@@ -587,7 +587,7 @@ namespace dftfe {
   //
   bool triangulationManager::checkConstraintsConsistency(parallel::distributed::Triangulation<3>& parallelTriangulation)
   {
-    FESystem<3> FE(FE_Q<3>(QGaussLobatto<1>(d_FEOrder+1)), 1);
+    FESystem<3> FE(FE_Q<3>(QGaussLobatto<1>(1+1)), 1);
     DoFHandler<3> dofHandler;
     dofHandler.initialize(parallelTriangulation,FE);
     dofHandler.distribute_dofs(FE);

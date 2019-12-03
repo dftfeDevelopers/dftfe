@@ -160,6 +160,26 @@ void forceClass<FEOrder>::computeStressEEshelbyEPSPEnlEk(const MatrixFree<3,doub
   std::vector<Tensor<1,C_DIM,VectorizedArray<double> > > derExchCorrEnergyWithGradRhoInQuads(numQuadPoints,zeroTensor3);
   std::vector<Tensor<1,C_DIM,VectorizedArray<double> > > derExchCorrEnergyWithGradRhoOutQuads(numQuadPoints,zeroTensor3);
 
+  std::map<unsigned int,std::vector<unsigned int>> macroIdToNonlocalAtomsSetMap;
+  for (unsigned int cell=0; cell<matrixFreeData.n_macro_cells(); ++cell)
+  {
+       const unsigned int numSubCells=matrixFreeData.n_components_filled(cell);
+       std::set<unsigned int> mergedSet;
+       for (unsigned int iSubCell=0; iSubCell<numSubCells; ++iSubCell)
+       {
+	  subCellPtr= matrixFreeData.get_cell_iterator(cell,iSubCell);
+	  dealii::CellId subCellId=subCellPtr->id();
+
+	  std::set<unsigned int> s;
+	  std::set_union(mergedSet.begin(), mergedSet.end(),
+			 d_cellIdToNonlocalAtomIdsLocalCompactSupportMap[subCellId].begin(), d_cellIdToNonlocalAtomIdsLocalCompactSupportMap[subCellId].end(),
+			 std::inserter(s, s.begin()));
+	  mergedSet=s;
+       }
+       macroIdToNonlocalAtomsSetMap[cell]=std::vector<unsigned int>(mergedSet.begin(),mergedSet.end());
+  }
+
+
   for (unsigned int cell=0; cell<matrixFreeData.n_macro_cells(); ++cell)
   {
     forceEval.reinit(cell);
@@ -466,12 +486,14 @@ void forceClass<FEOrder>::computeStressEEshelbyEPSPEnlEk(const MatrixFree<3,doub
 		                                         projectorKetTimesPsiTimesVTimesPartOcc,
 						         psiQuads.begin()+q*numEigenVectors*numKPoints,
 							 dftPtr->d_kPointWeights,
+							 macroIdToNonlocalAtomsSetMap[cell],
                                                          numEigenVectors);
 
           EKPoints+=eshelbyTensor::getEnlStress(gradZetalmDeltaVlDyadicDistImageAtomsQuads[q],
 		                                 projectorKetTimesPsiTimesVTimesPartOcc,
 						 psiQuads.begin()+q*numEigenVectors*numKPoints,
 					         dftPtr->d_kPointWeights,
+						 macroIdToNonlocalAtomsSetMap[cell],
                                                  numEigenVectors);
 
        }//is pseudopotential check
@@ -488,12 +510,14 @@ void forceClass<FEOrder>::computeStressEEshelbyEPSPEnlEk(const MatrixFree<3,doub
 		                                         projectorKetTimesPsiTimesVTimesPartOcc,
 						         psiQuadsNLP.begin()+q*numEigenVectors*numKPoints,
 							 dftPtr->d_kPointWeights,
+							 macroIdToNonlocalAtomsSetMap[cell],
                                                          numEigenVectors);
 
           EKPoints+=eshelbyTensor::getEnlStress(gradZetalmDeltaVlDyadicDistImageAtomsQuads[q],
 		                                 projectorKetTimesPsiTimesVTimesPartOcc,
 						 psiQuadsNLP.begin()+q*numEigenVectors*numKPoints,
 					         dftPtr->d_kPointWeights,
+						 macroIdToNonlocalAtomsSetMap[cell],
                                                  numEigenVectors);
 
 

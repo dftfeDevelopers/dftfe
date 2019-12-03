@@ -8,15 +8,13 @@ set -o pipefail
 # and optimization flag
 
 #Paths for external libraries
-dealiiPetscRealDir="/home/vikramg/DFT-FE-softwares/softwareCentos/dealiiDev/intel18.0.1_real_constraintsOpt"
-dealiiPetscComplexDir="/home/vikramg/DFT-FE-softwares/softwareCentos/dealiiDev/intel18.0.1_complex_constraintsOpt"
-alglibDir="/nfs/mcfs_comp/home/rudraa/software/alglib/cpp/src"
-libxcDir="/home/vikramg/DFT-FE-softwares/softwareCentos/libxcNew/install_intel18"
-spglibDir="/home/vikramg/DFT-FE-softwares/softwareCentos/spglib"
+dealiiPetscRealDir="/home/vikramg/DFT-FE-softwares/dealii/intel18.0.5_dealii9.0_real_new"
+dealiiPetscComplexDir="/home/vikramg/DFT-FE-softwares/dealii/intel18.0.5_dealii9.0_complex_new"
+alglibDir="/home/vikramg/DFT-FE-softwares/alglib/cpp/src"
+libxcDir="/home/vikramg/DFT-FE-softwares/libxc/intel2018_libxc_4.3.4"
+spglibDir="/home/vikramg/DFT-FE-softwares/spglib"
 xmlIncludeDir="/usr/include/libxml2"
 xmlLibDir="/usr/lib64"
-elpaIncludeDir="/home/vikramg/DFT-FE-softwares/softwareCentos/elpa/install2/include/elpa_openmp-2018.05.001"
-elpaLibDir="/home/vikramg/DFT-FE-softwares/softwareCentos/elpa/install2/lib"
 
 #If you have installed dealii by linking with intel mkl library set underlying flag to "ON",
 #otherwise set it to "OFF"
@@ -29,7 +27,7 @@ c_flagsRelease="-O3"
 cxx_flagsRelease="-O3"
 
 #Option to link to ELPA
-withELPA=ON
+withELPA=OFF
 
 #Optmization flag: 1 for optimized mode and 0 for debug mode compilation
 optimizedMode=1
