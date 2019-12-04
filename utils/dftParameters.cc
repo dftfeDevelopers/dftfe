@@ -299,15 +299,13 @@ namespace dftfe {
 			  Patterns::Bool(),
 			  "[Standard] Periodicity along the second domain bounding vector.");
 
-
 	prm.declare_entry("PERIODIC3", "false",
 			  Patterns::Bool(),
 			  "[Standard] Periodicity along the third domain bounding vector.");
-
-	prm.declare_entry("POINT WISE DIRICHLET CONSTRAINT", "false",
-			  Patterns::Bool(),
-			  "[Developer] Flag to set point wise dirichlet constraints to eliminate null-space associated with the discretized Poisson operator subject to periodic BCs.");
-	   
+	    
+        prm.declare_entry("POINT WISE DIRICHLET CONSTRAINT", "true",
+    		           Patterns::Bool(),
+	 	           "[Developer] Flag to set point wise dirichlet constraints to eliminate null-space associated with the discretized Poisson operator subject to periodic BCs.");
 
         prm.declare_entry("CONSTRAINTS PARALLEL CHECK", "true",
 			  Patterns::Bool(),
