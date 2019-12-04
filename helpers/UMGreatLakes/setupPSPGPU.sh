@@ -8,7 +8,7 @@ set -o pipefail
 # and optimization flag
 
 #Paths for external libraries
-dealiiDir="/home/dsambit/softwaresDFTFE/dealiicuda/install"
+dealiiDir="/home/vikramg/DFT-FE-softwares/dealii/install_dealii9.1_gcc8.2.0_openmp3.1.4_cuda10.1.243"
 alglibDir="/home/vikramg/DFT-FE-softwares/alglibGCC/cpp/src"
 libxcDir="/home/vikramg/DFT-FE-softwares/libxc/gcc8.2.0_libxc_4.3.4"
 spglibDir="/home/vikramg/DFT-FE-softwares/spglibGCC"
