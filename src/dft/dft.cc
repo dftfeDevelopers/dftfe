@@ -899,6 +899,9 @@ namespace dftfe {
       compute_ldos(eigenValues,
 		   "ldosData.out");
 
+    compute_pdos(eigenValues,
+                 "pdosData");
+
     if(dftParameters::writeLocalizationLengths)
       compute_localizationLength("localizationLengths.out");
 

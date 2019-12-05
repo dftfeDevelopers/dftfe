@@ -16,6 +16,82 @@
 // @author Phani Motamarri
 //
 
+void loadSingleAtomPSIFiles(unsigned int Z,
+		            unsigned int n,
+		            unsigned int l,
+		            unsigned int & fileReadFlag,
+		            std::map<unsigned int, std::map<unsigned int, std::map<unsigned int, alglib::spline1dinterpolant*> > > & radValues)
+{
+  if (radValues[Z][n].count(l) > 0)
+    {
+      fileReadFlag = 1;
+      return;
+    }
+
+  //
+  //set the paths for the Single-Atom wavefunction data
+  //
+  char psiFile[256];
+
+  if(dftParameters::isPseudopotential)
+    sprintf(psiFile, "%s/data/electronicStructure/pseudoPotential/z%u/singleAtomData/psi%u%u.inp", DFT_PATH, Z, n, l);
+
+  else
+    sprintf(psiFile, "%s/data/electronicStructure/allElectron/z%u/singleAtomData/psi%u%u.inp", DFT_PATH, Z, n, l);
+
+  std::vector<std::vector<double> > values;
+
+  const double truncationTol=1e-8;
+  fileReadFlag = dftUtils::readPsiFile(2, values, psiFile);
+
+   //
+  //spline fitting for single-atom wavefunctions
+  //
+  if(fileReadFlag > 0)
+    {
+      double maxTruncationRadius=0.0;
+      unsigned int truncRowId=0;
+      if(!dftParameters::reproducible_output)
+        {
+          if(Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0)
+            std::cout<<"reading data from file: "<<psiFile<<std::endl;
+        }
+
+      int numRows = values.size()-1;
+      std::vector<double> xData(numRows), yData(numRows);
+
+      //x
+      for(int irow = 0; irow < numRows; ++irow)
+	{
+	  xData[irow]= values[irow][0];
+	}
+      alglib::real_1d_array x;
+      x.setcontent(numRows,&xData[0]);
+
+      //y
+      for(int irow = 0; irow < numRows; ++irow)
+	{
+	  yData[irow] = values[irow][1];
+
+	  if (std::fabs(yData[irow])>truncationTol)
+	      truncRowId=irow;
+	}
+      alglib::real_1d_array y;
+      y.setcontent(numRows,&yData[0]);
+      alglib::ae_int_t natural_bound_type = 0;
+      alglib::spline1dinterpolant* spline=new alglib::spline1dinterpolant;
+      alglib::spline1dbuildcubic(x, y, numRows,
+				 natural_bound_type,
+				 0.0,
+				 natural_bound_type,
+				 0.0,
+				 *spline);
+
+      radValues[Z][n][l]=spline;
+    }
+
+}
+
 
 
 //compute fermi energy
@@ -117,7 +193,7 @@ void dftClass<FEOrder>::compute_tdos(const std::vector<std::vector<double>> & ei
 }
 
 
-//compute fermi energy
+//compute local density of states
 template<unsigned int FEOrder>
 void dftClass<FEOrder>::compute_ldos(const std::vector<std::vector<double>> & eigenValuesInput,
 				     const std::string & ldosFileName)
@@ -182,7 +258,7 @@ void dftClass<FEOrder>::compute_ldos(const std::vector<std::vector<double>> & ei
     localDensityOfStatesDown.resize(numberGlobalAtoms*numberIntervals,0.0);
   }
 
-  //compute density of states
+  //access finite-element data
   QGauss<3>  quadrature_formula(C_num1DQuad<FEOrder>());
   FEValues<3> fe_values (dofHandler.get_fe(), quadrature_formula, update_values|update_JxW_values);
   const unsigned int dofs_per_cell = dofHandler.get_fe().dofs_per_cell;
@@ -327,17 +403,17 @@ void dftClass<FEOrder>::compute_ldos(const std::vector<std::vector<double>> & ei
 		  fe_values.reinit(cellN);
 		  unsigned int globalAtomId = cellToAtomIdMap[cellN->id()];
 
-		  for (unsigned int iEigenVec=0; iEigenVec<currentBlockSize; ++iEigenVec)
-		  {
-		     fe_values.get_function_values(eigenVectors[0][iEigenVec],
-						tempQuadPointValues);
+		  for(unsigned int iEigenVec = 0; iEigenVec < currentBlockSize; ++iEigenVec)
+		    {
+		      fe_values.get_function_values(eigenVectors[0][iEigenVec],
+						    tempQuadPointValues);
 
-		     tempContribution[iEigenVec]=0.0;
-		     for(unsigned int q_point = 0; q_point < n_q_points; ++q_point)
-		     {
-		      tempContribution[iEigenVec]+= tempQuadPointValues[q_point]*tempQuadPointValues[q_point]*fe_values.JxW(q_point);
-		     }
-		  }
+		      tempContribution[iEigenVec] = 0.0;
+		      for(unsigned int q_point = 0; q_point < n_q_points; ++q_point)
+			{
+			  tempContribution[iEigenVec]+= tempQuadPointValues[q_point]*tempQuadPointValues[q_point]*fe_values.JxW(q_point);
+			}
+		    }
 
                   for (unsigned int iEigenVec=0; iEigenVec<currentBlockSize; ++iEigenVec)
 		      for(unsigned int epsInt = 0; epsInt < numberIntervals; ++epsInt)
@@ -352,7 +428,7 @@ void dftClass<FEOrder>::compute_ldos(const std::vector<std::vector<double>> & ei
 	    }
 
 	}
-   }
+   }//ivec loop
 
   if(dftParameters::spinPolarized == 1)
     {
@@ -421,6 +497,359 @@ void dftClass<FEOrder>::compute_ldos(const std::vector<std::vector<double>> & ei
     computing_timer.exit_section("LDOS computation");
 }
 
+template<unsigned int FEOrder>
+void dftClass<FEOrder>::compute_pdos(const std::vector<std::vector<double>> & eigenValuesInput,
+				     const std::string & pdosFileName)
+{
+
+   computing_timer.enter_section("PDOS computation");
+  
+  //
+  //create a stencil following orbital filling order
+  //
+  std::vector<unsigned int> level;
+  std::vector<std::vector<unsigned int> > stencil;
+
+  //
+  //create stencil in the order of single-atom orbital filling order
+  //
+  //1s
+  level.clear(); level.push_back(1); level.push_back(0); stencil.push_back(level);
+  //2s
+  level.clear(); level.push_back(2); level.push_back(0); stencil.push_back(level);
+  //2p
+  level.clear(); level.push_back(2); level.push_back(1); stencil.push_back(level);
+  //3s
+  level.clear(); level.push_back(3); level.push_back(0); stencil.push_back(level);
+  //3p
+  level.clear(); level.push_back(3); level.push_back(1); stencil.push_back(level);
+  //4s
+  level.clear(); level.push_back(4); level.push_back(0); stencil.push_back(level);
+  //3d
+  level.clear(); level.push_back(3); level.push_back(2); stencil.push_back(level);
+  //4p
+  level.clear(); level.push_back(4); level.push_back(1); stencil.push_back(level);
+  //5s
+  level.clear(); level.push_back(5); level.push_back(0); stencil.push_back(level);
+  //4d
+  level.clear(); level.push_back(4); level.push_back(2); stencil.push_back(level);
+  //5p
+  level.clear(); level.push_back(5); level.push_back(1); stencil.push_back(level);
+  //6s
+  level.clear(); level.push_back(6); level.push_back(0); stencil.push_back(level);
+  //4f
+  level.clear(); level.push_back(4); level.push_back(3); stencil.push_back(level);
+  //5d
+  level.clear(); level.push_back(5); level.push_back(2); stencil.push_back(level);
+  //6p
+  level.clear(); level.push_back(6); level.push_back(1); stencil.push_back(level);
+  //7s
+  level.clear(); level.push_back(7); level.push_back(0); stencil.push_back(level);
+  //5f
+  level.clear(); level.push_back(5); level.push_back(3); stencil.push_back(level);
+  //6d
+  level.clear(); level.push_back(6); level.push_back(2); stencil.push_back(level);
+  //7p
+  level.clear(); level.push_back(7); level.push_back(1); stencil.push_back(level);
+  //8s
+  level.clear(); level.push_back(8); level.push_back(0); stencil.push_back(level);
+
+  const unsigned int numberGlobalAtoms = atomLocations.size();
+
+  unsigned int errorReadFile = 0;
+  unsigned int fileReadFlag = 0;
+
+  std::map<unsigned int, std::map<unsigned int, std::map<unsigned int, alglib::spline1dinterpolant*> > > radValues;
+  std::vector<std::vector<orbital> > singleAtomInfo;
+  singleAtomInfo.resize(numberGlobalAtoms);
+
+  for(std::vector<std::vector<unsigned int> >::iterator it = stencil.begin(); it < stencil.end(); ++it)
+    {
+       unsigned int n = (*it)[0], l = (*it)[1];
+       //Think of having "m" quantum number loop as well and push it into atoms
+       for(int m = -l; m <= (int) l; m++)
+	 {
+	   for(unsigned int iAtom = 0; iAtom < numberGlobalAtoms; iAtom++)
+	     {
+	       unsigned int Z = atomLocations[iAtom][0];
+	       	       
+	       //
+	       //load PSI files
+	       //
+	       loadSingleAtomPSIFiles(Z, n, l,fileReadFlag,radValues);
+
+	       if(fileReadFlag > 0)
+		 {
+		   orbital temp;
+		   temp.atomID = iAtom;
+		   temp.Z = Z; temp.n = n; temp.l = l; temp.m = m; temp.psi = radValues[Z][n][l];
+		   singleAtomInfo[iAtom].push_back(temp);
+		   //pcout << "Atom Id: "<<iAtom<<" Z: "<<Z<<" n: "<<n<<" l: "<<l<<" m: "<<m<<std::endl;
+		 }
+	     }
+	 }
+
+       if(fileReadFlag == 0)
+	 errorReadFile += 1;
+    }// end stencil
+
+  unsigned int totalAtomicData = 0;
+  for(unsigned int iAtom = 0; iAtom < numberGlobalAtoms; ++iAtom)
+    {
+      for(unsigned int iSingAtomData = 0; iSingAtomData < singleAtomInfo[iAtom].size(); ++iSingAtomData)
+        {
+          totalAtomicData += 1;   
+        }
+    }
+
+  //loop over elements
+  std::vector<double> eigenValuesAllkPoints;
+  for(int kPoint = 0; kPoint < d_kPointWeights.size(); ++kPoint)
+    {
+      for(int statesIter = 0; statesIter < eigenValuesInput[0].size(); ++statesIter)
+	{
+	  eigenValuesAllkPoints.push_back(eigenValuesInput[kPoint][statesIter]);
+	}
+    }
+
+  std::sort(eigenValuesAllkPoints.begin(),eigenValuesAllkPoints.end()); 
+
+  double totalEigenValues = eigenValuesAllkPoints.size();
+  double intervalSize = 0.001;
+  double sigma = C_kb*dftParameters::TVal;
+  double lowerBoundEpsilon=1.5*eigenValuesAllkPoints[0];
+  double upperBoundEpsilon=eigenValuesAllkPoints[totalEigenValues-1]*1.5;
+
+  unsigned int numberIntervals = std::ceil((upperBoundEpsilon - lowerBoundEpsilon)/intervalSize);
+  std::vector<double> partialDensityOfStates;
+  partialDensityOfStates.resize(totalAtomicData*numberIntervals,0.0);
+
+  //access finite-element data
+  QGauss<3>  quadrature_formula(C_num1DQuad<FEOrder>());
+  FEValues<3> fe_values (dofHandler.get_fe(), quadrature_formula, update_values|update_JxW_values|update_quadrature_points);
+  const unsigned int dofs_per_cell = dofHandler.get_fe().dofs_per_cell;
+  const unsigned int n_q_points    = quadrature_formula.size();
+
+
+  const unsigned int blockSize=std::min(dftParameters::wfcBlockSize,
+	                                d_numEigenValues);
+
+  std::vector<std::vector<double> > tempQuadPointValuesForWaveFunctions(blockSize);
+  std::vector<double> tempQuadPointValues(n_q_points);
+
+  const unsigned int localVectorSize = d_eigenVectorsFlattenedSTL[0].size()/d_numEigenValues;
+  std::vector<std::vector<vectorType> > eigenVectors((1+dftParameters::spinPolarized)*d_kPointWeights.size());
+  std::vector<dealii::parallel::distributed::Vector<dataTypes::number> > eigenVectorsFlattenedBlock((1+dftParameters::spinPolarized)*d_kPointWeights.size());
+
+  for(unsigned int ivec = 0; ivec < d_numEigenValues; ivec+=blockSize)
+    {
+       const unsigned int currentBlockSize=std::min(blockSize,d_numEigenValues-ivec);
+
+       if(currentBlockSize!=blockSize || ivec==0)
+      {
+	   for(unsigned int kPoint = 0; kPoint < (1+dftParameters::spinPolarized)*d_kPointWeights.size(); ++kPoint)
+	   {
+	      eigenVectors[kPoint].resize(currentBlockSize);
+	      for(unsigned int i= 0; i < currentBlockSize; ++i)
+		  eigenVectors[kPoint][i].reinit(d_tempEigenVec);
+
+
+	      vectorTools::createDealiiVector<dataTypes::number>(matrix_free_data.get_vector_partitioner(),
+							         currentBlockSize,
+							         eigenVectorsFlattenedBlock[kPoint]);
+	      eigenVectorsFlattenedBlock[kPoint] = dataTypes::number(0.0);
+	   }
+
+	   constraintsNoneDataInfo.precomputeMaps(matrix_free_data.get_vector_partitioner(),
+					          eigenVectorsFlattenedBlock[0].get_partitioner(),
+					          currentBlockSize);
+      }
+
+
+        std::vector<std::vector<double>> blockedEigenValues(d_kPointWeights.size(),std::vector<double>((1+dftParameters::spinPolarized)*currentBlockSize,0.0));
+
+	for(unsigned int kPoint = 0; kPoint < d_kPointWeights.size(); ++kPoint)
+	 for (unsigned int iWave=0; iWave<currentBlockSize;++iWave)
+	 {
+	     blockedEigenValues[kPoint][iWave]=eigenValues[kPoint][ivec+iWave];
+	     if (dftParameters::spinPolarized==1)
+		 blockedEigenValues[kPoint][currentBlockSize+iWave]
+		     =eigenValues[kPoint][d_numEigenValues+ivec+iWave];
+	 }
+
+
+	for(unsigned int kPoint = 0; kPoint < (1+dftParameters::spinPolarized)*d_kPointWeights.size(); ++kPoint)
+      {
+	for(unsigned int iNode = 0; iNode < localVectorSize; ++iNode)
+	  for(unsigned int iWave = 0; iWave < currentBlockSize; ++iWave)
+	    eigenVectorsFlattenedBlock[kPoint].local_element(iNode*currentBlockSize+iWave)
+	      = d_eigenVectorsFlattenedSTL[kPoint][iNode*d_numEigenValues+ivec+iWave];
+
+	constraintsNoneDataInfo.distribute(eigenVectorsFlattenedBlock[kPoint],
+						currentBlockSize);
+	eigenVectorsFlattenedBlock[kPoint].update_ghost_values();
+
+#ifdef USE_COMPLEX
+	vectorTools::copyFlattenedDealiiVecToSingleCompVec
+	  (eigenVectorsFlattenedBlock[kPoint],
+	   currentBlockSize,
+	   std::make_pair(0,currentBlockSize),
+	   localProc_dof_indicesReal,
+	   localProc_dof_indicesImag,
+	   eigenVectors[kPoint],
+	   false);
+
+	     //FIXME: The underlying call to update_ghost_values
+	     //is required because currently localProc_dof_indicesReal
+	     //and localProc_dof_indicesImag are only available for
+	     //locally owned nodes. Once they are also made available
+	     //for ghost nodes- use true for the last argument in
+	     //copyFlattenedDealiiVecToSingleCompVec(..) above and supress
+	     //underlying call.
+	for(unsigned int i= 0; i < currentBlockSize; ++i)
+	  eigenVectors[kPoint][i].update_ghost_values();
+#else
+	vectorTools::copyFlattenedDealiiVecToSingleCompVec
+	  (eigenVectorsFlattenedBlock[kPoint],
+	   currentBlockSize,
+	   std::make_pair(0,currentBlockSize),
+	   eigenVectors[kPoint],
+	   true);
+#endif
+      }
+
+	if(dftParameters::spinPolarized == 1)
+	  {
+	    
+
+	  }
+	else
+	  {
+	    typename DoFHandler<3>::active_cell_iterator cellN = dofHandler.begin_active(), endcN = dofHandler.end();
+            unsigned int cellId = 0;
+   	    for(; cellN!=endcN; ++cellN)
+	      {
+		if(cellN->is_locally_owned())
+		  {
+		    fe_values.reinit(cellN);
+
+		    for(unsigned int iEigenVec=0; iEigenVec<currentBlockSize; ++iEigenVec)
+		      {
+                        tempQuadPointValuesForWaveFunctions[iEigenVec].resize(n_q_points);
+			fe_values.get_function_values(eigenVectors[0][iEigenVec],
+						      tempQuadPointValues);
+                        tempQuadPointValuesForWaveFunctions[iEigenVec] = tempQuadPointValues;
+		      }
+
+		    for(unsigned int iAtom = 0; iAtom < numberGlobalAtoms; ++iAtom)
+		      {
+                        for(unsigned int iSingAtomData = 0; iSingAtomData < singleAtomInfo[iAtom].size(); ++iSingAtomData)
+			  {
+                            std::vector<double> tempContribution(blockSize,0.0);
+			    for(unsigned int q = 0; q < n_q_points; ++q)
+			      {
+				const Point<3> & quadPoint = fe_values.quadrature_point(q);
+				double x = quadPoint[0]-atomLocations[iAtom][2];
+				double y = quadPoint[1]-atomLocations[iAtom][3];
+				double z = quadPoint[2]-atomLocations[iAtom][4];
+
+				double r = sqrt(x*x + y*y + z*z);
+				double theta = acos(z/r);
+				double phi = atan2(y,x);
+				
+				if (r==0){theta=0; phi=0;}
+                                  
+                                orbital dataOrb = singleAtomInfo[iAtom][iSingAtomData];
+
+				double R = alglib::spline1dcalc(*dataOrb.psi,r);
+				double singleAtomWaveFunctionQuadValue = R*sqrt(2)*boost::math::spherical_harmonic_r(dataOrb.l,dataOrb.m,theta,phi);
+					
+				for(unsigned int iEigenVec = 0; iEigenVec < currentBlockSize; ++iEigenVec)
+				  {
+				    tempContribution[iEigenVec] += tempQuadPointValuesForWaveFunctions[iEigenVec][q]*singleAtomWaveFunctionQuadValue*tempQuadPointValuesForWaveFunctions[iEigenVec][q]*singleAtomWaveFunctionQuadValue*fe_values.JxW(q);
+				  }
+			      }
+                         
+			    for(unsigned int iEigenVec=0; iEigenVec<currentBlockSize; ++iEigenVec)
+			      for(unsigned int epsInt = 0; epsInt < numberIntervals; ++epsInt)
+				{
+				  double epsValue = lowerBoundEpsilon+epsInt*intervalSize;
+				  double term1 = (epsValue - blockedEigenValues[0][iEigenVec]);
+				  double smearedEnergyLevel = (sigma/M_PI)*(1.0/(term1*term1+sigma*sigma));
+				  partialDensityOfStates[numberIntervals*singleAtomInfo[iAtom].size()*iAtom + numberIntervals*iSingAtomData + epsInt] += 2.0*tempContribution[iEigenVec]*smearedEnergyLevel;
+				}
+			    
+			  }//single atom wavefunction data
+			
+		      }//iAtom data
+		    
+		  }//if cell
+		
+
+	      }//cell loop
+	    
+	  }//if-else loop
+	
+    }//ivec block loop
+
+  if(dftParameters::spinPolarized == 1)
+    {
+      
+    }
+  else
+    {
+      dealii::Utilities::MPI::sum(partialDensityOfStates,
+				  mpi_communicator,
+				  partialDensityOfStates);
+    }
+
+  std::cout<<singleAtomInfo[0].size()<<std::endl;
+
+  for(unsigned int iAtom = 0; iAtom < numberGlobalAtoms; ++iAtom)
+    {
+      for(unsigned int iSingAtomData = 0; iSingAtomData < singleAtomInfo[iAtom].size(); ++iSingAtomData)
+	{
+	  orbital temp = singleAtomInfo[iAtom][iSingAtomData];
+	  pcout << "Atom Id: "<<iAtom<<" Z: "<<temp.Z<<" n: "<<temp.n<<" l: "<<temp.l<<" m: "<<temp.m<<std::endl;
+	}
+    }
+
+  std::cout<<singleAtomInfo[0].size()<<std::endl;
+  
+  if(dealii::Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0)
+    {
+      std::string tempFolder = "pdosOutputFolder";
+      mkdir(tempFolder.c_str(),ACCESSPERMS);
+      
+      for(unsigned int iAtom = 0; iAtom < numberGlobalAtoms; ++iAtom)
+	{
+	  std::string outFileName = tempFolder + "/" + pdosFileName + "_" + dealii::Utilities::to_string(iAtom);
+	  std::ofstream outputFile(outFileName);
+	  outputFile.setf(std::ios_base::fixed);
+	  if(outputFile.is_open())
+	    {
+	       if(dftParameters::spinPolarized == 1)
+		 {
+		   //fill in spin polarized
+		   
+		 }
+	       else
+		 {
+		   for(unsigned int epsInt = 0; epsInt < numberIntervals; ++epsInt)
+		     {
+		       double epsValue = lowerBoundEpsilon+epsInt*intervalSize;
+		       outputFile << std::setprecision(18) << epsValue*27.21138602 << " ";
+		       for(unsigned int iSingAtomData = 0; iSingAtomData < singleAtomInfo[iAtom].size(); ++iSingAtomData)
+			 {
+			   outputFile << std::setprecision(18) << partialDensityOfStates[numberIntervals*singleAtomInfo[iAtom].size()*iAtom + numberIntervals*iSingAtomData + epsInt] << " ";
+			 }
+		       outputFile<<std::endl;
+		     }
+		 }
+	    }
+	}
+    }
+}
 
 
 
