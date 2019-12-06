@@ -135,23 +135,20 @@ namespace dftfe {
 
 
 	/**
-	 * @brief Compute mean value constraint which is required in case of fully periodic
-	 * boundary conditions.
+	 * @brief Mean value constraint distibute
 	 *
 	 */
 	void meanValueConstraintDistribute(vectorType& vec) const;
 
 	/**
-	 * @brief Compute mean value constraint which is required in case of fully periodic
-	 * boundary conditions.
+	 * @brief Mean value constraint distibute slave to master
 	 *
 	 */
 	void meanValueConstraintDistributeSlaveToMaster(vectorType& vec) const;
 
 
 	/**
-	 * @brief Compute mean value constraint which is required in case of fully periodic
-	 * boundary conditions.
+	 * @brief Mean value constraint set zero
 	 *
 	 */
 	void meanValueConstraintSetZero(vectorType& vec) const;
@@ -193,7 +190,7 @@ namespace dftfe {
 	/// storage for mean value constraint vector
 	vectorType d_meanValueConstraintVec;
 
-	/// boolean flag
+	/// boolean flag to query if mean value constraint datastructures are precomputed
 	bool d_isMeanValueConstraintComputed;
 
 	/// mean constrained nodeid

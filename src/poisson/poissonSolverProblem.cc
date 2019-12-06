@@ -292,9 +292,13 @@ namespace dftfe {
 	     vec[d_meanValueConstraintNodeId]=0;
     }
 
+    //
+    // Compute mean value constraint which is required in case of fully periodic
+    // boundary conditions
     template<unsigned int FEOrder>
     void poissonSolverProblem<FEOrder>::computeMeanValueConstraint()
     {
+        // allocate parallel distibuted vector to store mean value constraint
 	d_meanValueConstraintVec.reinit(*d_xPtr);
 	d_meanValueConstraintVec=0;
 
@@ -335,6 +339,9 @@ namespace dftfe {
         dealii::IndexSet locallyRelevantElements;
         dealii::DoFTools::extract_locally_relevant_dofs(dofHandler, locallyRelevantElements);
 
+        //pick mean value constrained node in the zeroth processor such that it is not part
+        //of periodic and hanging node constraint equations (both slave and master node).
+        //This is done for simplicity of implementation.
 	dealii::IndexSet allIndicesTouchedByConstraints(d_meanValueConstraintVec.size());
 	for (dealii::IndexSet::ElementIterator it=locallyRelevantElements.begin();
 		it<locallyRelevantElements.end();it++)
@@ -352,9 +359,8 @@ namespace dftfe {
 
         locallyOwnedElements.subtract_set(allIndicesTouchedByConstraints);
         d_meanValueConstraintNodeId=*locallyOwnedElements.begin();
-	AssertThrow(!d_constraintMatrixPtr->is_constrained(d_meanValueConstraintNodeId),dealii::ExcMessage("DFT-FE Error: BUG."));
+	AssertThrow(!d_constraintMatrixPtr->is_constrained(d_meanValueConstraintNodeId),dealii::ExcMessage("DFT-FE Error: Mean value constraint creation bug."));
 
-	//pcout<<"Mean value constraint nodeid: "<<d_meanValueConstraintNodeId<<std::endl;
 
 	double valueAtConstraintNode=d_meanValueConstraintVec[d_meanValueConstraintNodeId];
         MPI_Bcast(&valueAtConstraintNode,
