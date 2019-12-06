@@ -49,7 +49,8 @@ namespace dftfe {
 		     const unsigned int matrixFreeVectorComponent,
 	             const std::map<dealii::types::global_dof_index, double> & atoms,
 		     const std::map<dealii::CellId,std::vector<double> > & rhoValues,
-		     const bool isComputeDiagonalA=true);
+		     const bool isComputeDiagonalA=true,
+                     const bool isComputeMeanValueConstraints=false);
 
 	/**
 	 * @brief reinitialize data structures for nuclear electrostatic potential solve
@@ -126,6 +127,36 @@ namespace dftfe {
 	void computeDiagonalA();
 
 	/**
+	 * @brief Compute mean value constraint which is required in case of fully periodic
+	 * boundary conditions.
+	 *
+	 */
+	void computeMeanValueConstraint();
+
+
+	/**
+	 * @brief Compute mean value constraint which is required in case of fully periodic
+	 * boundary conditions.
+	 *
+	 */
+	void meanValueConstraintDistribute(vectorType& vec) const;
+
+	/**
+	 * @brief Compute mean value constraint which is required in case of fully periodic
+	 * boundary conditions.
+	 *
+	 */
+	void meanValueConstraintDistributeSlaveToMaster(vectorType& vec) const;
+
+
+	/**
+	 * @brief Compute mean value constraint which is required in case of fully periodic
+	 * boundary conditions.
+	 *
+	 */
+	void meanValueConstraintSetZero(vectorType& vec) const;
+
+	/**
 	 * @brief precompute shape function gradient integral.
 	 *
 	 */
@@ -158,6 +189,15 @@ namespace dftfe {
         std::vector<double> d_cellShapeFunctionGradientIntegralFlattened;
 
         bool d_isShapeGradIntegralPrecomputed;
+
+	/// storage for mean value constraint vector
+	vectorType d_meanValueConstraintVec;
+
+	/// boolean flag
+	bool d_isMeanValueConstraintComputed;
+
+	/// mean constrained nodeid
+	dealii::types::global_dof_index d_meanValueConstraintNodeId;
 
         const MPI_Comm mpi_communicator;
         const unsigned int n_mpi_processes;
