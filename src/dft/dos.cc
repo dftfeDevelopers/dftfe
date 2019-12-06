@@ -849,6 +849,7 @@ void dftClass<FEOrder>::compute_pdos(const std::vector<std::vector<double>> & ei
 	    }
 	}
     }
+    computing_timer.exit_section("PDOS computation");
 }
 
 
