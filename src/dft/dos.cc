@@ -20,6 +20,7 @@ void loadSingleAtomPSIFiles(unsigned int Z,
 		            unsigned int n,
 		            unsigned int l,
 		            unsigned int & fileReadFlag,
+                            double & wfcInitTruncation,
 		            std::map<unsigned int, std::map<unsigned int, std::map<unsigned int, alglib::spline1dinterpolant*> > > & radValues)
 {
   if (radValues[Z][n].count(l) > 0)
@@ -88,6 +89,9 @@ void loadSingleAtomPSIFiles(unsigned int Z,
 				 *spline);
 
       radValues[Z][n][l]=spline;
+      maxTruncationRadius=xData[truncRowId];
+      if(maxTruncationRadius > wfcInitTruncation)
+          wfcInitTruncation = maxTruncationRadius; 
     }
 
 }
@@ -562,6 +566,7 @@ void dftClass<FEOrder>::compute_pdos(const std::vector<std::vector<double>> & ei
   std::map<unsigned int, std::map<unsigned int, std::map<unsigned int, alglib::spline1dinterpolant*> > > radValues;
   std::vector<std::vector<orbital> > singleAtomInfo;
   singleAtomInfo.resize(numberGlobalAtoms);
+  double wfcInitTruncation;
 
   for(std::vector<std::vector<unsigned int> >::iterator it = stencil.begin(); it < stencil.end(); ++it)
     {
@@ -576,7 +581,7 @@ void dftClass<FEOrder>::compute_pdos(const std::vector<std::vector<double>> & ei
 	       //
 	       //load PSI files
 	       //
-	       loadSingleAtomPSIFiles(Z, n, l,fileReadFlag,radValues);
+	       loadSingleAtomPSIFiles(Z,n,l,fileReadFlag,wfcInitTruncation,radValues);
 
 	       if(fileReadFlag > 0)
 		 {
@@ -640,10 +645,13 @@ void dftClass<FEOrder>::compute_pdos(const std::vector<std::vector<double>> & ei
   const unsigned int localVectorSize = d_eigenVectorsFlattenedSTL[0].size()/d_numEigenValues;
   std::vector<std::vector<vectorType> > eigenVectors((1+dftParameters::spinPolarized)*d_kPointWeights.size());
   std::vector<dealii::parallel::distributed::Vector<dataTypes::number> > eigenVectorsFlattenedBlock((1+dftParameters::spinPolarized)*d_kPointWeights.size());
+  //std::vector<double> innerProductWaveFunctionSingAtom(d_numEigenValues*5,0.0);
+  //std::vector<double> tempContribution(blockSize*,0.0);
 
   for(unsigned int ivec = 0; ivec < d_numEigenValues; ivec+=blockSize)
     {
        const unsigned int currentBlockSize=std::min(blockSize,d_numEigenValues-ivec);
+       std::vector<double> tempContribution(currentBlockSize*totalAtomicData,0.0);  
 
        if(currentBlockSize!=blockSize || ivec==0)
       {
@@ -726,7 +734,6 @@ void dftClass<FEOrder>::compute_pdos(const std::vector<std::vector<double>> & ei
 	else
 	  {
 	    typename DoFHandler<3>::active_cell_iterator cellN = dofHandler.begin_active(), endcN = dofHandler.end();
-            unsigned int cellId = 0;
    	    for(; cellN!=endcN; ++cellN)
 	      {
 		if(cellN->is_locally_owned())
@@ -741,11 +748,12 @@ void dftClass<FEOrder>::compute_pdos(const std::vector<std::vector<double>> & ei
                         tempQuadPointValuesForWaveFunctions[iEigenVec] = tempQuadPointValues;
 		      }
 
+                    
+
 		    for(unsigned int iAtom = 0; iAtom < numberGlobalAtoms; ++iAtom)
 		      {
                         for(unsigned int iSingAtomData = 0; iSingAtomData < singleAtomInfo[iAtom].size(); ++iSingAtomData)
 			  {
-                            std::vector<double> tempContribution(blockSize,0.0);
 			    for(unsigned int q = 0; q < n_q_points; ++q)
 			      {
 				const Point<3> & quadPoint = fe_values.quadrature_point(q);
@@ -761,49 +769,65 @@ void dftClass<FEOrder>::compute_pdos(const std::vector<std::vector<double>> & ei
                                   
                                 orbital dataOrb = singleAtomInfo[iAtom][iSingAtomData];
 
-				double R = alglib::spline1dcalc(*dataOrb.psi,r);
-				double singleAtomWaveFunctionQuadValue = R*sqrt(2)*boost::math::spherical_harmonic_r(dataOrb.l,dataOrb.m,theta,phi);
-					
+                                double R = 0.0;
+                                double singleAtomWaveFunctionQuadValue;
+
+                                if(r<=wfcInitTruncation)
+                                {
+			          R = alglib::spline1dcalc(*dataOrb.psi,r);
+                                  if(dataOrb.m > 0)
+				   singleAtomWaveFunctionQuadValue = R*std::sqrt(2)*boost::math::spherical_harmonic_r(dataOrb.l,dataOrb.m,theta,phi);
+				  else if (dataOrb.m == 0)
+                                   singleAtomWaveFunctionQuadValue = R*boost::math::spherical_harmonic_r(dataOrb.l,dataOrb.m,theta,phi);
+                                  else
+                                   singleAtomWaveFunctionQuadValue = R*std::sqrt(2)*boost::math::spherical_harmonic_i(dataOrb.l,-dataOrb.m,theta,phi);
+                                }
+                               else
+                                   singleAtomWaveFunctionQuadValue = 0.0;
+                                    	
 				for(unsigned int iEigenVec = 0; iEigenVec < currentBlockSize; ++iEigenVec)
 				  {
-				    tempContribution[iEigenVec] += tempQuadPointValuesForWaveFunctions[iEigenVec][q]*singleAtomWaveFunctionQuadValue*tempQuadPointValuesForWaveFunctions[iEigenVec][q]*singleAtomWaveFunctionQuadValue*fe_values.JxW(q);
+				   tempContribution[currentBlockSize*singleAtomInfo[iAtom].size()*iAtom + currentBlockSize*iSingAtomData + iEigenVec] += tempQuadPointValuesForWaveFunctions[iEigenVec][q]*singleAtomWaveFunctionQuadValue*fe_values.JxW(q);
 				  }
-			      }
+			      }//quad loop
                          
-			    for(unsigned int iEigenVec=0; iEigenVec<currentBlockSize; ++iEigenVec)
-			      for(unsigned int epsInt = 0; epsInt < numberIntervals; ++epsInt)
-				{
-				  double epsValue = lowerBoundEpsilon+epsInt*intervalSize;
-				  double term1 = (epsValue - blockedEigenValues[0][iEigenVec]);
-				  double smearedEnergyLevel = (sigma/M_PI)*(1.0/(term1*term1+sigma*sigma));
-				  partialDensityOfStates[numberIntervals*singleAtomInfo[iAtom].size()*iAtom + numberIntervals*iSingAtomData + epsInt] += 2.0*tempContribution[iEigenVec]*smearedEnergyLevel;
-				}
-			    
 			  }//single atom wavefunction data
 			
 		      }//iAtom data
 		    
 		  }//if cell
-		
 
 	      }//cell loop
-	    
-	  }//if-else loop
-	
-    }//ivec block loop
 
-  if(dftParameters::spinPolarized == 1)
-    {
-      
-    }
-  else
-    {
-      dealii::Utilities::MPI::sum(partialDensityOfStates,
-				  mpi_communicator,
-				  partialDensityOfStates);
-    }
+         dealii::Utilities::MPI::sum(tempContribution,
+                                     mpi_communicator,
+                                     tempContribution);
+        }//if-else loop
 
-  std::cout<<singleAtomInfo[0].size()<<std::endl;
+    
+  for(unsigned int iAtom = 0; iAtom < numberGlobalAtoms; ++iAtom)
+   {
+    for(unsigned int iSingAtomData = 0; iSingAtomData < singleAtomInfo[iAtom].size(); ++iSingAtomData)
+      {
+       for(unsigned int iEigenVec = 0; iEigenVec < currentBlockSize; ++iEigenVec)
+        {
+         for(unsigned int epsInt = 0; epsInt < numberIntervals; ++epsInt)
+           {
+             double epsValue = lowerBoundEpsilon+epsInt*intervalSize;
+             double term1 = (epsValue - blockedEigenValues[0][iEigenVec]);
+             double smearedEnergyLevel = (sigma/M_PI)*(1.0/(term1*term1+sigma*sigma));
+             double tempValue = tempContribution[currentBlockSize*singleAtomInfo[iAtom].size()*iAtom + currentBlockSize*iSingAtomData + iEigenVec];
+             partialDensityOfStates[numberIntervals*singleAtomInfo[iAtom].size()*iAtom + numberIntervals*iSingAtomData + epsInt]+= 2.0*tempValue*tempValue*smearedEnergyLevel;
+           }
+        }
+
+     }
+
+   }
+
+ }//ivec block loop
+
+  pcout<<"Following is the Single atom data used for PDOS computation: "<<std::endl;
 
   for(unsigned int iAtom = 0; iAtom < numberGlobalAtoms; ++iAtom)
     {
@@ -814,7 +838,6 @@ void dftClass<FEOrder>::compute_pdos(const std::vector<std::vector<double>> & ei
 	}
     }
 
-  std::cout<<singleAtomInfo[0].size()<<std::endl;
   
   if(dealii::Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0)
     {
