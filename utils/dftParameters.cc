@@ -37,7 +37,7 @@ namespace dftfe
       std::string mixingMethod = "";
       std::string ionOptSolver = "";
 
-      bool isPseudopotential=false,periodicX=false,periodicY=false,periodicZ=false, useSymm=false, timeReversal=false,pseudoTestsFlag=false, constraintMagnetization=false, writeDosFile=false, writeLdosFile=false, writeLocalizationLengths=false;
+      bool isPseudopotential=false,periodicX=false,periodicY=false,periodicZ=false, useSymm=false, timeReversal=false,pseudoTestsFlag=false, constraintMagnetization=false, writeDosFile=false, writeLdosFile=false, writePdosFile=false, writeLocalizationLengths=false;
       std::string meshFileName="",coordinatesFile="",domainBoundingVectorsFile="",kPointDataFile="", ionRelaxFlagsFile="",orthogType="", algoType="", pseudoPotentialFile="";
 
       std::string coordinatesGaussianDispFile="";
@@ -135,6 +135,11 @@ namespace dftfe
 	  prm.declare_entry("WRITE LOCAL DENSITY OF STATES", "false",
 			    Patterns::Bool(),
 			    "[Standard] Computes local density of states on each atom using Lorentzians. Uses specified Temperature for SCF as the broadening parameter. Outputs a file name 'ldosData.out' containing NUMATOM+1 columns with first column indicating the energy in eV and all other NUMATOM columns indicating local density of states for each of the NUMATOM atoms.");
+
+          prm.declare_entry("WRITE PROJECTED DENSITY OF STATES", "false",
+                            Patterns::Bool(),
+                            "[Standard] Computes projected density of states on each atom using Lorentzians. Uses specified Temperature for SCF as the broadening parameter. Outputs a file name 'pdosData_x' with x denoting atomID. This file contains columns with first column indicating the energy in eV and all other columns indicating projected density of states corresponding to single atom wavefunctions.");
+
 
 	  prm.declare_entry("WRITE LOCALIZATION LENGTHS", "false",
 			    Patterns::Bool(),
@@ -629,7 +634,8 @@ namespace dftfe
 	  dftParameters::writeWfcSolutionFields           = prm.get_bool("WRITE WFC");
 	  dftParameters::writeDensitySolutionFields       = prm.get_bool("WRITE DENSITY");
 	  dftParameters::writeDosFile                     = prm.get_bool("WRITE DENSITY OF STATES");
-	  dftParameters::writeLdosFile                     = prm.get_bool("WRITE LOCAL DENSITY OF STATES");
+	  dftParameters::writeLdosFile                    = prm.get_bool("WRITE LOCAL DENSITY OF STATES");
+          dftParameters::writePdosFile                    = prm.get_bool("WRITE PROJECTED DENSITY OF STATES"); 
 	  dftParameters::writeLocalizationLengths          = prm.get_bool("WRITE LOCALIZATION LENGTHS");
 	}
 	prm.leave_subsection ();

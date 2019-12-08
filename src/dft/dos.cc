@@ -728,8 +728,7 @@ void dftClass<FEOrder>::compute_pdos(const std::vector<std::vector<double>> & ei
 
 	if(dftParameters::spinPolarized == 1)
 	  {
-	    
-
+	    AssertThrow(false,ExcMessage("PDOS is not implemented for spin-polarized problems"));
 	  }
 	else
 	  {
@@ -853,7 +852,7 @@ void dftClass<FEOrder>::compute_pdos(const std::vector<std::vector<double>> & ei
 	    {
 	       if(dftParameters::spinPolarized == 1)
 		 {
-		   //fill in spin polarized
+		   AssertThrow(false,ExcMessage("PDOS is not implemented for spin-polarized problems"));
 		   
 		 }
 	       else
