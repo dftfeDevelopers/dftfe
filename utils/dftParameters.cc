@@ -898,7 +898,7 @@ namespace dftfe
 	  prm.print_parameters (std::cout, ParameterHandler::ShortText);
 	}
 
-        AssertThrow((dftParameters::periodicX || dftParameters::periodicY || dftParameters::periodicZ) && (dftParameters::writeLdosFile || dftParameters::writePdosFile),ExcMessage("DFT-FE Error: LOCAL DENSITY OF STATES and PROJECTED DENSITY OF STATES are currently not implemented in the case of periodic and semi-periodic boundary conditions."));
+        AssertThrow(!((dftParameters::periodicX || dftParameters::periodicY || dftParameters::periodicZ) && (dftParameters::writeLdosFile || dftParameters::writePdosFile)),ExcMessage("DFT-FE Error: LOCAL DENSITY OF STATES and PROJECTED DENSITY OF STATES are currently not implemented in the case of periodic and semi-periodic boundary conditions."));
 #ifdef USE_COMPLEX
 	if (dftParameters::isIonForce || dftParameters::isCellStress)
 	   AssertThrow(!dftParameters::useSymm,ExcMessage("DFT-FE Error: USE GROUP SYMMETRY must be set to false if either ION FORCE or CELL STRESS is set to true. This functionality will be added in a future release"));
