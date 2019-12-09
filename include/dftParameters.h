@@ -100,6 +100,7 @@ namespace dftfe {
       extern bool bandParalOpt;
       extern bool rrGEP;
       extern bool rrGEPFullMassMatrix;
+      extern bool readWfcForPdosPspFile;
 
       /**
        * Declare parameters.

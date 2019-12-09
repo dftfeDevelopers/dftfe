@@ -35,8 +35,20 @@ void loadSingleAtomPSIFiles(unsigned int Z,
   char psiFile[256];
 
   if(dftParameters::isPseudopotential)
-    sprintf(psiFile, "%s/data/electronicStructure/pseudoPotential/z%u/singleAtomData/psi%u%u.inp", DFT_PATH, Z, n, l);
-
+  {
+    if (dftParameters::readWfcForPdosPspFile && Z==78)
+    {
+      sprintf(psiFile, "%s/data/electronicStructure/pseudoPotential/z%u/singleAtomDataKB/psi%u%u.inp", DFT_PATH, Z, n, l);
+    }
+    else if (dftParameters::readWfcForPdosPspFile && Z!=78)
+    {
+      AssertThrow(false,ExcMessage("DFT-FE Error: Atomic wavefunctions for all atom types not available in internal data base for PDOS computation."));
+    }
+    else
+    {
+      sprintf(psiFile, "%s/data/electronicStructure/pseudoPotential/z%u/singleAtomData/psi%u%u.inp", DFT_PATH, Z, n, l);
+    }
+  }
   else
     sprintf(psiFile, "%s/data/electronicStructure/allElectron/z%u/singleAtomData/psi%u%u.inp", DFT_PATH, Z, n, l);
 
