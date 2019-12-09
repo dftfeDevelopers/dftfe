@@ -40,7 +40,7 @@ namespace dftfe {
       extern double radiusAtomBall, mixingParameter;
       extern double lowerEndWantedSpectrum,absLinearSolverTolerance,selfConsistentSolverTolerance,TVal, start_magnetization,absLinearSolverToleranceHelmholtz;
 
-      extern bool isPseudopotential, periodicX, periodicY, periodicZ, useSymm, timeReversal,pseudoTestsFlag, constraintMagnetization, writeDosFile, writeLdosFile,writeLocalizationLengths, pinnedNodeForPBC;
+      extern bool isPseudopotential, periodicX, periodicY, periodicZ, useSymm, timeReversal,pseudoTestsFlag, constraintMagnetization, writeDosFile, writeLdosFile,writeLocalizationLengths, pinnedNodeForPBC, writePdosFile;
       extern std::string meshFileName,coordinatesFile,domainBoundingVectorsFile,kPointDataFile, ionRelaxFlagsFile, orthogType, algoType, pseudoPotentialFile;
 
       extern std::string coordinatesGaussianDispFile;
@@ -100,6 +100,7 @@ namespace dftfe {
       extern bool bandParalOpt;
       extern bool rrGEP;
       extern bool rrGEPFullMassMatrix;
+      extern bool readWfcForPdosPspFile;
 
       /**
        * Declare parameters.
