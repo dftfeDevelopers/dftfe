@@ -281,7 +281,7 @@ namespace dftfe {
 	  if (dealii::Utilities::MPI::this_mpi_process(mpi_communicator) ==0)
 	     constrainedNodeValue=vec[d_meanValueConstraintNodeId];
 
-          // broadcast value at mean value constraint dof in root task to all other tasks
+          // broadcast value at mean value constraint dof in root task id to all other tasks ids
           MPI_Bcast(&constrainedNodeValue,
                   1,
                   MPI_DOUBLE,
