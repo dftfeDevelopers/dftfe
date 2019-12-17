@@ -104,7 +104,8 @@ void dftClass<FEOrder>::initBoundaryConditions(){
   d_constraintsForTotalPotential.clear();
   d_constraintsForTotalPotential.reinit(locally_relevant_dofs);
 
-  locatePeriodicPinnedNodes(dofHandler,constraintsNone,d_constraintsForTotalPotential);
+  if (dftParameters::pinnedNodeForPBC)
+    locatePeriodicPinnedNodes(dofHandler,constraintsNone,d_constraintsForTotalPotential);
   applyHomogeneousDirichletBC(dofHandler,d_constraintsForTotalPotential);
   d_constraintsForTotalPotential.close ();
 

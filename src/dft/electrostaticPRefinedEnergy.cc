@@ -180,9 +180,11 @@ void dftClass<FEOrder>::computeElectrostaticEnergyPRefined()
    dealii::ConstraintMatrix constraintsForTotalPotential;
    constraintsForTotalPotential.reinit(locallyRelevantDofs);
 
-   locatePeriodicPinnedNodes(dofHandlerPRefined,
-	                     constraintsPRefined,
-	                     constraintsForTotalPotential);
+   if (dftParameters::pinnedNodeForPBC)
+       locatePeriodicPinnedNodes(dofHandlerPRefined,
+	                         constraintsPRefined,
+	                         constraintsForTotalPotential);
+   
    applyHomogeneousDirichletBC(dofHandlerPRefined,constraintsForTotalPotential);
    constraintsForTotalPotential.close();
 
@@ -347,7 +349,9 @@ void dftClass<FEOrder>::computeElectrostaticEnergyPRefined()
 				*matrixFreeConstraintsInputVector[phiTotDofHandlerIndexPRefined],
                                 phiTotDofHandlerIndexPRefined,
 	                        atomPRefinedNodeIdToChargeMap,
-				rhoOutPRefinedQuadValues);
+				rhoOutPRefinedQuadValues,
+                                true,
+                                dftParameters::periodicX && dftParameters::periodicY && dftParameters::periodicZ && !dftParameters::pinnedNodeForPBC);
 
    if (dftParameters::verbosity==2)
         pcout<< std::endl<<"Solving for total electrostatic potential (rhoIn+b) on p refined mesh: ";
