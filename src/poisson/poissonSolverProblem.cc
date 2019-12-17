@@ -258,14 +258,22 @@ namespace dftfe {
       dst.scale(d_diagonalA);
     }
 
+    // Compute and fill value at mean value constrained dof
+    // u_o= -\sum_{i \neq o} a_i * u_i where i runs over all dofs
+    // except the mean value constrained dof (o^{th}) 
     template<unsigned int FEOrder>
     void poissonSolverProblem<FEOrder>::meanValueConstraintDistribute(vectorType& vec) const
     {
+          // -\sum_{i \neq o} a_i * u_i computation which involves summation across MPI tasks
 	  const double constrainedNodeValue=d_meanValueConstraintVec*vec;
+
+          // mean value constrained node is in the root task id 
 	  if (dealii::Utilities::MPI::this_mpi_process(mpi_communicator) ==0)
 	    vec[d_meanValueConstraintNodeId]=constrainedNodeValue;
     }
 
+    // Distribute value at mean value constrained dof (u_o) to all other dofs
+    // u_i+= -a_i * u_o, and subsequently set u_o to 0 
     template<unsigned int FEOrder>
     void poissonSolverProblem<FEOrder>::meanValueConstraintDistributeSlaveToMaster(vectorType& vec) const
     {
@@ -273,6 +281,7 @@ namespace dftfe {
 	  if (dealii::Utilities::MPI::this_mpi_process(mpi_communicator) ==0)
 	     constrainedNodeValue=vec[d_meanValueConstraintNodeId];
 
+          // broadcast value at mean value constraint dof in root task to all other tasks
           MPI_Bcast(&constrainedNodeValue,
                   1,
                   MPI_DOUBLE,
