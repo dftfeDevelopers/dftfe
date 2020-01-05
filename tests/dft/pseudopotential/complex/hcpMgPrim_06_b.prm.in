@@ -20,6 +20,7 @@ subsection Boundary conditions
   set PERIODIC1 = true
   set PERIODIC2 = true
   set PERIODIC3 = true
+set POINT WISE DIRICHLET CONSTRAINT=true
 end
 
 

@@ -14,6 +14,7 @@ subsection Boundary conditions
   set PERIODIC2                       = true
   set PERIODIC3                       = true
   set SELF POTENTIAL RADIUS           = 3.0
+  set POINT WISE DIRICHLET CONSTRAINT  =true
 end
 
 

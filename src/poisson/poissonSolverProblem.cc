@@ -31,6 +31,7 @@ namespace dftfe {
       pcout (std::cout, (dealii::Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0))
     {
       d_isShapeGradIntegralPrecomputed=false;
+      d_isMeanValueConstraintComputed=false;
     }
 
     template<unsigned int FEOrder>
@@ -41,7 +42,8 @@ namespace dftfe {
 		     const unsigned int matrixFreeVectorComponent,
 	             const std::map<dealii::types::global_dof_index, double> & atoms,
 		     const std::map<dealii::CellId,std::vector<double> > & rhoValues,
-		     const bool isComputeDiagonalA)
+		     const bool isComputeDiagonalA,
+                     const bool isComputeMeanValueConstraint)
     {
         int this_process;
         MPI_Comm_rank(mpi_communicator, &this_process);
@@ -54,6 +56,12 @@ namespace dftfe {
 	d_matrixFreeVectorComponent=matrixFreeVectorComponent;
 	d_rhoValuesPtr=&rhoValues;
 	d_atomsPtr=&atoms;
+
+	if (isComputeMeanValueConstraint)
+	{
+	  computeMeanValueConstraint();
+	  d_isMeanValueConstraintComputed=true;
+	}
 
 	if (isComputeDiagonalA)
 	  computeDiagonalA();
@@ -90,6 +98,9 @@ namespace dftfe {
     void poissonSolverProblem<FEOrder>::distributeX()
     {
        d_constraintMatrixPtr->distribute(*d_xPtr);
+
+       if (d_isMeanValueConstraintComputed)
+          meanValueConstraintDistribute(*d_xPtr);
     }
 
     template<unsigned int FEOrder>
@@ -144,6 +155,7 @@ namespace dftfe {
     {
 
 	rhs.reinit(*d_xPtr);
+        rhs=0;
 
 	const dealii::DoFHandler<3> & dofHandler=
 	    d_matrixFreeDataPtr->get_dof_handler(d_matrixFreeVectorComponent);
@@ -233,6 +245,9 @@ namespace dftfe {
         //MPI operation to sync data
         rhs.compress(dealii::VectorOperation::add);
 
+        if (d_isMeanValueConstraintComputed)
+           meanValueConstraintDistributeSlaveToMaster(rhs);
+
         //FIXME: check if this is really required
         d_constraintMatrixPtr->set_zero(rhs);
 
@@ -248,10 +263,137 @@ namespace dftfe {
       dst.scale(d_diagonalA);
     }
 
+    // Compute and fill value at mean value constrained dof
+    // u_o= -\sum_{i \neq o} a_i * u_i where i runs over all dofs
+    // except the mean value constrained dof (o^{th}) 
+    template<unsigned int FEOrder>
+    void poissonSolverProblem<FEOrder>::meanValueConstraintDistribute(vectorType& vec) const
+    {
+          // -\sum_{i \neq o} a_i * u_i computation which involves summation across MPI tasks
+	  const double constrainedNodeValue=d_meanValueConstraintVec*vec;
+
+          // mean value constrained node is in the root task id 
+	  if (dealii::Utilities::MPI::this_mpi_process(mpi_communicator) ==0)
+	    vec[d_meanValueConstraintNodeId]=constrainedNodeValue;
+    }
+
+    // Distribute value at mean value constrained dof (u_o) to all other dofs
+    // u_i+= -a_i * u_o, and subsequently set u_o to 0 
+    template<unsigned int FEOrder>
+    void poissonSolverProblem<FEOrder>::meanValueConstraintDistributeSlaveToMaster(vectorType& vec) const
+    {
+	  double constrainedNodeValue=0;
+	  if (dealii::Utilities::MPI::this_mpi_process(mpi_communicator) ==0)
+	     constrainedNodeValue=vec[d_meanValueConstraintNodeId];
+
+          // broadcast value at mean value constraint dof in root task id to all other tasks ids
+          MPI_Bcast(&constrainedNodeValue,
+                  1,
+                  MPI_DOUBLE,
+                  0,
+                  mpi_communicator);
+
+	  vec.add(constrainedNodeValue,d_meanValueConstraintVec);
+
+	  meanValueConstraintSetZero(vec);
+    }
+
+    template<unsigned int FEOrder>
+    void poissonSolverProblem<FEOrder>::meanValueConstraintSetZero(vectorType& vec) const
+    {
+        if (d_isMeanValueConstraintComputed)
+	  if (dealii::Utilities::MPI::this_mpi_process(mpi_communicator) ==0)
+	     vec[d_meanValueConstraintNodeId]=0;
+    }
+
+    //
+    // Compute mean value constraint which is required in case of fully periodic
+    // boundary conditions
+    template<unsigned int FEOrder>
+    void poissonSolverProblem<FEOrder>::computeMeanValueConstraint()
+    {
+        // allocate parallel distibuted vector to store mean value constraint
+	d_meanValueConstraintVec.reinit(*d_xPtr);
+	d_meanValueConstraintVec=0;
+
+	const dealii::DoFHandler<3> & dofHandler=
+	    d_matrixFreeDataPtr->get_dof_handler(d_matrixFreeVectorComponent);
+
+	dealii::QGauss<3>  quadrature(C_num1DQuad<FEOrder>());
+        dealii::FEValues<3> fe_values (dofHandler.get_fe(), quadrature, dealii::update_values| dealii::update_JxW_values);
+        const unsigned int   dofs_per_cell = dofHandler.get_fe().dofs_per_cell;
+        const unsigned int   num_quad_points = quadrature.size();
+        dealii::Vector<double>  elementalValues(dofs_per_cell);
+        std::vector<dealii::types::global_dof_index> local_dof_indices (dofs_per_cell);
+
+        //parallel loop over all elements
+        typename dealii::DoFHandler<3>::active_cell_iterator cell = dofHandler.begin_active(), endc = dofHandler.end();
+        for(; cell!=endc; ++cell)
+	  if (cell->is_locally_owned())
+	    {
+	      fe_values.reinit (cell);
+
+	      cell->get_dof_indices (local_dof_indices);
+
+	      elementalValues=0.0;
+	      for (unsigned int i = 0; i < dofs_per_cell; ++i)
+		  for (unsigned int q_point = 0; q_point < num_quad_points; ++q_point)
+		      elementalValues(i) += fe_values.shape_value (i, q_point)*fe_values.JxW(q_point);
+
+	      d_constraintMatrixPtr->distribute_local_to_global(elementalValues,
+		                                                local_dof_indices,
+							        d_meanValueConstraintVec);
+	    }
+
+	//MPI operation to sync data
+	d_meanValueConstraintVec.compress(dealii::VectorOperation::add);
+
+	dealii::IndexSet locallyOwnedElements=d_meanValueConstraintVec.locally_owned_elements();
+
+        dealii::IndexSet locallyRelevantElements;
+        dealii::DoFTools::extract_locally_relevant_dofs(dofHandler, locallyRelevantElements);
+
+        //pick mean value constrained node in the zeroth processor such that it is not part
+        //of periodic and hanging node constraint equations (both slave and master node).
+        //This is done for simplicity of implementation.
+	dealii::IndexSet allIndicesTouchedByConstraints(d_meanValueConstraintVec.size());
+	for (dealii::IndexSet::ElementIterator it=locallyRelevantElements.begin();
+		it<locallyRelevantElements.end();it++)
+	    if (d_constraintMatrixPtr->is_constrained(*it))
+	    {
+              const dealii::types::global_dof_index lineDof = *it;
+              const std::vector<std::pair<dealii::types::global_dof_index, double > > * rowData
+		  =d_constraintMatrixPtr->get_constraint_entries(lineDof);
+              allIndicesTouchedByConstraints.add_index(lineDof);
+              for(unsigned int j = 0; j < rowData->size();++j)
+		  allIndicesTouchedByConstraints.add_index((*rowData)[j].first);
+	    }
+        for (std::map<dealii::types::global_dof_index, double>::const_iterator it=(*d_atomsPtr).begin(); it!=(*d_atomsPtr).end(); ++it)
+	    allIndicesTouchedByConstraints.add_index(it->first);
+
+        locallyOwnedElements.subtract_set(allIndicesTouchedByConstraints);
+        d_meanValueConstraintNodeId=*locallyOwnedElements.begin();
+	AssertThrow(!d_constraintMatrixPtr->is_constrained(d_meanValueConstraintNodeId),dealii::ExcMessage("DFT-FE Error: Mean value constraint creation bug."));
+
+
+	double valueAtConstraintNode=d_meanValueConstraintVec[d_meanValueConstraintNodeId];
+        MPI_Bcast(&valueAtConstraintNode,
+                  1,
+                  MPI_DOUBLE,
+                  0,
+                  mpi_communicator);
+
+        d_meanValueConstraintVec/=-valueAtConstraintNode;
+	if (dealii::Utilities::MPI::this_mpi_process(mpi_communicator) ==0)
+	    d_meanValueConstraintVec[d_meanValueConstraintNodeId]=0;
+    }
+
+
     template<unsigned int FEOrder>
     void poissonSolverProblem<FEOrder>::computeDiagonalA()
     {
 	d_diagonalA.reinit(*d_xPtr);
+        d_diagonalA=0;
 
 	const dealii::DoFHandler<3> & dofHandler=
 	    d_matrixFreeDataPtr->get_dof_handler(d_matrixFreeVectorComponent);
@@ -325,7 +467,18 @@ namespace dftfe {
     void poissonSolverProblem<FEOrder>::vmult(vectorType &Ax,const vectorType &x) const
     {
       Ax=0.0;
-      d_matrixFreeDataPtr->cell_loop (&poissonSolverProblem<FEOrder>::AX, this, Ax, x);
+
+      if (d_isMeanValueConstraintComputed)
+      {
+	      vectorType tempVec=x;
+	      meanValueConstraintDistribute(tempVec);
+
+	      d_matrixFreeDataPtr->cell_loop (&poissonSolverProblem<FEOrder>::AX, this, Ax, tempVec);
+
+	      meanValueConstraintDistributeSlaveToMaster(Ax);
+      }
+      else
+              d_matrixFreeDataPtr->cell_loop (&poissonSolverProblem<FEOrder>::AX, this, Ax, x);
     }
 
 

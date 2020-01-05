@@ -981,6 +981,10 @@ namespace dftfe {
       compute_ldos(eigenValues,
 		   "ldosData.out");
 
+   if(dftParameters::writePdosFile)
+    compute_pdos(eigenValues,
+                 "pdosData");
+
     if(dftParameters::writeLocalizationLengths)
       compute_localizationLength("localizationLengths.out");
 
@@ -1263,7 +1267,9 @@ namespace dftfe {
 				       *d_constraintsVector[phiTotDofHandlerIndex],
 				       phiTotDofHandlerIndex,
 				       d_atomNodeIdToChargeMap,
-				       *rhoInValues);
+				       *rhoInValues,
+                                       true,
+                                       dftParameters::periodicX && dftParameters::periodicY && dftParameters::periodicZ && !dftParameters::pinnedNodeForPBC);
 
 	dealiiCGSolver.solve(phiTotalSolverProblem,
 			     dftParameters::absLinearSolverTolerance,
@@ -1275,20 +1281,8 @@ namespace dftfe {
 	//
 	if(dftParameters::periodicX && dftParameters::periodicY && dftParameters::periodicZ && !dftParameters::pinnedNodeForPBC)
 	  {
-	    double integPhi = totalCharge(dofHandler,
-					  d_phiTotRhoIn);
-
-	    double volume = computeVolume(dofHandler);
-	    double shiftingConst = integPhi/volume;
-
-	    vectorType tempDealiiVec;
-	    matrix_free_data.initialize_dof_vector(tempDealiiVec);
-	    tempDealiiVec = shiftingConst;
-
-	    d_phiTotRhoIn -= tempDealiiVec;
-
 	    if (dftParameters::verbosity>=2)
-	      pcout<<"Value of integPhiIn after scaling: "<<totalCharge(dofHandler,d_phiTotRhoIn)<<std::endl;
+	      pcout<<"Value of integPhiIn: "<<totalCharge(dofHandler,d_phiTotRhoIn)<<std::endl;
 	  }
 
 	computing_timer.exit_section("phiTot solve");
@@ -1809,20 +1803,8 @@ namespace dftfe {
 	    //
 	    if(dftParameters::periodicX && dftParameters::periodicY && dftParameters::periodicZ && !dftParameters::pinnedNodeForPBC)
 	      {
-		double integPhi = totalCharge(dofHandler,
-					      d_phiTotRhoOut);
-
-		double volume = computeVolume(dofHandler);
-		double shiftingConst = integPhi/volume;
-
-		vectorType tempDealiiVec;
-		matrix_free_data.initialize_dof_vector(tempDealiiVec);
-		tempDealiiVec = shiftingConst;
-
-		d_phiTotRhoOut -= tempDealiiVec;
-
 		if(dftParameters::verbosity>=2)
-		  pcout<<"Value of integPhiOut after scaling: "<<totalCharge(dofHandler,d_phiTotRhoOut);
+		  pcout<<"Value of integPhiOut: "<<totalCharge(dofHandler,d_phiTotRhoOut);
 	      }
 
 	    computing_timer.exit_section("phiTot solve");
