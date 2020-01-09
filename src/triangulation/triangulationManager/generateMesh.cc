@@ -174,9 +174,9 @@ namespace dftfe {
        double baseMeshSize1, baseMeshSize2, baseMeshSize3;
        if (dftParameters::periodicX ||dftParameters::periodicY ||dftParameters::periodicZ)
        {
-          baseMeshSize1=std::pow(2,round(log2(std::min(domainBoundingVectorMag1/20.0,2.0)/dftParameters::meshSizeOuterBall)))*dftParameters::meshSizeOuterBall;
-	  baseMeshSize2=std::pow(2,round(log2(std::min(domainBoundingVectorMag2/20.0,2.0)/dftParameters::meshSizeOuterBall)))*dftParameters::meshSizeOuterBall;
-          baseMeshSize3=std::pow(2,round(log2(std::min(domainBoundingVectorMag3/20.0,2.0)/dftParameters::meshSizeOuterBall)))*dftParameters::meshSizeOuterBall;
+          baseMeshSize1=std::pow(2,round(log2(2.0/dftParameters::meshSizeOuterBall)))*dftParameters::meshSizeOuterBall;
+          baseMeshSize2=std::pow(2,round(log2(2.0/dftParameters::meshSizeOuterBall)))*dftParameters::meshSizeOuterBall;
+          baseMeshSize3=std::pow(2,round(log2(2.0/dftParameters::meshSizeOuterBall)))*dftParameters::meshSizeOuterBall;
        }
        else
        {
