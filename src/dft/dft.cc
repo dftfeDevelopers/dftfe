@@ -427,7 +427,7 @@ namespace dftfe {
 	     dftParameters::chebyWfcBlockSize=150;
 	     dftParameters::wfcBlockSize=150;
           }
-          else if (eigenvaluesInBandGroup<=1000)
+          else if (eigenvaluesInBandGroup<=2000)
           {
              d_numEigenValues=std::ceil(eigenvaluesInBandGroup/200.0)*200.0*numberBandGroups; 
 	     dftParameters::chebyWfcBlockSize=200;
