@@ -423,21 +423,66 @@ namespace dftfe {
           }
           else if (eigenvaluesInBandGroup<=600)
           {
-             d_numEigenValues=std::ceil(eigenvaluesInBandGroup/150.0)*150.0*numberBandGroups; 
-	     dftParameters::chebyWfcBlockSize=150;
-	     dftParameters::wfcBlockSize=150;
+             std::vector<int> temp1(4,0);
+             std::vector<int> temp2(4,0);
+             temp1[0]=std::ceil(eigenvaluesInBandGroup/150.0)*150.0*numberBandGroups;
+             temp1[1]=std::ceil(eigenvaluesInBandGroup/160.0)*160.0*numberBandGroups;
+             temp1[2]=std::ceil(eigenvaluesInBandGroup/170.0)*170.0*numberBandGroups;
+             temp1[3]=std::ceil(eigenvaluesInBandGroup/180.0)*180.0*numberBandGroups;
+
+             temp2[0]=150;
+             temp2[1]=160;
+             temp2[2]=170;
+             temp2[3]=180;
+
+             int minElementIndex = std::min_element(temp1.begin(),temp1.end()) - temp1.begin();
+             int minElement = *std::min_element(temp1.begin(), temp1.end());
+           
+             d_numEigenValues=minElement; 
+	     dftParameters::chebyWfcBlockSize=temp2[minElementIndex];
+	     dftParameters::wfcBlockSize=temp2[minElementIndex];
           }
           else if (eigenvaluesInBandGroup<=2000)
           {
-             d_numEigenValues=std::ceil(eigenvaluesInBandGroup/200.0)*200.0*numberBandGroups; 
-	     dftParameters::chebyWfcBlockSize=200;
-	     dftParameters::wfcBlockSize=200;
+             std::vector<int> temp1(4,0);
+             std::vector<int> temp2(4,0);
+             temp1[0]=std::ceil(eigenvaluesInBandGroup/160.0)*160.0*numberBandGroups;
+             temp1[1]=std::ceil(eigenvaluesInBandGroup/180.0)*180.0*numberBandGroups;
+             temp1[2]=std::ceil(eigenvaluesInBandGroup/200.0)*200.0*numberBandGroups;
+             temp1[3]=std::ceil(eigenvaluesInBandGroup/220.0)*220.0*numberBandGroups;
+
+             temp2[0]=160;
+             temp2[1]=180;
+             temp2[2]=200;
+             temp2[3]=220;
+
+             int minElementIndex = std::min_element(temp1.begin(),temp1.end()) - temp1.begin();
+             int minElement = *std::min_element(temp1.begin(), temp1.end());
+
+             d_numEigenValues=minElement;                            
+             dftParameters::chebyWfcBlockSize=temp2[minElementIndex];
+             dftParameters::wfcBlockSize=temp2[minElementIndex];
           }
           else
           {
-             d_numEigenValues=std::ceil(eigenvaluesInBandGroup/400.0)*400.0*numberBandGroups; 
-	     dftParameters::chebyWfcBlockSize=numberBandGroups>1?400:200;
-	     dftParameters::wfcBlockSize=400;
+             std::vector<int> temp1(4,0);
+             std::vector<int> temp2(4,0);
+             temp1[0]=std::ceil(eigenvaluesInBandGroup/360.0)*360.0*numberBandGroups;
+             temp1[1]=std::ceil(eigenvaluesInBandGroup/380.0)*380.0*numberBandGroups;
+             temp1[2]=std::ceil(eigenvaluesInBandGroup/400.0)*400.0*numberBandGroups;
+             temp1[3]=std::ceil(eigenvaluesInBandGroup/440.0)*440.0*numberBandGroups;
+
+             temp2[0]=360;
+             temp2[1]=380;
+             temp2[2]=400;
+             temp2[3]=440;
+
+             int minElementIndex = std::min_element(temp1.begin(),temp1.end()) - temp1.begin();
+             int minElement = *std::min_element(temp1.begin(), temp1.end());
+
+             d_numEigenValues=minElement;
+             dftParameters::chebyWfcBlockSize=numberBandGroups>1?temp2[minElementIndex]:temp2[minElementIndex]/2;
+             dftParameters::wfcBlockSize=temp2[minElementIndex];
           }
 
 	 if (dftParameters::algoType=="FAST")
