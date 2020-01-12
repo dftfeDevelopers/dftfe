@@ -1345,6 +1345,7 @@ namespace dftfe {
 	           pcout<< "Hanging node and periodic constraints parallel consistency achieved."<<std::endl;
 
 	        dftParameters::createConstraintsFromSerialDofhandler=false;
+                dftParameters::constraintsParallelCheck=false;
 	   }
 	   else
 	   {
