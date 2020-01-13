@@ -1,0 +1,45 @@
+subsection GPU
+  set USE GPU=true
+end
+
+subsection Boundary conditions
+  set PERIODIC1                       = true
+  set PERIODIC2                       = true
+  set PERIODIC3                       = true
+end
+
+
+subsection DFT functional parameters
+  set EXCHANGE CORRELATION TYPE   = 4
+  set PSEUDOPOTENTIAL CALCULATION = true
+  set PSEUDOPOTENTIAL FILE NAMES LIST = pseudo.inp
+end
+
+
+subsection Finite element mesh parameters
+  set POLYNOMIAL ORDER = 4
+  subsection Auto mesh generation parameters
+    set AUTO USER MESH PARAMS = true
+    set MESH SIZE AROUND ATOM = 0.48
+  end
+end
+
+subsection Geometry
+  set NATOMS=863
+  set NATOM TYPES=1
+  set ATOMIC COORDINATES FILE      = coordinates.inp
+  set DOMAIN VECTORS FILE = domainVectors.inp
+  subsection Optimization
+    set ION FORCE = true
+  end
+end
+
+subsection SCF parameters
+  set TEMPERATURE              = 500
+  set MIXING HISTORY           = 15
+  set MIXING METHOD            = ANDERSON_WITH_KERKER
+  set MIXING PARAMETER =1.0
+  set KERKER MIXING PARAMETER  = 0.05
+  set TOLERANCE                = 1e-5
+  set COMPUTE ENERGY EACH ITER = false
+end

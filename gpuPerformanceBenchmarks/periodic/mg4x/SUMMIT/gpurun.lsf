@@ -1,0 +1,21 @@
+#!/bin/bash
+# Begin LSF Directives
+#BSUB -P MAT202
+#BSUB -W 0:30
+#BSUB -alloc_flags gpumps
+#BSUB -nnodes 6
+#BSUB -J mg4x
+#BSUB -o mg4x.%J
+#BSUB -e mg4x.%J
+	 
+date
+export OMP_NUM_THREADS=1
+export PAMI_DISABLE_IPC=1
+export PAMI_IBV_ENABLE_DCT=1
+export PAMI_ENABLE_STRIPING=0
+export PAMI_IBV_ADAPTER_AFFINITY=1
+export PAMI_IBV_DEVICE_NAME="mlx5_0:1,mlx5_3:1"
+export PAMI_IBV_DEVICE_NAME_1="mlx5_3:1,mlx5_0:1"
+
+
+jsrun --smpiargs "-gpu -mca coll_ibm_tune_results $XML10300" -n 36 -a 7 -c 7 -g 1 -r 6 -d packed -b packed:1 -l gpu-cpu  ./dftfe parameterFileGPU.prm > gpuOutput
