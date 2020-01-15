@@ -193,6 +193,16 @@ namespace dftfe {
 			     const unsigned int scfConverged,
 			     const bool print) const;
 
+
+	double computeEntropicEnergy(const std::vector<std::vector<double> > & eigenValues,
+			     const std::vector<double> & kPointWeights,
+		             const double fermiEnergy,
+                             const double fermiEnergyUp,
+		             const double fermiEnergyDown,
+		             const bool isSpinPolarized,
+                             const bool isConstraintMagnetization,
+		             const double temperature) const;
+
      private:
 
          const MPI_Comm mpi_communicator;

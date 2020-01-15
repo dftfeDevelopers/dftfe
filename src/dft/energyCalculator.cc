@@ -777,4 +777,95 @@ namespace dftfe
 
     return totalEnergy;
   }
+
+  double energyCalculator::computeEntropicEnergy(const std::vector<std::vector<double> > & eigenValues,
+			       const std::vector<double> & kPointWeights,
+		               const double fermiEnergy,
+                               const double fermiEnergyUp,
+		               const double fermiEnergyDown,
+		               const bool isSpinPolarized,
+                               const bool isConstraintMagnetization,
+		               const double temperature) const
+  {
+     //computation of entropic term only for one k-pt
+     double entropy = 0.0;
+     const unsigned int numEigenValues=kPointWeights.size();
+
+     for(unsigned int kPoint = 0; kPoint < eigenValues.size(); ++kPoint)
+        for(int i = 0; i < numEigenValues; ++i)
+        {
+          if (isSpinPolarized)
+          {
+		  
+		  double partOccSpin0 =dftUtils::getPartialOccupancy(eigenValues[kPoint][i],
+								     fermiEnergy,
+								     C_kb,
+								     temperature);
+		  double partOccSpin1 =dftUtils::getPartialOccupancy(eigenValues[kPoint][i+numEigenValues],
+								     fermiEnergy,
+								     C_kb,
+								     temperature);
+
+		  if(dftParameters::constraintMagnetization)
+		  {
+			 partOccSpin0 = 1.0 , partOccSpin1 = 1.0 ;
+			 if (eigenValues[kPoint][i+numEigenValues]> fermiEnergyDown)
+				partOccSpin1 = 0.0 ;
+			 if (eigenValues[kPoint][i] > fermiEnergyUp)
+				partOccSpin0 = 0.0 ;
+		  }
+
+
+                  double fTimeslogfSpin0,oneminusfTimeslogoneminusfSpin0;
+
+		  if(std::abs(partOccSpin0-1.0) <= 1e-07 || std::abs(partOccSpin0) <= 1e-07)
+		  {
+		     fTimeslogfSpin0 = 0.0;
+		     oneminusfTimeslogoneminusfSpin0 = 0.0;
+		  }
+		  else
+		  {
+		     fTimeslogfSpin0 = partOccSpin0*log(partOccSpin0);
+		     oneminusfTimeslogoneminusfSpin0 = (1.0 - partOccSpin0)*log(1.0 - partOccSpin0);
+		  }
+		  entropy += -C_kb*kPointWeights[kPoint]*(fTimeslogfSpin0 + oneminusfTimeslogoneminusfSpin0);
+
+                  double fTimeslogfSpin1,oneminusfTimeslogoneminusfSpin1;
+
+		  if(std::abs(partOccSpin1-1.0) <= 1e-07 || std::abs(partOccSpin1) <= 1e-07)
+		  {
+		     fTimeslogfSpin1 = 0.0;
+		     oneminusfTimeslogoneminusfSpin1 = 0.0;
+		  }
+		  else
+		  {
+		     fTimeslogfSpin1 = partOccSpin1*log(partOccSpin1);
+		     oneminusfTimeslogoneminusfSpin1 = (1.0 - partOccSpin1)*log(1.0 - partOccSpin1);
+		  }
+		  entropy += -C_kb*kPointWeights[kPoint]*(fTimeslogfSpin1 + oneminusfTimeslogoneminusfSpin1);
+          }
+          else
+          {
+		  const double partialOccupancy=dftUtils::getPartialOccupancy
+						    (eigenValues[kPoint][i],
+						     fermiEnergy,
+						     C_kb,
+						     temperature);
+		  double fTimeslogf,oneminusfTimeslogoneminusf;
+
+		  if(std::abs(partialOccupancy-1.0) <= 1e-07 || std::abs(partialOccupancy) <= 1e-07)
+		  {
+		     fTimeslogf = 0.0;
+		     oneminusfTimeslogoneminusf = 0.0;
+		  }
+		  else
+		  {
+		     fTimeslogf = partialOccupancy*log(partialOccupancy);
+		     oneminusfTimeslogoneminusf = (1.0 - partialOccupancy)*log(1.0 - partialOccupancy);
+		  }
+		  entropy += -2.0*C_kb*kPointWeights[kPoint]*(fTimeslogf + oneminusfTimeslogoneminusf);
+          }
+        }
+     return temperature*entropy;
+  }
 }

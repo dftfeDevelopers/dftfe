@@ -141,6 +141,7 @@ namespace dftfe {
 #ifdef USE_COMPLEX
     geoOptCellPtr= new geoOptCell<FEOrder>(this, mpi_comm_replica);
 #endif
+    d_mdPtr= new molecularDynamics<FEOrder>(this, mpi_comm_replica);
 
 #ifdef DFTFE_WITH_ELPA
     int error;
@@ -974,49 +975,53 @@ namespace dftfe {
   template<unsigned int FEOrder>
   void dftClass<FEOrder>::run()
   {
-
     if(dftParameters::meshAdaption)
       aposterioriMeshGenerate();
 
-    solve();
+    if (dftParameters::isBOMD)
+       d_mdPtr->run();
+    else
+    { 
+	    solve();
 
-    if (dftParameters::isIonOpt && !dftParameters::isCellOpt)
-      {
-	d_atomLocationsInitial = atomLocations;
-	d_groundStateEnergyInitial = d_groundStateEnergy;
+	    if (dftParameters::isIonOpt && !dftParameters::isCellOpt)
+	      {
+		d_atomLocationsInitial = atomLocations;
+		d_groundStateEnergyInitial = d_groundStateEnergy;
 
-	geoOptIonPtr->init();
-	geoOptIonPtr->run();
-      }
-    else if (!dftParameters::isIonOpt && dftParameters::isCellOpt)
-      {
-	d_atomLocationsInitial = atomLocations;
-	d_groundStateEnergyInitial = d_groundStateEnergy;
+		geoOptIonPtr->init();
+		geoOptIonPtr->run();
+	      }
+	    else if (!dftParameters::isIonOpt && dftParameters::isCellOpt)
+	      {
+		d_atomLocationsInitial = atomLocations;
+		d_groundStateEnergyInitial = d_groundStateEnergy;
 
-#ifdef USE_COMPLEX
-	geoOptCellPtr->init();
-	geoOptCellPtr->run();
-#else
-	AssertThrow(false,ExcMessage("CELL OPT cannot be set to true for fully non-periodic domain."));
-#endif
-      }
-    else if (dftParameters::isIonOpt && dftParameters::isCellOpt)
-      {
-	d_atomLocationsInitial = atomLocations;
-	d_groundStateEnergyInitial = d_groundStateEnergy;
+	#ifdef USE_COMPLEX
+		geoOptCellPtr->init();
+		geoOptCellPtr->run();
+	#else
+		AssertThrow(false,ExcMessage("CELL OPT cannot be set to true for fully non-periodic domain."));
+	#endif
+	      }
+	    else if (dftParameters::isIonOpt && dftParameters::isCellOpt)
+	      {
+		d_atomLocationsInitial = atomLocations;
+		d_groundStateEnergyInitial = d_groundStateEnergy;
 
-#ifdef USE_COMPLEX
-	//first relax ion positions in the starting cell configuration
-	geoOptIonPtr->init();
-	geoOptIonPtr->run();
+	#ifdef USE_COMPLEX
+		//first relax ion positions in the starting cell configuration
+		geoOptIonPtr->init();
+		geoOptIonPtr->run();
 
-	//start cell relaxation, where for each cell relaxation update the ion positions are again relaxed
-	geoOptCellPtr->init();
-	geoOptCellPtr->run();
-#else
-	AssertThrow(false,ExcMessage("CELL OPT cannot be set to true for fully non-periodic domain."));
-#endif
-      }
+		//start cell relaxation, where for each cell relaxation update the ion positions are again relaxed
+		geoOptCellPtr->init();
+		geoOptCellPtr->run();
+	#else
+		AssertThrow(false,ExcMessage("CELL OPT cannot be set to true for fully non-periodic domain."));
+	#endif
+	      }
+    }
 
     if(dftParameters::writeDosFile)
       compute_tdos(eigenValues,
@@ -2037,6 +2042,16 @@ namespace dftfe {
     }
 
     MPI_Barrier(interpoolcomm);
+
+    if (dftParameters::isBOMD)
+       d_entropicEnergy=energyCalc.computeEntropicEnergy(eigenValues,
+                                                         d_kPointWeights,
+                                                         fermiEnergy,
+                                                         fermiEnergyUp,
+                                                         fermiEnergyDown,
+                                                         dftParameters::spinPolarized==1,
+                                                         dftParameters::constraintMagnetization,
+                                                         dftParameters::TVal);
 
     //This step is required for interpolating rho from current mesh to the new
     //mesh in case of atomic relaxation

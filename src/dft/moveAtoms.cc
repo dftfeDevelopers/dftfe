@@ -99,7 +99,7 @@ namespace internal{
 // or move mesh using Gaussian functions.
 template<unsigned int FEOrder>
 void dftClass<FEOrder>::updateAtomPositionsAndMoveMesh(const std::vector<Tensor<1,3,double> > & globalAtomsDisplacements,
-	                                               double maximumForceToBeRelaxed,
+	                                               const double maxJacobianRatioFactor,
 						       const bool useSingleAtomSolutions)
 
 {
@@ -383,15 +383,8 @@ void dftClass<FEOrder>::updateAtomPositionsAndMoveMesh(const std::vector<Tensor<
 	     pcout << "Max current disp magnitude: "<<maxCurrentDispAtom<<" Bohr"<<std::endl;
 
 	  const std::pair<bool,double> meshQualityMetrics=d_gaussianMovePar.moveMeshTwoStep(controlPointLocationsInitialMove,d_controlPointLocationsCurrentMove,controlPointDisplacementsInitialMove,controlPointDisplacementsCurrentMove,d_gaussianConstantAutoMove,forcePtr->getGaussianGeneratorParameter());
-          double factor;
-          if(maximumForceToBeRelaxed >= 1e-03)
-            factor = 2.00;
-	  else if(maximumForceToBeRelaxed < 1e-03 && maximumForceToBeRelaxed >= 1e-04)
-            factor = 1.25;
-          else if(maximumForceToBeRelaxed < 1e-04)
-            factor = 1.15;
 
-	  if (meshQualityMetrics.first || meshQualityMetrics.second > factor*d_autoMeshMaxJacobianRatio)
+	  if (meshQualityMetrics.first || meshQualityMetrics.second > maxJacobianRatioFactor*d_autoMeshMaxJacobianRatio)
 	    d_autoMesh=1;
 	  MPI_Bcast(&(d_autoMesh),
 		    1,
@@ -405,7 +398,7 @@ void dftClass<FEOrder>::updateAtomPositionsAndMoveMesh(const std::vector<Tensor<
 	        if (meshQualityMetrics.first)
 		  pcout<< " Auto remeshing and reinitialization of dft problem for new atom coordinates due to negative jacobian after Gaussian mesh movement using Gaussian constant: "<< forcePtr->getGaussianGeneratorParameter()<<std::endl;
 	        else
-		  pcout<< " Auto remeshing and reinitialization of dft problem for new atom coordinates due to maximum jacobian ratio: "<< meshQualityMetrics.second<< " exceeding set bound of: "<< factor*d_autoMeshMaxJacobianRatio<<" after Gaussian mesh movement using Gaussian constant: "<< forcePtr->getGaussianGeneratorParameter()<<std::endl;
+		  pcout<< " Auto remeshing and reinitialization of dft problem for new atom coordinates due to maximum jacobian ratio: "<< meshQualityMetrics.second<< " exceeding set bound of: "<< maxJacobianRatioFactor*d_autoMeshMaxJacobianRatio<<" after Gaussian mesh movement using Gaussian constant: "<< forcePtr->getGaussianGeneratorParameter()<<std::endl;
               }
 
 	      if(dftParameters::periodicX || dftParameters::periodicY || dftParameters::periodicZ)

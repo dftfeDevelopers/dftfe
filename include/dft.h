@@ -35,6 +35,7 @@
 #include <chebyshevOrthogonalizedSubspaceIterationSolverCUDA.h>
 #endif
 
+#include <molecularDynamics.h>
 #include <kohnShamDFTOperator.h>
 #include <meshMovementAffineTransform.h>
 #include <meshMovementGaussian.h>
@@ -83,6 +84,7 @@ namespace dftfe {
   template <unsigned int T> class forceClass;
   template <unsigned int T> class geoOptIon;
   template <unsigned int T> class geoOptCell;
+  template <unsigned int T> class molecularDynamics;
 
 #endif /* DOXYGEN_SHOULD_SKIP_THIS */
 
@@ -112,6 +114,9 @@ namespace dftfe {
 
       template <unsigned int T>
 	friend class symmetryClass;
+
+      template <unsigned int T>
+        friend class molecularDynamics;
 
     public:
 
@@ -234,7 +239,7 @@ namespace dftfe {
        *  @return void.
        */
       void updateAtomPositionsAndMoveMesh(const std::vector<Tensor<1,3,double> > & globalAtomsDisplacements,
-	                                  double maxDisplacement,
+	                                  const double maxJacobianRatioFactor,
 					  const bool useSingleAtomSolutions=false);
 
 
@@ -722,6 +727,7 @@ namespace dftfe {
       symmetryClass<FEOrder> * symmetryPtr;
       geoOptIon<FEOrder> * geoOptIonPtr;
       geoOptCell<FEOrder> * geoOptCellPtr;
+      molecularDynamics<FEOrder> * d_mdPtr;
 
       elpaScalaManager d_elpaScala;
 
@@ -956,6 +962,9 @@ namespace dftfe {
 
       /// fermi energy
       double fermiEnergy, fermiEnergyUp, fermiEnergyDown, d_groundStateEnergy, d_groundStateEnergyInitial;
+
+      /// entropic energy
+      double d_entropicEnergy;
 
       //chebyshev filter variables and functions
       //int numPass ; // number of filter passes

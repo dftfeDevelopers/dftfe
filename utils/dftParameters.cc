@@ -47,7 +47,7 @@ namespace dftfe {
     double topfrac = 0.1;
     double kerkerParameter = 0.05;
 
-    bool isIonOpt=false, isCellOpt=false, isIonForce=false, isCellStress=false;
+    bool isIonOpt=false, isCellOpt=false, isIonForce=false, isCellStress=false, isBOMD=false;
     bool nonSelfConsistentForce=false;
     double forceRelaxTol  = 1e-4;//Hartree/Bohr
     double stressRelaxTol = 1e-6;//Hartree/Bohr^3
@@ -106,7 +106,7 @@ namespace dftfe {
     bool overlapComputeCommunCheby=false;
     bool overlapComputeCommunOrthoRR=false;
     bool autoGPUBlockSizes=true;
-
+    double maxJacobianRatioFactorForMD=1.5;
 
     void declare_parameters(ParameterHandler &prm)
     {
@@ -205,7 +205,7 @@ namespace dftfe {
       {
 	prm.declare_entry("CHK TYPE", "0",
 			  Patterns::Integer(0,2),
-			  "[Standard] Checkpoint type, 0 (do not create any checkpoint), 1 (create checkpoint for geometry optimization restart if either ION OPT or CELL OPT is set to true. Currently, checkpointing and restart framework does not work if both ION OPT and CELL OPT are set to true simultaneously- the code will throw an error if attempted.), 2 (create checkpoint for scf restart. Currently, this option cannot be used if geometry optimization is being performed. The code will throw an error if this option is used in conjunction with geometry optimization.)");
+			  "[Standard] Checkpoint type, 0 (do not create any checkpoint), 1 (create checkpoint for geometry optimization restart if either ION OPT or CELL OPT or BOMD is set to true. Currently, checkpointing and restart framework does not work if both ION OPT and CELL OPT are set to true simultaneously- the code will throw an error if attempted.), 2 (create checkpoint for scf restart. Currently, this option cannot be used if geometry optimization is being performed. The code will throw an error if this option is used in conjunction with geometry optimization.)");
 
 	prm.declare_entry("RESTART FROM CHK", "false",
 			  Patterns::Bool(),
@@ -669,6 +669,18 @@ namespace dftfe {
       prm.leave_subsection ();
 
 
+      prm.enter_subsection ("Molecular Dynamics");
+      {
+	prm.declare_entry("BOMD", "false",
+			  Patterns::Bool(),
+			  "[Standard] Perform Born-Oppenheimer NVE molecular dynamics. Input parameters for molecular dynamics have to be modified directly in the code in the file md/molecularDynamics.cc.");
+
+	prm.declare_entry("MAX JACOBIAN RATIO FACTOR", "1.5",
+			    Patterns::Double(0.9,3.0),
+			    "[Developer] Maximum scaling factor for maximum jacobian ratio of FEM mesh when mesh is deformed.");  
+
+      }
+      prm.leave_subsection ();
     }
 
     void parse_parameters(ParameterHandler &prm)
@@ -722,6 +734,7 @@ namespace dftfe {
         dftParameters::coordinatesFile               = prm.get("ATOMIC COORDINATES FILE");
         dftParameters::coordinatesGaussianDispFile   = prm.get("ATOMIC DISP COORDINATES FILE");
         dftParameters::domainBoundingVectorsFile     = prm.get("DOMAIN VECTORS FILE");
+
 	prm.enter_subsection ("Optimization");
 	{
 	  dftParameters::isIonOpt                      = prm.get_bool("ION OPT");
@@ -870,6 +883,13 @@ namespace dftfe {
       {
 	dftParameters::maxLinearSolverIterationsHelmholtz = prm.get_integer("MAXIMUM ITERATIONS HELMHOLTZ");
 	dftParameters::absLinearSolverToleranceHelmholtz  = prm.get_double("ABSOLUTE TOLERANCE HELMHOLTZ");
+      }
+      prm.leave_subsection ();
+
+      prm.enter_subsection ("Molecular Dynamics");
+      {
+	  dftParameters::isBOMD                        = prm.get_bool("BOMD");
+          dftParameters::maxJacobianRatioFactorForMD   = prm.get_double("MAX JACOBIAN RATIO FACTOR");
       }
       prm.leave_subsection ();
 	

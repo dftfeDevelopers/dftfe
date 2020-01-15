@@ -45,6 +45,7 @@ SET(TARGET_SRC
   ./src/linAlg/elpaScalaManager.cc
   ./src/solvers/dealiiLinearSolver.cc
   ./src/solvers/dealiiLinearSolverProblem.cc
+  ./src/md/molecularDynamics.cc
   ./utils/fileReaders.cc
   ./utils/dftParameters.cc
   ./utils/constraintMatrixInfo.cc
