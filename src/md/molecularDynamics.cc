@@ -92,6 +92,7 @@ void molecularDynamics<FEOrder>::run()
 	std::vector<double> internalEnergyVector(numberTimeSteps,0.0);
 	std::vector<double> entropicEnergyVector(numberTimeSteps,0.0);
 	std::vector<double> kineticEnergyVector(numberTimeSteps,0.0);
+        std::vector<double> totalEnergyVector(numberTimeSteps,0.0);
 
 	double kineticEnergy = 0.0;
 
@@ -267,6 +268,7 @@ void molecularDynamics<FEOrder>::run()
 	    kineticEnergyVector[0] = kineticEnergy/haToeV;
 	    internalEnergyVector[0] = dftPtr->d_groundStateEnergy;
 	    entropicEnergyVector[0] = dftPtr->d_entropicEnergy;
+            totalEnergyVector[0]=kineticEnergyVector[0]+internalEnergyVector[0]-entropicEnergyVector[0];
 
 	    if(this_mpi_process == 0)
 	      {
@@ -274,6 +276,7 @@ void molecularDynamics<FEOrder>::run()
 		    pcout<<" Kinetic Energy in Ha at timeIndex 0 "<<kineticEnergyVector[0]<<std::endl;
 		    pcout<<" Internal Energy in Ha at timeIndex 0 "<<internalEnergyVector[0]<<std::endl;
 		    pcout<<" Entropic Energy in Ha at timeIndex 0 "<<entropicEnergyVector[0]<<std::endl;
+                    pcout<<" Total Energy in Ha at timeIndex 0 "<<totalEnergyVector[0]<<std::endl;
 	      }
 
 	  }
@@ -399,6 +402,7 @@ void molecularDynamics<FEOrder>::run()
 	    kineticEnergyVector[timeIndex-startingTimeStep] = kineticEnergy/haToeV;
 	    internalEnergyVector[timeIndex-startingTimeStep] = dftPtr->d_groundStateEnergy;
 	    entropicEnergyVector[timeIndex-startingTimeStep] = dftPtr->d_entropicEnergy;
+            totalEnergyVector[timeIndex-startingTimeStep] = kineticEnergyVector[timeIndex-startingTimeStep] +internalEnergyVector[timeIndex-startingTimeStep] -entropicEnergyVector[timeIndex-startingTimeStep];
 
 	    //
 	    //reset acceleration at time t based on the acceleration at previous time step
@@ -411,11 +415,13 @@ void molecularDynamics<FEOrder>::run()
 		pcout<<" Kinetic Energy in Ha at timeIndex "<<timeIndex<<" "<<kineticEnergyVector[timeIndex-startingTimeStep]<<std::endl;
 		pcout<<" Internal Energy in Ha at timeIndex "<<timeIndex<<" "<<internalEnergyVector[timeIndex-startingTimeStep]<<std::endl;
 		pcout<<" Entropic Energy in Ha at timeIndex "<<timeIndex<<" "<<entropicEnergyVector[timeIndex-startingTimeStep]<<std::endl;
+                pcout<<" Total Energy in Ha at timeIndex "<<timeIndex<<" "<<totalEnergyVector[timeIndex-startingTimeStep]<<std::endl;
 	      }
 
 	     std::vector<std::vector<double> > data1(timeIndex+1,std::vector<double>(1,0.0));
              std::vector<std::vector<double> > data2(timeIndex+1,std::vector<double>(1,0.0));
              std::vector<std::vector<double> > data3(timeIndex+1,std::vector<double>(1,0.0));
+             std::vector<std::vector<double> > data4(timeIndex+1,std::vector<double>(1,0.0));
 
 	    if (restartFlag==1)
 	    {
@@ -434,11 +440,19 @@ void molecularDynamics<FEOrder>::run()
 				   entropicEnergyData,
 				   "EntEngMd");
 
+		std::vector<std::vector<double> > totalEnergyData;
+		dftUtils::readFile(1,
+				   totalEnergyData,
+				   "TotEngMd");
+
+
+
 		 for(int i = 0; i <= startingTimeStep; ++i)
 		 {
 		     data1[i][0]=kineticEnergyData[i][0];
 		     data2[i][0]=internalEnergyData[i][0];
 		     data3[i][0]=entropicEnergyData[i][0];
+                     data4[i][0]=totalEnergyData[i][0];
 		 }
 	     }
 	     else
@@ -446,6 +460,7 @@ void molecularDynamics<FEOrder>::run()
 		 data1[0][0]=kineticEnergyVector[0];
 		 data2[0][0]=internalEnergyVector[0];
 		 data3[0][0]=entropicEnergyVector[0];
+                 data4[0][0]=totalEnergyVector[0];
 	     }
 
 	     for(int i = startingTimeStep+1; i <= timeIndex; ++i)
@@ -453,6 +468,7 @@ void molecularDynamics<FEOrder>::run()
 		 data1[i][0]=kineticEnergyVector[i-startingTimeStep];
 		 data2[i][0]=internalEnergyVector[i-startingTimeStep];
 		 data3[i][0]=entropicEnergyVector[i-startingTimeStep];
+                 data4[i][0]=totalEnergyVector[i-startingTimeStep];
 	     }
              MPI_Barrier(MPI_COMM_WORLD);
 	     dftUtils::writeDataIntoFile(data1,
@@ -465,6 +481,9 @@ void molecularDynamics<FEOrder>::run()
 
 	     dftUtils::writeDataIntoFile(data3,
 			       "EntEngMd");
+
+	     dftUtils::writeDataIntoFile(data4,
+			       "TotEngMd");
 
 
 	    ///write velocity and acceleration data
