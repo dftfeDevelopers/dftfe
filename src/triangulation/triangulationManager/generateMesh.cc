@@ -174,9 +174,9 @@ namespace dftfe {
        double baseMeshSize1, baseMeshSize2, baseMeshSize3;
        if (dftParameters::periodicX ||dftParameters::periodicY ||dftParameters::periodicZ)
        {
-          baseMeshSize1=std::pow(2,round(log2(4.0/dftParameters::meshSizeOuterBall)))*dftParameters::meshSizeOuterBall;
-	  baseMeshSize2=std::pow(2,round(log2(4.0/dftParameters::meshSizeOuterBall)))*dftParameters::meshSizeOuterBall;
-          baseMeshSize3=std::pow(2,round(log2(4.0/dftParameters::meshSizeOuterBall)))*dftParameters::meshSizeOuterBall;
+          baseMeshSize1=std::pow(2,round(log2(2.0/dftParameters::meshSizeOuterBall)))*dftParameters::meshSizeOuterBall;
+          baseMeshSize2=std::pow(2,round(log2(2.0/dftParameters::meshSizeOuterBall)))*dftParameters::meshSizeOuterBall;
+          baseMeshSize3=std::pow(2,round(log2(2.0/dftParameters::meshSizeOuterBall)))*dftParameters::meshSizeOuterBall;
        }
        else
        {
@@ -324,7 +324,7 @@ namespace dftfe {
 	      if(distanceToClosestAtom <= dftParameters::outerAtomBallRadius)
 		inOuterAtomBall = true;
 
-	      if(inOuterAtomBall && currentMeshSize > 1.5*dftParameters::meshSizeOuterBall)
+	     if(inOuterAtomBall && currentMeshSize > 1.1*dftParameters::meshSizeOuterBall)
 		cellRefineFlag = true;
 
 	      bool inInnerAtomBall = false;
@@ -587,7 +587,7 @@ namespace dftfe {
   //
   bool triangulationManager::checkConstraintsConsistency(parallel::distributed::Triangulation<3>& parallelTriangulation)
   {
-    FESystem<3> FE(FE_Q<3>(QGaussLobatto<1>(1+1)), 1);
+    FESystem<3> FE(FE_Q<3>(QGaussLobatto<1>(d_FEOrder+1)), 1);
     DoFHandler<3> dofHandler;
     dofHandler.initialize(parallelTriangulation,FE);
     dofHandler.distribute_dofs(FE);
@@ -1344,6 +1344,7 @@ namespace dftfe {
 	           pcout<< "Hanging node and periodic constraints parallel consistency achieved."<<std::endl;
 
 	        dftParameters::createConstraintsFromSerialDofhandler=false;
+                dftParameters::constraintsParallelCheck=false;
 	   }
 	   else
 	   {
