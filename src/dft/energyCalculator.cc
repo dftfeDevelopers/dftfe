@@ -789,7 +789,7 @@ namespace dftfe
   {
      //computation of entropic term only for one k-pt
      double entropy = 0.0;
-     const unsigned int numEigenValues=kPointWeights.size();
+     const unsigned int numEigenValues=isSpinPolarized?eigenValues[0].size()/2:eigenValues[0].size();
 
      for(unsigned int kPoint = 0; kPoint < eigenValues.size(); ++kPoint)
         for(int i = 0; i < numEigenValues; ++i)
