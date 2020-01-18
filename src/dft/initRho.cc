@@ -153,7 +153,7 @@ void dftClass<FEOrder>::initRho()
       std::map<types::global_dof_index, Point<3> > supportPointsPRefined;
       DoFTools::map_dofs_to_support_points(MappingQ1<3,3>(), d_dofHandlerPRefined, supportPointsPRefined);
 
-      d_matrixFreeDataPRefined.initialize_dof_vector(d_rhoInNodalValues);
+      //d_matrixFreeDataPRefined.initialize_dof_vector(d_rhoInNodalValues);
 
       for(unsigned int dof = 0; dof < numberDofs; ++dof)
 	{

@@ -55,21 +55,21 @@ void molecularDynamics<FEOrder>::run()
         const unsigned int numberGlobalCharges=dftPtr->atomLocations.size();
         //https://lammps.sandia.gov/doc/units.html
 	const double initialTemperature = 1500;//K
-	int restartFlag =dftParameters::restartFromChk?1:0; //1; //0;//1;
+	const unsigned int restartFlag =dftParameters::restartFromChk?1:0; //1; //0;//1;
 	int startingTimeStep = 0; //625;//450;// 50;//300; //0;// 300;
 
 	double massAtomAl = 26.982;//mass proton is chosen 1 **49611.513**
 	double massAtomMg= 24.305;
-	double timeStep = 0.05; //0.5 femtoseconds
-	double totalTime = 100.0;//100.0;//41400.0;
-	int numberTimeSteps = totalTime/timeStep;
+	const double timeStep = 0.05; //0.5 femtoseconds
+	const unsigned int numberTimeSteps = 10;
 
-	double kb = 8.617330350e-05;//eV/K **3.166811429e-6**;
-	double initialVelocityDeviation = sqrt(kb*initialTemperature/massAtomAl);
-	double haPerBohrToeVPerAng = 27.211385/0.5291772109217;
-	double haToeV = 27.211385;
-	double bohrToAng = 0.5291772109217;
-	double AngTobohr = 1.0/bohrToAng;
+        //https://physics.nist.gov/cuu/Constants/Table/allascii.txt
+	const double kb = 8.617333262e-05;//eV/K **3.166811429e-6**;
+	const double initialVelocityDeviation = sqrt(kb*initialTemperature/massAtomAl);
+	const double haPerBohrToeVPerAng = 27.211386245988/0.529177210903;
+	const double haToeV = 27.211386245988;
+	const double bohrToAng = 0.529177210903;
+	const double AngTobohr = 1.0/bohrToAng;
 
         std::vector<double> massAtoms(numberGlobalCharges);
 	for(int iCharge = 0; iCharge < numberGlobalCharges; ++iCharge)
@@ -85,6 +85,7 @@ void molecularDynamics<FEOrder>::run()
 
 	std::vector<dealii::Tensor<1,3,double> > displacements(numberGlobalCharges);
 	std::vector<double> velocity(3*numberGlobalCharges,0.0);
+        std::vector<double> velocityMid(3*numberGlobalCharges,0.0);
 	std::vector<double> force(3*numberGlobalCharges,0.0);
 	std::vector<double> acceleration(3*numberGlobalCharges,0.0);
 	std::vector<double> accelerationNew(3*numberGlobalCharges,0.0);
@@ -93,6 +94,19 @@ void molecularDynamics<FEOrder>::run()
 	std::vector<double> entropicEnergyVector(numberTimeSteps,0.0);
 	std::vector<double> kineticEnergyVector(numberTimeSteps,0.0);
         std::vector<double> totalEnergyVector(numberTimeSteps,0.0);
+
+        const unsigned int kmax=6;
+        const double k=1.82;
+        const double alpha=0.018;
+        const double c0=-6.0;
+        const double c1=14.0;
+        const double c2=-8.0;
+        const double c3=-3.0;
+        const double c4=4.0;
+        const double c5=-1.0;
+        const double diracDeltaKernelConstant=0.5;
+        std::deque<vectorType> approxDensityContainer;
+        vectorType shadowKSRhoMin;
 
 	double kineticEnergy = 0.0;
 
@@ -108,6 +122,45 @@ void molecularDynamics<FEOrder>::run()
 	   // dftParameters::TVal=initialTemperature;
 	    dftPtr->solve();
             const std::vector<double> forceOnAtoms= dftPtr->forcePtr->getAtomsForces();
+
+            // Set approximate electron density to the exact ground state electron density in the 0th step
+            if (dftParameters::isXLBOMD)
+            {
+                   shadowKSRhoMin=dftPtr->d_rhoOutNodalValues;
+                   dftPtr->d_constraintsPRefined.distribute(shadowKSRhoMin);
+                   shadowKSRhoMin.update_ghost_values();
+
+                   approxDensityContainer.push_back(dftPtr->d_rhoOutNodalValues);
+                   dftPtr->d_constraintsPRefined.distribute(approxDensityContainer.back());
+                   approxDensityContainer.back().update_ghost_values();
+
+	           //normalize approxDensityVec
+	           const double charge = dftPtr->totalCharge(dftPtr->d_matrixFreeDataPRefined,
+						     approxDensityContainer.back());
+	           pcout<<"Total Charge before Normalizing approxDensityVec:  "<<charge<<std::endl;
+	       
+		   const double scalingFactor = ((double)dftPtr->numElectrons)/charge;
+
+		   //scale nodal vector with scalingFactor
+		   approxDensityContainer.back() *= scalingFactor;
+		   pcout<<"Total Charge after Normalizing approxDensityVec:  "<<dftPtr->totalCharge(dftPtr->d_matrixFreeDataPRefined,approxDensityContainer.back())<<std::endl;
+            }
+
+            const bool testing=false;
+            if (testing)
+            {
+		   dftPtr->interpolateNodalDataToQuadratureData(dftPtr->d_matrixFreeDataPRefined,
+						        approxDensityContainer.back(),
+						        *(dftPtr->rhoInValues),
+						        *(dftPtr->gradRhoInValues),
+						         dftParameters::xc_id == 4);
+		    dftPtr->solve(true,
+				  true);
+                    pcout<<"Shadow potential Energy check: "<<dftPtr->d_shadowPotentialEnergy<<std::endl;
+
+
+		    exit(0);
+            }
 
 	    if(this_mpi_process == 0)
 	      {
@@ -183,10 +236,8 @@ void molecularDynamics<FEOrder>::run()
 	    startingTimeStep=timeIndexData[0][0];
 
 
-	    if(this_mpi_process == 0)
-	      {
-		pcout<<" Ending time step read from file: "<<startingTimeStep<<std::endl;
-		pcout<<" Temperature read from file: "<<temperatureFromVelocities<<std::endl;
+            pcout<<" Ending time step read from file: "<<startingTimeStep<<std::endl;
+	    pcout<<" Temperature read from file: "<<temperatureFromVelocities<<std::endl;
 		/*
 		pcout<<"Acceleration  of charges read from file: "<<std::endl;
 		for(int iCharge = 0; iCharge < numberGlobalCharges; ++iCharge)
@@ -196,8 +247,6 @@ void molecularDynamics<FEOrder>::run()
 		for(int iCharge = 0; iCharge < numberGlobalCharges; ++iCharge)
 		  pcout<<iCharge<<" "<<velocity[3*iCharge + 0]<<" "<<velocity[3*iCharge + 1]<<" "<<velocity[3*iCharge + 2]<<std::endl;
 		 */
-
-	      }
 	  }
 
 
@@ -260,24 +309,18 @@ void molecularDynamics<FEOrder>::run()
 	    averageKineticEnergy = kineticEnergy/(3*numberGlobalCharges);
 	    temperatureFromVelocities = averageKineticEnergy*2/kb;
 
-	    if(this_mpi_process == 0)
-	      {
-		pcout<<"Temperature computed from Scaled Velocities: "<<temperatureFromVelocities<<std::endl;
-	      }
+            pcout<<"Temperature computed from Scaled Velocities: "<<temperatureFromVelocities<<std::endl;
 
 	    kineticEnergyVector[0] = kineticEnergy/haToeV;
 	    internalEnergyVector[0] = dftPtr->d_groundStateEnergy;
 	    entropicEnergyVector[0] = dftPtr->d_entropicEnergy;
             totalEnergyVector[0]=kineticEnergyVector[0]+internalEnergyVector[0]-entropicEnergyVector[0];
 
-	    if(this_mpi_process == 0)
-	      {
-		    pcout<<" Initial Velocity Deviation: "<<initialVelocityDeviation<<std::endl;
-		    pcout<<" Kinetic Energy in Ha at timeIndex 0 "<<kineticEnergyVector[0]<<std::endl;
-		    pcout<<" Internal Energy in Ha at timeIndex 0 "<<internalEnergyVector[0]<<std::endl;
-		    pcout<<" Entropic Energy in Ha at timeIndex 0 "<<entropicEnergyVector[0]<<std::endl;
-                    pcout<<" Total Energy in Ha at timeIndex 0 "<<totalEnergyVector[0]<<std::endl;
-	      }
+            pcout<<" Initial Velocity Deviation: "<<initialVelocityDeviation<<std::endl;
+	    pcout<<" Kinetic Energy in Ha at timeIndex 0 "<<kineticEnergyVector[0]<<std::endl;
+	    pcout<<" Internal Energy in Ha at timeIndex 0 "<<internalEnergyVector[0]<<std::endl;
+	    pcout<<" Entropic Energy in Ha at timeIndex 0 "<<entropicEnergyVector[0]<<std::endl;
+            pcout<<" Total Energy in Ha at timeIndex 0 "<<totalEnergyVector[0]<<std::endl;
 
 	  }
 
@@ -301,10 +344,8 @@ void molecularDynamics<FEOrder>::run()
 	    avgVely = avgVely/numberGlobalCharges;
 	    avgVelz = avgVelz/numberGlobalCharges;
 
-	    if(this_mpi_process == 0)
-	      {
-		pcout<<"Velocity and acceleration of atoms at current timeStep "<<timeIndex<<std::endl;
-		pcout<<"Velocity of center of mass: "<<avgVelx<<" "<<avgVely<<" "<<avgVelz<<" "<<std::endl;
+	    pcout<<"Velocity and acceleration of atoms at current timeStep "<<timeIndex<<std::endl;
+	    pcout<<"Velocity of center of mass: "<<avgVelx<<" "<<avgVely<<" "<<avgVelz<<" "<<std::endl;
 		/*
 		pcout<<"Velocity of charges: "<<std::endl;
 		for(int iCharge = 0; iCharge < numberGlobalCharges; ++iCharge)
@@ -315,16 +356,18 @@ void molecularDynamics<FEOrder>::run()
 		  pcout<<iCharge<<" "<<acceleration[3*iCharge + 0]<<" "<<acceleration[3*iCharge + 1]<<" "<<acceleration[3*iCharge + 2]<<std::endl;
 		  */
 
-	      }
-
 	    //
-	    //compute new positions and displacements from t to t + \Delta t
+	    //compute new positions and displacements from t to t + \Delta t using combined leap-frog and velocity Verlet scheme
 	    //
 	    for(int iCharge = 0; iCharge < numberGlobalCharges; ++iCharge)
 	      {
-		displacements[iCharge][0] = velocity[3*iCharge + 0]*timeStep + 0.5*acceleration[3*iCharge+ 0]*timeStep*timeStep;
-		displacements[iCharge][1] = velocity[3*iCharge + 1]*timeStep + 0.5*acceleration[3*iCharge+ 1]*timeStep*timeStep;
-		displacements[iCharge][2] = velocity[3*iCharge + 2]*timeStep + 0.5*acceleration[3*iCharge+ 2]*timeStep*timeStep;
+	        velocityMid[3*iCharge+0] = velocity[3*iCharge + 0] + 0.5*acceleration[3*iCharge+ 0]*timeStep;
+		velocityMid[3*iCharge+1] = velocity[3*iCharge + 1] + 0.5*acceleration[3*iCharge+ 1]*timeStep;
+		velocityMid[3*iCharge+2] = velocity[3*iCharge + 2] + 0.5*acceleration[3*iCharge+ 2]*timeStep;
+
+		displacements[iCharge][0] = velocityMid[3*iCharge + 0]*timeStep;
+		displacements[iCharge][1] = velocityMid[3*iCharge + 1]*timeStep;
+		displacements[iCharge][2] = velocityMid[3*iCharge + 2]*timeStep;
 	      }
 
 	    //
@@ -339,7 +382,7 @@ void molecularDynamics<FEOrder>::run()
 		displacements[iCharge][2] = displacements[iCharge][2]*AngTobohr;
 	      }
 
-	    if(this_mpi_process == 0)
+	    if(dftParameters::verbosity>=5)
 	      {
 		pcout<<"Displacement of atoms at current timeStep "<<timeIndex<<std::endl;
 		for(int iCharge = 0; iCharge < numberGlobalCharges; ++iCharge)
@@ -353,7 +396,7 @@ void molecularDynamics<FEOrder>::run()
 	    //
 	    dftPtr->updateAtomPositionsAndMoveMesh(displacements,dftParameters::maxJacobianRatioFactorForMD,(timeIndex ==startingTimeStep+1 && restartFlag==1)?true:false);
 
-	    if(this_mpi_process == 0)
+	    if(dftParameters::verbosity>=5)
 	      {
 		pcout<<"New atomic positions on the Mesh: "<<std::endl;
 		for(int iCharge = 0; iCharge < numberGlobalCharges; ++iCharge)
@@ -362,12 +405,116 @@ void molecularDynamics<FEOrder>::run()
 		  }
 	      }
 
+            if (dftParameters::isXLBOMD)
+            {
 
-	    //
-	    //do an scf calculation
-	    //
-	    //dftParameters::TVal=temperatureFromVelocities;
-            dftPtr->solve();
+                    if (dftPtr->d_autoMesh==1)
+                    {
+                        pcout<<".............Auto meshing step: interpolation of approximate density container to new mesh.............."<<std::endl;
+                        //interpolate all the vectors in the approximate density container on the current mesh
+                        std::vector<vectorType* > fieldsPtrsPrevious(approxDensityContainer.size());
+                        std::vector<vectorType* > fieldsPtrsCurrent(approxDensityContainer.size());
+                        std::vector<vectorType> fieldsCurrent(approxDensityContainer.size());
+
+                        for (unsigned int i = 0; i < approxDensityContainer.size(); i++)
+                        {
+                            fieldsPtrsPrevious[i]=&approxDensityContainer[i];
+                            dftPtr->d_matrixFreeDataPRefined.initialize_dof_vector(fieldsCurrent[i]);
+                            fieldsPtrsCurrent[i]=&fieldsCurrent[i];
+                        } 
+
+                        dealii::FESystem<3> fe(dealii::FESystem<3>(dftPtr->d_matrixFreeDataPRefined.get_dof_handler().get_fe(),1));
+                        dftPtr->interpolateFieldsFromPrevToCurrentMesh(fieldsPtrsPrevious,
+                                                                       fieldsPtrsCurrent,
+                                                                       fe,
+                                                                       fe,
+                                                                       dftPtr->d_constraintsPRefined);    
+
+                        for (unsigned int i = 0; i < approxDensityContainer.size(); i++)
+                        {
+                           approxDensityContainer[i]=fieldsCurrent[i];
+                           approxDensityContainer[i].update_ghost_values();
+                        }                     
+
+                        //re-normalize
+                        for (unsigned int i = 0; i < approxDensityContainer.size(); i++)
+                        {
+	                   const double charge = dftPtr->totalCharge(dftPtr->d_matrixFreeDataPRefined,
+						     approxDensityContainer[i]);
+	                   pcout<<"Total Charge before Normalizing interpolated field:  "<<charge<<std::endl;
+	       
+	 	           const double scalingFactor = ((double)dftPtr->numElectrons)/charge;
+
+		           approxDensityContainer[i] *= scalingFactor;
+		           pcout<<"Total Charge after Normalizing interpolated field:  "<<dftPtr->totalCharge(dftPtr->d_matrixFreeDataPRefined,approxDensityContainer[i])<<std::endl;
+                        }
+                        pcout<<".............Auto meshing step: interpolation and re-normalization completed.............."<<std::endl;
+                    }
+
+
+                    vectorType approxDensityNext;
+                    approxDensityNext.reinit(approxDensityContainer.back()); 
+
+                    const unsigned int containerSizeCurrent=approxDensityContainer.size();
+                    vectorType & approxDensityTimeT=approxDensityContainer[containerSizeCurrent-1];
+                    vectorType & approxDensityTimeTMinusDeltat=containerSizeCurrent>1?
+                                                               approxDensityContainer[containerSizeCurrent-2]
+                                                               :approxDensityTimeT;
+                   
+                    const unsigned int local_size = approxDensityNext.local_size();
+
+                    for (unsigned int i = 0; i < local_size; i++)
+                        approxDensityNext.local_element(i)=approxDensityTimeT.local_element(i)*2.0
+                                                          -approxDensityTimeTMinusDeltat.local_element(i)
+                                                          -(shadowKSRhoMin.local_element(i)-approxDensityTimeT.local_element(i))*k*diracDeltaKernelConstant;
+ 
+ 
+                    if (approxDensityContainer.size()==kmax)
+                    {
+                        for (unsigned int i = 0; i < local_size; i++)
+				approxDensityNext.local_element(i)+=alpha*(c0*approxDensityContainer[containerSizeCurrent-1].local_element(i)
+							 +c1*approxDensityContainer[containerSizeCurrent-2].local_element(i)
+							 +c2*approxDensityContainer[containerSizeCurrent-3].local_element(i)
+							 +c3*approxDensityContainer[containerSizeCurrent-4].local_element(i)
+							 +c4*approxDensityContainer[containerSizeCurrent-5].local_element(i)
+							 +c5*approxDensityContainer[containerSizeCurrent-6].local_element(i));
+                        approxDensityContainer.pop_front();
+                    }
+                    approxDensityContainer.push_back(approxDensityNext);
+                    approxDensityContainer.back().update_ghost_values();                    
+ 
+	            //normalize approxDensityVec
+	            const double charge = dftPtr->totalCharge(dftPtr->d_matrixFreeDataPRefined,
+						     approxDensityContainer.back());
+	            pcout<<"Total Charge before Normalizing new approxDensityVec:  "<<charge<<std::endl;
+	       
+		    const double scalingFactor = ((double)dftPtr->numElectrons)/charge;
+
+		    //scale nodal vector with scalingFactor
+		    approxDensityContainer.back() *= scalingFactor;
+		    pcout<<"Total Charge after Normalizing new approxDensityVec:  "<<dftPtr->totalCharge(dftPtr->d_matrixFreeDataPRefined,approxDensityContainer.back())<<std::endl;
+
+		    dftPtr->interpolateNodalDataToQuadratureData(dftPtr->d_matrixFreeDataPRefined,
+						        approxDensityContainer.back(),
+						        *(dftPtr->rhoInValues),
+						        *(dftPtr->gradRhoInValues),
+						         dftParameters::xc_id == 4); 
+		    //
+		    //do an scf calculation
+		    //
+		    dftPtr->solve(true,true);
+
+                    shadowKSRhoMin=dftPtr->d_rhoOutNodalValues;
+                    dftPtr->d_constraintsPRefined.distribute(shadowKSRhoMin);
+                    shadowKSRhoMin.update_ghost_values();
+            }
+            else
+            {
+		    //
+		    //do an scf calculation
+		    //
+		    dftPtr->solve();
+            }
 
 	    //
 	    //get force field using Gaussians
@@ -384,11 +531,12 @@ void molecularDynamics<FEOrder>::run()
 		accelerationNew[3*iCharge + 2] = -(forceOnAtoms[3*iCharge + 2]*haPerBohrToeVPerAng)/massAtoms[iCharge];
 	      }
 
+            //compute velocity at t + delta t 
 	    for(int iCharge = 0; iCharge < numberGlobalCharges; ++iCharge)
 	      {
-		velocity[3*iCharge + 0] += 0.5*(acceleration[3*iCharge + 0] + accelerationNew[3*iCharge + 0])*timeStep;
-		velocity[3*iCharge + 1] += 0.5*(acceleration[3*iCharge + 1] + accelerationNew[3*iCharge + 1])*timeStep;
-		velocity[3*iCharge + 2] += 0.5*(acceleration[3*iCharge + 2] + accelerationNew[3*iCharge + 2])*timeStep;
+		velocity[3*iCharge + 0] += velocityMid[3*iCharge + 0] + 0.5*accelerationNew[3*iCharge + 0]*timeStep;
+		velocity[3*iCharge + 1] += velocityMid[3*iCharge + 1] + 0.5*accelerationNew[3*iCharge + 1]*timeStep;
+		velocity[3*iCharge + 2] += velocityMid[3*iCharge + 2] + 0.5*accelerationNew[3*iCharge + 2]*timeStep;
 	      }
 
 	    kineticEnergy = 0.0;
@@ -400,7 +548,9 @@ void molecularDynamics<FEOrder>::run()
 	    averageKineticEnergy = kineticEnergy/(3*numberGlobalCharges);
 	    temperatureFromVelocities = averageKineticEnergy*2/kb;
 	    kineticEnergyVector[timeIndex-startingTimeStep] = kineticEnergy/haToeV;
-	    internalEnergyVector[timeIndex-startingTimeStep] = dftPtr->d_groundStateEnergy;
+	    internalEnergyVector[timeIndex-startingTimeStep] = dftParameters::isXLBOMD?
+                                                               dftPtr->d_shadowPotentialEnergy
+                                                               :dftPtr->d_groundStateEnergy;
 	    entropicEnergyVector[timeIndex-startingTimeStep] = dftPtr->d_entropicEnergy;
             totalEnergyVector[timeIndex-startingTimeStep] = kineticEnergyVector[timeIndex-startingTimeStep] +internalEnergyVector[timeIndex-startingTimeStep] -entropicEnergyVector[timeIndex-startingTimeStep];
 
@@ -409,14 +559,11 @@ void molecularDynamics<FEOrder>::run()
 	    //
 	    acceleration = accelerationNew;
 
-	    if(this_mpi_process == 0)
-	      {
-		pcout<<" Temperature from velocities: "<<timeIndex<<" "<<temperatureFromVelocities<<std::endl;
-		pcout<<" Kinetic Energy in Ha at timeIndex "<<timeIndex<<" "<<kineticEnergyVector[timeIndex-startingTimeStep]<<std::endl;
-		pcout<<" Internal Energy in Ha at timeIndex "<<timeIndex<<" "<<internalEnergyVector[timeIndex-startingTimeStep]<<std::endl;
-		pcout<<" Entropic Energy in Ha at timeIndex "<<timeIndex<<" "<<entropicEnergyVector[timeIndex-startingTimeStep]<<std::endl;
-                pcout<<" Total Energy in Ha at timeIndex "<<timeIndex<<" "<<totalEnergyVector[timeIndex-startingTimeStep]<<std::endl;
-	      }
+	    pcout<<" Temperature from velocities: "<<timeIndex<<" "<<temperatureFromVelocities<<std::endl;
+	    pcout<<" Kinetic Energy in Ha at timeIndex "<<timeIndex<<" "<<kineticEnergyVector[timeIndex-startingTimeStep]<<std::endl;
+	    pcout<<" Internal Energy in Ha at timeIndex "<<timeIndex<<" "<<internalEnergyVector[timeIndex-startingTimeStep]<<std::endl;
+	    pcout<<" Entropic Energy in Ha at timeIndex "<<timeIndex<<" "<<entropicEnergyVector[timeIndex-startingTimeStep]<<std::endl;
+            pcout<<" Total Energy in Ha at timeIndex "<<timeIndex<<" "<<totalEnergyVector[timeIndex-startingTimeStep]<<std::endl;
 
 	     std::vector<std::vector<double> > data1(timeIndex+1,std::vector<double>(1,0.0));
              std::vector<std::vector<double> > data2(timeIndex+1,std::vector<double>(1,0.0));

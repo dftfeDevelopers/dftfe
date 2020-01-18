@@ -727,7 +727,7 @@ namespace dftfe {
 					      d_imagePositions,
 					      d_domainBoundingVectors,
 					      dftParameters::useSymm
-					      || (dftParameters::isIonOpt && (dftParameters::reuseWfcGeoOpt || dftParameters::reuseDensityGeoOpt))
+					      || ((dftParameters::isIonOpt && (dftParameters::reuseWfcGeoOpt || dftParameters::reuseDensityGeoOpt)) || dftParameters::isBOMD)
 					      || dftParameters::createConstraintsFromSerialDofhandler);
 	loadTriaInfoAndRhoData();
       }
@@ -737,7 +737,7 @@ namespace dftfe {
 								d_imagePositions,
 								d_domainBoundingVectors,
 								dftParameters::useSymm
-								|| (dftParameters::isIonOpt && (dftParameters::reuseWfcGeoOpt || dftParameters::reuseDensityGeoOpt))
+								|| ((dftParameters::isIonOpt && (dftParameters::reuseWfcGeoOpt || dftParameters::reuseDensityGeoOpt)) || dftParameters::isBOMD)
 								|| dftParameters::createConstraintsFromSerialDofhandler,
 								dftParameters::electrostaticsHRefinement);
 
@@ -1049,9 +1049,9 @@ namespace dftfe {
   //dft solve
   //
   template<unsigned int FEOrder>
-  void dftClass<FEOrder>::solve(const bool computeForces)
+  void dftClass<FEOrder>::solve(const bool computeForces,
+                                const bool solveLinearizedKS)
   {
-
     //
     //solve vself in bins
     //
@@ -1196,7 +1196,10 @@ namespace dftfe {
     //
     computing_timer.enter_section("scf solve");
 
-    const double firstScfChebyTol=dftParameters::mixingMethod=="ANDERSON_WITH_KERKER"?1e-2:2e-2;
+    double firstScfChebyTol=dftParameters::mixingMethod=="ANDERSON_WITH_KERKER"?1e-2:2e-2;
+
+    if (dftParameters::isBOMD && dftParameters::isXLBOMD && solveLinearizedKS)
+        firstScfChebyTol=dftParameters::chebyshevFilterTolXLBOMD;
     //
     //Begin SCF iteration
     //
@@ -1940,14 +1943,22 @@ namespace dftfe {
 
 	if (dftParameters::chkType==2 && scfIter%10 == 0)
 	  saveTriaInfoAndRhoData();
+
+  
+        if (dftParameters::isBOMD && dftParameters::isXLBOMD && solveLinearizedKS)
+           break;
       }
 
-    if(scfIter==dftParameters::numSCFIterations)
-      pcout<<"DFT-FE Warning: SCF iterations did not converge to the specified tolerance after: "<<scfIter<<" iterations."<<std::endl;
-    else
-      pcout<<"SCF iterations converged to the specified tolerance after: "<<scfIter<<" iterations."<<std::endl;
+    if (!(dftParameters::isBOMD && dftParameters::isXLBOMD && solveLinearizedKS))
+    {
+	    if(scfIter==dftParameters::numSCFIterations)
+	      pcout<<"DFT-FE Warning: SCF iterations did not converge to the specified tolerance after: "<<scfIter<<" iterations."<<std::endl;
+	    else
+	      pcout<<"SCF iterations converged to the specified tolerance after: "<<scfIter<<" iterations."<<std::endl;
+    }
 
-    if (!dftParameters::computeEnergyEverySCF || d_numEigenValuesRR!=d_numEigenValues)
+    if ((!dftParameters::computeEnergyEverySCF || d_numEigenValuesRR!=d_numEigenValues)
+        && !(dftParameters::isBOMD && dftParameters::isXLBOMD && solveLinearizedKS))
     {
 	if(dftParameters::verbosity>=2)
 	  pcout<< std::endl<<"Poisson solve for total electrostatic potential (rhoOut+b): ";
@@ -1975,7 +1986,8 @@ namespace dftfe {
     // compute and print ground state energy or energy after max scf iterations
     //
     QGauss<3>  quadrature(C_num1DQuad<FEOrder>());
-    if (!dftParameters::electrostaticsHRefinement || dftParameters::verbosity>=4 || dftParameters::reproducible_output)
+    if ((!dftParameters::electrostaticsHRefinement || dftParameters::verbosity>=4 || dftParameters::reproducible_output)
+        && !(dftParameters::isBOMD && dftParameters::isXLBOMD && solveLinearizedKS))
     {
       const double totalEnergy = dftParameters::spinPolarized==0 ?
         energyCalc.computeEnergy(dofHandler,
@@ -2052,6 +2064,35 @@ namespace dftfe {
                                                          dftParameters::spinPolarized==1,
                                                          dftParameters::constraintMagnetization,
                                                          dftParameters::TVal);
+
+    if (dftParameters::isBOMD && dftParameters::isXLBOMD && solveLinearizedKS)
+    {
+      d_shadowPotentialEnergy =
+        energyCalc.computeShadowPotentialEnergyExtendedLagrangian(dofHandler,
+			       dofHandler,
+			       quadrature,
+			       quadrature,
+			       eigenValues,
+			       d_kPointWeights,
+			       fermiEnergy,
+			       funcX,
+			       funcC,
+			       d_phiTotRhoIn,
+			       d_phiTotRhoIn,
+			       d_phiExt,
+			       d_phiExt,
+			       *rhoInValues,
+			       *rhoOutValues,
+			       *rhoInValues,
+			       *gradRhoInValues,
+			       *gradRhoOutValues,
+			       d_localVselfs,
+			       d_pseudoVLoc,
+			       d_pseudoVLoc,
+			       d_atomNodeIdToChargeMap,
+			       atomLocations.size(),
+			       lowerBoundKindex);
+    }
 
     //This step is required for interpolating rho from current mesh to the new
     //mesh in case of atomic relaxation
@@ -2189,30 +2230,63 @@ namespace dftfe {
 	computingTimerStandard.enter_section("Ion force computation");
 	if (computeForces)
 	{
-	    forcePtr->computeAtomsForces(matrix_free_data,
-					 eigenDofHandlerIndex,
-					 phiExtDofHandlerIndex,
-					 phiTotDofHandlerIndex,
-					 d_phiTotRhoIn,
-					 d_phiTotRhoOut,
-					 d_phiExt,
-					 d_pseudoVLoc,
-					 d_gradPseudoVLoc,
-					 d_gradPseudoVLocAtoms,
-					 d_noConstraints,
-					 d_vselfBinsManager,
-					 matrix_free_data,
-					 phiTotDofHandlerIndex,
-					 phiExtDofHandlerIndex,
-					 d_phiTotRhoOut,
-					 d_phiExt,
-					 *rhoOutValues,
-					 *gradRhoOutValues,
-					 d_pseudoVLoc,
-					 d_gradPseudoVLoc,
-					 d_gradPseudoVLocAtoms,
-					 d_noConstraints,
-					 d_vselfBinsManager);
+            if (dftParameters::isBOMD && dftParameters::isXLBOMD && solveLinearizedKS)
+		    forcePtr->computeAtomsForces(matrix_free_data,
+						 eigenDofHandlerIndex,
+						 phiExtDofHandlerIndex,
+						 phiTotDofHandlerIndex,
+						 d_phiTotRhoIn,
+						 d_phiTotRhoIn,
+						 d_phiExt,
+						 d_pseudoVLoc,
+						 d_gradPseudoVLoc,
+						 d_gradPseudoVLocAtoms,
+						 d_noConstraints,
+						 d_vselfBinsManager,
+						 matrix_free_data,
+						 phiTotDofHandlerIndex,
+						 phiExtDofHandlerIndex,
+						 d_phiTotRhoIn,
+						 d_phiExt,
+						 *rhoInValues,
+                                                 *gradRhoInValues,
+						 *rhoInValues,
+						 *gradRhoInValues,
+						 d_pseudoVLoc,
+						 d_gradPseudoVLoc,
+						 d_gradPseudoVLocAtoms,
+						 d_noConstraints,
+						 d_vselfBinsManager,
+                                                 *rhoOutValues,
+                                                 true);
+            else
+		    forcePtr->computeAtomsForces(matrix_free_data,
+						 eigenDofHandlerIndex,
+						 phiExtDofHandlerIndex,
+						 phiTotDofHandlerIndex,
+						 d_phiTotRhoIn,
+						 d_phiTotRhoOut,
+						 d_phiExt,
+						 d_pseudoVLoc,
+						 d_gradPseudoVLoc,
+						 d_gradPseudoVLocAtoms,
+						 d_noConstraints,
+						 d_vselfBinsManager,
+						 matrix_free_data,
+						 phiTotDofHandlerIndex,
+						 phiExtDofHandlerIndex,
+						 d_phiTotRhoOut,
+						 d_phiExt,
+						 *rhoOutValues,
+                                                 *gradRhoOutValues,
+						 *rhoOutValues,
+						 *gradRhoOutValues,
+						 d_pseudoVLoc,
+						 d_gradPseudoVLoc,
+						 d_gradPseudoVLocAtoms,
+						 d_noConstraints,
+						 d_vselfBinsManager,
+                                                 *rhoOutValues);
 	    forcePtr->printAtomsForces();
 	}
 	computingTimerStandard.exit_section("Ion force computation");

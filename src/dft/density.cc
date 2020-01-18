@@ -172,6 +172,16 @@ void dftClass<FEOrder>::compute_rhoOut(
 			dftParameters::xc_id == 4,
 			isConsiderSpectrumSplitting);
 #endif
+
+      if (dftParameters::isBOMD && dftParameters::isXLBOMD)
+      {
+#ifdef DFTFE_WITH_GPU
+	      computeRhoNodalFromPSI(kohnShamDFTEigenOperator,isConsiderSpectrumSplitting);
+#else
+	      computeRhoNodalFromPSI(isConsiderSpectrumSplitting);
+#endif
+	      d_rhoOutNodalValues.update_ghost_values();
+      }
     }
   
   popOutRhoInRhoOutVals();

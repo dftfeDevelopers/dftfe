@@ -52,7 +52,7 @@ namespace dftfe {
       extern std::string mixingMethod,ionOptSolver;
 
 
-      extern bool isIonOpt, isCellOpt, isIonForce, isCellStress, isBOMD;
+      extern bool isIonOpt, isCellOpt, isIonForce, isCellStress, isBOMD, isXLBOMD;
       extern bool nonSelfConsistentForce, meshAdaption;
       extern double forceRelaxTol, stressRelaxTol, toleranceKinetic;
       extern unsigned int cellConstraintType;
@@ -110,6 +110,7 @@ namespace dftfe {
       extern bool autoGPUBlockSizes;
       extern bool readWfcForPdosPspFile;
       extern double maxJacobianRatioFactorForMD;
+      extern double chebyshevFilterTolXLBOMD;
 
       /**
        * Declare parameters.

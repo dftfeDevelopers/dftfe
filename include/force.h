@@ -124,13 +124,17 @@ namespace dftfe {
 		 const unsigned int phiExtDofHandlerIndexElectro,
 		 const vectorType & phiTotRhoOutElectro,
 		 const vectorType & phiExtElectro,
+                 const std::map<dealii::CellId, std::vector<double> > & rhoOutValues,
+                 const std::map<dealii::CellId, std::vector<double> > & gradRhoOutValues,
 		 const std::map<dealii::CellId, std::vector<double> > & rhoOutValuesElectro,
 		 const std::map<dealii::CellId, std::vector<double> > & gradRhoOutValuesElectro,
 		 const std::map<dealii::CellId, std::vector<double> > & pseudoVLocElectro,
 		 const std::map<dealii::CellId, std::vector<double> > & gradPseudoVLocElectro,
 		 const std::map<unsigned int,std::map<dealii::CellId, std::vector<double> > > & gradPseudoVLocAtomsElectro,
 	         const ConstraintMatrix  & noConstraintsElectro,
-		 const vselfBinsManager<FEOrder>   & vselfBinsManagerElectro);
+		 const vselfBinsManager<FEOrder>   & vselfBinsManagerElectro,
+                 const std::map<dealii::CellId, std::vector<double> > & shadowKSRhoMinValues,
+                 const bool shadowPotentialForce=false);
 
     /** @brief returns a copy of the configurational force on all global atoms.
      *
@@ -247,12 +251,16 @@ namespace dftfe {
 		              const unsigned int phiExtDofHandlerIndexElectro,
 		              const vectorType & phiTotRhoOutElectro,
 		              const vectorType & phiExtElectro,
+                              const std::map<dealii::CellId, std::vector<double> > & rhoOutValues,
+                              const std::map<dealii::CellId, std::vector<double> > & gradRhoOutValues,
 			      const std::map<dealii::CellId, std::vector<double> > & rhoOutValuesElectro,
 			      const std::map<dealii::CellId, std::vector<double> > & gradRhoOutValuesElectro,
 	          	      const std::map<dealii::CellId, std::vector<double> > & pseudoVLocElectro,
 		              const std::map<dealii::CellId, std::vector<double> > & gradPseudoVLocElectro,
 		              const std::map<unsigned int,std::map<dealii::CellId, std::vector<double> > > & gradPseudoVLocAtomsElectro,
-			      const vselfBinsManager<FEOrder> & vselfBinsManagerElectro);
+			      const vselfBinsManager<FEOrder> & vselfBinsManagerElectro,
+                              const std::map<dealii::CellId, std::vector<double> > & shadowKSRhoMinValues,
+                              const bool shadowPotentialForce=false);
 
       void computeConfigurationalForceSpinPolarizedEEshelbyTensorFPSPFnlLinFE
 			      (const MatrixFree<3,double> & matrixFreeData,
@@ -276,7 +284,9 @@ namespace dftfe {
 		              const std::map<dealii::CellId, std::vector<double> > & pseudoVLocElectro,
 		              const std::map<dealii::CellId, std::vector<double> > & gradPseudoVLocElectro,
 		              const std::map<unsigned int,std::map<dealii::CellId, std::vector<double> > > & gradPseudoVLocAtomsElectro,
-			      const vselfBinsManager<FEOrder> & vselfBinsManagerElectro);
+			      const vselfBinsManager<FEOrder> & vselfBinsManagerElectro,
+                              const std::map<dealii::CellId, std::vector<double> > & shadowKSRhoMinValues,
+                              const bool shadowPotentialForce=false);
 
       void computeConfigurationalForceEEshelbyEElectroPhiTot
 	                    (const MatrixFree<3,double> & matrixFreeDataElectro,
@@ -289,7 +299,9 @@ namespace dftfe {
 		             const std::map<dealii::CellId, std::vector<double> > & pseudoVLocElectro,
 		             const std::map<dealii::CellId, std::vector<double> > & gradPseudoVLocElectro,
 			     const std::map<unsigned int,std::map<dealii::CellId, std::vector<double> > > & gradPseudoVLocAtomsElectro,
-			     const vselfBinsManager<FEOrder> & vselfBinsManagerElectro);
+			     const vselfBinsManager<FEOrder> & vselfBinsManagerElectro,
+                             const std::map<dealii::CellId, std::vector<double> > & shadowKSRhoMinValues,
+                             const bool shadowPotentialForce=false);
 
       void computeConfigurationalForcePhiExtLinFE();
 
@@ -315,12 +327,16 @@ namespace dftfe {
 		                     const unsigned int phiExtDofHandlerIndexElectro,
 		                     const vectorType & phiTotRhoOutElectro,
 		                     const vectorType & phiExtElectro,
+                                     const std::map<dealii::CellId, std::vector<double> > & rhoOutValues,
+                                     const std::map<dealii::CellId, std::vector<double> > & gradRhoOutValues,
 				     const std::map<dealii::CellId, std::vector<double> > & rhoOutValuesElectro,
 				     const std::map<dealii::CellId, std::vector<double> > & gradRhoOutValuesElectro,
 		                     const std::map<dealii::CellId, std::vector<double> > & pseudoVLocElectro,
 		                     const std::map<dealii::CellId, std::vector<double> > & gradPseudoVLocElectro,
 		                     const std::map<unsigned int,std::map<dealii::CellId, std::vector<double> > > & gradPseudoVLocAtomsElectro,
-				     const vselfBinsManager<FEOrder>   & vselfBinsManagerElectro);
+				     const vselfBinsManager<FEOrder>   & vselfBinsManagerElectro,
+                                     const std::map<dealii::CellId, std::vector<double> > & shadowKSRhoMinValues,
+                                     const bool shadowPotentialForce=false);
 
       void FPSPLocalGammaAtomsElementalContribution
              (std::map<unsigned int, std::vector<double> > & forceContributionFPSPLocalGammaAtoms,

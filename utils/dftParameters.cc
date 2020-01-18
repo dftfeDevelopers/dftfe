@@ -47,7 +47,7 @@ namespace dftfe {
     double topfrac = 0.1;
     double kerkerParameter = 0.05;
 
-    bool isIonOpt=false, isCellOpt=false, isIonForce=false, isCellStress=false, isBOMD=false;
+    bool isIonOpt=false, isCellOpt=false, isIonForce=false, isCellStress=false, isBOMD=false, isXLBOMD=false;
     bool nonSelfConsistentForce=false;
     double forceRelaxTol  = 1e-4;//Hartree/Bohr
     double stressRelaxTol = 1e-6;//Hartree/Bohr^3
@@ -107,6 +107,7 @@ namespace dftfe {
     bool overlapComputeCommunOrthoRR=false;
     bool autoGPUBlockSizes=true;
     double maxJacobianRatioFactorForMD=1.5;
+    double chebyshevFilterTolXLBOMD=1e-8;
 
     void declare_parameters(ParameterHandler &prm)
     {
@@ -675,6 +676,14 @@ namespace dftfe {
 			  Patterns::Bool(),
 			  "[Standard] Perform Born-Oppenheimer NVE molecular dynamics. Input parameters for molecular dynamics have to be modified directly in the code in the file md/molecularDynamics.cc.");
 
+	prm.declare_entry("XL BOMD", "false",
+			  Patterns::Bool(),
+			  "[Standard] Perform Extended Lagrangian Born-Oppenheimer NVE molecular dynamics. Currently not implemented for spin-polarization case.");
+
+	prm.declare_entry("CHEBY TOL XL BOMD", "1e-7",
+			  Patterns::Double(0.0),
+			  "[Standard] Parameter specifying the accuracy of the occupied eigenvectors close to the Fermi-energy computed using Chebyshev filtering subspace iteration procedure.");
+
 	prm.declare_entry("MAX JACOBIAN RATIO FACTOR", "1.5",
 			    Patterns::Double(0.9,3.0),
 			    "[Developer] Maximum scaling factor for maximum jacobian ratio of FEM mesh when mesh is deformed.");  
@@ -890,6 +899,8 @@ namespace dftfe {
       {
 	  dftParameters::isBOMD                        = prm.get_bool("BOMD");
           dftParameters::maxJacobianRatioFactorForMD   = prm.get_double("MAX JACOBIAN RATIO FACTOR");
+          dftParameters::isXLBOMD                      = prm.get_bool("XL BOMD");
+          dftParameters::chebyshevFilterTolXLBOMD      = prm.get_double("CHEBY TOL XL BOMD");
       }
       prm.leave_subsection ();
 	

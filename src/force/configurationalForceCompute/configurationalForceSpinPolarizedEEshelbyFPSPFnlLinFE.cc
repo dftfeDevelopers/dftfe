@@ -39,7 +39,9 @@ void forceClass<FEOrder>::computeConfigurationalForceSpinPolarizedEEshelbyTensor
 		              const std::map<dealii::CellId, std::vector<double> > & pseudoVLocElectro,
 		              const std::map<dealii::CellId, std::vector<double> > & gradPseudoVLocElectro,
 		              const std::map<unsigned int,std::map<dealii::CellId, std::vector<double> > > & gradPseudoVLocAtomsElectro,
-			      const vselfBinsManager<FEOrder> & vselfBinsManagerElectro)
+			      const vselfBinsManager<FEOrder> & vselfBinsManagerElectro,
+                              const std::map<dealii::CellId, std::vector<double> > & shadowKSRhoMinValues,
+                              const bool shadowPotentialForce)
 {
   const unsigned int numberGlobalAtoms = dftPtr->atomLocations.size();
   std::map<unsigned int, std::vector<double> > forceContributionFPSPLocalGammaAtomsPSP;
@@ -900,6 +902,8 @@ void forceClass<FEOrder>::computeConfigurationalForceSpinPolarizedEEshelbyTensor
 			     pseudoVLocElectro,
 			     gradPseudoVLocElectro,
 			     gradPseudoVLocAtomsElectro,
-			     vselfBinsManagerElectro);
+			     vselfBinsManagerElectro,
+                             shadowKSRhoMinValues,
+                             shadowPotentialForce);
   }
 }

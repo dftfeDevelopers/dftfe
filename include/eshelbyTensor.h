@@ -97,6 +97,14 @@ namespace dftfe {
 			     const VectorizedArray<double> & exc,
 			     const Tensor<1,C_DIM,VectorizedArray<double> > & derExcGradRho);
 
+
+      /// exchange-correlation part of the shadow potential (XL-BOMD) Eshelby tensor
+      Tensor<2,C_DIM,VectorizedArray<double> >  getShadowPotentialForceRhoDiffXcEshelbyTensor
+			     (const VectorizedArray<double> & shadowKSRhoMinMinusRho,
+			      const Tensor<1,C_DIM,VectorizedArray<double> > & gradRho,
+			      const VectorizedArray<double> & exc,
+			      const Tensor<1,C_DIM,VectorizedArray<double> > & derVxcGradRho);
+
       /// psp part of the ELoc Eshelby tensor
       Tensor<2,C_DIM,VectorizedArray<double> >  getELocPspEshelbyTensor
 			     (const VectorizedArray<double> & rho,

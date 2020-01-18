@@ -282,13 +282,17 @@ void forceClass<FEOrder>::computeAtomsForces
 		 const unsigned int phiExtDofHandlerIndexElectro,
 		 const vectorType & phiTotRhoOutElectro,
 		 const vectorType & phiExtElectro,
+                 const std::map<dealii::CellId, std::vector<double> > & rhoOutValues,
+                 const std::map<dealii::CellId, std::vector<double> > & gradRhoOutValues,
 		 const std::map<dealii::CellId, std::vector<double> > & rhoOutValuesElectro,
 		 const std::map<dealii::CellId, std::vector<double> > & gradRhoOutValuesElectro,
 		 const std::map<dealii::CellId, std::vector<double> > & pseudoVLocElectro,
 		 const std::map<dealii::CellId, std::vector<double> > & gradPseudoVLocElectro,
 		 const std::map<unsigned int,std::map<dealii::CellId, std::vector<double> > > & gradPseudoVLocAtomsElectro,
 	         const ConstraintMatrix  & noConstraintsElectro,
-		 const vselfBinsManager<FEOrder> & vselfBinsManagerElectro)
+		 const vselfBinsManager<FEOrder> & vselfBinsManagerElectro,
+                 const std::map<dealii::CellId, std::vector<double> > & shadowKSRhoMinValues,
+                 const bool shadowPotentialForce)
 {
   /*
   createBinObjectsForce(matrixFreeData.get_dof_handler(phiTotDofHandlerIndex),
@@ -330,12 +334,16 @@ void forceClass<FEOrder>::computeAtomsForces
 		                        phiExtDofHandlerIndexElectro,
 		                        phiTotRhoOutElectro,
 		                        phiExtElectro,
+                                        rhoOutValues,
+                                        gradRhoOutValues,
 		                        rhoOutValuesElectro,
 					gradRhoOutValuesElectro,
 					pseudoVLocElectro,
 					gradPseudoVLocElectro,
 					gradPseudoVLocAtomsElectro,
-		                        vselfBinsManagerElectro);
+		                        vselfBinsManagerElectro,
+                                        shadowKSRhoMinValues,
+                                        shadowPotentialForce);
 
   computeAtomsForcesGaussianGenerator(d_allowGaussianOverlapOnAtoms);
 }
@@ -405,12 +413,16 @@ void forceClass<FEOrder>::computeConfigurationalForceTotalLinFE
 				     const unsigned int phiExtDofHandlerIndexElectro,
 				     const vectorType & phiTotRhoOutElectro,
 				     const vectorType & phiExtElectro,
+                                     const std::map<dealii::CellId, std::vector<double> > & rhoOutValues,
+                                     const std::map<dealii::CellId, std::vector<double> > & gradRhoOutValues,
 				     const std::map<dealii::CellId, std::vector<double> > & rhoOutValuesElectro,
 				     const std::map<dealii::CellId, std::vector<double> > & gradRhoOutValuesElectro,
 		                     const std::map<dealii::CellId, std::vector<double> > & pseudoVLocElectro,
 		                     const std::map<dealii::CellId, std::vector<double> > & gradPseudoVLocElectro,
 		                     const std::map<unsigned int,std::map<dealii::CellId, std::vector<double> > > & gradPseudoVLocAtomsElectro,
-				     const vselfBinsManager<FEOrder> & vselfBinsManagerElectro)
+				     const vselfBinsManager<FEOrder> & vselfBinsManagerElectro,
+                                     const std::map<dealii::CellId, std::vector<double> > & shadowKSRhoMinValues,
+                                     const bool shadowPotentialForce)
 {
 
 
@@ -441,7 +453,9 @@ void forceClass<FEOrder>::computeConfigurationalForceTotalLinFE
 					pseudoVLocElectro,
 					gradPseudoVLocElectro,
 					gradPseudoVLocAtomsElectro,
-					vselfBinsManagerElectro);
+					vselfBinsManagerElectro,
+                                        shadowKSRhoMinValues,
+                                        shadowPotentialForce);
   else
      computeConfigurationalForceEEshelbyTensorFPSPFnlLinFE
 		                        (matrixFreeData,
@@ -460,12 +474,16 @@ void forceClass<FEOrder>::computeConfigurationalForceTotalLinFE
 		                        phiExtDofHandlerIndexElectro,
 		                        phiTotRhoOutElectro,
 		                        phiExtElectro,
+                                        rhoOutValues,
+                                        gradRhoOutValues,
 		                        rhoOutValuesElectro,
 					gradRhoOutValuesElectro,
 					pseudoVLocElectro,
 					gradPseudoVLocElectro,
 					gradPseudoVLocAtomsElectro,
-					vselfBinsManagerElectro);
+					vselfBinsManagerElectro,
+                                        shadowKSRhoMinValues,
+                                        shadowPotentialForce);
 
   //configurational force contribution from nuclear self energy. This is handled separately as it involves
   // a surface integral over the vself ball surface

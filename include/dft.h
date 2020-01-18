@@ -169,7 +169,8 @@ namespace dftfe {
       /**
        * @brief Kohn-Sham ground-state solve using SCF iteration
        */
-      void solve(const bool computeForces=true);
+      void solve(const bool computeForces=true,
+                 const bool solveLinearizedKS=false);
 
       /**
        * @brief Number of Kohn-Sham eigen values to be computed
@@ -275,6 +276,12 @@ namespace dftfe {
        */
       void updatePrevMeshDataStructures();
 
+      void interpolateFieldsFromPrevToCurrentMesh(std::vector<vectorType*> fieldsPrevious,
+                                                  std::vector<vectorType* > fieldsCurrent,
+                                                  const dealii::FESystem<3> & FEPrev,
+                                                  const dealii::FESystem<3> & FECurrent,
+                                                  const dealii::ConstraintMatrix & constraintsCurrent);
+
       /**
        *@brief project ground state electron density from previous mesh into
        * the new mesh to be used as initial guess for the new ground state solve
@@ -350,7 +357,27 @@ namespace dftfe {
        *@param[in] isEvaluateGradData denotes a flag to evaluate gradients or not
        */
       void interpolateNodalDataToQuadratureData(dealii::MatrixFree<3,double> & matrixFreeData,
-						vectorType & nodalField,
+						const vectorType & nodalField,
+						std::map<dealii::CellId, std::vector<double> > & quadratureValueData,
+						std::map<dealii::CellId, std::vector<double> > & quadratureGradValueData,
+						const bool isEvaluateGradData);
+
+
+      /**
+       *@brief interpolate nodal data to quadrature data using FEEvaluation
+       *
+       *@param[in] matrixFreeData matrix free data object
+       *@param[in] nodalField nodal data to be interpolated
+       *@param[in] matrix free dofHandler id
+       *@param[in] matrix free quadrature id
+       *@param[out] quadratureValueData to be computed at quadrature points
+       *@param[out] quadratureGradValueData to be computed at quadrature points
+       *@param[in] isEvaluateGradData denotes a flag to evaluate gradients or not
+       */
+      void interpolateNodalDataToQuadratureData(dealii::MatrixFree<3,double> & matrixFreeData,
+						const unsigned int dofHandlerId,
+						const unsigned int quadratureId,
+						const vectorType & nodalField,
 						std::map<dealii::CellId, std::vector<double> > & quadratureValueData,
 						std::map<dealii::CellId, std::vector<double> > & quadratureGradValueData,
 						const bool isEvaluateGradData);
@@ -962,6 +989,9 @@ namespace dftfe {
 
       /// fermi energy
       double fermiEnergy, fermiEnergyUp, fermiEnergyDown, d_groundStateEnergy, d_groundStateEnergyInitial;
+
+      /// shadow potential energy in extended Lagrangian framework
+      double d_shadowPotentialEnergy;
 
       /// entropic energy
       double d_entropicEnergy;

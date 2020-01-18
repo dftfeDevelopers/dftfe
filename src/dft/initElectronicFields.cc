@@ -143,7 +143,7 @@ void dftClass<FEOrder>::initElectronicFields(const unsigned int usePreviousGroun
      if(!(dftParameters::chkType==2 && dftParameters::restartFromChk))
        {
 	 initRho();
-	 d_rhoOutNodalValues.reinit(d_rhoInNodalValues);
+	 //d_rhoOutNodalValues.reinit(d_rhoInNodalValues);
        }
 
      if (dftParameters::verbosity>=4)
@@ -260,7 +260,7 @@ void dftClass<FEOrder>::initElectronicFields(const unsigned int usePreviousGroun
      }
 #endif
 
-  if  (dftParameters::isIonOpt && (dftParameters::reuseWfcGeoOpt || dftParameters::reuseDensityGeoOpt))
+  if  ((dftParameters::isIonOpt && (dftParameters::reuseWfcGeoOpt || dftParameters::reuseDensityGeoOpt)) || dftParameters::isBOMD)
     updatePrevMeshDataStructures();
 
   if (dftParameters::verbosity>=2)

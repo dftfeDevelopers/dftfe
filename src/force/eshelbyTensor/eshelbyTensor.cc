@@ -186,6 +186,23 @@ namespace eshelbyTensor
        return eshelbyTensor;
     }
 
+    Tensor<2,C_DIM,VectorizedArray<double> >  getShadowPotentialForceRhoDiffXcEshelbyTensor
+			     (const VectorizedArray<double> & shadowKSRhoMinMinusRho,
+			      const Tensor<1,C_DIM,VectorizedArray<double> > & gradRho,
+			      const VectorizedArray<double> & exc,
+			      const Tensor<1,C_DIM,VectorizedArray<double> > & derVxcGradRho)
+    {
+
+       Tensor<2,C_DIM,VectorizedArray<double> > eshelbyTensor=-outer_product(derVxcGradRho,gradRho)*shadowKSRhoMinMinusRho;
+       VectorizedArray<double> identityTensorFactor=exc*shadowKSRhoMinMinusRho;
+
+
+       eshelbyTensor[0][0]+=identityTensorFactor;
+       eshelbyTensor[1][1]+=identityTensorFactor;
+       eshelbyTensor[2][2]+=identityTensorFactor;
+       return eshelbyTensor;
+    }
+
     Tensor<2,C_DIM,VectorizedArray<double> >  getELocPspEshelbyTensor
 			     (const VectorizedArray<double> & rho,
 			      const VectorizedArray<double> & pseudoVLoc,

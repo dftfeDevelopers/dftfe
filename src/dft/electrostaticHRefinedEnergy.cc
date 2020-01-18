@@ -716,13 +716,16 @@ void dftClass<FEOrder>::computeElectrostaticEnergyHRefined(const bool computeFor
 					 phiExtDofHandlerIndexHRefined,
 					 phiTotRhoOutHRefined,
 					 phiExtHRefined,
+                                         *rhoOutValues,
+                                         *gradRhoOutValues,
 					 rhoOutHRefinedQuadValues,
 					 gradRhoOutHRefinedQuadValues,
 					 pseudoVLocHRefined,
 					 gradPseudoVLocHRefined,
 					 gradPseudoVLocAtomsHRefined,
 					 onlyHangingNodeConstraints,
-					 vselfBinsManagerHRefined);
+					 vselfBinsManagerHRefined,
+                                         *rhoOutValues);
 	    forcePtr->printAtomsForces();
 	}
 	computingTimerStandard.exit_section("Ion force computation");
