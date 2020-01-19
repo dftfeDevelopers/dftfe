@@ -94,6 +94,7 @@ void molecularDynamics<FEOrder>::run()
 	std::vector<double> entropicEnergyVector(numberTimeSteps,0.0);
 	std::vector<double> kineticEnergyVector(numberTimeSteps,0.0);
         std::vector<double> totalEnergyVector(numberTimeSteps,0.0);
+        std::vector<double> rmsErrorRhoVector(numberTimeSteps,0.0);
 
         const unsigned int kmax=6;
         const double k=1.82;
@@ -104,7 +105,7 @@ void molecularDynamics<FEOrder>::run()
         const double c3=-3.0;
         const double c4=4.0;
         const double c5=-1.0;
-        const double diracDeltaKernelConstant=-0.5;
+        const double diracDeltaKernelConstant=-0.2;
         std::deque<vectorType> approxDensityContainer;
         vectorType shadowKSRhoMin;
 
@@ -316,13 +317,15 @@ void molecularDynamics<FEOrder>::run()
 	    internalEnergyVector[0] = dftPtr->d_groundStateEnergy;
 	    entropicEnergyVector[0] = dftPtr->d_entropicEnergy;
             totalEnergyVector[0]=kineticEnergyVector[0]+internalEnergyVector[0]-entropicEnergyVector[0];
+            rmsErrorRhoVector[0]=0.0;
 
             pcout<<" Initial Velocity Deviation: "<<initialVelocityDeviation<<std::endl;
 	    pcout<<" Kinetic Energy in Ha at timeIndex 0 "<<kineticEnergyVector[0]<<std::endl;
 	    pcout<<" Internal Energy in Ha at timeIndex 0 "<<internalEnergyVector[0]<<std::endl;
 	    pcout<<" Entropic Energy in Ha at timeIndex 0 "<<entropicEnergyVector[0]<<std::endl;
             pcout<<" Total Energy in Ha at timeIndex 0 "<<totalEnergyVector[0]<<std::endl;
-
+            if (dftParameters::isXLBOMD)
+              pcout<<" RMS error in rho in a.u. at timeIndex 0 "<<rmsErrorRhoVector[0]<<std::endl;
 	  }
 
 	//
@@ -406,6 +409,7 @@ void molecularDynamics<FEOrder>::run()
 		  }
 	      }
 
+            double rmsErrorRho=0.0;
             if (dftParameters::isXLBOMD)
             {
 
@@ -413,16 +417,19 @@ void molecularDynamics<FEOrder>::run()
                     {
                         pcout<<".............Auto meshing step: interpolation of approximate density container to new mesh.............."<<std::endl;
                         //interpolate all the vectors in the approximate density container on the current mesh
-                        std::vector<vectorType* > fieldsPtrsPrevious(approxDensityContainer.size());
-                        std::vector<vectorType* > fieldsPtrsCurrent(approxDensityContainer.size());
-                        std::vector<vectorType> fieldsCurrent(approxDensityContainer.size());
+                        std::vector<vectorType* > fieldsPtrsPrevious(approxDensityContainer.size()+1);
+                        std::vector<vectorType* > fieldsPtrsCurrent(approxDensityContainer.size()+1);
+                        std::vector<vectorType> fieldsCurrent(approxDensityContainer.size()+1);
 
                         for (unsigned int i = 0; i < approxDensityContainer.size(); i++)
                         {
                             fieldsPtrsPrevious[i]=&approxDensityContainer[i];
                             dftPtr->d_matrixFreeDataPRefined.initialize_dof_vector(fieldsCurrent[i]);
                             fieldsPtrsCurrent[i]=&fieldsCurrent[i];
-                        } 
+                        }
+                        fieldsPtrsPrevious[approxDensityContainer.size()]=&shadowKSRhoMin;
+                        dftPtr->d_matrixFreeDataPRefined.initialize_dof_vector(fieldsCurrent[approxDensityContainer.size()]);
+                        fieldsPtrsCurrent[approxDensityContainer.size()]=&fieldsCurrent[approxDensityContainer.size()]; 
 
                         dealii::FESystem<3> fe(dealii::FESystem<3>(dftPtr->d_matrixFreeDataPRefined.get_dof_handler().get_fe(),1));
                         dftPtr->interpolateFieldsFromPrevToCurrentMesh(fieldsPtrsPrevious,
@@ -436,18 +443,23 @@ void molecularDynamics<FEOrder>::run()
                            approxDensityContainer[i]=fieldsCurrent[i];
                            approxDensityContainer[i].update_ghost_values();
                         }                     
+                        
+                        shadowKSRhoMin=fieldsCurrent[approxDensityContainer.size()];
+                        shadowKSRhoMin.update_ghost_values();
 
                         //re-normalize
-                        for (unsigned int i = 0; i < approxDensityContainer.size(); i++)
+                        for (unsigned int i = 0; i < approxDensityContainer.size()+1; i++)
                         {
 	                   const double charge = dftPtr->totalCharge(dftPtr->d_matrixFreeDataPRefined,
-						     approxDensityContainer[i]);
+						     i<approxDensityContainer.size()?approxDensityContainer[i]:shadowKSRhoMin);
 	                   pcout<<"Total Charge before Normalizing interpolated field:  "<<charge<<std::endl;
 	       
 	 	           const double scalingFactor = ((double)dftPtr->numElectrons)/charge;
 
 		           approxDensityContainer[i] *= scalingFactor;
-		           pcout<<"Total Charge after Normalizing interpolated field:  "<<dftPtr->totalCharge(dftPtr->d_matrixFreeDataPRefined,approxDensityContainer[i])<<std::endl;
+		           pcout<<"Total Charge after Normalizing interpolated field:  "<<dftPtr->totalCharge(dftPtr->d_matrixFreeDataPRefined,
+                                                                                         i<approxDensityContainer.size()?
+                                                                                         approxDensityContainer[i]:shadowKSRhoMin)<<std::endl;
                         }
 
                         dftPtr->updatePrevMeshDataStructures();
@@ -512,6 +524,13 @@ void molecularDynamics<FEOrder>::run()
                     shadowKSRhoMin=dftPtr->d_rhoOutNodalValues;
                     dftPtr->d_constraintsPRefined.distribute(shadowKSRhoMin);
                     shadowKSRhoMin.update_ghost_values();
+
+                    for (unsigned int i = 0; i < local_size; i++)
+                       rmsErrorRho+=std::pow(approxDensityContainer.back().local_element(i)-shadowKSRhoMin.local_element(i),2.0);
+
+                    rmsErrorRho=std::sqrt(dealii::Utilities::MPI::sum(rmsErrorRho, mpi_communicator)/shadowKSRhoMin.size());
+
+                    //pcout<<"RMS error of approximate density with respect to shadow KS rho min: "<< rmsErrorRho<<std::endl;
             }
             else
             {
@@ -558,6 +577,7 @@ void molecularDynamics<FEOrder>::run()
                                                                :dftPtr->d_groundStateEnergy;
 	    entropicEnergyVector[timeIndex-startingTimeStep] = dftPtr->d_entropicEnergy;
             totalEnergyVector[timeIndex-startingTimeStep] = kineticEnergyVector[timeIndex-startingTimeStep] +internalEnergyVector[timeIndex-startingTimeStep] -entropicEnergyVector[timeIndex-startingTimeStep];
+            rmsErrorRhoVector[timeIndex-startingTimeStep] = rmsErrorRho;
 
 	    //
 	    //reset acceleration at time t based on the acceleration at previous time step
@@ -569,11 +589,14 @@ void molecularDynamics<FEOrder>::run()
 	    pcout<<" Internal Energy in Ha at timeIndex "<<timeIndex<<" "<<internalEnergyVector[timeIndex-startingTimeStep]<<std::endl;
 	    pcout<<" Entropic Energy in Ha at timeIndex "<<timeIndex<<" "<<entropicEnergyVector[timeIndex-startingTimeStep]<<std::endl;
             pcout<<" Total Energy in Ha at timeIndex "<<timeIndex<<" "<<totalEnergyVector[timeIndex-startingTimeStep]<<std::endl;
+            if (dftParameters::isXLBOMD)
+              pcout<<" RMS error in rho in a.u. at timeIndex 0 "<<rmsErrorRhoVector[timeIndex-startingTimeStep]<<std::endl;
 
 	     std::vector<std::vector<double> > data1(timeIndex+1,std::vector<double>(1,0.0));
              std::vector<std::vector<double> > data2(timeIndex+1,std::vector<double>(1,0.0));
              std::vector<std::vector<double> > data3(timeIndex+1,std::vector<double>(1,0.0));
              std::vector<std::vector<double> > data4(timeIndex+1,std::vector<double>(1,0.0));
+             std::vector<std::vector<double> > data5(timeIndex+1,std::vector<double>(1,0.0));
 
 	    if (restartFlag==1)
 	    {
@@ -598,13 +621,19 @@ void molecularDynamics<FEOrder>::run()
 				   "TotEngMd");
 
 
-
+		std::vector<std::vector<double> > rmsErrorRhoData;
+                if (dftParameters::isXLBOMD)
+			dftUtils::readFile(1,
+					   totalEnergyData,
+					   "RMSErrorRho");
 		 for(int i = 0; i <= startingTimeStep; ++i)
 		 {
 		     data1[i][0]=kineticEnergyData[i][0];
 		     data2[i][0]=internalEnergyData[i][0];
 		     data3[i][0]=entropicEnergyData[i][0];
                      data4[i][0]=totalEnergyData[i][0];
+                     if (dftParameters::isXLBOMD)
+                        data5[i][0]=rmsErrorRhoData[i][0];
 		 }
 	     }
 	     else
@@ -613,6 +642,8 @@ void molecularDynamics<FEOrder>::run()
 		 data2[0][0]=internalEnergyVector[0];
 		 data3[0][0]=entropicEnergyVector[0];
                  data4[0][0]=totalEnergyVector[0];
+                 if (dftParameters::isXLBOMD)
+                     data5[0][0]=rmsErrorRhoVector[0];
 	     }
 
 	     for(int i = startingTimeStep+1; i <= timeIndex; ++i)
@@ -621,6 +652,8 @@ void molecularDynamics<FEOrder>::run()
 		 data2[i][0]=internalEnergyVector[i-startingTimeStep];
 		 data3[i][0]=entropicEnergyVector[i-startingTimeStep];
                  data4[i][0]=totalEnergyVector[i-startingTimeStep];
+                 if (dftParameters::isXLBOMD)
+                     data5[i][0]=rmsErrorRhoVector[i-startingTimeStep];
 	     }
              MPI_Barrier(MPI_COMM_WORLD);
 	     dftUtils::writeDataIntoFile(data1,
@@ -637,6 +670,9 @@ void molecularDynamics<FEOrder>::run()
 	     dftUtils::writeDataIntoFile(data4,
 			       "TotEngMd");
 
+             if (dftParameters::isXLBOMD)
+  	         dftUtils::writeDataIntoFile(data5,
+			         "RMSErrorRho");
 
 	    ///write velocity and acceleration data
 	    std::vector<std::vector<double> > fileAccData(numberGlobalCharges,std::vector<double>(3,0.0));
