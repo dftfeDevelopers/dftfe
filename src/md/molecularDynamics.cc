@@ -119,7 +119,8 @@ void molecularDynamics<FEOrder>::run()
 
 	if(restartFlag == 0)
 	  {
-	   // dftParameters::TVal=initialTemperature;
+	    // dftParameters::TVal=initialTemperature;
+	    dftPtr->updatePrevMeshDataStructures();
 	    dftPtr->solve();
             const std::vector<double> forceOnAtoms= dftPtr->forcePtr->getAtomsForces();
 
