@@ -54,14 +54,14 @@ void molecularDynamics<FEOrder>::run()
         pcout<<"---------------Starting Molecular dynamics simulation---------------------"<<std::endl;
         const unsigned int numberGlobalCharges=dftPtr->atomLocations.size();
         //https://lammps.sandia.gov/doc/units.html
-	const double initialTemperature = 1500;//K
+	const double initialTemperature = 300;//K
 	const unsigned int restartFlag =dftParameters::restartFromChk?1:0; //1; //0;//1;
 	int startingTimeStep = 0; //625;//450;// 50;//300; //0;// 300;
 
 	double massAtomAl = 26.982;//mass proton is chosen 1 **49611.513**
 	double massAtomMg= 24.305;
 	const double timeStep = 0.05; //0.5 femtoseconds
-	const unsigned int numberTimeSteps = 10;
+	const unsigned int numberTimeSteps = 2;
 
         //https://physics.nist.gov/cuu/Constants/Table/allascii.txt
 	const double kb = 8.617333262e-05;//eV/K **3.166811429e-6**;
@@ -104,7 +104,7 @@ void molecularDynamics<FEOrder>::run()
         const double c3=-3.0;
         const double c4=4.0;
         const double c5=-1.0;
-        const double diracDeltaKernelConstant=0.5;
+        const double diracDeltaKernelConstant=-0.5;
         std::deque<vectorType> approxDensityContainer;
         vectorType shadowKSRhoMin;
 
@@ -448,6 +448,8 @@ void molecularDynamics<FEOrder>::run()
 		           approxDensityContainer[i] *= scalingFactor;
 		           pcout<<"Total Charge after Normalizing interpolated field:  "<<dftPtr->totalCharge(dftPtr->d_matrixFreeDataPRefined,approxDensityContainer[i])<<std::endl;
                         }
+
+                        dftPtr->updatePrevMeshDataStructures();
                         pcout<<".............Auto meshing step: interpolation and re-normalization completed.............."<<std::endl;
                     }
 
@@ -498,7 +500,9 @@ void molecularDynamics<FEOrder>::run()
 						        approxDensityContainer.back(),
 						        *(dftPtr->rhoInValues),
 						        *(dftPtr->gradRhoInValues),
-						         dftParameters::xc_id == 4); 
+						         dftParameters::xc_id == 4);
+                     
+                    dftPtr->normalizeRho(); 
 		    //
 		    //do an scf calculation
 		    //
@@ -534,9 +538,9 @@ void molecularDynamics<FEOrder>::run()
             //compute velocity at t + delta t 
 	    for(int iCharge = 0; iCharge < numberGlobalCharges; ++iCharge)
 	      {
-		velocity[3*iCharge + 0] += velocityMid[3*iCharge + 0] + 0.5*accelerationNew[3*iCharge + 0]*timeStep;
-		velocity[3*iCharge + 1] += velocityMid[3*iCharge + 1] + 0.5*accelerationNew[3*iCharge + 1]*timeStep;
-		velocity[3*iCharge + 2] += velocityMid[3*iCharge + 2] + 0.5*accelerationNew[3*iCharge + 2]*timeStep;
+		velocity[3*iCharge + 0] = velocityMid[3*iCharge + 0] + 0.5*accelerationNew[3*iCharge + 0]*timeStep;
+		velocity[3*iCharge + 1] = velocityMid[3*iCharge + 1] + 0.5*accelerationNew[3*iCharge + 1]*timeStep;
+		velocity[3*iCharge + 2] = velocityMid[3*iCharge + 2] + 0.5*accelerationNew[3*iCharge + 2]*timeStep;
 	      }
 
 	    kineticEnergy = 0.0;

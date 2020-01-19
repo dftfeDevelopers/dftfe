@@ -102,7 +102,7 @@ namespace dftfe {
       Tensor<2,C_DIM,VectorizedArray<double> >  getShadowPotentialForceRhoDiffXcEshelbyTensor
 			     (const VectorizedArray<double> & shadowKSRhoMinMinusRho,
 			      const Tensor<1,C_DIM,VectorizedArray<double> > & gradRho,
-			      const VectorizedArray<double> & exc,
+			      const VectorizedArray<double> & vxc,
 			      const Tensor<1,C_DIM,VectorizedArray<double> > & derVxcGradRho);
 
       /// psp part of the ELoc Eshelby tensor
