@@ -658,7 +658,7 @@ namespace dftfe {
 
       /// Gaussian generator parameter for force computation and Gaussian deformation of atoms and FEM mesh
       /// Gaussian generator: Gamma(r)= exp(-(r/d_gaussianConstant)^2)
-      const double d_gaussianConstantForce=0.75;
+      const double d_gaussianConstantForce;
 
       /// vector of lendth number of periodic image charges with corresponding master chargeIds
       std::vector<int> d_imageIds;

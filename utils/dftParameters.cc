@@ -108,6 +108,10 @@ namespace dftfe {
     bool autoGPUBlockSizes=true;
     double maxJacobianRatioFactorForMD=1.5;
     double chebyshevFilterTolXLBOMD=1e-8;
+    double timeStepBOMD=0.5;
+    unsigned int numberStepsBOMD=1000;
+    double startingTempBOMDNVE=300.0;
+    double gaussianConstantForce=0.75;
 
     void declare_parameters(ParameterHandler &prm)
     {
@@ -388,6 +392,10 @@ namespace dftfe {
 	  prm.declare_entry("ERROR ESTIMATE WAVEFUNCTIONS", "5",
 			    Patterns::Integer(0),
 			    "[Developer] Number of wavefunctions to be used for error estimation.");
+
+	  prm.declare_entry("GAUSSIAN CONSTANT FORCE GENERATOR", "0.75",
+			    Patterns::Double(0.0,2.0),
+			    "[Developer] Force computation generator gaussian constant. Gamma(r)= exp(-(r/gaussianConstant)^2).");
 
 	}
 	prm.leave_subsection ();
@@ -680,13 +688,25 @@ namespace dftfe {
 			  Patterns::Bool(),
 			  "[Standard] Perform Extended Lagrangian Born-Oppenheimer NVE molecular dynamics. Currently not implemented for spin-polarization case.");
 
-	prm.declare_entry("CHEBY TOL XL BOMD", "1e-7",
+	prm.declare_entry("CHEBY TOL XL BOMD", "1e-9",
 			  Patterns::Double(0.0),
 			  "[Standard] Parameter specifying the accuracy of the occupied eigenvectors close to the Fermi-energy computed using Chebyshev filtering subspace iteration procedure.");
 
 	prm.declare_entry("MAX JACOBIAN RATIO FACTOR", "1.5",
 			    Patterns::Double(0.9,3.0),
-			    "[Developer] Maximum scaling factor for maximum jacobian ratio of FEM mesh when mesh is deformed.");  
+			    "[Developer] Maximum scaling factor for maximum jacobian ratio of FEM mesh when mesh is deformed."); 
+
+	prm.declare_entry("STARTING TEMP NVE", "300.0",
+			    Patterns::Double(0.0),
+			    "[Developer] Starting temperature in K for NVE simulation.");   
+
+	prm.declare_entry("TIME STEP", "0.5",
+			    Patterns::Double(0.0),
+			    "[Standard] Time step in femtoseconds."); 
+
+	prm.declare_entry("NUMBER OF STEPS", "1000",
+			  Patterns::Integer(0,200000),
+			  "[Standard] Number of time steps."); 
 
       }
       prm.leave_subsection ();
@@ -792,6 +812,7 @@ namespace dftfe {
 	  dftParameters::numLevels                     = prm.get_double("NUM LEVELS");
 	  dftParameters::numberWaveFunctionsForEstimate = prm.get_integer("ERROR ESTIMATE WAVEFUNCTIONS");
 	  dftParameters::toleranceKinetic = prm.get_double("TOLERANCE FOR MESH ADAPTION");
+          dftParameters::gaussianConstantForce = prm.get_double("GAUSSIAN CONSTANT FORCE GENERATOR");
 	}
         prm.leave_subsection ();
       }
@@ -901,6 +922,9 @@ namespace dftfe {
           dftParameters::maxJacobianRatioFactorForMD   = prm.get_double("MAX JACOBIAN RATIO FACTOR");
           dftParameters::isXLBOMD                      = prm.get_bool("XL BOMD");
           dftParameters::chebyshevFilterTolXLBOMD      = prm.get_double("CHEBY TOL XL BOMD");
+          dftParameters::timeStepBOMD                  = prm.get_double("TIME STEP");
+          dftParameters::numberStepsBOMD               = prm.get_integer("NUMBER OF STEPS"); 
+          dftParameters::startingTempBOMDNVE      = prm.get_double("STARTING TEMP NVE");         
       }
       prm.leave_subsection ();
 	

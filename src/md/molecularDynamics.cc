@@ -54,14 +54,14 @@ void molecularDynamics<FEOrder>::run()
         pcout<<"---------------Starting Molecular dynamics simulation---------------------"<<std::endl;
         const unsigned int numberGlobalCharges=dftPtr->atomLocations.size();
         //https://lammps.sandia.gov/doc/units.html
-	const double initialTemperature = 300;//K
+	const double initialTemperature = dftParameters::startingTempBOMDNVE;//K
 	const unsigned int restartFlag =dftParameters::restartFromChk?1:0; //1; //0;//1;
 	int startingTimeStep = 0; //625;//450;// 50;//300; //0;// 300;
 
 	double massAtomAl = 26.982;//mass proton is chosen 1 **49611.513**
 	double massAtomMg= 24.305;
-	const double timeStep = 0.05; //0.5 femtoseconds
-	const unsigned int numberTimeSteps = 2;
+	const double timeStep = dftParameters::timeStepBOMD/10.0; //0.5 femtoseconds
+	const unsigned int numberTimeSteps = dftParameters::numberStepsBOMD;
 
         //https://physics.nist.gov/cuu/Constants/Table/allascii.txt
 	const double kb = 8.617333262e-05;//eV/K **3.166811429e-6**;
@@ -110,8 +110,8 @@ void molecularDynamics<FEOrder>::run()
 
 	double kineticEnergy = 0.0;
 
-	boost::mt19937 rng(std::time(0));
-	//boost::mt19937 rng;
+	//boost::mt19937 rng(std::time(0));
+	boost::mt19937 rng;
 	boost::normal_distribution<> gaussianDist(0.0,initialVelocityDeviation);
 	boost::variate_generator<boost::mt19937&,boost::normal_distribution<> > generator(rng,gaussianDist);
 	double averageKineticEnergy;

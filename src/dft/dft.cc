@@ -123,6 +123,7 @@ namespace dftfe {
     d_vselfBinsManager(mpi_comm_replica),
     pcout (std::cout, (Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0)),
     d_elpaScala(mpi_comm_replica),
+    d_gaussianConstantForce(dftParameters::gaussianConstantForce),
     computing_timer (mpi_comm_replica,
 	             pcout,
 		     dftParameters::reproducible_output
