@@ -122,8 +122,9 @@ void molecularDynamics<FEOrder>::run()
 
 	if(restartFlag == 0)
 	  {
-	    // dftParameters::TVal=initialTemperature;
-	    dftPtr->updatePrevMeshDataStructures();
+	    if (dftParameters::autoMeshStepInterpolateBOMD)
+	       dftPtr->updatePrevMeshDataStructures();
+
 	    dftPtr->solve();
             const std::vector<double> forceOnAtoms= dftPtr->forcePtr->getAtomsForces();
 
@@ -424,7 +425,7 @@ void molecularDynamics<FEOrder>::run()
             if (dftParameters::isXLBOMD)
             {
 
-                    if (dftPtr->d_autoMesh==1)
+                    if (dftPtr->d_autoMesh==1 && dftParameters::autoMeshStepInterpolateBOMD)
                     {
                         pcout<<".............Auto meshing step: interpolation of approximate density container to new mesh.............."<<std::endl;
                         //interpolate all the vectors in the approximate density container on the current mesh
@@ -479,74 +480,106 @@ void molecularDynamics<FEOrder>::run()
                         dftPtr->updatePrevMeshDataStructures();
                         pcout<<".............Auto meshing step: interpolation and re-normalization completed.............."<<std::endl;
                     }
-
-
-                    vectorType approxDensityNext;
-                    approxDensityNext.reinit(approxDensityContainer.back()); 
-
-                    const unsigned int containerSizeCurrent=approxDensityContainer.size();
-                    vectorType & approxDensityTimeT=approxDensityContainer[containerSizeCurrent-1];
-                    vectorType & approxDensityTimeTMinusDeltat=containerSizeCurrent>1?
-                                                               approxDensityContainer[containerSizeCurrent-2]
-                                                               :approxDensityTimeT;
-                   
-                    const unsigned int local_size = approxDensityNext.local_size();
-
-                    for (unsigned int i = 0; i < local_size; i++)
-                        approxDensityNext.local_element(i)=approxDensityTimeT.local_element(i)*2.0
-                                                          -approxDensityTimeTMinusDeltat.local_element(i)
-                                                          -(shadowKSRhoMin.local_element(i)-approxDensityTimeT.local_element(i))*k*diracDeltaKernelConstant;
- 
- 
-                    if (approxDensityContainer.size()==kmax)
+                    else if (dftPtr->d_autoMesh==1)
                     {
-                        for (unsigned int i = 0; i < local_size; i++)
-				approxDensityNext.local_element(i)+=alpha*(c0*approxDensityContainer[containerSizeCurrent-1].local_element(i)
-							 +c1*approxDensityContainer[containerSizeCurrent-2].local_element(i)
-							 +c2*approxDensityContainer[containerSizeCurrent-3].local_element(i)
-							 +c3*approxDensityContainer[containerSizeCurrent-4].local_element(i)
-							 +c4*approxDensityContainer[containerSizeCurrent-5].local_element(i)
-							 +c5*approxDensityContainer[containerSizeCurrent-6].local_element(i)
-                                                         +c6*approxDensityContainer[containerSizeCurrent-7].local_element(i)
-                                                         +c7*approxDensityContainer[containerSizeCurrent-8].local_element(i));
-                        approxDensityContainer.pop_front();
+                        dftPtr->solve();
+			shadowKSRhoMin=dftPtr->d_rhoOutNodalValues;
+		        dftPtr->d_constraintsPRefined.distribute(shadowKSRhoMin);
+		        shadowKSRhoMin.update_ghost_values();
+
+		        dftPtr->d_constraintsPRefined.distribute(dftPtr->d_rhoOutNodalValues);
+		        for (unsigned int i=0; i<approxDensityContainer.size();++i)
+		        {
+			      approxDensityContainer[i]=(dftPtr->d_rhoOutNodalValues);
+			      approxDensityContainer[i].update_ghost_values();
+		        }
+
+		        //normalize approxDensityVec
+		        double charge = dftPtr->totalCharge(dftPtr->d_matrixFreeDataPRefined,
+							     approxDensityContainer.back());
+		        pcout<<"Total Charge before Normalizing approxDensityVec:  "<<charge<<std::endl;
+		       
+		        double scalingFactor = ((double)dftPtr->numElectrons)/charge;
+
+		        //scale nodal vector with scalingFactor
+		        approxDensityContainer.back() *= scalingFactor;
+		        pcout<<"Total Charge after Normalizing approxDensityVec:  "<<dftPtr->totalCharge(dftPtr->d_matrixFreeDataPRefined,approxDensityContainer.back())<<std::endl;
+
+			//normalize shadowKSRhoMin
+			charge = dftPtr->totalCharge(dftPtr->d_matrixFreeDataPRefined,
+							       shadowKSRhoMin);
+			scalingFactor = ((double)dftPtr->numElectrons)/charge;
+			shadowKSRhoMin *= scalingFactor;
                     }
-                    approxDensityContainer.push_back(approxDensityNext);
-                    approxDensityContainer.back().update_ghost_values();                    
- 
-	            //normalize approxDensityVec
-	            double charge = dftPtr->totalCharge(dftPtr->d_matrixFreeDataPRefined,
-						     approxDensityContainer.back());
-	            pcout<<"Total Charge before Normalizing new approxDensityVec:  "<<charge<<std::endl;
-	       
-		    double scalingFactor = ((double)dftPtr->numElectrons)/charge;
+                    else
+		    {
+		        vectorType approxDensityNext;
+			approxDensityNext.reinit(approxDensityContainer.back()); 
 
-		    //scale nodal vector with scalingFactor
-		    approxDensityContainer.back() *= scalingFactor;
-		    pcout<<"Total Charge after Normalizing new approxDensityVec:  "<<dftPtr->totalCharge(dftPtr->d_matrixFreeDataPRefined,approxDensityContainer.back())<<std::endl;
+			const unsigned int containerSizeCurrent=approxDensityContainer.size();
+			vectorType & approxDensityTimeT=approxDensityContainer[containerSizeCurrent-1];
+			vectorType & approxDensityTimeTMinusDeltat=containerSizeCurrent>1?
+								       approxDensityContainer[containerSizeCurrent-2]
+								       :approxDensityTimeT;
+			   
+			const unsigned int local_size = approxDensityNext.local_size();
 
-		    dftPtr->interpolateNodalDataToQuadratureData(dftPtr->d_matrixFreeDataPRefined,
-						        approxDensityContainer.back(),
-						        *(dftPtr->rhoInValues),
-						        *(dftPtr->gradRhoInValues),
-						         dftParameters::xc_id == 4);
-                     
-                    dftPtr->normalizeRho(); 
-		    //
-		    //do an scf calculation
-		    //
-		    dftPtr->solve(true,true);
+			for (unsigned int i = 0; i < local_size; i++)
+				approxDensityNext.local_element(i)=approxDensityTimeT.local_element(i)*2.0
+								  -approxDensityTimeTMinusDeltat.local_element(i)
+								  -(shadowKSRhoMin.local_element(i)-approxDensityTimeT.local_element(i))*k*diracDeltaKernelConstant;
+	 
+	 
+			if (approxDensityContainer.size()==kmax)
+			{
+				for (unsigned int i = 0; i < local_size; i++)
+					approxDensityNext.local_element(i)+=alpha*(c0*approxDensityContainer[containerSizeCurrent-1].local_element(i)
+								 +c1*approxDensityContainer[containerSizeCurrent-2].local_element(i)
+								 +c2*approxDensityContainer[containerSizeCurrent-3].local_element(i)
+								 +c3*approxDensityContainer[containerSizeCurrent-4].local_element(i)
+								 +c4*approxDensityContainer[containerSizeCurrent-5].local_element(i)
+								 +c5*approxDensityContainer[containerSizeCurrent-6].local_element(i)
+								 +c6*approxDensityContainer[containerSizeCurrent-7].local_element(i)
+								 +c7*approxDensityContainer[containerSizeCurrent-8].local_element(i));
+				approxDensityContainer.pop_front();
+			}
+			approxDensityContainer.push_back(approxDensityNext);
+			approxDensityContainer.back().update_ghost_values();                    
+	 
+			//normalize approxDensityVec
+			double charge = dftPtr->totalCharge(dftPtr->d_matrixFreeDataPRefined,
+							     approxDensityContainer.back());
+			pcout<<"Total Charge before Normalizing new approxDensityVec:  "<<charge<<std::endl;
+		       
+			double scalingFactor = ((double)dftPtr->numElectrons)/charge;
 
-                    shadowKSRhoMin=dftPtr->d_rhoOutNodalValues;
-                    dftPtr->d_constraintsPRefined.distribute(shadowKSRhoMin);
-                    shadowKSRhoMin.update_ghost_values();
+			//scale nodal vector with scalingFactor
+			approxDensityContainer.back() *= scalingFactor;
+			pcout<<"Total Charge after Normalizing new approxDensityVec:  "<<dftPtr->totalCharge(dftPtr->d_matrixFreeDataPRefined,approxDensityContainer.back())<<std::endl;
 
-	            //normalize shadowKSRhoMin
-	            charge = dftPtr->totalCharge(dftPtr->d_matrixFreeDataPRefined,
-						       shadowKSRhoMin);
- 		    scalingFactor = ((double)dftPtr->numElectrons)/charge;
-		    shadowKSRhoMin *= scalingFactor;
+  		        dftPtr->interpolateNodalDataToQuadratureData(dftPtr->d_matrixFreeDataPRefined,
+								approxDensityContainer.back(),
+								*(dftPtr->rhoInValues),
+								*(dftPtr->gradRhoInValues),
+								 dftParameters::xc_id == 4);
+			     
+			dftPtr->normalizeRho(); 
+			    
+                        //do an scf calculation
+			dftPtr->solve(true,true);
 
+			shadowKSRhoMin=dftPtr->d_rhoOutNodalValues;
+			dftPtr->d_constraintsPRefined.distribute(shadowKSRhoMin);
+			shadowKSRhoMin.update_ghost_values();
+
+			//normalize shadowKSRhoMin
+			charge = dftPtr->totalCharge(dftPtr->d_matrixFreeDataPRefined,
+					       shadowKSRhoMin);
+			scalingFactor = ((double)dftPtr->numElectrons)/charge;
+			shadowKSRhoMin *= scalingFactor;
+		    }
+
+                    const unsigned int local_size = approxDensityContainer.back().local_size();
                     for (unsigned int i = 0; i < local_size; i++)
                        rmsErrorRho+=std::pow(approxDensityContainer.back().local_element(i)-shadowKSRhoMin.local_element(i),2.0);
 

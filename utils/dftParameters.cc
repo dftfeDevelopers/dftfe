@@ -113,6 +113,7 @@ namespace dftfe {
     double startingTempBOMDNVE=300.0;
     double gaussianConstantForce=0.75;
     bool useRank1KernelXLBOMD=false;
+    bool autoMeshStepInterpolateBOMD=false;
 
     void declare_parameters(ParameterHandler &prm)
     {
@@ -711,7 +712,11 @@ namespace dftfe {
 
 	prm.declare_entry("USE RANK 1 KERNEL XL BOMD", "false",
 			  Patterns::Bool(),
-			  "[Standard] Use rank 1 Kernel update without accumulation in every XL BOMD time step."); 
+			  "[Standard] Use rank 1 Kernel update without accumulation in every XL BOMD time step.");
+
+	prm.declare_entry("AUTO MESH STEP INTERPOLATE BOMD", "false",
+			  Patterns::Bool(),
+			  "[Standard] Perform interpolation of previous density to new auto mesh.");  
 
       }
       prm.leave_subsection ();
@@ -930,7 +935,8 @@ namespace dftfe {
           dftParameters::timeStepBOMD                  = prm.get_double("TIME STEP");
           dftParameters::numberStepsBOMD               = prm.get_integer("NUMBER OF STEPS"); 
           dftParameters::startingTempBOMDNVE           = prm.get_double("STARTING TEMP NVE");   
-          dftParameters::useRank1KernelXLBOMD          = prm.get_bool("USE RANK 1 KERNEL XL BOMD");       
+          dftParameters::useRank1KernelXLBOMD          = prm.get_bool("USE RANK 1 KERNEL XL BOMD");
+          dftParameters::autoMeshStepInterpolateBOMD     = prm.get_bool("AUTO MESH STEP INTERPOLATE BOMD");        
       }
       prm.leave_subsection ();
 	
