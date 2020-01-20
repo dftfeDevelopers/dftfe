@@ -115,6 +115,7 @@ namespace dftfe {
       extern unsigned int numberStepsBOMD;
       extern double startingTempBOMDNVE;
       extern double gaussianConstantForce;
+      extern bool useRank1KernelXLBOMD;
 
       /**
        * Declare parameters.
