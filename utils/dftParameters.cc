@@ -396,7 +396,7 @@ namespace dftfe {
 			    "[Developer] Number of wavefunctions to be used for error estimation.");
 
 	  prm.declare_entry("GAUSSIAN CONSTANT FORCE GENERATOR", "0.75",
-			    Patterns::Double(0.0,2.0),
+			    Patterns::Double(0.0),
 			    "[Developer] Force computation generator gaussian constant. Gamma(r)= exp(-(r/gaussianConstant)^2).");
 
 	}
