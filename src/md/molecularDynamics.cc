@@ -467,7 +467,10 @@ void molecularDynamics<FEOrder>::run()
 	       
 	 	           const double scalingFactor = ((double)dftPtr->numElectrons)/charge;
 
-		           approxDensityContainer[i] *= scalingFactor;
+                           if (i<approxDensityContainer.size())
+		              approxDensityContainer[i] *= scalingFactor;
+                           else
+                              shadowKSRhoMin *=scalingFactor;
 		           pcout<<"Total Charge after Normalizing interpolated field:  "<<dftPtr->totalCharge(dftPtr->d_matrixFreeDataPRefined,
                                                                                          i<approxDensityContainer.size()?
                                                                                          approxDensityContainer[i]:shadowKSRhoMin)<<std::endl;
