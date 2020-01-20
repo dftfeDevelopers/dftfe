@@ -96,17 +96,19 @@ void molecularDynamics<FEOrder>::run()
         std::vector<double> totalEnergyVector(numberTimeSteps,0.0);
         std::vector<double> rmsErrorRhoVector(numberTimeSteps,0.0);
 
-        const unsigned int kmax=6;
-        const double k=1.82;
-        const double alpha=0.018;
-        const double c0=-6.0;
-        const double c1=14.0;
-        const double c2=-8.0;
-        const double c3=-3.0;
-        const double c4=4.0;
-        const double c5=-1.0;
-        const double diracDeltaKernelConstant=-0.2;
-        std::deque<vectorType> approxDensityContainer;
+        const unsigned int kmax=8;
+        const double k=1.86;
+        const double alpha=0.0016;
+        const double c0=-36.0;
+        const double c1=99.0;
+        const double c2=-88.0;
+        const double c3=11.0;
+        const double c4=32.0;
+        const double c5=-25.0;
+        const double c6=8.0;
+        const double c7=-1.0;
+        const double diracDeltaKernelConstant=-0.1;
+        std::deque<vectorType> approxDensityContainer(kmax);
         vectorType shadowKSRhoMin;
 
 	double kineticEnergy = 0.0;
@@ -132,20 +134,29 @@ void molecularDynamics<FEOrder>::run()
                    dftPtr->d_constraintsPRefined.distribute(shadowKSRhoMin);
                    shadowKSRhoMin.update_ghost_values();
 
-                   approxDensityContainer.push_back(dftPtr->d_rhoOutNodalValues);
-                   dftPtr->d_constraintsPRefined.distribute(approxDensityContainer.back());
-                   approxDensityContainer.back().update_ghost_values();
+                   dftPtr->d_constraintsPRefined.distribute(dftPtr->d_rhoOutNodalValues);
+                   for (unsigned int i=0; i<approxDensityContainer.size();++i)
+                   {
+                      approxDensityContainer[i]=(dftPtr->d_rhoOutNodalValues);
+                      approxDensityContainer[i].update_ghost_values();
+                   }
 
 	           //normalize approxDensityVec
-	           const double charge = dftPtr->totalCharge(dftPtr->d_matrixFreeDataPRefined,
+	           double charge = dftPtr->totalCharge(dftPtr->d_matrixFreeDataPRefined,
 						     approxDensityContainer.back());
 	           pcout<<"Total Charge before Normalizing approxDensityVec:  "<<charge<<std::endl;
 	       
-		   const double scalingFactor = ((double)dftPtr->numElectrons)/charge;
+		   double scalingFactor = ((double)dftPtr->numElectrons)/charge;
 
 		   //scale nodal vector with scalingFactor
 		   approxDensityContainer.back() *= scalingFactor;
 		   pcout<<"Total Charge after Normalizing approxDensityVec:  "<<dftPtr->totalCharge(dftPtr->d_matrixFreeDataPRefined,approxDensityContainer.back())<<std::endl;
+
+	           //normalize shadowKSRhoMin
+	           charge = dftPtr->totalCharge(dftPtr->d_matrixFreeDataPRefined,
+						       shadowKSRhoMin);
+		   scalingFactor = ((double)dftPtr->numElectrons)/charge;
+		   shadowKSRhoMin *= scalingFactor;
             }
 
             const bool testing=false;
@@ -492,18 +503,20 @@ void molecularDynamics<FEOrder>::run()
 							 +c2*approxDensityContainer[containerSizeCurrent-3].local_element(i)
 							 +c3*approxDensityContainer[containerSizeCurrent-4].local_element(i)
 							 +c4*approxDensityContainer[containerSizeCurrent-5].local_element(i)
-							 +c5*approxDensityContainer[containerSizeCurrent-6].local_element(i));
+							 +c5*approxDensityContainer[containerSizeCurrent-6].local_element(i)
+                                                         +c6*approxDensityContainer[containerSizeCurrent-7].local_element(i)
+                                                         +c7*approxDensityContainer[containerSizeCurrent-8].local_element(i));
                         approxDensityContainer.pop_front();
                     }
                     approxDensityContainer.push_back(approxDensityNext);
                     approxDensityContainer.back().update_ghost_values();                    
  
 	            //normalize approxDensityVec
-	            const double charge = dftPtr->totalCharge(dftPtr->d_matrixFreeDataPRefined,
+	            double charge = dftPtr->totalCharge(dftPtr->d_matrixFreeDataPRefined,
 						     approxDensityContainer.back());
 	            pcout<<"Total Charge before Normalizing new approxDensityVec:  "<<charge<<std::endl;
 	       
-		    const double scalingFactor = ((double)dftPtr->numElectrons)/charge;
+		    double scalingFactor = ((double)dftPtr->numElectrons)/charge;
 
 		    //scale nodal vector with scalingFactor
 		    approxDensityContainer.back() *= scalingFactor;
@@ -524,6 +537,12 @@ void molecularDynamics<FEOrder>::run()
                     shadowKSRhoMin=dftPtr->d_rhoOutNodalValues;
                     dftPtr->d_constraintsPRefined.distribute(shadowKSRhoMin);
                     shadowKSRhoMin.update_ghost_values();
+
+	            //normalize shadowKSRhoMin
+	            charge = dftPtr->totalCharge(dftPtr->d_matrixFreeDataPRefined,
+						       shadowKSRhoMin);
+ 		    scalingFactor = ((double)dftPtr->numElectrons)/charge;
+		    shadowKSRhoMin *= scalingFactor;
 
                     for (unsigned int i = 0; i < local_size; i++)
                        rmsErrorRho+=std::pow(approxDensityContainer.back().local_element(i)-shadowKSRhoMin.local_element(i),2.0);
@@ -625,7 +644,7 @@ void molecularDynamics<FEOrder>::run()
                 if (dftParameters::isXLBOMD)
 			dftUtils::readFile(1,
 					   totalEnergyData,
-					   "RMSErrorRho");
+					   "RMSErrorRhoMd");
 		 for(int i = 0; i <= startingTimeStep; ++i)
 		 {
 		     data1[i][0]=kineticEnergyData[i][0];
@@ -672,7 +691,7 @@ void molecularDynamics<FEOrder>::run()
 
              if (dftParameters::isXLBOMD)
   	         dftUtils::writeDataIntoFile(data5,
-			         "RMSErrorRho");
+			         "RMSErrorRhoMd");
 
 	    ///write velocity and acceleration data
 	    std::vector<std::vector<double> > fileAccData(numberGlobalCharges,std::vector<double>(3,0.0));
