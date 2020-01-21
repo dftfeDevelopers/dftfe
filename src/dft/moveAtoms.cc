@@ -98,11 +98,13 @@ namespace internal{
 // Depending on the maximum displacement magnitude this function decides wether to do auto remeshing
 // or move mesh using Gaussian functions.
 template<unsigned int FEOrder>
-void dftClass<FEOrder>::updateAtomPositionsAndMoveMesh(const std::vector<Tensor<1,3,double> > & globalAtomsDisplacements,
+bool dftClass<FEOrder>::updateAtomPositionsAndMoveMesh(const std::vector<Tensor<1,3,double> > & globalAtomsDisplacements,
 	                                               const double maxJacobianRatioFactor,
-						       const bool useSingleAtomSolutions)
+						       const bool useSingleAtomSolutions,
+                                                       const bool forceSupressAutoMesh)
 
 {
+  bool isAutoRemeshSupressed=false;
   const int numberGlobalAtoms = atomLocations.size();
   int numberImageCharges = d_imageIds.size();
   int totalNumberAtoms = numberGlobalAtoms + numberImageCharges;
@@ -344,20 +346,6 @@ void dftClass<FEOrder>::updateAtomPositionsAndMoveMesh(const std::vector<Tensor<
 			     d_domainBoundingVectors);
 
       const double tol=1e-6;
-      //Heuristic values
-      const double maxJacobianRatio=2.0;
-      //const double break1=0.1;
-
-      //unsigned int useGaussian=0;
-      //if (maxDispAtom <(break1+tol))
-      //useGaussian=1;
-
-      //for synchrozination in case the updateCase are different in different processors due to floating point comparison
-      //MPI_Bcast(&(useGaussian),
-      //	1,
-      //	MPI_INT,
-      //	0,
-      //	MPI_COMM_WORLD);
 
       if(useGaussian!=1)
 	{
@@ -384,8 +372,16 @@ void dftClass<FEOrder>::updateAtomPositionsAndMoveMesh(const std::vector<Tensor<
 
 	  const std::pair<bool,double> meshQualityMetrics=d_gaussianMovePar.moveMeshTwoStep(controlPointLocationsInitialMove,d_controlPointLocationsCurrentMove,controlPointDisplacementsInitialMove,controlPointDisplacementsCurrentMove,d_gaussianConstantAutoMove,forcePtr->getGaussianGeneratorParameter());
 
-	  if (meshQualityMetrics.first || meshQualityMetrics.second > maxJacobianRatioFactor*d_autoMeshMaxJacobianRatio)
-	    d_autoMesh=1;
+	  if ((meshQualityMetrics.first || meshQualityMetrics.second > maxJacobianRatioFactor*d_autoMeshMaxJacobianRatio))
+          {
+            if (forceSupressAutoMesh)
+            {
+              d_autoMesh=0;
+              isAutoRemeshSupressed=true;
+            }
+            else
+	      d_autoMesh=1;
+          }
 	  MPI_Bcast(&(d_autoMesh),
 		    1,
 		    MPI_INT,
@@ -450,4 +446,5 @@ void dftClass<FEOrder>::updateAtomPositionsAndMoveMesh(const std::vector<Tensor<
 	    }
 	}
     }
+    return isAutoRemeshSupressed;
 }

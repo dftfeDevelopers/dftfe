@@ -239,9 +239,10 @@ namespace dftfe {
        *  @param[in] globalAtomsDisplacements vector containing the displacements (from current position) of all atoms (global).
        *  @return void.
        */
-      void updateAtomPositionsAndMoveMesh(const std::vector<Tensor<1,3,double> > & globalAtomsDisplacements,
+      bool updateAtomPositionsAndMoveMesh(const std::vector<Tensor<1,3,double> > & globalAtomsDisplacements,
 	                                  const double maxJacobianRatioFactor,
-					  const bool useSingleAtomSolutions=false);
+					  const bool useSingleAtomSolutions=false,
+                                          const bool forceSupressAutoMesh=false);
 
 
       /**

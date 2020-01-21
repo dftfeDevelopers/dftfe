@@ -114,6 +114,7 @@ namespace dftfe {
     double gaussianConstantForce=0.75;
     bool useRank1KernelXLBOMD=false;
     bool autoMeshStepInterpolateBOMD=false;
+    bool rectifyAutoMeshEnergyJump=false;
 
     void declare_parameters(ParameterHandler &prm)
     {
@@ -690,7 +691,7 @@ namespace dftfe {
 			  Patterns::Bool(),
 			  "[Standard] Perform Extended Lagrangian Born-Oppenheimer NVE molecular dynamics. Currently not implemented for spin-polarization case.");
 
-	prm.declare_entry("CHEBY TOL XL BOMD", "1e-9",
+	prm.declare_entry("CHEBY TOL XL BOMD", "1e-8",
 			  Patterns::Double(0.0),
 			  "[Standard] Parameter specifying the accuracy of the occupied eigenvectors close to the Fermi-energy computed using Chebyshev filtering subspace iteration procedure.");
 
@@ -717,6 +718,10 @@ namespace dftfe {
 	prm.declare_entry("AUTO MESH STEP INTERPOLATE BOMD", "false",
 			  Patterns::Bool(),
 			  "[Standard] Perform interpolation of previous density to new auto mesh.");  
+
+	prm.declare_entry("RECTIFY AUTO MESH ENERGY JUMP", "false",
+			  Patterns::Bool(),
+			  "[Standard] Rectify auto mesh energy jump.");  
 
       }
       prm.leave_subsection ();
@@ -936,7 +941,8 @@ namespace dftfe {
           dftParameters::numberStepsBOMD               = prm.get_integer("NUMBER OF STEPS"); 
           dftParameters::startingTempBOMDNVE           = prm.get_double("STARTING TEMP NVE");   
           dftParameters::useRank1KernelXLBOMD          = prm.get_bool("USE RANK 1 KERNEL XL BOMD");
-          dftParameters::autoMeshStepInterpolateBOMD     = prm.get_bool("AUTO MESH STEP INTERPOLATE BOMD");        
+          dftParameters::autoMeshStepInterpolateBOMD   = prm.get_bool("AUTO MESH STEP INTERPOLATE BOMD");
+          dftParameters::rectifyAutoMeshEnergyJump     = prm.get_bool("RECTIFY AUTO MESH ENERGY JUMP");         
       }
       prm.leave_subsection ();
 	

@@ -29,6 +29,86 @@
 
 namespace dftfe {
 
+        namespace internalmd
+	{
+
+
+	  extern "C"{
+	    //
+	    // lapack Ax=b
+	    //
+	    void dgesv_(int *N, int * NRHS, double* A, int * LDA, int* IPIV,
+			double *B, int * LDB, int *INFO);
+
+	  }
+
+	  std::vector<double> getFractionalCoordinates(const std::vector<double> & latticeVectors,
+						       const Point<3> & point,                                                                        const Point<3> & corner)
+	  {
+	    //
+	    // recenter vertex about corner
+	    //
+	    std::vector<double> recenteredPoint(3);
+	    for(unsigned int i = 0; i < 3; ++i)
+	      recenteredPoint[i] = point[i]-corner[i];
+
+	    std::vector<double> latticeVectorsDup = latticeVectors;
+
+	    //
+	    // to get the fractionalCoords, solve a linear
+	    // system of equations
+	    //
+	    int N = 3;
+	    int NRHS = 1;
+	    int LDA = 3;
+	    int IPIV[3];
+	    int info;
+
+	    dgesv_(&N, &NRHS, &latticeVectorsDup[0], &LDA, &IPIV[0], &recenteredPoint[0], &LDA,&info);
+	    AssertThrow(info == 0, ExcMessage("LU solve in finding fractional coordinates failed."));
+	    return recenteredPoint;
+	  }
+
+	  std::vector<double> wrapAtomsAcrossPeriodicBc(const Point<3> & cellCenteredCoord,
+							const Point<3> & corner,
+							const std::vector<double> & latticeVectors,
+							const std::vector<bool> & periodicBc)
+	  {
+	    const double tol=1e-8;
+	    std::vector<double> fracCoord= getFractionalCoordinates(latticeVectors,
+								    cellCenteredCoord,                                                                                                corner);
+
+
+	    //if(Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0)
+	    //std::cout<<"Fractional Coordinates before wrapping: "<<fracCoord[0]<<" "<<fracCoord[1]<<" "<<fracCoord[2]<<std::endl;
+
+
+	    //wrap fractional coordinate
+	    for(unsigned int i = 0; i < 3; ++i)
+	      {
+		if (periodicBc[i])
+		  {
+		    if (fracCoord[i]<-tol)
+		      fracCoord[i]+=1.0;
+		    else if (fracCoord[i]>1.0+tol)
+		      fracCoord[i]-=1.0;
+
+		    if(Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0)
+		     std::cout<<fracCoord[i]<<" ";
+
+		    AssertThrow(fracCoord[i]>-2.0*tol && fracCoord[i]<1.0+2.0*tol,ExcMessage("Moved atom position doesnt't lie inside the cell after wrapping across periodic boundary"));
+		  }
+	      }
+
+	    //if(Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0)
+	    //std::cout<<std::endl;
+
+	    return fracCoord;
+	  }
+
+	}
+
+
 //
 //constructor
 //
@@ -340,11 +420,17 @@ void molecularDynamics<FEOrder>::run()
               pcout<<" RMS error in rho in a.u. at timeIndex 0 "<<rmsErrorRhoVector[0]<<std::endl;
 	  }
 
+        double internalEnergyAccumulatedCorrection=0.0;
+        double entropicEnergyAccumulatedCorrection=0.0;
 	//
 	//start the MD simulation
 	//
 	for(int timeIndex = startingTimeStep+1; timeIndex < numberTimeSteps; ++timeIndex)
 	  {
+             double step_time;
+             MPI_Barrier(MPI_COMM_WORLD);
+             step_time = MPI_Wtime();
+            
 	    //
 	    //compute average velocity
 	    //
@@ -410,8 +496,9 @@ void molecularDynamics<FEOrder>::run()
 	    //
 	    //first move the mesh to current positions
 	    //
-	    dftPtr->updateAtomPositionsAndMoveMesh(displacements,dftParameters::maxJacobianRatioFactorForMD,(timeIndex ==startingTimeStep+1 && restartFlag==1)?true:false);
-
+	    const bool isAutoRemeshSupressed=dftPtr->updateAtomPositionsAndMoveMesh(displacements,
+                                                                                    dftParameters::maxJacobianRatioFactorForMD,(timeIndex ==startingTimeStep+1 && restartFlag==1)?true:false,
+                                                                                    dftParameters::rectifyAutoMeshEnergyJump);
 	    if(dftParameters::verbosity>=5)
 	      {
 		pcout<<"New atomic positions on the Mesh: "<<std::endl;
@@ -420,6 +507,143 @@ void molecularDynamics<FEOrder>::run()
 		    pcout<<"Charge Id: "<<iCharge<<" "<<dftPtr->atomLocations[iCharge][2]<<" "<<dftPtr->atomLocations[iCharge][3]<<" "<<dftPtr->atomLocations[iCharge][4]<<std::endl;
 		  }
 	      }
+
+            double internalEnergyRepressedAutomesh=0.0;
+            double entropicEnergyRepressedAutomesh=0.0;
+            if (isAutoRemeshSupressed)
+            {
+		if (dftParameters::isXLBOMD)
+		{
+			vectorType approxDensityNext;
+			approxDensityNext.reinit(approxDensityContainer.back()); 
+
+			const unsigned int containerSizeCurrent=approxDensityContainer.size();
+			vectorType & approxDensityTimeT=approxDensityContainer[containerSizeCurrent-1];
+			vectorType & approxDensityTimeTMinusDeltat=containerSizeCurrent>1?
+								       approxDensityContainer[containerSizeCurrent-2]
+								       :approxDensityTimeT;
+			   
+			const unsigned int local_size = approxDensityNext.local_size();
+
+			for (unsigned int i = 0; i < local_size; i++)
+				approxDensityNext.local_element(i)=approxDensityTimeT.local_element(i)*2.0
+								  -approxDensityTimeTMinusDeltat.local_element(i)
+								  -(shadowKSRhoMin.local_element(i)-approxDensityTimeT.local_element(i))*k*diracDeltaKernelConstant;
+	 
+	 
+			if (approxDensityContainer.size()==kmax)
+			{
+				for (unsigned int i = 0; i < local_size; i++)
+					approxDensityNext.local_element(i)+=alpha*(c0*approxDensityContainer[containerSizeCurrent-1].local_element(i)
+								 +c1*approxDensityContainer[containerSizeCurrent-2].local_element(i)
+								 +c2*approxDensityContainer[containerSizeCurrent-3].local_element(i)
+								 +c3*approxDensityContainer[containerSizeCurrent-4].local_element(i)
+								 +c4*approxDensityContainer[containerSizeCurrent-5].local_element(i)
+								 +c5*approxDensityContainer[containerSizeCurrent-6].local_element(i)
+								 +c6*approxDensityContainer[containerSizeCurrent-7].local_element(i)
+								 +c7*approxDensityContainer[containerSizeCurrent-8].local_element(i));
+				approxDensityContainer.pop_front();
+			}
+			approxDensityContainer.push_back(approxDensityNext);
+			approxDensityContainer.back().update_ghost_values();                    
+	 
+			//normalize approxDensityVec
+			double charge = dftPtr->totalCharge(dftPtr->d_matrixFreeDataPRefined,
+							     approxDensityContainer.back());
+			pcout<<"Total Charge before Normalizing new approxDensityVec:  "<<charge<<std::endl;
+		       
+			double scalingFactor = ((double)dftPtr->numElectrons)/charge;
+
+			//scale nodal vector with scalingFactor
+			approxDensityContainer.back() *= scalingFactor;
+			pcout<<"Total Charge after Normalizing new approxDensityVec:  "<<dftPtr->totalCharge(dftPtr->d_matrixFreeDataPRefined,approxDensityContainer.back())<<std::endl;
+
+			dftPtr->interpolateNodalDataToQuadratureData(dftPtr->d_matrixFreeDataPRefined,
+								approxDensityContainer.back(),
+								*(dftPtr->rhoInValues),
+								*(dftPtr->gradRhoInValues),
+								 dftParameters::xc_id == 4);
+			     
+			dftPtr->normalizeRho(); 
+			    
+			//do an scf calculation
+			dftPtr->solve(true,true);
+
+			shadowKSRhoMin=dftPtr->d_rhoOutNodalValues;
+			dftPtr->d_constraintsPRefined.distribute(shadowKSRhoMin);
+			shadowKSRhoMin.update_ghost_values();
+
+			//normalize shadowKSRhoMin
+			charge = dftPtr->totalCharge(dftPtr->d_matrixFreeDataPRefined,
+					       shadowKSRhoMin);
+			scalingFactor = ((double)dftPtr->numElectrons)/charge;
+			shadowKSRhoMin *= scalingFactor;
+		}
+		else
+		{
+			    //
+			    //do an scf calculation
+			    //
+			    dftPtr->solve();
+		}
+
+
+                internalEnergyRepressedAutomesh=dftParameters::isXLBOMD?
+                                                dftPtr->d_shadowPotentialEnergy
+                                                :dftPtr->d_groundStateEnergy;
+	        entropicEnergyRepressedAutomesh= dftPtr->d_entropicEnergy;
+                dftPtr->d_autoMesh=1;
+		pcout<< " Auto remeshing and reinitialization of dft problem"<<std::endl;
+
+	        if(dftParameters::periodicX || dftParameters::periodicY || dftParameters::periodicZ)
+		{
+		  std::vector<double> latticeVectorsFlattened(9,0.0);
+		  for (unsigned int idim=0; idim<3; idim++)
+		    for(unsigned int jdim=0; jdim<3; jdim++)
+		      latticeVectorsFlattened[3*idim+jdim]=dftPtr->d_domainBoundingVectors[idim][jdim];
+		  Point<3> corner;
+		  for (unsigned int idim=0; idim<3; idim++)
+		    {
+		      corner[idim]=0;
+		      for(unsigned int jdim=0; jdim<3; jdim++)
+			corner[idim]-=dftPtr->d_domainBoundingVectors[jdim][idim]/2.0;
+		    }
+
+                  std::vector<bool> periodicBc(3,false);
+                  periodicBc[0]=dftParameters::periodicX;periodicBc[1]=dftParameters::periodicY;periodicBc[2]=dftParameters::periodicZ;
+
+		  for (unsigned int iAtom=0;iAtom <numberGlobalCharges; iAtom++)
+		    {
+		      Point<C_DIM> atomCoor;
+		      int atomId=iAtom;
+		      atomCoor[0] = dftPtr->atomLocations[iAtom][2];
+		      atomCoor[1] = dftPtr->atomLocations[iAtom][3];
+		      atomCoor[2] = dftPtr->atomLocations[iAtom][4];
+
+		      Point<C_DIM> newCoord;
+		      for(unsigned int idim=0; idim<C_DIM; ++idim)
+			newCoord[idim]=atomCoor[idim];
+
+		      std::vector<double> newFracCoord=internalmd::wrapAtomsAcrossPeriodicBc(newCoord,
+											   corner,
+											   latticeVectorsFlattened,
+											   periodicBc);
+		      //for synchrozination
+		      MPI_Bcast(&(newFracCoord[0]),
+				3,
+				MPI_DOUBLE,
+				0,
+				MPI_COMM_WORLD);
+
+		      dftPtr->atomLocationsFractional[iAtom][2]=newFracCoord[0];
+		      dftPtr->atomLocationsFractional[iAtom][3]=newFracCoord[1];
+		      dftPtr->atomLocationsFractional[iAtom][4]=newFracCoord[2];
+		    }
+
+		}
+	       dftPtr->init(0);
+
+            }
 
             double rmsErrorRho=0.0;
             if (dftParameters::isXLBOMD)
@@ -595,6 +819,17 @@ void molecularDynamics<FEOrder>::run()
 		    dftPtr->solve();
             }
 
+            if (isAutoRemeshSupressed)
+            {
+                    internalEnergyAccumulatedCorrection+=dftParameters::isXLBOMD?
+                                                               dftPtr->d_shadowPotentialEnergy
+                                                               :dftPtr->d_groundStateEnergy-internalEnergyRepressedAutomesh;
+	            entropicEnergyAccumulatedCorrection += dftPtr->d_entropicEnergy-entropicEnergyRepressedAutomesh;
+
+	            pcout<<" Accumulated auto mesh correction in internal energy: "<<", time index: "<<timeIndex<<",  "<<internalEnergyAccumulatedCorrection<<std::endl;
+	            pcout<<" Accumulated auto mesh correction in entropic energy: "<<", time index: "<<timeIndex<<",  "<<entropicEnergyAccumulatedCorrection<<std::endl;
+            }
+
 	    //
 	    //get force field using Gaussians
 	    //
@@ -629,8 +864,8 @@ void molecularDynamics<FEOrder>::run()
 	    kineticEnergyVector[timeIndex-startingTimeStep] = kineticEnergy/haToeV;
 	    internalEnergyVector[timeIndex-startingTimeStep] = dftParameters::isXLBOMD?
                                                                dftPtr->d_shadowPotentialEnergy
-                                                               :dftPtr->d_groundStateEnergy;
-	    entropicEnergyVector[timeIndex-startingTimeStep] = dftPtr->d_entropicEnergy;
+                                                               :dftPtr->d_groundStateEnergy-internalEnergyAccumulatedCorrection;
+	    entropicEnergyVector[timeIndex-startingTimeStep] = dftPtr->d_entropicEnergy-entropicEnergyAccumulatedCorrection;
             totalEnergyVector[timeIndex-startingTimeStep] = kineticEnergyVector[timeIndex-startingTimeStep] +internalEnergyVector[timeIndex-startingTimeStep] -entropicEnergyVector[timeIndex-startingTimeStep];
             rmsErrorRhoVector[timeIndex-startingTimeStep] = rmsErrorRho;
 
@@ -765,6 +1000,10 @@ void molecularDynamics<FEOrder>::run()
             if (dftParameters::chkType==1)
 	       dftPtr->writeDomainAndAtomCoordinates();
 
+            MPI_Barrier(MPI_COMM_WORLD);
+            step_time = MPI_Wtime() - step_time;
+            if (dftParameters::verbosity>=1)
+                pcout<<"Time taken for md step: "<<step_time<<std::endl;
 	  }
 
 

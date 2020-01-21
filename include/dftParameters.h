@@ -117,6 +117,7 @@ namespace dftfe {
       extern double gaussianConstantForce;
       extern bool useRank1KernelXLBOMD;
       extern bool autoMeshStepInterpolateBOMD;
+      extern bool rectifyAutoMeshEnergyJump;
 
       /**
        * Declare parameters.
