@@ -262,6 +262,7 @@ bool dftClass<FEOrder>::updateAtomPositionsAndMoveMesh(const std::vector<Tensor<
      pcout<<"Minimum distance between atoms: "<<minDist<<std::endl;
 
   d_gaussianConstantForce=std::min(minDist/2.0-0.3,dftParameters::gaussianConstantForce);
+  forcePtr->updateGaussianConstant(d_gaussianConstantForce);
 
   d_gaussianMovementAtomsNetDisplacements.clear();
   numberImageCharges = d_imageIdsAutoMesh.size();

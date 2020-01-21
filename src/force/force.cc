@@ -530,7 +530,8 @@ double  forceClass<FEOrder>::getGaussianGeneratorParameter() const
 template<unsigned int FEOrder>
 void  forceClass<FEOrder>::updateGaussianConstant(const double newGaussianConstant)
 {
-    d_gaussianConstant=newGaussianConstant;
+    if (!dftParameters::reproducible_output)
+      d_gaussianConstant=newGaussianConstant;
 }
 
 template class forceClass<1>;

@@ -129,7 +129,7 @@ void dftClass<FEOrder>::moveMeshToAtoms(Triangulation<3,3> & triangulationMove,
      pcout<<"Minimum distance between atoms: "<<minDist<<std::endl;
 
   d_gaussianConstantForce=std::min(minDist/2.0-0.3,dftParameters::gaussianConstantForce);
-
+  forcePtr->updateGaussianConstant(d_gaussianConstantForce);
   const double gaussianConstant=dftParameters::reproducible_output?1/std::sqrt(0.5):std::min(0.9* minDist/2.0, 2.0);
   const std::pair<bool,double> meshQualityMetrics=gaussianMove.moveMesh(closestTriaVertexToAtomsLocation,
 									dispClosestTriaVerticesToAtoms,
