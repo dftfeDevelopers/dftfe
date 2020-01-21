@@ -168,9 +168,6 @@ bool dftClass<FEOrder>::updateAtomPositionsAndMoveMesh(const std::vector<Tensor<
 	    MPI_COMM_WORLD);
 
 
-
-
-
   if((dftParameters::periodicX || dftParameters::periodicY || dftParameters::periodicZ) && useGaussian == 0)
     {
       for (unsigned int iAtom = 0; iAtom < numberGlobalAtoms; iAtom++)
@@ -242,6 +239,29 @@ bool dftClass<FEOrder>::updateAtomPositionsAndMoveMesh(const std::vector<Tensor<
 	}
     }
 
+  std::vector<Point<3>> atomPoints;
+  for (unsigned int iAtom=0;iAtom <numberGlobalAtoms; iAtom++)
+  {
+      Point<3> atomCoor;
+      atomCoor[0] = atomLocations[iAtom][2];
+      atomCoor[1] = atomLocations[iAtom][3];
+      atomCoor[2] = atomLocations[iAtom][4];
+      atomPoints.push_back(atomCoor);
+  }
+
+  double minDist=1e+6;
+  for (unsigned int i=0;i <numberGlobalAtoms-1; i++)
+     for (unsigned int j=i+1;j <numberGlobalAtoms; j++)
+     {
+          const double dist=atomPoints[i].distance(atomPoints[j]);
+          if (dist<minDist)
+            minDist=dist;
+     }
+
+  if (dftParameters::verbosity>=2)
+     pcout<<"Minimum distance between atoms: "<<minDist<<std::endl;
+
+  d_gaussianConstantForce=std::min(minDist/2.0-0.3,dftParameters::gaussianConstantForce);
 
   d_gaussianMovementAtomsNetDisplacements.clear();
   numberImageCharges = d_imageIdsAutoMesh.size();
@@ -370,7 +390,7 @@ bool dftClass<FEOrder>::updateAtomPositionsAndMoveMesh(const std::vector<Tensor<
 	  if (!dftParameters::reproducible_output)
 	     pcout << "Max current disp magnitude: "<<maxCurrentDispAtom<<" Bohr"<<std::endl;
 
-	  const std::pair<bool,double> meshQualityMetrics=d_gaussianMovePar.moveMeshTwoStep(controlPointLocationsInitialMove,d_controlPointLocationsCurrentMove,controlPointDisplacementsInitialMove,controlPointDisplacementsCurrentMove,d_gaussianConstantAutoMove,forcePtr->getGaussianGeneratorParameter());
+	  const std::pair<bool,double> meshQualityMetrics=d_gaussianMovePar.moveMeshTwoStep(controlPointLocationsInitialMove,d_controlPointLocationsCurrentMove,controlPointDisplacementsInitialMove,controlPointDisplacementsCurrentMove,d_gaussianConstantAutoMove,dftParameters::isBOMD?(forcePtr->getGaussianGeneratorParameter()*dftParameters::ratioOfMeshMovementToForceGaussianBOMD):forcePtr->getGaussianGeneratorParameter());
 
 	  if ((meshQualityMetrics.first || meshQualityMetrics.second > maxJacobianRatioFactor*d_autoMeshMaxJacobianRatio))
           {

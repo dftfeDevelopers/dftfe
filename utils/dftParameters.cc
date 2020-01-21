@@ -115,6 +115,7 @@ namespace dftfe {
     bool useRank1KernelXLBOMD=false;
     bool autoMeshStepInterpolateBOMD=false;
     bool rectifyAutoMeshEnergyJump=false;
+    double ratioOfMeshMovementToForceGaussianBOMD=1.0;
 
     void declare_parameters(ParameterHandler &prm)
     {
@@ -721,7 +722,11 @@ namespace dftfe {
 
 	prm.declare_entry("RECTIFY AUTO MESH ENERGY JUMP", "false",
 			  Patterns::Bool(),
-			  "[Standard] Rectify auto mesh energy jump.");  
+			  "[Standard] Rectify auto mesh energy jump."); 
+
+	prm.declare_entry("RATIO MESH MOVEMENT TO FORCE GAUSSIAN", "1.0",
+			    Patterns::Double(0.0),
+			    "[Standard] Ratio of mesh movement to force Gaussian.");  
 
       }
       prm.leave_subsection ();
@@ -942,7 +947,8 @@ namespace dftfe {
           dftParameters::startingTempBOMDNVE           = prm.get_double("STARTING TEMP NVE");   
           dftParameters::useRank1KernelXLBOMD          = prm.get_bool("USE RANK 1 KERNEL XL BOMD");
           dftParameters::autoMeshStepInterpolateBOMD   = prm.get_bool("AUTO MESH STEP INTERPOLATE BOMD");
-          dftParameters::rectifyAutoMeshEnergyJump     = prm.get_bool("RECTIFY AUTO MESH ENERGY JUMP");         
+          dftParameters::rectifyAutoMeshEnergyJump     = prm.get_bool("RECTIFY AUTO MESH ENERGY JUMP"); 
+          dftParameters::ratioOfMeshMovementToForceGaussianBOMD       = prm.get_double("RATIO MESH MOVEMENT TO FORCE GAUSSIAN");        
       }
       prm.leave_subsection ();
 	

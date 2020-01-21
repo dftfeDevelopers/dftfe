@@ -152,6 +152,12 @@ namespace dftfe {
      */
       void printAtomsForces();
 
+    /** @brief Update force generator Gaussian constant.
+     *
+     *  @return void.
+     */
+      void updateGaussianConstant(const double newGaussianConstant);
+
 #ifdef USE_COMPLEX
     /** @brief computes the configurational stress on the domain corresponding to
      *  affine deformation of the periodic cell.
