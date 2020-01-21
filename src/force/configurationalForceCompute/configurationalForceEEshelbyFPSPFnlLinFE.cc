@@ -764,8 +764,9 @@ void forceClass<FEOrder>::computeConfigurationalForceEEshelbyTensorFPSPFnlLinFE
              if (shadowPotentialForce)
                 shadowKSRhoMinMinusRhoQuads[q][iSubCell]=shadowKSRhoMinValues.find(subCellId)->second[q]-rhoQuads[q][iSubCell];
 
-	     for (unsigned int idim=0; idim<C_DIM; idim++)
-		gradRhoQuads[q][idim][iSubCell]=gradRhoOutValues.find(subCellId)->second[3*q+idim];
+             if(dftParameters::xc_id == 4)
+		 for (unsigned int idim=0; idim<C_DIM; idim++)
+		    gradRhoQuads[q][idim][iSubCell]=gradRhoOutValues.find(subCellId)->second[3*q+idim];
 	   }
 	}
 
