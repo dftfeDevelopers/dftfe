@@ -112,6 +112,7 @@ namespace dftfe {
     unsigned int numberStepsBOMD=1000;
     double startingTempBOMDNVE=300.0;
     double gaussianConstantForce=0.75;
+    double diracDeltaKernelScalingConstant=0.1;
     bool useRank1KernelXLBOMD=false;
     bool autoMeshStepInterpolateBOMD=false;
     bool rectifyAutoMeshEnergyJump=false;
@@ -712,6 +713,10 @@ namespace dftfe {
 			  Patterns::Integer(0,200000),
 			  "[Standard] Number of time steps.");
 
+	prm.declare_entry("DIRAC DELTA KERNEL SCALING CONSTANT XL BOMD", "0.1",
+			    Patterns::Double(0.0),
+			    "[Developer] Dirac delta scaling kernel constant for XL BOMD.");  
+
 	prm.declare_entry("USE RANK 1 KERNEL XL BOMD", "false",
 			  Patterns::Bool(),
 			  "[Standard] Use rank 1 Kernel update without accumulation in every XL BOMD time step.");
@@ -944,7 +949,8 @@ namespace dftfe {
           dftParameters::chebyshevFilterTolXLBOMD      = prm.get_double("CHEBY TOL XL BOMD");
           dftParameters::timeStepBOMD                  = prm.get_double("TIME STEP");
           dftParameters::numberStepsBOMD               = prm.get_integer("NUMBER OF STEPS"); 
-          dftParameters::startingTempBOMDNVE           = prm.get_double("STARTING TEMP NVE");   
+          dftParameters::startingTempBOMDNVE           = prm.get_double("STARTING TEMP NVE");  
+          dftParameters::diracDeltaKernelScalingConstant     = prm.get_double("DIRAC DELTA KERNEL SCALING CONSTANT XL BOMD"); 
           dftParameters::useRank1KernelXLBOMD          = prm.get_bool("USE RANK 1 KERNEL XL BOMD");
           dftParameters::autoMeshStepInterpolateBOMD   = prm.get_bool("AUTO MESH STEP INTERPOLATE BOMD");
           dftParameters::rectifyAutoMeshEnergyJump     = prm.get_bool("RECTIFY AUTO MESH ENERGY JUMP"); 

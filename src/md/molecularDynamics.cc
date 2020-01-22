@@ -187,7 +187,7 @@ void molecularDynamics<FEOrder>::run()
         const double c5=-25.0;
         const double c6=8.0;
         const double c7=-1.0;
-        const double diracDeltaKernelConstant=-0.1;
+        const double diracDeltaKernelConstant=-dftParameters::diracDeltaKernelScalingConstant;
         std::deque<vectorType> approxDensityContainer(kmax);
         vectorType shadowKSRhoMin;
 
@@ -243,7 +243,7 @@ void molecularDynamics<FEOrder>::run()
             const bool testing=false;
             if (testing)
             {
-		   dftPtr->interpolateNodalDataToQuadratureData(dftPtr->d_matrixFreeDataPRefined,
+		    dftPtr->interpolateNodalDataToQuadratureData(dftPtr->d_matrixFreeDataPRefined,
 						        approxDensityContainer.back(),
 						        *(dftPtr->rhoInValues),
 						        *(dftPtr->gradRhoInValues),
