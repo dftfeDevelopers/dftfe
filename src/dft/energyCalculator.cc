@@ -494,10 +494,12 @@ namespace dftfe
 
   
   //compute energies
-  // energy=Eband(rho)-rho*pot(n)+Exc(n)+Etotelec(n)-Eself-int{n*sumvself} + int{(rho-n)*(phiTot(n)-sumvself+vxc(n))} + int{rho*vpsp}
-  //       =Eband(rho)-rho*pot(n)+Exc(n)+Etotelec(n)-Eself+init{n*vpsp}-int{n*sumvself} + int{(rho-n)*(phiTot(n)+vpsp-sumvself+vxc(n))}
+  // energy=Eband(rho)-rho*pot(n)-del{Exc}/del{gradRho}|_{gradRho=gradN}} \dot gradRho+Exc(n)+Etotelec(n)-Eself-int{n*sumvself}
+  //        + int{(rho-n)*(phiTot(n)-sumvself+vxc(n))} + int{rho*vpsp}+int{(gradRho-gradN) \dot del{Exc}/del{gradRho}|_{gradRho=gradN}}
+  //       =Eband(rho)-rho*pot(n)-del{Exc}/del{gradRho}|_{gradRho=gradN}} \dot gradRho+Exc(n)+Etotelec(n)-Eself+init{n*vpsp}-int{n*sumvself} 
+  //        + int{(rho-n)*(phiTot(n)+vpsp-sumvself+vxc(n))}+int{(gradRho-gradN) \dot del{Exc}/del{gradRho}|_{gradRho=gradN}}
   // rho*pot(n)=int{rho*(phiTot(n)+vxc(n)+vsp-sumvself)}
-  // = Eband(rho)+Exc(n)+Etotelec(n)-Eself- int{n*(phiTot(n)+vxc(n))}
+  // = Eband(rho)+Exc(n)+Etotelec(n)-Eself- int{n*(phiTot(n)+vxc(n))+gradN \dot del{Exc}/del{gradRho}|_{gradRho=gradN}}
   double energyCalculator::computeShadowPotentialEnergyExtendedLagrangian
   (const dealii::DoFHandler<3> & dofHandlerElectrostatic,
    const dealii::DoFHandler<3> & dofHandlerElectronic,
@@ -610,7 +612,7 @@ namespace dftfe
 		{
 		  // Vxc computed with rhoIn
 		  const double Vxc=derExchEnergyWithInputDensity[q_point]+derCorrEnergyWithInputDensity[q_point];
-		  const double VxcGrad = 2.0*(derExchEnergyWithSigmaGradDenInput[q_point]+derCorrEnergyWithSigmaGradDenInput[q_point])*gradRhoInDotgradRhoOut[q_point];
+		  const double VxcGrad = 2.0*(derExchEnergyWithSigmaGradDenInput[q_point]+derCorrEnergyWithSigmaGradDenInput[q_point])*sigmaWithInputGradDensity[q_point];
 
 		  excCorrPotentialTimesRhoIn+=(Vxc*(rhoInValues.find(cellElectronic->id())->second[q_point])+VxcGrad)*feValuesElectronic.JxW (q_point);
 

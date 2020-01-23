@@ -134,6 +134,7 @@ namespace dftfe {
 	         const ConstraintMatrix  & noConstraintsElectro,
 		 const vselfBinsManager<FEOrder>   & vselfBinsManagerElectro,
                  const std::map<dealii::CellId, std::vector<double> > & shadowKSRhoMinValues,
+                 const std::map<dealii::CellId, std::vector<double> > & shadowKSGradRhoMinValues,
                  const bool shadowPotentialForce=false);
 
     /** @brief returns a copy of the configurational force on all global atoms.
@@ -266,6 +267,7 @@ namespace dftfe {
 		              const std::map<unsigned int,std::map<dealii::CellId, std::vector<double> > > & gradPseudoVLocAtomsElectro,
 			      const vselfBinsManager<FEOrder> & vselfBinsManagerElectro,
                               const std::map<dealii::CellId, std::vector<double> > & shadowKSRhoMinValues,
+                              const std::map<dealii::CellId, std::vector<double> > & shadowKSGradRhoMinValues,
                               const bool shadowPotentialForce=false);
 
       void computeConfigurationalForceSpinPolarizedEEshelbyTensorFPSPFnlLinFE
@@ -292,6 +294,7 @@ namespace dftfe {
 		              const std::map<unsigned int,std::map<dealii::CellId, std::vector<double> > > & gradPseudoVLocAtomsElectro,
 			      const vselfBinsManager<FEOrder> & vselfBinsManagerElectro,
                               const std::map<dealii::CellId, std::vector<double> > & shadowKSRhoMinValues,
+                              const std::map<dealii::CellId, std::vector<double> > & shadowKSGradRhoMinValues,
                               const bool shadowPotentialForce=false);
 
       void computeConfigurationalForceEEshelbyEElectroPhiTot
@@ -342,6 +345,7 @@ namespace dftfe {
 		                     const std::map<unsigned int,std::map<dealii::CellId, std::vector<double> > > & gradPseudoVLocAtomsElectro,
 				     const vselfBinsManager<FEOrder>   & vselfBinsManagerElectro,
                                      const std::map<dealii::CellId, std::vector<double> > & shadowKSRhoMinValues,
+                                     const std::map<dealii::CellId, std::vector<double> > & shadowKSGradRhoMinValues,
                                      const bool shadowPotentialForce=false);
 
       void FPSPLocalGammaAtomsElementalContribution

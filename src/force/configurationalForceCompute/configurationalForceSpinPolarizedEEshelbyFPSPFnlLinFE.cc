@@ -41,6 +41,7 @@ void forceClass<FEOrder>::computeConfigurationalForceSpinPolarizedEEshelbyTensor
 		              const std::map<unsigned int,std::map<dealii::CellId, std::vector<double> > > & gradPseudoVLocAtomsElectro,
 			      const vselfBinsManager<FEOrder> & vselfBinsManagerElectro,
                               const std::map<dealii::CellId, std::vector<double> > & shadowKSRhoMinValues,
+                              const std::map<dealii::CellId, std::vector<double> > & shadowKSGradRhoMinValues,
                               const bool shadowPotentialForce)
 {
   const unsigned int numberGlobalAtoms = dftPtr->atomLocations.size();

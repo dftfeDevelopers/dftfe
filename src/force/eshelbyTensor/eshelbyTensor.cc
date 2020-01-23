@@ -188,13 +188,18 @@ namespace eshelbyTensor
 
     Tensor<2,C_DIM,VectorizedArray<double> >  getShadowPotentialForceRhoDiffXcEshelbyTensor
 			     (const VectorizedArray<double> & shadowKSRhoMinMinusRho,
+                              const Tensor<1,C_DIM,VectorizedArray<double> > & shadowKSGradRhoMinMinusGradRho,
 			      const Tensor<1,C_DIM,VectorizedArray<double> > & gradRho,
 			      const VectorizedArray<double> & vxc,
-			      const Tensor<1,C_DIM,VectorizedArray<double> > & derVxcGradRho)
+                              const Tensor<1,C_DIM,VectorizedArray<double> > & derVxcGradRho,
+                              const Tensor<1,C_DIM,VectorizedArray<double> > & derExcGradRho,
+                              const Tensor<2,C_DIM,VectorizedArray<double> > & der2ExcGradRho)
     {
 
-       Tensor<2,C_DIM,VectorizedArray<double> > eshelbyTensor=-outer_product(derVxcGradRho,gradRho)*shadowKSRhoMinMinusRho;
-       VectorizedArray<double> identityTensorFactor=vxc*shadowKSRhoMinMinusRho;
+       Tensor<2,C_DIM,VectorizedArray<double> > eshelbyTensor=-outer_product(derVxcGradRho,gradRho)*shadowKSRhoMinMinusRho
+                                                              -outer_product(der2ExcGradRho*shadowKSGradRhoMinMinusGradRho,gradRho)
+                                                              -outer_product(derExcGradRho,shadowKSGradRhoMinMinusGradRho);
+       VectorizedArray<double> identityTensorFactor=vxc*shadowKSRhoMinMinusRho+scalar_product(derExcGradRho,shadowKSGradRhoMinMinusGradRho);
 
 
        eshelbyTensor[0][0]+=identityTensorFactor;

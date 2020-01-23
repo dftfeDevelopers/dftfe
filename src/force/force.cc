@@ -292,6 +292,7 @@ void forceClass<FEOrder>::computeAtomsForces
 	         const ConstraintMatrix  & noConstraintsElectro,
 		 const vselfBinsManager<FEOrder> & vselfBinsManagerElectro,
                  const std::map<dealii::CellId, std::vector<double> > & shadowKSRhoMinValues,
+                 const std::map<dealii::CellId, std::vector<double> > & shadowKSGradRhoMinValues,
                  const bool shadowPotentialForce)
 {
   /*
@@ -343,6 +344,7 @@ void forceClass<FEOrder>::computeAtomsForces
 					gradPseudoVLocAtomsElectro,
 		                        vselfBinsManagerElectro,
                                         shadowKSRhoMinValues,
+                                        shadowKSGradRhoMinValues,
                                         shadowPotentialForce);
 
   computeAtomsForcesGaussianGenerator(d_allowGaussianOverlapOnAtoms);
@@ -422,6 +424,7 @@ void forceClass<FEOrder>::computeConfigurationalForceTotalLinFE
 		                     const std::map<unsigned int,std::map<dealii::CellId, std::vector<double> > > & gradPseudoVLocAtomsElectro,
 				     const vselfBinsManager<FEOrder> & vselfBinsManagerElectro,
                                      const std::map<dealii::CellId, std::vector<double> > & shadowKSRhoMinValues,
+                                     const std::map<dealii::CellId, std::vector<double> > & shadowKSGradRhoMinValues,
                                      const bool shadowPotentialForce)
 {
 
@@ -455,6 +458,7 @@ void forceClass<FEOrder>::computeConfigurationalForceTotalLinFE
 					gradPseudoVLocAtomsElectro,
 					vselfBinsManagerElectro,
                                         shadowKSRhoMinValues,
+                                        shadowKSGradRhoMinValues,
                                         shadowPotentialForce);
   else
      computeConfigurationalForceEEshelbyTensorFPSPFnlLinFE
@@ -483,6 +487,7 @@ void forceClass<FEOrder>::computeConfigurationalForceTotalLinFE
 					gradPseudoVLocAtomsElectro,
 					vselfBinsManagerElectro,
                                         shadowKSRhoMinValues,
+                                        shadowKSGradRhoMinValues,
                                         shadowPotentialForce);
 
   //configurational force contribution from nuclear self energy. This is handled separately as it involves

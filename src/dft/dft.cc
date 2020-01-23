@@ -2258,6 +2258,7 @@ namespace dftfe {
 						 d_noConstraints,
 						 d_vselfBinsManager,
                                                  *rhoOutValues,
+                                                 *gradRhoOutValues,
                                                  true);
             else
 		    forcePtr->computeAtomsForces(matrix_free_data,
@@ -2286,7 +2287,8 @@ namespace dftfe {
 						 d_gradPseudoVLocAtoms,
 						 d_noConstraints,
 						 d_vselfBinsManager,
-                                                 *rhoOutValues);
+                                                 *rhoOutValues,
+                                                 *gradRhoOutValues);
 	    forcePtr->printAtomsForces();
 	}
 	computingTimerStandard.exit_section("Ion force computation");
