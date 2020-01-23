@@ -38,8 +38,45 @@
 #include <iostream>
 #include <fstream>
 
-
 using namespace dealii;
+
+// The central DFT-FE run invocation:
+template <int n>
+void run_problem(const MPI_Comm &mpi_comm_replica,
+		   const MPI_Comm &interpoolcomm,
+		   const MPI_Comm &interBandGroupComm,
+		   const unsigned int &numberEigenValues) {
+      dftfe::dftClass<n> problemFE(mpi_comm_replica, interpoolcomm, interBandGroupComm);
+      problemFE.d_numEigenValues = numberEigenValues;
+      problemFE.set();
+      problemFE.init();
+      problemFE.run();
+}
+
+// Dynamically access dftClass<n> objects by order.
+//  Note that we can't store a list of classes because the types differ,
+//  but we can store a list of functions that use them in an n-independent way.
+//
+//  Also note element 0 is order 1.
+//
+typedef void (*run_fn)(const MPI_Comm &mpi_comm_replica,
+			 const MPI_Comm &interpoolcomm,
+			 const MPI_Comm &interBandGroupComm,
+			 const unsigned int &numberEigenValues);
+
+static run_fn order_list[] = {
+	run_problem<1>,
+	run_problem<2>,
+	run_problem<3>,
+	run_problem<4>,
+	run_problem<5>,
+	run_problem<6>,
+	run_problem<7>,
+	run_problem<8>,
+	run_problem<9>,
+	run_problem<10>,
+	run_problem<11>,
+	run_problem<12> };
 
 int main (int argc, char *argv[])
 {
@@ -94,154 +131,17 @@ int main (int argc, char *argv[])
   // set stdout precision
   std::cout << std::scientific << std::setprecision(18);
 
-  switch (dftfe::dftParameters::finiteElementPolynomialOrder)
-    {
+  int order = dftfe::dftParameters::finiteElementPolynomialOrder;
+  if(order < 1 || order-1 >= sizeof(order_list)/sizeof(order_list[0])) {
+    std::cout << "Invalid DFT-FE order " << order << std::endl;
+    return -1;
+  }
 
-    case 1:
-    {
-      dftfe::dftClass<1> problemFEOrder1(bandGroupsPool.get_intrapool_comm(),
-	                                 kPointPool.get_interpool_comm(),
-					 bandGroupsPool.get_interpool_comm());
-      problemFEOrder1.d_numEigenValues = dftfe::dftParameters::numberEigenValues;
-      problemFEOrder1.set();
-      problemFEOrder1.init();
-      problemFEOrder1.run();
-      break;
-    }
-
-    case 2:
-    {
-      dftfe::dftClass<2> problemFEOrder2(bandGroupsPool.get_intrapool_comm(),
-	                                 kPointPool.get_interpool_comm(),
-					 bandGroupsPool.get_interpool_comm());
-      problemFEOrder2.d_numEigenValues = dftfe::dftParameters::numberEigenValues;
-      problemFEOrder2.set();
-      problemFEOrder2.init();
-      problemFEOrder2.run();
-      break;
-    }
-
-    case 3:
-    {
-      dftfe::dftClass<3> problemFEOrder3(bandGroupsPool.get_intrapool_comm(),
-	                                 kPointPool.get_interpool_comm(),
-					 bandGroupsPool.get_interpool_comm());
-      problemFEOrder3.d_numEigenValues = dftfe::dftParameters::numberEigenValues;
-      problemFEOrder3.set();
-      problemFEOrder3.init();
-      problemFEOrder3.run();
-      break;
-    }
-
-    case 4:
-    {
-      dftfe::dftClass<4> problemFEOrder4(bandGroupsPool.get_intrapool_comm(),
-	                                 kPointPool.get_interpool_comm(),
-					 bandGroupsPool.get_interpool_comm());
-      problemFEOrder4.d_numEigenValues = dftfe::dftParameters::numberEigenValues;
-      problemFEOrder4.set();
-      problemFEOrder4.init();
-      problemFEOrder4.run();
-      break;
-    }
-
-    case 5:
-    {
-      dftfe::dftClass<5> problemFEOrder5(bandGroupsPool.get_intrapool_comm(),
-	                                kPointPool.get_interpool_comm(),
-					bandGroupsPool.get_interpool_comm());
-      problemFEOrder5.d_numEigenValues = dftfe::dftParameters::numberEigenValues;
-      problemFEOrder5.set();
-      problemFEOrder5.init();
-      problemFEOrder5.run();
-      break;
-    }
-
-    case 6:
-    {
-      dftfe::dftClass<6> problemFEOrder6(bandGroupsPool.get_intrapool_comm(),
-	                                kPointPool.get_interpool_comm(),
-					bandGroupsPool.get_interpool_comm());
-      problemFEOrder6.d_numEigenValues = dftfe::dftParameters::numberEigenValues;
-      problemFEOrder6.set();
-      problemFEOrder6.init();
-      problemFEOrder6.run();
-      break;
-    }
-
-    case 7:
-    {
-      dftfe::dftClass<7> problemFEOrder7(bandGroupsPool.get_intrapool_comm(),
-	                                 kPointPool.get_interpool_comm(),
-					 bandGroupsPool.get_interpool_comm());
-      problemFEOrder7.d_numEigenValues = dftfe::dftParameters::numberEigenValues;
-      problemFEOrder7.set();
-      problemFEOrder7.init();
-      problemFEOrder7.run();
-      break;
-    }
-
-    case 8:
-    {
-      dftfe::dftClass<8> problemFEOrder8(bandGroupsPool.get_intrapool_comm(),
-	                                 kPointPool.get_interpool_comm(),
-					 bandGroupsPool.get_interpool_comm());
-      problemFEOrder8.d_numEigenValues = dftfe::dftParameters::numberEigenValues;
-      problemFEOrder8.set();
-      problemFEOrder8.init();
-      problemFEOrder8.run();
-      break;
-    }
-
-    case 9:
-    {
-      dftfe::dftClass<9> problemFEOrder9(bandGroupsPool.get_intrapool_comm(),
-	                                 kPointPool.get_interpool_comm(),
-					 bandGroupsPool.get_interpool_comm());
-      problemFEOrder9.d_numEigenValues = dftfe::dftParameters::numberEigenValues;
-      problemFEOrder9.set();
-      problemFEOrder9.init();
-      problemFEOrder9.run();
-      break;
-    }
-
-    case 10:
-    {
-      dftfe::dftClass<10> problemFEOrder10(bandGroupsPool.get_intrapool_comm(),
-	                                   kPointPool.get_interpool_comm(),
-					   bandGroupsPool.get_interpool_comm());
-      problemFEOrder10.d_numEigenValues = dftfe::dftParameters::numberEigenValues;
-      problemFEOrder10.set();
-      problemFEOrder10.init();
-      problemFEOrder10.run();
-      break;
-    }
-
-    case 11:
-    {
-      dftfe::dftClass<11> problemFEOrder11(bandGroupsPool.get_intrapool_comm(),
-	                                   kPointPool.get_interpool_comm(),
-					   bandGroupsPool.get_interpool_comm());
-      problemFEOrder11.d_numEigenValues = dftfe::dftParameters::numberEigenValues;
-      problemFEOrder11.set();
-      problemFEOrder11.init();
-      problemFEOrder11.run();
-      break;
-    }
-
-    case 12:
-    {
-      dftfe::dftClass<12> problemFEOrder12(bandGroupsPool.get_intrapool_comm(),
-	                                   kPointPool.get_interpool_comm(),
-					   bandGroupsPool.get_interpool_comm());
-      problemFEOrder12.d_numEigenValues = dftfe::dftParameters::numberEigenValues;
-      problemFEOrder12.set();
-      problemFEOrder12.init();
-      problemFEOrder12.run();
-      break;
-    }
-
-    }
+  run_fn run = order_list[order - 1];
+  run(bandGroupsPool.get_intrapool_comm(),
+      kPointPool.get_interpool_comm(),
+      bandGroupsPool.get_interpool_comm(),
+      dftfe::dftParameters::numberEigenValues);
 
   const double end = MPI_Wtime();
   if (dftfe::dftParameters::verbosity>=1 && dealii::Utilities::MPI::this_mpi_process(MPI_COMM_WORLD)==0)

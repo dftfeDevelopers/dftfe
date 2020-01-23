@@ -20,6 +20,27 @@
 #include <vectorUtilities.h>
 #include <dftUtils.h>
 
+static const unsigned int order_lookup[][2] = {
+  {500, 24}, // <= 500 ~> chebyshevOrder = 24
+  {750, 30},
+  {1000, 39},
+  {750, 30},
+  {1000, 39},
+  {1500, 50},
+  {2000, 53},
+  {3000, 57},
+  {4000, 62},
+  {5000, 69},
+  {9000, 77},
+  {14000, 104},
+  {20000, 119},
+  {30000, 162},
+  {50000, 300},
+  {80000, 450},
+  {1e5, 550},
+  {2e5, 700},
+  {5e5, 1000}
+};
 
 namespace dftfe{
 
@@ -27,45 +48,11 @@ namespace dftfe{
   {
       unsigned int setChebyshevOrder(const unsigned int upperBoundUnwantedSpectrum)
       {
-	unsigned int chebyshevOrder;
-        if(upperBoundUnwantedSpectrum <= 500)
-          chebyshevOrder = 24;
-        else if(upperBoundUnwantedSpectrum > 500  && upperBoundUnwantedSpectrum <= 750)
-          chebyshevOrder = 30;
-        else if(upperBoundUnwantedSpectrum > 750  && upperBoundUnwantedSpectrum <= 1000)
-          chebyshevOrder = 39;
-        else if(upperBoundUnwantedSpectrum > 1000 && upperBoundUnwantedSpectrum <= 1500)
-          chebyshevOrder = 50;
-        else if(upperBoundUnwantedSpectrum > 1500 && upperBoundUnwantedSpectrum <= 2000)
-          chebyshevOrder = 53;
-        else if(upperBoundUnwantedSpectrum > 2000 && upperBoundUnwantedSpectrum <= 3000)
-          chebyshevOrder = 57;
-        else if(upperBoundUnwantedSpectrum > 3000 && upperBoundUnwantedSpectrum <= 4000)
-          chebyshevOrder = 62;
-        else if(upperBoundUnwantedSpectrum > 4000 && upperBoundUnwantedSpectrum <= 5000)
-          chebyshevOrder = 69;
-        else if(upperBoundUnwantedSpectrum > 5000 && upperBoundUnwantedSpectrum <= 9000)
-          chebyshevOrder = 77;
-        else if(upperBoundUnwantedSpectrum > 9000 && upperBoundUnwantedSpectrum <= 14000)
-          chebyshevOrder = 104;
-        else if(upperBoundUnwantedSpectrum > 14000 && upperBoundUnwantedSpectrum <= 20000)
-          chebyshevOrder = 119;
-        else if(upperBoundUnwantedSpectrum > 20000 && upperBoundUnwantedSpectrum <= 30000)
-          chebyshevOrder = 162;
-        else if(upperBoundUnwantedSpectrum > 30000 && upperBoundUnwantedSpectrum <= 50000)
-          chebyshevOrder = 300;
-        else if(upperBoundUnwantedSpectrum > 50000 && upperBoundUnwantedSpectrum <= 80000)
-          chebyshevOrder = 450;
-        else if(upperBoundUnwantedSpectrum > 80000 && upperBoundUnwantedSpectrum <= 1e5)
-          chebyshevOrder = 550;
-        else if(upperBoundUnwantedSpectrum > 1e5 && upperBoundUnwantedSpectrum <= 2e5)
-          chebyshevOrder = 700;
-        else if(upperBoundUnwantedSpectrum > 2e5 && upperBoundUnwantedSpectrum <= 5e5)
-          chebyshevOrder = 1000;
-        else if(upperBoundUnwantedSpectrum > 5e5)
-          chebyshevOrder = 1250;
-
-	return chebyshevOrder;
+        for(int i=0; i<sizeof(order_lookup)/sizeof(order_lookup[0]); i++) {
+          if(upperBoundUnwantedSpectrum <= order_lookup[i][0])
+            return order_lookup[i][1];
+        }
+	return 1250;
       }
   }
 
