@@ -1,6 +1,6 @@
 #!/bin/bash
 # Begin LSF Directives
-#BSUB -P MAT202
+#BSUB -P ENG110
 #BSUB -W 0:20
 #BSUB -nnodes 1
 #BSUB -alloc_flags gpumps
