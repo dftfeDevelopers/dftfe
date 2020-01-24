@@ -143,7 +143,73 @@ void dftClass<FEOrder>::initRho()
   //
   const int numberImageCharges = d_imageIdsTrunc.size();
 
-  if(dftParameters::mixingMethod == "ANDERSON_WITH_KERKER" || (dftParameters::isBOMD && dftParameters::isXLBOMD))
+  if(dftParameters::isBOMD && dftParameters::isXLBOMD)
+    {
+      IndexSet locallyOwnedSet;
+      DoFTools::extract_locally_owned_dofs(d_dofHandlerPRefined,locallyOwnedSet);
+      std::vector<IndexSet::size_type> locallyOwnedDOFs;
+      locallyOwnedSet.fill_index_vector(locallyOwnedDOFs);
+      unsigned int numberDofs = locallyOwnedDOFs.size();
+      std::map<types::global_dof_index, Point<3> > supportPointsPRefined;
+      DoFTools::map_dofs_to_support_points(MappingQ1<3,3>(), d_dofHandlerPRefined, supportPointsPRefined);
+
+      //d_matrixFreeDataPRefined.initialize_dof_vector(d_rhoInNodalValues);
+
+      for(unsigned int dof = 0; dof < numberDofs; ++dof)
+	{
+	  const dealii::types::global_dof_index dofID = locallyOwnedDOFs[dof];
+	  Point<3> nodalCoor = supportPointsPRefined[dofID];
+	  if(!d_constraintsPRefined.is_constrained(dofID))
+	    {
+	      //loop over atoms and superimpose electron-density at a given dof from all atoms
+	      double rhoNodalValue = 0.0;
+	      for(unsigned int iAtom = 0; iAtom < atomLocations.size(); ++iAtom)
+		{
+		  Point<3> atom(atomLocations[iAtom][2],atomLocations[iAtom][3],atomLocations[iAtom][4]);
+		  double distanceToAtom = nodalCoor.distance(atom);
+		  if(distanceToAtom <= outerMostPointDen[atomLocations[iAtom][0]])
+		    rhoNodalValue += alglib::spline1dcalc(denSpline[atomLocations[iAtom][0]], distanceToAtom);
+		  else
+		    rhoNodalValue += 0.0;
+		}
+
+	      //loop over image charges and do as above
+	      for(int iImageCharge = 0; iImageCharge < numberImageCharges; ++iImageCharge)
+		{
+		  Point<3> imageAtom(d_imagePositionsTrunc[iImageCharge][0],
+			             d_imagePositionsTrunc[iImageCharge][1],
+				     d_imagePositionsTrunc[iImageCharge][2]);
+		  double distanceToAtom = nodalCoor.distance(imageAtom);
+		  int masterAtomId = d_imageIdsTrunc[iImageCharge];
+		  if(distanceToAtom <= outerMostPointDen[atomLocations[masterAtomId][0]])
+		    rhoNodalValue += alglib::spline1dcalc(denSpline[atomLocations[masterAtomId][0]], distanceToAtom);
+		  else
+		    rhoNodalValue += 0.0;
+		}
+	      d_rhoInNodalValues.local_element(dof) = std::abs(rhoNodalValue);
+	    }
+	}
+
+      d_rhoInNodalValues.update_ghost_values();
+
+      //normalize rho
+      const double charge = totalCharge(d_matrixFreeDataPRefined,
+					d_rhoInNodalValues);
+
+       
+      const double scalingFactor = ((double)numElectrons)/charge;
+
+      //scale nodal vector with scalingFactor
+      d_rhoInNodalValues *= scalingFactor;
+
+      if (dftParameters::verbosity>=3)
+	{
+          pcout<<"Total Charge before Normalizing nodal Rho:  "<<charge<<std::endl;
+	  pcout<<"Total Charge after Normalizing nodal Rho: "<< totalCharge(d_matrixFreeDataPRefined,d_rhoInNodalValues)<<std::endl;
+	}
+    }
+
+  if(dftParameters::mixingMethod == "ANDERSON_WITH_KERKER")
     {
       IndexSet locallyOwnedSet;
       DoFTools::extract_locally_owned_dofs(d_dofHandlerPRefined,locallyOwnedSet);
