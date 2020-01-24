@@ -23,7 +23,7 @@ elpaIncludeDir="$PROJ/software/elpa/installElpa2018Gcc6.4.0/include/elpa_openmp-
 elpaLibDir="$PROJ/software/elpa/installElpa2018Gcc6.4.0/lib"
 
 # Path to project source (should be script run directory)
-SRC=$PWD
+SRC="$PWD"
 
 #If you have installed dealii by linking with intel mkl library set underlying flag to "ON",
 #otherwise set it to "OFF"
@@ -41,24 +41,27 @@ cxx_flagsRelease="-O3 -fPIC -fopenmp"
 #Option to link to ELPA
 withELPA=ON
 
-# build type: "release" or "debug"
-build_type=release
+# build type: "Release" or "Debug"
+build_type=Release
+testing=OFF
 
-if [[ x"$build_type" == x"debug" ]]; then
-  testing=ON
-else
-  testing=OFF
-fi
 ###########################################################################
 #Usually, no changes are needed below this line
 #
+
+#if [[ x"$build_type" == x"Release" ]]; then
+#  c_flags="$c_flagsRelease"
+#  cxx_flags="$c_flagsRelease"
+#else
+#fi
+out=`echo "build/$build_type" | tr '[:upper:]' '[:lower:]'`
 
 function cmake_real() {
   mkdir -p real && cd real
   cmake -DCMAKE_C_COMPILER=$c_compiler -DCMAKE_CXX_COMPILER=$cxx_compiler \
 	-DCMAKE_CXX_FLAGS_RELEASE="$cxx_flagsRelease" \
 	-DCMAKE_C_FLAGS_RELEASE="$c_flagsRelease" \
-	-DCMAKE_BUILD_TYPE=Release -DDEAL_II_DIR=$dealiiDir \
+	-DCMAKE_BUILD_TYPE=$build_type -DDEAL_II_DIR=$dealiiDir \
 	-DALGLIB_DIR=$alglibDir -DLIBXC_DIR=$libxcDir \
 	-DSPGLIB_DIR=$spglibDir -DXML_LIB_DIR=$xmlLibDir \
 	-DXML_INCLUDE_DIR=$xmlIncludeDir -DWITH_INTEL_MKL=$withIntelMkl \
@@ -74,7 +77,7 @@ function cmake_cplx() {
   cmake -DCMAKE_C_COMPILER=$c_compiler -DCMAKE_CXX_COMPILER=$cxx_compiler \
 	-DCMAKE_CXX_FLAGS_RELEASE="$cxx_flagsRelease" \
 	-DCMAKE_C_FLAGS_RELEASE="$c_flagsRelease" \
-	-DCMAKE_BUILD_TYPE=Release -DDEAL_II_DIR=$dealiiDir \
+	-DCMAKE_BUILD_TYPE=$build_type -DDEAL_II_DIR=$dealiiDir \
 	-DALGLIB_DIR=$alglibDir -DLIBXC_DIR=$libxcDir \
 	-DSPGLIB_DIR=$spglibDir -DXML_LIB_DIR=$xmlLibDir \
 	-DXML_INCLUDE_DIR=$xmlIncludeDir -DWITH_INTEL_MKL=$withIntelMkl \
@@ -84,22 +87,22 @@ function cmake_cplx() {
 
 RCol='\e[0m'
 Blu='\e[0;34m';
-if [ -d "build/$build_type" ]; then
-    echo -e "${Blu}build/$build_type directory already present${RCol}"
+if [ -d "$out" ]; then
+    echo -e "${Blu}$out directory already present${RCol}"
     # Control will enter here if build directory exists.
 else
-    rm -rf build/$build_type
-    echo -e "${Blu}Creating build/$build_type ${RCol}"
-    mkdir -p build/$build_type
+    rm -rf "$out"
+    echo -e "${Blu}Creating $out ${RCol}"
+    mkdir -p "$out"
 fi
 
-wd=$PWD
-cd $wd/build/$build_type
-echo -e "${Blu}Building Real executable in Optimized (Release) mode...${RCol}"
-cmake_real $SRC && make -j4
+wd="$PWD"
+cd "$wd/$out"
+echo -e "${Blu}Building Real executable in $build_type mode...${RCol}"
+cmake_real "$SRC" && make -j4
 
-cd $wd/build/$build_type
-echo -e "${Blu}Building Complex executable in Optimized (Release) mode...${RCol}"
-cmake_cplx $SRC && make -j4
+cd "$wd/$out"
+echo -e "${Blu}Building Complex executable in $build_type mode...${RCol}"
+cmake_cplx "$SRC" && make -j4
 
 echo -e "${Blu}Build complete.${RCol}"
