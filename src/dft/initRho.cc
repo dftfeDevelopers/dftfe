@@ -143,7 +143,7 @@ void dftClass<FEOrder>::initRho()
   //
   const int numberImageCharges = d_imageIdsTrunc.size();
 
-  if(dftParameters::mixingMethod == "ANDERSON_WITH_KERKER")
+  if(dftParameters::mixingMethod == "ANDERSON_WITH_KERKER" || (dftParameters::isBOMD && dftParameters::isXLBOMD))
     {
       IndexSet locallyOwnedSet;
       DoFTools::extract_locally_owned_dofs(d_dofHandlerPRefined,locallyOwnedSet);
@@ -222,6 +222,7 @@ void dftClass<FEOrder>::initRho()
 					   *rhoInValues,
 					   *gradRhoInValues,
 					   dftParameters::xc_id == 4);
+      normalizeRho();
 
       /*FEEvaluation<C_DIM,C_num1DKerkerPoly<FEOrder>(),C_num1DQuad<FEOrder>(),1,double> rhoEval(d_matrixFreeDataPRefined,0,1);
       const unsigned int numQuadPoints = rhoEval.n_q_points; 

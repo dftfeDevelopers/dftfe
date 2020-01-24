@@ -461,7 +461,7 @@ bool dftClass<FEOrder>::updateAtomPositionsAndMoveMesh(const std::vector<Tensor<
 	      if (!dftParameters::reproducible_output)
 	         pcout << "Now Reinitializing all moved triangulation dependent objects..." << std::endl;
 
-	      initNoRemesh(false,(!dftParameters::reproducible_output && maxCurrentDispAtom>0.06) || useSingleAtomSolutions?true:false);
+	      initNoRemesh(false,(!dftParameters::reproducible_output && maxCurrentDispAtom>0.06) || useSingleAtomSolutions);
 	      if (!dftParameters::reproducible_output)
 	         pcout << "...Reinitialization end" << std::endl;
 	    }
