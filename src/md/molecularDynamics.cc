@@ -724,32 +724,35 @@ void molecularDynamics<FEOrder>::run()
                     {
                         dftPtr->solve();
 			shadowKSRhoMin=dftPtr->d_rhoOutNodalValues;
-		        //dftPtr->d_constraintsPRefined.distribute(shadowKSRhoMin);
-		        shadowKSRhoMin.update_ghost_values();
+			shadowKSRhoMin-=dftPtr->d_rhoInNodalValues;
+			//dftPtr->d_constraintsPRefined.distribute(shadowKSRhoMin);
+			shadowKSRhoMin.update_ghost_values();
 
-		        //dftPtr->d_constraintsPRefined.distribute(dftPtr->d_rhoOutNodalValues);
-		        for (unsigned int i=0; i<approxDensityContainer.size();++i)
-		        {
-			      approxDensityContainer[i]=(dftPtr->d_rhoOutNodalValues);
+			//dftPtr->d_constraintsPRefined.distribute(dftPtr->d_rhoOutNodalValues);
+			for (unsigned int i=0; i<approxDensityContainer.size();++i)
+			{
+			      approxDensityContainer[i]=shadowKSRhoMin;
 			      approxDensityContainer[i].update_ghost_values();
-		        }
+			}
 
-		        //normalize approxDensityVec
-		        double charge = dftPtr->totalCharge(dftPtr->d_matrixFreeDataPRefined,
+			//normalize approxDensityVec
+			double charge = dftPtr->totalCharge(dftPtr->d_matrixFreeDataPRefined,
 							     approxDensityContainer.back());
-		        pcout<<"Total Charge before Normalizing approxDensityVec:  "<<charge<<std::endl;
+			pcout<<"Total Charge before Normalizing approxDensityVec:  "<<charge<<std::endl;
 		       
-		        double scalingFactor = ((double)dftPtr->numElectrons)/charge;
+			//double scalingFactor = ((double)dftPtr->numElectrons)/charge;
 
-		        //scale nodal vector with scalingFactor
-		        approxDensityContainer.back() *= scalingFactor;
-		        pcout<<"Total Charge after Normalizing approxDensityVec:  "<<dftPtr->totalCharge(dftPtr->d_matrixFreeDataPRefined,approxDensityContainer.back())<<std::endl;
+			//scale nodal vector with scalingFactor
+			//approxDensityContainer.back() *= scalingFactor;
+			approxDensityContainer.back().add(-charge/dftPtr->d_domainVolume);
+			pcout<<"Total Charge after Normalizing approxDensityVec:  "<<dftPtr->totalCharge(dftPtr->d_matrixFreeDataPRefined,approxDensityContainer.back())<<std::endl;
 
 			//normalize shadowKSRhoMin
 			charge = dftPtr->totalCharge(dftPtr->d_matrixFreeDataPRefined,
 							       shadowKSRhoMin);
-			scalingFactor = ((double)dftPtr->numElectrons)/charge;
-			shadowKSRhoMin *= scalingFactor;
+			//scalingFactor = ((double)dftPtr->numElectrons)/charge;
+			//shadowKSRhoMin *= scalingFactor;
+			shadowKSRhoMin.add(-charge/dftPtr->d_domainVolume);
                     }
                     else
 		    {
