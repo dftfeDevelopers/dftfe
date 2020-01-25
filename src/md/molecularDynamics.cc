@@ -192,6 +192,7 @@ void molecularDynamics<FEOrder>::run()
         vectorType shadowKSRhoMin;
         vectorType approxDensityNext;
         vectorType atomicRhoIn;
+        vectorType rhoErrorVec;
 
 	double kineticEnergy = 0.0;
 
@@ -215,10 +216,10 @@ void molecularDynamics<FEOrder>::run()
             {
                    shadowKSRhoMin=dftPtr->d_rhoOutNodalValues;
                    shadowKSRhoMin-=dftPtr->d_rhoInNodalValues;
-                   dftPtr->d_constraintsPRefined.distribute(shadowKSRhoMin);
+                   //dftPtr->d_constraintsPRefined.distribute(shadowKSRhoMin);
                    shadowKSRhoMin.update_ghost_values();
 
-                   dftPtr->d_constraintsPRefined.distribute(dftPtr->d_rhoOutNodalValues);
+                   //dftPtr->d_constraintsPRefined.distribute(dftPtr->d_rhoOutNodalValues);
                    for (unsigned int i=0; i<approxDensityContainer.size();++i)
                    {
                       approxDensityContainer[i]=shadowKSRhoMin;
@@ -567,7 +568,7 @@ void molecularDynamics<FEOrder>::run()
 
                         atomicRhoIn.reinit(approxDensityContainer.back());
                         atomicRhoIn=dftPtr->d_rhoInNodalValues;
-			dftPtr->d_constraintsPRefined.distribute(atomicRhoIn);
+			//dftPtr->d_constraintsPRefined.distribute(atomicRhoIn);
 			atomicRhoIn.update_ghost_values();
 
                         dftPtr->d_rhoInNodalValues+=approxDensityContainer.back();
@@ -584,7 +585,7 @@ void molecularDynamics<FEOrder>::run()
 
 			shadowKSRhoMin=dftPtr->d_rhoOutNodalValues;
                         shadowKSRhoMin-=atomicRhoIn;
-			dftPtr->d_constraintsPRefined.distribute(shadowKSRhoMin);
+			//dftPtr->d_constraintsPRefined.distribute(shadowKSRhoMin);
 			shadowKSRhoMin.update_ghost_values();
 
 			//normalize shadowKSRhoMin
@@ -723,10 +724,10 @@ void molecularDynamics<FEOrder>::run()
                     {
                         dftPtr->solve();
 			shadowKSRhoMin=dftPtr->d_rhoOutNodalValues;
-		        dftPtr->d_constraintsPRefined.distribute(shadowKSRhoMin);
+		        //dftPtr->d_constraintsPRefined.distribute(shadowKSRhoMin);
 		        shadowKSRhoMin.update_ghost_values();
 
-		        dftPtr->d_constraintsPRefined.distribute(dftPtr->d_rhoOutNodalValues);
+		        //dftPtr->d_constraintsPRefined.distribute(dftPtr->d_rhoOutNodalValues);
 		        for (unsigned int i=0; i<approxDensityContainer.size();++i)
 		        {
 			      approxDensityContainer[i]=(dftPtr->d_rhoOutNodalValues);
@@ -798,7 +799,7 @@ void molecularDynamics<FEOrder>::run()
 
                         atomicRhoIn.reinit(approxDensityContainer.back());
                         atomicRhoIn=dftPtr->d_rhoInNodalValues;
-			dftPtr->d_constraintsPRefined.distribute(atomicRhoIn);
+			//dftPtr->d_constraintsPRefined.distribute(atomicRhoIn);
 			atomicRhoIn.update_ghost_values();
 
                         dftPtr->d_rhoInNodalValues+=approxDensityContainer.back();
@@ -815,7 +816,7 @@ void molecularDynamics<FEOrder>::run()
 
 			shadowKSRhoMin=dftPtr->d_rhoOutNodalValues;
                         shadowKSRhoMin-=atomicRhoIn;
-			dftPtr->d_constraintsPRefined.distribute(shadowKSRhoMin);
+			//dftPtr->d_constraintsPRefined.distribute(shadowKSRhoMin);
 			shadowKSRhoMin.update_ghost_values();
 
 			//normalize shadowKSRhoMin
@@ -826,11 +827,16 @@ void molecularDynamics<FEOrder>::run()
 			shadowKSRhoMin.add(-charge/dftPtr->d_domainVolume);
 		    }
 
+                    rhoErrorVec=approxDensityContainer.back();
+                    rhoErrorVec-=shadowKSRhoMin;
+                    rmsErrorRho=std::sqrt(dftPtr->fieldl2Norm(dftPtr->d_matrixFreeDataPRefined,rhoErrorVec)/dftPtr->d_domainVolume);
+                    /*
                     const unsigned int local_size = approxDensityContainer.back().local_size();
                     for (unsigned int i = 0; i < local_size; i++)
                        rmsErrorRho+=std::pow(approxDensityContainer.back().local_element(i)-shadowKSRhoMin.local_element(i),2.0);
 
-                    rmsErrorRho=std::sqrt(dealii::Utilities::MPI::sum(rmsErrorRho, mpi_communicator)/shadowKSRhoMin.size());
+                    rmsErrorRho=std::sqrt(dealii::Utilities::MPI::sum(rmsErrorRho, mpi_communicator)/shadowKSRhoMin.size());\
+                    */
 
                     //pcout<<"RMS error of approximate density with respect to shadow KS rho min: "<< rmsErrorRho<<std::endl;
             }
