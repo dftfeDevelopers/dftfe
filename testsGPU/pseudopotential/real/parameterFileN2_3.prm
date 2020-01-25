@@ -22,6 +22,7 @@ subsection Boundary conditions
   set PERIODIC3                       = false
   set CONSTRAINTS FROM SERIAL DOFHANDLER = false
   set CONSTRAINTS PARALLEL CHECK         = false
+  set SELF POTENTIAL RADIUS=4.0
 end
 
 subsection Finite element mesh parameters
