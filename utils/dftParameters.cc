@@ -988,7 +988,7 @@ namespace dftfe
 	{
 	   if (dftParameters::isPseudopotential)
 	   {
-	      if (dftParameters::meshSizeOuterBall<0.399)
+	      if (dftParameters::meshSizeOuterBall<0.299)
 		dftParameters::outerAtomBallRadius=1.8;
 	   }
 	}
