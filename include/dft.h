@@ -405,6 +405,8 @@ namespace dftfe {
       void locatePeriodicPinnedNodes(const dealii::DoFHandler<3> & _dofHandler,
 	                             const dealii::AffineConstraints<double> & constraintMatrixBase,
 	                             dealii::AffineConstraints<double> & constraintMatrix);
+
+      void initAtomicRho(vectorType & atomicRho);
       void initRho();
       void computeRhoInitialGuessFromPSI(std::vector<std::vector<vectorType>> eigenVectors);
       void clearRhoData();

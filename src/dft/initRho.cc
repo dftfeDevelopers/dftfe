@@ -143,72 +143,6 @@ void dftClass<FEOrder>::initRho()
   //
   const int numberImageCharges = d_imageIdsTrunc.size();
 
-  if(dftParameters::isBOMD && dftParameters::isXLBOMD)
-    {
-      IndexSet locallyOwnedSet;
-      DoFTools::extract_locally_owned_dofs(d_dofHandlerPRefined,locallyOwnedSet);
-      std::vector<IndexSet::size_type> locallyOwnedDOFs;
-      locallyOwnedSet.fill_index_vector(locallyOwnedDOFs);
-      unsigned int numberDofs = locallyOwnedDOFs.size();
-      std::map<types::global_dof_index, Point<3> > supportPointsPRefined;
-      DoFTools::map_dofs_to_support_points(MappingQ1<3,3>(), d_dofHandlerPRefined, supportPointsPRefined);
-
-      //d_matrixFreeDataPRefined.initialize_dof_vector(d_rhoInNodalValues);
-
-      for(unsigned int dof = 0; dof < numberDofs; ++dof)
-	{
-	  const dealii::types::global_dof_index dofID = locallyOwnedDOFs[dof];
-	  Point<3> nodalCoor = supportPointsPRefined[dofID];
-	  if(!d_constraintsPRefined.is_constrained(dofID))
-	    {
-	      //loop over atoms and superimpose electron-density at a given dof from all atoms
-	      double rhoNodalValue = 0.0;
-	      for(unsigned int iAtom = 0; iAtom < atomLocations.size(); ++iAtom)
-		{
-		  Point<3> atom(atomLocations[iAtom][2],atomLocations[iAtom][3],atomLocations[iAtom][4]);
-		  double distanceToAtom = nodalCoor.distance(atom);
-		  if(distanceToAtom <= outerMostPointDen[atomLocations[iAtom][0]])
-		    rhoNodalValue += alglib::spline1dcalc(denSpline[atomLocations[iAtom][0]], distanceToAtom);
-		  else
-		    rhoNodalValue += 0.0;
-		}
-
-	      //loop over image charges and do as above
-	      for(int iImageCharge = 0; iImageCharge < numberImageCharges; ++iImageCharge)
-		{
-		  Point<3> imageAtom(d_imagePositionsTrunc[iImageCharge][0],
-			             d_imagePositionsTrunc[iImageCharge][1],
-				     d_imagePositionsTrunc[iImageCharge][2]);
-		  double distanceToAtom = nodalCoor.distance(imageAtom);
-		  int masterAtomId = d_imageIdsTrunc[iImageCharge];
-		  if(distanceToAtom <= outerMostPointDen[atomLocations[masterAtomId][0]])
-		    rhoNodalValue += alglib::spline1dcalc(denSpline[atomLocations[masterAtomId][0]], distanceToAtom);
-		  else
-		    rhoNodalValue += 0.0;
-		}
-	      d_rhoInNodalValues.local_element(dof) = std::abs(rhoNodalValue);
-	    }
-	}
-
-      d_rhoInNodalValues.update_ghost_values();
-
-      //normalize rho
-      const double charge = totalCharge(d_matrixFreeDataPRefined,
-					d_rhoInNodalValues);
-
-       
-      const double scalingFactor = ((double)numElectrons)/charge;
-
-      //scale nodal vector with scalingFactor
-      d_rhoInNodalValues *= scalingFactor;
-
-      if (dftParameters::verbosity>=3)
-	{
-          pcout<<"Total Charge before Normalizing nodal Rho:  "<<charge<<std::endl;
-	  pcout<<"Total Charge after Normalizing nodal Rho: "<< totalCharge(d_matrixFreeDataPRefined,d_rhoInNodalValues)<<std::endl;
-	}
-    }
-
   if(dftParameters::mixingMethod == "ANDERSON_WITH_KERKER")
     {
       IndexSet locallyOwnedSet;
@@ -1071,4 +1005,130 @@ void dftClass<FEOrder>::normalizeRho()
 
   if (dftParameters::verbosity>=1)
     pcout<<"Initial total charge: "<< chargeAfterScaling<<std::endl;
+}
+
+template<unsigned int FEOrder>
+void dftClass<FEOrder>::initAtomicRho(vectorType & atomicRho)
+{
+  computing_timer.enter_section("initialize density");
+
+  //Reading single atom rho initial guess
+  pcout <<std::endl<< "Reading initial guess for electron-density....."<<std::endl;
+  std::map<unsigned int, alglib::spline1dinterpolant> denSpline;
+  std::map<unsigned int, std::vector<std::vector<double> > > singleAtomElectronDensity;
+  std::map<unsigned int, double> outerMostPointDen;
+  const double truncationTol=1e-8;
+
+  //loop over atom types
+  for (std::set<unsigned int>::iterator it=atomTypes.begin(); it!=atomTypes.end(); it++)
+    {
+      char densityFile[256];
+      if(dftParameters::isPseudopotential)
+	{
+	  sprintf(densityFile,"temp/z%u/density.inp",*it);
+	}
+      else
+	{
+	  sprintf(densityFile, "%s/data/electronicStructure/allElectron/z%u/singleAtomData/density.inp", DFT_PATH, *it);
+	}
+
+      dftUtils::readFile(2, singleAtomElectronDensity[*it], densityFile);
+      unsigned int numRows = singleAtomElectronDensity[*it].size()-1;
+      std::vector<double> xData(numRows), yData(numRows);
+
+      unsigned int maxRowId=0;
+      for(unsigned int irow = 0; irow < numRows; ++irow)
+	{
+	  xData[irow] = singleAtomElectronDensity[*it][irow][0];
+	  yData[irow] = singleAtomElectronDensity[*it][irow][1];
+
+	  if (yData[irow]>truncationTol)
+	    maxRowId=irow;
+	}
+
+      //interpolate rho
+      alglib::real_1d_array x;
+      x.setcontent(numRows,&xData[0]);
+      alglib::real_1d_array y;
+      y.setcontent(numRows,&yData[0]);
+      alglib::ae_int_t natural_bound_type_L = 1;
+      alglib::ae_int_t natural_bound_type_R = 1;
+      spline1dbuildcubic(x, y, numRows, natural_bound_type_L, 0.0, natural_bound_type_R, 0.0, denSpline[*it]);
+      outerMostPointDen[*it]= xData[maxRowId];
+    }
+
+
+  //Initialize rho
+  QGauss<3>  quadrature_formula(C_num1DQuad<FEOrder>());
+  FEValues<3> fe_values (FE, quadrature_formula, update_quadrature_points);
+  const unsigned int n_q_points    = quadrature_formula.size();
+
+  //
+  //get number of image charges used only for periodic
+  //
+  const int numberImageCharges = d_imageIdsTrunc.size();
+
+  IndexSet locallyOwnedSet;
+  DoFTools::extract_locally_owned_dofs(d_dofHandlerPRefined,locallyOwnedSet);
+  std::vector<IndexSet::size_type> locallyOwnedDOFs;
+  locallyOwnedSet.fill_index_vector(locallyOwnedDOFs);
+  unsigned int numberDofs = locallyOwnedDOFs.size();
+  std::map<types::global_dof_index, Point<3> > supportPointsPRefined;
+  DoFTools::map_dofs_to_support_points(MappingQ1<3,3>(), d_dofHandlerPRefined, supportPointsPRefined);
+
+  //d_matrixFreeDataPRefined.initialize_dof_vector(d_rhoInNodalValues);
+
+  for(unsigned int dof = 0; dof < numberDofs; ++dof)
+  { 
+	  const dealii::types::global_dof_index dofID = locallyOwnedDOFs[dof];
+	  Point<3> nodalCoor = supportPointsPRefined[dofID];
+	  if(!d_constraintsPRefined.is_constrained(dofID))
+	    {
+	      //loop over atoms and superimpose electron-density at a given dof from all atoms
+	      double rhoNodalValue = 0.0;
+	      for(unsigned int iAtom = 0; iAtom < atomLocations.size(); ++iAtom)
+		{
+		  Point<3> atom(atomLocations[iAtom][2],atomLocations[iAtom][3],atomLocations[iAtom][4]);
+		  double distanceToAtom = nodalCoor.distance(atom);
+		  if(distanceToAtom <= outerMostPointDen[atomLocations[iAtom][0]])
+		    rhoNodalValue += alglib::spline1dcalc(denSpline[atomLocations[iAtom][0]], distanceToAtom);
+		  else
+		    rhoNodalValue += 0.0;
+		}
+
+	      //loop over image charges and do as above
+	      for(int iImageCharge = 0; iImageCharge < numberImageCharges; ++iImageCharge)
+		{
+		  Point<3> imageAtom(d_imagePositionsTrunc[iImageCharge][0],
+			             d_imagePositionsTrunc[iImageCharge][1],
+				     d_imagePositionsTrunc[iImageCharge][2]);
+		  double distanceToAtom = nodalCoor.distance(imageAtom);
+		  int masterAtomId = d_imageIdsTrunc[iImageCharge];
+		  if(distanceToAtom <= outerMostPointDen[atomLocations[masterAtomId][0]])
+		    rhoNodalValue += alglib::spline1dcalc(denSpline[atomLocations[masterAtomId][0]], distanceToAtom);
+		  else
+		    rhoNodalValue += 0.0;
+		}
+	      atomicRho.local_element(dof) = std::abs(rhoNodalValue);
+	    }
+   }
+
+   atomicRho.update_ghost_values();
+
+   //normalize rho
+   const double charge = totalCharge(d_matrixFreeDataPRefined,
+			             atomicRho);
+
+       
+   const double scalingFactor = ((double)numElectrons)/charge;
+
+   //scale nodal vector with scalingFactor
+   atomicRho *= scalingFactor;
+
+   if (dftParameters::verbosity>=3)
+   {
+          pcout<<"Total Charge before Normalizing nodal Rho:  "<<charge<<std::endl;
+	  pcout<<"Total Charge after Normalizing nodal Rho: "<< totalCharge(d_matrixFreeDataPRefined,atomicRho)<<std::endl;
+   }
+   computing_timer.exit_section("initialize density");  
 }

@@ -211,15 +211,21 @@ void molecularDynamics<FEOrder>::run()
 	    dftPtr->solve();
             const std::vector<double> forceOnAtoms= dftPtr->forcePtr->getAtomsForces();
 
+            dftPtr->d_matrixFreeDataPRefined.initialize_dof_vector(atomicRhoIn);
+            dftPtr->initAtomicRho(atomicRhoIn);
+            atomicRhoIn.update_ghost_values();
+
+            shadowKSRhoMin=dftPtr->d_rhoOutNodalValues;
+            shadowKSRhoMin-=atomicRhoIn;
+            shadowKSRhoMin.update_ghost_values();
+	    //normalize shadowKSRhoMin
+	    double charge = dftPtr->totalCharge(dftPtr->d_matrixFreeDataPRefined,
+	 		                 shadowKSRhoMin);
+            shadowKSRhoMin.add(-charge/dftPtr->d_domainVolume);
+
             // Set approximate electron density to the exact ground state electron density in the 0th step
             if (dftParameters::isXLBOMD)
             {
-                   shadowKSRhoMin=dftPtr->d_rhoOutNodalValues;
-                   shadowKSRhoMin-=dftPtr->d_rhoInNodalValues;
-                   //dftPtr->d_constraintsPRefined.distribute(shadowKSRhoMin);
-                   shadowKSRhoMin.update_ghost_values();
-
-                   //dftPtr->d_constraintsPRefined.distribute(dftPtr->d_rhoOutNodalValues);
                    for (unsigned int i=0; i<approxDensityContainer.size();++i)
                    {
                       approxDensityContainer[i]=shadowKSRhoMin;
@@ -231,24 +237,15 @@ void molecularDynamics<FEOrder>::run()
 						     approxDensityContainer.back());
 	           pcout<<"Total Charge before Normalizing approxDensityVec:  "<<charge<<std::endl;
 	       
-		   //double scalingFactor = ((double)dftPtr->numElectrons)/charge;
 
-		   //scale nodal vector with scalingFactor
-		   //approxDensityContainer.back() *= scalingFactor;
 		   approxDensityContainer.back().add(-charge/dftPtr->d_domainVolume);
 		   pcout<<"Total Charge after Normalizing approxDensityVec:  "<<dftPtr->totalCharge(dftPtr->d_matrixFreeDataPRefined,approxDensityContainer.back())<<std::endl;
-
-	           //normalize shadowKSRhoMin
-	           charge = dftPtr->totalCharge(dftPtr->d_matrixFreeDataPRefined,
-						       shadowKSRhoMin);
-		   //scalingFactor = ((double)dftPtr->numElectrons)/charge;
-		   //shadowKSRhoMin *= scalingFactor;
-		   shadowKSRhoMin.add(-charge/dftPtr->d_domainVolume);
             }
 
             const bool testing=false;
             if (testing)
             {
+                    dftPtr->d_rhoInNodalValues=atomicRhoIn;
                     dftPtr->d_rhoInNodalValues+=approxDensityContainer.back();
 		    dftPtr->interpolateNodalDataToQuadratureData(dftPtr->d_matrixFreeDataPRefined,
 						        dftPtr->d_rhoInNodalValues,
@@ -505,7 +502,7 @@ void molecularDynamics<FEOrder>::run()
 	    //
 	    const bool isAutoRemeshSupressed=dftPtr->updateAtomPositionsAndMoveMesh(displacements,
                                                                                     dftParameters::maxJacobianRatioFactorForMD,
-                                                                                    true,
+                                                                                    (timeIndex ==startingTimeStep+1 && restartFlag==1)?true:false,
                                                                                     dftParameters::rectifyAutoMeshEnergyJump);
 	    if(dftParameters::verbosity>=5)
 	      {
@@ -520,6 +517,9 @@ void molecularDynamics<FEOrder>::run()
             double entropicEnergyRepressedAutomesh=0.0;
             if (isAutoRemeshSupressed)
             {
+                dftPtr->d_matrixFreeDataPRefined.initialize_dof_vector(atomicRhoIn);
+                dftPtr->initAtomicRho(atomicRhoIn);
+		atomicRhoIn.update_ghost_values();
 		if (dftParameters::isXLBOMD)
 		{
 			approxDensityNext.reinit(approxDensityContainer.back());
@@ -566,12 +566,9 @@ void molecularDynamics<FEOrder>::run()
 			approxDensityContainer.back().add(-charge/dftPtr->d_domainVolume);
 			pcout<<"Total Charge after Normalizing new approxDensityVec:  "<<dftPtr->totalCharge(dftPtr->d_matrixFreeDataPRefined,approxDensityContainer.back())<<std::endl;
 
-                        atomicRhoIn.reinit(approxDensityContainer.back());
-                        atomicRhoIn=dftPtr->d_rhoInNodalValues;
-			//dftPtr->d_constraintsPRefined.distribute(atomicRhoIn);
-			atomicRhoIn.update_ghost_values();
-
+                        dftPtr->d_rhoInNodalValues=atomicRhoIn;
                         dftPtr->d_rhoInNodalValues+=approxDensityContainer.back();
+                        dftPtr->d_rhoInNodalValues.update_ghost_values();
 			dftPtr->interpolateNodalDataToQuadratureData(dftPtr->d_matrixFreeDataPRefined,
 								dftPtr->d_rhoInNodalValues,
 								*(dftPtr->rhoInValues),
@@ -597,10 +594,32 @@ void molecularDynamics<FEOrder>::run()
 		}
 		else
 		{
-			    //
-			    //do an scf calculation
-			    //
-			    dftPtr->solve();
+                        dftPtr->d_rhoInNodalValues=atomicRhoIn;
+                        dftPtr->d_rhoInNodalValues+=shadowKSRhoMin;
+                        dftPtr->d_rhoInNodalValues.update_ghost_values();
+			dftPtr->interpolateNodalDataToQuadratureData(dftPtr->d_matrixFreeDataPRefined,
+								dftPtr->d_rhoInNodalValues,
+								*(dftPtr->rhoInValues),
+								*(dftPtr->gradRhoInValues),
+								 dftParameters::xc_id == 4);
+			     
+			dftPtr->normalizeRho(); 
+			//
+			//do an scf calculation
+			//
+			dftPtr->solve();
+
+			shadowKSRhoMin=dftPtr->d_rhoOutNodalValues;
+                        shadowKSRhoMin-=atomicRhoIn;
+			//dftPtr->d_constraintsPRefined.distribute(shadowKSRhoMin);
+			shadowKSRhoMin.update_ghost_values();
+
+			//normalize shadowKSRhoMin
+			double charge = dftPtr->totalCharge(dftPtr->d_matrixFreeDataPRefined,
+					       shadowKSRhoMin);
+			//scalingFactor = ((double)dftPtr->numElectrons)/charge;
+			//shadowKSRhoMin *= scalingFactor;
+			shadowKSRhoMin.add(-charge/dftPtr->d_domainVolume);
 		}
 
 
@@ -661,10 +680,13 @@ void molecularDynamics<FEOrder>::run()
 
             }
 
+            dftPtr->d_matrixFreeDataPRefined.initialize_dof_vector(atomicRhoIn);
+            dftPtr->initAtomicRho(atomicRhoIn);
+	    atomicRhoIn.update_ghost_values();
+
             double rmsErrorRho=0.0;
             if (dftParameters::isXLBOMD)
             {
-
                     if (dftPtr->d_autoMesh==1 && dftParameters::autoMeshStepInterpolateBOMD)
                     {
                         pcout<<".............Auto meshing step: interpolation of approximate density container to new mesh.............."<<std::endl;
@@ -724,7 +746,7 @@ void molecularDynamics<FEOrder>::run()
                     {
                         dftPtr->solve();
 			shadowKSRhoMin=dftPtr->d_rhoOutNodalValues;
-			shadowKSRhoMin-=dftPtr->d_rhoInNodalValues;
+			shadowKSRhoMin-=atomicRhoIn;
 			//dftPtr->d_constraintsPRefined.distribute(shadowKSRhoMin);
 			shadowKSRhoMin.update_ghost_values();
 
@@ -800,12 +822,9 @@ void molecularDynamics<FEOrder>::run()
 			approxDensityContainer.back().add(-charge/dftPtr->d_domainVolume);
 			pcout<<"Total Charge after Normalizing new approxDensityVec:  "<<dftPtr->totalCharge(dftPtr->d_matrixFreeDataPRefined,approxDensityContainer.back())<<std::endl;
 
-                        atomicRhoIn.reinit(approxDensityContainer.back());
-                        atomicRhoIn=dftPtr->d_rhoInNodalValues;
-			//dftPtr->d_constraintsPRefined.distribute(atomicRhoIn);
-			atomicRhoIn.update_ghost_values();
-
+                        dftPtr->d_rhoInNodalValues=atomicRhoIn;
                         dftPtr->d_rhoInNodalValues+=approxDensityContainer.back();
+                        dftPtr->d_rhoInNodalValues.update_ghost_values();
 			dftPtr->interpolateNodalDataToQuadratureData(dftPtr->d_matrixFreeDataPRefined,
 								dftPtr->d_rhoInNodalValues,
 								*(dftPtr->rhoInValues),
@@ -845,10 +864,34 @@ void molecularDynamics<FEOrder>::run()
             }
             else
             {
+                    if (!(timeIndex ==startingTimeStep+1 && restartFlag==1))
+                    {
+			    dftPtr->d_rhoInNodalValues=atomicRhoIn;
+			    dftPtr->d_rhoInNodalValues+=shadowKSRhoMin;
+			    dftPtr->d_rhoInNodalValues.update_ghost_values();
+			    dftPtr->interpolateNodalDataToQuadratureData(dftPtr->d_matrixFreeDataPRefined,
+									dftPtr->d_rhoInNodalValues,
+									*(dftPtr->rhoInValues),
+									*(dftPtr->gradRhoInValues),
+									 dftParameters::xc_id == 4);
+                    }
+
 		    //
 		    //do an scf calculation
 		    //
 		    dftPtr->solve();
+
+	            shadowKSRhoMin=dftPtr->d_rhoOutNodalValues;
+                    shadowKSRhoMin-=atomicRhoIn;
+		    //dftPtr->d_constraintsPRefined.distribute(shadowKSRhoMin);
+		    shadowKSRhoMin.update_ghost_values();
+
+		    //normalize shadowKSRhoMin
+		    double charge = dftPtr->totalCharge(dftPtr->d_matrixFreeDataPRefined,
+					       shadowKSRhoMin);
+		    //scalingFactor = ((double)dftPtr->numElectrons)/charge;
+		    //shadowKSRhoMin *= scalingFactor;
+		    shadowKSRhoMin.add(-charge/dftPtr->d_domainVolume);
             }
 
             if (isAutoRemeshSupressed)

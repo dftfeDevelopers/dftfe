@@ -848,8 +848,8 @@ namespace dftfe {
        //
        //rho init (use previous ground state electron density)
        //
-      if(dftParameters::mixingMethod != "ANDERSON_WITH_KERKER")
-       solveNoSCF();
+       //if(dftParameters::mixingMethod != "ANDERSON_WITH_KERKER")
+       //   solveNoSCF();
 
        noRemeshRhoDataInit();
     }

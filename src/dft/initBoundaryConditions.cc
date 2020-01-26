@@ -229,7 +229,7 @@ void dftClass<FEOrder>::initBoundaryConditions(){
   //
   //init 2p matrix-free objects using appropriate constraint matrix and quadrature rule
   //
-  if(dftParameters::mixingMethod=="ANDERSON_WITH_KERKER" || (dftParameters::isBOMD && dftParameters::isXLBOMD))
+  if(dftParameters::mixingMethod=="ANDERSON_WITH_KERKER" || (dftParameters::isBOMD))
     initpRefinedObjects();
 
 }
