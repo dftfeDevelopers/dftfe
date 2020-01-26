@@ -896,7 +896,7 @@ void molecularDynamics<FEOrder>::run()
 
             if (isAutoRemeshSupressed)
             {
-                    internalEnergyAccumulatedCorrection+=dftParameters::isXLBOMD?
+                    internalEnergyAccumulatedCorrection+=(dftParameters::isXLBOMD && dftPtr->d_autoMesh!=1)?
                                                                dftPtr->d_shadowPotentialEnergy
                                                                :dftPtr->d_groundStateEnergy-internalEnergyRepressedAutomesh;
 	            entropicEnergyAccumulatedCorrection += dftPtr->d_entropicEnergy-entropicEnergyRepressedAutomesh;
@@ -937,7 +937,7 @@ void molecularDynamics<FEOrder>::run()
 	    averageKineticEnergy = kineticEnergy/(3*numberGlobalCharges);
 	    temperatureFromVelocities = averageKineticEnergy*2/kb;
 	    kineticEnergyVector[timeIndex-startingTimeStep] = kineticEnergy/haToeV;
-	    internalEnergyVector[timeIndex-startingTimeStep] = dftParameters::isXLBOMD?
+	    internalEnergyVector[timeIndex-startingTimeStep] = (dftParameters::isXLBOMD && dftPtr->d_autoMesh!=1)?
                                                                dftPtr->d_shadowPotentialEnergy
                                                                :dftPtr->d_groundStateEnergy-internalEnergyAccumulatedCorrection;
 	    entropicEnergyVector[timeIndex-startingTimeStep] = dftPtr->d_entropicEnergy-entropicEnergyAccumulatedCorrection;
