@@ -148,3 +148,38 @@ void dftClass<FEOrder>::interpolateFieldsFromPrevToCurrentMesh(std::vector<vecto
   for (unsigned int i=0; i<fieldsCurrent.size();++i)
     fieldsCurrent[i]->update_ghost_values();
 }
+
+//
+//compute field l2 norm
+//
+template <unsigned int FEOrder>
+double dftClass<FEOrder>::fieldGradl2Norm(const dealii::MatrixFree<3,double> & matrixFreeDataObject,
+				      const vectorType & nodalField)
+
+{
+  FEEvaluation<C_DIM,C_num1DKerkerPoly<FEOrder>(),C_num1DQuad<C_num1DKerkerPoly<FEOrder>()>(),1,double> fe_evalField(matrixFreeDataObject);
+  VectorizedArray<double> valueVectorized = make_vectorized_array(0.0);
+  const unsigned int numQuadPoints = fe_evalField.n_q_points;
+  for(unsigned int cell = 0; cell < matrixFreeDataObject.n_macro_cells(); ++cell)
+    {
+      fe_evalField.reinit(cell);
+      fe_evalField.read_dof_values(nodalField);
+      fe_evalField.evaluate(false,true);
+      for(unsigned int q_point = 0; q_point < numQuadPoints; ++q_point)
+	{
+	  VectorizedArray<double> temp = scalar_product(fe_evalField.get_gradient(q_point),fe_evalField.get_gradient(q_point));
+	  fe_evalField.submit_value(temp,q_point);
+	}
+
+      valueVectorized += fe_evalField.integrate_value();
+    }
+  
+  double value = 0.0;
+  for(unsigned int iSubCell = 0; iSubCell < VectorizedArray<double>::n_array_elements; ++iSubCell)
+    {
+      value += valueVectorized[iSubCell];
+    }
+  
+  return Utilities::MPI::sum(value, mpi_communicator);
+
+}

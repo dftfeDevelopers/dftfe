@@ -175,6 +175,7 @@ void molecularDynamics<FEOrder>::run()
 	std::vector<double> kineticEnergyVector(numberTimeSteps,0.0);
         std::vector<double> totalEnergyVector(numberTimeSteps,0.0);
         std::vector<double> rmsErrorRhoVector(numberTimeSteps,0.0);
+        std::vector<double> rmsErrorGradRhoVector(numberTimeSteps,0.0);
 
         const unsigned int kmax=8;
         const double k=1.86;
@@ -414,6 +415,7 @@ void molecularDynamics<FEOrder>::run()
 	    entropicEnergyVector[0] = dftPtr->d_entropicEnergy;
             totalEnergyVector[0]=kineticEnergyVector[0]+internalEnergyVector[0]-entropicEnergyVector[0];
             rmsErrorRhoVector[0]=0.0;
+            rmsErrorGradRhoVector[0]=0.0;
 
             pcout<<" Initial Velocity Deviation: "<<initialVelocityDeviation<<std::endl;
 	    pcout<<" Kinetic Energy in Ha at timeIndex 0 "<<kineticEnergyVector[0]<<std::endl;
@@ -421,8 +423,11 @@ void molecularDynamics<FEOrder>::run()
 	    pcout<<" Entropic Energy in Ha at timeIndex 0 "<<entropicEnergyVector[0]<<std::endl;
             pcout<<" Total Energy in Ha at timeIndex 0 "<<totalEnergyVector[0]<<std::endl;
             if (dftParameters::isXLBOMD)
+            {
               pcout<<" RMS error in rho in a.u. at timeIndex 0 "<<rmsErrorRhoVector[0]<<std::endl;
-	  }
+              pcout<<" RMS error in grad rho in a.u. at timeIndex 0 "<<rmsErrorGradRhoVector[0]<<std::endl;
+            }
+	}
 
         double internalEnergyAccumulatedCorrection=0.0;
         double entropicEnergyAccumulatedCorrection=0.0;
@@ -685,6 +690,7 @@ void molecularDynamics<FEOrder>::run()
 	    atomicRhoIn.update_ghost_values();
 
             double rmsErrorRho=0.0;
+            double rmsErrorGradRho=0.0;
             if (dftParameters::isXLBOMD)
             {
                     if (dftPtr->d_autoMesh==1 && dftParameters::autoMeshStepInterpolateBOMD)
@@ -852,6 +858,7 @@ void molecularDynamics<FEOrder>::run()
                     rhoErrorVec=approxDensityContainer.back();
                     rhoErrorVec-=shadowKSRhoMin;
                     rmsErrorRho=std::sqrt(dftPtr->fieldl2Norm(dftPtr->d_matrixFreeDataPRefined,rhoErrorVec)/dftPtr->d_domainVolume);
+                    rmsErrorGradRho=std::sqrt(dftPtr->fieldGradl2Norm(dftPtr->d_matrixFreeDataPRefined,rhoErrorVec)/dftPtr->d_domainVolume);
                     /*
                     const unsigned int local_size = approxDensityContainer.back().local_size();
                     for (unsigned int i = 0; i < local_size; i++)
@@ -943,6 +950,7 @@ void molecularDynamics<FEOrder>::run()
 	    entropicEnergyVector[timeIndex-startingTimeStep] = dftPtr->d_entropicEnergy-entropicEnergyAccumulatedCorrection;
             totalEnergyVector[timeIndex-startingTimeStep] = kineticEnergyVector[timeIndex-startingTimeStep] +internalEnergyVector[timeIndex-startingTimeStep] -entropicEnergyVector[timeIndex-startingTimeStep];
             rmsErrorRhoVector[timeIndex-startingTimeStep] = rmsErrorRho;
+            rmsErrorGradRhoVector[timeIndex-startingTimeStep] = rmsErrorGradRho;
 
 	    //
 	    //reset acceleration at time t based on the acceleration at previous time step
@@ -955,13 +963,17 @@ void molecularDynamics<FEOrder>::run()
 	    pcout<<" Entropic Energy in Ha at timeIndex "<<timeIndex<<" "<<entropicEnergyVector[timeIndex-startingTimeStep]<<std::endl;
             pcout<<" Total Energy in Ha at timeIndex "<<timeIndex<<" "<<totalEnergyVector[timeIndex-startingTimeStep]<<std::endl;
             if (dftParameters::isXLBOMD)
+            {
               pcout<<" RMS error in rho in a.u. at timeIndex 0 "<<rmsErrorRhoVector[timeIndex-startingTimeStep]<<std::endl;
+              pcout<<" RMS error in grad rho in a.u. at timeIndex 0 "<<rmsErrorGradRhoVector[timeIndex-startingTimeStep]<<std::endl;
+            }
 
 	     std::vector<std::vector<double> > data1(timeIndex+1,std::vector<double>(1,0.0));
              std::vector<std::vector<double> > data2(timeIndex+1,std::vector<double>(1,0.0));
              std::vector<std::vector<double> > data3(timeIndex+1,std::vector<double>(1,0.0));
              std::vector<std::vector<double> > data4(timeIndex+1,std::vector<double>(1,0.0));
              std::vector<std::vector<double> > data5(timeIndex+1,std::vector<double>(1,0.0));
+             std::vector<std::vector<double> > data6(timeIndex+1,std::vector<double>(1,0.0));
 
 	    if (restartFlag==1)
 	    {
@@ -987,19 +999,29 @@ void molecularDynamics<FEOrder>::run()
 
 
 		std::vector<std::vector<double> > rmsErrorRhoData;
+                std::vector<std::vector<double> > rmsErrorGradRhoData;
                 if (dftParameters::isXLBOMD)
+                {
 			dftUtils::readFile(1,
 					   totalEnergyData,
 					   "RMSErrorRhoMd");
-		 for(int i = 0; i <= startingTimeStep; ++i)
-		 {
+
+			dftUtils::readFile(1,
+					   totalEnergyData,
+					   "RMSErrorGradRhoMd");
+                }
+		for(int i = 0; i <= startingTimeStep; ++i)
+		{
 		     data1[i][0]=kineticEnergyData[i][0];
 		     data2[i][0]=internalEnergyData[i][0];
 		     data3[i][0]=entropicEnergyData[i][0];
                      data4[i][0]=totalEnergyData[i][0];
                      if (dftParameters::isXLBOMD)
+                     {
                         data5[i][0]=rmsErrorRhoData[i][0];
-		 }
+                        data6[i][0]=rmsErrorGradRhoData[i][0];
+                     }
+		}
 	     }
 	     else
 	     {
@@ -1008,7 +1030,10 @@ void molecularDynamics<FEOrder>::run()
 		 data3[0][0]=entropicEnergyVector[0];
                  data4[0][0]=totalEnergyVector[0];
                  if (dftParameters::isXLBOMD)
+                 {
                      data5[0][0]=rmsErrorRhoVector[0];
+                     data6[0][0]=rmsErrorGradRhoVector[0];
+                 }
 	     }
 
 	     for(int i = startingTimeStep+1; i <= timeIndex; ++i)
@@ -1018,7 +1043,10 @@ void molecularDynamics<FEOrder>::run()
 		 data3[i][0]=entropicEnergyVector[i-startingTimeStep];
                  data4[i][0]=totalEnergyVector[i-startingTimeStep];
                  if (dftParameters::isXLBOMD)
+                 {
                      data5[i][0]=rmsErrorRhoVector[i-startingTimeStep];
+                     data6[i][0]=rmsErrorGradRhoVector[i-startingTimeStep];
+                 }
 	     }
              MPI_Barrier(MPI_COMM_WORLD);
 	     dftUtils::writeDataIntoFile(data1,
@@ -1036,8 +1064,12 @@ void molecularDynamics<FEOrder>::run()
 			       "TotEngMd");
 
              if (dftParameters::isXLBOMD)
+             {
   	         dftUtils::writeDataIntoFile(data5,
 			         "RMSErrorRhoMd");
+  	         dftUtils::writeDataIntoFile(data6,
+			         "RMSErrorGradRhoMd");
+             }
 
 	    ///write velocity and acceleration data
 	    std::vector<std::vector<double> > fileAccData(numberGlobalCharges,std::vector<double>(3,0.0));

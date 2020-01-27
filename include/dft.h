@@ -510,7 +510,8 @@ namespace dftfe {
       double fieldl2Norm(const dealii::MatrixFree<3,double> & matrixFreeDataObject,
 			 const vectorType & rhoNodalField);
 
-
+      double fieldGradl2Norm(const dealii::MatrixFree<3,double> & matrixFreeDataObject,
+			     const vectorType & field);
 
       /**
        *@brief Computes net magnetization from the difference of local spin densities
