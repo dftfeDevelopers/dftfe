@@ -984,15 +984,6 @@ namespace dftfe
 	   else
 	       dftParameters::meshSizeInnerBall=0.1*dftParameters::meshSizeOuterBall;
 
-	if (dftParameters::autoUserMeshParams && !dftParameters::reproducible_output)
-	{
-	   if (dftParameters::isPseudopotential)
-	   {
-	      if (dftParameters::meshSizeOuterBall<0.399)
-		dftParameters::outerAtomBallRadius=1.8;
-	   }
-	}
-
 	if (dftParameters::isPseudopotential && dftParameters::orthogType=="Auto")
 	{
 	     if (dftParameters::verbosity >=1 && Utilities::MPI::this_mpi_process(MPI_COMM_WORLD)== 0)
