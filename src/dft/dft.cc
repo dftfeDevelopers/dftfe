@@ -1959,7 +1959,8 @@ namespace dftfe {
 	      pcout<<"SCF iterations converged to the specified tolerance after: "<<scfIter<<" iterations."<<std::endl;
     }
 
-    if ((!dftParameters::computeEnergyEverySCF || d_numEigenValuesRR!=d_numEigenValues))
+    if ((!dftParameters::computeEnergyEverySCF || d_numEigenValuesRR!=d_numEigenValues)
+        && !(dftParameters::isBOMD && dftParameters::isXLBOMD && solveLinearizedKS))
     {
 	if(dftParameters::verbosity>=2)
 	  pcout<< std::endl<<"Poisson solve for total electrostatic potential (rhoOut+b): ";
