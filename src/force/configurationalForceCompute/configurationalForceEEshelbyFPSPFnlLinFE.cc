@@ -135,6 +135,9 @@ void forceClass<FEOrder>::computeConfigurationalForceEEshelbyTensorFPSPFnlLinFE
 	                                                          phiExtDofHandlerIndex,
 								  0);
 
+  std::map<unsigned int, std::vector<double> > forceContributionShadowLocalGammaAtoms;
+
+
   QGauss<C_DIM>  quadrature(C_num1DQuad<FEOrder>());
 
   const unsigned int numQuadPoints=forceEval.n_q_points;
@@ -637,9 +640,11 @@ void forceClass<FEOrder>::computeConfigurationalForceEEshelbyTensorFPSPFnlLinFE
   if (bandGroupTaskId==0)
   {
       std::vector<VectorizedArray<double> > rhoQuads(numQuadPoints,make_vectorized_array(0.0));
+      std::vector<VectorizedArray<double> > derVxcWithRhoOutTimesRhoOutQuads(numQuadPoints,make_vectorized_array(0.0));
       std::vector<VectorizedArray<double> > shadowKSRhoMinMinusRhoQuads(numQuadPoints,make_vectorized_array(0.0));
       std::vector<Tensor<1,C_DIM,VectorizedArray<double> > > shadowKSGradRhoMinMinusGradRhoQuads(numQuadPoints,zeroTensor3);
       std::vector<Tensor<1,C_DIM,VectorizedArray<double> > > gradRhoQuads(numQuadPoints,zeroTensor3);
+      std::vector<Tensor<1,C_DIM,VectorizedArray<double> > > gradRhoAtomsQuads(numQuadPoints,zeroTensor3);
       std::vector<Tensor<2,C_DIM,VectorizedArray<double> > > hessianRhoQuads(numQuadPoints,zeroTensor4);
       std::vector<VectorizedArray<double> > excQuads(numQuadPoints,make_vectorized_array(0.0));
       std::vector<VectorizedArray<double> > pseudoVLocQuads(numQuadPoints,make_vectorized_array(0.0));
@@ -648,6 +653,7 @@ void forceClass<FEOrder>::computeConfigurationalForceEEshelbyTensorFPSPFnlLinFE
       std::vector<Tensor<1,C_DIM,VectorizedArray<double> > > derExchCorrEnergyWithGradRhoInQuads(numQuadPoints,zeroTensor3);
       std::vector<Tensor<1,C_DIM,VectorizedArray<double> > > derExchCorrEnergyWithGradRhoOutQuads(numQuadPoints,zeroTensor3);
       std::vector<Tensor<1,C_DIM,VectorizedArray<double> > > derVxcWithGradRhoOutQuads(numQuadPoints,zeroTensor3);
+      std::vector<VectorizedArray<double> > derVxcWithRhoOutQuads(numQuadPoints,make_vectorized_array(0.0));
       std::vector<Tensor<2,C_DIM,VectorizedArray<double> > > der2ExcWithGradRhoOutQuads(numQuadPoints,zeroTensor4);
       for (unsigned int cell=0; cell<matrixFreeData.n_macro_cells(); ++cell)
       {
@@ -665,9 +671,11 @@ void forceClass<FEOrder>::computeConfigurationalForceEEshelbyTensorFPSPFnlLinFE
 	}
 
 	std::fill(rhoQuads.begin(),rhoQuads.end(),make_vectorized_array(0.0));
+        std::fill(derVxcWithRhoOutTimesRhoOutQuads.begin(),derVxcWithRhoOutTimesRhoOutQuads.end(),make_vectorized_array(0.0));
         std::fill(shadowKSRhoMinMinusRhoQuads.begin(),shadowKSRhoMinMinusRhoQuads.end(),make_vectorized_array(0.0));
         std::fill(shadowKSGradRhoMinMinusGradRhoQuads.begin(),shadowKSGradRhoMinMinusGradRhoQuads.end(),zeroTensor3);  
 	std::fill(gradRhoQuads.begin(),gradRhoQuads.end(),zeroTensor3);
+        std::fill(gradRhoAtomsQuads.begin(),gradRhoAtomsQuads.end(),zeroTensor3);
 	std::fill(hessianRhoQuads.begin(),hessianRhoQuads.end(),zeroTensor4);
 	std::fill(excQuads.begin(),excQuads.end(),make_vectorized_array(0.0));
 	std::fill(pseudoVLocQuads.begin(),pseudoVLocQuads.end(),make_vectorized_array(0.0));
@@ -676,6 +684,7 @@ void forceClass<FEOrder>::computeConfigurationalForceEEshelbyTensorFPSPFnlLinFE
 	std::fill(derExchCorrEnergyWithGradRhoInQuads.begin(),derExchCorrEnergyWithGradRhoInQuads.end(),zeroTensor3);
 	std::fill(derExchCorrEnergyWithGradRhoOutQuads.begin(),derExchCorrEnergyWithGradRhoOutQuads.end(),zeroTensor3);
         std::fill(derVxcWithGradRhoOutQuads.begin(),derVxcWithGradRhoOutQuads.end(),zeroTensor3);
+        std::fill(derVxcWithRhoOutQuads.begin(),derVxcWithRhoOutQuads.end(),make_vectorized_array(0.0));
         std::fill(der2ExcWithGradRhoOutQuads.begin(),der2ExcWithGradRhoOutQuads.end(),zeroTensor4);
 
 	const unsigned int numSubCells=matrixFreeData.n_components_filled(cell);
@@ -700,7 +709,8 @@ void forceClass<FEOrder>::computeConfigurationalForceEEshelbyTensorFPSPFnlLinFE
         std::vector<double> derVcWithSigmaRhoOut(numQuadPoints);
         std::vector<double> der2ExWithSigmaRhoOut(numQuadPoints);
         std::vector<double> der2EcWithSigmaRhoOut(numQuadPoints);
-        std::vector<double> dummy1(numQuadPoints);
+        std::vector<double> derVxWithRhoOut(numQuadPoints);
+        std::vector<double> derVcWithRhoOut(numQuadPoints);
 
 	//
 	for (unsigned int iSubCell=0; iSubCell<numSubCells; ++iSubCell)
@@ -727,8 +737,8 @@ void forceClass<FEOrder>::computeConfigurationalForceEEshelbyTensorFPSPFnlLinFE
 	      xc_gga_exc_vxc(&(dftPtr->funcC),numQuadPoints,&((*dftPtr->rhoInValues)[subCellId][0]),&sigmaValRhoIn[0],&corrValRhoIn[0],&derCorrEnergyWithDensityValRhoIn[0],&derCorrEnergyWithSigmaRhoIn[0]);
               if  (shadowPotentialForce)
               {
-                 xc_gga_fxc(&(dftPtr->funcX),numQuadPoints,&(rhoOutValues.find(subCellId)->second[0]),&sigmaValRhoOut[0], &dummy1[0], &derVxWithSigmaRhoOut[0],  &der2ExWithSigmaRhoOut[0]);
-                 xc_gga_fxc(&(dftPtr->funcC),numQuadPoints,&(rhoOutValues.find(subCellId)->second[0]),&sigmaValRhoOut[0], &dummy1[0], &derVcWithSigmaRhoOut[0],  &der2EcWithSigmaRhoOut[0]);              
+                 xc_gga_fxc(&(dftPtr->funcX),numQuadPoints,&(rhoOutValues.find(subCellId)->second[0]),&sigmaValRhoOut[0], &derVxWithRhoOut[0], &derVxWithSigmaRhoOut[0],  &der2ExWithSigmaRhoOut[0]);
+                 xc_gga_fxc(&(dftPtr->funcC),numQuadPoints,&(rhoOutValues.find(subCellId)->second[0]),&sigmaValRhoOut[0], &derVcWithRhoOut[0], &derVcWithSigmaRhoOut[0],  &der2EcWithSigmaRhoOut[0]);              
               }
 
 	      for (unsigned int q=0; q<numQuadPoints; ++q)
@@ -737,6 +747,10 @@ void forceClass<FEOrder>::computeConfigurationalForceEEshelbyTensorFPSPFnlLinFE
 		 const double temp = derExchEnergyWithSigmaRhoOut[q]+derCorrEnergyWithSigmaRhoOut[q];
 		 vxcRhoInQuads[q][iSubCell]= derExchEnergyWithDensityValRhoIn[q]+derCorrEnergyWithDensityValRhoIn[q];
 		 vxcRhoOutQuads[q][iSubCell]= derExchEnergyWithDensityValRhoOut[q]+derCorrEnergyWithDensityValRhoOut[q];
+
+                 if  (shadowPotentialForce)
+                   derVxcWithRhoOutQuads[q][iSubCell]=derVxWithRhoOut[q]+derVcWithRhoOut[q];
+
 		  for (unsigned int idim=0; idim<C_DIM; idim++)
 		  {
 		     derExchCorrEnergyWithGradRhoInQuads[q][idim][iSubCell]=2.0*(derExchEnergyWithSigmaRhoIn[q]+derCorrEnergyWithSigmaRhoIn[q])*gradRhoIn[q][idim];
@@ -767,11 +781,16 @@ void forceClass<FEOrder>::computeConfigurationalForceEEshelbyTensorFPSPFnlLinFE
 	      xc_lda_vxc(&(dftPtr->funcC),numQuadPoints,&(rhoOutValues.find(subCellId)->second[0]),&corrPotValRhoOut[0]);
 	      xc_lda_vxc(&(dftPtr->funcX),numQuadPoints,&((*dftPtr->rhoInValues)[subCellId][0]),&exchPotValRhoIn[0]);
 	      xc_lda_vxc(&(dftPtr->funcC),numQuadPoints,&((*dftPtr->rhoInValues)[subCellId][0]),&corrPotValRhoIn[0]);
+              xc_lda_fxc(&(dftPtr->funcX),numQuadPoints,&(rhoOutValues.find(subCellId)->second[0]),&derVxWithRhoOut[0]);
+              xc_lda_fxc(&(dftPtr->funcC),numQuadPoints,&(rhoOutValues.find(subCellId)->second[0]),&derVcWithRhoOut[0]);
 	      for (unsigned int q=0; q<numQuadPoints; ++q)
 	      {
 		 excQuads[q][iSubCell]=exchValRhoOut[q]+corrValRhoOut[q];
 		 vxcRhoInQuads[q][iSubCell]= exchPotValRhoIn[q]+corrPotValRhoIn[q];
 		 vxcRhoOutQuads[q][iSubCell]= exchPotValRhoOut[q]+corrPotValRhoOut[q];
+
+                 if  (shadowPotentialForce)
+                   derVxcWithRhoOutQuads[q][iSubCell]=derVxWithRhoOut[q]+derVcWithRhoOut[q];
 	      }
 	   }
 
@@ -782,6 +801,9 @@ void forceClass<FEOrder>::computeConfigurationalForceEEshelbyTensorFPSPFnlLinFE
              if (shadowPotentialForce)
              {
                 shadowKSRhoMinMinusRhoQuads[q][iSubCell]=shadowKSRhoMinValues.find(subCellId)->second[q]-rhoQuads[q][iSubCell];
+  		    
+                for (unsigned int idim=0; idim<C_DIM; idim++)
+                    gradRhoAtomsQuads[q][idim][iSubCell]=dftPtr->d_gradRhoAtomsValues.find(subCellId)->second[3*q+idim];
 
                 if(dftParameters::xc_id == 4)
   		    for (unsigned int idim=0; idim<C_DIM; idim++)
@@ -815,6 +837,9 @@ void forceClass<FEOrder>::computeConfigurationalForceEEshelbyTensorFPSPFnlLinFE
 						    phiExtEval.get_value(q)
 						    :make_vectorized_array(0.0);
 
+           derVxcWithRhoOutTimesRhoOutQuads[q]=derVxcWithRhoOutQuads[q]*rhoQuads[q];
+
+
 	   Tensor<2,C_DIM,VectorizedArray<double> > E=eshelbyTensor::getELocXcEshelbyTensor
 						      (rhoQuads[q],
 						      gradRhoQuads[q],
@@ -832,6 +857,9 @@ void forceClass<FEOrder>::computeConfigurationalForceEEshelbyTensorFPSPFnlLinFE
 
 	   Tensor<1,C_DIM,VectorizedArray<double> > F=zeroTensor3;
 
+           if (shadowPotentialForce && dftParameters::useAtomicRhoXLBOMD)
+              F-=gradRhoAtomsQuads[q]*derVxcWithRhoOutTimesRhoOutQuads[q];
+
 	   if(d_isElectrostaticsMeshSubdivided)
 	       F-=gradRhoQuads[q]*phiTot_q;
 
@@ -842,11 +870,29 @@ void forceClass<FEOrder>::computeConfigurationalForceEEshelbyTensorFPSPFnlLinFE
 	   forceEval.submit_gradient(E,q);
 	}//quad point loop
 
+
+        
+        if(shadowPotentialForce && dftParameters::useAtomicRhoXLBOMD)
+            FShadowLocalGammaAtomsElementalContribution(forceContributionShadowLocalGammaAtoms,
+						forceEval,
+						matrixFreeData,
+						cell,
+						dftPtr->d_gradRhoAtomsValuesSeparate,
+                                                derVxcWithRhoOutTimesRhoOutQuads);
+        
+
+
 	forceEval.integrate(true,true);
 	forceEval.distribute_local_to_global(d_configForceVectorLinFE);//also takes care of constraints
-      }
+      }//cell loop
 
-
+      
+      if (shadowPotentialForce && dftParameters::useAtomicRhoXLBOMD)
+         distributeForceContributionFPSPLocalGammaAtoms(forceContributionShadowLocalGammaAtoms,
+	                                                d_atomsForceDofs,
+						        d_constraintsNoneForce,
+						        d_configForceVectorLinFE);
+      
       ////Add electrostatic configurational force contribution////////////////
       computeConfigurationalForceEEshelbyEElectroPhiTot
 			    (matrixFreeDataElectro,
@@ -914,6 +960,7 @@ void forceClass<FEOrder>::computeConfigurationalForceEEshelbyEElectroPhiTot
   std::vector<VectorizedArray<double> > shadowKSRhoMinQuadsElectro(numQuadPoints,make_vectorized_array(0.0));
   std::vector<VectorizedArray<double> > shadowKSRhoMinMinusRhoQuadsElectro(numQuadPoints,make_vectorized_array(0.0));
   std::vector<Tensor<1,C_DIM,VectorizedArray<double> > > gradRhoQuadsElectro(numQuadPoints,zeroTensor);
+  std::vector<Tensor<1,C_DIM,VectorizedArray<double> > > gradRhoAtomsQuadsElectro(numQuadPoints,zeroTensor);
   std::vector<VectorizedArray<double> > pseudoVLocQuadsElectro(numQuadPoints,make_vectorized_array(0.0));
   std::vector<Tensor<1,C_DIM,VectorizedArray<double> > > gradPseudoVLocQuadsElectro(numQuadPoints,zeroTensor);
 
@@ -936,6 +983,7 @@ void forceClass<FEOrder>::computeConfigurationalForceEEshelbyEElectroPhiTot
     std::fill(shadowKSRhoMinQuadsElectro.begin(),shadowKSRhoMinQuadsElectro.end(),make_vectorized_array(0.0));
     std::fill(shadowKSRhoMinMinusRhoQuadsElectro.begin(),shadowKSRhoMinMinusRhoQuadsElectro.end(),make_vectorized_array(0.0));
     std::fill(gradRhoQuadsElectro.begin(),gradRhoQuadsElectro.end(),zeroTensor);
+    std::fill(gradRhoAtomsQuadsElectro.begin(),gradRhoAtomsQuadsElectro.end(),zeroTensor);
     std::fill(pseudoVLocQuadsElectro.begin(),pseudoVLocQuadsElectro.end(),make_vectorized_array(0.0));
     std::fill(gradPseudoVLocQuadsElectro.begin(),gradPseudoVLocQuadsElectro.end(),zeroTensor);
 
@@ -952,6 +1000,10 @@ void forceClass<FEOrder>::computeConfigurationalForceEEshelbyEElectroPhiTot
          {
             shadowKSRhoMinQuadsElectro[q][iSubCell]=shadowKSRhoMinValues.find(subCellId)->second[q];
             shadowKSRhoMinMinusRhoQuadsElectro[q][iSubCell]=shadowKSRhoMinQuadsElectro[q][iSubCell]-rhoQuadsElectro[q][iSubCell];
+
+	    gradRhoAtomsQuadsElectro[q][0][iSubCell]=dftPtr->d_gradRhoAtomsValues.find(subCellId)->second[C_DIM*q+0];
+	    gradRhoAtomsQuadsElectro[q][1][iSubCell]=dftPtr->d_gradRhoAtomsValues.find(subCellId)->second[C_DIM*q+1];
+	    gradRhoAtomsQuadsElectro[q][2][iSubCell]=dftPtr->d_gradRhoAtomsValues.find(subCellId)->second[C_DIM*q+2];
          }
        }
 
@@ -1007,7 +1059,6 @@ void forceClass<FEOrder>::computeConfigurationalForceEEshelbyEElectroPhiTot
           E[0][0]+=identityTensorFactor;
           E[1][1]+=identityTensorFactor;
           E[2][2]+=identityTensorFactor;
-
        }
 
        if (dftParameters::isPseudopotential)
@@ -1042,11 +1093,19 @@ void forceClass<FEOrder>::computeConfigurationalForceEEshelbyEElectroPhiTot
 					(shadowKSRhoMinMinusRhoQuadsElectro[q],
 					 gradPseudoVLocQuadsElectro[q],
 					 gradPhiExt_q);
+           
 
 	   if(d_isElectrostaticsMeshSubdivided)
 	       F+=gradRhoQuadsElectro[q]*(pseudoVLocQuadsElectro[q]-phiExtElectro_q);
        }
 
+       if (shadowPotentialForce)
+       {
+          //F-=gradRhoAtomsQuadsElectro[q]*phiTotElectro_q;             
+          //if(dftParameters::isPseudopotential)
+          //   F-=gradRhoAtomsQuadsElectro[q]*(pseudoVLocQuadsElectro[q]-phiExtElectro_q);
+       }
+       
        forceEvalElectro.submit_value(F,q);
        forceEvalElectro.submit_gradient(E,q);
     }
@@ -1059,13 +1118,9 @@ void forceClass<FEOrder>::computeConfigurationalForceEEshelbyEElectroPhiTot
   // add global FPSPLocal contribution due to Gamma(Rj) to the configurational force vector
   if(dftParameters::isPseudopotential)
   {
-
-
      distributeForceContributionFPSPLocalGammaAtoms(forceContributionFPSPLocalGammaAtoms,
 	                                            d_atomsForceDofsElectro,
 						    d_constraintsNoneForceElectro,
 						    d_configForceVectorLinFEElectro);
-
-
   }
 }

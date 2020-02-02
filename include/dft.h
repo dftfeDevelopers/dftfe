@@ -524,6 +524,11 @@ namespace dftfe {
       void normalizeRho();
 
       /**
+       *@brief normalize the electron density
+       */
+      void normalizeAtomicRhoQuadValues();
+
+      /**
        *@brief Computes output electron-density from wavefunctions
        */
       void compute_rhoOut(
@@ -843,6 +848,9 @@ namespace dftfe {
       vectorType d_rhoInNodalValues, d_rhoOutNodalValues, d_preCondResidualVector;
       std::deque<vectorType> d_rhoInNodalVals, d_rhoOutNodalVals;
 
+      /// for xl-bomd
+      std::map<dealii::CellId, std::vector<double> > d_rhoAtomsValues,d_gradRhoAtomsValues;
+      std::map<unsigned int,std::map<dealii::CellId, std::vector<double> > > d_gradRhoAtomsValuesSeparate;  
 
       std::map<dealii::CellId, std::vector<double> > * gradRhoInValues, *gradRhoInValuesSpinPolarized;
       std::map<dealii::CellId, std::vector<double> > * gradRhoOutValues, *gradRhoOutValuesSpinPolarized;

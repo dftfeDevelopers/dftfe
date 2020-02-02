@@ -28,6 +28,9 @@ void dftClass<FEOrder>::interpolateNodalDataToQuadratureData(dealii::MatrixFree<
 							     const bool isEvaluateGradData)
 {
   
+  quadratureValueData.clear();
+  if(isEvaluateGradData)
+    quadratureGradValueData.clear();
 
   FEEvaluation<C_DIM,C_num1DKerkerPoly<FEOrder>(),C_num1DQuad<FEOrder>(),1,double> feEvalObj(matrixFreeData,0,1);
   const unsigned int numQuadPoints = feEvalObj.n_q_points; 

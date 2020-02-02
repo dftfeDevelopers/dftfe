@@ -359,6 +359,14 @@ namespace dftfe {
 	      const vselfBinsManager<FEOrder> & vselfBinsManager,
 	      const std::vector<std::map<dealii::CellId , unsigned int> > & cellsVselfBallsClosestAtomIdDofHandler);
 
+      void FShadowLocalGammaAtomsElementalContribution
+             (std::map<unsigned int, std::vector<double> > & forceContributionLocalGammaAtoms,
+	      FEEvaluation<C_DIM,1,C_num1DQuad<FEOrder>(),C_DIM>  & forceEval,
+	      const MatrixFree<3,double> & matrixFreeData,
+	      const unsigned int cell,
+              const std::map<unsigned int,std::map<dealii::CellId, std::vector<double> > > & gradRhoAtomsQuads,
+              const std::vector< VectorizedArray<double> > & electroPlusVxcQuads);
+
       void distributeForceContributionFPSPLocalGammaAtoms
 	      (const std::map<unsigned int,std::vector<double> > & forceContributionFPSPLocalGammaAtoms,
 	       const std::map<std::pair<unsigned int,unsigned int>, unsigned int> & atomsForceDofs,

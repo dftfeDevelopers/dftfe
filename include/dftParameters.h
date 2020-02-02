@@ -120,6 +120,7 @@ namespace dftfe {
       extern bool autoMeshStepInterpolateBOMD;
       extern bool rectifyAutoMeshEnergyJump;
       extern double ratioOfMeshMovementToForceGaussianBOMD;
+      extern bool useAtomicRhoXLBOMD;
 
       /**
        * Declare parameters.
