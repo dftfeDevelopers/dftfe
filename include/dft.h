@@ -874,6 +874,9 @@ namespace dftfe {
       // storage for sum of nuclear electrostatic potential
       vectorType d_phiExt;
 
+      // storage for potential due to rho minus approx density in case of xl bomd
+      vectorType d_phiRhoMinusApproxRho;
+
       // storage for projection of rho cell quadrature data to nodal field
       vectorType d_rhoNodalField;
 

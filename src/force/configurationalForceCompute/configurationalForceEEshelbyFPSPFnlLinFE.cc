@@ -131,6 +131,10 @@ void forceClass<FEOrder>::computeConfigurationalForceEEshelbyTensorFPSPFnlLinFE
 	                                                            phiTotDofHandlerIndex,
 								    0);
 
+  FEEvaluation<C_DIM,FEOrder,C_num1DQuad<FEOrder>(),1> phiTotEval2(matrixFreeData,
+	                                                          phiTotDofHandlerIndex,
+								  0);
+
   FEEvaluation<C_DIM,FEOrder,C_num1DQuad<FEOrder>(),1> phiExtEval(matrixFreeData,
 	                                                          phiExtDofHandlerIndex,
 								  0);
@@ -641,6 +645,7 @@ void forceClass<FEOrder>::computeConfigurationalForceEEshelbyTensorFPSPFnlLinFE
   {
       std::vector<VectorizedArray<double> > rhoQuads(numQuadPoints,make_vectorized_array(0.0));
       std::vector<VectorizedArray<double> > derVxcWithRhoOutTimesRhoOutQuads(numQuadPoints,make_vectorized_array(0.0));
+      std::vector<VectorizedArray<double> > phiRhoMinMinusApproxRhoQuads(numQuadPoints,make_vectorized_array(0.0));
       std::vector<VectorizedArray<double> > shadowKSRhoMinMinusRhoQuads(numQuadPoints,make_vectorized_array(0.0));
       std::vector<Tensor<1,C_DIM,VectorizedArray<double> > > shadowKSGradRhoMinMinusGradRhoQuads(numQuadPoints,zeroTensor3);
       std::vector<Tensor<1,C_DIM,VectorizedArray<double> > > gradRhoQuads(numQuadPoints,zeroTensor3);
@@ -670,8 +675,16 @@ void forceClass<FEOrder>::computeConfigurationalForceEEshelbyTensorFPSPFnlLinFE
 	  phiExtEval.evaluate(true,false);
 	}
 
+        if  (shadowPotentialForce)
+        {
+           phiTotEval2.reinit(cell);
+           phiTotEval2.read_dof_values_plain(dftPtr->d_phiRhoMinusApproxRho);
+           phiTotEval2.evaluate(true,false);
+        }
+
 	std::fill(rhoQuads.begin(),rhoQuads.end(),make_vectorized_array(0.0));
         std::fill(derVxcWithRhoOutTimesRhoOutQuads.begin(),derVxcWithRhoOutTimesRhoOutQuads.end(),make_vectorized_array(0.0));
+        std::fill(phiRhoMinMinusApproxRhoQuads.begin(),phiRhoMinMinusApproxRhoQuads.end(),make_vectorized_array(0.0));
         std::fill(shadowKSRhoMinMinusRhoQuads.begin(),shadowKSRhoMinMinusRhoQuads.end(),make_vectorized_array(0.0));
         std::fill(shadowKSGradRhoMinMinusGradRhoQuads.begin(),shadowKSGradRhoMinMinusGradRhoQuads.end(),zeroTensor3);  
 	std::fill(gradRhoQuads.begin(),gradRhoQuads.end(),zeroTensor3);
@@ -837,7 +850,11 @@ void forceClass<FEOrder>::computeConfigurationalForceEEshelbyTensorFPSPFnlLinFE
 						    phiExtEval.get_value(q)
 						    :make_vectorized_array(0.0);
 
-           derVxcWithRhoOutTimesRhoOutQuads[q]=derVxcWithRhoOutQuads[q]*rhoQuads[q];
+           if (shadowPotentialForce)
+           {
+              derVxcWithRhoOutTimesRhoOutQuads[q]=derVxcWithRhoOutQuads[q]*rhoQuads[q];
+              phiRhoMinMinusApproxRhoQuads[q]= phiTotEval2.get_value(q);
+           }
 
 
 	   Tensor<2,C_DIM,VectorizedArray<double> > E=eshelbyTensor::getELocXcEshelbyTensor
@@ -858,7 +875,7 @@ void forceClass<FEOrder>::computeConfigurationalForceEEshelbyTensorFPSPFnlLinFE
 	   Tensor<1,C_DIM,VectorizedArray<double> > F=zeroTensor3;
 
            if (shadowPotentialForce && dftParameters::useAtomicRhoXLBOMD)
-              F-=gradRhoAtomsQuads[q]*derVxcWithRhoOutTimesRhoOutQuads[q];
+              F-=gradRhoAtomsQuads[q]*(derVxcWithRhoOutTimesRhoOutQuads[q]-phiRhoMinMinusApproxRhoQuads[q]);
 
 	   if(d_isElectrostaticsMeshSubdivided)
 	       F-=gradRhoQuads[q]*phiTot_q;
@@ -878,7 +895,8 @@ void forceClass<FEOrder>::computeConfigurationalForceEEshelbyTensorFPSPFnlLinFE
 						matrixFreeData,
 						cell,
 						dftPtr->d_gradRhoAtomsValuesSeparate,
-                                                derVxcWithRhoOutTimesRhoOutQuads);
+                                                derVxcWithRhoOutTimesRhoOutQuads,
+                                                phiRhoMinMinusApproxRhoQuads);
         
 
 
@@ -935,6 +953,10 @@ void forceClass<FEOrder>::computeConfigurationalForceEEshelbyEElectroPhiTot
 	                                                          phiTotDofHandlerIndexElectro,
 								  0);
 
+  FEEvaluation<C_DIM,FEOrder,C_num1DQuad<FEOrder>(),1> phiTotEvalElectro2(matrixFreeDataElectro,
+	                                                          phiTotDofHandlerIndexElectro,
+								  0);
+
   FEEvaluation<C_DIM,FEOrder,C_num1DQuad<FEOrder>(),1> phiExtEvalElectro(matrixFreeDataElectro,
 	                                                          phiExtDofHandlerIndexElectro,
 								  0);
@@ -971,6 +993,13 @@ void forceClass<FEOrder>::computeConfigurationalForceEEshelbyEElectroPhiTot
     phiTotEvalElectro.reinit(cell);
     phiTotEvalElectro.read_dof_values_plain(phiTotRhoOutElectro);
     phiTotEvalElectro.evaluate(true,true);
+
+    if (shadowPotentialForce)
+    {
+       phiTotEvalElectro2.reinit(cell);
+       phiTotEvalElectro2.read_dof_values_plain(dftPtr->d_phiRhoMinusApproxRho);
+       phiTotEvalElectro2.evaluate(true,true);
+    }
 
     phiExtEvalElectro.reinit(cell);
     phiExtEvalElectro.read_dof_values_plain(phiExtElectro);
@@ -1101,9 +1130,15 @@ void forceClass<FEOrder>::computeConfigurationalForceEEshelbyEElectroPhiTot
 
        if (shadowPotentialForce)
        {
-          //F-=gradRhoAtomsQuadsElectro[q]*phiTotElectro_q;             
-          //if(dftParameters::isPseudopotential)
-          //   F-=gradRhoAtomsQuadsElectro[q]*(pseudoVLocQuadsElectro[q]-phiExtElectro_q);
+          VectorizedArray<double> phiRhoMinusApproxRho_q =phiTotEvalElectro2.get_value(q);
+          Tensor<1,C_DIM,VectorizedArray<double> > gradPhiRhoMinusApproxRho_q =phiTotEvalElectro2.get_gradient(q);
+          VectorizedArray<double> identityTensorFactor=make_vectorized_array(-1.0/(4.0*M_PI))*scalar_product(gradPhiRhoMinusApproxRho_q,gradPhiTotElectro_q)+phiRhoMinusApproxRho_q*rhoQuadsElectro[q];
+          E+= (outer_product(gradPhiRhoMinusApproxRho_q,gradPhiTotElectro_q)+outer_product(gradPhiTotElectro_q,gradPhiRhoMinusApproxRho_q))*make_vectorized_array(1.0/(4.0*M_PI));
+          E[0][0]+=identityTensorFactor;
+          E[1][1]+=identityTensorFactor;
+          E[2][2]+=identityTensorFactor;
+          if (dftParameters::useAtomicRhoXLBOMD)
+             F+=gradRhoAtomsQuadsElectro[q]*phiRhoMinusApproxRho_q;             
        }
        
        forceEvalElectro.submit_value(F,q);

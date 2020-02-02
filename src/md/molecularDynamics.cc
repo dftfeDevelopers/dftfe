@@ -898,8 +898,9 @@ void molecularDynamics<FEOrder>::run()
             }
             else
             {
-                    if (!(timeIndex ==startingTimeStep+1 && restartFlag==1))
-                    {
+                    if (!dftPtr->d_autoMesh==1)
+                       if (!(timeIndex ==startingTimeStep+1 && restartFlag==1))
+                       {
                             if (dftParameters::useAtomicRhoXLBOMD)
                             {
 			      dftPtr->d_rhoInNodalValues=atomicRhoIn;
@@ -915,7 +916,7 @@ void molecularDynamics<FEOrder>::run()
 									*(dftPtr->gradRhoInValues),
 									 dftParameters::xc_id == 4);
                             dftPtr->normalizeRho();
-                    }
+                       }
 
 		    //
 		    //do an scf calculation

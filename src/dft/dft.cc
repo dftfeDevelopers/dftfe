@@ -1959,8 +1959,7 @@ namespace dftfe {
 	      pcout<<"SCF iterations converged to the specified tolerance after: "<<scfIter<<" iterations."<<std::endl;
     }
 
-    if ((!dftParameters::computeEnergyEverySCF || d_numEigenValuesRR!=d_numEigenValues)
-        && !(dftParameters::isBOMD && dftParameters::isXLBOMD && solveLinearizedKS))
+    if ((!dftParameters::computeEnergyEverySCF || d_numEigenValuesRR!=d_numEigenValues))
     {
 	if(dftParameters::verbosity>=2)
 	  pcout<< std::endl<<"Poisson solve for total electrostatic potential (rhoOut+b): ";
@@ -1984,6 +1983,50 @@ namespace dftfe {
 
 	computing_timer.exit_section("phiTot solve");
     }
+
+    if (dftParameters::isBOMD && dftParameters::isXLBOMD && solveLinearizedKS)
+    {
+	if(dftParameters::verbosity>=2)
+	  pcout<< std::endl<<"Poisson solve for (rho_min-n): ";
+
+	computing_timer.enter_section("Poisson solve for (rho_min-approx_rho)");
+
+        QGauss<3>  quadrature_formula(C_num1DQuad<FEOrder>());
+        const unsigned int n_q_points    = quadrature_formula.size();
+
+        std::map<dealii::CellId, std::vector<double> > rhoMinMinusApproxRho;
+	DoFHandler<3>::active_cell_iterator
+	    cell = dofHandler.begin_active(),
+	    endc = dofHandler.end();
+	for (; cell!=endc; ++cell) 
+	    if (cell->is_locally_owned())
+	    {
+	      std::vector<double> & temp= rhoMinMinusApproxRho[cell->id()];
+              const std::vector<double> & rhoOut=(*rhoOutValues).find(cell->id())->second;
+              const std::vector<double> & rhoIn=(*rhoInValues).find(cell->id())->second;
+              temp.resize(n_q_points);
+	      for (unsigned int q_point=0; q_point<n_q_points; ++q_point)
+		temp[q_point]=rhoOut[q_point]-rhoIn[q_point];
+	      
+	    }
+
+	phiTotalSolverProblem.reinit(matrix_free_data,
+				     d_phiRhoMinusApproxRho,
+				     *d_constraintsVector[phiTotDofHandlerIndex],
+				     phiTotDofHandlerIndex,
+				     std::map<dealii::types::global_dof_index, double>(),
+				     rhoMinMinusApproxRho,
+				     false);
+
+
+	dealiiCGSolver.solve(phiTotalSolverProblem,
+			     dftParameters::absLinearSolverTolerance,
+			     dftParameters::maxLinearSolverIterations,
+			     dftParameters::verbosity);
+
+	computing_timer.exit_section("Poisson solve for (rho_min-approx_rho)");
+    }
+
     //
     // compute and print ground state energy or energy after max scf iterations
     //
