@@ -703,7 +703,7 @@ namespace dftfe {
       const double d_pspCutOff=40.0;
 
       /// distance from the domain till which periodic images will be considered
-      const double d_pspCutOffTrunc=8.0;
+      const double d_pspCutOffTrunc=10.0;
 
       std::vector<orbital> waveFunctionsVector;
       std::map<unsigned int, std::map<unsigned int, std::map<unsigned int, alglib::spline1dinterpolant*> > > radValues;
