@@ -813,7 +813,7 @@ namespace dftfe {
       dealii::AffineConstraints<double> constraintsNone, constraintsNoneEigen, d_constraintsForTotalPotential, d_noConstraints, d_constraintsPRefined;
 
 
-
+      dealii::AffineConstraints<double> d_constraintsPRefinedOnlyHanging;
       /**
        * data storage for Kohn-Sham wavefunctions
        */

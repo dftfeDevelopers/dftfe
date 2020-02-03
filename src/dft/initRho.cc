@@ -1114,13 +1114,13 @@ void dftClass<FEOrder>::initAtomicRho(vectorType & atomicRho)
   //d_matrixFreeDataPRefined.initialize_dof_vector(d_rhoInNodalValues);
   std::vector<vectorType> singleAtomsRho(atomLocations.size()+numberImageCharges);
   for(unsigned int iAtom = 0; iAtom < atomLocations.size()+numberImageCharges; ++iAtom)
-    d_matrixFreeDataPRefined.initialize_dof_vector(singleAtomsRho[iAtom]); 
+    d_matrixFreeDataPRefined.initialize_dof_vector(singleAtomsRho[iAtom],1); 
 
   for(unsigned int dof = 0; dof < numberDofs; ++dof)
   { 
 	  const dealii::types::global_dof_index dofID = locallyOwnedDOFs[dof];
 	  Point<3> nodalCoor = supportPointsPRefined[dofID];
-	  if(!d_constraintsPRefined.is_constrained(dofID))
+	  if(!d_constraintsPRefined.is_constrained(dofID) || true)
 	    {
 	      //loop over atoms and superimpose electron-density at a given dof from all atoms
 	      double rhoNodalValue = 0.0;
@@ -1170,10 +1170,36 @@ void dftClass<FEOrder>::initAtomicRho(vectorType & atomicRho)
    for(unsigned int iAtom = 0; iAtom < atomLocations.size()+numberImageCharges; ++iAtom)
       singleAtomsRho[iAtom].update_ghost_values(); 
 
-   //normalize rho
-   const double charge = totalCharge(d_matrixFreeDataPRefined,
-			             atomicRho);
+  //normalize rho
+  const double charge = totalCharge(d_matrixFreeDataPRefined,
+  			             atomicRho);
 
+  VectorizedArray<double> normValueVectorized = make_vectorized_array(0.0);
+  FEEvaluation<C_DIM,C_num1DKerkerPoly<FEOrder>(),C_num1DQuad<FEOrder>(),1,double> feEvalObj(d_matrixFreeDataPRefined,1,1);
+  const unsigned int numQuadPoints = feEvalObj.n_q_points;
+  /*
+  for(unsigned int cell = 0; cell < d_matrixFreeDataPRefined.n_macro_cells(); ++cell)
+    {
+      feEvalObj.reinit(cell);
+      feEvalObj.read_dof_values(atomicRho);
+      feEvalObj.evaluate(true,false);
+      for(unsigned int q_point = 0; q_point < numQuadPoints; ++q_point)
+        {
+          VectorizedArray<double> temp = feEvalObj.get_value(q_point);
+          feEvalObj.submit_value(temp,q_point);
+        }
+
+      normValueVectorized += feEvalObj.integrate_value();
+    }
+
+  double normValue = 0.0;
+  for(unsigned int iSubCell = 0; iSubCell < VectorizedArray<double>::n_array_elements; ++iSubCell)
+    {
+      normValue += normValueVectorized[iSubCell];
+    }
+
+   const double charge=Utilities::MPI::sum(normValue, mpi_communicator);
+   */
        
    const double scalingFactor = ((double)numElectrons)/charge;
 
@@ -1199,8 +1225,6 @@ void dftClass<FEOrder>::initAtomicRho(vectorType & atomicRho)
    normalizeAtomicRhoQuadValues();
 
    d_gradRhoAtomsValuesSeparate.clear();
-   FEEvaluation<C_DIM,C_num1DKerkerPoly<FEOrder>(),C_num1DQuad<FEOrder>(),1,double> feEvalObj(d_matrixFreeDataPRefined,0,1);
-   const unsigned int numQuadPoints = feEvalObj.n_q_points; 
 
    DoFHandler<C_DIM>::active_cell_iterator subCellPtr;
    for(unsigned int cell = 0; cell < d_matrixFreeDataPRefined.n_macro_cells(); ++cell)

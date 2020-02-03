@@ -1137,8 +1137,8 @@ void forceClass<FEOrder>::computeConfigurationalForceEEshelbyEElectroPhiTot
           E[0][0]+=identityTensorFactor;
           E[1][1]+=identityTensorFactor;
           E[2][2]+=identityTensorFactor;
-          if (dftParameters::useAtomicRhoXLBOMD)
-             F+=gradRhoAtomsQuadsElectro[q]*phiRhoMinusApproxRho_q;             
+          //if (dftParameters::useAtomicRhoXLBOMD)
+          //   F+=gradRhoAtomsQuadsElectro[q]*phiRhoMinusApproxRho_q;             
        }
        
        forceEvalElectro.submit_value(F,q);

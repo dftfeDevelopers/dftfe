@@ -30,10 +30,10 @@ void dftClass<FEOrder>::createpRefinedDofHandler(dealii::parallel::distributed::
   dealii::IndexSet locallyRelevantDofs;
   dealii::DoFTools::extract_locally_relevant_dofs(d_dofHandlerPRefined, locallyRelevantDofs);
 
-  dealii::ConstraintMatrix onlyHangingNodeConstraints;
-  onlyHangingNodeConstraints.reinit(locallyRelevantDofs);
-  dealii::DoFTools::make_hanging_node_constraints(d_dofHandlerPRefined, onlyHangingNodeConstraints);
-  onlyHangingNodeConstraints.close();
+  d_constraintsPRefinedOnlyHanging.clear();
+  d_constraintsPRefinedOnlyHanging.reinit(locallyRelevantDofs);
+  dealii::DoFTools::make_hanging_node_constraints(d_dofHandlerPRefined, d_constraintsPRefinedOnlyHanging);
+  d_constraintsPRefinedOnlyHanging.close();
 
   d_constraintsPRefined.clear();
   d_constraintsPRefined.reinit(locallyRelevantDofs);
@@ -94,6 +94,7 @@ void dftClass<FEOrder>::initpRefinedObjects()
   //clear existing constraints matrix vector
   std::vector<const dealii::ConstraintMatrix*> matrixFreeConstraintsInputVector;
   matrixFreeConstraintsInputVector.push_back(&d_constraintsPRefined);
+  matrixFreeConstraintsInputVector.push_back(&d_constraintsPRefinedOnlyHanging);
 
   std::vector<const dealii::DoFHandler<3> *> matrixFreeDofHandlerVectorInput;
   for(unsigned int i = 0; i < matrixFreeConstraintsInputVector.size(); ++i)
