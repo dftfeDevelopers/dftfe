@@ -852,7 +852,8 @@ void forceClass<FEOrder>::computeConfigurationalForceEEshelbyTensorFPSPFnlLinFE
 
            if (shadowPotentialForce)
            {
-              derVxcWithRhoOutTimesRhoOutQuads[q]=derVxcWithRhoOutQuads[q]*rhoQuads[q];
+              //derVxcWithRhoOutTimesRhoOutQuads[q]=derVxcWithRhoOutQuads[q]*rhoQuads[q];
+              derVxcWithRhoOutTimesRhoOutQuads[q]=-derVxcWithRhoOutQuads[q]*shadowKSRhoMinMinusRhoQuads[q];
               phiRhoMinMinusApproxRhoQuads[q]= phiTotEval2.get_value(q);
            }
 
