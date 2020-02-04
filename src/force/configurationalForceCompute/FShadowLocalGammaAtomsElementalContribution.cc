@@ -24,7 +24,7 @@ void forceClass<FEOrder>::FShadowLocalGammaAtomsElementalContribution
               const MatrixFree<3,double> & matrixFreeData,
 	      const unsigned int cell,
               const std::map<unsigned int,std::map<dealii::CellId, std::vector<double> > > & gradRhoAtomsQuads,
-              const std::vector< VectorizedArray<double> > & derVxcWithRhoOutTimesRhoOutQuads,
+              const std::vector< VectorizedArray<double> > & derVxcWithRhoOutTimesRhoDiffQuads,
               const std::vector< VectorizedArray<double> > & phiRhoMinusApproxRhoQuads)
 {
   Tensor<1,C_DIM,VectorizedArray<double> > zeroTensor1;
@@ -85,7 +85,7 @@ void forceClass<FEOrder>::FShadowLocalGammaAtomsElementalContribution
     }//subCell loop
 
     for (unsigned int q=0; q<numQuadPoints; ++q)
-      forceEval.submit_value(gradRhoQuads[q]*(derVxcWithRhoOutTimesRhoOutQuads[q]-phiRhoMinusApproxRhoQuads[q]),q);
+      forceEval.submit_value(-gradRhoQuads[q]*(derVxcWithRhoOutTimesRhoDiffQuads[q]+phiRhoMinusApproxRhoQuads[q]),q);
     
     Tensor<1,C_DIM,VectorizedArray<double> > forceContributionLocalGammaiAtomCells
 						 =forceEval.integrate_value();

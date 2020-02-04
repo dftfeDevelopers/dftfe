@@ -1001,8 +1001,8 @@ void molecularDynamics<FEOrder>::run()
             pcout<<" Total Energy in Ha at timeIndex "<<timeIndex<<" "<<totalEnergyVector[timeIndex-startingTimeStep]<<std::endl;
             if (dftParameters::isXLBOMD)
             {
-              pcout<<" RMS error in rho in a.u. at timeIndex 0 "<<rmsErrorRhoVector[timeIndex-startingTimeStep]<<std::endl;
-              pcout<<" RMS error in grad rho in a.u. at timeIndex 0 "<<rmsErrorGradRhoVector[timeIndex-startingTimeStep]<<std::endl;
+              pcout<<" RMS error in rho in a.u. at timeIndex "<<timeIndex<<" "<<rmsErrorRhoVector[timeIndex-startingTimeStep]<<std::endl;
+              pcout<<" RMS error in grad rho in a.u. at timeIndex "<<timeIndex<<" "<<rmsErrorGradRhoVector[timeIndex-startingTimeStep]<<std::endl;
             }
 
 	     std::vector<std::vector<double> > data1(timeIndex+1,std::vector<double>(1,0.0));
