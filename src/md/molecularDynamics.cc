@@ -239,17 +239,6 @@ void molecularDynamics<FEOrder>::run()
                       approxDensityContainer[i]=shadowKSRhoMin;
                       approxDensityContainer[i].update_ghost_values();
                    }
-
-	           //normalize approxDensityVec
-	           charge = dftPtr->totalCharge(dftPtr->d_matrixFreeDataPRefined,
-						     approxDensityContainer.back());
-	           pcout<<"Total Charge before Normalizing approxDensityVec:  "<<charge<<std::endl;
-	       
-                   if (dftParameters::useAtomicRhoXLBOMD)
-		       approxDensityContainer.back().add(-charge/dftPtr->d_domainVolume);
-                   else
-                       approxDensityContainer.back()*=((double)dftPtr->numElectrons)/charge;
-		   pcout<<"Total Charge after Normalizing approxDensityVec:  "<<dftPtr->totalCharge(dftPtr->d_matrixFreeDataPRefined,approxDensityContainer.back())<<std::endl;
             }
 
             const bool testing=false;
@@ -779,30 +768,19 @@ void molecularDynamics<FEOrder>::run()
 		  	   shadowKSRhoMin-=atomicRhoIn;
 			shadowKSRhoMin.update_ghost_values();
 
-			for (unsigned int i=0; i<approxDensityContainer.size();++i)
-			{
-			      approxDensityContainer[i]=shadowKSRhoMin;
-			      approxDensityContainer[i].update_ghost_values();
-			}
-
-			//normalize approxDensityVec
-			double charge = dftPtr->totalCharge(dftPtr->d_matrixFreeDataPRefined,
-							     approxDensityContainer.back());
-			pcout<<"Total Charge before Normalizing approxDensityVec:  "<<charge<<std::endl;
-		       
-   		        if (dftParameters::useAtomicRhoXLBOMD)
- 			   approxDensityContainer.back().add(-charge/dftPtr->d_domainVolume);
-                        else
-                           approxDensityContainer.back() *= ((double)dftPtr->numElectrons)/charge;
-			pcout<<"Total Charge after Normalizing approxDensityVec:  "<<dftPtr->totalCharge(dftPtr->d_matrixFreeDataPRefined,approxDensityContainer.back())<<std::endl;
-
 			//normalize shadowKSRhoMin
-			charge = dftPtr->totalCharge(dftPtr->d_matrixFreeDataPRefined,
+			double charge = dftPtr->totalCharge(dftPtr->d_matrixFreeDataPRefined,
 							       shadowKSRhoMin);
 			if (dftParameters::useAtomicRhoXLBOMD)
 		  	    shadowKSRhoMin.add(-charge/dftPtr->d_domainVolume);
                         else
                             shadowKSRhoMin *= ((double)dftPtr->numElectrons)/charge;  
+
+			for (unsigned int i=0; i<approxDensityContainer.size();++i)
+			{
+			      approxDensityContainer[i]=shadowKSRhoMin;
+			      approxDensityContainer[i].update_ghost_values();
+			}
                     }
                     else
 		    {
