@@ -87,6 +87,11 @@ void dftClass<FEOrder>::initElectronicFields(const unsigned int usePreviousGroun
     d_phiRhoMinusApproxRho.reinit(d_phiTotRhoIn);
   matrix_free_data.initialize_dof_vector(d_phiExt,phiExtDofHandlerIndex);
 
+  if(dftParameters::mixingMethod=="ANDERSON_WITH_KERKER" || (dftParameters::isBOMD))
+  {
+     d_matrixFreeDataPRefined.initialize_dof_vector(d_rhoInNodalValues);
+     d_rhoOutNodalValues.reinit(d_rhoInNodalValues);
+  }
   //
   //initialize eigen vectors
   //

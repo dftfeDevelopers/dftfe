@@ -108,7 +108,4 @@ void dftClass<FEOrder>::initpRefinedObjects()
 				  matrixFreeConstraintsInputVector,
 				  quadratureVector,
 				  additional_data);
-
-  d_matrixFreeDataPRefined.initialize_dof_vector(d_rhoInNodalValues);
-  d_rhoOutNodalValues.reinit(d_rhoInNodalValues);
 }

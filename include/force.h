@@ -365,7 +365,7 @@ namespace dftfe {
 	      const MatrixFree<3,double> & matrixFreeData,
 	      const unsigned int cell,
               const std::map<unsigned int,std::map<dealii::CellId, std::vector<double> > > & gradRhoAtomsQuads,
-              const std::vector< VectorizedArray<double> > & derVxcWithRhoOutTimesRhoOutQuads,
+              const std::vector< VectorizedArray<double> > & derVxcWithRhoOutTimesRhoDiffQuads,
               const std::vector< VectorizedArray<double> > & phiRhoMinusApproxRhoQuads);
 
       void distributeForceContributionFPSPLocalGammaAtoms

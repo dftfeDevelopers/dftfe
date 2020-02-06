@@ -644,7 +644,7 @@ void forceClass<FEOrder>::computeConfigurationalForceEEshelbyTensorFPSPFnlLinFE
   if (bandGroupTaskId==0)
   {
       std::vector<VectorizedArray<double> > rhoQuads(numQuadPoints,make_vectorized_array(0.0));
-      std::vector<VectorizedArray<double> > derVxcWithRhoOutTimesRhoOutQuads(numQuadPoints,make_vectorized_array(0.0));
+      std::vector<VectorizedArray<double> > derVxcWithRhoOutTimesRhoDiffQuads(numQuadPoints,make_vectorized_array(0.0));
       std::vector<VectorizedArray<double> > phiRhoMinMinusApproxRhoQuads(numQuadPoints,make_vectorized_array(0.0));
       std::vector<VectorizedArray<double> > shadowKSRhoMinMinusRhoQuads(numQuadPoints,make_vectorized_array(0.0));
       std::vector<Tensor<1,C_DIM,VectorizedArray<double> > > shadowKSGradRhoMinMinusGradRhoQuads(numQuadPoints,zeroTensor3);
@@ -683,7 +683,7 @@ void forceClass<FEOrder>::computeConfigurationalForceEEshelbyTensorFPSPFnlLinFE
         }
 
 	std::fill(rhoQuads.begin(),rhoQuads.end(),make_vectorized_array(0.0));
-        std::fill(derVxcWithRhoOutTimesRhoOutQuads.begin(),derVxcWithRhoOutTimesRhoOutQuads.end(),make_vectorized_array(0.0));
+        std::fill(derVxcWithRhoOutTimesRhoDiffQuads.begin(),derVxcWithRhoOutTimesRhoDiffQuads.end(),make_vectorized_array(0.0));
         std::fill(phiRhoMinMinusApproxRhoQuads.begin(),phiRhoMinMinusApproxRhoQuads.end(),make_vectorized_array(0.0));
         std::fill(shadowKSRhoMinMinusRhoQuads.begin(),shadowKSRhoMinMinusRhoQuads.end(),make_vectorized_array(0.0));
         std::fill(shadowKSGradRhoMinMinusGradRhoQuads.begin(),shadowKSGradRhoMinMinusGradRhoQuads.end(),zeroTensor3);  
@@ -852,7 +852,7 @@ void forceClass<FEOrder>::computeConfigurationalForceEEshelbyTensorFPSPFnlLinFE
 
            if (shadowPotentialForce)
            {
-              derVxcWithRhoOutTimesRhoOutQuads[q]=derVxcWithRhoOutQuads[q]*rhoQuads[q];
+              derVxcWithRhoOutTimesRhoDiffQuads[q]=derVxcWithRhoOutQuads[q]*shadowKSRhoMinMinusRhoQuads[q];
               phiRhoMinMinusApproxRhoQuads[q]= phiTotEval2.get_value(q);
            }
 
@@ -875,7 +875,7 @@ void forceClass<FEOrder>::computeConfigurationalForceEEshelbyTensorFPSPFnlLinFE
 	   Tensor<1,C_DIM,VectorizedArray<double> > F=zeroTensor3;
 
            if (shadowPotentialForce && dftParameters::useAtomicRhoXLBOMD)
-              F-=gradRhoAtomsQuads[q]*(derVxcWithRhoOutTimesRhoOutQuads[q]-phiRhoMinMinusApproxRhoQuads[q]);
+              F=gradRhoAtomsQuads[q]*(derVxcWithRhoOutTimesRhoDiffQuads[q]+phiRhoMinMinusApproxRhoQuads[q]);
 
 	   if(d_isElectrostaticsMeshSubdivided)
 	       F-=gradRhoQuads[q]*phiTot_q;
@@ -895,7 +895,7 @@ void forceClass<FEOrder>::computeConfigurationalForceEEshelbyTensorFPSPFnlLinFE
 						matrixFreeData,
 						cell,
 						dftPtr->d_gradRhoAtomsValuesSeparate,
-                                                derVxcWithRhoOutTimesRhoOutQuads,
+                                                derVxcWithRhoOutTimesRhoDiffQuads,
                                                 phiRhoMinMinusApproxRhoQuads);
         
 
@@ -1137,8 +1137,6 @@ void forceClass<FEOrder>::computeConfigurationalForceEEshelbyEElectroPhiTot
           E[0][0]+=identityTensorFactor;
           E[1][1]+=identityTensorFactor;
           E[2][2]+=identityTensorFactor;
-          //if (dftParameters::useAtomicRhoXLBOMD)
-          //   F+=gradRhoAtomsQuadsElectro[q]*phiRhoMinusApproxRho_q;             
        }
        
        forceEvalElectro.submit_value(F,q);
