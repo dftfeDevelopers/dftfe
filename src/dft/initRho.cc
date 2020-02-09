@@ -1101,6 +1101,9 @@ void dftClass<FEOrder>::initAtomicRho()
       d_gradRhoAtomsValues[cell->id()]=std::vector<double>(3*n_q_points);
       double *gradRhoInValuesPtr = &(d_gradRhoAtomsValues[cell->id()][0]);
 
+      d_hessianRhoAtomsValues[cell->id()]=std::vector<double>(9*n_q_points,0.0);
+      double *hessianRhoInValuesPtr = &(d_hessianRhoAtomsValues[cell->id()][0]);
+
       std::fill(cellInsideTailAtomVec.begin(),cellInsideTailAtomVec.end(),false);
       for (unsigned int q = 0; q < n_q_points; ++q)
 	{
@@ -1139,7 +1142,10 @@ void dftClass<FEOrder>::initAtomicRho()
 
         for (unsigned int iatom = 0; iatom < atomLocations.size()+numberImageCharges; iatom++)
             if (cellInsideTailAtomVec[iatom])
+            {
               d_gradRhoAtomsValuesSeparate[iatom][cell->id()]=std::vector<double>(3*n_q_points);
+              d_hessianRhoAtomsValuesSeparate[iatom][cell->id()]=std::vector<double>(9*n_q_points);
+            }
 
 	for (unsigned int q = 0; q < n_q_points; ++q)
 	{
@@ -1156,6 +1162,8 @@ void dftClass<FEOrder>::initAtomicRho()
 	      double gradRhoXValueAtQuadPtAtom = 0.0;
 	      double gradRhoYValueAtQuadPtAtom = 0.0;
 	      double gradRhoZValueAtQuadPtAtom = 0.0;
+ 
+              double radialDensitySecondDerivativeAtQuadPoint;
 	      //loop over atoms
 	      for (unsigned int n = 0; n < atomLocations.size(); n++)
 		{
@@ -1163,12 +1171,12 @@ void dftClass<FEOrder>::initAtomicRho()
 		  double distanceToAtom = quadPoint.distance(atom);
 		  if(cellInsideTailAtomVec[n])
 		    {
-		      double value,radialDensityFirstDerivative,radialDensitySecondDerivative;
+		      double value,radialDensityFirstDerivative,radialDensitySecondDerivativeAtom;
 		      alglib::spline1ddiff(denSpline[atomLocations[n][0]],
 					   distanceToAtom,
 					   value,
 					   radialDensityFirstDerivative,
-					   radialDensitySecondDerivative);
+					   radialDensitySecondDerivativeAtom);
 
 		      gradRhoXValueAtQuadPtAtom = signRho*radialDensityFirstDerivative*((quadPoint[0] - atomLocations[n][2])/distanceToAtom);
 		      gradRhoYValueAtQuadPtAtom = signRho*radialDensityFirstDerivative*((quadPoint[1] - atomLocations[n][3])/distanceToAtom);
@@ -1181,6 +1189,17 @@ void dftClass<FEOrder>::initAtomicRho()
 		      gradRhoXValueAtQuadPt += gradRhoXValueAtQuadPtAtom;
 		      gradRhoYValueAtQuadPt += gradRhoYValueAtQuadPtAtom;
 		      gradRhoZValueAtQuadPt += gradRhoZValueAtQuadPtAtom;
+
+                      for (unsigned int idim=0; idim<3; idim++)
+                         for (unsigned int jdim=0; jdim<3; jdim++)
+                         {
+                            double temp=signRho*(radialDensitySecondDerivativeAtom -radialDensityFirstDerivative/distanceToAtom)
+                                        *(quadPoint[idim] - atomLocations[n][2+idim])*(quadPoint[jdim] - atomLocations[n][2+jdim])/distanceToAtom/distanceToAtom;
+                            if (idim==jdim)
+                                temp +=radialDensityFirstDerivative/distanceToAtom;
+                            d_hessianRhoAtomsValuesSeparate[n][cell->id()][idim*3+jdim]=temp;
+                            hessianRhoInValuesPtr[9*q+idim*3+jdim]+=temp;
+                         }
 		    }
 		}
 
@@ -1193,12 +1212,12 @@ void dftClass<FEOrder>::initAtomicRho()
 		  int masterAtomId = d_imageIdsTrunc[iImageCharge];
 		  if(cellInsideTailAtomVec[atomLocations.size()+iImageCharge])
 		    {
-		      double value,radialDensityFirstDerivative,radialDensitySecondDerivative;
+		      double value,radialDensityFirstDerivative,radialDensitySecondDerivativeAtom;
 		      alglib::spline1ddiff(denSpline[atomLocations[masterAtomId][0]],
 					   distanceToAtom,
 					   value,
 					   radialDensityFirstDerivative,
-					   radialDensitySecondDerivative);
+					   radialDensitySecondDerivativeAtom);
 
 		      gradRhoXValueAtQuadPtAtom = signRho*radialDensityFirstDerivative*((quadPoint[0] - d_imagePositionsTrunc[iImageCharge][0])/distanceToAtom);
 		      gradRhoYValueAtQuadPtAtom = signRho*radialDensityFirstDerivative*((quadPoint[1] - d_imagePositionsTrunc[iImageCharge][1])/distanceToAtom);
@@ -1211,12 +1230,24 @@ void dftClass<FEOrder>::initAtomicRho()
 		      gradRhoXValueAtQuadPt += gradRhoXValueAtQuadPtAtom;
 		      gradRhoYValueAtQuadPt += gradRhoYValueAtQuadPtAtom;
 		      gradRhoZValueAtQuadPt += gradRhoZValueAtQuadPtAtom;
+
+                      for (unsigned int idim=0; idim<3; idim++)
+                         for (unsigned int jdim=0; jdim<3; jdim++)
+                         {
+                            double temp=signRho*(radialDensitySecondDerivativeAtom -radialDensityFirstDerivative/distanceToAtom)
+                                                 *(quadPoint[idim] - d_imagePositionsTrunc[iImageCharge][2+idim])
+                                                 *(quadPoint[jdim] - d_imagePositionsTrunc[iImageCharge][2+jdim])/distanceToAtom/distanceToAtom;
+                            if (idim==jdim)
+                                temp +=radialDensityFirstDerivative/distanceToAtom;
+                            d_hessianRhoAtomsValuesSeparate[atomLocations.size()+iImageCharge][cell->id()][idim*3+jdim]=temp;
+                            hessianRhoInValuesPtr[9*q+idim*3+jdim]+=temp;
+                         }
+ 
 		    }
 		}
 		gradRhoInValuesPtr[3*q+0] = gradRhoXValueAtQuadPt;
 		gradRhoInValuesPtr[3*q+1] = gradRhoYValueAtQuadPt;
 		gradRhoInValuesPtr[3*q+2] = gradRhoZValueAtQuadPt;
-
 	}//quad loop
     }//cell loop
 

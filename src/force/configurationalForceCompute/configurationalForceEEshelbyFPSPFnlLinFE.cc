@@ -651,6 +651,7 @@ void forceClass<FEOrder>::computeConfigurationalForceEEshelbyTensorFPSPFnlLinFE
       std::vector<Tensor<1,C_DIM,VectorizedArray<double> > > gradRhoQuads(numQuadPoints,zeroTensor3);
       std::vector<Tensor<1,C_DIM,VectorizedArray<double> > > gradRhoAtomsQuads(numQuadPoints,zeroTensor3);
       std::vector<Tensor<2,C_DIM,VectorizedArray<double> > > hessianRhoQuads(numQuadPoints,zeroTensor4);
+      std::vector<Tensor<2,C_DIM,VectorizedArray<double> > > hessianRhoAtomsQuads(numQuadPoints,zeroTensor4);
       std::vector<VectorizedArray<double> > excQuads(numQuadPoints,make_vectorized_array(0.0));
       std::vector<VectorizedArray<double> > pseudoVLocQuads(numQuadPoints,make_vectorized_array(0.0));
       std::vector<VectorizedArray<double> > vxcRhoInQuads(numQuadPoints,make_vectorized_array(0.0));
@@ -690,6 +691,7 @@ void forceClass<FEOrder>::computeConfigurationalForceEEshelbyTensorFPSPFnlLinFE
 	std::fill(gradRhoQuads.begin(),gradRhoQuads.end(),zeroTensor3);
         std::fill(gradRhoAtomsQuads.begin(),gradRhoAtomsQuads.end(),zeroTensor3);
 	std::fill(hessianRhoQuads.begin(),hessianRhoQuads.end(),zeroTensor4);
+        std::fill(hessianRhoAtomsQuads.begin(),hessianRhoAtomsQuads.end(),zeroTensor4);
 	std::fill(excQuads.begin(),excQuads.end(),make_vectorized_array(0.0));
 	std::fill(pseudoVLocQuads.begin(),pseudoVLocQuads.end(),make_vectorized_array(0.0));
 	std::fill(vxcRhoInQuads.begin(),vxcRhoInQuads.end(),make_vectorized_array(0.0));
@@ -776,8 +778,8 @@ void forceClass<FEOrder>::computeConfigurationalForceEEshelbyTensorFPSPFnlLinFE
                         for (unsigned int jdim=0; jdim<C_DIM; jdim++)
                         {
                            if (idim==jdim)
-                            der2ExcWithGradRhoOutQuads[q][idim][jdim][iSubCell]=2.0*(derExchEnergyWithSigmaRhoOut[q]+derCorrEnergyWithSigmaRhoOut[q])
-                                                                      +4.0*(der2ExWithSigmaRhoOut[q]+der2EcWithSigmaRhoOut[q])*gradRhoOut[q][idim]*gradRhoOut[q][jdim];
+                            der2ExcWithGradRhoOutQuads[q][idim][idim][iSubCell]=2.0*(derExchEnergyWithSigmaRhoOut[q]+derCorrEnergyWithSigmaRhoOut[q])
+                                                                      +4.0*(der2ExWithSigmaRhoOut[q]+der2EcWithSigmaRhoOut[q])*gradRhoOut[q][idim]*gradRhoOut[q][idim];
                            else
                             der2ExcWithGradRhoOutQuads[q][idim][jdim][iSubCell]=4.0*(der2ExWithSigmaRhoOut[q]+der2EcWithSigmaRhoOut[q])*gradRhoOut[q][idim]*gradRhoOut[q][jdim];
                         }
@@ -819,9 +821,15 @@ void forceClass<FEOrder>::computeConfigurationalForceEEshelbyTensorFPSPFnlLinFE
                     gradRhoAtomsQuads[q][idim][iSubCell]=dftPtr->d_gradRhoAtomsValues.find(subCellId)->second[3*q+idim];
 
                 if(dftParameters::xc_id == 4)
+                {
+                    for (unsigned int idim=0; idim<C_DIM; idim++)
+                       for (unsigned int jdim=0; jdim<C_DIM; jdim++)
+                          hessianRhoAtomsQuads[q][idim][jdim][iSubCell]=dftPtr->d_hessianRhoAtomsValues.find(subCellId)->second[9*q+3*idim+jdim];
+
   		    for (unsigned int idim=0; idim<C_DIM; idim++)
                         shadowKSGradRhoMinMinusGradRhoQuads[q][idim][iSubCell]=shadowKSGradRhoMinValues.find(subCellId)->second[3*q+idim]
                                                                           -gradRhoOutValues.find(subCellId)->second[3*q+idim];
+                }
              }
 
              if(dftParameters::xc_id == 4)
@@ -875,7 +883,12 @@ void forceClass<FEOrder>::computeConfigurationalForceEEshelbyTensorFPSPFnlLinFE
 	   Tensor<1,C_DIM,VectorizedArray<double> > F=zeroTensor3;
 
            if (shadowPotentialForce && dftParameters::useAtomicRhoXLBOMD)
-              F=gradRhoAtomsQuads[q]*(derVxcWithRhoOutTimesRhoDiffQuads[q]+phiRhoMinMinusApproxRhoQuads[q]);
+           {
+              F+=gradRhoAtomsQuads[q]*(derVxcWithRhoOutTimesRhoDiffQuads[q]+phiRhoMinMinusApproxRhoQuads[q]);
+
+              if(dftParameters::xc_id == 4)
+                  F+=der2ExcWithGradRhoOutQuads[q]*shadowKSGradRhoMinMinusGradRhoQuads[q]*hessianRhoAtomsQuads[q];
+           }
 
 	   if(d_isElectrostaticsMeshSubdivided)
 	       F-=gradRhoQuads[q]*phiTot_q;
@@ -896,7 +909,10 @@ void forceClass<FEOrder>::computeConfigurationalForceEEshelbyTensorFPSPFnlLinFE
 						cell,
 						dftPtr->d_gradRhoAtomsValuesSeparate,
                                                 derVxcWithRhoOutTimesRhoDiffQuads,
-                                                phiRhoMinMinusApproxRhoQuads);
+                                                phiRhoMinMinusApproxRhoQuads,
+                                                dftPtr->d_hessianRhoAtomsValuesSeparate,
+                                                der2ExcWithGradRhoOutQuads,
+                                                shadowKSGradRhoMinMinusGradRhoQuads);
         
 
 

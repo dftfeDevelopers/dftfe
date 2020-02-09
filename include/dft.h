@@ -844,8 +844,8 @@ namespace dftfe {
       std::deque<vectorType> d_rhoInNodalVals, d_rhoOutNodalVals;
 
       /// for xl-bomd
-      std::map<dealii::CellId, std::vector<double> > d_rhoAtomsValues,d_gradRhoAtomsValues;
-      std::map<unsigned int,std::map<dealii::CellId, std::vector<double> > > d_gradRhoAtomsValuesSeparate;  
+      std::map<dealii::CellId, std::vector<double> > d_rhoAtomsValues,d_gradRhoAtomsValues, d_hessianRhoAtomsValues;
+      std::map<unsigned int,std::map<dealii::CellId, std::vector<double> > > d_gradRhoAtomsValuesSeparate,d_hessianRhoAtomsValuesSeparate;  
 
       std::map<dealii::CellId, std::vector<double> > * gradRhoInValues, *gradRhoInValuesSpinPolarized;
       std::map<dealii::CellId, std::vector<double> > * gradRhoOutValues, *gradRhoOutValuesSpinPolarized;

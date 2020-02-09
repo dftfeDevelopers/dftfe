@@ -25,11 +25,20 @@ void forceClass<FEOrder>::FShadowLocalGammaAtomsElementalContribution
 	      const unsigned int cell,
               const std::map<unsigned int,std::map<dealii::CellId, std::vector<double> > > & gradRhoAtomsQuads,
               const std::vector< VectorizedArray<double> > & derVxcWithRhoOutTimesRhoDiffQuads,
-              const std::vector< VectorizedArray<double> > & phiRhoMinusApproxRhoQuads)
+              const std::vector< VectorizedArray<double> > & phiRhoMinusApproxRhoQuads,
+              const std::map<unsigned int,std::map<dealii::CellId, std::vector<double> > > & hessianRhoAtomsQuads,
+              const std::vector<Tensor<2,C_DIM,VectorizedArray<double> > >  & der2ExcWithGradRhoOutQuads,
+              const std::vector<Tensor<1,C_DIM,VectorizedArray<double> > >  & shadowKSGradRhoMinMinusGradRhoQuads)
 {
   Tensor<1,C_DIM,VectorizedArray<double> > zeroTensor1;
   for (unsigned int idim=0; idim<C_DIM; idim++)
     zeroTensor1[idim]=make_vectorized_array(0.0);
+
+  Tensor<2,C_DIM,VectorizedArray<double> > zeroTensor2;
+  for (unsigned int idim=0; idim<C_DIM; idim++)
+    for (unsigned int jdim=0; jdim<C_DIM; jdim++)
+	zeroTensor2[idim][jdim]=make_vectorized_array(0.0);
+
   const unsigned int numberGlobalAtoms = dftPtr->atomLocations.size();
   const unsigned int numberImageCharges = dftPtr->d_imageIdsTrunc.size();
   const unsigned int totalNumberAtoms = numberGlobalAtoms + numberImageCharges;
@@ -39,7 +48,8 @@ void forceClass<FEOrder>::FShadowLocalGammaAtomsElementalContribution
 
   for (unsigned int iAtom=0;iAtom <totalNumberAtoms; iAtom++)
   {
-    std::vector<Tensor<1,C_DIM,VectorizedArray<double> > > gradRhoQuads(numQuadPoints,zeroTensor1);
+    std::vector<Tensor<1,C_DIM,VectorizedArray<double> > > gradRhoQuadsiAtom(numQuadPoints,zeroTensor1);
+    std::vector<Tensor<2,C_DIM,VectorizedArray<double> > > hessianRhoQuadsiAtom(numQuadPoints,zeroTensor2);
 
     double atomCharge;
     unsigned int atomId=iAtom;
@@ -74,19 +84,35 @@ void forceClass<FEOrder>::FShadowLocalGammaAtomsElementalContribution
 
        std::map<dealii::CellId, std::vector<double> >::const_iterator it
 	      =gradRhoAtomsQuads.find(iAtom)->second.find(subCellId);
+
+       std::map<dealii::CellId, std::vector<double> >::const_iterator it2
+	      =hessianRhoAtomsQuads.find(iAtom)->second.find(subCellId);
+
        if (it!=gradRhoAtomsQuads.find(iAtom)->second.end())
 	    for (unsigned int q=0; q<numQuadPoints; ++q)
 	    {
-	       gradRhoQuads[q][0][iSubCell]=(it->second)[q*C_DIM];
-	       gradRhoQuads[q][1][iSubCell]=(it->second)[q*C_DIM+1];
-	       gradRhoQuads[q][2][iSubCell]=(it->second)[q*C_DIM+2];
+	       gradRhoQuadsiAtom[q][0][iSubCell]=(it->second)[q*C_DIM];
+	       gradRhoQuadsiAtom[q][1][iSubCell]=(it->second)[q*C_DIM+1];
+	       gradRhoQuadsiAtom[q][2][iSubCell]=(it->second)[q*C_DIM+2];
+
+               if(dftParameters::xc_id == 4)
+	          for (unsigned int idim=0; idim<C_DIM; idim++)
+	            for (unsigned int jdim=0; jdim<C_DIM; jdim++)
+	  	      hessianRhoQuadsiAtom[q][idim][jdim][iSubCell]=(it2->second)[9*q+idim*C_DIM+jdim];
 	    }
 
     }//subCell loop
 
-    for (unsigned int q=0; q<numQuadPoints; ++q)
-      forceEval.submit_value(-gradRhoQuads[q]*(derVxcWithRhoOutTimesRhoDiffQuads[q]+phiRhoMinusApproxRhoQuads[q]),q);
-    
+    if(dftParameters::xc_id == 4)
+       for (unsigned int q=0; q<numQuadPoints; ++q)
+          forceEval.submit_value(-gradRhoQuadsiAtom[q]*(derVxcWithRhoOutTimesRhoDiffQuads[q]+phiRhoMinusApproxRhoQuads[q])
+                                 -der2ExcWithGradRhoOutQuads[q]*shadowKSGradRhoMinMinusGradRhoQuads[q]*hessianRhoQuadsiAtom[q],
+                                 q);
+    else
+       for (unsigned int q=0; q<numQuadPoints; ++q)
+          forceEval.submit_value(-gradRhoQuadsiAtom[q]*(derVxcWithRhoOutTimesRhoDiffQuads[q]+phiRhoMinusApproxRhoQuads[q]),
+                                 q);
+ 
     Tensor<1,C_DIM,VectorizedArray<double> > forceContributionLocalGammaiAtomCells
 						 =forceEval.integrate_value();
 
