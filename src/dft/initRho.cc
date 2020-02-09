@@ -1117,10 +1117,6 @@ void dftClass<FEOrder>::initAtomicRho()
 		  rhoValueAtQuadPt += alglib::spline1dcalc(denSpline[atomLocations[n][0]], distanceToAtom);
                   cellInsideTailAtomVec[n]=true;
 		}
-	      else
-		{
-		  rhoValueAtQuadPt += 0.0;
-		}
 	    }
 
 	  //loop over image charges
