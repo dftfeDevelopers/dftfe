@@ -13,7 +13,7 @@
 //
 // ---------------------------------------------------------------------
 //
-// @author Phani Motamarri
+// @author Phani Motamarri, Sambit Das
 //
 
 
@@ -25,12 +25,15 @@ void dftClass<FEOrder>::interpolateNodalDataToQuadratureData(dealii::MatrixFree<
 							     const vectorType & nodalField,
 							     std::map<dealii::CellId, std::vector<double> > & quadratureValueData,
 							     std::map<dealii::CellId, std::vector<double> > & quadratureGradValueData,
-							     const bool isEvaluateGradData)
+							     const bool isEvaluateGradData,
+                                                             const bool addToExistingData)
 {
-  
-  quadratureValueData.clear();
-  if(isEvaluateGradData)
-    quadratureGradValueData.clear();
+  if (!addToExistingData) 
+  {
+    quadratureValueData.clear();
+    if(isEvaluateGradData)
+       quadratureGradValueData.clear();
+  }
 
   FEEvaluation<C_DIM,C_num1DKerkerPoly<FEOrder>(),C_num1DQuad<FEOrder>(),1,double> feEvalObj(matrixFreeData,0,1);
   const unsigned int numQuadPoints = feEvalObj.n_q_points; 
@@ -45,12 +48,21 @@ void dftClass<FEOrder>::interpolateNodalDataToQuadratureData(dealii::MatrixFree<
 	{
 	  subCellPtr= matrixFreeData.get_cell_iterator(cell,iSubCell);
 	  dealii::CellId subCellId=subCellPtr->id();
-	  quadratureValueData[subCellId] = std::vector<double>(numQuadPoints);
+          if (!addToExistingData)
+	    quadratureValueData[subCellId] = std::vector<double>(numQuadPoints);
+
 	  std::vector<double> & tempVec = quadratureValueData.find(subCellId)->second;
-	  for(unsigned int q_point = 0; q_point < numQuadPoints; ++q_point)
-	    {
-	      tempVec[q_point] = feEvalObj.get_value(q_point)[iSubCell];
-	    }
+
+          if (!addToExistingData)
+		  for(unsigned int q_point = 0; q_point < numQuadPoints; ++q_point)
+		    {
+		      tempVec[q_point] = feEvalObj.get_value(q_point)[iSubCell];
+		    }
+          else
+		  for(unsigned int q_point = 0; q_point < numQuadPoints; ++q_point)
+		    {
+		      tempVec[q_point] += feEvalObj.get_value(q_point)[iSubCell];
+		    }
 	}
       
       if(isEvaluateGradData)
@@ -59,14 +71,25 @@ void dftClass<FEOrder>::interpolateNodalDataToQuadratureData(dealii::MatrixFree<
 	    {
 	      subCellPtr= matrixFreeData.get_cell_iterator(cell,iSubCell);
 	      dealii::CellId subCellId=subCellPtr->id();
-	      quadratureGradValueData[subCellId]=std::vector<double>(3*numQuadPoints);
+              if (!addToExistingData)
+	         quadratureGradValueData[subCellId]=std::vector<double>(3*numQuadPoints);
+
 	      std::vector<double> & tempVec = quadratureGradValueData.find(subCellId)->second;
-	      for(unsigned int q_point = 0; q_point < numQuadPoints; ++q_point)
-		{
-		  tempVec[3*q_point + 0] = feEvalObj.get_gradient(q_point)[0][iSubCell];
-		  tempVec[3*q_point + 1] = feEvalObj.get_gradient(q_point)[1][iSubCell];
-		  tempVec[3*q_point + 2] = feEvalObj.get_gradient(q_point)[2][iSubCell];
-		}
+
+              if (!addToExistingData)
+		      for(unsigned int q_point = 0; q_point < numQuadPoints; ++q_point)
+			{
+			  tempVec[3*q_point + 0] = feEvalObj.get_gradient(q_point)[0][iSubCell];
+			  tempVec[3*q_point + 1] = feEvalObj.get_gradient(q_point)[1][iSubCell];
+			  tempVec[3*q_point + 2] = feEvalObj.get_gradient(q_point)[2][iSubCell];
+			}
+              else
+		      for(unsigned int q_point = 0; q_point < numQuadPoints; ++q_point)
+			{
+			  tempVec[3*q_point + 0] += feEvalObj.get_gradient(q_point)[0][iSubCell];
+			  tempVec[3*q_point + 1] += feEvalObj.get_gradient(q_point)[1][iSubCell];
+			  tempVec[3*q_point + 2] += feEvalObj.get_gradient(q_point)[2][iSubCell];
+			}
 	    }
 	}
 

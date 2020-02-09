@@ -115,7 +115,6 @@ namespace dftfe {
     double diracDeltaKernelScalingConstant=0.1;
     bool useRank1KernelXLBOMD=false;
     bool autoMeshStepInterpolateBOMD=false;
-    bool rectifyAutoMeshEnergyJump=false;
     double ratioOfMeshMovementToForceGaussianBOMD=1.0;
     bool useAtomicRhoXLBOMD=true;
 
@@ -726,10 +725,6 @@ namespace dftfe {
 			  Patterns::Bool(),
 			  "[Standard] Perform interpolation of previous density to new auto mesh.");  
 
-	prm.declare_entry("RECTIFY AUTO MESH ENERGY JUMP", "false",
-			  Patterns::Bool(),
-			  "[Standard] Rectify auto mesh energy jump."); 
-
 	prm.declare_entry("RATIO MESH MOVEMENT TO FORCE GAUSSIAN", "1.0",
 			    Patterns::Double(0.0),
 			    "[Standard] Ratio of mesh movement to force Gaussian."); 
@@ -958,7 +953,6 @@ namespace dftfe {
           dftParameters::diracDeltaKernelScalingConstant     = prm.get_double("DIRAC DELTA KERNEL SCALING CONSTANT XL BOMD"); 
           dftParameters::useRank1KernelXLBOMD          = prm.get_bool("USE RANK 1 KERNEL XL BOMD");
           dftParameters::autoMeshStepInterpolateBOMD   = prm.get_bool("AUTO MESH STEP INTERPOLATE BOMD");
-          dftParameters::rectifyAutoMeshEnergyJump     = prm.get_bool("RECTIFY AUTO MESH ENERGY JUMP"); 
           dftParameters::ratioOfMeshMovementToForceGaussianBOMD       = prm.get_double("RATIO MESH MOVEMENT TO FORCE GAUSSIAN");    
           dftParameters::useAtomicRhoXLBOMD     = prm.get_bool("USE ATOMIC RHO XL BOMD");     
       }

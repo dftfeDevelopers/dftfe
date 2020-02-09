@@ -98,11 +98,9 @@ namespace internal{
 // Depending on the maximum displacement magnitude this function decides wether to do auto remeshing
 // or move mesh using Gaussian functions.
 template<unsigned int FEOrder>
-bool dftClass<FEOrder>::updateAtomPositionsAndMoveMesh(const std::vector<Tensor<1,3,double> > & globalAtomsDisplacements,
+void dftClass<FEOrder>::updateAtomPositionsAndMoveMesh(const std::vector<Tensor<1,3,double> > & globalAtomsDisplacements,
 	                                               const double maxJacobianRatioFactor,
-						       const bool useSingleAtomSolutions,
-                                                       const bool forceSupressAutoMesh)
-
+						       const bool useSingleAtomSolutions)
 {
   bool isAutoRemeshSupressed=false;
   const int numberGlobalAtoms = atomLocations.size();
@@ -395,13 +393,7 @@ bool dftClass<FEOrder>::updateAtomPositionsAndMoveMesh(const std::vector<Tensor<
 
 	  if ((meshQualityMetrics.first || meshQualityMetrics.second > maxJacobianRatioFactor*d_autoMeshMaxJacobianRatio))
           {
-            if (forceSupressAutoMesh)
-            {
-              d_autoMesh=0;
-              isAutoRemeshSupressed=true;
-            }
-            else
-	      d_autoMesh=1;
+	    d_autoMesh=1;
           }
 	  MPI_Bcast(&(d_autoMesh),
 		    1,
@@ -470,5 +462,4 @@ bool dftClass<FEOrder>::updateAtomPositionsAndMoveMesh(const std::vector<Tensor<
 	    }
 	}
     }
-    return isAutoRemeshSupressed;
 }

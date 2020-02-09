@@ -239,10 +239,9 @@ namespace dftfe {
        *  @param[in] globalAtomsDisplacements vector containing the displacements (from current position) of all atoms (global).
        *  @return void.
        */
-      bool updateAtomPositionsAndMoveMesh(const std::vector<Tensor<1,3,double> > & globalAtomsDisplacements,
+      void updateAtomPositionsAndMoveMesh(const std::vector<Tensor<1,3,double> > & globalAtomsDisplacements,
 	                                  const double maxJacobianRatioFactor,
-					  const bool useSingleAtomSolutions=false,
-                                          const bool forceSupressAutoMesh=false);
+					  const bool useSingleAtomSolutions=false);
 
 
       /**
@@ -361,7 +360,8 @@ namespace dftfe {
 						const vectorType & nodalField,
 						std::map<dealii::CellId, std::vector<double> > & quadratureValueData,
 						std::map<dealii::CellId, std::vector<double> > & quadratureGradValueData,
-						const bool isEvaluateGradData);
+						const bool isEvaluateGradData,
+                                                const bool addToExistingData=false);
 
 
       /**
@@ -406,7 +406,8 @@ namespace dftfe {
 	                             const dealii::AffineConstraints<double> & constraintMatrixBase,
 	                             dealii::AffineConstraints<double> & constraintMatrix);
 
-      void initAtomicRho(vectorType & atomicRho);
+      void initAtomicRho();
+      void getRhoOutMinusAtomicRhoNodal(vectorType & rhoOutMinusAtomicRhoNodal);
       void initRho();
       void computeRhoInitialGuessFromPSI(std::vector<std::vector<vectorType>> eigenVectors);
       void clearRhoData();
@@ -535,15 +536,9 @@ namespace dftfe {
 #ifdef DFTFE_WITH_GPU
                           kohnShamDFTOperatorCUDAClass<FEOrder> & kohnShamDFTEigenOperator,
 #endif
-                          const bool isConsiderSpectrumSplitting);
+                          const bool isConsiderSpectrumSplitting,
+                          const bool isComputeNodalDensityIfNotKerker=false);
 
-#ifdef DFTFE_WITH_GPU
-      /**
-       *@brief Computes output electron-density from wavefunctions
-       */
-      //void compute_rhoOut(kohnShamDFTOperatorCUDAClass<FEOrder> & kohnShamDFTEigenOperator,
-      //                    const bool isConsiderSpectrumSplitting);
-#endif
       
       void popOutRhoInRhoOutVals(); 
 
@@ -876,6 +871,9 @@ namespace dftfe {
 
       // storage for potential due to rho minus approx density in case of xl bomd
       vectorType d_phiRhoMinusApproxRho;
+
+      // storage for sum of single atom rho in case of xl bomd
+      vectorType d_rhoAtomsNodal;
 
       // storage for projection of rho cell quadrature data to nodal field
       vectorType d_rhoNodalField;

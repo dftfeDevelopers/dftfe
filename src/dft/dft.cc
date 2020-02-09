@@ -1806,14 +1806,17 @@ namespace dftfe {
 	  symmetryPtr->computeAndSymmetrize_rhoOut();
 	}
 	else
-	  compute_rhoOut((scfIter<dftParameters::spectrumSplitStartingScfIter || scfConverged)?false:true);
+	  compute_rhoOut((scfIter<dftParameters::spectrumSplitStartingScfIter || scfConverged)?false:true,
+                         (dftParameters::isBOMD && scfConverged)||solveLinearizedKS);
 #else
 
 #ifdef DFTFE_WITH_GPU
         compute_rhoOut(kohnShamDFTEigenOperatorCUDA,
-	      (scfIter<dftParameters::spectrumSplitStartingScfIter || scfConverged)?false:true);
+	      (scfIter<dftParameters::spectrumSplitStartingScfIter || scfConverged)?false:true,
+               (dftParameters::isBOMD && scfConverged)||solveLinearizedKS);
 #else
-	compute_rhoOut((scfIter<dftParameters::spectrumSplitStartingScfIter || scfConverged)?false:true);
+	compute_rhoOut((scfIter<dftParameters::spectrumSplitStartingScfIter || scfConverged)?false:true,
+                       (dftParameters::isBOMD && scfConverged)||solveLinearizedKS);
 #endif
 #endif
 	computing_timer.exit_section("compute rho");

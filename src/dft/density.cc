@@ -81,7 +81,8 @@ void dftClass<FEOrder>::compute_rhoOut(
 #ifdef DFTFE_WITH_GPU
                           kohnShamDFTOperatorCUDAClass<FEOrder> & kohnShamDFTEigenOperator,
 #endif
-                          const bool isConsiderSpectrumSplitting)
+                          const bool isConsiderSpectrumSplitting,
+                          const bool isComputeNodalDensityIfNotKerker)
 {
 
   if(dftParameters::mixingMethod=="ANDERSON_WITH_KERKER")
@@ -173,7 +174,7 @@ void dftClass<FEOrder>::compute_rhoOut(
 			isConsiderSpectrumSplitting);
 #endif
 
-      if (dftParameters::isBOMD)
+      if (isComputeNodalDensityIfNotKerker && dftParameters::mixingMethod!="ANDERSON_WITH_KERKER")
       {
 #ifdef DFTFE_WITH_GPU
 	      computeRhoNodalFromPSI(kohnShamDFTEigenOperator,isConsiderSpectrumSplitting);
