@@ -1018,6 +1018,11 @@ void dftClass<FEOrder>::normalizeAtomicRhoQuadValues()
 	  for (unsigned int i=0; i<(it2->second).size(); ++i)
 	      (it2->second)[i]*=scaling;
 
+  for (auto it1=d_hessianRhoAtomsValuesSeparate.begin(); it1!=d_hessianRhoAtomsValuesSeparate.end(); ++it1)
+     for (auto it2=it1->second.begin(); it2!=it1->second.end(); ++it2)
+          for (unsigned int i=0; i<(it2->second).size(); ++i)
+              (it2->second)[i]*=scaling;
+
   double chargeAfterScaling = totalCharge(dofHandler,
 					  &d_rhoAtomsValues);
 
