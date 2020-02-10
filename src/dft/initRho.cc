@@ -1241,8 +1241,8 @@ void dftClass<FEOrder>::initAtomicRho()
                          for (unsigned int jdim=0; jdim<3; jdim++)
                          {
                             double temp=signRho*(radialDensitySecondDerivativeAtom -radialDensityFirstDerivative/distanceToAtom)
-                                                 *(quadPoint[idim] - d_imagePositionsTrunc[iImageCharge][2+idim])
-                                                 *(quadPoint[jdim] - d_imagePositionsTrunc[iImageCharge][2+jdim])/distanceToAtom/distanceToAtom;
+                                                 *(quadPoint[idim] - d_imagePositionsTrunc[iImageCharge][idim])
+                                                 *(quadPoint[jdim] - d_imagePositionsTrunc[iImageCharge][jdim])/distanceToAtom/distanceToAtom;
                             if (idim==jdim)
                                 temp +=radialDensityFirstDerivative/distanceToAtom;
                             d_hessianRhoAtomsValuesSeparate[atomLocations.size()+iImageCharge][cell->id()][idim*3+jdim]=temp;
