@@ -398,8 +398,9 @@ void dftClass<FEOrder>::initRho()
 			}
 
 		      int signRho = 0 ;
-		      if (std::abs((*rhoInValues)[cell->id()][q] ) > 1.0E-7)
-			int signRho = (*rhoInValues)[cell->id()][q]/std::abs((*rhoInValues)[cell->id()][q]);
+                      if (std::abs((*rhoInValues)[cell->id()][q] ) > 1.0E-7)
+                          signRho = (*rhoInValues)[cell->id()][q]>0.0?1:-1;
+
 		      // KG: the fact that we are forcing gradRho to zero whenever rho is zero is valid. Because rho is always positive, so whenever it is zero, it must have a local minima.
 		      //
 		      gradRhoInValuesPtr[3*q+0] = signRho*gradRhoXValueAtQuadPt;
@@ -1152,7 +1153,7 @@ void dftClass<FEOrder>::initAtomicRho()
 
               int signRho = 0 ;
      	      if (std::abs((*rhoInValues)[cell->id()][q] ) > 1.0E-7)
-	      int signRho = (*rhoInValues)[cell->id()][q]/std::abs((*rhoInValues)[cell->id()][q]);
+	         signRho = (*rhoInValues)[cell->id()][q]>0.0?1:-1;
 
 	      const Point<3> & quadPoint=fe_values.quadrature_point(q);
 	      double gradRhoXValueAtQuadPt = 0.0;
