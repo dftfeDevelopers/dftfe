@@ -811,13 +811,11 @@ namespace dftfe {
     //The last flag to updateAtomPositionsAndMoveMesh is set to true to force use of
     //single atom solutions.
     //
-    /*
     if (d_isAtomsGaussianDisplacementsReadFromFile)
     {
 	updateAtomPositionsAndMoveMesh(d_atomsDisplacementsGaussianRead,1e+4,true);
 	d_isAtomsGaussianDisplacementsReadFromFile=false;
     }
-    */
 
     computingTimerStandard.exit_section("KSDFT problem initialization");
   }
