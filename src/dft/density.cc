@@ -101,6 +101,7 @@ void dftClass<FEOrder>::compute_rhoOut(
 					   d_rhoOutNodalValues,
 					   *rhoOutValues,
 					   *gradRhoOutValues,
+                                           *gradRhoOutValues,
 					   dftParameters::xc_id == 4);
      
 
@@ -343,6 +344,7 @@ void dftClass<FEOrder>::noRemeshRhoDataInit()
 					   d_rhoInNodalValues,
 					   *rhoInValues,
 					   *gradRhoInValues,
+                                           *gradRhoInValues,
 					   dftParameters::xc_id == 4);
 
 

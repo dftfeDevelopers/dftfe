@@ -90,6 +90,8 @@ void dftClass<FEOrder>::initpRefinedObjects()
   //matrix free data structure
   typename dealii::MatrixFree<3>::AdditionalData additional_data;
   additional_data.tasks_parallel_scheme = dealii::MatrixFree<3>::AdditionalData::partition_partition;
+  if (dftParameters::xc_id==4 && dftParameters::isXLBOMD)
+     additional_data.mapping_update_flags = update_gradients|update_JxW_values|update_hessians;
 
   //clear existing constraints matrix vector
   std::vector<const dealii::ConstraintMatrix*> matrixFreeConstraintsInputVector;

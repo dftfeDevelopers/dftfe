@@ -144,6 +144,7 @@ double dftClass<FEOrder>::nodalDensity_mixing_simple(kerkerSolverProblem<C_num1D
 				       d_rhoInNodalValues,
 				       *rhoInValues,
 				       *gradRhoInValues,
+                                       *gradRhoInValues,
 				       dftParameters::xc_id == 4);
   
   return normValue;
@@ -393,6 +394,7 @@ double dftClass<FEOrder>::nodalDensity_mixing_anderson(kerkerSolverProblem<C_num
 				       d_rhoInNodalValues,
 				       *rhoInValues,
 				       *gradRhoInValues,
+                                       *gradRhoInValues,
 				       dftParameters::xc_id == 4);
 
 

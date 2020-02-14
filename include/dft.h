@@ -360,8 +360,9 @@ namespace dftfe {
 						const vectorType & nodalField,
 						std::map<dealii::CellId, std::vector<double> > & quadratureValueData,
 						std::map<dealii::CellId, std::vector<double> > & quadratureGradValueData,
+                                                std::map<dealii::CellId, std::vector<double> > & quadratureHessianValueData,
 						const bool isEvaluateGradData,
-                                                const bool addToExistingData=false);
+                                                const bool isEvaluateHessianData=false);
 
 
       /**
@@ -406,8 +407,7 @@ namespace dftfe {
 	                             const dealii::AffineConstraints<double> & constraintMatrixBase,
 	                             dealii::AffineConstraints<double> & constraintMatrix);
 
-      void initAtomicRho();
-      void getRhoOutMinusAtomicRhoNodal(vectorType & rhoOutMinusAtomicRhoNodal);
+      void initAtomicRho(vectorType & atomicRhoNodal);
       void initRho();
       void computeRhoInitialGuessFromPSI(std::vector<std::vector<vectorType>> eigenVectors);
       void clearRhoData();

@@ -25,15 +25,15 @@ void dftClass<FEOrder>::interpolateNodalDataToQuadratureData(dealii::MatrixFree<
 							     const vectorType & nodalField,
 							     std::map<dealii::CellId, std::vector<double> > & quadratureValueData,
 							     std::map<dealii::CellId, std::vector<double> > & quadratureGradValueData,
+                                                             std::map<dealii::CellId, std::vector<double> > & quadratureHessianValueData,
 							     const bool isEvaluateGradData,
-                                                             const bool addToExistingData)
+                                                             const bool isEvaluateHessianData)
 {
-  if (!addToExistingData) 
-  {
-    quadratureValueData.clear();
-    if(isEvaluateGradData)
-       quadratureGradValueData.clear();
-  }
+  quadratureValueData.clear();
+  if(isEvaluateGradData)
+     quadratureGradValueData.clear();
+  if (isEvaluateHessianData)
+     quadratureHessianValueData.clear();
 
   FEEvaluation<C_DIM,C_num1DKerkerPoly<FEOrder>(),C_num1DQuad<FEOrder>(),1,double> feEvalObj(matrixFreeData,0,1);
   const unsigned int numQuadPoints = feEvalObj.n_q_points; 
@@ -43,56 +43,53 @@ void dftClass<FEOrder>::interpolateNodalDataToQuadratureData(dealii::MatrixFree<
     {
       feEvalObj.reinit(cell);
       feEvalObj.read_dof_values(nodalField);
-      feEvalObj.evaluate(true,true);
+      if (isEvaluateHessianData)
+         feEvalObj.evaluate(true,true,true);
+      else
+         feEvalObj.evaluate(true,true);
       for(unsigned int iSubCell = 0; iSubCell < matrixFreeData.n_components_filled(cell); ++iSubCell)
 	{
 	  subCellPtr= matrixFreeData.get_cell_iterator(cell,iSubCell);
 	  dealii::CellId subCellId=subCellPtr->id();
-          if (!addToExistingData)
-	    quadratureValueData[subCellId] = std::vector<double>(numQuadPoints);
+	  quadratureValueData[subCellId] = std::vector<double>(numQuadPoints);
 
 	  std::vector<double> & tempVec = quadratureValueData.find(subCellId)->second;
 
-          if (!addToExistingData)
-		  for(unsigned int q_point = 0; q_point < numQuadPoints; ++q_point)
-		    {
-		      tempVec[q_point] = feEvalObj.get_value(q_point)[iSubCell];
-		    }
-          else
-		  for(unsigned int q_point = 0; q_point < numQuadPoints; ++q_point)
-		    {
-		      tempVec[q_point] += feEvalObj.get_value(q_point)[iSubCell];
-		    }
-	}
-      
-      if(isEvaluateGradData)
-	{
-	  for(unsigned int iSubCell = 0; iSubCell < matrixFreeData.n_components_filled(cell); ++iSubCell)
+	  for(unsigned int q_point = 0; q_point < numQuadPoints; ++q_point)
 	    {
-	      subCellPtr= matrixFreeData.get_cell_iterator(cell,iSubCell);
-	      dealii::CellId subCellId=subCellPtr->id();
-              if (!addToExistingData)
-	         quadratureGradValueData[subCellId]=std::vector<double>(3*numQuadPoints);
-
-	      std::vector<double> & tempVec = quadratureGradValueData.find(subCellId)->second;
-
-              if (!addToExistingData)
-		      for(unsigned int q_point = 0; q_point < numQuadPoints; ++q_point)
-			{
-			  tempVec[3*q_point + 0] = feEvalObj.get_gradient(q_point)[0][iSubCell];
-			  tempVec[3*q_point + 1] = feEvalObj.get_gradient(q_point)[1][iSubCell];
-			  tempVec[3*q_point + 2] = feEvalObj.get_gradient(q_point)[2][iSubCell];
-			}
-              else
-		      for(unsigned int q_point = 0; q_point < numQuadPoints; ++q_point)
-			{
-			  tempVec[3*q_point + 0] += feEvalObj.get_gradient(q_point)[0][iSubCell];
-			  tempVec[3*q_point + 1] += feEvalObj.get_gradient(q_point)[1][iSubCell];
-			  tempVec[3*q_point + 2] += feEvalObj.get_gradient(q_point)[2][iSubCell];
-			}
+	      tempVec[q_point] = feEvalObj.get_value(q_point)[iSubCell];
 	    }
-	}
 
+          if(isEvaluateGradData)
+          { 
+	      quadratureGradValueData[subCellId]=std::vector<double>(3*numQuadPoints);
+
+	      std::vector<double> & tempVec2 = quadratureGradValueData.find(subCellId)->second;
+
+	      for(unsigned int q_point = 0; q_point < numQuadPoints; ++q_point)
+		{
+                  const Tensor< 1, 3, VectorizedArray< double> >  & gradVals=	feEvalObj.get_gradient(q_point);
+		  tempVec2[3*q_point + 0] = gradVals[0][iSubCell];
+		  tempVec2[3*q_point + 1] = gradVals[1][iSubCell];
+		  tempVec2[3*q_point + 2] = gradVals[2][iSubCell];
+		}
+          }
+
+          if(isEvaluateHessianData)
+          { 
+	      quadratureHessianValueData[subCellId]=std::vector<double>(9*numQuadPoints);
+
+	      std::vector<double> & tempVec3 = quadratureHessianValueData[subCellId];
+
+	      for(unsigned int q_point = 0; q_point < numQuadPoints; ++q_point)
+		{
+                  const Tensor< 2, 3, VectorizedArray< double> >   & hessianVals=feEvalObj.get_hessian(q_point);
+                  for (unsigned int i=0; i<3;i++)
+                    for (unsigned int j=0; j<3;j++)
+	 	      tempVec3[9*q_point + 3*i+j] = hessianVals[i][j][iSubCell];
+		}
+          }
+	}
     }
 
 }
