@@ -887,7 +887,10 @@ void forceClass<FEOrder>::computeConfigurationalForceEEshelbyTensorFPSPFnlLinFE
               F+=gradRhoAtomsQuads[q]*(derVxcWithRhoOutTimesRhoDiffQuads[q]+phiRhoMinMinusApproxRhoQuads[q]);
 
               if(dftParameters::xc_id == 4)
+              {
                   F+=shadowKSGradRhoMinMinusGradRhoQuads[q]*der2ExcWithGradRhoOutQuads[q]*hessianRhoAtomsQuads[q];
+                  F+=shadowKSGradRhoMinMinusGradRhoQuads[q]*outer_product(derVxcWithGradRhoOutQuads[q],gradRhoAtomsQuads[q]);
+              }
            }
 
 	   if(d_isElectrostaticsMeshSubdivided)
@@ -912,6 +915,7 @@ void forceClass<FEOrder>::computeConfigurationalForceEEshelbyTensorFPSPFnlLinFE
                                                 phiRhoMinMinusApproxRhoQuads,
                                                 dftPtr->d_hessianRhoAtomsValuesSeparate,
                                                 der2ExcWithGradRhoOutQuads,
+                                                derVxcWithGradRhoOutQuads,
                                                 shadowKSGradRhoMinMinusGradRhoQuads);
         
 

@@ -1209,25 +1209,25 @@ void dftClass<FEOrder>::initAtomicRho(vectorType & atomicRho)
 		      subCellPtr= d_matrixFreeDataPRefined.get_cell_iterator(cell,iSubCell);
 		      dealii::CellId subCellId=subCellPtr->id();
 		      d_gradRhoAtomsValuesSeparate[iatom][subCellId]=std::vector<double>(3*numQuadPoints);
-		      std::vector<double> & tempVec = d_gradRhoAtomsValuesSeparate[iatom].find(subCellId)->second;
+		      std::vector<double> & tempVec1 = d_gradRhoAtomsValuesSeparate[iatom].find(subCellId)->second;
 		      for(unsigned int q_point = 0; q_point < numQuadPoints; ++q_point)
 		      {
-			    tempVec[3*q_point + 0] = feEvalObj.get_gradient(q_point)[0][iSubCell];
-			    tempVec[3*q_point + 1] = feEvalObj.get_gradient(q_point)[1][iSubCell];
-			    tempVec[3*q_point + 2] = feEvalObj.get_gradient(q_point)[2][iSubCell];
+			    tempVec1[3*q_point + 0] = feEvalObj.get_gradient(q_point)[0][iSubCell];
+			    tempVec1[3*q_point + 1] = feEvalObj.get_gradient(q_point)[1][iSubCell];
+			    tempVec1[3*q_point + 2] = feEvalObj.get_gradient(q_point)[2][iSubCell];
 		      }
 
                       if (dftParameters::xc_id==4)
                       {
                   
 			      d_hessianRhoAtomsValuesSeparate[iatom][subCellId]=std::vector<double>(9*numQuadPoints);
-			      std::vector<double> & tempVec = d_hessianRhoAtomsValuesSeparate[iatom][subCellId];
+			      std::vector<double> & tempVec2 = d_hessianRhoAtomsValuesSeparate[iatom][subCellId];
 			      for(unsigned int q_point = 0; q_point < numQuadPoints; ++q_point)
 				{
 				  const Tensor< 2, 3, VectorizedArray< double> >   & hessianVals=feEvalObj.get_hessian(q_point);
 				  for (unsigned int i=0; i<3;i++)
 				    for (unsigned int j=0; j<3;j++)
-				      tempVec[9*q_point + 3*i+j] = hessianVals[i][j][iSubCell];
+				      tempVec2[9*q_point + 3*i+j] = hessianVals[i][j][iSubCell];
 				}
                       }
 	      }
