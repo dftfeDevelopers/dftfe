@@ -106,7 +106,7 @@ void forceClass<FEOrder>::FShadowLocalGammaAtomsElementalContribution
     if(dftParameters::xc_id == 4)
        for (unsigned int q=0; q<numQuadPoints; ++q)
           forceEval.submit_value(-gradRhoQuadsiAtom[q]*(derVxcWithRhoOutTimesRhoDiffQuads[q]+phiRhoMinusApproxRhoQuads[q])
-                                 -der2ExcWithGradRhoOutQuads[q]*shadowKSGradRhoMinMinusGradRhoQuads[q]*hessianRhoQuadsiAtom[q],
+                                 -shadowKSGradRhoMinMinusGradRhoQuads[q]*der2ExcWithGradRhoOutQuads[q]*hessianRhoQuadsiAtom[q],
                                  q);
     else
        for (unsigned int q=0; q<numQuadPoints; ++q)

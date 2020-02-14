@@ -887,7 +887,7 @@ void forceClass<FEOrder>::computeConfigurationalForceEEshelbyTensorFPSPFnlLinFE
               F+=gradRhoAtomsQuads[q]*(derVxcWithRhoOutTimesRhoDiffQuads[q]+phiRhoMinMinusApproxRhoQuads[q]);
 
               if(dftParameters::xc_id == 4)
-                  F+=der2ExcWithGradRhoOutQuads[q]*shadowKSGradRhoMinMinusGradRhoQuads[q]*hessianRhoAtomsQuads[q];
+                  F+=shadowKSGradRhoMinMinusGradRhoQuads[q]*der2ExcWithGradRhoOutQuads[q]*hessianRhoAtomsQuads[q];
            }
 
 	   if(d_isElectrostaticsMeshSubdivided)
