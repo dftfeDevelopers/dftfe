@@ -679,15 +679,11 @@ void molecularDynamics<FEOrder>::run()
 		    //
 		    dftPtr->solve();
 
-	            if (dftParameters::useAtomicRhoXLBOMD)
-                    {
-                       shadowKSRhoMin=dftPtr->d_rhoOutNodalValues;
-                    }
-                    else
-                    {
-                       shadowKSRhoMin=dftPtr->d_rhoOutNodalValues;
-		       shadowKSRhoMin.update_ghost_values();
-                    }
+	            shadowKSRhoMin=dftPtr->d_rhoOutNodalValues;
+		    if (dftParameters::useAtomicRhoXLBOMD)
+		        shadowKSRhoMin-=atomicRho;
+
+		    shadowKSRhoMin.update_ghost_values();
 
 		    //normalize shadowKSRhoMin
 		    double charge = dftPtr->totalCharge(dftPtr->d_matrixFreeDataPRefined,
