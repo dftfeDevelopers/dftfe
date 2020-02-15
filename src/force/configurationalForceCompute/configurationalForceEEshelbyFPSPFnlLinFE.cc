@@ -890,6 +890,7 @@ void forceClass<FEOrder>::computeConfigurationalForceEEshelbyTensorFPSPFnlLinFE
               {
                   F+=shadowKSGradRhoMinMinusGradRhoQuads[q]*der2ExcWithGradRhoOutQuads[q]*hessianRhoAtomsQuads[q];
                   F+=shadowKSGradRhoMinMinusGradRhoQuads[q]*outer_product(derVxcWithGradRhoOutQuads[q],gradRhoAtomsQuads[q]);
+                  F+=shadowKSRhoMinMinusRhoQuads[q]*derVxcWithGradRhoOutQuads[q]*hessianRhoAtomsQuads[q];
               }
            }
 
@@ -916,7 +917,8 @@ void forceClass<FEOrder>::computeConfigurationalForceEEshelbyTensorFPSPFnlLinFE
                                                 dftPtr->d_hessianRhoAtomsValuesSeparate,
                                                 der2ExcWithGradRhoOutQuads,
                                                 derVxcWithGradRhoOutQuads,
-                                                shadowKSGradRhoMinMinusGradRhoQuads);
+                                                shadowKSGradRhoMinMinusGradRhoQuads,
+                                                shadowKSRhoMinMinusRhoQuads);
         
 
 

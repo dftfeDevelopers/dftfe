@@ -29,7 +29,8 @@ void forceClass<FEOrder>::FShadowLocalGammaAtomsElementalContribution
               const std::map<unsigned int,std::map<dealii::CellId, std::vector<double> > > & hessianRhoAtomsQuads,
               const std::vector<Tensor<2,C_DIM,VectorizedArray<double> > >  & der2ExcWithGradRhoOutQuads,
               const std::vector<Tensor<1,C_DIM,VectorizedArray<double> > >  & derVxcWithGradRhoOutQuads,
-              const std::vector<Tensor<1,C_DIM,VectorizedArray<double> > >  & shadowKSGradRhoMinMinusGradRhoQuads)
+              const std::vector<Tensor<1,C_DIM,VectorizedArray<double> > >  & shadowKSGradRhoMinMinusGradRhoQuads,
+              const std::vector<VectorizedArray<double> >  & shadowKSRhoMinMinusRhoQuads)
 {
   Tensor<1,C_DIM,VectorizedArray<double> > zeroTensor1;
   for (unsigned int idim=0; idim<C_DIM; idim++)
@@ -108,7 +109,8 @@ void forceClass<FEOrder>::FShadowLocalGammaAtomsElementalContribution
        for (unsigned int q=0; q<numQuadPoints; ++q)
           forceEval.submit_value(-gradRhoQuadsiAtom[q]*(derVxcWithRhoOutTimesRhoDiffQuads[q]+phiRhoMinusApproxRhoQuads[q])
                                  -shadowKSGradRhoMinMinusGradRhoQuads[q]*der2ExcWithGradRhoOutQuads[q]*hessianRhoQuadsiAtom[q]
-                                 -shadowKSGradRhoMinMinusGradRhoQuads[q]*outer_product(derVxcWithGradRhoOutQuads[q],gradRhoQuadsiAtom[q]),
+                                 -shadowKSGradRhoMinMinusGradRhoQuads[q]*outer_product(derVxcWithGradRhoOutQuads[q],gradRhoQuadsiAtom[q])
+                                 -shadowKSRhoMinMinusRhoQuads[q]*derVxcWithGradRhoOutQuads[q]*hessianRhoQuadsiAtom[q],
                                  q);
     else
        for (unsigned int q=0; q<numQuadPoints; ++q)

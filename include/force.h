@@ -370,7 +370,8 @@ namespace dftfe {
               const std::map<unsigned int,std::map<dealii::CellId, std::vector<double> > > & hessianRhoAtomsQuads,
               const std::vector<Tensor<2,C_DIM,VectorizedArray<double> > >  & der2ExcWithGradRhoOutQuads,
               const std::vector<Tensor<1,C_DIM,VectorizedArray<double> > >  & derVxcWithGradRhoOutQuads,
-              const std::vector<Tensor<1,C_DIM,VectorizedArray<double> > >  & shadowKSGradRhoMinMinusGradRhoQuads);
+              const std::vector<Tensor<1,C_DIM,VectorizedArray<double> > >  & shadowKSGradRhoMinMinusGradRhoQuads,
+              const std::vector<VectorizedArray<double> >  & shadowKSRhoMinMinusRhoQuads);
 
       void distributeForceContributionFPSPLocalGammaAtoms
 	      (const std::map<unsigned int,std::vector<double> > & forceContributionFPSPLocalGammaAtoms,
