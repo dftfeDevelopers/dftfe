@@ -83,8 +83,6 @@ void dftClass<FEOrder>::initElectronicFields(const unsigned int usePreviousGroun
   //initialize electrostatics fields
   matrix_free_data.initialize_dof_vector(d_phiTotRhoIn,phiTotDofHandlerIndex);
   d_phiTotRhoOut.reinit(d_phiTotRhoIn);
-  if (dftParameters::isBOMD && dftParameters::isXLBOMD)
-    d_phiRhoMinusApproxRho.reinit(d_phiTotRhoIn);
   matrix_free_data.initialize_dof_vector(d_phiExt,phiExtDofHandlerIndex);
 
   if(dftParameters::mixingMethod=="ANDERSON_WITH_KERKER" || (dftParameters::isBOMD))

@@ -135,6 +135,7 @@ namespace dftfe {
 		 const vselfBinsManager<FEOrder>   & vselfBinsManagerElectro,
                  const std::map<dealii::CellId, std::vector<double> > & shadowKSRhoMinValues,
                  const std::map<dealii::CellId, std::vector<double> > & shadowKSGradRhoMinValues,
+                 const vectorType & phiRhoMinusApproxRho,
                  const bool shadowPotentialForce=false);
 
     /** @brief returns a copy of the configurational force on all global atoms.
@@ -268,6 +269,7 @@ namespace dftfe {
 			      const vselfBinsManager<FEOrder> & vselfBinsManagerElectro,
                               const std::map<dealii::CellId, std::vector<double> > & shadowKSRhoMinValues,
                               const std::map<dealii::CellId, std::vector<double> > & shadowKSGradRhoMinValues,
+                              const vectorType & phiRhoMinusApproxRho,
                               const bool shadowPotentialForce=false);
 
       void computeConfigurationalForceSpinPolarizedEEshelbyTensorFPSPFnlLinFE
@@ -295,6 +297,7 @@ namespace dftfe {
 			      const vselfBinsManager<FEOrder> & vselfBinsManagerElectro,
                               const std::map<dealii::CellId, std::vector<double> > & shadowKSRhoMinValues,
                               const std::map<dealii::CellId, std::vector<double> > & shadowKSGradRhoMinValues,
+                              const vectorType & phiRhoMinusApproxRho,
                               const bool shadowPotentialForce=false);
 
       void computeConfigurationalForceEEshelbyEElectroPhiTot
@@ -310,6 +313,7 @@ namespace dftfe {
 			     const std::map<unsigned int,std::map<dealii::CellId, std::vector<double> > > & gradPseudoVLocAtomsElectro,
 			     const vselfBinsManager<FEOrder> & vselfBinsManagerElectro,
                              const std::map<dealii::CellId, std::vector<double> > & shadowKSRhoMinValues,
+                             const vectorType & phiRhoMinusApproxRho,
                              const bool shadowPotentialForce=false);
 
       void computeConfigurationalForcePhiExtLinFE();
@@ -346,6 +350,7 @@ namespace dftfe {
 				     const vselfBinsManager<FEOrder>   & vselfBinsManagerElectro,
                                      const std::map<dealii::CellId, std::vector<double> > & shadowKSRhoMinValues,
                                      const std::map<dealii::CellId, std::vector<double> > & shadowKSGradRhoMinValues,
+                                     const vectorType & phiRhoMinusApproxRho,
                                      const bool shadowPotentialForce=false);
 
       void FPSPLocalGammaAtomsElementalContribution

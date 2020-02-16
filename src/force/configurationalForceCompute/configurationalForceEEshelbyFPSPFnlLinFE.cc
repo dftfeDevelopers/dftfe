@@ -82,6 +82,7 @@ void forceClass<FEOrder>::computeConfigurationalForceEEshelbyTensorFPSPFnlLinFE
 			      const vselfBinsManager<FEOrder> & vselfBinsManagerElectro,
                               const std::map<dealii::CellId, std::vector<double> > & shadowKSRhoMinValues,
                               const std::map<dealii::CellId, std::vector<double> > & shadowKSGradRhoMinValues,
+                              const vectorType & phiRhoMinusApproxRho,
                               const bool shadowPotentialForce)
 {
   const unsigned int numberGlobalAtoms = dftPtr->atomLocations.size();
@@ -679,7 +680,7 @@ void forceClass<FEOrder>::computeConfigurationalForceEEshelbyTensorFPSPFnlLinFE
         if  (shadowPotentialForce)
         {
            phiTotEval2.reinit(cell);
-           phiTotEval2.read_dof_values_plain(dftPtr->d_phiRhoMinusApproxRho);
+           phiTotEval2.read_dof_values_plain(phiRhoMinusApproxRho);
            phiTotEval2.evaluate(true,false);
         }
 
@@ -947,6 +948,7 @@ void forceClass<FEOrder>::computeConfigurationalForceEEshelbyTensorFPSPFnlLinFE
 			     gradPseudoVLocAtomsElectro,
 			     vselfBinsManagerElectro,
                              shadowKSRhoMinValues,
+                             phiRhoMinusApproxRho,
                              shadowPotentialForce);
     }
 }
@@ -965,6 +967,7 @@ void forceClass<FEOrder>::computeConfigurationalForceEEshelbyEElectroPhiTot
 			 const std::map<unsigned int,std::map<dealii::CellId, std::vector<double> > > & gradPseudoVLocAtomsElectro,
 			 const vselfBinsManager<FEOrder> & vselfBinsManagerElectro,
                          const std::map<dealii::CellId, std::vector<double> > & shadowKSRhoMinValues,
+                         const vectorType & phiRhoMinusApproxRho,
                          const bool shadowPotentialForce)
 {
   FEEvaluation<C_DIM,1,C_num1DQuad<FEOrder>(),C_DIM>  forceEvalElectro(matrixFreeDataElectro,
@@ -1019,7 +1022,7 @@ void forceClass<FEOrder>::computeConfigurationalForceEEshelbyEElectroPhiTot
     if (shadowPotentialForce)
     {
        phiTotEvalElectro2.reinit(cell);
-       phiTotEvalElectro2.read_dof_values_plain(dftPtr->d_phiRhoMinusApproxRho);
+       phiTotEvalElectro2.read_dof_values_plain(phiRhoMinusApproxRho);
        phiTotEvalElectro2.evaluate(true,true);
     }
 

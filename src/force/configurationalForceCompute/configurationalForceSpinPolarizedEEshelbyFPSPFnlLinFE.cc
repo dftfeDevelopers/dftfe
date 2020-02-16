@@ -42,6 +42,7 @@ void forceClass<FEOrder>::computeConfigurationalForceSpinPolarizedEEshelbyTensor
 			      const vselfBinsManager<FEOrder> & vselfBinsManagerElectro,
                               const std::map<dealii::CellId, std::vector<double> > & shadowKSRhoMinValues,
                               const std::map<dealii::CellId, std::vector<double> > & shadowKSGradRhoMinValues,
+                              const vectorType & phiRhoMinusApproxRho,
                               const bool shadowPotentialForce)
 {
   const unsigned int numberGlobalAtoms = dftPtr->atomLocations.size();
@@ -905,6 +906,7 @@ void forceClass<FEOrder>::computeConfigurationalForceSpinPolarizedEEshelbyTensor
 			     gradPseudoVLocAtomsElectro,
 			     vselfBinsManagerElectro,
                              shadowKSRhoMinValues,
+                             phiRhoMinusApproxRho,
                              shadowPotentialForce);
   }
 }

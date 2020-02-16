@@ -1988,6 +1988,8 @@ namespace dftfe {
 	computing_timer.exit_section("phiTot solve");
     }
 
+    vectorType phiRhoMinusApproxRho;
+    phiRhoMinusApproxRho.reinit(d_phiTotRhoIn); 
     if (dftParameters::isBOMD && dftParameters::isXLBOMD && solveLinearizedKS)
     {
 	if(dftParameters::verbosity>=2)
@@ -2013,9 +2015,9 @@ namespace dftfe {
 		temp[q_point]=rhoOut[q_point]-rhoIn[q_point];
 	      
 	    }
-
+        
 	phiTotalSolverProblem.reinit(matrix_free_data,
-				     d_phiRhoMinusApproxRho,
+				     phiRhoMinusApproxRho,
 				     *d_constraintsVector[phiTotDofHandlerIndex],
 				     phiTotDofHandlerIndex,
 				     std::map<dealii::types::global_dof_index, double>(),
@@ -2027,7 +2029,7 @@ namespace dftfe {
 			     dftParameters::absLinearSolverTolerance,
 			     dftParameters::maxLinearSolverIterations,
 			     dftParameters::verbosity);
-
+        
 	computing_timer.exit_section("Poisson solve for (rho_min-approx_rho)");
     }
 
@@ -2145,7 +2147,7 @@ namespace dftfe {
 
     //This step is required for interpolating rho from current mesh to the new
     //mesh in case of atomic relaxation
-    computeNodalRhoFromQuadData();
+    //computeNodalRhoFromQuadData();
 
     computing_timer.exit_section("scf solve");
     computingTimerStandard.exit_section("Total scf solve");
@@ -2308,6 +2310,7 @@ namespace dftfe {
 						 d_vselfBinsManager,
                                                  *rhoOutValues,
                                                  *gradRhoOutValues,
+                                                 phiRhoMinusApproxRho,
                                                  true);
             else
 		    forcePtr->computeAtomsForces(matrix_free_data,
@@ -2337,7 +2340,8 @@ namespace dftfe {
 						 d_noConstraints,
 						 d_vselfBinsManager,
                                                  *rhoOutValues,
-                                                 *gradRhoOutValues);
+                                                 *gradRhoOutValues,
+                                                  d_phiTotRhoIn);
 	    forcePtr->printAtomsForces();
 	}
 	computingTimerStandard.exit_section("Ion force computation");
@@ -2409,13 +2413,13 @@ namespace dftfe {
 
 #ifdef DFTFE_WITH_GPU
     if (dftParameters::useGPU)
-	 kohnShamDFTEigenOperatorCUDA.destroyCublasHandle();
+    	 kohnShamDFTEigenOperatorCUDA.destroyCublasHandle();
 #endif
 
 #ifdef DFTFE_WITH_ELPA
     if (dftParameters::useELPA && !dftParameters::useGPU)
-	 kohnShamDFTEigenOperator.elpaDeallocateHandles(d_numEigenValues,
-				             d_numEigenValuesRR);
+    	 kohnShamDFTEigenOperator.elpaDeallocateHandles(d_numEigenValues,
+    				             d_numEigenValuesRR);
 #endif
   }
 
