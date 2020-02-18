@@ -197,7 +197,7 @@ namespace eshelbyTensor
     {
 
        Tensor<2,C_DIM,VectorizedArray<double> > eshelbyTensor=-outer_product(derVxcGradRho,gradRho)*shadowKSRhoMinMinusRho
-                                                              -outer_product(der2ExcGradRho*shadowKSGradRhoMinMinusGradRho,gradRho)
+                                                              -outer_product(shadowKSGradRhoMinMinusGradRho*der2ExcGradRho,gradRho)
                                                               -outer_product(derExcGradRho,shadowKSGradRhoMinMinusGradRho);
        VectorizedArray<double> identityTensorFactor=vxc*shadowKSRhoMinMinusRho+scalar_product(derExcGradRho,shadowKSGradRhoMinMinusGradRho);
 
