@@ -176,9 +176,9 @@ namespace dftfe {
     IndexSet  ghost_indices=d_locally_relevant_dofs;
     ghost_indices.subtract_set(d_locally_owned_dofs);
 
-    d_incrementalDisplacement = dealii::parallel::distributed::Vector<double>(d_locally_owned_dofs,
-									      ghost_indices,
-									      mpi_communicator);
+    d_incrementalDisplacement.reinit(d_locally_owned_dofs,
+				     ghost_indices,
+				     mpi_communicator);
 
     d_incrementalDisplacement = 0.0;
 
