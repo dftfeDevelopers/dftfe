@@ -836,7 +836,16 @@ namespace dftfe {
     //
     //reinitialize dirichlet BCs for total potential and vSelf poisson solutions
     //
+    double init_bc;
+    MPI_Barrier(MPI_COMM_WORLD);
+    init_bc = MPI_Wtime();
+  
     initBoundaryConditions();
+
+    MPI_Barrier(MPI_COMM_WORLD);
+    init_bc = MPI_Wtime() - init_bc;
+    if (dftParameters::verbosity>=1)
+        pcout<<"updateAtomPositionsAndMoveMesh: Time taken for initBoundaryConditions: "<<init_bc<<std::endl;
 
     if (useSingleAtomSolution)
     {
@@ -857,7 +866,17 @@ namespace dftfe {
     //
     //reinitialize pseudopotential related data structures
     //
+    double init_pseudo;
+    MPI_Barrier(MPI_COMM_WORLD);
+    init_pseudo = MPI_Wtime();
+ 
     initPseudoPotentialAll();
+
+    MPI_Barrier(MPI_COMM_WORLD);
+    init_pseudo = MPI_Wtime() - init_pseudo;
+    if (dftParameters::verbosity>=1)
+        pcout<<"updateAtomPositionsAndMoveMesh: Time taken for initPseudoPotentialAll: "<<init_pseudo<<std::endl;
+
     computingTimerStandard.exit_section("KSDFT problem initialization");
   }
 

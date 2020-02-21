@@ -35,7 +35,7 @@ void dftClass<FEOrder>::moveMeshToAtoms(Triangulation<3,3> & triangulationMove,
 		    d_domainBoundingVectors);
 
   const unsigned int numberGlobalAtoms = atomLocations.size();
-  const unsigned int numberImageAtoms = d_imageIds.size();
+  const unsigned int numberImageAtoms = d_imageIdsTrunc.size();
 
   std::vector<Point<3>> atomPoints;
   d_atomLocationsAutoMesh.resize(numberGlobalAtoms,std::vector<double>(3,0.0));
@@ -76,10 +76,10 @@ void dftClass<FEOrder>::moveMeshToAtoms(Triangulation<3,3> & triangulationMove,
 	  Point<3> imageCoor;
 	  Point<3> correspondingAtomCoor;
 
-	  imageCoor[0] = d_imagePositions[iImage][0];
-	  imageCoor[1] = d_imagePositions[iImage][1];
-	  imageCoor[2] = d_imagePositions[iImage][2];
-	  const int atomId=d_imageIds[iImage];
+	  imageCoor[0] = d_imagePositionsTrunc[iImage][0];
+	  imageCoor[1] = d_imagePositionsTrunc[iImage][1];
+	  imageCoor[2] = d_imagePositionsTrunc[iImage][2];
+	  const int atomId=d_imageIdsTrunc[iImage];
 	  correspondingAtomCoor[0] = atomLocations[atomId][2];
 	  correspondingAtomCoor[1] = atomLocations[atomId][3];
 	  correspondingAtomCoor[2] = atomLocations[atomId][4];
@@ -92,7 +92,7 @@ void dftClass<FEOrder>::moveMeshToAtoms(Triangulation<3,3> & triangulationMove,
 
   d_closestTriaVertexToAtomsLocation = closestTriaVertexToAtomsLocation;
   d_dispClosestTriaVerticesToAtoms = dispClosestTriaVerticesToAtoms;
-  d_imageIdsAutoMesh = d_imageIds;
+  d_imageIdsAutoMesh = d_imageIdsTrunc;
   d_gaussianMovementAtomsNetDisplacements.resize(numberGlobalAtoms);
   for(unsigned int iAtom=0;iAtom <numberGlobalAtoms; iAtom++)
      d_gaussianMovementAtomsNetDisplacements[iAtom]=0.0;
@@ -109,9 +109,9 @@ void dftClass<FEOrder>::moveMeshToAtoms(Triangulation<3,3> & triangulationMove,
 	}
       else
 	{
-	  atomCoor[0] = d_imagePositions[iAtom-numberGlobalAtoms][0];
-	  atomCoor[1] = d_imagePositions[iAtom-numberGlobalAtoms][1];
-	  atomCoor[2] = d_imagePositions[iAtom-numberGlobalAtoms][2];
+	  atomCoor[0] = d_imagePositionsTrunc[iAtom-numberGlobalAtoms][0];
+	  atomCoor[1] = d_imagePositionsTrunc[iAtom-numberGlobalAtoms][1];
+	  atomCoor[2] = d_imagePositionsTrunc[iAtom-numberGlobalAtoms][2];
 	}
       d_controlPointLocationsCurrentMove.push_back(atomCoor);
   }

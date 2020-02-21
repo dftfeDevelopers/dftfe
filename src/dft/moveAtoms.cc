@@ -104,7 +104,7 @@ void dftClass<FEOrder>::updateAtomPositionsAndMoveMesh(const std::vector<Tensor<
 {
   bool isAutoRemeshSupressed=false;
   const int numberGlobalAtoms = atomLocations.size();
-  int numberImageCharges = d_imageIds.size();
+  int numberImageCharges = d_imageIdsTrunc.size();
   int totalNumberAtoms = numberGlobalAtoms + numberImageCharges;
 
   std::vector<double> latticeVectorsFlattened(9,0.0);
@@ -389,7 +389,16 @@ void dftClass<FEOrder>::updateAtomPositionsAndMoveMesh(const std::vector<Tensor<
 	  if (!dftParameters::reproducible_output)
 	     pcout << "Max current disp magnitude: "<<maxCurrentDispAtom<<" Bohr"<<std::endl;
 
+          double movemesh_time;
+          MPI_Barrier(MPI_COMM_WORLD);
+          movemesh_time = MPI_Wtime();
+ 
 	  const std::pair<bool,double> meshQualityMetrics=d_gaussianMovePar.moveMeshTwoStep(controlPointLocationsInitialMove,d_controlPointLocationsCurrentMove,controlPointDisplacementsInitialMove,controlPointDisplacementsCurrentMove,d_gaussianConstantAutoMove,dftParameters::isBOMD?(forcePtr->getGaussianGeneratorParameter()*dftParameters::ratioOfMeshMovementToForceGaussianBOMD):forcePtr->getGaussianGeneratorParameter());
+
+	  MPI_Barrier(MPI_COMM_WORLD);
+	  movemesh_time = MPI_Wtime() - movemesh_time;
+	  if (dftParameters::verbosity>=1)
+              pcout<<"updateAtomPositionsAndMoveMesh: Time taken for Gaussian mesh movement: "<<movemesh_time<<std::endl;
 
 	  if ((meshQualityMetrics.first || meshQualityMetrics.second > maxJacobianRatioFactor*d_autoMeshMaxJacobianRatio))
           {
@@ -453,12 +462,22 @@ void dftClass<FEOrder>::updateAtomPositionsAndMoveMesh(const std::vector<Tensor<
 	      if (!dftParameters::reproducible_output)
 	         pcout << "Now Reinitializing all moved triangulation dependent objects..." << std::endl;
 
+
+              double init_time;
+              MPI_Barrier(MPI_COMM_WORLD);
+              init_time = MPI_Wtime(); 
+
               if (dftParameters::isBOMD)
                  initNoRemesh(false,(!dftParameters::reproducible_output && maxCurrentDispAtom>0.2) || useSingleAtomSolutions);
               else
        	         initNoRemesh(false,(!dftParameters::reproducible_output && maxCurrentDispAtom>0.06) || useSingleAtomSolutions);
 	      if (!dftParameters::reproducible_output)
 	         pcout << "...Reinitialization end" << std::endl;
+
+	      MPI_Barrier(MPI_COMM_WORLD);
+	      init_time = MPI_Wtime() - init_time;
+	      if (dftParameters::verbosity>=1)
+	          pcout<<"updateAtomPositionsAndMoveMesh: Time taken for initNoRemesh: "<<init_time<<std::endl;
 	    }
 	}
     }

@@ -211,7 +211,16 @@ void dftClass<FEOrder>::initBoundaryConditions(){
       dftUtils::printCurrentMemoryUsage(mpi_communicator,
 	                      "Called force init moved");
 
+  double init_mf;
+  MPI_Barrier(MPI_COMM_WORLD);
+  init_mf = MPI_Wtime(); 
+
   matrix_free_data.reinit(dofHandlerVector, d_constraintsVector, quadratureVector, additional_data);
+
+  MPI_Barrier(MPI_COMM_WORLD);
+  init_mf = MPI_Wtime() - init_mf;
+  if (dftParameters::verbosity>=1)
+      pcout<<"updateAtomPositionsAndMoveMesh: initBoundaryConditions: Time taken for matrix free reinit: "<<init_mf<<std::endl;
 
   if (dftParameters::verbosity>=4)
       dftUtils::printCurrentMemoryUsage(mpi_communicator,
@@ -225,11 +234,18 @@ void dftClass<FEOrder>::initBoundaryConditions(){
   //compute volume of the domain
   d_domainVolume=computeVolume(dofHandler);
 
- 
+  double init_pref;
+  MPI_Barrier(MPI_COMM_WORLD);
+  init_pref = MPI_Wtime(); 
   //
   //init 2p matrix-free objects using appropriate constraint matrix and quadrature rule
   //
   if(dftParameters::mixingMethod=="ANDERSON_WITH_KERKER" || (dftParameters::isBOMD))
     initpRefinedObjects();
+
+  MPI_Barrier(MPI_COMM_WORLD);
+  init_pref = MPI_Wtime() - init_pref;
+  if (dftParameters::verbosity>=1)
+      pcout<<"updateAtomPositionsAndMoveMesh: initBoundaryConditions: Time taken for initpRefinedObjects: "<<init_pref<<std::endl;
 
 }
