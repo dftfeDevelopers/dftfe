@@ -1099,24 +1099,37 @@ void dftClass<FEOrder>::initAtomicRho(vectorType & atomicRho)
   //
   const int numberImageCharges = d_imageIdsTrunc.size();
 
-  IndexSet locallyOwnedSet;
-  DoFTools::extract_locally_owned_dofs(d_dofHandlerPRefined,locallyOwnedSet);
-  std::vector<IndexSet::size_type> locallyOwnedDOFs;
-  locallyOwnedSet.fill_index_vector(locallyOwnedDOFs);
-  unsigned int numberDofs = locallyOwnedDOFs.size();
+  //IndexSet locallyOwnedSet;
+  //DoFTools::extract_locally_owned_dofs(d_dofHandlerPRefined,locallyOwnedSet);
+  //std::vector<IndexSet::size_type> locallyOwnedDOFs;
+  //locallyOwnedSet.fill_index_vector(locallyOwnedDOFs);
+  //unsigned int numberDofs = locallyOwnedDOFs.size();
   std::map<types::global_dof_index, Point<3> > supportPointsPRefined;
   DoFTools::map_dofs_to_support_points(MappingQ1<3,3>(), d_dofHandlerPRefined, supportPointsPRefined);
 
   //d_matrixFreeDataPRefined.initialize_dof_vector(d_rhoInNodalValues);
   std::vector<vectorType> singleAtomsRho(atomLocations.size()+numberImageCharges);
   for(unsigned int iAtom = 0; iAtom < atomLocations.size()+numberImageCharges; ++iAtom)
-    d_matrixFreeDataPRefined.initialize_dof_vector(singleAtomsRho[iAtom],1); 
+  {
+    if (iAtom==0)
+      d_matrixFreeDataPRefined.initialize_dof_vector(singleAtomsRho[iAtom],1);
+    else
+      singleAtomsRho[iAtom].reinit(singleAtomsRho[0]);
+  }
 
-  for(unsigned int dof = 0; dof < numberDofs; ++dof)
+  const std::shared_ptr< const dealii::Utilities::MPI::Partitioner > & partitioner
+			     =singleAtomsRho[0].get_partitioner();
+  const unsigned int localSize =  partitioner->local_size();
+  const unsigned int n_ghosts   = partitioner->n_ghost_indices();
+  const unsigned int relevantDofs = localSize + n_ghosts;
+
+  std::vector<bool> isAtomLocal(atomLocations.size()+numberImageCharges,false);
+  for(unsigned int dof = 0; dof < relevantDofs; ++dof)
   { 
-	  const dealii::types::global_dof_index dofID = locallyOwnedDOFs[dof];
+	  //const dealii::types::global_dof_index dofID = locallyOwnedDOFs[dof];
+	  const dealii::types::global_dof_index dofID = partitioner->local_to_global(dof);
 	  Point<3> nodalCoor = supportPointsPRefined[dofID];
-	  if(!d_constraintsPRefined.is_constrained(dofID) || true)
+	  if(!d_constraintsPRefinedOnlyHanging.is_constrained(dofID))
 	    {
 	      //loop over atoms and superimpose electron-density at a given dof from all atoms
 	      double rhoNodalValue = 0.0;
@@ -1129,6 +1142,7 @@ void dftClass<FEOrder>::initAtomicRho(vectorType & atomicRho)
                     const double rhoVal=alglib::spline1dcalc(denSpline[atomLocations[iAtom][0]], distanceToAtom);
                     singleAtomsRho[iAtom].local_element(dof)=std::abs(rhoVal);
 		    rhoNodalValue += rhoVal;
+                    isAtomLocal[iAtom]=true;
                   }
 		}
 
@@ -1145,16 +1159,19 @@ void dftClass<FEOrder>::initAtomicRho(vectorType & atomicRho)
 		     const double rhoVal = alglib::spline1dcalc(denSpline[atomLocations[masterAtomId][0]], distanceToAtom);
                      singleAtomsRho[iImageCharge+atomLocations.size()].local_element(dof)=std::abs(rhoVal);
 		     rhoNodalValue += rhoVal;
+                     isAtomLocal[iImageCharge+atomLocations.size()]=true;
                   }
 		}
-	      atomicRho.local_element(dof) = std::abs(rhoNodalValue);
+
+              if (dof<localSize)
+	         atomicRho.local_element(dof) = std::abs(rhoNodalValue);
 	    }
    }
 
    atomicRho.update_ghost_values();
 
-   for(unsigned int iAtom = 0; iAtom < atomLocations.size()+numberImageCharges; ++iAtom)
-      singleAtomsRho[iAtom].update_ghost_values(); 
+   //for(unsigned int iAtom = 0; iAtom < atomLocations.size()+numberImageCharges; ++iAtom)
+   //   singleAtomsRho[iAtom].update_ghost_values(); 
 
   //normalize rho
   const double charge = totalCharge(d_matrixFreeDataPRefined,
@@ -1199,38 +1216,56 @@ void dftClass<FEOrder>::initAtomicRho(vectorType & atomicRho)
       feEvalObj.reinit(cell);
       for (unsigned int iatom=0; iatom<(atomLocations.size()+numberImageCharges); iatom++)
       {
+              if (!isAtomLocal[iatom])
+                continue;
+
 	      feEvalObj.read_dof_values(singleAtomsRho[iatom]);
               if (dftParameters::xc_id==4)
 	         feEvalObj.evaluate(true,true,true);
               else
 	         feEvalObj.evaluate(true,true);
-	      for(unsigned int iSubCell = 0; iSubCell < d_matrixFreeDataPRefined.n_components_filled(cell); ++iSubCell)
-	      {
-		      subCellPtr= d_matrixFreeDataPRefined.get_cell_iterator(cell,iSubCell);
-		      dealii::CellId subCellId=subCellPtr->id();
-		      d_gradRhoAtomsValuesSeparate[iatom][subCellId]=std::vector<double>(3*numQuadPoints);
-		      std::vector<double> & tempVec1 = d_gradRhoAtomsValuesSeparate[iatom].find(subCellId)->second;
-		      for(unsigned int q_point = 0; q_point < numQuadPoints; ++q_point)
-		      {
-			    tempVec1[3*q_point + 0] = feEvalObj.get_gradient(q_point)[0][iSubCell];
-			    tempVec1[3*q_point + 1] = feEvalObj.get_gradient(q_point)[1][iSubCell];
-			    tempVec1[3*q_point + 2] = feEvalObj.get_gradient(q_point)[2][iSubCell];
-		      }
 
-                      if (dftParameters::xc_id==4)
-                      {
-                  
-			      d_hessianRhoAtomsValuesSeparate[iatom][subCellId]=std::vector<double>(9*numQuadPoints);
-			      std::vector<double> & tempVec2 = d_hessianRhoAtomsValuesSeparate[iatom][subCellId];
+              bool isRhoNonZero=true;
+              
+              for(unsigned int q_point = 0; q_point < numQuadPoints; ++q_point)
+              {
+                 VectorizedArray<double> val=feEvalObj.get_value(q_point);
+	         for(unsigned int iSubCell = 0; iSubCell < d_matrixFreeDataPRefined.n_components_filled(cell); ++iSubCell)
+	         {
+                        if (val[iSubCell]>truncationTol)
+                           isRhoNonZero=false; 
+                 }
+              }
+
+
+              if (!isRhoNonZero)
+	              for(unsigned int iSubCell = 0; iSubCell < d_matrixFreeDataPRefined.n_components_filled(cell); ++iSubCell)
+		      {
+			      subCellPtr= d_matrixFreeDataPRefined.get_cell_iterator(cell,iSubCell);
+			      dealii::CellId subCellId=subCellPtr->id();
+			      d_gradRhoAtomsValuesSeparate[iatom][subCellId]=std::vector<double>(3*numQuadPoints);
+			      std::vector<double> & tempVec1 = d_gradRhoAtomsValuesSeparate[iatom].find(subCellId)->second;
 			      for(unsigned int q_point = 0; q_point < numQuadPoints; ++q_point)
-				{
-				  const Tensor< 2, 3, VectorizedArray< double> >   & hessianVals=feEvalObj.get_hessian(q_point);
-				  for (unsigned int i=0; i<3;i++)
-				    for (unsigned int j=0; j<3;j++)
-				      tempVec2[9*q_point + 3*i+j] = hessianVals[i][j][iSubCell];
-				}
-                      }
-	      }
+			      {
+				    tempVec1[3*q_point + 0] = feEvalObj.get_gradient(q_point)[0][iSubCell];
+				    tempVec1[3*q_point + 1] = feEvalObj.get_gradient(q_point)[1][iSubCell];
+				    tempVec1[3*q_point + 2] = feEvalObj.get_gradient(q_point)[2][iSubCell];
+			      }
+
+			      if (dftParameters::xc_id==4)
+			      {
+			  
+				      d_hessianRhoAtomsValuesSeparate[iatom][subCellId]=std::vector<double>(9*numQuadPoints);
+				      std::vector<double> & tempVec2 = d_hessianRhoAtomsValuesSeparate[iatom][subCellId];
+				      for(unsigned int q_point = 0; q_point < numQuadPoints; ++q_point)
+					{
+					  const Tensor< 2, 3, VectorizedArray< double> >   & hessianVals=feEvalObj.get_hessian(q_point);
+					  for (unsigned int i=0; i<3;i++)
+					    for (unsigned int j=0; j<3;j++)
+					      tempVec2[9*q_point + 3*i+j] = hessianVals[i][j][iSubCell];
+					}
+			      }
+		      }
       }
 
    }

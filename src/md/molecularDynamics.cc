@@ -463,6 +463,9 @@ void molecularDynamics<FEOrder>::run()
 		  }
 	      }
 
+            double update_time;
+            MPI_Barrier(MPI_COMM_WORLD);
+            update_time = MPI_Wtime(); 
 	    //
 	    //first move the mesh to current positions
 	    //
@@ -490,7 +493,12 @@ void molecularDynamics<FEOrder>::run()
             if (dftPtr->d_autoMesh==1)
                 dftPtr->d_matrixFreeDataPRefined.initialize_dof_vector(atomicRho);
             dftPtr->initAtomicRho(atomicRho);
-        
+       
+            MPI_Barrier(MPI_COMM_WORLD);
+            update_time = MPI_Wtime() - update_time;
+            if (dftParameters::verbosity>=1)
+                pcout<<"Time taken for updateAtomPositionsAndMoveMesh and initAtomicRho: "<<update_time<<std::endl;
+ 
             double rmsErrorRho=0.0;
             double rmsErrorGradRho=0.0;
             if (dftParameters::isXLBOMD)
@@ -576,6 +584,10 @@ void molecularDynamics<FEOrder>::run()
                     }
                     else
 		    {
+			double xlbomdpre_time;
+			MPI_Barrier(MPI_COMM_WORLD);
+			xlbomdpre_time = MPI_Wtime(); 
+
 			approxDensityNext.reinit(approxDensityContainer.back()); 
 
 			const unsigned int containerSizeCurrent=approxDensityContainer.size();
@@ -633,8 +645,27 @@ void molecularDynamics<FEOrder>::run()
 	     
 			dftPtr->normalizeRho();
 
+			MPI_Barrier(MPI_COMM_WORLD);
+			xlbomdpre_time = MPI_Wtime() - xlbomdpre_time;
+			if (dftParameters::verbosity>=1)
+			   pcout<<"Time taken for xlbomd preinitializations: "<<xlbomdpre_time<<std::endl;
+
+                        double shadowsolve_time;
+                        MPI_Barrier(MPI_COMM_WORLD);
+                        shadowsolve_time = MPI_Wtime(); 
+
 			//do an scf calculation
 			dftPtr->solve(true,true);
+
+			MPI_Barrier(MPI_COMM_WORLD);
+			shadowsolve_time = MPI_Wtime() - shadowsolve_time;
+			if (dftParameters::verbosity>=1)
+			   pcout<<"Time taken for xlbomd shadow potential solve: "<<shadowsolve_time<<std::endl;
+
+			double xlbomdpost_time;
+			MPI_Barrier(MPI_COMM_WORLD);
+			xlbomdpost_time = MPI_Wtime(); 
+
 			shadowKSRhoMin=dftPtr->d_rhoOutNodalValues;
 			if (dftParameters::useAtomicRhoXLBOMD)
 			   shadowKSRhoMin-=atomicRho;
@@ -647,13 +678,18 @@ void molecularDynamics<FEOrder>::run()
 			if (dftParameters::useAtomicRhoXLBOMD)
 		  	    shadowKSRhoMin.add(-charge/dftPtr->d_domainVolume);
                         else
-                            shadowKSRhoMin *= ((double)dftPtr->numElectrons)/charge;  
-		    }
+                            shadowKSRhoMin *= ((double)dftPtr->numElectrons)/charge; 
 
-                    rhoErrorVec=approxDensityContainer.back();
-                    rhoErrorVec-=shadowKSRhoMin;
-                    rmsErrorRho=std::sqrt(dftPtr->fieldl2Norm(dftPtr->d_matrixFreeDataPRefined,rhoErrorVec)/dftPtr->d_domainVolume);
-                    rmsErrorGradRho=std::sqrt(dftPtr->fieldGradl2Norm(dftPtr->d_matrixFreeDataPRefined,rhoErrorVec)/dftPtr->d_domainVolume);
+
+			rhoErrorVec=approxDensityContainer.back();
+			rhoErrorVec-=shadowKSRhoMin;
+			rmsErrorRho=std::sqrt(dftPtr->fieldl2Norm(dftPtr->d_matrixFreeDataPRefined,rhoErrorVec)/dftPtr->d_domainVolume);
+			rmsErrorGradRho=std::sqrt(dftPtr->fieldGradl2Norm(dftPtr->d_matrixFreeDataPRefined,rhoErrorVec)/dftPtr->d_domainVolume);
+			MPI_Barrier(MPI_COMM_WORLD);
+			xlbomdpost_time = MPI_Wtime() - xlbomdpost_time;
+			if (dftParameters::verbosity>=1)
+			   pcout<<"Time taken for xlbomd post solve operations: "<<xlbomdpost_time<<std::endl; 
+		    }
             }
             else
             {
@@ -694,6 +730,10 @@ void molecularDynamics<FEOrder>::run()
                     else
                         shadowKSRhoMin *= ((double)dftPtr->numElectrons)/charge;  
             }
+
+            double bomdpost_time;
+	    MPI_Barrier(MPI_COMM_WORLD);
+	    bomdpost_time = MPI_Wtime();
 
 	    //
 	    //get force field using Gaussians
@@ -889,6 +929,12 @@ void molecularDynamics<FEOrder>::run()
 
             if (dftParameters::chkType==1)
 	       dftPtr->writeDomainAndAtomCoordinates();
+
+
+	    MPI_Barrier(MPI_COMM_WORLD);
+	    bomdpost_time = MPI_Wtime() - bomdpost_time;
+	    if (dftParameters::verbosity>=1)
+	      pcout<<"Time taken for bomd post solve operations: "<<bomdpost_time<<std::endl; 
 
             MPI_Barrier(MPI_COMM_WORLD);
             step_time = MPI_Wtime() - step_time;
