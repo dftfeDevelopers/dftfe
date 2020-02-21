@@ -976,6 +976,7 @@ namespace dftfe
 
     {
       d_vselfBinConstraintMatrices.clear();
+      d_dofClosestChargeLocationMap.clear();
 
       d_atomLocations=atomLocations;
 
@@ -1005,12 +1006,15 @@ namespace dftfe
 
       const int numberBins = d_bins.size();
       d_vselfBinConstraintMatrices.resize(numberBins);
+      d_dofClosestChargeLocationMap.resize(numberBins);
       //
       //set constraint matrices for each bin
       //
       for(int iBin = 0; iBin < numberBins; ++iBin)
       {
 	  inhomogBoundaryVec=0.0;
+          std::map<dealii::types::global_dof_index, dealii::Point<3>> & dofClosestChargeLocationMap
+		                                            = d_dofClosestChargeLocationMap[iBin];
 
 	  dealii::DoFHandler<3>::active_cell_iterator cell = dofHandler.begin_active(),endc = dofHandler.end();
 	   for(; cell!= endc; ++cell)
@@ -1047,6 +1051,8 @@ namespace dftfe
 				   closestAtomLocation[1]=imagePositions[imageId][1];
 				   closestAtomLocation[2]=imagePositions[imageId][2];
 		          }
+
+		   	  dofClosestChargeLocationMap[globalNodeId]=closestAtomLocation;
 
 			  if(!onlyHangingNodeConstraints.is_constrained(globalNodeId)
                             && boundaryId==-1 

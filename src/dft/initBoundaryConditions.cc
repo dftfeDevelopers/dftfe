@@ -126,6 +126,10 @@ void dftClass<FEOrder>::initBoundaryConditions(const bool meshOnlyDeformed){
   if (dftParameters::verbosity>=4)
       dftUtils::printCurrentMemoryUsage(mpi_communicator,
 	                      "Created total potential constraint matrices");
+
+  double init_bins;
+  MPI_Barrier(MPI_COMM_WORLD);
+  init_bins = MPI_Wtime(); 
   //
   //Dirichlet BC constraints on the boundary of fictitious ball
   //used for computing self-potential (Vself) using Poisson problem
@@ -158,6 +162,11 @@ void dftClass<FEOrder>::initBoundaryConditions(const bool meshOnlyDeformed){
 					    dftParameters::radiusAtomBall);
           computing_timer.exit_section("Create atom bins");
   }
+
+  MPI_Barrier(MPI_COMM_WORLD);
+  init_bins = MPI_Wtime() - init_bins;
+  if (dftParameters::verbosity>=1)
+     pcout<<"updateAtomPositionsAndMoveMesh: initBoundaryConditions: Time taken for bins update: "<<init_bins<<std::endl;
 
   if (dftParameters::constraintsParallelCheck)
   {
