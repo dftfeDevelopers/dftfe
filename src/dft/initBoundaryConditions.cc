@@ -22,7 +22,7 @@
 
 
 template<unsigned int FEOrder>
-void dftClass<FEOrder>::initBoundaryConditions(){
+void dftClass<FEOrder>::initBoundaryConditions(const bool meshOnlyDeformed){
   TimerOutput::Scope scope (computing_timer,"moved setup");
   //
   //initialize FE objects again
@@ -131,17 +131,33 @@ void dftClass<FEOrder>::initBoundaryConditions(){
   //used for computing self-potential (Vself) using Poisson problem
   //with atoms belonging to a given bin
   //
-  computing_timer.enter_section("Create atom bins");
-  d_vselfBinsManager.createAtomBins(d_constraintsVector,
-	                            d_noConstraints,
-	                            dofHandler,
-				    constraintsNone,
-				    atomLocations,
-				    d_imagePositionsTrunc,
-				    d_imageIdsTrunc,
-				    d_imageChargesTrunc,
-				    dftParameters::radiusAtomBall);
-  computing_timer.exit_section("Create atom bins");
+  if (meshOnlyDeformed)
+  {
+          computing_timer.enter_section("Update atom bins bc");
+	  d_vselfBinsManager.updateBinsBc(d_constraintsVector,
+					    d_noConstraints,
+					    dofHandler,
+					    constraintsNone,
+					    atomLocations,
+					    d_imagePositionsTrunc,
+					    d_imageIdsTrunc,
+					    d_imageChargesTrunc);
+          computing_timer.exit_section("Update atom bins bc");
+  }
+  else
+  {
+          computing_timer.enter_section("Create atom bins");
+	  d_vselfBinsManager.createAtomBins(d_constraintsVector,
+					    d_noConstraints,
+					    dofHandler,
+					    constraintsNone,
+					    atomLocations,
+					    d_imagePositionsTrunc,
+					    d_imageIdsTrunc,
+					    d_imageChargesTrunc,
+					    dftParameters::radiusAtomBall);
+          computing_timer.exit_section("Create atom bins");
+  }
 
   if (dftParameters::constraintsParallelCheck)
   {

@@ -64,6 +64,29 @@ namespace dftfe {
 			     const double radiusAtomBall
 	                     );
 
+	/**
+	 * @brief Categorize atoms into bins based on self-potential ball radius
+         * around each atom such that no two atoms in each bin has overlapping balls.
+	 *
+         * @param[out] constraintsVector constraintsVector to which the vself bins solve constraint
+	 * matrices will be pushed back
+         * @param[in] dofHandler DofHandler object
+	 * @param[in] constraintMatrix ConstraintMatrix which was used for the total electrostatics solve
+	 * @param[in] atomLocations global atom locations and charge values data
+	 * @param[in] imagePositions image atoms positions data
+	 * @param[in] imageIds image atoms Ids data
+	 * @param[in] imageCharges image atoms charge values data
+	 */
+	 void updateBinsBc(std::vector<const dealii::AffineConstraints<double> * > & constraintsVector,
+			   const dealii::AffineConstraints<double> & onlyHangingNodeConstraints,
+		           const dealii::DoFHandler<3> & dofHandler,
+			   const dealii::AffineConstraints<double> & constraintMatrix,
+			   const std::vector<std::vector<double> > & atomLocations,
+			   const std::vector<std::vector<double> > & imagePositions,
+			   const std::vector<int> & imageIds,
+			   const std::vector<double> & imageCharges);
+			   
+
 	  /**
 	   * @brief Solve nuclear electrostatic self-potential of atoms in each bin one-by-one
 	   *

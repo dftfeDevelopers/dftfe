@@ -840,7 +840,7 @@ namespace dftfe {
     MPI_Barrier(MPI_COMM_WORLD);
     init_bc = MPI_Wtime();
   
-    initBoundaryConditions();
+    initBoundaryConditions(true);
 
     MPI_Barrier(MPI_COMM_WORLD);
     init_bc = MPI_Wtime() - init_bc;

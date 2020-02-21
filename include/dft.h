@@ -335,7 +335,7 @@ namespace dftfe {
        * to be pinned for solving the Poisson problem electro-static potential is set here
        */
       void initUnmovedTriangulation(parallel::distributed::Triangulation<3> & triangulation);
-      void initBoundaryConditions();
+      void initBoundaryConditions(const bool meshOnlyDeformed=false);
       void initElectronicFields(const unsigned int usePreviousGroundStateFields=0);
       void initPseudoPotentialAll();
 

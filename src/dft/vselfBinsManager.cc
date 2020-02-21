@@ -965,6 +965,128 @@ namespace dftfe
     }//
 
     template<unsigned int FEOrder>
+    void vselfBinsManager<FEOrder>::updateBinsBc(std::vector<const dealii::AffineConstraints<double> * > & constraintsVector,
+		                                 const dealii::AffineConstraints<double> & onlyHangingNodeConstraints,
+		                                 const dealii::DoFHandler<3> &  dofHandler,
+			                         const dealii::AffineConstraints<double> & constraintMatrix,
+			                         const std::vector<std::vector<double> > & atomLocations,
+			                         const std::vector<std::vector<double> > & imagePositions,
+			                         const std::vector<int> & imageIds,
+			                         const std::vector<double> & imageCharges)
+
+    {
+      d_vselfBinConstraintMatrices.clear();
+
+      d_atomLocations=atomLocations;
+
+      const unsigned int numberImageCharges = imageIds.size();
+      const unsigned int numberGlobalAtoms = atomLocations.size();
+      const unsigned int totalNumberAtoms = numberGlobalAtoms + numberImageCharges;
+
+      const unsigned int vertices_per_cell=dealii::GeometryInfo<3>::vertices_per_cell;
+      const unsigned int dofs_per_cell = dofHandler.get_fe().dofs_per_cell;
+
+      const dealii::IndexSet & locally_owned_dofs= dofHandler.locally_owned_dofs();
+
+
+      std::map<dealii::types::global_dof_index, dealii::Point<3> > supportPoints;
+      dealii::DoFTools::map_dofs_to_support_points(dealii::MappingQ1<3,3>(), dofHandler, supportPoints);
+
+      dealii::IndexSet   locally_relevant_dofs;
+      dealii::DoFTools::extract_locally_relevant_dofs(dofHandler, locally_relevant_dofs);
+
+      dealii::IndexSet  ghost_indices=locally_relevant_dofs;
+      ghost_indices.subtract_set(locally_owned_dofs);
+
+      dealii::LinearAlgebra::distributed::Vector<double> inhomogBoundaryVec
+	  = dealii::LinearAlgebra::distributed::Vector<double>(locally_owned_dofs,
+                                                          ghost_indices,
+                                                          mpi_communicator);
+
+      const int numberBins = d_bins.size();
+      d_vselfBinConstraintMatrices.resize(numberBins);
+      //
+      //set constraint matrices for each bin
+      //
+      for(int iBin = 0; iBin < numberBins; ++iBin)
+      {
+	  inhomogBoundaryVec=0.0;
+
+	  dealii::DoFHandler<3>::active_cell_iterator cell = dofHandler.begin_active(),endc = dofHandler.end();
+	   for(; cell!= endc; ++cell)
+	    {
+	      if(cell->is_locally_owned() || cell->is_ghost())
+	      {
+
+		  std::vector<dealii::types::global_dof_index> cell_dof_indices(dofs_per_cell);
+		  cell->get_dof_indices(cell_dof_indices);
+
+	          for(unsigned int iNode = 0; iNode < dofs_per_cell; ++iNode)
+		  {
+			  const dealii::types::global_dof_index globalNodeId=cell_dof_indices[iNode];
+                          const int closestAtomId=d_closestAtomBin[iBin][globalNodeId];
+			  const int boundaryId=d_boundaryFlag[iBin][globalNodeId];
+
+		          double closestAtomCharge;
+		          dealii::Point<3> closestAtomLocation;
+		          if(closestAtomId < numberGlobalAtoms)
+		          {
+				   closestAtomLocation[0]=atomLocations[closestAtomId][2];
+				   closestAtomLocation[1]=atomLocations[closestAtomId][3];
+				   closestAtomLocation[2]=atomLocations[closestAtomId][4];
+				   if(dftParameters::isPseudopotential)
+				      closestAtomCharge = atomLocations[closestAtomId][1];
+				   else
+				      closestAtomCharge = atomLocations[closestAtomId][0];
+		          }
+		          else
+		          {
+				   const int imageId=closestAtomId-numberGlobalAtoms;
+				   closestAtomCharge = imageCharges[imageId];
+				   closestAtomLocation[0]=imagePositions[imageId][0];
+				   closestAtomLocation[1]=imagePositions[imageId][1];
+				   closestAtomLocation[2]=imagePositions[imageId][2];
+		          }
+
+			  if(!onlyHangingNodeConstraints.is_constrained(globalNodeId)
+                            && boundaryId==-1 
+                            && !(std::abs(inhomogBoundaryVec[globalNodeId])>1e-10))
+			  {
+			    const double distance=supportPoints[globalNodeId].distance(closestAtomLocation);
+			    const double newPotentialValue =-closestAtomCharge/distance;
+			    d_vselfBinField[iBin][globalNodeId] = newPotentialValue;
+			    inhomogBoundaryVec[globalNodeId]=newPotentialValue;
+			  }//check non hanging node and vself consraints not already set
+		  }//element node loop
+
+	      }//cell locally owned
+	    }// cell loop
+
+	  //
+	  //create constraint matrix for current bin
+	  //
+	  d_vselfBinConstraintMatrices[iBin].reinit(locally_relevant_dofs);
+
+	  inhomogBoundaryVec.update_ghost_values();
+          for (auto index : locally_relevant_dofs)
+          {
+		if(!onlyHangingNodeConstraints.is_constrained(index) && std::abs(inhomogBoundaryVec[index])>1e-10)
+		{
+		    d_vselfBinConstraintMatrices[iBin].add_line(index);
+	            d_vselfBinConstraintMatrices[iBin].set_inhomogeneity(index,
+			                                                 inhomogBoundaryVec[index]);
+		}
+	  }
+
+	  d_vselfBinConstraintMatrices[iBin].merge(onlyHangingNodeConstraints,dealii::AffineConstraints<double>::MergeConflictBehavior::left_object_wins);
+	  d_vselfBinConstraintMatrices[iBin].close();
+	  d_vselfBinConstraintMatrices[iBin].merge(constraintMatrix,dealii::AffineConstraints<double>::MergeConflictBehavior::left_object_wins);
+	  d_vselfBinConstraintMatrices[iBin].close();
+	  constraintsVector.push_back(&(d_vselfBinConstraintMatrices[iBin]));
+      }//bin loop
+    }
+
+    template<unsigned int FEOrder>
     void vselfBinsManager<FEOrder>::locateAtomsInBins(const dealii::DoFHandler<3> & dofHandler)
     {
       d_atomsInBin.clear();
