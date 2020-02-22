@@ -205,6 +205,13 @@ void forceClass<FEOrder>::computeConfigurationalForceEEshelbyTensorFPSPFnlLinFE
   std::vector<std::vector<vectorType>> eigenVectors((1+dftParameters::spinPolarized)*dftPtr->d_kPointWeights.size());
   std::vector<dealii::LinearAlgebra::distributed::Vector<dataTypes::number> > eigenVectorsFlattenedBlock((1+dftParameters::spinPolarized)*dftPtr->d_kPointWeights.size());
 
+   double wfc_time_total=0.0;
+   double fnlgamma_time_total=0.0;
+   double enlfnl_time_total=0.0;
+   double eloc_time_total=0.0;
+   double nlpinit_time_total=0.0;
+   double projketpsi_time_total=0.0;
+
    for(unsigned int ivec = 0; ivec < numEigenVectors; ivec+=blockSize)
    {
       const unsigned int currentBlockSize=std::min(blockSize,numEigenVectors-ivec);
@@ -287,6 +294,8 @@ void forceClass<FEOrder>::computeConfigurationalForceEEshelbyTensorFPSPFnlLinFE
 #endif
 	  }
 
+          double projketpsi_time;
+          projketpsi_time = clock();
 	  std::vector<std::vector<std::vector<dataTypes::number> > > projectorKetTimesPsiTimesVTimesPartOcc(numKPoints);
 	  if (isPseudopotential)
 	    for (unsigned int ikPoint=0; ikPoint<numKPoints; ++ikPoint)
@@ -297,6 +306,8 @@ void forceClass<FEOrder>::computeConfigurationalForceEEshelbyTensorFPSPFnlLinFE
 								    ikPoint,
 								    blockedPartialOccupancies[ikPoint]);
 	    }
+          projketpsi_time = clock() - projketpsi_time;
+          projketpsi_time_total+=projketpsi_time;
 
 	  for (unsigned int cell=0; cell<matrixFreeData.n_macro_cells(); ++cell)
 	  {
@@ -372,6 +383,8 @@ void forceClass<FEOrder>::computeConfigurationalForceEEshelbyTensorFPSPFnlLinFE
 	    std::vector< VectorizedArray<double> > psiQuads(numQuadPoints*currentBlockSize,make_vectorized_array(0.0));
 	    std::vector<Tensor<1,C_DIM,VectorizedArray<double> > > gradPsiQuads(numQuadPoints*currentBlockSize,zeroTensor3);
 #endif
+            double wfc_time;
+            wfc_time = clock();
 
 	    for (unsigned int ikPoint=0; ikPoint<numKPoints; ++ikPoint)
 		for (unsigned int iEigenVec=0; iEigenVec<currentBlockSize; ++iEigenVec)
@@ -416,8 +429,13 @@ void forceClass<FEOrder>::computeConfigurationalForceEEshelbyTensorFPSPFnlLinFE
 
 	    }
 
+            wfc_time = clock() - wfc_time;
+            wfc_time_total+=wfc_time;
+
 	    if(isPseudopotential)
 	    {
+               double nlpinit_time;
+               nlpinit_time = clock();
 	       for (unsigned int iSubCell=0; iSubCell<numSubCells; ++iSubCell)
 	       {
 		  subCellPtr= matrixFreeData.get_cell_iterator(cell,iSubCell);
@@ -458,6 +476,12 @@ void forceClass<FEOrder>::computeConfigurationalForceEEshelbyTensorFPSPFnlLinFE
 		  }//q loop
 	       }//subcell loop
 	       //compute FnlGammaAtoms  (contibution due to Gamma(Rj))
+	      
+              nlpinit_time = clock() - nlpinit_time;
+              nlpinit_time_total+=nlpinit_time;
+ 
+              double fnlgamma_time;
+              fnlgamma_time = clock();
 #ifdef USE_COMPLEX
 
 	       FnlGammaAtomsElementalContributionPeriodic
@@ -483,9 +507,12 @@ void forceClass<FEOrder>::computeConfigurationalForceEEshelbyTensorFPSPFnlLinFE
 					      dftParameters::useHigherQuadNLP?psiQuadsNLP:psiQuads,
 					      macroIdToNonlocalAtomsSetMap[cell]);
 #endif
-
+               fnlgamma_time = clock() - fnlgamma_time;
+               fnlgamma_time_total+=fnlgamma_time;
 	    }//is pseudopotential check
 
+            double eloc_time;
+            eloc_time = clock();
 	    for (unsigned int q=0; q<numQuadPoints; ++q)
 	    {
 	       Tensor<2,C_DIM,VectorizedArray<double> > E=zeroTensor4;
@@ -553,6 +580,11 @@ void forceClass<FEOrder>::computeConfigurationalForceEEshelbyTensorFPSPFnlLinFE
 	       forceEvalKPoints.submit_gradient(EKPoints,q);
 #endif
 	    }//quad point loop
+            eloc_time = clock() - eloc_time;
+            eloc_time_total+=eloc_time;
+
+            double enlfnl_time;
+            enlfnl_time = clock();
 
 	    if (isPseudopotential && dftParameters::useHigherQuadNLP)
 		for (unsigned int q=0; q<numQuadPointsNLP; ++q)
@@ -589,6 +621,9 @@ void forceClass<FEOrder>::computeConfigurationalForceEEshelbyTensorFPSPFnlLinFE
 		       forceEvalNLP.submit_gradient(E,q);
 #endif
 		}//nonlocal psp quad points loop
+
+            enlfnl_time = clock() - enlfnl_time;
+            enlfnl_time_total+=enlfnl_time;
 
 	    forceEval.integrate(true,true);
 
@@ -641,6 +676,8 @@ void forceClass<FEOrder>::computeConfigurationalForceEEshelbyTensorFPSPFnlLinFE
      distributeForceContributionFnlGammaAtoms(forceContributionFnlGammaAtoms);
   }
 
+  double enowfc_time;
+  enowfc_time = clock();
   /////////// Compute contribution independent of wavefunctions /////////////////
   if (bandGroupTaskId==0)
   {
@@ -950,6 +987,19 @@ void forceClass<FEOrder>::computeConfigurationalForceEEshelbyTensorFPSPFnlLinFE
                              shadowKSRhoMinValues,
                              phiRhoMinusApproxRho,
                              shadowPotentialForce);
+    }
+    
+    enowfc_time = clock() - enowfc_time;
+ 
+    if (dftParameters::verbosity>=1)
+    {
+        pcout<<" Time taken for wfc interpolation in force: "<<dealii::Utilities::MPI::max(wfc_time_total/CLOCKS_PER_SEC,mpi_communicator)<<std::endl;
+        pcout<<" Time taken for fnl gamma in force: "<<dealii::Utilities::MPI::max(fnlgamma_time_total/CLOCKS_PER_SEC,mpi_communicator)<<std::endl;
+        pcout<<" Time taken for enl fnl in force: "<<dealii::Utilities::MPI::max(enlfnl_time_total/CLOCKS_PER_SEC,mpi_communicator)<<std::endl;
+        pcout<<" Time taken for eloc in force: "<<dealii::Utilities::MPI::max(eloc_time_total/CLOCKS_PER_SEC,mpi_communicator)<<std::endl;
+        pcout<<" Time taken for non wfc in force: "<<dealii::Utilities::MPI::max(enowfc_time/CLOCKS_PER_SEC,mpi_communicator)<<std::endl;
+        pcout<<" Time taken for nlp init in force: "<<dealii::Utilities::MPI::max(nlpinit_time_total/CLOCKS_PER_SEC,mpi_communicator)<<std::endl;
+        pcout<<" Time taken for projector ket times psi in force: "<<dealii::Utilities::MPI::max(projketpsi_time_total/CLOCKS_PER_SEC,mpi_communicator)<<std::endl;
     }
 }
 

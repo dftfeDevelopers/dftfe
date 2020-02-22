@@ -1238,7 +1238,7 @@ namespace dftfe {
     if (dftParameters::isBOMD && dftParameters::isXLBOMD && solveLinearizedKS)
         firstScfChebyTol=dftParameters::chebyshevFilterTolXLBOMD;
     else if (dftParameters::isBOMD)
-        firstScfChebyTol=dftParameters::chebyshevTolerance>1e-4?1e-4:dftParameters::chebyshevTolerance;
+        firstScfChebyTol=dftParameters::chebyshevTolerance>1e-3?1e-3:dftParameters::chebyshevTolerance;
     //
     //Begin SCF iteration
     //
