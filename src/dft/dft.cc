@@ -580,17 +580,35 @@ namespace dftfe {
 	TimerOutput::Scope scope (computing_timer, "psp init");
 	pcout<<std::endl<<"Pseudopotential initalization...."<<std::endl;
 	QGauss<3>  quadrature(C_num1DQuad<FEOrder>());
+
+        double init_psplocal;
+        MPI_Barrier(MPI_COMM_WORLD);
+        init_psplocal = MPI_Wtime();
+
 	initLocalPseudoPotential(dofHandler,
 	                         quadrature,
 	                         d_pseudoVLoc,
 				 d_gradPseudoVLoc,
 				 d_gradPseudoVLocAtoms);
 
+        MPI_Barrier(MPI_COMM_WORLD);
+        init_psplocal = MPI_Wtime() - init_psplocal;
+        if (dftParameters::verbosity>=1)
+            pcout<<"updateAtomPositionsAndMoveMesh: initPseudoPotentialAll: Time taken for local psp init: "<<init_psplocal<<std::endl;
+
+        double init_nonlocal;
+        MPI_Barrier(MPI_COMM_WORLD);
+        init_nonlocal = MPI_Wtime();
 
 	computeSparseStructureNonLocalProjectors_OV();
 	computeElementalOVProjectorKets();
 
 	forcePtr->initPseudoData();
+
+        MPI_Barrier(MPI_COMM_WORLD);
+        init_nonlocal = MPI_Wtime() - init_nonlocal;
+        if (dftParameters::verbosity>=1)
+            pcout<<"updateAtomPositionsAndMoveMesh: initPseudoPotentialAll: Time taken for non local psp init: "<<init_nonlocal<<std::endl;
       }
 
     //exit(0);

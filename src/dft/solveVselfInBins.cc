@@ -54,6 +54,10 @@ namespace dftfe
       d_vselfFieldBins.resize(numberBins);
       for(unsigned int iBin = 0; iBin < numberBins; ++iBin)
 	{
+          double init_time;
+          MPI_Barrier(MPI_COMM_WORLD);
+          init_time = MPI_Wtime();
+
 	  const unsigned int constraintMatrixId = iBin + offset;
 	  vectorType vselfBinScratch;
 	  matrix_free_data.initialize_dof_vector(vselfBinScratch,constraintMatrixId);
@@ -78,6 +82,14 @@ namespace dftfe
 	  vselfBinScratch.compress(dealii::VectorOperation::insert);
 	  d_vselfBinConstraintMatrices[iBin].distribute(vselfBinScratch);
 
+          MPI_Barrier(MPI_COMM_WORLD);
+          init_time = MPI_Wtime() - init_time;
+          if (dftParameters::verbosity>=1)
+            pcout<<" Time taken for vself field initialization for current bin: "<<init_time<<std::endl;
+
+          double vselfinit_time;
+          MPI_Barrier(MPI_COMM_WORLD);
+          vselfinit_time = MPI_Wtime();
 	  //
 	  //call the poisson solver to compute vSelf in current bin
 	  //
@@ -89,12 +101,20 @@ namespace dftfe
                                     true,
                                     iBin==0?true:false);
 
+          MPI_Barrier(MPI_COMM_WORLD);
+          vselfinit_time = MPI_Wtime() - vselfinit_time;
+          if (dftParameters::verbosity>=1)
+            pcout<<" Time taken for vself solver problem init for current bin: "<<vselfinit_time<<std::endl;
 
 	  dealiiCGSolver.solve(vselfSolverProblem,
 			       dftParameters::absLinearSolverTolerance,
 			       dftParameters::maxLinearSolverIterations,
 			       dftParameters::verbosity);
 
+
+          double sumvself_time;
+          MPI_Barrier(MPI_COMM_WORLD);
+          sumvself_time = MPI_Wtime();
 
 	  std::set<int> & atomsInBinSet = d_bins[iBin];
 	  std::vector<int> atomsInCurrentBin(atomsInBinSet.begin(),atomsInBinSet.end());
@@ -118,6 +138,7 @@ namespace dftfe
 	  std::map<dealii::types::global_dof_index, int> & boundaryNodeMap = d_boundaryFlagOnlyChargeId[iBin];
           std::map<dealii::types::global_dof_index, dealii::Point<3>> & dofClosestChargeLocationMap
 		                                            = d_dofClosestChargeLocationMap[iBin];
+
 
 	  int inNodes =0, outNodes = 0;
 	  for(iterNodalCoorMap = supportPoints.begin(); iterNodalCoorMap != supportPoints.end(); ++iterNodalCoorMap)
@@ -210,7 +231,11 @@ namespace dftfe
 		        //store updated value in phiExt which is sumVself
 		        phiExt(iterNodalCoorMap->first)+= vSelf;
 		    }
-
+ 
+          MPI_Barrier(MPI_COMM_WORLD);
+          sumvself_time = MPI_Wtime() - sumvself_time;
+          if (dftParameters::verbosity>=1)
+            pcout<<" Time taken for sumvself for current bin: "<<sumvself_time<<std::endl;
 	  //
 	  //store Vselfs for atoms in bin
 	  //
