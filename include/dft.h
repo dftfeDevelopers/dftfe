@@ -732,7 +732,7 @@ namespace dftfe {
       double d_domainVolume;
 
       /// init wfc trunctation radius
-      double d_wfcInitTruncation;
+      double d_wfcInitTruncation=5.0;
 
       /**
        * dealii based FE data structres

@@ -18,6 +18,7 @@
 
 #include <vselfBinsManager.h>
 #include <dftParameters.h>
+#include <vectorUtilities.h>
 
 #include "solveVselfInBins.cc"
 #include "createBinsSanityCheck.cc"
@@ -443,7 +444,7 @@ namespace dftfe
       const unsigned int dofs_per_cell = dofHandler.get_fe().dofs_per_cell;
 
 
-      dealii::BoundingBox<3> boundingBoxTria=dealii::GridTools::compute_bounding_box(dofHandler.get_triangulation());
+      dealii::BoundingBox<3> boundingBoxTria(vectorTools::createBoundingBoxTriaLocallyOwned(dofHandler));
 
       std::map<dealii::types::global_dof_index, dealii::Point<3> > supportPoints;
       dealii::DoFTools::map_dofs_to_support_points(dealii::MappingQ1<3,3>(), dofHandler, supportPoints);

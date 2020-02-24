@@ -49,7 +49,7 @@ void dftClass<FEOrder>::loadPSIFiles(unsigned int Z,
 
   fileReadFlag = dftUtils::readPsiFile(2, values, psiFile);
 
-  const double truncationTol=1e-8;
+  const double truncationTol=dftParameters::reproducible_output?1e-10:1e-8;
   //
   //spline fitting for single-atom wavefunctions
   //
@@ -255,7 +255,7 @@ void dftClass<FEOrder>::readPSIRadialValues(){
   //
 
   std::vector<orbital>  waveFunctionsVectorTruncated;
-  dealii::BoundingBox<3> boundingBoxTria=dealii::GridTools::compute_bounding_box(dofHandler.get_triangulation());
+  dealii::BoundingBox<3> boundingBoxTria(vectorTools::createBoundingBoxTriaLocallyOwned(dofHandler));
   for (std::vector<orbital>::iterator it = waveFunctionsVector.begin(); it < waveFunctionsVector.end(); it++)
     {
 	  const unsigned int chargeId = it->atomID;

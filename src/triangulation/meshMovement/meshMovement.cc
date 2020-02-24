@@ -405,7 +405,7 @@ namespace dftfe {
     std::vector<bool> isPeriodic(3,false);
     isPeriodic[0]=dftParameters::periodicX;isPeriodic[1]=dftParameters::periodicY;isPeriodic[2]=dftParameters::periodicZ;
 
-    dealii::BoundingBox<3> boundingBoxTria=dealii::GridTools::compute_bounding_box(d_dofHandlerMoveMesh.get_triangulation());
+    dealii::BoundingBox<3> boundingBoxTria(vectorTools::createBoundingBoxTriaLocallyOwned(d_dofHandlerMoveMesh));;
 
     for (unsigned int idest=0;idest <destinationPoints.size(); idest++)
     {

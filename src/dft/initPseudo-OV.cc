@@ -910,10 +910,10 @@ void dftClass<FEOrder>::computeSparseStructureNonLocalProjectors_OV()
 
   for(int iElem = 0; iElem < numberElements; ++iElem)
     {
-      for(int iAtom = 0; iAtom < numberNonLocalAtoms; ++iAtom)
+      for(int iAtom = 0; iAtom < d_nonLocalAtomIdsInCurrentProcess.size(); ++iAtom)
 	{
-	  if(d_sparsityPattern[iAtom][iElem] >= 0)
-	    d_nonLocalAtomIdsInElement[iElem].push_back(iAtom);
+	  if(d_sparsityPattern[d_nonLocalAtomIdsInCurrentProcess[iAtom]][iElem] >= 0)
+	    d_nonLocalAtomIdsInElement[iElem].push_back(d_nonLocalAtomIdsInCurrentProcess[iAtom]);
 	}
     }
 
