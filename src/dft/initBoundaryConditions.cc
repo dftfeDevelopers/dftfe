@@ -273,4 +273,14 @@ void dftClass<FEOrder>::initBoundaryConditions(const bool meshOnlyDeformed){
   if (dftParameters::verbosity>=1)
       pcout<<"updateAtomPositionsAndMoveMesh: initBoundaryConditions: Time taken for initpRefinedObjects: "<<init_pref<<std::endl;
 
+  createMasterChargeIdToImageIdMaps(d_pspCutOff,
+	                            d_imageIds,
+	                            d_imagePositions,
+	                            d_globalChargeIdToImageIdMap);
+
+  createMasterChargeIdToImageIdMaps(3.0,
+	                            d_imageIdsTrunc,
+	                            d_imagePositionsTrunc,
+	                            d_globalChargeIdToImageIdMapTrunc);
+
 }

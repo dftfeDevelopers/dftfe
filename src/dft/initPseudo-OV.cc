@@ -772,7 +772,6 @@ void dftClass<FEOrder>::computeSparseStructureNonLocalProjectors_OV()
 
   const unsigned int numberElements = iElemCount;
 
-
   for(int iAtom = 0; iAtom < numberNonLocalAtoms; ++iAtom)
     {
 
@@ -801,97 +800,99 @@ void dftClass<FEOrder>::computeSparseStructureNonLocalProjectors_OV()
       //
       d_sparsityPattern[iAtom].resize(numberElements,-1);
 
-      //
-      //parallel loop over all elements
-      //
-      typename DoFHandler<3>::active_cell_iterator cell = dofHandler.begin_active(), endc = dofHandler.end();
-      typename DoFHandler<3>::active_cell_iterator cellEigen = dofHandlerEigen.begin_active();
+      if (imageIdsList.size()!=0)
+      {
+	      //
+	      //parallel loop over all elements
+	      //
+	      typename DoFHandler<3>::active_cell_iterator cell = dofHandler.begin_active(), endc = dofHandler.end();
+	      typename DoFHandler<3>::active_cell_iterator cellEigen = dofHandlerEigen.begin_active();
 
-      int iElem = -1;
+	      int iElem = -1;
 
-      for(; cell != endc; ++cell,++cellEigen)
-	{
-	  if(cell->is_locally_owned())
-	    {
-
-	      //compute the values for the current element
-	      fe_values.reinit(cell);
-
-	      iElem += 1;
-	      int lTemp = 1000 ;
-
-	      for(int iPsp = 0; iPsp < numberPseudoWaveFunctions; ++iPsp)
+	      for(; cell != endc; ++cell,++cellEigen)
 		{
-		  sparseFlag = 0;
-		  waveFunctionId = iPsp + cumulativeSplineId;
-		  const int globalWaveSplineId = d_pseudoWaveFunctionIdToFunctionIdDetails[waveFunctionId][0];
-		  const int lQuantumNumber = d_pseudoWaveFunctionIdToFunctionIdDetails[waveFunctionId][1];
-		  //
-		  if(lQuantumNumber != lTemp) {
-		    lTemp = lQuantumNumber ;
-		    for(int iQuadPoint = 0; iQuadPoint < numberQuadraturePoints; ++iQuadPoint)
-		      {
-			Point<3> quadPoint=fe_values.quadrature_point(iQuadPoint);
+		  if(cell->is_locally_owned())
+		    {
 
-			for(int iImageAtomCount = 0; iImageAtomCount < imageIdsList.size(); ++iImageAtomCount)
-			  {
+		      //compute the values for the current element
+		      fe_values.reinit(cell);
 
-			    int chargeId = imageIdsList[iImageAtomCount];
+		      iElem += 1;
+		      int lTemp = 1000 ;
 
-			    Point<3> chargePoint(0.0,0.0,0.0);
-
-			    if(chargeId < numberGlobalCharges)
+		      for(int iPsp = 0; iPsp < numberPseudoWaveFunctions; ++iPsp)
+			{
+			  sparseFlag = 0;
+			  waveFunctionId = iPsp + cumulativeSplineId;
+			  const int globalWaveSplineId = d_pseudoWaveFunctionIdToFunctionIdDetails[waveFunctionId][0];
+			  const int lQuantumNumber = d_pseudoWaveFunctionIdToFunctionIdDetails[waveFunctionId][1];
+			  //
+			  if(lQuantumNumber != lTemp) {
+			    lTemp = lQuantumNumber ;
+			    for(int iQuadPoint = 0; iQuadPoint < numberQuadraturePoints; ++iQuadPoint)
 			      {
-				chargePoint[0] = atomLocations[chargeId][2];
-				chargePoint[1] = atomLocations[chargeId][3];
-				chargePoint[2] = atomLocations[chargeId][4];
-			      }
-			    else
-			      {
-				chargePoint[0] = d_imagePositionsTrunc[chargeId-numberGlobalCharges][0];
-				chargePoint[1] = d_imagePositionsTrunc[chargeId-numberGlobalCharges][1];
-				chargePoint[2] = d_imagePositionsTrunc[chargeId-numberGlobalCharges][2];
-			      }
+				Point<3> quadPoint=fe_values.quadrature_point(iQuadPoint);
 
-			    double r = quadPoint.distance(chargePoint);
-			    double radialProjVal;
+				for(int iImageAtomCount = 0; iImageAtomCount < imageIdsList.size(); ++iImageAtomCount)
+				  {
 
-			    if(r <= d_outerMostPointPseudoProjectorData[globalWaveSplineId])
-			      pseudoUtils::getRadialFunctionVal( r, radialProjVal, &d_pseudoWaveFunctionSplines[globalWaveSplineId] );
-			    else
-			      radialProjVal = 0.0;
+				    int chargeId = imageIdsList[iImageAtomCount];
 
-			    if(fabs(radialProjVal) >= nlpTolerance)
-			      {
-				sparseFlag = 1;
-				break;
-			      }
-			  }//imageAtomLoop
+				    Point<3> chargePoint(0.0,0.0,0.0);
 
-			if(sparseFlag == 1)
-			  break;
+				    if(chargeId < numberGlobalCharges)
+				      {
+					chargePoint[0] = atomLocations[chargeId][2];
+					chargePoint[1] = atomLocations[chargeId][3];
+					chargePoint[2] = atomLocations[chargeId][4];
+				      }
+				    else
+				      {
+					chargePoint[0] = d_imagePositionsTrunc[chargeId-numberGlobalCharges][0];
+					chargePoint[1] = d_imagePositionsTrunc[chargeId-numberGlobalCharges][1];
+					chargePoint[2] = d_imagePositionsTrunc[chargeId-numberGlobalCharges][2];
+				      }
 
-		      }//quadrature loop
+				    double r = quadPoint.distance(chargePoint);
+				    double radialProjVal;
 
-		  }
+				    if(r <= d_outerMostPointPseudoProjectorData[globalWaveSplineId])
+				      pseudoUtils::getRadialFunctionVal( r, radialProjVal, &d_pseudoWaveFunctionSplines[globalWaveSplineId] );
+				    else
+				      radialProjVal = 0.0;
 
-		  if(sparseFlag == 1)
-		    break;
+				    if(fabs(radialProjVal) >= nlpTolerance)
+				      {
+					sparseFlag = 1;
+					break;
+				      }
+				  }//imageAtomLoop
 
-		}//iPsp loop ("l" loop)
+				if(sparseFlag == 1)
+				  break;
 
-	      if(sparseFlag==1) {
-		d_sparsityPattern[iAtom][iElem] = matCount;
-		d_elementIteratorsInAtomCompactSupport[iAtom].push_back(cellEigen);
-		d_elementIdsInAtomCompactSupport[iAtom].push_back(iElem);
-		d_elementOneFieldIteratorsInAtomCompactSupport[iAtom].push_back(cell);
-		matCount += 1;
-		isAtomIdInProcessor=true;
-	      }
+			      }//quadrature loop
 
-	    }
-	}//cell loop
+			  }
 
+			  if(sparseFlag == 1)
+			    break;
+
+			}//iPsp loop ("l" loop)
+
+		      if(sparseFlag==1) {
+			d_sparsityPattern[iAtom][iElem] = matCount;
+			d_elementIteratorsInAtomCompactSupport[iAtom].push_back(cellEigen);
+			d_elementIdsInAtomCompactSupport[iAtom].push_back(iElem);
+			d_elementOneFieldIteratorsInAtomCompactSupport[iAtom].push_back(cell);
+			matCount += 1;
+			isAtomIdInProcessor=true;
+		      }
+
+		    }
+		}//cell loop
+      }
       cumulativeSplineId += numberPseudoWaveFunctions;
 #ifdef DEBUG
       if (dftParameters::verbosity>=4)

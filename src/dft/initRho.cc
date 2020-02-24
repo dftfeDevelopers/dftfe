@@ -399,8 +399,12 @@ void dftClass<FEOrder>::initRho()
 			}
 
 		      int signRho = 0 ;
+                      /*
                       if (std::abs((*rhoInValues)[cell->id()][q] ) > 1.0E-7)
                           signRho = (*rhoInValues)[cell->id()][q]>0.0?1:-1;
+                      */
+                      if (std::abs((*rhoInValues)[cell->id()][q] ) > 1.0E-7)
+                        int signRho = (*rhoInValues)[cell->id()][q]/std::abs((*rhoInValues)[cell->id()][q]);
 
 		      // KG: the fact that we are forcing gradRho to zero whenever rho is zero is valid. Because rho is always positive, so whenever it is zero, it must have a local minima.
 		      //

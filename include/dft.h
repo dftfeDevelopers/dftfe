@@ -308,6 +308,11 @@ namespace dftfe {
 				std::vector<std::vector<double> > & imagePositions,
 				std::vector<std::vector<int> > & globalChargeIdToImageIdMap);
 
+      void createMasterChargeIdToImageIdMaps(const double pspCutOff,
+	                                     const std::vector<int> & imageIds,
+	                                     const std::vector<std::vector<double> > & imagePositions,
+	                                     std::vector<std::vector<int> > & globalChargeIdToImageIdMap);
+
       void determineOrbitalFilling();
 
       //

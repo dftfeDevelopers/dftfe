@@ -844,6 +844,60 @@ namespace dftfe
     }
 #endif
 
+    std::pair<dealii::Point<3>,dealii::Point<3>> createBoundingBoxTriaLocallyOwned
+                             (const dealii::DoFHandler<3>  & dofHandler)
+    {
+       dealii::Point<3> corner1, corner2;
+       const unsigned int vertices_per_cell=dealii::GeometryInfo<3>::vertices_per_cell;
+       corner1[0]=0.0;
+       corner1[1]=0.0;
+       corner1[2]=0.0;
+
+       corner2[0]=0.0;
+       corner2[1]=0.0;
+       corner2[2]=0.0;
+
+       dealii::DoFHandler<3>::active_cell_iterator cell,endc;
+       cell = dofHandler.begin_active(),
+       endc = dofHandler.end();
+
+       std::vector<bool> vertex_touched(dofHandler.get_triangulation().n_vertices(),
+                                       false);
+
+       for (; cell!=endc; ++cell)
+           if (cell->is_locally_owned())
+           {
+              for (unsigned int i=0; i<vertices_per_cell; ++i)
+              {
+                  const unsigned global_vertex_no = cell->vertex_index(i);
+
+                  if (vertex_touched[global_vertex_no])
+                    continue;
+                  vertex_touched[global_vertex_no]=true;
+
+                  dealii::Point<3> nodalCoor = cell->vertex(i);
+
+                  if (nodalCoor[0]<corner1[0])
+                       corner1[0]=nodalCoor[0];
+
+                  if (nodalCoor[1]<corner1[1])
+                       corner1[1]=nodalCoor[1];
+
+                  if (nodalCoor[2]<corner1[2])
+                       corner1[2]=nodalCoor[2];
+
+                  if (nodalCoor[0]>corner2[0])
+                       corner2[0]=nodalCoor[0];
+
+                  if (nodalCoor[1]>corner2[1])
+                       corner2[1]=nodalCoor[1];
+
+                  if (nodalCoor[2]>corner2[2])
+                       corner2[2]=nodalCoor[2];
+              }
+           }
+       return std::pair<dealii::Point<3>,dealii::Point<3>>(corner1,corner2);
+    }
 
     template void createDealiiVector(const std::shared_ptr<const dealii::Utilities::MPI::Partitioner> &,
 				     const unsigned int                                                ,

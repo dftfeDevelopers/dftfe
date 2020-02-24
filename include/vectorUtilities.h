@@ -330,6 +330,10 @@ namespace dftfe{
 
 #endif
 
+     std::pair<dealii::Point<3>,dealii::Point<3>> createBoundingBoxTriaLocallyOwned
+                             (const dealii::DoFHandler<3>  & dofHandler);
+
+
   }
 }
 #endif

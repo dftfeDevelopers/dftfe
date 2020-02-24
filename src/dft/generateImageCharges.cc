@@ -484,31 +484,71 @@ void dftClass<FEOrder>::generateImageCharges
       imageCharges.push_back(atomCharge);
 
     }
+}
 
-
-
+template<unsigned int FEOrder>
+void dftClass<FEOrder>::createMasterChargeIdToImageIdMaps
+(const double pspCutOff,
+ const std::vector<int> & imageIds,
+ const std::vector<std::vector<double> > & imagePositions,
+ std::vector<std::vector<int> > & globalChargeIdToImageIdMap)
+{
+  const unsigned int numImageCharges=imageIds.size();
   const unsigned int numberGlobalCharges  = atomLocations.size();
   globalChargeIdToImageIdMap.clear();
   globalChargeIdToImageIdMap.resize(numberGlobalCharges);
 
+  dealii::BoundingBox<3> boundingBoxTria(vectorTools::createBoundingBoxTriaLocallyOwned(dofHandler));
 
   for(int iCharge = 0; iCharge < numberGlobalCharges; ++iCharge)
-    globalChargeIdToImageIdMap[iCharge].push_back(iCharge);
+  {
+	  Point<3> atomCoord;
+	  atomCoord[0] = atomLocations[iCharge][2];
+	  atomCoord[1] = atomLocations[iCharge][3];
+	  atomCoord[2] = atomLocations[iCharge][4];
+
+
+	  dealii::Tensor<1,3,double> tempDisp;
+	  tempDisp[0]=pspCutOff;
+	  tempDisp[1]=pspCutOff;
+	  tempDisp[2]=pspCutOff;
+	  std::pair< dealii::Point<3,double >,dealii::Point<3, double>> boundaryPoints;
+	  boundaryPoints.first=atomCoord-tempDisp;
+	  boundaryPoints.second=atomCoord+tempDisp;
+	  dealii::BoundingBox<3> boundingBoxAroundAtom(boundaryPoints);
+
+	  if (boundingBoxTria.get_neighbor_type(boundingBoxAroundAtom)!=NeighborType::not_neighbors)
+               globalChargeIdToImageIdMap[iCharge].push_back(iCharge);
+  }
 
   for(int iImage = 0; iImage < numImageCharges; ++iImage)
     {
-      //
-      //Get the masterChargeId corresponding to the current image atom
-      //
-      const int masterChargeId = imageIds[iImage];
+	  Point<3> atomCoord;
+	  atomCoord[0] = imagePositions[iImage][0];
+	  atomCoord[1] = imagePositions[iImage][1];
+	  atomCoord[2] = imagePositions[iImage][2];
 
-      //
-      //insert into the map
-      //
-      globalChargeIdToImageIdMap[masterChargeId].push_back(iImage+numberGlobalCharges);
 
+	  dealii::Tensor<1,3,double> tempDisp;
+	  tempDisp[0]=pspCutOff;
+	  tempDisp[1]=pspCutOff;
+	  tempDisp[2]=pspCutOff;
+	  std::pair< dealii::Point<3,double >,dealii::Point<3, double>> boundaryPoints;
+	  boundaryPoints.first=atomCoord-tempDisp;
+	  boundaryPoints.second=atomCoord+tempDisp;
+	  dealii::BoundingBox<3> boundingBoxAroundAtom(boundaryPoints);
+
+	  if (boundingBoxTria.get_neighbor_type(boundingBoxAroundAtom)!=NeighborType::not_neighbors);
+	  {
+	      //
+	      //Get the masterChargeId corresponding to the current image atom
+	      //
+	      const int masterChargeId = imageIds[iImage];
+
+	      //
+	      //insert into the map
+	      //
+	      globalChargeIdToImageIdMap[masterChargeId].push_back(iImage+numberGlobalCharges);
+	  }
     }
-
 }
-
-
