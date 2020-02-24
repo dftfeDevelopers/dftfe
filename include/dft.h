@@ -662,7 +662,7 @@ namespace dftfe {
 
       /// Gaussian generator parameter for force computation and Gaussian deformation of atoms and FEM mesh
       /// Gaussian generator: Gamma(r)= exp(-(r/d_gaussianConstant)^2)
-      double d_gaussianConstantForce;
+      double d_gaussianConstantForce=0.75;
 
       /// vector of lendth number of periodic image charges with corresponding master chargeIds
       std::vector<int> d_imageIds;
@@ -698,7 +698,7 @@ namespace dftfe {
       const double d_pspCutOff=40.0;
 
       /// distance from the domain till which periodic images will be considered
-      const double d_pspCutOffTrunc=10.0;
+      const double d_pspCutOffTrunc=8.0;
 
       std::vector<orbital> waveFunctionsVector;
       std::map<unsigned int, std::map<unsigned int, std::map<unsigned int, alglib::spline1dinterpolant*> > > radValues;

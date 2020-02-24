@@ -596,22 +596,30 @@ namespace dftfe {
         if (dftParameters::verbosity>=1)
             pcout<<"updateAtomPositionsAndMoveMesh: initPseudoPotentialAll: Time taken for local psp init: "<<init_psplocal<<std::endl;
 
-        double init_nonlocal;
+        double init_nonlocal1;
         MPI_Barrier(MPI_COMM_WORLD);
-        init_nonlocal = MPI_Wtime();
+        init_nonlocal1 = MPI_Wtime();
 
 	computeSparseStructureNonLocalProjectors_OV();
+
+        MPI_Barrier(MPI_COMM_WORLD);
+        init_nonlocal1 = MPI_Wtime() - init_nonlocal1;
+        if (dftParameters::verbosity>=1)
+            pcout<<"updateAtomPositionsAndMoveMesh: initPseudoPotentialAll: Time taken for computeSparseStructureNonLocalProjectors_OV: "<<init_nonlocal1<<std::endl;
+
+        double init_nonlocal2;
+        MPI_Barrier(MPI_COMM_WORLD);
+        init_nonlocal2 = MPI_Wtime();
+
 	computeElementalOVProjectorKets();
 
 	forcePtr->initPseudoData();
 
         MPI_Barrier(MPI_COMM_WORLD);
-        init_nonlocal = MPI_Wtime() - init_nonlocal;
+        init_nonlocal2 = MPI_Wtime() - init_nonlocal2;
         if (dftParameters::verbosity>=1)
-            pcout<<"updateAtomPositionsAndMoveMesh: initPseudoPotentialAll: Time taken for non local psp init: "<<init_nonlocal<<std::endl;
+            pcout<<"updateAtomPositionsAndMoveMesh: initPseudoPotentialAll: Time taken for non local psp init: "<<init_nonlocal2<<std::endl;
       }
-
-    //exit(0);
   }
 
 

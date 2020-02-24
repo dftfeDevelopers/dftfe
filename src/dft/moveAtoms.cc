@@ -259,7 +259,8 @@ void dftClass<FEOrder>::updateAtomPositionsAndMoveMesh(const std::vector<Tensor<
   if (dftParameters::verbosity>=2)
      pcout<<"Minimum distance between atoms: "<<minDist<<std::endl;
 
-  d_gaussianConstantForce=std::min(minDist/2.0-0.3,dftParameters::gaussianConstantForce);
+  d_gaussianConstantForce=d_gaussianConstantForce=dftParameters::reproducible_output?
+                                                  1/std::sqrt(0.5):std::min(minDist/2.0-0.3,dftParameters::gaussianConstantForce);
   forcePtr->updateGaussianConstant(d_gaussianConstantForce);
 
   d_gaussianMovementAtomsNetDisplacements.clear();
