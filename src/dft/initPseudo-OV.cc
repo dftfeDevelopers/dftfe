@@ -735,7 +735,7 @@ void dftClass<FEOrder>::computeSparseStructureNonLocalProjectors_OV()
   d_elementIdsInAtomCompactSupport.clear();
   d_elementOneFieldIteratorsInAtomCompactSupport.clear();
 
-  d_sparsityPattern.resize(numberNonLocalAtoms);
+  //d_sparsityPattern.resize(numberNonLocalAtoms);
   d_elementIteratorsInAtomCompactSupport.resize(numberNonLocalAtoms);
   d_elementIdsInAtomCompactSupport.resize(numberNonLocalAtoms);
   d_elementOneFieldIteratorsInAtomCompactSupport.resize(numberNonLocalAtoms);
@@ -798,7 +798,8 @@ void dftClass<FEOrder>::computeSparseStructureNonLocalProjectors_OV()
       //
       //resize the data structure corresponding to sparsity pattern
       //
-      d_sparsityPattern[iAtom].resize(numberElements,-1);
+      std::vector<int> sparsityPattern(numberElements,-1);
+      //d_sparsityPattern[iAtom].resize(numberElements,-1);
 
       if (imageIdsList.size()!=0)
       {
@@ -882,7 +883,7 @@ void dftClass<FEOrder>::computeSparseStructureNonLocalProjectors_OV()
 			}//iPsp loop ("l" loop)
 
 		      if(sparseFlag==1) {
-			d_sparsityPattern[iAtom][iElem] = matCount;
+			sparsityPattern[iElem] = matCount;
 			d_elementIteratorsInAtomCompactSupport[iAtom].push_back(cellEigen);
 			d_elementIdsInAtomCompactSupport[iAtom].push_back(iElem);
 			d_elementOneFieldIteratorsInAtomCompactSupport[iAtom].push_back(cell);
@@ -900,7 +901,10 @@ void dftClass<FEOrder>::computeSparseStructureNonLocalProjectors_OV()
 #endif
 
       if (isAtomIdInProcessor)
+      {
 	d_nonLocalAtomIdsInCurrentProcess.push_back(iAtom);
+        d_sparsityPattern[iAtom]=sparsityPattern;
+      }
 
     }//atom loop
 

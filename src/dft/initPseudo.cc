@@ -735,7 +735,7 @@ void dftClass<FEOrder>::computeSparseStructureNonLocalProjectors()
   d_elementIdsInAtomCompactSupport.clear();
   d_elementOneFieldIteratorsInAtomCompactSupport.clear();
 
-  d_sparsityPattern.resize(numberNonLocalAtoms);
+  //d_sparsityPattern.resize(numberNonLocalAtoms);
   d_elementIteratorsInAtomCompactSupport.resize(numberNonLocalAtoms);
   d_elementIdsInAtomCompactSupport.resize(numberNonLocalAtoms);
   d_elementOneFieldIteratorsInAtomCompactSupport.resize(numberNonLocalAtoms);
@@ -802,8 +802,8 @@ void dftClass<FEOrder>::computeSparseStructureNonLocalProjectors()
       //
       //resize the data structure corresponding to sparsity pattern
       //
-      d_sparsityPattern[iAtom].resize(numberElements,-1);
-
+      std::vector<int> sparsityPattern(numberElements,-1);
+      
       //
       //parallel loop over all elements
       //
@@ -887,7 +887,7 @@ void dftClass<FEOrder>::computeSparseStructureNonLocalProjectors()
 		}//iPsp loop ("l" loop)
 
 	      if(sparseFlag==1) {
-		d_sparsityPattern[iAtom][iElem] = matCount;
+		sparsityPattern[iElem] = matCount;
 		d_elementIteratorsInAtomCompactSupport[iAtom].push_back(cellEigen);
 		d_elementIdsInAtomCompactSupport[iAtom].push_back(iElem);
 		d_elementOneFieldIteratorsInAtomCompactSupport[iAtom].push_back(cell);
@@ -903,20 +903,22 @@ void dftClass<FEOrder>::computeSparseStructureNonLocalProjectors()
       if (dftParameters::verbosity>=3)
          pcout<<"No.of non zero elements in the compact support of atom "<<iAtom<<" is "<<d_elementIteratorsInAtomCompactSupport[iAtom].size()<<std::endl;
       if (isAtomIdInProcessor)
+      {
           d_nonLocalAtomIdsInCurrentProcess.push_back(iAtom);
+          d_sparsityPattern[iAtom]=sparsityPattern;
+      }
     }//atom loop
 
   d_nonLocalAtomIdsInElement.clear();
   d_nonLocalAtomIdsInElement.resize(numberElements);
 
-
   for(int iElem = 0; iElem < numberElements; ++iElem)
     {
-      for(int iAtom = 0; iAtom < numberNonLocalAtoms; ++iAtom)
-	{
-	  if(d_sparsityPattern[iAtom][iElem] >= 0)
-	    d_nonLocalAtomIdsInElement[iElem].push_back(iAtom);
-	}
+      for(int iAtom = 0; iAtom < d_nonLocalAtomIdsInCurrentProcess.size(); ++iAtom)
+        {
+          if(d_sparsityPattern[d_nonLocalAtomIdsInCurrentProcess[iAtom]][iElem] >= 0)
+            d_nonLocalAtomIdsInElement[iElem].push_back(d_nonLocalAtomIdsInCurrentProcess[iAtom]);
+        }
     }
 
    //

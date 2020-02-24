@@ -918,7 +918,7 @@ namespace dftfe {
       //
       //matrices denoting the sparsity of nonlocal projectors and elemental projector matrices
       //
-      std::vector<std::vector<int> > d_sparsityPattern;
+      std::map<unsigned int,std::vector<int> > d_sparsityPattern;
       std::vector<std::vector<DoFHandler<3>::active_cell_iterator> > d_elementIteratorsInAtomCompactSupport;
       std::vector<std::vector<unsigned int> > d_elementIdsInAtomCompactSupport;
       std::vector<std::vector<DoFHandler<3>::active_cell_iterator> > d_elementOneFieldIteratorsInAtomCompactSupport;
