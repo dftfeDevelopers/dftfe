@@ -136,9 +136,9 @@ void forceClass<FEOrder>::computeConfigurationalForceEEshelbyTensorFPSPFnlLinFE
 	                                                          phiTotDofHandlerIndex,
 								  0);
 
-  FEEvaluation<C_DIM,FEOrder,C_num1DQuad<FEOrder>(),1> phiExtEval(matrixFreeData,
-	                                                          phiExtDofHandlerIndex,
-								  0);
+  //FEEvaluation<C_DIM,FEOrder,C_num1DQuad<FEOrder>(),1> phiExtEval(matrixFreeData,
+  //	                                                          phiExtDofHandlerIndex,
+  //								  0);
 
   std::map<unsigned int, std::vector<double> > forceContributionShadowLocalGammaAtoms;
 
@@ -709,9 +709,9 @@ void forceClass<FEOrder>::computeConfigurationalForceEEshelbyTensorFPSPFnlLinFE
 	  phiTotOutEval.read_dof_values_plain(phiTotRhoOut);
 	  phiTotOutEval.evaluate(true,false);
 
-	  phiExtEval.reinit(cell);
-	  phiExtEval.read_dof_values_plain(phiExt);
-	  phiExtEval.evaluate(true,false);
+	  //phiExtEval.reinit(cell);
+	  //phiExtEval.read_dof_values_plain(phiExt);
+	  //phiExtEval.evaluate(true,false);
 	}
 
         if  (shadowPotentialForce)
@@ -892,9 +892,9 @@ void forceClass<FEOrder>::computeConfigurationalForceEEshelbyTensorFPSPFnlLinFE
 	   const VectorizedArray<double> phiTot_q =d_isElectrostaticsMeshSubdivided?
 						    phiTotOutEval.get_value(q)
 						    :make_vectorized_array(0.0);
-	   const VectorizedArray<double> phiExt_q =d_isElectrostaticsMeshSubdivided?
-						    phiExtEval.get_value(q)
-						    :make_vectorized_array(0.0);
+	   //const VectorizedArray<double> phiExt_q =d_isElectrostaticsMeshSubdivided?
+	   //					    phiExtEval.get_value(q)
+	   //					    :make_vectorized_array(0.0);
 
            if (shadowPotentialForce)
            {
@@ -936,7 +936,7 @@ void forceClass<FEOrder>::computeConfigurationalForceEEshelbyTensorFPSPFnlLinFE
 	       F-=gradRhoQuads[q]*phiTot_q;
 
 	   if(isPseudopotential && d_isElectrostaticsMeshSubdivided)
-		  F-=gradRhoQuads[q]*(pseudoVLocQuads[q]-phiExt_q);
+		  F-=gradRhoQuads[q]*(pseudoVLocQuads[q]);//-phiExt_q);
 
 	   forceEval.submit_value(F,q);
 	   forceEval.submit_gradient(E,q);
@@ -1032,9 +1032,9 @@ void forceClass<FEOrder>::computeConfigurationalForceEEshelbyEElectroPhiTot
 	                                                          phiTotDofHandlerIndexElectro,
 								  0);
 
-  FEEvaluation<C_DIM,FEOrder,C_num1DQuad<FEOrder>(),1> phiExtEvalElectro(matrixFreeDataElectro,
-	                                                          phiExtDofHandlerIndexElectro,
-								  0);
+  //FEEvaluation<C_DIM,FEOrder,C_num1DQuad<FEOrder>(),1> phiExtEvalElectro(matrixFreeDataElectro,
+  //	                                                          phiExtDofHandlerIndexElectro,
+  //								  0);
 
   std::map<unsigned int, std::vector<double> > forceContributionFPSPLocalGammaAtoms;
 
@@ -1076,12 +1076,12 @@ void forceClass<FEOrder>::computeConfigurationalForceEEshelbyEElectroPhiTot
        phiTotEvalElectro2.evaluate(true,true);
     }
 
-    phiExtEvalElectro.reinit(cell);
-    phiExtEvalElectro.read_dof_values_plain(phiExtElectro);
-    if (dftParameters::isPseudopotential)
-      phiExtEvalElectro.evaluate(true,true);
-    else
-      phiExtEvalElectro.evaluate(true,false);
+    //phiExtEvalElectro.reinit(cell);
+    //phiExtEvalElectro.read_dof_values_plain(phiExtElectro);
+    //if (dftParameters::isPseudopotential)
+    //  phiExtEvalElectro.evaluate(true,true);
+    //else
+    //  phiExtEvalElectro.evaluate(true,false);
 
     std::fill(rhoQuadsElectro.begin(),rhoQuadsElectro.end(),make_vectorized_array(0.0));
     std::fill(shadowKSRhoMinQuadsElectro.begin(),shadowKSRhoMinQuadsElectro.end(),make_vectorized_array(0.0));
@@ -1147,9 +1147,7 @@ void forceClass<FEOrder>::computeConfigurationalForceEEshelbyEElectroPhiTot
     for (unsigned int q=0; q<numQuadPoints; ++q)
     {
        VectorizedArray<double> phiTotElectro_q =phiTotEvalElectro.get_value(q);
-       VectorizedArray<double> phiExtElectro_q =dftParameters::isPseudopotential?
-	                                        phiExtEvalElectro.get_value(q)
-						:make_vectorized_array(0.0);
+       VectorizedArray<double> phiExtElectro_q =make_vectorized_array(0.0);
        Tensor<1,C_DIM,VectorizedArray<double> > gradPhiTotElectro_q =phiTotEvalElectro.get_gradient(q);
 
        Tensor<2,C_DIM,VectorizedArray<double> > E=eshelbyTensor::getEElectroEshelbyTensor
@@ -1186,7 +1184,7 @@ void forceClass<FEOrder>::computeConfigurationalForceEEshelbyEElectroPhiTot
 
        if(dftParameters::isPseudopotential)
        {
-	   Tensor<1,C_DIM,VectorizedArray<double> > gradPhiExt_q =phiExtEvalElectro.get_gradient(q);
+	   Tensor<1,C_DIM,VectorizedArray<double> > gradPhiExt_q =zeroTensor;//phiExtEvalElectro.get_gradient(q);
 	   F+=eshelbyTensor::getFPSPLocal
 	                        (rhoQuadsElectro[q],
 	          	         gradPseudoVLocQuadsElectro[q],
@@ -1200,7 +1198,7 @@ void forceClass<FEOrder>::computeConfigurationalForceEEshelbyEElectroPhiTot
            
 
 	   if(d_isElectrostaticsMeshSubdivided)
-	       F+=gradRhoQuadsElectro[q]*(pseudoVLocQuadsElectro[q]-phiExtElectro_q);
+	       F+=gradRhoQuadsElectro[q]*(pseudoVLocQuadsElectro[q]);//-phiExtElectro_q);
        }
 
        if (shadowPotentialForce)

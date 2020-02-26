@@ -470,6 +470,11 @@ namespace dftfe {
       void loadPSIFiles(unsigned int Z, unsigned int n, unsigned int l, unsigned int & flag);
       void initLocalPseudoPotential(const DoFHandler<3> & _dofHandler,
 	   const dealii::QGauss<3> & _quadrature,
+           const dealii::MatrixFree<3,double> & _matrix_free_data,
+           const unsigned int _phiExtDofHandlerIndex,
+           const dealii::ConstraintMatrix & phiExtConstraintMatrix,
+           const std::map<types::global_dof_index, Point<3> > & supportPoints,
+           const vselfBinsManager<FEOrder> & vselfBinManager,
 	   std::map<dealii::CellId, std::vector<double> > & _pseudoValues,
 	   std::map<dealii::CellId, std::vector<double> > & _gradPseudoValues,
 	   std::map<unsigned int,std::map<dealii::CellId, std::vector<double> > > & _gradPseudoValuesAtoms);
@@ -700,10 +705,10 @@ namespace dftfe {
       std::vector<std::vector<int> > d_globalChargeIdToImageIdMapTrunc;
 
       /// distance from the domain till which periodic images will be considered
-      const double d_pspCutOff=40.0;
+      const double d_pspCutOff=20.0;
 
       /// distance from the domain till which periodic images will be considered
-      const double d_pspCutOffTrunc=8.0;
+      const double d_pspCutOffTrunc=10.0;
 
       std::vector<orbital> waveFunctionsVector;
       std::map<unsigned int, std::map<unsigned int, std::map<unsigned int, alglib::spline1dinterpolant*> > > radValues;

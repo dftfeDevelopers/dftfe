@@ -92,9 +92,9 @@ void forceClass<FEOrder>::computeStressEEshelbyEPSPEnlEk(const MatrixFree<3,doub
 	                                                            phiTotDofHandlerIndex,
 								    0);
 
-  FEEvaluation<C_DIM,FEOrder,C_num1DQuad<FEOrder>(),1> phiExtEval(matrixFreeData,
-	                                                          phiExtDofHandlerIndex,
-								  0);
+  //FEEvaluation<C_DIM,FEOrder,C_num1DQuad<FEOrder>(),1> phiExtEval(matrixFreeData,
+  //	                                                          phiExtDofHandlerIndex,
+  //								  0);
 
   QGauss<C_DIM>  quadrature(C_num1DQuad<FEOrder>());
 
@@ -198,12 +198,12 @@ void forceClass<FEOrder>::computeStressEEshelbyEPSPEnlEk(const MatrixFree<3,doub
       phiTotOutEval.evaluate(true,false);
     }
 
-    if (d_isElectrostaticsMeshSubdivided)
-    {
-      phiExtEval.reinit(cell);
-      phiExtEval.read_dof_values_plain(phiExt);
-      phiExtEval.evaluate(true,false);
-    }
+    //if (d_isElectrostaticsMeshSubdivided)
+    //{
+    //  phiExtEval.reinit(cell);
+    //  phiExtEval.read_dof_values_plain(phiExt);
+    //  phiExtEval.evaluate(true,false);
+    //}
 
     if (dftParameters::nonSelfConsistentForce)
     {
@@ -433,9 +433,7 @@ void forceClass<FEOrder>::computeStressEEshelbyEPSPEnlEk(const MatrixFree<3,doub
        const VectorizedArray<double> phiTot_q =d_isElectrostaticsMeshSubdivided?
 	                                        phiTotOutEval.get_value(q)
 						:make_vectorized_array(0.0);
-       const VectorizedArray<double> phiExt_q =d_isElectrostaticsMeshSubdivided?
-	                                        phiExtEval.get_value(q)
-						:make_vectorized_array(0.0);
+       const VectorizedArray<double> phiExt_q =make_vectorized_array(0.0);
        Point< 3, VectorizedArray<double> > quadPoint_q;
        if (d_isElectrostaticsMeshSubdivided && false)
             quadPoint_q=phiTotOutEval.quadrature_point(q);
@@ -455,7 +453,7 @@ void forceClass<FEOrder>::computeStressEEshelbyEPSPEnlEk(const MatrixFree<3,doub
 
 	   if (isPseudopotential)
 	   {
-	       val=scalar_product(gradRhoQuads[q]*(pseudoVLocQuads[q]-phiExt_q),quadPoint_q);
+	       val=scalar_product(gradRhoQuads[q]*(pseudoVLocQuads[q]),quadPoint_q);
 	       E[0][0]-=val;
 	       E[1][1]-=val;
 	       E[2][2]-=val;
@@ -569,9 +567,9 @@ void forceClass<FEOrder>::computeStressEEshelbyEElectroPhiTot
 	                                                          phiTotDofHandlerIndexElectro,
 								  0);
 
-  FEEvaluation<C_DIM,FEOrder,C_num1DQuad<FEOrder>(),1> phiExtEvalElectro(matrixFreeDataElectro,
-	                                                          phiExtDofHandlerIndexElectro,
-								  0);
+  //FEEvaluation<C_DIM,FEOrder,C_num1DQuad<FEOrder>(),1> phiExtEvalElectro(matrixFreeDataElectro,
+  //	                                                          phiExtDofHandlerIndexElectro,
+  //								  0);
 
   QGauss<C_DIM>  quadrature(C_num1DQuad<FEOrder>());
   FEValues<C_DIM> feVselfValuesElectro (matrixFreeDataElectro.
@@ -606,9 +604,9 @@ void forceClass<FEOrder>::computeStressEEshelbyEElectroPhiTot
     phiTotEvalElectro.read_dof_values_plain(phiTotRhoOutElectro);
     phiTotEvalElectro.evaluate(true,true);
 
-    phiExtEvalElectro.reinit(cell);
-    phiExtEvalElectro.read_dof_values_plain(phiExtElectro);
-    phiExtEvalElectro.evaluate(true,false);
+    //phiExtEvalElectro.reinit(cell);
+    //phiExtEvalElectro.read_dof_values_plain(phiExtElectro);
+    //phiExtEvalElectro.evaluate(true,false);
 
     std::fill(rhoQuadsElectro.begin(),rhoQuadsElectro.end(),make_vectorized_array(0.0));
     std::fill(gradRhoQuadsElectro.begin(),gradRhoQuadsElectro.end(),zeroTensor);
@@ -654,9 +652,7 @@ void forceClass<FEOrder>::computeStressEEshelbyEElectroPhiTot
     for (unsigned int q=0; q<numQuadPoints; ++q)
     {
        VectorizedArray<double> phiTotElectro_q =phiTotEvalElectro.get_value(q);
-       VectorizedArray<double> phiExtElectro_q =dftParameters::isPseudopotential?
-	                                        phiExtEvalElectro.get_value(q)
-						:make_vectorized_array(0.0);
+       VectorizedArray<double> phiExtElectro_q =make_vectorized_array(0.0);
        Tensor<1,C_DIM,VectorizedArray<double> > gradPhiTotElectro_q =phiTotEvalElectro.get_gradient(q);
 
        Tensor<2,C_DIM,VectorizedArray<double> > E=eshelbyTensor::getEElectroEshelbyTensor
@@ -678,7 +674,7 @@ void forceClass<FEOrder>::computeStressEEshelbyEElectroPhiTot
 
 	   if (dftParameters::isPseudopotential)
 	   {
-	       val=scalar_product(gradRhoQuadsElectro[q]*(pseudoVLocQuadsElectro[q]-phiExtElectro_q),quadPoint_q);
+	       val=scalar_product(gradRhoQuadsElectro[q]*(pseudoVLocQuadsElectro[q]),quadPoint_q);
 	       E[0][0]+=val;
 	       E[1][1]+=val;
 	       E[2][2]+=val;

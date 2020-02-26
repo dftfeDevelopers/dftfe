@@ -34,7 +34,7 @@ namespace dftfe
     {
       localVselfs.clear();
       d_vselfFieldBins.clear();
-      d_atomIdBinIdMapLocalAllImages.clear();
+      //d_atomIdBinIdMapLocalAllImages.clear();
       //phiExt with nuclear charge
       //
       const unsigned int numberBins = d_boundaryFlagOnlyChargeId.size();
@@ -111,11 +111,11 @@ namespace dftfe
 			       dftParameters::maxLinearSolverIterations,
 			       dftParameters::verbosity);
 
-
+          /*
           double sumvself_time;
           MPI_Barrier(MPI_COMM_WORLD);
           sumvself_time = MPI_Wtime();
-
+          
 	  std::set<int> & atomsInBinSet = d_bins[iBin];
 	  std::vector<int> atomsInCurrentBin(atomsInBinSet.begin(),atomsInBinSet.end());
 	  const unsigned int numberGlobalAtomsInBin = atomsInCurrentBin.size();
@@ -139,7 +139,7 @@ namespace dftfe
           std::map<dealii::types::global_dof_index, dealii::Point<3>> & dofClosestChargeLocationMap
 		                                            = d_dofClosestChargeLocationMap[iBin];
 
-
+        
 	  int inNodes =0, outNodes = 0;
 	  for(iterNodalCoorMap = supportPoints.begin(); iterNodalCoorMap != supportPoints.end(); ++iterNodalCoorMap)
 	      if(vselfBinScratch.in_local_range(iterNodalCoorMap->first)
@@ -236,6 +236,7 @@ namespace dftfe
           sumvself_time = MPI_Wtime() - sumvself_time;
           if (dftParameters::verbosity>=1)
             pcout<<" Time taken for sumvself for current bin: "<<sumvself_time<<std::endl;
+          */
 	  //
 	  //store Vselfs for atoms in bin
 	  //
@@ -255,14 +256,14 @@ namespace dftfe
 	    d_vselfFieldBins[iBin]=vselfBinScratch;
 	}//bin loop
 
-      phiExt.compress(dealii::VectorOperation::insert);
+      //phiExt.compress(dealii::VectorOperation::insert);
 
       //FIXME: Should we use periodic constraints to distribute phiExt?
-      phiExtConstraintMatrix.distribute(phiExt);
-      phiExt.update_ghost_values();
+      //phiExtConstraintMatrix.distribute(phiExt);
+      //phiExt.update_ghost_values();
 
       //print the norms of phiExt (in periodic case L2 norm of phiExt field does not match. check later)
-      if (dftParameters::verbosity>=4)
-	 pcout<<"L2 Norm Value of phiext: "<<phiExt.l2_norm()<<std::endl;
+      //if (dftParameters::verbosity>=4)
+      //  pcout<<"L2 Norm Value of phiext: "<<phiExt.l2_norm()<<std::endl;
     }
 }

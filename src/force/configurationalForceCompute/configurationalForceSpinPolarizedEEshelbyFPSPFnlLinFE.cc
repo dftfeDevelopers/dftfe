@@ -101,9 +101,9 @@ void forceClass<FEOrder>::computeConfigurationalForceSpinPolarizedEEshelbyTensor
   FEEvaluation<C_DIM,FEOrder,C_num1DQuad<FEOrder>(),1> phiTotInEval(matrixFreeData,
 	                                                            phiTotDofHandlerIndex,
 								    0);
-  FEEvaluation<C_DIM,FEOrder,C_num1DQuad<FEOrder>(),1> phiExtEval(matrixFreeData,
-	                                                          phiExtDofHandlerIndex,
-								  0);
+  //FEEvaluation<C_DIM,FEOrder,C_num1DQuad<FEOrder>(),1> phiExtEval(matrixFreeData,
+  //	                                                          phiExtDofHandlerIndex,
+  //								  0);
 
   QGauss<C_DIM>  quadrature(C_num1DQuad<FEOrder>());
 
@@ -313,12 +313,12 @@ void forceClass<FEOrder>::computeConfigurationalForceSpinPolarizedEEshelbyTensor
 	      phiTotOutEval.evaluate(true,false);
 	    }
 
-	    if (d_isElectrostaticsMeshSubdivided)
-	    {
-	      phiExtEval.reinit(cell);
-	      phiExtEval.read_dof_values_plain(phiExt);
-	      phiExtEval.evaluate(true,false);
-	    }
+	    //if (d_isElectrostaticsMeshSubdivided)
+	    //{
+	    //  phiExtEval.reinit(cell);
+	    //  phiExtEval.read_dof_values_plain(phiExt);
+	    //  phiExtEval.evaluate(true,false);
+	    //}
 
 #ifdef USE_COMPLEX
 	    //vector of quadPoints, nonlocal atom id, pseudo wave, k point
@@ -719,12 +719,12 @@ void forceClass<FEOrder>::computeConfigurationalForceSpinPolarizedEEshelbyTensor
 	  phiTotOutEval.evaluate(true,false);
 	}
 
-	if (d_isElectrostaticsMeshSubdivided)
-	{
-	  phiExtEval.reinit(cell);
-	  phiExtEval.read_dof_values_plain(phiExt);
-	  phiExtEval.evaluate(true,false);
-	}
+	//if (d_isElectrostaticsMeshSubdivided)
+	//{
+	//  phiExtEval.reinit(cell);
+	//  phiExtEval.read_dof_values_plain(phiExt);
+	//  phiExtEval.evaluate(true,false);
+	//}
 
 	std::fill(rhoQuads.begin(),rhoQuads.end(),make_vectorized_array(0.0));
 	std::fill(gradRhoSpin0Quads.begin(),gradRhoSpin0Quads.end(),zeroTensor3);
@@ -863,9 +863,7 @@ void forceClass<FEOrder>::computeConfigurationalForceSpinPolarizedEEshelbyTensor
 	   const VectorizedArray<double> phiTot_q =d_isElectrostaticsMeshSubdivided?
 						    phiTotOutEval.get_value(q)
 						    :make_vectorized_array(0.0);
-	   const VectorizedArray<double> phiExt_q =d_isElectrostaticsMeshSubdivided?
-						    phiExtEval.get_value(q)
-						    :make_vectorized_array(0.0);
+	   const VectorizedArray<double> phiExt_q =make_vectorized_array(0.0);
 
 	   Tensor<2,C_DIM,VectorizedArray<double> > E=eshelbyTensorSP::getELocXcEshelbyTensor
 					  (rhoQuads[q],
@@ -882,7 +880,7 @@ void forceClass<FEOrder>::computeConfigurationalForceSpinPolarizedEEshelbyTensor
 
 	   if(isPseudopotential)
 	       if(d_isElectrostaticsMeshSubdivided)
-		  F-=(gradRhoSpin0Quads[q]+gradRhoSpin1Quads[q])*(pseudoVLocQuads[q]-phiExt_q);
+		  F-=(gradRhoSpin0Quads[q]+gradRhoSpin1Quads[q])*(pseudoVLocQuads[q]);//-phiExt_q);
 
 	   forceEval.submit_value(F,q);
 	   forceEval.submit_gradient(E,q);

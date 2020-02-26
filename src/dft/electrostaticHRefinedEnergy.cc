@@ -570,9 +570,16 @@ void dftClass<FEOrder>::computeElectrostaticEnergyHRefined(const bool computeFor
    std::map<dealii::CellId, std::vector<double> > gradPseudoVLocHRefined;
    std::map<unsigned int,std::map<dealii::CellId, std::vector<double> > > gradPseudoVLocAtomsHRefined;
 
+   std::map<types::global_dof_index, Point<3> > supportPointsHRef;
+   DoFTools::map_dofs_to_support_points(MappingQ1<3,3>(), dofHandlerHRefined, supportPointsHRef);
    if(dftParameters::isPseudopotential)
        initLocalPseudoPotential(dofHandlerHRefined,
 				quadrature,
+                                matrixFreeDataHRefined,
+                                phiExtDofHandlerIndexHRefined,
+                                onlyHangingNodeConstraints,
+                                supportPointsHRef,
+                                vselfBinsManagerHRefined,
 				pseudoVLocHRefined,
 				gradPseudoVLocHRefined,
 				gradPseudoVLocAtomsHRefined);

@@ -715,8 +715,8 @@ namespace dftfe
  
           fe_values.get_function_values(phi,tempPhi);
   
-          if(dftParameters::isPseudopotential)
-	    fe_values.get_function_values(phiExt,tempPhiExt);
+          //if(dftParameters::isPseudopotential)
+	  //  fe_values.get_function_values(phiExt,tempPhiExt);
 
           for (unsigned int q=0; q<numberQuadraturePoints; ++q)
 	    {
@@ -732,7 +732,7 @@ namespace dftfe
               for (unsigned int q=0; q<numberQuadraturePoints; ++q)
 		{
 		  d_vEff[iElemCount*numberQuadraturePoints+q] = tempPhi[q]+exchangePotentialVal[q]+corrPotentialVal[q]
-		    +(pseudoValues.find(cellPtr->id())->second[q]-tempPhiExt[q]);
+		    +(pseudoValues.find(cellPtr->id())->second[q]);//-tempPhiExt[q]);
 
 		  d_vEffJxW[iElemCount*numberQuadraturePoints+q]=
 		    d_vEff[iElemCount*numberQuadraturePoints+q]*fe_values.JxW(q);
@@ -820,8 +820,8 @@ namespace dftfe
  
           fe_values.get_function_values(phi,tempPhi);
   
-          if(dftParameters::isPseudopotential)
-	    fe_values.get_function_values(phiExt,tempPhiExt);
+          //if(dftParameters::isPseudopotential)
+	  //  fe_values.get_function_values(phiExt,tempPhiExt);
 
           for (unsigned int q=0; q<numberQuadraturePoints; ++q)
 	    {
@@ -867,7 +867,7 @@ namespace dftfe
 		{
 		  d_vEff[iElemCount*numberQuadraturePoints+q] =tempPhi[q]
 		    +derExchEnergyWithDensityVal[q]+derCorrEnergyWithDensityVal[q]
-		    +(pseudoValues.find(cellPtr->id())->second[q]-tempPhiExt[q]);
+		    +(pseudoValues.find(cellPtr->id())->second[q]);//-tempPhiExt[q]);
 
 
 		  d_vEffJxW[iElemCount*numberQuadraturePoints+q]=
@@ -965,8 +965,8 @@ namespace dftfe
 
 	  fe_values.get_function_values(phi,tempPhi);
 
-	  if(dftParameters::isPseudopotential)
-	    fe_values.get_function_values(phiExt,tempPhiExt);
+	  //if(dftParameters::isPseudopotential)
+	  //  fe_values.get_function_values(phiExt,tempPhiExt);
 
 	  for (unsigned int q=0; q<numberQuadraturePoints; ++q)
 	    {
@@ -984,7 +984,7 @@ namespace dftfe
 	      for (unsigned int q=0; q<numberQuadraturePoints; ++q)
 		{
 		  d_vEff[iElemCount*numberQuadraturePoints+q] = tempPhi[q]+exchangePotentialVal[2*q+spinIndex]+corrPotentialVal[2*q+spinIndex]
-		    +(pseudoValues.find(cellPtr->id())->second[q]-tempPhiExt[q]);
+		    +(pseudoValues.find(cellPtr->id())->second[q]);//-tempPhiExt[q]);
 
 		  d_vEffJxW[iElemCount*numberQuadraturePoints+q]=
 		    d_vEff[iElemCount*numberQuadraturePoints+q]*fe_values.JxW(q);
@@ -1071,8 +1071,8 @@ namespace dftfe
  
           fe_values.get_function_values(phi,tempPhi);
   
-          if(dftParameters::isPseudopotential)
-	    fe_values.get_function_values(phiExt,tempPhiExt);
+          //if(dftParameters::isPseudopotential)
+	  //  fe_values.get_function_values(phiExt,tempPhiExt);
 
           for (unsigned int q=0; q<numberQuadraturePoints; ++q)
 	    {
@@ -1131,7 +1131,7 @@ namespace dftfe
 		{
 		  d_vEff[iElemCount*numberQuadraturePoints+q] =tempPhi[q]
 		    +derExchEnergyWithDensityVal[2*q+spinIndex]+derCorrEnergyWithDensityVal[2*q+spinIndex]
-		    +(pseudoValues.find(cellPtr->id())->second[q]-tempPhiExt[q]);
+		    +(pseudoValues.find(cellPtr->id())->second[q]);//-tempPhiExt[q]);
 
 
 		  d_vEffJxW[iElemCount*numberQuadraturePoints+q]=

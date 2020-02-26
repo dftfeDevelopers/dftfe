@@ -433,6 +433,7 @@ namespace dftfe
       d_vselfBinField.clear();
       d_closestAtomBin.clear();
       d_vselfBinConstraintMatrices.clear();
+      d_atomIdBinIdMapLocalAllImages.clear();
 
       d_atomLocations=atomLocations;
 
@@ -635,6 +636,8 @@ namespace dftfe
 	  for(int index = 0; index < numberGlobalAtomsInBin; ++index)
 	    {
 	      int globalChargeIdInCurrentBin = atomsInCurrentBin[index];
+             
+              d_atomIdBinIdMapLocalAllImages[globalChargeIdInCurrentBin]=iBin;
 
 	      //std:cout<<"Index: "<<index<<"Global Charge Id: "<<globalChargeIdInCurrentBin<<std::endl;
 
@@ -648,6 +651,7 @@ namespace dftfe
 		      imageIdsOfAtomsInCurrentBin.push_back(iImageAtom);
 		      std::vector<double> imageChargeCoor = imagePositions[iImageAtom];
 		      imagePositionsOfAtomsInCurrentBin.push_back(imageChargeCoor);
+                      d_atomIdBinIdMapLocalAllImages[numberGlobalAtoms+iImageAtom]=iBin;
 		    }
 		}
 

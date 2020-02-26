@@ -581,10 +581,11 @@ namespace dftfe {
 	pcout<<std::endl<<"Pseudopotential initalization...."<<std::endl;
 	QGauss<3>  quadrature(C_num1DQuad<FEOrder>());
 
+        /*
         double init_psplocal;
         MPI_Barrier(MPI_COMM_WORLD);
         init_psplocal = MPI_Wtime();
-
+        
 	initLocalPseudoPotential(dofHandler,
 	                         quadrature,
 	                         d_pseudoVLoc,
@@ -595,6 +596,7 @@ namespace dftfe {
         init_psplocal = MPI_Wtime() - init_psplocal;
         if (dftParameters::verbosity>=1)
             pcout<<"updateAtomPositionsAndMoveMesh: initPseudoPotentialAll: Time taken for local psp init: "<<init_psplocal<<std::endl;
+        */
 
         double init_nonlocal1;
         MPI_Barrier(MPI_COMM_WORLD);
@@ -1112,6 +1114,29 @@ namespace dftfe {
 					d_localVselfs);
     computingTimerStandard.exit_section("Nuclear self-potential solve");
     computing_timer.exit_section("Nuclear self-potential solve");
+
+    QGauss<3>  quadrature(C_num1DQuad<FEOrder>()); 
+    if(dftParameters::isPseudopotential)
+    {
+	    double init_psplocal;
+	    MPI_Barrier(MPI_COMM_WORLD);
+	    init_psplocal = MPI_Wtime();
+	    initLocalPseudoPotential(dofHandler,
+				     quadrature,
+                                     matrix_free_data,
+                                     phiExtDofHandlerIndex,
+                                     d_noConstraints,
+                                     d_supportPoints,
+				     d_vselfBinsManager,
+				     d_pseudoVLoc,
+				     d_gradPseudoVLoc,
+				     d_gradPseudoVLocAtoms);
+
+	    MPI_Barrier(MPI_COMM_WORLD);
+	    init_psplocal = MPI_Wtime() - init_psplocal;
+	    if (dftParameters::verbosity>=1)
+	       pcout<<"updateAtomPositionsAndMoveMesh: initPseudoPotentialAll: Time taken for local psp init: "<<init_psplocal<<std::endl;
+    }
 
     computingTimerStandard.enter_section("Total scf solve");
     energyCalculator energyCalc(mpi_communicator, interpoolcomm,interBandGroupComm);
@@ -2081,7 +2106,7 @@ namespace dftfe {
     //
     // compute and print ground state energy or energy after max scf iterations
     //
-    QGauss<3>  quadrature(C_num1DQuad<FEOrder>());
+    //QGauss<3>  quadrature(C_num1DQuad<FEOrder>());
     if ((!dftParameters::electrostaticsHRefinement || dftParameters::verbosity>=4 || dftParameters::reproducible_output)
         && !(dftParameters::isBOMD && dftParameters::isXLBOMD && solveLinearizedKS))
     {

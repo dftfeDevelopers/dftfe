@@ -23,8 +23,8 @@ void forceClass<FEOrder>::computeConfigurationalForceEselfLinFE
 				               const vselfBinsManager<FEOrder> & vselfBinsManagerElectro)
 {
   const std::vector<std::vector<double> > & atomLocations=dftPtr->atomLocations;
-  const std::vector<std::vector<double> > & imagePositions=dftPtr->d_imagePositionsTrunc;
-  const std::vector<double> & imageCharges=dftPtr->d_imageChargesTrunc;
+  const std::vector<std::vector<double> > & imagePositionsTrunc=dftPtr->d_imagePositionsTrunc;
+  const std::vector<double> & imageChargesTrunc=dftPtr->d_imageChargesTrunc;
   //
   //First add configurational force contribution from the volume integral
   //
@@ -133,10 +133,10 @@ void forceClass<FEOrder>::computeConfigurationalForceEselfLinFE
         }
 	else{
            const int imageId=closestAtomId-numberGlobalAtoms;
-	   closestAtomCharge = imageCharges[imageId];
-           closestAtomLocation[0]=imagePositions[imageId][0];
-	   closestAtomLocation[1]=imagePositions[imageId][1];
-	   closestAtomLocation[2]=imagePositions[imageId][2];
+	   closestAtomCharge = imageChargesTrunc[imageId];
+           closestAtomLocation[0]=imagePositionsTrunc[imageId][0];
+	   closestAtomLocation[1]=imagePositionsTrunc[imageId][1];
+	   closestAtomLocation[2]=imagePositionsTrunc[imageId][2];
         }
 
 	DoFHandler<C_DIM>::active_cell_iterator cellForce=iter2->first;
