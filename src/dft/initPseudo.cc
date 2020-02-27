@@ -245,6 +245,7 @@ void dftClass<FEOrder>::initLocalPseudoPotential
   //loop over elements
   //
   iElem=0;
+  std::vector<double> gradPseudoVLocAtom(3*n_q_points,0.0);
   for(unsigned int macrocell = 0; macrocell < _matrix_free_data.n_macro_cells(); ++macrocell)
   {
       feEvalObj.reinit(macrocell);
@@ -260,6 +261,8 @@ void dftClass<FEOrder>::initLocalPseudoPotential
 	      pseudoVLoc.resize(n_q_points,0.0);
       }
 
+      unsigned int temp;
+      unsigned int count=0;
       //loop over atoms
       for (unsigned int iAtom=0; iAtom<numberGlobalCharges+numberImageCharges; iAtom++)
       {
@@ -271,8 +274,10 @@ void dftClass<FEOrder>::initLocalPseudoPotential
 
           feEvalObj.read_dof_values(singleAtomsVself[iAtom]);
           feEvalObj.evaluate(true,true);
-
-          unsigned int iElemTemp=iElem;
+         
+          if (count==0)
+            temp=iElem; 
+          unsigned int iElemTemp=temp;
           for(unsigned int iSubCell = 0; iSubCell < _matrix_free_data.n_components_filled(macrocell); ++iSubCell)
 	  {
 	      subCellPtr= _matrix_free_data.get_cell_iterator(macrocell,iSubCell);
@@ -280,8 +285,7 @@ void dftClass<FEOrder>::initLocalPseudoPotential
 
 	      std::vector<double> & gradPseudoVLoc=_gradPseudoValues[subCellId];
 	      std::vector<double> & pseudoVLoc=_pseudoValues[subCellId];
-	      std::vector<double> gradPseudoVLocAtom(3*n_q_points,0.0);
-
+	      
 	      if (atomsSparsity[iAtom][iElemTemp]==1)
               {
                    
@@ -300,9 +304,10 @@ void dftClass<FEOrder>::initLocalPseudoPotential
               }
                
               iElemTemp++;  
-              if (iAtom==0)
+              if (count==0)
                  iElem++;
 	  }//subcell loop
+          count+=1;
       }//loop over atoms and images
   }//cell loop
 
