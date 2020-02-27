@@ -1119,6 +1119,8 @@ void dftClass<FEOrder>::initAtomicRho(vectorType & atomicRho)
       d_matrixFreeDataPRefined.initialize_dof_vector(singleAtomsRho[iAtom],1);
     else
       singleAtomsRho[iAtom].reinit(singleAtomsRho[0]);
+    
+    singleAtomsRho[iAtom]=0.0;
   }
 
   const std::shared_ptr< const dealii::Utilities::MPI::Partitioner > & partitioner
