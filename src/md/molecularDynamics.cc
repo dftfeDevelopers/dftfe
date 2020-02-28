@@ -159,8 +159,16 @@ void molecularDynamics<FEOrder>::run()
 	       massAtoms[iCharge]=massAtomMg;
 	   else if(std::fabs(charge-13.0)<1e-8)
 	       massAtoms[iCharge]=massAtomAl;
+	   else if(std::fabs(charge-49.0)<1e-8)
+	       massAtoms[iCharge]=114.82;
+	   else if(std::fabs(charge-15.0)<1e-8)
+	       massAtoms[iCharge]=30.97376;
+	   else if(std::fabs(charge-8.0)<1e-8)
+	       massAtoms[iCharge]=15.9994;
+	   else if(std::fabs(charge-1.0)<1e-8)
+	       massAtoms[iCharge]=1.00797;
 	   else
-	       AssertThrow(false,ExcMessage("Currently md capability is hardcoded for systems with Al and Mg atom types only."));
+	       AssertThrow(false,ExcMessage("Currently md capability is hardcoded for systems with Al, Mg, In, P, O, and H atom types only."));
 	}
 
 	std::vector<dealii::Tensor<1,3,double> > displacements(numberGlobalCharges);
