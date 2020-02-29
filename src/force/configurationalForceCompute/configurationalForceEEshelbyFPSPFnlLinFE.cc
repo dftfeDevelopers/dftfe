@@ -212,6 +212,108 @@ void forceClass<FEOrder>::computeConfigurationalForceEEshelbyTensorFPSPFnlLinFE
    double nlpinit_time_total=0.0;
    double projketpsi_time_total=0.0;
 
+#ifdef USE_COMPLEX
+   //vector of quadPoints times macrocells, nonlocal atom id, pseudo wave, k point
+   //FIXME: flatten nonlocal atomid id and pseudo wave and k point
+   std::vector<std::vector<std::vector<std::vector<Tensor<1,2,VectorizedArray<double> > > > > >ZetaDeltaVQuads;
+   std::vector<std::vector<std::vector<std::vector<Tensor<1,2, Tensor<1,C_DIM,VectorizedArray<double> > > > > > >gradZetaDeltaVQuads; 
+   std::vector<std::vector<std::vector<std::vector<Tensor<1,2, Tensor<1,C_DIM,VectorizedArray<double> > > > > > >pspnlGammaAtomsQuads;
+#else
+   //FIXME: flatten nonlocal atom id and pseudo wave
+   //vector of quadPoints times macrocells, nonlocal atom id, pseudo wave
+   std::vector<std::vector<std::vector<VectorizedArray<double> > > > ZetaDeltaVQuads;
+   std::vector<std::vector<std::vector<Tensor<1,C_DIM,VectorizedArray<double> > > > > gradZetaDeltaVQuads;
+#endif
+   const unsigned int numMacroCells=matrixFreeData.n_macro_cells();
+   if(isPseudopotential)
+   {
+       double nlpinit_time;
+       nlpinit_time = clock();
+
+       if(isPseudopotential)
+       {
+		ZetaDeltaVQuads.resize(numMacroCells*numQuadPointsNLP);
+		gradZetaDeltaVQuads.resize(numMacroCells*numQuadPointsNLP);
+#ifdef USE_COMPLEX
+		pspnlGammaAtomsQuads.resize(numMacroCells*numQuadPointsNLP);
+#endif
+
+		for (unsigned int q=0; q<numQuadPointsNLP*numMacroCells; ++q)
+		{
+		  ZetaDeltaVQuads[q].resize(d_nonLocalPSP_ZetalmDeltaVl.size());
+		  gradZetaDeltaVQuads[q].resize(d_nonLocalPSP_ZetalmDeltaVl.size());
+#ifdef USE_COMPLEX
+		  pspnlGammaAtomsQuads[q].resize(d_nonLocalPSP_ZetalmDeltaVl.size());
+#endif
+		  for (unsigned int i=0; i < d_nonLocalPSP_ZetalmDeltaVl.size(); ++i)
+		  {
+		    const int numberPseudoWaveFunctions = d_nonLocalPSP_ZetalmDeltaVl[i].size();
+#ifdef USE_COMPLEX
+		    ZetaDeltaVQuads[q][i].resize(numberPseudoWaveFunctions);
+		    gradZetaDeltaVQuads[q][i].resize(numberPseudoWaveFunctions);
+		    pspnlGammaAtomsQuads[q][i].resize(numberPseudoWaveFunctions);
+		    for (unsigned int iPseudoWave=0; iPseudoWave < numberPseudoWaveFunctions; ++iPseudoWave)
+		    {
+			ZetaDeltaVQuads[q][i][iPseudoWave].resize(numKPoints,zeroTensor1);
+			gradZetaDeltaVQuads[q][i][iPseudoWave].resize(numKPoints,zeroTensor2);
+			pspnlGammaAtomsQuads[q][i][iPseudoWave].resize(numKPoints,zeroTensor2);
+		    }
+#else
+		    ZetaDeltaVQuads[q][i].resize(numberPseudoWaveFunctions,make_vectorized_array(0.0));
+		    gradZetaDeltaVQuads[q][i].resize(numberPseudoWaveFunctions,zeroTensor3);
+#endif
+		  }
+		}
+       }
+	   
+       for (unsigned int cell=0; cell<matrixFreeData.n_macro_cells(); ++cell)
+       {
+               const unsigned int numSubCells=matrixFreeData.n_components_filled(cell);
+               for (unsigned int iSubCell=0; iSubCell<numSubCells; ++iSubCell)
+	       {
+		  subCellPtr= matrixFreeData.get_cell_iterator(cell,iSubCell);
+		  dealii::CellId subCellId=subCellPtr->id();
+
+		  for (unsigned int q=0; q<numQuadPointsNLP; ++q)
+		  {
+		    for (unsigned int i=0; i < d_nonLocalPSP_ZetalmDeltaVl.size(); ++i)
+		    {
+		      const int numberPseudoWaveFunctions = d_nonLocalPSP_ZetalmDeltaVl[i].size();
+		      for (unsigned int iPseudoWave=0; iPseudoWave < numberPseudoWaveFunctions; ++iPseudoWave)
+		      {
+			if (d_nonLocalPSP_ZetalmDeltaVl[i][iPseudoWave].find(subCellId)!=d_nonLocalPSP_ZetalmDeltaVl[i][iPseudoWave].end())
+			{
+#ifdef USE_COMPLEX
+			   for (unsigned int ikPoint=0; ikPoint<numKPoints; ++ikPoint)
+			   {
+			      ZetaDeltaVQuads[cell*numQuadPointsNLP+q][i][iPseudoWave][ikPoint][0][iSubCell]=d_nonLocalPSP_ZetalmDeltaVl[i][iPseudoWave][subCellId][ikPoint*numQuadPointsNLP*2+q*2+0];
+			      ZetaDeltaVQuads[cell*numQuadPointsNLP+q][i][iPseudoWave][ikPoint][1][iSubCell]=d_nonLocalPSP_ZetalmDeltaVl[i][iPseudoWave][subCellId][ikPoint*numQuadPointsNLP*2+q*2+1];
+			      for (unsigned int idim=0; idim<C_DIM; idim++)
+			      {
+				 gradZetaDeltaVQuads[cell*numQuadPointsNLP+q][i][iPseudoWave][ikPoint][0][idim][iSubCell]=d_nonLocalPSP_gradZetalmDeltaVl_minusZetalmDeltaVl_KPoint[i][iPseudoWave][subCellId][ikPoint*numQuadPointsNLP*C_DIM*2+q*C_DIM*2+idim*2+0];
+				 gradZetaDeltaVQuads[cell*numQuadPointsNLP+q][i][iPseudoWave][ikPoint][1][idim][iSubCell]=d_nonLocalPSP_gradZetalmDeltaVl_minusZetalmDeltaVl_KPoint[i][iPseudoWave][subCellId][ikPoint*numQuadPointsNLP*C_DIM*2+q*C_DIM*2+idim*2+1];
+				 pspnlGammaAtomsQuads[cell*numQuadPointsNLP+q][i][iPseudoWave][ikPoint][0][idim][iSubCell]=d_nonLocalPSP_gradZetalmDeltaVl_KPoint[i][iPseudoWave][subCellId][ikPoint*numQuadPointsNLP*C_DIM*2+q*C_DIM*2+idim*2+0];
+				 pspnlGammaAtomsQuads[cell*numQuadPointsNLP+q][i][iPseudoWave][ikPoint][1][idim][iSubCell]=d_nonLocalPSP_gradZetalmDeltaVl_KPoint[i][iPseudoWave][subCellId][ikPoint*numQuadPointsNLP*C_DIM*2+q*C_DIM*2+idim*2+1];
+			      }
+			   }
+#else
+			   ZetaDeltaVQuads[cell*numQuadPointsNLP+q][i][iPseudoWave][iSubCell]=d_nonLocalPSP_ZetalmDeltaVl[i][iPseudoWave][subCellId][q];
+
+			   for (unsigned int idim=0; idim<C_DIM; idim++)
+			       gradZetaDeltaVQuads[cell*numQuadPointsNLP+q][i][iPseudoWave][idim][iSubCell]=
+				   d_nonLocalPSP_gradZetalmDeltaVl[i][iPseudoWave][subCellId][q*C_DIM+idim];
+#endif
+			}//non-trivial cellId check
+		      }//iPseudoWave loop
+		    }//i loop
+		  }//q loop
+	       }//subcell loop
+       }
+	      
+       nlpinit_time = clock() - nlpinit_time;
+       nlpinit_time_total+=nlpinit_time;
+   }
+   
    for(unsigned int ivec = 0; ivec < numEigenVectors; ivec+=blockSize)
    {
       const unsigned int currentBlockSize=std::min(blockSize,numEigenVectors-ivec);
@@ -328,53 +430,6 @@ void forceClass<FEOrder>::computeConfigurationalForceEEshelbyTensorFPSPFnlLinFE
 	      psiEvalNLP.reinit(cell);
 	    }
 
-#ifdef USE_COMPLEX
-	    //vector of quadPoints, nonlocal atom id, pseudo wave, k point
-	    //FIXME: flatten nonlocal atomid id and pseudo wave and k point
-	    std::vector<std::vector<std::vector<std::vector<Tensor<1,2,VectorizedArray<double> > > > > >ZetaDeltaVQuads;
-	    std::vector<std::vector<std::vector<std::vector<Tensor<1,2, Tensor<1,C_DIM,VectorizedArray<double> > > > > > >gradZetaDeltaVQuads;
-	    std::vector<std::vector<std::vector<std::vector<Tensor<1,2, Tensor<1,C_DIM,VectorizedArray<double> > > > > > >pspnlGammaAtomsQuads;
-#else
-	    //FIXME: flatten nonlocal atom id and pseudo wave
-	    //vector of quadPoints, nonlocal atom id, pseudo wave
-	    std::vector<std::vector<std::vector<VectorizedArray<double> > > > ZetaDeltaVQuads;
-	    std::vector<std::vector<std::vector<Tensor<1,C_DIM,VectorizedArray<double> > > > > gradZetaDeltaVQuads;
-#endif
-	    if(isPseudopotential)
-	    {
-		ZetaDeltaVQuads.resize(numQuadPointsNLP);
-		gradZetaDeltaVQuads.resize(numQuadPointsNLP);
-#ifdef USE_COMPLEX
-		pspnlGammaAtomsQuads.resize(numQuadPointsNLP);
-#endif
-
-		for (unsigned int q=0; q<numQuadPointsNLP; ++q)
-		{
-		  ZetaDeltaVQuads[q].resize(d_nonLocalPSP_ZetalmDeltaVl.size());
-		  gradZetaDeltaVQuads[q].resize(d_nonLocalPSP_ZetalmDeltaVl.size());
-#ifdef USE_COMPLEX
-		  pspnlGammaAtomsQuads[q].resize(d_nonLocalPSP_ZetalmDeltaVl.size());
-#endif
-		  for (unsigned int i=0; i < d_nonLocalPSP_ZetalmDeltaVl.size(); ++i)
-		  {
-		    const int numberPseudoWaveFunctions = d_nonLocalPSP_ZetalmDeltaVl[i].size();
-#ifdef USE_COMPLEX
-		    ZetaDeltaVQuads[q][i].resize(numberPseudoWaveFunctions);
-		    gradZetaDeltaVQuads[q][i].resize(numberPseudoWaveFunctions);
-		    pspnlGammaAtomsQuads[q][i].resize(numberPseudoWaveFunctions);
-		    for (unsigned int iPseudoWave=0; iPseudoWave < numberPseudoWaveFunctions; ++iPseudoWave)
-		    {
-			ZetaDeltaVQuads[q][i][iPseudoWave].resize(numKPoints,zeroTensor1);
-			gradZetaDeltaVQuads[q][i][iPseudoWave].resize(numKPoints,zeroTensor2);
-			pspnlGammaAtomsQuads[q][i][iPseudoWave].resize(numKPoints,zeroTensor2);
-		    }
-#else
-		    ZetaDeltaVQuads[q][i].resize(numberPseudoWaveFunctions,make_vectorized_array(0.0));
-		    gradZetaDeltaVQuads[q][i].resize(numberPseudoWaveFunctions,zeroTensor3);
-#endif
-		  }
-		}
-	    }
 	    const unsigned int numSubCells=matrixFreeData.n_components_filled(cell);
 #ifdef USE_COMPLEX
 	    std::vector<Tensor<1,2,VectorizedArray<double> > > psiQuads(numQuadPoints*currentBlockSize*numKPoints,zeroTensor1);
@@ -434,54 +489,10 @@ void forceClass<FEOrder>::computeConfigurationalForceEEshelbyTensorFPSPFnlLinFE
 
 	    if(isPseudopotential)
 	    {
-               double nlpinit_time;
-               nlpinit_time = clock();
-	       for (unsigned int iSubCell=0; iSubCell<numSubCells; ++iSubCell)
-	       {
-		  subCellPtr= matrixFreeData.get_cell_iterator(cell,iSubCell);
-		  dealii::CellId subCellId=subCellPtr->id();
-
-		  for (unsigned int q=0; q<numQuadPointsNLP; ++q)
-		  {
-		    for (unsigned int i=0; i < d_nonLocalPSP_ZetalmDeltaVl.size(); ++i)
-		    {
-		      const int numberPseudoWaveFunctions = d_nonLocalPSP_ZetalmDeltaVl[i].size();
-		      for (unsigned int iPseudoWave=0; iPseudoWave < numberPseudoWaveFunctions; ++iPseudoWave)
-		      {
-			if (d_nonLocalPSP_ZetalmDeltaVl[i][iPseudoWave].find(subCellId)!=d_nonLocalPSP_ZetalmDeltaVl[i][iPseudoWave].end())
-			{
-#ifdef USE_COMPLEX
-			   for (unsigned int ikPoint=0; ikPoint<numKPoints; ++ikPoint)
-			   {
-			      ZetaDeltaVQuads[q][i][iPseudoWave][ikPoint][0][iSubCell]=d_nonLocalPSP_ZetalmDeltaVl[i][iPseudoWave][subCellId][ikPoint*numQuadPointsNLP*2+q*2+0];
-			      ZetaDeltaVQuads[q][i][iPseudoWave][ikPoint][1][iSubCell]=d_nonLocalPSP_ZetalmDeltaVl[i][iPseudoWave][subCellId][ikPoint*numQuadPointsNLP*2+q*2+1];
-			      for (unsigned int idim=0; idim<C_DIM; idim++)
-			      {
-				 gradZetaDeltaVQuads[q][i][iPseudoWave][ikPoint][0][idim][iSubCell]=d_nonLocalPSP_gradZetalmDeltaVl_minusZetalmDeltaVl_KPoint[i][iPseudoWave][subCellId][ikPoint*numQuadPointsNLP*C_DIM*2+q*C_DIM*2+idim*2+0];
-				 gradZetaDeltaVQuads[q][i][iPseudoWave][ikPoint][1][idim][iSubCell]=d_nonLocalPSP_gradZetalmDeltaVl_minusZetalmDeltaVl_KPoint[i][iPseudoWave][subCellId][ikPoint*numQuadPointsNLP*C_DIM*2+q*C_DIM*2+idim*2+1];
-				 pspnlGammaAtomsQuads[q][i][iPseudoWave][ikPoint][0][idim][iSubCell]=d_nonLocalPSP_gradZetalmDeltaVl_KPoint[i][iPseudoWave][subCellId][ikPoint*numQuadPointsNLP*C_DIM*2+q*C_DIM*2+idim*2+0];
-				 pspnlGammaAtomsQuads[q][i][iPseudoWave][ikPoint][1][idim][iSubCell]=d_nonLocalPSP_gradZetalmDeltaVl_KPoint[i][iPseudoWave][subCellId][ikPoint*numQuadPointsNLP*C_DIM*2+q*C_DIM*2+idim*2+1];
-			      }
-			   }
-#else
-			   ZetaDeltaVQuads[q][i][iPseudoWave][iSubCell]=d_nonLocalPSP_ZetalmDeltaVl[i][iPseudoWave][subCellId][q];
-
-			   for (unsigned int idim=0; idim<C_DIM; idim++)
-			       gradZetaDeltaVQuads[q][i][iPseudoWave][idim][iSubCell]=
-				   d_nonLocalPSP_gradZetalmDeltaVl[i][iPseudoWave][subCellId][q*C_DIM+idim];
-#endif
-			}//non-trivial cellId check
-		      }//iPseudoWave loop
-		    }//i loop
-		  }//q loop
-	       }//subcell loop
-	       //compute FnlGammaAtoms  (contibution due to Gamma(Rj))
-	      
-              nlpinit_time = clock() - nlpinit_time;
-              nlpinit_time_total+=nlpinit_time;
- 
+              //compute FnlGammaAtoms  (contibution due to Gamma(Rj)) 
               double fnlgamma_time;
               fnlgamma_time = clock();
+              
 #ifdef USE_COMPLEX
 
 	       FnlGammaAtomsElementalContributionPeriodic
@@ -507,6 +518,7 @@ void forceClass<FEOrder>::computeConfigurationalForceEEshelbyTensorFPSPFnlLinFE
 					      dftParameters::useHigherQuadNLP?psiQuadsNLP:psiQuads,
 					      macroIdToNonlocalAtomsSetMap[cell]);
 #endif
+               
                fnlgamma_time = clock() - fnlgamma_time;
                fnlgamma_time_total+=fnlgamma_time;
 	    }//is pseudopotential check
@@ -544,8 +556,8 @@ void forceClass<FEOrder>::computeConfigurationalForceEEshelbyTensorFPSPFnlLinFE
 		       Tensor<1,C_DIM,VectorizedArray<double> > FKPoints;
 		       Tensor<2,C_DIM,VectorizedArray<double> > EnlKPoints;
 
-		       eshelbyTensor::getFnlEnlMergedPeriodic(gradZetaDeltaVQuads[q],
-								 ZetaDeltaVQuads[q],
+		       eshelbyTensor::getFnlEnlMergedPeriodic(gradZetaDeltaVQuads[cell*numQuadPoints+q],
+								 ZetaDeltaVQuads[cell*numQuadPoints+q],
 								 projectorKetTimesPsiTimesVTimesPartOcc,
 								 psiQuads.begin()+q*currentBlockSize*numKPoints,
 								 dftPtr->d_kPointWeights,
@@ -559,8 +571,8 @@ void forceClass<FEOrder>::computeConfigurationalForceEEshelbyTensorFPSPFnlLinFE
 		       Tensor<1,C_DIM,VectorizedArray<double> > Fnl;
 		       Tensor<2,C_DIM,VectorizedArray<double> >	Enl;
 
-		       eshelbyTensor::getFnlEnlMergedNonPeriodic(gradZetaDeltaVQuads[q],
-			                                         ZetaDeltaVQuads[q],
+		       eshelbyTensor::getFnlEnlMergedNonPeriodic(gradZetaDeltaVQuads[cell*numQuadPoints+q],
+			                                         ZetaDeltaVQuads[cell*numQuadPoints+q],
 								 projectorKetTimesPsiTimesVTimesPartOcc[0],
 								 psiQuads.begin()+q*currentBlockSize,
 							         currentBlockSize,
@@ -593,29 +605,29 @@ void forceClass<FEOrder>::computeConfigurationalForceEEshelbyTensorFPSPFnlLinFE
 		       Tensor<1,C_DIM,VectorizedArray<double> > FKPoints;
 		       Tensor<2,C_DIM,VectorizedArray<double> > EKPoints;
 
-		       eshelbyTensor::getFnlEnlMergedPeriodic(gradZetaDeltaVQuads[q],
-								 ZetaDeltaVQuads[q],
-								 projectorKetTimesPsiTimesVTimesPartOcc,
-								 psiQuadsNLP.begin()+q*currentBlockSize*numKPoints,
-								 dftPtr->d_kPointWeights,
-								 currentBlockSize,
-								 macroIdToNonlocalAtomsSetMap[cell],
-								 FKPoints,
-								 EKPoints);
+		       eshelbyTensor::getFnlEnlMergedPeriodic(gradZetaDeltaVQuads[cell*numQuadPointsNLP+q],
+						              ZetaDeltaVQuads[cell*numQuadPointsNLP+q],
+							      projectorKetTimesPsiTimesVTimesPartOcc,
+							      psiQuadsNLP.begin()+q*currentBlockSize*numKPoints,
+							      dftPtr->d_kPointWeights,
+							      currentBlockSize,
+							      macroIdToNonlocalAtomsSetMap[cell],
+							      FKPoints,
+							      EKPoints);
 		       forceEvalKPointsNLP.submit_value(FKPoints,q);
 		       forceEvalKPointsNLP.submit_gradient(EKPoints,q);
 #else
 		       Tensor<1,C_DIM,VectorizedArray<double> > F;
 		       Tensor<2,C_DIM,VectorizedArray<double> >	E;
 
-		       eshelbyTensor::getFnlEnlMergedNonPeriodic(gradZetaDeltaVQuads[q],
-			                                                ZetaDeltaVQuads[q],
-									projectorKetTimesPsiTimesVTimesPartOcc[0],
-									psiQuadsNLP.begin()+q*currentBlockSize,
-									currentBlockSize,
-									macroIdToNonlocalAtomsSetMap[cell],
-									F,
-									E);
+		       eshelbyTensor::getFnlEnlMergedNonPeriodic(gradZetaDeltaVQuads[cell*numQuadPointsNLP+q],
+			                                         ZetaDeltaVQuads[cell*numQuadPointsNLP+q],
+								 projectorKetTimesPsiTimesVTimesPartOcc[0],
+								 psiQuadsNLP.begin()+q*currentBlockSize,
+								 currentBlockSize,
+								 macroIdToNonlocalAtomsSetMap[cell],
+								 F,
+								 E);
 
 		       forceEvalNLP.submit_value(F,q);
 		       forceEvalNLP.submit_gradient(E,q);

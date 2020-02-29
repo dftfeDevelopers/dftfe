@@ -73,7 +73,7 @@ void forceClass<FEOrder>::FnlGammaAtomsElementalContributionPeriodic(std::map<un
 	      for (unsigned int q=0; q<numQuadPoints; ++q)
 	      {
 		   std::vector<std::vector<std::vector<Tensor<1,2, Tensor<1,C_DIM,VectorizedArray<double> > > > > > temp1(1);
-		   temp1[0]=pspnlGammaAtomsQuads[q][iAtom];
+		   temp1[0]=pspnlGammaAtomsQuads[cell*numQuadPoints+q][iAtom];
 
 		   const Tensor<1,C_DIM,VectorizedArray<double> >
 		       F=-eshelbyTensor::getFnlPeriodic(temp1,
@@ -91,7 +91,7 @@ void forceClass<FEOrder>::FnlGammaAtomsElementalContributionPeriodic(std::map<un
 	      for (unsigned int q=0; q<numQuadPoints; ++q)
 	      {
 		   std::vector<std::vector<std::vector<Tensor<1,2, Tensor<1,C_DIM,VectorizedArray<double> > > > > > temp1(1);
-		   temp1[0]=pspnlGammaAtomsQuads[q][iAtom];
+		   temp1[0]=pspnlGammaAtomsQuads[cell*numQuadPoints+q][iAtom];
 
 		   const Tensor<1,C_DIM,VectorizedArray<double> >
 		       F=-eshelbyTensor::getFnlPeriodic(temp1,
@@ -125,7 +125,7 @@ void forceClass<FEOrder>::FnlGammaAtomsElementalContributionNonPeriodic(std::map
 							                FEEvaluation<C_DIM,1,C_num1DQuad<FEOrder>(),C_DIM>  & forceEval,
 								        FEEvaluation<C_DIM,1,C_num1DQuadPSP<FEOrder>(),C_DIM>  & forceEvalNLP,
 							                const unsigned int cell,
-							                const std::vector<std::vector<std::vector<Tensor<1,C_DIM,VectorizedArray<double> > > > > pspnlGammaAtomQuads,
+							                const std::vector<std::vector<std::vector<Tensor<1,C_DIM,VectorizedArray<double> > > > > & pspnlGammaAtomQuads,
                                                                         const std::vector<std::vector<double> >  & projectorKetTimesPsiTimesVTimesPartOcc,
 							                const std::vector< VectorizedArray<double> > & psiQuads,
 									const std::vector<unsigned int> & nonlocalAtomsCompactSupportList)
@@ -169,7 +169,7 @@ void forceClass<FEOrder>::FnlGammaAtomsElementalContributionNonPeriodic(std::map
 	      for (unsigned int q=0; q<numQuadPoints; ++q)
 	      {
 		   std::vector<std::vector<Tensor<1,C_DIM,VectorizedArray<double> > > > temp1(1);
-		   temp1[0]=pspnlGammaAtomQuads[q][iAtom];
+		   temp1[0]=pspnlGammaAtomQuads[cell*numQuadPoints+q][iAtom];
 
 		   const Tensor<1,C_DIM,VectorizedArray<double> > F=
 				  -eshelbyTensor::getFnlNonPeriodic(temp1,
@@ -186,7 +186,7 @@ void forceClass<FEOrder>::FnlGammaAtomsElementalContributionNonPeriodic(std::map
 	      for (unsigned int q=0; q<numQuadPoints; ++q)
 	      {
 		   std::vector<std::vector<Tensor<1,C_DIM,VectorizedArray<double> > > > temp1(1);
-		   temp1[0]=pspnlGammaAtomQuads[q][iAtom];
+		   temp1[0]=pspnlGammaAtomQuads[cell*numQuadPoints+q][iAtom];
 
 		   const Tensor<1,C_DIM,VectorizedArray<double> > F=
 				  -eshelbyTensor::getFnlNonPeriodic(temp1,
