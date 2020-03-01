@@ -57,6 +57,9 @@ namespace internalforce
 template<unsigned int FEOrder>
 void forceClass<FEOrder>::computeConfigurationalForceEEshelbyTensorFPSPFnlLinFE
 			      (const MatrixFree<3,double> & matrixFreeData,
+#ifdef DFTFE_WITH_GPU
+                               kohnShamDFTOperatorCUDAClass<FEOrder> & kohnShamDFTEigenOperator,
+#endif
 			      const unsigned int eigenDofHandlerIndex,
 			      const unsigned int phiExtDofHandlerIndex,
 			      const unsigned int phiTotDofHandlerIndex,

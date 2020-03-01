@@ -18,7 +18,11 @@
 
 
 template<unsigned int FEOrder>
-void dftClass<FEOrder>::computeElectrostaticEnergyHRefined(const bool computeForces)
+void dftClass<FEOrder>::computeElectrostaticEnergyHRefined(
+#ifdef DFTFE_WITH_GPU
+                          kohnShamDFTOperatorCUDAClass<FEOrder> & kohnShamDFTEigenOperator,
+#endif
+                                                           const bool computeForces)
 {
    computing_timer.enter_section("h refinement electrostatics");
    computingTimerStandard.enter_section("h refinement electrostatics");
@@ -707,6 +711,9 @@ void dftClass<FEOrder>::computeElectrostaticEnergyHRefined(const bool computeFor
 	if (computeForces)
 	{
 	    forcePtr->computeAtomsForces(matrix_free_data,
+#ifdef DFTFE_WITH_GPU
+                                         kohnShamDFTEigenOperator,
+#endif
 					 eigenDofHandlerIndex,
 					 phiExtDofHandlerIndex,
 					 phiTotDofHandlerIndex,

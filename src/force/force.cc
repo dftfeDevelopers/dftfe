@@ -267,6 +267,9 @@ void forceClass<FEOrder>::initPseudoData()
 template<unsigned int FEOrder>
 void forceClass<FEOrder>::computeAtomsForces
 		 (const MatrixFree<3,double> & matrixFreeData,
+#ifdef DFTFE_WITH_GPU
+                 kohnShamDFTOperatorCUDAClass<FEOrder> & kohnShamDFTEigenOperator,
+#endif
 		 const unsigned int eigenDofHandlerIndex,
 		 const unsigned int phiExtDofHandlerIndex,
 		 const unsigned int phiTotDofHandlerIndex,
@@ -322,6 +325,9 @@ void forceClass<FEOrder>::computeAtomsForces
                         d_cellFacesVselfBallSurfacesDofHandlerForceElectro);
 
   computeConfigurationalForceTotalLinFE(matrixFreeData,
+#ifdef DFTFE_WITH_GPU
+                                        kohnShamDFTEigenOperator,
+#endif
 		                        eigenDofHandlerIndex,
 		                        phiExtDofHandlerIndex,
 		                        phiTotDofHandlerIndex,
@@ -403,6 +409,9 @@ void forceClass<FEOrder>::configForceLinFEFinalize()
 template<unsigned int FEOrder>
 void forceClass<FEOrder>::computeConfigurationalForceTotalLinFE
                                      (const MatrixFree<3,double> & matrixFreeData,
+#ifdef DFTFE_WITH_GPU
+                                      kohnShamDFTOperatorCUDAClass<FEOrder> & kohnShamDFTEigenOperator,
+#endif
 				     const unsigned int eigenDofHandlerIndex,
 				     const unsigned int phiExtDofHandlerIndex,
 				     const unsigned int phiTotDofHandlerIndex,
@@ -468,6 +477,9 @@ void forceClass<FEOrder>::computeConfigurationalForceTotalLinFE
   else
      computeConfigurationalForceEEshelbyTensorFPSPFnlLinFE
 		                        (matrixFreeData,
+#ifdef DFTFE_WITH_GPU
+                                        kohnShamDFTEigenOperator,
+#endif
 		                        eigenDofHandlerIndex,
 		                        phiExtDofHandlerIndex,
 		                        phiTotDofHandlerIndex,

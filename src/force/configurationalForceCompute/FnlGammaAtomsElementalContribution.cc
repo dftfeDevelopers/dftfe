@@ -147,8 +147,7 @@ void forceClass<FEOrder>::FnlGammaAtomsElementalContributionNonPeriodic(std::map
       //
       const int nonLocalAtomId=dftPtr->d_nonLocalAtomIdsInCurrentProcess[iAtom];
       const int globalChargeIdNonLocalAtom =  dftPtr->d_nonLocalAtomGlobalChargeIds[nonLocalAtomId];
-      std::vector<std::vector<double> >  temp2(1);
-      temp2[0]=projectorKetTimesPsiTimesVTimesPartOcc[iAtom];
+      const std::vector<double> &  temp2=projectorKetTimesPsiTimesVTimesPartOcc[iAtom];
 
       //if map entry corresponding to current nonlocal atom id is empty, initialize it to zero
       if (forceContributionFnlGammaAtoms.find(globalChargeIdNonLocalAtom)==forceContributionFnlGammaAtoms.end())
@@ -168,8 +167,8 @@ void forceClass<FEOrder>::FnlGammaAtomsElementalContributionNonPeriodic(std::map
 	  {
 	      for (unsigned int q=0; q<numQuadPoints; ++q)
 	      {
-		   std::vector<std::vector<Tensor<1,C_DIM,VectorizedArray<double> > > > temp1(1);
-		   temp1[0]=pspnlGammaAtomQuads[cell*numQuadPoints+q][iAtom];
+		   const std::vector<Tensor<1,C_DIM,VectorizedArray<double> > >  & temp1
+                      =pspnlGammaAtomQuads[cell*numQuadPoints+q][iAtom];
 
 		   const Tensor<1,C_DIM,VectorizedArray<double> > F=
 				  -eshelbyTensor::getFnlNonPeriodic(temp1,
@@ -185,8 +184,8 @@ void forceClass<FEOrder>::FnlGammaAtomsElementalContributionNonPeriodic(std::map
 	  {
 	      for (unsigned int q=0; q<numQuadPoints; ++q)
 	      {
-		   std::vector<std::vector<Tensor<1,C_DIM,VectorizedArray<double> > > > temp1(1);
-		   temp1[0]=pspnlGammaAtomQuads[cell*numQuadPoints+q][iAtom];
+		   const std::vector<Tensor<1,C_DIM,VectorizedArray<double> > > &
+                   temp1=pspnlGammaAtomQuads[cell*numQuadPoints+q][iAtom];
 
 		   const Tensor<1,C_DIM,VectorizedArray<double> > F=
 				  -eshelbyTensor::getFnlNonPeriodic(temp1,

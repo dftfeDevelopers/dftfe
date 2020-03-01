@@ -149,8 +149,8 @@ namespace dftfe {
 				       Tensor<1,C_DIM,VectorizedArray<double> > & Fnl,
 				       Tensor<2,C_DIM,VectorizedArray<double> > & Enl);
 
-      Tensor<1,C_DIM,VectorizedArray<double> >  getFnlNonPeriodic(const std::vector<std::vector<Tensor<1,C_DIM,VectorizedArray<double> > > > & gradZetaDeltaV,
-								const std::vector<std::vector<double > > & projectorKetTimesPsiTimesVTimesPartOcc,
+      Tensor<1,C_DIM,VectorizedArray<double> >  getFnlNonPeriodic(const std::vector<Tensor<1,C_DIM,VectorizedArray<double> > >  & gradZetaDeltaV,
+								const std::vector<double >  & projectorKetTimesPsiTimesVTimesPartOcc,
 								std::vector<VectorizedArray<double> >::const_iterator psiBegin,
 								const unsigned int numBlockedEigenvectors);
 

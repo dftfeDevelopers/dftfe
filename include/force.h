@@ -20,6 +20,9 @@
 #include "constants.h"
 #include "meshMovementGaussian.h"
 #include <vselfBinsManager.h>
+#ifdef DFTFE_WITH_GPU
+#include <kohnShamDFTOperatorCUDA.h>
+#endif
 
 
 using namespace dealii;
@@ -108,6 +111,9 @@ namespace dftfe {
      */
       void computeAtomsForces
 		 (const MatrixFree<3,double> & matrixFreeData,
+#ifdef DFTFE_WITH_GPU
+                 kohnShamDFTOperatorCUDAClass<FEOrder> & kohnShamDFTEigenOperator,
+#endif
 		 const unsigned int eigenDofHandlerIndex,
 		 const unsigned int phiExtDofHandlerIndex,
 		 const unsigned int phiTotDofHandlerIndex,
@@ -244,6 +250,9 @@ namespace dftfe {
 
       void computeConfigurationalForceEEshelbyTensorFPSPFnlLinFE
 			      (const MatrixFree<3,double> & matrixFreeData,
+#ifdef DFTFE_WITH_GPU
+                              kohnShamDFTOperatorCUDAClass<FEOrder> & kohnShamDFTEigenOperator,
+#endif
 			      const unsigned int eigenDofHandlerIndex,
 			      const unsigned int phiExtDofHandlerIndex,
 			      const unsigned int phiTotDofHandlerIndex,
@@ -325,6 +334,9 @@ namespace dftfe {
 
       void computeConfigurationalForceTotalLinFE
 				     (const MatrixFree<3,double> & matrixFreeData,
+#ifdef DFTFE_WITH_GPU
+                                     kohnShamDFTOperatorCUDAClass<FEOrder> & kohnShamDFTEigenOperator,
+#endif
 				     const unsigned int eigenDofHandlerIndex,
 				     const unsigned int phiExtDofHandlerIndex,
 				     const unsigned int phiTotDofHandlerIndex,

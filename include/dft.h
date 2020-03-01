@@ -576,7 +576,11 @@ namespace dftfe {
        * However, it works for time reversal symmetry.
        *
        */
-      void computeElectrostaticEnergyHRefined(const bool computeForces=true);
+      void computeElectrostaticEnergyHRefined(
+#ifdef DFTFE_WITH_GPU
+                          kohnShamDFTOperatorCUDAClass<FEOrder> & kohnShamDFTEigenOperator,
+#endif
+                                              const bool computeForces=true);
       void computeElectrostaticEnergyPRefined();
       /**
        *@brief Computes Fermi-energy obtained by imposing constraint on the number of electrons
