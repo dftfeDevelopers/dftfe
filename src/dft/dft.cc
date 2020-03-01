@@ -2353,6 +2353,9 @@ namespace dftfe {
 	{
             if (dftParameters::isBOMD && dftParameters::isXLBOMD && solveLinearizedKS)
 		    forcePtr->computeAtomsForces(matrix_free_data,
+#ifdef DFTFE_WITH_GPU
+                                                 kohnShamDFTEigenOperatorCUDA,
+#endif
 						 eigenDofHandlerIndex,
 						 phiExtDofHandlerIndex,
 						 phiTotDofHandlerIndex,
@@ -2384,6 +2387,9 @@ namespace dftfe {
                                                  true);
             else
 		    forcePtr->computeAtomsForces(matrix_free_data,
+#ifdef DFTFE_WITH_GPU
+                                                 kohnShamDFTEigenOperatorCUDA,
+#endif
 						 eigenDofHandlerIndex,
 						 phiExtDofHandlerIndex,
 						 phiTotDofHandlerIndex,
@@ -2459,7 +2465,11 @@ namespace dftfe {
 #endif
 
   if(dftParameters::electrostaticsHRefinement)
-    computeElectrostaticEnergyHRefined(computeForces);
+    computeElectrostaticEnergyHRefined(
+#ifdef DFTFE_WITH_GPU
+                                       kohnShamDFTEigenOperatorCUDA,
+#endif
+                                       computeForces);
 
   if(dftParameters::electrostaticsPRefinement)
     computeElectrostaticEnergyPRefined();
