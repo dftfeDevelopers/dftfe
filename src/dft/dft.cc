@@ -2251,7 +2251,7 @@ namespace dftfe {
     //
     //move this to a common routine
     //
-    if(dftParameters::isIonForce || dftParameters::isCellStress)
+    if((dftParameters::isIonForce || dftParameters::isCellStress) && (dftParameters::electrostaticsHRefinement || solveLinearizedKS))
     {
 	dealii::QGauss<3> quadrature(C_num1DQuad<FEOrder>());
         const unsigned int n_q_points = quadrature.size();
