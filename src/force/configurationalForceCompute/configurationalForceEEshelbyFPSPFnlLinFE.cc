@@ -543,8 +543,7 @@ void forceClass<FEOrder>::computeConfigurationalForceEEshelbyTensorFPSPFnlLinFE
 						 (psiQuads.begin()+q*currentBlockSize,
 						 gradPsiQuads.begin()+q*currentBlockSize,
 						 blockedEigenValues[0],
-						 dftPtr->fermiEnergy,
-						 dftParameters::TVal);
+                                                 blockedPartialOccupancies[0]);
 #endif
 	       Tensor<1,C_DIM,VectorizedArray<double> > F=zeroTensor3;
 

@@ -81,8 +81,7 @@ namespace dftfe {
 			     (std::vector<VectorizedArray<double> >::const_iterator psiBegin,
 			      std::vector<Tensor<1,C_DIM,VectorizedArray<double> > >::const_iterator gradPsiBegin,
 			      const std::vector<double> & eigenValues_,
-			      const double fermiEnergy_,
-			      const double tVal);
+                              const std::vector<double> & partialOccupancies_);
 
       /// All-electron electrostatic part of the Eshelby tensor
       Tensor<2,C_DIM,VectorizedArray<double> >  getEElectroEshelbyTensor

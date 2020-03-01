@@ -122,8 +122,7 @@ namespace eshelbyTensor
 			     (std::vector<VectorizedArray<double> >::const_iterator psiBegin,
 			      std::vector<Tensor<1,C_DIM,VectorizedArray<double> > >::const_iterator gradPsiBegin,
 			      const std::vector<double> & eigenValues_,
-			      const double fermiEnergy_,
-			      const double tVal)
+                               const std::vector<double> & partialOccupancies_) 
     {
 
        Tensor<2,C_DIM,VectorizedArray<double> > eshelbyTensor;
@@ -138,12 +137,8 @@ namespace eshelbyTensor
        for (unsigned int eigenIndex=0; eigenIndex < eigenValues_.size(); ++it1, ++it2, ++ eigenIndex){
 	  const VectorizedArray<double> & psi= *it1;
 	  const Tensor<1,C_DIM,VectorizedArray<double> > & gradPsi=*it2;
-	  const double partOcc =dftUtils::getPartialOccupancy(eigenValues_[eigenIndex],
-							      fermiEnergy_,
-							      C_kb,
-							      tVal);
-	  identityTensorFactor+=make_vectorized_array(partOcc)*scalar_product(gradPsi,gradPsi)-make_vectorized_array(2*partOcc*eigenValues_[eigenIndex])*psi*psi;
-	  eshelbyTensor-=make_vectorized_array(2.0*partOcc)*outer_product(gradPsi,gradPsi);
+	  identityTensorFactor+=make_vectorized_array(partialOccupancies_[eigenIndex])*scalar_product(gradPsi,gradPsi)-make_vectorized_array(2*partialOccupancies_[eigenIndex]*eigenValues_[eigenIndex])*psi*psi;
+	  eshelbyTensor-=make_vectorized_array(2.0*partialOccupancies_[eigenIndex])*outer_product(gradPsi,gradPsi);
        }
 
        eshelbyTensor[0][0]+=identityTensorFactor;
