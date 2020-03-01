@@ -163,6 +163,7 @@ void forceClass<FEOrder>::computeNonLocalProjectorKetTimesPsiTimesVFlattened
   dftPtr->d_projectorKetTimesVectorParFlattened.compress(VectorOperation::add);
   dftPtr->d_projectorKetTimesVectorParFlattened.update_ghost_values();
 
+  /*
   for(unsigned int iAtom = 0; iAtom < dftPtr->d_nonLocalAtomIdsInCurrentProcess.size(); ++iAtom)
     {
       const int atomId=dftPtr->d_nonLocalAtomIdsInCurrentProcess[iAtom];
@@ -178,7 +179,7 @@ void forceClass<FEOrder>::computeNonLocalProjectorKetTimesPsiTimesVFlattened
 	    }
 	}
     }
-
+  */
 
   //
   //compute V*C^{T}*X
@@ -187,9 +188,13 @@ void forceClass<FEOrder>::computeNonLocalProjectorKetTimesPsiTimesVFlattened
     {
       const int atomId=dftPtr->d_nonLocalAtomIdsInCurrentProcess[iAtom];
       const unsigned int numberPseudoWaveFunctions =  dftPtr->d_numberPseudoAtomicWaveFunctions[atomId];
-      for(unsigned int iWave = 0; iWave < numberWaveFunctions; ++iWave)
-	{
-	  for(unsigned int iPseudoAtomicWave = 0; iPseudoAtomicWave < numberPseudoWaveFunctions; ++iPseudoAtomicWave)
-	    projectorKetTimesVector[iAtom][numberPseudoWaveFunctions*iWave + iPseudoAtomicWave] *= dftPtr->d_nonLocalPseudoPotentialConstants[atomId][iPseudoAtomicWave]*partialOccupancies[iWave];
-	}
-    }}
+      for(unsigned int iPseudoAtomicWave = 0; iPseudoAtomicWave < numberPseudoWaveFunctions; ++iPseudoAtomicWave)
+      {
+          const unsigned int id=dftPtr->d_projectorIdsNumberingMapCurrentProcess[std::make_pair(atomId,iPseudoAtomicWave)];
+          for(unsigned int iWave = 0; iWave < numberWaveFunctions; ++iWave)
+	    projectorKetTimesVector[iAtom][iPseudoAtomicWave*numberWaveFunctions+iWave] 
+              = dftPtr->d_projectorKetTimesVectorParFlattened[id*numberWaveFunctions+iWave]
+                * dftPtr->d_nonLocalPseudoPotentialConstants[atomId][iPseudoAtomicWave]*partialOccupancies[iWave];
+      }
+    }
+}
