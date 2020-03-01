@@ -2282,12 +2282,48 @@ namespace dftfe {
 			}
 		    }
 
-	       computeRhoFromPSI(rhoOutValues,
-			    gradRhoOutValues,
-			    rhoOutValuesSpinPolarized,
-			    gradRhoOutValuesSpinPolarized,
-			    true,
-			    false);
+#ifdef DFTFE_WITH_GPU
+                    if (dftParameters::useGPU)
+                            CUDA::computeRhoFromPSI(
+                                d_eigenVectorsFlattenedCUDA.begin(),
+                                d_eigenVectorsRotFracFlattenedCUDA.begin(),
+                                d_numEigenValues,
+                                d_numEigenValuesRR,
+                                d_eigenVectorsFlattenedSTL[0].size()/d_numEigenValues,
+                                eigenValues,
+                                fermiEnergy,
+                                fermiEnergyUp,
+                                fermiEnergyDown,
+                                kohnShamDFTEigenOperatorCUDA,
+                                dofHandler,
+                                matrix_free_data.n_physical_cells(),
+                                matrix_free_data.get_dofs_per_cell(),
+                                QGauss<3>(C_num1DQuad<FEOrder>()).size(),
+                                d_kPointWeights,
+                                rhoOutValues,
+                                gradRhoOutValues,
+                                rhoOutValuesSpinPolarized,
+                                gradRhoOutValuesSpinPolarized,
+                                true,
+                                interpoolcomm,
+                                interBandGroupComm,
+                                false);
+
+      else
+                    computeRhoFromPSI(rhoOutValues,
+                                      gradRhoOutValues,
+                                      rhoOutValuesSpinPolarized,
+                                      gradRhoOutValuesSpinPolarized,
+                                      true,
+                                      false);
+#else
+	            computeRhoFromPSI(rhoOutValues,
+		    	              gradRhoOutValues,
+			              rhoOutValuesSpinPolarized,
+			              gradRhoOutValuesSpinPolarized,
+			              true,
+			              false);
+#endif
 	}
     }
 
