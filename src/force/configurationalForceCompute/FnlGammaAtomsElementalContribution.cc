@@ -127,7 +127,7 @@ void forceClass<FEOrder>::FnlGammaAtomsElementalContributionNonPeriodic(std::map
 							                const unsigned int cell,
 							                const std::vector<std::vector<std::vector<Tensor<1,C_DIM,VectorizedArray<double> > > > > & pspnlGammaAtomQuads,
                                                                         const std::vector<std::vector<VectorizedArray<double> > > & projectorKetTimesPsiTimesVTimesPartOcc,
-									const std::vector<unsigned int> & nonlocalAtomsCompactSupportList,
+									const std::vector<bool> & isAtomInCell,
                                                                         const std::vector<unsigned int> & nonlocalPseudoWfcsAccum)
 {
 
@@ -152,18 +152,10 @@ void forceClass<FEOrder>::FnlGammaAtomsElementalContributionNonPeriodic(std::map
       if (forceContributionFnlGammaAtoms.find(globalChargeIdNonLocalAtom)==forceContributionFnlGammaAtoms.end())
 	   forceContributionFnlGammaAtoms[globalChargeIdNonLocalAtom]=std::vector<double>(C_DIM,0.0);
 
-      bool isCellInCompactSupport=false;
-      for (unsigned int i=0;i<nonlocalAtomsCompactSupportList.size();i++)
-	  if (nonlocalAtomsCompactSupportList[i]==iAtom)
-	  {
-	      isCellInCompactSupport=true;
-	      break;
-	  }
-    
-      const unsigned int startingPseudoWfcId=nonlocalPseudoWfcsAccum[iAtom];
-
-      if (isCellInCompactSupport)
+      if (isAtomInCell[iAtom])
       {
+          const unsigned int startingPseudoWfcId=nonlocalPseudoWfcsAccum[iAtom];
+
 	  if (dftParameters::useHigherQuadNLP)
 	  {
 	      for (unsigned int q=0; q<numQuadPoints; ++q)

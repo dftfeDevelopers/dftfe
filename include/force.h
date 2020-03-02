@@ -441,7 +441,7 @@ namespace dftfe {
 	   const unsigned int cell,
 	   const std::vector<std::vector<std::vector<Tensor<1,C_DIM,VectorizedArray<double> > > > > & pspnlGammaAtomQuads,
 	   const std::vector<std::vector<VectorizedArray<double> > > & projectorKetTimesPsiTimesVTimesPartOcc,
-	   const std::vector<unsigned int> & nonlocalAtomsCompactSupportList,
+	   const std::vector<bool> & isAtomInCell,
            const std::vector<unsigned int> & nonlocalPseudoWfcsAccum);
 
 #endif

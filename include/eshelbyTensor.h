@@ -143,7 +143,7 @@ namespace dftfe {
       void  getFnlEnlMergedNonPeriodic(const std::vector<std::vector<Tensor<1,C_DIM,VectorizedArray<double> > > > & gradZetaDeltaV,
 	                               const std::vector<std::vector<VectorizedArray<double> > > & ZetaDeltaV,
 				       const std::vector<VectorizedArray<double> > & projectorKetTimesPsiTimesVTimesPartOcc,
-				       const std::vector<unsigned int> & nonlocalAtomsCompactSupportList,
+				       const std::vector<bool> & isAtomInCell,
                                        const std::vector<unsigned int> & nonlocalPseudoWfcsAccum,
 				       Tensor<1,C_DIM,VectorizedArray<double> > & Fnl,
 				       Tensor<2,C_DIM,VectorizedArray<double> > & Enl);

@@ -506,9 +506,9 @@ void forceClass<FEOrder>::computeConfigurationalForceEEshelbyTensorFPSPFnlLinFE
             double nlppsicontract_time;
             nlppsicontract_time = clock();
             const unsigned int numNonLocalAtomsCurrentProc=projectorKetTimesPsiTimesVTimesPartOcc[0].size();
+            std::vector<bool> isAtomInCell(numNonLocalAtomsCurrentProc,false);
 	    if (isPseudopotential)
             {
-              std::vector<bool> isAtomInCell(numNonLocalAtomsCurrentProc,false);
               for (unsigned int iatom=0; iatom<numNonLocalAtomsCurrentProc; ++iatom)
               {
 		 for (unsigned int i=0;i<macroIdToNonlocalAtomsSetMap[cell].size();i++)
@@ -602,7 +602,7 @@ void forceClass<FEOrder>::computeConfigurationalForceEEshelbyTensorFPSPFnlLinFE
 					      cell,
 					      gradZetaDeltaVQuads,
 					      projectorKetTimesPsiTimesVTimesPartOccContractionPsiQuads,
-					      macroIdToNonlocalAtomsSetMap[cell],
+					      isAtomInCell,
                                               nonlocalPseudoWfcsAccum);
 #endif
                
@@ -660,7 +660,7 @@ void forceClass<FEOrder>::computeConfigurationalForceEEshelbyTensorFPSPFnlLinFE
 		       eshelbyTensor::getFnlEnlMergedNonPeriodic(gradZetaDeltaVQuads[cell*numQuadPoints+q],
 			                                         ZetaDeltaVQuads[cell*numQuadPoints+q],
 								 projectorKetTimesPsiTimesVTimesPartOccContractionPsiQuads[q],
-								 macroIdToNonlocalAtomsSetMap[cell],
+								 isAtomInCell,
                                                                  nonlocalPseudoWfcsAccum,
 								 Fnl,
 								 Enl);
@@ -708,7 +708,7 @@ void forceClass<FEOrder>::computeConfigurationalForceEEshelbyTensorFPSPFnlLinFE
 		       eshelbyTensor::getFnlEnlMergedNonPeriodic(gradZetaDeltaVQuads[cell*numQuadPointsNLP+q],
 			                                         ZetaDeltaVQuads[cell*numQuadPointsNLP+q],
 								 projectorKetTimesPsiTimesVTimesPartOccContractionPsiQuads[q],
-								 macroIdToNonlocalAtomsSetMap[cell],
+								 isAtomInCell,
                                                                  nonlocalPseudoWfcsAccum,
 								 F,
 								 E);

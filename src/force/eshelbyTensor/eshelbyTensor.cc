@@ -341,7 +341,7 @@ namespace eshelbyTensor
     void  getFnlEnlMergedNonPeriodic(const std::vector<std::vector<Tensor<1,C_DIM,VectorizedArray<double> > > > & gradZetaDeltaV,
 	                             const std::vector<std::vector<VectorizedArray<double> > > & ZetaDeltaV,
                                      const std::vector<VectorizedArray<double> > & projectorKetTimesPsiTimesVTimesPartOcc,
-				     const std::vector<unsigned int> & nonlocalAtomsCompactSupportList,
+				     const std::vector<bool> & isAtomInCell,
                                      const std::vector<unsigned int> & nonlocalPseudoWfcsAccum,
 				     Tensor<1,C_DIM,VectorizedArray<double> > & Fnl,
 				     Tensor<2,C_DIM,VectorizedArray<double> > & Enl)
@@ -356,15 +356,7 @@ namespace eshelbyTensor
 
        for (unsigned int iAtomNonLocal=0; iAtomNonLocal < gradZetaDeltaV.size(); ++iAtomNonLocal)
        {
-	 bool isCellInCompactSupport=false;
-	 for (unsigned int i=0;i<nonlocalAtomsCompactSupportList.size();i++)
-	      if (nonlocalAtomsCompactSupportList[i]==iAtomNonLocal)
-	      {
-		  isCellInCompactSupport=true;
-		  break;
-	      }
-
-	 if (!isCellInCompactSupport)
+	 if (!isAtomInCell[iAtomNonLocal])
 	      continue;
 
 	 const int numberPseudoWaveFunctions = gradZetaDeltaV[iAtomNonLocal].size();
