@@ -148,7 +148,7 @@ void meshMovementGaussianClass::computeIncrementTwoStep(const std::vector<Point<
 	       const double r=(nodalCoor-controlPointLocationsInitialMove[iControl]).norm();
 	       const double gaussianWeight=dftParameters::reproducible_output?
 		 std::exp(-std::pow(r/controllingParameterInitialMove,2))
-		 :std::exp(-std::pow(r/controllingParameterInitialMove,dftParameters::gaussianOrderForce));
+		 :std::exp(-std::pow(r/controllingParameterInitialMove,dftParameters::gaussianOrderMoveMeshToAtoms));
 
 	       for (unsigned int idim=0; idim < C_DIM ; idim++)
 		 {
@@ -266,7 +266,7 @@ void meshMovementGaussianClass::computeIncrement()
   	    const double r=(nodalCoor-d_controlPointLocations[iControl]).norm();
 	    const double gaussianWeight=dftParameters::reproducible_output?
 	      std::exp(-std::pow(r/d_controllingParameter,2))
-	      :std::exp(-std::pow(r/d_controllingParameter,dftParameters::gaussianOrderForce));
+	      :std::exp(-std::pow(r/d_controllingParameter,dftParameters::gaussianOrderMoveMeshToAtoms));
 	    for (unsigned int idim=0; idim < C_DIM ; idim++)
 	      {
 		const unsigned int globalDofIndex=cell->vertex_dof_index(i,idim);

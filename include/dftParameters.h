@@ -116,6 +116,7 @@ namespace dftfe {
       extern double startingTempBOMDNVE;
       extern double gaussianConstantForce;
       extern double gaussianOrderForce;
+      extern double gaussianOrderMoveMeshToAtoms;
       extern double diracDeltaKernelScalingConstant;
       extern bool useRank1KernelXLBOMD;
       extern bool autoMeshStepInterpolateBOMD;
