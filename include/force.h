@@ -440,9 +440,9 @@ namespace dftfe {
 	   FEEvaluation<C_DIM,1,C_num1DQuadPSP<FEOrder>(),C_DIM>  & forceEvalNLP,
 	   const unsigned int cell,
 	   const std::vector<std::vector<std::vector<Tensor<1,C_DIM,VectorizedArray<double> > > > > & pspnlGammaAtomQuads,
-	   const std::vector<std::vector<double> >  & projectorKetTimesPsiTimesVTimesPartOcc,
-	   const std::vector< VectorizedArray<double> > & psiQuads,
-	   const std::vector<unsigned int> & nonlocalAtomsCompactSupportList);
+	   const std::vector<std::vector<VectorizedArray<double> > > & projectorKetTimesPsiTimesVTimesPartOcc,
+	   const std::vector<unsigned int> & nonlocalAtomsCompactSupportList,
+           const std::vector<unsigned int> & nonlocalPseudoWfcsAccum);
 
 #endif
 

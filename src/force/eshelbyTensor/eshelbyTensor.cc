@@ -340,12 +340,11 @@ namespace eshelbyTensor
 
     void  getFnlEnlMergedNonPeriodic(const std::vector<std::vector<Tensor<1,C_DIM,VectorizedArray<double> > > > & gradZetaDeltaV,
 	                             const std::vector<std::vector<VectorizedArray<double> > > & ZetaDeltaV,
-								const std::vector<std::vector<double> > & projectorKetTimesPsiTimesVTimesPartOcc,
-								std::vector<VectorizedArray<double> >::const_iterator psiBegin,
-								const unsigned int numBlockedEigenvectors,
-								const std::vector<unsigned int> & nonlocalAtomsCompactSupportList,
-				                                Tensor<1,C_DIM,VectorizedArray<double> > & Fnl,
-				                                Tensor<2,C_DIM,VectorizedArray<double> > & Enl)
+                                     const std::vector<VectorizedArray<double> > & projectorKetTimesPsiTimesVTimesPartOcc,
+				     const std::vector<unsigned int> & nonlocalAtomsCompactSupportList,
+                                     const std::vector<unsigned int> & nonlocalPseudoWfcsAccum,
+				     Tensor<1,C_DIM,VectorizedArray<double> > & Fnl,
+				     Tensor<2,C_DIM,VectorizedArray<double> > & Enl)
     {
        Tensor<1,C_DIM,VectorizedArray<double> > zeroTensor;
        for (unsigned int idim=0; idim<C_DIM; idim++)
@@ -369,43 +368,15 @@ namespace eshelbyTensor
 	      continue;
 
 	 const int numberPseudoWaveFunctions = gradZetaDeltaV[iAtomNonLocal].size();
-	 const std::vector<double> & projectorKetTimesPsiTimesVTimesPartOccAtom
-	     =projectorKetTimesPsiTimesVTimesPartOcc[iAtomNonLocal];
 	 const std::vector<Tensor<1,C_DIM,VectorizedArray<double> > >  & gradZetaDeltaVAtom=gradZetaDeltaV[iAtomNonLocal];
 	 const std::vector<VectorizedArray<double> >  & ZetaDeltaVAtom=ZetaDeltaV[iAtomNonLocal];
 
-         /*
-	 Tensor<1,C_DIM,VectorizedArray<double> > tempF=zeroTensor;
-	 VectorizedArray<double> temp=make_vectorized_array(0.0);
-	 VectorizedArray<double> temp2;
-
-	 std::vector<VectorizedArray<double> >::const_iterator it1=psiBegin;
-	 for (unsigned int eigenIndex=0; eigenIndex < numBlockedEigenvectors; ++it1, ++ eigenIndex)
-	 {
-	     const VectorizedArray<double> & psi= *it1;
-	     for (unsigned int iPseudoWave=0; iPseudoWave < numberPseudoWaveFunctions; ++iPseudoWave)
-	     {
-		 temp2=make_vectorized_array(projectorKetTimesPsiTimesVTimesPartOccAtom[numberPseudoWaveFunctions*eigenIndex + iPseudoWave])*psi;
-		 tempF+=temp2*gradZetaDeltaVAtom[iPseudoWave];
-		 temp+=temp2*ZetaDeltaVAtom[iPseudoWave];
-	     }
-	  }
-	  Fnl+=four*tempF;
-	  identityTensorFactor+=four*temp;
-          */
           Tensor<1,C_DIM,VectorizedArray<double> > tempF=zeroTensor;
 	  VectorizedArray<double> temp=make_vectorized_array(0.0);
           for (unsigned int iPseudoWave=0; iPseudoWave < numberPseudoWaveFunctions; ++iPseudoWave)
           {
-              VectorizedArray<double> temp2=make_vectorized_array(0.0);
-              std::vector<VectorizedArray<double> >::const_iterator it1=psiBegin;
-              for (unsigned int eigenIndex=0; eigenIndex < numBlockedEigenvectors; ++it1, ++ eigenIndex)
-              {
-                   const VectorizedArray<double> & psi= *it1;
-                   temp2+=make_vectorized_array(projectorKetTimesPsiTimesVTimesPartOccAtom[iPseudoWave*numBlockedEigenvectors+eigenIndex])*psi;
-              }
-              tempF+=temp2*gradZetaDeltaVAtom[iPseudoWave];
-	      temp+=temp2*ZetaDeltaVAtom[iPseudoWave];
+              tempF+=projectorKetTimesPsiTimesVTimesPartOcc[nonlocalPseudoWfcsAccum[iAtomNonLocal]+iPseudoWave]*gradZetaDeltaVAtom[iPseudoWave];
+	      temp+=projectorKetTimesPsiTimesVTimesPartOcc[nonlocalPseudoWfcsAccum[iAtomNonLocal]+iPseudoWave]*ZetaDeltaVAtom[iPseudoWave];
           }
 	  Fnl+=four*tempF;
 	  identityTensorFactor+=four*temp;
@@ -416,9 +387,8 @@ namespace eshelbyTensor
     }
 
     Tensor<1,C_DIM,VectorizedArray<double> >  getFnlNonPeriodic(const std::vector<Tensor<1,C_DIM,VectorizedArray<double> > >  & gradZetaDeltaV,
-								const std::vector<double>  & projectorKetTimesPsiTimesVTimesPartOcc,
-								std::vector<VectorizedArray<double> >::const_iterator psiBegin,
-								const unsigned int numBlockedEigenvectors)
+								const std::vector<VectorizedArray<double> > & projectorKetTimesPsiTimesVTimesPartOcc,
+                                                                const unsigned int startingId)
     {
        Tensor<1,C_DIM,VectorizedArray<double> > zeroTensor;
        for (unsigned int idim=0; idim<C_DIM; idim++)
@@ -428,32 +398,10 @@ namespace eshelbyTensor
        VectorizedArray<double> four=make_vectorized_array(4.0);
        
    
-       /*
-       for (unsigned int eigenIndex=0; eigenIndex < numBlockedEigenvectors; ++it1, ++ eigenIndex)
-       {
-	  const VectorizedArray<double> & psi= *it1;
-	  Tensor<1,C_DIM,VectorizedArray<double> > tempF=zeroTensor;
-	  const unsigned int numberPseudoWaveFunctions = gradZetaDeltaV.size();
-	  for (unsigned int iPseudoWave=0; iPseudoWave < numberPseudoWaveFunctions; ++iPseudoWave)
-	  {
-		 tempF+=make_vectorized_array(projectorKetTimesPsiTimesVTimesPartOcc[numberPseudoWaveFunctions*eigenIndex + iPseudoWave])*gradZetaDeltaV[iPseudoWave];
-	  }
-	  F+=four*psi*tempF;
-       }
-       */
        const unsigned int numberPseudoWaveFunctions = gradZetaDeltaV.size();
        for (unsigned int iPseudoWave=0; iPseudoWave < numberPseudoWaveFunctions; ++iPseudoWave)
        {
-	  
-	  VectorizedArray<double> temp=make_vectorized_array(0.0);
-
-          std::vector<VectorizedArray<double> >::const_iterator it1=psiBegin;
-	  for (unsigned int eigenIndex=0; eigenIndex < numBlockedEigenvectors; ++it1, ++ eigenIndex)
-	  {
-                 const VectorizedArray<double> & psi= *it1;
-		 temp+=psi*make_vectorized_array(projectorKetTimesPsiTimesVTimesPartOcc[iPseudoWave*numBlockedEigenvectors+eigenIndex]);
-	  }
-	  F+=four*gradZetaDeltaV[iPseudoWave]*temp;
+          F+=four*gradZetaDeltaV[iPseudoWave]*projectorKetTimesPsiTimesVTimesPartOcc[startingId+iPseudoWave];
        }
 
        return F;

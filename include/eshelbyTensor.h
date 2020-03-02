@@ -142,17 +142,15 @@ namespace dftfe {
       /// Nonlocal pseudopotential force contribution (for non periodic case)
       void  getFnlEnlMergedNonPeriodic(const std::vector<std::vector<Tensor<1,C_DIM,VectorizedArray<double> > > > & gradZetaDeltaV,
 	                               const std::vector<std::vector<VectorizedArray<double> > > & ZetaDeltaV,
-				       const std::vector<std::vector<double > > & projectorKetTimesPsiTimesVTimesPartOcc,
-				       std::vector<VectorizedArray<double> >::const_iterator psiBegin,
-				       const unsigned int numBlockedEigenvectors,
+				       const std::vector<VectorizedArray<double> > & projectorKetTimesPsiTimesVTimesPartOcc,
 				       const std::vector<unsigned int> & nonlocalAtomsCompactSupportList,
+                                       const std::vector<unsigned int> & nonlocalPseudoWfcsAccum,
 				       Tensor<1,C_DIM,VectorizedArray<double> > & Fnl,
 				       Tensor<2,C_DIM,VectorizedArray<double> > & Enl);
 
       Tensor<1,C_DIM,VectorizedArray<double> >  getFnlNonPeriodic(const std::vector<Tensor<1,C_DIM,VectorizedArray<double> > >  & gradZetaDeltaV,
-								const std::vector<double >  & projectorKetTimesPsiTimesVTimesPartOcc,
-								std::vector<VectorizedArray<double> >::const_iterator psiBegin,
-								const unsigned int numBlockedEigenvectors);
+								  const std::vector<VectorizedArray<double> > & projectorKetTimesPsiTimesVTimesPartOcc,
+                                                                  const unsigned int startingId);
 
       /// Nonlocal pseudopotential force contribution (for periodic case)
       Tensor<1,C_DIM,VectorizedArray<double> >  getFnlPeriodic(const std::vector<std::vector<std::vector<Tensor<1,2, Tensor<1,C_DIM,VectorizedArray<double> > > > > > & gradZetaDeltaV,

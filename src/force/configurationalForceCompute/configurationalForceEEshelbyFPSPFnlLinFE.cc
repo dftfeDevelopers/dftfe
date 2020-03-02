@@ -192,6 +192,15 @@ void forceClass<FEOrder>::computeConfigurationalForceEEshelbyTensorFPSPFnlLinFE
        macroIdToNonlocalAtomsSetMap[cell]=std::vector<unsigned int>(mergedSet.begin(),mergedSet.end());
   }
 
+  std::vector<unsigned int> nonlocalPseudoWfcsAccum(dftPtr->d_nonLocalAtomIdsInCurrentProcess.size());
+  unsigned int numPseudo=0;
+  for(unsigned int iAtom = 0; iAtom < dftPtr->d_nonLocalAtomIdsInCurrentProcess.size(); ++iAtom)
+    {
+      const unsigned int atomId=dftPtr->d_nonLocalAtomIdsInCurrentProcess[iAtom];
+      nonlocalPseudoWfcsAccum[iAtom]=numPseudo;
+      numPseudo+= dftPtr->d_numberPseudoAtomicWaveFunctions[atomId];
+    }
+
   //band group parallelization data structures
   const unsigned int numberBandGroups=
 	dealii::Utilities::MPI::n_mpi_processes(dftPtr->interBandGroupComm);
@@ -214,6 +223,7 @@ void forceClass<FEOrder>::computeConfigurationalForceEEshelbyTensorFPSPFnlLinFE
    double eloc_time_total=0.0;
    double nlpinit_time_total=0.0;
    double projketpsi_time_total=0.0;
+   double nlppsicontract_time_total=0.0;
 
 #ifdef USE_COMPLEX
    //vector of quadPoints times macrocells, nonlocal atom id, pseudo wave, k point
@@ -227,6 +237,9 @@ void forceClass<FEOrder>::computeConfigurationalForceEEshelbyTensorFPSPFnlLinFE
    std::vector<std::vector<std::vector<VectorizedArray<double> > > > ZetaDeltaVQuads;
    std::vector<std::vector<std::vector<Tensor<1,C_DIM,VectorizedArray<double> > > > > gradZetaDeltaVQuads;
 #endif
+   std::vector<std::vector<std::vector<dataTypes::number> > > projectorKetTimesPsiTimesVTimesPartOcc(numKPoints);
+   std::vector<std::vector<VectorizedArray<double>> >  projectorKetTimesPsiTimesVTimesPartOccContractionPsiQuads(numQuadPointsNLP,std::vector<VectorizedArray<double>>(numPseudo,make_vectorized_array(0.0)));
+
    const unsigned int numMacroCells=matrixFreeData.n_macro_cells();
    if(isPseudopotential)
    {
@@ -401,7 +414,6 @@ void forceClass<FEOrder>::computeConfigurationalForceEEshelbyTensorFPSPFnlLinFE
 
           double projketpsi_time;
           projketpsi_time = clock();
-	  std::vector<std::vector<std::vector<dataTypes::number> > > projectorKetTimesPsiTimesVTimesPartOcc(numKPoints);
 	  if (isPseudopotential)
 	    for (unsigned int ikPoint=0; ikPoint<numKPoints; ++ikPoint)
 	    {
@@ -490,6 +502,76 @@ void forceClass<FEOrder>::computeConfigurationalForceEEshelbyTensorFPSPFnlLinFE
             wfc_time = clock() - wfc_time;
             wfc_time_total+=wfc_time;
 
+#ifndef USE_COMPLEX
+            double nlppsicontract_time;
+            nlppsicontract_time = clock();
+            const unsigned int numNonLocalAtomsCurrentProc=projectorKetTimesPsiTimesVTimesPartOcc[0].size();
+	    if (isPseudopotential)
+            {
+              std::vector<bool> isAtomInCell(numNonLocalAtomsCurrentProc,false);
+              for (unsigned int iatom=0; iatom<numNonLocalAtomsCurrentProc; ++iatom)
+              {
+		 for (unsigned int i=0;i<macroIdToNonlocalAtomsSetMap[cell].size();i++)
+		      if (macroIdToNonlocalAtomsSetMap[cell][i]==iatom)
+		      {
+			  isAtomInCell[iatom]=true;
+                          break;
+		      }
+              }
+
+              
+	      if (dftParameters::useHigherQuadNLP)
+	      {
+                       for (unsigned int q=0; q<numQuadPointsNLP; ++q)
+                       {
+                          std::vector<VectorizedArray<double> > & temp1= projectorKetTimesPsiTimesVTimesPartOccContractionPsiQuads[q];
+                          for (unsigned int iatom=0; iatom<numNonLocalAtomsCurrentProc; ++iatom)
+                          {
+                               if (!isAtomInCell[iatom])
+                                   continue;
+
+                               const unsigned int numberSingleAtomPseudoWaveFunctions=projectorKetTimesPsiTimesVTimesPartOcc[iatom].size()/currentBlockSize;
+                               const unsigned int startingId=nonlocalPseudoWfcsAccum[iatom];
+                               const std::vector<double> & temp2=projectorKetTimesPsiTimesVTimesPartOcc[0][iatom];
+                               for (unsigned int ipsp=0; ipsp<numberSingleAtomPseudoWaveFunctions; ++ipsp) 
+                                 for (unsigned int iEigenVec=0; iEigenVec<currentBlockSize; ++iEigenVec)
+                                 {
+                                     temp1[startingId+ipsp]
+                                      += psiQuadsNLP[q*currentBlockSize+iEigenVec]
+                                         *make_vectorized_array(temp2[ipsp*currentBlockSize+iEigenVec]);
+                                 }
+                          }
+                      }
+	      }
+	      else
+	      {
+                       for (unsigned int q=0; q<numQuadPoints; ++q)
+                       {
+                          std::vector<VectorizedArray<double> > & temp1= projectorKetTimesPsiTimesVTimesPartOccContractionPsiQuads[q];
+                          for (unsigned int iatom=0; iatom<numNonLocalAtomsCurrentProc; ++iatom)
+                          {
+                               if (!isAtomInCell[iatom])
+                                   continue;
+
+                               const unsigned int numberSingleAtomPseudoWaveFunctions=projectorKetTimesPsiTimesVTimesPartOcc[0][iatom].size()/currentBlockSize;
+                               const unsigned int startingId=nonlocalPseudoWfcsAccum[iatom];
+                               const std::vector<double> & temp2=projectorKetTimesPsiTimesVTimesPartOcc[0][iatom];
+                               for (unsigned int ipsp=0; ipsp<numberSingleAtomPseudoWaveFunctions; ++ipsp) 
+                                 for (unsigned int iEigenVec=0; iEigenVec<currentBlockSize; ++iEigenVec)
+                                 {
+                                     temp1[startingId+ipsp]
+                                      += psiQuads[q*currentBlockSize+iEigenVec]
+                                         *make_vectorized_array(temp2[ipsp*currentBlockSize+iEigenVec]);
+                                 }
+                          }
+                      }
+              }
+            }
+           
+            nlppsicontract_time = clock() - nlppsicontract_time;
+            nlppsicontract_time_total+=nlppsicontract_time;
+#endif
+
 	    if(isPseudopotential)
 	    {
               //compute FnlGammaAtoms  (contibution due to Gamma(Rj)) 
@@ -517,9 +599,9 @@ void forceClass<FEOrder>::computeConfigurationalForceEEshelbyTensorFPSPFnlLinFE
 					      forceEvalNLP,
 					      cell,
 					      gradZetaDeltaVQuads,
-					      projectorKetTimesPsiTimesVTimesPartOcc[0],
-					      dftParameters::useHigherQuadNLP?psiQuadsNLP:psiQuads,
-					      macroIdToNonlocalAtomsSetMap[cell]);
+					      projectorKetTimesPsiTimesVTimesPartOccContractionPsiQuads,
+					      macroIdToNonlocalAtomsSetMap[cell],
+                                              nonlocalPseudoWfcsAccum);
 #endif
                
                fnlgamma_time = clock() - fnlgamma_time;
@@ -575,10 +657,9 @@ void forceClass<FEOrder>::computeConfigurationalForceEEshelbyTensorFPSPFnlLinFE
 
 		       eshelbyTensor::getFnlEnlMergedNonPeriodic(gradZetaDeltaVQuads[cell*numQuadPoints+q],
 			                                         ZetaDeltaVQuads[cell*numQuadPoints+q],
-								 projectorKetTimesPsiTimesVTimesPartOcc[0],
-								 psiQuads.begin()+q*currentBlockSize,
-							         currentBlockSize,
+								 projectorKetTimesPsiTimesVTimesPartOccContractionPsiQuads[q],
 								 macroIdToNonlocalAtomsSetMap[cell],
+                                                                 nonlocalPseudoWfcsAccum,
 								 Fnl,
 								 Enl);
 		       F+=Fnl;
@@ -624,10 +705,9 @@ void forceClass<FEOrder>::computeConfigurationalForceEEshelbyTensorFPSPFnlLinFE
 
 		       eshelbyTensor::getFnlEnlMergedNonPeriodic(gradZetaDeltaVQuads[cell*numQuadPointsNLP+q],
 			                                         ZetaDeltaVQuads[cell*numQuadPointsNLP+q],
-								 projectorKetTimesPsiTimesVTimesPartOcc[0],
-								 psiQuadsNLP.begin()+q*currentBlockSize,
-								 currentBlockSize,
+								 projectorKetTimesPsiTimesVTimesPartOccContractionPsiQuads[q],
 								 macroIdToNonlocalAtomsSetMap[cell],
+                                                                 nonlocalPseudoWfcsAccum,
 								 F,
 								 E);
 
@@ -1014,6 +1094,8 @@ void forceClass<FEOrder>::computeConfigurationalForceEEshelbyTensorFPSPFnlLinFE
         pcout<<" Time taken for non wfc in force: "<<dealii::Utilities::MPI::max(enowfc_time/CLOCKS_PER_SEC,mpi_communicator)<<std::endl;
         pcout<<" Time taken for nlp init in force: "<<dealii::Utilities::MPI::max(nlpinit_time_total/CLOCKS_PER_SEC,mpi_communicator)<<std::endl;
         pcout<<" Time taken for projector ket times psi in force: "<<dealii::Utilities::MPI::max(projketpsi_time_total/CLOCKS_PER_SEC,mpi_communicator)<<std::endl;
+         pcout<<" Time taken for nlp psi contraction in force: "<<dealii::Utilities::MPI::max(nlppsicontract_time_total/CLOCKS_PER_SEC,mpi_communicator)<<std::endl;
+
     }
 }
 
