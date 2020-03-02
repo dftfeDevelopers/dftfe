@@ -112,6 +112,7 @@ namespace dftfe {
     unsigned int numberStepsBOMD=1000;
     double startingTempBOMDNVE=300.0;
     double gaussianConstantForce=0.75;
+    double gaussianOrderForce=4.0;
     double diracDeltaKernelScalingConstant=0.1;
     bool useRank1KernelXLBOMD=false;
     bool autoMeshStepInterpolateBOMD=false;
@@ -400,7 +401,11 @@ namespace dftfe {
 
 	  prm.declare_entry("GAUSSIAN CONSTANT FORCE GENERATOR", "0.75",
 			    Patterns::Double(0.0),
-			    "[Developer] Force computation generator gaussian constant. Gamma(r)= exp(-(r/gaussianConstant)^2).");
+			    "[Developer] Force computation generator gaussian constant. Also used for mesh movement. Gamma(r)= exp(-(r/gaussianConstant)^(gaussianOrder)).");
+
+	  prm.declare_entry("GAUSSIAN ORDER FORCE GENERATOR", "4.0",
+			    Patterns::Double(0.0),
+			    "[Developer] Force computation generator gaussian order. Also used for mesh movement. Gamma(r)= exp(-(r/gaussianConstant)^(gaussianOrder)).");
 
 	}
 	prm.leave_subsection ();
@@ -838,6 +843,7 @@ namespace dftfe {
 	  dftParameters::numberWaveFunctionsForEstimate = prm.get_integer("ERROR ESTIMATE WAVEFUNCTIONS");
 	  dftParameters::toleranceKinetic = prm.get_double("TOLERANCE FOR MESH ADAPTION");
           dftParameters::gaussianConstantForce = prm.get_double("GAUSSIAN CONSTANT FORCE GENERATOR");
+          dftParameters::gaussianOrderForce = prm.get_double("GAUSSIAN ORDER FORCE GENERATOR");
 	}
         prm.leave_subsection ();
       }

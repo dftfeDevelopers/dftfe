@@ -145,10 +145,10 @@ void meshMovementGaussianClass::computeIncrementTwoStep(const std::vector<Point<
 	       if(overlappedControlPointId != iControl && overlappedControlPointId != -1)
 		 continue;
 
-	       const double rsq=(nodalCoor-controlPointLocationsInitialMove[iControl]).norm_square();
+	       const double r=(nodalCoor-controlPointLocationsInitialMove[iControl]).norm();
 	       const double gaussianWeight=dftParameters::reproducible_output?
-		 std::exp(-(rsq)/std::pow(controllingParameterInitialMove,2))
-		 :std::exp(-(rsq*rsq)/std::pow(controllingParameterInitialMove,4));
+		 std::exp(-std::pow(r/controllingParameterInitialMove,2))
+		 :std::exp(-std::pow(r/controllingParameterInitialMove,dftParameters::gaussianOrderForce));
 
 	       for (unsigned int idim=0; idim < C_DIM ; idim++)
 		 {
@@ -199,10 +199,10 @@ void meshMovementGaussianClass::computeIncrementTwoStep(const std::vector<Point<
 		if(overlappedControlPointId != iControl && overlappedControlPointId != -1)
 		  continue;
 
-		const double rsq=(nodalCoordinatesUpdated[global_vertex_no]-controlPointLocationsCurrentMove[iControl]).norm_square();
+		const double r=(nodalCoordinatesUpdated[global_vertex_no]-controlPointLocationsCurrentMove[iControl]).norm();
 		const double gaussianWeight=dftParameters::reproducible_output?
-		  std::exp(-(rsq)/std::pow(controllingParameterCurrentMove,2))
-		  :std::exp(-(rsq*rsq)/std::pow(controllingParameterCurrentMove,4));
+		  std::exp(-std::pow(r/controllingParameterCurrentMove,2))
+		  :std::exp(-std::pow(r/controllingParameterCurrentMove,dftParameters::gaussianOrderForce));
 
 		for (unsigned int idim=0; idim < C_DIM ; idim++)
 		  {
@@ -263,10 +263,10 @@ void meshMovementGaussianClass::computeIncrement()
 		//std::cout<< " overlappedControlPointId: "<< overlappedControlPointId << std::endl;
 		continue;
 	      }
-  	    const double rsq=(nodalCoor-d_controlPointLocations[iControl]).norm_square();
+  	    const double r=(nodalCoor-d_controlPointLocations[iControl]).norm();
 	    const double gaussianWeight=dftParameters::reproducible_output?
-	      std::exp(-(rsq)/std::pow(d_controllingParameter,2))
-	      :std::exp(-(rsq*rsq)/std::pow(d_controllingParameter,4));
+	      std::exp(-std::pow(r/d_controllingParameter,2))
+	      :std::exp(-std::pow(r/d_controllingParameter,dftParameters::gaussianOrderForce));
 	    for (unsigned int idim=0; idim < C_DIM ; idim++)
 	      {
 		const unsigned int globalDofIndex=cell->vertex_dof_index(i,idim);
