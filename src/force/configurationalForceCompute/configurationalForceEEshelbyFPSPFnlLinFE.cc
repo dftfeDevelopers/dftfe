@@ -525,6 +525,7 @@ void forceClass<FEOrder>::computeConfigurationalForceEEshelbyTensorFPSPFnlLinFE
                        for (unsigned int q=0; q<numQuadPointsNLP; ++q)
                        {
                           std::vector<VectorizedArray<double> > & temp1= projectorKetTimesPsiTimesVTimesPartOccContractionPsiQuads[q];
+                          std::fill(temp1.begin(),temp1.end(),make_vectorized_array(0.0));
                           for (unsigned int iatom=0; iatom<numNonLocalAtomsCurrentProc; ++iatom)
                           {
                                if (!isAtomInCell[iatom])
@@ -548,6 +549,7 @@ void forceClass<FEOrder>::computeConfigurationalForceEEshelbyTensorFPSPFnlLinFE
                        for (unsigned int q=0; q<numQuadPoints; ++q)
                        {
                           std::vector<VectorizedArray<double> > & temp1= projectorKetTimesPsiTimesVTimesPartOccContractionPsiQuads[q];
+                          std::fill(temp1.begin(),temp1.end(),make_vectorized_array(0.0));
                           for (unsigned int iatom=0; iatom<numNonLocalAtomsCurrentProc; ++iatom)
                           {
                                if (!isAtomInCell[iatom])
