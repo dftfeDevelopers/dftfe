@@ -193,12 +193,14 @@ void forceClass<FEOrder>::computeConfigurationalForceEEshelbyTensorFPSPFnlLinFE
   }
 
   std::vector<unsigned int> nonlocalPseudoWfcsAccum(dftPtr->d_nonLocalAtomIdsInCurrentProcess.size());
+  std::vector<unsigned int> numPseudoWfcsAtom(dftPtr->d_nonLocalAtomIdsInCurrentProcess.size());
   unsigned int numPseudo=0;
   for(unsigned int iAtom = 0; iAtom < dftPtr->d_nonLocalAtomIdsInCurrentProcess.size(); ++iAtom)
     {
       const unsigned int atomId=dftPtr->d_nonLocalAtomIdsInCurrentProcess[iAtom];
       nonlocalPseudoWfcsAccum[iAtom]=numPseudo;
       numPseudo+= dftPtr->d_numberPseudoAtomicWaveFunctions[atomId];
+      numPseudoWfcsAtom[iAtom]=dftPtr->d_numberPseudoAtomicWaveFunctions[atomId];
     }
 
   //band group parallelization data structures
@@ -509,12 +511,14 @@ void forceClass<FEOrder>::computeConfigurationalForceEEshelbyTensorFPSPFnlLinFE
             std::vector<bool> isAtomInCell(numNonLocalAtomsCurrentProc,false);
 	    if (isPseudopotential)
             {
+              std::vector<unsigned int> nonTrivialNonLocalIds;
               for (unsigned int iatom=0; iatom<numNonLocalAtomsCurrentProc; ++iatom)
               {
 		 for (unsigned int i=0;i<macroIdToNonlocalAtomsSetMap[cell].size();i++)
 		      if (macroIdToNonlocalAtomsSetMap[cell][i]==iatom)
 		      {
 			  isAtomInCell[iatom]=true;
+                          nonTrivialNonLocalIds.push_back(iatom);
                           break;
 		      }
               }
@@ -526,12 +530,10 @@ void forceClass<FEOrder>::computeConfigurationalForceEEshelbyTensorFPSPFnlLinFE
                        {
                           std::vector<VectorizedArray<double> > & temp1= projectorKetTimesPsiTimesVTimesPartOccContractionPsiQuads[q];
                           std::fill(temp1.begin(),temp1.end(),make_vectorized_array(0.0));
-                          for (unsigned int iatom=0; iatom<numNonLocalAtomsCurrentProc; ++iatom)
+                          for (unsigned int i=0; i<nonTrivialNonLocalIds.size(); ++i)
                           {
-                               if (!isAtomInCell[iatom])
-                                   continue;
-
-                               const unsigned int numberSingleAtomPseudoWaveFunctions=projectorKetTimesPsiTimesVTimesPartOcc[iatom].size()/currentBlockSize;
+                               const unsigned int iatom=nonTrivialNonLocalIds[i];
+                               const unsigned int numberSingleAtomPseudoWaveFunctions=numPseudoWfcsAtom[iatom];
                                const unsigned int startingId=nonlocalPseudoWfcsAccum[iatom];
                                const std::vector<double> & temp2=projectorKetTimesPsiTimesVTimesPartOcc[0][iatom];
                                for (unsigned int ipsp=0; ipsp<numberSingleAtomPseudoWaveFunctions; ++ipsp) 
@@ -550,12 +552,10 @@ void forceClass<FEOrder>::computeConfigurationalForceEEshelbyTensorFPSPFnlLinFE
                        {
                           std::vector<VectorizedArray<double> > & temp1= projectorKetTimesPsiTimesVTimesPartOccContractionPsiQuads[q];
                           std::fill(temp1.begin(),temp1.end(),make_vectorized_array(0.0));
-                          for (unsigned int iatom=0; iatom<numNonLocalAtomsCurrentProc; ++iatom)
+                          for (unsigned int i=0; i<nonTrivialNonLocalIds.size(); ++i)
                           {
-                               if (!isAtomInCell[iatom])
-                                   continue;
-
-                               const unsigned int numberSingleAtomPseudoWaveFunctions=projectorKetTimesPsiTimesVTimesPartOcc[0][iatom].size()/currentBlockSize;
+                               const unsigned int iatom=nonTrivialNonLocalIds[i];
+                               const unsigned int numberSingleAtomPseudoWaveFunctions=numPseudoWfcsAtom[iatom];
                                const unsigned int startingId=nonlocalPseudoWfcsAccum[iatom];
                                const std::vector<double> & temp2=projectorKetTimesPsiTimesVTimesPartOcc[0][iatom];
                                for (unsigned int ipsp=0; ipsp<numberSingleAtomPseudoWaveFunctions; ++ipsp) 
