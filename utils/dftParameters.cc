@@ -119,6 +119,7 @@ namespace dftfe {
     bool autoMeshStepInterpolateBOMD=false;
     double ratioOfMeshMovementToForceGaussianBOMD=1.0;
     bool useAtomicRhoXLBOMD=true;
+    bool useMeshSizesFromAtomsFile=false;
 
     void declare_parameters(ParameterHandler &prm)
     {
@@ -411,6 +412,10 @@ namespace dftfe {
           prm.declare_entry("GAUSSIAN ORDER MOVE MESH TO ATOMS", "4.0",
                             Patterns::Double(0.0),
                             "[Developer] Move mesh to atoms gaussian order. Gamma(r)= exp(-(r/gaussianConstant)^(gaussianOrder)).");
+
+          prm.declare_entry("USE MESH SIZES FROM ATOM LOCATIONS FILE", "false",
+                            Patterns::Bool(),
+                            "[Developer] Use mesh sizes from atom locations file.");
 
 	}
 	prm.leave_subsection ();
@@ -850,6 +855,7 @@ namespace dftfe {
           dftParameters::gaussianConstantForce = prm.get_double("GAUSSIAN CONSTANT FORCE GENERATOR");
           dftParameters::gaussianOrderForce = prm.get_double("GAUSSIAN ORDER FORCE GENERATOR");
           dftParameters::gaussianOrderMoveMeshToAtoms = prm.get_double("GAUSSIAN ORDER MOVE MESH TO ATOMS");
+          dftParameters::useMeshSizesFromAtomsFile = prm.get_bool("USE MESH SIZES FROM ATOM LOCATIONS FILE");
 	}
         prm.leave_subsection ();
       }

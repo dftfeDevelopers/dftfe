@@ -244,7 +244,7 @@ namespace dftfe {
     //
     //read coordinates
     //
-    unsigned int numberColumnsCoordinatesFile = 5;
+    unsigned int numberColumnsCoordinatesFile =dftParameters::useMeshSizesFromAtomsFile?7:5;
 
     if (dftParameters::periodicX || dftParameters::periodicY || dftParameters::periodicZ)
       {
@@ -753,6 +753,7 @@ namespace dftfe {
       {
 	d_mesh.generateCoarseMeshesForRestart(atomLocations,
 					      d_imagePositions,
+                                              d_imageIds,
 					      d_domainBoundingVectors,
 					      dftParameters::useSymm
 					      || ((dftParameters::isIonOpt && (dftParameters::reuseWfcGeoOpt || dftParameters::reuseDensityGeoOpt)) || (dftParameters::isBOMD && dftParameters::autoMeshStepInterpolateBOMD))
@@ -763,6 +764,7 @@ namespace dftfe {
       {
 	d_mesh.generateSerialUnmovedAndParallelMovedUnmovedMesh(atomLocations,
 								d_imagePositions,
+                                                                d_imageIds,
 								d_domainBoundingVectors,
 								dftParameters::useSymm
 								|| ((dftParameters::isIonOpt && (dftParameters::reuseWfcGeoOpt || dftParameters::reuseDensityGeoOpt)) || (dftParameters::isBOMD && dftParameters::autoMeshStepInterpolateBOMD))

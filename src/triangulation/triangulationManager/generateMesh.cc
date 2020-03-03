@@ -169,20 +169,32 @@ namespace dftfe {
 
     std::vector<double> numberIntervalsEachDirection;
 
+    double largestMeshSizeAroundAtom=dftParameters::meshSizeOuterBall;
+
+    if (dftParameters::useMeshSizesFromAtomsFile)
+    {
+            largestMeshSizeAroundAtom=1e-6;
+	    for (unsigned int n=0; n<d_atomPositions.size(); n++)
+	    {
+	      if(d_atomPositions[n][5] >largestMeshSizeAroundAtom)
+		  largestMeshSizeAroundAtom=d_atomPositions[n][5];
+	    }
+    }
+
     if (dftParameters::autoUserMeshParams && !dftParameters::reproducible_output)
     {
        double baseMeshSize1, baseMeshSize2, baseMeshSize3;
        if (dftParameters::periodicX ||dftParameters::periodicY ||dftParameters::periodicZ)
        {
-          baseMeshSize1=std::pow(2,round(log2(2.0/dftParameters::meshSizeOuterBall)))*dftParameters::meshSizeOuterBall;
-          baseMeshSize2=std::pow(2,round(log2(2.0/dftParameters::meshSizeOuterBall)))*dftParameters::meshSizeOuterBall;
-          baseMeshSize3=std::pow(2,round(log2(2.0/dftParameters::meshSizeOuterBall)))*dftParameters::meshSizeOuterBall;
+          baseMeshSize1=std::pow(2,round(log2(2.0/largestMeshSizeAroundAtom)))*largestMeshSizeAroundAtom;
+          baseMeshSize2=std::pow(2,round(log2(2.0/largestMeshSizeAroundAtom)))*largestMeshSizeAroundAtom;
+          baseMeshSize3=std::pow(2,round(log2(2.0/largestMeshSizeAroundAtom)))*largestMeshSizeAroundAtom;
        }
        else
        {
-          baseMeshSize1=std::pow(2,round(log2(std::min(domainBoundingVectorMag1/8.0,8.0)/dftParameters::meshSizeOuterBall)))*dftParameters::meshSizeOuterBall;
-          baseMeshSize2=std::pow(2,round(log2(std::min(domainBoundingVectorMag2/8.0,8.0)/dftParameters::meshSizeOuterBall)))*dftParameters::meshSizeOuterBall;
-	  baseMeshSize3=std::pow(2,round(log2(std::min(domainBoundingVectorMag3/8.0,8.0)/dftParameters::meshSizeOuterBall)))*dftParameters::meshSizeOuterBall;
+          baseMeshSize1=std::pow(2,round(log2(std::min(domainBoundingVectorMag1/8.0,8.0)/largestMeshSizeAroundAtom)))*largestMeshSizeAroundAtom;
+          baseMeshSize2=std::pow(2,round(log2(std::min(domainBoundingVectorMag2/8.0,8.0)/largestMeshSizeAroundAtom)))*largestMeshSizeAroundAtom;
+	  baseMeshSize3=std::pow(2,round(log2(std::min(domainBoundingVectorMag3/8.0,8.0)/largestMeshSizeAroundAtom)))*largestMeshSizeAroundAtom;
        }
 
 	numberIntervalsEachDirection.push_back(domainBoundingVectorMag1/baseMeshSize1);
@@ -269,6 +281,18 @@ namespace dftfe {
     unsigned int locallyOwnedCount=0;
 
     bool isAnyCellRefined=false;
+    double smallestMeshSizeAroundAtom=dftParameters::meshSizeOuterBall;
+
+    if (dftParameters::useMeshSizesFromAtomsFile)
+    {
+            smallestMeshSizeAroundAtom=1e+6;
+	    for (unsigned int n=0; n<d_atomPositions.size(); n++)
+	    {
+	      if(d_atomPositions[n][5] <smallestMeshSizeAroundAtom)
+		  smallestMeshSizeAroundAtom=d_atomPositions[n][5];
+	    }
+    }
+    
     //
     //
     //
@@ -297,16 +321,19 @@ namespace dftfe {
 	  //loop over all atoms
 	  double distanceToClosestAtom = 1e8;
 	  Point<3> closestAtom;
+          unsigned int closestAtomId=0;
 	  for (unsigned int n=0; n<d_atomPositions.size(); n++)
 	    {
-	      Point<3> atom(d_atomPositions[n][2],d_atomPositions[n][3],d_atomPositions[n][4]);
-	      if(center.distance(atom) < distanceToClosestAtom)
-		{
-		  distanceToClosestAtom = center.distance(atom);
+              Point<3> atom(d_atomPositions[n][2],d_atomPositions[n][3],d_atomPositions[n][4]);
+              if(center.distance(atom) < distanceToClosestAtom)
+                {
+                  distanceToClosestAtom = center.distance(atom);
 		  closestAtom = atom;
+                  closestAtomId=n;
 		}
 	    }
 
+          int closestImageId=-1;
 	  for(unsigned int iImageCharge=0; iImageCharge < d_imageAtomPositions.size(); ++iImageCharge)
 	    {
 	      Point<3> imageAtom(d_imageAtomPositions[iImageCharge][0],d_imageAtomPositions[iImageCharge][1],d_imageAtomPositions[iImageCharge][2]);
@@ -314,17 +341,22 @@ namespace dftfe {
 		{
 		  distanceToClosestAtom = center.distance(imageAtom);
 		  closestAtom = imageAtom;
+                  closestImageId=iImageCharge;
 		}
 	    }
+          if (closestImageId!=-1)
+             closestAtomId=d_imageIds[closestImageId];
 
 	  if (dftParameters::autoUserMeshParams  && !dftParameters::reproducible_output)
 	  {
 	      bool inOuterAtomBall = false;
 
-	      if(distanceToClosestAtom <= dftParameters::outerAtomBallRadius)
+	      if(distanceToClosestAtom <= 
+                (dftParameters::useMeshSizesFromAtomsFile?d_atomPositions[closestAtomId][6]:dftParameters::outerAtomBallRadius))
 		inOuterAtomBall = true;
 
-	     if(inOuterAtomBall && currentMeshSize > 1.1*dftParameters::meshSizeOuterBall)
+	     if(inOuterAtomBall && (currentMeshSize > 
+                (1.1*(dftParameters::useMeshSizesFromAtomsFile?d_atomPositions[closestAtomId][5]:dftParameters::meshSizeOuterBall))))
 		cellRefineFlag = true;
 
 	      bool inInnerAtomBall = false;
@@ -339,10 +371,12 @@ namespace dftfe {
 	  {
 	      bool inOuterAtomBall = false;
 
-	      if(distanceToClosestAtom <= dftParameters::outerAtomBallRadius)
+	      if(distanceToClosestAtom <= 
+                (dftParameters::useMeshSizesFromAtomsFile?d_atomPositions[closestAtomId][6]:dftParameters::outerAtomBallRadius))
 		inOuterAtomBall = true;
 
-	      if(inOuterAtomBall && currentMeshSize > dftParameters::meshSizeOuterBall)
+	      if(inOuterAtomBall && (currentMeshSize > 
+                (dftParameters::useMeshSizesFromAtomsFile?d_atomPositions[closestAtomId][5]:dftParameters::meshSizeOuterBall)))
 		cellRefineFlag = true;
 
 	      bool inInnerAtomBall = false;
@@ -436,7 +470,7 @@ namespace dftfe {
 	    if (cell->is_locally_owned())
 	    {
 		if(cell->at_boundary()
-		   && cell->minimum_vertex_distance()>(dftParameters::autoUserMeshParams?1.5:1)*smootheningFactor*dftParameters::meshSizeOuterBall
+		   && cell->minimum_vertex_distance()>(dftParameters::autoUserMeshParams?1.5:1)*smootheningFactor*smallestMeshSizeAroundAtom
 		   && !cell->refine_flag_set() )
 			for(unsigned int iFace = 0; iFace < faces_per_cell; ++iFace)
 			    if (cell->has_periodic_neighbor(iFace))
