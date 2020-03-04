@@ -29,7 +29,7 @@ namespace dftfe
      void computeELocWfcEshelbyTensorNonPeriodic(const double * psiQuadValuesHost,
                                                  const double * gradPsiQuadValuesHost,
                                                  const double * eigenValuesHost,
-                                                 const double * partialOccupanciesHost
+                                                 const double * partialOccupanciesHost,
                                                  double * eshelbyTensorQuadValuesHost);
 
    }
