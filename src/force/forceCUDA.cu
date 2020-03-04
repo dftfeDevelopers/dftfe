@@ -113,12 +113,88 @@ namespace dftfe
 
       }
 
-      void computeELocWfcEshelbyTensorNonPeriodic(const double * psiQuadValuesHost,
-                                                 const double * gradPsiQuadValuesHost,
-                                                 const double * eigenValuesHost,
-                                                 const double * partialOccupanciesHost,
-                                                 double * eshelbyTensorQuadValuesHost)
+      void computeELocWfcEshelbyTensorNonPeriodicH(const double * psiQuadValuesH,
+                                                 const double * gradPsiQuadValuesXH,
+                                                 const double * gradPsiQuadValuesYH,
+                                                 const double * gradPsiQuadValuesZH,
+                                                 const double * eigenValuesH,
+                                                 const double * partialOccupanciesH,
+                                                 const unsigned int numCells,
+                                                 const unsigned int numPsi,
+                                                 const unsigned int numQuads,
+                                                 double * eshelbyTensorQuadValuesH)
       { 
+    
+           thrust::device_vector<double> psiQuadValuesD(numPsi*numQuads,0.0);
+           thrust::device_vector<double> gradPsiQuadValuesXD(numPsi*numQuads,0.0);
+           thrust::device_vector<double> gradPsiQuadValuesYD(numPsi*numQuads,0.0);
+           thrust::device_vector<double> gradPsiQuadValuesZD(numPsi*numQuads,0.0);
+           thrust::device_vector<double> eigenValuesD(numPsi,0.0);
+           thrust::device_vector<double> partialOccupanciesD(numPsi,0.0);
+           thrust::device_vector<double> eshelbyTensorQuadValuesD(numCells*6,0.0);
+
+
+           cudaMemcpy(thrust::raw_pointer_cast(&psiQuadValuesD[0]),
+		      &psiQuadValuesH,
+		      numCells*numPsi*numQuads*sizeof(double),
+		      cudaMemcpyHostToDevice);
+
+           cudaMemcpy(thrust::raw_pointer_cast(&gradPsiQuadValuesXD[0]),
+		      &gradPsiQuadValuesXH,
+		      numCells*numPsi*numQuads*sizeof(double),
+		      cudaMemcpyHostToDevice);
+
+           cudaMemcpy(thrust::raw_pointer_cast(&gradPsiQuadValuesYD[0]),
+		      &gradPsiQuadValuesYD,
+		      numCells*numPsi*numQuads*sizeof(double),
+		      cudaMemcpyHostToDevice);
+
+           cudaMemcpy(thrust::raw_pointer_cast(&gradPsiQuadValuesZD[0]),
+		      &gradPsiQuadValuesZD,
+		      numCells*numPsi*numQuads*sizeof(double),
+		      cudaMemcpyHostToDevice);
+
+           cudaMemcpy(thrust::raw_pointer_cast(&eigenValuesD[0]),
+		      &eigenValuesH,
+		      numCells*numPsi*sizeof(double),
+		      cudaMemcpyHostToDevice);
+
+           cudaMemcpy(thrust::raw_pointer_cast(&partialOccupanciesD[0]),
+		      &partialOccupanciesH,
+		      numCells*numPsi*sizeof(double),
+		      cudaMemcpyHostToDevice);
+
+           computeELocWfcEshelbyTensorNonPeriodic(thrust::raw_pointer_cast(&psiQuadValuesD[0]),
+                                                  thrust::raw_pointer_cast(&gradPsiQuadValuesXD[0]),
+                                                  thrust::raw_pointer_cast(&gradPsiQuadValuesYD[0]),
+                                                  thrust::raw_pointer_cast(&gradPsiQuadValuesZD[0]),
+                                                  thrust::raw_pointer_cast(&eigenValuesD[0]),
+                                                  thrust::raw_pointer_cast(&partialOccupanciesD[0]),
+                                                  numCells,
+                                                  numPsi,
+                                                  numQuads,
+                                                  thrust::raw_pointer_cast(&eshelbyTensorQuadValuesD[0])); 
+
+           cudaMemcpy(eshelbyTensorQuadValuesH,
+		      thrust::raw_pointer_cast(&eshelbyTensorQuadValuesD[0]),
+		      numCells*6*sizeof(double),
+		      cudaMemcpyDeviceToHost);   
+          
+      }
+
+      void computeELocWfcEshelbyTensorNonPeriodic(const double * psiQuadValuesD,
+                                                 const double * gradPsiQuadValuesXD,
+                                                 const double * gradPsiQuadValuesYD,
+                                                 const double * gradPsiQuadValuesZD,
+                                                 const double * eigenValuesD,
+                                                 const double * partialOccupanciesD,
+                                                 const unsigned int numCells, 
+                                                 const unsigned int numPsi,
+                                                 const unsigned int numQuads,
+                                                 double * eshelbyTensorQuadValuesD)
+      { 
+    
+          
       }
 
    }

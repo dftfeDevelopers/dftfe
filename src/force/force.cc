@@ -18,7 +18,9 @@
 
 
 #include <force.h>
+#ifdef DFTFE_WITH_GPU
 #include <forceCUDA.h>
+#endif
 #include <dft.h>
 #include <dftUtils.h>
 #include <constants.h>

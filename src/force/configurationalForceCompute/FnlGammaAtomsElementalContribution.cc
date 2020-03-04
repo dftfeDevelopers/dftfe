@@ -165,7 +165,7 @@ void forceClass<FEOrder>::FnlGammaAtomsElementalContributionNonPeriodic(std::map
 
 		   const Tensor<1,C_DIM,VectorizedArray<double> > F=
 				  -eshelbyTensor::getFnlNonPeriodic(temp1,
-								    projectorKetTimesPsiTimesVTimesPartOcc[q],
+								    projectorKetTimesPsiTimesVTimesPartOcc[cell*numQuadPoints+q],
                                                                     startingPseudoWfcId);
 
 
@@ -181,7 +181,7 @@ void forceClass<FEOrder>::FnlGammaAtomsElementalContributionNonPeriodic(std::map
 
 		   const Tensor<1,C_DIM,VectorizedArray<double> > F=
 				  -eshelbyTensor::getFnlNonPeriodic(temp1,
-								    projectorKetTimesPsiTimesVTimesPartOcc[q],
+								    projectorKetTimesPsiTimesVTimesPartOcc[cell*numQuadPoints+q],
                                                                     startingPseudoWfcId);
 
 

@@ -26,12 +26,27 @@ namespace dftfe
 {
    namespace forceCUDA
    {
-     void computeELocWfcEshelbyTensorNonPeriodic(const double * psiQuadValuesHost,
-                                                 const double * gradPsiQuadValuesHost,
-                                                 const double * eigenValuesHost,
-                                                 const double * partialOccupanciesHost,
-                                                 double * eshelbyTensorQuadValuesHost);
+     void computeELocWfcEshelbyTensorNonPeriodic(const double * psiQuadValuesD,
+                                                 const double * gradPsiQuadValuesXD,
+                                                 const double * gradPsiQuadValuesYD,
+                                                 const double * gradPsiQuadValuesZD,
+                                                 const double * eigenValuesD,
+                                                 const double * partialOccupanciesD,
+                                                 const unsigned int numCells,
+                                                 const unsigned int numPsi,
+                                                 const unsigned int numQuads,
+                                                 double * eshelbyTensorQuadValuesD);
 
+     void computeELocWfcEshelbyTensorNonPeriodicH(const double * psiQuadValuesH,
+                                                 const double * gradPsiQuadValuesXH,
+                                                 const double * gradPsiQuadValuesYH,
+                                                 const double * gradPsiQuadValuesZH,
+                                                 const double * eigenValuesH,
+                                                 const double * partialOccupanciesH,
+                                                 const unsigned int numCells,
+                                                 const unsigned int numPsi,
+                                                 const unsigned int numQuads,
+                                                 double * eshelbyTensorQuadValuesH);
    }
 }
 #endif
