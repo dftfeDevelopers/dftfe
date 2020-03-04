@@ -18,6 +18,7 @@
 
 
 #include <force.h>
+#include <forceCUDA.h>
 #include <dft.h>
 #include <dftUtils.h>
 #include <constants.h>

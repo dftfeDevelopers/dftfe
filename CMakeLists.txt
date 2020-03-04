@@ -194,6 +194,7 @@ IF (WITH_GPU)
    ./src/linAlg/linearAlgebraOperationsCUDA.cu
    ./src/linAlg/pseudoGSCUDA.cu
    ./src/linAlg/rayleighRitzCUDA.cu
+   ./src/force/forceCUDA.cu
    ./utils/constraintMatrixInfoCUDA.cu
    ./utils/vectorTools/vectorUtilitiesCUDA.cu
    )
