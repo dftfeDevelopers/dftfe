@@ -115,11 +115,14 @@ namespace dftfe {
       extern unsigned int numberStepsBOMD;
       extern double startingTempBOMDNVE;
       extern double gaussianConstantForce;
+      extern double gaussianOrderForce;
+      extern double gaussianOrderMoveMeshToAtoms;
       extern double diracDeltaKernelScalingConstant;
       extern bool useRank1KernelXLBOMD;
       extern bool autoMeshStepInterpolateBOMD;
       extern double ratioOfMeshMovementToForceGaussianBOMD;
       extern bool useAtomicRhoXLBOMD;
+      extern bool useMeshSizesFromAtomsFile;
 
       /**
        * Declare parameters.
