@@ -59,6 +59,13 @@ namespace dftfe
                                                   thrust::device_vector<double> & eshelbyTensorQuadValuesD20,
                                                   thrust::device_vector<double> & eshelbyTensorQuadValuesD21,
                                                   thrust::device_vector<double> & eshelbyTensorQuadValuesD22);
+
+     void computeNonLocalProjectorKetTimesPsiTimesVH(operatorDFTCUDAClass & operatorMatrix,
+                                                     const double * X,
+                                                     const unsigned int startingVecId,
+                                                     const unsigned int BVec,
+                                                     const unsigned int N,
+                                                     double * projectorKetTimesPsiTimesVH);
    }
 }
 #endif

@@ -438,5 +438,50 @@ namespace dftfe
 		      1);       
       }
 
+      void computeNonLocalProjectorKetTimesPsiTimesVH(operatorDFTCUDAClass & operatorMatrix,
+                                                      const double * X,
+                                                      const unsigned int startingVecId,
+                                                      const unsigned int BVec,
+                                                      const unsigned int N,
+                                                      double * projectorKetTimesPsiTimesVH)
+      {
+
+	    cudaVectorType cudaFlattenedArrayBlock;
+	    vectorTools::createDealiiVector(operatorMatrix.getMatrixFreeData()->get_vector_partitioner(),
+					    BVec,
+					    cudaFlattenedArrayBlock);
+
+
+	    cudaVectorType projectorKetTimesVector;
+	    vectorTools::createDealiiVector(operatorMatrix.getProjectorKetTimesVectorSingle().get_partitioner(),
+					    BVec,
+					    projectorKetTimesVector);
+
+
+            const unsigned int M=operatorMatrix.getMatrixFreeData()->get_vector_partitioner()->local_size();
+            stridedCopyToBlockKernel<<<(BVec+255)/256*M, 256>>>(BVec,
+								X,
+								M,
+								N,
+								cudaFlattenedArrayBlock.begin(),
+								startingVecId);
+            cudaFlattenedArrayBlock.update_ghost_values();
+  
+            (operatorMatrix.getOverloadedConstraintMatrix())->distribute(cudaFlattenedArrayBlock,
+								         BVec);
+
+            operatorMatrix.computeNonLocalProjectorKetTimesXTimesV(cudaFlattenedArrayBlock.begin(),
+						                   projectorKetTimesVector,
+							           BVec);
+
+
+            const unsigned int totalSize=projectorKetTimesVector.get_partitioner()->n_ghost_indices()+projectorKetTimesVector.local_size();
+
+            cudaMemcpy(projectorKetTimesPsiTimesVH,
+		       projectorKetTimesVector.begin(),
+		       totalSize*sizeof(double),
+		       cudaMemcpyDeviceToHost);  
+      }
+
    }
 }

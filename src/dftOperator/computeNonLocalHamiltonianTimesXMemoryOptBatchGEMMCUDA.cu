@@ -182,3 +182,91 @@ const bool skip2)
                                                                       dst,
                                                                       thrust::raw_pointer_cast(&d_flattenedArrayCellLocalProcIndexIdMapDevice[0]));
 }
+
+
+template<unsigned int FEOrder>
+void kohnShamDFTOperatorCUDAClass<FEOrder>::computeNonLocalProjectorKetTimesXTimesV(const double* src,
+									     cudaVectorType &  projectorKetTimesVector,
+									     const unsigned int numberWaveFunctions)
+{
+	 
+  const double scalarCoeffAlpha = 1.0,scalarCoeffBeta = 0.0;
+  
+  //
+  //compute C^{T}*X
+  //
+  unsigned int strideA = numberWaveFunctions*d_numberNodesPerElement;
+  unsigned int strideB = d_numberNodesPerElement*d_maxSingleAtomPseudoWfc; 
+  unsigned int strideC = numberWaveFunctions*d_maxSingleAtomPseudoWfc;
+
+  if (d_totalNonlocalElems>0)
+  { 
+	  copyCUDAKernel<<<(numberWaveFunctions+255)/256*d_totalNonlocalElems*d_numberNodesPerElement,256>>>
+									     (numberWaveFunctions, 
+									      d_totalNonlocalElems*d_numberNodesPerElement,
+									      src,
+									      thrust::raw_pointer_cast(&d_cellWaveFunctionMatrixNonLocalDevice[0]),
+									      thrust::raw_pointer_cast(&d_flattenedArrayCellLocalProcIndexIdFlattenedMapNonLocalDevice[0]));
+	 
+	 
+	  
+	  cublasDgemmStridedBatched(d_cublasHandle,
+				    CUBLAS_OP_N,
+				    CUBLAS_OP_N,
+				    numberWaveFunctions,
+				    d_maxSingleAtomPseudoWfc,
+				    d_numberNodesPerElement,
+				    &scalarCoeffAlpha,
+				    thrust::raw_pointer_cast(&d_cellWaveFunctionMatrixNonLocalDevice[0]),
+				    numberWaveFunctions,
+				    strideA,
+				    thrust::raw_pointer_cast(&d_cellHamiltonianMatrixNonLocalFlattenedDevice[0]),
+				    d_numberNodesPerElement,
+				    strideB,
+				    &scalarCoeffBeta,
+				    thrust::raw_pointer_cast(&d_projectorKetTimesVectorAllCellsDevice[0]),
+				    numberWaveFunctions,
+				    strideC,
+				    d_totalNonlocalElems);
+
+	  cublasDgemm(d_cublasHandle,
+		      CUBLAS_OP_N,
+		      CUBLAS_OP_N,
+		      numberWaveFunctions,
+		      d_totalPseudoWfcNonLocal,
+		      d_totalNonlocalElems*d_maxSingleAtomPseudoWfc,
+		      &scalarCoeffAlpha,
+		      thrust::raw_pointer_cast(&d_projectorKetTimesVectorAllCellsDevice[0]),
+		      numberWaveFunctions,
+		      thrust::raw_pointer_cast(&d_projectorKetTimesVectorAllCellsReductionDevice[0]),
+		      d_totalNonlocalElems*d_maxSingleAtomPseudoWfc,
+		      &scalarCoeffBeta,
+		      thrust::raw_pointer_cast(&d_projectorKetTimesVectorParFlattenedDevice[0]),
+		      numberWaveFunctions);
+
+  }
+
+  projectorKetTimesVector=0.0;
+
+  
+  if (d_totalNonlocalElems>0)
+    copyToDealiiParallelNonLocalVec<<<(numberWaveFunctions+255)/256*d_totalPseudoWfcNonLocal,256>>>
+						     (numberWaveFunctions, 
+						      d_totalPseudoWfcNonLocal,
+                                                      thrust::raw_pointer_cast(&d_projectorKetTimesVectorParFlattenedDevice[0]),
+                                                      projectorKetTimesVector.begin(),
+						      thrust::raw_pointer_cast(&d_projectorIdsParallelNumberingMapDevice[0]));
+
+  projectorKetTimesVector.compress(VectorOperation::add);
+  projectorKetTimesVector.update_ghost_values();
+ 
+  //
+  //compute V*C^{T}*X
+  //
+  if (d_totalNonlocalElems>0) 
+	  scaleCUDAKernel<<<(numberWaveFunctions+255)/256*d_totalPseudoWfcNonLocal,256>>>(numberWaveFunctions,
+										 d_totalPseudoWfcNonLocal,
+										 1.0,
+										 projectorKetTimesVector.begin(),
+										 thrust::raw_pointer_cast(&d_nonLocalPseudoPotentialConstantsDevice[0]));
+}

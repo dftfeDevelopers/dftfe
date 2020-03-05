@@ -406,7 +406,18 @@ namespace dftfe{
       void computeHamiltonianMatrix(unsigned int kPointIndex);
 
 
-
+     /**
+       * @brief implementation of non-local projector kets times psi product
+       * using non-local discretized projectors at cell-level.
+       * works for both complex and real data type
+       * @param src Vector containing current values of source array with multi-vector array stored
+       * in a flattened format with all the wavefunction value corresponding to a given node is stored
+       * contiguously.
+       * @param numberWaveFunctions Number of wavefunctions at a given node.
+       */
+      void computeNonLocalProjectorKetTimesXTimesV(const double *src,
+                                              cudaVectorType & projectorKetTimesVector,
+					      const unsigned int numberWaveFunctions);
 
     private:
       /**
