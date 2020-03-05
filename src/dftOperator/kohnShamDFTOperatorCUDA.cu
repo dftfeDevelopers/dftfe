@@ -278,6 +278,12 @@ namespace dftfe
   }
 
   template<unsigned int FEOrder>
+  thrust::device_vector<double> & kohnShamDFTOperatorCUDAClass<FEOrder>::getShapeFunctionValuesNLPInverted()
+  {
+    return d_shapeFunctionValueNLPInvertedDevice;
+  }
+
+  template<unsigned int FEOrder>
   thrust::device_vector<double> & kohnShamDFTOperatorCUDAClass<FEOrder>::getShapeFunctionGradientValuesX()
   {
     return d_shapeFunctionGradientValueXDevice;

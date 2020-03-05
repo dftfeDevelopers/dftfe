@@ -191,4 +191,37 @@ void kohnShamDFTOperatorCUDAClass<FEOrder>::preComputeShapeFunctionGradientInteg
 
 	    d_glShapeFunctionGradientValueZInvertedDevice=glShapeFunctionGradientValueZInverted;
     }
+
+    if (dftParameters::useHigherQuadNLP)
+    {
+	  QGauss<3>  quadratureNLP(C_num1DQuadPSP<FEOrder>());
+	  FEValues<3> fe_valuesNLP(dftPtr->matrix_free_data.get_dof_handler().get_fe(), quadratureNLP, update_values);
+	  const unsigned int numberQuadraturePointsNLP = quadratureNLP.size();
+
+	  //
+	  //resize data members
+	  //
+	  std::vector<double> nlpShapeFunctionValueInverted(numberQuadraturePointsNLP*numberDofsPerElement,0.0);
+
+	  typename dealii::DoFHandler<3>::active_cell_iterator cellPtr=dftPtr->matrix_free_data.get_dof_handler().begin_active();
+          typename dealii::DoFHandler<3>::active_cell_iterator endcPtr = dftPtr->matrix_free_data.get_dof_handler().end();
+
+		 
+	  for(; cellPtr!=endcPtr; ++cellPtr)
+	      if(cellPtr->is_locally_owned())
+	       { 
+                     fe_valuesNLP.reinit (cellPtr);
+                     break;
+               }
+
+
+	  for(unsigned int iNode = 0; iNode < numberDofsPerElement; ++iNode)
+	    for(unsigned int q_point = 0; q_point < numberQuadraturePointsNLP; ++q_point)
+	    {
+	       const double val=fe_valuesNLP.shape_value(iNode,q_point);
+	       nlpShapeFunctionValueInverted[q_point*numberDofsPerElement+iNode] = val;
+	    }
+
+	  d_shapeFunctionValueNLPInvertedDevice=nlpShapeFunctionValueInverted;
+    }
 }

@@ -66,6 +66,37 @@ namespace dftfe
                                                      const unsigned int BVec,
                                                      const unsigned int N,
                                                      double * projectorKetTimesPsiTimesVH);
+
+     void interpolatePsiH(operatorDFTCUDAClass & operatorMatrix,
+                          const double * X,
+                          const unsigned int startingVecId,
+                          const unsigned int BVec,
+                          const unsigned int N,
+                          const unsigned int numCells,
+                          const unsigned int numQuads,
+                          const unsigned int numQuadsNLP,
+                          const unsigned int numNodesPerElement,
+                          double * psiQuadsFlatH,
+                          double * psiQuadsNLPFlatH,
+                          double * gradPsiQuadsXFlatH,
+                          double * gradPsiQuadsYFlatH,
+                          double * gradPsiQuadsZFlatH,
+                          const bool interpolateForNLPQuad=false);
+
+     void interpolatePsiD(operatorDFTCUDAClass & operatorMatrix,
+                          cudaVectorType & Xb,
+                          const unsigned int BVec,
+                          const unsigned int N,
+                          const unsigned int numCells,
+                          const unsigned int numQuads,
+                          const unsigned int numQuadsNLP,
+                          const unsigned int numNodesPerElement,
+                          thrust::device_vector<double> & psiQuadsFlatD,
+                          thrust::device_vector<double> & psiQuadsNLPFlatD,
+                          thrust::device_vector<double> & gradPsiQuadsXFlatD,
+                          thrust::device_vector<double> & gradPsiQuadsYFlatD,
+                          thrust::device_vector<double> & gradPsiQuadsZFlatD,
+                          const bool interpolateForNLPQuad=false);
    }
 }
 #endif

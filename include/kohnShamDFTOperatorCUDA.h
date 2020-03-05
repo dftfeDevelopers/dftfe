@@ -80,6 +80,8 @@ namespace dftfe{
 
       thrust::device_vector<double> & getShapeFunctionValuesInverted(const bool use2pPlusOneGLQuad=false);
 
+      thrust::device_vector<double> & getShapeFunctionValuesNLPInverted();
+
       thrust::device_vector<double> & getShapeFunctionGradientValuesX();
 
       thrust::device_vector<double> & getShapeFunctionGradientValuesY();

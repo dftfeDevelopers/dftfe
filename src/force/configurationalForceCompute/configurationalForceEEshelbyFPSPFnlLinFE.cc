@@ -501,71 +501,33 @@ void forceClass<FEOrder>::computeConfigurationalForceEEshelbyTensorFPSPFnlLinFE
           std::vector<double> gradPsiQuadsYFlat(numPhysicalCells*numQuadPoints*currentBlockSize);
           std::vector<double> gradPsiQuadsZFlat(numPhysicalCells*numQuadPoints*currentBlockSize);
 
-	  for (unsigned int cell=0; cell<matrixFreeData.n_macro_cells(); ++cell)
-	  {
-	    psiEval.reinit(cell);
+          double wfc_time;
+          wfc_time = clock();
 
-	    if (isPseudopotential && dftParameters::useHigherQuadNLP)
-	      psiEvalNLP.reinit(cell);
+	  forceCUDA::interpolatePsiH(kohnShamDFTEigenOperator,
+	                  dftPtr->d_eigenVectorsFlattenedCUDA.begin(),
+		          ivec,
+		          currentBlockSize,
+			  numEigenVectors,
+		          numPhysicalCells,
+		          numQuadPoints,
+		          numQuadPointsNLP,
+		          dftPtr->matrix_free_data.get_dofs_per_cell(),
+		          &psiQuadsFlat[0],
+		          &psiQuadsNLPFlat[0],
+		          &gradPsiQuadsXFlat[0],
+	                  &gradPsiQuadsYFlat[0],
+		          &gradPsiQuadsZFlat[0],
+			  isPseudopotential && dftParameters::useHigherQuadNLP);
 
-	    const unsigned int numSubCells=matrixFreeData.n_components_filled(cell);
+          
+          wfc_time = clock() - wfc_time;
+          wfc_time_total+=wfc_time;          
 
-	    std::vector< VectorizedArray<double> > psiQuads(numQuadPoints*currentBlockSize,make_vectorized_array(0.0));
-	    std::vector<Tensor<1,C_DIM,VectorizedArray<double> > > gradPsiQuads(numQuadPoints*currentBlockSize,zeroTensor3);
-            
-            double wfc_time;
-            wfc_time = clock();
-            const unsigned int physicalCellId=macroCellIdToNormalCellIdMap[cell];
-
-	    for (unsigned int ikPoint=0; ikPoint<numKPoints; ++ikPoint)
-		for (unsigned int iEigenVec=0; iEigenVec<currentBlockSize; ++iEigenVec)
-		{
-		  psiEval.read_dof_values_plain(eigenVectors[ikPoint][iEigenVec]);
-		  psiEval.evaluate(true,true);
-
-		  for (unsigned int q=0; q<numQuadPoints; ++q)
-		  {
-		     const unsigned int id=q*currentBlockSize*numKPoints+currentBlockSize*ikPoint+iEigenVec;
-		     psiQuads[id]=psiEval.get_value(q);
-		     gradPsiQuads[id]=psiEval.get_gradient(q);
-
-                     psiQuadsFlat[physicalCellId*numQuadPoints*currentBlockSize+q*currentBlockSize+iEigenVec]=psiQuads[id][0];
-                     gradPsiQuadsXFlat[physicalCellId*numQuadPoints*currentBlockSize+q*currentBlockSize+iEigenVec]=gradPsiQuads[id][0][0];
-                     gradPsiQuadsYFlat[physicalCellId*numQuadPoints*currentBlockSize+q*currentBlockSize+iEigenVec]=gradPsiQuads[id][1][0];
-                     gradPsiQuadsZFlat[physicalCellId*numQuadPoints*currentBlockSize+q*currentBlockSize+iEigenVec]=gradPsiQuads[id][2][0];
-		  }//quad point loop
-		} //eigenvector loop
-
-	    std::vector< VectorizedArray<double> > psiQuadsNLP;
-
-	    if (isPseudopotential && dftParameters::useHigherQuadNLP)
-	    {
-		psiQuadsNLP.resize(numQuadPointsNLP*currentBlockSize,make_vectorized_array(0.0));
-		for (unsigned int ikPoint=0; ikPoint<numKPoints; ++ikPoint)
-		    for (unsigned int iEigenVec=0; iEigenVec<currentBlockSize; ++iEigenVec)
-		    {
-		      psiEvalNLP.read_dof_values_plain(eigenVectors[ikPoint][iEigenVec]);
-		      psiEvalNLP.evaluate(true,false);
-
-		      for (unsigned int q=0; q<numQuadPointsNLP; ++q)
-		      {
-			 const unsigned int id=q*currentBlockSize*numKPoints+currentBlockSize*ikPoint+iEigenVec;
-			 psiQuadsNLP[id]=psiEvalNLP.get_value(q);
-                         psiQuadsNLPFlat[physicalCellId*numQuadPointsNLP*currentBlockSize+q*currentBlockSize+iEigenVec]=psiQuadsNLP[id][0];
-		      }//quad point loop
-		    } //eigenvector loop
-
-	    }
-
-            wfc_time = clock() - wfc_time;
-            wfc_time_total+=wfc_time;
-
-          }
-           
+          double nlppsicontract_time;
+          nlppsicontract_time = clock(); 
           for (unsigned int ielem=0; ielem<numPhysicalCells; ++ielem)
           {
-            double nlppsicontract_time;
-            nlppsicontract_time = clock();
             const unsigned int numNonLocalAtomsCurrentProc= dftPtr->d_nonLocalAtomIdsInCurrentProcess.size();
             std::vector<bool> isAtomInCell(numNonLocalAtomsCurrentProc,false);
 	    if (isPseudopotential)
@@ -594,7 +556,6 @@ void forceClass<FEOrder>::computeConfigurationalForceEEshelbyTensorFPSPFnlLinFE
                                const int globalAtomId=dftPtr->d_nonLocalAtomIdsInCurrentProcess[iatom];
                                const unsigned int numberSingleAtomPseudoWaveFunctions=numPseudoWfcsAtom[iatom];
                                const unsigned int startingId=nonlocalPseudoWfcsAccum[iatom];
-                               //const std::vector<double> & temp2=projectorKetTimesPsiTimesVTimesPartOcc[iatom];
                                for (unsigned int ipsp=0; ipsp<numberSingleAtomPseudoWaveFunctions; ++ipsp)
                                {
                                  const unsigned int id=dftPtr->d_projectorIdsNumberingMapCurrentProcess[std::make_pair(globalAtomId,ipsp)];  
@@ -619,7 +580,6 @@ void forceClass<FEOrder>::computeConfigurationalForceEEshelbyTensorFPSPFnlLinFE
                                const int globalAtomId=dftPtr->d_nonLocalAtomIdsInCurrentProcess[iatom];
                                const unsigned int numberSingleAtomPseudoWaveFunctions=numPseudoWfcsAtom[iatom];
                                const unsigned int startingId=nonlocalPseudoWfcsAccum[iatom];
-                               //const std::vector<double> & temp2=projectorKetTimesPsiTimesVTimesPartOcc[iatom];
                                for (unsigned int ipsp=0; ipsp<numberSingleAtomPseudoWaveFunctions; ++ipsp)
                                {
                                  const unsigned int id=dftPtr->d_projectorIdsNumberingMapCurrentProcess[std::make_pair(globalAtomId,ipsp)]; 
@@ -634,10 +594,10 @@ void forceClass<FEOrder>::computeConfigurationalForceEEshelbyTensorFPSPFnlLinFE
                       }
               }
             }
-           
-            nlppsicontract_time = clock() - nlppsicontract_time;
-            nlppsicontract_time_total+=nlppsicontract_time;
           }//physical elem loop
+          nlppsicontract_time = clock() - nlppsicontract_time;
+          nlppsicontract_time_total+=nlppsicontract_time;
+
 
           double eloc_time;
           eloc_time = clock();

@@ -483,5 +483,225 @@ namespace dftfe
 		       cudaMemcpyDeviceToHost);  
       }
 
+
+     void interpolatePsiH(operatorDFTCUDAClass & operatorMatrix,
+                          const double * X,
+                          const unsigned int startingVecId,
+                          const unsigned int BVec,
+                          const unsigned int N,
+                          const unsigned int numCells,
+                          const unsigned int numQuads,
+                          const unsigned int numQuadsNLP,
+                          const unsigned int numNodesPerElement,
+                          double * psiQuadsFlatH,
+                          double * psiQuadsNLPFlatH,
+                          double * gradPsiQuadsXFlatH,
+                          double * gradPsiQuadsYFlatH,
+                          double * gradPsiQuadsZFlatH,
+                          const bool interpolateForNLPQuad)
+     {
+            thrust::device_vector<double> psiQuadsFlatD(numCells*numQuads*BVec,0.0);
+            thrust::device_vector<double> psiQuadsNLPFlatD(numCells*numQuadsNLP*BVec,0.0);
+            thrust::device_vector<double> gradPsiQuadsXFlatD(numCells*numQuads*BVec,0.0);
+            thrust::device_vector<double> gradPsiQuadsYFlatD(numCells*numQuads*BVec,0.0);
+            thrust::device_vector<double> gradPsiQuadsZFlatD(numCells*numQuads*BVec,0.0);
+
+
+	    cudaVectorType cudaFlattenedArrayBlock;
+	    vectorTools::createDealiiVector(operatorMatrix.getMatrixFreeData()->get_vector_partitioner(),
+					    BVec,
+					    cudaFlattenedArrayBlock);
+
+
+            const unsigned int M=operatorMatrix.getMatrixFreeData()->get_vector_partitioner()->local_size();
+            stridedCopyToBlockKernel<<<(BVec+255)/256*M, 256>>>(BVec,
+								X,
+								M,
+								N,
+								cudaFlattenedArrayBlock.begin(),
+								startingVecId);
+            cudaFlattenedArrayBlock.update_ghost_values();
+  
+            (operatorMatrix.getOverloadedConstraintMatrix())->distribute(cudaFlattenedArrayBlock,
+								         BVec);
+
+	    interpolatePsiD(operatorMatrix,
+			    cudaFlattenedArrayBlock,
+			    BVec,
+			    N,
+			    numCells,
+			    numQuads,
+			    numQuadsNLP,
+			    numNodesPerElement,
+			    psiQuadsFlatD,
+			    psiQuadsNLPFlatD,
+			    gradPsiQuadsXFlatD,
+			    gradPsiQuadsYFlatD,
+			    gradPsiQuadsZFlatD,
+			    interpolateForNLPQuad);
+
+            cudaMemcpy(psiQuadsFlatH,
+		      thrust::raw_pointer_cast(&psiQuadsFlatD[0]),
+		      numCells*numQuads*BVec*sizeof(double),
+		      cudaMemcpyDeviceToHost);
+
+            if (interpolateForNLPQuad)
+		    cudaMemcpy(psiQuadsNLPFlatH,
+			      thrust::raw_pointer_cast(&psiQuadsNLPFlatD[0]),
+			      numCells*numQuadsNLP*BVec*sizeof(double),
+			      cudaMemcpyDeviceToHost); 
+
+            cudaMemcpy(gradPsiQuadsXFlatH,
+		      thrust::raw_pointer_cast(&gradPsiQuadsXFlatD[0]),
+		      numCells*numQuads*BVec*sizeof(double),
+		      cudaMemcpyDeviceToHost);
+
+            cudaMemcpy(gradPsiQuadsYFlatH,
+		      thrust::raw_pointer_cast(&gradPsiQuadsYFlatD[0]),
+		      numCells*numQuads*BVec*sizeof(double),
+		      cudaMemcpyDeviceToHost);
+
+            cudaMemcpy(gradPsiQuadsZFlatH,
+		      thrust::raw_pointer_cast(&gradPsiQuadsZFlatD[0]),
+		      numCells*numQuads*BVec*sizeof(double),
+		      cudaMemcpyDeviceToHost); 
+
+     }
+
+     void interpolatePsiD(operatorDFTCUDAClass & operatorMatrix,
+                          cudaVectorType & Xb,
+                          const unsigned int BVec,
+                          const unsigned int N,
+                          const unsigned int numCells,
+                          const unsigned int numQuads,
+                          const unsigned int numQuadsNLP,
+                          const unsigned int numNodesPerElement,
+                          thrust::device_vector<double> & psiQuadsFlatD,
+                          thrust::device_vector<double> & psiQuadsNLPFlatD,
+                          thrust::device_vector<double> & gradPsiQuadsXFlatD,
+                          thrust::device_vector<double> & gradPsiQuadsYFlatD,
+                          thrust::device_vector<double> & gradPsiQuadsZFlatD,
+                          const bool interpolateForNLPQuad)
+     {
+            const unsigned int numGhosts=Xb.get_partitioner()->n_ghost_indices();
+
+            thrust::device_vector<double> & cellWaveFunctionMatrix = operatorMatrix.getCellWaveFunctionMatrix();
+
+	    copyCUDAKernel<<<(BVec+255)/256*numCells*numNodesPerElement,256>>>
+							  (BVec,
+							   numCells*numNodesPerElement,
+							   Xb.begin(),
+							   thrust::raw_pointer_cast(&cellWaveFunctionMatrix[0]),
+							   thrust::raw_pointer_cast(&(operatorMatrix.getFlattenedArrayCellLocalProcIndexIdMap())[0]));
+
+	    double scalarCoeffAlpha = 1.0,scalarCoeffBeta = 0.0;
+	    int strideA = BVec*numNodesPerElement;
+	    int strideB = 0;
+	    int strideC = BVec*numQuads;
+
+	  
+	    cublasDgemmStridedBatched(operatorMatrix.getCublasHandle(),
+				    CUBLAS_OP_N,
+				    CUBLAS_OP_N,
+				    BVec,
+				    numQuads,
+				    numNodesPerElement,
+				    &scalarCoeffAlpha,
+				    thrust::raw_pointer_cast(&cellWaveFunctionMatrix[0]),
+				    BVec,
+				    strideA,
+				    thrust::raw_pointer_cast(&(operatorMatrix.getShapeFunctionValuesInverted())[0]),
+				    numNodesPerElement,
+				    strideB,
+				    &scalarCoeffBeta,
+				    thrust::raw_pointer_cast(&psiQuadsFlatD[0]),
+				    BVec,
+				    strideC,
+				    numCells);
+
+            if (interpolateForNLPQuad)
+            {
+		    int strideCNLP = BVec*numQuadsNLP;
+		    cublasDgemmStridedBatched(operatorMatrix.getCublasHandle(),
+					    CUBLAS_OP_N,
+					    CUBLAS_OP_N,
+					    BVec,
+					    numQuadsNLP,
+					    numNodesPerElement,
+					    &scalarCoeffAlpha,
+					    thrust::raw_pointer_cast(&cellWaveFunctionMatrix[0]),
+					    BVec,
+					    strideA,
+					    thrust::raw_pointer_cast(&(operatorMatrix.getShapeFunctionValuesNLPInverted())[0]),
+					    numNodesPerElement,
+					    strideB,
+					    &scalarCoeffBeta,
+					    thrust::raw_pointer_cast(&psiQuadsNLPFlatD[0]),
+					    BVec,
+					    strideCNLP,
+					    numCells);
+            }
+
+	    strideB=numNodesPerElement*numQuads;
+
+	    cublasDgemmStridedBatched(operatorMatrix.getCublasHandle(),
+				    CUBLAS_OP_N,
+				    CUBLAS_OP_N,
+				    BVec,
+				    numQuads,
+				    numNodesPerElement,
+				    &scalarCoeffAlpha,
+				    thrust::raw_pointer_cast(&cellWaveFunctionMatrix[0]),
+				    BVec,
+				    strideA,
+				    thrust::raw_pointer_cast(&(operatorMatrix.getShapeFunctionGradientValuesXInverted())[0]),
+				    numNodesPerElement,
+				    strideB,
+				    &scalarCoeffBeta,
+				    thrust::raw_pointer_cast(&gradPsiQuadsXFlatD[0]),
+				    BVec,
+				    strideC,
+				    numCells);
+
+
+	    cublasDgemmStridedBatched(operatorMatrix.getCublasHandle(),
+				    CUBLAS_OP_N,
+				    CUBLAS_OP_N,
+				    BVec,
+				    numQuads,
+				    numNodesPerElement,
+				    &scalarCoeffAlpha,
+				    thrust::raw_pointer_cast(&cellWaveFunctionMatrix[0]),
+				    BVec,
+				    strideA,
+				    thrust::raw_pointer_cast(&(operatorMatrix.getShapeFunctionGradientValuesYInverted())[0]),
+				    numNodesPerElement,
+				    strideB,
+				    &scalarCoeffBeta,
+				    thrust::raw_pointer_cast(&gradPsiQuadsYFlatD[0]),
+				    BVec,
+				    strideC,
+				    numCells);
+
+	    cublasDgemmStridedBatched(operatorMatrix.getCublasHandle(),
+				    CUBLAS_OP_N,
+				    CUBLAS_OP_N,
+				    BVec,
+				    numQuads,
+				    numNodesPerElement,
+				    &scalarCoeffAlpha,
+				    thrust::raw_pointer_cast(&cellWaveFunctionMatrix[0]),
+				    BVec,
+				    strideA,
+				    thrust::raw_pointer_cast(&(operatorMatrix.getShapeFunctionGradientValuesZInverted())[0]),
+				    numNodesPerElement,
+				    strideB,
+				    &scalarCoeffBeta,
+				    thrust::raw_pointer_cast(&gradPsiQuadsZFlatD[0]),
+				    BVec,
+				    strideC,
+				    numCells);
+     }
+
    }
 }

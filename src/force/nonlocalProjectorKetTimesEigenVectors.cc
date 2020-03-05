@@ -21,7 +21,7 @@ void forceClass<FEOrder>::computeNonLocalProjectorKetTimesPsiTimesVFlattened
                            (const dealii::LinearAlgebra::distributed::Vector<dataTypes::number> &src,
 			    const unsigned int numberWaveFunctions)
 {
-
+/*
   vectorTools::createDealiiVector<dataTypes::number>(dftPtr->d_projectorKetTimesVectorPar[0].get_partitioner(),
                                                      numberWaveFunctions,
                                                      dftPtr->d_projectorKetTimesVectorParFlattened);
@@ -174,6 +174,7 @@ void forceClass<FEOrder>::computeNonLocalProjectorKetTimesPsiTimesVFlattened
                 *= dftPtr->d_nonLocalPseudoPotentialConstants[atomId][iPseudoAtomicWave];
       }
     }
+  */
 }
 
 template<unsigned int FEOrder>
