@@ -122,7 +122,7 @@ namespace eshelbyTensor
 			     (std::vector<VectorizedArray<double> >::const_iterator psiBegin,
 			      std::vector<Tensor<1,C_DIM,VectorizedArray<double> > >::const_iterator gradPsiBegin,
 			      const std::vector<double> & eigenValues_,
-                               const std::vector<double> & partialOccupancies_) 
+                              const std::vector<double> & partialOccupancies_) 
     {
 
        Tensor<2,C_DIM,VectorizedArray<double> > eshelbyTensor;

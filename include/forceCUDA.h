@@ -26,27 +26,39 @@ namespace dftfe
 {
    namespace forceCUDA
    {
-     void computeELocWfcEshelbyTensorNonPeriodic(const double * psiQuadValuesD,
-                                                 const double * gradPsiQuadValuesXD,
-                                                 const double * gradPsiQuadValuesYD,
-                                                 const double * gradPsiQuadValuesZD,
-                                                 const double * eigenValuesD,
-                                                 const double * partialOccupanciesD,
-                                                 const unsigned int numCells,
-                                                 const unsigned int numPsi,
-                                                 const unsigned int numQuads,
-                                                 double * eshelbyTensorQuadValuesD);
-
-     void computeELocWfcEshelbyTensorNonPeriodicH(const double * psiQuadValuesH,
+     void computeELocWfcEshelbyTensorNonPeriodicH(operatorDFTCUDAClass & operatorMatrix,
+                                                 const double * psiQuadValuesH,
                                                  const double * gradPsiQuadValuesXH,
                                                  const double * gradPsiQuadValuesYH,
                                                  const double * gradPsiQuadValuesZH,
                                                  const double * eigenValuesH,
                                                  const double * partialOccupanciesH,
                                                  const unsigned int numCells,
-                                                 const unsigned int numPsi,
                                                  const unsigned int numQuads,
-                                                 double * eshelbyTensorQuadValuesH);
+                                                 const unsigned int numPsi,
+                                                 double * eshelbyTensorQuadValuesH00,
+                                                 double * eshelbyTensorQuadValuesH10,
+                                                 double * eshelbyTensorQuadValuesH11,
+                                                 double * eshelbyTensorQuadValuesH20,
+                                                 double * eshelbyTensorQuadValuesH21,
+                                                 double * eshelbyTensorQuadValuesH22);
+
+     void computeELocWfcEshelbyTensorNonPeriodicD(operatorDFTCUDAClass & operatorMatrix,
+                                                  const thrust::device_vector<double> & psiQuadValuesD,
+                                                  const thrust::device_vector<double> & gradPsiQuadValuesXD,
+                                                  const thrust::device_vector<double> & gradPsiQuadValuesYD,
+                                                  const thrust::device_vector<double> & gradPsiQuadValuesZD,
+                                                  const thrust::device_vector<double> & eigenValuesD,
+                                                  const thrust::device_vector<double> & partialOccupanciesD,
+                                                  const unsigned int numCells,
+                                                  const unsigned int numQuads,
+                                                  const unsigned int numPsi,
+                                                  thrust::device_vector<double> & eshelbyTensorQuadValuesD00,
+                                                  thrust::device_vector<double> & eshelbyTensorQuadValuesD10,
+                                                  thrust::device_vector<double> & eshelbyTensorQuadValuesD11,
+                                                  thrust::device_vector<double> & eshelbyTensorQuadValuesD20,
+                                                  thrust::device_vector<double> & eshelbyTensorQuadValuesD21,
+                                                  thrust::device_vector<double> & eshelbyTensorQuadValuesD22);
    }
 }
 #endif
