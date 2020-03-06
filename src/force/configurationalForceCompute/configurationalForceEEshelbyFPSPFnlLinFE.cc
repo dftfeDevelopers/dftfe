@@ -267,7 +267,44 @@ void forceClass<FEOrder>::computeConfigurationalForceEEshelbyTensorFPSPFnlLinFE
                 iElemNormal++;
             }
    }
+
+   std::vector<unsigned int> nonTrivialNonLocalIdsAllCells;
+   std::vector<unsigned int> nonTrivialIdToElemIdMap;
+   std::vector<unsigned int> nonTrivialIdToAllPseudoWfcIdMap;
+   std::vector<unsigned int> projecterKetTimesFlattenedVectorLocalIds; 
+   if (isPseudopotential)
+   {
+          for (unsigned int ielem=0; ielem<numPhysicalCells; ++ielem)
+          {
+            const unsigned int numNonLocalAtomsCurrentProc= dftPtr->d_nonLocalAtomIdsInCurrentProcess.size();
+
+              for (unsigned int iatom=0; iatom<numNonLocalAtomsCurrentProc; ++iatom)
+              {
+                 bool isNonTrivial=false;
+		 for (unsigned int i=0;i<macroIdToNonlocalAtomsSetMap[normalCellIdToMacroCellIdMap[ielem]].size();i++)
+		      if (macroIdToNonlocalAtomsSetMap[normalCellIdToMacroCellIdMap[ielem]][i]==iatom)
+		      {
+                          isNonTrivial=true;
+                          break;
+		      }
+                 if (isNonTrivial)
+                 {
+                    const int globalAtomId=dftPtr->d_nonLocalAtomIdsInCurrentProcess[iatom];
+                    const unsigned int numberSingleAtomPseudoWaveFunctions=numPseudoWfcsAtom[iatom];
+                    for (unsigned int ipsp=0; ipsp<numberSingleAtomPseudoWaveFunctions; ++ipsp)
+		    {
+                         nonTrivialNonLocalIdsAllCells.push_back(iatom);
+                         nonTrivialIdToElemIdMap.push_back(ielem);
+                         nonTrivialIdToAllPseudoWfcIdMap.push_back(nonlocalPseudoWfcsAccum[iatom]+ipsp);
+			 const unsigned int id=dftPtr->d_projectorIdsNumberingMapCurrentProcess[std::make_pair(globalAtomId,ipsp)];
+                         projecterKetTimesFlattenedVectorLocalIds.push_back(id);
+                    }
+                 }
+              }
+          }
+   }
 #endif
+
 
 #ifdef USE_COMPLEX
    //vector of quadPoints times macrocells, nonlocal atom id, pseudo wave, k point
@@ -283,6 +320,7 @@ void forceClass<FEOrder>::computeConfigurationalForceEEshelbyTensorFPSPFnlLinFE
 #endif
 
 #if defined(DFTFE_WITH_GPU) && !defined(USE_COMPLEX)
+   std::vector<double>  projectorKetTimesPsiTimesVTimesPartOccContractionPsiQuadsFlattened(nonTrivialNonLocalIdsAllCells.size()*numQuadPointsNLP,0.0);
    std::vector<std::vector<VectorizedArray<double>> >  projectorKetTimesPsiTimesVTimesPartOccContractionPsiQuads(numMacroCells*numQuadPointsNLP,std::vector<VectorizedArray<double>>(numPseudo,make_vectorized_array(0.0)));
    std::vector<double> elocWfcEshelbyTensorQuadValuesH00(numPhysicalCells*numQuadPoints,0.0);
    std::vector<double> elocWfcEshelbyTensorQuadValuesH10(numPhysicalCells*numQuadPoints,0.0);
@@ -425,58 +463,11 @@ void forceClass<FEOrder>::computeConfigurationalForceEEshelbyTensorFPSPFnlLinFE
 
 	     }
 
-	  for(unsigned int kPoint = 0; kPoint < (1+dftParameters::spinPolarized)*dftPtr->d_kPointWeights.size(); ++kPoint)
-	  {
-		 for(unsigned int iNode = 0; iNode < localVectorSize; ++iNode)
-		    for(unsigned int iWave = 0; iWave < currentBlockSize; ++iWave)
-			eigenVectorsFlattenedBlock[kPoint].local_element(iNode*currentBlockSize+iWave)
-			  = dftPtr->d_eigenVectorsFlattenedSTL[kPoint][iNode*numEigenVectors+ivec+iWave];
-
-		 dftPtr->constraintsNoneDataInfo.distribute(eigenVectorsFlattenedBlock[kPoint],
-						    currentBlockSize);
-		 eigenVectorsFlattenedBlock[kPoint].update_ghost_values();
-
-#ifdef USE_COMPLEX
-		 vectorTools::copyFlattenedDealiiVecToSingleCompVec
-			 (eigenVectorsFlattenedBlock[kPoint],
-			  currentBlockSize,
-			  std::make_pair(0,currentBlockSize),
-			  dftPtr->localProc_dof_indicesReal,
-			  dftPtr->localProc_dof_indicesImag,
-			  eigenVectors[kPoint],
-			  false);
-
-		 //FIXME: The underlying call to update_ghost_values
-		 //is required because currently localProc_dof_indicesReal
-		 //and localProc_dof_indicesImag are only available for
-		 //locally owned nodes. Once they are also made available
-		 //for ghost nodes- use true for the last argument in
-		 //copyFlattenedDealiiVecToSingleCompVec(..) above and supress
-		 //underlying call.
-		 for(unsigned int i= 0; i < currentBlockSize; ++i)
-		     eigenVectors[kPoint][i].update_ghost_values();
-#else
-		 vectorTools::copyFlattenedDealiiVecToSingleCompVec
-			 (eigenVectorsFlattenedBlock[kPoint],
-			  currentBlockSize,
-			  std::make_pair(0,currentBlockSize),
-			  eigenVectors[kPoint],
-			  true);
-
-#endif
-	  }
-
 
 #if defined(DFTFE_WITH_GPU) && !defined(USE_COMPLEX)
       
           double projketpsi_time;
           projketpsi_time = clock();
-          
-          /*
-	  if (isPseudopotential)
-		 computeNonLocalProjectorKetTimesPsiTimesVFlattened(eigenVectorsFlattenedBlock[0],
-								    currentBlockSize);
-          */
           
           if (isPseudopotential)
           {
@@ -525,76 +516,28 @@ void forceClass<FEOrder>::computeConfigurationalForceEEshelbyTensorFPSPFnlLinFE
           wfc_time_total+=wfc_time;          
 
           double nlppsicontract_time;
-          nlppsicontract_time = clock(); 
-          for (unsigned int ielem=0; ielem<numPhysicalCells; ++ielem)
+          nlppsicontract_time = clock();
+          if (isPseudopotential)
           {
-            const unsigned int numNonLocalAtomsCurrentProc= dftPtr->d_nonLocalAtomIdsInCurrentProcess.size();
-            std::vector<bool> isAtomInCell(numNonLocalAtomsCurrentProc,false);
-	    if (isPseudopotential)
-            {
-              std::vector<unsigned int> nonTrivialNonLocalIds;
-              for (unsigned int iatom=0; iatom<numNonLocalAtomsCurrentProc; ++iatom)
-              {
-		 for (unsigned int i=0;i<macroIdToNonlocalAtomsSetMap[normalCellIdToMacroCellIdMap[ielem]].size();i++)
-		      if (macroIdToNonlocalAtomsSetMap[normalCellIdToMacroCellIdMap[ielem]][i]==iatom)
-		      {
-			  isAtomInCell[iatom]=true;
-                          nonTrivialNonLocalIds.push_back(iatom);
-                          break;
-		      }
-              }
+		  for (unsigned int i=0; i<nonTrivialNonLocalIdsAllCells.size(); ++i)
+		  {
 
-              
-	      if (dftParameters::useHigherQuadNLP)
-	      {
-                       for (unsigned int q=0; q<numQuadPointsNLP; ++q)
-                       {
-                          std::vector<VectorizedArray<double>> & temp1= projectorKetTimesPsiTimesVTimesPartOccContractionPsiQuads[normalCellIdToMacroCellIdMap[ielem]*numQuadPointsNLP+q];
-                          for (unsigned int i=0; i<nonTrivialNonLocalIds.size(); ++i)
-                          {
-                               const unsigned int iatom=nonTrivialNonLocalIds[i];
-                               const int globalAtomId=dftPtr->d_nonLocalAtomIdsInCurrentProcess[iatom];
-                               const unsigned int numberSingleAtomPseudoWaveFunctions=numPseudoWfcsAtom[iatom];
-                               const unsigned int startingId=nonlocalPseudoWfcsAccum[iatom];
-                               for (unsigned int ipsp=0; ipsp<numberSingleAtomPseudoWaveFunctions; ++ipsp)
-                               {
-                                 const unsigned int id=dftPtr->d_projectorIdsNumberingMapCurrentProcess[std::make_pair(globalAtomId,ipsp)];  
-                                 for (unsigned int iEigenVec=0; iEigenVec<currentBlockSize; ++iEigenVec)
-                                 {
-                                     temp1[startingId+ipsp]
-                                      += make_vectorized_array(psiQuadsNLPFlat[ielem*numQuadPointsNLP*currentBlockSize+q*currentBlockSize+iEigenVec]
-                                         *dftPtr->d_projectorKetTimesVectorParFlattened[id*currentBlockSize+iEigenVec]*blockedPartialOccupancies[0][iEigenVec]);
-                                 }
-                               }
-                          }
-                      }
-	      }
-	      else
-	      {
-                       for (unsigned int q=0; q<numQuadPoints; ++q)
-                       {
-                          std::vector<VectorizedArray<double> > & temp1= projectorKetTimesPsiTimesVTimesPartOccContractionPsiQuads[normalCellIdToMacroCellIdMap[ielem]*numQuadPoints+q];
-                          for (unsigned int i=0; i<nonTrivialNonLocalIds.size(); ++i)
-                          {
-                               const unsigned int iatom=nonTrivialNonLocalIds[i];
-                               const int globalAtomId=dftPtr->d_nonLocalAtomIdsInCurrentProcess[iatom];
-                               const unsigned int numberSingleAtomPseudoWaveFunctions=numPseudoWfcsAtom[iatom];
-                               const unsigned int startingId=nonlocalPseudoWfcsAccum[iatom];
-                               for (unsigned int ipsp=0; ipsp<numberSingleAtomPseudoWaveFunctions; ++ipsp)
-                               {
-                                 const unsigned int id=dftPtr->d_projectorIdsNumberingMapCurrentProcess[std::make_pair(globalAtomId,ipsp)]; 
-                                 for (unsigned int iEigenVec=0; iEigenVec<currentBlockSize; ++iEigenVec)
-                                 {
-                                     temp1[startingId+ipsp]
-                                      += make_vectorized_array(psiQuadsFlat[ielem*numQuadPoints*currentBlockSize+q*currentBlockSize+iEigenVec]
-                                         *dftPtr->d_projectorKetTimesVectorParFlattened[id*currentBlockSize+iEigenVec]*blockedPartialOccupancies[0][iEigenVec]);
-                                 }
-                               }
-                          }
-                      }
-              }
-            }
-          }//physical elem loop
+			 const unsigned int id= projecterKetTimesFlattenedVectorLocalIds[i]; 
+                         const unsigned int ielem=nonTrivialIdToElemIdMap[i];
+			 if (dftParameters::useHigherQuadNLP) 
+		             for (unsigned int q=0; q<numQuadPointsNLP; ++q)
+				 for (unsigned int iEigenVec=0; iEigenVec<currentBlockSize; ++iEigenVec)
+				     projectorKetTimesPsiTimesVTimesPartOccContractionPsiQuadsFlattened[i*numQuadPointsNLP+q]
+				      += psiQuadsNLPFlat[ielem*numQuadPointsNLP*currentBlockSize+q*currentBlockSize+iEigenVec]
+					 *dftPtr->d_projectorKetTimesVectorParFlattened[id*currentBlockSize+iEigenVec]*blockedPartialOccupancies[0][iEigenVec];
+                         else
+                             for (unsigned int q=0; q<numQuadPointsNLP; ++q)
+				 for (unsigned int iEigenVec=0; iEigenVec<currentBlockSize; ++iEigenVec)
+				     projectorKetTimesPsiTimesVTimesPartOccContractionPsiQuadsFlattened[i*numQuadPointsNLP+q]
+				      += psiQuadsFlat[ielem*numQuadPointsNLP*currentBlockSize+q*currentBlockSize+iEigenVec]
+					 *dftPtr->d_projectorKetTimesVectorParFlattened[id*currentBlockSize+iEigenVec]*blockedPartialOccupancies[0][iEigenVec];
+		  }
+          }
           nlppsicontract_time = clock() - nlppsicontract_time;
           nlppsicontract_time_total+=nlppsicontract_time;
 
@@ -620,6 +563,47 @@ void forceClass<FEOrder>::computeConfigurationalForceEEshelbyTensorFPSPFnlLinFE
           eloc_time = clock() - eloc_time;
           eloc_time_total+=eloc_time;
 #else
+
+	  for(unsigned int kPoint = 0; kPoint < (1+dftParameters::spinPolarized)*dftPtr->d_kPointWeights.size(); ++kPoint)
+	  {
+		 for(unsigned int iNode = 0; iNode < localVectorSize; ++iNode)
+		    for(unsigned int iWave = 0; iWave < currentBlockSize; ++iWave)
+			eigenVectorsFlattenedBlock[kPoint].local_element(iNode*currentBlockSize+iWave)
+			  = dftPtr->d_eigenVectorsFlattenedSTL[kPoint][iNode*numEigenVectors+ivec+iWave];
+
+		 dftPtr->constraintsNoneDataInfo.distribute(eigenVectorsFlattenedBlock[kPoint],
+						    currentBlockSize);
+		 eigenVectorsFlattenedBlock[kPoint].update_ghost_values();
+
+#ifdef USE_COMPLEX
+		 vectorTools::copyFlattenedDealiiVecToSingleCompVec
+			 (eigenVectorsFlattenedBlock[kPoint],
+			  currentBlockSize,
+			  std::make_pair(0,currentBlockSize),
+			  dftPtr->localProc_dof_indicesReal,
+			  dftPtr->localProc_dof_indicesImag,
+			  eigenVectors[kPoint],
+			  false);
+
+		 //FIXME: The underlying call to update_ghost_values
+		 //is required because currently localProc_dof_indicesReal
+		 //and localProc_dof_indicesImag are only available for
+		 //locally owned nodes. Once they are also made available
+		 //for ghost nodes- use true for the last argument in
+		 //copyFlattenedDealiiVecToSingleCompVec(..) above and supress
+		 //underlying call.
+		 for(unsigned int i= 0; i < currentBlockSize; ++i)
+		     eigenVectors[kPoint][i].update_ghost_values();
+#else
+		 vectorTools::copyFlattenedDealiiVecToSingleCompVec
+			 (eigenVectorsFlattenedBlock[kPoint],
+			  currentBlockSize,
+			  std::make_pair(0,currentBlockSize),
+			  eigenVectors[kPoint],
+			  true);
+
+#endif
+	  }
 
           double projketpsi_time;
           projketpsi_time = clock();
@@ -981,6 +965,8 @@ void forceClass<FEOrder>::computeConfigurationalForceEEshelbyTensorFPSPFnlLinFE
       }//band parallelization loop
   }//wavefunction block loop
 
+  double enowfc_time;
+  enowfc_time = clock();
 #if defined(DFTFE_WITH_GPU) && !defined(USE_COMPLEX)
   for (unsigned int cell=0; cell<matrixFreeData.n_macro_cells(); ++cell)
   {
@@ -1006,6 +992,16 @@ void forceClass<FEOrder>::computeConfigurationalForceEEshelbyTensorFPSPFnlLinFE
      forceEval.integrate(false,true);
      forceEval.distribute_local_to_global(d_configForceVectorLinFE);
   }
+
+  if (isPseudopotential)
+	  for (unsigned int i=0; i<nonTrivialNonLocalIdsAllCells.size(); ++i)
+	  {
+		 const unsigned int cell=normalCellIdToMacroCellIdMap[nonTrivialIdToElemIdMap[i]];
+                 const unsigned int id=nonTrivialIdToAllPseudoWfcIdMap[i];
+	         for (unsigned int q=0; q<numQuadPointsNLP; ++q)
+		     projectorKetTimesPsiTimesVTimesPartOccContractionPsiQuads[cell*numQuadPointsNLP+q][id]=make_vectorized_array(projectorKetTimesPsiTimesVTimesPartOccContractionPsiQuadsFlattened[i*numQuadPointsNLP+q]);
+
+	  }
 #endif
 
 #ifndef USE_COMPLEX
@@ -1103,8 +1099,7 @@ void forceClass<FEOrder>::computeConfigurationalForceEEshelbyTensorFPSPFnlLinFE
      distributeForceContributionFnlGammaAtoms(forceContributionFnlGammaAtoms);
   }
 
-  double enowfc_time;
-  enowfc_time = clock();
+
   /////////// Compute contribution independent of wavefunctions /////////////////
   if (bandGroupTaskId==0)
   {
