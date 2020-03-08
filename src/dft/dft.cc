@@ -1268,7 +1268,7 @@ namespace dftfe {
     //
     computing_timer.enter_section("scf solve");
 
-    double firstScfChebyTol=dftParameters::mixingMethod=="ANDERSON_WITH_KERKER"?1e+4:2e-2;
+    double firstScfChebyTol=dftParameters::mixingMethod=="ANDERSON_WITH_KERKER"?1e-2:2e-2;
 
     if (dftParameters::isBOMD && dftParameters::isXLBOMD && solveLinearizedKS)
         firstScfChebyTol=dftParameters::chebyshevFilterTolXLBOMD;
