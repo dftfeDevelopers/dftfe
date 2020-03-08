@@ -127,6 +127,7 @@ namespace dftfe
           void nlpPsiContractionCUDAKernel(const unsigned int numPsi,
                                            const unsigned int numQuadsNLP, 
                                            const unsigned int totalNonTrivialPseudoWfcs,
+                                           const unsigned int startingId,
 					   const double * projectorKetTimesVectorPar,
 					   const double * psiQuadValuesNLP,
                                            const double * partialOccupancies,
@@ -142,9 +143,9 @@ namespace dftfe
 		   {
 		      const unsigned int blockIndex = index/numPsi;
 		      const unsigned int wfcId=index-blockIndex*numPsi;
-                      const unsigned int pseudoWfcId=blockIndex/numQuadsNLP;
+                      unsigned int pseudoWfcId=blockIndex/numQuadsNLP;
                       const unsigned int quadId=blockIndex-pseudoWfcId*numQuadsNLP;
-                      //double temp=projectorKetTimesVectorPar[projecterKetTimesFlattenedVectorLocalIds[pseudoWfcId]*numPsi+wfcId];
+                      pseudoWfcId+=startingId;
                       nlpContractionContribution[index]=partialOccupancies[wfcId]*psiQuadValuesNLP[nonTrivialIdToElemIdMap[pseudoWfcId]*numQuadsNLP*numPsi+quadId*numPsi+wfcId]*projectorKetTimesVectorPar[projecterKetTimesFlattenedVectorLocalIds[pseudoWfcId]*numPsi+wfcId];
 		   }
 
@@ -819,37 +820,48 @@ namespace dftfe
                             const unsigned int totalNonTrivialPseudoWfcs,
                             thrust::device_vector<double> & projectorKetTimesPsiTimesVTimesPartOccContractionPsiQuadsFlattenedD)
      {
-            thrust::device_vector<double> nlpContractionContributionD(totalNonTrivialPseudoWfcs*numQuadsNLP*numPsi,0.0);
-            thrust::device_vector<double> onesMatD(numPsi,1.0);
-           
+            const unsigned int blockSize=500;
+            const unsigned int numberBlocks=totalNonTrivialPseudoWfcs/blockSize;
+            const unsigned int remBlockSize=totalNonTrivialPseudoWfcs-numberBlocks*blockSize;
+            thrust::device_vector<double> nlpContractionContributionD(blockSize*numQuadsNLP*numPsi,0.0);
+	    thrust::device_vector<double> onesMatD(numPsi,1.0);
 
-	    nlpPsiContractionCUDAKernel<<<(numPsi+255)/256*numQuadsNLP*totalNonTrivialPseudoWfcs,256>>>
-							  (numPsi,
-							   numQuadsNLP,
-							   totalNonTrivialPseudoWfcs,
-							   projectorKetTimesVectorParFlattenedD,
-							   thrust::raw_pointer_cast(&psiQuadValuesNLPD[0]),
-							   thrust::raw_pointer_cast(&partialOccupanciesD[0]),
-							   thrust::raw_pointer_cast(&nonTrivialIdToElemIdMapD[0]),
-							   thrust::raw_pointer_cast(&projecterKetTimesFlattenedVectorLocalIdsD[0]),
-							   thrust::raw_pointer_cast(&nlpContractionContributionD[0]));
-	    double scalarCoeffAlpha = 1.0,scalarCoeffBeta = 1.0;
+            for (unsigned int iblock=0; iblock<(numberBlocks+1); iblock++)
+            {
+                    const unsigned int currentBlockSize= (iblock==numberBlocks)?remBlockSize:blockSize;
+                    const unsigned int startingId=iblock*blockSize;
+                    if (currentBlockSize>0)
+                    {
+			    nlpPsiContractionCUDAKernel<<<(numPsi+255)/256*numQuadsNLP*currentBlockSize,256>>>
+									  (numPsi,
+									   numQuadsNLP,
+									   currentBlockSize,
+                                                                           startingId,
+									   projectorKetTimesVectorParFlattenedD,
+									   thrust::raw_pointer_cast(&psiQuadValuesNLPD[0]),
+									   thrust::raw_pointer_cast(&partialOccupanciesD[0]),
+									   thrust::raw_pointer_cast(&nonTrivialIdToElemIdMapD[0]),
+									   thrust::raw_pointer_cast(&projecterKetTimesFlattenedVectorLocalIdsD[0]),
+									   thrust::raw_pointer_cast(&nlpContractionContributionD[0]));
+			    double scalarCoeffAlpha = 1.0,scalarCoeffBeta = 1.0;
 
-	  
-	    cublasDgemm(operatorMatrix.getCublasHandle(),
-		      CUBLAS_OP_N,
-		      CUBLAS_OP_N,
-		      1,
-		      totalNonTrivialPseudoWfcs*numQuadsNLP,
-		      numPsi,
-		      &scalarCoeffAlpha,
-		      thrust::raw_pointer_cast(&onesMatD[0]),
-		      1,
-		      thrust::raw_pointer_cast(&nlpContractionContributionD[0]),
-		      numPsi,
-		      &scalarCoeffBeta,
-		      thrust::raw_pointer_cast(&projectorKetTimesPsiTimesVTimesPartOccContractionPsiQuadsFlattenedD[0]),
-		      1);
+			  
+			    cublasDgemm(operatorMatrix.getCublasHandle(),
+				      CUBLAS_OP_N,
+				      CUBLAS_OP_N,
+				      1,
+				      currentBlockSize*numQuadsNLP,
+				      numPsi,
+				      &scalarCoeffAlpha,
+				      thrust::raw_pointer_cast(&onesMatD[0]),
+				      1,
+				      thrust::raw_pointer_cast(&nlpContractionContributionD[0]),
+				      numPsi,
+				      &scalarCoeffBeta,
+				      thrust::raw_pointer_cast(&projectorKetTimesPsiTimesVTimesPartOccContractionPsiQuadsFlattenedD[startingId*numQuadsNLP]),
+				      1);
+                    }
+            }
      }
 
    }//forceCUDA namespace
