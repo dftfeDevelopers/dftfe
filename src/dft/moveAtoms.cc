@@ -198,6 +198,17 @@ void dftClass<FEOrder>::updateAtomPositionsAndMoveMesh(const std::vector<Tensor<
     }
   else if((dftParameters::periodicX || dftParameters::periodicY || dftParameters::periodicZ) && useGaussian == 1)
     {
+
+      for (unsigned int iAtom=0;iAtom < numberGlobalAtoms; iAtom++)
+	{
+	  Point<C_DIM> atomCoor;
+	  int atomId=iAtom;
+
+	  atomLocations[iAtom][2]+=globalAtomsDisplacements[atomId][0];
+	  atomLocations[iAtom][3]+=globalAtomsDisplacements[atomId][1];
+	  atomLocations[iAtom][4]+=globalAtomsDisplacements[atomId][2];
+	}
+
       for(unsigned int iAtom = 0; iAtom < numberGlobalAtoms; ++iAtom)
 	{
 	  Point<C_DIM> atomCoor;
@@ -207,12 +218,8 @@ void dftClass<FEOrder>::updateAtomPositionsAndMoveMesh(const std::vector<Tensor<
 	  atomCoor[1] = atomLocations[iAtom][3];
 	  atomCoor[2] = atomLocations[iAtom][4];
 
-	  Point<C_DIM> newCoord;
-	  for(unsigned int idim=0; idim<C_DIM; ++idim)
-	    newCoord[idim]=atomCoor[idim]+globalAtomsDisplacements[atomId][idim];
-
 	  std::vector<double> newFracCoord = internal::getFractionalCoordinates(latticeVectorsFlattened,
-										newCoord,
+										atomCoor,
 										corner);
 
 	  atomLocationsFractional[iAtom][2]=newFracCoord[0];
@@ -221,8 +228,23 @@ void dftClass<FEOrder>::updateAtomPositionsAndMoveMesh(const std::vector<Tensor<
 
 	}
 
-      initImageChargesUpdateKPoints(false);
+        //initImageChargesUpdateKPoints(false);
+      
+	for(int iImage = 0; iImage < d_imagePositions.size(); ++iImage)
+	{
+           const unsigned int imageChargeId=d_imageIds[iImage];
+           d_imagePositions[iImage][0]+=globalAtomsDisplacements[imageChargeId][0];
+	   d_imagePositions[iImage][1]+=globalAtomsDisplacements[imageChargeId][1];
+	   d_imagePositions[iImage][2]+=globalAtomsDisplacements[imageChargeId][2];
+	}
 
+	for(int iImage = 0; iImage < d_imagePositionsTrunc.size(); ++iImage)
+	{
+           const unsigned int imageChargeId=d_imageIdsTrunc[iImage];
+           d_imagePositionsTrunc[iImage][0]+=globalAtomsDisplacements[imageChargeId][0];
+	   d_imagePositionsTrunc[iImage][1]+=globalAtomsDisplacements[imageChargeId][1];
+	   d_imagePositionsTrunc[iImage][2]+=globalAtomsDisplacements[imageChargeId][2];
+	}
     }
   else
     {

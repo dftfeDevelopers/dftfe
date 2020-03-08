@@ -1033,41 +1033,43 @@ namespace dftfe
 	          for(unsigned int iNode = 0; iNode < dofs_per_cell; ++iNode)
 		  {
 			  const dealii::types::global_dof_index globalNodeId=cell_dof_indices[iNode];
-                          const int closestAtomId=d_closestAtomBin[iBin][globalNodeId];
-			  const int boundaryId=d_boundaryFlag[iBin][globalNodeId];
-
-		          double closestAtomCharge;
-		          dealii::Point<3> closestAtomLocation;
-		          if(closestAtomId < numberGlobalAtoms)
-		          {
-				   closestAtomLocation[0]=atomLocations[closestAtomId][2];
-				   closestAtomLocation[1]=atomLocations[closestAtomId][3];
-				   closestAtomLocation[2]=atomLocations[closestAtomId][4];
-				   if(dftParameters::isPseudopotential)
-				      closestAtomCharge = atomLocations[closestAtomId][1];
-				   else
-				      closestAtomCharge = atomLocations[closestAtomId][0];
-		          }
-		          else
-		          {
-				   const int imageId=closestAtomId-numberGlobalAtoms;
-				   closestAtomCharge = imageCharges[imageId];
-				   closestAtomLocation[0]=imagePositions[imageId][0];
-				   closestAtomLocation[1]=imagePositions[imageId][1];
-				   closestAtomLocation[2]=imagePositions[imageId][2];
-		          }
-
-		   	  dofClosestChargeLocationMap[globalNodeId]=closestAtomLocation;
-
-			  if(!onlyHangingNodeConstraints.is_constrained(globalNodeId)
-                            && boundaryId==-1 
-                            && !(std::abs(inhomogBoundaryVec[globalNodeId])>1e-10))
+                          if (!onlyHangingNodeConstraints.is_constrained(globalNodeId))
 			  {
-			    const double distance=supportPoints[globalNodeId].distance(closestAtomLocation);
-			    const double newPotentialValue =-closestAtomCharge/distance;
-			    d_vselfBinField[iBin][globalNodeId] = newPotentialValue;
-			    inhomogBoundaryVec[globalNodeId]=newPotentialValue;
-			  }//check non hanging node and vself consraints not already set
+				  const int closestAtomId=d_closestAtomBin[iBin][globalNodeId];
+				  const int boundaryId=d_boundaryFlag[iBin][globalNodeId];
+
+				  double closestAtomCharge;
+				  dealii::Point<3> closestAtomLocation;
+				  if(closestAtomId < numberGlobalAtoms)
+				  {
+					   closestAtomLocation[0]=atomLocations[closestAtomId][2];
+					   closestAtomLocation[1]=atomLocations[closestAtomId][3];
+					   closestAtomLocation[2]=atomLocations[closestAtomId][4];
+					   if(dftParameters::isPseudopotential)
+					      closestAtomCharge = atomLocations[closestAtomId][1];
+					   else
+					      closestAtomCharge = atomLocations[closestAtomId][0];
+				  }
+				  else
+				  {
+					   const int imageId=closestAtomId-numberGlobalAtoms;
+					   closestAtomCharge = imageCharges[imageId];
+					   closestAtomLocation[0]=imagePositions[imageId][0];
+					   closestAtomLocation[1]=imagePositions[imageId][1];
+					   closestAtomLocation[2]=imagePositions[imageId][2];
+				  }
+
+				  dofClosestChargeLocationMap[globalNodeId]=closestAtomLocation;
+
+				  if(boundaryId==-1 
+				    && !(std::abs(inhomogBoundaryVec[globalNodeId])>1e-10))
+				  {
+				    const double distance=supportPoints[globalNodeId].distance(closestAtomLocation);
+				    const double newPotentialValue =-closestAtomCharge/distance;
+				    d_vselfBinField[iBin][globalNodeId] = newPotentialValue;
+				    inhomogBoundaryVec[globalNodeId]=newPotentialValue;
+				  }//check non hanging node and vself consraints not already set
+			  }
 		  }//element node loop
 
 	      }//cell locally owned
