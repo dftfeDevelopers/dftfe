@@ -83,6 +83,23 @@ namespace dftfe
                           double * gradPsiQuadsZFlatH,
                           const bool interpolateForNLPQuad=false);
 
+
+     void interpolatePsiComputeELocWfcEshelbyTensorNonPeriodicD(operatorDFTCUDAClass & operatorMatrix,
+						  cudaVectorType & Xb,
+						  const unsigned int BVec,
+						  const unsigned int numCells,
+						  const unsigned int numQuads,
+						  const unsigned int numNodesPerElement,
+                                                  const thrust::device_vector<double> & eigenValuesD,
+                                                  const thrust::device_vector<double> & partialOccupanciesD,
+                                                  thrust::device_vector<double> & psiQuadsFlatD,
+                                                  thrust::device_vector<double> & eshelbyTensorQuadValuesD00,
+                                                  thrust::device_vector<double> & eshelbyTensorQuadValuesD10,
+                                                  thrust::device_vector<double> & eshelbyTensorQuadValuesD11,
+                                                  thrust::device_vector<double> & eshelbyTensorQuadValuesD20,
+                                                  thrust::device_vector<double> & eshelbyTensorQuadValuesD21,
+                                                  thrust::device_vector<double> & eshelbyTensorQuadValuesD22);
+
      void interpolatePsiD(operatorDFTCUDAClass & operatorMatrix,
                           cudaVectorType & Xb,
                           const unsigned int BVec,
@@ -97,6 +114,15 @@ namespace dftfe
                           thrust::device_vector<double> & gradPsiQuadsYFlatD,
                           thrust::device_vector<double> & gradPsiQuadsZFlatD,
                           const bool interpolateForNLPQuad=false);
+
+     void interpolatePsiNLPD(operatorDFTCUDAClass & operatorMatrix,
+                          cudaVectorType & Xb,
+                          const unsigned int BVec,
+                          const unsigned int N,
+                          const unsigned int numCells,
+                          const unsigned int numQuadsNLP,
+                          const unsigned int numNodesPerElement,
+                          thrust::device_vector<double> & psiQuadsNLPFlatD);
 
      void nlpPsiContractionH(operatorDFTCUDAClass & operatorMatrix,
 			    const double * psiQuadValuesNLPH,
@@ -121,6 +147,30 @@ namespace dftfe
 			    const unsigned int numPsi,
                             const unsigned int totalNonTrivialPseudoWfcs,
                             thrust::device_vector<double> & projectorKetTimesPsiTimesVTimesPartOccContractionPsiQuadsFlattenedH);
+
+      void gpuPortedForceKernelsAll(operatorDFTCUDAClass & operatorMatrix,
+                        const double * X,
+			const double * eigenValuesH,
+			const double * partialOccupanciesH,
+                        const unsigned int * nonTrivialIdToElemIdMapH,
+                        const unsigned int * projecterKetTimesFlattenedVectorLocalIdsH, 
+                        const unsigned int startingVecId,
+                        const unsigned int N,
+                        const unsigned int numPsi,
+			const unsigned int numCells,
+			const unsigned int numQuads,
+                        const unsigned int numQuadsNLP,
+                        const unsigned int numNodesPerElement,
+                        const unsigned int totalNonTrivialPseudoWfcs,
+			double * eshelbyTensorQuadValuesH00,
+			double * eshelbyTensorQuadValuesH10,
+			double * eshelbyTensorQuadValuesH11,
+			double * eshelbyTensorQuadValuesH20,
+			double * eshelbyTensorQuadValuesH21,
+			double * eshelbyTensorQuadValuesH22,
+                        double * projectorKetTimesPsiTimesVTimesPartOccContractionPsiQuadsFlattenedH,
+                        const bool isPsp,
+                        const bool interpolateForNLPQuad=false);
    }
 }
 #endif

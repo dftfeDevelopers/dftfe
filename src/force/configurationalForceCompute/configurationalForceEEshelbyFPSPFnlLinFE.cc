@@ -226,6 +226,7 @@ void forceClass<FEOrder>::computeConfigurationalForceEEshelbyTensorFPSPFnlLinFE
    double nlpinit_time_total=0.0;
    double projketpsi_time_total=0.0;
    double nlppsicontract_time_total=0.0;
+   double gpuportedforce_time_total=0.0;
 
    const unsigned int numMacroCells=matrixFreeData.n_macro_cells();
    const unsigned int numPhysicalCells=matrixFreeData.n_physical_cells();
@@ -464,7 +465,39 @@ void forceClass<FEOrder>::computeConfigurationalForceEEshelbyTensorFPSPFnlLinFE
           if (dftParameters::useGPU)
           {
 #if defined(DFTFE_WITH_GPU) && !defined(USE_COMPLEX)
-	      
+                  
+		  double gpuportedforce_time;
+		  gpuportedforce_time = clock();
+	    
+		  forceCUDA::gpuPortedForceKernelsAll(kohnShamDFTEigenOperator,
+				                      dftPtr->d_eigenVectorsFlattenedCUDA.begin(),
+						      &blockedEigenValues[0][0],
+						      &blockedPartialOccupancies[0][0],
+						      &nonTrivialIdToElemIdMap[0],
+						      &projecterKetTimesFlattenedVectorLocalIds[0],
+						      ivec,
+						      numEigenVectors,
+						      currentBlockSize,
+						      numPhysicalCells,
+						      numQuadPoints,
+						      numQuadPointsNLP,
+					              dftPtr->matrix_free_data.get_dofs_per_cell(),
+						      nonTrivialNonLocalIdsAllCells.size(),
+						      &elocWfcEshelbyTensorQuadValuesH00[0],
+						      &elocWfcEshelbyTensorQuadValuesH10[0],
+						      &elocWfcEshelbyTensorQuadValuesH11[0],
+						      &elocWfcEshelbyTensorQuadValuesH20[0],
+						      &elocWfcEshelbyTensorQuadValuesH21[0],
+						      &elocWfcEshelbyTensorQuadValuesH22[0],
+						      &projectorKetTimesPsiTimesVTimesPartOccContractionPsiQuadsFlattened[0],
+						      isPseudopotential,
+						      isPseudopotential && dftParameters::useHigherQuadNLP);
+
+		  gpuportedforce_time = clock() - gpuportedforce_time;
+		  gpuportedforce_time_total+=gpuportedforce_time;
+                 
+	          /*
+                  
 		  double projketpsi_time;
 		  projketpsi_time = clock();
 		  
@@ -554,6 +587,8 @@ void forceClass<FEOrder>::computeConfigurationalForceEEshelbyTensorFPSPFnlLinFE
 								       &elocWfcEshelbyTensorQuadValuesH22[0]);
 		  eloc_time = clock() - eloc_time;
 		  eloc_time_total+=eloc_time;
+                  */
+                  
 #endif
 	  }
           else
@@ -1419,7 +1454,8 @@ void forceClass<FEOrder>::computeConfigurationalForceEEshelbyTensorFPSPFnlLinFE
         pcout<<" Time taken for non wfc in force: "<<dealii::Utilities::MPI::max(enowfc_time/CLOCKS_PER_SEC,mpi_communicator)<<std::endl;
         pcout<<" Time taken for nlp init in force: "<<dealii::Utilities::MPI::max(nlpinit_time_total/CLOCKS_PER_SEC,mpi_communicator)<<std::endl;
         pcout<<" Time taken for projector ket times psi in force: "<<dealii::Utilities::MPI::max(projketpsi_time_total/CLOCKS_PER_SEC,mpi_communicator)<<std::endl;
-         pcout<<" Time taken for nlp psi contraction in force: "<<dealii::Utilities::MPI::max(nlppsicontract_time_total/CLOCKS_PER_SEC,mpi_communicator)<<std::endl;
+        pcout<<" Time taken for nlp psi contraction in force: "<<dealii::Utilities::MPI::max(nlppsicontract_time_total/CLOCKS_PER_SEC,mpi_communicator)<<std::endl;
+        pcout<<" Time taken for gpu ported force computation: "<<dealii::Utilities::MPI::max(gpuportedforce_time_total/CLOCKS_PER_SEC,mpi_communicator)<<std::endl;
 
     }
 }
