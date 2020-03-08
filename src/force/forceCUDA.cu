@@ -1,6 +1,6 @@
 // ---------------------------------------------------------------------
 //
-// Copyright (c) 2017-2018 The Regents of the University of Michigan and DFT-FE authors.
+// Copyright (c) 2017-2020 The Regents of the University of Michigan and DFT-FE authors.
 //
 // This file is part of the DFT-FE code.
 //
@@ -118,6 +118,34 @@ namespace dftfe
                       eshelbyTensor20[index]=-2.0*partOcc*gradPsiZ*gradPsiX;
                       eshelbyTensor21[index]=-2.0*partOcc*gradPsiZ*gradPsiY;
                       eshelbyTensor22[index]=-2.0*partOcc*gradPsiZ*gradPsiZ+identityFactor;
+		   }
+
+          }
+
+
+          __global__
+          void nlpPsiContractionCUDAKernel(const unsigned int numPsi,
+                                           const unsigned int numQuadsNLP, 
+                                           const unsigned int totalNonTrivialPseudoWfcs,
+					   const double * projectorKetTimesVectorPar,
+					   const double * psiQuadValuesNLP,
+                                           const double * partialOccupancies,
+					   const unsigned int * nonTrivialIdToElemIdMap,
+					   const unsigned int * projecterKetTimesFlattenedVectorLocalIds,
+					   double *nlpContractionContribution)
+          {
+
+		  const unsigned int globalThreadId = blockIdx.x*blockDim.x + threadIdx.x;
+		  const unsigned int numberEntries = totalNonTrivialPseudoWfcs*numQuadsNLP*numPsi;
+
+		  for(unsigned int index = globalThreadId; index < numberEntries; index+= blockDim.x*gridDim.x)
+		   {
+		      const unsigned int blockIndex = index/numPsi;
+		      const unsigned int wfcId=index-blockIndex*numPsi;
+                      const unsigned int pseudoWfcId=blockIndex/numQuadsNLP;
+                      const unsigned int quadId=blockIndex-pseudoWfcId*numQuadsNLP;
+                      //double temp=projectorKetTimesVectorPar[projecterKetTimesFlattenedVectorLocalIds[pseudoWfcId]*numPsi+wfcId];
+                      nlpContractionContribution[index]=partialOccupancies[wfcId]*psiQuadValuesNLP[nonTrivialIdToElemIdMap[pseudoWfcId]*numQuadsNLP*numPsi+quadId*numPsi+wfcId]*projectorKetTimesVectorPar[projecterKetTimesFlattenedVectorLocalIds[pseudoWfcId]*numPsi+wfcId];
 		   }
 
           }
@@ -321,8 +349,7 @@ namespace dftfe
            thrust::device_vector<double> eshelbyTensorContributionsD22(numCells*numQuads*numPsi,0.0); 
            
 
-           thrust::device_vector<double> onesVectorD(numPsi,0.0);
-           thrust::fill(onesVectorD.begin(),onesVectorD.end(),1.0);
+           thrust::device_vector<double> onesVectorD(numPsi,1.0);
            
 	   computeELocWfcEshelbyTensorContributions<<<(numPsi+255)/256*numCells*numQuads,256>>>
 							  (numPsi,
@@ -583,8 +610,6 @@ namespace dftfe
                           thrust::device_vector<double> & gradPsiQuadsZFlatD,
                           const bool interpolateForNLPQuad)
      {
-            const unsigned int numGhosts=Xb.get_partitioner()->n_ghost_indices();
-
             thrust::device_vector<double> & cellWaveFunctionMatrix = operatorMatrix.getCellWaveFunctionMatrix();
 
 	    copyCUDAKernel<<<(BVec+255)/256*numCells*numNodesPerElement,256>>>
@@ -703,5 +728,129 @@ namespace dftfe
 				    numCells);
      }
 
-   }
-}
+
+     void nlpPsiContractionH(operatorDFTCUDAClass & operatorMatrix,
+			    const double * psiQuadValuesNLPH,
+                            const double * partialOccupanciesH,
+                            const double * projectorKetTimesVectorParFlattenedH,
+                            const unsigned int * nonTrivialIdToElemIdMapH,
+                            const unsigned int * projecterKetTimesFlattenedVectorLocalIdsH,
+                            const unsigned int numCells,
+			    const unsigned int numQuadsNLP,
+			    const unsigned int numPsi,
+                            const unsigned int totalNonTrivialPseudoWfcs,
+                            double * projectorKetTimesPsiTimesVTimesPartOccContractionPsiQuadsFlattenedH)
+     {
+           thrust::device_vector<double> psiQuadValuesNLPD(numCells*numQuadsNLP*numPsi,0.0);
+           thrust::device_vector<double> partialOccupanciesD(numPsi,0.0);
+           thrust::device_vector<double> projectorKetTimesPsiTimesVTimesPartOccContractionPsiQuadsFlattenedD(totalNonTrivialPseudoWfcs*numQuadsNLP,0.0);
+
+           cudaVectorType projectorKetTimesVectorD;
+           vectorTools::createDealiiVector(operatorMatrix.getProjectorKetTimesVectorSingle().get_partitioner(),
+					   numPsi,
+					   projectorKetTimesVectorD);
+           projectorKetTimesVectorD=0.0;
+
+           if (totalNonTrivialPseudoWfcs>0)
+           {
+		   thrust::device_vector<unsigned int> projecterKetTimesFlattenedVectorLocalIdsD(totalNonTrivialPseudoWfcs,0.0);
+		   thrust::device_vector<unsigned int> nonTrivialIdToElemIdMapD(totalNonTrivialPseudoWfcs,0.0);
+
+		   cudaMemcpy(thrust::raw_pointer_cast(&psiQuadValuesNLPD[0]),
+			      psiQuadValuesNLPH,
+			      numCells*numQuadsNLP*numPsi*sizeof(double),
+			      cudaMemcpyHostToDevice);
+
+		   cudaMemcpy(thrust::raw_pointer_cast(&partialOccupanciesD[0]),
+			      partialOccupanciesH,
+			      numPsi*sizeof(double),
+			      cudaMemcpyHostToDevice);
+
+		   cudaMemcpy(projectorKetTimesVectorD.begin(),
+			      projectorKetTimesVectorParFlattenedH,
+			      (projectorKetTimesVectorD.local_size()+projectorKetTimesVectorD.get_partitioner()->n_ghost_indices())*sizeof(double),
+			      cudaMemcpyHostToDevice);
+
+		   cudaMemcpy(thrust::raw_pointer_cast(&nonTrivialIdToElemIdMapD[0]),
+			      nonTrivialIdToElemIdMapH,
+			      totalNonTrivialPseudoWfcs*sizeof(unsigned int),
+			      cudaMemcpyHostToDevice);
+
+
+		   cudaMemcpy(thrust::raw_pointer_cast(&projecterKetTimesFlattenedVectorLocalIdsD[0]),
+			      projecterKetTimesFlattenedVectorLocalIdsH,
+			      totalNonTrivialPseudoWfcs*sizeof(unsigned int),
+			      cudaMemcpyHostToDevice);
+
+
+		   cudaMemcpy(thrust::raw_pointer_cast(&projectorKetTimesPsiTimesVTimesPartOccContractionPsiQuadsFlattenedD[0]),
+			      projectorKetTimesPsiTimesVTimesPartOccContractionPsiQuadsFlattenedH,
+			      totalNonTrivialPseudoWfcs*numQuadsNLP*sizeof(double),
+			      cudaMemcpyHostToDevice);
+
+		   nlpPsiContractionD(operatorMatrix,
+				      psiQuadValuesNLPD,
+				      partialOccupanciesD,
+				      projectorKetTimesVectorD.begin(),
+				      nonTrivialIdToElemIdMapD,
+				      projecterKetTimesFlattenedVectorLocalIdsD,
+				      numCells, 
+				      numQuadsNLP,
+				      numPsi,
+				      totalNonTrivialPseudoWfcs,
+				      projectorKetTimesPsiTimesVTimesPartOccContractionPsiQuadsFlattenedD);
+
+		   cudaMemcpy(projectorKetTimesPsiTimesVTimesPartOccContractionPsiQuadsFlattenedH,
+			      thrust::raw_pointer_cast(&projectorKetTimesPsiTimesVTimesPartOccContractionPsiQuadsFlattenedD[0]),
+			      totalNonTrivialPseudoWfcs*numQuadsNLP*sizeof(double),
+			      cudaMemcpyDeviceToHost);
+	 }
+     }
+
+     void nlpPsiContractionD(operatorDFTCUDAClass & operatorMatrix,
+			    const thrust::device_vector<double> & psiQuadValuesNLPD,
+                            const thrust::device_vector<double> & partialOccupanciesD,
+                            const double * projectorKetTimesVectorParFlattenedD,
+                            thrust::device_vector<unsigned int> & nonTrivialIdToElemIdMapD,
+                            thrust::device_vector<unsigned int> & projecterKetTimesFlattenedVectorLocalIdsD,
+                            const unsigned int numCells, 
+			    const unsigned int numQuadsNLP,
+			    const unsigned int numPsi,
+                            const unsigned int totalNonTrivialPseudoWfcs,
+                            thrust::device_vector<double> & projectorKetTimesPsiTimesVTimesPartOccContractionPsiQuadsFlattenedD)
+     {
+            thrust::device_vector<double> nlpContractionContributionD(totalNonTrivialPseudoWfcs*numQuadsNLP*numPsi,0.0);
+            thrust::device_vector<double> onesMatD(numPsi,1.0);
+           
+
+	    nlpPsiContractionCUDAKernel<<<(numPsi+255)/256*numQuadsNLP*totalNonTrivialPseudoWfcs,256>>>
+							  (numPsi,
+							   numQuadsNLP,
+							   totalNonTrivialPseudoWfcs,
+							   projectorKetTimesVectorParFlattenedD,
+							   thrust::raw_pointer_cast(&psiQuadValuesNLPD[0]),
+							   thrust::raw_pointer_cast(&partialOccupanciesD[0]),
+							   thrust::raw_pointer_cast(&nonTrivialIdToElemIdMapD[0]),
+							   thrust::raw_pointer_cast(&projecterKetTimesFlattenedVectorLocalIdsD[0]),
+							   thrust::raw_pointer_cast(&nlpContractionContributionD[0]));
+	    double scalarCoeffAlpha = 1.0,scalarCoeffBeta = 1.0;
+
+	  
+	    cublasDgemm(operatorMatrix.getCublasHandle(),
+		      CUBLAS_OP_N,
+		      CUBLAS_OP_N,
+		      1,
+		      totalNonTrivialPseudoWfcs*numQuadsNLP,
+		      numPsi,
+		      &scalarCoeffAlpha,
+		      thrust::raw_pointer_cast(&onesMatD[0]),
+		      1,
+		      thrust::raw_pointer_cast(&nlpContractionContributionD[0]),
+		      numPsi,
+		      &scalarCoeffBeta,
+		      thrust::raw_pointer_cast(&projectorKetTimesPsiTimesVTimesPartOccContractionPsiQuadsFlattenedD[0]),
+		      1);
+     }
+
+   }//forceCUDA namespace
+}//dftfe namespace

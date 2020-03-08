@@ -296,7 +296,7 @@ void forceClass<FEOrder>::computeConfigurationalForceEEshelbyTensorFPSPFnlLinFE
                          nonTrivialNonLocalIdsAllCells.push_back(iatom);
                          nonTrivialIdToElemIdMap.push_back(ielem);
                          nonTrivialIdToAllPseudoWfcIdMap.push_back(nonlocalPseudoWfcsAccum[iatom]+ipsp);
-			 const unsigned int id=dftPtr->d_projectorIdsNumberingMapCurrentProcess[std::make_pair(globalAtomId,ipsp)];
+			 const unsigned int id=dftPtr->d_projectorKetTimesVectorPar[0].get_partitioner()->global_to_local(dftPtr->d_projectorIdsNumberingMapCurrentProcess[std::make_pair(globalAtomId,ipsp)]);
                          projecterKetTimesFlattenedVectorLocalIds.push_back(id);
                     }
                  }
@@ -517,6 +517,21 @@ void forceClass<FEOrder>::computeConfigurationalForceEEshelbyTensorFPSPFnlLinFE
 
           double nlppsicontract_time;
           nlppsicontract_time = clock();
+
+
+          if (isPseudopotential)
+		forceCUDA::nlpPsiContractionH(kohnShamDFTEigenOperator,
+					      dftParameters::useHigherQuadNLP?&psiQuadsNLPFlat[0]:&psiQuadsFlat[0],
+					      &blockedPartialOccupancies[0][0],
+					      dftPtr->d_projectorKetTimesVectorParFlattened.begin(),
+					      &nonTrivialIdToElemIdMap[0],
+					      &projecterKetTimesFlattenedVectorLocalIds[0],
+					      numPhysicalCells,
+					      numQuadPointsNLP,
+					      currentBlockSize,
+					      nonTrivialNonLocalIdsAllCells.size(),
+					      &projectorKetTimesPsiTimesVTimesPartOccContractionPsiQuadsFlattened[0]);
+          /*
           if (isPseudopotential)
           {
 		  for (unsigned int i=0; i<nonTrivialNonLocalIdsAllCells.size(); ++i)
@@ -529,15 +544,16 @@ void forceClass<FEOrder>::computeConfigurationalForceEEshelbyTensorFPSPFnlLinFE
 				 for (unsigned int iEigenVec=0; iEigenVec<currentBlockSize; ++iEigenVec)
 				     projectorKetTimesPsiTimesVTimesPartOccContractionPsiQuadsFlattened[i*numQuadPointsNLP+q]
 				      += psiQuadsNLPFlat[ielem*numQuadPointsNLP*currentBlockSize+q*currentBlockSize+iEigenVec]
-					 *dftPtr->d_projectorKetTimesVectorParFlattened[id*currentBlockSize+iEigenVec]*blockedPartialOccupancies[0][iEigenVec];
+					 *dftPtr->d_projectorKetTimesVectorParFlattened.local_element(id*currentBlockSize+iEigenVec)*blockedPartialOccupancies[0][iEigenVec];
                          else
                              for (unsigned int q=0; q<numQuadPointsNLP; ++q)
 				 for (unsigned int iEigenVec=0; iEigenVec<currentBlockSize; ++iEigenVec)
 				     projectorKetTimesPsiTimesVTimesPartOccContractionPsiQuadsFlattened[i*numQuadPointsNLP+q]
 				      += psiQuadsFlat[ielem*numQuadPointsNLP*currentBlockSize+q*currentBlockSize+iEigenVec]
-					 *dftPtr->d_projectorKetTimesVectorParFlattened[id*currentBlockSize+iEigenVec]*blockedPartialOccupancies[0][iEigenVec];
+					 *dftPtr->d_projectorKetTimesVectorParFlattened.local_element(id*currentBlockSize+iEigenVec)*blockedPartialOccupancies[0][iEigenVec];
 		  }
           }
+          */
           nlppsicontract_time = clock() - nlppsicontract_time;
           nlppsicontract_time_total+=nlppsicontract_time;
 

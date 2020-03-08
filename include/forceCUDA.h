@@ -97,6 +97,30 @@ namespace dftfe
                           thrust::device_vector<double> & gradPsiQuadsYFlatD,
                           thrust::device_vector<double> & gradPsiQuadsZFlatD,
                           const bool interpolateForNLPQuad=false);
+
+     void nlpPsiContractionH(operatorDFTCUDAClass & operatorMatrix,
+			    const double * psiQuadValuesNLPH,
+                            const double * partialOccupanciesH,
+                            const double * projectorKetTimesVectorParFlattenedH,
+                            const unsigned int * nonTrivialIdToElemIdMapH,
+                            const unsigned int * projecterKetTimesFlattenedVectorLocalIdsH, 
+                            const unsigned int numCells,
+			    const unsigned int numQuadsNLP,
+			    const unsigned int numPsi,
+                            const unsigned int totalNonTrivialPseudoWfcs,
+                            double * projectorKetTimesPsiTimesVTimesPartOccContractionPsiQuadsFlattenedH);
+
+     void nlpPsiContractionD(operatorDFTCUDAClass & operatorMatrix,
+			    const thrust::device_vector<double> & psiQuadValuesNLPD,
+                            const thrust::device_vector<double> & partialOccupanciesD,
+                            const double * projectorKetTimesVectorParFlattenedD,
+                            thrust::device_vector<unsigned int> & nonTrivialIdToElemIdMapD,
+                            thrust::device_vector<unsigned int> & projecterKetTimesFlattenedVectorLocalIdsD,
+                            const unsigned int numCells,
+			    const unsigned int numQuadsNLP,
+			    const unsigned int numPsi,
+                            const unsigned int totalNonTrivialPseudoWfcs,
+                            thrust::device_vector<double> & projectorKetTimesPsiTimesVTimesPartOccContractionPsiQuadsFlattenedH);
    }
 }
 #endif
