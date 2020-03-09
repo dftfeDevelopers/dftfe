@@ -738,11 +738,13 @@ namespace dftfe
 						  const unsigned int BVec,
 						  const unsigned int numCells,
 						  const unsigned int numQuads,
+                                                  const unsigned int numQuadsNLP,
 						  const unsigned int numNodesPerElement,
                                                   const thrust::device_vector<double> & eigenValuesD,
                                                   const thrust::device_vector<double> & partialOccupanciesD,
                                                   const unsigned int innerBlockSizeEloc,
                                                   thrust::device_vector<double> & psiQuadsFlatD,
+                                                  thrust::device_vector<double> & psiQuadsNLPFlatD,
                                                   thrust::device_vector<double> & gradPsiQuadsXFlatD,
                                                   thrust::device_vector<double> & gradPsiQuadsYFlatD,
                                                   thrust::device_vector<double> & gradPsiQuadsZFlatD,
@@ -757,7 +759,8 @@ namespace dftfe
                                                   thrust::device_vector<double> & eshelbyTensorQuadValuesD11,
                                                   thrust::device_vector<double> & eshelbyTensorQuadValuesD20,
                                                   thrust::device_vector<double> & eshelbyTensorQuadValuesD21,
-                                                  thrust::device_vector<double> & eshelbyTensorQuadValuesD22)
+                                                  thrust::device_vector<double> & eshelbyTensorQuadValuesD22,
+                                                  const bool interpolateForNLPQuad)
      {
             //thrust::device_vector<double> gradPsiQuadsXFlatD(numCells*numQuads*BVec,0.0);
             //thrust::device_vector<double> gradPsiQuadsYFlatD(numCells*numQuads*BVec,0.0);
@@ -796,6 +799,29 @@ namespace dftfe
 				    BVec,
 				    strideC,
 				    numCells);
+
+            if (interpolateForNLPQuad)
+            {
+		    int strideCNLP = BVec*numQuadsNLP;
+		    cublasDgemmStridedBatched(operatorMatrix.getCublasHandle(),
+					    CUBLAS_OP_N,
+					    CUBLAS_OP_N,
+					    BVec,
+					    numQuadsNLP,
+					    numNodesPerElement,
+					    &scalarCoeffAlpha,
+					    thrust::raw_pointer_cast(&cellWaveFunctionMatrix[0]),
+					    BVec,
+					    strideA,
+					    thrust::raw_pointer_cast(&(operatorMatrix.getShapeFunctionValuesNLPInverted())[0]),
+					    numNodesPerElement,
+					    strideB,
+					    &scalarCoeffBeta,
+					    thrust::raw_pointer_cast(&psiQuadsNLPFlatD[0]),
+					    BVec,
+					    strideCNLP,
+					    numCells);
+            }
 
 	    strideB=numNodesPerElement*numQuads;
 
@@ -1111,6 +1137,7 @@ namespace dftfe
 			     const unsigned int numNodesPerElement,
 			     const unsigned int totalNonTrivialPseudoWfcs,
 		  	     thrust::device_vector<double> & psiQuadsFlatD,
+                             thrust::device_vector<double> & psiQuadsNLPFlatD,
 			     thrust::device_vector<double> & gradPsiQuadsXFlatD,
 			     thrust::device_vector<double> & gradPsiQuadsYFlatD,
 			     thrust::device_vector<double> & gradPsiQuadsZFlatD,
@@ -1159,11 +1186,13 @@ namespace dftfe
 						   numPsi,
 						   numCells,
 						   numQuads,
+                                                   numQuadsNLP,
 						   numNodesPerElement,
                                                    eigenValuesD,
                                                    partialOccupanciesD,
                                                    innerBlockSizeEloc,
                                                    psiQuadsFlatD,
+                                                   psiQuadsNLPFlatD,
                                                    gradPsiQuadsXFlatD,
                                                    gradPsiQuadsYFlatD,
                                                    gradPsiQuadsZFlatD,
@@ -1178,7 +1207,8 @@ namespace dftfe
                                                    eshelbyTensorQuadValuesD11,
                                                    eshelbyTensorQuadValuesD20,
                                                    eshelbyTensorQuadValuesD21,
-                                                   eshelbyTensorQuadValuesD22);
+                                                   eshelbyTensorQuadValuesD22,
+                                                   interpolateForNLPQuad);
 
 	   cudaDeviceSynchronize();
 	   MPI_Barrier(MPI_COMM_WORLD);
@@ -1189,21 +1219,6 @@ namespace dftfe
 
            if (isPsp)
            {
-                   thrust::device_vector<double> psiQuadsNLPFlatD;
-                   if (interpolateForNLPQuad)
-                   {
-                           psiQuadsFlatD.clear();
-			   psiQuadsNLPFlatD.resize(numCells*numQuadsNLP*numPsi,0.0);
-			   interpolatePsiNLPD(operatorMatrix,
-				    cudaFlattenedArrayBlock,
-				    numPsi,
-				    N,
-				    numCells,
-				    numQuadsNLP,
-				    numNodesPerElement,
-				    psiQuadsNLPFlatD);
-                   }
-
 		   cudaDeviceSynchronize();
 		   MPI_Barrier(MPI_COMM_WORLD);
 		   double kernel2_time = MPI_Wtime();
@@ -1319,6 +1334,10 @@ namespace dftfe
 
 
             thrust::device_vector<double> psiQuadsFlatD(numCells*numQuads*blockSize,0.0);
+            thrust::device_vector<double> psiQuadsNLPFlatD;
+            if (interpolateForNLPQuad)                
+                 psiQuadsNLPFlatD.resize(numCells*numQuadsNLP*blockSize,0.0);
+
             thrust::device_vector<double> gradPsiQuadsXFlatD(numCells*numQuads*blockSize,0.0);
             thrust::device_vector<double> gradPsiQuadsYFlatD(numCells*numQuads*blockSize,0.0);
             thrust::device_vector<double> gradPsiQuadsZFlatD(numCells*numQuads*blockSize,0.0);
@@ -1406,6 +1425,7 @@ namespace dftfe
 			                       numNodesPerElement,
 					       totalNonTrivialPseudoWfcs,
                                                psiQuadsFlatD,
+                                               psiQuadsNLPFlatD,
                                                gradPsiQuadsXFlatD,
                                                gradPsiQuadsYFlatD,
                                                gradPsiQuadsZFlatD,

@@ -89,11 +89,13 @@ namespace dftfe
 						  const unsigned int BVec,
 						  const unsigned int numCells,
 						  const unsigned int numQuads,
+                                                  const unsigned int numQuadsNLP,
 						  const unsigned int numNodesPerElement,
                                                   const thrust::device_vector<double> & eigenValuesD,
                                                   const thrust::device_vector<double> & partialOccupanciesD,
                                                   const unsigned int innerBlockSizeEloc,
                                                   thrust::device_vector<double> & psiQuadsFlatD,
+                                                  thrust::device_vector<double> & psiQuadsNLPFlatD,
                                                   thrust::device_vector<double> & gradPsiQuadsXFlatD,
                                                   thrust::device_vector<double> & gradPsiQuadsYFlatD,
                                                   thrust::device_vector<double> & gradPsiQuadsZFlatD,
@@ -108,7 +110,8 @@ namespace dftfe
                                                   thrust::device_vector<double> & eshelbyTensorQuadValuesD11,
                                                   thrust::device_vector<double> & eshelbyTensorQuadValuesD20,
                                                   thrust::device_vector<double> & eshelbyTensorQuadValuesD21,
-                                                  thrust::device_vector<double> & eshelbyTensorQuadValuesD22);
+                                                  thrust::device_vector<double> & eshelbyTensorQuadValuesD22,
+                                                  const bool interpolateForNLPQuad=false);
 
      void interpolatePsiD(operatorDFTCUDAClass & operatorMatrix,
                           cudaVectorType & Xb,
@@ -165,6 +168,7 @@ namespace dftfe
                         const unsigned int numNodesPerElement,
                         const unsigned int totalNonTrivialPseudoWfcs,
 			thrust::device_vector<double> & psiQuadsFlatD,
+                        thrust::device_vector<double> & psiQuadsNLPFlatD,
 			thrust::device_vector<double> & gradPsiQuadsXFlatD,
 			thrust::device_vector<double> & gradPsiQuadsYFlatD,
 			thrust::device_vector<double> & gradPsiQuadsZFlatD,
