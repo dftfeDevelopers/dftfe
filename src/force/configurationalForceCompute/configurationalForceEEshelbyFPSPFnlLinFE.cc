@@ -275,6 +275,8 @@ void forceClass<FEOrder>::computeConfigurationalForceEEshelbyTensorFPSPFnlLinFE
    std::vector<unsigned int> projecterKetTimesFlattenedVectorLocalIds; 
    if (isPseudopotential)
    {
+          double nlpinit_time;
+          nlpinit_time = clock();
           for (unsigned int ielem=0; ielem<numPhysicalCells; ++ielem)
           {
             const unsigned int numNonLocalAtomsCurrentProc= dftPtr->d_nonLocalAtomIdsInCurrentProcess.size();
@@ -303,6 +305,8 @@ void forceClass<FEOrder>::computeConfigurationalForceEEshelbyTensorFPSPFnlLinFE
                  }
               }
           }
+          nlpinit_time = clock() - nlpinit_time;
+          nlpinit_time_total+=nlpinit_time;
    }
 #endif
 
@@ -420,12 +424,30 @@ void forceClass<FEOrder>::computeConfigurationalForceEEshelbyTensorFPSPFnlLinFE
        nlpinit_time = clock() - nlpinit_time;
        nlpinit_time_total+=nlpinit_time;
    }
-   
+  
+   double parallelflattened_time;
+   parallelflattened_time = clock();
+#if defined(DFTFE_WITH_GPU) && !defined(USE_COMPLEX)
+   cudaVectorType cudaFlattenedArrayBlock;
+   cudaVectorType projectorKetTimesVectorD;
+
+   if (dftParameters::useGPU)
+   {
+	   vectorTools::createDealiiVector(kohnShamDFTEigenOperator.getMatrixFreeData()->get_vector_partitioner(),
+					   blockSize,
+					   cudaFlattenedArrayBlock);
+	   vectorTools::createDealiiVector(kohnShamDFTEigenOperator.getProjectorKetTimesVectorSingle().get_partitioner(),
+					    blockSize,
+					    projectorKetTimesVectorD);
+   }
+#endif
+   parallelflattened_time = clock() - parallelflattened_time;
+ 
    for(unsigned int ivec = 0; ivec < numEigenVectors; ivec+=blockSize)
    {
       const unsigned int currentBlockSize=std::min(blockSize,numEigenVectors-ivec);
 
-      if (currentBlockSize!=blockSize || ivec==0)
+      if ((currentBlockSize!=blockSize || ivec==0) && !dftParameters::useGPU)
       {
 	   for(unsigned int kPoint = 0; kPoint < (1+dftParameters::spinPolarized)*dftPtr->d_kPointWeights.size(); ++kPoint)
 	   {
@@ -470,6 +492,8 @@ void forceClass<FEOrder>::computeConfigurationalForceEEshelbyTensorFPSPFnlLinFE
 		  gpuportedforce_time = clock();
 	    
 		  forceCUDA::gpuPortedForceKernelsAll(kohnShamDFTEigenOperator,
+                                                      cudaFlattenedArrayBlock,
+                                                      projectorKetTimesVectorD,
 				                      dftPtr->d_eigenVectorsFlattenedCUDA.begin(),
 						      &blockedEigenValues[0][0],
 						      &blockedPartialOccupancies[0][0],
@@ -1456,7 +1480,7 @@ void forceClass<FEOrder>::computeConfigurationalForceEEshelbyTensorFPSPFnlLinFE
         pcout<<" Time taken for projector ket times psi in force: "<<dealii::Utilities::MPI::max(projketpsi_time_total/CLOCKS_PER_SEC,mpi_communicator)<<std::endl;
         pcout<<" Time taken for nlp psi contraction in force: "<<dealii::Utilities::MPI::max(nlppsicontract_time_total/CLOCKS_PER_SEC,mpi_communicator)<<std::endl;
         pcout<<" Time taken for gpu ported force computation: "<<dealii::Utilities::MPI::max(gpuportedforce_time_total/CLOCKS_PER_SEC,mpi_communicator)<<std::endl;
-
+        pcout<<" Time taken for parallel flattened cuda vectors creation: "<<dealii::Utilities::MPI::max(parallelflattened_time/CLOCKS_PER_SEC,mpi_communicator)<<std::endl;
     }
 }
 

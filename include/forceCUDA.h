@@ -149,6 +149,8 @@ namespace dftfe
                             thrust::device_vector<double> & projectorKetTimesPsiTimesVTimesPartOccContractionPsiQuadsFlattenedH);
 
       void gpuPortedForceKernelsAll(operatorDFTCUDAClass & operatorMatrix,
+                        cudaVectorType & cudaFlattenedArrayBlock,
+                        cudaVectorType & projectorKetTimesVectorD,
                         const double * X,
 			const double * eigenValuesH,
 			const double * partialOccupanciesH,

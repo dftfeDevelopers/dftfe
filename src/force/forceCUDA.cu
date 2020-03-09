@@ -847,7 +847,7 @@ namespace dftfe
 				    strideC,
 				    numCells);
 
-           const int blockSize=200;
+           const int blockSize=100;
            const int numberBlocks=numCells/blockSize;
            const int remBlockSize=numCells-numberBlocks*blockSize;
            thrust::device_vector<double> eshelbyTensorContributionsD00(blockSize*numQuads*BVec,0.0);
@@ -1118,7 +1118,7 @@ namespace dftfe
                             const unsigned int totalNonTrivialPseudoWfcs,
                             thrust::device_vector<double> & projectorKetTimesPsiTimesVTimesPartOccContractionPsiQuadsFlattenedD)
      {
-            const int blockSize=500;
+            const int blockSize=200;
             const int numberBlocks=totalNonTrivialPseudoWfcs/blockSize;
             const int remBlockSize=totalNonTrivialPseudoWfcs-numberBlocks*blockSize;
             thrust::device_vector<double> nlpContractionContributionD(blockSize*numQuadsNLP*numPsi,0.0);
@@ -1164,6 +1164,8 @@ namespace dftfe
 
 
      void gpuPortedForceKernelsAll(operatorDFTCUDAClass & operatorMatrix,
+                             cudaVectorType & cudaFlattenedArrayBlock,
+                             cudaVectorType & projectorKetTimesVectorD,
                              const double * X,
 		             const double * eigenValuesH,
 			     const double * partialOccupanciesH,
@@ -1197,12 +1199,6 @@ namespace dftfe
             thrust::device_vector<double> eshelbyTensorQuadValuesD20(numCells*numQuads,0.0);
             thrust::device_vector<double> eshelbyTensorQuadValuesD21(numCells*numQuads,0.0);
             thrust::device_vector<double> eshelbyTensorQuadValuesD22(numCells*numQuads,0.0);
-
-	    cudaVectorType cudaFlattenedArrayBlock;
-	    vectorTools::createDealiiVector(operatorMatrix.getMatrixFreeData()->get_vector_partitioner(),
-					    numPsi,
-					    cudaFlattenedArrayBlock);
-
 
             const unsigned int M=operatorMatrix.getMatrixFreeData()->get_vector_partitioner()->local_size();
             stridedCopyToBlockKernel<<<(numPsi+255)/256*M, 256>>>(numPsi,
@@ -1319,10 +1315,6 @@ namespace dftfe
 				    psiQuadsNLPFlatD);
                    }
 
-		   cudaVectorType projectorKetTimesVectorD;
-		   vectorTools::createDealiiVector(operatorMatrix.getProjectorKetTimesVectorSingle().get_partitioner(),
-						    numPsi,
-						    projectorKetTimesVectorD);
 
 		   operatorMatrix.computeNonLocalProjectorKetTimesXTimesV(cudaFlattenedArrayBlock.begin(),
 									   projectorKetTimesVectorD,
