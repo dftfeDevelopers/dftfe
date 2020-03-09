@@ -741,7 +741,17 @@ namespace dftfe
 						  const unsigned int numNodesPerElement,
                                                   const thrust::device_vector<double> & eigenValuesD,
                                                   const thrust::device_vector<double> & partialOccupanciesD,
+                                                  const unsigned int innerBlockSizeEloc,
                                                   thrust::device_vector<double> & psiQuadsFlatD,
+                                                  thrust::device_vector<double> & gradPsiQuadsXFlatD,
+                                                  thrust::device_vector<double> & gradPsiQuadsYFlatD,
+                                                  thrust::device_vector<double> & gradPsiQuadsZFlatD,
+				                  thrust::device_vector<double> & eshelbyTensorContributionsD00,
+			                     	  thrust::device_vector<double> & eshelbyTensorContributionsD10,
+					          thrust::device_vector<double> & eshelbyTensorContributionsD11,
+					          thrust::device_vector<double> & eshelbyTensorContributionsD20,
+					          thrust::device_vector<double> & eshelbyTensorContributionsD21,
+					          thrust::device_vector<double> & eshelbyTensorContributionsD22,
                                                   thrust::device_vector<double> & eshelbyTensorQuadValuesD00,
                                                   thrust::device_vector<double> & eshelbyTensorQuadValuesD10,
                                                   thrust::device_vector<double> & eshelbyTensorQuadValuesD11,
@@ -749,9 +759,9 @@ namespace dftfe
                                                   thrust::device_vector<double> & eshelbyTensorQuadValuesD21,
                                                   thrust::device_vector<double> & eshelbyTensorQuadValuesD22)
      {
-            thrust::device_vector<double> gradPsiQuadsXFlatD(numCells*numQuads*BVec,0.0);
-            thrust::device_vector<double> gradPsiQuadsYFlatD(numCells*numQuads*BVec,0.0);
-            thrust::device_vector<double> gradPsiQuadsZFlatD(numCells*numQuads*BVec,0.0);
+            //thrust::device_vector<double> gradPsiQuadsXFlatD(numCells*numQuads*BVec,0.0);
+            //thrust::device_vector<double> gradPsiQuadsYFlatD(numCells*numQuads*BVec,0.0);
+            //thrust::device_vector<double> gradPsiQuadsZFlatD(numCells*numQuads*BVec,0.0);
 
             thrust::device_vector<double> & cellWaveFunctionMatrix = operatorMatrix.getCellWaveFunctionMatrix();
 
@@ -846,17 +856,18 @@ namespace dftfe
 				    BVec,
 				    strideC,
 				    numCells);
-
-           const int blockSize=100;
+           
+           const int blockSize=innerBlockSizeEloc;
            const int numberBlocks=numCells/blockSize;
            const int remBlockSize=numCells-numberBlocks*blockSize;
-           thrust::device_vector<double> eshelbyTensorContributionsD00(blockSize*numQuads*BVec,0.0);
-           thrust::device_vector<double> eshelbyTensorContributionsD10(blockSize*numQuads*BVec,0.0); 
-           thrust::device_vector<double> eshelbyTensorContributionsD11(blockSize*numQuads*BVec,0.0); 
-           thrust::device_vector<double> eshelbyTensorContributionsD20(blockSize*numQuads*BVec,0.0); 
-           thrust::device_vector<double> eshelbyTensorContributionsD21(blockSize*numQuads*BVec,0.0); 
-           thrust::device_vector<double> eshelbyTensorContributionsD22(blockSize*numQuads*BVec,0.0); 
+           //thrust::device_vector<double> eshelbyTensorContributionsD00(blockSize*numQuads*BVec,0.0);
+           //thrust::device_vector<double> eshelbyTensorContributionsD10(blockSize*numQuads*BVec,0.0); 
+           //thrust::device_vector<double> eshelbyTensorContributionsD11(blockSize*numQuads*BVec,0.0); 
+           //thrust::device_vector<double> eshelbyTensorContributionsD20(blockSize*numQuads*BVec,0.0); 
+           //thrust::device_vector<double> eshelbyTensorContributionsD21(blockSize*numQuads*BVec,0.0); 
+           //thrust::device_vector<double> eshelbyTensorContributionsD22(blockSize*numQuads*BVec,0.0); 
            thrust::device_vector<double> onesVectorD(BVec,1.0);
+           
            for (int iblock=0; iblock<(numberBlocks+1); iblock++)
 	   {
                    const int currentBlockSize= (iblock==numberBlocks)?remBlockSize:blockSize;
@@ -864,7 +875,7 @@ namespace dftfe
                   
                    if (currentBlockSize>0)
 	           {
-
+                           
 			   computeELocWfcEshelbyTensorContributions<<<(BVec+255)/256*currentBlockSize*numQuads,256>>>
 									  (BVec,
 									   currentBlockSize*numQuads,
@@ -882,13 +893,9 @@ namespace dftfe
 									   thrust::raw_pointer_cast(&eshelbyTensorContributionsD20[0]),
 									   thrust::raw_pointer_cast(&eshelbyTensorContributionsD21[0]),
 									   thrust::raw_pointer_cast(&eshelbyTensorContributionsD22[0]));
-
 			  
-
-
 			   scalarCoeffAlpha = 1.0;
 			   scalarCoeffBeta = 1.0;
-
 
 			  
 			   cublasDgemm(operatorMatrix.getCublasHandle(),
@@ -1028,84 +1035,6 @@ namespace dftfe
      }
 
 
-     void nlpPsiContractionH(operatorDFTCUDAClass & operatorMatrix,
-			    const double * psiQuadValuesNLPH,
-                            const double * partialOccupanciesH,
-                            const double * projectorKetTimesVectorParFlattenedH,
-                            const unsigned int * nonTrivialIdToElemIdMapH,
-                            const unsigned int * projecterKetTimesFlattenedVectorLocalIdsH,
-                            const unsigned int numCells,
-			    const unsigned int numQuadsNLP,
-			    const unsigned int numPsi,
-                            const unsigned int totalNonTrivialPseudoWfcs,
-                            double * projectorKetTimesPsiTimesVTimesPartOccContractionPsiQuadsFlattenedH)
-     {
-           thrust::device_vector<double> psiQuadValuesNLPD(numCells*numQuadsNLP*numPsi,0.0);
-           thrust::device_vector<double> partialOccupanciesD(numPsi,0.0);
-           thrust::device_vector<double> projectorKetTimesPsiTimesVTimesPartOccContractionPsiQuadsFlattenedD(totalNonTrivialPseudoWfcs*numQuadsNLP,0.0);
-
-           cudaVectorType projectorKetTimesVectorD;
-           vectorTools::createDealiiVector(operatorMatrix.getProjectorKetTimesVectorSingle().get_partitioner(),
-					   numPsi,
-					   projectorKetTimesVectorD);
-           projectorKetTimesVectorD=0.0;
-
-           if (totalNonTrivialPseudoWfcs>0)
-           {
-		   thrust::device_vector<unsigned int> projecterKetTimesFlattenedVectorLocalIdsD(totalNonTrivialPseudoWfcs,0.0);
-		   thrust::device_vector<unsigned int> nonTrivialIdToElemIdMapD(totalNonTrivialPseudoWfcs,0.0);
-
-		   cudaMemcpy(thrust::raw_pointer_cast(&psiQuadValuesNLPD[0]),
-			      psiQuadValuesNLPH,
-			      numCells*numQuadsNLP*numPsi*sizeof(double),
-			      cudaMemcpyHostToDevice);
-
-		   cudaMemcpy(thrust::raw_pointer_cast(&partialOccupanciesD[0]),
-			      partialOccupanciesH,
-			      numPsi*sizeof(double),
-			      cudaMemcpyHostToDevice);
-
-		   cudaMemcpy(projectorKetTimesVectorD.begin(),
-			      projectorKetTimesVectorParFlattenedH,
-			      (projectorKetTimesVectorD.local_size()+projectorKetTimesVectorD.get_partitioner()->n_ghost_indices())*sizeof(double),
-			      cudaMemcpyHostToDevice);
-
-		   cudaMemcpy(thrust::raw_pointer_cast(&nonTrivialIdToElemIdMapD[0]),
-			      nonTrivialIdToElemIdMapH,
-			      totalNonTrivialPseudoWfcs*sizeof(unsigned int),
-			      cudaMemcpyHostToDevice);
-
-
-		   cudaMemcpy(thrust::raw_pointer_cast(&projecterKetTimesFlattenedVectorLocalIdsD[0]),
-			      projecterKetTimesFlattenedVectorLocalIdsH,
-			      totalNonTrivialPseudoWfcs*sizeof(unsigned int),
-			      cudaMemcpyHostToDevice);
-
-
-		   cudaMemcpy(thrust::raw_pointer_cast(&projectorKetTimesPsiTimesVTimesPartOccContractionPsiQuadsFlattenedD[0]),
-			      projectorKetTimesPsiTimesVTimesPartOccContractionPsiQuadsFlattenedH,
-			      totalNonTrivialPseudoWfcs*numQuadsNLP*sizeof(double),
-			      cudaMemcpyHostToDevice);
-
-		   nlpPsiContractionD(operatorMatrix,
-				      psiQuadValuesNLPD,
-				      partialOccupanciesD,
-				      projectorKetTimesVectorD.begin(),
-				      nonTrivialIdToElemIdMapD,
-				      projecterKetTimesFlattenedVectorLocalIdsD,
-				      numCells, 
-				      numQuadsNLP,
-				      numPsi,
-				      totalNonTrivialPseudoWfcs,
-				      projectorKetTimesPsiTimesVTimesPartOccContractionPsiQuadsFlattenedD);
-
-		   cudaMemcpy(projectorKetTimesPsiTimesVTimesPartOccContractionPsiQuadsFlattenedH,
-			      thrust::raw_pointer_cast(&projectorKetTimesPsiTimesVTimesPartOccContractionPsiQuadsFlattenedD[0]),
-			      totalNonTrivialPseudoWfcs*numQuadsNLP*sizeof(double),
-			      cudaMemcpyDeviceToHost);
-	 }
-     }
-
      void nlpPsiContractionD(operatorDFTCUDAClass & operatorMatrix,
 			    const thrust::device_vector<double> & psiQuadValuesNLPD,
                             const thrust::device_vector<double> & partialOccupanciesD,
@@ -1116,12 +1045,14 @@ namespace dftfe
 			    const unsigned int numQuadsNLP,
 			    const unsigned int numPsi,
                             const unsigned int totalNonTrivialPseudoWfcs,
+                            const unsigned int innerBlockSizeEnlp,
+                            thrust::device_vector<double> & nlpContractionContributionD,
                             thrust::device_vector<double> & projectorKetTimesPsiTimesVTimesPartOccContractionPsiQuadsFlattenedD)
      {
-            const int blockSize=200;
+            const int blockSize=innerBlockSizeEnlp;
             const int numberBlocks=totalNonTrivialPseudoWfcs/blockSize;
             const int remBlockSize=totalNonTrivialPseudoWfcs-numberBlocks*blockSize;
-            thrust::device_vector<double> nlpContractionContributionD(blockSize*numQuadsNLP*numPsi,0.0);
+            //thrust::device_vector<double> nlpContractionContributionD(blockSize*numQuadsNLP*numPsi,0.0);
 	    thrust::device_vector<double> onesMatD(numPsi,1.0);
 
             for (int iblock=0; iblock<(numberBlocks+1); iblock++)
@@ -1179,13 +1110,26 @@ namespace dftfe
 			     const unsigned int numQuadsNLP,
 			     const unsigned int numNodesPerElement,
 			     const unsigned int totalNonTrivialPseudoWfcs,
+		  	     thrust::device_vector<double> & psiQuadsFlatD,
+			     thrust::device_vector<double> & gradPsiQuadsXFlatD,
+			     thrust::device_vector<double> & gradPsiQuadsYFlatD,
+			     thrust::device_vector<double> & gradPsiQuadsZFlatD,
+	                     thrust::device_vector<double> & eshelbyTensorContributionsD00,
+			     thrust::device_vector<double> & eshelbyTensorContributionsD10,
+			     thrust::device_vector<double> & eshelbyTensorContributionsD11,
+			     thrust::device_vector<double> & eshelbyTensorContributionsD20,
+			     thrust::device_vector<double> & eshelbyTensorContributionsD21,
+			     thrust::device_vector<double> & eshelbyTensorContributionsD22,
 			     thrust::device_vector<double> & eshelbyTensorQuadValuesD00,
 			     thrust::device_vector<double> & eshelbyTensorQuadValuesD10,
 			     thrust::device_vector<double> & eshelbyTensorQuadValuesD11,
 			     thrust::device_vector<double> & eshelbyTensorQuadValuesD20,
 			     thrust::device_vector<double> & eshelbyTensorQuadValuesD21,
 			     thrust::device_vector<double> & eshelbyTensorQuadValuesD22,
+                             thrust::device_vector<double> & nlpContractionContributionD,
 			     thrust::device_vector<double> & projectorKetTimesPsiTimesVTimesPartOccContractionPsiQuadsFlattenedD,
+                             const unsigned int innerBlockSizeEloc,
+                             const unsigned int innerBlockSizeEnlp,
                              const bool isPsp,
 			     const bool interpolateForNLPQuad)
      {
@@ -1193,7 +1137,6 @@ namespace dftfe
             int this_process;
             MPI_Comm_rank(MPI_COMM_WORLD, &this_process);
 
-            thrust::device_vector<double> psiQuadsFlatD(numCells*numQuads*numPsi,0.0);
             const unsigned int M=operatorMatrix.getMatrixFreeData()->get_vector_partitioner()->local_size();
             stridedCopyToBlockKernel<<<(numPsi+255)/256*M, 256>>>(numPsi,
 								X,
@@ -1219,7 +1162,17 @@ namespace dftfe
 						   numNodesPerElement,
                                                    eigenValuesD,
                                                    partialOccupanciesD,
+                                                   innerBlockSizeEloc,
                                                    psiQuadsFlatD,
+                                                   gradPsiQuadsXFlatD,
+                                                   gradPsiQuadsYFlatD,
+                                                   gradPsiQuadsZFlatD,
+	                                           eshelbyTensorContributionsD00,
+			                           eshelbyTensorContributionsD10,
+			                           eshelbyTensorContributionsD11,
+			                           eshelbyTensorContributionsD20,
+			                           eshelbyTensorContributionsD21,
+			                           eshelbyTensorContributionsD22,
                                                    eshelbyTensorQuadValuesD00,
                                                    eshelbyTensorQuadValuesD10,
                                                    eshelbyTensorQuadValuesD11,
@@ -1282,6 +1235,8 @@ namespace dftfe
 					      numQuadsNLP,
 					      numPsi,
 					      totalNonTrivialPseudoWfcs,
+                                              innerBlockSizeEnlp,
+                                              nlpContractionContributionD,
 					      projectorKetTimesPsiTimesVTimesPartOccContractionPsiQuadsFlattenedD);
 		   }
 
@@ -1362,6 +1317,22 @@ namespace dftfe
             thrust::device_vector<double> elocWfcEshelbyTensorQuadValuesD21(numCells*numQuads,0.0);
             thrust::device_vector<double> elocWfcEshelbyTensorQuadValuesD22(numCells*numQuads,0.0);
 
+
+            thrust::device_vector<double> psiQuadsFlatD(numCells*numQuads*blockSize,0.0);
+            thrust::device_vector<double> gradPsiQuadsXFlatD(numCells*numQuads*blockSize,0.0);
+            thrust::device_vector<double> gradPsiQuadsYFlatD(numCells*numQuads*blockSize,0.0);
+            thrust::device_vector<double> gradPsiQuadsZFlatD(numCells*numQuads*blockSize,0.0);
+
+            const unsigned int innerBlockSizeEloc=50;
+            thrust::device_vector<double> eshelbyTensorContributionsD00(innerBlockSizeEloc*numQuads*blockSize,0.0);
+            thrust::device_vector<double> eshelbyTensorContributionsD10(innerBlockSizeEloc*numQuads*blockSize,0.0); 
+            thrust::device_vector<double> eshelbyTensorContributionsD11(innerBlockSizeEloc*numQuads*blockSize,0.0); 
+            thrust::device_vector<double> eshelbyTensorContributionsD20(innerBlockSizeEloc*numQuads*blockSize,0.0); 
+            thrust::device_vector<double> eshelbyTensorContributionsD21(innerBlockSizeEloc*numQuads*blockSize,0.0); 
+            thrust::device_vector<double> eshelbyTensorContributionsD22(innerBlockSizeEloc*numQuads*blockSize,0.0); 
+
+            const unsigned int innerBlockSizeEnlp=200;
+            thrust::device_vector<double> nlpContractionContributionD(innerBlockSizeEnlp*numQuadsNLP*blockSize,0.0);
             thrust::device_vector<double> projectorKetTimesPsiTimesVTimesPartOccContractionPsiQuadsFlattenedD;
 	    thrust::device_vector<unsigned int> projecterKetTimesFlattenedVectorLocalIdsD;
 	    thrust::device_vector<unsigned int> nonTrivialIdToElemIdMapD;
@@ -1434,13 +1405,26 @@ namespace dftfe
 			                       numQuadsNLP,
 			                       numNodesPerElement,
 					       totalNonTrivialPseudoWfcs,
+                                               psiQuadsFlatD,
+                                               gradPsiQuadsXFlatD,
+                                               gradPsiQuadsYFlatD,
+                                               gradPsiQuadsZFlatD,
+	                                       eshelbyTensorContributionsD00,
+			                       eshelbyTensorContributionsD10,
+			                       eshelbyTensorContributionsD11,
+			                       eshelbyTensorContributionsD20,
+			                       eshelbyTensorContributionsD21,
+			                       eshelbyTensorContributionsD22,
 					       elocWfcEshelbyTensorQuadValuesD00,
 					       elocWfcEshelbyTensorQuadValuesD10,
 					       elocWfcEshelbyTensorQuadValuesD11,
 					       elocWfcEshelbyTensorQuadValuesD20,
 					       elocWfcEshelbyTensorQuadValuesD21,
 					       elocWfcEshelbyTensorQuadValuesD22,
+                                               nlpContractionContributionD,
 					       projectorKetTimesPsiTimesVTimesPartOccContractionPsiQuadsFlattenedD,
+                                               innerBlockSizeEloc,
+                                               innerBlockSizeEnlp,
                                                isPsp,
 			                       interpolateForNLPQuad);
 
