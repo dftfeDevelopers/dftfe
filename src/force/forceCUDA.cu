@@ -1189,6 +1189,10 @@ namespace dftfe
                              const bool isPsp,
 			     const bool interpolateForNLPQuad)
      {
+
+            int this_process;
+            MPI_Comm_rank(MPI_COMM_WORLD, &this_process);
+
             thrust::device_vector<double> psiQuadsFlatD(numCells*numQuads*numPsi,0.0);
             const unsigned int M=operatorMatrix.getMatrixFreeData()->get_vector_partitioner()->local_size();
             stridedCopyToBlockKernel<<<(numPsi+255)/256*M, 256>>>(numPsi,
@@ -1203,6 +1207,9 @@ namespace dftfe
 								         numPsi);
 
 
+            cudaDeviceSynchronize();
+            MPI_Barrier(MPI_COMM_WORLD);
+            double kernel1_time = MPI_Wtime();
 
            interpolatePsiComputeELocWfcEshelbyTensorNonPeriodicD(operatorMatrix,
 						   cudaFlattenedArrayBlock,
@@ -1219,6 +1226,13 @@ namespace dftfe
                                                    eshelbyTensorQuadValuesD20,
                                                    eshelbyTensorQuadValuesD21,
                                                    eshelbyTensorQuadValuesD22);
+
+	   cudaDeviceSynchronize();
+	   MPI_Barrier(MPI_COMM_WORLD);
+	   kernel1_time = MPI_Wtime() - kernel1_time;
+	    
+	   if (this_process==0 && dftParameters::verbosity>=2)
+		 std::cout<<"Time for interpolatePsiComputeELocWfcEshelbyTensorNonPeriodicD inside blocked loop: "<<kernel1_time<<std::endl;
 
            if (isPsp)
            {
@@ -1237,11 +1251,24 @@ namespace dftfe
 				    psiQuadsNLPFlatD);
                    }
 
+		   cudaDeviceSynchronize();
+		   MPI_Barrier(MPI_COMM_WORLD);
+		   double kernel2_time = MPI_Wtime();
 
 		   operatorMatrix.computeNonLocalProjectorKetTimesXTimesV(cudaFlattenedArrayBlock.begin(),
 									   projectorKetTimesVectorD,
 									   numPsi);
 
+		   cudaDeviceSynchronize();
+		   MPI_Barrier(MPI_COMM_WORLD);
+		   kernel2_time = MPI_Wtime() - kernel2_time;
+		    
+		   if (this_process==0 && dftParameters::verbosity>=2)
+			 std::cout<<"Time for computeNonLocalProjectorKetTimesXTimesV inside blocked loop: "<<kernel2_time<<std::endl;
+
+		   cudaDeviceSynchronize();
+		   MPI_Barrier(MPI_COMM_WORLD);
+		   double kernel3_time = MPI_Wtime();
 
 		   if (totalNonTrivialPseudoWfcs>0)
 		   {
@@ -1256,7 +1283,14 @@ namespace dftfe
 					      numPsi,
 					      totalNonTrivialPseudoWfcs,
 					      projectorKetTimesPsiTimesVTimesPartOccContractionPsiQuadsFlattenedD);
-		 }
+		   }
+
+		   cudaDeviceSynchronize();
+		   MPI_Barrier(MPI_COMM_WORLD);
+		   kernel3_time = MPI_Wtime() - kernel3_time;
+		    
+		   if (this_process==0 && dftParameters::verbosity>=2)
+			 std::cout<<"Time for nlpPsiContractionD inside blocked loop: "<<kernel3_time<<std::endl;
 	   }
      }
 
@@ -1313,10 +1347,11 @@ namespace dftfe
             cudaDeviceSynchronize();
             MPI_Barrier(MPI_COMM_WORLD);
             gpu_time = MPI_Wtime() - gpu_time;
-
+            
             if (this_process==0 && dftParameters::verbosity>=2)
               std::cout<<"Time for creating cuda parallel vectors for force computation: "<<gpu_time<<std::endl;
 
+            gpu_time = MPI_Wtime();
 
             thrust::device_vector<double> eigenValuesD(blockSize,0.0);
             thrust::device_vector<double> partialOccupanciesD(blockSize,0.0);
@@ -1378,6 +1413,10 @@ namespace dftfe
 			      &blockedPartialOccupancies[0],
 			      blockSize*sizeof(double),
 			      cudaMemcpyHostToDevice);
+                      
+                      cudaDeviceSynchronize();
+                      MPI_Barrier(MPI_COMM_WORLD);
+                      double kernel_time = MPI_Wtime();
 
 		      gpuPortedForceKernelsAllD(operatorMatrix,
                                                cudaFlattenedArrayBlock,
@@ -1404,6 +1443,13 @@ namespace dftfe
 					       projectorKetTimesPsiTimesVTimesPartOccContractionPsiQuadsFlattenedD,
                                                isPsp,
 			                       interpolateForNLPQuad);
+
+		      cudaDeviceSynchronize();
+		      MPI_Barrier(MPI_COMM_WORLD);
+		      kernel_time = MPI_Wtime() - kernel_time;
+		    
+		      if (this_process==0 && dftParameters::verbosity>=2)
+		         std::cout<<"Time for force kernels all insided block loop: "<<kernel_time<<std::endl;
                  }//band parallelization
             }//ivec loop
 
@@ -1439,6 +1485,11 @@ namespace dftfe
 				      totalNonTrivialPseudoWfcs*numQuadsNLP*sizeof(double),
 				      cudaMemcpyDeviceToHost); 
             cudaDeviceSynchronize();
+            MPI_Barrier(MPI_COMM_WORLD);
+            gpu_time = MPI_Wtime() - gpu_time;
+            
+            if (this_process==0 && dftParameters::verbosity>=1)
+              std::cout<<"Time taken for all gpu kernels force computation: "<<gpu_time<<std::endl;
      }
 
    }//forceCUDA namespace

@@ -88,6 +88,11 @@ void forceClass<FEOrder>::computeConfigurationalForceEEshelbyTensorFPSPFnlLinFE
                               const vectorType & phiRhoMinusApproxRho,
                               const bool shadowPotentialForce)
 {
+  int this_process;
+  MPI_Comm_rank(MPI_COMM_WORLD, &this_process);
+  MPI_Barrier(MPI_COMM_WORLD);
+  double forcetotal_time=MPI_Wtime();
+
   const unsigned int numberGlobalAtoms = dftPtr->atomLocations.size();
   std::map<unsigned int, std::vector<double> > forceContributionFnlGammaAtoms;
 
@@ -219,18 +224,11 @@ void forceClass<FEOrder>::computeConfigurationalForceEEshelbyTensorFPSPFnlLinFE
   std::vector<std::vector<vectorType>> eigenVectors((1+dftParameters::spinPolarized)*dftPtr->d_kPointWeights.size());
   std::vector<dealii::LinearAlgebra::distributed::Vector<dataTypes::number> > eigenVectorsFlattenedBlock((1+dftParameters::spinPolarized)*dftPtr->d_kPointWeights.size());
 
-   double wfc_time_total=0.0;
-   double fnlgamma_time_total=0.0;
-   double enlfnl_time_total=0.0;
-   double eloc_time_total=0.0;
-   double nlpinit_time_total=0.0;
-   double projketpsi_time_total=0.0;
-   double nlppsicontract_time_total=0.0;
-   double gpuportedforce_time_total=0.0;
-
    const unsigned int numMacroCells=matrixFreeData.n_macro_cells();
    const unsigned int numPhysicalCells=matrixFreeData.n_physical_cells();
 
+   MPI_Barrier(MPI_COMM_WORLD);
+   double init_time=MPI_Wtime();
 #if defined(DFTFE_WITH_GPU)
    AssertThrow(numMacroCells==numPhysicalCells,ExcMessage("DFT-FE Error: dealii for GPU DFT-FE must be compiled without any vectorization enabled."));
 
@@ -275,8 +273,6 @@ void forceClass<FEOrder>::computeConfigurationalForceEEshelbyTensorFPSPFnlLinFE
    std::vector<unsigned int> projecterKetTimesFlattenedVectorLocalIds; 
    if (isPseudopotential)
    {
-          double nlpinit_time;
-          nlpinit_time = clock();
           for (unsigned int ielem=0; ielem<numPhysicalCells; ++ielem)
           {
             const unsigned int numNonLocalAtomsCurrentProc= dftPtr->d_nonLocalAtomIdsInCurrentProcess.size();
@@ -305,8 +301,6 @@ void forceClass<FEOrder>::computeConfigurationalForceEEshelbyTensorFPSPFnlLinFE
                  }
               }
           }
-          nlpinit_time = clock() - nlpinit_time;
-          nlpinit_time_total+=nlpinit_time;
    }
 #endif
 
@@ -338,9 +332,6 @@ void forceClass<FEOrder>::computeConfigurationalForceEEshelbyTensorFPSPFnlLinFE
 
    if(isPseudopotential)
    {
-       double nlpinit_time;
-       nlpinit_time = clock();
-
        if(isPseudopotential)
        {
 		ZetaDeltaVQuads.resize(numMacroCells*numQuadPointsNLP);
@@ -420,17 +411,14 @@ void forceClass<FEOrder>::computeConfigurationalForceEEshelbyTensorFPSPFnlLinFE
 		  }//q loop
 	       }//subcell loop
        }
-	      
-       nlpinit_time = clock() - nlpinit_time;
-       nlpinit_time_total+=nlpinit_time;
    }
+
+   MPI_Barrier(MPI_COMM_WORLD); 
+   init_time=MPI_Wtime()-init_time;
   
    if (dftParameters::useGPU)
    {
 #if defined(DFTFE_WITH_GPU) && !defined(USE_COMPLEX)
-	    double gpuportedforce_time;
-	    gpuportedforce_time = clock();
-    
             std::vector<double> eigenValuesVec(numEigenVectors,0.0);
 	    for (unsigned int iWave=0; iWave<numEigenVectors;++iWave)
                eigenValuesVec[iWave]=dftPtr->eigenValues[0][iWave];
@@ -458,8 +446,6 @@ void forceClass<FEOrder>::computeConfigurationalForceEEshelbyTensorFPSPFnlLinFE
 					      isPseudopotential,
 					      isPseudopotential && dftParameters::useHigherQuadNLP);
 
-	   gpuportedforce_time = clock() - gpuportedforce_time;
-	   gpuportedforce_time_total+=gpuportedforce_time;
 #endif
    }
    else 
@@ -546,8 +532,6 @@ void forceClass<FEOrder>::computeConfigurationalForceEEshelbyTensorFPSPFnlLinFE
 #endif
 		  }
 
-		  double projketpsi_time;
-		  projketpsi_time = clock();
 		  if (isPseudopotential)
 		    for (unsigned int ikPoint=0; ikPoint<numKPoints; ++ikPoint)
 		    {
@@ -557,9 +541,6 @@ void forceClass<FEOrder>::computeConfigurationalForceEEshelbyTensorFPSPFnlLinFE
 									    ikPoint,
 									    blockedPartialOccupancies[ikPoint]);
 		    }
-		  projketpsi_time = clock() - projketpsi_time;
-		  projketpsi_time_total+=projketpsi_time;
-
 
 		  for (unsigned int cell=0; cell<matrixFreeData.n_macro_cells(); ++cell)
 		  {
@@ -588,8 +569,6 @@ void forceClass<FEOrder>::computeConfigurationalForceEEshelbyTensorFPSPFnlLinFE
 		    std::vector< VectorizedArray<double> > psiQuads(numQuadPoints*currentBlockSize,make_vectorized_array(0.0));
 		    std::vector<Tensor<1,C_DIM,VectorizedArray<double> > > gradPsiQuads(numQuadPoints*currentBlockSize,zeroTensor3);
 #endif
-		    double wfc_time;
-		    wfc_time = clock();
 
 		    for (unsigned int ikPoint=0; ikPoint<numKPoints; ++ikPoint)
 			for (unsigned int iEigenVec=0; iEigenVec<currentBlockSize; ++iEigenVec)
@@ -634,12 +613,7 @@ void forceClass<FEOrder>::computeConfigurationalForceEEshelbyTensorFPSPFnlLinFE
 
 		    }
 
-		    wfc_time = clock() - wfc_time;
-		    wfc_time_total+=wfc_time;
-
 #ifndef USE_COMPLEX
-		    double nlppsicontract_time;
-		    nlppsicontract_time = clock();
 		    const unsigned int numNonLocalAtomsCurrentProc=projectorKetTimesPsiTimesVTimesPartOcc[0].size();
 		    std::vector<bool> isAtomInCell(numNonLocalAtomsCurrentProc,false);
 		    if (isPseudopotential)
@@ -703,15 +677,11 @@ void forceClass<FEOrder>::computeConfigurationalForceEEshelbyTensorFPSPFnlLinFE
 		      }
 		    }
 		   
-		    nlppsicontract_time = clock() - nlppsicontract_time;
-		    nlppsicontract_time_total+=nlppsicontract_time;
 #endif
 
 		    if(isPseudopotential)
 		    {
 		      //compute FnlGammaAtoms  (contibution due to Gamma(Rj)) 
-		      double fnlgamma_time;
-		      fnlgamma_time = clock();
 		      
 #ifdef USE_COMPLEX
 
@@ -741,12 +711,8 @@ void forceClass<FEOrder>::computeConfigurationalForceEEshelbyTensorFPSPFnlLinFE
 		       */
 #endif
 		       
-		       fnlgamma_time = clock() - fnlgamma_time;
-		       fnlgamma_time_total+=fnlgamma_time;
 		    }//is pseudopotential check
 
-		    double eloc_time;
-		    eloc_time = clock();
 		    for (unsigned int q=0; q<numQuadPoints; ++q)
 		    {
 		       Tensor<2,C_DIM,VectorizedArray<double> > E=zeroTensor4;
@@ -814,11 +780,6 @@ void forceClass<FEOrder>::computeConfigurationalForceEEshelbyTensorFPSPFnlLinFE
 		       forceEvalKPoints.submit_gradient(EKPoints,q);
 #endif
 		    }//quad point loop
-		    eloc_time = clock() - eloc_time;
-		    eloc_time_total+=eloc_time;
-
-		    double enlfnl_time;
-		    enlfnl_time = clock();
 
 		    if (isPseudopotential && dftParameters::useHigherQuadNLP)
 			for (unsigned int q=0; q<numQuadPointsNLP; ++q)
@@ -857,8 +818,6 @@ void forceClass<FEOrder>::computeConfigurationalForceEEshelbyTensorFPSPFnlLinFE
 #endif
 			}//nonlocal psp quad points loop
 
-		    enlfnl_time = clock() - enlfnl_time;
-		    enlfnl_time_total+=enlfnl_time;
 
 		    forceEval.integrate(true,true);
 
@@ -906,8 +865,8 @@ void forceClass<FEOrder>::computeConfigurationalForceEEshelbyTensorFPSPFnlLinFE
 	  }//wavefunction block loop
   }
 
-  double enowfc_time;
-  enowfc_time = clock();
+  MPI_Barrier(MPI_COMM_WORLD); 
+  double enowfc_time = MPI_Wtime();
 #if defined(DFTFE_WITH_GPU) && !defined(USE_COMPLEX)
   if (dftParameters::useGPU)
   {
@@ -973,8 +932,6 @@ void forceClass<FEOrder>::computeConfigurationalForceEEshelbyTensorFPSPFnlLinFE
 	    }
 
 	    //compute FnlGammaAtoms  (contibution due to Gamma(Rj)) 
-	    double fnlgamma_time;
-	    fnlgamma_time = clock();
 	      
 	    FnlGammaAtomsElementalContributionNonPeriodic
 					     (forceContributionFnlGammaAtoms,
@@ -986,11 +943,7 @@ void forceClass<FEOrder>::computeConfigurationalForceEEshelbyTensorFPSPFnlLinFE
 					      isAtomInCell,
 					      nonlocalPseudoWfcsAccum);
 	       
-	    fnlgamma_time = clock() - fnlgamma_time;
-	    fnlgamma_time_total+=fnlgamma_time;
 
-	    double enlfnl_time;
-	    enlfnl_time = clock();
 
             Tensor<1,C_DIM,VectorizedArray<double> > F;
             Tensor<2,C_DIM,VectorizedArray<double> > E;
@@ -1020,8 +973,6 @@ void forceClass<FEOrder>::computeConfigurationalForceEEshelbyTensorFPSPFnlLinFE
                }
 	    }//nonlocal psp quad points loop
 
-	    enlfnl_time = clock() - enlfnl_time;
-	    enlfnl_time_total+=enlfnl_time;
 
 
 	    if (dftParameters::useHigherQuadNLP)
@@ -1354,20 +1305,19 @@ void forceClass<FEOrder>::computeConfigurationalForceEEshelbyTensorFPSPFnlLinFE
                              phiRhoMinusApproxRho,
                              shadowPotentialForce);
     }
-    
-    enowfc_time = clock() - enowfc_time;
+   
+    MPI_Barrier(MPI_COMM_WORLD); 
+    enowfc_time = MPI_Wtime() - enowfc_time;
+
+    forcetotal_time = MPI_Wtime() - forcetotal_time;
+            
+    if (this_process==0 && dftParameters::verbosity>=1)
+      std::cout<<"Total time for configurational force computation except Eself Eshelby contribution: "<<forcetotal_time<<std::endl;
  
     if (dftParameters::verbosity>=1)
     {
-        pcout<<" Time taken for wfc interpolation in force: "<<dealii::Utilities::MPI::max(wfc_time_total/CLOCKS_PER_SEC,mpi_communicator)<<std::endl;
-        pcout<<" Time taken for fnl gamma in force: "<<dealii::Utilities::MPI::max(fnlgamma_time_total/CLOCKS_PER_SEC,mpi_communicator)<<std::endl;
-        pcout<<" Time taken for enl fnl in force: "<<dealii::Utilities::MPI::max(enlfnl_time_total/CLOCKS_PER_SEC,mpi_communicator)<<std::endl;
-        pcout<<" Time taken for eloc in force: "<<dealii::Utilities::MPI::max(eloc_time_total/CLOCKS_PER_SEC,mpi_communicator)<<std::endl;
-        pcout<<" Time taken for non wfc in force: "<<dealii::Utilities::MPI::max(enowfc_time/CLOCKS_PER_SEC,mpi_communicator)<<std::endl;
-        pcout<<" Time taken for nlp init in force: "<<dealii::Utilities::MPI::max(nlpinit_time_total/CLOCKS_PER_SEC,mpi_communicator)<<std::endl;
-        pcout<<" Time taken for projector ket times psi in force: "<<dealii::Utilities::MPI::max(projketpsi_time_total/CLOCKS_PER_SEC,mpi_communicator)<<std::endl;
-        pcout<<" Time taken for nlp psi contraction in force: "<<dealii::Utilities::MPI::max(nlppsicontract_time_total/CLOCKS_PER_SEC,mpi_communicator)<<std::endl;
-        pcout<<" Time taken for gpu ported force computation: "<<dealii::Utilities::MPI::max(gpuportedforce_time_total/CLOCKS_PER_SEC,mpi_communicator)<<std::endl;
+        pcout<<" Time taken for initialization in force: "<<init_time<<std::endl;
+        pcout<<" Time taken for non wfc in force: "<<enowfc_time<<std::endl;
     }
 }
 
