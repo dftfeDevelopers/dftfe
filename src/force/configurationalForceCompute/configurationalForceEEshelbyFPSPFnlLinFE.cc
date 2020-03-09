@@ -425,198 +425,86 @@ void forceClass<FEOrder>::computeConfigurationalForceEEshelbyTensorFPSPFnlLinFE
        nlpinit_time_total+=nlpinit_time;
    }
   
-   double parallelflattened_time;
-   parallelflattened_time = clock();
-#if defined(DFTFE_WITH_GPU) && !defined(USE_COMPLEX)
-   cudaVectorType cudaFlattenedArrayBlock;
-   cudaVectorType projectorKetTimesVectorD;
-
    if (dftParameters::useGPU)
    {
-	   vectorTools::createDealiiVector(kohnShamDFTEigenOperator.getMatrixFreeData()->get_vector_partitioner(),
-					   blockSize,
-					   cudaFlattenedArrayBlock);
-	   vectorTools::createDealiiVector(kohnShamDFTEigenOperator.getProjectorKetTimesVectorSingle().get_partitioner(),
-					    blockSize,
-					    projectorKetTimesVectorD);
-   }
-#endif
-   parallelflattened_time = clock() - parallelflattened_time;
- 
-   for(unsigned int ivec = 0; ivec < numEigenVectors; ivec+=blockSize)
-   {
-      const unsigned int currentBlockSize=std::min(blockSize,numEigenVectors-ivec);
-
-      if ((currentBlockSize!=blockSize || ivec==0) && !dftParameters::useGPU)
-      {
-	   for(unsigned int kPoint = 0; kPoint < (1+dftParameters::spinPolarized)*dftPtr->d_kPointWeights.size(); ++kPoint)
-	   {
-	      eigenVectors[kPoint].resize(currentBlockSize);
-	      for(unsigned int i= 0; i < currentBlockSize; ++i)
-		  eigenVectors[kPoint][i].reinit(dftPtr->d_tempEigenVec);
-
-
-	      vectorTools::createDealiiVector<dataTypes::number>(dftPtr->matrix_free_data.get_vector_partitioner(),
-							         currentBlockSize,
-							         eigenVectorsFlattenedBlock[kPoint]);
-	      eigenVectorsFlattenedBlock[kPoint] = dataTypes::number(0.0);
-	   }
-
-	   dftPtr->constraintsNoneDataInfo.precomputeMaps(dftPtr->matrix_free_data.get_vector_partitioner(),
-					          eigenVectorsFlattenedBlock[0].get_partitioner(),
-					          currentBlockSize);
-      }
-
-      if((ivec+currentBlockSize)<=bandGroupLowHighPlusOneIndices[2*bandGroupTaskId+1] &&
-      	  (ivec+currentBlockSize)>bandGroupLowHighPlusOneIndices[2*bandGroupTaskId])
-      {
-          std::vector<std::vector<double>> blockedEigenValues(dftPtr->d_kPointWeights.size(),std::vector<double>(currentBlockSize,0.0));
-	  std::vector<std::vector<double>> blockedPartialOccupancies(dftPtr->d_kPointWeights.size(),std::vector<double>(currentBlockSize,0.0));
-	  for(unsigned int kPoint = 0; kPoint < dftPtr->d_kPointWeights.size(); ++kPoint)
-	     for (unsigned int iWave=0; iWave<currentBlockSize;++iWave)
-	     {
-		 blockedEigenValues[kPoint][iWave]=dftPtr->eigenValues[kPoint][ivec+iWave];
-		 blockedPartialOccupancies[kPoint][iWave]
-		     =dftUtils::getPartialOccupancy(blockedEigenValues[kPoint][iWave],
-				                                         dftPtr->fermiEnergy,
-									 C_kb,
-									 dftParameters::TVal);
-
-	     }
-
-          if (dftParameters::useGPU)
-          {
 #if defined(DFTFE_WITH_GPU) && !defined(USE_COMPLEX)
-                  
-		  double gpuportedforce_time;
-		  gpuportedforce_time = clock();
-	    
-		  forceCUDA::gpuPortedForceKernelsAll(kohnShamDFTEigenOperator,
-                                                      cudaFlattenedArrayBlock,
-                                                      projectorKetTimesVectorD,
-				                      dftPtr->d_eigenVectorsFlattenedCUDA.begin(),
-						      &blockedEigenValues[0][0],
-						      &blockedPartialOccupancies[0][0],
-						      &nonTrivialIdToElemIdMap[0],
-						      &projecterKetTimesFlattenedVectorLocalIds[0],
-						      ivec,
-						      numEigenVectors,
-						      currentBlockSize,
-						      numPhysicalCells,
-						      numQuadPoints,
-						      numQuadPointsNLP,
-					              dftPtr->matrix_free_data.get_dofs_per_cell(),
-						      nonTrivialNonLocalIdsAllCells.size(),
-						      &elocWfcEshelbyTensorQuadValuesH00[0],
-						      &elocWfcEshelbyTensorQuadValuesH10[0],
-						      &elocWfcEshelbyTensorQuadValuesH11[0],
-						      &elocWfcEshelbyTensorQuadValuesH20[0],
-						      &elocWfcEshelbyTensorQuadValuesH21[0],
-						      &elocWfcEshelbyTensorQuadValuesH22[0],
-						      &projectorKetTimesPsiTimesVTimesPartOccContractionPsiQuadsFlattened[0],
-						      isPseudopotential,
-						      isPseudopotential && dftParameters::useHigherQuadNLP);
+	    double gpuportedforce_time;
+	    gpuportedforce_time = clock();
+    
+            std::vector<double> eigenValuesVec(numEigenVectors,0.0);
+	    for (unsigned int iWave=0; iWave<numEigenVectors;++iWave)
+               eigenValuesVec[iWave]=dftPtr->eigenValues[0][iWave];
 
-		  gpuportedforce_time = clock() - gpuportedforce_time;
-		  gpuportedforce_time_total+=gpuportedforce_time;
-                 
-	          /*
-                  
-		  double projketpsi_time;
-		  projketpsi_time = clock();
-		  
-		  if (isPseudopotential)
-		  {
-		      vectorTools::createDealiiVector<double>(dftPtr->d_projectorKetTimesVectorPar[0].get_partitioner(),
-							      currentBlockSize,
-							      dftPtr->d_projectorKetTimesVectorParFlattened);
-	 
-		      forceCUDA::computeNonLocalProjectorKetTimesPsiTimesVH(kohnShamDFTEigenOperator,
-									    dftPtr->d_eigenVectorsFlattenedCUDA.begin(),
-									    ivec,
-									    currentBlockSize,
-									    numEigenVectors,
-									    dftPtr->d_projectorKetTimesVectorParFlattened.begin());
-		  }
-		  
-		  projketpsi_time = clock() - projketpsi_time;
-		  projketpsi_time_total+=projketpsi_time;
-	 
-		  std::vector<double> psiQuadsFlat(numPhysicalCells*numQuadPoints*currentBlockSize);
-		  std::vector<double> psiQuadsNLPFlat(numPhysicalCells*numQuadPointsNLP*currentBlockSize);
-		  std::vector<double> gradPsiQuadsXFlat(numPhysicalCells*numQuadPoints*currentBlockSize);
-		  std::vector<double> gradPsiQuadsYFlat(numPhysicalCells*numQuadPoints*currentBlockSize);
-		  std::vector<double> gradPsiQuadsZFlat(numPhysicalCells*numQuadPoints*currentBlockSize);
+	    forceCUDA::gpuPortedForceKernelsAllH(kohnShamDFTEigenOperator,
+					      dftPtr->d_eigenVectorsFlattenedCUDA.begin(),
+					      &eigenValuesVec[0],
+					      dftPtr->fermiEnergy,
+					      &nonTrivialIdToElemIdMap[0],
+					      &projecterKetTimesFlattenedVectorLocalIds[0],
+					      numEigenVectors,
+					      numPhysicalCells,
+					      numQuadPoints,
+					      numQuadPointsNLP,
+					      dftPtr->matrix_free_data.get_dofs_per_cell(),
+					      nonTrivialNonLocalIdsAllCells.size(),
+					      &elocWfcEshelbyTensorQuadValuesH00[0],
+					      &elocWfcEshelbyTensorQuadValuesH10[0],
+					      &elocWfcEshelbyTensorQuadValuesH11[0],
+					      &elocWfcEshelbyTensorQuadValuesH20[0],
+					      &elocWfcEshelbyTensorQuadValuesH21[0],
+					      &elocWfcEshelbyTensorQuadValuesH22[0],
+					      &projectorKetTimesPsiTimesVTimesPartOccContractionPsiQuadsFlattened[0],
+                                              dftPtr->interBandGroupComm,
+					      isPseudopotential,
+					      isPseudopotential && dftParameters::useHigherQuadNLP);
 
-		  double wfc_time;
-		  wfc_time = clock();
-
-		  forceCUDA::interpolatePsiH(kohnShamDFTEigenOperator,
-				  dftPtr->d_eigenVectorsFlattenedCUDA.begin(),
-				  ivec,
-				  currentBlockSize,
-				  numEigenVectors,
-				  numPhysicalCells,
-				  numQuadPoints,
-				  numQuadPointsNLP,
-				  dftPtr->matrix_free_data.get_dofs_per_cell(),
-				  &psiQuadsFlat[0],
-				  &psiQuadsNLPFlat[0],
-				  &gradPsiQuadsXFlat[0],
-				  &gradPsiQuadsYFlat[0],
-				  &gradPsiQuadsZFlat[0],
-				  isPseudopotential && dftParameters::useHigherQuadNLP);
-
-		  
-		  wfc_time = clock() - wfc_time;
-		  wfc_time_total+=wfc_time;          
-
-		  double nlppsicontract_time;
-		  nlppsicontract_time = clock();
-
-
-		  if (isPseudopotential)
-			forceCUDA::nlpPsiContractionH(kohnShamDFTEigenOperator,
-						      dftParameters::useHigherQuadNLP?&psiQuadsNLPFlat[0]:&psiQuadsFlat[0],
-						      &blockedPartialOccupancies[0][0],
-						      dftPtr->d_projectorKetTimesVectorParFlattened.begin(),
-						      &nonTrivialIdToElemIdMap[0],
-						      &projecterKetTimesFlattenedVectorLocalIds[0],
-						      numPhysicalCells,
-						      numQuadPointsNLP,
-						      currentBlockSize,
-						      nonTrivialNonLocalIdsAllCells.size(),
-						      &projectorKetTimesPsiTimesVTimesPartOccContractionPsiQuadsFlattened[0]);
-		  nlppsicontract_time = clock() - nlppsicontract_time;
-		  nlppsicontract_time_total+=nlppsicontract_time;
-
-
-		  double eloc_time;
-		  eloc_time = clock();
-		  forceCUDA::computeELocWfcEshelbyTensorNonPeriodicH(kohnShamDFTEigenOperator,
-								       &psiQuadsFlat[0],
-								       &gradPsiQuadsXFlat[0],
-								       &gradPsiQuadsYFlat[0],
-								       &gradPsiQuadsZFlat[0],
-								       &blockedEigenValues[0][0],
-								       &blockedPartialOccupancies[0][0],
-								       numPhysicalCells,
-								       numQuadPoints,
-								       currentBlockSize,
-								       &elocWfcEshelbyTensorQuadValuesH00[0],
-								       &elocWfcEshelbyTensorQuadValuesH10[0],
-								       &elocWfcEshelbyTensorQuadValuesH11[0],
-								       &elocWfcEshelbyTensorQuadValuesH20[0],
-								       &elocWfcEshelbyTensorQuadValuesH21[0],
-								       &elocWfcEshelbyTensorQuadValuesH22[0]);
-		  eloc_time = clock() - eloc_time;
-		  eloc_time_total+=eloc_time;
-                  */
-                  
+	   gpuportedforce_time = clock() - gpuportedforce_time;
+	   gpuportedforce_time_total+=gpuportedforce_time;
 #endif
-	  }
-          else
-	  {
+   }
+   else 
+   { 
+	   for(unsigned int ivec = 0; ivec < numEigenVectors; ivec+=blockSize)
+	   {
+	      const unsigned int currentBlockSize=std::min(blockSize,numEigenVectors-ivec);
+
+	      if (currentBlockSize!=blockSize || ivec==0)
+	      {
+		   for(unsigned int kPoint = 0; kPoint < (1+dftParameters::spinPolarized)*dftPtr->d_kPointWeights.size(); ++kPoint)
+		   {
+		      eigenVectors[kPoint].resize(currentBlockSize);
+		      for(unsigned int i= 0; i < currentBlockSize; ++i)
+			  eigenVectors[kPoint][i].reinit(dftPtr->d_tempEigenVec);
+
+
+		      vectorTools::createDealiiVector<dataTypes::number>(dftPtr->matrix_free_data.get_vector_partitioner(),
+									 currentBlockSize,
+									 eigenVectorsFlattenedBlock[kPoint]);
+		      eigenVectorsFlattenedBlock[kPoint] = dataTypes::number(0.0);
+		   }
+
+		   dftPtr->constraintsNoneDataInfo.precomputeMaps(dftPtr->matrix_free_data.get_vector_partitioner(),
+							  eigenVectorsFlattenedBlock[0].get_partitioner(),
+							  currentBlockSize);
+	      }
+
+	      if((ivec+currentBlockSize)<=bandGroupLowHighPlusOneIndices[2*bandGroupTaskId+1] &&
+		  (ivec+currentBlockSize)>bandGroupLowHighPlusOneIndices[2*bandGroupTaskId])
+	      {
+		  std::vector<std::vector<double>> blockedEigenValues(dftPtr->d_kPointWeights.size(),std::vector<double>(currentBlockSize,0.0));
+		  std::vector<std::vector<double>> blockedPartialOccupancies(dftPtr->d_kPointWeights.size(),std::vector<double>(currentBlockSize,0.0));
+		  for(unsigned int kPoint = 0; kPoint < dftPtr->d_kPointWeights.size(); ++kPoint)
+		     for (unsigned int iWave=0; iWave<currentBlockSize;++iWave)
+		     {
+			 blockedEigenValues[kPoint][iWave]=dftPtr->eigenValues[kPoint][ivec+iWave];
+			 blockedPartialOccupancies[kPoint][iWave]
+			     =dftUtils::getPartialOccupancy(blockedEigenValues[kPoint][iWave],
+										 dftPtr->fermiEnergy,
+										 C_kb,
+										 dftParameters::TVal);
+
+		     }
+
 		  for(unsigned int kPoint = 0; kPoint < (1+dftParameters::spinPolarized)*dftPtr->d_kPointWeights.size(); ++kPoint)
 		  {
 			 for(unsigned int iNode = 0; iNode < localVectorSize; ++iNode)
@@ -1014,9 +902,9 @@ void forceClass<FEOrder>::computeConfigurationalForceEEshelbyTensorFPSPFnlLinFE
 #endif
 		    }
 		  }//macro cell loop
-	}
-      }//band parallelization loop
-  }//wavefunction block loop
+	      }//band parallelization loop
+	  }//wavefunction block loop
+  }
 
   double enowfc_time;
   enowfc_time = clock();
@@ -1480,7 +1368,6 @@ void forceClass<FEOrder>::computeConfigurationalForceEEshelbyTensorFPSPFnlLinFE
         pcout<<" Time taken for projector ket times psi in force: "<<dealii::Utilities::MPI::max(projketpsi_time_total/CLOCKS_PER_SEC,mpi_communicator)<<std::endl;
         pcout<<" Time taken for nlp psi contraction in force: "<<dealii::Utilities::MPI::max(nlppsicontract_time_total/CLOCKS_PER_SEC,mpi_communicator)<<std::endl;
         pcout<<" Time taken for gpu ported force computation: "<<dealii::Utilities::MPI::max(gpuportedforce_time_total/CLOCKS_PER_SEC,mpi_communicator)<<std::endl;
-        pcout<<" Time taken for parallel flattened cuda vectors creation: "<<dealii::Utilities::MPI::max(parallelflattened_time/CLOCKS_PER_SEC,mpi_communicator)<<std::endl;
     }
 }
 

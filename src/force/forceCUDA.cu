@@ -1110,8 +1110,8 @@ namespace dftfe
 			    const thrust::device_vector<double> & psiQuadValuesNLPD,
                             const thrust::device_vector<double> & partialOccupanciesD,
                             const double * projectorKetTimesVectorParFlattenedD,
-                            thrust::device_vector<unsigned int> & nonTrivialIdToElemIdMapD,
-                            thrust::device_vector<unsigned int> & projecterKetTimesFlattenedVectorLocalIdsD,
+                            const thrust::device_vector<unsigned int> & nonTrivialIdToElemIdMapD,
+                            const thrust::device_vector<unsigned int> & projecterKetTimesFlattenedVectorLocalIdsD,
                             const unsigned int numCells, 
 			    const unsigned int numQuadsNLP,
 			    const unsigned int numPsi,
@@ -1163,14 +1163,14 @@ namespace dftfe
      }
 
 
-     void gpuPortedForceKernelsAll(operatorDFTCUDAClass & operatorMatrix,
+     void gpuPortedForceKernelsAllD(operatorDFTCUDAClass & operatorMatrix,
                              cudaVectorType & cudaFlattenedArrayBlock,
                              cudaVectorType & projectorKetTimesVectorD,
                              const double * X,
-		             const double * eigenValuesH,
-			     const double * partialOccupanciesH,
-			     const unsigned int * nonTrivialIdToElemIdMapH,
-			     const unsigned int * projecterKetTimesFlattenedVectorLocalIdsH, 
+		             const thrust::device_vector<double> & eigenValuesD,
+			     const thrust::device_vector<double> & partialOccupanciesD,
+			     const thrust::device_vector<unsigned int> & nonTrivialIdToElemIdMapD,
+			     const thrust::device_vector<unsigned int> & projecterKetTimesFlattenedVectorLocalIdsD, 
 			     const unsigned int startingVecId,
 			     const unsigned int N,
                              const unsigned int numPsi,
@@ -1179,27 +1179,17 @@ namespace dftfe
 			     const unsigned int numQuadsNLP,
 			     const unsigned int numNodesPerElement,
 			     const unsigned int totalNonTrivialPseudoWfcs,
-			     double * eshelbyTensorQuadValuesH00,
-			     double * eshelbyTensorQuadValuesH10,
-			     double * eshelbyTensorQuadValuesH11,
-			     double * eshelbyTensorQuadValuesH20,
-			     double * eshelbyTensorQuadValuesH21,
-			     double * eshelbyTensorQuadValuesH22,
-			     double * projectorKetTimesPsiTimesVTimesPartOccContractionPsiQuadsFlattenedH,
+			     thrust::device_vector<double> & eshelbyTensorQuadValuesD00,
+			     thrust::device_vector<double> & eshelbyTensorQuadValuesD10,
+			     thrust::device_vector<double> & eshelbyTensorQuadValuesD11,
+			     thrust::device_vector<double> & eshelbyTensorQuadValuesD20,
+			     thrust::device_vector<double> & eshelbyTensorQuadValuesD21,
+			     thrust::device_vector<double> & eshelbyTensorQuadValuesD22,
+			     thrust::device_vector<double> & projectorKetTimesPsiTimesVTimesPartOccContractionPsiQuadsFlattenedD,
                              const bool isPsp,
 			     const bool interpolateForNLPQuad)
      {
-            cudaDeviceSynchronize();
             thrust::device_vector<double> psiQuadsFlatD(numCells*numQuads*numPsi,0.0);
-            thrust::device_vector<double> eigenValuesD(numPsi,0.0);
-            thrust::device_vector<double> partialOccupanciesD(numPsi,0.0);
-            thrust::device_vector<double> eshelbyTensorQuadValuesD00(numCells*numQuads,0.0);
-            thrust::device_vector<double> eshelbyTensorQuadValuesD10(numCells*numQuads,0.0);
-            thrust::device_vector<double> eshelbyTensorQuadValuesD11(numCells*numQuads,0.0);
-            thrust::device_vector<double> eshelbyTensorQuadValuesD20(numCells*numQuads,0.0);
-            thrust::device_vector<double> eshelbyTensorQuadValuesD21(numCells*numQuads,0.0);
-            thrust::device_vector<double> eshelbyTensorQuadValuesD22(numCells*numQuads,0.0);
-
             const unsigned int M=operatorMatrix.getMatrixFreeData()->get_vector_partitioner()->local_size();
             stridedCopyToBlockKernel<<<(numPsi+255)/256*M, 256>>>(numPsi,
 								X,
@@ -1211,47 +1201,6 @@ namespace dftfe
   
             (operatorMatrix.getOverloadedConstraintMatrix())->distribute(cudaFlattenedArrayBlock,
 								         numPsi);
-
-
-           cudaMemcpy(thrust::raw_pointer_cast(&eigenValuesD[0]),
-		      eigenValuesH,
-		      numPsi*sizeof(double),
-		      cudaMemcpyHostToDevice);
-
-           cudaMemcpy(thrust::raw_pointer_cast(&partialOccupanciesD[0]),
-		      partialOccupanciesH,
-		      numPsi*sizeof(double),
-		      cudaMemcpyHostToDevice);
-
-           cudaMemcpy(thrust::raw_pointer_cast(&eshelbyTensorQuadValuesD00[0]),
-		      eshelbyTensorQuadValuesH00,
-		      numCells*numQuads*sizeof(double),
-		      cudaMemcpyHostToDevice); 
-
-           cudaMemcpy(thrust::raw_pointer_cast(&eshelbyTensorQuadValuesD10[0]),
-		      eshelbyTensorQuadValuesH10,
-		      numCells*numQuads*sizeof(double),
-		      cudaMemcpyHostToDevice); 
-
-           cudaMemcpy(thrust::raw_pointer_cast(&eshelbyTensorQuadValuesD11[0]),
-		      eshelbyTensorQuadValuesH11,
-		      numCells*numQuads*sizeof(double),
-		      cudaMemcpyHostToDevice); 
-
-           cudaMemcpy(thrust::raw_pointer_cast(&eshelbyTensorQuadValuesD20[0]),
-		      eshelbyTensorQuadValuesH20,
-		      numCells*numQuads*sizeof(double),
-		      cudaMemcpyHostToDevice); 
-
-           cudaMemcpy(thrust::raw_pointer_cast(&eshelbyTensorQuadValuesD21[0]),
-		      eshelbyTensorQuadValuesH21,
-		      numCells*numQuads*sizeof(double),
-		      cudaMemcpyHostToDevice); 
-
-           cudaMemcpy(thrust::raw_pointer_cast(&eshelbyTensorQuadValuesD22[0]),
-		      eshelbyTensorQuadValuesH22,
-		      numCells*numQuads*sizeof(double),
-		      cudaMemcpyHostToDevice); 
 
 
 
@@ -1270,33 +1219,6 @@ namespace dftfe
                                                    eshelbyTensorQuadValuesD20,
                                                    eshelbyTensorQuadValuesD21,
                                                    eshelbyTensorQuadValuesD22);
-
-           cudaMemcpy(eshelbyTensorQuadValuesH00,
-		      thrust::raw_pointer_cast(&eshelbyTensorQuadValuesD00[0]),
-		      numCells*numQuads*sizeof(double),
-		      cudaMemcpyDeviceToHost);  
-
-           cudaMemcpy(eshelbyTensorQuadValuesH10,
-		      thrust::raw_pointer_cast(&eshelbyTensorQuadValuesD10[0]),
-		      numCells*numQuads*sizeof(double),
-		      cudaMemcpyDeviceToHost);   
-           cudaMemcpy(eshelbyTensorQuadValuesH11,
-		      thrust::raw_pointer_cast(&eshelbyTensorQuadValuesD11[0]),
-		      numCells*numQuads*sizeof(double),
-		      cudaMemcpyDeviceToHost);   
-           cudaMemcpy(eshelbyTensorQuadValuesH20,
-		      thrust::raw_pointer_cast(&eshelbyTensorQuadValuesD20[0]),
-		      numCells*numQuads*sizeof(double),
-		      cudaMemcpyDeviceToHost);   
-           cudaMemcpy(eshelbyTensorQuadValuesH21,
-		      thrust::raw_pointer_cast(&eshelbyTensorQuadValuesD21[0]),
-		      numCells*numQuads*sizeof(double),
-		      cudaMemcpyDeviceToHost);   
-           cudaMemcpy(eshelbyTensorQuadValuesH22,
-		      thrust::raw_pointer_cast(&eshelbyTensorQuadValuesD22[0]),
-		      numCells*numQuads*sizeof(double),
-		      cudaMemcpyDeviceToHost);   
-
 
            if (isPsp)
            {
@@ -1323,27 +1245,6 @@ namespace dftfe
 
 		   if (totalNonTrivialPseudoWfcs>0)
 		   {
-			   thrust::device_vector<double> projectorKetTimesPsiTimesVTimesPartOccContractionPsiQuadsFlattenedD(totalNonTrivialPseudoWfcs*numQuadsNLP,0.0);
-			   thrust::device_vector<unsigned int> projecterKetTimesFlattenedVectorLocalIdsD(totalNonTrivialPseudoWfcs,0.0);
-			   thrust::device_vector<unsigned int> nonTrivialIdToElemIdMapD(totalNonTrivialPseudoWfcs,0.0);
-
-			   cudaMemcpy(thrust::raw_pointer_cast(&nonTrivialIdToElemIdMapD[0]),
-				      nonTrivialIdToElemIdMapH,
-				      totalNonTrivialPseudoWfcs*sizeof(unsigned int),
-				      cudaMemcpyHostToDevice);
-
-
-			   cudaMemcpy(thrust::raw_pointer_cast(&projecterKetTimesFlattenedVectorLocalIdsD[0]),
-				      projecterKetTimesFlattenedVectorLocalIdsH,
-				      totalNonTrivialPseudoWfcs*sizeof(unsigned int),
-				      cudaMemcpyHostToDevice);
-
-
-			   cudaMemcpy(thrust::raw_pointer_cast(&projectorKetTimesPsiTimesVTimesPartOccContractionPsiQuadsFlattenedD[0]),
-				      projectorKetTimesPsiTimesVTimesPartOccContractionPsiQuadsFlattenedH,
-				      totalNonTrivialPseudoWfcs*numQuadsNLP*sizeof(double),
-				      cudaMemcpyHostToDevice);
-
 			   nlpPsiContractionD(operatorMatrix,
 					      interpolateForNLPQuad?psiQuadsNLPFlatD:psiQuadsFlatD,
 					      partialOccupanciesD,
@@ -1355,14 +1256,189 @@ namespace dftfe
 					      numPsi,
 					      totalNonTrivialPseudoWfcs,
 					      projectorKetTimesPsiTimesVTimesPartOccContractionPsiQuadsFlattenedD);
+		 }
+	   }
+     }
 
+     void gpuPortedForceKernelsAllH(operatorDFTCUDAClass & operatorMatrix,
+                             const double * X,
+		             const double * eigenValuesH,
+                             const double  fermiEnergy,
+			     const unsigned int * nonTrivialIdToElemIdMapH,
+			     const unsigned int * projecterKetTimesFlattenedVectorLocalIdsH, 
+			     const unsigned int N,
+			     const unsigned int numCells,
+			     const unsigned int numQuads,
+			     const unsigned int numQuadsNLP,
+			     const unsigned int numNodesPerElement,
+			     const unsigned int totalNonTrivialPseudoWfcs,
+			     double * eshelbyTensorQuadValuesH00,
+			     double * eshelbyTensorQuadValuesH10,
+			     double * eshelbyTensorQuadValuesH11,
+			     double * eshelbyTensorQuadValuesH20,
+			     double * eshelbyTensorQuadValuesH21,
+			     double * eshelbyTensorQuadValuesH22,
+			     double * projectorKetTimesPsiTimesVTimesPartOccContractionPsiQuadsFlattenedH,
+                             const MPI_Comm & interBandGroupComm,
+                             const bool isPsp,
+			     const bool interpolateForNLPQuad)
+     {
+	    //band group parallelization data structures
+	    const unsigned int numberBandGroups=
+		dealii::Utilities::MPI::n_mpi_processes(interBandGroupComm);
+	    const unsigned int bandGroupTaskId = dealii::Utilities::MPI::this_mpi_process(interBandGroupComm);
+	    std::vector<unsigned int> bandGroupLowHighPlusOneIndices;
+	    dftUtils::createBandParallelizationIndices(interBandGroupComm,
+						       N,
+						       bandGroupLowHighPlusOneIndices);
+
+	    const unsigned int blockSize=std::min(dftParameters::chebyWfcBlockSize,
+						bandGroupLowHighPlusOneIndices[1]);
+
+            int this_process;
+            MPI_Comm_rank(MPI_COMM_WORLD, &this_process);
+            cudaDeviceSynchronize();
+            MPI_Barrier(MPI_COMM_WORLD);
+            double gpu_time=MPI_Wtime();
+
+            cudaVectorType cudaFlattenedArrayBlock;
+            cudaVectorType projectorKetTimesVectorD;
+	    vectorTools::createDealiiVector(operatorMatrix.getMatrixFreeData()->get_vector_partitioner(),
+					   blockSize,
+					   cudaFlattenedArrayBlock);
+	    vectorTools::createDealiiVector(operatorMatrix.getProjectorKetTimesVectorSingle().get_partitioner(),
+					    blockSize,
+					    projectorKetTimesVectorD);
+
+            cudaDeviceSynchronize();
+            MPI_Barrier(MPI_COMM_WORLD);
+            gpu_time = MPI_Wtime() - gpu_time;
+
+            if (this_process==0 && dftParameters::verbosity>=2)
+              std::cout<<"Time for creating cuda parallel vectors for force computation: "<<gpu_time<<std::endl;
+
+
+            thrust::device_vector<double> eigenValuesD(blockSize,0.0);
+            thrust::device_vector<double> partialOccupanciesD(blockSize,0.0);
+            thrust::device_vector<double> elocWfcEshelbyTensorQuadValuesD00(numCells*numQuads,0.0);
+            thrust::device_vector<double> elocWfcEshelbyTensorQuadValuesD10(numCells*numQuads,0.0);
+            thrust::device_vector<double> elocWfcEshelbyTensorQuadValuesD11(numCells*numQuads,0.0);
+            thrust::device_vector<double> elocWfcEshelbyTensorQuadValuesD20(numCells*numQuads,0.0);
+            thrust::device_vector<double> elocWfcEshelbyTensorQuadValuesD21(numCells*numQuads,0.0);
+            thrust::device_vector<double> elocWfcEshelbyTensorQuadValuesD22(numCells*numQuads,0.0);
+
+            thrust::device_vector<double> projectorKetTimesPsiTimesVTimesPartOccContractionPsiQuadsFlattenedD;
+	    thrust::device_vector<unsigned int> projecterKetTimesFlattenedVectorLocalIdsD;
+	    thrust::device_vector<unsigned int> nonTrivialIdToElemIdMapD;
+            if (totalNonTrivialPseudoWfcs>0)
+            {
+		    projectorKetTimesPsiTimesVTimesPartOccContractionPsiQuadsFlattenedD.resize(totalNonTrivialPseudoWfcs*numQuadsNLP,0.0);
+		    projecterKetTimesFlattenedVectorLocalIdsD.resize(totalNonTrivialPseudoWfcs,0.0);
+		    nonTrivialIdToElemIdMapD.resize(totalNonTrivialPseudoWfcs,0.0);
+
+		    cudaMemcpy(thrust::raw_pointer_cast(&nonTrivialIdToElemIdMapD[0]),
+			      nonTrivialIdToElemIdMapH,
+			      totalNonTrivialPseudoWfcs*sizeof(unsigned int),
+			      cudaMemcpyHostToDevice);
+
+
+		    cudaMemcpy(thrust::raw_pointer_cast(&projecterKetTimesFlattenedVectorLocalIdsD[0]),
+			      projecterKetTimesFlattenedVectorLocalIdsH,
+			      totalNonTrivialPseudoWfcs*sizeof(unsigned int),
+			      cudaMemcpyHostToDevice);
+            }
+
+
+	    for(unsigned int ivec = 0; ivec < N; ivec+=blockSize)
+	    {
+	         if((ivec+blockSize)<=bandGroupLowHighPlusOneIndices[2*bandGroupTaskId+1] &&
+		    (ivec+blockSize)>bandGroupLowHighPlusOneIndices[2*bandGroupTaskId])
+	         {
+		      std::vector<double> blockedEigenValues(blockSize,0.0);
+		      std::vector<double> blockedPartialOccupancies(blockSize,0.0);
+		      for (unsigned int iWave=0; iWave<blockSize;++iWave)
+		      {
+			 blockedEigenValues[iWave]=eigenValuesH[ivec+iWave];
+			 blockedPartialOccupancies[iWave]
+			     =dftUtils::getPartialOccupancy(blockedEigenValues[iWave],
+                                                            fermiEnergy,
+							    C_kb,
+                                                            dftParameters::TVal);
+                                                            
+		      }
+
+
+
+		      cudaMemcpy(thrust::raw_pointer_cast(&eigenValuesD[0]),
+			      &blockedEigenValues[0],
+			      blockSize*sizeof(double),
+			      cudaMemcpyHostToDevice);
+
+		      cudaMemcpy(thrust::raw_pointer_cast(&partialOccupanciesD[0]),
+			      &blockedPartialOccupancies[0],
+			      blockSize*sizeof(double),
+			      cudaMemcpyHostToDevice);
+
+		      gpuPortedForceKernelsAllD(operatorMatrix,
+                                               cudaFlattenedArrayBlock,
+                                               projectorKetTimesVectorD,
+				               X,
+					       eigenValuesD,
+					       partialOccupanciesD,
+					       nonTrivialIdToElemIdMapD,
+					       projecterKetTimesFlattenedVectorLocalIdsD,
+					       ivec,
+					       N,
+					       blockSize,
+			                       numCells,
+			                       numQuads,
+			                       numQuadsNLP,
+			                       numNodesPerElement,
+					       totalNonTrivialPseudoWfcs,
+					       elocWfcEshelbyTensorQuadValuesD00,
+					       elocWfcEshelbyTensorQuadValuesD10,
+					       elocWfcEshelbyTensorQuadValuesD11,
+					       elocWfcEshelbyTensorQuadValuesD20,
+					       elocWfcEshelbyTensorQuadValuesD21,
+					       elocWfcEshelbyTensorQuadValuesD22,
+					       projectorKetTimesPsiTimesVTimesPartOccContractionPsiQuadsFlattenedD,
+                                               isPsp,
+			                       interpolateForNLPQuad);
+                 }//band parallelization
+            }//ivec loop
+
+            cudaMemcpy(eshelbyTensorQuadValuesH00,
+		      thrust::raw_pointer_cast(&elocWfcEshelbyTensorQuadValuesD00[0]),
+		      numCells*numQuads*sizeof(double),
+		      cudaMemcpyDeviceToHost);  
+
+            cudaMemcpy(eshelbyTensorQuadValuesH10,
+		      thrust::raw_pointer_cast(&elocWfcEshelbyTensorQuadValuesD10[0]),
+		      numCells*numQuads*sizeof(double),
+		      cudaMemcpyDeviceToHost);   
+            cudaMemcpy(eshelbyTensorQuadValuesH11,
+		      thrust::raw_pointer_cast(&elocWfcEshelbyTensorQuadValuesD11[0]),
+		      numCells*numQuads*sizeof(double),
+		      cudaMemcpyDeviceToHost);   
+            cudaMemcpy(eshelbyTensorQuadValuesH20,
+		      thrust::raw_pointer_cast(&elocWfcEshelbyTensorQuadValuesD20[0]),
+		      numCells*numQuads*sizeof(double),
+		      cudaMemcpyDeviceToHost);   
+            cudaMemcpy(eshelbyTensorQuadValuesH21,
+		      thrust::raw_pointer_cast(&elocWfcEshelbyTensorQuadValuesD21[0]),
+		      numCells*numQuads*sizeof(double),
+		      cudaMemcpyDeviceToHost);   
+            cudaMemcpy(eshelbyTensorQuadValuesH22,
+		      thrust::raw_pointer_cast(&elocWfcEshelbyTensorQuadValuesD22[0]),
+		      numCells*numQuads*sizeof(double),
+		      cudaMemcpyDeviceToHost);  
+
+            if (totalNonTrivialPseudoWfcs>0)
 			   cudaMemcpy(projectorKetTimesPsiTimesVTimesPartOccContractionPsiQuadsFlattenedH,
 				      thrust::raw_pointer_cast(&projectorKetTimesPsiTimesVTimesPartOccContractionPsiQuadsFlattenedD[0]),
 				      totalNonTrivialPseudoWfcs*numQuadsNLP*sizeof(double),
-				      cudaMemcpyDeviceToHost);
-		 }
-	   }
-           cudaDeviceSynchronize();
+				      cudaMemcpyDeviceToHost); 
+            cudaDeviceSynchronize();
      }
 
    }//forceCUDA namespace
