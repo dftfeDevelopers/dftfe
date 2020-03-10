@@ -771,7 +771,7 @@ void dftClass<FEOrder>::computeSparseStructureNonLocalProjectors_OV()
     }
 
   const unsigned int numberElements = iElemCount;
-
+  std::vector<int> sparsityPattern(numberElements,-1);
   for(int iAtom = 0; iAtom < numberNonLocalAtoms; ++iAtom)
     {
 
@@ -798,11 +798,12 @@ void dftClass<FEOrder>::computeSparseStructureNonLocalProjectors_OV()
       //
       //resize the data structure corresponding to sparsity pattern
       //
-      std::vector<int> sparsityPattern(numberElements,-1);
+      //std::vector<int> sparsityPattern;(numberElements,-1);
       //d_sparsityPattern[iAtom].resize(numberElements,-1);
 
       if (imageIdsList.size()!=0)
       {
+              std::fill(sparsityPattern.begin(),sparsityPattern.end(),-1);
 	      //
 	      //parallel loop over all elements
 	      //
@@ -815,11 +816,41 @@ void dftClass<FEOrder>::computeSparseStructureNonLocalProjectors_OV()
 		{
 		  if(cell->is_locally_owned())
 		    {
+		      iElem += 1;
+                      bool isSkipCell=true;
+		      for(int iImageAtomCount = 0; iImageAtomCount < imageIdsList.size(); ++iImageAtomCount)
+			  {
+
+			    int chargeId = imageIdsList[iImageAtomCount];
+
+			    Point<3> chargePoint(0.0,0.0,0.0);
+
+			    if(chargeId < numberGlobalCharges)
+			      {
+				chargePoint[0] = atomLocations[chargeId][2];
+				chargePoint[1] = atomLocations[chargeId][3];
+				chargePoint[2] = atomLocations[chargeId][4];
+			      }
+			    else
+			      {
+				chargePoint[0] = d_imagePositionsTrunc[chargeId-numberGlobalCharges][0];
+				chargePoint[1] = d_imagePositionsTrunc[chargeId-numberGlobalCharges][1];
+				chargePoint[2] = d_imagePositionsTrunc[chargeId-numberGlobalCharges][2];
+			      }
+
+			      if (chargePoint.distance(cell->center())<4.0)
+                              {
+                                 isSkipCell=false;
+                                 break;
+                              }
+			   }
+
+                      if (isSkipCell)
+                         continue;
 
 		      //compute the values for the current element
 		      fe_values.reinit(cell);
 
-		      iElem += 1;
 		      int lTemp = 1000 ;
 
 		      for(int iPsp = 0; iPsp < numberPseudoWaveFunctions; ++iPsp)
