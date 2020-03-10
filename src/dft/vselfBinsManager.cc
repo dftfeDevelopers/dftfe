@@ -1024,7 +1024,7 @@ namespace dftfe
 	  dealii::DoFHandler<3>::active_cell_iterator cell = dofHandler.begin_active(),endc = dofHandler.end();
 	   for(; cell!= endc; ++cell)
 	    {
-	      if(cell->is_locally_owned() || cell->is_ghost())
+	      if(cell->is_locally_owned())
 	      {
 
 		  std::vector<dealii::types::global_dof_index> cell_dof_indices(dofs_per_cell);

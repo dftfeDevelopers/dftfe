@@ -368,38 +368,54 @@ void dftClass<FEOrder>::updateAtomPositionsAndMoveMesh(const std::vector<Tensor<
       double resetmesh_time;
       MPI_Barrier(MPI_COMM_WORLD);
       resetmesh_time = MPI_Wtime();
+     
+      if (dftParameters::useSymm
+	|| (dftParameters::isIonOpt && (dftParameters::reuseWfcGeoOpt || dftParameters::reuseDensityGeoOpt))
+	|| dftParameters::createConstraintsFromSerialDofhandler
+	|| dftParameters::electrostaticsHRefinement)
+      {
+	      d_mesh.generateResetMeshes(d_domainBoundingVectors,
+					 dftParameters::useSymm
+					 || (dftParameters::isIonOpt && (dftParameters::reuseWfcGeoOpt || dftParameters::reuseDensityGeoOpt))
+					 || dftParameters::createConstraintsFromSerialDofhandler,
+					 dftParameters::electrostaticsHRefinement);
 
-      d_mesh.generateResetMeshes(d_domainBoundingVectors,
-				 dftParameters::useSymm
-				 || (dftParameters::isIonOpt && (dftParameters::reuseWfcGeoOpt || dftParameters::reuseDensityGeoOpt))
-				 || dftParameters::createConstraintsFromSerialDofhandler,
-				 dftParameters::electrostaticsHRefinement);
+	      //initUnmovedTriangulation(d_mesh.getParallelMeshMoved());
 
-      //initUnmovedTriangulation(d_mesh.getParallelMeshMoved());
-
-      dofHandler.clear();dofHandlerEigen.clear();
-      dofHandler.initialize(d_mesh.getParallelMeshMoved(),FE);
-      dofHandlerEigen.initialize(d_mesh.getParallelMeshMoved(),FEEigen);
-      dofHandler.distribute_dofs (FE);
-      dofHandlerEigen.distribute_dofs (FEEigen);
+	      dofHandler.clear();dofHandlerEigen.clear();
+	      dofHandler.initialize(d_mesh.getParallelMeshMoved(),FE);
+	      dofHandlerEigen.initialize(d_mesh.getParallelMeshMoved(),FEEigen);
+	      dofHandler.distribute_dofs (FE);
+	      dofHandlerEigen.distribute_dofs (FEEigen);
 
 
-      forcePtr->initUnmoved(d_mesh.getParallelMeshMoved(),
-			    d_mesh.getSerialMeshUnmoved(),
-			    d_domainBoundingVectors,
-			    false,
-			    d_gaussianConstantForce);
+	      forcePtr->initUnmoved(d_mesh.getParallelMeshMoved(),
+				    d_mesh.getSerialMeshUnmoved(),
+				    d_domainBoundingVectors,
+				    false,
+				    d_gaussianConstantForce);
 
-      forcePtr->initUnmoved(d_mesh.getParallelMeshMoved(),
-			    d_mesh.getSerialMeshUnmoved(),
-			    d_domainBoundingVectors,
-			    true,
-			    d_gaussianConstantForce);
+	      forcePtr->initUnmoved(d_mesh.getParallelMeshMoved(),
+				    d_mesh.getSerialMeshUnmoved(),
+				    d_domainBoundingVectors,
+				    true,
+				    d_gaussianConstantForce);
 
-      //meshMovementGaussianClass gaussianMove(mpi_communicator);
-      d_gaussianMovePar.init(d_mesh.getParallelMeshMoved(),
-			     d_mesh.getSerialMeshUnmoved(),
-			     d_domainBoundingVectors);
+	      //meshMovementGaussianClass gaussianMove(mpi_communicator);
+	      d_gaussianMovePar.init(d_mesh.getParallelMeshMoved(),
+				     d_mesh.getSerialMeshUnmoved(),
+				     d_domainBoundingVectors);
+      }
+      else
+      {
+	      d_mesh.resetMesh(d_mesh.getParallelMeshUnmoved(),
+			       d_mesh.getParallelMeshMoved());
+
+	      //d_gaussianMovePar.init(d_mesh.getParallelMeshMoved(),
+	      //		       d_mesh.getSerialMeshUnmoved(),
+	      //		       d_domainBoundingVectors);
+
+      }
 
       MPI_Barrier(MPI_COMM_WORLD);
       resetmesh_time = MPI_Wtime() - resetmesh_time;

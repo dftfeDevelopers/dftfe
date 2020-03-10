@@ -39,9 +39,9 @@ void dftClass<FEOrder>::initUnmovedTriangulation(parallel::distributed::Triangul
                                d_domainBoundingVectors);
 
   //initialize meshMovementGaussianClass object (must be done on unmoved triangulation)
-  //d_gaussianMovePar.init(triangulation,
-  //	                 d_mesh.getSerialMeshUnmoved(),
-  //	                 d_domainBoundingVectors);
+  d_gaussianMovePar.init(triangulation,
+  	                 d_mesh.getSerialMeshUnmoved(),
+  	                 d_domainBoundingVectors);
 
   if (dftParameters::verbosity>=4)
      dftUtils::printCurrentMemoryUsage(mpi_communicator,
