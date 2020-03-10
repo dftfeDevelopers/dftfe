@@ -24,6 +24,10 @@
 template<unsigned int FEOrder>
 void dftClass<FEOrder>::initBoundaryConditions(const bool meshOnlyDeformed){
   TimerOutput::Scope scope (computing_timer,"moved setup");
+
+  double init_dofhandlerobjs;
+  MPI_Barrier(MPI_COMM_WORLD);
+  init_dofhandlerobjs = MPI_Wtime(); 
   //
   //initialize FE objects again
   //
@@ -83,6 +87,11 @@ void dftClass<FEOrder>::initBoundaryConditions(const bool meshOnlyDeformed){
   d_supportPointsEigen.clear();
   DoFTools::map_dofs_to_support_points(MappingQ1<3,3>(), dofHandlerEigen, d_supportPointsEigen);
 
+  MPI_Barrier(MPI_COMM_WORLD);
+  init_dofhandlerobjs = MPI_Wtime() - init_dofhandlerobjs;
+  if (dftParameters::verbosity>=1)
+     pcout<<"updateAtomPositionsAndMoveMesh: initBoundaryConditions: Time taken for creating dofhandler related objects: "<<init_dofhandlerobjs<<std::endl;
+
   if (dftParameters::verbosity>=4)
       dftUtils::printCurrentMemoryUsage(mpi_communicator,
 	                      "Created support points");
@@ -96,6 +105,10 @@ void dftClass<FEOrder>::initBoundaryConditions(const bool meshOnlyDeformed){
   if (dftParameters::nonSelfConsistentForce)
      additional_data.mapping_update_flags = update_values|update_gradients|update_JxW_values|update_hessians;
 
+
+  double init_constraints;
+  MPI_Barrier(MPI_COMM_WORLD);
+  init_constraints = MPI_Wtime(); 
   //
   //Zero Dirichlet BC constraints on the boundary of the domain
   //used for computing total electrostatic potential using Poisson problem
@@ -126,6 +139,10 @@ void dftClass<FEOrder>::initBoundaryConditions(const bool meshOnlyDeformed){
   if (dftParameters::verbosity>=4)
       dftUtils::printCurrentMemoryUsage(mpi_communicator,
 	                      "Created total potential constraint matrices");
+  MPI_Barrier(MPI_COMM_WORLD);
+  init_constraints = MPI_Wtime() - init_constraints;
+  if (dftParameters::verbosity>=1)
+     pcout<<"updateAtomPositionsAndMoveMesh: initBoundaryConditions: Time taken for creating constraint matrices: "<<init_constraints<<std::endl;
 
   double init_bins;
   MPI_Barrier(MPI_COMM_WORLD);
@@ -221,6 +238,9 @@ void dftClass<FEOrder>::initBoundaryConditions(const bool meshOnlyDeformed){
   quadratureVector.push_back(QGauss<1>(C_num1DQuadPSP<FEOrder>()));
   quadratureVector.push_back(QGaussLobatto<1>(C_num1DKerkerPoly<FEOrder>()+1));
 
+  double init_force;
+  MPI_Barrier(MPI_COMM_WORLD);
+  init_force = MPI_Wtime(); 
   //
   //
   //
@@ -235,6 +255,11 @@ void dftClass<FEOrder>::initBoundaryConditions(const bool meshOnlyDeformed){
   if (dftParameters::verbosity>=4)
       dftUtils::printCurrentMemoryUsage(mpi_communicator,
 	                      "Called force init moved");
+
+  MPI_Barrier(MPI_COMM_WORLD);
+  init_force = MPI_Wtime() - init_force;
+  if (dftParameters::verbosity>=1)
+     pcout<<"updateAtomPositionsAndMoveMesh: initBoundaryConditions: Time taken for force init moved: "<<init_force<<std::endl;
 
   double init_mf;
   MPI_Barrier(MPI_COMM_WORLD);
@@ -274,16 +299,13 @@ void dftClass<FEOrder>::initBoundaryConditions(const bool meshOnlyDeformed){
       pcout<<"updateAtomPositionsAndMoveMesh: initBoundaryConditions: Time taken for initpRefinedObjects: "<<init_pref<<std::endl;
 
   if (!meshOnlyDeformed)
-  {
 	  createMasterChargeIdToImageIdMaps(d_pspCutOff,
 					    d_imageIds,
 					    d_imagePositions,
 					    d_globalChargeIdToImageIdMap);
-
-	  createMasterChargeIdToImageIdMaps(3.0,
-					    d_imageIdsTrunc,
-					    d_imagePositionsTrunc,
-					    d_globalChargeIdToImageIdMapTrunc);
-  }
-
+  
+  createMasterChargeIdToImageIdMaps(3.0,
+				    d_imageIdsTrunc,
+				    d_imagePositionsTrunc,
+				    d_globalChargeIdToImageIdMapTrunc);
 }
