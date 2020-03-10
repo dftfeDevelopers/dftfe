@@ -105,10 +105,12 @@ void dftClass<FEOrder>::computeElementalOVProjectorKets()
       //
       //allocate element Matrices
       //
-      d_nonLocalProjectorElementMatrices[iAtom].resize(numberElementsInAtomCompactSupport);
-      d_nonLocalProjectorElementMatricesConjugate[iAtom].resize(numberElementsInAtomCompactSupport);
-      d_nonLocalProjectorElementMatricesTranspose[iAtom].resize(numberElementsInAtomCompactSupport);
-
+      if (numberElementsInAtomCompactSupport>0)
+      {
+         d_nonLocalProjectorElementMatrices[iAtom].resize(numberElementsInAtomCompactSupport);
+         d_nonLocalProjectorElementMatricesConjugate[iAtom].resize(numberElementsInAtomCompactSupport);
+         d_nonLocalProjectorElementMatricesTranspose[iAtom].resize(numberElementsInAtomCompactSupport);
+      }
 
       for(int iElemComp = 0; iElemComp < numberElementsInAtomCompactSupport; ++iElemComp)
 	{

@@ -1193,8 +1193,8 @@ void dftClass<FEOrder>::initAtomicRho(vectorType & atomicRho)
    //scale nodal vector with scalingFactor
    atomicRho *= scalingFactor;
 
-   for(unsigned int iAtom = 0; iAtom < atomLocations.size()+numberImageCharges; ++iAtom)
-      singleAtomsRho[iAtom]*=scalingFactor; 
+   //for(unsigned int iAtom = 0; iAtom < atomLocations.size()+numberImageCharges; ++iAtom)
+   //   singleAtomsRho[iAtom]*=scalingFactor; 
 
    if (dftParameters::verbosity>=3)
    {
@@ -1253,9 +1253,9 @@ void dftClass<FEOrder>::initAtomicRho(vectorType & atomicRho)
 			      std::vector<double> & tempVec1 = d_gradRhoAtomsValuesSeparate[iatom].find(subCellId)->second;
 			      for(unsigned int q_point = 0; q_point < numQuadPoints; ++q_point)
 			      {
-				    tempVec1[3*q_point + 0] = feEvalObj.get_gradient(q_point)[0][iSubCell];
-				    tempVec1[3*q_point + 1] = feEvalObj.get_gradient(q_point)[1][iSubCell];
-				    tempVec1[3*q_point + 2] = feEvalObj.get_gradient(q_point)[2][iSubCell];
+				    tempVec1[3*q_point + 0] = feEvalObj.get_gradient(q_point)[0][iSubCell]*scalingFactor;
+				    tempVec1[3*q_point + 1] = feEvalObj.get_gradient(q_point)[1][iSubCell]*scalingFactor;
+				    tempVec1[3*q_point + 2] = feEvalObj.get_gradient(q_point)[2][iSubCell]*scalingFactor;
 			      }
 
 			      if (dftParameters::xc_id==4)
@@ -1268,7 +1268,7 @@ void dftClass<FEOrder>::initAtomicRho(vectorType & atomicRho)
 					  const Tensor< 2, 3, VectorizedArray< double> >   & hessianVals=feEvalObj.get_hessian(q_point);
 					  for (unsigned int i=0; i<3;i++)
 					    for (unsigned int j=0; j<3;j++)
-					      tempVec2[9*q_point + 3*i+j] = hessianVals[i][j][iSubCell];
+					      tempVec2[9*q_point + 3*i+j] = hessianVals[i][j][iSubCell]*scalingFactor;
 					}
 			      }
 		      }
