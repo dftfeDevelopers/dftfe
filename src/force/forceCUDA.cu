@@ -153,322 +153,8 @@ namespace dftfe
 
           }
 
-
-          __global__
-          void computeRhoGradRhoFromInterpolatedValues(const unsigned int numberEntries,
-			    double *rhoCellsWfcContributions,
-                            double *gradRhoCellsWfcContributionsX,
-                            double *gradRhoCellsWfcContributionsY,
-                            double *gradRhoCellsWfcContributionsZ,
-                            const bool isEvaluateGradRho)
-          {
-
-		  const unsigned int globalThreadId = blockIdx.x*blockDim.x + threadIdx.x;
-
-		  for(unsigned int index = globalThreadId; index < numberEntries; index+= blockDim.x*gridDim.x)
-		   {
-                      const double psi=rhoCellsWfcContributions[index];
-                      rhoCellsWfcContributions[index]=psi*psi;
-
-                      if (isEvaluateGradRho)
-                      {
-                        const double gradPsiX=gradRhoCellsWfcContributionsX[index];
-                        gradRhoCellsWfcContributionsX[index]=2.0*psi*gradPsiX;
-                         
-                        const double gradPsiY=gradRhoCellsWfcContributionsY[index];
-                        gradRhoCellsWfcContributionsY[index]=2.0*psi*gradPsiY;
-
-                        const double gradPsiZ=gradRhoCellsWfcContributionsZ[index];
-                        gradRhoCellsWfcContributionsZ[index]=2.0*psi*gradPsiZ;
-                         
-                      }
-		   }
-
-          }
-
-
       }
 
-      void computeELocWfcEshelbyTensorNonPeriodicH(operatorDFTCUDAClass & operatorMatrix,
-                                                 const double * psiQuadValuesH,
-                                                 const double * gradPsiQuadValuesXH,
-                                                 const double * gradPsiQuadValuesYH,
-                                                 const double * gradPsiQuadValuesZH,
-                                                 const double * eigenValuesH,
-                                                 const double * partialOccupanciesH,
-                                                 const unsigned int numCells,
-                                                 const unsigned int numQuads,
-                                                 const unsigned int numPsi,
-                                                 double * eshelbyTensorQuadValuesH00,
-                                                 double * eshelbyTensorQuadValuesH10,
-                                                 double * eshelbyTensorQuadValuesH11,
-                                                 double * eshelbyTensorQuadValuesH20,
-                                                 double * eshelbyTensorQuadValuesH21,
-                                                 double * eshelbyTensorQuadValuesH22)
-      { 
-           cudaDeviceSynchronize(); 
-           thrust::device_vector<double> psiQuadValuesD(numCells*numQuads*numPsi,0.0);
-           thrust::device_vector<double> gradPsiQuadValuesXD(numCells*numQuads*numPsi,0.0);
-           thrust::device_vector<double> gradPsiQuadValuesYD(numCells*numQuads*numPsi,0.0);
-           thrust::device_vector<double> gradPsiQuadValuesZD(numCells*numQuads*numPsi,0.0);
-           thrust::device_vector<double> eigenValuesD(numPsi,0.0);
-           thrust::device_vector<double> partialOccupanciesD(numPsi,0.0);
-           thrust::device_vector<double> eshelbyTensorQuadValuesD00(numCells*numQuads,0.0);
-           thrust::device_vector<double> eshelbyTensorQuadValuesD10(numCells*numQuads,0.0);
-           thrust::device_vector<double> eshelbyTensorQuadValuesD11(numCells*numQuads,0.0);
-           thrust::device_vector<double> eshelbyTensorQuadValuesD20(numCells*numQuads,0.0);
-           thrust::device_vector<double> eshelbyTensorQuadValuesD21(numCells*numQuads,0.0);
-           thrust::device_vector<double> eshelbyTensorQuadValuesD22(numCells*numQuads,0.0);
-
-
-           cudaMemcpy(thrust::raw_pointer_cast(&psiQuadValuesD[0]),
-		      psiQuadValuesH,
-		      numCells*numQuads*numPsi*sizeof(double),
-		      cudaMemcpyHostToDevice);
-
-           cudaMemcpy(thrust::raw_pointer_cast(&gradPsiQuadValuesXD[0]),
-		      gradPsiQuadValuesXH,
-		      numCells*numQuads*numPsi*sizeof(double),
-		      cudaMemcpyHostToDevice);
-
-           cudaMemcpy(thrust::raw_pointer_cast(&gradPsiQuadValuesYD[0]),
-		      gradPsiQuadValuesYH,
-		      numCells*numQuads*numPsi*sizeof(double),
-		      cudaMemcpyHostToDevice);
-
-           cudaMemcpy(thrust::raw_pointer_cast(&gradPsiQuadValuesZD[0]),
-		      gradPsiQuadValuesZH,
-		      numCells*numQuads*numPsi*sizeof(double),
-		      cudaMemcpyHostToDevice);
-
-           cudaMemcpy(thrust::raw_pointer_cast(&eigenValuesD[0]),
-		      eigenValuesH,
-		      numPsi*sizeof(double),
-		      cudaMemcpyHostToDevice);
-
-           cudaMemcpy(thrust::raw_pointer_cast(&partialOccupanciesD[0]),
-		      partialOccupanciesH,
-		      numPsi*sizeof(double),
-		      cudaMemcpyHostToDevice);
-
-           cudaMemcpy(thrust::raw_pointer_cast(&eshelbyTensorQuadValuesD00[0]),
-		      eshelbyTensorQuadValuesH00,
-		      numCells*numQuads*sizeof(double),
-		      cudaMemcpyHostToDevice); 
-
-           cudaMemcpy(thrust::raw_pointer_cast(&eshelbyTensorQuadValuesD10[0]),
-		      eshelbyTensorQuadValuesH10,
-		      numCells*numQuads*sizeof(double),
-		      cudaMemcpyHostToDevice); 
-
-           cudaMemcpy(thrust::raw_pointer_cast(&eshelbyTensorQuadValuesD11[0]),
-		      eshelbyTensorQuadValuesH11,
-		      numCells*numQuads*sizeof(double),
-		      cudaMemcpyHostToDevice); 
-
-           cudaMemcpy(thrust::raw_pointer_cast(&eshelbyTensorQuadValuesD20[0]),
-		      eshelbyTensorQuadValuesH20,
-		      numCells*numQuads*sizeof(double),
-		      cudaMemcpyHostToDevice); 
-
-           cudaMemcpy(thrust::raw_pointer_cast(&eshelbyTensorQuadValuesD21[0]),
-		      eshelbyTensorQuadValuesH21,
-		      numCells*numQuads*sizeof(double),
-		      cudaMemcpyHostToDevice); 
-
-           cudaMemcpy(thrust::raw_pointer_cast(&eshelbyTensorQuadValuesD22[0]),
-		      eshelbyTensorQuadValuesH22,
-		      numCells*numQuads*sizeof(double),
-		      cudaMemcpyHostToDevice); 
-           
-           computeELocWfcEshelbyTensorNonPeriodicD(operatorMatrix,
-                                                  psiQuadValuesD,
-                                                  gradPsiQuadValuesXD,
-                                                  gradPsiQuadValuesYD,
-                                                  gradPsiQuadValuesZD,
-                                                  eigenValuesD,
-                                                  partialOccupanciesD,
-                                                  numCells,
-                                                  numQuads,
-                                                  numPsi,
-                                                  eshelbyTensorQuadValuesD00,
-                                                  eshelbyTensorQuadValuesD10,
-                                                  eshelbyTensorQuadValuesD11,
-                                                  eshelbyTensorQuadValuesD20,
-                                                  eshelbyTensorQuadValuesD21,
-                                                  eshelbyTensorQuadValuesD22); 
-           
-           cudaMemcpy(eshelbyTensorQuadValuesH00,
-		      thrust::raw_pointer_cast(&eshelbyTensorQuadValuesD00[0]),
-		      numCells*numQuads*sizeof(double),
-		      cudaMemcpyDeviceToHost);  
-
-           cudaMemcpy(eshelbyTensorQuadValuesH10,
-		      thrust::raw_pointer_cast(&eshelbyTensorQuadValuesD10[0]),
-		      numCells*numQuads*sizeof(double),
-		      cudaMemcpyDeviceToHost);   
-           cudaMemcpy(eshelbyTensorQuadValuesH11,
-		      thrust::raw_pointer_cast(&eshelbyTensorQuadValuesD11[0]),
-		      numCells*numQuads*sizeof(double),
-		      cudaMemcpyDeviceToHost);   
-           cudaMemcpy(eshelbyTensorQuadValuesH20,
-		      thrust::raw_pointer_cast(&eshelbyTensorQuadValuesD20[0]),
-		      numCells*numQuads*sizeof(double),
-		      cudaMemcpyDeviceToHost);   
-           cudaMemcpy(eshelbyTensorQuadValuesH21,
-		      thrust::raw_pointer_cast(&eshelbyTensorQuadValuesD21[0]),
-		      numCells*numQuads*sizeof(double),
-		      cudaMemcpyDeviceToHost);   
-           cudaMemcpy(eshelbyTensorQuadValuesH22,
-		      thrust::raw_pointer_cast(&eshelbyTensorQuadValuesD22[0]),
-		      numCells*numQuads*sizeof(double),
-		      cudaMemcpyDeviceToHost);    
-           cudaDeviceSynchronize();
-      }
-
-      void computeELocWfcEshelbyTensorNonPeriodicD(operatorDFTCUDAClass & operatorMatrix,
-                                                 const thrust::device_vector<double> & psiQuadValuesD,
-                                                 const thrust::device_vector<double> & gradPsiQuadValuesXD,
-                                                 const thrust::device_vector<double> & gradPsiQuadValuesYD,
-                                                 const thrust::device_vector<double> & gradPsiQuadValuesZD,
-                                                 const thrust::device_vector<double> & eigenValuesD,
-                                                 const thrust::device_vector<double> & partialOccupanciesD,
-                                                 const unsigned int numCells, 
-                                                 const unsigned int numQuads,
-                                                 const unsigned int numPsi,
-                                                 thrust::device_vector<double> & eshelbyTensorQuadValuesD00,
-                                                 thrust::device_vector<double> & eshelbyTensorQuadValuesD10,
-                                                 thrust::device_vector<double> & eshelbyTensorQuadValuesD11,
-                                                 thrust::device_vector<double> & eshelbyTensorQuadValuesD20,
-                                                 thrust::device_vector<double> & eshelbyTensorQuadValuesD21,
-                                                 thrust::device_vector<double> & eshelbyTensorQuadValuesD22)
-      { 
-   
-           thrust::device_vector<double> eshelbyTensorContributionsD00(numCells*numQuads*numPsi,0.0);
-           thrust::device_vector<double> eshelbyTensorContributionsD10(numCells*numQuads*numPsi,0.0); 
-           thrust::device_vector<double> eshelbyTensorContributionsD11(numCells*numQuads*numPsi,0.0); 
-           thrust::device_vector<double> eshelbyTensorContributionsD20(numCells*numQuads*numPsi,0.0); 
-           thrust::device_vector<double> eshelbyTensorContributionsD21(numCells*numQuads*numPsi,0.0); 
-           thrust::device_vector<double> eshelbyTensorContributionsD22(numCells*numQuads*numPsi,0.0); 
-           
-
-           thrust::device_vector<double> onesVectorD(numPsi,1.0);
-           
-	   computeELocWfcEshelbyTensorContributions<<<(numPsi+255)/256*numCells*numQuads,256>>>
-							  (numPsi,
-							   numCells*numQuads,
-                                                           0,
-                                                           numQuads,
-                                                           thrust::raw_pointer_cast(&psiQuadValuesD[0]),
-                                                           thrust::raw_pointer_cast(&gradPsiQuadValuesXD[0]),
-                                                           thrust::raw_pointer_cast(&gradPsiQuadValuesYD[0]),
-                                                           thrust::raw_pointer_cast(&gradPsiQuadValuesZD[0]),
-							   thrust::raw_pointer_cast(&eigenValuesD[0]),
-                                                           thrust::raw_pointer_cast(&partialOccupanciesD[0]),
-							   thrust::raw_pointer_cast(&eshelbyTensorContributionsD00[0]),
-                                                           thrust::raw_pointer_cast(&eshelbyTensorContributionsD10[0]),
-                                                           thrust::raw_pointer_cast(&eshelbyTensorContributionsD11[0]),
-                                                           thrust::raw_pointer_cast(&eshelbyTensorContributionsD20[0]),
-                                                           thrust::raw_pointer_cast(&eshelbyTensorContributionsD21[0]),
-                                                           thrust::raw_pointer_cast(&eshelbyTensorContributionsD22[0]));
-
-          
-
-
-	   double scalarCoeffAlpha = 1.0,scalarCoeffBeta = 1.0;
-
-
-	  
-	   cublasDgemm(operatorMatrix.getCublasHandle(),
-		      CUBLAS_OP_N,
-		      CUBLAS_OP_N,
-		      1,
-		      numCells*numQuads,
-		      numPsi,
-		      &scalarCoeffAlpha,
-		      thrust::raw_pointer_cast(&onesVectorD[0]),
-		      1,
-		      thrust::raw_pointer_cast(&eshelbyTensorContributionsD00[0]),
-		      numPsi,
-		      &scalarCoeffBeta,
-		      thrust::raw_pointer_cast(&eshelbyTensorQuadValuesD00[0]),
-		      1);
-
-	   cublasDgemm(operatorMatrix.getCublasHandle(),
-		      CUBLAS_OP_N,
-		      CUBLAS_OP_N,
-		      1,
-		      numCells*numQuads,
-		      numPsi,
-		      &scalarCoeffAlpha,
-		      thrust::raw_pointer_cast(&onesVectorD[0]),
-		      1,
-		      thrust::raw_pointer_cast(&eshelbyTensorContributionsD10[0]),
-		      numPsi,
-		      &scalarCoeffBeta,
-		      thrust::raw_pointer_cast(&eshelbyTensorQuadValuesD10[0]),
-		      1); 
-
-	   cublasDgemm(operatorMatrix.getCublasHandle(),
-		      CUBLAS_OP_N,
-		      CUBLAS_OP_N,
-		      1,
-		      numCells*numQuads,
-		      numPsi,
-		      &scalarCoeffAlpha,
-		      thrust::raw_pointer_cast(&onesVectorD[0]),
-		      1,
-		      thrust::raw_pointer_cast(&eshelbyTensorContributionsD11[0]),
-		      numPsi,
-		      &scalarCoeffBeta,
-		      thrust::raw_pointer_cast(&eshelbyTensorQuadValuesD11[0]),
-		      1); 
-
-	   cublasDgemm(operatorMatrix.getCublasHandle(),
-		      CUBLAS_OP_N,
-		      CUBLAS_OP_N,
-		      1,
-		      numCells*numQuads,
-		      numPsi,
-		      &scalarCoeffAlpha,
-		      thrust::raw_pointer_cast(&onesVectorD[0]),
-		      1,
-		      thrust::raw_pointer_cast(&eshelbyTensorContributionsD20[0]),
-		      numPsi,
-		      &scalarCoeffBeta,
-		      thrust::raw_pointer_cast(&eshelbyTensorQuadValuesD20[0]),
-		      1); 
-
-	   cublasDgemm(operatorMatrix.getCublasHandle(),
-		      CUBLAS_OP_N,
-		      CUBLAS_OP_N,
-		      1,
-		      numCells*numQuads,
-		      numPsi,
-		      &scalarCoeffAlpha,
-		      thrust::raw_pointer_cast(&onesVectorD[0]),
-		      1,
-		      thrust::raw_pointer_cast(&eshelbyTensorContributionsD21[0]),
-		      numPsi,
-		      &scalarCoeffBeta,
-		      thrust::raw_pointer_cast(&eshelbyTensorQuadValuesD21[0]),
-		      1); 
-
-	   cublasDgemm(operatorMatrix.getCublasHandle(),
-		      CUBLAS_OP_N,
-		      CUBLAS_OP_N,
-		      1,
-		      numCells*numQuads,
-		      numPsi,
-		      &scalarCoeffAlpha,
-		      thrust::raw_pointer_cast(&onesVectorD[0]),
-		      1,
-		      thrust::raw_pointer_cast(&eshelbyTensorContributionsD22[0]),
-		      numPsi,
-		      &scalarCoeffBeta,
-		      thrust::raw_pointer_cast(&eshelbyTensorQuadValuesD22[0]),
-		      1);       
-      }
 
       void computeNonLocalProjectorKetTimesPsiTimesVH(operatorDFTCUDAClass & operatorMatrix,
                                                       const double * X,
@@ -516,223 +202,6 @@ namespace dftfe
       }
 
 
-     void interpolatePsiH(operatorDFTCUDAClass & operatorMatrix,
-                          const double * X,
-                          const unsigned int startingVecId,
-                          const unsigned int BVec,
-                          const unsigned int N,
-                          const unsigned int numCells,
-                          const unsigned int numQuads,
-                          const unsigned int numQuadsNLP,
-                          const unsigned int numNodesPerElement,
-                          double * psiQuadsFlatH,
-                          double * psiQuadsNLPFlatH,
-                          double * gradPsiQuadsXFlatH,
-                          double * gradPsiQuadsYFlatH,
-                          double * gradPsiQuadsZFlatH,
-                          const bool interpolateForNLPQuad)
-     {
-            thrust::device_vector<double> psiQuadsFlatD(numCells*numQuads*BVec,0.0);
-            thrust::device_vector<double> psiQuadsNLPFlatD(numCells*numQuadsNLP*BVec,0.0);
-            thrust::device_vector<double> gradPsiQuadsXFlatD(numCells*numQuads*BVec,0.0);
-            thrust::device_vector<double> gradPsiQuadsYFlatD(numCells*numQuads*BVec,0.0);
-            thrust::device_vector<double> gradPsiQuadsZFlatD(numCells*numQuads*BVec,0.0);
-
-
-	    cudaVectorType cudaFlattenedArrayBlock;
-	    vectorTools::createDealiiVector(operatorMatrix.getMatrixFreeData()->get_vector_partitioner(),
-					    BVec,
-					    cudaFlattenedArrayBlock);
-
-
-            const unsigned int M=operatorMatrix.getMatrixFreeData()->get_vector_partitioner()->local_size();
-            stridedCopyToBlockKernel<<<(BVec+255)/256*M, 256>>>(BVec,
-								X,
-								M,
-								N,
-								cudaFlattenedArrayBlock.begin(),
-								startingVecId);
-            cudaFlattenedArrayBlock.update_ghost_values();
-  
-            (operatorMatrix.getOverloadedConstraintMatrix())->distribute(cudaFlattenedArrayBlock,
-								         BVec);
-
-	    interpolatePsiD(operatorMatrix,
-			    cudaFlattenedArrayBlock,
-			    BVec,
-			    N,
-			    numCells,
-			    numQuads,
-			    numQuadsNLP,
-			    numNodesPerElement,
-			    psiQuadsFlatD,
-			    psiQuadsNLPFlatD,
-			    gradPsiQuadsXFlatD,
-			    gradPsiQuadsYFlatD,
-			    gradPsiQuadsZFlatD,
-			    interpolateForNLPQuad);
-
-            cudaMemcpy(psiQuadsFlatH,
-		      thrust::raw_pointer_cast(&psiQuadsFlatD[0]),
-		      numCells*numQuads*BVec*sizeof(double),
-		      cudaMemcpyDeviceToHost);
-
-            if (interpolateForNLPQuad)
-		    cudaMemcpy(psiQuadsNLPFlatH,
-			      thrust::raw_pointer_cast(&psiQuadsNLPFlatD[0]),
-			      numCells*numQuadsNLP*BVec*sizeof(double),
-			      cudaMemcpyDeviceToHost); 
-
-            cudaMemcpy(gradPsiQuadsXFlatH,
-		      thrust::raw_pointer_cast(&gradPsiQuadsXFlatD[0]),
-		      numCells*numQuads*BVec*sizeof(double),
-		      cudaMemcpyDeviceToHost);
-
-            cudaMemcpy(gradPsiQuadsYFlatH,
-		      thrust::raw_pointer_cast(&gradPsiQuadsYFlatD[0]),
-		      numCells*numQuads*BVec*sizeof(double),
-		      cudaMemcpyDeviceToHost);
-
-            cudaMemcpy(gradPsiQuadsZFlatH,
-		      thrust::raw_pointer_cast(&gradPsiQuadsZFlatD[0]),
-		      numCells*numQuads*BVec*sizeof(double),
-		      cudaMemcpyDeviceToHost); 
-
-     }
-
-     void interpolatePsiD(operatorDFTCUDAClass & operatorMatrix,
-                          cudaVectorType & Xb,
-                          const unsigned int BVec,
-                          const unsigned int N,
-                          const unsigned int numCells,
-                          const unsigned int numQuads,
-                          const unsigned int numQuadsNLP,
-                          const unsigned int numNodesPerElement,
-                          thrust::device_vector<double> & psiQuadsFlatD,
-                          thrust::device_vector<double> & psiQuadsNLPFlatD,
-                          thrust::device_vector<double> & gradPsiQuadsXFlatD,
-                          thrust::device_vector<double> & gradPsiQuadsYFlatD,
-                          thrust::device_vector<double> & gradPsiQuadsZFlatD,
-                          const bool interpolateForNLPQuad)
-     {
-            thrust::device_vector<double> & cellWaveFunctionMatrix = operatorMatrix.getCellWaveFunctionMatrix();
-
-	    copyCUDAKernel<<<(BVec+255)/256*numCells*numNodesPerElement,256>>>
-							  (BVec,
-							   numCells*numNodesPerElement,
-							   Xb.begin(),
-							   thrust::raw_pointer_cast(&cellWaveFunctionMatrix[0]),
-							   thrust::raw_pointer_cast(&(operatorMatrix.getFlattenedArrayCellLocalProcIndexIdMap())[0]));
-
-	    double scalarCoeffAlpha = 1.0,scalarCoeffBeta = 0.0;
-	    int strideA = BVec*numNodesPerElement;
-	    int strideB = 0;
-	    int strideC = BVec*numQuads;
-
-	  
-	    cublasDgemmStridedBatched(operatorMatrix.getCublasHandle(),
-				    CUBLAS_OP_N,
-				    CUBLAS_OP_N,
-				    BVec,
-				    numQuads,
-				    numNodesPerElement,
-				    &scalarCoeffAlpha,
-				    thrust::raw_pointer_cast(&cellWaveFunctionMatrix[0]),
-				    BVec,
-				    strideA,
-				    thrust::raw_pointer_cast(&(operatorMatrix.getShapeFunctionValuesInverted())[0]),
-				    numNodesPerElement,
-				    strideB,
-				    &scalarCoeffBeta,
-				    thrust::raw_pointer_cast(&psiQuadsFlatD[0]),
-				    BVec,
-				    strideC,
-				    numCells);
-
-            if (interpolateForNLPQuad)
-            {
-		    int strideCNLP = BVec*numQuadsNLP;
-		    cublasDgemmStridedBatched(operatorMatrix.getCublasHandle(),
-					    CUBLAS_OP_N,
-					    CUBLAS_OP_N,
-					    BVec,
-					    numQuadsNLP,
-					    numNodesPerElement,
-					    &scalarCoeffAlpha,
-					    thrust::raw_pointer_cast(&cellWaveFunctionMatrix[0]),
-					    BVec,
-					    strideA,
-					    thrust::raw_pointer_cast(&(operatorMatrix.getShapeFunctionValuesNLPInverted())[0]),
-					    numNodesPerElement,
-					    strideB,
-					    &scalarCoeffBeta,
-					    thrust::raw_pointer_cast(&psiQuadsNLPFlatD[0]),
-					    BVec,
-					    strideCNLP,
-					    numCells);
-            }
-
-	    strideB=numNodesPerElement*numQuads;
-
-	    cublasDgemmStridedBatched(operatorMatrix.getCublasHandle(),
-				    CUBLAS_OP_N,
-				    CUBLAS_OP_N,
-				    BVec,
-				    numQuads,
-				    numNodesPerElement,
-				    &scalarCoeffAlpha,
-				    thrust::raw_pointer_cast(&cellWaveFunctionMatrix[0]),
-				    BVec,
-				    strideA,
-				    thrust::raw_pointer_cast(&(operatorMatrix.getShapeFunctionGradientValuesXInverted())[0]),
-				    numNodesPerElement,
-				    strideB,
-				    &scalarCoeffBeta,
-				    thrust::raw_pointer_cast(&gradPsiQuadsXFlatD[0]),
-				    BVec,
-				    strideC,
-				    numCells);
-
-
-	    cublasDgemmStridedBatched(operatorMatrix.getCublasHandle(),
-				    CUBLAS_OP_N,
-				    CUBLAS_OP_N,
-				    BVec,
-				    numQuads,
-				    numNodesPerElement,
-				    &scalarCoeffAlpha,
-				    thrust::raw_pointer_cast(&cellWaveFunctionMatrix[0]),
-				    BVec,
-				    strideA,
-				    thrust::raw_pointer_cast(&(operatorMatrix.getShapeFunctionGradientValuesYInverted())[0]),
-				    numNodesPerElement,
-				    strideB,
-				    &scalarCoeffBeta,
-				    thrust::raw_pointer_cast(&gradPsiQuadsYFlatD[0]),
-				    BVec,
-				    strideC,
-				    numCells);
-
-	    cublasDgemmStridedBatched(operatorMatrix.getCublasHandle(),
-				    CUBLAS_OP_N,
-				    CUBLAS_OP_N,
-				    BVec,
-				    numQuads,
-				    numNodesPerElement,
-				    &scalarCoeffAlpha,
-				    thrust::raw_pointer_cast(&cellWaveFunctionMatrix[0]),
-				    BVec,
-				    strideA,
-				    thrust::raw_pointer_cast(&(operatorMatrix.getShapeFunctionGradientValuesZInverted())[0]),
-				    numNodesPerElement,
-				    strideB,
-				    &scalarCoeffBeta,
-				    thrust::raw_pointer_cast(&gradPsiQuadsZFlatD[0]),
-				    BVec,
-				    strideC,
-				    numCells);
-     }
-
      void interpolatePsiComputeELocWfcEshelbyTensorNonPeriodicD(operatorDFTCUDAClass & operatorMatrix,
 						  cudaVectorType & Xb,
 						  const unsigned int BVec,
@@ -742,6 +211,7 @@ namespace dftfe
 						  const unsigned int numNodesPerElement,
                                                   const thrust::device_vector<double> & eigenValuesD,
                                                   const thrust::device_vector<double> & partialOccupanciesD,
+                                                  const thrust::device_vector<double> & onesVecD,
                                                   const unsigned int innerBlockSizeEloc,
                                                   thrust::device_vector<double> & psiQuadsFlatD,
                                                   thrust::device_vector<double> & psiQuadsNLPFlatD,
@@ -892,8 +362,16 @@ namespace dftfe
            //thrust::device_vector<double> eshelbyTensorContributionsD20(blockSize*numQuads*BVec,0.0); 
            //thrust::device_vector<double> eshelbyTensorContributionsD21(blockSize*numQuads*BVec,0.0); 
            //thrust::device_vector<double> eshelbyTensorContributionsD22(blockSize*numQuads*BVec,0.0); 
-           thrust::device_vector<double> onesVectorD(BVec,1.0);
-           
+           //thrust::device_vector<double> onesVectorD(BVec,1.0);
+          
+	   //cudaStream_t stream1, stream2, stream3, stream4, stream5, stream6;
+	   //cudaStreamCreate(&stream1);
+	   //cudaStreamCreate(&stream2);
+	   //cudaStreamCreate(&stream3);
+	   //cudaStreamCreate(&stream4);
+	   //cudaStreamCreate(&stream5);
+	   //cudaStreamCreate(&stream6);
+ 
            for (int iblock=0; iblock<(numberBlocks+1); iblock++)
 	   {
                    const int currentBlockSize= (iblock==numberBlocks)?remBlockSize:blockSize;
@@ -923,7 +401,9 @@ namespace dftfe
 			   scalarCoeffAlpha = 1.0;
 			   scalarCoeffBeta = 1.0;
 
-			  
+
+                           //cublasSetStream(operatorMatrix.getCublasHandle(),stream1);  			 
+ 
 			   cublasDgemm(operatorMatrix.getCublasHandle(),
 				      CUBLAS_OP_N,
 				      CUBLAS_OP_N,
@@ -931,7 +411,7 @@ namespace dftfe
 				      currentBlockSize*numQuads,
 				      BVec,
 				      &scalarCoeffAlpha,
-				      thrust::raw_pointer_cast(&onesVectorD[0]),
+				      thrust::raw_pointer_cast(&onesVecD[0]),
 				      1,
 				      thrust::raw_pointer_cast(&eshelbyTensorContributionsD00[0]),
 				      BVec,
@@ -939,6 +419,8 @@ namespace dftfe
 				      thrust::raw_pointer_cast(&eshelbyTensorQuadValuesD00[startingId*numQuads]),
 				      1);
 
+                           //cublasSetStream(operatorMatrix.getCublasHandle(),stream2);  
+
 			   cublasDgemm(operatorMatrix.getCublasHandle(),
 				      CUBLAS_OP_N,
 				      CUBLAS_OP_N,
@@ -946,7 +428,7 @@ namespace dftfe
 				      currentBlockSize*numQuads,
 				      BVec,
 				      &scalarCoeffAlpha,
-				      thrust::raw_pointer_cast(&onesVectorD[0]),
+				      thrust::raw_pointer_cast(&onesVecD[0]),
 				      1,
 				      thrust::raw_pointer_cast(&eshelbyTensorContributionsD10[0]),
 				      BVec,
@@ -954,6 +436,8 @@ namespace dftfe
 				      thrust::raw_pointer_cast(&eshelbyTensorQuadValuesD10[startingId*numQuads]),
 				      1); 
 
+                           //cublasSetStream(operatorMatrix.getCublasHandle(),stream3);  
+
 			   cublasDgemm(operatorMatrix.getCublasHandle(),
 				      CUBLAS_OP_N,
 				      CUBLAS_OP_N,
@@ -961,7 +445,7 @@ namespace dftfe
 				      currentBlockSize*numQuads,
 				      BVec,
 				      &scalarCoeffAlpha,
-				      thrust::raw_pointer_cast(&onesVectorD[0]),
+				      thrust::raw_pointer_cast(&onesVecD[0]),
 				      1,
 				      thrust::raw_pointer_cast(&eshelbyTensorContributionsD11[0]),
 				      BVec,
@@ -969,6 +453,9 @@ namespace dftfe
 				      thrust::raw_pointer_cast(&eshelbyTensorQuadValuesD11[startingId*numQuads]),
 				      1); 
 
+
+                           //cublasSetStream(operatorMatrix.getCublasHandle(),stream4); 
+
 			   cublasDgemm(operatorMatrix.getCublasHandle(),
 				      CUBLAS_OP_N,
 				      CUBLAS_OP_N,
@@ -976,7 +463,7 @@ namespace dftfe
 				      currentBlockSize*numQuads,
 				      BVec,
 				      &scalarCoeffAlpha,
-				      thrust::raw_pointer_cast(&onesVectorD[0]),
+				      thrust::raw_pointer_cast(&onesVecD[0]),
 				      1,
 				      thrust::raw_pointer_cast(&eshelbyTensorContributionsD20[0]),
 				      BVec,
@@ -984,20 +471,7 @@ namespace dftfe
 				      thrust::raw_pointer_cast(&eshelbyTensorQuadValuesD20[startingId*numQuads]),
 				      1); 
 
-			   cublasDgemm(operatorMatrix.getCublasHandle(),
-				      CUBLAS_OP_N,
-				      CUBLAS_OP_N,
-				      1,
-				      currentBlockSize*numQuads,
-				      BVec,
-				      &scalarCoeffAlpha,
-				      thrust::raw_pointer_cast(&onesVectorD[0]),
-				      1,
-				      thrust::raw_pointer_cast(&eshelbyTensorContributionsD21[0]),
-				      BVec,
-				      &scalarCoeffBeta,
-				      thrust::raw_pointer_cast(&eshelbyTensorQuadValuesD21[startingId*numQuads]),
-				      1); 
+                           //cublasSetStream(operatorMatrix.getCublasHandle(),stream5); 
 
 			   cublasDgemm(operatorMatrix.getCublasHandle(),
 				      CUBLAS_OP_N,
@@ -1006,7 +480,24 @@ namespace dftfe
 				      currentBlockSize*numQuads,
 				      BVec,
 				      &scalarCoeffAlpha,
-				      thrust::raw_pointer_cast(&onesVectorD[0]),
+				      thrust::raw_pointer_cast(&onesVecD[0]),
+				      1,
+				      thrust::raw_pointer_cast(&eshelbyTensorContributionsD21[0]),
+				      BVec,
+				      &scalarCoeffBeta,
+				      thrust::raw_pointer_cast(&eshelbyTensorQuadValuesD21[startingId*numQuads]),
+				      1); 
+
+                           //cublasSetStream(operatorMatrix.getCublasHandle(),stream6); 
+
+			   cublasDgemm(operatorMatrix.getCublasHandle(),
+				      CUBLAS_OP_N,
+				      CUBLAS_OP_N,
+				      1,
+				      currentBlockSize*numQuads,
+				      BVec,
+				      &scalarCoeffAlpha,
+				      thrust::raw_pointer_cast(&onesVecD[0]),
 				      1,
 				      thrust::raw_pointer_cast(&eshelbyTensorContributionsD22[0]),
 				      BVec,
@@ -1015,6 +506,7 @@ namespace dftfe
 				      1); 
 		   }
 	   }
+           //cublasSetStream(operatorMatrix.getCublasHandle(),NULL);
      }
 
      void interpolatePsiNLPD(operatorDFTCUDAClass & operatorMatrix,
@@ -1064,6 +556,7 @@ namespace dftfe
      void nlpPsiContractionD(operatorDFTCUDAClass & operatorMatrix,
 			    const thrust::device_vector<double> & psiQuadValuesNLPD,
                             const thrust::device_vector<double> & partialOccupanciesD,
+                            const thrust::device_vector<double> & onesVecD,
                             const double * projectorKetTimesVectorParFlattenedD,
                             const thrust::device_vector<unsigned int> & nonTrivialIdToElemIdMapD,
                             const thrust::device_vector<unsigned int> & projecterKetTimesFlattenedVectorLocalIdsD,
@@ -1079,7 +572,7 @@ namespace dftfe
             const int numberBlocks=totalNonTrivialPseudoWfcs/blockSize;
             const int remBlockSize=totalNonTrivialPseudoWfcs-numberBlocks*blockSize;
             //thrust::device_vector<double> nlpContractionContributionD(blockSize*numQuadsNLP*numPsi,0.0);
-	    thrust::device_vector<double> onesMatD(numPsi,1.0);
+	    //thrust::device_vector<double> onesMatD(numPsi,1.0);
 
             for (int iblock=0; iblock<(numberBlocks+1); iblock++)
             {
@@ -1108,7 +601,7 @@ namespace dftfe
 				      currentBlockSize*numQuadsNLP,
 				      numPsi,
 				      &scalarCoeffAlpha,
-				      thrust::raw_pointer_cast(&onesMatD[0]),
+				      thrust::raw_pointer_cast(&onesVecD[0]),
 				      1,
 				      thrust::raw_pointer_cast(&nlpContractionContributionD[0]),
 				      numPsi,
@@ -1126,6 +619,7 @@ namespace dftfe
                              const double * X,
 		             const thrust::device_vector<double> & eigenValuesD,
 			     const thrust::device_vector<double> & partialOccupanciesD,
+                             const thrust::device_vector<double> & onesVecD,
 			     const thrust::device_vector<unsigned int> & nonTrivialIdToElemIdMapD,
 			     const thrust::device_vector<unsigned int> & projecterKetTimesFlattenedVectorLocalIdsD, 
 			     const unsigned int startingVecId,
@@ -1177,9 +671,9 @@ namespace dftfe
 								         numPsi);
 
 
-            cudaDeviceSynchronize();
-            MPI_Barrier(MPI_COMM_WORLD);
-            double kernel1_time = MPI_Wtime();
+            //cudaDeviceSynchronize();
+            //MPI_Barrier(MPI_COMM_WORLD);
+            //double kernel1_time = MPI_Wtime();
 
            interpolatePsiComputeELocWfcEshelbyTensorNonPeriodicD(operatorMatrix,
 						   cudaFlattenedArrayBlock,
@@ -1190,6 +684,7 @@ namespace dftfe
 						   numNodesPerElement,
                                                    eigenValuesD,
                                                    partialOccupanciesD,
+                                                   onesVecD,
                                                    innerBlockSizeEloc,
                                                    psiQuadsFlatD,
                                                    psiQuadsNLPFlatD,
@@ -1210,39 +705,40 @@ namespace dftfe
                                                    eshelbyTensorQuadValuesD22,
                                                    interpolateForNLPQuad);
 
-	   cudaDeviceSynchronize();
-	   MPI_Barrier(MPI_COMM_WORLD);
-	   kernel1_time = MPI_Wtime() - kernel1_time;
+	   //cudaDeviceSynchronize();
+	   //MPI_Barrier(MPI_COMM_WORLD);
+	   //kernel1_time = MPI_Wtime() - kernel1_time;
 	    
-	   if (this_process==0 && dftParameters::verbosity>=2)
-		 std::cout<<"Time for interpolatePsiComputeELocWfcEshelbyTensorNonPeriodicD inside blocked loop: "<<kernel1_time<<std::endl;
+	   //if (this_process==0 && dftParameters::verbosity>=5)
+	   //	 std::cout<<"Time for interpolatePsiComputeELocWfcEshelbyTensorNonPeriodicD inside blocked loop: "<<kernel1_time<<std::endl;
 
            if (isPsp)
            {
-		   cudaDeviceSynchronize();
-		   MPI_Barrier(MPI_COMM_WORLD);
-		   double kernel2_time = MPI_Wtime();
+		   //cudaDeviceSynchronize();
+		   //MPI_Barrier(MPI_COMM_WORLD);
+		   //double kernel2_time = MPI_Wtime();
 
 		   operatorMatrix.computeNonLocalProjectorKetTimesXTimesV(cudaFlattenedArrayBlock.begin(),
 									   projectorKetTimesVectorD,
 									   numPsi);
 
-		   cudaDeviceSynchronize();
-		   MPI_Barrier(MPI_COMM_WORLD);
-		   kernel2_time = MPI_Wtime() - kernel2_time;
+		   //cudaDeviceSynchronize();
+		   //MPI_Barrier(MPI_COMM_WORLD);
+		   //kernel2_time = MPI_Wtime() - kernel2_time;
 		    
-		   if (this_process==0 && dftParameters::verbosity>=2)
-			 std::cout<<"Time for computeNonLocalProjectorKetTimesXTimesV inside blocked loop: "<<kernel2_time<<std::endl;
+		   //if (this_process==0 && dftParameters::verbosity>=5)
+	  	   //  std::cout<<"Time for computeNonLocalProjectorKetTimesXTimesV inside blocked loop: "<<kernel2_time<<std::endl;
 
-		   cudaDeviceSynchronize();
-		   MPI_Barrier(MPI_COMM_WORLD);
-		   double kernel3_time = MPI_Wtime();
+		   //cudaDeviceSynchronize();
+		   //MPI_Barrier(MPI_COMM_WORLD);
+		   //double kernel3_time = MPI_Wtime();
 
 		   if (totalNonTrivialPseudoWfcs>0)
 		   {
 			   nlpPsiContractionD(operatorMatrix,
 					      interpolateForNLPQuad?psiQuadsNLPFlatD:psiQuadsFlatD,
 					      partialOccupanciesD,
+                                              onesVecD,
 					      projectorKetTimesVectorD.begin(),
 					      nonTrivialIdToElemIdMapD,
 					      projecterKetTimesFlattenedVectorLocalIdsD,
@@ -1255,12 +751,12 @@ namespace dftfe
 					      projectorKetTimesPsiTimesVTimesPartOccContractionPsiQuadsFlattenedD);
 		   }
 
-		   cudaDeviceSynchronize();
-		   MPI_Barrier(MPI_COMM_WORLD);
-		   kernel3_time = MPI_Wtime() - kernel3_time;
+		   //cudaDeviceSynchronize();
+		   //MPI_Barrier(MPI_COMM_WORLD);
+		   //kernel3_time = MPI_Wtime() - kernel3_time;
 		    
-		   if (this_process==0 && dftParameters::verbosity>=2)
-			 std::cout<<"Time for nlpPsiContractionD inside blocked loop: "<<kernel3_time<<std::endl;
+		   //if (this_process==0 && dftParameters::verbosity>=5)
+		   //	 std::cout<<"Time for nlpPsiContractionD inside blocked loop: "<<kernel3_time<<std::endl;
 	   }
      }
 
@@ -1341,6 +837,7 @@ namespace dftfe
             thrust::device_vector<double> gradPsiQuadsXFlatD(numCells*numQuads*blockSize,0.0);
             thrust::device_vector<double> gradPsiQuadsYFlatD(numCells*numQuads*blockSize,0.0);
             thrust::device_vector<double> gradPsiQuadsZFlatD(numCells*numQuads*blockSize,0.0);
+            thrust::device_vector<double> onesVecD(blockSize,1.0);
 
             const unsigned int innerBlockSizeEloc=50;
             thrust::device_vector<double> eshelbyTensorContributionsD00(innerBlockSizeEloc*numQuads*blockSize,0.0);
@@ -1350,7 +847,7 @@ namespace dftfe
             thrust::device_vector<double> eshelbyTensorContributionsD21(innerBlockSizeEloc*numQuads*blockSize,0.0); 
             thrust::device_vector<double> eshelbyTensorContributionsD22(innerBlockSizeEloc*numQuads*blockSize,0.0); 
 
-            const unsigned int innerBlockSizeEnlp=200;
+            const unsigned int innerBlockSizeEnlp=400;
             thrust::device_vector<double> nlpContractionContributionD(innerBlockSizeEnlp*numQuadsNLP*blockSize,0.0);
             thrust::device_vector<double> projectorKetTimesPsiTimesVTimesPartOccContractionPsiQuadsFlattenedD;
 	    thrust::device_vector<unsigned int> projecterKetTimesFlattenedVectorLocalIdsD;
@@ -1404,9 +901,9 @@ namespace dftfe
 			      blockSize*sizeof(double),
 			      cudaMemcpyHostToDevice);
                       
-                      cudaDeviceSynchronize();
-                      MPI_Barrier(MPI_COMM_WORLD);
-                      double kernel_time = MPI_Wtime();
+                      //cudaDeviceSynchronize();
+                      //MPI_Barrier(MPI_COMM_WORLD);
+                      //double kernel_time = MPI_Wtime();
 
 		      gpuPortedForceKernelsAllD(operatorMatrix,
                                                cudaFlattenedArrayBlock,
@@ -1414,6 +911,7 @@ namespace dftfe
 				               X,
 					       eigenValuesD,
 					       partialOccupanciesD,
+                                               onesVecD,
 					       nonTrivialIdToElemIdMapD,
 					       projecterKetTimesFlattenedVectorLocalIdsD,
 					       ivec,
@@ -1448,12 +946,12 @@ namespace dftfe
                                                isPsp,
 			                       interpolateForNLPQuad);
 
-		      cudaDeviceSynchronize();
-		      MPI_Barrier(MPI_COMM_WORLD);
-		      kernel_time = MPI_Wtime() - kernel_time;
+		      //cudaDeviceSynchronize();
+		      //MPI_Barrier(MPI_COMM_WORLD);
+		      //kernel_time = MPI_Wtime() - kernel_time;
 		    
-		      if (this_process==0 && dftParameters::verbosity>=2)
-		         std::cout<<"Time for force kernels all insided block loop: "<<kernel_time<<std::endl;
+		      //if (this_process==0 && dftParameters::verbosity>=5)
+		      //   std::cout<<"Time for force kernels all insided block loop: "<<kernel_time<<std::endl;
                  }//band parallelization
             }//ivec loop
 

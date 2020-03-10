@@ -93,6 +93,9 @@ void forceClass<FEOrder>::computeConfigurationalForceEEshelbyTensorFPSPFnlLinFE
   MPI_Barrier(MPI_COMM_WORLD);
   double forcetotal_time=MPI_Wtime();
 
+  MPI_Barrier(MPI_COMM_WORLD);
+  double init_time=MPI_Wtime();
+
   const unsigned int numberGlobalAtoms = dftPtr->atomLocations.size();
   std::map<unsigned int, std::vector<double> > forceContributionFnlGammaAtoms;
 
@@ -199,6 +202,7 @@ void forceClass<FEOrder>::computeConfigurationalForceEEshelbyTensorFPSPFnlLinFE
 
   std::vector<unsigned int> nonlocalPseudoWfcsAccum(dftPtr->d_nonLocalAtomIdsInCurrentProcess.size());
   std::vector<unsigned int> numPseudoWfcsAtom(dftPtr->d_nonLocalAtomIdsInCurrentProcess.size());
+  std::vector<std::vector<unsigned int>> projectorKetTimesVectorLocalIds(dftPtr->d_nonLocalAtomIdsInCurrentProcess.size());
   unsigned int numPseudo=0;
   for(unsigned int iAtom = 0; iAtom < dftPtr->d_nonLocalAtomIdsInCurrentProcess.size(); ++iAtom)
     {
@@ -206,6 +210,9 @@ void forceClass<FEOrder>::computeConfigurationalForceEEshelbyTensorFPSPFnlLinFE
       nonlocalPseudoWfcsAccum[iAtom]=numPseudo;
       numPseudo+= dftPtr->d_numberPseudoAtomicWaveFunctions[atomId];
       numPseudoWfcsAtom[iAtom]=dftPtr->d_numberPseudoAtomicWaveFunctions[atomId];
+                  
+     for (unsigned int ipsp=0; ipsp<dftPtr->d_numberPseudoAtomicWaveFunctions[atomId]; ++ipsp)
+          projectorKetTimesVectorLocalIds[iAtom].push_back(dftPtr->d_projectorKetTimesVectorPar[0].get_partitioner()->global_to_local(dftPtr->d_projectorIdsNumberingMapCurrentProcess[std::make_pair(atomId,ipsp)]));
     }
 
   //band group parallelization data structures
@@ -227,8 +234,7 @@ void forceClass<FEOrder>::computeConfigurationalForceEEshelbyTensorFPSPFnlLinFE
    const unsigned int numMacroCells=matrixFreeData.n_macro_cells();
    const unsigned int numPhysicalCells=matrixFreeData.n_physical_cells();
 
-   MPI_Barrier(MPI_COMM_WORLD);
-   double init_time=MPI_Wtime();
+
 #if defined(DFTFE_WITH_GPU)
    AssertThrow(numMacroCells==numPhysicalCells,ExcMessage("DFT-FE Error: dealii for GPU DFT-FE must be compiled without any vectorization enabled."));
 
@@ -275,13 +281,15 @@ void forceClass<FEOrder>::computeConfigurationalForceEEshelbyTensorFPSPFnlLinFE
    {
           for (unsigned int ielem=0; ielem<numPhysicalCells; ++ielem)
           {
-            const unsigned int numNonLocalAtomsCurrentProc= dftPtr->d_nonLocalAtomIdsInCurrentProcess.size();
+              const unsigned int numNonLocalAtomsCurrentProc= dftPtr->d_nonLocalAtomIdsInCurrentProcess.size();
 
+              const unsigned int macroCellId= normalCellIdToMacroCellIdMap[ielem];
               for (unsigned int iatom=0; iatom<numNonLocalAtomsCurrentProc; ++iatom)
               {
                  bool isNonTrivial=false;
-		 for (unsigned int i=0;i<macroIdToNonlocalAtomsSetMap[normalCellIdToMacroCellIdMap[ielem]].size();i++)
-		      if (macroIdToNonlocalAtomsSetMap[normalCellIdToMacroCellIdMap[ielem]][i]==iatom)
+                 const unsigned int macroCellId= normalCellIdToMacroCellIdMap[ielem];
+		 for (unsigned int i=0;i<macroIdToNonlocalAtomsSetMap[macroCellId].size();i++)
+		      if (macroIdToNonlocalAtomsSetMap[macroCellId][i]==iatom)
 		      {
                           isNonTrivial=true;
                           break;
@@ -295,8 +303,8 @@ void forceClass<FEOrder>::computeConfigurationalForceEEshelbyTensorFPSPFnlLinFE
                          nonTrivialNonLocalIdsAllCells.push_back(iatom);
                          nonTrivialIdToElemIdMap.push_back(ielem);
                          nonTrivialIdToAllPseudoWfcIdMap.push_back(nonlocalPseudoWfcsAccum[iatom]+ipsp);
-			 const unsigned int id=dftPtr->d_projectorKetTimesVectorPar[0].get_partitioner()->global_to_local(dftPtr->d_projectorIdsNumberingMapCurrentProcess[std::make_pair(globalAtomId,ipsp)]);
-                         projecterKetTimesFlattenedVectorLocalIds.push_back(id);
+			 //const unsigned int id=dftPtr->d_projectorKetTimesVectorPar[0].get_partitioner()->global_to_local(dftPtr->d_projectorIdsNumberingMapCurrentProcess[std::make_pair(globalAtomId,ipsp)]);
+                         projecterKetTimesFlattenedVectorLocalIds.push_back(projectorKetTimesVectorLocalIds[iatom][ipsp]);
                     }
                  }
               }
@@ -419,6 +427,9 @@ void forceClass<FEOrder>::computeConfigurationalForceEEshelbyTensorFPSPFnlLinFE
    if (dftParameters::useGPU)
    {
 #if defined(DFTFE_WITH_GPU) && !defined(USE_COMPLEX)
+            MPI_Barrier(MPI_COMM_WORLD);
+            double gpu_time=MPI_Wtime();
+
             std::vector<double> eigenValuesVec(numEigenVectors,0.0);
 	    for (unsigned int iWave=0; iWave<numEigenVectors;++iWave)
                eigenValuesVec[iWave]=dftPtr->eigenValues[0][iWave];
@@ -446,6 +457,10 @@ void forceClass<FEOrder>::computeConfigurationalForceEEshelbyTensorFPSPFnlLinFE
 					      isPseudopotential,
 					      isPseudopotential && dftParameters::useHigherQuadNLP);
 
+	    gpu_time=MPI_Wtime()-gpu_time;
+
+            if (this_process==0 && dftParameters::verbosity>=1)
+                 std::cout<<"Time for gpuPortedForceKernelsAllH: "<<gpu_time<<std::endl;
 #endif
    }
    else 
@@ -1312,7 +1327,7 @@ void forceClass<FEOrder>::computeConfigurationalForceEEshelbyTensorFPSPFnlLinFE
     forcetotal_time = MPI_Wtime() - forcetotal_time;
             
     if (this_process==0 && dftParameters::verbosity>=1)
-      std::cout<<"Total time for configurational force computation except Eself Eshelby contribution: "<<forcetotal_time<<std::endl;
+      std::cout<<"Total time for configurational force computation except Eself contribution: "<<forcetotal_time<<std::endl;
  
     if (dftParameters::verbosity>=1)
     {

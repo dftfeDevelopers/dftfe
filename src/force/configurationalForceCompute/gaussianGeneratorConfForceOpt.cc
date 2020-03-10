@@ -366,6 +366,45 @@ void forceClass<FEOrder>::computeAtomsForcesGaussianGenerator(bool allowGaussian
   d_globalAtomsGaussianForces.clear();
   d_globalAtomsGaussianForces.resize(numberGlobalAtoms*C_DIM,0.0);
 
+  dealii::BoundingBox<3> boundingBoxTria(vectorTools::createBoundingBoxTriaLocallyOwned(d_dofHandlerForce));
+  dealii::Tensor<1,3,double> tempDisp;
+  tempDisp[0]=3.0;
+  tempDisp[1]=3.0;
+  tempDisp[2]=3.0;
+
+  std::vector<dealii::Point<3>> nontrivialAtomCoords;
+  std::vector<unsigned int> nontrivialAtomIds;
+  std::vector<unsigned int> nontrivialAtomChargeIds;
+  for (unsigned int iAtom=0;iAtom <totalNumberAtoms; iAtom++)
+  {
+     Point<C_DIM> atomCoor;
+     int atomId=iAtom;
+     if(iAtom < numberGlobalAtoms)
+     {
+	atomCoor[0] = atomLocations[iAtom][2];
+	atomCoor[1] = atomLocations[iAtom][3];
+	atomCoor[2] = atomLocations[iAtom][4];
+      }
+      else
+      {
+	atomCoor[0] = imagePositions[iAtom-numberGlobalAtoms][0];
+	atomCoor[1] = imagePositions[iAtom-numberGlobalAtoms][1];
+	atomCoor[2] = imagePositions[iAtom-numberGlobalAtoms][2];
+        atomId=imageIds[iAtom-numberGlobalAtoms];
+      }
+
+      std::pair< dealii::Point<3,double >,dealii::Point<3, double>> boundaryPoints;
+      boundaryPoints.first=atomCoor-tempDisp;
+      boundaryPoints.second=atomCoor+tempDisp;
+      dealii::BoundingBox<3> boundingBoxAroundAtom(boundaryPoints);
+
+      if (boundingBoxTria.get_neighbor_type(boundingBoxAroundAtom)!=NeighborType::not_neighbors)
+      {
+          nontrivialAtomCoords.push_back(atomCoor);
+          nontrivialAtomIds.push_back(iAtom);
+          nontrivialAtomChargeIds.push_back(atomId);
+      }
+  }
 
   if (d_isElectrostaticsMeshSubdivided)
   {
@@ -412,21 +451,9 @@ void forceClass<FEOrder>::computeAtomsForcesGaussianGenerator(bool allowGaussian
 	Point<C_DIM> nodalCoor = cell->vertex(i);
 
 	int overlappedAtomId=-1;
-	for (unsigned int jAtom=0;jAtom <totalNumberAtoms; jAtom++)
+	for (unsigned int jAtom=0;jAtom <nontrivialAtomCoords.size(); jAtom++)
 	{
-           Point<C_DIM> jAtomCoor;
-           if(jAtom < numberGlobalAtoms)
-           {
-              jAtomCoor[0] = atomLocations[jAtom][2];
-              jAtomCoor[1] = atomLocations[jAtom][3];
-              jAtomCoor[2] = atomLocations[jAtom][4];
-           }
-           else
-           {
-	      jAtomCoor[0] = imagePositions[jAtom-numberGlobalAtoms][0];
-	      jAtomCoor[1] = imagePositions[jAtom-numberGlobalAtoms][1];
-	      jAtomCoor[2] = imagePositions[jAtom-numberGlobalAtoms][2];
-            }
+            const Point<C_DIM> & jAtomCoor=nontrivialAtomCoords[jAtom];
             const double distance=(nodalCoor-jAtomCoor).norm();
 	    if (distance < 1e-5){
 		overlappedAtomId=jAtom;
@@ -434,25 +461,14 @@ void forceClass<FEOrder>::computeAtomsForcesGaussianGenerator(bool allowGaussian
 	    }
 	}//j atom loop
 
-        for (unsigned int iAtom=0;iAtom <totalNumberAtoms; iAtom++)
+        for (unsigned int iAtom=0;iAtom <nontrivialAtomCoords.size(); iAtom++)
 	{
-             if (overlappedAtomId!=iAtom && overlappedAtomId!=-1 && !allowGaussianOverlapOnAtoms)
+              if (overlappedAtomId!=iAtom && overlappedAtomId!=-1 && !allowGaussianOverlapOnAtoms)
 		 continue;
-             Point<C_DIM> atomCoor;
-	     int atomId=iAtom;
-	     if(iAtom < numberGlobalAtoms)
-	     {
-		atomCoor[0] = atomLocations[iAtom][2];
-		atomCoor[1] = atomLocations[iAtom][3];
-		atomCoor[2] = atomLocations[iAtom][4];
-	      }
-	      else
-	      {
-		atomCoor[0] = imagePositions[iAtom-numberGlobalAtoms][0];
-		atomCoor[1] = imagePositions[iAtom-numberGlobalAtoms][1];
-		atomCoor[2] = imagePositions[iAtom-numberGlobalAtoms][2];
-		atomId=imageIds[iAtom-numberGlobalAtoms];
-	      }
+              const Point<C_DIM> & atomCoor=nontrivialAtomCoords[iAtom];
+              const int atomId=nontrivialAtomIds[iAtom];
+	      const int atomChargeId=nontrivialAtomChargeIds[iAtom];
+
 	      const double r=(nodalCoor-atomCoor).norm();
 	      //const double gaussianWeight=std::exp(-d_gaussianConstant*rsq);
 
@@ -465,12 +481,12 @@ void forceClass<FEOrder>::computeAtomsForcesGaussianGenerator(bool allowGaussian
 	          if (!d_constraintsNoneForce.is_constrained(globalDofIndex) && d_locally_owned_dofsForce.is_element(globalDofIndex))
 		  {
 		      if (d_isElectrostaticsMeshSubdivided)
-		        d_gaussianWeightsVecAtoms[iAtom][globalDofIndex]=gaussianWeight;
+		        d_gaussianWeightsVecAtoms[atomId][globalDofIndex]=gaussianWeight;
 
-	              globalAtomsGaussianForcesLocalPart[C_DIM*atomId+idim]+=
+	              globalAtomsGaussianForcesLocalPart[C_DIM*atomChargeId+idim]+=
 			  gaussianWeight*(d_configForceVectorLinFE[globalDofIndex]);
 #ifdef USE_COMPLEX
-                      globalAtomsGaussianForcesKPointsLocalPart[C_DIM*atomId+idim]+=
+                      globalAtomsGaussianForcesKPointsLocalPart[C_DIM*atomChargeId+idim]+=
 			  gaussianWeight*(d_configForceVectorLinFEKPoints[globalDofIndex]);
 #endif
 		  }
@@ -550,21 +566,9 @@ void forceClass<FEOrder>::computeAtomsForcesGaussianGenerator(bool allowGaussian
 	Point<C_DIM> nodalCoor = cell->vertex(i);
 
 	int overlappedAtomId=-1;
-	for (unsigned int jAtom=0;jAtom <totalNumberAtoms; jAtom++)
+	for (unsigned int jAtom=0;jAtom <nontrivialAtomCoords.size(); jAtom++)
 	{
-           Point<C_DIM> jAtomCoor;
-           if(jAtom < numberGlobalAtoms)
-           {
-              jAtomCoor[0] = atomLocations[jAtom][2];
-              jAtomCoor[1] = atomLocations[jAtom][3];
-              jAtomCoor[2] = atomLocations[jAtom][4];
-           }
-           else
-           {
-	      jAtomCoor[0] = imagePositions[jAtom-numberGlobalAtoms][0];
-	      jAtomCoor[1] = imagePositions[jAtom-numberGlobalAtoms][1];
-	      jAtomCoor[2] = imagePositions[jAtom-numberGlobalAtoms][2];
-            }
+            const Point<C_DIM> & jAtomCoor=nontrivialAtomCoords[jAtom];
             const double distance=(nodalCoor-jAtomCoor).norm();
 	    if (distance < 1e-5){
 		overlappedAtomId=jAtom;
@@ -572,25 +576,15 @@ void forceClass<FEOrder>::computeAtomsForcesGaussianGenerator(bool allowGaussian
 	    }
 	}//j atom loop
 
-        for (unsigned int iAtom=0;iAtom <totalNumberAtoms; iAtom++)
+        for (unsigned int iAtom=0;iAtom <nontrivialAtomCoords.size(); iAtom++)
 	{
-             if (overlappedAtomId!=iAtom && overlappedAtomId!=-1 && !allowGaussianOverlapOnAtoms)
+              if (overlappedAtomId!=iAtom && overlappedAtomId!=-1 && !allowGaussianOverlapOnAtoms)
 		 continue;
-             Point<C_DIM> atomCoor;
-	     int atomId=iAtom;
-	     if(iAtom < numberGlobalAtoms)
-	     {
-		atomCoor[0] = atomLocations[iAtom][2];
-		atomCoor[1] = atomLocations[iAtom][3];
-		atomCoor[2] = atomLocations[iAtom][4];
-	      }
-	      else
-	      {
-		atomCoor[0] = imagePositions[iAtom-numberGlobalAtoms][0];
-		atomCoor[1] = imagePositions[iAtom-numberGlobalAtoms][1];
-		atomCoor[2] = imagePositions[iAtom-numberGlobalAtoms][2];
-		atomId=imageIds[iAtom-numberGlobalAtoms];
-	      }
+
+              const Point<C_DIM> & atomCoor=nontrivialAtomCoords[iAtom];
+              const int atomId=nontrivialAtomIds[iAtom];
+	      const int atomChargeId=nontrivialAtomChargeIds[iAtom];
+
 	      const double r=(nodalCoor-atomCoor).norm();
 	      //double gaussianWeight=std::exp(-d_gaussianConstant*rsq);
 	      double gaussianWeight=dftParameters::reproducible_output?
@@ -603,9 +597,9 @@ void forceClass<FEOrder>::computeAtomsForcesGaussianGenerator(bool allowGaussian
 			  && d_locally_owned_dofsForceElectro.is_element(globalDofIndex))
 		  {
 		      if (d_isElectrostaticsMeshSubdivided)
-		         gaussianWeight=d_gaussianWeightsVecAtoms[iAtom][globalDofIndex];
+		         gaussianWeight=d_gaussianWeightsVecAtoms[atomId][globalDofIndex];
 
-	              globalAtomsGaussianForcesLocalPart[C_DIM*atomId+idim]+=
+	              globalAtomsGaussianForcesLocalPart[C_DIM*atomChargeId+idim]+=
 			  gaussianWeight*(d_configForceVectorLinFEElectro[globalDofIndex]);
 		  }
 	      }//idim loop

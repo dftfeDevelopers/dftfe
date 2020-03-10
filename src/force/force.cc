@@ -359,7 +359,16 @@ void forceClass<FEOrder>::computeAtomsForces
                                         phiRhoMinusApproxRho,
                                         shadowPotentialForce);
 
+  MPI_Barrier(MPI_COMM_WORLD);
+  double gaussian_time=MPI_Wtime();
+
   computeAtomsForcesGaussianGenerator(d_allowGaussianOverlapOnAtoms);
+
+  MPI_Barrier(MPI_COMM_WORLD); 
+  gaussian_time = MPI_Wtime() -gaussian_time;
+            
+  if (this_mpi_process ==0 && dftParameters::verbosity>=1)
+      std::cout<<"Time for contraction of nodal foces with gaussian generator: "<<gaussian_time <<std::endl;
 }
 
 
@@ -513,10 +522,21 @@ void forceClass<FEOrder>::computeConfigurationalForceTotalLinFE
 
   //configurational force contribution from nuclear self energy. This is handled separately as it involves
   // a surface integral over the vself ball surface
+  MPI_Barrier(MPI_COMM_WORLD);
+  double vselfforce_time=MPI_Wtime();
+
   if (dealii::Utilities::MPI::this_mpi_process(dftPtr->interBandGroupComm)==0)
     computeConfigurationalForceEselfLinFE(matrixFreeDataElectro.get_dof_handler(phiTotDofHandlerIndexElectro),
 				        vselfBinsManagerElectro);
+  
   configForceLinFEFinalize();
+
+  MPI_Barrier(MPI_COMM_WORLD); 
+  vselfforce_time = MPI_Wtime() -vselfforce_time;
+            
+  if (this_mpi_process ==0 && dftParameters::verbosity>=1)
+      std::cout<<"Time for configurational force computation of Eself contribution and configForceLinFEFinalize(): "<<vselfforce_time <<std::endl;
+
 #ifdef DEBUG
   std::map<std::pair<unsigned int,unsigned int>, unsigned int> ::const_iterator it;
   for (it=d_atomsForceDofs.begin(); it!=d_atomsForceDofs.end(); ++it)

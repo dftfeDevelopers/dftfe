@@ -256,6 +256,11 @@ void dftClass<FEOrder>::readPSIRadialValues(){
 
   std::vector<orbital>  waveFunctionsVectorTruncated;
   dealii::BoundingBox<3> boundingBoxTria(vectorTools::createBoundingBoxTriaLocallyOwned(dofHandler));
+  dealii::Tensor<1,3,double> tempDisp;
+  tempDisp[0]=d_wfcInitTruncation;
+  tempDisp[1]=d_wfcInitTruncation;
+  tempDisp[2]=d_wfcInitTruncation;
+
   for (std::vector<orbital>::iterator it = waveFunctionsVector.begin(); it < waveFunctionsVector.end(); it++)
     {
 	  const unsigned int chargeId = it->atomID;
@@ -274,10 +279,7 @@ void dftClass<FEOrder>::readPSIRadialValues(){
 	      atomCoord[2] = d_imagePositions[chargeId-numberGlobalAtoms][2];
 	    }
 
-	  dealii::Tensor<1,3,double> tempDisp;
-	  tempDisp[0]=d_wfcInitTruncation;
-	  tempDisp[1]=d_wfcInitTruncation;
-	  tempDisp[2]=d_wfcInitTruncation;
+
 	  std::pair< dealii::Point<3,double >,dealii::Point<3, double>> boundaryPoints;
 	  boundaryPoints.first=atomCoord-tempDisp;
 	  boundaryPoints.second=atomCoord+tempDisp;

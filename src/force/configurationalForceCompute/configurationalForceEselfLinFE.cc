@@ -89,7 +89,7 @@ void forceClass<FEOrder>::computeConfigurationalForceEselfLinFE
   //which is anyway required to solve the vself accurately- these parameters assure that the contribution of
   //the surface integral to the configurational force is negligible (< 1e-6 Hartree/Bohr)
   //
-
+  /*
   QGauss<C_DIM-1>  faceQuadrature(C_num1DQuad<FEOrder>());
   FEFaceValues<C_DIM> feForceFaceValues (FEForce, faceQuadrature, update_values | update_JxW_values | update_normal_vectors | update_quadrature_points);
   const unsigned int faces_per_cell=GeometryInfo<C_DIM>::faces_per_cell;
@@ -171,6 +171,7 @@ void forceClass<FEOrder>::computeConfigurationalForceEselfLinFE
 	}//face loop
      }//cell loop
   }//bin loop
+  */
 }
 
 

@@ -499,7 +499,10 @@ void dftClass<FEOrder>::createMasterChargeIdToImageIdMaps
   globalChargeIdToImageIdMap.resize(numberGlobalCharges);
 
   dealii::BoundingBox<3> boundingBoxTria(vectorTools::createBoundingBoxTriaLocallyOwned(dofHandler));
-
+  dealii::Tensor<1,3,double> tempDisp;
+  tempDisp[0]=pspCutOff;
+  tempDisp[1]=pspCutOff;
+  tempDisp[2]=pspCutOff;
   for(int iCharge = 0; iCharge < numberGlobalCharges; ++iCharge)
   {
 	  Point<3> atomCoord;
@@ -508,10 +511,6 @@ void dftClass<FEOrder>::createMasterChargeIdToImageIdMaps
 	  atomCoord[2] = atomLocations[iCharge][4];
 
 
-	  dealii::Tensor<1,3,double> tempDisp;
-	  tempDisp[0]=pspCutOff;
-	  tempDisp[1]=pspCutOff;
-	  tempDisp[2]=pspCutOff;
 	  std::pair< dealii::Point<3,double >,dealii::Point<3, double>> boundaryPoints;
 	  boundaryPoints.first=atomCoord-tempDisp;
 	  boundaryPoints.second=atomCoord+tempDisp;
