@@ -328,12 +328,12 @@ void forceClass<FEOrder>::computeConfigurationalForceEEshelbyTensorFPSPFnlLinFE
 
 #if defined(DFTFE_WITH_GPU) && !defined(USE_COMPLEX)
    std::vector<double>  projectorKetTimesPsiTimesVTimesPartOccContractionPsiQuadsFlattened(nonTrivialNonLocalIdsAllCells.size()*numQuadPointsNLP,0.0);
-   std::vector<double> elocWfcEshelbyTensorQuadValuesH00(numPhysicalCells*numQuadPoints,0.0);
-   std::vector<double> elocWfcEshelbyTensorQuadValuesH10(numPhysicalCells*numQuadPoints,0.0);
-   std::vector<double> elocWfcEshelbyTensorQuadValuesH11(numPhysicalCells*numQuadPoints,0.0);
-   std::vector<double> elocWfcEshelbyTensorQuadValuesH20(numPhysicalCells*numQuadPoints,0.0);
-   std::vector<double> elocWfcEshelbyTensorQuadValuesH21(numPhysicalCells*numQuadPoints,0.0);
-   std::vector<double> elocWfcEshelbyTensorQuadValuesH22(numPhysicalCells*numQuadPoints,0.0);
+   std::vector<double> elocWfcEshelbyTensorQuadValuesH(numPhysicalCells*numQuadPoints*6,0.0);
+   //std::vector<double> elocWfcEshelbyTensorQuadValuesH10(numPhysicalCells*numQuadPoints,0.0);
+   //std::vector<double> elocWfcEshelbyTensorQuadValuesH11(numPhysicalCells*numQuadPoints,0.0);
+   //std::vector<double> elocWfcEshelbyTensorQuadValuesH20(numPhysicalCells*numQuadPoints,0.0);
+   //std::vector<double> elocWfcEshelbyTensorQuadValuesH21(numPhysicalCells*numQuadPoints,0.0);
+   //std::vector<double> elocWfcEshelbyTensorQuadValuesH22(numPhysicalCells*numQuadPoints,0.0);
 #endif
    std::vector<std::vector<std::vector<dataTypes::number> > > projectorKetTimesPsiTimesVTimesPartOcc(numKPoints);
    std::vector<std::vector<VectorizedArray<double>> >  projectorKetTimesPsiTimesVTimesPartOccContractionPsiQuads(numMacroCells*numQuadPointsNLP,std::vector<VectorizedArray<double>>(numPseudo,make_vectorized_array(0.0)));
@@ -446,12 +446,7 @@ void forceClass<FEOrder>::computeConfigurationalForceEEshelbyTensorFPSPFnlLinFE
 					      numQuadPointsNLP,
 					      dftPtr->matrix_free_data.get_dofs_per_cell(),
 					      nonTrivialNonLocalIdsAllCells.size(),
-					      &elocWfcEshelbyTensorQuadValuesH00[0],
-					      &elocWfcEshelbyTensorQuadValuesH10[0],
-					      &elocWfcEshelbyTensorQuadValuesH11[0],
-					      &elocWfcEshelbyTensorQuadValuesH20[0],
-					      &elocWfcEshelbyTensorQuadValuesH21[0],
-					      &elocWfcEshelbyTensorQuadValuesH22[0],
+					      &elocWfcEshelbyTensorQuadValuesH[0],
 					      &projectorKetTimesPsiTimesVTimesPartOccContractionPsiQuadsFlattened[0],
                                               dftPtr->interBandGroupComm,
 					      isPseudopotential,
@@ -894,12 +889,12 @@ void forceClass<FEOrder>::computeConfigurationalForceEEshelbyTensorFPSPFnlLinFE
 	       Tensor<2,C_DIM,VectorizedArray<double> > E;
 	       const unsigned int physicalCellId=macroCellIdToNormalCellIdMap[cell];
 	       const unsigned int id=physicalCellId*numQuadPoints+q;
-	       E[0][0]=make_vectorized_array(elocWfcEshelbyTensorQuadValuesH00[id]);
-	       E[1][0]=make_vectorized_array(elocWfcEshelbyTensorQuadValuesH10[id]);
-	       E[1][1]=make_vectorized_array(elocWfcEshelbyTensorQuadValuesH11[id]);
-	       E[2][0]=make_vectorized_array(elocWfcEshelbyTensorQuadValuesH20[id]);
-	       E[2][1]=make_vectorized_array(elocWfcEshelbyTensorQuadValuesH21[id]);
-	       E[2][2]=make_vectorized_array(elocWfcEshelbyTensorQuadValuesH22[id]);
+	       E[0][0]=make_vectorized_array(elocWfcEshelbyTensorQuadValuesH[id*6+0]);
+	       E[1][0]=make_vectorized_array(elocWfcEshelbyTensorQuadValuesH[id*6+1]);
+	       E[1][1]=make_vectorized_array(elocWfcEshelbyTensorQuadValuesH[id*6+2]);
+	       E[2][0]=make_vectorized_array(elocWfcEshelbyTensorQuadValuesH[id*6+3]);
+	       E[2][1]=make_vectorized_array(elocWfcEshelbyTensorQuadValuesH[id*6+4]);
+	       E[2][2]=make_vectorized_array(elocWfcEshelbyTensorQuadValuesH[id*6+5]);
 	       E[0][1]=E[1][0];
 	       E[0][2]=E[2][0];
 	       E[1][2]=E[2][1];
