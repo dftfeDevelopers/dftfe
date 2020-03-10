@@ -102,6 +102,10 @@ void dftClass<FEOrder>::updateAtomPositionsAndMoveMesh(const std::vector<Tensor<
 	                                               const double maxJacobianRatioFactor,
 						       const bool useSingleAtomSolutions)
 {
+  double atomsloop_time;
+  MPI_Barrier(MPI_COMM_WORLD);
+  atomsloop_time = MPI_Wtime();
+
   bool isAutoRemeshSupressed=false;
   const int numberGlobalAtoms = atomLocations.size();
   int numberImageCharges = d_imageIdsTrunc.size();
@@ -313,6 +317,12 @@ void dftClass<FEOrder>::updateAtomPositionsAndMoveMesh(const std::vector<Tensor<
   MPI_Barrier(mpi_communicator);
   d_autoMesh=0;
 
+  MPI_Barrier(MPI_COMM_WORLD);
+  atomsloop_time = MPI_Wtime() - atomsloop_time;
+  if (dftParameters::verbosity>=1)
+      pcout<<"updateAtomPositionsAndMoveMesh: Time taken for atoms loop: "<<atomsloop_time<<std::endl;
+
+
   const bool useHybridMeshUpdateScheme = true;// dftParameters::electrostaticsHRefinement?false:true;
 
   if(!useHybridMeshUpdateScheme)//always remesh
@@ -365,12 +375,6 @@ void dftClass<FEOrder>::updateAtomPositionsAndMoveMesh(const std::vector<Tensor<
 				 || dftParameters::createConstraintsFromSerialDofhandler,
 				 dftParameters::electrostaticsHRefinement);
 
-
-      MPI_Barrier(MPI_COMM_WORLD);
-      resetmesh_time = MPI_Wtime() - resetmesh_time;
-      if (dftParameters::verbosity>=1)
-             pcout<<"updateAtomPositionsAndMoveMesh: Time taken for reset mesh: "<<resetmesh_time<<std::endl;
-
       //initUnmovedTriangulation(d_mesh.getParallelMeshMoved());
 
       dofHandler.clear();dofHandlerEigen.clear();
@@ -396,6 +400,12 @@ void dftClass<FEOrder>::updateAtomPositionsAndMoveMesh(const std::vector<Tensor<
       d_gaussianMovePar.init(d_mesh.getParallelMeshMoved(),
 			     d_mesh.getSerialMeshUnmoved(),
 			     d_domainBoundingVectors);
+
+      MPI_Barrier(MPI_COMM_WORLD);
+      resetmesh_time = MPI_Wtime() - resetmesh_time;
+      if (dftParameters::verbosity>=1)
+             pcout<<"updateAtomPositionsAndMoveMesh: Time taken for reset mesh: "<<resetmesh_time<<std::endl;
+
 
       const double tol=1e-6;
 
