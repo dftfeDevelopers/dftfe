@@ -498,14 +498,27 @@ void molecularDynamics<FEOrder>::run()
 		  }
 	      }
 
+           MPI_Barrier(MPI_COMM_WORLD);
+
+            update_time = MPI_Wtime() - update_time;
+            if (dftParameters::verbosity>=1)
+                pcout<<"Time taken for updateAtomPositionsAndMoveMesh: "<<update_time<<std::endl;
+
+            double atomicrho_time;
+            MPI_Barrier(MPI_COMM_WORLD);
+            atomicrho_time = MPI_Wtime();
+
             if (dftPtr->d_autoMesh==1)
                 dftPtr->d_matrixFreeDataPRefined.initialize_dof_vector(atomicRho);
+
             dftPtr->initAtomicRho(atomicRho);
        
             MPI_Barrier(MPI_COMM_WORLD);
-            update_time = MPI_Wtime() - update_time;
+
+            atomicrho_time = MPI_Wtime() - atomicrho_time;
             if (dftParameters::verbosity>=1)
-                pcout<<"Time taken for updateAtomPositionsAndMoveMesh and initAtomicRho: "<<update_time<<std::endl;
+                pcout<<"Time taken for initAtomicRho: "<<atomicrho_time<<std::endl;
+
  
             double rmsErrorRho=0.0;
             double rmsErrorGradRho=0.0;

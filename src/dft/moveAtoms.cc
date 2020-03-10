@@ -355,11 +355,21 @@ void dftClass<FEOrder>::updateAtomPositionsAndMoveMesh(const std::vector<Tensor<
       // for following three cases: symmetrization is on, ionic optimization is on as well
       // as reuse wfcs and density from previous ionic step is on, or if serial constraints
       // generation is on.
+      double resetmesh_time;
+      MPI_Barrier(MPI_COMM_WORLD);
+      resetmesh_time = MPI_Wtime();
+
       d_mesh.generateResetMeshes(d_domainBoundingVectors,
 				 dftParameters::useSymm
 				 || (dftParameters::isIonOpt && (dftParameters::reuseWfcGeoOpt || dftParameters::reuseDensityGeoOpt))
 				 || dftParameters::createConstraintsFromSerialDofhandler,
 				 dftParameters::electrostaticsHRefinement);
+
+
+      MPI_Barrier(MPI_COMM_WORLD);
+      resetmesh_time = MPI_Wtime() - resetmesh_time;
+      if (dftParameters::verbosity>=1)
+             pcout<<"updateAtomPositionsAndMoveMesh: Time taken for reset mesh: "<<resetmesh_time<<std::endl;
 
       //initUnmovedTriangulation(d_mesh.getParallelMeshMoved());
 
