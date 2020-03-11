@@ -81,8 +81,7 @@ dataTypes::number dftClass<FEOrder>::computeTraceXtHX(unsigned int numberWaveFun
   //
   d_vselfBinsManager.solveVselfInBins(matrix_free_data,
 				      2,
-				      d_phiExt,
-				      d_noConstraints,
+				      constraintsNone,
 				      d_imagePositions,
 				      d_imageIds,
 				      d_imageCharges,

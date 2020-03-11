@@ -19,6 +19,7 @@ SET(TARGET_SRC
   ./src/dft/vselfBinsManager.cc
   ./src/dft/energyCalculator.cc
   ./src/poisson/poissonSolverProblem.cc
+  ./src/poisson/poissonSolverProblemCellMatrixMultiVector.cc
   ./src/helmholtz/kerkerSolverProblem.cc
   ./src/dftOperator/kohnShamDFTOperator.cc
   ./src/dftOperator/operator.cc

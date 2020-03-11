@@ -538,8 +538,7 @@ void dftClass<FEOrder>::computeElectrostaticEnergyHRefined(
         pcout<< std::endl<<"Solving for nuclear charge self potential in bins on h refined mesh: ";
    vselfBinsManagerHRefined.solveVselfInBins(matrixFreeDataHRefined,
 		                             2,
-	                                     phiExtHRefined,
-				             onlyHangingNodeConstraints,
+				             constraintsHRefined,
 					     d_imagePositions,
 					     d_imageIds,
 					     d_imageCharges,

@@ -18,6 +18,7 @@
 
 #include <dealiiLinearSolver.h>
 #include <poissonSolverProblem.h>
+#include <poissonSolverProblemCellMatrixMultiVector.h>
 
 namespace dftfe
 {
@@ -25,8 +26,7 @@ namespace dftfe
     void vselfBinsManager<FEOrder>::solveVselfInBins
                                     (const dealii::MatrixFree<3,double> & matrix_free_data,
 	                             const unsigned int offset,
-	                             vectorType & phiExt,
-			             const dealii::AffineConstraints<double> & phiExtConstraintMatrix,
+			             const dealii::AffineConstraints<double> & hangingPeriodicConstraintMatrix,
 				     const std::vector<std::vector<double> > & imagePositions,
 				     const std::vector<int> & imageIds,
 				     const std::vector<double> &imageCharges,
@@ -40,11 +40,9 @@ namespace dftfe
       const unsigned int numberBins = d_boundaryFlagOnlyChargeId.size();
       const unsigned int numberGlobalCharges = d_atomLocations.size();
 
-      phiExt = 0;
-
       //set up poisson solver
       dealiiLinearSolver dealiiCGSolver(mpi_communicator,dealiiLinearSolver::CG);
-      poissonSolverProblem<FEOrder> vselfSolverProblem(mpi_communicator);
+      poissonSolverProblemCellMatrixMultiVector<FEOrder> vselfSolverProblem(mpi_communicator);
 
       std::map<dealii::types::global_dof_index, dealii::Point<3> > supportPoints;
       dealii::DoFTools::map_dofs_to_support_points(dealii::MappingQ1<3,3>(), matrix_free_data.get_dof_handler(offset), supportPoints);
@@ -60,7 +58,7 @@ namespace dftfe
 
 	  const unsigned int constraintMatrixId = iBin + offset;
 	  vectorType vselfBinScratch;
-	  matrix_free_data.initialize_dof_vector(vselfBinScratch,constraintMatrixId);
+	  matrix_free_data.initialize_dof_vector(vselfBinScratch,0);
 	  vselfBinScratch = 0;
 
 	  std::map<dealii::types::global_dof_index,dealii::Point<3> >::iterator iterNodalCoorMap;
@@ -69,19 +67,24 @@ namespace dftfe
 	  //
 	  //set initial guess to vSelfBinScratch
 	  //
+          	  
 	  for(iterNodalCoorMap = supportPoints.begin(); iterNodalCoorMap != supportPoints.end(); ++iterNodalCoorMap)
-	      if(vselfBinScratch.in_local_range(iterNodalCoorMap->first)
-		  && !d_vselfBinConstraintMatrices[iBin].is_constrained(iterNodalCoorMap->first))
+	      if(vselfBinScratch.in_local_range(iterNodalCoorMap->first))
+              {
+	            if(!d_vselfBinConstraintMatrices[iBin].is_constrained(iterNodalCoorMap->first))
 		    {
 		      iterMapVal = vSelfBinNodeMap.find(iterNodalCoorMap->first);
 		      if(iterMapVal != vSelfBinNodeMap.end())
 			  vselfBinScratch(iterNodalCoorMap->first) = iterMapVal->second;
 		    }
+                    else
+                      vselfBinScratch(iterNodalCoorMap->first) = 0.0;
+               }     
 
 
-	  vselfBinScratch.compress(dealii::VectorOperation::insert);
-	  d_vselfBinConstraintMatrices[iBin].distribute(vselfBinScratch);
-
+	  //vselfBinScratch.compress(dealii::VectorOperation::insert);
+	  //d_vselfBinConstraintMatrices[iBin].distribute(vselfBinScratch);
+           
           MPI_Barrier(MPI_COMM_WORLD);
           init_time = MPI_Wtime() - init_time;
           if (dftParameters::verbosity>=1)
@@ -95,6 +98,7 @@ namespace dftfe
 	  //
 	  vselfSolverProblem.reinit(matrix_free_data,
 				    vselfBinScratch,
+                                    hangingPeriodicConstraintMatrix,
 				    d_vselfBinConstraintMatrices[iBin],
 				    constraintMatrixId,
 				    d_atomsInBin[iBin],

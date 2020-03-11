@@ -1108,8 +1108,7 @@ namespace dftfe {
     computingTimerStandard.enter_section("Nuclear self-potential solve");
     d_vselfBinsManager.solveVselfInBins(matrix_free_data,
 					2,
-					d_phiExt,
-					d_noConstraints,
+					constraintsNone,
 				        d_imagePositions,
 				        d_imageIds,
 				        d_imageCharges,

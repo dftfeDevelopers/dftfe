@@ -101,8 +101,7 @@ namespace dftfe {
 	   */
 	  void solveVselfInBins(const dealii::MatrixFree<3,double> & matrix_free_data,
 		                                  const unsigned int offset,
-	                                          vectorType & phiExt,
-						  const dealii::ConstraintMatrix & phiExtConstraintMatrix,
+						  const dealii::ConstraintMatrix & hangingPeriodicConstraintMatrix,
 						  const std::vector<std::vector<double> > & imagePositions,
 						  const std::vector<int> & imageIds,
 						  const std::vector<double> & imageCharges,
