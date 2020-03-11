@@ -13,14 +13,14 @@ PROJ=/ccs/proj/eng110
 # and optimization flag
 
 #Paths for external libraries
-dealiiDir="$PROJ/software/dealiiCustomized/installDealiiReleaseCustomizedCUDA10.1.168Gcc6.4.0"
+dealiiDir="$PROJ/software/dealiiCustomizedSMPI20200121/installDealiiReleaseCustomizedCUDA10.1.243Gcc6.4.0"
 alglibDir="$PROJ/software/alglib/cpp/src"
 libxcDir="$PROJ/software/libxc/installGcc6.4.0"
 spglibDir="$PROJ/software/spglib/installGcc6.4.0"
 xmlIncludeDir="/usr/include/libxml2"
 xmlLibDir="/usr/lib64"
-elpaIncludeDir="$PROJ/software/elpa/installElpa2018Gcc6.4.0/include/elpa_openmp-2018.11.001"
-elpaLibDir="$PROJ/software/elpa/installElpa2018Gcc6.4.0/lib"
+elpaIncludeDir="$PROJ/software/elpaSMPI20200121/installElpa2018Gcc6.4.0/include/elpa_openmp-2018.11.001"
+elpaLibDir="$PROJ/software/elpaSMPI20200121/installElpa2018Gcc6.4.0/lib"
 
 # Path to project source (should be script run directory)
 SRC="$PWD"
