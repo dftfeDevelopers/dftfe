@@ -1,6 +1,6 @@
 // ---------------------------------------------------------------------
 //
-// Copyright (c) 2017-2018 The Regents of the University of Michigan and DFT-FE authors.
+// Copyright (c) 2017-2020 The Regents of the University of Michigan and DFT-FE authors.
 //
 // This file is part of the DFT-FE code.
 //
@@ -13,8 +13,105 @@
 //
 // ---------------------------------------------------------------------
 //
-// @author  Phani Motamarri
+// @author  Sambit Das
 //
+
+namespace shapeFuncCUDA
+{
+          __global__
+          void computeShapeGradNINJIntegralContribution(const unsigned int numQuads,
+                                                   const unsigned int numNodesPerElem,
+                                                   const unsigned int numElems,
+					           const double * gradNQuadValuesXI,
+					           const double * gradNQuadValuesYI,
+					           const double * gradNQuadValuesZI,
+					           const double * gradNQuadValuesXJ,
+					           const double * gradNQuadValuesYJ,
+					           const double * gradNQuadValuesZJ,
+                                                   const double * jxwQuadValues,
+                                                   double * shapeGradNINJIntegralContribution)
+          {
+
+		  const unsigned int globalThreadId = blockIdx.x*blockDim.x + threadIdx.x;
+		  const unsigned int numberEntries = numElems*numNodesPerElem*numNodesPerElem*numQuads;
+
+		  for(unsigned int index = globalThreadId; index < numberEntries; index+= blockDim.x*gridDim.x)
+		   {
+		      const unsigned int blockIndex1 = index/numQuads;
+                      const unsigned int quadIndex=index-blockIndex1*numQuads;
+                      const unsigned int blockIndex2=blockIndex1/numNodesPerElem;
+                      const unsigned int cellId=blockIndex2/numNodesPerElem;
+                      const unsigned int idJ=cellId*numNodesPerElem*numQuads+(blockIndex1-blockIndex2*numNodesPerElem)*numQuads+quadIndex;
+                      const unsigned int idI=cellId*numNodesPerElem*numQuads+(blockIndex2-cellId*numNodesPerElem)*numQuads+quadIndex;
+    
+                                  
+                      shapeGradNINJIntegralContribution[index]=(gradNQuadValuesXI[idI]*gradNQuadValuesXJ[idJ]+gradNQuadValuesYI[idI]*gradNQuadValuesYJ[idJ]+gradNQuadValuesZI[idI]*gradNQuadValuesZJ[idJ])*jxwQuadValues[cellId*numQuads+quadIndex];
+		   }
+
+          }
+
+          void computeShapeGradNINJIntegral(cublasHandle_t &handle,
+                                            const unsigned int numQuads,
+                                            const unsigned int numNodesPerElem,
+                                            const unsigned int numElems,
+			                    const thrust::device_vector<double> & gradNQuadValuesXD,
+                                            const thrust::device_vector<double> & gradNQuadValuesYD,
+                                            const thrust::device_vector<double> & gradNQuadValuesZD,
+                                            const thrust::device_vector<double> & jxwQuadValuesD,
+                                            thrust::device_vector<double> & shapeGradNINJIntegralD)
+          {
+                    shapeGradNINJIntegralD.clear();
+                    shapeGradNINJIntegralD.resize(numElems*numNodesPerElem*numNodesPerElem,0.0);
+		    //thrust::device_vector<double> gradPsiQuadValuesXDJ=gradPsiQuadValuesXD;
+		    //thrust::device_vector<double> gradPsiQuadValuesYDJ=gradPsiQuadValuesYD;
+		    //thrust::device_vector<double> gradPsiQuadValuesZDJ=gradPsiQuadValuesZD;
+
+                    const int blockSize=50;
+                    const int numberBlocks=numElems/blockSize;
+                    const int remBlockSize=numElems-numberBlocks*blockSize;
+
+                    thrust::device_vector<double> shapeGradNINJIntegralContributionD(blockSize*numNodesPerElem*numNodesPerElem*numQuads,0.0);
+	            thrust::device_vector<double> onesVecD(numQuads,1.0); 
+		    for (int iblock=0; iblock<(numberBlocks+1); iblock++)
+		    {
+			   const int currentBlockSize= (iblock==numberBlocks)?remBlockSize:blockSize;
+			   const int startingId=iblock*blockSize;
+
+			   computeShapeGradNINJIntegralContribution<<<(numQuads+255)/256*numNodesPerElem*numNodesPerElem*currentBlockSize,256>>>
+									  (numQuads,
+									   numNodesPerElem,
+									   currentBlockSize,
+									   thrust::raw_pointer_cast(&gradNQuadValuesXD[startingId*numNodesPerElem*numQuads]),
+									   thrust::raw_pointer_cast(&gradNQuadValuesYD[startingId*numNodesPerElem*numQuads]),
+									   thrust::raw_pointer_cast(&gradNQuadValuesZD[startingId*numNodesPerElem*numQuads]),
+									   thrust::raw_pointer_cast(&gradNQuadValuesXD[startingId*numNodesPerElem*numQuads]),
+									   thrust::raw_pointer_cast(&gradNQuadValuesYD[startingId*numNodesPerElem*numQuads]),
+									   thrust::raw_pointer_cast(&gradNQuadValuesZD[startingId*numNodesPerElem*numQuads]),
+									   thrust::raw_pointer_cast(&jxwQuadValuesD[startingId*numQuads]),
+									   thrust::raw_pointer_cast(&shapeGradNINJIntegralContributionD[0]));
+			  
+			   const double scalarCoeffAlpha = 1.0;
+			   const double scalarCoeffBeta = 0.0;
+
+
+
+			   cublasDgemm(handle,
+				      CUBLAS_OP_N,
+				      CUBLAS_OP_N,
+				      1,
+				      currentBlockSize*numNodesPerElem*numNodesPerElem,
+				      numQuads,
+				      &scalarCoeffAlpha,
+				      thrust::raw_pointer_cast(&onesVecD[0]),
+				      1,
+				      thrust::raw_pointer_cast(&shapeGradNINJIntegralContributionD[0]),
+				      numQuads,
+				      &scalarCoeffBeta,
+				      thrust::raw_pointer_cast(&shapeGradNINJIntegralD[startingId*numNodesPerElem*numNodesPerElem]),
+		  		      1);
+                    }
+          } 
+}
 
 template<unsigned int FEOrder>
 void kohnShamDFTOperatorCUDAClass<FEOrder>::preComputeShapeFunctionGradientIntegrals()
@@ -32,8 +129,8 @@ void kohnShamDFTOperatorCUDAClass<FEOrder>::preComputeShapeFunctionGradientInteg
   //
   //resize data members
   //
-  d_cellShapeFunctionGradientIntegralFlattened.clear();
-  d_cellShapeFunctionGradientIntegralFlattened.resize(numberPhysicalCells*numberDofsPerElement*numberDofsPerElement);
+  //d_cellShapeFunctionGradientIntegralFlattened.clear();
+  //d_cellShapeFunctionGradientIntegralFlattened.resize(numberPhysicalCells*numberDofsPerElement*numberDofsPerElement);
 
   d_cellJxWValues.clear();
   d_cellJxWValues.resize(numberPhysicalCells*numberQuadraturePoints);
@@ -65,6 +162,7 @@ void kohnShamDFTOperatorCUDAClass<FEOrder>::preComputeShapeFunctionGradientInteg
 
           for(unsigned int iNode = 0; iNode < numberDofsPerElement; ++iNode)
           {
+              /*
               for(unsigned int jNode = 0; jNode < numberDofsPerElement; ++jNode)
               {
                   double shapeFunctionGradientIntegralValue = 0.0;
@@ -76,6 +174,7 @@ void kohnShamDFTOperatorCUDAClass<FEOrder>::preComputeShapeFunctionGradientInteg
                   d_cellShapeFunctionGradientIntegralFlattened[iElem*numberDofsPerElement*numberDofsPerElement
                                                                +iNode*numberDofsPerElement+jNode]=shapeFunctionGradientIntegralValue;
               }
+              */
 
               for(unsigned int q_point = 0; q_point < numberQuadraturePoints; ++q_point)
               {
@@ -124,9 +223,30 @@ void kohnShamDFTOperatorCUDAClass<FEOrder>::preComputeShapeFunctionGradientInteg
     d_shapeFunctionGradientValueZDevice=d_shapeFunctionGradientValueZ;
     d_shapeFunctionGradientValueZInvertedDevice=d_shapeFunctionGradientValueZInverted;
 
-    d_cellShapeFunctionGradientIntegralFlattenedDevice=d_cellShapeFunctionGradientIntegralFlattened;
+    //d_cellShapeFunctionGradientIntegralFlattenedDevice=d_cellShapeFunctionGradientIntegralFlattened;
     d_cellJxWValuesDevice=d_cellJxWValues;
 
+    cudaDeviceSynchronize();
+    MPI_Barrier(MPI_COMM_WORLD);
+    double gpu_time=MPI_Wtime();
+
+    shapeFuncCUDA::computeShapeGradNINJIntegral(d_cublasHandle,
+                                                numberQuadraturePoints,
+                                                numberDofsPerElement,
+                                                numberPhysicalCells,
+			                        d_shapeFunctionGradientValueXDevice,
+                                                d_shapeFunctionGradientValueYDevice,
+                                                d_shapeFunctionGradientValueZDevice,
+                                                d_cellJxWValuesDevice,
+                                                d_cellShapeFunctionGradientIntegralFlattenedDevice);
+
+    cudaDeviceSynchronize();
+    MPI_Barrier(MPI_COMM_WORLD);
+    gpu_time = MPI_Wtime() - gpu_time;
+    
+    if (this_mpi_process==0 && dftParameters::verbosity>=2)
+      std::cout<<"Time for shapeFuncCUDA::computeShapeGradNINJIntegral: "<<gpu_time<<std::endl;
+    
     if (dftParameters::mixingMethod=="ANDERSON_WITH_KERKER" || (dftParameters::isBOMD))
     {
 	  QGaussLobatto<3>  quadratureGl(C_num1DQuad<C_num1DKerkerPoly<FEOrder>()>());
