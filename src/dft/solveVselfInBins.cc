@@ -60,8 +60,8 @@ namespace dftfe
 	  vectorType vselfBinScratch;
 	  matrix_free_data.initialize_dof_vector(vselfBinScratch,0);
 	  vselfBinScratch = 0;
-
-	  std::map<dealii::types::global_dof_index,dealii::Point<3> >::iterator iterNodalCoorMap;
+	  
+          std::map<dealii::types::global_dof_index,dealii::Point<3> >::iterator iterNodalCoorMap;
 	  std::map<dealii::types::global_dof_index, double> & vSelfBinNodeMap = d_vselfBinField[iBin];
 
 	  //
@@ -103,7 +103,7 @@ namespace dftfe
 				    constraintMatrixId,
 				    d_atomsInBin[iBin],
                                     true,
-                                    iBin==0?true:false);
+                                    iBin==0?false:false);
 
           MPI_Barrier(MPI_COMM_WORLD);
           vselfinit_time = MPI_Wtime() - vselfinit_time;
