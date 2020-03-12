@@ -171,48 +171,7 @@ namespace dftfe {
         dealii::Vector<double>  elementalRhs(dofs_per_cell);
         std::vector<dealii::types::global_dof_index> local_dof_indices (dofs_per_cell);
 	typename dealii::DoFHandler<3>::active_cell_iterator cell = dofHandler.begin_active(), endc = dofHandler.end();
-        //rhs contribution from static condensation of dirichlet boundary conditions
-        /*
-        unsigned int iElem=0;
-	for(; cell!=endc; ++cell)
-	      if(cell->is_locally_owned())
-		{
-		  //compute values for the current element
-		  fe_values.reinit(cell);
-		  cell->get_dof_indices(local_dof_indices);
-
-		  elementalRhs=0.0;
-		  bool assembleFlag=false;
-
-		  //local poissonClass operator
-		  for(unsigned int j = 0; j < dofs_per_cell; ++j)
-		    {
-		      unsigned int columnID = local_dof_indices[j];
-		      if(d_constraintMatrixPtr->is_inhomogeneously_constrained(columnID))
-			  for (unsigned int i = 0; i < dofs_per_cell; ++i)
-			    {
-			      //compute contribution to rhs
-			      double localStiffnessMatIJ = 0.0;
-                              if (!d_isShapeGradIntegralPrecomputed)
-			         for (unsigned int q_point=0; q_point<num_quad_points; ++q_point)
-				     localStiffnessMatIJ += (1.0/(4.0*M_PI))*(fe_values.shape_grad(i,q_point)*fe_values.shape_grad(j,q_point))*fe_values.JxW(q_point);
-                              else
-                                 localStiffnessMatIJ=(1.0/(4.0*M_PI))*d_cellShapeFunctionGradientIntegralFlattened[iElem*dofs_per_cell*dofs_per_cell
-                                                               +j*dofs_per_cell+i];
-
-			      elementalRhs(i)-=d_constraintMatrixPtr->
-				  get_inhomogeneity(columnID)*localStiffnessMatIJ;
-			      if (!assembleFlag)
-				  assembleFlag=true;
-			    }
-
-		    }
-		  if(assembleFlag)
-		      d_constraintMatrixPtr->distribute_local_to_global(elementalRhs,local_dof_indices,rhs);
-            
-                  iElem++;
-		}
-        */
+ 
 
       if (!d_rhoValuesPtr)
       {

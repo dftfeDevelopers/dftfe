@@ -125,9 +125,6 @@ namespace dftfe {
 	    d_matrixFreeDataPtr->get_dof_handler(d_matrixFreeVectorComponent);
 
 	dealii::QGauss<3>  quadrature(C_num1DQuad<FEOrder>());
-        dealii::FEValues<3> fe_values (dofHandler.get_fe(), quadrature,
-                                       d_isShapeGradIntegralPrecomputed?dealii::update_values | dealii::update_JxW_values
-                                                                       :dealii::update_values | dealii::update_gradients | dealii::update_JxW_values);
         const unsigned int   dofs_per_cell = dofHandler.get_fe().dofs_per_cell;
         const unsigned int   num_quad_points = quadrature.size();
         dealii::Vector<double>  elementalRhs(dofs_per_cell);
@@ -135,55 +132,40 @@ namespace dftfe {
 
         //rhs contribution from static condensation of dirichlet boundary conditions
 	typename dealii::DoFHandler<3>::active_cell_iterator cell = dofHandler.begin_active(), endc = dofHandler.end();
-        unsigned int iElem=0;
-	for(; cell!=endc; ++cell)
-	      if(cell->is_locally_owned())
-		{
-		  //compute values for the current element
-		  fe_values.reinit(cell);
-		  cell->get_dof_indices(local_dof_indices);
 
-		  elementalRhs=0.0;
-		  bool assembleFlag=false;
+        vectorType tempvec;
+        d_matrixFreeDataPtr->initialize_dof_vector(tempvec,d_matrixFreeVectorComponent);
+        tempvec=0.0;
+        d_constraintMatrixPtrRhs->distribute(tempvec);
+        tempvec.update_ghost_values();
 
-		  //local poissonClass operator
-		  for(unsigned int j = 0; j < dofs_per_cell; ++j)
-		    {
-		      unsigned int columnID = local_dof_indices[j];
-		      if(d_constraintMatrixPtrRhs->is_inhomogeneously_constrained(columnID))
-			  for (unsigned int i = 0; i < dofs_per_cell; ++i)
-			    {
-			      //compute contribution to rhs
-			      double localStiffnessMatIJ = 0.0;
-                              if (!d_isShapeGradIntegralPrecomputed)
-			         for (unsigned int q_point=0; q_point<num_quad_points; ++q_point)
-				     localStiffnessMatIJ += (1.0/(4.0*M_PI))*(fe_values.shape_grad(i,q_point)*fe_values.shape_grad(j,q_point))*fe_values.JxW(q_point);
-                              else
-                                 localStiffnessMatIJ=(1.0/(4.0*M_PI))*d_cellShapeFunctionGradientIntegralFlattened[iElem*dofs_per_cell*dofs_per_cell
-                                                               +j*dofs_per_cell+i];
-
-			      elementalRhs(i)-=d_constraintMatrixPtrRhs->
-				  get_inhomogeneity(columnID)*localStiffnessMatIJ;
-			      if (!assembleFlag)
-				  assembleFlag=true;
-			    }
-
-		    }
-		  if(assembleFlag)
-		      d_constraintMatrixPtrRhs->distribute_local_to_global(elementalRhs,local_dof_indices,rhs);
-            
-                  iElem++;
-		}
+        dealii::FEEvaluation<3,FEOrder,C_num1DQuad<FEOrder>()> fe_eval(*d_matrixFreeDataPtr,
+								     d_matrixFreeVectorComponent,
+								     0);
+        dealii::VectorizedArray<double>  quarter = dealii::make_vectorized_array (1.0/(4.0*M_PI));
+        for (unsigned int macrocell = 0;macrocell < d_matrixFreeDataPtr->n_macro_cells();
+	 ++macrocell)
+	{
+	  fe_eval.reinit(macrocell);
+	  fe_eval.read_dof_values_plain(tempvec);
+	  fe_eval.evaluate(false,true);
+	  for (unsigned int q=0; q<fe_eval.n_q_points; ++q)
+	    {
+	      fe_eval.submit_gradient(-quarter*fe_eval.get_gradient(q), q);
+	    }
+	  fe_eval.integrate(false, true);
+	  fe_eval.distribute_local_to_global(rhs);
+	}
 
 
 	//rhs contribution from atomic charge at fem nodes
         for (std::map<dealii::types::global_dof_index, double>::const_iterator it=(*d_atomsPtr).begin(); it!=(*d_atomsPtr).end(); ++it)
 	{
-	  std::vector<dealii::ConstraintMatrix::size_type> local_dof_indices_origin(1, it->first); //atomic node
-	  dealii::Vector<double> cell_rhs_origin (1);
-	  cell_rhs_origin(0)=-(it->second); //atomic charge
+	   std::vector<dealii::ConstraintMatrix::size_type> local_dof_indices_origin(1, it->first); //atomic node
+	   dealii::Vector<double> cell_rhs_origin (1);
+	   cell_rhs_origin(0)=-(it->second); //atomic charge
 
-	  d_constraintMatrixPtrRhs->distribute_local_to_global(cell_rhs_origin, local_dof_indices_origin, rhs);
+	   d_constraintMatrixPtrRhs->distribute_local_to_global(cell_rhs_origin, local_dof_indices_origin, rhs);
 	}
 
         //MPI operation to sync data

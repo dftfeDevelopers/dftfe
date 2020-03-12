@@ -103,7 +103,7 @@ namespace dftfe
 				    constraintMatrixId,
 				    d_atomsInBin[iBin],
                                     true,
-                                    iBin==0?false:false);
+                                    false);
 
           MPI_Barrier(MPI_COMM_WORLD);
           vselfinit_time = MPI_Wtime() - vselfinit_time;
@@ -115,132 +115,7 @@ namespace dftfe
 			       dftParameters::maxLinearSolverIterations,
 			       dftParameters::verbosity);
 
-          /*
-          double sumvself_time;
-          MPI_Barrier(MPI_COMM_WORLD);
-          sumvself_time = MPI_Wtime();
           
-	  std::set<int> & atomsInBinSet = d_bins[iBin];
-	  std::vector<int> atomsInCurrentBin(atomsInBinSet.begin(),atomsInBinSet.end());
-	  const unsigned int numberGlobalAtomsInBin = atomsInCurrentBin.size();
-
-	  std::vector<int> imageIdsOfAtomsInCurrentBin;
-	  std::vector<int> imageChargeIdsOfAtomsInCurrentBin;
-	  for(int index = 0; index < numberGlobalAtomsInBin; ++index)
-	    {
-	      int globalChargeIdInCurrentBin = atomsInCurrentBin[index];
-	      for(int iImageAtom = 0; iImageAtom < imageIds.size(); ++iImageAtom)
-		  if(imageIds[iImageAtom] == globalChargeIdInCurrentBin)
-		  {
-		      imageIdsOfAtomsInCurrentBin.push_back(iImageAtom);
-		      imageChargeIdsOfAtomsInCurrentBin.push_back(imageIds[iImageAtom]);
-		  }
-	    }
-
-	  const unsigned int numberImageAtomsInBin = imageIdsOfAtomsInCurrentBin.size();
-
-	  std::map<dealii::types::global_dof_index, int> & boundaryNodeMap = d_boundaryFlagOnlyChargeId[iBin];
-          std::map<dealii::types::global_dof_index, dealii::Point<3>> & dofClosestChargeLocationMap
-		                                            = d_dofClosestChargeLocationMap[iBin];
-
-        
-	  int inNodes =0, outNodes = 0;
-	  for(iterNodalCoorMap = supportPoints.begin(); iterNodalCoorMap != supportPoints.end(); ++iterNodalCoorMap)
-	      if(vselfBinScratch.in_local_range(iterNodalCoorMap->first)
-		  && !phiExtConstraintMatrix.is_constrained(iterNodalCoorMap->first))
-		    {
-		      //
-		      //get the vertex Id
-		      //
-		      dealii::Point<3> nodalCoor = iterNodalCoorMap->second;
-
-		      //
-		      //get the boundary flag for iVertex for current bin
-		      //
-		      int boundaryFlag;
-		      iterMap = boundaryNodeMap.find(iterNodalCoorMap->first);
-		      if(iterMap != boundaryNodeMap.end())
-			{
-			  boundaryFlag = iterMap->second;
-			}
-		      else
-			{
-			  std::cout<<"Could not find boundaryNode Map for the given dof:"<<std::endl;
-			  exit(-1);
-			}
-
-		      //
-		      //go through all atoms in a given bin
-		      //
-		      double vSelf=0.0;
-		      const dealii::Point<3> & dofClosestChargeLocation=dofClosestChargeLocationMap[iterNodalCoorMap->first];
-		      for(int iCharge = 0; iCharge < numberGlobalAtomsInBin+numberImageAtomsInBin; ++iCharge)
-			{
-			  //
-			  //get the globalChargeId corresponding to iCharge in the current bin
-			  //and add numberGlobalCharges to image atomId
-			  int chargeId;
-			  unsigned int atomId;
-			  dealii::Point<3> atomCoor(0.0,0.0,0.0);
-			  if(iCharge < numberGlobalAtomsInBin)
-			  {
-			    chargeId = atomsInCurrentBin[iCharge];
-			    atomId=chargeId;
-			    atomCoor[0] = d_atomLocations[chargeId][2];
-		            atomCoor[1] = d_atomLocations[chargeId][3];
-			    atomCoor[2] = d_atomLocations[chargeId][4];
-			  }
-			  else
-			  {
-			    chargeId = imageChargeIdsOfAtomsInCurrentBin[iCharge-numberGlobalAtomsInBin];
-			    atomId=imageIdsOfAtomsInCurrentBin[iCharge-numberGlobalAtomsInBin]
-				   +numberGlobalCharges;
-			    atomCoor[0]
-				= imagePositions[imageIdsOfAtomsInCurrentBin[iCharge-numberGlobalAtomsInBin]][0];
-			    atomCoor[1]
-				= imagePositions[imageIdsOfAtomsInCurrentBin[iCharge-numberGlobalAtomsInBin]][1];
-			    atomCoor[2]
-				= imagePositions[imageIdsOfAtomsInCurrentBin[iCharge-numberGlobalAtomsInBin]][2];
-			  }
-
-			  if(boundaryFlag == chargeId
-			    && dofClosestChargeLocation.distance(atomCoor)<1e-5)
-			    {
-			      vSelf += vselfBinScratch(iterNodalCoorMap->first);
-			      inNodes++;
-			      d_atomIdBinIdMapLocalAllImages[atomId]=iBin;
-			    }
-			  else
-			    {
-			      double nuclearCharge;
-			      if(iCharge < numberGlobalAtomsInBin)
-				{
-				  if(dftParameters::isPseudopotential)
-				    nuclearCharge = d_atomLocations[chargeId][1];
-				  else
-				    nuclearCharge = d_atomLocations[chargeId][0];
-
-				}
-			      else
-				{
-				  nuclearCharge =
-				      imageCharges[imageIdsOfAtomsInCurrentBin[iCharge-numberGlobalAtomsInBin]];
-				}
-
-			      const double r = nodalCoor.distance(atomCoor);
-			      vSelf += -nuclearCharge/r;
-			      outNodes++;
-			    }
-			}//charge loop
-		        //store updated value in phiExt which is sumVself
-		        phiExt(iterNodalCoorMap->first)+= vSelf;
-		    }
- 
-          MPI_Barrier(MPI_COMM_WORLD);
-          sumvself_time = MPI_Wtime() - sumvself_time;
-          if (dftParameters::verbosity>=1)
-            pcout<<" Time taken for sumvself for current bin: "<<sumvself_time<<std::endl;
-          */
 	  //
 	  //store Vselfs for atoms in bin
 	  //
@@ -259,15 +134,5 @@ namespace dftfe
 	    //
 	    d_vselfFieldBins[iBin]=vselfBinScratch;
 	}//bin loop
-
-      //phiExt.compress(dealii::VectorOperation::insert);
-
-      //FIXME: Should we use periodic constraints to distribute phiExt?
-      //phiExtConstraintMatrix.distribute(phiExt);
-      //phiExt.update_ghost_values();
-
-      //print the norms of phiExt (in periodic case L2 norm of phiExt field does not match. check later)
-      //if (dftParameters::verbosity>=4)
-      //  pcout<<"L2 Norm Value of phiext: "<<phiExt.l2_norm()<<std::endl;
     }
 }
