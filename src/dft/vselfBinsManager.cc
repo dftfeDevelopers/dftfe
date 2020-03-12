@@ -215,9 +215,9 @@ namespace dftfe
 		}
 
 	      dealii::Tensor<1,3,double> tempDisp;
-	      tempDisp[0]=radiusAtomBall;
-	      tempDisp[1]=radiusAtomBall;
-	      tempDisp[2]=radiusAtomBall;
+	      tempDisp[0]=radiusAtomBall+0.5;
+	      tempDisp[1]=radiusAtomBall+0.5;
+	      tempDisp[2]=radiusAtomBall+0.5;
 	      std::pair< dealii::Point<3,double >,dealii::Point<3, double>> boundaryPoints;
 	      boundaryPoints.first=atomCoor-tempDisp;
 	      boundaryPoints.second=atomCoor+tempDisp;
