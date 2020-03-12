@@ -67,7 +67,7 @@ namespace dftfe
 	  //
 	  //set initial guess to vSelfBinScratch
 	  //
-          	  
+          /* 
 	  for(iterNodalCoorMap = supportPoints.begin(); iterNodalCoorMap != supportPoints.end(); ++iterNodalCoorMap)
 	      if(vselfBinScratch.in_local_range(iterNodalCoorMap->first))
               {
@@ -80,7 +80,7 @@ namespace dftfe
                     else
                       vselfBinScratch(iterNodalCoorMap->first) = 0.0;
                }     
-
+          */
 
 	  //vselfBinScratch.compress(dealii::VectorOperation::insert);
 	  //d_vselfBinConstraintMatrices[iBin].distribute(vselfBinScratch);

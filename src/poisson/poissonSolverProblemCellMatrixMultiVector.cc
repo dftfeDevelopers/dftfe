@@ -64,7 +64,7 @@ namespace dftfe {
     template<unsigned int FEOrder>
     void poissonSolverProblemCellMatrixMultiVector<FEOrder>::distributeX()
     {
-       d_constraintMatrixPtr->distribute(*d_xPtr);
+       d_constraintMatrixPtrRhs->distribute(*d_xPtr);
     }
 
     template<unsigned int FEOrder>
