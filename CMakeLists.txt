@@ -190,7 +190,10 @@ IF (WITH_GPU)
    ./src/dftOperator/operatorCUDA.cu
    ./src/dftOperator/kohnShamDFTOperatorCUDA.cu
    ./src/dftOperator/kohnShamDFTOperatorCUDAKernels.cu
+   ./src/solvers/linearSolverCUDA.cu
+   ./src/solvers/linearSolverProblemCUDA.cu
    ./src/solvers/eigenSolvers/chebyshevOrthogonalizedSubspaceIterationSolverCUDA.cu
+   ./src/solvers/cgSolvers/cgLinearSolverCUDA.cu
    ./src/linAlg/linearAlgebraOperationsInternalCUDA.cu
    ./src/linAlg/linearAlgebraOperationsCUDA.cu
    ./src/linAlg/pseudoGSCUDA.cu

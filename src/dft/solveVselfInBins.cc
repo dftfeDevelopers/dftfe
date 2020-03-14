@@ -77,8 +77,6 @@ namespace dftfe
 		      if(iterMapVal != vSelfBinNodeMap.end())
 			  vselfBinScratch(iterNodalCoorMap->first) = iterMapVal->second;
 		    }
-                    else
-                      vselfBinScratch(iterNodalCoorMap->first) = 0.0;
                }     
           */
 
@@ -102,6 +100,9 @@ namespace dftfe
 				    d_vselfBinConstraintMatrices[iBin],
 				    constraintMatrixId,
 				    d_atomsInBin[iBin],
+                                    &d_inhomoIdsColoredVecFlattened[0],
+                                    numberBins,
+                                    iBin,
                                     true,
                                     false);
 

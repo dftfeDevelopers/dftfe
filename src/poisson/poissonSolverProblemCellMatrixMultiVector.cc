@@ -42,6 +42,9 @@ namespace dftfe {
                            const dealii::ConstraintMatrix & constraintMatrixRhs,
 		           const unsigned int matrixFreeVectorComponent,
 	                   const std::map<dealii::types::global_dof_index, double> & atoms,
+                           const double * inhomoIdsColoredVecFlattened,
+                           const unsigned int numberBins,
+                           const unsigned int binId,
 			   const bool isComputeDiagonalA,
                            const bool isPrecomputeShapeGradIntegral)
     {
@@ -51,6 +54,9 @@ namespace dftfe {
         d_constraintMatrixPtrRhs=&constraintMatrixRhs;
 	d_matrixFreeVectorComponent=matrixFreeVectorComponent;
 	d_atomsPtr=&atoms;
+        d_inhomoIdsColoredVecFlattened=inhomoIdsColoredVecFlattened;
+        d_numberBins=numberBins;
+        d_binId=binId;
 
 	if (isComputeDiagonalA)
 	  computeDiagonalA();
@@ -264,6 +270,9 @@ namespace dftfe {
       Ax=0.0;
 
       d_matrixFreeDataPtr->cell_loop (&poissonSolverProblemCellMatrixMultiVector<FEOrder>::AX, this, Ax, x);
+
+      for(unsigned int i = 0; i < Ax.local_size(); ++i)
+             Ax.local_element(i) *= d_inhomoIdsColoredVecFlattened[i*d_numberBins+d_binId];
     }
 
 

@@ -615,6 +615,10 @@ namespace dftfe
 	  = dealii::LinearAlgebra::distributed::Vector<double>(locally_owned_dofs,
                                                           ghost_indices,
                                                           mpi_communicator);
+
+      d_inhomoIdsColoredVecFlattened.clear();
+      d_inhomoIdsColoredVecFlattened.resize(numberBins*locally_owned_dofs.size(),1.0);
+
       //
       //set constraint matrices for each bin
       //
@@ -796,7 +800,7 @@ namespace dftfe
 			  boundaryNodeMapOnlyChargeId[iterMap->first] = -1;
 			  vSelfBinNodeMap[iterMap->first] = potentialValue;
 			  outNodes++;
-
+                        
 			}//else loop
 
 		    }//non-hanging node check
@@ -954,6 +958,10 @@ namespace dftfe
 	    d_vselfBinConstraintMatrices[iBin].merge(constraintMatrix,dealii::AffineConstraints<double>::MergeConflictBehavior::left_object_wins);
 	    d_vselfBinConstraintMatrices[iBin].close();
 	    constraintsVector.push_back(&(d_vselfBinConstraintMatrices[iBin]));
+
+            for (auto index : locally_owned_dofs)
+		if( d_vselfBinConstraintMatrices[iBin].is_inhomogeneously_constrained(index))
+                    d_inhomoIdsColoredVecFlattened[inhomogBoundaryVec.get_partitioner()->global_to_local(index)*numberBins+iBin]=0.0;
 
 	}//bin loop
 

@@ -47,6 +47,9 @@ namespace dftfe {
                      const dealii::ConstraintMatrix & constraintMatrixRhs,
 		     const unsigned int matrixFreeVectorComponent,
 	             const std::map<dealii::types::global_dof_index, double> & atoms,
+                     const double * inhomoIdsColoredVecFlattened,
+                     const unsigned int numberBins,
+                     const unsigned int binId,
 		     const bool isComputeDiagonalA=true,
                      const bool isPrecomputeShapeGradIntegral=false);
 
@@ -134,6 +137,9 @@ namespace dftfe {
         /// pointer to dealii ConstraintMatrix object
         const dealii::ConstraintMatrix * d_constraintMatrixPtrRhs;
 
+        /// pointer to 
+        const double * d_inhomoIdsColoredVecFlattened;
+
 	/// matrix free index required to access the DofHandler and ConstraintMatrix objects corresponding to the
 	/// problem
         unsigned int d_matrixFreeVectorComponent;
@@ -145,6 +151,10 @@ namespace dftfe {
         std::vector<double> d_cellShapeFunctionGradientIntegralFlattened;
 
         bool d_isShapeGradIntegralPrecomputed;
+
+        unsigned int d_numberBins;
+
+        unsigned int d_binId;
 
         const MPI_Comm mpi_communicator;
         const unsigned int n_mpi_processes;
