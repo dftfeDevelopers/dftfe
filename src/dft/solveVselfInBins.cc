@@ -50,6 +50,8 @@ namespace dftfe
       std::map<dealii::types::global_dof_index, int>::iterator iterMap;
       std::map<dealii::types::global_dof_index, double>::iterator iterMapVal;
       d_vselfFieldBins.resize(numberBins);
+      vectorType vselfBinScratch;
+      matrix_free_data.initialize_dof_vector(vselfBinScratch,0);
       for(unsigned int iBin = 0; iBin < numberBins; ++iBin)
 	{
           double init_time;
@@ -57,8 +59,7 @@ namespace dftfe
           init_time = MPI_Wtime();
 
 	  const unsigned int constraintMatrixId = iBin + offset;
-	  vectorType vselfBinScratch;
-	  matrix_free_data.initialize_dof_vector(vselfBinScratch,0);
+
 	  vselfBinScratch = 0;
 	  
           std::map<dealii::types::global_dof_index,dealii::Point<3> >::iterator iterNodalCoorMap;
@@ -126,14 +127,17 @@ namespace dftfe
 	      temp[0] = it->second;//charge;
 	      temp[1] = vselfBinScratch(it->first);//vself
 	      if (dftParameters::verbosity>=4)
-		  std::cout<< "(only for debugging: peak value of Vself: "<< temp[1] << ")" <<std::endl;
+		  std::cout<< "(only for debugging: peak value of Vself: "<< temp[1] <<")" <<std::endl;
 
 	      localVselfs.push_back(temp);
 	    }
 	    //
 	    //store solved vselfBinScratch field
 	    //
-	    d_vselfFieldBins[iBin]=vselfBinScratch;
+	    matrix_free_data.initialize_dof_vector(d_vselfFieldBins[iBin],constraintMatrixId);
+	    d_vselfFieldBins[iBin].copy_locally_owned_data_from(vselfBinScratch);
+            d_vselfBinConstraintMatrices[iBin].distribute(d_vselfFieldBins[iBin]);
+            d_vselfFieldBins[iBin].update_ghost_values();
 	}//bin loop
     }
 }

@@ -70,7 +70,7 @@ namespace dftfe {
     template<unsigned int FEOrder>
     void poissonSolverProblemCellMatrixMultiVector<FEOrder>::distributeX()
     {
-       d_constraintMatrixPtrRhs->distribute(*d_xPtr);
+       d_constraintMatrixPtr->distribute(*d_xPtr);
     }
 
     template<unsigned int FEOrder>
@@ -124,8 +124,8 @@ namespace dftfe {
     void poissonSolverProblemCellMatrixMultiVector<FEOrder>::computeRhs(vectorType  & rhs)
     {
 
-	rhs.reinit(*d_xPtr);
-        rhs=0;
+	//rhs.reinit(*d_xPtr);
+        //rhs=0;
 
 	const dealii::DoFHandler<3> & dofHandler=
 	    d_matrixFreeDataPtr->get_dof_handler(d_matrixFreeVectorComponent);
@@ -142,6 +142,10 @@ namespace dftfe {
         vectorType tempvec;
         d_matrixFreeDataPtr->initialize_dof_vector(tempvec,d_matrixFreeVectorComponent);
         tempvec=0.0;
+
+	rhs.reinit(tempvec);
+        rhs=0;
+
         d_constraintMatrixPtrRhs->distribute(tempvec);
         tempvec.update_ghost_values();
 
@@ -221,7 +225,7 @@ namespace dftfe {
                   for (unsigned int q_point = 0; q_point < num_quad_points; ++q_point)
                       elementalDiagonalA(i) += (1.0/(4.0*M_PI))*(fe_values.shape_grad(i, q_point)*fe_values.shape_grad (i, q_point))*fe_values.JxW(q_point);
 
-              d_constraintMatrixPtrRhs->distribute_local_to_global(elementalDiagonalA,
+              d_constraintMatrixPtr->distribute_local_to_global(elementalDiagonalA,
                                                                 local_dof_indices,
                                                                 d_diagonalA);
             }
@@ -230,7 +234,7 @@ namespace dftfe {
 
         for(dealii::types::global_dof_index i = 0; i < d_diagonalA.size(); ++i)
               if(d_diagonalA.in_local_range(i))
-                  if(! d_constraintMatrixPtrRhs->is_constrained(i))
+                  if(! d_constraintMatrixPtr->is_constrained(i))
                       d_diagonalA(i) = 1.0/d_diagonalA(i);
 
         d_diagonalA.compress(dealii::VectorOperation::insert);
