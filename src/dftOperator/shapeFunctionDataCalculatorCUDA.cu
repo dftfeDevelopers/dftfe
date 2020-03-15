@@ -66,7 +66,7 @@ namespace shapeFuncCUDA
 		    //thrust::device_vector<double> gradPsiQuadValuesYDJ=gradPsiQuadValuesYD;
 		    //thrust::device_vector<double> gradPsiQuadValuesZDJ=gradPsiQuadValuesZD;
 
-                    const int blockSize=50;
+                    const int blockSize=10;
                     const int numberBlocks=numElems/blockSize;
                     const int remBlockSize=numElems-numberBlocks*blockSize;
 
@@ -75,40 +75,43 @@ namespace shapeFuncCUDA
 		    for (int iblock=0; iblock<(numberBlocks+1); iblock++)
 		    {
 			   const int currentBlockSize= (iblock==numberBlocks)?remBlockSize:blockSize;
-			   const int startingId=iblock*blockSize;
+                           if (currentBlockSize>0)
+                           {
+				   const int startingId=iblock*blockSize;
 
-			   computeShapeGradNINJIntegralContribution<<<(numQuads+255)/256*numNodesPerElem*numNodesPerElem*currentBlockSize,256>>>
-									  (numQuads,
-									   numNodesPerElem,
-									   currentBlockSize,
-									   thrust::raw_pointer_cast(&gradNQuadValuesXD[startingId*numNodesPerElem*numQuads]),
-									   thrust::raw_pointer_cast(&gradNQuadValuesYD[startingId*numNodesPerElem*numQuads]),
-									   thrust::raw_pointer_cast(&gradNQuadValuesZD[startingId*numNodesPerElem*numQuads]),
-									   thrust::raw_pointer_cast(&gradNQuadValuesXD[startingId*numNodesPerElem*numQuads]),
-									   thrust::raw_pointer_cast(&gradNQuadValuesYD[startingId*numNodesPerElem*numQuads]),
-									   thrust::raw_pointer_cast(&gradNQuadValuesZD[startingId*numNodesPerElem*numQuads]),
-									   thrust::raw_pointer_cast(&jxwQuadValuesD[startingId*numQuads]),
-									   thrust::raw_pointer_cast(&shapeGradNINJIntegralContributionD[0]));
-			  
-			   const double scalarCoeffAlpha = 1.0;
-			   const double scalarCoeffBeta = 0.0;
+				   computeShapeGradNINJIntegralContribution<<<(numQuads+255)/256*numNodesPerElem*numNodesPerElem*currentBlockSize,256>>>
+										  (numQuads,
+										   numNodesPerElem,
+										   currentBlockSize,
+										   thrust::raw_pointer_cast(&gradNQuadValuesXD[startingId*numNodesPerElem*numQuads]),
+										   thrust::raw_pointer_cast(&gradNQuadValuesYD[startingId*numNodesPerElem*numQuads]),
+										   thrust::raw_pointer_cast(&gradNQuadValuesZD[startingId*numNodesPerElem*numQuads]),
+										   thrust::raw_pointer_cast(&gradNQuadValuesXD[startingId*numNodesPerElem*numQuads]),
+										   thrust::raw_pointer_cast(&gradNQuadValuesYD[startingId*numNodesPerElem*numQuads]),
+										   thrust::raw_pointer_cast(&gradNQuadValuesZD[startingId*numNodesPerElem*numQuads]),
+										   thrust::raw_pointer_cast(&jxwQuadValuesD[startingId*numQuads]),
+										   thrust::raw_pointer_cast(&shapeGradNINJIntegralContributionD[0]));
+				  
+				   const double scalarCoeffAlpha = 1.0;
+				   const double scalarCoeffBeta = 0.0;
 
 
 
-			   cublasDgemm(handle,
-				      CUBLAS_OP_N,
-				      CUBLAS_OP_N,
-				      1,
-				      currentBlockSize*numNodesPerElem*numNodesPerElem,
-				      numQuads,
-				      &scalarCoeffAlpha,
-				      thrust::raw_pointer_cast(&onesVecD[0]),
-				      1,
-				      thrust::raw_pointer_cast(&shapeGradNINJIntegralContributionD[0]),
-				      numQuads,
-				      &scalarCoeffBeta,
-				      thrust::raw_pointer_cast(&shapeGradNINJIntegralD[startingId*numNodesPerElem*numNodesPerElem]),
-		  		      1);
+				   cublasDgemm(handle,
+					      CUBLAS_OP_N,
+					      CUBLAS_OP_N,
+					      1,
+					      currentBlockSize*numNodesPerElem*numNodesPerElem,
+					      numQuads,
+					      &scalarCoeffAlpha,
+					      thrust::raw_pointer_cast(&onesVecD[0]),
+					      1,
+					      thrust::raw_pointer_cast(&shapeGradNINJIntegralContributionD[0]),
+					      numQuads,
+					      &scalarCoeffBeta,
+					      thrust::raw_pointer_cast(&shapeGradNINJIntegralD[startingId*numNodesPerElem*numNodesPerElem]),
+					      1);
+                           }
                     }
           } 
 }
