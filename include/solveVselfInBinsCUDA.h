@@ -34,6 +34,7 @@ namespace dftfe
                         const double * diagonalAH,
                         const double * inhomoIdsColoredVecFlattenedH,
                         const unsigned int localSize,
+                        const unsigned int ghostSize,
                         const unsigned int numberBins,
                         const MPI_Comm & mpiComm,  
                         double * xH);
@@ -46,6 +47,7 @@ namespace dftfe
 		  const thrust::device_vector<double> & inhomoIdsColoredVecFlattenedD,
 		  const thrust::device_vector<dealii::types::global_dof_index> & cellLocalProcIndexIdMapD,
 		  const unsigned int localSize,
+                  const unsigned int ghostSize,
 		  const unsigned int numberBins,
 		  const unsigned int totalLocallyOwnedCells,
 		  const unsigned int numberNodesPerElement,

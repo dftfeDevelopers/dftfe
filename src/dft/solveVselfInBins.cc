@@ -265,6 +265,22 @@ namespace dftfe
 
       diagonalA.compress(dealii::VectorOperation::insert);
 
+      const unsigned int ghostSize   = matrix_free_data.get_vector_partitioner()->n_ghost_indices();
+
+      std::vector<double> inhomoIdsColoredVecFlattened((localSize+ghostSize)*numberBins,1.0);
+      for (unsigned int i = 0; i <(localSize+ghostSize); ++i)
+      {
+             const dealii::types::global_dof_index globalNodeId=matrix_free_data.get_vector_partitioner()->local_to_global(i);
+             for(unsigned int iBin = 0; iBin < numberBins; ++iBin)
+             {
+		     if( d_vselfBinConstraintMatrices[iBin].is_inhomogeneously_constrained(globalNodeId)
+	                 && d_vselfBinConstraintMatrices[iBin].get_constraint_entries(globalNodeId)->size()==0)
+		     	    inhomoIdsColoredVecFlattened[i*numberBins+iBin]=0.0;
+		     //if( d_vselfBinConstraintMatrices[iBin].is_inhomogeneously_constrained(globalNodeId))
+		     //    inhomoIdsColoredVecFlattened[i*numberBins+iBin]=0.0;
+             }
+      }
+
       MPI_Barrier(MPI_COMM_WORLD);
       time = MPI_Wtime() - time;
       if (dftParameters::verbosity >= 2 && this_mpi_process==0)
@@ -281,8 +297,9 @@ namespace dftfe
                         hangingPeriodicConstraintMatrix,
                         &rhsFlattened[0],
                         diagonalA.begin(),
-                        &d_inhomoIdsColoredVecFlattened[0],
+                        &inhomoIdsColoredVecFlattened[0],
                         localSize,
+                        ghostSize,
                         numberBins,
                         mpi_communicator,
                         &vselfBinsFieldsFlattened[0]);

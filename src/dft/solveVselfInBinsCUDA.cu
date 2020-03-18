@@ -207,10 +207,12 @@ namespace dftfe
 		    void computeAX(cublasHandle_t &handle,
                                    dftUtils::constraintMatrixInfoCUDA & constraintsMatrixDataInfoCUDA,
                                    cudaVectorType & src,
+                                   cudaVectorType & temp,
                                    const unsigned int totalLocallyOwnedCells,
                                    const unsigned int numberNodesPerElement,
                                    const unsigned int numberVectors,
                                    const unsigned int localSize,
+                                   const unsigned int ghostSize,
                                    const thrust::device_vector<double> & poissonCellStiffnessMatricesD,
                                    const thrust::device_vector<double> & inhomoIdsColoredVecFlattenedD,
                                    const thrust::device_vector<dealii::types::global_dof_index> & cellLocalProcIndexIdMapD,
@@ -225,11 +227,19 @@ namespace dftfe
                             //cudaVectorType temp;
                             //temp.reinit(src);
                             //temp=src;
-                                      
-                            src.update_ghost_values();  
-			    constraintsMatrixDataInfoCUDA.distribute(src,numberVectors);
-                            //temp.update_ghost_values(); 
-		            //constraintsMatrixDataInfoCUDA.distribute(temp,numberVectors);
+	                    cudaMemcpy(temp.begin(),
+		                       src.begin(),
+		                       localSize*numberVectors*sizeof(double),
+		                       cudaMemcpyDeviceToDevice);                                     
+ 
+                            //src.update_ghost_values();  
+			    //constraintsMatrixDataInfoCUDA.distribute(src,numberVectors);
+                            temp.update_ghost_values(); 
+		            constraintsMatrixDataInfoCUDA.distribute(temp,numberVectors);
+
+   		  	    scaleKernel<<<(numberVectors+255)/256*(localSize+ghostSize),256>>>(numberVectors*(localSize+ghostSize),
+                                                                temp.begin(),
+			   				        thrust::raw_pointer_cast(&inhomoIdsColoredVecFlattenedD[0]));
 
 			    //
 			    //elemental matrix-multiplication
@@ -238,7 +248,7 @@ namespace dftfe
 
 			    copyCUDAKernel<<<(numberVectors+255)/256*totalLocallyOwnedCells*numberNodesPerElement,256>>>(numberVectors,
                                                                                                  totalLocallyOwnedCells*numberNodesPerElement,
-												 src.begin(),
+												 temp.begin(),//src.begin(),
 											         thrust::raw_pointer_cast(&cellNodalVectorD[0]),
 												 thrust::raw_pointer_cast(&cellLocalProcIndexIdMapD[0]));  
 
@@ -277,10 +287,10 @@ namespace dftfe
 												      dst.begin(),
 												      thrust::raw_pointer_cast(&cellLocalProcIndexIdMapD[0]));
 
-                            
-   		  	   //scaleKernel<<<(numberVectors+255)/256*localSize,256>>>(numberVectors*localSize,
-                           //                                     dst.begin(),
-			   //				        thrust::raw_pointer_cast(&inhomoIdsColoredVecFlattenedD[0]));
+                           // think dirichlet hanging node linked to two master solved nodes 
+   		  	   scaleKernel<<<(numberVectors+255)/256*(localSize+ghostSize),256>>>(numberVectors*(localSize+ghostSize),
+                                                                dst.begin(),
+			   				        thrust::raw_pointer_cast(&inhomoIdsColoredVecFlattenedD[0]));
                            
  
 			   constraintsMatrixDataInfoCUDA.distribute_slave_to_master(dst,numberVectors);
@@ -292,8 +302,8 @@ namespace dftfe
                                                                 dst.begin(),
 			   				        thrust::raw_pointer_cast(&inhomoIdsColoredVecFlattenedD[0]));
                            
-                           src.zero_out_ghosts();
-                           constraintsMatrixDataInfoCUDA.set_zero(src,numberVectors);
+                           //src.zero_out_ghosts();
+                           //constraintsMatrixDataInfoCUDA.set_zero(src,numberVectors);
 		    }
 
 		    void precondition_Jacobi(const double * src,
@@ -349,6 +359,7 @@ namespace dftfe
                                   const double * diagonalAH,
                                   const double * inhomoIdsColoredVecFlattenedH,
                                   const unsigned int localSize,
+                                  const unsigned int ghostSize,
                                   const unsigned int numberBins, 
                                   const MPI_Comm & mpiComm, 
                                   double * xH)
@@ -396,7 +407,7 @@ namespace dftfe
 
                 thrust::device_vector<double> bD(localSize*numberBins,0.0);
                 thrust::device_vector<double> diagonalAD(localSize,0.0);
-                thrust::device_vector<double> inhomoIdsColoredVecFlattenedD(localSize*numberBins,0.0);
+                thrust::device_vector<double> inhomoIdsColoredVecFlattenedD((localSize+ghostSize)*numberBins,0.0);
                 thrust::device_vector<dealii::types::global_dof_index> cellLocalProcIndexIdMapD(totalLocallyOwnedCells*numberNodesPerElement);
 
 	        cudaMemcpy(thrust::raw_pointer_cast(&bD[0]),
@@ -411,7 +422,7 @@ namespace dftfe
 
 	        cudaMemcpy(thrust::raw_pointer_cast(&inhomoIdsColoredVecFlattenedD[0]),
 		           inhomoIdsColoredVecFlattenedH,
-		           localSize*numberBins*sizeof(double),
+		           (localSize+ghostSize)*numberBins*sizeof(double),
 		           cudaMemcpyHostToDevice);
 
 
@@ -434,6 +445,7 @@ namespace dftfe
                           inhomoIdsColoredVecFlattenedD,
                           cellLocalProcIndexIdMapD,
                           localSize,
+                          ghostSize,
                           numberBins,
                           totalLocallyOwnedCells,
                           numberNodesPerElement,
@@ -457,6 +469,7 @@ namespace dftfe
                           const thrust::device_vector<double> & inhomoIdsColoredVecFlattenedD,
                           const thrust::device_vector<dealii::types::global_dof_index> & cellLocalProcIndexIdMapD,
                           const unsigned int localSize,
+                          const unsigned int ghostSize,
                           const unsigned int numberBins,
                           const unsigned int totalLocallyOwnedCells,
                           const unsigned int numberNodesPerElement,
@@ -532,8 +545,9 @@ namespace dftfe
                     q.reinit(x);
                     s.reinit(x);
 
-                    cudaVectorType d;
+                    cudaVectorType d, temp;
                     d.reinit(x);
+                    temp.reinit(x);
 
                     cudaDeviceSynchronize();
                     MPI_Barrier(MPI_COMM_WORLD);
@@ -548,10 +562,12 @@ namespace dftfe
                     computeAX(handle,
                               constraintsMatrixDataInfoCUDA,
                               x,
+                              temp,
                               totalLocallyOwnedCells,
                               numberNodesPerElement,
                               numberBins,
                               localSize,
+                              ghostSize,
                               poissonCellStiffnessMatricesD,
                               inhomoIdsColoredVecFlattenedD,
                               cellLocalProcIndexIdMapD,
@@ -689,10 +705,12 @@ namespace dftfe
                         computeAX(handle,
                               constraintsMatrixDataInfoCUDA,
                               d,
+                              temp,
                               totalLocallyOwnedCells,
                               numberNodesPerElement,
                               numberBins,
                               localSize,
+                              ghostSize,
                               poissonCellStiffnessMatricesD,
                               inhomoIdsColoredVecFlattenedD,
                               cellLocalProcIndexIdMapD,
@@ -778,10 +796,12 @@ namespace dftfe
 		            computeAX(handle,
 				      constraintsMatrixDataInfoCUDA,
 				      x,
+                                      temp,
 				      totalLocallyOwnedCells,
 				      numberNodesPerElement,
 				      numberBins,
                                       localSize,
+                                      ghostSize,
 				      poissonCellStiffnessMatricesD,
 				      inhomoIdsColoredVecFlattenedD,
 				      cellLocalProcIndexIdMapD,

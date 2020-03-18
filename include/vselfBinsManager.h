@@ -203,7 +203,7 @@ namespace dftfe {
 	/// solved vself solution field for each bin
 	std::vector<vectorType> d_vselfFieldBins;
 
-        std::vector<double> d_inhomoIdsColoredVecFlattened;
+        //std::vector<double> d_inhomoIdsColoredVecFlattened;
 
 	/// Map of locally relevant global dof index and the atomic charge in each bin
 	std::vector<std::map<dealii::types::global_dof_index, double> > d_atomsInBin;
