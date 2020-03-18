@@ -68,7 +68,6 @@ namespace dftfe
 	  //
 	  //set initial guess to vSelfBinScratch
 	  //
-	  /*
 	  for(iterNodalCoorMap = supportPoints.begin(); iterNodalCoorMap != supportPoints.end(); ++iterNodalCoorMap)
 	      if(vselfBinScratch.in_local_range(iterNodalCoorMap->first)
 		  && !d_vselfBinConstraintMatrices[iBin].is_constrained(iterNodalCoorMap->first))
@@ -81,7 +80,6 @@ namespace dftfe
 
 	  vselfBinScratch.compress(dealii::VectorOperation::insert);
 	  d_vselfBinConstraintMatrices[iBin].distribute(vselfBinScratch);
-          */
 
           MPI_Barrier(MPI_COMM_WORLD);
           init_time = MPI_Wtime() - init_time;
