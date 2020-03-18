@@ -19,7 +19,6 @@ SET(TARGET_SRC
   ./src/dft/vselfBinsManager.cc
   ./src/dft/energyCalculator.cc
   ./src/poisson/poissonSolverProblem.cc
-  ./src/poisson/poissonSolverProblemCellMatrixMultiVector.cc
   ./src/helmholtz/kerkerSolverProblem.cc
   ./src/dftOperator/kohnShamDFTOperator.cc
   ./src/dftOperator/operator.cc
@@ -190,10 +189,8 @@ IF (WITH_GPU)
    ./src/dftOperator/operatorCUDA.cu
    ./src/dftOperator/kohnShamDFTOperatorCUDA.cu
    ./src/dftOperator/kohnShamDFTOperatorCUDAKernels.cu
-   ./src/solvers/linearSolverCUDA.cu
-   ./src/solvers/linearSolverProblemCUDA.cu
+   ./src/dft/solveVselfInBinsCUDA.cu
    ./src/solvers/eigenSolvers/chebyshevOrthogonalizedSubspaceIterationSolverCUDA.cu
-   ./src/solvers/cgSolvers/cgLinearSolverCUDA.cu
    ./src/linAlg/linearAlgebraOperationsInternalCUDA.cu
    ./src/linAlg/linearAlgebraOperationsCUDA.cu
    ./src/linAlg/pseudoGSCUDA.cu

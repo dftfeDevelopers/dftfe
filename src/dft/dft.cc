@@ -1101,45 +1101,45 @@ namespace dftfe {
   void dftClass<FEOrder>::solve(const bool computeForces,
                                 const bool solveLinearizedKS)
   {
-    //
-    //solve vself in bins
-    //
+
+    /*
     computing_timer.enter_section("Nuclear self-potential solve");
     computingTimerStandard.enter_section("Nuclear self-potential solve");
+#ifdef DFTFE_WITH_GPU
+    if (dftParameters::useGPU)
+            d_vselfBinsManager.solveVselfInBinsGPU(matrix_free_data,
+					           2,
+					           constraintsNone,
+				                   d_imagePositions,
+				                   d_imageIds,
+				                   d_imageCharges,
+					           d_localVselfs);
+    else
+            d_vselfBinsManager.solveVselfInBins(matrix_free_data,
+                                                   2,
+                                                   constraintsNone,
+                                                   d_imagePositions,
+                                                   d_imageIds,
+                                                   d_imageCharges,
+                                                   d_localVselfs);
+#else
     d_vselfBinsManager.solveVselfInBins(matrix_free_data,
-					2,
-					constraintsNone,
-				        d_imagePositions,
-				        d_imageIds,
-				        d_imageCharges,
-					d_localVselfs);
+                                        2,
+                                        constraintsNone,
+                                        d_imagePositions,
+                                        d_imageIds,
+                                        d_imageCharges,
+                                        d_localVselfs);
+
+#endif
     computingTimerStandard.exit_section("Nuclear self-potential solve");
     computing_timer.exit_section("Nuclear self-potential solve");
-
+    */
+    
     QGauss<3>  quadrature(C_num1DQuad<FEOrder>()); 
-    if(dftParameters::isPseudopotential)
-    {
-	    double init_psplocal;
-	    MPI_Barrier(MPI_COMM_WORLD);
-	    init_psplocal = MPI_Wtime();
-	    initLocalPseudoPotential(dofHandler,
-				     quadrature,
-                                     matrix_free_data,
-                                     phiExtDofHandlerIndex,
-                                     d_noConstraints,
-                                     d_supportPoints,
-				     d_vselfBinsManager,
-				     d_pseudoVLoc,
-				     d_gradPseudoVLoc,
-				     d_gradPseudoVLocAtoms);
 
-	    MPI_Barrier(MPI_COMM_WORLD);
-	    init_psplocal = MPI_Wtime() - init_psplocal;
-	    if (dftParameters::verbosity>=1)
-	       pcout<<"updateAtomPositionsAndMoveMesh: initPseudoPotentialAll: Time taken for local psp init: "<<init_psplocal<<std::endl;
-    }
-
-    computingTimerStandard.enter_section("Total scf solve");
+    //computingTimerStandard.enter_section("Total scf solve");
+    computingTimerStandard.enter_section("Kohn-sham dft operator init");
     energyCalculator energyCalc(mpi_communicator, interpoolcomm,interBandGroupComm);
 
 
@@ -1228,22 +1228,6 @@ namespace dftfe {
     }
 #endif
 
-    if (dftParameters::verbosity>=4)
-      dftUtils::printCurrentMemoryUsage(mpi_communicator,
-	                      "Kohn-sham dft operator init called");
-    //
-    //create eigen solver object
-    //
-    chebyshevOrthogonalizedSubspaceIterationSolver subspaceIterationSolver(mpi_communicator,
-	                                                                   dftParameters::lowerEndWantedSpectrum,
-									   0.0);
-#ifdef DFTFE_WITH_GPU
-    chebyshevOrthogonalizedSubspaceIterationSolverCUDA subspaceIterationSolverCUDA(mpi_communicator,
-	                                                                       dftParameters::lowerEndWantedSpectrum,
-									       0.0);
-#endif
-
-
     //
     //precompute shapeFunctions and shapeFunctionGradients and shapeFunctionGradientIntegrals
     //
@@ -1262,6 +1246,87 @@ namespace dftfe {
     if (dftParameters::verbosity>=4)
       dftUtils::printCurrentMemoryUsage(mpi_communicator,
 	                      "Precompute shapefunction grad integrals, just before starting scf solve");
+
+    if (dftParameters::verbosity>=4)
+      dftUtils::printCurrentMemoryUsage(mpi_communicator,
+	                      "Kohn-sham dft operator init called");
+
+    computingTimerStandard.exit_section("Kohn-sham dft operator init");
+
+    //
+    //solve vself in bins
+    //
+    computing_timer.enter_section("Nuclear self-potential solve");
+    computingTimerStandard.enter_section("Nuclear self-potential solve");
+#ifdef DFTFE_WITH_GPU
+    if (dftParameters::useGPU)
+            d_vselfBinsManager.solveVselfInBinsGPU(matrix_free_data,
+					           2,
+                                                   kohnShamDFTEigenOperatorCUDA,
+					           constraintsNone,
+				                   d_imagePositions,
+				                   d_imageIds,
+				                   d_imageCharges,
+					           d_localVselfs);
+    else
+            d_vselfBinsManager.solveVselfInBins(matrix_free_data,
+                                                   2,
+                                                   constraintsNone,
+                                                   d_imagePositions,
+                                                   d_imageIds,
+                                                   d_imageCharges,
+                                                   d_localVselfs);
+#else
+    d_vselfBinsManager.solveVselfInBins(matrix_free_data,
+                                        2,
+                                        constraintsNone,
+                                        d_imagePositions,
+                                        d_imageIds,
+                                        d_imageCharges,
+                                        d_localVselfs);
+
+#endif
+    computingTimerStandard.exit_section("Nuclear self-potential solve");
+    computing_timer.exit_section("Nuclear self-potential solve");
+
+
+    if(dftParameters::isPseudopotential)
+    {
+	    double init_psplocal;
+	    MPI_Barrier(MPI_COMM_WORLD);
+	    init_psplocal = MPI_Wtime();
+	    initLocalPseudoPotential(dofHandler,
+				     quadrature,
+                                     matrix_free_data,
+                                     phiExtDofHandlerIndex,
+                                     d_noConstraints,
+                                     d_supportPoints,
+				     d_vselfBinsManager,
+				     d_pseudoVLoc,
+				     d_gradPseudoVLoc,
+				     d_gradPseudoVLocAtoms);
+
+	    MPI_Barrier(MPI_COMM_WORLD);
+	    init_psplocal = MPI_Wtime() - init_psplocal;
+	    if (dftParameters::verbosity>=1)
+	       pcout<<"updateAtomPositionsAndMoveMesh: initPseudoPotentialAll: Time taken for local psp init: "<<init_psplocal<<std::endl;
+    }
+  
+
+    computingTimerStandard.enter_section("Total scf solve");
+
+    //
+    //create eigen solver object
+    //
+    chebyshevOrthogonalizedSubspaceIterationSolver subspaceIterationSolver(mpi_communicator,
+	                                                                   dftParameters::lowerEndWantedSpectrum,
+									   0.0);
+#ifdef DFTFE_WITH_GPU
+    chebyshevOrthogonalizedSubspaceIterationSolverCUDA subspaceIterationSolverCUDA(mpi_communicator,
+	                                                                       dftParameters::lowerEndWantedSpectrum,
+									       0.0);
+#endif
+
     //
     //solve
     //

@@ -311,16 +311,15 @@ namespace dftfe {
                                            thrust::raw_pointer_cast(&d_localIndexMapUnflattenedToFlattenedDevice[0]));
 	  }
 
-	  template<typename T>
-	  void constraintMatrixInfoCUDA::set_zero(thrust::device_vector<T>& fieldVector,
+	  void constraintMatrixInfoCUDA::set_zero(cudaVectorType & fieldVector,
 					      const unsigned int blockSize) const
 	  {
             if (d_numConstrainedDofs==0)
                return;
 
              const unsigned int numConstrainedDofs=d_rowIdsLocal.size();
-	     setzeroKernel<T><<<min((blockSize+255)/256*numConstrainedDofs,30000), 256>>>(blockSize,
-					  thrust::raw_pointer_cast(&fieldVector[0]),
+	     setzeroKernel<double><<<min((blockSize+255)/256*numConstrainedDofs,30000), 256>>>(blockSize,
+					  fieldVector.begin(),
 					  thrust::raw_pointer_cast(&d_rowIdsLocalDevice[0]),
 					  numConstrainedDofs,
 					  thrust::raw_pointer_cast(&d_localIndexMapUnflattenedToFlattenedDevice[0]));
@@ -354,13 +353,6 @@ namespace dftfe {
 	    d_columnIdsLocalBinsDevice.clear();
 	    d_columnValuesBinsDevice.clear();
 	  }
-
-
-	 
-	  template void constraintMatrixInfoCUDA::set_zero(thrust::device_vector<double>& fieldVector,
-							 const unsigned int blockSize) const;
-
 	}
-
 }
 

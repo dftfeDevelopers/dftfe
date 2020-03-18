@@ -98,8 +98,7 @@ namespace dftfe {
 	     * @param fieldVector parallel dealii vector with fields stored in a flattened format
 	     * @param blockSize number of field components for a given node
 	     */
-	    template<typename T>
-	    void set_zero(thrust::device_vector<T> &fieldVector,
+	    void set_zero(cudaVectorType &fieldVector,
 			  const unsigned int blockSize) const;
 
 	    /**

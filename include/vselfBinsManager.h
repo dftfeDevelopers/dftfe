@@ -16,6 +16,10 @@
 
 #include <headers.h>
 
+#if defined(DFTFE_WITH_GPU)
+#include <operatorCUDA.h>
+#endif
+
 #ifndef vselfBinsManager_H_
 #define vselfBinsManager_H_
 
@@ -100,12 +104,37 @@ namespace dftfe {
 	   * @param[out] localVselfs peak self-potential values of atoms in the local processor
 	   */
 	  void solveVselfInBins(const dealii::MatrixFree<3,double> & matrix_free_data,
-		                                  const unsigned int offset,
-						  const dealii::ConstraintMatrix & hangingPeriodicConstraintMatrix,
-						  const std::vector<std::vector<double> > & imagePositions,
-						  const std::vector<int> & imageIds,
-						  const std::vector<double> & imageCharges,
-	                                          std::vector<std::vector<double> > & localVselfs);
+				const unsigned int offset,
+				const dealii::ConstraintMatrix & hangingPeriodicConstraintMatrix,
+				const std::vector<std::vector<double> > & imagePositions,
+				const std::vector<int> & imageIds,
+				const std::vector<double> & imageCharges,
+				std::vector<std::vector<double> > & localVselfs);
+
+#ifdef DFTFE_WITH_GPU
+	  /**
+	   * @brief Solve nuclear electrostatic self-potential of atoms in each bin one-by-one
+	   *
+           * @param[in] matrix_free_data MatrixFree object
+           * @param[in] offset MatrixFree object starting offset for vself bins solve
+	   * @param[out] phiExt sum of the self-potential fields of all atoms and image atoms
+	   * @param[in] phiExtConstraintMatrix constraintMatrix corresponding to phiExt
+	   * @param[in] imagePositions image atoms positions data
+	   * @param[in] imageIds image atoms Ids data
+	   * @param[in] imageCharges image atoms charge values data	   *
+	   * @param[out] localVselfs peak self-potential values of atoms in the local processor
+	   */
+	  void solveVselfInBinsGPU(const dealii::MatrixFree<3,double> & matrix_free_data,
+				const unsigned int offset,
+                                operatorDFTCUDAClass & operatorMatrix,
+				const dealii::ConstraintMatrix & hangingPeriodicConstraintMatrix,
+				const std::vector<std::vector<double> > & imagePositions,
+				const std::vector<int> & imageIds,
+				const std::vector<double> & imageCharges,
+				std::vector<std::vector<double> > & localVselfs);
+
+
+#endif
 
           /// get const reference map of binIds and atomIds
 	  const std::map<int,std::set<int> > & getAtomIdsBins() const;

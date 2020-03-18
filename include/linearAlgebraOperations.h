@@ -28,7 +28,7 @@ namespace dftfe
     //
 #ifndef DOXYGEN_SHOULD_SKIP_THIS
     extern "C"{
-      void dgemv_(char* TRANS, const int* M, const int* N, double* alpha, double* A, const int* LDA, double* X, const int* INCX, double* beta, double* C, const int* INCY);
+      void dgemv_(const char* TRANS, const unsigned int* M, const unsigned int* N, const double* alpha, const double* A, const unsigned int* LDA, const double* X, const unsigned int* INCX, const double* beta, double* C, const unsigned int* INCY);
       void dgesv_( int* n, int* nrhs, double* a, int* lda, int* ipiv, double* b, int* ldb, int* info );
       void dscal_(const unsigned int *n, const double *alpha, double *x, const unsigned int *inc);
       void sscal_(const unsigned int *n, const float *alpha, float *x, const unsigned int *inc);

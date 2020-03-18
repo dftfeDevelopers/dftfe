@@ -112,6 +112,20 @@ namespace dftfe{
                                      std::vector<unsigned int>                       & macroCellIdToNormalCellIdMap,
 				     std::vector<dealii::types::global_dof_index>         & flattenedArrayCellLocalProcIndexId);
 
+    /** @brief Creates a cell local index set map for flattened array
+     *
+     *  @param partitioner associated with the flattened array
+     *  @param matrix_free_data object pointer associated with the matrix free data structure
+     *  @param blockSize number of components associated with each node
+     *
+     *  @return flattenedArrayMacroCellLocalProcIndexId macrocell's subcell local proc index map
+     *  @return flattenedArrayCellLocalProcIndexId cell local proc index map
+     */
+    void computeCellLocalIndexSetMap(const std::shared_ptr< const dealii::Utilities::MPI::Partitioner > & partitioner,
+				     const dealii::MatrixFree<3,double>                                 & matrix_free_data,
+				     const unsigned int                                                   blockSize,
+				     std::vector<dealii::types::global_dof_index>         & flattenedArrayCellLocalProcIndexId);
+
 
 #ifdef USE_COMPLEX
     /** @brief Copies a single field component from a flattenedArray STL

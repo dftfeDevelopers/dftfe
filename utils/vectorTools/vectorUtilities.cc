@@ -347,6 +347,51 @@ namespace dftfe
    void computeCellLocalIndexSetMap(const std::shared_ptr< const dealii::Utilities::MPI::Partitioner > & partitioner,
 				    const dealii::MatrixFree<3,double>                                 & matrix_free_data,
 				    const unsigned int                                                   blockSize,
+				    std::vector<dealii::types::global_dof_index >         & flattenedArrayCellLocalProcIndexIdMap)
+
+    {
+      //
+      //get FE cell data
+      //
+      const unsigned int numberMacroCells = matrix_free_data.n_macro_cells();
+      const unsigned int numberNodesPerElement = matrix_free_data.get_dofs_per_cell();
+      const unsigned int totalLocallyOwnedCells = matrix_free_data.n_physical_cells();
+
+
+      std::vector<dealii::types::global_dof_index> cell_dof_indicesGlobal(numberNodesPerElement);
+      //
+      //create map for all locally owned cells in the same order
+      //
+      typename dealii::DoFHandler<3>::active_cell_iterator cell = matrix_free_data.get_dof_handler().begin_active(), endc = matrix_free_data.get_dof_handler().end();
+      std::vector<dealii::types::global_dof_index> cell_dof_indices(numberNodesPerElement);
+
+      flattenedArrayCellLocalProcIndexIdMap.clear();
+      flattenedArrayCellLocalProcIndexIdMap.resize(totalLocallyOwnedCells*numberNodesPerElement);
+
+      unsigned int iElemCount = 0;
+      for(; cell!=endc; ++cell)
+	{
+	  if(cell->is_locally_owned())
+	    {
+	      cell->get_dof_indices(cell_dof_indices);
+	      for(unsigned int iNode = 0; iNode < numberNodesPerElement; ++iNode)
+		{
+		  dealii::types::global_dof_index globalIndex = cell_dof_indices[iNode];
+
+		  //Think about variable blockSize
+		  dealii::types::global_dof_index globalIndexFlattenedArray = (dealii::types::global_dof_index)blockSize*globalIndex;
+		  dealii::types::global_dof_index localIndexFlattenedArray = partitioner->global_to_local(globalIndexFlattenedArray);
+		  flattenedArrayCellLocalProcIndexIdMap[iElemCount*numberNodesPerElement+iNode]=localIndexFlattenedArray;
+		}
+	      ++iElemCount;
+	    }
+	}
+    }
+
+
+   void computeCellLocalIndexSetMap(const std::shared_ptr< const dealii::Utilities::MPI::Partitioner > & partitioner,
+				    const dealii::MatrixFree<3,double>                                 & matrix_free_data,
+				    const unsigned int                                                   blockSize,
 				    std::vector<dealii::types::global_dof_index>                       & flattenedArrayMacroCellLocalProcIndexIdMap,
                                     std::vector<unsigned int>                       & normalCellIdToMacroCellIdMap,
                                     std::vector<unsigned int>                       & macroCellIdToNormalCellIdMap,

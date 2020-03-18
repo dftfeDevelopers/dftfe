@@ -27,7 +27,7 @@ namespace dftfe {
  /**
   * @brief Abstract class for linear solve problems to be used with the dealiiLinearSolver interface.
   *
-  * @author Phani Motamarri
+  * @author Phani Motamarri, Sambit Das
   */
   class linearSolverProblemCUDA {
 
@@ -42,14 +42,14 @@ namespace dftfe {
 	 *
 	 * @return reference to x field. Assumes x field data structure is already initialized
 	 */
-	virtual thrust::device_vector<double>  & getX() = 0;
+	virtual cudaVectorType  & getX() = 0;
 
 	/**
 	 * @brief Compute A matrix multipled by x.
 	 *
 	 */
-	virtual void computeAX(thrust::device_vector<double> &src,
-			       thrust::device_vector<double> &dst)  = 0;
+	virtual void computeAX(cudaVectorType &src,
+			       cudaVectorType &dst)  = 0;
 
 
 	/**
@@ -57,14 +57,14 @@ namespace dftfe {
 	 *
 	 * @param rhs vector for the right hand side values
 	 */
-	virtual void computeRhs(thrust::device_vector<double> & rhs) = 0;
+	virtual void computeRhs(cudaVectorType & rhs) = 0;
 
 	/**
 	 * @brief Jacobi preconditioning function.
 	 *
 	 */
-        virtual void precondition_Jacobi(const thrust::device_vector<double> & src,
-		                         thrust::device_vector<double> & dst)const = 0;
+        virtual void precondition_Jacobi(const cudaVectorType & src,
+		                         cudaVectorType & dst)const = 0;
 
 
 	/**
