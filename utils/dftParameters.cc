@@ -121,6 +121,7 @@ namespace dftfe {
     bool useAtomicRhoXLBOMD=true;
     bool useMeshSizesFromAtomsFile=false;
     bool chebyCommunAvoidanceAlgo=false;
+    double chebyshevFilterPolyDegreeFirstScfScalingFactor=1.34;
 
     void declare_parameters(ParameterHandler &prm)
     {
@@ -574,6 +575,11 @@ namespace dftfe {
 			    Patterns::Integer(0,2000),
 			    "[Advanced] Chebyshev polynomial degree to be employed for the Chebyshev filtering subspace iteration procedure to dampen the unwanted spectrum of the Kohn-Sham Hamiltonian. If set to 0, a default value depending on the upper bound of the eigen-spectrum is used. See Phani Motamarri et.al., J. Comp. Phys. 253, 308-343 (2013).");
 
+          prm.declare_entry("CHEBYSHEV POLYNOMIAL DEGREE SCALING FACTOR FIRST SCF", "1.34",
+                            Patterns::Double(0,2000),
+                            "[Advanced] Chebyshev polynomial degree first scf scaling factor.");
+
+
 	  prm.declare_entry("LOWER BOUND UNWANTED FRAC UPPER", "0",
 			    Patterns::Double(0,1),
 			    "[Developer] The value of the fraction of the upper bound of the unwanted spectrum, the lower bound of the unwanted spectrum will be set. Default value is 0.");
@@ -945,6 +951,7 @@ namespace dftfe {
 	  dftParameters::mixedPrecXtHXFracStates  = prm.get_integer("MIXED PREC XTHX FRAC STATES");
 	  dftParameters::algoType= prm.get("ALGO");
 	  dftParameters::numAdaptiveFilterStates= prm.get_integer("ADAPTIVE FILTER STATES");
+          dftParameters::chebyshevFilterPolyDegreeFirstScfScalingFactor=prm.get_double("CHEBYSHEV POLYNOMIAL DEGREE SCALING FACTOR FIRST SCF");
 	}
 	prm.leave_subsection ();
       }

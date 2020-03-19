@@ -111,6 +111,7 @@ namespace dftfe {
       extern bool readWfcForPdosPspFile;
       extern double maxJacobianRatioFactorForMD;
       extern double chebyshevFilterTolXLBOMD;
+      extern double chebyshevFilterPolyDegreeFirstScfScalingFactor;
       extern double timeStepBOMD;
       extern unsigned int numberStepsBOMD;
       extern double startingTempBOMDNVE;

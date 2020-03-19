@@ -137,7 +137,7 @@ namespace dftfe{
     if(chebyshevOrder == 0)
       chebyshevOrder=internal::setChebyshevOrder(upperBoundUnwantedSpectrum);
 
-    chebyshevOrder=(isFirstScf && dftParameters::isPseudopotential && !dftParameters::isXLBOMD)?chebyshevOrder*1.34:chebyshevOrder;
+    chebyshevOrder=(isFirstScf && dftParameters::isPseudopotential)?chebyshevOrder*dftParameters::chebyshevFilterPolyDegreeFirstScfScalingFactor:chebyshevOrder;
 
     if (dftParameters::lowerBoundUnwantedFracUpper>1e-6)
       d_lowerBoundUnWantedSpectrum=dftParameters::lowerBoundUnwantedFracUpper*upperBoundUnwantedSpectrum;
