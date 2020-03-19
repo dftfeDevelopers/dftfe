@@ -123,6 +123,7 @@ namespace dftfe {
       extern double ratioOfMeshMovementToForceGaussianBOMD;
       extern bool useAtomicRhoXLBOMD;
       extern bool useMeshSizesFromAtomsFile;
+      extern bool chebyCommunAvoidanceAlgo;
 
       /**
        * Declare parameters.
