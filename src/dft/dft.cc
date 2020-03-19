@@ -1332,6 +1332,8 @@ namespace dftfe {
     //
     computing_timer.enter_section("scf solve");
 
+    const bool performExtraNoMixedPrecNoSpectrumSplitPassInCaseOfXlBOMD=((dftParameters::useMixedPrecXTHXSpectrumSplit || dftParameters::mixedPrecXtHXFracStates!=0) && solveLinearizedKS)?true:false;
+
     double firstScfChebyTol=dftParameters::mixingMethod=="ANDERSON_WITH_KERKER"?1e-2:2e-2;
 
     if (dftParameters::isBOMD && dftParameters::isXLBOMD && solveLinearizedKS)
@@ -1748,7 +1750,7 @@ namespace dftfe {
 	    std::vector<std::vector<double>> residualNormWaveFunctionsAllkPoints;
 	    residualNormWaveFunctionsAllkPoints.resize(d_kPointWeights.size());
 	    for(unsigned int kPoint = 0; kPoint < d_kPointWeights.size(); ++kPoint)
-	      residualNormWaveFunctionsAllkPoints[kPoint].resize((scfIter<dftParameters::spectrumSplitStartingScfIter || scfConverged)?d_numEigenValues:d_numEigenValuesRR);
+	       residualNormWaveFunctionsAllkPoints[kPoint].resize((scfIter<dftParameters::spectrumSplitStartingScfIter || scfConverged || performExtraNoMixedPrecNoSpectrumSplitPassInCaseOfXlBOMD)?d_numEigenValues:d_numEigenValuesRR);
 
 	    if(dftParameters::xc_id < 4)
 	      {
@@ -1925,7 +1927,76 @@ namespace dftfe {
 		    if (dftParameters::verbosity>=2)
 		      pcout << "Maximum residual norm of the state closest to and below Fermi level: "<< maxRes << std::endl;
 		  }
+
+                  if (performExtraNoMixedPrecNoSpectrumSplitPassInCaseOfXlBOMD)
+                  {
+
+		    for (unsigned int kPoint = 0; kPoint < d_kPointWeights.size(); ++kPoint)
+		      {
+			if (dftParameters::verbosity>=2)
+			  pcout<< "Perform extra pass for xlbomd mixed precison spectrum splitting case "<< 1+count<<std::endl;
+
+#ifdef DFTFE_WITH_GPU
+			if (dftParameters::useGPU)
+			       kohnShamDFTEigenOperatorCUDA.reinitkPointIndex(kPoint);
+#endif
+			if (!dftParameters::useGPU)
+			       kohnShamDFTEigenOperator.reinitkPointIndex(kPoint);
+
+			    computing_timer.enter_section("Hamiltonian Matrix Computation");
+#ifdef DFTFE_WITH_GPU
+			if (dftParameters::useGPU)
+			       kohnShamDFTEigenOperatorCUDA.computeHamiltonianMatrix(kPoint);
+#endif
+			if (!dftParameters::useGPU)
+			       kohnShamDFTEigenOperator.computeHamiltonianMatrix(kPoint);
+			    computing_timer.exit_section("Hamiltonian Matrix Computation");
+
+			if(dftParameters::verbosity>=4)
+			  dftUtils::printCurrentMemoryUsage(mpi_communicator,
+							    "Hamiltonian Matrix computed");
+#ifdef DFTFE_WITH_GPU
+                        if (dftParameters::useGPU)
+				kohnShamEigenSpaceCompute(0,
+							  kPoint,
+							  kohnShamDFTEigenOperatorCUDA,
+							  d_elpaScala,
+							  subspaceIterationSolverCUDA,
+							  residualNormWaveFunctionsAllkPoints[kPoint],
+							  false,
+							  false,
+							  scfIter==0);
+
+#endif
+                        if (!dftParameters::useGPU)
+				kohnShamEigenSpaceCompute(0,
+							  kPoint,
+							  kohnShamDFTEigenOperator,
+							  d_elpaScala,
+							  subspaceIterationSolver,
+							  residualNormWaveFunctionsAllkPoints[kPoint],
+							  false,
+							  false,
+							  scfIter==0);
+
+		      }
+		    count++;
+		    //
+		    if (dftParameters::constraintMagnetization)
+		       compute_fermienergy_constraintMagnetization(eigenValues) ;
+		    else
+			compute_fermienergy(eigenValues,
+					numElectrons);
+		    //
+		    maxRes = computeMaximumHighestOccupiedStateResidualNorm
+		      (residualNormWaveFunctionsAllkPoints,
+		       eigenValues,
+		       fermiEnergy);
+		    if (dftParameters::verbosity>=2)
+		      pcout << "Maximum residual norm of the state closest to and below Fermi level: "<< maxRes << std::endl;
+                  }
 	      }
+
               numberChebyshevSolvePasses=count;
 
 	      if(dftParameters::verbosity>=1)
@@ -1940,16 +2011,16 @@ namespace dftfe {
 	  symmetryPtr->computeAndSymmetrize_rhoOut();
 	}
 	else
-	  compute_rhoOut((scfIter<dftParameters::spectrumSplitStartingScfIter || scfConverged)?false:true,
+	  compute_rhoOut((scfIter<dftParameters::spectrumSplitStartingScfIter || scfConverged || performExtraNoMixedPrecNoSpectrumSplitPassInCaseOfXlBOMD)?false:true,
                          (dftParameters::isBOMD && scfConverged)||solveLinearizedKS);
 #else
 
 #ifdef DFTFE_WITH_GPU
         compute_rhoOut(kohnShamDFTEigenOperatorCUDA,
-	      (scfIter<dftParameters::spectrumSplitStartingScfIter || scfConverged)?false:true,
+	      (scfIter<dftParameters::spectrumSplitStartingScfIter || scfConverged || performExtraNoMixedPrecNoSpectrumSplitPassInCaseOfXlBOMD)?false:true,
                (dftParameters::isBOMD && scfConverged)||solveLinearizedKS);
 #else
-	compute_rhoOut((scfIter<dftParameters::spectrumSplitStartingScfIter || scfConverged)?false:true,
+	compute_rhoOut((scfIter<dftParameters::spectrumSplitStartingScfIter || scfConverged || performExtraNoMixedPrecNoSpectrumSplitPassInCaseOfXlBOMD)?false:true,
                        (dftParameters::isBOMD && scfConverged)||solveLinearizedKS);
 #endif
 #endif
