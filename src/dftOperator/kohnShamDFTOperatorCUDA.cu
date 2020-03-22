@@ -2123,17 +2123,24 @@ namespace dftfe
 						   thrust::raw_pointer_cast(&XSP[0]));
 
     double *  projHamBlockHost;
-    cudaMallocHost((void **)&projHamBlockHost,vectorsBlockSize*N*sizeof(double));
+    cudaMallocHost((void **)&projHamBlockHost,vectorsBlockSize*vectorsBlockSize*Sizeof(double));
     std::memset(projHamBlockHost,0,vectorsBlockSize*N*sizeof(double));
+    
+    float *  projHamBlockHostFracSP;
+    cudaMallocHost((void **)&projHamBlockHostFracSP,vectorsBlockSize*N*sizeof(float));
+    std::memset(projHamBlockHostFracSP,0,vectorsBlockSize*N*sizeof(float));
 
     float *  projHamBlockHostSP;
     cudaMallocHost((void **)&projHamBlockHostSP,vectorsBlockSize*N*sizeof(float));
     std::memset(projHamBlockHostSP,0,vectorsBlockSize*N*sizeof(float));
 
     thrust::device_vector<double> HXBlockFull(vectorsBlockSize*M,0.0);
+    thrust::device_vector<double> HXBlockFullFracSP(vectorsBlockSize*M,0.0);
     thrust::device_vector<float> HXBlockFullSP(vectorsBlockSize*M,0.0);
-    thrust::device_vector<double> projHamBlock(vectorsBlockSize*N,0.0);
+    thrust::device_vector<double> projHamBlock(vectorsBlockSize*vectorsBlockSize,0.0);
     thrust::device_vector<float> projHamBlockSP(vectorsBlockSize*N,0.0);
+    thrust::device_vector<float> projHamBlockFracSP(vectorsBlockSize*N,0.0);
+    
  
     for (unsigned int jvec = 0; jvec < N; jvec += vectorsBlockSize)
       {
@@ -2199,16 +2206,26 @@ namespace dftfe
 										    k-jvec);
 	      }
 
+      if(jvec+B>Noc)
+      {
+         convDoubleArrToFloatArr<<<(vectorsBlockSize+255)/256*M,256>>>(vectorsBlockSize*M,
+						 	               thrust::raw_pointer_cast(&HXBlockFull[0]),
+						                       thrust::raw_pointer_cast(&HXBlockFullFracSP[0]));
+      }
+
+      
+
             
 	    const double alpha = 1.0, beta = 0.0;
+	    const float alphaSPFrac = 1.0,betaSPFrac = 0.0;
 
-            if (jvec+B>Noc)
+             if (jvec+B>Noc)
 	      {
 		const unsigned int D=N-jvec;
 		cublasDgemm(handle,
 			    CUBLAS_OP_N,
 			    CUBLAS_OP_T,
-			    D,
+			    B,
 			    B,
 			    M,
 			    &alpha,
@@ -2218,37 +2235,83 @@ namespace dftfe
 			    B,
 			    &beta,
 			    thrust::raw_pointer_cast(&projHamBlock[0]),
-			    D);
+			    B);
+
+               const unsigned int DRem = D-B;
+
+               if(DRem!=0)
+	       {
+                 cublasSgemm(handle,
+		             CUBLAS_OP_N,
+			     CUBLAS_OP_T,
+			     DRem,
+			     B,
+			     M,
+			     &alphaSPFrac,
+			     thrust::raw_pointer_cast(&XSP[0])+jvec+B,
+			     N,
+			     thrust::raw_pointer_cast(&HXBlockFullFracSP[0]),
+			     B,
+			     &beta,
+			     thrust::raw_pointer_cast(&projHamBlockFracSP[0]),
+			     DRem);
+               }
 
 	       cudaMemcpy(projHamBlockHost,
-		       thrust::raw_pointer_cast(&projHamBlock[0]),
-		       D*B*sizeof(double),
-		       cudaMemcpyDeviceToHost);
+		          thrust::raw_pointer_cast(&projHamBlock[0]),
+		          B*B*sizeof(double),
+		          cudaMemcpyDeviceToHost);
+
+               cudaMemcpy(projHamBlockHostFracSP,
+	                  thrust::raw_pointer_cast(&projHamBlockFracSP[0]),
+			  DRem*B*sizeof(float),
+			  cudaMemcpyDeviceToHost);
 
 
 	       // Sum local projHamBlock across domain decomposition processors 
 	       MPI_Allreduce(MPI_IN_PLACE,
 			  projHamBlockHost,
-			  D*B,
+			  B*B,
 			  MPI_DOUBLE,
 			  MPI_SUM,
 			  mpi_communicator);
 
+                MPI_Allreduce(MPI_IN_PLACE,
+			  projHamBlockHostFracSP,
+			  DRem*B,
+			  MPI_FLOAT,
+			  MPI_SUM,
+			  mpi_communicator);
+
+
+
 		//Copying only the lower triangular part to the ScaLAPACK projected Hamiltonian matrix
-		if (processGrid->is_process_active())
-		  for (unsigned int j = 0; j <B; ++j)
+		if(processGrid->is_process_active())
+		  for(unsigned int j = 0; j <B; ++j)
 		    if(globalToLocalColumnIdMap.find(j+jvec)!=globalToLocalColumnIdMap.end())
 		      {
 			const unsigned int localColumnId=globalToLocalColumnIdMap[j+jvec];
-			for (unsigned int i = j+jvec; i <N; ++i)
+			for (unsigned int i = j+jvec; i <jvec+B; ++i)
 			  {
 			    std::map<unsigned int, unsigned int>::iterator it=
 			      globalToLocalRowIdMap.find(i);
 			    if (it!=globalToLocalRowIdMap.end())
 			      projHamPar.local_el(it->second,
 						  localColumnId)
-				=projHamBlockHost[j*D+i-jvec];
+				=projHamBlockHost[j*B+i-jvec];
 			  }
+
+			 for (unsigned int i = jvec+B; i <N; ++i)
+			  {
+			    std::map<unsigned int, unsigned int>::iterator it=
+			      globalToLocalRowIdMap.find(i);
+			    if (it!=globalToLocalRowIdMap.end())
+			      projHamPar.local_el(it->second,
+						  localColumnId)
+				=projHamBlockHostFracSP[j*DRem+i-jvec-B];
+			  }
+
+
 		      }
 	      }
 	    else
