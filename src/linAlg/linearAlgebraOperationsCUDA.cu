@@ -302,29 +302,13 @@ namespace dftfe
       }
 
       __global__
-      void dotProductContributionBlockedKernel(const unsigned int numEntries,
-			   const double *vec1,
-			   const double *vec2,
-			   double * vecTemp)
-      { 
-
- 	 const unsigned int globalThreadId = blockIdx.x*blockDim.x + threadIdx.x;
-	
-	 for(unsigned int index = globalThreadId; index < numEntries; index+= blockDim.x*gridDim.x)
-	 {
-	   vecTemp[index]=vec1[index]*vec2[index];
-	 }
-
-
-      }
-
-      __global__
       void dotProductContributionBlockedKernelMassVector(const unsigned int contiguousBlockSize,
 					       const unsigned int numContiguousBlocks,
 			   const double *vec1,
 			   const double *vec2,
                            const double * sqrtMassVector,
-			   double * vecTemp)
+                           double * vecTemp1,
+			   double * vecTemp2)
       { 
         const unsigned int globalThreadId = blockIdx.x*blockDim.x + threadIdx.x;
 	const unsigned int numberEntries = numContiguousBlocks*contiguousBlockSize;
@@ -332,7 +316,9 @@ namespace dftfe
 	for(unsigned int index = globalThreadId; index < numberEntries; index+= blockDim.x*gridDim.x)
 	 {
 	   const unsigned int blockIndex = index/contiguousBlockSize;
-	   vecTemp[index]=vec1[index]*vec2[index]*sqrtMassVector[blockIndex]*sqrtMassVector[blockIndex];
+           const double temp= sqrtMassVector[blockIndex];
+           vecTemp1[index]=vec1[index]*vec2[index];           
+	   vecTemp2[index]=vec1[index]*vec1[index]*temp*temp;
 	 }
 
 
@@ -358,16 +344,13 @@ namespace dftfe
                          double * rayleighQuotientsH,
                          double * rayleighQuotientsDiffH)
       {
-	     dotProductContributionBlockedKernel<<<(numberVectors+255)/256*localSize,256>>>(numberVectors*localSize,
-						xarray,
-						yarray,
-						temparray1);
-
+             
 	     dotProductContributionBlockedKernelMassVector<<<(numberVectors+255)/256*localSize,256>>>(numberVectors,
                                                 localSize,
 						xarray,
-						xarray,
+						yarray,
                                                 sqrtMassVector,
+                                                temparray1,
 						temparray2);
 
 	     const double alpha = 1.0, beta = 0.0;
@@ -400,35 +383,37 @@ namespace dftfe
 			  &beta,
 			  xtdotxarrayD,
 			  1);
-
-	    cudaMemcpy(xtdotxarrayH,
+            
+	     cudaMemcpy(xtdotxarrayH,
 		   xtdotxarrayD,
 		   numberVectors*sizeof(double),
 		   cudaMemcpyDeviceToHost);
 
-	    cudaMemcpy(ytdotxarrayH,
+	     cudaMemcpy(ytdotxarrayH,
 		   ytdotxarrayD,
 		   numberVectors*sizeof(double),
-		   cudaMemcpyDeviceToHost);
+	 	   cudaMemcpyDeviceToHost);
+             
+             
 
-
-	     MPI_Allreduce(MPI_IN_PLACE,
-			  &xtdotxarrayH[0],
-			  numberVectors,
-			  MPI_DOUBLE,
-			  MPI_SUM,
-			  mpiComm);
-
-	     MPI_Allreduce(MPI_IN_PLACE,
-			  &ytdotxarrayH[0],
-			  numberVectors,
-			  MPI_DOUBLE,
-			  MPI_SUM,
-			  mpiComm);
-
-             std::pair<bool,bool> temp;
              bool isConvergedToTol1=true;
              bool isConvergedToTol2=true;
+ 
+	     MPI_Allreduce(MPI_IN_PLACE,
+			  xtdotxarrayH,
+			  numberVectors,
+			  MPI_DOUBLE,
+			  MPI_SUM,
+			  mpiComm);
+
+	     MPI_Allreduce(MPI_IN_PLACE,
+			  ytdotxarrayH,
+			  numberVectors,
+			  MPI_DOUBLE,
+			  MPI_SUM,
+			  mpiComm);
+
+             
              for (unsigned int i=0; i<numberVectors;++i)
              {
                    const double temp=rayleighQuotientsH[i];
@@ -441,14 +426,15 @@ namespace dftfe
                    if (std::fabs(diff)>tolCompute)
                        isConvergedToTol2=false;
 
-                   rayleighQuotientsDiffH[i]=diff;
+                   //rayleighQuotientsDiffH[i]=diff;
              }
-
+             
 	     cudaMemcpy(rayleighQuotientsD,
 		   rayleighQuotientsH,
 		   numberVectors*sizeof(double),
 		   cudaMemcpyHostToDevice);
-             
+              
+             std::pair<bool,bool> temp;
              temp.first=isConvergedToTol1;
              temp.second=isConvergedToTol2;
              return temp; 
@@ -811,11 +797,12 @@ namespace dftfe
 		  YArray.begin(),
 		  inc);
 	      
-      const double communAvoidanceTolerance=1e-12;
+      const double communAvoidanceTolerance=1e-14;
       const double computeAvoidanceTolerance=1e-10;  
       bool isCommunAvoidanceToleranceReached=false;
       bool isComputeAvoidanceToleranceReached=false;
       bool isFirstCallToCommunAvoidance=false;
+      bool isFirstCallToComputeAvoidance=false;
  
       //
       //polynomial loop
@@ -903,14 +890,52 @@ namespace dftfe
                       if (isComputeAvoidanceToleranceReached)
                       {
                         if (this_mpi_process==0)
-                           std::cout<<"  Skipping Chebyshev polynomial filtering after iter: "<<degree<<std::endl;
-                        continue;
+                           std::cout<<"  Skipping Chebyshev polynomial filtering after iter: "<<(degree-1)<<std::endl;
+
+		  
+			XArray.zero_out_ghosts();
+			YArray.zero_out_ghosts();
+
+			//unscale src vector with M^{1/2}
+			//
+			scaleCUDAKernel<<<(numberVectors+255)/256*localVectorSize,256>>>(numberVectors,
+										       localVectorSize,
+										       1.0/alpha1Old,
+										       XArray.begin(),
+										       operatorMatrix.getSqrtMassVec());
+
+			scaleCUDAKernel<<<(numberVectors+255)/256*localVectorSize,256>>>(numberVectors,
+										       localVectorSize,
+										       1.0,
+										       YArray.begin(),
+										       operatorMatrix.getInvSqrtMassVec());
+
+			daxpbyCUDAKernel<<<min((totalVectorSize+255)/256,30000),256>>>(totalVectorSize,
+										     YArray.begin(),
+										     XArray.begin(),
+										     coeff,
+										     alpha2);
+			scaleFlag=true;
+			//
+			//call HX
+			//
+			operatorMatrix.HX(YArray,
+					projectorKetTimesVector,
+					localVectorSize,
+					numberVectors,
+					scaleFlag,
+					alpha1,
+					XArray);
+
+           	        XArray.swap(YArray);
+
+                        break;
                       }
 
-                      if (this_mpi_process==0 && isFirstCallToCommunAvoidance)
-                        std::cout<<"   Communication avoidance HX from Chebyshev polynomial iter: "<<degree<<", ghostVectorSize: "<<ghostVectorSize<<std::endl;
+		      if (this_mpi_process==0 && isFirstCallToCommunAvoidance)
+			std::cout<<"   Communication avoidance HX from Chebyshev polynomial iter: "<<degree<<", ghostVectorSize: "<<ghostVectorSize<<std::endl;
 		      
-                      combinedCUDAKernel<<<min((numberVectors*(localVectorSize+ghostVectorSize)+255)/256,30000),256>>>(numberVectors,
+		      combinedCUDAKernel<<<min((numberVectors*(localVectorSize+ghostVectorSize)+255)/256,30000),256>>>(numberVectors,
 										       localVectorSize+ghostVectorSize,
 										       YArray.begin(),
 										       XArray.begin(),
@@ -922,53 +947,42 @@ namespace dftfe
 										       operatorMatrix.getSqrtMassVec());
 
 
-                       if (isFirstCallToCommunAvoidance)
-                       {
-                          YArray.update_ghost_values();
-                          XArray.update_ghost_values();
-                          isFirstCallToCommunAvoidance=false;
-                       }
-                      
-                       
-                       XArray2=0;
-                       operatorMatrix.HXChebyNoCommun(YArray,
+		       if (isFirstCallToCommunAvoidance)
+		       {
+			  YArray.update_ghost_values();
+			  XArray.update_ghost_values();
+			  isFirstCallToCommunAvoidance=false;
+		       }
+		      
+		       
+		       XArray2=0;
+		       operatorMatrix.HXChebyNoCommun(YArray,
 					     projectorKetTimesVector,
 					     localVectorSize,
 					     numberVectors,
 					     XArray2);
-                       
+		       
 
-                      XArray2.compress(dealii::VectorOperation::add);
-                      //XArray2.update_ghost_values();
+		      XArray2.compress(dealii::VectorOperation::add);
+		      //XArray2.update_ghost_values();
 
-                      // update ghost values of XArray by scaling YArray ghost values with Rayleigh quotients
-                      // XArray+= M * YArray' * Lamda (M^(1/2)*M^(-1/2)*H*M^(-1/2)*M^(1/2)*YArray')
-                      // YArray'=M^(-1/2)*YArray
-                      if (ghostVectorSize>0)
-        	          scaleXArrayRayleighQuotientsCUDAKernel<<<(numberVectors+255)/256*ghostVectorSize,256>>>(numberVectors,
-									                            ghostVectorSize,
-                                                                                                    thrust::raw_pointer_cast(&rayleighQuotientsD[0]), 
-									                            YArray.begin()+localVectorSize*numberVectors,
-                                                                                                    operatorMatrix.getSqrtMassVec()+localVectorSize,
-									                            XArray2.begin()+localVectorSize*numberVectors);
-                      
+		      // update ghost values of XArray by scaling YArray ghost values with Rayleigh quotients
+		      // XArray+= M * YArray' * Lamda (M^(1/2)*M^(-1/2)*H*M^(-1/2)*M^(1/2)*YArray')
+		      // YArray'=M^(-1/2)*YArray
+		      if (ghostVectorSize>0)
+			  scaleXArrayRayleighQuotientsCUDAKernel<<<(numberVectors+255)/256*ghostVectorSize,256>>>(numberVectors,
+												    ghostVectorSize,
+												    thrust::raw_pointer_cast(&rayleighQuotientsD[0]), 
+												    YArray.begin()+localVectorSize*numberVectors,
+												    operatorMatrix.getSqrtMassVec()+localVectorSize,
+												    XArray2.begin()+localVectorSize*numberVectors);
+		      
 
-                      /*
-       	              scaleXArrayRayleighQuotientsCUDAKernel<<<(numberVectors+255)/256*(ghostVectorSize+localVectorSize),256>>>(numberVectors,
-									                            (ghostVectorSize+localVectorSize),
-                                                                                                    thrust::raw_pointer_cast(&rayleighQuotientsD[0]), 
-									                            YArray.begin(),
-                                                                                                    operatorMatrix.getSqrtMassVec(),
-									                            XArray2.begin());
-                      */
-                      
 		      daxpbyCUDAKernel<<<min(((ghostVectorSize+localVectorSize)*numberVectors+255)/256,30000),256>>>((ghostVectorSize+localVectorSize)*numberVectors,
 										     XArray2.begin(),
 										     XArray.begin(),
 										     1.0,
 										     1.0);
-                      
-
                       if (degree==(m-1))
                       {
                          XArray.zero_out_ghosts();
@@ -1005,25 +1019,28 @@ namespace dftfe
 		      //(YArray^T*M^(-1/2)*H*M^(-1/2)*YArray)/(YArray^T*YArray)
 		      // =(YArray'_i^T*XArray2)/(YArray'^T_i* M*YArray')
                       std::pair<bool, bool> temp;
-		      temp=computeAndCheckRayleighQuotients(operatorMatrix.getCublasHandle(),
-						       YArray.begin(),
-						       XArray2.begin(),
-						       operatorMatrix.getSqrtMassVec(),
-						       thrust::raw_pointer_cast(&onesVecD[0]),
-						       numberVectors,
-						       localVectorSize,
-						       operatorMatrix.getMPICommunicator(),
-						       communAvoidanceTolerance,
-                                                       computeAvoidanceTolerance,
-						       thrust::raw_pointer_cast(&tempArray1D[0]),
-						       thrust::raw_pointer_cast(&tempArray2D[0]),
-						       thrust::raw_pointer_cast(&ytdotxarrayD[0]),
-						       thrust::raw_pointer_cast(&xtdotxarrayD[0]),
-						       &ytdotxarrayH[0],
-						       &xtdotxarrayH[0],
-						       thrust::raw_pointer_cast(&rayleighQuotientsD[0]),
-						       &rayleighQuotientsH[0],
-                                                       &rayleighQuotientsDiffH[0]);
+                      temp.first=false;
+                      temp.second=false;
+                      if (degree%5==0)
+			      temp=computeAndCheckRayleighQuotients(operatorMatrix.getCublasHandle(),
+							       YArray.begin(),
+							       XArray2.begin(),
+							       operatorMatrix.getSqrtMassVec(),
+							       thrust::raw_pointer_cast(&onesVecD[0]),
+							       numberVectors,
+							       localVectorSize,
+							       operatorMatrix.getMPICommunicator(),
+							       communAvoidanceTolerance,
+							       computeAvoidanceTolerance,
+							       thrust::raw_pointer_cast(&tempArray1D[0]),
+							       thrust::raw_pointer_cast(&tempArray2D[0]),
+							       thrust::raw_pointer_cast(&ytdotxarrayD[0]),
+							       thrust::raw_pointer_cast(&xtdotxarrayD[0]),
+							       &ytdotxarrayH[0],
+							       &xtdotxarrayH[0],
+							       thrust::raw_pointer_cast(&rayleighQuotientsD[0]),
+							       &rayleighQuotientsH[0],
+							       &rayleighQuotientsDiffH[0]);
                       
                       isCommunAvoidanceToleranceReached=temp.first;
                       isComputeAvoidanceToleranceReached=temp.second;
@@ -1041,7 +1058,10 @@ namespace dftfe
 										     1.0,
 										     1.0); 
                       if (isCommunAvoidanceToleranceReached) 
-                           isFirstCallToCommunAvoidance=true;     
+                           isFirstCallToCommunAvoidance=true;    
+
+                      if (isComputeAvoidanceToleranceReached) 
+                           isFirstCallToComputeAvoidance=true;   
               }       
 
 
