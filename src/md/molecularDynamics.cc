@@ -407,8 +407,6 @@ void molecularDynamics<FEOrder>::run()
             }
 	}
 
-        double internalEnergyAccumulatedCorrection=0.0;
-        double entropicEnergyAccumulatedCorrection=0.0;
 	//
 	//start the MD simulation
 	//
@@ -508,7 +506,7 @@ void molecularDynamics<FEOrder>::run()
             MPI_Barrier(MPI_COMM_WORLD);
             atomicrho_time = MPI_Wtime();
 
-            if (dftPtr->d_autoMesh==1)
+            if (dftPtr->d_autoMesh==1 || (timeIndex == (startingTimeStep+1) && restartFlag==1))
                 dftPtr->d_matrixFreeDataPRefined.initialize_dof_vector(atomicRho);
 
             dftPtr->initAtomicRho(atomicRho);
@@ -579,7 +577,7 @@ void molecularDynamics<FEOrder>::run()
                         dftPtr->updatePrevMeshDataStructures();
                         pcout<<".............Auto meshing step: interpolation and re-normalization completed.............."<<std::endl;
                     }
-                    else if (dftPtr->d_autoMesh==1)
+                    else if (dftPtr->d_autoMesh==1 || (timeIndex == (startingTimeStep+1) && restartFlag==1))
                     {
                         dftPtr->solve();
                         
@@ -788,10 +786,10 @@ void molecularDynamics<FEOrder>::run()
 	    averageKineticEnergy = kineticEnergy/(3*numberGlobalCharges);
 	    temperatureFromVelocities = averageKineticEnergy*2/kb;
 	    kineticEnergyVector[timeIndex-startingTimeStep] = kineticEnergy/haToeV;
-	    internalEnergyVector[timeIndex-startingTimeStep] = (dftParameters::isXLBOMD && dftPtr->d_autoMesh!=1)?
+	    internalEnergyVector[timeIndex-startingTimeStep] = (dftParameters::isXLBOMD && dftPtr->d_autoMesh!=1 && !(timeIndex ==startingTimeStep+1 && restartFlag==1))?
                                                                dftPtr->d_shadowPotentialEnergy
-                                                               :dftPtr->d_groundStateEnergy-internalEnergyAccumulatedCorrection;
-	    entropicEnergyVector[timeIndex-startingTimeStep] = dftPtr->d_entropicEnergy-entropicEnergyAccumulatedCorrection;
+                                                               :dftPtr->d_groundStateEnergy;
+	    entropicEnergyVector[timeIndex-startingTimeStep] = dftPtr->d_entropicEnergy;
             totalEnergyVector[timeIndex-startingTimeStep] = kineticEnergyVector[timeIndex-startingTimeStep] +internalEnergyVector[timeIndex-startingTimeStep] -entropicEnergyVector[timeIndex-startingTimeStep];
             rmsErrorRhoVector[timeIndex-startingTimeStep] = rmsErrorRho;
             rmsErrorGradRhoVector[timeIndex-startingTimeStep] = rmsErrorGradRho;
@@ -847,11 +845,11 @@ void molecularDynamics<FEOrder>::run()
                 if (dftParameters::isXLBOMD)
                 {
 			dftUtils::readFile(1,
-					   totalEnergyData,
+					   rmsErrorRhoData,
 					   "RMSErrorRhoMd");
 
 			dftUtils::readFile(1,
-					   totalEnergyData,
+					   rmsErrorGradRhoData,
 					   "RMSErrorGradRhoMd");
                 }
 		for(int i = 0; i <= startingTimeStep; ++i)
