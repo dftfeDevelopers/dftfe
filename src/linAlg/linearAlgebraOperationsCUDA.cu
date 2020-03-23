@@ -307,8 +307,7 @@ namespace dftfe
 			   const double *vec1,
 			   const double *vec2,
                            const double * sqrtMassVector,
-                           double * vecTemp1,
-			   double * vecTemp2)
+                           double * vecTemp)
       { 
         const unsigned int globalThreadId = blockIdx.x*blockDim.x + threadIdx.x;
 	const unsigned int numberEntries = numContiguousBlocks*contiguousBlockSize;
@@ -317,8 +316,8 @@ namespace dftfe
 	 {
 	   const unsigned int blockIndex = index/contiguousBlockSize;
            const double temp= sqrtMassVector[blockIndex];
-           vecTemp1[index]=vec1[index]*vec2[index];           
-	   vecTemp2[index]=vec1[index]*vec1[index]*temp*temp;
+           vecTemp[2*index]=vec1[index]*vec2[index];           
+	   vecTemp[2*index+1]=vec1[index]*vec1[index]*temp*temp;
 	 }
 
 
@@ -334,12 +333,9 @@ namespace dftfe
                          const MPI_Comm & mpiComm,
                          const double tolCommun,
                          const double tolCompute,
-                         double * temparray1,
-                         double * temparray2,
-                         double * ytdotxarrayD,
-                         double * xtdotxarrayD,
-                         double * ytdotxarrayH,
-                         double * xtdotxarrayH,
+                         double * temparray,
+                         double * dotarrayD,
+                         double * dotarrayH,
 			 double * rayleighQuotientsD,
                          double * rayleighQuotientsH,
                          double * rayleighQuotientsDiffH)
@@ -350,76 +346,47 @@ namespace dftfe
 						xarray,
 						yarray,
                                                 sqrtMassVector,
-                                                temparray1,
-						temparray2);
+                                                temparray);
 
 	     const double alpha = 1.0, beta = 0.0;
 	     cublasDgemm(handle,
 			  CUBLAS_OP_N,
 			  CUBLAS_OP_T,
 			  1,
-			  numberVectors,
+			  2*numberVectors,
 			  localSize,
 			  &alpha,
 			  onesVec,
 			  1,
-			  temparray1,
-			  numberVectors,
+			  temparray,
+			  2*numberVectors,
 			  &beta,
-			  ytdotxarrayD,
+			  dotarrayD,
 			  1);
 
-	     cublasDgemm(handle,
-			  CUBLAS_OP_N,
-			  CUBLAS_OP_T,
-			  1,
-			  numberVectors,
-			  localSize,
-			  &alpha,
-			  onesVec,
-			  1,
-			  temparray2,
-			  numberVectors,
-			  &beta,
-			  xtdotxarrayD,
-			  1);
             
-	     cudaMemcpy(xtdotxarrayH,
-		   xtdotxarrayD,
-		   numberVectors*sizeof(double),
+	     cudaMemcpy(dotarrayH,
+		        dotarrayD,
+		   2*numberVectors*sizeof(double),
 		   cudaMemcpyDeviceToHost);
-
-	     cudaMemcpy(ytdotxarrayH,
-		   ytdotxarrayD,
-		   numberVectors*sizeof(double),
-	 	   cudaMemcpyDeviceToHost);
-             
              
 
              bool isConvergedToTol1=true;
              bool isConvergedToTol2=true;
  
 	     MPI_Allreduce(MPI_IN_PLACE,
-			  xtdotxarrayH,
-			  numberVectors,
+			  dotarrayH,
+			  2*numberVectors,
 			  MPI_DOUBLE,
 			  MPI_SUM,
 			  mpiComm);
 
-	     MPI_Allreduce(MPI_IN_PLACE,
-			  ytdotxarrayH,
-			  numberVectors,
-			  MPI_DOUBLE,
-			  MPI_SUM,
-			  mpiComm);
-
-             
              for (unsigned int i=0; i<numberVectors;++i)
              {
                    const double temp=rayleighQuotientsH[i];
                    //std::cout<<"ytdotxarrayH: "<<ytdotxarrayH[i]<<std::endl;
                    //std::cout<<"xtdotxarrayH: "<<xtdotxarrayH[i]<<std::endl;
-                   rayleighQuotientsH[i]= ytdotxarrayH[i]/xtdotxarrayH[i];
+                   rayleighQuotientsH[i]= dotarrayH[2*i]/dotarrayH[2*i+1];
                    const double diff=rayleighQuotientsH[i]-temp;
                    if (std::fabs(diff)>tolCommun)
                        isConvergedToTol1=false;
@@ -428,11 +395,13 @@ namespace dftfe
 
                    //rayleighQuotientsDiffH[i]=diff;
              }
-             
+            
+             /* 
 	     cudaMemcpy(rayleighQuotientsD,
 		   rayleighQuotientsH,
 		   numberVectors*sizeof(double),
 		   cudaMemcpyHostToDevice);
+             */
               
              std::pair<bool,bool> temp;
              temp.first=isConvergedToTol1;
@@ -753,12 +722,9 @@ namespace dftfe
       XArray2=0;
 
       thrust::device_vector<double> onesVecD(localVectorSize,1.0);
-      thrust::device_vector<double> tempArray1D(localVectorSize*numberVectors,0.0);
-      thrust::device_vector<double> tempArray2D(localVectorSize*numberVectors,0.0);
-      thrust::device_vector<double> ytdotxarrayD(numberVectors,0.0);
-      thrust::device_vector<double> xtdotxarrayD(numberVectors,0.0);
-      std::vector<double> ytdotxarrayH(numberVectors,0.0);
-      std::vector<double> xtdotxarrayH(numberVectors,0.0);
+      thrust::device_vector<double> tempArrayD(2*localVectorSize*numberVectors,0.0);
+      thrust::device_vector<double> dotarrayD(2*numberVectors,0.0);
+      std::vector<double> dotarrayH(2*numberVectors,0.0);
       thrust::device_vector<double> rayleighQuotientsD(numberVectors,0.0);
       std::vector<double> rayleighQuotientsH(numberVectors,0.0);
       std::vector<double> rayleighQuotientsDiffH(numberVectors,0.0);
@@ -798,7 +764,7 @@ namespace dftfe
 		  inc);
 	      
       const double communAvoidanceTolerance=1e-14;
-      const double computeAvoidanceTolerance=1e-10;  
+      const double computeAvoidanceTolerance=1e-11;  
       bool isCommunAvoidanceToleranceReached=false;
       bool isComputeAvoidanceToleranceReached=false;
       bool isFirstCallToCommunAvoidance=false;
@@ -1032,12 +998,9 @@ namespace dftfe
 							       operatorMatrix.getMPICommunicator(),
 							       communAvoidanceTolerance,
 							       computeAvoidanceTolerance,
-							       thrust::raw_pointer_cast(&tempArray1D[0]),
-							       thrust::raw_pointer_cast(&tempArray2D[0]),
-							       thrust::raw_pointer_cast(&ytdotxarrayD[0]),
-							       thrust::raw_pointer_cast(&xtdotxarrayD[0]),
-							       &ytdotxarrayH[0],
-							       &xtdotxarrayH[0],
+							       thrust::raw_pointer_cast(&tempArrayD[0]),
+							       thrust::raw_pointer_cast(&dotarrayD[0]),
+							       &dotarrayH[0],
 							       thrust::raw_pointer_cast(&rayleighQuotientsD[0]),
 							       &rayleighQuotientsH[0],
 							       &rayleighQuotientsDiffH[0]);
