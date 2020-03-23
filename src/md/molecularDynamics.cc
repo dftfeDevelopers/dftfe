@@ -407,8 +407,6 @@ void molecularDynamics<FEOrder>::run()
             }
 	}
 
-        double internalEnergyAccumulatedCorrection=0.0;
-        double entropicEnergyAccumulatedCorrection=0.0;
 	//
 	//start the MD simulation
 	//
@@ -788,10 +786,10 @@ void molecularDynamics<FEOrder>::run()
 	    averageKineticEnergy = kineticEnergy/(3*numberGlobalCharges);
 	    temperatureFromVelocities = averageKineticEnergy*2/kb;
 	    kineticEnergyVector[timeIndex-startingTimeStep] = kineticEnergy/haToeV;
-	    internalEnergyVector[timeIndex-startingTimeStep] = (dftParameters::isXLBOMD && dftPtr->d_autoMesh!=1)?
+	    internalEnergyVector[timeIndex-startingTimeStep] = (dftParameters::isXLBOMD && dftPtr->d_autoMesh!=1 && !(timeIndex ==startingTimeStep+1 && restartFlag==1))?
                                                                dftPtr->d_shadowPotentialEnergy
-                                                               :dftPtr->d_groundStateEnergy-internalEnergyAccumulatedCorrection;
-	    entropicEnergyVector[timeIndex-startingTimeStep] = dftPtr->d_entropicEnergy-entropicEnergyAccumulatedCorrection;
+                                                               :dftPtr->d_groundStateEnergy;
+	    entropicEnergyVector[timeIndex-startingTimeStep] = dftPtr->d_entropicEnergy;
             totalEnergyVector[timeIndex-startingTimeStep] = kineticEnergyVector[timeIndex-startingTimeStep] +internalEnergyVector[timeIndex-startingTimeStep] -entropicEnergyVector[timeIndex-startingTimeStep];
             rmsErrorRhoVector[timeIndex-startingTimeStep] = rmsErrorRho;
             rmsErrorGradRhoVector[timeIndex-startingTimeStep] = rmsErrorGradRho;
