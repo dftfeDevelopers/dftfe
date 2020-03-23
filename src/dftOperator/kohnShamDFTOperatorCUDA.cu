@@ -2097,6 +2097,8 @@ namespace dftfe
 							    dealii::ScaLAPACKMatrix<double> & projHamPar)
   {
 
+   pcout<<"XtHX Mixed Prec: "<<std::endl;
+
     std::map<unsigned int, unsigned int> globalToLocalColumnIdMap;
     std::map<unsigned int, unsigned int> globalToLocalRowIdMap;
     linearAlgebraOperationsCUDA::internal::createGlobalToLocalIdMapsScaLAPACKMat(processGrid,
@@ -2123,8 +2125,8 @@ namespace dftfe
 						   thrust::raw_pointer_cast(&XSP[0]));
 
     double *  projHamBlockHost;
-    cudaMallocHost((void **)&projHamBlockHost,vectorsBlockSize*vectorsBlockSize*Sizeof(double));
-    std::memset(projHamBlockHost,0,vectorsBlockSize*N*sizeof(double));
+    cudaMallocHost((void **)&projHamBlockHost,vectorsBlockSize*vectorsBlockSize*sizeof(double));
+    std::memset(projHamBlockHost,0,vectorsBlockSize*vectorsBlockSize*sizeof(double));
     
     float *  projHamBlockHostFracSP;
     cudaMallocHost((void **)&projHamBlockHostFracSP,vectorsBlockSize*N*sizeof(float));
@@ -2135,16 +2137,15 @@ namespace dftfe
     std::memset(projHamBlockHostSP,0,vectorsBlockSize*N*sizeof(float));
 
     thrust::device_vector<double> HXBlockFull(vectorsBlockSize*M,0.0);
-    thrust::device_vector<double> HXBlockFullFracSP(vectorsBlockSize*M,0.0);
+    thrust::device_vector<float> HXBlockFullFracSP(vectorsBlockSize*M,0.0);
     thrust::device_vector<float> HXBlockFullSP(vectorsBlockSize*M,0.0);
     thrust::device_vector<double> projHamBlock(vectorsBlockSize*vectorsBlockSize,0.0);
     thrust::device_vector<float> projHamBlockSP(vectorsBlockSize*N,0.0);
     thrust::device_vector<float> projHamBlockFracSP(vectorsBlockSize*N,0.0);
     
  
-    for (unsigned int jvec = 0; jvec < N; jvec += vectorsBlockSize)
+     for (unsigned int jvec = 0; jvec < N; jvec += vectorsBlockSize)
       {
-
 	// Correct block dimensions if block "goes off edge of" the matrix
 	const unsigned int B = std::min(vectorsBlockSize, N-jvec);
 
@@ -2206,15 +2207,14 @@ namespace dftfe
 										    k-jvec);
 	      }
 
+
       if(jvec+B>Noc)
       {
-         convDoubleArrToFloatArr<<<(vectorsBlockSize+255)/256*M,256>>>(vectorsBlockSize*M,
-						 	               thrust::raw_pointer_cast(&HXBlockFull[0]),
-						                       thrust::raw_pointer_cast(&HXBlockFullFracSP[0]));
+         convDoubleArrToFloatArr<<<(B+255)/256*M,256>>>(B*M,
+						 	thrust::raw_pointer_cast(&HXBlockFull[0]),
+						        thrust::raw_pointer_cast(&HXBlockFullFracSP[0]));
       }
-
-      
-
+          
             
 	    const double alpha = 1.0, beta = 0.0;
 	    const float alphaSPFrac = 1.0,betaSPFrac = 0.0;
@@ -2252,7 +2252,7 @@ namespace dftfe
 			     N,
 			     thrust::raw_pointer_cast(&HXBlockFullFracSP[0]),
 			     B,
-			     &beta,
+			     &betaSPFrac,
 			     thrust::raw_pointer_cast(&projHamBlockFracSP[0]),
 			     DRem);
                }
