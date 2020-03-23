@@ -267,10 +267,8 @@ namespace dftfe
 
 
     cudaVectorType cudaFlattenedArrayBlock2;
-    if (dftParameters::overlapComputeCommunCheby)
-	   vectorTools::createDealiiVector(operatorMatrix.getMatrixFreeData()->get_vector_partitioner(),
-					    vectorsBlockSize,
-					    cudaFlattenedArrayBlock2);
+    if (dftParameters::overlapComputeCommunCheby || dftParameters::chebyCommunAvoidanceAlgo)
+           cudaFlattenedArrayBlock2.reinit(cudaFlattenedArrayBlock);
 
 
     cudaVectorType YArray2;
@@ -280,11 +278,7 @@ namespace dftfe
 
     cudaVectorType projectorKetTimesVector2;
     if (dftParameters::overlapComputeCommunCheby)
-	    vectorTools::createDealiiVector(operatorMatrix.getProjectorKetTimesVectorSingle().get_partitioner(),
-					    vectorsBlockSize,
-					    projectorKetTimesVector2);
-
-
+           projectorKetTimesVector2.reinit(projectorKetTimesVector);
 
     if(!isElpaStep2)
     {
@@ -396,6 +390,19 @@ namespace dftfe
 									      d_lowerBoundUnWantedSpectrum,
 									      upperBoundUnwantedSpectrum,
 									      d_lowerBoundWantedSpectrum);	
+                         else if (dftParameters::chebyCommunAvoidanceAlgo)
+				 linearAlgebraOperationsCUDA::chebyshevFilterCommunAvoidance(operatorMatrix,
+										   cudaFlattenedArrayBlock,
+										   YArray,
+                                                                                   cudaFlattenedArrayBlock2,
+										   cudaFlattenedFloatArrayBlock,
+										   projectorKetTimesVector,
+										   localVectorSize,
+										   BVec,
+										   chebyshevOrder,
+										   d_lowerBoundUnWantedSpectrum,
+										   upperBoundUnwantedSpectrum,
+										   d_lowerBoundWantedSpectrum);	
                          else 
 				 linearAlgebraOperationsCUDA::chebyshevFilter(operatorMatrix,
 										   cudaFlattenedArrayBlock,

@@ -271,6 +271,19 @@ namespace dftfe
 			 const double b,
 			 const double a0);
 
+    void chebyshevFilterCommunAvoidance(operatorDFTCUDAClass & operatorMatrix,
+			 cudaVectorType & X,//thrust::device_vector<dataTypes::number> & X,
+                         cudaVectorType & Y,
+                         cudaVectorType & X2,
+                         cudaVectorTypeFloat & Z,
+                         cudaVectorType & projectorKetTimesVector,
+			 const unsigned int localVectorSize,
+			 const unsigned int numberComponents,
+			 const unsigned int m,
+			 const double a,
+			 const double b,
+			 const double a0);
+
     void chebyshevFilter(operatorDFTCUDAClass & operatorMatrix,
 			 cudaVectorType & X1,
                          cudaVectorType & Y1,

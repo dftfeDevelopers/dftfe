@@ -176,6 +176,12 @@ namespace dftfe{
                          bool returnBeforeCompressSkipUpdateSkipNonLocal=false,
                          bool returnBeforeCompressSkipUpdateSkipLocal=false) = 0;
 
+    virtual void HXChebyNoCommun(cudaVectorType & X,
+                         cudaVectorType & projectorKetTimesVector,
+                         const unsigned int localVectorSize,
+                         const unsigned int numberComponents,
+                         cudaVectorType & Y)=0;
+
 
       /**
        * @brief implementation of non-local projector kets times psi product

@@ -662,18 +662,24 @@ namespace dftfe
     invSqrtMassVec.compress(VectorOperation::insert);
     sqrtMassVec.compress(VectorOperation::insert);
 
+    invSqrtMassVec.update_ghost_values();
+    sqrtMassVec.update_ghost_values();
+
     const unsigned int numberLocalDofs = invSqrtMassVec.local_size();
-    d_invSqrtMassVectorDevice.resize(numberLocalDofs);
-    d_sqrtMassVectorDevice.resize(numberLocalDofs);
+    const unsigned int numberGhostDofs = invSqrtMassVec.get_partitioner()->n_ghost_indices();
+    d_invSqrtMassVectorDevice.clear();
+    d_sqrtMassVectorDevice.clear();
+    d_invSqrtMassVectorDevice.resize(numberLocalDofs+numberGhostDofs);
+    d_sqrtMassVectorDevice.resize(numberLocalDofs+numberGhostDofs);
 
     cudaMemcpy(thrust::raw_pointer_cast(&d_invSqrtMassVectorDevice[0]),
 	       invSqrtMassVec.begin(),
-	       numberLocalDofs*sizeof(double),
+	       (numberLocalDofs+numberGhostDofs)*sizeof(double),
 	       cudaMemcpyHostToDevice);
 
     cudaMemcpy(thrust::raw_pointer_cast(&d_sqrtMassVectorDevice[0]),
 	       sqrtMassVec.begin(),
-	       numberLocalDofs*sizeof(double),
+	       (numberLocalDofs+numberGhostDofs)*sizeof(double),
 	       cudaMemcpyHostToDevice);	      
 
 
@@ -1540,6 +1546,43 @@ namespace dftfe
       }
 
   }
+
+
+
+  template<unsigned int FEOrder>
+  void kohnShamDFTOperatorCUDAClass<FEOrder>::HXChebyNoCommun(cudaVectorType & src,
+                                                      cudaVectorType & projectorKetTimesVector,
+						      const unsigned int localVectorSize,
+						      const unsigned int numberWaveFunctions,
+						      cudaVectorType & dst)
+  {
+    const unsigned int n_ghosts   = dftPtr->matrix_free_data.get_vector_partitioner()->n_ghost_indices();
+    const unsigned int localSize  = dftPtr->matrix_free_data.get_vector_partitioner()->local_size();
+    const unsigned int totalSize  = localSize + n_ghosts;
+
+    getOverloadedConstraintMatrix()->distribute(src,
+						numberWaveFunctions);
+
+    computeLocalHamiltonianTimesX(src.begin(),
+				  numberWaveFunctions,
+				  dst.begin());
+
+
+    //H^{nloc}*M^{-1/2}*X
+    if(dftParameters::isPseudopotential && dftPtr->d_nonLocalAtomGlobalChargeIds.size() > 0)
+      {
+	computeNonLocalHamiltonianTimesX(src.begin(),
+					 projectorKetTimesVector,
+					 numberWaveFunctions,
+					 dst.begin());
+      }
+
+
+
+    getOverloadedConstraintMatrix()->distribute_slave_to_master(dst,
+								numberWaveFunctions);
+  }
+
 
 
   //XTHX

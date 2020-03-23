@@ -153,6 +153,12 @@ namespace dftfe{
                    bool computePart2=false);
 
 
+      void HXChebyNoCommun(cudaVectorType & X,
+                         cudaVectorType & projectorKetTimesVector,
+                         const unsigned int localVectorSize,
+                         const unsigned int numberComponents,
+                         cudaVectorType & Y);
+
       /**
        * @brief Compute projection of the operator into orthogonal basis
        *

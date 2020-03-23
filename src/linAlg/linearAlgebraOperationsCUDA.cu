@@ -113,6 +113,27 @@ namespace dftfe
 
 
       __global__
+      void scaleXArrayRayleighQuotientsCUDAKernel(const unsigned int numVectors,
+			      const unsigned int numGhostEntries,
+                              const double * rayleighQuotients,  
+			      const double *y,
+                              const double *sqrtMassVec,
+                              double * x)
+      {
+	const unsigned int globalThreadId = blockIdx.x*blockDim.x + threadIdx.x;
+	const unsigned int numberEntries = numVectors*numGhostEntries;
+
+	for(unsigned int index = globalThreadId; index < numberEntries; index+= blockDim.x*gridDim.x)
+	  {
+            const unsigned int blockIndex=index/numVectors;
+	    const unsigned int intraBlockIndex = index%numVectors;
+            x[index]=y[index]*rayleighQuotients[intraBlockIndex]*sqrtMassVec[blockIndex]*sqrtMassVec[blockIndex];
+
+	  }
+
+      }
+
+      __global__
       void copySubspaceRotatedBlockToXKernel(const unsigned int BDof,
 					     const float *rotatedXBlockSP,
 					     const double *diagValues,
@@ -280,6 +301,158 @@ namespace dftfe
 
       }
 
+      __global__
+      void dotProductContributionBlockedKernel(const unsigned int numEntries,
+			   const double *vec1,
+			   const double *vec2,
+			   double * vecTemp)
+      { 
+
+ 	 const unsigned int globalThreadId = blockIdx.x*blockDim.x + threadIdx.x;
+	
+	 for(unsigned int index = globalThreadId; index < numEntries; index+= blockDim.x*gridDim.x)
+	 {
+	   vecTemp[index]=vec1[index]*vec2[index];
+	 }
+
+
+      }
+
+      __global__
+      void dotProductContributionBlockedKernelMassVector(const unsigned int contiguousBlockSize,
+					       const unsigned int numContiguousBlocks,
+			   const double *vec1,
+			   const double *vec2,
+                           const double * sqrtMassVector,
+			   double * vecTemp)
+      { 
+        const unsigned int globalThreadId = blockIdx.x*blockDim.x + threadIdx.x;
+	const unsigned int numberEntries = numContiguousBlocks*contiguousBlockSize;
+
+	for(unsigned int index = globalThreadId; index < numberEntries; index+= blockDim.x*gridDim.x)
+	 {
+	   const unsigned int blockIndex = index/contiguousBlockSize;
+	   vecTemp[index]=vec1[index]*vec2[index]*sqrtMassVector[blockIndex]*sqrtMassVector[blockIndex];
+	 }
+
+
+      }
+
+      std::pair<bool,bool> computeAndCheckRayleighQuotients(cublasHandle_t &handle,
+			 const double * xarray,
+			 const double * yarray,
+                         const double * sqrtMassVector,
+			 const double * onesVec,
+			 const unsigned int numberVectors,
+			 const unsigned int localSize,
+                         const MPI_Comm & mpiComm,
+                         const double tolCommun,
+                         const double tolCompute,
+                         double * temparray1,
+                         double * temparray2,
+                         double * ytdotxarrayD,
+                         double * xtdotxarrayD,
+                         double * ytdotxarrayH,
+                         double * xtdotxarrayH,
+			 double * rayleighQuotientsD,
+                         double * rayleighQuotientsH,
+                         double * rayleighQuotientsDiffH)
+      {
+	     dotProductContributionBlockedKernel<<<(numberVectors+255)/256*localSize,256>>>(numberVectors*localSize,
+						xarray,
+						yarray,
+						temparray1);
+
+	     dotProductContributionBlockedKernelMassVector<<<(numberVectors+255)/256*localSize,256>>>(numberVectors,
+                                                localSize,
+						xarray,
+						xarray,
+                                                sqrtMassVector,
+						temparray2);
+
+	     const double alpha = 1.0, beta = 0.0;
+	     cublasDgemm(handle,
+			  CUBLAS_OP_N,
+			  CUBLAS_OP_T,
+			  1,
+			  numberVectors,
+			  localSize,
+			  &alpha,
+			  onesVec,
+			  1,
+			  temparray1,
+			  numberVectors,
+			  &beta,
+			  ytdotxarrayD,
+			  1);
+
+	     cublasDgemm(handle,
+			  CUBLAS_OP_N,
+			  CUBLAS_OP_T,
+			  1,
+			  numberVectors,
+			  localSize,
+			  &alpha,
+			  onesVec,
+			  1,
+			  temparray2,
+			  numberVectors,
+			  &beta,
+			  xtdotxarrayD,
+			  1);
+
+	    cudaMemcpy(xtdotxarrayH,
+		   xtdotxarrayD,
+		   numberVectors*sizeof(double),
+		   cudaMemcpyDeviceToHost);
+
+	    cudaMemcpy(ytdotxarrayH,
+		   ytdotxarrayD,
+		   numberVectors*sizeof(double),
+		   cudaMemcpyDeviceToHost);
+
+
+	     MPI_Allreduce(MPI_IN_PLACE,
+			  &xtdotxarrayH[0],
+			  numberVectors,
+			  MPI_DOUBLE,
+			  MPI_SUM,
+			  mpiComm);
+
+	     MPI_Allreduce(MPI_IN_PLACE,
+			  &ytdotxarrayH[0],
+			  numberVectors,
+			  MPI_DOUBLE,
+			  MPI_SUM,
+			  mpiComm);
+
+             std::pair<bool,bool> temp;
+             bool isConvergedToTol1=true;
+             bool isConvergedToTol2=true;
+             for (unsigned int i=0; i<numberVectors;++i)
+             {
+                   const double temp=rayleighQuotientsH[i];
+                   //std::cout<<"ytdotxarrayH: "<<ytdotxarrayH[i]<<std::endl;
+                   //std::cout<<"xtdotxarrayH: "<<xtdotxarrayH[i]<<std::endl;
+                   rayleighQuotientsH[i]= ytdotxarrayH[i]/xtdotxarrayH[i];
+                   const double diff=rayleighQuotientsH[i]-temp;
+                   if (std::fabs(diff)>tolCommun)
+                       isConvergedToTol1=false;
+                   if (std::fabs(diff)>tolCompute)
+                       isConvergedToTol2=false;
+
+                   rayleighQuotientsDiffH[i]=diff;
+             }
+
+	     cudaMemcpy(rayleighQuotientsD,
+		   rayleighQuotientsH,
+		   numberVectors*sizeof(double),
+		   cudaMemcpyHostToDevice);
+             
+             temp.first=isConvergedToTol1;
+             temp.second=isConvergedToTol2;
+             return temp; 
+      }
     }
 
  
@@ -564,7 +737,332 @@ namespace dftfe
 		 cudaMemcpyDeviceToDevice);
 #endif
     }
-   
+  
+    void chebyshevFilterCommunAvoidance(operatorDFTCUDAClass & operatorMatrix,
+			 cudaVectorType & XArray,
+                         cudaVectorType & YArray,
+                         cudaVectorType & XArray2,
+			 cudaVectorTypeFloat & tempFloatArray,
+                         cudaVectorType & projectorKetTimesVector,
+			 const unsigned int localVectorSize,
+			 const unsigned int numberVectors,
+			 const unsigned int m,
+			 const double a,
+			 const double b,
+			 const double a0)
+    {
+#ifdef USE_COMPLEX
+      AssertThrow(false,dftUtils::ExcNotImplementedYet());
+#else
+      double e, c, sigma, sigma1, sigma2, gamma, gpu_time;
+      e = (b-a)/2.0; c = (b+a)/2.0;
+      sigma = e/(a0-c); sigma1 = sigma; gamma = 2.0/sigma1;
+      const unsigned int totalVectorSize = localVectorSize*numberVectors;
+      const unsigned int ghostVectorSize=operatorMatrix.getMatrixFreeData()->get_vector_partitioner()->n_ghost_indices();
+      int inc = 1;
+
+      const unsigned int this_mpi_process=dealii::Utilities::MPI::this_mpi_process(operatorMatrix.getMPICommunicator());
+
+      YArray=0;
+      XArray2=0;
+
+      thrust::device_vector<double> onesVecD(localVectorSize,1.0);
+      thrust::device_vector<double> tempArray1D(localVectorSize*numberVectors,0.0);
+      thrust::device_vector<double> tempArray2D(localVectorSize*numberVectors,0.0);
+      thrust::device_vector<double> ytdotxarrayD(numberVectors,0.0);
+      thrust::device_vector<double> xtdotxarrayD(numberVectors,0.0);
+      std::vector<double> ytdotxarrayH(numberVectors,0.0);
+      std::vector<double> xtdotxarrayH(numberVectors,0.0);
+      thrust::device_vector<double> rayleighQuotientsD(numberVectors,0.0);
+      std::vector<double> rayleighQuotientsH(numberVectors,0.0);
+      std::vector<double> rayleighQuotientsDiffH(numberVectors,0.0);
+
+      //
+      //call HX
+      //
+      bool scaleFlag = false;
+      double scalar = 1.0;
+
+      operatorMatrix.HX(XArray,
+                        projectorKetTimesVector,
+			localVectorSize,
+			numberVectors,
+			scaleFlag,
+			scalar,
+			YArray);
+
+      double  alpha1 = sigma1/e, alpha2 = -c;
+      double alpha1Old=alpha1;
+  
+      //
+      //YArray = YArray + alpha2*XArray and YArray = alpha1*YArray
+      //
+      cublasDaxpy(operatorMatrix.getCublasHandle(),
+		  totalVectorSize,
+		  &alpha2,
+		  XArray.begin(),
+		  inc,
+		  YArray.begin(),
+		  inc);
+
+      cublasDscal(operatorMatrix.getCublasHandle(),
+		  totalVectorSize,
+		  &alpha1,
+		  YArray.begin(),
+		  inc);
+	      
+      const double communAvoidanceTolerance=1e-12;
+      const double computeAvoidanceTolerance=1e-10;  
+      bool isCommunAvoidanceToleranceReached=false;
+      bool isComputeAvoidanceToleranceReached=false;
+      bool isFirstCallToCommunAvoidance=false;
+ 
+      //
+      //polynomial loop
+      //
+      for(unsigned int degree = 2; degree < m+1; ++degree)
+	{
+	  sigma2 = 1.0/(gamma - sigma);
+	  alpha1 = 2.0*sigma2/e, alpha2 = -(sigma*sigma2);
+
+	  double coeff = -c*alpha1;
+	  
+	  if (degree==2)
+	    {
+	      daxpbyCUDAKernel<<<min((totalVectorSize+255)/256,30000),256>>>(totalVectorSize,
+									     YArray.begin(),
+									     XArray.begin(),
+          		                                                     coeff,
+		                                                             alpha2);
+
+
+	      //scale src vector with M^{-1/2}
+	      //
+	      scaleCUDAKernel<<<(numberVectors+255)/256*localVectorSize,256>>>(numberVectors,
+									       localVectorSize,
+									       alpha1,
+									       YArray.begin(),
+									       operatorMatrix.getInvSqrtMassVec());
+
+	      scaleCUDAKernel<<<(numberVectors+255)/256*localVectorSize,256>>>(numberVectors,
+									       localVectorSize,
+									       1.0,
+									       XArray.begin(),
+									       operatorMatrix.getSqrtMassVec());
+
+	      //
+	      //call HX
+	      //
+	      operatorMatrix.HXCheby(YArray,
+				     tempFloatArray,
+				     projectorKetTimesVector,
+				     localVectorSize,
+				     numberVectors,
+				     XArray,
+				     dftParameters::useMixedPrecCheby);
+	    }
+	  else if (degree==m)
+	    {
+
+	      //unscale src vector with M^{1/2}
+	      //
+	      scaleCUDAKernel<<<(numberVectors+255)/256*localVectorSize,256>>>(numberVectors,
+									       localVectorSize,
+									       1.0/alpha1Old,
+									       XArray.begin(),
+									       operatorMatrix.getSqrtMassVec());
+
+	      scaleCUDAKernel<<<(numberVectors+255)/256*localVectorSize,256>>>(numberVectors,
+									       localVectorSize,
+									       1.0,
+									       YArray.begin(),
+									       operatorMatrix.getInvSqrtMassVec());
+
+	      daxpbyCUDAKernel<<<min((totalVectorSize+255)/256,30000),256>>>(totalVectorSize,
+									     YArray.begin(),
+									     XArray.begin(),
+									     coeff,
+									     alpha2);
+	      scaleFlag=true;
+	      //
+	      //call HX
+	      //
+	      operatorMatrix.HX(YArray,
+				projectorKetTimesVector,
+				localVectorSize,
+				numberVectors,
+				scaleFlag,
+				alpha1,
+				XArray);
+
+	    }
+	  else
+	    {
+              if (isCommunAvoidanceToleranceReached || isComputeAvoidanceToleranceReached)
+              {
+                      if (isComputeAvoidanceToleranceReached)
+                      {
+                        if (this_mpi_process==0)
+                           std::cout<<"  Skipping Chebyshev polynomial filtering after iter: "<<degree<<std::endl;
+                        continue;
+                      }
+
+                      if (this_mpi_process==0 && isFirstCallToCommunAvoidance)
+                        std::cout<<"   Communication avoidance HX from Chebyshev polynomial iter: "<<degree<<", ghostVectorSize: "<<ghostVectorSize<<std::endl;
+		      
+                      combinedCUDAKernel<<<min((numberVectors*(localVectorSize+ghostVectorSize)+255)/256,30000),256>>>(numberVectors,
+										       localVectorSize+ghostVectorSize,
+										       YArray.begin(),
+										       XArray.begin(),
+										       coeff,
+										       alpha2,
+										       alpha1,
+										       alpha1Old,
+										       operatorMatrix.getInvSqrtMassVec(),
+										       operatorMatrix.getSqrtMassVec());
+
+
+                       if (isFirstCallToCommunAvoidance)
+                       {
+                          YArray.update_ghost_values();
+                          XArray.update_ghost_values();
+                          isFirstCallToCommunAvoidance=false;
+                       }
+                      
+                       
+                       XArray2=0;
+                       operatorMatrix.HXChebyNoCommun(YArray,
+					     projectorKetTimesVector,
+					     localVectorSize,
+					     numberVectors,
+					     XArray2);
+                       
+
+                      XArray2.compress(dealii::VectorOperation::add);
+                      //XArray2.update_ghost_values();
+
+                      // update ghost values of XArray by scaling YArray ghost values with Rayleigh quotients
+                      // XArray+= M * YArray' * Lamda (M^(1/2)*M^(-1/2)*H*M^(-1/2)*M^(1/2)*YArray')
+                      // YArray'=M^(-1/2)*YArray
+                      if (ghostVectorSize>0)
+        	          scaleXArrayRayleighQuotientsCUDAKernel<<<(numberVectors+255)/256*ghostVectorSize,256>>>(numberVectors,
+									                            ghostVectorSize,
+                                                                                                    thrust::raw_pointer_cast(&rayleighQuotientsD[0]), 
+									                            YArray.begin()+localVectorSize*numberVectors,
+                                                                                                    operatorMatrix.getSqrtMassVec()+localVectorSize,
+									                            XArray2.begin()+localVectorSize*numberVectors);
+                      
+
+                      /*
+       	              scaleXArrayRayleighQuotientsCUDAKernel<<<(numberVectors+255)/256*(ghostVectorSize+localVectorSize),256>>>(numberVectors,
+									                            (ghostVectorSize+localVectorSize),
+                                                                                                    thrust::raw_pointer_cast(&rayleighQuotientsD[0]), 
+									                            YArray.begin(),
+                                                                                                    operatorMatrix.getSqrtMassVec(),
+									                            XArray2.begin());
+                      */
+                      
+		      daxpbyCUDAKernel<<<min(((ghostVectorSize+localVectorSize)*numberVectors+255)/256,30000),256>>>((ghostVectorSize+localVectorSize)*numberVectors,
+										     XArray2.begin(),
+										     XArray.begin(),
+										     1.0,
+										     1.0);
+                      
+
+                      if (degree==(m-1))
+                      {
+                         XArray.zero_out_ghosts();
+                         YArray.zero_out_ghosts();
+                      }
+              }
+              else
+              {
+		      combinedCUDAKernel<<<min((totalVectorSize+255)/256,30000),256>>>(numberVectors,
+										       localVectorSize,
+										       YArray.begin(),
+										       XArray.begin(),
+										       coeff,
+										       alpha2,
+										       alpha1,
+										       alpha1Old,
+										       operatorMatrix.getInvSqrtMassVec(),
+										       operatorMatrix.getSqrtMassVec());
+		      //
+		      //call HX
+		      // H  * YArray'= H * M^(-1/2) * YArray
+		      // YArray=M^(1/2)*YArray'
+		      // XArray2= H *YArray'
+		      //
+		      XArray2=0.0;
+		      operatorMatrix.HXCheby(YArray,
+					     tempFloatArray,
+					     projectorKetTimesVector,
+					     localVectorSize,
+					     numberVectors,
+					     XArray2,
+					     dftParameters::useMixedPrecCheby);
+
+		      //(YArray^T*M^(-1/2)*H*M^(-1/2)*YArray)/(YArray^T*YArray)
+		      // =(YArray'_i^T*XArray2)/(YArray'^T_i* M*YArray')
+                      std::pair<bool, bool> temp;
+		      temp=computeAndCheckRayleighQuotients(operatorMatrix.getCublasHandle(),
+						       YArray.begin(),
+						       XArray2.begin(),
+						       operatorMatrix.getSqrtMassVec(),
+						       thrust::raw_pointer_cast(&onesVecD[0]),
+						       numberVectors,
+						       localVectorSize,
+						       operatorMatrix.getMPICommunicator(),
+						       communAvoidanceTolerance,
+                                                       computeAvoidanceTolerance,
+						       thrust::raw_pointer_cast(&tempArray1D[0]),
+						       thrust::raw_pointer_cast(&tempArray2D[0]),
+						       thrust::raw_pointer_cast(&ytdotxarrayD[0]),
+						       thrust::raw_pointer_cast(&xtdotxarrayD[0]),
+						       &ytdotxarrayH[0],
+						       &xtdotxarrayH[0],
+						       thrust::raw_pointer_cast(&rayleighQuotientsD[0]),
+						       &rayleighQuotientsH[0],
+                                                       &rayleighQuotientsDiffH[0]);
+                      
+                      isCommunAvoidanceToleranceReached=temp.first;
+                      isComputeAvoidanceToleranceReached=temp.second;
+
+                      if (this_mpi_process==0)
+                      {
+                        //std::cout<<"Chebyshev polynomial iter: "<<degree<<std::endl;
+                        //for (unsigned int i=0; i<numberVectors;i++)
+                        //   std::cout<<" Difference of rayleigh quotient from previous iteration for vector: "<<i <<", "<<rayleighQuotientsDiffH[i]<<std::endl;
+		      }
+
+		      daxpbyCUDAKernel<<<min((totalVectorSize+255)/256,30000),256>>>(totalVectorSize,
+										     XArray2.begin(),
+										     XArray.begin(),
+										     1.0,
+										     1.0); 
+                      if (isCommunAvoidanceToleranceReached) 
+                           isFirstCallToCommunAvoidance=true;     
+              }       
+
+
+	    }
+
+	  XArray.swap(YArray);
+
+      
+	  sigma = sigma2;
+	  alpha1Old=alpha1;
+
+	}
+
+      //copy back YArray to XArray
+      cudaMemcpy(XArray.begin(),
+		 YArray.begin(),
+		 totalVectorSize*sizeof(double),
+		 cudaMemcpyDeviceToDevice);
+#endif
+    }
+ 
     //
     // Compute and comunication of two blocks (1) and (2) are overlapped during chebyshev filtering.
     //
