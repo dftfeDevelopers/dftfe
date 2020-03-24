@@ -323,7 +323,7 @@ namespace dftfe
 
       }
 
-      std::pair<bool,bool> computeAndCheckRayleighQuotients(cublasHandle_t &handle,
+      void computeRayleighQuotients(cublasHandle_t &handle,
 			 const double * xarray,
 			 const double * yarray,
                          const double * sqrtMassVector,
@@ -331,14 +331,10 @@ namespace dftfe
 			 const unsigned int numberVectors,
 			 const unsigned int localSize,
                          const MPI_Comm & mpiComm,
-                         const double tolCommun,
-                         const double tolCompute,
+                         MPI_Request & request,
                          double * temparray,
                          double * dotarrayD,
-                         double * dotarrayH,
-			 double * rayleighQuotientsD,
-                         double * rayleighQuotientsH,
-                         double * rayleighQuotientsDiffH)
+                         double * dotarrayH)
       {
              
 	     dotProductContributionBlockedKernelMassVector<<<(numberVectors+255)/256*localSize,256>>>(numberVectors,
@@ -371,15 +367,29 @@ namespace dftfe
 		   cudaMemcpyDeviceToHost);
              
 
-             bool isConvergedToTol1=true;
-             bool isConvergedToTol2=true;
- 
-	     MPI_Allreduce(MPI_IN_PLACE,
+
+	     MPI_Iallreduce(MPI_IN_PLACE,
 			  dotarrayH,
 			  2*numberVectors,
 			  MPI_DOUBLE,
 			  MPI_SUM,
-			  mpiComm);
+			  mpiComm,
+                          &request);
+              
+      }
+
+      void checkRayleighQuotients(const unsigned int numberVectors,
+                         const double tolCommun,
+                         const double tolCompute,
+                         double * dotarrayH,
+                         double * rayleighQuotientsH,
+                         double * rayleighQuotientsDiffH,
+                         bool & isConvergedToTol1,
+                         bool & isConvergedToTol2)
+      {
+
+             isConvergedToTol1=true;
+             isConvergedToTol2=true;
 
              for (unsigned int i=0; i<numberVectors;++i)
              {
@@ -395,19 +405,8 @@ namespace dftfe
 
                    //rayleighQuotientsDiffH[i]=diff;
              }
-            
-             /* 
-	     cudaMemcpy(rayleighQuotientsD,
-		   rayleighQuotientsH,
-		   numberVectors*sizeof(double),
-		   cudaMemcpyHostToDevice);
-             */
-              
-             std::pair<bool,bool> temp;
-             temp.first=isConvergedToTol1;
-             temp.second=isConvergedToTol2;
-             return temp; 
       }
+
     }
 
  
@@ -770,6 +769,8 @@ namespace dftfe
       bool isFirstCallToCommunAvoidance=false;
       bool isFirstCallToComputeAvoidance=false;
  
+      MPI_Request request;
+      int count=0;
       //
       //polynomial loop
       //
@@ -957,6 +958,7 @@ namespace dftfe
               }
               else
               {
+
 		      combinedCUDAKernel<<<min((totalVectorSize+255)/256,30000),256>>>(numberVectors,
 										       localVectorSize,
 										       YArray.begin(),
@@ -982,13 +984,37 @@ namespace dftfe
 					     XArray2,
 					     dftParameters::useMixedPrecCheby);
 
+		      daxpbyCUDAKernel<<<min((totalVectorSize+255)/256,30000),256>>>(totalVectorSize,
+										     XArray2.begin(),
+										     XArray.begin(),
+										     1.0,
+										     1.0);                      
+ 
+                      if ((degree-3)%5==0 && count>0)
+                      {
+                              MPI_Wait(&request, MPI_STATUS_IGNORE);
+			      checkRayleighQuotients(numberVectors,
+					             communAvoidanceTolerance,
+						     computeAvoidanceTolerance,
+                                                     &dotarrayH[0],
+					             &rayleighQuotientsH[0],
+						     &rayleighQuotientsDiffH[0],
+                                                     isCommunAvoidanceToleranceReached,
+                                                     isComputeAvoidanceToleranceReached);
+
+			      if (this_mpi_process==0)
+			      {
+				//std::cout<<"Chebyshev polynomial iter: "<<degree-5<<std::endl;
+				//for (unsigned int i=0; i<numberVectors;i++)
+				//   std::cout<<" Difference of rayleigh quotient from previous iteration for vector: "<<i <<", "<<rayleighQuotientsDiffH[i]<<std::endl;
+			      }
+                      }
+
 		      //(YArray^T*M^(-1/2)*H*M^(-1/2)*YArray)/(YArray^T*YArray)
 		      // =(YArray'_i^T*XArray2)/(YArray'^T_i* M*YArray')
-                      std::pair<bool, bool> temp;
-                      temp.first=false;
-                      temp.second=false;
-                      if (degree%5==0)
-			      temp=computeAndCheckRayleighQuotients(operatorMatrix.getCublasHandle(),
+                      if ((degree-3)%5==0)
+                      {
+			     computeRayleighQuotients(operatorMatrix.getCublasHandle(),
 							       YArray.begin(),
 							       XArray2.begin(),
 							       operatorMatrix.getSqrtMassVec(),
@@ -996,30 +1022,14 @@ namespace dftfe
 							       numberVectors,
 							       localVectorSize,
 							       operatorMatrix.getMPICommunicator(),
-							       communAvoidanceTolerance,
-							       computeAvoidanceTolerance,
+                                                               request,
 							       thrust::raw_pointer_cast(&tempArrayD[0]),
 							       thrust::raw_pointer_cast(&dotarrayD[0]),
-							       &dotarrayH[0],
-							       thrust::raw_pointer_cast(&rayleighQuotientsD[0]),
-							       &rayleighQuotientsH[0],
-							       &rayleighQuotientsDiffH[0]);
+							       &dotarrayH[0]);
+                             count+=1;
+                      }
                       
-                      isCommunAvoidanceToleranceReached=temp.first;
-                      isComputeAvoidanceToleranceReached=temp.second;
 
-                      if (this_mpi_process==0)
-                      {
-                        //std::cout<<"Chebyshev polynomial iter: "<<degree<<std::endl;
-                        //for (unsigned int i=0; i<numberVectors;i++)
-                        //   std::cout<<" Difference of rayleigh quotient from previous iteration for vector: "<<i <<", "<<rayleighQuotientsDiffH[i]<<std::endl;
-		      }
-
-		      daxpbyCUDAKernel<<<min((totalVectorSize+255)/256,30000),256>>>(totalVectorSize,
-										     XArray2.begin(),
-										     XArray.begin(),
-										     1.0,
-										     1.0); 
                       if (isCommunAvoidanceToleranceReached) 
                            isFirstCallToCommunAvoidance=true;    
 
@@ -1043,6 +1053,8 @@ namespace dftfe
 		 YArray.begin(),
 		 totalVectorSize*sizeof(double),
 		 cudaMemcpyDeviceToDevice);
+
+      MPI_Wait(&request, MPI_STATUS_IGNORE);
 #endif
     }
  
