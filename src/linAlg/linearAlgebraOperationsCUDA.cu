@@ -974,21 +974,34 @@ namespace dftfe
 		      // H  * YArray'= H * M^(-1/2) * YArray
 		      // YArray=M^(1/2)*YArray'
 		      // XArray2= H *YArray'
-		      //
-		      XArray2=0.0;
-		      operatorMatrix.HXCheby(YArray,
-					     tempFloatArray,
-					     projectorKetTimesVector,
-					     localVectorSize,
-					     numberVectors,
-					     XArray2,
-					     dftParameters::useMixedPrecCheby);
+		      // 
+                      if ((degree-3)%5==0)
+                      {
+			      XArray2=0.0;
+			      operatorMatrix.HXCheby(YArray,
+						     tempFloatArray,
+						     projectorKetTimesVector,
+						     localVectorSize,
+						     numberVectors,
+						     XArray2,
+						     dftParameters::useMixedPrecCheby);
 
-		      daxpbyCUDAKernel<<<min((totalVectorSize+255)/256,30000),256>>>(totalVectorSize,
-										     XArray2.begin(),
-										     XArray.begin(),
-										     1.0,
-										     1.0);                      
+			      daxpbyCUDAKernel<<<min((totalVectorSize+255)/256,30000),256>>>(totalVectorSize,
+											     XArray2.begin(),
+											     XArray.begin(),
+											     1.0,
+											     1.0);     
+                      }       
+                      else
+                      {
+			      operatorMatrix.HXCheby(YArray,
+						     tempFloatArray,
+						     projectorKetTimesVector,
+						     localVectorSize,
+						     numberVectors,
+						     XArray,
+						     dftParameters::useMixedPrecCheby);
+                      }          
  
                       if ((degree-3)%5==0 && count>0)
                       {
