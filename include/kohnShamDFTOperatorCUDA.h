@@ -340,7 +340,7 @@ namespace dftfe{
      * @param projHamPar parallel ScaLAPACKMatrix which stores the computed projection
      * of the operation into the given subspace
      */
-      void XtHXOffDiagSinglePrecOverlapComputeCommun(const double *  X,
+      void XtHXOffDiagBlockSinglePrecOverlapComputeCommun(const double *  X,
 						     cudaVectorType & Xb,
 						     cudaVectorTypeFloat & floatXb,
 						     cudaVectorType & HXb,
