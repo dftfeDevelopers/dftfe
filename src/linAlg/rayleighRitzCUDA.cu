@@ -521,10 +521,10 @@ namespace dftfe
 					     processGrid,
 					     projHamPar);
 	    }
-	  else if (useMixedPrecOverall)
+	  else if (useMixedPrecOverall && dftParameters::useSinglePrecXtHXOffDiag)
 	    {
 	      if (dftParameters::overlapComputeCommunOrthoRR)
-		operatorMatrix.XtHXOffDiagSinglePrecOverlapComputeCommun(X,
+		operatorMatrix.XtHXOffDiagBlockSinglePrecOverlapComputeCommun(X,
 								         Xb,
                                                                          floatXb,
 								         HXb,
