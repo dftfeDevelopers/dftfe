@@ -3095,36 +3095,36 @@ namespace dftfe
 						   X,
 						   thrust::raw_pointer_cast(&XSP[0]));
 
-    double *  projHamBlockHost;
-    cudaMallocHost((void **)&projHamBlockHost,vectorsBlockSize*N*sizeof(double));
+    double *  projHamBlockHostDP;
+    cudaMallocHost((void **)&projHamBlockHostDP,vectorsBlockSize*N*sizeof(double));
     std::memset(projHamBlockHost,0,vectorsBlockSize*N*sizeof(double));
 
     float *  projHamBlockHostSP;
     cudaMallocHost((void **)&projHamBlockHostSP,vectorsBlockSize*N*sizeof(float));
     std::memset(projHamBlockHostSP,0,vectorsBlockSize*N*sizeof(float));
 
-    thrust::device_vector<double> HXBlockFull(vectorsBlockSize*M,0.0);
+    thrust::device_vector<double> HXBlockFullDP(vectorsBlockSize*M,0.0);
     thrust::device_vector<float> HXBlockFullSP(vectorsBlockSize*M,0.0);
-    thrust::device_vector<double> projHamBlock(vectorsBlockSize*N,0.0);
+    thrust::device_vector<double> projHamBlockDP(vectorsBlockSize*N,0.0);
     thrust::device_vector<float> projHamBlockSP(vectorsBlockSize*N,0.0);
-    thrust::device_vector<double> projHamBlockNext(vectorsBlockSize*N,0.0);
+    thrust::device_vector<double> projHamBlockDPNext(vectorsBlockSize*N,0.0);
     thrust::device_vector<float> projHamBlockSPNext(vectorsBlockSize*N,0.0);
 
-    unsigned int blockCount=0; 
+    unsigned int blockCount=0;
+    const double scalarCoeffAlpha = 1.0,scalarCoeffBeta = 0.0;
+    const float  scalarCoeffAlphaSP=1.0,scalarCoeffBetaSP=0.0;
     for (unsigned int jvec = 0; jvec < N; jvec += vectorsBlockSize)
       {
 
 	// Correct block dimensions if block "goes off edge of" the matrix
 	const unsigned int B = std::min(vectorsBlockSize, N-jvec);
+	const unsigned int D=N-jvec;
 
 	if ((jvec+B)<=bandGroupLowHighPlusOneIndices[2*bandGroupTaskId+1] &&
 	    (jvec+B)>bandGroupLowHighPlusOneIndices[2*bandGroupTaskId])
 	  {
 
             const unsigned int chebyBlockSize=std::min(dftParameters::chebyWfcBlockSize,N);
-
-            const double alpha = 1.0, beta = 0.0;
-            const float alphaSP = 1.0,betaSP = 0.0;
             const unsigned int D=N-jvec;
 
             //handle edge case for the first block or the first block in the band group
@@ -3145,41 +3145,25 @@ namespace dftfe
 			HXBlock=0.0;
 			const bool scaleFlag = false;
 			const double scalar = 1.0;
-			if (jvec+B>Noc)
-				HX(XBlock,
-				   projectorKetTimesVector,
-				   M,
-				   chebyBlockSize,
-				   scaleFlag,
-				   scalar,
-				   HXBlock,
-				   false);
-			else
-				HX(XBlock,
-				   tempFloatBlock,
-				   projectorKetTimesVector,
-				   M,
-				   chebyBlockSize,
-				   scaleFlag,
-				   scalar,
-				   HXBlock,
-				   false,
-				   true);
+		
+			HX(XBlock,
+			   tempFloatBlock,
+			   projectorKetTimesVector,
+			   M,
+			   chebyBlockSize,
+			   scaleFlag,
+			   scalar,
+			   HXBlock,
+			   false,
+			   true);
 
-			if (jvec+B>Noc)
-			  stridedCopyFromBlockKernel<<<(chebyBlockSize+255)/256*M, 256>>>(chebyBlockSize,
+			stridedCopyFromBlockKernel<<<(chebyBlockSize+255)/256*M, 256>>>(chebyBlockSize,
 											  M,
 											  HXBlock.begin(),
 											  B,
-											  thrust::raw_pointer_cast(&HXBlockFull[0]),
+											  thrust::raw_pointer_cast(&HXBlockFullDP[0]),
 											  k-jvec);
-			else
-			  stridedCopyFromBlockKernelSP<<<(chebyBlockSize+255)/256*M, 256>>>(chebyBlockSize,
-											    M,
-											    HXBlock.begin(),
-											    B,
-											    thrust::raw_pointer_cast(&HXBlockFullSP[0]),
-											    k-jvec);
+			
 		    }
 
 		    // evaluate X^{T} times HXBlockFull or XSP^{T} times HXBlockFullSP		    
@@ -3187,17 +3171,17 @@ namespace dftfe
 			cublasDgemm(handle,
 				    CUBLAS_OP_N,
 				    CUBLAS_OP_T,
-				    D,
+				    B,
 				    B,
 				    M,
-				    &alpha,
+				    &scalarCoeffAlpha,
 				    X+jvec,
 				    N,
-				    thrust::raw_pointer_cast(&HXBlockFull[0]),
+				    thrust::raw_pointer_cast(&HXBlockFullDP[0]),
 				    B,
-				    &beta,
-				    thrust::raw_pointer_cast(&projHamBlock[0]),
-				    D);
+				    &scalarCoeffBeta,
+				    thrust::raw_pointer_cast(&projHamBlockDP[0]),
+				    B);
 		    else
 			cublasSgemm(handle,
 				    CUBLAS_OP_N,
