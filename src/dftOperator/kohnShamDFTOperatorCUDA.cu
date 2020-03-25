@@ -2506,7 +2506,7 @@ namespace dftfe
 		     N,
 		     thrust::raw_pointer_cast(&HXBlockFullDP[0]),
 		     B,
-		     &beta,
+		     &scalarCoeffBeta,
 		     thrust::raw_pointer_cast(&projHamBlockDP[0]),
 		     B);
 
@@ -2590,7 +2590,7 @@ namespace dftfe
 
 	  }//band parallelization
       }//end block loop
-    cudaFreeHost(projHamBlockHost);
+    cudaFreeHost(projHamBlockHostDP);
     cudaFreeHost(projHamBlockHostSP);
 
     if (numberBandGroups>1)
@@ -3047,6 +3047,7 @@ namespace dftfe
 							    const std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid>  & processGrid,
 							    dealii::ScaLAPACKMatrix<double> & projHamPar)
   {
+    const unsigned int Noc=0;
     std::map<unsigned int, unsigned int> globalToLocalColumnIdMap;
     std::map<unsigned int, unsigned int> globalToLocalRowIdMap;
     linearAlgebraOperationsCUDA::internal::createGlobalToLocalIdMapsScaLAPACKMat(processGrid,
