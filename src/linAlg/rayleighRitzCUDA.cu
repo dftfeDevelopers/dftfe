@@ -521,6 +521,31 @@ namespace dftfe
 					     processGrid,
 					     projHamPar);
 	    }
+	  else if (useMixedPrecOverall)
+	    {
+	      if (dftParameters::overlapComputeCommunOrthoRR)
+		operatorMatrix.XtHXOffDiagSinglePrecOverlapComputeCommun(X,
+								         Xb,
+                                                                         floatXb,
+								         HXb,
+								         projectorKetTimesVector,
+								         M,
+								         N,
+								 	 handle,
+								         processGrid,
+								         projHamPar);
+	      else
+		operatorMatrix.XtHXOffDiagBlockSinglePrec(X,
+					                  Xb,
+							  floatXb,
+							  HXb,
+							  projectorKetTimesVector,
+							  M,
+							  N,
+							  handle,
+							  processGrid,
+							  projHamPar);
+	    }
 	  else
 	    {
 	      if (dftParameters::overlapComputeCommunOrthoRR)
