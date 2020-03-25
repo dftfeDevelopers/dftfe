@@ -282,7 +282,8 @@ namespace dftfe
 			 const unsigned int m,
 			 const double a,
 			 const double b,
-			 const double a0);
+			 const double a0,
+                         const bool isXlBOMDLinearizedSolve);
 
     void chebyshevFilter(operatorDFTCUDAClass & operatorMatrix,
 			 cudaVectorType & X1,

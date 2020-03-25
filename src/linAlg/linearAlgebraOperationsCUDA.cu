@@ -703,7 +703,8 @@ namespace dftfe
 			 const unsigned int m,
 			 const double a,
 			 const double b,
-			 const double a0)
+			 const double a0,
+                         const bool isXlBOMDLinearizedSolve)
     {
 #ifdef USE_COMPLEX
       AssertThrow(false,dftUtils::ExcNotImplementedYet());
@@ -761,9 +762,10 @@ namespace dftfe
 		  &alpha1,
 		  YArray.begin(),
 		  inc);
-	      
-      const double communAvoidanceTolerance=1e-14;
-      const double computeAvoidanceTolerance=1e-11;  
+	     
+      const bool useCommunAvoidanceOpt=false; 
+      const double communAvoidanceTolerance=1e-8;
+      const double computeAvoidanceTolerance=isXlBOMDLinearizedSolve?1e-8:1e-16;  
       bool isCommunAvoidanceToleranceReached=false;
       bool isComputeAvoidanceToleranceReached=false;
       bool isFirstCallToCommunAvoidance=false;
@@ -852,7 +854,7 @@ namespace dftfe
 	    }
 	  else
 	    {
-              if (isCommunAvoidanceToleranceReached || isComputeAvoidanceToleranceReached)
+              if (isComputeAvoidanceToleranceReached || (isCommunAvoidanceToleranceReached && isCommunAvoidanceOpt))
               {
                       if (isComputeAvoidanceToleranceReached)
                       {
