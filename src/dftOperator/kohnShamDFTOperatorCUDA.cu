@@ -2397,7 +2397,7 @@ namespace dftfe
 							    dealii::ScaLAPACKMatrix<double> & projHamPar)
   {
 
-   pcout<<"XtHX Mixed Prec: "<<std::endl;
+   pcout<<"XtHX Single Prec off diag: "<<std::endl;
 
     std::map<unsigned int, unsigned int> globalToLocalColumnIdMap;
     std::map<unsigned int, unsigned int> globalToLocalRowIdMap;
