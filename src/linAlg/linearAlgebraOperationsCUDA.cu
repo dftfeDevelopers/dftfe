@@ -763,13 +763,12 @@ namespace dftfe
 		  YArray.begin(),
 		  inc);
 	     
-      const bool useCommunAvoidanceOpt=false; 
-      const double communAvoidanceTolerance=1e-8;
+      const bool useCommunAvoidanceOpt=true; 
+      const double communAvoidanceTolerance=1e-6;
       const double computeAvoidanceTolerance=isXlBOMDLinearizedSolve?1e-8:1e-16;  
       bool isCommunAvoidanceToleranceReached=false;
       bool isComputeAvoidanceToleranceReached=false;
       bool isFirstCallToCommunAvoidance=false;
-      bool isFirstCallToComputeAvoidance=false;
  
       MPI_Request request;
       int count=0;
@@ -854,7 +853,7 @@ namespace dftfe
 	    }
 	  else
 	    {
-              if (isComputeAvoidanceToleranceReached || (isCommunAvoidanceToleranceReached && isCommunAvoidanceOpt))
+              if (isComputeAvoidanceToleranceReached || (isCommunAvoidanceToleranceReached && useCommunAvoidanceOpt))
               {
                       if (isComputeAvoidanceToleranceReached)
                       {
@@ -933,11 +932,12 @@ namespace dftfe
 		       
 
 		      XArray2.compress(dealii::VectorOperation::add);
-		      //XArray2.update_ghost_values();
+		      XArray2.update_ghost_values();
 
 		      // update ghost values of XArray by scaling YArray ghost values with Rayleigh quotients
 		      // XArray+= M * YArray' * Lamda (M^(1/2)*M^(-1/2)*H*M^(-1/2)*M^(1/2)*YArray')
 		      // YArray'=M^(-1/2)*YArray
+                      /*
 		      if (ghostVectorSize>0)
 			  scaleXArrayRayleighQuotientsCUDAKernel<<<(numberVectors+255)/256*ghostVectorSize,256>>>(numberVectors,
 												    ghostVectorSize,
@@ -945,13 +945,48 @@ namespace dftfe
 												    YArray.begin()+localVectorSize*numberVectors,
 												    operatorMatrix.getSqrtMassVec()+localVectorSize,
 												    XArray2.begin()+localVectorSize*numberVectors);
-		      
+		      */
 
 		      daxpbyCUDAKernel<<<min(((ghostVectorSize+localVectorSize)*numberVectors+255)/256,30000),256>>>((ghostVectorSize+localVectorSize)*numberVectors,
 										     XArray2.begin(),
 										     XArray.begin(),
 										     1.0,
 										     1.0);
+
+                      bool dummy;
+                      if ((degree-3)%5==0 && count>0)
+                      {
+                              MPI_Wait(&request, MPI_STATUS_IGNORE);
+			      checkRayleighQuotients(numberVectors,
+					             communAvoidanceTolerance,
+						     computeAvoidanceTolerance,
+                                                     &dotarrayH[0],
+					             &rayleighQuotientsH[0],
+						     &rayleighQuotientsDiffH[0],
+                                                     dummy,
+                                                     isComputeAvoidanceToleranceReached);
+                      }
+
+		      //(YArray^T*M^(-1/2)*H*M^(-1/2)*YArray)/(YArray^T*YArray)
+		      // =(YArray'_i^T*XArray2)/(YArray'^T_i* M*YArray')
+                      if ((degree-3)%5==0)
+                      {
+			     computeRayleighQuotients(operatorMatrix.getCublasHandle(),
+							       YArray.begin(),
+							       XArray2.begin(),
+							       operatorMatrix.getSqrtMassVec(),
+							       thrust::raw_pointer_cast(&onesVecD[0]),
+							       numberVectors,
+							       localVectorSize,
+							       operatorMatrix.getMPICommunicator(),
+                                                               request,
+							       thrust::raw_pointer_cast(&tempArrayD[0]),
+							       thrust::raw_pointer_cast(&dotarrayD[0]),
+							       &dotarrayH[0]);
+                             count+=1;
+                      }
+                      
+
                       if (degree==(m-1))
                       {
                          XArray.zero_out_ghosts();
@@ -1043,13 +1078,10 @@ namespace dftfe
 							       &dotarrayH[0]);
                              count+=1;
                       }
-                      
 
                       if (isCommunAvoidanceToleranceReached) 
                            isFirstCallToCommunAvoidance=true;    
 
-                      if (isComputeAvoidanceToleranceReached) 
-                           isFirstCallToComputeAvoidance=true;   
               }       
 
 
