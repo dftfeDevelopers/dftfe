@@ -60,6 +60,8 @@ namespace dftfe{
 
       const double * getInvSqrtMassVec();
 
+      thrust::device_vector<unsigned int> & getBoundaryIdToLocalIdMap();
+
       //cudaVectorType & getBlockCUDADealiiVector();
 
       //cudaVectorType & getBlockCUDADealiiVector2();

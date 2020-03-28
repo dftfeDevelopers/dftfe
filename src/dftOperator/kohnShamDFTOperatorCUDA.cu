@@ -337,6 +337,12 @@ namespace dftfe
     return d_locallyOwnedProcBoundaryNodesVectorDevice;
   }
 
+  template<unsigned int FEOrder>
+  thrust::device_vector<unsigned int> & kohnShamDFTOperatorCUDAClass<FEOrder>::getBoundaryIdToLocalIdMap()
+  {
+    return d_boundaryIdToLocalIdMapDevice;
+  }
+
   //
   //initialize kohnShamDFTOperatorCUDAClass object
   //
@@ -682,6 +688,31 @@ namespace dftfe
 	       (numberLocalDofs+numberGhostDofs)*sizeof(double),
 	       cudaMemcpyHostToDevice);	      
 
+
+    vectorType boundaryIdVec;
+    boundaryIdVec.reinit(d_invSqrtMassVector);
+    boundaryIdVec=0;
+    for(unsigned int i = 0; i < numberGhostDofs; ++i)
+        boundaryIdVec.local_element(numberLocalDofs+i)=1.0;
+   
+    boundaryIdVec.compress(VectorOperation::add);
+    boundaryIdVec.update_ghost_values();
+  
+    //std::cout<<"CHECK: "<<boundaryId.l2_norm()<<std::endl;
+
+    std::vector<unsigned int> boundaryIdToLocalIdMap;
+    for(unsigned int i = 0; i < (numberLocalDofs+numberGhostDofs); ++i)
+    {
+        if (std::fabs(boundaryIdVec.local_element(i))>1e-8)
+           boundaryIdToLocalIdMap.push_back(i);
+    }
+
+    d_boundaryIdToLocalIdMapDevice.resize(boundaryIdToLocalIdMap.size());
+
+    cudaMemcpy(thrust::raw_pointer_cast(&d_boundaryIdToLocalIdMapDevice[0]),
+	       &boundaryIdToLocalIdMap[0],
+	       boundaryIdToLocalIdMap.size()*sizeof(unsigned int),
+	       cudaMemcpyHostToDevice);
 
     computing_timer.exit_section("kohnShamDFTOperatorCUDAClass Mass assembly");
   }

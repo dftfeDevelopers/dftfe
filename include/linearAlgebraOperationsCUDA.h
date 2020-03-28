@@ -271,7 +271,7 @@ namespace dftfe
 			 const double b,
 			 const double a0);
 
-    void chebyshevFilterCommunAvoidance(operatorDFTCUDAClass & operatorMatrix,
+    void chebyshevFilterComputeCommunAvoidance(operatorDFTCUDAClass & operatorMatrix,
 			 cudaVectorType & X,//thrust::device_vector<dataTypes::number> & X,
                          cudaVectorType & Y,
                          cudaVectorType & X2,
@@ -283,7 +283,8 @@ namespace dftfe
 			 const double a,
 			 const double b,
 			 const double a0,
-                         const bool isXlBOMDLinearizedSolve);
+                         const bool isXlBOMDLinearizedSolve,
+                         const bool communAvoidance);
 
     void chebyshevFilter(operatorDFTCUDAClass & operatorMatrix,
 			 cudaVectorType & X1,

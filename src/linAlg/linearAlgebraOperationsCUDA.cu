@@ -114,20 +114,23 @@ namespace dftfe
 
       __global__
       void scaleXArrayRayleighQuotientsCUDAKernel(const unsigned int numVectors,
-			      const unsigned int numGhostEntries,
+			      const unsigned int numBoundaryPlusGhostNodes,
+                              const unsigned int * boundaryGhostIdToLocalIdMap, 
                               const double * rayleighQuotients,  
 			      const double *y,
                               const double *sqrtMassVec,
                               double * x)
       {
 	const unsigned int globalThreadId = blockIdx.x*blockDim.x + threadIdx.x;
-	const unsigned int numberEntries = numVectors*numGhostEntries;
+	const unsigned int numberEntries = numVectors*numBoundaryPlusGhostNodes;
 
 	for(unsigned int index = globalThreadId; index < numberEntries; index+= blockDim.x*gridDim.x)
 	  {
             const unsigned int blockIndex=index/numVectors;
 	    const unsigned int intraBlockIndex = index%numVectors;
-            x[index]=y[index]*rayleighQuotients[intraBlockIndex]*sqrtMassVec[blockIndex]*sqrtMassVec[blockIndex];
+            const unsigned int localId=boundaryGhostIdToLocalIdMap[blockIndex];
+            const unsigned int flattenedWfcId=localId*numVectors+intraBlockIndex;
+            x[flattenedWfcId]=y[flattenedWfcId]*rayleighQuotients[intraBlockIndex]*sqrtMassVec[localId]*sqrtMassVec[localId];
 
 	  }
 
@@ -692,7 +695,7 @@ namespace dftfe
 #endif
     }
   
-    void chebyshevFilterCommunAvoidance(operatorDFTCUDAClass & operatorMatrix,
+    void chebyshevFilterComputeCommunAvoidance(operatorDFTCUDAClass & operatorMatrix,
 			 cudaVectorType & XArray,
                          cudaVectorType & YArray,
                          cudaVectorType & XArray2,
@@ -704,7 +707,8 @@ namespace dftfe
 			 const double a,
 			 const double b,
 			 const double a0,
-                         const bool isXlBOMDLinearizedSolve)
+                         const bool isXlBOMDLinearizedSolve,
+                         const bool communAvoidance)
     {
 #ifdef USE_COMPLEX
       AssertThrow(false,dftUtils::ExcNotImplementedYet());
@@ -763,13 +767,14 @@ namespace dftfe
 		  YArray.begin(),
 		  inc);
 	     
-      const bool useCommunAvoidanceOpt=true; 
-      const double communAvoidanceTolerance=1e-6;
+      const bool useCommunAvoidanceOpt=communAvoidance; 
+      const double communAvoidanceTolerance=isXlBOMDLinearizedSolve?1e-6:1e-8;
       const double computeAvoidanceTolerance=isXlBOMDLinearizedSolve?1e-8:1e-16;  
       bool isCommunAvoidanceToleranceReached=false;
       bool isComputeAvoidanceToleranceReached=false;
       bool isFirstCallToCommunAvoidance=false;
- 
+      const unsigned int boundaryVectorSize=operatorMatrix.getBoundaryIdToLocalIdMap().size(); 
+
       MPI_Request request;
       int count=0;
       //
@@ -901,7 +906,7 @@ namespace dftfe
                       }
 
 		      if (this_mpi_process==0 && isFirstCallToCommunAvoidance)
-			std::cout<<"   Communication avoidance HX from Chebyshev polynomial iter: "<<degree<<", ghostVectorSize: "<<ghostVectorSize<<std::endl;
+			std::cout<<"   Communication avoidance HX from Chebyshev polynomial iter: "<<degree<<", localVectorSize: "<<localVectorSize<<", ghostVectorSize: "<<ghostVectorSize<<", boundaryVectorSize: "<<boundaryVectorSize<<std::endl;
 		      
 		      combinedCUDAKernel<<<min((numberVectors*(localVectorSize+ghostVectorSize)+255)/256,30000),256>>>(numberVectors,
 										       localVectorSize+ghostVectorSize,
@@ -929,23 +934,24 @@ namespace dftfe
 					     localVectorSize,
 					     numberVectors,
 					     XArray2);
+
+                       //XArray2.compress(dealii::VectorOperation::add);
+                       //XArray2.update_ghost_values();
 		       
 
-		      XArray2.compress(dealii::VectorOperation::add);
-		      XArray2.update_ghost_values();
+		       // update ghost values of XArray by scaling YArray ghost values with Rayleigh quotients
+		       // XArray2= M * YArray' * Lamda = M^(1/2)*M^(-1/2)*H*M^(-1/2)*M^(1/2)*YArray'
+		       // YArray'=M^(-1/2)*YArray
 
-		      // update ghost values of XArray by scaling YArray ghost values with Rayleigh quotients
-		      // XArray+= M * YArray' * Lamda (M^(1/2)*M^(-1/2)*H*M^(-1/2)*M^(1/2)*YArray')
-		      // YArray'=M^(-1/2)*YArray
-                      /*
-		      if (ghostVectorSize>0)
-			  scaleXArrayRayleighQuotientsCUDAKernel<<<(numberVectors+255)/256*ghostVectorSize,256>>>(numberVectors,
-												    ghostVectorSize,
+		       if (boundaryVectorSize>0)
+			  scaleXArrayRayleighQuotientsCUDAKernel<<<(numberVectors+255)/256*boundaryVectorSize,256>>>(numberVectors,
+												    boundaryVectorSize,
+												    thrust::raw_pointer_cast(&operatorMatrix.getBoundaryIdToLocalIdMap()[0]),
 												    thrust::raw_pointer_cast(&rayleighQuotientsD[0]), 
-												    YArray.begin()+localVectorSize*numberVectors,
-												    operatorMatrix.getSqrtMassVec()+localVectorSize,
-												    XArray2.begin()+localVectorSize*numberVectors);
-		      */
+												    YArray.begin(),
+												    operatorMatrix.getSqrtMassVec(),
+												    XArray2.begin());
+
 
 		      daxpbyCUDAKernel<<<min(((ghostVectorSize+localVectorSize)*numberVectors+255)/256,30000),256>>>((ghostVectorSize+localVectorSize)*numberVectors,
 										     XArray2.begin(),
@@ -965,6 +971,11 @@ namespace dftfe
 						     &rayleighQuotientsDiffH[0],
                                                      dummy,
                                                      isComputeAvoidanceToleranceReached);
+
+		              cudaMemcpy(thrust::raw_pointer_cast(&rayleighQuotientsD[0]),
+					 &rayleighQuotientsH[0],
+					 numberVectors*sizeof(double),
+					 cudaMemcpyHostToDevice);
                       }
 
 		      //(YArray^T*M^(-1/2)*H*M^(-1/2)*YArray)/(YArray^T*YArray)
@@ -1080,7 +1091,14 @@ namespace dftfe
                       }
 
                       if (isCommunAvoidanceToleranceReached) 
+                      {
+			  cudaMemcpy(thrust::raw_pointer_cast(&rayleighQuotientsD[0]),
+			             &rayleighQuotientsH[0],
+				     numberVectors*sizeof(double),
+				     cudaMemcpyHostToDevice);
+
                            isFirstCallToCommunAvoidance=true;    
+                      }
 
               }       
 

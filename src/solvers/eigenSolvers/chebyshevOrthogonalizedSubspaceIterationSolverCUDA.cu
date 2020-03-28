@@ -392,7 +392,7 @@ namespace dftfe
 									      upperBoundUnwantedSpectrum,
 									      d_lowerBoundWantedSpectrum);	
                          else if (dftParameters::chebyCommunAvoidanceAlgo)
-				 linearAlgebraOperationsCUDA::chebyshevFilterCommunAvoidance(operatorMatrix,
+				 linearAlgebraOperationsCUDA::chebyshevFilterComputeCommunAvoidance(operatorMatrix,
 										   cudaFlattenedArrayBlock,
 										   YArray,
                                                                                    cudaFlattenedArrayBlock2,
@@ -404,7 +404,8 @@ namespace dftfe
 										   d_lowerBoundUnWantedSpectrum,
 										   upperBoundUnwantedSpectrum,
 										   d_lowerBoundWantedSpectrum,
-                                                                                   isXlBOMDLinearizedSolve);	
+                                                                                   isXlBOMDLinearizedSolve,
+                                                                                   useMixedPrecOverall);	
                          else 
 				 linearAlgebraOperationsCUDA::chebyshevFilter(operatorMatrix,
 										   cudaFlattenedArrayBlock,

@@ -70,6 +70,8 @@ namespace dftfe{
 
     virtual const double * getInvSqrtMassVec() = 0;
 
+    virtual thrust::device_vector<unsigned int> & getBoundaryIdToLocalIdMap() = 0;
+
     virtual dealii::LinearAlgebra::distributed::Vector<dataTypes::number,dealii::MemorySpace::Host> &  getProjectorKetTimesVectorSingle()=0;
 
     //virtual cudaVectorType & getBlockCUDADealiiVector() = 0;
@@ -488,6 +490,8 @@ namespace dftfe{
     thrust::device_vector<double> d_glShapeFunctionGradientValueYInvertedDevice;
 
     thrust::device_vector<double> d_glShapeFunctionGradientValueZInvertedDevice;
+                            
+    thrust::device_vector<unsigned int> d_boundaryIdToLocalIdMapDevice;
 
 
 
