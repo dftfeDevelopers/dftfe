@@ -204,6 +204,7 @@ namespace dftfe
                                                             dealii::ScaLAPACKMatrix<double> & overlapMatPar,
                                                             const std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid> & processGrid,
                                                             const bool isXlBOMDLinearizedSolve,
+                                                            const bool useCommunAvoidanceCheby,
                                                             const bool useMixedPrecOverall,
                                                             const bool isFirstScf,
                                                             const bool useFullMassMatrixGEP,
@@ -405,7 +406,7 @@ namespace dftfe
 										   upperBoundUnwantedSpectrum,
 										   d_lowerBoundWantedSpectrum,
                                                                                    isXlBOMDLinearizedSolve,
-                                                                                   useMixedPrecOverall);	
+                                                                                   useCommunAvoidanceCheby);	
                          else 
 				 linearAlgebraOperationsCUDA::chebyshevFilter(operatorMatrix,
 										   cudaFlattenedArrayBlock,

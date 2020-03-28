@@ -767,9 +767,9 @@ namespace dftfe
 		  YArray.begin(),
 		  inc);
 	     
-      const bool useCommunAvoidanceOpt=communAvoidance; 
-      const double communAvoidanceTolerance=isXlBOMDLinearizedSolve?1e-6:1e-8;
-      const double computeAvoidanceTolerance=isXlBOMDLinearizedSolve?1e-8:1e-16;  
+      const bool useCommunAvoidanceOpt=isXlBOMDLinearizedSolve?communAvoidance:false; 
+      const double communAvoidanceTolerance=isXlBOMDLinearizedSolve?1e-10:1e-12;
+      const double computeAvoidanceTolerance=isXlBOMDLinearizedSolve?1e-8:1e-14;  
       bool isCommunAvoidanceToleranceReached=false;
       bool isComputeAvoidanceToleranceReached=false;
       bool isFirstCallToCommunAvoidance=false;

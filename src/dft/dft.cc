@@ -1560,6 +1560,7 @@ namespace dftfe {
 						  subspaceIterationSolverCUDA,
 						  residualNormWaveFunctionsAllkPointsSpins[s][kPoint],
                                                   solveLinearizedKS,
+                                                  true,
 						  (scfIter<dftParameters::spectrumSplitStartingScfIter || scfConverged)?false:true,
 						  scfConverged?false:true,
                                                   scfIter==0,
@@ -1690,6 +1691,7 @@ namespace dftfe {
 							  subspaceIterationSolverCUDA,
 							  residualNormWaveFunctionsAllkPointsSpins[s][kPoint],
                                                           solveLinearizedKS,
+                                                          maxRes>1e-3 && solveLinearizedKS, 
 							  (scfIter<dftParameters::spectrumSplitStartingScfIter)?false:true,
 							  true,
 							  scfIter==0);
@@ -1813,6 +1815,7 @@ namespace dftfe {
 						  subspaceIterationSolverCUDA,
 						  residualNormWaveFunctionsAllkPoints[kPoint],
                                                   solveLinearizedKS,
+                                                  true,
 						  (scfIter<dftParameters::spectrumSplitStartingScfIter || scfConverged)?false:true,
 						  scfConverged?false:true,
 						  scfIter==0,
@@ -1899,6 +1902,7 @@ namespace dftfe {
 							  subspaceIterationSolverCUDA,
 							  residualNormWaveFunctionsAllkPoints[kPoint],
                                                           solveLinearizedKS,
+                                                           maxRes>1e-3 && solveLinearizedKS,
 							  (scfIter<dftParameters::spectrumSplitStartingScfIter)?false:true,
 							  true,
 							  scfIter==0);
@@ -1968,6 +1972,7 @@ namespace dftfe {
 							  subspaceIterationSolverCUDA,
 							  residualNormWaveFunctionsAllkPoints[kPoint],
                                                           solveLinearizedKS,
+                                                          false,
 							  false,
 							  false,
 							  scfIter==0);
