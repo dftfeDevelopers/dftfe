@@ -3048,7 +3048,8 @@ namespace dftfe
 							    dealii::ScaLAPACKMatrix<double> & projHamPar)
   {
     
-    const unsigned int Noc=0;
+    pcout<<"XtHX OffDiag Single Prec Asyn Compute Commn: "<<std::endl;
+
     std::map<unsigned int, unsigned int> globalToLocalColumnIdMap;
     std::map<unsigned int, unsigned int> globalToLocalRowIdMap;
     linearAlgebraOperationsCUDA::internal::createGlobalToLocalIdMapsScaLAPACKMat(processGrid,
@@ -3127,7 +3128,6 @@ namespace dftfe
 	  {
 
             const unsigned int chebyBlockSize=std::min(dftParameters::chebyWfcBlockSize,N);
-            const unsigned int D=N-jvec;
 
             //handle edge case for the first block or the first block in the band group
             //in case of band parallelization
@@ -3279,7 +3279,7 @@ namespace dftfe
 											M,
 											HXBlock.begin(),
 											BNew,
-											thrust::raw_pointer_cast(&HXBlockFull[0]),
+											thrust::raw_pointer_cast(&HXBlockFullDP[0]),
 											k-jvecNew);
 			
 		    }
@@ -3387,7 +3387,7 @@ namespace dftfe
 	  }//band parallelization
           blockCount+=1;
       }//end block loop
-    cudaFreeHost(projHamBlockHost);
+    cudaFreeHost(projHamBlockHostDP);
     cudaFreeHost(projHamBlockHostSP);
    
     // return cublas handle to default stream     
