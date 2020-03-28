@@ -694,8 +694,9 @@ namespace dftfe
     boundaryIdVec=0;
     for(unsigned int i = 0; i < numberGhostDofs; ++i)
         boundaryIdVec.local_element(numberLocalDofs+i)=1.0;
-   
+  
     boundaryIdVec.compress(VectorOperation::add);
+    constraintMatrix.set_zero(boundaryIdVec); 
     boundaryIdVec.update_ghost_values();
   
     //std::cout<<"CHECK: "<<boundaryId.l2_norm()<<std::endl;
