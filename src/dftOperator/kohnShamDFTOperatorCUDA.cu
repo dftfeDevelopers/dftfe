@@ -1873,7 +1873,7 @@ namespace dftfe
     cudaStreamCreate(&streamCopy);
 
     // attach cublas handle to compute stream
-    cublasSetStream(d_cublasHandle,streamCompute);  
+    cublasSetStream(handle,streamCompute);  
 
     // create array of compute and copy events on GPUs
     // for all the blocks. These are required for synchronization
@@ -2075,7 +2075,7 @@ namespace dftfe
 
     cudaFreeHost(projHamBlockHost);
     // return cublas handle to default stream
-    cublasSetStream(d_cublasHandle,NULL);
+    cublasSetStream(handle,NULL);
     if (numberBandGroups>1)
       {
 	MPI_Barrier(dftPtr->interBandGroupComm);
@@ -2676,7 +2676,7 @@ namespace dftfe
     cudaStreamCreate(&streamCopy);
 
     // attach cublas handle to compute stream
-    cublasSetStream(d_cublasHandle,streamCompute);  
+    cublasSetStream(handle,streamCompute);  
 
     // create array of compute and copy events on GPUs
     // for all the blocks. These are required for synchronization
@@ -3006,7 +3006,7 @@ namespace dftfe
     cudaFreeHost(projHamBlockHostSP);
    
     // return cublas handle to default stream     
-    cublasSetStream(d_cublasHandle,NULL);
+    cublasSetStream(handle,NULL);
 
     if (numberBandGroups>1)
       {
@@ -3084,7 +3084,7 @@ namespace dftfe
     cudaStreamCreate(&streamCopy);
 
     // attach cublas handle to compute stream
-    cublasSetStream(d_cublasHandle,streamCompute);  
+    cublasSetStream(handle,streamCompute);  
 
     // create array of compute and copy events on GPUs
     // for all the blocks. These are required for synchronization
@@ -3397,7 +3397,7 @@ namespace dftfe
     cudaFreeHost(projHamBlockHostSP);
    
     // return cublas handle to default stream     
-    cublasSetStream(d_cublasHandle,NULL);
+    cublasSetStream(handle,NULL);
 
     if (numberBandGroups>1)
       {
