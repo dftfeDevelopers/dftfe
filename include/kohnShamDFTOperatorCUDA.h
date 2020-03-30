@@ -60,6 +60,8 @@ namespace dftfe{
 
       const double * getInvSqrtMassVec();
 
+      thrust::device_vector<unsigned int> & getBoundaryIdToLocalIdMap();
+
       //cudaVectorType & getBlockCUDADealiiVector();
 
       //cudaVectorType & getBlockCUDADealiiVector2();
@@ -152,6 +154,12 @@ namespace dftfe{
                    bool computePart1=false,
                    bool computePart2=false);
 
+
+      void HXChebyNoCommun(cudaVectorType & X,
+                         cudaVectorType & projectorKetTimesVector,
+                         const unsigned int localVectorSize,
+                         const unsigned int numberComponents,
+                         cudaVectorType & Y);
 
       /**
        * @brief Compute projection of the operator into orthogonal basis
@@ -576,7 +584,8 @@ namespace dftfe{
 
       void computeLocalHamiltonianTimesX(const double* src,
 					 const unsigned int numberWaveFunctions,
-					 double* dst);
+					 double* dst,
+                                         const bool skipAccumulationBoundaryNodes=false);
 
       /**
        * @brief implementation of non-local Hamiltonian matrix-vector product
@@ -608,7 +617,8 @@ namespace dftfe{
 					    const unsigned int numberWaveFunctions,
 					    double* dst,
                                             const bool skip1=false,
-                                            const bool skip2=false);
+                                            const bool skip2=false,
+                                            const bool skipAccumulationBoundaryNodes=false);
 
 
 
@@ -699,7 +709,7 @@ namespace dftfe{
       //storage for precomputing index maps
       std::vector<dealii::types::global_dof_index> d_flattenedArrayMacroCellLocalProcIndexIdMapFlattened;
       thrust::device_vector<dealii::types::global_dof_index> d_DeviceFlattenedArrayMacroCellLocalProcIndexIdMapFlattened;
-      
+      thrust::device_vector<unsigned int> d_boundaryIdsVecDevice;      
 
       ///storage for magma and cublas handles
       cublasHandle_t  d_cublasHandle;

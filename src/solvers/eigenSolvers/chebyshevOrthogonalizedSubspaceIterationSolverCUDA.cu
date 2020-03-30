@@ -203,6 +203,8 @@ namespace dftfe
                                                             dealii::ScaLAPACKMatrix<double> & projHamPar,
                                                             dealii::ScaLAPACKMatrix<double> & overlapMatPar,
                                                             const std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid> & processGrid,
+                                                            const bool isXlBOMDLinearizedSolve,
+                                                            const bool useCommunAvoidanceCheby,
                                                             const bool useMixedPrecOverall,
                                                             const bool isFirstScf,
                                                             const bool useFullMassMatrixGEP,
@@ -267,10 +269,8 @@ namespace dftfe
 
 
     cudaVectorType cudaFlattenedArrayBlock2;
-    if (dftParameters::overlapComputeCommunCheby)
-	   vectorTools::createDealiiVector(operatorMatrix.getMatrixFreeData()->get_vector_partitioner(),
-					    vectorsBlockSize,
-					    cudaFlattenedArrayBlock2);
+    if (dftParameters::overlapComputeCommunCheby || dftParameters::chebyCommunAvoidanceAlgo)
+           cudaFlattenedArrayBlock2.reinit(cudaFlattenedArrayBlock);
 
 
     cudaVectorType YArray2;
@@ -280,11 +280,7 @@ namespace dftfe
 
     cudaVectorType projectorKetTimesVector2;
     if (dftParameters::overlapComputeCommunCheby)
-	    vectorTools::createDealiiVector(operatorMatrix.getProjectorKetTimesVectorSingle().get_partitioner(),
-					    vectorsBlockSize,
-					    projectorKetTimesVector2);
-
-
+           projectorKetTimesVector2.reinit(projectorKetTimesVector);
 
     if(!isElpaStep2)
     {
@@ -396,6 +392,21 @@ namespace dftfe
 									      d_lowerBoundUnWantedSpectrum,
 									      upperBoundUnwantedSpectrum,
 									      d_lowerBoundWantedSpectrum);	
+                         else if (dftParameters::chebyCommunAvoidanceAlgo)
+				 linearAlgebraOperationsCUDA::chebyshevFilterComputeCommunAvoidance(operatorMatrix,
+										   cudaFlattenedArrayBlock,
+										   YArray,
+                                                                                   cudaFlattenedArrayBlock2,
+										   cudaFlattenedFloatArrayBlock,
+										   projectorKetTimesVector,
+										   localVectorSize,
+										   BVec,
+										   chebyshevOrder,
+										   d_lowerBoundUnWantedSpectrum,
+										   upperBoundUnwantedSpectrum,
+										   d_lowerBoundWantedSpectrum,
+                                                                                   isXlBOMDLinearizedSolve,
+                                                                                   useCommunAvoidanceCheby);	
                          else 
 				 linearAlgebraOperationsCUDA::chebyshevFilter(operatorMatrix,
 										   cudaFlattenedArrayBlock,

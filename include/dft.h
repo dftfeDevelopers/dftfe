@@ -1063,6 +1063,8 @@ namespace dftfe {
                                      elpaScalaManager & elpaScala,
                                      chebyshevOrthogonalizedSubspaceIterationSolverCUDA & subspaceIterationSolverCUDA,
                                      std::vector<double> & residualNormWaveFunctions,
+                                     const bool isXlBOMDLinearizedSolve,
+                                     const bool useCommunAvoidanceCheby,
 				     const bool isSpectrumSplit=false,
 				     const bool useMixedPrec=false,
                                      const bool isFirstScf=false,

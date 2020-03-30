@@ -241,7 +241,8 @@ void kohnShamDFTOperatorCUDAClass<FEOrder>::computeLocalHamiltonianTimesXMF (con
 template<unsigned int FEOrder>
 void kohnShamDFTOperatorCUDAClass<FEOrder>::computeLocalHamiltonianTimesX(const double* src,
 							                  const unsigned int numberWaveFunctions,
-							                  double* dst) 
+							                  double* dst,
+                                                                          const bool skipAccumulationBoundaryNodes) 
 {
 
   const unsigned int totalLocallyOwnedCells = dftPtr->matrix_free_data.n_physical_cells();  
@@ -281,7 +282,16 @@ void kohnShamDFTOperatorCUDAClass<FEOrder>::computeLocalHamiltonianTimesX(const 
 
   if(!(dftParameters::isPseudopotential && dftPtr->d_nonLocalAtomGlobalChargeIds.size() > 0))
   {
-         daxpyAtomicAddKernel<<<(numberWaveFunctions+255)/256*d_numLocallyOwnedCells*d_numberNodesPerElement,256>>>
+         if (skipAccumulationBoundaryNodes)
+            daxpyAtomicAddKernelNonBoundary<<<(numberWaveFunctions+255)/256*d_numLocallyOwnedCells*d_numberNodesPerElement,256>>>
+                                                                     (numberWaveFunctions,
+                                                                      d_numLocallyOwnedCells*d_numberNodesPerElement,
+                                                                      thrust::raw_pointer_cast(&d_cellHamMatrixTimesWaveMatrix[0]),
+                                                                      thrust::raw_pointer_cast(&d_boundaryIdsVecDevice[0]),
+                                                                      dst,
+                                                                      thrust::raw_pointer_cast(&d_flattenedArrayCellLocalProcIndexIdMapDevice[0]));
+         else
+            daxpyAtomicAddKernel<<<(numberWaveFunctions+255)/256*d_numLocallyOwnedCells*d_numberNodesPerElement,256>>>
                                                                      (numberWaveFunctions,
                                                                       d_numLocallyOwnedCells*d_numberNodesPerElement,
                                                                       thrust::raw_pointer_cast(&d_cellHamMatrixTimesWaveMatrix[0]),

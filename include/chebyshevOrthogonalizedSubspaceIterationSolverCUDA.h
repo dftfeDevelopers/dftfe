@@ -70,6 +70,8 @@ namespace dftfe
                dealii::ScaLAPACKMatrix<double> & projHamPar,
                dealii::ScaLAPACKMatrix<double> & overlapMatPar,
                const std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid> & processGrid,
+               const bool isXlBOMDLinearizedSolve,
+               const bool useCommunAvoidanceCheby,
                const bool useMixedPrecOverall=false,
                const bool isFirstScf=false,
                const bool useFullMassMatrixGEP=false,

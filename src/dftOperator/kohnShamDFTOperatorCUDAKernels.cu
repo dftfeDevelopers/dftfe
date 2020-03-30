@@ -168,6 +168,30 @@ namespace dftfe
 
 	}
 
+
+	__global__
+	void daxpyAtomicAddKernelNonBoundary(const unsigned int contiguousBlockSize,
+		    const unsigned int numContiguousBlocks,
+		    const double *addFromVec,
+                    const unsigned int * boundaryIdVec,
+		    double *addToVec,
+		    const dealii::types::global_dof_index *addToVecStartingContiguousBlockIds)
+	{
+
+	     const unsigned int globalThreadId = blockIdx.x*blockDim.x + threadIdx.x;
+	     const unsigned int numberEntries = numContiguousBlocks*contiguousBlockSize;
+
+	     for(unsigned int index = globalThreadId; index < numberEntries; index+= blockDim.x*gridDim.x)
+	     {
+		  const unsigned int blockIndex = index/contiguousBlockSize;
+		  const unsigned int intraBlockIndex=index%contiguousBlockSize;
+                  const unsigned int flattenedId=addToVecStartingContiguousBlockIds[blockIndex];
+                  if (boundaryIdVec[flattenedId/contiguousBlockSize]==0)
+		      atomicAdd(&addToVec[flattenedId+intraBlockIndex], addFromVec[index]);
+	     }
+
+	}
+
         __global__
         void copyToParallelNonLocalVecFromReducedVec(const unsigned int numWfcs,
                                const unsigned int totalPseudoWfcs,

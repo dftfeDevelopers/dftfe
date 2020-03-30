@@ -337,6 +337,12 @@ namespace dftfe
     return d_locallyOwnedProcBoundaryNodesVectorDevice;
   }
 
+  template<unsigned int FEOrder>
+  thrust::device_vector<unsigned int> & kohnShamDFTOperatorCUDAClass<FEOrder>::getBoundaryIdToLocalIdMap()
+  {
+    return d_boundaryIdToLocalIdMapDevice;
+  }
+
   //
   //initialize kohnShamDFTOperatorCUDAClass object
   //
@@ -662,20 +668,68 @@ namespace dftfe
     invSqrtMassVec.compress(VectorOperation::insert);
     sqrtMassVec.compress(VectorOperation::insert);
 
+    invSqrtMassVec.update_ghost_values();
+    sqrtMassVec.update_ghost_values();
+
     const unsigned int numberLocalDofs = invSqrtMassVec.local_size();
-    d_invSqrtMassVectorDevice.resize(numberLocalDofs);
-    d_sqrtMassVectorDevice.resize(numberLocalDofs);
+    const unsigned int numberGhostDofs = invSqrtMassVec.get_partitioner()->n_ghost_indices();
+    d_invSqrtMassVectorDevice.clear();
+    d_sqrtMassVectorDevice.clear();
+    d_invSqrtMassVectorDevice.resize(numberLocalDofs+numberGhostDofs);
+    d_sqrtMassVectorDevice.resize(numberLocalDofs+numberGhostDofs);
 
     cudaMemcpy(thrust::raw_pointer_cast(&d_invSqrtMassVectorDevice[0]),
 	       invSqrtMassVec.begin(),
-	       numberLocalDofs*sizeof(double),
+	       (numberLocalDofs+numberGhostDofs)*sizeof(double),
 	       cudaMemcpyHostToDevice);
 
     cudaMemcpy(thrust::raw_pointer_cast(&d_sqrtMassVectorDevice[0]),
 	       sqrtMassVec.begin(),
-	       numberLocalDofs*sizeof(double),
+	       (numberLocalDofs+numberGhostDofs)*sizeof(double),
 	       cudaMemcpyHostToDevice);	      
 
+
+    vectorType boundaryIdVec;
+    boundaryIdVec.reinit(d_invSqrtMassVector);
+    boundaryIdVec=0;
+    for(unsigned int i = 0; i < numberGhostDofs; ++i)
+        boundaryIdVec.local_element(numberLocalDofs+i)=1.0;
+  
+    boundaryIdVec.compress(VectorOperation::add);
+    boundaryIdVec.update_ghost_values();
+    //boundary constrained node as well its masters should also be treated as boundary nodes
+    constraintMatrix.distribute(boundaryIdVec);
+    constraintMatrix.set_zero(boundaryIdVec); 
+    boundaryIdVec.update_ghost_values(); 
+
+  
+    //std::cout<<"CHECK: "<<boundaryId.l2_norm()<<std::endl;
+
+    std::vector<unsigned int> boundaryIdToLocalIdMap;
+    std::vector<unsigned int> boundaryIdsHost(numberLocalDofs+numberGhostDofs,0);
+    for(unsigned int i = 0; i < (numberLocalDofs+numberGhostDofs); ++i)
+    {
+        if (std::fabs(boundaryIdVec.local_element(i))>1e-8)
+        {
+           boundaryIdToLocalIdMap.push_back(i);
+           boundaryIdsHost[i]=1;
+        }
+    }
+
+    d_boundaryIdToLocalIdMapDevice.clear();
+    d_boundaryIdToLocalIdMapDevice.resize(boundaryIdToLocalIdMap.size());
+
+    cudaMemcpy(thrust::raw_pointer_cast(&d_boundaryIdToLocalIdMapDevice[0]),
+	       &boundaryIdToLocalIdMap[0],
+	       boundaryIdToLocalIdMap.size()*sizeof(unsigned int),
+	       cudaMemcpyHostToDevice);
+
+    d_boundaryIdsVecDevice.clear();
+    d_boundaryIdsVecDevice.resize(numberLocalDofs+numberGhostDofs);
+    cudaMemcpy(thrust::raw_pointer_cast(&d_boundaryIdsVecDevice[0]),
+	       &boundaryIdsHost[0],
+	       (numberLocalDofs+numberGhostDofs)*sizeof(unsigned int),
+	       cudaMemcpyHostToDevice);
 
     computing_timer.exit_section("kohnShamDFTOperatorCUDAClass Mass assembly");
   }
@@ -1540,6 +1594,47 @@ namespace dftfe
       }
 
   }
+
+
+
+  template<unsigned int FEOrder>
+  void kohnShamDFTOperatorCUDAClass<FEOrder>::HXChebyNoCommun(cudaVectorType & src,
+                                                      cudaVectorType & projectorKetTimesVector,
+						      const unsigned int localVectorSize,
+						      const unsigned int numberWaveFunctions,
+						      cudaVectorType & dst)
+  {
+    const unsigned int n_ghosts   = dftPtr->matrix_free_data.get_vector_partitioner()->n_ghost_indices();
+    const unsigned int localSize  = dftPtr->matrix_free_data.get_vector_partitioner()->local_size();
+    const unsigned int totalSize  = localSize + n_ghosts;
+
+    getOverloadedConstraintMatrix()->distribute(src,
+						numberWaveFunctions);
+
+    computeLocalHamiltonianTimesX(src.begin(),
+				  numberWaveFunctions,
+				  dst.begin(),
+                                  false);
+
+
+    //H^{nloc}*M^{-1/2}*X
+    if(dftParameters::isPseudopotential && dftPtr->d_nonLocalAtomGlobalChargeIds.size() > 0)
+      {
+	computeNonLocalHamiltonianTimesX(src.begin(),
+					 projectorKetTimesVector,
+					 numberWaveFunctions,
+					 dst.begin(),
+                                         false,
+                                         false,
+                                         false);
+      }
+
+
+
+    getOverloadedConstraintMatrix()->distribute_slave_to_master(dst,
+								numberWaveFunctions);
+  }
+
 
 
   //XTHX
