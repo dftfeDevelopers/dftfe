@@ -197,11 +197,15 @@ void molecularDynamics<FEOrder>::run()
         const double c6=8.0;
         const double c7=-1.0;
         const double diracDeltaKernelConstant=-dftParameters::diracDeltaKernelScalingConstant;
+        const double k0kernelconstant=20.0;
         std::deque<vectorType> approxDensityContainer(kmax);
         vectorType shadowKSRhoMin;
         vectorType atomicRho;
         vectorType approxDensityNext;
         vectorType rhoErrorVec;
+        vectorType u1;// for rank1 update kernel
+        vectorType v1;// for rank1 update kernel
+        vectorType peturbedApproxDensity;// for rank1 update kernel
 
 	double kineticEnergy = 0.0;
 
@@ -407,6 +411,7 @@ void molecularDynamics<FEOrder>::run()
             }
 	}
 
+        bool isFirstXLBOMDStep=true;
 	//
 	//start the MD simulation
 	//
@@ -520,6 +525,12 @@ void molecularDynamics<FEOrder>::run()
  
             double rmsErrorRho=0.0;
             double rmsErrorGradRho=0.0;
+	    double shadowPotentialInternalEnergy;
+	    double entropicEnergyShadowPotential;
+
+            if (dftPtr->d_autoMesh==1 || (timeIndex == (startingTimeStep+1) && restartFlag==1))
+                isFirstXLBOMDStep=true;
+
             if (dftParameters::isXLBOMD)
             {
                     if (dftPtr->d_autoMesh==1 && dftParameters::autoMeshStepInterpolateBOMD)
@@ -617,11 +628,26 @@ void molecularDynamics<FEOrder>::run()
 			   
 			const unsigned int local_size = approxDensityNext.local_size();
 
-			for (unsigned int i = 0; i < local_size; i++)
-				approxDensityNext.local_element(i)=approxDensityTimeT.local_element(i)*2.0
-								  -approxDensityTimeTMinusDeltat.local_element(i)
-								  -(shadowKSRhoMin.local_element(i)-approxDensityTimeT.local_element(i))*k*diracDeltaKernelConstant;
+
 	 
+                        if (dftParameters::useRank1KernelXLBOMD && !isFirstXLBOMDStep)
+                        {
+                                const double k0=-1.0/(k0kernelconstant+1.0);
+                                const double v1Tk0rhoMinusn=v1*rhoErrorVec*k0;
+                                const double v1Tk0u1=v1*u1*k0;
+				for (unsigned int i = 0; i < local_size; i++)
+					approxDensityNext.local_element(i)=approxDensityTimeT.local_element(i)*2.0
+									  -approxDensityTimeTMinusDeltat.local_element(i)
+									  -k*(k0*rhoErrorVec.local_element(i)-k0*v1Tk0rhoMinusn/(1.0+v1Tk0u1)*u1.local_element(i));
+                        }
+                        else
+                        {
+				for (unsigned int i = 0; i < local_size; i++)
+					approxDensityNext.local_element(i)=approxDensityTimeT.local_element(i)*2.0
+									  -approxDensityTimeTMinusDeltat.local_element(i)
+									  -(shadowKSRhoMin.local_element(i)-approxDensityTimeT.local_element(i))*k*diracDeltaKernelConstant;
+                                isFirstXLBOMDStep=false;
+                        }
 	 
 			if (approxDensityContainer.size()==kmax)
 			{
@@ -642,13 +668,19 @@ void molecularDynamics<FEOrder>::run()
 			//normalize approxDensityVec
 			double charge = dftPtr->totalCharge(dftPtr->d_matrixFreeDataPRefined,
 							     approxDensityContainer.back());
-			pcout<<"Total Charge before Normalizing new approxDensityVec:  "<<charge<<std::endl;
+
+
+			if (dftParameters::verbosity>=1)
+		   	   pcout<<"Total Charge before Normalizing new approxDensityVec:  "<<charge<<std::endl;
 		       
    		        if (dftParameters::useAtomicRhoXLBOMD)
  			   approxDensityContainer.back().add(-charge/dftPtr->d_domainVolume);
                         else
                            approxDensityContainer.back() *= ((double)dftPtr->numElectrons)/charge;
-			pcout<<"Total Charge after Normalizing new approxDensityVec:  "<<dftPtr->totalCharge(dftPtr->d_matrixFreeDataPRefined,approxDensityContainer.back())<<std::endl;
+
+
+			if (dftParameters::verbosity>=1)
+			   pcout<<"Total Charge after Normalizing new approxDensityVec:  "<<dftPtr->totalCharge(dftPtr->d_matrixFreeDataPRefined,approxDensityContainer.back())<<std::endl;
 
                         dftPtr->d_rhoInNodalValues=approxDensityContainer.back();
                         if (dftParameters::useAtomicRhoXLBOMD)
@@ -673,8 +705,16 @@ void molecularDynamics<FEOrder>::run()
                         MPI_Barrier(MPI_COMM_WORLD);
                         shadowsolve_time = MPI_Wtime(); 
 
-			//do an scf calculation
+			if (dftParameters::verbosity>=1)
+			   pcout<<"----------Start shadow potential energy solve with approx density= n-------------"<<std::endl;
+
 			dftPtr->solve(true,true);
+
+			if (dftParameters::verbosity>=1)
+			   pcout<<"----------End shadow potential energy solve with approx density= n-------------"<<std::endl;
+
+                        shadowPotentialInternalEnergy=dftPtr->d_shadowPotentialEnergy;
+                        entropicEnergyShadowPotential=dftPtr->d_entropicEnergy;
 
 			MPI_Barrier(MPI_COMM_WORLD);
 			shadowsolve_time = MPI_Wtime() - shadowsolve_time;
@@ -700,8 +740,84 @@ void molecularDynamics<FEOrder>::run()
                             shadowKSRhoMin *= ((double)dftPtr->numElectrons)/charge; 
 
 
-			rhoErrorVec=approxDensityContainer.back();
-			rhoErrorVec-=shadowKSRhoMin;
+			rhoErrorVec=shadowKSRhoMin;
+                        rhoErrorVec-=approxDensityContainer.back();
+
+
+                        if (dftParameters::useRank1KernelXLBOMD)
+                        {
+                           v1=rhoErrorVec;
+                           v1*=1.0/rhoErrorVec.l2_norm();
+                           const double deltalambda=1e-2*std::sqrt(dftPtr->fieldl2Norm(dftPtr->d_matrixFreeDataPRefined,approxDensityContainer.back())/dftPtr->d_domainVolume);
+
+                           if (dftParameters::verbosity>=1)
+                              pcout<<"deltalambda: "<<deltalambda<<std::endl;
+
+                           peturbedApproxDensity=approxDensityContainer.back();
+                           peturbedApproxDensity.add(deltalambda,v1);
+
+                           peturbedApproxDensity.update_ghost_values();   
+
+		           //normalize peturbedApproxDensity
+			   charge = dftPtr->totalCharge(dftPtr->d_matrixFreeDataPRefined,
+							  peturbedApproxDensity);
+
+
+			   if (dftParameters::verbosity>=1)
+		   	       pcout<<"Total Charge before Normalizing peturbedApproxDensity:  "<<charge<<std::endl;
+		       
+   		           if (dftParameters::useAtomicRhoXLBOMD)
+ 			      peturbedApproxDensity.add(-charge/dftPtr->d_domainVolume);
+                           else
+                              peturbedApproxDensity *= ((double)dftPtr->numElectrons)/charge;
+
+                           dftPtr->d_rhoInNodalValues=peturbedApproxDensity;
+                           if (dftParameters::useAtomicRhoXLBOMD)
+                              dftPtr->d_rhoInNodalValues+=atomicRho;
+                         
+                           dftPtr->d_rhoInNodalValues.update_ghost_values();
+			   dftPtr->interpolateNodalDataToQuadratureData(dftPtr->d_matrixFreeDataPRefined,
+								dftPtr->d_rhoInNodalValues,
+								*(dftPtr->rhoInValues),
+								*(dftPtr->gradRhoInValues),
+                                                                *(dftPtr->gradRhoInValues),
+								 dftParameters::xc_id == 4);		
+	     
+			   dftPtr->normalizeRho();
+
+		 	   if (dftParameters::verbosity>=1)
+			      pcout<<"----------Start shadow potential energy solve with approx density= n+lamda*v1-------------"<<std::endl;
+
+                           dftPtr->solve(false,true);
+
+		 	   if (dftParameters::verbosity>=1)
+			      pcout<<"----------End shadow potential energy solve with approx density= n+lamda*v1-------------"<<std::endl;
+
+			   u1=dftPtr->d_rhoOutNodalValues;
+			   if (dftParameters::useAtomicRhoXLBOMD)
+			      u1-=atomicRho;
+
+	                   u1.update_ghost_values();
+
+			   //normalize shadowKSRhoMin
+			   charge = dftPtr->totalCharge(dftPtr->d_matrixFreeDataPRefined,
+					       u1);
+			   if (dftParameters::useAtomicRhoXLBOMD)
+		  	      u1.add(-charge/dftPtr->d_domainVolume);
+                           else
+                              u1 *= ((double)dftPtr->numElectrons)/charge; 
+
+		           for (unsigned int i = 0; i < local_size; i++)
+				u1.local_element(i)=(u1.local_element(i)-shadowKSRhoMin.local_element(i))/deltalambda;
+
+			   if (dftParameters::verbosity>=1)
+		   	       pcout<<" Vector norm of response (delta rho_min[n+delta_lambda*v1]/ delta_lambda):  "<<u1.l2_norm()<<std::endl;
+
+                           u1.add(k0kernelconstant,v1);
+
+                           //u1.update_ghost_values();
+                        }
+
 			rmsErrorRho=std::sqrt(dftPtr->fieldl2Norm(dftPtr->d_matrixFreeDataPRefined,rhoErrorVec)/dftPtr->d_domainVolume);
 			rmsErrorGradRho=std::sqrt(dftPtr->fieldGradl2Norm(dftPtr->d_matrixFreeDataPRefined,rhoErrorVec)/dftPtr->d_domainVolume);
 			MPI_Barrier(MPI_COMM_WORLD);
@@ -747,7 +863,7 @@ void molecularDynamics<FEOrder>::run()
                     if (dftParameters::useAtomicRhoXLBOMD)
 		        shadowKSRhoMin.add(-charge/dftPtr->d_domainVolume);
                     else
-                        shadowKSRhoMin *= ((double)dftPtr->numElectrons)/charge;  
+                        shadowKSRhoMin *= ((double)dftPtr->numElectrons)/charge; 
             }
 
             double bomdpost_time;
@@ -787,9 +903,9 @@ void molecularDynamics<FEOrder>::run()
 	    temperatureFromVelocities = averageKineticEnergy*2/kb;
 	    kineticEnergyVector[timeIndex-startingTimeStep] = kineticEnergy/haToeV;
 	    internalEnergyVector[timeIndex-startingTimeStep] = (dftParameters::isXLBOMD && dftPtr->d_autoMesh!=1 && !(timeIndex ==startingTimeStep+1 && restartFlag==1))?
-                                                               dftPtr->d_shadowPotentialEnergy
+                                                               shadowPotentialInternalEnergy
                                                                :dftPtr->d_groundStateEnergy;
-	    entropicEnergyVector[timeIndex-startingTimeStep] = dftPtr->d_entropicEnergy;
+	    entropicEnergyVector[timeIndex-startingTimeStep] = (dftParameters::isXLBOMD && dftPtr->d_autoMesh!=1 && !(timeIndex ==startingTimeStep+1 && restartFlag==1))?entropicEnergyShadowPotential:dftPtr->d_entropicEnergy;
             totalEnergyVector[timeIndex-startingTimeStep] = kineticEnergyVector[timeIndex-startingTimeStep] +internalEnergyVector[timeIndex-startingTimeStep] -entropicEnergyVector[timeIndex-startingTimeStep];
             rmsErrorRhoVector[timeIndex-startingTimeStep] = rmsErrorRho;
             rmsErrorGradRhoVector[timeIndex-startingTimeStep] = rmsErrorGradRho;

@@ -2207,7 +2207,7 @@ namespace dftfe {
 
     vectorType phiRhoMinusApproxRho;
     phiRhoMinusApproxRho.reinit(d_phiTotRhoIn); 
-    if (dftParameters::isBOMD && dftParameters::isXLBOMD && solveLinearizedKS)
+    if (dftParameters::isBOMD && dftParameters::isXLBOMD && solveLinearizedKS && computeForces)
     {
 	if(dftParameters::verbosity>=2)
 	  pcout<< std::endl<<"Poisson solve for (rho_min-n): ";
