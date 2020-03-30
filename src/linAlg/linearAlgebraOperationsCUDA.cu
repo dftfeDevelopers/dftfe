@@ -792,7 +792,7 @@ namespace dftfe
 		  inc);
 	     
       const bool useCommunAvoidanceOpt=isXlBOMDLinearizedSolve?communAvoidance:true; 
-      const double communAvoidanceTolerance=isXlBOMDLinearizedSolve?1e-6:1e-10;
+      const double communAvoidanceTolerance=isXlBOMDLinearizedSolve?1e-6:1e-12;
       const double computeAvoidanceTolerance=isXlBOMDLinearizedSolve?1e-8:1e-14;  
       bool isCommunAvoidanceToleranceReached=false;
       bool isComputeAvoidanceToleranceReached=false;
