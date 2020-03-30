@@ -791,7 +791,7 @@ namespace dftfe
 		  YArray.begin(),
 		  inc);
 	     
-      const bool useCommunAvoidanceOpt=isXlBOMDLinearizedSolve?communAvoidance:true; 
+      const bool useCommunAvoidanceOpt=isXlBOMDLinearizedSolve?communAvoidance:false; 
       const double communAvoidanceTolerance=isXlBOMDLinearizedSolve?1e-6:1e-12;
       const double computeAvoidanceTolerance=isXlBOMDLinearizedSolve?1e-8:1e-14;  
       bool isCommunAvoidanceToleranceReached=false;
@@ -1004,7 +1004,7 @@ namespace dftfe
                       }
                       else
                       {
-                               /* 
+                               /*
 			       operatorMatrix.HXChebyNoCommun(YArray,
 						     projectorKetTimesVector,
 						     localVectorSize,
@@ -1028,8 +1028,8 @@ namespace dftfe
 													    operatorMatrix.getSqrtMassVec(),
 													    XArray.begin());
                                
-                               */
                                
+                               */
 			       XArray2=0;
 			       operatorMatrix.HXChebyNoCommun(YArray,
 						     projectorKetTimesVector,
@@ -1060,6 +1060,7 @@ namespace dftfe
 											     XArray.begin(),
 											     1.0,
 											     1.0);
+                              
                       }
                     
 

@@ -698,9 +698,9 @@ namespace dftfe
     boundaryIdVec.compress(VectorOperation::add);
     boundaryIdVec.update_ghost_values();
     //boundary constrained node as well its masters should also be treated as boundary nodes
-    constraintMatrix.distribute(boundaryIdVec);
-    constraintMatrix.set_zero(boundaryIdVec); 
-    boundaryIdVec.update_ghost_values(); 
+    //constraintMatrix.distribute(boundaryIdVec);
+    //constraintMatrix.set_zero(boundaryIdVec); 
+    //boundaryIdVec.update_ghost_values(); 
 
   
     //std::cout<<"CHECK: "<<boundaryId.l2_norm()<<std::endl;
@@ -715,6 +715,19 @@ namespace dftfe
            boundaryIdsHost[i]=1;
         }
     }
+
+    //boundary constrained node as well its masters should also be treated as boundary nodes
+    constraintMatrix.distribute(boundaryIdVec);
+
+    for(unsigned int i = 0; i < (numberLocalDofs+numberGhostDofs); ++i)
+    {
+        if (std::fabs(boundaryIdVec.local_element(i))>1e-8)
+        {
+           boundaryIdToLocalIdMap.push_back(i);
+           boundaryIdsHost[i]=1;
+        }
+    }
+
 
     d_boundaryIdToLocalIdMapDevice.clear();
     d_boundaryIdToLocalIdMapDevice.resize(boundaryIdToLocalIdMap.size());
