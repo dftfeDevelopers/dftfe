@@ -206,6 +206,8 @@ void molecularDynamics<FEOrder>::run()
         vectorType u1;// for rank1 update kernel
         vectorType v1;// for rank1 update kernel
         vectorType peturbedApproxDensity;// for rank1 update kernel
+        vectorType temp1;
+        vectorType temp2;
 
 	double kineticEnergy = 0.0;
 
@@ -793,22 +795,79 @@ void molecularDynamics<FEOrder>::run()
 		 	   if (dftParameters::verbosity>=1)
 			      pcout<<"----------End shadow potential energy solve with approx density= n+lamda*v1-------------"<<std::endl;
 
-			   u1=dftPtr->d_rhoOutNodalValues;
+			   temp1=dftPtr->d_rhoOutNodalValues;
 			   if (dftParameters::useAtomicRhoXLBOMD)
-			      u1-=atomicRho;
+			      temp1-=atomicRho;
 
-	                   u1.update_ghost_values();
+	                   temp1.update_ghost_values();
 
 			   //normalize shadowKSRhoMin
 			   charge = dftPtr->totalCharge(dftPtr->d_matrixFreeDataPRefined,
-					       u1);
+					       temp1);
 			   if (dftParameters::useAtomicRhoXLBOMD)
-		  	      u1.add(-charge/dftPtr->d_domainVolume);
+		  	      temp1.add(-charge/dftPtr->d_domainVolume);
                            else
-                              u1 *= ((double)dftPtr->numElectrons)/charge; 
+                              temp1 *= ((double)dftPtr->numElectrons)/charge; 
 
+
+                           peturbedApproxDensity=approxDensityContainer.back();
+                           peturbedApproxDensity.add(-deltalambda,v1);
+
+                           peturbedApproxDensity.update_ghost_values();   
+
+		           //normalize peturbedApproxDensity
+			   charge = dftPtr->totalCharge(dftPtr->d_matrixFreeDataPRefined,
+							  peturbedApproxDensity);
+
+
+			   if (dftParameters::verbosity>=1)
+		   	       pcout<<"Total Charge before Normalizing peturbedApproxDensity:  "<<charge<<std::endl;
+		       
+   		           if (dftParameters::useAtomicRhoXLBOMD)
+ 			      peturbedApproxDensity.add(-charge/dftPtr->d_domainVolume);
+                           else
+                              peturbedApproxDensity *= ((double)dftPtr->numElectrons)/charge;
+
+                           dftPtr->d_rhoInNodalValues=peturbedApproxDensity;
+                           if (dftParameters::useAtomicRhoXLBOMD)
+                              dftPtr->d_rhoInNodalValues+=atomicRho;
+                         
+                           dftPtr->d_rhoInNodalValues.update_ghost_values();
+			   dftPtr->interpolateNodalDataToQuadratureData(dftPtr->d_matrixFreeDataPRefined,
+								dftPtr->d_rhoInNodalValues,
+								*(dftPtr->rhoInValues),
+								*(dftPtr->gradRhoInValues),
+                                                                *(dftPtr->gradRhoInValues),
+								 dftParameters::xc_id == 4);		
+	     
+			   dftPtr->normalizeRho();
+
+		 	   if (dftParameters::verbosity>=1)
+			      pcout<<"----------Start shadow potential energy solve with approx density= n-lamda*v1-------------"<<std::endl;
+
+                           dftPtr->solve(false,true);
+
+		 	   if (dftParameters::verbosity>=1)
+			      pcout<<"----------End shadow potential energy solve with approx density= n-lamda*v1-------------"<<std::endl;
+
+			   temp2=dftPtr->d_rhoOutNodalValues;
+			   if (dftParameters::useAtomicRhoXLBOMD)
+			      temp2-=atomicRho;
+
+	                   temp2.update_ghost_values();
+
+			   //normalize shadowKSRhoMin
+			   charge = dftPtr->totalCharge(dftPtr->d_matrixFreeDataPRefined,
+					       temp2);
+			   if (dftParameters::useAtomicRhoXLBOMD)
+		  	      temp2.add(-charge/dftPtr->d_domainVolume);
+                           else
+                              temp2 *= ((double)dftPtr->numElectrons)/charge; 
+
+                           u1.reinit(shadowKSRhoMin);
+                           u1=0;
 		           for (unsigned int i = 0; i < local_size; i++)
-				u1.local_element(i)=(u1.local_element(i)-shadowKSRhoMin.local_element(i))/deltalambda;
+				u1.local_element(i)=(temp1.local_element(i)-temp2.local_element(i))/(2.0*deltalambda);
 
 			   if (dftParameters::verbosity>=1)
 		   	       pcout<<" Vector norm of response (delta rho_min[n+delta_lambda*v1]/ delta_lambda):  "<<u1.l2_norm()<<std::endl;
