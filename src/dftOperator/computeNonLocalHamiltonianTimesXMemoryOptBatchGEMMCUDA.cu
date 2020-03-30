@@ -25,8 +25,9 @@ void kohnShamDFTOperatorCUDAClass<FEOrder>::computeNonLocalHamiltonianTimesX(con
 									     cudaVectorType &  projectorKetTimesVector,
 									     const unsigned int numberWaveFunctions,
 									     double* dst,
-const bool skip1,
-const bool skip2)
+                                                                             const bool skip1,
+                                                                             const bool skip2,
+                                                                             const bool skipAccumulationBoundaryNodes)
 
 {
 	 
@@ -175,7 +176,16 @@ const bool skip2)
 	  
   }   
 
-  daxpyAtomicAddKernel<<<(numberWaveFunctions+255)/256*d_numLocallyOwnedCells*d_numberNodesPerElement,256>>>
+  if (skipAccumulationBoundaryNodes)
+     daxpyAtomicAddKernelNonBoundary<<<(numberWaveFunctions+255)/256*d_numLocallyOwnedCells*d_numberNodesPerElement,256>>>
+                                                                     (numberWaveFunctions,
+                                                                      d_numLocallyOwnedCells*d_numberNodesPerElement,
+                                                                      thrust::raw_pointer_cast(&d_cellHamMatrixTimesWaveMatrix[0]),
+                                                                      thrust::raw_pointer_cast(&d_boundaryIdsVecDevice[0]),
+                                                                      dst,
+                                                                      thrust::raw_pointer_cast(&d_flattenedArrayCellLocalProcIndexIdMapDevice[0]));
+  else
+     daxpyAtomicAddKernel<<<(numberWaveFunctions+255)/256*d_numLocallyOwnedCells*d_numberNodesPerElement,256>>>
                                                                      (numberWaveFunctions,
                                                                       d_numLocallyOwnedCells*d_numberNodesPerElement,
                                                                       thrust::raw_pointer_cast(&d_cellHamMatrixTimesWaveMatrix[0]),
