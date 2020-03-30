@@ -197,7 +197,7 @@ void molecularDynamics<FEOrder>::run()
         const double c6=8.0;
         const double c7=-1.0;
         const double diracDeltaKernelConstant=-dftParameters::diracDeltaKernelScalingConstant;
-        const double k0kernelconstant=20.0;
+        const double k0kernelconstant=20.0;//20.0
         std::deque<vectorType> approxDensityContainer(kmax);
         vectorType shadowKSRhoMin;
         vectorType atomicRho;
@@ -750,7 +750,7 @@ void molecularDynamics<FEOrder>::run()
                         {
                            v1=rhoErrorVec;
                            v1*=1.0/rhoErrorVec.l2_norm();
-                           const double deltalambda=1e-2*std::sqrt(dftPtr->fieldl2Norm(dftPtr->d_matrixFreeDataPRefined,approxDensityContainer.back())/dftPtr->d_domainVolume);
+                           const double deltalambda=1e-1*std::sqrt(dftPtr->fieldl2Norm(dftPtr->d_matrixFreeDataPRefined,approxDensityContainer.back())/dftPtr->d_domainVolume);
 
                            if (dftParameters::verbosity>=1)
                               pcout<<"deltalambda: "<<deltalambda<<std::endl;
