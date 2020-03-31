@@ -219,7 +219,7 @@ namespace dftfe {
       prm.enter_subsection ("Checkpointing and Restart");
       {
 	prm.declare_entry("CHK TYPE", "0",
-			  Patterns::Integer(0,2),
+			  Patterns::Integer(0,3),
 			  "[Standard] Checkpoint type, 0 (do not create any checkpoint), 1 (create checkpoint for geometry optimization restart if either ION OPT or CELL OPT or BOMD is set to true. Currently, checkpointing and restart framework does not work if both ION OPT and CELL OPT are set to true simultaneously- the code will throw an error if attempted.), 2 (create checkpoint for scf restart. Currently, this option cannot be used if geometry optimization is being performed. The code will throw an error if this option is used in conjunction with geometry optimization.)");
 
 	prm.declare_entry("RESTART FROM CHK", "false",

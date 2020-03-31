@@ -170,7 +170,8 @@ namespace dftfe {
        * @brief Kohn-Sham ground-state solve using SCF iteration
        */
       void solve(const bool computeForces=true,
-                 const bool solveLinearizedKS=false);
+                 const bool solveLinearizedKS=false,
+                 const bool restartGroundStateCalcFromChk=false);
 
       /**
        * @brief Number of Kohn-Sham eigen values to be computed
@@ -294,9 +295,19 @@ namespace dftfe {
       void saveTriaInfoAndRhoData();
 
       /**
+       *@brief save triangulation information and rho quadrature data to checkpoint file for restarts
+       */
+      void saveTriaInfoAndRhoNodalData();
+
+      /**
        *@brief load triangulation information rho quadrature data from checkpoint file for restarted run
        */
       void loadTriaInfoAndRhoData();
+
+      /**
+       *@brief load triangulation information rho quadrature data from checkpoint file for restarted run
+       */
+      void loadTriaInfoAndRhoNodalData();
 
       void generateMPGrid();
       void writeMesh(std::string meshFileName);
@@ -854,7 +865,7 @@ namespace dftfe {
       std::map<dealii::CellId, std::vector<double> > *rhoInValues, *rhoOutValues, *rhoInValuesSpinPolarized, *rhoOutValuesSpinPolarized;
       std::deque<std::map<dealii::CellId,std::vector<double> >> rhoInVals, rhoOutVals, rhoInValsSpinPolarized, rhoOutValsSpinPolarized;
 
-      vectorType d_rhoInNodalValues, d_rhoOutNodalValues, d_preCondResidualVector;
+      vectorType d_rhoInNodalValuesRead, d_rhoInNodalValues, d_rhoOutNodalValues, d_preCondResidualVector;
       std::deque<vectorType> d_rhoInNodalVals, d_rhoOutNodalVals;
 
       /// for xl-bomd
@@ -1026,6 +1037,8 @@ namespace dftfe {
 
       vectorType d_tempEigenVec;
       vectorType d_tempEigenVecPrev;
+
+      bool d_isRestartGroundStateCalcFromChk;
 
       /**
       * @ nscf variables

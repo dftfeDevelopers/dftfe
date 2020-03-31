@@ -135,7 +135,7 @@ void molecularDynamics<FEOrder>::run()
         const unsigned int numberGlobalCharges=dftPtr->atomLocations.size();
         //https://lammps.sandia.gov/doc/units.html
 	const double initialTemperature = dftParameters::startingTempBOMDNVE;//K
-	const unsigned int restartFlag =dftParameters::restartFromChk?1:0; //1; //0;//1;
+	const unsigned int restartFlag =(dftParameters::chkType==1 && dftParameters::restartFromChk)?1:0; //1; //0;//1;
 	int startingTimeStep = 0; //625;//450;// 50;//300; //0;// 300;
 
 	double massAtomAl = 26.982;//mass proton is chosen 1 **49611.513**
@@ -223,7 +223,8 @@ void molecularDynamics<FEOrder>::run()
 	    if (dftParameters::autoMeshStepInterpolateBOMD)
 	       dftPtr->updatePrevMeshDataStructures();
 
-	    dftPtr->solve();
+	    dftPtr->solve(true,false,dftPtr->d_isRestartGroundStateCalcFromChk);
+            dftPtr->d_isRestartGroundStateCalcFromChk=false;
             const std::vector<double> forceOnAtoms= dftPtr->forcePtr->getAtomsForces();
 
             dftPtr->d_matrixFreeDataPRefined.initialize_dof_vector(atomicRho);
