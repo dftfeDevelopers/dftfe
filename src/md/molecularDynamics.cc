@@ -1122,7 +1122,7 @@ void molecularDynamics<FEOrder>::run()
 	    dftUtils::writeDataIntoFile(timeIndexData,
 			               "time.chk");
 
-            if (dftParameters::chkType==1)
+            if (dftParameters::chkType>=1)
 	       dftPtr->writeDomainAndAtomCoordinates();
 
 
