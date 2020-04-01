@@ -106,6 +106,77 @@ namespace dftfe {
 	    return fracCoord;
 	  }
 
+
+	  void recursiveKernelApply(const std::vector<vectorType> & ucontainer,
+                                    const std::vector<vectorType> & vcontainer,
+                                    const double k0,
+                                    const vectorType & x,
+                                    const unsigned int id,
+				    vectorType & y)
+	  {
+              if (id==0)
+              {
+		      for (unsigned int i = 0; i < x.local_size(); i++)
+		  	  y.local_element(i)=k0* x.local_element(i);
+              }
+              else
+              {
+		      vectorType kminus1x, kminus1u;
+		      kminus1x.reinit(y);
+                      kminus1u.reinit(y);
+		     
+		      recursiveKernelApply(ucontainer,
+					   vcontainer,
+					   k0,
+					   x,
+					   id-1,
+					   kminus1x);
+
+		      recursiveKernelApply(ucontainer,
+					   vcontainer,
+					   k0,
+					   ucontainer[id],
+					   id-1,
+					   kminus1u);
+
+		      const double vTkminus1x=vcontainer[id]*kminus1x;
+		      const double vTkminus1u=vcontainer[id]*kminus1u;
+		      for (unsigned int i = 0; i < x.local_size(); i++)
+		  	  y.local_element(i)=kminus1x.local_element(i)-kminus1u.local_element(i)*vTkminus1x/(1.0+vTkminus1u);
+              }
+	  }
+
+
+	  void recursiveJApply(const std::vector<vectorType> & ucontainer,
+                                    const std::vector<vectorType> & vcontainer,
+                                    const double c,
+                                    const vectorType & x,
+                                    const unsigned int id,
+				    vectorType & y)
+	  {
+              if (id==0)
+              {
+		      for (unsigned int i = 0; i < x.local_size(); i++)
+		  	  y.local_element(i)=-c*x.local_element(i);
+              }
+              else
+              {
+		      vectorType jminus1x;
+                      jminus1x.reinit(y);
+		     
+		      recursiveJApply(ucontainer,
+				      vcontainer,
+				      c,
+				      x,
+				      id-1,
+				      jminus1x);
+
+		      const double vTx=vcontainer[id]*x;
+		      for (unsigned int i = 0; i < x.local_size(); i++)
+		  	  y.local_element(i)=jminus1x.local_element(i)+ucontainer[id].local_element(i)*vTx;
+              }
+	  }
+
 	}
 
 
@@ -203,11 +274,13 @@ void molecularDynamics<FEOrder>::run()
         vectorType atomicRho;
         vectorType approxDensityNext;
         vectorType rhoErrorVec;
-        vectorType u1;// for rank1 update kernel
-        vectorType v1;// for rank1 update kernel
-        vectorType peturbedApproxDensity;// for rank1 update kernel
-        vectorType temp1;
-        vectorType temp2;
+        std::vector<vectorType> ucontainer(dftParameters::kernelUpdateRankXLBOMD);// for low rank update kernel
+        std::vector<vectorType> vcontainer(dftParameters::kernelUpdateRankXLBOMD);// for low rank update kernel
+        vectorType jv;
+        vectorType peturbedApproxDensity;// for low rank update kernel
+        vectorType temp1;// for central difference
+        vectorType temp2;// for central difference
+        vectorType kernelAction;//
 
 	double kineticEnergy = 0.0;
 
@@ -635,13 +708,10 @@ void molecularDynamics<FEOrder>::run()
 	 
                         if (dftParameters::kernelUpdateRankXLBOMD>0 && !isFirstXLBOMDStep)
                         {
-                                const double k0=-1.0/(k0kernelconstant+1.0);
-                                const double v1Tk0rhoMinusn=v1*rhoErrorVec*k0;
-                                const double v1Tk0u1=v1*u1*k0;
 				for (unsigned int i = 0; i < local_size; i++)
 					approxDensityNext.local_element(i)=approxDensityTimeT.local_element(i)*2.0
 									  -approxDensityTimeTMinusDeltat.local_element(i)
-									  -k*(k0*rhoErrorVec.local_element(i)-k0*v1Tk0rhoMinusn/(1.0+v1Tk0u1)*u1.local_element(i));
+									  -k*(kernelAction.local_element(i));
                         }
                         else
                         {
@@ -749,133 +819,168 @@ void molecularDynamics<FEOrder>::run()
 
                         if (dftParameters::kernelUpdateRankXLBOMD>0)
                         {
-                           v1=rhoErrorVec;
-                           v1*=1.0/rhoErrorVec.l2_norm();
-                           const double deltalambda=1e-1*std::sqrt(dftPtr->fieldl2Norm(dftPtr->d_matrixFreeDataPRefined,approxDensityContainer.back())/dftPtr->d_domainVolume);
-
-                           if (dftParameters::verbosity>=1)
-                              pcout<<"deltalambda: "<<deltalambda<<std::endl;
-
-                           peturbedApproxDensity=approxDensityContainer.back();
-                           peturbedApproxDensity.add(deltalambda,v1);
-
-                           peturbedApproxDensity.update_ghost_values();   
-
-		           //normalize peturbedApproxDensity
-			   charge = dftPtr->totalCharge(dftPtr->d_matrixFreeDataPRefined,
-							  peturbedApproxDensity);
-
+			   const double deltalambda=1e-1*std::sqrt(dftPtr->fieldl2Norm(dftPtr->d_matrixFreeDataPRefined,approxDensityContainer.back())/dftPtr->d_domainVolume);
 
 			   if (dftParameters::verbosity>=1)
-		   	       pcout<<"Total Charge before Normalizing peturbedApproxDensity:  "<<charge<<std::endl;
-		       
-   		           if (dftParameters::useAtomicRhoXLBOMD)
- 			      peturbedApproxDensity.add(-charge/dftPtr->d_domainVolume);
-                           else
-                              peturbedApproxDensity *= ((double)dftPtr->numElectrons)/charge;
+			      pcout<<"deltalambda: "<<deltalambda<<std::endl;
 
-                           dftPtr->d_rhoInNodalValues=peturbedApproxDensity;
-                           if (dftParameters::useAtomicRhoXLBOMD)
-                              dftPtr->d_rhoInNodalValues+=atomicRho;
-                         
-                           dftPtr->d_rhoInNodalValues.update_ghost_values();
-			   dftPtr->interpolateNodalDataToQuadratureData(dftPtr->d_matrixFreeDataPRefined,
-								dftPtr->d_rhoInNodalValues,
-								*(dftPtr->rhoInValues),
-								*(dftPtr->gradRhoInValues),
-                                                                *(dftPtr->gradRhoInValues),
-								 dftParameters::xc_id == 4);		
-	     
-			   dftPtr->normalizeRho();
+                           const double k0=-1.0/(k0kernelconstant+1.0);
 
-		 	   if (dftParameters::verbosity>=1)
-			      pcout<<"----------Start shadow potential energy solve with approx density= n+lamda*v1-------------"<<std::endl;
+                           jv.reinit(rhoErrorVec);
 
-                           dftPtr->solve(false,true);
+                           vectorType compvec;
+                           compvec.reinit(rhoErrorVec);
+                           for (unsigned int irank=0; irank<dftParameters::kernelUpdateRankXLBOMD; irank++)
+			   {
+                                   vcontainer[irank].reinit(rhoErrorVec);
+                                   internalmd::recursiveKernelApply(ucontainer,
+                                                vcontainer,
+                                                k0,
+                                                rhoErrorVec,
+                                                irank,
+				                vcontainer[irank]);
+                                   for (unsigned int jrank=0; jrank<(dftParameters::kernelUpdateRankXLBOMD-1); jrank++)
+                                   {
+                                       const double tTvj=vcontainer[irank]*vcontainer[jrank];
+                                       compvec.add(tTvj,vcontainer[jrank]);
+                                   }
+                                   vcontainer[irank]-=compvec;
+                                  
+				   vcontainer[irank]*=1.0/vcontainer[irank].l2_norm();
 
-		 	   if (dftParameters::verbosity>=1)
-			      pcout<<"----------End shadow potential energy solve with approx density= n+lamda*v1-------------"<<std::endl;
+				   peturbedApproxDensity=approxDensityContainer.back();
+				   peturbedApproxDensity.add(deltalambda,vcontainer[irank]);
 
-			   temp1=dftPtr->d_rhoOutNodalValues;
-			   if (dftParameters::useAtomicRhoXLBOMD)
-			      temp1-=atomicRho;
+				   peturbedApproxDensity.update_ghost_values();   
 
-	                   temp1.update_ghost_values();
-
-			   //normalize shadowKSRhoMin
-			   charge = dftPtr->totalCharge(dftPtr->d_matrixFreeDataPRefined,
-					       temp1);
-			   if (dftParameters::useAtomicRhoXLBOMD)
-		  	      temp1.add(-charge/dftPtr->d_domainVolume);
-                           else
-                              temp1 *= ((double)dftPtr->numElectrons)/charge; 
+				   //normalize peturbedApproxDensity
+				   charge = dftPtr->totalCharge(dftPtr->d_matrixFreeDataPRefined,
+								  peturbedApproxDensity);
 
 
-                           peturbedApproxDensity=approxDensityContainer.back();
-                           peturbedApproxDensity.add(-deltalambda,v1);
+				   if (dftParameters::verbosity>=1)
+				       pcout<<"Total Charge before Normalizing peturbedApproxDensity:  "<<charge<<std::endl;
+			       
+				   if (dftParameters::useAtomicRhoXLBOMD)
+				      peturbedApproxDensity.add(-charge/dftPtr->d_domainVolume);
+				   else
+				      peturbedApproxDensity *= ((double)dftPtr->numElectrons)/charge;
 
-                           peturbedApproxDensity.update_ghost_values();   
+				   dftPtr->d_rhoInNodalValues=peturbedApproxDensity;
+				   if (dftParameters::useAtomicRhoXLBOMD)
+				      dftPtr->d_rhoInNodalValues+=atomicRho;
+				 
+				   dftPtr->d_rhoInNodalValues.update_ghost_values();
+				   dftPtr->interpolateNodalDataToQuadratureData(dftPtr->d_matrixFreeDataPRefined,
+									dftPtr->d_rhoInNodalValues,
+									*(dftPtr->rhoInValues),
+									*(dftPtr->gradRhoInValues),
+									*(dftPtr->gradRhoInValues),
+									 dftParameters::xc_id == 4);		
+		     
+				   dftPtr->normalizeRho();
 
-		           //normalize peturbedApproxDensity
-			   charge = dftPtr->totalCharge(dftPtr->d_matrixFreeDataPRefined,
-							  peturbedApproxDensity);
+				   if (dftParameters::verbosity>=1)
+				      pcout<<"----------Start shadow potential energy solve with approx density= n+lamda*v1-------------"<<std::endl;
+
+				   dftPtr->solve(false,true);
+
+				   if (dftParameters::verbosity>=1)
+				      pcout<<"----------End shadow potential energy solve with approx density= n+lamda*v1-------------"<<std::endl;
+
+				   temp1=dftPtr->d_rhoOutNodalValues;
+				   if (dftParameters::useAtomicRhoXLBOMD)
+				      temp1-=atomicRho;
+
+				   temp1.update_ghost_values();
+
+				   //normalize shadowKSRhoMin
+				   charge = dftPtr->totalCharge(dftPtr->d_matrixFreeDataPRefined,
+						       temp1);
+				   if (dftParameters::useAtomicRhoXLBOMD)
+				      temp1.add(-charge/dftPtr->d_domainVolume);
+				   else
+				      temp1 *= ((double)dftPtr->numElectrons)/charge; 
 
 
-			   if (dftParameters::verbosity>=1)
-		   	       pcout<<"Total Charge before Normalizing peturbedApproxDensity:  "<<charge<<std::endl;
-		       
-   		           if (dftParameters::useAtomicRhoXLBOMD)
- 			      peturbedApproxDensity.add(-charge/dftPtr->d_domainVolume);
-                           else
-                              peturbedApproxDensity *= ((double)dftPtr->numElectrons)/charge;
+				   peturbedApproxDensity=approxDensityContainer.back();
+				   peturbedApproxDensity.add(-deltalambda,vcontainer[irank]);
 
-                           dftPtr->d_rhoInNodalValues=peturbedApproxDensity;
-                           if (dftParameters::useAtomicRhoXLBOMD)
-                              dftPtr->d_rhoInNodalValues+=atomicRho;
-                         
-                           dftPtr->d_rhoInNodalValues.update_ghost_values();
-			   dftPtr->interpolateNodalDataToQuadratureData(dftPtr->d_matrixFreeDataPRefined,
-								dftPtr->d_rhoInNodalValues,
-								*(dftPtr->rhoInValues),
-								*(dftPtr->gradRhoInValues),
-                                                                *(dftPtr->gradRhoInValues),
-								 dftParameters::xc_id == 4);		
-	     
-			   dftPtr->normalizeRho();
+				   peturbedApproxDensity.update_ghost_values();   
 
-		 	   if (dftParameters::verbosity>=1)
-			      pcout<<"----------Start shadow potential energy solve with approx density= n-lamda*v1-------------"<<std::endl;
+				   //normalize peturbedApproxDensity
+				   charge = dftPtr->totalCharge(dftPtr->d_matrixFreeDataPRefined,
+								  peturbedApproxDensity);
 
-                           dftPtr->solve(false,true);
 
-		 	   if (dftParameters::verbosity>=1)
-			      pcout<<"----------End shadow potential energy solve with approx density= n-lamda*v1-------------"<<std::endl;
+				   if (dftParameters::verbosity>=1)
+				       pcout<<"Total Charge before Normalizing peturbedApproxDensity:  "<<charge<<std::endl;
+			       
+				   if (dftParameters::useAtomicRhoXLBOMD)
+				      peturbedApproxDensity.add(-charge/dftPtr->d_domainVolume);
+				   else
+				      peturbedApproxDensity *= ((double)dftPtr->numElectrons)/charge;
 
-			   temp2=dftPtr->d_rhoOutNodalValues;
-			   if (dftParameters::useAtomicRhoXLBOMD)
-			      temp2-=atomicRho;
+				   dftPtr->d_rhoInNodalValues=peturbedApproxDensity;
+				   if (dftParameters::useAtomicRhoXLBOMD)
+				      dftPtr->d_rhoInNodalValues+=atomicRho;
+				 
+				   dftPtr->d_rhoInNodalValues.update_ghost_values();
+				   dftPtr->interpolateNodalDataToQuadratureData(dftPtr->d_matrixFreeDataPRefined,
+									dftPtr->d_rhoInNodalValues,
+									*(dftPtr->rhoInValues),
+									*(dftPtr->gradRhoInValues),
+									*(dftPtr->gradRhoInValues),
+									 dftParameters::xc_id == 4);		
+		     
+				   dftPtr->normalizeRho();
 
-	                   temp2.update_ghost_values();
+				   if (dftParameters::verbosity>=1)
+				      pcout<<"----------Start shadow potential energy solve with approx density= n-lamda*v1-------------"<<std::endl;
 
-			   //normalize shadowKSRhoMin
-			   charge = dftPtr->totalCharge(dftPtr->d_matrixFreeDataPRefined,
-					       temp2);
-			   if (dftParameters::useAtomicRhoXLBOMD)
-		  	      temp2.add(-charge/dftPtr->d_domainVolume);
-                           else
-                              temp2 *= ((double)dftPtr->numElectrons)/charge; 
+				   dftPtr->solve(false,true);
 
-                           u1.reinit(shadowKSRhoMin);
-                           u1=0;
-		           for (unsigned int i = 0; i < local_size; i++)
-				u1.local_element(i)=(temp1.local_element(i)-temp2.local_element(i))/(2.0*deltalambda);
+				   if (dftParameters::verbosity>=1)
+				      pcout<<"----------End shadow potential energy solve with approx density= n-lamda*v1-------------"<<std::endl;
 
-			   if (dftParameters::verbosity>=1)
-		   	       pcout<<" Vector norm of response (delta rho_min[n+delta_lambda*v1]/ delta_lambda):  "<<u1.l2_norm()<<std::endl;
+				   temp2=dftPtr->d_rhoOutNodalValues;
+				   if (dftParameters::useAtomicRhoXLBOMD)
+				      temp2-=atomicRho;
 
-                           u1.add(k0kernelconstant,v1);
+				   temp2.update_ghost_values();
 
-                           //u1.update_ghost_values();
+				   //normalize shadowKSRhoMin
+				   charge = dftPtr->totalCharge(dftPtr->d_matrixFreeDataPRefined,
+						       temp2);
+				   if (dftParameters::useAtomicRhoXLBOMD)
+				      temp2.add(-charge/dftPtr->d_domainVolume);
+				   else
+				      temp2 *= ((double)dftPtr->numElectrons)/charge; 
+
+				   ucontainer[irank].reinit(shadowKSRhoMin);
+				   ucontainer[irank]=0;
+				   for (unsigned int i = 0; i < local_size; i++)
+					ucontainer[irank].local_element(i)=(temp1.local_element(i)-temp2.local_element(i))/(2.0*deltalambda);
+
+				   if (dftParameters::verbosity>=1)
+				       pcout<<" Vector norm of response (delta rho_min[n+delta_lambda*v1]/ delta_lambda):  "<<ucontainer[irank].l2_norm()<< " for kernel rank: "<<irank+1<<std::endl;
+
+                                   internalmd::recursiveJApply(ucontainer,
+                                                 vcontainer,
+                                                 k0kernelconstant,
+                                                 vcontainer[irank],
+                                                 ucontainer.size(),
+				                 jv);
+
+				   ucontainer[irank]-=jv;
+			   }
+
+                           internalmd::recursiveKernelApply(ucontainer,
+                                                vcontainer,
+                                                k0,
+                                                rhoErrorVec,
+                                                ucontainer.size(),
+				                kernelAction);
                         }
 
 			rmsErrorRho=std::sqrt(dftPtr->fieldl2Norm(dftPtr->d_matrixFreeDataPRefined,rhoErrorVec)/dftPtr->d_domainVolume);
