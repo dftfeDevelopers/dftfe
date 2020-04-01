@@ -197,7 +197,7 @@ void molecularDynamics<FEOrder>::run()
         const double c6=8.0;
         const double c7=-1.0;
         const double diracDeltaKernelConstant=-dftParameters::diracDeltaKernelScalingConstant;
-        const double k0kernelconstant=20.0;//20.0
+        const double k0kernelconstant=1.0/dftParameters::diracDeltaKernelScalingConstant-1.0;//20.0;//20.0
         std::deque<vectorType> approxDensityContainer(kmax);
         vectorType shadowKSRhoMin;
         vectorType atomicRho;
@@ -633,7 +633,7 @@ void molecularDynamics<FEOrder>::run()
 
 
 	 
-                        if (dftParameters::useRank1KernelXLBOMD && !isFirstXLBOMDStep)
+                        if (dftParameters::kernelUpdateRankXLBOMD>0 && !isFirstXLBOMDStep)
                         {
                                 const double k0=-1.0/(k0kernelconstant+1.0);
                                 const double v1Tk0rhoMinusn=v1*rhoErrorVec*k0;
@@ -747,7 +747,7 @@ void molecularDynamics<FEOrder>::run()
                         rhoErrorVec-=approxDensityContainer.back();
 
 
-                        if (dftParameters::useRank1KernelXLBOMD)
+                        if (dftParameters::kernelUpdateRankXLBOMD>0)
                         {
                            v1=rhoErrorVec;
                            v1*=1.0/rhoErrorVec.l2_norm();
@@ -923,7 +923,14 @@ void molecularDynamics<FEOrder>::run()
                     if (dftParameters::useAtomicRhoXLBOMD)
 		        shadowKSRhoMin.add(-charge/dftPtr->d_domainVolume);
                     else
-                        shadowKSRhoMin *= ((double)dftPtr->numElectrons)/charge; 
+                        shadowKSRhoMin *= ((double)dftPtr->numElectrons)/charge;
+
+
+	            for (unsigned int i=0; i<approxDensityContainer.size();++i)
+		    {
+			approxDensityContainer[i]=shadowKSRhoMin;
+			approxDensityContainer[i].update_ghost_values();
+		    } 
             }
 
             double bomdpost_time;
