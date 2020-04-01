@@ -269,7 +269,7 @@ void molecularDynamics<FEOrder>::run()
         const double c7=-1.0;
         const double diracDeltaKernelConstant=-dftParameters::diracDeltaKernelScalingConstant;
         const double k0kernelconstant=1.0/dftParameters::diracDeltaKernelScalingConstant-1.0;//20.0;//20.0
-        std::deque<vectorType> approxDensityContainer(kmax);
+        std::deque<vectorType> approxDensityContainer;
         vectorType shadowKSRhoMin;
         vectorType atomicRho;
         vectorType approxDensityNext;
@@ -320,11 +320,8 @@ void molecularDynamics<FEOrder>::run()
             // Set approximate electron density to the exact ground state electron density in the 0th step
             if (dftParameters::isXLBOMD)
             {
-                   for (unsigned int i=0; i<approxDensityContainer.size();++i)
-                   {
-                      approxDensityContainer[i]=shadowKSRhoMin;
-                      approxDensityContainer[i].update_ghost_values();
-                   }
+                   approxDensityContainer.push_back(shadowKSRhoMin);
+                   approxDensityContainer.back().update_ghost_values();
             }
 
 
@@ -488,6 +485,7 @@ void molecularDynamics<FEOrder>::run()
 	}
 
         bool isFirstXLBOMDStep=true;
+        unsigned int autoMeshTimeIndex=(restartFlag==1)?(startingTimeStep+1):startingTimeStep;
 	//
 	//start the MD simulation
 	//
@@ -607,6 +605,7 @@ void molecularDynamics<FEOrder>::run()
             if (dftPtr->d_autoMesh==1 || (timeIndex == (startingTimeStep+1) && restartFlag==1))
                 isFirstXLBOMDStep=true;
 
+            bool isXlBOMDStep=false;
             if (dftParameters::isXLBOMD)
             {
                     if (dftPtr->d_autoMesh==1 && dftParameters::autoMeshStepInterpolateBOMD)
@@ -664,8 +663,28 @@ void molecularDynamics<FEOrder>::run()
                         dftPtr->updatePrevMeshDataStructures();
                         pcout<<".............Auto meshing step: interpolation and re-normalization completed.............."<<std::endl;
                     }
-                    else if (dftPtr->d_autoMesh==1 || (timeIndex == (startingTimeStep+1) && restartFlag==1))
+                    else if (dftPtr->d_autoMesh==1
+                           || (timeIndex == (startingTimeStep+1) && restartFlag==1)
+                           || (timeIndex < (kmax+autoMeshTimeIndex)))
                     {
+
+		        if (!dftPtr->d_autoMesh==1)
+			       if (!(timeIndex ==startingTimeStep+1 && restartFlag==1))
+			       {
+				    dftPtr->d_rhoInNodalValues=shadowKSRhoMin;
+				    if (dftParameters::useAtomicRhoXLBOMD)
+				       dftPtr->d_rhoInNodalValues+=atomicRho;
+				 
+				    dftPtr->d_rhoInNodalValues.update_ghost_values();
+				    dftPtr->interpolateNodalDataToQuadratureData(dftPtr->d_matrixFreeDataPRefined,
+									dftPtr->d_rhoInNodalValues,
+									*(dftPtr->rhoInValues),
+									*(dftPtr->gradRhoInValues),
+									*(dftPtr->gradRhoInValues),
+									 dftParameters::xc_id == 4);	
+				    dftPtr->normalizeRho();
+			       }
+
                         dftPtr->solve();
                         
 			shadowKSRhoMin=dftPtr->d_rhoOutNodalValues;
@@ -682,14 +701,18 @@ void molecularDynamics<FEOrder>::run()
                         else
                             shadowKSRhoMin *= ((double)dftPtr->numElectrons)/charge;  
 
-			for (unsigned int i=0; i<approxDensityContainer.size();++i)
-			{
-			      approxDensityContainer[i]=shadowKSRhoMin;
-			      approxDensityContainer[i].update_ghost_values();
-			}
+                        if (dftPtr->d_autoMesh==1)
+                        {
+                          autoMeshTimeIndex=timeIndex;
+                          approxDensityContainer.clear();
+                        }
+
+                        approxDensityContainer.push_back(shadowKSRhoMin);
+                        approxDensityContainer.back().update_ghost_values();
                     }
                     else
 		    {
+                        isXlBOMDStep=true;
 			double xlbomdpre_time;
 			MPI_Barrier(MPI_COMM_WORLD);
 			xlbomdpre_time = MPI_Wtime(); 
@@ -1029,13 +1052,6 @@ void molecularDynamics<FEOrder>::run()
 		        shadowKSRhoMin.add(-charge/dftPtr->d_domainVolume);
                     else
                         shadowKSRhoMin *= ((double)dftPtr->numElectrons)/charge;
-
-
-	            for (unsigned int i=0; i<approxDensityContainer.size();++i)
-		    {
-			approxDensityContainer[i]=shadowKSRhoMin;
-			approxDensityContainer[i].update_ghost_values();
-		    } 
             }
 
             double bomdpost_time;
@@ -1074,10 +1090,8 @@ void molecularDynamics<FEOrder>::run()
 	    averageKineticEnergy = kineticEnergy/(3*numberGlobalCharges);
 	    temperatureFromVelocities = averageKineticEnergy*2/kb;
 	    kineticEnergyVector[timeIndex-startingTimeStep] = kineticEnergy/haToeV;
-	    internalEnergyVector[timeIndex-startingTimeStep] = (dftParameters::isXLBOMD && dftPtr->d_autoMesh!=1 && !(timeIndex ==startingTimeStep+1 && restartFlag==1))?
-                                                               shadowPotentialInternalEnergy
-                                                               :dftPtr->d_groundStateEnergy;
-	    entropicEnergyVector[timeIndex-startingTimeStep] = (dftParameters::isXLBOMD && dftPtr->d_autoMesh!=1 && !(timeIndex ==startingTimeStep+1 && restartFlag==1))?entropicEnergyShadowPotential:dftPtr->d_entropicEnergy;
+	    internalEnergyVector[timeIndex-startingTimeStep] = isXlBOMDStep?shadowPotentialInternalEnergy:dftPtr->d_groundStateEnergy;
+	    entropicEnergyVector[timeIndex-startingTimeStep] = isXlBOMDStep?entropicEnergyShadowPotential:dftPtr->d_entropicEnergy;
             totalEnergyVector[timeIndex-startingTimeStep] = kineticEnergyVector[timeIndex-startingTimeStep] +internalEnergyVector[timeIndex-startingTimeStep] -entropicEnergyVector[timeIndex-startingTimeStep];
             rmsErrorRhoVector[timeIndex-startingTimeStep] = rmsErrorRho;
             rmsErrorGradRhoVector[timeIndex-startingTimeStep] = rmsErrorGradRho;
