@@ -1627,20 +1627,26 @@ namespace dftfe {
 			  pcout<< "refinement in progress, level: "<< numLevels<<std::endl;
 
 			d_parallelTriaCurrentRefinement.push_back(std::vector<bool>());
-			parallelTriangulation.save_refine_flags(d_parallelTriaCurrentRefinement[numLevels]);
 
-			
+                        
+                        dealii::parallel::distributed::SolutionTransfer<3,vectorType> solTrans1(dofHandlerRestartMesh);
+			parallelTriangulation.save_refine_flags(d_parallelTriaCurrentRefinement[numLevels]);
 			parallelTriangulation.prepare_coarsening_and_refinement();
 
 			if(solutionTransferFlag)
 			  {
-			    dealii::parallel::distributed::SolutionTransfer<3,vectorType> solTrans1(dofHandlerRestartMesh);
+                            if(dftParameters::verbosity>=4)
+                              pcout<<"Solution transfer in Stage 1 "<<std::endl;                   
+
 			    solTrans1.prepare_for_coarsening_and_refinement(nodalFieldToBeTransferred);
 			  }
 
 			parallelTriangulation.execute_coarsening_and_refinement();
 
 			dofHandlerRestartMesh.distribute_dofs(dofHandlerRestartMesh.get_fe());
+
+                        if(dftParameters::verbosity>=4)
+                           pcout<<"Solution transfer in Stage 1 completed "<<std::endl;
 		
 
 			numLevels++;
@@ -1750,12 +1756,20 @@ namespace dftfe {
 			  pcout<< "refinement in progress, level: "<< numLevels<<std::endl;
 
 			
-
+                        
 			d_parallelTriaCurrentRefinement.push_back(std::vector<bool>());
 			parallelTriangulation.save_refine_flags(d_parallelTriaCurrentRefinement[numLevels]);
-			dealii::parallel::distributed::SolutionTransfer<3,vectorType> solTrans2(dofHandlerRestartMesh);
 
-			solTrans2.prepare_for_coarsening_and_refinement(nodalFieldToBeTransferred);
+                        parallelTriangulation.prepare_coarsening_and_refinement();
+           
+                        if(solutionTransferFlag)
+                        {
+                          if(dftParameters::verbosity>=4)
+                              pcout<<"Solution transfer in Stage 2 "<<std::endl;
+
+			  dealii::parallel::distributed::SolutionTransfer<3,vectorType> solTrans2(dofHandlerRestartMesh);
+			  solTrans2.prepare_for_coarsening_and_refinement(nodalFieldToBeTransferred);
+                        }
 			
 			parallelTriangulation.execute_coarsening_and_refinement();
 
@@ -1871,15 +1885,19 @@ namespace dftfe {
 			d_parallelTriaCurrentRefinement.push_back(std::vector<bool>());
 			parallelTriangulation.save_refine_flags(d_parallelTriaCurrentRefinement[numLevels]);
 
-			dealii::parallel::distributed::SolutionTransfer<3,vectorType> solTrans3(dofHandlerRestartMesh);
+                        parallelTriangulation.prepare_coarsening_and_refinement();
 
-			solTrans3.prepare_for_coarsening_and_refinement(nodalFieldToBeTransferred);
+                        if(solutionTransferFlag)
+                        {
+                          if(dftParameters::verbosity>=4)
+                              pcout<<"Solution transfer in Stage 3 "<<std::endl;
+
+                          dealii::parallel::distributed::SolutionTransfer<3,vectorType> solTrans3(dofHandlerRestartMesh);
+                          solTrans3.prepare_for_coarsening_and_refinement(nodalFieldToBeTransferred);
+                        }
 
 			parallelTriangulation.execute_coarsening_and_refinement();
-
 			dofHandlerRestartMesh.distribute_dofs(dofHandlerRestartMesh.get_fe());
-		
-
 			numLevels++;
 		      }
 		    else
