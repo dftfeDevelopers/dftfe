@@ -135,12 +135,12 @@ namespace dftfe {
 		      recursiveKernelApply(ucontainer,
 					   vcontainer,
 					   k0,
-					   ucontainer[id],
+					   ucontainer[id-1],
 					   id-1,
 					   kminus1u);
 
-		      const double vTkminus1x=vcontainer[id]*kminus1x;
-		      const double vTkminus1u=vcontainer[id]*kminus1u;
+		      const double vTkminus1x=vcontainer[id-1]*kminus1x;
+		      const double vTkminus1u=vcontainer[id-1]*kminus1u;
 		      for (unsigned int i = 0; i < x.local_size(); i++)
 		  	  y.local_element(i)=kminus1x.local_element(i)-kminus1u.local_element(i)*vTkminus1x/(1.0+vTkminus1u);
               }
@@ -171,9 +171,9 @@ namespace dftfe {
 				      id-1,
 				      jminus1x);
 
-		      const double vTx=vcontainer[id]*x;
+		      const double vTx=vcontainer[id-1]*x;
 		      for (unsigned int i = 0; i < x.local_size(); i++)
-		  	  y.local_element(i)=jminus1x.local_element(i)+ucontainer[id].local_element(i)*vTx;
+		  	  y.local_element(i)=jminus1x.local_element(i)+ucontainer[id-1].local_element(i)*vTx;
               }
 	  }
 
@@ -842,7 +842,7 @@ void molecularDynamics<FEOrder>::run()
 
                         if (dftParameters::kernelUpdateRankXLBOMD>0)
                         {
-			   const double deltalambda=1e-1*std::sqrt(dftPtr->fieldl2Norm(dftPtr->d_matrixFreeDataPRefined,approxDensityContainer.back())/dftPtr->d_domainVolume);
+			   const double deltalambda=1e-2*std::sqrt(dftPtr->fieldl2Norm(dftPtr->d_matrixFreeDataPRefined,approxDensityContainer.back())/dftPtr->d_domainVolume);
 
 			   if (dftParameters::verbosity>=1)
 			      pcout<<"deltalambda: "<<deltalambda<<std::endl;
@@ -850,6 +850,7 @@ void molecularDynamics<FEOrder>::run()
                            const double k0=-1.0/(k0kernelconstant+1.0);
 
                            jv.reinit(rhoErrorVec);
+                           kernelAction.reinit(rhoErrorVec);
 
                            vectorType compvec;
                            compvec.reinit(rhoErrorVec);
@@ -862,6 +863,8 @@ void molecularDynamics<FEOrder>::run()
                                                 rhoErrorVec,
                                                 irank,
 				                vcontainer[irank]);
+
+                                   compvec=0;
                                    for (unsigned int jrank=0; jrank<(dftParameters::kernelUpdateRankXLBOMD-1); jrank++)
                                    {
                                        const double tTvj=vcontainer[irank]*vcontainer[jrank];
@@ -870,6 +873,9 @@ void molecularDynamics<FEOrder>::run()
                                    vcontainer[irank]-=compvec;
                                   
 				   vcontainer[irank]*=1.0/vcontainer[irank].l2_norm();
+
+				   if (dftParameters::verbosity>=1)
+				       pcout<<" Vector norm of v:  "<<vcontainer[irank].l2_norm()<< ", for rank: "<<irank+1<<std::endl;
 
 				   peturbedApproxDensity=approxDensityContainer.back();
 				   peturbedApproxDensity.add(deltalambda,vcontainer[irank]);
@@ -992,7 +998,7 @@ void molecularDynamics<FEOrder>::run()
                                                  vcontainer,
                                                  k0kernelconstant,
                                                  vcontainer[irank],
-                                                 ucontainer.size(),
+                                                 irank,
 				                 jv);
 
 				   ucontainer[irank]-=jv;
