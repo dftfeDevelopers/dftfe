@@ -2046,16 +2046,16 @@ namespace dftfe {
 	}
 	else
 	  compute_rhoOut((scfIter<dftParameters::spectrumSplitStartingScfIter || scfConverged || performExtraNoMixedPrecNoSpectrumSplitPassInCaseOfXlBOMD)?false:true,
-                         (scfConverged)||solveLinearizedKS);
+                         (scfConverged && (dftParameters::isBOMD || dftParameters::chkType==3) )||solveLinearizedKS);
 #else
 
 #ifdef DFTFE_WITH_GPU
         compute_rhoOut(kohnShamDFTEigenOperatorCUDA,
 	      (scfIter<dftParameters::spectrumSplitStartingScfIter || scfConverged || performExtraNoMixedPrecNoSpectrumSplitPassInCaseOfXlBOMD)?false:true,
-               (scfConverged)||solveLinearizedKS);
+               (scfConverged && (dftParameters::isBOMD || dftParameters::chkType==3) )||solveLinearizedKS);
 #else
 	compute_rhoOut((scfIter<dftParameters::spectrumSplitStartingScfIter || scfConverged || performExtraNoMixedPrecNoSpectrumSplitPassInCaseOfXlBOMD)?false:true,
-                       (scfConverged)||solveLinearizedKS);
+                       (scfConverged && (dftParameters::isBOMD || dftParameters::chkType==3) )||solveLinearizedKS);
 #endif
 #endif
 	computing_timer.exit_section("compute rho");
