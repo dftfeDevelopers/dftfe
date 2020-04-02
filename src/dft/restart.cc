@@ -278,11 +278,11 @@ void dftClass<FEOrder>::loadTriaInfoAndRhoNodalData()
                                               1,
                                               solutionVectors);
      d_mesh.generateMeshRestart(d_mesh.getParallelMeshMoved(),
-				&solutionVectors[0],
+				*(solutionVectors[0]),
 				true);
 
-     d_mesh.generateMeshRestart(d_mesh.getParallelMeshUnMoved(),
-				&solutionVectors[0],
+     d_mesh.generateMeshRestart(d_mesh.getParallelMeshUnmoved(),
+				*(solutionVectors[0]),
 				false);
 
      pcout<< "...Reading from checkpoint done." << std::endl;

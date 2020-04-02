@@ -1539,7 +1539,7 @@ namespace dftfe {
 	//and consistentPeriodicBoundaryRefinement do not set refinement flags on any cell.
 	//
     dealii::DoFHandler <3> dofHandlerRestartMesh;
-    dofHandlerRestartMesh.initialize(parallelTriangulation,dealii::FE_Q<3>(dealii::QGaussLobatto<1>(FEOrder+1)));
+    dofHandlerRestartMesh.initialize(parallelTriangulation,dealii::FE_Q<3>(dealii::QGaussLobatto<1>(d_FEOrder+1)));
     dofHandlerRestartMesh.distribute_dofs(dofHandlerRestartMesh.get_fe());
 
     
@@ -1816,7 +1816,6 @@ namespace dftfe {
 									d_triangulationElectrostaticsDisp,
 									d_triangulationElectrostaticsForce,
 									false,
-									false,    
 									locallyOwnedCellsRefineFlags,
 									cellIdToCellRefineFlagMapLocal);
 
