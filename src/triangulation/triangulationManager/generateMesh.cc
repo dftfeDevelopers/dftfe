@@ -1525,6 +1525,439 @@ namespace dftfe {
   }
 
 
+   void triangulationManager::generateMeshRestart(parallel::distributed::Triangulation<3> & parallelTriangulation,
+						  vectorType & nodalFieldToBeTransferred,
+						  bool solutionTransferFlag)
+	 
+  {
+	//
+	//STAGE1: This stage is only activated if combined periodic and hanging node constraints are
+	//not consistent in parallel.
+	//Call refinementAlgorithmA and consistentPeriodicBoundaryRefinement alternatively.
+	//In the call to refinementAlgorithmA there is no additional reduction of adaptivity performed
+	//on the periodic boundary. Multilevel refinement is performed until both refinementAlgorithmA
+	//and consistentPeriodicBoundaryRefinement do not set refinement flags on any cell.
+	//
+    dealii::DoFHandler <3> dofHandlerRestartMesh;
+    dofHandlerRestartMesh.initialize(parallelTriangulation,dealii::FE_Q<3>(dealii::QGaussLobatto<1>(FEOrder+1)));
+    dofHandlerRestartMesh.distribute_dofs(dofHandlerRestartMesh.get_fe());
+
+    
+    
+        unsigned int numLevels=0;
+ 	bool refineFlag = true;
+	if (!dftParameters::reproducible_output)
+	{
+	   if (!checkConstraintsConsistency(parallelTriangulation))
+	   {
+	    refineFlag=true;
+	    while(refineFlag)
+	      {
+		refineFlag = false;
+		std::vector<unsigned int> locallyOwnedCellsRefineFlags;
+		std::map<dealii::CellId,unsigned int> cellIdToCellRefineFlagMapLocal;
+		if (numLevels%2==0)
+		{
+		    refineFlag=refinementAlgorithmA(parallelTriangulation,
+					 d_triangulationElectrostaticsRho,
+					 d_triangulationElectrostaticsDisp,
+					 d_triangulationElectrostaticsForce,
+					 false,
+					 locallyOwnedCellsRefineFlags,
+					 cellIdToCellRefineFlagMapLocal);
+
+		    //This sets the global refinement sweep flag
+		    refineFlag= Utilities::MPI::max((unsigned int) refineFlag, mpi_communicator);
+
+		    //try the other type of refinement to prevent while loop from ending prematurely
+		    if (!refineFlag)
+		    {
+			//call refinement algorithm  which sets refinement flags such as to
+			//create consistent refinement across periodic boundary
+			refineFlag=consistentPeriodicBoundaryRefinement(parallelTriangulation,
+									d_triangulationElectrostaticsRho,
+									d_triangulationElectrostaticsDisp,
+									d_triangulationElectrostaticsForce,
+									false,
+									locallyOwnedCellsRefineFlags,
+									cellIdToCellRefineFlagMapLocal);
+
+			//This sets the global refinement sweep flag
+			refineFlag= Utilities::MPI::max((unsigned int) refineFlag, mpi_communicator);
+		    }
+		}
+		else
+		{
+		    //call refinement algorithm  which sets refinement flags such as to
+		    //create consistent refinement across periodic boundary
+		    refineFlag=consistentPeriodicBoundaryRefinement(parallelTriangulation,
+					 d_triangulationElectrostaticsRho,
+					 d_triangulationElectrostaticsDisp,
+					 d_triangulationElectrostaticsForce,
+					 false,
+					 locallyOwnedCellsRefineFlags,
+					 cellIdToCellRefineFlagMapLocal);
+
+		    //This sets the global refinement sweep flag
+		    refineFlag= Utilities::MPI::max((unsigned int) refineFlag, mpi_communicator);
+
+		    //try the other type of refinement to prevent while loop from ending prematurely
+		    if (!refineFlag)
+		    {
+			refineFlag=refinementAlgorithmA(parallelTriangulation,
+							d_triangulationElectrostaticsRho,
+							d_triangulationElectrostaticsDisp,
+							d_triangulationElectrostaticsForce,
+							false,
+							locallyOwnedCellsRefineFlags,
+							cellIdToCellRefineFlagMapLocal);
+
+			//This sets the global refinement sweep flag
+			refineFlag= Utilities::MPI::max((unsigned int) refineFlag, mpi_communicator);
+		    }
+		}
+
+		//Refine
+		if (refineFlag)
+		  {
+
+		    if(numLevels<d_max_refinement_steps)
+		      {
+			if (dftParameters::verbosity>=4)
+			  pcout<< "refinement in progress, level: "<< numLevels<<std::endl;
+
+			d_parallelTriaCurrentRefinement.push_back(std::vector<bool>());
+			parallelTriangulation.save_refine_flags(d_parallelTriaCurrentRefinement[numLevels]);
+
+			
+			parallelTriangulation.prepare_coarsening_and_refinement();
+
+			if(solutionTransferFlag)
+			  {
+			    dealii::parallel::distributed::SolutionTransfer<3,vectorType> solTrans1(dofHandlerRestartMesh);
+			    solTrans1.prepare_for_coarsening_and_refinement(nodalFieldToBeTransferred);
+			  }
+
+			parallelTriangulation.execute_coarsening_and_refinement();
+
+			dofHandlerRestartMesh.distribute_dofs(dofHandlerRestartMesh.get_fe());
+		
+
+			numLevels++;
+		      }
+		    else
+		      {
+			refineFlag=false;
+		      }
+		  }
+
+	      }
+	   }
+	}
+
+	if (!dftParameters::reproducible_output)
+	{
+	   //
+	   //STAGE2: This stage is only activated if combined periodic and hanging node constraints are
+	   //still not consistent in parallel.
+	   //Call refinementAlgorithmA and consistentPeriodicBoundaryRefinement alternatively.
+	   //In the call to refinementAlgorithmA there is an additional reduction of adaptivity performed
+	   //on the periodic boundary such that the maximum cell length on the periodic boundary is less
+	   //than two times the MESH SIZE AROUND ATOM. Multilevel refinement is performed until both
+	   //refinementAlgorithmAand consistentPeriodicBoundaryRefinement do not set refinement flags
+	   //on any cell.
+	   //
+	   if (!checkConstraintsConsistency(parallelTriangulation))
+	   {
+	      refineFlag=true;
+	      while (refineFlag)
+              {
+		refineFlag = false;
+		std::vector<unsigned int> locallyOwnedCellsRefineFlags;
+		std::map<dealii::CellId,unsigned int> cellIdToCellRefineFlagMapLocal;
+		if (numLevels%2==0)
+		{
+		    refineFlag=refinementAlgorithmA(parallelTriangulation,
+						    d_triangulationElectrostaticsRho,
+						    d_triangulationElectrostaticsDisp,
+						    d_triangulationElectrostaticsForce,
+						    false,
+						    locallyOwnedCellsRefineFlags,
+						    cellIdToCellRefineFlagMapLocal,
+						    true,
+						    2.0);
+
+		    //This sets the global refinement sweep flag
+		    refineFlag= Utilities::MPI::max((unsigned int) refineFlag, mpi_communicator);
+
+		    //try the other type of refinement to prevent while loop from ending prematurely
+		    if (!refineFlag)
+		    {
+		        //call refinement algorithm  which sets refinement flags such as to
+			//create consistent refinement across periodic boundary
+			refineFlag=consistentPeriodicBoundaryRefinement(parallelTriangulation,
+									d_triangulationElectrostaticsRho,
+									d_triangulationElectrostaticsDisp,
+									d_triangulationElectrostaticsForce,
+									false,
+									locallyOwnedCellsRefineFlags,
+									cellIdToCellRefineFlagMapLocal);
+
+			//This sets the global refinement sweep flag
+			refineFlag= Utilities::MPI::max((unsigned int) refineFlag, mpi_communicator);
+		    }
+		}
+		else
+		{
+		    //call refinement algorithm  which sets refinement flags such as to
+		    //create consistent refinement across periodic boundary
+		    refineFlag=consistentPeriodicBoundaryRefinement(parallelTriangulation,
+								    d_triangulationElectrostaticsRho,
+								    d_triangulationElectrostaticsDisp,
+								    d_triangulationElectrostaticsForce,
+								    false,
+								    locallyOwnedCellsRefineFlags,
+								    cellIdToCellRefineFlagMapLocal);
+
+		    //This sets the global refinement sweep flag
+		    refineFlag= Utilities::MPI::max((unsigned int) refineFlag, mpi_communicator);
+
+		    //try the other type of refinement to prevent while loop from ending prematurely
+		    if (!refineFlag)
+		    {
+			refineFlag=refinementAlgorithmA(parallelTriangulation,
+							d_triangulationElectrostaticsRho,
+							d_triangulationElectrostaticsDisp,
+							d_triangulationElectrostaticsForce,
+							false,
+							locallyOwnedCellsRefineFlags,
+							cellIdToCellRefineFlagMapLocal,
+							true,
+							2.0);
+
+			//This sets the global refinement sweep flag
+			refineFlag= Utilities::MPI::max((unsigned int) refineFlag, mpi_communicator);
+		    }
+		}
+
+		//Refine
+		if (refineFlag)
+		  {
+
+		    if(numLevels<d_max_refinement_steps)
+		      {
+			if (dftParameters::verbosity>=4)
+			  pcout<< "refinement in progress, level: "<< numLevels<<std::endl;
+
+			
+
+			d_parallelTriaCurrentRefinement.push_back(std::vector<bool>());
+			parallelTriangulation.save_refine_flags(d_parallelTriaCurrentRefinement[numLevels]);
+			dealii::parallel::distributed::SolutionTransfer<3,vectorType> solTrans2(dofHandlerRestartMesh);
+
+			solTrans2.prepare_for_coarsening_and_refinement(nodalFieldToBeTransferred);
+			
+			parallelTriangulation.execute_coarsening_and_refinement();
+
+			dofHandlerRestartMesh.distribute_dofs(dofHandlerRestartMesh.get_fe());
+
+			numLevels++;
+		      }
+		    else
+		      {
+			refineFlag=false;
+		      }
+		  }
+
+	      }
+	   }
+
+	   //
+	   //STAGE3: This stage is only activated if combined periodic and hanging node constraints are
+	   //still not consistent in parallel.
+	   //Call refinementAlgorithmA and consistentPeriodicBoundaryRefinement alternatively.
+	   //In the call to refinementAlgorithmA there is an additional reduction of adaptivity performed
+	   //on the periodic boundary such that the maximum cell length on the periodic boundary is less
+	   //than MESH SIZE AROUND ATOM essentially ensuring uniform refinement on the periodic boundary
+	   //in the case of MESH SIZE AROUND ATOM being same as MESH SIZE AT ATOM.
+	   //Multilevel refinement is performed until both refinementAlgorithmA and
+	   //consistentPeriodicBoundaryRefinement do not set refinement flags on any cell.
+	   //
+           if (!checkConstraintsConsistency(parallelTriangulation))
+           {
+	      refineFlag=true;
+	      while (refineFlag)
+              {
+		refineFlag = false;
+		std::vector<unsigned int> locallyOwnedCellsRefineFlags;
+		std::map<dealii::CellId,unsigned int> cellIdToCellRefineFlagMapLocal;
+		if (numLevels%2==0)
+		{
+		    refineFlag=refinementAlgorithmA(parallelTriangulation,
+						    d_triangulationElectrostaticsRho,
+						    d_triangulationElectrostaticsDisp,
+						    d_triangulationElectrostaticsForce,
+						    false,
+						    locallyOwnedCellsRefineFlags,
+						    cellIdToCellRefineFlagMapLocal,
+						    true,
+						    1.0);
+
+		    //This sets the global refinement sweep flag
+		    refineFlag= Utilities::MPI::max((unsigned int) refineFlag, mpi_communicator);
+
+		    //try the other type of refinement to prevent while loop from ending prematurely
+		    if (!refineFlag)
+		    {
+		        //call refinement algorithm  which sets refinement flags such as to
+			//create consistent refinement across periodic boundary
+			refineFlag=consistentPeriodicBoundaryRefinement(parallelTriangulation,
+									d_triangulationElectrostaticsRho,
+									d_triangulationElectrostaticsDisp,
+									d_triangulationElectrostaticsForce,
+									false,
+									false,    
+									locallyOwnedCellsRefineFlags,
+									cellIdToCellRefineFlagMapLocal);
+
+			//This sets the global refinement sweep flag
+			refineFlag= Utilities::MPI::max((unsigned int) refineFlag, mpi_communicator);
+		    }
+		}
+		else
+		{
+
+		    //call refinement algorithm  which sets refinement flags such as to
+		    //create consistent refinement across periodic boundary
+		    refineFlag=consistentPeriodicBoundaryRefinement(parallelTriangulation,
+								    d_triangulationElectrostaticsRho,
+								    d_triangulationElectrostaticsDisp,
+								    d_triangulationElectrostaticsForce,
+								    false,
+								    locallyOwnedCellsRefineFlags,
+								    cellIdToCellRefineFlagMapLocal);
+
+		    //This sets the global refinement sweep flag
+		    refineFlag= Utilities::MPI::max((unsigned int) refineFlag, mpi_communicator);
+
+		    //try the other type of refinement to prevent while loop from ending prematurely
+		    if (!refineFlag)
+		    {
+			refineFlag=refinementAlgorithmA(parallelTriangulation,
+							d_triangulationElectrostaticsRho,
+							d_triangulationElectrostaticsDisp,
+							d_triangulationElectrostaticsForce,
+							false,
+							locallyOwnedCellsRefineFlags,
+							cellIdToCellRefineFlagMapLocal,
+							true,
+							1.0);
+
+			//This sets the global refinement sweep flag
+			refineFlag= Utilities::MPI::max((unsigned int) refineFlag, mpi_communicator);
+		    }
+		}
+
+		//Refine
+		if (refineFlag)
+		  {
+
+		    if(numLevels<d_max_refinement_steps)
+		      {
+			if (dftParameters::verbosity>=4)
+			  pcout<< "refinement in progress, level: "<< numLevels<<std::endl;
+
+		
+
+			d_parallelTriaCurrentRefinement.push_back(std::vector<bool>());
+			parallelTriangulation.save_refine_flags(d_parallelTriaCurrentRefinement[numLevels]);
+
+			dealii::parallel::distributed::SolutionTransfer<3,vectorType> solTrans3(dofHandlerRestartMesh);
+
+			solTrans3.prepare_for_coarsening_and_refinement(nodalFieldToBeTransferred);
+
+			parallelTriangulation.execute_coarsening_and_refinement();
+
+			dofHandlerRestartMesh.distribute_dofs(dofHandlerRestartMesh.get_fe());
+		
+
+			numLevels++;
+		      }
+		    else
+		      {
+			refineFlag=false;
+		      }
+		  }
+
+	      }
+	   }
+
+	   if (checkConstraintsConsistency(parallelTriangulation))
+	   {
+	       if (dftParameters::verbosity>=4)
+	           pcout<< "Hanging node and periodic constraints parallel consistency achieved."<<std::endl;
+
+	        dftParameters::createConstraintsFromSerialDofhandler=false;
+                dftParameters::constraintsParallelCheck=false;
+	   }
+	   else
+	   {
+	       if (dftParameters::verbosity>=4)
+	           pcout<< "Hanging node and periodic constraints parallel consistency not achieved."<<std::endl;
+
+	       dftParameters::createConstraintsFromSerialDofhandler=true;
+	   }
+	}
+
+	//
+	//compute some adaptive mesh metrics
+	//
+	double minElemLength = dftParameters::meshSizeOuterDomain;
+	double maxElemLength = 0.0;
+	typename parallel::distributed::Triangulation<3>::active_cell_iterator cell, endc, cellDisp, cellForce;
+	cell = parallelTriangulation.begin_active();
+	endc = parallelTriangulation.end();
+	unsigned int numLocallyOwnedCells=0;
+	for( ; cell != endc; ++cell)
+	  {
+	    if(cell->is_locally_owned())
+	      {
+		numLocallyOwnedCells++;
+		if(cell->minimum_vertex_distance() < minElemLength)
+		    minElemLength = cell->minimum_vertex_distance();
+
+		if(cell->minimum_vertex_distance() > maxElemLength)
+		    maxElemLength = cell->minimum_vertex_distance();
+	      }
+	  }
+
+	minElemLength = Utilities::MPI::min(minElemLength, mpi_communicator);
+	maxElemLength = Utilities::MPI::max(maxElemLength, mpi_communicator);
+
+	//
+	//print out adaptive mesh metrics and check mesh generation synchronization across pools
+	//
+	if (dftParameters::verbosity>=4)
+	  {
+	    pcout<< "Triangulation generation summary: "<<std::endl<<" num elements: "<<parallelTriangulation.n_global_active_cells()<<", num refinement levels: "<<numLevels<<", min element length: "<<minElemLength<<", max element length: "<<maxElemLength<<std::endl;
+	  }
+
+	internal::checkTriangulationEqualityAcrossProcessorPools(parallelTriangulation,
+								 numLocallyOwnedCells,
+								 interpoolcomm);
+	internal::checkTriangulationEqualityAcrossProcessorPools(parallelTriangulation,
+								 numLocallyOwnedCells,
+								 interBandGroupComm);
+
+
+	const unsigned int numberGlobalCellsParallel = parallelTriangulation.n_global_active_cells();
+
+	if (dftParameters::verbosity>=4)
+	  pcout<<" numParallelCells: "<< numberGlobalCellsParallel<<std::endl;
+      
+  }
+
+
   //
   void triangulationManager::refineSerialMesh
   (const std::map<dealii::CellId,unsigned int> & cellIdToCellRefineFlagMapLocal,

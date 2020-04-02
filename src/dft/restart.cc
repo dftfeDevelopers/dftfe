@@ -277,6 +277,13 @@ void dftClass<FEOrder>::loadTriaInfoAndRhoNodalData()
      d_mesh.loadTriangulationsSolutionVectors(C_num1DKerkerPoly<FEOrder>(),
                                               1,
                                               solutionVectors);
+     d_mesh.generateMeshRestart(d_mesh.getParallelMeshMoved(),
+				&solutionVectors[0],
+				true);
+
+     d_mesh.generateMeshRestart(d_mesh.getParallelMeshUnMoved(),
+				&solutionVectors[0],
+				false);
 
      pcout<< "...Reading from checkpoint done." << std::endl;
 }
