@@ -1123,7 +1123,8 @@ namespace dftfe {
   template<unsigned int FEOrder>
   void dftClass<FEOrder>::solve(const bool computeForces,
                                 const bool solveLinearizedKS,
-                                const bool isRestartGroundStateCalcFromChk)
+                                const bool isRestartGroundStateCalcFromChk,
+                                const bool skipVselfSolveInitLocalPSP)
   {
 
     /*
@@ -1280,41 +1281,43 @@ namespace dftfe {
     //
     //solve vself in bins
     //
+    if (!skipVselfSolveInitLocalPSP)
+    {
     computing_timer.enter_section("Nuclear self-potential solve");
     computingTimerStandard.enter_section("Nuclear self-potential solve");
 #ifdef DFTFE_WITH_GPU
-    if (dftParameters::useGPU)
-            d_vselfBinsManager.solveVselfInBinsGPU(matrix_free_data,
-					           2,
-                                                   kohnShamDFTEigenOperatorCUDA,
-					           constraintsNone,
-				                   d_imagePositions,
-				                   d_imageIds,
-				                   d_imageCharges,
-					           d_localVselfs);
-    else
-            d_vselfBinsManager.solveVselfInBins(matrix_free_data,
-                                                   2,
-                                                   constraintsNone,
-                                                   d_imagePositions,
-                                                   d_imageIds,
-                                                   d_imageCharges,
-                                                   d_localVselfs);
+	    if (dftParameters::useGPU)
+		    d_vselfBinsManager.solveVselfInBinsGPU(matrix_free_data,
+							   2,
+							   kohnShamDFTEigenOperatorCUDA,
+							   constraintsNone,
+							   d_imagePositions,
+							   d_imageIds,
+							   d_imageCharges,
+							   d_localVselfs);
+	    else
+		    d_vselfBinsManager.solveVselfInBins(matrix_free_data,
+							   2,
+							   constraintsNone,
+							   d_imagePositions,
+							   d_imageIds,
+							   d_imageCharges,
+							   d_localVselfs);
 #else
-    d_vselfBinsManager.solveVselfInBins(matrix_free_data,
-                                        2,
-                                        constraintsNone,
-                                        d_imagePositions,
-                                        d_imageIds,
-                                        d_imageCharges,
-                                        d_localVselfs);
-
-#endif
+	    d_vselfBinsManager.solveVselfInBins(matrix_free_data,
+						2,
+						constraintsNone,
+						d_imagePositions,
+						d_imageIds,
+						d_imageCharges,
+						d_localVselfs);
     computingTimerStandard.exit_section("Nuclear self-potential solve");
     computing_timer.exit_section("Nuclear self-potential solve");
+#endif
+    }
 
 
-    if(dftParameters::isPseudopotential)
+    if(dftParameters::isPseudopotential && !skipVselfSolveInitLocalPSP)
     {
 	    double init_psplocal;
 	    MPI_Barrier(MPI_COMM_WORLD);
@@ -1363,7 +1366,7 @@ namespace dftfe {
     if (dftParameters::isBOMD && dftParameters::isXLBOMD && solveLinearizedKS)
         firstScfChebyTol=dftParameters::chebyshevFilterTolXLBOMD;
     else if (dftParameters::isBOMD)
-        firstScfChebyTol=dftParameters::chebyshevTolerance>1e-3?1e-3:dftParameters::chebyshevTolerance;
+        firstScfChebyTol=dftParameters::chebyshevTolerance>1e-4?1e-4:dftParameters::chebyshevTolerance;
     //
     //Begin SCF iteration
     //

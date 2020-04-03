@@ -912,7 +912,7 @@ void molecularDynamics<FEOrder>::run()
 				   if (dftParameters::verbosity>=1)
 				      pcout<<"----------Start shadow potential energy solve with approx density= n+lamda*v1-------------"<<std::endl;
 
-				   dftPtr->solve(false,true);
+				   dftPtr->solve(false,true,false,true);
 
 				   if (dftParameters::verbosity>=1)
 				      pcout<<"----------End shadow potential energy solve with approx density= n+lamda*v1-------------"<<std::endl;
@@ -967,7 +967,7 @@ void molecularDynamics<FEOrder>::run()
 				   if (dftParameters::verbosity>=1)
 				      pcout<<"----------Start shadow potential energy solve with approx density= n-lamda*v1-------------"<<std::endl;
 
-				   dftPtr->solve(false,true);
+				   dftPtr->solve(false,true,false,true);
 
 				   if (dftParameters::verbosity>=1)
 				      pcout<<"----------End shadow potential energy solve with approx density= n-lamda*v1-------------"<<std::endl;

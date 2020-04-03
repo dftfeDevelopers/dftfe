@@ -768,8 +768,8 @@ namespace dftfe
 		  inc);
 	     
       const bool useCommunAvoidanceOpt=isXlBOMDLinearizedSolve?communAvoidance:false; 
-      const double communAvoidanceTolerance=isXlBOMDLinearizedSolve?1e-10:1e-12;
-      const double computeAvoidanceTolerance=isXlBOMDLinearizedSolve?1e-8:1e-14;  
+      const double communAvoidanceTolerance=isXlBOMDLinearizedSolve?1e-12:1e-12;
+      const double computeAvoidanceTolerance=isXlBOMDLinearizedSolve?1e-10:1e-16;  
       bool isCommunAvoidanceToleranceReached=false;
       bool isComputeAvoidanceToleranceReached=false;
       bool isFirstCallToCommunAvoidance=false;
