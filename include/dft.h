@@ -171,7 +171,8 @@ namespace dftfe {
        */
       void solve(const bool computeForces=true,
                  const bool solveLinearizedKS=false,
-                 const bool restartGroundStateCalcFromChk=false);
+                 const bool restartGroundStateCalcFromChk=false,
+                 const bool skipVselfSolveInitLocalPSP=false);
 
       /**
        * @brief Number of Kohn-Sham eigen values to be computed
