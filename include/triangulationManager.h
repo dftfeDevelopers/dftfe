@@ -269,10 +269,6 @@ namespace dftfe  {
       (std::vector<std::map<dealii::CellId, std::vector<double> > > & cellQuadDataContainerOut,
        const std::vector<unsigned int>  & cellDataSizeContainer);
 
-   void generateMeshRestart(parallel::distributed::Triangulation<3> & parallelTriangulation,
-                             vectorType & nodalFieldToBeTransferred,
-                             bool solutionTransferFlag);
-
   private:
 
     /**
