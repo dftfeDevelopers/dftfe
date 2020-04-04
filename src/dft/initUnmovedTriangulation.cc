@@ -229,7 +229,7 @@ void dftClass<FEOrder>::initUnmovedTriangulation(parallel::distributed::Triangul
   //
   //create 2p DoFHandler if Kerker density mixing is on
   //
-  if(dftParameters::mixingMethod=="ANDERSON_WITH_KERKER" || (dftParameters::isBOMD))
+  if(dftParameters::mixingMethod=="ANDERSON_WITH_KERKER" || (dftParameters::isBOMD) || dftParameters::chkType==3)
     createpRefinedDofHandler(triangulation);
 
   if (dftParameters::verbosity>=4)

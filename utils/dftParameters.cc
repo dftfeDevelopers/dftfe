@@ -115,7 +115,7 @@ namespace dftfe {
     double gaussianOrderForce=4.0;
     double gaussianOrderMoveMeshToAtoms=4.0;
     double diracDeltaKernelScalingConstant=0.1;
-    bool useRank1KernelXLBOMD=false;
+    unsigned int kernelUpdateRankXLBOMD=0;
     bool autoMeshStepInterpolateBOMD=false;
     double ratioOfMeshMovementToForceGaussianBOMD=1.0;
     bool useAtomicRhoXLBOMD=true;
@@ -219,7 +219,7 @@ namespace dftfe {
       prm.enter_subsection ("Checkpointing and Restart");
       {
 	prm.declare_entry("CHK TYPE", "0",
-			  Patterns::Integer(0,2),
+			  Patterns::Integer(0,3),
 			  "[Standard] Checkpoint type, 0 (do not create any checkpoint), 1 (create checkpoint for geometry optimization restart if either ION OPT or CELL OPT or BOMD is set to true. Currently, checkpointing and restart framework does not work if both ION OPT and CELL OPT are set to true simultaneously- the code will throw an error if attempted.), 2 (create checkpoint for scf restart. Currently, this option cannot be used if geometry optimization is being performed. The code will throw an error if this option is used in conjunction with geometry optimization.)");
 
 	prm.declare_entry("RESTART FROM CHK", "false",
@@ -743,9 +743,9 @@ namespace dftfe {
 			    Patterns::Double(0.0),
 			    "[Developer] Dirac delta scaling kernel constant for XL BOMD.");  
 
-	prm.declare_entry("USE RANK 1 KERNEL XL BOMD", "false",
-			  Patterns::Bool(),
-			  "[Standard] Use rank 1 Kernel update without accumulation in every XL BOMD time step.");
+	prm.declare_entry("KERNEL RANK XL BOMD", "0",
+			  Patterns::Integer(0,5),
+			  "[Standard] Maximum rank for low rank kernel update in XL BOMD.");
 
 	prm.declare_entry("AUTO MESH STEP INTERPOLATE BOMD", "false",
 			  Patterns::Bool(),
@@ -982,7 +982,7 @@ namespace dftfe {
           dftParameters::numberStepsBOMD               = prm.get_integer("NUMBER OF STEPS"); 
           dftParameters::startingTempBOMDNVE           = prm.get_double("STARTING TEMP NVE");  
           dftParameters::diracDeltaKernelScalingConstant     = prm.get_double("DIRAC DELTA KERNEL SCALING CONSTANT XL BOMD"); 
-          dftParameters::useRank1KernelXLBOMD          = prm.get_bool("USE RANK 1 KERNEL XL BOMD");
+          dftParameters::kernelUpdateRankXLBOMD        = prm.get_integer("KERNEL RANK XL BOMD");
           dftParameters::autoMeshStepInterpolateBOMD   = prm.get_bool("AUTO MESH STEP INTERPOLATE BOMD");
           dftParameters::ratioOfMeshMovementToForceGaussianBOMD       = prm.get_double("RATIO MESH MOVEMENT TO FORCE GAUSSIAN");    
           dftParameters::useAtomicRhoXLBOMD     = prm.get_bool("USE ATOMIC RHO XL BOMD");     

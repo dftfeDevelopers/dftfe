@@ -80,6 +80,41 @@ void dftClass<FEOrder>::saveTriaInfoAndRhoData()
      pcout<< "...checkpointing done." << std::endl;
 }
 
+template<unsigned int FEOrder>
+void dftClass<FEOrder>::saveTriaInfoAndRhoNodalData()
+{
+     pcout<< "Checkpointing tria info and rho data in progress..." << std::endl;
+
+     std::vector< const vectorType * >  solutionVectors;
+
+
+     dealii::IndexSet   locally_relevant_dofs_;
+     dealii::DoFTools::extract_locally_relevant_dofs(d_dofHandlerPRefined, locally_relevant_dofs_);
+
+     const dealii::IndexSet & locally_owned_dofs_= d_dofHandlerPRefined.locally_owned_dofs();
+     dealii::IndexSet  ghost_indices_=locally_relevant_dofs_;
+     ghost_indices_.subtract_set(locally_owned_dofs_);
+
+     vectorType tempVec= dealii::LinearAlgebra::distributed::Vector<double>(locally_owned_dofs_,
+                                                                             ghost_indices_,
+                                                                             mpi_communicator);
+
+     for (unsigned int i = 0; i < d_rhoOutNodalValues.local_size(); i++)
+           tempVec.local_element(i)=d_rhoOutNodalValues.local_element(i);
+
+     tempVec.update_ghost_values();
+
+     solutionVectors.push_back(&tempVec);
+
+     d_mesh.saveTriangulationsSolutionVectors(C_num1DKerkerPoly<FEOrder>(),
+                                              1,
+                                              solutionVectors,
+	                                      interpoolcomm,
+					      interBandGroupComm);
+
+     pcout<< "...checkpointing done." << std::endl;
+}
+
 //
 //
 template<unsigned int FEOrder>
@@ -228,6 +263,28 @@ void dftClass<FEOrder>::loadTriaInfoAndRhoData()
 	 }
 	 gradRhoOutValuesSpinPolarized=&(gradRhoOutValsSpinPolarized.back());
      }
+     pcout<< "...Reading from checkpoint done." << std::endl;
+}
+
+template<unsigned int FEOrder>
+void dftClass<FEOrder>::loadTriaInfoAndRhoNodalData()
+{
+     pcout<< "Reading tria info and rho data from checkpoint in progress..." << std::endl;
+     //read rho data from checkpoint file
+     
+     std::vector< vectorType * >  solutionVectors;
+     solutionVectors.push_back(&d_rhoInNodalValuesRead);
+     d_mesh.loadTriangulationsSolutionVectors(C_num1DKerkerPoly<FEOrder>(),
+                                              1,
+                                              solutionVectors);
+     d_mesh.generateMeshRestart(d_mesh.getParallelMeshMoved(),
+				*(solutionVectors[0]),
+				true);
+
+     d_mesh.generateMeshRestart(d_mesh.getParallelMeshUnmoved(),
+				*(solutionVectors[0]),
+				false);
+
      pcout<< "...Reading from checkpoint done." << std::endl;
 }
 

@@ -290,7 +290,7 @@ void dftClass<FEOrder>::initBoundaryConditions(const bool meshOnlyDeformed){
   //
   //init 2p matrix-free objects using appropriate constraint matrix and quadrature rule
   //
-  if(dftParameters::mixingMethod=="ANDERSON_WITH_KERKER" || (dftParameters::isBOMD))
+  if(dftParameters::mixingMethod=="ANDERSON_WITH_KERKER" || (dftParameters::isBOMD) || dftParameters::chkType==3)
     initpRefinedObjects();
 
   MPI_Barrier(MPI_COMM_WORLD);
