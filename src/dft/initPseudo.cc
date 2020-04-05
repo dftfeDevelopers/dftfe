@@ -106,9 +106,9 @@ void dftClass<FEOrder>::initLocalPseudoPotential
 
     singleAtomsVself[iAtom]=0.0;
   }
-  vectorType phiExt;
-  phiExt.reinit(singleAtomsVself[0]);
-  phiExt=0;
+  //vectorType phiExt;
+  //phiExt.reinit(singleAtomsVself[0]);
+  //phiExt=0;
 
   double init_2;
   MPI_Barrier(MPI_COMM_WORLD);
@@ -130,7 +130,6 @@ void dftClass<FEOrder>::initLocalPseudoPotential
   const unsigned int dofs_per_cell = _dofHandler.get_fe().dofs_per_cell;
   DoFHandler<3>::active_cell_iterator subCellPtr;
 
-  unsigned int iElem=0;
   for(unsigned int macrocell = 0; macrocell < _matrix_free_data.n_macro_cells(); ++macrocell)
       for(unsigned int iSubCell = 0; iSubCell < _matrix_free_data.n_components_filled(macrocell); ++iSubCell)
       {
@@ -143,7 +142,7 @@ void dftClass<FEOrder>::initLocalPseudoPotential
 	  for(unsigned int iNode = 0; iNode < dofs_per_cell; ++iNode)
 	  {
              const dealii::types::global_dof_index dofId=cell_dof_indices[iNode];
-             Point<3> nodalCoor = _supportPoints.find(dofId)->second;
+             const Point<3> & nodalCoor = _supportPoints.find(dofId)->second;
 	     if(!_phiExtConstraintMatrix.is_constrained(dofId) 
                && singleAtomsVself[0].in_local_range(dofId))
 	     {
@@ -185,12 +184,14 @@ void dftClass<FEOrder>::initLocalPseudoPotential
                           {
 				  const unsigned int binId=atomIdBinIdMap.find(chargeId)->second;
 				  const int boundaryFlagChargeId=boundaryNodeMapBinsOnlyChargeId[binId].find(dofId)->second;
-				  const vectorType & vselfBin=vselfBinManager.getVselfFieldBins()[binId];
-				  
+
 				  if (boundaryFlagChargeId==chargeId)
 				  {
 					 if (dofClosestChargeLocationMapBins[binId].find(dofId)->second.distance(atom)<1e-5)
+                                         {
+                                            const vectorType & vselfBin=vselfBinManager.getVselfFieldBins()[binId];
 					    val=vselfBin.local_element(localDofId);
+                                         }
 					 else
 					    val=-atomCharge/distanceToAtom;
 				  }
@@ -203,12 +204,11 @@ void dftClass<FEOrder>::initLocalPseudoPotential
 			  }
 
 			  singleAtomsVself[iAtom].local_element(localDofId)=val;
-                          phiExt.local_element(localDofId)+=val;
+                          //phiExt.local_element(localDofId)+=val;
 		       }
 	       }
 	    }
 	  }
-          iElem++;
       }
 
   MPI_Barrier(MPI_COMM_WORLD);
@@ -222,9 +222,9 @@ void dftClass<FEOrder>::initLocalPseudoPotential
        singleAtomsVself[iAtom].update_ghost_values();
   }
 
-  _phiExtConstraintMatrix.distribute(phiExt);
-  phiExt.update_ghost_values();
-  pcout<<"L2 Norm Value of phiext: "<<phiExt.l2_norm()<<std::endl;
+  //_phiExtConstraintMatrix.distribute(phiExt);
+  //phiExt.update_ghost_values();
+  //pcout<<"L2 Norm Value of phiext: "<<phiExt.l2_norm()<<std::endl;
 
   std::map<dealii::CellId, std::vector<Point<3>>> quadPoints;
   typename DoFHandler<3>::active_cell_iterator cell = _dofHandler.begin_active(), endc = _dofHandler.end();
@@ -340,139 +340,6 @@ void dftClass<FEOrder>::initLocalPseudoPotential
 	  }//subcell loop
       }//loop over atoms and images
   }//cell loop
-  
-  //
-  //loop over elements
-  //
-  /*
-  cell = _dofHandler.begin_active(), endc = _dofHandler.end();
-  for(; cell!=endc; ++cell)
-    {
-      if(cell->is_locally_owned())
-	{
-	  //compute values for the current elements
-	  fe_values.reinit(cell);
-          std::vector<double> & gradPseudoVLoc=_gradPseudoValues[cell->id()];
-	  gradPseudoVLoc.resize(n_q_points*3,0.0);
-
-          std::vector<double> & pseudoVLoc=_pseudoValues[cell->id()];
-	  pseudoVLoc.resize(n_q_points,0.0);
-
-	  std::vector<Tensor<1,3,double>> gradPseudoVLocAtom(n_q_points);
-
-          std::vector<double> vselfQuads(n_q_points);
-          std::vector<Tensor<1,3,double> > gradVselfQuads(n_q_points);
-
-	  //loop over atoms
-	  for (unsigned int n=0; n<atomLocations.size(); n++)
-	  {
-              Point<3> atom(atomLocations[n][2],atomLocations[n][3],atomLocations[n][4]);
-	      bool isPseudoDataInCell=false;
-
-              fe_values.get_function_values(singleAtomsVself[n],
-				           vselfQuads);
-
-              fe_values.get_function_gradients(singleAtomsVself[n],
-				           gradVselfQuads);
-
-	      //loop over quad points
-	      for (unsigned int q = 0; q < n_q_points; ++q)
-	      {
-
-		  Point<3> quadPoint=fe_values.quadrature_point(q);
-		  double distanceToAtom = quadPoint.distance(atom);
-		  double value,firstDer,secondDer;
-		  if(distanceToAtom <= d_pspTail)//outerMostPointPseudo[atomLocations[n][0]])
-		    {
-		      alglib::spline1ddiff(pseudoSpline[atomLocations[n][0]],
-			                    distanceToAtom,
-					    value,
-					    firstDer,
-					    secondDer);
-		      isPseudoDataInCell=true;
-		    }
-		  else
-		    {
-	              value=(-atomLocations[n][1])/distanceToAtom;
-		      firstDer= (atomLocations[n][1])/distanceToAtom/distanceToAtom;
-		    }
-		    pseudoVLoc[q]+=value-vselfQuads[q];
-		    gradPseudoVLocAtom[q]=firstDer*(quadPoint-atom)/distanceToAtom-gradVselfQuads[q];
-		    gradPseudoVLoc[q*3+0]+=gradPseudoVLocAtom[q][0];
-		    gradPseudoVLoc[q*3+1]+=gradPseudoVLocAtom[q][1];
-		    gradPseudoVLoc[q*3+2]+=gradPseudoVLocAtom[q][2];
-	      }//loop over quad points
-	      if (isPseudoDataInCell)
-	      {
-		  std::vector<double> & gradPseudoVLocAtomCell=_gradPseudoValuesAtoms[n][cell->id()];
-	          gradPseudoVLocAtomCell.resize(n_q_points*3);
-	          for (unsigned int q = 0; q < n_q_points; ++q)
-	          {
-		    gradPseudoVLocAtomCell[q*3+0]=gradPseudoVLocAtom[q][0];
-		    gradPseudoVLocAtomCell[q*3+1]=gradPseudoVLocAtom[q][1];
-		    gradPseudoVLocAtomCell[q*3+2]=gradPseudoVLocAtom[q][2];
-	          }
-	      }
-	  }//loop over atoms
-
-	  //loop over image charges
-	  for(unsigned int iImageCharge = 0; iImageCharge < numberImageCharges; ++iImageCharge)
-	  {
-	      Point<3> imageAtom(d_imagePositions[iImageCharge][0],
-		                 d_imagePositions[iImageCharge][1],
-				 d_imagePositions[iImageCharge][2]);
-	      bool isPseudoDataInCell=false;
-
-              fe_values.get_function_values(singleAtomsVself[atomLocations.size()+iImageCharge],
-				           vselfQuads);
-
-              fe_values.get_function_gradients(singleAtomsVself[atomLocations.size()+iImageCharge],
-				           gradVselfQuads);
-
-	      //loop over quad points
-	      for (unsigned int q = 0; q < n_q_points; ++q)
-	      {
-
-		  Point<3> quadPoint=fe_values.quadrature_point(q);
-		  double distanceToAtom = quadPoint.distance(imageAtom);
-		  int masterAtomId = d_imageIds[iImageCharge];
-		  double value,firstDer,secondDer;
-		  if(distanceToAtom <= d_pspTail)//outerMostPointPseudo[atomLocations[masterAtomId][0]])
-		    {
-		      alglib::spline1ddiff(pseudoSpline[atomLocations[masterAtomId][0]],
-			                    distanceToAtom,
-					    value,
-					    firstDer,
-					    secondDer);
-		      isPseudoDataInCell=true;
-		    }
-		  else
-		    {
-		      value=(-atomLocations[masterAtomId][1])/distanceToAtom;
-		      firstDer= (atomLocations[masterAtomId][1])/distanceToAtom/distanceToAtom;
-		    }
-		   pseudoVLoc[q]+=value-vselfQuads[q];
-		   gradPseudoVLocAtom[q]=firstDer*(quadPoint-imageAtom)/distanceToAtom-gradVselfQuads[q];
-		   gradPseudoVLoc[q*3+0]+=gradPseudoVLocAtom[q][0];
-		   gradPseudoVLoc[q*3+1]+=gradPseudoVLocAtom[q][1];
-		   gradPseudoVLoc[q*3+2]+=gradPseudoVLocAtom[q][2];
-	      }//loop over quad points
-	      if (isPseudoDataInCell)
-	      {
-		  std::vector<double> & gradPseudoVLocAtomCell
-		                   =_gradPseudoValuesAtoms[numberGlobalCharges+iImageCharge][cell->id()];
-	          gradPseudoVLocAtomCell.resize(n_q_points*3);
-	          for (unsigned int q = 0; q < n_q_points; ++q)
-	          {
-		    gradPseudoVLocAtomCell[q*3+0]=gradPseudoVLocAtom[q][0];
-		    gradPseudoVLocAtomCell[q*3+1]=gradPseudoVLocAtom[q][1];
-		    gradPseudoVLocAtomCell[q*3+2]=gradPseudoVLocAtom[q][2];
-	          }
-	      }
-	   }//loop over image charges
-	}//cell locally owned check
-    }//cell loop
-    */
 } 
 /*
 //
