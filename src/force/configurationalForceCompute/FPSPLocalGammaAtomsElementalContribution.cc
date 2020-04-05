@@ -33,7 +33,7 @@ void forceClass<FEOrder>::FPSPLocalGammaAtomsElementalContribution
   for (unsigned int idim=0; idim<C_DIM; idim++)
     zeroTensor1[idim]=make_vectorized_array(0.0);
   const unsigned int numberGlobalAtoms = dftPtr->atomLocations.size();
-  const unsigned int numberImageCharges = dftPtr->d_imageIdsTrunc.size();
+  const unsigned int numberImageCharges = dftPtr->d_imageIds.size();
   const unsigned int totalNumberAtoms = numberGlobalAtoms + numberImageCharges;
   const unsigned int numSubCells= matrixFreeData.n_components_filled(cell);
   const unsigned int numQuadPoints=forceEval.n_q_points;
@@ -60,11 +60,11 @@ void forceClass<FEOrder>::FPSPLocalGammaAtomsElementalContribution
     else
     {
        const int imageId=iAtom-numberGlobalAtoms;
-       atomId=dftPtr->d_imageIdsTrunc[imageId];
-       atomCharge = dftPtr->d_imageChargesTrunc[imageId];
-       atomLocation[0]=dftPtr->d_imagePositionsTrunc[imageId][0];
-       atomLocation[1]=dftPtr->d_imagePositionsTrunc[imageId][1];
-       atomLocation[2]=dftPtr->d_imagePositionsTrunc[imageId][2];
+       atomId=dftPtr->d_imageIds[imageId];
+       atomCharge = dftPtr->d_imageCharges[imageId];
+       atomLocation[0]=dftPtr->d_imagePositions[imageId][0];
+       atomLocation[1]=dftPtr->d_imagePositions[imageId][1];
+       atomLocation[2]=dftPtr->d_imagePositions[imageId][2];
     }
 
     if (gradPseudoVLocAtoms.find(iAtom)==gradPseudoVLocAtoms.end())
