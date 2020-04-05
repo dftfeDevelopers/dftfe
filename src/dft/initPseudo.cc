@@ -241,7 +241,7 @@ void dftClass<FEOrder>::initLocalPseudoPotential
 
   
   FEEvaluation<3,FEOrder,C_num1DQuad<FEOrder>()> feEvalObj(_matrix_free_data,_phiExtDofHandlerIndex,0);
-  std::vector<Tensor<1,3,double>> gradPseudoVLocAtom(n_q_points);
+  std::vector<double> gradPseudoVLocAtom(3*n_q_points);
   for(unsigned int macrocell = 0; macrocell < _matrix_free_data.n_macro_cells(); ++macrocell)
   {
       feEvalObj.reinit(macrocell);
@@ -318,24 +318,15 @@ void dftClass<FEOrder>::initLocalPseudoPotential
 		      firstDer= atomCharge/distanceToAtom/distanceToAtom;
 		    }
 		    pseudoVLoc[q]+=value-feEvalObj.get_value(q)[iSubCell];
-		    gradPseudoVLocAtom[q][0]=firstDer*(quadPoint[0]-atom[0])/distanceToAtom-feEvalObj.get_gradient(q)[0][iSubCell];
-                    gradPseudoVLocAtom[q][1]=firstDer*(quadPoint[1]-atom[1])/distanceToAtom-feEvalObj.get_gradient(q)[1][iSubCell];
-                    gradPseudoVLocAtom[q][2]=firstDer*(quadPoint[2]-atom[2])/distanceToAtom-feEvalObj.get_gradient(q)[2][iSubCell];
-		    gradPseudoVLoc[q*3+0]+=gradPseudoVLocAtom[q][0];
-		    gradPseudoVLoc[q*3+1]+=gradPseudoVLocAtom[q][1];
-		    gradPseudoVLoc[q*3+2]+=gradPseudoVLocAtom[q][2];
+		    gradPseudoVLocAtom[3*q+0]=firstDer*(quadPoint[0]-atom[0])/distanceToAtom-feEvalObj.get_gradient(q)[0][iSubCell];
+                    gradPseudoVLocAtom[3*q+1]=firstDer*(quadPoint[1]-atom[1])/distanceToAtom-feEvalObj.get_gradient(q)[1][iSubCell];
+                    gradPseudoVLocAtom[3*q+2]=firstDer*(quadPoint[2]-atom[2])/distanceToAtom-feEvalObj.get_gradient(q)[2][iSubCell];
+		    gradPseudoVLoc[q*3+0]+=gradPseudoVLocAtom[3*q+0];
+		    gradPseudoVLoc[q*3+1]+=gradPseudoVLocAtom[3*q+1];
+		    gradPseudoVLoc[q*3+2]+=gradPseudoVLocAtom[3*q+2];
 	      }//loop over quad points
 	      if (isPseudoDataInCell || true)
-	      {
-		  std::vector<double> & gradPseudoVLocAtomCell=_gradPseudoValuesAtoms[iAtom][subCellId];
-	          gradPseudoVLocAtomCell.resize(n_q_points*3);
-	          for (unsigned int q = 0; q < n_q_points; ++q)
-	          {
-		    gradPseudoVLocAtomCell[q*3+0]=gradPseudoVLocAtom[q][0];
-		    gradPseudoVLocAtomCell[q*3+1]=gradPseudoVLocAtom[q][1];
-		    gradPseudoVLocAtomCell[q*3+2]=gradPseudoVLocAtom[q][2];
-	          }
-	      }
+		  _gradPseudoValuesAtoms[iAtom][subCellId]=gradPseudoVLocAtom;
               
 	  }//subcell loop
       }//loop over atoms and images
