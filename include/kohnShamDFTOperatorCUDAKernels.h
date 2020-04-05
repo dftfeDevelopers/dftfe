@@ -57,6 +57,14 @@ namespace dftfe
                     double *addToVec,
                     const dealii::types::global_dof_index *addToVecStartingContiguousBlockIds);
 
+        __global__
+        void daxpyAtomicAddKernelNonBoundary(const unsigned int contiguousBlockSize,
+                    const unsigned int numContiguousBlocks,
+                    const double *addFromVec,
+                    const unsigned int * boundaryIdVec,
+                    double *addToVec,
+                    const dealii::types::global_dof_index *addToVecStartingContiguousBlockIds);
+
 
         __global__
         void copyToParallelNonLocalVecFromReducedVec(const unsigned int numWfcs,

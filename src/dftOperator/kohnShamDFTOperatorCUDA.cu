@@ -696,23 +696,52 @@ namespace dftfe
         boundaryIdVec.local_element(numberLocalDofs+i)=1.0;
   
     boundaryIdVec.compress(VectorOperation::add);
-    constraintMatrix.set_zero(boundaryIdVec); 
     boundaryIdVec.update_ghost_values();
+    //boundary constrained node as well its masters should also be treated as boundary nodes
+    //constraintMatrix.distribute(boundaryIdVec);
+    //constraintMatrix.set_zero(boundaryIdVec); 
+    //boundaryIdVec.update_ghost_values(); 
+
   
     //std::cout<<"CHECK: "<<boundaryId.l2_norm()<<std::endl;
 
     std::vector<unsigned int> boundaryIdToLocalIdMap;
+    std::vector<unsigned int> boundaryIdsHost(numberLocalDofs+numberGhostDofs,0);
     for(unsigned int i = 0; i < (numberLocalDofs+numberGhostDofs); ++i)
     {
         if (std::fabs(boundaryIdVec.local_element(i))>1e-8)
+        {
            boundaryIdToLocalIdMap.push_back(i);
+           boundaryIdsHost[i]=1;
+        }
     }
 
+    //boundary constrained node as well its masters should also be treated as boundary nodes
+    constraintMatrix.distribute(boundaryIdVec);
+
+    for(unsigned int i = 0; i < (numberLocalDofs+numberGhostDofs); ++i)
+    {
+        if (std::fabs(boundaryIdVec.local_element(i))>1e-8)
+        {
+           boundaryIdToLocalIdMap.push_back(i);
+           boundaryIdsHost[i]=1;
+        }
+    }
+
+
+    d_boundaryIdToLocalIdMapDevice.clear();
     d_boundaryIdToLocalIdMapDevice.resize(boundaryIdToLocalIdMap.size());
 
     cudaMemcpy(thrust::raw_pointer_cast(&d_boundaryIdToLocalIdMapDevice[0]),
 	       &boundaryIdToLocalIdMap[0],
 	       boundaryIdToLocalIdMap.size()*sizeof(unsigned int),
+	       cudaMemcpyHostToDevice);
+
+    d_boundaryIdsVecDevice.clear();
+    d_boundaryIdsVecDevice.resize(numberLocalDofs+numberGhostDofs);
+    cudaMemcpy(thrust::raw_pointer_cast(&d_boundaryIdsVecDevice[0]),
+	       &boundaryIdsHost[0],
+	       (numberLocalDofs+numberGhostDofs)*sizeof(unsigned int),
 	       cudaMemcpyHostToDevice);
 
     computing_timer.exit_section("kohnShamDFTOperatorCUDAClass Mass assembly");
@@ -1597,7 +1626,8 @@ namespace dftfe
 
     computeLocalHamiltonianTimesX(src.begin(),
 				  numberWaveFunctions,
-				  dst.begin());
+				  dst.begin(),
+                                  false);
 
 
     //H^{nloc}*M^{-1/2}*X
@@ -1606,7 +1636,10 @@ namespace dftfe
 	computeNonLocalHamiltonianTimesX(src.begin(),
 					 projectorKetTimesVector,
 					 numberWaveFunctions,
-					 dst.begin());
+					 dst.begin(),
+                                         false,
+                                         false,
+                                         false);
       }
 
 

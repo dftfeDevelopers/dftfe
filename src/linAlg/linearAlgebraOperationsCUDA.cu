@@ -137,6 +137,30 @@ namespace dftfe
       }
 
       __global__
+      void addScaleXArrayRayleighQuotientsCUDAKernel(const unsigned int numVectors,
+			      const unsigned int numBoundaryPlusGhostNodes,
+                              const unsigned int * boundaryGhostIdToLocalIdMap, 
+                              const double * rayleighQuotients,  
+			      const double *y,
+                              const double *sqrtMassVec,
+                              double * x)
+      {
+	const unsigned int globalThreadId = blockIdx.x*blockDim.x + threadIdx.x;
+	const unsigned int numberEntries = numVectors*numBoundaryPlusGhostNodes;
+
+	for(unsigned int index = globalThreadId; index < numberEntries; index+= blockDim.x*gridDim.x)
+	  {
+            const unsigned int blockIndex=index/numVectors;
+	    const unsigned int intraBlockIndex = index%numVectors;
+            const unsigned int localId=boundaryGhostIdToLocalIdMap[blockIndex];
+            const unsigned int flattenedWfcId=localId*numVectors+intraBlockIndex;
+            x[flattenedWfcId]+=y[flattenedWfcId]*rayleighQuotients[intraBlockIndex]*sqrtMassVec[localId]*sqrtMassVec[localId];
+
+	  }
+
+      }
+
+      __global__
       void copySubspaceRotatedBlockToXKernel(const unsigned int BDof,
 					     const float *rotatedXBlockSP,
 					     const double *diagValues,
@@ -926,42 +950,43 @@ namespace dftfe
 			  XArray.update_ghost_values();
 			  isFirstCallToCommunAvoidance=false;
 		       }
-		      
-		       
-		       XArray2=0;
-		       operatorMatrix.HXChebyNoCommun(YArray,
-					     projectorKetTimesVector,
-					     localVectorSize,
-					     numberVectors,
-					     XArray2);
 
-                       //XArray2.compress(dealii::VectorOperation::add);
-                       //XArray2.update_ghost_values();
-		       
-
-		       // update ghost values of XArray by scaling YArray ghost values with Rayleigh quotients
-		       // XArray2= M * YArray' * Lamda = M^(1/2)*M^(-1/2)*H*M^(-1/2)*M^(1/2)*YArray'
-		       // YArray'=M^(-1/2)*YArray
-
-		       if (boundaryVectorSize>0)
-			  scaleXArrayRayleighQuotientsCUDAKernel<<<(numberVectors+255)/256*boundaryVectorSize,256>>>(numberVectors,
-												    boundaryVectorSize,
-												    thrust::raw_pointer_cast(&operatorMatrix.getBoundaryIdToLocalIdMap()[0]),
-												    thrust::raw_pointer_cast(&rayleighQuotientsD[0]), 
-												    YArray.begin(),
-												    operatorMatrix.getSqrtMassVec(),
-												    XArray2.begin());
-
-
-		      daxpbyCUDAKernel<<<min(((ghostVectorSize+localVectorSize)*numberVectors+255)/256,30000),256>>>((ghostVectorSize+localVectorSize)*numberVectors,
-										     XArray2.begin(),
-										     XArray.begin(),
-										     1.0,
-										     1.0);
 
                       bool dummy;
                       if ((degree-3)%5==0 && count>0)
                       {
+
+			       XArray2=0;
+			       operatorMatrix.HXChebyNoCommun(YArray,
+						     projectorKetTimesVector,
+						     localVectorSize,
+						     numberVectors,
+						     XArray2);
+
+			       //XArray2.compress(dealii::VectorOperation::add);
+			       //XArray2.update_ghost_values();
+			       
+
+			       // update ghost values of XArray by scaling YArray ghost values with Rayleigh quotients
+			       // XArray2= M * YArray' * Lamda = M^(1/2)*M^(-1/2)*H*M^(-1/2)*M^(1/2)*YArray'
+			       // YArray'=M^(-1/2)*YArray
+
+			       if (boundaryVectorSize>0)
+				  scaleXArrayRayleighQuotientsCUDAKernel<<<(numberVectors+255)/256*boundaryVectorSize,256>>>(numberVectors,
+													    boundaryVectorSize,
+													    thrust::raw_pointer_cast(&operatorMatrix.getBoundaryIdToLocalIdMap()[0]),
+													    thrust::raw_pointer_cast(&rayleighQuotientsD[0]), 
+													    YArray.begin(),
+													    operatorMatrix.getSqrtMassVec(),
+													    XArray2.begin());
+
+
+			      daxpbyCUDAKernel<<<min(((ghostVectorSize+localVectorSize)*numberVectors+255)/256,30000),256>>>((ghostVectorSize+localVectorSize)*numberVectors,
+											     XArray2.begin(),
+											     XArray.begin(),
+											     1.0,
+											     1.0);
+
                               MPI_Wait(&request, MPI_STATUS_IGNORE);
 			      checkRayleighQuotients(numberVectors,
 					             communAvoidanceTolerance,
@@ -977,6 +1002,67 @@ namespace dftfe
 					 numberVectors*sizeof(double),
 					 cudaMemcpyHostToDevice);
                       }
+                      else
+                      {
+                               /*
+			       operatorMatrix.HXChebyNoCommun(YArray,
+						     projectorKetTimesVector,
+						     localVectorSize,
+						     numberVectors,
+						     XArray);
+
+			       //XArray2.compress(dealii::VectorOperation::add);
+			       //XArray2.update_ghost_values();
+			       
+
+			       // update ghost values of XArray by scaling YArray ghost values with Rayleigh quotients
+			       // XArray2= M * YArray' * Lamda = M^(1/2)*M^(-1/2)*H*M^(-1/2)*M^(1/2)*YArray'
+			       // YArray'=M^(-1/2)*YArray
+
+			       if (boundaryVectorSize>0)
+				  addScaleXArrayRayleighQuotientsCUDAKernel<<<(numberVectors+255)/256*boundaryVectorSize,256>>>(numberVectors,
+													    boundaryVectorSize,
+													    thrust::raw_pointer_cast(&operatorMatrix.getBoundaryIdToLocalIdMap()[0]),
+													    thrust::raw_pointer_cast(&rayleighQuotientsD[0]), 
+													    YArray.begin(),
+													    operatorMatrix.getSqrtMassVec(),
+													    XArray.begin());
+                               
+                               
+                               */
+			       XArray2=0;
+			       operatorMatrix.HXChebyNoCommun(YArray,
+						     projectorKetTimesVector,
+						     localVectorSize,
+						     numberVectors,
+						     XArray2);
+
+			       //XArray2.compress(dealii::VectorOperation::add);
+			       //XArray2.update_ghost_values();
+			       
+
+			       // update ghost values of XArray by scaling YArray ghost values with Rayleigh quotients
+			       // XArray2= M * YArray' * Lamda = M^(1/2)*M^(-1/2)*H*M^(-1/2)*M^(1/2)*YArray'
+			       // YArray'=M^(-1/2)*YArray
+
+			       if (boundaryVectorSize>0)
+				  scaleXArrayRayleighQuotientsCUDAKernel<<<(numberVectors+255)/256*boundaryVectorSize,256>>>(numberVectors,
+													    boundaryVectorSize,
+													    thrust::raw_pointer_cast(&operatorMatrix.getBoundaryIdToLocalIdMap()[0]),
+													    thrust::raw_pointer_cast(&rayleighQuotientsD[0]), 
+													    YArray.begin(),
+													    operatorMatrix.getSqrtMassVec(),
+													    XArray2.begin());
+
+
+			      daxpbyCUDAKernel<<<min(((ghostVectorSize+localVectorSize)*numberVectors+255)/256,30000),256>>>((ghostVectorSize+localVectorSize)*numberVectors,
+											     XArray2.begin(),
+											     XArray.begin(),
+											     1.0,
+											     1.0);
+                              
+                      }
+                    
 
 		      //(YArray^T*M^(-1/2)*H*M^(-1/2)*YArray)/(YArray^T*YArray)
 		      // =(YArray'_i^T*XArray2)/(YArray'^T_i* M*YArray')
