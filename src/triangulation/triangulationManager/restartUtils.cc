@@ -161,8 +161,8 @@ namespace dftfe {
       dftUtils::verifyCheckpointFileExists(filename);
       try
       {
-         d_parallelTriangulationMoved.load(filename.c_str());
-	 d_parallelTriangulationUnmoved.load(filename.c_str());
+         d_parallelTriangulationMoved.load(filename.c_str(),false);
+	 d_parallelTriangulationUnmoved.load(filename.c_str(),false);
       }
       catch (...)
       {
@@ -174,13 +174,26 @@ namespace dftfe {
       dofHandler.distribute_dofs(FE);
       dealii::parallel::distributed::SolutionTransfer<3,typename dealii::LinearAlgebra::distributed::Vector<double>> solTrans(dofHandler);
 
+      dealii::IndexSet   locally_relevant_dofs;
+      dealii::DoFTools::extract_locally_relevant_dofs(dofHandler, locally_relevant_dofs);
+
+      const dealii::IndexSet & locally_owned_dofs= dofHandler.locally_owned_dofs();
+      dealii::IndexSet  ghost_indices=locally_relevant_dofs;
+      ghost_indices.subtract_set(locally_owned_dofs);
+
       for (unsigned int i=0; i< solutionVectors.size();++i)
+      {
+            solutionVectors[i]->reinit(locally_owned_dofs,
+		                       ghost_indices,
+				       mpi_communicator);
             solutionVectors[i]->zero_out_ghosts();
+      }
 
       //assumes solution vectors are not ghosted
       solTrans.deserialize (solutionVectors);
 
       //dummy de-serialization for d_parallelTriangulationUnmoved to avoid assert fail in call to save
+      /*
       dofHandler.initialize(d_parallelTriangulationUnmoved,FE);
       dofHandler.distribute_dofs(FE);
       dealii::parallel::distributed::SolutionTransfer<3,typename dealii::LinearAlgebra::distributed::Vector<double>> solTransDummy(dofHandler);
@@ -193,6 +206,7 @@ namespace dftfe {
       }
 
       solTransDummy.deserialize (dummySolutionVectors);
+      */
     }
 
     //

@@ -120,7 +120,8 @@ namespace dftfe {
       extern double gaussianOrderForce;
       extern double gaussianOrderMoveMeshToAtoms;
       extern double diracDeltaKernelScalingConstant;
-      extern bool useRank1KernelXLBOMD;
+      extern unsigned int kernelUpdateRankXLBOMD;
+      extern unsigned int kmaxXLBOMD;
       extern bool autoMeshStepInterpolateBOMD;
       extern double ratioOfMeshMovementToForceGaussianBOMD;
       extern bool useAtomicRhoXLBOMD;

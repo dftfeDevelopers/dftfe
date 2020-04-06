@@ -142,8 +142,14 @@ namespace dftfe {
 	  /// get const reference to map of global dof index and vself solve boundary flag in each bin
 	  const std::vector<std::map<dealii::types::global_dof_index, int> > & getBoundaryFlagsBins() const;
 
+	  /// get const reference to map of global dof index and vself solve boundary flag in each bin
+	  const std::vector<std::map<dealii::types::global_dof_index, int> > & getBoundaryFlagsBinsOnlyChargeId() const;
+
 	  /// get const reference to map of global dof index and vself field initial value in each bin
 	  const std::vector<std::map<dealii::types::global_dof_index, int> > & getClosestAtomIdsBins() const;
+
+	  /// get const reference to map of global dof index and vself field initial value in each bin
+	  const std::vector<std::map<dealii::types::global_dof_index, dealii::Point<3>> > & getClosestAtomLocationsBins() const;
 
 	  /// get const reference to map of global dof index and vself field initial value in each bin
 	  const std::vector<vectorType> & getVselfFieldBins() const;

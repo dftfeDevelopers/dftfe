@@ -43,6 +43,323 @@ void dftClass<FEOrder>::initLocalPseudoPotential
   std::map<unsigned int, std::vector<std::vector<double> > > pseudoPotentialData;
   std::map<unsigned int, double> outerMostPointPseudo;
 
+
+  //
+  //loop over atom types
+  //
+  for(std::set<unsigned int>::iterator it=atomTypes.begin(); it!=atomTypes.end(); it++)
+    {
+      char pseudoFile[256];
+      //if (dftParameters::pseudoProjector==2)
+	//sprintf(pseudoFile, "%s/data/electronicStructure/pseudoPotential/z%u/oncv/pseudoAtomData/locPot.dat", DFT_PATH,*it);
+	sprintf(pseudoFile,"temp/z%u/locPot.dat",*it);
+	//else
+	//sprintf(pseudoFile, "%s/data/electronicStructure/pseudoPotential/z%u/pseudoAtomData/locPot.dat", DFT_PATH,*it);
+      //pcout<<"Reading Local Pseudo-potential data from: " <<pseudoFile<<std::endl;
+      dftUtils::readFile(2, pseudoPotentialData[*it], pseudoFile);
+      unsigned int numRows = pseudoPotentialData[*it].size()-1;
+      std::vector<double> xData(numRows), yData(numRows);
+      for(unsigned int irow = 0; irow < numRows; ++irow)
+	{
+	  xData[irow] = pseudoPotentialData[*it][irow][0];
+	  yData[irow] = pseudoPotentialData[*it][irow][1];
+	}
+
+      //interpolate pseudopotentials
+      alglib::real_1d_array x;
+      x.setcontent(numRows,&xData[0]);
+      alglib::real_1d_array y;
+      y.setcontent(numRows,&yData[0]);
+      alglib::ae_int_t bound_type_l = 0;
+      alglib::ae_int_t bound_type_r = 1;
+      const double slopeL= (pseudoPotentialData[*it][1][1]-pseudoPotentialData[*it][0][1])/(pseudoPotentialData[*it][1][0]-pseudoPotentialData[*it][0][0]);
+      const double slopeR=-pseudoPotentialData[*it][numRows-1][1]/pseudoPotentialData[*it][numRows-1][0];
+      spline1dbuildcubic(x, y, numRows, bound_type_l, slopeL, bound_type_r, slopeR, pseudoSpline[*it]);
+      outerMostPointPseudo[*it]= xData[numRows-1];
+
+      if(outerMostPointPseudo[*it] < d_pspTail)
+	 d_pspTail = outerMostPointPseudo[*it] ;
+    }
+   if(dftParameters::verbosity>=2)
+      pcout << " d_pspTail adjusted to " << d_pspTail << std::endl ;
+
+  //
+  //Initialize pseudopotential
+  //
+  FEValues<3> fe_values (_dofHandler.get_fe(), _quadrature, update_values|update_gradients|update_quadrature_points);
+  const unsigned int n_q_points = _quadrature.size();
+
+
+  const int numberGlobalCharges=atomLocations.size();
+  //
+  //get number of image charges used only for periodic
+  //
+  const int numberImageCharges = d_imageIds.size();
+
+  std::vector<vectorType> singleAtomsVself(atomLocations.size()+numberImageCharges);
+  for(unsigned int iAtom = 0; iAtom < atomLocations.size()+numberImageCharges; ++iAtom)
+  {
+    if (iAtom==0)
+      _matrix_free_data.initialize_dof_vector(singleAtomsVself[iAtom],_phiExtDofHandlerIndex);
+    else
+      singleAtomsVself[iAtom].reinit(singleAtomsVself[0]);
+
+    singleAtomsVself[iAtom]=0.0;
+  }
+  //vectorType phiExt;
+  //phiExt.reinit(singleAtomsVself[0]);
+  //phiExt=0;
+
+  double init_2;
+  MPI_Barrier(MPI_COMM_WORLD);
+  init_2 = MPI_Wtime();
+
+  const std::shared_ptr< const dealii::Utilities::MPI::Partitioner > & partitioner
+			    =singleAtomsVself[0].get_partitioner();
+  const unsigned int localSize =  partitioner->local_size();
+  const unsigned int n_ghosts   = partitioner->n_ghost_indices();
+  const unsigned int totalSize = localSize + n_ghosts;
+
+
+  const std::vector<std::map<dealii::types::global_dof_index, int> > & boundaryNodeMapBinsOnlyChargeId = vselfBinManager.getBoundaryFlagsBinsOnlyChargeId();
+  const std::vector<std::map<dealii::types::global_dof_index, dealii::Point<3>> > & dofClosestChargeLocationMapBins
+		                                            = vselfBinManager.getClosestAtomLocationsBins();
+  const std::map<unsigned int, unsigned int>  & atomIdBinIdMap=vselfBinManager.getAtomIdBinIdMapLocalAllImages();
+
+  std::vector<bool> dofsTouched(totalSize,false);
+  const unsigned int dofs_per_cell = _dofHandler.get_fe().dofs_per_cell;
+  DoFHandler<3>::active_cell_iterator subCellPtr;
+
+  for(unsigned int macrocell = 0; macrocell < _matrix_free_data.n_macro_cells(); ++macrocell)
+      for(unsigned int iSubCell = 0; iSubCell < _matrix_free_data.n_components_filled(macrocell); ++iSubCell)
+      {
+	  subCellPtr= _matrix_free_data.get_cell_iterator(macrocell,iSubCell);
+	  dealii::CellId subCellId=subCellPtr->id();
+
+	  std::vector<dealii::types::global_dof_index> cell_dof_indices(dofs_per_cell);
+	  subCellPtr->get_dof_indices(cell_dof_indices);
+
+	  for(unsigned int iNode = 0; iNode < dofs_per_cell; ++iNode)
+	  {
+             const dealii::types::global_dof_index dofId=cell_dof_indices[iNode];
+             const Point<3> & nodalCoor = _supportPoints.find(dofId)->second;
+	     if(!_phiExtConstraintMatrix.is_constrained(dofId) 
+               && singleAtomsVself[0].in_local_range(dofId))
+	     {
+               const unsigned int localDofId=partitioner->global_to_local(dofId);
+               if (!dofsTouched[localDofId])
+	       {
+		       dofsTouched[localDofId]=true;
+		       Point<3> atom;
+		       double atomCharge;
+		       int atomicNumber;
+                       int chargeId;
+                       double distanceToAtom;
+		       for(unsigned int iAtom = 0; iAtom < (atomLocations.size()+numberImageCharges); ++iAtom)
+			{
+			  if (iAtom<numberGlobalCharges)
+			  {
+			    atom[0]=atomLocations[iAtom][2];
+			    atom[1]=atomLocations[iAtom][3];
+			    atom[2]=atomLocations[iAtom][4];
+			    atomCharge=atomLocations[iAtom][1];
+			    atomicNumber=std::round(atomLocations[iAtom][0]);
+                            chargeId=iAtom;
+			  }
+			  else
+			  {
+			    const unsigned int iImageCharge=iAtom-numberGlobalCharges;
+			    atom[0]=d_imagePositions[iImageCharge][0];
+			    atom[1]=d_imagePositions[iImageCharge][1];
+			    atom[2]=d_imagePositions[iImageCharge][2];
+			    atomCharge=atomLocations[d_imageIds[iImageCharge]][1];
+			    atomicNumber=std::round(atomLocations[d_imageIds[iImageCharge]][0]);
+                            chargeId = d_imageIds[iImageCharge];
+			  }
+
+			  distanceToAtom = nodalCoor.distance(atom);
+			  double val;
+
+                          if (atomIdBinIdMap.find(chargeId)!=atomIdBinIdMap.end())
+                          {
+				  const unsigned int binId=atomIdBinIdMap.find(chargeId)->second;
+				  const int boundaryFlagChargeId=boundaryNodeMapBinsOnlyChargeId[binId].find(dofId)->second;
+
+				  if (boundaryFlagChargeId==chargeId)
+				  {
+					 if (dofClosestChargeLocationMapBins[binId].find(dofId)->second.distance(atom)<1e-5)
+                                         {
+                                            const vectorType & vselfBin=vselfBinManager.getVselfFieldBins()[binId];
+					    val=vselfBin.local_element(localDofId);
+                                         }
+					 else
+					    val=-atomCharge/distanceToAtom;
+				  }
+                                  else
+                                         val=-atomCharge/distanceToAtom;
+                          }
+			  else
+			  {
+				 val=-atomCharge/distanceToAtom;
+			  }
+
+			  singleAtomsVself[iAtom].local_element(localDofId)=val;
+                          //phiExt.local_element(localDofId)+=val;
+		       }
+	       }
+	    }
+	  }
+      }
+
+  MPI_Barrier(MPI_COMM_WORLD);
+  init_2 = MPI_Wtime() - init_2;
+  if (dftParameters::verbosity>=1)
+        pcout<<"initLocalPSP: Time taken for init2: "<<init_2<<std::endl;
+
+  for(unsigned int iAtom = 0; iAtom < atomLocations.size()+numberImageCharges; ++iAtom)
+  {
+       //_phiExtConstraintMatrix.distribute(singleAtomsVself[iAtom]);
+       singleAtomsVself[iAtom].update_ghost_values();
+  }
+
+  //_phiExtConstraintMatrix.distribute(phiExt);
+  //phiExt.update_ghost_values();
+  //pcout<<"L2 Norm Value of phiext: "<<phiExt.l2_norm()<<std::endl;
+
+  std::map<dealii::CellId, std::vector<Point<3>>> quadPoints;
+  typename DoFHandler<3>::active_cell_iterator cell = _dofHandler.begin_active(), endc = _dofHandler.end();
+  for(; cell!=endc; ++cell)
+      if(cell->is_locally_owned())
+	{
+	  //compute values for the current elements
+	  fe_values.reinit(cell);
+
+          quadPoints[cell->id()].resize(n_q_points);
+	  for (unsigned int q = 0; q < n_q_points; ++q)
+             quadPoints[cell->id()][q]=fe_values.quadrature_point(q);
+        }
+
+  
+  FEEvaluation<3,FEOrder,C_num1DQuad<FEOrder>()> feEvalObj(_matrix_free_data,_phiExtDofHandlerIndex,0);
+  std::vector<double> gradPseudoVLocAtom(3*n_q_points);
+  for(unsigned int macrocell = 0; macrocell < _matrix_free_data.n_macro_cells(); ++macrocell)
+  {
+      feEvalObj.reinit(macrocell);
+
+      for(unsigned int iSubCell = 0; iSubCell < _matrix_free_data.n_components_filled(macrocell); ++iSubCell)
+      {
+	      subCellPtr= _matrix_free_data.get_cell_iterator(macrocell,iSubCell);
+	      dealii::CellId subCellId=subCellPtr->id();
+	      std::vector<double> & gradPseudoVLoc=_gradPseudoValues[subCellId];
+	      gradPseudoVLoc.resize(n_q_points*3,0.0);
+
+	      std::vector<double> & pseudoVLoc=_pseudoValues[subCellId];
+	      pseudoVLoc.resize(n_q_points,0.0);
+      }
+
+      Point<3> atom;
+      int atomicNumber;
+      double atomCharge;
+      //loop over atoms
+      for (unsigned int iAtom=0; iAtom<numberGlobalCharges+numberImageCharges; iAtom++)
+      {
+
+	  if (iAtom<numberGlobalCharges)
+	  {
+	    atom[0]=atomLocations[iAtom][2];
+	    atom[1]=atomLocations[iAtom][3];
+	    atom[2]=atomLocations[iAtom][4];
+	    atomCharge=atomLocations[iAtom][1];
+	    atomicNumber=std::round(atomLocations[iAtom][0]);
+	  }
+	  else
+	  {
+	    const unsigned int iImageCharge=iAtom-numberGlobalCharges;
+	    atom[0]=d_imagePositions[iImageCharge][0];
+	    atom[1]=d_imagePositions[iImageCharge][1];
+	    atom[2]=d_imagePositions[iImageCharge][2];
+	    atomCharge=atomLocations[d_imageIds[iImageCharge]][1];
+	    atomicNumber=std::round(atomLocations[d_imageIds[iImageCharge]][0]);
+	  }
+
+          feEvalObj.read_dof_values(singleAtomsVself[iAtom]);
+          feEvalObj.evaluate(true,true);
+         
+          for(unsigned int iSubCell = 0; iSubCell < _matrix_free_data.n_components_filled(macrocell); ++iSubCell)
+	  {
+              
+	      subCellPtr= _matrix_free_data.get_cell_iterator(macrocell,iSubCell);
+	      dealii::CellId subCellId=subCellPtr->id();
+
+	      std::vector<double> & gradPseudoVLoc=_gradPseudoValues[subCellId];
+	      std::vector<double> & pseudoVLoc=_pseudoValues[subCellId];
+              
+              bool isPseudoDataInCell=false;
+
+	      //loop over quad points
+	      for (unsigned int q = 0; q < n_q_points; ++q)
+	      {
+
+                  const Point<3> & quadPoint= quadPoints[subCellId][q];
+		  double distanceToAtom = quadPoint.distance(atom);
+		  double value,firstDer,secondDer;
+		  if(distanceToAtom <= d_pspTail)//outerMostPointPseudo[atomLocations[n][0]])
+		    {
+		      alglib::spline1ddiff(pseudoSpline[atomicNumber],
+			                    distanceToAtom,
+					    value,
+					    firstDer,
+					    secondDer);
+		      isPseudoDataInCell=true;
+		    }
+		  else
+		    {
+	              value=-atomCharge/distanceToAtom;
+		      firstDer= atomCharge/distanceToAtom/distanceToAtom;
+		    }
+		    pseudoVLoc[q]+=value-feEvalObj.get_value(q)[iSubCell];
+		    gradPseudoVLocAtom[3*q+0]=firstDer*(quadPoint[0]-atom[0])/distanceToAtom-feEvalObj.get_gradient(q)[0][iSubCell];
+                    gradPseudoVLocAtom[3*q+1]=firstDer*(quadPoint[1]-atom[1])/distanceToAtom-feEvalObj.get_gradient(q)[1][iSubCell];
+                    gradPseudoVLocAtom[3*q+2]=firstDer*(quadPoint[2]-atom[2])/distanceToAtom-feEvalObj.get_gradient(q)[2][iSubCell];
+		    gradPseudoVLoc[q*3+0]+=gradPseudoVLocAtom[3*q+0];
+		    gradPseudoVLoc[q*3+1]+=gradPseudoVLocAtom[3*q+1];
+		    gradPseudoVLoc[q*3+2]+=gradPseudoVLocAtom[3*q+2];
+	      }//loop over quad points
+	      if (isPseudoDataInCell || true)
+		  _gradPseudoValuesAtoms[iAtom][subCellId]=gradPseudoVLocAtom;
+              
+	  }//subcell loop
+      }//loop over atoms and images
+  }//cell loop
+} 
+/*
+//
+//Initialize rho by reading in single-atom electron-density and fit a spline
+//
+template<unsigned int FEOrder>
+void dftClass<FEOrder>::initLocalPseudoPotential
+          (const DoFHandler<3> & _dofHandler,
+	   const dealii::QGauss<3> & _quadrature,
+           const dealii::MatrixFree<3,double> & _matrix_free_data,
+           const unsigned int _phiExtDofHandlerIndex,
+           const dealii::ConstraintMatrix & _phiExtConstraintMatrix,
+           const std::map<types::global_dof_index, Point<3> > & _supportPoints,
+           const vselfBinsManager<FEOrder> & vselfBinManager,
+	   std::map<dealii::CellId, std::vector<double> > & _pseudoValues,
+	   std::map<dealii::CellId, std::vector<double> > & _gradPseudoValues,
+	   std::map<unsigned int,std::map<dealii::CellId, std::vector<double> > > & _gradPseudoValuesAtoms)
+{
+  _pseudoValues.clear();
+  _gradPseudoValues.clear();
+  _gradPseudoValuesAtoms.clear();
+
+  //
+  //Reading single atom rho initial guess
+  //
+  std::map<unsigned int, alglib::spline1dinterpolant> pseudoSpline;
+  std::map<unsigned int, std::vector<std::vector<double> > > pseudoPotentialData;
+  std::map<unsigned int, double> outerMostPointPseudo;
+
   double init_1;
   MPI_Barrier(MPI_COMM_WORLD);
   init_1 = MPI_Wtime();
@@ -315,24 +632,8 @@ void dftClass<FEOrder>::initLocalPseudoPotential
   init_4 = MPI_Wtime() - init_4;
   if (dftParameters::verbosity>=1)
         pcout<<"initLocalPSP: Time taken for init4: "<<init_4<<std::endl;
-  /*
-  double value=0.0; 
-  cell = _dofHandler.begin_active();
-  endc = _dofHandler.end();
-  for(; cell!=endc; ++cell)
-      if(cell->is_locally_owned())
-	{
-         fe_values.reinit (cell);
-         const std::vector<double> & values=(_pseudoValues).find(cell->id())->second;
-         for (unsigned int q_point=0; q_point<n_q_points; ++q_point)
-           value+=values[q_point];
-      }
-    
-  
-  value= Utilities::MPI::sum(value, mpi_communicator);
-  pcout<<"Sum pseudoVLoc: "<<value<<std::endl;
-  */
 }
+*/
 
 template<unsigned int FEOrder>
 void dftClass<FEOrder>::initNonLocalPseudoPotential()

@@ -1197,7 +1197,13 @@ namespace dftfe
     const std::vector<std::map<dealii::types::global_dof_index, int> > & vselfBinsManager<FEOrder>::getBoundaryFlagsBins() const {return d_boundaryFlag;}
 
     template<unsigned int FEOrder>
+    const std::vector<std::map<dealii::types::global_dof_index, int> > & vselfBinsManager<FEOrder>::getBoundaryFlagsBinsOnlyChargeId() const {return d_boundaryFlagOnlyChargeId;}
+
+    template<unsigned int FEOrder>
     const std::vector<std::map<dealii::types::global_dof_index, int> > & vselfBinsManager<FEOrder>::getClosestAtomIdsBins() const {return d_closestAtomBin;}
+
+    template<unsigned int FEOrder>
+    const std::vector<std::map<dealii::types::global_dof_index, dealii::Point<3>> > & vselfBinsManager<FEOrder>::getClosestAtomLocationsBins() const {return  d_dofClosestChargeLocationMap;}
 
     template<unsigned int FEOrder>
     const std::vector<vectorType> & vselfBinsManager<FEOrder>::getVselfFieldBins() const {return d_vselfFieldBins;}
