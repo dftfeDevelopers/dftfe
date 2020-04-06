@@ -116,6 +116,7 @@ namespace dftfe {
     double gaussianOrderMoveMeshToAtoms=4.0;
     double diracDeltaKernelScalingConstant=0.1;
     unsigned int kernelUpdateRankXLBOMD=0;
+    unsigned int kmaxXLBOMD=8;
     bool autoMeshStepInterpolateBOMD=false;
     double ratioOfMeshMovementToForceGaussianBOMD=1.0;
     bool useAtomicRhoXLBOMD=true;
@@ -747,6 +748,10 @@ namespace dftfe {
 			  Patterns::Integer(0,5),
 			  "[Standard] Maximum rank for low rank kernel update in XL BOMD.");
 
+        prm.declare_entry("NUMBER DISSIPATION TERMS XL BOMD", "8",
+                          Patterns::Integer(6,8),
+                          "[Standard] Number of dissipation terms in XL BOMD.");
+
 	prm.declare_entry("AUTO MESH STEP INTERPOLATE BOMD", "false",
 			  Patterns::Bool(),
 			  "[Standard] Perform interpolation of previous density to new auto mesh.");  
@@ -983,6 +988,7 @@ namespace dftfe {
           dftParameters::startingTempBOMDNVE           = prm.get_double("STARTING TEMP NVE");  
           dftParameters::diracDeltaKernelScalingConstant     = prm.get_double("DIRAC DELTA KERNEL SCALING CONSTANT XL BOMD"); 
           dftParameters::kernelUpdateRankXLBOMD        = prm.get_integer("KERNEL RANK XL BOMD");
+          dftParameters::kmaxXLBOMD        = prm.get_integer("NUMBER DISSIPATION TERMS XL BOMD");
           dftParameters::autoMeshStepInterpolateBOMD   = prm.get_bool("AUTO MESH STEP INTERPOLATE BOMD");
           dftParameters::ratioOfMeshMovementToForceGaussianBOMD       = prm.get_double("RATIO MESH MOVEMENT TO FORCE GAUSSIAN");    
           dftParameters::useAtomicRhoXLBOMD     = prm.get_bool("USE ATOMIC RHO XL BOMD");     

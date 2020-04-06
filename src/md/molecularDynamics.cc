@@ -256,17 +256,43 @@ void molecularDynamics<FEOrder>::run()
         std::vector<double> rmsErrorRhoVector(numberTimeSteps,0.0);
         std::vector<double> rmsErrorGradRhoVector(numberTimeSteps,0.0);
 
-        const unsigned int kmax=8;
-        const double k=1.86;
-        const double alpha=0.0016;
-        const double c0=-36.0;
-        const double c1=99.0;
-        const double c2=-88.0;
-        const double c3=11.0;
-        const double c4=32.0;
-        const double c5=-25.0;
-        const double c6=8.0;
-        const double c7=-1.0;
+        const unsigned int kmax=dftParameters::kmaxXLBOMD;
+        double k;
+        double alpha;
+        double c0;
+        double c1;
+        double c2;
+        double c3;
+        double c4;
+        double c5;
+        double c6;
+        double c7;
+
+        if (kmax==6)
+        {
+		const double k=1.82;
+		const double alpha=0.018;
+		const double c0=-6.0;
+		const double c1=14.0;
+		const double c2=-8.0;
+		const double c3=-3.0;
+		const double c4=4.0;
+		const double c5=-1.0;
+        }
+        else if (kmax==8)
+        {
+		const double k=1.86;
+		const double alpha=0.0016;
+		const double c0=-36.0;
+		const double c1=99.0;
+		const double c2=-88.0;
+		const double c3=11.0;
+		const double c4=32.0;
+		const double c5=-25.0;
+		const double c6=8.0;
+		const double c7=-1.0;
+        }
+
         const double diracDeltaKernelConstant=-dftParameters::diracDeltaKernelScalingConstant;
         const double k0kernelconstant=1.0/dftParameters::diracDeltaKernelScalingConstant-1.0;//20.0;//20.0
         std::deque<vectorType> approxDensityContainer;
@@ -747,15 +773,28 @@ void molecularDynamics<FEOrder>::run()
 	 
 			if (approxDensityContainer.size()==kmax)
 			{
-				for (unsigned int i = 0; i < local_size; i++)
-					approxDensityNext.local_element(i)+=alpha*(c0*approxDensityContainer[containerSizeCurrent-1].local_element(i)
-								 +c1*approxDensityContainer[containerSizeCurrent-2].local_element(i)
-								 +c2*approxDensityContainer[containerSizeCurrent-3].local_element(i)
-								 +c3*approxDensityContainer[containerSizeCurrent-4].local_element(i)
-								 +c4*approxDensityContainer[containerSizeCurrent-5].local_element(i)
-								 +c5*approxDensityContainer[containerSizeCurrent-6].local_element(i)
-								 +c6*approxDensityContainer[containerSizeCurrent-7].local_element(i)
-								 +c7*approxDensityContainer[containerSizeCurrent-8].local_element(i));
+                                if (kmax==6)
+                                {
+					for (unsigned int i = 0; i < local_size; i++)
+						approxDensityNext.local_element(i)+=alpha*(c0*approxDensityContainer[containerSizeCurrent-1].local_element(i)
+									 +c1*approxDensityContainer[containerSizeCurrent-2].local_element(i)
+									 +c2*approxDensityContainer[containerSizeCurrent-3].local_element(i)
+									 +c3*approxDensityContainer[containerSizeCurrent-4].local_element(i)
+									 +c4*approxDensityContainer[containerSizeCurrent-5].local_element(i)
+									 +c5*approxDensityContainer[containerSizeCurrent-6].local_element(i));
+                                }
+                                else if (kmax==8)
+                                {
+					for (unsigned int i = 0; i < local_size; i++)
+						approxDensityNext.local_element(i)+=alpha*(c0*approxDensityContainer[containerSizeCurrent-1].local_element(i)
+									 +c1*approxDensityContainer[containerSizeCurrent-2].local_element(i)
+									 +c2*approxDensityContainer[containerSizeCurrent-3].local_element(i)
+									 +c3*approxDensityContainer[containerSizeCurrent-4].local_element(i)
+									 +c4*approxDensityContainer[containerSizeCurrent-5].local_element(i)
+									 +c5*approxDensityContainer[containerSizeCurrent-6].local_element(i)
+									 +c6*approxDensityContainer[containerSizeCurrent-7].local_element(i)
+									 +c7*approxDensityContainer[containerSizeCurrent-8].local_element(i));
+                                }
 				approxDensityContainer.pop_front();
 			}
 			approxDensityContainer.push_back(approxDensityNext);
