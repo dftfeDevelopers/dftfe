@@ -1311,9 +1311,9 @@ namespace dftfe {
 						d_imageIds,
 						d_imageCharges,
 						d_localVselfs);
+#endif
     computingTimerStandard.exit_section("Nuclear self-potential solve");
     computing_timer.exit_section("Nuclear self-potential solve");
-#endif
     }
 
 
