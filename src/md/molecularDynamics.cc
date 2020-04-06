@@ -270,27 +270,27 @@ void molecularDynamics<FEOrder>::run()
 
         if (kmax==6)
         {
-		const double k=1.82;
-		const double alpha=0.018;
-		const double c0=-6.0;
-		const double c1=14.0;
-		const double c2=-8.0;
-		const double c3=-3.0;
-		const double c4=4.0;
-		const double c5=-1.0;
+		k=1.82;
+		alpha=0.018;
+		c0=-6.0;
+		c1=14.0;
+		c2=-8.0;
+		c3=-3.0;
+		c4=4.0;
+		c5=-1.0;
         }
         else if (kmax==8)
         {
-		const double k=1.86;
-		const double alpha=0.0016;
-		const double c0=-36.0;
-		const double c1=99.0;
-		const double c2=-88.0;
-		const double c3=11.0;
-		const double c4=32.0;
-		const double c5=-25.0;
-		const double c6=8.0;
-		const double c7=-1.0;
+		k=1.86;
+		alpha=0.0016;
+		c0=-36.0;
+		c1=99.0;
+		c2=-88.0;
+		c3=11.0;
+		c4=32.0;
+		c5=-25.0;
+		c6=8.0;
+		c7=-1.0;
         }
 
         const double diracDeltaKernelConstant=-dftParameters::diracDeltaKernelScalingConstant;
