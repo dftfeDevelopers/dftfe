@@ -571,7 +571,7 @@ namespace dftfe {
 
   //dft pseudopotential init
   template<unsigned int FEOrder>
-  void dftClass<FEOrder>::initPseudoPotentialAll()
+  void dftClass<FEOrder>::initPseudoPotentialAll(const bool meshOnlyDeformed)
   {
     if(dftParameters::isPseudopotential)
       {
@@ -599,16 +599,19 @@ namespace dftfe {
             pcout<<"updateAtomPositionsAndMoveMesh: initPseudoPotentialAll: Time taken for local psp init: "<<init_psplocal<<std::endl;
         */
 
-        double init_nonlocal1;
-        MPI_Barrier(MPI_COMM_WORLD);
-        init_nonlocal1 = MPI_Wtime();
+        if (!meshOnlyDeformed)
+        {
+		double init_nonlocal1;
+		MPI_Barrier(MPI_COMM_WORLD);
+		init_nonlocal1 = MPI_Wtime();
 
-	computeSparseStructureNonLocalProjectors_OV();
+		computeSparseStructureNonLocalProjectors_OV();
 
-        MPI_Barrier(MPI_COMM_WORLD);
-        init_nonlocal1 = MPI_Wtime() - init_nonlocal1;
-        if (dftParameters::verbosity>=1)
-            pcout<<"updateAtomPositionsAndMoveMesh: initPseudoPotentialAll: Time taken for computeSparseStructureNonLocalProjectors_OV: "<<init_nonlocal1<<std::endl;
+		MPI_Barrier(MPI_COMM_WORLD);
+		init_nonlocal1 = MPI_Wtime() - init_nonlocal1;
+		if (dftParameters::verbosity>=1)
+		    pcout<<"updateAtomPositionsAndMoveMesh: initPseudoPotentialAll: Time taken for computeSparseStructureNonLocalProjectors_OV: "<<init_nonlocal1<<std::endl;
+        }
 
         double init_nonlocal2;
         MPI_Barrier(MPI_COMM_WORLD);
@@ -923,7 +926,7 @@ namespace dftfe {
     MPI_Barrier(MPI_COMM_WORLD);
     init_pseudo = MPI_Wtime();
  
-    initPseudoPotentialAll();
+    initPseudoPotentialAll(true);
 
     MPI_Barrier(MPI_COMM_WORLD);
     init_pseudo = MPI_Wtime() - init_pseudo;
