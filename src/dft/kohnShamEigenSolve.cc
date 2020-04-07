@@ -444,6 +444,7 @@ void dftClass<FEOrder>::kohnShamEigenSpaceCompute(const unsigned int spinType,
 						  std::vector<double>                            & residualNormWaveFunctions,
                                                   const bool isXlBOMDLinearizedSolve,
                                                   const bool useCommunAvoidanceCheby,
+                                                  const bool rayleighRitzAvoidanceXLBOMD,
 						  const bool isSpectrumSplit,
 						  const bool useMixedPrec,
                                                   const bool isFirstScf,
@@ -482,196 +483,218 @@ void dftClass<FEOrder>::kohnShamEigenSpaceCompute(const unsigned int spinType,
   dealii::ScaLAPACKMatrix<double> overlapMatPar(d_numEigenValues,
                                              processGrid,
                                              rowsBlockSize);
-#ifdef DFTFE_WITH_ELPA
-  if (dftParameters::useELPA)
+
+  if (rayleighRitzAvoidanceXLBOMD)
   {
-	  subspaceIterationSolverCUDA.solve(kohnShamDFTEigenOperator,
+          bool isFirstPass=false;
+	  subspaceIterationSolverCUDA.solveNoRR(kohnShamDFTEigenOperator,
 					d_eigenVectorsFlattenedCUDA.begin()
 					+((1+dftParameters::spinPolarized)*kPointIndex+spinType)*d_eigenVectorsFlattenedSTL[0].size(),
-                                        d_eigenVectorsRotFracFlattenedCUDA.begin()
-                                        +((1+dftParameters::spinPolarized)*kPointIndex+spinType)*d_eigenVectorsRotFracDensityFlattenedSTL[0].size(),
 					d_eigenVectorsFlattenedSTL[0].size(),
 					d_tempEigenVec,
 					d_numEigenValues,
 					eigenValuesDummy,
-					residualNormWaveFunctions,
-					interBandGroupComm,
-					projHamPar,
-                                        overlapMatPar,
-					processGrid,
-                                        isXlBOMDLinearizedSolve,
-                                        useCommunAvoidanceCheby,
-					useMixedPrec,
-					isFirstScf,
-					useFullMassMatrixGEP,
-                                        true,
-                                        false);
-          MPI_Barrier(MPI_COMM_WORLD);
-          double time = MPI_Wtime();
-
-          if (isSpectrumSplit && d_numEigenValuesRR!=d_numEigenValues)
-          {
-             if (dftParameters::rrGEP==false)
-                 linearAlgebraOperations::elpaPartialDiagonalization(elpaScala,
-                                                       d_numEigenValues,
-                                                       d_numEigenValues-d_numEigenValuesRR,
-                                                       elpaScala.getMPICommunicator(),
-                                                       eigenValuesTemp,
-                                                       projHamPar,
-                                                       processGrid);
-             else
-                 linearAlgebraOperations::elpaPartialDiagonalizationGEP(elpaScala,
-                                                       d_numEigenValues,
-                                                       d_numEigenValues-d_numEigenValuesRR,
-                                                       elpaScala.getMPICommunicator(),
-                                                       eigenValuesTemp,
-                                                       projHamPar,
-                                                       overlapMatPar,
-                                                       processGrid); 
-          }
-          else
-          {
-             if (dftParameters::rrGEP==false)
-                 linearAlgebraOperations::elpaDiagonalization(elpaScala,
-                                                       d_numEigenValues,
-                                                       elpaScala.getMPICommunicator(),
-                                                       eigenValuesTemp,
-                                                       projHamPar,
-                                                       processGrid);
-             else
-                 linearAlgebraOperations::elpaDiagonalizationGEP(elpaScala,
-                                                       d_numEigenValues,
-                                                       elpaScala.getMPICommunicator(),
-                                                       eigenValuesTemp,
-                                                       projHamPar,
-                                                       overlapMatPar,
-                                                       processGrid);
-          }
-
-          MPI_Barrier(MPI_COMM_WORLD);
-	  time = MPI_Wtime() - time;
-	  if (dealii::Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) ==0 && dftParameters::verbosity>=2)
-              if (isSpectrumSplit && d_numEigenValuesRR!=d_numEigenValues)
-                std::cout<<"Time for ELPA partial eigen decomp, RR step: "<<time<<std::endl;
-              else
-	        std::cout<<"Time for ELPA eigen decomp, RR step: "<<time<<std::endl;
-                                  
-
-	  subspaceIterationSolverCUDA.solve(kohnShamDFTEigenOperator,
-					d_eigenVectorsFlattenedCUDA.begin()
-					+((1+dftParameters::spinPolarized)*kPointIndex+spinType)*d_eigenVectorsFlattenedSTL[0].size(),
-                                        d_eigenVectorsRotFracFlattenedCUDA.begin()
-                                        +((1+dftParameters::spinPolarized)*kPointIndex+spinType)*d_eigenVectorsRotFracDensityFlattenedSTL[0].size(),
-					d_eigenVectorsFlattenedSTL[0].size(),
-					d_tempEigenVec,
-					d_numEigenValues,
-					eigenValuesTemp,
-					residualNormWaveFunctions,
-					interBandGroupComm,
-					projHamPar,
-                                        overlapMatPar,
-					processGrid,
-                                        isXlBOMDLinearizedSolve,
-                                        useCommunAvoidanceCheby,
-					useMixedPrec,
-					isFirstScf,
-					useFullMassMatrixGEP,
-                                        false,
-                                        true);
-  }
-  else
-  {
-	  subspaceIterationSolverCUDA.solve(kohnShamDFTEigenOperator,
-					d_eigenVectorsFlattenedCUDA.begin()
-					+((1+dftParameters::spinPolarized)*kPointIndex+spinType)*d_eigenVectorsFlattenedSTL[0].size(),
-                                        d_eigenVectorsRotFracFlattenedCUDA.begin()
-                                        +((1+dftParameters::spinPolarized)*kPointIndex+spinType)*d_eigenVectorsRotFracDensityFlattenedSTL[0].size(),
-					d_eigenVectorsFlattenedSTL[0].size(),
-					d_tempEigenVec,
-					d_numEigenValues,
-					eigenValuesTemp,
-					residualNormWaveFunctions,
-					interBandGroupComm,
-					projHamPar,
-                                        overlapMatPar,
-					processGrid,
-                                        isXlBOMDLinearizedSolve,
-                                        useCommunAvoidanceCheby,
-					useMixedPrec,
-					isFirstScf,
-					useFullMassMatrixGEP);
-  }
-#else
-	  subspaceIterationSolverCUDA.solve(kohnShamDFTEigenOperator,
-					d_eigenVectorsFlattenedCUDA.begin()
-					+((1+dftParameters::spinPolarized)*kPointIndex+spinType)*d_eigenVectorsFlattenedSTL[0].size(),
-					d_eigenVectorsRotFracFlattenedCUDA.begin()
-					+((1+dftParameters::spinPolarized)*kPointIndex+spinType)*d_eigenVectorsRotFracDensityFlattenedSTL[0].size(),
-					d_eigenVectorsFlattenedSTL[0].size(),
-					d_tempEigenVec,
-					d_numEigenValues,
-					eigenValuesTemp,
-					residualNormWaveFunctions,
 					interBandGroupComm,
 					projHamPar,
 					overlapMatPar,
 					processGrid,
-                                        isXlBOMDLinearizedSolve,
-                                        useCommunAvoidanceCheby,
-					useMixedPrec,
-					isFirstScf,
-					useFullMassMatrixGEP);
-#endif
+					isXlBOMDLinearizedSolve,
+					useCommunAvoidanceCheby,
+                                        isFirstPass,
+					useMixedPrec);
+  }
+  else	  
+  {
+#ifdef DFTFE_WITH_ELPA
+	  if (dftParameters::useELPA)
+	  {
+		  subspaceIterationSolverCUDA.solve(kohnShamDFTEigenOperator,
+						d_eigenVectorsFlattenedCUDA.begin()
+						+((1+dftParameters::spinPolarized)*kPointIndex+spinType)*d_eigenVectorsFlattenedSTL[0].size(),
+						d_eigenVectorsRotFracFlattenedCUDA.begin()
+						+((1+dftParameters::spinPolarized)*kPointIndex+spinType)*d_eigenVectorsRotFracDensityFlattenedSTL[0].size(),
+						d_eigenVectorsFlattenedSTL[0].size(),
+						d_tempEigenVec,
+						d_numEigenValues,
+						eigenValuesDummy,
+						residualNormWaveFunctions,
+						interBandGroupComm,
+						projHamPar,
+						overlapMatPar,
+						processGrid,
+						isXlBOMDLinearizedSolve,
+						useCommunAvoidanceCheby,
+						useMixedPrec,
+						isFirstScf,
+						useFullMassMatrixGEP,
+						true,
+						false);
+		  MPI_Barrier(MPI_COMM_WORLD);
+		  double time = MPI_Wtime();
 
+		  if (isSpectrumSplit && d_numEigenValuesRR!=d_numEigenValues)
+		  {
+		     if (dftParameters::rrGEP==false)
+			 linearAlgebraOperations::elpaPartialDiagonalization(elpaScala,
+							       d_numEigenValues,
+							       d_numEigenValues-d_numEigenValuesRR,
+							       elpaScala.getMPICommunicator(),
+							       eigenValuesTemp,
+							       projHamPar,
+							       processGrid);
+		     else
+			 linearAlgebraOperations::elpaPartialDiagonalizationGEP(elpaScala,
+							       d_numEigenValues,
+							       d_numEigenValues-d_numEigenValuesRR,
+							       elpaScala.getMPICommunicator(),
+							       eigenValuesTemp,
+							       projHamPar,
+							       overlapMatPar,
+							       processGrid); 
+		  }
+		  else
+		  {
+		     if (dftParameters::rrGEP==false)
+			 linearAlgebraOperations::elpaDiagonalization(elpaScala,
+							       d_numEigenValues,
+							       elpaScala.getMPICommunicator(),
+							       eigenValuesTemp,
+							       projHamPar,
+							       processGrid);
+		     else
+			 linearAlgebraOperations::elpaDiagonalizationGEP(elpaScala,
+							       d_numEigenValues,
+							       elpaScala.getMPICommunicator(),
+							       eigenValuesTemp,
+							       projHamPar,
+							       overlapMatPar,
+							       processGrid);
+		  }
 
-  //
-  //copy the eigenValues and corresponding residual norms back to data members
-  //
-  if (isSpectrumSplit)
-    {
-      for(unsigned int i = 0; i < d_numEigenValuesRR; i++)
-	{
-          
-	  if(dftParameters::verbosity>=5 && d_numEigenValues==d_numEigenValuesRR)
-	      pcout<<"eigen value "<< std::setw(3) <<i <<": "<<eigenValuesTemp[i] <<std::endl;
-	  else if(dftParameters::verbosity>=5 && d_numEigenValues!=d_numEigenValuesRR)
-              pcout<<"valence eigen value "<< std::setw(3) <<i <<": "<<eigenValuesTemp[i] <<std::endl;
-          
-	  eigenValuesRRSplit[kPointIndex][spinType*d_numEigenValuesRR + i] =  eigenValuesTemp[i];
-	}
+		  MPI_Barrier(MPI_COMM_WORLD);
+		  time = MPI_Wtime() - time;
+		  if (dealii::Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) ==0 && dftParameters::verbosity>=2)
+		      if (isSpectrumSplit && d_numEigenValuesRR!=d_numEigenValues)
+			std::cout<<"Time for ELPA partial eigen decomp, RR step: "<<time<<std::endl;
+		      else
+			std::cout<<"Time for ELPA eigen decomp, RR step: "<<time<<std::endl;
+					  
 
-      for(unsigned int i = 0; i < d_numEigenValues; i++)
-	{
-	  if (i>=(d_numEigenValues-d_numEigenValuesRR))
-	     eigenValues[kPointIndex][spinType*d_numEigenValues + i]
-		 = eigenValuesTemp[i-(d_numEigenValues-d_numEigenValuesRR)];
+		  subspaceIterationSolverCUDA.solve(kohnShamDFTEigenOperator,
+						d_eigenVectorsFlattenedCUDA.begin()
+						+((1+dftParameters::spinPolarized)*kPointIndex+spinType)*d_eigenVectorsFlattenedSTL[0].size(),
+						d_eigenVectorsRotFracFlattenedCUDA.begin()
+						+((1+dftParameters::spinPolarized)*kPointIndex+spinType)*d_eigenVectorsRotFracDensityFlattenedSTL[0].size(),
+						d_eigenVectorsFlattenedSTL[0].size(),
+						d_tempEigenVec,
+						d_numEigenValues,
+						eigenValuesTemp,
+						residualNormWaveFunctions,
+						interBandGroupComm,
+						projHamPar,
+						overlapMatPar,
+						processGrid,
+						isXlBOMDLinearizedSolve,
+						useCommunAvoidanceCheby,
+						useMixedPrec,
+						isFirstScf,
+						useFullMassMatrixGEP,
+						false,
+						true);
+	  }
 	  else
-             eigenValues[kPointIndex][spinType*d_numEigenValues + i]=-100.0;
-	}
-    }
-  else
-    {
-      for(unsigned int i = 0; i < d_numEigenValues; i++)
-	{
-          
-	  if(dftParameters::verbosity>=5)
-	      pcout<<"eigen value "<< std::setw(3) <<i <<": "<<eigenValuesTemp[i] <<std::endl;
-          
-	  eigenValues[kPointIndex][spinType*d_numEigenValues + i] =  eigenValuesTemp[i];
-	}
-    }
+	  {
+		  subspaceIterationSolverCUDA.solve(kohnShamDFTEigenOperator,
+						d_eigenVectorsFlattenedCUDA.begin()
+						+((1+dftParameters::spinPolarized)*kPointIndex+spinType)*d_eigenVectorsFlattenedSTL[0].size(),
+						d_eigenVectorsRotFracFlattenedCUDA.begin()
+						+((1+dftParameters::spinPolarized)*kPointIndex+spinType)*d_eigenVectorsRotFracDensityFlattenedSTL[0].size(),
+						d_eigenVectorsFlattenedSTL[0].size(),
+						d_tempEigenVec,
+						d_numEigenValues,
+						eigenValuesTemp,
+						residualNormWaveFunctions,
+						interBandGroupComm,
+						projHamPar,
+						overlapMatPar,
+						processGrid,
+						isXlBOMDLinearizedSolve,
+						useCommunAvoidanceCheby,
+						useMixedPrec,
+						isFirstScf,
+						useFullMassMatrixGEP);
+	  }
+#else
+		  subspaceIterationSolverCUDA.solve(kohnShamDFTEigenOperator,
+						d_eigenVectorsFlattenedCUDA.begin()
+						+((1+dftParameters::spinPolarized)*kPointIndex+spinType)*d_eigenVectorsFlattenedSTL[0].size(),
+						d_eigenVectorsRotFracFlattenedCUDA.begin()
+						+((1+dftParameters::spinPolarized)*kPointIndex+spinType)*d_eigenVectorsRotFracDensityFlattenedSTL[0].size(),
+						d_eigenVectorsFlattenedSTL[0].size(),
+						d_tempEigenVec,
+						d_numEigenValues,
+						eigenValuesTemp,
+						residualNormWaveFunctions,
+						interBandGroupComm,
+						projHamPar,
+						overlapMatPar,
+						processGrid,
+						isXlBOMDLinearizedSolve,
+						useCommunAvoidanceCheby,
+						useMixedPrec,
+						isFirstScf,
+						useFullMassMatrixGEP);
+#endif
+	  
 
-  if (dftParameters::verbosity>=4)
-     pcout <<std::endl;
+	  //
+	  //copy the eigenValues and corresponding residual norms back to data members
+	  //
+	  if (isSpectrumSplit)
+	    {
+	      for(unsigned int i = 0; i < d_numEigenValuesRR; i++)
+		{
+		  
+		  if(dftParameters::verbosity>=5 && d_numEigenValues==d_numEigenValuesRR)
+		      pcout<<"eigen value "<< std::setw(3) <<i <<": "<<eigenValuesTemp[i] <<std::endl;
+		  else if(dftParameters::verbosity>=5 && d_numEigenValues!=d_numEigenValuesRR)
+		      pcout<<"valence eigen value "<< std::setw(3) <<i <<": "<<eigenValuesTemp[i] <<std::endl;
+		  
+		  eigenValuesRRSplit[kPointIndex][spinType*d_numEigenValuesRR + i] =  eigenValuesTemp[i];
+		}
 
- 
-  bLow[(1+dftParameters::spinPolarized)*kPointIndex+spinType]=eigenValuesTemp.back();
+	      for(unsigned int i = 0; i < d_numEigenValues; i++)
+		{
+		  if (i>=(d_numEigenValues-d_numEigenValuesRR))
+		     eigenValues[kPointIndex][spinType*d_numEigenValues + i]
+			 = eigenValuesTemp[i-(d_numEigenValues-d_numEigenValuesRR)];
+		  else
+		     eigenValues[kPointIndex][spinType*d_numEigenValues + i]=-100.0;
+		}
+	    }
+	  else
+	    {
+	      for(unsigned int i = 0; i < d_numEigenValues; i++)
+		{
+		  
+		  if(dftParameters::verbosity>=5)
+		      pcout<<"eigen value "<< std::setw(3) <<i <<": "<<eigenValuesTemp[i] <<std::endl;
+		  
+		  eigenValues[kPointIndex][spinType*d_numEigenValues + i] =  eigenValuesTemp[i];
+		}
+	    }
 
-  if(!isSpectrumSplit)
-    {
-      a0[(1+dftParameters::spinPolarized)*kPointIndex+spinType] = eigenValuesTemp[0];
-    }
+	  if (dftParameters::verbosity>=4)
+	     pcout <<std::endl;
 
+	 
+	  bLow[(1+dftParameters::spinPolarized)*kPointIndex+spinType]=eigenValuesTemp.back();
+
+	  if(!isSpectrumSplit)
+	    {
+	      a0[(1+dftParameters::spinPolarized)*kPointIndex+spinType] = eigenValuesTemp[0];
+	    }
+  }
   computing_timer.exit_section("Chebyshev solve CUDA");
 }
 #endif

@@ -1124,7 +1124,8 @@ namespace dftfe {
   void dftClass<FEOrder>::solve(const bool computeForces,
                                 const bool solveLinearizedKS,
                                 const bool isRestartGroundStateCalcFromChk,
-                                const bool skipVselfSolveInitLocalPSP)
+                                const bool skipVselfSolveInitLocalPSP,
+                                const bool rayleighRitzAvoidancePassesXLBOMD)
   {
 
     /*
@@ -1588,6 +1589,7 @@ namespace dftfe {
 						  residualNormWaveFunctionsAllkPointsSpins[s][kPoint],
                                                   solveLinearizedKS,
                                                   true,
+                                                  rayleighRitzAvoidancePassesXLBOMD,
 						  (scfIter<dftParameters::spectrumSplitStartingScfIter || scfConverged)?false:true,
 						  scfConverged?false:true,
                                                   scfIter==0,
@@ -1634,7 +1636,7 @@ namespace dftfe {
 
 		//maximum of the residual norm of the state closest to and below the Fermi level among all k points,
 		//and also the maximum between the two spins
-		double maxRes =std::max(computeMaximumHighestOccupiedStateResidualNorm
+		double maxRes =rayleighRitzAvoidancePassesXLBOMD?1e+6:std::max(computeMaximumHighestOccupiedStateResidualNorm
 					(residualNormWaveFunctionsAllkPointsSpins[0],
 					 eigenValuesSpins[0],
 					 fermiEnergy),
@@ -1643,7 +1645,7 @@ namespace dftfe {
 					 eigenValuesSpins[1],
 					 fermiEnergy));
 
-		if (dftParameters::verbosity>=2)
+		if (dftParameters::verbosity>=2 && !rayleighRitzAvoidancePassesXLBOMD)
 		  {
 		    pcout << "Maximum residual norm of the state closest to and below Fermi level: "<< maxRes << std::endl;
 		  }
@@ -1718,7 +1720,8 @@ namespace dftfe {
 							  subspaceIterationSolverCUDA,
 							  residualNormWaveFunctionsAllkPointsSpins[s][kPoint],
                                                           solveLinearizedKS,
-                                                          maxRes>1e-3 && solveLinearizedKS, 
+                                                          maxRes>1e-3 && solveLinearizedKS,
+                                                          count<dftParameters::numberPassesRRSkippedXLBOMD && rayleighRitzAvoidancePassesXLBOMD, 
 							  (scfIter<dftParameters::spectrumSplitStartingScfIter)?false:true,
 							  true,
 							  scfIter==0);
@@ -1736,36 +1739,40 @@ namespace dftfe {
 
 			  }
 		      }
-		    count++;
-		    for(unsigned int s=0; s<2; ++s)
-		      for (unsigned int kPoint = 0; kPoint < d_kPointWeights.size(); ++kPoint)
-		      {
-			if (scfIter<dftParameters::spectrumSplitStartingScfIter || scfConverged)
-			    for (unsigned int i = 0; i<d_numEigenValues; ++i)
-			      eigenValuesSpins[s][kPoint][i]=eigenValues[kPoint][d_numEigenValues*s+i];
-			else
-			    for (unsigned int i = 0; i<d_numEigenValuesRR; ++i)
-			      eigenValuesSpins[s][kPoint][i]=eigenValuesRRSplit[kPoint][d_numEigenValuesRR*s+i];
-		      }
-		    //
-		    if (dftParameters::constraintMagnetization)
-		       compute_fermienergy_constraintMagnetization(eigenValues) ;
-		    else
-			compute_fermienergy(eigenValues,
-					numElectrons);
-		    //
-		    maxRes =std::max(computeMaximumHighestOccupiedStateResidualNorm
-				     (residualNormWaveFunctionsAllkPointsSpins[0],
-				      eigenValuesSpins[0],
-				      fermiEnergy),
-				     computeMaximumHighestOccupiedStateResidualNorm
-				     (residualNormWaveFunctionsAllkPointsSpins[1],
-				      eigenValuesSpins[1],
-				      fermiEnergy));
-		    if (dftParameters::verbosity>=2)
-		      pcout << "Maximum residual norm of the state closest to and below Fermi level: "<< maxRes << std::endl;
 
+                    if (!(count<dftParameters::numberPassesRRSkippedXLBOMD && rayleighRitzAvoidancePassesXLBOMD))
+		    {
+			    for(unsigned int s=0; s<2; ++s)
+			      for (unsigned int kPoint = 0; kPoint < d_kPointWeights.size(); ++kPoint)
+			      {
+				if (scfIter<dftParameters::spectrumSplitStartingScfIter || scfConverged)
+				    for (unsigned int i = 0; i<d_numEigenValues; ++i)
+				      eigenValuesSpins[s][kPoint][i]=eigenValues[kPoint][d_numEigenValues*s+i];
+				else
+				    for (unsigned int i = 0; i<d_numEigenValuesRR; ++i)
+				      eigenValuesSpins[s][kPoint][i]=eigenValuesRRSplit[kPoint][d_numEigenValuesRR*s+i];
+			      }
+			    //
+			    if (dftParameters::constraintMagnetization)
+			       compute_fermienergy_constraintMagnetization(eigenValues) ;
+			    else
+				compute_fermienergy(eigenValues,
+						numElectrons);
+			    //
+			    maxRes =std::max(computeMaximumHighestOccupiedStateResidualNorm
+					     (residualNormWaveFunctionsAllkPointsSpins[0],
+					      eigenValuesSpins[0],
+					      fermiEnergy),
+					     computeMaximumHighestOccupiedStateResidualNorm
+					     (residualNormWaveFunctionsAllkPointsSpins[1],
+					      eigenValuesSpins[1],
+					      fermiEnergy));
+			    if (dftParameters::verbosity>=2)
+			      pcout << "Maximum residual norm of the state closest to and below Fermi level: "<< maxRes << std::endl;
+		    }
 		  }
+
+                  count++;
 	    }
 
 	    if(dftParameters::verbosity>=1)
@@ -1843,6 +1850,7 @@ namespace dftfe {
 						  residualNormWaveFunctionsAllkPoints[kPoint],
                                                   solveLinearizedKS,
                                                   true,
+                                                  rayleighRitzAvoidancePassesXLBOMD,
 						  (scfIter<dftParameters::spectrumSplitStartingScfIter || scfConverged)?false:true,
 						  scfConverged?false:true,
 						  scfIter==0,
@@ -1878,11 +1886,11 @@ namespace dftfe {
 		//
 		//maximum of the residual norm of the state closest to and below the Fermi level among all k points
 		//
-		double maxRes = computeMaximumHighestOccupiedStateResidualNorm
+		double maxRes = rayleighRitzAvoidancePassesXLBOMD?1e+6:computeMaximumHighestOccupiedStateResidualNorm
 		  (residualNormWaveFunctionsAllkPoints,
 		   (scfIter<dftParameters::spectrumSplitStartingScfIter)?eigenValues:eigenValuesRRSplit,
 		   fermiEnergy);
-		if (dftParameters::verbosity>=2)
+		if (dftParameters::verbosity>=2 && !rayleighRitzAvoidancePassesXLBOMD)
 		  pcout << "Maximum residual norm of the state closest to and below Fermi level: "<< maxRes << std::endl;
 
 		//if the residual norm is greater than adaptiveChebysevFilterPassesTol (a heuristic value)
@@ -1930,6 +1938,7 @@ namespace dftfe {
 							  residualNormWaveFunctionsAllkPoints[kPoint],
                                                           solveLinearizedKS,
                                                            maxRes>1e-3 && solveLinearizedKS,
+                                                          count<dftParameters::numberPassesRRSkippedXLBOMD && rayleighRitzAvoidancePassesXLBOMD,
 							  (scfIter<dftParameters::spectrumSplitStartingScfIter)?false:true,
 							  true,
 							  scfIter==0);
@@ -1947,20 +1956,25 @@ namespace dftfe {
 							  scfIter==0);
 
 		      }
-		    count++;
-		    //
-		    if (dftParameters::constraintMagnetization)
-		       compute_fermienergy_constraintMagnetization(eigenValues) ;
-		    else
-			compute_fermienergy(eigenValues,
-					numElectrons);
-		    //
-		    maxRes = computeMaximumHighestOccupiedStateResidualNorm
-		      (residualNormWaveFunctionsAllkPoints,
-		       (scfIter<dftParameters::spectrumSplitStartingScfIter || scfConverged)?eigenValues:eigenValuesRRSplit,
-		       fermiEnergy);
-		    if (dftParameters::verbosity>=2)
-		      pcout << "Maximum residual norm of the state closest to and below Fermi level: "<< maxRes << std::endl;
+
+                    if (!(count<dftParameters::numberPassesRRSkippedXLBOMD && rayleighRitzAvoidancePassesXLBOMD))
+                    {
+			    //
+			    if (dftParameters::constraintMagnetization)
+			       compute_fermienergy_constraintMagnetization(eigenValues) ;
+			    else
+				compute_fermienergy(eigenValues,
+						numElectrons);
+			    //
+			    maxRes = computeMaximumHighestOccupiedStateResidualNorm
+			      (residualNormWaveFunctionsAllkPoints,
+			       (scfIter<dftParameters::spectrumSplitStartingScfIter || scfConverged)?eigenValues:eigenValuesRRSplit,
+			       fermiEnergy);
+			    if (dftParameters::verbosity>=2)
+			      pcout << "Maximum residual norm of the state closest to and below Fermi level: "<< maxRes << std::endl;
+                    }
+
+                    count++;
 		  }
 
                   if (performExtraNoMixedPrecNoSpectrumSplitPassInCaseOfXlBOMD)
@@ -1999,6 +2013,7 @@ namespace dftfe {
 							  subspaceIterationSolverCUDA,
 							  residualNormWaveFunctionsAllkPoints[kPoint],
                                                           solveLinearizedKS,
+                                                          false,
                                                           false,
 							  false,
 							  false,
