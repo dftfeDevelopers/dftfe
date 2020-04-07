@@ -93,7 +93,7 @@ namespace dftfe
                const std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid> & processGrid,
                const bool isXlBOMDLinearizedSolve,
                const bool useCommunAvoidanceCheby,
-               const bool isFirstPass,
+               const unsigned int numberPasses,
                const bool useMixedPrecOverall);
 
     /**

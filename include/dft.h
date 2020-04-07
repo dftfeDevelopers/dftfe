@@ -1080,7 +1080,7 @@ namespace dftfe {
                                      std::vector<double> & residualNormWaveFunctions,
                                      const bool isXlBOMDLinearizedSolve,
                                      const bool useCommunAvoidanceCheby,
-                                     const bool rayleighRitzAvoidanceXLBOMD=false,
+                                     const unsigned int numberRayleighRitzAvoidanceXLBOMDPasses=0,
 				     const bool isSpectrumSplit=false,
 				     const bool useMixedPrec=false,
                                      const bool isFirstScf=false,

@@ -444,7 +444,7 @@ void dftClass<FEOrder>::kohnShamEigenSpaceCompute(const unsigned int spinType,
 						  std::vector<double>                            & residualNormWaveFunctions,
                                                   const bool isXlBOMDLinearizedSolve,
                                                   const bool useCommunAvoidanceCheby,
-                                                  const bool rayleighRitzAvoidanceXLBOMD,
+                                                  const unsigned int numberRayleighRitzAvoidanceXLBOMDPasses,
 						  const bool isSpectrumSplit,
 						  const bool useMixedPrec,
                                                   const bool isFirstScf,
@@ -484,7 +484,7 @@ void dftClass<FEOrder>::kohnShamEigenSpaceCompute(const unsigned int spinType,
                                              processGrid,
                                              rowsBlockSize);
 
-  if (rayleighRitzAvoidanceXLBOMD)
+  if (numberRayleighRitzAvoidanceXLBOMDPasses>0)
   {
           bool isFirstPass=false;
 	  subspaceIterationSolverCUDA.solveNoRR(kohnShamDFTEigenOperator,
@@ -500,7 +500,7 @@ void dftClass<FEOrder>::kohnShamEigenSpaceCompute(const unsigned int spinType,
 					processGrid,
 					isXlBOMDLinearizedSolve,
 					useCommunAvoidanceCheby,
-                                        isFirstPass,
+                                        numberRayleighRitzAvoidanceXLBOMDPasses,
 					useMixedPrec);
   }
   else	  
