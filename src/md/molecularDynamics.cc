@@ -326,6 +326,8 @@ void molecularDynamics<FEOrder>::run()
 	boost::variate_generator<boost::mt19937&,boost::normal_distribution<> > generator(rng,gaussianDist);
 	double averageKineticEnergy;
 	double temperatureFromVelocities;
+        double accumTotEnergyCorrection=0.0;
+        double totalEnergyStartingTimeStep=0.0;
 
 	if(restartFlag == 0)
 	  {
@@ -434,10 +436,15 @@ void molecularDynamics<FEOrder>::run()
 
 	    std::vector<std::vector<double> > fileTemperatueData;
 	    std::vector<std::vector<double> > timeIndexData;
+            std::vector<std::vector<double> > accumTotEnergyCorrectionData;
 
 	    dftUtils::readFile(1,
 		               fileTemperatueData,
 		               "temperature.chk");
+
+	    dftUtils::readFile(1,
+		               accumTotEnergyCorrectionData,
+		               "accumEnergyCorrection.chk");
 
 	    dftUtils::readFile(1,
 		               timeIndexData,
@@ -448,9 +455,19 @@ void molecularDynamics<FEOrder>::run()
 
 	    startingTimeStep=timeIndexData[0][0];
 
+            accumTotEnergyCorrection=accumTotEnergyCorrectionData[0][0];
+
+
+            std::vector<std::vector<double> > totalEnergyData;
+	    dftUtils::readFile(1,
+	   		       totalEnergyData,
+			      "TotEngMd");
+
+            totalEnergyStartingTimeStep=totalEnergyData[startingTimeStep][0];
 
             pcout<<" Ending time step read from file: "<<startingTimeStep<<std::endl;
 	    pcout<<" Temperature read from file: "<<temperatureFromVelocities<<std::endl;
+            pcout<<" Accumulated total energy correction due to auto remeshing read from file: "<<accumTotEnergyCorrection<<std::endl;
 	  }
 
 
@@ -1206,6 +1223,20 @@ void molecularDynamics<FEOrder>::run()
 	    internalEnergyVector[timeIndex-startingTimeStep] = isXlBOMDStep?shadowPotentialInternalEnergy:dftPtr->d_groundStateEnergy;
 	    entropicEnergyVector[timeIndex-startingTimeStep] = isXlBOMDStep?entropicEnergyShadowPotential:dftPtr->d_entropicEnergy;
             totalEnergyVector[timeIndex-startingTimeStep] = kineticEnergyVector[timeIndex-startingTimeStep] +internalEnergyVector[timeIndex-startingTimeStep] -entropicEnergyVector[timeIndex-startingTimeStep];
+
+            double totalEnergyChangeAutoMesh=0.0;
+            if (dftPtr->d_autoMesh==1)
+            {
+                totalEnergyChangeAutoMesh=totalEnergyVector[timeIndex-startingTimeStep]-totalEnergyVector[timeIndex-startingTimeStep-1];
+                accumTotEnergyCorrection+=totalEnergyChangeAutoMesh;
+            }
+            else if (timeIndex == (startingTimeStep+1)&& restartFlag==1)
+            {
+                totalEnergyChangeAutoMesh=totalEnergyVector[timeIndex-startingTimeStep]-totalEnergyStartingTimeStep;
+                accumTotEnergyCorrection+=totalEnergyChangeAutoMesh;
+            }
+            totalEnergyVector[timeIndex-startingTimeStep]-=accumTotEnergyCorrection;
+
             rmsErrorRhoVector[timeIndex-startingTimeStep] = rmsErrorRho;
             rmsErrorGradRhoVector[timeIndex-startingTimeStep] = rmsErrorGradRho;
 
@@ -1333,6 +1364,7 @@ void molecularDynamics<FEOrder>::run()
 	    std::vector<std::vector<double> > fileVelData(numberGlobalCharges,std::vector<double>(3,0.0));
 	    std::vector<std::vector<double> > fileTemperatureData(1,std::vector<double>(1,0.0));
 	    std::vector<std::vector<double> > timeIndexData(1,std::vector<double>(1,0.0));
+            std::vector<std::vector<double> > accumTotEnergyCorrectionData(1,std::vector<double>(1,0.0));
 
 
 	    for(int iCharge = 0; iCharge < numberGlobalCharges; ++iCharge)
@@ -1360,6 +1392,10 @@ void molecularDynamics<FEOrder>::run()
 	    timeIndexData[0][0]=timeIndex;
 	    dftUtils::writeDataIntoFile(timeIndexData,
 			               "time.chk");
+
+	    accumTotEnergyCorrectionData[0][0]=accumTotEnergyCorrection;
+	    dftUtils::writeDataIntoFile(accumTotEnergyCorrectionData,
+			               "accumEnergyCorrection.chk");
 
             if (dftParameters::chkType>=1)
 	       dftPtr->writeDomainAndAtomCoordinates();
