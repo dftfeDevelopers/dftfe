@@ -79,6 +79,24 @@ namespace dftfe
                const bool isElpaStep2=false);
 
     /**
+     * @brief Solve a generalized eigen problem.
+     */
+    void solveNoRR(operatorDFTCUDAClass & operatorMatrix,
+	       double* eigenVectorsFlattenedCUDA,
+               const unsigned int flattenedSize,
+	       vectorType & tempEigenVec,
+	       const unsigned int totalNumberWaveFunctions,
+	       std::vector<double> & eigenValues,
+               const MPI_Comm &interBandGroupComm,
+               dealii::ScaLAPACKMatrix<double> & projHamPar,
+               dealii::ScaLAPACKMatrix<double> & overlapMatPar,
+               const std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid> & processGrid,
+               const bool isXlBOMDLinearizedSolve,
+               const bool useCommunAvoidanceCheby,
+               const unsigned int numberPasses,
+               const bool useMixedPrecOverall);
+
+    /**
      * @brief reinit spectrum bounds
      */
     void reinitSpectrumBounds(double lowerBoundWantedSpectrum,

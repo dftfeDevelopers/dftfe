@@ -126,6 +126,7 @@ namespace dftfe {
       extern bool useAtomicRhoXLBOMD;
       extern bool useMeshSizesFromAtomsFile;
       extern bool chebyCommunAvoidanceAlgo;
+      extern unsigned int numberPassesRRSkippedXLBOMD;
 
       /**
        * Declare parameters.

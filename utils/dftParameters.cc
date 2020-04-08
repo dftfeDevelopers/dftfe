@@ -123,6 +123,7 @@ namespace dftfe {
     bool useMeshSizesFromAtomsFile=false;
     bool chebyCommunAvoidanceAlgo=false;
     double chebyshevFilterPolyDegreeFirstScfScalingFactor=1.34;
+    unsigned int numberPassesRRSkippedXLBOMD=0;
 
     void declare_parameters(ParameterHandler &prm)
     {
@@ -752,6 +753,10 @@ namespace dftfe {
                           Patterns::Integer(6,8),
                           "[Standard] Number of dissipation terms in XL BOMD.");
 
+        prm.declare_entry("NUMBER PASSES RR SKIPPED XL BOMD", "0",
+                          Patterns::Integer(0),
+                          "[Standard] Number of starting chebsyev filtering passes without Rayleigh Ritz in XL BOMD.");
+
 	prm.declare_entry("AUTO MESH STEP INTERPOLATE BOMD", "false",
 			  Patterns::Bool(),
 			  "[Standard] Perform interpolation of previous density to new auto mesh.");  
@@ -989,6 +994,7 @@ namespace dftfe {
           dftParameters::diracDeltaKernelScalingConstant     = prm.get_double("DIRAC DELTA KERNEL SCALING CONSTANT XL BOMD"); 
           dftParameters::kernelUpdateRankXLBOMD        = prm.get_integer("KERNEL RANK XL BOMD");
           dftParameters::kmaxXLBOMD        = prm.get_integer("NUMBER DISSIPATION TERMS XL BOMD");
+          dftParameters::numberPassesRRSkippedXLBOMD        = prm.get_integer("NUMBER PASSES RR SKIPPED XL BOMD");
           dftParameters::autoMeshStepInterpolateBOMD   = prm.get_bool("AUTO MESH STEP INTERPOLATE BOMD");
           dftParameters::ratioOfMeshMovementToForceGaussianBOMD       = prm.get_double("RATIO MESH MOVEMENT TO FORCE GAUSSIAN");    
           dftParameters::useAtomicRhoXLBOMD     = prm.get_bool("USE ATOMIC RHO XL BOMD");     
