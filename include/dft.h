@@ -169,7 +169,12 @@ namespace dftfe {
       /**
        * @brief Kohn-Sham ground-state solve using SCF iteration
        */
-      void solve(const bool computeForces=true,
+      void solve(kohnShamDFTOperatorClass<FEOrder> & kohnShamDFTEigenOperator,
+#ifdef DFTFE_WITH_GPU
+                 kohnShamDFTOperatorCUDAClass<FEOrder> kohnShamDFTEigenOperatorCUDA,
+#endif
+                 const bool kohnShamDFTOperatorsInitialized=false,
+                 const bool computeForces=true,
                  const bool solveLinearizedKS=false,
                  const bool restartGroundStateCalcFromChk=false,
                  const bool skipVselfSolveInitLocalPSP=false);

@@ -1050,6 +1050,11 @@ namespace dftfe {
   template<unsigned int FEOrder>
   void dftClass<FEOrder>::run()
   {
+    kohnShamDFTOperatorClass<FEOrder> kohnShamDFTEigenOperator(this,mpi_communicator);
+#ifdef DFTFE_WITH_GPU
+    kohnShamDFTOperatorCUDAClass<FEOrder> kohnShamDFTEigenOperatorCUDA(this,mpi_communicator);
+#endif
+
     if(dftParameters::meshAdaption)
       aposterioriMeshGenerate();
 
@@ -1124,7 +1129,12 @@ namespace dftfe {
   //dft solve
   //
   template<unsigned int FEOrder>
-  void dftClass<FEOrder>::solve(const bool computeForces,
+  void dftClass<FEOrder>::solve(kohnShamDFTOperatorClass<FEOrder> & kohnShamDFTEigenOperator,
+#ifdef DFTFE_WITH_GPU
+                                kohnShamDFTOperatorCUDAClass<FEOrder> kohnShamDFTEigenOperatorCUDA,
+#endif
+                                const bool kohnShamDFTOperatorsInitialized,
+                                const bool computeForces,
                                 const bool solveLinearizedKS,
                                 const bool isRestartGroundStateCalcFromChk,
                                 const bool skipVselfSolveInitLocalPSP)
@@ -1194,8 +1204,8 @@ namespace dftfe {
     //
     //create kohnShamDFTOperatorClass object
     //
-    kohnShamDFTOperatorClass<FEOrder> kohnShamDFTEigenOperator(this,mpi_communicator);
-    if (!dftParameters::useGPU)
+    //kohnShamDFTOperatorClass<FEOrder> kohnShamDFTEigenOperator(this,mpi_communicator);
+    if (!dftParameters::useGPU && !kohnShamDFTOperatorsInitialized)
     {
        kohnShamDFTEigenOperator.init();
 
@@ -1204,8 +1214,8 @@ namespace dftfe {
     }
 
 #ifdef DFTFE_WITH_GPU
-    kohnShamDFTOperatorCUDAClass<FEOrder> kohnShamDFTEigenOperatorCUDA(this,mpi_communicator);
-    if (dftParameters::useGPU)
+    //kohnShamDFTOperatorCUDAClass<FEOrder> kohnShamDFTEigenOperatorCUDA(this,mpi_communicator);
+    if (dftParameters::useGPU && !kohnShamDFTOperatorsInitialized)
     {
 	    kohnShamDFTEigenOperatorCUDA.init();
 	    kohnShamDFTEigenOperatorCUDA.createCublasHandle();
@@ -2708,12 +2718,12 @@ namespace dftfe {
 #endif
 
 #ifdef DFTFE_WITH_GPU
-    if (dftParameters::useGPU)
+    if (dftParameters::useGPU && !kohnShamDFTOperatorsInitialized)
     	 kohnShamDFTEigenOperatorCUDA.destroyCublasHandle();
 #endif
 
 #ifdef DFTFE_WITH_ELPA
-    if (dftParameters::useELPA && !dftParameters::useGPU)
+    if (dftParameters::useELPA && !dftParameters::useGPU && !kohnShamDFTOperatorsInitialized)
     	 kohnShamDFTEigenOperator.elpaDeallocateHandles(d_numEigenValues,
     				             d_numEigenValuesRR);
 #endif
