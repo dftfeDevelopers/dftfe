@@ -172,7 +172,8 @@ namespace dftfe {
       void solve(const bool computeForces=true,
                  const bool solveLinearizedKS=false,
                  const bool restartGroundStateCalcFromChk=false,
-                 const bool skipVselfSolveInitLocalPSP=false);
+                 const bool skipVselfSolveInitLocalPSP=false,
+                 const bool rayleighRitzAvoidancePassesXLBOMD=false);
 
       /**
        * @brief Number of Kohn-Sham eigen values to be computed
@@ -1079,6 +1080,7 @@ namespace dftfe {
                                      std::vector<double> & residualNormWaveFunctions,
                                      const bool isXlBOMDLinearizedSolve,
                                      const bool useCommunAvoidanceCheby,
+                                     const unsigned int numberRayleighRitzAvoidanceXLBOMDPasses=0,
 				     const bool isSpectrumSplit=false,
 				     const bool useMixedPrec=false,
                                      const bool isFirstScf=false,

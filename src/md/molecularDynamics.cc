@@ -843,7 +843,7 @@ void molecularDynamics<FEOrder>::run()
 			if (dftParameters::verbosity>=1)
 			   pcout<<"----------Start shadow potential energy solve with approx density= n-------------"<<std::endl;
 
-			dftPtr->solve(true,true);
+			dftPtr->solve(true,true,false,false,true);
 
 			if (dftParameters::verbosity>=1)
 			   pcout<<"----------End shadow potential energy solve with approx density= n-------------"<<std::endl;
