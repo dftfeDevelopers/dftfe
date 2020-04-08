@@ -171,7 +171,7 @@ namespace dftfe {
        */
       void solve(kohnShamDFTOperatorClass<FEOrder> & kohnShamDFTEigenOperator,
 #ifdef DFTFE_WITH_GPU
-                 kohnShamDFTOperatorCUDAClass<FEOrder> kohnShamDFTEigenOperatorCUDA,
+                 kohnShamDFTOperatorCUDAClass<FEOrder> & kohnShamDFTEigenOperatorCUDA,
 #endif
                  const bool kohnShamDFTOperatorsInitialized=false,
                  const bool computeForces=true,
@@ -179,6 +179,30 @@ namespace dftfe {
                  const bool restartGroundStateCalcFromChk=false,
                  const bool skipVselfSolveInitLocalPSP=false,
                  const bool rayleighRitzAvoidancePassesXLBOMD=false);
+
+
+      void initializeKohnShamDFTOperator(kohnShamDFTOperatorClass<FEOrder> & kohnShamDFTEigenOperator
+#ifdef DFTFE_WITH_GPU
+                                         ,
+                                         kohnShamDFTOperatorCUDAClass<FEOrder> & kohnShamDFTEigenOperatorCUDA
+#endif
+                                         );
+
+
+      void reInitializeKohnShamDFTOperator(kohnShamDFTOperatorClass<FEOrder> & kohnShamDFTEigenOperator
+#ifdef DFTFE_WITH_GPU
+                                         ,
+                                         kohnShamDFTOperatorCUDAClass<FEOrder> & kohnShamDFTEigenOperatorCUDA
+#endif
+                                         );
+
+
+      void finalizeKohnShamDFTOperator(kohnShamDFTOperatorClass<FEOrder> & kohnShamDFTEigenOperator
+#ifdef DFTFE_WITH_GPU
+                                       ,
+                                       kohnShamDFTOperatorCUDAClass<FEOrder> & kohnShamDFTEigenOperatorCUDA
+#endif
+                                       );
 
       /**
        * @brief Number of Kohn-Sham eigen values to be computed

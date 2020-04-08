@@ -27,6 +27,11 @@
 #include <boost/math/distributions/normal.hpp>
 #include <boost/random/normal_distribution.hpp>
 
+#include <kohnShamDFTOperator.h>
+#ifdef DFTFE_WITH_GPU
+#include <kohnShamDFTOperatorCUDA.h>
+#endif
+
 namespace dftfe {
 
         namespace internalmd
@@ -293,6 +298,11 @@ void molecularDynamics<FEOrder>::run()
 		c7=-1.0;
         }
 
+        kohnShamDFTOperatorClass<FEOrder> kohnShamDFTEigenOperator(dftPtr,mpi_communicator);
+#ifdef DFTFE_WITH_GPU
+        kohnShamDFTOperatorCUDAClass<FEOrder> kohnShamDFTEigenOperatorCUDA(dftPtr,mpi_communicator);
+#endif
+
         const double diracDeltaKernelConstant=-dftParameters::diracDeltaKernelScalingConstant;
         const double k0kernelconstant=1.0/dftParameters::diracDeltaKernelScalingConstant-1.0;//20.0;//20.0
         std::deque<vectorType> approxDensityContainer;
@@ -322,7 +332,21 @@ void molecularDynamics<FEOrder>::run()
 	    if (dftParameters::autoMeshStepInterpolateBOMD)
 	       dftPtr->updatePrevMeshDataStructures();
 
-	    dftPtr->solve(true,false,dftPtr->d_isRestartGroundStateCalcFromChk);
+	    dftPtr->initializeKohnShamDFTOperator(kohnShamDFTEigenOperator
+#ifdef DFTFE_WITH_GPU
+                                          ,
+					  kohnShamDFTEigenOperatorCUDA
+#endif
+                                          );
+
+	    dftPtr->solve(kohnShamDFTEigenOperator,
+#ifdef DFTFE_WITH_GPU
+                          kohnShamDFTEigenOperatorCUDA,
+#endif
+                          true,
+                          true,
+                          false,
+                          dftPtr->d_isRestartGroundStateCalcFromChk);
             dftPtr->d_isRestartGroundStateCalcFromChk=false;
             const std::vector<double> forceOnAtoms= dftPtr->forcePtr->getAtomsForces();
 
@@ -612,7 +636,16 @@ void molecularDynamics<FEOrder>::run()
             atomicrho_time = MPI_Wtime();
 
             if (dftPtr->d_autoMesh==1 || (timeIndex == (startingTimeStep+1) && restartFlag==1))
+            {
                 dftPtr->d_matrixFreeDataPRefined.initialize_dof_vector(atomicRho);
+
+  	        dftPtr->initializeKohnShamDFTOperator(kohnShamDFTEigenOperator
+#ifdef DFTFE_WITH_GPU
+                                              ,
+					      kohnShamDFTEigenOperatorCUDA
+#endif
+                                              );
+            }
 
             dftPtr->initAtomicRho(atomicRho);
        
@@ -711,7 +744,11 @@ void molecularDynamics<FEOrder>::run()
 				    dftPtr->normalizeRho();
 			       }
 
-                        dftPtr->solve();
+                        dftPtr->solve(kohnShamDFTEigenOperator,
+#ifdef DFTFE_WITH_GPU
+                                       kohnShamDFTEigenOperatorCUDA,
+#endif
+                                       true);
                         
 			shadowKSRhoMin=dftPtr->d_rhoOutNodalValues;
 			if (dftParameters::useAtomicRhoXLBOMD)
@@ -843,7 +880,16 @@ void molecularDynamics<FEOrder>::run()
 			if (dftParameters::verbosity>=1)
 			   pcout<<"----------Start shadow potential energy solve with approx density= n-------------"<<std::endl;
 
-			dftPtr->solve(true,true,false,false,true);
+			dftPtr->solve(kohnShamDFTEigenOperator,
+#ifdef DFTFE_WITH_GPU
+                                       kohnShamDFTEigenOperatorCUDA,
+#endif
+                                       true,
+                                       true,
+                                       true,
+                                       false,
+                                       false,
+                                       true);
 
 			if (dftParameters::verbosity>=1)
 			   pcout<<"----------End shadow potential energy solve with approx density= n-------------"<<std::endl;
@@ -951,7 +997,15 @@ void molecularDynamics<FEOrder>::run()
 				   if (dftParameters::verbosity>=1)
 				      pcout<<"----------Start shadow potential energy solve with approx density= n+lamda*v1-------------"<<std::endl;
 
-				   dftPtr->solve(false,true,false,true);
+				   dftPtr->solve(kohnShamDFTEigenOperator,
+#ifdef DFTFE_WITH_GPU
+                                                  kohnShamDFTEigenOperatorCUDA,
+#endif
+                                                  true,
+                                                  false,
+                                                  true,
+                                                  false,
+                                                  true);
 
 				   if (dftParameters::verbosity>=1)
 				      pcout<<"----------End shadow potential energy solve with approx density= n+lamda*v1-------------"<<std::endl;
@@ -1006,7 +1060,15 @@ void molecularDynamics<FEOrder>::run()
 				   if (dftParameters::verbosity>=1)
 				      pcout<<"----------Start shadow potential energy solve with approx density= n-lamda*v1-------------"<<std::endl;
 
-				   dftPtr->solve(false,true,false,true);
+				   dftPtr->solve(kohnShamDFTEigenOperator,
+#ifdef DFTFE_WITH_GPU
+                                                 kohnShamDFTEigenOperatorCUDA,
+#endif
+                                                 true,
+                                                 false,
+                                                 true,
+                                                 false,
+                                                 true);
 
 				   if (dftParameters::verbosity>=1)
 				      pcout<<"----------End shadow potential energy solve with approx density= n-lamda*v1-------------"<<std::endl;
@@ -1081,7 +1143,11 @@ void molecularDynamics<FEOrder>::run()
 		    //
 		    //do an scf calculation
 		    //
-		    dftPtr->solve();
+		    dftPtr->solve(kohnShamDFTEigenOperator,
+#ifdef DFTFE_WITH_GPU
+                                  kohnShamDFTEigenOperatorCUDA,
+#endif
+                                  true);
 
 	            shadowKSRhoMin=dftPtr->d_rhoOutNodalValues;
 		    if (dftParameters::useAtomicRhoXLBOMD)
@@ -1307,6 +1373,14 @@ void molecularDynamics<FEOrder>::run()
             if (dftParameters::verbosity>=1)
                 pcout<<"Time taken for md step: "<<step_time<<std::endl;
 	  }
+
+
+	 dftPtr->finalizeKohnShamDFTOperator(kohnShamDFTEigenOperator
+#ifdef DFTFE_WITH_GPU
+                                             ,
+					     kohnShamDFTEigenOperatorCUDA
+#endif
+                                             );
 
 
 

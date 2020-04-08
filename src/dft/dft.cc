@@ -1050,19 +1050,30 @@ namespace dftfe {
   template<unsigned int FEOrder>
   void dftClass<FEOrder>::run()
   {
-    kohnShamDFTOperatorClass<FEOrder> kohnShamDFTEigenOperator(this,mpi_communicator);
-#ifdef DFTFE_WITH_GPU
-    kohnShamDFTOperatorCUDAClass<FEOrder> kohnShamDFTEigenOperatorCUDA(this,mpi_communicator);
-#endif
-
     if(dftParameters::meshAdaption)
       aposterioriMeshGenerate();
 
     if (dftParameters::isBOMD)
        d_mdPtr->run();
     else
-    { 
-	    solve(true,false,d_isRestartGroundStateCalcFromChk);
+    {
+            if (true)
+            {
+		    kohnShamDFTOperatorClass<FEOrder> kohnShamDFTEigenOperator(this,mpi_communicator);
+#ifdef DFTFE_WITH_GPU
+		    kohnShamDFTOperatorCUDAClass<FEOrder> kohnShamDFTEigenOperatorCUDA(this,mpi_communicator);
+#endif
+	 
+		    solve(kohnShamDFTEigenOperator,
+#ifdef DFTFE_WITH_GPU
+			  kohnShamDFTEigenOperatorCUDA,
+#endif
+			  false,
+			  true,
+			  false,
+			  d_isRestartGroundStateCalcFromChk);
+            }
+
             d_isRestartGroundStateCalcFromChk=false;
 	    if (dftParameters::isIonOpt && !dftParameters::isCellOpt)
 	      {
@@ -1077,19 +1088,19 @@ namespace dftfe {
 		d_atomLocationsInitial = atomLocations;
 		d_groundStateEnergyInitial = d_groundStateEnergy;
 
-	#ifdef USE_COMPLEX
+#ifdef USE_COMPLEX
 		geoOptCellPtr->init();
 		geoOptCellPtr->run();
-	#else
+#else
 		AssertThrow(false,ExcMessage("CELL OPT cannot be set to true for fully non-periodic domain."));
-	#endif
+#endif
 	      }
 	    else if (dftParameters::isIonOpt && dftParameters::isCellOpt)
 	      {
 		d_atomLocationsInitial = atomLocations;
 		d_groundStateEnergyInitial = d_groundStateEnergy;
 
-	#ifdef USE_COMPLEX
+#ifdef USE_COMPLEX
 		//first relax ion positions in the starting cell configuration
 		geoOptIonPtr->init();
 		geoOptIonPtr->run();
@@ -1097,9 +1108,9 @@ namespace dftfe {
 		//start cell relaxation, where for each cell relaxation update the ion positions are again relaxed
 		geoOptCellPtr->init();
 		geoOptCellPtr->run();
-	#else
+#else
 		AssertThrow(false,ExcMessage("CELL OPT cannot be set to true for fully non-periodic domain."));
-	#endif
+#endif
 	      }
     }
 
@@ -1124,89 +1135,18 @@ namespace dftfe {
   }
 
 
-
   //
-  //dft solve
+  //initialize
   //
   template<unsigned int FEOrder>
-  void dftClass<FEOrder>::solve(kohnShamDFTOperatorClass<FEOrder> & kohnShamDFTEigenOperator,
+  void dftClass<FEOrder>::initializeKohnShamDFTOperator(kohnShamDFTOperatorClass<FEOrder> & kohnShamDFTEigenOperator
 #ifdef DFTFE_WITH_GPU
-                                kohnShamDFTOperatorCUDAClass<FEOrder> kohnShamDFTEigenOperatorCUDA,
+                                                        ,
+                                                        kohnShamDFTOperatorCUDAClass<FEOrder> & kohnShamDFTEigenOperatorCUDA
 #endif
-                                const bool kohnShamDFTOperatorsInitialized,
-                                const bool computeForces,
-                                const bool solveLinearizedKS,
-                                const bool isRestartGroundStateCalcFromChk,
-                                const bool skipVselfSolveInitLocalPSP,
-                                const bool rayleighRitzAvoidancePassesXLBOMD)
+                                                        )
   {
-
-    /*
-    computing_timer.enter_section("Nuclear self-potential solve");
-    computingTimerStandard.enter_section("Nuclear self-potential solve");
-#ifdef DFTFE_WITH_GPU
-    if (dftParameters::useGPU)
-            d_vselfBinsManager.solveVselfInBinsGPU(matrix_free_data,
-					           2,
-					           constraintsNone,
-				                   d_imagePositions,
-				                   d_imageIds,
-				                   d_imageCharges,
-					           d_localVselfs);
-    else
-            d_vselfBinsManager.solveVselfInBins(matrix_free_data,
-                                                   2,
-                                                   constraintsNone,
-                                                   d_imagePositions,
-                                                   d_imageIds,
-                                                   d_imageCharges,
-                                                   d_localVselfs);
-#else
-    d_vselfBinsManager.solveVselfInBins(matrix_free_data,
-                                        2,
-                                        constraintsNone,
-                                        d_imagePositions,
-                                        d_imageIds,
-                                        d_imageCharges,
-                                        d_localVselfs);
-
-#endif
-    computingTimerStandard.exit_section("Nuclear self-potential solve");
-    computing_timer.exit_section("Nuclear self-potential solve");
-    */
-    
-    QGauss<3>  quadrature(C_num1DQuad<FEOrder>()); 
-
-    //computingTimerStandard.enter_section("Total scf solve");
-    computingTimerStandard.enter_section("Kohn-sham dft operator init");
-    energyCalculator energyCalc(mpi_communicator, interpoolcomm,interBandGroupComm);
-
-
-
-    //set up linear solver
-    dealiiLinearSolver dealiiCGSolver(mpi_communicator, dealiiLinearSolver::CG);
-
-    //set up solver functions for Poisson
-    poissonSolverProblem<FEOrder> phiTotalSolverProblem(mpi_communicator);
-
-    //
-    //set up solver functions for Helmholtz to be used only when Kerker mixing is on
-    //use 2p dofHandler
-    //
-    kerkerSolverProblem<C_num1DKerkerPoly<FEOrder>()> kerkerPreconditionedResidualSolverProblem(mpi_communicator);
-    if(dftParameters::mixingMethod=="ANDERSON_WITH_KERKER")
-      kerkerPreconditionedResidualSolverProblem.init(d_matrixFreeDataPRefined,
-						     d_constraintsPRefined,
-						     d_preCondResidualVector,
-						     dftParameters::kerkerParameter);
-
-
-
-    //
-    //create kohnShamDFTOperatorClass object
-    //
-    //kohnShamDFTOperatorClass<FEOrder> kohnShamDFTEigenOperator(this,mpi_communicator);
-    if (!dftParameters::useGPU && !kohnShamDFTOperatorsInitialized)
+    if (!dftParameters::useGPU)
     {
        kohnShamDFTEigenOperator.init();
 
@@ -1215,8 +1155,7 @@ namespace dftfe {
     }
 
 #ifdef DFTFE_WITH_GPU
-    //kohnShamDFTOperatorCUDAClass<FEOrder> kohnShamDFTEigenOperatorCUDA(this,mpi_communicator);
-    if (dftParameters::useGPU && !kohnShamDFTOperatorsInitialized)
+    if (dftParameters::useGPU)
     {
 	    kohnShamDFTEigenOperatorCUDA.init();
 	    kohnShamDFTEigenOperatorCUDA.createCublasHandle();
@@ -1266,6 +1205,113 @@ namespace dftfe {
 					       true);
     }
 #endif
+  }
+
+
+  //
+  //re-initialize (significantly cheaper than initialize)
+  //
+  template<unsigned int FEOrder>
+  void dftClass<FEOrder>::reInitializeKohnShamDFTOperator(kohnShamDFTOperatorClass<FEOrder> & kohnShamDFTEigenOperator
+#ifdef DFTFE_WITH_GPU
+                                                          ,
+                                                          kohnShamDFTOperatorCUDAClass<FEOrder> & kohnShamDFTEigenOperatorCUDA
+#endif
+                                                          )
+  {
+    if (!dftParameters::useGPU)
+    {
+       kohnShamDFTEigenOperator.init();
+    }
+
+#ifdef DFTFE_WITH_GPU
+    if (dftParameters::useGPU)
+    {
+	    kohnShamDFTEigenOperatorCUDA.init();
+
+	    kohnShamDFTEigenOperatorCUDA.reinitNoRemesh(std::min(dftParameters::chebyWfcBlockSize,
+					       d_numEigenValues));
+    }
+#endif
+  }
+
+  //
+  //finalize
+  //
+  template<unsigned int FEOrder>
+  void dftClass<FEOrder>::finalizeKohnShamDFTOperator(kohnShamDFTOperatorClass<FEOrder> & kohnShamDFTEigenOperator
+#ifdef DFTFE_WITH_GPU
+                                                      ,
+                                                      kohnShamDFTOperatorCUDAClass<FEOrder> & kohnShamDFTEigenOperatorCUDA
+#endif
+                                                      )
+  {
+#ifdef DFTFE_WITH_GPU
+    if (dftParameters::useGPU)
+    	 kohnShamDFTEigenOperatorCUDA.destroyCublasHandle();
+#endif
+
+#ifdef DFTFE_WITH_ELPA
+    if (dftParameters::useELPA && !dftParameters::useGPU)
+    	 kohnShamDFTEigenOperator.elpaDeallocateHandles(d_numEigenValues,
+    				             d_numEigenValuesRR);
+#endif
+  }
+
+  //
+  //dft solve
+  //
+  template<unsigned int FEOrder>
+  void dftClass<FEOrder>::solve(kohnShamDFTOperatorClass<FEOrder> & kohnShamDFTEigenOperator,
+#ifdef DFTFE_WITH_GPU
+                                kohnShamDFTOperatorCUDAClass<FEOrder> & kohnShamDFTEigenOperatorCUDA,
+#endif
+                                const bool kohnShamDFTOperatorsInitialized,
+                                const bool computeForces,
+                                const bool solveLinearizedKS,
+                                const bool isRestartGroundStateCalcFromChk,
+                                const bool skipVselfSolveInitLocalPSP,
+                                const bool rayleighRitzAvoidancePassesXLBOMD)
+  {
+    QGauss<3>  quadrature(C_num1DQuad<FEOrder>()); 
+
+    //computingTimerStandard.enter_section("Total scf solve");
+    computingTimerStandard.enter_section("Kohn-sham dft operator init");
+    energyCalculator energyCalc(mpi_communicator, interpoolcomm,interBandGroupComm);
+
+
+
+    //set up linear solver
+    dealiiLinearSolver dealiiCGSolver(mpi_communicator, dealiiLinearSolver::CG);
+
+    //set up solver functions for Poisson
+    poissonSolverProblem<FEOrder> phiTotalSolverProblem(mpi_communicator);
+
+    //
+    //set up solver functions for Helmholtz to be used only when Kerker mixing is on
+    //use 2p dofHandler
+    //
+    kerkerSolverProblem<C_num1DKerkerPoly<FEOrder>()> kerkerPreconditionedResidualSolverProblem(mpi_communicator);
+    if(dftParameters::mixingMethod=="ANDERSON_WITH_KERKER")
+      kerkerPreconditionedResidualSolverProblem.init(d_matrixFreeDataPRefined,
+						     d_constraintsPRefined,
+						     d_preCondResidualVector,
+						     dftParameters::kerkerParameter);
+
+    if (!kohnShamDFTOperatorsInitialized)
+	    initializeKohnShamDFTOperator(kohnShamDFTEigenOperator
+#ifdef DFTFE_WITH_GPU
+                                          ,
+					  kohnShamDFTEigenOperatorCUDA
+#endif
+                                          );
+    else
+	    reInitializeKohnShamDFTOperator(kohnShamDFTEigenOperator
+#ifdef DFTFE_WITH_GPU
+                                            ,
+					    kohnShamDFTEigenOperatorCUDA
+#endif
+                                            );
 
     //
     //precompute shapeFunctions and shapeFunctionGradients and shapeFunctionGradientIntegrals
@@ -2742,16 +2788,13 @@ namespace dftfe {
      }
 #endif
 
+    if (!kohnShamDFTOperatorsInitialized)
+	    finalizeKohnShamDFTOperator(kohnShamDFTEigenOperator
 #ifdef DFTFE_WITH_GPU
-    if (dftParameters::useGPU && !kohnShamDFTOperatorsInitialized)
-    	 kohnShamDFTEigenOperatorCUDA.destroyCublasHandle();
+                                        ,
+					kohnShamDFTEigenOperatorCUDA
 #endif
-
-#ifdef DFTFE_WITH_ELPA
-    if (dftParameters::useELPA && !dftParameters::useGPU && !kohnShamDFTOperatorsInitialized)
-    	 kohnShamDFTEigenOperator.elpaDeallocateHandles(d_numEigenValues,
-    				             d_numEigenValuesRR);
-#endif
+                                        );
   }
 
   //Output wfc
