@@ -950,7 +950,7 @@ void molecularDynamics<FEOrder>::run()
 				                vcontainer[irank]);
 
                                    compvec=0;
-                                   for (unsigned int jrank=0; jrank<(dftParameters::kernelUpdateRankXLBOMD-1); jrank++)
+                                   for (int jrank=0; jrank<irank; jrank++)
                                    {
                                        const double tTvj=vcontainer[irank]*vcontainer[jrank];
                                        compvec.add(tTvj,vcontainer[jrank]);
