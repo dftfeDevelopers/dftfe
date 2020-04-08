@@ -1144,7 +1144,8 @@ namespace dftfe {
                                                         ,
                                                         kohnShamDFTOperatorCUDAClass<FEOrder> & kohnShamDFTEigenOperatorCUDA
 #endif
-                                                        )
+                                                        ,
+                                                        const bool initializeCUDAScala)
   {
     if (!dftParameters::useGPU)
     {
@@ -1158,10 +1159,14 @@ namespace dftfe {
     if (dftParameters::useGPU)
     {
 	    kohnShamDFTEigenOperatorCUDA.init();
-	    kohnShamDFTEigenOperatorCUDA.createCublasHandle();
 
-	    kohnShamDFTEigenOperatorCUDA.processGridSetup(d_numEigenValues,
-							  d_numEigenValuesRR);
+            if (initializeCUDAScala)
+            {
+		    kohnShamDFTEigenOperatorCUDA.createCublasHandle();
+
+		    kohnShamDFTEigenOperatorCUDA.processGridSetup(d_numEigenValues,
+								  d_numEigenValuesRR);
+            }
 
 	    AssertThrow((d_numEigenValues%dftParameters::chebyWfcBlockSize==0 || d_numEigenValues/dftParameters::chebyWfcBlockSize==0)
 			,ExcMessage("DFT-FE Error: total number wavefunctions must be exactly divisible by cheby wfc block size for GPU run."));
@@ -1262,9 +1267,9 @@ namespace dftfe {
   //dft solve
   //
   template<unsigned int FEOrder>
-  void dftClass<FEOrder>::solve(kohnShamDFTOperatorClass<FEOrder> & kohnShamDFTEigenOperator,
+  void dftClass<FEOrder>::solve(kohnShamDFTOperatorClass<FEOrder> & kohnShamDFTEigenOperatorD,
 #ifdef DFTFE_WITH_GPU
-                                kohnShamDFTOperatorCUDAClass<FEOrder> & kohnShamDFTEigenOperatorCUDA,
+                                kohnShamDFTOperatorCUDAClass<FEOrder> & kohnShamDFTEigenOperatorCUDAD,
 #endif
                                 const bool kohnShamDFTOperatorsInitialized,
                                 const bool computeForces,
@@ -1273,6 +1278,11 @@ namespace dftfe {
                                 const bool skipVselfSolveInitLocalPSP,
                                 const bool rayleighRitzAvoidancePassesXLBOMD)
   {
+    kohnShamDFTOperatorClass<FEOrder> kohnShamDFTEigenOperator(this,mpi_communicator);
+#ifdef DFTFE_WITH_GPU
+    kohnShamDFTOperatorCUDAClass<FEOrder> kohnShamDFTEigenOperatorCUDA(this,mpi_communicator);
+#endif
+
     QGauss<3>  quadrature(C_num1DQuad<FEOrder>()); 
 
     //computingTimerStandard.enter_section("Total scf solve");
@@ -1298,7 +1308,7 @@ namespace dftfe {
 						     d_preCondResidualVector,
 						     dftParameters::kerkerParameter);
 
-    if (!kohnShamDFTOperatorsInitialized)
+    if (!kohnShamDFTOperatorsInitialized || true)
 	    initializeKohnShamDFTOperator(kohnShamDFTEigenOperator
 #ifdef DFTFE_WITH_GPU
                                           ,
@@ -2788,7 +2798,7 @@ namespace dftfe {
      }
 #endif
 
-    if (!kohnShamDFTOperatorsInitialized)
+    if (!kohnShamDFTOperatorsInitialized || true)
 	    finalizeKohnShamDFTOperator(kohnShamDFTEigenOperator
 #ifdef DFTFE_WITH_GPU
                                         ,

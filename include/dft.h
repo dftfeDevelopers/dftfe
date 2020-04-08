@@ -186,7 +186,8 @@ namespace dftfe {
                                          ,
                                          kohnShamDFTOperatorCUDAClass<FEOrder> & kohnShamDFTEigenOperatorCUDA
 #endif
-                                         );
+                                         ,
+                                         const bool initializeCUDAScala=true);
 
 
       void reInitializeKohnShamDFTOperator(kohnShamDFTOperatorClass<FEOrder> & kohnShamDFTEigenOperator

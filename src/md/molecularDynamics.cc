@@ -331,14 +331,14 @@ void molecularDynamics<FEOrder>::run()
 	  {
 	    if (dftParameters::autoMeshStepInterpolateBOMD)
 	       dftPtr->updatePrevMeshDataStructures();
-
+/*
 	    dftPtr->initializeKohnShamDFTOperator(kohnShamDFTEigenOperator
 #ifdef DFTFE_WITH_GPU
                                           ,
 					  kohnShamDFTEigenOperatorCUDA
 #endif
                                           );
-
+*/
 	    dftPtr->solve(kohnShamDFTEigenOperator,
 #ifdef DFTFE_WITH_GPU
                           kohnShamDFTEigenOperatorCUDA,
@@ -638,13 +638,15 @@ void molecularDynamics<FEOrder>::run()
             if (dftPtr->d_autoMesh==1 || (timeIndex == (startingTimeStep+1) && restartFlag==1))
             {
                 dftPtr->d_matrixFreeDataPRefined.initialize_dof_vector(atomicRho);
-
+/*
   	        dftPtr->initializeKohnShamDFTOperator(kohnShamDFTEigenOperator
 #ifdef DFTFE_WITH_GPU
                                               ,
 					      kohnShamDFTEigenOperatorCUDA
 #endif
-                                              );
+                                              ,
+                                              false);
+*/
             }
 
             dftPtr->initAtomicRho(atomicRho);
@@ -1374,13 +1376,14 @@ void molecularDynamics<FEOrder>::run()
                 pcout<<"Time taken for md step: "<<step_time<<std::endl;
 	  }
 
-
+/*
 	 dftPtr->finalizeKohnShamDFTOperator(kohnShamDFTEigenOperator
 #ifdef DFTFE_WITH_GPU
                                              ,
 					     kohnShamDFTEigenOperatorCUDA
 #endif
                                              );
+*/
 
 
 
