@@ -172,7 +172,8 @@ namespace dftfe {
       void solve(const bool computeForces=true,
                  const bool solveLinearizedKS=false,
                  const bool restartGroundStateCalcFromChk=false,
-                 const bool skipVselfSolveInitLocalPSP=false);
+                 const bool skipVselfSolveInitLocalPSP=false,
+                 const bool rayleighRitzAvoidancePassesXLBOMD=false);
 
       /**
        * @brief Number of Kohn-Sham eigen values to be computed
@@ -354,7 +355,7 @@ namespace dftfe {
       void initUnmovedTriangulation(parallel::distributed::Triangulation<3> & triangulation);
       void initBoundaryConditions(const bool meshOnlyDeformed=false);
       void initElectronicFields(const unsigned int usePreviousGroundStateFields=0);
-      void initPseudoPotentialAll();
+      void initPseudoPotentialAll(const bool meshOnlyDeformed=false);
 
       /**
        * create a dofHandler containing finite-element interpolating polynomial twice of the original polynomial
@@ -1079,6 +1080,7 @@ namespace dftfe {
                                      std::vector<double> & residualNormWaveFunctions,
                                      const bool isXlBOMDLinearizedSolve,
                                      const bool useCommunAvoidanceCheby,
+                                     const unsigned int numberRayleighRitzAvoidanceXLBOMDPasses=0,
 				     const bool isSpectrumSplit=false,
 				     const bool useMixedPrec=false,
                                      const bool isFirstScf=false,

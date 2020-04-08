@@ -806,4 +806,408 @@ namespace dftfe
     return;
 #endif
   }
+
+  //
+  // solve
+  //
+  void
+  chebyshevOrthogonalizedSubspaceIterationSolverCUDA::solveNoRR(operatorDFTCUDAClass  & operatorMatrix,
+							    double* eigenVectorsFlattenedCUDA,
+                                                            const unsigned int flattenedSize,
+							    vectorType  & tempEigenVec,
+							    const unsigned int totalNumberWaveFunctions,
+							    std::vector<double>        & eigenValues,
+							    const MPI_Comm &interBandGroupComm,
+                                                            dealii::ScaLAPACKMatrix<double> & projHamPar,
+                                                            dealii::ScaLAPACKMatrix<double> & overlapMatPar,
+                                                            const std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid> & processGrid,
+                                                            const bool isXlBOMDLinearizedSolve,
+                                                            const bool useCommunAvoidanceCheby,
+                                                            const unsigned int numberPasses,
+                                                            const bool useMixedPrecOverall)
+  {
+#ifdef USE_COMPLEX
+        AssertThrow(false,dftUtils::ExcNotImplementedYet());
+#else
+    double gpu_time, start_time, sub_gpu_time;
+    int this_process;
+
+    MPI_Comm_rank(MPI_COMM_WORLD, &this_process);
+
+
+    cublasHandle_t & cublasHandle =
+    operatorMatrix.getCublasHandle();
+
+    //
+    //allocate memory for full flattened array on device and fill it up
+    //
+    const unsigned int localVectorSize = flattenedSize/totalNumberWaveFunctions;
+    
+    cudaDeviceSynchronize(); 
+    MPI_Barrier(MPI_COMM_WORLD);
+    start_time = MPI_Wtime();
+   
+    //band group parallelization data structures
+    const unsigned int numberBandGroups=
+      dealii::Utilities::MPI::n_mpi_processes(interBandGroupComm);
+
+
+    const unsigned int bandGroupTaskId = dealii::Utilities::MPI::this_mpi_process(interBandGroupComm);
+    std::vector<unsigned int> bandGroupLowHighPlusOneIndices;
+    dftUtils::createBandParallelizationIndices(interBandGroupComm,
+					       totalNumberWaveFunctions,
+					       bandGroupLowHighPlusOneIndices);
+
+
+    const unsigned int vectorsBlockSize=std::min(dftParameters::chebyWfcBlockSize,
+						 totalNumberWaveFunctions);
+
+    cudaVectorType cudaFlattenedArrayBlock;
+    vectorTools::createDealiiVector(operatorMatrix.getMatrixFreeData()->get_vector_partitioner(),
+				    vectorsBlockSize,
+				    cudaFlattenedArrayBlock);
+
+
+    cudaVectorType YArray;
+    YArray.reinit(cudaFlattenedArrayBlock);
+
+    cudaVectorTypeFloat cudaFlattenedFloatArrayBlock;
+    vectorTools::createDealiiVector(operatorMatrix.getMatrixFreeData()->get_vector_partitioner(),
+                                    vectorsBlockSize,
+                                    cudaFlattenedFloatArrayBlock);
+
+
+    cudaVectorType projectorKetTimesVector;
+    vectorTools::createDealiiVector(operatorMatrix.getProjectorKetTimesVectorSingle().get_partitioner(),
+				    vectorsBlockSize,
+				    projectorKetTimesVector);
+
+
+    cudaVectorType cudaFlattenedArrayBlock2;
+    if (dftParameters::overlapComputeCommunCheby || dftParameters::chebyCommunAvoidanceAlgo)
+           cudaFlattenedArrayBlock2.reinit(cudaFlattenedArrayBlock);
+
+
+    cudaVectorType YArray2;
+    if (dftParameters::overlapComputeCommunCheby)
+           YArray2.reinit(cudaFlattenedArrayBlock2);
+
+
+    cudaVectorType projectorKetTimesVector2;
+    if (dftParameters::overlapComputeCommunCheby)
+           projectorKetTimesVector2.reinit(projectorKetTimesVector);
+
+    computing_timer.enter_section("Lanczos k-step Upper Bound");
+    operatorMatrix.reinit(1);
+    const double upperBoundUnwantedSpectrum =linearAlgebraOperationsCUDA::lanczosUpperBoundEigenSpectrum(operatorMatrix,
+												      tempEigenVec);
+    computing_timer.exit_section("Lanczos k-step Upper Bound");
+    cudaDeviceSynchronize();
+    MPI_Barrier(MPI_COMM_WORLD);
+    gpu_time = MPI_Wtime();
+    unsigned int chebyshevOrder = dftParameters::chebyshevOrder;
+
+    //
+    //set Chebyshev order
+    //
+    if(chebyshevOrder == 0)
+      chebyshevOrder=internal::setChebyshevOrder(upperBoundUnwantedSpectrum);
+
+    chebyshevOrder = (dftParameters::isPseudopotential)?chebyshevOrder*dftParameters::chebyshevFilterPolyDegreeFirstScfScalingFactor:chebyshevOrder;
+
+
+    if(dftParameters::lowerBoundUnwantedFracUpper > 1e-6)
+      d_lowerBoundUnWantedSpectrum=dftParameters::lowerBoundUnwantedFracUpper*upperBoundUnwantedSpectrum;
+
+    //
+    //output statements
+    //
+    if (dftParameters::verbosity>=2)
+      {
+	char buffer[100];
+
+	sprintf(buffer, "%s:%18.10e\n", "upper bound of unwanted spectrum", upperBoundUnwantedSpectrum);
+	pcout << buffer;
+	sprintf(buffer, "%s:%18.10e\n", "lower bound of unwanted spectrum", d_lowerBoundUnWantedSpectrum);
+	pcout << buffer;
+	sprintf(buffer, "%s: %u\n\n", "Chebyshev polynomial degree", chebyshevOrder);
+	pcout << buffer;
+      }
+
+
+    //
+    //scale the eigenVectors (initial guess of single atom wavefunctions or previous guess) to convert into Lowden Orthonormalized FE basis
+    //multiply by M^{1/2}
+    scaleCUDAKernel<<<(totalNumberWaveFunctions+255)/256*localVectorSize,256>>>(totalNumberWaveFunctions,
+										localVectorSize,
+										1.0,
+										eigenVectorsFlattenedCUDA,
+										operatorMatrix.getSqrtMassVec());
+
+
+    for (unsigned int ipass = 0; ipass < numberPasses; ipass++)
+    {
+            if (this_process==0 && dftParameters::verbosity>=1)
+               std::cout<<"Beginning no RR Chebyshev filter subpspace iteration pass: "<<ipass+1<<std::endl;
+
+	    //two blocks of wavefunctions are filtered simultaneously when overlap compute communication in chebyshev
+	    //filtering is toggled on
+	    const unsigned int numSimultaneousBlocks=dftParameters::overlapComputeCommunCheby?2:1;
+	    unsigned int numSimultaneousBlocksCurrent=numSimultaneousBlocks;
+	    const unsigned int numWfcsInBandGroup=bandGroupLowHighPlusOneIndices[2*bandGroupTaskId+1]-bandGroupLowHighPlusOneIndices[2*bandGroupTaskId];
+	    int startIndexBandParal=totalNumberWaveFunctions;
+	    int numVectorsBandParal=0;
+	    for (unsigned int jvec = 0; jvec < totalNumberWaveFunctions; jvec += numSimultaneousBlocksCurrent*vectorsBlockSize)
+	    {
+
+		// Correct block dimensions if block "goes off edge of" the matrix
+		const unsigned int BVec = vectorsBlockSize;//std::min(vectorsBlockSize, totalNumberWaveFunctions-jvec);
+	      
+		//handle edge case when total number of blocks in a given band group is not even in case of 
+		//overlapping computation and communciation in chebyshev filtering 
+		const unsigned int leftIndexBandGroupMargin=(jvec/numWfcsInBandGroup)*numWfcsInBandGroup;
+		numSimultaneousBlocksCurrent
+		     =((jvec+numSimultaneousBlocks*BVec-leftIndexBandGroupMargin)<=numWfcsInBandGroup && numSimultaneousBlocks==2)?2:1;
+
+		if ((jvec+numSimultaneousBlocksCurrent*BVec)<=bandGroupLowHighPlusOneIndices[2*bandGroupTaskId+1] &&
+		 (jvec+numSimultaneousBlocksCurrent*BVec)>bandGroupLowHighPlusOneIndices[2*bandGroupTaskId])
+		{
+
+			if (jvec<startIndexBandParal)
+			   startIndexBandParal=jvec;
+			numVectorsBandParal= jvec+numSimultaneousBlocksCurrent*BVec-startIndexBandParal;
+			
+			//copy from vector containg all wavefunction vectors to current wavefunction vectors block
+			stridedCopyToBlockKernel<<<(BVec+255)/256*localVectorSize, 256>>>(BVec,
+											  localVectorSize,
+											  eigenVectorsFlattenedCUDA,
+											  totalNumberWaveFunctions,
+											  cudaFlattenedArrayBlock.begin(),
+											  jvec);
+
+			if (dftParameters::overlapComputeCommunCheby && numSimultaneousBlocksCurrent==2)
+				stridedCopyToBlockKernel<<<(BVec+255)/256*localVectorSize, 256>>>(BVec,
+												  localVectorSize,
+												  eigenVectorsFlattenedCUDA,
+												  totalNumberWaveFunctions,
+												  cudaFlattenedArrayBlock2.begin(),
+												  jvec+BVec);
+			  
+			 //
+			 //call Chebyshev filtering function only for the current block or two simulataneous blocks
+			 //(in case of overlap computation and communication) to be filtered and does in-place filtering
+			 if (dftParameters::overlapComputeCommunCheby && numSimultaneousBlocksCurrent==2)
+				 linearAlgebraOperationsCUDA::chebyshevFilter(operatorMatrix,
+									      cudaFlattenedArrayBlock,
+									      YArray,
+									      cudaFlattenedFloatArrayBlock,
+									      projectorKetTimesVector,
+									      cudaFlattenedArrayBlock2,
+									      YArray2,
+									      projectorKetTimesVector2,
+									      localVectorSize,
+									      BVec,
+									      chebyshevOrder,
+									      d_lowerBoundUnWantedSpectrum,
+									      upperBoundUnwantedSpectrum,
+									      d_lowerBoundWantedSpectrum);	
+			 else if (dftParameters::chebyCommunAvoidanceAlgo)
+				 linearAlgebraOperationsCUDA::chebyshevFilterComputeCommunAvoidance(operatorMatrix,
+										   cudaFlattenedArrayBlock,
+										   YArray,
+										   cudaFlattenedArrayBlock2,
+										   cudaFlattenedFloatArrayBlock,
+										   projectorKetTimesVector,
+										   localVectorSize,
+										   BVec,
+										   chebyshevOrder,
+										   d_lowerBoundUnWantedSpectrum,
+										   upperBoundUnwantedSpectrum,
+										   d_lowerBoundWantedSpectrum,
+										   isXlBOMDLinearizedSolve,
+										   useCommunAvoidanceCheby);	
+			 else 
+				 linearAlgebraOperationsCUDA::chebyshevFilter(operatorMatrix,
+										   cudaFlattenedArrayBlock,
+										   YArray,
+										   cudaFlattenedFloatArrayBlock,
+										   projectorKetTimesVector,
+										   localVectorSize,
+										   BVec,
+										   chebyshevOrder,
+										   d_lowerBoundUnWantedSpectrum,
+										   upperBoundUnwantedSpectrum,
+										   d_lowerBoundWantedSpectrum);								  
+		       //copy current wavefunction vectors block to vector containing all wavefunction vectors
+		       stridedCopyFromBlockKernel<<<(BVec+255)/256*localVectorSize, 256>>>(BVec,
+											   localVectorSize,
+											   cudaFlattenedArrayBlock.begin(),
+											   totalNumberWaveFunctions,
+											   eigenVectorsFlattenedCUDA,
+											   jvec);
+
+		       if (dftParameters::overlapComputeCommunCheby && numSimultaneousBlocksCurrent==2)
+			       stridedCopyFromBlockKernel<<<(BVec+255)/256*localVectorSize, 256>>>(BVec,
+												   localVectorSize,
+												   cudaFlattenedArrayBlock2.begin(),
+												   totalNumberWaveFunctions,
+												   eigenVectorsFlattenedCUDA,
+												   jvec+BVec);
+		}
+		else
+		{
+		      //set to zero wavefunctions which wont go through chebyshev filtering inside a given band group
+		      setZeroKernel<<<(numSimultaneousBlocksCurrent*BVec+255)/256*localVectorSize, 256>>>(numSimultaneousBlocksCurrent*BVec,
+									     localVectorSize,
+									     totalNumberWaveFunctions,
+									     eigenVectorsFlattenedCUDA,
+									     jvec);
+		}
+
+	    }//block loop
+
+	    cudaDeviceSynchronize();
+	    MPI_Barrier(MPI_COMM_WORLD);
+	    gpu_time = MPI_Wtime() - gpu_time;
+	    if (this_process==0 && dftParameters::verbosity>=2)
+		std::cout<<"Time for chebyshev filtering on GPU: "<<gpu_time<<std::endl;
+
+
+	    if(dftParameters::verbosity >= 4)
+	      pcout<<"ChebyShev Filtering Done: "<<std::endl;
+
+
+	    if (numberBandGroups>1)
+	    {
+		    cudaDeviceSynchronize();
+		    MPI_Barrier(MPI_COMM_WORLD);
+		    double band_paral_time=MPI_Wtime();
+
+		    std::vector<double> eigenVectorsFlattened(totalNumberWaveFunctions*localVectorSize,0);
+
+		    //cudaDeviceSynchronize();
+		    //double copytime=MPI_Wtime();
+		    cudaMemcpy(&eigenVectorsFlattened[0],
+			       eigenVectorsFlattenedCUDA,
+			       totalNumberWaveFunctions*localVectorSize*sizeof(double),
+			       cudaMemcpyDeviceToHost);
+		    //cudaDeviceSynchronize();
+		    //copytime = MPI_Wtime() - copytime;
+		    //if (this_process==0)
+		    //   std::cout<<"copy time on GPU: "<<copytime<<std::endl;
+
+		    MPI_Barrier(interBandGroupComm);
+
+		    if (true)
+		    {
+			    MPI_Allreduce(MPI_IN_PLACE,
+				      &eigenVectorsFlattened[0],
+				      totalNumberWaveFunctions*localVectorSize,
+				      MPI_DOUBLE,
+				      MPI_SUM,
+				      interBandGroupComm);
+		    }
+		    else
+		    {
+			    std::vector<double> eigenVectorsBandGroup(numVectorsBandParal*localVectorSize,0);
+			    std::vector<double> eigenVectorsBandGroupTransposed(numVectorsBandParal*localVectorSize,0);
+			    std::vector<double> eigenVectorsTransposed(totalNumberWaveFunctions*localVectorSize,0);
+
+			    for(unsigned int iNode = 0; iNode < localVectorSize; ++iNode)
+			       for(unsigned int iWave = 0; iWave < numVectorsBandParal; ++iWave)
+				   eigenVectorsBandGroup[iNode*numVectorsBandParal+iWave]
+				     = eigenVectorsFlattened[iNode*totalNumberWaveFunctions+startIndexBandParal+iWave];
+
+			    
+			    for(unsigned int iNode = 0; iNode < localVectorSize; ++iNode)
+			       for(unsigned int iWave = 0; iWave < numVectorsBandParal; ++iWave)
+				   eigenVectorsBandGroupTransposed[iWave*localVectorSize+iNode]
+				     = eigenVectorsBandGroup[iNode*numVectorsBandParal+iWave];
+
+			    std::vector<int> recvcounts(numberBandGroups,0);
+			    std::vector<int> displs(numberBandGroups,0);
+
+			    int recvcount=numVectorsBandParal*localVectorSize;
+			    MPI_Allgather(&recvcount,
+					  1,
+					  MPI_INT,
+					  &recvcounts[0],
+					  1,
+					  MPI_INT,
+					  interBandGroupComm);
+
+			    int displ=startIndexBandParal*localVectorSize;
+			    MPI_Allgather(&displ,
+					  1,
+					  MPI_INT,
+					  &displs[0],
+					  1,
+					  MPI_INT,
+					  interBandGroupComm);
+
+			    MPI_Allgatherv(&eigenVectorsBandGroupTransposed[0],
+					   numVectorsBandParal*localVectorSize,
+					   MPI_DOUBLE,
+					   &eigenVectorsTransposed[0],
+					   &recvcounts[0],
+					   &displs[0],
+					   dataTypes::mpi_type_id(&eigenVectorsTransposed[0]),
+					   interBandGroupComm);
+
+			    
+			    for(unsigned int iNode = 0; iNode < localVectorSize; ++iNode)
+			       for(unsigned int iWave = 0; iWave < totalNumberWaveFunctions; ++iWave)
+				   eigenVectorsFlattened[iNode*totalNumberWaveFunctions+iWave]
+				     = eigenVectorsTransposed[iWave*localVectorSize+iNode];
+		    }
+		    MPI_Barrier(interBandGroupComm);
+
+		    //cudaDeviceSynchronize();
+		    //copytime=MPI_Wtime();
+		    cudaMemcpy(eigenVectorsFlattenedCUDA,
+			       &eigenVectorsFlattened[0],
+			       totalNumberWaveFunctions*localVectorSize*sizeof(double),
+			       cudaMemcpyHostToDevice);
+		    //cudaDeviceSynchronize();
+		    //copytime = MPI_Wtime() - copytime;
+		    //if (this_process==0)
+		    //   std::cout<<"copy time on GPU: "<<copytime<<std::endl;
+		    cudaDeviceSynchronize();
+		    MPI_Barrier(MPI_COMM_WORLD);
+		    band_paral_time = MPI_Wtime() - band_paral_time;
+
+		    if (this_process==0 && dftParameters::verbosity>=2)
+			std::cout<<"Time for band parallelization communication: "<<band_paral_time<<std::endl;
+
+	    }
+
+	    linearAlgebraOperationsCUDA::pseudoGramSchmidtOrthogonalization
+		     (operatorMatrix,
+		      eigenVectorsFlattenedCUDA,
+		      localVectorSize,
+		      totalNumberWaveFunctions,
+		      operatorMatrix.getMPICommunicator(),
+		      interBandGroupComm,
+		      cublasHandle,
+		      useMixedPrecOverall);
+
+    }
+
+    //
+    //scale the eigenVectors with M^{-1/2} to represent the wavefunctions in the usual FE basis
+    //
+    scaleCUDAKernel<<<(totalNumberWaveFunctions+255)/256*localVectorSize,256>>>(totalNumberWaveFunctions,
+                                                                     localVectorSize,
+                                                                     1.0,
+                                                                     eigenVectorsFlattenedCUDA,
+                                                                     operatorMatrix.getInvSqrtMassVec());
+
+    cudaDeviceSynchronize();
+    MPI_Barrier(MPI_COMM_WORLD);
+    gpu_time = MPI_Wtime() - start_time;
+
+    if (this_process==0 && dftParameters::verbosity>=2)
+           std::cout<<"Time for all no RR Chebyshev filtering passes on GPU: "<<gpu_time<<std::endl;
+#endif
+  }
 }
