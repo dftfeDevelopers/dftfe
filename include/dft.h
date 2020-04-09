@@ -936,7 +936,7 @@ namespace dftfe {
       vectorType d_rhoNodalFieldSpin1;
 
       // storage of densities for xl-bomd
-      std::vector<vectorType> d_groundStateDensityHistory;
+      std::deque<vectorType> d_groundStateDensityHistory;
 
       double d_pspTail = 8.0;
       std::map<dealii::CellId, std::vector<double> > d_pseudoVLoc;

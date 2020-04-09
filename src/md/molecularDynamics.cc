@@ -211,7 +211,8 @@ void molecularDynamics<FEOrder>::run()
         const unsigned int numberGlobalCharges=dftPtr->atomLocations.size();
         //https://lammps.sandia.gov/doc/units.html
 	const double initialTemperature = dftParameters::startingTempBOMDNVE;//K
-	const unsigned int restartFlag =(dftParameters::chkType==1 && dftParameters::restartFromChk)?1:0; //1; //0;//1;
+	const unsigned int restartFlag =((dftParameters::chkType==1 || dftParameters::chkType==3) && dftParameters::restartFromChk)?1:0; //1; //0;//1;
+        bool xlbomdHistoryRestart=(dftParameters::chkType==3 && dftParameters::restartFromChk)?true:false;
 	int startingTimeStep = 0; //625;//450;// 50;//300; //0;// 300;
 
 	double massAtomAl = 26.982;//mass proton is chosen 1 **49611.513**
@@ -329,6 +330,17 @@ void molecularDynamics<FEOrder>::run()
         double accumTotEnergyCorrection=0.0;
         double totalEnergyStartingTimeStep=0.0;
         bool lastInterruptedStepPreviousRunAutoMesh=false;
+
+        dealii::IndexSet   locally_relevant_dofs_;
+        dealii::DoFTools::extract_locally_relevant_dofs(dftPtr->d_dofHandlerPRefined, locally_relevant_dofs_);
+
+        const dealii::IndexSet & locally_owned_dofs_= dftPtr->d_dofHandlerPRefined.locally_owned_dofs();
+        dealii::IndexSet  ghost_indices_=locally_relevant_dofs_;
+        ghost_indices_.subtract_set(locally_owned_dofs_);
+
+        vectorType tempVecRestart= dealii::LinearAlgebra::distributed::Vector<double>(locally_owned_dofs_,
+                                                                             ghost_indices_,
+                                                                             mpi_communicator);
 
 	if(restartFlag == 0)
 	  {
@@ -476,6 +488,41 @@ void molecularDynamics<FEOrder>::run()
             pcout<<" Ending time step read from file: "<<startingTimeStep<<std::endl;
 	    pcout<<" Temperature read from file: "<<temperatureFromVelocities<<std::endl;
             pcout<<" Accumulated total energy correction due to auto remeshing read from file: "<<accumTotEnergyCorrection<<std::endl;
+
+            if (lastInterruptedStepPreviousRunAutoMesh)
+              xlbomdHistoryRestart=false;
+		
+            if (xlbomdHistoryRestart)
+	    {
+                    approxDensityContainer.resize(kmax);
+		    for (unsigned int i = 0; i < kmax; i++)
+		    {
+                        if (i==0)
+                             dftPtr->d_matrixFreeDataPRefined.initialize_dof_vector(approxDensityContainer[i]);
+                        else
+                             approxDensityContainer[i].reinit(approxDensityContainer[0]);
+
+			for (unsigned int idof = 0; idof < approxDensityContainer[i].local_size(); idof++)
+			    approxDensityContainer[i].local_element(idof)=dftPtr->d_groundStateDensityHistory[i].local_element(idof);
+
+			approxDensityContainer[i].update_ghost_values();
+
+                        /*
+ 			if (dftParameters::verbosity>=4)
+		   	   pcout<<"l2 norm of approxDensityVec read:  "<<i<< "  "<< approxDensityContainer[i].l2_norm()<<std::endl;
+
+			//normalize approxDensityVec
+			double charge = dftPtr->totalCharge(dftPtr->d_matrixFreeDataPRefined,
+							    approxDensityContainer[i]);
+
+
+			if (dftParameters::verbosity>=1)
+		   	   pcout<<"Total Charge approxDensityVec:  "<<charge<<std::endl;
+                        */
+		    }
+                    shadowKSRhoMin=approxDensityContainer.back();
+                    shadowKSRhoMin.update_ghost_values();
+	    }
 	  }
 
 
@@ -699,6 +746,7 @@ void molecularDynamics<FEOrder>::run()
                 isFirstXLBOMDStep=true;
 
             bool isXlBOMDStep=false;
+            bool writeDensityHistory=false;
             if (dftParameters::isXLBOMD)
             {
                     if (dftPtr->d_autoMesh==1 && dftParameters::autoMeshStepInterpolateBOMD)
@@ -756,9 +804,9 @@ void molecularDynamics<FEOrder>::run()
                         dftPtr->updatePrevMeshDataStructures();
                         pcout<<".............Auto meshing step: interpolation and re-normalization completed.............."<<std::endl;
                     }
-                    else if (dftPtr->d_autoMesh==1
+                    else if ((dftPtr->d_autoMesh==1
                            || (timeIndex == (startingTimeStep+1) && restartFlag==1)
-                           || (timeIndex < (kmax+autoMeshTimeIndex)))
+                           || (timeIndex < (kmax+autoMeshTimeIndex))) && !xlbomdHistoryRestart)
                     {
 
 		        if (!dftPtr->d_autoMesh==1)
@@ -806,6 +854,26 @@ void molecularDynamics<FEOrder>::run()
 
                         approxDensityContainer.push_back(shadowKSRhoMin);
                         approxDensityContainer.back().update_ghost_values();
+
+                        if (dftParameters::chkType==3)
+				if (approxDensityContainer.size()==kmax)
+				{
+				    dftPtr->d_groundStateDensityHistory.clear();
+                                    dftPtr->d_groundStateDensityHistory.resize(kmax);
+				    for (unsigned int i = 0; i < kmax; i++)
+                                    {
+ 			                //if (dftParameters::verbosity>=4)
+		   	                //   pcout<<"l2 norm of approxDensityVec to be written:  "<<i<< "  "<< approxDensityContainer[i].l2_norm()<<std::endl;
+
+                                        dftPtr->d_groundStateDensityHistory[i].reinit(tempVecRestart);
+
+					for (unsigned int idof = 0; idof < approxDensityContainer[i].local_size(); idof++)
+					    dftPtr->d_groundStateDensityHistory[i].local_element(idof)=approxDensityContainer[i].local_element(idof);
+
+                                        dftPtr->d_groundStateDensityHistory[i].update_ghost_values();
+                                    }
+                                    writeDensityHistory=true;
+				}
                     }
                     else
 		    {
@@ -1152,7 +1220,17 @@ void molecularDynamics<FEOrder>::run()
 			MPI_Barrier(MPI_COMM_WORLD);
 			xlbomdpost_time = MPI_Wtime() - xlbomdpost_time;
 			if (dftParameters::verbosity>=1)
-			   pcout<<"Time taken for xlbomd post solve operations: "<<xlbomdpost_time<<std::endl; 
+			   pcout<<"Time taken for xlbomd post solve operations: "<<xlbomdpost_time<<std::endl;
+
+
+
+                        if (dftParameters::chkType==3)
+                        {
+                            dftPtr->d_groundStateDensityHistory.pop_front();
+		  	    dftPtr->d_groundStateDensityHistory.push_back(approxDensityContainer.back());
+			    dftPtr->d_groundStateDensityHistory.back().update_ghost_values();
+                            writeDensityHistory=true;
+			}
 		    }
             }
             else
@@ -1414,6 +1492,11 @@ void molecularDynamics<FEOrder>::run()
             if (dftParameters::chkType>=1)
 	       dftPtr->writeDomainAndAtomCoordinates();
 
+
+            if (dftParameters::chkType==3 && writeDensityHistory)
+            {
+               dftPtr->saveTriaInfoAndRhoNodalData();  
+            }
 
 	    MPI_Barrier(MPI_COMM_WORLD);
 	    bomdpost_time = MPI_Wtime() - bomdpost_time;

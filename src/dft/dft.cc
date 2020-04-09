@@ -830,7 +830,7 @@ namespace dftfe {
     //
     initElectronicFields(usePreviousGroundStateFields);
 
-    if (dftParameters::chkType==3 && dftParameters::restartFromChk)
+    if (dftParameters::chkType==3 && dftParameters::restartFromChk && !(dftParameters::isBOMD && dftParameters::isXLBOMD))
     {
             for (unsigned int i = 0; i < d_rhoInNodalValues.local_size(); i++)
                 d_rhoInNodalValues.local_element(i)=d_rhoInNodalValuesRead.local_element(i);
@@ -2490,7 +2490,7 @@ namespace dftfe {
     computing_timer.exit_section("scf solve");
     computingTimerStandard.exit_section("Total scf solve");
 
-    if (dftParameters::chkType==3 && !solveLinearizedKS)
+    if (dftParameters::chkType==3 && !(dftParameters::isBOMD && dftParameters::isXLBOMD))
 	  saveTriaInfoAndRhoNodalData();
 
 #ifdef DFTFE_WITH_GPU

@@ -1001,7 +1001,7 @@ namespace dftfe {
       }
       prm.leave_subsection ();
 	
-      if (restartFromChk==true && chkType==1)
+      if (restartFromChk==true && (chkType==1 || chkType==3))
 	{
           if (dftParameters::periodicX || dftParameters::periodicY || dftParameters::periodicZ)
 		dftParameters::coordinatesFile="atomsFracCoordAutomesh.chk";
