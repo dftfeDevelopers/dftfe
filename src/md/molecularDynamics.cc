@@ -855,7 +855,7 @@ void molecularDynamics<FEOrder>::run()
                         approxDensityContainer.push_back(shadowKSRhoMin);
                         approxDensityContainer.back().update_ghost_values();
 
-                        if (dftParameters::chkType==3)
+                        if (dftParameters::chkType==3 && !xlbomdHistoryRestart)
 				if (approxDensityContainer.size()==kmax)
 				{
 				    dftPtr->d_groundStateDensityHistory.clear();
@@ -907,7 +907,6 @@ void molecularDynamics<FEOrder>::run()
 					approxDensityNext.local_element(i)=approxDensityTimeT.local_element(i)*2.0
 									  -approxDensityTimeTMinusDeltat.local_element(i)
 									  -(shadowKSRhoMin.local_element(i)-approxDensityTimeT.local_element(i))*k*diracDeltaKernelConstant;
-                                isFirstXLBOMDStep=false;
                         }
 	 
 			if (approxDensityContainer.size()==kmax)
@@ -982,6 +981,13 @@ void molecularDynamics<FEOrder>::run()
 			if (dftParameters::verbosity>=1)
 			   pcout<<"----------Start shadow potential energy solve with approx density= n-------------"<<std::endl;
 
+                        double temp;
+                        if (isFirstXLBOMDStep && xlbomdHistoryRestart)
+                        {
+                           temp=dftParameters::chebyshevFilterTolXLBOMD;
+                           dftParameters::chebyshevFilterTolXLBOMD=1e-9;
+                        }
+
 			dftPtr->solve(kohnShamDFTEigenOperator,
 #ifdef DFTFE_WITH_GPU
                                        kohnShamDFTEigenOperatorCUDA,
@@ -991,7 +997,12 @@ void molecularDynamics<FEOrder>::run()
                                        true,
                                        false,
                                        false,
-                                       true);
+                                       (isFirstXLBOMDStep && xlbomdHistoryRestart)?false:true);
+
+                        if (isFirstXLBOMDStep && xlbomdHistoryRestart)
+                        {
+                           dftParameters::chebyshevFilterTolXLBOMD=temp;
+                        }
 
 			if (dftParameters::verbosity>=1)
 			   pcout<<"----------End shadow potential energy solve with approx density= n-------------"<<std::endl;
@@ -1224,13 +1235,21 @@ void molecularDynamics<FEOrder>::run()
 
 
 
-                        if (dftParameters::chkType==3)
+                        if (dftParameters::chkType==3 && !xlbomdHistoryRestart)
                         {
                             dftPtr->d_groundStateDensityHistory.pop_front();
-		  	    dftPtr->d_groundStateDensityHistory.push_back(approxDensityContainer.back());
-			    dftPtr->d_groundStateDensityHistory.back().update_ghost_values();
+
+			    dftPtr->d_groundStateDensityHistory.push_back(tempVecRestart);
+
+			    for (unsigned int idof = 0; idof < approxDensityContainer[kmax-1].local_size(); idof++)
+			        dftPtr->d_groundStateDensityHistory[kmax-1].local_element(idof)=approxDensityContainer[kmax-1].local_element(idof);
+
+			    dftPtr->d_groundStateDensityHistory[kmax-1].update_ghost_values();
+
                             writeDensityHistory=true;
 			}
+
+                        isFirstXLBOMDStep=false;
 		    }
             }
             else
@@ -1493,7 +1512,7 @@ void molecularDynamics<FEOrder>::run()
 	       dftPtr->writeDomainAndAtomCoordinates();
 
 
-            if (dftParameters::chkType==3 && writeDensityHistory)
+            if (dftParameters::chkType==3 && writeDensityHistory && !xlbomdHistoryRestart)
             {
                dftPtr->saveTriaInfoAndRhoNodalData();  
             }
