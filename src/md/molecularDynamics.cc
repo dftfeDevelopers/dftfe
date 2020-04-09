@@ -1227,7 +1227,7 @@ void molecularDynamics<FEOrder>::run()
             double totalEnergyChangeAutoMesh=0.0;
             if (dftPtr->d_autoMesh==1)
             {
-                totalEnergyChangeAutoMesh=totalEnergyVector[timeIndex-startingTimeStep]-totalEnergyVector[timeIndex-startingTimeStep-1];
+                totalEnergyChangeAutoMesh=(totalEnergyVector[timeIndex-startingTimeStep]-accumTotEnergyCorrection)-totalEnergyVector[timeIndex-startingTimeStep-1];
                 accumTotEnergyCorrection+=totalEnergyChangeAutoMesh;
             }
             else if (timeIndex == (startingTimeStep+1)&& restartFlag==1)
