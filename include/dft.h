@@ -935,6 +935,9 @@ namespace dftfe {
       // storage for projection of rho cell quadrature data to nodal field
       vectorType d_rhoNodalFieldSpin1;
 
+      // storage of densities for xl-bomd
+      std::vector<vectorType> d_groundStateDensityHistory;
+
       double d_pspTail = 8.0;
       std::map<dealii::CellId, std::vector<double> > d_pseudoVLoc;
 
