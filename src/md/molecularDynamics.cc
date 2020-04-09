@@ -328,6 +328,7 @@ void molecularDynamics<FEOrder>::run()
 	double temperatureFromVelocities;
         double accumTotEnergyCorrection=0.0;
         double totalEnergyStartingTimeStep=0.0;
+        bool lastInterruptedStepPreviousRunAutoMesh=false;
 
 	if(restartFlag == 0)
 	  {
@@ -437,6 +438,7 @@ void molecularDynamics<FEOrder>::run()
 	    std::vector<std::vector<double> > fileTemperatueData;
 	    std::vector<std::vector<double> > timeIndexData;
             std::vector<std::vector<double> > accumTotEnergyCorrectionData;
+            std::vector<std::vector<double> > autoMeshData;
 
 	    dftUtils::readFile(1,
 		               fileTemperatueData,
@@ -450,12 +452,18 @@ void molecularDynamics<FEOrder>::run()
 		               timeIndexData,
 		               "time.chk");
 
+	    dftUtils::readFile(1,
+		               autoMeshData,
+		               "autoMeshMd.chk");
+
 	    temperatureFromVelocities=fileTemperatueData[0][0];
 
 
 	    startingTimeStep=timeIndexData[0][0];
 
             accumTotEnergyCorrection=accumTotEnergyCorrectionData[0][0];
+
+            lastInterruptedStepPreviousRunAutoMesh=(autoMeshData[0][0]>1e-6)?true:false;
 
 
             std::vector<std::vector<double> > totalEnergyData;
@@ -647,6 +655,13 @@ void molecularDynamics<FEOrder>::run()
             update_time = MPI_Wtime() - update_time;
             if (dftParameters::verbosity>=1)
                 pcout<<"Time taken for updateAtomPositionsAndMoveMesh: "<<update_time<<std::endl;
+
+
+            std::vector<std::vector<double> > autoMeshData(1,std::vector<double>(1,0.0));
+
+	    autoMeshData[0][0]=dftPtr->d_autoMesh==1?1.0:0.0;
+	    dftUtils::writeDataIntoFile(autoMeshData,
+			               "autoMeshMd.chk");
 
             double atomicrho_time;
             MPI_Barrier(MPI_COMM_WORLD);
@@ -1230,7 +1245,7 @@ void molecularDynamics<FEOrder>::run()
                 totalEnergyChangeAutoMesh=(totalEnergyVector[timeIndex-startingTimeStep]-accumTotEnergyCorrection)-totalEnergyVector[timeIndex-startingTimeStep-1];
                 accumTotEnergyCorrection+=totalEnergyChangeAutoMesh;
             }
-            else if (timeIndex == (startingTimeStep+1)&& restartFlag==1)
+            else if ((timeIndex == (startingTimeStep+1)&& restartFlag==1) && lastInterruptedStepPreviousRunAutoMesh)
             {
                 totalEnergyChangeAutoMesh=(totalEnergyVector[timeIndex-startingTimeStep]-accumTotEnergyCorrection)-totalEnergyStartingTimeStep;
                 accumTotEnergyCorrection+=totalEnergyChangeAutoMesh;
@@ -1365,7 +1380,6 @@ void molecularDynamics<FEOrder>::run()
 	    std::vector<std::vector<double> > fileTemperatureData(1,std::vector<double>(1,0.0));
 	    std::vector<std::vector<double> > timeIndexData(1,std::vector<double>(1,0.0));
             std::vector<std::vector<double> > accumTotEnergyCorrectionData(1,std::vector<double>(1,0.0));
-
 
 	    for(int iCharge = 0; iCharge < numberGlobalCharges; ++iCharge)
 	      {
