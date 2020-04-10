@@ -71,6 +71,11 @@ void forceClass<FEOrder>::FPSPLocalGammaAtomsElementalContribution
     bool isLocalDomainOutsidePspTail= false;
     if (gradPseudoVLocAtoms.find(iAtom)==gradPseudoVLocAtoms.end())
        isLocalDomainOutsidePspTail=true;
+
+    //Assuming psp tail is larger than vself ball
+    if (isLocalDomainOutsidePspTail)
+       continue;
+
     unsigned int binIdiAtom;
     std::map<unsigned int,unsigned int>::const_iterator it1=
 	vselfBinsManager.getAtomIdBinIdMapLocalAllImages().find(atomId);
@@ -79,8 +84,8 @@ void forceClass<FEOrder>::FPSPLocalGammaAtomsElementalContribution
     else
        binIdiAtom=it1->second;
 
-    if (isLocalDomainOutsideVselfBall && isLocalDomainOutsidePspTail)
-       continue;
+    //if (isLocalDomainOutsideVselfBall && isLocalDomainOutsidePspTail)
+    //   continue;
 
     for (unsigned int iSubCell=0; iSubCell<numSubCells; ++iSubCell)
     {
