@@ -126,6 +126,27 @@ void dftClass<FEOrder>::initLocalPseudoPotential
   tempDisp[2]=d_pspTail+5.0;
   std::pair< dealii::Point<3,double >,dealii::Point<3, double>> boundaryPoints;
 
+  std::vector<double> atomsImagesPositions((numberGlobalCharges+numberImageCharges)*3);
+  std::vector<double> atomsImagesCharges((numberGlobalCharges+numberImageCharges));
+  for (unsigned int iAtom=0; iAtom<numberGlobalCharges+numberImageCharges; iAtom++)
+  {
+	  if (iAtom<numberGlobalCharges)
+	  {
+	    atomsImagesPositions[iAtom*3+0]=atomLocations[iAtom][2];
+	    atomsImagesPositions[iAtom*3+1]=atomLocations[iAtom][3];
+	    atomsImagesPositions[iAtom*3+2]=atomLocations[iAtom][4];
+	    atomsImagesCharges[iAtom]=atomLocations[iAtom][1];
+	  }
+	  else
+	  {
+	    const unsigned int iImageCharge=iAtom-numberGlobalCharges;
+	    atomsImagesPositions[iAtom*3+0]=d_imagePositions[iImageCharge][0];
+	    atomsImagesPositions[iAtom*3+1]=d_imagePositions[iImageCharge][1];
+	    atomsImagesPositions[iAtom*3+2]=d_imagePositions[iImageCharge][2];
+	    atomsImagesCharges[iAtom]=atomLocations[d_imageIds[iImageCharge]][1];
+	  }
+  }
+
   for(unsigned int localDofId = 0; localDofId < phiExt.local_size(); ++localDofId)
   {
      const dealii::types::global_dof_index dofId=partitioner->local_to_global(localDofId);
@@ -139,33 +160,28 @@ void dftClass<FEOrder>::initLocalPseudoPotential
        int chargeId;
        double distanceToAtom;
        double sumVal=0.0;
+       double val;
        for(unsigned int iAtom = 0; iAtom < (atomLocations.size()+numberImageCharges); ++iAtom)
 	{
-	  if (iAtom<numberGlobalCharges)
-	  {
-	    atom[0]=atomLocations[iAtom][2];
-	    atom[1]=atomLocations[iAtom][3];
-	    atom[2]=atomLocations[iAtom][4];
-	    atomCharge=atomLocations[iAtom][1];
-	    atomicNumber=std::round(atomLocations[iAtom][0]);
-	    chargeId=iAtom;
-	  }
-	  else
-	  {
-	    const unsigned int iImageCharge=iAtom-numberGlobalCharges;
-	    atom[0]=d_imagePositions[iImageCharge][0];
-	    atom[1]=d_imagePositions[iImageCharge][1];
-	    atom[2]=d_imagePositions[iImageCharge][2];
-	    atomCharge=atomLocations[d_imageIds[iImageCharge]][1];
-	    atomicNumber=std::round(atomLocations[d_imageIds[iImageCharge]][0]);
-	    chargeId = d_imageIds[iImageCharge];
-	  }
+	  atom[0]=atomsImagesPositions[iAtom*3+0];
+	  atom[1]=atomsImagesPositions[iAtom*3+1];
+	  atom[2]=atomsImagesPositions[iAtom*3+2];
+	  atomCharge=atomsImagesCharges[iAtom];
 
 	  distanceToAtom = nodalCoor.distance(atom);
-	  double val;
 
           if (distanceToAtom<d_pspTail)
           {
+		  if (iAtom<numberGlobalCharges)
+		  {
+		    chargeId=iAtom;
+		  }
+		  else
+		  {
+		    const unsigned int iImageCharge=iAtom-numberGlobalCharges;
+		    chargeId = d_imageIds[iImageCharge];
+		  }
+
 		  if (atomIdBinIdMap.find(chargeId)!=atomIdBinIdMap.end())
 		  {
 			  const unsigned int binId=atomIdBinIdMap.find(chargeId)->second;
@@ -218,7 +234,6 @@ void dftClass<FEOrder>::initLocalPseudoPotential
       feEvalObj.read_dof_values(phiExt);
       feEvalObj.evaluate(true,true);
 
-      std::vector<double> quadPoints( _matrix_free_data.n_components_filled(macrocell)*n_q_points*3);
       for(unsigned int iSubCell = 0; iSubCell < _matrix_free_data.n_components_filled(macrocell); ++iSubCell)
       {
 	      subCellPtr= _matrix_free_data.get_cell_iterator(macrocell,iSubCell);
@@ -228,65 +243,61 @@ void dftClass<FEOrder>::initLocalPseudoPotential
 
 	      std::vector<double> & pseudoVLoc=_pseudoValues[subCellId];
 	      pseudoVLoc.resize(n_q_points,0.0);
-
-             fe_values.reinit(subCellPtr);
-	    
-             for (unsigned int q = 0; q < n_q_points; ++q)
-             {
-                 const Point<3> & quadPoint=fe_values.quadrature_point(q);
-                 quadPoints[iSubCell*n_q_points*3+q*3+0]=quadPoint[0];
-                 quadPoints[iSubCell*n_q_points*3+q*3+1]=quadPoint[1]; 
-                 quadPoints[iSubCell*n_q_points*3+q*3+2]=quadPoint[2];  
-             }
       }
 
       Point<3> atom;
       int atomicNumber;
       double atomCharge;
-      //loop over atoms
-      for (unsigned int iAtom=0; iAtom<numberGlobalCharges+numberImageCharges; iAtom++)
+
+
+      for(unsigned int iSubCell = 0; iSubCell < _matrix_free_data.n_components_filled(macrocell); ++iSubCell)
       {
+      
+          subCellPtr= _matrix_free_data.get_cell_iterator(macrocell,iSubCell);
+          dealii::CellId subCellId=subCellPtr->id();
 
-	  if (iAtom<numberGlobalCharges)
+          std::vector<double> & gradPseudoVLoc=_gradPseudoValues[subCellId];
+          std::vector<double> & pseudoVLoc=_pseudoValues[subCellId];
+      
+          Point<3> quadPoint;
+          double value,firstDer,secondDer,distanceToAtom;
+
+          fe_values.reinit(subCellPtr);
+	    
+
+	  //loop over quad points
+	  for (unsigned int q = 0; q < n_q_points; ++q)
 	  {
-	    atom[0]=atomLocations[iAtom][2];
-	    atom[1]=atomLocations[iAtom][3];
-	    atom[2]=atomLocations[iAtom][4];
-	    atomCharge=atomLocations[iAtom][1];
-	    atomicNumber=std::round(atomLocations[iAtom][0]);
-	  }
-	  else
-	  {
-	    const unsigned int iImageCharge=iAtom-numberGlobalCharges;
-	    atom[0]=d_imagePositions[iImageCharge][0];
-	    atom[1]=d_imagePositions[iImageCharge][1];
-	    atom[2]=d_imagePositions[iImageCharge][2];
-	    atomCharge=atomLocations[d_imageIds[iImageCharge]][1];
-	    atomicNumber=std::round(atomLocations[d_imageIds[iImageCharge]][0]);
-	  }
+              const Point<3> & quadPoint=fe_values.quadrature_point(q);
 
-          for(unsigned int iSubCell = 0; iSubCell < _matrix_free_data.n_components_filled(macrocell); ++iSubCell)
-	  {
-              
-	      subCellPtr= _matrix_free_data.get_cell_iterator(macrocell,iSubCell);
-	      dealii::CellId subCellId=subCellPtr->id();
-
-	      std::vector<double> & gradPseudoVLoc=_gradPseudoValues[subCellId];
-	      std::vector<double> & pseudoVLoc=_pseudoValues[subCellId];
-              
-              Point<3> quadPoint;
-              double value,firstDer,secondDer,distanceToAtom;
-
-	      //loop over quad points
-	      for (unsigned int q = 0; q < n_q_points; ++q)
+              double tempVal=0.0;
+              double tempGradX=0.0;
+              double tempGradY=0.0;
+              double tempGradZ=0.0;
+	      //loop over atoms
+	      for (unsigned int iAtom=0; iAtom<numberGlobalCharges+numberImageCharges; iAtom++)
 	      {
-                  quadPoint[0]=quadPoints[iSubCell*n_q_points*3+q*3+0];
-                  quadPoint[1]=quadPoints[iSubCell*n_q_points*3+q*3+1]; 
-                  quadPoint[2]=quadPoints[iSubCell*n_q_points*3+q*3+2];
+
+		  atom[0]=atomsImagesPositions[iAtom*3+0];
+		  atom[1]=atomsImagesPositions[iAtom*3+1];
+		  atom[2]=atomsImagesPositions[iAtom*3+2];
+		  atomCharge=atomsImagesCharges[iAtom];
 
 		  distanceToAtom = quadPoint.distance(atom);
+
 		  if(distanceToAtom <= d_pspTail)//outerMostPointPseudo[atomLocations[n][0]])
 		    {
+
+		      if (iAtom<numberGlobalCharges)
+		      {
+			    atomicNumber=std::round(atomLocations[iAtom][0]);
+		      }
+		      else
+		      {
+			    const unsigned int iImageCharge=iAtom-numberGlobalCharges;
+			    atomicNumber=std::round(atomLocations[d_imageIds[iImageCharge]][0]);
+		      }
+
 		      alglib::spline1ddiff(pseudoSpline[atomicNumber],
 			                    distanceToAtom,
 					    value,
@@ -298,13 +309,17 @@ void dftClass<FEOrder>::initLocalPseudoPotential
 	              value=-atomCharge/distanceToAtom;
 		      firstDer= atomCharge/distanceToAtom/distanceToAtom;
 		    }
-		    pseudoVLoc[q]+=value;
-		    gradPseudoVLoc[q*3+0]+=firstDer*(quadPoint[0]-atom[0])/distanceToAtom;
-		    gradPseudoVLoc[q*3+1]+=firstDer*(quadPoint[1]-atom[1])/distanceToAtom;
-		    gradPseudoVLoc[q*3+2]+=firstDer*(quadPoint[2]-atom[2])/distanceToAtom;
-	      }//loop over quad points
-	  }//subcell loop
-      }//loop over atoms and images
+		  tempVal+=value;
+		  tempGradX+=firstDer*(quadPoint[0]-atom[0])/distanceToAtom;
+		  tempGradY+=firstDer*(quadPoint[1]-atom[1])/distanceToAtom;
+		  tempGradZ+=firstDer*(quadPoint[2]-atom[2])/distanceToAtom;
+	      }//atom loop
+	      pseudoVLoc[q]=tempVal;
+	      gradPseudoVLoc[q*3+0]=tempGradX;
+	      gradPseudoVLoc[q*3+1]=tempGradY;
+	      gradPseudoVLoc[q*3+2]=tempGradZ;
+	  }//quad loop
+      }//subcell loop
 
       for(unsigned int iSubCell = 0; iSubCell < _matrix_free_data.n_components_filled(macrocell); ++iSubCell)
       {
