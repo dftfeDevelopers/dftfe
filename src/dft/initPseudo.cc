@@ -192,6 +192,10 @@ void dftClass<FEOrder>::initLocalPseudoPotential
 
 			  if (boundaryFlagChargeId==chargeId)
 			  {
+		                 atom[0]=atomsImagesPositions[iAtom*3+0];
+		                 atom[1]=atomsImagesPositions[iAtom*3+1];
+                  		 atom[2]=atomsImagesPositions[iAtom*3+2];
+
 				 if (dofClosestChargeLocationMapBins[binId].find(dofId)->second.distance(atom)<1e-5)
 				 {
 				    const vectorType & vselfBin=vselfBinManager.getVselfFieldBins()[binId];
