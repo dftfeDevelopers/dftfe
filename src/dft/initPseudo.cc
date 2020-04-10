@@ -161,14 +161,17 @@ void dftClass<FEOrder>::initLocalPseudoPotential
        double distanceToAtom;
        double sumVal=0.0;
        double val;
+       double diffx;
+       double diffy;
+       double diffz;
        for(unsigned int iAtom = 0; iAtom < (atomLocations.size()+numberImageCharges); ++iAtom)
 	{
-	  atom[0]=atomsImagesPositions[iAtom*3+0];
-	  atom[1]=atomsImagesPositions[iAtom*3+1];
-	  atom[2]=atomsImagesPositions[iAtom*3+2];
+	  diffx= nodalCoor[0]-atomsImagesPositions[iAtom*3+0];
+	  diffy= nodalCoor[1]-atomsImagesPositions[iAtom*3+1];
+	  diffz= nodalCoor[2]-atomsImagesPositions[iAtom*3+2];
 	  atomCharge=atomsImagesCharges[iAtom];
 
-	  distanceToAtom = nodalCoor.distance(atom);
+	  distanceToAtom = std::sqrt(diffx*diffx+diffy*diffy+diffz*diffz);
 
           if (distanceToAtom<d_pspTail)
           {
@@ -260,7 +263,7 @@ void dftClass<FEOrder>::initLocalPseudoPotential
           std::vector<double> & pseudoVLoc=_pseudoValues[subCellId];
       
           Point<3> quadPoint;
-          double value,firstDer,secondDer,distanceToAtom;
+          double value,firstDer,secondDer,distanceToAtom, distanceToAtomInv;
 
           fe_values.reinit(subCellPtr);
 	    
@@ -270,20 +273,25 @@ void dftClass<FEOrder>::initLocalPseudoPotential
 	  {
               const Point<3> & quadPoint=fe_values.quadrature_point(q);
 
+              double temp;
               double tempVal=0.0;
               double tempGradX=0.0;
               double tempGradY=0.0;
               double tempGradZ=0.0;
+              double diffx;
+              double diffy;
+              double diffz;
 	      //loop over atoms
 	      for (unsigned int iAtom=0; iAtom<numberGlobalCharges+numberImageCharges; iAtom++)
 	      {
 
-		  atom[0]=atomsImagesPositions[iAtom*3+0];
-		  atom[1]=atomsImagesPositions[iAtom*3+1];
-		  atom[2]=atomsImagesPositions[iAtom*3+2];
+		  diffx= quadPoint[0]-atomsImagesPositions[iAtom*3+0];
+		  diffy= quadPoint[1]-atomsImagesPositions[iAtom*3+1];
+		  diffz= quadPoint[2]-atomsImagesPositions[iAtom*3+2];
 		  atomCharge=atomsImagesCharges[iAtom];
 
-		  distanceToAtom = quadPoint.distance(atom);
+		  distanceToAtom = std::sqrt(diffx*diffx+diffy*diffy+diffz*diffz);
+                  distanceToAtomInv=1.0/distanceToAtom;
 
 		  if(distanceToAtom <= d_pspTail)//outerMostPointPseudo[atomLocations[n][0]])
 		    {
@@ -306,13 +314,14 @@ void dftClass<FEOrder>::initLocalPseudoPotential
 		    }
 		  else
 		    {
-	              value=-atomCharge/distanceToAtom;
-		      firstDer= atomCharge/distanceToAtom/distanceToAtom;
+	              value=-atomCharge*distanceToAtomInv;
+		      firstDer= -value*distanceToAtomInv;
 		    }
 		  tempVal+=value;
-		  tempGradX+=firstDer*(quadPoint[0]-atom[0])/distanceToAtom;
-		  tempGradY+=firstDer*(quadPoint[1]-atom[1])/distanceToAtom;
-		  tempGradZ+=firstDer*(quadPoint[2]-atom[2])/distanceToAtom;
+                  temp=firstDer*distanceToAtomInv;
+		  tempGradX+=temp*diffx;
+		  tempGradY+=temp*diffy;
+		  tempGradZ+=temp*diffz;
 	      }//atom loop
 	      pseudoVLoc[q]=tempVal;
 	      gradPseudoVLoc[q*3+0]=tempGradX;
