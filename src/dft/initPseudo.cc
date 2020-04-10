@@ -336,6 +336,13 @@ void dftClass<FEOrder>::initLocalPseudoPotential
   MPI_Barrier(MPI_COMM_WORLD);
   init_3 = MPI_Wtime();
 
+  dealii::BoundingBox<3> boundingBoxTria(vectorTools::createBoundingBoxTriaLocallyOwned(_dofHandler));
+  dealii::Tensor<1,3,double> tempDisp;
+  tempDisp[0]=d_pspTail+5.0;
+  tempDisp[1]=d_pspTail+5.0;
+  tempDisp[2]=d_pspTail+5.0;
+  std::pair< dealii::Point<3,double >,dealii::Point<3, double>> boundaryPoints;
+
   std::vector<double> gradPseudoVLocAtom(3*n_q_points);
   typename DoFHandler<3>::active_cell_iterator cell = _dofHandler.begin_active(), endc = _dofHandler.end();
   for(; cell!=endc; ++cell)
@@ -359,7 +366,7 @@ void dftClass<FEOrder>::initLocalPseudoPotential
 		    atom[1]=atomLocations[iAtom][3];
 		    atom[2]=atomLocations[iAtom][4];
 		    atomCharge=atomLocations[iAtom][1];
-	          atomicNumber=std::round(atomLocations[iAtom][0]);
+	            atomicNumber=std::round(atomLocations[iAtom][0]);
 	      }
 	      else
 	      {
@@ -370,7 +377,15 @@ void dftClass<FEOrder>::initLocalPseudoPotential
 		    atomCharge=atomLocations[d_imageIdsTrunc[iImageCharge]][1];
 		    atomicNumber=std::round(atomLocations[d_imageIdsTrunc[iImageCharge]][0]);
 	      }
-	      
+	     
+
+	      boundaryPoints.first=atom-tempDisp;
+	      boundaryPoints.second=atom+tempDisp;
+	      dealii::BoundingBox<3> boundingBoxAroundAtom(boundaryPoints);
+
+	      if (boundingBoxTria.get_neighbor_type(boundingBoxAroundAtom)==NeighborType::not_neighbors)
+                 continue;
+ 
               bool isPseudoDataInCell=false;
               Point<3> quadPoint;
               double value,firstDer,secondDer,distanceToAtom;
