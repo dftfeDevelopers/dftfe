@@ -753,7 +753,7 @@ namespace dftfe {
     //as reuse wfcs and density from previous ionic step is on, or if serial constraints
     //generation is on.
     //
-    if ((dftParameters::chkType==2 || dftParameters::chkType==3)  && dftParameters::restartFromChk)
+    if ((dftParameters::chkType==2 || dftParameters::chkType==3)  && (dftParameters::restartFromChk || dftParameters::restartMdFromChk))
       {
 	d_mesh.generateCoarseMeshesForRestart(atomLocations,
 					      d_imagePositions,
@@ -830,7 +830,7 @@ namespace dftfe {
     //
     initElectronicFields(usePreviousGroundStateFields);
 
-    if (dftParameters::chkType==3 && dftParameters::restartFromChk && !(dftParameters::isBOMD && dftParameters::isXLBOMD))
+    if (dftParameters::chkType==3 && dftParameters::restartFromChk)
     {
             for (unsigned int i = 0; i < d_rhoInNodalValues.local_size(); i++)
                 d_rhoInNodalValues.local_element(i)=d_rhoInNodalValuesRead.local_element(i);
@@ -2491,7 +2491,10 @@ namespace dftfe {
     computingTimerStandard.exit_section("Total scf solve");
 
     if (dftParameters::chkType==3 && !(dftParameters::isBOMD && dftParameters::isXLBOMD))
+    {
+	  writeDomainAndAtomCoordinates();
 	  saveTriaInfoAndRhoNodalData();
+    }
 
 #ifdef DFTFE_WITH_GPU
      if (dftParameters::useGPU)

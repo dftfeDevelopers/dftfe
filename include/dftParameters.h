@@ -59,6 +59,7 @@ namespace dftfe {
 
       extern unsigned int verbosity, chkType;
       extern bool restartFromChk;
+      extern bool restartMdFromChk;
       extern bool electrostaticsHRefinement;
       extern bool electrostaticsPRefinement;
 
@@ -127,6 +128,8 @@ namespace dftfe {
       extern bool useMeshSizesFromAtomsFile;
       extern bool chebyCommunAvoidanceAlgo;
       extern unsigned int numberPassesRRSkippedXLBOMD;
+      extern bool useSingleFullScfXLBOMD;
+      extern bool skipHarmonicOscillatorTermInitialStepsXLBOMD;
 
       /**
        * Declare parameters.

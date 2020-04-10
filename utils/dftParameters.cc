@@ -56,6 +56,7 @@ namespace dftfe {
 
     unsigned int verbosity=0; unsigned int chkType=0;
     bool restartFromChk=false;
+    bool restartMdFromChk=false;
     bool reproducible_output=false;
     bool electrostaticsHRefinement = false;
     bool electrostaticsPRefinement = false;
@@ -124,6 +125,8 @@ namespace dftfe {
     bool chebyCommunAvoidanceAlgo=false;
     double chebyshevFilterPolyDegreeFirstScfScalingFactor=1.34;
     unsigned int numberPassesRRSkippedXLBOMD=0;
+    bool useSingleFullScfXLBOMD=false;
+    bool skipHarmonicOscillatorTermInitialStepsXLBOMD=false;
 
     void declare_parameters(ParameterHandler &prm)
     {
@@ -227,6 +230,10 @@ namespace dftfe {
 	prm.declare_entry("RESTART FROM CHK", "false",
 			  Patterns::Bool(),
 			  "[Standard] Boolean parameter specifying if the current job reads from a checkpoint. The nature of the restart corresponds to the CHK TYPE parameter. Hence, the checkpoint being read must have been created using the CHK TYPE parameter before using this option. RESTART FROM CHK is always false for CHK TYPE 0.");
+
+        prm.declare_entry("RESTART MD FROM CHK", "false",
+                          Patterns::Bool(),
+                          "[Standard] Boolean parameter specifying if the current job reads from a checkpoint. The nature of the restart corresponds to the CHK TYPE parameter. Hence, the checkpoint being read must have been created using the CHK TYPE parameter before using this option. RESTART FROM CHK is always false for CHK TYPE 0.");
       }
       prm.leave_subsection ();
 
@@ -767,8 +774,15 @@ namespace dftfe {
 
 	prm.declare_entry("USE ATOMIC RHO XL BOMD", "true",
 			  Patterns::Bool(),
-			  "[Standard] Use atomic rho xl bomd.");   
+			  "[Standard] Use atomic rho xl bomd.");  
 
+        prm.declare_entry("STARTING SINGLE FULL SCF XL BOMD", "false",
+                          Patterns::Bool(),
+                          "[Standard] Only do first ground-state in full scf for XL BOMD.");
+
+        prm.declare_entry("SKIP HARMONIC OSCILLATOR INITIAL STEPS XL BOMD", "false",
+                          Patterns::Bool(),
+                          "[Standard] Numerical strategy to remove oscillations in initial steps.");
       }
       prm.leave_subsection ();
     }
@@ -814,6 +828,7 @@ namespace dftfe {
       {
 	chkType=prm.get_integer("CHK TYPE");
 	restartFromChk=prm.get_bool("RESTART FROM CHK") && chkType!=0;
+        restartMdFromChk=prm.get_bool("RESTART MD FROM CHK") && chkType!=0;
       }
       prm.leave_subsection ();
 
@@ -997,11 +1012,13 @@ namespace dftfe {
           dftParameters::numberPassesRRSkippedXLBOMD        = prm.get_integer("NUMBER PASSES RR SKIPPED XL BOMD");
           dftParameters::autoMeshStepInterpolateBOMD   = prm.get_bool("AUTO MESH STEP INTERPOLATE BOMD");
           dftParameters::ratioOfMeshMovementToForceGaussianBOMD       = prm.get_double("RATIO MESH MOVEMENT TO FORCE GAUSSIAN");    
-          dftParameters::useAtomicRhoXLBOMD     = prm.get_bool("USE ATOMIC RHO XL BOMD");     
+          dftParameters::useAtomicRhoXLBOMD     = prm.get_bool("USE ATOMIC RHO XL BOMD");   
+          dftParameters::useSingleFullScfXLBOMD = prm.get_bool("STARTING SINGLE FULL SCF XL BOMD");
+          dftParameters::skipHarmonicOscillatorTermInitialStepsXLBOMD= prm.get_bool("SKIP HARMONIC OSCILLATOR INITIAL STEPS XL BOMD");  
       }
       prm.leave_subsection ();
 	
-      if (restartFromChk==true && (chkType==1 || chkType==3))
+      if ((restartFromChk==true || dftParameters::restartMdFromChk) && (chkType==1 || chkType==3))
 	{
           if (dftParameters::periodicX || dftParameters::periodicY || dftParameters::periodicZ)
 		dftParameters::coordinatesFile="atomsFracCoordAutomesh.chk";

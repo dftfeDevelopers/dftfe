@@ -282,7 +282,7 @@ void dftClass<FEOrder>::loadTriaInfoAndRhoNodalData()
      
      std::vector< vectorType * >  solutionVectors;
 
-     if (dftParameters::isBOMD && dftParameters::isXLBOMD)
+     if (dftParameters::isBOMD && dftParameters::isXLBOMD && dftParameters::restartMdFromChk)
      {
         d_groundStateDensityHistory.resize(dftParameters::kmaxXLBOMD);
         for (unsigned int i = 0; i < d_groundStateDensityHistory.size(); i++)
