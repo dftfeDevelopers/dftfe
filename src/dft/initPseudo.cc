@@ -116,89 +116,85 @@ void dftClass<FEOrder>::initLocalPseudoPotential
 		                                            = vselfBinManager.getClosestAtomLocationsBins();
   const std::map<unsigned int, unsigned int>  & atomIdBinIdMap=vselfBinManager.getAtomIdBinIdMapLocalAllImages();
 
-  std::vector<bool> dofsTouched(totalSize,false);
   const unsigned int dofs_per_cell = _dofHandler.get_fe().dofs_per_cell;
   DoFHandler<3>::active_cell_iterator subCellPtr;
 
-  for(unsigned int macrocell = 0; macrocell < _matrix_free_data.n_macro_cells(); ++macrocell)
-      for(unsigned int iSubCell = 0; iSubCell < _matrix_free_data.n_components_filled(macrocell); ++iSubCell)
-      {
-	  subCellPtr= _matrix_free_data.get_cell_iterator(macrocell,iSubCell);
-	  dealii::CellId subCellId=subCellPtr->id();
+  dealii::BoundingBox<3> boundingBoxTria(vectorTools::createBoundingBoxTriaLocallyOwned(_dofHandler));
+  dealii::Tensor<1,3,double> tempDisp;
+  tempDisp[0]=d_pspTail+5.0;
+  tempDisp[1]=d_pspTail+5.0;
+  tempDisp[2]=d_pspTail+5.0;
+  std::pair< dealii::Point<3,double >,dealii::Point<3, double>> boundaryPoints;
 
-	  std::vector<dealii::types::global_dof_index> cell_dof_indices(dofs_per_cell);
-	  subCellPtr->get_dof_indices(cell_dof_indices);
+  for(unsigned int localDofId = 0; localDofId < phiExt.local_size(); ++localDofId)
+  {
+     const dealii::types::global_dof_index dofId=partitioner->local_to_global(localDofId);
+     const Point<3> & nodalCoor = _supportPoints.find(dofId)->second;
+     if(!_phiExtConstraintMatrix.is_constrained(dofId))
+     {
 
-	  for(unsigned int iNode = 0; iNode < dofs_per_cell; ++iNode)
+       Point<3> atom;
+       double atomCharge;
+       int atomicNumber;
+       int chargeId;
+       double distanceToAtom;
+       double sumVal=0.0;
+       for(unsigned int iAtom = 0; iAtom < (atomLocations.size()+numberImageCharges); ++iAtom)
+	{
+	  if (iAtom<numberGlobalCharges)
 	  {
-             const dealii::types::global_dof_index dofId=cell_dof_indices[iNode];
-             const Point<3> & nodalCoor = _supportPoints.find(dofId)->second;
-	     if(!_phiExtConstraintMatrix.is_constrained(dofId) 
-               && phiExt.in_local_range(dofId))
-	     {
-               const unsigned int localDofId=partitioner->global_to_local(dofId);
-               if (!dofsTouched[localDofId])
-	       {
-		       dofsTouched[localDofId]=true;
-		       Point<3> atom;
-		       double atomCharge;
-		       int atomicNumber;
-                       int chargeId;
-                       double distanceToAtom;
-		       for(unsigned int iAtom = 0; iAtom < (atomLocations.size()+numberImageCharges); ++iAtom)
-			{
-			  if (iAtom<numberGlobalCharges)
-			  {
-			    atom[0]=atomLocations[iAtom][2];
-			    atom[1]=atomLocations[iAtom][3];
-			    atom[2]=atomLocations[iAtom][4];
-			    atomCharge=atomLocations[iAtom][1];
-			    atomicNumber=std::round(atomLocations[iAtom][0]);
-                            chargeId=iAtom;
-			  }
-			  else
-			  {
-			    const unsigned int iImageCharge=iAtom-numberGlobalCharges;
-			    atom[0]=d_imagePositions[iImageCharge][0];
-			    atom[1]=d_imagePositions[iImageCharge][1];
-			    atom[2]=d_imagePositions[iImageCharge][2];
-			    atomCharge=atomLocations[d_imageIds[iImageCharge]][1];
-			    atomicNumber=std::round(atomLocations[d_imageIds[iImageCharge]][0]);
-                            chargeId = d_imageIds[iImageCharge];
-			  }
-
-			  distanceToAtom = nodalCoor.distance(atom);
-			  double val;
-
-                          if (atomIdBinIdMap.find(chargeId)!=atomIdBinIdMap.end())
-                          {
-				  const unsigned int binId=atomIdBinIdMap.find(chargeId)->second;
-				  const int boundaryFlagChargeId=boundaryNodeMapBinsOnlyChargeId[binId].find(dofId)->second;
-
-				  if (boundaryFlagChargeId==chargeId)
-				  {
-					 if (dofClosestChargeLocationMapBins[binId].find(dofId)->second.distance(atom)<1e-5)
-                                         {
-                                            const vectorType & vselfBin=vselfBinManager.getVselfFieldBins()[binId];
-					    val=vselfBin.local_element(localDofId);
-                                         }
-					 else
-					    val=-atomCharge/distanceToAtom;
-				  }
-                                  else
-                                         val=-atomCharge/distanceToAtom;
-                          }
-			  else
-			  {
-				 val=-atomCharge/distanceToAtom;
-			  }
-
-                          phiExt.local_element(localDofId)+=val;
-		       }
-	       }
-	    }
+	    atom[0]=atomLocations[iAtom][2];
+	    atom[1]=atomLocations[iAtom][3];
+	    atom[2]=atomLocations[iAtom][4];
+	    atomCharge=atomLocations[iAtom][1];
+	    atomicNumber=std::round(atomLocations[iAtom][0]);
+	    chargeId=iAtom;
 	  }
-      }
+	  else
+	  {
+	    const unsigned int iImageCharge=iAtom-numberGlobalCharges;
+	    atom[0]=d_imagePositions[iImageCharge][0];
+	    atom[1]=d_imagePositions[iImageCharge][1];
+	    atom[2]=d_imagePositions[iImageCharge][2];
+	    atomCharge=atomLocations[d_imageIds[iImageCharge]][1];
+	    atomicNumber=std::round(atomLocations[d_imageIds[iImageCharge]][0]);
+	    chargeId = d_imageIds[iImageCharge];
+	  }
+
+	  distanceToAtom = nodalCoor.distance(atom);
+	  double val;
+
+          if (distanceToAtom<d_pspTail)
+          {
+		  if (atomIdBinIdMap.find(chargeId)!=atomIdBinIdMap.end())
+		  {
+			  const unsigned int binId=atomIdBinIdMap.find(chargeId)->second;
+			  const int boundaryFlagChargeId=boundaryNodeMapBinsOnlyChargeId[binId].find(dofId)->second;
+
+			  if (boundaryFlagChargeId==chargeId)
+			  {
+				 if (dofClosestChargeLocationMapBins[binId].find(dofId)->second.distance(atom)<1e-5)
+				 {
+				    const vectorType & vselfBin=vselfBinManager.getVselfFieldBins()[binId];
+				    val=vselfBin.local_element(localDofId);
+				 }
+				 else
+				    val=-atomCharge/distanceToAtom;
+			  }
+			  else
+				 val=-atomCharge/distanceToAtom;
+		  }
+          }
+	  else
+	  {
+		 val=-atomCharge/distanceToAtom;
+	  }
+
+	  sumVal+=val;
+       }
+       phiExt.local_element(localDofId)=sumVal;
+    }
+  }
 
 
   //_phiExtConstraintMatrix.distribute(phiExt);
@@ -335,13 +331,6 @@ void dftClass<FEOrder>::initLocalPseudoPotential
   double init_3;
   MPI_Barrier(MPI_COMM_WORLD);
   init_3 = MPI_Wtime();
-
-  dealii::BoundingBox<3> boundingBoxTria(vectorTools::createBoundingBoxTriaLocallyOwned(_dofHandler));
-  dealii::Tensor<1,3,double> tempDisp;
-  tempDisp[0]=d_pspTail+5.0;
-  tempDisp[1]=d_pspTail+5.0;
-  tempDisp[2]=d_pspTail+5.0;
-  std::pair< dealii::Point<3,double >,dealii::Point<3, double>> boundaryPoints;
 
   std::vector<double> gradPseudoVLocAtom(3*n_q_points);
   typename DoFHandler<3>::active_cell_iterator cell = _dofHandler.begin_active(), endc = _dofHandler.end();
