@@ -100,9 +100,9 @@ void dftClass<FEOrder>::initLocalPseudoPotential
   _matrix_free_data.initialize_dof_vector(phiExt,_phiExtDofHandlerIndex);
   phiExt=0;
 
-  double init_2;
+  double init_1;
   MPI_Barrier(MPI_COMM_WORLD);
-  init_2 = MPI_Wtime();
+  init_1 = MPI_Wtime();
 
   const std::shared_ptr< const dealii::Utilities::MPI::Partitioner > & partitioner
 			    =phiExt.get_partitioner();
@@ -206,10 +206,13 @@ void dftClass<FEOrder>::initLocalPseudoPotential
   //pcout<<"L2 Norm Value of phiext: "<<phiExt.l2_norm()<<std::endl;
 
   MPI_Barrier(MPI_COMM_WORLD);
-  init_2 = MPI_Wtime() - init_2;
+  init_1 = MPI_Wtime() - init_1;
   if (dftParameters::verbosity>=1)
-        pcout<<"initLocalPSP: Time taken for init2: "<<init_2<<std::endl;
+        pcout<<"initLocalPSP: Time taken for init1: "<<init_1<<std::endl;
 
+  double init_2;
+  MPI_Barrier(MPI_COMM_WORLD);
+  init_2 = MPI_Wtime();
 
   FEEvaluation<3,FEOrder,C_num1DQuad<FEOrder>()> feEvalObj(_matrix_free_data,_phiExtDofHandlerIndex,0);
 
@@ -275,7 +278,6 @@ void dftClass<FEOrder>::initLocalPseudoPotential
 	      std::vector<double> & gradPseudoVLoc=_gradPseudoValues[subCellId];
 	      std::vector<double> & pseudoVLoc=_pseudoValues[subCellId];
               
-              bool isPseudoDataInCell=false;
               Point<3> quadPoint;
               double value,firstDer,secondDer,distanceToAtom;
 
@@ -294,7 +296,6 @@ void dftClass<FEOrder>::initLocalPseudoPotential
 					    value,
 					    firstDer,
 					    secondDer);
-		      isPseudoDataInCell=true;
 		    }
 		  else
 		    {
@@ -326,6 +327,14 @@ void dftClass<FEOrder>::initLocalPseudoPotential
       }//subcell loop
   }//cell loop
 
+  MPI_Barrier(MPI_COMM_WORLD);
+  init_2 = MPI_Wtime() - init_2;
+  if (dftParameters::verbosity>=1)
+        pcout<<"initLocalPSP: Time taken for init2: "<<init_2<<std::endl;
+
+  double init_3;
+  MPI_Barrier(MPI_COMM_WORLD);
+  init_3 = MPI_Wtime();
 
   std::vector<double> gradPseudoVLocAtom(3*n_q_points);
   typename DoFHandler<3>::active_cell_iterator cell = _dofHandler.begin_active(), endc = _dofHandler.end();
@@ -395,6 +404,11 @@ void dftClass<FEOrder>::initLocalPseudoPotential
 	  }//loop over atoms
 	}//cell locally owned check
     }//cell loop
+
+  MPI_Barrier(MPI_COMM_WORLD);
+  init_3 = MPI_Wtime() - init_3;
+  if (dftParameters::verbosity>=1)
+        pcout<<"initLocalPSP: Time taken for init3: "<<init_3<<std::endl;
 } 
 /*
 //
