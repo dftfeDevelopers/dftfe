@@ -33,7 +33,7 @@ void forceClass<FEOrder>::FPSPLocalGammaAtomsElementalContribution
   for (unsigned int idim=0; idim<C_DIM; idim++)
     zeroTensor1[idim]=make_vectorized_array(0.0);
   const unsigned int numberGlobalAtoms = dftPtr->atomLocations.size();
-  const unsigned int numberImageCharges = dftPtr->d_imageIds.size();
+  const unsigned int numberImageCharges = dftPtr->d_imageIdsTrunc.size();
   const unsigned int totalNumberAtoms = numberGlobalAtoms + numberImageCharges;
   const unsigned int numSubCells= matrixFreeData.n_components_filled(cell);
   const unsigned int numQuadPoints=forceEval.n_q_points;
@@ -60,32 +60,114 @@ void forceClass<FEOrder>::FPSPLocalGammaAtomsElementalContribution
     else
     {
        const int imageId=iAtom-numberGlobalAtoms;
-       atomId=dftPtr->d_imageIds[imageId];
-       atomCharge = dftPtr->d_imageCharges[imageId];
-       atomLocation[0]=dftPtr->d_imagePositions[imageId][0];
-       atomLocation[1]=dftPtr->d_imagePositions[imageId][1];
-       atomLocation[2]=dftPtr->d_imagePositions[imageId][2];
+       atomId=dftPtr->d_imageIdsTrunc[imageId];
+       atomCharge = dftPtr->d_imageChargesTrunc[imageId];
+       atomLocation[0]=dftPtr->d_imagePositionsTrunc[imageId][0];
+       atomLocation[1]=dftPtr->d_imagePositionsTrunc[imageId][1];
+       atomLocation[2]=dftPtr->d_imagePositionsTrunc[imageId][2];
     }
 
+    bool isLocalDomainOutsideVselfBall=false;
+    bool isLocalDomainOutsidePspTail= false;
     if (gradPseudoVLocAtoms.find(iAtom)==gradPseudoVLocAtoms.end())
+       isLocalDomainOutsidePspTail=true;
+    unsigned int binIdiAtom;
+    std::map<unsigned int,unsigned int>::const_iterator it1=
+	vselfBinsManager.getAtomIdBinIdMapLocalAllImages().find(atomId);
+    if (it1==vselfBinsManager.getAtomIdBinIdMapLocalAllImages().end())
+       isLocalDomainOutsideVselfBall=true;
+    else
+       binIdiAtom=it1->second;
+
+    if (isLocalDomainOutsideVselfBall && isLocalDomainOutsidePspTail)
        continue;
 
     for (unsigned int iSubCell=0; iSubCell<numSubCells; ++iSubCell)
     {
        subCellPtr= matrixFreeData.get_cell_iterator(cell,iSubCell);
        dealii::CellId subCellId=subCellPtr->id();
-
-       std::map<dealii::CellId, std::vector<double> >::const_iterator it
-	      =gradPseudoVLocAtoms.find(iAtom)->second.find(subCellId);
-       if (it!=gradPseudoVLocAtoms.find(iAtom)->second.end())
+       feValues.reinit(subCellPtr);
+       //get grad vself for iAtom
+       bool isCellOutsideVselfBall=true;
+       if (!isLocalDomainOutsideVselfBall)
        {
+	  std::map<dealii::CellId, unsigned int >::const_iterator
+	      it2=cellsVselfBallsClosestAtomIdDofHandler[binIdiAtom].find(subCellId);
+	  if (it2!=cellsVselfBallsClosestAtomIdDofHandler[binIdiAtom].end())
+	  {
+	    Point<C_DIM> closestAtomLocation;
+	    const unsigned int closestAtomId=it2->second;
+	    if(it2->second >= numberGlobalAtoms)
+	    {
+	       const unsigned int imageIdTrunc=closestAtomId-numberGlobalAtoms;
+	       closestAtomLocation[0]=dftPtr->d_imagePositionsTrunc[imageIdTrunc][0];
+	       closestAtomLocation[1]=dftPtr->d_imagePositionsTrunc[imageIdTrunc][1];
+	       closestAtomLocation[2]=dftPtr->d_imagePositionsTrunc[imageIdTrunc][2];
+	    }
+	    else
+	    {
+	       closestAtomLocation[0]=dftPtr->atomLocations[closestAtomId][2];
+	       closestAtomLocation[1]=dftPtr->atomLocations[closestAtomId][3];
+	       closestAtomLocation[2]=dftPtr->atomLocations[closestAtomId][4];
+	    }
+
+	    if(atomLocation.distance(closestAtomLocation)<1e-5)
+	    {
+		 isCellOutsideVselfBall=false;
+		 std::vector<Tensor<1,C_DIM,double> > gradVselfQuadsSubCell(numQuadPoints);
+		 feValues.get_function_gradients(vselfBinsManager.getVselfFieldBins()[binIdiAtom],
+						       gradVselfQuadsSubCell);
+		 for (unsigned int q=0; q<numQuadPoints; ++q)
+		 {
+		    gradVselfQuads[q][0][iSubCell]=gradVselfQuadsSubCell[q][0];
+		    gradVselfQuads[q][1][iSubCell]=gradVselfQuadsSubCell[q][1];
+		    gradVselfQuads[q][2][iSubCell]=gradVselfQuadsSubCell[q][2];
+		 }
+	    }
+	  }
+
+       }
+       if (isCellOutsideVselfBall)
+	  for (unsigned int q=0; q<numQuadPoints; ++q)
+	  {
+	      Point<C_DIM> quadPoint=feValues.quadrature_point(q);
+	      Tensor<1,C_DIM,double> dispAtom=quadPoint-atomLocation;
+	      const double dist=dispAtom.norm();
+	      Tensor<1,C_DIM,double> temp=atomCharge*dispAtom/dist/dist/dist;
+	      gradVselfQuads[q][0][iSubCell]=temp[0];
+	      gradVselfQuads[q][1][iSubCell]=temp[1];
+	      gradVselfQuads[q][2][iSubCell]=temp[2];
+	  }
+
+       //get grad pseudo VLoc for iAtom
+       bool isCellOutsidePspTail=true;
+       if (!isLocalDomainOutsidePspTail)
+       {
+	  std::map<dealii::CellId, std::vector<double> >::const_iterator it
+	      =gradPseudoVLocAtoms.find(iAtom)->second.find(subCellId);
+	  if (it!=gradPseudoVLocAtoms.find(iAtom)->second.end())
+	  {
+	    isCellOutsidePspTail=false;
 	    for (unsigned int q=0; q<numQuadPoints; ++q)
 	    {
 	       gradPseudoVLocAtomsQuads[q][0][iSubCell]=(it->second)[q*C_DIM];
 	       gradPseudoVLocAtomsQuads[q][1][iSubCell]=(it->second)[q*C_DIM+1];
 	       gradPseudoVLocAtomsQuads[q][2][iSubCell]=(it->second)[q*C_DIM+2];
 	    }
+	  }
        }
+
+       if (isCellOutsidePspTail)
+	  for (unsigned int q=0; q<numQuadPoints; ++q)
+	  {
+	      Point<C_DIM> quadPoint=feValues.quadrature_point(q);
+	      Tensor<1,C_DIM,double> dispAtom=quadPoint-atomLocation;
+	      const double dist=dispAtom.norm();
+	      Tensor<1,C_DIM,double> temp=atomCharge*dispAtom/dist/dist/dist;
+	      gradPseudoVLocAtomsQuads[q][0][iSubCell]=temp[0];
+	      gradPseudoVLocAtomsQuads[q][1][iSubCell]=temp[1];
+	      gradPseudoVLocAtomsQuads[q][2][iSubCell]=temp[2];
+	  }
     }//subCell loop
 
     for (unsigned int q=0; q<numQuadPoints; ++q)
