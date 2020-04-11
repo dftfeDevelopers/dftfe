@@ -27,6 +27,11 @@
 #include <boost/math/distributions/normal.hpp>
 #include <boost/random/normal_distribution.hpp>
 
+#include <kohnShamDFTOperator.h>
+#ifdef DFTFE_WITH_GPU
+#include <kohnShamDFTOperatorCUDA.h>
+#endif
+
 namespace dftfe {
 
         namespace internalmd
@@ -206,7 +211,8 @@ void molecularDynamics<FEOrder>::run()
         const unsigned int numberGlobalCharges=dftPtr->atomLocations.size();
         //https://lammps.sandia.gov/doc/units.html
 	const double initialTemperature = dftParameters::startingTempBOMDNVE;//K
-	const unsigned int restartFlag =(dftParameters::chkType==1 && dftParameters::restartFromChk)?1:0; //1; //0;//1;
+	const unsigned int restartFlag =((dftParameters::chkType==1 || dftParameters::chkType==3) && dftParameters::restartMdFromChk)?1:0; //1; //0;//1;
+        bool xlbomdHistoryRestart=(dftParameters::chkType==3 && dftParameters::restartMdFromChk)?true:false;
 	int startingTimeStep = 0; //625;//450;// 50;//300; //0;// 300;
 
 	double massAtomAl = 26.982;//mass proton is chosen 1 **49611.513**
@@ -257,6 +263,8 @@ void molecularDynamics<FEOrder>::run()
         std::vector<double> rmsErrorGradRhoVector(numberTimeSteps,0.0);
 
         const unsigned int kmax=dftParameters::kmaxXLBOMD;
+        const unsigned int fullScfSolvesBeforeStartingXLBOMD=dftParameters::useSingleFullScfXLBOMD?1:kmax;
+        const unsigned int numberStepsKappaTermSkipped=fullScfSolvesBeforeStartingXLBOMD?3:kmax;
         double k;
         double alpha;
         double c0;
@@ -293,6 +301,11 @@ void molecularDynamics<FEOrder>::run()
 		c7=-1.0;
         }
 
+        kohnShamDFTOperatorClass<FEOrder> kohnShamDFTEigenOperator(dftPtr,mpi_communicator);
+#ifdef DFTFE_WITH_GPU
+        kohnShamDFTOperatorCUDAClass<FEOrder> kohnShamDFTEigenOperatorCUDA(dftPtr,mpi_communicator);
+#endif
+
         const double diracDeltaKernelConstant=-dftParameters::diracDeltaKernelScalingConstant;
         const double k0kernelconstant=1.0/dftParameters::diracDeltaKernelScalingConstant-1.0;//20.0;//20.0
         std::deque<vectorType> approxDensityContainer;
@@ -316,13 +329,41 @@ void molecularDynamics<FEOrder>::run()
 	boost::variate_generator<boost::mt19937&,boost::normal_distribution<> > generator(rng,gaussianDist);
 	double averageKineticEnergy;
 	double temperatureFromVelocities;
+        double accumTotEnergyCorrection=0.0;
+        double totalEnergyStartingTimeStep=0.0;
+        bool lastInterruptedStepPreviousRunAutoMesh=false;
+
+        dealii::IndexSet   locally_relevant_dofs_;
+        dealii::DoFTools::extract_locally_relevant_dofs(dftPtr->d_dofHandlerPRefined, locally_relevant_dofs_);
+
+        const dealii::IndexSet & locally_owned_dofs_= dftPtr->d_dofHandlerPRefined.locally_owned_dofs();
+        dealii::IndexSet  ghost_indices_=locally_relevant_dofs_;
+        ghost_indices_.subtract_set(locally_owned_dofs_);
+
+        vectorType tempVecRestart= dealii::LinearAlgebra::distributed::Vector<double>(locally_owned_dofs_,
+                                                                             ghost_indices_,
+                                                                             mpi_communicator);
 
 	if(restartFlag == 0)
 	  {
 	    if (dftParameters::autoMeshStepInterpolateBOMD)
 	       dftPtr->updatePrevMeshDataStructures();
-
-	    dftPtr->solve(true,false,dftPtr->d_isRestartGroundStateCalcFromChk);
+/*
+	    dftPtr->initializeKohnShamDFTOperator(kohnShamDFTEigenOperator
+#ifdef DFTFE_WITH_GPU
+                                          ,
+					  kohnShamDFTEigenOperatorCUDA
+#endif
+                                          );
+*/
+	    dftPtr->solve(kohnShamDFTEigenOperator,
+#ifdef DFTFE_WITH_GPU
+                          kohnShamDFTEigenOperatorCUDA,
+#endif
+                          true,
+                          true,
+                          false,
+                          dftPtr->d_isRestartGroundStateCalcFromChk);
             dftPtr->d_isRestartGroundStateCalcFromChk=false;
             const std::vector<double> forceOnAtoms= dftPtr->forcePtr->getAtomsForces();
 
@@ -346,10 +387,36 @@ void molecularDynamics<FEOrder>::run()
             // Set approximate electron density to the exact ground state electron density in the 0th step
             if (dftParameters::isXLBOMD)
             {
-                   approxDensityContainer.push_back(shadowKSRhoMin);
-                   approxDensityContainer.back().update_ghost_values();
+		if (fullScfSolvesBeforeStartingXLBOMD==1)
+		{
+			for (unsigned int i = 0; i < kmax; i++)
+			{
+				approxDensityContainer.push_back(shadowKSRhoMin);
+				approxDensityContainer.back().update_ghost_values();
+			}
+		}
+		else
+		{
+			approxDensityContainer.push_back(shadowKSRhoMin);
+			approxDensityContainer.back().update_ghost_values();
+		}
             }
 
+	    if (dftParameters::chkType==3 && !xlbomdHistoryRestart)
+		if (approxDensityContainer.size()==kmax)
+		{
+		    dftPtr->d_groundStateDensityHistory.clear();
+		    dftPtr->d_groundStateDensityHistory.resize(kmax);
+		    for (unsigned int i = 0; i < kmax; i++)
+		    {
+			dftPtr->d_groundStateDensityHistory[i].reinit(tempVecRestart);
+
+			for (unsigned int idof = 0; idof < approxDensityContainer[i].local_size(); idof++)
+			    dftPtr->d_groundStateDensityHistory[i].local_element(idof)=approxDensityContainer[i].local_element(idof);
+
+			dftPtr->d_groundStateDensityHistory[i].update_ghost_values();
+		    }
+		}
 
 	    if(this_mpi_process == 0)
 	      {
@@ -410,23 +477,80 @@ void molecularDynamics<FEOrder>::run()
 
 	    std::vector<std::vector<double> > fileTemperatueData;
 	    std::vector<std::vector<double> > timeIndexData;
+            std::vector<std::vector<double> > accumTotEnergyCorrectionData;
+            std::vector<std::vector<double> > autoMeshData;
 
 	    dftUtils::readFile(1,
 		               fileTemperatueData,
 		               "temperature.chk");
 
 	    dftUtils::readFile(1,
+		               accumTotEnergyCorrectionData,
+		               "accumEnergyCorrection.chk");
+
+	    dftUtils::readFile(1,
 		               timeIndexData,
 		               "time.chk");
+
+	    dftUtils::readFile(1,
+		               autoMeshData,
+		               "autoMeshMd.chk");
 
 	    temperatureFromVelocities=fileTemperatueData[0][0];
 
 
 	    startingTimeStep=timeIndexData[0][0];
 
+            accumTotEnergyCorrection=accumTotEnergyCorrectionData[0][0];
+
+            lastInterruptedStepPreviousRunAutoMesh=(autoMeshData[0][0]>1e-6)?true:false;
+
+
+            std::vector<std::vector<double> > totalEnergyData;
+	    dftUtils::readFile(1,
+	   		       totalEnergyData,
+			      "TotEngMd");
+
+            totalEnergyStartingTimeStep=totalEnergyData[startingTimeStep][0];
 
             pcout<<" Ending time step read from file: "<<startingTimeStep<<std::endl;
 	    pcout<<" Temperature read from file: "<<temperatureFromVelocities<<std::endl;
+            pcout<<" Accumulated total energy correction due to auto remeshing read from file: "<<accumTotEnergyCorrection<<std::endl;
+
+            if (lastInterruptedStepPreviousRunAutoMesh)
+              xlbomdHistoryRestart=false;
+		
+            if (xlbomdHistoryRestart)
+	    {
+                    approxDensityContainer.resize(kmax);
+		    for (unsigned int i = 0; i < kmax; i++)
+		    {
+                        if (i==0)
+                             dftPtr->d_matrixFreeDataPRefined.initialize_dof_vector(approxDensityContainer[i]);
+                        else
+                             approxDensityContainer[i].reinit(approxDensityContainer[0]);
+
+			for (unsigned int idof = 0; idof < approxDensityContainer[i].local_size(); idof++)
+			    approxDensityContainer[i].local_element(idof)=dftPtr->d_groundStateDensityHistory[i].local_element(idof);
+
+			approxDensityContainer[i].update_ghost_values();
+
+                        /*
+ 			if (dftParameters::verbosity>=4)
+		   	   pcout<<"l2 norm of approxDensityVec read:  "<<i<< "  "<< approxDensityContainer[i].l2_norm()<<std::endl;
+
+			//normalize approxDensityVec
+			double charge = dftPtr->totalCharge(dftPtr->d_matrixFreeDataPRefined,
+							    approxDensityContainer[i]);
+
+
+			if (dftParameters::verbosity>=1)
+		   	   pcout<<"Total Charge approxDensityVec:  "<<charge<<std::endl;
+                        */
+		    }
+                    shadowKSRhoMin=approxDensityContainer.back();
+                    shadowKSRhoMin.update_ghost_values();
+	    }
 	  }
 
 
@@ -607,12 +731,30 @@ void molecularDynamics<FEOrder>::run()
             if (dftParameters::verbosity>=1)
                 pcout<<"Time taken for updateAtomPositionsAndMoveMesh: "<<update_time<<std::endl;
 
+
+            std::vector<std::vector<double> > autoMeshData(1,std::vector<double>(1,0.0));
+
+	    autoMeshData[0][0]=dftPtr->d_autoMesh==1?1.0:0.0;
+	    dftUtils::writeDataIntoFile(autoMeshData,
+			               "autoMeshMd.chk");
+
             double atomicrho_time;
             MPI_Barrier(MPI_COMM_WORLD);
             atomicrho_time = MPI_Wtime();
 
             if (dftPtr->d_autoMesh==1 || (timeIndex == (startingTimeStep+1) && restartFlag==1))
+            {
                 dftPtr->d_matrixFreeDataPRefined.initialize_dof_vector(atomicRho);
+/*
+  	        dftPtr->initializeKohnShamDFTOperator(kohnShamDFTEigenOperator
+#ifdef DFTFE_WITH_GPU
+                                              ,
+					      kohnShamDFTEigenOperatorCUDA
+#endif
+                                              ,
+                                              false);
+*/
+            }
 
             dftPtr->initAtomicRho(atomicRho);
        
@@ -632,6 +774,7 @@ void molecularDynamics<FEOrder>::run()
                 isFirstXLBOMDStep=true;
 
             bool isXlBOMDStep=false;
+            bool writeDensityHistory=false;
             if (dftParameters::isXLBOMD)
             {
                     if (dftPtr->d_autoMesh==1 && dftParameters::autoMeshStepInterpolateBOMD)
@@ -689,9 +832,9 @@ void molecularDynamics<FEOrder>::run()
                         dftPtr->updatePrevMeshDataStructures();
                         pcout<<".............Auto meshing step: interpolation and re-normalization completed.............."<<std::endl;
                     }
-                    else if (dftPtr->d_autoMesh==1
+                    else if ((dftPtr->d_autoMesh==1
                            || (timeIndex == (startingTimeStep+1) && restartFlag==1)
-                           || (timeIndex < (kmax+autoMeshTimeIndex)))
+                           || (timeIndex < (fullScfSolvesBeforeStartingXLBOMD+autoMeshTimeIndex))) && !xlbomdHistoryRestart)
                     {
 
 		        if (!dftPtr->d_autoMesh==1)
@@ -711,7 +854,11 @@ void molecularDynamics<FEOrder>::run()
 				    dftPtr->normalizeRho();
 			       }
 
-                        dftPtr->solve();
+                        dftPtr->solve(kohnShamDFTEigenOperator,
+#ifdef DFTFE_WITH_GPU
+                                       kohnShamDFTEigenOperatorCUDA,
+#endif
+                                       true);
                         
 			shadowKSRhoMin=dftPtr->d_rhoOutNodalValues;
 			if (dftParameters::useAtomicRhoXLBOMD)
@@ -733,8 +880,39 @@ void molecularDynamics<FEOrder>::run()
                           approxDensityContainer.clear();
                         }
 
-                        approxDensityContainer.push_back(shadowKSRhoMin);
-                        approxDensityContainer.back().update_ghost_values();
+                        if (fullScfSolvesBeforeStartingXLBOMD==1)
+                        {
+			        for (unsigned int i = 0; i < kmax; i++)
+			        {
+					approxDensityContainer.push_back(shadowKSRhoMin);
+					approxDensityContainer.back().update_ghost_values();
+                                }
+                        }
+                        else
+                        {
+				approxDensityContainer.push_back(shadowKSRhoMin);
+				approxDensityContainer.back().update_ghost_values();
+                        }
+
+                        if (dftParameters::chkType==3 && !xlbomdHistoryRestart)
+				if (approxDensityContainer.size()==kmax)
+				{
+				    dftPtr->d_groundStateDensityHistory.clear();
+                                    dftPtr->d_groundStateDensityHistory.resize(kmax);
+				    for (unsigned int i = 0; i < kmax; i++)
+                                    {
+ 			                //if (dftParameters::verbosity>=4)
+		   	                //   pcout<<"l2 norm of approxDensityVec to be written:  "<<i<< "  "<< approxDensityContainer[i].l2_norm()<<std::endl;
+
+                                        dftPtr->d_groundStateDensityHistory[i].reinit(tempVecRestart);
+
+					for (unsigned int idof = 0; idof < approxDensityContainer[i].local_size(); idof++)
+					    dftPtr->d_groundStateDensityHistory[i].local_element(idof)=approxDensityContainer[i].local_element(idof);
+
+                                        dftPtr->d_groundStateDensityHistory[i].update_ghost_values();
+                                    }
+                                    writeDensityHistory=true;
+				}
                     }
                     else
 		    {
@@ -754,21 +932,28 @@ void molecularDynamics<FEOrder>::run()
 			const unsigned int local_size = approxDensityNext.local_size();
 
 
-	 
-                        if (dftParameters::kernelUpdateRankXLBOMD>0 && !isFirstXLBOMDStep)
+	                if (dftParameters::skipHarmonicOscillatorTermInitialStepsXLBOMD && fullScfSolvesBeforeStartingXLBOMD==1 && (timeIndex <= (numberStepsKappaTermSkipped+autoMeshTimeIndex)))
                         {
 				for (unsigned int i = 0; i < local_size; i++)
 					approxDensityNext.local_element(i)=approxDensityTimeT.local_element(i)*2.0
-									  -approxDensityTimeTMinusDeltat.local_element(i)
-									  -k*(kernelAction.local_element(i));
+									  -approxDensityTimeTMinusDeltat.local_element(i);
                         }
                         else
-                        {
-				for (unsigned int i = 0; i < local_size; i++)
-					approxDensityNext.local_element(i)=approxDensityTimeT.local_element(i)*2.0
-									  -approxDensityTimeTMinusDeltat.local_element(i)
-									  -(shadowKSRhoMin.local_element(i)-approxDensityTimeT.local_element(i))*k*diracDeltaKernelConstant;
-                                isFirstXLBOMDStep=false;
+                        { 
+				if (dftParameters::kernelUpdateRankXLBOMD>0 && !isFirstXLBOMDStep)
+				{
+					for (unsigned int i = 0; i < local_size; i++)
+						approxDensityNext.local_element(i)=approxDensityTimeT.local_element(i)*2.0
+										  -approxDensityTimeTMinusDeltat.local_element(i)
+										  -k*(kernelAction.local_element(i));
+				}
+				else
+				{
+					for (unsigned int i = 0; i < local_size; i++)
+						approxDensityNext.local_element(i)=approxDensityTimeT.local_element(i)*2.0
+										  -approxDensityTimeTMinusDeltat.local_element(i)
+										  -(shadowKSRhoMin.local_element(i)-approxDensityTimeT.local_element(i))*k*diracDeltaKernelConstant;
+				}
                         }
 	 
 			if (approxDensityContainer.size()==kmax)
@@ -843,7 +1028,28 @@ void molecularDynamics<FEOrder>::run()
 			if (dftParameters::verbosity>=1)
 			   pcout<<"----------Start shadow potential energy solve with approx density= n-------------"<<std::endl;
 
-			dftPtr->solve(true,true,false,false,true);
+                        double temp;
+                        if (isFirstXLBOMDStep && xlbomdHistoryRestart)
+                        {
+                           temp=dftParameters::chebyshevFilterTolXLBOMD;
+                           dftParameters::chebyshevFilterTolXLBOMD=1e-9;
+                        }
+
+			dftPtr->solve(kohnShamDFTEigenOperator,
+#ifdef DFTFE_WITH_GPU
+                                       kohnShamDFTEigenOperatorCUDA,
+#endif
+                                       true,
+                                       true,
+                                       true,
+                                       false,
+                                       false,
+                                       (isFirstXLBOMDStep && xlbomdHistoryRestart)?false:true);
+
+                        if (isFirstXLBOMDStep && xlbomdHistoryRestart)
+                        {
+                           dftParameters::chebyshevFilterTolXLBOMD=temp;
+                        }
 
 			if (dftParameters::verbosity>=1)
 			   pcout<<"----------End shadow potential energy solve with approx density= n-------------"<<std::endl;
@@ -878,177 +1084,195 @@ void molecularDynamics<FEOrder>::run()
 			rhoErrorVec=shadowKSRhoMin;
                         rhoErrorVec-=approxDensityContainer.back();
 
-
-                        if (dftParameters::kernelUpdateRankXLBOMD>0)
+	                if (!(dftParameters::skipHarmonicOscillatorTermInitialStepsXLBOMD && fullScfSolvesBeforeStartingXLBOMD==1 && (timeIndex < (numberStepsKappaTermSkipped+autoMeshTimeIndex))))
                         {
-			   const double deltalambda=1e-2*std::sqrt(dftPtr->fieldl2Norm(dftPtr->d_matrixFreeDataPRefined,approxDensityContainer.back())/dftPtr->d_domainVolume);
-
-			   if (dftParameters::verbosity>=1)
-			      pcout<<"deltalambda: "<<deltalambda<<std::endl;
-
-                           const double k0=-1.0/(k0kernelconstant+1.0);
-
-                           jv.reinit(rhoErrorVec);
-                           kernelAction.reinit(rhoErrorVec);
-
-                           vectorType compvec;
-                           compvec.reinit(rhoErrorVec);
-                           for (unsigned int irank=0; irank<dftParameters::kernelUpdateRankXLBOMD; irank++)
-			   {
-                                   vcontainer[irank].reinit(rhoErrorVec);
-                                   internalmd::recursiveKernelApply(ucontainer,
-                                                vcontainer,
-                                                k0,
-                                                rhoErrorVec,
-                                                irank,
-				                vcontainer[irank]);
-
-                                   compvec=0;
-                                   for (unsigned int jrank=0; jrank<(dftParameters::kernelUpdateRankXLBOMD-1); jrank++)
-                                   {
-                                       const double tTvj=vcontainer[irank]*vcontainer[jrank];
-                                       compvec.add(tTvj,vcontainer[jrank]);
-                                   }
-                                   vcontainer[irank]-=compvec;
-                                  
-				   vcontainer[irank]*=1.0/vcontainer[irank].l2_norm();
+                                if (dftParameters::kernelUpdateRankXLBOMD>0)
+				{
+				   const double deltalambda=1e-2*std::sqrt(dftPtr->fieldl2Norm(dftPtr->d_matrixFreeDataPRefined,approxDensityContainer.back())/dftPtr->d_domainVolume);
 
 				   if (dftParameters::verbosity>=1)
-				       pcout<<" Vector norm of v:  "<<vcontainer[irank].l2_norm()<< ", for rank: "<<irank+1<<std::endl;
+				      pcout<<"deltalambda: "<<deltalambda<<std::endl;
 
-				   peturbedApproxDensity=approxDensityContainer.back();
-				   peturbedApproxDensity.add(deltalambda,vcontainer[irank]);
+				   const double k0=-1.0/(k0kernelconstant+1.0);
 
-				   peturbedApproxDensity.update_ghost_values();   
+				   jv.reinit(rhoErrorVec);
+				   kernelAction.reinit(rhoErrorVec);
 
-				   //normalize peturbedApproxDensity
-				   charge = dftPtr->totalCharge(dftPtr->d_matrixFreeDataPRefined,
-								  peturbedApproxDensity);
+				   vectorType compvec;
+				   compvec.reinit(rhoErrorVec);
+				   for (unsigned int irank=0; irank<dftParameters::kernelUpdateRankXLBOMD; irank++)
+				   {
+					   vcontainer[irank].reinit(rhoErrorVec);
+					   internalmd::recursiveKernelApply(ucontainer,
+							vcontainer,
+							k0,
+							rhoErrorVec,
+							irank,
+							vcontainer[irank]);
 
+					   compvec=0;
+					   for (int jrank=0; jrank<irank; jrank++)
+					   {
+					       const double tTvj=vcontainer[irank]*vcontainer[jrank];
+					       compvec.add(tTvj,vcontainer[jrank]);
+					   }
+					   vcontainer[irank]-=compvec;
+					  
+					   vcontainer[irank]*=1.0/vcontainer[irank].l2_norm();
 
-				   if (dftParameters::verbosity>=1)
-				       pcout<<"Total Charge before Normalizing peturbedApproxDensity:  "<<charge<<std::endl;
-			       
-				   if (dftParameters::useAtomicRhoXLBOMD)
-				      peturbedApproxDensity.add(-charge/dftPtr->d_domainVolume);
-				   else
-				      peturbedApproxDensity *= ((double)dftPtr->numElectrons)/charge;
+					   if (dftParameters::verbosity>=1)
+					       pcout<<" Vector norm of v:  "<<vcontainer[irank].l2_norm()<< ", for rank: "<<irank+1<<std::endl;
 
-				   dftPtr->d_rhoInNodalValues=peturbedApproxDensity;
-				   if (dftParameters::useAtomicRhoXLBOMD)
-				      dftPtr->d_rhoInNodalValues+=atomicRho;
-				 
-				   dftPtr->d_rhoInNodalValues.update_ghost_values();
-				   dftPtr->interpolateNodalDataToQuadratureData(dftPtr->d_matrixFreeDataPRefined,
-									dftPtr->d_rhoInNodalValues,
-									*(dftPtr->rhoInValues),
-									*(dftPtr->gradRhoInValues),
-									*(dftPtr->gradRhoInValues),
-									 dftParameters::xc_id == 4);		
-		     
-				   dftPtr->normalizeRho();
+					   peturbedApproxDensity=approxDensityContainer.back();
+					   peturbedApproxDensity.add(deltalambda,vcontainer[irank]);
 
-				   if (dftParameters::verbosity>=1)
-				      pcout<<"----------Start shadow potential energy solve with approx density= n+lamda*v1-------------"<<std::endl;
+					   peturbedApproxDensity.update_ghost_values();   
 
-				   dftPtr->solve(false,true,false,true);
-
-				   if (dftParameters::verbosity>=1)
-				      pcout<<"----------End shadow potential energy solve with approx density= n+lamda*v1-------------"<<std::endl;
-
-				   temp1=dftPtr->d_rhoOutNodalValues;
-				   if (dftParameters::useAtomicRhoXLBOMD)
-				      temp1-=atomicRho;
-
-				   temp1.update_ghost_values();
-
-				   //normalize shadowKSRhoMin
-				   charge = dftPtr->totalCharge(dftPtr->d_matrixFreeDataPRefined,
-						       temp1);
-				   if (dftParameters::useAtomicRhoXLBOMD)
-				      temp1.add(-charge/dftPtr->d_domainVolume);
-				   else
-				      temp1 *= ((double)dftPtr->numElectrons)/charge; 
+					   //normalize peturbedApproxDensity
+					   charge = dftPtr->totalCharge(dftPtr->d_matrixFreeDataPRefined,
+									  peturbedApproxDensity);
 
 
-				   peturbedApproxDensity=approxDensityContainer.back();
-				   peturbedApproxDensity.add(-deltalambda,vcontainer[irank]);
+					   if (dftParameters::verbosity>=1)
+					       pcout<<"Total Charge before Normalizing peturbedApproxDensity:  "<<charge<<std::endl;
+				       
+					   if (dftParameters::useAtomicRhoXLBOMD)
+					      peturbedApproxDensity.add(-charge/dftPtr->d_domainVolume);
+					   else
+					      peturbedApproxDensity *= ((double)dftPtr->numElectrons)/charge;
 
-				   peturbedApproxDensity.update_ghost_values();   
+					   dftPtr->d_rhoInNodalValues=peturbedApproxDensity;
+					   if (dftParameters::useAtomicRhoXLBOMD)
+					      dftPtr->d_rhoInNodalValues+=atomicRho;
+					 
+					   dftPtr->d_rhoInNodalValues.update_ghost_values();
+					   dftPtr->interpolateNodalDataToQuadratureData(dftPtr->d_matrixFreeDataPRefined,
+										dftPtr->d_rhoInNodalValues,
+										*(dftPtr->rhoInValues),
+										*(dftPtr->gradRhoInValues),
+										*(dftPtr->gradRhoInValues),
+										 dftParameters::xc_id == 4);		
+			     
+					   dftPtr->normalizeRho();
 
-				   //normalize peturbedApproxDensity
-				   charge = dftPtr->totalCharge(dftPtr->d_matrixFreeDataPRefined,
-								  peturbedApproxDensity);
+					   if (dftParameters::verbosity>=1)
+					      pcout<<"----------Start shadow potential energy solve with approx density= n+lamda*v1-------------"<<std::endl;
+
+					   dftPtr->solve(kohnShamDFTEigenOperator,
+	#ifdef DFTFE_WITH_GPU
+							  kohnShamDFTEigenOperatorCUDA,
+	#endif
+							  true,
+							  false,
+							  true,
+							  false,
+							  true);
+
+					   if (dftParameters::verbosity>=1)
+					      pcout<<"----------End shadow potential energy solve with approx density= n+lamda*v1-------------"<<std::endl;
+
+					   temp1=dftPtr->d_rhoOutNodalValues;
+					   if (dftParameters::useAtomicRhoXLBOMD)
+					      temp1-=atomicRho;
+
+					   temp1.update_ghost_values();
+
+					   //normalize shadowKSRhoMin
+					   charge = dftPtr->totalCharge(dftPtr->d_matrixFreeDataPRefined,
+							       temp1);
+					   if (dftParameters::useAtomicRhoXLBOMD)
+					      temp1.add(-charge/dftPtr->d_domainVolume);
+					   else
+					      temp1 *= ((double)dftPtr->numElectrons)/charge; 
 
 
-				   if (dftParameters::verbosity>=1)
-				       pcout<<"Total Charge before Normalizing peturbedApproxDensity:  "<<charge<<std::endl;
-			       
-				   if (dftParameters::useAtomicRhoXLBOMD)
-				      peturbedApproxDensity.add(-charge/dftPtr->d_domainVolume);
-				   else
-				      peturbedApproxDensity *= ((double)dftPtr->numElectrons)/charge;
+					   peturbedApproxDensity=approxDensityContainer.back();
+					   peturbedApproxDensity.add(-deltalambda,vcontainer[irank]);
 
-				   dftPtr->d_rhoInNodalValues=peturbedApproxDensity;
-				   if (dftParameters::useAtomicRhoXLBOMD)
-				      dftPtr->d_rhoInNodalValues+=atomicRho;
-				 
-				   dftPtr->d_rhoInNodalValues.update_ghost_values();
-				   dftPtr->interpolateNodalDataToQuadratureData(dftPtr->d_matrixFreeDataPRefined,
-									dftPtr->d_rhoInNodalValues,
-									*(dftPtr->rhoInValues),
-									*(dftPtr->gradRhoInValues),
-									*(dftPtr->gradRhoInValues),
-									 dftParameters::xc_id == 4);		
-		     
-				   dftPtr->normalizeRho();
+					   peturbedApproxDensity.update_ghost_values();   
 
-				   if (dftParameters::verbosity>=1)
-				      pcout<<"----------Start shadow potential energy solve with approx density= n-lamda*v1-------------"<<std::endl;
+					   //normalize peturbedApproxDensity
+					   charge = dftPtr->totalCharge(dftPtr->d_matrixFreeDataPRefined,
+									  peturbedApproxDensity);
 
-				   dftPtr->solve(false,true,false,true);
 
-				   if (dftParameters::verbosity>=1)
-				      pcout<<"----------End shadow potential energy solve with approx density= n-lamda*v1-------------"<<std::endl;
+					   if (dftParameters::verbosity>=1)
+					       pcout<<"Total Charge before Normalizing peturbedApproxDensity:  "<<charge<<std::endl;
+				       
+					   if (dftParameters::useAtomicRhoXLBOMD)
+					      peturbedApproxDensity.add(-charge/dftPtr->d_domainVolume);
+					   else
+					      peturbedApproxDensity *= ((double)dftPtr->numElectrons)/charge;
 
-				   temp2=dftPtr->d_rhoOutNodalValues;
-				   if (dftParameters::useAtomicRhoXLBOMD)
-				      temp2-=atomicRho;
+					   dftPtr->d_rhoInNodalValues=peturbedApproxDensity;
+					   if (dftParameters::useAtomicRhoXLBOMD)
+					      dftPtr->d_rhoInNodalValues+=atomicRho;
+					 
+					   dftPtr->d_rhoInNodalValues.update_ghost_values();
+					   dftPtr->interpolateNodalDataToQuadratureData(dftPtr->d_matrixFreeDataPRefined,
+										dftPtr->d_rhoInNodalValues,
+										*(dftPtr->rhoInValues),
+										*(dftPtr->gradRhoInValues),
+										*(dftPtr->gradRhoInValues),
+										 dftParameters::xc_id == 4);		
+			     
+					   dftPtr->normalizeRho();
 
-				   temp2.update_ghost_values();
+					   if (dftParameters::verbosity>=1)
+					      pcout<<"----------Start shadow potential energy solve with approx density= n-lamda*v1-------------"<<std::endl;
 
-				   //normalize shadowKSRhoMin
-				   charge = dftPtr->totalCharge(dftPtr->d_matrixFreeDataPRefined,
-						       temp2);
-				   if (dftParameters::useAtomicRhoXLBOMD)
-				      temp2.add(-charge/dftPtr->d_domainVolume);
-				   else
-				      temp2 *= ((double)dftPtr->numElectrons)/charge; 
+					   dftPtr->solve(kohnShamDFTEigenOperator,
+	#ifdef DFTFE_WITH_GPU
+							 kohnShamDFTEigenOperatorCUDA,
+	#endif
+							 true,
+							 false,
+							 true,
+							 false,
+							 true);
 
-				   ucontainer[irank].reinit(shadowKSRhoMin);
-				   ucontainer[irank]=0;
-				   for (unsigned int i = 0; i < local_size; i++)
-					ucontainer[irank].local_element(i)=(temp1.local_element(i)-temp2.local_element(i))/(2.0*deltalambda);
+					   if (dftParameters::verbosity>=1)
+					      pcout<<"----------End shadow potential energy solve with approx density= n-lamda*v1-------------"<<std::endl;
 
-				   if (dftParameters::verbosity>=1)
-				       pcout<<" Vector norm of response (delta rho_min[n+delta_lambda*v1]/ delta_lambda):  "<<ucontainer[irank].l2_norm()<< " for kernel rank: "<<irank+1<<std::endl;
+					   temp2=dftPtr->d_rhoOutNodalValues;
+					   if (dftParameters::useAtomicRhoXLBOMD)
+					      temp2-=atomicRho;
 
-                                   internalmd::recursiveJApply(ucontainer,
-                                                 vcontainer,
-                                                 k0kernelconstant,
-                                                 vcontainer[irank],
-                                                 irank,
-				                 jv);
+					   temp2.update_ghost_values();
 
-				   ucontainer[irank]-=jv;
-			   }
+					   //normalize shadowKSRhoMin
+					   charge = dftPtr->totalCharge(dftPtr->d_matrixFreeDataPRefined,
+							       temp2);
+					   if (dftParameters::useAtomicRhoXLBOMD)
+					      temp2.add(-charge/dftPtr->d_domainVolume);
+					   else
+					      temp2 *= ((double)dftPtr->numElectrons)/charge; 
 
-                           internalmd::recursiveKernelApply(ucontainer,
-                                                vcontainer,
-                                                k0,
-                                                rhoErrorVec,
-                                                ucontainer.size(),
-				                kernelAction);
+					   ucontainer[irank].reinit(shadowKSRhoMin);
+					   ucontainer[irank]=0;
+					   for (unsigned int i = 0; i < local_size; i++)
+						ucontainer[irank].local_element(i)=(temp1.local_element(i)-temp2.local_element(i))/(2.0*deltalambda);
+
+					   if (dftParameters::verbosity>=1)
+					       pcout<<" Vector norm of response (delta rho_min[n+delta_lambda*v1]/ delta_lambda):  "<<ucontainer[irank].l2_norm()<< " for kernel rank: "<<irank+1<<std::endl;
+
+					   internalmd::recursiveJApply(ucontainer,
+							 vcontainer,
+							 k0kernelconstant,
+							 vcontainer[irank],
+							 irank,
+							 jv);
+
+					   ucontainer[irank]-=jv;
+				   }
+
+				   internalmd::recursiveKernelApply(ucontainer,
+							vcontainer,
+							k0,
+							rhoErrorVec,
+							ucontainer.size(),
+							kernelAction);
+				}
                         }
 
 			rmsErrorRho=std::sqrt(dftPtr->fieldl2Norm(dftPtr->d_matrixFreeDataPRefined,rhoErrorVec)/dftPtr->d_domainVolume);
@@ -1056,7 +1280,25 @@ void molecularDynamics<FEOrder>::run()
 			MPI_Barrier(MPI_COMM_WORLD);
 			xlbomdpost_time = MPI_Wtime() - xlbomdpost_time;
 			if (dftParameters::verbosity>=1)
-			   pcout<<"Time taken for xlbomd post solve operations: "<<xlbomdpost_time<<std::endl; 
+			   pcout<<"Time taken for xlbomd post solve operations: "<<xlbomdpost_time<<std::endl;
+
+
+
+                        if (dftParameters::chkType==3 && !xlbomdHistoryRestart)
+                        {
+                            dftPtr->d_groundStateDensityHistory.pop_front();
+
+			    dftPtr->d_groundStateDensityHistory.push_back(tempVecRestart);
+
+			    for (unsigned int idof = 0; idof < approxDensityContainer[kmax-1].local_size(); idof++)
+			        dftPtr->d_groundStateDensityHistory[kmax-1].local_element(idof)=approxDensityContainer[kmax-1].local_element(idof);
+
+			    dftPtr->d_groundStateDensityHistory[kmax-1].update_ghost_values();
+
+                            writeDensityHistory=true;
+			}
+
+                        isFirstXLBOMDStep=false;
 		    }
             }
             else
@@ -1081,7 +1323,11 @@ void molecularDynamics<FEOrder>::run()
 		    //
 		    //do an scf calculation
 		    //
-		    dftPtr->solve();
+		    dftPtr->solve(kohnShamDFTEigenOperator,
+#ifdef DFTFE_WITH_GPU
+                                  kohnShamDFTEigenOperatorCUDA,
+#endif
+                                  true);
 
 	            shadowKSRhoMin=dftPtr->d_rhoOutNodalValues;
 		    if (dftParameters::useAtomicRhoXLBOMD)
@@ -1138,6 +1384,20 @@ void molecularDynamics<FEOrder>::run()
 	    internalEnergyVector[timeIndex-startingTimeStep] = isXlBOMDStep?shadowPotentialInternalEnergy:dftPtr->d_groundStateEnergy;
 	    entropicEnergyVector[timeIndex-startingTimeStep] = isXlBOMDStep?entropicEnergyShadowPotential:dftPtr->d_entropicEnergy;
             totalEnergyVector[timeIndex-startingTimeStep] = kineticEnergyVector[timeIndex-startingTimeStep] +internalEnergyVector[timeIndex-startingTimeStep] -entropicEnergyVector[timeIndex-startingTimeStep];
+
+            double totalEnergyChangeAutoMesh=0.0;
+            if (dftPtr->d_autoMesh==1)
+            {
+                totalEnergyChangeAutoMesh=(totalEnergyVector[timeIndex-startingTimeStep]-accumTotEnergyCorrection)-totalEnergyVector[timeIndex-startingTimeStep-1];
+                accumTotEnergyCorrection+=totalEnergyChangeAutoMesh;
+            }
+            else if ((timeIndex == (startingTimeStep+1)&& restartFlag==1) && lastInterruptedStepPreviousRunAutoMesh)
+            {
+                totalEnergyChangeAutoMesh=(totalEnergyVector[timeIndex-startingTimeStep]-accumTotEnergyCorrection)-totalEnergyStartingTimeStep;
+                accumTotEnergyCorrection+=totalEnergyChangeAutoMesh;
+            }
+            totalEnergyVector[timeIndex-startingTimeStep]-=accumTotEnergyCorrection;
+
             rmsErrorRhoVector[timeIndex-startingTimeStep] = rmsErrorRho;
             rmsErrorGradRhoVector[timeIndex-startingTimeStep] = rmsErrorGradRho;
 
@@ -1265,7 +1525,7 @@ void molecularDynamics<FEOrder>::run()
 	    std::vector<std::vector<double> > fileVelData(numberGlobalCharges,std::vector<double>(3,0.0));
 	    std::vector<std::vector<double> > fileTemperatureData(1,std::vector<double>(1,0.0));
 	    std::vector<std::vector<double> > timeIndexData(1,std::vector<double>(1,0.0));
-
+            std::vector<std::vector<double> > accumTotEnergyCorrectionData(1,std::vector<double>(1,0.0));
 
 	    for(int iCharge = 0; iCharge < numberGlobalCharges; ++iCharge)
 	      {
@@ -1293,6 +1553,10 @@ void molecularDynamics<FEOrder>::run()
 	    dftUtils::writeDataIntoFile(timeIndexData,
 			               "time.chk");
 
+	    accumTotEnergyCorrectionData[0][0]=accumTotEnergyCorrection;
+	    dftUtils::writeDataIntoFile(accumTotEnergyCorrectionData,
+			               "accumEnergyCorrection.chk");
+
             if (dftParameters::chkType>=1)
 	       dftPtr->writeDomainAndAtomCoordinates();
 
@@ -1306,7 +1570,21 @@ void molecularDynamics<FEOrder>::run()
             step_time = MPI_Wtime() - step_time;
             if (dftParameters::verbosity>=1)
                 pcout<<"Time taken for md step: "<<step_time<<std::endl;
+
+            if (dftParameters::chkType==3 && writeDensityHistory && !xlbomdHistoryRestart)
+            {
+               dftPtr->saveTriaInfoAndRhoNodalData();  
+            }
 	  }
+
+/*
+	 dftPtr->finalizeKohnShamDFTOperator(kohnShamDFTEigenOperator
+#ifdef DFTFE_WITH_GPU
+                                             ,
+					     kohnShamDFTEigenOperatorCUDA
+#endif
+                                             );
+*/
 
 
 

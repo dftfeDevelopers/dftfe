@@ -25,6 +25,11 @@
 #include <dftParameters.h>
 #include <dftUtils.h>
 
+#include <kohnShamDFTOperator.h>
+#ifdef DFTFE_WITH_GPU
+#include <kohnShamDFTOperatorCUDA.h>
+#endif
+
 namespace dftfe {
 
 //
@@ -379,7 +384,18 @@ void geoOptCell<FEOrder>::update(const std::vector<double> & solution, const boo
    d_totalUpdateCalls+=1;
    dftPtr->deformDomain(deformationGradient);
 
-   dftPtr->solve(computeForces);
+   kohnShamDFTOperatorClass<FEOrder> kohnShamDFTEigenOperator(dftPtr,mpi_communicator);
+#ifdef DFTFE_WITH_GPU
+   kohnShamDFTOperatorCUDAClass<FEOrder> kohnShamDFTEigenOperatorCUDA(dftPtr,mpi_communicator);
+#endif
+
+   dftPtr->solve(kohnShamDFTEigenOperator,
+#ifdef DFTFE_WITH_GPU
+          kohnShamDFTEigenOperatorCUDA,
+#endif
+          false,
+          computeForces);
+
    // if ion optimization is on, then for every cell relaxation also relax the atomic forces
    if (dftParameters::isIonOpt)
    {

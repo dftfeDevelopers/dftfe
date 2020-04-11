@@ -169,11 +169,41 @@ namespace dftfe {
       /**
        * @brief Kohn-Sham ground-state solve using SCF iteration
        */
-      void solve(const bool computeForces=true,
+      void solve(kohnShamDFTOperatorClass<FEOrder> & kohnShamDFTEigenOperator,
+#ifdef DFTFE_WITH_GPU
+                 kohnShamDFTOperatorCUDAClass<FEOrder> & kohnShamDFTEigenOperatorCUDA,
+#endif
+                 const bool kohnShamDFTOperatorsInitialized=false,
+                 const bool computeForces=true,
                  const bool solveLinearizedKS=false,
                  const bool restartGroundStateCalcFromChk=false,
                  const bool skipVselfSolveInitLocalPSP=false,
                  const bool rayleighRitzAvoidancePassesXLBOMD=false);
+
+
+      void initializeKohnShamDFTOperator(kohnShamDFTOperatorClass<FEOrder> & kohnShamDFTEigenOperator
+#ifdef DFTFE_WITH_GPU
+                                         ,
+                                         kohnShamDFTOperatorCUDAClass<FEOrder> & kohnShamDFTEigenOperatorCUDA
+#endif
+                                         ,
+                                         const bool initializeCUDAScala=true);
+
+
+      void reInitializeKohnShamDFTOperator(kohnShamDFTOperatorClass<FEOrder> & kohnShamDFTEigenOperator
+#ifdef DFTFE_WITH_GPU
+                                         ,
+                                         kohnShamDFTOperatorCUDAClass<FEOrder> & kohnShamDFTEigenOperatorCUDA
+#endif
+                                         );
+
+
+      void finalizeKohnShamDFTOperator(kohnShamDFTOperatorClass<FEOrder> & kohnShamDFTEigenOperator
+#ifdef DFTFE_WITH_GPU
+                                       ,
+                                       kohnShamDFTOperatorCUDAClass<FEOrder> & kohnShamDFTEigenOperatorCUDA
+#endif
+                                       );
 
       /**
        * @brief Number of Kohn-Sham eigen values to be computed
@@ -904,6 +934,9 @@ namespace dftfe {
 
       // storage for projection of rho cell quadrature data to nodal field
       vectorType d_rhoNodalFieldSpin1;
+
+      // storage of densities for xl-bomd
+      std::deque<vectorType> d_groundStateDensityHistory;
 
       double d_pspTail = 8.0;
       std::map<dealii::CellId, std::vector<double> > d_pseudoVLoc;

@@ -104,7 +104,15 @@ void dftClass<FEOrder>::saveTriaInfoAndRhoNodalData()
 
      tempVec.update_ghost_values();
 
-     solutionVectors.push_back(&tempVec);
+     if (dftParameters::isBOMD && dftParameters::isXLBOMD)
+     {
+        for (unsigned int i = 0; i < d_groundStateDensityHistory.size(); i++)
+            solutionVectors.push_back(&d_groundStateDensityHistory[i]);
+     }
+     else
+     {
+        solutionVectors.push_back(&tempVec);
+     }
 
      d_mesh.saveTriangulationsSolutionVectors(C_num1DKerkerPoly<FEOrder>(),
                                               1,
@@ -273,7 +281,18 @@ void dftClass<FEOrder>::loadTriaInfoAndRhoNodalData()
      //read rho data from checkpoint file
      
      std::vector< vectorType * >  solutionVectors;
-     solutionVectors.push_back(&d_rhoInNodalValuesRead);
+
+     if (dftParameters::isBOMD && dftParameters::isXLBOMD && dftParameters::restartMdFromChk)
+     {
+        d_groundStateDensityHistory.resize(dftParameters::kmaxXLBOMD);
+        for (unsigned int i = 0; i < d_groundStateDensityHistory.size(); i++)
+            solutionVectors.push_back(&d_groundStateDensityHistory[i]);
+     }
+     else
+     {
+        solutionVectors.push_back(&d_rhoInNodalValuesRead);
+     }
+
      d_mesh.loadTriangulationsSolutionVectors(C_num1DKerkerPoly<FEOrder>(),
                                               1,
                                               solutionVectors);

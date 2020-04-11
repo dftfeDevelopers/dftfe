@@ -597,6 +597,56 @@ namespace dftfe
 
   }
 
+  template<unsigned int FEOrder>
+  void kohnShamDFTOperatorCUDAClass<FEOrder>::reinitNoRemesh(const unsigned int numberWaveFunctions)
+  {
+    if(dftParameters::isPseudopotential)
+      {
+        d_cellHamiltonianMatrixNonLocalFlattened.resize(d_totalNonlocalElems*d_numberNodesPerElement*d_maxSingleAtomPseudoWfc,0.0);
+        d_cellHamiltonianMatrixNonLocalFlattenedTranspose.resize(d_totalNonlocalElems*d_numberNodesPerElement*d_maxSingleAtomPseudoWfc,0.0);
+        d_nonLocalPseudoPotentialConstants.resize(d_totalPseudoWfcNonLocal,0.0);
+       
+        unsigned int countElem=0;
+        d_numberCellsNonLocalAtoms.resize(d_totalNonlocalAtomsCurrentProc);
+        for(unsigned int iAtom = 0; iAtom < d_totalNonlocalAtomsCurrentProc; ++iAtom)
+	  {
+	    const unsigned int atomId=dftPtr->d_nonLocalAtomIdsInCurrentProcess[iAtom];
+	    const unsigned int numberPseudoWaveFunctions = dftPtr->d_numberPseudoAtomicWaveFunctions[atomId];
+
+
+	    for(unsigned int ipseudowfc = 0; ipseudowfc < numberPseudoWaveFunctions; ++ipseudowfc)
+	      {
+		const unsigned int id=dftPtr->d_projectorKetTimesVectorPar[0].get_partitioner()->global_to_local(dftPtr->d_projectorIdsNumberingMapCurrentProcess[std::make_pair(atomId,ipseudowfc)]);
+
+		d_nonLocalPseudoPotentialConstants[id]
+                  =dftPtr->d_nonLocalPseudoPotentialConstants[atomId][ipseudowfc];
+	      }
+
+	    for(unsigned int iElemComp = 0; iElemComp < dftPtr->d_elementIteratorsInAtomCompactSupport[atomId].size(); ++iElemComp)
+	      { 
+		for(unsigned int iNode = 0; iNode < d_numberNodesPerElement; ++iNode)
+		  {
+		    for(unsigned int iPseudoWave = 0; iPseudoWave < numberPseudoWaveFunctions; ++iPseudoWave)
+		      {
+			d_cellHamiltonianMatrixNonLocalFlattened[countElem*d_maxSingleAtomPseudoWfc*d_numberNodesPerElement
+								 +d_numberNodesPerElement*iPseudoWave+iNode]
+			  =dftPtr->d_nonLocalProjectorElementMatrices[atomId][iElemComp][d_numberNodesPerElement*iPseudoWave + iNode];
+			d_cellHamiltonianMatrixNonLocalFlattenedTranspose[countElem*d_numberNodesPerElement*d_maxSingleAtomPseudoWfc
+									  +d_maxSingleAtomPseudoWfc*iNode+iPseudoWave]
+			  =dftPtr->d_nonLocalProjectorElementMatricesTranspose[atomId][iElemComp][numberPseudoWaveFunctions*iNode+iPseudoWave];
+		      }
+		  }
+
+		countElem++;
+	      }
+	  }
+
+        d_cellHamiltonianMatrixNonLocalFlattenedDevice=d_cellHamiltonianMatrixNonLocalFlattened;
+        d_cellHamiltonianMatrixNonLocalFlattenedTransposeDevice=d_cellHamiltonianMatrixNonLocalFlattenedTranspose;
+        d_nonLocalPseudoPotentialConstantsDevice=d_nonLocalPseudoPotentialConstants;
+      }
+  }
+
 
   template<unsigned int FEOrder>
   void kohnShamDFTOperatorCUDAClass<FEOrder>::reinit(const unsigned int numberWaveFunctions)

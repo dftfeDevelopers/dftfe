@@ -25,6 +25,11 @@
 #include <dftUtils.h>
 #include <cg_descent_wrapper.h>
 
+#include <kohnShamDFTOperator.h>
+#ifdef DFTFE_WITH_GPU
+#include <kohnShamDFTOperatorCUDA.h>
+#endif
+
 namespace dftfe {
 
   //
@@ -328,8 +333,17 @@ namespace dftfe {
     else if(d_maximumAtomForceToBeRelaxed >= 1e-05)
       dftParameters::selfConsistentSolverTolerance = 5e-06;*/
 
+   kohnShamDFTOperatorClass<FEOrder> kohnShamDFTEigenOperator(dftPtr,mpi_communicator);
+#ifdef DFTFE_WITH_GPU
+   kohnShamDFTOperatorCUDAClass<FEOrder> kohnShamDFTEigenOperatorCUDA(dftPtr,mpi_communicator);
+#endif
 
-    dftPtr->solve(computeForces);
+   dftPtr->solve(kohnShamDFTEigenOperator,
+#ifdef DFTFE_WITH_GPU
+          kohnShamDFTEigenOperatorCUDA,
+#endif
+          false,
+          computeForces);
 
   }
 
