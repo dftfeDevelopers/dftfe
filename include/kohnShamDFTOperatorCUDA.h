@@ -264,6 +264,38 @@ namespace dftfe{
 	        const std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid>  & processGrid,
 	        dealii::ScaLAPACKMatrix<double> & projHamPar);
 
+
+  /**
+     * @brief Compute projection of the operator into a subspace spanned by a given basis.
+     * This routine uses a mixed precision algorithm (https://doi.org/10.1016/j.cpc.2019.07.016).
+     *
+     * @param X Vector of Vectors containing all wavefunction vectors
+     * @param Xb parallel distributed vector datastructure for handling block of wavefunction vectors
+     * @param floatXb parallel distributed vector datastructure for handling block of wavefunction
+     * vectors in single precision
+     * @param HXb parallel distributed vector datastructure for handling H multiplied by block of 
+     * wavefunction vectors
+     * @param projectorKetTimesVector parallel distributed vector datastructure for handling nonlocal 
+     * projector kets times block wavefunction vectors
+     * @param M number of local dofs
+     * @param N total number of wavefunction vectors
+     * @param handle cublasHandle
+     * @param processGrid two-dimensional processor grid corresponding to the parallel projHamPar
+     * @param projHamPar parallel ScaLAPACKMatrix which stores the computed projection
+     * of the operation into the given subspace
+     */
+     void XtHXOffDiagBlockSinglePrec(const double *  X,
+				     cudaVectorType & Xb,
+				     cudaVectorTypeFloat & floatXb,
+				     cudaVectorType & HXb,
+				     cudaVectorType & projectorKetTimesVector,
+				     const unsigned int M,
+				     const unsigned int N,
+				     cublasHandle_t &handle,
+				     const std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid>  & processGrid,
+				     dealii::ScaLAPACKMatrix<double> & projHamPar);
+      
+
     /**
      * @brief Compute projection of the operator into a subspace spanned by a given basis.
      * This routine uses a mixed precision algorithm (https://doi.org/10.1016/j.cpc.2019.07.016)
@@ -296,6 +328,40 @@ namespace dftfe{
                 cublasHandle_t &handle,
 	        const std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid>  & processGrid,
 	        dealii::ScaLAPACKMatrix<double> & projHamPar);
+
+
+     /**
+     * @brief Compute projection of the operator into a subspace spanned by a given basis.
+     * This routine uses a mixed precision algorithm (https://doi.org/10.1016/j.cpc.2019.07.016)
+     * and further overlaps communication and computation.
+     *
+     * @param X Vector of Vectors containing all wavefunction vectors
+     * @param Xb parallel distributed vector datastructure for handling block of wavefunction vectors
+     * @param floatXb parallel distributed vector datastructure for handling block of wavefunction
+     * vectors in single precision
+     * @param HXb parallel distributed vector datastructure for handling H multiplied by block of 
+     * wavefunction vectors
+     * @param projectorKetTimesVector parallel distributed vector datastructure for handling nonlocal 
+     * projector kets times block wavefunction vectors
+     * @param M number of local dofs
+     * @param N total number of wavefunction vectors
+     * @param handle cublasHandle
+     * @param processGrid two-dimensional processor grid corresponding to the parallel projHamPar
+     * @param projHamPar parallel ScaLAPACKMatrix which stores the computed projection
+     * of the operation into the given subspace
+     */
+      void XtHXOffDiagBlockSinglePrecOverlapComputeCommun(const double *  X,
+						     cudaVectorType & Xb,
+						     cudaVectorTypeFloat & floatXb,
+						     cudaVectorType & HXb,
+						     cudaVectorType & projectorKetTimesVector,
+						     const unsigned int M,
+						     const unsigned int N,
+						     cublasHandle_t &handle,
+						     const std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid>  & processGrid,
+						     dealii::ScaLAPACKMatrix<double> & projHamPar);
+      
+      
 #endif
    
 
