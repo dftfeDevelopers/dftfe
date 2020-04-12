@@ -434,6 +434,32 @@ namespace dftfe
              }
       }
 
+      void checkRayleighQuotients(const unsigned int numberVectors,
+                         const double tolCompute,
+                         double * dotarrayH,
+                         double * rayleighQuotientsH,
+                         double * rayleighQuotientsDiffH,
+                         bool & isConvergedToTol)
+      {
+
+             isConvergedToTol=true;
+
+             for (unsigned int i=0; i<numberVectors;++i)
+             {
+                   const double temp=rayleighQuotientsH[i];
+                   //std::cout<<"ytdotxarrayH: "<<ytdotxarrayH[i]<<std::endl;
+                   //std::cout<<"xtdotxarrayH: "<<xtdotxarrayH[i]<<std::endl;
+                   rayleighQuotientsH[i]= dotarrayH[2*i]/dotarrayH[2*i+1];
+                   const double diff=rayleighQuotientsH[i]-temp;
+                   if (std::fabs(diff)>tolCompute)
+                       isConvergedToTol=false;
+
+                   //rayleighQuotientsDiffH[i]=diff;
+             }
+      }
+
+
+
     }
 
  
@@ -719,7 +745,7 @@ namespace dftfe
 #endif
     }
   
-    void chebyshevFilterComputeCommunAvoidance(operatorDFTCUDAClass & operatorMatrix,
+    void chebyshevFilterComputeAvoidance(operatorDFTCUDAClass & operatorMatrix,
 			 cudaVectorType & XArray,
                          cudaVectorType & YArray,
                          cudaVectorType & XArray2,
@@ -791,7 +817,7 @@ namespace dftfe
 		  YArray.begin(),
 		  inc);
 	     
-      const bool useCommunAvoidanceOpt=isXlBOMDLinearizedSolve?communAvoidance:false; 
+      const bool useCommunAvoidanceOpt=isXlBOMDLinearizedSolve?false:false; 
       const double communAvoidanceTolerance=isXlBOMDLinearizedSolve?1e-12:1e-12;
       const double computeAvoidanceTolerance=isXlBOMDLinearizedSolve?1e-10:1e-16;  
       bool isCommunAvoidanceToleranceReached=false;
@@ -1770,6 +1796,814 @@ namespace dftfe
 	      //Handle edge case for the second to last Chebyshev filter iteration as there is no overlap
 	      //algorithm for the next filter iteration.
 	      if (degree==(m-1))
+		{
+
+		  projectorKetTimesVector2.compress(dealii::VectorOperation::add);
+		  projectorKetTimesVector2.update_ghost_values();
+
+		  operatorMatrix.HXCheby(YArray2,
+					 tempFloatArray,
+					 projectorKetTimesVector2,
+					 localVectorSize,
+					 numberVectors,
+					 XArray2,
+					 dftParameters::useMixedPrecCheby,
+					 false,
+					 true);
+		  YArray2.zero_out_ghosts();
+		  if (dftParameters::useMixedPrecCheby)
+		    {
+		      convDoubleArrToFloatArr<<<(numberVectors+255)/256*totalSize,256>>>(numberVectors*totalSize,
+											 XArray2.begin(),
+											 tempFloatArray.begin());
+		      tempFloatArray.compress(dealii::VectorOperation::add);
+
+		      copyFloatArrToDoubleArrLocallyOwned<<<(numberVectors+255)/256*localVectorSize,256>>>(numberVectors,
+													   localVectorSize,
+													   tempFloatArray.begin(),
+													   thrust::raw_pointer_cast(&operatorMatrix.getLocallyOwnedProcBoundaryNodesVectorDevice()[0]),
+													   XArray2.begin());
+
+		      XArray2.zero_out_ghosts();
+		    }
+		  else
+		    XArray2.compress(dealii::VectorOperation::add);
+		  overlap=false;
+		}
+	      else
+		overlap=true;
+	    }
+
+	  XArray1.swap(YArray1);
+	  //Handle edge cases for the first and last iteration involving overlap of communication and computation 
+	  if (!overlap)
+	    {
+	      XArray2.swap(YArray2);
+	    }
+
+      
+	  sigma = sigma2;
+	  alpha1Old=alpha1;
+
+	}
+
+      //copy back YArray to XArray
+      cudaMemcpy(XArray1.begin(),
+		 YArray1.begin(),
+		 totalVectorSize*sizeof(double),
+		 cudaMemcpyDeviceToDevice);
+
+      cudaMemcpy(XArray2.begin(),
+		 YArray2.begin(),
+		 totalVectorSize*sizeof(double),
+		 cudaMemcpyDeviceToDevice);
+#endif
+    }
+
+
+    //
+    // Compute and comunication of two blocks (1) and (2) are overlapped during chebyshev filtering.
+    //
+    void chebyshevFilterComputeAvoidance(operatorDFTCUDAClass & operatorMatrix,
+			 cudaVectorType & XArray1,
+                         cudaVectorType & XArrayCA,
+                         cudaVectorType & YArray1,
+			 cudaVectorTypeFloat & tempFloatArray,
+                         cudaVectorType & projectorKetTimesVector1,
+                         cudaVectorTypeFloat & projectorKetTimesVectorFloat,
+			 cudaVectorType & XArray2,
+                         cudaVectorType & YArray2,
+                         cudaVectorType & projectorKetTimesVector2,
+			 const unsigned int localVectorSize,
+			 const unsigned int numberVectors,
+			 const unsigned int m,
+			 const double a,
+			 const double b,
+			 const double a0,
+                         const bool isXlBOMDLinearizedSolve,
+                         const bool communAvoidance)
+    {
+#ifdef USE_COMPLEX
+      AssertThrow(false,dftUtils::ExcNotImplementedYet());
+#else
+      double e, c, sigma, sigma1, sigma2, gamma, gpu_time;
+      e = (b-a)/2.0; c = (b+a)/2.0;
+      sigma = e/(a0-c); sigma1 = sigma; gamma = 2.0/sigma1;
+      const unsigned int totalVectorSize = localVectorSize*numberVectors;
+      int inc = 1;
+
+      YArray1=0.0;
+      YArray2=0.0;
+ 
+      const unsigned int n_ghosts   = YArray1.get_partitioner()->n_ghost_indices()/numberVectors;
+      const unsigned int totalSize  = localVectorSize + n_ghosts;
+      const unsigned int totalVectorSizeWithGhosts = totalSize*numberVectors;
+
+      const unsigned int localSizeNLP   = projectorKetTimesVector1.local_size()/numberVectors;
+      const unsigned int n_ghosts_nlp   = projectorKetTimesVector1.get_partitioner()->n_ghost_indices()/numberVectors;
+      const unsigned int totalSizeNLP   = localSizeNLP + n_ghosts_nlp;
+
+      const unsigned int this_mpi_process=dealii::Utilities::MPI::this_mpi_process(operatorMatrix.getMPICommunicator());
+      XArrayCA=0;
+      thrust::device_vector<double> onesVecD(localVectorSize,1.0);
+      thrust::device_vector<double> tempArrayD(2*localVectorSize*numberVectors,0.0);
+      thrust::device_vector<double> dotarrayD(2*numberVectors,0.0);
+      std::vector<double> dotarrayH(2*numberVectors,0.0);
+      thrust::device_vector<double> rayleighQuotientsD(numberVectors,0.0);
+      std::vector<double> rayleighQuotientsH(numberVectors,0.0);
+      std::vector<double> rayleighQuotientsDiffH(numberVectors,0.0);
+
+      //
+      //call HX
+      //
+      bool scaleFlag = false;
+      double scalar = 1.0;
+
+      operatorMatrix.HX(XArray1,
+                        projectorKetTimesVector1,
+			localVectorSize,
+			numberVectors,
+			scaleFlag,
+			scalar,
+			YArray1);
+
+      operatorMatrix.HX(XArray2,
+                        projectorKetTimesVector2,
+			localVectorSize,
+			numberVectors,
+			scaleFlag,
+			scalar,
+			YArray2);
+
+      double  alpha1 = sigma1/e, alpha2 = -c;
+      double alpha1Old=alpha1;
+  
+      //
+      //YArray = YArray + alpha2*XArray and YArray = alpha1*YArray
+      //
+      cublasDaxpy(operatorMatrix.getCublasHandle(),
+		  totalVectorSize,
+		  &alpha2,
+		  XArray1.begin(),
+		  inc,
+		  YArray1.begin(),
+		  inc);
+
+      cublasDscal(operatorMatrix.getCublasHandle(),
+		  totalVectorSize,
+		  &alpha1,
+		  YArray1.begin(),
+		  inc);
+
+
+      cublasDaxpy(operatorMatrix.getCublasHandle(),
+		  totalVectorSize,
+		  &alpha2,
+		  XArray2.begin(),
+		  inc,
+		  YArray2.begin(),
+		  inc);
+
+      cublasDscal(operatorMatrix.getCublasHandle(),
+		  totalVectorSize,
+		  &alpha1,
+		  YArray2.begin(),
+		  inc);
+	   
+      const double computeAvoidanceTolerance=isXlBOMDLinearizedSolve?1e-10:1e-14;  
+      bool isComputeAvoidanceToleranceReached=false;
+
+      MPI_Request request;
+      int count=0;
+   
+      bool overlap=false; 
+      //
+      //polynomial loop
+      //
+      for(unsigned int degree = 2; degree < m+1; ++degree)
+	{
+	  sigma2 = 1.0/(gamma - sigma);
+	  alpha1 = 2.0*sigma2/e, alpha2 = -(sigma*sigma2);
+
+
+	  double coeff = -c*alpha1;
+
+	  
+	  if (degree==2)
+	    {
+	      daxpbyCUDAKernel<<<min((totalVectorSize+255)/256,30000),256>>>(totalVectorSize,
+									     YArray1.begin(),
+									     XArray1.begin(),
+          		                                                     coeff,
+		                                                             alpha2);
+
+
+	      //scale src vector with M^{-1/2}
+	      //
+	      scaleCUDAKernel<<<(numberVectors+255)/256*localVectorSize,256>>>(numberVectors,
+									       localVectorSize,
+									       alpha1,
+									       YArray1.begin(),
+									       operatorMatrix.getInvSqrtMassVec());
+
+	      scaleCUDAKernel<<<(numberVectors+255)/256*localVectorSize,256>>>(numberVectors,
+									       localVectorSize,
+									       1.0,
+									       XArray1.begin(),
+									       operatorMatrix.getSqrtMassVec());
+
+	      //
+	      //call HX
+	      //
+	      operatorMatrix.HXCheby(YArray1,
+				     tempFloatArray,
+				     projectorKetTimesVector1,
+				     localVectorSize,
+				     numberVectors,
+				     XArray1,
+				     dftParameters::useMixedPrecCheby);
+
+	      daxpbyCUDAKernel<<<min((totalVectorSize+255)/256,30000),256>>>(totalVectorSize,
+									     YArray2.begin(),
+									     XArray2.begin(),
+									     coeff,
+									     alpha2);
+
+
+	      //scale src vector with M^{-1/2}
+	      //
+	      scaleCUDAKernel<<<(numberVectors+255)/256*localVectorSize,256>>>(numberVectors,
+									       localVectorSize,
+									       alpha1,
+									       YArray2.begin(),
+									       operatorMatrix.getInvSqrtMassVec());
+
+	      scaleCUDAKernel<<<(numberVectors+255)/256*localVectorSize,256>>>(numberVectors,
+									       localVectorSize,
+									       1.0,
+									       XArray2.begin(),
+									       operatorMatrix.getSqrtMassVec());
+
+	      //
+	      //call HX
+	      //
+	      operatorMatrix.HXCheby(YArray2,
+				     tempFloatArray,
+				     projectorKetTimesVector2,
+				     localVectorSize,
+				     numberVectors,
+				     XArray2,
+				     dftParameters::useMixedPrecCheby);
+	      overlap=false;
+	    }
+	  else if (degree==m)
+	    {
+
+	      //unscale src vector with M^{1/2}
+	      //
+	      scaleCUDAKernel<<<(numberVectors+255)/256*localVectorSize,256>>>(numberVectors,
+									       localVectorSize,
+									       1.0/alpha1Old,
+									       XArray1.begin(),
+									       operatorMatrix.getSqrtMassVec());
+
+	      scaleCUDAKernel<<<(numberVectors+255)/256*localVectorSize,256>>>(numberVectors,
+									       localVectorSize,
+									       1.0,
+									       YArray1.begin(),
+									       operatorMatrix.getInvSqrtMassVec());
+
+	      daxpbyCUDAKernel<<<min((totalVectorSize+255)/256,30000),256>>>(totalVectorSize,
+									     YArray1.begin(),
+									     XArray1.begin(),
+									     coeff,
+									     alpha2);
+	      scaleFlag=true;
+	      //
+	      //call HX
+	      //
+	      operatorMatrix.HX(YArray1,
+				projectorKetTimesVector1,
+				localVectorSize,
+				numberVectors,
+				scaleFlag,
+				alpha1,
+				XArray1);
+
+
+	      //unscale src vector with M^{1/2}
+	      //
+	      scaleCUDAKernel<<<(numberVectors+255)/256*localVectorSize,256>>>(numberVectors,
+									       localVectorSize,
+									       1.0/alpha1Old,
+									       XArray2.begin(),
+									       operatorMatrix.getSqrtMassVec());
+
+	      scaleCUDAKernel<<<(numberVectors+255)/256*localVectorSize,256>>>(numberVectors,
+									       localVectorSize,
+									       1.0,
+									       YArray2.begin(),
+									       operatorMatrix.getInvSqrtMassVec());
+
+	      daxpbyCUDAKernel<<<min((totalVectorSize+255)/256,30000),256>>>(totalVectorSize,
+									     YArray2.begin(),
+									     XArray2.begin(),
+									     coeff,
+									     alpha2);
+	      //
+	      //call HX
+	      //
+	      operatorMatrix.HX(YArray2,
+				projectorKetTimesVector2,
+				localVectorSize,
+				numberVectors,
+				scaleFlag,
+				alpha1,
+				XArray2);
+	      overlap=false;
+	    }
+	  else
+	    {
+	      /////////////PSEUDO CODE for the implementation below for Overlapping compute and communication in HX/////////////////
+	      //
+	      // In the algorithm below the communication and computation of two blocks of wavefunctions: block 1 and
+	      // block 2 are overlapped. CM-NB and CM-B denotes non-blocking and blocking communications respectively.
+	      // CP denotes compute. The HX computation is divided into compute part 1 and compute part 2 which are separately
+	      // overlapped. Note that the first and the last iterations of the algorithm are edge cases and are handled 
+	      // a bit differently (Look for step skipped remarks below).
+	      //
+	      // 1) [CM-NB] Initiate compress of nonlocal projectorKetTimesVector of block 2 (skipped in first overlap iteration)  
+	      // 2) [CP] Call combinedCUDAKernel of block 1
+	      // 3) [CM-B] Finish compress of nonlocal projectorKetTimesVector of block 2. (skipped in first overlap iteration) 
+	      // 4) [CM-NB] Call update_ghost_values on nonlocal projectorKetTimesVector of block 2. (skipped in first overlap iteration)
+	      // 5) [CM-NB] Initiate update_ghost_values on wavefunctions of block 1.
+	      // 6) [CP] Call HX compute part 2 on block 2. (skipped in first overlap iteration)
+	      // 7) [CM-B] Finish update_ghost_values on wavefunctions of block 1.
+	      // 8) [CM-NB] Initiate compress on wavefunctions of block 2.
+	      // 9) [CP] Call HX compute part 1 on block 1.
+	      // 10)[CM-B] Finish compress on wavefunctions of block 2.
+	      // 11)[CM-NB] Initiate compress of nonlocal projectorKetTimesVector of block 1.
+	      // 12)[CP] Call combinedCUDAKernel of block 2
+	      // 13)[CM-B] Finish compress of nonlocal projectorKetTimesVector of block 1.
+	      // 14)[CM-NB] Initiate update_ghost_values on wavefunctions of block 2.
+	      // 15)[CP] Call HX compute part 2 on block 1. 
+	      // 16)[CM-B] Finish update_ghost_values on wavefunctions of block 2.
+	      // 17)[CM-NB] Initiate compress on wavefunctions of block 1.
+	      // 18)[CP] Call HX compute part 1 on block 2.
+	      // 19)[CM-B] Finish compress on wavefunctions of block 1. 
+	      // 20) Perform chebyshev recursion related swap and scalar operations and go back to step 1)
+	      //
+	      // Extra steps for second to last chebyshev filter iteration or the last overlapped iteration:
+	      // 21) Call compress and update_ghost_values on projectorKetTimesVector of block 2
+	      // 22) Call HX compute part 2 on block 2.
+	      // 23) Call compress on wavefunctions of block 2.
+	      /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+              if (isComputeAvoidanceToleranceReached)
+              {
+		  //unscale src vector with M^{1/2}
+		  //
+		  scaleCUDAKernel<<<(numberVectors+255)/256*localVectorSize,256>>>(numberVectors,
+										       localVectorSize,
+										       1.0/alpha1Old,
+										       XArray1.begin(),
+										       operatorMatrix.getSqrtMassVec());
+
+		  scaleCUDAKernel<<<(numberVectors+255)/256*localVectorSize,256>>>(numberVectors,
+										       localVectorSize,
+										       1.0,
+										       YArray1.begin(),
+										       operatorMatrix.getInvSqrtMassVec());
+
+		  daxpbyCUDAKernel<<<min((totalVectorSize+255)/256,30000),256>>>(totalVectorSize,
+										     YArray1.begin(),
+										     XArray1.begin(),
+										     coeff,
+										     alpha2);
+		  scaleFlag=true;
+		  //
+		  //call HX
+		  //
+		  operatorMatrix.HX(YArray1,
+				    projectorKetTimesVector1,
+				    localVectorSize,
+				    numberVectors,
+				    scaleFlag,
+				    alpha1,
+				    XArray1);
+
+
+		  //unscale src vector with M^{1/2}
+		  //
+		  scaleCUDAKernel<<<(numberVectors+255)/256*localVectorSize,256>>>(numberVectors,
+										       localVectorSize,
+										       1.0/alpha1Old,
+										       XArray2.begin(),
+										       operatorMatrix.getSqrtMassVec());
+
+		  scaleCUDAKernel<<<(numberVectors+255)/256*localVectorSize,256>>>(numberVectors,
+										       localVectorSize,
+										       1.0,
+										       YArray2.begin(),
+										       operatorMatrix.getInvSqrtMassVec());
+
+		  daxpbyCUDAKernel<<<min((totalVectorSize+255)/256,30000),256>>>(totalVectorSize,
+										     YArray2.begin(),
+										     XArray2.begin(),
+										     coeff,
+										     alpha2);
+		  //
+		  //call HX
+		  //
+		  operatorMatrix.HX(YArray2,
+		 		    projectorKetTimesVector2,
+				    localVectorSize,
+				    numberVectors,
+				    scaleFlag,
+				    alpha1,
+				    XArray2);
+
+		  XArray1.swap(YArray1);
+		  XArray2.swap(YArray2);
+
+                  if (this_mpi_process==0)
+                      std::cout<<"  Skipping Chebyshev polynomial filtering (overlap compute-commun algo) after iter: "<<(degree-1)<<std::endl;
+                  break;
+              }
+
+	      //overlap flag is used to handle the edge case for the very first overlap is performed,
+	      //where the previous chebyshev filtering iteration did not use the overlap algorithm
+	      if (overlap)
+		{
+		  if (dftParameters::useMixedPrecChebyNonLocal)
+		    {
+                      if (totalSizeNLP>0)
+			      convDoubleArrToFloatArr<<<(numberVectors+255)/256*totalSizeNLP,256>>>(numberVectors*totalSizeNLP,
+												    projectorKetTimesVector2.begin(),
+												    projectorKetTimesVectorFloat.begin());
+		      projectorKetTimesVectorFloat.compress_start(dealii::VectorOperation::add);
+		    }
+		  else
+		    projectorKetTimesVector2.compress_start(dealii::VectorOperation::add);
+		}
+
+	      combinedCUDAKernel<<<min((totalVectorSize+255)/256,30000),256>>>(numberVectors,
+									       localVectorSize,
+									       YArray1.begin(),
+									       XArray1.begin(),
+									       coeff,
+									       alpha2,
+									       alpha1,
+									       alpha1Old,
+									       operatorMatrix.getInvSqrtMassVec(),
+									       operatorMatrix.getSqrtMassVec());
+
+
+	      if (overlap)
+		{
+
+		  if (dftParameters::useMixedPrecChebyNonLocal)
+		    {
+		      projectorKetTimesVectorFloat.compress_finish(dealii::VectorOperation::add);
+
+                      if (localSizeNLP>0)
+			     copyFloatArrToDoubleArrLocallyOwned<<<(numberVectors+255)/256*localSizeNLP,256>>>(numberVectors,
+														   localSizeNLP,
+														   projectorKetTimesVectorFloat.begin(),
+														   thrust::raw_pointer_cast(&operatorMatrix.getLocallyOwnedProcProjectorKetBoundaryNodesVectorDevice()[0]),
+														   projectorKetTimesVector2.begin());
+
+		      projectorKetTimesVector2.zero_out_ghosts();
+		    }
+		  else
+                      projectorKetTimesVector2.compress_finish(dealii::VectorOperation::add);
+
+		  if(dftParameters::useMixedPrecChebyNonLocal)
+		    {
+                        if (localSizeNLP>0)
+		           convDoubleArrToFloatArr<<<(numberVectors+255)/256*localSizeNLP,256>>>(numberVectors*localSizeNLP,
+												   projectorKetTimesVector2.begin(),
+												   projectorKetTimesVectorFloat.begin());
+			projectorKetTimesVectorFloat.update_ghost_values();
+
+			if(n_ghosts_nlp>0)
+			   convFloatArrToDoubleArr<<<(numberVectors+255)/256*n_ghosts,256>>>(numberVectors*n_ghosts_nlp,
+								 			    projectorKetTimesVectorFloat.begin()+localSizeNLP*numberVectors,
+											    projectorKetTimesVector2.begin()+localSizeNLP*numberVectors);
+
+
+		      }
+		  else
+		     projectorKetTimesVector2.update_ghost_values();
+		}
+
+	      //unsigned int id2=nvtxRangeStartA("ghost1");
+	      if (dftParameters::useMixedPrecCheby)
+		{
+		  convDoubleArrToFloatArr<<<(numberVectors+255)/256*localVectorSize,256>>>(numberVectors*localVectorSize,
+											   YArray1.begin(),
+											   tempFloatArray.begin());
+		  tempFloatArray.update_ghost_values_start();
+		}
+	      else
+		YArray1.update_ghost_values_start();
+
+	      // call compute part 2 of block 2
+	      if (overlap)
+		operatorMatrix.HXCheby(YArray2,
+				       tempFloatArray,
+				       projectorKetTimesVector2,
+				       localVectorSize,
+				       numberVectors,
+				       XArray2,
+				       dftParameters::useMixedPrecCheby,
+				       false,
+				       true);
+
+	      if (dftParameters::useMixedPrecCheby)
+		{
+		  tempFloatArray.update_ghost_values_finish();
+		  if(n_ghosts!=0)
+		    convFloatArrToDoubleArr<<<(numberVectors+255)/256*n_ghosts,256>>>(numberVectors*n_ghosts,
+										      tempFloatArray.begin()+localVectorSize*numberVectors,
+										      YArray1.begin()+localVectorSize*numberVectors);
+		}
+	      else
+		YArray1.update_ghost_values_finish();
+
+	      if (overlap)
+		YArray2.zero_out_ghosts();
+	      //nvtxRangeEnd(id2);
+
+	      projectorKetTimesVector1=0.0;
+	      //unsigned int id1=nvtxRangeStartA("compress2");
+	      if (overlap)
+		{
+		  if (dftParameters::useMixedPrecCheby)
+		    {
+		      convDoubleArrToFloatArr<<<(numberVectors+255)/256*totalSize,256>>>(numberVectors*totalSize,
+											 XArray2.begin(),
+											 tempFloatArray.begin());
+		      tempFloatArray.compress_start(dealii::VectorOperation::add);
+		    }
+		  else
+		    XArray2.compress_start(dealii::VectorOperation::add);
+		}
+
+	      // call compute part 1 of block 1
+              if ((degree-3)%5==0)
+              {
+		      XArrayCA=0.0;
+		      operatorMatrix.HXCheby(YArray1,
+					     tempFloatArray,
+					     projectorKetTimesVector1,
+					     localVectorSize,
+					     numberVectors,
+					     XArrayCA,
+					     dftParameters::useMixedPrecCheby,
+                                             true,
+                                             false);
+              }  
+              else
+		      operatorMatrix.HXCheby(YArray1,
+					     tempFloatArray,
+					     projectorKetTimesVector1,
+					     localVectorSize,
+					     numberVectors,
+					     XArray1,
+					     dftParameters::useMixedPrecCheby,
+					     true,
+					     false);
+
+	      if (overlap)
+		{
+		  if (dftParameters::useMixedPrecCheby)
+		    {
+		      tempFloatArray.compress_finish(dealii::VectorOperation::add);
+
+		      copyFloatArrToDoubleArrLocallyOwned<<<(numberVectors+255)/256*localVectorSize,256>>>(numberVectors,
+													   localVectorSize,
+													   tempFloatArray.begin(),
+													   thrust::raw_pointer_cast(&operatorMatrix.getLocallyOwnedProcBoundaryNodesVectorDevice()[0]),
+													   XArray2.begin());
+
+		      XArray2.zero_out_ghosts();
+		    }
+		  else
+		    XArray2.compress_finish(dealii::VectorOperation::add);
+		  XArray2.swap(YArray2);
+		}
+	      //nvtxRangeEnd(id1);
+
+	      if (dftParameters::useMixedPrecChebyNonLocal)
+	      {
+                    if (totalSizeNLP>0)
+			    convDoubleArrToFloatArr<<<(numberVectors+255)/256*totalSizeNLP,256>>>(numberVectors*totalSizeNLP,
+												    projectorKetTimesVector1.begin(),
+												    projectorKetTimesVectorFloat.begin());
+	            projectorKetTimesVectorFloat.compress_start(dealii::VectorOperation::add);
+	      }
+	      else
+		    projectorKetTimesVector1.compress_start(dealii::VectorOperation::add);
+
+	      combinedCUDAKernel<<<min((totalVectorSize+255)/256,30000),256>>>(numberVectors,
+									       localVectorSize,
+									       YArray2.begin(),
+									       XArray2.begin(),
+									       coeff,
+									       alpha2,
+									       alpha1,
+									       alpha1Old,
+									       operatorMatrix.getInvSqrtMassVec(),
+									       operatorMatrix.getSqrtMassVec());
+
+	       if (dftParameters::useMixedPrecChebyNonLocal)
+	       {
+		      projectorKetTimesVectorFloat.compress_finish(dealii::VectorOperation::add);
+
+                      if (localSizeNLP>0)
+			      copyFloatArrToDoubleArrLocallyOwned<<<(numberVectors+255)/256*localSizeNLP,256>>>(numberVectors,
+														localSizeNLP,
+														 projectorKetTimesVectorFloat.begin(),
+														 thrust::raw_pointer_cast(&operatorMatrix.getLocallyOwnedProcProjectorKetBoundaryNodesVectorDevice()[0]),
+														 projectorKetTimesVector1.begin());
+
+		      projectorKetTimesVector1.zero_out_ghosts();
+	       }
+	       else
+                      projectorKetTimesVector1.compress_finish(dealii::VectorOperation::add);
+
+	       if(dftParameters::useMixedPrecChebyNonLocal)
+	       {
+                      if (localSizeNLP>0)
+			  convDoubleArrToFloatArr<<<(numberVectors+255)/256*localSizeNLP,256>>>(numberVectors*localSizeNLP,
+												    projectorKetTimesVector1.begin(),
+												    projectorKetTimesVectorFloat.begin());
+		      projectorKetTimesVectorFloat.update_ghost_values();
+
+		      if(n_ghosts_nlp>0)
+			  convFloatArrToDoubleArr<<<(numberVectors+255)/256*n_ghosts,256>>>(numberVectors*n_ghosts_nlp,
+								 			    projectorKetTimesVectorFloat.begin()+localSizeNLP*numberVectors,
+											    projectorKetTimesVector1.begin()+localSizeNLP*numberVectors);
+	       }
+	       else
+		     projectorKetTimesVector1.update_ghost_values();
+
+	      //unsigned int id3=nvtxRangeStartA("ghost2");
+	      if (dftParameters::useMixedPrecCheby)
+		{
+		  convDoubleArrToFloatArr<<<(numberVectors+255)/256*localVectorSize,256>>>(numberVectors*localVectorSize,
+											   YArray2.begin(),
+											   tempFloatArray.begin());
+		  tempFloatArray.update_ghost_values_start();
+		}
+	      else
+		YArray2.update_ghost_values_start(); 
+
+	      // call compute part 2 of block 1
+              if ((degree-3)%5==0)
+              {
+		      operatorMatrix.HXCheby(YArray1,
+					     tempFloatArray,
+					     projectorKetTimesVector1,
+					     localVectorSize,
+					     numberVectors,
+					     XArrayCA,
+					     dftParameters::useMixedPrecCheby,
+					     false,
+					     true);
+              }  
+              else
+		      operatorMatrix.HXCheby(YArray1,
+					     tempFloatArray,
+					     projectorKetTimesVector1,
+					     localVectorSize,
+					     numberVectors,
+					     XArray1,
+					     dftParameters::useMixedPrecCheby,
+					     false,
+					     true);
+
+	      if (dftParameters::useMixedPrecCheby)
+		{
+		  tempFloatArray.update_ghost_values_finish();
+		  if(n_ghosts!=0)
+		    convFloatArrToDoubleArr<<<(numberVectors+255)/256*n_ghosts,256>>>(numberVectors*n_ghosts,
+										      tempFloatArray.begin()+localVectorSize*numberVectors,
+										      YArray2.begin()+localVectorSize*numberVectors);
+		}
+	      else
+		YArray2.update_ghost_values_finish();
+	      YArray1.zero_out_ghosts();
+	      //nvtxRangeEnd(id3);
+
+
+	      projectorKetTimesVector2=0.0;
+
+	      //unsigned int id4=nvtxRangeStartA("compress1");
+	      if (dftParameters::useMixedPrecCheby)
+		{
+		  convDoubleArrToFloatArr<<<(numberVectors+255)/256*totalSize,256>>>(numberVectors*totalSize,
+										     (degree-3)%5==0?XArrayCA.begin():XArray1.begin(),
+										     tempFloatArray.begin());
+		  tempFloatArray.compress_start(dealii::VectorOperation::add);
+		}
+	      else
+                {
+                  if ((degree-3)%5==0)
+                     XArrayCA.compress_start(dealii::VectorOperation::add); 
+                  else
+		     XArray1.compress_start(dealii::VectorOperation::add);
+                }
+
+
+	      // call compute part 1 of block 2
+	      operatorMatrix.HXCheby(YArray2,
+				     tempFloatArray,
+				     projectorKetTimesVector2,
+				     localVectorSize,
+				     numberVectors,
+				     XArray2,
+				     dftParameters::useMixedPrecCheby,
+				     true,
+				     false);
+
+	      if (dftParameters::useMixedPrecCheby)
+		{
+		  tempFloatArray.compress_finish(dealii::VectorOperation::add);
+
+		  copyFloatArrToDoubleArrLocallyOwned<<<(numberVectors+255)/256*localVectorSize,256>>>(numberVectors,
+												       localVectorSize,
+												       tempFloatArray.begin(),
+												       thrust::raw_pointer_cast(&operatorMatrix.getLocallyOwnedProcBoundaryNodesVectorDevice()[0]),
+												       (degree-3)%5==0
+?XArrayCA.begin():XArray1.begin());
+
+                  if ((degree-3)%5==0)
+                     XArrayCA.zero_out_ghosts();
+
+		  XArray1.zero_out_ghosts();
+		}
+	      else
+                {
+                  if ((degree-3)%5==0)
+ 		     XArrayCA.compress_finish(dealii::VectorOperation::add);
+                  else
+ 		     XArray1.compress_finish(dealii::VectorOperation::add);
+                }
+	      //nvtxRangeEnd(id4);
+
+
+              if ((degree-3)%5==0)
+		      daxpbyCUDAKernel<<<min((totalVectorSize+255)/256,30000),256>>>(totalVectorSize,
+										     XArrayCA.begin(),
+										     XArray1.begin(),
+										     1.0,
+										     1.0);  
+
+	      if ((degree-3)%5==0 && count>0)
+	      {
+		      MPI_Wait(&request, MPI_STATUS_IGNORE);
+		      checkRayleighQuotients(numberVectors,
+					     computeAvoidanceTolerance,
+					     &dotarrayH[0],
+					     &rayleighQuotientsH[0],
+					     &rayleighQuotientsDiffH[0],
+					     isComputeAvoidanceToleranceReached);
+
+                      /*
+		      if (this_mpi_process==0)
+		      {
+			 std::cout<<"Chebyshev polynomial iter: "<<degree-5<<std::endl;
+			 for (unsigned int i=0; i<numberVectors;i++)
+			   std::cout<<" Difference of rayleigh quotient from previous iteration for vector: "<<i <<", "<<rayleighQuotientsDiffH[i]<<std::endl;
+		      } 
+                      */
+	      }
+
+
+	      //(YArray^T*M^(-1/2)*H*M^(-1/2)*YArray)/(YArray^T*YArray)
+	      // =(YArray'_i^T*XArray2)/(YArray'^T_i* M*YArray')
+	      if ((degree-3)%5==0)
+	      {
+		     computeRayleighQuotients(operatorMatrix.getCublasHandle(),
+					       YArray1.begin(),
+					       XArrayCA.begin(),
+					       operatorMatrix.getSqrtMassVec(),
+					       thrust::raw_pointer_cast(&onesVecD[0]),
+					       numberVectors,
+					       localVectorSize,
+					       operatorMatrix.getMPICommunicator(),
+					       request,
+					       thrust::raw_pointer_cast(&tempArrayD[0]),
+					       thrust::raw_pointer_cast(&dotarrayD[0]),
+					       &dotarrayH[0]);
+		     count+=1;
+	      }
+
+	      //Handle edge case for the second to last Chebyshev filter iteration as there is no overlap
+	      //algorithm for the next filter iteration.
+	      if (degree==(m-1) || isComputeAvoidanceToleranceReached)
 		{
 
 		  projectorKetTimesVector2.compress(dealii::VectorOperation::add);

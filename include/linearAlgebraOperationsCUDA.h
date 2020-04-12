@@ -271,7 +271,7 @@ namespace dftfe
 			 const double b,
 			 const double a0);
 
-    void chebyshevFilterComputeCommunAvoidance(operatorDFTCUDAClass & operatorMatrix,
+    void chebyshevFilterComputeAvoidance(operatorDFTCUDAClass & operatorMatrix,
 			 cudaVectorType & X,//thrust::device_vector<dataTypes::number> & X,
                          cudaVectorType & Y,
                          cudaVectorType & X2,
@@ -301,6 +301,25 @@ namespace dftfe
 			 const double a,
 			 const double b,
 			 const double a0);
+
+    void chebyshevFilterComputeAvoidance(operatorDFTCUDAClass & operatorMatrix,
+			 cudaVectorType & X1,
+                         cudaVectorType & XArrayCA,
+                         cudaVectorType & Y1,
+                         cudaVectorTypeFloat & Z,
+                         cudaVectorType & projectorKetTimesVector1,
+                         cudaVectorTypeFloat & projectorKetTimesVectorFloat,
+			 cudaVectorType & X2,
+                         cudaVectorType & Y2,
+                         cudaVectorType & projectorKetTimesVector2,
+			 const unsigned int localVectorSize,
+			 const unsigned int numberComponents,
+			 const unsigned int m,
+			 const double a,
+			 const double b,
+			 const double a0,
+                         const bool isXlBOMDLinearizedSolve,
+                         const bool communAvoidance);
 
     void computeEigenResidualNorm(operatorDFTCUDAClass        & operatorMatrix,
 			          double* X,
