@@ -302,6 +302,18 @@ namespace dftfe{
 	        dealii::ScaLAPACKMatrix<double> & projHamPar)=0;
 
 
+    virtual void XtHXOffDiagBlockSinglePrec(const double *  X,
+                cudaVectorType & Xb,
+                cudaVectorTypeFloat & floatXb,
+                cudaVectorType & HXb,
+                cudaVectorType & projectorKetTimesVector,
+                const unsigned int M,
+                const unsigned int N,
+                cublasHandle_t &handle,
+                const std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid>  & processGrid,
+                dealii::ScaLAPACKMatrix<double> & projHamPar)=0;
+
+
     /**
      * @brief Compute projection of the operator into a subspace spanned by a given basis.
      * This routine uses a mixed precision algorithm (https://doi.org/10.1016/j.cpc.2019.07.016)
@@ -334,6 +346,19 @@ namespace dftfe{
                 cublasHandle_t &handle,
 	        const std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid>  & processGrid,
 	        dealii::ScaLAPACKMatrix<double> & projHamPar)=0;
+
+
+    virtual void XtHXOffDiagBlockSinglePrecOverlapComputeCommun(const double *  X,
+                cudaVectorType & Xb,
+                cudaVectorTypeFloat & floatXb,
+                cudaVectorType & HXb,
+                cudaVectorType & projectorKetTimesVector,
+                const unsigned int M,
+                const unsigned int N,
+                cublasHandle_t &handle,
+                const std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid>  & processGrid,
+                dealii::ScaLAPACKMatrix<double> & projHamPar)=0;
+
     /**
      * @brief Compute projection of the operator into a subspace spanned by a given orthogonal basis
      *
