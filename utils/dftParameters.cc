@@ -103,6 +103,7 @@ namespace dftfe {
     bool gpuFineGrainedTimings=false;
     bool allowFullCPUMemSubspaceRot=true;
     bool useMixedPrecCheby=false;
+    bool useMixedPrecChebyNonLocal=false;
     unsigned int mixedPrecXtHXFracStates=0;
     bool overlapComputeCommunCheby=false;
     bool overlapComputeCommunOrthoRR=false;
@@ -663,6 +664,11 @@ namespace dftfe {
 			    Patterns::Bool(),
 			    "[Advanced] Use mixed precision arithmetic in Chebyshev filtering. Currently this option is only available for real executable and USE ELPA=true for which DFT-FE also has to be linked to ELPA library. Default setting is false.");
 
+          prm.declare_entry("USE MIXED PREC CHEBY NON LOCAL", "false",
+                            Patterns::Bool(),
+                            "[Advanced] Use mixed precision arithmetic in non-local HX of Chebyshev filtering. Currently this option is only available for real executable and USE ELPA=true for which DFT-FE also has to be linked to ELPA library. Default setting is false.");
+
+
 	  prm.declare_entry("OVERLAP COMPUTE COMMUN CHEBY", "true",
 			    Patterns::Bool(),
 			    "[Advanced] Overlap communication and computation in Chebyshev filtering. This option can only be activated for USE GPU=true. Default setting is true.");
@@ -970,6 +976,7 @@ namespace dftfe {
 	  dftParameters::useMixedPrecSubspaceRotSpectrumSplit= prm.get_bool("USE MIXED PREC RR_SR SPECTRUM SPLIT");
 	  dftParameters::useMixedPrecSubspaceRotRR= prm.get_bool("USE MIXED PREC RR_SR");
 	  dftParameters::useMixedPrecCheby= prm.get_bool("USE MIXED PREC CHEBY");
+          dftParameters::useMixedPrecChebyNonLocal= prm.get_bool("USE MIXED PREC CHEBY NON LOCAL");
           dftParameters::chebyCommunAvoidanceAlgo= prm.get_bool("COMMUN AVOIDANCE ALGO CHEBY");
           dftParameters::overlapComputeCommunCheby= prm.get_bool("OVERLAP COMPUTE COMMUN CHEBY");
           dftParameters::overlapComputeCommunOrthoRR= prm.get_bool("OVERLAP COMPUTE COMMUN ORTHO RR");

@@ -291,6 +291,7 @@ namespace dftfe
                          cudaVectorType & Y1,
                          cudaVectorTypeFloat & Z,
                          cudaVectorType & projectorKetTimesVector1,
+                         cudaVectorTypeFloat & projectorKetTimesVectorFloat,
 			 cudaVectorType & X2,
                          cudaVectorType & Y2,
                          cudaVectorType & projectorKetTimesVector2,

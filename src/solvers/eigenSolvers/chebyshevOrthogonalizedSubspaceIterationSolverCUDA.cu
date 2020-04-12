@@ -268,6 +268,13 @@ namespace dftfe
 				    projectorKetTimesVector);
 
 
+    cudaVectorTypeFloat  projectorKetTimesVectorFloat;
+    if (dftParameters::useMixedPrecChebyNonLocal)
+	    vectorTools::createDealiiVector(operatorMatrix.getProjectorKetTimesVectorSingle().get_partitioner(),
+					    vectorsBlockSize,
+					    projectorKetTimesVectorFloat);
+
+
     cudaVectorType cudaFlattenedArrayBlock2;
     if (dftParameters::overlapComputeCommunCheby || dftParameters::chebyCommunAvoidanceAlgo)
            cudaFlattenedArrayBlock2.reinit(cudaFlattenedArrayBlock);
@@ -383,6 +390,7 @@ namespace dftfe
 									      YArray,
 									      cudaFlattenedFloatArrayBlock,
 									      projectorKetTimesVector,
+                                                                              projectorKetTimesVectorFloat,
 									      cudaFlattenedArrayBlock2,
 									      YArray2,
 									      projectorKetTimesVector2,
@@ -886,6 +894,14 @@ namespace dftfe
 				    projectorKetTimesVector);
 
 
+
+    cudaVectorTypeFloat  projectorKetTimesVectorFloat;
+    if (dftParameters::useMixedPrecChebyNonLocal)
+	    vectorTools::createDealiiVector(operatorMatrix.getProjectorKetTimesVectorSingle().get_partitioner(),
+					    chebyBlockSize,
+					    projectorKetTimesVectorFloat);
+
+
     cudaVectorType cudaFlattenedArrayBlock2;
     if (dftParameters::overlapComputeCommunCheby || dftParameters::chebyCommunAvoidanceAlgo)
            cudaFlattenedArrayBlock2.reinit(cudaFlattenedArrayBlock);
@@ -998,6 +1014,7 @@ namespace dftfe
 										      YArray,
 										      cudaFlattenedFloatArrayBlock,
 										      projectorKetTimesVector,
+                                                                                      projectorKetTimesVectorFloat,
 										      cudaFlattenedArrayBlock2,
 										      YArray2,
 										      projectorKetTimesVector2,
