@@ -338,6 +338,12 @@ namespace dftfe
   }
 
   template<unsigned int FEOrder>
+  thrust::device_vector<unsigned int> & kohnShamDFTOperatorCUDAClass<FEOrder>::getLocallyOwnedProcProjectorKetBoundaryNodesVectorDevice()
+  {
+    return d_locallyOwnedProcProjectorKetBoundaryNodesVectorDevice;
+  }
+
+  template<unsigned int FEOrder>
   thrust::device_vector<unsigned int> & kohnShamDFTOperatorCUDAClass<FEOrder>::getBoundaryIdToLocalIdMap()
   {
     return d_boundaryIdToLocalIdMapDevice;
@@ -410,11 +416,11 @@ namespace dftfe
 
     thrust::host_vector<unsigned int> locallyOwnedProcBoundaryNodesVector(localSize,0);
 
-    const std::vector<std::pair<unsigned int,unsigned int> > locallyOwnedProcBoundaryNodes = dftPtr->matrix_free_data.get_vector_partitioner()->import_indices();
+    const std::vector<std::pair<unsigned int,unsigned int> > & locallyOwnedProcBoundaryNodes = dftPtr->matrix_free_data.get_vector_partitioner()->import_indices();
 
     for(unsigned int iset = 0; iset < locallyOwnedProcBoundaryNodes.size(); ++iset)
       {
-        std::pair<unsigned int,unsigned int> localIndices = locallyOwnedProcBoundaryNodes[iset];
+        const std::pair<unsigned int,unsigned int> & localIndices = locallyOwnedProcBoundaryNodes[iset];
 	for(unsigned int inode = localIndices.first;inode < localIndices.second; ++inode)
           {
 	    locallyOwnedProcBoundaryNodesVector[inode] = 1;
@@ -460,6 +466,22 @@ namespace dftfe
 							   numberWaveFunctions,
 							   dftPtr->d_projectorKetTimesVectorParFlattened);
 
+
+        thrust::host_vector<unsigned int> locallyOwnedProcProjectorKetBoundaryNodesVector(dftPtr->d_projectorKetTimesVectorPar[0].get_partitioner()->local_size(),0);
+
+        const std::vector<std::pair<unsigned int,unsigned int> > & locallyOwnedProcProjectorKetBoundaryNodes = dftPtr->d_projectorKetTimesVectorPar[0].get_partitioner()->import_indices();
+
+        for(unsigned int iset = 0; iset < locallyOwnedProcProjectorKetBoundaryNodes.size(); ++iset)
+        {
+          const std::pair<unsigned int,unsigned int> & localIndices = locallyOwnedProcProjectorKetBoundaryNodes[iset];
+	  for(unsigned int inode = localIndices.first;inode < localIndices.second; ++inode)
+          {
+	    locallyOwnedProcProjectorKetBoundaryNodesVector[inode] = 1;
+	  }
+        }
+
+        d_locallyOwnedProcProjectorKetBoundaryNodesVectorDevice.resize(dftPtr->d_projectorKetTimesVectorPar[0].get_partitioner()->local_size());
+        d_locallyOwnedProcProjectorKetBoundaryNodesVectorDevice = locallyOwnedProcProjectorKetBoundaryNodesVector;
 
         /* 
 	   vectorTools::createDealiiVector(dftPtr->d_projectorKetTimesVectorPar[0].get_partitioner(),

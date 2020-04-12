@@ -106,6 +106,7 @@ namespace dftfe {
       extern bool gpuFineGrainedTimings;
       extern bool allowFullCPUMemSubspaceRot;
       extern bool useMixedPrecCheby;
+      extern bool useMixedPrecChebyNonLocal;
       extern unsigned int mixedPrecXtHXFracStates;
       extern bool overlapComputeCommunCheby;
       extern bool overlapComputeCommunOrthoRR;

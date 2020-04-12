@@ -102,6 +102,8 @@ namespace dftfe{
 
       thrust::device_vector<unsigned int> & getLocallyOwnedProcBoundaryNodesVectorDevice();
 
+      thrust::device_vector<unsigned int> & getLocallyOwnedProcProjectorKetBoundaryNodesVectorDevice();
+
       /**
        * @brief Compute operator times vector or operator times bunch of vectors
        * @param X Vector of Vectors containing current values of X
@@ -568,6 +570,8 @@ namespace dftfe{
       std::vector<unsigned int> d_macroCellIdToNormalCellIdMap;
 
       thrust::device_vector<unsigned int> d_locallyOwnedProcBoundaryNodesVectorDevice;
+
+      thrust::device_vector<unsigned int> d_locallyOwnedProcProjectorKetBoundaryNodesVectorDevice;
 
       
       /**

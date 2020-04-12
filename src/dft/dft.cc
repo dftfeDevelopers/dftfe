@@ -1276,7 +1276,8 @@ namespace dftfe {
                                 const bool solveLinearizedKS,
                                 const bool isRestartGroundStateCalcFromChk,
                                 const bool skipVselfSolveInitLocalPSP,
-                                const bool rayleighRitzAvoidancePassesXLBOMD)
+                                const bool rayleighRitzAvoidancePassesXLBOMD,
+                                const bool isPerturbationSolveXLBOMD)
   {
     kohnShamDFTOperatorClass<FEOrder> kohnShamDFTEigenOperator(this,mpi_communicator);
 #ifdef DFTFE_WITH_GPU
@@ -1797,7 +1798,7 @@ namespace dftfe {
 							  subspaceIterationSolverCUDA,
 							  residualNormWaveFunctionsAllkPointsSpins[s][kPoint],
                                                           solveLinearizedKS,
-                                                          maxRes>1e-3 && solveLinearizedKS,
+                                                          solveLinearizedKS,
                                                           0, 
 							  (scfIter<dftParameters::spectrumSplitStartingScfIter)?false:true,
 							  true,
@@ -2019,7 +2020,7 @@ namespace dftfe {
 							  subspaceIterationSolverCUDA,
 							  residualNormWaveFunctionsAllkPoints[kPoint],
                                                           solveLinearizedKS,
-                                                           maxRes>1e-3 && solveLinearizedKS,
+                                                          solveLinearizedKS,
                                                           0,
 							  (scfIter<dftParameters::spectrumSplitStartingScfIter)?false:true,
 							  true,
@@ -2454,7 +2455,7 @@ namespace dftfe {
                                                          dftParameters::constraintMagnetization,
                                                          dftParameters::TVal);
 
-    if (dftParameters::isBOMD && dftParameters::isXLBOMD && solveLinearizedKS)
+    if (dftParameters::isBOMD && dftParameters::isXLBOMD && solveLinearizedKS && !isPerturbationSolveXLBOMD)
     {
       d_shadowPotentialEnergy =
         energyCalc.computeShadowPotentialEnergyExtendedLagrangian(dofHandler,
@@ -2497,7 +2498,7 @@ namespace dftfe {
     }
 
 #ifdef DFTFE_WITH_GPU
-     if (dftParameters::useGPU)
+     if (dftParameters::useGPU && dftParameters::isCellStress)
        for(unsigned int kPoint = 0; kPoint < (1+dftParameters::spinPolarized)*d_kPointWeights.size(); ++kPoint)
        {
                vectorToolsCUDA::copyCUDAVecToHostVec(d_eigenVectorsFlattenedCUDA.begin()+kPoint*d_eigenVectorsFlattenedSTL[0].size(),

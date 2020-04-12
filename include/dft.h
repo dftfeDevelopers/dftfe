@@ -178,7 +178,8 @@ namespace dftfe {
                  const bool solveLinearizedKS=false,
                  const bool restartGroundStateCalcFromChk=false,
                  const bool skipVselfSolveInitLocalPSP=false,
-                 const bool rayleighRitzAvoidancePassesXLBOMD=false);
+                 const bool rayleighRitzAvoidancePassesXLBOMD=false,
+                 const bool isPerturbationSolveXLBOMD=false);
 
 
       void initializeKohnShamDFTOperator(kohnShamDFTOperatorClass<FEOrder> & kohnShamDFTEigenOperator
