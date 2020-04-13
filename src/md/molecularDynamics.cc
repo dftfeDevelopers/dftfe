@@ -1028,11 +1028,36 @@ void molecularDynamics<FEOrder>::run()
 			if (dftParameters::verbosity>=1)
 			   pcout<<"----------Start shadow potential energy solve with approx density= n-------------"<<std::endl;
 
-                        double temp;
+                        double temp1p;
+                        bool temp2p;
+                        bool temp3p;
+                        bool temp4p;
+                        bool temp5p;
+                        bool temp6p;
+                        bool temp7p;
+                        bool temp8p;
+                        bool temp9p;
                         if (isFirstXLBOMDStep && xlbomdHistoryRestart)
                         {
-                           temp=dftParameters::chebyshevFilterTolXLBOMD;
+                           temp1p=dftParameters::chebyshevFilterTolXLBOMD;
+			   temp2p=dftParameters::useMixedPrecPGS_SR;
+			   temp3p=dftParameters::useMixedPrecPGS_O;
+			   temp4p=dftParameters::useMixedPrecXTHXSpectrumSplit;
+			   temp5p=dftParameters::useMixedPrecSubspaceRotRR;
+			   temp6p=dftParameters::useMixedPrecCheby;
+			   temp7p=dftParameters::useMixedPrecChebyNonLocal;
+			   temp8p=dftParameters::chebyCommunAvoidanceAlgo;
+			   temp9p=dftParameters::useSinglePrecXtHXOffDiag;
+                           
                            dftParameters::chebyshevFilterTolXLBOMD=1e-9;
+			   dftParameters::useMixedPrecPGS_SR=false;
+			   dftParameters::useMixedPrecPGS_O=false;
+			   dftParameters::useMixedPrecXTHXSpectrumSplit=false;
+			   dftParameters::useMixedPrecSubspaceRotRR=false;
+			   dftParameters::useMixedPrecCheby=false;
+			   dftParameters::useMixedPrecChebyNonLocal=false;
+			   dftParameters::chebyCommunAvoidanceAlgo=false;
+			   dftParameters::useSinglePrecXtHXOffDiag=false;
                         }
 
 			dftPtr->solve(kohnShamDFTEigenOperator,
@@ -1048,7 +1073,15 @@ void molecularDynamics<FEOrder>::run()
 
                         if (isFirstXLBOMDStep && xlbomdHistoryRestart)
                         {
-                           dftParameters::chebyshevFilterTolXLBOMD=temp;
+                           dftParameters::chebyshevFilterTolXLBOMD=temp1p;
+			   dftParameters::useMixedPrecPGS_SR=temp2p;
+			   dftParameters::useMixedPrecPGS_O=temp3p;
+			   dftParameters::useMixedPrecXTHXSpectrumSplit=temp4p;
+			   dftParameters::useMixedPrecSubspaceRotRR=temp5p;
+			   dftParameters::useMixedPrecCheby=temp6p;
+			   dftParameters::useMixedPrecChebyNonLocal=temp7p;
+			   dftParameters::chebyCommunAvoidanceAlgo=temp8p;
+			   dftParameters::useSinglePrecXtHXOffDiag=temp9p;
                         }
 
 			if (dftParameters::verbosity>=1)

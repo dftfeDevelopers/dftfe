@@ -1431,6 +1431,15 @@ namespace dftfe {
     computing_timer.enter_section("scf solve");
 
     const bool performExtraNoMixedPrecNoSpectrumSplitPassInCaseOfXlBOMD=((dftParameters::useMixedPrecXTHXSpectrumSplit || dftParameters::mixedPrecXtHXFracStates!=0) && solveLinearizedKS)?true:false;
+    const bool rrPassesNoMixedPrecXlBOMD=((dftParameters::useMixedPrecPGS_SR
+					 || dftParameters::useMixedPrecPGS_O
+					 || dftParameters::useMixedPrecXTHXSpectrumSplit
+					 || dftParameters::useMixedPrecSubspaceRotRR
+					 || dftParameters::useMixedPrecCheby
+					 || dftParameters::useMixedPrecChebyNonLocal
+					 || dftParameters::chebyCommunAvoidanceAlgo
+					 || dftParameters::useSinglePrecXtHXOffDiag)
+					&& (solveLinearizedKS && !isPerturbationSolveXLBOMD))?true:false;
 
     double firstScfChebyTol=dftParameters::mixingMethod=="ANDERSON_WITH_KERKER"?1e-2:2e-2;
 
