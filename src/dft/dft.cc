@@ -1810,7 +1810,7 @@ namespace dftfe {
                                                           solveLinearizedKS,
                                                           0, 
 							  (scfIter<dftParameters::spectrumSplitStartingScfIter)?false:true,
-							  true,
+							  rrPassesNoMixedPrecXlBOMD?false:true,
 							  scfIter==0);
 #endif
 			    if (!dftParameters::useGPU)
@@ -1821,7 +1821,7 @@ namespace dftfe {
 							  subspaceIterationSolver,
 							  residualNormWaveFunctionsAllkPointsSpins[s][kPoint],
 							  (scfIter<dftParameters::spectrumSplitStartingScfIter)?false:true,
-							  true,
+							  rrPassesNoMixedPrecXlBOMD?false:true,
 							  scfIter==0);
 
 			  }
@@ -2032,7 +2032,7 @@ namespace dftfe {
                                                           solveLinearizedKS,
                                                           0,
 							  (scfIter<dftParameters::spectrumSplitStartingScfIter)?false:true,
-							  true,
+							  rrPassesNoMixedPrecXlBOMD?false:true,
 							  scfIter==0);
 
 #endif
@@ -2044,7 +2044,7 @@ namespace dftfe {
 							  subspaceIterationSolver,
 							  residualNormWaveFunctionsAllkPoints[kPoint],
 							  (scfIter<dftParameters::spectrumSplitStartingScfIter)?false:true,
-							  true,
+							  rrPassesNoMixedPrecXlBOMD?false:true,
 							  scfIter==0);
 
 		      }
