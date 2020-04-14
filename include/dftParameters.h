@@ -132,6 +132,8 @@ namespace dftfe {
       extern unsigned int numberPassesRRSkippedXLBOMD;
       extern bool useSingleFullScfXLBOMD;
       extern bool skipHarmonicOscillatorTermInitialStepsXLBOMD;
+      extern double xlbomdRestartChebyTol;
+      extern bool xlbomdRRPassMixedPrec;
 
       /**
        * Declare parameters.

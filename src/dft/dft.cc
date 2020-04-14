@@ -1438,7 +1438,8 @@ namespace dftfe {
 					 || dftParameters::useMixedPrecCheby
 					 || dftParameters::useMixedPrecChebyNonLocal
 					 || dftParameters::useSinglePrecXtHXOffDiag)
-					&& (solveLinearizedKS && !isPerturbationSolveXLBOMD))?true:false;
+					&& (solveLinearizedKS && !isPerturbationSolveXLBOMD)
+                                        && (!dftParameters::xlbomdRRPassMixedPrec))?true:false;
 
     double firstScfChebyTol=dftParameters::mixingMethod=="ANDERSON_WITH_KERKER"?1e-2:2e-2;
 

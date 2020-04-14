@@ -129,6 +129,8 @@ namespace dftfe {
     unsigned int numberPassesRRSkippedXLBOMD=0;
     bool useSingleFullScfXLBOMD=false;
     bool skipHarmonicOscillatorTermInitialStepsXLBOMD=false;
+    double xlbomdRestartChebyTol=1e-9;
+    bool xlbomdRRPassMixedPrec=false;
 
     void declare_parameters(ParameterHandler &prm)
     {
@@ -739,7 +741,11 @@ namespace dftfe {
 			  Patterns::Bool(),
 			  "[Standard] Perform Extended Lagrangian Born-Oppenheimer NVE molecular dynamics. Currently not implemented for spin-polarization case.");
 
-	prm.declare_entry("CHEBY TOL XL BOMD", "1e-8",
+	prm.declare_entry("CHEBY TOL XL BOMD", "1e-6",
+			  Patterns::Double(0.0),
+			  "[Standard] Parameter specifying the accuracy of the occupied eigenvectors close to the Fermi-energy computed using Chebyshev filtering subspace iteration procedure.");
+
+	prm.declare_entry("CHEBY TOL XL BOMD RESTART", "1e-9",
 			  Patterns::Double(0.0),
 			  "[Standard] Parameter specifying the accuracy of the occupied eigenvectors close to the Fermi-energy computed using Chebyshev filtering subspace iteration procedure.");
 
@@ -790,6 +796,10 @@ namespace dftfe {
         prm.declare_entry("STARTING SINGLE FULL SCF XL BOMD", "false",
                           Patterns::Bool(),
                           "[Standard] Only do first ground-state in full scf for XL BOMD.");
+
+        prm.declare_entry("XL BOMD RR PASS MIXED PREC", "false",
+                          Patterns::Bool(),
+                          "[Standard] Allow mixed precision for RR passes in XL BOMD.");
 
         prm.declare_entry("SKIP HARMONIC OSCILLATOR INITIAL STEPS XL BOMD", "false",
                           Patterns::Bool(),
@@ -1027,7 +1037,9 @@ namespace dftfe {
           dftParameters::ratioOfMeshMovementToForceGaussianBOMD       = prm.get_double("RATIO MESH MOVEMENT TO FORCE GAUSSIAN");    
           dftParameters::useAtomicRhoXLBOMD     = prm.get_bool("USE ATOMIC RHO XL BOMD");   
           dftParameters::useSingleFullScfXLBOMD = prm.get_bool("STARTING SINGLE FULL SCF XL BOMD");
-          dftParameters::skipHarmonicOscillatorTermInitialStepsXLBOMD= prm.get_bool("SKIP HARMONIC OSCILLATOR INITIAL STEPS XL BOMD");  
+          dftParameters::skipHarmonicOscillatorTermInitialStepsXLBOMD= prm.get_bool("SKIP HARMONIC OSCILLATOR INITIAL STEPS XL BOMD"); 
+          dftParameters::xlbomdRestartChebyTol           = prm.get_double("CHEBY TOL XL BOMD RESTART");  
+          dftParameters::xlbomdRRPassMixedPrec           = prm.get_bool("XL BOMD RR PASS MIXED PREC"); 
       }
       prm.leave_subsection ();
 	

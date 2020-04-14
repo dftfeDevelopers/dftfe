@@ -1049,7 +1049,7 @@ void molecularDynamics<FEOrder>::run()
 			   temp8p=dftParameters::chebyCommunAvoidanceAlgo;
 			   temp9p=dftParameters::useSinglePrecXtHXOffDiag;
                            
-                           dftParameters::chebyshevFilterTolXLBOMD=1e-9;
+                           dftParameters::chebyshevFilterTolXLBOMD=dftParameters::xlbomdRestartChebyTol;
 			   dftParameters::useMixedPrecPGS_SR=false;
 			   dftParameters::useMixedPrecPGS_O=false;
 			   dftParameters::useMixedPrecXTHXSpectrumSplit=false;
