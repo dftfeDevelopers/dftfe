@@ -1028,11 +1028,36 @@ void molecularDynamics<FEOrder>::run()
 			if (dftParameters::verbosity>=1)
 			   pcout<<"----------Start shadow potential energy solve with approx density= n-------------"<<std::endl;
 
-                        double temp;
+                        double temp1p;
+                        bool temp2p;
+                        bool temp3p;
+                        bool temp4p;
+                        bool temp5p;
+                        bool temp6p;
+                        bool temp7p;
+                        bool temp8p;
+                        bool temp9p;
                         if (isFirstXLBOMDStep && xlbomdHistoryRestart)
                         {
-                           temp=dftParameters::chebyshevFilterTolXLBOMD;
-                           dftParameters::chebyshevFilterTolXLBOMD=1e-9;
+                           temp1p=dftParameters::chebyshevFilterTolXLBOMD;
+			   temp2p=dftParameters::useMixedPrecPGS_SR;
+			   temp3p=dftParameters::useMixedPrecPGS_O;
+			   temp4p=dftParameters::useMixedPrecXTHXSpectrumSplit;
+			   temp5p=dftParameters::useMixedPrecSubspaceRotRR;
+			   temp6p=dftParameters::useMixedPrecCheby;
+			   temp7p=dftParameters::useMixedPrecChebyNonLocal;
+			   temp8p=dftParameters::chebyCommunAvoidanceAlgo;
+			   temp9p=dftParameters::useSinglePrecXtHXOffDiag;
+                           
+                           dftParameters::chebyshevFilterTolXLBOMD=dftParameters::xlbomdRestartChebyTol;
+			   dftParameters::useMixedPrecPGS_SR=false;
+			   dftParameters::useMixedPrecPGS_O=false;
+			   dftParameters::useMixedPrecXTHXSpectrumSplit=false;
+			   dftParameters::useMixedPrecSubspaceRotRR=false;
+			   dftParameters::useMixedPrecCheby=false;
+			   dftParameters::useMixedPrecChebyNonLocal=false;
+			   dftParameters::chebyCommunAvoidanceAlgo=false;
+			   dftParameters::useSinglePrecXtHXOffDiag=false;
                         }
 
 			dftPtr->solve(kohnShamDFTEigenOperator,
@@ -1048,7 +1073,15 @@ void molecularDynamics<FEOrder>::run()
 
                         if (isFirstXLBOMDStep && xlbomdHistoryRestart)
                         {
-                           dftParameters::chebyshevFilterTolXLBOMD=temp;
+                           dftParameters::chebyshevFilterTolXLBOMD=temp1p;
+			   dftParameters::useMixedPrecPGS_SR=temp2p;
+			   dftParameters::useMixedPrecPGS_O=temp3p;
+			   dftParameters::useMixedPrecXTHXSpectrumSplit=temp4p;
+			   dftParameters::useMixedPrecSubspaceRotRR=temp5p;
+			   dftParameters::useMixedPrecCheby=temp6p;
+			   dftParameters::useMixedPrecChebyNonLocal=temp7p;
+			   dftParameters::chebyCommunAvoidanceAlgo=temp8p;
+			   dftParameters::useSinglePrecXtHXOffDiag=temp9p;
                         }
 
 			if (dftParameters::verbosity>=1)
@@ -1088,6 +1121,14 @@ void molecularDynamics<FEOrder>::run()
                         {
                                 if (dftParameters::kernelUpdateRankXLBOMD>0)
 				{
+				   temp1p=dftParameters::chebyshevFilterTolXLBOMD;
+			           temp6p=dftParameters::useMixedPrecCheby;
+			           temp7p=dftParameters::useMixedPrecChebyNonLocal;
+				   
+				   dftParameters::chebyshevFilterTolXLBOMD=1e-7;
+			           dftParameters::useMixedPrecCheby=false;
+			           dftParameters::useMixedPrecChebyNonLocal=false;
+
 				   const double deltalambda=1e-2*std::sqrt(dftPtr->fieldl2Norm(dftPtr->d_matrixFreeDataPRefined,approxDensityContainer.back())/dftPtr->d_domainVolume);
 
 				   if (dftParameters::verbosity>=1)
@@ -1159,9 +1200,9 @@ void molecularDynamics<FEOrder>::run()
 					      pcout<<"----------Start shadow potential energy solve with approx density= n+lamda*v1-------------"<<std::endl;
 
 					   dftPtr->solve(kohnShamDFTEigenOperator,
-	#ifdef DFTFE_WITH_GPU
+#ifdef DFTFE_WITH_GPU
 							  kohnShamDFTEigenOperatorCUDA,
-	#endif
+#endif
 							  true,
 							  false,
 							  true,
@@ -1224,9 +1265,9 @@ void molecularDynamics<FEOrder>::run()
 					      pcout<<"----------Start shadow potential energy solve with approx density= n-lamda*v1-------------"<<std::endl;
 
 					   dftPtr->solve(kohnShamDFTEigenOperator,
-	#ifdef DFTFE_WITH_GPU
+#ifdef DFTFE_WITH_GPU
 							 kohnShamDFTEigenOperatorCUDA,
-	#endif
+#endif
 							 true,
 							 false,
 							 true,
@@ -1276,6 +1317,10 @@ void molecularDynamics<FEOrder>::run()
 							rhoErrorVec,
 							ucontainer.size(),
 							kernelAction);
+
+				   dftParameters::chebyshevFilterTolXLBOMD=temp1p;
+			           dftParameters::useMixedPrecCheby=temp6p;
+			           dftParameters::useMixedPrecChebyNonLocal=temp7p;
 				}
                         }
 

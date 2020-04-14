@@ -1431,6 +1431,15 @@ namespace dftfe {
     computing_timer.enter_section("scf solve");
 
     const bool performExtraNoMixedPrecNoSpectrumSplitPassInCaseOfXlBOMD=((dftParameters::useMixedPrecXTHXSpectrumSplit || dftParameters::mixedPrecXtHXFracStates!=0) && solveLinearizedKS)?true:false;
+    const bool rrPassesNoMixedPrecXlBOMD=((dftParameters::useMixedPrecPGS_SR
+					 || dftParameters::useMixedPrecPGS_O
+					 || dftParameters::useMixedPrecXTHXSpectrumSplit
+					 || dftParameters::useMixedPrecSubspaceRotRR
+					 || dftParameters::useMixedPrecCheby
+					 || dftParameters::useMixedPrecChebyNonLocal
+					 || dftParameters::useSinglePrecXtHXOffDiag)
+					&& (solveLinearizedKS && !isPerturbationSolveXLBOMD)
+                                        && (!dftParameters::xlbomdRRPassMixedPrec))?true:false;
 
     double firstScfChebyTol=dftParameters::mixingMethod=="ANDERSON_WITH_KERKER"?1e-2:2e-2;
 
@@ -1801,7 +1810,7 @@ namespace dftfe {
                                                           solveLinearizedKS,
                                                           0, 
 							  (scfIter<dftParameters::spectrumSplitStartingScfIter)?false:true,
-							  true,
+							  rrPassesNoMixedPrecXlBOMD?false:true,
 							  scfIter==0);
 #endif
 			    if (!dftParameters::useGPU)
@@ -1812,7 +1821,7 @@ namespace dftfe {
 							  subspaceIterationSolver,
 							  residualNormWaveFunctionsAllkPointsSpins[s][kPoint],
 							  (scfIter<dftParameters::spectrumSplitStartingScfIter)?false:true,
-							  true,
+							  rrPassesNoMixedPrecXlBOMD?false:true,
 							  scfIter==0);
 
 			  }
@@ -2023,7 +2032,7 @@ namespace dftfe {
                                                           solveLinearizedKS,
                                                           0,
 							  (scfIter<dftParameters::spectrumSplitStartingScfIter)?false:true,
-							  true,
+							  rrPassesNoMixedPrecXlBOMD?false:true,
 							  scfIter==0);
 
 #endif
@@ -2035,7 +2044,7 @@ namespace dftfe {
 							  subspaceIterationSolver,
 							  residualNormWaveFunctionsAllkPoints[kPoint],
 							  (scfIter<dftParameters::spectrumSplitStartingScfIter)?false:true,
-							  true,
+							  rrPassesNoMixedPrecXlBOMD?false:true,
 							  scfIter==0);
 
 		      }
