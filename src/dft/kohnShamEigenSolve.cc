@@ -484,10 +484,13 @@ void dftClass<FEOrder>::kohnShamEigenSpaceCompute(const unsigned int spinType,
                                              processGrid,
                                              rowsBlockSize);
 
+
   if (numberRayleighRitzAvoidanceXLBOMDPasses>0)
   {
           bool isFirstPass=false;
-	  subspaceIterationSolverCUDA.solveNoRR(kohnShamDFTEigenOperator,
+          if(dftParameters::useMixedPrecPGS_O && dftParameters::useMixedPrecPGS_SR)
+          {
+	  subspaceIterationSolverCUDA.solveNoRRMixedPrec(kohnShamDFTEigenOperator,
 					d_eigenVectorsFlattenedCUDA.begin()
 					+((1+dftParameters::spinPolarized)*kPointIndex+spinType)*d_eigenVectorsFlattenedSTL[0].size(),
 					d_eigenVectorsFlattenedSTL[0].size(),
@@ -502,6 +505,26 @@ void dftClass<FEOrder>::kohnShamEigenSpaceCompute(const unsigned int spinType,
 					useCommunAvoidanceCheby,
                                         numberRayleighRitzAvoidanceXLBOMDPasses,
 					useMixedPrec);
+          }
+         else
+          {
+            subspaceIterationSolverCUDA.solveNoRR(kohnShamDFTEigenOperator,
+                                        d_eigenVectorsFlattenedCUDA.begin()
+                                        +((1+dftParameters::spinPolarized)*kPointIndex+spinType)*d_eigenVectorsFlattenedSTL[0].size(),
+                                        d_eigenVectorsFlattenedSTL[0].size(),
+                                        d_tempEigenVec,
+                                        d_numEigenValues,
+                                        eigenValuesDummy,
+                                        interBandGroupComm,
+                                        projHamPar,
+                                        overlapMatPar,
+                                        processGrid,
+                                        isXlBOMDLinearizedSolve,
+                                        useCommunAvoidanceCheby,
+                                        numberRayleighRitzAvoidanceXLBOMDPasses,
+                                        useMixedPrec);
+
+         }
   }
   else	  
   {
