@@ -578,7 +578,8 @@ namespace dftfe
 			 const unsigned int m,
 			 const double a,
 			 const double b,
-			 const double a0)
+			 const double a0,
+                         const bool mixedPrecOverall)
     {
 #ifdef USE_COMPLEX
       AssertThrow(false,dftUtils::ExcNotImplementedYet());
@@ -667,7 +668,7 @@ namespace dftfe
 				     localVectorSize,
 				     numberVectors,
 				     XArray,
-				     dftParameters::useMixedPrecCheby);
+				     mixedPrecOverall && dftParameters::useMixedPrecCheby);
 	    }
 	  else if (degree==m)
 	    {
@@ -725,7 +726,7 @@ namespace dftfe
 				     localVectorSize,
 				     numberVectors,
 				     XArray,
-				     dftParameters::useMixedPrecCheby);
+				     mixedPrecOverall && dftParameters::useMixedPrecCheby);
           
 	    }
 
@@ -758,7 +759,8 @@ namespace dftfe
 			 const double b,
 			 const double a0,
                          const bool isXlBOMDLinearizedSolve,
-                         const bool communAvoidance)
+                         const bool communAvoidance,
+                         const bool mixedPrecOverall)
     {
 #ifdef USE_COMPLEX
       AssertThrow(false,dftUtils::ExcNotImplementedYet());
@@ -869,7 +871,7 @@ namespace dftfe
 				     localVectorSize,
 				     numberVectors,
 				     XArray,
-				     dftParameters::useMixedPrecCheby);
+				     mixedPrecOverall && dftParameters::useMixedPrecCheby);
 	    }
 	  else if (degree==m)
 	    {
@@ -1144,7 +1146,7 @@ namespace dftfe
 						     localVectorSize,
 						     numberVectors,
 						     XArray2,
-						     dftParameters::useMixedPrecCheby);
+						     mixedPrecOverall && dftParameters::useMixedPrecCheby);
 
 			      daxpbyCUDAKernel<<<min((totalVectorSize+255)/256,30000),256>>>(totalVectorSize,
 											     XArray2.begin(),
@@ -1160,7 +1162,7 @@ namespace dftfe
 						     localVectorSize,
 						     numberVectors,
 						     XArray,
-						     dftParameters::useMixedPrecCheby);
+						     mixedPrecOverall && dftParameters::useMixedPrecCheby);
                       }          
  
                       if ((degree-3)%5==0 && count>0)
@@ -1252,7 +1254,8 @@ namespace dftfe
 			 const unsigned int m,
 			 const double a,
 			 const double b,
-			 const double a0)
+			 const double a0,
+                         const bool mixedPrecOverall)
     {
 #ifdef USE_COMPLEX
       AssertThrow(false,dftUtils::ExcNotImplementedYet());
@@ -1375,7 +1378,7 @@ namespace dftfe
 				     localVectorSize,
 				     numberVectors,
 				     XArray1,
-				     dftParameters::useMixedPrecCheby);
+				     mixedPrecOverall && dftParameters::useMixedPrecCheby);
 
 	      daxpbyCUDAKernel<<<min((totalVectorSize+255)/256,30000),256>>>(totalVectorSize,
 									     YArray2.begin(),
@@ -1407,7 +1410,7 @@ namespace dftfe
 				     localVectorSize,
 				     numberVectors,
 				     XArray2,
-				     dftParameters::useMixedPrecCheby);
+				     mixedPrecOverall && dftParameters::useMixedPrecCheby);
 	      overlap=false;
 	    }
 	  else if (degree==m)
@@ -1517,7 +1520,7 @@ namespace dftfe
 	      //where the previous chebyshev filtering iteration did not use the overlap algorithm
 	      if (overlap)
 		{
-		  if (dftParameters::useMixedPrecChebyNonLocal)
+		  if (mixedPrecOverall && dftParameters::useMixedPrecChebyNonLocal)
 		    {
                       if (totalSizeNLP>0)
 			      convDoubleArrToFloatArr<<<(numberVectors+255)/256*totalSizeNLP,256>>>(numberVectors*totalSizeNLP,
@@ -1544,7 +1547,7 @@ namespace dftfe
 	      if (overlap)
 		{
 
-		  if (dftParameters::useMixedPrecChebyNonLocal)
+		  if (mixedPrecOverall && dftParameters::useMixedPrecChebyNonLocal)
 		    {
 		      projectorKetTimesVectorFloat.compress_finish(dealii::VectorOperation::add);
 
@@ -1560,7 +1563,7 @@ namespace dftfe
 		  else
                       projectorKetTimesVector2.compress_finish(dealii::VectorOperation::add);
 
-		  if(dftParameters::useMixedPrecChebyNonLocal)
+		  if(mixedPrecOverall && dftParameters::useMixedPrecChebyNonLocal)
 		    {
                         if (localSizeNLP>0)
 		           convDoubleArrToFloatArr<<<(numberVectors+255)/256*localSizeNLP,256>>>(numberVectors*localSizeNLP,
@@ -1580,7 +1583,7 @@ namespace dftfe
 		}
 
 	      //unsigned int id2=nvtxRangeStartA("ghost1");
-	      if (dftParameters::useMixedPrecCheby)
+	      if (mixedPrecOverall && dftParameters::useMixedPrecCheby)
 		{
 		  convDoubleArrToFloatArr<<<(numberVectors+255)/256*localVectorSize,256>>>(numberVectors*localVectorSize,
 											   YArray1.begin(),
@@ -1598,11 +1601,11 @@ namespace dftfe
 				       localVectorSize,
 				       numberVectors,
 				       XArray2,
-				       dftParameters::useMixedPrecCheby,
+				       mixedPrecOverall && dftParameters::useMixedPrecCheby,
 				       false,
 				       true);
 
-	      if (dftParameters::useMixedPrecCheby)
+	      if (mixedPrecOverall && dftParameters::useMixedPrecCheby)
 		{
 		  tempFloatArray.update_ghost_values_finish();
 		  if(n_ghosts!=0)
@@ -1621,7 +1624,7 @@ namespace dftfe
 	      //unsigned int id1=nvtxRangeStartA("compress2");
 	      if (overlap)
 		{
-		  if (dftParameters::useMixedPrecCheby)
+		  if (mixedPrecOverall && dftParameters::useMixedPrecCheby)
 		    {
 		      convDoubleArrToFloatArr<<<(numberVectors+255)/256*totalSize,256>>>(numberVectors*totalSize,
 											 XArray2.begin(),
@@ -1639,13 +1642,13 @@ namespace dftfe
 				     localVectorSize,
 				     numberVectors,
 				     XArray1,
-				     dftParameters::useMixedPrecCheby,
+				     mixedPrecOverall && dftParameters::useMixedPrecCheby,
 				     true,
 				     false);
 
 	      if (overlap)
 		{
-		  if (dftParameters::useMixedPrecCheby)
+		  if (mixedPrecOverall && dftParameters::useMixedPrecCheby)
 		    {
 		      tempFloatArray.compress_finish(dealii::VectorOperation::add);
 
@@ -1663,7 +1666,7 @@ namespace dftfe
 		}
 	      //nvtxRangeEnd(id1);
 
-	      if (dftParameters::useMixedPrecChebyNonLocal)
+	      if (mixedPrecOverall && dftParameters::useMixedPrecChebyNonLocal)
 	      {
                     if (totalSizeNLP>0)
 			    convDoubleArrToFloatArr<<<(numberVectors+255)/256*totalSizeNLP,256>>>(numberVectors*totalSizeNLP,
@@ -1685,7 +1688,7 @@ namespace dftfe
 									       operatorMatrix.getInvSqrtMassVec(),
 									       operatorMatrix.getSqrtMassVec());
 
-	       if (dftParameters::useMixedPrecChebyNonLocal)
+	       if (mixedPrecOverall && dftParameters::useMixedPrecChebyNonLocal)
 	       {
 		      projectorKetTimesVectorFloat.compress_finish(dealii::VectorOperation::add);
 
@@ -1701,7 +1704,7 @@ namespace dftfe
 	       else
                       projectorKetTimesVector1.compress_finish(dealii::VectorOperation::add);
 
-	       if(dftParameters::useMixedPrecChebyNonLocal)
+	       if(mixedPrecOverall && dftParameters::useMixedPrecChebyNonLocal)
 	       {
                       if (localSizeNLP>0)
 			  convDoubleArrToFloatArr<<<(numberVectors+255)/256*localSizeNLP,256>>>(numberVectors*localSizeNLP,
@@ -1718,7 +1721,7 @@ namespace dftfe
 		     projectorKetTimesVector1.update_ghost_values();
 
 	      //unsigned int id3=nvtxRangeStartA("ghost2");
-	      if (dftParameters::useMixedPrecCheby)
+	      if (mixedPrecOverall && dftParameters::useMixedPrecCheby)
 		{
 		  convDoubleArrToFloatArr<<<(numberVectors+255)/256*localVectorSize,256>>>(numberVectors*localVectorSize,
 											   YArray2.begin(),
@@ -1735,11 +1738,11 @@ namespace dftfe
 				     localVectorSize,
 				     numberVectors,
 				     XArray1,
-				     dftParameters::useMixedPrecCheby,
+				     mixedPrecOverall && dftParameters::useMixedPrecCheby,
 				     false,
 				     true);
 
-	      if (dftParameters::useMixedPrecCheby)
+	      if (mixedPrecOverall && dftParameters::useMixedPrecCheby)
 		{
 		  tempFloatArray.update_ghost_values_finish();
 		  if(n_ghosts!=0)
@@ -1756,7 +1759,7 @@ namespace dftfe
 	      projectorKetTimesVector2=0.0;
 
 	      //unsigned int id4=nvtxRangeStartA("compress1");
-	      if (dftParameters::useMixedPrecCheby)
+	      if (mixedPrecOverall && dftParameters::useMixedPrecCheby)
 		{
 		  convDoubleArrToFloatArr<<<(numberVectors+255)/256*totalSize,256>>>(numberVectors*totalSize,
 										     XArray1.begin(),
@@ -1773,11 +1776,11 @@ namespace dftfe
 				     localVectorSize,
 				     numberVectors,
 				     XArray2,
-				     dftParameters::useMixedPrecCheby,
+				     mixedPrecOverall && dftParameters::useMixedPrecCheby,
 				     true,
 				     false);
 
-	      if (dftParameters::useMixedPrecCheby)
+	      if (mixedPrecOverall && dftParameters::useMixedPrecCheby)
 		{
 		  tempFloatArray.compress_finish(dealii::VectorOperation::add);
 
@@ -1807,11 +1810,11 @@ namespace dftfe
 					 localVectorSize,
 					 numberVectors,
 					 XArray2,
-					 dftParameters::useMixedPrecCheby,
+					 mixedPrecOverall && dftParameters::useMixedPrecCheby,
 					 false,
 					 true);
 		  YArray2.zero_out_ghosts();
-		  if (dftParameters::useMixedPrecCheby)
+		  if (mixedPrecOverall && dftParameters::useMixedPrecCheby)
 		    {
 		      convDoubleArrToFloatArr<<<(numberVectors+255)/256*totalSize,256>>>(numberVectors*totalSize,
 											 XArray2.begin(),
@@ -1881,7 +1884,9 @@ namespace dftfe
 			 const double b,
 			 const double a0,
                          const bool isXlBOMDLinearizedSolve,
-                         const bool communAvoidance)
+                         const bool communAvoidance,
+                         const bool mixedPrecOverall,
+                         const double computeAvoidanceTolerance)
     {
 #ifdef USE_COMPLEX
       AssertThrow(false,dftUtils::ExcNotImplementedYet());
@@ -1969,8 +1974,8 @@ namespace dftfe
 		  &alpha1,
 		  YArray2.begin(),
 		  inc);
-	   
-      const double computeAvoidanceTolerance=isXlBOMDLinearizedSolve?1e-10:1e-14;  
+
+      //const double computeAvoidanceTolerance=isXlBOMDLinearizedSolve?1e-9:1e-14;  
       bool isComputeAvoidanceToleranceReached=false;
 
       MPI_Request request;
@@ -2021,7 +2026,7 @@ namespace dftfe
 				     localVectorSize,
 				     numberVectors,
 				     XArray1,
-				     dftParameters::useMixedPrecCheby);
+				     mixedPrecOverall && dftParameters::useMixedPrecCheby);
 
 	      daxpbyCUDAKernel<<<min((totalVectorSize+255)/256,30000),256>>>(totalVectorSize,
 									     YArray2.begin(),
@@ -2053,7 +2058,7 @@ namespace dftfe
 				     localVectorSize,
 				     numberVectors,
 				     XArray2,
-				     dftParameters::useMixedPrecCheby);
+				     mixedPrecOverall && dftParameters::useMixedPrecCheby);
 	      overlap=false;
 	    }
 	  else if (degree==m)
@@ -2235,7 +2240,7 @@ namespace dftfe
 	      //where the previous chebyshev filtering iteration did not use the overlap algorithm
 	      if (overlap)
 		{
-		  if (dftParameters::useMixedPrecChebyNonLocal)
+		  if (mixedPrecOverall && dftParameters::useMixedPrecChebyNonLocal)
 		    {
                       if (totalSizeNLP>0)
 			      convDoubleArrToFloatArr<<<(numberVectors+255)/256*totalSizeNLP,256>>>(numberVectors*totalSizeNLP,
@@ -2262,7 +2267,7 @@ namespace dftfe
 	      if (overlap)
 		{
 
-		  if (dftParameters::useMixedPrecChebyNonLocal)
+		  if (mixedPrecOverall && dftParameters::useMixedPrecChebyNonLocal)
 		    {
 		      projectorKetTimesVectorFloat.compress_finish(dealii::VectorOperation::add);
 
@@ -2278,7 +2283,7 @@ namespace dftfe
 		  else
                       projectorKetTimesVector2.compress_finish(dealii::VectorOperation::add);
 
-		  if(dftParameters::useMixedPrecChebyNonLocal)
+		  if(mixedPrecOverall && dftParameters::useMixedPrecChebyNonLocal)
 		    {
                         if (localSizeNLP>0)
 		           convDoubleArrToFloatArr<<<(numberVectors+255)/256*localSizeNLP,256>>>(numberVectors*localSizeNLP,
@@ -2298,7 +2303,7 @@ namespace dftfe
 		}
 
 	      //unsigned int id2=nvtxRangeStartA("ghost1");
-	      if (dftParameters::useMixedPrecCheby)
+	      if (mixedPrecOverall && dftParameters::useMixedPrecCheby)
 		{
 		  convDoubleArrToFloatArr<<<(numberVectors+255)/256*localVectorSize,256>>>(numberVectors*localVectorSize,
 											   YArray1.begin(),
@@ -2316,11 +2321,11 @@ namespace dftfe
 				       localVectorSize,
 				       numberVectors,
 				       XArray2,
-				       dftParameters::useMixedPrecCheby,
+				       mixedPrecOverall && dftParameters::useMixedPrecCheby,
 				       false,
 				       true);
 
-	      if (dftParameters::useMixedPrecCheby)
+	      if (mixedPrecOverall && dftParameters::useMixedPrecCheby)
 		{
 		  tempFloatArray.update_ghost_values_finish();
 		  if(n_ghosts!=0)
@@ -2339,7 +2344,7 @@ namespace dftfe
 	      //unsigned int id1=nvtxRangeStartA("compress2");
 	      if (overlap)
 		{
-		  if (dftParameters::useMixedPrecCheby)
+		  if (mixedPrecOverall && dftParameters::useMixedPrecCheby)
 		    {
 		      convDoubleArrToFloatArr<<<(numberVectors+255)/256*totalSize,256>>>(numberVectors*totalSize,
 											 XArray2.begin(),
@@ -2360,7 +2365,7 @@ namespace dftfe
 					     localVectorSize,
 					     numberVectors,
 					     XArrayCA,
-					     dftParameters::useMixedPrecCheby,
+					     mixedPrecOverall && dftParameters::useMixedPrecCheby,
                                              true,
                                              false);
               }  
@@ -2371,13 +2376,13 @@ namespace dftfe
 					     localVectorSize,
 					     numberVectors,
 					     XArray1,
-					     dftParameters::useMixedPrecCheby,
+					     mixedPrecOverall && dftParameters::useMixedPrecCheby,
 					     true,
 					     false);
 
 	      if (overlap)
 		{
-		  if (dftParameters::useMixedPrecCheby)
+		  if (mixedPrecOverall && dftParameters::useMixedPrecCheby)
 		    {
 		      tempFloatArray.compress_finish(dealii::VectorOperation::add);
 
@@ -2395,7 +2400,7 @@ namespace dftfe
 		}
 	      //nvtxRangeEnd(id1);
 
-	      if (dftParameters::useMixedPrecChebyNonLocal)
+	      if (mixedPrecOverall && dftParameters::useMixedPrecChebyNonLocal)
 	      {
                     if (totalSizeNLP>0)
 			    convDoubleArrToFloatArr<<<(numberVectors+255)/256*totalSizeNLP,256>>>(numberVectors*totalSizeNLP,
@@ -2417,7 +2422,7 @@ namespace dftfe
 									       operatorMatrix.getInvSqrtMassVec(),
 									       operatorMatrix.getSqrtMassVec());
 
-	       if (dftParameters::useMixedPrecChebyNonLocal)
+	       if (mixedPrecOverall && dftParameters::useMixedPrecChebyNonLocal)
 	       {
 		      projectorKetTimesVectorFloat.compress_finish(dealii::VectorOperation::add);
 
@@ -2433,7 +2438,7 @@ namespace dftfe
 	       else
                       projectorKetTimesVector1.compress_finish(dealii::VectorOperation::add);
 
-	       if(dftParameters::useMixedPrecChebyNonLocal)
+	       if(mixedPrecOverall && dftParameters::useMixedPrecChebyNonLocal)
 	       {
                       if (localSizeNLP>0)
 			  convDoubleArrToFloatArr<<<(numberVectors+255)/256*localSizeNLP,256>>>(numberVectors*localSizeNLP,
@@ -2450,7 +2455,7 @@ namespace dftfe
 		     projectorKetTimesVector1.update_ghost_values();
 
 	      //unsigned int id3=nvtxRangeStartA("ghost2");
-	      if (dftParameters::useMixedPrecCheby)
+	      if (mixedPrecOverall && dftParameters::useMixedPrecCheby)
 		{
 		  convDoubleArrToFloatArr<<<(numberVectors+255)/256*localVectorSize,256>>>(numberVectors*localVectorSize,
 											   YArray2.begin(),
@@ -2469,7 +2474,7 @@ namespace dftfe
 					     localVectorSize,
 					     numberVectors,
 					     XArrayCA,
-					     dftParameters::useMixedPrecCheby,
+					     mixedPrecOverall && dftParameters::useMixedPrecCheby,
 					     false,
 					     true);
               }  
@@ -2480,11 +2485,11 @@ namespace dftfe
 					     localVectorSize,
 					     numberVectors,
 					     XArray1,
-					     dftParameters::useMixedPrecCheby,
+					     mixedPrecOverall && dftParameters::useMixedPrecCheby,
 					     false,
 					     true);
 
-	      if (dftParameters::useMixedPrecCheby)
+	      if (mixedPrecOverall && dftParameters::useMixedPrecCheby)
 		{
 		  tempFloatArray.update_ghost_values_finish();
 		  if(n_ghosts!=0)
@@ -2501,7 +2506,7 @@ namespace dftfe
 	      projectorKetTimesVector2=0.0;
 
 	      //unsigned int id4=nvtxRangeStartA("compress1");
-	      if (dftParameters::useMixedPrecCheby)
+	      if (mixedPrecOverall && dftParameters::useMixedPrecCheby)
 		{
 		  convDoubleArrToFloatArr<<<(numberVectors+255)/256*totalSize,256>>>(numberVectors*totalSize,
 										     (degree-3)%5==0?XArrayCA.begin():XArray1.begin(),
@@ -2524,11 +2529,11 @@ namespace dftfe
 				     localVectorSize,
 				     numberVectors,
 				     XArray2,
-				     dftParameters::useMixedPrecCheby,
+				     mixedPrecOverall && dftParameters::useMixedPrecCheby,
 				     true,
 				     false);
 
-	      if (dftParameters::useMixedPrecCheby)
+	      if (mixedPrecOverall && dftParameters::useMixedPrecCheby)
 		{
 		  tempFloatArray.compress_finish(dealii::VectorOperation::add);
 
@@ -2615,11 +2620,11 @@ namespace dftfe
 					 localVectorSize,
 					 numberVectors,
 					 XArray2,
-					 dftParameters::useMixedPrecCheby,
+					 mixedPrecOverall && dftParameters::useMixedPrecCheby,
 					 false,
 					 true);
 		  YArray2.zero_out_ghosts();
-		  if (dftParameters::useMixedPrecCheby)
+		  if (mixedPrecOverall && dftParameters::useMixedPrecCheby)
 		    {
 		      convDoubleArrToFloatArr<<<(numberVectors+255)/256*totalSize,256>>>(numberVectors*totalSize,
 											 XArray2.begin(),

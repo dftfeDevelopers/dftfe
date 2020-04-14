@@ -1437,7 +1437,6 @@ namespace dftfe {
 					 || dftParameters::useMixedPrecSubspaceRotRR
 					 || dftParameters::useMixedPrecCheby
 					 || dftParameters::useMixedPrecChebyNonLocal
-					 || dftParameters::chebyCommunAvoidanceAlgo
 					 || dftParameters::useSinglePrecXtHXOffDiag)
 					&& (solveLinearizedKS && !isPerturbationSolveXLBOMD))?true:false;
 

@@ -1121,6 +1121,14 @@ void molecularDynamics<FEOrder>::run()
                         {
                                 if (dftParameters::kernelUpdateRankXLBOMD>0)
 				{
+				   temp1p=dftParameters::chebyshevFilterTolXLBOMD;
+			           temp6p=dftParameters::useMixedPrecCheby;
+			           temp7p=dftParameters::useMixedPrecChebyNonLocal;
+				   
+				   dftParameters::chebyshevFilterTolXLBOMD=1e-7;
+			           dftParameters::useMixedPrecCheby=false;
+			           dftParameters::useMixedPrecChebyNonLocal=false;
+
 				   const double deltalambda=1e-2*std::sqrt(dftPtr->fieldl2Norm(dftPtr->d_matrixFreeDataPRefined,approxDensityContainer.back())/dftPtr->d_domainVolume);
 
 				   if (dftParameters::verbosity>=1)
@@ -1192,9 +1200,9 @@ void molecularDynamics<FEOrder>::run()
 					      pcout<<"----------Start shadow potential energy solve with approx density= n+lamda*v1-------------"<<std::endl;
 
 					   dftPtr->solve(kohnShamDFTEigenOperator,
-	#ifdef DFTFE_WITH_GPU
+#ifdef DFTFE_WITH_GPU
 							  kohnShamDFTEigenOperatorCUDA,
-	#endif
+#endif
 							  true,
 							  false,
 							  true,
@@ -1257,9 +1265,9 @@ void molecularDynamics<FEOrder>::run()
 					      pcout<<"----------Start shadow potential energy solve with approx density= n-lamda*v1-------------"<<std::endl;
 
 					   dftPtr->solve(kohnShamDFTEigenOperator,
-	#ifdef DFTFE_WITH_GPU
+#ifdef DFTFE_WITH_GPU
 							 kohnShamDFTEigenOperatorCUDA,
-	#endif
+#endif
 							 true,
 							 false,
 							 true,
@@ -1309,6 +1317,10 @@ void molecularDynamics<FEOrder>::run()
 							rhoErrorVec,
 							ucontainer.size(),
 							kernelAction);
+
+				   dftParameters::chebyshevFilterTolXLBOMD=temp1p;
+			           dftParameters::useMixedPrecCheby=temp6p;
+			           dftParameters::useMixedPrecChebyNonLocal=temp7p;
 				}
                         }
 
