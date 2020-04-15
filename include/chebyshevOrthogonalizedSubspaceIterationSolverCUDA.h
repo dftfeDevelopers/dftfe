@@ -96,6 +96,20 @@ namespace dftfe
                const unsigned int numberPasses,
                const bool useMixedPrecOverall);
 
+
+    void solveNoRRMixedPrec(operatorDFTCUDAClass & operatorMatrix,
+               double* eigenVectorsFlattenedCUDA,
+               const unsigned int flattenedSize,
+               vectorType & tempEigenVec,
+               const unsigned int totalNumberWaveFunctions,
+               std::vector<double> & eigenValues,
+               const MPI_Comm &interBandGroupComm,
+               const bool isXlBOMDLinearizedSolve,
+               const bool useCommunAvoidanceCheby,
+               const unsigned int numberPasses,
+               const bool useMixedPrecOverall);
+
+
     /**
      * @brief reinit spectrum bounds
      */
