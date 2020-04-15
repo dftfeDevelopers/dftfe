@@ -488,7 +488,7 @@ void dftClass<FEOrder>::kohnShamEigenSpaceCompute(const unsigned int spinType,
   if (numberRayleighRitzAvoidanceXLBOMDPasses>0)
   {
           bool isFirstPass=false;
-          if(dftParameters::useMixedPrecPGS_O && dftParameters::useMixedPrecPGS_SR)
+          if(dftParameters::useAsyncChebPGS_SR && dftParameters::useMixedPrecPGS_SR)
           {
 	  subspaceIterationSolverCUDA.solveNoRRMixedPrec(kohnShamDFTEigenOperator,
 					d_eigenVectorsFlattenedCUDA.begin()
@@ -498,12 +498,9 @@ void dftClass<FEOrder>::kohnShamEigenSpaceCompute(const unsigned int spinType,
 					d_numEigenValues,
 					eigenValuesDummy,
 					interBandGroupComm,
-					projHamPar,
-					overlapMatPar,
-					processGrid,
 					isXlBOMDLinearizedSolve,
 					useCommunAvoidanceCheby,
-                                        numberRayleighRitzAvoidanceXLBOMDPasses,
+                                        numberRayleighRitzAvoidanceXLBOMDPasses+1,
 					useMixedPrec);
           }
          else

@@ -86,6 +86,7 @@ namespace dftfe {
     bool useHigherQuadNLP=true;
     bool useMixedPrecPGS_SR=false;
     bool useMixedPrecPGS_O=false;
+    bool useAsyncChebPGS_SR = false;
     bool useMixedPrecXTHXSpectrumSplit=false;
     bool useMixedPrecSubspaceRotSpectrumSplit=false;
     bool useMixedPrecSubspaceRotRR=false;
@@ -680,6 +681,11 @@ namespace dftfe {
 			    Patterns::Bool(),
 			    "[Advanced] Overlap communication and computation in Chebyshev filtering. This option can only be activated for USE GPU=true. Default setting is true.");
 
+
+          prm.declare_entry("OVERLAP CHEB PGS SR","false",
+                            Patterns::Bool(),
+	                   "[Advanced] Overlap Chebyshev filtering and subspace rotation. This option can only be activated when RR step is skipped for certial problems. Default setting is false.");
+
 	  prm.declare_entry("COMMUN AVOIDANCE ALGO CHEBY", "false",
 			    Patterns::Bool(),
 			    "[Advanced] Communication avoidance algorithm. Not implemented for OVERLAP COMPUTE COMMUN CHEBY=true.");
@@ -993,6 +999,7 @@ namespace dftfe {
 	  dftParameters::useMixedPrecCheby= prm.get_bool("USE MIXED PREC CHEBY");
           dftParameters::useMixedPrecChebyNonLocal= prm.get_bool("USE MIXED PREC CHEBY NON LOCAL");
           dftParameters::chebyCommunAvoidanceAlgo= prm.get_bool("COMMUN AVOIDANCE ALGO CHEBY");
+          dftParameters::useAsyncChebPGS_SR = prm.get_bool("OVERLAP CHEB PGS SR");
 	  dftParameters::useSinglePrecXtHXOffDiag=prm.get_bool("USE SINGLE PREC XTHX OFF DIAGONAL");
           dftParameters::overlapComputeCommunCheby= prm.get_bool("OVERLAP COMPUTE COMMUN CHEBY");
           dftParameters::overlapComputeCommunOrthoRR= prm.get_bool("OVERLAP COMPUTE COMMUN ORTHO RR");

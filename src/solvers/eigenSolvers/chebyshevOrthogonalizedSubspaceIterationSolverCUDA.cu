@@ -1264,9 +1264,6 @@ namespace dftfe
 							    const unsigned int totalNumberWaveFunctions,
 							    std::vector<double>        & eigenValues,
 							    const MPI_Comm &interBandGroupComm,
-                                                            dealii::ScaLAPACKMatrix<double> & projHamPar,
-                                                            dealii::ScaLAPACKMatrix<double> & overlapMatPar,
-                                                            const std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid> & processGrid,
                                                             const bool isXlBOMDLinearizedSolve,
                                                             const bool useCommunAvoidanceCheby,
                                                             const unsigned int numberPasses,
@@ -1319,6 +1316,11 @@ namespace dftfe
 
     cudaVectorType YArray;
     YArray.reinit(cudaFlattenedArrayBlock);
+
+
+     cudaVectorType YArrayCA;
+    if (dftParameters::chebyCommunAvoidanceAlgo) 
+         YArrayCA.reinit(cudaFlattenedArrayBlock);
 
     cudaVectorTypeFloat cudaFlattenedFloatArrayBlock;
     vectorTools::createDealiiVector(operatorMatrix.getMatrixFreeData()->get_vector_partitioner(),
@@ -1397,30 +1399,68 @@ namespace dftfe
 										eigenVectorsFlattenedCUDA,
 										operatorMatrix.getSqrtMassVec());
 
+      const unsigned int M = localVectorSize;
+      const unsigned int N = totalNumberWaveFunctions;
+
+      unsigned int vectorsBlockSize=std::min(dftParameters::wfcBlockSize,
+                                                   N);
+
+      const unsigned int maxNumLocalDofs=dealii::Utilities::MPI::max(M,operatorMatrix.getMPICommunicator());
+
+      const unsigned int dofsBlockSize=std::min(maxNumLocalDofs,
+                                                dftParameters::subspaceRotDofsBlockSize);
+
+      const float scalarCoeffAlphaSP = 1.0,scalarCoeffBetaSP = 0.0;
+
+     thrust::device_vector<float> rotationMatBlockSP(vectorsBlockSize*N,0.0);
+     thrust::device_vector<float> rotatedVectorsMatBlockSP(vectorsBlockSize*dofsBlockSize,0.0);
+
+     float * rotationMatBlockHostSP;
+     cudaMallocHost((void **)&rotationMatBlockHostSP,vectorsBlockSize*N*sizeof(float));
+     std::memset(rotationMatBlockHostSP,0,vectorsBlockSize*N*sizeof(float));
+
+
+     thrust::device_vector<double> diagValues(N,0.0);
+     double * diagValuesHost;
+     cudaMallocHost((void **)&diagValuesHost,N*sizeof(double));
+     std::memset(diagValuesHost,0,N*sizeof(double));
+
+     const unsigned int MPadded=std::ceil(M*1.0/8.0)*8.0+0.5;
+
+     thrust::device_vector<float> XSP(MPadded*N,0.0);
+
+
+     std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid> processGrid;
+
+     const unsigned int rowsBlockSize=operatorMatrix.getScalapackBlockSize();
+     linearAlgebraOperationsCUDA::internal::createProcessGridSquareMatrix(operatorMatrix.getMPICommunicator(),
+                                                                          N,
+                                                                          processGrid);
+
+     dealii::ScaLAPACKMatrix<double> LMatPar(N,
+                                             processGrid,
+                                             rowsBlockSize);
+
+
+     dealii::ScaLAPACKMatrix<double> overlapMatPar(N,
+                                                   processGrid,
+                                                   rowsBlockSize);
+
+
 
     for (unsigned int ipass = 0; ipass < numberPasses; ipass++)
     {
             if (this_process==0 && dftParameters::verbosity>=1)
-               std::cout<<"Beginning no RR Chebyshev filter subpspace iteration pass: "<<ipass<<std::endl;
+               std::cout<<"Beginning no RR Chebyshev filter subpspace iteration pass: "<<ipass+1<<std::endl;
 
-	    
-	    const unsigned int M = localVectorSize;
-	    const unsigned int N = totalNumberWaveFunctions;
 
-            unsigned int vectorsBlockSize=std::min(dftParameters::wfcBlockSize,
-				                   N);
+            double computeAvoidanceTolerance=1e-8;
+            if (ipass>=2 && ipass<4)
+               computeAvoidanceTolerance=1e-10;
+            else if (ipass>=4)
+               computeAvoidanceTolerance=1e-12;
 
-            const unsigned int maxNumLocalDofs=dealii::Utilities::MPI::max(M,operatorMatrix.getMPICommunicator());
 
-	    const unsigned int dofsBlockSize=std::min(maxNumLocalDofs,
-						      dftParameters::subspaceRotDofsBlockSize);
-
-	    const float scalarCoeffAlphaSP = 1.0,scalarCoeffBetaSP = 0.0;
-
-	    const unsigned int MPadded=std::ceil(M*1.0/8.0)*8.0+0.5;
-
-	    //think if you need to do this iPass > 0
-	    thrust::device_vector<float> XSP(MPadded*N,0.0);
 
 	    convDoubleArrToFloatArr<<<(N+255)/256*M,256>>>(N*M,
 							   eigenVectorsFlattenedCUDA,
@@ -1433,19 +1473,6 @@ namespace dftfe
                 MPI_Barrier(MPI_COMM_WORLD);
                 gpu_time = MPI_Wtime();
              }
-            const unsigned int rowsBlockSize=operatorMatrix.getScalapackBlockSize();
-            std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid>  processGrid;
-            linearAlgebraOperationsCUDA::internal::createProcessGridSquareMatrix(operatorMatrix.getMPICommunicator(),
-                                                                                 N,
-                                                                                 processGrid);
-            dealii::ScaLAPACKMatrix<double> LMatPar(N,
-                                                    processGrid,
-                                                    rowsBlockSize);
-
-            
-            dealii::ScaLAPACKMatrix<double> overlapMatPar(N,
-                                                          processGrid,
-                                                          rowsBlockSize);
 
 
              if(dftParameters::gpuFineGrainedTimings)
@@ -1602,11 +1629,6 @@ namespace dftfe
 											globalToLocalColumnIdMap);
            if(ipass > 0)
             {
-		thrust::device_vector<double> diagValues(N,0.0);
-		double * diagValuesHost;
-		cudaMallocHost((void **)&diagValuesHost,N*sizeof(double));
-		std::memset(diagValuesHost,0,N*sizeof(double));
-
 		//Extract DiagQ from parallel ScaLAPACK matrix Q
 		if(LMatPar.get_property()==dealii::LAPACKSupport::Property::upper_triangular)
 		  {
@@ -1665,13 +1687,6 @@ namespace dftfe
 
 	      }//end of iPass condition
 
-	    thrust::device_vector<float> rotationMatBlockSP(vectorsBlockSize*N,0.0);
-	    thrust::device_vector<float> rotatedVectorsMatBlockSP(vectorsBlockSize*dofsBlockSize,0.0);
-
-	    float * rotationMatBlockHostSP;
-	    cudaMallocHost((void **)&rotationMatBlockHostSP,vectorsBlockSize*N*sizeof(float));
-	    std::memset(rotationMatBlockHostSP,0,vectorsBlockSize*N*sizeof(float));
-	    
 	    
 	    //think you have to modify ivec limits
 	    unsigned int iVecLimit = vectorsBlockSize;
@@ -1837,49 +1852,80 @@ namespace dftfe
 				//call Chebyshev filtering function only for the current block or two simulataneous blocks
 				//(in case of overlap computation and communication) to be filtered and does in-place filtering
 				if (dftParameters::overlapComputeCommunCheby && numSimultaneousBlocksCurrent==2)
-				  linearAlgebraOperationsCUDA::chebyshevFilter(operatorMatrix,
-									       cudaFlattenedArrayBlock,
-									       YArray,
-									       cudaFlattenedFloatArrayBlock,
-									       projectorKetTimesVector,
-                                                                               projectorKetTimesVectorFloat,
-									       cudaFlattenedArrayBlock2,
-									       YArray2,
-									       projectorKetTimesVector2,
-									       localVectorSize,
-									       BVec,
-									       chebyshevOrder,
-									       d_lowerBoundUnWantedSpectrum,
-									       upperBoundUnwantedSpectrum,
-									       d_lowerBoundWantedSpectrum);	
-				else if (dftParameters::chebyCommunAvoidanceAlgo)
-				  linearAlgebraOperationsCUDA::chebyshevFilterComputeAvoidance(operatorMatrix,
-											cudaFlattenedArrayBlock,
-								                        YArray,
-								                        cudaFlattenedArrayBlock2,
-								                        cudaFlattenedFloatArrayBlock,
-									                projectorKetTimesVector,
-									                localVectorSize,
-										        BVec,
-										        chebyshevOrder,
-									                d_lowerBoundUnWantedSpectrum,
-											upperBoundUnwantedSpectrum,
-										        d_lowerBoundWantedSpectrum,
-										        isXlBOMDLinearizedSolve,
-										        useCommunAvoidanceCheby);	
-				else 
-				  linearAlgebraOperationsCUDA::chebyshevFilter(operatorMatrix,
-									       cudaFlattenedArrayBlock,
-									       YArray,
-									       cudaFlattenedFloatArrayBlock,
-									       projectorKetTimesVector,
-									       localVectorSize,
-									       BVec,
-									       chebyshevOrder,
-									       d_lowerBoundUnWantedSpectrum,
-									       upperBoundUnwantedSpectrum,
-									       d_lowerBoundWantedSpectrum);								  
-				//copy current wavefunction vectors block to vector containing all wavefunction vectors
+                                 {
+                                      if (dftParameters::chebyCommunAvoidanceAlgo)
+                                         linearAlgebraOperationsCUDA::chebyshevFilterComputeAvoidance(operatorMatrix,
+                                                                                      cudaFlattenedArrayBlock,
+                                                                                      YArray,
+                                                                                      YArrayCA,
+                                                                                      cudaFlattenedFloatArrayBlock,
+                                                                                      projectorKetTimesVector,
+                                                                                      projectorKetTimesVectorFloat,
+                                                                                      cudaFlattenedArrayBlock2,
+                                                                                      YArray2,
+                                                                                      projectorKetTimesVector2,
+                                                                                      localVectorSize,
+                                                                                      BVec,
+                                                                                      chebyshevOrder,
+                                                                                      d_lowerBoundUnWantedSpectrum,
+                                                                                      upperBoundUnwantedSpectrum,
+                                                                                      d_lowerBoundWantedSpectrum,
+                                                                                      isXlBOMDLinearizedSolve,
+                                                                                      useCommunAvoidanceCheby,
+                                                                                      useMixedPrecOverall,
+                                                                                      computeAvoidanceTolerance);
+                                        else
+                                         linearAlgebraOperationsCUDA::chebyshevFilter(operatorMatrix,
+                                                                                      cudaFlattenedArrayBlock,
+                                                                                      YArray,
+                                                                                      cudaFlattenedFloatArrayBlock,
+                                                                                      projectorKetTimesVector,
+                                                                                      projectorKetTimesVectorFloat,
+                                                                                      cudaFlattenedArrayBlock2,
+                                                                                      YArray2,
+                                                                                      projectorKetTimesVector2,
+                                                                                      localVectorSize,
+                                                                                      BVec,
+                                                                                      chebyshevOrder,
+                                                                                      d_lowerBoundUnWantedSpectrum,
+                                                                                      upperBoundUnwantedSpectrum,
+                                                                                      d_lowerBoundWantedSpectrum,
+                                                                                      useMixedPrecOverall);
+                                 }
+                                 else
+                                 {
+                                   if (dftParameters::chebyCommunAvoidanceAlgo)
+                                         linearAlgebraOperationsCUDA::chebyshevFilterComputeAvoidance(operatorMatrix,
+                                                                                           cudaFlattenedArrayBlock,
+                                                                                           YArray,
+                                                                                           cudaFlattenedArrayBlock2,
+                                                                                           cudaFlattenedFloatArrayBlock,
+                                                                                           projectorKetTimesVector,
+                                                                                           localVectorSize,
+                                                                                           BVec,
+                                                                                           chebyshevOrder,
+                                                                                           d_lowerBoundUnWantedSpectrum,
+                                                                                           upperBoundUnwantedSpectrum,
+                                                                                           d_lowerBoundWantedSpectrum,
+                                                                                           isXlBOMDLinearizedSolve,
+                                                                                           useCommunAvoidanceCheby,
+                                                                                           useMixedPrecOverall);
+                                     else
+                                        linearAlgebraOperationsCUDA::chebyshevFilter(operatorMatrix,
+                                                                                           cudaFlattenedArrayBlock,
+                                                                                           YArray,
+                                                                                           cudaFlattenedFloatArrayBlock,
+                                                                                           projectorKetTimesVector,
+                                                                                           localVectorSize,
+                                                                                           BVec,
+                                                                                           chebyshevOrder,
+                                                                                           d_lowerBoundUnWantedSpectrum,
+                                                                                           upperBoundUnwantedSpectrum,
+                                                                                           d_lowerBoundWantedSpectrum,
+                                                                                           useMixedPrecOverall);
+                                 }
+
+	                        //copy current wavefunction vectors block to vector containing all wavefunction vectors
 				stridedCopyFromBlockKernel<<<(BVec+255)/256*localVectorSize, 256>>>(BVec,
 												    localVectorSize,
 												    cudaFlattenedArrayBlock.begin(),
@@ -1985,6 +2031,10 @@ namespace dftfe
 		      useMixedPrecOverall);*/
 
     }
+   
+    cudaFreeHost(rotationMatBlockHostSP);
+    cudaFreeHost(diagValuesHost);
+    
 
     //
     //scale the eigenVectors with M^{-1/2} to represent the wavefunctions in the usual FE basis
