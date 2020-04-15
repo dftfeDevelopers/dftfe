@@ -1417,13 +1417,7 @@ namespace dftfe
 
      float * rotationMatBlockHostSP;
      cudaMallocHost((void **)&rotationMatBlockHostSP,vectorsBlockSize*N*sizeof(float));
-     std::memset(rotationMatBlockHostSP,0,vectorsBlockSize*N*sizeof(float));
 
-
-     thrust::device_vector<double> diagValues(N,0.0);
-     double * diagValuesHost;
-     cudaMallocHost((void **)&diagValuesHost,N*sizeof(double));
-     std::memset(diagValuesHost,0,N*sizeof(double));
 
      const unsigned int MPadded=std::ceil(M*1.0/8.0)*8.0+0.5;
 
@@ -1627,6 +1621,13 @@ namespace dftfe
 											LMatPar,
 											globalToLocalRowIdMap,
 											globalToLocalColumnIdMap);
+
+          thrust::device_vector<double> diagValues(N,0.0);
+          double * diagValuesHost;
+          cudaMallocHost((void **)&diagValuesHost,N*sizeof(double));
+          std::memset(diagValuesHost,0,N*sizeof(double));
+
+
            if(ipass > 0)
             {
 		//Extract DiagQ from parallel ScaLAPACK matrix Q
@@ -2030,10 +2031,10 @@ namespace dftfe
 		      cublasHandle,
 		      useMixedPrecOverall);*/
 
+      cudaFreeHost(diagValuesHost);
+      cudaFreeHost(rotationMatBlockHostSP);
     }
    
-    cudaFreeHost(rotationMatBlockHostSP);
-    cudaFreeHost(diagValuesHost);
     
 
     //
