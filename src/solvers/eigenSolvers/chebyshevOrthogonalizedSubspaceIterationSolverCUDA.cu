@@ -1417,10 +1417,13 @@ namespace dftfe
 
      float * rotationMatBlockHostSP;
      cudaMallocHost((void **)&rotationMatBlockHostSP,vectorsBlockSize*N*sizeof(float));
+     std::memset(rotationMatBlockHostSP,0,vectorsBlockSize*N*sizeof(float));
+
+     double * diagValuesHost;
+     cudaMallocHost((void **)&diagValuesHost,N*sizeof(double));
 
 
      const unsigned int MPadded=std::ceil(M*1.0/8.0)*8.0+0.5;
-
      thrust::device_vector<float> XSP(MPadded*N,0.0);
 
 
@@ -1623,8 +1626,6 @@ namespace dftfe
 											globalToLocalColumnIdMap);
 
           thrust::device_vector<double> diagValues(N,0.0);
-          double * diagValuesHost;
-          cudaMallocHost((void **)&diagValuesHost,N*sizeof(double));
           std::memset(diagValuesHost,0,N*sizeof(double));
 
 
@@ -2031,10 +2032,11 @@ namespace dftfe
 		      cublasHandle,
 		      useMixedPrecOverall);*/
 
-      cudaFreeHost(diagValuesHost);
-      cudaFreeHost(rotationMatBlockHostSP);
+     //cudaFreeHost(diagValuesHost);
+     //cudaFreeHost(rotationMatBlockHostSP);
     }
-   
+    cudaFreeHost(diagValuesHost);
+    cudaFreeHost(rotationMatBlockHostSP);
     
 
     //
