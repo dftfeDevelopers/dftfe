@@ -33,6 +33,7 @@ namespace dftfe {
     double radiusAtomBall=0.0, mixingParameter=0.5;
     double lowerEndWantedSpectrum=0.0,absLinearSolverTolerance=1e-10,selfConsistentSolverTolerance=1e-10,TVal=500, start_magnetization=0.0,absLinearSolverToleranceHelmholtz=1e-10;
     double chebyshevTolerance = 1e-02;
+    double chebyshevFilterTolXLBOMDRankUpdates = 1e-07;
     std::string mixingMethod = "";
     std::string ionOptSolver = "";
 
@@ -751,6 +752,10 @@ namespace dftfe {
 			  Patterns::Double(0.0),
 			  "[Standard] Parameter specifying the accuracy of the occupied eigenvectors close to the Fermi-energy computed using Chebyshev filtering subspace iteration procedure.");
 
+        prm.declare_entry("CHEBY TOL XL BOMD RANK UPDATES FD", "1e-7",
+                          Patterns::Double(0.0),
+                          "[Standard] Parameter specifying the accuracy of the occupied eigenvectors close to the Fermi-energy computed using Chebyshev filtering subspace iteration procedure.");
+
 	prm.declare_entry("CHEBY TOL XL BOMD RESTART", "1e-9",
 			  Patterns::Double(0.0),
 			  "[Standard] Parameter specifying the accuracy of the occupied eigenvectors close to the Fermi-energy computed using Chebyshev filtering subspace iteration procedure.");
@@ -1033,6 +1038,7 @@ namespace dftfe {
           dftParameters::maxJacobianRatioFactorForMD   = prm.get_double("MAX JACOBIAN RATIO FACTOR");
           dftParameters::isXLBOMD                      = prm.get_bool("XL BOMD");
           dftParameters::chebyshevFilterTolXLBOMD      = prm.get_double("CHEBY TOL XL BOMD");
+          dftParameters::chebyshevFilterTolXLBOMDRankUpdates      = prm.get_double("CHEBY TOL XL BOMD RANK UPDATES FD");
           dftParameters::timeStepBOMD                  = prm.get_double("TIME STEP");
           dftParameters::numberStepsBOMD               = prm.get_integer("NUMBER OF STEPS"); 
           dftParameters::startingTempBOMDNVE           = prm.get_double("STARTING TEMP NVE");  

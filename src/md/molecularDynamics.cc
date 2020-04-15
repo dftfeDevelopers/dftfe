@@ -1125,7 +1125,7 @@ void molecularDynamics<FEOrder>::run()
 			           temp6p=dftParameters::useMixedPrecCheby;
 			           temp7p=dftParameters::useMixedPrecChebyNonLocal;
 				   
-				   dftParameters::chebyshevFilterTolXLBOMD=1e-7;
+				   dftParameters::chebyshevFilterTolXLBOMD=dftParameters::chebyshevFilterTolXLBOMDRankUpdates;
 			           dftParameters::useMixedPrecCheby=false;
 			           dftParameters::useMixedPrecChebyNonLocal=false;
 
@@ -1624,6 +1624,7 @@ void molecularDynamics<FEOrder>::run()
             {
                dftPtr->saveTriaInfoAndRhoNodalData();  
             }
+            xlbomdHistoryRestart=false;
 	  }
 
 /*

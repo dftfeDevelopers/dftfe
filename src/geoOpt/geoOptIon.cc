@@ -209,6 +209,8 @@ namespace dftfe {
 		pcout<<"-----------------------------------------------------------------------------------------"<<std::endl;
 	      }
 	    pcout<<"-----------------------------------------------------------------------------------"<<std::endl;
+
+            dftPtr->writeDomainAndAtomCoordinates();
 	  }
 	else if (cgReturn == nonLinearSolver::FAILURE || !cgSuccess)
 	  {
