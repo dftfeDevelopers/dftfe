@@ -903,6 +903,10 @@ namespace dftfe {
     if (dftParameters::verbosity>=1)
         pcout<<"updateAtomPositionsAndMoveMesh: Time taken for initBoundaryConditions: "<<init_bc<<std::endl;
 
+    double init_rho;
+    MPI_Barrier(MPI_COMM_WORLD);
+    init_rho = MPI_Wtime();
+
     if (useSingleAtomSolution)
     {
 	 readPSI();
@@ -918,6 +922,11 @@ namespace dftfe {
 
        noRemeshRhoDataInit();
     }
+
+    MPI_Barrier(MPI_COMM_WORLD);
+    init_rho = MPI_Wtime() - init_rho;
+    if (dftParameters::verbosity>=1)
+        pcout<<"updateAtomPositionsAndMoveMesh: Time taken for initRho: "<<init_rho<<std::endl;
 
     //
     //reinitialize pseudopotential related data structures
