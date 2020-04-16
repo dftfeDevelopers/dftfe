@@ -1624,7 +1624,9 @@ void molecularDynamics<FEOrder>::run()
             {
                dftPtr->saveTriaInfoAndRhoNodalData();  
             }
-            xlbomdHistoryRestart=false;
+         
+            if (timeIndex == (fullScfSolvesBeforeStartingXLBOMD+autoMeshTimeIndex) && xlbomdHistoryRestart)
+               xlbomdHistoryRestart=false;
 	  }
 
 /*
