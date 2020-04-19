@@ -752,7 +752,8 @@ void molecularDynamics<FEOrder>::run()
 	    //
 	    dftPtr->updateAtomPositionsAndMoveMesh(displacements,
 						   dftParameters::maxJacobianRatioFactorForMD,
-						   (timeIndex ==startingTimeStep+1 && restartFlag==1)?true:false);
+						   (timeIndex ==startingTimeStep+1 && restartFlag==1)?true:false,
+                                                   false);
 
             /*
 	    if (d_isAtomsGaussianDisplacementsReadFromFile)

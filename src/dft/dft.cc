@@ -869,8 +869,11 @@ namespace dftfe {
     //
     if (d_isAtomsGaussianDisplacementsReadFromFile)
     {
-	updateAtomPositionsAndMoveMesh(d_atomsDisplacementsGaussianRead,1e+4,true);
+	updateAtomPositionsAndMoveMesh(d_atomsDisplacementsGaussianRead,1e+4,true,!(dftParameters::chkType==3 && dftParameters::restartFromChk));
 	d_isAtomsGaussianDisplacementsReadFromFile=false;
+
+        if (dftParameters::chkType==3 && dftParameters::restartFromChk)
+           normalizeRho();
     }
 
     computingTimerStandard.exit_section("KSDFT problem initialization");
@@ -878,7 +881,8 @@ namespace dftfe {
 
   template<unsigned int FEOrder>
   void dftClass<FEOrder>::initNoRemesh(const bool updateImageKPoints,
-	                               const bool useSingleAtomSolution)
+	                               const bool useSingleAtomSolution,
+                                       const bool updateDensity)
   {
     computingTimerStandard.enter_section("KSDFT problem initialization");
     if(updateImageKPoints)
@@ -903,30 +907,34 @@ namespace dftfe {
     if (dftParameters::verbosity>=1)
         pcout<<"updateAtomPositionsAndMoveMesh: Time taken for initBoundaryConditions: "<<init_bc<<std::endl;
 
-    double init_rho;
-    MPI_Barrier(MPI_COMM_WORLD);
-    init_rho = MPI_Wtime();
-
-    if (useSingleAtomSolution)
+    if (updateDensity) 
     {
-	 readPSI();
-	 initRho();
-    }
-    else
-    {
-       //
-       //rho init (use previous ground state electron density)
-       //
-       //if(dftParameters::mixingMethod != "ANDERSON_WITH_KERKER")
-       //   solveNoSCF();
+	    double init_rho;
+	    MPI_Barrier(MPI_COMM_WORLD);
+	    init_rho = MPI_Wtime();
 
-       noRemeshRhoDataInit();
-    }
+	    if (useSingleAtomSolution)
+	    {
+		 readPSI();
+		 initRho();
+	    }
+	    else
+	    {
+	       //
+	       //rho init (use previous ground state electron density)
+	       //
+	       //if(dftParameters::mixingMethod != "ANDERSON_WITH_KERKER")
+	       //   solveNoSCF();
 
-    MPI_Barrier(MPI_COMM_WORLD);
-    init_rho = MPI_Wtime() - init_rho;
-    if (dftParameters::verbosity>=1)
-        pcout<<"updateAtomPositionsAndMoveMesh: Time taken for initRho: "<<init_rho<<std::endl;
+	       noRemeshRhoDataInit();
+	    }
+
+	    MPI_Barrier(MPI_COMM_WORLD);
+	    init_rho = MPI_Wtime() - init_rho;
+	    if (dftParameters::verbosity>=1)
+		pcout<<"updateAtomPositionsAndMoveMesh: Time taken for initRho: "<<init_rho<<std::endl;
+
+    }
 
     //
     //reinitialize pseudopotential related data structures

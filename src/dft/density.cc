@@ -359,13 +359,9 @@ void dftClass<FEOrder>::noRemeshRhoDataInit()
 
 
     }
-  else
-    {
-      //scale quadrature values
-      normalizeRho();
-    }
-
-
+      
+    //scale quadrature values
+    normalizeRho();
 }
 
 template <unsigned int FEOrder>

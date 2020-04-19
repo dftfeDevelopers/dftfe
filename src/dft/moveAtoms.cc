@@ -100,7 +100,8 @@ namespace internal{
 template<unsigned int FEOrder>
 void dftClass<FEOrder>::updateAtomPositionsAndMoveMesh(const std::vector<Tensor<1,3,double> > & globalAtomsDisplacements,
 	                                               const double maxJacobianRatioFactor,
-						       const bool useSingleAtomSolutions)
+						       const bool useSingleAtomSolutions,
+                                                       const bool updateDensity)
 {
   double atomsloop_time;
   MPI_Barrier(MPI_COMM_WORLD);
@@ -527,9 +528,9 @@ void dftClass<FEOrder>::updateAtomPositionsAndMoveMesh(const std::vector<Tensor<
               init_time = MPI_Wtime(); 
 
               if (dftParameters::isBOMD)
-                 initNoRemesh(false,(!dftParameters::reproducible_output && maxCurrentDispAtom>0.2) || useSingleAtomSolutions);
+                 initNoRemesh(false,(!dftParameters::reproducible_output && maxCurrentDispAtom>0.2) || useSingleAtomSolutions,updateDensity);
               else
-       	         initNoRemesh(false,(!dftParameters::reproducible_output && maxCurrentDispAtom>0.06) || useSingleAtomSolutions);
+       	         initNoRemesh(false,(!dftParameters::reproducible_output && maxCurrentDispAtom>0.06) || useSingleAtomSolutions,updateDensity);
 	      if (!dftParameters::reproducible_output)
 	         pcout << "...Reinitialization end" << std::endl;
 
