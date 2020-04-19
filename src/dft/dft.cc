@@ -1071,7 +1071,12 @@ namespace dftfe {
       aposterioriMeshGenerate();
 
     if (dftParameters::isBOMD)
-       d_mdPtr->run();
+    {
+       if (dftParameters::xlbomdStepTimingRun)
+          d_mdPtr->timingRun();
+       else
+          d_mdPtr->run();
+    }
     else
     {
             if (true)
