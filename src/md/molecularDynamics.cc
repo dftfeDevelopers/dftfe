@@ -1178,7 +1178,7 @@ void molecularDynamics<FEOrder>::run()
 			           dftParameters::useMixedPrecCheby=false;
 			           dftParameters::useMixedPrecChebyNonLocal=false;
 
-				   const double deltalambda=1e-3*std::sqrt(dftPtr->fieldl2Norm(dftPtr->d_matrixFreeDataPRefined,approxDensityContainer.back())/dftPtr->d_domainVolume);
+				   const double deltalambda=dftParameters::xlbomdKernelRankUpdateFDParameter*std::sqrt(dftPtr->fieldl2Norm(dftPtr->d_matrixFreeDataPRefined,approxDensityContainer.back())/dftPtr->d_domainVolume);
 
 				   if (dftParameters::verbosity>=1)
 				      pcout<<"deltalambda: "<<deltalambda<<std::endl;
@@ -2715,7 +2715,7 @@ void molecularDynamics<FEOrder>::timingRun()
 			           dftParameters::useMixedPrecCheby=false;
 			           dftParameters::useMixedPrecChebyNonLocal=false;
 
-				   const double deltalambda=1e-2*std::sqrt(dftPtr->fieldl2Norm(dftPtr->d_matrixFreeDataPRefined,approxDensityContainer.back())/dftPtr->d_domainVolume);
+				   const double deltalambda=dftParameters::xlbomdKernelRankUpdateFDParameter*std::sqrt(dftPtr->fieldl2Norm(dftPtr->d_matrixFreeDataPRefined,approxDensityContainer.back())/dftPtr->d_domainVolume);
 
 				   if (dftParameters::verbosity>=1)
 				      pcout<<"deltalambda: "<<deltalambda<<std::endl;
