@@ -133,6 +133,7 @@ namespace dftfe {
     bool skipHarmonicOscillatorTermInitialStepsXLBOMD=false;
     double xlbomdRestartChebyTol=1e-9;
     bool xlbomdRRPassMixedPrec=false;
+    bool useDensityMatrixPerturbationRankUpdates=false;
 
     void declare_parameters(ParameterHandler &prm)
     {
@@ -812,6 +813,10 @@ namespace dftfe {
                           Patterns::Bool(),
                           "[Standard] Allow mixed precision for RR passes in XL BOMD.");
 
+        prm.declare_entry("DENSITY MATRIX PERTURBATION RANK UPDATES XL BOMD", "false",
+                          Patterns::Bool(),
+                          "[Standard] Use density matrix perturbation theory for rank updates.");
+
         prm.declare_entry("SKIP HARMONIC OSCILLATOR INITIAL STEPS XL BOMD", "false",
                           Patterns::Bool(),
                           "[Standard] Numerical strategy to remove oscillations in initial steps.");
@@ -1052,7 +1057,8 @@ namespace dftfe {
           dftParameters::useSingleFullScfXLBOMD = prm.get_bool("STARTING SINGLE FULL SCF XL BOMD");
           dftParameters::skipHarmonicOscillatorTermInitialStepsXLBOMD= prm.get_bool("SKIP HARMONIC OSCILLATOR INITIAL STEPS XL BOMD"); 
           dftParameters::xlbomdRestartChebyTol           = prm.get_double("CHEBY TOL XL BOMD RESTART");  
-          dftParameters::xlbomdRRPassMixedPrec           = prm.get_bool("XL BOMD RR PASS MIXED PREC"); 
+          dftParameters::xlbomdRRPassMixedPrec           = prm.get_bool("XL BOMD RR PASS MIXED PREC");
+          dftParameters::useDensityMatrixPerturbationRankUpdates           = prm.get_bool("DENSITY MATRIX PERTURBATION RANK UPDATES XL BOMD");  
       }
       prm.leave_subsection ();
 	

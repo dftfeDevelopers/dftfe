@@ -247,6 +247,208 @@ namespace dftfe
     d_lowerBoundUnWantedSpectrum = lowerBoundUnWantedSpectrum;
   }
 
+  //
+  //
+  //
+  void
+  chebyshevOrthogonalizedSubspaceIterationSolverCUDA::onlyRR(operatorDFTCUDAClass  & operatorMatrix,
+							    double* eigenVectorsFlattenedCUDA,
+                                                            double* eigenVectorsRotFracDensityFlattenedCUDA,
+                                                            const unsigned int flattenedSize,
+							    vectorType  & tempEigenVec,
+							    const unsigned int totalNumberWaveFunctions,
+							    std::vector<double>        & eigenValues,
+							    const MPI_Comm &interBandGroupComm,
+                                                            dealii::ScaLAPACKMatrix<double> & projHamPar,
+                                                            dealii::ScaLAPACKMatrix<double> & overlapMatPar,
+                                                            const std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid> & processGrid,
+                                                            const bool useMixedPrecOverall,
+                                                            const bool isElpaStep1,
+                                                            const bool isElpaStep2)
+  {
+#ifdef USE_COMPLEX
+        AssertThrow(false,dftUtils::ExcNotImplementedYet());
+#else
+    double gpu_time, start_time, sub_gpu_time;
+    int this_process;
+
+    MPI_Comm_rank(MPI_COMM_WORLD, &this_process);
+
+
+    cublasHandle_t & cublasHandle =
+    operatorMatrix.getCublasHandle();
+
+    //
+    //allocate memory for full flattened array on device and fill it up
+    //
+    const unsigned int localVectorSize = flattenedSize/totalNumberWaveFunctions;
+    
+    cudaDeviceSynchronize(); 
+    MPI_Barrier(MPI_COMM_WORLD);
+    start_time = MPI_Wtime();
+   
+    //band group parallelization data structures
+    const unsigned int numberBandGroups=
+      dealii::Utilities::MPI::n_mpi_processes(interBandGroupComm);
+
+
+    const unsigned int bandGroupTaskId = dealii::Utilities::MPI::this_mpi_process(interBandGroupComm);
+    std::vector<unsigned int> bandGroupLowHighPlusOneIndices;
+    dftUtils::createBandParallelizationIndices(interBandGroupComm,
+					       totalNumberWaveFunctions,
+					       bandGroupLowHighPlusOneIndices);
+
+
+    const unsigned int vectorsBlockSize=std::min(dftParameters::chebyWfcBlockSize,
+						 totalNumberWaveFunctions);
+
+    cudaVectorType cudaFlattenedArrayBlock;
+    vectorTools::createDealiiVector(operatorMatrix.getMatrixFreeData()->get_vector_partitioner(),
+				    vectorsBlockSize,
+				    cudaFlattenedArrayBlock);
+
+
+    cudaVectorType YArray;
+    YArray.reinit(cudaFlattenedArrayBlock);
+
+
+    cudaVectorTypeFloat cudaFlattenedFloatArrayBlock;
+    vectorTools::createDealiiVector(operatorMatrix.getMatrixFreeData()->get_vector_partitioner(),
+                                    vectorsBlockSize,
+                                    cudaFlattenedFloatArrayBlock);
+
+
+    cudaVectorType projectorKetTimesVector;
+    vectorTools::createDealiiVector(operatorMatrix.getProjectorKetTimesVectorSingle().get_partitioner(),
+				    vectorsBlockSize,
+				    projectorKetTimesVector);
+
+
+    if(!isElpaStep2)
+    {
+	    //
+	    //scale the eigenVectors (initial guess of single atom wavefunctions or previous guess) to convert into Lowden Orthonormalized FE basis
+	    //multiply by M^{1/2}
+	    scaleCUDAKernel<<<(totalNumberWaveFunctions+255)/256*localVectorSize,256>>>(totalNumberWaveFunctions,
+										        localVectorSize,
+											1.0,
+											eigenVectorsFlattenedCUDA,
+											operatorMatrix.getSqrtMassVec());
+
+
+	    //gpu_time = MPI_Wtime();
+	    for (unsigned int i=0;i<eigenValues.size();i++)
+		   eigenValues[i]=0.0;
+
+    }
+
+    if (eigenValues.size()!=totalNumberWaveFunctions)
+    {
+	    linearAlgebraOperationsCUDA::rayleighRitzSpectrumSplitDirect(operatorMatrix,
+						      eigenVectorsFlattenedCUDA,
+						      eigenVectorsRotFracDensityFlattenedCUDA,
+						      cudaFlattenedArrayBlock,
+						      cudaFlattenedFloatArrayBlock,
+						      YArray,
+						      projectorKetTimesVector,
+						      localVectorSize,
+						      totalNumberWaveFunctions,
+						      totalNumberWaveFunctions-eigenValues.size(),
+						      isElpaStep1,
+						      isElpaStep2,
+						      operatorMatrix.getMPICommunicator(),
+						      &eigenValues[0],
+						      cublasHandle,
+						      projHamPar,
+						      processGrid,
+						      useMixedPrecOverall);
+ 
+
+	     if (isElpaStep1)
+	     {
+		cudaDeviceSynchronize();
+                MPI_Barrier(MPI_COMM_WORLD);
+		gpu_time = MPI_Wtime() - start_time;
+		if (this_process==0 && dftParameters::verbosity>=2)
+	            std::cout<<"Time for all steps of subspace iteration on GPU till ELPA step 1: "<<gpu_time<<std::endl; 
+		return;
+	     }
+
+    }
+    else
+    {
+	    linearAlgebraOperationsCUDA::rayleighRitz(operatorMatrix,
+						      eigenVectorsFlattenedCUDA,
+						      cudaFlattenedArrayBlock,
+						      cudaFlattenedFloatArrayBlock,
+						      YArray,
+						      projectorKetTimesVector,
+						      localVectorSize,
+						      totalNumberWaveFunctions,
+						      isElpaStep1,
+						      isElpaStep2,
+						      operatorMatrix.getMPICommunicator(),
+						      interBandGroupComm,
+						      &eigenValues[0],
+						      cublasHandle,
+						      projHamPar,
+						      processGrid,
+						      useMixedPrecOverall);
+
+	     if (isElpaStep1)
+	     {
+		cudaDeviceSynchronize();
+                MPI_Barrier(MPI_COMM_WORLD);
+		gpu_time = MPI_Wtime() - start_time;
+		if (this_process==0 && dftParameters::verbosity>=2)
+	            std::cout<<"Time for all steps of subspace iteration on GPU till ELPA step 1: "<<gpu_time<<std::endl; 
+		return;
+	     }
+
+    }
+     //gpu_time = MPI_Wtime() - gpu_time;
+     //if (this_process==0)
+     //    std::cout<<"Time for Rayleigh Ritz on GPU: "<<gpu_time<<std::endl;
+
+
+
+    if(dftParameters::verbosity >= 4)
+    {
+	pcout<<"Rayleigh-Ritz Done: "<<std::endl;
+	pcout<<std::endl;
+    }
+
+
+    //
+    //scale the eigenVectors with M^{-1/2} to represent the wavefunctions in the usual FE basis
+    //
+    scaleCUDAKernel<<<(totalNumberWaveFunctions+255)/256*localVectorSize,256>>>(totalNumberWaveFunctions,
+                                                                     localVectorSize,
+                                                                     1.0,
+                                                                     eigenVectorsFlattenedCUDA,
+                                                                     operatorMatrix.getInvSqrtMassVec());
+
+    if (eigenValues.size()!=totalNumberWaveFunctions)
+	    scaleCUDAKernel<<<(eigenValues.size()+255)/256*localVectorSize,256>>>(eigenValues.size(),
+									     localVectorSize,
+									     1.0,
+									     eigenVectorsRotFracDensityFlattenedCUDA,
+									     operatorMatrix.getInvSqrtMassVec());
+
+    cudaDeviceSynchronize();
+    MPI_Barrier(MPI_COMM_WORLD);
+    gpu_time = MPI_Wtime() - start_time;
+
+    if (isElpaStep2)
+       if (this_process==0 && dftParameters::verbosity>=2)
+           std::cout<<"Time for ELPA step 2 on GPU: "<<gpu_time<<std::endl;
+    else
+       if (this_process==0 && dftParameters::verbosity>=2)
+           std::cout<<"Time for all steps of subspace iteration on GPU: "<<gpu_time<<std::endl;
+    return;
+#endif
+  }
+
 
   //
   // solve
@@ -265,7 +467,6 @@ namespace dftfe
                                                             dealii::ScaLAPACKMatrix<double> & overlapMatPar,
                                                             const std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid> & processGrid,
                                                             const bool isXlBOMDLinearizedSolve,
-                                                            const bool useCommunAvoidanceCheby,
                                                             const bool useMixedPrecOverall,
                                                             const bool isFirstScf,
                                                             const bool useFullMassMatrixGEP,
@@ -472,8 +673,8 @@ namespace dftfe
 									      upperBoundUnwantedSpectrum,
 									      d_lowerBoundWantedSpectrum,
                                                                               isXlBOMDLinearizedSolve,
-                                                                              useCommunAvoidanceCheby,
-                                                                              useMixedPrecOverall || isXlBOMDLinearizedSolve,
+                                                                              false,
+                                                                              useMixedPrecOverall,
                                                                               computeAvoidanceTolerance);
                              else
 				 linearAlgebraOperationsCUDA::chebyshevFilter(operatorMatrix,
@@ -491,7 +692,7 @@ namespace dftfe
 									      d_lowerBoundUnWantedSpectrum,
 									      upperBoundUnwantedSpectrum,
 									      d_lowerBoundWantedSpectrum,
-                                                                              useMixedPrecOverall || isXlBOMDLinearizedSolve);	
+                                                                              useMixedPrecOverall);	
                          }
                          else
                          {
@@ -509,8 +710,8 @@ namespace dftfe
 										   upperBoundUnwantedSpectrum,
 										   d_lowerBoundWantedSpectrum,
                                                                                    isXlBOMDLinearizedSolve,
-                                                                                   useCommunAvoidanceCheby,
-                                                                                   useMixedPrecOverall || isXlBOMDLinearizedSolve);	
+                                                                                   false,
+                                                                                   useMixedPrecOverall);	
                              else 
 				 linearAlgebraOperationsCUDA::chebyshevFilter(operatorMatrix,
 									   cudaFlattenedArrayBlock,
@@ -523,7 +724,7 @@ namespace dftfe
 									   d_lowerBoundUnWantedSpectrum,
 									   upperBoundUnwantedSpectrum,
 									   d_lowerBoundWantedSpectrum,
-									   useMixedPrecOverall || isXlBOMDLinearizedSolve);	
+									   useMixedPrecOverall);	
                        }
 							  
 		       //copy current wavefunction vectors block to vector containing all wavefunction vectors
@@ -929,7 +1130,6 @@ namespace dftfe
                                                             dealii::ScaLAPACKMatrix<double> & overlapMatPar,
                                                             const std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid> & processGrid,
                                                             const bool isXlBOMDLinearizedSolve,
-                                                            const bool useCommunAvoidanceCheby,
                                                             const unsigned int numberPasses,
                                                             const bool useMixedPrecOverall)
   {
@@ -1136,7 +1336,7 @@ namespace dftfe
 										      upperBoundUnwantedSpectrum,
 										      d_lowerBoundWantedSpectrum,
 										      isXlBOMDLinearizedSolve,
-										      useCommunAvoidanceCheby,
+										      false,
                                                                                       useMixedPrecOverall,
                                                                                       computeAvoidanceTolerance);
 				     else
@@ -1173,7 +1373,7 @@ namespace dftfe
 											   upperBoundUnwantedSpectrum,
 											   d_lowerBoundWantedSpectrum,
 											   isXlBOMDLinearizedSolve,
-											   useCommunAvoidanceCheby,
+											   false,
                                                                                            useMixedPrecOverall);	
 				     else 
 					 linearAlgebraOperationsCUDA::chebyshevFilter(operatorMatrix,
@@ -1265,7 +1465,6 @@ namespace dftfe
 							    std::vector<double>        & eigenValues,
 							    const MPI_Comm &interBandGroupComm,
                                                             const bool isXlBOMDLinearizedSolve,
-                                                            const bool useCommunAvoidanceCheby,
                                                             const unsigned int numberPasses,
                                                             const bool useMixedPrecOverall)
   {
@@ -1873,7 +2072,7 @@ namespace dftfe
                                                                                       upperBoundUnwantedSpectrum,
                                                                                       d_lowerBoundWantedSpectrum,
                                                                                       isXlBOMDLinearizedSolve,
-                                                                                      useCommunAvoidanceCheby,
+                                                                                      false,
                                                                                       useMixedPrecOverall,
                                                                                       computeAvoidanceTolerance);
                                         else
@@ -1910,7 +2109,7 @@ namespace dftfe
                                                                                            upperBoundUnwantedSpectrum,
                                                                                            d_lowerBoundWantedSpectrum,
                                                                                            isXlBOMDLinearizedSolve,
-                                                                                           useCommunAvoidanceCheby,
+                                                                                           false,
                                                                                            useMixedPrecOverall);
                                      else
                                         linearAlgebraOperationsCUDA::chebyshevFilter(operatorMatrix,

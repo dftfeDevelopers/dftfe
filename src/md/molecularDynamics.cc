@@ -30,7 +30,9 @@
 #include <kohnShamDFTOperator.h>
 #ifdef DFTFE_WITH_GPU
 #include <kohnShamDFTOperatorCUDA.h>
+#include <vectorUtilitiesCUDA.h>
 #endif
+
 
 namespace dftfe {
 
@@ -1156,6 +1158,17 @@ void molecularDynamics<FEOrder>::run()
                         {
                                 if (dftParameters::kernelUpdateRankXLBOMD>0)
 				{
+
+#ifdef DFTFE_WITH_GPU
+				    if (dftParameters::useGPU && dftParameters::useDensityMatrixPerturbationRankUpdates)
+				       for(unsigned int kPoint = 0; kPoint < (1+dftParameters::spinPolarized)*dftPtr->d_kPointWeights.size(); ++kPoint)
+				       {
+					       vectorToolsCUDA::copyCUDAVecToHostVec(dftPtr->d_eigenVectorsFlattenedCUDA.begin()+kPoint*dftPtr->d_eigenVectorsFlattenedSTL[0].size(),
+										    &dftPtr->d_eigenVectorsFlattenedSTL[kPoint][0],
+										     dftPtr->d_eigenVectorsFlattenedSTL[kPoint].size());
+				       }
+#endif
+
 				   temp1p=dftParameters::chebyshevFilterTolXLBOMD;
 			           temp6p=dftParameters::useMixedPrecCheby;
 			           temp7p=dftParameters::useMixedPrecChebyNonLocal;
@@ -1233,18 +1246,36 @@ void molecularDynamics<FEOrder>::run()
 
 					   if (dftParameters::verbosity>=1)
 					      pcout<<"----------Start shadow potential energy solve with approx density= n+lamda*v1-------------"<<std::endl;
-
-					   dftPtr->solve(kohnShamDFTEigenOperator,
 #ifdef DFTFE_WITH_GPU
-							  kohnShamDFTEigenOperatorCUDA,
+					   if (dftParameters::useGPU && dftParameters::useDensityMatrixPerturbationRankUpdates)
+					       for(unsigned int kPoint = 0; kPoint < (1+dftParameters::spinPolarized)*dftPtr->d_kPointWeights.size(); ++kPoint)
+					       {
+						       vectorToolsCUDA::copyHostVecToCUDAVec(&dftPtr->d_eigenVectorsFlattenedSTL[kPoint][0],
+											     dftPtr->d_eigenVectorsFlattenedCUDA.begin()+kPoint*dftPtr->d_eigenVectorsFlattenedSTL[0].size(),
+											     dftPtr->d_eigenVectorsFlattenedSTL[0].size());
+
+					       }
 #endif
-							  true,
-							  false,
-							  true,
-							  false,
-							  true,
-                                                          false,
-                                                          true);
+
+
+                                           if (dftParameters::useDensityMatrixPerturbationRankUpdates)
+						   dftPtr->computeDensityPerturbation(kohnShamDFTEigenOperator,
+#ifdef DFTFE_WITH_GPU
+								 kohnShamDFTEigenOperatorCUDA,
+#endif
+								 true);
+                                           else
+						   dftPtr->solve(kohnShamDFTEigenOperator,
+#ifdef DFTFE_WITH_GPU
+								 kohnShamDFTEigenOperatorCUDA,
+#endif
+								 true,
+								 false,
+								 true,
+								 false,
+								 true,
+								 false,
+								 true);
 
 					   if (dftParameters::verbosity>=1)
 					      pcout<<"----------End shadow potential energy solve with approx density= n+lamda*v1-------------"<<std::endl;
@@ -1299,17 +1330,35 @@ void molecularDynamics<FEOrder>::run()
 					   if (dftParameters::verbosity>=1)
 					      pcout<<"----------Start shadow potential energy solve with approx density= n-lamda*v1-------------"<<std::endl;
 
-					   dftPtr->solve(kohnShamDFTEigenOperator,
 #ifdef DFTFE_WITH_GPU
-							 kohnShamDFTEigenOperatorCUDA,
+					   if (dftParameters::useGPU && dftParameters::useDensityMatrixPerturbationRankUpdates)
+					       for(unsigned int kPoint = 0; kPoint < (1+dftParameters::spinPolarized)*dftPtr->d_kPointWeights.size(); ++kPoint)
+					       {
+						       vectorToolsCUDA::copyHostVecToCUDAVec(&dftPtr->d_eigenVectorsFlattenedSTL[kPoint][0],
+											     dftPtr->d_eigenVectorsFlattenedCUDA.begin()+kPoint*dftPtr->d_eigenVectorsFlattenedSTL[0].size(),
+											     dftPtr->d_eigenVectorsFlattenedSTL[0].size());
+
+					       }
 #endif
-							 true,
-							 false,
-							 true,
-							 false,
-							 true,
-                                                         false,
-                                                         true);
+
+                                           if (dftParameters::useDensityMatrixPerturbationRankUpdates)
+						   dftPtr->computeDensityPerturbation(kohnShamDFTEigenOperator,
+#ifdef DFTFE_WITH_GPU
+								 kohnShamDFTEigenOperatorCUDA,
+#endif
+								 true);
+                                           else
+						   dftPtr->solve(kohnShamDFTEigenOperator,
+#ifdef DFTFE_WITH_GPU
+								 kohnShamDFTEigenOperatorCUDA,
+#endif
+								 true,
+								 false,
+								 true,
+								 false,
+								 true,
+								 false,
+								 true);
 
 					   if (dftParameters::verbosity>=1)
 					      pcout<<"----------End shadow potential energy solve with approx density= n-lamda*v1-------------"<<std::endl;
@@ -1356,6 +1405,17 @@ void molecularDynamics<FEOrder>::run()
 				   dftParameters::chebyshevFilterTolXLBOMD=temp1p;
 			           dftParameters::useMixedPrecCheby=temp6p;
 			           dftParameters::useMixedPrecChebyNonLocal=temp7p;
+
+#ifdef DFTFE_WITH_GPU
+				   if (dftParameters::useGPU && dftParameters::useDensityMatrixPerturbationRankUpdates)
+				       for(unsigned int kPoint = 0; kPoint < (1+dftParameters::spinPolarized)*dftPtr->d_kPointWeights.size(); ++kPoint)
+				       {
+					       vectorToolsCUDA::copyHostVecToCUDAVec(&dftPtr->d_eigenVectorsFlattenedSTL[kPoint][0],
+										     dftPtr->d_eigenVectorsFlattenedCUDA.begin()+kPoint*dftPtr->d_eigenVectorsFlattenedSTL[0].size(),
+										     dftPtr->d_eigenVectorsFlattenedSTL[0].size());
+
+				       }
+#endif
 				}
                         }
 

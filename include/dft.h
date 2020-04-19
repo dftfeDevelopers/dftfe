@@ -182,6 +182,16 @@ namespace dftfe {
                  const bool isPerturbationSolveXLBOMD=false);
 
 
+      /**
+       * @brief Kohn-Sham ground-state solve using SCF iteration
+       */
+      void computeDensityPerturbation(kohnShamDFTOperatorClass<FEOrder> & kohnShamDFTEigenOperator,
+#ifdef DFTFE_WITH_GPU
+                 kohnShamDFTOperatorCUDAClass<FEOrder> & kohnShamDFTEigenOperatorCUDA,
+#endif
+                 const bool kohnShamDFTOperatorsInitialized=false);
+
+
       void initializeKohnShamDFTOperator(kohnShamDFTOperatorClass<FEOrder> & kohnShamDFTEigenOperator
 #ifdef DFTFE_WITH_GPU
                                          ,
@@ -1113,12 +1123,22 @@ namespace dftfe {
                                      chebyshevOrthogonalizedSubspaceIterationSolverCUDA & subspaceIterationSolverCUDA,
                                      std::vector<double> & residualNormWaveFunctions,
                                      const bool isXlBOMDLinearizedSolve,
-                                     const bool useCommunAvoidanceCheby,
                                      const unsigned int numberRayleighRitzAvoidanceXLBOMDPasses=0,
 				     const bool isSpectrumSplit=false,
 				     const bool useMixedPrec=false,
                                      const bool isFirstScf=false,
 				     const bool useFullMassMatrixGEP=false);
+#endif
+
+
+#ifdef DFTFE_WITH_GPU
+      void kohnShamEigenSpaceOnlyRRCompute(const unsigned int s,
+                                     const unsigned int kPointIndex,
+                                     kohnShamDFTOperatorCUDAClass<FEOrder> & kohnShamDFTEigenOperator,
+                                     elpaScalaManager & elpaScala,
+                                     chebyshevOrthogonalizedSubspaceIterationSolverCUDA & subspaceIterationSolverCUDA,
+				     const bool isSpectrumSplit=false,
+				     const bool useMixedPrec=false);
 #endif
 
      void kohnShamEigenSpaceComputeNSCF(const unsigned int spinType,
