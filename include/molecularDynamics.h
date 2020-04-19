@@ -37,6 +37,8 @@ namespace dftfe {
 
           void run();
 
+          void timingRun();
+
 
         private:
 
