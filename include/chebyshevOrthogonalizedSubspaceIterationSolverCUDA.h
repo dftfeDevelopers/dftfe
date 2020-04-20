@@ -71,10 +71,25 @@ namespace dftfe
                dealii::ScaLAPACKMatrix<double> & overlapMatPar,
                const std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid> & processGrid,
                const bool isXlBOMDLinearizedSolve,
-               const bool useCommunAvoidanceCheby,
                const bool useMixedPrecOverall=false,
                const bool isFirstScf=false,
                const bool useFullMassMatrixGEP=false,
+               const bool isElpaStep1=false,
+               const bool isElpaStep2=false);
+
+
+    void onlyRR(operatorDFTCUDAClass & operatorMatrix,
+	       double* eigenVectorsFlattenedCUDA,
+               double* eigenVectorsRotFracDensityFlattenedCUDA,
+               const unsigned int flattenedSize,
+	       vectorType & tempEigenVec,
+	       const unsigned int totalNumberWaveFunctions,
+	       std::vector<double> & eigenValues,
+               const MPI_Comm &interBandGroupComm,
+               dealii::ScaLAPACKMatrix<double> & projHamPar,
+               dealii::ScaLAPACKMatrix<double> & overlapMatPar,
+               const std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid> & processGrid,
+               const bool useMixedPrecOverall=false,
                const bool isElpaStep1=false,
                const bool isElpaStep2=false);
 
@@ -92,7 +107,6 @@ namespace dftfe
                dealii::ScaLAPACKMatrix<double> & overlapMatPar,
                const std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid> & processGrid,
                const bool isXlBOMDLinearizedSolve,
-               const bool useCommunAvoidanceCheby,
                const unsigned int numberPasses,
                const bool useMixedPrecOverall);
 
@@ -105,7 +119,6 @@ namespace dftfe
                std::vector<double> & eigenValues,
                const MPI_Comm &interBandGroupComm,
                const bool isXlBOMDLinearizedSolve,
-               const bool useCommunAvoidanceCheby,
                const unsigned int numberPasses,
                const bool useMixedPrecOverall);
 

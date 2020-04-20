@@ -136,6 +136,9 @@ namespace dftfe {
       extern bool skipHarmonicOscillatorTermInitialStepsXLBOMD;
       extern double xlbomdRestartChebyTol;
       extern bool xlbomdRRPassMixedPrec;
+      extern bool useDensityMatrixPerturbationRankUpdates;
+      extern bool xlbomdStepTimingRun; 
+      extern double xlbomdKernelRankUpdateFDParameter;
 
       /**
        * Declare parameters.

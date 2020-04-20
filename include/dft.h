@@ -155,7 +155,8 @@ namespace dftfe {
        * @brief Does KSDFT problem pre-processing steps but without remeshing.
        */
       void initNoRemesh(const bool updateImageKPoints = true,
-		        const bool useSingleAtomSolution = false );
+		        const bool useSingleAtomSolution = false ,
+                        const bool updateDensity=true);
 
       /**
        * @brief Selects between only electronic field relaxation or combined electronic and geometry relaxation
@@ -180,6 +181,16 @@ namespace dftfe {
                  const bool skipVselfSolveInitLocalPSP=false,
                  const bool rayleighRitzAvoidancePassesXLBOMD=false,
                  const bool isPerturbationSolveXLBOMD=false);
+
+
+      /**
+       * @brief Kohn-Sham ground-state solve using SCF iteration
+       */
+      void computeDensityPerturbation(kohnShamDFTOperatorClass<FEOrder> & kohnShamDFTEigenOperator,
+#ifdef DFTFE_WITH_GPU
+                 kohnShamDFTOperatorCUDAClass<FEOrder> & kohnShamDFTEigenOperatorCUDA,
+#endif
+                 const bool kohnShamDFTOperatorsInitialized=false);
 
 
       void initializeKohnShamDFTOperator(kohnShamDFTOperatorClass<FEOrder> & kohnShamDFTEigenOperator
@@ -275,7 +286,8 @@ namespace dftfe {
        */
       void updateAtomPositionsAndMoveMesh(const std::vector<Tensor<1,3,double> > & globalAtomsDisplacements,
 	                                  const double maxJacobianRatioFactor,
-					  const bool useSingleAtomSolutions=false);
+					  const bool useSingleAtomSolutions=false,
+                                          const bool updateDensity=true);
 
 
       /**
@@ -1113,12 +1125,22 @@ namespace dftfe {
                                      chebyshevOrthogonalizedSubspaceIterationSolverCUDA & subspaceIterationSolverCUDA,
                                      std::vector<double> & residualNormWaveFunctions,
                                      const bool isXlBOMDLinearizedSolve,
-                                     const bool useCommunAvoidanceCheby,
                                      const unsigned int numberRayleighRitzAvoidanceXLBOMDPasses=0,
 				     const bool isSpectrumSplit=false,
 				     const bool useMixedPrec=false,
                                      const bool isFirstScf=false,
 				     const bool useFullMassMatrixGEP=false);
+#endif
+
+
+#ifdef DFTFE_WITH_GPU
+      void kohnShamEigenSpaceOnlyRRCompute(const unsigned int s,
+                                     const unsigned int kPointIndex,
+                                     kohnShamDFTOperatorCUDAClass<FEOrder> & kohnShamDFTEigenOperator,
+                                     elpaScalaManager & elpaScala,
+                                     chebyshevOrthogonalizedSubspaceIterationSolverCUDA & subspaceIterationSolverCUDA,
+				     const bool isSpectrumSplit=false,
+				     const bool useMixedPrec=false);
 #endif
 
      void kohnShamEigenSpaceComputeNSCF(const unsigned int spinType,

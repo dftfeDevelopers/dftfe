@@ -133,6 +133,9 @@ namespace dftfe {
     bool skipHarmonicOscillatorTermInitialStepsXLBOMD=false;
     double xlbomdRestartChebyTol=1e-9;
     bool xlbomdRRPassMixedPrec=false;
+    bool useDensityMatrixPerturbationRankUpdates=false;
+    double xlbomdKernelRankUpdateFDParameter=1e-2;
+    bool xlbomdStepTimingRun=false;
 
     void declare_parameters(ParameterHandler &prm)
     {
@@ -812,6 +815,18 @@ namespace dftfe {
                           Patterns::Bool(),
                           "[Standard] Allow mixed precision for RR passes in XL BOMD.");
 
+        prm.declare_entry("DENSITY MATRIX PERTURBATION RANK UPDATES XL BOMD", "false",
+                          Patterns::Bool(),
+                          "[Standard] Use density matrix perturbation theory for rank updates.");
+
+        prm.declare_entry("XL BOMD STEP TIMING RUN", "false",
+                          Patterns::Bool(),
+                          "[Standard] Time one XL BOMD md step for performance measurements.");
+
+        prm.declare_entry("XL BOMD KERNEL RANK UPDATE FD PARAMETER", "1e-2",
+                            Patterns::Double(0.0),
+                            "[Standard] Finite difference perturbation parameter.");
+
         prm.declare_entry("SKIP HARMONIC OSCILLATOR INITIAL STEPS XL BOMD", "false",
                           Patterns::Bool(),
                           "[Standard] Numerical strategy to remove oscillations in initial steps.");
@@ -1052,7 +1067,10 @@ namespace dftfe {
           dftParameters::useSingleFullScfXLBOMD = prm.get_bool("STARTING SINGLE FULL SCF XL BOMD");
           dftParameters::skipHarmonicOscillatorTermInitialStepsXLBOMD= prm.get_bool("SKIP HARMONIC OSCILLATOR INITIAL STEPS XL BOMD"); 
           dftParameters::xlbomdRestartChebyTol           = prm.get_double("CHEBY TOL XL BOMD RESTART");  
-          dftParameters::xlbomdRRPassMixedPrec           = prm.get_bool("XL BOMD RR PASS MIXED PREC"); 
+          dftParameters::xlbomdRRPassMixedPrec           = prm.get_bool("XL BOMD RR PASS MIXED PREC");
+          dftParameters::useDensityMatrixPerturbationRankUpdates           = prm.get_bool("DENSITY MATRIX PERTURBATION RANK UPDATES XL BOMD");  
+          dftParameters::xlbomdStepTimingRun           = prm.get_bool("XL BOMD STEP TIMING RUN");
+          dftParameters::xlbomdKernelRankUpdateFDParameter=prm.get_double("XL BOMD KERNEL RANK UPDATE FD PARAMETER");
       }
       prm.leave_subsection ();
 	
