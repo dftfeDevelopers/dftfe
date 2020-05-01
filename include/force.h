@@ -537,7 +537,8 @@ namespace dftfe {
 			    const unsigned int numberWaveFunctions,
 			    std::vector<std::vector<dataTypes::number> > & projectorKetTimesPsiTimesV,
 			    const unsigned int kPointIndex,
-                            const std::vector<double> & partialOccupancies);
+                            const std::vector<double> & partialOccupancies,
+                            const bool oldRoute=false);
 
       void computeNonLocalProjectorKetTimesPsiTimesVFlattened
                            (const dealii::LinearAlgebra::distributed::Vector<dataTypes::number> &src,

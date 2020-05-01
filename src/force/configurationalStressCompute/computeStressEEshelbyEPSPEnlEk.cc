@@ -147,7 +147,8 @@ void forceClass<FEOrder>::computeStressEEshelbyEPSPEnlEk(const MatrixFree<3,doub
 			 numEigenVectors,
                          projectorKetTimesPsiTimesVTimesPartOcc[ikPoint],
 			 ikPoint,
-			 partialOccupancies[ikPoint]);
+			 partialOccupancies[ikPoint],
+                         true);
   }
 
   std::vector<VectorizedArray<double> > rhoQuads(numQuadPoints,make_vectorized_array(0.0));

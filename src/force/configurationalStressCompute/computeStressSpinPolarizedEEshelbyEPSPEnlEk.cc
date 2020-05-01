@@ -191,7 +191,8 @@ void forceClass<FEOrder>::computeStressSpinPolarizedEEshelbyEPSPEnlEk
 		                                   numEigenVectors,
                                                    projectorKetTimesPsiSpin0TimesVTimesPartOcc[ikPoint],
 						   ikPoint,
-						   partialOccupanciesSpin0[ikPoint]);
+						   partialOccupanciesSpin0[ikPoint],
+                                                   true);
     }
     for (unsigned int ikPoint=0; ikPoint<numKPoints; ++ikPoint)
     {
@@ -199,7 +200,8 @@ void forceClass<FEOrder>::computeStressSpinPolarizedEEshelbyEPSPEnlEk
 		                                   numEigenVectors,
                                                    projectorKetTimesPsiSpin1TimesVTimesPartOcc[ikPoint],
 						   ikPoint,
-						   partialOccupanciesSpin1[ikPoint]);
+						   partialOccupanciesSpin1[ikPoint],
+                                                   true);
     }
   }
 

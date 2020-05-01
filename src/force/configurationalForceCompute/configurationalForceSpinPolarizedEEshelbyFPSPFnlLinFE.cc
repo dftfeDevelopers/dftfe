@@ -277,13 +277,15 @@ void forceClass<FEOrder>::computeConfigurationalForceSpinPolarizedEEshelbyTensor
 							   currentBlockSize,
 							   projectorKetTimesPsiSpin0TimesVTimesPartOcc[ikPoint],
 							   ikPoint,
-							   blockedPartialOccupanciesSpin0[ikPoint]);
+							   blockedPartialOccupanciesSpin0[ikPoint],
+                                                           true);
 	    for (unsigned int ikPoint=0; ikPoint<numKPoints; ++ikPoint)
 		 computeNonLocalProjectorKetTimesPsiTimesVFlattened(eigenVectorsFlattenedBlock[2*ikPoint+1],
 							   currentBlockSize,
 							   projectorKetTimesPsiSpin1TimesVTimesPartOcc[ikPoint],
 							   ikPoint,
-							   blockedPartialOccupanciesSpin1[ikPoint]);
+							   blockedPartialOccupanciesSpin1[ikPoint],
+                                                           true);
 	  }
 
           for (unsigned int cell=0; cell<matrixFreeData.n_macro_cells(); ++cell)
