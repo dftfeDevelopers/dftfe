@@ -784,7 +784,7 @@ namespace dftfe {
 			    "[Developer] Dirac delta scaling kernel constant for XL BOMD.");  
 
 	prm.declare_entry("KERNEL RANK XL BOMD", "0",
-			  Patterns::Integer(0,5),
+			  Patterns::Integer(0,10),
 			  "[Standard] Maximum rank for low rank kernel update in XL BOMD.");
 
         prm.declare_entry("NUMBER DISSIPATION TERMS XL BOMD", "8",
