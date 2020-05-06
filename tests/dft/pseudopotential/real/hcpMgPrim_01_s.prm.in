@@ -74,7 +74,6 @@ subsection SCF parameters
      set CHEBYSHEV FILTER TOLERANCE=5e-3
      set ORTHOGONALIZATION TYPE=PGS
      set RR GEP=true
-     set RR GEP FULL MASS MATRIX=true
   end
 end
 

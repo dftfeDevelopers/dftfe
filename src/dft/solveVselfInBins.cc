@@ -98,7 +98,7 @@ namespace dftfe
 				    constraintMatrixId,
 				    d_atomsInBin[iBin],
                                     true,
-                                    iBin==0?false:false);
+                                    iBin==0?true:false);
 
           MPI_Barrier(MPI_COMM_WORLD);
           vselfinit_time = MPI_Wtime() - vselfinit_time;

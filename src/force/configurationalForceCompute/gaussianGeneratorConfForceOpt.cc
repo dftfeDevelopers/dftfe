@@ -368,9 +368,10 @@ void forceClass<FEOrder>::computeAtomsForcesGaussianGenerator(bool allowGaussian
 
   dealii::BoundingBox<3> boundingBoxTria(vectorTools::createBoundingBoxTriaLocallyOwned(d_dofHandlerForce));
   dealii::Tensor<1,3,double> tempDisp;
-  tempDisp[0]=3.0;
-  tempDisp[1]=3.0;
-  tempDisp[2]=3.0;
+  const double val=3.0;
+  tempDisp[0]=val;
+  tempDisp[1]=val;
+  tempDisp[2]=val;
 
   std::vector<dealii::Point<3>> nontrivialAtomCoords;
   std::vector<unsigned int> nontrivialAtomIds;
@@ -398,7 +399,7 @@ void forceClass<FEOrder>::computeAtomsForcesGaussianGenerator(bool allowGaussian
       boundaryPoints.second=atomCoor+tempDisp;
       dealii::BoundingBox<3> boundingBoxAroundAtom(boundaryPoints);
 
-      if (boundingBoxTria.get_neighbor_type(boundingBoxAroundAtom)!=NeighborType::not_neighbors)
+      if (boundingBoxTria.get_neighbor_type(boundingBoxAroundAtom)!=NeighborType::not_neighbors || d_isElectrostaticsMeshSubdivided)
       {
           nontrivialAtomCoords.push_back(atomCoor);
           nontrivialAtomIds.push_back(iAtom);
