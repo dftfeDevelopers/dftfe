@@ -549,7 +549,12 @@ void forceClass<FEOrder>::computeConfigurationalForceEEshelbyTensorFPSPFnlLinFE
 									    currentBlockSize,
 									    projectorKetTimesPsiTimesVTimesPartOcc[ikPoint],
 									    ikPoint,
-									    blockedPartialOccupancies[ikPoint]);
+									    blockedPartialOccupancies[ikPoint]
+#ifdef USE_COMPLEX
+                                                                            ,
+                                                                            true
+#endif
+                                                                            );
 		    }
 
 		  for (unsigned int cell=0; cell<matrixFreeData.n_macro_cells(); ++cell)
@@ -1197,7 +1202,7 @@ void forceClass<FEOrder>::computeConfigurationalForceEEshelbyTensorFPSPFnlLinFE
                 }
              }
 
-             if(dftParameters::xc_id == 4)
+             if(dftParameters::xc_id == 4 || d_isElectrostaticsMeshSubdivided)
 		 for (unsigned int idim=0; idim<C_DIM; idim++)
 		    gradRhoQuads[q][idim][iSubCell]=gradRhoOutValues.find(subCellId)->second[3*q+idim];
 	   }
@@ -1263,7 +1268,7 @@ void forceClass<FEOrder>::computeConfigurationalForceEEshelbyTensorFPSPFnlLinFE
 	       F-=gradRhoQuads[q]*phiTot_q;
 
 	   if(isPseudopotential && d_isElectrostaticsMeshSubdivided)
-		  F-=gradRhoQuads[q]*(pseudoVLocQuads[q]);//-phiExt_q);
+	       F-=gradRhoQuads[q]*(pseudoVLocQuads[q]);//-phiExt_q);
 
 	   forceEval.submit_value(F,q);
 	   forceEval.submit_gradient(E,q);

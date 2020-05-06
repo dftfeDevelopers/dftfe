@@ -843,11 +843,12 @@ void forceClass<FEOrder>::computeConfigurationalForceSpinPolarizedEEshelbyTensor
 	   {
 	     rhoQuads[q][iSubCell]=(*dftPtr->rhoOutValues)[subCellId][q];
 
-	     for (unsigned int idim=0; idim<C_DIM; idim++)
-	     {
-		gradRhoSpin0Quads[q][idim][iSubCell]=(*dftPtr->gradRhoOutValuesSpinPolarized)[subCellId][6*q+idim];
-		gradRhoSpin1Quads[q][idim][iSubCell]=(*dftPtr->gradRhoOutValuesSpinPolarized)[subCellId][6*q+3+idim];
-	     }
+             if(d_isElectrostaticsMeshSubdivided || dftParameters::xc_id == 4)
+	        for (unsigned int idim=0; idim<C_DIM; idim++)
+	        {
+		   gradRhoSpin0Quads[q][idim][iSubCell]=(*dftPtr->gradRhoOutValuesSpinPolarized)[subCellId][6*q+idim];
+		   gradRhoSpin1Quads[q][idim][iSubCell]=(*dftPtr->gradRhoOutValuesSpinPolarized)[subCellId][6*q+3+idim];
+	        }
 	   }
 	}
 
