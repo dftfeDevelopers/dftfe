@@ -181,7 +181,7 @@ namespace dftfe
 			    dealii::LinearAlgebra::distributed::Vector<T>                           & flattenedArray)
     {
 
-      const MPI_Comm & mpi_communicator=partitioner->get_communicator();
+      const MPI_Comm & mpi_communicator=partitioner->get_mpi_communicator();
       //
       //Get required sizes
       //
@@ -266,7 +266,7 @@ namespace dftfe
 			    dealii::LinearAlgebra::distributed::Vector<T,dealii::MemorySpace::CUDA>  & flattenedArray)
     {
 
-      const MPI_Comm & mpi_communicator=partitioner->get_communicator();
+      const MPI_Comm & mpi_communicator=partitioner->get_mpi_communicator();
       //
       //Get required sizes
       //
