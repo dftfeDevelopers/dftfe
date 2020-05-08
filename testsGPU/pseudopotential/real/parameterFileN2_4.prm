@@ -50,8 +50,8 @@ subsection SCF parameters
   set MIXING PARAMETER = 0.5
   set MAXIMUM ITERATIONS               = 100
   set TEMPERATURE                      = 500
-  set TOLERANCE                        = 1e-5
-  set STARTING WFC                     = ATOMIC
+  set TOLERANCE                        = 1e-6
+  set STARTING WFC                     = RANDOM
   subsection Eigen-solver parameters
       set CHEBYSHEV POLYNOMIAL DEGREE=10
       set NUMBER OF KOHN-SHAM WAVEFUNCTIONS = 8
