@@ -82,7 +82,7 @@ void dftClass<FEOrder>::compute_rhoOut(
                           kohnShamDFTOperatorCUDAClass<FEOrder> & kohnShamDFTEigenOperator,
 #endif
                           const bool isConsiderSpectrumSplitting,
-                          const bool isComputeNodalDensityIfNotKerker)
+                          const bool isGroundState)
 {
 
   if(dftParameters::mixingMethod=="ANDERSON_WITH_KERKER")
@@ -175,7 +175,7 @@ void dftClass<FEOrder>::compute_rhoOut(
 			isConsiderSpectrumSplitting);
 #endif
 
-      if (isComputeNodalDensityIfNotKerker && dftParameters::mixingMethod!="ANDERSON_WITH_KERKER")
+      if (isGroundState && dftParameters::mixingMethod!="ANDERSON_WITH_KERKER")
       {
 #ifdef DFTFE_WITH_GPU
 	      computeRhoNodalFromPSI(kohnShamDFTEigenOperator,isConsiderSpectrumSplitting);
@@ -188,6 +188,18 @@ void dftClass<FEOrder>::compute_rhoOut(
   
   popOutRhoInRhoOutVals();
 
+  if (isGroundState && (dftParameters::isIonOpt || dftParameters::isCellOpt))
+  {
+      d_rhoInNodalValues=d_rhoOutNodalValues;
+      d_rhoInNodalValues-=d_atomicRho;
+
+      d_rhoInNodalValues.update_ghost_values();
+
+      double charge = totalCharge(d_matrixFreeDataPRefined,
+				  d_rhoInNodalValues);
+	
+      d_rhoInNodalValues.add(-charge/d_domainVolume);
+  }
 }
 
 

@@ -287,7 +287,7 @@ namespace dftfe {
       void updateAtomPositionsAndMoveMesh(const std::vector<Tensor<1,3,double> > & globalAtomsDisplacements,
 	                                  const double maxJacobianRatioFactor,
 					  const bool useSingleAtomSolutions=false,
-                                          const bool updateDensity=true);
+                                          const bool useAtomicRhoSplitDensityUpdate=true);
 
 
       /**
@@ -603,7 +603,7 @@ namespace dftfe {
                           kohnShamDFTOperatorCUDAClass<FEOrder> & kohnShamDFTEigenOperator,
 #endif
                           const bool isConsiderSpectrumSplitting,
-                          const bool isComputeNodalDensityIfNotKerker=false);
+                          const bool isGroundState=false);
 
       
       void popOutRhoInRhoOutVals(); 
@@ -910,7 +910,7 @@ namespace dftfe {
       std::map<dealii::CellId, std::vector<double> > *rhoInValues, *rhoOutValues, *rhoInValuesSpinPolarized, *rhoOutValuesSpinPolarized;
       std::deque<std::map<dealii::CellId,std::vector<double> >> rhoInVals, rhoOutVals, rhoInValsSpinPolarized, rhoOutValsSpinPolarized;
 
-      vectorType d_rhoInNodalValuesRead, d_rhoInNodalValues, d_rhoOutNodalValues, d_preCondResidualVector;
+      vectorType d_rhoInNodalValuesRead, d_rhoInNodalValues, d_rhoOutNodalValues, d_preCondResidualVector, d_atomicRho;
       std::deque<vectorType> d_rhoInNodalVals, d_rhoOutNodalVals;
 
       /// for xl-bomd

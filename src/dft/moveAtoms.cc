@@ -530,7 +530,7 @@ void dftClass<FEOrder>::updateAtomPositionsAndMoveMesh(const std::vector<Tensor<
               if (dftParameters::isBOMD)
                  initNoRemesh(false,(!dftParameters::reproducible_output && maxCurrentDispAtom>0.2) || useSingleAtomSolutions,updateDensity);
               else
-       	         initNoRemesh(false,(!dftParameters::reproducible_output && maxCurrentDispAtom>0.06) || useSingleAtomSolutions,updateDensity);
+       	         initNoRemesh(false,(!dftParameters::reproducible_output && maxCurrentDispAtom>0.2) || useSingleAtomSolutions,updateDensity);
 	      if (!dftParameters::reproducible_output)
 	         pcout << "...Reinitialization end" << std::endl;
 
