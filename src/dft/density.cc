@@ -190,15 +190,10 @@ void dftClass<FEOrder>::compute_rhoOut(
 
   if (isGroundState && (dftParameters::isIonOpt || dftParameters::isCellOpt))
   {
-      d_rhoInNodalValues=d_rhoOutNodalValues;
-      d_rhoInNodalValues-=d_atomicRho;
+      d_rhoOutNodalValuesSplit=d_rhoOutNodalValues;
+      d_rhoOutNodalValuesSplit-=d_atomicRho;
 
-      d_rhoInNodalValues.update_ghost_values();
-
-      double charge = totalCharge(d_matrixFreeDataPRefined,
-				  d_rhoInNodalValues);
-	
-      d_rhoInNodalValues.add(-charge/d_domainVolume);
+      d_rhoOutNodalValuesSplit.update_ghost_values();
   }
 }
 
@@ -288,92 +283,95 @@ void dftClass<FEOrder>::sumRhoData(std::map<dealii::CellId, std::vector<double> 
 template<unsigned int FEOrder>
 void dftClass<FEOrder>::noRemeshRhoDataInit()
 {
-  
-  //create temporary copies of rho Out data
-  std::map<dealii::CellId, std::vector<double> > rhoOutValuesCopy=*(rhoOutValues);
+ 
+  if (rhoOutVals.size()>0 || d_rhoInNodalVals.size()>0)
+  { 
+	  //create temporary copies of rho Out data
+	  std::map<dealii::CellId, std::vector<double> > rhoOutValuesCopy=*(rhoOutValues);
 
-  std::map<dealii::CellId, std::vector<double> > gradRhoOutValuesCopy;
-  if (dftParameters::xc_id==4)
-    {
-      gradRhoOutValuesCopy=*(gradRhoOutValues);
+	  std::map<dealii::CellId, std::vector<double> > gradRhoOutValuesCopy;
+	  if (dftParameters::xc_id==4)
+	    {
+	      gradRhoOutValuesCopy=*(gradRhoOutValues);
+	    }
+
+	  std::map<dealii::CellId, std::vector<double> > rhoOutValuesSpinPolarizedCopy;
+	  if(dftParameters::spinPolarized==1)
+	    {
+	      rhoOutValuesSpinPolarizedCopy=*(rhoOutValuesSpinPolarized);
+
+	    }
+
+	  std::map<dealii::CellId, std::vector<double> > gradRhoOutValuesSpinPolarizedCopy;
+	  if(dftParameters::spinPolarized==1 && dftParameters::xc_id==4)
+	    {
+	      gradRhoOutValuesSpinPolarizedCopy=*(gradRhoOutValuesSpinPolarized);
+
+	    }
+
+	  //cleanup of existing rho Out and rho In data
+	  clearRhoData();
+
+	  ///copy back temporary rho out to rho in data
+	  rhoInVals.push_back(rhoOutValuesCopy);
+	  rhoInValues=&(rhoInVals.back());
+
+	  if (dftParameters::xc_id==4)
+	    {
+	      gradRhoInVals.push_back(gradRhoOutValuesCopy);
+	      gradRhoInValues=&(gradRhoInVals.back());
+	    }
+
+	  if(dftParameters::spinPolarized==1)
+	    {
+	      rhoInValsSpinPolarized.push_back(rhoOutValuesSpinPolarizedCopy);
+	      rhoInValuesSpinPolarized=&(rhoInValsSpinPolarized.back());
+	    }
+
+	  if (dftParameters::xc_id==4 && dftParameters::spinPolarized==1)
+	    {
+	      gradRhoInValsSpinPolarized.push_back(gradRhoOutValuesSpinPolarizedCopy);
+	      gradRhoInValuesSpinPolarized=&(gradRhoInValsSpinPolarized.back());
+	    }
+
+	  if(dftParameters::mixingMethod == "ANDERSON_WITH_KERKER")
+	    {
+
+	      d_rhoInNodalValues = d_rhoOutNodalValues;
+
+	      //normalize rho
+	      const double charge = totalCharge(d_matrixFreeDataPRefined,
+						d_rhoInNodalValues);
+
+	      const double scalingFactor = ((double)numElectrons)/charge;
+
+	      //scale nodal vector with scalingFactor
+	      d_rhoInNodalValues *= scalingFactor;
+	      d_rhoInNodalVals.push_back(d_rhoInNodalValues);
+
+	      interpolateNodalDataToQuadratureData(d_matrixFreeDataPRefined,
+						   d_rhoInNodalValues,
+						   *rhoInValues,
+						   *gradRhoInValues,
+						   *gradRhoInValues,
+						   dftParameters::xc_id == 4);
+
+
+	      rhoOutVals.push_back(std::map<dealii::CellId,std::vector<double> > ());
+	      rhoOutValues = &(rhoOutVals.back());
+
+	      if(dftParameters::xc_id == 4)
+		{
+		  gradRhoOutVals.push_back(std::map<dealii::CellId, std::vector<double> >());
+		  gradRhoOutValues= &(gradRhoOutVals.back());
+		}
+
+
+	    }
+	      
+	    //scale quadrature values
+	    normalizeRho();
     }
-
-  std::map<dealii::CellId, std::vector<double> > rhoOutValuesSpinPolarizedCopy;
-  if(dftParameters::spinPolarized==1)
-    {
-      rhoOutValuesSpinPolarizedCopy=*(rhoOutValuesSpinPolarized);
-
-    }
-
-  std::map<dealii::CellId, std::vector<double> > gradRhoOutValuesSpinPolarizedCopy;
-  if(dftParameters::spinPolarized==1 && dftParameters::xc_id==4)
-    {
-      gradRhoOutValuesSpinPolarizedCopy=*(gradRhoOutValuesSpinPolarized);
-
-    }
-
-  //cleanup of existing rho Out and rho In data
-  clearRhoData();
-
-  ///copy back temporary rho out to rho in data
-  rhoInVals.push_back(rhoOutValuesCopy);
-  rhoInValues=&(rhoInVals.back());
-
-  if (dftParameters::xc_id==4)
-    {
-      gradRhoInVals.push_back(gradRhoOutValuesCopy);
-      gradRhoInValues=&(gradRhoInVals.back());
-    }
-
-  if(dftParameters::spinPolarized==1)
-    {
-      rhoInValsSpinPolarized.push_back(rhoOutValuesSpinPolarizedCopy);
-      rhoInValuesSpinPolarized=&(rhoInValsSpinPolarized.back());
-    }
-
-  if (dftParameters::xc_id==4 && dftParameters::spinPolarized==1)
-    {
-      gradRhoInValsSpinPolarized.push_back(gradRhoOutValuesSpinPolarizedCopy);
-      gradRhoInValuesSpinPolarized=&(gradRhoInValsSpinPolarized.back());
-    }
-
-  if(dftParameters::mixingMethod == "ANDERSON_WITH_KERKER")
-    {
-
-      d_rhoInNodalValues = d_rhoOutNodalValues;
-
-      //normalize rho
-      const double charge = totalCharge(d_matrixFreeDataPRefined,
-					d_rhoInNodalValues);
-
-      const double scalingFactor = ((double)numElectrons)/charge;
-
-      //scale nodal vector with scalingFactor
-      d_rhoInNodalValues *= scalingFactor;
-      d_rhoInNodalVals.push_back(d_rhoInNodalValues);
-
-      interpolateNodalDataToQuadratureData(d_matrixFreeDataPRefined,
-					   d_rhoInNodalValues,
-					   *rhoInValues,
-					   *gradRhoInValues,
-                                           *gradRhoInValues,
-					   dftParameters::xc_id == 4);
-
-
-      rhoOutVals.push_back(std::map<dealii::CellId,std::vector<double> > ());
-      rhoOutValues = &(rhoOutVals.back());
-
-      if(dftParameters::xc_id == 4)
-	{
-	  gradRhoOutVals.push_back(std::map<dealii::CellId, std::vector<double> >());
-	  gradRhoOutValues= &(gradRhoOutVals.back());
-	}
-
-
-    }
-      
-    //scale quadrature values
-    normalizeRho();
 }
 
 template <unsigned int FEOrder>
@@ -425,6 +423,30 @@ void dftClass<FEOrder>::computeRhoNodalFromPSI(
 	}
     }
 
+  //allocate dummy datastructures
+  std::map<dealii::CellId, std::vector<double> > _gradRhoValues;
+  std::map<dealii::CellId, std::vector<double> > _rhoValuesSpinPolarized;
+  std::map<dealii::CellId, std::vector<double> > _gradRhoValuesSpinPolarized;
+ 
+  cell = dofHandler.begin_active();
+  endc = dofHandler.end();
+  for (; cell!=endc; ++cell)
+    if (cell->is_locally_owned())
+      {
+        const dealii::CellId cellId=cell->id();
+        if(dftParameters::xc_id == 4)
+          (_gradRhoValues)[cellId] = std::vector<double>(3*numQuadPoints,0.0);
+
+        if (dftParameters::spinPolarized==1)
+          {
+            (_rhoValuesSpinPolarized)[cellId] = std::vector<double>(2*numQuadPoints,0.0);
+            if(dftParameters::xc_id == 4)
+              (_gradRhoValuesSpinPolarized)[cellId]
+                = std::vector<double>(6*numQuadPoints,0.0);
+          }
+      }
+
+
   //compute rho from wavefunctions at nodal locations of 2p DoFHandler nodes in each cell
 #ifdef DFTFE_WITH_GPU
   if (dftParameters::useGPU)
@@ -445,9 +467,9 @@ void dftClass<FEOrder>::computeRhoNodalFromPSI(
 			quadrature_formula.size(),
 			d_kPointWeights,
                         &rhoPRefinedNodalData,
-		        gradRhoOutValues,
-		        rhoOutValuesSpinPolarized,
-		        gradRhoOutValuesSpinPolarized,
+		        &_gradRhoValues,
+		        &_rhoValuesSpinPolarized,
+		        &_gradRhoValuesSpinPolarized,
 			false,
 			interpoolcomm,
 			interBandGroupComm,
@@ -456,17 +478,17 @@ void dftClass<FEOrder>::computeRhoNodalFromPSI(
 
   else
      computeRhoFromPSI(&rhoPRefinedNodalData,
-		    gradRhoOutValues,
-		    rhoOutValuesSpinPolarized,
-		    gradRhoOutValuesSpinPolarized,
+		    &_gradRhoValues,
+		    &_rhoValuesSpinPolarized,
+		    &_gradRhoValuesSpinPolarized,
 		    false,
 		    isConsiderSpectrumSplitting,
 		    true);
 #else
   computeRhoFromPSI(&rhoPRefinedNodalData,
-		    gradRhoOutValues,
-		    rhoOutValuesSpinPolarized,
-		    gradRhoOutValuesSpinPolarized,
+		    &_gradRhoValues,
+		    &_rhoValuesSpinPolarized,
+		    &_gradRhoValuesSpinPolarized,
 		    false,
 		    isConsiderSpectrumSplitting,
 		    true);

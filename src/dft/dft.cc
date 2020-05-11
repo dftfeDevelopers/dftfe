@@ -832,18 +832,21 @@ namespace dftfe {
 
     if (dftParameters::chkType==3 && dftParameters::restartFromChk)
     {
-            for (unsigned int i = 0; i < d_rhoInNodalValues.local_size(); i++)
-                d_rhoInNodalValues.local_element(i)=d_rhoInNodalValuesRead.local_element(i);
+            if (!d_isAtomsGaussianDisplacementsReadFromFile)
+            {
+		    for (unsigned int i = 0; i < d_rhoInNodalValues.local_size(); i++)
+			d_rhoInNodalValues.local_element(i)=d_rhoInNodalValuesRead.local_element(i);
 
-	    d_rhoInNodalValues.update_ghost_values();
-	    interpolateNodalDataToQuadratureData(d_matrixFreeDataPRefined,
-						 d_rhoInNodalValues,
-						 *(rhoInValues),
-						 *(gradRhoInValues),
-						 *(gradRhoInValues),
-						 dftParameters::xc_id == 4);
+		    d_rhoInNodalValues.update_ghost_values();
+		    interpolateNodalDataToQuadratureData(d_matrixFreeDataPRefined,
+							 d_rhoInNodalValues,
+							 *(rhoInValues),
+							 *(gradRhoInValues),
+							 *(gradRhoInValues),
+							 dftParameters::xc_id == 4);
 
-            normalizeRho();
+		    normalizeRho();
+            }
 
             d_isRestartGroundStateCalcFromChk=true;
     }
@@ -869,11 +872,27 @@ namespace dftfe {
     //
     if (d_isAtomsGaussianDisplacementsReadFromFile)
     {
-	updateAtomPositionsAndMoveMesh(d_atomsDisplacementsGaussianRead,1e+4,true,!(dftParameters::chkType==3 && dftParameters::restartFromChk));
+	updateAtomPositionsAndMoveMesh(d_atomsDisplacementsGaussianRead,
+                                       1e+4,
+                                       true,
+                                       false);
 	d_isAtomsGaussianDisplacementsReadFromFile=false;
 
         if (dftParameters::chkType==3 && dftParameters::restartFromChk)
-           normalizeRho();
+        {
+            for (unsigned int i = 0; i < d_rhoInNodalValues.local_size(); i++)
+                d_rhoInNodalValues.local_element(i)=d_rhoInNodalValuesRead.local_element(i);
+
+            d_rhoInNodalValues.update_ghost_values();
+            interpolateNodalDataToQuadratureData(d_matrixFreeDataPRefined,
+                                                 d_rhoInNodalValues,
+                                                 *(rhoInValues),
+                                                 *(gradRhoInValues),
+                                                 *(gradRhoInValues),
+                                                 dftParameters::xc_id == 4);
+
+            normalizeRho();
+        }
     }
 
     computingTimerStandard.exit_section("KSDFT problem initialization");
@@ -928,12 +947,17 @@ namespace dftfe {
 
        if (useAtomicRhoSplitDensityUpdate && (dftParameters::isIonOpt || dftParameters::isCellOpt))
        {
+            double charge = totalCharge(d_matrixFreeDataPRefined,
+                                       d_rhoOutNodalValuesSplit);
+ 
+            d_rhoOutNodalValuesSplit.add(-charge/d_domainVolume);
+
             initAtomicRho(d_atomicRho);
-	    d_rhoInNodalValues+=d_atomicRho;
+	    d_rhoOutNodalValuesSplit+=d_atomicRho;
 	 
-	    d_rhoInNodalValues.update_ghost_values();
+	    d_rhoOutNodalValuesSplit.update_ghost_values();
 	    interpolateNodalDataToQuadratureData(d_matrixFreeDataPRefined,
-						 d_rhoInNodalValues,
+						 d_rhoOutNodalValuesSplit,
 						*(rhoInValues),
 						*(gradRhoInValues),
 						*(gradRhoInValues),

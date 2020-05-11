@@ -910,7 +910,7 @@ namespace dftfe {
       std::map<dealii::CellId, std::vector<double> > *rhoInValues, *rhoOutValues, *rhoInValuesSpinPolarized, *rhoOutValuesSpinPolarized;
       std::deque<std::map<dealii::CellId,std::vector<double> >> rhoInVals, rhoOutVals, rhoInValsSpinPolarized, rhoOutValsSpinPolarized;
 
-      vectorType d_rhoInNodalValuesRead, d_rhoInNodalValues, d_rhoOutNodalValues, d_preCondResidualVector, d_atomicRho;
+      vectorType d_rhoInNodalValuesRead, d_rhoInNodalValues, d_rhoOutNodalValues, d_rhoOutNodalValuesSplit, d_preCondResidualVector, d_atomicRho;
       std::deque<vectorType> d_rhoInNodalVals, d_rhoOutNodalVals;
 
       /// for xl-bomd
