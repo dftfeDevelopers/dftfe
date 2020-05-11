@@ -832,18 +832,21 @@ namespace dftfe {
 
     if (dftParameters::chkType==3 && dftParameters::restartFromChk)
     {
-            for (unsigned int i = 0; i < d_rhoInNodalValues.local_size(); i++)
-                d_rhoInNodalValues.local_element(i)=d_rhoInNodalValuesRead.local_element(i);
+            if (!d_isAtomsGaussianDisplacementsReadFromFile)
+            {
+		    for (unsigned int i = 0; i < d_rhoInNodalValues.local_size(); i++)
+			d_rhoInNodalValues.local_element(i)=d_rhoInNodalValuesRead.local_element(i);
 
-	    d_rhoInNodalValues.update_ghost_values();
-	    interpolateNodalDataToQuadratureData(d_matrixFreeDataPRefined,
-						 d_rhoInNodalValues,
-						 *(rhoInValues),
-						 *(gradRhoInValues),
-						 *(gradRhoInValues),
-						 dftParameters::xc_id == 4);
+		    d_rhoInNodalValues.update_ghost_values();
+		    interpolateNodalDataToQuadratureData(d_matrixFreeDataPRefined,
+							 d_rhoInNodalValues,
+							 *(rhoInValues),
+							 *(gradRhoInValues),
+							 *(gradRhoInValues),
+							 dftParameters::xc_id == 4);
 
-            normalizeRho();
+		    normalizeRho();
+            }
 
             d_isRestartGroundStateCalcFromChk=true;
     }
@@ -869,11 +872,27 @@ namespace dftfe {
     //
     if (d_isAtomsGaussianDisplacementsReadFromFile)
     {
-	updateAtomPositionsAndMoveMesh(d_atomsDisplacementsGaussianRead,1e+4,true,!(dftParameters::chkType==3 && dftParameters::restartFromChk));
+	updateAtomPositionsAndMoveMesh(d_atomsDisplacementsGaussianRead,
+                                       1e+4,
+                                       true,
+                                       false);
 	d_isAtomsGaussianDisplacementsReadFromFile=false;
 
         if (dftParameters::chkType==3 && dftParameters::restartFromChk)
-           normalizeRho();
+        {
+            for (unsigned int i = 0; i < d_rhoInNodalValues.local_size(); i++)
+                d_rhoInNodalValues.local_element(i)=d_rhoInNodalValuesRead.local_element(i);
+
+            d_rhoInNodalValues.update_ghost_values();
+            interpolateNodalDataToQuadratureData(d_matrixFreeDataPRefined,
+                                                 d_rhoInNodalValues,
+                                                 *(rhoInValues),
+                                                 *(gradRhoInValues),
+                                                 *(gradRhoInValues),
+                                                 dftParameters::xc_id == 4);
+
+            normalizeRho();
+        }
     }
 
     computingTimerStandard.exit_section("KSDFT problem initialization");
@@ -882,7 +901,7 @@ namespace dftfe {
   template<unsigned int FEOrder>
   void dftClass<FEOrder>::initNoRemesh(const bool updateImageKPoints,
 	                               const bool useSingleAtomSolution,
-                                       const bool updateDensity)
+                                       const bool useAtomicRhoSplitDensityUpdate)
   {
     computingTimerStandard.enter_section("KSDFT problem initialization");
     if(updateImageKPoints)
@@ -907,34 +926,50 @@ namespace dftfe {
     if (dftParameters::verbosity>=1)
         pcout<<"updateAtomPositionsAndMoveMesh: Time taken for initBoundaryConditions: "<<init_bc<<std::endl;
 
-    if (updateDensity) 
+    double init_rho;
+    MPI_Barrier(MPI_COMM_WORLD);
+    init_rho = MPI_Wtime();
+
+    if (useSingleAtomSolution)
     {
-	    double init_rho;
-	    MPI_Barrier(MPI_COMM_WORLD);
-	    init_rho = MPI_Wtime();
-
-	    if (useSingleAtomSolution)
-	    {
-		 readPSI();
-		 initRho();
-	    }
-	    else
-	    {
-	       //
-	       //rho init (use previous ground state electron density)
-	       //
-	       //if(dftParameters::mixingMethod != "ANDERSON_WITH_KERKER")
-	       //   solveNoSCF();
-
-	       noRemeshRhoDataInit();
-	    }
-
-	    MPI_Barrier(MPI_COMM_WORLD);
-	    init_rho = MPI_Wtime() - init_rho;
-	    if (dftParameters::verbosity>=1)
-		pcout<<"updateAtomPositionsAndMoveMesh: Time taken for initRho: "<<init_rho<<std::endl;
-
+	 readPSI();
+	 initRho();
     }
+    else
+    {
+       //
+       //rho init (use previous ground state electron density)
+       //
+       //if(dftParameters::mixingMethod != "ANDERSON_WITH_KERKER")
+       //   solveNoSCF();
+
+       noRemeshRhoDataInit();
+
+       if (useAtomicRhoSplitDensityUpdate && (dftParameters::isIonOpt || dftParameters::isCellOpt))
+       {
+            double charge = totalCharge(d_matrixFreeDataPRefined,
+                                       d_rhoOutNodalValuesSplit);
+ 
+            d_rhoOutNodalValuesSplit.add(-charge/d_domainVolume);
+
+            initAtomicRho(d_atomicRho);
+	    d_rhoOutNodalValuesSplit+=d_atomicRho;
+	 
+	    d_rhoOutNodalValuesSplit.update_ghost_values();
+	    interpolateNodalDataToQuadratureData(d_matrixFreeDataPRefined,
+						 d_rhoOutNodalValuesSplit,
+						*(rhoInValues),
+						*(gradRhoInValues),
+						*(gradRhoInValues),
+						 dftParameters::xc_id == 4);	
+	    normalizeRho();
+       }
+    }
+
+    MPI_Barrier(MPI_COMM_WORLD);
+    init_rho = MPI_Wtime() - init_rho;
+    if (dftParameters::verbosity>=1)
+	pcout<<"updateAtomPositionsAndMoveMesh: Time taken for initRho: "<<init_rho<<std::endl;
 
     //
     //reinitialize pseudopotential related data structures
@@ -1788,6 +1823,8 @@ namespace dftfe {
         firstScfChebyTol=dftParameters::chebyshevFilterTolXLBOMD;
     else if (dftParameters::isBOMD)
         firstScfChebyTol=dftParameters::chebyshevTolerance>1e-4?1e-4:dftParameters::chebyshevTolerance;
+    else if (dftParameters::isIonOpt || dftParameters::isCellOpt)
+        firstScfChebyTol=dftParameters::chebyshevTolerance>1e-3?1e-3:dftParameters::chebyshevTolerance; 
     //
     //Begin SCF iteration
     //
@@ -2494,16 +2531,16 @@ namespace dftfe {
 	}
 	else
 	  compute_rhoOut((scfIter<dftParameters::spectrumSplitStartingScfIter || scfConverged || performExtraNoMixedPrecNoSpectrumSplitPassInCaseOfXlBOMD)?false:true,
-                         (scfConverged && (dftParameters::isBOMD || dftParameters::chkType==3) )||solveLinearizedKS);
+                         scfConverged);
 #else
 
 #ifdef DFTFE_WITH_GPU
         compute_rhoOut(kohnShamDFTEigenOperatorCUDA,
 	      (scfIter<dftParameters::spectrumSplitStartingScfIter || scfConverged || performExtraNoMixedPrecNoSpectrumSplitPassInCaseOfXlBOMD)?false:true,
-               (scfConverged && (dftParameters::isBOMD || dftParameters::chkType==3) )||solveLinearizedKS);
+               scfConverged);
 #else
 	compute_rhoOut((scfIter<dftParameters::spectrumSplitStartingScfIter || scfConverged || performExtraNoMixedPrecNoSpectrumSplitPassInCaseOfXlBOMD)?false:true,
-                       (scfConverged && (dftParameters::isBOMD || dftParameters::chkType==3) )||solveLinearizedKS);
+                       scfConverged);
 #endif
 #endif
 	computing_timer.exit_section("compute rho");

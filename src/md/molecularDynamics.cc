@@ -753,7 +753,7 @@ void molecularDynamics<FEOrder>::run()
 	    dftPtr->updateAtomPositionsAndMoveMesh(displacements,
 						   dftParameters::maxJacobianRatioFactorForMD,
 						   (timeIndex ==startingTimeStep+1 && restartFlag==1)?true:false,
-                                                   true);
+                                                   false);
 
             /*
 	    if (d_isAtomsGaussianDisplacementsReadFromFile)
@@ -1451,6 +1451,16 @@ void molecularDynamics<FEOrder>::run()
                     if (!dftPtr->d_autoMesh==1)
                        if (!(timeIndex ==startingTimeStep+1 && restartFlag==1))
                        {
+                            //normalize shadowKSRhoMin
+			    double charge = dftPtr->totalCharge(dftPtr->d_matrixFreeDataPRefined,
+						       shadowKSRhoMin);
+
+			    if (dftParameters::useAtomicRhoXLBOMD)
+				shadowKSRhoMin.add(-charge/dftPtr->d_domainVolume);
+			    else
+				    shadowKSRhoMin *= ((double)dftPtr->numElectrons)/charge;
+
+
                             dftPtr->d_rhoInNodalValues=shadowKSRhoMin;
                             if (dftParameters::useAtomicRhoXLBOMD)
                                dftPtr->d_rhoInNodalValues+=atomicRho;
@@ -1479,15 +1489,6 @@ void molecularDynamics<FEOrder>::run()
 		        shadowKSRhoMin-=atomicRho;
 
 		    shadowKSRhoMin.update_ghost_values();
-
-		    //normalize shadowKSRhoMin
-		    double charge = dftPtr->totalCharge(dftPtr->d_matrixFreeDataPRefined,
-					       shadowKSRhoMin);
-			
-                    if (dftParameters::useAtomicRhoXLBOMD)
-		        shadowKSRhoMin.add(-charge/dftPtr->d_domainVolume);
-                    else
-                        shadowKSRhoMin *= ((double)dftPtr->numElectrons)/charge;
             }
 
             double bomdpost_time;

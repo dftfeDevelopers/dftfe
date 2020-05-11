@@ -1048,7 +1048,9 @@ void dftClass<FEOrder>::initAtomicRho(vectorType & atomicRho)
   computing_timer.enter_section("initialize atomic density for xl bomd");
 
   //Reading single atom rho initial guess
-  pcout <<std::endl<< "Reading initial guess for electron-density....."<<std::endl;
+  if (dftParameters::verbosity>=1)
+     pcout <<std::endl<< "Reading initial guess for electron-density....."<<std::endl;
+
   std::map<unsigned int, alglib::spline1dinterpolant> denSpline;
   std::map<unsigned int, std::vector<std::vector<double> > > singleAtomElectronDensity;
   std::map<unsigned int, double> outerMostPointDen;
