@@ -10,13 +10,11 @@ set -o pipefail
 #Paths for external libraries
 dealiiPetscRealDir="/home/dsambit/softwaresDFTFE/dealii/install_intel18.0.5_real"
 dealiiPetscComplexDir="/home/dsambit/softwaresDFTFE/dealii/install_intel18.0.5_complex"
-alglibDir="/home/phanim/softwaresDFTFE/alglib/cpp/src"
-libxcDir="/home/phanim/softwaresDFTFE/libxc/intel2018_libxc_4.3.4"
-spglibDir="/home/phanim/softwaresDFTFE/spglib"
+alglibDir="/home/vikramg/DFT-FE-softwares/alglib/cpp/src"
+libxcDir="/home/vikramg/DFT-FE-softwares/libxc/intel2018_libxc_4.3.4"
+spglibDir="/home/vikramg/DFT-FE-softwares/spglib"
 xmlIncludeDir="/usr/include/libxml2"
 xmlLibDir="/usr/lib64"
-elpaIncludeDir="/ccs/proj/mat202/softwaresNew/elpa/installGcc6.4.0CUDAVSX/include/elpa_openmp-2018.11.001"
-elpaLibDir="/ccs/proj/mat202/softwaresNew/elpa/installGcc6.4.0CUDAVSX/lib"
 
 
 #If you have installed dealii by linking with intel mkl library set underlying flag to "ON",
