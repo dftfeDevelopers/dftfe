@@ -23,9 +23,9 @@ void forceClass<FEOrder>::computeStressSpinPolarizedEEshelbyEPSPEnlEk
 			      const unsigned int eigenDofHandlerIndex,
 			      const unsigned int phiExtDofHandlerIndex,
 			      const unsigned int phiTotDofHandlerIndex,
-			      const vectorType & phiTotRhoIn,
-			      const vectorType & phiTotRhoOut,
-			      const vectorType & phiExt,
+			      const distributedCPUVec<double> & phiTotRhoIn,
+			      const distributedCPUVec<double> & phiTotRhoOut,
+			      const distributedCPUVec<double> & phiExt,
 		              const std::map<dealii::CellId, std::vector<double> > & pseudoVLoc,
 		              const std::map<dealii::CellId, std::vector<double> > & gradPseudoVLoc,
 		              const std::map<unsigned int,std::map<dealii::CellId, std::vector<double> > > & gradPseudoVLocAtoms,
@@ -33,8 +33,8 @@ void forceClass<FEOrder>::computeStressSpinPolarizedEEshelbyEPSPEnlEk
 			      const MatrixFree<3,double> & matrixFreeDataElectro,
 		              const unsigned int phiTotDofHandlerIndexElectro,
 		              const unsigned int phiExtDofHandlerIndexElectro,
-		              const vectorType & phiTotRhoOutElectro,
-		              const vectorType & phiExtElectro,
+		              const distributedCPUVec<double> & phiTotRhoOutElectro,
+		              const distributedCPUVec<double> & phiExtElectro,
 			      const std::map<dealii::CellId, std::vector<double> > & rhoOutValuesElectro,
 			      const std::map<dealii::CellId, std::vector<double> > & gradRhoOutValuesElectro,
 		              const std::map<dealii::CellId, std::vector<double> > & pseudoVLocElectro,
@@ -42,7 +42,7 @@ void forceClass<FEOrder>::computeStressSpinPolarizedEEshelbyEPSPEnlEk
 		              const std::map<unsigned int,std::map<dealii::CellId, std::vector<double> > > & gradPseudoVLocAtomsElectro,
 			      const vselfBinsManager<FEOrder> & vselfBinsManagerElectro)
 {
-  std::vector<std::vector<vectorType>> eigenVectors((1+dftParameters::spinPolarized)*dftPtr->d_kPointWeights.size());
+  std::vector<std::vector<distributedCPUVec<double>>> eigenVectors((1+dftParameters::spinPolarized)*dftPtr->d_kPointWeights.size());
   for(unsigned int kPoint = 0; kPoint < (1+dftParameters::spinPolarized)*dftPtr->d_kPointWeights.size(); ++kPoint)
   {
         eigenVectors[kPoint].resize(dftPtr->d_numEigenValues);

@@ -1024,10 +1024,10 @@ namespace dftfe {
       {
 	if(numberLevelRefinements > 0)
 	  {
-	     vectorType tempVec;
+	     distributedCPUVec<double> tempVec;
 	     matrix_free_data.initialize_dof_vector(tempVec);
 
-	     std::vector<dealii::LinearAlgebra::distributed::Vector<double> > eigenVectorsArray(numberWaveFunctionsErrorEstimate);
+	     std::vector<distributedCPUVec<double> > eigenVectorsArray(numberWaveFunctionsErrorEstimate);
 
 	     for(unsigned int i = 0; i < numberWaveFunctionsErrorEstimate; ++i)
 	       eigenVectorsArray[i].reinit(tempVec);
@@ -2714,7 +2714,7 @@ namespace dftfe {
 	computing_timer.exit_section("phiTot solve");
     }
 
-    vectorType phiRhoMinusApproxRho;
+    distributedCPUVec<double> phiRhoMinusApproxRho;
     phiRhoMinusApproxRho.reinit(d_phiTotRhoIn); 
     if (dftParameters::isBOMD && dftParameters::isXLBOMD && solveLinearizedKS && computeForces)
     {
@@ -3255,10 +3255,10 @@ namespace dftfe {
     DataOut<3> data_outEigen;
     data_outEigen.attach_dof_handler(dofHandlerEigen);
 
-    std::vector<vectorType> tempVec(1);
+    std::vector<distributedCPUVec<double>> tempVec(1);
     tempVec[0].reinit(d_tempEigenVec);
 
-    std::vector<vectorType> visualizeWaveFunctions(d_kPointWeights.size()*(1+dftParameters::spinPolarized)*numStatesOutput);
+    std::vector<distributedCPUVec<double>> visualizeWaveFunctions(d_kPointWeights.size()*(1+dftParameters::spinPolarized)*numStatesOutput);
 
     unsigned int count = 0;
     for(unsigned int s = 0; s < 1+dftParameters::spinPolarized; ++s)
@@ -3318,7 +3318,7 @@ namespace dftfe {
     //
     //compute nodal electron-density from quad data
     //
-    dealii::LinearAlgebra::distributed::Vector<double>  rhoNodalField;
+    distributedCPUVec<double>  rhoNodalField;
     matrix_free_data.initialize_dof_vector(rhoNodalField,densityDofHandlerIndex);
     rhoNodalField=0;
     std::function<double(const typename dealii::DoFHandler<3>::active_cell_iterator & cell ,
@@ -3326,7 +3326,7 @@ namespace dftfe {
                           [&](const typename dealii::DoFHandler<3>::active_cell_iterator & cell ,
                               const unsigned int q)
                               {return (*rhoOutValues).find(cell->id())->second[q];};
-    dealii::VectorTools::project<3,dealii::LinearAlgebra::distributed::Vector<double>> (dealii::MappingQ1<3,3>(),
+    dealii::VectorTools::project<3,distributedCPUVec<double>> (dealii::MappingQ1<3,3>(),
 										   dofHandler,
 										   constraintsNone,
 										   QGauss<3>(C_num1DQuad<FEOrder>()),
@@ -3334,8 +3334,8 @@ namespace dftfe {
 										   rhoNodalField);
     rhoNodalField.update_ghost_values();
 
-    dealii::LinearAlgebra::distributed::Vector<double>  rhoNodalFieldSpin0;
-    dealii::LinearAlgebra::distributed::Vector<double>  rhoNodalFieldSpin1;
+    distributedCPUVec<double>  rhoNodalFieldSpin0;
+    distributedCPUVec<double>  rhoNodalFieldSpin1;
     if (dftParameters::spinPolarized==1)
     {
 	matrix_free_data.initialize_dof_vector(rhoNodalFieldSpin0,densityDofHandlerIndex);
@@ -3345,7 +3345,7 @@ namespace dftfe {
                              [&](const typename dealii::DoFHandler<3>::active_cell_iterator & cell ,
                               const unsigned int q)
                               {return (*rhoOutValuesSpinPolarized).find(cell->id())->second[2*q];};
-	dealii::VectorTools::project<3,dealii::LinearAlgebra::distributed::Vector<double>> (dealii::MappingQ1<3,3>(),
+	dealii::VectorTools::project<3,distributedCPUVec<double>> (dealii::MappingQ1<3,3>(),
 										       dofHandler,
 										       constraintsNone,
 										       QGauss<3>(C_num1DQuad<FEOrder>()),
@@ -3361,7 +3361,7 @@ namespace dftfe {
                              [&](const typename dealii::DoFHandler<3>::active_cell_iterator & cell ,
                               const unsigned int q)
                               {return (*rhoOutValuesSpinPolarized).find(cell->id())->second[2*q+1];};
-	dealii::VectorTools::project<3,dealii::LinearAlgebra::distributed::Vector<double>> (dealii::MappingQ1<3,3>(),
+	dealii::VectorTools::project<3,distributedCPUVec<double>> (dealii::MappingQ1<3,3>(),
 										       dofHandler,
 										       constraintsNone,
 										       QGauss<3>(C_num1DQuad<FEOrder>()),

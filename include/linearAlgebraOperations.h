@@ -102,7 +102,7 @@ namespace dftfe
      *  @return double An estimate of the upper bound of the given matrix
      */
     double lanczosUpperBoundEigenSpectrum(operatorDFTClass & operatorMatrix,
-					  const vectorType & vect);
+					  const distributedCPUVec<double> & vect);
 
 
     /** @brief Apply Chebyshev filter to a given subspace
@@ -116,7 +116,7 @@ namespace dftfe
      *  @param[in]  a0 lower bound of wanted spectrum
      */
     void chebyshevFilter(operatorDFTClass & operatorMatrix,
-			 std::vector<vectorType> & X,
+			 std::vector<distributedCPUVec<double>> & X,
 			 const unsigned int m,
 			 const double a,
 			 const double b,
@@ -136,7 +136,7 @@ namespace dftfe
      */
     template<typename T>
     void chebyshevFilter(operatorDFTClass & operatorMatrix,
-			 dealii::LinearAlgebra::distributed::Vector<T> & X,
+			 distributedCPUVec<T> & X,
 			 const unsigned int numberComponents,
 			 const unsigned int m,
 			 const double a,
@@ -152,7 +152,7 @@ namespace dftfe
      *  @param[in] startingIndex dealii column vector index to start the orthogonalization procedure
      */
     void gramSchmidtOrthogonalization(operatorDFTClass & operatorMatrix,
-				      std::vector<vectorType> & X,
+				      std::vector<distributedCPUVec<double>> & X,
 				      unsigned int startingIndex = 0);
 
 
@@ -211,7 +211,7 @@ namespace dftfe
      *  @param[out] eigenValues of the Projected Hamiltonian
      */
     void rayleighRitz(operatorDFTClass        & operatorMatrix,
-		      std::vector<vectorType> & X,
+		      std::vector<distributedCPUVec<double>> & X,
 		      std::vector<double>     & eigenValues);
 
 

@@ -418,7 +418,7 @@ void forceClass<FEOrder>::computeAtomsForcesGaussianGenerator(bool allowGaussian
       {
 	  if (iatom==0)
 	    d_gaussianWeightsVecAtoms[iatom]
-	               = dealii::LinearAlgebra::distributed::Vector<double>(d_locally_owned_dofsForce,
+	               = distributedCPUVec<double>(d_locally_owned_dofsForce,
 									       ghostIndicesForce,
 									       mpi_communicator);
 	  else
@@ -513,11 +513,11 @@ void forceClass<FEOrder>::computeAtomsForcesGaussianGenerator(bool allowGaussian
 	                            FESystem<3>(FE_Q<3>(dealii::QGaussLobatto<1>(2)),3));
       dofHandlerSolTrans.distribute_dofs(dofHandlerSolTrans.get_fe());
 
-      parallel::distributed::SolutionTransfer<3,vectorType> solTrans(dofHandlerSolTrans);
+      parallel::distributed::SolutionTransfer<3,distributedCPUVec<double>> solTrans(dofHandlerSolTrans);
       electrostaticsTriaForce.set_all_refine_flags();
       electrostaticsTriaForce.prepare_coarsening_and_refinement();
 
-      std::vector<const vectorType *> vecAllIn(d_gaussianWeightsVecAtoms.size());
+      std::vector<const distributedCPUVec<double> *> vecAllIn(d_gaussianWeightsVecAtoms.size());
       for (unsigned int i=0; i<d_gaussianWeightsVecAtoms.size(); ++i)
 	  vecAllIn[i]=&d_gaussianWeightsVecAtoms[i];
 
@@ -533,7 +533,7 @@ void forceClass<FEOrder>::computeAtomsForcesGaussianGenerator(bool allowGaussian
       {
 	  if (iatom==0)
 	    d_gaussianWeightsVecAtoms[iatom]
-	               = dealii::LinearAlgebra::distributed::Vector<double>(d_locally_owned_dofsForceElectro,
+	               = distributedCPUVec<double>(d_locally_owned_dofsForceElectro,
 								       ghostIndicesForceElectro,
 								       mpi_communicator);
 	  else
@@ -543,7 +543,7 @@ void forceClass<FEOrder>::computeAtomsForcesGaussianGenerator(bool allowGaussian
 	  d_gaussianWeightsVecAtoms[iatom].zero_out_ghosts();
       }
 
-      std::vector<vectorType *> vecAllOut(d_gaussianWeightsVecAtoms.size());
+      std::vector<distributedCPUVec<double> *> vecAllOut(d_gaussianWeightsVecAtoms.size());
       for (unsigned int i=0; i<d_gaussianWeightsVecAtoms.size(); ++i)
 	  vecAllOut[i]=&d_gaussianWeightsVecAtoms[i];
 

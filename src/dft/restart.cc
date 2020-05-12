@@ -85,7 +85,7 @@ void dftClass<FEOrder>::saveTriaInfoAndRhoNodalData()
 {
      pcout<< "Checkpointing tria info and rho data in progress..." << std::endl;
 
-     std::vector< const vectorType * >  solutionVectors;
+     std::vector< const distributedCPUVec<double> * >  solutionVectors;
 
 
      dealii::IndexSet   locally_relevant_dofs_;
@@ -95,7 +95,7 @@ void dftClass<FEOrder>::saveTriaInfoAndRhoNodalData()
      dealii::IndexSet  ghost_indices_=locally_relevant_dofs_;
      ghost_indices_.subtract_set(locally_owned_dofs_);
 
-     vectorType tempVec= dealii::LinearAlgebra::distributed::Vector<double>(locally_owned_dofs_,
+     distributedCPUVec<double> tempVec= distributedCPUVec<double>(locally_owned_dofs_,
                                                                              ghost_indices_,
                                                                              mpi_communicator);
 
@@ -280,7 +280,7 @@ void dftClass<FEOrder>::loadTriaInfoAndRhoNodalData()
      pcout<< "Reading tria info and rho data from checkpoint in progress..." << std::endl;
      //read rho data from checkpoint file
      
-     std::vector< vectorType * >  solutionVectors;
+     std::vector< distributedCPUVec<double> * >  solutionVectors;
 
      if (dftParameters::isBOMD && dftParameters::isXLBOMD && dftParameters::restartMdFromChk)
      {

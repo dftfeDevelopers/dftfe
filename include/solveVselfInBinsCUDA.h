@@ -55,7 +55,7 @@ namespace dftfe
 		  const unsigned int maxIter,
 		  const double absTol,  
 		  const MPI_Comm & mpiComm,
-		  cudaVectorType & x);
+		  distributedGPUVec<double> & x);
    }
 }
 #endif

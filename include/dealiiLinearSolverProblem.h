@@ -39,28 +39,28 @@ namespace dftfe {
 	 *
 	 * @return reference to x field. Assumes x field data structure is already initialized
 	 */
-	virtual vectorType & getX() = 0;
+	virtual distributedCPUVec<double> & getX() = 0;
 
 	/**
 	 * @brief Compute A matrix multipled by x.
 	 *
 	 */
-	virtual void vmult(vectorType &Ax,
-			   const vectorType &x) const= 0;
+	virtual void vmult(distributedCPUVec<double> &Ax,
+			   const distributedCPUVec<double> &x) const= 0;
 
 	/**
 	 * @brief Compute right hand side vector for the problem Ax = rhs.
 	 *
 	 * @param rhs vector for the right hand side values
 	 */
-	virtual void computeRhs(vectorType & rhs) = 0;
+	virtual void computeRhs(distributedCPUVec<double> & rhs) = 0;
 
 	/**
 	 * @brief Jacobi preconditioning function.
 	 *
 	 */
-        virtual void precondition_Jacobi(vectorType& dst,
-		                         const vectorType& src,
+        virtual void precondition_Jacobi(distributedCPUVec<double>& dst,
+		                         const distributedCPUVec<double>& src,
 				         const double omega) const=0;
 
 	/**

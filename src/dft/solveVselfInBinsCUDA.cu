@@ -206,8 +206,8 @@ namespace dftfe
 
 		    void computeAX(cublasHandle_t &handle,
                                    dftUtils::constraintMatrixInfoCUDA & constraintsMatrixDataInfoCUDA,
-                                   cudaVectorType & src,
-                                   cudaVectorType & temp,
+                                   distributedGPUVec<double> & src,
+                                   distributedGPUVec<double> & temp,
                                    const unsigned int totalLocallyOwnedCells,
                                    const unsigned int numberNodesPerElement,
                                    const unsigned int numberVectors,
@@ -216,7 +216,7 @@ namespace dftfe
                                    const thrust::device_vector<double> & poissonCellStiffnessMatricesD,
                                    const thrust::device_vector<double> & inhomoIdsColoredVecFlattenedD,
                                    const thrust::device_vector<dealii::types::global_dof_index> & cellLocalProcIndexIdMapD,
-                                   cudaVectorType & dst,
+                                   distributedGPUVec<double> & dst,
                                    thrust::device_vector<double> & cellNodalVectorD,
                                    thrust::device_vector<double> & cellStiffnessMatrixTimesVectorD)
 		    {
@@ -224,7 +224,7 @@ namespace dftfe
 			    //thrust::fill(dst.begin(),dst.end(),0.0);
 			    dst=0.0;
 
-                            //cudaVectorType temp;
+                            //distributedGPUVec<double> temp;
                             //temp.reinit(src);
                             //temp=src;
 	                    cudaMemcpy(temp.begin(),
@@ -371,7 +371,7 @@ namespace dftfe
                 const unsigned int totalLocallyOwnedCells=matrixFreeData.n_physical_cells();
                 const unsigned int numberNodesPerElement=matrixFreeData.get_dofs_per_cell();
 
-                cudaVectorType xD;
+                distributedGPUVec<double> xD;
 
                 MPI_Barrier(MPI_COMM_WORLD);
 		double time = MPI_Wtime(); 
@@ -477,7 +477,7 @@ namespace dftfe
                           const unsigned int maxIter,
                           const double absTol,  
                           const MPI_Comm & mpiComm,
-                          cudaVectorType & x)
+                          distributedGPUVec<double> & x)
 	    {
                     int this_process;
                     MPI_Comm_rank(MPI_COMM_WORLD, &this_process);
@@ -534,18 +534,18 @@ namespace dftfe
 		    //compute Ax
 		    //thrust::device_vector<double> Ax;
 		    //Ax.resize(localSize,0.0);
-                    cudaVectorType Ax;
+                    distributedGPUVec<double> Ax;
                     Ax.reinit(x);
 		    //computeAX(x,Ax);
 
-                    cudaVectorType r;
+                    distributedGPUVec<double> r;
                     r.reinit(x);
 
-                    cudaVectorType q,s;
+                    distributedGPUVec<double> q,s;
                     q.reinit(x);
                     s.reinit(x);
 
-                    cudaVectorType d, temp;
+                    distributedGPUVec<double> d, temp;
                     d.reinit(x);
                     temp.reinit(x);
 

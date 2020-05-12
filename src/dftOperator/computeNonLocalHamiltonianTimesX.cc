@@ -16,8 +16,8 @@
 // @author Phani Motamarri (2017)
 //
 template<unsigned int FEOrder>
-void eigenClass<FEOrder>::computeNonLocalHamiltonianTimesX(const std::vector<vectorType> &src,
-							   std::vector<vectorType>       &dst) const
+void eigenClass<FEOrder>::computeNonLocalHamiltonianTimesX(const std::vector<distributedCPUVec<double>> &src,
+							   std::vector<distributedCPUVec<double>>       &dst) const
 {
 
   //
@@ -90,7 +90,7 @@ void eigenClass<FEOrder>::computeNonLocalHamiltonianTimesX(const std::vector<vec
 	  unsigned int index=0;
 
 	  std::vector<double> temp(dofs_per_cell,0.0);
-	  for (std::vector<vectorType>::const_iterator it=src.begin(); it!=src.end(); it++)
+	  for (std::vector<distributedCPUVec<double>>::const_iterator it=src.begin(); it!=src.end(); it++)
 	    {
 #ifdef USE_COMPLEX	      
 	      (*it).extract_subvector_to(local_dof_indices.begin(), local_dof_indices.end(), temp.begin());
@@ -297,7 +297,7 @@ void eigenClass<FEOrder>::computeNonLocalHamiltonianTimesX(const std::vector<vec
 #ifdef USE_COMPLEX
 	  unsigned int index = 0;
 	  std::vector<double> temp(dofs_per_cell,0.0);
-	  for(std::vector<vectorType>::iterator it = dst.begin(); it != dst.end(); ++it)
+	  for(std::vector<distributedCPUVec<double>>::iterator it = dst.begin(); it != dst.end(); ++it)
 	    {
 	      for(unsigned int idof = 0; idof < dofs_per_cell; ++idof)
 		{
@@ -315,7 +315,7 @@ void eigenClass<FEOrder>::computeNonLocalHamiltonianTimesX(const std::vector<vec
 	    }
 #else
 	  std::vector<double>::iterator iter = outputVectors.begin();
-	  for (std::vector<vectorType>::iterator it=dst.begin(); it!=dst.end(); ++it)
+	  for (std::vector<distributedCPUVec<double>>::iterator it=dst.begin(); it!=dst.end(); ++it)
 	    {
 	      dftPtr->constraintsNoneEigen.distribute_local_to_global(iter, iter+numberNodesPerElement,local_dof_indices.begin(), *it);
 	      iter+=numberNodesPerElement;

@@ -20,8 +20,8 @@
 
 namespace internal
 {
-    void pointWiseScaleWithDiagonal(const vectorType & diagonal,
-				    std::vector<vectorType> & fieldArray,
+    void pointWiseScaleWithDiagonal(const distributedCPUVec<double> & diagonal,
+				    std::vector<distributedCPUVec<double>> & fieldArray,
 				    dftUtils::constraintMatrixInfo & constraintsNoneEigenDataInfo)
     {
        for(unsigned int i = 0; i < fieldArray.size();++i)
@@ -35,7 +35,7 @@ namespace internal
     }
 
 
-    void pointWiseScaleWithDiagonal(const vectorType & diagonal,
+    void pointWiseScaleWithDiagonal(const distributedCPUVec<double> & diagonal,
 				    const std::shared_ptr<const dealii::Utilities::MPI::Partitioner> & singleComponentPartitioner,
 				    const unsigned int numberFields,
 				    const std::vector<dealii::types::global_dof_index> & localProc_dof_indicesReal,
@@ -996,12 +996,12 @@ void dftClass<FEOrder>::kohnShamEigenSpaceComputeNSCF(const unsigned int spinTyp
 template<unsigned int FEOrder>
 void dftClass<FEOrder>::computeResidualNorm(const std::vector<double> & eigenValuesTemp,
 					    kohnShamDFTOperatorClass<FEOrder> & kohnShamDFTEigenOperator,
-					    std::vector<vectorType> & X,
+					    std::vector<distributedCPUVec<double>> & X,
 					    std::vector<double> & residualNorm) const
 {
 
 
-  std::vector<vectorType> PSI(X.size());
+  std::vector<distributedCPUVec<double>> PSI(X.size());
 
   for(unsigned int i = 0; i < X.size(); ++i)
       PSI[i].reinit(X[0]);

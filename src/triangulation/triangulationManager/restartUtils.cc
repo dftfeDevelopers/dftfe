@@ -114,7 +114,7 @@ namespace dftfe {
     triangulationManager::saveTriangulationsSolutionVectors
 				 (const unsigned int feOrder,
 				  const unsigned int nComponents,
-				  const std::vector< const vectorType * > & solutionVectors,
+				  const std::vector< const distributedCPUVec<double> * > & solutionVectors,
 	                          const MPI_Comm & interpoolComm,
 				  const MPI_Comm &interBandGroupComm)
     {
@@ -130,7 +130,7 @@ namespace dftfe {
          DoFHandler<3> dofHandler (d_parallelTriangulationUnmoved);
          dofHandler.distribute_dofs(FE);
 
-         dealii::parallel::distributed::SolutionTransfer<3,vectorType > solTrans(dofHandler);
+         dealii::parallel::distributed::SolutionTransfer<3,distributedCPUVec<double> > solTrans(dofHandler);
          //assumes solution vectors are ghosted
          solTrans.prepare_serialization(solutionVectors);
 
@@ -154,7 +154,7 @@ namespace dftfe {
     triangulationManager::loadTriangulationsSolutionVectors
 				 (const unsigned int feOrder,
 				  const unsigned int nComponents,
-				  std::vector< vectorType * > & solutionVectors)
+				  std::vector< distributedCPUVec<double> * > & solutionVectors)
     {
       loadSupportTriangulations();
       const std::string filename="parallelUnmovedTriaSolData.chk";
@@ -172,7 +172,7 @@ namespace dftfe {
       dealii::FESystem<3> FE(dealii::FE_Q<3>(dealii::QGaussLobatto<1>(feOrder+1)), nComponents); //linear shape function
       DoFHandler<3> dofHandler (d_parallelTriangulationMoved);
       dofHandler.distribute_dofs(FE);
-      dealii::parallel::distributed::SolutionTransfer<3,typename dealii::LinearAlgebra::distributed::Vector<double>> solTrans(dofHandler);
+      dealii::parallel::distributed::SolutionTransfer<3,typename dftfe::distributedCPUVec<double>> solTrans(dofHandler);
 
       dealii::IndexSet   locally_relevant_dofs;
       dealii::DoFTools::extract_locally_relevant_dofs(dofHandler, locally_relevant_dofs);
@@ -196,9 +196,9 @@ namespace dftfe {
       /*
       dofHandler.initialize(d_parallelTriangulationUnmoved,FE);
       dofHandler.distribute_dofs(FE);
-      dealii::parallel::distributed::SolutionTransfer<3,typename dealii::LinearAlgebra::distributed::Vector<double>> solTransDummy(dofHandler);
+      dealii::parallel::distributed::SolutionTransfer<3,typename distributedCPUVec<double>> solTransDummy(dofHandler);
 
-      std::vector< vectorType * > dummySolutionVectors(solutionVectors.size());
+      std::vector< distributedCPUVec<double> * > dummySolutionVectors(solutionVectors.size());
       for (unsigned int i=0; i<dummySolutionVectors.size();++i)
       {
           dummySolutionVectors[i]->reinit(*solutionVectors[0]);

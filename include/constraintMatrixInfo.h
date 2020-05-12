@@ -77,7 +77,7 @@ namespace dftUtils
      *
      * @param fieldVector parallel dealii vector
      */
-    void distribute(dealii::LinearAlgebra::distributed::Vector<double> &fieldVector) const;
+    void distribute(distributedCPUVec<double> &fieldVector) const;
 
     /**
      * @brief overloaded dealii internal function distribute for flattened dealii array  which sets
@@ -86,7 +86,7 @@ namespace dftUtils
      * @param blockSize number of components for a given node
      */
     template<typename T>
-    void distribute(dealii::LinearAlgebra::distributed::Vector<T> &fieldVector,
+    void distribute(distributedCPUVec<T> &fieldVector,
 		    const unsigned int blockSize) const;
 
     /**
@@ -99,7 +99,7 @@ namespace dftUtils
      * @param blockSize number of components for a given node
      */
     template<typename T>
-    void distribute_slave_to_master(dealii::LinearAlgebra::distributed::Vector<T> &fieldVector,
+    void distribute_slave_to_master(distributedCPUVec<T> &fieldVector,
 				    const unsigned int blockSize) const;
 
 
@@ -110,7 +110,7 @@ namespace dftUtils
      * @param blockSize number of field components for a given node
      */
     template<typename T>
-    void set_zero(dealii::LinearAlgebra::distributed::Vector<T> &fieldVector,
+    void set_zero(distributedCPUVec<T> &fieldVector,
 	          const unsigned int blockSize) const;
 
     /**

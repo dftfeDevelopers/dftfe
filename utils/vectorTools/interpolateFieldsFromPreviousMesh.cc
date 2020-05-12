@@ -43,8 +43,8 @@ void interpolateFieldsFromPreviousMesh::interpolate
 		   const dealii::parallel::distributed::Triangulation<3> & triangulationParCurrent,
 		   const dealii::FESystem<3> & FEPrev,
 		   const dealii::FESystem<3> & FECurrent,
-		   const std::vector<vectorType*> & fieldsPreviousMesh,
-		   std::vector<vectorType*> & fieldsCurrentMesh,
+		   const std::vector<distributedCPUVec<double>*> & fieldsPreviousMesh,
+		   std::vector<distributedCPUVec<double>*> & fieldsCurrentMesh,
 		   const dealii::ConstraintMatrix * constraintsCurrentPtr)
 {
   AssertThrow(FEPrev.components==FECurrent.components,dealii::ExcMessage("FEPrev and FECurrent must have the same number of components."));

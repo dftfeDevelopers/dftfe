@@ -34,8 +34,8 @@ namespace linearAlgebraOperations
 {
 #ifdef USE_COMPLEX
   std::complex<double> innerProduct(operatorDFTClass & operatorMatrix,
-				    const vectorType & X,
-				    const vectorType & Y)
+				    const distributedCPUVec<double> & X,
+				    const distributedCPUVec<double> & Y)
     {
       unsigned int dofs_per_proc = X.local_size()/2;
       std::vector<double> xReal(dofs_per_proc), xImag(dofs_per_proc);
@@ -95,8 +95,8 @@ namespace linearAlgebraOperations
 
   void  alphaTimesXPlusY(operatorDFTClass & operatorMatrix,
 			 std::complex<double> & alpha,
-			 vectorType & x,
-			 vectorType & y)
+			 distributedCPUVec<double> & x,
+			 distributedCPUVec<double> & y)
   {
     const unsigned int dofs_per_proc = x.local_size()/2;
     std::vector<double> xReal(dofs_per_proc), xImag(dofs_per_proc);
@@ -157,7 +157,7 @@ namespace linearAlgebraOperations
   // evaluate upper bound of the spectrum using k-step Lanczos iteration
   //
   double lanczosUpperBoundEigenSpectrum(operatorDFTClass & operatorMatrix,
-					const vectorType & vect)
+					const distributedCPUVec<double> & vect)
   {
 
       const unsigned int this_mpi_process = dealii::Utilities::MPI::this_mpi_process(operatorMatrix.getMPICommunicator());
@@ -173,7 +173,7 @@ namespace linearAlgebraOperations
       //
       //generate random vector v
       //
-      vectorType vVector, fVector, v0Vector;
+      distributedCPUVec<double> vVector, fVector, v0Vector;
       vVector.reinit(vect);
       fVector.reinit(vect);
 
@@ -196,7 +196,7 @@ namespace linearAlgebraOperations
       //
       //call matrix times X
       //
-      std::vector<vectorType> v(1),f(1);
+      std::vector<distributedCPUVec<double>> v(1),f(1);
       v[0] = vVector;
       f[0] = fVector;
       operatorMatrix.HX(v,f);
@@ -279,7 +279,7 @@ namespace linearAlgebraOperations
   //chebyshev filtering of given subspace X
   //
   void chebyshevFilter(operatorDFTClass & operatorMatrix,
-		       std::vector<vectorType> & X,
+		       std::vector<distributedCPUVec<double>> & X,
 		       const unsigned int m,
 		       const double a,
 		       const double b,
@@ -291,8 +291,8 @@ namespace linearAlgebraOperations
       e=(b-a)/2.0; c=(b+a)/2.0;
       sigma=e/(a0-c); sigma1=sigma; gamma=2.0/sigma1;
 
-      std::vector<vectorType> PSI(X.size());
-      std::vector<vectorType> tempPSI(X.size());
+      std::vector<distributedCPUVec<double>> PSI(X.size());
+      std::vector<distributedCPUVec<double>> tempPSI(X.size());
 
       for(unsigned int i = 0; i < X.size(); ++i)
 	{
@@ -304,7 +304,7 @@ namespace linearAlgebraOperations
       double alpha1=sigma1/e, alpha2=-c;
       operatorMatrix.HX(X, PSI);
 
-      for (std::vector<vectorType>::iterator y=PSI.begin(), x=X.begin(); y<PSI.end(); ++y, ++x)
+      for (std::vector<distributedCPUVec<double>>::iterator y=PSI.begin(), x=X.begin(); y<PSI.end(); ++y, ++x)
 	{
 	  (*y).add(alpha2,*x);
 	  (*y)*=alpha1;
@@ -317,7 +317,7 @@ namespace linearAlgebraOperations
 	  //Ynew=alpha1*(HY-cY)+alpha2*X
 	  alpha1=2.0*sigma2/e, alpha2=-(sigma*sigma2);
 	  operatorMatrix.HX(PSI, tempPSI);
-	  for(std::vector<vectorType>::iterator ynew=tempPSI.begin(), y=PSI.begin(), x=X.begin(); ynew<tempPSI.end(); ++ynew, ++y, ++x)
+	  for(std::vector<distributedCPUVec<double>>::iterator ynew=tempPSI.begin(), y=PSI.begin(), x=X.begin(); ynew<tempPSI.end(); ++ynew, ++y, ++x)
 	    {
 	      (*ynew).add(-c,*y);
 	      (*ynew)*=alpha1;
@@ -329,7 +329,7 @@ namespace linearAlgebraOperations
 	}
 
     //copy back PSI to eigenVectors
-    for (std::vector<vectorType>::iterator y=PSI.begin(), x=X.begin(); y<PSI.end(); ++y, ++x)
+    for (std::vector<distributedCPUVec<double>>::iterator y=PSI.begin(), x=X.begin(); y<PSI.end(); ++y, ++x)
       {
 	*x=*y;
       }
@@ -339,7 +339,7 @@ namespace linearAlgebraOperations
   //Gram-Schmidt orthogonalization of given subspace X
   //
   void gramSchmidtOrthogonalization(operatorDFTClass & operatorMatrix,
-				    std::vector<vectorType> & X,
+				    std::vector<distributedCPUVec<double>> & X,
 				    unsigned int startingIndex)
   {
 #ifdef USE_PETSC
@@ -450,7 +450,7 @@ namespace linearAlgebraOperations
   //Rayleigh-Ritz projection of given subspace X
   //
   void rayleighRitz(operatorDFTClass        & operatorMatrix,
-		    std::vector<vectorType> & X,
+		    std::vector<distributedCPUVec<double>> & X,
 		    std::vector<double>     & eigenValues)
   {
 
@@ -486,7 +486,7 @@ namespace linearAlgebraOperations
       const unsigned int n1 = X[0].local_size()/2;
       std::vector<std::complex<double> > Xbar(n1*m), Xlocal(n1*m); //Xbar=Xlocal*Q
       std::vector<std::complex<double> >::iterator val = Xlocal.begin();
-      for(std::vector<vectorType>::iterator x=X.begin(); x<X.end(); ++x)
+      for(std::vector<distributedCPUVec<double>>::iterator x=X.begin(); x<X.end(); ++x)
 	{
 	  for (unsigned int i=0; i<(unsigned int)n1; i++)
 	    {
@@ -499,7 +499,7 @@ namespace linearAlgebraOperations
       const unsigned int n1 = X[0].local_size();
       std::vector<double> Xbar(n1*m), Xlocal(n1*m); //Xbar=Xlocal*Q
       std::vector<double>::iterator val = Xlocal.begin();
-      for (std::vector<vectorType>::iterator x = X.begin(); x < X.end(); ++x)
+      for (std::vector<distributedCPUVec<double>>::iterator x = X.begin(); x < X.end(); ++x)
 	{
 	  for (unsigned int i=0; i<(unsigned int)n1; i++)
 	    {
@@ -525,7 +525,7 @@ namespace linearAlgebraOperations
 #ifdef USE_COMPLEX
       //copy back Xbar to X
       val = Xbar.begin();
-      for(std::vector<vectorType>::iterator x = X.begin(); x < X.end(); ++x)
+      for(std::vector<distributedCPUVec<double>>::iterator x = X.begin(); x < X.end(); ++x)
 	{
 	  *x=0.0;
 	  for(unsigned int i=0; i<(unsigned int)n1; i++)
@@ -539,7 +539,7 @@ namespace linearAlgebraOperations
 #else
       //copy back Xbar to X
       val=Xbar.begin();
-      for(std::vector<vectorType>::iterator x=X.begin(); x<X.end(); ++x)
+      for(std::vector<distributedCPUVec<double>>::iterator x=X.begin(); x<X.end(); ++x)
 	{
 	  *x=0.0;
 	  for(unsigned int i=0; i<(unsigned int)n1; i++)
@@ -553,7 +553,7 @@ namespace linearAlgebraOperations
   }
 
   void computeEigenResidualNorm(operatorDFTClass & operatorMatrix,
-				std::vector<vectorType> & X,
+				std::vector<distributedCPUVec<double>> & X,
 				const std::vector<double> & eigenValues,
 				std::vector<double> & residualNorm)
 
@@ -561,7 +561,7 @@ namespace linearAlgebraOperations
     //
     //create a temp array
     //
-    std::vector<vectorType> PSI(X.size());
+    std::vector<distributedCPUVec<double>> PSI(X.size());
     for(unsigned int i = 0; i < X.size(); ++i)
       PSI[i].reinit(X[0]);
 

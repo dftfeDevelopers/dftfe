@@ -23,7 +23,7 @@ double dftClass<FEOrder>::nodalDensity_mixing_simple(kerkerSolverProblem<C_num1D
 {
   double normValue=0.0;
 
-  vectorType residualRho;
+  distributedCPUVec<double> residualRho;
   residualRho.reinit(d_rhoInNodalValues);
   residualRho = 0.0;
 
@@ -157,7 +157,7 @@ double dftClass<FEOrder>::nodalDensity_mixing_anderson(kerkerSolverProblem<C_num
 {
   double normValue=0.0;
 
-  vectorType residualRho;
+  distributedCPUVec<double> residualRho;
   residualRho.reinit(d_rhoInNodalValues);
 
   residualRho = 0.0;
@@ -183,7 +183,7 @@ double dftClass<FEOrder>::nodalDensity_mixing_anderson(kerkerSolverProblem<C_num
 
 
   //compute Fn = rhoOutVals[N] - rhoInVals[N]
-  vectorType Fn,Fnm,Fnk, FnMinusFnm, FnMinusFnk;
+  distributedCPUVec<double> Fn,Fnm,Fnk, FnMinusFnm, FnMinusFnk;
   Fn.reinit(d_rhoInNodalValues);
   Fnm.reinit(d_rhoInNodalValues);
   Fnk.reinit(d_rhoInNodalValues);
@@ -255,7 +255,7 @@ double dftClass<FEOrder>::nodalDensity_mixing_anderson(kerkerSolverProblem<C_num
 
 
   //do the linear combination of history of input rhos and output rhos
-  vectorType rhoInBar,rhoOutBar;
+  distributedCPUVec<double> rhoInBar,rhoOutBar;
   rhoInBar.reinit(d_rhoInNodalValues);
   rhoOutBar.reinit(d_rhoInNodalValues);
   rhoInBar = 0.0;
@@ -277,7 +277,7 @@ double dftClass<FEOrder>::nodalDensity_mixing_anderson(kerkerSolverProblem<C_num
     }
 
   //compute difference in rhoInBar and rhoOutBar
-  vectorType diffRhoBar;
+  distributedCPUVec<double> diffRhoBar;
   diffRhoBar.reinit(d_rhoInNodalValues);
   diffRhoBar = 0.0;
 

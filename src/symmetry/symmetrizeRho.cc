@@ -195,11 +195,11 @@ void symmetryClass<FEOrder>::computeAndSymmetrize_rhoOut()
 template<unsigned int FEOrder>
 void symmetryClass<FEOrder>::computeLocalrhoOut()
 {
-  std::vector<std::vector<vectorType>> eigenVectors((1+dftParameters::spinPolarized)*dftPtr->d_kPointWeights.size());
+  std::vector<std::vector<distributedCPUVec<double>>> eigenVectors((1+dftParameters::spinPolarized)*dftPtr->d_kPointWeights.size());
 
   const unsigned int localVectorSize = dftPtr->d_eigenVectorsFlattenedSTL[0].size()/dftPtr->d_numEigenValues;
 
-  dealii::LinearAlgebra::distributed::Vector<dataTypes::number> eigenVectorsFlattenedArrayFullBlock;
+  distributedCPUVec<dataTypes::number> eigenVectorsFlattenedArrayFullBlock;
   vectorTools::createDealiiVector<dataTypes::number>(dftPtr->matrix_free_data.get_vector_partitioner(),
 						     dftPtr->d_numEigenValues,
 						     eigenVectorsFlattenedArrayFullBlock);

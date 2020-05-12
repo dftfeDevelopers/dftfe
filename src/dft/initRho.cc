@@ -435,7 +435,7 @@ void dftClass<FEOrder>::initRho()
 //
 //
 template <unsigned int FEOrder>
-void dftClass<FEOrder>::computeRhoInitialGuessFromPSI(std::vector<std::vector<vectorType>> eigenVectors)
+void dftClass<FEOrder>::computeRhoInitialGuessFromPSI(std::vector<std::vector<distributedCPUVec<double>>> eigenVectors)
 
 {
   computing_timer.enter_section("initialize density");
@@ -713,7 +713,7 @@ void dftClass<FEOrder>::computeNodalRhoFromQuadData()
     {return (*rhoOutValues).find(cell->id())->second[q];};
 
 
-  dealii::VectorTools::project<3,dealii::LinearAlgebra::distributed::Vector<double>>
+  dealii::VectorTools::project<3,distributedCPUVec<double>>
     (dealii::MappingQ1<3,3>(),
      dofHandler,
      constraintsNone,
@@ -737,7 +737,7 @@ void dftClass<FEOrder>::computeNodalRhoFromQuadData()
 	{return (*rhoOutValuesSpinPolarized).find(cell->id())->second[2*q];};
 
 
-      dealii::VectorTools::project<3,dealii::LinearAlgebra::distributed::Vector<double>>
+      dealii::VectorTools::project<3,distributedCPUVec<double>>
 	(dealii::MappingQ1<3,3>(),
 	 dofHandler,
 	 constraintsNone,
@@ -757,7 +757,7 @@ void dftClass<FEOrder>::computeNodalRhoFromQuadData()
 	    const unsigned int q)
 	{return (*rhoOutValuesSpinPolarized).find(cell->id())->second[2*q+1];};
 
-      dealii::VectorTools::project<3,dealii::LinearAlgebra::distributed::Vector<double>>
+      dealii::VectorTools::project<3,distributedCPUVec<double>>
 	  (dealii::MappingQ1<3,3>(),
 	   dofHandler,
 	   constraintsNone,
@@ -782,7 +782,7 @@ void dftClass<FEOrder>::initRhoFromPreviousGroundStateRho()
   if (dftParameters::verbosity>=3)
     pcout <<std::endl<< "Interpolating previous groundstate density into the new finite element mesh...."<<std::endl;
 
-  std::vector<vectorType* > rhoFieldsPrevious;
+  std::vector<distributedCPUVec<double>* > rhoFieldsPrevious;
   rhoFieldsPrevious.push_back(&d_rhoNodalField);
   if (dftParameters::spinPolarized==1)
     {
@@ -790,16 +790,16 @@ void dftClass<FEOrder>::initRhoFromPreviousGroundStateRho()
       rhoFieldsPrevious.push_back(&d_rhoNodalFieldSpin1);
     }
 
-  vectorType rhoNodalFieldCurrent;
-  vectorType rhoNodalFieldSpin0Current;
-  vectorType rhoNodalFieldSpin1Current;
+  distributedCPUVec<double> rhoNodalFieldCurrent;
+  distributedCPUVec<double> rhoNodalFieldSpin0Current;
+  distributedCPUVec<double> rhoNodalFieldSpin1Current;
   matrix_free_data.initialize_dof_vector(rhoNodalFieldCurrent,densityDofHandlerIndex);
   if (dftParameters::spinPolarized==1)
     {
       matrix_free_data.initialize_dof_vector(rhoNodalFieldSpin0Current,densityDofHandlerIndex);
       matrix_free_data.initialize_dof_vector(rhoNodalFieldSpin1Current,densityDofHandlerIndex);
     }
-  std::vector<vectorType* > rhoFieldsCurrent;
+  std::vector<distributedCPUVec<double>* > rhoFieldsCurrent;
   rhoFieldsCurrent.push_back(&rhoNodalFieldCurrent);
   if (dftParameters::spinPolarized==1)
     {
@@ -1043,7 +1043,7 @@ void dftClass<FEOrder>::normalizeAtomicRhoQuadValues()
 }
 
 template<unsigned int FEOrder>
-void dftClass<FEOrder>::initAtomicRho(vectorType & atomicRho)
+void dftClass<FEOrder>::initAtomicRho(distributedCPUVec<double> & atomicRho)
 {
   computing_timer.enter_section("initialize atomic density for xl bomd");
 
@@ -1114,7 +1114,7 @@ void dftClass<FEOrder>::initAtomicRho(vectorType & atomicRho)
   DoFTools::map_dofs_to_support_points(MappingQ1<3,3>(), d_dofHandlerPRefined, supportPointsPRefined);
 
   //d_matrixFreeDataPRefined.initialize_dof_vector(d_rhoInNodalValues);
-  std::vector<vectorType> singleAtomsRho(atomLocations.size()+numberImageCharges);
+  std::vector<distributedCPUVec<double>> singleAtomsRho(atomLocations.size()+numberImageCharges);
   for(unsigned int iAtom = 0; iAtom < atomLocations.size()+numberImageCharges; ++iAtom)
   {
     if (iAtom==0)

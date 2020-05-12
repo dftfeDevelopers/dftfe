@@ -42,14 +42,14 @@ namespace dftfe {
 	 *
 	 * @return reference to x field. Assumes x field data structure is already initialized
 	 */
-	virtual cudaVectorType  & getX() = 0;
+	virtual distributedGPUVec<double>  & getX() = 0;
 
 	/**
 	 * @brief Compute A matrix multipled by x.
 	 *
 	 */
-	virtual void computeAX(cudaVectorType &src,
-			       cudaVectorType &dst)  = 0;
+	virtual void computeAX(distributedGPUVec<double> &src,
+			       distributedGPUVec<double> &dst)  = 0;
 
 
 	/**
@@ -57,14 +57,14 @@ namespace dftfe {
 	 *
 	 * @param rhs vector for the right hand side values
 	 */
-	virtual void computeRhs(cudaVectorType & rhs) = 0;
+	virtual void computeRhs(distributedGPUVec<double> & rhs) = 0;
 
 	/**
 	 * @brief Jacobi preconditioning function.
 	 *
 	 */
-        virtual void precondition_Jacobi(const cudaVectorType & src,
-		                         cudaVectorType & dst)const = 0;
+        virtual void precondition_Jacobi(const distributedGPUVec<double> & src,
+		                         distributedGPUVec<double> & dst)const = 0;
 
 
 	/**

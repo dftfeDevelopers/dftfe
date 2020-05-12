@@ -284,8 +284,8 @@ void dftClass<FEOrder>::compute_ldos(const std::vector<std::vector<double>> & ei
   std::vector<double> tempQuadPointValues(n_q_points);
 
   const unsigned int localVectorSize = d_eigenVectorsFlattenedSTL[0].size()/d_numEigenValues;
-  std::vector<std::vector<vectorType>> eigenVectors((1+dftParameters::spinPolarized)*d_kPointWeights.size());
-  std::vector<dealii::LinearAlgebra::distributed::Vector<dataTypes::number> > eigenVectorsFlattenedBlock((1+dftParameters::spinPolarized)*d_kPointWeights.size());
+  std::vector<std::vector<distributedCPUVec<double>>> eigenVectors((1+dftParameters::spinPolarized)*d_kPointWeights.size());
+  std::vector<distributedCPUVec<dataTypes::number> > eigenVectorsFlattenedBlock((1+dftParameters::spinPolarized)*d_kPointWeights.size());
 
    for(unsigned int ivec = 0; ivec < d_numEigenValues; ivec+=blockSize)
    {
@@ -651,8 +651,8 @@ void dftClass<FEOrder>::compute_pdos(const std::vector<std::vector<double>> & ei
   std::vector<double> tempQuadPointValues(n_q_points);
 
   const unsigned int localVectorSize = d_eigenVectorsFlattenedSTL[0].size()/d_numEigenValues;
-  std::vector<std::vector<vectorType> > eigenVectors((1+dftParameters::spinPolarized)*d_kPointWeights.size());
-  std::vector<dealii::LinearAlgebra::distributed::Vector<dataTypes::number> > eigenVectorsFlattenedBlock((1+dftParameters::spinPolarized)*d_kPointWeights.size());
+  std::vector<std::vector<distributedCPUVec<double>> > eigenVectors((1+dftParameters::spinPolarized)*d_kPointWeights.size());
+  std::vector<distributedCPUVec<dataTypes::number> > eigenVectorsFlattenedBlock((1+dftParameters::spinPolarized)*d_kPointWeights.size());
   //std::vector<double> innerProductWaveFunctionSingAtom(d_numEigenValues*5,0.0);
   //std::vector<double> tempContribution(blockSize*,0.0);
 

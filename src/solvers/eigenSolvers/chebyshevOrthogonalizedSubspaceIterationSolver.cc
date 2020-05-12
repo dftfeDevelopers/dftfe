@@ -107,7 +107,7 @@ namespace dftfe{
   chebyshevOrthogonalizedSubspaceIterationSolver::solve(operatorDFTClass  & operatorMatrix,
 							std::vector<dataTypes::number> & eigenVectorsFlattened,
 							std::vector<dataTypes::number> & eigenVectorsRotFracDensityFlattened,
-							vectorType  & tempEigenVec,
+							distributedCPUVec<double>  & tempEigenVec,
 							const unsigned int totalNumberWaveFunctions,
 							std::vector<double>        & eigenValues,
 							std::vector<double>        & residualNorms,
@@ -187,7 +187,7 @@ namespace dftfe{
     //
     //allocate storage for eigenVectorsFlattenedArray for multiple blocks
     //
-    dealii::LinearAlgebra::distributed::Vector<dataTypes::number> eigenVectorsFlattenedArrayBlock;
+    distributedCPUVec<dataTypes::number> eigenVectorsFlattenedArrayBlock;
     operatorMatrix.reinit(vectorsBlockSize,
 			  eigenVectorsFlattenedArrayBlock,
 			  true);
@@ -554,7 +554,7 @@ namespace dftfe{
   //
   void
   chebyshevOrthogonalizedSubspaceIterationSolver::solve(operatorDFTClass           & operatorMatrix,
-							std::vector<vectorType>    & eigenVectors,
+							std::vector<distributedCPUVec<double>>    & eigenVectors,
 							std::vector<double>        & eigenValues,
 							std::vector<double>        & residualNorms)
   {

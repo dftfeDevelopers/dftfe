@@ -20,9 +20,9 @@
 #ifdef WITH_MKL
 #ifdef USE_COMPLEX
 template<unsigned int FEOrder>
-void kohnShamDFTOperatorClass<FEOrder>::computeNonLocalHamiltonianTimesXBatchGEMM(const dealii::LinearAlgebra::distributed::Vector<std::complex<double> > & src,
+void kohnShamDFTOperatorClass<FEOrder>::computeNonLocalHamiltonianTimesXBatchGEMM(const distributedCPUVec<std::complex<double> > & src,
 								    const unsigned int numberWaveFunctions,
-								    dealii::LinearAlgebra::distributed::Vector<std::complex<double> >       & dst) const
+								    distributedCPUVec<std::complex<double> >       & dst) const
 {
 
   std::map<unsigned int, std::vector<std::complex<double> > > projectorKetTimesVector;
@@ -220,9 +220,9 @@ void kohnShamDFTOperatorClass<FEOrder>::computeNonLocalHamiltonianTimesXBatchGEM
 
 #else
 template<unsigned int FEOrder>
-void kohnShamDFTOperatorClass<FEOrder>::computeNonLocalHamiltonianTimesXBatchGEMM(const dealii::LinearAlgebra::distributed::Vector<double> & src,
+void kohnShamDFTOperatorClass<FEOrder>::computeNonLocalHamiltonianTimesXBatchGEMM(const distributedCPUVec<double> & src,
 								    const unsigned int numberWaveFunctions,
-								    dealii::LinearAlgebra::distributed::Vector<double>       & dst) const
+								    distributedCPUVec<double>       & dst) const
 {
 
 

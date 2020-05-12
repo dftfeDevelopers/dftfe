@@ -77,13 +77,13 @@ void dftClass<FEOrder>::computeElectrostaticEnergyHRefined(
    //
    //project and create a nodal field of the same mesh from the quadrature data (L2 projection from quad points to nodes)
    //
-   vectorType rhoNodalFieldCoarse;
+   distributedCPUVec<double> rhoNodalFieldCoarse;
    matrix_free_data.initialize_dof_vector(rhoNodalFieldCoarse);
    rhoNodalFieldCoarse = 0.0;
 
-   vectorType delxRhoNodalFieldCoarse;
-   vectorType delyRhoNodalFieldCoarse;
-   vectorType delzRhoNodalFieldCoarse;
+   distributedCPUVec<double> delxRhoNodalFieldCoarse;
+   distributedCPUVec<double> delyRhoNodalFieldCoarse;
+   distributedCPUVec<double> delzRhoNodalFieldCoarse;
    if (dftParameters::isCellStress || dftParameters::isIonForce)
    {
 
@@ -103,7 +103,7 @@ void dftClass<FEOrder>::computeElectrostaticEnergyHRefined(
    std::function<double(const typename dealii::DoFHandler<3>::active_cell_iterator & cell,const unsigned int q)> funcRho = [&](const typename dealii::DoFHandler<3>::active_cell_iterator & cell , const unsigned int q)
      {return (*rhoOutValues).find(cell->id())->second[q];};
 
-   dealii::VectorTools::project<3,dealii::LinearAlgebra::distributed::Vector<double> >(dealii::MappingQ1<3,3>(),
+   dealii::VectorTools::project<3,distributedCPUVec<double> >(dealii::MappingQ1<3,3>(),
 										  matrix_free_data.get_dof_handler(),
 										  constraintsNone,
 										  quadrature,
@@ -114,7 +114,7 @@ void dftClass<FEOrder>::computeElectrostaticEnergyHRefined(
        std::function<double(const typename dealii::DoFHandler<3>::active_cell_iterator & cell,const unsigned int q)> funcDelxRho = [&](const typename dealii::DoFHandler<3>::active_cell_iterator & cell , const unsigned int q)
 	 {return (*gradRhoOutValues).find(cell->id())->second[3*q];};
 
-       dealii::VectorTools::project<3,dealii::LinearAlgebra::distributed::Vector<double> >(dealii::MappingQ1<3,3>(),
+       dealii::VectorTools::project<3,distributedCPUVec<double> >(dealii::MappingQ1<3,3>(),
 										      matrix_free_data.get_dof_handler(),
 										      constraintsNone,
 										      quadrature,
@@ -124,7 +124,7 @@ void dftClass<FEOrder>::computeElectrostaticEnergyHRefined(
        std::function<double(const typename dealii::DoFHandler<3>::active_cell_iterator & cell,const unsigned int q)> funcDelyRho = [&](const typename dealii::DoFHandler<3>::active_cell_iterator & cell , const unsigned int q)
 	 {return (*gradRhoOutValues).find(cell->id())->second[3*q+1];};
 
-       dealii::VectorTools::project<3,dealii::LinearAlgebra::distributed::Vector<double> >(dealii::MappingQ1<3,3>(),
+       dealii::VectorTools::project<3,distributedCPUVec<double> >(dealii::MappingQ1<3,3>(),
 										      matrix_free_data.get_dof_handler(),
 										      constraintsNone,
 										      quadrature,
@@ -134,7 +134,7 @@ void dftClass<FEOrder>::computeElectrostaticEnergyHRefined(
        std::function<double(const typename dealii::DoFHandler<3>::active_cell_iterator & cell,const unsigned int q)> funcDelzRho = [&](const typename dealii::DoFHandler<3>::active_cell_iterator & cell , const unsigned int q)
 	 {return (*gradRhoOutValues).find(cell->id())->second[3*q+2];};
 
-       dealii::VectorTools::project<3,dealii::LinearAlgebra::distributed::Vector<double> >(dealii::MappingQ1<3,3>(),
+       dealii::VectorTools::project<3,distributedCPUVec<double> >(dealii::MappingQ1<3,3>(),
 										      matrix_free_data.get_dof_handler(),
 										      constraintsNone,
 										      quadrature,
@@ -190,13 +190,13 @@ void dftClass<FEOrder>::computeElectrostaticEnergyHRefined(
    //
    //create a solution transfer object and prepare for refinement and solution transfer
    //
-   parallel::distributed::SolutionTransfer<3,vectorType> solTrans(dofHandlerHRefined);
+   parallel::distributed::SolutionTransfer<3,distributedCPUVec<double>> solTrans(dofHandlerHRefined);
    electrostaticsTriaRho.set_all_refine_flags();
    electrostaticsTriaRho.prepare_coarsening_and_refinement();
 
    if (dftParameters::isCellStress || dftParameters::isIonForce)
    {
-       std::vector<const vectorType *> vecAllIn(4);
+       std::vector<const distributedCPUVec<double> *> vecAllIn(4);
        vecAllIn[0]=&rhoNodalFieldCoarse;
        vecAllIn[1]=&delxRhoNodalFieldCoarse;
        vecAllIn[2]=&delyRhoNodalFieldCoarse;
@@ -283,14 +283,14 @@ void dftClass<FEOrder>::computeElectrostaticEnergyHRefined(
    //
    //create rho nodal field on the refined mesh and conduct solution transfer
    //
-   vectorType rhoNodalFieldRefined = dealii::LinearAlgebra::distributed::Vector<double>(dofHandlerHRefined.locally_owned_dofs(),
+   distributedCPUVec<double> rhoNodalFieldRefined = distributedCPUVec<double>(dofHandlerHRefined.locally_owned_dofs(),
 										   ghost_indices,
 										   mpi_communicator);
    rhoNodalFieldRefined.zero_out_ghosts();
 
-   vectorType delxRhoNodalFieldRefined;
-   vectorType delyRhoNodalFieldRefined;
-   vectorType delzRhoNodalFieldRefined;
+   distributedCPUVec<double> delxRhoNodalFieldRefined;
+   distributedCPUVec<double> delyRhoNodalFieldRefined;
+   distributedCPUVec<double> delzRhoNodalFieldRefined;
 
    if (dftParameters::isCellStress || dftParameters::isIonForce)
    {
@@ -307,7 +307,7 @@ void dftClass<FEOrder>::computeElectrostaticEnergyHRefined(
 
    if (dftParameters::isCellStress || dftParameters::isIonForce)
    {
-       std::vector<vectorType *> vecAllOut(4);
+       std::vector<distributedCPUVec<double> *> vecAllOut(4);
        vecAllOut[0]=&rhoNodalFieldRefined;
        vecAllOut[1]=&delxRhoNodalFieldRefined;
        vecAllOut[2]=&delyRhoNodalFieldRefined;
@@ -532,7 +532,7 @@ void dftClass<FEOrder>::computeElectrostaticEnergyHRefined(
 
    //solve vself in bins on h refined mesh
    std::vector<std::vector<double> > localVselfsHRefined;
-   vectorType phiExtHRefined;
+   distributedCPUVec<double> phiExtHRefined;
    matrixFreeDataHRefined.initialize_dof_vector(phiExtHRefined,phiExtDofHandlerIndexHRefined);
    if (dftParameters::verbosity==2)
         pcout<< std::endl<<"Solving for nuclear charge self potential in bins on h refined mesh: ";
@@ -547,7 +547,7 @@ void dftClass<FEOrder>::computeElectrostaticEnergyHRefined(
    //
    //solve the Poisson problem for total rho
    //
-   vectorType phiTotRhoOutHRefined;
+   distributedCPUVec<double> phiTotRhoOutHRefined;
    matrixFreeDataHRefined.initialize_dof_vector(phiTotRhoOutHRefined,phiTotDofHandlerIndexHRefined);
 
    dealiiLinearSolver dealiiCGSolver(mpi_communicator, dealiiLinearSolver::CG);

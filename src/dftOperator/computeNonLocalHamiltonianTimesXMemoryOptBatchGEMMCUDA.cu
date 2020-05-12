@@ -22,7 +22,7 @@
 // and computations directly start from V*C^{T}*X. When skip2 is set to true only extraction and C^{T}*X computations are performed.
 template<unsigned int FEOrder>
 void kohnShamDFTOperatorCUDAClass<FEOrder>::computeNonLocalHamiltonianTimesX(const double* src,
-									     cudaVectorType &  projectorKetTimesVector,
+									     distributedGPUVec<double> &  projectorKetTimesVector,
 									     const unsigned int numberWaveFunctions,
 									     double* dst,
                                                                              const bool skip1,
@@ -196,7 +196,7 @@ void kohnShamDFTOperatorCUDAClass<FEOrder>::computeNonLocalHamiltonianTimesX(con
 
 template<unsigned int FEOrder>
 void kohnShamDFTOperatorCUDAClass<FEOrder>::computeNonLocalProjectorKetTimesXTimesV(const double* src,
-									     cudaVectorType &  projectorKetTimesVector,
+									     distributedGPUVec<double> &  projectorKetTimesVector,
 									     const unsigned int numberWaveFunctions)
 {
 	 

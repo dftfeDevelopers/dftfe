@@ -265,7 +265,7 @@ namespace dftfe {
 
 
 	  
-	  void constraintMatrixInfoCUDA::distribute(cudaVectorType & fieldVector,
+	  void constraintMatrixInfoCUDA::distribute(distributedGPUVec<double> & fieldVector,
 						const unsigned int blockSize) const
 	  {
             if (d_numConstrainedDofs==0)
@@ -295,7 +295,7 @@ namespace dftfe {
 	  //are satisfied for flattened array
 	  //
 	  
-	  void constraintMatrixInfoCUDA::distribute_slave_to_master(cudaVectorType & fieldVector,
+	  void constraintMatrixInfoCUDA::distribute_slave_to_master(distributedGPUVec<double> & fieldVector,
 								const unsigned int blockSize) const
 	  {
             if (d_numConstrainedDofs==0)
@@ -311,7 +311,7 @@ namespace dftfe {
                                            thrust::raw_pointer_cast(&d_localIndexMapUnflattenedToFlattenedDevice[0]));
 	  }
 
-	  void constraintMatrixInfoCUDA::set_zero(cudaVectorType & fieldVector,
+	  void constraintMatrixInfoCUDA::set_zero(distributedGPUVec<double> & fieldVector,
 					      const unsigned int blockSize) const
 	  {
             if (d_numConstrainedDofs==0)

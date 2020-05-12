@@ -265,7 +265,7 @@ namespace dftfe{
     //
     template<typename T>
     void chebyshevFilter(operatorDFTClass & operatorMatrix,
-			 dealii::LinearAlgebra::distributed::Vector<T> & XArray,
+			 distributedCPUVec<T> & XArray,
 			 const unsigned int numberWaveFunctions,
 			 const unsigned int m,
 			 const double a,
@@ -276,7 +276,7 @@ namespace dftfe{
       e = (b-a)/2.0; c = (b+a)/2.0;
       sigma = e/(a0-c); sigma1 = sigma; gamma = 2.0/sigma1;
 
-      dealii::LinearAlgebra::distributed::Vector<T> YArray;//,YNewArray;
+      distributedCPUVec<T> YArray;//,YNewArray;
 
       //
       //create YArray
@@ -2657,7 +2657,7 @@ namespace dftfe{
 						 bandGroupLowHighPlusOneIndices);
 
       //create temporary arrays XBlock,HXBlock
-      dealii::LinearAlgebra::distributed::Vector<T> XBlock,HXBlock;
+      distributedCPUVec<T> XBlock,HXBlock;
 
       // Do H*X using a blocked approach and compute
       // the residual norms: H*XBlock-XBlock*D, where
@@ -3100,7 +3100,7 @@ namespace dftfe{
 
 
     template void chebyshevFilter(operatorDFTClass & operatorMatrix,
-				  dealii::LinearAlgebra::distributed::Vector<dataTypes::number> & ,
+				  distributedCPUVec<dataTypes::number> & ,
 				  const unsigned int ,
 				  const unsigned int,
 				  const double ,

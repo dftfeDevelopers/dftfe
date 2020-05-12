@@ -58,7 +58,7 @@ namespace dftfe
           init_time = MPI_Wtime();
 
 	  const unsigned int constraintMatrixId = iBin + offset;
-	  vectorType vselfBinScratch;
+	  distributedCPUVec<double> vselfBinScratch;
 	  matrix_free_data.initialize_dof_vector(vselfBinScratch,constraintMatrixId);
 	  vselfBinScratch = 0;
 	  
@@ -174,11 +174,11 @@ namespace dftfe
 		//rhs contribution from static condensation of dirichlet boundary conditions
      	        const unsigned int constraintMatrixId = iBin + offset;
 		
-		vectorType tempvec;
+		distributedCPUVec<double> tempvec;
 		matrix_free_data.initialize_dof_vector(tempvec,constraintMatrixId);
 		tempvec=0.0;
 
-                vectorType rhs;
+                distributedCPUVec<double> rhs;
 		rhs.reinit(tempvec);
 		rhs=0;
 
@@ -227,7 +227,7 @@ namespace dftfe
       //
       // compute diagonal
       //
-      vectorType diagonalA;
+      distributedCPUVec<double> diagonalA;
       matrix_free_data.initialize_dof_vector(diagonalA,0);
       diagonalA=0;
 

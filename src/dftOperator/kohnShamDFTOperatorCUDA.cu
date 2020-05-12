@@ -227,7 +227,7 @@ namespace dftfe
 
   /*
     template<unsigned int FEOrder> 
-    cudaVectorType & kohnShamDFTOperatorCUDAClass<FEOrder>::getBlockCUDADealiiVector()
+    distributedGPUVec<double> & kohnShamDFTOperatorCUDAClass<FEOrder>::getBlockCUDADealiiVector()
     //thrust::device_vector<dataTypes::number> & kohnShamDFTOperatorCUDAClass<FEOrder>::getBlockCUDADealiiVector() 
     {
     return d_cudaFlattenedArrayBlock;
@@ -236,14 +236,14 @@ namespace dftfe
 
     template<unsigned int FEOrder>
     //thrust::device_vector<dataTypes::number> & kohnShamDFTOperatorCUDAClass<FEOrder>::getBlockCUDADealiiVector2()
-    cudaVectorType & kohnShamDFTOperatorCUDAClass<FEOrder>::getBlockCUDADealiiVector2()
+    distributedGPUVec<double> & kohnShamDFTOperatorCUDAClass<FEOrder>::getBlockCUDADealiiVector2()
     {
     return d_cudaFlattenedArrayBlock2;
 
     }
 
     template<unsigned int FEOrder> 
-    cudaVectorType & kohnShamDFTOperatorCUDAClass<FEOrder>::getBlockCUDADealiiVector3()
+    distributedGPUVec<double> & kohnShamDFTOperatorCUDAClass<FEOrder>::getBlockCUDADealiiVector3()
     //thrust::device_vector<dataTypes::number> & kohnShamDFTOperatorCUDAClass<FEOrder>::getBlockCUDADealiiVector() 
     {
     return d_cudaFlattenedArrayBlock3;
@@ -251,7 +251,7 @@ namespace dftfe
     }
   */
   template<unsigned int FEOrder>
-  dealii::LinearAlgebra::distributed::Vector<dataTypes::number,dealii::MemorySpace::Host> &  kohnShamDFTOperatorCUDAClass<FEOrder>::getProjectorKetTimesVectorSingle()
+  distributedCPUVec<dataTypes::number> &  kohnShamDFTOperatorCUDAClass<FEOrder>::getProjectorKetTimesVectorSingle()
   {
     return dftPtr->d_projectorKetTimesVectorPar[0];
   }
@@ -399,7 +399,7 @@ namespace dftfe
 	*/
       }
     
-    dealii::LinearAlgebra::distributed::Vector<dataTypes::number,dealii::MemorySpace::Host> flattenedArray;
+    distributedCPUVec<dataTypes::number> flattenedArray;
     if(flag)
       vectorTools::createDealiiVector<dataTypes::number>(dftPtr->matrix_free_data.get_vector_partitioner(),
                                                          numberWaveFunctions,
@@ -690,8 +690,8 @@ namespace dftfe
   template<unsigned int FEOrder>
   void kohnShamDFTOperatorCUDAClass<FEOrder>::computeMassVector(const dealii::DoFHandler<3> & dofHandler,
 								const dealii::AffineConstraints<double> & constraintMatrix,
-								vectorType & sqrtMassVec,
-								vectorType & invSqrtMassVec)
+								distributedCPUVec<double> & sqrtMassVec,
+								distributedCPUVec<double> & invSqrtMassVec)
   {
     computing_timer.enter_section("kohnShamDFTOperatorCUDAClass Mass assembly");
     invSqrtMassVec = 0.0;
@@ -761,7 +761,7 @@ namespace dftfe
 	       cudaMemcpyHostToDevice);	      
 
 
-    vectorType boundaryIdVec;
+    distributedCPUVec<double> boundaryIdVec;
     boundaryIdVec.reinit(d_invSqrtMassVector);
     boundaryIdVec=0;
     for(unsigned int i = 0; i < numberGhostDofs; ++i)
@@ -829,8 +829,8 @@ namespace dftfe
 
   template<unsigned int FEOrder>
   void kohnShamDFTOperatorCUDAClass<FEOrder>::computeVEff(const std::map<dealii::CellId,std::vector<double> >* rhoValues,
-							  const vectorType & phi,
-							  const vectorType & phiExt,
+							  const distributedCPUVec<double> & phi,
+							  const distributedCPUVec<double> & phiExt,
 							  const std::map<dealii::CellId,std::vector<double> > & pseudoValues)
   {
     const unsigned int n_cells = dftPtr->matrix_free_data.n_macro_cells();
@@ -925,8 +925,8 @@ namespace dftfe
   template<unsigned int FEOrder>
   void kohnShamDFTOperatorCUDAClass<FEOrder>::computeVEff(const std::map<dealii::CellId,std::vector<double> >* rhoValues,
 							  const std::map<dealii::CellId,std::vector<double> >* gradRhoValues,
-							  const vectorType & phi,
-							  const vectorType & phiExt,
+							  const distributedCPUVec<double> & phi,
+							  const distributedCPUVec<double> & phiExt,
 							  const std::map<dealii::CellId,std::vector<double> > & pseudoValues)
   {
 
@@ -1077,8 +1077,8 @@ namespace dftfe
 
   template<unsigned int FEOrder>
   void kohnShamDFTOperatorCUDAClass<FEOrder>::computeVEffSpinPolarized(const std::map<dealii::CellId,std::vector<double> >* rhoValues,
-								       const vectorType & phi,
-								       const vectorType & phiExt,
+								       const distributedCPUVec<double> & phi,
+								       const distributedCPUVec<double> & phiExt,
 								       const unsigned int spinIndex,
 								       const std::map<dealii::CellId,std::vector<double> > & pseudoValues)
 
@@ -1176,8 +1176,8 @@ namespace dftfe
   template<unsigned int FEOrder>
   void kohnShamDFTOperatorCUDAClass<FEOrder>::computeVEffSpinPolarized(const std::map<dealii::CellId,std::vector<double> >* rhoValues,
 								       const std::map<dealii::CellId,std::vector<double> >* gradRhoValues,
-								       const vectorType & phi,
-								       const vectorType & phiExt,
+								       const distributedCPUVec<double> & phi,
+								       const distributedCPUVec<double> & phiExt,
 								       const unsigned int spinIndex,
 								       const std::map<dealii::CellId,std::vector<double> > & pseudoValues)
   {
@@ -1334,8 +1334,8 @@ namespace dftfe
   }
 
   template<unsigned int FEOrder>
-  void kohnShamDFTOperatorCUDAClass<FEOrder>::HX(std::vector<vectorType> &src,
-                               			 std::vector<vectorType> &dst)
+  void kohnShamDFTOperatorCUDAClass<FEOrder>::HX(std::vector<distributedCPUVec<double>> &src,
+                               			 std::vector<distributedCPUVec<double>> &dst)
   {
 
     for (unsigned int i = 0; i < src.size(); i++)
@@ -1362,7 +1362,7 @@ namespace dftfe
     //
     //Finally evaluate M^{-1/2}*H*M^{-1/2}*X
     //
-    for (std::vector<vectorType>::iterator it=dst.begin(); it!=dst.end(); it++)
+    for (std::vector<distributedCPUVec<double>>::iterator it=dst.begin(); it!=dst.end(); it++)
       {
         (*it).scale(d_invSqrtMassVector);
       }
@@ -1370,7 +1370,7 @@ namespace dftfe
     //
     //unscale src back
     //
-    for (std::vector<vectorType>::iterator it=src.begin(); it!=src.end(); it++)
+    for (std::vector<distributedCPUVec<double>>::iterator it=src.begin(); it!=src.end(); it++)
       {
         (*it).scale(d_sqrtMassVector); //MHMX
       }
@@ -1378,14 +1378,14 @@ namespace dftfe
   }
 
   template<unsigned int FEOrder>
-  void kohnShamDFTOperatorCUDAClass<FEOrder>::HX(cudaVectorType & src,
-                                                 cudaVectorTypeFloat & tempFloatArray,
-						 cudaVectorType & projectorKetTimesVector,
+  void kohnShamDFTOperatorCUDAClass<FEOrder>::HX(distributedGPUVec<double> & src,
+                                                 distributedGPUVec<float> & tempFloatArray,
+						 distributedGPUVec<double> & projectorKetTimesVector,
 						 const unsigned int localVectorSize,
 						 const unsigned int numberWaveFunctions,
 						 const bool scaleFlag,
 						 const double scalar,
-						 cudaVectorType & dst,
+						 distributedGPUVec<double> & dst,
                                                  const bool doUnscalingSrc,
                                                  const bool singlePrecCommun)
   {
@@ -1498,13 +1498,13 @@ namespace dftfe
 
 
   template<unsigned int FEOrder>
-  void kohnShamDFTOperatorCUDAClass<FEOrder>::HX(cudaVectorType & src,
-						 cudaVectorType & projectorKetTimesVector,
+  void kohnShamDFTOperatorCUDAClass<FEOrder>::HX(distributedGPUVec<double> & src,
+						 distributedGPUVec<double> & projectorKetTimesVector,
 						 const unsigned int localVectorSize,
 						 const unsigned int numberWaveFunctions,
 						 const bool scaleFlag,
 						 const double scalar,
-						 cudaVectorType & dst,
+						 distributedGPUVec<double> & dst,
                                                  const bool doUnscalingSrc)
   {
     const unsigned int n_ghosts   = dftPtr->matrix_free_data.get_vector_partitioner()->n_ghost_indices();
@@ -1585,12 +1585,12 @@ namespace dftfe
 // in computePart1 are skipped and only computations performed are: second compute part of nonlocalHX,
 // assembly (only local processor), and distribute_slave_to_master.
   template<unsigned int FEOrder>
-  void kohnShamDFTOperatorCUDAClass<FEOrder>::HXCheby(cudaVectorType & src,
-						      cudaVectorTypeFloat & tempFloatArray,
-                                                      cudaVectorType & projectorKetTimesVector,
+  void kohnShamDFTOperatorCUDAClass<FEOrder>::HXCheby(distributedGPUVec<double> & src,
+						      distributedGPUVec<float> & tempFloatArray,
+                                                      distributedGPUVec<double> & projectorKetTimesVector,
 						      const unsigned int localVectorSize,
 						      const unsigned int numberWaveFunctions,
-						      cudaVectorType & dst,
+						      distributedGPUVec<double> & dst,
 						      bool chebMixedPrec,
                                                       bool computePart1,
                                                       bool computePart2)
@@ -1683,11 +1683,11 @@ namespace dftfe
 
 
   template<unsigned int FEOrder>
-  void kohnShamDFTOperatorCUDAClass<FEOrder>::HXChebyNoCommun(cudaVectorType & src,
-                                                      cudaVectorType & projectorKetTimesVector,
+  void kohnShamDFTOperatorCUDAClass<FEOrder>::HXChebyNoCommun(distributedGPUVec<double> & src,
+                                                      distributedGPUVec<double> & projectorKetTimesVector,
 						      const unsigned int localVectorSize,
 						      const unsigned int numberWaveFunctions,
-						      cudaVectorType & dst)
+						      distributedGPUVec<double> & dst)
   {
     const unsigned int n_ghosts   = dftPtr->matrix_free_data.get_vector_partitioner()->n_ghost_indices();
     const unsigned int localSize  = dftPtr->matrix_free_data.get_vector_partitioner()->local_size();
@@ -1725,9 +1725,9 @@ namespace dftfe
   //XTHX
   template<unsigned int FEOrder>
   void kohnShamDFTOperatorCUDAClass<FEOrder>::XtHX(const double *  X,
-						   cudaVectorType & XBlock,
-						   cudaVectorType & HXBlock,
-						   cudaVectorType & projectorKetTimesVector,
+						   distributedGPUVec<double> & XBlock,
+						   distributedGPUVec<double> & HXBlock,
+						   distributedGPUVec<double> & projectorKetTimesVector,
 						   const unsigned int M,
 						   const unsigned int N,
 						   cublasHandle_t &handle,
@@ -1742,7 +1742,7 @@ namespace dftfe
         const unsigned int vectorsBlockSize=std::min(dftParameters::wfcBlockSize,
 						     N);
         /*
-	  cudaVectorType XBlock, HXBlock, tempArray, projectorKetTimesVector;
+	  distributedGPUVec<double> XBlock, HXBlock, tempArray, projectorKetTimesVector;
 	  vectorTools::createDealiiVector(dftPtr->matrix_free_data.get_vector_partitioner(),
 	  vectorsBlockSize,
 	  XBlock);
@@ -1758,7 +1758,7 @@ namespace dftfe
         //HXBlock.reinit(d_cudaFlattenedArrayBlock);
 
         //thrust::device_vector<double> HXBlock(d_cudaFlattenedArrayBlock.size(),0.0);
-        //cudaVectorType & HXBlock = getBlockCUDADealiiVector2();
+        //distributedGPUVec<double> & HXBlock = getBlockCUDADealiiVector2();
   
 
         thrust::device_vector<double> HXBlockFull(vectorsBlockSize*M,0.0);
@@ -1841,9 +1841,9 @@ namespace dftfe
   //XTHX
   template<unsigned int FEOrder>
   void kohnShamDFTOperatorCUDAClass<FEOrder>::XtHX(const double *  X,
-						   cudaVectorType & XBlock,
-						   cudaVectorType & HXBlock,
-						   cudaVectorType & projectorKetTimesVector,
+						   distributedGPUVec<double> & XBlock,
+						   distributedGPUVec<double> & HXBlock,
+						   distributedGPUVec<double> & projectorKetTimesVector,
 						   const unsigned int M,
 						   const unsigned int N,
 						   cublasHandle_t &handle,
@@ -1990,9 +1990,9 @@ namespace dftfe
   //XTHX with overlap of computation and communication
   template<unsigned int FEOrder>
   void kohnShamDFTOperatorCUDAClass<FEOrder>::XtHXOverlapComputeCommun(const double *  X,
-						   cudaVectorType & XBlock,
-						   cudaVectorType & HXBlock,
-						   cudaVectorType & projectorKetTimesVector,
+						   distributedGPUVec<double> & XBlock,
+						   distributedGPUVec<double> & HXBlock,
+						   distributedGPUVec<double> & projectorKetTimesVector,
 						   const unsigned int M,
 						   const unsigned int N,
 						   cublasHandle_t &handle,
@@ -2271,10 +2271,10 @@ namespace dftfe
   //XTHX
   template<unsigned int FEOrder>
   void kohnShamDFTOperatorCUDAClass<FEOrder>::XtHXMixedPrec(const double *  X,
-							    cudaVectorType & XBlock,
-                                                            cudaVectorTypeFloat & tempFloatBlock,
-							    cudaVectorType & HXBlock,
-							    cudaVectorType & projectorKetTimesVector,
+							    distributedGPUVec<double> & XBlock,
+                                                            distributedGPUVec<float> & tempFloatBlock,
+							    distributedGPUVec<double> & HXBlock,
+							    distributedGPUVec<double> & projectorKetTimesVector,
 							    const unsigned int M,
 							    const unsigned int N,
 							    const unsigned int Noc,
@@ -2572,10 +2572,10 @@ namespace dftfe
    //XTHX
   template<unsigned int FEOrder>
   void kohnShamDFTOperatorCUDAClass<FEOrder>::XtHXOffDiagBlockSinglePrec(const double *  X,
-							    cudaVectorType & XBlock,
-                                                            cudaVectorTypeFloat & tempFloatBlock,
-							    cudaVectorType & HXBlock,
-							    cudaVectorType & projectorKetTimesVector,
+							    distributedGPUVec<double> & XBlock,
+                                                            distributedGPUVec<float> & tempFloatBlock,
+							    distributedGPUVec<double> & HXBlock,
+							    distributedGPUVec<double> & projectorKetTimesVector,
 							    const unsigned int M,
 							    const unsigned int N,
 						            cublasHandle_t &handle,
@@ -2817,10 +2817,10 @@ namespace dftfe
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   template<unsigned int FEOrder>
   void kohnShamDFTOperatorCUDAClass<FEOrder>::XtHXMixedPrecOverlapComputeCommun(const double *  X,
-							    cudaVectorType & XBlock,
-                                                            cudaVectorTypeFloat & tempFloatBlock,
-							    cudaVectorType & HXBlock,
-							    cudaVectorType & projectorKetTimesVector,
+							    distributedGPUVec<double> & XBlock,
+                                                            distributedGPUVec<float> & tempFloatBlock,
+							    distributedGPUVec<double> & HXBlock,
+							    distributedGPUVec<double> & projectorKetTimesVector,
 							    const unsigned int M,
 							    const unsigned int N,
 							    const unsigned int Noc,
@@ -3223,10 +3223,10 @@ namespace dftfe
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   template<unsigned int FEOrder>
   void kohnShamDFTOperatorCUDAClass<FEOrder>::XtHXOffDiagBlockSinglePrecOverlapComputeCommun(const double *  X,
-							    cudaVectorType & XBlock,
-                                                            cudaVectorTypeFloat & tempFloatBlock,
-							    cudaVectorType & HXBlock,
-							    cudaVectorType & projectorKetTimesVector,
+							    distributedGPUVec<double> & XBlock,
+                                                            distributedGPUVec<float> & tempFloatBlock,
+							    distributedGPUVec<double> & HXBlock,
+							    distributedGPUVec<double> & projectorKetTimesVector,
 							    const unsigned int M,
 							    const unsigned int N,
 							    cublasHandle_t &handle,

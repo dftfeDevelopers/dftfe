@@ -72,13 +72,13 @@ namespace dftfe{
 
     virtual thrust::device_vector<unsigned int> & getBoundaryIdToLocalIdMap() = 0;
 
-    virtual dealii::LinearAlgebra::distributed::Vector<dataTypes::number,dealii::MemorySpace::Host> &  getProjectorKetTimesVectorSingle()=0;
+    virtual distributedCPUVec<dataTypes::number> &  getProjectorKetTimesVectorSingle()=0;
 
-    //virtual cudaVectorType & getBlockCUDADealiiVector() = 0;
+    //virtual distributedGPUVec<double> & getBlockCUDADealiiVector() = 0;
 
-    //virtual cudaVectorType & getBlockCUDADealiiVector2() = 0;
+    //virtual distributedGPUVec<double> & getBlockCUDADealiiVector2() = 0;
 
-    //virtual cudaVectorType & getBlockCUDADealiiVector3() = 0;
+    //virtual distributedGPUVec<double> & getBlockCUDADealiiVector3() = 0;
  
     //virtual thrust::device_vector<dataTypes::number> & getBlockCUDADealiiVector() = 0;
 
@@ -138,8 +138,8 @@ namespace dftfe{
      */
     virtual void computeMassVector(const dealii::DoFHandler<3>    & dofHandler,
 				   const dealii::AffineConstraints<double> & constraintMatrix,
-				   vectorType                     & sqrtMassVec,
-				   vectorType                     & invSqrtMassVec) = 0;
+				   distributedCPUVec<double>                     & sqrtMassVec,
+				   distributedCPUVec<double>                     & invSqrtMassVec) = 0;
 
 
     /**
@@ -147,8 +147,8 @@ namespace dftfe{
      * @param X Vector of Vectors containing current values of X
      * @param Y Vector of Vectors containing operator times vectors product
      */
-    virtual void HX(std::vector<vectorType> & X,
-                    std::vector<vectorType> & Y) = 0;
+    virtual void HX(std::vector<distributedCPUVec<double>> & X,
+                    std::vector<distributedCPUVec<double>> & Y) = 0;
 
 
     /**
@@ -160,31 +160,31 @@ namespace dftfe{
      * @param numberComponents number of wavefunctions associated with a given node
      * @param Y Vector containing multi-component fields after operator times vectors product
      */
-    virtual void HX(cudaVectorType & X,
-                    cudaVectorType & projectorKetTimesVector,
+    virtual void HX(distributedGPUVec<double> & X,
+                    distributedGPUVec<double> & projectorKetTimesVector,
                     const unsigned int localVectorSize,
 		    const unsigned int numberComponents,
 		    const bool scaleFlag,
 		    const double scalar,
-		    cudaVectorType & Y,
+		    distributedGPUVec<double> & Y,
                     const bool doUnscalingX=true) = 0;
 
 
-    virtual void HXCheby(cudaVectorType & X,
-                         cudaVectorTypeFloat &XTemp,
-                         cudaVectorType & projectorKetTimesVector,
+    virtual void HXCheby(distributedGPUVec<double> & X,
+                         distributedGPUVec<float> &XTemp,
+                         distributedGPUVec<double> & projectorKetTimesVector,
                          const unsigned int localVectorSize,
                          const unsigned int numberComponents,
-                         cudaVectorType & Y,
+                         distributedGPUVec<double> & Y,
                          bool mixPrecFlag=false,
                          bool returnBeforeCompressSkipUpdateSkipNonLocal=false,
                          bool returnBeforeCompressSkipUpdateSkipLocal=false) = 0;
 
-    virtual void HXChebyNoCommun(cudaVectorType & X,
-                         cudaVectorType & projectorKetTimesVector,
+    virtual void HXChebyNoCommun(distributedGPUVec<double> & X,
+                         distributedGPUVec<double> & projectorKetTimesVector,
                          const unsigned int localVectorSize,
                          const unsigned int numberComponents,
-                         cudaVectorType & Y)=0;
+                         distributedGPUVec<double> & Y)=0;
 
 
       /**
@@ -197,7 +197,7 @@ namespace dftfe{
        * @param numberWaveFunctions Number of wavefunctions at a given node.
        */
      virtual void computeNonLocalProjectorKetTimesXTimesV(const double *src,
-                                                     cudaVectorType & projectorKetTimesVector,
+                                                     distributedGPUVec<double> & projectorKetTimesVector,
 					             const unsigned int numberWaveFunctions)=0;
 
       /**
@@ -207,9 +207,9 @@ namespace dftfe{
        * @return ProjMatrix projected small matrix
        */
      virtual void XtHX(const double *  X,
-                      cudaVectorType & Xb,
-                      cudaVectorType & HXb,
-                      cudaVectorType & projectorKetTimesVector,
+                      distributedGPUVec<double> & Xb,
+                      distributedGPUVec<double> & HXb,
+                      distributedGPUVec<double> & projectorKetTimesVector,
                 const unsigned int M,
 		const unsigned int N,
                 cublasHandle_t &handle,
@@ -233,9 +233,9 @@ namespace dftfe{
      * of the operation into the given subspace
      */
      virtual void XtHX(const double *  X,
-                cudaVectorType & Xb,
-                cudaVectorType & HXb,
-                cudaVectorType & projectorKetTimesVector,
+                distributedGPUVec<double> & Xb,
+                distributedGPUVec<double> & HXb,
+                distributedGPUVec<double> & projectorKetTimesVector,
                 const unsigned int M,
 		const unsigned int N,
                 cublasHandle_t &handle,
@@ -260,9 +260,9 @@ namespace dftfe{
      * of the operation into the given subspace
      */
      virtual void XtHXOverlapComputeCommun(const double *  X,
-                cudaVectorType & Xb,
-                cudaVectorType & HXb,
-                cudaVectorType & projectorKetTimesVector,
+                distributedGPUVec<double> & Xb,
+                distributedGPUVec<double> & HXb,
+                distributedGPUVec<double> & projectorKetTimesVector,
                 const unsigned int M,
 		const unsigned int N,
                 cublasHandle_t &handle,
@@ -290,10 +290,10 @@ namespace dftfe{
      * of the operation into the given subspace
      */
      virtual void XtHXMixedPrec(const double *  X,
-                cudaVectorType & Xb,
-                cudaVectorTypeFloat & floatXb,
-                cudaVectorType & HXb,
-                cudaVectorType & projectorKetTimesVector,
+                distributedGPUVec<double> & Xb,
+                distributedGPUVec<float> & floatXb,
+                distributedGPUVec<double> & HXb,
+                distributedGPUVec<double> & projectorKetTimesVector,
                 const unsigned int M,
 		const unsigned int N,
                 const unsigned int Noc,
@@ -303,10 +303,10 @@ namespace dftfe{
 
 
     virtual void XtHXOffDiagBlockSinglePrec(const double *  X,
-                cudaVectorType & Xb,
-                cudaVectorTypeFloat & floatXb,
-                cudaVectorType & HXb,
-                cudaVectorType & projectorKetTimesVector,
+                distributedGPUVec<double> & Xb,
+                distributedGPUVec<float> & floatXb,
+                distributedGPUVec<double> & HXb,
+                distributedGPUVec<double> & projectorKetTimesVector,
                 const unsigned int M,
                 const unsigned int N,
                 cublasHandle_t &handle,
@@ -336,10 +336,10 @@ namespace dftfe{
      * of the operation into the given subspace
      */
      virtual void XtHXMixedPrecOverlapComputeCommun(const double *  X,
-                cudaVectorType & Xb,
-                cudaVectorTypeFloat & floatXb,
-                cudaVectorType & HXb,
-                cudaVectorType & projectorKetTimesVector,
+                distributedGPUVec<double> & Xb,
+                distributedGPUVec<float> & floatXb,
+                distributedGPUVec<double> & HXb,
+                distributedGPUVec<double> & projectorKetTimesVector,
                 const unsigned int M,
 		const unsigned int N,
                 const unsigned int Noc,
@@ -349,10 +349,10 @@ namespace dftfe{
 
 
     virtual void XtHXOffDiagBlockSinglePrecOverlapComputeCommun(const double *  X,
-                cudaVectorType & Xb,
-                cudaVectorTypeFloat & floatXb,
-                cudaVectorType & HXb,
-                cudaVectorType & projectorKetTimesVector,
+                distributedGPUVec<double> & Xb,
+                distributedGPUVec<float> & floatXb,
+                distributedGPUVec<double> & HXb,
+                distributedGPUVec<double> & projectorKetTimesVector,
                 const unsigned int M,
                 const unsigned int N,
                 cublasHandle_t &handle,
@@ -365,7 +365,7 @@ namespace dftfe{
      * @param  X Vector of Vectors containing the basis vectors spanning the subspace
      * @return ProjMatrix projected small matrix
      */
-    /*virtual void XtHX(std::vector<vectorType> & X,
+    /*virtual void XtHX(std::vector<distributedCPUVec<double>> & X,
       std::vector<dataTypes::number> & ProjHam) = 0;*/
 
 

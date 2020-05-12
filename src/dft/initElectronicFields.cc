@@ -17,12 +17,12 @@
 //
 
 template<unsigned int FEOrder>
-void dftClass<FEOrder>::initPsiAndRhoFromPreviousGroundStatePsi(std::vector<std::vector<vectorType>> eigenVectors)
+void dftClass<FEOrder>::initPsiAndRhoFromPreviousGroundStatePsi(std::vector<std::vector<distributedCPUVec<double>>> eigenVectors)
 {
      const unsigned int totalNumEigenVectors=(1+dftParameters::spinPolarized)*d_kPointWeights.size()*eigenVectors[0].size();
-     std::vector<vectorType> eigenVectorsPrevious(totalNumEigenVectors);
-     std::vector<vectorType* > eigenVectorsPreviousPtrs(totalNumEigenVectors);
-     std::vector<vectorType* > eigenVectorsCurrentPtrs(totalNumEigenVectors);
+     std::vector<distributedCPUVec<double>> eigenVectorsPrevious(totalNumEigenVectors);
+     std::vector<distributedCPUVec<double>* > eigenVectorsPreviousPtrs(totalNumEigenVectors);
+     std::vector<distributedCPUVec<double>* > eigenVectorsCurrentPtrs(totalNumEigenVectors);
 
      for(unsigned int kPoint = 0; kPoint < (1+dftParameters::spinPolarized)*d_kPointWeights.size(); ++kPoint)
         for(unsigned int i = 0; i < eigenVectors[kPoint].size(); ++i)
@@ -180,8 +180,8 @@ void dftClass<FEOrder>::initElectronicFields(const unsigned int usePreviousGroun
   }
   else if (usePreviousGroundStateFields==2)
   {
-      std::vector<std::vector<vectorType>> eigenVectors((1+dftParameters::spinPolarized)*d_kPointWeights.size(),
-	                                                 std::vector<vectorType>(d_numEigenValues));
+      std::vector<std::vector<distributedCPUVec<double>>> eigenVectors((1+dftParameters::spinPolarized)*d_kPointWeights.size(),
+	                                                 std::vector<distributedCPUVec<double>>(d_numEigenValues));
 
       for(unsigned int kPoint = 0; kPoint < (1+dftParameters::spinPolarized)*d_kPointWeights.size(); ++kPoint)
 	  for(unsigned int i= 0; i < d_numEigenValues; ++i)

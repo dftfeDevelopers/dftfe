@@ -88,7 +88,7 @@ namespace dftfe {
     }
 
     void computeLocalFiniteElementError(const dealii::DoFHandler<3> & dofHandler,
-					const std::vector<const vectorType*> & eigenVectorsArray,
+					const std::vector<const distributedCPUVec<double>*> & eigenVectorsArray,
 					std::vector<double>  & errorInEachCell,
 					const unsigned int FEOrder)
     {
@@ -694,7 +694,7 @@ namespace dftfe {
   //
   void triangulationManager::generateAutomaticMeshApriori(const DoFHandler<3> & dofHandler,
 							  parallel::distributed::Triangulation<3> & parallelTriangulation,
-							  const std::vector<vectorType> & eigenVectorsArrayIn,
+							  const std::vector<distributedCPUVec<double>> & eigenVectorsArrayIn,
 							  const unsigned int FEOrder,
 							  const bool generateElectrostaticsTria)
   {
@@ -706,7 +706,7 @@ namespace dftfe {
     //create an array of pointers holding the eigenVectors on starting mesh
     //
     unsigned int numberWaveFunctionsEstimate = eigenVectorsArrayIn.size();
-    std::vector<const vectorType*> eigenVectorsArrayOfPtrsIn(numberWaveFunctionsEstimate);
+    std::vector<const distributedCPUVec<double>*> eigenVectorsArrayOfPtrsIn(numberWaveFunctionsEstimate);
     for(int iWave = 0; iWave < numberWaveFunctionsEstimate; ++iWave)
       {
 	eigenVectorsArrayOfPtrsIn[iWave] = &eigenVectorsArrayIn[iWave];

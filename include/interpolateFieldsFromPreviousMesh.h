@@ -42,7 +42,7 @@ namespace dftfe
  */
     class interpolateFieldsFromPreviousMesh
     {
-     //typedef dealii::parallel::distributed::Vector<double> vectorType;
+     //typedef dealii::parallel::distributed::Vector<double> distributedCPUVec<double>;
      public:
     /** @brief Constructor.
      *
@@ -76,8 +76,8 @@ namespace dftfe
 		   const dealii::parallel::distributed::Triangulation<3> & triangulationParCurrent,
 		   const dealii::FESystem<3> & FEPrev,
 		   const dealii::FESystem<3> & FECurrent,
-		   const std::vector<vectorType*> & fieldsPreviousMesh,
-		   std::vector<vectorType*> & fieldsCurrentMesh,
+		   const std::vector<distributedCPUVec<double>*> & fieldsPreviousMesh,
+		   std::vector<distributedCPUVec<double>*> & fieldsCurrentMesh,
 		   const dealii::ConstraintMatrix * constraintsCurrentPtr=NULL);
 
      private:

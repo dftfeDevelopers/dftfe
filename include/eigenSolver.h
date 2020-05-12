@@ -50,7 +50,7 @@ namespace dftfe{
      * @return Return value indicating success or failure.
      */
     virtual void solve(operatorDFTClass & operatorMatrix,
-				  std::vector<vectorType> & eigenVectors,
+				  std::vector<distributedCPUVec<double>> & eigenVectors,
 				  std::vector<double> & eigenValues,
 				  std::vector<double> & residuals) = 0;
 

@@ -117,9 +117,9 @@ namespace dftfe {
 		 const unsigned int eigenDofHandlerIndex,
 		 const unsigned int phiExtDofHandlerIndex,
 		 const unsigned int phiTotDofHandlerIndex,
-		 const vectorType & phiTotRhoIn,
-		 const vectorType & phiTotRhoOut,
-		 const vectorType & phiExt,
+		 const distributedCPUVec<double> & phiTotRhoIn,
+		 const distributedCPUVec<double> & phiTotRhoOut,
+		 const distributedCPUVec<double> & phiExt,
 		 const std::map<dealii::CellId, std::vector<double> > & pseudoVLoc,
 		 const std::map<dealii::CellId, std::vector<double> > & gradPseudoVLoc,
 		 const std::map<unsigned int,std::map<dealii::CellId, std::vector<double> > > & gradPseudoVLocAtoms,
@@ -128,8 +128,8 @@ namespace dftfe {
 	         const MatrixFree<3,double> & matrixFreeDataElectro,
 		 const unsigned int phiTotDofHandlerIndexElectro,
 		 const unsigned int phiExtDofHandlerIndexElectro,
-		 const vectorType & phiTotRhoOutElectro,
-		 const vectorType & phiExtElectro,
+		 const distributedCPUVec<double> & phiTotRhoOutElectro,
+		 const distributedCPUVec<double> & phiExtElectro,
                  const std::map<dealii::CellId, std::vector<double> > & rhoOutValues,
                  const std::map<dealii::CellId, std::vector<double> > & gradRhoOutValues,
 		 const std::map<dealii::CellId, std::vector<double> > & rhoOutValuesElectro,
@@ -141,7 +141,7 @@ namespace dftfe {
 		 const vselfBinsManager<FEOrder>   & vselfBinsManagerElectro,
                  const std::map<dealii::CellId, std::vector<double> > & shadowKSRhoMinValues,
                  const std::map<dealii::CellId, std::vector<double> > & shadowKSGradRhoMinValues,
-                 const vectorType & phiRhoMinusApproxRho,
+                 const distributedCPUVec<double> & phiRhoMinusApproxRho,
                  const bool shadowPotentialForce=false);
 
     /** @brief returns a copy of the configurational force on all global atoms.
@@ -178,9 +178,9 @@ namespace dftfe {
 		 const unsigned int eigenDofHandlerIndex,
 		 const unsigned int phiExtDofHandlerIndex,
 		 const unsigned int phiTotDofHandlerIndex,
-		 const vectorType & phiTotRhoIn,
-		 const vectorType & phiTotRhoOut,
-		 const vectorType & phiExt,
+		 const distributedCPUVec<double> & phiTotRhoIn,
+		 const distributedCPUVec<double> & phiTotRhoOut,
+		 const distributedCPUVec<double> & phiExt,
 		 const std::map<dealii::CellId, std::vector<double> > & pseudoVLoc,
 		 const std::map<dealii::CellId, std::vector<double> > & gradPseudoVLoc,
 		 const std::map<unsigned int,std::map<dealii::CellId, std::vector<double> > > & gradPseudoVLocAtoms,
@@ -189,8 +189,8 @@ namespace dftfe {
 	         const MatrixFree<3,double> & matrixFreeDataElectro,
 		 const unsigned int phiTotDofHandlerIndexElectro,
 		 const unsigned int phiExtDofHandlerIndexElectro,
-		 const vectorType & phiTotRhoOutElectro,
-		 const vectorType & phiExtElectro,
+		 const distributedCPUVec<double> & phiTotRhoOutElectro,
+		 const distributedCPUVec<double> & phiExtElectro,
 		 const std::map<dealii::CellId, std::vector<double> > & rhoOutValuesElectro,
 		 const std::map<dealii::CellId, std::vector<double> > & gradRhoOutValuesElectro,
 		 const std::map<dealii::CellId, std::vector<double> > & pseudoVLocElectro,
@@ -256,9 +256,9 @@ namespace dftfe {
 			      const unsigned int eigenDofHandlerIndex,
 			      const unsigned int phiExtDofHandlerIndex,
 			      const unsigned int phiTotDofHandlerIndex,
-			      const vectorType & phiTotRhoIn,
-			      const vectorType & phiTotRhoOut,
-			      const vectorType & phiExt,
+			      const distributedCPUVec<double> & phiTotRhoIn,
+			      const distributedCPUVec<double> & phiTotRhoOut,
+			      const distributedCPUVec<double> & phiExt,
 		              const std::map<dealii::CellId, std::vector<double> > & pseudoVLoc,
 		              const std::map<dealii::CellId, std::vector<double> > & gradPseudoVLoc,
 		              const std::map<unsigned int,std::map<dealii::CellId, std::vector<double> > > & gradPseudoVLocAtoms,
@@ -266,8 +266,8 @@ namespace dftfe {
 			      const MatrixFree<3,double> & matrixFreeDataElectro,
 		              const unsigned int phiTotDofHandlerIndexElectro,
 		              const unsigned int phiExtDofHandlerIndexElectro,
-		              const vectorType & phiTotRhoOutElectro,
-		              const vectorType & phiExtElectro,
+		              const distributedCPUVec<double> & phiTotRhoOutElectro,
+		              const distributedCPUVec<double> & phiExtElectro,
                               const std::map<dealii::CellId, std::vector<double> > & rhoOutValues,
                               const std::map<dealii::CellId, std::vector<double> > & gradRhoOutValues,
 			      const std::map<dealii::CellId, std::vector<double> > & rhoOutValuesElectro,
@@ -278,7 +278,7 @@ namespace dftfe {
 			      const vselfBinsManager<FEOrder> & vselfBinsManagerElectro,
                               const std::map<dealii::CellId, std::vector<double> > & shadowKSRhoMinValues,
                               const std::map<dealii::CellId, std::vector<double> > & shadowKSGradRhoMinValues,
-                              const vectorType & phiRhoMinusApproxRho,
+                              const distributedCPUVec<double> & phiRhoMinusApproxRho,
                               const bool shadowPotentialForce=false);
 
       void computeConfigurationalForceSpinPolarizedEEshelbyTensorFPSPFnlLinFE
@@ -286,9 +286,9 @@ namespace dftfe {
 			      const unsigned int eigenDofHandlerIndex,
 			      const unsigned int phiExtDofHandlerIndex,
 			      const unsigned int phiTotDofHandlerIndex,
-			      const vectorType & phiTotRhoIn,
-			      const vectorType & phiTotRhoOut,
-			      const vectorType & phiExt,
+			      const distributedCPUVec<double> & phiTotRhoIn,
+			      const distributedCPUVec<double> & phiTotRhoOut,
+			      const distributedCPUVec<double> & phiExt,
 		              const std::map<dealii::CellId, std::vector<double> > & pseudoVLoc,
 		              const std::map<dealii::CellId, std::vector<double> > & gradPseudoVLoc,
 		              const std::map<unsigned int,std::map<dealii::CellId, std::vector<double> > > & gradPseudoVLocAtoms,
@@ -296,8 +296,8 @@ namespace dftfe {
 			      const MatrixFree<3,double> & matrixFreeDataElectro,
 		              const unsigned int phiTotDofHandlerIndexElectro,
 		              const unsigned int phiExtDofHandlerIndexElectro,
-		              const vectorType & phiTotRhoOutElectro,
-		              const vectorType & phiExtElectro,
+		              const distributedCPUVec<double> & phiTotRhoOutElectro,
+		              const distributedCPUVec<double> & phiExtElectro,
 			      const std::map<dealii::CellId, std::vector<double> > & rhoOutValuesElectro,
 			      const std::map<dealii::CellId, std::vector<double> > & gradRhoOutValuesElectro,
 		              const std::map<dealii::CellId, std::vector<double> > & pseudoVLocElectro,
@@ -306,15 +306,15 @@ namespace dftfe {
 			      const vselfBinsManager<FEOrder> & vselfBinsManagerElectro,
                               const std::map<dealii::CellId, std::vector<double> > & shadowKSRhoMinValues,
                               const std::map<dealii::CellId, std::vector<double> > & shadowKSGradRhoMinValues,
-                              const vectorType & phiRhoMinusApproxRho,
+                              const distributedCPUVec<double> & phiRhoMinusApproxRho,
                               const bool shadowPotentialForce=false);
 
       void computeConfigurationalForceEEshelbyEElectroPhiTot
 	                    (const MatrixFree<3,double> & matrixFreeDataElectro,
 		             const unsigned int phiTotDofHandlerIndexElectro,
 		             const unsigned int phiExtDofHandlerIndexElectro,
-		             const vectorType & phiTotRhoOutElectro,
-		             const vectorType & phiExtElectro,
+		             const distributedCPUVec<double> & phiTotRhoOutElectro,
+		             const distributedCPUVec<double> & phiExtElectro,
 			     const std::map<dealii::CellId, std::vector<double> > & rhoOutValuesElectro,
 			     const std::map<dealii::CellId, std::vector<double> > & gradRhoOutValuesElectro,
 		             const std::map<dealii::CellId, std::vector<double> > & pseudoVLocElectro,
@@ -322,7 +322,7 @@ namespace dftfe {
 			     const std::map<unsigned int,std::map<dealii::CellId, std::vector<double> > > & gradPseudoVLocAtomsElectro,
 			     const vselfBinsManager<FEOrder> & vselfBinsManagerElectro,
                              const std::map<dealii::CellId, std::vector<double> > & shadowKSRhoMinValues,
-                             const vectorType & phiRhoMinusApproxRho,
+                             const distributedCPUVec<double> & phiRhoMinusApproxRho,
                              const bool shadowPotentialForce=false);
 
       void computeConfigurationalForcePhiExtLinFE();
@@ -340,9 +340,9 @@ namespace dftfe {
 				     const unsigned int eigenDofHandlerIndex,
 				     const unsigned int phiExtDofHandlerIndex,
 				     const unsigned int phiTotDofHandlerIndex,
-				     const vectorType & phiTotRhoIn,
-				     const vectorType & phiTotRhoOut,
-				     const vectorType & phiExt,
+				     const distributedCPUVec<double> & phiTotRhoIn,
+				     const distributedCPUVec<double> & phiTotRhoOut,
+				     const distributedCPUVec<double> & phiExt,
 		                     const std::map<dealii::CellId, std::vector<double> > & pseudoVLoc,
 		                     const std::map<dealii::CellId, std::vector<double> > & gradPseudoVLoc,
 		                     const std::map<unsigned int,std::map<dealii::CellId, std::vector<double> > > & gradPseudoVLocAtoms,
@@ -350,8 +350,8 @@ namespace dftfe {
 				     const MatrixFree<3,double> & matrixFreeDataElectro,
 		                     const unsigned int phiTotDofHandlerIndexElectro,
 		                     const unsigned int phiExtDofHandlerIndexElectro,
-		                     const vectorType & phiTotRhoOutElectro,
-		                     const vectorType & phiExtElectro,
+		                     const distributedCPUVec<double> & phiTotRhoOutElectro,
+		                     const distributedCPUVec<double> & phiExtElectro,
                                      const std::map<dealii::CellId, std::vector<double> > & rhoOutValues,
                                      const std::map<dealii::CellId, std::vector<double> > & gradRhoOutValues,
 				     const std::map<dealii::CellId, std::vector<double> > & rhoOutValuesElectro,
@@ -362,7 +362,7 @@ namespace dftfe {
 				     const vselfBinsManager<FEOrder>   & vselfBinsManagerElectro,
                                      const std::map<dealii::CellId, std::vector<double> > & shadowKSRhoMinValues,
                                      const std::map<dealii::CellId, std::vector<double> > & shadowKSGradRhoMinValues,
-                                     const vectorType & phiRhoMinusApproxRho,
+                                     const distributedCPUVec<double> & phiRhoMinusApproxRho,
                                      const bool shadowPotentialForce=false);
 
       void FPSPLocalGammaAtomsElementalContribution
@@ -394,7 +394,7 @@ namespace dftfe {
 	      (const std::map<unsigned int,std::vector<double> > & forceContributionFPSPLocalGammaAtoms,
 	       const std::map<std::pair<unsigned int,unsigned int>, unsigned int> & atomsForceDofs,
 	       const ConstraintMatrix &  constraintsNoneForce,
-	       vectorType & configForceVectorLinFE);
+	       distributedCPUVec<double> & configForceVectorLinFE);
 
 #ifdef USE_COMPLEX
       void FnlGammaAtomsElementalContributionPeriodic
@@ -458,9 +458,9 @@ namespace dftfe {
 			      const unsigned int eigenDofHandlerIndex,
 			      const unsigned int phiExtDofHandlerIndex,
 			      const unsigned int phiTotDofHandlerIndex,
-			      const vectorType & phiTotRhoIn,
-			      const vectorType & phiTotRhoOut,
-			      const vectorType & phiExt,
+			      const distributedCPUVec<double> & phiTotRhoIn,
+			      const distributedCPUVec<double> & phiTotRhoOut,
+			      const distributedCPUVec<double> & phiExt,
 		              const std::map<dealii::CellId, std::vector<double> > & pseudoVLoc,
 		              const std::map<dealii::CellId, std::vector<double> > & gradPseudoVLoc,
 		              const std::map<unsigned int,std::map<dealii::CellId, std::vector<double> > > & gradPseudoVLocAtoms,
@@ -468,8 +468,8 @@ namespace dftfe {
 			      const MatrixFree<3,double> & matrixFreeDataElectro,
 		              const unsigned int phiTotDofHandlerIndexElectro,
 		              const unsigned int phiExtDofHandlerIndexElectro,
-		              const vectorType & phiTotRhoOutElectro,
-		              const vectorType & phiExtElectro,
+		              const distributedCPUVec<double> & phiTotRhoOutElectro,
+		              const distributedCPUVec<double> & phiExtElectro,
 			      const std::map<dealii::CellId, std::vector<double> > & rhoOutValuesElectro,
                               const std::map<dealii::CellId, std::vector<double> > & gradRhoOutValuesElectro,
 		              const std::map<dealii::CellId, std::vector<double> > & pseudoVLocElectro,
@@ -481,8 +481,8 @@ namespace dftfe {
 	                    (const MatrixFree<3,double> & matrixFreeDataElectro,
 		             const unsigned int phiTotDofHandlerIndexElectro,
 	                     const unsigned int phiExtDofHandlerIndexElectro,
-		             const vectorType & phiTotRhoOutElectro,
-		             const vectorType & phiExtElectro,
+		             const distributedCPUVec<double> & phiTotRhoOutElectro,
+		             const distributedCPUVec<double> & phiExtElectro,
 			     const std::map<dealii::CellId, std::vector<double> > & rhoOutValuesElectro,
 			     const std::map<dealii::CellId, std::vector<double> > & gradRhoOutValuesElectro,
 		             const std::map<dealii::CellId, std::vector<double> > & gradPseudoVLocElectro,
@@ -493,9 +493,9 @@ namespace dftfe {
 			      const unsigned int eigenDofHandlerIndex,
 			      const unsigned int phiExtDofHandlerIndex,
 			      const unsigned int phiTotDofHandlerIndex,
-			      const vectorType & phiTotRhoIn,
-			      const vectorType & phiTotRhoOut,
-			      const vectorType & phiExt,
+			      const distributedCPUVec<double> & phiTotRhoIn,
+			      const distributedCPUVec<double> & phiTotRhoOut,
+			      const distributedCPUVec<double> & phiExt,
 		              const std::map<dealii::CellId, std::vector<double> > & pseudoVLoc,
 		              const std::map<dealii::CellId, std::vector<double> > & gradPseudoVLoc,
 		              const std::map<unsigned int,std::map<dealii::CellId, std::vector<double> > > & gradPseudoVLocAtoms,
@@ -503,8 +503,8 @@ namespace dftfe {
 			      const MatrixFree<3,double> & matrixFreeDataElectro,
 			      const unsigned int phiTotDofHandlerIndexElectro,
 			      const unsigned int phiExtDofHandlerIndexElectro,
-			      const vectorType & phiTotRhoOutElectro,
-			      const vectorType & phiExtElectro,
+			      const distributedCPUVec<double> & phiTotRhoOutElectro,
+			      const distributedCPUVec<double> & phiExtElectro,
 			      const std::map<dealii::CellId, std::vector<double> > & rhoOutValuesElectro,
 			      const std::map<dealii::CellId, std::vector<double> > & gradRhoOutValuesElectro,
 		              const std::map<dealii::CellId, std::vector<double> > & pseudoVLocElectro,
@@ -527,13 +527,13 @@ namespace dftfe {
 
       void computeElementalNonLocalPseudoOVDataForce();
 
-      void computeNonLocalProjectorKetTimesPsiTimesV(const std::vector<vectorType> &src,
+      void computeNonLocalProjectorKetTimesPsiTimesV(const std::vector<distributedCPUVec<double>> &src,
 						     std::vector<std::vector<double> > & projectorKetTimesPsiTimesVReal,
 						     std::vector<std::vector<std::complex<double> > > & projectorKetTimesPsiTimesVComplex,
 						     const unsigned int kPointIndex);
 
       void computeNonLocalProjectorKetTimesPsiTimesVFlattened
-                           (const dealii::LinearAlgebra::distributed::Vector<dataTypes::number> &src,
+                           (const distributedCPUVec<dataTypes::number> &src,
 			    const unsigned int numberWaveFunctions,
 			    std::vector<std::vector<dataTypes::number> > & projectorKetTimesPsiTimesV,
 			    const unsigned int kPointIndex,
@@ -541,24 +541,24 @@ namespace dftfe {
                             const bool oldRoute=false);
 
       void computeNonLocalProjectorKetTimesPsiTimesVFlattened
-                           (const dealii::LinearAlgebra::distributed::Vector<dataTypes::number> &src,
+                           (const distributedCPUVec<dataTypes::number> &src,
 			    const unsigned int numberWaveFunctions);
 
       /// Parallel distributed vector field which stores the configurational force for each fem node corresponding
       /// to linear shape function generator (see equations 52-53 in (https://link.aps.org/doi/10.1103/PhysRevB.97.165132)).
       /// This vector doesn't contain contribution from terms which have sums over k points.
-      vectorType d_configForceVectorLinFE;
+      distributedCPUVec<double> d_configForceVectorLinFE;
 
       /// Parallel distributed vector field which stores the configurational force for each fem node corresponding
       /// to linear shape function generator (see equations 52-53 in (https://link.aps.org/doi/10.1103/PhysRevB.97.165132)).
       /// This vector only containts contribution from the electrostatic part.
-      vectorType d_configForceVectorLinFEElectro;
+      distributedCPUVec<double> d_configForceVectorLinFEElectro;
 
 #ifdef USE_COMPLEX
       /// Parallel distributed vector field which stores the configurational force for each fem node corresponding
       /// to linear shape function generator (see equations 52-53 in (https://link.aps.org/doi/10.1103/PhysRevB.97.165132)).
       /// This vector only contains contribution from terms which have sums over k points.
-      vectorType d_configForceVectorLinFEKPoints;
+      distributedCPUVec<double> d_configForceVectorLinFEKPoints;
 #endif
 
 
@@ -745,7 +745,7 @@ namespace dftfe {
        */
       std::vector<std::map<DoFHandler<C_DIM>::active_cell_iterator,std::vector<unsigned int > > > d_cellFacesVselfBallSurfacesDofHandlerForceElectro;
 
-      std::vector<vectorType> d_gaussianWeightsVecAtoms;
+      std::vector<distributedCPUVec<double>> d_gaussianWeightsVecAtoms;
 
       bool d_isElectrostaticsMeshSubdivided=false;
 

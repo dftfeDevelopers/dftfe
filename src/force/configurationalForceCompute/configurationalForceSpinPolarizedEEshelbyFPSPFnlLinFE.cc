@@ -22,9 +22,9 @@ void forceClass<FEOrder>::computeConfigurationalForceSpinPolarizedEEshelbyTensor
 			      const unsigned int eigenDofHandlerIndex,
 			      const unsigned int phiExtDofHandlerIndex,
 			      const unsigned int phiTotDofHandlerIndex,
-			      const vectorType & phiTotRhoIn,
-			      const vectorType & phiTotRhoOut,
-			      const vectorType & phiExt,
+			      const distributedCPUVec<double> & phiTotRhoIn,
+			      const distributedCPUVec<double> & phiTotRhoOut,
+			      const distributedCPUVec<double> & phiExt,
 		              const std::map<dealii::CellId, std::vector<double> > & pseudoVLoc,
 		              const std::map<dealii::CellId, std::vector<double> > & gradPseudoVLoc,
 		              const std::map<unsigned int,std::map<dealii::CellId, std::vector<double> > > & gradPseudoVLocAtoms,
@@ -32,8 +32,8 @@ void forceClass<FEOrder>::computeConfigurationalForceSpinPolarizedEEshelbyTensor
 			      const MatrixFree<3,double> & matrixFreeDataElectro,
 		              const unsigned int phiTotDofHandlerIndexElectro,
 		              const unsigned int phiExtDofHandlerIndexElectro,
-		              const vectorType & phiTotRhoOutElectro,
-		              const vectorType & phiExtElectro,
+		              const distributedCPUVec<double> & phiTotRhoOutElectro,
+		              const distributedCPUVec<double> & phiExtElectro,
 			      const std::map<dealii::CellId, std::vector<double> > & rhoOutValuesElectro,
 			      const std::map<dealii::CellId, std::vector<double> > & gradRhoOutValuesElectro,
 		              const std::map<dealii::CellId, std::vector<double> > & pseudoVLocElectro,
@@ -42,7 +42,7 @@ void forceClass<FEOrder>::computeConfigurationalForceSpinPolarizedEEshelbyTensor
 			      const vselfBinsManager<FEOrder> & vselfBinsManagerElectro,
                               const std::map<dealii::CellId, std::vector<double> > & shadowKSRhoMinValues,
                               const std::map<dealii::CellId, std::vector<double> > & shadowKSGradRhoMinValues,
-                              const vectorType & phiRhoMinusApproxRho,
+                              const distributedCPUVec<double> & phiRhoMinusApproxRho,
                               const bool shadowPotentialForce)
 {
   const unsigned int numberGlobalAtoms = dftPtr->atomLocations.size();
@@ -164,8 +164,8 @@ void forceClass<FEOrder>::computeConfigurationalForceSpinPolarizedEEshelbyTensor
 	                                bandGroupLowHighPlusOneIndices[1]);
 
   const unsigned int localVectorSize = dftPtr->d_eigenVectorsFlattenedSTL[0].size()/numEigenVectors;
-  std::vector<std::vector<vectorType>> eigenVectors((1+dftParameters::spinPolarized)*dftPtr->d_kPointWeights.size());
-  std::vector<dealii::LinearAlgebra::distributed::Vector<dataTypes::number> > eigenVectorsFlattenedBlock((1+dftParameters::spinPolarized)*dftPtr->d_kPointWeights.size());
+  std::vector<std::vector<distributedCPUVec<double>>> eigenVectors((1+dftParameters::spinPolarized)*dftPtr->d_kPointWeights.size());
+  std::vector<distributedCPUVec<dataTypes::number> > eigenVectorsFlattenedBlock((1+dftParameters::spinPolarized)*dftPtr->d_kPointWeights.size());
 
    for(unsigned int ivec = 0; ivec < numEigenVectors; ivec+=blockSize)
    {

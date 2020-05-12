@@ -18,8 +18,8 @@
 
 
 template<unsigned int FEOrder>
-void kohnShamDFTOperatorClass<FEOrder>::computeNonLocalHamiltonianTimesX(const std::vector<vectorType> &src,
-							   std::vector<vectorType>       &dst)const
+void kohnShamDFTOperatorClass<FEOrder>::computeNonLocalHamiltonianTimesX(const std::vector<distributedCPUVec<double>> &src,
+							   std::vector<distributedCPUVec<double>>       &dst)const
 {
 
   //
@@ -85,7 +85,7 @@ void kohnShamDFTOperatorClass<FEOrder>::computeNonLocalHamiltonianTimesX(const s
 	  std::vector<double> temp(dofs_per_cell,0.0);
 	  if (dftPtr->d_nonLocalAtomIdsInElement[iElem].size()>0)
 	  {
-	    for (std::vector<vectorType>::const_iterator it=src.begin(); it!=src.end(); it++)
+	    for (std::vector<distributedCPUVec<double>>::const_iterator it=src.begin(); it!=src.end(); it++)
 	    {
 #ifdef USE_COMPLEX
 	      (*it).extract_subvector_to(local_dof_indices.begin(), local_dof_indices.end(), temp.begin());
@@ -275,7 +275,7 @@ void kohnShamDFTOperatorClass<FEOrder>::computeNonLocalHamiltonianTimesX(const s
 #ifdef USE_COMPLEX
 	  unsigned int index = 0;
 	  std::vector<double> temp(dofs_per_cell,0.0);
-	  for(std::vector<vectorType>::iterator it = dst.begin(); it != dst.end(); ++it)
+	  for(std::vector<distributedCPUVec<double>>::iterator it = dst.begin(); it != dst.end(); ++it)
 	    {
 	      for(unsigned int idof = 0; idof < dofs_per_cell; ++idof)
 		{
@@ -293,7 +293,7 @@ void kohnShamDFTOperatorClass<FEOrder>::computeNonLocalHamiltonianTimesX(const s
 	    }
 #else
 	  std::vector<double>::iterator iter = outputVectors.begin();
-	  for (std::vector<vectorType>::iterator it=dst.begin(); it!=dst.end(); ++it)
+	  for (std::vector<distributedCPUVec<double>>::iterator it=dst.begin(); it!=dst.end(); ++it)
 	    {
 	      dftPtr->constraintsNoneEigen.distribute_local_to_global(iter, iter+numberNodesPerElement,local_dof_indices.begin(), *it);
 	      iter+=numberNodesPerElement;
@@ -308,9 +308,9 @@ void kohnShamDFTOperatorClass<FEOrder>::computeNonLocalHamiltonianTimesX(const s
 
 #ifdef USE_COMPLEX
 template<unsigned int FEOrder>
-void kohnShamDFTOperatorClass<FEOrder>::computeNonLocalHamiltonianTimesX(const dealii::LinearAlgebra::distributed::Vector<std::complex<double> > & src,
+void kohnShamDFTOperatorClass<FEOrder>::computeNonLocalHamiltonianTimesX(const distributedCPUVec<std::complex<double> > & src,
 							   const unsigned int numberWaveFunctions,
-							   dealii::LinearAlgebra::distributed::Vector<std::complex<double> >       & dst) const
+							   distributedCPUVec<std::complex<double> >       & dst) const
 {
 
   std::map<unsigned int, std::vector<std::complex<double> > > projectorKetTimesVector;
@@ -491,9 +491,9 @@ void kohnShamDFTOperatorClass<FEOrder>::computeNonLocalHamiltonianTimesX(const d
 }
 #else
 template<unsigned int FEOrder>
-void kohnShamDFTOperatorClass<FEOrder>::computeNonLocalHamiltonianTimesX(const dealii::LinearAlgebra::distributed::Vector<double> & src,
+void kohnShamDFTOperatorClass<FEOrder>::computeNonLocalHamiltonianTimesX(const distributedCPUVec<double> & src,
 							   const unsigned int numberWaveFunctions,
-							   dealii::LinearAlgebra::distributed::Vector<double>       & dst) const
+							   distributedCPUVec<double>       & dst) const
 {
 
 

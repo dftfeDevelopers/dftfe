@@ -50,7 +50,7 @@ namespace dftfe {
      */
     void init(dealii::MatrixFree<3,double> & matrixFreeData,
 	      dealii::ConstraintMatrix & constraintMatrix,
-	      vectorType & x,
+	      distributedCPUVec<double> & x,
 	      double kerkerMixingParameter);
 
 
@@ -62,7 +62,7 @@ namespace dftfe {
      * @param kerkerMixingParameter used in Kerker mixing scheme which usually represents Thomas Fermi wavevector (k_{TF}**2).
      *
      */
-    void reinit(vectorType & x,
+    void reinit(distributedCPUVec<double> & x,
 		const std::map<dealii::CellId,std::vector<double> > & gradResidualValues);
 
 
@@ -71,28 +71,28 @@ namespace dftfe {
      *
      * @return reference to x field. Assumes x field data structure is already initialized
      */
-    vectorType & getX();
+    distributedCPUVec<double> & getX();
 
     /**
      * @brief Compute A matrix multipled by x.
      *
      */
-    void vmult(vectorType &Ax,
-	       const vectorType &x) const;
+    void vmult(distributedCPUVec<double> &Ax,
+	       const distributedCPUVec<double> &x) const;
 
     /**
      * @brief Compute right hand side vector for the problem Ax = rhs.
      *
      * @param rhs vector for the right hand side values
      */
-    void computeRhs(vectorType & rhs);
+    void computeRhs(distributedCPUVec<double> & rhs);
 
     /**
      * @brief Jacobi preconditioning.
      *
      */
-    void precondition_Jacobi(vectorType& dst,
-			     const vectorType& src,
+    void precondition_Jacobi(distributedCPUVec<double>& dst,
+			     const distributedCPUVec<double>& src,
 			     const double omega) const;
 
     /**
@@ -118,8 +118,8 @@ namespace dftfe {
      *
      */
     void AX (const dealii::MatrixFree<3,double> & matrixFreeData,
-	     vectorType &dst,
-	     const vectorType &src,
+	     distributedCPUVec<double> &dst,
+	     const distributedCPUVec<double> &src,
 	     const std::pair<unsigned int,unsigned int> &cell_range) const;
 
 
@@ -131,11 +131,11 @@ namespace dftfe {
 
 
     /// storage for diagonal of the A matrix
-    vectorType d_diagonalA;
+    distributedCPUVec<double> d_diagonalA;
 
    
     /// pointer to the x vector being solved for
-    vectorType * d_xPtr;
+    distributedCPUVec<double> * d_xPtr;
 
     //kerker mixing constant
     double d_gamma;

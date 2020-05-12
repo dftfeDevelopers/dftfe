@@ -467,7 +467,7 @@ namespace dftfe
     // evaluate upper bound of the spectrum using k-step Lanczos iteration
     //
     double lanczosUpperBoundEigenSpectrum(operatorDFTCUDAClass & operatorMatrix,
-					  const vectorType & vect)
+					  const distributedCPUVec<double> & vect)
     {
 #ifdef USE_COMPLEX
       AssertThrow(false,dftUtils::ExcNotImplementedYet());
@@ -485,7 +485,7 @@ namespace dftfe
       //
       //generate random vector v
       //
-      vectorType vVector, fVector, v0Vector;
+      distributedCPUVec<double> vVector, fVector, v0Vector;
       vVector.reinit(vect);
       fVector.reinit(vect);
 
@@ -508,7 +508,7 @@ namespace dftfe
       //
       //call matrix times X
       //
-      std::vector<vectorType> v(1),f(1);
+      std::vector<distributedCPUVec<double>> v(1),f(1);
       v[0] = vVector;
       f[0] = fVector;
       operatorMatrix.HX(v,f);
@@ -569,10 +569,10 @@ namespace dftfe
 
 
     void chebyshevFilter(operatorDFTCUDAClass & operatorMatrix,
-			 cudaVectorType & XArray,
-                         cudaVectorType & YArray,
-			 cudaVectorTypeFloat & tempFloatArray,
-                         cudaVectorType & projectorKetTimesVector,
+			 distributedGPUVec<double> & XArray,
+                         distributedGPUVec<double> & YArray,
+			 distributedGPUVec<float> & tempFloatArray,
+                         distributedGPUVec<double> & projectorKetTimesVector,
 			 const unsigned int localVectorSize,
 			 const unsigned int numberVectors,
 			 const unsigned int m,
@@ -747,11 +747,11 @@ namespace dftfe
     }
   
     void chebyshevFilterComputeAvoidance(operatorDFTCUDAClass & operatorMatrix,
-			 cudaVectorType & XArray,
-                         cudaVectorType & YArray,
-                         cudaVectorType & XArray2,
-			 cudaVectorTypeFloat & tempFloatArray,
-                         cudaVectorType & projectorKetTimesVector,
+			 distributedGPUVec<double> & XArray,
+                         distributedGPUVec<double> & YArray,
+                         distributedGPUVec<double> & XArray2,
+			 distributedGPUVec<float> & tempFloatArray,
+                         distributedGPUVec<double> & projectorKetTimesVector,
 			 const unsigned int localVectorSize,
 			 const unsigned int numberVectors,
 			 const unsigned int m,
@@ -1241,14 +1241,14 @@ namespace dftfe
     // Compute and comunication of two blocks (1) and (2) are overlapped during chebyshev filtering.
     //
     void chebyshevFilter(operatorDFTCUDAClass & operatorMatrix,
-			 cudaVectorType & XArray1,
-                         cudaVectorType & YArray1,
-			 cudaVectorTypeFloat & tempFloatArray,
-                         cudaVectorType & projectorKetTimesVector1,
-                         cudaVectorTypeFloat & projectorKetTimesVectorFloat,
-			 cudaVectorType & XArray2,
-                         cudaVectorType & YArray2,
-                         cudaVectorType & projectorKetTimesVector2,
+			 distributedGPUVec<double> & XArray1,
+                         distributedGPUVec<double> & YArray1,
+			 distributedGPUVec<float> & tempFloatArray,
+                         distributedGPUVec<double> & projectorKetTimesVector1,
+                         distributedGPUVec<float> & projectorKetTimesVectorFloat,
+			 distributedGPUVec<double> & XArray2,
+                         distributedGPUVec<double> & YArray2,
+                         distributedGPUVec<double> & projectorKetTimesVector2,
 			 const unsigned int localVectorSize,
 			 const unsigned int numberVectors,
 			 const unsigned int m,
@@ -1868,15 +1868,15 @@ namespace dftfe
     // Compute and comunication of two blocks (1) and (2) are overlapped during chebyshev filtering.
     //
     void chebyshevFilterComputeAvoidance(operatorDFTCUDAClass & operatorMatrix,
-			 cudaVectorType & XArray1,
-                         cudaVectorType & XArrayCA,
-                         cudaVectorType & YArray1,
-			 cudaVectorTypeFloat & tempFloatArray,
-                         cudaVectorType & projectorKetTimesVector1,
-                         cudaVectorTypeFloat & projectorKetTimesVectorFloat,
-			 cudaVectorType & XArray2,
-                         cudaVectorType & YArray2,
-                         cudaVectorType & projectorKetTimesVector2,
+			 distributedGPUVec<double> & XArray1,
+                         distributedGPUVec<double> & XArrayCA,
+                         distributedGPUVec<double> & YArray1,
+			 distributedGPUVec<float> & tempFloatArray,
+                         distributedGPUVec<double> & projectorKetTimesVector1,
+                         distributedGPUVec<float> & projectorKetTimesVectorFloat,
+			 distributedGPUVec<double> & XArray2,
+                         distributedGPUVec<double> & YArray2,
+                         distributedGPUVec<double> & projectorKetTimesVector2,
 			 const unsigned int localVectorSize,
 			 const unsigned int numberVectors,
 			 const unsigned int m,
@@ -4458,9 +4458,9 @@ namespace dftfe
 
     void computeEigenResidualNorm(operatorDFTCUDAClass        & operatorMatrix,
 				  double* X,
-				  cudaVectorType & XBlock,
-				  cudaVectorType & HXBlock,
-				  cudaVectorType & projectorKetTimesVector,
+				  distributedGPUVec<double> & XBlock,
+				  distributedGPUVec<double> & HXBlock,
+				  distributedGPUVec<double> & projectorKetTimesVector,
 				  const unsigned int M,
 				  const unsigned int N,
 				  const std::vector<double>     & eigenValues,

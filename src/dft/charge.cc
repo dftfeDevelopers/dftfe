@@ -52,7 +52,7 @@ double dftClass<FEOrder>::totalCharge(const dealii::DoFHandler<3> & dofHandlerOf
 //
 template <unsigned int FEOrder>
 double dftClass<FEOrder>::totalCharge(const dealii::DoFHandler<3> & dofHandlerOfField,
-				      const vectorType & rhoNodalField)
+				      const distributedCPUVec<double> & rhoNodalField)
 {
   double normValue = 0.0;
   QGauss<3>  quadrature_formula(C_num1DQuad<FEOrder>());
@@ -84,7 +84,7 @@ double dftClass<FEOrder>::totalCharge(const dealii::DoFHandler<3> & dofHandlerOf
 //
 template <unsigned int FEOrder>
 double dftClass<FEOrder>::totalCharge(const dealii::DoFHandler<3> & dofHandlerOfField,
-				      const vectorType & rhoNodalField,
+				      const distributedCPUVec<double> & rhoNodalField,
 				      std::map<dealii::CellId,std::vector<double> > & rhoQuadValues)
 {
   double normValue = 0.0;
@@ -119,7 +119,7 @@ double dftClass<FEOrder>::totalCharge(const dealii::DoFHandler<3> & dofHandlerOf
 //
 template <unsigned int FEOrder>
 double dftClass<FEOrder>::totalCharge(const dealii::MatrixFree<3,double> & matrixFreeDataObject,
-				      const vectorType & nodalField)
+				      const distributedCPUVec<double> & nodalField)
 {
   FEEvaluation<C_DIM,C_num1DKerkerPoly<FEOrder>(),C_num1DQuad<C_num1DKerkerPoly<FEOrder>()>(),1,double> fe_evalField(matrixFreeDataObject);
   VectorizedArray<double> normValueVectorized = make_vectorized_array(0.0);
@@ -178,7 +178,7 @@ double dftClass<FEOrder>::totalMagnetization(const std::map<dealii::CellId, std:
 //
 template <unsigned int FEOrder>
 double dftClass<FEOrder>::fieldl2Norm(const dealii::MatrixFree<3,double> & matrixFreeDataObject,
-				      const vectorType & nodalField)
+				      const distributedCPUVec<double> & nodalField)
 
 {
   FEEvaluation<C_DIM,C_num1DKerkerPoly<FEOrder>(),C_num1DQuad<C_num1DKerkerPoly<FEOrder>()>(),1,double> fe_evalField(matrixFreeDataObject);

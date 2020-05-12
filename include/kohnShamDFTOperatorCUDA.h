@@ -62,11 +62,11 @@ namespace dftfe{
 
       thrust::device_vector<unsigned int> & getBoundaryIdToLocalIdMap();
 
-      //cudaVectorType & getBlockCUDADealiiVector();
+      //distributedGPUVec<double> & getBlockCUDADealiiVector();
 
-      //cudaVectorType & getBlockCUDADealiiVector2();
+      //distributedGPUVec<double> & getBlockCUDADealiiVector2();
 
-      //cudaVectorType & getBlockCUDADealiiVector3();
+      //distributedGPUVec<double> & getBlockCUDADealiiVector3();
 
 
       //thrust::device_vector<dataTypes::number> & getBlockCUDADealiiVector();
@@ -74,7 +74,7 @@ namespace dftfe{
 
       //thrust::device_vector<dataTypes::number> & getBlockCUDADealiiVector2(); 
 
-      dealii::LinearAlgebra::distributed::Vector<dataTypes::number,dealii::MemorySpace::Host> &  getProjectorKetTimesVectorSingle();
+      distributedCPUVec<dataTypes::number> &  getProjectorKetTimesVectorSingle();
 
       thrust::device_vector<double> & getShapeFunctionGradientIntegral();
 
@@ -109,8 +109,8 @@ namespace dftfe{
        * @param X Vector of Vectors containing current values of X
        * @param Y Vector of Vectors containing operator times vectors product
        */
-       void HX(std::vector<vectorType> & X,
-               std::vector<vectorType> & Y);
+       void HX(std::vector<distributedCPUVec<double>> & X,
+               std::vector<distributedCPUVec<double>> & Y);
 
 
       /**
@@ -126,42 +126,42 @@ namespace dftfe{
        * @param scalar which multiplies src before evaluating matrix times src vector
        * @param dst Vector containing sum of dst vector and operator times given multi-vectors product
        */
-      void HX(cudaVectorType & src,
-              cudaVectorType & projectorKetTimesVector,
+      void HX(distributedGPUVec<double> & src,
+              distributedGPUVec<double> & projectorKetTimesVector,
 	      const unsigned int localVectorSize,
 	      const unsigned int numberComponents,
 	      const bool scaleFlag,
 	      const double scalar,
-	      cudaVectorType & dst,
+	      distributedGPUVec<double> & dst,
               const bool doUnscalingX=true);
 
-      void HX(cudaVectorType & src,
-              cudaVectorTypeFloat & srcFloat,
-              cudaVectorType & projectorKetTimesVector,
+      void HX(distributedGPUVec<double> & src,
+              distributedGPUVec<float> & srcFloat,
+              distributedGPUVec<double> & projectorKetTimesVector,
 	      const unsigned int localVectorSize,
 	      const unsigned int numberComponents,
 	      const bool scaleFlag,
 	      const double scalar,
-	      cudaVectorType & dst,
+	      distributedGPUVec<double> & dst,
               const bool doUnscalingX=true,
               const bool singlePrecCommun=false);
 
-      void HXCheby(cudaVectorType & X,
-                   cudaVectorTypeFloat & XFloat,  
-                   cudaVectorType & projectorKetTimesVector,
+      void HXCheby(distributedGPUVec<double> & X,
+                   distributedGPUVec<float> & XFloat,  
+                   distributedGPUVec<double> & projectorKetTimesVector,
 		   const unsigned int localVectorSize,
 		   const unsigned int numberComponents,
-		   cudaVectorType & Y,
+		   distributedGPUVec<double> & Y,
                    bool mixedPrecflag=false,
                    bool computePart1=false,
                    bool computePart2=false);
 
 
-      void HXChebyNoCommun(cudaVectorType & X,
-                         cudaVectorType & projectorKetTimesVector,
+      void HXChebyNoCommun(distributedGPUVec<double> & X,
+                         distributedGPUVec<double> & projectorKetTimesVector,
                          const unsigned int localVectorSize,
                          const unsigned int numberComponents,
-                         cudaVectorType & Y);
+                         distributedGPUVec<double> & Y);
 
       /**
        * @brief Compute projection of the operator into orthogonal basis
@@ -170,9 +170,9 @@ namespace dftfe{
        * @return ProjMatrix projected small matrix
        */
       void XtHX(const double *  X,
-                      cudaVectorType & Xb,
-                      cudaVectorType & HXb,
-                      cudaVectorType & projectorKetTimesVector,
+                      distributedGPUVec<double> & Xb,
+                      distributedGPUVec<double> & HXb,
+                      distributedGPUVec<double> & projectorKetTimesVector,
                 const unsigned int M,
 		const unsigned int N,
                 cublasHandle_t &handle,
@@ -197,9 +197,9 @@ namespace dftfe{
      * of the operation into the given subspace
      */
      void XtHX(const double *  X,
-                cudaVectorType & Xb,
-                cudaVectorType & HXb,
-                cudaVectorType & projectorKetTimesVector,
+                distributedGPUVec<double> & Xb,
+                distributedGPUVec<double> & HXb,
+                distributedGPUVec<double> & projectorKetTimesVector,
                 const unsigned int M,
 		const unsigned int N,
                 cublasHandle_t &handle,
@@ -224,9 +224,9 @@ namespace dftfe{
      * of the operation into the given subspace
      */
      void XtHXOverlapComputeCommun(const double *  X,
-                cudaVectorType & Xb,
-                cudaVectorType & HXb,
-                cudaVectorType & projectorKetTimesVector,
+                distributedGPUVec<double> & Xb,
+                distributedGPUVec<double> & HXb,
+                distributedGPUVec<double> & projectorKetTimesVector,
                 const unsigned int M,
 		const unsigned int N,
                 cublasHandle_t &handle,
@@ -255,10 +255,10 @@ namespace dftfe{
      * of the operation into the given subspace
      */
      void XtHXMixedPrec(const double *  X,
-                cudaVectorType & Xb,
-                cudaVectorTypeFloat & floatXb,
-                cudaVectorType & HXb,
-                cudaVectorType & projectorKetTimesVector,
+                distributedGPUVec<double> & Xb,
+                distributedGPUVec<float> & floatXb,
+                distributedGPUVec<double> & HXb,
+                distributedGPUVec<double> & projectorKetTimesVector,
                 const unsigned int M,
 		const unsigned int N,
                 const unsigned int Noc,
@@ -287,10 +287,10 @@ namespace dftfe{
      * of the operation into the given subspace
      */
      void XtHXOffDiagBlockSinglePrec(const double *  X,
-				     cudaVectorType & Xb,
-				     cudaVectorTypeFloat & floatXb,
-				     cudaVectorType & HXb,
-				     cudaVectorType & projectorKetTimesVector,
+				     distributedGPUVec<double> & Xb,
+				     distributedGPUVec<float> & floatXb,
+				     distributedGPUVec<double> & HXb,
+				     distributedGPUVec<double> & projectorKetTimesVector,
 				     const unsigned int M,
 				     const unsigned int N,
 				     cublasHandle_t &handle,
@@ -320,10 +320,10 @@ namespace dftfe{
      * of the operation into the given subspace
      */
      void XtHXMixedPrecOverlapComputeCommun(const double *  X,
-                cudaVectorType & Xb,
-                cudaVectorTypeFloat & floatXb,
-                cudaVectorType & HXb,
-                cudaVectorType & projectorKetTimesVector,
+                distributedGPUVec<double> & Xb,
+                distributedGPUVec<float> & floatXb,
+                distributedGPUVec<double> & HXb,
+                distributedGPUVec<double> & projectorKetTimesVector,
                 const unsigned int M,
 		const unsigned int N,
                 const unsigned int Noc,
@@ -353,10 +353,10 @@ namespace dftfe{
      * of the operation into the given subspace
      */
       void XtHXOffDiagBlockSinglePrecOverlapComputeCommun(const double *  X,
-						     cudaVectorType & Xb,
-						     cudaVectorTypeFloat & floatXb,
-						     cudaVectorType & HXb,
-						     cudaVectorType & projectorKetTimesVector,
+						     distributedGPUVec<double> & Xb,
+						     distributedGPUVec<float> & floatXb,
+						     distributedGPUVec<double> & HXb,
+						     distributedGPUVec<double> & projectorKetTimesVector,
 						     const unsigned int M,
 						     const unsigned int N,
 						     cublasHandle_t &handle,
@@ -377,8 +377,8 @@ namespace dftfe{
        * @param pseudoValues quadrature data of pseudopotential values
        */
       void computeVEff(const std::map<dealii::CellId,std::vector<double> >* rhoValues,
-		       const vectorType & phi,
-		       const vectorType & phiExt,
+		       const distributedCPUVec<double> & phi,
+		       const distributedCPUVec<double> & phiExt,
 		       const std::map<dealii::CellId,std::vector<double> > & pseudoValues);
 
 
@@ -392,8 +392,8 @@ namespace dftfe{
        * @param pseudoValues quadrature data of pseudopotential values
        */
       void computeVEffSpinPolarized(const std::map<dealii::CellId,std::vector<double> >* rhoValues,
-				    const vectorType & phi,
-				    const vectorType & phiExt,
+				    const distributedCPUVec<double> & phi,
+				    const distributedCPUVec<double> & phiExt,
 				    unsigned int spinIndex,
 				    const std::map<dealii::CellId,std::vector<double> > & pseudoValues);
 
@@ -408,8 +408,8 @@ namespace dftfe{
        */
       void computeVEff(const std::map<dealii::CellId,std::vector<double> >* rhoValues,
 		       const std::map<dealii::CellId,std::vector<double> >* gradRhoValues,
-		       const vectorType & phi,
-		       const vectorType & phiExt,
+		       const distributedCPUVec<double> & phi,
+		       const distributedCPUVec<double> & phiExt,
 		       const std::map<dealii::CellId,std::vector<double> > & pseudoValues);
 
 
@@ -425,8 +425,8 @@ namespace dftfe{
        */
       void computeVEffSpinPolarized(const std::map<dealii::CellId,std::vector<double> >* rhoValues,
 				    const std::map<dealii::CellId,std::vector<double> >* gradRhoValues,
-				    const vectorType & phi,
-				    const vectorType & phiExt,
+				    const distributedCPUVec<double> & phi,
+				    const distributedCPUVec<double> & phiExt,
 				    const unsigned int spinIndex,
 				    const std::map<dealii::CellId,std::vector<double> > & pseudoValues);
 
@@ -476,8 +476,8 @@ namespace dftfe{
        */
       void computeMassVector(const dealii::DoFHandler<3> & dofHandler,
 	                     const dealii::AffineConstraints<double> & constraintMatrix,
-			     vectorType & sqrtMassVec,
-			     vectorType & invSqrtMassVec);
+			     distributedCPUVec<double> & sqrtMassVec,
+			     distributedCPUVec<double> & invSqrtMassVec);
 
       ///precompute shapefunction gradient integral
       void preComputeShapeFunctionGradientIntegrals();
@@ -496,7 +496,7 @@ namespace dftfe{
        * @param numberWaveFunctions Number of wavefunctions at a given node.
        */
       void computeNonLocalProjectorKetTimesXTimesV(const double *src,
-                                              cudaVectorType & projectorKetTimesVector,
+                                              distributedGPUVec<double> & projectorKetTimesVector,
 					      const unsigned int numberWaveFunctions);
 
     private:
@@ -508,8 +508,8 @@ namespace dftfe{
        * @param cell_range range of cell-blocks
        */
       void computeLocalHamiltonianTimesXMF(const dealii::MatrixFree<3,double>  &data,
-					   std::vector<vectorType>  &dst,
-					   const std::vector<vectorType>  &src,
+					   std::vector<distributedCPUVec<double>>  &dst,
+					   const std::vector<distributedCPUVec<double>>  &src,
 					   const std::pair<unsigned int,unsigned int> &cell_range) const;
 
       /**
@@ -517,8 +517,8 @@ namespace dftfe{
        * @param src Vector of Vectors containing input vectors
        * @param dst Vector of Vectors containing matrix times vectors product
        */
-      void computeNonLocalHamiltonianTimesX(const std::vector<vectorType> &src,
-					    std::vector<vectorType>       &dst) const;
+      void computeNonLocalHamiltonianTimesX(const std::vector<distributedCPUVec<double>> &src,
+					    std::vector<distributedCPUVec<double>>       &dst) const;
 
 
 
@@ -541,7 +541,7 @@ namespace dftfe{
       thrust::device_vector<dataTypes::number> d_cellHamiltonianMatrixNonLocalFlattenedTransposeDevice;
       thrust::device_vector<dataTypes::number> d_cellWaveFunctionMatrixNonLocalDevice;
       thrust::device_vector<dataTypes::number> d_cellHamMatrixTimesWaveMatrixNonLocalDevice;
-      //cudaVectorType d_projectorKetTimesVectorDealiiParFlattenedDevice;
+      //distributedGPUVec<double> d_projectorKetTimesVectorDealiiParFlattenedDevice;
       thrust::device_vector<dataTypes::number> d_projectorKetTimesVectorParFlattenedDevice;
       thrust::device_vector<dataTypes::number> d_projectorKetTimesVectorAllCellsDevice;
       thrust::device_vector<dataTypes::number> d_projectorKetTimesVectorDevice;
@@ -583,9 +583,9 @@ namespace dftfe{
        * @param numberWaveFunctions Number of wavefunctions at a given node.
        * @param dst Vector containing matrix times given multi-vectors product
        */
-      void computeLocalHamiltonianTimesX(const dealii::LinearAlgebra::distributed::Vector<dataTypes::number> & src,
+      void computeLocalHamiltonianTimesX(const distributedCPUVec<dataTypes::number> & src,
 				         const unsigned int numberWaveFunctions,
-				         dealii::LinearAlgebra::distributed::Vector<dataTypes::number> & dst) const;
+				         distributedCPUVec<dataTypes::number> & dst) const;
 
 
       void computeLocalHamiltonianTimesX(const double* src,
@@ -603,9 +603,9 @@ namespace dftfe{
        * @param numberWaveFunctions Number of wavefunctions at a given node.
        * @param dst Vector containing matrix times given multi-vectors product
        */
-      void computeNonLocalHamiltonianTimesX(const dealii::LinearAlgebra::distributed::Vector<dataTypes::number> & src,
+      void computeNonLocalHamiltonianTimesX(const distributedCPUVec<dataTypes::number> & src,
 					    const unsigned int numberWaveFunctions,
-					    dealii::LinearAlgebra::distributed::Vector<dataTypes::number> & dst) const;
+					    distributedCPUVec<dataTypes::number> & dst) const;
 
 
       /**
@@ -619,7 +619,7 @@ namespace dftfe{
        * @param dst Vector containing matrix times given multi-vectors product
        */
       void computeNonLocalHamiltonianTimesX(const double *src,
-                                            cudaVectorType & projectorKetTimesVector,
+                                            distributedGPUVec<double> & projectorKetTimesVector,
 					    const unsigned int numberWaveFunctions,
 					    double* dst,
                                             const bool skip1=false,
@@ -634,7 +634,7 @@ namespace dftfe{
 
 
       ///data structures to store diagonal of inverse square root mass matrix and square root of mass matrix
-      vectorType d_invSqrtMassVector,d_sqrtMassVector;
+      distributedCPUVec<double> d_invSqrtMassVector,d_sqrtMassVector;
       thrust::device_vector<double> d_invSqrtMassVectorDevice, d_sqrtMassVectorDevice;
 
       dealii::Table<2, dealii::VectorizedArray<double> > vEff;
@@ -721,11 +721,11 @@ namespace dftfe{
       cublasHandle_t  d_cublasHandle;
 
       ///storage for CUDA device dealii array
-      // dealii::LinearAlgebra::distributed::Vector<dataTypes::number,dealii::MemorySpace::CUDA> d_cudaFlattenedArrayBlock;
-      //cudaVectorType d_cudaFlattenedArrayBlock;
-      //cudaVectorType d_cudaFlattenedArrayBlock2;
-      //cudaVectorType d_cudaFlattenedArrayBlock3;
-      //cudaVectorType d_cudaFlattenedArrayBlock4;
+      // distributedCPUVec<dataTypes::number,dealii::MemorySpace::CUDA> d_cudaFlattenedArrayBlock;
+      //distributedGPUVec<double> d_cudaFlattenedArrayBlock;
+      //distributedGPUVec<double> d_cudaFlattenedArrayBlock2;
+      //distributedGPUVec<double> d_cudaFlattenedArrayBlock3;
+      //distributedGPUVec<double> d_cudaFlattenedArrayBlock4;
     };
 }
 #endif

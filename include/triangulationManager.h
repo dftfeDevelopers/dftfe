@@ -128,7 +128,7 @@ namespace dftfe  {
      */
     void generateAutomaticMeshApriori(const dealii::DoFHandler<3> & dofHandler,
 				      parallel::distributed::Triangulation<3> & parallelTriangulation,
-				      const std::vector<vectorType> & eigenVectorsArrayIn,
+				      const std::vector<distributedCPUVec<double>> & eigenVectorsArrayIn,
 				      const unsigned int FEOrder,
 				      const bool generateElectrostaticsTria);
 
@@ -225,7 +225,7 @@ namespace dftfe  {
     void saveTriangulationsSolutionVectors
       (const unsigned int feOrder,
        const unsigned int nComponents,
-       const std::vector< const vectorType * > & solutionVectors,
+       const std::vector< const distributedCPUVec<double> * > & solutionVectors,
        const MPI_Comm & interpoolComm,
        const MPI_Comm &interBandGroupComm);
 
@@ -242,7 +242,7 @@ namespace dftfe  {
     void loadTriangulationsSolutionVectors
       (const unsigned int feOrder,
        const unsigned int nComponents,
-       std::vector< vectorType * > & solutionVectors);
+       std::vector< distributedCPUVec<double> * > & solutionVectors);
     /**
      * @brief serialize the triangulations and the associated cell quadrature data container
      *

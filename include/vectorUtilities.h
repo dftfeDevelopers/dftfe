@@ -60,7 +60,7 @@ namespace dftfe{
     template<typename T>
       void createDealiiVector(const std::shared_ptr< const dealii::Utilities::MPI::Partitioner > & partitioner,
 			      const unsigned int                                           blockSize,
-			      dealii::LinearAlgebra::distributed::Vector<T>                   & flattenedArray);
+			      distributedCPUVec<T>                   & flattenedArray);
 
 
 
@@ -76,7 +76,7 @@ namespace dftfe{
     template<typename T>
     void createDealiiVector(const std::shared_ptr< const dealii::Utilities::MPI::Partitioner > & partitioner,
 			    const unsigned int                                           blockSize,
-			    dealii::LinearAlgebra::distributed::Vector<T,dealii::MemorySpace::CUDA> & flattenedArray);
+			    distributedGPUVec<T> & flattenedArray);
 #endif
 
     /** @brief Creates a cell local index set map for flattened array
@@ -154,14 +154,14 @@ namespace dftfe{
 			      const std::pair<unsigned int,unsigned int> componentIndexRange,
 			      const std::vector<dealii::types::global_dof_index> & localProcDofIndicesReal,
                               const std::vector<dealii::types::global_dof_index> & localProcDofIndicesImag,
-			      std::vector<dealii::LinearAlgebra::distributed::Vector<double>>  & componentVectors);
+			      std::vector<distributedCPUVec<double>>  & componentVectors);
 
      void copyFlattenedSTLVecToSingleCompVec
                              (const std::vector<std::complex<double> >  & flattenedArray,
 			      const unsigned int                        totalNumberComponents,
 			      const std::pair<unsigned int,unsigned int> componentIndexRange,
 
-			      std::vector<dealii::LinearAlgebra::distributed::Vector<double>>  & componentVectors);
+			      std::vector<distributedCPUVec<double>>  & componentVectors);
 
 #else
     /** @brief Copies a single field component from a flattenedArray STL
@@ -181,7 +181,7 @@ namespace dftfe{
                              (const std::vector<double>  & flattenedArray,
 			      const unsigned int                        totalNumberComponents,
 			      const std::pair<unsigned int,unsigned int>  componentIndexRange,
-			      std::vector<dealii::LinearAlgebra::distributed::Vector<double>>  & componentVectors);
+			      std::vector<distributedCPUVec<double>>  & componentVectors);
 
 #endif
 
@@ -209,12 +209,12 @@ namespace dftfe{
      *  optimization if update ghost values has already been called in the flattened dealii vec.
      */
      void copyFlattenedDealiiVecToSingleCompVec
-                             (const dealii::LinearAlgebra::distributed::Vector<std::complex<double>>  & flattenedArray,
+                             (const distributedCPUVec<std::complex<double>>  & flattenedArray,
 			      const unsigned int                        totalNumberComponents,
 			      const std::pair<unsigned int,unsigned int> componentIndexRange,
 			      const std::vector<dealii::types::global_dof_index> & localProcDofIndicesReal,
                               const std::vector<dealii::types::global_dof_index> & localProcDofIndicesImag,
-			      std::vector<dealii::LinearAlgebra::distributed::Vector<double>>  & componentVectors,
+			      std::vector<distributedCPUVec<double>>  & componentVectors,
 			      const bool isFlattenedDealiiGhostValuesUpdated=false);
 
 #else
@@ -234,10 +234,10 @@ namespace dftfe{
      *  optimization if update ghost values has already been called in the flattened dealii vec.
      */
      void copyFlattenedDealiiVecToSingleCompVec
-                             (const dealii::LinearAlgebra::distributed::Vector<double>  & flattenedArray,
+                             (const distributedCPUVec<double>  & flattenedArray,
 			      const unsigned int                        totalNumberComponents,
 			      const std::pair<unsigned int,unsigned int>  componentIndexRange,
-			      std::vector<dealii::LinearAlgebra::distributed::Vector<double>>  & componentVectors,
+			      std::vector<distributedCPUVec<double>>  & componentVectors,
 			      const bool isFlattenedDealiiGhostValuesUpdated=false);
 
 #endif
@@ -264,12 +264,12 @@ namespace dftfe{
      *  partitioner.
      */
      void copySingleCompVecToFlattenedDealiiVec
-                             (dealii::LinearAlgebra::distributed::Vector<std::complex<double>>  & flattenedArray,
+                             (distributedCPUVec<std::complex<double>>  & flattenedArray,
 			      const unsigned int                        totalNumberComponents,
 			      const std::pair<unsigned int,unsigned int> componentIndexRange,
 			      const std::vector<dealii::types::global_dof_index> & localProcDofIndicesReal,
                               const std::vector<dealii::types::global_dof_index> & localProcDofIndicesImag,
-			      const std::vector<dealii::LinearAlgebra::distributed::Vector<double>>  & componentVectors);
+			      const std::vector<distributedCPUVec<double>>  & componentVectors);
 
 #else
     /** @brief Copies to a flattenedArray parallel distributed
@@ -286,10 +286,10 @@ namespace dftfe{
      *  partitioner used in the creation of the flattenedArray partitioner.
      */
      void copySingleCompVecToFlattenedDealiiVec
-                             (dealii::LinearAlgebra::distributed::Vector<double>  & flattenedArray,
+                             (distributedCPUVec<double>  & flattenedArray,
 			      const unsigned int                        totalNumberComponents,
 			      const std::pair<unsigned int,unsigned int>  componentIndexRange,
-			      const std::vector<dealii::LinearAlgebra::distributed::Vector<double>>  & componentVectors);
+			      const std::vector<distributedCPUVec<double>>  & componentVectors);
 
 #endif
 
@@ -320,7 +320,7 @@ namespace dftfe{
 			      const std::pair<unsigned int,unsigned int> componentIndexRange,
 			      const std::vector<dealii::types::global_dof_index> & localProcDofIndicesReal,
                               const std::vector<dealii::types::global_dof_index> & localProcDofIndicesImag,
-			      const std::vector<dealii::LinearAlgebra::distributed::Vector<double>>  & componentVectors);
+			      const std::vector<distributedCPUVec<double>>  & componentVectors);
 
 #else
     /** @brief Copies to a flattenedArray stl
@@ -340,7 +340,7 @@ namespace dftfe{
                              (std::vector<double>  & flattenedArray,
 			      const unsigned int                        totalNumberComponents,
 			      const std::pair<unsigned int,unsigned int>  componentIndexRange,
-			      const std::vector<dealii::LinearAlgebra::distributed::Vector<double>>  & componentVectors);
+			      const std::vector<distributedCPUVec<double>>  & componentVectors);
 
 #endif
 

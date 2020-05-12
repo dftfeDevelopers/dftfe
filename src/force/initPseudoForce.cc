@@ -302,7 +302,7 @@ void forceClass<FEOrder>::computeElementalNonLocalPseudoDataForce()
 
 
 template<unsigned int FEOrder>
-void forceClass<FEOrder>::computeNonLocalProjectorKetTimesPsiTimesV(const std::vector<vectorType> &src,
+void forceClass<FEOrder>::computeNonLocalProjectorKetTimesPsiTimesV(const std::vector<distributedCPUVec<double>> &src,
 							            std::vector<std::vector<double> > & projectorKetTimesPsiTimesVReal,
                                                                     std::vector<std::vector<std::complex<double> > > & projectorKetTimesPsiTimesVComplex,
 								    const unsigned int kPointIndex)
@@ -371,7 +371,7 @@ void forceClass<FEOrder>::computeNonLocalProjectorKetTimesPsiTimesV(const std::v
 	  unsigned int index=0;
 #ifdef USE_COMPLEX
 	  std::vector<double> temp(dofs_per_cell,0.0);
-	  for (std::vector<vectorType>::const_iterator it=src.begin(); it!=src.end(); it++)
+	  for (std::vector<distributedCPUVec<double>>::const_iterator it=src.begin(); it!=src.end(); it++)
 	    {
 	      (*it).extract_subvector_to(local_dof_indices.begin(), local_dof_indices.end(), temp.begin());
 	      for(int idof = 0; idof < dofs_per_cell; ++idof)
@@ -391,7 +391,7 @@ void forceClass<FEOrder>::computeNonLocalProjectorKetTimesPsiTimesV(const std::v
 
 
 #else
-	  for (std::vector<vectorType>::const_iterator it=src.begin(); it!=src.end(); it++)
+	  for (std::vector<distributedCPUVec<double>>::const_iterator it=src.begin(); it!=src.end(); it++)
 	    {
 	      (*it).extract_subvector_to(local_dof_indices.begin(), local_dof_indices.end(), inputVectors.begin()+numberNodesPerElement*index);
 	      index++;
@@ -448,16 +448,16 @@ void forceClass<FEOrder>::computeNonLocalProjectorKetTimesPsiTimesV(const std::v
 
   //std::cout<<"Finished Element Loop"<<std::endl;
 #ifdef USE_COMPLEX
-  std::vector<dealii::LinearAlgebra::distributed::Vector<std::complex<double> > > projectorKetTimesVectorPar(numberWaveFunctions);
+  std::vector<distributedCPUVec<std::complex<double> > > projectorKetTimesVectorPar(numberWaveFunctions);
 #else
-  std::vector<dealii::LinearAlgebra::distributed::Vector<double> > projectorKetTimesVectorPar(numberWaveFunctions);
+  std::vector<distributedCPUVec<double> > projectorKetTimesVectorPar(numberWaveFunctions);
 #endif
 #ifdef USE_COMPLEX
-  dealii::LinearAlgebra::distributed::Vector<std::complex<double> > vec(dftPtr->d_locallyOwnedProjectorIdsCurrentProcess,
+  distributedCPUVec<std::complex<double> > vec(dftPtr->d_locallyOwnedProjectorIdsCurrentProcess,
                                                                    dftPtr->d_ghostProjectorIdsCurrentProcess,
                                                                    mpi_communicator);
 #else
-  dealii::LinearAlgebra::distributed::Vector<double > vec(dftPtr->d_locallyOwnedProjectorIdsCurrentProcess,
+  distributedCPUVec<double > vec(dftPtr->d_locallyOwnedProjectorIdsCurrentProcess,
                                                      dftPtr->d_ghostProjectorIdsCurrentProcess,
                                                      mpi_communicator);
 #endif

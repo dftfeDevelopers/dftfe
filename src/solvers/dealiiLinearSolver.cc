@@ -48,7 +48,7 @@ namespace dftfe {
       double time;
 
       //compute RHS
-      vectorType rhs;
+      distributedCPUVec<double> rhs;
       problem.computeRhs(rhs);
 
       MPI_Barrier(mpi_communicator);
@@ -66,18 +66,18 @@ namespace dftfe {
       dealii::PreconditionJacobi<dealiiLinearSolverProblem> preconditioner;
       preconditioner.initialize (problem, 0.3);
 
-      vectorType & x= problem.getX();
+      distributedCPUVec<double> & x= problem.getX();
       try{
 	x.update_ghost_values();
 
 	if (d_type==CG)
 	{
-	  dealii::SolverCG<vectorType> solver(solverControl);
+	  dealii::SolverCG<distributedCPUVec<double>> solver(solverControl);
 	  solver.solve(problem,x, rhs, preconditioner);
 	}
 	else if (d_type==GMRES)
 	{
-	  dealii::SolverGMRES<vectorType> solver(solverControl);
+	  dealii::SolverGMRES<distributedCPUVec<double>> solver(solverControl);
 	  solver.solve(problem,x, rhs, preconditioner);
 	}
 

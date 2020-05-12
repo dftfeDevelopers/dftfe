@@ -44,7 +44,7 @@ namespace dftfe {
 	 *
 	 */
 	 void reinit(const dealii::MatrixFree<3,double> & matrixFreeData,
-		     vectorType & x,
+		     distributedCPUVec<double> & x,
 		     const dealii::ConstraintMatrix & constraintMatrix,
 		     const unsigned int matrixFreeVectorComponent,
 	             const std::map<dealii::types::global_dof_index, double> & atoms,
@@ -57,7 +57,7 @@ namespace dftfe {
 	 *
 	 */
 	 void reinit(const dealii::MatrixFree<3,double> & matrixFreeData,
-		     vectorType & x,
+		     distributedCPUVec<double> & x,
 		     const dealii::ConstraintMatrix & constraintMatrix,
 		     const unsigned int matrixFreeVectorComponent,
 	             const std::map<dealii::types::global_dof_index, double> & atoms,
@@ -69,28 +69,28 @@ namespace dftfe {
 	 *
 	 * @return reference to x field. Assumes x field data structure is already initialized
 	 */
-	vectorType & getX();
+	distributedCPUVec<double> & getX();
 
 	/**
 	 * @brief Compute A matrix multipled by x.
 	 *
 	 */
-	void vmult(vectorType &Ax,
-		   const vectorType &x) const;
+	void vmult(distributedCPUVec<double> &Ax,
+		   const distributedCPUVec<double> &x) const;
 
 	/**
 	 * @brief Compute right hand side vector for the problem Ax = rhs.
 	 *
 	 * @param rhs vector for the right hand side values
 	 */
-	void computeRhs(vectorType & rhs);
+	void computeRhs(distributedCPUVec<double> & rhs);
 
 	/**
 	 * @brief Jacobi preconditioning.
 	 *
 	 */
-        void precondition_Jacobi(vectorType& dst,
-		                 const vectorType& src,
+        void precondition_Jacobi(distributedCPUVec<double>& dst,
+		                 const distributedCPUVec<double>& src,
 				 const double omega) const;
 
 	/**
@@ -115,8 +115,8 @@ namespace dftfe {
 	 *
 	 */
         void AX (const dealii::MatrixFree<3,double>  &matrixFreeData,
-	                  vectorType &dst,
-		          const vectorType &src,
+	                  distributedCPUVec<double> &dst,
+		          const distributedCPUVec<double> &src,
 		          const std::pair<unsigned int,unsigned int> &cell_range) const;
 
 
@@ -138,20 +138,20 @@ namespace dftfe {
 	 * @brief Mean value constraint distibute
 	 *
 	 */
-	void meanValueConstraintDistribute(vectorType& vec) const;
+	void meanValueConstraintDistribute(distributedCPUVec<double>& vec) const;
 
 	/**
 	 * @brief Mean value constraint distibute slave to master
 	 *
 	 */
-	void meanValueConstraintDistributeSlaveToMaster(vectorType& vec) const;
+	void meanValueConstraintDistributeSlaveToMaster(distributedCPUVec<double>& vec) const;
 
 
 	/**
 	 * @brief Mean value constraint set zero
 	 *
 	 */
-	void meanValueConstraintSetZero(vectorType& vec) const;
+	void meanValueConstraintSetZero(distributedCPUVec<double>& vec) const;
 
 	/**
 	 * @brief precompute shape function gradient integral.
@@ -161,13 +161,13 @@ namespace dftfe {
 
 
 	/// storage for diagonal of the A matrix
-	vectorType d_diagonalA;
+	distributedCPUVec<double> d_diagonalA;
 
 	/// pointer to dealii MatrixFree object
         const dealii::MatrixFree<3,double>  * d_matrixFreeDataPtr;
 
 	/// pointer to the x vector being solved for
-        vectorType * d_xPtr;
+        distributedCPUVec<double> * d_xPtr;
 
 	/// pointer to dealii ConstraintMatrix object
         const dealii::ConstraintMatrix * d_constraintMatrixPtr;
@@ -188,7 +188,7 @@ namespace dftfe {
         bool d_isShapeGradIntegralPrecomputed;
 
 	/// storage for mean value constraint vector
-	vectorType d_meanValueConstraintVec;
+	distributedCPUVec<double> d_meanValueConstraintVec;
 
 	/// boolean flag to query if mean value constraint datastructures are precomputed
 	bool d_isMeanValueConstraintComputed;

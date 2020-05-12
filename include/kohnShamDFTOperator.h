@@ -56,8 +56,8 @@ namespace dftfe{
          we scale src and rescale src to avoid creation of temporary vectors)
        * @param dst Vector of Vectors containing operator times vectors product
        */
-      void HX(std::vector<vectorType> &src,
-	      std::vector<vectorType> &dst);
+      void HX(std::vector<distributedCPUVec<double>> &src,
+	      std::vector<distributedCPUVec<double>> &dst);
 
 
 
@@ -74,19 +74,19 @@ namespace dftfe{
        * @param scalar which multiplies src before evaluating matrix times src vector
        * @param dst Vector containing sum of dst vector and operator times given multi-vectors product
        */
-      void HX(dealii::LinearAlgebra::distributed::Vector<dataTypes::number> & src,
+      void HX(distributedCPUVec<dataTypes::number> & src,
 	      const unsigned int numberComponents,
 	      const bool scaleFlag,
 	      const double scalar,
-	      dealii::LinearAlgebra::distributed::Vector<dataTypes::number> & dst);
+	      distributedCPUVec<dataTypes::number> & dst);
 
-      void HX(dealii::LinearAlgebra::distributed::Vector<dataTypes::number> & src,
+      void HX(distributedCPUVec<dataTypes::number> & src,
 	      const unsigned int numberComponents,
-	      dealii::LinearAlgebra::distributed::Vector<dataTypes::number> & dst);
+	      distributedCPUVec<dataTypes::number> & dst);
 
-      void MX(dealii::LinearAlgebra::distributed::Vector<dataTypes::number> & src,
+      void MX(distributedCPUVec<dataTypes::number> & src,
 	      const unsigned int numberComponents,
-	      dealii::LinearAlgebra::distributed::Vector<dataTypes::number> & dst);
+	      distributedCPUVec<dataTypes::number> & dst);
 
 
       /**
@@ -150,7 +150,7 @@ namespace dftfe{
        * @param src given orthogonal basis vectors
        * @return ProjMatrix projected small matrix
        */
-      void XtHX(std::vector<vectorType> &src,
+      void XtHX(std::vector<distributedCPUVec<double>> &src,
 		std::vector<dataTypes::number> & ProjHam);
 
 
@@ -164,8 +164,8 @@ namespace dftfe{
        * @param pseudoValues quadrature data of pseudopotential values
        */
       void computeVEff(const std::map<dealii::CellId,std::vector<double> >* rhoValues,
-		       const vectorType & phi,
-		       const vectorType & phiExt,
+		       const distributedCPUVec<double> & phi,
+		       const distributedCPUVec<double> & phiExt,
 		       const std::map<dealii::CellId,std::vector<double> > & pseudoValues);
 
 
@@ -179,8 +179,8 @@ namespace dftfe{
        * @param pseudoValues quadrature data of pseudopotential values
        */
       void computeVEffSpinPolarized(const std::map<dealii::CellId,std::vector<double> >* rhoValues,
-				    const vectorType & phi,
-				    const vectorType & phiExt,
+				    const distributedCPUVec<double> & phi,
+				    const distributedCPUVec<double> & phiExt,
 				    unsigned int spinIndex,
 				    const std::map<dealii::CellId,std::vector<double> > & pseudoValues);
 
@@ -195,8 +195,8 @@ namespace dftfe{
        */
       void computeVEff(const std::map<dealii::CellId,std::vector<double> >* rhoValues,
 		       const std::map<dealii::CellId,std::vector<double> >* gradRhoValues,
-		       const vectorType & phi,
-		       const vectorType & phiExt,
+		       const distributedCPUVec<double> & phi,
+		       const distributedCPUVec<double> & phiExt,
 		       const std::map<dealii::CellId,std::vector<double> > & pseudoValues);
 
 
@@ -212,8 +212,8 @@ namespace dftfe{
        */
       void computeVEffSpinPolarized(const std::map<dealii::CellId,std::vector<double> >* rhoValues,
 				    const std::map<dealii::CellId,std::vector<double> >* gradRhoValues,
-				    const vectorType & phi,
-				    const vectorType & phiExt,
+				    const distributedCPUVec<double> & phi,
+				    const distributedCPUVec<double> & phiExt,
 				    const unsigned int spinIndex,
 				    const std::map<dealii::CellId,std::vector<double> > & pseudoValues);
 
@@ -246,7 +246,7 @@ namespace dftfe{
        *
        */
       void reinit(const unsigned int wavefunBlockSize,
-		  dealii::LinearAlgebra::distributed::Vector<dataTypes::number> & X,
+		  distributedCPUVec<dataTypes::number> & X,
 		  bool flag);
 
       void reinit(const unsigned int wavefunBlockSize);
@@ -263,8 +263,8 @@ namespace dftfe{
        */
       void computeMassVector(const dealii::DoFHandler<3> & dofHandler,
 	                     const dealii::ConstraintMatrix & constraintMatrix,
-			     vectorType & sqrtMassVec,
-			     vectorType & invSqrtMassVec);
+			     distributedCPUVec<double> & sqrtMassVec,
+			     distributedCPUVec<double> & invSqrtMassVec);
 
       ///precompute shapefunction gradient integral
       void preComputeShapeFunctionGradientIntegrals();
@@ -286,8 +286,8 @@ namespace dftfe{
        * @param cell_range range of cell-blocks
        */
       void computeLocalHamiltonianTimesXMF(const dealii::MatrixFree<3,double>  &data,
-					   std::vector<vectorType>  &dst,
-					   const std::vector<vectorType>  &src,
+					   std::vector<distributedCPUVec<double>>  &dst,
+					   const std::vector<distributedCPUVec<double>>  &src,
 					   const std::pair<unsigned int,unsigned int> &cell_range) const;
 
       /**
@@ -295,8 +295,8 @@ namespace dftfe{
        * @param src Vector of Vectors containing input vectors
        * @param dst Vector of Vectors containing matrix times vectors product
        */
-      void computeNonLocalHamiltonianTimesX(const std::vector<vectorType> &src,
-					    std::vector<vectorType>       &dst) const;
+      void computeNonLocalHamiltonianTimesX(const std::vector<distributedCPUVec<double>> &src,
+					    std::vector<distributedCPUVec<double>>       &dst) const;
 
 
 
@@ -318,14 +318,14 @@ namespace dftfe{
        * @param numberWaveFunctions Number of wavefunctions at a given node.
        * @param dst Vector containing matrix times given multi-vectors product
        */
-      void computeLocalHamiltonianTimesX(const dealii::LinearAlgebra::distributed::Vector<dataTypes::number> & src,
+      void computeLocalHamiltonianTimesX(const distributedCPUVec<dataTypes::number> & src,
 					 const unsigned int numberWaveFunctions,
-					 dealii::LinearAlgebra::distributed::Vector<dataTypes::number> & dst) const;
+					 distributedCPUVec<dataTypes::number> & dst) const;
 
 
-      void computeMassMatrixTimesX(const dealii::LinearAlgebra::distributed::Vector<dataTypes::number> & src,
+      void computeMassMatrixTimesX(const distributedCPUVec<dataTypes::number> & src,
 				   const unsigned int numberWaveFunctions,
-				   dealii::LinearAlgebra::distributed::Vector<dataTypes::number> & dst) const;
+				   distributedCPUVec<dataTypes::number> & dst) const;
 
 #ifdef WITH_MKL
 
@@ -339,9 +339,9 @@ namespace dftfe{
        * @param dst Vector containing matrix times given multi-vectors product
        */
       void computeLocalHamiltonianTimesXBatchGEMM
-	           (const dealii::LinearAlgebra::distributed::Vector<dataTypes::number> & src,
+	           (const distributedCPUVec<dataTypes::number> & src,
 		    const unsigned int numberWaveFunctions,
-		    dealii::LinearAlgebra::distributed::Vector<dataTypes::number> & dst) const;
+		    distributedCPUVec<dataTypes::number> & dst) const;
 
 
 #endif
@@ -355,9 +355,9 @@ namespace dftfe{
        * @param numberWaveFunctions Number of wavefunctions at a given node.
        * @param dst Vector containing matrix times given multi-vectors product
        */
-      void computeNonLocalHamiltonianTimesX(const dealii::LinearAlgebra::distributed::Vector<dataTypes::number> & src,
+      void computeNonLocalHamiltonianTimesX(const distributedCPUVec<dataTypes::number> & src,
 					    const unsigned int numberWaveFunctions,
-					    dealii::LinearAlgebra::distributed::Vector<dataTypes::number> & dst) const;
+					    distributedCPUVec<dataTypes::number> & dst) const;
 
 #ifdef WITH_MKL
       /**
@@ -370,9 +370,9 @@ namespace dftfe{
        * @param numberWaveFunctions Number of wavefunctions at a given node.
        * @param dst Vector containing matrix times given multi-vectors product
        */
-      void computeNonLocalHamiltonianTimesXBatchGEMM(const dealii::LinearAlgebra::distributed::Vector<dataTypes::number> & src,
+      void computeNonLocalHamiltonianTimesXBatchGEMM(const distributedCPUVec<dataTypes::number> & src,
 						     const unsigned int numberWaveFunctions,
-						     dealii::LinearAlgebra::distributed::Vector<dataTypes::number> & dst) const;
+						     distributedCPUVec<dataTypes::number> & dst) const;
 
 
 #endif
@@ -382,7 +382,7 @@ namespace dftfe{
 
 
       ///data structures to store diagonal of inverse square root mass matrix and square root of mass matrix
-      vectorType d_invSqrtMassVector,d_sqrtMassVector;
+      distributedCPUVec<double> d_invSqrtMassVector,d_sqrtMassVector;
 
       dealii::Table<2, dealii::VectorizedArray<double> > vEff;
       dealii::Table<2, dealii::Tensor<1,3,dealii::VectorizedArray<double> > > derExcWithSigmaTimesGradRho;

@@ -107,7 +107,7 @@ namespace dftfe {
 
       /// vector of displacements of the triangulation vertices
       //Vector<double> d_incrementalDisplacement;
-      vectorType d_incrementalDisplacement;
+      distributedCPUVec<double> d_incrementalDisplacement;
 
       bool d_isParallelMesh;
 

@@ -44,7 +44,7 @@ void forceClass<FEOrder>::computeStressEself(const DoFHandler<3> & dofHandlerEle
   for(unsigned int iBin = 0; iBin < numberBins; ++iBin)
   {
     const std::vector<DoFHandler<C_DIM>::active_cell_iterator> & cellsVselfBallDofHandler=d_cellsVselfBallsDofHandlerElectro[iBin];
-    const vectorType & iBinVselfField= vselfBinsManagerElectro.getVselfFieldBins()[iBin];
+    const distributedCPUVec<double> & iBinVselfField= vselfBinsManagerElectro.getVselfFieldBins()[iBin];
     std::vector<DoFHandler<C_DIM>::active_cell_iterator>::const_iterator iter1;
     for (iter1 = cellsVselfBallDofHandler.begin(); iter1 != cellsVselfBallDofHandler.end(); ++iter1)
     {
@@ -72,7 +72,7 @@ void forceClass<FEOrder>::computeStressEself(const DoFHandler<3> & dofHandlerEle
   for(unsigned int iBin = 0; iBin < numberBins; ++iBin)
   {
     const std::map<DoFHandler<C_DIM>::active_cell_iterator,std::vector<unsigned int > >  & cellsVselfBallSurfacesDofHandler=d_cellFacesVselfBallSurfacesDofHandlerElectro[iBin];
-    const vectorType & iBinVselfField= vselfBinsManagerElectro.getVselfFieldBins()[iBin];
+    const distributedCPUVec<double> & iBinVselfField= vselfBinsManagerElectro.getVselfFieldBins()[iBin];
     std::map<DoFHandler<C_DIM>::active_cell_iterator,std::vector<unsigned int > >::const_iterator iter1;
     for (iter1 = cellsVselfBallSurfacesDofHandler.begin(); iter1 != cellsVselfBallSurfacesDofHandler.end(); ++iter1)
     {

@@ -83,10 +83,11 @@
 //commonly used  typedefs used in dftfe go here
 namespace dftfe
 {
-  typedef dealii::LinearAlgebra::distributed::Vector<double> vectorType;
+  template <typename elem_type>
+    using distributedCPUVec = dealii::LinearAlgebra::distributed::Vector<elem_type,dealii::MemorySpace::Host>;
 #ifdef DFTFE_WITH_GPU
-  typedef dealii::LinearAlgebra::distributed::Vector<double,dealii::MemorySpace::CUDA> cudaVectorType;
-  typedef dealii::LinearAlgebra::distributed::Vector<float,dealii::MemorySpace::CUDA> cudaVectorTypeFloat;
+  template <typename elem_type>
+    using distributedGPUVec = dealii::LinearAlgebra::distributed::Vector<elem_type,dealii::MemorySpace::CUDA>;
 #endif
 
   namespace dataTypes

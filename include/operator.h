@@ -85,7 +85,7 @@ namespace dftfe{
     *
     */
     virtual void reinit(const unsigned int wavefunBlockSize,
-			dealii::LinearAlgebra::distributed::Vector<dataTypes::number> & X,
+			distributedCPUVec<dataTypes::number> & X,
 			bool flag) = 0;
 
     virtual void reinit(const unsigned int wavefunBlockSize) = 0;
@@ -100,8 +100,8 @@ namespace dftfe{
      */
     virtual void computeMassVector(const dealii::DoFHandler<3>    & dofHandler,
 				   const dealii::ConstraintMatrix & constraintMatrix,
-				   vectorType                     & sqrtMassVec,
-				   vectorType                     & invSqrtMassVec) = 0;
+				   distributedCPUVec<double>                     & sqrtMassVec,
+				   distributedCPUVec<double>                     & invSqrtMassVec) = 0;
 
 
     /**
@@ -110,8 +110,8 @@ namespace dftfe{
      * @param X Vector of Vectors containing current values of X
      * @param Y Vector of Vectors containing operator times vectors product
      */
-    virtual void HX(std::vector<vectorType> & X,
-		    std::vector<vectorType> & Y) = 0;
+    virtual void HX(std::vector<distributedCPUVec<double>> & X,
+		    std::vector<distributedCPUVec<double>> & Y) = 0;
 
 
 
@@ -124,21 +124,21 @@ namespace dftfe{
      * @param numberComponents number of wavefunctions associated with a given node
      * @param Y Vector containing multi-component fields after operator times vectors product
      */
-    virtual void HX(dealii::LinearAlgebra::distributed::Vector<dataTypes::number> & X,
+    virtual void HX(distributedCPUVec<dataTypes::number> & X,
 		    const unsigned int numberComponents,
 		    const bool scaleFlag,
 		    const double scalar,
-		    dealii::LinearAlgebra::distributed::Vector<dataTypes::number> & Y) = 0;
+		    distributedCPUVec<dataTypes::number> & Y) = 0;
 
 
-    virtual void MX(dealii::LinearAlgebra::distributed::Vector<dataTypes::number> & X,
+    virtual void MX(distributedCPUVec<dataTypes::number> & X,
 		    const unsigned int numberComponents,
-		    dealii::LinearAlgebra::distributed::Vector<dataTypes::number> & Y) = 0;
+		    distributedCPUVec<dataTypes::number> & Y) = 0;
 
     
-    virtual void HX(dealii::LinearAlgebra::distributed::Vector<dataTypes::number> & X,
+    virtual void HX(distributedCPUVec<dataTypes::number> & X,
 		    const unsigned int numberComponents,
-		    dealii::LinearAlgebra::distributed::Vector<dataTypes::number> & Y) = 0;
+		    distributedCPUVec<dataTypes::number> & Y) = 0;
 
 
     /**
@@ -202,12 +202,12 @@ namespace dftfe{
      * @param  X Vector of Vectors containing the basis vectors spanning the subspace
      * @return ProjMatrix projected small matrix
      */
-    virtual void XtHX(std::vector<vectorType> & X,
+    virtual void XtHX(std::vector<distributedCPUVec<double>> & X,
 		      std::vector<dataTypes::number> & ProjHam) = 0;
 
 
-    void setInvSqrtMassVector(vectorType & X);
-    vectorType & getInvSqrtMassVector();
+    void setInvSqrtMassVector(distributedCPUVec<double> & X);
+    distributedCPUVec<double> & getInvSqrtMassVector();
 
     /**
      * @brief Get local dof indices real
@@ -330,7 +330,7 @@ namespace dftfe{
     //
     //inv sqrt mass vector
     //
-    vectorType d_invSqrtMassVector;
+    distributedCPUVec<double> d_invSqrtMassVector;
 
     //
     //mpi communicator

@@ -255,7 +255,7 @@ namespace dftfe
 							    double* eigenVectorsFlattenedCUDA,
                                                             double* eigenVectorsRotFracDensityFlattenedCUDA,
                                                             const unsigned int flattenedSize,
-							    vectorType  & tempEigenVec,
+							    distributedCPUVec<double>  & tempEigenVec,
 							    const unsigned int totalNumberWaveFunctions,
 							    std::vector<double>        & eigenValues,
 							    const MPI_Comm &interBandGroupComm,
@@ -302,23 +302,23 @@ namespace dftfe
     const unsigned int vectorsBlockSize=std::min(dftParameters::chebyWfcBlockSize,
 						 totalNumberWaveFunctions);
 
-    cudaVectorType cudaFlattenedArrayBlock;
+    distributedGPUVec<double> cudaFlattenedArrayBlock;
     vectorTools::createDealiiVector(operatorMatrix.getMatrixFreeData()->get_vector_partitioner(),
 				    vectorsBlockSize,
 				    cudaFlattenedArrayBlock);
 
 
-    cudaVectorType YArray;
+    distributedGPUVec<double> YArray;
     YArray.reinit(cudaFlattenedArrayBlock);
 
 
-    cudaVectorTypeFloat cudaFlattenedFloatArrayBlock;
+    distributedGPUVec<float> cudaFlattenedFloatArrayBlock;
     vectorTools::createDealiiVector(operatorMatrix.getMatrixFreeData()->get_vector_partitioner(),
                                     vectorsBlockSize,
                                     cudaFlattenedFloatArrayBlock);
 
 
-    cudaVectorType projectorKetTimesVector;
+    distributedGPUVec<double> projectorKetTimesVector;
     vectorTools::createDealiiVector(operatorMatrix.getProjectorKetTimesVectorSingle().get_partitioner(),
 				    vectorsBlockSize,
 				    projectorKetTimesVector);
@@ -458,7 +458,7 @@ namespace dftfe
 							    double* eigenVectorsFlattenedCUDA,
                                                             double* eigenVectorsRotFracDensityFlattenedCUDA,
                                                             const unsigned int flattenedSize,
-							    vectorType  & tempEigenVec,
+							    distributedCPUVec<double>  & tempEigenVec,
 							    const unsigned int totalNumberWaveFunctions,
 							    std::vector<double>        & eigenValues,
 							    std::vector<double>        & residualNorms,
@@ -509,50 +509,50 @@ namespace dftfe
     const unsigned int vectorsBlockSize=std::min(dftParameters::chebyWfcBlockSize,
 						 totalNumberWaveFunctions);
 
-    cudaVectorType cudaFlattenedArrayBlock;
+    distributedGPUVec<double> cudaFlattenedArrayBlock;
     vectorTools::createDealiiVector(operatorMatrix.getMatrixFreeData()->get_vector_partitioner(),
 				    vectorsBlockSize,
 				    cudaFlattenedArrayBlock);
 
 
-    cudaVectorType YArray;
+    distributedGPUVec<double> YArray;
     YArray.reinit(cudaFlattenedArrayBlock);
 
-    cudaVectorType YArrayCA; 
+    distributedGPUVec<double> YArrayCA; 
     if (dftParameters::chebyCommunAvoidanceAlgo)
          YArrayCA.reinit(cudaFlattenedArrayBlock);
 
 
-    cudaVectorTypeFloat cudaFlattenedFloatArrayBlock;
+    distributedGPUVec<float> cudaFlattenedFloatArrayBlock;
     vectorTools::createDealiiVector(operatorMatrix.getMatrixFreeData()->get_vector_partitioner(),
                                     vectorsBlockSize,
                                     cudaFlattenedFloatArrayBlock);
 
 
-    cudaVectorType projectorKetTimesVector;
+    distributedGPUVec<double> projectorKetTimesVector;
     vectorTools::createDealiiVector(operatorMatrix.getProjectorKetTimesVectorSingle().get_partitioner(),
 				    vectorsBlockSize,
 				    projectorKetTimesVector);
 
 
-    cudaVectorTypeFloat  projectorKetTimesVectorFloat;
+    distributedGPUVec<float>  projectorKetTimesVectorFloat;
     if (dftParameters::useMixedPrecChebyNonLocal)
 	    vectorTools::createDealiiVector(operatorMatrix.getProjectorKetTimesVectorSingle().get_partitioner(),
 					    vectorsBlockSize,
 					    projectorKetTimesVectorFloat);
 
 
-    cudaVectorType cudaFlattenedArrayBlock2;
+    distributedGPUVec<double> cudaFlattenedArrayBlock2;
     if (dftParameters::overlapComputeCommunCheby || dftParameters::chebyCommunAvoidanceAlgo)
            cudaFlattenedArrayBlock2.reinit(cudaFlattenedArrayBlock);
 
 
-    cudaVectorType YArray2;
+    distributedGPUVec<double> YArray2;
     if (dftParameters::overlapComputeCommunCheby)
            YArray2.reinit(cudaFlattenedArrayBlock2);
 
 
-    cudaVectorType projectorKetTimesVector2;
+    distributedGPUVec<double> projectorKetTimesVector2;
     if (dftParameters::overlapComputeCommunCheby)
            projectorKetTimesVector2.reinit(projectorKetTimesVector);
 
@@ -1122,7 +1122,7 @@ namespace dftfe
   chebyshevOrthogonalizedSubspaceIterationSolverCUDA::solveNoRR(operatorDFTCUDAClass  & operatorMatrix,
 							    double* eigenVectorsFlattenedCUDA,
                                                             const unsigned int flattenedSize,
-							    vectorType  & tempEigenVec,
+							    distributedCPUVec<double>  & tempEigenVec,
 							    const unsigned int totalNumberWaveFunctions,
 							    std::vector<double>        & eigenValues,
 							    const MPI_Comm &interBandGroupComm,
@@ -1172,50 +1172,50 @@ namespace dftfe
     const unsigned int chebyBlockSize=std::min(dftParameters::chebyWfcBlockSize,
 						 totalNumberWaveFunctions);
 
-    cudaVectorType cudaFlattenedArrayBlock;
+    distributedGPUVec<double> cudaFlattenedArrayBlock;
     vectorTools::createDealiiVector(operatorMatrix.getMatrixFreeData()->get_vector_partitioner(),
 				    chebyBlockSize,
 				    cudaFlattenedArrayBlock);
 
 
-    cudaVectorType YArray;
+    distributedGPUVec<double> YArray;
     YArray.reinit(cudaFlattenedArrayBlock);
 
-    cudaVectorType YArrayCA; 
+    distributedGPUVec<double> YArrayCA; 
     if (dftParameters::chebyCommunAvoidanceAlgo)
          YArrayCA.reinit(cudaFlattenedArrayBlock);
 
-    cudaVectorTypeFloat cudaFlattenedFloatArrayBlock;
+    distributedGPUVec<float> cudaFlattenedFloatArrayBlock;
     vectorTools::createDealiiVector(operatorMatrix.getMatrixFreeData()->get_vector_partitioner(),
                                     chebyBlockSize,
                                     cudaFlattenedFloatArrayBlock);
 
 
-    cudaVectorType projectorKetTimesVector;
+    distributedGPUVec<double> projectorKetTimesVector;
     vectorTools::createDealiiVector(operatorMatrix.getProjectorKetTimesVectorSingle().get_partitioner(),
 				    chebyBlockSize,
 				    projectorKetTimesVector);
 
 
 
-    cudaVectorTypeFloat  projectorKetTimesVectorFloat;
+    distributedGPUVec<float>  projectorKetTimesVectorFloat;
     if (dftParameters::useMixedPrecChebyNonLocal)
 	    vectorTools::createDealiiVector(operatorMatrix.getProjectorKetTimesVectorSingle().get_partitioner(),
 					    chebyBlockSize,
 					    projectorKetTimesVectorFloat);
 
 
-    cudaVectorType cudaFlattenedArrayBlock2;
+    distributedGPUVec<double> cudaFlattenedArrayBlock2;
     if (dftParameters::overlapComputeCommunCheby || dftParameters::chebyCommunAvoidanceAlgo)
            cudaFlattenedArrayBlock2.reinit(cudaFlattenedArrayBlock);
 
 
-    cudaVectorType YArray2;
+    distributedGPUVec<double> YArray2;
     if (dftParameters::overlapComputeCommunCheby)
            YArray2.reinit(cudaFlattenedArrayBlock2);
 
 
-    cudaVectorType projectorKetTimesVector2;
+    distributedGPUVec<double> projectorKetTimesVector2;
     if (dftParameters::overlapComputeCommunCheby)
            projectorKetTimesVector2.reinit(projectorKetTimesVector);
 
@@ -1460,7 +1460,7 @@ namespace dftfe
   chebyshevOrthogonalizedSubspaceIterationSolverCUDA::solveNoRRMixedPrec(operatorDFTCUDAClass  & operatorMatrix,
 							    double* eigenVectorsFlattenedCUDA,
                                                             const unsigned int flattenedSize,
-							    vectorType  & tempEigenVec,
+							    distributedCPUVec<double>  & tempEigenVec,
 							    const unsigned int totalNumberWaveFunctions,
 							    std::vector<double>        & eigenValues,
 							    const MPI_Comm &interBandGroupComm,
@@ -1507,50 +1507,50 @@ namespace dftfe
     const unsigned int chebyBlockSize=std::min(dftParameters::chebyWfcBlockSize,
 						 totalNumberWaveFunctions);
 
-    cudaVectorType cudaFlattenedArrayBlock;
+    distributedGPUVec<double> cudaFlattenedArrayBlock;
     vectorTools::createDealiiVector(operatorMatrix.getMatrixFreeData()->get_vector_partitioner(),
 				    chebyBlockSize,
 				    cudaFlattenedArrayBlock);
 
 
-    cudaVectorType YArray;
+    distributedGPUVec<double> YArray;
     YArray.reinit(cudaFlattenedArrayBlock);
 
 
-     cudaVectorType YArrayCA;
+     distributedGPUVec<double> YArrayCA;
     if (dftParameters::chebyCommunAvoidanceAlgo) 
          YArrayCA.reinit(cudaFlattenedArrayBlock);
 
-    cudaVectorTypeFloat cudaFlattenedFloatArrayBlock;
+    distributedGPUVec<float> cudaFlattenedFloatArrayBlock;
     vectorTools::createDealiiVector(operatorMatrix.getMatrixFreeData()->get_vector_partitioner(),
                                     chebyBlockSize,
                                     cudaFlattenedFloatArrayBlock);
 
 
-    cudaVectorType projectorKetTimesVector;
+    distributedGPUVec<double> projectorKetTimesVector;
     vectorTools::createDealiiVector(operatorMatrix.getProjectorKetTimesVectorSingle().get_partitioner(),
 				    chebyBlockSize,
 				    projectorKetTimesVector);
 
 
-    cudaVectorTypeFloat  projectorKetTimesVectorFloat;
+    distributedGPUVec<float>  projectorKetTimesVectorFloat;
     if (dftParameters::useMixedPrecChebyNonLocal)
             vectorTools::createDealiiVector(operatorMatrix.getProjectorKetTimesVectorSingle().get_partitioner(),
                                             chebyBlockSize,
                                             projectorKetTimesVectorFloat);
 
 
-    cudaVectorType cudaFlattenedArrayBlock2;
+    distributedGPUVec<double> cudaFlattenedArrayBlock2;
     if (dftParameters::overlapComputeCommunCheby || dftParameters::chebyCommunAvoidanceAlgo)
            cudaFlattenedArrayBlock2.reinit(cudaFlattenedArrayBlock);
 
 
-    cudaVectorType YArray2;
+    distributedGPUVec<double> YArray2;
     if (dftParameters::overlapComputeCommunCheby)
            YArray2.reinit(cudaFlattenedArrayBlock2);
 
 
-    cudaVectorType projectorKetTimesVector2;
+    distributedGPUVec<double> projectorKetTimesVector2;
     if (dftParameters::overlapComputeCommunCheby)
            projectorKetTimesVector2.reinit(projectorKetTimesVector);
 

@@ -37,7 +37,7 @@ namespace dftfe {
     template<unsigned int FEOrder>
     void poissonSolverProblem<FEOrder>::reinit
                     (const dealii::MatrixFree<3,double> & matrixFreeData,
-		     vectorType & x,
+		     distributedCPUVec<double> & x,
 		     const dealii::ConstraintMatrix & constraintMatrix,
 		     const unsigned int matrixFreeVectorComponent,
 	             const std::map<dealii::types::global_dof_index, double> & atoms,
@@ -71,7 +71,7 @@ namespace dftfe {
     template<unsigned int FEOrder>
     void poissonSolverProblem<FEOrder>::reinit
                           (const dealii::MatrixFree<3,double> & matrixFreeData,
-		           vectorType & x,
+		           distributedCPUVec<double> & x,
 		           const dealii::ConstraintMatrix & constraintMatrix,
 		           const unsigned int matrixFreeVectorComponent,
 	                   const std::map<dealii::types::global_dof_index, double> & atoms,
@@ -104,7 +104,7 @@ namespace dftfe {
     }
 
     template<unsigned int FEOrder>
-    vectorType & poissonSolverProblem<FEOrder>::getX()
+    distributedCPUVec<double> & poissonSolverProblem<FEOrder>::getX()
     {
        return *d_xPtr;
     }
@@ -151,7 +151,7 @@ namespace dftfe {
     }
 
     template<unsigned int FEOrder>
-    void poissonSolverProblem<FEOrder>::computeRhs(vectorType  & rhs)
+    void poissonSolverProblem<FEOrder>::computeRhs(distributedCPUVec<double>  & rhs)
     {
 
 	rhs.reinit(*d_xPtr);
@@ -175,7 +175,7 @@ namespace dftfe {
 
       if (!d_rhoValuesPtr)
       {
-	      vectorType tempvec;
+	      distributedCPUVec<double> tempvec;
 	      tempvec.reinit(rhs);
 	      tempvec=0.0;
 	      d_constraintMatrixPtr->distribute(tempvec);
@@ -244,8 +244,8 @@ namespace dftfe {
 
     //Matrix-Free Jacobi preconditioner application
     template<unsigned int FEOrder>
-    void  poissonSolverProblem<FEOrder>::precondition_Jacobi(vectorType& dst,
-	                                                      const vectorType& src,
+    void  poissonSolverProblem<FEOrder>::precondition_Jacobi(distributedCPUVec<double>& dst,
+	                                                      const distributedCPUVec<double>& src,
 						              const double omega) const
     {
       dst = src;
@@ -256,7 +256,7 @@ namespace dftfe {
     // u_o= -\sum_{i \neq o} a_i * u_i where i runs over all dofs
     // except the mean value constrained dof (o^{th}) 
     template<unsigned int FEOrder>
-    void poissonSolverProblem<FEOrder>::meanValueConstraintDistribute(vectorType& vec) const
+    void poissonSolverProblem<FEOrder>::meanValueConstraintDistribute(distributedCPUVec<double>& vec) const
     {
           // -\sum_{i \neq o} a_i * u_i computation which involves summation across MPI tasks
 	  const double constrainedNodeValue=d_meanValueConstraintVec*vec;
@@ -269,7 +269,7 @@ namespace dftfe {
     // Distribute value at mean value constrained dof (u_o) to all other dofs
     // u_i+= -a_i * u_o, and subsequently set u_o to 0 
     template<unsigned int FEOrder>
-    void poissonSolverProblem<FEOrder>::meanValueConstraintDistributeSlaveToMaster(vectorType& vec) const
+    void poissonSolverProblem<FEOrder>::meanValueConstraintDistributeSlaveToMaster(distributedCPUVec<double>& vec) const
     {
 	  double constrainedNodeValue=0;
 	  if (dealii::Utilities::MPI::this_mpi_process(mpi_communicator) ==0)
@@ -288,7 +288,7 @@ namespace dftfe {
     }
 
     template<unsigned int FEOrder>
-    void poissonSolverProblem<FEOrder>::meanValueConstraintSetZero(vectorType& vec) const
+    void poissonSolverProblem<FEOrder>::meanValueConstraintSetZero(distributedCPUVec<double>& vec) const
     {
         if (d_isMeanValueConstraintComputed)
 	  if (dealii::Utilities::MPI::this_mpi_process(mpi_communicator) ==0)
@@ -427,8 +427,8 @@ namespace dftfe {
     //Ax
     template<unsigned int FEOrder>
     void poissonSolverProblem<FEOrder>::AX (const dealii::MatrixFree<3,double>  &matrixFreeData,
-				     vectorType &dst,
-				     const vectorType &src,
+				     distributedCPUVec<double> &dst,
+				     const distributedCPUVec<double> &src,
 				     const std::pair<unsigned int,unsigned int> &cell_range) const
     {
       dealii::VectorizedArray<double>  quarter = dealii::make_vectorized_array (1.0/(4.0*M_PI));
@@ -453,13 +453,13 @@ namespace dftfe {
 
 
     template<unsigned int FEOrder>
-    void poissonSolverProblem<FEOrder>::vmult(vectorType &Ax,const vectorType &x) const
+    void poissonSolverProblem<FEOrder>::vmult(distributedCPUVec<double> &Ax,const distributedCPUVec<double> &x) const
     {
       Ax=0.0;
 
       if (d_isMeanValueConstraintComputed)
       {
-	      vectorType tempVec=x;
+	      distributedCPUVec<double> tempVec=x;
 	      meanValueConstraintDistribute(tempVec);
 
 	      d_matrixFreeDataPtr->cell_loop (&poissonSolverProblem<FEOrder>::AX, this, Ax, tempVec);

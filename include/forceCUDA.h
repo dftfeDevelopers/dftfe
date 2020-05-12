@@ -27,7 +27,7 @@ namespace dftfe
    namespace forceCUDA
    {
      void interpolatePsiComputeELocWfcEshelbyTensorNonPeriodicD(operatorDFTCUDAClass & operatorMatrix,
-						  cudaVectorType & Xb,
+						  distributedGPUVec<double> & Xb,
 						  const unsigned int BVec,
 						  const unsigned int numCells,
 						  const unsigned int numQuads,
@@ -48,7 +48,7 @@ namespace dftfe
 
 
      void interpolatePsiNLPD(operatorDFTCUDAClass & operatorMatrix,
-                          cudaVectorType & Xb,
+                          distributedGPUVec<double> & Xb,
                           const unsigned int BVec,
                           const unsigned int N,
                           const unsigned int numCells,
@@ -72,8 +72,8 @@ namespace dftfe
                             thrust::device_vector<double> & projectorKetTimesPsiTimesVTimesPartOccContractionPsiQuadsFlattenedH);
 
       void gpuPortedForceKernelsAllD(operatorDFTCUDAClass & operatorMatrix,
-                        cudaVectorType & cudaFlattenedArrayBlock,
-                        cudaVectorType & projectorKetTimesVectorD,
+                        distributedGPUVec<double> & cudaFlattenedArrayBlock,
+                        distributedGPUVec<double> & projectorKetTimesVectorD,
                         const double * X,
 			const thrust::device_vector<double> & eigenValuesD,
 			const thrust::device_vector<double> & partialOccupanciesD,

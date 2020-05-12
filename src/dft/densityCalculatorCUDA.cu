@@ -216,9 +216,9 @@ namespace dftfe
            std::vector<double> partialOccupVec(BVec,0.0);
            thrust::device_vector<double> partialOccupVecDevice(BVec,0.0);
 
-           //cudaVectorType & cudaFlattenedArrayBlock = operatorMatrix.getBlockCUDADealiiVector();
+           //distributedGPUVec<double> & cudaFlattenedArrayBlock = operatorMatrix.getBlockCUDADealiiVector();
 
-           cudaVectorType cudaFlattenedArrayBlock;
+           distributedGPUVec<double> cudaFlattenedArrayBlock;
            vectorTools::createDealiiVector(operatorMatrix.getMatrixFreeData()->get_vector_partitioner(),
    				           BVec,
 				           cudaFlattenedArrayBlock);

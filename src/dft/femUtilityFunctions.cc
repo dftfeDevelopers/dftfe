@@ -22,7 +22,7 @@
 //
 template <unsigned int FEOrder>
 void dftClass<FEOrder>::interpolateNodalDataToQuadratureData(dealii::MatrixFree<3,double> & matrixFreeData,
-							     const vectorType & nodalField,
+							     const distributedCPUVec<double> & nodalField,
 							     std::map<dealii::CellId, std::vector<double> > & quadratureValueData,
 							     std::map<dealii::CellId, std::vector<double> > & quadratureGradValueData,
                                                              std::map<dealii::CellId, std::vector<double> > & quadratureHessianValueData,
@@ -100,7 +100,7 @@ template <unsigned int FEOrder>
 void dftClass<FEOrder>::interpolateNodalDataToQuadratureData(dealii::MatrixFree<3,double> & matrixFreeData,
                                                              const unsigned int dofHandlerId,
                                                              const unsigned int quadratureId,
-							     const vectorType & nodalField,
+							     const distributedCPUVec<double> & nodalField,
 							     std::map<dealii::CellId, std::vector<double> > & quadratureValueData,
 							     std::map<dealii::CellId, std::vector<double> > & quadratureGradValueData,
 							     const bool isEvaluateGradData)
@@ -151,8 +151,8 @@ void dftClass<FEOrder>::interpolateNodalDataToQuadratureData(dealii::MatrixFree<
 }
 
 template <unsigned int FEOrder>
-void dftClass<FEOrder>::interpolateFieldsFromPrevToCurrentMesh(std::vector<vectorType*> fieldsPrevious,
-                                                  std::vector<vectorType* > fieldsCurrent,
+void dftClass<FEOrder>::interpolateFieldsFromPrevToCurrentMesh(std::vector<distributedCPUVec<double>*> fieldsPrevious,
+                                                  std::vector<distributedCPUVec<double>* > fieldsCurrent,
                                                   const dealii::FESystem<3> & FEPrev,
                                                   const dealii::FESystem<3> & FECurrent,
                                                   const dealii::ConstraintMatrix & constraintsCurrent)
@@ -177,7 +177,7 @@ void dftClass<FEOrder>::interpolateFieldsFromPrevToCurrentMesh(std::vector<vecto
 //
 template <unsigned int FEOrder>
 double dftClass<FEOrder>::fieldGradl2Norm(const dealii::MatrixFree<3,double> & matrixFreeDataObject,
-				      const vectorType & nodalField)
+				      const distributedCPUVec<double> & nodalField)
 
 {
   FEEvaluation<C_DIM,C_num1DKerkerPoly<FEOrder>(),C_num1DQuad<C_num1DKerkerPoly<FEOrder>()>(),1,double> fe_evalField(matrixFreeDataObject);

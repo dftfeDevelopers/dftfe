@@ -242,7 +242,7 @@ namespace dftfe {
     //
     //create a solution transfer object and prepare for refinement and solution transfer
     //
-    parallel::distributed::SolutionTransfer<3,vectorType> solTrans(d_dofHandlerMoveMesh);
+    parallel::distributed::SolutionTransfer<3,distributedCPUVec<double>> solTrans(d_dofHandlerMoveMesh);
     d_triaPtr->set_all_refine_flags();
     d_triaPtr->prepare_coarsening_and_refinement();
     solTrans.prepare_for_coarsening_and_refinement(d_incrementalDisplacement);

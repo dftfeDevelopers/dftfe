@@ -35,7 +35,7 @@ void dftClass<FEOrder>::compute_localizationLength(const std::string & locLength
   firstMomentY.resize(d_numEigenValues);
   firstMomentZ.resize(d_numEigenValues);
 
-  std::vector<vectorType> tempVec(1);
+  std::vector<distributedCPUVec<double>> tempVec(1);
   tempVec[0].reinit(d_tempEigenVec);
 
   //

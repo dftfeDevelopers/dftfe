@@ -168,13 +168,13 @@ namespace dftfe
                                                       double * projectorKetTimesPsiTimesVH)
       {
 
-	    cudaVectorType cudaFlattenedArrayBlock;
+	    distributedGPUVec<double> cudaFlattenedArrayBlock;
 	    vectorTools::createDealiiVector(operatorMatrix.getMatrixFreeData()->get_vector_partitioner(),
 					    BVec,
 					    cudaFlattenedArrayBlock);
 
 
-	    cudaVectorType projectorKetTimesVector;
+	    distributedGPUVec<double> projectorKetTimesVector;
 	    vectorTools::createDealiiVector(operatorMatrix.getProjectorKetTimesVectorSingle().get_partitioner(),
 					    BVec,
 					    projectorKetTimesVector);
@@ -207,7 +207,7 @@ namespace dftfe
 
 
      void interpolatePsiComputeELocWfcEshelbyTensorNonPeriodicD(operatorDFTCUDAClass & operatorMatrix,
-						  cudaVectorType & Xb,
+						  distributedGPUVec<double> & Xb,
 						  const unsigned int BVec,
 						  const unsigned int numCells,
 						  const unsigned int numQuads,
@@ -393,7 +393,7 @@ namespace dftfe
      }
 
      void interpolatePsiNLPD(operatorDFTCUDAClass & operatorMatrix,
-                          cudaVectorType & Xb,
+                          distributedGPUVec<double> & Xb,
                           const unsigned int BVec,
                           const unsigned int N,
                           const unsigned int numCells,
@@ -497,8 +497,8 @@ namespace dftfe
 
 
      void gpuPortedForceKernelsAllD(operatorDFTCUDAClass & operatorMatrix,
-                             cudaVectorType & cudaFlattenedArrayBlock,
-                             cudaVectorType & projectorKetTimesVectorD,
+                             distributedGPUVec<double> & cudaFlattenedArrayBlock,
+                             distributedGPUVec<double> & projectorKetTimesVectorD,
                              const double * X,
 		             const thrust::device_vector<double> & eigenValuesD,
 			     const thrust::device_vector<double> & partialOccupanciesD,
@@ -659,8 +659,8 @@ namespace dftfe
             MPI_Barrier(MPI_COMM_WORLD);
             double gpu_time=MPI_Wtime();
 
-            cudaVectorType cudaFlattenedArrayBlock;
-            cudaVectorType projectorKetTimesVectorD;
+            distributedGPUVec<double> cudaFlattenedArrayBlock;
+            distributedGPUVec<double> projectorKetTimesVectorD;
 	    vectorTools::createDealiiVector(operatorMatrix.getMatrixFreeData()->get_vector_partitioner(),
 					   blockSize,
 					   cudaFlattenedArrayBlock);

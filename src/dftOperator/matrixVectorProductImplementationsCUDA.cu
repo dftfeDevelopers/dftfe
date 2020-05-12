@@ -25,8 +25,8 @@
 
 template<unsigned int FEOrder>
 void kohnShamDFTOperatorCUDAClass<FEOrder>::computeLocalHamiltonianTimesXMF (const dealii::MatrixFree<3,double>  &data,
-							   std::vector<vectorType>  &dst,
-							   const std::vector<vectorType>  &src,
+							   std::vector<distributedCPUVec<double>>  &dst,
+							   const std::vector<distributedCPUVec<double>>  &src,
 							   const std::pair<unsigned int,unsigned int> &cell_range) const
 {
   VectorizedArray<double>  half = make_vectorized_array(0.5);
@@ -305,9 +305,9 @@ void kohnShamDFTOperatorCUDAClass<FEOrder>::computeLocalHamiltonianTimesX(const 
 
 
 template<unsigned int FEOrder>
-void kohnShamDFTOperatorCUDAClass<FEOrder>::computeLocalHamiltonianTimesX(const dealii::LinearAlgebra::distributed::Vector<double> & src,
+void kohnShamDFTOperatorCUDAClass<FEOrder>::computeLocalHamiltonianTimesX(const distributedCPUVec<double> & src,
 							              const unsigned int numberWaveFunctions,
-							              dealii::LinearAlgebra::distributed::Vector<double> & dst) const
+							              distributedCPUVec<double> & dst) const
 {
 
 

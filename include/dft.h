@@ -307,7 +307,7 @@ namespace dftfe {
 
       /**
        */
-      void initPsiAndRhoFromPreviousGroundStatePsi(std::vector<std::vector<vectorType>> eigenVectors);
+      void initPsiAndRhoFromPreviousGroundStatePsi(std::vector<std::vector<distributedCPUVec<double>>> eigenVectors);
 
 
       /**
@@ -322,8 +322,8 @@ namespace dftfe {
        */
       void updatePrevMeshDataStructures();
 
-      void interpolateFieldsFromPrevToCurrentMesh(std::vector<vectorType*> fieldsPrevious,
-                                                  std::vector<vectorType* > fieldsCurrent,
+      void interpolateFieldsFromPrevToCurrentMesh(std::vector<distributedCPUVec<double>*> fieldsPrevious,
+                                                  std::vector<distributedCPUVec<double>* > fieldsCurrent,
                                                   const dealii::FESystem<3> & FEPrev,
                                                   const dealii::FESystem<3> & FECurrent,
                                                   const dealii::ConstraintMatrix & constraintsCurrent);
@@ -418,7 +418,7 @@ namespace dftfe {
        *@param[in] isEvaluateGradData denotes a flag to evaluate gradients or not
        */
       void interpolateNodalDataToQuadratureData(dealii::MatrixFree<3,double> & matrixFreeData,
-						const vectorType & nodalField,
+						const distributedCPUVec<double> & nodalField,
 						std::map<dealii::CellId, std::vector<double> > & quadratureValueData,
 						std::map<dealii::CellId, std::vector<double> > & quadratureGradValueData,
                                                 std::map<dealii::CellId, std::vector<double> > & quadratureHessianValueData,
@@ -440,7 +440,7 @@ namespace dftfe {
       void interpolateNodalDataToQuadratureData(dealii::MatrixFree<3,double> & matrixFreeData,
 						const unsigned int dofHandlerId,
 						const unsigned int quadratureId,
-						const vectorType & nodalField,
+						const distributedCPUVec<double> & nodalField,
 						std::map<dealii::CellId, std::vector<double> > & quadratureValueData,
 						std::map<dealii::CellId, std::vector<double> > & quadratureGradValueData,
 						const bool isEvaluateGradData);
@@ -468,9 +468,9 @@ namespace dftfe {
 	                             const dealii::AffineConstraints<double> & constraintMatrixBase,
 	                             dealii::AffineConstraints<double> & constraintMatrix);
 
-      void initAtomicRho(vectorType & atomicRhoNodal);
+      void initAtomicRho(distributedCPUVec<double> & atomicRhoNodal);
       void initRho();
-      void computeRhoInitialGuessFromPSI(std::vector<std::vector<vectorType>> eigenVectors);
+      void computeRhoInitialGuessFromPSI(std::vector<std::vector<distributedCPUVec<double>>> eigenVectors);
       void clearRhoData();
 
       /**
@@ -558,12 +558,12 @@ namespace dftfe {
        *@brief Computes total charge by integrating the electron-density
        */
       double totalCharge(const dealii::DoFHandler<3> & dofHandlerOfField,
-			 const vectorType & rhoNodalField,
+			 const distributedCPUVec<double> & rhoNodalField,
 			 std::map<dealii::CellId, std::vector<double> > & rhoQuadValues);
 
 
       double totalCharge(const dealii::DoFHandler<3> & dofHandlerOfField,
-			 const vectorType & rhoNodalField);
+			 const distributedCPUVec<double> & rhoNodalField);
 
 
       double totalCharge(const dealii::DoFHandler<3> & dofHandlerOfField,
@@ -571,14 +571,14 @@ namespace dftfe {
 
 
       double totalCharge(const dealii::MatrixFree<3,double> & matrixFreeDataObject,
-			 const vectorType & rhoNodalField);
+			 const distributedCPUVec<double> & rhoNodalField);
 
 
       double fieldl2Norm(const dealii::MatrixFree<3,double> & matrixFreeDataObject,
-			 const vectorType & rhoNodalField);
+			 const distributedCPUVec<double> & rhoNodalField);
 
       double fieldGradl2Norm(const dealii::MatrixFree<3,double> & matrixFreeDataObject,
-			     const vectorType & field);
+			     const distributedCPUVec<double> & field);
 
       /**
        *@brief Computes net magnetization from the difference of local spin densities
@@ -698,12 +698,12 @@ namespace dftfe {
        */
 
 #ifdef USE_COMPLEX
-      std::complex<double> innerProduct(vectorType & a,
-					vectorType & b);
+      std::complex<double> innerProduct(distributedCPUVec<double> & a,
+					distributedCPUVec<double> & b);
 
       void alphaTimesXPlusY(std::complex<double>   alpha,
-			    vectorType           & x,
-			    vectorType           & y);
+			    distributedCPUVec<double>           & x,
+			    distributedCPUVec<double>           & y);
 
 #endif
       /**
@@ -886,7 +886,7 @@ namespace dftfe {
 
       /// Spectrum split higher eigenvalues computed in Rayleigh-Ritz step
       std::vector<std::vector<double> > eigenValuesRRSplit;
-      std::vector<dealii::LinearAlgebra::distributed::Vector<dataTypes::number> > d_eigenVectorsFlattened;
+      std::vector<distributedCPUVec<dataTypes::number> > d_eigenVectorsFlattened;
       std::vector<std::vector<dataTypes::number> > d_eigenVectorsFlattenedSTL;
       std::vector<std::vector<dataTypes::number> > d_eigenVectorsRotFracDensityFlattenedSTL;
 
@@ -910,8 +910,8 @@ namespace dftfe {
       std::map<dealii::CellId, std::vector<double> > *rhoInValues, *rhoOutValues, *rhoInValuesSpinPolarized, *rhoOutValuesSpinPolarized;
       std::deque<std::map<dealii::CellId,std::vector<double> >> rhoInVals, rhoOutVals, rhoInValsSpinPolarized, rhoOutValsSpinPolarized;
 
-      vectorType d_rhoInNodalValuesRead, d_rhoInNodalValues, d_rhoOutNodalValues, d_rhoOutNodalValuesSplit, d_preCondResidualVector, d_atomicRho;
-      std::deque<vectorType> d_rhoInNodalVals, d_rhoOutNodalVals;
+      distributedCPUVec<double> d_rhoInNodalValuesRead, d_rhoInNodalValues, d_rhoOutNodalValues, d_rhoOutNodalValuesSplit, d_preCondResidualVector, d_atomicRho;
+      std::deque<distributedCPUVec<double>> d_rhoInNodalVals, d_rhoOutNodalVals;
 
       /// for xl-bomd
       std::map<dealii::CellId, std::vector<double> > d_rhoAtomsValues,d_gradRhoAtomsValues, d_hessianRhoAtomsValues;
@@ -931,25 +931,25 @@ namespace dftfe {
 
 
       // storage for total electrostatic potential solution vector corresponding to input scf electron density
-      vectorType d_phiTotRhoIn;
+      distributedCPUVec<double> d_phiTotRhoIn;
 
       // storage for total electrostatic potential solution vector corresponding to output scf electron density
-      vectorType d_phiTotRhoOut;
+      distributedCPUVec<double> d_phiTotRhoOut;
 
       // storage for sum of nuclear electrostatic potential
-      vectorType d_phiExt;
+      distributedCPUVec<double> d_phiExt;
 
       // storage for projection of rho cell quadrature data to nodal field
-      vectorType d_rhoNodalField;
+      distributedCPUVec<double> d_rhoNodalField;
 
       // storage for projection of rho cell quadrature data to nodal field
-      vectorType d_rhoNodalFieldSpin0;
+      distributedCPUVec<double> d_rhoNodalFieldSpin0;
 
       // storage for projection of rho cell quadrature data to nodal field
-      vectorType d_rhoNodalFieldSpin1;
+      distributedCPUVec<double> d_rhoNodalFieldSpin1;
 
       // storage of densities for xl-bomd
-      std::deque<vectorType> d_groundStateDensityHistory;
+      std::deque<distributedCPUVec<double>> d_groundStateDensityHistory;
 
       double d_pspTail = 8.0;
       std::map<dealii::CellId, std::vector<double> > d_pseudoVLoc;
@@ -999,22 +999,22 @@ namespace dftfe {
       std::vector<std::vector<std::vector<std::vector<std::complex<double> > > > > d_nonLocalProjectorElementMatrices,d_nonLocalProjectorElementMatricesConjugate,d_nonLocalProjectorElementMatricesTranspose;
 
 
-      std::vector<dealii::LinearAlgebra::distributed::Vector<std::complex<double> > > d_projectorKetTimesVectorPar;
+      std::vector<distributedCPUVec<std::complex<double> > > d_projectorKetTimesVectorPar;
 
       /// parallel vector used in nonLocalHamiltionian times wavefunction vector computation
       /// pre-initialization of the parallel layout is more efficient than creating the parallel
       /// layout for every nonLocalHamiltionan times wavefunction computation
-      dealii::LinearAlgebra::distributed::Vector<std::complex<double> >  d_projectorKetTimesVectorParFlattened;
+      distributedCPUVec<std::complex<double> >  d_projectorKetTimesVectorParFlattened;
 #else
       std::vector<std::vector<std::vector<double> > > d_nonLocalProjectorElementMatrices,d_nonLocalProjectorElementMatricesConjugate,d_nonLocalProjectorElementMatricesTranspose;
 
 
-      std::vector<dealii::LinearAlgebra::distributed::Vector<double> > d_projectorKetTimesVectorPar;
+      std::vector<distributedCPUVec<double> > d_projectorKetTimesVectorPar;
 
       /// parallel vector used in nonLocalHamiltionian times wavefunction vector computation
       /// pre-initialization of the parallel layout is more efficient than creating the parallel
       /// layout for every nonLocalHamiltionan times wavefunction computation
-      dealii::LinearAlgebra::distributed::Vector<double> d_projectorKetTimesVectorParFlattened;
+      distributedCPUVec<double> d_projectorKetTimesVectorParFlattened;
 #endif
 
       //
@@ -1083,8 +1083,8 @@ namespace dftfe {
       std::vector<double> bLow;
 
 
-      vectorType d_tempEigenVec;
-      vectorType d_tempEigenVecPrev;
+      distributedCPUVec<double> d_tempEigenVec;
+      distributedCPUVec<double> d_tempEigenVecPrev;
 
       bool d_isRestartGroundStateCalcFromChk;
 
@@ -1152,7 +1152,7 @@ namespace dftfe {
 
       void computeResidualNorm(const std::vector<double> & eigenValuesTemp,
 			       kohnShamDFTOperatorClass<FEOrder> & kohnShamDFTEigenOperator,
-			       std::vector<vectorType> & X,
+			       std::vector<distributedCPUVec<double>> & X,
 			       std::vector<double> & residualNorm) const;
 
     };

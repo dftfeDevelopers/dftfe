@@ -76,7 +76,7 @@ namespace dftfe {
 	     *
 	     * @param blockSize number of components for a given node
 	     */
-	    void distribute(cudaVectorType &fieldVector,
+	    void distribute(distributedGPUVec<double> &fieldVector,
 			    const unsigned int blockSize) const;
 
 	    /**
@@ -88,7 +88,7 @@ namespace dftfe {
 	     * care of constraints
 	     * @param blockSize number of components for a given node
 	     */
-	    void distribute_slave_to_master(cudaVectorType &fieldVector,
+	    void distribute_slave_to_master(distributedGPUVec<double> &fieldVector,
 					    const unsigned int blockSize) const;
 
 
@@ -98,7 +98,7 @@ namespace dftfe {
 	     * @param fieldVector parallel dealii vector with fields stored in a flattened format
 	     * @param blockSize number of field components for a given node
 	     */
-	    void set_zero(cudaVectorType &fieldVector,
+	    void set_zero(distributedGPUVec<double> &fieldVector,
 			  const unsigned int blockSize) const;
 
 	    /**

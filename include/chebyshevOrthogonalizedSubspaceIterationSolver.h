@@ -58,7 +58,7 @@ namespace dftfe{
     void solve(operatorDFTClass & operatorMatrix,
 	                                    std::vector<dataTypes::number> & eigenVectorsFlattened,
 					    std::vector<dataTypes::number> & eigenVectorsRotFracDensityFlattened,
-					    vectorType & tempEigenVec,
+					    distributedCPUVec<double> & tempEigenVec,
 					    const unsigned int totalNumberWaveFunctions,
 					    std::vector<double> & eigenValues,
 					    std::vector<double> & residuals,
@@ -71,7 +71,7 @@ namespace dftfe{
      * @brief Solve a generalized eigen problem.
      */
     void solve(operatorDFTClass & operatorMatrix,
-	                                    std::vector<vectorType> & eigenVectors,
+	                                    std::vector<distributedCPUVec<double>> & eigenVectors,
 					    std::vector<double> & eigenValues,
 					    std::vector<double> & residuals);
 

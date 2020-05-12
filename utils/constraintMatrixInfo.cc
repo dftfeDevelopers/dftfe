@@ -175,7 +175,7 @@ namespace dftUtils
   //set the constrained degrees of freedom to values so that constraints
   //are satisfied
   //
-  void constraintMatrixInfo::distribute(dealii::LinearAlgebra::distributed::Vector<double> &fieldVector) const
+  void constraintMatrixInfo::distribute(distributedCPUVec<double> &fieldVector) const
   {
     fieldVector.update_ghost_values();
     unsigned int count = 0;
@@ -193,7 +193,7 @@ namespace dftUtils
 
 
   template<typename T>
-  void constraintMatrixInfo::distribute(dealii::LinearAlgebra::distributed::Vector<T> &fieldVector,
+  void constraintMatrixInfo::distribute(distributedCPUVec<T> &fieldVector,
 					const unsigned int blockSize) const
   {
     fieldVector.update_ghost_values();
@@ -244,7 +244,7 @@ namespace dftUtils
   //are satisfied for flattened array
   //
   template<typename T>
-  void constraintMatrixInfo::distribute_slave_to_master(dealii::LinearAlgebra::distributed::Vector<T> & fieldVector,
+  void constraintMatrixInfo::distribute_slave_to_master(distributedCPUVec<T> & fieldVector,
 							const unsigned int blockSize) const
   {
     unsigned int count = 0;
@@ -279,7 +279,7 @@ namespace dftUtils
   }
 
   template<typename T>
-  void constraintMatrixInfo::set_zero(dealii::LinearAlgebra::distributed::Vector<T> & fieldVector,
+  void constraintMatrixInfo::set_zero(distributedCPUVec<T> & fieldVector,
 				      const unsigned int blockSize) const
   {
     for(unsigned int i = 0; i < d_rowIdsLocal.size(); ++i)
@@ -309,13 +309,13 @@ namespace dftUtils
   }
 
 
-  template void constraintMatrixInfo::distribute(dealii::LinearAlgebra::distributed::Vector<dataTypes::number> & fieldVector,
+  template void constraintMatrixInfo::distribute(distributedCPUVec<dataTypes::number> & fieldVector,
 						 const unsigned int blockSize) const;
 
-  template void constraintMatrixInfo::distribute_slave_to_master(dealii::LinearAlgebra::distributed::Vector<dataTypes::number> & fieldVector,
+  template void constraintMatrixInfo::distribute_slave_to_master(distributedCPUVec<dataTypes::number> & fieldVector,
 						 const unsigned int blockSize) const;
 
-  template void constraintMatrixInfo::set_zero(dealii::LinearAlgebra::distributed::Vector<dataTypes::number> & fieldVector,
+  template void constraintMatrixInfo::set_zero(distributedCPUVec<dataTypes::number> & fieldVector,
 						 const unsigned int blockSize) const;
 
 }

@@ -152,7 +152,7 @@ namespace dftfe {
 	  const std::vector<std::map<dealii::types::global_dof_index, dealii::Point<3>> > & getClosestAtomLocationsBins() const;
 
 	  /// get const reference to map of global dof index and vself field initial value in each bin
-	  const std::vector<vectorType> & getVselfFieldBins() const;
+	  const std::vector<distributedCPUVec<double>> & getVselfFieldBins() const;
 
 	  /// get const reference to d_atomIdBinIdMapLocalAllImages
 	  const std::map<unsigned int, unsigned int>  & getAtomIdBinIdMapLocalAllImages() const;
@@ -207,7 +207,7 @@ namespace dftfe {
         std::map<unsigned int, unsigned int> d_atomIdBinIdMapLocalAllImages;
 
 	/// solved vself solution field for each bin
-	std::vector<vectorType> d_vselfFieldBins;
+	std::vector<distributedCPUVec<double>> d_vselfFieldBins;
 
         //std::vector<double> d_inhomoIdsColoredVecFlattened;
 

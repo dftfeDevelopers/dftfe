@@ -100,7 +100,7 @@ namespace dftfe {
 
   template<unsigned int FEOrder>
   void kohnShamDFTOperatorClass<FEOrder>::reinit(const unsigned int numberWaveFunctions,
-				   dealii::LinearAlgebra::distributed::Vector<dataTypes::number> & flattenedArray,
+				   distributedCPUVec<dataTypes::number> & flattenedArray,
 				   bool flag)
   {
 
@@ -150,8 +150,8 @@ void kohnShamDFTOperatorClass<FEOrder>::reinit(const unsigned int numberWaveFunc
 template<unsigned int FEOrder>
 void kohnShamDFTOperatorClass<FEOrder>::computeMassVector(const dealii::DoFHandler<3> & dofHandler,
 	                                    const dealii::ConstraintMatrix & constraintMatrix,
-			                    vectorType & sqrtMassVec,
-			                    vectorType & invSqrtMassVec)
+			                    distributedCPUVec<double> & sqrtMassVec,
+			                    distributedCPUVec<double> & invSqrtMassVec)
 {
   computing_timer.enter_section("kohnShamDFTOperatorClass Mass assembly");
   invSqrtMassVec = 0.0;
@@ -213,8 +213,8 @@ void kohnShamDFTOperatorClass<FEOrder>::reinitkPointIndex(unsigned int & kPointI
 
 template<unsigned int FEOrder>
 void kohnShamDFTOperatorClass<FEOrder>::computeVEff(const std::map<dealii::CellId,std::vector<double> >* rhoValues,
-						    const vectorType & phi,
-						    const vectorType & phiExt,
+						    const distributedCPUVec<double> & phi,
+						    const distributedCPUVec<double> & phiExt,
 						    const std::map<dealii::CellId,std::vector<double> > & pseudoValues)
 {
   const unsigned int n_cells = dftPtr->matrix_free_data.n_macro_cells();
@@ -301,8 +301,8 @@ void kohnShamDFTOperatorClass<FEOrder>::computeVEff(const std::map<dealii::CellI
 template<unsigned int FEOrder>
 void kohnShamDFTOperatorClass<FEOrder>::computeVEff(const std::map<dealii::CellId,std::vector<double> >* rhoValues,
 				      const std::map<dealii::CellId,std::vector<double> >* gradRhoValues,
-				      const vectorType & phi,
-				      const vectorType & phiExt,
+				      const distributedCPUVec<double> & phi,
+				      const distributedCPUVec<double> & phiExt,
 				      const std::map<dealii::CellId,std::vector<double> > & pseudoValues)
 {
   const unsigned int n_cells = dftPtr->matrix_free_data.n_macro_cells();
@@ -412,11 +412,11 @@ void kohnShamDFTOperatorClass<FEOrder>::computeVEff(const std::map<dealii::CellI
 
 #ifdef USE_COMPLEX
   template<unsigned int FEOrder>
-  void kohnShamDFTOperatorClass<FEOrder>::HX(dealii::LinearAlgebra::distributed::Vector<std::complex<double> > & src,
+  void kohnShamDFTOperatorClass<FEOrder>::HX(distributedCPUVec<std::complex<double> > & src,
 			       const unsigned int numberWaveFunctions,
 			       const bool scaleFlag,
 			       const double scalar,
-			       dealii::LinearAlgebra::distributed::Vector<std::complex<double> > & dst)
+			       distributedCPUVec<std::complex<double> > & dst)
 
 
   {
@@ -540,28 +540,28 @@ void kohnShamDFTOperatorClass<FEOrder>::computeVEff(const std::map<dealii::CellI
   }
 
  template<unsigned int FEOrder>
- void kohnShamDFTOperatorClass<FEOrder>::HX(dealii::LinearAlgebra::distributed::Vector<std::complex<double> > & src,
+ void kohnShamDFTOperatorClass<FEOrder>::HX(distributedCPUVec<std::complex<double> > & src,
 					    const unsigned int numberWaveFunctions,
-					    dealii::LinearAlgebra::distributed::Vector<std::complex<double> > & dst)
+					    distributedCPUVec<std::complex<double> > & dst)
  {
    AssertThrow(false,dftUtils::ExcNotImplementedYet());
  }
 
 template<unsigned int FEOrder>
-void kohnShamDFTOperatorClass<FEOrder>::MX(dealii::LinearAlgebra::distributed::Vector<std::complex<double> > & src,
+void kohnShamDFTOperatorClass<FEOrder>::MX(distributedCPUVec<std::complex<double> > & src,
 					   const unsigned int numberWaveFunctions,
-					   dealii::LinearAlgebra::distributed::Vector<std::complex<double> > & dst)
+					   distributedCPUVec<std::complex<double> > & dst)
   {
     AssertThrow(false,dftUtils::ExcNotImplementedYet());
   }
 
 #else
  template<unsigned int FEOrder>
- void kohnShamDFTOperatorClass<FEOrder>::HX(dealii::LinearAlgebra::distributed::Vector<double> & src,
+ void kohnShamDFTOperatorClass<FEOrder>::HX(distributedCPUVec<double> & src,
 					    const unsigned int numberWaveFunctions,
 					    const bool scaleFlag,
 					    const double scalar,
-					    dealii::LinearAlgebra::distributed::Vector<double> & dst)
+					    distributedCPUVec<double> & dst)
 
 
   {
@@ -686,9 +686,9 @@ void kohnShamDFTOperatorClass<FEOrder>::MX(dealii::LinearAlgebra::distributed::V
   }
 
   template<unsigned int FEOrder>
-  void kohnShamDFTOperatorClass<FEOrder>::HX(dealii::LinearAlgebra::distributed::Vector<double> & src,
+  void kohnShamDFTOperatorClass<FEOrder>::HX(distributedCPUVec<double> & src,
 					     const unsigned int numberWaveFunctions,
-					     dealii::LinearAlgebra::distributed::Vector<double> & dst)
+					     distributedCPUVec<double> & dst)
 
 
   {
@@ -763,9 +763,9 @@ void kohnShamDFTOperatorClass<FEOrder>::MX(dealii::LinearAlgebra::distributed::V
   }
 
 template<unsigned int FEOrder>
-  void kohnShamDFTOperatorClass<FEOrder>::MX(dealii::LinearAlgebra::distributed::Vector<double> & src,
+  void kohnShamDFTOperatorClass<FEOrder>::MX(distributedCPUVec<double> & src,
 					     const unsigned int numberWaveFunctions,
-					     dealii::LinearAlgebra::distributed::Vector<double> & dst)
+					     distributedCPUVec<double> & dst)
 
 
   {
@@ -823,8 +823,8 @@ template<unsigned int FEOrder>
 
   //HX
   template<unsigned int FEOrder>
-  void kohnShamDFTOperatorClass<FEOrder>::HX(std::vector<vectorType> &src,
-			       std::vector<vectorType> &dst)
+  void kohnShamDFTOperatorClass<FEOrder>::HX(std::vector<distributedCPUVec<double>> &src,
+			       std::vector<distributedCPUVec<double>> &dst)
   {
 
     for (unsigned int i = 0; i < src.size(); i++)
@@ -851,7 +851,7 @@ template<unsigned int FEOrder>
     //
     //Finally evaluate M^{-1/2}*H*M^{-1/2}*X
     //
-    for (std::vector<vectorType>::iterator it=dst.begin(); it!=dst.end(); it++)
+    for (std::vector<distributedCPUVec<double>>::iterator it=dst.begin(); it!=dst.end(); it++)
       {
 	(*it).scale(d_invSqrtMassVector);
       }
@@ -859,7 +859,7 @@ template<unsigned int FEOrder>
     //
     //unscale src back
     //
-    for (std::vector<vectorType>::iterator it=src.begin(); it!=src.end(); it++)
+    for (std::vector<distributedCPUVec<double>>::iterator it=src.begin(); it!=src.end(); it++)
       {
 	(*it).scale(d_sqrtMassVector); //MHMX
       }
@@ -872,14 +872,14 @@ template<unsigned int FEOrder>
   //XHX
 #ifdef USE_COMPLEX
   template<unsigned int FEOrder>
-  void kohnShamDFTOperatorClass<FEOrder>::XtHX(std::vector<vectorType> & src,
+  void kohnShamDFTOperatorClass<FEOrder>::XtHX(std::vector<distributedCPUVec<double>> & src,
 				 std::vector<std::complex<double> > & ProjHam)
   {
 
     //Resize ProjHam
     ProjHam.resize(src.size()*src.size(),0.0);
 
-    std::vector<vectorType> tempPSI3(src.size());
+    std::vector<distributedCPUVec<double>> tempPSI3(src.size());
 
     for(unsigned int i = 0; i < src.size(); ++i)
       tempPSI3[i].reinit(src[0]);
@@ -907,7 +907,7 @@ template<unsigned int FEOrder>
     //extract vectors at the processor level(too much memory expensive)
     //
     unsigned int index = 0;
-    for (std::vector<vectorType>::const_iterator it = src.begin(); it != src.end(); it++)
+    for (std::vector<distributedCPUVec<double>>::const_iterator it = src.begin(); it != src.end(); it++)
       {
 	(*it).extract_subvector_to(dftPtr->getLocalDofIndicesReal().begin(),
 				   dftPtr->getLocalDofIndicesReal().end(),
@@ -974,7 +974,7 @@ template<unsigned int FEOrder>
     //
     //create temporary array XTemp
     //
-    dealii::LinearAlgebra::distributed::Vector<std::complex<double>> XTemp;
+    distributedCPUVec<std::complex<double>> XTemp;
     reinit(numberWaveFunctions,
 	   XTemp,
 	   true);
@@ -986,7 +986,7 @@ template<unsigned int FEOrder>
     //
     //create temporary array Y
     //
-    dealii::LinearAlgebra::distributed::Vector<std::complex<double> > Y;
+    distributedCPUVec<std::complex<double> > Y;
     reinit(numberWaveFunctions,
 	   Y,
 	   true);
@@ -1044,14 +1044,14 @@ template<unsigned int FEOrder>
   }
 #else
   template<unsigned int FEOrder>
-  void kohnShamDFTOperatorClass<FEOrder>::XtHX(std::vector<vectorType> &src,
+  void kohnShamDFTOperatorClass<FEOrder>::XtHX(std::vector<distributedCPUVec<double>> &src,
 				 std::vector<double> & ProjHam)
   {
 
     //Resize ProjHam
     ProjHam.resize(src.size()*src.size(),0.0);
 
-    std::vector<vectorType> tempPSI3(src.size());
+    std::vector<distributedCPUVec<double>> tempPSI3(src.size());
 
     for(unsigned int i = 0; i < src.size(); ++i)
       {
@@ -1085,7 +1085,7 @@ template<unsigned int FEOrder>
     src[0].locally_owned_elements().fill_index_vector(local_dof_indices);
 
     unsigned int index=0;
-    for (std::vector<vectorType>::const_iterator it=src.begin(); it!=src.end(); it++)
+    for (std::vector<distributedCPUVec<double>>::const_iterator it=src.begin(); it!=src.end(); it++)
       {
 	(*it).extract_subvector_to(local_dof_indices.begin(), local_dof_indices.end(), x.begin()+dofs_per_proc*index);
 	tempPSI3[index].extract_subvector_to(local_dof_indices.begin(), local_dof_indices.end(), hx.begin()+dofs_per_proc*index);
@@ -1117,7 +1117,7 @@ template<unsigned int FEOrder>
     //
     //create temporary array XTemp
     //
-    dealii::LinearAlgebra::distributed::Vector<double> XTemp;
+    distributedCPUVec<double> XTemp;
     reinit(numberWaveFunctions,
 	   XTemp,
 	   true);
@@ -1130,7 +1130,7 @@ template<unsigned int FEOrder>
     //
     //create temporary array Y
     //
-    dealii::LinearAlgebra::distributed::Vector<double> Y;
+    distributedCPUVec<double> Y;
     reinit(numberWaveFunctions,
 	   Y,
 	   true);
@@ -1187,7 +1187,7 @@ template<unsigned int FEOrder>
     const unsigned int numberDofs = X.size()/numberWaveFunctions;
 
     //create temporary arrays XBlock,Hx
-    dealii::LinearAlgebra::distributed::Vector<dataTypes::number> XBlock,HXBlock;
+    distributedCPUVec<dataTypes::number> XBlock,HXBlock;
 
     std::map<unsigned int, unsigned int> globalToLocalColumnIdMap;
     std::map<unsigned int, unsigned int> globalToLocalRowIdMap;
@@ -1358,7 +1358,7 @@ template<unsigned int FEOrder>
     const unsigned int numberDofs = X.size()/numberWaveFunctions;
 
     //create temporary arrays XBlock,Hx
-    dealii::LinearAlgebra::distributed::Vector<dataTypes::number> XBlock,MXBlock;
+    distributedCPUVec<dataTypes::number> XBlock,MXBlock;
 
     std::map<unsigned int, unsigned int> globalToLocalColumnIdMap;
     std::map<unsigned int, unsigned int> globalToLocalRowIdMap;
@@ -1520,7 +1520,7 @@ template<unsigned int FEOrder>
     const unsigned int numberDofs = X.size()/N;
 
     //create temporary arrays XBlock,Hx
-    dealii::LinearAlgebra::distributed::Vector<dataTypes::number> XBlock,HXBlock;
+    distributedCPUVec<dataTypes::number> XBlock,HXBlock;
 
     std::map<unsigned int, unsigned int> globalToLocalColumnIdMap;
     std::map<unsigned int, unsigned int> globalToLocalRowIdMap;
@@ -1740,8 +1740,8 @@ template<unsigned int FEOrder>
 
 template<unsigned int FEOrder>
 void kohnShamDFTOperatorClass<FEOrder>::computeVEffSpinPolarized(const std::map<dealii::CellId,std::vector<double> >* rhoValues,
-						   const vectorType & phi,
-						   const vectorType & phiExt,
+						   const distributedCPUVec<double> & phi,
+						   const distributedCPUVec<double> & phiExt,
 						   const unsigned int spinIndex,
 						   const std::map<dealii::CellId,std::vector<double> > & pseudoValues)
 
@@ -1833,8 +1833,8 @@ void kohnShamDFTOperatorClass<FEOrder>::computeVEffSpinPolarized(const std::map<
 template<unsigned int FEOrder>
 void kohnShamDFTOperatorClass<FEOrder>::computeVEffSpinPolarized(const std::map<dealii::CellId,std::vector<double> >* rhoValues,
 						   const std::map<dealii::CellId,std::vector<double> >* gradRhoValues,
-						   const vectorType & phi,
-						   const vectorType & phiExt,
+						   const distributedCPUVec<double> & phi,
+						   const distributedCPUVec<double> & phiExt,
 						   const unsigned int spinIndex,
 						   const std::map<dealii::CellId,std::vector<double> > & pseudoValues)
 {

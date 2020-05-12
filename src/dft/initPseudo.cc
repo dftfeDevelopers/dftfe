@@ -96,7 +96,7 @@ void dftClass<FEOrder>::initLocalPseudoPotential
   //
   const int numberImageCharges = d_imageIds.size();
 
-  vectorType phiExt;
+  distributedCPUVec<double> phiExt;
   _matrix_free_data.initialize_dof_vector(phiExt,_phiExtDofHandlerIndex);
   phiExt=0;
 
@@ -198,7 +198,7 @@ void dftClass<FEOrder>::initLocalPseudoPotential
 
 				 if (dofClosestChargeLocationMapBins[binId].find(dofId)->second.distance(atom)<1e-5)
 				 {
-				    const vectorType & vselfBin=vselfBinManager.getVselfFieldBins()[binId];
+				    const distributedCPUVec<double> & vselfBin=vselfBinManager.getVselfFieldBins()[binId];
 				    val=vselfBin.local_element(localDofId);
 				 }
 				 else
@@ -518,7 +518,7 @@ void dftClass<FEOrder>::initLocalPseudoPotential
   //get number of image charges used only for periodic
   const int numberImageCharges = d_imageIdsTrunc.size();
 
-  std::vector<vectorType> singleAtomsVself(atomLocations.size()+numberImageCharges);
+  std::vector<distributedCPUVec<double>> singleAtomsVself(atomLocations.size()+numberImageCharges);
   for(unsigned int iAtom = 0; iAtom < atomLocations.size()+numberImageCharges; ++iAtom)
   {
     if (iAtom==0)
@@ -607,7 +607,7 @@ void dftClass<FEOrder>::initLocalPseudoPotential
 			     {
                                      const unsigned int binId=atomIdBinIdMap.find(iAtom)->second;
 			             const int boundaryFlag=boundaryNodeMapBins[binId].find(dofId)->second;
-			             const vectorType & vselfBin=vselfBinManager.getVselfFieldBins()[binId];
+			             const distributedCPUVec<double> & vselfBin=vselfBinManager.getVselfFieldBins()[binId];
 				     double val;
 				     if (boundaryFlag==iAtom)
 				     {
@@ -1665,11 +1665,11 @@ void dftClass<FEOrder>::computeSparseStructureNonLocalProjectors()
    }
 
 #ifdef USE_COMPLEX
-  dealii::LinearAlgebra::distributed::Vector<std::complex<double> > vec(d_locallyOwnedProjectorIdsCurrentProcess,
+  distributedCPUVec<std::complex<double> > vec(d_locallyOwnedProjectorIdsCurrentProcess,
                                                                    d_ghostProjectorIdsCurrentProcess,
                                                                    mpi_communicator);
 #else
-  dealii::LinearAlgebra::distributed::Vector<double > vec(d_locallyOwnedProjectorIdsCurrentProcess,
+  distributedCPUVec<double > vec(d_locallyOwnedProjectorIdsCurrentProcess,
                                                      d_ghostProjectorIdsCurrentProcess,
                                                      mpi_communicator);
 #endif

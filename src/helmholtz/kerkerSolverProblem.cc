@@ -38,7 +38,7 @@ namespace dftfe {
   template<unsigned int FEOrder>
   void kerkerSolverProblem<FEOrder>::init(dealii::MatrixFree<3,double> & matrixFreeDataPRefined,
 					  dealii::ConstraintMatrix & constraintMatrixPRefined,
-					  vectorType & x,
+					  distributedCPUVec<double> & x,
 					  double kerkerMixingParameter)
   {
     d_matrixFreeDataPRefinedPtr = &matrixFreeDataPRefined;
@@ -51,7 +51,7 @@ namespace dftfe {
   
 
   template<unsigned int FEOrder>
-  void kerkerSolverProblem<FEOrder>::reinit(vectorType & x,
+  void kerkerSolverProblem<FEOrder>::reinit(distributedCPUVec<double> & x,
 					    const std::map<dealii::CellId,std::vector<double> > & quadPointValues)
   {
     d_xPtr = &x;
@@ -65,13 +65,13 @@ namespace dftfe {
   }
 
   template<unsigned int FEOrder>
-  vectorType & kerkerSolverProblem<FEOrder>::getX()
+  distributedCPUVec<double> & kerkerSolverProblem<FEOrder>::getX()
   {
     return *d_xPtr;
   }
 
   template<unsigned int FEOrder>
-  void kerkerSolverProblem<FEOrder>::computeRhs(vectorType  & rhs)
+  void kerkerSolverProblem<FEOrder>::computeRhs(distributedCPUVec<double>  & rhs)
   {
 
     rhs.reinit(*d_xPtr);
@@ -125,8 +125,8 @@ namespace dftfe {
 
   //Matrix-Free Jacobi preconditioner application
   template<unsigned int FEOrder>
-  void  kerkerSolverProblem<FEOrder>::precondition_Jacobi(vectorType& dst,
-								  const vectorType& src,
+  void  kerkerSolverProblem<FEOrder>::precondition_Jacobi(distributedCPUVec<double>& dst,
+								  const distributedCPUVec<double>& src,
 								  const double omega) const
   {
     dst = src;
@@ -184,8 +184,8 @@ namespace dftfe {
   //Ax
   template<unsigned int FEOrder>
   void kerkerSolverProblem<FEOrder>::AX(const dealii::MatrixFree<3,double> & matrixFreeData,
-						vectorType &dst,
-						const vectorType &src,
+						distributedCPUVec<double> &dst,
+						const distributedCPUVec<double> &src,
 						const std::pair<unsigned int,unsigned int> &cell_range) const
   {
 
@@ -214,7 +214,7 @@ namespace dftfe {
 
 
   template<unsigned int FEOrder>
-  void kerkerSolverProblem<FEOrder>::vmult(vectorType &Ax,const vectorType &x) const
+  void kerkerSolverProblem<FEOrder>::vmult(distributedCPUVec<double> &Ax,const distributedCPUVec<double> &x) const
   {
     Ax=0.0;
     d_matrixFreeDataPRefinedPtr->cell_loop (&kerkerSolverProblem<FEOrder>::AX, this, Ax, x);

@@ -611,8 +611,8 @@ namespace dftfe
       dealii::IndexSet  ghost_indices=locally_relevant_dofs;
       ghost_indices.subtract_set(locally_owned_dofs);
 
-      dealii::LinearAlgebra::distributed::Vector<double> inhomogBoundaryVec
-	  = dealii::LinearAlgebra::distributed::Vector<double>(locally_owned_dofs,
+      distributedCPUVec<double> inhomogBoundaryVec
+	  = distributedCPUVec<double>(locally_owned_dofs,
                                                           ghost_indices,
                                                           mpi_communicator);
 
@@ -1019,8 +1019,8 @@ namespace dftfe
       dealii::IndexSet  ghost_indices=locally_relevant_dofs;
       ghost_indices.subtract_set(locally_owned_dofs);
 
-      dealii::LinearAlgebra::distributed::Vector<double> inhomogBoundaryVec
-	  = dealii::LinearAlgebra::distributed::Vector<double>(locally_owned_dofs,
+      distributedCPUVec<double> inhomogBoundaryVec
+	  = distributedCPUVec<double>(locally_owned_dofs,
                                                           ghost_indices,
                                                           mpi_communicator);
 
@@ -1206,7 +1206,7 @@ namespace dftfe
     const std::vector<std::map<dealii::types::global_dof_index, dealii::Point<3>> > & vselfBinsManager<FEOrder>::getClosestAtomLocationsBins() const {return  d_dofClosestChargeLocationMap;}
 
     template<unsigned int FEOrder>
-    const std::vector<vectorType> & vselfBinsManager<FEOrder>::getVselfFieldBins() const {return d_vselfFieldBins;}
+    const std::vector<distributedCPUVec<double>> & vselfBinsManager<FEOrder>::getVselfFieldBins() const {return d_vselfFieldBins;}
 
     template<unsigned int FEOrder>
     const std::map<unsigned int, unsigned int>  & vselfBinsManager<FEOrder>::getAtomIdBinIdMapLocalAllImages() const {return d_atomIdBinIdMapLocalAllImages;}

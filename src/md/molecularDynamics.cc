@@ -114,12 +114,12 @@ namespace dftfe {
 	  }
 
 
-	  void recursiveKernelApply(const std::vector<vectorType> & ucontainer,
-                                    const std::vector<vectorType> & vcontainer,
+	  void recursiveKernelApply(const std::vector<distributedCPUVec<double>> & ucontainer,
+                                    const std::vector<distributedCPUVec<double>> & vcontainer,
                                     const double k0,
-                                    const vectorType & x,
+                                    const distributedCPUVec<double> & x,
                                     const unsigned int id,
-				    vectorType & y)
+				    distributedCPUVec<double> & y)
 	  {
               if (id==0)
               {
@@ -128,7 +128,7 @@ namespace dftfe {
               }
               else
               {
-		      vectorType kminus1x, kminus1u;
+		      distributedCPUVec<double> kminus1x, kminus1u;
 		      kminus1x.reinit(y);
                       kminus1u.reinit(y);
 		     
@@ -154,12 +154,12 @@ namespace dftfe {
 	  }
 
 
-	  void recursiveJApply(const std::vector<vectorType> & ucontainer,
-                                    const std::vector<vectorType> & vcontainer,
+	  void recursiveJApply(const std::vector<distributedCPUVec<double>> & ucontainer,
+                                    const std::vector<distributedCPUVec<double>> & vcontainer,
                                     const double c,
-                                    const vectorType & x,
+                                    const distributedCPUVec<double> & x,
                                     const unsigned int id,
-				    vectorType & y)
+				    distributedCPUVec<double> & y)
 	  {
               if (id==0)
               {
@@ -168,7 +168,7 @@ namespace dftfe {
               }
               else
               {
-		      vectorType jminus1x;
+		      distributedCPUVec<double> jminus1x;
                       jminus1x.reinit(y);
 		     
 		      recursiveJApply(ucontainer,
@@ -310,18 +310,18 @@ void molecularDynamics<FEOrder>::run()
 
         const double diracDeltaKernelConstant=-dftParameters::diracDeltaKernelScalingConstant;
         const double k0kernelconstant=1.0/dftParameters::diracDeltaKernelScalingConstant-1.0;//20.0;//20.0
-        std::deque<vectorType> approxDensityContainer;
-        vectorType shadowKSRhoMin;
-        vectorType atomicRho;
-        vectorType approxDensityNext;
-        vectorType rhoErrorVec;
-        std::vector<vectorType> ucontainer(dftParameters::kernelUpdateRankXLBOMD);// for low rank update kernel
-        std::vector<vectorType> vcontainer(dftParameters::kernelUpdateRankXLBOMD);// for low rank update kernel
-        vectorType jv;
-        vectorType peturbedApproxDensity;// for low rank update kernel
-        vectorType temp1;// for central difference
-        vectorType temp2;// for central difference
-        vectorType kernelAction;//
+        std::deque<distributedCPUVec<double>> approxDensityContainer;
+        distributedCPUVec<double> shadowKSRhoMin;
+        distributedCPUVec<double> atomicRho;
+        distributedCPUVec<double> approxDensityNext;
+        distributedCPUVec<double> rhoErrorVec;
+        std::vector<distributedCPUVec<double>> ucontainer(dftParameters::kernelUpdateRankXLBOMD);// for low rank update kernel
+        std::vector<distributedCPUVec<double>> vcontainer(dftParameters::kernelUpdateRankXLBOMD);// for low rank update kernel
+        distributedCPUVec<double> jv;
+        distributedCPUVec<double> peturbedApproxDensity;// for low rank update kernel
+        distributedCPUVec<double> temp1;// for central difference
+        distributedCPUVec<double> temp2;// for central difference
+        distributedCPUVec<double> kernelAction;//
 
 	double kineticEnergy = 0.0;
 
@@ -342,7 +342,7 @@ void molecularDynamics<FEOrder>::run()
         dealii::IndexSet  ghost_indices_=locally_relevant_dofs_;
         ghost_indices_.subtract_set(locally_owned_dofs_);
 
-        vectorType tempVecRestart= dealii::LinearAlgebra::distributed::Vector<double>(locally_owned_dofs_,
+        distributedCPUVec<double> tempVecRestart= distributedCPUVec<double>(locally_owned_dofs_,
                                                                              ghost_indices_,
                                                                              mpi_communicator);
 
@@ -828,9 +828,9 @@ void molecularDynamics<FEOrder>::run()
                     {
                         pcout<<".............Auto meshing step: interpolation of approximate density container to new mesh.............."<<std::endl;
                         //interpolate all the vectors in the approximate density container on the current mesh
-                        std::vector<vectorType* > fieldsPtrsPrevious(approxDensityContainer.size()+1);
-                        std::vector<vectorType* > fieldsPtrsCurrent(approxDensityContainer.size()+1);
-                        std::vector<vectorType> fieldsCurrent(approxDensityContainer.size()+1);
+                        std::vector<distributedCPUVec<double>* > fieldsPtrsPrevious(approxDensityContainer.size()+1);
+                        std::vector<distributedCPUVec<double>* > fieldsPtrsCurrent(approxDensityContainer.size()+1);
+                        std::vector<distributedCPUVec<double>> fieldsCurrent(approxDensityContainer.size()+1);
 
                         for (unsigned int i = 0; i < approxDensityContainer.size(); i++)
                         {
@@ -971,8 +971,8 @@ void molecularDynamics<FEOrder>::run()
 			approxDensityNext.reinit(approxDensityContainer.back()); 
 
 			const unsigned int containerSizeCurrent=approxDensityContainer.size();
-			vectorType & approxDensityTimeT=approxDensityContainer[containerSizeCurrent-1];
-			vectorType & approxDensityTimeTMinusDeltat=containerSizeCurrent>1?
+			distributedCPUVec<double> & approxDensityTimeT=approxDensityContainer[containerSizeCurrent-1];
+			distributedCPUVec<double> & approxDensityTimeTMinusDeltat=containerSizeCurrent>1?
 								       approxDensityContainer[containerSizeCurrent-2]
 								       :approxDensityTimeT;
 			   
@@ -1188,7 +1188,7 @@ void molecularDynamics<FEOrder>::run()
 				   jv.reinit(rhoErrorVec);
 				   kernelAction.reinit(rhoErrorVec);
 
-				   vectorType compvec;
+				   distributedCPUVec<double> compvec;
 				   compvec.reinit(rhoErrorVec);
 				   for (unsigned int irank=0; irank<dftParameters::kernelUpdateRankXLBOMD; irank++)
 				   {
@@ -1847,18 +1847,18 @@ void molecularDynamics<FEOrder>::timingRun()
 
         const double diracDeltaKernelConstant=-dftParameters::diracDeltaKernelScalingConstant;
         const double k0kernelconstant=1.0/dftParameters::diracDeltaKernelScalingConstant-1.0;//20.0;//20.0
-        std::deque<vectorType> approxDensityContainer;
-        vectorType shadowKSRhoMin;
-        vectorType atomicRho;
-        vectorType approxDensityNext;
-        vectorType rhoErrorVec;
-        std::vector<vectorType> ucontainer(dftParameters::kernelUpdateRankXLBOMD);// for low rank update kernel
-        std::vector<vectorType> vcontainer(dftParameters::kernelUpdateRankXLBOMD);// for low rank update kernel
-        vectorType jv;
-        vectorType peturbedApproxDensity;// for low rank update kernel
-        vectorType temp1;// for central difference
-        vectorType temp2;// for central difference
-        vectorType kernelAction;//
+        std::deque<distributedCPUVec<double>> approxDensityContainer;
+        distributedCPUVec<double> shadowKSRhoMin;
+        distributedCPUVec<double> atomicRho;
+        distributedCPUVec<double> approxDensityNext;
+        distributedCPUVec<double> rhoErrorVec;
+        std::vector<distributedCPUVec<double>> ucontainer(dftParameters::kernelUpdateRankXLBOMD);// for low rank update kernel
+        std::vector<distributedCPUVec<double>> vcontainer(dftParameters::kernelUpdateRankXLBOMD);// for low rank update kernel
+        distributedCPUVec<double> jv;
+        distributedCPUVec<double> peturbedApproxDensity;// for low rank update kernel
+        distributedCPUVec<double> temp1;// for central difference
+        distributedCPUVec<double> temp2;// for central difference
+        distributedCPUVec<double> kernelAction;//
 
 	double kineticEnergy = 0.0;
 
@@ -1879,7 +1879,7 @@ void molecularDynamics<FEOrder>::timingRun()
         dealii::IndexSet  ghost_indices_=locally_relevant_dofs_;
         ghost_indices_.subtract_set(locally_owned_dofs_);
 
-        vectorType tempVecRestart= dealii::LinearAlgebra::distributed::Vector<double>(locally_owned_dofs_,
+        distributedCPUVec<double> tempVecRestart= distributedCPUVec<double>(locally_owned_dofs_,
                                                                              ghost_indices_,
                                                                              mpi_communicator);
 
@@ -2366,9 +2366,9 @@ void molecularDynamics<FEOrder>::timingRun()
                     {
                         pcout<<".............Auto meshing step: interpolation of approximate density container to new mesh.............."<<std::endl;
                         //interpolate all the vectors in the approximate density container on the current mesh
-                        std::vector<vectorType* > fieldsPtrsPrevious(approxDensityContainer.size()+1);
-                        std::vector<vectorType* > fieldsPtrsCurrent(approxDensityContainer.size()+1);
-                        std::vector<vectorType> fieldsCurrent(approxDensityContainer.size()+1);
+                        std::vector<distributedCPUVec<double>* > fieldsPtrsPrevious(approxDensityContainer.size()+1);
+                        std::vector<distributedCPUVec<double>* > fieldsPtrsCurrent(approxDensityContainer.size()+1);
+                        std::vector<distributedCPUVec<double>> fieldsCurrent(approxDensityContainer.size()+1);
 
                         for (unsigned int i = 0; i < approxDensityContainer.size(); i++)
                         {
@@ -2509,8 +2509,8 @@ void molecularDynamics<FEOrder>::timingRun()
 			approxDensityNext.reinit(approxDensityContainer.back()); 
 
 			const unsigned int containerSizeCurrent=approxDensityContainer.size();
-			vectorType & approxDensityTimeT=approxDensityContainer[containerSizeCurrent-1];
-			vectorType & approxDensityTimeTMinusDeltat=containerSizeCurrent>1?
+			distributedCPUVec<double> & approxDensityTimeT=approxDensityContainer[containerSizeCurrent-1];
+			distributedCPUVec<double> & approxDensityTimeTMinusDeltat=containerSizeCurrent>1?
 								       approxDensityContainer[containerSizeCurrent-2]
 								       :approxDensityTimeT;
 			   
@@ -2726,7 +2726,7 @@ void molecularDynamics<FEOrder>::timingRun()
 				   jv.reinit(rhoErrorVec);
 				   kernelAction.reinit(rhoErrorVec);
 
-				   vectorType compvec;
+				   distributedCPUVec<double> compvec;
 				   compvec.reinit(rhoErrorVec);
 				   for (unsigned int irank=0; irank<dftParameters::kernelUpdateRankXLBOMD; irank++)
 				   {
