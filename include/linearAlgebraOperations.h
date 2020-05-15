@@ -101,26 +101,9 @@ namespace dftfe
      *  @param  vect A dummy vector
      *  @return double An estimate of the upper bound of the given matrix
      */
+		template<typename T>
     double lanczosUpperBoundEigenSpectrum(operatorDFTClass & operatorMatrix,
-					  const distributedCPUVec<double> & vect);
-
-
-    /** @brief Apply Chebyshev filter to a given subspace
-     *
-     *  @param[in] operatorMatrix An object which has access to the given matrix
-     *  @param[in,out]  X Given subspace as STL vector of dealii vectors.
-     *  In-place update of the given subspace
-     *  @param[in]  m Chebyshev polynomial degree
-     *  @param[in]  a lower bound of unwanted spectrum
-     *  @param[in]  b upper bound of unwanted spectrum
-     *  @param[in]  a0 lower bound of wanted spectrum
-     */
-    void chebyshevFilter(operatorDFTClass & operatorMatrix,
-			 std::vector<distributedCPUVec<double>> & X,
-			 const unsigned int m,
-			 const double a,
-			 const double b,
-			 const double a0);
+					  const distributedCPUVec<T> & vect);
 
 
     /** @brief Apply Chebyshev filter to a given subspace
@@ -142,19 +125,6 @@ namespace dftfe
 			 const double a,
 			 const double b,
 			 const double a0);
-
-
-    /** @brief Orthogonalize given subspace using GramSchmidt orthogonalization
-     *
-     *  @param[in] operatorMatrix An object which has access to the given matrix
-     *  @param[in,out]  X Given subspace as vector of dealii column vectors.
-     *  In-place update of the given subspace
-     *  @param[in] startingIndex dealii column vector index to start the orthogonalization procedure
-     */
-    void gramSchmidtOrthogonalization(operatorDFTClass & operatorMatrix,
-				      std::vector<distributedCPUVec<double>> & X,
-				      unsigned int startingIndex = 0);
-
 
 
      /** @brief Orthogonalize given subspace using GramSchmidt orthogonalization
@@ -202,17 +172,6 @@ namespace dftfe
 					              const MPI_Comm &interBandGroupComm,
 						      const MPI_Comm &mpiComm,
 						      const bool useMixedPrec);
-
-    /** @brief Compute Rayleigh-Ritz projection
-     *
-     *  @param[in] operatorMatrix An object which has access to the given matrix
-     *  @param[in,out]  X Given subspace as STL vector dealii vectors.
-     *  In-place rotated subspace
-     *  @param[out] eigenValues of the Projected Hamiltonian
-     */
-    void rayleighRitz(operatorDFTClass        & operatorMatrix,
-		      std::vector<distributedCPUVec<double>> & X,
-		      std::vector<double>     & eigenValues);
 
 
     /** @brief Compute Rayleigh-Ritz projection

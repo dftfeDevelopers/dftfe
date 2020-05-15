@@ -39,7 +39,6 @@ SET(TARGET_SRC
   ./src/solvers/cgSolvers/cg_descent.cc
   ./src/solvers/eigenSolvers/chebyshevOrthogonalizedSubspaceIterationSolver.cc
   ./src/solvers/eigenSolver.cc
-  ./src/linAlg/linearAlgebraOperations.cc
   ./src/linAlg/linearAlgebraOperationsOpt.cc
   ./src/linAlg/linearAlgebraOperationsInternal.cc
   ./src/linAlg/elpaScalaManager.cc
