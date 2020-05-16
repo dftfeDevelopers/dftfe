@@ -38,7 +38,6 @@ namespace internal
     void pointWiseScaleWithDiagonal(const distributedCPUVec<double> & diagonal,
 				    const std::shared_ptr<const dealii::Utilities::MPI::Partitioner> & singleComponentPartitioner,
 				    const unsigned int numberFields,
-				    const std::vector<dealii::types::global_dof_index> & localProc_dof_indicesReal,
 				    std::vector<dataTypes::number> & fieldsArrayFlattened)
     {
 
@@ -49,7 +48,7 @@ namespace internal
         {
 #ifdef USE_COMPLEX
 	    double scalingCoeff =
-		diagonal.local_element(localProc_dof_indicesReal[i]);
+		diagonal.local_element(i);
 	    zdscal_(&numberFields,
 	           &scalingCoeff,
 	           &fieldsArrayFlattened[i*numberFields],
@@ -137,7 +136,6 @@ dataTypes::number dftClass<FEOrder>::computeTraceXtHX(unsigned int numberWaveFun
   internal::pointWiseScaleWithDiagonal(kohnShamDFTEigenOperator.d_sqrtMassVector,
 				       matrix_free_data.get_vector_partitioner(),
 				       d_numEigenValues,
-				       localProc_dof_indicesReal,
 				       d_eigenVectorsFlattenedSTL[0]);
 
 
@@ -156,7 +154,6 @@ dataTypes::number dftClass<FEOrder>::computeTraceXtHX(unsigned int numberWaveFun
   internal::pointWiseScaleWithDiagonal(kohnShamDFTEigenOperator.d_invSqrtMassVector,
 				       matrix_free_data.get_vector_partitioner(),
 				       d_numEigenValues,
-				       localProc_dof_indicesReal,
 				       d_eigenVectorsFlattenedSTL[0]);
 
 
@@ -197,7 +194,6 @@ double dftClass<FEOrder>::computeTraceXtKX(unsigned int numberWaveFunctionsEstim
   internal::pointWiseScaleWithDiagonal(kohnShamDFTEigenOperator.d_sqrtMassVector,
 				       matrix_free_data.get_vector_partitioner(),
 				       d_numEigenValues,
-				       localProc_dof_indicesReal,
 				       d_eigenVectorsFlattenedSTL[0]);
 
 
@@ -223,7 +219,6 @@ double dftClass<FEOrder>::computeTraceXtKX(unsigned int numberWaveFunctionsEstim
   internal::pointWiseScaleWithDiagonal(kohnShamDFTEigenOperator.d_invSqrtMassVector,
 				       matrix_free_data.get_vector_partitioner(),
 				       d_numEigenValues,
-				       localProc_dof_indicesReal,
 				       d_eigenVectorsFlattenedSTL[0]);
 
   double trXtKX = 0.0;
@@ -265,7 +260,6 @@ void dftClass<FEOrder>::solveNoSCF()
 	  internal::pointWiseScaleWithDiagonal(kohnShamDFTEigenOperator.d_sqrtMassVector,
 					       matrix_free_data.get_vector_partitioner(),
 					       d_numEigenValues,
-					       localProc_dof_indicesReal,
 					       d_eigenVectorsFlattenedSTL[(1+dftParameters::spinPolarized)*kPointIndex+spinType]);
 	}
 
@@ -295,7 +289,6 @@ void dftClass<FEOrder>::solveNoSCF()
 	  internal::pointWiseScaleWithDiagonal(kohnShamDFTEigenOperator.d_invSqrtMassVector,
 					       matrix_free_data.get_vector_partitioner(),
 					       d_numEigenValues,
-					       localProc_dof_indicesReal,
 					       d_eigenVectorsFlattenedSTL[(1+dftParameters::spinPolarized)*kPointIndex+spinType]);
 	}
   }
@@ -338,7 +331,6 @@ void dftClass<FEOrder>::kohnShamEigenSpaceCompute(const unsigned int spinType,
   internal::pointWiseScaleWithDiagonal(kohnShamDFTEigenOperator.d_sqrtMassVector,
 				       matrix_free_data.get_vector_partitioner(),
 				       d_numEigenValues,
-				       localProc_dof_indicesReal,
 				       d_eigenVectorsFlattenedSTL[(1+dftParameters::spinPolarized)*kPointIndex+spinType]);
 
   std::vector<double> eigenValuesTemp(isSpectrumSplit?d_numEigenValuesRR
@@ -366,7 +358,6 @@ void dftClass<FEOrder>::kohnShamEigenSpaceCompute(const unsigned int spinType,
       internal::pointWiseScaleWithDiagonal(kohnShamDFTEigenOperator.d_invSqrtMassVector,
 					   matrix_free_data.get_vector_partitioner(),
 					   d_numEigenValues,
-					   localProc_dof_indicesReal,
 					   d_eigenVectorsFlattenedSTL[(1+dftParameters::spinPolarized)*kPointIndex+spinType]);
 
   if (isSpectrumSplit && d_numEigenValuesRR!=d_numEigenValues)
@@ -374,7 +365,6 @@ void dftClass<FEOrder>::kohnShamEigenSpaceCompute(const unsigned int spinType,
       internal::pointWiseScaleWithDiagonal(kohnShamDFTEigenOperator.d_invSqrtMassVector,
 					   matrix_free_data.get_vector_partitioner(),
 					   d_numEigenValuesRR,
-					   localProc_dof_indicesReal,
 					   d_eigenVectorsRotFracDensityFlattenedSTL[(1+dftParameters::spinPolarized)*kPointIndex+spinType]);
     }
 
@@ -934,7 +924,6 @@ void dftClass<FEOrder>::kohnShamEigenSpaceComputeNSCF(const unsigned int spinTyp
    internal::pointWiseScaleWithDiagonal(kohnShamDFTEigenOperator.d_invSqrtMassVector,
 				       matrix_free_data.get_vector_partitioner(),
 				       d_numEigenValues,
-				       localProc_dof_indicesReal,
 				       d_eigenVectorsFlattenedSTL[(1+dftParameters::spinPolarized)*kPointIndex+spinType]);
 
 
@@ -992,40 +981,6 @@ void dftClass<FEOrder>::kohnShamEigenSpaceComputeNSCF(const unsigned int spinTyp
   computing_timer.exit_section("Chebyshev solve");
 }
 
-
-template<unsigned int FEOrder>
-void dftClass<FEOrder>::computeResidualNorm(const std::vector<double> & eigenValuesTemp,
-					    kohnShamDFTOperatorClass<FEOrder> & kohnShamDFTEigenOperator,
-					    std::vector<distributedCPUVec<double>> & X,
-					    std::vector<double> & residualNorm) const
-{
-
-
-  std::vector<distributedCPUVec<double>> PSI(X.size());
-
-  for(unsigned int i = 0; i < X.size(); ++i)
-      PSI[i].reinit(X[0]);
-
-
-  kohnShamDFTEigenOperator.HX(X, PSI);
-
-  if (dftParameters::verbosity>=4)
-     pcout<<"L-2 Norm of residue   :"<<std::endl;
-
-  for(unsigned int i = 0; i < eigenValuesTemp.size(); i++)
-    {
-      (PSI[i]).add(-eigenValuesTemp[i],X[i]) ;
-      const double resNorm= (PSI[i]).l2_norm();
-      residualNorm[i]=resNorm;
-
-      if (dftParameters::verbosity>=4)
-	pcout<<"eigen vector "<< i<<": "<<resNorm<<std::endl;
-    }
-  if (dftParameters::verbosity>=3)
-    pcout <<std::endl;
-
-
-}
 
 //compute the maximum of the residual norm of the highest occupied state among all k points
 template<unsigned int FEOrder>

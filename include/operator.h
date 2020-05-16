@@ -35,7 +35,7 @@ namespace dftfe{
   /**
    * @brief Base class for building the DFT operator and the action of operator on a vector
    *
-   * @author Phani Motamarri
+   * @author Phani Motamarri, Sambit Das
    */
   class operatorDFTClass {
 
@@ -102,17 +102,6 @@ namespace dftfe{
 				   const dealii::ConstraintMatrix & constraintMatrix,
 				   distributedCPUVec<double>                     & sqrtMassVec,
 				   distributedCPUVec<double>                     & invSqrtMassVec) = 0;
-
-
-    /**
-     * @brief Compute operator times vector or operator times bunch of vectors
-     *
-     * @param X Vector of Vectors containing current values of X
-     * @param Y Vector of Vectors containing operator times vectors product
-     */
-    virtual void HX(std::vector<distributedCPUVec<double>> & X,
-		    std::vector<distributedCPUVec<double>> & Y) = 0;
-
 
 
     /**
@@ -195,15 +184,6 @@ namespace dftfe{
 		      const std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid>  & processGrid,
 		      dealii::ScaLAPACKMatrix<dataTypes::number> & projHamPar,
 		      bool origHFlag=false) = 0;
-
-    /**
-     * @brief Compute projection of the operator into a subspace spanned by a given orthogonal basis
-     *
-     * @param  X Vector of Vectors containing the basis vectors spanning the subspace
-     * @return ProjMatrix projected small matrix
-     */
-    virtual void XtHX(std::vector<distributedCPUVec<double>> & X,
-		      std::vector<dataTypes::number> & ProjHam) = 0;
 
 
     void setInvSqrtMassVector(distributedCPUVec<double> & X);

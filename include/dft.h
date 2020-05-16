@@ -1150,11 +1150,6 @@ namespace dftfe {
 				    std::vector<double>                            & residualNormWaveFunctions,
 				    unsigned int ipass) ;
 
-      void computeResidualNorm(const std::vector<double> & eigenValuesTemp,
-			       kohnShamDFTOperatorClass<FEOrder> & kohnShamDFTEigenOperator,
-			       std::vector<distributedCPUVec<double>> & X,
-			       std::vector<double> & residualNorm) const;
-
     };
 
 }
