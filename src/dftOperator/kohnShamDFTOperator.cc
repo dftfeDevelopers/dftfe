@@ -51,11 +51,6 @@ namespace dftfe {
 			computing_timer (mpi_comm_replica,pcout, TimerOutput::never, TimerOutput::wall_times),
 			operatorDFTClass(mpi_comm_replica,
 					_dftPtr->getMatrixFreeData(),
-					_dftPtr->getLocalDofIndicesReal(),
-					_dftPtr->getLocalDofIndicesImag(),
-					_dftPtr->getLocalProcDofIndicesReal(),
-					_dftPtr->getLocalProcDofIndicesImag(),
-					_dftPtr->getConstraintMatrixEigen(),
 					_dftPtr->constraintsNoneDataInfo)
 	{
 
