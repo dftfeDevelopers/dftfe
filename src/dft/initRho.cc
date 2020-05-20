@@ -935,14 +935,6 @@ void dftClass<FEOrder>::initRhoFromPreviousGroundStateRho()
 	}//subcell loop
     }//macro cell loop
 
-  //gather density from all pools
-  sumRhoData(rhoInValues,
-	     gradRhoInValues,
-	     rhoInValuesSpinPolarized,
-	     gradRhoInValuesSpinPolarized,
-	     dftParameters::xc_id == 4,
-	     interpoolcomm);
-
   //normalize density
   normalizeRho();
   computing_timer.exit_section("init density from prev gs density");
