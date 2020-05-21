@@ -2960,7 +2960,6 @@ namespace dftfe {
                 fermiEnergyDown,
                 kohnShamDFTEigenOperatorCUDA,
                 dofHandler,
-                constraintsNone,
                 matrix_free_data.n_physical_cells(),
                 matrix_free_data.get_dofs_per_cell(),
                 QGauss<3>(C_num1DQuad<FEOrder>()).size(),
