@@ -15,6 +15,7 @@
 //
 // @author Phani Motamarri, Sambit Das
 
+#if defined(DFTFE_WITH_GPU)
 #include <chebyshevOrthogonalizedSubspaceIterationSolverCUDA.h>
 #include <linearAlgebraOperations.h>
 #include <linearAlgebraOperationsCUDA.h>
@@ -2257,3 +2258,4 @@ namespace dftfe
   }
    
 }
+#endif

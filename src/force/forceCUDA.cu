@@ -18,6 +18,7 @@
 
 //source file for force related computations
 
+#if defined(DFTFE_WITH_GPU)
 #include <forceCUDA.h>
 #include <dftParameters.h>
 #include <dftUtils.h>
@@ -813,3 +814,4 @@ namespace dftfe
 
    }//forceCUDA namespace
 }//dftfe namespace
+#endif

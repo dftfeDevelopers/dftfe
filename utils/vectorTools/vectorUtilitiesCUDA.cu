@@ -16,6 +16,7 @@
 // @author Sambit Das
 //
 
+#if defined(DFTFE_WITH_GPU)
 #include <vectorUtilitiesCUDA.h>
 #include <cublas_v2.h>
 
@@ -106,4 +107,4 @@ namespace dftfe
   }//end of namespace
 
 }
-
+#endif

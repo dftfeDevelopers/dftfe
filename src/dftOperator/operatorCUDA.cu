@@ -17,6 +17,7 @@
 //
 // @author Phani Motamarri, Sambit Das
 //
+#if defined(DFTFE_WITH_GPU)
 #include <operatorCUDA.h>
 #include <linearAlgebraOperationsInternalCUDA.h>
 #include <dftParameters.h>
@@ -144,3 +145,4 @@ namespace dftfe {
   }
 
 }
+#endif
