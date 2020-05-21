@@ -83,85 +83,85 @@
 //commonly used  typedefs used in dftfe go here
 namespace dftfe
 {
-  template <typename elem_type>
-    using distributedCPUVec = dealii::LinearAlgebra::distributed::Vector<elem_type,dealii::MemorySpace::Host>;
+	template <typename elem_type>
+		using distributedCPUVec = dealii::LinearAlgebra::distributed::Vector<elem_type,dealii::MemorySpace::Host>;
 #ifdef DFTFE_WITH_GPU
-  template <typename elem_type>
-    using distributedGPUVec = dealii::LinearAlgebra::distributed::Vector<elem_type,dealii::MemorySpace::CUDA>;
+	template <typename elem_type>
+		using distributedGPUVec = dealii::LinearAlgebra::distributed::Vector<elem_type,dealii::MemorySpace::CUDA>;
 #endif
 
-  namespace dataTypes
-  {
+	namespace dataTypes
+	{
 #ifdef USE_COMPLEX
-    typedef std::complex<double> number;
-    typedef std::complex<float> numberLowPrec;
+		typedef std::complex<double> number;
+		typedef std::complex<float> numberLowPrec;
 #else
-    typedef double number;
-    typedef float numberLowPrec;
+		typedef double number;
+		typedef float numberLowPrec;
 #endif
 
-    inline MPI_Datatype
-    mpi_type_id(const int *)
-    {
-        return MPI_INT;
-    }
+		inline MPI_Datatype
+			mpi_type_id(const int *)
+			{
+				return MPI_INT;
+			}
 
-    inline MPI_Datatype
-    mpi_type_id(const long int *)
-    {
-        return MPI_LONG;
-    }
+		inline MPI_Datatype
+			mpi_type_id(const long int *)
+			{
+				return MPI_LONG;
+			}
 
-    inline MPI_Datatype
-    mpi_type_id(const unsigned int *)
-    {
-      return MPI_UNSIGNED;
-    }
+		inline MPI_Datatype
+			mpi_type_id(const unsigned int *)
+			{
+				return MPI_UNSIGNED;
+			}
 
-    inline MPI_Datatype
-    mpi_type_id(const unsigned long int *)
-    {
-      return MPI_UNSIGNED_LONG;
-    }
+		inline MPI_Datatype
+			mpi_type_id(const unsigned long int *)
+			{
+				return MPI_UNSIGNED_LONG;
+			}
 
-    inline MPI_Datatype
-    mpi_type_id(const unsigned long long int *)
-    {
-      return MPI_UNSIGNED_LONG_LONG;
-    }
-
-
-    inline MPI_Datatype
-    mpi_type_id(const float *)
-    {
-     return MPI_FLOAT;
-    }
+		inline MPI_Datatype
+			mpi_type_id(const unsigned long long int *)
+			{
+				return MPI_UNSIGNED_LONG_LONG;
+			}
 
 
-    inline MPI_Datatype
-    mpi_type_id(const double *)
-    {
-      return MPI_DOUBLE;
-    }
+		inline MPI_Datatype
+			mpi_type_id(const float *)
+			{
+				return MPI_FLOAT;
+			}
 
-    inline MPI_Datatype
-    mpi_type_id(const long double *)
-    {
-      return MPI_LONG_DOUBLE;
-    }
 
-    inline MPI_Datatype
-    mpi_type_id(const std::complex<float> *)
-    {
-      return MPI_COMPLEX;
-    }
+		inline MPI_Datatype
+			mpi_type_id(const double *)
+			{
+				return MPI_DOUBLE;
+			}
 
-    inline MPI_Datatype
-    mpi_type_id(const std::complex<double> *)
-    {
-      return MPI_DOUBLE_COMPLEX;
-    }
-  }
+		inline MPI_Datatype
+			mpi_type_id(const long double *)
+			{
+				return MPI_LONG_DOUBLE;
+			}
+
+		inline MPI_Datatype
+			mpi_type_id(const std::complex<float> *)
+			{
+				return MPI_COMPLEX;
+			}
+
+		inline MPI_Datatype
+			mpi_type_id(const std::complex<double> *)
+			{
+				return MPI_DOUBLE_COMPLEX;
+			}
+	}
 
 
 }

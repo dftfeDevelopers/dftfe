@@ -20,25 +20,25 @@
 #define constants_H_
 
 namespace dftfe {
-    //
-    //Add prefix C_ to all constants
-    //
+	//
+	//Add prefix C_ to all constants
+	//
 
-    /// Boltzmann constant
-    const double C_kb = 3.166811429e-06;
+	/// Boltzmann constant
+	const double C_kb = 3.166811429e-06;
 
-    /// problem space dimensions
-    const int C_DIM = 3;
+	/// problem space dimensions
+	const int C_DIM = 3;
 
-    /// 1d quadrature rule order
-    template <unsigned int FEOrder> constexpr unsigned int C_num1DQuad(){return FEOrder+1;}
+	/// 1d quadrature rule order
+	template <unsigned int FEOrder> constexpr unsigned int C_num1DQuad(){return FEOrder+1;}
 
-    //kerker Helmholtz solve polynomial Order
-    template <unsigned int FEOrder> constexpr unsigned int C_num1DKerkerPoly(){return FEOrder;}
+	//kerker Helmholtz solve polynomial Order
+	template <unsigned int FEOrder> constexpr unsigned int C_num1DKerkerPoly(){return FEOrder;}
 
 
-    /// 1d quadrature rule order for non-local part of pseudopotential
-    template <unsigned int FEOrder> constexpr unsigned int C_num1DQuadPSP()
-			                                  {return FEOrder+4 > 8 ? 8 : FEOrder+4;}
+	/// 1d quadrature rule order for non-local part of pseudopotential
+	template <unsigned int FEOrder> constexpr unsigned int C_num1DQuadPSP()
+	{return FEOrder+4 > 8 ? 8 : FEOrder+4;}
 }
 #endif

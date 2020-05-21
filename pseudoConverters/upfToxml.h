@@ -24,30 +24,30 @@
 
 namespace dftfe
 {
-  //
-  //Declare pseudoUtils function
-  //
+	//
+	//Declare pseudoUtils function
+	//
 
-  /** @file upfxml.h
-   *  @brief converts pseudopotential file from upf to xml format
-   *
-   *  The functionality reads the upfile and identifies appropriate tags and converts
-   *  into xml file format
-   *
-   *  @author Phani Motamarri
-   */
- namespace pseudoUtils
- {
-   /**
-    * @brief read a given upf pseudopotential file name in upf format  and convert to xml format
-    * 
-    * @param inputFile filePath location of the upf file
-    * @param outputFile filePath location of xml file
-    *
-    * @return int errorCode indicating success or failure of conversion
-    */
-   int upfToxml(const std::string &inputFile,
-		const std::string &outputFile);
- }
+	/** @file upfxml.h
+	 *  @brief converts pseudopotential file from upf to xml format
+	 *
+	 *  The functionality reads the upfile and identifies appropriate tags and converts
+	 *  into xml file format
+	 *
+	 *  @author Phani Motamarri
+	 */
+	namespace pseudoUtils
+	{
+		/**
+		 * @brief read a given upf pseudopotential file name in upf format  and convert to xml format
+		 * 
+		 * @param inputFile filePath location of the upf file
+		 * @param outputFile filePath location of xml file
+		 *
+		 * @return int errorCode indicating success or failure of conversion
+		 */
+		int upfToxml(const std::string &inputFile,
+				const std::string &outputFile);
+	}
 }
 #endif 

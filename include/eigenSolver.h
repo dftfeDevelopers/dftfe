@@ -23,46 +23,46 @@
 
 namespace dftfe{
 
-  /**
-   * @brief Base class for non-linear algebraic solver.
-   *
-   * @author Phani Motamarri
-   */
+	/**
+	 * @brief Base class for non-linear algebraic solver.
+	 *
+	 * @author Phani Motamarri
+	 */
 
-  class eigenSolverClass {
-
-
-  public:
-    enum class ReturnValueType {SUCCESS = 0,FAILURE,MAX_ITER_REACHED};
+	class eigenSolverClass {
 
 
-  public:
-
-    /**
-     * @brief Destructor.
-     */
-    virtual ~eigenSolverClass() = 0;
+		public:
+			enum class ReturnValueType {SUCCESS = 0,FAILURE,MAX_ITER_REACHED};
 
 
-    /**
-     * @brief Solve eigen problem.
-     *
-     * @return Return value indicating success or failure.
-     */
-    virtual void solve(operatorDFTClass & operatorMatrix,
-				  std::vector<distributedCPUVec<double>> & eigenVectors,
-				  std::vector<double> & eigenValues,
-				  std::vector<double> & residuals) = 0;
+		public:
 
-  protected:
+			/**
+			 * @brief Destructor.
+			 */
+			virtual ~eigenSolverClass() = 0;
 
-    /**
-     * @brief Constructor.
-     *
-     */
-    eigenSolverClass();
 
-  };
+			/**
+			 * @brief Solve eigen problem.
+			 *
+			 * @return Return value indicating success or failure.
+			 */
+			virtual void solve(operatorDFTClass & operatorMatrix,
+					std::vector<distributedCPUVec<double>> & eigenVectors,
+					std::vector<double> & eigenValues,
+					std::vector<double> & residuals) = 0;
+
+		protected:
+
+			/**
+			 * @brief Constructor.
+			 *
+			 */
+			eigenSolverClass();
+
+	};
 }
 #endif // dft_eigenSolver_h
 

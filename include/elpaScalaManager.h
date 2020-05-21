@@ -31,107 +31,107 @@ extern "C"
 
 namespace dftfe{
 
-  /**
-   * @brief Manager class for ELPA and ScaLAPACK
-   *
-   * @author Sambit Das
-   */
-  class elpaScalaManager {
+	/**
+	 * @brief Manager class for ELPA and ScaLAPACK
+	 *
+	 * @author Sambit Das
+	 */
+	class elpaScalaManager {
 
-    //
-    // methods
-    //
-  public:
+		//
+		// methods
+		//
+		public:
 
-    unsigned int getScalapackBlockSize() const;
+			unsigned int getScalapackBlockSize() const;
 
-    void processGridOptionalELPASetup(const unsigned int na,
-    		                      const unsigned int nev);
+			void processGridOptionalELPASetup(const unsigned int na,
+					const unsigned int nev);
 
 #ifdef DFTFE_WITH_ELPA
-    void elpaDeallocateHandles(const unsigned int na,
-		    const unsigned int nev);
+			void elpaDeallocateHandles(const unsigned int na,
+					const unsigned int nev);
 
-    elpa_t & getElpaHandle();
+			elpa_t & getElpaHandle();
 
-    elpa_t & getElpaHandlePartialEigenVec();
+			elpa_t & getElpaHandlePartialEigenVec();
 
-    elpa_autotune_t & getElpaAutoTuneHandle();
+			elpa_autotune_t & getElpaAutoTuneHandle();
 #endif
 
 
-    /**
-     * @brief Get relevant mpi communicator
-     *
-     * @return mpi communicator
-     */
-    const MPI_Comm & getMPICommunicator() const;
+			/**
+			 * @brief Get relevant mpi communicator
+			 *
+			 * @return mpi communicator
+			 */
+			const MPI_Comm & getMPICommunicator() const;
 
 
-    /**
-     * @brief Constructor.
-     */
-    elpaScalaManager(const MPI_Comm & mpi_comm_replica);
+			/**
+			 * @brief Constructor.
+			 */
+			elpaScalaManager(const MPI_Comm & mpi_comm_replica);
 
-    /**
-     * @brief Destructor.
-     */
-    ~elpaScalaManager();
+			/**
+			 * @brief Destructor.
+			 */
+			~elpaScalaManager();
 
-    //
-    //mpi communicator
-    //
-    MPI_Comm d_mpi_communicator;
+			//
+			//mpi communicator
+			//
+			MPI_Comm d_mpi_communicator;
 
 #ifdef DFTFE_WITH_ELPA
-    /// ELPA handle
-    elpa_t d_elpaHandle;
+			/// ELPA handle
+			elpa_t d_elpaHandle;
 
-    /// ELPA handle for partial eigenvectors of full proj ham
-    elpa_t d_elpaHandlePartialEigenVec;
+			/// ELPA handle for partial eigenvectors of full proj ham
+			elpa_t d_elpaHandlePartialEigenVec;
 
-    /// ELPA autotune handle
-    elpa_autotune_t d_elpaAutoTuneHandle;
+			/// ELPA autotune handle
+			elpa_autotune_t d_elpaAutoTuneHandle;
 
-    /// processGrid mpi communicator
-    MPI_Comm d_processGridCommunicatorActive;
+			/// processGrid mpi communicator
+			MPI_Comm d_processGridCommunicatorActive;
 
-    MPI_Comm d_processGridCommunicatorActivePartial;
-     
+			MPI_Comm d_processGridCommunicatorActivePartial;
+
 #endif
 
-    /// ScaLAPACK distributed format block size
-    unsigned int d_scalapackBlockSize;
+			/// ScaLAPACK distributed format block size
+			unsigned int d_scalapackBlockSize;
 
-  };
+	};
 
-/*--------------------- Inline functions --------------------------------*/
+	/*--------------------- Inline functions --------------------------------*/
 
 #  ifndef DOXYGEN
-   inline unsigned int
-   elpaScalaManager::getScalapackBlockSize() const
-   {
-     return d_scalapackBlockSize;
-   }
+	inline unsigned int
+		elpaScalaManager::getScalapackBlockSize() const
+		{
+			return d_scalapackBlockSize;
+		}
 #ifdef DFTFE_WITH_ELPA
-  inline
-  elpa_t & elpaScalaManager::getElpaHandle()
-  {
-       return d_elpaHandle;
-  }
+	inline
+		elpa_t & elpaScalaManager::getElpaHandle()
+		{
+			return d_elpaHandle;
+		}
 
-  inline
-  elpa_t & elpaScalaManager::getElpaHandlePartialEigenVec()
-  {
-       return d_elpaHandlePartialEigenVec;
-  }
+	inline
+		elpa_t & elpaScalaManager::getElpaHandlePartialEigenVec()
+		{
+			return d_elpaHandlePartialEigenVec;
+		}
 
 
-  inline
-  elpa_autotune_t & elpaScalaManager::getElpaAutoTuneHandle()
-  {
-       return d_elpaAutoTuneHandle;
-  }
+	inline
+		elpa_autotune_t & elpaScalaManager::getElpaAutoTuneHandle()
+		{
+			return d_elpaAutoTuneHandle;
+		}
 #endif
 #  endif // ifndef DOXYGEN
 

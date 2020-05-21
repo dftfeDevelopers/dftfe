@@ -23,44 +23,44 @@
 
 namespace dftfe{
 
-  /**
-   *  @brief Contains generic utils functions
-   *
-   *  @author Sambit Das
-   */
-  namespace vectorToolsCUDA
-  {
-       class cudaThrustVector
-       {
+	/**
+	 *  @brief Contains generic utils functions
+	 *
+	 *  @author Sambit Das
+	 */
+	namespace vectorToolsCUDA
+	{
+		class cudaThrustVector
+		{
 
-         public:
-             cudaThrustVector();
+			public:
+				cudaThrustVector();
 
-             void resize(const unsigned int size);
+				void resize(const unsigned int size);
 
-             double * begin();
+				double * begin();
 
-             const double * begin() const;
-    
-             unsigned int size() const;
+				const double * begin() const;
 
-             double l2_norm() const;
- 
-             double l1_norm() const;
+				unsigned int size() const;
 
-         private:
-             thrust::device_vector<double> d_data; 
-               
-       };
+				double l2_norm() const;
 
-       void copyHostVecToCUDAVec(const double* hostVec,
-                                 double* cudaVector,
-                                 const unsigned int size);
+				double l1_norm() const;
 
-       void copyCUDAVecToHostVec(const double* cudaVector,
-                                 double* hostVec,
-                                 const unsigned int size);
-  }
+			private:
+				thrust::device_vector<double> d_data; 
+
+		};
+
+		void copyHostVecToCUDAVec(const double* hostVec,
+				double* cudaVector,
+				const unsigned int size);
+
+		void copyCUDAVecToHostVec(const double* cudaVector,
+				double* hostVec,
+				const unsigned int size);
+	}
 }
 #endif
 #endif

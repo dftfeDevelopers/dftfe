@@ -780,16 +780,16 @@ namespace dftfe {
 			//
 
 			/*#ifdef WITH_MKL
-				if (dftParameters::useBatchGEMM && numberWaveFunctions<1000)
-				{
-				computeLocalHamiltonianTimesXBatchGEMM(src,
-				numberWaveFunctions,
-				dst);
-				}
-				else
-				computeLocalHamiltonianTimesX(src,
-				numberWaveFunctions,
-				dst);
+			  if (dftParameters::useBatchGEMM && numberWaveFunctions<1000)
+			  {
+			  computeLocalHamiltonianTimesXBatchGEMM(src,
+			  numberWaveFunctions,
+			  dst);
+			  }
+			  else
+			  computeLocalHamiltonianTimesX(src,
+			  numberWaveFunctions,
+			  dst);
 #else
 computeLocalHamiltonianTimesX(src,
 numberWaveFunctions,
@@ -854,7 +854,7 @@ dst);
 					Y,
 					true);
 
-      Y=dataTypes::number(0);
+			Y=dataTypes::number(0);
 			//
 			//evaluate H times XTemp and store in Y
 			//
@@ -867,8 +867,8 @@ dst);
 					Y);
 
 #ifdef USE_COMPLEX
-      for(unsigned int i = 0; i < Y.local_size(); ++i)
-         Y.local_element(i) = std::conj(Y.local_element(i));
+			for(unsigned int i = 0; i < Y.local_size(); ++i)
+				Y.local_element(i) = std::conj(Y.local_element(i));
 
 			char transA  = 'N';
 			char transB  = 'T';

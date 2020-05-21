@@ -27,125 +27,125 @@
 namespace dftfe
 {
 
-  /**
-   * @brief Concrete class implementing Chebyshev filtered orthogonalized subspace
-   * iteration solver.
-   * @author Phani Motamarri
-   */
-  class chebyshevOrthogonalizedSubspaceIterationSolverCUDA
-  {
+	/**
+	 * @brief Concrete class implementing Chebyshev filtered orthogonalized subspace
+	 * iteration solver.
+	 * @author Phani Motamarri
+	 */
+	class chebyshevOrthogonalizedSubspaceIterationSolverCUDA
+	{
 
-    public:
-    /**
-     * @brief Constructor.
-     *
-     * @param mpi_comm domain decomposition mpi communicator
-     * @param lowerBoundWantedSpectrum Lower Bound of the Wanted Spectrum.
-     * @param lowerBoundUnWantedSpectrum Lower Bound of the UnWanted Spectrum.
-     */
-    chebyshevOrthogonalizedSubspaceIterationSolverCUDA
-                                          (const MPI_Comm &mpi_comm,
-	                                   double lowerBoundWantedSpectrum,
-				           double lowerBoundUnWantedSpectrum);
-
-
-    /**
-     * @brief Destructor.
-     */
-    ~chebyshevOrthogonalizedSubspaceIterationSolverCUDA();
+		public:
+			/**
+			 * @brief Constructor.
+			 *
+			 * @param mpi_comm domain decomposition mpi communicator
+			 * @param lowerBoundWantedSpectrum Lower Bound of the Wanted Spectrum.
+			 * @param lowerBoundUnWantedSpectrum Lower Bound of the UnWanted Spectrum.
+			 */
+			chebyshevOrthogonalizedSubspaceIterationSolverCUDA
+				(const MPI_Comm &mpi_comm,
+				 double lowerBoundWantedSpectrum,
+				 double lowerBoundUnWantedSpectrum);
 
 
-    /**
-     * @brief Solve a generalized eigen problem.
-     */
-    void solve(operatorDFTCUDAClass & operatorMatrix,
-	       double* eigenVectorsFlattenedCUDA,
-               double* eigenVectorsRotFracDensityFlattenedCUDA,
-               const unsigned int flattenedSize,
-	       distributedCPUVec<double> & tempEigenVec,
-	       const unsigned int totalNumberWaveFunctions,
-	       std::vector<double> & eigenValues,
-	       std::vector<double> & residuals,
-               const MPI_Comm &interBandGroupComm,
-               dealii::ScaLAPACKMatrix<double> & projHamPar,
-               dealii::ScaLAPACKMatrix<double> & overlapMatPar,
-               const std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid> & processGrid,
-               const bool isXlBOMDLinearizedSolve,
-               const bool useMixedPrecOverall=false,
-               const bool isFirstScf=false,
-               const bool useFullMassMatrixGEP=false,
-               const bool isElpaStep1=false,
-               const bool isElpaStep2=false);
+			/**
+			 * @brief Destructor.
+			 */
+			~chebyshevOrthogonalizedSubspaceIterationSolverCUDA();
 
 
-    void onlyRR(operatorDFTCUDAClass & operatorMatrix,
-	       double* eigenVectorsFlattenedCUDA,
-               double* eigenVectorsRotFracDensityFlattenedCUDA,
-               const unsigned int flattenedSize,
-	       distributedCPUVec<double> & tempEigenVec,
-	       const unsigned int totalNumberWaveFunctions,
-	       std::vector<double> & eigenValues,
-               const MPI_Comm &interBandGroupComm,
-               dealii::ScaLAPACKMatrix<double> & projHamPar,
-               dealii::ScaLAPACKMatrix<double> & overlapMatPar,
-               const std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid> & processGrid,
-               const bool useMixedPrecOverall=false,
-               const bool isElpaStep1=false,
-               const bool isElpaStep2=false);
-
-    /**
-     * @brief Solve a generalized eigen problem.
-     */
-    void solveNoRR(operatorDFTCUDAClass & operatorMatrix,
-	       double* eigenVectorsFlattenedCUDA,
-               const unsigned int flattenedSize,
-	       distributedCPUVec<double> & tempEigenVec,
-	       const unsigned int totalNumberWaveFunctions,
-	       std::vector<double> & eigenValues,
-               const MPI_Comm &interBandGroupComm,
-               dealii::ScaLAPACKMatrix<double> & projHamPar,
-               dealii::ScaLAPACKMatrix<double> & overlapMatPar,
-               const std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid> & processGrid,
-               const bool isXlBOMDLinearizedSolve,
-               const unsigned int numberPasses,
-               const bool useMixedPrecOverall);
+			/**
+			 * @brief Solve a generalized eigen problem.
+			 */
+			void solve(operatorDFTCUDAClass & operatorMatrix,
+					double* eigenVectorsFlattenedCUDA,
+					double* eigenVectorsRotFracDensityFlattenedCUDA,
+					const unsigned int flattenedSize,
+					distributedCPUVec<double> & tempEigenVec,
+					const unsigned int totalNumberWaveFunctions,
+					std::vector<double> & eigenValues,
+					std::vector<double> & residuals,
+					const MPI_Comm &interBandGroupComm,
+					dealii::ScaLAPACKMatrix<double> & projHamPar,
+					dealii::ScaLAPACKMatrix<double> & overlapMatPar,
+					const std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid> & processGrid,
+					const bool isXlBOMDLinearizedSolve,
+					const bool useMixedPrecOverall=false,
+					const bool isFirstScf=false,
+					const bool useFullMassMatrixGEP=false,
+					const bool isElpaStep1=false,
+					const bool isElpaStep2=false);
 
 
-    void solveNoRRMixedPrec(operatorDFTCUDAClass & operatorMatrix,
-               double* eigenVectorsFlattenedCUDA,
-               const unsigned int flattenedSize,
-               distributedCPUVec<double> & tempEigenVec,
-               const unsigned int totalNumberWaveFunctions,
-               std::vector<double> & eigenValues,
-               const MPI_Comm &interBandGroupComm,
-               const bool isXlBOMDLinearizedSolve,
-               const unsigned int numberPasses,
-               const bool useMixedPrecOverall);
+			void onlyRR(operatorDFTCUDAClass & operatorMatrix,
+					double* eigenVectorsFlattenedCUDA,
+					double* eigenVectorsRotFracDensityFlattenedCUDA,
+					const unsigned int flattenedSize,
+					distributedCPUVec<double> & tempEigenVec,
+					const unsigned int totalNumberWaveFunctions,
+					std::vector<double> & eigenValues,
+					const MPI_Comm &interBandGroupComm,
+					dealii::ScaLAPACKMatrix<double> & projHamPar,
+					dealii::ScaLAPACKMatrix<double> & overlapMatPar,
+					const std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid> & processGrid,
+					const bool useMixedPrecOverall=false,
+					const bool isElpaStep1=false,
+					const bool isElpaStep2=false);
+
+			/**
+			 * @brief Solve a generalized eigen problem.
+			 */
+			void solveNoRR(operatorDFTCUDAClass & operatorMatrix,
+					double* eigenVectorsFlattenedCUDA,
+					const unsigned int flattenedSize,
+					distributedCPUVec<double> & tempEigenVec,
+					const unsigned int totalNumberWaveFunctions,
+					std::vector<double> & eigenValues,
+					const MPI_Comm &interBandGroupComm,
+					dealii::ScaLAPACKMatrix<double> & projHamPar,
+					dealii::ScaLAPACKMatrix<double> & overlapMatPar,
+					const std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid> & processGrid,
+					const bool isXlBOMDLinearizedSolve,
+					const unsigned int numberPasses,
+					const bool useMixedPrecOverall);
 
 
-    /**
-     * @brief reinit spectrum bounds
-     */
-    void reinitSpectrumBounds(double lowerBoundWantedSpectrum,
-			      double lowerBoundUnWantedSpectrum);
+			void solveNoRRMixedPrec(operatorDFTCUDAClass & operatorMatrix,
+					double* eigenVectorsFlattenedCUDA,
+					const unsigned int flattenedSize,
+					distributedCPUVec<double> & tempEigenVec,
+					const unsigned int totalNumberWaveFunctions,
+					std::vector<double> & eigenValues,
+					const MPI_Comm &interBandGroupComm,
+					const bool isXlBOMDLinearizedSolve,
+					const unsigned int numberPasses,
+					const bool useMixedPrecOverall);
 
-  private:
-    //
-    //stores lower bound of wanted spectrum
-    //
-    double d_lowerBoundWantedSpectrum;
 
-    //
-    //stores lower bound of unwanted spectrum
-    //
-    double d_lowerBoundUnWantedSpectrum;
+			/**
+			 * @brief reinit spectrum bounds
+			 */
+			void reinitSpectrumBounds(double lowerBoundWantedSpectrum,
+					double lowerBoundUnWantedSpectrum);
 
-    //
-    //variables for printing out and timing
-    //
-    dealii::ConditionalOStream   pcout;
-    dealii::TimerOutput computing_timer;
-  };
+		private:
+			//
+			//stores lower bound of wanted spectrum
+			//
+			double d_lowerBoundWantedSpectrum;
+
+			//
+			//stores lower bound of unwanted spectrum
+			//
+			double d_lowerBoundUnWantedSpectrum;
+
+			//
+			//variables for printing out and timing
+			//
+			dealii::ConditionalOStream   pcout;
+			dealii::TimerOutput computing_timer;
+	};
 }
 #endif
 #endif

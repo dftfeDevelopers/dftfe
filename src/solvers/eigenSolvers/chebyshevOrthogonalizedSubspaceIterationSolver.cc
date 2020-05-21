@@ -21,23 +21,23 @@
 #include <dftUtils.h>
 
 static const unsigned int order_lookup[][2] = {
-  {500, 24}, // <= 500 ~> chebyshevOrder = 24
-  {750, 30},
-  {1000, 39},
-  {1500, 50},
-  {2000, 53},
-  {3000, 57},
-  {4000, 62},
-  {5000, 69},
-  {9000, 77},
-  {14000, 104},
-  {20000, 119},
-  {30000, 162},
-  {50000, 300},
-  {80000, 450},
-  {1e5, 550},
-  {2e5, 700},
-  {5e5, 1000}
+	{500, 24}, // <= 500 ~> chebyshevOrder = 24
+	{750, 30},
+	{1000, 39},
+	{1500, 50},
+	{2000, 53},
+	{3000, 57},
+	{4000, 62},
+	{5000, 69},
+	{9000, 77},
+	{14000, 104},
+	{20000, 119},
+	{30000, 162},
+	{50000, 300},
+	{80000, 450},
+	{1e5, 550},
+	{2e5, 700},
+	{5e5, 1000}
 };
 
 namespace dftfe{
@@ -123,10 +123,10 @@ namespace dftfe{
 			computing_timer.enter_section("Lanczos k-step Upper Bound");
 			distributedCPUVec<dataTypes::number> vecForLanczos;
 			operatorMatrix.reinit(1,
-			                      vecForLanczos,
-					                  true);			
+					vecForLanczos,
+					true);			
 			const double upperBoundUnwantedSpectrum =linearAlgebraOperations::lanczosUpperBoundEigenSpectrum(operatorMatrix,
-					 vecForLanczos);
+					vecForLanczos);
 			computing_timer.exit_section("Lanczos k-step Upper Bound");
 
 			unsigned int chebyshevOrder = dftParameters::chebyshevOrder;
@@ -561,16 +561,16 @@ namespace dftfe{
 		{
 
 			/*
-				 computing_timer.enter_section("Lanczos k-step Upper Bound");
-				 operatorMatrix.reinit(1);
-				 double upperBoundUnwantedSpectrum = linearAlgebraOperations::lanczosUpperBoundEigenSpectrum(operatorMatrix,
-				 eigenVectors[0]);
+			   computing_timer.enter_section("Lanczos k-step Upper Bound");
+			   operatorMatrix.reinit(1);
+			   double upperBoundUnwantedSpectrum = linearAlgebraOperations::lanczosUpperBoundEigenSpectrum(operatorMatrix,
+			   eigenVectors[0]);
 
-				 computing_timer.exit_section("Lanczos k-step Upper Bound");
+			   computing_timer.exit_section("Lanczos k-step Upper Bound");
 
-				 unsigned int chebyshevOrder = dftParameters::chebyshevOrder;
+			   unsigned int chebyshevOrder = dftParameters::chebyshevOrder;
 
-				 const unsigned int totalNumberWaveFunctions = eigenVectors.size();
+			   const unsigned int totalNumberWaveFunctions = eigenVectors.size();
 
 			//set Chebyshev order
 			if(chebyshevOrder == 0)

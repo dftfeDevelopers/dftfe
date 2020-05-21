@@ -19,306 +19,306 @@
 #include <linearAlgebraOperations.h>
 
 namespace dftfe {
-//
-//Declare dftUtils functions
-//
-namespace dftUtils
-{
+	//
+	//Declare dftUtils functions
+	//
+	namespace dftUtils
+	{
 
-  //
-  //wrapper function to call blas function daxpy or zapxy depending
-  //on the data type (complex or double)
-  //
+		//
+		//wrapper function to call blas function daxpy or zapxy depending
+		//on the data type (complex or double)
+		//
 
-  void callaxpy(const unsigned int *n,
-		const double *alpha,
-		double *x,
-		const unsigned int *incx,
-		double *y,
-		const unsigned int *incy)
-  {
-    daxpy_(n,
-	   alpha,
-	   x,
-	   incx,
-	   y,
-	   incy);
-  }
+		void callaxpy(const unsigned int *n,
+				const double *alpha,
+				double *x,
+				const unsigned int *incx,
+				double *y,
+				const unsigned int *incy)
+		{
+			daxpy_(n,
+					alpha,
+					x,
+					incx,
+					y,
+					incy);
+		}
 
-  void callaxpy(const unsigned int *n,
-		const std::complex<double> *alpha,
-		std::complex<double> *x,
-		const unsigned int *incx,
-		std::complex<double> *y,
-		const unsigned int *incy)
-  {
-    zaxpy_(n,
-	   alpha,
-	   x,
-	   incx,
-	   y,
-	   incy);
-  }
-
-
-
-  //
-  //constructor
-  //
-  constraintMatrixInfo::constraintMatrixInfo()
-  {
-
-
-  }
-
-  //
-  //destructor
-  //
-  constraintMatrixInfo::~constraintMatrixInfo()
-  {
-
-
-  }
-
-
-  //
-  //store constraintMatrix row data in STL vector
-  //
-  void constraintMatrixInfo::initialize(const std::shared_ptr< const dealii::Utilities::MPI::Partitioner > & partitioner,
-					const dealii::AffineConstraints<double> & constraintMatrixData)
-
-  {
-
-    clear();
-
-    const dealii::IndexSet & locally_owned_dofs = partitioner->locally_owned_range();
-    const dealii::IndexSet & ghost_dofs = partitioner->ghost_indices();
-
-    for(dealii::IndexSet::ElementIterator it = locally_owned_dofs.begin(); it != locally_owned_dofs.end();++it)
-      {
-	if(constraintMatrixData.is_constrained(*it))
-	  {
-	    const dealii::types::global_dof_index lineDof = *it;
-	    d_rowIdsLocal.push_back(partitioner->global_to_local(lineDof));
-	    d_rowIdsGlobal.push_back(lineDof);
-	    d_inhomogenities.push_back(constraintMatrixData.get_inhomogeneity(lineDof));
-	    const std::vector<std::pair<dealii::types::global_dof_index, double > > * rowData=constraintMatrixData.get_constraint_entries(lineDof);
-	    d_rowSizes.push_back(rowData->size());
-	    for(unsigned int j = 0; j < rowData->size();++j)
-	      {
-		Assert((*rowData)[j].first<partitioner->size(),
-	    	   dealii::ExcMessage("Index out of bounds"));
-		d_columnIdsGlobal.push_back((*rowData)[j].first);
-		d_columnIdsLocal.push_back(partitioner->global_to_local((*rowData)[j].first));
-		d_columnValues.push_back((*rowData)[j].second);
-	      }
-	  }
-      }
-
-
-    for(dealii::IndexSet::ElementIterator it = ghost_dofs.begin(); it != ghost_dofs.end();++it)
-      {
-	if(constraintMatrixData.is_constrained(*it))
-	  {
-	    const dealii::types::global_dof_index lineDof = *it;
-	    d_rowIdsLocal.push_back(partitioner->global_to_local(lineDof));
-	    d_rowIdsGlobal.push_back(lineDof);
-	    d_inhomogenities.push_back(constraintMatrixData.get_inhomogeneity(lineDof));
-	    const std::vector<std::pair<dealii::types::global_dof_index, double > > * rowData=constraintMatrixData.get_constraint_entries(lineDof);
-	    d_rowSizes.push_back(rowData->size());
-	    for(unsigned int j = 0; j < rowData->size();++j)
-	      {
-		Assert((*rowData)[j].first<partitioner->size(),
-		       dealii::ExcMessage("Index out of bounds"));
-		d_columnIdsGlobal.push_back((*rowData)[j].first);
-		d_columnIdsLocal.push_back(partitioner->global_to_local((*rowData)[j].first));
-		d_columnValues.push_back((*rowData)[j].second);
-	      }
-	  }
-      }
+		void callaxpy(const unsigned int *n,
+				const std::complex<double> *alpha,
+				std::complex<double> *x,
+				const unsigned int *incx,
+				std::complex<double> *y,
+				const unsigned int *incy)
+		{
+			zaxpy_(n,
+					alpha,
+					x,
+					incx,
+					y,
+					incy);
+		}
 
 
 
-  }
+		//
+		//constructor
+		//
+		constraintMatrixInfo::constraintMatrixInfo()
+		{
 
 
-  void constraintMatrixInfo::precomputeMaps(const std::shared_ptr< const dealii::Utilities::MPI::Partitioner> & unFlattenedPartitioner,
-					    const std::shared_ptr< const dealii::Utilities::MPI::Partitioner> & flattenedPartitioner,
-					    const unsigned int blockSize)
-  {
+		}
 
-    //
-    //Get required sizes
-    //
-    const unsigned int n_ghosts   = unFlattenedPartitioner->n_ghost_indices();
-    const unsigned int localSize  = unFlattenedPartitioner->local_size();
-    const unsigned int totalSize = n_ghosts + localSize;
-
-    d_localIndexMapUnflattenedToFlattened.clear();
-    d_localIndexMapUnflattenedToFlattened.resize(totalSize);
-
-    //
-    //fill the data array
-    //
-    for(unsigned int ilocalDof = 0; ilocalDof < totalSize; ++ilocalDof)
-      {
-	const dealii::types::global_dof_index globalIndex = unFlattenedPartitioner->local_to_global(ilocalDof);
-	d_localIndexMapUnflattenedToFlattened[ilocalDof] = flattenedPartitioner->global_to_local(globalIndex*blockSize);
-      }
-
-  }
+		//
+		//destructor
+		//
+		constraintMatrixInfo::~constraintMatrixInfo()
+		{
 
 
+		}
 
 
-  //
-  //set the constrained degrees of freedom to values so that constraints
-  //are satisfied
-  //
-  void constraintMatrixInfo::distribute(distributedCPUVec<double> &fieldVector) const
-  {
-    fieldVector.update_ghost_values();
-    unsigned int count = 0;
-    for(unsigned int i = 0; i < d_rowIdsLocal.size();++i)
-      {
-	double new_value = d_inhomogenities[i];
-	for(unsigned int j = 0; j < d_rowSizes[i]; ++j)
-	  {
-	    new_value += fieldVector.local_element(d_columnIdsLocal[count])*d_columnValues[count];
-	    count++;
-	  }
-	fieldVector.local_element(d_rowIdsLocal[i]) = new_value;
-      }
-  }
+		//
+		//store constraintMatrix row data in STL vector
+		//
+		void constraintMatrixInfo::initialize(const std::shared_ptr< const dealii::Utilities::MPI::Partitioner > & partitioner,
+				const dealii::AffineConstraints<double> & constraintMatrixData)
+
+		{
+
+			clear();
+
+			const dealii::IndexSet & locally_owned_dofs = partitioner->locally_owned_range();
+			const dealii::IndexSet & ghost_dofs = partitioner->ghost_indices();
+
+			for(dealii::IndexSet::ElementIterator it = locally_owned_dofs.begin(); it != locally_owned_dofs.end();++it)
+			{
+				if(constraintMatrixData.is_constrained(*it))
+				{
+					const dealii::types::global_dof_index lineDof = *it;
+					d_rowIdsLocal.push_back(partitioner->global_to_local(lineDof));
+					d_rowIdsGlobal.push_back(lineDof);
+					d_inhomogenities.push_back(constraintMatrixData.get_inhomogeneity(lineDof));
+					const std::vector<std::pair<dealii::types::global_dof_index, double > > * rowData=constraintMatrixData.get_constraint_entries(lineDof);
+					d_rowSizes.push_back(rowData->size());
+					for(unsigned int j = 0; j < rowData->size();++j)
+					{
+						Assert((*rowData)[j].first<partitioner->size(),
+								dealii::ExcMessage("Index out of bounds"));
+						d_columnIdsGlobal.push_back((*rowData)[j].first);
+						d_columnIdsLocal.push_back(partitioner->global_to_local((*rowData)[j].first));
+						d_columnValues.push_back((*rowData)[j].second);
+					}
+				}
+			}
 
 
-  template<typename T>
-  void constraintMatrixInfo::distribute(distributedCPUVec<T> &fieldVector,
+			for(dealii::IndexSet::ElementIterator it = ghost_dofs.begin(); it != ghost_dofs.end();++it)
+			{
+				if(constraintMatrixData.is_constrained(*it))
+				{
+					const dealii::types::global_dof_index lineDof = *it;
+					d_rowIdsLocal.push_back(partitioner->global_to_local(lineDof));
+					d_rowIdsGlobal.push_back(lineDof);
+					d_inhomogenities.push_back(constraintMatrixData.get_inhomogeneity(lineDof));
+					const std::vector<std::pair<dealii::types::global_dof_index, double > > * rowData=constraintMatrixData.get_constraint_entries(lineDof);
+					d_rowSizes.push_back(rowData->size());
+					for(unsigned int j = 0; j < rowData->size();++j)
+					{
+						Assert((*rowData)[j].first<partitioner->size(),
+								dealii::ExcMessage("Index out of bounds"));
+						d_columnIdsGlobal.push_back((*rowData)[j].first);
+						d_columnIdsLocal.push_back(partitioner->global_to_local((*rowData)[j].first));
+						d_columnValues.push_back((*rowData)[j].second);
+					}
+				}
+			}
+
+
+
+		}
+
+
+		void constraintMatrixInfo::precomputeMaps(const std::shared_ptr< const dealii::Utilities::MPI::Partitioner> & unFlattenedPartitioner,
+				const std::shared_ptr< const dealii::Utilities::MPI::Partitioner> & flattenedPartitioner,
+				const unsigned int blockSize)
+		{
+
+			//
+			//Get required sizes
+			//
+			const unsigned int n_ghosts   = unFlattenedPartitioner->n_ghost_indices();
+			const unsigned int localSize  = unFlattenedPartitioner->local_size();
+			const unsigned int totalSize = n_ghosts + localSize;
+
+			d_localIndexMapUnflattenedToFlattened.clear();
+			d_localIndexMapUnflattenedToFlattened.resize(totalSize);
+
+			//
+			//fill the data array
+			//
+			for(unsigned int ilocalDof = 0; ilocalDof < totalSize; ++ilocalDof)
+			{
+				const dealii::types::global_dof_index globalIndex = unFlattenedPartitioner->local_to_global(ilocalDof);
+				d_localIndexMapUnflattenedToFlattened[ilocalDof] = flattenedPartitioner->global_to_local(globalIndex*blockSize);
+			}
+
+		}
+
+
+
+
+		//
+		//set the constrained degrees of freedom to values so that constraints
+		//are satisfied
+		//
+		void constraintMatrixInfo::distribute(distributedCPUVec<double> &fieldVector) const
+		{
+			fieldVector.update_ghost_values();
+			unsigned int count = 0;
+			for(unsigned int i = 0; i < d_rowIdsLocal.size();++i)
+			{
+				double new_value = d_inhomogenities[i];
+				for(unsigned int j = 0; j < d_rowSizes[i]; ++j)
+				{
+					new_value += fieldVector.local_element(d_columnIdsLocal[count])*d_columnValues[count];
+					count++;
+				}
+				fieldVector.local_element(d_rowIdsLocal[i]) = new_value;
+			}
+		}
+
+
+		template<typename T>
+			void constraintMatrixInfo::distribute(distributedCPUVec<T> &fieldVector,
 					const unsigned int blockSize) const
-  {
-    fieldVector.update_ghost_values();
+			{
+				fieldVector.update_ghost_values();
 
 
-    unsigned int count = 0;
-    const unsigned int inc = 1;
-    std::vector<T> newValuesBlock(blockSize,0.0);
-    for(unsigned int i = 0; i < d_rowIdsLocal.size(); ++i)
-      {
-        std::fill(newValuesBlock.begin(),
-	          newValuesBlock.end(),
-		  d_inhomogenities[i]);
+				unsigned int count = 0;
+				const unsigned int inc = 1;
+				std::vector<T> newValuesBlock(blockSize,0.0);
+				for(unsigned int i = 0; i < d_rowIdsLocal.size(); ++i)
+				{
+					std::fill(newValuesBlock.begin(),
+							newValuesBlock.end(),
+							d_inhomogenities[i]);
 
-	const dealii::types::global_dof_index startingLocalDofIndexRow = d_localIndexMapUnflattenedToFlattened[d_rowIdsLocal[i]];
+					const dealii::types::global_dof_index startingLocalDofIndexRow = d_localIndexMapUnflattenedToFlattened[d_rowIdsLocal[i]];
 
-	for(unsigned int j = 0; j < d_rowSizes[i]; ++j)
-	  {
+					for(unsigned int j = 0; j < d_rowSizes[i]; ++j)
+					{
 
-	    Assert(count<d_columnIdsGlobal.size(),
-	    	   dealii::ExcMessage("Overloaded distribute for flattened array has indices out of bounds"));
+						Assert(count<d_columnIdsGlobal.size(),
+								dealii::ExcMessage("Overloaded distribute for flattened array has indices out of bounds"));
 
-	    const dealii::types::global_dof_index startingLocalDofIndexColumn = d_localIndexMapUnflattenedToFlattened[d_columnIdsLocal[count]];
+						const dealii::types::global_dof_index startingLocalDofIndexColumn = d_localIndexMapUnflattenedToFlattened[d_columnIdsLocal[count]];
 
-	    T alpha = d_columnValues[count];
+						T alpha = d_columnValues[count];
 
-	    callaxpy(&blockSize,
-		     &alpha,
-		     fieldVector.begin()+startingLocalDofIndexColumn,
-		     &inc,
-		     &newValuesBlock[0],
-		     &inc);
-	    count++;
-	  }
+						callaxpy(&blockSize,
+								&alpha,
+								fieldVector.begin()+startingLocalDofIndexColumn,
+								&inc,
+								&newValuesBlock[0],
+								&inc);
+						count++;
+					}
 
-	  std::copy(&newValuesBlock[0],
-	            &newValuesBlock[0]+blockSize,
-		    fieldVector.begin()+startingLocalDofIndexRow);
-      }
-  }
-
-
+					std::copy(&newValuesBlock[0],
+							&newValuesBlock[0]+blockSize,
+							fieldVector.begin()+startingLocalDofIndexRow);
+				}
+			}
 
 
 
-  //
-  //set the constrained degrees of freedom to values so that constraints
-  //are satisfied for flattened array
-  //
-  template<typename T>
-  void constraintMatrixInfo::distribute_slave_to_master(distributedCPUVec<T> & fieldVector,
-							const unsigned int blockSize) const
-  {
-    unsigned int count = 0;
-    const unsigned int inc = 1;
-    for(unsigned int i = 0; i < d_rowIdsLocal.size(); ++i)
-      {
-	const dealii::types::global_dof_index startingLocalDofIndexRow = d_localIndexMapUnflattenedToFlattened[d_rowIdsLocal[i]];
-	for(unsigned int j = 0; j < d_rowSizes[i]; ++j)
-	  {
-
-	    const dealii::types::global_dof_index startingLocalDofIndexColumn=d_localIndexMapUnflattenedToFlattened[d_columnIdsLocal[count]];
-
-	    T alpha = d_columnValues[count];
-	    callaxpy(&blockSize,
-		     &alpha,
-		     fieldVector.begin()+startingLocalDofIndexRow,
-		     &inc,
-		     fieldVector.begin()+startingLocalDofIndexColumn,
-		     &inc);
 
 
-	    count++;
-	  }
+		//
+		//set the constrained degrees of freedom to values so that constraints
+		//are satisfied for flattened array
+		//
+		template<typename T>
+			void constraintMatrixInfo::distribute_slave_to_master(distributedCPUVec<T> & fieldVector,
+					const unsigned int blockSize) const
+			{
+				unsigned int count = 0;
+				const unsigned int inc = 1;
+				for(unsigned int i = 0; i < d_rowIdsLocal.size(); ++i)
+				{
+					const dealii::types::global_dof_index startingLocalDofIndexRow = d_localIndexMapUnflattenedToFlattened[d_rowIdsLocal[i]];
+					for(unsigned int j = 0; j < d_rowSizes[i]; ++j)
+					{
 
-	//
-	//set slave contribution to zero
-	//
-	std::fill(fieldVector.begin()+startingLocalDofIndexRow,
-		  fieldVector.begin()+startingLocalDofIndexRow+blockSize,
-		  0.0);
-      }
-  }
+						const dealii::types::global_dof_index startingLocalDofIndexColumn=d_localIndexMapUnflattenedToFlattened[d_columnIdsLocal[count]];
 
-  template<typename T>
-  void constraintMatrixInfo::set_zero(distributedCPUVec<T> & fieldVector,
-				      const unsigned int blockSize) const
-  {
-    for(unsigned int i = 0; i < d_rowIdsLocal.size(); ++i)
-      {
-	const dealii::types::global_dof_index startingLocalDofIndexRow = d_localIndexMapUnflattenedToFlattened[d_rowIdsLocal[i]];
-
-	//set constrained nodes to zero
-	std::fill(fieldVector.begin()+startingLocalDofIndexRow,
-		  fieldVector.begin()+startingLocalDofIndexRow+blockSize,
-		  0.0);
-      }
-  }
-
-  //
-  //
-  //clear the data variables
-  //
-  void constraintMatrixInfo::clear()
-  {
-    d_rowIdsGlobal.clear();
-    d_rowIdsLocal.clear();
-    d_columnIdsLocal.clear();
-    d_columnIdsGlobal.clear();
-    d_columnValues.clear();
-    d_inhomogenities.clear();
-    d_rowSizes.clear();
-  }
+						T alpha = d_columnValues[count];
+						callaxpy(&blockSize,
+								&alpha,
+								fieldVector.begin()+startingLocalDofIndexRow,
+								&inc,
+								fieldVector.begin()+startingLocalDofIndexColumn,
+								&inc);
 
 
-  template void constraintMatrixInfo::distribute(distributedCPUVec<dataTypes::number> & fieldVector,
-						 const unsigned int blockSize) const;
+						count++;
+					}
 
-  template void constraintMatrixInfo::distribute_slave_to_master(distributedCPUVec<dataTypes::number> & fieldVector,
-						 const unsigned int blockSize) const;
+					//
+					//set slave contribution to zero
+					//
+					std::fill(fieldVector.begin()+startingLocalDofIndexRow,
+							fieldVector.begin()+startingLocalDofIndexRow+blockSize,
+							0.0);
+				}
+			}
 
-  template void constraintMatrixInfo::set_zero(distributedCPUVec<dataTypes::number> & fieldVector,
-						 const unsigned int blockSize) const;
+		template<typename T>
+			void constraintMatrixInfo::set_zero(distributedCPUVec<T> & fieldVector,
+					const unsigned int blockSize) const
+			{
+				for(unsigned int i = 0; i < d_rowIdsLocal.size(); ++i)
+				{
+					const dealii::types::global_dof_index startingLocalDofIndexRow = d_localIndexMapUnflattenedToFlattened[d_rowIdsLocal[i]];
 
-}
+					//set constrained nodes to zero
+					std::fill(fieldVector.begin()+startingLocalDofIndexRow,
+							fieldVector.begin()+startingLocalDofIndexRow+blockSize,
+							0.0);
+				}
+			}
+
+		//
+		//
+		//clear the data variables
+		//
+		void constraintMatrixInfo::clear()
+		{
+			d_rowIdsGlobal.clear();
+			d_rowIdsLocal.clear();
+			d_columnIdsLocal.clear();
+			d_columnIdsGlobal.clear();
+			d_columnValues.clear();
+			d_inhomogenities.clear();
+			d_rowSizes.clear();
+		}
+
+
+		template void constraintMatrixInfo::distribute(distributedCPUVec<dataTypes::number> & fieldVector,
+				const unsigned int blockSize) const;
+
+		template void constraintMatrixInfo::distribute_slave_to_master(distributedCPUVec<dataTypes::number> & fieldVector,
+				const unsigned int blockSize) const;
+
+		template void constraintMatrixInfo::set_zero(distributedCPUVec<dataTypes::number> & fieldVector,
+				const unsigned int blockSize) const;
+
+	}
 
 }
 

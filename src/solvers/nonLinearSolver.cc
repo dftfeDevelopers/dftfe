@@ -24,72 +24,72 @@
 #include "../../include/nonLinearSolver.h"
 
 namespace dftfe {
-  //
-  // Constructor.
-  //
-  nonLinearSolver::nonLinearSolver(const unsigned int debugLevel,
-				   const unsigned int maxNumberIterations,
-			           const double tolerance):
-  d_debugLevel(debugLevel),
-  d_maxNumberIterations(maxNumberIterations),
-  d_tolerance(tolerance)
-  {
-  }
+	//
+	// Constructor.
+	//
+	nonLinearSolver::nonLinearSolver(const unsigned int debugLevel,
+			const unsigned int maxNumberIterations,
+			const double tolerance):
+		d_debugLevel(debugLevel),
+		d_maxNumberIterations(maxNumberIterations),
+		d_tolerance(tolerance)
+	{
+	}
 
-  //
-  // Destructor.
-  //
-  nonLinearSolver::~nonLinearSolver()
-  {
+	//
+	// Destructor.
+	//
+	nonLinearSolver::~nonLinearSolver()
+	{
 
-    //
-    //
-    //
-    return;
+		//
+		//
+		//
+		return;
 
-  }
+	}
 
-  //
-  // Get tolerance.
-  //
-  double
-  nonLinearSolver::getTolerance() const
-  {
+	//
+	// Get tolerance.
+	//
+	double
+		nonLinearSolver::getTolerance() const
+		{
 
-    //
-    //
-    //
-    return d_tolerance;
+			//
+			//
+			//
+			return d_tolerance;
 
-  }
+		}
 
-  //
-  // Get maximum number of iterations.
-  //
-  unsigned int
-  nonLinearSolver::getMaximumNumberIterations() const
-  {
+	//
+	// Get maximum number of iterations.
+	//
+	unsigned int
+		nonLinearSolver::getMaximumNumberIterations() const
+		{
 
-    //
-    //
-    //
-    return d_maxNumberIterations;
+			//
+			//
+			//
+			return d_maxNumberIterations;
 
-  }
+		}
 
 
-  //
-  // Get debug level.
-  //
-  unsigned int
-  nonLinearSolver::getDebugLevel() const
-  {
+	//
+	// Get debug level.
+	//
+	unsigned int
+		nonLinearSolver::getDebugLevel() const
+		{
 
-    //
-    //
-    //
-    return d_debugLevel;
+			//
+			//
+			//
+			return d_debugLevel;
 
-  }
+		}
 
 }

@@ -18,10 +18,10 @@
 #include <dealiiLinearSolverProblem.h>
 
 namespace dftfe {
-  // Constructor.
-  dealiiLinearSolverProblem::dealiiLinearSolverProblem()
-  {
-    return;
-  }
+	// Constructor.
+	dealiiLinearSolverProblem::dealiiLinearSolverProblem()
+	{
+		return;
+	}
 
 }

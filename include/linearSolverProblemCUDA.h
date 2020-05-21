@@ -24,61 +24,61 @@
 
 namespace dftfe {
 
- /**
-  * @brief Abstract class for linear solve problems to be used with the dealiiLinearSolver interface.
-  *
-  * @author Phani Motamarri, Sambit Das
-  */
-  class linearSolverProblemCUDA {
-
-     public:
-        /**
-         * @brief Constructor.
-         */
-        linearSolverProblemCUDA();
-
 	/**
-	 * @brief get the reference to x field
+	 * @brief Abstract class for linear solve problems to be used with the dealiiLinearSolver interface.
 	 *
-	 * @return reference to x field. Assumes x field data structure is already initialized
+	 * @author Phani Motamarri, Sambit Das
 	 */
-	virtual distributedGPUVec<double>  & getX() = 0;
+	class linearSolverProblemCUDA {
 
-	/**
-	 * @brief Compute A matrix multipled by x.
-	 *
-	 */
-	virtual void computeAX(distributedGPUVec<double> &src,
-			       distributedGPUVec<double> &dst)  = 0;
+		public:
+			/**
+			 * @brief Constructor.
+			 */
+			linearSolverProblemCUDA();
 
+			/**
+			 * @brief get the reference to x field
+			 *
+			 * @return reference to x field. Assumes x field data structure is already initialized
+			 */
+			virtual distributedGPUVec<double>  & getX() = 0;
 
-	/**
-	 * @brief Compute right hand side vector for the problem Ax = rhs.
-	 *
-	 * @param rhs vector for the right hand side values
-	 */
-	virtual void computeRhs(distributedGPUVec<double> & rhs) = 0;
-
-	/**
-	 * @brief Jacobi preconditioning function.
-	 *
-	 */
-        virtual void precondition_Jacobi(const distributedGPUVec<double> & src,
-		                         distributedGPUVec<double> & dst)const = 0;
+			/**
+			 * @brief Compute A matrix multipled by x.
+			 *
+			 */
+			virtual void computeAX(distributedGPUVec<double> &src,
+					distributedGPUVec<double> &dst)  = 0;
 
 
-	/**
-	 * @brief distribute x to the constrained nodes.
-	 *
-	 */
-	virtual void setX() = 0;
+			/**
+			 * @brief Compute right hand side vector for the problem Ax = rhs.
+			 *
+			 * @param rhs vector for the right hand side values
+			 */
+			virtual void computeRhs(distributedGPUVec<double> & rhs) = 0;
+
+			/**
+			 * @brief Jacobi preconditioning function.
+			 *
+			 */
+			virtual void precondition_Jacobi(const distributedGPUVec<double> & src,
+					distributedGPUVec<double> & dst)const = 0;
 
 
-     //protected:
+			/**
+			 * @brief distribute x to the constrained nodes.
+			 *
+			 */
+			virtual void setX() = 0;
 
-	 /// typedef declaration needed by dealii
-	typedef dealii::types::global_dof_index size_type;
-    };
+
+			//protected:
+
+			/// typedef declaration needed by dealii
+			typedef dealii::types::global_dof_index size_type;
+	};
 
 }
 #endif // linearSolverProblemCUDA_H_
