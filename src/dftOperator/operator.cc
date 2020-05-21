@@ -28,11 +28,6 @@ namespace dftfe {
 
   operatorDFTClass::operatorDFTClass(const MPI_Comm                                        & mpi_comm_replica,
 				     const dealii::MatrixFree<3,double>                    & matrix_free_data,
-				     const std::vector<dealii::types::global_dof_index>    & localDofIndicesReal,
-				     const std::vector<dealii::types::global_dof_index>    & localDofIndicesImag,
-				     const std::vector<dealii::types::global_dof_index>    & localProcDofIndicesReal,
-				     const std::vector<dealii::types::global_dof_index>    & localProcDofIndicesImag,
-				     const dealii::ConstraintMatrix                        & constraintMatrixEigen,
 				     dftUtils::constraintMatrixInfo                        & constraintMatrixNone):
     d_mpi_communicator(mpi_comm_replica),
 #ifdef DFTFE_WITH_ELPA	
@@ -40,11 +35,6 @@ namespace dftfe {
     d_processGridCommunicatorActivePartial(MPI_COMM_NULL),
 #endif	
     d_matrix_free_data(&matrix_free_data),
-    d_localDofIndicesReal(&localDofIndicesReal),
-    d_localDofIndicesImag(&localDofIndicesImag),
-    d_localProcDofIndicesReal(&localProcDofIndicesReal),
-    d_localProcDofIndicesImag(&localProcDofIndicesImag),
-    d_constraintMatrixEigen(&constraintMatrixEigen),
     d_constraintMatrixData(&constraintMatrixNone)
   {
 
@@ -80,47 +70,6 @@ namespace dftfe {
   distributedCPUVec<double> & operatorDFTClass::getInvSqrtMassVector() 
   {
     return d_invSqrtMassVector;
-  }
-
-  //
-  //Get local dof indices real
-  //
-  const std::vector<dealii::types::global_dof_index> * operatorDFTClass::getLocalDofIndicesReal() const
-  {
-    return d_localDofIndicesReal;
-  }
-
-  //
-  //Get local dof indices imag
-  //
-  const std::vector<dealii::types::global_dof_index> * operatorDFTClass::getLocalDofIndicesImag() const
-  {
-    return d_localDofIndicesImag;
-  }
-
-  //
-  //Get local proc dof indices real
-  //
-  const std::vector<dealii::types::global_dof_index> * operatorDFTClass::getLocalProcDofIndicesReal() const
-  {
-    return d_localProcDofIndicesReal;
-  }
-
-
-  //
-  //Get local proc dof indices imag
-  //
-  const std::vector<dealii::types::global_dof_index> * operatorDFTClass::getLocalProcDofIndicesImag() const
-  {
-    return d_localProcDofIndicesImag;
-  }
-
-  //
-  //Get dealii constraint matrix used for the eigen problem (2-component FE Object for Periodic, 1-component FE object for non-periodic)
-  //
-  const dealii::ConstraintMatrix * operatorDFTClass::getConstraintMatrixEigen() const
-  {
-    return d_constraintMatrixEigen;
   }
 
   //

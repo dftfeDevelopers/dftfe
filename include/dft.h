@@ -88,37 +88,37 @@ namespace dftfe {
 
 #endif /* DOXYGEN_SHOULD_SKIP_THIS */
 
- /**
-  * @brief This class is the primary interface location of all other parts of the DFT-FE code
-  * for all steps involved in obtaining the Kohn-Sham DFT ground-state solution.
-  *
-  * @author Shiva Rudraraju, Phani Motamarri, Sambit Das
-  */
+  /**
+   * @brief This class is the primary interface location of all other parts of the DFT-FE code
+   * for all steps involved in obtaining the Kohn-Sham DFT ground-state solution.
+   *
+   * @author Shiva Rudraraju, Phani Motamarri, Sambit Das
+   */
   template <unsigned int FEOrder>
     class dftClass
     {
       template <unsigned int T>
-	friend class kohnShamDFTOperatorClass;
+        friend class kohnShamDFTOperatorClass;
 
       template <unsigned int T>
-       friend class kohnShamDFTOperatorCUDAClass;
+        friend class kohnShamDFTOperatorCUDAClass;
 
       template <unsigned int T>
-	friend class forceClass;
+        friend class forceClass;
 
       template <unsigned int T>
-	friend class geoOptIon;
+        friend class geoOptIon;
 
       template <unsigned int T>
-	friend class geoOptCell;
+        friend class geoOptCell;
 
       template <unsigned int T>
-	friend class symmetryClass;
+        friend class symmetryClass;
 
       template <unsigned int T>
         friend class molecularDynamics;
 
-    public:
+      public:
 
       /**
        * @brief dftClass constructor
@@ -128,8 +128,8 @@ namespace dftfe {
        *  @param[in] interBandGroupComm  mpi_communicator for parallelization over bands
        */
       dftClass(const MPI_Comm &mpi_comm_replica,
-	       const MPI_Comm &interpoolcomm,
-	       const MPI_Comm &interBandGroupComm);
+          const MPI_Comm &interpoolcomm,
+          const MPI_Comm &interBandGroupComm);
 
       /**
        * @brief dftClass destructor
@@ -155,8 +155,8 @@ namespace dftfe {
        * @brief Does KSDFT problem pre-processing steps but without remeshing.
        */
       void initNoRemesh(const bool updateImageKPoints = true,
-		        const bool useSingleAtomSolution = false ,
-                        const bool updateDensity=true);
+          const bool useSingleAtomSolution = false ,
+          const bool updateDensity=true);
 
       /**
        * @brief Selects between only electronic field relaxation or combined electronic and geometry relaxation
@@ -172,15 +172,15 @@ namespace dftfe {
        */
       void solve(kohnShamDFTOperatorClass<FEOrder> & kohnShamDFTEigenOperator,
 #ifdef DFTFE_WITH_GPU
-                 kohnShamDFTOperatorCUDAClass<FEOrder> & kohnShamDFTEigenOperatorCUDA,
+          kohnShamDFTOperatorCUDAClass<FEOrder> & kohnShamDFTEigenOperatorCUDA,
 #endif
-                 const bool kohnShamDFTOperatorsInitialized=false,
-                 const bool computeForces=true,
-                 const bool solveLinearizedKS=false,
-                 const bool restartGroundStateCalcFromChk=false,
-                 const bool skipVselfSolveInitLocalPSP=false,
-                 const bool rayleighRitzAvoidancePassesXLBOMD=false,
-                 const bool isPerturbationSolveXLBOMD=false);
+          const bool kohnShamDFTOperatorsInitialized=false,
+          const bool computeForces=true,
+          const bool solveLinearizedKS=false,
+          const bool restartGroundStateCalcFromChk=false,
+          const bool skipVselfSolveInitLocalPSP=false,
+          const bool rayleighRitzAvoidancePassesXLBOMD=false,
+          const bool isPerturbationSolveXLBOMD=false);
 
 
       /**
@@ -188,34 +188,34 @@ namespace dftfe {
        */
       void computeDensityPerturbation(kohnShamDFTOperatorClass<FEOrder> & kohnShamDFTEigenOperator,
 #ifdef DFTFE_WITH_GPU
-                 kohnShamDFTOperatorCUDAClass<FEOrder> & kohnShamDFTEigenOperatorCUDA,
+          kohnShamDFTOperatorCUDAClass<FEOrder> & kohnShamDFTEigenOperatorCUDA,
 #endif
-                 const bool kohnShamDFTOperatorsInitialized=false);
+          const bool kohnShamDFTOperatorsInitialized=false);
 
 
       void initializeKohnShamDFTOperator(kohnShamDFTOperatorClass<FEOrder> & kohnShamDFTEigenOperator
 #ifdef DFTFE_WITH_GPU
-                                         ,
-                                         kohnShamDFTOperatorCUDAClass<FEOrder> & kohnShamDFTEigenOperatorCUDA
+          ,
+          kohnShamDFTOperatorCUDAClass<FEOrder> & kohnShamDFTEigenOperatorCUDA
 #endif
-                                         ,
-                                         const bool initializeCUDAScala=true);
+          ,
+          const bool initializeCUDAScala=true);
 
 
       void reInitializeKohnShamDFTOperator(kohnShamDFTOperatorClass<FEOrder> & kohnShamDFTEigenOperator
 #ifdef DFTFE_WITH_GPU
-                                         ,
-                                         kohnShamDFTOperatorCUDAClass<FEOrder> & kohnShamDFTEigenOperatorCUDA
+          ,
+          kohnShamDFTOperatorCUDAClass<FEOrder> & kohnShamDFTEigenOperatorCUDA
 #endif
-                                         );
+          );
 
 
       void finalizeKohnShamDFTOperator(kohnShamDFTOperatorClass<FEOrder> & kohnShamDFTEigenOperator
 #ifdef DFTFE_WITH_GPU
-                                       ,
-                                       kohnShamDFTOperatorCUDAClass<FEOrder> & kohnShamDFTEigenOperatorCUDA
+          ,
+          kohnShamDFTOperatorCUDAClass<FEOrder> & kohnShamDFTEigenOperatorCUDA
 #endif
-                                       );
+          );
 
       /**
        * @brief Number of Kohn-Sham eigen values to be computed
@@ -285,9 +285,9 @@ namespace dftfe {
        *  @return void.
        */
       void updateAtomPositionsAndMoveMesh(const std::vector<Tensor<1,3,double> > & globalAtomsDisplacements,
-	                                  const double maxJacobianRatioFactor,
-					  const bool useSingleAtomSolutions=false,
-                                          const bool useAtomicRhoSplitDensityUpdate=true);
+          const double maxJacobianRatioFactor,
+          const bool useSingleAtomSolutions=false,
+          const bool useAtomicRhoSplitDensityUpdate=true);
 
 
       /**
@@ -297,7 +297,7 @@ namespace dftfe {
       void writeDomainAndAtomCoordinates();
 
 
-    private:
+      private:
 
       /**
        * @brief generate image charges and update k point cartesian coordinates based
@@ -306,7 +306,7 @@ namespace dftfe {
       void initImageChargesUpdateKPoints(bool flag=true);
 
       /**
-       */
+      */
       void initPsiAndRhoFromPreviousGroundStatePsi(std::vector<std::vector<distributedCPUVec<double>>> eigenVectors);
 
 
@@ -323,10 +323,10 @@ namespace dftfe {
       void updatePrevMeshDataStructures();
 
       void interpolateFieldsFromPrevToCurrentMesh(std::vector<distributedCPUVec<double>*> fieldsPrevious,
-                                                  std::vector<distributedCPUVec<double>* > fieldsCurrent,
-                                                  const dealii::FESystem<3> & FEPrev,
-                                                  const dealii::FESystem<3> & FECurrent,
-                                                  const dealii::ConstraintMatrix & constraintsCurrent);
+          std::vector<distributedCPUVec<double>* > fieldsCurrent,
+          const dealii::FESystem<3> & FEPrev,
+          const dealii::FESystem<3> & FECurrent,
+          const dealii::ConstraintMatrix & constraintsCurrent);
 
       /**
        *@brief project ground state electron density from previous mesh into
@@ -359,15 +359,15 @@ namespace dftfe {
 
       /// creates datastructures related to periodic image charges
       void generateImageCharges(const double pspCutOff,
-	                        std::vector<int> & imageIds,
-				std::vector<double> & imageCharges,
-				std::vector<std::vector<double> > & imagePositions,
-				std::vector<std::vector<int> > & globalChargeIdToImageIdMap);
+          std::vector<int> & imageIds,
+          std::vector<double> & imageCharges,
+          std::vector<std::vector<double> > & imagePositions,
+          std::vector<std::vector<int> > & globalChargeIdToImageIdMap);
 
       void createMasterChargeIdToImageIdMaps(const double pspCutOff,
-	                                     const std::vector<int> & imageIds,
-	                                     const std::vector<std::vector<double> > & imagePositions,
-	                                     std::vector<std::vector<int> > & globalChargeIdToImageIdMap);
+          const std::vector<int> & imageIds,
+          const std::vector<std::vector<double> > & imagePositions,
+          std::vector<std::vector<int> > & globalChargeIdToImageIdMap);
 
       void determineOrbitalFilling();
 
@@ -383,9 +383,9 @@ namespace dftfe {
        *@brief  moves the triangulation vertices using Gaussians such that the all atoms are on triangulation vertices
        */
       void moveMeshToAtoms(Triangulation<3,3> & triangulationMove,
-		           Triangulation<3,3> & triangulationSerial,
-			   bool reuseFlag = false,
-			   bool moveSubdivided = false);
+          Triangulation<3,3> & triangulationSerial,
+          bool reuseFlag = false,
+          bool moveSubdivided = false);
 
       /**
        * Initializes the guess of electron-density and single-atom wavefunctions on the mesh,
@@ -418,12 +418,12 @@ namespace dftfe {
        *@param[in] isEvaluateGradData denotes a flag to evaluate gradients or not
        */
       void interpolateNodalDataToQuadratureData(dealii::MatrixFree<3,double> & matrixFreeData,
-						const distributedCPUVec<double> & nodalField,
-						std::map<dealii::CellId, std::vector<double> > & quadratureValueData,
-						std::map<dealii::CellId, std::vector<double> > & quadratureGradValueData,
-                                                std::map<dealii::CellId, std::vector<double> > & quadratureHessianValueData,
-						const bool isEvaluateGradData,
-                                                const bool isEvaluateHessianData=false);
+          const distributedCPUVec<double> & nodalField,
+          std::map<dealii::CellId, std::vector<double> > & quadratureValueData,
+          std::map<dealii::CellId, std::vector<double> > & quadratureGradValueData,
+          std::map<dealii::CellId, std::vector<double> > & quadratureHessianValueData,
+          const bool isEvaluateGradData,
+          const bool isEvaluateHessianData=false);
 
 
       /**
@@ -438,35 +438,35 @@ namespace dftfe {
        *@param[in] isEvaluateGradData denotes a flag to evaluate gradients or not
        */
       void interpolateNodalDataToQuadratureData(dealii::MatrixFree<3,double> & matrixFreeData,
-						const unsigned int dofHandlerId,
-						const unsigned int quadratureId,
-						const distributedCPUVec<double> & nodalField,
-						std::map<dealii::CellId, std::vector<double> > & quadratureValueData,
-						std::map<dealii::CellId, std::vector<double> > & quadratureGradValueData,
-						const bool isEvaluateGradData);
+          const unsigned int dofHandlerId,
+          const unsigned int quadratureId,
+          const distributedCPUVec<double> & nodalField,
+          std::map<dealii::CellId, std::vector<double> > & quadratureValueData,
+          std::map<dealii::CellId, std::vector<double> > & quadratureGradValueData,
+          const bool isEvaluateGradData);
 
-     /**
-      *@brief Finds the global dof ids of the nodes containing atoms.
-      *
-      * @param[in] dofHandler
-      * @param[out] atomNodeIdToChargeValueMap local map of global dof id to atom charge id
-      */
+      /**
+       *@brief Finds the global dof ids of the nodes containing atoms.
+       *
+       * @param[in] dofHandler
+       * @param[out] atomNodeIdToChargeValueMap local map of global dof id to atom charge id
+       */
       void locateAtomCoreNodes(const dealii::DoFHandler<3> & _dofHandler,
-	                       std::map<dealii::types::global_dof_index, double> & atomNodeIdToChargeValueMap);
+          std::map<dealii::types::global_dof_index, double> & atomNodeIdToChargeValueMap);
 
-     /**
-      *@brief Sets homogeneous dirichlet boundary conditions on a node farthest from
-      * all atoms (pinned node). This is only done in case of periodic boundary conditions
-      * to get an unique solution to the total electrostatic potential problem.
-      *
-      * @param[in] dofHandler
-      * @param[in] constraintMatrixBase base ConstraintMatrix object
-      * @param[out] constraintMatrix ConstraintMatrix object with homogeneous
-      * Dirichlet boundary condition entries added
-      */
+      /**
+       *@brief Sets homogeneous dirichlet boundary conditions on a node farthest from
+       * all atoms (pinned node). This is only done in case of periodic boundary conditions
+       * to get an unique solution to the total electrostatic potential problem.
+       *
+       * @param[in] dofHandler
+       * @param[in] constraintMatrixBase base ConstraintMatrix object
+       * @param[out] constraintMatrix ConstraintMatrix object with homogeneous
+       * Dirichlet boundary condition entries added
+       */
       void locatePeriodicPinnedNodes(const dealii::DoFHandler<3> & _dofHandler,
-	                             const dealii::AffineConstraints<double> & constraintMatrixBase,
-	                             dealii::AffineConstraints<double> & constraintMatrix);
+          const dealii::AffineConstraints<double> & constraintMatrixBase,
+          dealii::AffineConstraints<double> & constraintMatrix);
 
       void initAtomicRho(distributedCPUVec<double> & atomicRhoNodal);
       void initRho();
@@ -480,60 +480,38 @@ namespace dftfe {
 
 
       /**
-       *@brief computes density quadratrue dat from wavefunctions
-       */
-      void computeRhoFromPSI
-		    (std::map<dealii::CellId, std::vector<double> > * _rhoValues,
-		     std::map<dealii::CellId, std::vector<double> > * _gradRhoValues,
-		     std::map<dealii::CellId, std::vector<double> > * _rhoValuesSpinPolarized,
-		     std::map<dealii::CellId, std::vector<double> > * _gradRhoValuesSpinPolarized,
-		     const bool isEvaluateGradRho,
-		     const bool isConsiderSpectrumSplitting,
-		     const bool lobattoNodesFlag = false);
-
-      /**
        *@brief computes density nodal data from wavefunctions
        */
       void computeRhoNodalFromPSI(
 #ifdef DFTFE_WITH_GPU
-                          kohnShamDFTOperatorCUDAClass<FEOrder> & kohnShamDFTEigenOperator,
+          kohnShamDFTOperatorCUDAClass<FEOrder> & kohnShamDFTEigenOperator,
 #endif
-                          bool isConsiderSpectrumSplitting);
+          bool isConsiderSpectrumSplitting);
 
-
-      /**
-       *@brief sums rho cell quadratrure data from  inter communicator
-       */
-      void sumRhoData(std::map<dealii::CellId, std::vector<double> > * _rhoValues,
-	              std::map<dealii::CellId, std::vector<double> > * _gradRhoValues,
-	              std::map<dealii::CellId, std::vector<double> > * _rhoValuesSpinPolarized,
-		      std::map<dealii::CellId, std::vector<double> > * _gradRhoValuesSpinPolarized,
-		      const bool isGradRhoDataPresent,
-		      const MPI_Comm &interComm);
 
       /**
        *@brief resize and allocate table storage for rho cell quadratrue data
        */
       void resizeAndAllocateRhoTableStorage
-			    (std::deque<std::map<dealii::CellId,std::vector<double> >> & rhoVals,
-			     std::deque<std::map<dealii::CellId,std::vector<double> >> & gradRhoVals,
-			     std::deque<std::map<dealii::CellId,std::vector<double> >> & rhoValsSpinPolarized,
-			     std::deque<std::map<dealii::CellId,std::vector<double> >> & gradRhoValsSpinPolarized);
+        (std::deque<std::map<dealii::CellId,std::vector<double> >> & rhoVals,
+         std::deque<std::map<dealii::CellId,std::vector<double> >> & gradRhoVals,
+         std::deque<std::map<dealii::CellId,std::vector<double> >> & rhoValsSpinPolarized,
+         std::deque<std::map<dealii::CellId,std::vector<double> >> & gradRhoValsSpinPolarized);
 
       void noRemeshRhoDataInit();
       void readPSI();
       void readPSIRadialValues();
       void loadPSIFiles(unsigned int Z, unsigned int n, unsigned int l, unsigned int & flag);
       void initLocalPseudoPotential(const DoFHandler<3> & _dofHandler,
-	   const dealii::QGauss<3> & _quadrature,
-           const dealii::MatrixFree<3,double> & _matrix_free_data,
-           const unsigned int _phiExtDofHandlerIndex,
-           const dealii::ConstraintMatrix & phiExtConstraintMatrix,
-           const std::map<types::global_dof_index, Point<3> > & supportPoints,
-           const vselfBinsManager<FEOrder> & vselfBinManager,
-	   std::map<dealii::CellId, std::vector<double> > & _pseudoValues,
-	   std::map<dealii::CellId, std::vector<double> > & _gradPseudoValues,
-	   std::map<unsigned int,std::map<dealii::CellId, std::vector<double> > > & _gradPseudoValuesAtoms);
+          const dealii::QGauss<3> & _quadrature,
+          const dealii::MatrixFree<3,double> & _matrix_free_data,
+          const unsigned int _phiExtDofHandlerIndex,
+          const dealii::ConstraintMatrix & phiExtConstraintMatrix,
+          const std::map<types::global_dof_index, Point<3> > & supportPoints,
+          const vselfBinsManager<FEOrder> & vselfBinManager,
+          std::map<dealii::CellId, std::vector<double> > & _pseudoValues,
+          std::map<dealii::CellId, std::vector<double> > & _gradPseudoValues,
+          std::map<unsigned int,std::map<dealii::CellId, std::vector<double> > > & _gradPseudoValuesAtoms);
       void initNonLocalPseudoPotential();
       void initNonLocalPseudoPotential_OV();
       void computeSparseStructureNonLocalProjectors();
@@ -550,7 +528,7 @@ namespace dftfe {
        * Dirichlet boundary condition entries added
        */
       void applyHomogeneousDirichletBC(const dealii::DoFHandler<3> & _dofHandler,
-	                               dealii::AffineConstraints<double> & constraintMatrix);
+          dealii::AffineConstraints<double> & constraintMatrix);
 
       void computeElementalOVProjectorKets();
 
@@ -558,27 +536,27 @@ namespace dftfe {
        *@brief Computes total charge by integrating the electron-density
        */
       double totalCharge(const dealii::DoFHandler<3> & dofHandlerOfField,
-			 const distributedCPUVec<double> & rhoNodalField,
-			 std::map<dealii::CellId, std::vector<double> > & rhoQuadValues);
+          const distributedCPUVec<double> & rhoNodalField,
+          std::map<dealii::CellId, std::vector<double> > & rhoQuadValues);
 
 
       double totalCharge(const dealii::DoFHandler<3> & dofHandlerOfField,
-			 const distributedCPUVec<double> & rhoNodalField);
+          const distributedCPUVec<double> & rhoNodalField);
 
 
       double totalCharge(const dealii::DoFHandler<3> & dofHandlerOfField,
-			 const std::map<dealii::CellId, std::vector<double> > *rhoQuadValues);
+          const std::map<dealii::CellId, std::vector<double> > *rhoQuadValues);
 
 
       double totalCharge(const dealii::MatrixFree<3,double> & matrixFreeDataObject,
-			 const distributedCPUVec<double> & rhoNodalField);
+          const distributedCPUVec<double> & rhoNodalField);
 
 
       double fieldl2Norm(const dealii::MatrixFree<3,double> & matrixFreeDataObject,
-			 const distributedCPUVec<double> & rhoNodalField);
+          const distributedCPUVec<double> & rhoNodalField);
 
       double fieldGradl2Norm(const dealii::MatrixFree<3,double> & matrixFreeDataObject,
-			     const distributedCPUVec<double> & field);
+          const distributedCPUVec<double> & field);
 
       /**
        *@brief Computes net magnetization from the difference of local spin densities
@@ -600,12 +578,12 @@ namespace dftfe {
        */
       void compute_rhoOut(
 #ifdef DFTFE_WITH_GPU
-                          kohnShamDFTOperatorCUDAClass<FEOrder> & kohnShamDFTEigenOperator,
+          kohnShamDFTOperatorCUDAClass<FEOrder> & kohnShamDFTEigenOperator,
 #endif
-                          const bool isConsiderSpectrumSplitting,
-                          const bool isGroundState=false);
+          const bool isConsiderSpectrumSplitting,
+          const bool isGroundState=false);
 
-      
+
       void popOutRhoInRhoOutVals(); 
 
       /**
@@ -618,9 +596,9 @@ namespace dftfe {
       double mixing_broyden();
       double mixing_broyden_spinPolarized();
       double nodalDensity_mixing_simple(kerkerSolverProblem<C_num1DKerkerPoly<FEOrder>()> & solverProblem,
-					dealiiLinearSolver & dealiiLinearSolver);
+          dealiiLinearSolver & dealiiLinearSolver);
       double nodalDensity_mixing_anderson(kerkerSolverProblem<C_num1DKerkerPoly<FEOrder>()> & solverProblem,
-					  dealiiLinearSolver & dealiiLinearSolver);
+          dealiiLinearSolver & dealiiLinearSolver);
 
 
       /**
@@ -634,15 +612,15 @@ namespace dftfe {
        */
       void computeElectrostaticEnergyHRefined(
 #ifdef DFTFE_WITH_GPU
-                          kohnShamDFTOperatorCUDAClass<FEOrder> & kohnShamDFTEigenOperator,
+          kohnShamDFTOperatorCUDAClass<FEOrder> & kohnShamDFTEigenOperator,
 #endif
-                                              const bool computeForces=true);
+          const bool computeForces=true);
       void computeElectrostaticEnergyPRefined();
       /**
        *@brief Computes Fermi-energy obtained by imposing constraint on the number of electrons
        */
       void compute_fermienergy(const std::vector<std::vector<double>> & eigenValuesInput,
-	                       const double numElectronsInput);
+          const double numElectronsInput);
       /**
        *@brief Computes Fermi-energy obtained by imposing separate constraints on the number of spin-up and spin-down electrons
        */
@@ -652,13 +630,13 @@ namespace dftfe {
        *@brief compute density of states and local density of states
        */
       void compute_tdos(const std::vector<std::vector<double> > & eigenValuesInput,
-			const std::string & fileName);
+          const std::string & fileName);
 
       void compute_ldos(const std::vector<std::vector<double> > & eigenValuesInput,
-			const std::string & fileName);
+          const std::string & fileName);
 
       void compute_pdos(const std::vector<std::vector<double>> & eigenValuesInput,
-                        const std::string & fileName);
+          const std::string & fileName);
 
 
       /**
@@ -699,11 +677,11 @@ namespace dftfe {
 
 #ifdef USE_COMPLEX
       std::complex<double> innerProduct(distributedCPUVec<double> & a,
-					distributedCPUVec<double> & b);
+          distributedCPUVec<double> & b);
 
       void alphaTimesXPlusY(std::complex<double>   alpha,
-			    distributedCPUVec<double>           & x,
-			    distributedCPUVec<double>           & y);
+          distributedCPUVec<double>           & x,
+          distributedCPUVec<double>           & y);
 
 #endif
       /**
@@ -864,15 +842,6 @@ namespace dftfe {
 #ifdef DFTFE_WITH_GPU
       dftUtils::constraintMatrixInfoCUDA d_constraintsNoneDataInfoCUDA;
 #endif
-
-      /**
-       *object which is used to store dealii constraint matrix information
-       *using STL vectors. The relevant dealii constraint matrix
-       *has hanging node constraints used in Poisson problem solution
-       *
-       */
-      dftUtils::constraintMatrixInfo constraintsNoneDataInfo2;
-
 
 
       dealii::AffineConstraints<double> constraintsNone, constraintsNoneEigen, d_constraintsForTotalPotential, d_noConstraints, d_constraintsPRefined;
@@ -1089,71 +1058,66 @@ namespace dftfe {
       bool d_isRestartGroundStateCalcFromChk;
 
       /**
-      * @ nscf variables
-      */
-     bool scfConverged;
-     void nscf(kohnShamDFTOperatorClass<FEOrder> & kohnShamDFTEigenOperator,
-	      chebyshevOrthogonalizedSubspaceIterationSolver & subspaceIterationSolver);
-     void initnscf(kohnShamDFTOperatorClass<FEOrder> & kohnShamDFTEigenOperator,poissonSolverProblem<FEOrder> & phiTotalSolverProblem,
-	      dealiiLinearSolver & dealiiCGSolver) ;
+       * @ nscf variables
+       */
+      bool scfConverged;
+      void nscf(kohnShamDFTOperatorClass<FEOrder> & kohnShamDFTEigenOperator,
+          chebyshevOrthogonalizedSubspaceIterationSolver & subspaceIterationSolver);
+      void initnscf(kohnShamDFTOperatorClass<FEOrder> & kohnShamDFTEigenOperator,poissonSolverProblem<FEOrder> & phiTotalSolverProblem,
+          dealiiLinearSolver & dealiiCGSolver) ;
 
       /**
        * @brief compute the maximum of the residual norm of the highest occupied state among all k points
        */
       double computeMaximumHighestOccupiedStateResidualNorm(const std::vector<std::vector<double> > & residualNormWaveFunctionsAllkPoints,
-							    const std::vector<std::vector<double> > & eigenValuesAllkPoints,
-							    const double _fermiEnergy);
+          const std::vector<std::vector<double> > & eigenValuesAllkPoints,
+          const double _fermiEnergy);
 
 
       void kohnShamEigenSpaceCompute(const unsigned int s,
-				     const unsigned int kPointIndex,
-				     kohnShamDFTOperatorClass<FEOrder> & kohnShamDFTEigenOperator,
-                                     elpaScalaManager & elpaScala,
-				     chebyshevOrthogonalizedSubspaceIterationSolver & subspaceIterationSolver,
-				     std::vector<double> & residualNormWaveFunctions,
-				     const bool isSpectrumSplit=false,
-				     const bool useMixedPrec=false,
-                                     const bool isFirstScf=false,
-				     const bool useFullMassMatrixGEP=false);
+          const unsigned int kPointIndex,
+          kohnShamDFTOperatorClass<FEOrder> & kohnShamDFTEigenOperator,
+          elpaScalaManager & elpaScala,
+          chebyshevOrthogonalizedSubspaceIterationSolver & subspaceIterationSolver,
+          std::vector<double> & residualNormWaveFunctions,
+          const bool isSpectrumSplit=false,
+          const bool useMixedPrec=false,
+          const bool isFirstScf=false,
+          const bool useFullMassMatrixGEP=false);
 
 
 #ifdef DFTFE_WITH_GPU
       void kohnShamEigenSpaceCompute(const unsigned int s,
-                                     const unsigned int kPointIndex,
-                                     kohnShamDFTOperatorCUDAClass<FEOrder> & kohnShamDFTEigenOperator,
-                                     elpaScalaManager & elpaScala,
-                                     chebyshevOrthogonalizedSubspaceIterationSolverCUDA & subspaceIterationSolverCUDA,
-                                     std::vector<double> & residualNormWaveFunctions,
-                                     const bool isXlBOMDLinearizedSolve,
-                                     const unsigned int numberRayleighRitzAvoidanceXLBOMDPasses=0,
-				     const bool isSpectrumSplit=false,
-				     const bool useMixedPrec=false,
-                                     const bool isFirstScf=false,
-				     const bool useFullMassMatrixGEP=false);
+          const unsigned int kPointIndex,
+          kohnShamDFTOperatorCUDAClass<FEOrder> & kohnShamDFTEigenOperator,
+          elpaScalaManager & elpaScala,
+          chebyshevOrthogonalizedSubspaceIterationSolverCUDA & subspaceIterationSolverCUDA,
+          std::vector<double> & residualNormWaveFunctions,
+          const bool isXlBOMDLinearizedSolve,
+          const unsigned int numberRayleighRitzAvoidanceXLBOMDPasses=0,
+          const bool isSpectrumSplit=false,
+          const bool useMixedPrec=false,
+          const bool isFirstScf=false,
+          const bool useFullMassMatrixGEP=false);
 #endif
 
 
 #ifdef DFTFE_WITH_GPU
       void kohnShamEigenSpaceOnlyRRCompute(const unsigned int s,
-                                     const unsigned int kPointIndex,
-                                     kohnShamDFTOperatorCUDAClass<FEOrder> & kohnShamDFTEigenOperator,
-                                     elpaScalaManager & elpaScala,
-                                     chebyshevOrthogonalizedSubspaceIterationSolverCUDA & subspaceIterationSolverCUDA,
-				     const bool isSpectrumSplit=false,
-				     const bool useMixedPrec=false);
+          const unsigned int kPointIndex,
+          kohnShamDFTOperatorCUDAClass<FEOrder> & kohnShamDFTEigenOperator,
+          elpaScalaManager & elpaScala,
+          chebyshevOrthogonalizedSubspaceIterationSolverCUDA & subspaceIterationSolverCUDA,
+          const bool isSpectrumSplit=false,
+          const bool useMixedPrec=false);
 #endif
 
-     void kohnShamEigenSpaceComputeNSCF(const unsigned int spinType,
-				    const unsigned int kPointIndex,
-				    kohnShamDFTOperatorClass<FEOrder> & kohnShamDFTEigenOperator,
-				    chebyshevOrthogonalizedSubspaceIterationSolver & subspaceIterationSolver,
-				    std::vector<double>                            & residualNormWaveFunctions,
-				    unsigned int ipass) ;
-
-      void computeResidualNorm(const std::vector<double> & eigenValuesTemp,
-			       kohnShamDFTOperatorClass<FEOrder> & kohnShamDFTEigenOperator,
-			       std::vector<distributedCPUVec<double>> & X,
-			       std::vector<double> & residualNorm) const;
+      void kohnShamEigenSpaceComputeNSCF(const unsigned int spinType,
+          const unsigned int kPointIndex,
+          kohnShamDFTOperatorClass<FEOrder> & kohnShamDFTEigenOperator,
+          chebyshevOrthogonalizedSubspaceIterationSolver & subspaceIterationSolver,
+          std::vector<double>                            & residualNormWaveFunctions,
+          unsigned int ipass) ;
 
     };
 
