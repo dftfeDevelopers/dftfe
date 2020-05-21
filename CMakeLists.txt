@@ -5,9 +5,6 @@
 # Set the name of the project and target:
 SET(TARGET "dftfe")
 SET(TARGETLIB "dftfem")
-IF (WITH_GPU)
-   SET(DFTFECUDALIB "dftfecuda")
-ENDIF()
 
 INCLUDE_DIRECTORIES(
  ${CMAKE_SOURCE_DIR}/include
@@ -56,6 +53,20 @@ SET(TARGET_SRC
   ./pseudoConverters/upfToxml.cc
   ./utils/PeriodicTable.cc
   ./utils/xmlTodftfeParser.cc
+  ./src/setupGPU.cu
+  ./src/dft/densityCalculatorCUDA.cu
+  ./src/dftOperator/operatorCUDA.cu
+  ./src/dftOperator/kohnShamDFTOperatorCUDA.cu
+  ./src/dftOperator/kohnShamDFTOperatorCUDAKernels.cu
+  ./src/dft/solveVselfInBinsCUDA.cu
+  ./src/solvers/eigenSolvers/chebyshevOrthogonalizedSubspaceIterationSolverCUDA.cu
+  ./src/linAlg/linearAlgebraOperationsInternalCUDA.cu
+  ./src/linAlg/linearAlgebraOperationsCUDA.cu
+  ./src/linAlg/pseudoGSCUDA.cu
+  ./src/linAlg/rayleighRitzCUDA.cu
+  ./src/force/forceCUDA.cu
+  ./utils/constraintMatrixInfoCUDA.cu
+  ./utils/vectorTools/vectorUtilitiesCUDA.cu
   # You can specify additional files here!
   )
 
@@ -183,49 +194,25 @@ IF (WITH_GPU)
      )
   ENDIF()
 
-  SET(CUDA_SRC
-   ./src/setupGPU.cu
-   ./src/dft/densityCalculatorCUDA.cu
-   ./src/dftOperator/operatorCUDA.cu
-   ./src/dftOperator/kohnShamDFTOperatorCUDA.cu
-   ./src/dftOperator/kohnShamDFTOperatorCUDAKernels.cu
-   ./src/dft/solveVselfInBinsCUDA.cu
-   ./src/solvers/eigenSolvers/chebyshevOrthogonalizedSubspaceIterationSolverCUDA.cu
-   ./src/linAlg/linearAlgebraOperationsInternalCUDA.cu
-   ./src/linAlg/linearAlgebraOperationsCUDA.cu
-   ./src/linAlg/pseudoGSCUDA.cu
-   ./src/linAlg/rayleighRitzCUDA.cu
-   ./src/force/forceCUDA.cu
-   ./utils/constraintMatrixInfoCUDA.cu
-   ./utils/vectorTools/vectorUtilitiesCUDA.cu
-   )
-
   find_package(CUDA REQUIRED)
   set(CUDA_PROPAGATE_HOST_FLAGS ON)
   list( APPEND CUDA_NVCC_FLAGS -arch=sm_70; -std=c++11; -expt-relaxed-constexpr)
-  CUDA_ADD_LIBRARY(${DFTFECUDALIB} SHARED ${CUDA_SRC})
 ENDIF()
 
-
-ADD_LIBRARY(${TARGETLIB} SHARED
-  ${TARGET_SRC}
-)
+IF (WITH_GPU)
+  CUDA_ADD_LIBRARY(${TARGETLIB} SHARED ${TARGET_SRC})
+ELSE()
+  ADD_LIBRARY(${TARGETLIB} SHARED ${TARGET_SRC})
+ENDIF()
 
 ADD_EXECUTABLE(${TARGET}   src/main.cc)
 
 DEAL_II_SETUP_TARGET(${TARGETLIB})
 DEAL_II_SETUP_TARGET(${TARGET})
 
-IF (WITH_GPU)
- DEAL_II_SETUP_TARGET(${DFTFECUDALIB})
- TARGET_LINK_LIBRARIES(${TARGET}
-    ${TARGETLIB} ${DFTFECUDALIB}
-  )
-ELSE()
- TARGET_LINK_LIBRARIES(${TARGET}
+TARGET_LINK_LIBRARIES(${TARGET}
     ${TARGETLIB}
   )
-ENDIF()
 
 #
 # REQUIRED DEPENDENCIES:
