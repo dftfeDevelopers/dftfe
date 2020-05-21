@@ -3097,6 +3097,127 @@ namespace dftfe{
     }
 #endif
 
+		//
+		// evaluate upper bound of the spectrum using k-step Lanczos iteration
+		//
+		template<typename T>
+			double lanczosUpperBoundEigenSpectrum(operatorDFTClass & operatorMatrix,
+					const distributedCPUVec<T> & vect)
+			{
+
+				const unsigned int this_mpi_process = dealii::Utilities::MPI::this_mpi_process(operatorMatrix.getMPICommunicator());
+
+				const unsigned int lanczosIterations=dftParameters::reproducible_output?40:20;
+				double beta;
+
+
+				T alpha,alphaNeg;
+
+				//
+				//generate random vector v
+				//
+				distributedCPUVec<T> vVector, fVector, v0Vector;
+				vVector.reinit(vect);
+				fVector.reinit(vect);
+
+				vVector = T(0.0),fVector = T(0.0);
+				//std::srand(this_mpi_process);
+				const unsigned int local_size = vVector.local_size();
+
+				for (unsigned int i = 0; i < local_size; i++)
+					vVector.local_element(i) = ((double)std::rand())/((double)RAND_MAX);
+
+			  operatorMatrix.getOverloadedConstraintMatrix()->set_zero(vVector,
+				                                                    1);
+
+				vVector.update_ghost_values();
+
+				//
+				//evaluate l2 norm
+				//
+				vVector/=vVector.l2_norm();
+				vVector.update_ghost_values();
+
+				//
+				//call matrix times X
+				//
+			  fVector=T(0);
+        const bool scaleFlag = false;
+        const double scalar = 1.0;
+				operatorMatrix.HX(vVector,
+						1,
+						scaleFlag,
+						scalar,
+					  fVector);
+
+				//evaluate fVector^{H}*vVector
+				alpha=fVector*vVector;
+				fVector.add(-1.0*alpha,vVector);
+				std::vector<T> Tlanczos(lanczosIterations*lanczosIterations,0.0);
+
+				Tlanczos[0]=alpha;
+				unsigned index=0;
+
+				//filling only lower triangular part
+				for (unsigned int j=1; j<lanczosIterations; j++)
+				{
+					beta=fVector.l2_norm();
+					v0Vector = vVector; vVector.equ(1.0/beta,fVector);
+						
+					fVector=T(0);
+					operatorMatrix.HX(vVector,
+							1,
+							scaleFlag,
+							scalar,
+							fVector);					
+
+					fVector.add(-1.0*beta,v0Vector);//beta is real
+					
+					alpha = fVector*vVector;
+					fVector.add(-1.0*alpha,vVector);
+					
+					index+=1;
+					Tlanczos[index]=beta;
+					index+=lanczosIterations;
+					Tlanczos[index]=alpha;
+				}
+				
+				//eigen decomposition to find max eigen value of T matrix
+				std::vector<double> eigenValuesT(lanczosIterations);
+				char jobz='N', uplo='L';
+				const unsigned int n = lanczosIterations, lda = lanczosIterations;
+				int info;
+				const unsigned int lwork = 1 + 6*n + 2*n*n, liwork = 3 + 5*n;
+				std::vector<int> iwork(liwork, 0);
+
+#ifdef USE_COMPLEX
+				const unsigned int lrwork = 1 + 5*n + 2*n*n;
+				std::vector<double> rwork(lrwork,0.0);
+				std::vector<std::complex<double> > work(lwork);
+				zheevd_(&jobz, &uplo, &n, &Tlanczos[0], &lda, &eigenValuesT[0], &work[0], &lwork, &rwork[0], &lrwork, &iwork[0], &liwork, &info);
+#else
+				std::vector<double> work(lwork, 0.0);
+				dsyevd_(&jobz, &uplo, &n, &Tlanczos[0], &lda, &eigenValuesT[0], &work[0], &lwork, &iwork[0], &liwork, &info);
+#endif
+
+
+				for (unsigned int i=0; i<eigenValuesT.size(); i++){eigenValuesT[i]=std::abs(eigenValuesT[i]);}
+				std::sort(eigenValuesT.begin(),eigenValuesT.end());
+				//
+				if (dftParameters::verbosity==2)
+				{
+					char buffer[100];
+					sprintf(buffer, "bUp1: %18.10e,  bUp2: %18.10e\n", eigenValuesT[lanczosIterations-1], fVector.l2_norm());
+					//pcout << buffer;
+				}
+				
+				double upperBound=eigenValuesT[lanczosIterations-1]+fVector.l2_norm();
+				return (std::ceil(upperBound));
+			}
+
+
+		template double lanczosUpperBoundEigenSpectrum(operatorDFTClass &,
+				const distributedCPUVec<dataTypes::number> &);
 
 
     template void chebyshevFilter(operatorDFTClass & operatorMatrix,

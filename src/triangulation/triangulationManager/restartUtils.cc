@@ -144,7 +144,7 @@ namespace dftfe {
 
          d_parallelTriangulationUnmoved.save(filename.c_str());
 
-	 saveSupportTriangulations();
+	 //saveSupportTriangulations();
       }
     }
 
@@ -156,7 +156,7 @@ namespace dftfe {
 				  const unsigned int nComponents,
 				  std::vector< distributedCPUVec<double> * > & solutionVectors)
     {
-      loadSupportTriangulations();
+      //loadSupportTriangulations();
       const std::string filename="parallelUnmovedTriaSolData.chk";
       dftUtils::verifyCheckpointFileExists(filename);
       try

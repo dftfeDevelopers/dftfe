@@ -109,9 +109,6 @@ void dftClass<FEOrder>::initElectronicFields(const unsigned int usePreviousGroun
   constraintsNoneDataInfo.initialize(matrix_free_data.get_vector_partitioner(),
 				     constraintsNone);
 
-  constraintsNoneDataInfo2.initialize(matrix_free_data.get_vector_partitioner(),
-				     constraintsNone);
-
 #ifdef DFTFE_WITH_GPU
   if (dftParameters::useGPU)
      d_constraintsNoneDataInfoCUDA.initialize(matrix_free_data.get_vector_partitioner(),

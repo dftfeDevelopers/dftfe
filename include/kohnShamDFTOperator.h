@@ -50,18 +50,6 @@ namespace dftfe{
       kohnShamDFTOperatorClass(dftClass<FEOrder>* _dftPtr, const MPI_Comm &mpi_comm_replica);
 
       /**
-       * @brief Compute operator times vector or operator times bunch of vectors
-       *
-       * @param src Vector of Vectors containing current values of source array (non-const as
-         we scale src and rescale src to avoid creation of temporary vectors)
-       * @param dst Vector of Vectors containing operator times vectors product
-       */
-      void HX(std::vector<distributedCPUVec<double>> &src,
-	      std::vector<distributedCPUVec<double>> &dst);
-
-
-
-      /**
        * @brief Compute discretized operator matrix times multi-vectors and add it to the existing dst vector
        * works for both real and complex data types
        * @param src Vector containing current values of source array with multi-vector array stored
@@ -143,16 +131,6 @@ namespace dftfe{
 		      const std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid>  & processGrid,
 		      dealii::ScaLAPACKMatrix<dataTypes::number> & projHamPar,
 		      bool origHFlag = false);
-
-      /**
-       * @brief Compute projection of the operator into orthogonal basis
-       *
-       * @param src given orthogonal basis vectors
-       * @return ProjMatrix projected small matrix
-       */
-      void XtHX(std::vector<distributedCPUVec<double>> &src,
-		std::vector<dataTypes::number> & ProjHam);
-
 
 
        /**
@@ -278,28 +256,6 @@ namespace dftfe{
 
 
     private:
-      /**
-       * @brief implementation of matrix-free based matrix-vector product at cell-level
-       * @param data matrix-free data
-       * @param dst Vector of Vectors containing matrix times vectors product
-       * @param src Vector of Vectors containing input vectors
-       * @param cell_range range of cell-blocks
-       */
-      void computeLocalHamiltonianTimesXMF(const dealii::MatrixFree<3,double>  &data,
-					   std::vector<distributedCPUVec<double>>  &dst,
-					   const std::vector<distributedCPUVec<double>>  &src,
-					   const std::pair<unsigned int,unsigned int> &cell_range) const;
-
-      /**
-       * @brief implementation of  matrix-vector product for nonlocal Hamiltonian
-       * @param src Vector of Vectors containing input vectors
-       * @param dst Vector of Vectors containing matrix times vectors product
-       */
-      void computeNonLocalHamiltonianTimesX(const std::vector<distributedCPUVec<double>> &src,
-					    std::vector<distributedCPUVec<double>>       &dst) const;
-
-
-
 
       /**
        * @brief finite-element cell level stiffness matrix with first dimension traversing the cell id(in the order of macro-cell and subcell)
