@@ -15,7 +15,6 @@
 //
 // @author Phani Motamarri, Sambit Das
 
-#if defined(DFTFE_WITH_GPU)
 #include <chebyshevOrthogonalizedSubspaceIterationSolverCUDA.h>
 #include <linearAlgebraOperations.h>
 #include <linearAlgebraOperationsCUDA.h>
@@ -26,8 +25,6 @@
 
 static const unsigned int order_lookup[][2] = {
   {500, 24}, // <= 500 ~> chebyshevOrder = 24
-  {750, 30},
-  {1000, 39},
   {750, 30},
   {1000, 39},
   {1500, 50},
@@ -2258,4 +2255,3 @@ namespace dftfe
   }
    
 }
-#endif

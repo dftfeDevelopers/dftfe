@@ -17,7 +17,6 @@
 //
 
 //source file for electron density related computations
-#if defined(DFTFE_WITH_GPU)
 #include <densityCalculatorCUDA.h>
 #include <dftParameters.h>
 #include <dftUtils.h>
@@ -1291,4 +1290,3 @@ namespace dftfe
 
    }
 }
-#endif

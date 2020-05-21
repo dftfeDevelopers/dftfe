@@ -16,7 +16,6 @@
 // @author Sambit Das
 //
 
-#if defined(DFTFE_WITH_GPU)
 #include <linearAlgebraOperationsInternalCUDA.h>
 #include <dftParameters.h>
 #include <dftUtils.h>
@@ -185,4 +184,3 @@ namespace dftfe
     }
   }
 }
-#endif

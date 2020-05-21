@@ -16,7 +16,6 @@
 // @author  Sambit Das, Phani Motamarri
 //
 
-#if defined(DFTFE_WITH_GPU)
 #include <constraintMatrixInfoCUDA.h>
 
 namespace dftfe {
@@ -357,4 +356,3 @@ namespace dftfe {
 	  }
 	}
 }
-#endif
