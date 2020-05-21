@@ -15,6 +15,7 @@
 //
 // @author  Sambit Das, Phani Motamarri
 //
+
 #include <constraintMatrixInfoCUDA.h>
 
 namespace dftfe {
@@ -355,4 +356,3 @@ namespace dftfe {
 	  }
 	}
 }
-

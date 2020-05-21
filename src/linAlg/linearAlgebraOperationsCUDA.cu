@@ -15,7 +15,6 @@
 // @author Sambit Das, Phani Motamarri
 
 
-
 #include<linearAlgebraOperationsInternalCUDA.h>
 #include<linearAlgebraOperationsCUDA.h>
 #include<dftParameters.h>
@@ -4592,4 +4591,4 @@ namespace dftfe
 #endif
     }
   }
-}  
+}

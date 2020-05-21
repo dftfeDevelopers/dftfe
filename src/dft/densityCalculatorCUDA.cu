@@ -17,7 +17,6 @@
 //
 
 //source file for electron density related computations
-
 #include <densityCalculatorCUDA.h>
 #include <dftParameters.h>
 #include <dftUtils.h>

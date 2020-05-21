@@ -5,13 +5,6 @@
 # Set the name of the project and target:
 SET(TARGET "dftfe")
 SET(TARGETLIB "dftfem")
-IF (WITH_GPU)
-   SET(DFTFECUDALIB "dftfecuda")
-ENDIF()
-
-INCLUDE_DIRECTORIES(
- ${CMAKE_SOURCE_DIR}/include
-)
 
 # Declare all source files the target consists of:
 SET(TARGET_SRC
@@ -56,11 +49,28 @@ SET(TARGET_SRC
   ./pseudoConverters/upfToxml.cc
   ./utils/PeriodicTable.cc
   ./utils/xmlTodftfeParser.cc
-  # You can specify additional files here!
+  )
+
+SET(CUDA_SRC
+  ./src/setupGPU.cu
+  ./src/dft/densityCalculatorCUDA.cu
+  ./src/dftOperator/operatorCUDA.cu
+  ./src/dftOperator/kohnShamDFTOperatorCUDA.cu
+  ./src/dftOperator/kohnShamDFTOperatorCUDAKernels.cu
+  ./src/dft/solveVselfInBinsCUDA.cu
+  ./src/solvers/eigenSolvers/chebyshevOrthogonalizedSubspaceIterationSolverCUDA.cu
+  ./src/linAlg/linearAlgebraOperationsInternalCUDA.cu
+  ./src/linAlg/linearAlgebraOperationsCUDA.cu
+  ./src/linAlg/pseudoGSCUDA.cu
+  ./src/linAlg/rayleighRitzCUDA.cu
+  ./src/force/forceCUDA.cu
+  ./utils/constraintMatrixInfoCUDA.cu
+  ./utils/vectorTools/vectorUtilitiesCUDA.cu
   )
 
 IF (WITH_GPU)
-  CMAKE_MINIMUM_REQUIRED(VERSION 3.9)
+  CMAKE_MINIMUM_REQUIRED(VERSION 3.11)
+  LIST(APPEND TARGET_SRC ${CUDA_SRC})
 ELSE()
   CMAKE_MINIMUM_REQUIRED(VERSION 2.8.12)
 ENDIF()
@@ -103,8 +113,10 @@ ENDIF()
 
 
 DEAL_II_INITIALIZE_CACHED_VARIABLES()
-PROJECT(${TARGET})
-
+PROJECT(${TARGET} LANGUAGES CXX)
+IF (DEAL_II_WITH_CUDA)
+    enable_language(CUDA)
+ENDIF()
 #
 # RPATHS: https://cmake.org/Wiki/CMake_RPATH_handling#Mac_OS_X_and_the_RPATH
 #
@@ -183,60 +195,35 @@ IF (WITH_GPU)
      )
   ENDIF()
 
-  SET(CUDA_SRC
-   ./src/setupGPU.cu
-   ./src/dft/densityCalculatorCUDA.cu
-   ./src/dftOperator/operatorCUDA.cu
-   ./src/dftOperator/kohnShamDFTOperatorCUDA.cu
-   ./src/dftOperator/kohnShamDFTOperatorCUDAKernels.cu
-   ./src/dft/solveVselfInBinsCUDA.cu
-   ./src/solvers/eigenSolvers/chebyshevOrthogonalizedSubspaceIterationSolverCUDA.cu
-   ./src/linAlg/linearAlgebraOperationsInternalCUDA.cu
-   ./src/linAlg/linearAlgebraOperationsCUDA.cu
-   ./src/linAlg/pseudoGSCUDA.cu
-   ./src/linAlg/rayleighRitzCUDA.cu
-   ./src/force/forceCUDA.cu
-   ./utils/constraintMatrixInfoCUDA.cu
-   ./utils/vectorTools/vectorUtilitiesCUDA.cu
-   )
-
   find_package(CUDA REQUIRED)
   set(CUDA_PROPAGATE_HOST_FLAGS ON)
-  list( APPEND CUDA_NVCC_FLAGS -arch=sm_70; -std=c++11; -expt-relaxed-constexpr)
-  CUDA_ADD_LIBRARY(${DFTFECUDALIB} SHARED ${CUDA_SRC})
+  list(APPEND CUDA_NVCC_FLAGS -arch=sm_70; -std=c++11; -expt-relaxed-constexpr)
 ENDIF()
 
-
-ADD_LIBRARY(${TARGETLIB} SHARED
-  ${TARGET_SRC}
-)
+IF (WITH_GPU)
+  CUDA_ADD_LIBRARY(${TARGETLIB} SHARED ${TARGET_SRC})
+ELSE()
+  ADD_LIBRARY(${TARGETLIB} SHARED ${TARGET_SRC})
+ENDIF()
 
 ADD_EXECUTABLE(${TARGET}   src/main.cc)
 
 DEAL_II_SETUP_TARGET(${TARGETLIB})
 DEAL_II_SETUP_TARGET(${TARGET})
 
-IF (WITH_GPU)
- DEAL_II_SETUP_TARGET(${DFTFECUDALIB})
- TARGET_LINK_LIBRARIES(${TARGET}
-    ${TARGETLIB} ${DFTFECUDALIB}
-  )
-ELSE()
- TARGET_LINK_LIBRARIES(${TARGET}
-    ${TARGETLIB}
-  )
-ENDIF()
+TARGET_INCLUDE_DIRECTORIES(${TARGETLIB} PUBLIC ${CMAKE_SOURCE_DIR}/include)
+
+TARGET_LINK_LIBRARIES(${TARGET} ${TARGETLIB})
 
 #
 # REQUIRED DEPENDENCIES:
 #
 
 IF (WITH_GPU)
-  include_directories(${CUDA_INCLUDE_DIRS})
+  target_include_directories(${TARGETLIB} PUBLIC ${CUDA_INCLUDE_DIRS})
   SET(ALL_CUDA_LIBS ${CUDA_LIBRARIES} ${CUDA_cusparse_LIBRARY} ${CUDA_cublas_LIBRARY})
   message(STATUS "CUDA_LIBRARIES: ${CUDA_INCLUDE_DIRS} ${ALL_CUDA_LIBS}")
-  TARGET_LINK_LIBRARIES(${TARGET}
-            "${ALL_CUDA_LIBS}")
+  TARGET_LINK_LIBRARIES(${TARGET} "${ALL_CUDA_LIBS}")
 ENDIF()
 
 #
@@ -255,8 +242,8 @@ IF (DEFINED ALGLIB_DIR)
   TARGET_LINK_LIBRARIES(${TARGET}
 	  "${ALGLIB_LIBRARY}"
   )
-  INCLUDE_DIRECTORIES ("${ALGLIB_DIR}")
-  INCLUDE_DIRECTORIES ("${ALGLIB_DIR}/include")
+  TARGET_INCLUDE_DIRECTORIES (${TARGETLIB} PUBLIC "${ALGLIB_DIR}")
+  TARGET_INCLUDE_DIRECTORIES (${TARGETLIB} PUBLIC "${ALGLIB_DIR}/include")
 ELSE()
   MESSAGE(FATAL_ERROR "-- Provide path to AlgLIB: -DALGLIB_DIR=/path/to/prefix")
 ENDIF (DEFINED ALGLIB_DIR)
@@ -277,7 +264,7 @@ IF (DEFINED LIBXC_DIR)
   TARGET_LINK_LIBRARIES(${TARGET}
 	    "${LIBXC_LIBRARY}"
   )
-  INCLUDE_DIRECTORIES ("${LIBXC_DIR}/include")
+  TARGET_INCLUDE_DIRECTORIES (${TARGETLIB} PUBLIC "${LIBXC_DIR}/include")
 ELSE()
   MESSAGE(FATAL_ERROR "-- Provide path to prefix of LibXC: -DLIBXC_DIR=/path/to/prefix")
 ENDIF (DEFINED LIBXC_DIR)
@@ -298,7 +285,7 @@ IF (DEFINED XML_INCLUDE_DIR)
   TARGET_LINK_LIBRARIES(${TARGET}
 	    "${XML_LIBRARY}"
   )
-  INCLUDE_DIRECTORIES ("${XML_INCLUDE_DIR}")
+  TARGET_INCLUDE_DIRECTORIES (${TARGETLIB} PUBLIC "${XML_INCLUDE_DIR}")
 ELSE()
   MESSAGE(FATAL_ERROR "-- Provide path of XML: -DXML_LIB_DIR and -DXML_INCLUDE_DIR")
 ENDIF (DEFINED XML_INCLUDE_DIR)
@@ -321,7 +308,7 @@ IF (DEFINED SPGLIB_DIR)
   TARGET_LINK_LIBRARIES(${TARGET}
 	    "${SPGLIB_LIBRARY}"
   )
-  INCLUDE_DIRECTORIES ("${SPGLIB_DIR}/include")
+  TARGET_INCLUDE_DIRECTORIES (${TARGETLIB} PUBLIC "${SPGLIB_DIR}/include")
 ELSE()
   MESSAGE(FATAL_ERROR "-- Provide path to prefix of SPGLIB: -DSPGLIB_DIR=/path/to/prefix")
 ENDIF (DEFINED SPGLIB_DIR)
@@ -345,7 +332,7 @@ IF (WITH_ELPA)
       TARGET_LINK_LIBRARIES(${TARGET}
 		"${ELPA_LIBRARY}"
       )
-      INCLUDE_DIRECTORIES ("${ELPA_INCLUDE_DIR}")
+      TARGET_INCLUDE_DIRECTORIES (${TARGETLIB} PUBLIC "${ELPA_INCLUDE_DIR}")
    ELSE()
       MESSAGE(FATAL_ERROR "-- Provide path of ELPA: -DELPA_LIB_DIR and -DELPA_INCLUDE_DIR")
    ENDIF (DEFINED ELPA_INCLUDE_DIR)

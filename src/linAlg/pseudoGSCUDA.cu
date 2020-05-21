@@ -15,7 +15,6 @@
 // @author Sambit Das
 
 
-
 #include<linearAlgebraOperationsInternalCUDA.h>
 #include<linearAlgebraOperationsCUDA.h>
 #include<dftParameters.h>

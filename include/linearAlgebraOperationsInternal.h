@@ -22,7 +22,7 @@
 #ifdef DFTFE_WITH_ELPA
 extern "C"
 {
-#include <elpa/elpa.h>
+#include <elpa.hh>
 }
 #endif
 

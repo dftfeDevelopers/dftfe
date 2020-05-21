@@ -62,7 +62,7 @@
 #ifdef DFTFE_WITH_ELPA
 extern "C"
 {
-#include <elpa/elpa.h>
+#include <elpa.hh>
 }
 #endif
 
@@ -148,7 +148,7 @@ namespace dftfe {
 #ifdef DFTFE_WITH_ELPA
         int error;
 
-        if (elpa_init(20181113) != ELPA_OK) {
+        if (elpa_init(ELPA_API_VERSION) != ELPA_OK) {
           fprintf(stderr, "Error: ELPA API version not supported. Use API version 20181113.");
           exit(1);
         }

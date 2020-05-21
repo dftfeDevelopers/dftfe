@@ -16,6 +16,7 @@
 //
 // @author Phani Motamarri, Sambit Das
 //
+#if defined(DFTFE_WITH_GPU)
 #ifndef operatorDFTCUDAClass_h
 #define operatorDFTCUDAClass_h
 
@@ -545,4 +546,5 @@ namespace dftfe{
 #  endif // ifndef DOXYGEN
 
 }
+#endif
 #endif

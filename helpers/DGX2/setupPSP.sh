@@ -4,25 +4,17 @@
 set -e
 set -o pipefail
 
-PROJ=/ccs/proj/eng110
-
-. $PROJ/setup-env.sh
-
 ########################################################################
 #Provide paths below for external libraries, compiler options and flags,
 # and optimization flag
 
 #Paths for external libraries
-dealiiDir="$PROJ/software/dealiiCustomizedSMPI20200121/installDealiiCustomizedCUDA10.1.243Gcc6.4.0"
-alglibDir="$PROJ/software/alglib/cpp/src"
-libxcDir="$PROJ/software/libxc/installGcc6.4.0"
-spglibDir="$PROJ/software/spglib/installGcc6.4.0"
+dealiiDir="/home/nv-tb-03/software/dealii/installMpich"
+alglibDir="/home/nv-tb-03/software/alglib/cpp/src"
+libxcDir="/home/nv-tb-03/software/libxc/libxc-4.3.4/install"
+spglibDir="/home/nv-tb-03/software/spglib/install"
 xmlIncludeDir="/usr/include/libxml2"
-xmlLibDir="/usr/lib64"
-elpaIncludeDir="$PROJ/software/elpaSMPI20200121/installElpa2020Gcc6.4.0CUDA10/include/elpa-2020.05.001.rc1"
-elpaLibDir="$PROJ/software/elpaSMPI20200121/installElpa2020Gcc6.4.0CUDA10/lib"
-#elpaIncludeDir="$PROJ/Rogers_Tests/elpaSMPI202005/include/elpa_openmp-2020.05.001.rc1"
-#elpaLibDir="$PROJ/Rogers_Tests/elpaSMPI202005/lib"
+xmlLibDir="/usr/lib/x86_64-linux-gnu"
 
 # Path to project source (should be script run directory)
 SRC="$PWD"
@@ -41,7 +33,7 @@ c_flagsRelease="-O2 -fPIC -fopenmp"
 cxx_flagsRelease="-O2 -fPIC -fopenmp"
 
 #Option to link to ELPA
-withELPA=ON
+withELPA=OFF
 
 # build type: "Release" or "Debug"
 build_type=Release
