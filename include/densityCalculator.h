@@ -55,6 +55,8 @@ namespace dftfe
            const dealii::MatrixFree<3,double> & mfData,
            const unsigned int mfDofIndex,
            const unsigned int mfQuadIndex,
+           const std::vector<dealii::types::global_dof_index> & localProc_dof_indicesReal,
+           const std::vector<dealii::types::global_dof_index> & localProc_dof_indicesImag,
            const std::vector<double> & kPointWeights,
            std::map<dealii::CellId, std::vector<double> > * _rhoValues,
            std::map<dealii::CellId, std::vector<double> > * _gradRhoValues,

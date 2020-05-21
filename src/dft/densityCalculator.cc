@@ -89,6 +89,8 @@ namespace dftfe
      const dealii::MatrixFree<3,double> & mfData,
      const unsigned int mfDofIndex,
      const unsigned int mfQuadIndex,
+     const std::vector<dealii::types::global_dof_index> & localProc_dof_indicesReal,
+     const std::vector<dealii::types::global_dof_index> & localProc_dof_indicesImag,     
      const std::vector<double> & kPointWeights,
      std::map<dealii::CellId, std::vector<double> > * _rhoValues,
      std::map<dealii::CellId, std::vector<double> > * _gradRhoValues,
@@ -176,7 +178,7 @@ namespace dftfe
        const unsigned int eigenVectorsBlockSize=std::min(dftParameters::wfcBlockSize,
            bandGroupLowHighPlusOneIndices[1]);
 
-       const unsigned int localVectorSize = eigenVectorsInput.size()/numEigenVectorsTotal;
+       const unsigned int localVectorSize = eigenVectorsInput[0].size()/numEigenVectorsTotal;
 
        std::vector<std::vector<distributedCPUVec<double>>> eigenVectors((1+dftParameters::spinPolarized)*kPointWeights.size());
        std::vector<distributedCPUVec<dataTypes::number> > eigenVectorsFlattenedBlock((1+dftParameters::spinPolarized)*kPointWeights.size());
@@ -507,7 +509,7 @@ namespace dftfe
                    {
                      const unsigned int id=q*currentBlockSize*numKPoints+currentBlockSize*kPoint+iEigenVec;
 #ifdef USE_COMPLEX
-                     Vector<double> psi, psi2;
+                     dealii::Vector<double> psi, psi2;
                      psi.reinit(2); psi2.reinit(2);
 
                      psi(0)= psiQuads[id][0][iSubCell];

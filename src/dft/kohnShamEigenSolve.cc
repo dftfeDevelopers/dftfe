@@ -309,6 +309,8 @@ void dftClass<FEOrder>::solveNoSCF()
       matrix_free_data,
       eigenDofHandlerIndex,
       0,
+      localProc_dof_indicesReal,
+      localProc_dof_indicesImag,  
       d_kPointWeights,
       rhoOutValues,
       gradRhoOutValues,

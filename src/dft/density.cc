@@ -131,7 +131,7 @@ void dftClass<FEOrder>::compute_rhoOut(
         gradRhoOutValuesSpinPolarized = &(gradRhoOutValsSpinPolarized.back());
     }
 
-  DensityCalculator<FEOrder> densityCalculator;
+    DensityCalculator<FEOrder> densityCalculator;
 
 #ifdef DFTFE_WITH_GPU
     if (dftParameters::useGPU)
@@ -175,6 +175,8 @@ void dftClass<FEOrder>::compute_rhoOut(
           matrix_free_data,
           eigenDofHandlerIndex,
           0,
+          localProc_dof_indicesReal,
+          localProc_dof_indicesImag,           
           d_kPointWeights,
           rhoOutValues,
           gradRhoOutValues,
@@ -186,30 +188,32 @@ void dftClass<FEOrder>::compute_rhoOut(
           isConsiderSpectrumSplitting,
           false);
 #else
-      densityCalculator.computeRhoFromPSI(
-          d_eigenVectorsFlattenedSTL,
-          d_eigenVectorsRotFracDensityFlattenedSTL,
-          d_numEigenValues,
-          d_numEigenValuesRR,
-          eigenValues,
-          fermiEnergy,
-          fermiEnergyUp,
-          fermiEnergyDown,
-          dofHandler,
-          constraintsNone,
-          matrix_free_data,
-          eigenDofHandlerIndex,
-          0,
-          d_kPointWeights,
-          rhoOutValues,
-          gradRhoOutValues,
-          rhoOutValuesSpinPolarized,
-          gradRhoOutValuesSpinPolarized,
-          dftParameters::xc_id == 4,
-          interpoolcomm,
-          interBandGroupComm,
-          isConsiderSpectrumSplitting,
-          false);
+    densityCalculator.computeRhoFromPSI(
+        d_eigenVectorsFlattenedSTL,
+        d_eigenVectorsRotFracDensityFlattenedSTL,
+        d_numEigenValues,
+        d_numEigenValuesRR,
+        eigenValues,
+        fermiEnergy,
+        fermiEnergyUp,
+        fermiEnergyDown,
+        dofHandler,
+        constraintsNone,
+        matrix_free_data,
+        eigenDofHandlerIndex,
+        0,
+        localProc_dof_indicesReal,
+        localProc_dof_indicesImag,         
+        d_kPointWeights,
+        rhoOutValues,
+        gradRhoOutValues,
+        rhoOutValuesSpinPolarized,
+        gradRhoOutValuesSpinPolarized,
+        dftParameters::xc_id == 4,
+        interpoolcomm,
+        interBandGroupComm,
+        isConsiderSpectrumSplitting,
+        false);
 #endif
 
     if (isGroundState && dftParameters::mixingMethod!="ANDERSON_WITH_KERKER")
@@ -479,55 +483,59 @@ void dftClass<FEOrder>::computeRhoNodalFromPSI(
         true);
 
   else
-      densityCalculator.computeRhoFromPSI(
-          d_eigenVectorsFlattenedSTL,
-          d_eigenVectorsRotFracDensityFlattenedSTL,
-          d_numEigenValues,
-          d_numEigenValuesRR,
-          eigenValues,
-          fermiEnergy,
-          fermiEnergyUp,
-          fermiEnergyDown,
-          dofHandler,
-          constraintsNone,
-          matrix_free_data,
-          eigenDofHandlerIndex,
-          3,
-          d_kPointWeights,
-          rhoOutValues,
-          gradRhoOutValues,
-          rhoOutValuesSpinPolarized,
-          gradRhoOutValuesSpinPolarized,
-          dftParameters::xc_id == 4,
-          interpoolcomm,
-          interBandGroupComm,
-          isConsiderSpectrumSplitting,
-          true);
+    densityCalculator.computeRhoFromPSI(
+        d_eigenVectorsFlattenedSTL,
+        d_eigenVectorsRotFracDensityFlattenedSTL,
+        d_numEigenValues,
+        d_numEigenValuesRR,
+        eigenValues,
+        fermiEnergy,
+        fermiEnergyUp,
+        fermiEnergyDown,
+        dofHandler,
+        constraintsNone,
+        matrix_free_data,
+        eigenDofHandlerIndex,
+        3,
+        localProc_dof_indicesReal,
+        localProc_dof_indicesImag,        
+        d_kPointWeights,
+        &rhoPRefinedNodalData,
+        &_gradRhoValues,
+        &_rhoValuesSpinPolarized,
+        &_gradRhoValuesSpinPolarized,
+        dftParameters::xc_id == 4,
+        interpoolcomm,
+        interBandGroupComm,
+        isConsiderSpectrumSplitting,
+        true);
 #else
-      densityCalculator.computeRhoFromPSI(
-          d_eigenVectorsFlattenedSTL,
-          d_eigenVectorsRotFracDensityFlattenedSTL,
-          d_numEigenValues,
-          d_numEigenValuesRR,
-          eigenValues,
-          fermiEnergy,
-          fermiEnergyUp,
-          fermiEnergyDown,
-          dofHandler,
-          constraintsNone,
-          matrix_free_data,
-          eigenDofHandlerIndex,
-          3,
-          d_kPointWeights,
-          rhoOutValues,
-          gradRhoOutValues,
-          rhoOutValuesSpinPolarized,
-          gradRhoOutValuesSpinPolarized,
-          dftParameters::xc_id == 4,
-          interpoolcomm,
-          interBandGroupComm,
-          isConsiderSpectrumSplitting,
-          true);
+  densityCalculator.computeRhoFromPSI(
+      d_eigenVectorsFlattenedSTL,
+      d_eigenVectorsRotFracDensityFlattenedSTL,
+      d_numEigenValues,
+      d_numEigenValuesRR,
+      eigenValues,
+      fermiEnergy,
+      fermiEnergyUp,
+      fermiEnergyDown,
+      dofHandler,
+      constraintsNone,
+      matrix_free_data,
+      eigenDofHandlerIndex,
+      3,
+      localProc_dof_indicesReal,
+      localProc_dof_indicesImag,
+      d_kPointWeights,
+      &rhoPRefinedNodalData,
+      &_gradRhoValues,
+      &_rhoValuesSpinPolarized,
+      &_gradRhoValuesSpinPolarized,
+      dftParameters::xc_id == 4,
+      interpoolcomm,
+      interBandGroupComm,
+      isConsiderSpectrumSplitting,
+      true);
 #endif
 
   //copy Lobatto quadrature data to fill in 2p DoFHandler nodal data  
