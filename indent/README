@@ -9,4 +9,5 @@ set smartindent
 2) $ source .vimrc (first time)
 
 3) Do the following from the top directory of DFT-FE 
+$ find . -type f -name ".*.swp" -exec rm -f {} \;
 $ find . -name \*.cc -o -name \*.cu -o -name \*.h | xargs -I {} ./indent/indent-with-vim.sh {}
