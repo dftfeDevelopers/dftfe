@@ -20,16 +20,16 @@
 
 namespace dftfe {
 
-  nonlinearSolverProblem::nonlinearSolverProblem()
-  {
-    return;
-  }
+	nonlinearSolverProblem::nonlinearSolverProblem()
+	{
+		return;
+	}
 
 
-  // Destructor.
-  nonlinearSolverProblem::~nonlinearSolverProblem()
-  {
-    return;
-  }
+	// Destructor.
+	nonlinearSolverProblem::~nonlinearSolverProblem()
+	{
+		return;
+	}
 
 }

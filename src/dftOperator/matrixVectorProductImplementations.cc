@@ -25,366 +25,366 @@
 #ifdef USE_COMPLEX
 template<unsigned int FEOrder>
 void kohnShamDFTOperatorClass<FEOrder>::computeLocalHamiltonianTimesX(const distributedCPUVec<std::complex<double> > & src,
-							const unsigned int numberWaveFunctions,
-							distributedCPUVec<std::complex<double> > & dst) const
+		const unsigned int numberWaveFunctions,
+		distributedCPUVec<std::complex<double> > & dst) const
 {
 
-  //
-  //element level matrix-vector multiplications
-  //
-  const char transA = 'N',transB = 'T';
-  const std::complex<double> scalarCoeffAlpha = 1.0,scalarCoeffBeta = 0.0;
-  const unsigned int inc = 1;
+	//
+	//element level matrix-vector multiplications
+	//
+	const char transA = 'N',transB = 'T';
+	const std::complex<double> scalarCoeffAlpha = 1.0,scalarCoeffBeta = 0.0;
+	const unsigned int inc = 1;
 
-  std::vector<std::complex<double> > cellWaveFunctionMatrix(d_numberNodesPerElement*numberWaveFunctions,0.0);
-  std::vector<std::complex<double> > cellHamMatrixTimesWaveMatrix(d_numberNodesPerElement*numberWaveFunctions,0.0);
+	std::vector<std::complex<double> > cellWaveFunctionMatrix(d_numberNodesPerElement*numberWaveFunctions,0.0);
+	std::vector<std::complex<double> > cellHamMatrixTimesWaveMatrix(d_numberNodesPerElement*numberWaveFunctions,0.0);
 
-  unsigned int iElem = 0;
-  for(unsigned int iMacroCell = 0; iMacroCell < d_numberMacroCells; ++iMacroCell)
-    {
-      for(unsigned int iCell = 0; iCell < d_macroCellSubCellMap[iMacroCell]; ++iCell)
+	unsigned int iElem = 0;
+	for(unsigned int iMacroCell = 0; iMacroCell < d_numberMacroCells; ++iMacroCell)
 	{
-	  for(unsigned int iNode = 0; iNode < d_numberNodesPerElement; ++iNode)
-	    {
-	      dealii::types::global_dof_index localNodeId = d_flattenedArrayMacroCellLocalProcIndexIdMap[iElem][iNode];
-	      zcopy_(&numberWaveFunctions,
-		     src.begin()+localNodeId,
-		     &inc,
-		     &cellWaveFunctionMatrix[numberWaveFunctions*iNode],
-		     &inc);
-	    }
+		for(unsigned int iCell = 0; iCell < d_macroCellSubCellMap[iMacroCell]; ++iCell)
+		{
+			for(unsigned int iNode = 0; iNode < d_numberNodesPerElement; ++iNode)
+			{
+				dealii::types::global_dof_index localNodeId = d_flattenedArrayMacroCellLocalProcIndexIdMap[iElem][iNode];
+				zcopy_(&numberWaveFunctions,
+						src.begin()+localNodeId,
+						&inc,
+						&cellWaveFunctionMatrix[numberWaveFunctions*iNode],
+						&inc);
+			}
 
-	  zgemm_(&transA,
-		 &transB,
-		 &numberWaveFunctions,
-		 &d_numberNodesPerElement,
-		 &d_numberNodesPerElement,
-		 &scalarCoeffAlpha,
-		 &cellWaveFunctionMatrix[0],
-		 &numberWaveFunctions,
-		 &d_cellHamiltonianMatrix[iElem][0],
-		 &d_numberNodesPerElement,
-		 &scalarCoeffBeta,
-		 &cellHamMatrixTimesWaveMatrix[0],
-		 &numberWaveFunctions);
+			zgemm_(&transA,
+					&transB,
+					&numberWaveFunctions,
+					&d_numberNodesPerElement,
+					&d_numberNodesPerElement,
+					&scalarCoeffAlpha,
+					&cellWaveFunctionMatrix[0],
+					&numberWaveFunctions,
+					&d_cellHamiltonianMatrix[iElem][0],
+					&d_numberNodesPerElement,
+					&scalarCoeffBeta,
+					&cellHamMatrixTimesWaveMatrix[0],
+					&numberWaveFunctions);
 
-	  for(unsigned int iNode = 0; iNode < d_numberNodesPerElement; ++iNode)
-	    {
-	      dealii::types::global_dof_index localNodeId = d_flattenedArrayMacroCellLocalProcIndexIdMap[iElem][iNode];
-	      zaxpy_(&numberWaveFunctions,
-		     &scalarCoeffAlpha,
-		     &cellHamMatrixTimesWaveMatrix[numberWaveFunctions*iNode],
-		     &inc,
-		     dst.begin()+localNodeId,
-		     &inc);
-	    }
+			for(unsigned int iNode = 0; iNode < d_numberNodesPerElement; ++iNode)
+			{
+				dealii::types::global_dof_index localNodeId = d_flattenedArrayMacroCellLocalProcIndexIdMap[iElem][iNode];
+				zaxpy_(&numberWaveFunctions,
+						&scalarCoeffAlpha,
+						&cellHamMatrixTimesWaveMatrix[numberWaveFunctions*iNode],
+						&inc,
+						dst.begin()+localNodeId,
+						&inc);
+			}
 
-	  ++iElem;
-	}//subcell loop
-    }//macrocell loop
+			++iElem;
+		}//subcell loop
+	}//macrocell loop
 
 }
 
 #ifdef WITH_MKL
 template<unsigned int FEOrder>
 void kohnShamDFTOperatorClass<FEOrder>::computeLocalHamiltonianTimesXBatchGEMM (const distributedCPUVec<std::complex<double> > & src,
-										const unsigned int numberWaveFunctions,
-										distributedCPUVec<std::complex<double> > & dst) const
+		const unsigned int numberWaveFunctions,
+		distributedCPUVec<std::complex<double> > & dst) const
 
 {
 
-  //
-  //element level matrix-vector multiplications
-  //
-  const char transA = 'N',transB = 'T';
-  const std::complex<double> scalarCoeffAlpha = 1.0,scalarCoeffBeta = 0.0;
-  const unsigned int inc = 1;
+	//
+	//element level matrix-vector multiplications
+	//
+	const char transA = 'N',transB = 'T';
+	const std::complex<double> scalarCoeffAlpha = 1.0,scalarCoeffBeta = 0.0;
+	const unsigned int inc = 1;
 
-  const unsigned int groupCount=1;
-  const unsigned int groupSize=VectorizedArray<double>::n_array_elements;
+	const unsigned int groupCount=1;
+	const unsigned int groupSize=VectorizedArray<double>::n_array_elements;
 
-  std::complex<double> ** cellWaveFunctionMatrixBatch = new std::complex<double>*[groupSize];
-  std::complex<double> ** cellHamMatrixTimesWaveMatrixBatch = new std::complex<double>*[groupSize];
-  const std::complex<double> ** cellHamMatrixBatch = new std::complex<double>*[groupSize];
-  for(unsigned int i = 0; i < groupSize; i++)
-    {
-      cellWaveFunctionMatrixBatch[i] = new std::complex<double>[d_numberNodesPerElement*numberWaveFunctions];
-      cellHamMatrixTimesWaveMatrixBatch[i] = new std::complex<double>[d_numberNodesPerElement*numberWaveFunctions];
-    }
-
-  unsigned int iElem= 0;
-  for(unsigned int iMacroCell = 0; iMacroCell < d_numberMacroCells; ++iMacroCell)
-    {
-
-      for(unsigned int isubcell = 0; isubcell < d_macroCellSubCellMap[iMacroCell]; isubcell++)
+	std::complex<double> ** cellWaveFunctionMatrixBatch = new std::complex<double>*[groupSize];
+	std::complex<double> ** cellHamMatrixTimesWaveMatrixBatch = new std::complex<double>*[groupSize];
+	const std::complex<double> ** cellHamMatrixBatch = new std::complex<double>*[groupSize];
+	for(unsigned int i = 0; i < groupSize; i++)
 	{
-	  for(unsigned int iNode = 0; iNode < d_numberNodesPerElement; ++iNode)
-	    {
-	      dealii::types::global_dof_index localNodeId = d_flattenedArrayMacroCellLocalProcIndexIdMap[iElem+isubcell][iNode];
-	      zcopy_(&numberWaveFunctions,
-		     src.begin()+localNodeId,
-		     &inc,
-		     &cellWaveFunctionMatrixBatch[isubcell][numberWaveFunctions*iNode],
-		     &inc);
-	    }
-
-	  cellHamMatrixBatch[isubcell] =&d_cellHamiltonianMatrix[iElem+isubcell][0];
+		cellWaveFunctionMatrixBatch[i] = new std::complex<double>[d_numberNodesPerElement*numberWaveFunctions];
+		cellHamMatrixTimesWaveMatrixBatch[i] = new std::complex<double>[d_numberNodesPerElement*numberWaveFunctions];
 	}
 
-      zgemm_batch_(&transA,
-		   &transB,
-		   &numberWaveFunctions,
-		   &d_numberNodesPerElement,
-		   &d_numberNodesPerElement,
-		   &scalarCoeffAlpha,
-		   cellWaveFunctionMatrixBatch,
-		   &numberWaveFunctions,
-		   cellHamMatrixBatch,
-		   &d_numberNodesPerElement,
-		   &scalarCoeffBeta,
-		   cellHamMatrixTimesWaveMatrixBatch,
-		   &numberWaveFunctions,
-		   &groupCount,
-		   &d_macroCellSubCellMap[iMacroCell]);
+	unsigned int iElem= 0;
+	for(unsigned int iMacroCell = 0; iMacroCell < d_numberMacroCells; ++iMacroCell)
+	{
 
-      for(unsigned int isubcell = 0; isubcell < d_macroCellSubCellMap[iMacroCell]; isubcell++)
-	for(unsigned int iNode = 0; iNode < d_numberNodesPerElement; ++iNode)
-	  {
-	    dealii::types::global_dof_index localNodeId = d_flattenedArrayMacroCellLocalProcIndexIdMap[iElem+isubcell][iNode];
-	    zaxpy_(&numberWaveFunctions,
-		   &scalarCoeffAlpha,
-		   &cellHamMatrixTimesWaveMatrixBatch[isubcell][numberWaveFunctions*iNode],
-		   &inc,
-		   dst.begin()+localNodeId,
-		   &inc);
-	  }
+		for(unsigned int isubcell = 0; isubcell < d_macroCellSubCellMap[iMacroCell]; isubcell++)
+		{
+			for(unsigned int iNode = 0; iNode < d_numberNodesPerElement; ++iNode)
+			{
+				dealii::types::global_dof_index localNodeId = d_flattenedArrayMacroCellLocalProcIndexIdMap[iElem+isubcell][iNode];
+				zcopy_(&numberWaveFunctions,
+						src.begin()+localNodeId,
+						&inc,
+						&cellWaveFunctionMatrixBatch[isubcell][numberWaveFunctions*iNode],
+						&inc);
+			}
+
+			cellHamMatrixBatch[isubcell] =&d_cellHamiltonianMatrix[iElem+isubcell][0];
+		}
+
+		zgemm_batch_(&transA,
+				&transB,
+				&numberWaveFunctions,
+				&d_numberNodesPerElement,
+				&d_numberNodesPerElement,
+				&scalarCoeffAlpha,
+				cellWaveFunctionMatrixBatch,
+				&numberWaveFunctions,
+				cellHamMatrixBatch,
+				&d_numberNodesPerElement,
+				&scalarCoeffBeta,
+				cellHamMatrixTimesWaveMatrixBatch,
+				&numberWaveFunctions,
+				&groupCount,
+				&d_macroCellSubCellMap[iMacroCell]);
+
+		for(unsigned int isubcell = 0; isubcell < d_macroCellSubCellMap[iMacroCell]; isubcell++)
+			for(unsigned int iNode = 0; iNode < d_numberNodesPerElement; ++iNode)
+			{
+				dealii::types::global_dof_index localNodeId = d_flattenedArrayMacroCellLocalProcIndexIdMap[iElem+isubcell][iNode];
+				zaxpy_(&numberWaveFunctions,
+						&scalarCoeffAlpha,
+						&cellHamMatrixTimesWaveMatrixBatch[isubcell][numberWaveFunctions*iNode],
+						&inc,
+						dst.begin()+localNodeId,
+						&inc);
+			}
 
 
-      iElem+=d_macroCellSubCellMap[iMacroCell];
-    }//macrocell loop
+		iElem+=d_macroCellSubCellMap[iMacroCell];
+	}//macrocell loop
 
-  for(unsigned int i = 0; i < groupSize; i++)
-    {
-      delete [] cellWaveFunctionMatrixBatch[i];
-      delete [] cellHamMatrixTimesWaveMatrixBatch[i];
-    }
-  delete [] cellWaveFunctionMatrixBatch;
-  delete []  cellHamMatrixTimesWaveMatrixBatch;
-  delete []  cellHamMatrixBatch;
+	for(unsigned int i = 0; i < groupSize; i++)
+	{
+		delete [] cellWaveFunctionMatrixBatch[i];
+		delete [] cellHamMatrixTimesWaveMatrixBatch[i];
+	}
+	delete [] cellWaveFunctionMatrixBatch;
+	delete []  cellHamMatrixTimesWaveMatrixBatch;
+	delete []  cellHamMatrixBatch;
 }
 
 #endif
 #else
 template<unsigned int FEOrder>
 void kohnShamDFTOperatorClass<FEOrder>::computeLocalHamiltonianTimesX(const distributedCPUVec<double> & src,
-								      const unsigned int numberWaveFunctions,
-								      distributedCPUVec<double> & dst) const
+		const unsigned int numberWaveFunctions,
+		distributedCPUVec<double> & dst) const
 {
 
 
-  //
-  //element level matrix-vector multiplications
-  //
-  const char transA = 'N',transB = 'N';
-  const double scalarCoeffAlpha = 1.0,scalarCoeffBeta = 0.0;
-  const unsigned int inc = 1;
+	//
+	//element level matrix-vector multiplications
+	//
+	const char transA = 'N',transB = 'N';
+	const double scalarCoeffAlpha = 1.0,scalarCoeffBeta = 0.0;
+	const unsigned int inc = 1;
 
-  std::vector<double> cellWaveFunctionMatrix(d_numberNodesPerElement*numberWaveFunctions,0.0);
-  std::vector<double> cellHamMatrixTimesWaveMatrix(d_numberNodesPerElement*numberWaveFunctions,0.0);
+	std::vector<double> cellWaveFunctionMatrix(d_numberNodesPerElement*numberWaveFunctions,0.0);
+	std::vector<double> cellHamMatrixTimesWaveMatrix(d_numberNodesPerElement*numberWaveFunctions,0.0);
 
-  unsigned int iElem = 0;
-  for(unsigned int iMacroCell = 0; iMacroCell < d_numberMacroCells; ++iMacroCell)
-    {
-      for(unsigned int iCell = 0; iCell < d_macroCellSubCellMap[iMacroCell]; ++iCell)
+	unsigned int iElem = 0;
+	for(unsigned int iMacroCell = 0; iMacroCell < d_numberMacroCells; ++iMacroCell)
 	{
-	  for(unsigned int iNode = 0; iNode < d_numberNodesPerElement; ++iNode)
-	    {
-	      dealii::types::global_dof_index localNodeId = d_flattenedArrayMacroCellLocalProcIndexIdMap[iElem][iNode];
-	      dcopy_(&numberWaveFunctions,
-		     src.begin()+localNodeId,
-		     &inc,
-		     &cellWaveFunctionMatrix[numberWaveFunctions*iNode],
-		     &inc);
-	    }
+		for(unsigned int iCell = 0; iCell < d_macroCellSubCellMap[iMacroCell]; ++iCell)
+		{
+			for(unsigned int iNode = 0; iNode < d_numberNodesPerElement; ++iNode)
+			{
+				dealii::types::global_dof_index localNodeId = d_flattenedArrayMacroCellLocalProcIndexIdMap[iElem][iNode];
+				dcopy_(&numberWaveFunctions,
+						src.begin()+localNodeId,
+						&inc,
+						&cellWaveFunctionMatrix[numberWaveFunctions*iNode],
+						&inc);
+			}
 
-	  dgemm_(&transA,
-		 &transB,
-		 &numberWaveFunctions,
-		 &d_numberNodesPerElement,
-		 &d_numberNodesPerElement,
-		 &scalarCoeffAlpha,
-		 &cellWaveFunctionMatrix[0],
-		 &numberWaveFunctions,
-		 &d_cellHamiltonianMatrix[iElem][0],
-		 &d_numberNodesPerElement,
-		 &scalarCoeffBeta,
-		 &cellHamMatrixTimesWaveMatrix[0],
-		 &numberWaveFunctions);
+			dgemm_(&transA,
+					&transB,
+					&numberWaveFunctions,
+					&d_numberNodesPerElement,
+					&d_numberNodesPerElement,
+					&scalarCoeffAlpha,
+					&cellWaveFunctionMatrix[0],
+					&numberWaveFunctions,
+					&d_cellHamiltonianMatrix[iElem][0],
+					&d_numberNodesPerElement,
+					&scalarCoeffBeta,
+					&cellHamMatrixTimesWaveMatrix[0],
+					&numberWaveFunctions);
 
-	  for(unsigned int iNode = 0; iNode < d_numberNodesPerElement; ++iNode)
-	    {
-	      dealii::types::global_dof_index localNodeId = d_flattenedArrayMacroCellLocalProcIndexIdMap[iElem][iNode];
-	      daxpy_(&numberWaveFunctions,
-		     &scalarCoeffAlpha,
-		     &cellHamMatrixTimesWaveMatrix[numberWaveFunctions*iNode],
-		     &inc,
-		     dst.begin()+localNodeId,
-		     &inc);
-	    }
+			for(unsigned int iNode = 0; iNode < d_numberNodesPerElement; ++iNode)
+			{
+				dealii::types::global_dof_index localNodeId = d_flattenedArrayMacroCellLocalProcIndexIdMap[iElem][iNode];
+				daxpy_(&numberWaveFunctions,
+						&scalarCoeffAlpha,
+						&cellHamMatrixTimesWaveMatrix[numberWaveFunctions*iNode],
+						&inc,
+						dst.begin()+localNodeId,
+						&inc);
+			}
 
-	  ++iElem;
-	}//subcell loop
-    }//macrocell loop
+			++iElem;
+		}//subcell loop
+	}//macrocell loop
 
 }
 
 template<unsigned int FEOrder>
 void kohnShamDFTOperatorClass<FEOrder>::computeMassMatrixTimesX(const distributedCPUVec<double> & src,
-								const unsigned int numberWaveFunctions,
-								distributedCPUVec<double> & dst) const
+		const unsigned int numberWaveFunctions,
+		distributedCPUVec<double> & dst) const
 {
 
-  //
-  //element level matrix-vector multiplications
-  //
-  const char transA = 'N',transB = 'N';
-  const double scalarCoeffAlpha = 1.0,scalarCoeffBeta = 0.0;
-  const unsigned int inc = 1;
+	//
+	//element level matrix-vector multiplications
+	//
+	const char transA = 'N',transB = 'N';
+	const double scalarCoeffAlpha = 1.0,scalarCoeffBeta = 0.0;
+	const unsigned int inc = 1;
 
-  std::vector<double> cellWaveFunctionMatrix(d_numberNodesPerElement*numberWaveFunctions,0.0);
-  std::vector<double> cellMassMatrixTimesWaveMatrix(d_numberNodesPerElement*numberWaveFunctions,0.0);
+	std::vector<double> cellWaveFunctionMatrix(d_numberNodesPerElement*numberWaveFunctions,0.0);
+	std::vector<double> cellMassMatrixTimesWaveMatrix(d_numberNodesPerElement*numberWaveFunctions,0.0);
 
-  unsigned int iElem = 0;
-  for(unsigned int iMacroCell = 0; iMacroCell < d_numberMacroCells; ++iMacroCell)
-    {
-      for(unsigned int iCell = 0; iCell < d_macroCellSubCellMap[iMacroCell]; ++iCell)
+	unsigned int iElem = 0;
+	for(unsigned int iMacroCell = 0; iMacroCell < d_numberMacroCells; ++iMacroCell)
 	{
-	  for(unsigned int iNode = 0; iNode < d_numberNodesPerElement; ++iNode)
-	    {
-	      dealii::types::global_dof_index localNodeId = d_flattenedArrayMacroCellLocalProcIndexIdMap[iElem][iNode];
-	      dcopy_(&numberWaveFunctions,
-		     src.begin()+localNodeId,
-		     &inc,
-		     &cellWaveFunctionMatrix[numberWaveFunctions*iNode],
-		     &inc);
-	    }
+		for(unsigned int iCell = 0; iCell < d_macroCellSubCellMap[iMacroCell]; ++iCell)
+		{
+			for(unsigned int iNode = 0; iNode < d_numberNodesPerElement; ++iNode)
+			{
+				dealii::types::global_dof_index localNodeId = d_flattenedArrayMacroCellLocalProcIndexIdMap[iElem][iNode];
+				dcopy_(&numberWaveFunctions,
+						src.begin()+localNodeId,
+						&inc,
+						&cellWaveFunctionMatrix[numberWaveFunctions*iNode],
+						&inc);
+			}
 
-	  dgemm_(&transA,
-		 &transB,
-		 &numberWaveFunctions,
-		 &d_numberNodesPerElement,
-		 &d_numberNodesPerElement,
-		 &scalarCoeffAlpha,
-		 &cellWaveFunctionMatrix[0],
-		 &numberWaveFunctions,
-		 &d_cellMassMatrix[iElem][0],
-		 &d_numberNodesPerElement,
-		 &scalarCoeffBeta,
-		 &cellMassMatrixTimesWaveMatrix[0],
-		 &numberWaveFunctions);
+			dgemm_(&transA,
+					&transB,
+					&numberWaveFunctions,
+					&d_numberNodesPerElement,
+					&d_numberNodesPerElement,
+					&scalarCoeffAlpha,
+					&cellWaveFunctionMatrix[0],
+					&numberWaveFunctions,
+					&d_cellMassMatrix[iElem][0],
+					&d_numberNodesPerElement,
+					&scalarCoeffBeta,
+					&cellMassMatrixTimesWaveMatrix[0],
+					&numberWaveFunctions);
 
-	  for(unsigned int iNode = 0; iNode < d_numberNodesPerElement; ++iNode)
-	    {
-	      dealii::types::global_dof_index localNodeId = d_flattenedArrayMacroCellLocalProcIndexIdMap[iElem][iNode];
-	      daxpy_(&numberWaveFunctions,
-		     &scalarCoeffAlpha,
-		     &cellMassMatrixTimesWaveMatrix[numberWaveFunctions*iNode],
-		     &inc,
-		     dst.begin()+localNodeId,
-		     &inc);
-	    }
+			for(unsigned int iNode = 0; iNode < d_numberNodesPerElement; ++iNode)
+			{
+				dealii::types::global_dof_index localNodeId = d_flattenedArrayMacroCellLocalProcIndexIdMap[iElem][iNode];
+				daxpy_(&numberWaveFunctions,
+						&scalarCoeffAlpha,
+						&cellMassMatrixTimesWaveMatrix[numberWaveFunctions*iNode],
+						&inc,
+						dst.begin()+localNodeId,
+						&inc);
+			}
 
-	  ++iElem;
-	}//subcell loop
-    }//macrocell loop
+			++iElem;
+		}//subcell loop
+	}//macrocell loop
 
 }
 
 #ifdef WITH_MKL
 template<unsigned int FEOrder>
 void kohnShamDFTOperatorClass<FEOrder>::computeLocalHamiltonianTimesXBatchGEMM (const distributedCPUVec<double> & src,
-								  const unsigned int numberWaveFunctions,
-								  distributedCPUVec<double> & dst) const
+		const unsigned int numberWaveFunctions,
+		distributedCPUVec<double> & dst) const
 {
 
-  //
-  //element level matrix-vector multiplications
-  //
-  const char transA = 'N',transB = 'N';
-  const double scalarCoeffAlpha = 1.0,scalarCoeffBeta = 0.0;
-  const unsigned int inc = 1;
+	//
+	//element level matrix-vector multiplications
+	//
+	const char transA = 'N',transB = 'N';
+	const double scalarCoeffAlpha = 1.0,scalarCoeffBeta = 0.0;
+	const unsigned int inc = 1;
 
-  const unsigned int groupCount=1;
-  const unsigned int groupSize=VectorizedArray<double>::n_array_elements;
+	const unsigned int groupCount=1;
+	const unsigned int groupSize=VectorizedArray<double>::n_array_elements;
 
-  double ** cellWaveFunctionMatrixBatch = new double*[groupSize];
-  double ** cellHamMatrixTimesWaveMatrixBatch = new double*[groupSize];
-  const double ** cellHamMatrixBatch = new double*[groupSize];
-  for(unsigned int i = 0; i < groupSize; i++)
-    {
-      cellWaveFunctionMatrixBatch[i] = new double[d_numberNodesPerElement*numberWaveFunctions];
-      cellHamMatrixTimesWaveMatrixBatch[i] = new double[d_numberNodesPerElement*numberWaveFunctions];
-    }
-
-  unsigned int iElem= 0;
-  for(unsigned int iMacroCell = 0; iMacroCell < d_numberMacroCells; ++iMacroCell)
-    {
-
-      for(unsigned int isubcell = 0; isubcell < d_macroCellSubCellMap[iMacroCell]; isubcell++)
+	double ** cellWaveFunctionMatrixBatch = new double*[groupSize];
+	double ** cellHamMatrixTimesWaveMatrixBatch = new double*[groupSize];
+	const double ** cellHamMatrixBatch = new double*[groupSize];
+	for(unsigned int i = 0; i < groupSize; i++)
 	{
-	  for(unsigned int iNode = 0; iNode < d_numberNodesPerElement; ++iNode)
-	    {
-	      dealii::types::global_dof_index localNodeId = d_flattenedArrayMacroCellLocalProcIndexIdMap[iElem+isubcell][iNode];
-	      dcopy_(&numberWaveFunctions,
-		     src.begin()+localNodeId,
-		     &inc,
-		     &cellWaveFunctionMatrixBatch[isubcell][numberWaveFunctions*iNode],
-		     &inc);
-	    }
-
-	  cellHamMatrixBatch[isubcell] =&d_cellHamiltonianMatrix[iElem+isubcell][0];
+		cellWaveFunctionMatrixBatch[i] = new double[d_numberNodesPerElement*numberWaveFunctions];
+		cellHamMatrixTimesWaveMatrixBatch[i] = new double[d_numberNodesPerElement*numberWaveFunctions];
 	}
 
-      dgemm_batch_(&transA,
-		   &transB,
-		   &numberWaveFunctions,
-		   &d_numberNodesPerElement,
-		   &d_numberNodesPerElement,
-		   &scalarCoeffAlpha,
-		   cellWaveFunctionMatrixBatch,
-		   &numberWaveFunctions,
-		   cellHamMatrixBatch,
-		   &d_numberNodesPerElement,
-		   &scalarCoeffBeta,
-		   cellHamMatrixTimesWaveMatrixBatch,
-		   &numberWaveFunctions,
-		   &groupCount,
-		   &d_macroCellSubCellMap[iMacroCell]);
+	unsigned int iElem= 0;
+	for(unsigned int iMacroCell = 0; iMacroCell < d_numberMacroCells; ++iMacroCell)
+	{
 
-      for(unsigned int isubcell = 0; isubcell < d_macroCellSubCellMap[iMacroCell]; isubcell++)
-	for(unsigned int iNode = 0; iNode < d_numberNodesPerElement; ++iNode)
-	  {
-	    dealii::types::global_dof_index localNodeId = d_flattenedArrayMacroCellLocalProcIndexIdMap[iElem+isubcell][iNode];
-	    daxpy_(&numberWaveFunctions,
-		   &scalarCoeffAlpha,
-		   &cellHamMatrixTimesWaveMatrixBatch[isubcell][numberWaveFunctions*iNode],
-		   &inc,
-		   dst.begin()+localNodeId,
-		   &inc);
-	  }
+		for(unsigned int isubcell = 0; isubcell < d_macroCellSubCellMap[iMacroCell]; isubcell++)
+		{
+			for(unsigned int iNode = 0; iNode < d_numberNodesPerElement; ++iNode)
+			{
+				dealii::types::global_dof_index localNodeId = d_flattenedArrayMacroCellLocalProcIndexIdMap[iElem+isubcell][iNode];
+				dcopy_(&numberWaveFunctions,
+						src.begin()+localNodeId,
+						&inc,
+						&cellWaveFunctionMatrixBatch[isubcell][numberWaveFunctions*iNode],
+						&inc);
+			}
+
+			cellHamMatrixBatch[isubcell] =&d_cellHamiltonianMatrix[iElem+isubcell][0];
+		}
+
+		dgemm_batch_(&transA,
+				&transB,
+				&numberWaveFunctions,
+				&d_numberNodesPerElement,
+				&d_numberNodesPerElement,
+				&scalarCoeffAlpha,
+				cellWaveFunctionMatrixBatch,
+				&numberWaveFunctions,
+				cellHamMatrixBatch,
+				&d_numberNodesPerElement,
+				&scalarCoeffBeta,
+				cellHamMatrixTimesWaveMatrixBatch,
+				&numberWaveFunctions,
+				&groupCount,
+				&d_macroCellSubCellMap[iMacroCell]);
+
+		for(unsigned int isubcell = 0; isubcell < d_macroCellSubCellMap[iMacroCell]; isubcell++)
+			for(unsigned int iNode = 0; iNode < d_numberNodesPerElement; ++iNode)
+			{
+				dealii::types::global_dof_index localNodeId = d_flattenedArrayMacroCellLocalProcIndexIdMap[iElem+isubcell][iNode];
+				daxpy_(&numberWaveFunctions,
+						&scalarCoeffAlpha,
+						&cellHamMatrixTimesWaveMatrixBatch[isubcell][numberWaveFunctions*iNode],
+						&inc,
+						dst.begin()+localNodeId,
+						&inc);
+			}
 
 
-      iElem+=d_macroCellSubCellMap[iMacroCell];
-    }//macrocell loop
+		iElem+=d_macroCellSubCellMap[iMacroCell];
+	}//macrocell loop
 
-  for(unsigned int i = 0; i < groupSize; i++)
-    {
-      delete [] cellWaveFunctionMatrixBatch[i];
-      delete [] cellHamMatrixTimesWaveMatrixBatch[i];
-    }
-  delete [] cellWaveFunctionMatrixBatch;
-  delete []  cellHamMatrixTimesWaveMatrixBatch;
-  delete []  cellHamMatrixBatch;
+	for(unsigned int i = 0; i < groupSize; i++)
+	{
+		delete [] cellWaveFunctionMatrixBatch[i];
+		delete [] cellHamMatrixTimesWaveMatrixBatch[i];
+	}
+	delete [] cellWaveFunctionMatrixBatch;
+	delete []  cellHamMatrixTimesWaveMatrixBatch;
+	delete []  cellHamMatrixBatch;
 }
 #endif
 #endif

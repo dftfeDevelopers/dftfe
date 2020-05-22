@@ -22,51 +22,51 @@
 
 namespace dftfe
 {
-  /**
-   * @brief Density calculator class
-   *
-   * @author Sambit Das
-   */
-  template<unsigned int FEOrder>
-    class DensityCalculator
-    {
+	/**
+	 * @brief Density calculator class
+	 *
+	 * @author Sambit Das
+	 */
+	template<unsigned int FEOrder>
+		class DensityCalculator
+		{
 
-      public:
+			public:
 
-        /**
-         * @brief Constructor
-         *
-         * @param mpi_comm mpi communicator
-         */
-        DensityCalculator();
+				/**
+				 * @brief Constructor
+				 *
+				 * @param mpi_comm mpi communicator
+				 */
+				DensityCalculator();
 
 
-        void computeRhoFromPSI
-          (const std::vector<std::vector<dataTypes::number> > & eigenVectorsInput,
-           const std::vector<std::vector<dataTypes::number> > & eigenVectorsFracInput,
-           const unsigned int totalNumWaveFunctions,
-           const unsigned int Nfr,
-           const std::vector<std::vector<double>> & eigenValues,
-           const double fermiEnergy, 
-           const double fermiEnergyUp,
-           const double fermiEnergyDown,
-           const dealii::DoFHandler<3> & dofHandler,
-           const dealii::AffineConstraints<double> & constraints,
-           const dealii::MatrixFree<3,double> & mfData,
-           const unsigned int mfDofIndex,
-           const unsigned int mfQuadIndex,
-           const std::vector<dealii::types::global_dof_index> & localProc_dof_indicesReal,
-           const std::vector<dealii::types::global_dof_index> & localProc_dof_indicesImag,
-           const std::vector<double> & kPointWeights,
-           std::map<dealii::CellId, std::vector<double> > * _rhoValues,
-           std::map<dealii::CellId, std::vector<double> > * _gradRhoValues,
-           std::map<dealii::CellId, std::vector<double> > * _rhoValuesSpinPolarized,
-           std::map<dealii::CellId, std::vector<double> > * _gradRhoValuesSpinPolarized,
-           const bool isEvaluateGradRho,
-           const MPI_Comm & interpoolcomm,
-           const MPI_Comm & interBandGroupComm,
-           const bool isConsiderSpectrumSplitting,
-           const bool lobattoNodesFlag);
-    };
+				void computeRhoFromPSI
+					(const std::vector<std::vector<dataTypes::number> > & eigenVectorsInput,
+					 const std::vector<std::vector<dataTypes::number> > & eigenVectorsFracInput,
+					 const unsigned int totalNumWaveFunctions,
+					 const unsigned int Nfr,
+					 const std::vector<std::vector<double>> & eigenValues,
+					 const double fermiEnergy, 
+					 const double fermiEnergyUp,
+					 const double fermiEnergyDown,
+					 const dealii::DoFHandler<3> & dofHandler,
+					 const dealii::AffineConstraints<double> & constraints,
+					 const dealii::MatrixFree<3,double> & mfData,
+					 const unsigned int mfDofIndex,
+					 const unsigned int mfQuadIndex,
+					 const std::vector<dealii::types::global_dof_index> & localProc_dof_indicesReal,
+					 const std::vector<dealii::types::global_dof_index> & localProc_dof_indicesImag,
+					 const std::vector<double> & kPointWeights,
+					 std::map<dealii::CellId, std::vector<double> > * _rhoValues,
+					 std::map<dealii::CellId, std::vector<double> > * _gradRhoValues,
+					 std::map<dealii::CellId, std::vector<double> > * _rhoValuesSpinPolarized,
+					 std::map<dealii::CellId, std::vector<double> > * _gradRhoValuesSpinPolarized,
+					 const bool isEvaluateGradRho,
+					 const MPI_Comm & interpoolcomm,
+					 const MPI_Comm & interBandGroupComm,
+					 const bool isConsiderSpectrumSplitting,
+					 const bool lobattoNodesFlag);
+		};
 }
 #endif

@@ -64,22 +64,22 @@
 #endif
 
 void CG_DGEMV (char *trans, BLAS_INT *m, BLAS_INT *n, double *alpha, double *A,
-        BLAS_INT *lda, double *X, BLAS_INT *incx,
-        double *beta, double *Y, BLAS_INT *incy) ;
+		BLAS_INT *lda, double *X, BLAS_INT *incx,
+		double *beta, double *Y, BLAS_INT *incy) ;
 
 void CG_DTRSV (char *uplo, char *trans, char *diag, BLAS_INT *n, double *A,
-        BLAS_INT *lda, double *X, BLAS_INT *incx) ;
+		BLAS_INT *lda, double *X, BLAS_INT *incx) ;
 
 void CG_DAXPY (BLAS_INT *n, double *DA, double *DX, BLAS_INT *incx, double *DY,
-        BLAS_INT *incy) ;
+		BLAS_INT *incy) ;
 
 double CG_DDOT (BLAS_INT *n, double *DX, BLAS_INT *incx, double *DY,
-        BLAS_INT *incy) ;
+		BLAS_INT *incy) ;
 
 void CG_DSCAL (BLAS_INT *n, double *DA, double *DX, BLAS_INT *incx) ;
 
 void CG_DCOPY (BLAS_INT *n, double *DX, BLAS_INT *incx, double *DY,
-        BLAS_INT *incy) ;
+		BLAS_INT *incy) ;
 
 BLAS_INT CG_IDAMAX (BLAS_INT *n, double *DX, BLAS_INT *incx) ;
 

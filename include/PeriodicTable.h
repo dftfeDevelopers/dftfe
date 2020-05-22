@@ -25,46 +25,46 @@
 
 namespace dftfe
 {
-  //
-  //Declare pseudoUtils function
-  //
+	//
+	//Declare pseudoUtils function
+	//
 
-  /** @file PeriodicTable.h
-   *  @brief stores a map between atomic number and atomic symbol and atomic mass
-   *
-   *
-   *  @author Phani Motamarri
-   */
-  namespace pseudoUtils
-  {
-    struct Element
-    {
-      int z;
-      std::string symbol;
-      std::string config;
-      double mass;
-      Element(int zz, std::string s, std::string c, double m) : z(zz), symbol(s), config(c),mass(m) {}
-    };
+	/** @file PeriodicTable.h
+	 *  @brief stores a map between atomic number and atomic symbol and atomic mass
+	 *
+	 *
+	 *  @author Phani Motamarri
+	 */
+	namespace pseudoUtils
+	{
+		struct Element
+		{
+			int z;
+			std::string symbol;
+			std::string config;
+			double mass;
+			Element(int zz, std::string s, std::string c, double m) : z(zz), symbol(s), config(c),mass(m) {}
+		};
 
-    class PeriodicTable
-    {
-    private:
+		class PeriodicTable
+		{
+			private:
 
-      std::vector<Element> ptable;
-      std::map<std::string,int> zmap;
+				std::vector<Element> ptable;
+				std::map<std::string,int> zmap;
 
-    public:
+			public:
 
-      PeriodicTable(void);
-      int z(std::string symbol) const;
-      std::string symbol(int zval) const;
-      std::string configuration(int zval) const;
-      std::string configuration(std::string symbol) const;
-      double mass(int zval) const;
-      double mass(std::string symbol) const;
-      int size(void) const;
+				PeriodicTable(void);
+				int z(std::string symbol) const;
+				std::string symbol(int zval) const;
+				std::string configuration(int zval) const;
+				std::string configuration(std::string symbol) const;
+				double mass(int zval) const;
+				double mass(std::string symbol) const;
+				int size(void) const;
 
-    };
-  }
+		};
+	}
 }
 #endif

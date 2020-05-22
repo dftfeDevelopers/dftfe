@@ -18,10 +18,10 @@
 #include <linearSolver.h>
 
 namespace dftfe {
-  // Constructor.
-  linearSolver::linearSolver()
-  {
-    return;
-  }
+	// Constructor.
+	linearSolver::linearSolver()
+	{
+		return;
+	}
 
 }

@@ -18,113 +18,113 @@
 
 
 template<unsigned int FEOrder>
-void forceClass<FEOrder>::createBinObjectsForce
-    (const DoFHandler<3> & dofHandler,
-     const DoFHandler<3> & dofHandlerForce,
-     const ConstraintMatrix  & noConstraints,
-     const vselfBinsManager<FEOrder> & vselfBinsManager,
-     std::vector<std::vector<DoFHandler<C_DIM>::active_cell_iterator> > & cellsVselfBallsDofHandler,
-     std::vector<std::vector<DoFHandler<C_DIM>::active_cell_iterator> > & cellsVselfBallsDofHandlerForce,
-     std::vector<std::map<dealii::CellId , unsigned int> > & cellsVselfBallsClosestAtomIdDofHandler,
-     std::map<unsigned int, unsigned int> & AtomIdBinIdLocalDofHandler,
-     std::vector<std::map<DoFHandler<C_DIM>::active_cell_iterator,std::vector<unsigned int > > > & cellFacesVselfBallSurfacesDofHandler,
-     std::vector<std::map<DoFHandler<C_DIM>::active_cell_iterator,std::vector<unsigned int > > > & cellFacesVselfBallSurfacesDofHandlerForce)
+	void forceClass<FEOrder>::createBinObjectsForce
+(const DoFHandler<3> & dofHandler,
+ const DoFHandler<3> & dofHandlerForce,
+ const ConstraintMatrix  & noConstraints,
+ const vselfBinsManager<FEOrder> & vselfBinsManager,
+ std::vector<std::vector<DoFHandler<C_DIM>::active_cell_iterator> > & cellsVselfBallsDofHandler,
+ std::vector<std::vector<DoFHandler<C_DIM>::active_cell_iterator> > & cellsVselfBallsDofHandlerForce,
+ std::vector<std::map<dealii::CellId , unsigned int> > & cellsVselfBallsClosestAtomIdDofHandler,
+ std::map<unsigned int, unsigned int> & AtomIdBinIdLocalDofHandler,
+ std::vector<std::map<DoFHandler<C_DIM>::active_cell_iterator,std::vector<unsigned int > > > & cellFacesVselfBallSurfacesDofHandler,
+ std::vector<std::map<DoFHandler<C_DIM>::active_cell_iterator,std::vector<unsigned int > > > & cellFacesVselfBallSurfacesDofHandlerForce)
 {
-  const unsigned int faces_per_cell=GeometryInfo<C_DIM>::faces_per_cell;
-  const unsigned int dofs_per_cell=dofHandler.get_fe().dofs_per_cell;
-  const unsigned int dofs_per_face=dofHandler.get_fe().dofs_per_face;
-  const unsigned int numberBins=vselfBinsManager.getAtomIdsBins().size();
-  //clear exisitng data
-  cellsVselfBallsDofHandler.clear();
-  cellsVselfBallsDofHandlerForce.clear();
-  cellFacesVselfBallSurfacesDofHandler.clear();
-  cellFacesVselfBallSurfacesDofHandlerForce.clear();
-  cellsVselfBallsClosestAtomIdDofHandler.clear();
-  AtomIdBinIdLocalDofHandler.clear();
-  //resize
-  cellsVselfBallsDofHandler.resize(numberBins);
-  cellsVselfBallsDofHandlerForce.resize(numberBins);
-  cellFacesVselfBallSurfacesDofHandler.resize(numberBins);
-  cellFacesVselfBallSurfacesDofHandlerForce.resize(numberBins);
-  cellsVselfBallsClosestAtomIdDofHandler.resize(numberBins);
+	const unsigned int faces_per_cell=GeometryInfo<C_DIM>::faces_per_cell;
+	const unsigned int dofs_per_cell=dofHandler.get_fe().dofs_per_cell;
+	const unsigned int dofs_per_face=dofHandler.get_fe().dofs_per_face;
+	const unsigned int numberBins=vselfBinsManager.getAtomIdsBins().size();
+	//clear exisitng data
+	cellsVselfBallsDofHandler.clear();
+	cellsVselfBallsDofHandlerForce.clear();
+	cellFacesVselfBallSurfacesDofHandler.clear();
+	cellFacesVselfBallSurfacesDofHandlerForce.clear();
+	cellsVselfBallsClosestAtomIdDofHandler.clear();
+	AtomIdBinIdLocalDofHandler.clear();
+	//resize
+	cellsVselfBallsDofHandler.resize(numberBins);
+	cellsVselfBallsDofHandlerForce.resize(numberBins);
+	cellFacesVselfBallSurfacesDofHandler.resize(numberBins);
+	cellFacesVselfBallSurfacesDofHandlerForce.resize(numberBins);
+	cellsVselfBallsClosestAtomIdDofHandler.resize(numberBins);
 
-  for(unsigned int iBin = 0; iBin < numberBins; ++iBin)
-  {
-
-     const std::map<dealii::types::global_dof_index, int> & boundaryNodeMap
-	                                        = vselfBinsManager.getBoundaryFlagsBins()[iBin];
-     const std::map<dealii::types::global_dof_index, int> & closestAtomBinMap =
-	                                       vselfBinsManager.getClosestAtomIdsBins()[iBin];
-     DoFHandler<C_DIM>::active_cell_iterator cell = dofHandler.begin_active();
-     DoFHandler<C_DIM>::active_cell_iterator endc = dofHandler.end();
-     DoFHandler<C_DIM>::active_cell_iterator cellForce = dofHandlerForce.begin_active();
-     for(; cell!= endc; ++cell, ++cellForce)
-     {
-	if(cell->is_locally_owned())
+	for(unsigned int iBin = 0; iBin < numberBins; ++iBin)
 	{
-	   std::vector<unsigned int> dirichletFaceIds;
-	   std::vector<unsigned int> faceIdsWithAtleastOneSolvedNonHangingNode;
-	   std::vector<unsigned int> allFaceIdsOfCell;
-	   unsigned int closestAtomIdSum=0;
-	   unsigned int closestAtomId;
-	   unsigned int nonHangingNodeIdCountCell=0;
-	   for(unsigned int iFace = 0; iFace < faces_per_cell; ++iFace)
-           {
-              int dirichletDofCount=0;
-	      bool isSolvedDofPresent=false;
-	      int nonHangingNodeIdCountFace=0;
-	      std::vector<types::global_dof_index> iFaceGlobalDofIndices(dofs_per_face);
-	      cell->face(iFace)->get_dof_indices(iFaceGlobalDofIndices);
-	      for(unsigned int iFaceDof = 0; iFaceDof < dofs_per_face; ++iFaceDof)
-	      {
-                 const types::global_dof_index nodeId=iFaceGlobalDofIndices[iFaceDof];
-		 if (!noConstraints.is_constrained(nodeId))
-		 {
-	            Assert(boundaryNodeMap.find(nodeId)!=boundaryNodeMap.end(),ExcMessage("BUG"));
-                    Assert(closestAtomBinMap.find(nodeId)!=closestAtomBinMap.end(),ExcMessage("BUG"));
 
-		    if (boundaryNodeMap.find(nodeId)->second!=-1)
-			isSolvedDofPresent=true;
-		    else
-			dirichletDofCount+=boundaryNodeMap.find(nodeId)->second;
+		const std::map<dealii::types::global_dof_index, int> & boundaryNodeMap
+			= vselfBinsManager.getBoundaryFlagsBins()[iBin];
+		const std::map<dealii::types::global_dof_index, int> & closestAtomBinMap =
+			vselfBinsManager.getClosestAtomIdsBins()[iBin];
+		DoFHandler<C_DIM>::active_cell_iterator cell = dofHandler.begin_active();
+		DoFHandler<C_DIM>::active_cell_iterator endc = dofHandler.end();
+		DoFHandler<C_DIM>::active_cell_iterator cellForce = dofHandlerForce.begin_active();
+		for(; cell!= endc; ++cell, ++cellForce)
+		{
+			if(cell->is_locally_owned())
+			{
+				std::vector<unsigned int> dirichletFaceIds;
+				std::vector<unsigned int> faceIdsWithAtleastOneSolvedNonHangingNode;
+				std::vector<unsigned int> allFaceIdsOfCell;
+				unsigned int closestAtomIdSum=0;
+				unsigned int closestAtomId;
+				unsigned int nonHangingNodeIdCountCell=0;
+				for(unsigned int iFace = 0; iFace < faces_per_cell; ++iFace)
+				{
+					int dirichletDofCount=0;
+					bool isSolvedDofPresent=false;
+					int nonHangingNodeIdCountFace=0;
+					std::vector<types::global_dof_index> iFaceGlobalDofIndices(dofs_per_face);
+					cell->face(iFace)->get_dof_indices(iFaceGlobalDofIndices);
+					for(unsigned int iFaceDof = 0; iFaceDof < dofs_per_face; ++iFaceDof)
+					{
+						const types::global_dof_index nodeId=iFaceGlobalDofIndices[iFaceDof];
+						if (!noConstraints.is_constrained(nodeId))
+						{
+							Assert(boundaryNodeMap.find(nodeId)!=boundaryNodeMap.end(),ExcMessage("BUG"));
+							Assert(closestAtomBinMap.find(nodeId)!=closestAtomBinMap.end(),ExcMessage("BUG"));
 
-		    closestAtomId=closestAtomBinMap.find(nodeId)->second;
-		    closestAtomIdSum+=closestAtomId;
-		    nonHangingNodeIdCountCell++;
-		    nonHangingNodeIdCountFace++;
-	         }//non-hanging node check
+							if (boundaryNodeMap.find(nodeId)->second!=-1)
+								isSolvedDofPresent=true;
+							else
+								dirichletDofCount+=boundaryNodeMap.find(nodeId)->second;
 
-	      }//Face dof loop
+							closestAtomId=closestAtomBinMap.find(nodeId)->second;
+							closestAtomIdSum+=closestAtomId;
+							nonHangingNodeIdCountCell++;
+							nonHangingNodeIdCountFace++;
+						}//non-hanging node check
 
-	      if (isSolvedDofPresent)
-	      {
-	         faceIdsWithAtleastOneSolvedNonHangingNode.push_back(iFace);
-	      }
-	      if (dirichletDofCount<0)
-	      {
-	         dirichletFaceIds.push_back(iFace);
-              }
-              allFaceIdsOfCell.push_back(iFace);
+					}//Face dof loop
 
-	   }//Face loop
+					if (isSolvedDofPresent)
+					{
+						faceIdsWithAtleastOneSolvedNonHangingNode.push_back(iFace);
+					}
+					if (dirichletDofCount<0)
+					{
+						dirichletFaceIds.push_back(iFace);
+					}
+					allFaceIdsOfCell.push_back(iFace);
 
-	   //fill the target objects
-	   if (faceIdsWithAtleastOneSolvedNonHangingNode.size()>0){
-	      if (!(closestAtomIdSum==closestAtomId*nonHangingNodeIdCountCell))
-	      {
-		  std::cout << "closestAtomIdSum: "<<closestAtomIdSum<< ", closestAtomId: "<<closestAtomId<< ", nonHangingNodeIdCountCell: "<<nonHangingNodeIdCountCell<<std::endl;
-	      }
-	      AssertThrow(closestAtomIdSum==closestAtomId*nonHangingNodeIdCountCell,ExcMessage("cell dofs on vself ball surface have different closest atom ids, remedy- increase separation between vself balls"));
-	      cellsVselfBallsDofHandler[iBin].push_back(cell);
-	      cellsVselfBallsDofHandlerForce[iBin].push_back(cellForce);
-	      cellsVselfBallsClosestAtomIdDofHandler[iBin][cell->id()]=closestAtomId;
-	      AtomIdBinIdLocalDofHandler[closestAtomId]=iBin;
-	      cellFacesVselfBallSurfacesDofHandler[iBin][cell]= allFaceIdsOfCell;
-	      cellFacesVselfBallSurfacesDofHandlerForce[iBin][cellForce]= dirichletFaceIds;//allFaceIdsOfCell;
-	   }
-	}//cell locally owned
-     }// cell loop
-  }//Bin loop
+				}//Face loop
+
+				//fill the target objects
+				if (faceIdsWithAtleastOneSolvedNonHangingNode.size()>0){
+					if (!(closestAtomIdSum==closestAtomId*nonHangingNodeIdCountCell))
+					{
+						std::cout << "closestAtomIdSum: "<<closestAtomIdSum<< ", closestAtomId: "<<closestAtomId<< ", nonHangingNodeIdCountCell: "<<nonHangingNodeIdCountCell<<std::endl;
+					}
+					AssertThrow(closestAtomIdSum==closestAtomId*nonHangingNodeIdCountCell,ExcMessage("cell dofs on vself ball surface have different closest atom ids, remedy- increase separation between vself balls"));
+					cellsVselfBallsDofHandler[iBin].push_back(cell);
+					cellsVselfBallsDofHandlerForce[iBin].push_back(cellForce);
+					cellsVselfBallsClosestAtomIdDofHandler[iBin][cell->id()]=closestAtomId;
+					AtomIdBinIdLocalDofHandler[closestAtomId]=iBin;
+					cellFacesVselfBallSurfacesDofHandler[iBin][cell]= allFaceIdsOfCell;
+					cellFacesVselfBallSurfacesDofHandlerForce[iBin][cellForce]= dirichletFaceIds;//allFaceIdsOfCell;
+				}
+			}//cell locally owned
+		}// cell loop
+	}//Bin loop
 
 }
 //

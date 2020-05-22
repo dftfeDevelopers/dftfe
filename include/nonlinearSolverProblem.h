@@ -19,93 +19,93 @@
 #include "headers.h"
 
 namespace dftfe {
-    /**
-    * @brief Abstract class for solver functions.
-    *
-    * @author Sambit Das
-    */
-    class nonlinearSolverProblem {
-
-	public:
-
 	/**
-	 * @brief Constructor.
-	 */
-	nonlinearSolverProblem();
-
-	/**
-	 * @brief Destructor.
-	 */
-	virtual ~nonlinearSolverProblem() = 0;
-
-	/**
-	 * @brief Obtain number of unknowns.
+	 * @brief Abstract class for solver functions.
 	 *
-	 * @return Number of unknowns.
+	 * @author Sambit Das
 	 */
-	virtual unsigned int getNumberUnknowns() const = 0;
+	class nonlinearSolverProblem {
 
-	/**
-	 * @brief Compute function value (aka energy).
-	 *
-	 *
-	 * @return Function value.
-	 */
-	virtual void value(std::vector<double> & functionValue) = 0;
+		public:
+
+			/**
+			 * @brief Constructor.
+			 */
+			nonlinearSolverProblem();
+
+			/**
+			 * @brief Destructor.
+			 */
+			virtual ~nonlinearSolverProblem() = 0;
+
+			/**
+			 * @brief Obtain number of unknowns.
+			 *
+			 * @return Number of unknowns.
+			 */
+			virtual unsigned int getNumberUnknowns() const = 0;
+
+			/**
+			 * @brief Compute function value (aka energy).
+			 *
+			 *
+			 * @return Function value.
+			 */
+			virtual void value(std::vector<double> & functionValue) = 0;
 
 
-	/**
-	 * @brief Compute function gradient (aka forces).
-	 *
-	 * @param gradient STL vector for gradient values.
-	 */
-	virtual void gradient(std::vector<double> & gradient) = 0;
+			/**
+			 * @brief Compute function gradient (aka forces).
+			 *
+			 * @param gradient STL vector for gradient values.
+			 */
+			virtual void gradient(std::vector<double> & gradient) = 0;
 
-	/**
-	 * @brief Apply preconditioner to function gradient.
-	 *
-	 * @param s STL vector for s=-M^{-1} gradient.
-	 * @param gradient STL vector for gradient values.
-	 */
-	virtual void precondition(std::vector<double>       & s,
-				  const std::vector<double> & gradient) const = 0;
+			/**
+			 * @brief Apply preconditioner to function gradient.
+			 *
+			 * @param s STL vector for s=-M^{-1} gradient.
+			 * @param gradient STL vector for gradient values.
+			 */
+			virtual void precondition(std::vector<double>       & s,
+					const std::vector<double> & gradient) const = 0;
 
-	/**
-	 * @brief Update solution.
-	 *
-	 * @param solution Updated solution.
-	 */
-	virtual void update(const std::vector<double> & solution,
-			    const bool computeForces=true) = 0;
+			/**
+			 * @brief Update solution.
+			 *
+			 * @param solution Updated solution.
+			 */
+			virtual void update(const std::vector<double> & solution,
+					const bool computeForces=true) = 0;
 
-	/**
-	 * @brief Obtain current solution.
-	 *
-	 * @param solution Space for current solution.
-	 */
-	virtual void solution(std::vector<double> & solution) = 0;
+			/**
+			 * @brief Obtain current solution.
+			 *
+			 * @param solution Space for current solution.
+			 */
+			virtual void solution(std::vector<double> & solution) = 0;
 
-	/**
-	 * @brief For each unknown indicate whether that unknown should
-	 * be accumulated. This functionality is needed in the case of
-	 * parallel execution when domain decomposition is
-	 * employed. Unknowns residing on processor boundary should only
-	 * be accumulated once when dot products of vertex fields are
-	 * computed (e.g. residual).
-	 *
-	 * @return A vector of int values for each unknown. Value of 1
-	 * indicates that the unknown should be counted and 0 otherwise.
-	 */
-	virtual std::vector<unsigned int>
-	getUnknownCountFlag() const = 0;
+			/**
+			 * @brief For each unknown indicate whether that unknown should
+			 * be accumulated. This functionality is needed in the case of
+			 * parallel execution when domain decomposition is
+			 * employed. Unknowns residing on processor boundary should only
+			 * be accumulated once when dot products of vertex fields are
+			 * computed (e.g. residual).
+			 *
+			 * @return A vector of int values for each unknown. Value of 1
+			 * indicates that the unknown should be counted and 0 otherwise.
+			 */
+			virtual std::vector<unsigned int>
+				getUnknownCountFlag() const = 0;
 
-	/**
-	 * @brief create checkpoint for the current state of the problem i.e problem domain and solution.
-	 *
-	 */
-	virtual void save() = 0;
+			/**
+			 * @brief create checkpoint for the current state of the problem i.e problem domain and solution.
+			 *
+			 */
+			virtual void save() = 0;
 
-    };
+	};
 
 }
 #endif // nonlinearSolverProblem_H_

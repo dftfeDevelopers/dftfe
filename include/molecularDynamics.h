@@ -20,39 +20,39 @@
 
 namespace dftfe {
 
-    using namespace dealii;
-    template <unsigned int FEOrder> class dftClass;
+	using namespace dealii;
+	template <unsigned int FEOrder> class dftClass;
 
-    /** @file molecularDynamics.h
-     *
-     *  @author Sambit Das
-     */
-    template <unsigned int FEOrder>
-    class molecularDynamics
-    {
-        public:
+	/** @file molecularDynamics.h
+	 *
+	 *  @author Sambit Das
+	 */
+	template <unsigned int FEOrder>
+		class molecularDynamics
+		{
+			public:
 
-          molecularDynamics(dftClass<FEOrder>* _dftPtr,const  MPI_Comm &mpi_comm_replica);
-
-
-          void run();
-
-          void timingRun();
+				molecularDynamics(dftClass<FEOrder>* _dftPtr,const  MPI_Comm &mpi_comm_replica);
 
 
-        private:
+				void run();
 
-          /// pointer to dft class
-          dftClass<FEOrder>* dftPtr;
+				void timingRun();
 
-          /// parallel communication objects
-          const MPI_Comm mpi_communicator;
-          const unsigned int n_mpi_processes;
-          const unsigned int this_mpi_process;
 
-          /// conditional stream object
-          dealii::ConditionalOStream   pcout;
-    };
+			private:
+
+				/// pointer to dft class
+				dftClass<FEOrder>* dftPtr;
+
+				/// parallel communication objects
+				const MPI_Comm mpi_communicator;
+				const unsigned int n_mpi_processes;
+				const unsigned int this_mpi_process;
+
+				/// conditional stream object
+				dealii::ConditionalOStream   pcout;
+		};
 
 }
 #endif

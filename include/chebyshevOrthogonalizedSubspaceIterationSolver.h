@@ -25,78 +25,78 @@
 
 namespace dftfe{
 
-  /**
-   * @brief Concrete class implementing Chebyshev filtered orthogonalized subspace
-   * iteration solver.
-   * @author Phani Motamarri
-   */
+	/**
+	 * @brief Concrete class implementing Chebyshev filtered orthogonalized subspace
+	 * iteration solver.
+	 * @author Phani Motamarri
+	 */
 
-  class chebyshevOrthogonalizedSubspaceIterationSolver : public eigenSolverClass {
+	class chebyshevOrthogonalizedSubspaceIterationSolver : public eigenSolverClass {
 
-  public:
-    /**
-     * @brief Constructor.
-     *
-     * @param mpi_comm domain decomposition mpi communicator
-     * @param lowerBoundWantedSpectrum Lower Bound of the Wanted Spectrum.
-     * @param lowerBoundUnWantedSpectrum Lower Bound of the UnWanted Spectrum.
-     */
-    chebyshevOrthogonalizedSubspaceIterationSolver(const MPI_Comm &mpi_comm,
-	                                           double lowerBoundWantedSpectrum,
-						   double lowerBoundUnWantedSpectrum);
-
-
-    /**
-     * @brief Destructor.
-     */
-    ~chebyshevOrthogonalizedSubspaceIterationSolver();
+		public:
+			/**
+			 * @brief Constructor.
+			 *
+			 * @param mpi_comm domain decomposition mpi communicator
+			 * @param lowerBoundWantedSpectrum Lower Bound of the Wanted Spectrum.
+			 * @param lowerBoundUnWantedSpectrum Lower Bound of the UnWanted Spectrum.
+			 */
+			chebyshevOrthogonalizedSubspaceIterationSolver(const MPI_Comm &mpi_comm,
+					double lowerBoundWantedSpectrum,
+					double lowerBoundUnWantedSpectrum);
 
 
-    /**
-     * @brief Solve a generalized eigen problem.
-     */
-    void solve(operatorDFTClass & operatorMatrix,
-	                                    std::vector<dataTypes::number> & eigenVectorsFlattened,
-					    std::vector<dataTypes::number> & eigenVectorsRotFracDensityFlattened,
-					    distributedCPUVec<double> & tempEigenVec,
-					    const unsigned int totalNumberWaveFunctions,
-					    std::vector<double> & eigenValues,
-					    std::vector<double> & residuals,
-					    const MPI_Comm &interBandGroupComm,
-					    const bool useMixedPrec=false,
-                                            const bool isFirstScf=false,
-					    const bool useFullMassMatrixGEP=false);
+			/**
+			 * @brief Destructor.
+			 */
+			~chebyshevOrthogonalizedSubspaceIterationSolver();
 
-    /**
-     * @brief Solve a generalized eigen problem.
-     */
-    void solve(operatorDFTClass & operatorMatrix,
-	                                    std::vector<distributedCPUVec<double>> & eigenVectors,
-					    std::vector<double> & eigenValues,
-					    std::vector<double> & residuals);
 
-    /**
-     * @brief reinit spectrum bounds
-     */
-    void reinitSpectrumBounds(double lowerBoundWantedSpectrum,
-			      double lowerBoundUnWantedSpectrum);
+			/**
+			 * @brief Solve a generalized eigen problem.
+			 */
+			void solve(operatorDFTClass & operatorMatrix,
+					std::vector<dataTypes::number> & eigenVectorsFlattened,
+					std::vector<dataTypes::number> & eigenVectorsRotFracDensityFlattened,
+					distributedCPUVec<double> & tempEigenVec,
+					const unsigned int totalNumberWaveFunctions,
+					std::vector<double> & eigenValues,
+					std::vector<double> & residuals,
+					const MPI_Comm &interBandGroupComm,
+					const bool useMixedPrec=false,
+					const bool isFirstScf=false,
+					const bool useFullMassMatrixGEP=false);
 
-  private:
-    //
-    //stores lower bound of wanted spectrum
-    //
-    double d_lowerBoundWantedSpectrum;
+			/**
+			 * @brief Solve a generalized eigen problem.
+			 */
+			void solve(operatorDFTClass & operatorMatrix,
+					std::vector<distributedCPUVec<double>> & eigenVectors,
+					std::vector<double> & eigenValues,
+					std::vector<double> & residuals);
 
-    //
-    //stores lower bound of unwanted spectrum
-    //
-    double d_lowerBoundUnWantedSpectrum;
+			/**
+			 * @brief reinit spectrum bounds
+			 */
+			void reinitSpectrumBounds(double lowerBoundWantedSpectrum,
+					double lowerBoundUnWantedSpectrum);
 
-    //
-    //variables for printing out and timing
-    //
-    dealii::ConditionalOStream   pcout;
-    dealii::TimerOutput computing_timer;
-  };
+		private:
+			//
+			//stores lower bound of wanted spectrum
+			//
+			double d_lowerBoundWantedSpectrum;
+
+			//
+			//stores lower bound of unwanted spectrum
+			//
+			double d_lowerBoundUnWantedSpectrum;
+
+			//
+			//variables for printing out and timing
+			//
+			dealii::ConditionalOStream   pcout;
+			dealii::TimerOutput computing_timer;
+	};
 }
 #endif

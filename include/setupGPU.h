@@ -21,7 +21,7 @@
 
 namespace dftfe
 {
-  void setupGPU();
+	void setupGPU();
 }
 #endif
 #endif

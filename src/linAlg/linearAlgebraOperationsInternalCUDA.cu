@@ -27,160 +27,160 @@
 namespace dftfe
 {
 
-  namespace linearAlgebraOperationsCUDA
-  {
+	namespace linearAlgebraOperationsCUDA
+	{
 
-    namespace internal
-    {
-      void createProcessGridSquareMatrix(const MPI_Comm & mpi_communicator,
-					 const unsigned size,
-					 std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid>  & processGrid,
-					 const bool useOnlyThumbRule)
-      {
-	const unsigned int numberProcs = dealii::Utilities::MPI::n_mpi_processes(mpi_communicator);
+		namespace internal
+		{
+			void createProcessGridSquareMatrix(const MPI_Comm & mpi_communicator,
+					const unsigned size,
+					std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid>  & processGrid,
+					const bool useOnlyThumbRule)
+			{
+				const unsigned int numberProcs = dealii::Utilities::MPI::n_mpi_processes(mpi_communicator);
 
-	//Rule of thumb from http://netlib.org/scalapack/slug/node106.html#SECTION04511000000000000000
-	unsigned int rowProcs=(dftParameters::scalapackParalProcs==0 || useOnlyThumbRule)?
-	  std::min(std::floor(std::sqrt(numberProcs)),
-		   std::ceil((double)size/(double)(1000))):
-	  std::min((unsigned int)std::floor(std::sqrt(numberProcs)),
-		   dftParameters::scalapackParalProcs);
+				//Rule of thumb from http://netlib.org/scalapack/slug/node106.html#SECTION04511000000000000000
+				unsigned int rowProcs=(dftParameters::scalapackParalProcs==0 || useOnlyThumbRule)?
+					std::min(std::floor(std::sqrt(numberProcs)),
+							std::ceil((double)size/(double)(1000))):
+					std::min((unsigned int)std::floor(std::sqrt(numberProcs)),
+							dftParameters::scalapackParalProcs);
 
 #ifdef DFTFE_WITH_ELPA
-	rowProcs=((dftParameters::scalapackParalProcs==0 || useOnlyThumbRule) && dftParameters::useELPA)?
-		   std::min((unsigned int)std::floor(std::sqrt(numberProcs)),(unsigned int)std::floor(rowProcs*3.0)):rowProcs;
+				rowProcs=((dftParameters::scalapackParalProcs==0 || useOnlyThumbRule) && dftParameters::useELPA)?
+					std::min((unsigned int)std::floor(std::sqrt(numberProcs)),(unsigned int)std::floor(rowProcs*3.0)):rowProcs;
 #endif
 
-	if(dftParameters::verbosity>=4)
-	  {
-	    dealii::ConditionalOStream   pcout(std::cout, (dealii::Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0));
-	    pcout<<"Scalapack Matrix created, row procs: "<< rowProcs<<std::endl;
-	  }
+				if(dftParameters::verbosity>=4)
+				{
+					dealii::ConditionalOStream   pcout(std::cout, (dealii::Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0));
+					pcout<<"Scalapack Matrix created, row procs: "<< rowProcs<<std::endl;
+				}
 
-	processGrid=std::make_shared<const dealii::Utilities::MPI::ProcessGrid>(mpi_communicator,
-										rowProcs,
-										rowProcs);
-      }
-
-
-      void createProcessGridRectangularMatrix(const MPI_Comm & mpi_communicator,
-					      const unsigned sizeRows,
-					      const unsigned sizeColumns,
-					      std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid>  & processGrid)
-      {
-	const unsigned int numberProcs = dealii::Utilities::MPI::n_mpi_processes(mpi_communicator);
-
-	//Rule of thumb from http://netlib.org/scalapack/slug/node106.html#SECTION04511000000000000000
-	const unsigned int rowProcs=  std::min(std::floor(std::sqrt(numberProcs)),std::ceil((double)sizeRows/(double)(1000)));
-	const unsigned int columnProcs = std::min(std::floor(std::sqrt(numberProcs)),std::ceil((double)sizeColumns/(double)(1000)));
-
-	if(dftParameters::verbosity>=4)
-	  {
-	    dealii::ConditionalOStream   pcout(std::cout, (dealii::Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0));
-	    pcout<<"Scalapack Matrix created, row procs x column procs: "<< rowProcs<<" x "<<columnProcs<<std::endl;
-	  }
-
-	processGrid=std::make_shared<const dealii::Utilities::MPI::ProcessGrid>(mpi_communicator,
-										rowProcs,
-										columnProcs);
-      }
+				processGrid=std::make_shared<const dealii::Utilities::MPI::ProcessGrid>(mpi_communicator,
+						rowProcs,
+						rowProcs);
+			}
 
 
-      template<typename T>
-      void createGlobalToLocalIdMapsScaLAPACKMat(const std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid>  & processGrid,
-						 const dealii::ScaLAPACKMatrix<T> & mat,
-						 std::map<unsigned int, unsigned int> & globalToLocalRowIdMap,
-						 std::map<unsigned int, unsigned int> & globalToLocalColumnIdMap)
-      {
+			void createProcessGridRectangularMatrix(const MPI_Comm & mpi_communicator,
+					const unsigned sizeRows,
+					const unsigned sizeColumns,
+					std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid>  & processGrid)
+			{
+				const unsigned int numberProcs = dealii::Utilities::MPI::n_mpi_processes(mpi_communicator);
+
+				//Rule of thumb from http://netlib.org/scalapack/slug/node106.html#SECTION04511000000000000000
+				const unsigned int rowProcs=  std::min(std::floor(std::sqrt(numberProcs)),std::ceil((double)sizeRows/(double)(1000)));
+				const unsigned int columnProcs = std::min(std::floor(std::sqrt(numberProcs)),std::ceil((double)sizeColumns/(double)(1000)));
+
+				if(dftParameters::verbosity>=4)
+				{
+					dealii::ConditionalOStream   pcout(std::cout, (dealii::Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0));
+					pcout<<"Scalapack Matrix created, row procs x column procs: "<< rowProcs<<" x "<<columnProcs<<std::endl;
+				}
+
+				processGrid=std::make_shared<const dealii::Utilities::MPI::ProcessGrid>(mpi_communicator,
+						rowProcs,
+						columnProcs);
+			}
+
+
+			template<typename T>
+				void createGlobalToLocalIdMapsScaLAPACKMat(const std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid>  & processGrid,
+						const dealii::ScaLAPACKMatrix<T> & mat,
+						std::map<unsigned int, unsigned int> & globalToLocalRowIdMap,
+						std::map<unsigned int, unsigned int> & globalToLocalColumnIdMap)
+				{
 #ifdef USE_COMPLEX
-	AssertThrow(false,dftUtils::ExcNotImplementedYet());
+					AssertThrow(false,dftUtils::ExcNotImplementedYet());
 #else
-	globalToLocalRowIdMap.clear();
-	globalToLocalColumnIdMap.clear();
-	if (processGrid->is_process_active())
-	  {
-	    for (unsigned int i = 0; i < mat.local_m(); ++i)
-	      globalToLocalRowIdMap[mat.global_row(i)]=i;
+					globalToLocalRowIdMap.clear();
+					globalToLocalColumnIdMap.clear();
+					if (processGrid->is_process_active())
+					{
+						for (unsigned int i = 0; i < mat.local_m(); ++i)
+							globalToLocalRowIdMap[mat.global_row(i)]=i;
 
-	    for (unsigned int j = 0; j < mat.local_n(); ++j)
-	      globalToLocalColumnIdMap[mat.global_column(j)]=j;
+						for (unsigned int j = 0; j < mat.local_n(); ++j)
+							globalToLocalColumnIdMap[mat.global_column(j)]=j;
 
-	  }
+					}
 #endif
-      }
+				}
 
 
-      template<typename T>
-      void sumAcrossInterCommScaLAPACKMat(const std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid>  & processGrid,
-					  dealii::ScaLAPACKMatrix<T> & mat,
-					  const MPI_Comm &interComm)
-      {
+			template<typename T>
+				void sumAcrossInterCommScaLAPACKMat(const std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid>  & processGrid,
+						dealii::ScaLAPACKMatrix<T> & mat,
+						const MPI_Comm &interComm)
+				{
 #ifdef USE_COMPLEX
-	AssertThrow(false,dftUtils::ExcNotImplementedYet());
+					AssertThrow(false,dftUtils::ExcNotImplementedYet());
 #else
-	//sum across all inter communicator groups
-	if (processGrid->is_process_active() &&
-	    dealii::Utilities::MPI::n_mpi_processes(interComm)>1)
-	  {
+					//sum across all inter communicator groups
+					if (processGrid->is_process_active() &&
+							dealii::Utilities::MPI::n_mpi_processes(interComm)>1)
+					{
 
-	    MPI_Allreduce(MPI_IN_PLACE,
-			  &mat.local_el(0,0),
-			  mat.local_m()*mat.local_n(),
-			  MPI_DOUBLE,
-			  MPI_SUM,
-			  interComm);
+						MPI_Allreduce(MPI_IN_PLACE,
+								&mat.local_el(0,0),
+								mat.local_m()*mat.local_n(),
+								MPI_DOUBLE,
+								MPI_SUM,
+								interComm);
 
-	  }
+					}
 #endif
-      }
+				}
 
 
 
 
-      template<typename T>
-      void broadcastAcrossInterCommScaLAPACKMat
-      (const std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid>  & processGrid,
-       dealii::ScaLAPACKMatrix<T> & mat,
-       const MPI_Comm &interComm,
-       const unsigned int broadcastRoot)
-      {
+			template<typename T>
+				void broadcastAcrossInterCommScaLAPACKMat
+				(const std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid>  & processGrid,
+				 dealii::ScaLAPACKMatrix<T> & mat,
+				 const MPI_Comm &interComm,
+				 const unsigned int broadcastRoot)
+				{
 #ifdef USE_COMPLEX
-	AssertThrow(false,dftUtils::ExcNotImplementedYet());
+					AssertThrow(false,dftUtils::ExcNotImplementedYet());
 #else
-	//sum across all inter communicator groups
-	if (processGrid->is_process_active() &&
-	    dealii::Utilities::MPI::n_mpi_processes(interComm)>1)
-	  {
-	    MPI_Bcast(&mat.local_el(0,0),
-		      mat.local_m()*mat.local_n(),
-		      MPI_DOUBLE,
-		      broadcastRoot,
-		      interComm);
+					//sum across all inter communicator groups
+					if (processGrid->is_process_active() &&
+							dealii::Utilities::MPI::n_mpi_processes(interComm)>1)
+					{
+						MPI_Bcast(&mat.local_el(0,0),
+								mat.local_m()*mat.local_n(),
+								MPI_DOUBLE,
+								broadcastRoot,
+								interComm);
 
-	  }
+					}
 #endif
-      }
+				}
 
 
 
 
-      template
-      void createGlobalToLocalIdMapsScaLAPACKMat(const std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid>  & processGrid,
-						 const dealii::ScaLAPACKMatrix<dataTypes::number> & mat,
-						 std::map<unsigned int, unsigned int> & globalToLocalRowIdMap,
-						 std::map<unsigned int, unsigned int> & globalToLocalColumnIdMap);
+			template
+				void createGlobalToLocalIdMapsScaLAPACKMat(const std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid>  & processGrid,
+						const dealii::ScaLAPACKMatrix<dataTypes::number> & mat,
+						std::map<unsigned int, unsigned int> & globalToLocalRowIdMap,
+						std::map<unsigned int, unsigned int> & globalToLocalColumnIdMap);
 
-      template
-      void sumAcrossInterCommScaLAPACKMat(const std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid>  & processGrid,
-					  dealii::ScaLAPACKMatrix<dataTypes::number> & mat,
-					  const MPI_Comm &interComm);
+			template
+				void sumAcrossInterCommScaLAPACKMat(const std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid>  & processGrid,
+						dealii::ScaLAPACKMatrix<dataTypes::number> & mat,
+						const MPI_Comm &interComm);
 
-      template
-      void broadcastAcrossInterCommScaLAPACKMat
-      (const std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid>  & processGrid,
-       dealii::ScaLAPACKMatrix<dataTypes::number> & mat,
-       const MPI_Comm &interComm,
-       const unsigned int broadcastRoot);
-    }
-  }
+			template
+				void broadcastAcrossInterCommScaLAPACKMat
+				(const std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid>  & processGrid,
+				 dealii::ScaLAPACKMatrix<dataTypes::number> & mat,
+				 const MPI_Comm &interComm,
+				 const unsigned int broadcastRoot);
+		}
+	}
 }

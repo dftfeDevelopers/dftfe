@@ -18,10 +18,10 @@
 #include <linearSolverCUDA.h>
 
 namespace dftfe {
-  // Constructor.
-  linearSolverCUDA::linearSolverCUDA()
-  {
-    return;
-  }
+	// Constructor.
+	linearSolverCUDA::linearSolverCUDA()
+	{
+		return;
+	}
 
 }

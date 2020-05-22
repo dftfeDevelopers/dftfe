@@ -21,224 +21,224 @@
 
 namespace dftfe
 {
-  namespace linearAlgebraOperationsCUDA
-  {
- 
+	namespace linearAlgebraOperationsCUDA
+	{
 
-      void pseudoGramSchmidtOrthogonalization(operatorDFTCUDAClass & operatorMatrix,
-                                              double * X,
-                                              const unsigned int M,
-                                              const unsigned int N,
-                                              const MPI_Comm &mpiComm,
-                                              const MPI_Comm &interBandGroupComm,
-                                              cublasHandle_t &handle,
-                                              const bool useMixedPrecOverall)
-      {
 
-             int this_process;
-             MPI_Comm_rank(mpiComm, &this_process);
+		void pseudoGramSchmidtOrthogonalization(operatorDFTCUDAClass & operatorMatrix,
+				double * X,
+				const unsigned int M,
+				const unsigned int N,
+				const MPI_Comm &mpiComm,
+				const MPI_Comm &interBandGroupComm,
+				cublasHandle_t &handle,
+				const bool useMixedPrecOverall)
+		{
 
-             double gpu_time;
+			int this_process;
+			MPI_Comm_rank(mpiComm, &this_process);
 
-             if (dftParameters::gpuFineGrainedTimings)
-             {
-                cudaDeviceSynchronize();
-                MPI_Barrier(MPI_COMM_WORLD);
-                gpu_time = MPI_Wtime();
-             }
+			double gpu_time;
 
-             const unsigned int rowsBlockSize=operatorMatrix.getScalapackBlockSize();
-             std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid>  processGrid;
-             linearAlgebraOperationsCUDA::internal::createProcessGridSquareMatrix(mpiComm,
-                                                  N,
-                                                  processGrid);
+			if (dftParameters::gpuFineGrainedTimings)
+			{
+				cudaDeviceSynchronize();
+				MPI_Barrier(MPI_COMM_WORLD);
+				gpu_time = MPI_Wtime();
+			}
 
-             dealii::ScaLAPACKMatrix<double> overlapMatPar(N,
-                                                        processGrid,
-                                                        rowsBlockSize);
+			const unsigned int rowsBlockSize=operatorMatrix.getScalapackBlockSize();
+			std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid>  processGrid;
+			linearAlgebraOperationsCUDA::internal::createProcessGridSquareMatrix(mpiComm,
+					N,
+					processGrid);
 
-             if (dftParameters::gpuFineGrainedTimings)
-             {
-                    cudaDeviceSynchronize();
-                    MPI_Barrier(MPI_COMM_WORLD);
-		    gpu_time = MPI_Wtime() - gpu_time;
-		    if (this_process==0)
-			  std::cout<<"Time for creating processGrid and ScaLAPACK matrix: "<<gpu_time<<std::endl;
-             }
+			dealii::ScaLAPACKMatrix<double> overlapMatPar(N,
+					processGrid,
+					rowsBlockSize);
 
-             if (dftParameters::gpuFineGrainedTimings)
-             {
-                cudaDeviceSynchronize();
-                MPI_Barrier(MPI_COMM_WORLD);
-                gpu_time = MPI_Wtime();
-             }
+			if (dftParameters::gpuFineGrainedTimings)
+			{
+				cudaDeviceSynchronize();
+				MPI_Barrier(MPI_COMM_WORLD);
+				gpu_time = MPI_Wtime() - gpu_time;
+				if (this_process==0)
+					std::cout<<"Time for creating processGrid and ScaLAPACK matrix: "<<gpu_time<<std::endl;
+			}
 
-             //S=X*X^{T}. Implemented as S=X^{T}*X with X^{T} stored in the column major format
-             if (dftParameters::useMixedPrecPGS_O && useMixedPrecOverall)
-	       {
-		 if(dftParameters::overlapComputeCommunOrthoRR)
-		   linearAlgebraOperationsCUDA::
-		     fillParallelOverlapMatMixedPrecScalapackAsyncComputeCommun
-		     (X,
-		      M,
-		      N,
-		      handle,
-		      mpiComm,
-		      interBandGroupComm,
-		      processGrid,
-		      overlapMatPar);
-		 else
-		   linearAlgebraOperationsCUDA::
-		     fillParallelOverlapMatMixedPrecScalapack
-		     (X,
-		      M,
-		      N,
-		      handle,
-		      mpiComm,
-		      interBandGroupComm,
-		      processGrid,
-		      overlapMatPar);
-	       }
-             else
-	       {
-		 if(dftParameters::overlapComputeCommunOrthoRR)
-		   linearAlgebraOperationsCUDA::
-		     fillParallelOverlapMatScalapackAsyncComputeCommun
-		     (X,
-		      M,
-		      N,
-		      handle,
-		      mpiComm,
-		      interBandGroupComm,
-		      processGrid,
-		      overlapMatPar); 
-		 else
-		   linearAlgebraOperationsCUDA::
-		     fillParallelOverlapMatScalapack
-		     (X,
-		      M,
-		      N,
-		      handle,
-		      mpiComm,
-		      interBandGroupComm,
-		      processGrid,
-		      overlapMatPar); 
-	       }
-            
-            if (dftParameters::gpuFineGrainedTimings)
-            {
-                    cudaDeviceSynchronize();
-                    MPI_Barrier(MPI_COMM_WORLD);
-		    gpu_time = MPI_Wtime() - gpu_time;
-		    if (this_process==0)
-                    {
-                      if (dftParameters::useMixedPrecPGS_O && useMixedPrecOverall)
-			  std::cout<<"Time for PGS Fill overlap matrix GPU mixed prec (option 0): "<<gpu_time<<std::endl;
-                      else
-                          std::cout<<"Time for PGS Fill overlap matrix (option 0): "<<gpu_time<<std::endl;
-                    }
-            }
+			if (dftParameters::gpuFineGrainedTimings)
+			{
+				cudaDeviceSynchronize();
+				MPI_Barrier(MPI_COMM_WORLD);
+				gpu_time = MPI_Wtime();
+			}
 
-            if (dftParameters::gpuFineGrainedTimings)  
-            {
-                cudaDeviceSynchronize();
-                MPI_Barrier(MPI_COMM_WORLD);
-                gpu_time = MPI_Wtime(); 
-            }
+			//S=X*X^{T}. Implemented as S=X^{T}*X with X^{T} stored in the column major format
+			if (dftParameters::useMixedPrecPGS_O && useMixedPrecOverall)
+			{
+				if(dftParameters::overlapComputeCommunOrthoRR)
+					linearAlgebraOperationsCUDA::
+						fillParallelOverlapMatMixedPrecScalapackAsyncComputeCommun
+						(X,
+						 M,
+						 N,
+						 handle,
+						 mpiComm,
+						 interBandGroupComm,
+						 processGrid,
+						 overlapMatPar);
+				else
+					linearAlgebraOperationsCUDA::
+						fillParallelOverlapMatMixedPrecScalapack
+						(X,
+						 M,
+						 N,
+						 handle,
+						 mpiComm,
+						 interBandGroupComm,
+						 processGrid,
+						 overlapMatPar);
+			}
+			else
+			{
+				if(dftParameters::overlapComputeCommunOrthoRR)
+					linearAlgebraOperationsCUDA::
+						fillParallelOverlapMatScalapackAsyncComputeCommun
+						(X,
+						 M,
+						 N,
+						 handle,
+						 mpiComm,
+						 interBandGroupComm,
+						 processGrid,
+						 overlapMatPar); 
+				else
+					linearAlgebraOperationsCUDA::
+						fillParallelOverlapMatScalapack
+						(X,
+						 M,
+						 N,
+						 handle,
+						 mpiComm,
+						 interBandGroupComm,
+						 processGrid,
+						 overlapMatPar); 
+			}
 
-            overlapMatPar.compute_cholesky_factorization();
+			if (dftParameters::gpuFineGrainedTimings)
+			{
+				cudaDeviceSynchronize();
+				MPI_Barrier(MPI_COMM_WORLD);
+				gpu_time = MPI_Wtime() - gpu_time;
+				if (this_process==0)
+				{
+					if (dftParameters::useMixedPrecPGS_O && useMixedPrecOverall)
+						std::cout<<"Time for PGS Fill overlap matrix GPU mixed prec (option 0): "<<gpu_time<<std::endl;
+					else
+						std::cout<<"Time for PGS Fill overlap matrix (option 0): "<<gpu_time<<std::endl;
+				}
+			}
 
-            dealii::LAPACKSupport::Property overlapMatPropertyPostCholesky=overlapMatPar.get_property();
+			if (dftParameters::gpuFineGrainedTimings)  
+			{
+				cudaDeviceSynchronize();
+				MPI_Barrier(MPI_COMM_WORLD);
+				gpu_time = MPI_Wtime(); 
+			}
 
-            AssertThrow(overlapMatPropertyPostCholesky==dealii::LAPACKSupport::Property::lower_triangular
-                  ||overlapMatPropertyPostCholesky==dealii::LAPACKSupport::Property::upper_triangular
-                   ,dealii::ExcMessage("DFT-FE Error: overlap matrix property after cholesky factorization incorrect"));
+			overlapMatPar.compute_cholesky_factorization();
 
-            dealii::ScaLAPACKMatrix<double> LMatPar(N,
-                                         processGrid,
-                                         rowsBlockSize,
-                                         overlapMatPropertyPostCholesky);
+			dealii::LAPACKSupport::Property overlapMatPropertyPostCholesky=overlapMatPar.get_property();
 
-            //copy triangular part of projHamPar into LMatPar
-            if (processGrid->is_process_active())
-              for (unsigned int i = 0; i < overlapMatPar.local_n(); ++i)
-              {
-                 const unsigned int glob_i = overlapMatPar.global_column(i);
-                 for (unsigned int j = 0; j < overlapMatPar.local_m(); ++j)
-                 {
-                   const unsigned int glob_j = overlapMatPar.global_row(j);
-                   if (overlapMatPropertyPostCholesky==dealii::LAPACKSupport::Property::lower_triangular)
-                   {
-                     if (glob_i <= glob_j)
-                        LMatPar.local_el(j, i)=overlapMatPar.local_el(j, i);
-                     else
-                        LMatPar.local_el(j, i)=0;
-                   }
-                   else
-                   {
-                     if (glob_j <= glob_i)
-                        LMatPar.local_el(j, i)=overlapMatPar.local_el(j, i);
-                     else
-                        LMatPar.local_el(j, i)=0;
-                   }
-                 }
-               }
+			AssertThrow(overlapMatPropertyPostCholesky==dealii::LAPACKSupport::Property::lower_triangular
+					||overlapMatPropertyPostCholesky==dealii::LAPACKSupport::Property::upper_triangular
+					,dealii::ExcMessage("DFT-FE Error: overlap matrix property after cholesky factorization incorrect"));
 
-  
-               LMatPar.invert();
+			dealii::ScaLAPACKMatrix<double> LMatPar(N,
+					processGrid,
+					rowsBlockSize,
+					overlapMatPropertyPostCholesky);
 
-               if (dftParameters::gpuFineGrainedTimings)
-               {  
-                  cudaDeviceSynchronize();
-                  MPI_Barrier(MPI_COMM_WORLD);
-                  gpu_time = MPI_Wtime() - gpu_time;
-                  if (this_process==0)
-                    std::cout<<"Time for PGS Cholesky Triangular Mat inverse ScaLAPACK (option 0): "<<gpu_time<<std::endl;
-               }
+			//copy triangular part of projHamPar into LMatPar
+			if (processGrid->is_process_active())
+				for (unsigned int i = 0; i < overlapMatPar.local_n(); ++i)
+				{
+					const unsigned int glob_i = overlapMatPar.global_column(i);
+					for (unsigned int j = 0; j < overlapMatPar.local_m(); ++j)
+					{
+						const unsigned int glob_j = overlapMatPar.global_row(j);
+						if (overlapMatPropertyPostCholesky==dealii::LAPACKSupport::Property::lower_triangular)
+						{
+							if (glob_i <= glob_j)
+								LMatPar.local_el(j, i)=overlapMatPar.local_el(j, i);
+							else
+								LMatPar.local_el(j, i)=0;
+						}
+						else
+						{
+							if (glob_j <= glob_i)
+								LMatPar.local_el(j, i)=overlapMatPar.local_el(j, i);
+							else
+								LMatPar.local_el(j, i)=0;
+						}
+					}
+				}
 
-               //X=X*L^{-1}^{T} implemented as X^{T}=L^{-1}*X^{T} with X^{T} stored in the column major format
-               if (dftParameters::gpuFineGrainedTimings)
-               {
-                  cudaDeviceSynchronize();
-                  MPI_Barrier(MPI_COMM_WORLD);
-                  gpu_time = MPI_Wtime();
-               }
 
-               if (dftParameters::useMixedPrecPGS_SR && useMixedPrecOverall)
-		       subspaceRotationPGSMixedPrecScalapack(X,
-				    M,
-				    N,
-				    handle,
-				    processGrid,
-				    mpiComm,
-                                    interBandGroupComm,
-				    LMatPar,
-				    overlapMatPropertyPostCholesky==dealii::LAPACKSupport::Property::upper_triangular?true:false);
-               else
-		       subspaceRotationScalapack(X,
-				    M,
-				    N,
-				    handle,
-				    processGrid,
-				    mpiComm,
-                                    interBandGroupComm,
-				    LMatPar,
-				    overlapMatPropertyPostCholesky==dealii::LAPACKSupport::Property::upper_triangular?true:false,
-				    dftParameters::triMatPGSOpt?true:false);
+			LMatPar.invert();
 
-               if (dftParameters::gpuFineGrainedTimings)
-               {
-                   cudaDeviceSynchronize();
-                   MPI_Barrier(MPI_COMM_WORLD);
-		   gpu_time = MPI_Wtime() - gpu_time;
-		   if (this_process==0)
-                   {
-                      if (dftParameters::useMixedPrecPGS_SR && useMixedPrecOverall)
-                         std::cout<<"Time for PGS subspace rotation GPU mixed prec (option 0): "<<gpu_time<<std::endl;
-                      else
-		         std::cout<<"Time for PGS subspace rotation GPU (option 0): "<<gpu_time<<std::endl;
-                   }
-               }
-      }
-  }
+			if (dftParameters::gpuFineGrainedTimings)
+			{  
+				cudaDeviceSynchronize();
+				MPI_Barrier(MPI_COMM_WORLD);
+				gpu_time = MPI_Wtime() - gpu_time;
+				if (this_process==0)
+					std::cout<<"Time for PGS Cholesky Triangular Mat inverse ScaLAPACK (option 0): "<<gpu_time<<std::endl;
+			}
+
+			//X=X*L^{-1}^{T} implemented as X^{T}=L^{-1}*X^{T} with X^{T} stored in the column major format
+			if (dftParameters::gpuFineGrainedTimings)
+			{
+				cudaDeviceSynchronize();
+				MPI_Barrier(MPI_COMM_WORLD);
+				gpu_time = MPI_Wtime();
+			}
+
+			if (dftParameters::useMixedPrecPGS_SR && useMixedPrecOverall)
+				subspaceRotationPGSMixedPrecScalapack(X,
+						M,
+						N,
+						handle,
+						processGrid,
+						mpiComm,
+						interBandGroupComm,
+						LMatPar,
+						overlapMatPropertyPostCholesky==dealii::LAPACKSupport::Property::upper_triangular?true:false);
+			else
+				subspaceRotationScalapack(X,
+						M,
+						N,
+						handle,
+						processGrid,
+						mpiComm,
+						interBandGroupComm,
+						LMatPar,
+						overlapMatPropertyPostCholesky==dealii::LAPACKSupport::Property::upper_triangular?true:false,
+						dftParameters::triMatPGSOpt?true:false);
+
+			if (dftParameters::gpuFineGrainedTimings)
+			{
+				cudaDeviceSynchronize();
+				MPI_Barrier(MPI_COMM_WORLD);
+				gpu_time = MPI_Wtime() - gpu_time;
+				if (this_process==0)
+				{
+					if (dftParameters::useMixedPrecPGS_SR && useMixedPrecOverall)
+						std::cout<<"Time for PGS subspace rotation GPU mixed prec (option 0): "<<gpu_time<<std::endl;
+					else
+						std::cout<<"Time for PGS subspace rotation GPU (option 0): "<<gpu_time<<std::endl;
+				}
+			}
+		}
+	}
 }

@@ -21,22 +21,22 @@
 #include "string.h"
 namespace dftfe
 {
-  //
-  //Declare pseudoUtils function
-  //
+	//
+	//Declare pseudoUtils function
+	//
 
-  /** 
-   *  @brief wrapper to convert pseudopotential file from upf to dftfe format
-   *
-   *  The functionality reads a file containing list of pseudopotential files in upf format and converts into 
-   *  into dftfe format -via- xml file format
-   *
-   *  @author Phani Motamarri
-   */
+	/** 
+	 *  @brief wrapper to convert pseudopotential file from upf to dftfe format
+	 *
+	 *  The functionality reads a file containing list of pseudopotential files in upf format and converts into 
+	 *  into dftfe format -via- xml file format
+	 *
+	 *  @author Phani Motamarri
+	 */
 
-  namespace pseudoUtils
-  {
-    void convert(std::string & file);
-  }
+	namespace pseudoUtils
+	{
+		void convert(std::string & file);
+	}
 }
 #endif 

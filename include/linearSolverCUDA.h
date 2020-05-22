@@ -23,37 +23,37 @@
 
 namespace dftfe {
 
-   /**
-    * @brief Abstract linear solver base class.
-    *
-    * @author Sambit Das
-    */
-    class linearSolverCUDA
-    {
-       public:
+	/**
+	 * @brief Abstract linear solver base class.
+	 *
+	 * @author Sambit Das
+	 */
+	class linearSolverCUDA
+	{
+		public:
 
 
-	  /// Constructor
-	  linearSolverCUDA();
+			/// Constructor
+			linearSolverCUDA();
 
-	  /**
-	   * @brief Solve linear system, A*x=Rhs
-	   *
-	   * @param problem linearSolverCUDAProblem object (functor) to compute Rhs and A*x, and preconditioning
-           * @param relTolerance Tolerance (relative) required for convergence.
-           * @param maxNumberIterations Maximum number of iterations.
-	   * @param debugLevel Debug output level:
-	   *                   0 - no debug output
-	   *                   1 - limited debug output
-	   *                   2 - all debug output.
-	   */
-	   virtual void solve(linearSolverProblemCUDA & problem,
-		              const double relTolerance,
-		              const unsigned int maxNumberIterations,
-		              const unsigned int  debugLevel = 0)=0;
+			/**
+			 * @brief Solve linear system, A*x=Rhs
+			 *
+			 * @param problem linearSolverCUDAProblem object (functor) to compute Rhs and A*x, and preconditioning
+			 * @param relTolerance Tolerance (relative) required for convergence.
+			 * @param maxNumberIterations Maximum number of iterations.
+			 * @param debugLevel Debug output level:
+			 *                   0 - no debug output
+			 *                   1 - limited debug output
+			 *                   2 - all debug output.
+			 */
+			virtual void solve(linearSolverProblemCUDA & problem,
+					const double relTolerance,
+					const unsigned int maxNumberIterations,
+					const unsigned int  debugLevel = 0)=0;
 
-       private:
-    };
+		private:
+	};
 
 }
 #endif

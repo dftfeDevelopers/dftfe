@@ -22,53 +22,53 @@
 
 namespace dftfe {
 
-    /**
-     * @brief dealii linear solver class wrapper
-     *
-     * @author Sambit Das
-     */
-    class dealiiLinearSolver : public linearSolver
-    {
-       public:
+	/**
+	 * @brief dealii linear solver class wrapper
+	 *
+	 * @author Sambit Das
+	 */
+	class dealiiLinearSolver : public linearSolver
+	{
+		public:
 
-	  enum solverType { CG=0, GMRES };
+			enum solverType { CG=0, GMRES };
 
-	  /**
-	   * @brief Constructor
-	   *
-	   * @param mpi_comm mpi communicator
-	   * @param type enum specifying the choice of the dealii linear solver
-	   */
-	  dealiiLinearSolver(const  MPI_Comm &mpi_comm,
-		               const  solverType type);
+			/**
+			 * @brief Constructor
+			 *
+			 * @param mpi_comm mpi communicator
+			 * @param type enum specifying the choice of the dealii linear solver
+			 */
+			dealiiLinearSolver(const  MPI_Comm &mpi_comm,
+					const  solverType type);
 
-	  /**
-	   * @brief Solve linear system, A*x=Rhs
-	   *
-	   * @param problem linearSolverProblem object (functor) to compute Rhs and A*x, and preconditioning
-           * @param relTolerance Tolerance (relative) required for convergence.
-           * @param maxNumberIterations Maximum number of iterations.
-	   * @param debugLevel Debug output level:
-	   *                   0 - no debug output
-	   *                   1 - limited debug output
-	   *                   2 - all debug output.
-	   */
-	   void solve(dealiiLinearSolverProblem & problem,
-		      const double absTolerance,
-		      const unsigned int maxNumberIterations,
-		      const unsigned int  debugLevel = 0,
-		      bool distributeFlag = true);
+			/**
+			 * @brief Solve linear system, A*x=Rhs
+			 *
+			 * @param problem linearSolverProblem object (functor) to compute Rhs and A*x, and preconditioning
+			 * @param relTolerance Tolerance (relative) required for convergence.
+			 * @param maxNumberIterations Maximum number of iterations.
+			 * @param debugLevel Debug output level:
+			 *                   0 - no debug output
+			 *                   1 - limited debug output
+			 *                   2 - all debug output.
+			 */
+			void solve(dealiiLinearSolverProblem & problem,
+					const double absTolerance,
+					const unsigned int maxNumberIterations,
+					const unsigned int  debugLevel = 0,
+					bool distributeFlag = true);
 
-       private:
+		private:
 
-	   /// enum denoting the choice of the dealii solver
-           const solverType d_type;
+			/// enum denoting the choice of the dealii solver
+			const solverType d_type;
 
-           const MPI_Comm mpi_communicator;
-           const unsigned int n_mpi_processes;
-           const unsigned int this_mpi_process;
-           dealii::ConditionalOStream   pcout;
-    };
+			const MPI_Comm mpi_communicator;
+			const unsigned int n_mpi_processes;
+			const unsigned int this_mpi_process;
+			dealii::ConditionalOStream   pcout;
+	};
 
 }
 

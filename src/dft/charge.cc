@@ -21,130 +21,130 @@
 //
 //compute total charge using quad point values
 //
-template <unsigned int FEOrder>
+	template <unsigned int FEOrder>
 double dftClass<FEOrder>::totalCharge(const dealii::DoFHandler<3> & dofHandlerOfField,
-				      const std::map<dealii::CellId, std::vector<double> > *rhoQuadValues)
+		const std::map<dealii::CellId, std::vector<double> > *rhoQuadValues)
 {
-  double normValue = 0.0;
-  QGauss<3>  quadrature_formula(C_num1DQuad<FEOrder>());
-  FEValues<3> fe_values (dofHandlerOfField.get_fe(), quadrature_formula, update_JxW_values);
-  const unsigned int dofs_per_cell = dofHandlerOfField.get_fe().dofs_per_cell;
-  const unsigned int n_q_points    = quadrature_formula.size();
+	double normValue = 0.0;
+	QGauss<3>  quadrature_formula(C_num1DQuad<FEOrder>());
+	FEValues<3> fe_values (dofHandlerOfField.get_fe(), quadrature_formula, update_JxW_values);
+	const unsigned int dofs_per_cell = dofHandlerOfField.get_fe().dofs_per_cell;
+	const unsigned int n_q_points    = quadrature_formula.size();
 
-  DoFHandler<3>::active_cell_iterator
-    cell = dofHandlerOfField.begin_active(),
-    endc = dofHandlerOfField.end();
-  for (; cell!=endc; ++cell) {
-    if (cell->is_locally_owned()){
-      fe_values.reinit (cell);
-      const std::vector<double> & rhoValues=(*rhoQuadValues).find(cell->id())->second;
-      for (unsigned int q_point=0; q_point<n_q_points; ++q_point){
-        normValue+=rhoValues[q_point]*fe_values.JxW(q_point);
-      }
-    }
-  }
-  return Utilities::MPI::sum(normValue, mpi_communicator);
+	DoFHandler<3>::active_cell_iterator
+		cell = dofHandlerOfField.begin_active(),
+		     endc = dofHandlerOfField.end();
+	for (; cell!=endc; ++cell) {
+		if (cell->is_locally_owned()){
+			fe_values.reinit (cell);
+			const std::vector<double> & rhoValues=(*rhoQuadValues).find(cell->id())->second;
+			for (unsigned int q_point=0; q_point<n_q_points; ++q_point){
+				normValue+=rhoValues[q_point]*fe_values.JxW(q_point);
+			}
+		}
+	}
+	return Utilities::MPI::sum(normValue, mpi_communicator);
 }
 
 
 //
 //compute total charge using nodal point values 
 //
-template <unsigned int FEOrder>
+	template <unsigned int FEOrder>
 double dftClass<FEOrder>::totalCharge(const dealii::DoFHandler<3> & dofHandlerOfField,
-				      const distributedCPUVec<double> & rhoNodalField)
+		const distributedCPUVec<double> & rhoNodalField)
 {
-  double normValue = 0.0;
-  QGauss<3>  quadrature_formula(C_num1DQuad<FEOrder>());
-  FEValues<3> fe_values (dofHandlerOfField.get_fe(), quadrature_formula, update_values | update_JxW_values);
-  const unsigned int dofs_per_cell = dofHandlerOfField.get_fe().dofs_per_cell;
-  const unsigned int n_q_points    = quadrature_formula.size();
+	double normValue = 0.0;
+	QGauss<3>  quadrature_formula(C_num1DQuad<FEOrder>());
+	FEValues<3> fe_values (dofHandlerOfField.get_fe(), quadrature_formula, update_values | update_JxW_values);
+	const unsigned int dofs_per_cell = dofHandlerOfField.get_fe().dofs_per_cell;
+	const unsigned int n_q_points    = quadrature_formula.size();
 
-  DoFHandler<3>::active_cell_iterator
-    cell = dofHandlerOfField.begin_active(),
-    endc = dofHandlerOfField.end();
-  for(; cell!=endc; ++cell) 
-    {
-      if(cell->is_locally_owned())
+	DoFHandler<3>::active_cell_iterator
+		cell = dofHandlerOfField.begin_active(),
+		     endc = dofHandlerOfField.end();
+	for(; cell!=endc; ++cell) 
 	{
-	  fe_values.reinit (cell);
-	  std::vector<double> tempRho(n_q_points);
-	  fe_values.get_function_values(rhoNodalField,tempRho);
-	  for (unsigned int q_point=0; q_point<n_q_points; ++q_point)
-	    {
-	      normValue += tempRho[q_point]*fe_values.JxW(q_point);
-	    }
+		if(cell->is_locally_owned())
+		{
+			fe_values.reinit (cell);
+			std::vector<double> tempRho(n_q_points);
+			fe_values.get_function_values(rhoNodalField,tempRho);
+			for (unsigned int q_point=0; q_point<n_q_points; ++q_point)
+			{
+				normValue += tempRho[q_point]*fe_values.JxW(q_point);
+			}
+		}
 	}
-    }
-  return Utilities::MPI::sum(normValue, mpi_communicator);
+	return Utilities::MPI::sum(normValue, mpi_communicator);
 }
 
 //
 //compute total charge using nodal point values by filling the quadrature point values of the nodal field
 //
-template <unsigned int FEOrder>
+	template <unsigned int FEOrder>
 double dftClass<FEOrder>::totalCharge(const dealii::DoFHandler<3> & dofHandlerOfField,
-				      const distributedCPUVec<double> & rhoNodalField,
-				      std::map<dealii::CellId,std::vector<double> > & rhoQuadValues)
+		const distributedCPUVec<double> & rhoNodalField,
+		std::map<dealii::CellId,std::vector<double> > & rhoQuadValues)
 {
-  double normValue = 0.0;
-  QGauss<3>  quadrature_formula(C_num1DQuad<FEOrder>());
-  FEValues<3> fe_values (dofHandlerOfField.get_fe(), quadrature_formula, update_values | update_JxW_values);
-  const unsigned int dofs_per_cell = dofHandlerOfField.get_fe().dofs_per_cell;
-  const unsigned int n_q_points    = quadrature_formula.size();
-  std::vector<double> tempRho(n_q_points);
+	double normValue = 0.0;
+	QGauss<3>  quadrature_formula(C_num1DQuad<FEOrder>());
+	FEValues<3> fe_values (dofHandlerOfField.get_fe(), quadrature_formula, update_values | update_JxW_values);
+	const unsigned int dofs_per_cell = dofHandlerOfField.get_fe().dofs_per_cell;
+	const unsigned int n_q_points    = quadrature_formula.size();
+	std::vector<double> tempRho(n_q_points);
 
-  DoFHandler<3>::active_cell_iterator
-    cell = dofHandlerOfField.begin_active(),
-    endc = dofHandlerOfField.end();
-  for(; cell!=endc; ++cell) 
-    {
-      if(cell->is_locally_owned())
+	DoFHandler<3>::active_cell_iterator
+		cell = dofHandlerOfField.begin_active(),
+		     endc = dofHandlerOfField.end();
+	for(; cell!=endc; ++cell) 
 	{
-	  fe_values.reinit (cell);
-	  fe_values.get_function_values(rhoNodalField,tempRho);
-	  rhoQuadValues[cell->id()].resize(n_q_points);
-	  for (unsigned int q_point=0; q_point<n_q_points; ++q_point)
-	    {
-	      rhoQuadValues[cell->id()][q_point] = tempRho[q_point];
-	      normValue += tempRho[q_point]*fe_values.JxW(q_point);
-	    }
+		if(cell->is_locally_owned())
+		{
+			fe_values.reinit (cell);
+			fe_values.get_function_values(rhoNodalField,tempRho);
+			rhoQuadValues[cell->id()].resize(n_q_points);
+			for (unsigned int q_point=0; q_point<n_q_points; ++q_point)
+			{
+				rhoQuadValues[cell->id()][q_point] = tempRho[q_point];
+				normValue += tempRho[q_point]*fe_values.JxW(q_point);
+			}
+		}
 	}
-    }
-  return Utilities::MPI::sum(normValue, mpi_communicator);
+	return Utilities::MPI::sum(normValue, mpi_communicator);
 }
 
 //
 //compute total charge using nodal point values by using FEEvaluation object
 //
-template <unsigned int FEOrder>
+	template <unsigned int FEOrder>
 double dftClass<FEOrder>::totalCharge(const dealii::MatrixFree<3,double> & matrixFreeDataObject,
-				      const distributedCPUVec<double> & nodalField)
+		const distributedCPUVec<double> & nodalField)
 {
-  FEEvaluation<C_DIM,C_num1DKerkerPoly<FEOrder>(),C_num1DQuad<C_num1DKerkerPoly<FEOrder>()>(),1,double> fe_evalField(matrixFreeDataObject);
-  VectorizedArray<double> normValueVectorized = make_vectorized_array(0.0);
-  const unsigned int numQuadPoints = fe_evalField.n_q_points;
-  for(unsigned int cell = 0; cell < matrixFreeDataObject.n_macro_cells(); ++cell)
-    {
-      fe_evalField.reinit(cell);
-      fe_evalField.read_dof_values(nodalField);
-      fe_evalField.evaluate(true,false);
-      for(unsigned int q_point = 0; q_point < numQuadPoints; ++q_point)
+	FEEvaluation<C_DIM,C_num1DKerkerPoly<FEOrder>(),C_num1DQuad<C_num1DKerkerPoly<FEOrder>()>(),1,double> fe_evalField(matrixFreeDataObject);
+	VectorizedArray<double> normValueVectorized = make_vectorized_array(0.0);
+	const unsigned int numQuadPoints = fe_evalField.n_q_points;
+	for(unsigned int cell = 0; cell < matrixFreeDataObject.n_macro_cells(); ++cell)
 	{
-	  VectorizedArray<double> temp = fe_evalField.get_value(q_point);
-	  fe_evalField.submit_value(temp,q_point);
+		fe_evalField.reinit(cell);
+		fe_evalField.read_dof_values(nodalField);
+		fe_evalField.evaluate(true,false);
+		for(unsigned int q_point = 0; q_point < numQuadPoints; ++q_point)
+		{
+			VectorizedArray<double> temp = fe_evalField.get_value(q_point);
+			fe_evalField.submit_value(temp,q_point);
+		}
+
+		normValueVectorized += fe_evalField.integrate_value();
 	}
 
-      normValueVectorized += fe_evalField.integrate_value();
-    }
-  
-  double normValue = 0.0;
-  for(unsigned int iSubCell = 0; iSubCell < VectorizedArray<double>::n_array_elements; ++iSubCell)
-    {
-      normValue += normValueVectorized[iSubCell];
-    }
-  
-  return Utilities::MPI::sum(normValue, mpi_communicator);
+	double normValue = 0.0;
+	for(unsigned int iSubCell = 0; iSubCell < VectorizedArray<double>::n_array_elements; ++iSubCell)
+	{
+		normValue += normValueVectorized[iSubCell];
+	}
+
+	return Utilities::MPI::sum(normValue, mpi_communicator);
 
 }
 
@@ -153,57 +153,57 @@ double dftClass<FEOrder>::totalCharge(const dealii::MatrixFree<3,double> & matri
 //
 template <unsigned int FEOrder>
 double dftClass<FEOrder>::totalMagnetization(const std::map<dealii::CellId, std::vector<double> > *rhoQuadValues){
-  double normValue=0.0;
-  QGauss<3>  quadrature_formula(C_num1DQuad<FEOrder>());
-  FEValues<3> fe_values (FE, quadrature_formula, update_JxW_values);
-  const unsigned int   dofs_per_cell = FE.dofs_per_cell;
-  const unsigned int   n_q_points    = quadrature_formula.size();
+	double normValue=0.0;
+	QGauss<3>  quadrature_formula(C_num1DQuad<FEOrder>());
+	FEValues<3> fe_values (FE, quadrature_formula, update_JxW_values);
+	const unsigned int   dofs_per_cell = FE.dofs_per_cell;
+	const unsigned int   n_q_points    = quadrature_formula.size();
 
-  DoFHandler<3>::active_cell_iterator
-    cell = dofHandler.begin_active(),
-    endc = dofHandler.end();
-  for (; cell!=endc; ++cell) {
-    if (cell->is_locally_owned()){
-      fe_values.reinit (cell);
-      for (unsigned int q_point=0; q_point<n_q_points; ++q_point){
-        normValue+=((*rhoQuadValues).find(cell->id())->second[2*q_point]-(*rhoQuadValues).find(cell->id())->second[2*q_point+1])*fe_values.JxW(q_point);
-      }
-    }
-  }
-  return Utilities::MPI::sum(normValue, mpi_communicator);
+	DoFHandler<3>::active_cell_iterator
+		cell = dofHandler.begin_active(),
+		     endc = dofHandler.end();
+	for (; cell!=endc; ++cell) {
+		if (cell->is_locally_owned()){
+			fe_values.reinit (cell);
+			for (unsigned int q_point=0; q_point<n_q_points; ++q_point){
+				normValue+=((*rhoQuadValues).find(cell->id())->second[2*q_point]-(*rhoQuadValues).find(cell->id())->second[2*q_point+1])*fe_values.JxW(q_point);
+			}
+		}
+	}
+	return Utilities::MPI::sum(normValue, mpi_communicator);
 }
 
 //
 //compute field l2 norm
 //
-template <unsigned int FEOrder>
+	template <unsigned int FEOrder>
 double dftClass<FEOrder>::fieldl2Norm(const dealii::MatrixFree<3,double> & matrixFreeDataObject,
-				      const distributedCPUVec<double> & nodalField)
+		const distributedCPUVec<double> & nodalField)
 
 {
-  FEEvaluation<C_DIM,C_num1DKerkerPoly<FEOrder>(),C_num1DQuad<C_num1DKerkerPoly<FEOrder>()>(),1,double> fe_evalField(matrixFreeDataObject);
-  VectorizedArray<double> normValueVectorized = make_vectorized_array(0.0);
-  const unsigned int numQuadPoints = fe_evalField.n_q_points;
-  for(unsigned int cell = 0; cell < matrixFreeDataObject.n_macro_cells(); ++cell)
-    {
-      fe_evalField.reinit(cell);
-      fe_evalField.read_dof_values(nodalField);
-      fe_evalField.evaluate(true,false);
-      for(unsigned int q_point = 0; q_point < numQuadPoints; ++q_point)
+	FEEvaluation<C_DIM,C_num1DKerkerPoly<FEOrder>(),C_num1DQuad<C_num1DKerkerPoly<FEOrder>()>(),1,double> fe_evalField(matrixFreeDataObject);
+	VectorizedArray<double> normValueVectorized = make_vectorized_array(0.0);
+	const unsigned int numQuadPoints = fe_evalField.n_q_points;
+	for(unsigned int cell = 0; cell < matrixFreeDataObject.n_macro_cells(); ++cell)
 	{
-	  VectorizedArray<double> temp = fe_evalField.get_value(q_point)*fe_evalField.get_value(q_point);
-	  fe_evalField.submit_value(temp,q_point);
+		fe_evalField.reinit(cell);
+		fe_evalField.read_dof_values(nodalField);
+		fe_evalField.evaluate(true,false);
+		for(unsigned int q_point = 0; q_point < numQuadPoints; ++q_point)
+		{
+			VectorizedArray<double> temp = fe_evalField.get_value(q_point)*fe_evalField.get_value(q_point);
+			fe_evalField.submit_value(temp,q_point);
+		}
+
+		normValueVectorized += fe_evalField.integrate_value();
 	}
 
-      normValueVectorized += fe_evalField.integrate_value();
-    }
-  
-  double normValue = 0.0;
-  for(unsigned int iSubCell = 0; iSubCell < VectorizedArray<double>::n_array_elements; ++iSubCell)
-    {
-      normValue += normValueVectorized[iSubCell];
-    }
-  
-  return Utilities::MPI::sum(normValue, mpi_communicator);
+	double normValue = 0.0;
+	for(unsigned int iSubCell = 0; iSubCell < VectorizedArray<double>::n_array_elements; ++iSubCell)
+	{
+		normValue += normValueVectorized[iSubCell];
+	}
+
+	return Utilities::MPI::sum(normValue, mpi_communicator);
 
 }

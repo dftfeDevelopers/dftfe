@@ -26,320 +26,320 @@
 namespace dftfe
 {
 
-  extern "C"
-  {
-    void dsyevd_(const char* jobz, const char* uplo, const unsigned int* n, double* A, const unsigned int *lda, double* w, double* work, const unsigned int* lwork, int* iwork, const unsigned int* liwork, int* info);
-  }
+	extern "C"
+	{
+		void dsyevd_(const char* jobz, const char* uplo, const unsigned int* n, double* A, const unsigned int *lda, double* w, double* work, const unsigned int* lwork, int* iwork, const unsigned int* liwork, int* info);
+	}
 
-  /**
-   *  @brief Contains functions for linear algebra operations on GPU
-   *
-   *  @author Sambit Das
-   */
-  namespace linearAlgebraOperationsCUDA
-  {
+	/**
+	 *  @brief Contains functions for linear algebra operations on GPU
+	 *
+	 *  @author Sambit Das
+	 */
+	namespace linearAlgebraOperationsCUDA
+	{
 
-    /** @brief Computes Sc=X^{T}*Xc.
-     *
-     *
-     */
-    void fillParallelOverlapMatScalapack(const double* X,
-					 const unsigned int M,
-					 const unsigned int N,
-					 cublasHandle_t &handle,
-					 const MPI_Comm &mpiComm,
-                                         const MPI_Comm &interBandGroupComm,
-					 const std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid>  & processGrid,
-					 dealii::ScaLAPACKMatrix<double> & overlapMatPar);
-
-
-    
-    /** @brief Computes Sc=X^{T}*Xc.
-     *
-     *
-     */
-    void fillParallelOverlapMatScalapackAsyncComputeCommun(const double* X,
-					 const unsigned int M,
-					 const unsigned int N,
-					 cublasHandle_t &handle,
-					 const MPI_Comm &mpiComm,
-                                         const MPI_Comm &interBandGroupComm,
-					 const std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid>  & processGrid,
-					 dealii::ScaLAPACKMatrix<double> & overlapMatPar);
+		/** @brief Computes Sc=X^{T}*Xc.
+		 *
+		 *
+		 */
+		void fillParallelOverlapMatScalapack(const double* X,
+				const unsigned int M,
+				const unsigned int N,
+				cublasHandle_t &handle,
+				const MPI_Comm &mpiComm,
+				const MPI_Comm &interBandGroupComm,
+				const std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid>  & processGrid,
+				dealii::ScaLAPACKMatrix<double> & overlapMatPar);
 
 
 
-   
-    /** @brief Computes Sc=X^{T}*Xc.
-     *
-     *
-     */
-    void fillParallelOverlapMatMixedPrecScalapackAsyncComputeCommun(const double* X,
-					 const unsigned int M,
-					 const unsigned int N,
-					 cublasHandle_t &handle,
-					 const MPI_Comm &mpiComm,
-                                         const MPI_Comm &interBandGroupComm,
-					 const std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid>  & processGrid,
-					 dealii::ScaLAPACKMatrix<double> & overlapMatPar);
+		/** @brief Computes Sc=X^{T}*Xc.
+		 *
+		 *
+		 */
+		void fillParallelOverlapMatScalapackAsyncComputeCommun(const double* X,
+				const unsigned int M,
+				const unsigned int N,
+				cublasHandle_t &handle,
+				const MPI_Comm &mpiComm,
+				const MPI_Comm &interBandGroupComm,
+				const std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid>  & processGrid,
+				dealii::ScaLAPACKMatrix<double> & overlapMatPar);
 
 
 
-    /** @brief Computes Sc=X^{T}*Xc.
-     *
-     *
-     */
-    void fillParallelOverlapMatMixedPrecScalapack(const double* X,
-					 const unsigned int M,
-					 const unsigned int N,
-					 cublasHandle_t &handle,
-					 const MPI_Comm &mpiComm,
-                                         const MPI_Comm &interBandGroupComm,
-					 const std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid>  & processGrid,
-					 dealii::ScaLAPACKMatrix<double> & overlapMatPar);
+
+		/** @brief Computes Sc=X^{T}*Xc.
+		 *
+		 *
+		 */
+		void fillParallelOverlapMatMixedPrecScalapackAsyncComputeCommun(const double* X,
+				const unsigned int M,
+				const unsigned int N,
+				cublasHandle_t &handle,
+				const MPI_Comm &mpiComm,
+				const MPI_Comm &interBandGroupComm,
+				const std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid>  & processGrid,
+				dealii::ScaLAPACKMatrix<double> & overlapMatPar);
 
 
 
-    /** @brief PGS orthogonalization
-     */
-    void pseudoGramSchmidtOrthogonalization(operatorDFTCUDAClass & operatorMatrix,
-                                            double * X,
-					    const unsigned int M,
-					    const unsigned int N,
-					    const MPI_Comm &mpiComm,
-                                            const MPI_Comm &interBandGroupComm,
-					    cublasHandle_t & handle,
-                                            const bool useMixedPrecOverall=false);
-                              
-    void subspaceRotationScalapack(double* X,
-				   const unsigned int M,
-				   const unsigned int N,
-				   cublasHandle_t &handle,
-				   const std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid>  & processGrid,
-				   const MPI_Comm &mpiComm,
-                                   const MPI_Comm &interBandGroupComm,
-				   const dealii::ScaLAPACKMatrix<double> & rotationMatPar,
-				   const bool rotationMatTranspose=false,
-				   const bool isRotationMatLowerTria=false);
+		/** @brief Computes Sc=X^{T}*Xc.
+		 *
+		 *
+		 */
+		void fillParallelOverlapMatMixedPrecScalapack(const double* X,
+				const unsigned int M,
+				const unsigned int N,
+				cublasHandle_t &handle,
+				const MPI_Comm &mpiComm,
+				const MPI_Comm &interBandGroupComm,
+				const std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid>  & processGrid,
+				dealii::ScaLAPACKMatrix<double> & overlapMatPar);
 
 
-    void subspaceRotationSpectrumSplitScalapack(const double* X,
-                                   double * XFrac,
-				   const unsigned int M,
-				   const unsigned int N,
-                                   const unsigned int Nfr,
-				   cublasHandle_t &handle,
-				   const std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid>  & processGrid,
-				   const MPI_Comm &mpiComm,
-				   const dealii::ScaLAPACKMatrix<double> & rotationMatPar,
-				   const bool rotationMatTranspose=false);
 
-    void subspaceRotationPGSMixedPrecScalapack
-                                  (double* X,
-				   const unsigned int M,
-				   const unsigned int N,
-				   cublasHandle_t &handle,
-				   const std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid>  & processGrid,
-				   const MPI_Comm &mpiComm,
-                                   const MPI_Comm &interBandGroupComm,
-				   const dealii::ScaLAPACKMatrix<double> & rotationMatPar,
-				   const bool rotationMatTranspose=false);
+		/** @brief PGS orthogonalization
+		 */
+		void pseudoGramSchmidtOrthogonalization(operatorDFTCUDAClass & operatorMatrix,
+				double * X,
+				const unsigned int M,
+				const unsigned int N,
+				const MPI_Comm &mpiComm,
+				const MPI_Comm &interBandGroupComm,
+				cublasHandle_t & handle,
+				const bool useMixedPrecOverall=false);
 
-
-    void subspaceRotationRRMixedPrecScalapack
-                                  (double* X,
-				   const unsigned int M,
-				   const unsigned int N,
-				   cublasHandle_t &handle,
-				   const std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid>  & processGrid,
-				   const MPI_Comm &mpiComm,
-                                   const MPI_Comm &interBandGroupComm,
-				   const dealii::ScaLAPACKMatrix<double> & rotationMatPar,
-				   const bool rotationMatTranspose=false);
-
-    void rayleighRitzSpectrumSplitDirect(operatorDFTCUDAClass & operatorMatrix,
-		      const double* X,
-                      double* XFrac,
-                      distributedGPUVec<double> & Xb,
-                      distributedGPUVec<float> & floatXb,
-                      distributedGPUVec<double> & HXb,
-                      distributedGPUVec<double> & projectorKetTimesVector,
-		      const unsigned int M,
-		      const unsigned int N,
-                      const unsigned int Noc,
-                      const bool isElpaStep1,
-                      const bool isElpaStep2,
-		      const MPI_Comm &mpiComm,
-		      double* eigenValues,
-		      cublasHandle_t & handle,
-                      dealii::ScaLAPACKMatrix<double> & projHamPar,
-                      const std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid> & processGrid,
-                      const bool useMixedPrecOverall=false);
+		void subspaceRotationScalapack(double* X,
+				const unsigned int M,
+				const unsigned int N,
+				cublasHandle_t &handle,
+				const std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid>  & processGrid,
+				const MPI_Comm &mpiComm,
+				const MPI_Comm &interBandGroupComm,
+				const dealii::ScaLAPACKMatrix<double> & rotationMatPar,
+				const bool rotationMatTranspose=false,
+				const bool isRotationMatLowerTria=false);
 
 
-    void rayleighRitz(operatorDFTCUDAClass & operatorMatrix,
-		      double* X,
-                      distributedGPUVec<double> & Xb,
-                      distributedGPUVec<float> & floatXb,
-                      distributedGPUVec<double> & HXb,
-                      distributedGPUVec<double> & projectorKetTimesVector,
-		      const unsigned int M,
-		      const unsigned int N,
-                      const bool isElpaStep1,
-                      const bool isElpaStep2,
-		      const MPI_Comm &mpiComm,
-                      const MPI_Comm &interBandGroupComm,
-		      double* eigenValues,
-		      cublasHandle_t & handle,
-                      dealii::ScaLAPACKMatrix<double> & projHamPar,
-                      const std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid> & processGrid,
-                      const bool useMixedPrecOverall=false);
+		void subspaceRotationSpectrumSplitScalapack(const double* X,
+				double * XFrac,
+				const unsigned int M,
+				const unsigned int N,
+				const unsigned int Nfr,
+				cublasHandle_t &handle,
+				const std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid>  & processGrid,
+				const MPI_Comm &mpiComm,
+				const dealii::ScaLAPACKMatrix<double> & rotationMatPar,
+				const bool rotationMatTranspose=false);
+
+		void subspaceRotationPGSMixedPrecScalapack
+			(double* X,
+			 const unsigned int M,
+			 const unsigned int N,
+			 cublasHandle_t &handle,
+			 const std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid>  & processGrid,
+			 const MPI_Comm &mpiComm,
+			 const MPI_Comm &interBandGroupComm,
+			 const dealii::ScaLAPACKMatrix<double> & rotationMatPar,
+			 const bool rotationMatTranspose=false);
 
 
-    void rayleighRitzGEP(operatorDFTCUDAClass & operatorMatrix,
-		      double* X,
-                      distributedGPUVec<double> & Xb,
-                      distributedGPUVec<float> & floatXb,
-                      distributedGPUVec<double> & HXb,
-                      distributedGPUVec<double> & projectorKetTimesVector,
-		      const unsigned int M,
-		      const unsigned int N,
-                      const bool isElpaStep1,
-                      const bool isElpaStep2,
-		      const MPI_Comm &mpiComm,
-                      const MPI_Comm &interBandGroupComm,
-		      double* eigenValues,
-		      cublasHandle_t & handle,
-                      dealii::ScaLAPACKMatrix<double> & projHamPar,
-                      dealii::ScaLAPACKMatrix<double> & overlapMatPar,
-                      const std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid> & processGrid,
-                      const bool useMixedPrecOverall=false);
+		void subspaceRotationRRMixedPrecScalapack
+			(double* X,
+			 const unsigned int M,
+			 const unsigned int N,
+			 cublasHandle_t &handle,
+			 const std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid>  & processGrid,
+			 const MPI_Comm &mpiComm,
+			 const MPI_Comm &interBandGroupComm,
+			 const dealii::ScaLAPACKMatrix<double> & rotationMatPar,
+			 const bool rotationMatTranspose=false);
 
-    void rayleighRitzGEPSpectrumSplitDirect(operatorDFTCUDAClass & operatorMatrix,
-		      double* X,
-                      double* XFrac,
-                      distributedGPUVec<double> & Xb,
-                      distributedGPUVec<float> & floatXb,
-                      distributedGPUVec<double> & HXb,
-                      distributedGPUVec<double> & projectorKetTimesVector,
-		      const unsigned int M,
-		      const unsigned int N,
-                      const unsigned int Noc,
-                      const bool isElpaStep1,
-                      const bool isElpaStep2,
-		      const MPI_Comm &mpiComm,
-                      const MPI_Comm &interBandGroupComm,
-		      double* eigenValues,
-		      cublasHandle_t & handle,
-                      dealii::ScaLAPACKMatrix<double> & projHamPar,
-                      dealii::ScaLAPACKMatrix<double> & overlapMatPar,
-                      const std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid> & processGrid,
-                      const bool useMixedPrecOverall=false);
+		void rayleighRitzSpectrumSplitDirect(operatorDFTCUDAClass & operatorMatrix,
+				const double* X,
+				double* XFrac,
+				distributedGPUVec<double> & Xb,
+				distributedGPUVec<float> & floatXb,
+				distributedGPUVec<double> & HXb,
+				distributedGPUVec<double> & projectorKetTimesVector,
+				const unsigned int M,
+				const unsigned int N,
+				const unsigned int Noc,
+				const bool isElpaStep1,
+				const bool isElpaStep2,
+				const MPI_Comm &mpiComm,
+				double* eigenValues,
+				cublasHandle_t & handle,
+				dealii::ScaLAPACKMatrix<double> & projHamPar,
+				const std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid> & processGrid,
+				const bool useMixedPrecOverall=false);
 
 
-    /** @brief Calculates an estimate of upper bound of a matrix using
-     *  k-step Lanczos method.
-     *
-     *  @param  operatorMatrix An object which has access to the given matrix
-     *  @param  vect A dummy vector
-     *  @return double An estimate of the upper bound of the given matrix
-     */
-    double lanczosUpperBoundEigenSpectrum(operatorDFTCUDAClass & operatorMatrix,
-					  const distributedCPUVec<double> & vect); 
+		void rayleighRitz(operatorDFTCUDAClass & operatorMatrix,
+				double* X,
+				distributedGPUVec<double> & Xb,
+				distributedGPUVec<float> & floatXb,
+				distributedGPUVec<double> & HXb,
+				distributedGPUVec<double> & projectorKetTimesVector,
+				const unsigned int M,
+				const unsigned int N,
+				const bool isElpaStep1,
+				const bool isElpaStep2,
+				const MPI_Comm &mpiComm,
+				const MPI_Comm &interBandGroupComm,
+				double* eigenValues,
+				cublasHandle_t & handle,
+				dealii::ScaLAPACKMatrix<double> & projHamPar,
+				const std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid> & processGrid,
+				const bool useMixedPrecOverall=false);
 
 
-    /** @brief Apply Chebyshev filter to a given subspace
-     *
-     *  @param[in] operatorMatrix An object which has access to the given matrix
-     *  @param[in,out]  X Given subspace as a dealii array representing multiple fields
-     *  as a flattened array. In-place update of the given subspace.
-     *  @param[in]  numberComponents Number of multiple-fields
-     *  @param[in]  m Chebyshev polynomial degree
-     *  @param[in]  a lower bound of unwanted spectrum
-     *  @param[in]  b upper bound of unwanted spectrum
-     *  @param[in]  a0 lower bound of wanted spectrum
-     */
-    void chebyshevFilter(operatorDFTCUDAClass & operatorMatrix,
-			 distributedGPUVec<double> & X,//thrust::device_vector<dataTypes::number> & X,
-                         distributedGPUVec<double> & Y,
-                         distributedGPUVec<float> & Z,
-                         distributedGPUVec<double> & projectorKetTimesVector,
-			 const unsigned int localVectorSize,
-			 const unsigned int numberComponents,
-			 const unsigned int m,
-			 const double a,
-			 const double b,
-			 const double a0,
-                         const bool mixedPrecOverall);
+		void rayleighRitzGEP(operatorDFTCUDAClass & operatorMatrix,
+				double* X,
+				distributedGPUVec<double> & Xb,
+				distributedGPUVec<float> & floatXb,
+				distributedGPUVec<double> & HXb,
+				distributedGPUVec<double> & projectorKetTimesVector,
+				const unsigned int M,
+				const unsigned int N,
+				const bool isElpaStep1,
+				const bool isElpaStep2,
+				const MPI_Comm &mpiComm,
+				const MPI_Comm &interBandGroupComm,
+				double* eigenValues,
+				cublasHandle_t & handle,
+				dealii::ScaLAPACKMatrix<double> & projHamPar,
+				dealii::ScaLAPACKMatrix<double> & overlapMatPar,
+				const std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid> & processGrid,
+				const bool useMixedPrecOverall=false);
 
-    void chebyshevFilterComputeAvoidance(operatorDFTCUDAClass & operatorMatrix,
-			 distributedGPUVec<double> & X,//thrust::device_vector<dataTypes::number> & X,
-                         distributedGPUVec<double> & Y,
-                         distributedGPUVec<double> & X2,
-                         distributedGPUVec<float> & Z,
-                         distributedGPUVec<double> & projectorKetTimesVector,
-			 const unsigned int localVectorSize,
-			 const unsigned int numberComponents,
-			 const unsigned int m,
-			 const double a,
-			 const double b,
-			 const double a0,
-                         const bool isXlBOMDLinearizedSolve,
-                         const bool communAvoidance,
-                         const bool mixedPrecOverall);
+		void rayleighRitzGEPSpectrumSplitDirect(operatorDFTCUDAClass & operatorMatrix,
+				double* X,
+				double* XFrac,
+				distributedGPUVec<double> & Xb,
+				distributedGPUVec<float> & floatXb,
+				distributedGPUVec<double> & HXb,
+				distributedGPUVec<double> & projectorKetTimesVector,
+				const unsigned int M,
+				const unsigned int N,
+				const unsigned int Noc,
+				const bool isElpaStep1,
+				const bool isElpaStep2,
+				const MPI_Comm &mpiComm,
+				const MPI_Comm &interBandGroupComm,
+				double* eigenValues,
+				cublasHandle_t & handle,
+				dealii::ScaLAPACKMatrix<double> & projHamPar,
+				dealii::ScaLAPACKMatrix<double> & overlapMatPar,
+				const std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid> & processGrid,
+				const bool useMixedPrecOverall=false);
 
-    void chebyshevFilter(operatorDFTCUDAClass & operatorMatrix,
-			 distributedGPUVec<double> & X1,
-                         distributedGPUVec<double> & Y1,
-                         distributedGPUVec<float> & Z,
-                         distributedGPUVec<double> & projectorKetTimesVector1,
-                         distributedGPUVec<float> & projectorKetTimesVectorFloat,
-			 distributedGPUVec<double> & X2,
-                         distributedGPUVec<double> & Y2,
-                         distributedGPUVec<double> & projectorKetTimesVector2,
-			 const unsigned int localVectorSize,
-			 const unsigned int numberComponents,
-			 const unsigned int m,
-			 const double a,
-			 const double b,
-			 const double a0,
-                         const bool mixedPrecOverall);
 
-    void chebyshevFilterComputeAvoidance(operatorDFTCUDAClass & operatorMatrix,
-			 distributedGPUVec<double> & X1,
-                         distributedGPUVec<double> & XArrayCA,
-                         distributedGPUVec<double> & Y1,
-                         distributedGPUVec<float> & Z,
-                         distributedGPUVec<double> & projectorKetTimesVector1,
-                         distributedGPUVec<float> & projectorKetTimesVectorFloat,
-			 distributedGPUVec<double> & X2,
-                         distributedGPUVec<double> & Y2,
-                         distributedGPUVec<double> & projectorKetTimesVector2,
-			 const unsigned int localVectorSize,
-			 const unsigned int numberComponents,
-			 const unsigned int m,
-			 const double a,
-			 const double b,
-			 const double a0,
-                         const bool isXlBOMDLinearizedSolve,
-                         const bool communAvoidance,
-                         const bool mixedPrecOverall,
-                         const double computeAvoidanceTolerance);
+		/** @brief Calculates an estimate of upper bound of a matrix using
+		 *  k-step Lanczos method.
+		 *
+		 *  @param  operatorMatrix An object which has access to the given matrix
+		 *  @param  vect A dummy vector
+		 *  @return double An estimate of the upper bound of the given matrix
+		 */
+		double lanczosUpperBoundEigenSpectrum(operatorDFTCUDAClass & operatorMatrix,
+				const distributedCPUVec<double> & vect); 
 
-    void computeEigenResidualNorm(operatorDFTCUDAClass        & operatorMatrix,
-			          double* X,
-			          distributedGPUVec<double> & Xb,
-			          distributedGPUVec<double> & HXb,
-			          distributedGPUVec<double> & projectorKetTimesVector,
-			          const unsigned int M,
-			          const unsigned int N,
-				  const std::vector<double>     & eigenValues,
-				  const MPI_Comm &mpiComm,
-                                  const MPI_Comm &interBandGroupComm,
-                                  cublasHandle_t & handle,
-				  std::vector<double> & residualNorm,
-                                  const bool useBandParal=false);
-  }
+
+		/** @brief Apply Chebyshev filter to a given subspace
+		 *
+		 *  @param[in] operatorMatrix An object which has access to the given matrix
+		 *  @param[in,out]  X Given subspace as a dealii array representing multiple fields
+		 *  as a flattened array. In-place update of the given subspace.
+		 *  @param[in]  numberComponents Number of multiple-fields
+		 *  @param[in]  m Chebyshev polynomial degree
+		 *  @param[in]  a lower bound of unwanted spectrum
+		 *  @param[in]  b upper bound of unwanted spectrum
+		 *  @param[in]  a0 lower bound of wanted spectrum
+		 */
+		void chebyshevFilter(operatorDFTCUDAClass & operatorMatrix,
+				distributedGPUVec<double> & X,//thrust::device_vector<dataTypes::number> & X,
+				distributedGPUVec<double> & Y,
+				distributedGPUVec<float> & Z,
+				distributedGPUVec<double> & projectorKetTimesVector,
+				const unsigned int localVectorSize,
+				const unsigned int numberComponents,
+				const unsigned int m,
+				const double a,
+				const double b,
+				const double a0,
+				const bool mixedPrecOverall);
+
+		void chebyshevFilterComputeAvoidance(operatorDFTCUDAClass & operatorMatrix,
+				distributedGPUVec<double> & X,//thrust::device_vector<dataTypes::number> & X,
+				distributedGPUVec<double> & Y,
+				distributedGPUVec<double> & X2,
+				distributedGPUVec<float> & Z,
+				distributedGPUVec<double> & projectorKetTimesVector,
+				const unsigned int localVectorSize,
+				const unsigned int numberComponents,
+				const unsigned int m,
+				const double a,
+				const double b,
+				const double a0,
+				const bool isXlBOMDLinearizedSolve,
+				const bool communAvoidance,
+				const bool mixedPrecOverall);
+
+		void chebyshevFilter(operatorDFTCUDAClass & operatorMatrix,
+				distributedGPUVec<double> & X1,
+				distributedGPUVec<double> & Y1,
+				distributedGPUVec<float> & Z,
+				distributedGPUVec<double> & projectorKetTimesVector1,
+				distributedGPUVec<float> & projectorKetTimesVectorFloat,
+				distributedGPUVec<double> & X2,
+				distributedGPUVec<double> & Y2,
+				distributedGPUVec<double> & projectorKetTimesVector2,
+				const unsigned int localVectorSize,
+				const unsigned int numberComponents,
+				const unsigned int m,
+				const double a,
+				const double b,
+				const double a0,
+				const bool mixedPrecOverall);
+
+		void chebyshevFilterComputeAvoidance(operatorDFTCUDAClass & operatorMatrix,
+				distributedGPUVec<double> & X1,
+				distributedGPUVec<double> & XArrayCA,
+				distributedGPUVec<double> & Y1,
+				distributedGPUVec<float> & Z,
+				distributedGPUVec<double> & projectorKetTimesVector1,
+				distributedGPUVec<float> & projectorKetTimesVectorFloat,
+				distributedGPUVec<double> & X2,
+				distributedGPUVec<double> & Y2,
+				distributedGPUVec<double> & projectorKetTimesVector2,
+				const unsigned int localVectorSize,
+				const unsigned int numberComponents,
+				const unsigned int m,
+				const double a,
+				const double b,
+				const double a0,
+				const bool isXlBOMDLinearizedSolve,
+				const bool communAvoidance,
+				const bool mixedPrecOverall,
+				const double computeAvoidanceTolerance);
+
+		void computeEigenResidualNorm(operatorDFTCUDAClass        & operatorMatrix,
+				double* X,
+				distributedGPUVec<double> & Xb,
+				distributedGPUVec<double> & HXb,
+				distributedGPUVec<double> & projectorKetTimesVector,
+				const unsigned int M,
+				const unsigned int N,
+				const std::vector<double>     & eigenValues,
+				const MPI_Comm &mpiComm,
+				const MPI_Comm &interBandGroupComm,
+				cublasHandle_t & handle,
+				std::vector<double> & residualNorm,
+				const bool useBandParal=false);
+	}
 }
 #endif
 #endif

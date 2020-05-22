@@ -17,7 +17,7 @@
 //
 
 
-template<unsigned int FEOrder>
+	template<unsigned int FEOrder>
 void dftClass<FEOrder>::computeElectrostaticEnergyPRefined()
 {
 }

@@ -18,119 +18,119 @@
 
 
 //compute localization lengths currently implemented for spin unpolarized case
-template<unsigned int FEOrder>
+	template<unsigned int FEOrder>
 void dftClass<FEOrder>::compute_localizationLength(const std::string & locLengthFileName)
 {
 
-  QGauss<3>  quadrature_formula(C_num1DQuad<FEOrder>());
-  FEValues<3> fe_values (dofHandler.get_fe(), quadrature_formula, update_values|update_JxW_values|update_quadrature_points);
-  const unsigned int dofs_per_cell = dofHandler.get_fe().dofs_per_cell;
-  const unsigned int n_q_points    = quadrature_formula.size();
-  std::vector<double> tempQuadPointValues(n_q_points);
-  std::vector<double> localizationLength,secondMoment,firstMomentX,firstMomentY,firstMomentZ;
-  
-  localizationLength.resize(d_numEigenValues);
-  secondMoment.resize(d_numEigenValues);
-  firstMomentX.resize(d_numEigenValues);
-  firstMomentY.resize(d_numEigenValues);
-  firstMomentZ.resize(d_numEigenValues);
+	QGauss<3>  quadrature_formula(C_num1DQuad<FEOrder>());
+	FEValues<3> fe_values (dofHandler.get_fe(), quadrature_formula, update_values|update_JxW_values|update_quadrature_points);
+	const unsigned int dofs_per_cell = dofHandler.get_fe().dofs_per_cell;
+	const unsigned int n_q_points    = quadrature_formula.size();
+	std::vector<double> tempQuadPointValues(n_q_points);
+	std::vector<double> localizationLength,secondMoment,firstMomentX,firstMomentY,firstMomentZ;
 
-  std::vector<distributedCPUVec<double>> tempVec(1);
-  tempVec[0].reinit(d_tempEigenVec);
+	localizationLength.resize(d_numEigenValues);
+	secondMoment.resize(d_numEigenValues);
+	firstMomentX.resize(d_numEigenValues);
+	firstMomentY.resize(d_numEigenValues);
+	firstMomentZ.resize(d_numEigenValues);
 
-  //
-  //compute integral(psi_i*(x^2 + y^2 + z^2)*psi_i), integral(psi_i*x*psi_i),  integral(psi_i*y*psi_i), integral(psi_i*z*psi_i)
-  //
-  for(unsigned int iWave = 0; iWave < d_numEigenValues; ++iWave)
-    {
-      vectorTools::copyFlattenedSTLVecToSingleCompVec(d_eigenVectorsFlattenedSTL[0],
-						      d_numEigenValues,
-						      std::make_pair(iWave,iWave+1),
-						      tempVec);
+	std::vector<distributedCPUVec<double>> tempVec(1);
+	tempVec[0].reinit(d_tempEigenVec);
 
-      constraintsNoneEigenDataInfo.distribute(tempVec[0]);
-
-      typename DoFHandler<3>::active_cell_iterator cellN = dofHandler.begin_active(), endcN = dofHandler.end();
-      
-      for(; cellN!=endcN; ++cellN)
+	//
+	//compute integral(psi_i*(x^2 + y^2 + z^2)*psi_i), integral(psi_i*x*psi_i),  integral(psi_i*y*psi_i), integral(psi_i*z*psi_i)
+	//
+	for(unsigned int iWave = 0; iWave < d_numEigenValues; ++iWave)
 	{
-	  if(cellN->is_locally_owned())
-	    {
-	      fe_values.reinit(cellN);
-	      fe_values.get_function_values(tempVec[0],
-					    tempQuadPointValues);
+		vectorTools::copyFlattenedSTLVecToSingleCompVec(d_eigenVectorsFlattenedSTL[0],
+				d_numEigenValues,
+				std::make_pair(iWave,iWave+1),
+				tempVec);
 
-	      for(unsigned int q_point = 0; q_point < n_q_points; ++q_point)
+		constraintsNoneEigenDataInfo.distribute(tempVec[0]);
+
+		typename DoFHandler<3>::active_cell_iterator cellN = dofHandler.begin_active(), endcN = dofHandler.end();
+
+		for(; cellN!=endcN; ++cellN)
 		{
-		  Point<3> quadPointCoor = fe_values.quadrature_point(q_point);
-		  double distanceFromOriginSquare = quadPointCoor[0]*quadPointCoor[0] + quadPointCoor[1]*quadPointCoor[1] + quadPointCoor[2]*quadPointCoor[2];
-		  secondMoment[iWave] += tempQuadPointValues[q_point]*tempQuadPointValues[q_point]*distanceFromOriginSquare*fe_values.JxW(q_point);
-		  firstMomentX[iWave] += tempQuadPointValues[q_point]*tempQuadPointValues[q_point]*quadPointCoor[0]*fe_values.JxW(q_point);
-		  firstMomentY[iWave] += tempQuadPointValues[q_point]*tempQuadPointValues[q_point]*quadPointCoor[1]*fe_values.JxW(q_point);
-		  firstMomentZ[iWave] += tempQuadPointValues[q_point]*tempQuadPointValues[q_point]*quadPointCoor[2]*fe_values.JxW(q_point);
+			if(cellN->is_locally_owned())
+			{
+				fe_values.reinit(cellN);
+				fe_values.get_function_values(tempVec[0],
+						tempQuadPointValues);
+
+				for(unsigned int q_point = 0; q_point < n_q_points; ++q_point)
+				{
+					Point<3> quadPointCoor = fe_values.quadrature_point(q_point);
+					double distanceFromOriginSquare = quadPointCoor[0]*quadPointCoor[0] + quadPointCoor[1]*quadPointCoor[1] + quadPointCoor[2]*quadPointCoor[2];
+					secondMoment[iWave] += tempQuadPointValues[q_point]*tempQuadPointValues[q_point]*distanceFromOriginSquare*fe_values.JxW(q_point);
+					firstMomentX[iWave] += tempQuadPointValues[q_point]*tempQuadPointValues[q_point]*quadPointCoor[0]*fe_values.JxW(q_point);
+					firstMomentY[iWave] += tempQuadPointValues[q_point]*tempQuadPointValues[q_point]*quadPointCoor[1]*fe_values.JxW(q_point);
+					firstMomentZ[iWave] += tempQuadPointValues[q_point]*tempQuadPointValues[q_point]*quadPointCoor[2]*fe_values.JxW(q_point);
+				}
+
+			}
+		}
+	}
+
+	dealii::Utilities::MPI::sum(secondMoment,
+			mpi_communicator,
+			secondMoment);
+
+
+	dealii::Utilities::MPI::sum(firstMomentX,
+			mpi_communicator,
+			firstMomentX);
+
+
+	dealii::Utilities::MPI::sum(firstMomentY,
+			mpi_communicator,
+			firstMomentY);
+
+	dealii::Utilities::MPI::sum(firstMomentZ,
+			mpi_communicator,
+			firstMomentZ);
+
+	//
+	//compute localization length using above computed integrals
+	//
+	for(unsigned int iWave = 0; iWave < d_numEigenValues; ++iWave)
+	{
+		localizationLength[iWave] = 2.0*std::sqrt(secondMoment[iWave] - (firstMomentX[iWave]*firstMomentX[iWave] + firstMomentY[iWave]*firstMomentY[iWave] + firstMomentZ[iWave]*firstMomentZ[iWave]));
+
+	}
+
+	//
+	//output the localization lengths in a file
+	//
+	if(dealii::Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0)
+	{
+		std::ofstream outFile(locLengthFileName.c_str());
+		outFile.setf(std::ios_base::fixed);
+
+		if(outFile.is_open())
+		{
+			for(unsigned int iWave = 0; iWave < d_numEigenValues; ++iWave)
+			{
+				outFile << std::setprecision(18) << iWave << " "<<localizationLength[iWave]<<std::endl;
+			}
 		}
 
-	    }
 	}
-    }
-
-   dealii::Utilities::MPI::sum(secondMoment,
-			       mpi_communicator,
-			       secondMoment);
-
-   
-   dealii::Utilities::MPI::sum(firstMomentX,
-			       mpi_communicator,
-			       firstMomentX);
-
-   
-   dealii::Utilities::MPI::sum(firstMomentY,
-			       mpi_communicator,
-			       firstMomentY);
-
-   dealii::Utilities::MPI::sum(firstMomentZ,
-			       mpi_communicator,
-			       firstMomentZ);
-
-   //
-   //compute localization length using above computed integrals
-   //
-   for(unsigned int iWave = 0; iWave < d_numEigenValues; ++iWave)
-     {
-       localizationLength[iWave] = 2.0*std::sqrt(secondMoment[iWave] - (firstMomentX[iWave]*firstMomentX[iWave] + firstMomentY[iWave]*firstMomentY[iWave] + firstMomentZ[iWave]*firstMomentZ[iWave]));
-
-     }
-
-   //
-   //output the localization lengths in a file
-   //
-   if(dealii::Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0)
-    {
-      std::ofstream outFile(locLengthFileName.c_str());
-      outFile.setf(std::ios_base::fixed);
-
-      if(outFile.is_open())
-	{
-	  for(unsigned int iWave = 0; iWave < d_numEigenValues; ++iWave)
-	    {
-	      outFile << std::setprecision(18) << iWave << " "<<localizationLength[iWave]<<std::endl;
-	    }
-	}
-
-    }
 
 
 }
 
-  
 
 
 
 
 
- 
-  
 
 
-  
+
+
+
+
 

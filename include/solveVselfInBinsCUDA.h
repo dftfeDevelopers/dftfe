@@ -24,39 +24,39 @@
 
 namespace dftfe
 {
-   namespace poissonCUDA
-   {
-     void solveVselfInBins
-                       (operatorDFTCUDAClass & operatorMatrix,
-                        const dealii::MatrixFree<3,double> & matrixFreeData,
-                        const dealii::AffineConstraints<double> & hangingPeriodicConstraintMatrix,
-                        const double * rhsFlattenedH,
-                        const double * diagonalAH,
-                        const double * inhomoIdsColoredVecFlattenedH,
-                        const unsigned int localSize,
-                        const unsigned int ghostSize,
-                        const unsigned int numberBins,
-                        const MPI_Comm & mpiComm,  
-                        double * xH);
+	namespace poissonCUDA
+	{
+		void solveVselfInBins
+			(operatorDFTCUDAClass & operatorMatrix,
+			 const dealii::MatrixFree<3,double> & matrixFreeData,
+			 const dealii::AffineConstraints<double> & hangingPeriodicConstraintMatrix,
+			 const double * rhsFlattenedH,
+			 const double * diagonalAH,
+			 const double * inhomoIdsColoredVecFlattenedH,
+			 const unsigned int localSize,
+			 const unsigned int ghostSize,
+			 const unsigned int numberBins,
+			 const MPI_Comm & mpiComm,  
+			 double * xH);
 
-    void cgSolver(cublasHandle_t &handle,
-		  dftUtils::constraintMatrixInfoCUDA & constraintsMatrixDataInfoCUDA,
-		  const double * bD,
-		  const double * diagonalAD,
-		  const thrust::device_vector<double> & poissonCellStiffnessMatricesD,
-		  const thrust::device_vector<double> & inhomoIdsColoredVecFlattenedD,
-		  const thrust::device_vector<dealii::types::global_dof_index> & cellLocalProcIndexIdMapD,
-		  const unsigned int localSize,
-                  const unsigned int ghostSize,
-		  const unsigned int numberBins,
-		  const unsigned int totalLocallyOwnedCells,
-		  const unsigned int numberNodesPerElement,
-		  const unsigned int debugLevel,
-		  const unsigned int maxIter,
-		  const double absTol,  
-		  const MPI_Comm & mpiComm,
-		  distributedGPUVec<double> & x);
-   }
+		void cgSolver(cublasHandle_t &handle,
+				dftUtils::constraintMatrixInfoCUDA & constraintsMatrixDataInfoCUDA,
+				const double * bD,
+				const double * diagonalAD,
+				const thrust::device_vector<double> & poissonCellStiffnessMatricesD,
+				const thrust::device_vector<double> & inhomoIdsColoredVecFlattenedD,
+				const thrust::device_vector<dealii::types::global_dof_index> & cellLocalProcIndexIdMapD,
+				const unsigned int localSize,
+				const unsigned int ghostSize,
+				const unsigned int numberBins,
+				const unsigned int totalLocallyOwnedCells,
+				const unsigned int numberNodesPerElement,
+				const unsigned int debugLevel,
+				const unsigned int maxIter,
+				const double absTol,  
+				const MPI_Comm & mpiComm,
+				distributedGPUVec<double> & x);
+	}
 }
 #endif
 #endif
