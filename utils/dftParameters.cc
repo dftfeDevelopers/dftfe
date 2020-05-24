@@ -119,6 +119,7 @@ namespace dftfe {
 		double gaussianConstantForce=0.75;
 		double gaussianOrderForce=4.0;
 		double gaussianOrderMoveMeshToAtoms=4.0;
+    bool useFlatTopGenerator=false;
 		double diracDeltaKernelScalingConstant=0.1;
 		unsigned int kernelUpdateRankXLBOMD=0;
 		unsigned int kmaxXLBOMD=8;
@@ -136,6 +137,7 @@ namespace dftfe {
 		bool useDensityMatrixPerturbationRankUpdates=false;
 		double xlbomdKernelRankUpdateFDParameter=1e-2;
 		bool xlbomdStepTimingRun=false;
+    bool smearedNuclearCharges=false;
 
 		void declare_parameters(ParameterHandler &prm)
 		{
@@ -357,6 +359,10 @@ namespace dftfe {
 						Patterns::Bool(),
 						"[Developer] Check constraints from serial dofHandler.");
 
+        prm.declare_entry("SMEARED NUCLEAR CHARGES", "false",
+                           Patterns::Bool(),
+                          "[Developer] Nuclear charges are smeared for solving electrostatic fields.");        
+
 			}
 			prm.leave_subsection ();
 
@@ -429,9 +435,13 @@ namespace dftfe {
 							Patterns::Double(0.0),
 							"[Developer] Force computation generator gaussian order. Also used for mesh movement. Gamma(r)= exp(-(r/gaussianConstant)^(gaussianOrder)).");
 
-					prm.declare_entry("GAUSSIAN ORDER MOVE MESH TO ATOMS", "4.0",
+					prm.declare_entry("GAUSSIAN ORDER MOVE MESH TO ATOMS", "3.0",
 							Patterns::Double(0.0),
 							"[Developer] Move mesh to atoms gaussian order. Gamma(r)= exp(-(r/gaussianConstant)^(gaussianOrder)).");
+
+          prm.declare_entry("USE FLAT TOP GENERATOR", "false",
+              Patterns::Bool(),
+              "[Developer] Use a composite generator flat top and Gaussian generator for mesh movement and configurational force computation.");
 
 					prm.declare_entry("USE MESH SIZES FROM ATOM LOCATIONS FILE", "false",
 							Patterns::Bool(),
@@ -915,6 +925,7 @@ namespace dftfe {
 				dftParameters::constraintsParallelCheck      = prm.get_bool("CONSTRAINTS PARALLEL CHECK");
 				dftParameters::createConstraintsFromSerialDofhandler = prm.get_bool("CONSTRAINTS FROM SERIAL DOFHANDLER");
 				dftParameters::pinnedNodeForPBC = prm.get_bool("POINT WISE DIRICHLET CONSTRAINT");
+        dftParameters::smearedNuclearCharges = prm.get_bool("SMEARED NUCLEAR CHARGES");
 			}
 			prm.leave_subsection ();
 
@@ -938,6 +949,7 @@ namespace dftfe {
 					dftParameters::gaussianConstantForce = prm.get_double("GAUSSIAN CONSTANT FORCE GENERATOR");
 					dftParameters::gaussianOrderForce = prm.get_double("GAUSSIAN ORDER FORCE GENERATOR");
 					dftParameters::gaussianOrderMoveMeshToAtoms = prm.get_double("GAUSSIAN ORDER MOVE MESH TO ATOMS");
+          dftParameters::useFlatTopGenerator = prm.get_bool("USE FLAT TOP GENERATOR");
 					dftParameters::useMeshSizesFromAtomsFile = prm.get_bool("USE MESH SIZES FROM ATOM LOCATIONS FILE");
 				}
 				prm.leave_subsection ();
@@ -1156,6 +1168,9 @@ namespace dftfe {
 			{
 				prm.print_parameters (std::cout, ParameterHandler::ShortText);
 			}
+
+			AssertThrow((dftParameters::smearedNuclearCharges && dftParameters::useFlatTopGenerator) || (!dftParameters::smearedNuclearCharges)  
+				 ,ExcMessage("DFT-FE Error: USE FLAT TOP GENERATOR must be set to true if SMEARED NUCLEAR CHARGES is set to true."));
 
 			AssertThrow(!((dftParameters::periodicX || dftParameters::periodicY || dftParameters::periodicZ) && (dftParameters::writeLdosFile || dftParameters::writePdosFile)),ExcMessage("DFT-FE Error: LOCAL DENSITY OF STATES and PROJECTED DENSITY OF STATES are currently not implemented in the case of periodic and semi-periodic boundary conditions."));
 

@@ -453,7 +453,7 @@ void dftClass<FEOrder>::updateAtomPositionsAndMoveMesh(const std::vector<Tensor<
 			MPI_Barrier(MPI_COMM_WORLD);
 			movemesh_time = MPI_Wtime();
 
-			const std::pair<bool,double> meshQualityMetrics=d_gaussianMovePar.moveMeshTwoStep(controlPointLocationsInitialMove,d_controlPointLocationsCurrentMove,controlPointDisplacementsInitialMove,controlPointDisplacementsCurrentMove,d_gaussianConstantAutoMove,dftParameters::isBOMD?(forcePtr->getGaussianGeneratorParameter()*dftParameters::ratioOfMeshMovementToForceGaussianBOMD):forcePtr->getGaussianGeneratorParameter());
+			const std::pair<bool,double> meshQualityMetrics=d_gaussianMovePar.moveMeshTwoStep(controlPointLocationsInitialMove,d_controlPointLocationsCurrentMove,controlPointDisplacementsInitialMove,controlPointDisplacementsCurrentMove,d_gaussianConstantAutoMove,dftParameters::isBOMD?(forcePtr->getGaussianGeneratorParameter()*dftParameters::ratioOfMeshMovementToForceGaussianBOMD):forcePtr->getGaussianGeneratorParameter(),d_generatorFlatTopWidth);
 
 			MPI_Barrier(MPI_COMM_WORLD);
 			movemesh_time = MPI_Wtime() - movemesh_time;

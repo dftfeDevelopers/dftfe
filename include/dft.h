@@ -712,6 +712,9 @@ namespace dftfe {
 			/// Gaussian generator: Gamma(r)= exp(-(r/d_gaussianConstant)^2)
 			double d_gaussianConstantForce=0.75;
 
+      /// composite generator flat top width
+      double d_generatorFlatTopWidth;
+
 			/// vector of lendth number of periodic image charges with corresponding master chargeIds
 			std::vector<int> d_imageIds;
 			std::vector<int> d_imageIdsAutoMesh;
@@ -747,6 +750,9 @@ namespace dftfe {
 
 			/// distance from the domain till which periodic images will be considered
 			const double d_pspCutOffTrunc=10.0;
+
+      /// sum of smeared charges of all atoms at quad points
+      std::map<dealii::CellId, std::vector<double> >  d_bQuadValuesAllAtoms;
 
 			std::vector<orbital> waveFunctionsVector;
 			std::map<unsigned int, std::map<unsigned int, std::map<unsigned int, alglib::spline1dinterpolant*> > > radValues;

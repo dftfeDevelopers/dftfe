@@ -109,7 +109,10 @@ namespace dftfe {
 						const std::vector<std::vector<double> > & imagePositions,
 						const std::vector<int> & imageIds,
 						const std::vector<double> & imageCharges,
-						std::vector<std::vector<double> > & localVselfs);
+						std::vector<std::vector<double> > & localVselfs,
+            std::map<dealii::CellId, std::vector<double> > & bQuadValuesAllAtoms,
+            const double smearingWidth,
+            const bool useSmearedCharges=false);
 
 #ifdef DFTFE_WITH_GPU
 				/**
@@ -131,7 +134,10 @@ namespace dftfe {
 						const std::vector<std::vector<double> > & imagePositions,
 						const std::vector<int> & imageIds,
 						const std::vector<double> & imageCharges,
-						std::vector<std::vector<double> > & localVselfs);
+						std::vector<std::vector<double> > & localVselfs,
+            std::map<dealii::CellId, std::vector<double> > & bQuadValuesAllAtoms,
+            const double smearingWidth,
+            const bool useSmearedCharges=false);
 
 
 #endif

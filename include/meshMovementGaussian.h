@@ -49,6 +49,7 @@ namespace dftfe {
 			std::pair<bool,double> moveMesh(const std::vector<Point<C_DIM> > & controlPointLocations,
 					const std::vector<Tensor<1,3,double> > & controlPointDisplacements,
 					const double controllingParameter,
+          const double flatTopWidthParameter,
 					const bool moveSubdivided = false);
 
 
@@ -59,6 +60,7 @@ namespace dftfe {
 					const std::vector<Tensor<1,3,double> > & controlPointDisplacements2,
 					const double controllingParameter1,
 					const double controllingParameter2,
+          const double flatTopWidthParameter,
 					const bool moveSubdivided = false);
 
 
@@ -86,6 +88,9 @@ namespace dftfe {
 
 			/// internal: storage for the constant in the Gaussian function: exp(-d_controllingParameter*r^2)
 			double d_controllingParameter;
+
+      /// internal: flat top width
+      double d_flatTopWidthParameter;
 	};
 
 }

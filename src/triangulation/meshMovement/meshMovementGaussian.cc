@@ -18,6 +18,7 @@
 //
 #include <meshMovementGaussian.h>
 #include <dftParameters.h>
+#include <dftUtils.h>
 
 namespace dftfe {
 
@@ -29,11 +30,13 @@ namespace dftfe {
 	std::pair<bool,double> meshMovementGaussianClass::moveMesh(const std::vector<Point<C_DIM> > & controlPointLocations,
 			const std::vector<Tensor<1,C_DIM,double> > & controlPointDisplacements,
 			const double controllingParameter,
+      const double flatTopWidthParameter,
 			const bool moveSubdivided)
 	{
 		d_controlPointLocations=controlPointLocations;
 		d_controlPointDisplacements=controlPointDisplacements;
 		d_controllingParameter=controllingParameter;
+    d_flatTopWidthParameter=flatTopWidthParameter;
 		//writeMesh("meshUnmoved.vtu");
 		MPI_Barrier(mpi_communicator);
 		if (dftParameters::verbosity==2)
@@ -60,11 +63,13 @@ namespace dftfe {
 			const std::vector<Tensor<1,C_DIM,double> > & controlPointDisplacementsCurrentMove,
 			const double controllingParameterInitialMove,
 			const double controllingParameterCurrentMove,
+      const double flatTopWidthParameter,
 			const bool moveSubdivided)
 	{
 		//d_controlPointLocations = controlPointLocations;
 		//d_controlPointDisplacements=controlPointDisplacements;
 		//d_controllingParameter=controllingParameter;
+    d_flatTopWidthParameter=flatTopWidthParameter;
 		//writeMesh("meshUnmoved.vtu");
 		MPI_Barrier(mpi_communicator);
 		if (dftParameters::verbosity==2)
@@ -146,9 +151,12 @@ namespace dftfe {
 							continue;
 
 						const double r=(nodalCoor-controlPointLocationsInitialMove[iControl]).norm();
+						//const double gaussianWeight=dftParameters::reproducible_output?
+						//	std::exp(-std::pow(r/controllingParameterInitialMove,2))
+						//	:std::exp(-std::pow(r/controllingParameterInitialMove,dftParameters::gaussianOrderMoveMeshToAtoms));
 						const double gaussianWeight=dftParameters::reproducible_output?
 							std::exp(-std::pow(r/controllingParameterInitialMove,2))
-							:std::exp(-std::pow(r/controllingParameterInitialMove,dftParameters::gaussianOrderMoveMeshToAtoms));
+							:dftUtils::getCompositeGeneratorVal(d_flatTopWidthParameter,r,controllingParameterInitialMove,dftParameters::gaussianOrderMoveMeshToAtoms);
 
 						for (unsigned int idim=0; idim < C_DIM ; idim++)
 						{
@@ -200,10 +208,13 @@ namespace dftfe {
 							continue;
 
 						const double r=(nodalCoordinatesUpdated[global_vertex_no]-controlPointLocationsCurrentMove[iControl]).norm();
+						//const double gaussianWeight=dftParameters::reproducible_output?
+						//	std::exp(-std::pow(r/controllingParameterCurrentMove,2))
+						//	:std::exp(-std::pow(r/controllingParameterCurrentMove,dftParameters::gaussianOrderForce));
 						const double gaussianWeight=dftParameters::reproducible_output?
 							std::exp(-std::pow(r/controllingParameterCurrentMove,2))
-							:std::exp(-std::pow(r/controllingParameterCurrentMove,dftParameters::gaussianOrderForce));
-
+							:dftUtils::getCompositeGeneratorVal(d_flatTopWidthParameter,r,controllingParameterCurrentMove,dftParameters::gaussianOrderForce);
+            
 						for (unsigned int idim=0; idim < C_DIM ; idim++)
 						{
 							const unsigned int globalDofIndex = cellStep2->vertex_dof_index(i,idim);
@@ -264,9 +275,12 @@ namespace dftfe {
 							continue;
 						}
 						const double r=(nodalCoor-d_controlPointLocations[iControl]).norm();
+						//const double gaussianWeight=dftParameters::reproducible_output?
+						//	std::exp(-std::pow(r/d_controllingParameter,2))
+						//	:std::exp(-std::pow(r/d_controllingParameter,dftParameters::gaussianOrderMoveMeshToAtoms));
 						const double gaussianWeight=dftParameters::reproducible_output?
 							std::exp(-std::pow(r/d_controllingParameter,2))
-							:std::exp(-std::pow(r/d_controllingParameter,dftParameters::gaussianOrderMoveMeshToAtoms));
+							:dftUtils::getCompositeGeneratorVal(d_flatTopWidthParameter,r,d_controllingParameter,dftParameters::gaussianOrderMoveMeshToAtoms);
 						for (unsigned int idim=0; idim < C_DIM ; idim++)
 						{
 							const unsigned int globalDofIndex=cell->vertex_dof_index(i,idim);

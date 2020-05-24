@@ -43,7 +43,9 @@ namespace dftfe {
 		 const std::map<dealii::types::global_dof_index, double> & atoms,
 		 const std::map<dealii::CellId,std::vector<double> > & rhoValues,
 		 const bool isComputeDiagonalA,
-		 const bool isComputeMeanValueConstraint)
+		 const bool isComputeMeanValueConstraint,
+     const bool smearedNuclearCharges,
+     const bool isPrecomputeShapeGradIntegral)
 		{
 			int this_process;
 			MPI_Comm_rank(mpi_communicator, &this_process);
@@ -55,7 +57,7 @@ namespace dftfe {
 			d_constraintMatrixPtr=&constraintMatrix;
 			d_matrixFreeVectorComponent=matrixFreeVectorComponent;
 			d_rhoValuesPtr=&rhoValues;
-			d_atomsPtr=&atoms;
+			d_atomsPtr=smearedNuclearCharges?NULL:&atoms;
 
 			if (isComputeMeanValueConstraint)
 			{
@@ -65,6 +67,9 @@ namespace dftfe {
 
 			if (isComputeDiagonalA)
 				computeDiagonalA();
+
+			if (isPrecomputeShapeGradIntegral)
+				precomputeShapeFunctionGradientIntegral();        
 		}
 
 
@@ -173,32 +178,29 @@ namespace dftfe {
 			typename dealii::DoFHandler<3>::active_cell_iterator cell = dofHandler.begin_active(), endc = dofHandler.end();
 
 
-			if (!d_rhoValuesPtr)
-			{
-				distributedCPUVec<double> tempvec;
-				tempvec.reinit(rhs);
-				tempvec=0.0;
-				d_constraintMatrixPtr->distribute(tempvec);
-				tempvec.update_ghost_values();
+      distributedCPUVec<double> tempvec;
+      tempvec.reinit(rhs);
+      tempvec=0.0;
+      d_constraintMatrixPtr->distribute(tempvec);
+      tempvec.update_ghost_values();
 
-				dealii::FEEvaluation<3,FEOrder,C_num1DQuad<FEOrder>()> fe_eval(*d_matrixFreeDataPtr,
-						d_matrixFreeVectorComponent,
-						0);
-				dealii::VectorizedArray<double>  quarter = dealii::make_vectorized_array (1.0/(4.0*M_PI));
-				for (unsigned int macrocell = 0;macrocell < d_matrixFreeDataPtr->n_macro_cells();
-						++macrocell)
-				{
-					fe_eval.reinit(macrocell);
-					fe_eval.read_dof_values_plain(tempvec);
-					fe_eval.evaluate(false,true);
-					for (unsigned int q=0; q<fe_eval.n_q_points; ++q)
-					{
-						fe_eval.submit_gradient(-quarter*fe_eval.get_gradient(q), q);
-					}
-					fe_eval.integrate(false, true);
-					fe_eval.distribute_local_to_global(rhs);
-				}
-			}
+      dealii::FEEvaluation<3,FEOrder,C_num1DQuad<FEOrder>()> fe_eval(*d_matrixFreeDataPtr,
+          d_matrixFreeVectorComponent,
+          0);
+      dealii::VectorizedArray<double>  quarter = dealii::make_vectorized_array (1.0/(4.0*M_PI));
+      for (unsigned int macrocell = 0;macrocell < d_matrixFreeDataPtr->n_macro_cells();
+          ++macrocell)
+      {
+        fe_eval.reinit(macrocell);
+        fe_eval.read_dof_values_plain(tempvec);
+        fe_eval.evaluate(false,true);
+        for (unsigned int q=0; q<fe_eval.n_q_points; ++q)
+        {
+          fe_eval.submit_gradient(-quarter*fe_eval.get_gradient(q), q);
+        }
+        fe_eval.integrate(false, true);
+        fe_eval.distribute_local_to_global(rhs);
+      }
 
 			//rhs contribution from electronic charge
 			if (d_rhoValuesPtr)
@@ -222,14 +224,15 @@ namespace dftfe {
 			}
 
 			//rhs contribution from atomic charge at fem nodes
-			for (std::map<dealii::types::global_dof_index, double>::const_iterator it=(*d_atomsPtr).begin(); it!=(*d_atomsPtr).end(); ++it)
-			{
-				std::vector<dealii::ConstraintMatrix::size_type> local_dof_indices_origin(1, it->first); //atomic node
-				dealii::Vector<double> cell_rhs_origin (1);
-				cell_rhs_origin(0)=-(it->second); //atomic charge
+      if (d_atomsPtr)
+        for (std::map<dealii::types::global_dof_index, double>::const_iterator it=(*d_atomsPtr).begin(); it!=(*d_atomsPtr).end(); ++it)
+        {
+          std::vector<dealii::ConstraintMatrix::size_type> local_dof_indices_origin(1, it->first); //atomic node
+          dealii::Vector<double> cell_rhs_origin (1);
+          cell_rhs_origin(0)=-(it->second); //atomic charge
 
-				d_constraintMatrixPtr->distribute_local_to_global(cell_rhs_origin, local_dof_indices_origin, rhs);
-			}
+          d_constraintMatrixPtr->distribute_local_to_global(cell_rhs_origin, local_dof_indices_origin, rhs);
+        }
 
 			//MPI operation to sync data
 			rhs.compress(dealii::VectorOperation::add);
@@ -357,8 +360,10 @@ namespace dftfe {
 					for(unsigned int j = 0; j < rowData->size();++j)
 						allIndicesTouchedByConstraints.add_index((*rowData)[j].first);
 				}
-			for (std::map<dealii::types::global_dof_index, double>::const_iterator it=(*d_atomsPtr).begin(); it!=(*d_atomsPtr).end(); ++it)
-				allIndicesTouchedByConstraints.add_index(it->first);
+
+      if (d_atomsPtr)
+        for (std::map<dealii::types::global_dof_index, double>::const_iterator it=(*d_atomsPtr).begin(); it!=(*d_atomsPtr).end(); ++it)
+          allIndicesTouchedByConstraints.add_index(it->first);
 
 			locallyOwnedElements.subtract_set(allIndicesTouchedByConstraints);
 			d_meanValueConstraintNodeId=*locallyOwnedElements.begin();

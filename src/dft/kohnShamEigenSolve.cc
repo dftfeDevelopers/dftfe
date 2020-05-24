@@ -84,17 +84,34 @@ dataTypes::number dftClass<FEOrder>::computeTraceXtHX(unsigned int numberWaveFun
 			d_imagePositions,
 			d_imageIds,
 			d_imageCharges,
-			d_localVselfs);
+			d_localVselfs,
+      d_bQuadValuesAllAtoms,
+      std::min(0.4,d_generatorFlatTopWidth-0.1));
 
 	//
 	//solve for potential corresponding to initial electron-density
 	//
+  QGauss<3>  quadrature(C_num1DQuad<FEOrder>());
+  std::map<dealii::CellId, std::vector<double> > rhoPlusbQuadValues;
+  dealii::DoFHandler<3>::active_cell_iterator cell = dofHandler.begin_active(), endc = dofHandler.end();
+  if (dftParameters::smearedNuclearCharges)
+    for (; cell!=endc; ++cell)
+      if (cell->is_locally_owned())
+      {
+        rhoPlusbQuadValues[cell->id()].resize(quadrature.size(),0.0);
+        for (unsigned int q = 0; q < quadrature.size(); ++q)
+          rhoPlusbQuadValues[cell->id()][q]=d_bQuadValuesAllAtoms[cell->id()][q]+(*rhoInValues)[cell->id()][q];
+      }
+
 	phiTotalSolverProblem.reinit(matrix_free_data,
 			d_phiTotRhoIn,
 			*d_constraintsVector[phiTotDofHandlerIndex],
 			phiTotDofHandlerIndex,
 			d_atomNodeIdToChargeMap,
-			*rhoInValues);
+      dftParameters::smearedNuclearCharges?rhoPlusbQuadValues:*rhoInValues,
+      true,
+      dftParameters::periodicX && dftParameters::periodicY && dftParameters::periodicZ && !dftParameters::pinnedNodeForPBC,
+      dftParameters::smearedNuclearCharges);
 
 
 	dealiiCGSolver.solve(phiTotalSolverProblem,

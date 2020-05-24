@@ -32,6 +32,11 @@ namespace dftfe {
 	namespace dftUtils
 	{
 
+		/** @brief Calculates value of composite generator
+		 *
+		 */
+		double getCompositeGeneratorVal(const double rc, const double r, const double a0, const double power);
+
 		/** @brief Create bounding box around a sphere.
 		 *
 		 *  @param  sphere center

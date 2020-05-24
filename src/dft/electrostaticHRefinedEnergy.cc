@@ -496,6 +496,7 @@ void dftClass<FEOrder>::computeElectrostaticEnergyHRefined(
 
 	//solve vself in bins on h refined mesh
 	std::vector<std::vector<double> > localVselfsHRefined;
+  std::map<dealii::CellId, std::vector<double> >  dummy;
 	distributedCPUVec<double> phiExtHRefined;
 	matrixFreeDataHRefined.initialize_dof_vector(phiExtHRefined,phiExtDofHandlerIndexHRefined);
 	if (dftParameters::verbosity==2)
@@ -506,7 +507,9 @@ void dftClass<FEOrder>::computeElectrostaticEnergyHRefined(
 			d_imagePositions,
 			d_imageIds,
 			d_imageCharges,
-			localVselfsHRefined);
+			localVselfsHRefined,
+      dummy,
+      d_generatorFlatTopWidth-0.1);
 
 	//
 	//solve the Poisson problem for total rho
@@ -573,6 +576,7 @@ void dftClass<FEOrder>::computeElectrostaticEnergyHRefined(
 				rhoOutHRefinedQuadValues,
 				*gradRhoInValues,
 				*gradRhoOutValues,
+        dummy,
 				localVselfsHRefined,
 				d_pseudoVLoc,
 				pseudoVLocHRefined,
@@ -605,6 +609,7 @@ void dftClass<FEOrder>::computeElectrostaticEnergyHRefined(
 							*rhoOutValuesSpinPolarized,
 							*gradRhoInValuesSpinPolarized,
 							*gradRhoOutValuesSpinPolarized,
+              dummy,
 							localVselfsHRefined,
 							d_pseudoVLoc,
 							pseudoVLocHRefined,

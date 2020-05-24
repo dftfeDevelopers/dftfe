@@ -39,6 +39,15 @@ namespace dftfe {
 
 	namespace dftUtils
 	{
+
+		double getCompositeGeneratorVal(const double rc, const double r, const double a0, const double power)
+    {
+      if (r<=rc)
+        return 1.0;        
+      else
+        return std::exp(-std::pow((r-rc)/a0,power));
+    }
+
 		double getPartialOccupancy(const double eigenValue,const double fermiEnergy,const double kb,const double T)
 		{
 			const double factor=(eigenValue-fermiEnergy)/(kb*T);

@@ -50,7 +50,9 @@ namespace dftfe {
 						const std::map<dealii::types::global_dof_index, double> & atoms,
 						const std::map<dealii::CellId,std::vector<double> > & rhoValues,
 						const bool isComputeDiagonalA=true,
-						const bool isComputeMeanValueConstraints=false);
+						const bool isComputeMeanValueConstraints=false,
+            const bool smearedNuclearCharges=false,
+            const bool isPrecomputeShapeGradIntegral=false);
 
 				/**
 				 * @brief reinitialize data structures for nuclear electrostatic potential solve
