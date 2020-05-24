@@ -86,7 +86,7 @@ dataTypes::number dftClass<FEOrder>::computeTraceXtHX(unsigned int numberWaveFun
 			d_imageCharges,
 			d_localVselfs,
       d_bQuadValuesAllAtoms,
-      std::min(0.4,d_generatorFlatTopWidth-0.1));
+      std::min(d_smearedChargeWidthMin,d_generatorFlatTopWidth));
 
 	//
 	//solve for potential corresponding to initial electron-density

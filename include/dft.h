@@ -754,6 +754,9 @@ namespace dftfe {
       /// sum of smeared charges of all atoms at quad points
       std::map<dealii::CellId, std::vector<double> >  d_bQuadValuesAllAtoms;
 
+      /// minimum smeared charge width
+      const double d_smearedChargeWidthMin=0.4;
+
 			std::vector<orbital> waveFunctionsVector;
 			std::map<unsigned int, std::map<unsigned int, std::map<unsigned int, alglib::spline1dinterpolant*> > > radValues;
 			std::map<unsigned int, std::map<unsigned int, std::map <unsigned int, double> > >outerValues;
