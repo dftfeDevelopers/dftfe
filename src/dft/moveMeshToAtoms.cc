@@ -128,13 +128,16 @@ void dftClass<FEOrder>::moveMeshToAtoms(Triangulation<3,3> & triangulationMove,
 	if (dftParameters::verbosity>=2)
 		pcout<<"Minimum distance between atoms: "<<minDist<<std::endl;
  
-  d_generatorFlatTopWidth=dftParameters::useFlatTopGenerator?std::min(0.5,0.9*minDist/2.0-0.6):0.0;
+  d_generatorFlatTopWidth=dftParameters::useFlatTopGenerator?std::min(0.5,0.9*minDist/2.0-0.4):0.0;
+
+  if (dftParameters::verbosity>=2)
+        pcout<<"Flat top width: "<<d_generatorFlatTopWidth<<std::endl;
 
 	d_gaussianConstantForce=dftParameters::reproducible_output?
 		1/std::sqrt(0.5):(dftParameters::useFlatTopGenerator?(d_generatorFlatTopWidth+0.4):(std::min(0.9*minDist/2.0-0.3,dftParameters::gaussianConstantForce)));
 
 	forcePtr->updateGaussianConstant(d_gaussianConstantForce);
-	const double gaussianConstant=dftParameters::reproducible_output?1/std::sqrt(0.5):std::min(0.9* minDist/2.0-d_generatorFlatTopWidth, 2.0-d_generatorFlatTopWidth);
+	const double gaussianConstant=dftParameters::reproducible_output?1/std::sqrt(0.5):std::min(0.9* minDist/2.0, 2.0);
   AssertThrow(gaussianConstant>0,ExcMessage("DFT-FE Error: gaussian constant for mesh movement is <=0"));
 	const std::pair<bool,double> meshQualityMetrics=gaussianMove.moveMesh(closestTriaVertexToAtomsLocation,
 			dispClosestTriaVerticesToAtoms,

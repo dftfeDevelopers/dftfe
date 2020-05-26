@@ -2767,7 +2767,7 @@ namespace dftfe {
             *d_constraintsVector[phiTotDofHandlerIndex],
             phiTotDofHandlerIndex,
             d_atomNodeIdToChargeMap,
-            dftParameters::smearedNuclearCharges?d_bQuadValuesAllAtoms:*rhoOutValues,
+            dftParameters::smearedNuclearCharges?rhoPlusbQuadValues:*rhoOutValues,
             false,
             false,
             dftParameters::smearedNuclearCharges);
