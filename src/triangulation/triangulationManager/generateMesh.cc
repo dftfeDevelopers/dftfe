@@ -293,6 +293,30 @@ namespace dftfe {
 			}
 		}
 
+    std::vector<double> atomPointsLocal;
+    std::vector<unsigned int> atomIdsLocal;
+    for (unsigned int iAtom=0;iAtom <(d_atomPositions.size()+d_imageAtomPositions.size()); iAtom++)
+    {
+      if (iAtom < d_atomPositions.size())
+      {
+        atomPointsLocal.push_back(d_atomPositions[iAtom][2]);
+        atomPointsLocal.push_back(d_atomPositions[iAtom][3]);
+        atomPointsLocal.push_back(d_atomPositions[iAtom][4]);
+        atomIdsLocal.push_back(iAtom);
+      }
+      else
+      {
+        const unsigned int iImageCharge=iAtom-d_atomPositions.size();
+        atomPointsLocal.push_back(d_imageAtomPositions[iImageCharge][0]);
+        atomPointsLocal.push_back(d_imageAtomPositions[iImageCharge][1]);
+        atomPointsLocal.push_back(d_imageAtomPositions[iImageCharge][2]);
+        atomIdsLocal.push_back(d_imageIds[iImageCharge]);
+      }
+    }
+
+    std::vector<double> nearestAtomDistancesLocal(atomIdsLocal.size());
+
+
 		//
 		//
 		//
@@ -322,30 +346,16 @@ namespace dftfe {
 				double distanceToClosestAtom = 1e8;
 				Point<3> closestAtom;
 				unsigned int closestAtomId=0;
-				for (unsigned int n=0; n<d_atomPositions.size(); n++)
+				for (unsigned int n=0; n<atomPointsLocal.size(); n++)
 				{
-					Point<3> atom(d_atomPositions[n][2],d_atomPositions[n][3],d_atomPositions[n][4]);
+          Point<3> atom(atomPointsLocal[3*n],atomPointsLocal[3*n+1],atomPointsLocal[3*n+2]);
 					if(center.distance(atom) < distanceToClosestAtom)
 					{
 						distanceToClosestAtom = center.distance(atom);
 						closestAtom = atom;
-						closestAtomId=n;
+						closestAtomId=atomIdsLocal[n];
 					}
 				}
-
-				int closestImageId=-1;
-				for(unsigned int iImageCharge=0; iImageCharge < d_imageAtomPositions.size(); ++iImageCharge)
-				{
-					Point<3> imageAtom(d_imageAtomPositions[iImageCharge][0],d_imageAtomPositions[iImageCharge][1],d_imageAtomPositions[iImageCharge][2]);
-					if(center.distance(imageAtom) < distanceToClosestAtom)
-					{
-						distanceToClosestAtom = center.distance(imageAtom);
-						closestAtom = imageAtom;
-						closestImageId=iImageCharge;
-					}
-				}
-				if (closestImageId!=-1)
-					closestAtomId=d_imageIds[closestImageId];
 
 				if (dftParameters::autoUserMeshParams  && !dftParameters::reproducible_output)
 				{

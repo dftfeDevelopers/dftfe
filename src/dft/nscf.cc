@@ -91,11 +91,13 @@ void dftClass<FEOrder>::initnscf(kohnShamDFTOperatorClass<FEOrder> & kohnShamDFT
 		pcout<< std::endl<<"Poisson solve for total electrostatic potential (rhoIn+b): ";
 	computing_timer.enter_section("nscf: phiTot solve");
 	//
+  std::map<dealii::CellId,std::vector<double> > dummy;
 	phiTotalSolverProblem.reinit(matrix_free_data,
 			d_phiTotRhoIn,
 			*d_constraintsVector[phiTotDofHandlerIndex],
 			phiTotDofHandlerIndex,
 			d_atomNodeIdToChargeMap,
+      dummy,
 			*rhoInValues,
 			false);
 	dealiiCGSolver.solve(phiTotalSolverProblem,

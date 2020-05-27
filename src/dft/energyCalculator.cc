@@ -179,7 +179,8 @@ namespace dftfe
         const std::vector<std::vector<double> > & localVselfs,
         const std::map<dealii::CellId, std::vector<double> > & smearedbValues,
         const dealii::DoFHandler<3> & dofHandlerElectrostatic,
-        const dealii::QGauss<3> & quadratureElectrostatic,        
+        const dealii::QGauss<3> & quadratureElectrostatic,      
+        const dealii::QGauss<3> & quadratureSmearedCharge,
         const std::map<dealii::types::global_dof_index, double> & atomElectrostaticNodeIdToChargeMap,
         const bool smearedNuclearCharges=false)
     {
@@ -200,8 +201,8 @@ namespace dftfe
       }
       else
       {
-        dealii::FEValues<3> fe_values (dofHandlerElectrostatic.get_fe(), quadratureElectrostatic, dealii::update_values|dealii::update_JxW_values);
-        const unsigned int n_q_points    = quadratureElectrostatic.size();
+        dealii::FEValues<3> fe_values (dofHandlerElectrostatic.get_fe(), quadratureSmearedCharge, dealii::update_values|dealii::update_JxW_values);
+        const unsigned int n_q_points    = quadratureSmearedCharge.size();
         dealii::DoFHandler<3>::active_cell_iterator
           cell = dofHandlerElectrostatic.begin_active(),
                endc = dofHandlerElectrostatic.end();
@@ -277,6 +278,7 @@ namespace dftfe
      const dealii::DoFHandler<3> & dofHandlerElectronic,
      const dealii::QGauss<3> & quadratureElectrostatic,
      const dealii::QGauss<3> & quadratureElectronic,
+     const dealii::QGauss<3> & quadratureSmearedCharge,
      const std::vector<std::vector<double> > & eigenValues,
      const std::vector<double> & kPointWeights,
      const double fermiEnergy,
@@ -483,6 +485,7 @@ namespace dftfe
            smearedbValues,
            dofHandlerElectrostatic,
            quadratureElectrostatic,
+           quadratureSmearedCharge,
            atomElectrostaticNodeIdToChargeMap,
            smearedNuclearCharges);
 
@@ -542,6 +545,7 @@ double energyCalculator::computeShadowPotentialEnergyExtendedLagrangian
  const dealii::DoFHandler<3> & dofHandlerElectronic,
  const dealii::QGauss<3> & quadratureElectrostatic,
  const dealii::QGauss<3> & quadratureElectronic,
+ const dealii::QGauss<3> & quadratureSmearedCharge,
  const std::vector<std::vector<double> > & eigenValues,
  const std::vector<double> & kPointWeights,
  const double fermiEnergy,
@@ -727,7 +731,8 @@ double energyCalculator::computeShadowPotentialEnergyExtendedLagrangian
       localVselfs,
       smearedbValues,
       dofHandlerElectrostatic,
-      quadratureElectrostatic,      
+      quadratureElectrostatic,    
+      quadratureSmearedCharge,
       atomElectrostaticNodeIdToChargeMap,
       smearedNuclearCharges);
 
@@ -761,6 +766,7 @@ double energyCalculator::computeEnergySpinPolarized
  const dealii::DoFHandler<3> & dofHandlerElectronic,
  const dealii::QGauss<3> & quadratureElectrostatic,
  const dealii::QGauss<3> & quadratureElectronic,
+ const dealii::QGauss<3> & quadratureSmearedCharge,
  const std::vector<std::vector<double> > & eigenValues,
  const std::vector<double> & kPointWeights,
  const double fermiEnergy,
@@ -998,7 +1004,8 @@ double energyCalculator::computeEnergySpinPolarized
       localVselfs,
       smearedbValues,
       dofHandlerElectrostatic,
-      quadratureElectrostatic,      
+      quadratureElectrostatic,  
+      quadratureSmearedCharge,
       atomElectrostaticNodeIdToChargeMap,
       smearedNuclearCharges);
 

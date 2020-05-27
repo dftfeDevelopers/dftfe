@@ -103,8 +103,10 @@ namespace dftfe
             const double jxw=fe_values.JxW(q);
             for (unsigned int iatom=0; iatom< numberTotalAtomsInBin; ++iatom)
             {
-              const unsigned int atomId=iatom<numberDomainAtomsInBin?iatom:imageIdToDomainAtomIdMapCurrentBin[iatom-numberDomainAtomsInBin];
               const double r=(quadPoint-atomLocations[iatom]).norm();
+              if (r>rc)
+                continue;
+              const unsigned int atomId=iatom<numberDomainAtomsInBin?iatom:imageIdToDomainAtomIdMapCurrentBin[iatom-numberDomainAtomsInBin];
               const double chargeVal=smearedCharge(r,rc);
               smearedNuclearChargeIntegral[atomId]+=chargeVal*jxw;
             }
@@ -136,9 +138,11 @@ namespace dftfe
             const double jxw=fe_values.JxW(q);
             for (unsigned int iatom=0; iatom< numberTotalAtomsInBin; ++iatom)
             {
-              const unsigned int atomId=iatom<numberDomainAtomsInBin?iatom:imageIdToDomainAtomIdMapCurrentBin[iatom-numberDomainAtomsInBin];
               const double r=(quadPoint-atomLocations[iatom]).norm();
+              if (r>rc)
+                continue;
               const double chargeVal=smearedCharge(r,rc);
+              const unsigned int atomId=iatom<numberDomainAtomsInBin?iatom:imageIdToDomainAtomIdMapCurrentBin[iatom-numberDomainAtomsInBin];
               bQuadValuesCell[q]+=chargeVal*(-atomCharges[atomId])/smearedNuclearChargeIntegral[atomId];
               smearedNuclearChargeIntegralCheck[atomId]+=chargeVal*(-atomCharges[atomId])/smearedNuclearChargeIntegral[atomId]*jxw;
             }
@@ -180,14 +184,17 @@ namespace dftfe
 
       const dealii::DoFHandler<3> & dofHandler=matrix_free_data.get_dof_handler(offset); 
       const dealii::Quadrature<3> & quadratureFormula=matrix_free_data.get_quadrature();
-      dealii::FEValues<3> fe_values (dofHandler.get_fe(), quadratureFormula, dealii::update_values|dealii::update_JxW_values);
-      const unsigned int n_q_points    = quadratureFormula.size(); 
+
+      dealii::QGauss<3>  quadratureFormulaSmearedCharge(C_num1DQuadSmearedCharge<FEOrder>());
+      dealii::FEValues<3> fe_values_sc (dofHandler.get_fe(), quadratureFormulaSmearedCharge, dealii::update_values|dealii::update_JxW_values);
+      const unsigned int n_q_points_sc    =quadratureFormulaSmearedCharge.size();
+
       dealii::DoFHandler<3>::active_cell_iterator cell = dofHandler.begin_active(), endc = dofHandler.end();
       if (useSmearedCharges)
       {
         for (; cell!=endc; ++cell)
           if (cell->is_locally_owned())
-            bQuadValuesAllAtoms[cell->id()].resize(n_q_points,0.0);
+            bQuadValuesAllAtoms[cell->id()].resize(n_q_points_sc,0.0);
            
         localVselfs.resize(1,std::vector<double>(1));
         localVselfs[0][0]=0.0;           
@@ -204,6 +211,7 @@ namespace dftfe
       std::map<dealii::types::global_dof_index, double>::iterator iterMapVal;
       d_vselfFieldBins.resize(numberBins);
       std::map<dealii::CellId, std::vector<double> > bQuadValuesBin;
+      std::map<dealii::CellId, std::vector<double> > dummy;
 
       for(unsigned int iBin = 0; iBin < numberBins; ++iBin)
       {
@@ -256,7 +264,7 @@ namespace dftfe
 
         if (useSmearedCharges)
           smearedNuclearCharges(dofHandler,
-              quadratureFormula,
+              quadratureFormulaSmearedCharge,
               atomPointsBin,
               atomChargesBin,
               numberGlobalAtomsInBin,
@@ -307,9 +315,11 @@ namespace dftfe
               constraintMatrixId,
               d_atomsInBin[iBin],
               bQuadValuesBin,
+              dummy,
               true,
               false,
               true,
+              false,
               false);        
         else
           vselfSolverProblem.reinit(matrix_free_data,
@@ -346,7 +356,7 @@ namespace dftfe
 
               std::vector<double> & bQuadValuesBinCell=bQuadValuesBin[cell->id()];
               std::vector<double> & bQuadValuesAllAtomsCell=bQuadValuesAllAtoms[cell->id()];
-              for (unsigned int q = 0; q < n_q_points; ++q)
+              for (unsigned int q = 0; q < n_q_points_sc; ++q)
                 bQuadValuesAllAtomsCell[q]+=bQuadValuesBinCell[q];
 
               int boundaryFlagSum=0;
@@ -371,16 +381,16 @@ namespace dftfe
 
               if (boundaryFlagSum%count==0 && boundaryFlagSum/count==boundaryFlag && boundaryFlag<numberGlobalCharges)
               {
-                fe_values.reinit (cell);
+                fe_values_sc.reinit (cell);
 
-                std::vector<double> tempVself(n_q_points);
-                fe_values.get_function_values(vselfBinScratch,tempVself);
+                std::vector<double> tempVself(n_q_points_sc);
+                fe_values_sc.get_function_values(vselfBinScratch,tempVself);
 
 
                 double temp=0;
-                for (unsigned int q = 0; q < n_q_points; ++q)
+                for (unsigned int q = 0; q < n_q_points_sc; ++q)
                 {
-                  temp+=tempVself[q]*bQuadValuesBinCell[q]*fe_values.JxW(q);
+                  temp+=tempVself[q]*bQuadValuesBinCell[q]*fe_values_sc.JxW(q);
                 }
                 vselfTimesSmearedChargesIntegralBin+=temp;
               }

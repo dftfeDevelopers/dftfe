@@ -509,7 +509,7 @@ void dftClass<FEOrder>::computeElectrostaticEnergyHRefined(
 			d_imageCharges,
 			localVselfsHRefined,
       dummy,
-      d_generatorFlatTopWidth-0.1);
+      std::min(d_smearedChargeWidthMin,d_generatorFlatTopWidth));
 
 	//
 	//solve the Poisson problem for total rho
@@ -525,6 +525,7 @@ void dftClass<FEOrder>::computeElectrostaticEnergyHRefined(
 			*matrixFreeConstraintsInputVector[phiTotDofHandlerIndexHRefined],
 			phiTotDofHandlerIndexHRefined,
 			atomHRefinedNodeIdToChargeMap,
+      dummy,
 			rhoOutHRefinedQuadValues,
 			true,
 			dftParameters::periodicX && dftParameters::periodicY && dftParameters::periodicZ && !dftParameters::pinnedNodeForPBC);
@@ -556,12 +557,14 @@ void dftClass<FEOrder>::computeElectrostaticEnergyHRefined(
 
 	energyCalculator energyCalcHRefined(mpi_communicator, interpoolcomm, interBandGroupComm);
 
+  QGauss<3>  quadratureSmearedCharge(C_num1DQuadSmearedCharge<FEOrder>());
 
 	const double totalEnergy = dftParameters::spinPolarized==0 ?
 		energyCalcHRefined.computeEnergy(dofHandlerHRefined,
 				dofHandler,
 				quadrature,
 				quadrature,
+        quadratureSmearedCharge,
 				eigenValues,
 				d_kPointWeights,
 				fermiEnergy,
@@ -589,6 +592,7 @@ void dftClass<FEOrder>::computeElectrostaticEnergyHRefined(
 							dofHandler,
 							quadrature,
 							quadrature,
+              quadratureSmearedCharge,
 							eigenValues,
 							d_kPointWeights,
 							fermiEnergy,

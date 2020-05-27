@@ -48,11 +48,13 @@ namespace dftfe {
 						const dealii::ConstraintMatrix & constraintMatrix,
 						const unsigned int matrixFreeVectorComponent,
 						const std::map<dealii::types::global_dof_index, double> & atoms,
+            const std::map<dealii::CellId,std::vector<double> > & smearedChargeValues,
 						const std::map<dealii::CellId,std::vector<double> > & rhoValues,
 						const bool isComputeDiagonalA=true,
 						const bool isComputeMeanValueConstraints=false,
             const bool smearedNuclearCharges=false,
-            const bool isPrecomputeShapeGradIntegral=false);
+            const bool isPrecomputeShapeGradIntegral=false,
+            const bool isRhoValues=true);
 
 				/**
 				 * @brief reinitialize data structures for nuclear electrostatic potential solve
@@ -180,6 +182,9 @@ namespace dftfe {
 
 				/// pointer to electron density cell quadrature data
 				const std::map<dealii::CellId,std::vector<double> >* d_rhoValuesPtr;
+
+				/// pointer to smeared charge cell quadrature data
+				const std::map<dealii::CellId,std::vector<double> >* d_smearedChargeValuesPtr;        
 
 				/// pointer to map between global dof index in current processor and the atomic charge on that dof
 				const std::map<dealii::types::global_dof_index, double> * d_atomsPtr;

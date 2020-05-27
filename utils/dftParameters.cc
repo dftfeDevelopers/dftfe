@@ -1295,6 +1295,10 @@ namespace dftfe {
 			else if (dftParameters::reproducible_output)
 				dftParameters::createConstraintsFromSerialDofhandler=true;
 
+      if (dftParameters::reproducible_output)
+      {
+        dftParameters::gaussianOrderMoveMeshToAtoms=4.0;
+      }
 
 		}
 

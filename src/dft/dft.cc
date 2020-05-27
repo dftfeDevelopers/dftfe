@@ -757,8 +757,8 @@ namespace dftfe {
       if ((dftParameters::chkType==2 || dftParameters::chkType==3)  && (dftParameters::restartFromChk || dftParameters::restartMdFromChk))
       {
         d_mesh.generateCoarseMeshesForRestart(atomLocations,
-            d_imagePositions,
-            d_imageIds,
+            d_imagePositionsTrunc,
+            d_imageIdsTrunc,
             d_domainBoundingVectors,
             dftParameters::useSymm
             || ((dftParameters::isIonOpt && (dftParameters::reuseWfcGeoOpt || dftParameters::reuseDensityGeoOpt)) || (dftParameters::isBOMD && dftParameters::autoMeshStepInterpolateBOMD))
@@ -772,8 +772,8 @@ namespace dftfe {
       else
       {
         d_mesh.generateSerialUnmovedAndParallelMovedUnmovedMesh(atomLocations,
-            d_imagePositions,
-            d_imageIds,
+            d_imagePositionsTrunc,
+            d_imageIdsTrunc,
             d_domainBoundingVectors,
             dftParameters::useSymm
             || ((dftParameters::isIonOpt && (dftParameters::reuseWfcGeoOpt || dftParameters::reuseDensityGeoOpt)) || (dftParameters::isBOMD && dftParameters::autoMeshStepInterpolateBOMD))
@@ -1409,23 +1409,13 @@ namespace dftfe {
 
       computingTimerStandard.enter_section("phiTotalSolverProblem init");
 
-      std::map<dealii::CellId, std::vector<double> > rhoPlusbQuadValues;
-      dealii::DoFHandler<3>::active_cell_iterator cell = dofHandler.begin_active(), endc = dofHandler.end();
-      if (dftParameters::smearedNuclearCharges)
-        for (; cell!=endc; ++cell)
-          if (cell->is_locally_owned())
-          {
-            rhoPlusbQuadValues[cell->id()].resize(quadrature.size(),0.0);
-            for (unsigned int q = 0; q < quadrature.size(); ++q)
-               rhoPlusbQuadValues[cell->id()][q]=d_bQuadValuesAllAtoms[cell->id()][q]+(*rhoInValues)[cell->id()][q];
-          }
-
       phiTotalSolverProblem.reinit(matrix_free_data,
           d_phiTotRhoIn,
           *d_constraintsVector[phiTotDofHandlerIndex],
           phiTotDofHandlerIndex,
           d_atomNodeIdToChargeMap,
-          dftParameters::smearedNuclearCharges?rhoPlusbQuadValues:*rhoInValues,
+          d_bQuadValuesAllAtoms,
+          *rhoInValues,
           true,
           dftParameters::periodicX && dftParameters::periodicY && dftParameters::periodicZ && !dftParameters::pinnedNodeForPBC,
           dftParameters::smearedNuclearCharges);
@@ -1673,7 +1663,8 @@ namespace dftfe {
       kohnShamDFTOperatorCUDAClass<FEOrder> kohnShamDFTEigenOperatorCUDA(this,mpi_communicator);
 #endif
 
-      QGauss<3>  quadrature(C_num1DQuad<FEOrder>()); 
+      QGauss<3>  quadrature(C_num1DQuad<FEOrder>());
+      QGauss<3>  quadratureSmearedCharge(C_num1DQuadSmearedCharge<FEOrder>());
 
       //computingTimerStandard.enter_section("Total scf solve");
       computingTimerStandard.enter_section("Kohn-sham dft operator init");
@@ -1849,13 +1840,6 @@ namespace dftfe {
       else if (dftParameters::isIonOpt || dftParameters::isCellOpt)
         firstScfChebyTol=dftParameters::chebyshevTolerance>1e-3?1e-3:dftParameters::chebyshevTolerance;
 
-      std::map<dealii::CellId, std::vector<double> > rhoPlusbQuadValues;
-      dealii::DoFHandler<3>::active_cell_iterator cell = dofHandler.begin_active(), endc = dofHandler.end();
-      if (dftParameters::smearedNuclearCharges)
-        for (; cell!=endc; ++cell)
-          if (cell->is_locally_owned())
-            rhoPlusbQuadValues[cell->id()].resize(quadrature.size(),0.0); 
-
       //
       //Begin SCF iteration
       //
@@ -1963,22 +1947,14 @@ namespace dftfe {
 
         computingTimerStandard.enter_section("phiTotalSolverProblem init");
 
-        if (dftParameters::smearedNuclearCharges)
-        {
-          cell = dofHandler.begin_active();
-          for (; cell!=endc; ++cell)
-            if (cell->is_locally_owned())
-              for (unsigned int q = 0; q < quadrature.size(); ++q)
-                rhoPlusbQuadValues[cell->id()][q]=d_bQuadValuesAllAtoms[cell->id()][q]+(*rhoInValues)[cell->id()][q];
-        }
-
         if (scfIter>0)
           phiTotalSolverProblem.reinit(matrix_free_data,
               d_phiTotRhoIn,
               *d_constraintsVector[phiTotDofHandlerIndex],
               phiTotDofHandlerIndex,
               d_atomNodeIdToChargeMap,
-              dftParameters::smearedNuclearCharges?rhoPlusbQuadValues:*rhoInValues,
+              d_bQuadValuesAllAtoms,
+              *rhoInValues,
               false,
               false,
               dftParameters::smearedNuclearCharges);
@@ -1988,7 +1964,8 @@ namespace dftfe {
               *d_constraintsVector[phiTotDofHandlerIndex],
               phiTotDofHandlerIndex,
               d_atomNodeIdToChargeMap,
-              dftParameters::smearedNuclearCharges?rhoPlusbQuadValues:*rhoInValues,
+              d_bQuadValuesAllAtoms,
+              *rhoInValues,
               true,
               dftParameters::periodicX && dftParameters::periodicY && dftParameters::periodicZ && !dftParameters::pinnedNodeForPBC,
               dftParameters::smearedNuclearCharges);
@@ -2609,21 +2586,13 @@ namespace dftfe {
 
           computing_timer.enter_section("phiTot solve");
 
-          if (dftParameters::smearedNuclearCharges)
-          {
-            cell = dofHandler.begin_active();
-            for (; cell!=endc; ++cell)
-              if (cell->is_locally_owned())
-                for (unsigned int q = 0; q < quadrature.size(); ++q)
-                  rhoPlusbQuadValues[cell->id()][q]=d_bQuadValuesAllAtoms[cell->id()][q]+(*rhoOutValues)[cell->id()][q];
-          }
-
           phiTotalSolverProblem.reinit(matrix_free_data,
               d_phiTotRhoOut,
               *d_constraintsVector[phiTotDofHandlerIndex],
               phiTotDofHandlerIndex,
               d_atomNodeIdToChargeMap,
-              dftParameters::smearedNuclearCharges?rhoPlusbQuadValues:*rhoOutValues,
+              d_bQuadValuesAllAtoms,
+              *rhoOutValues,
               false,
               false,
               dftParameters::smearedNuclearCharges);
@@ -2652,6 +2621,7 @@ namespace dftfe {
                 dofHandler,
                 quadrature,
                 quadrature,
+                quadratureSmearedCharge,
                 eigenValues,
                 d_kPointWeights,
                 fermiEnergy,
@@ -2680,6 +2650,7 @@ namespace dftfe {
                       dofHandler,
                       quadrature,
                       quadrature,
+                      quadratureSmearedCharge,
                       eigenValues,
                       d_kPointWeights,
                       fermiEnergy,
@@ -2753,21 +2724,13 @@ namespace dftfe {
 
         computing_timer.enter_section("phiTot solve");
 
-        if (dftParameters::smearedNuclearCharges)
-        {
-          cell = dofHandler.begin_active();
-          for (; cell!=endc; ++cell)
-            if (cell->is_locally_owned())
-              for (unsigned int q = 0; q < quadrature.size(); ++q)
-                rhoPlusbQuadValues[cell->id()][q]=d_bQuadValuesAllAtoms[cell->id()][q]+(*rhoOutValues)[cell->id()][q];
-        }
-
         phiTotalSolverProblem.reinit(matrix_free_data,
             d_phiTotRhoOut,
             *d_constraintsVector[phiTotDofHandlerIndex],
             phiTotDofHandlerIndex,
             d_atomNodeIdToChargeMap,
-            dftParameters::smearedNuclearCharges?rhoPlusbQuadValues:*rhoOutValues,
+            d_bQuadValuesAllAtoms,
+            *rhoOutValues,
             false,
             false,
             dftParameters::smearedNuclearCharges);
@@ -2791,6 +2754,7 @@ namespace dftfe {
         computing_timer.enter_section("Poisson solve for (rho_min-approx_rho)");
 
         std::map<dealii::CellId, std::vector<double> > rhoMinMinusApproxRho;
+        std::map<dealii::CellId, std::vector<double> > dummy;
         DoFHandler<3>::active_cell_iterator
           cell = dofHandler.begin_active(),
                endc = dofHandler.end();
@@ -2811,6 +2775,7 @@ namespace dftfe {
             *d_constraintsVector[phiTotDofHandlerIndex],
             phiTotDofHandlerIndex,
             std::map<dealii::types::global_dof_index, double>(),
+            dummy,
             rhoMinMinusApproxRho,
             false);
 
@@ -2834,6 +2799,7 @@ namespace dftfe {
               dofHandler,
               quadrature,
               quadrature,
+              quadratureSmearedCharge,
               eigenValues,
               d_kPointWeights,
               fermiEnergy,
@@ -2862,6 +2828,7 @@ namespace dftfe {
                     dofHandler,
                     quadrature,
                     quadrature,
+                    quadratureSmearedCharge,
                     eigenValues,
                     d_kPointWeights,
                     fermiEnergy,
@@ -2916,6 +2883,7 @@ namespace dftfe {
               dofHandler,
               quadrature,
               quadrature,
+              quadratureSmearedCharge,
               eigenValues,
               d_kPointWeights,
               fermiEnergy,
