@@ -42,14 +42,15 @@ namespace dftfe {
 			 *
 			 *  @param controlPointLocations  vector of coordinates of control points
 			 *  @param controlPointDisplacements vector of displacements of control points
-			 *  @ controllingParameter constant in the Gaussian function: exp(-controllingParameter*r^2)
+			 *  @ controllingParameter constant in the Gaussian function: exp(-(r/controllingParameter)^pow)
+       *  where pow is controlled via the input file parameter (.prm)
 			 *  @return std::pair<bool,double> mesh quality metrics
 			 *  pair(bool for is negative jacobian, maximum jacobian ratio)
 			 */
 			std::pair<bool,double> moveMesh(const std::vector<Point<C_DIM> > & controlPointLocations,
 					const std::vector<Tensor<1,3,double> > & controlPointDisplacements,
-					const double controllingParameter,
-          const double flatTopWidthParameter,
+					const std::vector<double> & gaussianWidthParameter,
+          const std::vector<double> & flatTopWidthParameter,
 					const bool moveSubdivided = false);
 
 
@@ -58,9 +59,9 @@ namespace dftfe {
 					const std::vector<Point<C_DIM> > & controlPointLocations2,
 					const std::vector<Tensor<1,3,double> > & controlPointDisplacements1,
 					const std::vector<Tensor<1,3,double> > & controlPointDisplacements2,
-					const double controllingParameter1,
-					const double controllingParameter2,
-          const double flatTopWidthParameter,
+					const std::vector<double> & controllingParameter1,
+					const std::vector<double> & controllingParameter2,
+          const std::vector<double> & flatTopWidthParameter,
 					const bool moveSubdivided = false);
 
 
@@ -71,26 +72,18 @@ namespace dftfe {
 			/** @brief internal function which computes the nodal increment field in the local processor
 			 *
 			 */
-			void computeIncrement();
+			void computeIncrement(const std::vector<Point<C_DIM> > & controlPointLocations,
+					const std::vector<Tensor<1,3,double> > & controlPointDisplacements,
+					const double gaussianWidthParameter,
+          const double flatTopWidthParameter);
 
 			void computeIncrementTwoStep(const std::vector<Point<C_DIM> > & controlPointLocations1,
 					const std::vector<Point<C_DIM> > & controlPointLocations2,
 					const std::vector<Tensor<1,3,double> > & controlPointDisplacements1,
 					const std::vector<Tensor<1,3,double> > & controlPointDisplacements2,
-					const double controllingParameter1,
-					const double controllingParameter2);
-
-			/// internal: storage for coordinates of the control points to which the Gaussians are attached
-			std::vector<Point<C_DIM> > d_controlPointLocations;
-
-			/// internal: storage for the displacements of each control point
-			std::vector<Tensor<1,C_DIM,double> > d_controlPointDisplacements;
-
-			/// internal: storage for the constant in the Gaussian function: exp(-d_controllingParameter*r^2)
-			double d_controllingParameter;
-
-      /// internal: flat top width
-      double d_flatTopWidthParameter;
+					const std::vector<double> & gaussianWidthParameter1,
+					const std::vector<double> & gaussianWidthParameter2,
+          const std::vector<double> & flatTopWidthParameter);
 	};
 
 }

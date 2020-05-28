@@ -88,7 +88,7 @@ namespace dftfe {
 			/// Performs periodic matching sanity check and returns the pair<if negative jacobian, maximum inverse jacobian magnitude>
 			std::pair<bool,double> movedMeshCheck();
 
-			virtual void computeIncrement()=0;
+			//virtual void computeIncrement()=0;
 
 			/// vector of displacements of the triangulation vertices
 			//Vector<double> d_incrementalDisplacement;

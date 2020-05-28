@@ -567,6 +567,7 @@ namespace  dftfe {
 			return d_stress;
 		}
 
+  /*
 	template<unsigned int FEOrder>
 		double  forceClass<FEOrder>::getGaussianGeneratorParameter() const
 		{
@@ -579,6 +580,7 @@ namespace  dftfe {
 			if (!dftParameters::reproducible_output)
 				d_gaussianConstant=newGaussianConstant;
 		}
+  */
 
 	template class forceClass<1>;
 	template class forceClass<2>;

@@ -164,7 +164,7 @@ namespace dftfe {
 			 *
 			 *  @return void.
 			 */
-			void updateGaussianConstant(const double newGaussianConstant);
+			//void updateGaussianConstant(const double newGaussianConstant);
 
 #ifdef USE_COMPLEX
 			/** @brief computes the configurational stress on the domain corresponding to
@@ -218,7 +218,7 @@ namespace dftfe {
 			 * Gaussian generator: Gamma(r)= exp(-d_gaussianConstant*r^2).
 			 *
 			 */
-			double getGaussianGeneratorParameter() const;
+			//double getGaussianGeneratorParameter() const;
 
 			private:
 
@@ -622,7 +622,7 @@ namespace dftfe {
 
 			/// Gaussian generator constant. Gaussian generator: Gamma(r)= exp(-d_gaussianConstant*r^2)
 			/// FIXME: Until the hanging nodes surface integral issue is fixed use a value >=4.0
-			double d_gaussianConstant;
+			//double d_gaussianConstant;
 
 			/// Storage for configurational force on all global atoms.
 			std::vector<double> d_globalAtomsGaussianForces;

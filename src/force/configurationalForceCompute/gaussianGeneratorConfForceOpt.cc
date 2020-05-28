@@ -476,7 +476,7 @@ void forceClass<FEOrder>::computeAtomsForcesGaussianGenerator(bool allowGaussian
 					//	std::exp(-std::pow(r/d_gaussianConstant,2)):std::exp(-std::pow(r/d_gaussianConstant,dftParameters::gaussianOrderForce));
 
 					double gaussianWeight=dftParameters::reproducible_output?
-						std::exp(-std::pow(r/d_gaussianConstant,2)):dftUtils::getCompositeGeneratorVal(dftPtr->d_generatorFlatTopWidth,r,d_gaussianConstant,dftParameters::gaussianOrderForce);          
+						std::exp(-std::pow(r/d_gaussianConstant,2)):dftUtils::getCompositeGeneratorVal(dftPtr->d_generatorFlatTopWidths[atomId],r,dftPtr->d_gaussianConstantsForce[atomId],dftParameters::gaussianOrderForce);          
 
 					for (unsigned int idim=0; idim < C_DIM ; idim++)
 					{
@@ -592,7 +592,7 @@ void forceClass<FEOrder>::computeAtomsForcesGaussianGenerator(bool allowGaussian
 					//double gaussianWeight=dftParameters::reproducible_output?
 					//	std::exp(-std::pow(r/d_gaussianConstant,2)):std::exp(-std::pow(r/d_gaussianConstant,dftParameters::gaussianOrderForce));
 					double gaussianWeight=dftParameters::reproducible_output?
-						std::exp(-std::pow(r/d_gaussianConstant,2)):dftUtils::getCompositeGeneratorVal(dftPtr->d_generatorFlatTopWidth,r,d_gaussianConstant,dftParameters::gaussianOrderForce);
+						std::exp(-std::pow(r/d_gaussianConstant,2)):dftUtils::getCompositeGeneratorVal(dftPtr->d_generatorFlatTopWidths[atomId],r,dftPtr->d_gaussianConstantsForce[atomId],dftParameters::gaussianOrderForce);
 					for (unsigned int idim=0; idim < C_DIM ; idim++)
 					{
 						const unsigned int globalDofIndex=cell->vertex_dof_index(i,idim);

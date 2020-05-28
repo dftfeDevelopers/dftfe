@@ -74,7 +74,7 @@ namespace dftfe
         const unsigned int numberDomainAtomsInBin,
         const std::vector<int> & imageIdToDomainAtomIdMapCurrentBin,        
         const  MPI_Comm &mpi_communicator,
-        const double rc,
+        const std::vector<double> & rc,
         std::map<dealii::CellId, std::vector<double> > & bQuadValues)
     {
       bQuadValues.clear();
@@ -104,9 +104,9 @@ namespace dftfe
             for (unsigned int iatom=0; iatom< numberTotalAtomsInBin; ++iatom)
             {
               const double r=(quadPoint-atomLocations[iatom]).norm();
-              if (r>rc)
-                continue;
               const unsigned int atomId=iatom<numberDomainAtomsInBin?iatom:imageIdToDomainAtomIdMapCurrentBin[iatom-numberDomainAtomsInBin];
+              if (r>rc[atomId])
+                continue;
               const double chargeVal=smearedCharge(r,rc);
               smearedNuclearChargeIntegral[atomId]+=chargeVal*jxw;
             }
@@ -139,10 +139,10 @@ namespace dftfe
             for (unsigned int iatom=0; iatom< numberTotalAtomsInBin; ++iatom)
             {
               const double r=(quadPoint-atomLocations[iatom]).norm();
-              if (r>rc)
+              const unsigned int atomId=iatom<numberDomainAtomsInBin?iatom:imageIdToDomainAtomIdMapCurrentBin[iatom-numberDomainAtomsInBin];
+              if (r>rc[atomId])
                 continue;
               const double chargeVal=smearedCharge(r,rc);
-              const unsigned int atomId=iatom<numberDomainAtomsInBin?iatom:imageIdToDomainAtomIdMapCurrentBin[iatom-numberDomainAtomsInBin];
               bQuadValuesCell[q]+=chargeVal*(-atomCharges[atomId])/smearedNuclearChargeIntegral[atomId];
               smearedNuclearChargeIntegralCheck[atomId]+=chargeVal*(-atomCharges[atomId])/smearedNuclearChargeIntegral[atomId]*jxw;
             }
@@ -173,7 +173,7 @@ namespace dftfe
      const std::vector<double> &imageCharges,
      std::vector<std::vector<double> > & localVselfs,
      std::map<dealii::CellId, std::vector<double> > & bQuadValuesAllAtoms,
-     const double smearingWidth,
+     const std::vector<double> & smearingWidths,
      const bool useSmearedCharges)
     {
       localVselfs.clear();
@@ -270,7 +270,7 @@ namespace dftfe
               numberGlobalAtomsInBin,
               imageIdToDomainAtomIdMapCurrentBin,
               mpi_communicator,
-              smearingWidth,
+              smearingWidths,
               bQuadValuesBin);
 
         const unsigned int constraintMatrixId = iBin + offset;
@@ -433,7 +433,7 @@ namespace dftfe
      const std::vector<double> &imageCharges,
      std::vector<std::vector<double> > & localVselfs,
      std::map<dealii::CellId, std::vector<double> > & bQuadValuesAllAtoms,
-     const double smearingWidth,
+     const std::vector<double> & smearingWidths,
      const bool useSmearedCharges)
     {
       localVselfs.clear();
