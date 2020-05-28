@@ -2887,7 +2887,7 @@ namespace dftfe {
 			}
 
 #ifdef DFTFE_WITH_GPU
-			if (dftParameters::useGPU && (dftParameters::isCellStress || dftParameters::spinPolarized==1 || dftParameters::writeWfcSolutionFields))
+			if (dftParameters::useGPU && (dftParameters::isCellStress || dftParameters::spinPolarized==1 || dftParameters::writeWfcSolutionFields || dftParameters::writeLdosFile || dftParameters::writePdosFile))
 				for(unsigned int kPoint = 0; kPoint < (1+dftParameters::spinPolarized)*d_kPointWeights.size(); ++kPoint)
 				{
 					vectorToolsCUDA::copyCUDAVecToHostVec(d_eigenVectorsFlattenedCUDA.begin()+kPoint*d_eigenVectorsFlattenedSTL[0].size(),
