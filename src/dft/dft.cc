@@ -2922,7 +2922,7 @@ namespace dftfe {
       }
 
 #ifdef DFTFE_WITH_GPU
-      if (dftParameters::useGPU && (dftParameters::isCellStress || dftParameters::spinPolarized==1))
+      if (dftParameters::useGPU && (dftParameters::isCellStress || dftParameters::spinPolarized==1 || dftParameters::writeWfcSolutionFields || dftParameters::writeLdosFile || dftParameters::writePdosFile))
         for(unsigned int kPoint = 0; kPoint < (1+dftParameters::spinPolarized)*d_kPointWeights.size(); ++kPoint)
         {
           vectorToolsCUDA::copyCUDAVecToHostVec(d_eigenVectorsFlattenedCUDA.begin()+kPoint*d_eigenVectorsFlattenedSTL[0].size(),
@@ -2935,6 +2935,7 @@ namespace dftfe {
         dealii::Utilities::MPI::n_mpi_processes(interBandGroupComm);
 
       const unsigned int localVectorSize = d_eigenVectorsFlattenedSTL[0].size()/d_numEigenValues;
+
 
 #ifndef USE_COMPLEX
       if (numberBandGroups>1)
