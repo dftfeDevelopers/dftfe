@@ -274,22 +274,6 @@ void dftClass<FEOrder>::updateAtomPositionsAndMoveMesh(const std::vector<Tensor<
 		atomPoints.push_back(atomCoor);
 	}
 
-	double minDist=1e+6;
-	for (unsigned int i=0;i <numberGlobalAtoms-1; i++)
-		for (unsigned int j=i+1;j <numberGlobalAtoms; j++)
-		{
-			const double dist=atomPoints[i].distance(atomPoints[j]);
-			if (dist<minDist)
-				minDist=dist;
-		}
-
-	if (dftParameters::verbosity>=2)
-		pcout<<"Minimum distance between atoms: "<<minDist<<std::endl;
-
-	d_gaussianConstantForce=d_gaussianConstantForce=dftParameters::reproducible_output?
-		1/std::sqrt(0.5):std::min(minDist/2.0-0.3,dftParameters::gaussianConstantForce);
-	forcePtr->updateGaussianConstant(d_gaussianConstantForce);
-
 	d_gaussianMovementAtomsNetDisplacements.clear();
 	numberImageCharges = d_imageIdsAutoMesh.size();
 	totalNumberAtoms = numberGlobalAtoms + numberImageCharges;
