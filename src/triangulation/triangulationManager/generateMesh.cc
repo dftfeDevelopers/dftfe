@@ -293,28 +293,28 @@ namespace dftfe {
 			}
 		}
 
-    std::vector<double> atomPointsLocal;
-    std::vector<unsigned int> atomIdsLocal;
-    for (unsigned int iAtom=0;iAtom <(d_atomPositions.size()+d_imageAtomPositions.size()); iAtom++)
-    {
-      if (iAtom < d_atomPositions.size())
-      {
-        atomPointsLocal.push_back(d_atomPositions[iAtom][2]);
-        atomPointsLocal.push_back(d_atomPositions[iAtom][3]);
-        atomPointsLocal.push_back(d_atomPositions[iAtom][4]);
-        atomIdsLocal.push_back(iAtom);
-      }
-      else
-      {
-        const unsigned int iImageCharge=iAtom-d_atomPositions.size();
-        atomPointsLocal.push_back(d_imageAtomPositions[iImageCharge][0]);
-        atomPointsLocal.push_back(d_imageAtomPositions[iImageCharge][1]);
-        atomPointsLocal.push_back(d_imageAtomPositions[iImageCharge][2]);
-        atomIdsLocal.push_back(d_imageIds[iImageCharge]);
-      }
-    }
+		std::vector<double> atomPointsLocal;
+		std::vector<unsigned int> atomIdsLocal;
+		for (unsigned int iAtom=0;iAtom <(d_atomPositions.size()+d_imageAtomPositions.size()); iAtom++)
+		{
+			if (iAtom < d_atomPositions.size())
+			{
+				atomPointsLocal.push_back(d_atomPositions[iAtom][2]);
+				atomPointsLocal.push_back(d_atomPositions[iAtom][3]);
+				atomPointsLocal.push_back(d_atomPositions[iAtom][4]);
+				atomIdsLocal.push_back(iAtom);
+			}
+			else
+			{
+				const unsigned int iImageCharge=iAtom-d_atomPositions.size();
+				atomPointsLocal.push_back(d_imageAtomPositions[iImageCharge][0]);
+				atomPointsLocal.push_back(d_imageAtomPositions[iImageCharge][1]);
+				atomPointsLocal.push_back(d_imageAtomPositions[iImageCharge][2]);
+				atomIdsLocal.push_back(d_imageIds[iImageCharge]);
+			}
+		}
 
-    std::vector<double> nearestAtomDistancesLocal(atomIdsLocal.size());
+		std::vector<double> nearestAtomDistancesLocal(atomIdsLocal.size());
 
 
 		//
@@ -348,7 +348,7 @@ namespace dftfe {
 				unsigned int closestAtomId=0;
 				for (unsigned int n=0; n<atomPointsLocal.size(); n++)
 				{
-          Point<3> atom(atomPointsLocal[3*n],atomPointsLocal[3*n+1],atomPointsLocal[3*n+2]);
+					Point<3> atom(atomPointsLocal[3*n],atomPointsLocal[3*n+1],atomPointsLocal[3*n+2]);
 					if(center.distance(atom) < distanceToClosestAtom)
 					{
 						distanceToClosestAtom = center.distance(atom);

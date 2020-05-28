@@ -86,7 +86,7 @@ namespace dftfe {
 					const dealii::DoFHandler<3> & dofHandlerElectronic,
 					const dealii::QGauss<3> & quadratureElectrostatic,
 					const dealii::QGauss<3> & quadratureElectronic,
-          const dealii::QGauss<3> & quadratureSmearedCharge,
+					const dealii::QGauss<3> & quadratureSmearedCharge,
 					const std::vector<std::vector<double> > & eigenValues,
 					const std::vector<double> & kPointWeights,
 					const double fermiEnergy,
@@ -101,7 +101,7 @@ namespace dftfe {
 					const std::map<dealii::CellId, std::vector<double> > & rhoOutValuesElectrostatic,
 					const std::map<dealii::CellId, std::vector<double> > & gradRhoInValues,
 					const std::map<dealii::CellId, std::vector<double> > & gradRhoOutValues,
-          const std::map<dealii::CellId, std::vector<double> > & smearedbValues,
+					const std::map<dealii::CellId, std::vector<double> > & smearedbValues,
 					const std::vector<std::vector<double> > & localVselfs,
 					const std::map<dealii::CellId, std::vector<double> > & pseudoValuesElectronic,
 					const std::map<dealii::CellId, std::vector<double> > & pseudoValuesElectrostatic,
@@ -110,7 +110,7 @@ namespace dftfe {
 					const unsigned int lowerBoundKindex,
 					const unsigned int scfConverged,
 					const bool print,
-          const bool smearedNuclearCharges=false) const;
+					const bool smearedNuclearCharges=false) const;
 
 
 			/**
@@ -157,7 +157,7 @@ namespace dftfe {
 					const dealii::DoFHandler<3> & dofHandlerElectronic,
 					const dealii::QGauss<3> & quadratureElectrostatic,
 					const dealii::QGauss<3> & quadratureElectronic,
-          const dealii::QGauss<3> & quadratureSmearedCharge,
+					const dealii::QGauss<3> & quadratureSmearedCharge,
 					const std::vector<std::vector<double> > & eigenValues,
 					const std::vector<double> & kPointWeights,
 					const double fermiEnergy,
@@ -172,14 +172,14 @@ namespace dftfe {
 					const std::map<dealii::CellId, std::vector<double> > & rhoInValuesElectrostatic,
 					const std::map<dealii::CellId, std::vector<double> > & gradRhoInValues,
 					const std::map<dealii::CellId, std::vector<double> > & gradRhoOutValues,
-          const std::map<dealii::CellId, std::vector<double> > & smearedbValues,
+					const std::map<dealii::CellId, std::vector<double> > & smearedbValues,
 					const std::vector<std::vector<double> > & localVselfs,
 					const std::map<dealii::CellId, std::vector<double> > & pseudoValuesElectronic,
 					const std::map<dealii::CellId, std::vector<double> > & pseudoValuesElectrostatic,
 					const std::map<dealii::types::global_dof_index, double> & atomElectrostaticNodeIdToChargeMap,
 					const unsigned int numberGlobalAtoms,
 					const unsigned int lowerBoundKindex,
-          const bool smearedNuclearCharges=false) const;
+					const bool smearedNuclearCharges=false) const;
 
 			/**
 			 * Computes total energy of the spin polarized ksdft problem in the current state and also prints the
@@ -236,7 +236,7 @@ namespace dftfe {
 				 const dealii::DoFHandler<3> & dofHandlerElectronic,
 				 const dealii::QGauss<3> & quadratureElectrostatic,
 				 const dealii::QGauss<3> & quadratureElectronic,
-         const dealii::QGauss<3> & quadratureSmearedCharge,
+				 const dealii::QGauss<3> & quadratureSmearedCharge,
 				 const std::vector<std::vector<double> > & eigenValues,
 				 const std::vector<double> & kPointWeights,
 				 const double fermiEnergy,
@@ -257,7 +257,7 @@ namespace dftfe {
 				 const std::map<dealii::CellId, std::vector<double> > & rhoOutValuesSpinPolarized,
 				 const std::map<dealii::CellId, std::vector<double> > & gradRhoInValuesSpinPolarized,
 				 const std::map<dealii::CellId, std::vector<double> > & gradRhoOutValuesSpinPolarized,
-         const std::map<dealii::CellId, std::vector<double> > & smearedbValues,
+				 const std::map<dealii::CellId, std::vector<double> > & smearedbValues,
 				 const std::vector<std::vector<double> > & localVselfs,
 				 const std::map<dealii::CellId, std::vector<double> > & pseudoValuesElectronic,
 				 const std::map<dealii::CellId, std::vector<double> > & pseudoValuesElectrostatic,
@@ -266,7 +266,7 @@ namespace dftfe {
 				 const unsigned int lowerBoundKindex,
 				 const unsigned int scfConverged,
 				 const bool print,
-         const bool smearedNuclearCharges=false) const;
+				 const bool smearedNuclearCharges=false) const;
 
 
 			double computeEntropicEnergy(const std::vector<std::vector<double> > & eigenValues,

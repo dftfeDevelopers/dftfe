@@ -30,7 +30,7 @@ namespace dftfe {
 	std::pair<bool,double> meshMovementGaussianClass::moveMesh(const std::vector<Point<C_DIM> > & controlPointLocations,
 			const std::vector<Tensor<1,C_DIM,double> > & controlPointDisplacements,
 			const std::vector<double> & gaussianWidthParameter,
-      const std::vector<double> & flatTopWidthParameter,
+			const std::vector<double> & flatTopWidthParameter,
 			const bool moveSubdivided)
 	{
 		//writeMesh("meshUnmoved.vtu");
@@ -40,9 +40,9 @@ namespace dftfe {
 
 		initIncrementField();
 		computeIncrement(controlPointLocations,
-       controlPointDisplacements,
-       gaussianWidthParameter,
-       flatToWidthParameter);
+				controlPointDisplacements,
+				gaussianWidthParameter,
+				flatToWidthParameter);
 		finalizeIncrementField();
 		if (dftParameters::verbosity==2)
 			pcout << "...Computed triangulation displacement increment" << std::endl;
@@ -62,7 +62,7 @@ namespace dftfe {
 			const std::vector<Tensor<1,C_DIM,double> > & controlPointDisplacementsCurrentMove,
 			const std::vector<double> & controllingParameterInitialMove,
 			const std::vector<double> & controllingParameterCurrentMove,
-      const std::vector<double> & flatTopWidthParameter,
+			const std::vector<double> & flatTopWidthParameter,
 			const bool moveSubdivided)
 	{
 		//writeMesh("meshUnmoved.vtu");
@@ -77,7 +77,7 @@ namespace dftfe {
 				controlPointDisplacementsCurrentMove,
 				controllingParameterInitialMove,
 				controllingParameterCurrentMove,
-        flatTopWidthParameter);
+				flatTopWidthParameter);
 		finalizeIncrementField();
 		if (dftParameters::verbosity==2)
 			pcout << "...Computed triangulation displacement increment" << std::endl;
@@ -103,7 +103,7 @@ namespace dftfe {
 			const std::vector<Tensor<1,C_DIM,double> > & controlPointDisplacementsCurrentMove,
 			const std::vector<double> & controllingParameterInitialMove,
 			const std::vector<double> & controllingParameterCurrentMove,
-      const std::vector<double> & flatTopWidthParameter)
+			const std::vector<double> & flatTopWidthParameter)
 	{
 		unsigned int vertices_per_cell = GeometryInfo<C_DIM>::vertices_per_cell;
 		std::vector<bool> vertex_touched(d_dofHandlerMoveMesh.get_triangulation().n_vertices(),
@@ -205,7 +205,7 @@ namespace dftfe {
 						const double gaussianWeight=dftParameters::reproducible_output?
 							std::exp(-std::pow(r/controllingParameterCurrentMove[iControl],2))
 							:dftUtils::getCompositeGeneratorVal(flatTopWidthParameter[iControl],r,controllingParameterCurrentMove[iControl],dftParameters::gaussianOrderForce);
-            
+
 						for (unsigned int idim=0; idim < C_DIM ; idim++)
 						{
 							const unsigned int globalDofIndex = cellStep2->vertex_dof_index(i,idim);
@@ -229,9 +229,9 @@ namespace dftfe {
 	//their corresponding controlPointDisplacements. In other words for those nodes we don't consider overlapping
 	//Gaussians
 	void meshMovementGaussianClass::computeIncrement(const std::vector<Point<C_DIM> > & controlPointLocations,
-					const std::vector<Tensor<1,3,double> > & controlPointDisplacements,
-					const std::vector<double> & gaussianWidthParameter,
-          const std::vector<double> & flatTopWidthParameter)
+			const std::vector<Tensor<1,3,double> > & controlPointDisplacements,
+			const std::vector<double> & gaussianWidthParameter,
+			const std::vector<double> & flatTopWidthParameter)
 	{
 		unsigned int vertices_per_cell=GeometryInfo<C_DIM>::vertices_per_cell;
 		std::vector<bool> vertex_touched(d_dofHandlerMoveMesh.get_triangulation().n_vertices(),

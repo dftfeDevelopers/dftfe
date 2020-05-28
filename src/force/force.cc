@@ -567,20 +567,20 @@ namespace  dftfe {
 			return d_stress;
 		}
 
-  /*
-	template<unsigned int FEOrder>
-		double  forceClass<FEOrder>::getGaussianGeneratorParameter() const
-		{
-			return d_gaussianConstant;
-		}
+	/*
+	   template<unsigned int FEOrder>
+	   double  forceClass<FEOrder>::getGaussianGeneratorParameter() const
+	   {
+	   return d_gaussianConstant;
+	   }
 
-	template<unsigned int FEOrder>
-		void  forceClass<FEOrder>::updateGaussianConstant(const double newGaussianConstant)
-		{
-			if (!dftParameters::reproducible_output)
-				d_gaussianConstant=newGaussianConstant;
-		}
-  */
+	   template<unsigned int FEOrder>
+	   void  forceClass<FEOrder>::updateGaussianConstant(const double newGaussianConstant)
+	   {
+	   if (!dftParameters::reproducible_output)
+	   d_gaussianConstant=newGaussianConstant;
+	   }
+	 */
 
 	template class forceClass<1>;
 	template class forceClass<2>;

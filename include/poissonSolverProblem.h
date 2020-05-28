@@ -48,13 +48,13 @@ namespace dftfe {
 						const dealii::ConstraintMatrix & constraintMatrix,
 						const unsigned int matrixFreeVectorComponent,
 						const std::map<dealii::types::global_dof_index, double> & atoms,
-            const std::map<dealii::CellId,std::vector<double> > & smearedChargeValues,
+						const std::map<dealii::CellId,std::vector<double> > & smearedChargeValues,
 						const std::map<dealii::CellId,std::vector<double> > & rhoValues,
 						const bool isComputeDiagonalA=true,
 						const bool isComputeMeanValueConstraints=false,
-            const bool smearedNuclearCharges=false,
-            const bool isPrecomputeShapeGradIntegral=false,
-            const bool isRhoValues=true);
+						const bool smearedNuclearCharges=false,
+						const bool isPrecomputeShapeGradIntegral=false,
+						const bool isRhoValues=true);
 
 				/**
 				 * @brief reinitialize data structures for nuclear electrostatic potential solve

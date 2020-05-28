@@ -85,8 +85,8 @@ dataTypes::number dftClass<FEOrder>::computeTraceXtHX(unsigned int numberWaveFun
 			d_imageIds,
 			d_imageCharges,
 			d_localVselfs,
-      d_bQuadValuesAllAtoms,
-      std::min(d_smearedChargeWidthMin,d_generatorFlatTopWidth));
+			d_bQuadValuesAllAtoms,
+			std::min(d_smearedChargeWidthMin,d_generatorFlatTopWidth));
 
 	//
 	//solve for potential corresponding to initial electron-density
@@ -96,11 +96,11 @@ dataTypes::number dftClass<FEOrder>::computeTraceXtHX(unsigned int numberWaveFun
 			*d_constraintsVector[phiTotDofHandlerIndex],
 			phiTotDofHandlerIndex,
 			d_atomNodeIdToChargeMap,
-      d_bQuadValuesAllAtoms,
-      *rhoInValues,
-      true,
-      dftParameters::periodicX && dftParameters::periodicY && dftParameters::periodicZ && !dftParameters::pinnedNodeForPBC,
-      dftParameters::smearedNuclearCharges);
+			d_bQuadValuesAllAtoms,
+			*rhoInValues,
+			true,
+			dftParameters::periodicX && dftParameters::periodicY && dftParameters::periodicZ && !dftParameters::pinnedNodeForPBC,
+			dftParameters::smearedNuclearCharges);
 
 
 	dealiiCGSolver.solve(phiTotalSolverProblem,

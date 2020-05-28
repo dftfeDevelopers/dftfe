@@ -123,7 +123,7 @@ namespace dftfe {
 		extern double gaussianConstantForce;
 		extern double gaussianOrderForce;
 		extern double gaussianOrderMoveMeshToAtoms;
-    extern bool useFlatTopGenerator;
+		extern bool useFlatTopGenerator;
 		extern double diracDeltaKernelScalingConstant;
 		extern unsigned int kernelUpdateRankXLBOMD;
 		extern unsigned int kmaxXLBOMD;
@@ -140,7 +140,7 @@ namespace dftfe {
 		extern bool useDensityMatrixPerturbationRankUpdates;
 		extern bool xlbomdStepTimingRun; 
 		extern double xlbomdKernelRankUpdateFDParameter;
-    extern bool smearedNuclearCharges;
+		extern bool smearedNuclearCharges;
 
 		/**
 		 * Declare parameters.

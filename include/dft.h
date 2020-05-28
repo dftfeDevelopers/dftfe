@@ -712,11 +712,11 @@ namespace dftfe {
 			/// Gaussian generator: Gamma(r)= exp(-(r/d_gaussianConstant)^2)
 			std::vector<double> d_gaussianConstantsForce;
 
-      /// composite generator flat top widths for all domain atoms
-      std::vector<double> d_generatorFlatTopWidths;
+			/// composite generator flat top widths for all domain atoms
+			std::vector<double> d_generatorFlatTopWidths;
 
-      /// smeared charge widths for all domain atoms
-      std::vector<double> d_smearedChargeWidths;
+			/// smeared charge widths for all domain atoms
+			std::vector<double> d_smearedChargeWidths;
 
 			/// vector of lendth number of periodic image charges with corresponding master chargeIds
 			std::vector<int> d_imageIds;
@@ -754,11 +754,11 @@ namespace dftfe {
 			/// distance from the domain till which periodic images will be considered
 			const double d_pspCutOffTrunc=10.0;
 
-      /// sum of smeared charges of all atoms at quad points
-      std::map<dealii::CellId, std::vector<double> >  d_bQuadValuesAllAtoms;
+			/// sum of smeared charges of all atoms at quad points
+			std::map<dealii::CellId, std::vector<double> >  d_bQuadValuesAllAtoms;
 
-      /// minimum smeared charge width
-      const double d_smearedChargeWidthMin=0.4;
+			/// minimum smeared charge width
+			const double d_smearedChargeWidthMin=0.4;
 
 			std::vector<orbital> waveFunctionsVector;
 			std::map<unsigned int, std::map<unsigned int, std::map<unsigned int, alglib::spline1dinterpolant*> > > radValues;

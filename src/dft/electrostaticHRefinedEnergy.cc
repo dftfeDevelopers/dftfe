@@ -496,7 +496,7 @@ void dftClass<FEOrder>::computeElectrostaticEnergyHRefined(
 
 	//solve vself in bins on h refined mesh
 	std::vector<std::vector<double> > localVselfsHRefined;
-  std::map<dealii::CellId, std::vector<double> >  dummy;
+	std::map<dealii::CellId, std::vector<double> >  dummy;
 	distributedCPUVec<double> phiExtHRefined;
 	matrixFreeDataHRefined.initialize_dof_vector(phiExtHRefined,phiExtDofHandlerIndexHRefined);
 	if (dftParameters::verbosity==2)
@@ -508,8 +508,8 @@ void dftClass<FEOrder>::computeElectrostaticEnergyHRefined(
 			d_imageIds,
 			d_imageCharges,
 			localVselfsHRefined,
-      dummy,
-      std::min(d_smearedChargeWidthMin,d_generatorFlatTopWidth));
+			dummy,
+			std::min(d_smearedChargeWidthMin,d_generatorFlatTopWidth));
 
 	//
 	//solve the Poisson problem for total rho
@@ -525,7 +525,7 @@ void dftClass<FEOrder>::computeElectrostaticEnergyHRefined(
 			*matrixFreeConstraintsInputVector[phiTotDofHandlerIndexHRefined],
 			phiTotDofHandlerIndexHRefined,
 			atomHRefinedNodeIdToChargeMap,
-      dummy,
+			dummy,
 			rhoOutHRefinedQuadValues,
 			true,
 			dftParameters::periodicX && dftParameters::periodicY && dftParameters::periodicZ && !dftParameters::pinnedNodeForPBC);
@@ -557,14 +557,14 @@ void dftClass<FEOrder>::computeElectrostaticEnergyHRefined(
 
 	energyCalculator energyCalcHRefined(mpi_communicator, interpoolcomm, interBandGroupComm);
 
-  QGauss<3>  quadratureSmearedCharge(C_num1DQuadSmearedCharge<FEOrder>());
+	QGauss<3>  quadratureSmearedCharge(C_num1DQuadSmearedCharge<FEOrder>());
 
 	const double totalEnergy = dftParameters::spinPolarized==0 ?
 		energyCalcHRefined.computeEnergy(dofHandlerHRefined,
 				dofHandler,
 				quadrature,
 				quadrature,
-        quadratureSmearedCharge,
+				quadratureSmearedCharge,
 				eigenValues,
 				d_kPointWeights,
 				fermiEnergy,
@@ -579,7 +579,7 @@ void dftClass<FEOrder>::computeElectrostaticEnergyHRefined(
 				rhoOutHRefinedQuadValues,
 				*gradRhoInValues,
 				*gradRhoOutValues,
-        dummy,
+				dummy,
 				localVselfsHRefined,
 				d_pseudoVLoc,
 				pseudoVLocHRefined,
@@ -592,7 +592,7 @@ void dftClass<FEOrder>::computeElectrostaticEnergyHRefined(
 							dofHandler,
 							quadrature,
 							quadrature,
-              quadratureSmearedCharge,
+							quadratureSmearedCharge,
 							eigenValues,
 							d_kPointWeights,
 							fermiEnergy,
@@ -613,7 +613,7 @@ void dftClass<FEOrder>::computeElectrostaticEnergyHRefined(
 							*rhoOutValuesSpinPolarized,
 							*gradRhoInValuesSpinPolarized,
 							*gradRhoOutValuesSpinPolarized,
-              dummy,
+							dummy,
 							localVselfsHRefined,
 							d_pseudoVLoc,
 							pseudoVLocHRefined,

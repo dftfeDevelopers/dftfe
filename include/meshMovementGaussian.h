@@ -43,14 +43,14 @@ namespace dftfe {
 			 *  @param controlPointLocations  vector of coordinates of control points
 			 *  @param controlPointDisplacements vector of displacements of control points
 			 *  @ controllingParameter constant in the Gaussian function: exp(-(r/controllingParameter)^pow)
-       *  where pow is controlled via the input file parameter (.prm)
+			 *  where pow is controlled via the input file parameter (.prm)
 			 *  @return std::pair<bool,double> mesh quality metrics
 			 *  pair(bool for is negative jacobian, maximum jacobian ratio)
 			 */
 			std::pair<bool,double> moveMesh(const std::vector<Point<C_DIM> > & controlPointLocations,
 					const std::vector<Tensor<1,3,double> > & controlPointDisplacements,
 					const std::vector<double> & gaussianWidthParameter,
-          const std::vector<double> & flatTopWidthParameter,
+					const std::vector<double> & flatTopWidthParameter,
 					const bool moveSubdivided = false);
 
 
@@ -61,7 +61,7 @@ namespace dftfe {
 					const std::vector<Tensor<1,3,double> > & controlPointDisplacements2,
 					const std::vector<double> & controllingParameter1,
 					const std::vector<double> & controllingParameter2,
-          const std::vector<double> & flatTopWidthParameter,
+					const std::vector<double> & flatTopWidthParameter,
 					const bool moveSubdivided = false);
 
 
@@ -75,7 +75,7 @@ namespace dftfe {
 			void computeIncrement(const std::vector<Point<C_DIM> > & controlPointLocations,
 					const std::vector<Tensor<1,3,double> > & controlPointDisplacements,
 					const double gaussianWidthParameter,
-          const double flatTopWidthParameter);
+					const double flatTopWidthParameter);
 
 			void computeIncrementTwoStep(const std::vector<Point<C_DIM> > & controlPointLocations1,
 					const std::vector<Point<C_DIM> > & controlPointLocations2,
@@ -83,7 +83,7 @@ namespace dftfe {
 					const std::vector<Tensor<1,3,double> > & controlPointDisplacements2,
 					const std::vector<double> & gaussianWidthParameter1,
 					const std::vector<double> & gaussianWidthParameter2,
-          const std::vector<double> & flatTopWidthParameter);
+					const std::vector<double> & flatTopWidthParameter);
 	};
 
 }
