@@ -74,8 +74,8 @@ namespace dftfe {
 			 */
 			void computeIncrement(const std::vector<Point<C_DIM> > & controlPointLocations,
 					const std::vector<Tensor<1,3,double> > & controlPointDisplacements,
-					const double gaussianWidthParameter,
-					const double flatTopWidthParameter);
+					const std::vector<double> & gaussianWidthParameter,
+					const std::vector<double> & flatTopWidthParameter);
 
 			void computeIncrementTwoStep(const std::vector<Point<C_DIM> > & controlPointLocations1,
 					const std::vector<Point<C_DIM> > & controlPointLocations2,

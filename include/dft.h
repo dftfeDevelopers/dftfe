@@ -710,7 +710,11 @@ namespace dftfe {
 
 			/// Gaussian generator parameter for force computation and Gaussian deformation of atoms and FEM mesh
 			/// Gaussian generator: Gamma(r)= exp(-(r/d_gaussianConstant)^2)
+      /// Stored for all domain atoms
 			std::vector<double> d_gaussianConstantsForce;
+
+      /// Gaussian constants for automesh mesh movement stored for all domain atoms
+      std::vector<double> d_gaussianConstantsAutoMesh;
 
 			/// composite generator flat top widths for all domain atoms
 			std::vector<double> d_generatorFlatTopWidths;
@@ -720,7 +724,7 @@ namespace dftfe {
 
 			/// vector of lendth number of periodic image charges with corresponding master chargeIds
 			std::vector<int> d_imageIds;
-			std::vector<int> d_imageIdsAutoMesh;
+			//std::vector<int> d_imageIdsAutoMesh;
 
 
 			/// vector of length number of periodic image charges with corresponding charge values
@@ -781,7 +785,6 @@ namespace dftfe {
 
 			std::vector<Tensor<1,3,double>> d_gaussianMovementAtomsNetDisplacements;
 			std::vector<Point<C_DIM> > d_controlPointLocationsCurrentMove;
-			std::vector<double> d_gaussianConstantsAutoMove;
 
 			/// volume of the domain
 			double d_domainVolume;

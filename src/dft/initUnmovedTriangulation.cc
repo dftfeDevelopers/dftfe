@@ -238,13 +238,11 @@ void dftClass<FEOrder>::initUnmovedTriangulation(parallel::distributed::Triangul
 	forcePtr->initUnmoved(triangulation,
 			d_mesh.getSerialMeshUnmoved(),
 			d_domainBoundingVectors,
-			false,
-			d_gaussianConstantForce);
+			false);
 	forcePtr->initUnmoved(triangulation,
 			d_mesh.getSerialMeshUnmoved(),
 			d_domainBoundingVectors,
-			true,
-			d_gaussianConstantForce);
+			true);
 
 	if (dftParameters::verbosity>=4)
 		dftUtils::printCurrentMemoryUsage(mpi_communicator,

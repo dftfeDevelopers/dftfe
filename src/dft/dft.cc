@@ -1748,7 +1748,7 @@ namespace dftfe {
 							d_imageCharges,
 							d_localVselfs,
 							d_bQuadValuesAllAtoms,
-							std::min(d_smearedChargeWidthMin,d_generatorFlatTopWidth),
+							d_smearedChargeWidths,
 							dftParameters::smearedNuclearCharges);
 				else
 					d_vselfBinsManager.solveVselfInBins(matrix_free_data,
@@ -1759,7 +1759,7 @@ namespace dftfe {
 							d_imageCharges,
 							d_localVselfs,
 							d_bQuadValuesAllAtoms,
-							std::min(d_smearedChargeWidthMin,d_generatorFlatTopWidth),
+							d_smearedChargeWidths,
 							dftParameters::smearedNuclearCharges);
 #else
 				d_vselfBinsManager.solveVselfInBins(matrix_free_data,
@@ -1770,7 +1770,7 @@ namespace dftfe {
 						d_imageCharges,
 						d_localVselfs,
 						d_bQuadValuesAllAtoms,
-						std::min(d_smearedChargeWidthMin,d_generatorFlatTopWidth),
+						d_smearedChargeWidths,
 						dftParameters::smearedNuclearCharges);
 #endif
 				computingTimerStandard.exit_section("Nuclear self-potential solve");

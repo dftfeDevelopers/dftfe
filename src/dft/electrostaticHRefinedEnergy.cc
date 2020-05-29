@@ -339,8 +339,7 @@ void dftClass<FEOrder>::computeElectrostaticEnergyHRefined(
 	forcePtr->initUnmoved(electrostaticsTriaRho,
 			d_mesh.getSerialMeshElectrostatics(),
 			d_domainBoundingVectors,
-			true,
-			d_gaussianConstantForce);
+			true);
 
 	d_mesh.resetMesh(electrostaticsTriaDisp,
 			electrostaticsTriaRho);
@@ -509,7 +508,7 @@ void dftClass<FEOrder>::computeElectrostaticEnergyHRefined(
 			d_imageCharges,
 			localVselfsHRefined,
 			dummy,
-			std::min(d_smearedChargeWidthMin,d_generatorFlatTopWidth));
+			d_smearedChargeWidths);
 
 	//
 	//solve the Poisson problem for total rho

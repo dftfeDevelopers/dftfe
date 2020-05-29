@@ -42,7 +42,7 @@ namespace dftfe {
 		computeIncrement(controlPointLocations,
 				controlPointDisplacements,
 				gaussianWidthParameter,
-				flatToWidthParameter);
+				flatTopWidthParameter);
 		finalizeIncrementField();
 		if (dftParameters::verbosity==2)
 			pcout << "...Computed triangulation displacement increment" << std::endl;

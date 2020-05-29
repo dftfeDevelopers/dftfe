@@ -472,11 +472,8 @@ void forceClass<FEOrder>::computeAtomsForcesGaussianGenerator(bool allowGaussian
 
 					const double r=(nodalCoor-atomCoor).norm();
 
-					//const double gaussianWeight=dftParameters::reproducible_output?
-					//	std::exp(-std::pow(r/d_gaussianConstant,2)):std::exp(-std::pow(r/d_gaussianConstant,dftParameters::gaussianOrderForce));
-
 					double gaussianWeight=dftParameters::reproducible_output?
-						std::exp(-std::pow(r/d_gaussianConstant,2)):dftUtils::getCompositeGeneratorVal(dftPtr->d_generatorFlatTopWidths[atomId],r,dftPtr->d_gaussianConstantsForce[atomId],dftParameters::gaussianOrderForce);          
+						std::exp(-std::pow(r/dftPtr->d_gaussianConstantsForce[atomChargeId],2)):dftUtils::getCompositeGeneratorVal(dftPtr->d_generatorFlatTopWidths[atomChargeId],r,dftPtr->d_gaussianConstantsForce[atomChargeId],dftParameters::gaussianOrderForce);          
 
 					for (unsigned int idim=0; idim < C_DIM ; idim++)
 					{
@@ -589,10 +586,8 @@ void forceClass<FEOrder>::computeAtomsForcesGaussianGenerator(bool allowGaussian
 					const int atomChargeId=nontrivialAtomChargeIds[iAtom];
 
 					const double r=(nodalCoor-atomCoor).norm();
-					//double gaussianWeight=dftParameters::reproducible_output?
-					//	std::exp(-std::pow(r/d_gaussianConstant,2)):std::exp(-std::pow(r/d_gaussianConstant,dftParameters::gaussianOrderForce));
 					double gaussianWeight=dftParameters::reproducible_output?
-						std::exp(-std::pow(r/d_gaussianConstant,2)):dftUtils::getCompositeGeneratorVal(dftPtr->d_generatorFlatTopWidths[atomId],r,dftPtr->d_gaussianConstantsForce[atomId],dftParameters::gaussianOrderForce);
+						std::exp(-std::pow(r/dftPtr->d_gaussianConstantsForce[atomChargeId],2)):dftUtils::getCompositeGeneratorVal(dftPtr->d_generatorFlatTopWidths[atomChargeId],r,dftPtr->d_gaussianConstantsForce[atomChargeId],dftParameters::gaussianOrderForce);
 					for (unsigned int idim=0; idim < C_DIM ; idim++)
 					{
 						const unsigned int globalDofIndex=cell->vertex_dof_index(i,idim);
@@ -670,8 +665,8 @@ void forceClass<FEOrder>::printAtomsForces()
 		pcout<<std::endl<<"Ion forces (Hartree/Bohr)"<<std::endl;
 	else
 		pcout<<std::endl<<"Absolute values of ion forces (Hartree/Bohr)"<<std::endl;
-	if (dftParameters::verbosity==2)
-		pcout<< "Negative of configurational force (Hartree/Bohr) on atoms for Gaussian generator with constant: "<< d_gaussianConstant <<std::endl;
+	if (dftParameters::verbosity>=2)
+		pcout<< "Negative of configurational force (Hartree/Bohr) on atoms"<<std::endl;
 
 	pcout<< "--------------------------------------------------------------------------------------------"<<std::endl;
 	//also find the atom with the maximum absolute force and print that

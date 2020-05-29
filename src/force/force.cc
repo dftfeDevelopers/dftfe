@@ -160,10 +160,8 @@ namespace  dftfe {
 		void forceClass<FEOrder>::initUnmoved(const Triangulation<3,3> & triangulation,
 				const Triangulation<3,3> & serialTriangulation,
 				const std::vector<std::vector<double> >  & domainBoundingVectors,
-				const bool isElectrostaticsMesh,
-				const double gaussianConstant)
+				const bool isElectrostaticsMesh)
 		{
-			d_gaussianConstant=dftParameters::reproducible_output?1/std::sqrt(5.0):gaussianConstant;
 			if (isElectrostaticsMesh)
 				internalForce::initUnmoved(triangulation,
 						serialTriangulation,
@@ -238,20 +236,6 @@ namespace  dftfe {
 					atomCoor[2] = dftPtr->atomLocations[iAtom][4];
 					atomPoints.push_back(atomCoor);
 				}
-
-				/*
-				   double minDist=1e+6;
-				   for (unsigned int i=0;i <numberGlobalAtoms-1; i++)
-				   for (unsigned int j=i+1;j <numberGlobalAtoms; j++)
-				   {
-				   const double dist=atomPoints[i].distance(atomPoints[j]);
-				   if (dist<minDist)
-				   minDist=dist;
-				   }
-
-				   d_gaussianConstant=dftParameters::reproducible_output?1/std::sqrt(5.0):std::min(0.7* minDist/2.0, 0.75);
-				 */
-
 			}
 		}
 

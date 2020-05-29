@@ -346,7 +346,7 @@ namespace dftfe {
 				double distanceToClosestAtom = 1e8;
 				Point<3> closestAtom;
 				unsigned int closestAtomId=0;
-				for (unsigned int n=0; n<atomPointsLocal.size(); n++)
+				for (unsigned int n=0; n<atomPointsLocal.size()/3; n++)
 				{
 					Point<3> atom(atomPointsLocal[3*n],atomPointsLocal[3*n+1],atomPointsLocal[3*n+2]);
 					if(center.distance(atom) < distanceToClosestAtom)

@@ -107,7 +107,7 @@ namespace dftfe
 							const unsigned int atomId=iatom<numberDomainAtomsInBin?iatom:imageIdToDomainAtomIdMapCurrentBin[iatom-numberDomainAtomsInBin];
 							if (r>rc[atomId])
 								continue;
-							const double chargeVal=smearedCharge(r,rc);
+							const double chargeVal=smearedCharge(r,rc[atomId]);
 							smearedNuclearChargeIntegral[atomId]+=chargeVal*jxw;
 						}
 					}
@@ -142,7 +142,7 @@ namespace dftfe
 							const unsigned int atomId=iatom<numberDomainAtomsInBin?iatom:imageIdToDomainAtomIdMapCurrentBin[iatom-numberDomainAtomsInBin];
 							if (r>rc[atomId])
 								continue;
-							const double chargeVal=smearedCharge(r,rc);
+							const double chargeVal=smearedCharge(r,rc[atomId]);
 							bQuadValuesCell[q]+=chargeVal*(-atomCharges[atomId])/smearedNuclearChargeIntegral[atomId];
 							smearedNuclearChargeIntegralCheck[atomId]+=chargeVal*(-atomCharges[atomId])/smearedNuclearChargeIntegral[atomId]*jxw;
 						}

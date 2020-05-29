@@ -92,30 +92,10 @@ void dftClass<FEOrder>::moveMeshToAtoms(Triangulation<3,3> & triangulationMove,
 
 	d_closestTriaVertexToAtomsLocation = closestTriaVertexToAtomsLocation;
 	d_dispClosestTriaVerticesToAtoms = dispClosestTriaVerticesToAtoms;
-	d_imageIdsAutoMesh = d_imageIdsTrunc;
+	//d_imageIdsAutoMesh = d_imageIdsTrunc;
 	d_gaussianMovementAtomsNetDisplacements.resize(numberGlobalAtoms);
 	for(unsigned int iAtom=0;iAtom <numberGlobalAtoms; iAtom++)
 		d_gaussianMovementAtomsNetDisplacements[iAtom]=0.0;
-
-	d_controlPointLocationsCurrentMove.clear();
-	for (unsigned int iAtom=0;iAtom <numberGlobalAtoms+numberImageAtoms; iAtom++)
-	{
-		Point<3> atomCoor;
-		if(iAtom < numberGlobalAtoms)
-		{
-			atomCoor[0] = atomLocations[iAtom][2];
-			atomCoor[1] = atomLocations[iAtom][3];
-			atomCoor[2] = atomLocations[iAtom][4];
-		}
-		else
-		{
-			atomCoor[0] = d_imagePositionsTrunc[iAtom-numberGlobalAtoms][0];
-			atomCoor[1] = d_imagePositionsTrunc[iAtom-numberGlobalAtoms][1];
-			atomCoor[2] = d_imagePositionsTrunc[iAtom-numberGlobalAtoms][2];
-		}
-		d_controlPointLocationsCurrentMove.push_back(atomCoor);
-	}
-
 
 	double minDist=1e+6;
 	for (unsigned int i=0;i <numberGlobalAtoms-1; i++)
@@ -128,24 +108,64 @@ void dftClass<FEOrder>::moveMeshToAtoms(Triangulation<3,3> & triangulationMove,
 	if (dftParameters::verbosity>=2)
 		pcout<<"Minimum distance between atoms: "<<minDist<<std::endl;
 
-	d_generatorFlatTopWidth=dftParameters::useFlatTopGenerator?std::min(0.5,0.9*minDist/2.0-0.4):0.0;
+	const double generatorFlatTopWidth=dftParameters::useFlatTopGenerator?std::min(0.5,0.9*minDist/2.0-0.4):0.0;
 
 	if (dftParameters::verbosity>=2)
-		pcout<<"Flat top width: "<<d_generatorFlatTopWidth<<std::endl;
+		pcout<<"Flat top width: "<<generatorFlatTopWidth<<std::endl;
 
-	d_gaussianConstantForce=dftParameters::reproducible_output?
-		1/std::sqrt(0.5):(dftParameters::useFlatTopGenerator?(d_generatorFlatTopWidth+0.4):(std::min(0.9*minDist/2.0-0.3,dftParameters::gaussianConstantForce)));
+	const double gaussianConstantForce=dftParameters::reproducible_output?
+		1/std::sqrt(5.0):(dftParameters::useFlatTopGenerator?(generatorFlatTopWidth+0.4):(std::min(0.9*minDist/2.0-0.3,dftParameters::gaussianConstantForce)));
 
-	forcePtr->updateGaussianConstant(d_gaussianConstantForce);
-	const double gaussianConstant=dftParameters::reproducible_output?1/std::sqrt(0.5):std::min(0.9* minDist/2.0, 2.0);
-	AssertThrow(gaussianConstant>0,ExcMessage("DFT-FE Error: gaussian constant for mesh movement is <=0"));
+	const double gaussianConstantAutoMesh=dftParameters::reproducible_output?1/std::sqrt(0.5):std::min(0.9* minDist/2.0, 2.0);
+
+	d_controlPointLocationsCurrentMove.clear();
+  d_gaussianConstantsAutoMesh.clear();
+  d_gaussianConstantsForce.clear();
+  d_generatorFlatTopWidths.clear();
+  d_smearedChargeWidths.clear();
+  std::vector<double> gaussianConstantsAutoMesh;
+  std::vector<double> flatTopWidths;
+	for (unsigned int iAtom=0;iAtom <numberGlobalAtoms+numberImageAtoms; iAtom++)
+	{
+		Point<3> atomCoor;
+		if(iAtom < numberGlobalAtoms)
+		{
+			atomCoor[0] = atomLocations[iAtom][2];
+			atomCoor[1] = atomLocations[iAtom][3];
+			atomCoor[2] = atomLocations[iAtom][4];
+      d_gaussianConstantsForce.push_back(gaussianConstantForce);
+      d_generatorFlatTopWidths.push_back(generatorFlatTopWidth);
+      d_smearedChargeWidths.push_back(generatorFlatTopWidth);
+      d_gaussianConstantsAutoMesh.push_back(gaussianConstantAutoMesh);
+		}
+		else
+		{
+			atomCoor[0] = d_imagePositionsTrunc[iAtom-numberGlobalAtoms][0];
+			atomCoor[1] = d_imagePositionsTrunc[iAtom-numberGlobalAtoms][1];
+			atomCoor[2] = d_imagePositionsTrunc[iAtom-numberGlobalAtoms][2];
+		}
+		d_controlPointLocationsCurrentMove.push_back(atomCoor);
+	}
+
+	for (unsigned int iAtom=0;iAtom <numberGlobalAtoms+numberImageAtoms; iAtom++)
+	{
+    int atomId;
+		if(iAtom < numberGlobalAtoms)
+      atomId=iAtom;
+		else
+      atomId=d_imageIdsTrunc[iAtom-numberGlobalAtoms];
+		
+    gaussianConstantsAutoMesh.push_back(d_gaussianConstantsAutoMesh[atomId]);
+    flatTopWidths.push_back(d_generatorFlatTopWidths[atomId]);
+	}
+
+
+	//AssertThrow(gaussianConstant>0,ExcMessage("DFT-FE Error: gaussian constant for mesh movement is <=0"));
 	const std::pair<bool,double> meshQualityMetrics=gaussianMove.moveMesh(closestTriaVertexToAtomsLocation,
 			dispClosestTriaVerticesToAtoms,
-			gaussianConstant,
-			d_generatorFlatTopWidth,
+			gaussianConstantsAutoMesh,
+			flatTopWidths,
 			moveSubdivided);
-
-	d_gaussianConstantAutoMove = gaussianConstant;
 
 	timer_movemesh.exit_section("move mesh to atoms: move mesh");
 
