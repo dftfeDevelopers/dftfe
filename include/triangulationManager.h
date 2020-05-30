@@ -73,6 +73,7 @@ namespace dftfe  {
 				(const std::vector<std::vector<double> > & atomLocations,
 				 const std::vector<std::vector<double> > & imageAtomLocations,
 				 const std::vector<int> & imageIds,
+         const std::vector<double> & nearestAtomDistances,
 				 const std::vector<std::vector<double> > & domainBoundingVectors,
 				 const bool generateSerialTria,
 				 const bool generateElectrostaticsTria);
@@ -96,6 +97,7 @@ namespace dftfe  {
 				(const std::vector<std::vector<double> > & atomLocations,
 				 const std::vector<std::vector<double> > & imageAtomLocations,
 				 const std::vector<int> & imageIds,
+         const std::vector<double> & nearestAtomDistances,
 				 const std::vector<std::vector<double> > & domainBoundingVectors);
 
 
@@ -113,6 +115,7 @@ namespace dftfe  {
 				(const std::vector<std::vector<double> > & atomLocations,
 				 const std::vector<std::vector<double> > & imageAtomLocations,
 				 const std::vector<int> & imageIds,
+         const std::vector<double> & nearestAtomDistances,
 				 const std::vector<std::vector<double> > & domainBoundingVectors,
 				 const bool generateSerialTria);
 
@@ -378,6 +381,7 @@ namespace dftfe  {
 			std::vector<std::vector<double> > d_atomPositions;
 			std::vector<std::vector<double> > d_imageAtomPositions;
 			std::vector<int> d_imageIds;
+      std::vector<double> d_nearestAtomDistances;
 			std::vector<std::vector<double> > d_domainBoundingVectors;
 			const unsigned int d_max_refinement_steps=40;
 

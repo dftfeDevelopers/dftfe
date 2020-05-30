@@ -746,6 +746,8 @@ namespace dftfe {
 
 			initImageChargesUpdateKPoints();
 
+      calculateNearestAtomDistances();
+
 			computing_timer.enter_section("mesh generation");
 			//
 			//generate mesh (both parallel and serial)
@@ -759,6 +761,7 @@ namespace dftfe {
 				d_mesh.generateCoarseMeshesForRestart(atomLocations,
 						d_imagePositionsTrunc,
 						d_imageIdsTrunc,
+            d_nearestAtomDistances,
 						d_domainBoundingVectors,
 						dftParameters::useSymm
 						|| ((dftParameters::isIonOpt && (dftParameters::reuseWfcGeoOpt || dftParameters::reuseDensityGeoOpt)) || (dftParameters::isBOMD && dftParameters::autoMeshStepInterpolateBOMD))
@@ -774,6 +777,7 @@ namespace dftfe {
 				d_mesh.generateSerialUnmovedAndParallelMovedUnmovedMesh(atomLocations,
 						d_imagePositionsTrunc,
 						d_imageIdsTrunc,
+            d_nearestAtomDistances,
 						d_domainBoundingVectors,
 						dftParameters::useSymm
 						|| ((dftParameters::isIonOpt && (dftParameters::reuseWfcGeoOpt || dftParameters::reuseDensityGeoOpt)) || (dftParameters::isBOMD && dftParameters::autoMeshStepInterpolateBOMD))
@@ -1664,7 +1668,7 @@ namespace dftfe {
 #endif
 
 			QGauss<3>  quadrature(C_num1DQuad<FEOrder>());
-			QGauss<3>  quadratureSmearedCharge(C_num1DQuadSmearedCharge<FEOrder>());
+			QGauss<3>  quadratureSmearedCharge(C_num1DQuadSmearedCharge());
 
 			//computingTimerStandard.enter_section("Total scf solve");
 			computingTimerStandard.enter_section("Kohn-sham dft operator init");

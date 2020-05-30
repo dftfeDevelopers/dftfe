@@ -290,6 +290,7 @@ void dftClass<FEOrder>::updatePrevMeshDataStructures()
 	d_mesh.generateSerialAndParallelUnmovedPreviousMesh(atomLocations,
 			d_imagePositions,
 			d_imageIds,
+      d_nearestAtomDistances,
 			d_domainBoundingVectors);
 	if (dftParameters::verbosity>=4)
 		dftUtils::printCurrentMemoryUsage(mpi_communicator,

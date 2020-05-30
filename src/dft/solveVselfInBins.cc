@@ -185,7 +185,7 @@ namespace dftfe
 			const dealii::DoFHandler<3> & dofHandler=matrix_free_data.get_dof_handler(offset); 
 			const dealii::Quadrature<3> & quadratureFormula=matrix_free_data.get_quadrature();
 
-			dealii::QGauss<3>  quadratureFormulaSmearedCharge(C_num1DQuadSmearedCharge<FEOrder>());
+		  dealii::QGauss<3>  quadratureFormulaSmearedCharge(C_num1DQuadSmearedCharge());
 			dealii::FEValues<3> fe_values_sc (dofHandler.get_fe(), quadratureFormulaSmearedCharge, dealii::update_values|dealii::update_JxW_values);
 			const unsigned int n_q_points_sc    =quadratureFormulaSmearedCharge.size();
 

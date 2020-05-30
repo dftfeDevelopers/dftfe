@@ -295,6 +295,8 @@ namespace dftfe {
 
 		std::vector<double> atomPointsLocal;
 		std::vector<unsigned int> atomIdsLocal;
+    std::vector<double> meshSizeAroundAtomLocalAtoms;
+    std::vector<double> outerAtomBallRadiusLocalAtoms;
 		for (unsigned int iAtom=0;iAtom <(d_atomPositions.size()+d_imageAtomPositions.size()); iAtom++)
 		{
 			if (iAtom < d_atomPositions.size())
@@ -303,6 +305,12 @@ namespace dftfe {
 				atomPointsLocal.push_back(d_atomPositions[iAtom][3]);
 				atomPointsLocal.push_back(d_atomPositions[iAtom][4]);
 				atomIdsLocal.push_back(iAtom);
+
+        const double meshSizeAroundAtomScaleFactor=(d_nearestAtomDistances[iAtom]<2.5)?0.5:1.0;
+        const double outerAtomBallRadiusScaleFactor=(d_nearestAtomDistances[iAtom]<2.5)?0.75:1.0;
+
+        meshSizeAroundAtomLocalAtoms.push_back(dftParameters::useMeshSizesFromAtomsFile?d_atomPositions[iAtom][5]:meshSizeAroundAtomScaleFactor*dftParameters::meshSizeOuterBall);
+        outerAtomBallRadiusLocalAtoms.push_back(dftParameters::useMeshSizesFromAtomsFile?d_atomPositions[iAtom][6]:outerAtomBallRadiusScaleFactor*dftParameters::outerAtomBallRadius);
 			}
 			else
 			{
@@ -310,12 +318,16 @@ namespace dftfe {
 				atomPointsLocal.push_back(d_imageAtomPositions[iImageCharge][0]);
 				atomPointsLocal.push_back(d_imageAtomPositions[iImageCharge][1]);
 				atomPointsLocal.push_back(d_imageAtomPositions[iImageCharge][2]);
-				atomIdsLocal.push_back(d_imageIds[iImageCharge]);
+        const unsigned int imageChargeId=d_imageIds[iImageCharge];
+				atomIdsLocal.push_back(imageChargeId);
+
+        const double meshSizeAroundAtomScaleFactor=(d_nearestAtomDistances[imageChargeId]<2.5)?0.5:1.0;
+        const double outerAtomBallRadiusScaleFactor=(d_nearestAtomDistances[imageChargeId]<2.5)?0.75:1.0;       
+
+        meshSizeAroundAtomLocalAtoms.push_back(dftParameters::useMeshSizesFromAtomsFile?d_atomPositions[imageChargeId][5]:meshSizeAroundAtomScaleFactor*dftParameters::meshSizeOuterBall);
+        outerAtomBallRadiusLocalAtoms.push_back(dftParameters::useMeshSizesFromAtomsFile?d_atomPositions[imageChargeId][6]:outerAtomBallRadiusScaleFactor*dftParameters::outerAtomBallRadius);        
 			}
 		}
-
-		std::vector<double> nearestAtomDistancesLocal(atomIdsLocal.size());
-
 
 		//
 		//
@@ -345,7 +357,7 @@ namespace dftfe {
 				//loop over all atoms
 				double distanceToClosestAtom = 1e8;
 				Point<3> closestAtom;
-				unsigned int closestAtomId=0;
+        unsigned int closestId=0;
 				for (unsigned int n=0; n<atomPointsLocal.size()/3; n++)
 				{
 					Point<3> atom(atomPointsLocal[3*n],atomPointsLocal[3*n+1],atomPointsLocal[3*n+2]);
@@ -353,7 +365,7 @@ namespace dftfe {
 					{
 						distanceToClosestAtom = center.distance(atom);
 						closestAtom = atom;
-						closestAtomId=atomIdsLocal[n];
+            closestId=n;
 					}
 				}
 
@@ -361,12 +373,10 @@ namespace dftfe {
 				{
 					bool inOuterAtomBall = false;
 
-					if(distanceToClosestAtom <= 
-							(dftParameters::useMeshSizesFromAtomsFile?d_atomPositions[closestAtomId][6]:dftParameters::outerAtomBallRadius))
+					if(distanceToClosestAtom <= outerAtomBallRadiusLocalAtoms[closestId])
 						inOuterAtomBall = true;
 
-					if(inOuterAtomBall && (currentMeshSize > 
-								(1.1*(dftParameters::useMeshSizesFromAtomsFile?d_atomPositions[closestAtomId][5]:dftParameters::meshSizeOuterBall))))
+					if(inOuterAtomBall && (currentMeshSize > 1.1*meshSizeAroundAtomLocalAtoms[closestId]))
 						cellRefineFlag = true;
 
 					bool inInnerAtomBall = false;
@@ -381,12 +391,10 @@ namespace dftfe {
 				{
 					bool inOuterAtomBall = false;
 
-					if(distanceToClosestAtom <= 
-							(dftParameters::useMeshSizesFromAtomsFile?d_atomPositions[closestAtomId][6]:dftParameters::outerAtomBallRadius))
+					if(distanceToClosestAtom <= outerAtomBallRadiusLocalAtoms[closestId])
 						inOuterAtomBall = true;
 
-					if(inOuterAtomBall && (currentMeshSize > 
-								(dftParameters::useMeshSizesFromAtomsFile?d_atomPositions[closestAtomId][5]:dftParameters::meshSizeOuterBall)))
+					if(inOuterAtomBall && (currentMeshSize > meshSizeAroundAtomLocalAtoms[closestId]))
 						cellRefineFlag = true;
 
 					bool inInnerAtomBall = false;

@@ -1300,6 +1300,11 @@ namespace dftfe {
 				dftParameters::gaussianOrderMoveMeshToAtoms=4.0;
 			}
 
+      //if (dftParameters::smearedNuclearCharges)
+      //{
+      //  dftParameters::gaussianOrderForce=3.0;
+      //}
+
 		}
 
 	}

@@ -76,6 +76,7 @@ namespace dftfe {
 		(const std::vector<std::vector<double> > & atomLocations,
 		 const std::vector<std::vector<double> > & imageAtomLocations,
 		 const std::vector<int> & imageIds,
+     const std::vector<double> & nearestAtomDistances,
 		 const std::vector<std::vector<double> > & domainBoundingVectors,
 		 const bool generateSerialTria,
 		 const bool generateElectrostaticsTria)
@@ -87,6 +88,7 @@ namespace dftfe {
 			d_atomPositions = atomLocations;
 			d_imageAtomPositions = imageAtomLocations;
 			d_imageIds=imageIds;
+      d_nearestAtomDistances=nearestAtomDistances;
 			d_domainBoundingVectors = domainBoundingVectors;
 
 			//clear existing triangulation data
@@ -129,6 +131,7 @@ namespace dftfe {
 		(const std::vector<std::vector<double> > & atomLocations,
 		 const std::vector<std::vector<double> > & imageAtomLocations,
 		 const std::vector<int> & imageIds,
+     const std::vector<double> & nearestAtomDistances,
 		 const std::vector<std::vector<double> > & domainBoundingVectors)
 		{
 
@@ -138,6 +141,7 @@ namespace dftfe {
 			d_atomPositions = atomLocations;
 			d_imageAtomPositions = imageAtomLocations;
 			d_imageIds=imageIds;
+      d_nearestAtomDistances=nearestAtomDistances;
 			d_domainBoundingVectors = domainBoundingVectors;
 
 			d_parallelTriangulationUnmovedPrevious.clear();
@@ -250,6 +254,7 @@ namespace dftfe {
 		(const std::vector<std::vector<double> > & atomLocations,
 		 const std::vector<std::vector<double> > & imageAtomLocations,
 		 const std::vector<int> & imageIds,
+     const std::vector<double> & nearestAtomDistances,
 		 const std::vector<std::vector<double> > & domainBoundingVectors,
 		 const bool generateSerialTria)
 		{
@@ -260,6 +265,7 @@ namespace dftfe {
 			d_atomPositions = atomLocations;
 			d_imageAtomPositions = imageAtomLocations;
 			d_imageIds=imageIds;
+      d_nearestAtomDistances=nearestAtomDistances;
 			d_domainBoundingVectors = domainBoundingVectors;
 
 			//clear existing triangulation data

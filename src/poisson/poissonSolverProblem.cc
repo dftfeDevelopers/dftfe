@@ -239,7 +239,7 @@ namespace dftfe {
 				}
 			else if (d_smearedChargeValuesPtr!=NULL)
 			{
-				dealii::QGauss<3>  quadratureSC(C_num1DQuadSmearedCharge<FEOrder>());
+				dealii::QGauss<3>  quadratureSC(C_num1DQuadSmearedCharge());
 				const unsigned int   num_quad_points_sc = quadratureSC.size();
 				dealii::FEValues<3> fe_valuesSC (dofHandler.get_fe(), quadratureSC,dealii::update_values | dealii::update_JxW_values);        
 				cell = dofHandler.begin_active();

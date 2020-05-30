@@ -303,7 +303,7 @@ void dftClass<FEOrder>::updateAtomPositionsAndMoveMesh(const std::vector<Tensor<
 		controlPointDisplacementsCurrentMove.push_back(d_gaussianMovementAtomsNetDisplacements[iAtom]);
     gaussianConstantsInitialMove.push_back(d_gaussianConstantsAutoMesh[atomId]);
     gaussianConstantsCurrentMove.push_back(dftParameters::isBOMD?dftParameters::ratioOfMeshMovementToForceGaussianBOMD*d_gaussianConstantsForce[atomId]:d_gaussianConstantsForce[atomId]);
-    flatTopWidths.push_back(d_generatorFlatTopWidths[atomId]);
+    flatTopWidths.push_back(d_flatTopWidthsAutoMeshMove[atomId]);
 	}
 
 	MPI_Barrier(mpi_communicator);

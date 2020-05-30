@@ -388,6 +388,16 @@ namespace dftfe {
 					bool moveSubdivided = false);
 
 			/**
+			 *@brief  a
+			 */
+			void calculateAdaptiveForceGeneratorsSmearedChargeWidths();     
+
+			/**
+			 *@brief  a
+			 */
+			void calculateNearestAtomDistances();       
+
+			/**
 			 * Initializes the guess of electron-density and single-atom wavefunctions on the mesh,
 			 * maps finite-element nodes to given atomic positions,
 			 * initializes pseudopotential files and exchange-correlation functionals to be used
@@ -719,8 +729,20 @@ namespace dftfe {
 			/// composite generator flat top widths for all domain atoms
 			std::vector<double> d_generatorFlatTopWidths;
 
+      /// flat top widths for all domain atoms in case of automesh mesh movement composite gaussian
+      std::vector<double> d_flatTopWidthsAutoMeshMove;
+
 			/// smeared charge widths for all domain atoms
 			std::vector<double> d_smearedChargeWidths;
+
+      /// nearest atom ids for all domain atoms
+      std::vector<unsigned int> d_nearestAtomIds;
+
+      /// nearest atom distances for all domain atoms
+      std::vector<double> d_nearestAtomDistances;
+
+      ///
+      double d_minDist;
 
 			/// vector of lendth number of periodic image charges with corresponding master chargeIds
 			std::vector<int> d_imageIds;

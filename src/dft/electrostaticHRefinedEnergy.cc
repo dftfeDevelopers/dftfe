@@ -556,7 +556,7 @@ void dftClass<FEOrder>::computeElectrostaticEnergyHRefined(
 
 	energyCalculator energyCalcHRefined(mpi_communicator, interpoolcomm, interBandGroupComm);
 
-	QGauss<3>  quadratureSmearedCharge(C_num1DQuadSmearedCharge<FEOrder>());
+	QGauss<3>  quadratureSmearedCharge(C_num1DQuadSmearedCharge());
 
 	const double totalEnergy = dftParameters::spinPolarized==0 ?
 		energyCalcHRefined.computeEnergy(dofHandlerHRefined,
