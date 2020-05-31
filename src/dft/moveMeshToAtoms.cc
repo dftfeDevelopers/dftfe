@@ -164,7 +164,6 @@ void dftClass<FEOrder>::moveMeshToAtoms(Triangulation<3,3> & triangulationMove,
 			atomCoor[0] = atomLocations[iAtom][2];
 			atomCoor[1] = atomLocations[iAtom][3];
 			atomCoor[2] = atomLocations[iAtom][4];
-      d_gaussianConstantsAutoMesh.push_back(dftParameters::reproducible_output?1/std::sqrt(0.5):std::min(0.9* d_nearestAtomDistances[iAtom]/2.0, 2.0));
 		}
 		else
 		{
