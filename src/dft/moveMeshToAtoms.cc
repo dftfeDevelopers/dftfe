@@ -150,8 +150,8 @@ void dftClass<FEOrder>::moveMeshToAtoms(Triangulation<3,3> & triangulationMove,
   d_flatTopWidthsAutoMeshMove.resize(numberGlobalAtoms);
 	for (unsigned int iAtom=0;iAtom <numberGlobalAtoms; iAtom++)
 	{
-      d_flatTopWidthsAutoMeshMove[iAtom]=dftParameters::useFlatTopGenerator?std::min(0.5,0.9*d_nearestAtomDistances[iAtom]/2.0-0.4):0.0;
-      d_gaussianConstantsAutoMesh[iAtom]=dftParameters::reproducible_output?1/std::sqrt(0.5):(std::min(0.9* d_nearestAtomDistances[iAtom]/2.0, 2.0)-d_flatTopWidthsAutoMeshMove[iAtom]);
+      d_flatTopWidthsAutoMeshMove[iAtom]=dftParameters::useFlatTopGenerator?std::min(0.5,0.9*d_nearestAtomDistances[iAtom]/2.0-0.2):0.0;
+      d_gaussianConstantsAutoMesh[iAtom]=dftParameters::reproducible_output?1/std::sqrt(0.5):(std::min(d_nearestAtomDistances[iAtom]/2.0, 2.0)-d_flatTopWidthsAutoMeshMove[iAtom]);
   }
 
   std::vector<double> gaussianConstantsAutoMesh;
@@ -270,7 +270,7 @@ void dftClass<FEOrder>::calculateAdaptiveForceGeneratorsSmearedChargeWidths()
       double boundingSphereRadius=generatorFlatTopWidthsAllAtomsImages[iAtom];
       while ((boundingSphereRadius*2.0+gaussianWidth*2.0)>d_nearestAtomDistances[atomId] || (boundingSphereRadius>maxFlatTopWidth) || count==0)
       {
-        boundingSphereRadius=0.0;
+        boundingSphereRadius=smearedChargeWidthsAllAtomsImages[iAtom];
         DoFHandler<3>::active_cell_iterator
           cell = dofHandler.begin_active(),
                endc = dofHandler.end();
@@ -297,8 +297,11 @@ void dftClass<FEOrder>::calculateAdaptiveForceGeneratorsSmearedChargeWidths()
         boundingSphereRadius+=1e-3;
         generatorFlatTopWidthsAllAtomsImages[iAtom]=boundingSphereRadius;
 
-        if ((boundingSphereRadius*2.0+gaussianWidth*2)>d_nearestAtomDistances[atomId])
+        if ((boundingSphereRadius*2.0+gaussianWidth*2.0)>d_nearestAtomDistances[atomId])
           smearedChargeWidthsAllAtomsImages[iAtom]-=0.05;
+
+        if (dftParameters::verbosity>=5 && smearedChargeWidthsAllAtomsImages[iAtom]<0.05)
+            std::cout<< "iAtom: "<< iAtom<<", Smeared charge width: "<<smearedChargeWidthsAllAtomsImages[iAtom]<< ",  flat top width: "<< generatorFlatTopWidthsAllAtomsImages[iAtom] <<std::endl; 
 
 	      AssertThrow(smearedChargeWidthsAllAtomsImages[iAtom]>=0.05,ExcMessage("DFT-FE Error: Smeared charge width calculated adaptively is less than 0.05 Bohr. Hint: Refine the mesh further for regions where atoms are close (<2 Bohr).")); 
         count++;

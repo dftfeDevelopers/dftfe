@@ -384,7 +384,7 @@ namespace dftfe {
 					if(distanceToClosestAtom <= dftParameters::innerAtomBallRadius)
 						inInnerAtomBall = true;
 
-					if(inInnerAtomBall && currentMeshSize > 1.5*dftParameters::meshSizeInnerBall)
+					if(inInnerAtomBall && currentMeshSize > 1.1*dftParameters::meshSizeInnerBall)
 						cellRefineFlag = true;
 				}
 				else
@@ -690,7 +690,7 @@ namespace dftfe {
 
 		for (int i = 0; i < std::accumulate(periodic.begin(),periodic.end(),0); ++i)
 		{
-			GridTools::collect_periodic_faces(dofHandler, /*b_id1*/ 2*i+1, /*b_id2*/ 2*i+2,/*direction*/ periodicDirectionVector[i], periodicity_vector,offsetVectors[periodicDirectionVector[i]]);
+			GridTools::collect_periodic_faces(dofHandler,  2*i+1, 2*i+2, periodicDirectionVector[i], periodicity_vector,offsetVectors[periodicDirectionVector[i]]);
 		}
 
 		DoFTools::make_periodicity_constraints<DoFHandler<C_DIM> >(periodicity_vector, constraints);
@@ -701,7 +701,7 @@ namespace dftfe {
 
 		const std::vector<IndexSet>& locally_owned_dofs_debug= dofHandler.locally_owned_dofs_per_processor();
 
-		return constraints.is_consistent_in_parallel(locally_owned_dofs_debug,
+    return constraints.is_consistent_in_parallel(locally_owned_dofs_debug,
 				locally_active_dofs_debug,
 				mpi_communicator,
 				!dftParameters::reproducible_output);
