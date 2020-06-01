@@ -435,7 +435,7 @@ namespace dftfe {
 							Patterns::Double(0.0),
 							"[Developer] Force computation generator gaussian order. Also used for mesh movement. Gamma(r)= exp(-(r/gaussianConstant)^(gaussianOrder)).");
 
-					prm.declare_entry("GAUSSIAN ORDER MOVE MESH TO ATOMS", "3.0",
+					prm.declare_entry("GAUSSIAN ORDER MOVE MESH TO ATOMS", "4.0",
 							Patterns::Double(0.0),
 							"[Developer] Move mesh to atoms gaussian order. Gamma(r)= exp(-(r/gaussianConstant)^(gaussianOrder)).");
 

@@ -423,7 +423,7 @@ namespace dftfe {
 					Point<3> p_cell = mapping.transform_real_to_unit_cell(cell,closestAtom);
 					double dist = GeometryInfo<3>::distance_to_unit_cell(p_cell);
 
-					if(dist < 1e-08 && currentMeshSize > (dftParameters::autoUserMeshParams?1.5:1)*dftParameters::meshSizeInnerBall)
+					if(dist < 1e-08 && currentMeshSize > (dftParameters::autoUserMeshParams?1.1:1)*dftParameters::meshSizeInnerBall)
 						cellRefineFlag = true;
 
 				}
