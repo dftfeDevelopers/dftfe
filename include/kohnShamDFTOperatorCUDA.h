@@ -709,7 +709,7 @@ namespace dftfe{
 		//d_kpoint index for which Hamiltonian is computed
 		unsigned int d_kPointIndex;
 
-    unsigned int d_spinIndex;
+		unsigned int d_spinIndex;
 
 		//storage for precomputing index maps
 		std::vector<dealii::types::global_dof_index > d_flattenedArrayCellLocalProcIndexIdMap;

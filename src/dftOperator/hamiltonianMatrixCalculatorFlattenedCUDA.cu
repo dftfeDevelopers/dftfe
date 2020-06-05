@@ -126,7 +126,7 @@ namespace
 	template<unsigned int FEOrder>
 void kohnShamDFTOperatorCUDAClass<FEOrder>::computeHamiltonianMatrix(const unsigned int kPointIndex, const unsigned int spinIndex)
 {
-  const unsigned int kpointSpinIndex=(1+dftParameters::spinPolarized)*kPointIndex+spinIndex;
+	const unsigned int kpointSpinIndex=(1+dftParameters::spinPolarized)*kPointIndex+spinIndex;
 	//d_cellHamiltonianMatrixFlattenedDevice.resize(d_numLocallyOwnedCells*d_numberNodesPerElement*d_numberNodesPerElement,0.0);
 	double gpu_time=MPI_Wtime();
 	if(dftParameters::xc_id == 4)
