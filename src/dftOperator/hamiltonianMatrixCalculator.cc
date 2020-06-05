@@ -19,7 +19,7 @@
 
 
 	template<unsigned int FEOrder>
-void kohnShamDFTOperatorClass<FEOrder>::computeHamiltonianMatrix(unsigned int kPointIndex)
+void kohnShamDFTOperatorClass<FEOrder>::computeHamiltonianMatrix(const unsigned int kPointIndex, const unsigned int spinIndex)
 {
 
 	//
@@ -27,12 +27,13 @@ void kohnShamDFTOperatorClass<FEOrder>::computeHamiltonianMatrix(unsigned int kP
 	//
 	const unsigned int numberMacroCells = dftPtr->matrix_free_data.n_macro_cells();
 	const unsigned int totalLocallyOwnedCells = dftPtr->matrix_free_data.n_physical_cells();
-
+  const unsigned int kpointSpinIndex=(1+dftParameters::spinPolarized)*kPointIndex+spinIndex;
+  
 	//
 	//Resize the cell-level hamiltonian  matrix
 	//
-	d_cellHamiltonianMatrix.clear();
-	d_cellHamiltonianMatrix.resize(totalLocallyOwnedCells);
+	d_cellHamiltonianMatrix[kpointSpinIndex].clear();
+	d_cellHamiltonianMatrix[kpointSpinIndex].resize(totalLocallyOwnedCells);
 
 	//
 	//Get some FE related Data
@@ -154,18 +155,18 @@ void kohnShamDFTOperatorClass<FEOrder>::computeHamiltonianMatrix(unsigned int kP
 		for(unsigned int iSubCell = 0; iSubCell < n_sub_cells; ++iSubCell)
 		{
 			//FIXME: Use functions like mkl_malloc for 64 byte memory alignment.
-			d_cellHamiltonianMatrix[iElem].resize(numberDofsPerElement*numberDofsPerElement,0.0);
+			d_cellHamiltonianMatrix[kpointSpinIndex][iElem].resize(numberDofsPerElement*numberDofsPerElement,0.0);
 
 			for(unsigned int iNode = 0; iNode < numberDofsPerElement; ++iNode)
 			{
 				for(unsigned int jNode = 0; jNode < numberDofsPerElement; ++jNode)
 				{
 #ifdef USE_COMPLEX
-					d_cellHamiltonianMatrix[iElem][numberDofsPerElement*iNode + jNode].real(elementHamiltonianMatrix[numberDofsPerElement*iNode + jNode][iSubCell]);
-					d_cellHamiltonianMatrix[iElem][numberDofsPerElement*iNode + jNode].imag(elementHamiltonianMatrixImag[numberDofsPerElement*iNode + jNode][iSubCell]);
+					d_cellHamiltonianMatrix[kpointSpinIndex][iElem][numberDofsPerElement*iNode + jNode].real(elementHamiltonianMatrix[numberDofsPerElement*iNode + jNode][iSubCell]);
+					d_cellHamiltonianMatrix[kpointSpinIndex][iElem][numberDofsPerElement*iNode + jNode].imag(elementHamiltonianMatrixImag[numberDofsPerElement*iNode + jNode][iSubCell]);
 
 #else
-					d_cellHamiltonianMatrix[iElem][numberDofsPerElement*iNode + jNode]
+					d_cellHamiltonianMatrix[kpointSpinIndex][iElem][numberDofsPerElement*iNode + jNode]
 						= elementHamiltonianMatrix[numberDofsPerElement*iNode + jNode][iSubCell];
 
 #endif
@@ -194,8 +195,8 @@ void kohnShamDFTOperatorClass<FEOrder>::computeKineticMatrix()
 	//
 	//Resize the cell-level hamiltonian  matrix
 	//
-	d_cellHamiltonianMatrix.clear();
-	d_cellHamiltonianMatrix.resize(totalLocallyOwnedCells);
+	d_cellHamiltonianMatrix[0].clear();
+	d_cellHamiltonianMatrix[0].resize(totalLocallyOwnedCells);
 
 	//
 	//Get some FE related Data
@@ -233,13 +234,13 @@ void kohnShamDFTOperatorClass<FEOrder>::computeKineticMatrix()
 		for(unsigned int iSubCell = 0; iSubCell < n_sub_cells; ++iSubCell)
 		{
 			//FIXME: Use functions like mkl_malloc for 64 byte memory alignment.
-			d_cellHamiltonianMatrix[iElem].resize(numberDofsPerElement*numberDofsPerElement,0.0);
+			d_cellHamiltonianMatrix[0][iElem].resize(numberDofsPerElement*numberDofsPerElement,0.0);
 
 			for(unsigned int iNode = 0; iNode < numberDofsPerElement; ++iNode)
 			{
 				for(unsigned int jNode = 0; jNode < numberDofsPerElement; ++jNode)
 				{
-					d_cellHamiltonianMatrix[iElem][numberDofsPerElement*iNode + jNode]
+					d_cellHamiltonianMatrix[0][iElem][numberDofsPerElement*iNode + jNode]
 						= elementHamiltonianMatrix[numberDofsPerElement*iNode + jNode][iSubCell];
 				}
 			}

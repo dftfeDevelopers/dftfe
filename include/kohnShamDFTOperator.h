@@ -197,11 +197,11 @@ namespace dftfe{
 
 
 		/**
-		 * @brief sets the data member to appropriate kPoint Index
+		 * @brief sets the data member to appropriate kPoint and spin Index
 		 *
 		 * @param kPointIndex  k-point Index to set
 		 */
-		void reinitkPointIndex(unsigned int & kPointIndex);
+		void reinitkPointSpinIndex(const unsigned int  kPointIndex, const unsigned int spinIndex);
 
 		//
 		//initialize eigen class
@@ -248,7 +248,7 @@ namespace dftfe{
 		void preComputeShapeFunctionGradientIntegrals();
 
 		///compute element Hamiltonian matrix
-		void computeHamiltonianMatrix(unsigned int kPointIndex);
+		void computeHamiltonianMatrix(const unsigned int kPointIndex, const unsigned int spinIndex);
 		void computeKineticMatrix();
 		void computeMassMatrix();
 
@@ -262,7 +262,7 @@ namespace dftfe{
 		 * and second dimension storing the stiffness matrix of size numberNodesPerElement x numberNodesPerElement in a flattened 1D array
 		 * of complex data type
 		 */
-		std::vector<std::vector<dataTypes::number> > d_cellHamiltonianMatrix;
+		std::vector<std::vector<std::vector<dataTypes::number> > > d_cellHamiltonianMatrix;
 		std::vector<std::vector<dataTypes::number> > d_cellMassMatrix;
 
 		/**
@@ -372,8 +372,11 @@ namespace dftfe{
 		//mutex thread for managing multi-thread writing to XHXvalue
 		mutable dealii::Threads::Mutex  assembler_lock;
 
-		//d_kpoint index for which Hamiltonian is computed
+		//d_kpoint index for which Hamiltonian is used in HX
 		unsigned int d_kPointIndex;
+
+    // spin index for which Hamiltonian is used in HX
+    unsigned int d_spinIndex;    
 
 		//storage for precomputing index maps
 		std::vector<std::vector<dealii::types::global_dof_index> > d_flattenedArrayMacroCellLocalProcIndexIdMap, d_flattenedArrayCellLocalProcIndexIdMap;
