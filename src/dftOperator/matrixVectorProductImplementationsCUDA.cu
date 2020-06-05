@@ -244,7 +244,7 @@ void kohnShamDFTOperatorCUDAClass<FEOrder>::computeLocalHamiltonianTimesX(const 
 		double* dst,
 		const bool skipAccumulationBoundaryNodes) 
 {
-
+  const unsigned int kpointSpinIndex=(1+dftParameters::spinPolarized)*d_kPointIndex+d_spinIndex;
 	const unsigned int totalLocallyOwnedCells = dftPtr->matrix_free_data.n_physical_cells();  
 
 	copyCUDAKernel<<<(numberWaveFunctions+255)/256*totalLocallyOwnedCells*d_numberNodesPerElement,256>>>(numberWaveFunctions, 
@@ -270,7 +270,7 @@ void kohnShamDFTOperatorCUDAClass<FEOrder>::computeLocalHamiltonianTimesX(const 
 			thrust::raw_pointer_cast(&d_cellWaveFunctionMatrix[0]),
 			numberWaveFunctions,
 			strideA,
-			thrust::raw_pointer_cast(&d_cellHamiltonianMatrixFlattenedDevice[0]),
+			thrust::raw_pointer_cast(&d_cellHamiltonianMatrixFlattenedDevice[d_numLocallyOwnedCells*d_numberNodesPerElement*d_numberNodesPerElement*kpointSpinIndex]),
 			d_numberNodesPerElement,
 			strideB,
 			&scalarCoeffBeta,

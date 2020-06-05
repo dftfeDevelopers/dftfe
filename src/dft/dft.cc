@@ -1474,7 +1474,7 @@ namespace dftfe {
 					{
 #ifdef DFTFE_WITH_GPU
 						if (dftParameters::useGPU)
-							kohnShamDFTEigenOperatorCUDA.reinitkPointIndex(kPoint);
+							kohnShamDFTEigenOperatorCUDA.reinitkPointSpinIndex(kPoint,s);
 #endif
 						if (!dftParameters::useGPU)
 							kohnShamDFTEigenOperator.reinitkPointSpinIndex(kPoint,s);
@@ -1482,7 +1482,7 @@ namespace dftfe {
 						computing_timer.enter_section("Hamiltonian Matrix Computation");
 #ifdef DFTFE_WITH_GPU
 						if (dftParameters::useGPU)
-							kohnShamDFTEigenOperatorCUDA.computeHamiltonianMatrix(kPoint);
+							kohnShamDFTEigenOperatorCUDA.computeHamiltonianMatrix(kPoint,s);
 #endif
 						if (!dftParameters::useGPU)
 							kohnShamDFTEigenOperator.computeHamiltonianMatrix(kPoint,s);
@@ -1565,7 +1565,7 @@ namespace dftfe {
 				{
 #ifdef DFTFE_WITH_GPU
 					if (dftParameters::useGPU)
-						kohnShamDFTEigenOperatorCUDA.reinitkPointIndex(kPoint);
+						kohnShamDFTEigenOperatorCUDA.reinitkPointSpinIndex(kPoint,0);
 #endif
 					if (!dftParameters::useGPU)
 						kohnShamDFTEigenOperator.reinitkPointSpinIndex(kPoint,0);
@@ -1573,7 +1573,7 @@ namespace dftfe {
 					computing_timer.enter_section("Hamiltonian Matrix Computation");
 #ifdef DFTFE_WITH_GPU
 					if (dftParameters::useGPU)
-						kohnShamDFTEigenOperatorCUDA.computeHamiltonianMatrix(kPoint);
+						kohnShamDFTEigenOperatorCUDA.computeHamiltonianMatrix(kPoint,0);
 #endif
 					if (!dftParameters::useGPU)
 						kohnShamDFTEigenOperator.computeHamiltonianMatrix(kPoint,0);
@@ -2020,7 +2020,7 @@ namespace dftfe {
 						{
 #ifdef DFTFE_WITH_GPU
 							if (dftParameters::useGPU)
-								kohnShamDFTEigenOperatorCUDA.reinitkPointIndex(kPoint);
+								kohnShamDFTEigenOperatorCUDA.reinitkPointSpinIndex(kPoint,s);
 #endif
 							if (!dftParameters::useGPU)
 								kohnShamDFTEigenOperator.reinitkPointSpinIndex(kPoint,s);
@@ -2028,7 +2028,7 @@ namespace dftfe {
 							computing_timer.enter_section("Hamiltonian Matrix Computation");
 #ifdef DFTFE_WITH_GPU
 							if (dftParameters::useGPU)
-								kohnShamDFTEigenOperatorCUDA.computeHamiltonianMatrix(kPoint);
+								kohnShamDFTEigenOperatorCUDA.computeHamiltonianMatrix(kPoint,s);
 #endif
 							if (!dftParameters::useGPU)
 								kohnShamDFTEigenOperator.computeHamiltonianMatrix(kPoint,s);
@@ -2140,7 +2140,7 @@ namespace dftfe {
 
 #ifdef DFTFE_WITH_GPU
 									if (dftParameters::useGPU)
-										kohnShamDFTEigenOperatorCUDA.reinitkPointIndex(kPoint);
+										kohnShamDFTEigenOperatorCUDA.reinitkPointSpinIndex(kPoint,s);
 #endif
 									if (!dftParameters::useGPU)
 										kohnShamDFTEigenOperator.reinitkPointSpinIndex(kPoint,s);
@@ -2247,7 +2247,7 @@ namespace dftfe {
 					{
 #ifdef DFTFE_WITH_GPU
 						if (dftParameters::useGPU)
-							kohnShamDFTEigenOperatorCUDA.reinitkPointIndex(kPoint);
+							kohnShamDFTEigenOperatorCUDA.reinitkPointSpinIndex(kPoint,0);
 #endif
 						if (!dftParameters::useGPU)
 							kohnShamDFTEigenOperator.reinitkPointSpinIndex(kPoint,0);
@@ -2255,7 +2255,7 @@ namespace dftfe {
 						computing_timer.enter_section("Hamiltonian Matrix Computation");
 #ifdef DFTFE_WITH_GPU
 						if (dftParameters::useGPU)
-							kohnShamDFTEigenOperatorCUDA.computeHamiltonianMatrix(kPoint);
+							kohnShamDFTEigenOperatorCUDA.computeHamiltonianMatrix(kPoint,0);
 #endif
 						if (!dftParameters::useGPU)
 							kohnShamDFTEigenOperator.computeHamiltonianMatrix(kPoint,0);
@@ -2349,7 +2349,7 @@ namespace dftfe {
 
 #ifdef DFTFE_WITH_GPU
 								if (dftParameters::useGPU)
-									kohnShamDFTEigenOperatorCUDA.reinitkPointIndex(kPoint);
+									kohnShamDFTEigenOperatorCUDA.reinitkPointSpinIndex(kPoint,0);
 #endif
 								if (!dftParameters::useGPU)
 									kohnShamDFTEigenOperator.reinitkPointSpinIndex(kPoint,0);
@@ -2409,7 +2409,7 @@ namespace dftfe {
 
 #ifdef DFTFE_WITH_GPU
 								if (dftParameters::useGPU)
-									kohnShamDFTEigenOperatorCUDA.reinitkPointIndex(kPoint);
+									kohnShamDFTEigenOperatorCUDA.reinitkPointSpinIndex(kPoint,0);
 #endif
 								if (!dftParameters::useGPU)
 									kohnShamDFTEigenOperator.reinitkPointSpinIndex(kPoint,0);
@@ -2417,7 +2417,7 @@ namespace dftfe {
 								computing_timer.enter_section("Hamiltonian Matrix Computation");
 #ifdef DFTFE_WITH_GPU
 								if (dftParameters::useGPU)
-									kohnShamDFTEigenOperatorCUDA.computeHamiltonianMatrix(kPoint);
+									kohnShamDFTEigenOperatorCUDA.computeHamiltonianMatrix(kPoint,0);
 #endif
 								if (!dftParameters::useGPU)
 									kohnShamDFTEigenOperator.computeHamiltonianMatrix(kPoint,0);

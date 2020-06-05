@@ -436,7 +436,7 @@ namespace dftfe{
 		 *
 		 * @param kPointIndex  k-point Index to set
 		 */
-		void reinitkPointIndex(unsigned int & kPointIndex);
+		void reinitkPointSpinIndex(const unsigned int kPointIndex, const unsigned int spinIndex);
 
 		//
 		//initialize eigen class
@@ -483,7 +483,7 @@ namespace dftfe{
 		void preComputeShapeFunctionGradientIntegrals();
 
 
-		void computeHamiltonianMatrix(unsigned int kPointIndex);
+		void computeHamiltonianMatrix(const unsigned int kPointIndex, const unsigned int spinIndex);
 
 
 		/**
@@ -528,7 +528,7 @@ namespace dftfe{
 		 * and second dimension storing the stiffness matrix of size numberNodesPerElement x numberNodesPerElement in a flattened 1D array
 		 * of complex data type
 		 */
-		std::vector<dataTypes::number> d_cellHamiltonianMatrixFlattened;
+		std::vector<dataTypes::number>  d_cellHamiltonianMatrixFlattened;
 		thrust::device_vector<dataTypes::number> d_cellHamiltonianMatrixFlattenedDevice;
 		//thrust::device_vector<dataTypes::number> d_cellWaveFunctionMatrix;
 		thrust::device_vector<dataTypes::number> d_cellHamMatrixTimesWaveMatrix;
@@ -708,6 +708,8 @@ namespace dftfe{
 
 		//d_kpoint index for which Hamiltonian is computed
 		unsigned int d_kPointIndex;
+
+    unsigned int d_spinIndex;
 
 		//storage for precomputing index maps
 		std::vector<dealii::types::global_dof_index > d_flattenedArrayCellLocalProcIndexIdMap;
