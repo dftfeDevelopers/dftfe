@@ -2140,7 +2140,7 @@ namespace dftfe {
 
 #ifdef DFTFE_WITH_GPU
 									if (dftParameters::useGPU)
-										kohnShamDFTEigenOperatorCUDA.reinitkPointSpinIndex(kPoint,s);
+										kohnShamDFTEigenOperatorCUDA.reinitkPointIndex(kPoint);
 #endif
 									if (!dftParameters::useGPU)
 										kohnShamDFTEigenOperator.reinitkPointSpinIndex(kPoint,s);
