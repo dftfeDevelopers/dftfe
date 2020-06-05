@@ -28,7 +28,7 @@ void kohnShamDFTOperatorClass<FEOrder>::computeLocalHamiltonianTimesX(const dist
 		const unsigned int numberWaveFunctions,
 		distributedCPUVec<std::complex<double> > & dst) const
 {
-  const unsigned int kpointSpinIndex=(1+dftParameters::spinPolarized)*d_kPointIndex+d_spinIndex;
+	const unsigned int kpointSpinIndex=(1+dftParameters::spinPolarized)*d_kPointIndex+d_spinIndex;
 	//
 	//element level matrix-vector multiplications
 	//
@@ -92,7 +92,7 @@ void kohnShamDFTOperatorClass<FEOrder>::computeLocalHamiltonianTimesXBatchGEMM (
 		distributedCPUVec<std::complex<double> > & dst) const
 
 {
-  const unsigned int kpointSpinIndex=(1+dftParameters::spinPolarized)*d_kPointIndex+d_spinIndex;
+	const unsigned int kpointSpinIndex=(1+dftParameters::spinPolarized)*d_kPointIndex+d_spinIndex;
 	//
 	//element level matrix-vector multiplications
 	//
@@ -181,7 +181,7 @@ void kohnShamDFTOperatorClass<FEOrder>::computeLocalHamiltonianTimesX(const dist
 		distributedCPUVec<double> & dst) const
 {
 
-  const unsigned int kpointSpinIndex=(1+dftParameters::spinPolarized)*d_kPointIndex+d_spinIndex;
+	const unsigned int kpointSpinIndex=(1+dftParameters::spinPolarized)*d_kPointIndex+d_spinIndex;
 	//
 	//element level matrix-vector multiplications
 	//
@@ -215,7 +215,7 @@ void kohnShamDFTOperatorClass<FEOrder>::computeLocalHamiltonianTimesX(const dist
 					&scalarCoeffAlpha,
 					&cellWaveFunctionMatrix[0],
 					&numberWaveFunctions,
-				  &d_cellHamiltonianMatrix[kpointSpinIndex][iElem][0],
+					&d_cellHamiltonianMatrix[kpointSpinIndex][iElem][0],
 					&d_numberNodesPerElement,
 					&scalarCoeffBeta,
 					&cellHamMatrixTimesWaveMatrix[0],
@@ -243,7 +243,7 @@ void kohnShamDFTOperatorClass<FEOrder>::computeMassMatrixTimesX(const distribute
 		const unsigned int numberWaveFunctions,
 		distributedCPUVec<double> & dst) const
 {
-  const unsigned int kpointSpinIndex=(1+dftParameters::spinPolarized)*d_kPointIndex+d_spinIndex;
+	const unsigned int kpointSpinIndex=(1+dftParameters::spinPolarized)*d_kPointIndex+d_spinIndex;
 	//
 	//element level matrix-vector multiplications
 	//
@@ -306,7 +306,7 @@ void kohnShamDFTOperatorClass<FEOrder>::computeLocalHamiltonianTimesXBatchGEMM (
 		const unsigned int numberWaveFunctions,
 		distributedCPUVec<double> & dst) const
 {
-  const unsigned int kpointSpinIndex=(1+dftParameters::spinPolarized)*d_kPointIndex+d_spinIndex;
+	const unsigned int kpointSpinIndex=(1+dftParameters::spinPolarized)*d_kPointIndex+d_spinIndex;
 	//
 	//element level matrix-vector multiplications
 	//

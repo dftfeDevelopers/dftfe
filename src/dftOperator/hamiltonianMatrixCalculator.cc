@@ -27,8 +27,8 @@ void kohnShamDFTOperatorClass<FEOrder>::computeHamiltonianMatrix(const unsigned 
 	//
 	const unsigned int numberMacroCells = dftPtr->matrix_free_data.n_macro_cells();
 	const unsigned int totalLocallyOwnedCells = dftPtr->matrix_free_data.n_physical_cells();
-  const unsigned int kpointSpinIndex=(1+dftParameters::spinPolarized)*kPointIndex+spinIndex;
-  
+	const unsigned int kpointSpinIndex=(1+dftParameters::spinPolarized)*kPointIndex+spinIndex;
+
 	//
 	//Resize the cell-level hamiltonian  matrix
 	//

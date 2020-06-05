@@ -375,8 +375,8 @@ namespace dftfe{
 		//d_kpoint index for which Hamiltonian is used in HX
 		unsigned int d_kPointIndex;
 
-    // spin index for which Hamiltonian is used in HX
-    unsigned int d_spinIndex;    
+		// spin index for which Hamiltonian is used in HX
+		unsigned int d_spinIndex;    
 
 		//storage for precomputing index maps
 		std::vector<std::vector<dealii::types::global_dof_index> > d_flattenedArrayMacroCellLocalProcIndexIdMap, d_flattenedArrayCellLocalProcIndexIdMap;
