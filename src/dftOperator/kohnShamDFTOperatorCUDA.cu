@@ -456,6 +456,8 @@ namespace dftfe
 
 			const unsigned int totalLocallyOwnedCells = dftPtr->matrix_free_data.n_physical_cells(); 
 
+			d_cellHamiltonianMatrixFlattenedDevice.resize(d_numLocallyOwnedCells*d_numberNodesPerElement*d_numberNodesPerElement*dftPtr->d_kPointWeights.size()*(1+dftParameters::spinPolarized),0.0);
+
 			d_cellWaveFunctionMatrix.resize(totalLocallyOwnedCells*d_numberNodesPerElement*numberWaveFunctions,0.0);
 
 			d_cellHamMatrixTimesWaveMatrix.resize(totalLocallyOwnedCells*d_numberNodesPerElement*numberWaveFunctions,0.0);
@@ -821,9 +823,10 @@ namespace dftfe
 
 
 	template<unsigned int FEOrder>
-		void kohnShamDFTOperatorCUDAClass<FEOrder>::reinitkPointIndex(unsigned int & kPointIndex)
+		void kohnShamDFTOperatorCUDAClass<FEOrder>::reinitkPointSpinIndex(const unsigned int kPointIndex, const unsigned int spinIndex)
 		{
 			d_kPointIndex = kPointIndex;
+			d_spinIndex   = spinIndex;
 		}
 
 

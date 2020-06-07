@@ -128,7 +128,7 @@ dataTypes::number dftClass<FEOrder>::computeTraceXtHX(unsigned int numberWaveFun
 	//
 	//compute Hamiltonian matrix
 	//
-	kohnShamDFTEigenOperator.computeHamiltonianMatrix(0);
+	kohnShamDFTEigenOperator.computeHamiltonianMatrix(0,0);
 
 	//
 	//scale the eigenVectors (initial guess of single atom wavefunctions or previous guess) to convert into Lowden Orthonormalized FE basis
