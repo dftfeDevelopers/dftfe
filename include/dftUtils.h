@@ -32,6 +32,53 @@ namespace dftfe {
 	namespace dftUtils
 	{
 
+		inline double smearedCharge(double r, double rc){
+			double val;
+			if (r > rc){
+				val=0.0;
+			}
+			else {
+				val = -21.0*pow(r-rc,3.0)*(6.0*r*r+3.0*r*rc+rc*rc)/(5.0*M_PI*pow(rc,8.0));
+			}
+			return val;
+		}
+   
+		inline double smearedChargeDr(double r, double rc){
+			double val;
+			if (r > rc){
+				val=0.0;
+			}
+			else {
+				val = (-63.0*pow(r-rc,2.0)*(6.0*r*r+3.0*r*rc+rc*rc)-63.0*pow(r-rc,3.0)*(4.0*r+rc))/(5.0*M_PI*pow(rc,8.0));
+			}
+			return val;
+		}   
+
+		inline double smearedPot(double r, double rc){
+			double val;
+			if (r > rc){
+				val=1.0/r;
+			}
+			else {
+				val = (9.0*pow(r,7.0)- 30.0*pow(r,6.0)*rc + 28.0*pow(r,5.0)*pow(rc,2.0) -
+						14.0*pow(r,2.0)*pow(rc,5) + 12.0*pow(rc,7) )/(5.0*pow(rc,8.0));
+			}
+			return val;
+		}
+
+		// derivative w.r.t r
+		inline double smearedPotDr(double r, double rc){
+			double val;
+			if (r > rc){
+				val=-1.0/pow(r,2.0);
+			}
+			else {
+				val = (63.0*pow(r,6.0)- 180.0*pow(r,5.0)*rc + 140.0*pow(r,4.0)*pow(rc,2.0) -
+						28.0*pow(r,1.0)*pow(rc,5) )/(5.0*pow(rc,8.0));
+			}
+			return val;
+		}   
+
 		/** @brief Calculates value of composite generator
 		 *
 		 */

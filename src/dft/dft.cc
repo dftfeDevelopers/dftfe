@@ -1752,6 +1752,8 @@ namespace dftfe {
 							d_imageCharges,
 							d_localVselfs,
 							d_bQuadValuesAllAtoms,
+              d_bQuadAtomIdsAllAtoms,
+              d_bQuadGradValuesAllAtoms,             
 							d_smearedChargeWidths,
 							dftParameters::smearedNuclearCharges);
 				else
@@ -1763,6 +1765,8 @@ namespace dftfe {
 							d_imageCharges,
 							d_localVselfs,
 							d_bQuadValuesAllAtoms,
+              d_bQuadAtomIdsAllAtoms,
+              d_bQuadGradValuesAllAtoms,
 							d_smearedChargeWidths,
 							dftParameters::smearedNuclearCharges);
 #else
@@ -1774,6 +1778,8 @@ namespace dftfe {
 						d_imageCharges,
 						d_localVselfs,
 						d_bQuadValuesAllAtoms,
+            d_bQuadAtomIdsAllAtoms,
+            d_bQuadGradValuesAllAtoms,
 						d_smearedChargeWidths,
 						dftParameters::smearedNuclearCharges);
 #endif
@@ -1794,6 +1800,7 @@ namespace dftfe {
 						d_noConstraints,
 						d_supportPoints,
 						d_vselfBinsManager,
+            d_phiExt,
 						d_pseudoVLoc,
 						d_gradPseudoVLoc,
 						d_gradPseudoVLocAtoms);

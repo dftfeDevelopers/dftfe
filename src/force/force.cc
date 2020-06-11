@@ -42,6 +42,7 @@ namespace  dftfe {
 #include "configurationalForceCompute/configurationalForceEEshelbyFPSPFnlLinFE.cc"
 #include "configurationalForceCompute/configurationalForceSpinPolarizedEEshelbyFPSPFnlLinFE.cc"
 #include "configurationalForceCompute/FPSPLocalGammaAtomsElementalContribution.cc"
+#include "configurationalForceCompute/FSmearedChargesGammaAtomsElementalContribution.cc"
 #include "configurationalForceCompute/FShadowLocalGammaAtomsElementalContribution.cc"
 #include "configurationalForceCompute/FnlGammaAtomsElementalContribution.cc"
 #include "configurationalForceCompute/FnlGammaAtomsElementalContributionSpinPolarized.cc"
@@ -511,7 +512,8 @@ namespace  dftfe {
 
 			 if (dealii::Utilities::MPI::this_mpi_process(dftPtr->interBandGroupComm)==0)
 				 computeConfigurationalForceEselfLinFE(matrixFreeDataElectro.get_dof_handler(phiTotDofHandlerIndexElectro),
-						 vselfBinsManagerElectro);
+						 vselfBinsManagerElectro,
+             matrixFreeDataElectro);
 
 			 configForceLinFEFinalize();
 

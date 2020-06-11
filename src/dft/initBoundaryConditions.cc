@@ -237,6 +237,8 @@ void dftClass<FEOrder>::initBoundaryConditions(const bool meshOnlyDeformed){
 	quadratureVector.push_back(QGaussLobatto<1>(FEOrder+1));
 	quadratureVector.push_back(QGauss<1>(C_num1DQuadPSP<FEOrder>()));
 	quadratureVector.push_back(QGaussLobatto<1>(C_num1DKerkerPoly<FEOrder>()+1));
+  quadratureVector.push_back(QGaussLobatto<1>(C_num1DQuadSmearedCharge()));
+
 
 	double init_force;
 	MPI_Barrier(MPI_COMM_WORLD);

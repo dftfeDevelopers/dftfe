@@ -111,6 +111,8 @@ namespace dftfe {
 						const std::vector<double> & imageCharges,
 						std::vector<std::vector<double> > & localVselfs,
 						std::map<dealii::CellId, std::vector<double> > & bQuadValuesAllAtoms,
+            std::map<dealii::CellId, std::vector<int> > & bQuadAtomIdsAllAtoms,
+            std::map<dealii::CellId, std::vector<double> > & bQuadGradValuesAllAtoms,
 						const std::vector<double> & smearingWidths,
 						const bool useSmearedCharges=false);
 
@@ -136,6 +138,8 @@ namespace dftfe {
 						const std::vector<double> & imageCharges,
 						std::vector<std::vector<double> > & localVselfs,
 						std::map<dealii::CellId, std::vector<double> > & bQuadValuesAllAtoms,
+            std::map<dealii::CellId, std::vector<int> > & bQuadAtomIdsAllAtoms,
+            std::map<dealii::CellId, std::vector<double> > & bQuadGradValuesAllAtoms,
 						const std::vector<double> & smearingWidths,
 						const bool useSmearedCharges=false);
 

@@ -496,6 +496,8 @@ void dftClass<FEOrder>::computeElectrostaticEnergyHRefined(
 	//solve vself in bins on h refined mesh
 	std::vector<std::vector<double> > localVselfsHRefined;
 	std::map<dealii::CellId, std::vector<double> >  dummy;
+  std::map<dealii::CellId, std::vector<int> >  dummy2;
+  std::map<dealii::CellId, std::vector<double> >  dummy3;
 	distributedCPUVec<double> phiExtHRefined;
 	matrixFreeDataHRefined.initialize_dof_vector(phiExtHRefined,phiExtDofHandlerIndexHRefined);
 	if (dftParameters::verbosity==2)
@@ -508,6 +510,8 @@ void dftClass<FEOrder>::computeElectrostaticEnergyHRefined(
 			d_imageCharges,
 			localVselfsHRefined,
 			dummy,
+      dummy2,
+      dummy3,
 			d_smearedChargeWidths);
 
 	//
@@ -550,6 +554,7 @@ void dftClass<FEOrder>::computeElectrostaticEnergyHRefined(
 				onlyHangingNodeConstraints,
 				supportPointsHRef,
 				vselfBinsManagerHRefined,
+        phiExtHRefined,
 				pseudoVLocHRefined,
 				gradPseudoVLocHRefined,
 				gradPseudoVLocAtomsHRefined);

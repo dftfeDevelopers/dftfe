@@ -224,149 +224,20 @@ void dftClass<FEOrder>::calculateAdaptiveForceGeneratorsSmearedChargeWidths()
 
   if (dftParameters::smearedNuclearCharges)
   {
-    const double gaussianWidth=0.3;
-    const double maxFlatTopWidth=1.5;
-    std::vector<double> generatorFlatTopWidthsAllAtomsImages(numberGlobalAtoms+numberImageAtoms,0.0);
-    std::vector<double> smearedChargeWidthsAllAtomsImages(numberGlobalAtoms+numberImageAtoms,0.0);
-
-    dealii::BoundingBox<3> boundingBoxTria(vectorTools::createBoundingBoxTriaLocallyOwned(dofHandler));
-    dealii::Tensor<1,3,double> tempDisp;
-    tempDisp[0]=2.0;
-    tempDisp[1]=2.0;
-    tempDisp[2]=2.0;
-
-    for (unsigned int iAtom=0;iAtom <numberGlobalAtoms+numberImageAtoms; iAtom++)
-    {
-      Point<3> atomCoord;
-      unsigned int atomId;
-      if(iAtom < numberGlobalAtoms)
-      {
-        atomId=iAtom;
-        atomCoord[0] = atomLocations[iAtom][2];
-        atomCoord[1] = atomLocations[iAtom][3];
-        atomCoord[2] = atomLocations[iAtom][4];
-      }
-      else
-      {
-        const int atomId=d_imageIdsTrunc[iAtom-numberGlobalAtoms];
-        atomCoord[0] = d_imagePositionsTrunc[iAtom-numberGlobalAtoms][0];
-        atomCoord[1] = d_imagePositionsTrunc[iAtom-numberGlobalAtoms][1];
-        atomCoord[2] = d_imagePositionsTrunc[iAtom-numberGlobalAtoms][2];
-      }
-
-
-      std::pair< dealii::Point<3,double >,dealii::Point<3, double>> boundaryPoints;
-      boundaryPoints.first=atomCoord-tempDisp;
-      boundaryPoints.second=atomCoord+tempDisp;
-      dealii::BoundingBox<3> boundingBoxAroundAtom(boundaryPoints);
-
-      if (boundingBoxTria.get_neighbor_type(boundingBoxAroundAtom)==NeighborType::not_neighbors)
-        continue;
-
-      smearedChargeWidthsAllAtomsImages[iAtom]=0.4;
-    
-      int count=0;
-      double boundingSphereRadius=generatorFlatTopWidthsAllAtomsImages[iAtom];
-      while ((boundingSphereRadius*2.0+gaussianWidth*2.0)>d_nearestAtomDistances[atomId] || (boundingSphereRadius>maxFlatTopWidth) || count==0)
-      {
-        boundingSphereRadius=smearedChargeWidthsAllAtomsImages[iAtom];
-        DoFHandler<3>::active_cell_iterator
-          cell = dofHandler.begin_active(),
-               endc = dofHandler.end();
-        for(; cell!=endc; ++cell) 
-          if(cell->is_locally_owned())
-          {
-              double maximumDistanceFromVertex=0.0;
-              double minimumDistanceFromVertex=1e+6;            
-              for (unsigned int i=0; i<vertices_per_cell; ++i)
-              {
-                dealii::Point<3> nodalCoor = cell->vertex(i);
-                const double dist=atomCoord.distance(nodalCoor);
-                if (dist>maximumDistanceFromVertex)
-                  maximumDistanceFromVertex=dist;
-                                
-                if (dist<minimumDistanceFromVertex)
-                  minimumDistanceFromVertex=dist;
-              } 
-
-              if (minimumDistanceFromVertex<smearedChargeWidthsAllAtomsImages[iAtom] && boundingSphereRadius<maximumDistanceFromVertex)
-                boundingSphereRadius=maximumDistanceFromVertex;
-          }
-
-        boundingSphereRadius+=1e-3;
-        generatorFlatTopWidthsAllAtomsImages[iAtom]=boundingSphereRadius;
-
-        if ((boundingSphereRadius*2.0+gaussianWidth*2.0)>d_nearestAtomDistances[atomId])
-          smearedChargeWidthsAllAtomsImages[iAtom]-=0.05;
-
-        if (dftParameters::verbosity>=5 && smearedChargeWidthsAllAtomsImages[iAtom]<0.05)
-            std::cout<< "iAtom: "<< iAtom<<", Smeared charge width: "<<smearedChargeWidthsAllAtomsImages[iAtom]<< ",  flat top width: "<< generatorFlatTopWidthsAllAtomsImages[iAtom] <<std::endl; 
-
-	      AssertThrow(smearedChargeWidthsAllAtomsImages[iAtom]>=0.05,ExcMessage("DFT-FE Error: Smeared charge width calculated adaptively is less than 0.05 Bohr. Hint: Refine the mesh further for regions where atoms are close (<2 Bohr).")); 
-        count++;
-      }
-    }
-   
-		MPI_Allreduce(MPI_IN_PLACE,
-					&smearedChargeWidthsAllAtomsImages[0],
-					numberGlobalAtoms+numberImageAtoms,
-					MPI_DOUBLE,
-					MPI_MAX,
-					mpi_communicator);
-
-		MPI_Allreduce(MPI_IN_PLACE,
-					&generatorFlatTopWidthsAllAtomsImages[0],
-					numberGlobalAtoms+numberImageAtoms,
-					MPI_DOUBLE,
-					MPI_MAX,
-					mpi_communicator);    
-
-    MPI_Bcast(&smearedChargeWidthsAllAtomsImages[0],
-        numberGlobalAtoms+numberImageAtoms,
-        MPI_DOUBLE,
-        0,
-        interpoolcomm);
-
-    MPI_Bcast(&smearedChargeWidthsAllAtomsImages[0],
-        numberGlobalAtoms+numberImageAtoms,
-        MPI_DOUBLE,
-        0,
-        interBandGroupComm); 
-
-    MPI_Bcast(&generatorFlatTopWidthsAllAtomsImages[0],
-        numberGlobalAtoms+numberImageAtoms,
-        MPI_DOUBLE,
-        0,
-        interpoolcomm);
-
-    MPI_Bcast(&generatorFlatTopWidthsAllAtomsImages[0],
-        numberGlobalAtoms+numberImageAtoms,
-        MPI_DOUBLE,
-        0,
-        interBandGroupComm);     
+    for (unsigned int iAtom=0;iAtom <numberGlobalAtoms; iAtom++)
+      d_smearedChargeWidths[iAtom]=0.4;   
 
     for (unsigned int iAtom=0;iAtom <numberGlobalAtoms; iAtom++)
     {
-      d_generatorFlatTopWidths[iAtom]=generatorFlatTopWidthsAllAtomsImages[iAtom];
-      d_smearedChargeWidths[iAtom]=smearedChargeWidthsAllAtomsImages[iAtom];      
-    }
-
-    for (unsigned int iAtom=0;iAtom <numberImageAtoms; iAtom++)
-    {
-      const unsigned atomId=d_imageIdsTrunc[iAtom];
-        
-      if (generatorFlatTopWidthsAllAtomsImages[iAtom+numberGlobalAtoms]>d_generatorFlatTopWidths[atomId])
-        d_generatorFlatTopWidths[atomId]=generatorFlatTopWidthsAllAtomsImages[iAtom+numberGlobalAtoms];
-
-      if (smearedChargeWidthsAllAtomsImages[iAtom+numberGlobalAtoms]<d_smearedChargeWidths[atomId] && smearedChargeWidthsAllAtomsImages[iAtom+numberGlobalAtoms]>1e-3)
-        d_smearedChargeWidths[atomId]=smearedChargeWidthsAllAtomsImages[iAtom+numberGlobalAtoms];      
+      while (d_nearestAtomDistances[iAtom]<(d_smearedChargeWidths[iAtom]+d_smearedChargeWidths[d_nearestAtomIds[iAtom]]+0.1))
+      {
+         d_smearedChargeWidths[iAtom]-=0.05;
+         d_smearedChargeWidths[d_nearestAtomIds[iAtom]]-=0.05;
+      }
     }
 
     for (unsigned int iAtom=0;iAtom <numberGlobalAtoms; iAtom++)
-        d_gaussianConstantsForce[iAtom]=std::min(gaussianWidth,maxFlatTopWidth+gaussianWidth-d_generatorFlatTopWidths[iAtom]);
-
-    if (dftParameters::verbosity>=4)
-      for (unsigned int iAtom=0;iAtom <numberGlobalAtoms; iAtom++)
-          pcout<< "iAtom: "<< iAtom<<", Smeared charge width: "<<d_smearedChargeWidths[iAtom]<< ",  flat top width: "<< d_generatorFlatTopWidths[iAtom] <<std::endl;        
+      if (dftParameters::verbosity>=4)
+            pcout<< "iAtom: "<< iAtom<<", Smeared charge width: "<<d_smearedChargeWidths[iAtom]<<", flat top width: "<<d_generatorFlatTopWidths[iAtom]<<std::endl;        
   }
 }

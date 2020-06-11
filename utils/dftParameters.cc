@@ -1169,9 +1169,6 @@ namespace dftfe {
 				prm.print_parameters (std::cout, ParameterHandler::ShortText);
 			}
 
-			AssertThrow((dftParameters::smearedNuclearCharges && dftParameters::useFlatTopGenerator) || (!dftParameters::smearedNuclearCharges)  
-					,ExcMessage("DFT-FE Error: USE FLAT TOP GENERATOR must be set to true if SMEARED NUCLEAR CHARGES is set to true."));
-
 			AssertThrow(!((dftParameters::periodicX || dftParameters::periodicY || dftParameters::periodicZ) && (dftParameters::writeLdosFile || dftParameters::writePdosFile)),ExcMessage("DFT-FE Error: LOCAL DENSITY OF STATES and PROJECTED DENSITY OF STATES are currently not implemented in the case of periodic and semi-periodic boundary conditions."));
 
 #ifdef USE_COMPLEX

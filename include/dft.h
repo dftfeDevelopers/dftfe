@@ -519,6 +519,7 @@ namespace dftfe {
 					const dealii::ConstraintMatrix & phiExtConstraintMatrix,
 					const std::map<types::global_dof_index, Point<3> > & supportPoints,
 					const vselfBinsManager<FEOrder> & vselfBinManager,
+          distributedCPUVec<double> & phiExt,
 					std::map<dealii::CellId, std::vector<double> > & _pseudoValues,
 					std::map<dealii::CellId, std::vector<double> > & _gradPseudoValues,
 					std::map<unsigned int,std::map<dealii::CellId, std::vector<double> > > & _gradPseudoValuesAtoms);
@@ -780,8 +781,14 @@ namespace dftfe {
 			/// distance from the domain till which periodic images will be considered
 			const double d_pspCutOffTrunc=10.0;
 
-			/// sum of smeared charges of all atoms at quad points
+			/// non-intersecting smeared charges of all atoms at quad points
 			std::map<dealii::CellId, std::vector<double> >  d_bQuadValuesAllAtoms;
+
+			/// non-intersecting smeared charges atom ids of all atoms at quad points
+			std::map<dealii::CellId, std::vector<int> >  d_bQuadAtomIdsAllAtoms;     
+
+			/// non-intersecting gradient smeared charges of all atoms at quad points
+			std::map<dealii::CellId, std::vector<double> >   d_bQuadGradValuesAllAtoms;           
 
 			/// minimum smeared charge width
 			const double d_smearedChargeWidthMin=0.4;

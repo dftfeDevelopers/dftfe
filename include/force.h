@@ -327,7 +327,8 @@ namespace dftfe {
 			void computeConfigurationalForcePhiExtLinFE();
 
 			void computeConfigurationalForceEselfLinFE(const DoFHandler<3> & dofHandlerElectro,
-					const vselfBinsManager<FEOrder>   & vselfBinsManagerElectro);
+					const vselfBinsManager<FEOrder>   & vselfBinsManagerElectro,
+          const MatrixFree<3,double> & matrixFreeDataElectro);
 
 			void computeConfigurationalForceEselfNoSurfaceLinFE();
 
@@ -374,6 +375,25 @@ namespace dftfe {
 				 const std::map<unsigned int,std::map<dealii::CellId, std::vector<double> > > & gradPseudoVLocAtoms,
 				 const vselfBinsManager<FEOrder> & vselfBinsManager,
 				 const std::vector<std::map<dealii::CellId , unsigned int> > & cellsVselfBallsClosestAtomIdDofHandler);
+
+      void FPhiTotSmearedChargesGammaAtomsElementalContribution
+        (std::map<unsigned int, std::vector<double> > & forceContributionSmearedChargesGammaAtoms,
+         FEEvaluation<3,1,C_num1DQuadSmearedCharge(),3>  & forceEval,
+         const MatrixFree<3,double> & matrixFreeData,
+         const unsigned int cell,
+         const std::vector<VectorizedArray<double> > & phiTotQuads,
+         const std::map<dealii::CellId, std::vector<int> > & bQuadAtomIdsAllAtoms,
+         const std::vector<Tensor<1,C_DIM,VectorizedArray<double> > > & gradSmearedbQuads);  
+
+      void FVselfSmearedChargesGammaAtomsElementalContribution
+        (std::map<unsigned int, std::vector<double> > & forceContributionSmearedChargesGammaAtoms,
+         FEEvaluation<3,1,C_num1DQuadSmearedCharge(),3>  & forceEval,
+         const MatrixFree<3,double> & matrixFreeData,
+         const unsigned int cell,
+         const std::vector<VectorizedArray<double> > & vselfBinQuads,
+         const std::set<int> & atomIdsInBin,
+         const std::map<dealii::CellId, std::vector<int> > & bQuadAtomIdsAllAtoms,
+         const std::vector<Tensor<1,C_DIM,VectorizedArray<double> > > & gradSmearedbQuads);         
 
 			void FShadowLocalGammaAtomsElementalContribution
 				(std::map<unsigned int, std::vector<double> > & forceContributionLocalGammaAtoms,

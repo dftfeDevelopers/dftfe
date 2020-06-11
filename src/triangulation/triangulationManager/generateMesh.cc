@@ -376,7 +376,7 @@ namespace dftfe {
 					if(distanceToClosestAtom <= outerAtomBallRadiusLocalAtoms[closestId])
 						inOuterAtomBall = true;
 
-					if(inOuterAtomBall && (currentMeshSize > 1.1*meshSizeAroundAtomLocalAtoms[closestId]))
+					if(inOuterAtomBall && (currentMeshSize > 1.2*meshSizeAroundAtomLocalAtoms[closestId]))
 						cellRefineFlag = true;
 
 					bool inInnerAtomBall = false;
@@ -384,7 +384,7 @@ namespace dftfe {
 					if(distanceToClosestAtom <= dftParameters::innerAtomBallRadius)
 						inInnerAtomBall = true;
 
-					if(inInnerAtomBall && currentMeshSize > 1.1*dftParameters::meshSizeInnerBall)
+					if(inInnerAtomBall && currentMeshSize > 1.2*dftParameters::meshSizeInnerBall)
 						cellRefineFlag = true;
 				}
 				else
@@ -423,7 +423,7 @@ namespace dftfe {
 					Point<3> p_cell = mapping.transform_real_to_unit_cell(cell,closestAtom);
 					double dist = GeometryInfo<3>::distance_to_unit_cell(p_cell);
 
-					if(dist < 1e-08 && currentMeshSize > (dftParameters::autoUserMeshParams?1.1:1)*dftParameters::meshSizeInnerBall)
+					if(dist < 1e-08 && currentMeshSize > (dftParameters::autoUserMeshParams?1.2:1)*dftParameters::meshSizeInnerBall)
 						cellRefineFlag = true;
 
 				}

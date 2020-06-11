@@ -28,6 +28,7 @@ template<unsigned int FEOrder>
  const dealii::ConstraintMatrix & _phiExtConstraintMatrix,
  const std::map<types::global_dof_index, Point<3> > & _supportPoints,
  const vselfBinsManager<FEOrder> & vselfBinManager,
+ distributedCPUVec<double> & phiExt,
  std::map<dealii::CellId, std::vector<double> > & _pseudoValues,
  std::map<dealii::CellId, std::vector<double> > & _gradPseudoValues,
  std::map<unsigned int,std::map<dealii::CellId, std::vector<double> > > & _gradPseudoValuesAtoms)
@@ -96,8 +97,8 @@ template<unsigned int FEOrder>
 	//
 	const int numberImageCharges = d_imageIds.size();
 
-	distributedCPUVec<double> phiExt;
-	_matrix_free_data.initialize_dof_vector(phiExt,_phiExtDofHandlerIndex);
+	//distributedCPUVec<double> phiExt;
+	//_matrix_free_data.initialize_dof_vector(phiExt,_phiExtDofHandlerIndex);
 	phiExt=0;
 
 	double init_1;
@@ -220,7 +221,7 @@ template<unsigned int FEOrder>
 	}
 
 
-	//_phiExtConstraintMatrix.distribute(phiExt);
+	_phiExtConstraintMatrix.distribute(phiExt);
 	phiExt.update_ghost_values();
 	//pcout<<"L2 Norm Value of phiext: "<<phiExt.l2_norm()<<std::endl;
 

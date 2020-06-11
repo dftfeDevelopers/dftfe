@@ -20,7 +20,8 @@
 template<unsigned int FEOrder>
 	void forceClass<FEOrder>::computeConfigurationalForceEselfLinFE
 (const DoFHandler<3> & dofHandlerElectro,
- const vselfBinsManager<FEOrder> & vselfBinsManagerElectro)
+ const vselfBinsManager<FEOrder> & vselfBinsManagerElectro,
+ const MatrixFree<3,double> & matrixFreeDataElectro)
 {
 	const std::vector<std::vector<double> > & atomLocations=dftPtr->atomLocations;
 	const std::vector<std::vector<double> > & imagePositionsTrunc=dftPtr->d_imagePositionsTrunc;
@@ -81,6 +82,124 @@ template<unsigned int FEOrder>
 					d_configForceVectorLinFEElectro);
 		}//cell loop
 	}//bin loop
+
+  //
+  // Add configurational force due to smeared charges
+  //
+  if (dftParameters::smearedNuclearCharges)
+  {
+    const std::map<int,std::set<int> > & atomIdsBins= vselfBinsManagerElectro.getAtomIdsBins();
+
+    FEEvaluation<C_DIM,1,C_num1DQuadSmearedCharge(),C_DIM>  forceEvalSmearedCharge(matrixFreeDataElectro,
+        d_forceDofHandlerIndexElectro,
+        4); 
+
+    DoFHandler<C_DIM>::active_cell_iterator subCellPtr;
+    const unsigned int numQuadPointsSmearedb=forceEvalSmearedCharge.n_q_points;
+
+  	QGauss<C_DIM>  quadratureSmeared(C_num1DQuad<FEOrder>());
+
+    Tensor<1,C_DIM,VectorizedArray<double> > zeroTensor;
+    for (unsigned int idim=0; idim<C_DIM; idim++)
+    {
+      zeroTensor[idim]=make_vectorized_array(0.0);
+    }
+
+    Tensor<2,C_DIM,VectorizedArray<double> > zeroTensor2;
+    for (unsigned int idim=0; idim<C_DIM; idim++)
+      for (unsigned int jdim=0; jdim<C_DIM; jdim++)
+      {
+        zeroTensor2[idim][jdim]=make_vectorized_array(0.0);
+      }
+
+    std::vector<VectorizedArray<double> > smearedbQuads(numQuadPointsSmearedb,make_vectorized_array(0.0));
+    std::vector<Tensor<1,C_DIM,VectorizedArray<double> > > gradSmearedbQuads(numQuadPointsSmearedb,zeroTensor);
+    std::vector<VectorizedArray<double> > vselfSmearedChargeQuads(numQuadPointsSmearedb,make_vectorized_array(0.0));
+
+	  std::map<unsigned int, std::vector<double> > forceContributionSmearedChargesGammaAtoms; 
+
+    for(unsigned int iBin = 0; iBin < numberBins; ++iBin)
+    {
+      FEEvaluation<C_DIM,1,C_num1DQuadSmearedCharge(),1>  vselfEvalSmearedCharge(matrixFreeDataElectro,
+        2+iBin,
+        4);
+
+      const std::set<int> & atomIdsInBin=atomIdsBins.find(iBin)->second;
+      forceContributionSmearedChargesGammaAtoms.clear();
+      for (unsigned int cell=0; cell<matrixFreeDataElectro.n_macro_cells(); ++cell)
+      {
+        forceEvalSmearedCharge.reinit(cell);
+        vselfEvalSmearedCharge.reinit(cell);
+        vselfEvalSmearedCharge.read_dof_values_plain(vselfBinsManagerElectro.getVselfFieldBins()[iBin]);
+        vselfEvalSmearedCharge.evaluate(true,false);    
+
+        std::fill(smearedbQuads.begin(),smearedbQuads.end(),make_vectorized_array(0.0));
+        std::fill(gradSmearedbQuads.begin(),gradSmearedbQuads.end(),zeroTensor);
+        std::fill(vselfSmearedChargeQuads.begin(),vselfSmearedChargeQuads.end(),make_vectorized_array(0.0));
+
+        const unsigned int numSubCells=matrixFreeDataElectro.n_components_filled(cell);
+
+        bool isCellNonTrivial=false;
+        for (unsigned int iSubCell=0; iSubCell<numSubCells; ++iSubCell)
+        {
+          subCellPtr= matrixFreeDataElectro.get_cell_iterator(cell,iSubCell);
+          dealii::CellId subCellId=subCellPtr->id();
+
+          const std::vector<int> & bQuadAtomIdsCell=dftPtr->d_bQuadAtomIdsAllAtoms.find(subCellId)->second;
+          const std::vector<double> & bQuadValuesCell= dftPtr->d_bQuadValuesAllAtoms.find(subCellId)->second;
+          const std::vector<double> & bQuadGradValuesCell= dftPtr->d_bQuadGradValuesAllAtoms.find(subCellId)->second;
+
+          for (unsigned int q=0; q<numQuadPointsSmearedb; ++q)
+          {
+            if (atomIdsInBin.find(bQuadAtomIdsCell[q])!=atomIdsInBin.end())
+            {
+              isCellNonTrivial=true;
+              smearedbQuads[q][iSubCell]=bQuadValuesCell[q];
+              gradSmearedbQuads[q][0][iSubCell]=bQuadGradValuesCell[3*q+0];
+              gradSmearedbQuads[q][1][iSubCell]=bQuadGradValuesCell[3*q+1];
+              gradSmearedbQuads[q][2][iSubCell]=bQuadGradValuesCell[3*q+2]; 
+            }
+          }//quad loop         
+        }//subcell loop
+
+        if (!isCellNonTrivial)
+          continue;
+
+        for (unsigned int q=0; q<numQuadPointsSmearedb; ++q)
+        {
+          Tensor<2,C_DIM,VectorizedArray<double> > E=zeroTensor2;
+          vselfSmearedChargeQuads[q]=vselfEvalSmearedCharge.get_value(q);
+          const VectorizedArray<double> identityTensorFactor=-smearedbQuads[q]*vselfSmearedChargeQuads[q];
+          E[0][0]=identityTensorFactor;
+          E[1][1]=identityTensorFactor;
+          E[2][2]=identityTensorFactor;
+
+          Tensor<1,C_DIM,VectorizedArray<double> > F=zeroTensor;
+          F=-vselfSmearedChargeQuads[q]*gradSmearedbQuads[q];
+
+          forceEvalSmearedCharge.submit_value(F,q);
+          forceEvalSmearedCharge.submit_gradient(E,q);
+        }//quadloop
+
+        forceEvalSmearedCharge.integrate(true,true);
+        forceEvalSmearedCharge.distribute_local_to_global(d_configForceVectorLinFEElectro);
+
+        FVselfSmearedChargesGammaAtomsElementalContribution(forceContributionSmearedChargesGammaAtoms,
+            forceEvalSmearedCharge,
+            matrixFreeDataElectro,
+            cell,
+            vselfSmearedChargeQuads,
+            atomIdsInBin,
+            dftPtr->d_bQuadAtomIdsAllAtoms,
+            gradSmearedbQuads);
+      }//macrocell loop
+
+      distributeForceContributionFPSPLocalGammaAtoms(forceContributionSmearedChargesGammaAtoms,
+          d_atomsForceDofsElectro,
+          d_constraintsNoneForceElectro,
+          d_configForceVectorLinFEElectro);      
+    }//bin loop
+  }
 
 	//
 	//Second add configurational force contribution from the surface integral.

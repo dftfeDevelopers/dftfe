@@ -1365,13 +1365,19 @@ template<unsigned int FEOrder>
 			phiTotDofHandlerIndexElectro,
 			0);
 
-	//FEEvaluation<C_DIM,FEOrder,C_num1DQuad<FEOrder>(),1> phiExtEvalElectro(matrixFreeDataElectro,
-	//	                                                          phiExtDofHandlerIndexElectro,
-	//								  0);
+	FEEvaluation<C_DIM,FEOrder,C_num1DQuadSmearedCharge(),1>  phiTotEvalSmearedCharge(matrixFreeDataElectro,
+			phiTotDofHandlerIndexElectro,
+			4);
+
+	FEEvaluation<C_DIM,1,C_num1DQuadSmearedCharge(),C_DIM>  forceEvalSmearedCharge(matrixFreeDataElectro,
+			d_forceDofHandlerIndexElectro,
+			4);  
 
 	std::map<unsigned int, std::vector<double> > forceContributionFPSPLocalGammaAtoms;
+	std::map<unsigned int, std::vector<double> > forceContributionSmearedChargesGammaAtoms;  
 
 	const unsigned int numQuadPoints=forceEvalElectro.n_q_points;
+  const unsigned int numQuadPointsSmearedb=forceEvalSmearedCharge.n_q_points;
 	DoFHandler<C_DIM>::active_cell_iterator subCellPtr;
 
 	QGauss<C_DIM>  quadrature(C_num1DQuad<FEOrder>());
@@ -1386,7 +1392,17 @@ template<unsigned int FEOrder>
 		zeroTensor[idim]=make_vectorized_array(0.0);
 	}
 
+	Tensor<2,C_DIM,VectorizedArray<double> > zeroTensor2;
+	for (unsigned int idim=0; idim<C_DIM; idim++)
+		for (unsigned int jdim=0; jdim<C_DIM; jdim++)
+		{
+			zeroTensor2[idim][jdim]=make_vectorized_array(0.0);
+		}
+
 	std::vector<VectorizedArray<double> > rhoQuadsElectro(numQuadPoints,make_vectorized_array(0.0));
+  std::vector<VectorizedArray<double> > smearedbQuads(numQuadPointsSmearedb,make_vectorized_array(0.0));
+  std::vector<Tensor<1,C_DIM,VectorizedArray<double> > > gradSmearedbQuads(numQuadPointsSmearedb,zeroTensor);
+  std::vector<VectorizedArray<double> > phiTotSmearedChargeQuads(numQuadPointsSmearedb,make_vectorized_array(0.0));
 	std::vector<VectorizedArray<double> > shadowKSRhoMinQuadsElectro(numQuadPoints,make_vectorized_array(0.0));
 	std::vector<VectorizedArray<double> > shadowKSRhoMinMinusRhoQuadsElectro(numQuadPoints,make_vectorized_array(0.0));
 	std::vector<Tensor<1,C_DIM,VectorizedArray<double> > > gradRhoQuadsElectro(numQuadPoints,zeroTensor);
@@ -1409,14 +1425,18 @@ template<unsigned int FEOrder>
 			phiTotEvalElectro2.evaluate(true,true);
 		}
 
-		//phiExtEvalElectro.reinit(cell);
-		//phiExtEvalElectro.read_dof_values_plain(phiExtElectro);
-		//if (dftParameters::isPseudopotential)
-		//  phiExtEvalElectro.evaluate(true,true);
-		//else
-		//  phiExtEvalElectro.evaluate(true,false);
+    if (dftParameters::smearedNuclearCharges)
+    {
+      forceEvalSmearedCharge.reinit(cell);
+      phiTotEvalSmearedCharge.reinit(cell);
+      phiTotEvalSmearedCharge.read_dof_values_plain(phiTotRhoOutElectro);
+      phiTotEvalSmearedCharge.evaluate(true,false);        
+    }
 
 		std::fill(rhoQuadsElectro.begin(),rhoQuadsElectro.end(),make_vectorized_array(0.0));
+    std::fill(smearedbQuads.begin(),smearedbQuads.end(),make_vectorized_array(0.0));
+    std::fill(gradSmearedbQuads.begin(),gradSmearedbQuads.end(),zeroTensor);
+    std::fill(phiTotSmearedChargeQuads.begin(),phiTotSmearedChargeQuads.end(),make_vectorized_array(0.0));
 		std::fill(shadowKSRhoMinQuadsElectro.begin(),shadowKSRhoMinQuadsElectro.end(),make_vectorized_array(0.0));
 		std::fill(shadowKSRhoMinMinusRhoQuadsElectro.begin(),shadowKSRhoMinMinusRhoQuadsElectro.end(),make_vectorized_array(0.0));
 		std::fill(gradRhoQuadsElectro.begin(),gradRhoQuadsElectro.end(),zeroTensor);
@@ -1460,6 +1480,15 @@ template<unsigned int FEOrder>
 					gradPseudoVLocQuadsElectro[q][1][iSubCell]=gradPseudoVLocElectro.find(subCellId)->second[C_DIM*q+1];
 					gradPseudoVLocQuadsElectro[q][2][iSubCell]=gradPseudoVLocElectro.find(subCellId)->second[C_DIM*q+2];
 				}
+       
+      if (dftParameters::smearedNuclearCharges)
+        for (unsigned int q=0; q<numQuadPointsSmearedb; ++q)
+        {
+          smearedbQuads[q][iSubCell]=dftPtr->d_bQuadValuesAllAtoms.find(subCellId)->second[q];
+					gradSmearedbQuads[q][0][iSubCell]=dftPtr->d_bQuadGradValuesAllAtoms.find(subCellId)->second[3*q+0];
+					gradSmearedbQuads[q][1][iSubCell]=dftPtr->d_bQuadGradValuesAllAtoms.find(subCellId)->second[3*q+1];
+					gradSmearedbQuads[q][2][iSubCell]=dftPtr->d_bQuadGradValuesAllAtoms.find(subCellId)->second[3*q+2];          
+        }       
 		}
 
 		if(dftParameters::isPseudopotential)
@@ -1552,7 +1581,38 @@ template<unsigned int FEOrder>
 		forceEvalElectro.integrate (true,true);
 		forceEvalElectro.distribute_local_to_global(d_configForceVectorLinFEElectro);
 
-	}
+    if (dftParameters::smearedNuclearCharges)
+      for (unsigned int q=0; q<numQuadPointsSmearedb; ++q)
+      {
+        Tensor<2,C_DIM,VectorizedArray<double> > E=zeroTensor2;
+        phiTotSmearedChargeQuads[q]=phiTotEvalSmearedCharge.get_value(q);
+        const VectorizedArray<double> identityTensorFactor=smearedbQuads[q]*phiTotSmearedChargeQuads[q];
+        E[0][0]=identityTensorFactor;
+        E[1][1]=identityTensorFactor;
+        E[2][2]=identityTensorFactor;
+
+        Tensor<1,C_DIM,VectorizedArray<double> > F=zeroTensor;
+        F=phiTotSmearedChargeQuads[q]*gradSmearedbQuads[q];
+
+        forceEvalSmearedCharge.submit_value(F,q);
+        forceEvalSmearedCharge.submit_gradient(E,q);
+      }
+
+    if (dftParameters::smearedNuclearCharges)
+    {
+      forceEvalSmearedCharge.integrate(true,true);
+      forceEvalSmearedCharge.distribute_local_to_global(d_configForceVectorLinFEElectro);      
+			
+      FPhiTotSmearedChargesGammaAtomsElementalContribution(forceContributionSmearedChargesGammaAtoms,
+					forceEvalSmearedCharge,
+					matrixFreeDataElectro,
+					cell,
+					phiTotSmearedChargeQuads,
+          dftPtr->d_bQuadAtomIdsAllAtoms,
+				  gradSmearedbQuads);    
+    }
+     
+	}//macro cell loop
 
 	// add global FPSPLocal contribution due to Gamma(Rj) to the configurational force vector
 	if(dftParameters::isPseudopotential)
@@ -1562,4 +1622,10 @@ template<unsigned int FEOrder>
 				d_constraintsNoneForceElectro,
 				d_configForceVectorLinFEElectro);
 	}
+
+  if (dftParameters::smearedNuclearCharges) 
+		distributeForceContributionFPSPLocalGammaAtoms(forceContributionSmearedChargesGammaAtoms,
+				d_atomsForceDofsElectro,
+				d_constraintsNoneForceElectro,
+				d_configForceVectorLinFEElectro);  
 }
