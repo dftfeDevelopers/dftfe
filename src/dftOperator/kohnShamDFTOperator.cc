@@ -571,17 +571,18 @@ namespace dftfe {
 			//
 			//scale src vector with M^{-1/2}
 			//
-			for(unsigned int i = 0; i < numberDofs; ++i)
+			
+			/*for(unsigned int i = 0; i < numberDofs; ++i)
 			{
 				const double scalingCoeff = d_invSqrtMassVector.local_element(i)*scalar;
 				dscal_(&numberWaveFunctions,
 						&scalingCoeff,
 						src.begin()+i*numberWaveFunctions,
 						&inc);
-			}
+						}*/
 
 
-			if(scaleFlag)
+			/*if(scaleFlag)
 			{
 				for(int i = 0; i < numberDofs; ++i)
 				{
@@ -592,7 +593,7 @@ namespace dftfe {
 							&inc);
 
 				}
-			}
+				}*/
 
 			//
 			//update slave nodes before doing element-level matrix-vec multiplication
@@ -660,7 +661,7 @@ namespace dftfe {
 			//
 			//M^{-1/2}*H*M^{-1/2}*X
 			//
-			for(unsigned int i = 0; i < numberDofs; ++i)
+			/*for(unsigned int i = 0; i < numberDofs; ++i)
 			{
 				dscal_(&numberWaveFunctions,
 						&d_invSqrtMassVector.local_element(i),
@@ -679,7 +680,7 @@ namespace dftfe {
 						&scalingCoeff,
 						src.begin()+i*numberWaveFunctions,
 						&inc);
-			}
+						}*/
 
 
 		}
