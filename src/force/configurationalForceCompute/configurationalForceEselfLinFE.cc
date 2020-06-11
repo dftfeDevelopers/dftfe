@@ -120,7 +120,7 @@ template<unsigned int FEOrder>
 
     for(unsigned int iBin = 0; iBin < numberBins; ++iBin)
     {
-      FEEvaluation<C_DIM,1,C_num1DQuadSmearedCharge(),1>  vselfEvalSmearedCharge(matrixFreeDataElectro,
+      FEEvaluation<C_DIM,FEOrder,C_num1DQuadSmearedCharge(),1>  vselfEvalSmearedCharge(matrixFreeDataElectro,
         2+iBin,
         4);
 

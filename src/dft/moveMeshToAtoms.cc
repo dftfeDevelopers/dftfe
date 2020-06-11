@@ -229,7 +229,7 @@ void dftClass<FEOrder>::calculateAdaptiveForceGeneratorsSmearedChargeWidths()
 
     for (unsigned int iAtom=0;iAtom <numberGlobalAtoms; iAtom++)
     {
-      while (d_nearestAtomDistances[iAtom]<(d_smearedChargeWidths[iAtom]+d_smearedChargeWidths[d_nearestAtomIds[iAtom]]+0.1))
+      while (d_nearestAtomDistances[iAtom]<(d_smearedChargeWidths[iAtom]+d_smearedChargeWidths[d_nearestAtomIds[iAtom]]+0.3))
       {
          d_smearedChargeWidths[iAtom]-=0.05;
          d_smearedChargeWidths[d_nearestAtomIds[iAtom]]-=0.05;
