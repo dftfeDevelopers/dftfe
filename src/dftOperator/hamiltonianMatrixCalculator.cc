@@ -246,7 +246,7 @@ void kohnShamDFTOperatorClass<FEOrder>::computeKineticMatrix()
 				  {
 				    dealii::types::global_dof_index localProcJNode = d_flattenedArrayMacroCellLocalProcIndexIdMap[iElem][jNode];
 				    
-				    double stiffMatrixEntry = invSqrtMassVec.local_element(localProcINode)*elementHamiltonianMatrix[numberDofsPerElement*iNode + jNode][iSubCell]*invSqrtMassVec.local_element(localProcJNode);
+				    double stiffMatrixEntry = d_invSqrtMassVector.local_element(localProcINode)*elementHamiltonianMatrix[numberDofsPerElement*iNode + jNode][iSubCell]*d_invSqrtMassVector.local_element(localProcJNode);
 				    d_cellHamiltonianMatrix[0][iElem][numberDofsPerElement*iNode + jNode] = stiffMatrixEntry;
 				  
 				  }
