@@ -236,20 +236,37 @@ void kohnShamDFTOperatorClass<FEOrder>::computeKineticMatrix()
 			//FIXME: Use functions like mkl_malloc for 64 byte memory alignment.
 			d_cellHamiltonianMatrix[0][iElem].resize(numberDofsPerElement*numberDofsPerElement,0.0);
 
-			for(unsigned int iNode = 0; iNode < numberDofsPerElement; ++iNode)
-			{
+			if(dftParameters::cellLevelMassMatrixScaling)
+			  {
+			    for(unsigned int iNode = 0; iNode < numberDofsPerElement; ++iNode)
+			      {
                             	dealii::types::global_dof_index localProcINode = d_flattenedArrayMacroCellLocalProcIndexIdMap[iElem][iNode];
 				
 				for(unsigned int jNode = 0; jNode < numberDofsPerElement; ++jNode)
-				{
-				  dealii::types::global_dof_index localProcJNode = d_flattenedArrayMacroCellLocalProcIndexIdMap[iElem][jNode];
-				  //d_cellHamiltonianMatrix[0][iElem][numberDofsPerElement*iNode + jNode]
-				  //= elementHamiltonianMatrix[numberDofsPerElement*iNode + jNode][iSubCell];
-				  double stiffMatrixEntry = invSqrtMassVec.local_element(localProcINode)*elementHamiltonianMatrix[numberDofsPerElement*iNode + jNode][iSubCell]*invSqrtMassVec.local_element(localProcJNode);
-				  d_cellHamiltonianMatrix[0][iElem][numberDofsPerElement*iNode + jNode] = stiffMatrixEntry;
+				  {
+				    dealii::types::global_dof_index localProcJNode = d_flattenedArrayMacroCellLocalProcIndexIdMap[iElem][jNode];
+				    
+				    double stiffMatrixEntry = invSqrtMassVec.local_element(localProcINode)*elementHamiltonianMatrix[numberDofsPerElement*iNode + jNode][iSubCell]*invSqrtMassVec.local_element(localProcJNode);
+				    d_cellHamiltonianMatrix[0][iElem][numberDofsPerElement*iNode + jNode] = stiffMatrixEntry;
 				  
-				}
-			}
+				  }
+			      }
+			  }
+			else
+			  {
+			    for(unsigned int iNode = 0; iNode < numberDofsPerElement; ++iNode)
+			      {
+                            				
+				for(unsigned int jNode = 0; jNode < numberDofsPerElement; ++jNode)
+				  {
+				   
+				    d_cellHamiltonianMatrix[0][iElem][numberDofsPerElement*iNode + jNode]
+				    = elementHamiltonianMatrix[numberDofsPerElement*iNode + jNode][iSubCell];
+				   
+				  
+				  }
+			      }
+			  }
 
 			iElem += 1;
 		}
