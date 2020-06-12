@@ -511,7 +511,6 @@ void dftClass<FEOrder>::computeElectrostaticEnergyHRefined(
 			localVselfsHRefined,
 			dummy,
       dummy2,
-      dummy3,
 			d_smearedChargeWidths);
 
 	//

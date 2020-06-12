@@ -787,9 +787,6 @@ namespace dftfe {
 			/// non-intersecting smeared charges atom ids of all atoms at quad points
 			std::map<dealii::CellId, std::vector<int> >  d_bQuadAtomIdsAllAtoms;     
 
-			/// non-intersecting gradient smeared charges of all atoms at quad points
-			std::map<dealii::CellId, std::vector<double> >   d_bQuadGradValuesAllAtoms;           
-
 			/// minimum smeared charge width
 			const double d_smearedChargeWidthMin=0.4;
 

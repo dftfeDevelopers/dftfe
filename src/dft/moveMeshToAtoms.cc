@@ -218,6 +218,7 @@ void dftClass<FEOrder>::calculateAdaptiveForceGeneratorsSmearedChargeWidths()
 
   d_gaussianConstantsForce.resize(numberGlobalAtoms);
   d_generatorFlatTopWidths=d_flatTopWidthsAutoMeshMove;
+
 	for (unsigned int iAtom=0;iAtom <numberGlobalAtoms; iAtom++)
       d_gaussianConstantsForce[iAtom]=dftParameters::reproducible_output?1/std::sqrt(5.0):(dftParameters::useFlatTopGenerator?d_generatorFlatTopWidths[iAtom]+0.4:(std::min(0.9*d_nearestAtomDistances[iAtom]/2.0-0.3,dftParameters::gaussianConstantForce)));  
   d_smearedChargeWidths.resize(numberGlobalAtoms,0.0);

@@ -1753,7 +1753,6 @@ namespace dftfe {
 							d_localVselfs,
 							d_bQuadValuesAllAtoms,
               d_bQuadAtomIdsAllAtoms,
-              d_bQuadGradValuesAllAtoms,             
 							d_smearedChargeWidths,
 							dftParameters::smearedNuclearCharges);
 				else
@@ -1779,7 +1778,6 @@ namespace dftfe {
 						d_localVselfs,
 						d_bQuadValuesAllAtoms,
             d_bQuadAtomIdsAllAtoms,
-            d_bQuadGradValuesAllAtoms,
 						d_smearedChargeWidths,
 						dftParameters::smearedNuclearCharges);
 #endif
