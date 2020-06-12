@@ -113,8 +113,8 @@ namespace dftfe
 							if (r>rc[binAtomIdToGlobalAtomIdMapCurrentBin[atomId]])
 								continue;
 							const double chargeVal=dftUtils::smearedCharge(r,rc[binAtomIdToGlobalAtomIdMapCurrentBin[atomId]]);
-							bQuadValuesCell[q]=chargeVal*(-atomCharges[atomId])/smearedNuclearChargeIntegral[atomId];
-							smearedNuclearChargeIntegralCheck[atomId]+=chargeVal*(-atomCharges[atomId])/smearedNuclearChargeIntegral[atomId]*jxw;
+							bQuadValuesCell[q]=chargeVal*(-atomCharges[atomId]);
+							smearedNuclearChargeIntegralCheck[atomId]+=chargeVal*(-atomCharges[atomId])*jxw;
               bQuadAtomIdsCell[q]=binAtomIdToGlobalAtomIdMapCurrentBin[atomId];
 
               break;
