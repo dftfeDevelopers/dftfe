@@ -225,7 +225,7 @@ void dftClass<FEOrder>::calculateAdaptiveForceGeneratorsSmearedChargeWidths()
   if (dftParameters::smearedNuclearCharges)
   {
     for (unsigned int iAtom=0;iAtom <numberGlobalAtoms; iAtom++)
-      d_smearedChargeWidths[iAtom]=0.4;   
+      d_smearedChargeWidths[iAtom]=0.5;   
 
     for (unsigned int iAtom=0;iAtom <numberGlobalAtoms; iAtom++)
     {

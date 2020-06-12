@@ -381,19 +381,19 @@ namespace dftfe {
          FEEvaluation<3,1,C_num1DQuadSmearedCharge(),3>  & forceEval,
          const MatrixFree<3,double> & matrixFreeData,
          const unsigned int cell,
-         const std::vector<VectorizedArray<double> > & phiTotQuads,
+         const std::vector<Tensor<1,C_DIM,VectorizedArray<double> >  > & gradPhiTotQuads,
          const std::map<dealii::CellId, std::vector<int> > & bQuadAtomIdsAllAtoms,
-         const std::vector<Tensor<1,C_DIM,VectorizedArray<double> > > & gradSmearedbQuads);  
+         const std::vector<VectorizedArray<double> > & smearedbQuads);  
 
       void FVselfSmearedChargesGammaAtomsElementalContribution
         (std::map<unsigned int, std::vector<double> > & forceContributionSmearedChargesGammaAtoms,
          FEEvaluation<3,1,C_num1DQuadSmearedCharge(),3>  & forceEval,
          const MatrixFree<3,double> & matrixFreeData,
          const unsigned int cell,
-         const std::vector<VectorizedArray<double> > & vselfBinQuads,
+         const std::vector<Tensor<1,C_DIM,VectorizedArray<double> > > & gradVselfBinQuads,
          const std::set<int> & atomIdsInBin,
          const std::map<dealii::CellId, std::vector<int> > & bQuadAtomIdsAllAtoms,
-         const std::vector<Tensor<1,C_DIM,VectorizedArray<double> > > & gradSmearedbQuads);         
+         const std::vector<VectorizedArray<double> > & smearedbQuads);         
 
 			void FShadowLocalGammaAtomsElementalContribution
 				(std::map<unsigned int, std::vector<double> > & forceContributionLocalGammaAtoms,

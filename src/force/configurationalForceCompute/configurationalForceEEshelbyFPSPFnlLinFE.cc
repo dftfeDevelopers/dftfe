@@ -1401,8 +1401,7 @@ template<unsigned int FEOrder>
 
 	std::vector<VectorizedArray<double> > rhoQuadsElectro(numQuadPoints,make_vectorized_array(0.0));
   std::vector<VectorizedArray<double> > smearedbQuads(numQuadPointsSmearedb,make_vectorized_array(0.0));
-  std::vector<Tensor<1,C_DIM,VectorizedArray<double> > > gradSmearedbQuads(numQuadPointsSmearedb,zeroTensor);
-  std::vector<VectorizedArray<double> > phiTotSmearedChargeQuads(numQuadPointsSmearedb,make_vectorized_array(0.0));
+  std::vector< Tensor<1,C_DIM,VectorizedArray<double> >  > gradPhiTotSmearedChargeQuads(numQuadPointsSmearedb,zeroTensor);
 	std::vector<VectorizedArray<double> > shadowKSRhoMinQuadsElectro(numQuadPoints,make_vectorized_array(0.0));
 	std::vector<VectorizedArray<double> > shadowKSRhoMinMinusRhoQuadsElectro(numQuadPoints,make_vectorized_array(0.0));
 	std::vector<Tensor<1,C_DIM,VectorizedArray<double> > > gradRhoQuadsElectro(numQuadPoints,zeroTensor);
@@ -1430,13 +1429,12 @@ template<unsigned int FEOrder>
       forceEvalSmearedCharge.reinit(cell);
       phiTotEvalSmearedCharge.reinit(cell);
       phiTotEvalSmearedCharge.read_dof_values_plain(phiTotRhoOutElectro);
-      phiTotEvalSmearedCharge.evaluate(true,false);        
+      phiTotEvalSmearedCharge.evaluate(false,true);        
     }
 
 		std::fill(rhoQuadsElectro.begin(),rhoQuadsElectro.end(),make_vectorized_array(0.0));
     std::fill(smearedbQuads.begin(),smearedbQuads.end(),make_vectorized_array(0.0));
-    std::fill(gradSmearedbQuads.begin(),gradSmearedbQuads.end(),zeroTensor);
-    std::fill(phiTotSmearedChargeQuads.begin(),phiTotSmearedChargeQuads.end(),make_vectorized_array(0.0));
+    std::fill(gradPhiTotSmearedChargeQuads.begin(),gradPhiTotSmearedChargeQuads.end(),zeroTensor);
 		std::fill(shadowKSRhoMinQuadsElectro.begin(),shadowKSRhoMinQuadsElectro.end(),make_vectorized_array(0.0));
 		std::fill(shadowKSRhoMinMinusRhoQuadsElectro.begin(),shadowKSRhoMinMinusRhoQuadsElectro.end(),make_vectorized_array(0.0));
 		std::fill(gradRhoQuadsElectro.begin(),gradRhoQuadsElectro.end(),zeroTensor);
@@ -1485,9 +1483,6 @@ template<unsigned int FEOrder>
         for (unsigned int q=0; q<numQuadPointsSmearedb; ++q)
         {
           smearedbQuads[q][iSubCell]=dftPtr->d_bQuadValuesAllAtoms.find(subCellId)->second[q];
-					gradSmearedbQuads[q][0][iSubCell]=dftPtr->d_bQuadGradValuesAllAtoms.find(subCellId)->second[3*q+0];
-					gradSmearedbQuads[q][1][iSubCell]=dftPtr->d_bQuadGradValuesAllAtoms.find(subCellId)->second[3*q+1];
-					gradSmearedbQuads[q][2][iSubCell]=dftPtr->d_bQuadGradValuesAllAtoms.find(subCellId)->second[3*q+2];          
         }       
 		}
 
@@ -1584,32 +1579,26 @@ template<unsigned int FEOrder>
     if (dftParameters::smearedNuclearCharges)
       for (unsigned int q=0; q<numQuadPointsSmearedb; ++q)
       {
-        Tensor<2,C_DIM,VectorizedArray<double> > E=zeroTensor2;
-        phiTotSmearedChargeQuads[q]=phiTotEvalSmearedCharge.get_value(q);
-        const VectorizedArray<double> identityTensorFactor=smearedbQuads[q]*phiTotSmearedChargeQuads[q];
-        E[0][0]=identityTensorFactor;
-        E[1][1]=identityTensorFactor;
-        E[2][2]=identityTensorFactor;
+        gradPhiTotSmearedChargeQuads[q]=phiTotEvalSmearedCharge.get_gradient(q);
 
         Tensor<1,C_DIM,VectorizedArray<double> > F=zeroTensor;
-        F=phiTotSmearedChargeQuads[q]*gradSmearedbQuads[q];
+        F=-gradPhiTotSmearedChargeQuads[q]*smearedbQuads[q];
 
         forceEvalSmearedCharge.submit_value(F,q);
-        forceEvalSmearedCharge.submit_gradient(E,q);
       }
 
     if (dftParameters::smearedNuclearCharges)
     {
-      forceEvalSmearedCharge.integrate(true,true);
+      forceEvalSmearedCharge.integrate(true,false);
       forceEvalSmearedCharge.distribute_local_to_global(d_configForceVectorLinFEElectro);      
 			
       FPhiTotSmearedChargesGammaAtomsElementalContribution(forceContributionSmearedChargesGammaAtoms,
 					forceEvalSmearedCharge,
 					matrixFreeDataElectro,
 					cell,
-					phiTotSmearedChargeQuads,
+					gradPhiTotSmearedChargeQuads,
           dftPtr->d_bQuadAtomIdsAllAtoms,
-				  gradSmearedbQuads);    
+				  smearedbQuads);    
     }
      
 	}//macro cell loop

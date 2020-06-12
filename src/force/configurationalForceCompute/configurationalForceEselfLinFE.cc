@@ -113,8 +113,7 @@ template<unsigned int FEOrder>
       }
 
     std::vector<VectorizedArray<double> > smearedbQuads(numQuadPointsSmearedb,make_vectorized_array(0.0));
-    std::vector<Tensor<1,C_DIM,VectorizedArray<double> > > gradSmearedbQuads(numQuadPointsSmearedb,zeroTensor);
-    std::vector<VectorizedArray<double> > vselfSmearedChargeQuads(numQuadPointsSmearedb,make_vectorized_array(0.0));
+    std::vector<Tensor<1,C_DIM,VectorizedArray<double> > > gradVselfSmearedChargeQuads(numQuadPointsSmearedb,zeroTensor);
 
 	  std::map<unsigned int, std::vector<double> > forceContributionSmearedChargesGammaAtoms; 
 
@@ -131,11 +130,10 @@ template<unsigned int FEOrder>
         forceEvalSmearedCharge.reinit(cell);
         vselfEvalSmearedCharge.reinit(cell);
         vselfEvalSmearedCharge.read_dof_values_plain(vselfBinsManagerElectro.getVselfFieldBins()[iBin]);
-        vselfEvalSmearedCharge.evaluate(true,false);    
+        vselfEvalSmearedCharge.evaluate(false,true);    
 
         std::fill(smearedbQuads.begin(),smearedbQuads.end(),make_vectorized_array(0.0));
-        std::fill(gradSmearedbQuads.begin(),gradSmearedbQuads.end(),zeroTensor);
-        std::fill(vselfSmearedChargeQuads.begin(),vselfSmearedChargeQuads.end(),make_vectorized_array(0.0));
+        std::fill(gradVselfSmearedChargeQuads.begin(),gradVselfSmearedChargeQuads.end(),zeroTensor);
 
         const unsigned int numSubCells=matrixFreeDataElectro.n_components_filled(cell);
 
@@ -147,7 +145,6 @@ template<unsigned int FEOrder>
 
           const std::vector<int> & bQuadAtomIdsCell=dftPtr->d_bQuadAtomIdsAllAtoms.find(subCellId)->second;
           const std::vector<double> & bQuadValuesCell= dftPtr->d_bQuadValuesAllAtoms.find(subCellId)->second;
-          const std::vector<double> & bQuadGradValuesCell= dftPtr->d_bQuadGradValuesAllAtoms.find(subCellId)->second;
 
           for (unsigned int q=0; q<numQuadPointsSmearedb; ++q)
           {
@@ -155,9 +152,6 @@ template<unsigned int FEOrder>
             {
               isCellNonTrivial=true;
               smearedbQuads[q][iSubCell]=bQuadValuesCell[q];
-              gradSmearedbQuads[q][0][iSubCell]=bQuadGradValuesCell[3*q+0];
-              gradSmearedbQuads[q][1][iSubCell]=bQuadGradValuesCell[3*q+1];
-              gradSmearedbQuads[q][2][iSubCell]=bQuadGradValuesCell[3*q+2]; 
             }
           }//quad loop         
         }//subcell loop
@@ -167,31 +161,25 @@ template<unsigned int FEOrder>
 
         for (unsigned int q=0; q<numQuadPointsSmearedb; ++q)
         {
-          Tensor<2,C_DIM,VectorizedArray<double> > E=zeroTensor2;
-          vselfSmearedChargeQuads[q]=vselfEvalSmearedCharge.get_value(q);
-          const VectorizedArray<double> identityTensorFactor=-smearedbQuads[q]*vselfSmearedChargeQuads[q];
-          E[0][0]=identityTensorFactor;
-          E[1][1]=identityTensorFactor;
-          E[2][2]=identityTensorFactor;
+          gradVselfSmearedChargeQuads[q]=vselfEvalSmearedCharge.get_gradient(q);
 
           Tensor<1,C_DIM,VectorizedArray<double> > F=zeroTensor;
-          F=-vselfSmearedChargeQuads[q]*gradSmearedbQuads[q];
+          F=gradVselfSmearedChargeQuads[q]*smearedbQuads[q];
 
           forceEvalSmearedCharge.submit_value(F,q);
-          forceEvalSmearedCharge.submit_gradient(E,q);
         }//quadloop
 
-        forceEvalSmearedCharge.integrate(true,true);
+        forceEvalSmearedCharge.integrate(true,false);
         forceEvalSmearedCharge.distribute_local_to_global(d_configForceVectorLinFEElectro);
 
         FVselfSmearedChargesGammaAtomsElementalContribution(forceContributionSmearedChargesGammaAtoms,
             forceEvalSmearedCharge,
             matrixFreeDataElectro,
             cell,
-            vselfSmearedChargeQuads,
+            gradVselfSmearedChargeQuads,
             atomIdsInBin,
             dftPtr->d_bQuadAtomIdsAllAtoms,
-            gradSmearedbQuads);
+            smearedbQuads);
       }//macrocell loop
 
       distributeForceContributionFPSPLocalGammaAtoms(forceContributionSmearedChargesGammaAtoms,
