@@ -378,7 +378,7 @@ namespace dftfe {
 
       void FPhiTotSmearedChargesGammaAtomsElementalContribution
         (std::map<unsigned int, std::vector<double> > & forceContributionSmearedChargesGammaAtoms,
-         FEEvaluation<3,1,C_num1DQuadSmearedCharge(),3>  & forceEval,
+         FEEvaluation<3,1,C_num1DQuadSmearedCharge<FEOrder>()*C_numCopies1DQuadSmearedCharge(),3>  & forceEval,
          const MatrixFree<3,double> & matrixFreeData,
          const unsigned int cell,
          const std::vector<Tensor<1,C_DIM,VectorizedArray<double> >  > & gradPhiTotQuads,
@@ -387,7 +387,7 @@ namespace dftfe {
 
       void FVselfSmearedChargesGammaAtomsElementalContribution
         (std::map<unsigned int, std::vector<double> > & forceContributionSmearedChargesGammaAtoms,
-         FEEvaluation<3,1,C_num1DQuadSmearedCharge(),3>  & forceEval,
+         FEEvaluation<3,1,C_num1DQuadSmearedCharge<FEOrder>()*C_numCopies1DQuadSmearedCharge(),3>  & forceEval,
          const MatrixFree<3,double> & matrixFreeData,
          const unsigned int cell,
          const std::vector<Tensor<1,C_DIM,VectorizedArray<double> > > & gradVselfBinQuads,

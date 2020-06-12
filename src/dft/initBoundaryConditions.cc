@@ -237,7 +237,7 @@ void dftClass<FEOrder>::initBoundaryConditions(const bool meshOnlyDeformed){
 	quadratureVector.push_back(QGaussLobatto<1>(FEOrder+1));
 	quadratureVector.push_back(QGauss<1>(C_num1DQuadPSP<FEOrder>()));
 	quadratureVector.push_back(QGaussLobatto<1>(C_num1DKerkerPoly<FEOrder>()+1));
-  quadratureVector.push_back(QGauss<1>(C_num1DQuadSmearedCharge()));
+  quadratureVector.push_back(QIterated<1>(QGauss<1>(C_num1DQuadSmearedCharge<FEOrder>()),C_numCopies1DQuadSmearedCharge()));
 
 
 	double init_force;

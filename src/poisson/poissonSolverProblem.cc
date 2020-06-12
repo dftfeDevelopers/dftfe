@@ -239,9 +239,8 @@ namespace dftfe {
 				}
 			else if (d_smearedChargeValuesPtr!=NULL)
 			{
-				dealii::QGauss<3>  quadratureSC(C_num1DQuadSmearedCharge());
-				const unsigned int   num_quad_points_sc = quadratureSC.size();
-				dealii::FEValues<3> fe_valuesSC (dofHandler.get_fe(), quadratureSC,dealii::update_values | dealii::update_JxW_values);        
+				const unsigned int   num_quad_points_sc = d_matrixFreeDataPtr->get_quadrature(4).size();
+				dealii::FEValues<3> fe_valuesSC (dofHandler.get_fe(), d_matrixFreeDataPtr->get_quadrature(4),dealii::update_values | dealii::update_JxW_values);        
 				cell = dofHandler.begin_active();
 				for(; cell!=endc; ++cell)
 					if (cell->is_locally_owned())

@@ -90,14 +90,12 @@ template<unsigned int FEOrder>
   {
     const std::map<int,std::set<int> > & atomIdsBins= vselfBinsManagerElectro.getAtomIdsBins();
 
-    FEEvaluation<C_DIM,1,C_num1DQuadSmearedCharge(),C_DIM>  forceEvalSmearedCharge(matrixFreeDataElectro,
+    FEEvaluation<C_DIM,1,C_num1DQuadSmearedCharge<FEOrder>()*C_numCopies1DQuadSmearedCharge(),C_DIM>  forceEvalSmearedCharge(matrixFreeDataElectro,
         d_forceDofHandlerIndexElectro,
         4); 
 
     DoFHandler<C_DIM>::active_cell_iterator subCellPtr;
     const unsigned int numQuadPointsSmearedb=forceEvalSmearedCharge.n_q_points;
-
-  	QGauss<C_DIM>  quadratureSmeared(C_num1DQuad<FEOrder>());
 
     Tensor<1,C_DIM,VectorizedArray<double> > zeroTensor;
     for (unsigned int idim=0; idim<C_DIM; idim++)
@@ -119,7 +117,7 @@ template<unsigned int FEOrder>
 
     for(unsigned int iBin = 0; iBin < numberBins; ++iBin)
     {
-      FEEvaluation<C_DIM,FEOrder,C_num1DQuadSmearedCharge(),1>  vselfEvalSmearedCharge(matrixFreeDataElectro,
+      FEEvaluation<C_DIM,FEOrder,C_num1DQuadSmearedCharge<FEOrder>()*C_numCopies1DQuadSmearedCharge(),1>  vselfEvalSmearedCharge(matrixFreeDataElectro,
         2+iBin,
         4);
 

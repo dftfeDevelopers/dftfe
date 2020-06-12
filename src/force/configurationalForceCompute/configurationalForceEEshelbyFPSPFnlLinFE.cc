@@ -1365,11 +1365,11 @@ template<unsigned int FEOrder>
 			phiTotDofHandlerIndexElectro,
 			0);
 
-	FEEvaluation<C_DIM,FEOrder,C_num1DQuadSmearedCharge(),1>  phiTotEvalSmearedCharge(matrixFreeDataElectro,
+	FEEvaluation<C_DIM,FEOrder,C_num1DQuadSmearedCharge<FEOrder>()*C_numCopies1DQuadSmearedCharge(),1>  phiTotEvalSmearedCharge(matrixFreeDataElectro,
 			phiTotDofHandlerIndexElectro,
 			4);
 
-	FEEvaluation<C_DIM,1,C_num1DQuadSmearedCharge(),C_DIM>  forceEvalSmearedCharge(matrixFreeDataElectro,
+	FEEvaluation<C_DIM,1,C_num1DQuadSmearedCharge<FEOrder>()*C_numCopies1DQuadSmearedCharge(),C_DIM>  forceEvalSmearedCharge(matrixFreeDataElectro,
 			d_forceDofHandlerIndexElectro,
 			4);  
 

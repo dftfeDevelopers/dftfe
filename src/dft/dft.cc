@@ -1668,7 +1668,6 @@ namespace dftfe {
 #endif
 
 			QGauss<3>  quadrature(C_num1DQuad<FEOrder>());
-			QGauss<3>  quadratureSmearedCharge(C_num1DQuadSmearedCharge());
 
 			//computingTimerStandard.enter_section("Total scf solve");
 			computingTimerStandard.enter_section("Kohn-sham dft operator init");
@@ -2630,7 +2629,7 @@ namespace dftfe {
 								dofHandler,
 								quadrature,
 								quadrature,
-								quadratureSmearedCharge,
+								matrix_free_data.get_quadrature(4),
 								eigenValues,
 								d_kPointWeights,
 								fermiEnergy,
@@ -2659,7 +2658,7 @@ namespace dftfe {
 											dofHandler,
 											quadrature,
 											quadrature,
-											quadratureSmearedCharge,
+											matrix_free_data.get_quadrature(4),
 											eigenValues,
 											d_kPointWeights,
 											fermiEnergy,
@@ -2808,7 +2807,7 @@ namespace dftfe {
 							dofHandler,
 							quadrature,
 							quadrature,
-							quadratureSmearedCharge,
+							matrix_free_data.get_quadrature(4),
 							eigenValues,
 							d_kPointWeights,
 							fermiEnergy,
@@ -2837,7 +2836,7 @@ namespace dftfe {
 										dofHandler,
 										quadrature,
 										quadrature,
-										quadratureSmearedCharge,
+										matrix_free_data.get_quadrature(4),
 										eigenValues,
 										d_kPointWeights,
 										fermiEnergy,
@@ -2892,7 +2891,7 @@ namespace dftfe {
 							dofHandler,
 							quadrature,
 							quadrature,
-							quadratureSmearedCharge,
+							matrix_free_data.get_quadrature(4),
 							eigenValues,
 							d_kPointWeights,
 							fermiEnergy,

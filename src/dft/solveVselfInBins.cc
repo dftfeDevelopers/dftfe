@@ -113,8 +113,8 @@ namespace dftfe
 							if (r>rc[binAtomIdToGlobalAtomIdMapCurrentBin[atomId]])
 								continue;
 							const double chargeVal=dftUtils::smearedCharge(r,rc[binAtomIdToGlobalAtomIdMapCurrentBin[atomId]]);
-							bQuadValuesCell[q]=chargeVal*(-atomCharges[atomId]);
-							smearedNuclearChargeIntegralCheck[atomId]+=chargeVal*(-atomCharges[atomId])*jxw;
+							bQuadValuesCell[q]=chargeVal*(-atomCharges[atomId])/smearedNuclearChargeIntegral[atomId];
+							smearedNuclearChargeIntegralCheck[atomId]+=bQuadValuesCell[q]*jxw;
               bQuadAtomIdsCell[q]=binAtomIdToGlobalAtomIdMapCurrentBin[atomId];
 
               break;
@@ -160,9 +160,8 @@ namespace dftfe
 			const dealii::DoFHandler<3> & dofHandler=matrix_free_data.get_dof_handler(offset); 
 			const dealii::Quadrature<3> & quadratureFormula=matrix_free_data.get_quadrature();
 
-		  dealii::QGauss<3>  quadratureFormulaSmearedCharge(C_num1DQuadSmearedCharge());
-			dealii::FEValues<3> fe_values_sc (dofHandler.get_fe(), quadratureFormulaSmearedCharge, dealii::update_values|dealii::update_JxW_values);
-			const unsigned int n_q_points_sc    =quadratureFormulaSmearedCharge.size();
+			dealii::FEValues<3> fe_values_sc (dofHandler.get_fe(), matrix_free_data.get_quadrature(4), dealii::update_values|dealii::update_JxW_values);
+			const unsigned int n_q_points_sc    =matrix_free_data.get_quadrature(4).size();
 
 			dealii::DoFHandler<3>::active_cell_iterator cell = dofHandler.begin_active(), endc = dofHandler.end();
 			if (useSmearedCharges)
@@ -242,7 +241,7 @@ namespace dftfe
 
 				if (useSmearedCharges)
 					smearedNuclearCharges(dofHandler,
-							quadratureFormulaSmearedCharge,
+							matrix_free_data.get_quadrature(4),
 							atomPointsBin,
 							atomChargesBin,
 							numberGlobalAtomsInBin,

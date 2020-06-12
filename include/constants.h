@@ -34,7 +34,11 @@ namespace dftfe {
 	template <unsigned int FEOrder> constexpr unsigned int C_num1DQuad(){return FEOrder+1;}
 
 	/// 1d quad rule smeared nuclear charge
-	constexpr unsigned int C_num1DQuadSmearedCharge(){return 10;}
+	template <unsigned int FEOrder> constexpr unsigned int C_num1DQuadSmearedCharge(){return FEOrder/2+2;}
+
+  /// number of copies 1d quad rule smeared nuclear charge
+  constexpr unsigned int C_numCopies1DQuadSmearedCharge(){return 4;}
+  
 
 	//kerker Helmholtz solve polynomial Order
 	template <unsigned int FEOrder> constexpr unsigned int C_num1DKerkerPoly(){return FEOrder;}
