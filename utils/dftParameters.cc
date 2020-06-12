@@ -439,7 +439,7 @@ namespace dftfe {
 							Patterns::Double(0.0),
 							"[Developer] Move mesh to atoms gaussian order. Gamma(r)= exp(-(r/gaussianConstant)^(gaussianOrder)).");
 
-					prm.declare_entry("USE FLAT TOP GENERATOR", "false",
+					prm.declare_entry("USE FLAT TOP GENERATOR", "true",
 							Patterns::Bool(),
 							"[Developer] Use a composite generator flat top and Gaussian generator for mesh movement and configurational force computation.");
 
