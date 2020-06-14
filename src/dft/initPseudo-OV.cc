@@ -55,6 +55,14 @@ void dftClass<FEOrder>::computeElementalOVProjectorKets()
 	//
 	const unsigned int maxkPoints = d_kPointWeights.size();
 
+	//
+	//reinit kohnShamDFTOperator for getting access to global to local element nodeIds
+	//
+	kohnShamDFTOperatorClass<FEOrder> kohnShamDFTEigenOperator(this,mpi_communicator);
+	kohnShamDFTEigenOperator.init();
+	distributedCPUVec<dataTypes::number> tmpVector;
+	kohnShamDFTEigenOperator.reinit(1,tmpVector,true);
+
 
 	//
 	//preallocate element Matrices
