@@ -322,11 +322,42 @@ void dftClass<FEOrder>::computeElementalOVProjectorKets()
 
 	}//atom loop
 
+	
+	//scaling nonlocal element matrices with M^{-1/2}
+	if(dftParameters::cellLevelMassMatrixScaling)
+	  {
+	    for(int iAtom = 0; iAtom < numberNonLocalAtoms; ++iAtom)
+	      {
+		int numberElementsInAtomCompactSupport = d_elementOneFieldIteratorsInAtomCompactSupport[iAtom].size();
+		for(int iElem = 0; iElem < numberElementsInAtomCompactSupport; ++iElem)
+		  {
+		    for(int iNode = 0; iNode < numberNodesPerElement; ++iNode)
+		      {
+			int origElemId = d_elementIdsInAtomCompactSupport[iAtom][iElem];
+			dealii::types::global_dof_index localNodeId = d_flattenedArrayCellLocalProcIndexIdMap[origElemId][iNode];
+			double alpha = d_invSqrtMassVector.local_element(localNodeId);
+
+			for(int iPseudoWave = 0; iPseduoWave < numberPseudoWaveFunctions; ++iPseudoWave)
+			  {
+			    d_nonLocalProjectorElementMatricesTranspose[iAtom][iElem][numberPseudoWaveFunctions*iNode + iPseudoWave]*=alpha;
+
+			    d_nonLocalProjectorElementMatrices[iAtom][iElem][numberNodesPerElement*iPseudoWave + iNode] = d_nonLocalProjectorElementMatricesTranspose[iAtom][iElem][numberPseudoWaveFunctions*iNode + iPseudoWave];
+
+			  }
+
+		      }
+
+		  }
+
+	      }
+	  }
+
 	//
 	//Add mpi accumulation
 	//
 
 }
+
 	template<unsigned int FEOrder>
 void dftClass<FEOrder>::initNonLocalPseudoPotential_OV()
 {
