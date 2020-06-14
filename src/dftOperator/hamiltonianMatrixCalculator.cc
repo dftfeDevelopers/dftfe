@@ -131,51 +131,83 @@ void kohnShamDFTOperatorClass<FEOrder>::computeHamiltonianMatrix(const unsigned 
 
 
 		if(dftParameters::xc_id == 4)
-			for(unsigned int iNode = 0; iNode < numberDofsPerElement; ++iNode)
-				for(unsigned int jNode = 0; jNode < numberDofsPerElement; ++jNode)
-				{
-					for(unsigned int q_point = 0; q_point < numberQuadraturePoints; ++q_point)
-					{
-						const Tensor<1,3, VectorizedArray<double> > tempVec =
-							nonCachedShapeGrad[iNode*numberQuadraturePoints+q_point]
-							*make_vectorized_array(d_shapeFunctionValue[numberQuadraturePoints*jNode+q_point])
-							+ nonCachedShapeGrad[jNode*numberQuadraturePoints+q_point]
-							*make_vectorized_array(d_shapeFunctionValue[numberQuadraturePoints*iNode+q_point]);
+		  for(unsigned int iNode = 0; iNode < numberDofsPerElement; ++iNode)
+		    for(unsigned int jNode = 0; jNode < numberDofsPerElement; ++jNode)
+		      {
+			for(unsigned int q_point = 0; q_point < numberQuadraturePoints; ++q_point)
+			  {
+			    const Tensor<1,3, VectorizedArray<double> > tempVec =
+			      nonCachedShapeGrad[iNode*numberQuadraturePoints+q_point]
+			      *make_vectorized_array(d_shapeFunctionValue[numberQuadraturePoints*jNode+q_point])
+			      + nonCachedShapeGrad[jNode*numberQuadraturePoints+q_point]
+			      *make_vectorized_array(d_shapeFunctionValue[numberQuadraturePoints*iNode+q_point]);
 
-						const VectorizedArray<double> temp =
-							make_vectorized_array(2.0)*scalar_product(derExcWithSigmaTimesGradRho(iMacroCell,q_point),tempVec);
+			    const VectorizedArray<double> temp =
+			      make_vectorized_array(2.0)*scalar_product(derExcWithSigmaTimesGradRho(iMacroCell,q_point),tempVec);
 
-						fe_eval.submit_value(temp,q_point);
-					}
+			    fe_eval.submit_value(temp,q_point);
+			  }
 
-					elementHamiltonianMatrix[numberDofsPerElement*iNode + jNode] +=  fe_eval.integrate_value();
+			elementHamiltonianMatrix[numberDofsPerElement*iNode + jNode] +=  fe_eval.integrate_value();
 
-				}//jNode loop
+		      }//jNode loop
+
+		
 
 		for(unsigned int iSubCell = 0; iSubCell < n_sub_cells; ++iSubCell)
-		{
-			//FIXME: Use functions like mkl_malloc for 64 byte memory alignment.
-			d_cellHamiltonianMatrix[kpointSpinIndex][iElem].resize(numberDofsPerElement*numberDofsPerElement,0.0);
+		  {
+		    //FIXME: Use functions like mkl_malloc for 64 byte memory alignment.
+		    d_cellHamiltonianMatrix[kpointSpinIndex][iElem].resize(numberDofsPerElement*numberDofsPerElement,0.0);
 
+		    if(dftParameters::cellLevelMassMatrixScaling)
+		      {
 			for(unsigned int iNode = 0; iNode < numberDofsPerElement; ++iNode)
-			{
-				for(unsigned int jNode = 0; jNode < numberDofsPerElement; ++jNode)
-				{
+			  {
+			    dealii::types::global_dof_index localProcINode = d_flattenedArrayMacroCellLocalProcIndexIdMap[iElem][iNode];
+			    for(unsigned int jNode = 0; jNode < numberDofsPerElement; ++jNode)
+			      {
+				dealii::types::global_dof_index localProcJNode = d_flattenedArrayMacroCellLocalProcIndexIdMap[iElem][jNode];
+
+				double stiffMatrixEntry = d_invSqrtMassVector.local_element(localProcINode)*elementHamiltonianMatrix[numberDofsPerElement*iNode + jNode][iSubCell]*d_invSqrtMassVector.local_element(localProcJNode);
+				
+				
 #ifdef USE_COMPLEX
-					d_cellHamiltonianMatrix[kpointSpinIndex][iElem][numberDofsPerElement*iNode + jNode].real(elementHamiltonianMatrix[numberDofsPerElement*iNode + jNode][iSubCell]);
-					d_cellHamiltonianMatrix[kpointSpinIndex][iElem][numberDofsPerElement*iNode + jNode].imag(elementHamiltonianMatrixImag[numberDofsPerElement*iNode + jNode][iSubCell]);
+                  double stiffMatrixEntryImag =  d_invSqrtMassVector.local_element(localProcINode)*elementHamiltonianMatrixImag[numberDofsPerElement*iNode + jNode][iSubCell]*d_invSqrtMassVector.local_element(localProcJNode);
+				
+				d_cellHamiltonianMatrix[kpointSpinIndex][iElem][numberDofsPerElement*iNode + jNode].real(stiffMatrixEntry);
+				d_cellHamiltonianMatrix[kpointSpinIndex][iElem][numberDofsPerElement*iNode + jNode].imag(stiffMatrixEntryImag);
 
 #else
-					d_cellHamiltonianMatrix[kpointSpinIndex][iElem][numberDofsPerElement*iNode + jNode]
-						= elementHamiltonianMatrix[numberDofsPerElement*iNode + jNode][iSubCell];
+				d_cellHamiltonianMatrix[kpointSpinIndex][iElem][numberDofsPerElement*iNode + jNode]
+				  = stiffMatrixEntry;
+#endif
+
+			      }
+			  }
+		      }
+		    else
+		      {
+			for(unsigned int iNode = 0; iNode < numberDofsPerElement; ++iNode)
+			  {
+			    for(unsigned int jNode = 0; jNode < numberDofsPerElement; ++jNode)
+			      {
+#ifdef USE_COMPLEX
+				d_cellHamiltonianMatrix[kpointSpinIndex][iElem][numberDofsPerElement*iNode + jNode].real(elementHamiltonianMatrix[numberDofsPerElement*iNode + jNode][iSubCell]);
+				d_cellHamiltonianMatrix[kpointSpinIndex][iElem][numberDofsPerElement*iNode + jNode].imag(elementHamiltonianMatrixImag[numberDofsPerElement*iNode + jNode][iSubCell]);
+
+#else
+				d_cellHamiltonianMatrix[kpointSpinIndex][iElem][numberDofsPerElement*iNode + jNode]
+				  = elementHamiltonianMatrix[numberDofsPerElement*iNode + jNode][iSubCell];
 
 #endif
 
-				}
-			}
+			      }
+			  }
 
-			iElem += 1;
-		}
+		      }
+
+		    iElem += 1;
+		  }
 
 	}//macrocell loop
 
