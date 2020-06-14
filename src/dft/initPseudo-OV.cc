@@ -59,9 +59,29 @@ void dftClass<FEOrder>::computeElementalOVProjectorKets()
 	//reinit kohnShamDFTOperator for getting access to global to local element nodeIds
 	//
 	kohnShamDFTOperatorClass<FEOrder> kohnShamDFTEigenOperator(this,mpi_communicator);
-	kohnShamDFTEigenOperator.init();
+	distributedCPUVec<double> sqrtMassVector,invSqrtMassVector;
+	matrix_free_data.initialize_dof_vector(invSqrtMassVector,0);
+	sqrtMassVector.reinit(invSqrtMassVector);
+	kohnShamDFTEigenOperator.computeMassVector(dofHandler,
+						   constraintsNone,
+						   sqrtMassVector,
+						   invSqrtMassVector);
+
+	constraintsNone.distribute(invSqrtMassVector);
+	
 	distributedCPUVec<dataTypes::number> tmpVector;
-	kohnShamDFTEigenOperator.reinit(1,tmpVector,true);
+	vectorTools::createDealiiVector<dataTypes::number>(matrix_free_data.get_vector_partitioner(),
+							   1,
+							   tmpVector);
+
+	//storage for precomputing index maps
+	std::vector<std::vector<dealii::types::global_dof_index> > flattenedArrayMacroCellLocalProcIndexIdMap, flattenedArrayCellLocalProcIndexIdMap;
+	
+	vectorTools::computeCellLocalIndexSetMap(tmpVector.get_partitioner(),
+						 matrix_free_data,
+						 1,
+						 flattenedArrayMacroCellLocalProcIndexIdMap,
+						 flattenedArrayCellLocalProcIndexIdMap);
 
 
 	//
@@ -342,8 +362,8 @@ void dftClass<FEOrder>::computeElementalOVProjectorKets()
 		    for(int iNode = 0; iNode < numberNodesPerElement; ++iNode)
 		      {
 			int origElemId = d_elementIdsInAtomCompactSupport[iAtom][iElem];
-			dealii::types::global_dof_index localNodeId = d_flattenedArrayCellLocalProcIndexIdMap[origElemId][iNode];
-			double alpha = d_invSqrtMassVector.local_element(localNodeId);
+			dealii::types::global_dof_index localNodeId = flattenedArrayCellLocalProcIndexIdMap[origElemId][iNode];
+			double alpha = invSqrtMassVector.local_element(localNodeId);
 
 			for(int iPseudoWave = 0; iPseduoWave < numberPseudoWaveFunctions; ++iPseudoWave)
 			  {
