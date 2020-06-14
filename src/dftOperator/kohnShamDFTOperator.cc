@@ -93,9 +93,6 @@ namespace dftfe {
 			d_cellHamiltonianMatrix.clear();
 			d_cellHamiltonianMatrix.resize(dftPtr->d_kPointWeights.size()*(1+dftParameters::spinPolarized));
 
-			distributedCPUVec<dataTypes::number> tmpVector;
-
-			reinit(1,tmpVector,true);
 
 			computing_timer.exit_section("kohnShamDFTOperatorClass setup");
 		}
