@@ -352,11 +352,16 @@ void dftClass<FEOrder>::computeElementalOVProjectorKets()
 
 	
 	//scaling nonlocal element matrices with M^{-1/2}
+#ifdef USE_COMPLEX
+
+
+#else
 	if(dftParameters::cellLevelMassMatrixScaling)
 	  {
 	    for(int iAtom = 0; iAtom < numberNonLocalAtoms; ++iAtom)
 	      {
 		int numberElementsInAtomCompactSupport = d_elementOneFieldIteratorsInAtomCompactSupport[iAtom].size();
+		int numberPseudoWaveFunctions = d_numberPseudoAtomicWaveFunctions[iAtom];
 		for(int iElem = 0; iElem < numberElementsInAtomCompactSupport; ++iElem)
 		  {
 		    for(int iNode = 0; iNode < numberNodesPerElement; ++iNode)
@@ -365,7 +370,7 @@ void dftClass<FEOrder>::computeElementalOVProjectorKets()
 			dealii::types::global_dof_index localNodeId = flattenedArrayCellLocalProcIndexIdMap[origElemId][iNode];
 			double alpha = invSqrtMassVector.local_element(localNodeId);
 
-			for(int iPseudoWave = 0; iPseduoWave < numberPseudoWaveFunctions; ++iPseudoWave)
+			for(int iPseudoWave = 0; iPseudoWave < numberPseudoWaveFunctions; ++iPseudoWave)
 			  {
 			    d_nonLocalProjectorElementMatricesTranspose[iAtom][iElem][numberPseudoWaveFunctions*iNode + iPseudoWave]*=alpha;
 
@@ -379,6 +384,7 @@ void dftClass<FEOrder>::computeElementalOVProjectorKets()
 
 	      }
 	  }
+#endif	
 
 	//
 	//Add mpi accumulation

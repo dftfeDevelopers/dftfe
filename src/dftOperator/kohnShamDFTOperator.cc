@@ -88,6 +88,9 @@ namespace dftfe {
 					d_sqrtMassVector,
 					d_invSqrtMassVector);
 
+			if(dftParameters::cellLevelMassMatrixScaling)
+			  dftPtr->constraintsNone.distribute(d_invSqrtMassVector);
+
 			operatorDFTClass::setInvSqrtMassVector(d_invSqrtMassVector);
 
 			d_cellHamiltonianMatrix.clear();
@@ -597,6 +600,21 @@ namespace dftfe {
 				  }
 			      }
 			  }
+			else
+			  {
+			    
+			    for(unsigned int i = 0; i < numberDofs; ++i)
+			      {
+				const double scalingCoeff = scalar;
+				dscal_(&numberWaveFunctions,
+				       &scalingCoeff,
+				       src.begin()+i*numberWaveFunctions,
+				       &inc);
+			      }
+
+
+			  }
+			
 
 			//
 			//update slave nodes before doing element-level matrix-vec multiplication
@@ -686,7 +704,18 @@ namespace dftfe {
 				       &inc);
 			      }
 			  }
+			else
+			  {
+			    for(unsigned int i = 0; i < numberDofs; ++i)
+			      {
+				double scalingCoeff = (1.0/scalar);
+				dscal_(&numberWaveFunctions,
+				       &scalingCoeff,
+				       src.begin()+i*numberWaveFunctions,
+				       &inc);
+			      }
 
+			  }
 
 		}
 
