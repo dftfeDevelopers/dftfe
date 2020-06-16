@@ -89,7 +89,10 @@ namespace dftfe {
 					d_invSqrtMassVector);
 
 			if(dftParameters::cellLevelMassMatrixScaling)
-			  dftPtr->constraintsNone.distribute(d_invSqrtMassVector);
+			  {
+			    dftPtr->constraintsNone.distribute(d_invSqrtMassVector);
+			    d_invSqrtMassVector.update_ghost_values();
+			  }
 
 			operatorDFTClass::setInvSqrtMassVector(d_invSqrtMassVector);
 
@@ -602,7 +605,7 @@ namespace dftfe {
 			  }
 			else
 			  {
-			    
+			   
 			    for(unsigned int i = 0; i < numberDofs; ++i)
 			      {
 				const double scalingCoeff = scalar;
@@ -611,7 +614,6 @@ namespace dftfe {
 				       src.begin()+i*numberWaveFunctions,
 				       &inc);
 			      }
-
 
 			  }
 			
