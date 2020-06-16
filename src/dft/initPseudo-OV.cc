@@ -61,7 +61,7 @@ void dftClass<FEOrder>::computeElementalOVProjectorKets()
 	kohnShamDFTOperatorClass<FEOrder> kohnShamDFTEigenOperator(this,mpi_communicator);
 	distributedCPUVec<double> sqrtMassVector,invSqrtMassVector;
 
-	if(cellLevelMassMatrixScaling)
+	if(dftParameters::cellLevelMassMatrixScaling)
 	  {
 	    matrix_free_data.initialize_dof_vector(invSqrtMassVector,0);
 	    sqrtMassVector.reinit(invSqrtMassVector);
