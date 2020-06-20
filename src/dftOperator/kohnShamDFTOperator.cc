@@ -543,6 +543,10 @@ namespace dftfe {
 						&inc);
 			}
 
+			
+			
+			
+
 		}
 
 	template<unsigned int FEOrder>
@@ -716,6 +720,9 @@ namespace dftfe {
 				       src.begin()+i*numberWaveFunctions,
 				       &inc);
 			      }
+
+			    dftPtr->constraintsNoneDataInfo.set_zero(src,
+                                                                     numberWaveFunctions);
 
 			  }
 
