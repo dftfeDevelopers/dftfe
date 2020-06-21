@@ -75,7 +75,7 @@ void kohnShamDFTOperatorClass<FEOrder>::computeHamiltonianMatrix(const unsigned 
 
 		for(unsigned int iNode = 0; iNode < numberDofsPerElement; ++iNode)
 		{
-			for(unsigned int jNode = 0; jNode < numberDofsPerElement; ++jNode)
+			for(unsigned int jNode = iNode; jNode < numberDofsPerElement; ++jNode)
 			{
 				for(unsigned int q_point = 0; q_point < numberQuadraturePoints; ++q_point)
 				{
@@ -136,7 +136,7 @@ void kohnShamDFTOperatorClass<FEOrder>::computeHamiltonianMatrix(const unsigned 
 
 		if(dftParameters::xc_id == 4)
 		  for(unsigned int iNode = 0; iNode < numberDofsPerElement; ++iNode)
-		    for(unsigned int jNode = 0; jNode < numberDofsPerElement; ++jNode)
+		    for(unsigned int jNode = iNode; jNode < numberDofsPerElement; ++jNode)
 		      {
 			for(unsigned int q_point = 0; q_point < numberQuadraturePoints; ++q_point)
 			  {
@@ -200,7 +200,7 @@ void kohnShamDFTOperatorClass<FEOrder>::computeHamiltonianMatrix(const unsigned 
 			      }
 			    
 			  }
-#end			
+#endif			
 		      }
 		    else
 		      {
