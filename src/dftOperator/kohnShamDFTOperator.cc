@@ -638,8 +638,8 @@ namespace dftfe {
 			{
 				computeLocalHamiltonianTimesXBatchGEMM(src,
 								       numberWaveFunctions,
-								       dst,
-								       scalar);
+								       dst);
+								       
 			}
 			else
 				computeLocalHamiltonianTimesX(src,

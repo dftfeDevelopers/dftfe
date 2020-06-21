@@ -275,8 +275,9 @@ namespace dftfe{
 		 * @param dst Vector containing matrix times given multi-vectors product
 		 */
 		void computeLocalHamiltonianTimesX(const distributedCPUVec<dataTypes::number> & src,
-				const unsigned int numberWaveFunctions,
-				distributedCPUVec<dataTypes::number> & dst) const;
+						   const unsigned int numberWaveFunctions,
+						   distributedCPUVec<dataTypes::number> & dst,
+						   const double scalar = 1.0) const;
 
 
 		void computeMassMatrixTimesX(const distributedCPUVec<dataTypes::number> & src,
@@ -312,8 +313,9 @@ namespace dftfe{
 		 * @param dst Vector containing matrix times given multi-vectors product
 		 */
 		void computeNonLocalHamiltonianTimesX(const distributedCPUVec<dataTypes::number> & src,
-				const unsigned int numberWaveFunctions,
-				distributedCPUVec<dataTypes::number> & dst) const;
+						      const unsigned int numberWaveFunctions,
+						      distributedCPUVec<dataTypes::number> & dst,
+						      const double scalar = 1.0) const;
 
 #ifdef WITH_MKL
 		/**
