@@ -156,9 +156,94 @@ void kohnShamDFTOperatorClass<FEOrder>::computeHamiltonianMatrix(const unsigned 
 
 		      }//jNode loop
 
+
+		 for(unsigned int iSubCell = 0; iSubCell < n_sub_cells; ++iSubCell)
+		  {
+		    //FIXME: Use functions like mkl_malloc for 64 byte memory alignment.
+		    d_cellHamiltonianMatrix[kpointSpinIndex][iElem].resize(numberDofsPerElement*numberDofsPerElement,0.0);
+		    if(dftParameters::cellLevelMassMatrixScaling)
+		      {
+#ifdef USE_COMPLEX
+			for(unsigned int iNode = 0; iNode < numberDofsPerElement; ++iNode)
+			  {
+			    dealii::types::global_dof_index localProcINode = d_flattenedArrayMacroCellLocalProcIndexIdMap[iElem][iNode];
+			    for(unsigned int jNode = iNode; jNode < numberDofsPerElement; ++jNode)
+			      {
+				dealii::types::global_dof_index localProcJNode = d_flattenedArrayMacroCellLocalProcIndexIdMap[iElem][jNode];
+				double stiffMatrixEntry = d_invSqrtMassVector.local_element(localProcINode)*elementHamiltonianMatrix[numberDofsPerElement*iNode + jNode][iSubCell]*d_invSqrtMassVector.local_element(localProcJNode);
+				d_cellHamiltonianMatrix[kpointSpinIndex][iElem][numberDofsPerElement*iNode + jNode].real(stiffMatrixEntry);
+				 double stiffMatrixEntryImag =  d_invSqrtMassVector.local_element(localProcINode)*elementHamiltonianMatrixImag[numberDofsPerElement*iNode + jNode][iSubCell]*d_invSqrtMassVector.local_element(localProcJNode);
+				d_cellHamiltonianMatrix[kpointSpinIndex][iElem][numberDofsPerElement*iNode + jNode].imag(stiffMatrixEntryImag); 
+				
+			      }
+			     for(unsigned int jNode = 0; jNode < iNode; ++jNode)
+			       {
+				 d_cellHamiltonianMatrix[kpointSpinIndex][iElem][numberDofsPerElement*iNode + jNode].real(d_cellHamiltonianMatrix[kpointSpinIndex][iElem][numberDofsPerElement*jNode + iNode]);
+				 dealii::types::global_dof_index localProcJNode = d_flattenedArrayMacroCellLocalProcIndexIdMap[iElem][jNode];
+				  double stiffMatrixEntryImag =  d_invSqrtMassVector.local_element(localProcINode)*elementHamiltonianMatrixImag[numberDofsPerElement*iNode + jNode][iSubCell]*d_invSqrtMassVector.local_element(localProcJNode);
+				d_cellHamiltonianMatrix[kpointSpinIndex][iElem][numberDofsPerElement*iNode + jNode].imag(stiffMatrixEntryImag); 
+			       }
+			  }
+#else
+			for(unsigned int iNode = 0; iNode < numberDofsPerElement; ++iNode)
+			  {
+			    dealii::types::global_dof_index localProcINode = d_flattenedArrayMacroCellLocalProcIndexIdMap[iElem][iNode];
+			    for(unsigned int jNode = iNode; jNode < numberDofsPerElement; ++jNode)
+			      {
+				dealii::types::global_dof_index localProcJNode = d_flattenedArrayMacroCellLocalProcIndexIdMap[iElem][jNode];
+				d_cellHamiltonianMatrix[kpointSpinIndex][iElem][numberDofsPerElement*iNode + jNode] = d_invSqrtMassVector.local_element(localProcINode)*elementHamiltonianMatrix[numberDofsPerElement*iNode + jNode][iSubCell]*d_invSqrtMassVector.local_element(localProcJNode);
+			      }
+                            for(unsigned int jNode = 0; jNode < iNode; ++jNode)
+			      {
+				d_cellHamiltonianMatrix[kpointSpinIndex][iElem][numberDofsPerElement*iNode + jNode] = d_cellHamiltonianMatrix[kpointSpinIndex][iElem][numberDofsPerElement*jNode + iNode];
+				
+			      }
+			    
+			  }
+#end			
+		      }
+		    else
+		      {
+#ifdef USE_COMPLEX
+			for(unsigned int iNode = 0; iNode < numberDofsPerElement; ++iNode)
+			  {
+			    for(unsigned int jNode = iNode; jNode < numberDofsPerElement; ++jNode)
+			      {
+				d_cellHamiltonianMatrix[kpointSpinIndex][iElem][numberDofsPerElement*iNode + jNode].real(elementHamiltonianMatrix[numberDofsPerElement*iNode + jNode][iSubCell]);
+				d_cellHamiltonianMatrix[kpointSpinIndex][iElem][numberDofsPerElement*iNode + jNode].imag(elementHamiltonianMatrixImag[numberDofsPerElement*iNode + jNode][iSubCell]);
+			      }
+
+			    for(unsigned int jNode = 0; jNode < iNode; ++jNode)
+			      {
+				d_cellHamiltonianMatrix[kpointSpinIndex][iElem][numberDofsPerElement*iNode + jNode].real(elementHamiltonianMatrix[numberDofsPerElement*jNode + iNode][iSubCell]);
+				d_cellHamiltonianMatrix[kpointSpinIndex][iElem][numberDofsPerElement*iNode + jNode].imag(elementHamiltonianMatrixImag[numberDofsPerElement*iNode + jNode][iSubCell]);
+			      }
+			    
+			  }
+#else
+			for(unsigned int iNode = 0; iNode < numberDofsPerElement; ++iNode)
+			  {
+			    for(unsigned int jNode = iNode; jNode < numberDofsPerElement; ++jNode)
+			      {
+				d_cellHamiltonianMatrix[kpointSpinIndex][iElem][numberDofsPerElement*iNode + jNode]
+				  = elementHamiltonianMatrix[numberDofsPerElement*iNode + jNode][iSubCell];
+			      }
+			    for(unsigned int jNode = 0; jNode < iNode; ++jNode)
+			      {
+				d_cellHamiltonianMatrix[kpointSpinIndex][iElem][numberDofsPerElement*iNode + jNode]
+				  = elementHamiltonianMatrix[numberDofsPerElement*jNode + iNode][iSubCell];
+			      }
+			  }
+#endif			
+		      }
+		    
+		    iElem += 1; 
+		  }
+                 
+
 		
 
-		for(unsigned int iSubCell = 0; iSubCell < n_sub_cells; ++iSubCell)
+		 /*	for(unsigned int iSubCell = 0; iSubCell < n_sub_cells; ++iSubCell)
 		  {
 		    //FIXME: Use functions like mkl_malloc for 64 byte memory alignment.
 		    d_cellHamiltonianMatrix[kpointSpinIndex][iElem].resize(numberDofsPerElement*numberDofsPerElement,0.0);
@@ -211,7 +296,7 @@ void kohnShamDFTOperatorClass<FEOrder>::computeHamiltonianMatrix(const unsigned 
 		      }
 
 		    iElem += 1;
-		  }
+		  }*/
 
 	}//macrocell loop
 
