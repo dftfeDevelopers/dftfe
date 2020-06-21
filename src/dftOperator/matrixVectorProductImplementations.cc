@@ -304,15 +304,16 @@ void kohnShamDFTOperatorClass<FEOrder>::computeMassMatrixTimesX(const distribute
 #ifdef WITH_MKL
 template<unsigned int FEOrder>
 void kohnShamDFTOperatorClass<FEOrder>::computeLocalHamiltonianTimesXBatchGEMM (const distributedCPUVec<double> & src,
-		const unsigned int numberWaveFunctions,
-		distributedCPUVec<double> & dst) const
+										const unsigned int numberWaveFunctions,
+										distributedCPUVec<double> & dst,
+										const double scalar) const
 {
 	const unsigned int kpointSpinIndex=(1+dftParameters::spinPolarized)*d_kPointIndex+d_spinIndex;
 	//
 	//element level matrix-vector multiplications
 	//
 	const char transA = 'N',transB = 'N';
-	const double scalarCoeffAlpha = 1.0,scalarCoeffBeta = 0.0;
+	const double scalarCoeffAlpha = 1.0,scalarCoeffBeta = 0.0,scalarCoeffAlpha1 = scalar;
 	const unsigned int inc = 1;
 
 	const unsigned int groupCount=1;
@@ -351,7 +352,7 @@ void kohnShamDFTOperatorClass<FEOrder>::computeLocalHamiltonianTimesXBatchGEMM (
 				&numberWaveFunctions,
 				&d_numberNodesPerElement,
 				&d_numberNodesPerElement,
-				&scalarCoeffAlpha,
+				&scalarCoeffAlpha1,
 				cellWaveFunctionMatrixBatch,
 				&numberWaveFunctions,
 				cellHamMatrixBatch,

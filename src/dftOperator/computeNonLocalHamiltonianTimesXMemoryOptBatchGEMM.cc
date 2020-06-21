@@ -221,8 +221,9 @@ void kohnShamDFTOperatorClass<FEOrder>::computeNonLocalHamiltonianTimesXBatchGEM
 #else
 template<unsigned int FEOrder>
 void kohnShamDFTOperatorClass<FEOrder>::computeNonLocalHamiltonianTimesXBatchGEMM(const distributedCPUVec<double> & src,
-		const unsigned int numberWaveFunctions,
-		distributedCPUVec<double>       & dst) const
+										  const unsigned int numberWaveFunctions,
+										  distributedCPUVec<double>       & dst,
+										  const double scalar) const
 {
 
 
@@ -348,6 +349,7 @@ void kohnShamDFTOperatorClass<FEOrder>::computeNonLocalHamiltonianTimesXBatchGEM
 	const double alpha1 = 1.0;
 	const double beta1 = 0.0;
 	const unsigned int inc1 = 1;
+	const double alpha2 = scalar;
 
 	//
 	//compute C*V*C^{T}*x
@@ -378,7 +380,7 @@ void kohnShamDFTOperatorClass<FEOrder>::computeNonLocalHamiltonianTimesXBatchGEM
 				&numberWaveFunctions,
 				&d_numberNodesPerElement,
 				&numberPseudoWaveFunctions,
-				&alpha1,
+				&alpha2,
 				cellProjectorKetTimesVectorMatrixBatch,
 				&numberWaveFunctions,
 				cellNonLocalProjectorKetBatch,

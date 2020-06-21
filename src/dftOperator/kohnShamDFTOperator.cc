@@ -586,7 +586,7 @@ namespace dftfe {
 			  {
 			    for(unsigned int i = 0; i < numberDofs; ++i)
 			      {
-				const double scalingCoeff = d_invSqrtMassVector.local_element(i)*scalar;
+				const double scalingCoeff = d_invSqrtMassVector.local_element(i);//*scalar;
 				dscal_(&numberWaveFunctions,
 				       &scalingCoeff,
 				       src.begin()+i*numberWaveFunctions,
@@ -638,7 +638,8 @@ namespace dftfe {
 			{
 				computeLocalHamiltonianTimesXBatchGEMM(src,
 								       numberWaveFunctions,
-								       dst);
+								       dst,
+								       scalar);
 								       
 			}
 			else
@@ -648,8 +649,9 @@ namespace dftfe {
 							      scalar);
 #else
 			computeLocalHamiltonianTimesX(src,
-					numberWaveFunctions,
-					dst);
+						      numberWaveFunctions,
+						      dst,
+						      scalar);
 #endif
 
 			//
@@ -661,8 +663,9 @@ namespace dftfe {
 				if (dftParameters::useBatchGEMM && numberWaveFunctions<1000)
 				{
 					computeNonLocalHamiltonianTimesXBatchGEMM(src,
-							numberWaveFunctions,
-							dst);
+										  numberWaveFunctions,
+										  dst,
+										  scalar);
 				}
 				else
 					computeNonLocalHamiltonianTimesX(src,
@@ -671,8 +674,9 @@ namespace dftfe {
 									 scalar);
 #else
 				computeNonLocalHamiltonianTimesX(src,
-						numberWaveFunctions,
-						dst);
+								 numberWaveFunctions,
+								 dst,
+								 scalar);
 #endif
 			}
 
