@@ -607,7 +607,7 @@ namespace dftfe {
 				  }
 			      }
 			  }
-			else
+			/*else
 			  {
 			   
 			    for(unsigned int i = 0; i < numberDofs; ++i)
@@ -619,7 +619,7 @@ namespace dftfe {
 				       &inc);
 			      }
 
-			  }
+			      }*/
 			
 
 			//
@@ -637,13 +637,15 @@ namespace dftfe {
 			if (dftParameters::useBatchGEMM && numberWaveFunctions<1000)
 			{
 				computeLocalHamiltonianTimesXBatchGEMM(src,
-						numberWaveFunctions,
-						dst);
+								       numberWaveFunctions,
+								       dst,
+								       scalar);
 			}
 			else
 				computeLocalHamiltonianTimesX(src,
-						numberWaveFunctions,
-						dst);
+							      numberWaveFunctions,
+							      dst,
+							      scalar);
 #else
 			computeLocalHamiltonianTimesX(src,
 					numberWaveFunctions,
@@ -665,7 +667,8 @@ namespace dftfe {
 				else
 					computeNonLocalHamiltonianTimesX(src,
 							numberWaveFunctions,
-							dst);
+									 dst,
+									 scalar);
 #else
 				computeNonLocalHamiltonianTimesX(src,
 						numberWaveFunctions,
@@ -712,14 +715,14 @@ namespace dftfe {
 			  }
 			else
 			  {
-			    for(unsigned int i = 0; i < numberDofs; ++i)
+			    /*for(unsigned int i = 0; i < numberDofs; ++i)
 			      {
 				double scalingCoeff = (1.0/scalar);
 				dscal_(&numberWaveFunctions,
 				       &scalingCoeff,
 				       src.begin()+i*numberWaveFunctions,
 				       &inc);
-			      }
+				       }*/
 
 			    dftPtr->constraintsNoneDataInfo.set_zero(src,
                                                                      numberWaveFunctions);

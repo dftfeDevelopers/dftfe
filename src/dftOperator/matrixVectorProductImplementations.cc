@@ -177,8 +177,9 @@ void kohnShamDFTOperatorClass<FEOrder>::computeLocalHamiltonianTimesXBatchGEMM (
 #else
 template<unsigned int FEOrder>
 void kohnShamDFTOperatorClass<FEOrder>::computeLocalHamiltonianTimesX(const distributedCPUVec<double> & src,
-		const unsigned int numberWaveFunctions,
-		distributedCPUVec<double> & dst) const
+								      const unsigned int numberWaveFunctions,
+								      distributedCPUVec<double> & dst,
+								      const double scalar) const
 {
 
 	const unsigned int kpointSpinIndex=(1+dftParameters::spinPolarized)*d_kPointIndex+d_spinIndex;
@@ -186,7 +187,7 @@ void kohnShamDFTOperatorClass<FEOrder>::computeLocalHamiltonianTimesX(const dist
 	//element level matrix-vector multiplications
 	//
 	const char transA = 'N',transB = 'N';
-	const double scalarCoeffAlpha = 1.0,scalarCoeffBeta = 0.0;
+	const double scalarCoeffAlpha1 = scalar,scalarCoeffBeta = 0.0,scalarCoeffAlpha = 1.0;
 	const unsigned int inc = 1;
 
 	std::vector<double> cellWaveFunctionMatrix(d_numberNodesPerElement*numberWaveFunctions,0.0);
@@ -212,7 +213,7 @@ void kohnShamDFTOperatorClass<FEOrder>::computeLocalHamiltonianTimesX(const dist
 					&numberWaveFunctions,
 					&d_numberNodesPerElement,
 					&d_numberNodesPerElement,
-					&scalarCoeffAlpha,
+					&scalarCoeffAlpha1,
 					&cellWaveFunctionMatrix[0],
 					&numberWaveFunctions,
 					&d_cellHamiltonianMatrix[kpointSpinIndex][iElem][0],
