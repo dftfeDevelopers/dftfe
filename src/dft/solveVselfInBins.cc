@@ -148,6 +148,7 @@ namespace dftfe
 		 std::map<dealii::CellId, std::vector<double> > & bQuadValuesAllAtoms,
      std::map<dealii::CellId, std::vector<int> > & bQuadAtomIdsAllAtoms,
 		 const std::vector<double> & smearingWidths,
+     const unsigned int smearedChargeQuadratureId,
 		 const bool useSmearedCharges)
 		{
 			localVselfs.clear();
@@ -160,8 +161,8 @@ namespace dftfe
 			const dealii::DoFHandler<3> & dofHandler=matrix_free_data.get_dof_handler(offset); 
 			const dealii::Quadrature<3> & quadratureFormula=matrix_free_data.get_quadrature();
 
-			dealii::FEValues<3> fe_values_sc (dofHandler.get_fe(), matrix_free_data.get_quadrature(4), dealii::update_values|dealii::update_JxW_values);
-			const unsigned int n_q_points_sc    =matrix_free_data.get_quadrature(4).size();
+			dealii::FEValues<3> fe_values_sc (dofHandler.get_fe(), matrix_free_data.get_quadrature(smearedChargeQuadratureId), dealii::update_values|dealii::update_JxW_values);
+			const unsigned int n_q_points_sc    =matrix_free_data.get_quadrature(smearedChargeQuadratureId).size();
 
 			dealii::DoFHandler<3>::active_cell_iterator cell = dofHandler.begin_active(), endc = dofHandler.end();
 			if (useSmearedCharges)
@@ -241,7 +242,7 @@ namespace dftfe
 
 				if (useSmearedCharges)
 					smearedNuclearCharges(dofHandler,
-							matrix_free_data.get_quadrature(4),
+							matrix_free_data.get_quadrature(smearedChargeQuadratureId),
 							atomPointsBin,
 							atomChargesBin,
 							numberGlobalAtomsInBin,
@@ -294,6 +295,7 @@ namespace dftfe
 							constraintMatrixId,
 							std::map<dealii::types::global_dof_index, double>(),
 							bQuadValuesBin,
+              smearedChargeQuadratureId,
 							dummy,
 							true,
 							false,

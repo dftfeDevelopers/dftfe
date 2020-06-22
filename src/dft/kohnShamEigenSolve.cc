@@ -87,7 +87,8 @@ dataTypes::number dftClass<FEOrder>::computeTraceXtHX(unsigned int numberWaveFun
 			d_localVselfs,
 			d_bQuadValuesAllAtoms,
       d_bQuadAtomIdsAllAtoms,
-			d_smearedChargeWidths);
+			d_smearedChargeWidths,
+      4);
 
 	//
 	//solve for potential corresponding to initial electron-density
@@ -98,6 +99,7 @@ dataTypes::number dftClass<FEOrder>::computeTraceXtHX(unsigned int numberWaveFun
 			phiTotDofHandlerIndex,
 			d_atomNodeIdToChargeMap,
 			d_bQuadValuesAllAtoms,
+      4,
 			*rhoInValues,
 			true,
 			dftParameters::periodicX && dftParameters::periodicY && dftParameters::periodicZ && !dftParameters::pinnedNodeForPBC,

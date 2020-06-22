@@ -63,6 +63,7 @@ template<unsigned int FEOrder>
  const unsigned int eigenDofHandlerIndex,
  const unsigned int phiExtDofHandlerIndex,
  const unsigned int phiTotDofHandlerIndex,
+ const unsigned int smearedChargeQuadratureId,
  const distributedCPUVec<double> & phiTotRhoIn,
  const distributedCPUVec<double> & phiTotRhoOut,
  const distributedCPUVec<double> & phiExt,
@@ -1327,6 +1328,7 @@ template<unsigned int FEOrder>
 			(matrixFreeDataElectro,
 			 phiTotDofHandlerIndexElectro,
 			 phiExtDofHandlerIndexElectro,
+       smearedChargeQuadratureId,
 			 phiTotRhoOutElectro,
 			 phiExtElectro,
 			 rhoOutValuesElectro,
@@ -1360,6 +1362,7 @@ template<unsigned int FEOrder>
 (const MatrixFree<3,double> & matrixFreeDataElectro,
  const unsigned int phiTotDofHandlerIndexElectro,
  const unsigned int phiExtDofHandlerIndexElectro,
+ const unsigned int smearedChargeQuadratureId,
  const distributedCPUVec<double> & phiTotRhoOutElectro,
  const distributedCPUVec<double> & phiExtElectro,
  const std::map<dealii::CellId, std::vector<double> > & rhoOutValuesElectro,
@@ -1386,11 +1389,11 @@ template<unsigned int FEOrder>
 
 	FEEvaluation<C_DIM,FEOrder,C_num1DQuadSmearedCharge<FEOrder>()*C_numCopies1DQuadSmearedCharge(),1>  phiTotEvalSmearedCharge(matrixFreeDataElectro,
 			phiTotDofHandlerIndexElectro,
-			4);
+			smearedChargeQuadratureId);
 
 	FEEvaluation<C_DIM,1,C_num1DQuadSmearedCharge<FEOrder>()*C_numCopies1DQuadSmearedCharge(),C_DIM>  forceEvalSmearedCharge(matrixFreeDataElectro,
 			d_forceDofHandlerIndexElectro,
-			4);  
+			smearedChargeQuadratureId);  
 
 	std::map<unsigned int, std::vector<double> > forceContributionFPSPLocalGammaAtoms;
 	std::map<unsigned int, std::vector<double> > forceContributionSmearedChargesGammaAtoms;  

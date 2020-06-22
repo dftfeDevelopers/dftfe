@@ -116,6 +116,7 @@ namespace dftfe {
 				 const unsigned int eigenDofHandlerIndex,
 				 const unsigned int phiExtDofHandlerIndex,
 				 const unsigned int phiTotDofHandlerIndex,
+         const unsigned int smearedChargeQuadratureId,
 				 const distributedCPUVec<double> & phiTotRhoIn,
 				 const distributedCPUVec<double> & phiTotRhoOut,
 				 const distributedCPUVec<double> & phiExt,
@@ -255,6 +256,7 @@ namespace dftfe {
 				 const unsigned int eigenDofHandlerIndex,
 				 const unsigned int phiExtDofHandlerIndex,
 				 const unsigned int phiTotDofHandlerIndex,
+         const unsigned int smearedChargeQuadratureId,
 				 const distributedCPUVec<double> & phiTotRhoIn,
 				 const distributedCPUVec<double> & phiTotRhoOut,
 				 const distributedCPUVec<double> & phiExt,
@@ -285,6 +287,7 @@ namespace dftfe {
 				 const unsigned int eigenDofHandlerIndex,
 				 const unsigned int phiExtDofHandlerIndex,
 				 const unsigned int phiTotDofHandlerIndex,
+         const unsigned int smearedChargeQuadratureId,
 				 const distributedCPUVec<double> & phiTotRhoIn,
 				 const distributedCPUVec<double> & phiTotRhoOut,
 				 const distributedCPUVec<double> & phiExt,
@@ -312,6 +315,7 @@ namespace dftfe {
 				(const MatrixFree<3,double> & matrixFreeDataElectro,
 				 const unsigned int phiTotDofHandlerIndexElectro,
 				 const unsigned int phiExtDofHandlerIndexElectro,
+         const unsigned int smearedChargeQuadratureId,
 				 const distributedCPUVec<double> & phiTotRhoOutElectro,
 				 const distributedCPUVec<double> & phiExtElectro,
 				 const std::map<dealii::CellId, std::vector<double> > & rhoOutValuesElectro,
@@ -328,7 +332,8 @@ namespace dftfe {
 
 			void computeConfigurationalForceEselfLinFE(const DoFHandler<3> & dofHandlerElectro,
 					const vselfBinsManager<FEOrder>   & vselfBinsManagerElectro,
-          const MatrixFree<3,double> & matrixFreeDataElectro);
+          const MatrixFree<3,double> & matrixFreeDataElectro,
+          const unsigned int smearedChargeQuadratureId);
 
 			void computeConfigurationalForceEselfNoSurfaceLinFE();
 
@@ -340,6 +345,7 @@ namespace dftfe {
 				 const unsigned int eigenDofHandlerIndex,
 				 const unsigned int phiExtDofHandlerIndex,
 				 const unsigned int phiTotDofHandlerIndex,
+        const unsigned int smearedChargeQuadratureId,
 				 const distributedCPUVec<double> & phiTotRhoIn,
 				 const distributedCPUVec<double> & phiTotRhoOut,
 				 const distributedCPUVec<double> & phiExt,

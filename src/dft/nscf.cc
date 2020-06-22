@@ -98,6 +98,7 @@ void dftClass<FEOrder>::initnscf(kohnShamDFTOperatorClass<FEOrder> & kohnShamDFT
 			phiTotDofHandlerIndex,
 			d_atomNodeIdToChargeMap,
 			dummy,
+      4,
 			*rhoInValues,
 			false);
 	dealiiCGSolver.solve(phiTotalSolverProblem,

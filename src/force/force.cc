@@ -265,6 +265,7 @@ namespace  dftfe {
 		 const unsigned int eigenDofHandlerIndex,
 		 const unsigned int phiExtDofHandlerIndex,
 		 const unsigned int phiTotDofHandlerIndex,
+     const unsigned int smearedChargeQuadratureId,
 		 const distributedCPUVec<double> & phiTotRhoIn,
 		 const distributedCPUVec<double> & phiTotRhoOut,
 		 const distributedCPUVec<double> & phiExt,
@@ -323,6 +324,7 @@ namespace  dftfe {
 					 eigenDofHandlerIndex,
 					 phiExtDofHandlerIndex,
 					 phiTotDofHandlerIndex,
+           smearedChargeQuadratureId,
 					 phiTotRhoIn,
 					 phiTotRhoOut,
 					 phiExt,
@@ -430,6 +432,7 @@ namespace  dftfe {
 		 const unsigned int eigenDofHandlerIndex,
 		 const unsigned int phiExtDofHandlerIndex,
 		 const unsigned int phiTotDofHandlerIndex,
+     const unsigned int smearedChargeQuadratureId,
 		 const distributedCPUVec<double> & phiTotRhoIn,
 		 const distributedCPUVec<double> & phiTotRhoOut,
 		 const distributedCPUVec<double> & phiExt,
@@ -467,6 +470,7 @@ namespace  dftfe {
 					  eigenDofHandlerIndex,
 					  phiExtDofHandlerIndex,
 					  phiTotDofHandlerIndex,
+            smearedChargeQuadratureId,
 					  phiTotRhoIn,
 					  phiTotRhoOut,
 					  phiExt,
@@ -498,6 +502,7 @@ namespace  dftfe {
 					  eigenDofHandlerIndex,
 					  phiExtDofHandlerIndex,
 					  phiTotDofHandlerIndex,
+            smearedChargeQuadratureId,
 					  phiTotRhoIn,
 					  phiTotRhoOut,
 					  phiExt,
@@ -531,7 +536,8 @@ namespace  dftfe {
 			 if (dealii::Utilities::MPI::this_mpi_process(dftPtr->interBandGroupComm)==0)
 				 computeConfigurationalForceEselfLinFE(matrixFreeDataElectro.get_dof_handler(phiTotDofHandlerIndexElectro),
 						 vselfBinsManagerElectro,
-             matrixFreeDataElectro);
+             matrixFreeDataElectro,
+             smearedChargeQuadratureId);
 
 			 configForceLinFEFinalize();
 

@@ -49,6 +49,7 @@ namespace dftfe {
 						const unsigned int matrixFreeVectorComponent,
 						const std::map<dealii::types::global_dof_index, double> & atoms,
 						const std::map<dealii::CellId,std::vector<double> > & smearedChargeValues,
+            const unsigned int smearedChargeQuadratureId,
 						const std::map<dealii::CellId,std::vector<double> > & rhoValues,
 						const bool isComputeDiagonalA=true,
 						const bool isComputeMeanValueConstraints=false,
@@ -184,7 +185,10 @@ namespace dftfe {
 				const std::map<dealii::CellId,std::vector<double> >* d_rhoValuesPtr;
 
 				/// pointer to smeared charge cell quadrature data
-				const std::map<dealii::CellId,std::vector<double> >* d_smearedChargeValuesPtr;        
+				const std::map<dealii::CellId,std::vector<double> >* d_smearedChargeValuesPtr; 
+
+        ///
+        unsigned int d_smearedChargeQuadratureId;
 
 				/// pointer to map between global dof index in current processor and the atomic charge on that dof
 				const std::map<dealii::types::global_dof_index, double> * d_atomsPtr;

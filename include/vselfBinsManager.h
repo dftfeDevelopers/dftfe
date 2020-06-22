@@ -113,6 +113,7 @@ namespace dftfe {
 						std::map<dealii::CellId, std::vector<double> > & bQuadValuesAllAtoms,
             std::map<dealii::CellId, std::vector<int> > & bQuadAtomIdsAllAtoms,
 						const std::vector<double> & smearingWidths,
+            const unsigned int smearedChargeQuadratureId,
 						const bool useSmearedCharges=false);
 
 #ifdef DFTFE_WITH_GPU
@@ -139,6 +140,7 @@ namespace dftfe {
 						std::map<dealii::CellId, std::vector<double> > & bQuadValuesAllAtoms,
             std::map<dealii::CellId, std::vector<int> > & bQuadAtomIdsAllAtoms,
 						const std::vector<double> & smearingWidths,
+            const unsigned int smearedChargeQuadratureId,
 						const bool useSmearedCharges=false);
 
 

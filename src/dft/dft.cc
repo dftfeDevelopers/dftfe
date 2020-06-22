@@ -1419,6 +1419,7 @@ namespace dftfe {
 					phiTotDofHandlerIndex,
 					d_atomNodeIdToChargeMap,
 					d_bQuadValuesAllAtoms,
+          4,
 					*rhoInValues,
 					true,
 					dftParameters::periodicX && dftParameters::periodicY && dftParameters::periodicZ && !dftParameters::pinnedNodeForPBC,
@@ -1753,6 +1754,7 @@ namespace dftfe {
 							d_bQuadValuesAllAtoms,
               d_bQuadAtomIdsAllAtoms,
 							d_smearedChargeWidths,
+              4,
 							dftParameters::smearedNuclearCharges);
 				else
 					d_vselfBinsManager.solveVselfInBins(matrix_free_data,
@@ -1764,8 +1766,8 @@ namespace dftfe {
 							d_localVselfs,
 							d_bQuadValuesAllAtoms,
               d_bQuadAtomIdsAllAtoms,
-              d_bQuadGradValuesAllAtoms,
 							d_smearedChargeWidths,
+              4,
 							dftParameters::smearedNuclearCharges);
 #else
 				d_vselfBinsManager.solveVselfInBins(matrix_free_data,
@@ -1778,6 +1780,7 @@ namespace dftfe {
 						d_bQuadValuesAllAtoms,
             d_bQuadAtomIdsAllAtoms,
 						d_smearedChargeWidths,
+            4,
 						dftParameters::smearedNuclearCharges);
 #endif
 				computingTimerStandard.exit_section("Nuclear self-potential solve");
@@ -1952,8 +1955,8 @@ namespace dftfe {
 				//
 				if (dftParameters::verbosity>=2)
 					pcout<< std::endl<<"Poisson solve for total electrostatic potential (rhoIn+b): ";
-
-				computingTimerStandard.enter_section("phiTotalSolverProblem init");
+				
+        computingTimerStandard.enter_section("phiTotalSolverProblem init");
 
 				if (scfIter>0)
 					phiTotalSolverProblem.reinit(matrix_free_data,
@@ -1962,6 +1965,7 @@ namespace dftfe {
 							phiTotDofHandlerIndex,
 							d_atomNodeIdToChargeMap,
 							d_bQuadValuesAllAtoms,
+              4,
 							*rhoInValues,
 							false,
 							false,
@@ -1973,13 +1977,13 @@ namespace dftfe {
 							phiTotDofHandlerIndex,
 							d_atomNodeIdToChargeMap,
 							d_bQuadValuesAllAtoms,
+              4,
 							*rhoInValues,
 							true,
 							dftParameters::periodicX && dftParameters::periodicY && dftParameters::periodicZ && !dftParameters::pinnedNodeForPBC,
 							dftParameters::smearedNuclearCharges);
 
 				computingTimerStandard.exit_section("phiTotalSolverProblem init");
-
 				computing_timer.enter_section("phiTot solve");
 
 				dealiiCGSolver.solve(phiTotalSolverProblem,
@@ -2600,6 +2604,7 @@ namespace dftfe {
 							phiTotDofHandlerIndex,
 							d_atomNodeIdToChargeMap,
 							d_bQuadValuesAllAtoms,
+              4,
 							*rhoOutValues,
 							false,
 							false,
@@ -2738,6 +2743,7 @@ namespace dftfe {
 						phiTotDofHandlerIndex,
 						d_atomNodeIdToChargeMap,
 						d_bQuadValuesAllAtoms,
+            4,
 						*rhoOutValues,
 						false,
 						false,
@@ -2784,6 +2790,7 @@ namespace dftfe {
 						phiTotDofHandlerIndex,
 						std::map<dealii::types::global_dof_index, double>(),
 						dummy,
+            4,
 						rhoMinMinusApproxRho,
 						false);
 
@@ -3142,6 +3149,7 @@ namespace dftfe {
 								eigenDofHandlerIndex,
 								phiExtDofHandlerIndex,
 								phiTotDofHandlerIndex,
+                4,
 								d_phiTotRhoIn,
 								d_phiTotRhoIn,
 								d_phiExt,
@@ -3176,6 +3184,7 @@ namespace dftfe {
 								eigenDofHandlerIndex,
 								phiExtDofHandlerIndex,
 								phiTotDofHandlerIndex,
+                4,
 								d_phiTotRhoIn,
 								d_phiTotRhoOut,
 								d_phiExt,

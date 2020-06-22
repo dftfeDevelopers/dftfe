@@ -302,36 +302,37 @@ void dftClass<FEOrder>::computeElectrostaticEnergyHRefined(
 	}
 
 
-	//
-	//move the refined mesh so that it forms exact subdivison of coarse moved mesh
-	//
-	dealii::parallel::distributed::Triangulation<3> & electrostaticsTriaDisp = d_mesh.getElectrostaticsMeshDisp();
-
-	//
-	//create guassian Move object
-	//
-	if(d_autoMesh == 1)
-		moveMeshToAtoms(electrostaticsTriaDisp,
-				d_mesh.getSerialMeshElectrostatics(),
-				true,
-				true);
-	else
-	{
-
-		//
-		//move electrostatics mesh
-		//
-
-		d_gaussianMovePar.init(electrostaticsTriaDisp,
-				d_mesh.getSerialMeshElectrostatics(),
-				d_domainBoundingVectors);
-
-		d_gaussianMovePar.moveMeshTwoLevelElectro();
-
-	}
+  dealii::parallel::distributed::Triangulation<3> & electrostaticsTriaDisp = d_mesh.getElectrostaticsMeshDisp();
+  if (!dftParameters::floatingNuclearCharges)
+  {
+    //
+    //move the refined mesh so that it forms exact subdivison of coarse moved mesh
+    //
 
 
+    //
+    //create guassian Move object
+    //
+    if(d_autoMesh == 1)
+      moveMeshToAtoms(electrostaticsTriaDisp,
+          d_mesh.getSerialMeshElectrostatics(),
+          true,
+          true);
+    else
+    {
 
+      //
+      //move electrostatics mesh
+      //
+
+      d_gaussianMovePar.init(electrostaticsTriaDisp,
+          d_mesh.getSerialMeshElectrostatics(),
+          d_domainBoundingVectors);
+
+      d_gaussianMovePar.moveMeshTwoLevelElectro();
+
+    }
+  }
 
 	//
 	//call init for the force computation subsequently
@@ -341,8 +342,9 @@ void dftClass<FEOrder>::computeElectrostaticEnergyHRefined(
 			d_domainBoundingVectors,
 			true);
 
-	d_mesh.resetMesh(electrostaticsTriaDisp,
-			electrostaticsTriaRho);
+  if (!dftParameters::floatingNuclearCharges)
+    d_mesh.resetMesh(electrostaticsTriaDisp,
+        electrostaticsTriaRho);
 
 	dofHandlerHRefined.distribute_dofs(dofHandlerHRefined.get_fe());
 
@@ -479,6 +481,7 @@ void dftClass<FEOrder>::computeElectrostaticEnergyHRefined(
 
 	std::vector<Quadrature<1> > quadratureVector;
 	quadratureVector.push_back(QGauss<1>(C_num1DQuad<FEOrder>()));
+  quadratureVector.push_back(QIterated<1>(QGauss<1>(C_num1DQuadSmearedCharge<FEOrder>()),C_numCopies1DQuadSmearedCharge()));
 
 	dealii::MatrixFree<3,double> matrixFreeDataHRefined;
 
@@ -490,14 +493,12 @@ void dftClass<FEOrder>::computeElectrostaticEnergyHRefined(
 
 
 	std::map<dealii::types::global_dof_index, double> atomHRefinedNodeIdToChargeMap;
-	locateAtomCoreNodes(dofHandlerHRefined,atomHRefinedNodeIdToChargeMap);
+  if (!dftParameters::floatingNuclearCharges)
+    locateAtomCoreNodes(dofHandlerHRefined,atomHRefinedNodeIdToChargeMap);
 
 
 	//solve vself in bins on h refined mesh
 	std::vector<std::vector<double> > localVselfsHRefined;
-	std::map<dealii::CellId, std::vector<double> >  dummy;
-  std::map<dealii::CellId, std::vector<int> >  dummy2;
-  std::map<dealii::CellId, std::vector<double> >  dummy3;
 	distributedCPUVec<double> phiExtHRefined;
 	matrixFreeDataHRefined.initialize_dof_vector(phiExtHRefined,phiExtDofHandlerIndexHRefined);
 	if (dftParameters::verbosity==2)
@@ -509,9 +510,11 @@ void dftClass<FEOrder>::computeElectrostaticEnergyHRefined(
 			d_imageIds,
 			d_imageCharges,
 			localVselfsHRefined,
-			dummy,
-      dummy2,
-			d_smearedChargeWidths);
+			d_bQuadValuesAllAtoms,
+      d_bQuadAtomIdsAllAtoms,
+			d_smearedChargeWidths,
+      1,
+      dftParameters::smearedNuclearCharges);
 
 	//
 	//solve the Poisson problem for total rho
@@ -527,10 +530,12 @@ void dftClass<FEOrder>::computeElectrostaticEnergyHRefined(
 			*matrixFreeConstraintsInputVector[phiTotDofHandlerIndexHRefined],
 			phiTotDofHandlerIndexHRefined,
 			atomHRefinedNodeIdToChargeMap,
-			dummy,
+      d_bQuadValuesAllAtoms,
+      1,
 			rhoOutHRefinedQuadValues,
 			true,
-			dftParameters::periodicX && dftParameters::periodicY && dftParameters::periodicZ && !dftParameters::pinnedNodeForPBC);
+			dftParameters::periodicX && dftParameters::periodicY && dftParameters::periodicZ && !dftParameters::pinnedNodeForPBC,
+      dftParameters::smearedNuclearCharges);
 
 	if (dftParameters::verbosity==2)
 		pcout<< std::endl<<"Solving for total electrostatic potential (rhoIn+b) on h refined mesh: ";
@@ -560,14 +565,12 @@ void dftClass<FEOrder>::computeElectrostaticEnergyHRefined(
 
 	energyCalculator energyCalcHRefined(mpi_communicator, interpoolcomm, interBandGroupComm);
 
-	QGauss<3>  quadratureSmearedCharge(C_num1DQuadSmearedCharge<FEOrder>());
-
 	const double totalEnergy = dftParameters::spinPolarized==0 ?
 		energyCalcHRefined.computeEnergy(dofHandlerHRefined,
 				dofHandler,
 				quadrature,
 				quadrature,
-				quadratureSmearedCharge,
+				matrixFreeDataHRefined.get_quadrature(1),
 				eigenValues,
 				d_kPointWeights,
 				fermiEnergy,
@@ -582,7 +585,7 @@ void dftClass<FEOrder>::computeElectrostaticEnergyHRefined(
 				rhoOutHRefinedQuadValues,
 				*gradRhoInValues,
 				*gradRhoOutValues,
-				dummy,
+				d_bQuadValuesAllAtoms,
 				localVselfsHRefined,
 				d_pseudoVLoc,
 				pseudoVLocHRefined,
@@ -590,12 +593,13 @@ void dftClass<FEOrder>::computeElectrostaticEnergyHRefined(
 				atomLocations.size(),
 				lowerBoundKindex,
 				1,
-				true) :
+				true,
+        dftParameters::smearedNuclearCharges) :
 					energyCalcHRefined.computeEnergySpinPolarized(dofHandlerHRefined,
 							dofHandler,
 							quadrature,
 							quadrature,
-							quadratureSmearedCharge,
+							matrixFreeDataHRefined.get_quadrature(1),
 							eigenValues,
 							d_kPointWeights,
 							fermiEnergy,
@@ -616,7 +620,7 @@ void dftClass<FEOrder>::computeElectrostaticEnergyHRefined(
 							*rhoOutValuesSpinPolarized,
 							*gradRhoInValuesSpinPolarized,
 							*gradRhoOutValuesSpinPolarized,
-							dummy,
+							d_bQuadValuesAllAtoms,
 							localVselfsHRefined,
 							d_pseudoVLoc,
 							pseudoVLocHRefined,
@@ -624,7 +628,8 @@ void dftClass<FEOrder>::computeElectrostaticEnergyHRefined(
 							atomLocations.size(),
 							lowerBoundKindex,
 							1,
-							true);
+							true,
+              dftParameters::smearedNuclearCharges);
 
 	d_groundStateEnergy = totalEnergy;
 
@@ -692,6 +697,7 @@ void dftClass<FEOrder>::computeElectrostaticEnergyHRefined(
 					eigenDofHandlerIndex,
 					phiExtDofHandlerIndex,
 					phiTotDofHandlerIndex,
+          1,
 					d_phiTotRhoIn,
 					d_phiTotRhoOut,
 					d_phiExt,
