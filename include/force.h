@@ -415,6 +415,10 @@ namespace dftfe {
 				 const ConstraintMatrix &  constraintsNoneForce,
 				 distributedCPUVec<double> & configForceVectorLinFE);
 
+			void accumulateForceContributionGammaAtomsFloating
+				(const std::map<unsigned int,std::vector<double> > & forceContributionLocalGammaAtoms,
+				 std::vector<double> & accumForcesVector);        
+
 #ifdef USE_COMPLEX
 			void FnlGammaAtomsElementalContributionPeriodic
 				(std::map<unsigned int, std::vector<double> > & forceContributionFnlGammaAtoms,
@@ -468,6 +472,8 @@ namespace dftfe {
 			void distributeForceContributionFnlGammaAtoms(const std::map<unsigned int, std::vector<double> > & forceContributionFnlGammaAtoms);
 
 			void computeAtomsForcesGaussianGenerator(bool allowGaussianOverlapOnAtoms=false);
+
+      void computeFloatingAtomsForces();
 
 #ifdef USE_COMPLEX
 			void computeStressEself(const DoFHandler<3> & dofHandlerElectro,
@@ -581,6 +587,13 @@ namespace dftfe {
 #endif
 
 
+			std::vector<double> d_forceAtomsFloating;
+
+#ifdef USE_COMPLEX
+			std::vector<double> d_forceAtomsFloatingKPoints;
+#endif
+
+
 #ifdef USE_COMPLEX
 			/* Storage for precomputed nonlocal pseudopotential quadrature data. This is to speedup the
 			 * configurational force computation. Data format: vector(numNonLocalAtomsCurrentProcess with
@@ -644,7 +657,7 @@ namespace dftfe {
 			//double d_gaussianConstant;
 
 			/// Storage for configurational force on all global atoms.
-			std::vector<double> d_globalAtomsGaussianForces;
+			std::vector<double> d_globalAtomsForces;
 
 			/// Storage for configurational stress tensor
 			Tensor<2,C_DIM,double> d_stress;

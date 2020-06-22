@@ -34,24 +34,28 @@ void dftClass<FEOrder>::calculateNearestAtomDistances()
     atomCoori[2] = atomLocations[i][4];
 		for (unsigned int j=0;j <(numberGlobalAtoms+numberImageAtoms); j++)
 		{
+      int jatomId;
+
       if(j < numberGlobalAtoms)
       {
         atomCoorj[0] = atomLocations[j][2];
         atomCoorj[1] = atomLocations[j][3];
         atomCoorj[2] = atomLocations[j][4];
+        jatomId=j;
       }
       else
       {
         atomCoorj[0] = d_imagePositionsTrunc[j-numberGlobalAtoms][0];
         atomCoorj[1] = d_imagePositionsTrunc[j-numberGlobalAtoms][1];
         atomCoorj[2] = d_imagePositionsTrunc[j-numberGlobalAtoms][2];
+        jatomId=d_imageIdsTrunc[j-numberGlobalAtoms]; 
       }     
 
 			const double dist=atomCoori.distance(atomCoorj);
 			if (dist<d_nearestAtomDistances[i] && j!=i)
       {
 				d_nearestAtomDistances[i] =dist;
-        d_nearestAtomIds[i]=j;
+        d_nearestAtomIds[i]=jatomId;
       }
 		}
   }
@@ -186,21 +190,24 @@ void dftClass<FEOrder>::moveMeshToAtoms(Triangulation<3,3> & triangulationMove,
     flatTopWidths.push_back(d_flatTopWidthsAutoMeshMove[atomId]);
 	}
 
-	const std::pair<bool,double> meshQualityMetrics=gaussianMove.moveMesh(closestTriaVertexToAtomsLocation,
-			dispClosestTriaVerticesToAtoms,
-			gaussianConstantsAutoMesh,
-			flatTopWidths,
-			moveSubdivided);
+  if (!dftParameters::floatingNuclearCharges)
+  {
+    const std::pair<bool,double> meshQualityMetrics=gaussianMove.moveMesh(closestTriaVertexToAtomsLocation,
+        dispClosestTriaVerticesToAtoms,
+        gaussianConstantsAutoMesh,
+        flatTopWidths,
+        moveSubdivided);
 
-	timer_movemesh.exit_section("move mesh to atoms: move mesh");
+    timer_movemesh.exit_section("move mesh to atoms: move mesh");
 
-	AssertThrow(!meshQualityMetrics.first,ExcMessage("Negative jacobian created after moving closest nodes to atoms. Suggestion: increase refinement near atoms"));
+    AssertThrow(!meshQualityMetrics.first,ExcMessage("Negative jacobian created after moving closest nodes to atoms. Suggestion: increase refinement near atoms"));
 
-	if(!reuseClosestTriaVertices)
-		d_autoMeshMaxJacobianRatio = meshQualityMetrics.second;
+    if(!reuseClosestTriaVertices)
+      d_autoMeshMaxJacobianRatio = meshQualityMetrics.second;
 
-	if (dftParameters::verbosity>=1 && !moveSubdivided)
-		pcout<< "Mesh quality check for Auto mesh after mesh movement, maximum jacobian ratio: "<< meshQualityMetrics.second<<std::endl;
+    if (dftParameters::verbosity>=1 && !moveSubdivided)
+      pcout<< "Mesh quality check for Auto mesh after mesh movement, maximum jacobian ratio: "<< meshQualityMetrics.second<<std::endl;
+  }
 
   calculateAdaptiveForceGeneratorsSmearedChargeWidths();  
 }

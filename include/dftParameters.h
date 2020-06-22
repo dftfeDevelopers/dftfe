@@ -141,6 +141,7 @@ namespace dftfe {
 		extern bool xlbomdStepTimingRun; 
 		extern double xlbomdKernelRankUpdateFDParameter;
 		extern bool smearedNuclearCharges;
+    extern bool floatingNuclearCharges;
 
 		/**
 		 * Declare parameters.

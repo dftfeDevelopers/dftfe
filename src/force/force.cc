@@ -48,6 +48,8 @@ namespace  dftfe {
 #include "configurationalForceCompute/FnlGammaAtomsElementalContributionSpinPolarized.cc"
 #include "configurationalForceCompute/configurationalForceEselfLinFE.cc"
 #include "configurationalForceCompute/gaussianGeneratorConfForceOpt.cc"
+#include "configurationalForceCompute/computeFloatingAtomsForces.cc"
+#include "configurationalForceCompute/accumulateForceContributionGammaAtomsFloating.cc"
 #include "configurationalStressCompute/stress.cc"
 #include "configurationalStressCompute/computeStressEself.cc"
 #include "configurationalStressCompute/computeStressEEshelbyEPSPEnlEk.cc"
@@ -210,9 +212,10 @@ namespace  dftfe {
 
 				d_forceDofHandlerIndexElectro = dofHandlerVectorMatrixFree.size()-1;
 
-				locateAtomCoreNodesForce(d_dofHandlerForceElectro,
-						d_locally_owned_dofsForceElectro,
-						d_atomsForceDofsElectro);
+        if (!dftParameters::floatingNuclearCharges)
+				   locateAtomCoreNodesForce(d_dofHandlerForceElectro,
+					    	d_locally_owned_dofsForceElectro,
+						    d_atomsForceDofsElectro);
 
 			}
 			else
@@ -223,9 +226,10 @@ namespace  dftfe {
 				d_forceDofHandlerIndex = dofHandlerVectorMatrixFree.size()-1;
 				constraintsVectorMatrixFree.push_back(&d_constraintsNoneForce);
 
-				locateAtomCoreNodesForce(d_dofHandlerForce,
-						d_locally_owned_dofsForce,
-						d_atomsForceDofs);
+        if (!dftParameters::floatingNuclearCharges)
+				   locateAtomCoreNodesForce(d_dofHandlerForce,
+					  	d_locally_owned_dofsForce,
+				  	 	d_atomsForceDofs);
 
 				const unsigned int numberGlobalAtoms = dftPtr->atomLocations.size(); 
 				std::vector<Point<3>> atomPoints;
@@ -347,7 +351,10 @@ namespace  dftfe {
 			 MPI_Barrier(MPI_COMM_WORLD);
 			 double gaussian_time=MPI_Wtime();
 
-			 computeAtomsForcesGaussianGenerator(d_allowGaussianOverlapOnAtoms);
+       if (dftParameters::floatingNuclearCharges)
+			   computeFloatingAtomsForces();       
+       else
+			   computeAtomsForcesGaussianGenerator(d_allowGaussianOverlapOnAtoms);
 
 			 MPI_Barrier(MPI_COMM_WORLD); 
 			 gaussian_time = MPI_Wtime() -gaussian_time;
@@ -373,6 +380,17 @@ namespace  dftfe {
 			matrixFreeData.initialize_dof_vector(d_configForceVectorLinFEKPoints,d_forceDofHandlerIndex);
 			d_configForceVectorLinFEKPoints=0;
 #endif
+
+      d_forceAtomsFloating.clear();
+#ifdef USE_COMPLEX      
+      d_forceAtomsFloatingKPoints.clear();
+#endif      
+
+      const int numberGlobalAtoms = dftPtr->atomLocations.size();   
+      d_forceAtomsFloating.resize(3*numberGlobalAtoms,0.0);
+#ifdef USE_COMPLEX      
+      d_forceAtomsFloatingKPoints.resize(3*numberGlobalAtoms,0.0);
+#endif      
 		}
 
 	template<unsigned int FEOrder>
@@ -544,7 +562,7 @@ namespace  dftfe {
 	template<unsigned int FEOrder>
 		std::vector<double>  forceClass<FEOrder>::getAtomsForces()
 		{
-			return  d_globalAtomsGaussianForces;
+			return  d_globalAtomsForces;
 		}
 
 	template<unsigned int FEOrder>

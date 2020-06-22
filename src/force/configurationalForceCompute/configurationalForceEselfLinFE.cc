@@ -180,10 +180,16 @@ template<unsigned int FEOrder>
             smearedbQuads);
       }//macrocell loop
 
-      distributeForceContributionFPSPLocalGammaAtoms(forceContributionSmearedChargesGammaAtoms,
-          d_atomsForceDofsElectro,
-          d_constraintsNoneForceElectro,
-          d_configForceVectorLinFEElectro);      
+      if (dftParameters::floatingNuclearCharges)
+      {
+         accumulateForceContributionGammaAtomsFloating(forceContributionSmearedChargesGammaAtoms,
+                                                       d_forceAtomsFloating);
+      }
+      else
+        distributeForceContributionFPSPLocalGammaAtoms(forceContributionSmearedChargesGammaAtoms,
+            d_atomsForceDofsElectro,
+            d_constraintsNoneForceElectro,
+            d_configForceVectorLinFEElectro);      
     }//bin loop
   }
 

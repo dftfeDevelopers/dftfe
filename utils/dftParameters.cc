@@ -138,6 +138,7 @@ namespace dftfe {
 		double xlbomdKernelRankUpdateFDParameter=1e-2;
 		bool xlbomdStepTimingRun=false;
 		bool smearedNuclearCharges=false;
+    bool floatingNuclearCharges=false;
 
 		void declare_parameters(ParameterHandler &prm)
 		{
@@ -361,7 +362,11 @@ namespace dftfe {
 
 				prm.declare_entry("SMEARED NUCLEAR CHARGES", "false",
 						Patterns::Bool(),
-						"[Developer] Nuclear charges are smeared for solving electrostatic fields.");        
+						"[Developer] Nuclear charges are smeared for solving electrostatic fields.");  
+
+				prm.declare_entry("FLOATING NUCLEAR CHARGES", "false",
+						Patterns::Bool(),
+						"[Developer] Nuclear charges are smeared for solving electrostatic fields.");          
 
 			}
 			prm.leave_subsection ();
@@ -926,6 +931,7 @@ namespace dftfe {
 				dftParameters::createConstraintsFromSerialDofhandler = prm.get_bool("CONSTRAINTS FROM SERIAL DOFHANDLER");
 				dftParameters::pinnedNodeForPBC = prm.get_bool("POINT WISE DIRICHLET CONSTRAINT");
 				dftParameters::smearedNuclearCharges = prm.get_bool("SMEARED NUCLEAR CHARGES");
+        dftParameters::floatingNuclearCharges = prm.get_bool("FLOATING NUCLEAR CHARGES");
 			}
 			prm.leave_subsection ();
 
@@ -1170,6 +1176,9 @@ namespace dftfe {
 			}
 
 			AssertThrow(!((dftParameters::periodicX || dftParameters::periodicY || dftParameters::periodicZ) && (dftParameters::writeLdosFile || dftParameters::writePdosFile)),ExcMessage("DFT-FE Error: LOCAL DENSITY OF STATES and PROJECTED DENSITY OF STATES are currently not implemented in the case of periodic and semi-periodic boundary conditions."));
+
+      if (floatingNuclearCharges)
+			    AssertThrow(smearedNuclearCharges,ExcMessage("DFT-FE Error: FLOATING NUCLEAR CHARGES can only be used if SMEARED NUCLEAR CHARGES is set to true."));      
 
 #ifdef USE_COMPLEX
 			if (dftParameters::isIonForce || dftParameters::isCellStress)

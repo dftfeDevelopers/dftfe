@@ -978,7 +978,8 @@ namespace dftfe
 			createAtomBinsSanityCheck(dofHandler,onlyHangingNodeConstraints);
 			computing_timer.exit_section("create bins: sanity check");
 
-			locateAtomsInBins(dofHandler);
+      if (!dftParameters::floatingNuclearCharges)
+			   locateAtomsInBins(dofHandler);
 
 			return;
 

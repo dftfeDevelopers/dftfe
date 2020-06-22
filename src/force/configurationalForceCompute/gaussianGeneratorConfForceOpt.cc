@@ -363,8 +363,8 @@ void forceClass<FEOrder>::computeAtomsForcesGaussianGenerator(bool allowGaussian
 	const int numberImageCharges = imageIds.size();
 	const int totalNumberAtoms = numberGlobalAtoms + numberImageCharges;
 	std::vector<double> globalAtomsGaussianForcesLocalPart(numberGlobalAtoms*C_DIM,0);
-	d_globalAtomsGaussianForces.clear();
-	d_globalAtomsGaussianForces.resize(numberGlobalAtoms*C_DIM,0.0);
+  d_globalAtomsForces.clear();
+	d_globalAtomsForces.resize(numberGlobalAtoms*C_DIM,0.0);
 
 	dealii::BoundingBox<3> boundingBoxTria(vectorTools::createBoundingBoxTriaLocallyOwned(d_dofHandlerForce));
 	dealii::Tensor<1,3,double> tempDisp;
@@ -608,7 +608,7 @@ void forceClass<FEOrder>::computeAtomsForcesGaussianGenerator(bool allowGaussian
 
 	//Sum all processor contributions and distribute to all processors
 	MPI_Allreduce(&(globalAtomsGaussianForcesLocalPart[0]),
-			&(d_globalAtomsGaussianForces[0]),
+			&(d_globalAtomsForces[0]),
 			numberGlobalAtoms*C_DIM,
 			MPI_DOUBLE,
 			MPI_SUM,
@@ -616,7 +616,7 @@ void forceClass<FEOrder>::computeAtomsForcesGaussianGenerator(bool allowGaussian
 
 	//Sum over band parallelization
 	MPI_Allreduce(MPI_IN_PLACE,
-			&(d_globalAtomsGaussianForces[0]),
+			&(d_globalAtomsForces[0]),
 			numberGlobalAtoms*C_DIM,
 			MPI_DOUBLE,
 			MPI_SUM,
@@ -650,7 +650,7 @@ void forceClass<FEOrder>::computeAtomsForcesGaussianGenerator(bool allowGaussian
 	{
 		for (unsigned int idim=0; idim < C_DIM ; idim++)
 		{
-			d_globalAtomsGaussianForces[iAtom*C_DIM+idim]+=globalAtomsGaussianForcesKPoints[iAtom*C_DIM+idim];
+			d_globalAtomsForces[iAtom*C_DIM+idim]+=globalAtomsGaussianForcesKPoints[iAtom*C_DIM+idim];
 		}
 	}
 #endif
@@ -677,12 +677,12 @@ void forceClass<FEOrder>::printAtomsForces()
 	for (unsigned int i=0; i< numberGlobalAtoms; i++)
 	{
 		if (!dftParameters::reproducible_output)
-			pcout<<std::setw(4) <<i<<"     "<< std::scientific<< -d_globalAtomsGaussianForces[3*i]<< "   "<< -d_globalAtomsGaussianForces[3*i+1]<<"   "<<-d_globalAtomsGaussianForces[3*i+2]<<std::endl;
+			pcout<<std::setw(4) <<i<<"     "<< std::scientific<< -d_globalAtomsForces[3*i]<< "   "<< -d_globalAtomsForces[3*i+1]<<"   "<<-d_globalAtomsForces[3*i+2]<<std::endl;
 		else
 		{
 			std::vector<double> truncatedForce(C_DIM);
 			for (unsigned int idim=0; idim< C_DIM; idim++)
-				truncatedForce[idim]  = std::fabs(std::floor(10000000 * (-d_globalAtomsGaussianForces[3*i+idim])) / 10000000.0);
+				truncatedForce[idim]  = std::fabs(std::floor(10000000 * (-d_globalAtomsForces[3*i+idim])) / 10000000.0);
 
 			pcout<< "AtomId "<< std::setw(4) << i << ":  "<< std::fixed<<std::setprecision(6)<< truncatedForce[0]<<","<<truncatedForce[1]<<","<<truncatedForce[2]<<std::endl;
 		}
@@ -690,9 +690,9 @@ void forceClass<FEOrder>::printAtomsForces()
 		double absForce=0.0;
 		for (unsigned int idim=0; idim< C_DIM; idim++)
 		{
-			absForce+=d_globalAtomsGaussianForces[3*i+idim]*d_globalAtomsGaussianForces[3*i+idim];
-			sumAbsValForceComp+=std::abs(d_globalAtomsGaussianForces[3*i+idim]);
-			sumForce[idim]+=d_globalAtomsGaussianForces[3*i+idim];
+			absForce+=d_globalAtomsForces[3*i+idim]*d_globalAtomsForces[3*i+idim];
+			sumAbsValForceComp+=std::abs(d_globalAtomsForces[3*i+idim]);
+			sumForce[idim]+=d_globalAtomsForces[3*i+idim];
 		}
 		Assert (absForce>=0., ExcInternalError());
 		absForce=std::sqrt(absForce);
@@ -707,7 +707,7 @@ void forceClass<FEOrder>::printAtomsForces()
 
 	if (dftParameters::verbosity>=1)
 	{
-		pcout<<" Maximum absolute force atom id: "<< maxForceAtomId << ", Force vec: "<< -d_globalAtomsGaussianForces[3*maxForceAtomId]<<","<< -d_globalAtomsGaussianForces[3*maxForceAtomId+1]<<","<<-d_globalAtomsGaussianForces[3*maxForceAtomId+2]<<std::endl;
+		pcout<<" Maximum absolute force atom id: "<< maxForceAtomId << ", Force vec: "<< -d_globalAtomsForces[3*maxForceAtomId]<<","<< -d_globalAtomsForces[3*maxForceAtomId+1]<<","<<-d_globalAtomsForces[3*maxForceAtomId+2]<<std::endl;
 		pcout<<" Sum of absolute value of all force components over all atoms: "<<sumAbsValForceComp<<std::endl;
 		pcout<<" Sum of all forces in each component: "<<sumForce[0]<<" "<< sumForce[1]<<" "<<sumForce[2]<<std::endl;
 	}

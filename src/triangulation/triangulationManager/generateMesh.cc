@@ -306,11 +306,8 @@ namespace dftfe {
 				atomPointsLocal.push_back(d_atomPositions[iAtom][4]);
 				atomIdsLocal.push_back(iAtom);
 
-        const double meshSizeAroundAtomScaleFactor=(d_nearestAtomDistances[iAtom]<2.5 && !dftParameters::reproducible_output)?0.5:1.0;
-        const double outerAtomBallRadiusScaleFactor=(d_nearestAtomDistances[iAtom]<2.5 && !dftParameters::reproducible_output)?0.75:1.0;
-
-        meshSizeAroundAtomLocalAtoms.push_back(dftParameters::useMeshSizesFromAtomsFile?d_atomPositions[iAtom][5]:meshSizeAroundAtomScaleFactor*dftParameters::meshSizeOuterBall);
-        outerAtomBallRadiusLocalAtoms.push_back(dftParameters::useMeshSizesFromAtomsFile?d_atomPositions[iAtom][6]:outerAtomBallRadiusScaleFactor*dftParameters::outerAtomBallRadius);
+        meshSizeAroundAtomLocalAtoms.push_back(dftParameters::useMeshSizesFromAtomsFile?d_atomPositions[iAtom][5]:dftParameters::meshSizeOuterBall);
+        outerAtomBallRadiusLocalAtoms.push_back(dftParameters::useMeshSizesFromAtomsFile?d_atomPositions[iAtom][6]:dftParameters::outerAtomBallRadius);
 			}
 			else
 			{
@@ -321,11 +318,8 @@ namespace dftfe {
         const unsigned int imageChargeId=d_imageIds[iImageCharge];
 				atomIdsLocal.push_back(imageChargeId);
 
-        const double meshSizeAroundAtomScaleFactor=(d_nearestAtomDistances[imageChargeId]<2.5 && !dftParameters::reproducible_output)?0.5:1.0;
-        const double outerAtomBallRadiusScaleFactor=(d_nearestAtomDistances[imageChargeId]<2.5 && !dftParameters::reproducible_output)?0.75:1.0;       
-
-        meshSizeAroundAtomLocalAtoms.push_back(dftParameters::useMeshSizesFromAtomsFile?d_atomPositions[imageChargeId][5]:meshSizeAroundAtomScaleFactor*dftParameters::meshSizeOuterBall);
-        outerAtomBallRadiusLocalAtoms.push_back(dftParameters::useMeshSizesFromAtomsFile?d_atomPositions[imageChargeId][6]:outerAtomBallRadiusScaleFactor*dftParameters::outerAtomBallRadius);        
+        meshSizeAroundAtomLocalAtoms.push_back(dftParameters::useMeshSizesFromAtomsFile?d_atomPositions[imageChargeId][5]:dftParameters::meshSizeOuterBall);
+        outerAtomBallRadiusLocalAtoms.push_back(dftParameters::useMeshSizesFromAtomsFile?d_atomPositions[imageChargeId][6]:dftParameters::outerAtomBallRadius);        
 			}
 		}
 

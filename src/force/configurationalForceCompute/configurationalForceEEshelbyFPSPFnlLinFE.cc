@@ -1006,7 +1006,18 @@ template<unsigned int FEOrder>
 	// add global Fnl contribution due to Gamma(Rj) to the configurational force vector
 	if(isPseudopotential)
 	{
-		distributeForceContributionFnlGammaAtoms(forceContributionFnlGammaAtoms);
+    if (dftParameters::floatingNuclearCharges)
+    {
+#ifdef USE_COMPLEX
+       accumulateForceContributionGammaAtomsFloating(forceContributionFnlGammaAtoms,
+                                                     d_forceAtomsFloatingKPoints);
+#else
+       accumulateForceContributionGammaAtomsFloating(forceContributionFnlGammaAtoms,
+                                                     d_forceAtomsFloating);
+#endif
+    }
+    else
+      distributeForceContributionFnlGammaAtoms(forceContributionFnlGammaAtoms);
 	}
 
 
@@ -1298,10 +1309,18 @@ template<unsigned int FEOrder>
 
 
 		if (shadowPotentialForce && dftParameters::useAtomicRhoXLBOMD)
-			distributeForceContributionFPSPLocalGammaAtoms(forceContributionShadowLocalGammaAtoms,
-					d_atomsForceDofs,
-					d_constraintsNoneForce,
-					d_configForceVectorLinFE);
+    {
+      if (dftParameters::floatingNuclearCharges)
+      {
+         accumulateForceContributionGammaAtomsFloating(forceContributionShadowLocalGammaAtoms,
+                                                       d_forceAtomsFloating);
+      }
+      else      
+        distributeForceContributionFPSPLocalGammaAtoms(forceContributionShadowLocalGammaAtoms,
+            d_atomsForceDofs,
+            d_constraintsNoneForce,
+            d_configForceVectorLinFE);
+    }
 
 		////Add electrostatic configurational force contribution////////////////
 		computeConfigurationalForceEEshelbyEElectroPhiTot
@@ -1606,15 +1625,29 @@ template<unsigned int FEOrder>
 	// add global FPSPLocal contribution due to Gamma(Rj) to the configurational force vector
 	if(dftParameters::isPseudopotential)
 	{
-		distributeForceContributionFPSPLocalGammaAtoms(forceContributionFPSPLocalGammaAtoms,
-				d_atomsForceDofsElectro,
-				d_constraintsNoneForceElectro,
-				d_configForceVectorLinFEElectro);
+    if (dftParameters::floatingNuclearCharges)
+    {
+       accumulateForceContributionGammaAtomsFloating(forceContributionFPSPLocalGammaAtoms,
+                                                     d_forceAtomsFloating);
+    }
+    else
+      distributeForceContributionFPSPLocalGammaAtoms(forceContributionFPSPLocalGammaAtoms,
+          d_atomsForceDofsElectro,
+          d_constraintsNoneForceElectro,
+          d_configForceVectorLinFEElectro);
 	}
 
-  if (dftParameters::smearedNuclearCharges) 
-		distributeForceContributionFPSPLocalGammaAtoms(forceContributionSmearedChargesGammaAtoms,
-				d_atomsForceDofsElectro,
-				d_constraintsNoneForceElectro,
-				d_configForceVectorLinFEElectro);  
+  if (dftParameters::smearedNuclearCharges)
+  {
+    if (dftParameters::floatingNuclearCharges)
+    {
+       accumulateForceContributionGammaAtomsFloating(forceContributionSmearedChargesGammaAtoms,
+                                                     d_forceAtomsFloating);
+    }
+    else
+      distributeForceContributionFPSPLocalGammaAtoms(forceContributionSmearedChargesGammaAtoms,
+          d_atomsForceDofsElectro,
+          d_constraintsNoneForceElectro,
+          d_configForceVectorLinFEElectro);  
+  }
 }

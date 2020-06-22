@@ -292,7 +292,7 @@ namespace dftfe
 							vselfBinScratch,
 							d_vselfBinConstraintMatrices[iBin],
 							constraintMatrixId,
-							d_atomsInBin[iBin],
+							std::map<dealii::types::global_dof_index, double>(),
 							bQuadValuesBin,
 							dummy,
 							true,

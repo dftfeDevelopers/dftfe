@@ -280,7 +280,8 @@ void dftClass<FEOrder>::initBoundaryConditions(const bool meshOnlyDeformed){
 	//
 	//locate atom core nodes
 	//
-	locateAtomCoreNodes(dofHandler,d_atomNodeIdToChargeMap);
+  if (!dftParameters::floatingNuclearCharges)
+	   locateAtomCoreNodes(dofHandler,d_atomNodeIdToChargeMap);
 
 
 	//compute volume of the domain
