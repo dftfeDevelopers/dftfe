@@ -632,7 +632,8 @@ void dftClass<FEOrder>::computeElectrostaticEnergyHRefined(
               dftParameters::smearedNuclearCharges);
 
 	d_groundStateEnergy = totalEnergy;
-
+  if (dftParameters::verbosity>=1)
+    pcout<<"Entropic energy: "<<d_entropicEnergy<<std::endl;
 
 
 	if(dftParameters::isCellStress)

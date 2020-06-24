@@ -2881,8 +2881,8 @@ namespace dftfe {
 
 			MPI_Barrier(interpoolcomm);
 
-			if (dftParameters::isBOMD)
-				d_entropicEnergy=energyCalc.computeEntropicEnergy(eigenValues,
+			//if (dftParameters::isBOMD)
+		  d_entropicEnergy=energyCalc.computeEntropicEnergy(eigenValues,
 						d_kPointWeights,
 						fermiEnergy,
 						fermiEnergyUp,
@@ -2890,6 +2890,9 @@ namespace dftfe {
 						dftParameters::spinPolarized==1,
 						dftParameters::constraintMagnetization,
 						dftParameters::TVal);
+
+      if (dftParameters::verbosity>=1)
+         pcout<<"Entropic energy: "<<d_entropicEnergy<<std::endl;
 
 			if (dftParameters::isBOMD && dftParameters::isXLBOMD && solveLinearizedKS && !isPerturbationSolveXLBOMD)
 			{

@@ -31,7 +31,7 @@ namespace dftfe {
 	const int C_DIM = 3;
 
 	/// 1d quadrature rule order
-	template <unsigned int FEOrder> constexpr unsigned int C_num1DQuad(){return FEOrder+1;}
+	template <unsigned int FEOrder> constexpr unsigned int C_num1DQuad(){return FEOrder+4;}
 
 	/// 1d quad rule smeared nuclear charge
 	template <unsigned int FEOrder> constexpr unsigned int C_num1DQuadSmearedCharge(){return FEOrder/2+2;}
@@ -46,6 +46,6 @@ namespace dftfe {
 
 	/// 1d quadrature rule order for non-local part of pseudopotential
 	template <unsigned int FEOrder> constexpr unsigned int C_num1DQuadPSP()
-	{return FEOrder+4 > 8 ? 8 : FEOrder+4;}
+	{return FEOrder+8;}
 }
 #endif
