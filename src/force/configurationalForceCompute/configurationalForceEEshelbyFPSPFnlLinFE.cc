@@ -106,14 +106,14 @@ template<unsigned int FEOrder>
 	FEEvaluation<C_DIM,1,C_num1DQuad<FEOrder>(),C_DIM>  forceEval(matrixFreeData,
 			d_forceDofHandlerIndex,
 			0);
-	FEEvaluation<C_DIM,1,C_num1DQuadPSP<FEOrder>(),C_DIM>  forceEvalNLP(matrixFreeData,
+	FEEvaluation<C_DIM,1,C_num1DQuadPSP<FEOrder>()*C_numCopies1DQuadPSP(),C_DIM>  forceEvalNLP(matrixFreeData,
 			d_forceDofHandlerIndex,
 			2);
 #ifdef USE_COMPLEX
 	FEEvaluation<C_DIM,1,C_num1DQuad<FEOrder>(),C_DIM>  forceEvalKPoints(matrixFreeData,
 			d_forceDofHandlerIndex,
 			0);
-	FEEvaluation<C_DIM,1,C_num1DQuadPSP<FEOrder>(),C_DIM>  forceEvalKPointsNLP(matrixFreeData,
+	FEEvaluation<C_DIM,1,C_num1DQuadPSP<FEOrder>()*C_numCopies1DQuadPSP(),C_DIM>  forceEvalKPointsNLP(matrixFreeData,
 			d_forceDofHandlerIndex,
 			2);
 #endif
@@ -123,7 +123,7 @@ template<unsigned int FEOrder>
 			eigenDofHandlerIndex,
 			0);
 
-	FEEvaluation<C_DIM,FEOrder,C_num1DQuadPSP<FEOrder>(),2> psiEvalNLP(matrixFreeData,
+	FEEvaluation<C_DIM,FEOrder,C_num1DQuadPSP<FEOrder>()*C_numCopies1DQuadPSP(),2> psiEvalNLP(matrixFreeData,
 			eigenDofHandlerIndex,
 			2);
 #else
@@ -131,7 +131,7 @@ template<unsigned int FEOrder>
 			eigenDofHandlerIndex,
 			0);
 
-	FEEvaluation<C_DIM,FEOrder,C_num1DQuadPSP<FEOrder>(),1> psiEvalNLP(matrixFreeData,
+	FEEvaluation<C_DIM,FEOrder,C_num1DQuadPSP<FEOrder>()*C_numCopies1DQuadPSP(),1> psiEvalNLP(matrixFreeData,
 			eigenDofHandlerIndex,
 			2);
 #endif

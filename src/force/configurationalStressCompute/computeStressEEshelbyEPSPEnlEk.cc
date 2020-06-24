@@ -74,14 +74,14 @@ void forceClass<FEOrder>::computeStressEEshelbyEPSPEnlEk(const MatrixFree<3,doub
 	FEEvaluation<C_DIM,1,C_num1DQuad<FEOrder>(),C_DIM>  forceEval(matrixFreeData,
 			d_forceDofHandlerIndex,
 			0);
-	FEEvaluation<C_DIM,1,C_num1DQuadPSP<FEOrder>(),C_DIM>  forceEvalNLP(matrixFreeData,
+	FEEvaluation<C_DIM,1,C_num1DQuadPSP<FEOrder>()*C_numCopies1DQuadPSP(),C_DIM>  forceEvalNLP(matrixFreeData,
 			d_forceDofHandlerIndex,
 			2);
 
 	FEEvaluation<C_DIM,FEOrder,C_num1DQuad<FEOrder>(),2> psiEval(matrixFreeData,
 			eigenDofHandlerIndex,
 			0);
-	FEEvaluation<C_DIM,FEOrder,C_num1DQuadPSP<FEOrder>(),2> psiEvalNLP(matrixFreeData,
+	FEEvaluation<C_DIM,FEOrder,C_num1DQuadPSP<FEOrder>()*C_numCopies1DQuadPSP(),2> psiEvalNLP(matrixFreeData,
 			eigenDofHandlerIndex,
 			2);
 

@@ -75,7 +75,7 @@ template<unsigned int FEOrder>
 	FEEvaluation<C_DIM,1,C_num1DQuad<FEOrder>(),C_DIM>  forceEval(matrixFreeData,
 			d_forceDofHandlerIndex,
 			0);
-	FEEvaluation<C_DIM,1,C_num1DQuadPSP<FEOrder>(),C_DIM>  forceEvalNLP(matrixFreeData,
+	FEEvaluation<C_DIM,1,C_num1DQuadPSP<FEOrder>()*C_numCopies1DQuadPSP(),C_DIM>  forceEvalNLP(matrixFreeData,
 			d_forceDofHandlerIndex,
 			2);
 
@@ -85,10 +85,10 @@ template<unsigned int FEOrder>
 	FEEvaluation<C_DIM,FEOrder,C_num1DQuad<FEOrder>(),2> psiEvalSpin1(matrixFreeData,
 			eigenDofHandlerIndex,
 			0);
-	FEEvaluation<C_DIM,FEOrder,C_num1DQuadPSP<FEOrder>(),2> psiEvalSpin0NLP(matrixFreeData,
+	FEEvaluation<C_DIM,FEOrder,C_num1DQuadPSP<FEOrder>()*C_numCopies1DQuadPSP(),2> psiEvalSpin0NLP(matrixFreeData,
 			eigenDofHandlerIndex,
 			2);
-	FEEvaluation<C_DIM,FEOrder,C_num1DQuadPSP<FEOrder>(),2> psiEvalSpin1NLP(matrixFreeData,
+	FEEvaluation<C_DIM,FEOrder,C_num1DQuadPSP<FEOrder>()*C_numCopies1DQuadPSP(),2> psiEvalSpin1NLP(matrixFreeData,
 			eigenDofHandlerIndex,
 			2);
 

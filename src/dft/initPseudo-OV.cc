@@ -39,8 +39,10 @@ void dftClass<FEOrder>::computeElementalOVProjectorKets()
 	//
 	//get FE data structures
 	//
-	QGauss<3>  quadrature(C_num1DQuad<FEOrder>());
-	QGauss<3>  quadratureHigh(C_num1DQuadPSP<FEOrder>());
+	//QGauss<3>  quadrature(C_num1DQuad<FEOrder>());
+	//QGauss<3>  quadratureHigh(C_num1DQuadPSP<FEOrder>());
+  QIterated<3> quadrature(QGauss<1>(C_num1DQuad<FEOrder>()),1);
+  QIterated<3> quadratureHigh(QGauss<1>(C_num1DQuadPSP<FEOrder>()),C_numCopies1DQuadPSP());
 
 	//FEValues<3> fe_values(FE, quadrature, update_values | update_gradients | update_JxW_values);
 	FEValues<3> fe_values(FE, dftParameters::useHigherQuadNLP?quadratureHigh:quadrature,

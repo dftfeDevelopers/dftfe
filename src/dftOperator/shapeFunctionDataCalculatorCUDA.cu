@@ -317,7 +317,8 @@ void kohnShamDFTOperatorCUDAClass<FEOrder>::preComputeShapeFunctionGradientInteg
 
 	if (dftParameters::useHigherQuadNLP)
 	{
-		QGauss<3>  quadratureNLP(C_num1DQuadPSP<FEOrder>());
+		//QGauss<3>  quadratureNLP(C_num1DQuadPSP<FEOrder>());
+    QIterated<3> quadratureNLP(QGauss<1>(C_num1DQuadPSP<FEOrder>()),C_numCopies1DQuadPSP());
 		FEValues<3> fe_valuesNLP(dftPtr->matrix_free_data.get_dof_handler().get_fe(), quadratureNLP, update_values);
 		const unsigned int numberQuadraturePointsNLP = quadratureNLP.size();
 
