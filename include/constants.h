@@ -41,7 +41,7 @@ namespace dftfe {
   
 
 	//kerker Helmholtz solve polynomial Order
-	template <unsigned int FEOrder> constexpr unsigned int C_num1DKerkerPoly(){return FEOrder;}
+	template <unsigned int FEOrder> constexpr unsigned int C_num1DKerkerPoly(){return 2*FEOrder;}
 
 
 	/// 1d quadrature rule order for non-local part of pseudopotential
