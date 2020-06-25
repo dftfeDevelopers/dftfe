@@ -41,14 +41,21 @@ namespace dftfe {
   
 
 	//kerker Helmholtz solve polynomial Order
-	template <unsigned int FEOrder> constexpr unsigned int C_num1DKerkerPoly(){return 2*FEOrder;}
+	template <unsigned int FEOrder> constexpr unsigned int C_num1DKerkerPoly(){return FEOrder+2;}
 
 
 	/// 1d quadrature rule order for non-local part of pseudopotential
-	template <unsigned int FEOrder> constexpr unsigned int C_num1DQuadPSP()
+	template <unsigned int FEOrder> constexpr unsigned int C_num1DQuadNLPSP()
 	{return 8;}
 
-  /// number of copies 1d quad rule PSP
-  constexpr unsigned int C_numCopies1DQuadPSP(){return 5;}  
+  /// number of copies 1d quad rule non-local PSP
+  constexpr unsigned int C_numCopies1DQuadNLPSP(){return 5;} 
+
+	/// 1d quadrature rule order for local part of pseudopotential
+	template <unsigned int FEOrder> constexpr unsigned int C_num1DQuadLPSP()
+	{return FEOrder+1;}
+
+  /// number of copies 1d quad rule local PSP
+  constexpr unsigned int C_numCopies1DQuadLPSP(){return 2;}    
 }
 #endif

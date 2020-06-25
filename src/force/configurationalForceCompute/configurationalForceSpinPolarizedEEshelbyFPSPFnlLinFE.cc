@@ -56,14 +56,14 @@ template<unsigned int FEOrder>
 	FEEvaluation<C_DIM,1,C_num1DQuad<FEOrder>(),C_DIM>  forceEval(matrixFreeData,
 			d_forceDofHandlerIndex,
 			0);
-	FEEvaluation<C_DIM,1,C_num1DQuadPSP<FEOrder>()*C_numCopies1DQuadPSP(),C_DIM>  forceEvalNLP(matrixFreeData,
+	FEEvaluation<C_DIM,1,C_num1DQuadNLPSP<FEOrder>()*C_numCopies1DQuadNLPSP(),C_DIM>  forceEvalNLP(matrixFreeData,
 			d_forceDofHandlerIndex,
 			2);
 #ifdef USE_COMPLEX
 	FEEvaluation<C_DIM,1,C_num1DQuad<FEOrder>(),C_DIM>  forceEvalKPoints(matrixFreeData,
 			d_forceDofHandlerIndex,
 			0);
-	FEEvaluation<C_DIM,1,C_num1DQuadPSP<FEOrder>()*C_numCopies1DQuadPSP(),C_DIM>  forceEvalKPointsNLP(matrixFreeData,
+	FEEvaluation<C_DIM,1,C_num1DQuadNLPSP<FEOrder>()*C_numCopies1DQuadNLPSP(),C_DIM>  forceEvalKPointsNLP(matrixFreeData,
 			d_forceDofHandlerIndex,
 			2);
 #endif
@@ -75,10 +75,10 @@ template<unsigned int FEOrder>
 	FEEvaluation<C_DIM,FEOrder,C_num1DQuad<FEOrder>(),2> psiEvalSpin1(matrixFreeData,
 			eigenDofHandlerIndex,
 			0);
-	FEEvaluation<C_DIM,FEOrder,C_num1DQuadPSP<FEOrder>()*C_numCopies1DQuadPSP(),2> psiEvalSpin0NLP(matrixFreeData,
+	FEEvaluation<C_DIM,FEOrder,C_num1DQuadNLPSP<FEOrder>()*C_numCopies1DQuadNLPSP(),2> psiEvalSpin0NLP(matrixFreeData,
 			eigenDofHandlerIndex,
 			2);
-	FEEvaluation<C_DIM,FEOrder,C_num1DQuadPSP<FEOrder>()*C_numCopies1DQuadPSP(),2> psiEvalSpin1NLP(matrixFreeData,
+	FEEvaluation<C_DIM,FEOrder,C_num1DQuadNLPSP<FEOrder>()*C_numCopies1DQuadNLPSP(),2> psiEvalSpin1NLP(matrixFreeData,
 			eigenDofHandlerIndex,
 			2);
 #else
@@ -88,10 +88,10 @@ template<unsigned int FEOrder>
 	FEEvaluation<C_DIM,FEOrder,C_num1DQuad<FEOrder>(),1> psiEvalSpin1(matrixFreeData,
 			eigenDofHandlerIndex,
 			0);
-	FEEvaluation<C_DIM,FEOrder,C_num1DQuadPSP<FEOrder>()*C_numCopies1DQuadPSP(),1> psiEvalSpin0NLP(matrixFreeData,
+	FEEvaluation<C_DIM,FEOrder,C_num1DQuadNLPSP<FEOrder>()*C_numCopies1DQuadNLPSP(),1> psiEvalSpin0NLP(matrixFreeData,
 			eigenDofHandlerIndex,
 			2);
-	FEEvaluation<C_DIM,FEOrder,C_num1DQuadPSP<FEOrder>()*C_numCopies1DQuadPSP(),1> psiEvalSpin1NLP(matrixFreeData,
+	FEEvaluation<C_DIM,FEOrder,C_num1DQuadNLPSP<FEOrder>()*C_numCopies1DQuadNLPSP(),1> psiEvalSpin1NLP(matrixFreeData,
 			eigenDofHandlerIndex,
 			2);
 #endif
@@ -688,7 +688,18 @@ template<unsigned int FEOrder>
 	// add global FPSPLocal contribution due to Gamma(Rj) to the configurational force vector
 	if(isPseudopotential)
 	{
-		distributeForceContributionFnlGammaAtoms(forceContributionFnlGammaAtoms);
+    if (dftParameters::floatingNuclearCharges)
+    {
+#ifdef USE_COMPLEX
+       accumulateForceContributionGammaAtomsFloating(forceContributionFnlGammaAtoms,
+                                                     d_forceAtomsFloatingKPoints);
+#else
+       accumulateForceContributionGammaAtomsFloating(forceContributionFnlGammaAtoms,
+                                                     d_forceAtomsFloating);
+#endif
+    }
+    else
+      distributeForceContributionFnlGammaAtoms(forceContributionFnlGammaAtoms);    
 	}
 
 	/////////// Compute contribution independent of wavefunctions /////////////////
