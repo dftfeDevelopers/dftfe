@@ -31,13 +31,13 @@ namespace dftfe {
 	const int C_DIM = 3;
 
 	/// 1d quadrature rule order
-	template <unsigned int FEOrder> constexpr unsigned int C_num1DQuad(){return 2*FEOrder;}
+	template <unsigned int FEOrder> constexpr unsigned int C_num1DQuad(){return FEOrder+3;}
 
 	/// 1d quad rule smeared nuclear charge
-	template <unsigned int FEOrder> constexpr unsigned int C_num1DQuadSmearedCharge(){return FEOrder/2+2;}
+	template <unsigned int FEOrder> constexpr unsigned int C_num1DQuadSmearedCharge(){return 8;}
 
   /// number of copies 1d quad rule smeared nuclear charge
-  constexpr unsigned int C_numCopies1DQuadSmearedCharge(){return 4;}
+  constexpr unsigned int C_numCopies1DQuadSmearedCharge(){return 3;}
   
 
 	//kerker Helmholtz solve polynomial Order
@@ -46,9 +46,9 @@ namespace dftfe {
 
 	/// 1d quadrature rule order for non-local part of pseudopotential
 	template <unsigned int FEOrder> constexpr unsigned int C_num1DQuadPSP()
-	{return FEOrder/2+1;}
+	{return 8;}
 
   /// number of copies 1d quad rule PSP
-  constexpr unsigned int C_numCopies1DQuadPSP(){return 4;}  
+  constexpr unsigned int C_numCopies1DQuadPSP(){return 5;}  
 }
 #endif
