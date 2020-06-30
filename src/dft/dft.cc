@@ -1753,6 +1753,7 @@ namespace dftfe {
 							d_localVselfs,
 							d_bQuadValuesAllAtoms,
               d_bQuadAtomIdsAllAtoms,
+              d_bQuadAtomIdsAllAtomsImages,              
 							d_smearedChargeWidths,
               4,
 							dftParameters::smearedNuclearCharges);
@@ -1766,6 +1767,7 @@ namespace dftfe {
 							d_localVselfs,
 							d_bQuadValuesAllAtoms,
               d_bQuadAtomIdsAllAtoms,
+              d_bQuadAtomIdsAllAtomsImages,              
 							d_smearedChargeWidths,
               4,
 							dftParameters::smearedNuclearCharges);
@@ -1779,6 +1781,7 @@ namespace dftfe {
 						d_localVselfs,
 						d_bQuadValuesAllAtoms,
             d_bQuadAtomIdsAllAtoms,
+            d_bQuadAtomIdsAllAtomsImages,            
 						d_smearedChargeWidths,
             4,
 						dftParameters::smearedNuclearCharges);
@@ -3232,6 +3235,7 @@ namespace dftfe {
 							eigenDofHandlerIndex,
 							phiExtDofHandlerIndex,
 							phiTotDofHandlerIndex,
+              4,
 							d_phiTotRhoIn,
 							d_phiTotRhoOut,
 							d_phiExt,

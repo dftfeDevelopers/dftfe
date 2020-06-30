@@ -55,6 +55,7 @@ namespace  dftfe {
 #include "configurationalStressCompute/computeStressEEshelbyEPSPEnlEk.cc"
 #include "configurationalStressCompute/computeStressSpinPolarizedEEshelbyEPSPEnlEk.cc"
 #include "configurationalStressCompute/EPSPStressContribution.cc"
+#include "configurationalStressCompute/ESmearedStressContribution.cc"
 #include "initPseudoForce.cc"
 #include "initPseudoOVForce.cc"
 #include "createBinObjectsForce.cc"

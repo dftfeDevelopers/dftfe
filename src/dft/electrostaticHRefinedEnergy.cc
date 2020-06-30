@@ -512,6 +512,7 @@ void dftClass<FEOrder>::computeElectrostaticEnergyHRefined(
 			localVselfsHRefined,
 			d_bQuadValuesAllAtoms,
       d_bQuadAtomIdsAllAtoms,
+      d_bQuadAtomIdsAllAtomsImages,  
 			d_smearedChargeWidths,
       1,
       dftParameters::smearedNuclearCharges);
@@ -741,6 +742,7 @@ void dftClass<FEOrder>::computeElectrostaticEnergyHRefined(
 					eigenDofHandlerIndex,
 					phiExtDofHandlerIndex,
 					phiTotDofHandlerIndex,
+          1,
 					d_phiTotRhoIn,
 					d_phiTotRhoOut,
 					d_phiExt,

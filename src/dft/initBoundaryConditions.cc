@@ -102,6 +102,7 @@ void dftClass<FEOrder>::initBoundaryConditions(const bool meshOnlyDeformed){
 	//comment this if using deal ii version 9
 	//additional_data.mpi_communicator = MPI_COMM_WORLD;
 	additional_data.tasks_parallel_scheme =MatrixFree<3>::AdditionalData::partition_partition;
+  additional_data.mapping_update_flags = update_values|update_gradients|update_JxW_values|update_quadrature_points;
 	if (dftParameters::nonSelfConsistentForce)
 		additional_data.mapping_update_flags = update_values|update_gradients|update_JxW_values|update_hessians;
 

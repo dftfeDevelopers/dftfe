@@ -1194,6 +1194,9 @@ namespace dftfe
 	template<unsigned int FEOrder>
 		const std::map<int,std::set<int> > & vselfBinsManager<FEOrder>::getAtomIdsBins() const {return d_bins;}
 
+  template<unsigned int FEOrder>
+      const std::map<int,std::set<int> > & vselfBinsManager<FEOrder>::getAtomImageIdsBins() const {return d_binsImages;}
+
 	template<unsigned int FEOrder>
 		const std::vector<std::map<dealii::types::global_dof_index, int> > & vselfBinsManager<FEOrder>::getBoundaryFlagsBins() const {return d_boundaryFlag;}
 

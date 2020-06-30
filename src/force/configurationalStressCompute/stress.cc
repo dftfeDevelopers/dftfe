@@ -23,6 +23,7 @@ template<unsigned int FEOrder>
  const unsigned int eigenDofHandlerIndex,
  const unsigned int phiExtDofHandlerIndex,
  const unsigned int phiTotDofHandlerIndex,
+ const unsigned int smearedChargeQuadratureId,
  const distributedCPUVec<double> & phiTotRhoIn,
  const distributedCPUVec<double> & phiTotRhoOut,
  const distributedCPUVec<double> & phiExt,
@@ -84,6 +85,7 @@ template<unsigned int FEOrder>
 				eigenDofHandlerIndex,
 				phiExtDofHandlerIndex,
 				phiTotDofHandlerIndex,
+        smearedChargeQuadratureId,
 				phiTotRhoIn,
 				phiTotRhoOut,
 				phiExt,
@@ -107,6 +109,7 @@ template<unsigned int FEOrder>
 				eigenDofHandlerIndex,
 				phiExtDofHandlerIndex,
 				phiTotDofHandlerIndex,
+        smearedChargeQuadratureId,
 				phiTotRhoIn,
 				phiTotRhoOut,
 				phiExt,
@@ -129,7 +132,9 @@ template<unsigned int FEOrder>
 	//configurational stress contribution from nuclear self energy. This is handled separately as it involves
 	// a surface integral over the vself ball surface
 	computeStressEself(matrixFreeDataElectro.get_dof_handler(phiTotDofHandlerIndexElectro),
-			vselfBinsManagerElectro);
+						 vselfBinsManagerElectro,
+             matrixFreeDataElectro,
+             smearedChargeQuadratureId);
 
 	//Sum all processor contributions and distribute to all processors
 	d_stress=Utilities::MPI::sum(d_stress,mpi_communicator);

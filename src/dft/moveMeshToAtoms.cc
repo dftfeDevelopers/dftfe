@@ -245,7 +245,7 @@ void dftClass<FEOrder>::calculateAdaptiveForceGeneratorsSmearedChargeWidths()
     }
 
     for (unsigned int iAtom=0;iAtom <numberGlobalAtoms; iAtom++)
-      if (dftParameters::verbosity>=4)
+      if (dftParameters::verbosity>=5)
             pcout<< "iAtom: "<< iAtom<<", Smeared charge width: "<<d_smearedChargeWidths[iAtom]<<", flat top width: "<<d_generatorFlatTopWidths[iAtom]<<std::endl;        
   }
 }

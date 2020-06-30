@@ -112,6 +112,7 @@ namespace dftfe {
 						std::vector<std::vector<double> > & localVselfs,
 						std::map<dealii::CellId, std::vector<double> > & bQuadValuesAllAtoms,
             std::map<dealii::CellId, std::vector<int> > & bQuadAtomIdsAllAtoms,
+            std::map<dealii::CellId, std::vector<int> > & bQuadAtomIdsAllAtomsImages,
 						const std::vector<double> & smearingWidths,
             const unsigned int smearedChargeQuadratureId,
 						const bool useSmearedCharges=false);
@@ -139,6 +140,7 @@ namespace dftfe {
 						std::vector<std::vector<double> > & localVselfs,
 						std::map<dealii::CellId, std::vector<double> > & bQuadValuesAllAtoms,
             std::map<dealii::CellId, std::vector<int> > & bQuadAtomIdsAllAtoms,
+            std::map<dealii::CellId, std::vector<int> > & bQuadAtomIdsAllAtomsImages,
 						const std::vector<double> & smearingWidths,
             const unsigned int smearedChargeQuadratureId,
 						const bool useSmearedCharges=false);
@@ -148,6 +150,9 @@ namespace dftfe {
 
 				/// get const reference map of binIds and atomIds
 				const std::map<int,std::set<int> > & getAtomIdsBins() const;
+
+				/// get const reference map of binIds and atomIds
+				const std::map<int,std::set<int> > & getAtomImageIdsBins() const;        
 
 				/// get const reference to map of global dof index and vself solve boundary flag in each bin
 				const std::vector<std::map<dealii::types::global_dof_index, int> > & getBoundaryFlagsBins() const;
@@ -195,6 +200,9 @@ namespace dftfe {
 
 				/// map of binIds and atomIds
 				std::map<int,std::set<int> > d_bins;
+
+				/// map of binIds and atomIds and imageIds
+				std::map<int,std::set<int> > d_binsImages;        
 
 				/// map of global dof index and vself solve boundary flag (chargeId or
 				//  imageId+numberGlobalCharges) in each bin

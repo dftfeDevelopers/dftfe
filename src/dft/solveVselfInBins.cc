@@ -42,7 +42,8 @@ namespace dftfe
 				const  MPI_Comm &mpi_communicator,
 				const std::vector<double> & rc,
 				std::map<dealii::CellId, std::vector<double> > & bQuadValues,
-        std::map<dealii::CellId, std::vector<int> >  & bQuadAtomIdsAllAtoms)
+        std::map<dealii::CellId, std::vector<int> >  & bQuadAtomIdsAllAtoms,
+        std::map<dealii::CellId, std::vector<int> > & bQuadAtomIdsAllAtomsImages)
 		{
 			bQuadValues.clear();
 			dealii::FEValues<3> fe_values (dofHandlerOfField.get_fe(), quadrature_formula, dealii::update_quadrature_points|dealii::update_JxW_values);
@@ -102,6 +103,7 @@ namespace dftfe
 					fe_values.reinit (cell);
 					std::vector<double> & bQuadValuesCell=bQuadValues[cell->id()];
           std::vector<int> & bQuadAtomIdsCell=bQuadAtomIdsAllAtoms[cell->id()];
+          std::vector<int> & bQuadAtomImageIdsCell=bQuadAtomIdsAllAtomsImages[cell->id()];
 					for (unsigned int q = 0; q < n_q_points; ++q)
 					{
 						const dealii::Point<3> & quadPoint=fe_values.quadrature_point(q);
@@ -116,7 +118,7 @@ namespace dftfe
 							bQuadValuesCell[q]=chargeVal*(-atomCharges[atomId])/smearedNuclearChargeIntegral[atomId];
 							smearedNuclearChargeIntegralCheck[atomId]+=bQuadValuesCell[q]*jxw;
               bQuadAtomIdsCell[q]=binAtomIdToGlobalAtomIdMapCurrentBin[atomId];
-
+              bQuadAtomImageIdsCell[q]=binAtomIdToGlobalAtomIdMapCurrentBin[iatom];
               break;
 						}
 					}
@@ -147,6 +149,7 @@ namespace dftfe
 		 std::vector<std::vector<double> > & localVselfs,
 		 std::map<dealii::CellId, std::vector<double> > & bQuadValuesAllAtoms,
      std::map<dealii::CellId, std::vector<int> > & bQuadAtomIdsAllAtoms,
+     std::map<dealii::CellId, std::vector<int> > & bQuadAtomIdsAllAtomsImages,
 		 const std::vector<double> & smearingWidths,
      const unsigned int smearedChargeQuadratureId,
 		 const bool useSmearedCharges)
@@ -155,6 +158,7 @@ namespace dftfe
 			d_vselfFieldBins.clear();
 			bQuadValuesAllAtoms.clear();
       bQuadAtomIdsAllAtoms.clear();
+      bQuadAtomIdsAllAtomsImages.clear();
 			const unsigned int numberBins = d_boundaryFlagOnlyChargeId.size();
 			const unsigned int numberGlobalCharges = d_atomLocations.size();
 
@@ -172,6 +176,7 @@ namespace dftfe
           {
 						bQuadValuesAllAtoms[cell->id()].resize(n_q_points_sc,0.0);
             bQuadAtomIdsAllAtoms[cell->id()].resize(n_q_points_sc,-1);
+            bQuadAtomIdsAllAtomsImages[cell->id()].resize(n_q_points_sc,-1);
           }
 
 				localVselfs.resize(1,std::vector<double>(1));
@@ -199,6 +204,7 @@ namespace dftfe
 
 
 				std::set<int> & atomsInBinSet = d_bins[iBin];
+        std::set<int> & atomsImagesInBinSet = d_binsImages[iBin];
 				std::vector<int> atomsInCurrentBin(atomsInBinSet.begin(),atomsInBinSet.end());
 				const unsigned int numberGlobalAtomsInBin = atomsInCurrentBin.size();
 
@@ -214,6 +220,7 @@ namespace dftfe
 							imageIdsOfAtomsInCurrentBin.push_back(iImageAtom);
 							imageChargeIdsOfAtomsInCurrentBin.push_back(imageIds[iImageAtom]);
 							imageIdToDomainAtomIdMapCurrentBin.push_back(index);
+              atomsImagesInBinSet.insert(iImageAtom+numberGlobalCharges);
 						}
 				}        
 
@@ -238,6 +245,7 @@ namespace dftfe
 						= imagePositions[imageIdsOfAtomsInCurrentBin[i]][2];
 					atomPointsBin.push_back(imagePoint);
 					atomChargesBin.push_back(d_atomLocations[imageChargeIdsOfAtomsInCurrentBin[i]][1]);
+          atomsInCurrentBin.push_back(imageIdsOfAtomsInCurrentBin[i]+ numberGlobalCharges);
 				}        
 
 				if (useSmearedCharges)
@@ -251,7 +259,8 @@ namespace dftfe
 							mpi_communicator,
 							smearingWidths,
 							bQuadValuesBin,
-              bQuadAtomIdsAllAtoms);
+              bQuadAtomIdsAllAtoms,
+              bQuadAtomIdsAllAtomsImages);
 
 				const unsigned int constraintMatrixId = iBin + offset;
 				distributedCPUVec<double> vselfBinScratch;
@@ -415,6 +424,7 @@ namespace dftfe
 		 std::vector<std::vector<double> > & localVselfs,
 		 std::map<dealii::CellId, std::vector<double> > & bQuadValuesAllAtoms,
      std::map<dealii::CellId, std::vector<int> > & bQuadAtomIdsAllAtoms,
+     std::map<dealii::CellId, std::vector<int> > & bQuadAtomIdsAllAtomsImages,
 		 const std::vector<double> & smearingWidths,
 		 const bool useSmearedCharges)
 		{
