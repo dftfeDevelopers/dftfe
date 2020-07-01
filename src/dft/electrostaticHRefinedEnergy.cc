@@ -511,6 +511,7 @@ void dftClass<FEOrder>::computeElectrostaticEnergyHRefined(
 			d_imageCharges,
 			localVselfsHRefined,
 			d_bQuadValuesAllAtoms,
+			d_gradbQuadValuesAllAtoms,      
       d_bQuadAtomIdsAllAtoms,
       d_bQuadAtomIdsAllAtomsImages,  
 			d_smearedChargeWidths,

@@ -563,18 +563,19 @@ namespace dftfe {
         (FEEvaluation<3,1,C_num1DQuadSmearedCharge<FEOrder>()*C_numCopies1DQuadSmearedCharge(),3>  & forceEval,
          const MatrixFree<3,double> & matrixFreeData,
          const unsigned int cell,
-         const std::vector<Tensor<1,3,VectorizedArray<double> > > & gradPhiTotQuads,
+         const std::vector<VectorizedArray<double> > & phiTotQuads,
          const std::map<dealii::CellId, std::vector<int> > & bQuadAtomIdsAllAtomsImages,
-         const std::vector<VectorizedArray<double> > & smearedbQuads);
+         const std::vector<Tensor<1,3,VectorizedArray<double> >  > & smearedGradbQuads);
 
 			void addEVselfSmearedStressContribution
         (FEEvaluation<3,1,C_num1DQuadSmearedCharge<FEOrder>()*C_numCopies1DQuadSmearedCharge(),3>  & forceEval,
          const MatrixFree<3,double> & matrixFreeData,
          const unsigned int cell,
-         const std::vector<Tensor<1,3,VectorizedArray<double> > > & gradVselfQuads,
+         const std::vector<VectorizedArray<double> > & vselfQuads,
          const std::set<int> & atomImageIdsInBin,
          const std::map<dealii::CellId, std::vector<int> > & bQuadAtomIdsAllAtomsImages,
-         const std::vector<VectorizedArray<double> > & smearedbQuads);      
+         const std::vector< VectorizedArray<double> > & smearedbQuads,
+         const std::vector<Tensor<1,3,VectorizedArray<double> > > & smearedGradbQuads);      
       
 #endif
 

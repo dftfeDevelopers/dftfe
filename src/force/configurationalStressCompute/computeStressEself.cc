@@ -151,7 +151,8 @@ void forceClass<FEOrder>::computeStressEself(const DoFHandler<3> & dofHandlerEle
       }
 
     std::vector<VectorizedArray<double> > smearedbQuads(numQuadPointsSmearedb,make_vectorized_array(0.0));
-    std::vector<Tensor<1,C_DIM,VectorizedArray<double> > > gradVselfSmearedChargeQuads(numQuadPointsSmearedb,zeroTensor);
+    std::vector<Tensor<1,C_DIM,VectorizedArray<double> > > smearedGradbQuads(numQuadPointsSmearedb,zeroTensor);
+    std::vector<VectorizedArray<double> > vselfSmearedChargeQuads(numQuadPointsSmearedb,make_vectorized_array(0.0));
 
     for(unsigned int iBin = 0; iBin < numberBins; ++iBin)
     {
@@ -165,10 +166,11 @@ void forceClass<FEOrder>::computeStressEself(const DoFHandler<3> & dofHandlerEle
         forceEvalSmearedCharge.reinit(cell);
         vselfEvalSmearedCharge.reinit(cell);
         vselfEvalSmearedCharge.read_dof_values_plain(vselfBinsManagerElectro.getVselfFieldBins()[iBin]);
-        vselfEvalSmearedCharge.evaluate(false,true);    
+        vselfEvalSmearedCharge.evaluate(true,false);    
 
         std::fill(smearedbQuads.begin(),smearedbQuads.end(),make_vectorized_array(0.0));
-        std::fill(gradVselfSmearedChargeQuads.begin(),gradVselfSmearedChargeQuads.end(),zeroTensor);
+        std::fill(smearedGradbQuads.begin(),smearedGradbQuads.end(),zeroTensor);
+        std::fill(vselfSmearedChargeQuads.begin(),vselfSmearedChargeQuads.end(),make_vectorized_array(0.0));
 
         const unsigned int numSubCells=matrixFreeDataElectro.n_components_filled(cell);
 
@@ -179,6 +181,7 @@ void forceClass<FEOrder>::computeStressEself(const DoFHandler<3> & dofHandlerEle
           dealii::CellId subCellId=subCellPtr->id();
 
           const std::vector<int> & bQuadAtomIdsCell=dftPtr->d_bQuadAtomIdsAllAtoms.find(subCellId)->second;
+          const std::vector<double> & gradbQuadValuesCell= dftPtr->d_gradbQuadValuesAllAtoms.find(subCellId)->second;
           const std::vector<double> & bQuadValuesCell= dftPtr->d_bQuadValuesAllAtoms.find(subCellId)->second;
 
           for (unsigned int q=0; q<numQuadPointsSmearedb; ++q)
@@ -187,6 +190,9 @@ void forceClass<FEOrder>::computeStressEself(const DoFHandler<3> & dofHandlerEle
             {
               isCellNonTrivial=true;
               smearedbQuads[q][iSubCell]=bQuadValuesCell[q];
+              smearedGradbQuads[q][0][iSubCell]=gradbQuadValuesCell[3*q+0];
+              smearedGradbQuads[q][1][iSubCell]=gradbQuadValuesCell[3*q+1];
+              smearedGradbQuads[q][2][iSubCell]=gradbQuadValuesCell[3*q+2];
             }
           }//quad loop         
         }//subcell loop
@@ -195,15 +201,18 @@ void forceClass<FEOrder>::computeStressEself(const DoFHandler<3> & dofHandlerEle
           continue;
 
         for (unsigned int q=0; q<numQuadPointsSmearedb; ++q)
-          gradVselfSmearedChargeQuads[q]=vselfEvalSmearedCharge.get_gradient(q);
+        {
+          vselfSmearedChargeQuads[q]=vselfEvalSmearedCharge.get_value(q);
+        }
 
         addEVselfSmearedStressContribution(forceEvalSmearedCharge,
             matrixFreeDataElectro,
             cell,
-            gradVselfSmearedChargeQuads,
+            vselfSmearedChargeQuads,
             atomImageIdsInBin,
             dftPtr->d_bQuadAtomIdsAllAtomsImages,
-            smearedbQuads);
+            smearedbQuads,
+            smearedGradbQuads);
         
       }//macrocell loop
     }//bin loop

@@ -19,16 +19,24 @@
 //compute ESmeared contribution stress
 template<unsigned int FEOrder>
 	void forceClass<FEOrder>::addEPhiTotSmearedStressContribution
-(FEEvaluation<3,1,C_num1DQuadSmearedCharge<FEOrder>()*C_numCopies1DQuadSmearedCharge(),3>  & forceEval,
- const MatrixFree<3,double> & matrixFreeData,
- const unsigned int cell,
- const std::vector<Tensor<1,3,VectorizedArray<double> > > & gradPhiTotQuads,
- const std::map<dealii::CellId, std::vector<int> > & bQuadAtomIdsAllAtomsImages,
- const std::vector<VectorizedArray<double> > & smearedbQuads)
+        (FEEvaluation<3,1,C_num1DQuadSmearedCharge<FEOrder>()*C_numCopies1DQuadSmearedCharge(),3>  & forceEval,
+         const MatrixFree<3,double> & matrixFreeData,
+         const unsigned int cell,
+         const std::vector<VectorizedArray<double> > & phiTotQuads,
+         const std::map<dealii::CellId, std::vector<int> > & bQuadAtomIdsAllAtomsImages,
+         const std::vector<Tensor<1,3,VectorizedArray<double> >  > & smearedGradbQuads)
 {
 	Tensor<1,3,VectorizedArray<double> > zeroTensor1;
 	for (unsigned int idim=0; idim<3; idim++)
 		zeroTensor1[idim]=make_vectorized_array(0.0);
+
+  Tensor<2,3,VectorizedArray<double> > zeroTensor2;
+  for (unsigned int idim=0; idim<3; idim++)
+    for (unsigned int jdim=0; jdim<3; jdim++)
+    {
+      zeroTensor2[idim][jdim]=make_vectorized_array(0.0);
+    }
+
 	const unsigned int numberGlobalAtoms = dftPtr->atomLocations.size();
 	const unsigned int numberImageCharges = dftPtr->d_imageIds.size();
 	const unsigned int numberTotalAtoms = numberGlobalAtoms + numberImageCharges;  
@@ -52,7 +60,7 @@ template<unsigned int FEOrder>
       atomLocation[2]=make_vectorized_array(dftPtr->d_imagePositions[iAtom-numberGlobalAtoms][2]);      
     }
 
-    std::vector<VectorizedArray<double>> smearedbQuadsiAtom(numQuadPoints,make_vectorized_array(0.0));
+    std::vector<Tensor<1,3,VectorizedArray<double> > > smearedGradbQuadsiAtom(numQuadPoints,zeroTensor1);
 
 		for (unsigned int iSubCell=0; iSubCell<numSubCells; ++iSubCell)
 		{
@@ -62,15 +70,19 @@ template<unsigned int FEOrder>
       for (unsigned int q=0; q<numQuadPoints; ++q)
       {
         if (bQuadAtomIdsCell[q]==iAtom)
-          smearedbQuadsiAtom[q][iSubCell]=smearedbQuads[q][iSubCell];
+        {
+          smearedGradbQuadsiAtom[q][0][iSubCell]=smearedGradbQuads[q][0][iSubCell];
+          smearedGradbQuadsiAtom[q][1][iSubCell]=smearedGradbQuads[q][1][iSubCell];
+          smearedGradbQuadsiAtom[q][2][iSubCell]=smearedGradbQuads[q][2][iSubCell];
+        }
       }
     }
 
     
-		Tensor<2,3,VectorizedArray<double> > EPSPStressContribution;
+		Tensor<2,3,VectorizedArray<double> > EPSPStressContribution=zeroTensor2;
 		for (unsigned int q=0; q<numQuadPoints; ++q)
 			EPSPStressContribution
-				+=outer_product(-smearedbQuadsiAtom[q]*gradPhiTotQuads[q],forceEval.quadrature_point(q)-atomLocation)
+				+=outer_product(smearedGradbQuadsiAtom[q]*phiTotQuads[q],forceEval.quadrature_point(q)-atomLocation)
 				*forceEval.JxW(q);
         
 
@@ -85,17 +97,30 @@ template<unsigned int FEOrder>
 
 template<unsigned int FEOrder>
 	void forceClass<FEOrder>::addEVselfSmearedStressContribution
-(FEEvaluation<3,1,C_num1DQuadSmearedCharge<FEOrder>()*C_numCopies1DQuadSmearedCharge(),3>  & forceEval,
- const MatrixFree<3,double> & matrixFreeData,
- const unsigned int cell,
- const std::vector<Tensor<1,3,VectorizedArray<double> > > & gradVselfQuads,
- const std::set<int> & atomImageIdsInBin,
- const std::map<dealii::CellId, std::vector<int> > & bQuadAtomIdsAllAtomsImages,
- const std::vector<VectorizedArray<double> > & smearedbQuads)
+        (FEEvaluation<3,1,C_num1DQuadSmearedCharge<FEOrder>()*C_numCopies1DQuadSmearedCharge(),3>  & forceEval,
+         const MatrixFree<3,double> & matrixFreeData,
+         const unsigned int cell,
+         const std::vector<VectorizedArray<double> > & vselfQuads,
+         const std::set<int> & atomImageIdsInBin,
+         const std::map<dealii::CellId, std::vector<int> > & bQuadAtomIdsAllAtomsImages,
+         const std::vector< VectorizedArray<double> > & smearedbQuads,
+         const std::vector<Tensor<1,3,VectorizedArray<double> > > & smearedGradbQuads) 
 {
 	Tensor<1,3,VectorizedArray<double> > zeroTensor1;
 	for (unsigned int idim=0; idim<3; idim++)
 		zeroTensor1[idim]=make_vectorized_array(0.0);
+
+  Tensor<2,3,VectorizedArray<double> > zeroTensor2;
+  for (unsigned int idim=0; idim<3; idim++)
+    for (unsigned int jdim=0; jdim<3; jdim++)
+    {
+      zeroTensor2[idim][jdim]=make_vectorized_array(0.0);
+    }
+
+  Tensor<2,3,VectorizedArray<double> > idTensor2=zeroTensor2;
+  for (unsigned int idim=0; idim<3; idim++)
+      idTensor2[idim][idim]=make_vectorized_array(1.0);
+
 	const unsigned int numSubCells= matrixFreeData.n_components_filled(cell);
 	const unsigned int numQuadPoints=forceEval.n_q_points;
 	DoFHandler<3>::active_cell_iterator subCellPtr;
@@ -121,7 +146,8 @@ template<unsigned int FEOrder>
       atomLocation[2]=make_vectorized_array(dftPtr->d_imagePositions[atomId-numberGlobalAtoms][2]);      
     }
 
-    std::vector<VectorizedArray<double>> smearedbQuadsiAtom(numQuadPoints,make_vectorized_array(0.0));
+    std::vector< VectorizedArray<double> > smearedbQuadsiAtom(numQuadPoints,make_vectorized_array(0.0));
+    std::vector<Tensor<1,3,VectorizedArray<double> > > smearedGradbQuadsiAtom(numQuadPoints,zeroTensor1);
 
 		for (unsigned int iSubCell=0; iSubCell<numSubCells; ++iSubCell)
 		{
@@ -131,20 +157,21 @@ template<unsigned int FEOrder>
       for (unsigned int q=0; q<numQuadPoints; ++q)
       {
         if (bQuadAtomIdsCell[q]==iAtom)
+        {
           smearedbQuadsiAtom[q][iSubCell]=smearedbQuads[q][iSubCell];
+          smearedGradbQuadsiAtom[q][0][iSubCell]=smearedGradbQuads[q][0][iSubCell];
+          smearedGradbQuadsiAtom[q][1][iSubCell]=smearedGradbQuads[q][1][iSubCell];
+          smearedGradbQuadsiAtom[q][2][iSubCell]=smearedGradbQuads[q][2][iSubCell];
+        }
       }
     }
 
-		Tensor<2,3,VectorizedArray<double> > EPSPStressContribution;
+		Tensor<2,3,VectorizedArray<double> > EPSPStressContribution=zeroTensor2;
 		for (unsigned int q=0; q<numQuadPoints; ++q)
-		{
-
 			EPSPStressContribution
-				+=outer_product(smearedbQuadsiAtom[q]*gradVselfQuads[q],forceEval.quadrature_point(q)-atomLocation)
-				*forceEval.JxW(q);
+				+=(-smearedbQuadsiAtom[q]*vselfQuads[q]*idTensor2-outer_product(smearedGradbQuadsiAtom[q]*vselfQuads[q],forceEval.quadrature_point(q)-atomLocation)
+				)*forceEval.JxW(q);
 
-
-		}
 
 		for (unsigned int iSubCell=0; iSubCell<numSubCells; ++iSubCell)
 			for (unsigned int idim=0; idim<C_DIM; idim++)

@@ -601,10 +601,10 @@ template<unsigned int FEOrder>
 		for (unsigned int jdim=0; jdim<C_DIM; jdim++)
 			zeroTensor2[idim][jdim]=make_vectorized_array(0.0);
 
-
 	std::vector<VectorizedArray<double> > rhoQuadsElectro(numQuadPoints,make_vectorized_array(0.0));
   std::vector<VectorizedArray<double> > smearedbQuads(numQuadPointsSmearedb,make_vectorized_array(0.0));
-  std::vector< Tensor<1,C_DIM,VectorizedArray<double> >  > gradPhiTotSmearedChargeQuads(numQuadPointsSmearedb,zeroTensor);  
+  std::vector< Tensor<1,C_DIM,VectorizedArray<double> >  > smearedGradbQuads(numQuadPointsSmearedb,zeroTensor);  
+  std::vector< VectorizedArray<double> > phiTotSmearedChargeQuads(numQuadPointsSmearedb,make_vectorized_array(0.0));  
 	std::vector<Tensor<1,C_DIM,VectorizedArray<double> > > gradRhoQuadsElectro(numQuadPoints,zeroTensor);
 	std::vector<VectorizedArray<double> > pseudoVLocQuadsElectro(numQuadPoints,make_vectorized_array(0.0));
 	for (unsigned int cell=0; cell<matrixFreeDataElectro.n_macro_cells(); ++cell)
@@ -620,14 +620,15 @@ template<unsigned int FEOrder>
       forceEvalSmearedCharge.reinit(cell);
       phiTotEvalSmearedCharge.reinit(cell);
       phiTotEvalSmearedCharge.read_dof_values_plain(phiTotRhoOutElectro);
-      phiTotEvalSmearedCharge.evaluate(false,true);        
+      phiTotEvalSmearedCharge.evaluate(true,false);        
     }
 
 		std::fill(rhoQuadsElectro.begin(),rhoQuadsElectro.end(),make_vectorized_array(0.0));
 		std::fill(gradRhoQuadsElectro.begin(),gradRhoQuadsElectro.end(),zeroTensor);
 		std::fill(pseudoVLocQuadsElectro.begin(),pseudoVLocQuadsElectro.end(),make_vectorized_array(0.0));
     std::fill(smearedbQuads.begin(),smearedbQuads.end(),make_vectorized_array(0.0));
-    std::fill(gradPhiTotSmearedChargeQuads.begin(),gradPhiTotSmearedChargeQuads.end(),zeroTensor);    
+    std::fill(smearedGradbQuads.begin(),smearedGradbQuads.end(),zeroTensor);    
+    std::fill(phiTotSmearedChargeQuads.begin(),phiTotSmearedChargeQuads.end(),make_vectorized_array(0.0));    
 
 		const unsigned int numSubCells=matrixFreeDataElectro.n_components_filled(cell);
 
@@ -651,10 +652,17 @@ template<unsigned int FEOrder>
 					pseudoVLocQuadsElectro[q][iSubCell]=pseudoVLocElectro.find(subCellId)->second[q];
 
       if (dftParameters::smearedNuclearCharges)
+      {
+        const std::vector<double> & gradbQuadValuesCell= dftPtr->d_gradbQuadValuesAllAtoms.find(subCellId)->second;
+        const std::vector<double> & bQuadValuesCell= dftPtr->d_bQuadValuesAllAtoms.find(subCellId)->second;
         for (unsigned int q=0; q<numQuadPointsSmearedb; ++q)
         {
-          smearedbQuads[q][iSubCell]=dftPtr->d_bQuadValuesAllAtoms.find(subCellId)->second[q];
+          smearedbQuads[q][iSubCell]=bQuadValuesCell[q];
+          smearedGradbQuads[q][0][iSubCell]=gradbQuadValuesCell[3*q+0];
+          smearedGradbQuads[q][1][iSubCell]=gradbQuadValuesCell[3*q+1];
+          smearedGradbQuads[q][2][iSubCell]=gradbQuadValuesCell[3*q+2];
         }            
+      }
 		}
 
 		if (dftParameters::isPseudopotential)
@@ -713,23 +721,34 @@ template<unsigned int FEOrder>
 			EQuadSum+=E*forceEvalElectro.JxW(q);
 		}
 
-
+    VectorizedArray<double>  identityTensorContributionSmearedCharge=make_vectorized_array(0.0);
     if (dftParameters::smearedNuclearCharges)
       for (unsigned int q=0; q<numQuadPointsSmearedb; ++q)
-        gradPhiTotSmearedChargeQuads[q]=phiTotEvalSmearedCharge.get_gradient(q);
+      {
+        phiTotSmearedChargeQuads[q]=phiTotEvalSmearedCharge.get_value(q);
+        identityTensorContributionSmearedCharge+=phiTotSmearedChargeQuads[q]*smearedbQuads[q]*forceEvalSmearedCharge.JxW(q);
+      }
 
 		if (dftParameters::smearedNuclearCharges)
 			addEPhiTotSmearedStressContribution(forceEvalSmearedCharge,
 					matrixFreeDataElectro,
 					cell,
-					gradPhiTotSmearedChargeQuads,
+					phiTotSmearedChargeQuads,
           dftPtr->d_bQuadAtomIdsAllAtomsImages,
-				  smearedbQuads); 
+				  smearedGradbQuads); 
 
 		for (unsigned int iSubCell=0; iSubCell<numSubCells; ++iSubCell)
 			for (unsigned int idim=0; idim<C_DIM; ++idim)
 				for (unsigned int jdim=0; jdim<C_DIM; ++jdim)
 					d_stress[idim][jdim]+=EQuadSum[idim][jdim][iSubCell];
+
+    if (dftParameters::smearedNuclearCharges)
+      for (unsigned int iSubCell=0; iSubCell<numSubCells; ++iSubCell)  
+      {
+         d_stress[0][0]+=identityTensorContributionSmearedCharge[iSubCell];
+         d_stress[1][1]+=identityTensorContributionSmearedCharge[iSubCell];
+         d_stress[2][2]+=identityTensorContributionSmearedCharge[iSubCell];
+      }          
 
 	}//cell loop
 }

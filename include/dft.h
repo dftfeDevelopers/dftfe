@@ -784,6 +784,9 @@ namespace dftfe {
 			/// non-intersecting smeared charges of all atoms at quad points
 			std::map<dealii::CellId, std::vector<double> >  d_bQuadValuesAllAtoms;
 
+			/// non-intersecting smeared charge gradients of all atoms at quad points
+			std::map<dealii::CellId, std::vector<double> >  d_gradbQuadValuesAllAtoms;      
+
 			/// non-intersecting smeared charges atom ids of all atoms at quad points
 			std::map<dealii::CellId, std::vector<int> >  d_bQuadAtomIdsAllAtoms;    
 

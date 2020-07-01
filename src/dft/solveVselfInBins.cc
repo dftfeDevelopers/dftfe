@@ -42,10 +42,11 @@ namespace dftfe
 				const  MPI_Comm &mpi_communicator,
 				const std::vector<double> & rc,
 				std::map<dealii::CellId, std::vector<double> > & bQuadValues,
+				std::map<dealii::CellId, std::vector<double> > & gradbQuadValues,        
         std::map<dealii::CellId, std::vector<int> >  & bQuadAtomIdsAllAtoms,
         std::map<dealii::CellId, std::vector<int> > & bQuadAtomIdsAllAtomsImages)
 		{
-			bQuadValues.clear();
+			//bQuadValues.clear();
 			dealii::FEValues<3> fe_values (dofHandlerOfField.get_fe(), quadrature_formula, dealii::update_quadrature_points|dealii::update_JxW_values);
 			const unsigned int dofs_per_cell = dofHandlerOfField.get_fe().dofs_per_cell;
 			const unsigned int n_q_points    = quadrature_formula.size();
@@ -55,7 +56,11 @@ namespace dftfe
 				     endc = dofHandlerOfField.end();
 			for (; cell!=endc; ++cell)
 				if (cell->is_locally_owned())
-					bQuadValues[cell->id()].resize(n_q_points,0.0);
+        {
+					//bQuadValues[cell->id()].resize(n_q_points,0.0);
+          std::fill(bQuadValues[cell->id()].begin(),bQuadValues[cell->id()].end(),0.0);
+          //std::fill(gradbQuadValues[cell->id()].begin(),gradbQuadValues[cell->id()].end(),0.0);
+        }
 
 			const unsigned int numberTotalAtomsInBin=atomLocations.size();
 			std::vector<double> smearedNuclearChargeIntegral(numberTotalAtomsInBin,0.0); 
@@ -102,6 +107,7 @@ namespace dftfe
 				{
 					fe_values.reinit (cell);
 					std::vector<double> & bQuadValuesCell=bQuadValues[cell->id()];
+					std::vector<double> & gradbQuadValuesCell=gradbQuadValues[cell->id()];          
           std::vector<int> & bQuadAtomIdsCell=bQuadAtomIdsAllAtoms[cell->id()];
           std::vector<int> & bQuadAtomImageIdsCell=bQuadAtomIdsAllAtomsImages[cell->id()];
 					for (unsigned int q = 0; q < n_q_points; ++q)
@@ -114,10 +120,18 @@ namespace dftfe
 							const unsigned int atomId=iatom<numberDomainAtomsInBin?iatom:imageIdToDomainAtomIdMapCurrentBin[iatom-numberDomainAtomsInBin];
 							if (r>rc[binAtomIdToGlobalAtomIdMapCurrentBin[atomId]])
 								continue;
-							const double chargeVal=dftUtils::smearedCharge(r,rc[binAtomIdToGlobalAtomIdMapCurrentBin[atomId]]);
-							bQuadValuesCell[q]=chargeVal*(-atomCharges[atomId])/smearedNuclearChargeIntegral[atomId];
+              const unsigned int atomChargeId=binAtomIdToGlobalAtomIdMapCurrentBin[atomId];
+							const double chargeVal=dftUtils::smearedCharge(r,rc[atomChargeId]);
+              const double gradChargeVal=dftUtils::smearedChargeDr(r,rc[atomChargeId]);
+
+              const double scalingFac=(-atomCharges[atomId])/smearedNuclearChargeIntegral[atomId];
+
+							bQuadValuesCell[q]=chargeVal*scalingFac;
+              gradbQuadValuesCell[3*q+0]=gradChargeVal*(quadPoint[0]-atomLocations[iatom][0])/r*scalingFac;   
+              gradbQuadValuesCell[3*q+1]=gradChargeVal*(quadPoint[1]-atomLocations[iatom][1])/r*scalingFac;    
+              gradbQuadValuesCell[3*q+2]=gradChargeVal*(quadPoint[2]-atomLocations[iatom][2])/r*scalingFac;                  
 							smearedNuclearChargeIntegralCheck[atomId]+=bQuadValuesCell[q]*jxw;
-              bQuadAtomIdsCell[q]=binAtomIdToGlobalAtomIdMapCurrentBin[atomId];
+              bQuadAtomIdsCell[q]=atomChargeId;
               bQuadAtomImageIdsCell[q]=binAtomIdToGlobalAtomIdMapCurrentBin[iatom];
               break;
 						}
@@ -148,6 +162,7 @@ namespace dftfe
 		 const std::vector<double> &imageCharges,
 		 std::vector<std::vector<double> > & localVselfs,
 		 std::map<dealii::CellId, std::vector<double> > & bQuadValuesAllAtoms,
+		 std::map<dealii::CellId, std::vector<double> > & gradbQuadValuesAllAtoms,     
      std::map<dealii::CellId, std::vector<int> > & bQuadAtomIdsAllAtoms,
      std::map<dealii::CellId, std::vector<int> > & bQuadAtomIdsAllAtomsImages,
 		 const std::vector<double> & smearingWidths,
@@ -157,6 +172,7 @@ namespace dftfe
 			localVselfs.clear();
 			d_vselfFieldBins.clear();
 			bQuadValuesAllAtoms.clear();
+			gradbQuadValuesAllAtoms.clear();      
       bQuadAtomIdsAllAtoms.clear();
       bQuadAtomIdsAllAtomsImages.clear();
 			const unsigned int numberBins = d_boundaryFlagOnlyChargeId.size();
@@ -175,6 +191,7 @@ namespace dftfe
 					if (cell->is_locally_owned())
           {
 						bQuadValuesAllAtoms[cell->id()].resize(n_q_points_sc,0.0);
+            gradbQuadValuesAllAtoms[cell->id()].resize(3*n_q_points_sc,0.0);
             bQuadAtomIdsAllAtoms[cell->id()].resize(n_q_points_sc,-1);
             bQuadAtomIdsAllAtomsImages[cell->id()].resize(n_q_points_sc,-1);
           }
@@ -195,6 +212,16 @@ namespace dftfe
 			d_vselfFieldBins.resize(numberBins);
 			std::map<dealii::CellId, std::vector<double> > bQuadValuesBin;
 			std::map<dealii::CellId, std::vector<double> > dummy;
+
+			cell = dofHandler.begin_active();
+			if (useSmearedCharges)
+			{
+				for (; cell!=endc; ++cell)
+					if (cell->is_locally_owned())
+          {
+						bQuadValuesBin[cell->id()].resize(n_q_points_sc,0.0);
+          }
+			}      
 
 			for(unsigned int iBin = 0; iBin < numberBins; ++iBin)
 			{
@@ -259,6 +286,7 @@ namespace dftfe
 							mpi_communicator,
 							smearingWidths,
 							bQuadValuesBin,
+							gradbQuadValuesAllAtoms,              
               bQuadAtomIdsAllAtoms,
               bQuadAtomIdsAllAtomsImages);
 
@@ -423,6 +451,7 @@ namespace dftfe
 		 const std::vector<double> &imageCharges,
 		 std::vector<std::vector<double> > & localVselfs,
 		 std::map<dealii::CellId, std::vector<double> > & bQuadValuesAllAtoms,
+		 std::map<dealii::CellId, std::vector<double> > & gradbQuadValuesAllAtoms,     
      std::map<dealii::CellId, std::vector<int> > & bQuadAtomIdsAllAtoms,
      std::map<dealii::CellId, std::vector<int> > & bQuadAtomIdsAllAtomsImages,
 		 const std::vector<double> & smearingWidths,

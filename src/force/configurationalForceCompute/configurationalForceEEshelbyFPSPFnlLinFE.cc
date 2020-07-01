@@ -1500,12 +1500,16 @@ template<unsigned int FEOrder>
 					gradPseudoVLocQuadsElectro[q][1][iSubCell]=gradPseudoVLocElectro.find(subCellId)->second[C_DIM*q+1];
 					gradPseudoVLocQuadsElectro[q][2][iSubCell]=gradPseudoVLocElectro.find(subCellId)->second[C_DIM*q+2];
 				}
-       
+      
+      
       if (dftParameters::smearedNuclearCharges)
+      {
+        const std::vector<double> & bQuadValuesCell= dftPtr->d_bQuadValuesAllAtoms.find(subCellId)->second;
         for (unsigned int q=0; q<numQuadPointsSmearedb; ++q)
         {
-          smearedbQuads[q][iSubCell]=dftPtr->d_bQuadValuesAllAtoms.find(subCellId)->second[q];
+          smearedbQuads[q][iSubCell]=bQuadValuesCell[q];
         }       
+      }
 		}
 
 		if(dftParameters::isPseudopotential)
