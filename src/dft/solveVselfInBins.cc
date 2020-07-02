@@ -361,6 +361,10 @@ namespace dftfe
 				//
 				if (useSmearedCharges)
 				{
+				  double selfenergy_time;
+				  MPI_Barrier(MPI_COMM_WORLD);
+				  selfenergy_time = MPI_Wtime();
+
 					std::map<dealii::types::global_dof_index, int> & boundaryNodeMap = d_boundaryFlagOnlyChargeId[iBin];
 					double vselfTimesSmearedChargesIntegralBin=0.0;
 					const unsigned int vertices_per_cell=dealii::GeometryInfo<3>::vertices_per_cell;
@@ -371,6 +375,10 @@ namespace dftfe
 
 							std::vector<double> & bQuadValuesBinCell=bQuadValuesBin[cell->id()];
 							std::vector<double> & bQuadValuesAllAtomsCell=bQuadValuesAllAtoms[cell->id()];
+
+              if (std::abs(std::accumulate(bQuadValuesBinCell.begin(),bQuadValuesBinCell.end(),0.0))<1e-9)
+                  continue;
+
 							for (unsigned int q = 0; q < n_q_points_sc; ++q)
 								bQuadValuesAllAtomsCell[q]+=bQuadValuesBinCell[q];
 
@@ -413,6 +421,11 @@ namespace dftfe
 						}
 
 					localVselfs[0][0]+=vselfTimesSmearedChargesIntegralBin;
+
+				MPI_Barrier(MPI_COMM_WORLD);
+				selfenergy_time = MPI_Wtime() - selfenergy_time;
+				if (dftParameters::verbosity>=1)
+					pcout<<" Time taken for vself self energy for current bin: "<<selfenergy_time<<std::endl;          
 
 				}
 				else
