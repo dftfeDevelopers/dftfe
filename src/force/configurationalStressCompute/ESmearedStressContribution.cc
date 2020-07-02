@@ -156,7 +156,7 @@ template<unsigned int FEOrder>
       const std::vector<int> & bQuadAtomIdsCell=bQuadAtomIdsAllAtomsImages.find(subCellId)->second;
       for (unsigned int q=0; q<numQuadPoints; ++q)
       {
-        if (bQuadAtomIdsCell[q]==iAtom)
+        if (bQuadAtomIdsCell[q]==atomId)
         {
           smearedbQuadsiAtom[q][iSubCell]=smearedbQuads[q][iSubCell];
           smearedGradbQuadsiAtom[q][0][iSubCell]=smearedGradbQuads[q][0][iSubCell];
