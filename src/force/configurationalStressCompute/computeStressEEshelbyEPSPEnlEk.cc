@@ -632,6 +632,7 @@ template<unsigned int FEOrder>
 
 		const unsigned int numSubCells=matrixFreeDataElectro.n_components_filled(cell);
 
+    double sum=0.0; 
 		for (unsigned int iSubCell=0; iSubCell<numSubCells; ++iSubCell)
 		{
 			subCellPtr= matrixFreeDataElectro.get_cell_iterator(cell,iSubCell);
@@ -658,6 +659,7 @@ template<unsigned int FEOrder>
         for (unsigned int q=0; q<numQuadPointsSmearedb; ++q)
         {
           smearedbQuads[q][iSubCell]=bQuadValuesCell[q];
+          sum+=bQuadValuesCell[q];
           smearedGradbQuads[q][0][iSubCell]=gradbQuadValuesCell[3*q+0];
           smearedGradbQuads[q][1][iSubCell]=gradbQuadValuesCell[3*q+1];
           smearedGradbQuads[q][2][iSubCell]=gradbQuadValuesCell[3*q+2];
@@ -721,34 +723,34 @@ template<unsigned int FEOrder>
 			EQuadSum+=E*forceEvalElectro.JxW(q);
 		}
 
+		for (unsigned int iSubCell=0; iSubCell<numSubCells; ++iSubCell)
+			for (unsigned int idim=0; idim<C_DIM; ++idim)
+				for (unsigned int jdim=0; jdim<C_DIM; ++jdim)
+					d_stress[idim][jdim]+=EQuadSum[idim][jdim][iSubCell];
+
     VectorizedArray<double>  identityTensorContributionSmearedCharge=make_vectorized_array(0.0);
-    if (dftParameters::smearedNuclearCharges)
+    if (dftParameters::smearedNuclearCharges && std::abs(sum)>1e-9)
+    {
       for (unsigned int q=0; q<numQuadPointsSmearedb; ++q)
       {
         phiTotSmearedChargeQuads[q]=phiTotEvalSmearedCharge.get_value(q);
         identityTensorContributionSmearedCharge+=phiTotSmearedChargeQuads[q]*smearedbQuads[q]*forceEvalSmearedCharge.JxW(q);
       }
 
-		if (dftParameters::smearedNuclearCharges)
 			addEPhiTotSmearedStressContribution(forceEvalSmearedCharge,
 					matrixFreeDataElectro,
 					cell,
 					phiTotSmearedChargeQuads,
           dftPtr->d_bQuadAtomIdsAllAtomsImages,
-				  smearedGradbQuads); 
-
-		for (unsigned int iSubCell=0; iSubCell<numSubCells; ++iSubCell)
-			for (unsigned int idim=0; idim<C_DIM; ++idim)
-				for (unsigned int jdim=0; jdim<C_DIM; ++jdim)
-					d_stress[idim][jdim]+=EQuadSum[idim][jdim][iSubCell];
-
-    if (dftParameters::smearedNuclearCharges)
+				  smearedGradbQuads);
+      
       for (unsigned int iSubCell=0; iSubCell<numSubCells; ++iSubCell)  
       {
          d_stress[0][0]+=identityTensorContributionSmearedCharge[iSubCell];
          d_stress[1][1]+=identityTensorContributionSmearedCharge[iSubCell];
          d_stress[2][2]+=identityTensorContributionSmearedCharge[iSubCell];
-      }          
+      }  
+    }
 
 	}//cell loop
 }
