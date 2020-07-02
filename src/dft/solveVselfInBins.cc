@@ -46,7 +46,6 @@ namespace dftfe
         std::map<dealii::CellId, std::vector<int> >  & bQuadAtomIdsAllAtoms,
         std::map<dealii::CellId, std::vector<int> > & bQuadAtomIdsAllAtomsImages)
 		{
-			//bQuadValues.clear();
 			dealii::FEValues<3> fe_values (dofHandlerOfField.get_fe(), quadrature_formula, dealii::update_quadrature_points|dealii::update_JxW_values);
 			const unsigned int dofs_per_cell = dofHandlerOfField.get_fe().dofs_per_cell;
 			const unsigned int n_q_points    = quadrature_formula.size();
@@ -56,11 +55,7 @@ namespace dftfe
 				     endc = dofHandlerOfField.end();
 			for (; cell!=endc; ++cell)
 				if (cell->is_locally_owned())
-        {
-					//bQuadValues[cell->id()].resize(n_q_points,0.0);
           std::fill(bQuadValues[cell->id()].begin(),bQuadValues[cell->id()].end(),0.0);
-          //std::fill(gradbQuadValues[cell->id()].begin(),gradbQuadValues[cell->id()].end(),0.0);
-        }
 
 			const unsigned int numberTotalAtomsInBin=atomLocations.size();
 			std::vector<double> smearedNuclearChargeIntegral(numberTotalAtomsInBin,0.0); 

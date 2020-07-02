@@ -427,6 +427,7 @@ namespace dftfe
 			computing_timer.enter_section("create bins: initial overheads");
 
 			d_bins.clear();
+      d_binsImages.clear();
 			d_boundaryFlag.clear();
 			d_boundaryFlagOnlyChargeId.clear();
 			d_dofClosestChargeLocationMap.clear();
@@ -594,6 +595,8 @@ namespace dftfe
 			const int numberBins = binCount + 1;
 			if (dftParameters::verbosity>=2)
 				pcout<<"number bins: "<<numberBins<<std::endl;
+
+      d_binsImages=d_bins;
 
 			computing_timer.exit_section("create bins: put in bins");
 
