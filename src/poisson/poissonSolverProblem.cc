@@ -247,10 +247,14 @@ namespace dftfe {
 				for(; cell!=endc; ++cell)
 					if (cell->is_locally_owned())
 					{
+						const std::vector<double>& tempVec=d_smearedChargeValuesPtr->find(cell->id())->second;
+            if (std::abs(std::accumulate(tempVec.begin(),tempVec.end(),0.0))<1e-9)
+              continue;
+
 						fe_valuesSC.reinit (cell);
 						elementalRhs=0.0;
 
-						const std::vector<double>& tempVec=d_smearedChargeValuesPtr->find(cell->id())->second;
+
 						for (unsigned int i=0; i<dofs_per_cell; ++i)
 							for (unsigned int q_point=0; q_point<num_quad_points_sc; ++q_point)
 								elementalRhs(i) += fe_valuesSC.shape_value(i, q_point)*tempVec[q_point]*fe_valuesSC.JxW (q_point);

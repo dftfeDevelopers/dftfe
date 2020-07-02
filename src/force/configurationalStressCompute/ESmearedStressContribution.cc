@@ -38,7 +38,7 @@ template<unsigned int FEOrder>
     }
 
 	const unsigned int numberGlobalAtoms = dftPtr->atomLocations.size();
-	const unsigned int numberImageCharges = dftPtr->d_imageIds.size();
+	const unsigned int numberImageCharges = dftPtr->d_imageIdsTrunc.size();
 	const unsigned int numberTotalAtoms = numberGlobalAtoms + numberImageCharges;  
 	const unsigned int numSubCells= matrixFreeData.n_components_filled(cell);
 	const unsigned int numQuadPoints=forceEval.n_q_points;
@@ -55,9 +55,9 @@ template<unsigned int FEOrder>
     }
     else
     {
-      atomLocation[0]=make_vectorized_array(dftPtr->d_imagePositions[iAtom-numberGlobalAtoms][0]);
-      atomLocation[1]=make_vectorized_array(dftPtr->d_imagePositions[iAtom-numberGlobalAtoms][1]);
-      atomLocation[2]=make_vectorized_array(dftPtr->d_imagePositions[iAtom-numberGlobalAtoms][2]);      
+      atomLocation[0]=make_vectorized_array(dftPtr->d_imagePositionsTrunc[iAtom-numberGlobalAtoms][0]);
+      atomLocation[1]=make_vectorized_array(dftPtr->d_imagePositionsTrunc[iAtom-numberGlobalAtoms][1]);
+      atomLocation[2]=make_vectorized_array(dftPtr->d_imagePositionsTrunc[iAtom-numberGlobalAtoms][2]);      
     }
 
     std::vector<Tensor<1,3,VectorizedArray<double> > > smearedGradbQuadsiAtom(numQuadPoints,zeroTensor1);
@@ -141,9 +141,9 @@ template<unsigned int FEOrder>
     }
     else
     {
-      atomLocation[0]=make_vectorized_array(dftPtr->d_imagePositions[atomId-numberGlobalAtoms][0]);
-      atomLocation[1]=make_vectorized_array(dftPtr->d_imagePositions[atomId-numberGlobalAtoms][1]);
-      atomLocation[2]=make_vectorized_array(dftPtr->d_imagePositions[atomId-numberGlobalAtoms][2]);      
+      atomLocation[0]=make_vectorized_array(dftPtr->d_imagePositionsTrunc[atomId-numberGlobalAtoms][0]);
+      atomLocation[1]=make_vectorized_array(dftPtr->d_imagePositionsTrunc[atomId-numberGlobalAtoms][1]);
+      atomLocation[2]=make_vectorized_array(dftPtr->d_imagePositionsTrunc[atomId-numberGlobalAtoms][2]);      
     }
 
     std::vector< VectorizedArray<double> > smearedbQuadsiAtom(numQuadPoints,make_vectorized_array(0.0));

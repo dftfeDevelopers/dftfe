@@ -125,7 +125,7 @@ namespace dftfe
               gradbQuadValuesCell[3*q+0]=gradChargeVal*(quadPoint[0]-atomLocations[iatom][0])/r*scalingFac;   
               gradbQuadValuesCell[3*q+1]=gradChargeVal*(quadPoint[1]-atomLocations[iatom][1])/r*scalingFac;    
               gradbQuadValuesCell[3*q+2]=gradChargeVal*(quadPoint[2]-atomLocations[iatom][2])/r*scalingFac;                  
-							smearedNuclearChargeIntegralCheck[atomId]+=bQuadValuesCell[q]*jxw;
+							//smearedNuclearChargeIntegralCheck[atomId]+=bQuadValuesCell[q]*jxw;
               bQuadAtomIdsCell[q]=atomChargeId;
               bQuadAtomImageIdsCell[q]=binAtomIdToGlobalAtomIdMapCurrentBin[iatom];
               break;
@@ -134,6 +134,7 @@ namespace dftfe
 
 				}
 
+      /*
 			MPI_Allreduce(MPI_IN_PLACE,
 					&smearedNuclearChargeIntegralCheck[0],
 					numberTotalAtomsInBin,
@@ -143,7 +144,8 @@ namespace dftfe
 
 			if (dealii::Utilities::MPI::this_mpi_process(mpi_communicator) ==0)
 				for (unsigned int iatom=0; iatom< numberDomainAtomsInBin; ++iatom)
-					std::cout<<"Smeared charge integral after scaling: "<<smearedNuclearChargeIntegralCheck[iatom]<<std::endl; 
+					std::cout<<"Smeared charge integral after scaling: "<<smearedNuclearChargeIntegralCheck[iatom]<<std::endl;
+      */
 		}
 	}
 
