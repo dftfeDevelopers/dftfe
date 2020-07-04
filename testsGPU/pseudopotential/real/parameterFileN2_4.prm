@@ -29,7 +29,7 @@ subsection Finite element mesh parameters
   set POLYNOMIAL ORDER=2
   subsection Auto mesh generation parameters
     set AUTO USER MESH PARAMS = true
-    set MESH SIZE AROUND ATOM = 1.0
+    set MESH SIZE AROUND ATOM = 0.6
   end
 end
 
@@ -54,17 +54,18 @@ subsection SCF parameters
   set STARTING WFC                     = RANDOM
   subsection Eigen-solver parameters
       set CHEBYSHEV POLYNOMIAL DEGREE=10
-      set NUMBER OF KOHN-SHAM WAVEFUNCTIONS = 8
+      set NUMBER OF KOHN-SHAM WAVEFUNCTIONS = 12
       set SPECTRUM SPLIT CORE EIGENSTATES=4
       set SUBSPACE ROT DOFS BLOCK SIZE        = 2000
       set WFC BLOCK SIZE=2
       set CHEBY WFC BLOCK SIZE=2
-      set CHEBYSHEV FILTER TOLERANCE=1e-3
+      set CHEBYSHEV FILTER TOLERANCE=1e-4
       set USE ELPA=true
       set SCALAPACKPROCS=2
       set RR GEP=true
       set RR GEP FULL MASS MATRIX=false
       set OVERLAP COMPUTE COMMUN ORTHO RR=false
       set OVERLAP COMPUTE COMMUN CHEBY=false
+      set CHEBYSHEV POLYNOMIAL DEGREE SCALING FACTOR FIRST SCF = 1.0
   end
 end

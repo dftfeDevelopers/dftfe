@@ -138,9 +138,9 @@ void dftClass<FEOrder>::nscf(kohnShamDFTOperatorClass<FEOrder> & kohnShamDFTEige
 	{
 		unsigned int count=1; double maxRes = 1e+6 ; double adaptiveChebysevFilterPassesTol = 1.0E-3 ;
 		//
-		kohnShamDFTEigenOperator.reinitkPointIndex(kPoint); 
+		kohnShamDFTEigenOperator.reinitkPointSpinIndex(kPoint,0); 
 		computing_timer.enter_section("nscf: Hamiltonian Matrix Computation");
-		kohnShamDFTEigenOperator.computeHamiltonianMatrix(kPoint); 
+		kohnShamDFTEigenOperator.computeHamiltonianMatrix(kPoint,0); 
 		computing_timer.exit_section("nscf: Hamiltonian Matrix Computation");
 		//MPI_Barrier(MPI_COMM_WORLD);
 		//

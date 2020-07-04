@@ -124,9 +124,10 @@ namespace
 
 
 	template<unsigned int FEOrder>
-void kohnShamDFTOperatorCUDAClass<FEOrder>::computeHamiltonianMatrix(unsigned int kPointIndex)
+void kohnShamDFTOperatorCUDAClass<FEOrder>::computeHamiltonianMatrix(const unsigned int kPointIndex, const unsigned int spinIndex)
 {
-	d_cellHamiltonianMatrixFlattenedDevice.resize(d_numLocallyOwnedCells*d_numberNodesPerElement*d_numberNodesPerElement,0.0);
+	const unsigned int kpointSpinIndex=(1+dftParameters::spinPolarized)*kPointIndex+spinIndex;
+	//d_cellHamiltonianMatrixFlattenedDevice.resize(d_numLocallyOwnedCells*d_numberNodesPerElement*d_numberNodesPerElement,0.0);
 	double gpu_time=MPI_Wtime();
 	if(dftParameters::xc_id == 4)
 		hamMatrixKernelGGA<<<(d_numLocallyOwnedCells*d_numberNodesPerElement*d_numberNodesPerElement+255)/256,256>>>
@@ -144,7 +145,7 @@ void kohnShamDFTOperatorCUDAClass<FEOrder>::computeHamiltonianMatrix(unsigned in
 			 thrust::raw_pointer_cast(&d_cellShapeFunctionGradientIntegralFlattenedDevice[0]),
 			 thrust::raw_pointer_cast(&d_vEffJxWDevice[0]),
 			 thrust::raw_pointer_cast(&d_derExcWithSigmaTimesGradRhoJxWDevice[0]),
-			 thrust::raw_pointer_cast(&d_cellHamiltonianMatrixFlattenedDevice[0]));
+			 thrust::raw_pointer_cast(&d_cellHamiltonianMatrixFlattenedDevice[kpointSpinIndex*d_numLocallyOwnedCells*d_numberNodesPerElement*d_numberNodesPerElement]));
 	else
 		hamMatrixKernelLDA<<<(d_numLocallyOwnedCells*d_numberNodesPerElement*d_numberNodesPerElement+255)/256,256>>>
 			(d_numLocallyOwnedCells,
@@ -154,7 +155,7 @@ void kohnShamDFTOperatorCUDAClass<FEOrder>::computeHamiltonianMatrix(unsigned in
 			 thrust::raw_pointer_cast(&d_shapeFunctionValueInvertedDevice[0]),
 			 thrust::raw_pointer_cast(&d_cellShapeFunctionGradientIntegralFlattenedDevice[0]),
 			 thrust::raw_pointer_cast(&d_vEffJxWDevice[0]),
-			 thrust::raw_pointer_cast(&d_cellHamiltonianMatrixFlattenedDevice[0]));
+			 thrust::raw_pointer_cast(&d_cellHamiltonianMatrixFlattenedDevice[kpointSpinIndex*d_numLocallyOwnedCells*d_numberNodesPerElement*d_numberNodesPerElement]));
 
 	cudaDeviceSynchronize();
 	gpu_time = MPI_Wtime() - gpu_time;

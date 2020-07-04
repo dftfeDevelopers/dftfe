@@ -91,6 +91,9 @@ namespace dftfe {
 
 			operatorDFTClass::setInvSqrtMassVector(d_invSqrtMassVector);
 
+			d_cellHamiltonianMatrix.clear();
+			d_cellHamiltonianMatrix.resize(dftPtr->d_kPointWeights.size()*(1+dftParameters::spinPolarized));
+
 			computing_timer.exit_section("kohnShamDFTOperatorClass setup");
 		}
 
@@ -201,9 +204,10 @@ namespace dftfe {
 
 
 	template<unsigned int FEOrder>
-		void kohnShamDFTOperatorClass<FEOrder>::reinitkPointIndex(unsigned int & kPointIndex)
+		void kohnShamDFTOperatorClass<FEOrder>::reinitkPointSpinIndex(const unsigned int  kPointIndex, const unsigned int spinIndex)
 		{
 			d_kPointIndex = kPointIndex;
+			d_spinIndex= spinIndex;
 		}
 
 
