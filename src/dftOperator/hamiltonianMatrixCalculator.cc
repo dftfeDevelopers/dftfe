@@ -36,7 +36,6 @@ void kohnShamDFTOperatorClass<FEOrder>::computeHamiltonianMatrix(unsigned int kP
 
     FEEvaluation<3, FEOrder, C_num1DQuadLPSP<FEOrder>()*C_numCopies1DQuadLPSP(), 1, double>  fe_eval(dftPtr->matrix_free_data, 0, d_externalPotCorrQuadratureId);
     const unsigned int numberQuadraturePoints = fe_eval.n_q_points;
-    std::cout<<"Number quads: "<<numberQuadraturePoints<<std::endl;
     typename dealii::DoFHandler<3>::active_cell_iterator cellPtr;
 
     unsigned int iElem = 0;
