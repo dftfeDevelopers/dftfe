@@ -28,6 +28,54 @@ void kohnShamDFTOperatorClass<FEOrder>::computeHamiltonianMatrix(unsigned int kP
 	const unsigned int numberMacroCells = dftPtr->matrix_free_data.n_macro_cells();
 	const unsigned int totalLocallyOwnedCells = dftPtr->matrix_free_data.n_physical_cells();
 
+  if (dftParameters::isPseudopotential && !d_isStiffnessMatrixExternalPotCorrComputed)
+  {
+    const unsigned int numberDofsPerElement = dftPtr->matrix_free_data.get_dof_handler().get_fe().dofs_per_cell;
+    d_cellHamiltonianMatrixExternalPotCorr.clear();
+  	d_cellHamiltonianMatrixExternalPotCorr.resize(totalLocallyOwnedCells,std::vector<double>(numberDofsPerElement*numberDofsPerElement,0.0));   
+
+    FEEvaluation<3, FEOrder, C_num1DQuadLPSP<FEOrder>()*C_numCopies1DQuadLPSP(), 1, double>  fe_eval(dftPtr->matrix_free_data, 0, d_externalPotCorrQuadratureId);
+    const unsigned int numberQuadraturePoints = fe_eval.n_q_points;
+    std::cout<<"Number quads: "<<numberQuadraturePoints<<std::endl;
+    typename dealii::DoFHandler<3>::active_cell_iterator cellPtr;
+
+    unsigned int iElem = 0;
+    for(unsigned int iMacroCell = 0; iMacroCell < numberMacroCells; ++iMacroCell)
+    {
+      std::vector<VectorizedArray<double> > elementHamiltonianMatrix;
+      elementHamiltonianMatrix.resize(numberDofsPerElement*numberDofsPerElement);
+      fe_eval.reinit(iMacroCell);
+      const  unsigned int n_sub_cells = dftPtr->matrix_free_data.n_components_filled(iMacroCell);
+
+      for(unsigned int iNode = 0; iNode < numberDofsPerElement; ++iNode)
+      {
+        for(unsigned int jNode = 0; jNode < numberDofsPerElement; ++jNode)
+        {
+          for(unsigned int q_point = 0; q_point < numberQuadraturePoints; ++q_point)
+          {
+
+            VectorizedArray<double> temp = d_vEffExternalPotCorr(iMacroCell,q_point)*make_vectorized_array(d_shapeFunctionValue[numberQuadraturePoints*iNode+q_point])*make_vectorized_array(d_shapeFunctionValue[numberQuadraturePoints*jNode+q_point]);
+            fe_eval.submit_value(temp,q_point);
+          }
+
+          elementHamiltonianMatrix[numberDofsPerElement*iNode + jNode] = fe_eval.integrate_value();
+
+        }//jNode loop
+      }//iNode loop 
+
+      for(unsigned int iSubCell = 0; iSubCell < n_sub_cells; ++iSubCell)
+      {
+        for(unsigned int iNode = 0; iNode < numberDofsPerElement; ++iNode)
+          for(unsigned int jNode = 0; jNode < numberDofsPerElement; ++jNode)
+            d_cellHamiltonianMatrixExternalPotCorr[iElem][numberDofsPerElement*iNode + jNode]
+              = elementHamiltonianMatrix[numberDofsPerElement*iNode + jNode][iSubCell];
+        iElem += 1;
+      }
+
+    }//macrocell loop
+    d_isStiffnessMatrixExternalPotCorrComputed=true;
+  }
+
 	//
 	//Resize the cell-level hamiltonian  matrix
 	//
@@ -172,6 +220,18 @@ void kohnShamDFTOperatorClass<FEOrder>::computeHamiltonianMatrix(unsigned int kP
 
 				}
 			}
+
+      if (dftParameters::isPseudopotential)
+        for(unsigned int iNode = 0; iNode < numberDofsPerElement; ++iNode)
+          for(unsigned int jNode = 0; jNode < numberDofsPerElement; ++jNode)
+          {
+#ifdef USE_COMPLEX
+            d_cellHamiltonianMatrix[iElem][numberDofsPerElement*iNode + jNode]+=dataTypes::number(d_cellHamiltonianMatrixExternalPotCorr[iElem][numberDofsPerElement*iNode + jNode],0.0);
+#else
+            d_cellHamiltonianMatrix[iElem][numberDofsPerElement*iNode + jNode]
+              += d_cellHamiltonianMatrixExternalPotCorr[iElem][numberDofsPerElement*iNode + jNode];
+#endif
+          }
 
 			iElem += 1;
 		}

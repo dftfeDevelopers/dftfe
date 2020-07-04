@@ -139,12 +139,12 @@ namespace dftfe{
 		 * @param rhoValues electron-density
 		 * @param phi electrostatic potential arising both from electron-density and nuclear charge
 		 * @param phiExt electrostatic potential arising from nuclear charges
-		 * @param pseudoValues quadrature data of pseudopotential values
+		 * @param externalPotCorrValues quadrature data of sum{Vext} minus sum{Vnu}
 		 */
 		void computeVEff(const std::map<dealii::CellId,std::vector<double> >* rhoValues,
 				const distributedCPUVec<double> & phi,
-				const distributedCPUVec<double> & phiExt,
-				const std::map<dealii::CellId,std::vector<double> > & pseudoValues);
+				const std::map<dealii::CellId,std::vector<double> > & externalPotCorrValues,
+        const unsigned int externalPotCorrQuadratureId);
 
 
 		/**
@@ -152,15 +152,14 @@ namespace dftfe{
 		 *
 		 * @param rhoValues electron-density
 		 * @param phi electrostatic potential arising both from electron-density and nuclear charge
-		 * @param phiExt electrostatic potential arising from nuclear charges
 		 * @param spinIndex flag to toggle spin-up or spin-down
-		 * @param pseudoValues quadrature data of pseudopotential values
+		 * @param externalPotCorrValues quadrature data of sum{Vext} minus sum{Vnu}
 		 */
 		void computeVEffSpinPolarized(const std::map<dealii::CellId,std::vector<double> >* rhoValues,
 				const distributedCPUVec<double> & phi,
-				const distributedCPUVec<double> & phiExt,
 				unsigned int spinIndex,
-				const std::map<dealii::CellId,std::vector<double> > & pseudoValues);
+				const std::map<dealii::CellId,std::vector<double> > & externalPotCorrValues,
+        const unsigned int externalPotCorrQuadratureId);
 
 		/**
 		 * @brief Computes effective potential involving gradient density type exchange-correlation functionals
@@ -168,14 +167,13 @@ namespace dftfe{
 		 * @param rhoValues electron-density
 		 * @param gradRhoValues gradient of electron-density
 		 * @param phi electrostatic potential arising both from electron-density and nuclear charge
-		 * @param phiExt electrostatic potential arising from nuclear charges
-		 * @param pseudoValues quadrature data of pseudopotential values
+		 * @param externalPotCorrValues quadrature data of sum{Vext} minus sum{Vnu}
 		 */
 		void computeVEff(const std::map<dealii::CellId,std::vector<double> >* rhoValues,
 				const std::map<dealii::CellId,std::vector<double> >* gradRhoValues,
 				const distributedCPUVec<double> & phi,
-				const distributedCPUVec<double> & phiExt,
-				const std::map<dealii::CellId,std::vector<double> > & pseudoValues);
+				const std::map<dealii::CellId,std::vector<double> > & externalPotCorrValues,
+        const unsigned int externalPotCorrQuadratureId);
 
 
 		/**
@@ -184,16 +182,15 @@ namespace dftfe{
 		 * @param rhoValues electron-density
 		 * @param gradRhoValues gradient of electron-density
 		 * @param phi electrostatic potential arising both from electron-density and nuclear charge
-		 * @param phiExt electrostatic potential arising from nuclear charges
 		 * @param spinIndex flag to toggle spin-up or spin-down
-		 * @param pseudoValues quadrature data of pseudopotential values
+		 * @param externalPotCorrValues quadrature data of sum{Vext} minus sum{Vnu}
 		 */
 		void computeVEffSpinPolarized(const std::map<dealii::CellId,std::vector<double> >* rhoValues,
 				const std::map<dealii::CellId,std::vector<double> >* gradRhoValues,
 				const distributedCPUVec<double> & phi,
-				const distributedCPUVec<double> & phiExt,
 				const unsigned int spinIndex,
-				const std::map<dealii::CellId,std::vector<double> > & pseudoValues);
+				const std::map<dealii::CellId,std::vector<double> > & externalPotCorrValues,
+        const unsigned int externalPotCorrQuadratureId);
 
 
 		/**
@@ -258,11 +255,22 @@ namespace dftfe{
 		private:
 
 		/**
+		 * @brief Computes effective potential for external potential correction to phiTot
+		 *
+		 * @param externalPotCorrValues quadrature data of sum{Vext} minus sum{Vnu}
+		 */
+		void computeVEffExternalPotCorr(const std::map<dealii::CellId,std::vector<double> > & externalPotCorrValues,
+                                    const unsigned int externalPotCorrQuadratureId);
+
+		/**
 		 * @brief finite-element cell level stiffness matrix with first dimension traversing the cell id(in the order of macro-cell and subcell)
 		 * and second dimension storing the stiffness matrix of size numberNodesPerElement x numberNodesPerElement in a flattened 1D array
 		 * of complex data type
 		 */
 		std::vector<std::vector<dataTypes::number> > d_cellHamiltonianMatrix;
+
+
+    std::vector<std::vector<double> > d_cellHamiltonianMatrixExternalPotCorr;
 		std::vector<std::vector<dataTypes::number> > d_cellMassMatrix;
 
 		/**
@@ -341,6 +349,7 @@ namespace dftfe{
 		distributedCPUVec<double> d_invSqrtMassVector,d_sqrtMassVector;
 
 		dealii::Table<2, dealii::VectorizedArray<double> > vEff;
+    dealii::Table<2, dealii::VectorizedArray<double> > d_vEffExternalPotCorr;
 		dealii::Table<2, dealii::Tensor<1,3,dealii::VectorizedArray<double> > > derExcWithSigmaTimesGradRho;
 
 
@@ -377,6 +386,12 @@ namespace dftfe{
 
 		//storage for precomputing index maps
 		std::vector<std::vector<dealii::types::global_dof_index> > d_flattenedArrayMacroCellLocalProcIndexIdMap, d_flattenedArrayCellLocalProcIndexIdMap;
+
+    /// flag for precomputing stiffness matrix contribution from sum{Vext}-sum{Vnuc}
+    bool d_isStiffnessMatrixExternalPotCorrComputed;
+
+    /// external potential correction quadrature id
+    unsigned int d_externalPotCorrQuadratureId;
 	};
 }
 #endif

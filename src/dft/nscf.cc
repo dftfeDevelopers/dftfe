@@ -111,13 +111,13 @@ void dftClass<FEOrder>::initnscf(kohnShamDFTOperatorClass<FEOrder> & kohnShamDFT
 	if(dftParameters::xc_id < 4)
 	{
 		computing_timer.enter_section("nscf: VEff Computation");
-		kohnShamDFTEigenOperator.computeVEff(rhoInValues, d_phiTotRhoIn, d_phiExt, d_pseudoVLoc);
+		kohnShamDFTEigenOperator.computeVEff(rhoInValues, d_phiTotRhoIn, d_pseudoVLoc,5);
 		computing_timer.exit_section("nscf: VEff Computation");
 	}
 	else if (dftParameters::xc_id == 4)
 	{
 		computing_timer.enter_section("nscf: VEff Computation");
-		kohnShamDFTEigenOperator.computeVEff(rhoInValues, gradRhoInValues, d_phiTotRhoIn, d_phiExt, d_pseudoVLoc);
+		kohnShamDFTEigenOperator.computeVEff(rhoInValues, gradRhoInValues, d_phiTotRhoIn, d_pseudoVLoc,5);
 		computing_timer.exit_section("nscf: VEff Computation");
 	}
 
