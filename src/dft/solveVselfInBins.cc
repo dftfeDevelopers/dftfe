@@ -465,6 +465,7 @@ namespace dftfe
      std::map<dealii::CellId, std::vector<int> > & bQuadAtomIdsAllAtoms,
      std::map<dealii::CellId, std::vector<int> > & bQuadAtomIdsAllAtomsImages,
 		 const std::vector<double> & smearingWidths,
+     const unsigned int smearedChargeQuadratureId,
 		 const bool useSmearedCharges)
 		{
 			localVselfs.clear();
