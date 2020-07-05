@@ -1800,7 +1800,7 @@ namespace dftfe {
 				MPI_Barrier(MPI_COMM_WORLD);
 				init_psplocal = MPI_Wtime();
 				initLocalPseudoPotential(dofHandler,
-						quadrature,
+					  5,
 						matrix_free_data,
 						phiExtDofHandlerIndex,
 						d_noConstraints,

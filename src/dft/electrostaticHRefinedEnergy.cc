@@ -482,6 +482,7 @@ void dftClass<FEOrder>::computeElectrostaticEnergyHRefined(
 	std::vector<Quadrature<1> > quadratureVector;
 	quadratureVector.push_back(QGauss<1>(C_num1DQuad<FEOrder>()));
   quadratureVector.push_back(QIterated<1>(QGauss<1>(C_num1DQuadSmearedCharge<FEOrder>()),C_numCopies1DQuadSmearedCharge()));
+	quadratureVector.push_back(QIterated<1>(QGauss<1>(C_num1DQuadLPSP<FEOrder>()),C_numCopies1DQuadLPSP()));  
 
 	dealii::MatrixFree<3,double> matrixFreeDataHRefined;
 
@@ -554,7 +555,7 @@ void dftClass<FEOrder>::computeElectrostaticEnergyHRefined(
 	DoFTools::map_dofs_to_support_points(MappingQ1<3,3>(), dofHandlerHRefined, supportPointsHRef);
 	if(dftParameters::isPseudopotential)
 		initLocalPseudoPotential(dofHandlerHRefined,
-				quadrature,
+				2,
 				matrixFreeDataHRefined,
 				phiExtDofHandlerIndexHRefined,
 				onlyHangingNodeConstraints,

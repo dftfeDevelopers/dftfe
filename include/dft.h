@@ -513,7 +513,7 @@ namespace dftfe {
 			void readPSIRadialValues();
 			void loadPSIFiles(unsigned int Z, unsigned int n, unsigned int l, unsigned int & flag);
 			void initLocalPseudoPotential(const DoFHandler<3> & _dofHandler,
-					const dealii::QGauss<3> & _quadrature,
+					const unsigned int lpspQuadratureId,
 					const dealii::MatrixFree<3,double> & _matrix_free_data,
 					const unsigned int _phiExtDofHandlerIndex,
 					const dealii::ConstraintMatrix & phiExtConstraintMatrix,

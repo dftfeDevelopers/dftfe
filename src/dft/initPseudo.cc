@@ -22,7 +22,7 @@
 template<unsigned int FEOrder>
 	void dftClass<FEOrder>::initLocalPseudoPotential
 (const DoFHandler<3> & _dofHandler,
- const dealii::QGauss<3> & _quadrature,
+ const unsigned int lpspQuadratureId,
  const dealii::MatrixFree<3,double> & _matrix_free_data,
  const unsigned int _phiExtDofHandlerIndex,
  const dealii::ConstraintMatrix & _phiExtConstraintMatrix,
@@ -87,8 +87,8 @@ template<unsigned int FEOrder>
 	//
 	//Initialize pseudopotential
 	//
-	FEValues<3> fe_values (_dofHandler.get_fe(), _quadrature,update_quadrature_points);
-	const unsigned int n_q_points = _quadrature.size();
+	FEValues<3> fe_values (_dofHandler.get_fe(), _matrix_free_data.get_quadrature(lpspQuadratureId),update_quadrature_points);
+	const unsigned int n_q_points = _matrix_free_data.get_quadrature(lpspQuadratureId).size();
 
 
 	const int numberGlobalCharges=atomLocations.size();
