@@ -35,9 +35,12 @@ void kohnShamDFTOperatorClass<FEOrder>::computeHamiltonianMatrix(const unsigned 
     d_cellHamiltonianMatrixExternalPotCorr.clear();
   	d_cellHamiltonianMatrixExternalPotCorr.resize(totalLocallyOwnedCells,std::vector<double>(numberDofsPerElement*numberDofsPerElement,0.0));   
 
-    FEEvaluation<3, FEOrder, C_num1DQuadLPSP<FEOrder>()*C_numCopies1DQuadLPSP(), 1, double>  fe_eval(dftPtr->matrix_free_data, 0, d_externalPotCorrQuadratureId);
+    FEEvaluation<3, FEOrder, C_num1DQuad<FEOrder>(), 1, double>  fe_eval(dftPtr->matrix_free_data, 0, d_externalPotCorrQuadratureId);
     const unsigned int numberQuadraturePoints = fe_eval.n_q_points;
     typename dealii::DoFHandler<3>::active_cell_iterator cellPtr;
+
+    AssertThrow(dftPtr->matrix_free_data.get_quadrature(d_externalPotCorrQuadratureId).size() == numberQuadraturePoints,
+            dealii::ExcMessage("DFT-FE Error: mismatch in quadrature rule usage in computeHamiltonianMatrix.")); 
 
     unsigned int iElem = 0;
     for(unsigned int iMacroCell = 0; iMacroCell < numberMacroCells; ++iMacroCell)

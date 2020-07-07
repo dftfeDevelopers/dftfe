@@ -227,6 +227,17 @@ void dftClass<FEOrder>::compute_rhoOut(
 		}
 	}
 
+  if (isGroundState)
+  {
+		interpolateNodalDataToQuadratureData(d_matrixFreeDataPRefined,
+        0,
+        2,
+				d_rhoOutNodalValues,
+				d_rhoOutValuesLpspQuad,
+				d_rhoOutValuesLpspQuad,
+				false);
+  }
+
 	popOutRhoInRhoOutVals();
 
 	if (isGroundState && (dftParameters::isIonOpt || dftParameters::isCellOpt))

@@ -359,7 +359,8 @@ void dftClass<FEOrder>::computeElectrostaticEnergyHRefined(
 	//fill in grad rho at quadrature values of the field on the refined mesh
 	//
 	std::map<dealii::CellId, std::vector<double> > gradRhoOutHRefinedQuadValues;
-
+  std::map<dealii::CellId, std::vector<double> > rhoOutValuesLpspQuadHRefined;
+  
 	if (dftParameters::isCellStress || dftParameters::isIonForce)
 	{
 		FEValues<3> fe_values (dofHandlerHRefined.get_fe(), quadrature, update_values);
@@ -379,13 +380,34 @@ void dftClass<FEOrder>::computeElectrostaticEnergyHRefined(
 				fe_values.get_function_values(delzRhoNodalFieldRefined,tempDelzRho);
 
 				gradRhoOutHRefinedQuadValues[cell->id()].resize(3*n_q_points);
+        std::vector<double> & temp=gradRhoOutHRefinedQuadValues[cell->id()];
 				for (unsigned int q_point=0; q_point<n_q_points; ++q_point)
 				{
-					gradRhoOutHRefinedQuadValues[cell->id()][3*q_point] = tempDelxRho[q_point];
-					gradRhoOutHRefinedQuadValues[cell->id()][3*q_point+1] = tempDelyRho[q_point];
-					gradRhoOutHRefinedQuadValues[cell->id()][3*q_point+2] = tempDelzRho[q_point];
+					temp[3*q_point] = tempDelxRho[q_point];
+					temp[3*q_point+1] = tempDelyRho[q_point];
+					temp[3*q_point+2] = tempDelzRho[q_point];
 				}
 			}
+
+    dealii::QIterated<3> quadraturelpsp(QGauss<1>(C_num1DQuadLPSP<FEOrder>()),C_numCopies1DQuadLPSP());
+	  const unsigned int n_q_points_lpsp = quadraturelpsp.size();
+		FEValues<3> fe_values_lpspquad (dofHandlerHRefined.get_fe(), quadraturelpsp, update_values);
+		std::vector<double> rholpsp(n_q_points_lpsp);
+
+    d_rhoOutValuesLpspQuad.clear();
+		cell = dofHandlerHRefined.begin_active();
+		for(; cell!=endc; ++cell)
+			if(cell->is_locally_owned())
+			{
+				fe_values_lpspquad.reinit (cell);
+				fe_values_lpspquad.get_function_values(rhoNodalFieldRefined,rholpsp);
+
+        std::vector<double> & temp=d_rhoOutValuesLpspQuad[cell->id()];
+        temp.resize(n_q_points_lpsp);
+
+				for (unsigned int q_point=0; q_point<n_q_points_lpsp; ++q_point)
+					temp[q_point] = rholpsp[q_point];
+			}      
 	}
 
 	//
@@ -702,6 +724,7 @@ void dftClass<FEOrder>::computeElectrostaticEnergyHRefined(
 					phiExtDofHandlerIndex,
 					phiTotDofHandlerIndex,
           1,
+          2,
 					d_phiTotRhoIn,
 					d_phiTotRhoOut,
 					d_phiExt,
@@ -745,6 +768,7 @@ void dftClass<FEOrder>::computeElectrostaticEnergyHRefined(
 					phiExtDofHandlerIndex,
 					phiTotDofHandlerIndex,
           1,
+          2,
 					d_phiTotRhoIn,
 					d_phiTotRhoOut,
 					d_phiExt,

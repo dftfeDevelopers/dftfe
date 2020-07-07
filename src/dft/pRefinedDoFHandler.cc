@@ -105,6 +105,7 @@ void dftClass<FEOrder>::initpRefinedObjects()
 	std::vector<Quadrature<1> > quadratureVector;
 	quadratureVector.push_back(QGauss<1>(C_num1DQuad<C_num1DKerkerPoly<FEOrder>()>()));
 	quadratureVector.push_back(QGauss<1>(C_num1DQuad<FEOrder>()));
+  quadratureVector.push_back(QIterated<1>(QGauss<1>(C_num1DQuadLPSP<FEOrder>()),C_numCopies1DQuadLPSP()));  
 
 	d_matrixFreeDataPRefined.reinit(matrixFreeDofHandlerVectorInput,
 			matrixFreeConstraintsInputVector,

@@ -929,6 +929,8 @@ namespace dftfe {
 			distributedCPUVec<double> d_rhoInNodalValuesRead, d_rhoInNodalValues, d_rhoOutNodalValues, d_rhoOutNodalValuesSplit, d_preCondResidualVector, d_atomicRho;
 			std::deque<distributedCPUVec<double>> d_rhoInNodalVals, d_rhoOutNodalVals;
 
+      std::map<dealii::CellId, std::vector<double> > d_rhoOutValuesLpspQuad, d_rhoInValuesLpspQuad;
+
 			/// for xl-bomd
 			std::map<dealii::CellId, std::vector<double> > d_rhoAtomsValues,d_gradRhoAtomsValues, d_hessianRhoAtomsValues;
 			std::map<unsigned int,std::map<dealii::CellId, std::vector<double> > > d_gradRhoAtomsValuesSeparate,d_hessianRhoAtomsValuesSeparate;  

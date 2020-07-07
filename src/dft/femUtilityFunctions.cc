@@ -108,8 +108,11 @@ void dftClass<FEOrder>::interpolateNodalDataToQuadratureData(dealii::MatrixFree<
 
 	quadratureValueData.clear();
 	quadratureGradValueData.clear();
-	FEEvaluation<C_DIM,FEOrder,C_num1DQuad<FEOrder>(),1,double> feEvalObj(matrixFreeData,dofHandlerId,quadratureId);
-	const unsigned int numQuadPoints = feEvalObj.n_q_points; 
+  FEEvaluation<C_DIM,C_num1DKerkerPoly<FEOrder>(),C_num1DQuadLPSP<FEOrder>()*C_numCopies1DQuadLPSP(),1,double> feEvalObj(matrixFreeData,dofHandlerId,quadratureId);
+	const unsigned int numQuadPoints = feEvalObj.n_q_points;
+
+  AssertThrow(matrixFreeData.get_quadrature(quadratureId).size() == numQuadPoints,
+          dealii::ExcMessage("DFT-FE Error: mismatch in quadrature rule usage in interpolateNodalDataToQuadratureData."));
 
 	DoFHandler<C_DIM>::active_cell_iterator subCellPtr;
 	for(unsigned int cell = 0; cell < matrixFreeData.n_macro_cells(); ++cell)
