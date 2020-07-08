@@ -316,17 +316,20 @@ namespace dftfe
 			 const unsigned int   num_quad_points_electronic    = quadratureElectronic.size();
        const unsigned int   num_quad_points_lpsp    = quadratureLpsp.size();
 
-       AssertThrow( num_quad_points_electronic == rhoOutValues.begin()->second.size(),
-            dealii::ExcMessage("DFT-FE Error: mismatch in quadrature data in energyCalculator::computeEnergy."));
-       if(dftParameters::xc_id == 4)
-         AssertThrow( num_quad_points_electronic*3 == gradRhoOutValues.begin()->second.size(),
+       if (rhoOutValues.size()!=0)
+       {
+         AssertThrow( num_quad_points_electronic == rhoOutValues.begin()->second.size(),
+              dealii::ExcMessage("DFT-FE Error: mismatch in quadrature data in energyCalculator::computeEnergy."));
+         if(dftParameters::xc_id == 4)
+           AssertThrow( num_quad_points_electronic*3 == gradRhoOutValues.begin()->second.size(),
+                dealii::ExcMessage("DFT-FE Error: mismatch in quadrature data in energyCalculator::computeEnergy."));  
+         AssertThrow( num_quad_points_electrostatic == rhoOutValuesElectrostatic.begin()->second.size(),
               dealii::ExcMessage("DFT-FE Error: mismatch in quadrature data in energyCalculator::computeEnergy."));  
-       AssertThrow( num_quad_points_electrostatic == rhoOutValuesElectrostatic.begin()->second.size(),
-            dealii::ExcMessage("DFT-FE Error: mismatch in quadrature data in energyCalculator::computeEnergy."));  
-       AssertThrow( num_quad_points_lpsp == rhoOutValuesLpsp.begin()->second.size(),
-            dealii::ExcMessage("DFT-FE Error: mismatch in quadrature data in energyCalculator::computeEnergy."));  
-       AssertThrow( num_quad_points_lpsp == rhoOutValuesElectrostaticLpsp.begin()->second.size(),
-            dealii::ExcMessage("DFT-FE Error: mismatch in quadrature data in energyCalculator::computeEnergy."));         
+         AssertThrow( num_quad_points_lpsp == rhoOutValuesLpsp.begin()->second.size(),
+              dealii::ExcMessage("DFT-FE Error: mismatch in quadrature data in energyCalculator::computeEnergy."));  
+         AssertThrow( num_quad_points_lpsp == rhoOutValuesElectrostaticLpsp.begin()->second.size(),
+              dealii::ExcMessage("DFT-FE Error: mismatch in quadrature data in energyCalculator::computeEnergy."));   
+       }
 
 			 const double TVal = dftParameters::TVal;
 			 std::vector<double> cellPhiTotRhoIn(num_quad_points_electronic);
@@ -815,17 +818,20 @@ double energyCalculator::computeEnergySpinPolarized
    const unsigned int   num_quad_points_electronic    = quadratureElectronic.size();
    const unsigned int   num_quad_points_lpsp    = quadratureLpsp.size();
 
-   AssertThrow( num_quad_points_electronic == rhoOutValues.begin()->second.size(),
-        dealii::ExcMessage("DFT-FE Error: mismatch in quadrature data in energyCalculator::computeEnergy."));
-   if(dftParameters::xc_id == 4)
-     AssertThrow( num_quad_points_electronic*3 == gradRhoOutValues.begin()->second.size(),
+   if (rhoOutValues.size()!=0)
+   {
+     AssertThrow( num_quad_points_electronic == rhoOutValues.begin()->second.size(),
+          dealii::ExcMessage("DFT-FE Error: mismatch in quadrature data in energyCalculator::computeEnergy."));
+     if(dftParameters::xc_id == 4)
+       AssertThrow( num_quad_points_electronic*3 == gradRhoOutValues.begin()->second.size(),
+            dealii::ExcMessage("DFT-FE Error: mismatch in quadrature data in energyCalculator::computeEnergy."));  
+     AssertThrow( num_quad_points_electrostatic == rhoOutValuesElectrostatic.begin()->second.size(),
           dealii::ExcMessage("DFT-FE Error: mismatch in quadrature data in energyCalculator::computeEnergy."));  
-   AssertThrow( num_quad_points_electrostatic == rhoOutValuesElectrostatic.begin()->second.size(),
-        dealii::ExcMessage("DFT-FE Error: mismatch in quadrature data in energyCalculator::computeEnergy."));  
-   AssertThrow( num_quad_points_lpsp == rhoOutValuesLpsp.begin()->second.size(),
-        dealii::ExcMessage("DFT-FE Error: mismatch in quadrature data in energyCalculator::computeEnergy."));  
-   AssertThrow( num_quad_points_lpsp == rhoOutValuesElectrostaticLpsp.begin()->second.size(),
-        dealii::ExcMessage("DFT-FE Error: mismatch in quadrature data in energyCalculator::computeEnergy."));  
+     AssertThrow( num_quad_points_lpsp == rhoOutValuesLpsp.begin()->second.size(),
+          dealii::ExcMessage("DFT-FE Error: mismatch in quadrature data in energyCalculator::computeEnergy."));  
+     AssertThrow( num_quad_points_lpsp == rhoOutValuesElectrostaticLpsp.begin()->second.size(),
+          dealii::ExcMessage("DFT-FE Error: mismatch in quadrature data in energyCalculator::computeEnergy."));  
+   }
 
 	std::vector<double> cellPhiTotRhoIn(num_quad_points_electronic);
 	std::vector<double> cellPhiTotRhoOut(num_quad_points_electrostatic);
