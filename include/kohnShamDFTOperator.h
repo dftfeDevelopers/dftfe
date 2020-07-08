@@ -242,7 +242,7 @@ namespace dftfe{
 				distributedCPUVec<double> & invSqrtMassVec);
 
 		///precompute shapefunction gradient integral
-		void preComputeShapeFunctionGradientIntegrals();
+		void preComputeShapeFunctionGradientIntegrals(const unsigned int lpspQuadratureId);
 
 		///compute element Hamiltonian matrix
 		void computeHamiltonianMatrix(const unsigned int kPointIndex, const unsigned int spinIndex);
@@ -362,6 +362,9 @@ namespace dftfe{
 
 		///storage for shapefunctions
 		std::vector<double> d_shapeFunctionValue;
+
+    ///storage for shapefunctions
+    std::vector<double> d_shapeFunctionValueLpspQuad;
 
 
 		///storage for  matrix-free cell data

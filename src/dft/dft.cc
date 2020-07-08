@@ -1375,7 +1375,7 @@ namespace dftfe {
 			//
 			computing_timer.enter_section("shapefunction data");
 			if (!dftParameters::useGPU)
-				kohnShamDFTEigenOperator.preComputeShapeFunctionGradientIntegrals();
+				kohnShamDFTEigenOperator.preComputeShapeFunctionGradientIntegrals(5);
 #ifdef DFTFE_WITH_GPU
 			if (dftParameters::useGPU)
 				kohnShamDFTEigenOperatorCUDA.preComputeShapeFunctionGradientIntegrals();
@@ -1463,7 +1463,7 @@ namespace dftfe {
 							kohnShamDFTEigenOperatorCUDA.computeVEffSpinPolarized(rhoInValuesSpinPolarized, d_phiTotRhoIn, d_phiExt, s, d_pseudoVLoc);
 #endif
 						if (!dftParameters::useGPU)
-							kohnShamDFTEigenOperator.computeVEffSpinPolarized(rhoInValuesSpinPolarized, d_phiTotRhoIn, s, d_pseudoVLoc,0);
+							kohnShamDFTEigenOperator.computeVEffSpinPolarized(rhoInValuesSpinPolarized, d_phiTotRhoIn, s, d_pseudoVLoc,5);
 						computing_timer.exit_section("VEff Computation");
 					}
 					else if (dftParameters::xc_id == 4)
@@ -1474,7 +1474,7 @@ namespace dftfe {
 							kohnShamDFTEigenOperatorCUDA.computeVEffSpinPolarized(rhoInValuesSpinPolarized, gradRhoInValuesSpinPolarized, d_phiTotRhoIn, d_phiExt, s, d_pseudoVLoc);
 #endif
 						if (!dftParameters::useGPU)
-							kohnShamDFTEigenOperator.computeVEffSpinPolarized(rhoInValuesSpinPolarized, gradRhoInValuesSpinPolarized, d_phiTotRhoIn, s, d_pseudoVLoc,0);
+							kohnShamDFTEigenOperator.computeVEffSpinPolarized(rhoInValuesSpinPolarized, gradRhoInValuesSpinPolarized, d_phiTotRhoIn, s, d_pseudoVLoc,5);
 						computing_timer.exit_section("VEff Computation");
 					}
 					for (unsigned int kPoint = 0; kPoint < d_kPointWeights.size(); ++kPoint)
@@ -1553,7 +1553,7 @@ namespace dftfe {
 						kohnShamDFTEigenOperatorCUDA.computeVEff(rhoInValues, d_phiTotRhoIn, d_phiExt, d_pseudoVLoc);
 #endif
 					if (!dftParameters::useGPU)
-						kohnShamDFTEigenOperator.computeVEff(rhoInValues, d_phiTotRhoIn, d_pseudoVLoc,0);
+						kohnShamDFTEigenOperator.computeVEff(rhoInValues, d_phiTotRhoIn, d_pseudoVLoc,5);
 					computing_timer.exit_section("VEff Computation");
 				}
 				else if (dftParameters::xc_id == 4)
@@ -1564,7 +1564,7 @@ namespace dftfe {
 						kohnShamDFTEigenOperatorCUDA.computeVEff(rhoInValues, gradRhoInValues, d_phiTotRhoIn, d_phiExt, d_pseudoVLoc);
 #endif
 					if (!dftParameters::useGPU)
-						kohnShamDFTEigenOperator.computeVEff(rhoInValues, gradRhoInValues, d_phiTotRhoIn, d_pseudoVLoc,0);
+						kohnShamDFTEigenOperator.computeVEff(rhoInValues, gradRhoInValues, d_phiTotRhoIn, d_pseudoVLoc,5);
 					computing_timer.exit_section("VEff Computation");
 				}
 
@@ -1714,7 +1714,7 @@ namespace dftfe {
 			//
 			computing_timer.enter_section("shapefunction data");
 			if (!dftParameters::useGPU)
-				kohnShamDFTEigenOperator.preComputeShapeFunctionGradientIntegrals();
+				kohnShamDFTEigenOperator.preComputeShapeFunctionGradientIntegrals(5);
 #ifdef DFTFE_WITH_GPU
 			if (dftParameters::useGPU)
 				kohnShamDFTEigenOperatorCUDA.preComputeShapeFunctionGradientIntegrals();
@@ -2038,7 +2038,7 @@ namespace dftfe {
 								kohnShamDFTEigenOperatorCUDA.computeVEffSpinPolarized(rhoInValuesSpinPolarized, d_phiTotRhoIn, d_phiExt, s, d_pseudoVLoc);
 #endif
 							if (!dftParameters::useGPU)
-								kohnShamDFTEigenOperator.computeVEffSpinPolarized(rhoInValuesSpinPolarized, d_phiTotRhoIn, s, d_pseudoVLoc,0);
+								kohnShamDFTEigenOperator.computeVEffSpinPolarized(rhoInValuesSpinPolarized, d_phiTotRhoIn, s, d_pseudoVLoc,5);
 							computing_timer.exit_section("VEff Computation");
 						}
 						else if (dftParameters::xc_id == 4)
@@ -2049,7 +2049,7 @@ namespace dftfe {
 								kohnShamDFTEigenOperatorCUDA.computeVEffSpinPolarized(rhoInValuesSpinPolarized, gradRhoInValuesSpinPolarized, d_phiTotRhoIn, d_phiExt, s, d_pseudoVLoc);
 #endif
 							if (!dftParameters::useGPU)
-								kohnShamDFTEigenOperator.computeVEffSpinPolarized(rhoInValuesSpinPolarized, gradRhoInValuesSpinPolarized, d_phiTotRhoIn, s, d_pseudoVLoc,0);
+								kohnShamDFTEigenOperator.computeVEffSpinPolarized(rhoInValuesSpinPolarized, gradRhoInValuesSpinPolarized, d_phiTotRhoIn, s, d_pseudoVLoc,5);
 							computing_timer.exit_section("VEff Computation");
 						}
 						for (unsigned int kPoint = 0; kPoint < d_kPointWeights.size(); ++kPoint)
@@ -2264,7 +2264,7 @@ namespace dftfe {
 							kohnShamDFTEigenOperatorCUDA.computeVEff(rhoInValues, d_phiTotRhoIn, d_phiExt, d_pseudoVLoc);
 #endif
 						if (!dftParameters::useGPU)
-							kohnShamDFTEigenOperator.computeVEff(rhoInValues, d_phiTotRhoIn, d_pseudoVLoc,0);
+							kohnShamDFTEigenOperator.computeVEff(rhoInValues, d_phiTotRhoIn, d_pseudoVLoc,5);
 						computing_timer.exit_section("VEff Computation");
 					}
 					else if (dftParameters::xc_id == 4)
@@ -2275,7 +2275,7 @@ namespace dftfe {
 							kohnShamDFTEigenOperatorCUDA.computeVEff(rhoInValues, gradRhoInValues, d_phiTotRhoIn, d_phiExt, d_pseudoVLoc);
 #endif
 						if (!dftParameters::useGPU)
-							kohnShamDFTEigenOperator.computeVEff(rhoInValues, gradRhoInValues, d_phiTotRhoIn, d_pseudoVLoc,0);
+							kohnShamDFTEigenOperator.computeVEff(rhoInValues, gradRhoInValues, d_phiTotRhoIn, d_pseudoVLoc,5);
 						computing_timer.exit_section("VEff Computation");
 					}
 
@@ -2593,6 +2593,7 @@ namespace dftfe {
 								quadrature,
 								quadrature,
 								matrix_free_data.get_quadrature(4),
+                matrix_free_data.get_quadrature(5),
 								eigenValues,
 								d_kPointWeights,
 								fermiEnergy,
@@ -2600,11 +2601,11 @@ namespace dftfe {
 								funcC,
 								d_phiTotRhoIn,
 								d_phiTotRhoOut,
-								d_phiExt,
-								d_phiExt,
 								*rhoInValues,
 								*rhoOutValues,
+                d_rhoOutValuesLpspQuad,
 								*rhoOutValues,
+                d_rhoOutValuesLpspQuad,
 								*gradRhoInValues,
 								*gradRhoOutValues,
 								d_bQuadValuesAllAtoms,
@@ -2622,6 +2623,7 @@ namespace dftfe {
 											quadrature,
 											quadrature,
 											matrix_free_data.get_quadrature(4),
+											matrix_free_data.get_quadrature(5),                      
 											eigenValues,
 											d_kPointWeights,
 											fermiEnergy,
@@ -2631,11 +2633,11 @@ namespace dftfe {
 											funcC,
 											d_phiTotRhoIn,
 											d_phiTotRhoOut,
-											d_phiExt,
-											d_phiExt,
 											*rhoInValues,
 											*rhoOutValues,
+                      d_rhoOutValuesLpspQuad,
 											*rhoOutValues,
+                      d_rhoOutValuesLpspQuad,
 											*gradRhoInValues,
 											*gradRhoOutValues,
 											*rhoInValuesSpinPolarized,
@@ -2773,6 +2775,7 @@ namespace dftfe {
 							quadrature,
 							quadrature,
 							matrix_free_data.get_quadrature(4),
+              matrix_free_data.get_quadrature(5),
 							eigenValues,
 							d_kPointWeights,
 							fermiEnergy,
@@ -2780,11 +2783,11 @@ namespace dftfe {
 							funcC,
 							d_phiTotRhoIn,
 							d_phiTotRhoOut,
-							d_phiExt,
-							d_phiExt,
 							*rhoInValues,
 							*rhoOutValues,
+              d_rhoOutValuesLpspQuad,
 							*rhoOutValues,
+              d_rhoOutValuesLpspQuad,
 							*gradRhoInValues,
 							*gradRhoOutValues,
 							d_bQuadValuesAllAtoms,
@@ -2802,6 +2805,7 @@ namespace dftfe {
 										quadrature,
 										quadrature,
 										matrix_free_data.get_quadrature(4),
+                    matrix_free_data.get_quadrature(5),
 										eigenValues,
 										d_kPointWeights,
 										fermiEnergy,
@@ -2811,11 +2815,11 @@ namespace dftfe {
 										funcC,
 										d_phiTotRhoIn,
 										d_phiTotRhoOut,
-										d_phiExt,
-										d_phiExt,
 										*rhoInValues,
 										*rhoOutValues,
+                    d_rhoOutValuesLpspQuad,
 										*rhoOutValues,
+                    d_rhoOutValuesLpspQuad,
 										*gradRhoInValues,
 										*gradRhoOutValues,
 										*rhoInValuesSpinPolarized,
@@ -2867,8 +2871,6 @@ namespace dftfe {
 							funcC,
 							d_phiTotRhoIn,
 							d_phiTotRhoIn,
-							d_phiExt,
-							d_phiExt,
 							*rhoInValues,
 							*rhoOutValues,
 							*rhoInValues,
@@ -3108,13 +3110,12 @@ namespace dftfe {
 								kohnShamDFTEigenOperatorCUDA,
 #endif
 								eigenDofHandlerIndex,
-								phiExtDofHandlerIndex,
 								phiTotDofHandlerIndex,
                 4,
                 5,
+                5,
 								d_phiTotRhoIn,
 								d_phiTotRhoIn,
-								d_phiExt,
 								d_pseudoVLoc,
 								d_gradPseudoVLoc,
 								d_gradPseudoVLocAtoms,
@@ -3122,13 +3123,14 @@ namespace dftfe {
 								d_vselfBinsManager,
 								matrix_free_data,
 								phiTotDofHandlerIndex,
-								phiExtDofHandlerIndex,
 								d_phiTotRhoIn,
-								d_phiExt,
 								*rhoInValues,
 								*gradRhoInValues,
+                d_gradRhoInValuesLpspQuad,
 								*rhoInValues,
+                d_rhoInValuesLpspQuad,
 								*gradRhoInValues,
+                d_gradRhoInValuesLpspQuad,
 								d_pseudoVLoc,
 								d_gradPseudoVLoc,
 								d_gradPseudoVLocAtoms,
@@ -3144,13 +3146,12 @@ namespace dftfe {
 								kohnShamDFTEigenOperatorCUDA,
 #endif
 								eigenDofHandlerIndex,
-								phiExtDofHandlerIndex,
 								phiTotDofHandlerIndex,
                 4,
                 5,
+                5,
 								d_phiTotRhoIn,
 								d_phiTotRhoOut,
-								d_phiExt,
 								d_pseudoVLoc,
 								d_gradPseudoVLoc,
 								d_gradPseudoVLocAtoms,
@@ -3158,13 +3159,14 @@ namespace dftfe {
 								d_vselfBinsManager,
 								matrix_free_data,
 								phiTotDofHandlerIndex,
-								phiExtDofHandlerIndex,
 								d_phiTotRhoOut,
-								d_phiExt,
 								*rhoOutValues,
 								*gradRhoOutValues,
+                d_gradRhoOutValuesLpspQuad,
 								*rhoOutValues,
+                d_rhoOutValuesLpspQuad,
 								*gradRhoOutValues,
+                d_gradRhoOutValuesLpspQuad,
 								d_pseudoVLoc,
 								d_gradPseudoVLoc,
 								d_gradPseudoVLocAtoms,

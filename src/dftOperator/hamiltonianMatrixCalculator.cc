@@ -35,7 +35,7 @@ void kohnShamDFTOperatorClass<FEOrder>::computeHamiltonianMatrix(const unsigned 
     d_cellHamiltonianMatrixExternalPotCorr.clear();
   	d_cellHamiltonianMatrixExternalPotCorr.resize(totalLocallyOwnedCells,std::vector<double>(numberDofsPerElement*numberDofsPerElement,0.0));   
 
-    FEEvaluation<3, FEOrder, C_num1DQuad<FEOrder>(), 1, double>  fe_eval(dftPtr->matrix_free_data, 0, d_externalPotCorrQuadratureId);
+    FEEvaluation<3, FEOrder, C_num1DQuadLPSP<FEOrder>()*C_numCopies1DQuadLPSP(), 1, double>  fe_eval(dftPtr->matrix_free_data, 0, d_externalPotCorrQuadratureId);
     const unsigned int numberQuadraturePoints = fe_eval.n_q_points;
     typename dealii::DoFHandler<3>::active_cell_iterator cellPtr;
 
@@ -57,7 +57,7 @@ void kohnShamDFTOperatorClass<FEOrder>::computeHamiltonianMatrix(const unsigned 
           for(unsigned int q_point = 0; q_point < numberQuadraturePoints; ++q_point)
           {
 
-            VectorizedArray<double> temp = d_vEffExternalPotCorr(iMacroCell,q_point)*make_vectorized_array(d_shapeFunctionValue[numberQuadraturePoints*iNode+q_point])*make_vectorized_array(d_shapeFunctionValue[numberQuadraturePoints*jNode+q_point]);
+            VectorizedArray<double> temp = d_vEffExternalPotCorr(iMacroCell,q_point)*make_vectorized_array(d_shapeFunctionValueLpspQuad[numberQuadraturePoints*iNode+q_point])*make_vectorized_array(d_shapeFunctionValueLpspQuad[numberQuadraturePoints*jNode+q_point]);
             fe_eval.submit_value(temp,q_point);
           }
 

@@ -360,6 +360,7 @@ void dftClass<FEOrder>::computeElectrostaticEnergyHRefined(
 	//
 	std::map<dealii::CellId, std::vector<double> > gradRhoOutHRefinedQuadValues;
   std::map<dealii::CellId, std::vector<double> > rhoOutValuesLpspQuadHRefined;
+  std::map<dealii::CellId, std::vector<double> > gradRhoOutValuesLpspQuadHRefined;
   
 	if (dftParameters::isCellStress || dftParameters::isIonForce)
 	{
@@ -393,8 +394,10 @@ void dftClass<FEOrder>::computeElectrostaticEnergyHRefined(
 	  const unsigned int n_q_points_lpsp = quadraturelpsp.size();
 		FEValues<3> fe_values_lpspquad (dofHandlerHRefined.get_fe(), quadraturelpsp, update_values);
 		std::vector<double> rholpsp(n_q_points_lpsp);
+		std::vector<double> tempDelxRhoPsp(3*n_q_points);
+		std::vector<double> tempDelyRhoPsp(3*n_q_points);
+		std::vector<double> tempDelzRhoPsp(3*n_q_points);
 
-    d_rhoOutValuesLpspQuad.clear();
 		cell = dofHandlerHRefined.begin_active();
 		for(; cell!=endc; ++cell)
 			if(cell->is_locally_owned())
@@ -402,11 +405,22 @@ void dftClass<FEOrder>::computeElectrostaticEnergyHRefined(
 				fe_values_lpspquad.reinit (cell);
 				fe_values_lpspquad.get_function_values(rhoNodalFieldRefined,rholpsp);
 
-        std::vector<double> & temp=d_rhoOutValuesLpspQuad[cell->id()];
+				fe_values.get_function_values(delxRhoNodalFieldRefined,tempDelxRho);
+				fe_values.get_function_values(delyRhoNodalFieldRefined,tempDelyRho);
+				fe_values.get_function_values(delzRhoNodalFieldRefined,tempDelzRho);
+
+        std::vector<double> & temp=rhoOutValuesLpspQuadHRefined[cell->id()];
         temp.resize(n_q_points_lpsp);
 
+        std::vector<double> & tempGrad=gradRhoOutValuesLpspQuadHRefined[cell->id()];
+        tempGrad.resize(3*n_q_points_lpsp);
 				for (unsigned int q_point=0; q_point<n_q_points_lpsp; ++q_point)
+        {
 					temp[q_point] = rholpsp[q_point];
+					tempGrad[3*q_point] = tempDelxRhoPsp[q_point];
+					tempGrad[3*q_point+1] = tempDelyRhoPsp[q_point];
+					tempGrad[3*q_point+2] = tempDelzRhoPsp[q_point];          
+        }
 			}      
 	}
 
@@ -596,6 +610,7 @@ void dftClass<FEOrder>::computeElectrostaticEnergyHRefined(
 				quadrature,
 				quadrature,
 				matrixFreeDataHRefined.get_quadrature(1),
+				matrixFreeDataHRefined.get_quadrature(2),        
 				eigenValues,
 				d_kPointWeights,
 				fermiEnergy,
@@ -603,11 +618,11 @@ void dftClass<FEOrder>::computeElectrostaticEnergyHRefined(
 				funcC,
 				d_phiTotRhoIn,
 				phiTotRhoOutHRefined,
-				d_phiExt,
-				phiExtHRefined,
 				*rhoInValues,
 				*rhoOutValues,
+        d_rhoOutValuesLpspQuad,
 				rhoOutHRefinedQuadValues,
+        rhoOutValuesLpspQuadHRefined,
 				*gradRhoInValues,
 				*gradRhoOutValues,
 				d_bQuadValuesAllAtoms,
@@ -625,6 +640,7 @@ void dftClass<FEOrder>::computeElectrostaticEnergyHRefined(
 							quadrature,
 							quadrature,
 							matrixFreeDataHRefined.get_quadrature(1),
+							matrixFreeDataHRefined.get_quadrature(2),              
 							eigenValues,
 							d_kPointWeights,
 							fermiEnergy,
@@ -634,11 +650,11 @@ void dftClass<FEOrder>::computeElectrostaticEnergyHRefined(
 							funcC,
 							d_phiTotRhoIn,
 							phiTotRhoOutHRefined,
-							d_phiExt,
-							phiExtHRefined,
 							*rhoInValues,
 							*rhoOutValues,
+              d_rhoOutValuesLpspQuad,
 							rhoOutHRefinedQuadValues,
+              rhoOutValuesLpspQuadHRefined,
 							*gradRhoInValues,
 							*gradRhoOutValues,
 							*rhoInValuesSpinPolarized,
@@ -721,13 +737,12 @@ void dftClass<FEOrder>::computeElectrostaticEnergyHRefined(
 					kohnShamDFTEigenOperator,
 #endif
 					eigenDofHandlerIndex,
-					phiExtDofHandlerIndex,
 					phiTotDofHandlerIndex,
           1,
+          5,
           2,
 					d_phiTotRhoIn,
 					d_phiTotRhoOut,
-					d_phiExt,
 					d_pseudoVLoc,
 					d_gradPseudoVLoc,
 					d_gradPseudoVLocAtoms,
@@ -735,13 +750,14 @@ void dftClass<FEOrder>::computeElectrostaticEnergyHRefined(
 					d_vselfBinsManager,
 					matrixFreeDataHRefined,
 					phiTotDofHandlerIndexHRefined,
-					phiExtDofHandlerIndexHRefined,
 					phiTotRhoOutHRefined,
-					phiExtHRefined,
 					*rhoOutValues,
 					*gradRhoOutValues,
+          d_gradRhoOutValuesLpspQuad,
 					rhoOutHRefinedQuadValues,
+          rhoOutValuesLpspQuadHRefined,
 					gradRhoOutHRefinedQuadValues,
+          gradRhoOutValuesLpspQuadHRefined,
 					pseudoVLocHRefined,
 					gradPseudoVLocHRefined,
 					gradPseudoVLocAtomsHRefined,
@@ -779,7 +795,7 @@ void dftClass<FEOrder>::computeElectrostaticEnergyHRefined(
 					d_vselfBinsManager,
 					matrixFreeDataHRefined,
 					phiTotDofHandlerIndexHRefined,
-					phiExtDofHandlerIndexHRefined,
+          phiExtDofHandlerIndexHRefined,
 					phiTotRhoOutHRefined,
 					phiExtHRefined,
 					rhoOutHRefinedQuadValues,

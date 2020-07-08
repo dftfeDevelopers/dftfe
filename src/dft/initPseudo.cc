@@ -87,10 +87,8 @@ template<unsigned int FEOrder>
 	//
 	//Initialize pseudopotential
 	//
-	FEValues<3> fe_gradvalues (_dofHandler.get_fe(), _matrix_free_data.get_quadrature(lpspQuadratureId),update_quadrature_points);
-  FEValues<3> fe_values (_dofHandler.get_fe(), _matrix_free_data.get_quadrature(0),update_quadrature_points);
+	FEValues<3> fe_values (_dofHandler.get_fe(), _matrix_free_data.get_quadrature(lpspQuadratureId),update_quadrature_points);
 	const unsigned int n_q_points = _matrix_free_data.get_quadrature(lpspQuadratureId).size();
-
 
 	const int numberGlobalCharges=atomLocations.size();
 	//
@@ -235,117 +233,24 @@ template<unsigned int FEOrder>
 	MPI_Barrier(MPI_COMM_WORLD);
 	init_2 = MPI_Wtime();
 
-	FEEvaluation<3,FEOrder,C_num1DQuad<FEOrder>()> feEvalObjValues(_matrix_free_data,_phiExtDofHandlerIndex,0);
-  const unsigned int n_q_points_values=feEvalObjValues.n_q_points;
+	FEEvaluation<3,FEOrder,C_num1DQuadLPSP<FEOrder>()*C_numCopies1DQuadLPSP()> feEvalObj(_matrix_free_data,_phiExtDofHandlerIndex,lpspQuadratureId);
+  AssertThrow(_matrix_free_data.get_quadrature(lpspQuadratureId).size() == feEvalObj.n_q_points,
+            dealii::ExcMessage("DFT-FE Error: mismatch in quadrature rule usage in initLocalPseudoPotential.")); 
+
 	for(unsigned int macrocell = 0; macrocell < _matrix_free_data.n_macro_cells(); ++macrocell)
 	{
-		feEvalObjValues.reinit(macrocell);
-		feEvalObjValues.read_dof_values(phiExt);
-		feEvalObjValues.evaluate(true,false);
+		feEvalObj.reinit(macrocell);
+		feEvalObj.read_dof_values(phiExt);
+		feEvalObj.evaluate(true,true);
 
 		for(unsigned int iSubCell = 0; iSubCell < _matrix_free_data.n_components_filled(macrocell); ++iSubCell)
 		{
 			subCellPtr= _matrix_free_data.get_cell_iterator(macrocell,iSubCell);
 			dealii::CellId subCellId=subCellPtr->id();
-			
+
       std::vector<double> & pseudoVLoc=_pseudoValues[subCellId];
-			pseudoVLoc.resize(n_q_points_values,0.0);
-		}
+			pseudoVLoc.resize(n_q_points,0.0);
 
-		Point<3> atom;
-		int atomicNumber;
-		double atomCharge;
-
-
-		for(unsigned int iSubCell = 0; iSubCell < _matrix_free_data.n_components_filled(macrocell); ++iSubCell)
-		{
-
-			subCellPtr= _matrix_free_data.get_cell_iterator(macrocell,iSubCell);
-			dealii::CellId subCellId=subCellPtr->id();
-
-			std::vector<double> & pseudoVLoc=_pseudoValues[subCellId];
-
-			Point<3> quadPoint;
-			double value,firstDer,secondDer,distanceToAtom, distanceToAtomInv;
-
-			fe_values.reinit(subCellPtr);
-
-
-			//loop over quad points
-			for (unsigned int q = 0; q < n_q_points_values; ++q)
-			{
-				const Point<3> & quadPoint=fe_values.quadrature_point(q);
-
-				double temp, diffx, diffy, diffz;
-				double tempVal=0.0;
-				//loop over atoms
-				for (unsigned int iAtom=0; iAtom<numberGlobalCharges+numberImageCharges; iAtom++)
-				{
-
-					diffx= quadPoint[0]-atomsImagesPositions[iAtom*3+0];
-					diffy= quadPoint[1]-atomsImagesPositions[iAtom*3+1];
-					diffz= quadPoint[2]-atomsImagesPositions[iAtom*3+2];
-					atomCharge=atomsImagesCharges[iAtom];
-
-					distanceToAtom = std::sqrt(diffx*diffx+diffy*diffy+diffz*diffz);
-					distanceToAtomInv=1.0/distanceToAtom;
-
-					if(distanceToAtom <= d_pspTail)//outerMostPointPseudo[atomLocations[n][0]])
-					{
-
-						if (iAtom<numberGlobalCharges)
-						{
-							atomicNumber=std::round(atomLocations[iAtom][0]);
-						}
-						else
-						{
-							const unsigned int iImageCharge=iAtom-numberGlobalCharges;
-							atomicNumber=std::round(atomLocations[d_imageIds[iImageCharge]][0]);
-						}
-
-						alglib::spline1ddiff(pseudoSpline[atomicNumber],
-								distanceToAtom,
-								value,
-								firstDer,
-								secondDer);
-					}
-					else
-					{
-						value=-atomCharge*distanceToAtomInv;
-						firstDer= -value*distanceToAtomInv;
-					}
-					tempVal+=value;
-				}//atom loop
-				pseudoVLoc[q]=tempVal;
-			}//quad loop
-		}//subcell loop
-
-		for(unsigned int iSubCell = 0; iSubCell < _matrix_free_data.n_components_filled(macrocell); ++iSubCell)
-		{
-			subCellPtr= _matrix_free_data.get_cell_iterator(macrocell,iSubCell);
-			dealii::CellId subCellId=subCellPtr->id();
-			std::vector<double> & pseudoVLoc=_pseudoValues[subCellId];
-			//loop over quad points
-			for (unsigned int q = 0; q < n_q_points_values; ++q)
-			{
-				pseudoVLoc[q]-=feEvalObjValues.get_value(q)[iSubCell];
-			}//loop over quad points
-		}//subcell loop
-	}//cell loop
-
-
-	FEEvaluation<3,FEOrder,C_num1DQuadLPSP<FEOrder>()*C_numCopies1DQuadLPSP()> feEvalObjGrad(_matrix_free_data,_phiExtDofHandlerIndex,lpspQuadratureId);
-
-	for(unsigned int macrocell = 0; macrocell < _matrix_free_data.n_macro_cells(); ++macrocell)
-	{
-		feEvalObjGrad.reinit(macrocell);
-		feEvalObjGrad.read_dof_values(phiExt);
-		feEvalObjGrad.evaluate(false,true);
-
-		for(unsigned int iSubCell = 0; iSubCell < _matrix_free_data.n_components_filled(macrocell); ++iSubCell)
-		{
-			subCellPtr= _matrix_free_data.get_cell_iterator(macrocell,iSubCell);
-			dealii::CellId subCellId=subCellPtr->id();
 			std::vector<double> & gradPseudoVLoc=_gradPseudoValues[subCellId];
 			gradPseudoVLoc.resize(n_q_points*3,0.0);
 
@@ -362,18 +267,19 @@ template<unsigned int FEOrder>
 			subCellPtr= _matrix_free_data.get_cell_iterator(macrocell,iSubCell);
 			dealii::CellId subCellId=subCellPtr->id();
 
+      std::vector<double> & pseudoVLoc=_pseudoValues[subCellId];
 			std::vector<double> & gradPseudoVLoc=_gradPseudoValues[subCellId];
 
 			Point<3> quadPoint;
 			double value,firstDer,secondDer,distanceToAtom, distanceToAtomInv;
 
-			fe_gradvalues.reinit(subCellPtr);
+			fe_values.reinit(subCellPtr);
 
 
 			//loop over quad points
 			for (unsigned int q = 0; q < n_q_points; ++q)
 			{
-				const Point<3> & quadPoint=fe_gradvalues.quadrature_point(q);
+				const Point<3> & quadPoint=fe_values.quadrature_point(q);
 
 				double temp;
 				double tempVal=0.0;
@@ -425,6 +331,7 @@ template<unsigned int FEOrder>
 					tempGradY+=temp*diffy;
 					tempGradZ+=temp*diffz;
 				}//atom loop
+        pseudoVLoc[q]=tempVal;
 				gradPseudoVLoc[q*3+0]=tempGradX;
 				gradPseudoVLoc[q*3+1]=tempGradY;
 				gradPseudoVLoc[q*3+2]=tempGradZ;
@@ -435,13 +342,15 @@ template<unsigned int FEOrder>
 		{
 			subCellPtr= _matrix_free_data.get_cell_iterator(macrocell,iSubCell);
 			dealii::CellId subCellId=subCellPtr->id();
+      std::vector<double> & pseudoVLoc=_pseudoValues[subCellId];
 			std::vector<double> & gradPseudoVLoc=_gradPseudoValues[subCellId];
 			//loop over quad points
 			for (unsigned int q = 0; q < n_q_points; ++q)
 			{
-				gradPseudoVLoc[q*3+0]-=feEvalObjGrad.get_gradient(q)[0][iSubCell];
-				gradPseudoVLoc[q*3+1]-=feEvalObjGrad.get_gradient(q)[1][iSubCell];
-				gradPseudoVLoc[q*3+2]-=feEvalObjGrad.get_gradient(q)[2][iSubCell];
+        pseudoVLoc[q]-=feEvalObj.get_value(q)[iSubCell];
+				gradPseudoVLoc[q*3+0]-=feEvalObj.get_gradient(q)[0][iSubCell];
+				gradPseudoVLoc[q*3+1]-=feEvalObj.get_gradient(q)[1][iSubCell];
+				gradPseudoVLoc[q*3+2]-=feEvalObj.get_gradient(q)[2][iSubCell];
 			}//loop over quad points
 		}//subcell loop
 	}//cell loop
@@ -462,7 +371,7 @@ template<unsigned int FEOrder>
 		if(cell->is_locally_owned())
 		{
 			//compute values for the current elements
-			fe_gradvalues.reinit(cell);
+			fe_values.reinit(cell);
 
 			Point<3> atom;
 			int atomicNumber;
@@ -505,7 +414,7 @@ template<unsigned int FEOrder>
 				for (unsigned int q = 0; q < n_q_points; ++q)
 				{
 
-					const Point<3> & quadPoint=fe_gradvalues.quadrature_point(q);
+					const Point<3> & quadPoint=fe_values.quadrature_point(q);
 					distanceToAtom = quadPoint.distance(atom);
 					if(distanceToAtom <= d_pspTail)//outerMostPointPseudo[atomLocations[n][0]])
 					{

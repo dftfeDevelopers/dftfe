@@ -122,7 +122,7 @@ dataTypes::number dftClass<FEOrder>::computeTraceXtHX(unsigned int numberWaveFun
 	//
 	//precompute shapeFunctions and shapeFunctionGradients and shapeFunctionGradientIntegrals
 	//
-	kohnShamDFTEigenOperator.preComputeShapeFunctionGradientIntegrals();
+	kohnShamDFTEigenOperator.preComputeShapeFunctionGradientIntegrals(5);
 
 	//
 	//compute Veff
@@ -191,7 +191,7 @@ double dftClass<FEOrder>::computeTraceXtKX(unsigned int numberWaveFunctionsEstim
 	//
 	//precompute shapeFunctions and shapeFunctionGradients and shapeFunctionGradientIntegrals
 	//
-	kohnShamDFTEigenOperator.preComputeShapeFunctionGradientIntegrals();
+	kohnShamDFTEigenOperator.preComputeShapeFunctionGradientIntegrals(5);
 
 
 	//

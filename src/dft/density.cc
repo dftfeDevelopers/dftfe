@@ -227,15 +227,38 @@ void dftClass<FEOrder>::compute_rhoOut(
 		}
 	}
 
-  if (isGroundState)
+  if (dftParameters::mixingMethod!="ANDERSON_WITH_KERKER" || isGroundState)
   {
 		interpolateNodalDataToQuadratureData(d_matrixFreeDataPRefined,
         0,
         2,
 				d_rhoOutNodalValues,
 				d_rhoOutValuesLpspQuad,
+				d_gradRhoOutValuesLpspQuad,
+				true);
+  }
+  else if (dftParameters::computeEnergyEverySCF)
+  {
+    std::function<double(const typename dealii::DoFHandler<3>::active_cell_iterator & cell ,
+        const unsigned int q)> funcRho =
+      [&](const typename dealii::DoFHandler<3>::active_cell_iterator & cell ,
+          const unsigned int q)
+      {return (*rhoOutValues).find(cell->id())->second[q];};
+    dealii::VectorTools::project<3,distributedCPUVec<double>> (dealii::MappingQ1<3,3>(),
+        d_dofHandlerPRefined,
+        d_constraintsPRefined,
+        QGauss<3>(C_num1DQuad<FEOrder>()),
+        funcRho,
+        d_rhoOutNodalValues);
+    d_rhoOutNodalValues.update_ghost_values();
+
+		interpolateNodalDataToQuadratureData(d_matrixFreeDataPRefined,
+        0,
+        2,
+				d_rhoOutNodalValues,
 				d_rhoOutValuesLpspQuad,
-				false);
+				d_gradRhoOutValuesLpspQuad,
+				true);    
   }
 
 	popOutRhoInRhoOutVals();

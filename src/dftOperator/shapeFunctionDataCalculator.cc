@@ -18,7 +18,7 @@
 
 
 	template<unsigned int FEOrder>
-void kohnShamDFTOperatorClass<FEOrder>::preComputeShapeFunctionGradientIntegrals()
+void kohnShamDFTOperatorClass<FEOrder>::preComputeShapeFunctionGradientIntegrals(const unsigned int lpspQuadratureId)
 {
 
 	//
@@ -31,12 +31,16 @@ void kohnShamDFTOperatorClass<FEOrder>::preComputeShapeFunctionGradientIntegrals
 	const unsigned int numberDofsPerElement = dftPtr->matrix_free_data.get_dof_handler().get_fe().dofs_per_cell;
 	const unsigned int numberQuadraturePoints = quadrature.size();
 
+	FEValues<3> fe_values_lpsp(dftPtr->matrix_free_data.get_dof_handler().get_fe(), dftPtr->matrix_free_data.get_quadrature(lpspQuadratureId), update_values);
+	const unsigned int numberQuadraturePointsLpsp = dftPtr->matrix_free_data.get_quadrature(lpspQuadratureId).size();
+
 	//
 	//resize data members
 	//
 	d_cellShapeFunctionGradientIntegral.resize(numberMacroCells);
 
 	d_shapeFunctionValue.resize(numberQuadraturePoints*numberDofsPerElement,0.0);
+  d_shapeFunctionValueLpspQuad.resize(numberQuadraturePointsLpsp*numberDofsPerElement,0.0);
 	std::vector<std::vector<std::vector<Tensor<1,3,double > > > > tempShapeFuncGradData;
 
 	typename dealii::DoFHandler<3>::active_cell_iterator cellPtr;
@@ -58,6 +62,8 @@ void kohnShamDFTOperatorClass<FEOrder>::preComputeShapeFunctionGradientIntegrals
 			cellPtr = dftPtr->matrix_free_data.get_cell_iterator(iMacroCell,iCell);
 			fe_values.reinit(cellPtr);
 
+			fe_values_lpsp.reinit(cellPtr);
+
 			for(unsigned int iNode = 0; iNode < numberDofsPerElement; ++iNode)
 			{
 				for(unsigned int jNode = 0; jNode < numberDofsPerElement; ++jNode)
@@ -76,9 +82,15 @@ void kohnShamDFTOperatorClass<FEOrder>::preComputeShapeFunctionGradientIntegrals
 
 
 			if(iMacroCell == 0 && iCell == 0)
+      {
 				for(unsigned int iNode = 0; iNode < numberDofsPerElement; ++iNode)
 					for(unsigned int q_point = 0; q_point < numberQuadraturePoints; ++q_point)
 						d_shapeFunctionValue[numberQuadraturePoints*iNode + q_point] = fe_values.shape_value(iNode,q_point);
+
+				for(unsigned int iNode = 0; iNode < numberDofsPerElement; ++iNode)
+					for(unsigned int q_point = 0; q_point < numberQuadraturePointsLpsp; ++q_point)
+						d_shapeFunctionValueLpspQuad[numberQuadraturePointsLpsp*iNode + q_point] = fe_values_lpsp.shape_value(iNode,q_point);            
+      }
 
 		}//icell loop
 
