@@ -141,6 +141,16 @@ void kohnShamDFTOperatorClass<FEOrder>::computeHamiltonianMatrix(const unsigned 
 				}
 		}
 
+		std::vector<VectorizedArray<double> > shapeGradDotDerExcWithSigmaTimesGradRho;
+
+    if(dftParameters::xc_id == 4)
+    {
+      shapeGradDotDerExcWithSigmaTimesGradRho.resize(numberDofsPerElement*numberQuadraturePoints);
+      for(unsigned int iNode = 0; iNode < numberDofsPerElement; ++iNode)
+        for(unsigned int q_point = 0; q_point < numberQuadraturePoints; ++q_point)
+            shapeGradDotDerExcWithSigmaTimesGradRho[iNode*numberQuadraturePoints+q_point]=make_vectorized_array(2.0)*scalar_product(derExcWithSigmaTimesGradRho(iMacroCell,q_point),nonCachedShapeGrad[iNode*numberQuadraturePoints+q_point]);
+    }
+
 		for(unsigned int iNode = 0; iNode < numberDofsPerElement; ++iNode)
 		{
 			for(unsigned int jNode = iNode; jNode < numberDofsPerElement; ++jNode)
@@ -156,14 +166,13 @@ void kohnShamDFTOperatorClass<FEOrder>::computeHamiltonianMatrix(const unsigned 
           
           if(dftParameters::xc_id == 4)
           {
-						const Tensor<1,3, VectorizedArray<double> > tempVec =
-							nonCachedShapeGrad[iNode*numberQuadraturePoints+q_point]
+						const  VectorizedArray<double>  tempGGA =
+							shapeGradDotDerExcWithSigmaTimesGradRho[iNode*numberQuadraturePoints+q_point]
 							*make_vectorized_array(d_shapeFunctionValue[numberQuadraturePoints*jNode+q_point])
-							+ nonCachedShapeGrad[jNode*numberQuadraturePoints+q_point]
+							+ shapeGradDotDerExcWithSigmaTimesGradRho[jNode*numberQuadraturePoints+q_point]
 							*make_vectorized_array(d_shapeFunctionValue[numberQuadraturePoints*iNode+q_point]);
 
-						temp +=
-							make_vectorized_array(2.0)*scalar_product(derExcWithSigmaTimesGradRho(iMacroCell,q_point),tempVec);            
+						temp +=tempGGA;            
           }
 
 					fe_eval.submit_value(temp,q_point);
