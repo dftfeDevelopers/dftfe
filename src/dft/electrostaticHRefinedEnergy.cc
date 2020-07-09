@@ -394,9 +394,9 @@ void dftClass<FEOrder>::computeElectrostaticEnergyHRefined(
 	  const unsigned int n_q_points_lpsp = quadraturelpsp.size();
 		FEValues<3> fe_values_lpspquad (dofHandlerHRefined.get_fe(), quadraturelpsp, update_values);
 		std::vector<double> rholpsp(n_q_points_lpsp);
-		std::vector<double> tempDelxRhoPsp(3*n_q_points);
-		std::vector<double> tempDelyRhoPsp(3*n_q_points);
-		std::vector<double> tempDelzRhoPsp(3*n_q_points);
+		std::vector<double> tempDelxRhoPsp(3*n_q_points_lpsp);
+		std::vector<double> tempDelyRhoPsp(3*n_q_points_lpsp);
+		std::vector<double> tempDelzRhoPsp(3*n_q_points_lpsp);
 
 		cell = dofHandlerHRefined.begin_active();
 		for(; cell!=endc; ++cell)
@@ -405,9 +405,9 @@ void dftClass<FEOrder>::computeElectrostaticEnergyHRefined(
 				fe_values_lpspquad.reinit (cell);
 				fe_values_lpspquad.get_function_values(rhoNodalFieldRefined,rholpsp);
 
-				fe_values.get_function_values(delxRhoNodalFieldRefined,tempDelxRho);
-				fe_values.get_function_values(delyRhoNodalFieldRefined,tempDelyRho);
-				fe_values.get_function_values(delzRhoNodalFieldRefined,tempDelzRho);
+				fe_values_lpspquad.get_function_values(delxRhoNodalFieldRefined,tempDelxRhoPsp);
+				fe_values_lpspquad.get_function_values(delyRhoNodalFieldRefined,tempDelyRhoPsp);
+				fe_values_lpspquad.get_function_values(delzRhoNodalFieldRefined,tempDelzRhoPsp);
 
         std::vector<double> & temp=rhoOutValuesLpspQuadHRefined[cell->id()];
         temp.resize(n_q_points_lpsp);
@@ -744,8 +744,6 @@ void dftClass<FEOrder>::computeElectrostaticEnergyHRefined(
 					d_phiTotRhoIn,
 					d_phiTotRhoOut,
 					d_pseudoVLoc,
-					d_gradPseudoVLoc,
-					d_gradPseudoVLocAtoms,
 					d_noConstraints,
 					d_vselfBinsManager,
 					matrixFreeDataHRefined,

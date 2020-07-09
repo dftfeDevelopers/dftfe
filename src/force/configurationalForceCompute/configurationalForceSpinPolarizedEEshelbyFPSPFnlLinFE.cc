@@ -27,8 +27,6 @@ template<unsigned int FEOrder>
  const distributedCPUVec<double> & phiTotRhoIn,
  const distributedCPUVec<double> & phiTotRhoOut,
  const std::map<dealii::CellId, std::vector<double> > & pseudoVLoc,
- const std::map<dealii::CellId, std::vector<double> > & gradPseudoVLoc,
- const std::map<unsigned int,std::map<dealii::CellId, std::vector<double> > > & gradPseudoVLocAtoms,
  const vselfBinsManager<FEOrder> & vselfBinsManagerEigen,
  const MatrixFree<3,double> & matrixFreeDataElectro,
  const unsigned int phiTotDofHandlerIndexElectro,
@@ -712,7 +710,7 @@ template<unsigned int FEOrder>
 		std::vector<Tensor<2,C_DIM,VectorizedArray<double> > > hessianRhoSpin0Quads(numQuadPoints,zeroTensor4);
 		std::vector<Tensor<2,C_DIM,VectorizedArray<double> > > hessianRhoSpin1Quads(numQuadPoints,zeroTensor4);
 		std::vector<VectorizedArray<double> > excQuads(numQuadPoints,make_vectorized_array(0.0));
-		std::vector<VectorizedArray<double> > pseudoVLocQuads(numQuadPoints,make_vectorized_array(0.0));
+		std::vector<VectorizedArray<double> > pseudoVLocQuads(numQuadPointsLpsp,make_vectorized_array(0.0));
 		std::vector<Tensor<1,C_DIM,VectorizedArray<double> > > gradPseudoVLocQuads(numQuadPoints,zeroTensor3);
 		std::vector<VectorizedArray<double> > vEffRhoOutSpin0Quads(numQuadPoints,make_vectorized_array(0.0));
 		std::vector<VectorizedArray<double> > vEffRhoOutSpin1Quads(numQuadPoints,make_vectorized_array(0.0));
@@ -835,8 +833,10 @@ template<unsigned int FEOrder>
 				{
 					subCellPtr= matrixFreeData.get_cell_iterator(cell,iSubCell);
 					dealii::CellId subCellId=subCellPtr->id();
-					for (unsigned int q=0; q<numQuadPoints; ++q)
-						pseudoVLocQuads[q][iSubCell]=pseudoVLoc.find(subCellId)->second[q];
+
+          const std::vector<double> & tempPseudoVal=pseudoVLoc.find(subCellId)->second;
+					for (unsigned int q=0; q<numQuadPointsLpsp; ++q)
+						pseudoVLocQuads[q][iSubCell]=tempPseudoVal[q];
 				}
 
 			for (unsigned int q=0; q<numQuadPoints; ++q)
@@ -874,8 +874,11 @@ template<unsigned int FEOrder>
 			forceEval.integrate(true,true);
 			forceEval.distribute_local_to_global(d_configForceVectorLinFE);//also takes care of constraints
 
-			forceEvalLpsp.integrate(true,false);
-			forceEvalLpsp.distribute_local_to_global(d_configForceVectorLinFE);//also takes care of constraints      
+      if(isPseudopotential && d_isElectrostaticsMeshSubdivided)
+      {
+        forceEvalLpsp.integrate(true,false);
+        forceEvalLpsp.distribute_local_to_global(d_configForceVectorLinFE);//also takes care of constraints   
+      }
 		}
 
 		////Add electrostatic configurational force contribution////////////////
