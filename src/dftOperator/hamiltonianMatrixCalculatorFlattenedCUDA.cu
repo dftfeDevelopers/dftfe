@@ -128,6 +128,8 @@ void kohnShamDFTOperatorCUDAClass<FEOrder>::computeHamiltonianMatrix(const unsig
 {
 	const unsigned int kpointSpinIndex=(1+dftParameters::spinPolarized)*kPointIndex+spinIndex;
 	//d_cellHamiltonianMatrixFlattenedDevice.resize(d_numLocallyOwnedCells*d_numberNodesPerElement*d_numberNodesPerElement,0.0);
+  cudaDeviceSynchronize();
+  MPI_Barrier(MPI_COMM_WORLD);
 	double gpu_time=MPI_Wtime();
 	if(dftParameters::xc_id == 4)
 		hamMatrixKernelGGA<<<(d_numLocallyOwnedCells*d_numberNodesPerElement*d_numberNodesPerElement+255)/256,256>>>
@@ -158,6 +160,7 @@ void kohnShamDFTOperatorCUDAClass<FEOrder>::computeHamiltonianMatrix(const unsig
 			 thrust::raw_pointer_cast(&d_cellHamiltonianMatrixFlattenedDevice[kpointSpinIndex*d_numLocallyOwnedCells*d_numberNodesPerElement*d_numberNodesPerElement]));
 
 	cudaDeviceSynchronize();
+  MPI_Barrier(MPI_COMM_WORLD);
 	gpu_time = MPI_Wtime() - gpu_time;
 	if (dftParameters::verbosity>=2)
 		pcout<<"Time for elemental Hamiltonian matrix computation on GPU: "<<gpu_time<<std::endl;

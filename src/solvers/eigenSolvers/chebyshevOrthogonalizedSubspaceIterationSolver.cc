@@ -157,6 +157,11 @@ namespace dftfe{
 				pcout << buffer;
 			}
 
+			int this_process;
+			MPI_Comm_rank(MPI_COMM_WORLD, &this_process);
+
+			MPI_Barrier(MPI_COMM_WORLD);
+			double cheby_time = MPI_Wtime();
 
 			//
 			//Set the constraints to zero
@@ -274,6 +279,11 @@ namespace dftfe{
 			}//block loop
 
 			eigenVectorsFlattenedArrayBlock.reinit(0);
+
+			MPI_Barrier(MPI_COMM_WORLD);
+			cheby_time = MPI_Wtime() - cheby_time;
+			if (this_process==0 && dftParameters::verbosity>=2)
+					std::cout<<"Time for chebyshev filtering on CPU: "<<cheby_time<<std::endl;
 
 			if (numberBandGroups>1)
 			{
