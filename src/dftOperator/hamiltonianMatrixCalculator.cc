@@ -157,22 +157,19 @@ void kohnShamDFTOperatorClass<FEOrder>::computeHamiltonianMatrix(const unsigned 
 			{
 				for(unsigned int q_point = 0; q_point < numberQuadraturePoints; ++q_point)
 				{
-
+          const VectorizedArray<double> shapei=make_vectorized_array(d_shapeFunctionValue[numberQuadraturePoints*iNode+q_point]);
+          const VectorizedArray<double> shapej=make_vectorized_array(d_shapeFunctionValue[numberQuadraturePoints*jNode+q_point]);
 #ifdef USE_COMPLEX
-					VectorizedArray<double> temp = (vEff(iMacroCell,q_point)+halfkSquare)*make_vectorized_array(d_shapeFunctionValue[numberQuadraturePoints*iNode+q_point])*make_vectorized_array(d_shapeFunctionValue[numberQuadraturePoints*jNode+q_point]);
+					VectorizedArray<double> temp = (vEff(iMacroCell,q_point)+halfkSquare)*shapei*shapej;
 #else
-					VectorizedArray<double> temp = vEff(iMacroCell,q_point)*make_vectorized_array(d_shapeFunctionValue[numberQuadraturePoints*iNode+q_point])*make_vectorized_array(d_shapeFunctionValue[numberQuadraturePoints*jNode+q_point]);
+					VectorizedArray<double> temp = vEff(iMacroCell,q_point)*shapei*shapej;
 #endif
           
           if(dftParameters::xc_id == 4)
           {
-						const  VectorizedArray<double>  tempGGA =
-							shapeGradDotDerExcWithSigmaTimesGradRho[iNode*numberQuadraturePoints+q_point]
-							*make_vectorized_array(d_shapeFunctionValue[numberQuadraturePoints*jNode+q_point])
-							+ shapeGradDotDerExcWithSigmaTimesGradRho[jNode*numberQuadraturePoints+q_point]
-							*make_vectorized_array(d_shapeFunctionValue[numberQuadraturePoints*iNode+q_point]);
-
-						temp +=tempGGA;            
+						temp +=
+							shapeGradDotDerExcWithSigmaTimesGradRho[iNode*numberQuadraturePoints+q_point]*shapej
+							+ shapeGradDotDerExcWithSigmaTimesGradRho[jNode*numberQuadraturePoints+q_point]*shapei;
           }
 
 					fe_eval.submit_value(temp,q_point);
