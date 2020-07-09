@@ -124,27 +124,6 @@ void kohnShamDFTOperatorClass<FEOrder>::computeHamiltonianMatrix(const unsigned 
 		fe_eval.reinit(iMacroCell);
 		const  unsigned int n_sub_cells = dftPtr->matrix_free_data.n_components_filled(iMacroCell);
 
-		for(unsigned int iNode = 0; iNode < numberDofsPerElement; ++iNode)
-		{
-			for(unsigned int jNode = iNode; jNode < numberDofsPerElement; ++jNode)
-			{
-				for(unsigned int q_point = 0; q_point < numberQuadraturePoints; ++q_point)
-				{
-
-#ifdef USE_COMPLEX
-					VectorizedArray<double> temp = (vEff(iMacroCell,q_point)+halfkSquare)*make_vectorized_array(d_shapeFunctionValue[numberQuadraturePoints*iNode+q_point])*make_vectorized_array(d_shapeFunctionValue[numberQuadraturePoints*jNode+q_point]);
-#else
-					VectorizedArray<double> temp = vEff(iMacroCell,q_point)*make_vectorized_array(d_shapeFunctionValue[numberQuadraturePoints*iNode+q_point])*make_vectorized_array(d_shapeFunctionValue[numberQuadraturePoints*jNode+q_point]);
-#endif
-					fe_eval.submit_value(temp,q_point);
-				}
-
-				elementHamiltonianMatrix[numberDofsPerElement*iNode + jNode] = make_vectorized_array(0.5)*d_cellShapeFunctionGradientIntegral[iMacroCell][numberDofsPerElement*iNode + jNode] + fe_eval.integrate_value();
-
-			}//jNode loop
-
-		}//iNode loop
-
 		std::vector<Tensor<1,3,VectorizedArray<double> > > nonCachedShapeGrad;
 
 		nonCachedShapeGrad.resize(numberDofsPerElement*numberQuadraturePoints);
@@ -161,6 +140,40 @@ void kohnShamDFTOperatorClass<FEOrder>::computeHamiltonianMatrix(const unsigned 
 						nonCachedShapeGrad[iNode*numberQuadraturePoints+q_point][idim][iCell] =tempGrad[idim];
 				}
 		}
+
+		for(unsigned int iNode = 0; iNode < numberDofsPerElement; ++iNode)
+		{
+			for(unsigned int jNode = iNode; jNode < numberDofsPerElement; ++jNode)
+			{
+				for(unsigned int q_point = 0; q_point < numberQuadraturePoints; ++q_point)
+				{
+
+#ifdef USE_COMPLEX
+					VectorizedArray<double> temp = (vEff(iMacroCell,q_point)+halfkSquare)*make_vectorized_array(d_shapeFunctionValue[numberQuadraturePoints*iNode+q_point])*make_vectorized_array(d_shapeFunctionValue[numberQuadraturePoints*jNode+q_point]);
+#else
+					VectorizedArray<double> temp = vEff(iMacroCell,q_point)*make_vectorized_array(d_shapeFunctionValue[numberQuadraturePoints*iNode+q_point])*make_vectorized_array(d_shapeFunctionValue[numberQuadraturePoints*jNode+q_point]);
+#endif
+          
+          if(dftParameters::xc_id == 4)
+          {
+						const Tensor<1,3, VectorizedArray<double> > tempVec =
+							nonCachedShapeGrad[iNode*numberQuadraturePoints+q_point]
+							*make_vectorized_array(d_shapeFunctionValue[numberQuadraturePoints*jNode+q_point])
+							+ nonCachedShapeGrad[jNode*numberQuadraturePoints+q_point]
+							*make_vectorized_array(d_shapeFunctionValue[numberQuadraturePoints*iNode+q_point]);
+
+						temp +=
+							make_vectorized_array(2.0)*scalar_product(derExcWithSigmaTimesGradRho(iMacroCell,q_point),tempVec);            
+          }
+
+					fe_eval.submit_value(temp,q_point);
+				}
+
+				elementHamiltonianMatrix[numberDofsPerElement*iNode + jNode] = make_vectorized_array(0.5)*d_cellShapeFunctionGradientIntegral[iMacroCell][numberDofsPerElement*iNode + jNode] + fe_eval.integrate_value();
+
+			}//jNode loop
+
+		}//iNode loop
 
 #ifdef USE_COMPLEX
 		std::vector<VectorizedArray<double> > elementHamiltonianMatrixImag;
@@ -182,30 +195,6 @@ void kohnShamDFTOperatorClass<FEOrder>::computeHamiltonianMatrix(const unsigned 
 
 			}//jNode loop
 #endif
-
-
-
-		if(dftParameters::xc_id == 4)
-			for(unsigned int iNode = 0; iNode < numberDofsPerElement; ++iNode)
-				for(unsigned int jNode = iNode; jNode < numberDofsPerElement; ++jNode)
-				{
-					for(unsigned int q_point = 0; q_point < numberQuadraturePoints; ++q_point)
-					{
-						const Tensor<1,3, VectorizedArray<double> > tempVec =
-							nonCachedShapeGrad[iNode*numberQuadraturePoints+q_point]
-							*make_vectorized_array(d_shapeFunctionValue[numberQuadraturePoints*jNode+q_point])
-							+ nonCachedShapeGrad[jNode*numberQuadraturePoints+q_point]
-							*make_vectorized_array(d_shapeFunctionValue[numberQuadraturePoints*iNode+q_point]);
-
-						const VectorizedArray<double> temp =
-							make_vectorized_array(2.0)*scalar_product(derExcWithSigmaTimesGradRho(iMacroCell,q_point),tempVec);
-
-						fe_eval.submit_value(temp,q_point);
-					}
-
-					elementHamiltonianMatrix[numberDofsPerElement*iNode + jNode] +=  fe_eval.integrate_value();
-
-				}//jNode loop
 
 		for(unsigned int iSubCell = 0; iSubCell < n_sub_cells; ++iSubCell)
 		{
