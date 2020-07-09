@@ -77,11 +77,6 @@ void kohnShamDFTOperatorClass<FEOrder>::computeHamiltonianMatrix(const unsigned 
             d_cellHamiltonianMatrixExternalPotCorr[iElem][numberDofsPerElement*iNode + jNode]
               = elementHamiltonianMatrix[numberDofsPerElement*iNode + jNode][iSubCell];
 
-        for(unsigned int iNode = 0; iNode < numberDofsPerElement; ++iNode)
-          for(unsigned int jNode = 0; jNode < iNode; ++jNode)
-            d_cellHamiltonianMatrixExternalPotCorr[iElem][numberDofsPerElement*iNode + jNode]
-              = d_cellHamiltonianMatrixExternalPotCorr[iElem][numberDofsPerElement*jNode + iNode];
-
         iElem += 1;
       }
 
@@ -131,7 +126,7 @@ void kohnShamDFTOperatorClass<FEOrder>::computeHamiltonianMatrix(const unsigned 
 
 		for(unsigned int iNode = 0; iNode < numberDofsPerElement; ++iNode)
 		{
-			for(unsigned int jNode = 0; jNode < numberDofsPerElement; ++jNode)
+			for(unsigned int jNode = iNode; jNode < numberDofsPerElement; ++jNode)
 			{
 				for(unsigned int q_point = 0; q_point < numberQuadraturePoints; ++q_point)
 				{
@@ -172,7 +167,7 @@ void kohnShamDFTOperatorClass<FEOrder>::computeHamiltonianMatrix(const unsigned 
 		elementHamiltonianMatrixImag.resize(numberDofsPerElement*numberDofsPerElement);
 		//
 		for(unsigned int iNode = 0; iNode < numberDofsPerElement; ++iNode)
-			for(unsigned int jNode = 0; jNode < numberDofsPerElement; ++jNode)
+			for(unsigned int jNode = iNode; jNode < numberDofsPerElement; ++jNode)
 			{
 				for(unsigned int q_point = 0; q_point < numberQuadraturePoints; ++q_point)
 				{
@@ -192,7 +187,7 @@ void kohnShamDFTOperatorClass<FEOrder>::computeHamiltonianMatrix(const unsigned 
 
 		if(dftParameters::xc_id == 4)
 			for(unsigned int iNode = 0; iNode < numberDofsPerElement; ++iNode)
-				for(unsigned int jNode = 0; jNode < numberDofsPerElement; ++jNode)
+				for(unsigned int jNode = iNode; jNode < numberDofsPerElement; ++jNode)
 				{
 					for(unsigned int q_point = 0; q_point < numberQuadraturePoints; ++q_point)
 					{
@@ -219,7 +214,7 @@ void kohnShamDFTOperatorClass<FEOrder>::computeHamiltonianMatrix(const unsigned 
 
 			for(unsigned int iNode = 0; iNode < numberDofsPerElement; ++iNode)
 			{
-				for(unsigned int jNode = 0; jNode < numberDofsPerElement; ++jNode)
+				for(unsigned int jNode = iNode; jNode < numberDofsPerElement; ++jNode)
 				{
 #ifdef USE_COMPLEX
 					d_cellHamiltonianMatrix[kpointSpinIndex][iElem][numberDofsPerElement*iNode + jNode].real(elementHamiltonianMatrix[numberDofsPerElement*iNode + jNode][iSubCell]);
@@ -236,7 +231,7 @@ void kohnShamDFTOperatorClass<FEOrder>::computeHamiltonianMatrix(const unsigned 
 
       if (dftParameters::isPseudopotential)
         for(unsigned int iNode = 0; iNode < numberDofsPerElement; ++iNode)
-          for(unsigned int jNode = 0; jNode < numberDofsPerElement; ++jNode)
+          for(unsigned int jNode = iNode; jNode < numberDofsPerElement; ++jNode)
           {
 #ifdef USE_COMPLEX
             d_cellHamiltonianMatrix[kpointSpinIndex][iElem][numberDofsPerElement*iNode + jNode]+=dataTypes::number(d_cellHamiltonianMatrixExternalPotCorr[iElem][numberDofsPerElement*iNode + jNode],0.0);
@@ -245,6 +240,11 @@ void kohnShamDFTOperatorClass<FEOrder>::computeHamiltonianMatrix(const unsigned 
               += d_cellHamiltonianMatrixExternalPotCorr[iElem][numberDofsPerElement*iNode + jNode];
 #endif
           }
+
+      for(unsigned int iNode = 0; iNode < numberDofsPerElement; ++iNode)
+        for(unsigned int jNode = 0; jNode < iNode; ++jNode)
+          d_cellHamiltonianMatrix[kpointSpinIndex][iElem][numberDofsPerElement*iNode + jNode]
+            = d_cellHamiltonianMatrix[kpointSpinIndex][iElem][numberDofsPerElement*jNode + iNode];
 
 			iElem += 1;
 		}
