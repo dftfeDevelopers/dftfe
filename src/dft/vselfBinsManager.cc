@@ -678,7 +678,7 @@ namespace dftfe
 				//
 				d_vselfBinConstraintMatrices[4*iBin].reinit(locally_relevant_dofs);
         for (unsigned int idim=0;idim<3;idim++)
-          d_vselfBinConstraintMatrices[4*iBin+idim].reinit(locally_relevant_dofs);
+          d_vselfBinConstraintMatrices[4*iBin+idim+1].reinit(locally_relevant_dofs);
 
 
 				unsigned int inNodes=0, outNodes=0;
