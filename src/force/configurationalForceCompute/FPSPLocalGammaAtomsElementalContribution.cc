@@ -128,6 +128,19 @@ template<unsigned int FEOrder>
               for (unsigned int q=0; q<numQuadPoints; ++q)
                 vselfDerRQuads[q][idim][iSubCell]=vselfDerRQuadsSubCell[q];
             }
+
+            /*
+            std::vector<Tensor<1,C_DIM,double> > gradVselfQuadsSubCell(numQuadPoints);
+            feValues.get_function_gradients(vselfBinsManager.getVselfFieldBins()[binIdiAtom],
+                gradVselfQuadsSubCell);
+            for (unsigned int q=0; q<numQuadPoints; ++q)
+            {
+              vselfDerRQuads[q][0][iSubCell]=-gradVselfQuadsSubCell[q][0];
+              vselfDerRQuads[q][1][iSubCell]=-gradVselfQuadsSubCell[q][1];
+              vselfDerRQuads[q][2][iSubCell]=-gradVselfQuadsSubCell[q][2];
+            }
+            */
+            
 					}
 				}
 

@@ -914,7 +914,7 @@ namespace dftfe
 					}//cell locally owned
 				}// cell loop
 
-        
+        /*
 				//Next apply correct dirichlet boundary conditions on elements with all dirichlet nodes
 				cell = dofHandler.begin_active();
 				for(; cell!= endc; ++cell) {
@@ -963,7 +963,7 @@ namespace dftfe
 						}//check if element has atleast one dirichlet node and atleast one solved node
 					}//cell locally owned
 				} //cell loop
-        
+        */ 
 
 				inhomogBoundaryVec.update_ghost_values();
 				for (auto index : locally_relevant_dofs)
