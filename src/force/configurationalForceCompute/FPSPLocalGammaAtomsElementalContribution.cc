@@ -42,7 +42,7 @@ template<unsigned int FEOrder>
 	for (unsigned int iAtom=0;iAtom <totalNumberAtoms; iAtom++)
 	{
 		std::vector<Tensor<1,C_DIM,VectorizedArray<double> > > gradPseudoVLocAtomsQuads(numQuadPoints,zeroTensor1);
-		std::vector<Tensor<1,C_DIM,VectorizedArray<double> > > gradVselfQuads(numQuadPoints,zeroTensor1);
+		std::vector<Tensor<1,C_DIM,VectorizedArray<double> > > vselfDerRQuads(numQuadPoints,zeroTensor1);
 
 		double atomCharge;
 		unsigned int atomId=iAtom;
@@ -92,7 +92,7 @@ template<unsigned int FEOrder>
 			subCellPtr= matrixFreeData.get_cell_iterator(cell,iSubCell);
 			dealii::CellId subCellId=subCellPtr->id();
 			feValues.reinit(subCellPtr);
-			//get grad vself for iAtom
+			//get derivative R vself for iAtom
 			bool isCellOutsideVselfBall=true;
 			if (!isLocalDomainOutsideVselfBall)
 			{
@@ -119,15 +119,15 @@ template<unsigned int FEOrder>
 					if(atomLocation.distance(closestAtomLocation)<1e-5)
 					{
 						isCellOutsideVselfBall=false;
-						std::vector<Tensor<1,C_DIM,double> > gradVselfQuadsSubCell(numQuadPoints);
-						feValues.get_function_gradients(vselfBinsManager.getVselfFieldBins()[binIdiAtom],
-								gradVselfQuadsSubCell);
-						for (unsigned int q=0; q<numQuadPoints; ++q)
-						{
-							gradVselfQuads[q][0][iSubCell]=gradVselfQuadsSubCell[q][0];
-							gradVselfQuads[q][1][iSubCell]=gradVselfQuadsSubCell[q][1];
-							gradVselfQuads[q][2][iSubCell]=gradVselfQuadsSubCell[q][2];
-						}
+						std::vector<double> vselfDerRQuadsSubCell(numQuadPoints);
+
+            for (unsigned int idim=0; idim<3; ++idim)
+            {
+              feValues.get_function_values(vselfBinsManager.getVselfFieldDerRBins()[3*binIdiAtom+idim],
+                 vselfDerRQuadsSubCell);
+              for (unsigned int q=0; q<numQuadPoints; ++q)
+                vselfDerRQuads[q][idim][iSubCell]=vselfDerRQuadsSubCell[q];
+            }
 					}
 				}
 
@@ -138,10 +138,10 @@ template<unsigned int FEOrder>
 					Point<C_DIM> quadPoint=feValues.quadrature_point(q);
 					Tensor<1,C_DIM,double> dispAtom=quadPoint-atomLocation;
 					const double dist=dispAtom.norm();
-					Tensor<1,C_DIM,double> temp=atomCharge*dispAtom/dist/dist/dist;
-					gradVselfQuads[q][0][iSubCell]=temp[0];
-					gradVselfQuads[q][1][iSubCell]=temp[1];
-					gradVselfQuads[q][2][iSubCell]=temp[2];
+					Tensor<1,C_DIM,double> temp=-atomCharge*dispAtom/dist/dist/dist;
+					vselfDerRQuads[q][0][iSubCell]=temp[0];
+					vselfDerRQuads[q][1][iSubCell]=temp[1];
+					vselfDerRQuads[q][2][iSubCell]=temp[2];
 				}
 
 			//get grad pseudo VLoc for iAtom
@@ -176,15 +176,8 @@ template<unsigned int FEOrder>
 		}//subCell loop
 
 		for (unsigned int q=0; q<numQuadPoints; ++q)
-		{
+			forceEval.submit_value(-rhoQuads[q]*(gradPseudoVLocAtomsQuads[q]+vselfDerRQuads[q]),q);
 
-			forceEval.submit_value(-eshelbyTensor::getFPSPLocal(rhoQuads[q],
-						gradPseudoVLocAtomsQuads[q],
-						gradVselfQuads[q]),
-					q);
-
-
-		}
 		Tensor<1,C_DIM,VectorizedArray<double> > forceContributionFPSPLocalGammaiAtomCells
 			=forceEval.integrate_value();
 

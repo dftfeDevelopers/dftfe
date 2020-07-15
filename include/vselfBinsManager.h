@@ -171,6 +171,9 @@ namespace dftfe {
 				/// get const reference to map of global dof index and vself field initial value in each bin
 				const std::vector<distributedCPUVec<double>> & getVselfFieldBins() const;
 
+				/// get const reference to map of global dof index and vself field initial value in each bin
+				const std::vector<distributedCPUVec<double>> & getVselfFieldDerRBins() const;        
+
 				/// get const reference to d_atomIdBinIdMapLocalAllImages
 				const std::map<unsigned int, unsigned int>  & getAtomIdBinIdMapLocalAllImages() const;
 
@@ -228,6 +231,9 @@ namespace dftfe {
 
 				/// solved vself solution field for each bin
 				std::vector<distributedCPUVec<double>> d_vselfFieldBins;
+
+				/// solved vself solution field for each bin
+				std::vector<distributedCPUVec<double>> d_vselfFieldDerRBins;        
 
 				//std::vector<double> d_inhomoIdsColoredVecFlattened;
 
