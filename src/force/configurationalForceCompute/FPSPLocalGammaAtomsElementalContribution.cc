@@ -149,7 +149,6 @@ template<unsigned int FEOrder>
 			}
 			if (isCellOutsideVselfBall)
       {
-        /*
 				for (unsigned int q=0; q<numQuadPoints; ++q)
 				{
 					Point<C_DIM> quadPoint=feValues.quadrature_point(q);
@@ -160,8 +159,8 @@ template<unsigned int FEOrder>
 					vselfDerRQuads[q][1][iSubCell]=temp[1];
 					vselfDerRQuads[q][2][iSubCell]=temp[2];
 				}
-        */
 
+        /*
         std::vector<double> vselfDerRQuadsSubCell(numQuadPoints);
         for (unsigned int idim=0; idim<3; idim++)
         {
@@ -180,7 +179,8 @@ template<unsigned int FEOrder>
               vselfDerRQuadsSubCell);
           for (unsigned int q=0; q<numQuadPoints; ++q)
             vselfDerRQuads[q][idim][iSubCell]=vselfDerRQuadsSubCell[q];
-        }        
+        } 
+        */
       }
 
 			//get grad pseudo VLoc for iAtom

@@ -388,14 +388,16 @@ namespace dftfe
                 d_vselfBinConstraintMatrices[4*iBin+idim+1],
                 constraintMatrixIdVselfDerR[idim],
                 std::map<dealii::types::global_dof_index, double>(),
-                negDerRbQuadValuesBin[idim],
+                bQuadValuesBin,
                 smearedChargeQuadratureId,
                 dummy,
                 true,
                 false,
                 true,
                 false,
-                false);        
+                false,
+                true,
+                idim);        
           else
             vselfSolverProblem.reinit(matrix_free_data,
                 vselfDerRBinScratch[idim],

@@ -813,9 +813,9 @@ namespace dftfe
 								vSelfBinNodeMap[iterMap->first] = potentialValue;
 
                 
-                inhomogBoundaryVec[iterMap->first]=potentialValue;
-                for (unsigned int idim=0; idim<3; idim++)
-                      inhomogBoundaryVecVselfDerR[idim][iterMap->first]=potentialValue/minDistance*(nodalCoor[idim]-dofClosestChargeLocationMap[iterMap->first][idim])/minDistance;
+                //inhomogBoundaryVec[iterMap->first]=potentialValue;
+                //for (unsigned int idim=0; idim<3; idim++)
+                //      inhomogBoundaryVecVselfDerR[idim][iterMap->first]=potentialValue/minDistance*(nodalCoor[idim]-dofClosestChargeLocationMap[iterMap->first][idim])/minDistance;
                 
 								outNodes++;
 
@@ -827,7 +827,7 @@ namespace dftfe
 
 				}//nodal loop
 
-				//Apply correct dirichlet boundary conditions on elements with atleast one solved node
+				//First Apply correct dirichlet boundary conditions on elements with atleast one solved node
 				dealii::DoFHandler<3>::active_cell_iterator cell = dofHandler.begin_active(),endc = dofHandler.end();
 				for(; cell!= endc; ++cell)
 				{
@@ -963,7 +963,8 @@ namespace dftfe
 						}//check if element has atleast one dirichlet node and atleast one solved node
 					}//cell locally owned
 				} //cell loop
-        */ 
+        */
+         
 
 				inhomogBoundaryVec.update_ghost_values();
 				for (auto index : locally_relevant_dofs)

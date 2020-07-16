@@ -55,7 +55,9 @@ namespace dftfe {
 						const bool isComputeMeanValueConstraints=false,
 						const bool smearedNuclearCharges=false,
 						const bool isPrecomputeShapeGradIntegral=false,
-						const bool isRhoValues=true);
+						const bool isRhoValues=true,
+            const bool isGradSmearedChargeRhs=false,
+            const unsigned int smearedChargeGradientComponentId=0);
 
 				/**
 				 * @brief reinitialize data structures for nuclear electrostatic potential solve
@@ -203,6 +205,12 @@ namespace dftfe {
 
 				/// boolean flag to query if mean value constraint datastructures are precomputed
 				bool d_isMeanValueConstraintComputed;
+
+        ///
+        bool d_isGradSmearedChargeRhs;
+
+        ///
+        unsigned int d_smearedChargeGradientComponentId;
 
 				/// mean constrained nodeid
 				dealii::types::global_dof_index d_meanValueConstraintNodeId;

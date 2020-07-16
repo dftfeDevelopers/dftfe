@@ -48,7 +48,9 @@ namespace dftfe {
 		 const bool isComputeMeanValueConstraint,
 		 const bool smearedNuclearCharges,
 		 const bool isPrecomputeShapeGradIntegral,
-		 const bool isRhoValues)
+		 const bool isRhoValues,
+     const bool isGradSmearedChargeRhs,
+     const unsigned int smearedChargeGradientComponentId)
 		{
 			int this_process;
 			MPI_Comm_rank(mpi_communicator, &this_process);
@@ -63,6 +65,8 @@ namespace dftfe {
 			d_atomsPtr=smearedNuclearCharges?NULL:&atoms;
 			d_smearedChargeValuesPtr=smearedNuclearCharges?&smearedChargeValues:NULL;
       d_smearedChargeQuadratureId=smearedChargeQuadratureId;
+      d_isGradSmearedChargeRhs=isGradSmearedChargeRhs;
+      d_smearedChargeGradientComponentId=smearedChargeGradientComponentId;
 
 			if (isComputeMeanValueConstraint)
 			{
@@ -239,7 +243,7 @@ namespace dftfe {
 
 					d_constraintMatrixPtr->distribute_local_to_global(cell_rhs_origin, local_dof_indices_origin, rhs);
 				}
-			else if (d_smearedChargeValuesPtr!=NULL)
+			else if (d_smearedChargeValuesPtr!=NULL && !d_isGradSmearedChargeRhs)
 			{
 				const unsigned int   num_quad_points_sc = d_matrixFreeDataPtr->get_quadrature(d_smearedChargeQuadratureId).size();
 				dealii::FEValues<3> fe_valuesSC (dofHandler.get_fe(), d_matrixFreeDataPtr->get_quadrature(d_smearedChargeQuadratureId),dealii::update_values | dealii::update_JxW_values);        
@@ -264,6 +268,32 @@ namespace dftfe {
 						d_constraintMatrixPtr->distribute_local_to_global(elementalRhs, local_dof_indices, rhs);
 					}        
 			}
+			else if (d_smearedChargeValuesPtr!=NULL && d_isGradSmearedChargeRhs)
+			{
+        //Computes integration -Grad(b) * Ni 
+				const unsigned int   num_quad_points_sc = d_matrixFreeDataPtr->get_quadrature(d_smearedChargeQuadratureId).size();
+				dealii::FEValues<3> fe_valuesSC (dofHandler.get_fe(), d_matrixFreeDataPtr->get_quadrature(d_smearedChargeQuadratureId),dealii::update_gradients | dealii::update_JxW_values);        
+				cell = dofHandler.begin_active();
+				for(; cell!=endc; ++cell)
+					if (cell->is_locally_owned())
+					{
+						const std::vector<double>& tempVec=d_smearedChargeValuesPtr->find(cell->id())->second;
+            if (std::abs(std::accumulate(tempVec.begin(),tempVec.end(),0.0))<1e-9)
+              continue;
+
+						fe_valuesSC.reinit (cell);
+						elementalRhs=0.0;
+
+
+						for (unsigned int i=0; i<dofs_per_cell; ++i)
+							for (unsigned int q_point=0; q_point<num_quad_points_sc; ++q_point)
+								elementalRhs(i) += fe_valuesSC.shape_grad(i, q_point)[d_smearedChargeGradientComponentId]*tempVec[q_point]*fe_valuesSC.JxW (q_point);
+
+						//assemble to global data structures
+						cell->get_dof_indices (local_dof_indices);
+						d_constraintMatrixPtr->distribute_local_to_global(elementalRhs, local_dof_indices, rhs);
+					}        
+			}      
 
 			//MPI operation to sync data
 			rhs.compress(dealii::VectorOperation::add);
