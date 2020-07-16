@@ -1421,7 +1421,7 @@ template<unsigned int FEOrder>
 	FEValues<C_DIM> feVselfValuesElectro (matrixFreeDataElectro.
 			get_dof_handler(phiTotDofHandlerIndexElectro).get_fe(),
 			matrixFreeDataElectro.get_quadrature(lpspQuadratureIdElectro),
-			update_gradients | update_quadrature_points);
+			update_values| update_gradients | update_quadrature_points);
 
 	Tensor<1,C_DIM,VectorizedArray<double> > zeroTensor;
 	for (unsigned int idim=0; idim<C_DIM; idim++)

@@ -37,6 +37,8 @@ template<unsigned int FEOrder>
 	const unsigned int totalNumberAtoms = numberGlobalAtoms + numberImageCharges;
 	const unsigned int numSubCells= matrixFreeData.n_components_filled(cell);
 	const unsigned int numQuadPoints=forceEval.n_q_points;
+  const unsigned int dofs_per_cell = matrixFreeData.get_dof_handler(0).get_fe().dofs_per_cell;
+
 	DoFHandler<C_DIM>::active_cell_iterator subCellPtr;
 
 	for (unsigned int iAtom=0;iAtom <totalNumberAtoms; iAtom++)
@@ -146,6 +148,8 @@ template<unsigned int FEOrder>
 
 			}
 			if (isCellOutsideVselfBall)
+      {
+        /*
 				for (unsigned int q=0; q<numQuadPoints; ++q)
 				{
 					Point<C_DIM> quadPoint=feValues.quadrature_point(q);
@@ -156,6 +160,28 @@ template<unsigned int FEOrder>
 					vselfDerRQuads[q][1][iSubCell]=temp[1];
 					vselfDerRQuads[q][2][iSubCell]=temp[2];
 				}
+        */
+
+        std::vector<double> vselfDerRQuadsSubCell(numQuadPoints);
+        for (unsigned int idim=0; idim<3; idim++)
+        {
+          std::vector<dealii::types::global_dof_index> cell_dof_indices(dofs_per_cell);
+          subCellPtr->get_dof_indices(cell_dof_indices);
+          for (unsigned int idof=0; idof<dofs_per_cell; ++idof)
+          {
+            const dealii::Point<3> & feNodeGlobalCoord = dftPtr->d_supportPoints.find(cell_dof_indices[idof])->second;
+            Tensor<1,C_DIM,double> dispAtom=feNodeGlobalCoord-atomLocation;
+            const double dist=dispAtom.norm();
+            const double temp=-atomCharge/dist/dist*dispAtom[idim]/dist;
+            dftPtr->d_phiExt[cell_dof_indices[idof]]=temp;
+          }
+
+          feValues.get_function_values(dftPtr->d_phiExt,
+              vselfDerRQuadsSubCell);
+          for (unsigned int q=0; q<numQuadPoints; ++q)
+            vselfDerRQuads[q][idim][iSubCell]=vselfDerRQuadsSubCell[q];
+        }        
+      }
 
 			//get grad pseudo VLoc for iAtom
 			bool isCellOutsidePspTail=true;
