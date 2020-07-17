@@ -42,7 +42,7 @@ namespace dftfe
 				const  MPI_Comm &mpi_communicator,
 				const std::vector<double> & rc,
 				std::map<dealii::CellId, std::vector<double> > & bQuadValues,
-				std::vector<std::map<dealii::CellId, std::vector<double> > > & negDerRbQuadValues,    
+				std::map<dealii::CellId, std::vector<double> >  & gradbQuadValuesAllAtoms,    
         std::map<dealii::CellId, std::vector<int> >  & bQuadAtomIdsAllAtoms,
         std::map<dealii::CellId, std::vector<int> > & bQuadAtomIdsAllAtomsImages)
 		{
@@ -57,8 +57,6 @@ namespace dftfe
 				if (cell->is_locally_owned())
         {
           std::fill(bQuadValues[cell->id()].begin(),bQuadValues[cell->id()].end(),0.0);
-          for (unsigned int idim=0; idim<3;idim++)
-            std::fill(negDerRbQuadValues[idim][cell->id()].begin(),negDerRbQuadValues[idim][cell->id()].end(),0.0);
         }
 
 			const unsigned int numberTotalAtomsInBin=atomLocations.size();
@@ -106,9 +104,7 @@ namespace dftfe
 				{
 					fe_values.reinit (cell);
 					std::vector<double> & bQuadValuesCell=bQuadValues[cell->id()];
-					std::vector<double> & negDerXbQuadValuesCell=negDerRbQuadValues[0][cell->id()];   
-					std::vector<double> & negDerYbQuadValuesCell=negDerRbQuadValues[1][cell->id()];  
-				  std::vector<double> & negDerZbQuadValuesCell=negDerRbQuadValues[2][cell->id()];            
+					std::vector<double> & gradbQuadValuesAllAtomsCell=gradbQuadValuesAllAtoms[cell->id()];   
           std::vector<int> & bQuadAtomIdsCell=bQuadAtomIdsAllAtoms[cell->id()];
           std::vector<int> & bQuadAtomImageIdsCell=bQuadAtomIdsAllAtomsImages[cell->id()];
 					for (unsigned int q = 0; q < n_q_points; ++q)
@@ -128,9 +124,9 @@ namespace dftfe
               const double scalingFac=(-atomCharges[atomId])/smearedNuclearChargeIntegral[atomId];
 
 							bQuadValuesCell[q]=chargeVal*scalingFac;
-              negDerXbQuadValuesCell[q]=-gradChargeVal*(quadPoint[0]-atomLocations[iatom][0])/r*scalingFac;   
-              negDerYbQuadValuesCell[q]=-gradChargeVal*(quadPoint[1]-atomLocations[iatom][1])/r*scalingFac;    
-              negDerZbQuadValuesCell[q]=-gradChargeVal*(quadPoint[2]-atomLocations[iatom][2])/r*scalingFac;                  
+              gradbQuadValuesAllAtomsCell[3*q]=gradChargeVal*(quadPoint[0]-atomLocations[iatom][0])/r*scalingFac;   
+              gradbQuadValuesAllAtomsCell[3*q+1]=gradChargeVal*(quadPoint[1]-atomLocations[iatom][1])/r*scalingFac;    
+              gradbQuadValuesAllAtomsCell[3*q+2]=gradChargeVal*(quadPoint[2]-atomLocations[iatom][2])/r*scalingFac;                  
 							//smearedNuclearChargeIntegralCheck[atomId]+=bQuadValuesCell[q]*jxw;
               bQuadAtomIdsCell[q]=atomChargeId;
               bQuadAtomImageIdsCell[q]=binAtomIdToGlobalAtomIdMapCurrentBin[iatom];
@@ -216,7 +212,6 @@ namespace dftfe
 			d_vselfFieldBins.resize(numberBins);
       d_vselfFieldDerRBins.resize(numberBins*3);
 			std::map<dealii::CellId, std::vector<double> > bQuadValuesBin;
-			std::vector<std::map<dealii::CellId, std::vector<double> > > negDerRbQuadValuesBin(3); 
 			std::map<dealii::CellId, std::vector<double> > dummy;
 
 			cell = dofHandler.begin_active();
@@ -225,8 +220,6 @@ namespace dftfe
 					if (cell->is_locally_owned())
           {
 						bQuadValuesBin[cell->id()].resize(n_q_points_sc,0.0);
-            for (unsigned int idim=0; idim<3;idim++)
-              negDerRbQuadValuesBin[idim][cell->id()].resize(n_q_points_sc,0.0);          
           }
 
 			for(unsigned int iBin = 0; iBin < numberBins; ++iBin)
@@ -292,7 +285,7 @@ namespace dftfe
 							mpi_communicator,
 							smearingWidths,
 							bQuadValuesBin,
-							negDerRbQuadValuesBin,              
+							gradbQuadValuesAllAtoms,              
               bQuadAtomIdsAllAtoms,
               bQuadAtomIdsAllAtomsImages);
 
@@ -323,13 +316,14 @@ namespace dftfe
 
 				std::vector<distributedCPUVec<double> > vselfDerRBinScratch(3);
         std::vector<unsigned int> constraintMatrixIdVselfDerR(3);
-        for (unsigned int idim=0; idim<3;idim++)
-        {
-          constraintMatrixIdVselfDerR[idim] = 4*iBin+idim + offset+1;
-          matrix_free_data.initialize_dof_vector(vselfDerRBinScratch[idim],constraintMatrixIdVselfDerR[idim]);
-          vselfDerRBinScratch[idim] = 0;
-          d_vselfBinConstraintMatrices[4*iBin+idim+1].distribute(vselfDerRBinScratch[idim]);
-        }        
+        if (useSmearedCharges)
+          for (unsigned int idim=0; idim<3;idim++)
+          {
+            constraintMatrixIdVselfDerR[idim] = 4*iBin+idim + offset+1;
+            matrix_free_data.initialize_dof_vector(vselfDerRBinScratch[idim],constraintMatrixIdVselfDerR[idim]);
+            vselfDerRBinScratch[idim] = 0;
+            d_vselfBinConstraintMatrices[4*iBin+idim+1].distribute(vselfDerRBinScratch[idim]);
+          }        
 
 				MPI_Barrier(MPI_COMM_WORLD);
 				init_time = MPI_Wtime() - init_time;
@@ -375,14 +369,14 @@ namespace dftfe
 						dftParameters::maxLinearSolverIterations,
 						dftParameters::verbosity);
 
-        for (unsigned int idim=0; idim<3;idim++)
-        {
-          MPI_Barrier(MPI_COMM_WORLD);
-          vselfinit_time = MPI_Wtime();
-          //
-          //call the poisson solver to compute vSelf in current bin
-          //
-          if (useSmearedCharges)
+				if (useSmearedCharges)
+          for (unsigned int idim=0; idim<3;idim++)
+          {
+            MPI_Barrier(MPI_COMM_WORLD);
+            vselfinit_time = MPI_Wtime();
+            //
+            //call the poisson solver to compute vSelf in current bin
+            //
             vselfSolverProblem.reinit(matrix_free_data,
                 vselfDerRBinScratch[idim] ,
                 d_vselfBinConstraintMatrices[4*iBin+idim+1],
@@ -398,25 +392,18 @@ namespace dftfe
                 false,
                 true,
                 idim);        
-          else
-            vselfSolverProblem.reinit(matrix_free_data,
-                vselfDerRBinScratch[idim],
-                d_vselfBinConstraintMatrices[4*iBin+idim+1],
-                constraintMatrixIdVselfDerR[idim],
-                d_atomsInBin[iBin],
-                true,
-                false);
 
-          MPI_Barrier(MPI_COMM_WORLD);
-          vselfinit_time = MPI_Wtime() - vselfinit_time;
-          if (dftParameters::verbosity>=1)
-            pcout<<" Time taken for vself solver problem init for current bin: "<<vselfinit_time<<std::endl;         
 
-          dealiiCGSolver.solve(vselfSolverProblem,
-              dftParameters::absLinearSolverTolerance,
-              dftParameters::maxLinearSolverIterations,
-              dftParameters::verbosity);            
-        }
+            MPI_Barrier(MPI_COMM_WORLD);
+            vselfinit_time = MPI_Wtime() - vselfinit_time;
+            if (dftParameters::verbosity>=1)
+              pcout<<" Time taken for vself solver problem init for current bin: "<<vselfinit_time<<std::endl;         
+
+            dealiiCGSolver.solve(vselfSolverProblem,
+                dftParameters::absLinearSolverTolerance,
+                dftParameters::maxLinearSolverIterations,
+                dftParameters::verbosity);            
+          }
 
 				//
 				//store Vselfs for atoms in bin
@@ -438,23 +425,11 @@ namespace dftfe
 							std::vector<double> & bQuadValuesBinCell=bQuadValuesBin[cell->id()];
 							std::vector<double> & bQuadValuesAllAtomsCell=bQuadValuesAllAtoms[cell->id()];
 
-              std::vector<double> & gradbQuadValuesAllAtomsCell=gradbQuadValuesAllAtoms[cell->id()];
-							std::vector<double> & negDerXbQuadValuesBinCell=negDerRbQuadValuesBin[0][cell->id()];
-							std::vector<double> & negDerYbQuadValuesBinCell=negDerRbQuadValuesBin[1][cell->id()];
-              std::vector<double> & negDerZbQuadValuesBinCell=negDerRbQuadValuesBin[2][cell->id()];
-
               if (std::abs(std::accumulate(bQuadValuesBinCell.begin(),bQuadValuesBinCell.end(),0.0))<1e-9)
                   continue;
 
 							for (unsigned int q = 0; q < n_q_points_sc; ++q)
 								bQuadValuesAllAtomsCell[q]=bQuadValuesBinCell[q];
-
-							for (unsigned int q = 0; q < n_q_points_sc; ++q)
-              {
-								gradbQuadValuesAllAtomsCell[3*q+0]=-negDerXbQuadValuesBinCell[q];
-                gradbQuadValuesAllAtomsCell[3*q+1]=-negDerYbQuadValuesBinCell[q];
-                gradbQuadValuesAllAtomsCell[3*q+2]=-negDerZbQuadValuesBinCell[q];
-              }
 
 
 							int boundaryFlagSum=0;
@@ -521,9 +496,11 @@ namespace dftfe
 				//store solved vselfBinScratch field
 				//
 				d_vselfFieldBins[iBin]=vselfBinScratch;
+       
         
-        for (unsigned int idim=0; idim<3; idim++) 
-          d_vselfFieldDerRBins[3*iBin+idim]=vselfDerRBinScratch[idim];
+				if (useSmearedCharges)
+          for (unsigned int idim=0; idim<3; idim++) 
+            d_vselfFieldDerRBins[3*iBin+idim]=vselfDerRBinScratch[idim];
 			}//bin loop
 		}
 

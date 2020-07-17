@@ -121,27 +121,43 @@ template<unsigned int FEOrder>
 					if(atomLocation.distance(closestAtomLocation)<1e-5)
 					{
 						isCellOutsideVselfBall=false;
-						std::vector<double> vselfDerRQuadsSubCell(numQuadPoints);
 
-            for (unsigned int idim=0; idim<3; ++idim)
+            if (dftParameters::floatingNuclearCharges && dftParameters::smearedNuclearCharges)
             {
-              feValues.get_function_values(vselfBinsManager.getVselfFieldDerRBins()[3*binIdiAtom+idim],
-                 vselfDerRQuadsSubCell);
+              std::vector<double> vselfDerRQuadsSubCell(numQuadPoints);
+              for (unsigned int idim=0; idim<3; ++idim)
+              {
+                feValues.get_function_values(vselfBinsManager.getVselfFieldDerRBins()[3*binIdiAtom+idim],
+                   vselfDerRQuadsSubCell);
+                for (unsigned int q=0; q<numQuadPoints; ++q)
+                  vselfDerRQuads[q][idim][iSubCell]=vselfDerRQuadsSubCell[q];
+              }
+            }
+            else if (!dftParameters::floatingNuclearCharges && dftParameters::smearedNuclearCharges)
+            {
               for (unsigned int q=0; q<numQuadPoints; ++q)
-                vselfDerRQuads[q][idim][iSubCell]=vselfDerRQuadsSubCell[q];
+              {
+                Point<C_DIM> quadPoint=feValues.quadrature_point(q);
+                Tensor<1,C_DIM,double> dispAtom=quadPoint-atomLocation;
+                const double dist=dispAtom.norm();
+                Tensor<1,C_DIM,double> temp= atomCharge*dftUtils::smearedPotDr(dist, dftPtr->d_smearedChargeWidths[atomId])*dispAtom/dist;
+                vselfDerRQuads[q][0][iSubCell]=temp[0];
+                vselfDerRQuads[q][1][iSubCell]=temp[1];
+                vselfDerRQuads[q][2][iSubCell]=temp[2];
+              }  
             }
-
-            /*
-            std::vector<Tensor<1,C_DIM,double> > gradVselfQuadsSubCell(numQuadPoints);
-            feValues.get_function_gradients(vselfBinsManager.getVselfFieldBins()[binIdiAtom],
-                gradVselfQuadsSubCell);
-            for (unsigned int q=0; q<numQuadPoints; ++q)
+            else
             {
-              vselfDerRQuads[q][0][iSubCell]=-gradVselfQuadsSubCell[q][0];
-              vselfDerRQuads[q][1][iSubCell]=-gradVselfQuadsSubCell[q][1];
-              vselfDerRQuads[q][2][iSubCell]=-gradVselfQuadsSubCell[q][2];
+              std::vector<Tensor<1,C_DIM,double> > gradVselfQuadsSubCell(numQuadPoints);
+              feValues.get_function_gradients(vselfBinsManager.getVselfFieldBins()[binIdiAtom],
+                  gradVselfQuadsSubCell);
+              for (unsigned int q=0; q<numQuadPoints; ++q)
+              {
+                vselfDerRQuads[q][0][iSubCell]=-gradVselfQuadsSubCell[q][0];
+                vselfDerRQuads[q][1][iSubCell]=-gradVselfQuadsSubCell[q][1];
+                vselfDerRQuads[q][2][iSubCell]=-gradVselfQuadsSubCell[q][2];
+              }
             }
-            */
             
 					}
 				}

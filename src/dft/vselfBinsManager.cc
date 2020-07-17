@@ -813,9 +813,9 @@ namespace dftfe
 								vSelfBinNodeMap[iterMap->first] = potentialValue;
 
                 
-                //inhomogBoundaryVec[iterMap->first]=potentialValue;
-                //for (unsigned int idim=0; idim<3; idim++)
-                //      inhomogBoundaryVecVselfDerR[idim][iterMap->first]=potentialValue/minDistance*(nodalCoor[idim]-dofClosestChargeLocationMap[iterMap->first][idim])/minDistance;
+                inhomogBoundaryVec[iterMap->first]=potentialValue;
+                for (unsigned int idim=0; idim<3; idim++)
+                      inhomogBoundaryVecVselfDerR[idim][iterMap->first]=potentialValue/minDistance*(nodalCoor[idim]-dofClosestChargeLocationMap[iterMap->first][idim])/minDistance;
                 
 								outNodes++;
 
@@ -888,12 +888,14 @@ namespace dftfe
 								closestAtomLocationSolved[1]=imagePositions[imageId][1];
 								closestAtomLocationSolved[2]=imagePositions[imageId][2];
 							}
+
+              //FIXME: dofs touched optimization to be done
 							for(unsigned int iNode = 0; iNode < dofs_per_cell; ++iNode)
 							{
 
 								const dealii::types::global_dof_index globalNodeId=cell_dof_indices[iNode];
 								const int boundaryId=d_boundaryFlag[iBin][globalNodeId];
-								if(!onlyHangingNodeConstraints.is_constrained(globalNodeId) && boundaryId==-1 && !(std::abs(inhomogBoundaryVec[globalNodeId])>1e-10))
+								if(!onlyHangingNodeConstraints.is_constrained(globalNodeId) && boundaryId==-1)
 								{
 									//d_vselfBinConstraintMatrices[iBin].add_line(globalNodeId);
                   const dealii::Point<3> & nodalPoint=supportPoints[globalNodeId];

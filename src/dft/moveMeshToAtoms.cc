@@ -155,7 +155,7 @@ void dftClass<FEOrder>::moveMeshToAtoms(Triangulation<3,3> & triangulationMove,
 	for (unsigned int iAtom=0;iAtom <numberGlobalAtoms; iAtom++)
 	{
       d_flatTopWidthsAutoMeshMove[iAtom]=dftParameters::useFlatTopGenerator?std::min(0.5,0.9*d_nearestAtomDistances[iAtom]/2.0-0.2):0.0;
-      d_gaussianConstantsAutoMesh[iAtom]=dftParameters::reproducible_output?1/std::sqrt(0.5):(std::min(d_nearestAtomDistances[iAtom]/2.0, 2.0)-d_flatTopWidthsAutoMeshMove[iAtom]);
+      d_gaussianConstantsAutoMesh[iAtom]=dftParameters::reproducible_output?1/std::sqrt(0.5):(std::min(0.9*d_nearestAtomDistances[iAtom]/2.0, 2.0)-d_flatTopWidthsAutoMeshMove[iAtom]);
   }
 
   std::vector<double> gaussianConstantsAutoMesh;
@@ -227,7 +227,7 @@ void dftClass<FEOrder>::calculateAdaptiveForceGeneratorsSmearedChargeWidths()
   d_generatorFlatTopWidths=d_flatTopWidthsAutoMeshMove;
 
 	for (unsigned int iAtom=0;iAtom <numberGlobalAtoms; iAtom++)
-      d_gaussianConstantsForce[iAtom]=dftParameters::reproducible_output?1/std::sqrt(5.0):(dftParameters::useFlatTopGenerator?d_generatorFlatTopWidths[iAtom]+0.4:(std::min(0.9*d_nearestAtomDistances[iAtom]/2.0-0.3,dftParameters::gaussianConstantForce)));  
+      d_gaussianConstantsForce[iAtom]=dftParameters::reproducible_output?1/std::sqrt(5.0):(dftParameters::useFlatTopGenerator?d_generatorFlatTopWidths[iAtom]+0.4:(std::min(d_nearestAtomDistances[iAtom]/2.0-0.3,dftParameters::gaussianConstantForce)));  
   d_smearedChargeWidths.resize(numberGlobalAtoms,0.0);
 
   if (dftParameters::smearedNuclearCharges)
