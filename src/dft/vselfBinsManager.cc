@@ -1072,8 +1072,12 @@ namespace dftfe
 						ghost_indices,
 						mpi_communicator);
 
+      std::vector<distributedCPUVec<double> > inhomogBoundaryVecVselfDerR(3); 
+      for (unsigned int idim=0; idim<3; idim++)
+          inhomogBoundaryVecVselfDerR[idim].reinit(inhomogBoundaryVec);
+
 			const int numberBins = d_bins.size();
-			d_vselfBinConstraintMatrices.resize(numberBins);
+			d_vselfBinConstraintMatrices.resize(4*numberBins);
 			d_dofClosestChargeLocationMap.resize(numberBins);
 			//
 			//set constraint matrices for each bin
@@ -1131,6 +1135,9 @@ namespace dftfe
 									const double newPotentialValue =-closestAtomCharge/distance;
 									d_vselfBinField[iBin][globalNodeId] = newPotentialValue;
 									inhomogBoundaryVec[globalNodeId]=newPotentialValue;
+
+                  for (unsigned int idim=0; idim<3; idim++)
+                        inhomogBoundaryVecVselfDerR[idim][globalNodeId]=newPotentialValue/distance*(supportPoints[globalNodeId][idim]-closestAtomLocation[idim])/distance;                  
 								}//check non hanging node and vself consraints not already set
 							}
 						}//element node loop
@@ -1141,24 +1148,47 @@ namespace dftfe
 				//
 				//create constraint matrix for current bin
 				//
-				d_vselfBinConstraintMatrices[iBin].reinit(locally_relevant_dofs);
+				d_vselfBinConstraintMatrices[4*iBin].reinit(locally_relevant_dofs);
 
 				inhomogBoundaryVec.update_ghost_values();
 				for (auto index : locally_relevant_dofs)
 				{
 					if(!onlyHangingNodeConstraints.is_constrained(index) && std::abs(inhomogBoundaryVec[index])>1e-10)
 					{
-						d_vselfBinConstraintMatrices[iBin].add_line(index);
-						d_vselfBinConstraintMatrices[iBin].set_inhomogeneity(index,
+						d_vselfBinConstraintMatrices[4*iBin].add_line(index);
+						d_vselfBinConstraintMatrices[4*iBin].set_inhomogeneity(index,
 								inhomogBoundaryVec[index]);
 					}
 				}
 
-				d_vselfBinConstraintMatrices[iBin].merge(onlyHangingNodeConstraints,dealii::AffineConstraints<double>::MergeConflictBehavior::left_object_wins);
-				d_vselfBinConstraintMatrices[iBin].close();
-				d_vselfBinConstraintMatrices[iBin].merge(constraintMatrix,dealii::AffineConstraints<double>::MergeConflictBehavior::left_object_wins);
-				d_vselfBinConstraintMatrices[iBin].close();
-				constraintsVector.push_back(&(d_vselfBinConstraintMatrices[iBin]));
+				d_vselfBinConstraintMatrices[4*iBin].merge(onlyHangingNodeConstraints,dealii::AffineConstraints<double>::MergeConflictBehavior::left_object_wins);
+				d_vselfBinConstraintMatrices[4*iBin].close();
+				d_vselfBinConstraintMatrices[4*iBin].merge(constraintMatrix,dealii::AffineConstraints<double>::MergeConflictBehavior::left_object_wins);
+				d_vselfBinConstraintMatrices[4*iBin].close();
+				constraintsVector.push_back(&(d_vselfBinConstraintMatrices[4*iBin]));
+
+        for (unsigned int idim=0;idim<3;idim++)
+          d_vselfBinConstraintMatrices[4*iBin+idim+1].reinit(locally_relevant_dofs);
+
+        for (unsigned int idim=0; idim<3; idim++)
+        {
+          inhomogBoundaryVecVselfDerR[idim].update_ghost_values();
+          for (auto index : locally_relevant_dofs)
+          {
+            if(!onlyHangingNodeConstraints.is_constrained(index) && std::abs(inhomogBoundaryVecVselfDerR[idim][index])>1e-10)
+            {
+              d_vselfBinConstraintMatrices[4*iBin+idim+1].add_line(index);
+              d_vselfBinConstraintMatrices[4*iBin+idim+1].set_inhomogeneity(index,
+                  inhomogBoundaryVecVselfDerR[idim][index]);
+            }
+          }
+
+          d_vselfBinConstraintMatrices[4*iBin+idim+1].merge(onlyHangingNodeConstraints,dealii::AffineConstraints<double>::MergeConflictBehavior::left_object_wins);
+          d_vselfBinConstraintMatrices[4*iBin+idim+1].close();
+          d_vselfBinConstraintMatrices[4*iBin+idim+1].merge(constraintMatrix,dealii::AffineConstraints<double>::MergeConflictBehavior::left_object_wins);
+          d_vselfBinConstraintMatrices[4*iBin+idim+1].close();
+          constraintsVector.push_back(&(d_vselfBinConstraintMatrices[4*iBin+idim+1]));          
+        }        
 			}//bin loop
 		}
 

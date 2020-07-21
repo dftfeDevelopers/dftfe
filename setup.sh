@@ -8,8 +8,8 @@ set -o pipefail
 # and optimization flag
 
 #Paths for external libraries
-dealiiPetscRealDir="/home/vikramg/DFT-FE-softwares/dealiinew/intel18.0.5_dealiicustom_real_old"
-dealiiPetscComplexDir="/home/vikramg/DFT-FE-softwares/dealiinew/intel18.0.5_dealiicustom_complex_old"
+dealiiPetscRealDir="/home/vikramg/DFT-FE-softwares/dealiinew/intel18.0.5_dealiicustom_real"
+dealiiPetscComplexDir="/home/vikramg/DFT-FE-softwares/dealiinew/intel18.0.5_dealiicustom_complex"
 alglibDir="/home/vikramg/DFT-FE-softwares/alglib/cpp/src"
 libxcDir="/home/vikramg/DFT-FE-softwares/libxc/intel2018_libxc_4.3.4"
 spglibDir="/home/vikramg/DFT-FE-softwares/spglib"
