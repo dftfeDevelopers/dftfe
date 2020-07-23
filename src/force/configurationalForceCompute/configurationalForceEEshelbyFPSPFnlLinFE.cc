@@ -1452,7 +1452,6 @@ template<unsigned int FEOrder>
   std::vector<Tensor<1,C_DIM,VectorizedArray<double> > > gradRhoQuadsElectroLpsp(numQuadPointsLpsp,zeroTensor);
 	std::vector<Tensor<1,C_DIM,VectorizedArray<double> > > gradRhoAtomsQuadsElectro(numQuadPoints,zeroTensor);
 	std::vector<VectorizedArray<double> > pseudoVLocQuadsElectro(numQuadPointsLpsp,make_vectorized_array(0.0));
-	std::vector<Tensor<1,C_DIM,VectorizedArray<double> > > gradPseudoVLocQuadsElectro(numQuadPointsLpsp,zeroTensor);
 
 	for (unsigned int cell=0; cell<matrixFreeDataElectro.n_macro_cells(); ++cell)
 	{
@@ -1488,7 +1487,6 @@ template<unsigned int FEOrder>
     std::fill(gradRhoQuadsElectroLpsp.begin(),gradRhoQuadsElectroLpsp.end(),zeroTensor);
 		std::fill(gradRhoAtomsQuadsElectro.begin(),gradRhoAtomsQuadsElectro.end(),zeroTensor);
 		std::fill(pseudoVLocQuadsElectro.begin(),pseudoVLocQuadsElectro.end(),make_vectorized_array(0.0));
-		std::fill(gradPseudoVLocQuadsElectro.begin(),gradPseudoVLocQuadsElectro.end(),zeroTensor);
 
 		const unsigned int numSubCells=matrixFreeDataElectro.n_components_filled(cell);
 
@@ -1531,9 +1529,6 @@ template<unsigned int FEOrder>
 				  gradRhoQuadsElectroLpsp[q][0][iSubCell]=tempLpspGradRhoVal[3*q+0];
 					gradRhoQuadsElectroLpsp[q][1][iSubCell]=tempLpspGradRhoVal[3*q+1];
 					gradRhoQuadsElectroLpsp[q][2][iSubCell]=tempLpspGradRhoVal[3*q+2];            
-					gradPseudoVLocQuadsElectro[q][0][iSubCell]=tempLpspGrad[3*q+0];
-					gradPseudoVLocQuadsElectro[q][1][iSubCell]=tempLpspGrad[3*q+1];
-					gradPseudoVLocQuadsElectro[q][2][iSubCell]=tempLpspGrad[3*q+2];          
         }
       }
       
@@ -1607,10 +1602,7 @@ template<unsigned int FEOrder>
 
         VectorizedArray<double> phiExtElectro_q =make_vectorized_array(0.0);
 
-        Tensor<2,C_DIM,VectorizedArray<double> > E=eshelbyTensor::getELocPspEshelbyTensor
-            (rhoQuadsElectroLpsp[q],
-             pseudoVLocQuadsElectro[q],
-             phiExtElectro_q);
+        Tensor<2,C_DIM,VectorizedArray<double> > E=zeroTensor2;
 
         //FIXME: quadrature mismatch
 				if (shadowPotentialForce)
@@ -1621,20 +1613,19 @@ template<unsigned int FEOrder>
 
         Tensor<1,C_DIM,VectorizedArray<double> > F=zeroTensor;
         Tensor<1,C_DIM,VectorizedArray<double> > gradPhiExt_q =zeroTensor;
-        F+=eshelbyTensor::getFPSPLocal
-          (rhoQuadsElectroLpsp[q],
-           gradPseudoVLocQuadsElectro[q],
-           gradPhiExt_q);
+        F-=gradRhoQuadsElectroLpsp[q]*pseudoVLocQuadsElectro[q];
 
         if(d_isElectrostaticsMeshSubdivided)
             F+=gradRhoQuadsElectroLpsp[q]*(pseudoVLocQuadsElectro[q]);
 
         //FIXME: quadrature mismatch
+        /*
         if (shadowPotentialForce)
           F+=eshelbyTensor::getFPSPLocal
             (shadowKSRhoMinMinusRhoQuadsElectro[q],
              gradPseudoVLocQuadsElectro[q],
              gradPhiExt_q);
+        */
         
         forceEvalElectroLpsp.submit_value(F,q);
         forceEvalElectroLpsp.submit_gradient(E,q);
