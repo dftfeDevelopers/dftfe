@@ -84,6 +84,8 @@ template<unsigned int FEOrder>
 	if(dftParameters::verbosity>=2)
 		pcout << " d_pspTail adjusted to " << d_pspTail << std::endl ;
 
+	AssertThrow((vselfBinManager.getStoredAdaptiveBallRadius()+3.0)<d_pspTail,ExcMessage("DFT-FE Error: pspTail must be larger than vself ball radius plus a buffer"));
+
 	//
 	//Initialize pseudopotential
 	//
