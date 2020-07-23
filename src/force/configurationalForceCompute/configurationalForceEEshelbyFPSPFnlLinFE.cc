@@ -1423,6 +1423,12 @@ template<unsigned int FEOrder>
 			matrixFreeDataElectro.get_quadrature(lpspQuadratureIdElectro),
 			update_values| update_gradients | update_quadrature_points);
 
+	QIterated<C_DIM-1>  faceQuadrature(QGauss<1>(C_num1DQuadLPSP<FEOrder>()),C_numCopies1DQuadLPSP());
+	FEFaceValues<C_DIM> feFaceValuesElectro (d_isElectrostaticsMeshSubdivided?matrixFreeDataElectro.
+			get_dof_handler(phiTotDofHandlerIndexElectro).get_fe():dftPtr->d_dofHandlerPRefined.get_fe(),
+                                         faceQuadrature,
+                                         update_values| update_JxW_values | update_normal_vectors | update_quadrature_points);
+
 	Tensor<1,C_DIM,VectorizedArray<double> > zeroTensor;
 	for (unsigned int idim=0; idim<C_DIM; idim++)
 	{
@@ -1545,10 +1551,12 @@ template<unsigned int FEOrder>
 		{
 			FPSPLocalGammaAtomsElementalContribution(forceContributionFPSPLocalGammaAtoms,
 					feVselfValuesElectro,
+          feFaceValuesElectro,
 					forceEvalElectroLpsp,
 					matrixFreeDataElectro,
 					cell,
 					shadowPotentialForce?shadowKSRhoMinQuadsElectro:rhoQuadsElectroLpsp,
+          gradRhoQuadsElectroLpsp,
 					gradPseudoVLocAtomsElectro,
 					vselfBinsManagerElectro,
 					d_cellsVselfBallsClosestAtomIdDofHandlerElectro);

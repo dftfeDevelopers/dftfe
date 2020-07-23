@@ -229,6 +229,8 @@ void dftClass<FEOrder>::compute_rhoOut(
 
   if (isGroundState)
   {
+    d_constraintsPRefined.distribute(d_rhoOutNodalValues);
+    d_rhoOutNodalValues.update_ghost_values();
 		interpolateNodalDataToQuadratureData(d_matrixFreeDataPRefined,
         0,
         2,

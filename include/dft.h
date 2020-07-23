@@ -926,7 +926,7 @@ namespace dftfe {
 			std::map<dealii::CellId, std::vector<double> > *rhoInValues, *rhoOutValues, *rhoInValuesSpinPolarized, *rhoOutValuesSpinPolarized;
 			std::deque<std::map<dealii::CellId,std::vector<double> >> rhoInVals, rhoOutVals, rhoInValsSpinPolarized, rhoOutValsSpinPolarized;
 
-			distributedCPUVec<double> d_rhoInNodalValuesRead, d_rhoInNodalValues, d_rhoOutNodalValues, d_rhoOutNodalValuesSplit, d_preCondResidualVector, d_atomicRho;
+			distributedCPUVec<double> d_rhoInNodalValuesRead, d_rhoInNodalValues, d_rhoOutNodalValues, d_rhoOutNodalValuesSplit, d_preCondResidualVector, d_atomicRho, d_rhoNodalFieldRefined;
 			std::deque<distributedCPUVec<double>> d_rhoInNodalVals, d_rhoOutNodalVals;
 
       std::map<dealii::CellId, std::vector<double> > d_rhoOutValuesLpspQuad, d_rhoInValuesLpspQuad, d_gradRhoOutValuesLpspQuad, d_gradRhoInValuesLpspQuad;
@@ -972,9 +972,9 @@ namespace dftfe {
 			double d_pspTail = 8.0;
 			std::map<dealii::CellId, std::vector<double> > d_pseudoVLoc;
 
-			/// Internal data:: map for cell id to gradient of Vpseudo local of individual atoms. Only for atoms
+			/// Internal data:: map for cell id to Vpseudo local of individual atoms. Only for atoms
 			/// whose psp tail intersects the local domain.
-			std::map<unsigned int,std::map<dealii::CellId, std::vector<double> > > d_gradPseudoVLocAtoms;
+			std::map<unsigned int,std::map<dealii::CellId, std::vector<double> > > d_pseudoVLocAtoms;
 
 
 			/// Internal data: map for cell id to sum Vpseudo local of all atoms whose psp tail intersects the local domain.

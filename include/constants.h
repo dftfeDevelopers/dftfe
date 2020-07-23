@@ -56,6 +56,6 @@ namespace dftfe {
 	{return 9;}
 
   /// number of copies 1d quad rule local PSP
-  constexpr unsigned int C_numCopies1DQuadLPSP(){return 3;}    
+  constexpr unsigned int C_numCopies1DQuadLPSP(){return 1;}    
 }
 #endif

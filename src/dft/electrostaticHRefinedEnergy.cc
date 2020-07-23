@@ -247,10 +247,10 @@ void dftClass<FEOrder>::computeElectrostaticEnergyHRefined(
 	//
 	//create rho nodal field on the refined mesh and conduct solution transfer
 	//
-	distributedCPUVec<double> rhoNodalFieldRefined = distributedCPUVec<double>(dofHandlerHRefined.locally_owned_dofs(),
+	d_rhoNodalFieldRefined = distributedCPUVec<double>(dofHandlerHRefined.locally_owned_dofs(),
 			ghost_indices,
 			mpi_communicator);
-	rhoNodalFieldRefined.zero_out_ghosts();
+	d_rhoNodalFieldRefined.zero_out_ghosts();
 
 	distributedCPUVec<double> delxRhoNodalFieldRefined;
 	distributedCPUVec<double> delyRhoNodalFieldRefined;
@@ -259,20 +259,20 @@ void dftClass<FEOrder>::computeElectrostaticEnergyHRefined(
 	if (dftParameters::isCellStress || dftParameters::isIonForce)
 	{
 
-		delxRhoNodalFieldRefined.reinit(rhoNodalFieldRefined);
+		delxRhoNodalFieldRefined.reinit(d_rhoNodalFieldRefined);
 		delxRhoNodalFieldRefined.zero_out_ghosts();
 
-		delyRhoNodalFieldRefined.reinit(rhoNodalFieldRefined);
+		delyRhoNodalFieldRefined.reinit(d_rhoNodalFieldRefined);
 		delyRhoNodalFieldRefined.zero_out_ghosts();
 
-		delzRhoNodalFieldRefined.reinit(rhoNodalFieldRefined);
+		delzRhoNodalFieldRefined.reinit(d_rhoNodalFieldRefined);
 		delzRhoNodalFieldRefined.zero_out_ghosts();
 	}
 
 	if (dftParameters::isCellStress || dftParameters::isIonForce)
 	{
 		std::vector<distributedCPUVec<double> *> vecAllOut(4);
-		vecAllOut[0]=&rhoNodalFieldRefined;
+		vecAllOut[0]=&d_rhoNodalFieldRefined;
 		vecAllOut[1]=&delxRhoNodalFieldRefined;
 		vecAllOut[2]=&delyRhoNodalFieldRefined;
 		vecAllOut[3]=&delzRhoNodalFieldRefined;
@@ -280,11 +280,11 @@ void dftClass<FEOrder>::computeElectrostaticEnergyHRefined(
 		solTrans.interpolate(vecAllOut);
 	}
 	else
-		solTrans.interpolate(rhoNodalFieldRefined);
+		solTrans.interpolate(d_rhoNodalFieldRefined);
 
-	rhoNodalFieldRefined.update_ghost_values();
-	constraintsHRefined.distribute(rhoNodalFieldRefined);
-	rhoNodalFieldRefined.update_ghost_values();
+	d_rhoNodalFieldRefined.update_ghost_values();
+	constraintsHRefined.distribute(d_rhoNodalFieldRefined);
+	d_rhoNodalFieldRefined.update_ghost_values();
 
 	if (dftParameters::isCellStress || dftParameters::isIonForce)
 	{
@@ -353,7 +353,7 @@ void dftClass<FEOrder>::computeElectrostaticEnergyHRefined(
 	//
 	std::map<dealii::CellId, std::vector<double> > rhoOutHRefinedQuadValues;
 	const double integralRhoValue = totalCharge(dofHandlerHRefined,
-			rhoNodalFieldRefined,
+			d_rhoNodalFieldRefined,
 			rhoOutHRefinedQuadValues);
 	//
 	//fill in grad rho at quadrature values of the field on the refined mesh
@@ -403,7 +403,7 @@ void dftClass<FEOrder>::computeElectrostaticEnergyHRefined(
 			if(cell->is_locally_owned())
 			{
 				fe_values_lpspquad.reinit (cell);
-				fe_values_lpspquad.get_function_values(rhoNodalFieldRefined,rholpsp);
+				fe_values_lpspquad.get_function_values(d_rhoNodalFieldRefined,rholpsp);
 
 				fe_values_lpspquad.get_function_values(delxRhoNodalFieldRefined,tempDelxRhoPsp);
 				fe_values_lpspquad.get_function_values(delyRhoNodalFieldRefined,tempDelyRhoPsp);
@@ -585,7 +585,7 @@ void dftClass<FEOrder>::computeElectrostaticEnergyHRefined(
 
 	std::map<dealii::CellId, std::vector<double> > pseudoVLocHRefined;
 	std::map<dealii::CellId, std::vector<double> > gradPseudoVLocHRefined;
-	std::map<unsigned int,std::map<dealii::CellId, std::vector<double> > > gradPseudoVLocAtomsHRefined;
+	std::map<unsigned int,std::map<dealii::CellId, std::vector<double> > > pseudoVLocAtomsHRefined;
 
 	std::map<types::global_dof_index, Point<3> > supportPointsHRef;
 	DoFTools::map_dofs_to_support_points(MappingQ1<3,3>(), dofHandlerHRefined, supportPointsHRef);
@@ -600,7 +600,7 @@ void dftClass<FEOrder>::computeElectrostaticEnergyHRefined(
         phiExtHRefined,
 				pseudoVLocHRefined,
 				gradPseudoVLocHRefined,
-				gradPseudoVLocAtomsHRefined);
+				pseudoVLocAtomsHRefined);
 
 	energyCalculator energyCalcHRefined(mpi_communicator, interpoolcomm, interBandGroupComm);
 
@@ -758,7 +758,7 @@ void dftClass<FEOrder>::computeElectrostaticEnergyHRefined(
           gradRhoOutValuesLpspQuadHRefined,
 					pseudoVLocHRefined,
 					gradPseudoVLocHRefined,
-					gradPseudoVLocAtomsHRefined,
+					pseudoVLocAtomsHRefined,
 					onlyHangingNodeConstraints,
 					vselfBinsManagerHRefined,
 					*rhoOutValues,
@@ -794,7 +794,7 @@ void dftClass<FEOrder>::computeElectrostaticEnergyHRefined(
 					gradRhoOutHRefinedQuadValues,
 					pseudoVLocHRefined,
 					gradPseudoVLocHRefined,
-					gradPseudoVLocAtomsHRefined,
+					pseudoVLocAtomsHRefined,
 					onlyHangingNodeConstraints,
 					vselfBinsManagerHRefined);
 			forcePtr->printStress();

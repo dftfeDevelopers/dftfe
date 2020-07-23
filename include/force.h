@@ -367,11 +367,13 @@ namespace dftfe {
 			void FPSPLocalGammaAtomsElementalContribution
 				(std::map<unsigned int, std::vector<double> > & forceContributionFPSPLocalGammaAtoms,
 				 FEValues<C_DIM> & feValues,
+         FEFaceValues<C_DIM> & feFaceValues,
 				 FEEvaluation<C_DIM,1,C_num1DQuadLPSP<FEOrder>()*C_numCopies1DQuadLPSP(),C_DIM>  & forceEval,
 				 const MatrixFree<3,double> & matrixFreeData,
 				 const unsigned int cell,
-				 const std::vector<VectorizedArray<double> > & rhoQuads,
-				 const std::map<unsigned int,std::map<dealii::CellId, std::vector<double> > > & gradPseudoVLocAtoms,
+         const std::vector<VectorizedArray<double> > & rhoQuads,
+				 const std::vector<Tensor<1,C_DIM,VectorizedArray<double> >  > & gradRhoQuads,
+				 const std::map<unsigned int,std::map<dealii::CellId, std::vector<double> > > & pseudoVLocAtoms,
 				 const vselfBinsManager<FEOrder> & vselfBinsManager,
 				 const std::vector<std::map<dealii::CellId , unsigned int> > & cellsVselfBallsClosestAtomIdDofHandler);
 
@@ -788,6 +790,8 @@ namespace dftfe {
 			 * cell iterator.
 			 */
 			std::vector<std::map<DoFHandler<C_DIM>::active_cell_iterator,std::vector<unsigned int > > > d_cellFacesVselfBallSurfacesDofHandlerForceElectro;
+
+      std::map<dealii::CellId, DoFHandler<3>::active_cell_iterator> d_cellIdToActiveCellIteratorMapDofHandlerRhoNodalElectro;
 
 			std::vector<distributedCPUVec<double>> d_gaussianWeightsVecAtoms;
 

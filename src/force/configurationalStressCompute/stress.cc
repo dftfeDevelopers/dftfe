@@ -40,18 +40,6 @@ template<unsigned int FEOrder>
  const ConstraintMatrix  & noConstraintsElectro,
  const vselfBinsManager<FEOrder> & vselfBinsManagerElectro)
 {
-	/*
-	   createBinObjectsForce(matrixFreeData.get_dof_handler(phiTotDofHandlerIndex),
-	   d_dofHandlerForce,
-	   noConstraints,
-	   vselfBinsManagerEigen,
-	   d_cellsVselfBallsDofHandler,
-	   d_cellsVselfBallsDofHandlerForce,
-	   d_cellsVselfBallsClosestAtomIdDofHandler,
-	   d_AtomIdBinIdLocalDofHandler,
-	   d_cellFacesVselfBallSurfacesDofHandler,
-	   d_cellFacesVselfBallSurfacesDofHandlerForce);
-	 */
 
 	createBinObjectsForce(matrixFreeDataElectro.get_dof_handler(phiTotDofHandlerIndexElectro),
 			d_dofHandlerForceElectro,

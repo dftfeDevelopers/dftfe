@@ -293,18 +293,6 @@ namespace  dftfe {
 		 const distributedCPUVec<double> & phiRhoMinusApproxRho,
 		 const bool shadowPotentialForce)
 		 {
-			 /*
-			    createBinObjectsForce(matrixFreeData.get_dof_handler(phiTotDofHandlerIndex),
-			    d_dofHandlerForce,
-			    noConstraints,
-			    vselfBinsManagerEigen,
-			    d_cellsVselfBallsDofHandler,
-			    d_cellsVselfBallsDofHandlerForce,
-			    d_cellsVselfBallsClosestAtomIdDofHandler,
-			    d_AtomIdBinIdLocalDofHandler,
-			    d_cellFacesVselfBallSurfacesDofHandler,
-			    d_cellFacesVselfBallSurfacesDofHandlerForce);
-			  */
 
 			 createBinObjectsForce(matrixFreeDataElectro.get_dof_handler(phiTotDofHandlerIndexElectro),
 					 d_dofHandlerForceElectro,
