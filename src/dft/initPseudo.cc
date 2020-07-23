@@ -84,7 +84,7 @@ template<unsigned int FEOrder>
 	if(dftParameters::verbosity>=2)
 		pcout << " d_pspTail adjusted to " << d_pspTail << std::endl ;
 
-	AssertThrow((vselfBinManager.getStoredAdaptiveBallRadius()+3.0)<d_pspTail,ExcMessage("DFT-FE Error: pspTail must be larger than vself ball radius plus a buffer"));
+  const double cutOffForPsp=std::max(vselfBinManager.getStoredAdaptiveBallRadius()+4.0,d_pspTail);
 
 	//
 	//Initialize pseudopotential
@@ -123,9 +123,9 @@ template<unsigned int FEOrder>
 
 	dealii::BoundingBox<3> boundingBoxTria(vectorTools::createBoundingBoxTriaLocallyOwned(_dofHandler));
 	dealii::Tensor<1,3,double> tempDisp;
-	tempDisp[0]=d_pspTail+5.0;
-	tempDisp[1]=d_pspTail+5.0;
-	tempDisp[2]=d_pspTail+5.0;
+	tempDisp[0]=cutOffForPsp+5.0;
+	tempDisp[1]=cutOffForPsp+5.0;
+	tempDisp[2]=cutOffForPsp+5.0;
 	std::pair< dealii::Point<3,double >,dealii::Point<3, double>> boundaryPoints;
 
 	std::vector<double> atomsImagesPositions((numberGlobalCharges+numberImageCharges)*3);
@@ -175,7 +175,7 @@ template<unsigned int FEOrder>
 
 				distanceToAtom = std::sqrt(diffx*diffx+diffy*diffy+diffz*diffz);
 
-				if (distanceToAtom<d_pspTail)
+				if (distanceToAtom<cutOffForPsp)
 				{
 					if (iAtom<numberGlobalCharges)
 					{
