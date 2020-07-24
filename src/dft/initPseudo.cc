@@ -31,11 +31,13 @@ template<unsigned int FEOrder>
  distributedCPUVec<double> & phiExt,
  std::map<dealii::CellId, std::vector<double> > & _pseudoValues,
  std::map<dealii::CellId, std::vector<double> > & _gradPseudoValues,
- std::map<unsigned int,std::map<dealii::CellId, std::vector<double> > > & _pseudoValuesAtoms)
+ std::map<unsigned int,std::map<dealii::CellId, std::vector<double> > > & _pseudoValuesAtoms,
+ std::map<unsigned int,std::map<dealii::CellId, std::vector<double> > > & _gradPseudoValuesAtoms)
 {
 	_pseudoValues.clear();
 	_gradPseudoValues.clear();
 	_pseudoValuesAtoms.clear();
+  _gradPseudoValuesAtoms.clear();
 
 	//
 	//Reading single atom rho initial guess
@@ -367,6 +369,7 @@ template<unsigned int FEOrder>
 	init_3 = MPI_Wtime();
 
 	std::vector<double> pseudoVLocAtom(n_q_points);
+  std::vector<double> gradPseudoVLocAtom(3*n_q_points); 
 	typename DoFHandler<3>::active_cell_iterator cell = _dofHandler.begin_active(), endc = _dofHandler.end();
 	for(; cell!=endc; ++cell)
 	{
@@ -430,12 +433,19 @@ template<unsigned int FEOrder>
 					else
 					{
 						value=-atomCharge/distanceToAtom;
+            firstDer= atomCharge/distanceToAtom/distanceToAtom;
 					}
 
 					pseudoVLocAtom[q]=value;
+					gradPseudoVLocAtom[3*q+0]=firstDer*(quadPoint[0]-atom[0])/distanceToAtom;
+					gradPseudoVLocAtom[3*q+1]=firstDer*(quadPoint[1]-atom[1])/distanceToAtom;
+					gradPseudoVLocAtom[3*q+2]=firstDer*(quadPoint[2]-atom[2])/distanceToAtom;          
 				}//loop over quad points
 				if (isPseudoDataInCell)
+        {
 					_pseudoValuesAtoms[iAtom][cell->id()]=pseudoVLocAtom;
+          _gradPseudoValuesAtoms[iAtom][cell->id()]=gradPseudoVLocAtom;
+        }
 			}//loop over atoms
 		}//cell locally owned check
 	}//cell loop

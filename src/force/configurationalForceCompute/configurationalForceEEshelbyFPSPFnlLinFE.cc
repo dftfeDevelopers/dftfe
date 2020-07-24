@@ -1521,7 +1521,6 @@ template<unsigned int FEOrder>
         const std::vector<double> & tempPseudoVal=pseudoVLocElectro.find(subCellId)->second;
         const std::vector<double> & tempLpspRhoVal=rhoOutValuesElectroLpsp.find(subCellId)->second;
         const std::vector<double> & tempLpspGradRhoVal=gradRhoOutValuesElectroLpsp.find(subCellId)->second;
-        const std::vector<double> & tempLpspGrad=gradPseudoVLocElectro.find(subCellId)->second;
 				for (unsigned int q=0; q<numQuadPointsLpsp; ++q)
         {
           pseudoVLocQuadsElectro[q][iSubCell]=tempPseudoVal[q];

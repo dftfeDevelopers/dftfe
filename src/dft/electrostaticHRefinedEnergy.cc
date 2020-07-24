@@ -586,6 +586,7 @@ void dftClass<FEOrder>::computeElectrostaticEnergyHRefined(
 	std::map<dealii::CellId, std::vector<double> > pseudoVLocHRefined;
 	std::map<dealii::CellId, std::vector<double> > gradPseudoVLocHRefined;
 	std::map<unsigned int,std::map<dealii::CellId, std::vector<double> > > pseudoVLocAtomsHRefined;
+  std::map<unsigned int,std::map<dealii::CellId, std::vector<double> > > gradPseudoVLocAtomsHRefined;
 
 	std::map<types::global_dof_index, Point<3> > supportPointsHRef;
 	DoFTools::map_dofs_to_support_points(MappingQ1<3,3>(), dofHandlerHRefined, supportPointsHRef);
@@ -600,7 +601,8 @@ void dftClass<FEOrder>::computeElectrostaticEnergyHRefined(
         phiExtHRefined,
 				pseudoVLocHRefined,
 				gradPseudoVLocHRefined,
-				pseudoVLocAtomsHRefined);
+				pseudoVLocAtomsHRefined,
+        gradPseudoVLocAtomsHRefined);
 
 	energyCalculator energyCalcHRefined(mpi_communicator, interpoolcomm, interBandGroupComm);
 
@@ -790,11 +792,16 @@ void dftClass<FEOrder>::computeElectrostaticEnergyHRefined(
 					matrixFreeDataHRefined,
 					phiTotDofHandlerIndexHRefined,
 					phiTotRhoOutHRefined,
+					*rhoOutValues,
+					*gradRhoOutValues,
+          d_gradRhoOutValuesLpspQuad,
 					rhoOutHRefinedQuadValues,
+          rhoOutValuesLpspQuadHRefined,
 					gradRhoOutHRefinedQuadValues,
+          gradRhoOutValuesLpspQuadHRefined,
 					pseudoVLocHRefined,
 					gradPseudoVLocHRefined,
-					pseudoVLocAtomsHRefined,
+					gradPseudoVLocAtomsHRefined,
 					onlyHangingNodeConstraints,
 					vselfBinsManagerHRefined);
 			forcePtr->printStress();

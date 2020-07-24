@@ -1809,7 +1809,8 @@ namespace dftfe {
             d_phiExt,
 						d_pseudoVLoc,
 						d_gradPseudoVLoc,
-						d_pseudoVLocAtoms);
+						d_pseudoVLocAtoms,
+            d_gradPseudoVLocAtoms);
 
 				MPI_Barrier(MPI_COMM_WORLD);
 				init_psplocal = MPI_Wtime() - init_psplocal;
@@ -3199,11 +3200,16 @@ namespace dftfe {
 							matrix_free_data,
 							phiTotDofHandlerIndex,
 							d_phiTotRhoOut,
-							*rhoOutValues,
-							*gradRhoOutValues,
-							d_pseudoVLoc,
-							d_gradPseudoVLoc,
-							d_pseudoVLocAtoms,
+              *rhoOutValues,
+              *gradRhoOutValues,
+              d_gradRhoOutValuesLpspQuad,
+              *rhoOutValues,
+              d_rhoOutValuesLpspQuad,
+              *gradRhoOutValues,
+              d_gradRhoOutValuesLpspQuad,
+              d_pseudoVLoc,
+              d_gradPseudoVLoc,
+              d_gradPseudoVLocAtoms,
 							d_noConstraints,
 							d_vselfBinsManager);
 					forcePtr->printStress();

@@ -20,7 +20,7 @@
 template<unsigned int FEOrder>
 	void forceClass<FEOrder>::addEPSPStressContribution
 (FEValues<C_DIM> & feValues,
- FEEvaluation<C_DIM,1,C_num1DQuad<FEOrder>(),C_DIM>  & forceEval,
+ FEEvaluation<C_DIM,1,C_num1DQuadLPSP<FEOrder>()*C_numCopies1DQuadLPSP(),C_DIM>  & forceEval,
  const MatrixFree<3,double> & matrixFreeData,
  const unsigned int cell,
  const std::vector<VectorizedArray<double> > & rhoQuads,

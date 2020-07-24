@@ -522,6 +522,7 @@ namespace dftfe {
           distributedCPUVec<double> & phiExt,
 					std::map<dealii::CellId, std::vector<double> > & _pseudoValues,
 					std::map<dealii::CellId, std::vector<double> > & _gradPseudoValues,
+          std::map<unsigned int,std::map<dealii::CellId, std::vector<double> > > & _pseudoValuesAtoms,
 					std::map<unsigned int,std::map<dealii::CellId, std::vector<double> > > & _gradPseudoValuesAtoms);
 			void initNonLocalPseudoPotential();
 			void initNonLocalPseudoPotential_OV();
@@ -971,6 +972,10 @@ namespace dftfe {
 
 			double d_pspTail = 8.0;
 			std::map<dealii::CellId, std::vector<double> > d_pseudoVLoc;
+
+			/// Internal data:: map for cell id to Vpseudo local of individual atoms. Only for atoms
+			/// whose psp tail intersects the local domain.
+			std::map<unsigned int,std::map<dealii::CellId, std::vector<double> > > d_gradPseudoVLocAtoms;
 
 			/// Internal data:: map for cell id to Vpseudo local of individual atoms. Only for atoms
 			/// whose psp tail intersects the local domain.

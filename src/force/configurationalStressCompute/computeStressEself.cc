@@ -157,7 +157,7 @@ void forceClass<FEOrder>::computeStressEself(const DoFHandler<3> & dofHandlerEle
     for(unsigned int iBin = 0; iBin < numberBins; ++iBin)
     {
       FEEvaluation<C_DIM,FEOrder,C_num1DQuadSmearedCharge<FEOrder>()*C_numCopies1DQuadSmearedCharge(),1>  vselfEvalSmearedCharge(matrixFreeDataElectro,
-        2+iBin,
+        2+4*iBin,
         smearedChargeQuadratureId);
 
       const std::set<int> & atomImageIdsInBin=atomImageIdsBins.find(iBin)->second;

@@ -30,8 +30,13 @@ void forceClass<FEOrder>::computeStressEEshelbyEPSPEnlEk(const MatrixFree<3,doub
 		const MatrixFree<3,double> & matrixFreeDataElectro,
 		const unsigned int phiTotDofHandlerIndexElectro,
 		const distributedCPUVec<double> & phiTotRhoOutElectro,
-		const std::map<dealii::CellId, std::vector<double> > & rhoOutValuesElectro,
-		const std::map<dealii::CellId, std::vector<double> > & gradRhoOutValuesElectro,
+    const std::map<dealii::CellId, std::vector<double> > & rhoOutValues,
+    const std::map<dealii::CellId, std::vector<double> > & gradRhoOutValues,
+    const std::map<dealii::CellId, std::vector<double> > & gradRhoOutValuesLpsp,         
+    const std::map<dealii::CellId, std::vector<double> > & rhoOutValuesElectro,
+    const std::map<dealii::CellId, std::vector<double> > & rhoOutValuesElectroLpsp,         
+    const std::map<dealii::CellId, std::vector<double> > & gradRhoOutValuesElectro,
+    const std::map<dealii::CellId, std::vector<double> > & gradRhoOutValuesElectroLpsp,
 		const std::map<dealii::CellId, std::vector<double> > & pseudoVLocElectro,
 		const std::map<dealii::CellId, std::vector<double> > & gradPseudoVLocElectro,
 		const std::map<unsigned int,std::map<dealii::CellId, std::vector<double> > > & gradPseudoVLocAtomsElectro,
@@ -488,8 +493,10 @@ void forceClass<FEOrder>::computeStressEEshelbyEPSPEnlEk(const MatrixFree<3,doub
      smearedChargeQuadratureId,
      lpspQuadratureIdElectro,
 		 phiTotRhoOutElectro,
-		 rhoOutValuesElectro,
-		 gradRhoOutValuesElectro,
+     rhoOutValuesElectro,
+     rhoOutValuesElectroLpsp,         
+     gradRhoOutValuesElectro,
+     gradRhoOutValuesElectroLpsp,
 		 pseudoVLocElectro,
 		 gradPseudoVLocAtomsElectro,
 		 vselfBinsManagerElectro);
@@ -503,7 +510,9 @@ template<unsigned int FEOrder>
           const unsigned int lpspQuadratureIdElectro,
  const distributedCPUVec<double> & phiTotRhoOutElectro,
  const std::map<dealii::CellId, std::vector<double> > & rhoOutValuesElectro,
+ const std::map<dealii::CellId, std::vector<double> > & rhoOutValuesElectroLpsp,         
  const std::map<dealii::CellId, std::vector<double> > & gradRhoOutValuesElectro,
+ const std::map<dealii::CellId, std::vector<double> > & gradRhoOutValuesElectroLpsp,
  const std::map<dealii::CellId, std::vector<double> > & pseudoVLocElectro,
  const std::map<unsigned int,std::map<dealii::CellId, std::vector<double> > > & gradPseudoVLocAtomsElectro,
  const vselfBinsManager<FEOrder> & vselfBinsManagerElectro)
@@ -524,14 +533,23 @@ template<unsigned int FEOrder>
 			d_forceDofHandlerIndexElectro,
 			smearedChargeQuadratureId);
 
-	QGauss<C_DIM>  quadrature(C_num1DQuad<FEOrder>());
+	FEEvaluation<C_DIM,1,C_num1DQuadLPSP<FEOrder>()*C_numCopies1DQuadLPSP(),C_DIM>  forceEvalElectroLpsp(matrixFreeDataElectro,
+			d_forceDofHandlerIndexElectro,
+			lpspQuadratureIdElectro);  
+
 	FEValues<C_DIM> feVselfValuesElectro (matrixFreeDataElectro.
 			get_dof_handler(phiTotDofHandlerIndexElectro).get_fe(),
-			quadrature,
+			matrixFreeDataElectro.get_quadrature(lpspQuadratureIdElectro),
 			update_gradients | update_quadrature_points);
 
 	const unsigned int numQuadPoints=forceEvalElectro.n_q_points;
   const unsigned int numQuadPointsSmearedb=forceEvalSmearedCharge.n_q_points;
+  const unsigned int numQuadPointsLpsp=forceEvalElectroLpsp.n_q_points;
+
+  if (gradRhoOutValuesElectroLpsp.size()!=0)
+    AssertThrow(gradRhoOutValuesElectroLpsp.begin()->second.size() == 3*numQuadPointsLpsp,
+            dealii::ExcMessage("DFT-FE Error: mismatch in quadrature rule usage in force computation.")); 
+  
 	DoFHandler<C_DIM>::active_cell_iterator subCellPtr;
 
 
@@ -547,14 +565,17 @@ template<unsigned int FEOrder>
 			zeroTensor2[idim][jdim]=make_vectorized_array(0.0);
 
 	std::vector<VectorizedArray<double> > rhoQuadsElectro(numQuadPoints,make_vectorized_array(0.0));
+  std::vector<VectorizedArray<double> > rhoQuadsElectroLpsp(numQuadPointsLpsp,make_vectorized_array(0.0));  
   std::vector<VectorizedArray<double> > smearedbQuads(numQuadPointsSmearedb,make_vectorized_array(0.0));
   std::vector< Tensor<1,C_DIM,VectorizedArray<double> >  > smearedGradbQuads(numQuadPointsSmearedb,zeroTensor);  
   std::vector< VectorizedArray<double> > phiTotSmearedChargeQuads(numQuadPointsSmearedb,make_vectorized_array(0.0));  
 	std::vector<Tensor<1,C_DIM,VectorizedArray<double> > > gradRhoQuadsElectro(numQuadPoints,zeroTensor);
-	std::vector<VectorizedArray<double> > pseudoVLocQuadsElectro(numQuadPoints,make_vectorized_array(0.0));
+  std::vector<Tensor<1,C_DIM,VectorizedArray<double> > > gradRhoQuadsElectroLpsp(numQuadPointsLpsp,zeroTensor);
+	std::vector<VectorizedArray<double> > pseudoVLocQuadsElectro(numQuadPointsLpsp,make_vectorized_array(0.0));
 	for (unsigned int cell=0; cell<matrixFreeDataElectro.n_macro_cells(); ++cell)
 	{
 		forceEvalElectro.reinit(cell);
+    forceEvalElectroLpsp.reinit(cell);
 
 		phiTotEvalElectro.reinit(cell);
 		phiTotEvalElectro.read_dof_values_plain(phiTotRhoOutElectro);
@@ -569,7 +590,9 @@ template<unsigned int FEOrder>
     }
 
 		std::fill(rhoQuadsElectro.begin(),rhoQuadsElectro.end(),make_vectorized_array(0.0));
+    std::fill(rhoQuadsElectroLpsp.begin(),rhoQuadsElectroLpsp.end(),make_vectorized_array(0.0));    
 		std::fill(gradRhoQuadsElectro.begin(),gradRhoQuadsElectro.end(),zeroTensor);
+    std::fill(gradRhoQuadsElectroLpsp.begin(),gradRhoQuadsElectroLpsp.end(),zeroTensor);    
 		std::fill(pseudoVLocQuadsElectro.begin(),pseudoVLocQuadsElectro.end(),make_vectorized_array(0.0));
     std::fill(smearedbQuads.begin(),smearedbQuads.end(),make_vectorized_array(0.0));
     std::fill(smearedGradbQuads.begin(),smearedGradbQuads.end(),zeroTensor);    
@@ -594,8 +617,19 @@ template<unsigned int FEOrder>
 				}
 
 			if(dftParameters::isPseudopotential)
-				for (unsigned int q=0; q<numQuadPoints; ++q)
-					pseudoVLocQuadsElectro[q][iSubCell]=pseudoVLocElectro.find(subCellId)->second[q];
+      {
+        const std::vector<double> & tempPseudoVal=pseudoVLocElectro.find(subCellId)->second;
+        const std::vector<double> & tempLpspRhoVal=rhoOutValuesElectroLpsp.find(subCellId)->second;
+        const std::vector<double> & tempLpspGradRhoVal=gradRhoOutValuesElectroLpsp.find(subCellId)->second;
+				for (unsigned int q=0; q<numQuadPointsLpsp; ++q)
+        {
+          pseudoVLocQuadsElectro[q][iSubCell]=tempPseudoVal[q];
+					rhoQuadsElectroLpsp[q][iSubCell]=tempLpspRhoVal[q];
+				  gradRhoQuadsElectroLpsp[q][0][iSubCell]=tempLpspGradRhoVal[3*q+0];
+					gradRhoQuadsElectroLpsp[q][1][iSubCell]=tempLpspGradRhoVal[3*q+1];
+					gradRhoQuadsElectroLpsp[q][2][iSubCell]=tempLpspGradRhoVal[3*q+2];            
+        }
+      }
 
       if (dftParameters::smearedNuclearCharges)
       {
@@ -616,10 +650,10 @@ template<unsigned int FEOrder>
 		{
 
 			addEPSPStressContribution(feVselfValuesElectro,
-					forceEvalElectro,
+					forceEvalElectroLpsp,
 					matrixFreeDataElectro,
 					cell,
-					rhoQuadsElectro,
+					rhoQuadsElectroLpsp,
 					gradPseudoVLocAtomsElectro,
 					vselfBinsManagerElectro,
 					d_cellsVselfBallsClosestAtomIdDofHandlerElectro);
@@ -649,24 +683,36 @@ template<unsigned int FEOrder>
 				E[0][0]+=val;
 				E[1][1]+=val;
 				E[2][2]+=val;
-
-				if (dftParameters::isPseudopotential)
-				{
-					val=scalar_product(gradRhoQuadsElectro[q]*(pseudoVLocQuadsElectro[q]),quadPoint_q);
-					E[0][0]+=val;
-					E[1][1]+=val;
-					E[2][2]+=val;
-				}
 			}
-
-			if (dftParameters::isPseudopotential)
-				E+=eshelbyTensor::getELocPspEshelbyTensor
-					(rhoQuadsElectro[q],
-					 pseudoVLocQuadsElectro[q],
-					 phiExtElectro_q);
 
 			EQuadSum+=E*forceEvalElectro.JxW(q);
 		}
+
+		if(dftParameters::isPseudopotential)
+      for (unsigned int q=0; q<numQuadPointsLpsp; ++q)
+      {
+			  VectorizedArray<double> phiExtElectro_q =make_vectorized_array(0.0);
+        Tensor<2,C_DIM,VectorizedArray<double> > E=zeroTensor2;
+
+				E+=eshelbyTensor::getELocPspEshelbyTensor
+					(rhoQuadsElectroLpsp[q],
+					 pseudoVLocQuadsElectro[q],
+					 phiExtElectro_q);
+
+        Point< 3, VectorizedArray<double> > quadPoint_q;
+        if (d_isElectrostaticsMeshSubdivided && false)
+          quadPoint_q=forceEvalElectroLpsp.quadrature_point(q);
+
+        if(d_isElectrostaticsMeshSubdivided && false)
+        {
+					VectorizedArray<double> val=scalar_product(gradRhoQuadsElectroLpsp[q]*(pseudoVLocQuadsElectro[q]),quadPoint_q);
+					E[0][0]+=val;
+					E[1][1]+=val;
+					E[2][2]+=val;
+        }
+
+        EQuadSum+=E*forceEvalElectroLpsp.JxW(q);
+      }    
 
 		for (unsigned int iSubCell=0; iSubCell<numSubCells; ++iSubCell)
 			for (unsigned int idim=0; idim<C_DIM; ++idim)
