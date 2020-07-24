@@ -540,7 +540,7 @@ template<unsigned int FEOrder>
 	FEValues<C_DIM> feVselfValuesElectro (matrixFreeDataElectro.
 			get_dof_handler(phiTotDofHandlerIndexElectro).get_fe(),
 			matrixFreeDataElectro.get_quadrature(lpspQuadratureIdElectro),
-			update_gradients | update_quadrature_points);
+			update_values| update_gradients | update_quadrature_points);
 
 	const unsigned int numQuadPoints=forceEvalElectro.n_q_points;
   const unsigned int numQuadPointsSmearedb=forceEvalSmearedCharge.n_q_points;

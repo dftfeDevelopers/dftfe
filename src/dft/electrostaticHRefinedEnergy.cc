@@ -552,6 +552,7 @@ void dftClass<FEOrder>::computeElectrostaticEnergyHRefined(
       d_bQuadAtomIdsAllAtoms,
       d_bQuadAtomIdsAllAtomsImages,  
 			d_smearedChargeWidths,
+      d_smearedChargeScaling,
       1,
       dftParameters::smearedNuclearCharges);
 

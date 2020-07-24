@@ -737,6 +737,9 @@ namespace dftfe {
 			/// smeared charge widths for all domain atoms
 			std::vector<double> d_smearedChargeWidths;
 
+			/// smeared charge normalization scaling for all domain atoms
+			std::vector<double> d_smearedChargeScaling;      
+
       /// nearest atom ids for all domain atoms
       std::vector<unsigned int> d_nearestAtomIds;
 

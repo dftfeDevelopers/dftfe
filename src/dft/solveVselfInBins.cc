@@ -44,7 +44,8 @@ namespace dftfe
 				std::map<dealii::CellId, std::vector<double> > & bQuadValues,
 				std::map<dealii::CellId, std::vector<double> >  & gradbQuadValuesAllAtoms,    
         std::map<dealii::CellId, std::vector<int> >  & bQuadAtomIdsAllAtoms,
-        std::map<dealii::CellId, std::vector<int> > & bQuadAtomIdsAllAtomsImages)
+        std::map<dealii::CellId, std::vector<int> > & bQuadAtomIdsAllAtomsImages,
+        std::vector<double> & smearedChargeScaling)
 		{
 			dealii::FEValues<3> fe_values (dofHandlerOfField.get_fe(), quadrature_formula, dealii::update_quadrature_points|dealii::update_JxW_values);
 			const unsigned int dofs_per_cell = dofHandlerOfField.get_fe().dofs_per_cell;
@@ -92,6 +93,11 @@ namespace dftfe
 					MPI_DOUBLE,
 					MPI_SUM,
 					mpi_communicator);
+
+			for (unsigned int iatom=0; iatom< numberDomainAtomsInBin; ++iatom)
+      {
+        smearedChargeScaling[binAtomIdToGlobalAtomIdMapCurrentBin[iatom]]=1.0/smearedNuclearChargeIntegral[iatom];
+      }
 
 			if (dealii::Utilities::MPI::this_mpi_process(mpi_communicator) ==0)
 				for (unsigned int iatom=0; iatom< numberDomainAtomsInBin; ++iatom)
@@ -165,9 +171,11 @@ namespace dftfe
      std::map<dealii::CellId, std::vector<int> > & bQuadAtomIdsAllAtoms,
      std::map<dealii::CellId, std::vector<int> > & bQuadAtomIdsAllAtomsImages,
 		 const std::vector<double> & smearingWidths,
+     std::vector<double> & smearedChargeScaling,
      const unsigned int smearedChargeQuadratureId,
 		 const bool useSmearedCharges)
 		{
+      smearedChargeScaling.clear();
 			localVselfs.clear();
 			d_vselfFieldBins.clear();
       d_vselfFieldDerRBins.clear();
@@ -177,6 +185,8 @@ namespace dftfe
       bQuadAtomIdsAllAtomsImages.clear();
 			const unsigned int numberBins = d_boundaryFlagOnlyChargeId.size();
 			const unsigned int numberGlobalCharges = d_atomLocations.size();
+
+      smearedChargeScaling.resize(numberGlobalCharges,0.0);
 
 			const dealii::DoFHandler<3> & dofHandler=matrix_free_data.get_dof_handler(offset); 
 			const dealii::Quadrature<3> & quadratureFormula=matrix_free_data.get_quadrature();
@@ -287,7 +297,8 @@ namespace dftfe
 							bQuadValuesBin,
 							gradbQuadValuesAllAtoms,              
               bQuadAtomIdsAllAtoms,
-              bQuadAtomIdsAllAtomsImages);
+              bQuadAtomIdsAllAtomsImages,
+              smearedChargeScaling);
 
 				const unsigned int constraintMatrixIdVself = 4*iBin + offset;
 				distributedCPUVec<double> vselfBinScratch;
@@ -520,6 +531,7 @@ namespace dftfe
      std::map<dealii::CellId, std::vector<int> > & bQuadAtomIdsAllAtoms,
      std::map<dealii::CellId, std::vector<int> > & bQuadAtomIdsAllAtomsImages,
 		 const std::vector<double> & smearingWidths,
+     std::vector<double> & smearedChargeScaling,
      const unsigned int smearedChargeQuadratureId,
 		 const bool useSmearedCharges)
 		{

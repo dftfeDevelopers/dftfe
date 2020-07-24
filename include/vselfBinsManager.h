@@ -115,6 +115,7 @@ namespace dftfe {
             std::map<dealii::CellId, std::vector<int> > & bQuadAtomIdsAllAtoms,
             std::map<dealii::CellId, std::vector<int> > & bQuadAtomIdsAllAtomsImages,
 						const std::vector<double> & smearingWidths,
+            std::vector<double> & smearedChargeScaling,
             const unsigned int smearedChargeQuadratureId,
 						const bool useSmearedCharges=false);
 
@@ -144,6 +145,7 @@ namespace dftfe {
             std::map<dealii::CellId, std::vector<int> > & bQuadAtomIdsAllAtoms,
             std::map<dealii::CellId, std::vector<int> > & bQuadAtomIdsAllAtomsImages,
 						const std::vector<double> & smearingWidths,
+            std::vector<double> & smearedChargeScaling,            
             const unsigned int smearedChargeQuadratureId,
 						const bool useSmearedCharges=false);
 

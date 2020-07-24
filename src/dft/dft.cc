@@ -1756,6 +1756,7 @@ namespace dftfe {
               d_bQuadAtomIdsAllAtoms,
               d_bQuadAtomIdsAllAtomsImages,              
 							d_smearedChargeWidths,
+              d_smearedChargeScaling,
               4,
 							dftParameters::smearedNuclearCharges);
 				else
@@ -1771,6 +1772,7 @@ namespace dftfe {
               d_bQuadAtomIdsAllAtoms,
               d_bQuadAtomIdsAllAtomsImages,              
 							d_smearedChargeWidths,
+              d_smearedChargeScaling,
               4,
 							dftParameters::smearedNuclearCharges);
 #else
@@ -1786,6 +1788,7 @@ namespace dftfe {
             d_bQuadAtomIdsAllAtoms,
             d_bQuadAtomIdsAllAtomsImages,            
 						d_smearedChargeWidths,
+            d_smearedChargeScaling,
             4,
 						dftParameters::smearedNuclearCharges);
 #endif

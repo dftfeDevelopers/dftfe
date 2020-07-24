@@ -155,7 +155,7 @@ template<unsigned int FEOrder>
                 Point<C_DIM> quadPoint=feValues.quadrature_point(q);
                 Tensor<1,C_DIM,double> dispAtom=quadPoint-atomLocation;
                 const double dist=dispAtom.norm();
-                Tensor<1,C_DIM,double> temp= atomCharge*dftUtils::smearedPotDr(dist, dftPtr->d_smearedChargeWidths[atomId])*dispAtom/dist;
+                Tensor<1,C_DIM,double> temp= atomCharge*dftUtils::smearedPotDr(dist, dftPtr->d_smearedChargeWidths[atomId])*dispAtom/dist*dftPtr->d_smearedChargeScaling[atomId];
                 vselfDerRQuads[q][0][iSubCell]=temp[0];
                 vselfDerRQuads[q][1][iSubCell]=temp[1];
                 vselfDerRQuads[q][2][iSubCell]=temp[2];
