@@ -234,6 +234,9 @@ namespace dftfe
 				for(; cell!= endc; ++cell)
 					if(cell->is_locally_owned() || cell->is_ghost())
 					{
+            if(cell->bounding_box().get_neighbor_type(boundingBoxAroundPoint)==dealii::NeighborType::not_neighbors)
+              continue;
+            
 						int cutOffFlag = 0;
 						cell->get_dof_indices(cell_dof_indices);
 
