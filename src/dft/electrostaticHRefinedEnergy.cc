@@ -48,18 +48,15 @@ void dftClass<FEOrder>::computeElectrostaticEnergyHRefined(
 	distributedCPUVec<double> delxRhoNodalFieldCoarse;
 	distributedCPUVec<double> delyRhoNodalFieldCoarse;
 	distributedCPUVec<double> delzRhoNodalFieldCoarse;
-	if (dftParameters::isCellStress || dftParameters::isIonForce)
-	{
 
-		matrix_free_data.initialize_dof_vector(delxRhoNodalFieldCoarse);
-		delxRhoNodalFieldCoarse = 0.0;
+	matrix_free_data.initialize_dof_vector(delxRhoNodalFieldCoarse);
+	delxRhoNodalFieldCoarse = 0.0;
 
-		matrix_free_data.initialize_dof_vector(delyRhoNodalFieldCoarse);
-		delyRhoNodalFieldCoarse = 0.0;
+	matrix_free_data.initialize_dof_vector(delyRhoNodalFieldCoarse);
+	delyRhoNodalFieldCoarse = 0.0;
 
-		matrix_free_data.initialize_dof_vector(delzRhoNodalFieldCoarse);
-		delzRhoNodalFieldCoarse = 0.0;
-	}
+	matrix_free_data.initialize_dof_vector(delzRhoNodalFieldCoarse);
+	delzRhoNodalFieldCoarse = 0.0;
 
 	//
 	//create a lambda function for L2 projection of quadrature electron-density to nodal electron density
@@ -73,58 +70,53 @@ void dftClass<FEOrder>::computeElectrostaticEnergyHRefined(
 			quadrature,
 			funcRho,
 			rhoNodalFieldCoarse);
-	if (dftParameters::isCellStress || dftParameters::isIonForce)
-	{
-		std::function<double(const typename dealii::DoFHandler<3>::active_cell_iterator & cell,const unsigned int q)> funcDelxRho = [&](const typename dealii::DoFHandler<3>::active_cell_iterator & cell , const unsigned int q)
-		{return (*gradRhoOutValues).find(cell->id())->second[3*q];};
+  
+  std::function<double(const typename dealii::DoFHandler<3>::active_cell_iterator & cell,const unsigned int q)> funcDelxRho = [&](const typename dealii::DoFHandler<3>::active_cell_iterator & cell , const unsigned int q)
+  {return (*gradRhoOutValues).find(cell->id())->second[3*q];};
 
-		dealii::VectorTools::project<3,distributedCPUVec<double> >(dealii::MappingQ1<3,3>(),
-				matrix_free_data.get_dof_handler(),
-				constraintsNone,
-				quadrature,
-				funcDelxRho,
-				delxRhoNodalFieldCoarse);
+  dealii::VectorTools::project<3,distributedCPUVec<double> >(dealii::MappingQ1<3,3>(),
+      matrix_free_data.get_dof_handler(),
+      constraintsNone,
+      quadrature,
+      funcDelxRho,
+      delxRhoNodalFieldCoarse);
 
-		std::function<double(const typename dealii::DoFHandler<3>::active_cell_iterator & cell,const unsigned int q)> funcDelyRho = [&](const typename dealii::DoFHandler<3>::active_cell_iterator & cell , const unsigned int q)
-		{return (*gradRhoOutValues).find(cell->id())->second[3*q+1];};
+  std::function<double(const typename dealii::DoFHandler<3>::active_cell_iterator & cell,const unsigned int q)> funcDelyRho = [&](const typename dealii::DoFHandler<3>::active_cell_iterator & cell , const unsigned int q)
+  {return (*gradRhoOutValues).find(cell->id())->second[3*q+1];};
 
-		dealii::VectorTools::project<3,distributedCPUVec<double> >(dealii::MappingQ1<3,3>(),
-				matrix_free_data.get_dof_handler(),
-				constraintsNone,
-				quadrature,
-				funcDelyRho,
-				delyRhoNodalFieldCoarse);
+  dealii::VectorTools::project<3,distributedCPUVec<double> >(dealii::MappingQ1<3,3>(),
+      matrix_free_data.get_dof_handler(),
+      constraintsNone,
+      quadrature,
+      funcDelyRho,
+      delyRhoNodalFieldCoarse);
 
-		std::function<double(const typename dealii::DoFHandler<3>::active_cell_iterator & cell,const unsigned int q)> funcDelzRho = [&](const typename dealii::DoFHandler<3>::active_cell_iterator & cell , const unsigned int q)
-		{return (*gradRhoOutValues).find(cell->id())->second[3*q+2];};
+  std::function<double(const typename dealii::DoFHandler<3>::active_cell_iterator & cell,const unsigned int q)> funcDelzRho = [&](const typename dealii::DoFHandler<3>::active_cell_iterator & cell , const unsigned int q)
+  {return (*gradRhoOutValues).find(cell->id())->second[3*q+2];};
 
-		dealii::VectorTools::project<3,distributedCPUVec<double> >(dealii::MappingQ1<3,3>(),
-				matrix_free_data.get_dof_handler(),
-				constraintsNone,
-				quadrature,
-				funcDelzRho,
-				delzRhoNodalFieldCoarse);
-	}
+  dealii::VectorTools::project<3,distributedCPUVec<double> >(dealii::MappingQ1<3,3>(),
+      matrix_free_data.get_dof_handler(),
+      constraintsNone,
+      quadrature,
+      funcDelzRho,
+      delzRhoNodalFieldCoarse);
 
 	rhoNodalFieldCoarse.update_ghost_values();
 	constraintsNone.distribute(rhoNodalFieldCoarse);
 	rhoNodalFieldCoarse.update_ghost_values();
 
 
-	if (dftParameters::isCellStress || dftParameters::isIonForce)
-	{
-		delxRhoNodalFieldCoarse.update_ghost_values();
-		constraintsNone.distribute(delxRhoNodalFieldCoarse);
-		delxRhoNodalFieldCoarse.update_ghost_values();
+  delxRhoNodalFieldCoarse.update_ghost_values();
+  constraintsNone.distribute(delxRhoNodalFieldCoarse);
+  delxRhoNodalFieldCoarse.update_ghost_values();
 
-		delyRhoNodalFieldCoarse.update_ghost_values();
-		constraintsNone.distribute(delyRhoNodalFieldCoarse);
-		delyRhoNodalFieldCoarse.update_ghost_values();
+  delyRhoNodalFieldCoarse.update_ghost_values();
+  constraintsNone.distribute(delyRhoNodalFieldCoarse);
+  delyRhoNodalFieldCoarse.update_ghost_values();
 
-		delzRhoNodalFieldCoarse.update_ghost_values();
-		constraintsNone.distribute(delzRhoNodalFieldCoarse);
-		delzRhoNodalFieldCoarse.update_ghost_values();
-	}
+  delzRhoNodalFieldCoarse.update_ghost_values();
+  constraintsNone.distribute(delzRhoNodalFieldCoarse);
+  delzRhoNodalFieldCoarse.update_ghost_values();
 
 	//
 	//compute the total charge using rho nodal field for debugging purposes
@@ -158,21 +150,15 @@ void dftClass<FEOrder>::computeElectrostaticEnergyHRefined(
 	electrostaticsTriaRho.set_all_refine_flags();
 	electrostaticsTriaRho.prepare_coarsening_and_refinement();
 
-	if (dftParameters::isCellStress || dftParameters::isIonForce)
-	{
-		std::vector<const distributedCPUVec<double> *> vecAllIn(4);
-		vecAllIn[0]=&rhoNodalFieldCoarse;
-		vecAllIn[1]=&delxRhoNodalFieldCoarse;
-		vecAllIn[2]=&delyRhoNodalFieldCoarse;
-		vecAllIn[3]=&delzRhoNodalFieldCoarse;
+  std::vector<const distributedCPUVec<double> *> vecAllIn(4);
+  vecAllIn[0]=&rhoNodalFieldCoarse;
+  vecAllIn[1]=&delxRhoNodalFieldCoarse;
+  vecAllIn[2]=&delyRhoNodalFieldCoarse;
+  vecAllIn[3]=&delzRhoNodalFieldCoarse;
 
 
-		solTrans.prepare_for_coarsening_and_refinement(vecAllIn);
-	}
-	else
-	{
-		solTrans.prepare_for_coarsening_and_refinement(rhoNodalFieldCoarse);
-	}
+  solTrans.prepare_for_coarsening_and_refinement(vecAllIn);
+
 
 	electrostaticsTriaRho.execute_coarsening_and_refinement();
 
@@ -256,51 +242,39 @@ void dftClass<FEOrder>::computeElectrostaticEnergyHRefined(
 	distributedCPUVec<double> delyRhoNodalFieldRefined;
 	distributedCPUVec<double> delzRhoNodalFieldRefined;
 
-	if (dftParameters::isCellStress || dftParameters::isIonForce)
-	{
+  delxRhoNodalFieldRefined.reinit(d_rhoNodalFieldRefined);
+  delxRhoNodalFieldRefined.zero_out_ghosts();
 
-		delxRhoNodalFieldRefined.reinit(d_rhoNodalFieldRefined);
-		delxRhoNodalFieldRefined.zero_out_ghosts();
+  delyRhoNodalFieldRefined.reinit(d_rhoNodalFieldRefined);
+  delyRhoNodalFieldRefined.zero_out_ghosts();
 
-		delyRhoNodalFieldRefined.reinit(d_rhoNodalFieldRefined);
-		delyRhoNodalFieldRefined.zero_out_ghosts();
+  delzRhoNodalFieldRefined.reinit(d_rhoNodalFieldRefined);
+  delzRhoNodalFieldRefined.zero_out_ghosts();
 
-		delzRhoNodalFieldRefined.reinit(d_rhoNodalFieldRefined);
-		delzRhoNodalFieldRefined.zero_out_ghosts();
-	}
+  std::vector<distributedCPUVec<double> *> vecAllOut(4);
+  vecAllOut[0]=&d_rhoNodalFieldRefined;
+  vecAllOut[1]=&delxRhoNodalFieldRefined;
+  vecAllOut[2]=&delyRhoNodalFieldRefined;
+  vecAllOut[3]=&delzRhoNodalFieldRefined;
 
-	if (dftParameters::isCellStress || dftParameters::isIonForce)
-	{
-		std::vector<distributedCPUVec<double> *> vecAllOut(4);
-		vecAllOut[0]=&d_rhoNodalFieldRefined;
-		vecAllOut[1]=&delxRhoNodalFieldRefined;
-		vecAllOut[2]=&delyRhoNodalFieldRefined;
-		vecAllOut[3]=&delzRhoNodalFieldRefined;
+  solTrans.interpolate(vecAllOut);
 
-		solTrans.interpolate(vecAllOut);
-	}
-	else
-		solTrans.interpolate(d_rhoNodalFieldRefined);
 
 	d_rhoNodalFieldRefined.update_ghost_values();
 	constraintsHRefined.distribute(d_rhoNodalFieldRefined);
 	d_rhoNodalFieldRefined.update_ghost_values();
 
-	if (dftParameters::isCellStress || dftParameters::isIonForce)
-	{
-		delxRhoNodalFieldRefined.update_ghost_values();
-		constraintsHRefined.distribute(delxRhoNodalFieldRefined);
-		delxRhoNodalFieldRefined.update_ghost_values();
+  delxRhoNodalFieldRefined.update_ghost_values();
+  constraintsHRefined.distribute(delxRhoNodalFieldRefined);
+  delxRhoNodalFieldRefined.update_ghost_values();
 
-		delyRhoNodalFieldRefined.update_ghost_values();
-		constraintsHRefined.distribute(delyRhoNodalFieldRefined);
-		delyRhoNodalFieldRefined.update_ghost_values();
+  delyRhoNodalFieldRefined.update_ghost_values();
+  constraintsHRefined.distribute(delyRhoNodalFieldRefined);
+  delyRhoNodalFieldRefined.update_ghost_values();
 
-		delzRhoNodalFieldRefined.update_ghost_values();
-		constraintsHRefined.distribute(delzRhoNodalFieldRefined);
-		delzRhoNodalFieldRefined.update_ghost_values();
-	}
-
+  delzRhoNodalFieldRefined.update_ghost_values();
+  constraintsHRefined.distribute(delzRhoNodalFieldRefined);
+  delzRhoNodalFieldRefined.update_ghost_values();
 
   dealii::parallel::distributed::Triangulation<3> & electrostaticsTriaDisp = d_mesh.getElectrostaticsMeshDisp();
   if (!dftParameters::floatingNuclearCharges)
@@ -362,67 +336,64 @@ void dftClass<FEOrder>::computeElectrostaticEnergyHRefined(
   std::map<dealii::CellId, std::vector<double> > rhoOutValuesLpspQuadHRefined;
   std::map<dealii::CellId, std::vector<double> > gradRhoOutValuesLpspQuadHRefined;
   
-	if (dftParameters::isCellStress || dftParameters::isIonForce)
-	{
-		FEValues<3> fe_values (dofHandlerHRefined.get_fe(), quadrature, update_values);
-		std::vector<double> tempDelxRho(n_q_points);
-		std::vector<double> tempDelyRho(n_q_points);
-		std::vector<double> tempDelzRho(n_q_points);
+  FEValues<3> fe_values (dofHandlerHRefined.get_fe(), quadrature, update_values);
+  std::vector<double> tempDelxRho(n_q_points);
+  std::vector<double> tempDelyRho(n_q_points);
+  std::vector<double> tempDelzRho(n_q_points);
 
-		DoFHandler<3>::active_cell_iterator
-			cell = dofHandlerHRefined.begin_active(),
-			     endc = dofHandlerHRefined.end();
-		for(; cell!=endc; ++cell)
-			if(cell->is_locally_owned())
-			{
-				fe_values.reinit (cell);
-				fe_values.get_function_values(delxRhoNodalFieldRefined,tempDelxRho);
-				fe_values.get_function_values(delyRhoNodalFieldRefined,tempDelyRho);
-				fe_values.get_function_values(delzRhoNodalFieldRefined,tempDelzRho);
+  DoFHandler<3>::active_cell_iterator
+    cell = dofHandlerHRefined.begin_active(),
+         endc = dofHandlerHRefined.end();
+  for(; cell!=endc; ++cell)
+    if(cell->is_locally_owned())
+    {
+      fe_values.reinit (cell);
+      fe_values.get_function_values(delxRhoNodalFieldRefined,tempDelxRho);
+      fe_values.get_function_values(delyRhoNodalFieldRefined,tempDelyRho);
+      fe_values.get_function_values(delzRhoNodalFieldRefined,tempDelzRho);
 
-				gradRhoOutHRefinedQuadValues[cell->id()].resize(3*n_q_points);
-        std::vector<double> & temp=gradRhoOutHRefinedQuadValues[cell->id()];
-				for (unsigned int q_point=0; q_point<n_q_points; ++q_point)
-				{
-					temp[3*q_point] = tempDelxRho[q_point];
-					temp[3*q_point+1] = tempDelyRho[q_point];
-					temp[3*q_point+2] = tempDelzRho[q_point];
-				}
-			}
+      gradRhoOutHRefinedQuadValues[cell->id()].resize(3*n_q_points);
+      std::vector<double> & temp=gradRhoOutHRefinedQuadValues[cell->id()];
+      for (unsigned int q_point=0; q_point<n_q_points; ++q_point)
+      {
+        temp[3*q_point] = tempDelxRho[q_point];
+        temp[3*q_point+1] = tempDelyRho[q_point];
+        temp[3*q_point+2] = tempDelzRho[q_point];
+      }
+    }
 
-    dealii::QIterated<3> quadraturelpsp(QGauss<1>(C_num1DQuadLPSP<FEOrder>()),C_numCopies1DQuadLPSP());
-	  const unsigned int n_q_points_lpsp = quadraturelpsp.size();
-		FEValues<3> fe_values_lpspquad (dofHandlerHRefined.get_fe(), quadraturelpsp, update_values);
-		std::vector<double> rholpsp(n_q_points_lpsp);
-		std::vector<double> tempDelxRhoPsp(3*n_q_points_lpsp);
-		std::vector<double> tempDelyRhoPsp(3*n_q_points_lpsp);
-		std::vector<double> tempDelzRhoPsp(3*n_q_points_lpsp);
+  dealii::QIterated<3> quadraturelpsp(QGauss<1>(C_num1DQuadLPSP<FEOrder>()),C_numCopies1DQuadLPSP());
+  const unsigned int n_q_points_lpsp = quadraturelpsp.size();
+  FEValues<3> fe_values_lpspquad (dofHandlerHRefined.get_fe(), quadraturelpsp, update_values);
+  std::vector<double> rholpsp(n_q_points_lpsp);
+  std::vector<double> tempDelxRhoPsp(3*n_q_points_lpsp);
+  std::vector<double> tempDelyRhoPsp(3*n_q_points_lpsp);
+  std::vector<double> tempDelzRhoPsp(3*n_q_points_lpsp);
 
-		cell = dofHandlerHRefined.begin_active();
-		for(; cell!=endc; ++cell)
-			if(cell->is_locally_owned())
-			{
-				fe_values_lpspquad.reinit (cell);
-				fe_values_lpspquad.get_function_values(d_rhoNodalFieldRefined,rholpsp);
+  cell = dofHandlerHRefined.begin_active();
+  for(; cell!=endc; ++cell)
+    if(cell->is_locally_owned())
+    {
+      fe_values_lpspquad.reinit (cell);
+      fe_values_lpspquad.get_function_values(d_rhoNodalFieldRefined,rholpsp);
 
-				fe_values_lpspquad.get_function_values(delxRhoNodalFieldRefined,tempDelxRhoPsp);
-				fe_values_lpspquad.get_function_values(delyRhoNodalFieldRefined,tempDelyRhoPsp);
-				fe_values_lpspquad.get_function_values(delzRhoNodalFieldRefined,tempDelzRhoPsp);
+      fe_values_lpspquad.get_function_values(delxRhoNodalFieldRefined,tempDelxRhoPsp);
+      fe_values_lpspquad.get_function_values(delyRhoNodalFieldRefined,tempDelyRhoPsp);
+      fe_values_lpspquad.get_function_values(delzRhoNodalFieldRefined,tempDelzRhoPsp);
 
-        std::vector<double> & temp=rhoOutValuesLpspQuadHRefined[cell->id()];
-        temp.resize(n_q_points_lpsp);
+      std::vector<double> & temp=rhoOutValuesLpspQuadHRefined[cell->id()];
+      temp.resize(n_q_points_lpsp);
 
-        std::vector<double> & tempGrad=gradRhoOutValuesLpspQuadHRefined[cell->id()];
-        tempGrad.resize(3*n_q_points_lpsp);
-				for (unsigned int q_point=0; q_point<n_q_points_lpsp; ++q_point)
-        {
-					temp[q_point] = rholpsp[q_point];
-					tempGrad[3*q_point] = tempDelxRhoPsp[q_point];
-					tempGrad[3*q_point+1] = tempDelyRhoPsp[q_point];
-					tempGrad[3*q_point+2] = tempDelzRhoPsp[q_point];          
-        }
-			}      
-	}
+      std::vector<double> & tempGrad=gradRhoOutValuesLpspQuadHRefined[cell->id()];
+      tempGrad.resize(3*n_q_points_lpsp);
+      for (unsigned int q_point=0; q_point<n_q_points_lpsp; ++q_point)
+      {
+        temp[q_point] = rholpsp[q_point];
+        tempGrad[3*q_point] = tempDelxRhoPsp[q_point];
+        tempGrad[3*q_point+1] = tempDelyRhoPsp[q_point];
+        tempGrad[3*q_point+2] = tempDelzRhoPsp[q_point];          
+      }
+    }      
 
 	//
 	//compute total charge using rhoNodalRefined field
