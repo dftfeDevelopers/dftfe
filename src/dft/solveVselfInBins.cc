@@ -425,7 +425,6 @@ namespace dftfe
 				  MPI_Barrier(MPI_COMM_WORLD);
 				  selfenergy_time = MPI_Wtime();
 
-					std::map<dealii::types::global_dof_index, int> & boundaryNodeMap = d_boundaryFlagOnlyChargeId[iBin];
 					double vselfTimesSmearedChargesIntegralBin=0.0;
 					const unsigned int vertices_per_cell=dealii::GeometryInfo<3>::vertices_per_cell;
 					cell = dofHandler.begin_active();
@@ -440,45 +439,20 @@ namespace dftfe
                   continue;
 
 							for (unsigned int q = 0; q < n_q_points_sc; ++q)
-								bQuadValuesAllAtomsCell[q]=bQuadValuesBinCell[q];
+								bQuadValuesAllAtomsCell[q]+=bQuadValuesBinCell[q];
+
+              fe_values_sc.reinit (cell);
+
+              std::vector<double> tempVself(n_q_points_sc);
+              fe_values_sc.get_function_values(vselfBinScratch,tempVself);
 
 
-							int boundaryFlagSum=0;
-							int count=0;
-							int boundaryFlag=0; 
-							for (unsigned int i=0; i<vertices_per_cell; ++i)
-							{
-								const dealii::types::global_dof_index nodeID=cell->vertex_dof_index(i,0);
-								dealii::Point<3> feNodeGlobalCoord = cell->vertex(i);
-
-								iterMap = boundaryNodeMap.find(nodeID);
-								if(iterMap != boundaryNodeMap.end())
-								{
-									boundaryFlag = iterMap->second;
-									boundaryFlagSum+=boundaryFlag;
-									count++;
-								}
-							}
-
-							AssertThrow(count!=0,
-									dealii::ExcMessage("BUG"));
-
-							if (boundaryFlagSum%count==0 && boundaryFlagSum/count==boundaryFlag && boundaryFlag<numberGlobalCharges)
-							{
-								fe_values_sc.reinit (cell);
-
-								std::vector<double> tempVself(n_q_points_sc);
-								fe_values_sc.get_function_values(vselfBinScratch,tempVself);
-
-
-								double temp=0;
-								for (unsigned int q = 0; q < n_q_points_sc; ++q)
-								{
-									temp+=tempVself[q]*bQuadValuesBinCell[q]*fe_values_sc.JxW(q);
-								}
-								vselfTimesSmearedChargesIntegralBin+=temp;
-							}
-
+              double temp=0;
+              for (unsigned int q = 0; q < n_q_points_sc; ++q)
+              {
+                temp+=tempVself[q]*bQuadValuesBinCell[q]*fe_values_sc.JxW(q);
+              }
+              vselfTimesSmearedChargesIntegralBin+=temp;
 						}
 
 					localVselfs[0][0]+=vselfTimesSmearedChargesIntegralBin;
