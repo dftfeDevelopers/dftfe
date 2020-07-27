@@ -3134,7 +3134,6 @@ namespace dftfe {
 								*gradRhoInValues,
                 d_gradRhoInValuesLpspQuad,
 								d_pseudoVLoc,
-								d_gradPseudoVLoc,
 								d_pseudoVLocAtoms,
 								d_noConstraints,
 								d_vselfBinsManager,
@@ -3168,7 +3167,6 @@ namespace dftfe {
 								*gradRhoOutValues,
                 d_gradRhoOutValuesLpspQuad,
 								d_pseudoVLoc,
-								d_gradPseudoVLoc,
 								d_pseudoVLocAtoms,
 								d_noConstraints,
 								d_vselfBinsManager,
@@ -3211,8 +3209,7 @@ namespace dftfe {
               *gradRhoOutValues,
               d_gradRhoOutValuesLpspQuad,
               d_pseudoVLoc,
-              d_gradPseudoVLoc,
-              d_gradPseudoVLocAtoms,
+              d_pseudoVLocAtoms,
 							d_noConstraints,
 							d_vselfBinsManager);
 					forcePtr->printStress();

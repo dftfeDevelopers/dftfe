@@ -37,8 +37,7 @@ template<unsigned int FEOrder>
   const std::map<dealii::CellId, std::vector<double> > & gradRhoOutValuesElectro,
   const std::map<dealii::CellId, std::vector<double> > & gradRhoOutValuesElectroLpsp,
  const std::map<dealii::CellId, std::vector<double> > & pseudoVLocElectro,
- const std::map<dealii::CellId, std::vector<double> > & gradPseudoVLocElectro,
- const std::map<unsigned int,std::map<dealii::CellId, std::vector<double> > > & gradPseudoVLocAtomsElectro,
+ const std::map<unsigned int,std::map<dealii::CellId, std::vector<double> > > & pseudoVLocAtomsElectro,
  const vselfBinsManager<FEOrder> & vselfBinsManagerElectro)
 {
 	std::vector<std::vector<distributedCPUVec<double>>> eigenVectors((1+dftParameters::spinPolarized)*dftPtr->d_kPointWeights.size());
@@ -602,7 +601,7 @@ template<unsigned int FEOrder>
      gradRhoOutValuesElectro,
      gradRhoOutValuesElectroLpsp,
 		 pseudoVLocElectro,
-		 gradPseudoVLocAtomsElectro,
+		 pseudoVLocAtomsElectro,
 		 vselfBinsManagerElectro);
 }
 #endif

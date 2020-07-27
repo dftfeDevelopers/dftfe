@@ -134,8 +134,7 @@ namespace dftfe {
 				 const std::map<dealii::CellId, std::vector<double> > & gradRhoOutValuesElectro,
 				 const std::map<dealii::CellId, std::vector<double> > & gradRhoOutValuesElectroLpsp,
 				 const std::map<dealii::CellId, std::vector<double> > & pseudoVLocElectro,
-				 const std::map<dealii::CellId, std::vector<double> > & gradPseudoVLocElectro,
-				 const std::map<unsigned int,std::map<dealii::CellId, std::vector<double> > > & gradPseudoVLocAtomsElectro,
+				 const std::map<unsigned int,std::map<dealii::CellId, std::vector<double> > > & pseudoVLocAtomsElectro,
 				 const ConstraintMatrix  & noConstraintsElectro,
 				 const vselfBinsManager<FEOrder>   & vselfBinsManagerElectro,
 				 const std::map<dealii::CellId, std::vector<double> > & shadowKSRhoMinValues,
@@ -194,8 +193,7 @@ namespace dftfe {
 				  const std::map<dealii::CellId, std::vector<double> > & gradRhoOutValuesElectro,
 				  const std::map<dealii::CellId, std::vector<double> > & gradRhoOutValuesElectroLpsp,
 					const std::map<dealii::CellId, std::vector<double> > & pseudoVLocElectro,
-					const std::map<dealii::CellId, std::vector<double> > & gradPseudoVLocElectro,
-          const std::map<unsigned int,std::map<dealii::CellId, std::vector<double> > > & gradPseudoVLocAtomsElectro,
+          const std::map<unsigned int,std::map<dealii::CellId, std::vector<double> > > & pseudoVLocAtomsElectro,
 					const ConstraintMatrix  & noConstraintsElectro,
 					const vselfBinsManager<FEOrder>   & vselfBinsManagerElectro);
 
@@ -273,8 +271,7 @@ namespace dftfe {
 				 const std::map<dealii::CellId, std::vector<double> > & gradRhoOutValuesElectro,
 				 const std::map<dealii::CellId, std::vector<double> > & gradRhoOutValuesElectroLpsp,
 				 const std::map<dealii::CellId, std::vector<double> > & pseudoVLocElectro,
-				 const std::map<dealii::CellId, std::vector<double> > & gradPseudoVLocElectro,
-				 const std::map<unsigned int,std::map<dealii::CellId, std::vector<double> > > & gradPseudoVLocAtomsElectro,
+				 const std::map<unsigned int,std::map<dealii::CellId, std::vector<double> > > & pseudoVLocAtomsElectro,
 				 const vselfBinsManager<FEOrder> & vselfBinsManagerElectro,
 				 const std::map<dealii::CellId, std::vector<double> > & shadowKSRhoMinValues,
 				 const std::map<dealii::CellId, std::vector<double> > & shadowKSGradRhoMinValues,
@@ -301,8 +298,7 @@ namespace dftfe {
 				 const std::map<dealii::CellId, std::vector<double> > & gradRhoOutValuesElectro,
 				 const std::map<dealii::CellId, std::vector<double> > & gradRhoOutValuesElectroLpsp,
 				 const std::map<dealii::CellId, std::vector<double> > & pseudoVLocElectro,
-				 const std::map<dealii::CellId, std::vector<double> > & gradPseudoVLocElectro,
-				 const std::map<unsigned int,std::map<dealii::CellId, std::vector<double> > > & gradPseudoVLocAtomsElectro,
+				 const std::map<unsigned int,std::map<dealii::CellId, std::vector<double> > > & pseudoVLocAtomsElectro,
 				 const vselfBinsManager<FEOrder> & vselfBinsManagerElectro,
 				 const std::map<dealii::CellId, std::vector<double> > & shadowKSRhoMinValues,
 				 const std::map<dealii::CellId, std::vector<double> > & shadowKSGradRhoMinValues,
@@ -320,8 +316,7 @@ namespace dftfe {
 				 const std::map<dealii::CellId, std::vector<double> > & gradRhoOutValuesElectro,
 				 const std::map<dealii::CellId, std::vector<double> > & gradRhoOutValuesElectroLpsp,
 				 const std::map<dealii::CellId, std::vector<double> > & pseudoVLocElectro,
-				 const std::map<dealii::CellId, std::vector<double> > & gradPseudoVLocElectro,
-				 const std::map<unsigned int,std::map<dealii::CellId, std::vector<double> > > & gradPseudoVLocAtomsElectro,
+				 const std::map<unsigned int,std::map<dealii::CellId, std::vector<double> > > & pseudoVLocAtomsElectro,
 				 const vselfBinsManager<FEOrder> & vselfBinsManagerElectro,
 				 const std::map<dealii::CellId, std::vector<double> > & shadowKSRhoMinValues,
 				 const distributedCPUVec<double> & phiRhoMinusApproxRho,
@@ -361,8 +356,7 @@ namespace dftfe {
 				 const std::map<dealii::CellId, std::vector<double> > & gradRhoOutValuesElectro,
 				 const std::map<dealii::CellId, std::vector<double> > & gradRhoOutValuesElectroLpsp,
 				 const std::map<dealii::CellId, std::vector<double> > & pseudoVLocElectro,
-				 const std::map<dealii::CellId, std::vector<double> > & gradPseudoVLocElectro,
-				 const std::map<unsigned int,std::map<dealii::CellId, std::vector<double> > > & gradPseudoVLocAtomsElectro,
+				 const std::map<unsigned int,std::map<dealii::CellId, std::vector<double> > > & pseudoVLocAtomsElectro,
 				 const vselfBinsManager<FEOrder>   & vselfBinsManagerElectro,
 				 const std::map<dealii::CellId, std::vector<double> > & shadowKSRhoMinValues,
 				 const std::map<dealii::CellId, std::vector<double> > & shadowKSGradRhoMinValues,
@@ -507,8 +501,7 @@ namespace dftfe {
 				  const std::map<dealii::CellId, std::vector<double> > & gradRhoOutValuesElectro,
 				  const std::map<dealii::CellId, std::vector<double> > & gradRhoOutValuesElectroLpsp,
 					const std::map<dealii::CellId, std::vector<double> > & pseudoVLocElectro,
-					const std::map<dealii::CellId, std::vector<double> > & gradPseudoVLocElectro,
-					const std::map<unsigned int,std::map<dealii::CellId, std::vector<double> > > & gradPseudoVLocAtomsElectro,
+					const std::map<unsigned int,std::map<dealii::CellId, std::vector<double> > > & pseudoVLocAtomsElectro,
 					const vselfBinsManager<FEOrder> & vselfBinsManagerElectro);
 
 			void computeStressEEshelbyEElectroPhiTot
@@ -521,8 +514,8 @@ namespace dftfe {
 				  const std::map<dealii::CellId, std::vector<double> > & rhoOutValuesElectroLpsp,         
 				  const std::map<dealii::CellId, std::vector<double> > & gradRhoOutValuesElectro,
 				  const std::map<dealii::CellId, std::vector<double> > & gradRhoOutValuesElectroLpsp,
-				 const std::map<dealii::CellId, std::vector<double> > & gradPseudoVLocElectro,
-				 const std::map<unsigned int,std::map<dealii::CellId, std::vector<double> > > & gradPseudoVLocAtomsElectro,
+          					const std::map<dealii::CellId, std::vector<double> > & pseudoVLocElectro,
+				 const std::map<unsigned int,std::map<dealii::CellId, std::vector<double> > > & pseudoVLocAtomsElectro,
 				 const vselfBinsManager<FEOrder> & vselfBinsManagerElectro);
 
 			void computeStressSpinPolarizedEEshelbyEPSPEnlEk(const MatrixFree<3,double> & matrixFreeData,
@@ -543,8 +536,7 @@ namespace dftfe {
 				  const std::map<dealii::CellId, std::vector<double> > & gradRhoOutValuesElectro,
 				  const std::map<dealii::CellId, std::vector<double> > & gradRhoOutValuesElectroLpsp,
 					const std::map<dealii::CellId, std::vector<double> > & pseudoVLocElectro,
-					const std::map<dealii::CellId, std::vector<double> > & gradPseudoVLocElectro,
-					const std::map<unsigned int,std::map<dealii::CellId, std::vector<double> > > & gradPseudoVLocAtomsElectro,
+					const std::map<unsigned int,std::map<dealii::CellId, std::vector<double> > > & pseudoVLocAtomsElectro,
 					const vselfBinsManager<FEOrder> & vselfBinsManagerElectro);
 
 			void addEPSPStressContribution
@@ -552,8 +544,8 @@ namespace dftfe {
 				 FEEvaluation<C_DIM,1,C_num1DQuadLPSP<FEOrder>()*C_numCopies1DQuadLPSP(),C_DIM>  & forceEval,
 				 const MatrixFree<3,double> & matrixFreeData,
 				 const unsigned int cell,
-				 const std::vector<VectorizedArray<double> > & rhoQuads,
-				 const std::map<unsigned int,std::map<dealii::CellId, std::vector<double> > > & gradPseudoVLocAtoms,
+				 const std::vector< Tensor<1,3,VectorizedArray<double> > > & gradRhoQuads,
+				 const std::map<unsigned int,std::map<dealii::CellId, std::vector<double> > > & pseudoVLocAtoms,
 				 const vselfBinsManager<FEOrder>   & vselfBinsManager,
 				 const std::vector<std::map<dealii::CellId , unsigned int> > & cellsVselfBallsClosestAtomIdDofHandler);
 

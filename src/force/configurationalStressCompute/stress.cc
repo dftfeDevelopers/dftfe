@@ -40,8 +40,7 @@ template<unsigned int FEOrder>
   const std::map<dealii::CellId, std::vector<double> > & gradRhoOutValuesElectro,
   const std::map<dealii::CellId, std::vector<double> > & gradRhoOutValuesElectroLpsp,
   const std::map<dealii::CellId, std::vector<double> > & pseudoVLocElectro,
-  const std::map<dealii::CellId, std::vector<double> > & gradPseudoVLocElectro,
- const std::map<unsigned int,std::map<dealii::CellId, std::vector<double> > > & gradPseudoVLocAtomsElectro,
+ const std::map<unsigned int,std::map<dealii::CellId, std::vector<double> > > & pseudoVLocAtomsElectro,
  const ConstraintMatrix  & noConstraintsElectro,
  const vselfBinsManager<FEOrder> & vselfBinsManagerElectro)
 {
@@ -87,8 +86,7 @@ template<unsigned int FEOrder>
         gradRhoOutValuesElectro,
         gradRhoOutValuesElectroLpsp,
 				pseudoVLocElectro,
-				gradPseudoVLocElectro,
-				gradPseudoVLocAtomsElectro,
+				pseudoVLocAtomsElectro,
 				vselfBinsManagerElectro);
 	else
 		computeStressEEshelbyEPSPEnlEk(matrixFreeData,
@@ -111,8 +109,7 @@ template<unsigned int FEOrder>
         gradRhoOutValuesElectro,
         gradRhoOutValuesElectroLpsp,
         pseudoVLocElectro,
-        gradPseudoVLocElectro,
-				gradPseudoVLocAtomsElectro,
+				pseudoVLocAtomsElectro,
 				vselfBinsManagerElectro);
 
 	//configurational stress contribution from nuclear self energy. This is handled separately as it involves

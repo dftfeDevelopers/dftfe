@@ -38,8 +38,7 @@ void forceClass<FEOrder>::computeStressEEshelbyEPSPEnlEk(const MatrixFree<3,doub
     const std::map<dealii::CellId, std::vector<double> > & gradRhoOutValuesElectro,
     const std::map<dealii::CellId, std::vector<double> > & gradRhoOutValuesElectroLpsp,
 		const std::map<dealii::CellId, std::vector<double> > & pseudoVLocElectro,
-		const std::map<dealii::CellId, std::vector<double> > & gradPseudoVLocElectro,
-		const std::map<unsigned int,std::map<dealii::CellId, std::vector<double> > > & gradPseudoVLocAtomsElectro,
+		const std::map<unsigned int,std::map<dealii::CellId, std::vector<double> > > & pseudoVLocAtomsElectro,
 		const vselfBinsManager<FEOrder> & vselfBinsManagerElectro)
 {
 	std::vector<std::vector<distributedCPUVec<double>>> eigenVectors((1+dftParameters::spinPolarized)*dftPtr->d_kPointWeights.size());
@@ -498,7 +497,7 @@ void forceClass<FEOrder>::computeStressEEshelbyEPSPEnlEk(const MatrixFree<3,doub
      gradRhoOutValuesElectro,
      gradRhoOutValuesElectroLpsp,
 		 pseudoVLocElectro,
-		 gradPseudoVLocAtomsElectro,
+		 pseudoVLocAtomsElectro,
 		 vselfBinsManagerElectro);
 }
 
@@ -514,7 +513,7 @@ template<unsigned int FEOrder>
  const std::map<dealii::CellId, std::vector<double> > & gradRhoOutValuesElectro,
  const std::map<dealii::CellId, std::vector<double> > & gradRhoOutValuesElectroLpsp,
  const std::map<dealii::CellId, std::vector<double> > & pseudoVLocElectro,
- const std::map<unsigned int,std::map<dealii::CellId, std::vector<double> > > & gradPseudoVLocAtomsElectro,
+ const std::map<unsigned int,std::map<dealii::CellId, std::vector<double> > > & pseudoVLocAtomsElectro,
  const vselfBinsManager<FEOrder> & vselfBinsManagerElectro)
 {
 	FEEvaluation<C_DIM,1,C_num1DQuad<FEOrder>(),C_DIM>  forceEvalElectro(matrixFreeDataElectro,
@@ -540,7 +539,7 @@ template<unsigned int FEOrder>
 	FEValues<C_DIM> feVselfValuesElectro (matrixFreeDataElectro.
 			get_dof_handler(phiTotDofHandlerIndexElectro).get_fe(),
 			matrixFreeDataElectro.get_quadrature(lpspQuadratureIdElectro),
-			update_values| update_gradients | update_quadrature_points);
+			update_values| update_quadrature_points);
 
 	const unsigned int numQuadPoints=forceEvalElectro.n_q_points;
   const unsigned int numQuadPointsSmearedb=forceEvalSmearedCharge.n_q_points;
@@ -647,8 +646,8 @@ template<unsigned int FEOrder>
 					forceEvalElectroLpsp,
 					matrixFreeDataElectro,
 					cell,
-					rhoQuadsElectroLpsp,
-					gradPseudoVLocAtomsElectro,
+					gradRhoQuadsElectroLpsp,
+					pseudoVLocAtomsElectro,
 					vselfBinsManagerElectro,
 					d_cellsVselfBallsClosestAtomIdDofHandlerElectro);
 
@@ -687,11 +686,6 @@ template<unsigned int FEOrder>
       {
 			  VectorizedArray<double> phiExtElectro_q =make_vectorized_array(0.0);
         Tensor<2,C_DIM,VectorizedArray<double> > E=zeroTensor2;
-
-				E+=eshelbyTensor::getELocPspEshelbyTensor
-					(rhoQuadsElectroLpsp[q],
-					 pseudoVLocQuadsElectro[q],
-					 phiExtElectro_q);
 
         Point< 3, VectorizedArray<double> > quadPoint_q;
         if (d_isElectrostaticsMeshSubdivided && false)

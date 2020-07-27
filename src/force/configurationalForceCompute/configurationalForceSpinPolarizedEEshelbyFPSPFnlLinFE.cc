@@ -37,8 +37,7 @@ template<unsigned int FEOrder>
 				 const std::map<dealii::CellId, std::vector<double> > & gradRhoOutValuesElectro,
 				 const std::map<dealii::CellId, std::vector<double> > & gradRhoOutValuesElectroLpsp,
  const std::map<dealii::CellId, std::vector<double> > & pseudoVLocElectro,
- const std::map<dealii::CellId, std::vector<double> > & gradPseudoVLocElectro,
- const std::map<unsigned int,std::map<dealii::CellId, std::vector<double> > > & gradPseudoVLocAtomsElectro,
+ const std::map<unsigned int,std::map<dealii::CellId, std::vector<double> > > & pseudoVLocAtomsElectro,
  const vselfBinsManager<FEOrder> & vselfBinsManagerElectro,
  const std::map<dealii::CellId, std::vector<double> > & shadowKSRhoMinValues,
  const std::map<dealii::CellId, std::vector<double> > & shadowKSGradRhoMinValues,
@@ -711,7 +710,6 @@ template<unsigned int FEOrder>
 		std::vector<Tensor<2,C_DIM,VectorizedArray<double> > > hessianRhoSpin1Quads(numQuadPoints,zeroTensor4);
 		std::vector<VectorizedArray<double> > excQuads(numQuadPoints,make_vectorized_array(0.0));
 		std::vector<VectorizedArray<double> > pseudoVLocQuads(numQuadPointsLpsp,make_vectorized_array(0.0));
-		std::vector<Tensor<1,C_DIM,VectorizedArray<double> > > gradPseudoVLocQuads(numQuadPoints,zeroTensor3);
 		std::vector<VectorizedArray<double> > vEffRhoOutSpin0Quads(numQuadPoints,make_vectorized_array(0.0));
 		std::vector<VectorizedArray<double> > vEffRhoOutSpin1Quads(numQuadPoints,make_vectorized_array(0.0));
 		std::vector<Tensor<1,C_DIM,VectorizedArray<double> > > derExchCorrEnergyWithGradRhoOutSpin0Quads(numQuadPoints,zeroTensor3);
@@ -737,7 +735,6 @@ template<unsigned int FEOrder>
 			std::fill(hessianRhoSpin1Quads.begin(),hessianRhoSpin1Quads.end(),zeroTensor4);
 			std::fill(excQuads.begin(),excQuads.end(),make_vectorized_array(0.0));
 			std::fill(pseudoVLocQuads.begin(),pseudoVLocQuads.end(),make_vectorized_array(0.0));
-			std::fill(gradPseudoVLocQuads.begin(),gradPseudoVLocQuads.end(),zeroTensor3);
 			std::fill(vEffRhoOutSpin0Quads.begin(),vEffRhoOutSpin0Quads.end(),make_vectorized_array(0.0));
 			std::fill(vEffRhoOutSpin1Quads.begin(),vEffRhoOutSpin1Quads.end(),make_vectorized_array(0.0));
 			std::fill(derExchCorrEnergyWithGradRhoOutSpin0Quads.begin(),derExchCorrEnergyWithGradRhoOutSpin0Quads.end(),zeroTensor3);
@@ -893,8 +890,7 @@ template<unsigned int FEOrder>
 			 gradRhoOutValuesElectro,
        gradRhoOutValuesElectroLpsp,
 			 pseudoVLocElectro,
-			 gradPseudoVLocElectro,
-			 gradPseudoVLocAtomsElectro,
+			 pseudoVLocAtomsElectro,
 			 vselfBinsManagerElectro,
 			 shadowKSRhoMinValues,
 			 phiRhoMinusApproxRho,

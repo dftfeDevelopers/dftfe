@@ -731,7 +731,6 @@ void dftClass<FEOrder>::computeElectrostaticEnergyHRefined(
 					gradRhoOutHRefinedQuadValues,
           gradRhoOutValuesLpspQuadHRefined,
 					pseudoVLocHRefined,
-					gradPseudoVLocHRefined,
 					pseudoVLocAtomsHRefined,
 					onlyHangingNodeConstraints,
 					vselfBinsManagerHRefined,
@@ -772,8 +771,7 @@ void dftClass<FEOrder>::computeElectrostaticEnergyHRefined(
 					gradRhoOutHRefinedQuadValues,
           gradRhoOutValuesLpspQuadHRefined,
 					pseudoVLocHRefined,
-					gradPseudoVLocHRefined,
-					gradPseudoVLocAtomsHRefined,
+					pseudoVLocAtomsHRefined,
 					onlyHangingNodeConstraints,
 					vselfBinsManagerHRefined);
 			forcePtr->printStress();
