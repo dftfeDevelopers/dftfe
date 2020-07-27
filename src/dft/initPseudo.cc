@@ -30,14 +30,10 @@ template<unsigned int FEOrder>
  const vselfBinsManager<FEOrder> & vselfBinManager,
  distributedCPUVec<double> & phiExt,
  std::map<dealii::CellId, std::vector<double> > & _pseudoValues,
- std::map<dealii::CellId, std::vector<double> > & _gradPseudoValues,
- std::map<unsigned int,std::map<dealii::CellId, std::vector<double> > > & _pseudoValuesAtoms,
- std::map<unsigned int,std::map<dealii::CellId, std::vector<double> > > & _gradPseudoValuesAtoms)
+ std::map<unsigned int,std::map<dealii::CellId, std::vector<double> > > & _pseudoValuesAtoms)
 {
 	_pseudoValues.clear();
-	_gradPseudoValues.clear();
 	_pseudoValuesAtoms.clear();
-  _gradPseudoValuesAtoms.clear();
 
 	//
 	//Reading single atom rho initial guess
@@ -245,7 +241,7 @@ template<unsigned int FEOrder>
 	{
 		feEvalObj.reinit(macrocell);
 		feEvalObj.read_dof_values(phiExt);
-		feEvalObj.evaluate(true,true);
+		feEvalObj.evaluate(true,false);
 
 		for(unsigned int iSubCell = 0; iSubCell < _matrix_free_data.n_components_filled(macrocell); ++iSubCell)
 		{
@@ -254,10 +250,6 @@ template<unsigned int FEOrder>
 
       std::vector<double> & pseudoVLoc=_pseudoValues[subCellId];
 			pseudoVLoc.resize(n_q_points,0.0);
-
-			std::vector<double> & gradPseudoVLoc=_gradPseudoValues[subCellId];
-			gradPseudoVLoc.resize(n_q_points*3,0.0);
-
 		}
 
 		Point<3> atom;
@@ -272,10 +264,9 @@ template<unsigned int FEOrder>
 			dealii::CellId subCellId=subCellPtr->id();
 
       std::vector<double> & pseudoVLoc=_pseudoValues[subCellId];
-			std::vector<double> & gradPseudoVLoc=_gradPseudoValues[subCellId];
 
 			Point<3> quadPoint;
-			double value,firstDer,secondDer,distanceToAtom, distanceToAtomInv;
+			double value,distanceToAtom, distanceToAtomInv;
 
 			fe_values.reinit(subCellPtr);
 
@@ -287,19 +278,16 @@ template<unsigned int FEOrder>
 
 				double temp;
 				double tempVal=0.0;
-				double tempGradX=0.0;
-				double tempGradY=0.0;
-				double tempGradZ=0.0;
-				double diffx;
-				double diffy;
-				double diffz;
+        double diffx;
+        double diffy;
+        double diffz;
 				//loop over atoms
 				for (unsigned int iAtom=0; iAtom<numberGlobalCharges+numberImageCharges; iAtom++)
 				{
+          diffx= quadPoint[0]-atomsImagesPositions[iAtom*3+0];
+          diffy= quadPoint[1]-atomsImagesPositions[iAtom*3+1];
+          diffz= quadPoint[2]-atomsImagesPositions[iAtom*3+2];
 
-					diffx= quadPoint[0]-atomsImagesPositions[iAtom*3+0];
-					diffy= quadPoint[1]-atomsImagesPositions[iAtom*3+1];
-					diffz= quadPoint[2]-atomsImagesPositions[iAtom*3+2];
 					atomCharge=atomsImagesCharges[iAtom];
 
 					distanceToAtom = std::sqrt(diffx*diffx+diffy*diffy+diffz*diffz);
@@ -318,27 +306,16 @@ template<unsigned int FEOrder>
 							atomicNumber=std::round(atomLocations[d_imageIds[iImageCharge]][0]);
 						}
 
-						alglib::spline1ddiff(pseudoSpline[atomicNumber],
-								distanceToAtom,
-								value,
-								firstDer,
-								secondDer);
+						value=alglib::spline1dcalc(pseudoSpline[atomicNumber],
+								distanceToAtom);
 					}
 					else
 					{
 						value=-atomCharge*distanceToAtomInv;
-						firstDer= -value*distanceToAtomInv;
 					}
 					tempVal+=value;
-					temp=firstDer*distanceToAtomInv;
-					tempGradX+=temp*diffx;
-					tempGradY+=temp*diffy;
-					tempGradZ+=temp*diffz;
 				}//atom loop
         pseudoVLoc[q]=tempVal;
-				gradPseudoVLoc[q*3+0]=tempGradX;
-				gradPseudoVLoc[q*3+1]=tempGradY;
-				gradPseudoVLoc[q*3+2]=tempGradZ;
 			}//quad loop
 		}//subcell loop
 
@@ -347,14 +324,10 @@ template<unsigned int FEOrder>
 			subCellPtr= _matrix_free_data.get_cell_iterator(macrocell,iSubCell);
 			dealii::CellId subCellId=subCellPtr->id();
       std::vector<double> & pseudoVLoc=_pseudoValues[subCellId];
-			std::vector<double> & gradPseudoVLoc=_gradPseudoValues[subCellId];
 			//loop over quad points
 			for (unsigned int q = 0; q < n_q_points; ++q)
 			{
         pseudoVLoc[q]-=feEvalObj.get_value(q)[iSubCell];
-				gradPseudoVLoc[q*3+0]-=feEvalObj.get_gradient(q)[0][iSubCell];
-				gradPseudoVLoc[q*3+1]-=feEvalObj.get_gradient(q)[1][iSubCell];
-				gradPseudoVLoc[q*3+2]-=feEvalObj.get_gradient(q)[2][iSubCell];
 			}//loop over quad points
 		}//subcell loop
 	}//cell loop
@@ -369,7 +342,6 @@ template<unsigned int FEOrder>
 	init_3 = MPI_Wtime();
 
 	std::vector<double> pseudoVLocAtom(n_q_points);
-  std::vector<double> gradPseudoVLocAtom(3*n_q_points); 
 	typename DoFHandler<3>::active_cell_iterator cell = _dofHandler.begin_active(), endc = _dofHandler.end();
 	for(; cell!=endc; ++cell)
 	{
@@ -414,7 +386,7 @@ template<unsigned int FEOrder>
 
 				bool isPseudoDataInCell=false;
 				Point<3> quadPoint;
-				double value,firstDer,secondDer,distanceToAtom;
+				double value,distanceToAtom;
 				//loop over quad points
 				for (unsigned int q = 0; q < n_q_points; ++q)
 				{
@@ -423,28 +395,20 @@ template<unsigned int FEOrder>
 					distanceToAtom = quadPoint.distance(atom);
 					if(distanceToAtom <= d_pspTail)//outerMostPointPseudo[atomLocations[n][0]])
 					{
-						alglib::spline1ddiff(pseudoSpline[atomicNumber],
-								distanceToAtom,
-								value,
-								firstDer,
-								secondDer);
+						value=alglib::spline1dcalc(pseudoSpline[atomicNumber],
+								distanceToAtom);
 						isPseudoDataInCell=true;
 					}
 					else
 					{
 						value=-atomCharge/distanceToAtom;
-            firstDer= atomCharge/distanceToAtom/distanceToAtom;
 					}
 
 					pseudoVLocAtom[q]=value;
-					gradPseudoVLocAtom[3*q+0]=firstDer*(quadPoint[0]-atom[0])/distanceToAtom;
-					gradPseudoVLocAtom[3*q+1]=firstDer*(quadPoint[1]-atom[1])/distanceToAtom;
-					gradPseudoVLocAtom[3*q+2]=firstDer*(quadPoint[2]-atom[2])/distanceToAtom;          
 				}//loop over quad points
 				if (isPseudoDataInCell)
         {
 					_pseudoValuesAtoms[iAtom][cell->id()]=pseudoVLocAtom;
-          _gradPseudoValuesAtoms[iAtom][cell->id()]=gradPseudoVLocAtom;
         }
 			}//loop over atoms
 		}//cell locally owned check

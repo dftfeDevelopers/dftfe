@@ -86,7 +86,6 @@ dataTypes::number dftClass<FEOrder>::computeTraceXtHX(unsigned int numberWaveFun
 			d_imageChargesTrunc,
 			d_localVselfs,
 			d_bQuadValuesAllAtoms,
-			d_gradbQuadValuesAllAtoms,      
       d_bQuadAtomIdsAllAtomsImages,
       d_bQuadAtomIdsAllAtoms,
 			d_smearedChargeWidths,

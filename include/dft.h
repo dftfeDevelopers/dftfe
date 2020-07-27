@@ -521,9 +521,7 @@ namespace dftfe {
 					const vselfBinsManager<FEOrder> & vselfBinManager,
           distributedCPUVec<double> & phiExt,
 					std::map<dealii::CellId, std::vector<double> > & _pseudoValues,
-					std::map<dealii::CellId, std::vector<double> > & _gradPseudoValues,
-          std::map<unsigned int,std::map<dealii::CellId, std::vector<double> > > & _pseudoValuesAtoms,
-					std::map<unsigned int,std::map<dealii::CellId, std::vector<double> > > & _gradPseudoValuesAtoms);
+          std::map<unsigned int,std::map<dealii::CellId, std::vector<double> > > & _pseudoValuesAtoms);
 			void initNonLocalPseudoPotential();
 			void initNonLocalPseudoPotential_OV();
 			void computeSparseStructureNonLocalProjectors();
@@ -978,15 +976,8 @@ namespace dftfe {
 
 			/// Internal data:: map for cell id to Vpseudo local of individual atoms. Only for atoms
 			/// whose psp tail intersects the local domain.
-			std::map<unsigned int,std::map<dealii::CellId, std::vector<double> > > d_gradPseudoVLocAtoms;
-
-			/// Internal data:: map for cell id to Vpseudo local of individual atoms. Only for atoms
-			/// whose psp tail intersects the local domain.
 			std::map<unsigned int,std::map<dealii::CellId, std::vector<double> > > d_pseudoVLocAtoms;
 
-
-			/// Internal data: map for cell id to sum Vpseudo local of all atoms whose psp tail intersects the local domain.
-			std::map<dealii::CellId, std::vector<double> > d_gradPseudoVLoc;
 
 			std::vector<std::vector<double> > d_localVselfs;
 

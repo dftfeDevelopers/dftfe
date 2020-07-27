@@ -519,7 +519,6 @@ void dftClass<FEOrder>::computeElectrostaticEnergyHRefined(
 			d_imageChargesTrunc,
 			localVselfsHRefined,
 			d_bQuadValuesAllAtoms,
-			d_gradbQuadValuesAllAtoms,      
       d_bQuadAtomIdsAllAtoms,
       d_bQuadAtomIdsAllAtomsImages,  
 			d_smearedChargeWidths,
@@ -556,9 +555,7 @@ void dftClass<FEOrder>::computeElectrostaticEnergyHRefined(
 			dftParameters::verbosity);
 
 	std::map<dealii::CellId, std::vector<double> > pseudoVLocHRefined;
-	std::map<dealii::CellId, std::vector<double> > gradPseudoVLocHRefined;
 	std::map<unsigned int,std::map<dealii::CellId, std::vector<double> > > pseudoVLocAtomsHRefined;
-  std::map<unsigned int,std::map<dealii::CellId, std::vector<double> > > gradPseudoVLocAtomsHRefined;
 
 	std::map<types::global_dof_index, Point<3> > supportPointsHRef;
 	DoFTools::map_dofs_to_support_points(MappingQ1<3,3>(), dofHandlerHRefined, supportPointsHRef);
@@ -572,9 +569,7 @@ void dftClass<FEOrder>::computeElectrostaticEnergyHRefined(
 				vselfBinsManagerHRefined,
         phiExtHRefined,
 				pseudoVLocHRefined,
-				gradPseudoVLocHRefined,
-				pseudoVLocAtomsHRefined,
-        gradPseudoVLocAtomsHRefined);
+				pseudoVLocAtomsHRefined);
 
 	energyCalculator energyCalcHRefined(mpi_communicator, interpoolcomm, interBandGroupComm);
 

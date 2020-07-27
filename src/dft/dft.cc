@@ -1752,7 +1752,6 @@ namespace dftfe {
 							d_imageChargesTrunc,
 							d_localVselfs,
 							d_bQuadValuesAllAtoms,
-							d_gradbQuadValuesAllAtoms,              
               d_bQuadAtomIdsAllAtoms,
               d_bQuadAtomIdsAllAtomsImages,              
 							d_smearedChargeWidths,
@@ -1768,7 +1767,6 @@ namespace dftfe {
 							d_imageChargesTrunc,
 							d_localVselfs,
 							d_bQuadValuesAllAtoms,
-							d_gradbQuadValuesAllAtoms,                
               d_bQuadAtomIdsAllAtoms,
               d_bQuadAtomIdsAllAtomsImages,              
 							d_smearedChargeWidths,
@@ -1784,7 +1782,6 @@ namespace dftfe {
 						d_imageChargesTrunc,
 						d_localVselfs,
 						d_bQuadValuesAllAtoms,
-						d_gradbQuadValuesAllAtoms,              
             d_bQuadAtomIdsAllAtoms,
             d_bQuadAtomIdsAllAtomsImages,            
 						d_smearedChargeWidths,
@@ -1811,9 +1808,7 @@ namespace dftfe {
 						d_vselfBinsManager,
             d_phiExt,
 						d_pseudoVLoc,
-						d_gradPseudoVLoc,
-						d_pseudoVLocAtoms,
-            d_gradPseudoVLocAtoms);
+						d_pseudoVLocAtoms);
 
 				MPI_Barrier(MPI_COMM_WORLD);
 				init_psplocal = MPI_Wtime() - init_psplocal;
