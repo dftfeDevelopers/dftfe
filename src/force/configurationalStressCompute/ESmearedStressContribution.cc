@@ -22,9 +22,9 @@ template<unsigned int FEOrder>
         (FEEvaluation<3,1,C_num1DQuadSmearedCharge<FEOrder>()*C_numCopies1DQuadSmearedCharge(),3>  & forceEval,
          const MatrixFree<3,double> & matrixFreeData,
          const unsigned int cell,
-         const std::vector<VectorizedArray<double> > & phiTotQuads,
+         const std::vector<Tensor<1,3,VectorizedArray<double> > > & gradPhiTotQuads,
          const std::map<dealii::CellId, std::vector<int> > & bQuadAtomIdsAllAtomsImages,
-         const std::vector<Tensor<1,3,VectorizedArray<double> >  > & smearedGradbQuads)
+         const std::vector< VectorizedArray<double> > & smearedbQuads)
 {
 	Tensor<1,3,VectorizedArray<double> > zeroTensor1;
 	for (unsigned int idim=0; idim<3; idim++)
@@ -42,25 +42,35 @@ template<unsigned int FEOrder>
 	const unsigned int numberTotalAtoms = numberGlobalAtoms + numberImageCharges;  
 	const unsigned int numSubCells= matrixFreeData.n_components_filled(cell);
 	const unsigned int numQuadPoints=forceEval.n_q_points;
+
 	DoFHandler<3>::active_cell_iterator subCellPtr;
 
+  std::vector< VectorizedArray<double> > smearedbQuadsiAtom(numQuadPoints,make_vectorized_array(0.0));
+
+  //FIXME: only loop over non-trivial atoms
 	for (int iAtom=0;iAtom <numberTotalAtoms; iAtom++)
 	{
-		Point<3,VectorizedArray<double> > atomLocation;
+		Point<3,double> atomLocation;
     if(iAtom < numberGlobalAtoms)
 		{
-      atomLocation[0]=make_vectorized_array(dftPtr->atomLocations[iAtom][2]);
-      atomLocation[1]=make_vectorized_array(dftPtr->atomLocations[iAtom][3]);
-      atomLocation[2]=make_vectorized_array(dftPtr->atomLocations[iAtom][4]);
+      atomLocation[0]=dftPtr->atomLocations[iAtom][2];
+      atomLocation[1]=dftPtr->atomLocations[iAtom][3];
+      atomLocation[2]=dftPtr->atomLocations[iAtom][4];
     }
     else
     {
-      atomLocation[0]=make_vectorized_array(dftPtr->d_imagePositionsTrunc[iAtom-numberGlobalAtoms][0]);
-      atomLocation[1]=make_vectorized_array(dftPtr->d_imagePositionsTrunc[iAtom-numberGlobalAtoms][1]);
-      atomLocation[2]=make_vectorized_array(dftPtr->d_imagePositionsTrunc[iAtom-numberGlobalAtoms][2]);      
+			const int imageId=iAtom-numberGlobalAtoms;
+      atomLocation[0]=dftPtr->d_imagePositionsTrunc[imageId][0];
+      atomLocation[1]=dftPtr->d_imagePositionsTrunc[imageId][1];
+      atomLocation[2]=dftPtr->d_imagePositionsTrunc[imageId][2];      
     }
 
-    std::vector<Tensor<1,3,VectorizedArray<double> > > smearedGradbQuadsiAtom(numQuadPoints,zeroTensor1);
+    Point<3,VectorizedArray<double> > atomLocationVect;
+    atomLocationVect[0]=make_vectorized_array(atomLocation[0]);
+    atomLocationVect[1]=make_vectorized_array(atomLocation[1]);
+    atomLocationVect[2]=make_vectorized_array(atomLocation[2]);
+
+    std::fill(smearedbQuadsiAtom.begin(),smearedbQuadsiAtom.end(),make_vectorized_array(0.0));
 
 		for (unsigned int iSubCell=0; iSubCell<numSubCells; ++iSubCell)
 		{
@@ -68,24 +78,17 @@ template<unsigned int FEOrder>
 			dealii::CellId subCellId=subCellPtr->id();
       const std::vector<int> & bQuadAtomIdsCell=bQuadAtomIdsAllAtomsImages.find(subCellId)->second;
       for (unsigned int q=0; q<numQuadPoints; ++q)
-      {
         if (bQuadAtomIdsCell[q]==iAtom)
-        {
-          smearedGradbQuadsiAtom[q][0][iSubCell]=smearedGradbQuads[q][0][iSubCell];
-          smearedGradbQuadsiAtom[q][1][iSubCell]=smearedGradbQuads[q][1][iSubCell];
-          smearedGradbQuadsiAtom[q][2][iSubCell]=smearedGradbQuads[q][2][iSubCell];
-        }
-      }
+          smearedbQuadsiAtom[q][iSubCell]=smearedbQuads[q][iSubCell];
     }
 
     
 		Tensor<2,3,VectorizedArray<double> > EPSPStressContribution=zeroTensor2;
 		for (unsigned int q=0; q<numQuadPoints; ++q)
 			EPSPStressContribution
-				+=outer_product(smearedGradbQuadsiAtom[q]*phiTotQuads[q],forceEval.quadrature_point(q)-atomLocation)
+				-=outer_product(smearedbQuadsiAtom[q]*gradPhiTotQuads[q],forceEval.quadrature_point(q)-atomLocationVect)
 				*forceEval.JxW(q);
-        
-
+       
 		for (unsigned int iSubCell=0; iSubCell<numSubCells; ++iSubCell)
 			for (unsigned int idim=0; idim<C_DIM; idim++)
 				for (unsigned int jdim=0; jdim<C_DIM; jdim++)
@@ -100,11 +103,10 @@ template<unsigned int FEOrder>
         (FEEvaluation<3,1,C_num1DQuadSmearedCharge<FEOrder>()*C_numCopies1DQuadSmearedCharge(),3>  & forceEval,
          const MatrixFree<3,double> & matrixFreeData,
          const unsigned int cell,
-         const std::vector<VectorizedArray<double> > & vselfQuads,
+         const std::vector<Tensor<1,3,VectorizedArray<double> > > & gradVselfQuads,         
          const std::set<int> & atomImageIdsInBin,
          const std::map<dealii::CellId, std::vector<int> > & bQuadAtomIdsAllAtomsImages,
-         const std::vector< VectorizedArray<double> > & smearedbQuads,
-         const std::vector<Tensor<1,3,VectorizedArray<double> > > & smearedGradbQuads) 
+         const std::vector< VectorizedArray<double> > & smearedbQuads)
 {
 	Tensor<1,3,VectorizedArray<double> > zeroTensor1;
 	for (unsigned int idim=0; idim<3; idim++)
@@ -117,37 +119,42 @@ template<unsigned int FEOrder>
       zeroTensor2[idim][jdim]=make_vectorized_array(0.0);
     }
 
-  Tensor<2,3,VectorizedArray<double> > idTensor2=zeroTensor2;
-  for (unsigned int idim=0; idim<3; idim++)
-      idTensor2[idim][idim]=make_vectorized_array(1.0);
-
 	const unsigned int numSubCells= matrixFreeData.n_components_filled(cell);
 	const unsigned int numQuadPoints=forceEval.n_q_points;
+
 	DoFHandler<3>::active_cell_iterator subCellPtr;
 
   std::vector<int> atomsInCurrentBin(atomImageIdsInBin.begin(),atomImageIdsInBin.end());
 	const unsigned int numberGlobalAtoms = dftPtr->atomLocations.size();
 
+  std::vector< VectorizedArray<double> > smearedbQuadsiAtom(numQuadPoints,make_vectorized_array(0.0));
+
+  //FIXME: only loop over non-trivial atoms
 	for (int iAtom=0;iAtom <atomsInCurrentBin.size(); iAtom++)
 	{
     const int atomId=atomsInCurrentBin[iAtom];
 
-		Point<3,VectorizedArray<double> > atomLocation;
+		Point<3,double> atomLocation;
     if(atomId < numberGlobalAtoms)
 		{
-      atomLocation[0]=make_vectorized_array(dftPtr->atomLocations[atomId][2]);
-      atomLocation[1]=make_vectorized_array(dftPtr->atomLocations[atomId][3]);
-      atomLocation[2]=make_vectorized_array(dftPtr->atomLocations[atomId][4]);
+      atomLocation[0]=dftPtr->atomLocations[atomId][2];
+      atomLocation[1]=dftPtr->atomLocations[atomId][3];
+      atomLocation[2]=dftPtr->atomLocations[atomId][4];
     }
     else
     {
-      atomLocation[0]=make_vectorized_array(dftPtr->d_imagePositionsTrunc[atomId-numberGlobalAtoms][0]);
-      atomLocation[1]=make_vectorized_array(dftPtr->d_imagePositionsTrunc[atomId-numberGlobalAtoms][1]);
-      atomLocation[2]=make_vectorized_array(dftPtr->d_imagePositionsTrunc[atomId-numberGlobalAtoms][2]);      
+			const int imageId=atomId-numberGlobalAtoms;
+      atomLocation[0]=dftPtr->d_imagePositionsTrunc[imageId][0];
+      atomLocation[1]=dftPtr->d_imagePositionsTrunc[imageId][1];
+      atomLocation[2]=dftPtr->d_imagePositionsTrunc[imageId][2];      
     }
 
-    std::vector< VectorizedArray<double> > smearedbQuadsiAtom(numQuadPoints,make_vectorized_array(0.0));
-    std::vector<Tensor<1,3,VectorizedArray<double> > > smearedGradbQuadsiAtom(numQuadPoints,zeroTensor1);
+    Point<3,VectorizedArray<double> > atomLocationVect;
+    atomLocationVect[0]=make_vectorized_array(atomLocation[0]);
+    atomLocationVect[1]=make_vectorized_array(atomLocation[1]);
+    atomLocationVect[2]=make_vectorized_array(atomLocation[2]);
+
+    std::fill(smearedbQuadsiAtom.begin(),smearedbQuadsiAtom.end(),make_vectorized_array(0.0));
 
 		for (unsigned int iSubCell=0; iSubCell<numSubCells; ++iSubCell)
 		{
@@ -155,23 +162,14 @@ template<unsigned int FEOrder>
 			dealii::CellId subCellId=subCellPtr->id();
       const std::vector<int> & bQuadAtomIdsCell=bQuadAtomIdsAllAtomsImages.find(subCellId)->second;
       for (unsigned int q=0; q<numQuadPoints; ++q)
-      {
         if (bQuadAtomIdsCell[q]==atomId)
-        {
           smearedbQuadsiAtom[q][iSubCell]=smearedbQuads[q][iSubCell];
-          smearedGradbQuadsiAtom[q][0][iSubCell]=smearedGradbQuads[q][0][iSubCell];
-          smearedGradbQuadsiAtom[q][1][iSubCell]=smearedGradbQuads[q][1][iSubCell];
-          smearedGradbQuadsiAtom[q][2][iSubCell]=smearedGradbQuads[q][2][iSubCell];
-        }
-      }
     }
 
 		Tensor<2,3,VectorizedArray<double> > EPSPStressContribution=zeroTensor2;
 		for (unsigned int q=0; q<numQuadPoints; ++q)
 			EPSPStressContribution
-				+=(-smearedbQuadsiAtom[q]*vselfQuads[q]*idTensor2-outer_product(smearedGradbQuadsiAtom[q]*vselfQuads[q],forceEval.quadrature_point(q)-atomLocation)
-				)*forceEval.JxW(q);
-
+				+=outer_product(smearedbQuadsiAtom[q]*gradVselfQuads[q],forceEval.quadrature_point(q)-atomLocationVect)*forceEval.JxW(q);
 
 		for (unsigned int iSubCell=0; iSubCell<numSubCells; ++iSubCell)
 			for (unsigned int idim=0; idim<C_DIM; idim++)

@@ -35,6 +35,7 @@ template<unsigned int FEOrder>
 	const unsigned int numQuadPoints=forceEval.n_q_points;
 	DoFHandler<3>::active_cell_iterator subCellPtr;
 
+  //FIXME: only loop over non-trivial atoms
 	for (int iAtom=0;iAtom <numberGlobalAtoms; iAtom++)
 	{
     std::vector<VectorizedArray<double>> smearedbQuadsiAtom(numQuadPoints,make_vectorized_array(0.0));
@@ -88,9 +89,9 @@ template<unsigned int FEOrder>
 	const unsigned int numQuadPoints=forceEval.n_q_points;
 	DoFHandler<3>::active_cell_iterator subCellPtr;
 
- std::vector<int> atomsInCurrentBin(atomIdsInBin.begin(),atomIdsInBin.end());
+  std::vector<int> atomsInCurrentBin(atomIdsInBin.begin(),atomIdsInBin.end());
 
-
+  //FIXME: only loop over non-trivial atoms
 	for (int iAtom=0;iAtom <atomsInCurrentBin.size(); iAtom++)
 	{
     const int atomId=atomsInCurrentBin[iAtom];

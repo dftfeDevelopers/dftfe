@@ -567,8 +567,7 @@ template<unsigned int FEOrder>
 	std::vector<VectorizedArray<double> > rhoQuadsElectro(numQuadPoints,make_vectorized_array(0.0));
   std::vector<VectorizedArray<double> > rhoQuadsElectroLpsp(numQuadPointsLpsp,make_vectorized_array(0.0));  
   std::vector<VectorizedArray<double> > smearedbQuads(numQuadPointsSmearedb,make_vectorized_array(0.0));
-  std::vector< Tensor<1,C_DIM,VectorizedArray<double> >  > smearedGradbQuads(numQuadPointsSmearedb,zeroTensor);  
-  std::vector< VectorizedArray<double> > phiTotSmearedChargeQuads(numQuadPointsSmearedb,make_vectorized_array(0.0));  
+  std::vector< Tensor<1,C_DIM,VectorizedArray<double> > > gradPhiTotSmearedChargeQuads(numQuadPointsSmearedb,zeroTensor);    
 	std::vector<Tensor<1,C_DIM,VectorizedArray<double> > > gradRhoQuadsElectro(numQuadPoints,zeroTensor);
   std::vector<Tensor<1,C_DIM,VectorizedArray<double> > > gradRhoQuadsElectroLpsp(numQuadPointsLpsp,zeroTensor);
 	std::vector<VectorizedArray<double> > pseudoVLocQuadsElectro(numQuadPointsLpsp,make_vectorized_array(0.0));
@@ -586,7 +585,7 @@ template<unsigned int FEOrder>
       forceEvalSmearedCharge.reinit(cell);
       phiTotEvalSmearedCharge.reinit(cell);
       phiTotEvalSmearedCharge.read_dof_values_plain(phiTotRhoOutElectro);
-      phiTotEvalSmearedCharge.evaluate(true,false);        
+      phiTotEvalSmearedCharge.evaluate(false,true);        
     }
 
 		std::fill(rhoQuadsElectro.begin(),rhoQuadsElectro.end(),make_vectorized_array(0.0));
@@ -595,8 +594,7 @@ template<unsigned int FEOrder>
     std::fill(gradRhoQuadsElectroLpsp.begin(),gradRhoQuadsElectroLpsp.end(),zeroTensor);    
 		std::fill(pseudoVLocQuadsElectro.begin(),pseudoVLocQuadsElectro.end(),make_vectorized_array(0.0));
     std::fill(smearedbQuads.begin(),smearedbQuads.end(),make_vectorized_array(0.0));
-    std::fill(smearedGradbQuads.begin(),smearedGradbQuads.end(),zeroTensor);    
-    std::fill(phiTotSmearedChargeQuads.begin(),phiTotSmearedChargeQuads.end(),make_vectorized_array(0.0));    
+    std::fill(gradPhiTotSmearedChargeQuads.begin(),gradPhiTotSmearedChargeQuads.end(),zeroTensor);    
 
 		const unsigned int numSubCells=matrixFreeDataElectro.n_components_filled(cell);
 
@@ -633,15 +631,11 @@ template<unsigned int FEOrder>
 
       if (dftParameters::smearedNuclearCharges)
       {
-        const std::vector<double> & gradbQuadValuesCell= dftPtr->d_gradbQuadValuesAllAtoms.find(subCellId)->second;
         const std::vector<double> & bQuadValuesCell= dftPtr->d_bQuadValuesAllAtoms.find(subCellId)->second;
         for (unsigned int q=0; q<numQuadPointsSmearedb; ++q)
         {
           smearedbQuads[q][iSubCell]=bQuadValuesCell[q];
           sum+=bQuadValuesCell[q];
-          smearedGradbQuads[q][0][iSubCell]=gradbQuadValuesCell[3*q+0];
-          smearedGradbQuads[q][1][iSubCell]=gradbQuadValuesCell[3*q+1];
-          smearedGradbQuads[q][2][iSubCell]=gradbQuadValuesCell[3*q+2];
         }            
       }
 		}
@@ -719,28 +713,19 @@ template<unsigned int FEOrder>
 				for (unsigned int jdim=0; jdim<C_DIM; ++jdim)
 					d_stress[idim][jdim]+=EQuadSum[idim][jdim][iSubCell];
 
-    VectorizedArray<double>  identityTensorContributionSmearedCharge=make_vectorized_array(0.0);
     if (dftParameters::smearedNuclearCharges && std::abs(sum)>1e-9)
     {
       for (unsigned int q=0; q<numQuadPointsSmearedb; ++q)
       {
-        phiTotSmearedChargeQuads[q]=phiTotEvalSmearedCharge.get_value(q);
-        identityTensorContributionSmearedCharge+=phiTotSmearedChargeQuads[q]*smearedbQuads[q]*forceEvalSmearedCharge.JxW(q);
+        gradPhiTotSmearedChargeQuads[q]=phiTotEvalSmearedCharge.get_gradient(q);
       }
 
 			addEPhiTotSmearedStressContribution(forceEvalSmearedCharge,
 					matrixFreeDataElectro,
 					cell,
-					phiTotSmearedChargeQuads,
+          gradPhiTotSmearedChargeQuads,
           dftPtr->d_bQuadAtomIdsAllAtomsImages,
-				  smearedGradbQuads);
-      
-      for (unsigned int iSubCell=0; iSubCell<numSubCells; ++iSubCell)  
-      {
-         d_stress[0][0]+=identityTensorContributionSmearedCharge[iSubCell];
-         d_stress[1][1]+=identityTensorContributionSmearedCharge[iSubCell];
-         d_stress[2][2]+=identityTensorContributionSmearedCharge[iSubCell];
-      }  
+				  smearedbQuads);
     }
 
 	}//cell loop
