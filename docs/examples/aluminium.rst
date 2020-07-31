@@ -85,7 +85,9 @@ in the `Geometry` / `Optimization` subsections), set::
    :math:`\mathcal{O}(10^{-6})` accuracy, and convergence in cell stress to
    :math:`\mathcal{O}(10^{-7})` accuracy.
 
-  .. _table2: FCC Al ground-state energy and hydrostatic cell-stress convergence for demo example 2
+  .. _table2:
+
+    FCC Al ground-state energy and hydrostatic cell-stress convergence for demo example 2
 
     ========  ========== ===========  ========================  ===============  ==============================
     Mesh No.  POLYNOMIAL MESH SIZE    Total degrees of freedom  Energy per atom  Hydrostatic Cell stress

@@ -95,8 +95,8 @@ and finally doing the atomic relaxation of nitrogen molecule.
     from http://www.quantum-simulation.org/potentials/sg15_oncv/upf/.
 
     .. note::
-        Presently, we only support Norm-Conserving pseudopotential (Troullier-Martins, ONCV) files in `UPF`
-        format (version 2.0 or greater).
+        Presently, we only support norm-Conserving pseudopotentials (Troullier-Martins or ONCV)
+        files in `UPF` format (version 2.0 or greater).
 
 4. Set the input parameters for self-consistent field (SCF) iterative procedure.::
 

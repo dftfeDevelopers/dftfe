@@ -9,26 +9,31 @@ It is based on adaptive finite-element discretization that handles all-electron 
 same framework, and incorporates scalable and efficient solvers for the solution of the Kohn-Sham equations. Importantly, DFT-FE can handle general geometries and boundary conditions, including periodic, semi-periodic and non-periodic systems. DFT-FE code builds on top of the deal.II library for everything 
 that has to do with finite elements, geometries, meshes, etc., and, through deal.II on p4est for parallel adaptive mesh handling.
 
+.. image:: _static/N2.png
+   :alt: Electron density of dinitrogen calculated with DFT-FE
+
 .. toctree::
-   :maxdepth: 1
+   :titlesonly:
    :caption: Using DFT-FE
 
-   installation
-   running
-   params
+   Installing <installation>
+   Running <running>
+   references
 
 .. toctree::
-   :maxdepth: 1
+   :maxdepth: 2
    :caption: Examples
 
    examples/nitrogen
    examples/aluminium
 
 .. toctree::
-   :maxdepth: 1
+   :titlesonly:
    :caption: DFT-FE API Reference
 
+   params
    dftfe
+   developing
 
 * :ref:`genindex`
 

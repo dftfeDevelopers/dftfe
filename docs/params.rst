@@ -2,6 +2,9 @@
 
 .. _parameters:
 
+DFT-FE Input Parameter File Reference
+=====================================
+
 Global parameters
 -----------------
 
