@@ -16,13 +16,14 @@
 
 import subprocess, os
 
-def configureDoxyfile(input_dir, output_dir):
-
+def configureDoxyfile(output_dir):
 	with open('Doxyfile.in', 'r') as file :
 		filedata = file.read()
 
-	filedata = filedata.replace('@DOXYGEN_INPUT_DIR@', input_dir)
+	filedata = filedata.replace('@DOXYGEN_INPUT_DIR@', '../include')
 	filedata = filedata.replace('@DOXYGEN_OUTPUT_DIR@', output_dir)
+	filedata = filedata.replace('@PROJECT_SOURCE_DIR@', '../')
+	filedata = filedata.replace('@TARGET_VERSION@', 'development version')
 	
 	with open('Doxyfile', 'w') as file:
 		file.write(filedata)
@@ -32,12 +33,10 @@ read_the_docs_build = os.environ.get('READTHEDOCS', None) == 'True'
 
 breathe_projects = {}
 if read_the_docs_build:
-	input_dir = '../include'
 	output_dir = 'build'
-	configureDoxyfile(input_dir, output_dir)
+	configureDoxyfile(output_dir)
 	subprocess.call('doxygen', shell=True)
 	breathe_projects['src'] = output_dir + '/xml'
-
 
 # -- Project information -----------------------------------------------------
 
@@ -51,11 +50,8 @@ author = 'yes'
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
-#...
 
 extensions = [ "breathe" ]
-
-#...
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
@@ -80,3 +76,7 @@ html_static_path = ['_static']
 
 # Breathe Configuration
 breathe_default_project = "src"
+
+# Remove dftfe:: prefix when creating the global index.
+cpp_index_common_prefix = ['dftfe::']
+
