@@ -390,7 +390,7 @@ namespace dftfe {
 			/**
 			 *@brief  a
 			 */
-			void calculateAdaptiveForceGeneratorsSmearedChargeWidths();     
+			void calculateSmearedChargeWidths();     
 
 			/**
 			 *@brief  a

@@ -150,6 +150,8 @@ void dftClass<FEOrder>::moveMeshToAtoms(Triangulation<3,3> & triangulationMove,
 	d_controlPointLocationsCurrentMove.clear();
   d_gaussianConstantsAutoMesh.clear();
   d_flatTopWidthsAutoMeshMove.clear();
+  d_gaussianConstantsForce.clear();
+  d_generatorFlatTopWidths.clear();  
   d_gaussianConstantsAutoMesh.resize(numberGlobalAtoms);
   d_flatTopWidthsAutoMeshMove.resize(numberGlobalAtoms);
 	for (unsigned int iAtom=0;iAtom <numberGlobalAtoms; iAtom++)
@@ -190,45 +192,38 @@ void dftClass<FEOrder>::moveMeshToAtoms(Triangulation<3,3> & triangulationMove,
     flatTopWidths.push_back(d_flatTopWidthsAutoMeshMove[atomId]);
 	}
 
-  if (!dftParameters::floatingNuclearCharges)
-  {
-    const std::pair<bool,double> meshQualityMetrics=gaussianMove.moveMesh(closestTriaVertexToAtomsLocation,
-        dispClosestTriaVerticesToAtoms,
-        gaussianConstantsAutoMesh,
-        flatTopWidths,
-        moveSubdivided);
+  const std::pair<bool,double> meshQualityMetrics=gaussianMove.moveMesh(closestTriaVertexToAtomsLocation,
+      dispClosestTriaVerticesToAtoms,
+      gaussianConstantsAutoMesh,
+      flatTopWidths,
+      moveSubdivided);
 
-    timer_movemesh.exit_section("move mesh to atoms: move mesh");
+  timer_movemesh.exit_section("move mesh to atoms: move mesh");
 
-    AssertThrow(!meshQualityMetrics.first,ExcMessage("Negative jacobian created after moving closest nodes to atoms. Suggestion: increase refinement near atoms"));
+  AssertThrow(!meshQualityMetrics.first,ExcMessage("Negative jacobian created after moving closest nodes to atoms. Suggestion: increase refinement near atoms"));
 
-    if(!reuseClosestTriaVertices)
-      d_autoMeshMaxJacobianRatio = meshQualityMetrics.second;
+  if(!reuseClosestTriaVertices)
+    d_autoMeshMaxJacobianRatio = meshQualityMetrics.second;
 
-    if (dftParameters::verbosity>=1 && !moveSubdivided)
-      pcout<< "Mesh quality check for Auto mesh after mesh movement, maximum jacobian ratio: "<< meshQualityMetrics.second<<std::endl;
-  }
-
-  calculateAdaptiveForceGeneratorsSmearedChargeWidths();  
-}
-
-	template<unsigned int FEOrder>
-void dftClass<FEOrder>::calculateAdaptiveForceGeneratorsSmearedChargeWidths()
-{
-  d_gaussianConstantsForce.clear();
-  d_generatorFlatTopWidths.clear();
-  d_smearedChargeWidths.clear();
-  const unsigned int vertices_per_cell=dealii::GeometryInfo<3>::vertices_per_cell;
-
-	const unsigned int numberGlobalAtoms = atomLocations.size();
-	const unsigned int numberImageAtoms = d_imageIdsTrunc.size();
+  if (dftParameters::verbosity>=1 && !moveSubdivided)
+    pcout<< "Mesh quality check for Auto mesh after mesh movement, maximum jacobian ratio: "<< meshQualityMetrics.second<<std::endl;
 
   d_gaussianConstantsForce.resize(numberGlobalAtoms);
   d_generatorFlatTopWidths=d_flatTopWidthsAutoMeshMove;
 
 	for (unsigned int iAtom=0;iAtom <numberGlobalAtoms; iAtom++)
       d_gaussianConstantsForce[iAtom]=dftParameters::reproducible_output?1/std::sqrt(5.0):(dftParameters::useFlatTopGenerator?d_generatorFlatTopWidths[iAtom]+0.4:(std::min(d_nearestAtomDistances[iAtom]/2.0-0.3,dftParameters::gaussianConstantForce)));  
-  d_smearedChargeWidths.resize(numberGlobalAtoms,0.0);
+}
+
+	template<unsigned int FEOrder>
+void dftClass<FEOrder>::calculateSmearedChargeWidths()
+{
+
+  d_smearedChargeWidths.clear();
+
+	const unsigned int numberGlobalAtoms = atomLocations.size();
+
+  d_smearedChargeWidths.resize(numberGlobalAtoms);
 
   if (dftParameters::smearedNuclearCharges)
   {
@@ -246,6 +241,6 @@ void dftClass<FEOrder>::calculateAdaptiveForceGeneratorsSmearedChargeWidths()
 
     for (unsigned int iAtom=0;iAtom <numberGlobalAtoms; iAtom++)
       if (dftParameters::verbosity>=5)
-            pcout<< "iAtom: "<< iAtom<<", Smeared charge width: "<<d_smearedChargeWidths[iAtom]<<", flat top width: "<<d_generatorFlatTopWidths[iAtom]<<std::endl;        
+            pcout<< "iAtom: "<< iAtom<<", Smeared charge width: "<<d_smearedChargeWidths[iAtom]<<std::endl;        
   }
 }

@@ -814,9 +814,13 @@ namespace dftfe {
 			//
 			//move triangulation to have atoms on triangulation vertices
 			//
-			moveMeshToAtoms(triangulationPar,
-					d_mesh.getSerialMeshUnmoved());
+      if (!dftParameters::floatingNuclearCharges)
+        moveMeshToAtoms(triangulationPar,
+            d_mesh.getSerialMeshUnmoved());
 
+
+      if (dftParameters::smearedNuclearCharges)
+         calculateSmearedChargeWidths();
 
 			if (dftParameters::verbosity>=4)
 				dftUtils::printCurrentMemoryUsage(mpi_communicator,
@@ -911,6 +915,11 @@ namespace dftfe {
 			computingTimerStandard.enter_section("KSDFT problem initialization");
 			if(updateImageKPoints)
 				initImageChargesUpdateKPoints();
+
+      calculateNearestAtomDistances(); 
+
+      if (dftParameters::smearedNuclearCharges)
+        calculateSmearedChargeWidths(); 
 
 			// update mesh and other data structures required for interpolating solution fields from previous
 			// atomic configuration mesh to the current atomic configuration during an automesh step. Currently
