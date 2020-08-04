@@ -306,7 +306,7 @@ void dftClass<FEOrder>::initBoundaryConditions(const bool meshOnlyDeformed){
 				d_imagePositions,
 				d_globalChargeIdToImageIdMap);
 
-	createMasterChargeIdToImageIdMaps(3.0,
+	createMasterChargeIdToImageIdMaps(10.0,
 			d_imageIdsTrunc,
 			d_imagePositionsTrunc,
 			d_globalChargeIdToImageIdMapTrunc);
