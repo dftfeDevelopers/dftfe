@@ -82,7 +82,7 @@ template<unsigned int FEOrder>
 	if(dftParameters::verbosity>=2)
 		pcout << " d_pspTail adjusted to " << d_pspTail << std::endl ;
 
-  const double cutOffForPsp=std::max(vselfBinManager.getStoredAdaptiveBallRadius()+4.0,d_pspTail);
+  const double cutOffForPsp=std::max(vselfBinManager.getStoredAdaptiveBallRadius()+6.0,d_pspTail);
 
 	//
 	//Initialize pseudopotential
