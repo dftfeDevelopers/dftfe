@@ -781,7 +781,7 @@ namespace dftfe {
 			const double d_pspCutOff=40.0;
 
 			/// distance from the domain till which periodic images will be considered
-			const double d_pspCutOffTrunc=10.0;
+			const double d_pspCutOffTrunc=15.0;
 
 			/// non-intersecting smeared charges of all atoms at quad points
 			std::map<dealii::CellId, std::vector<double> >  d_bQuadValuesAllAtoms;
