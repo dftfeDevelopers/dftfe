@@ -191,6 +191,7 @@ void kohnShamDFTOperatorClass<FEOrder>::computeLocalHamiltonianTimesX(const dist
 	const unsigned int inc = 1;
 
 	std::vector<double> cellWaveFunctionMatrix(d_numberNodesPerElement*numberWaveFunctions,0.0);
+        cellWaveFunctionMatrix = d_cellWaveFunctionMatrix;
 	std::vector<double> cellHamMatrixTimesWaveMatrix(d_numberNodesPerElement*numberWaveFunctions,0.0);
 
 	unsigned int iElem = 0;

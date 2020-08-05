@@ -357,7 +357,7 @@ namespace dftfe{
 
 		///storage for shapefunctions
 		std::vector<double> d_shapeFunctionValue;
-
+                std::vector<double> d_cellWaveFunctionMatrix;
 
 		///storage for  matrix-free cell data
 		const unsigned int d_numberNodesPerElement;

@@ -133,6 +133,10 @@ namespace dftfe {
 			getOverloadedConstraintMatrix()->precomputeMaps(dftPtr->matrix_free_data.get_vector_partitioner(),
 					flattenedArray.get_partitioner(),
 					numberWaveFunctions);
+
+
+			d_cellWaveFunctionMatrix.resize(d_numberNodesPerElement*numberWaveFunctions,0.0);
+			
 		}
 
 	template<unsigned int FEOrder>
@@ -710,7 +714,7 @@ namespace dftfe {
 			    //
 			    for(unsigned int i = 0; i < numberDofs; ++i)
 			      {
-				double scalingCoeff = d_sqrtMassVector.local_element(i)*(1.0/scalar);
+				double scalingCoeff = d_sqrtMassVector.local_element(i);
 				dscal_(&numberWaveFunctions,
 				       &scalingCoeff,
 				       src.begin()+i*numberWaveFunctions,
