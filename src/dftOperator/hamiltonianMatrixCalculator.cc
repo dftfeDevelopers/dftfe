@@ -255,7 +255,7 @@ void kohnShamDFTOperatorClass<FEOrder>::computeHamiltonianMatrix(const unsigned 
 	    unsigned int iElem = 0;
 	    for(unsigned int iMacroCell = 0; iMacroCell < numberMacroCells; ++iMacroCell)
 	      {
-
+                  const  unsigned int n_sub_cells = dftPtr->matrix_free_data.n_components_filled(iMacroCell);
 #ifdef USE_COMPLEX
 
 #else		
@@ -267,7 +267,7 @@ void kohnShamDFTOperatorClass<FEOrder>::computeHamiltonianMatrix(const unsigned 
 			for(unsigned int jNode = iNode; jNode < numberDofsPerElement; ++jNode)
 			  {
 			    dealii::types::global_dof_index localProcJNode = d_flattenedArrayMacroCellLocalProcIndexIdMap[iElem][jNode];
-			    d_cellHamiltonianMatrix[kpointSpinIndex][iElem][numberDofsPerElement*iNode + jNode] = d_invSqrtMassVector.local_element(localProcINode)*d_cellHamiltonianMatrix[kpointSpinIndex][iElem][numberDofsPerElement*iNode + jNode][iSubCell]*d_invSqrtMassVector.local_element(localProcJNode);
+			    d_cellHamiltonianMatrix[kpointSpinIndex][iElem][numberDofsPerElement*iNode + jNode] = d_invSqrtMassVector.local_element(localProcINode)*d_cellHamiltonianMatrix[kpointSpinIndex][iElem][numberDofsPerElement*iNode + jNode]*d_invSqrtMassVector.local_element(localProcJNode);
 			  }
 			for(unsigned int jNode = 0; jNode < iNode; ++jNode)
 			  {

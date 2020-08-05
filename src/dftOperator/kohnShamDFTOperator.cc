@@ -667,7 +667,7 @@ namespace dftfe {
 			    //
 			    for(unsigned int i = 0; i < numberDofs; ++i)
 			      {
-				double scalingCoeff = d_sqrtMassVector.local_element(i)*(1.0/scalar);
+				double scalingCoeff = d_sqrtMassVector.local_element(i);//*(1.0/scalar);
 				dscal_(&numberWaveFunctions,
 				       &scalingCoeff,
 				       src.begin()+i*numberWaveFunctions,
