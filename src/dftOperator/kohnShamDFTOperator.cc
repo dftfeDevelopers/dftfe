@@ -134,6 +134,10 @@ namespace dftfe {
 			getOverloadedConstraintMatrix()->precomputeMaps(dftPtr->matrix_free_data.get_vector_partitioner(),
 					flattenedArray.get_partitioner(),
 					numberWaveFunctions);
+
+
+			d_cellWaveFunctionMatrix.resize(d_numberNodesPerElement*numberWaveFunctions,0.0);
+			
 		}
 
 	template<unsigned int FEOrder>
