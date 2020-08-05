@@ -204,7 +204,8 @@ void kohnShamDFTOperatorClass<FEOrder>::computeNonLocalHamiltonianTimesX(const d
 template<unsigned int FEOrder>
 void kohnShamDFTOperatorClass<FEOrder>::computeNonLocalHamiltonianTimesX(const distributedCPUVec<double> & src,
 		const unsigned int numberWaveFunctions,
-		distributedCPUVec<double>       & dst) const
+									 distributedCPUVec<double>       & dst,
+									 const double scalar) const
 {
 
 
@@ -231,6 +232,7 @@ void kohnShamDFTOperatorClass<FEOrder>::computeNonLocalHamiltonianTimesX(const d
 	const double alpha = 1.0;
 	const double beta = 1.0;
 	const unsigned int inc = 1;
+
 
 
 	typename DoFHandler<3>::active_cell_iterator cell = dftPtr->dofHandler.begin_active(), endc = dftPtr->dofHandler.end();
@@ -339,6 +341,7 @@ void kohnShamDFTOperatorClass<FEOrder>::computeNonLocalHamiltonianTimesX(const d
 	const double alpha1 = 1.0;
 	const double beta1 = 0.0;
 	const unsigned int inc1 = 1;
+	const double alpha2 = scalar;
 
 	//
 	//compute C*V*C^{T}*x
@@ -355,7 +358,7 @@ void kohnShamDFTOperatorClass<FEOrder>::computeNonLocalHamiltonianTimesX(const d
 					&numberWaveFunctions,
 					&d_numberNodesPerElement,
 					&numberPseudoWaveFunctions,
-					&alpha1,
+					&alpha2,
 					&projectorKetTimesVector[atomId][0],
 					&numberWaveFunctions,
 					&dftPtr->d_nonLocalProjectorElementMatricesTranspose[atomId][iElemComp][0],

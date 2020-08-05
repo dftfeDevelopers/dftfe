@@ -57,6 +57,39 @@ void dftClass<FEOrder>::computeElementalOVProjectorKets()
 	//
 	const unsigned int maxkPoints = d_kPointWeights.size();
 
+	//
+	//reinit kohnShamDFTOperator for getting access to global to local element nodeIds
+	//
+	kohnShamDFTOperatorClass<FEOrder> kohnShamDFTEigenOperator(this,mpi_communicator);
+	distributedCPUVec<double> sqrtMassVector,invSqrtMassVector;
+
+	if(dftParameters::cellLevelMassMatrixScaling)
+	  {
+	    matrix_free_data.initialize_dof_vector(invSqrtMassVector,0);
+	    sqrtMassVector.reinit(invSqrtMassVector);
+	    kohnShamDFTEigenOperator.computeMassVector(dofHandler,
+						       constraintsNone,
+						       sqrtMassVector,
+						       invSqrtMassVector);
+
+	    constraintsNone.distribute(invSqrtMassVector);
+	    invSqrtMassVector.update_ghost_values();
+	  }
+	
+	distributedCPUVec<dataTypes::number> tmpVector;
+	vectorTools::createDealiiVector<dataTypes::number>(matrix_free_data.get_vector_partitioner(),
+							   1,
+							   tmpVector);
+
+	//storage for precomputing index maps
+	std::vector<std::vector<dealii::types::global_dof_index> > flattenedArrayMacroCellLocalProcIndexIdMap, flattenedArrayCellLocalProcIndexIdMap;
+	
+	vectorTools::computeCellLocalIndexSetMap(tmpVector.get_partitioner(),
+						 matrix_free_data,
+						 1,
+						 flattenedArrayMacroCellLocalProcIndexIdMap,
+						 flattenedArrayCellLocalProcIndexIdMap);
+
 
 	//
 	//preallocate element Matrices
@@ -324,11 +357,79 @@ void dftClass<FEOrder>::computeElementalOVProjectorKets()
 
 	}//atom loop
 
+	
+	//scaling nonlocal element matrices with M^{-1/2}
+#ifdef USE_COMPLEX
+	if(dftParameters::cellLevelMassMatrixScaling)
+	  {
+	    for(int iAtom = 0; iAtom < numberNonLocalAtoms; ++iAtom)
+	      {
+		int numberElementsInAtomCompactSupport = d_elementOneFieldIteratorsInAtomCompactSupport[iAtom].size();
+		int numberPseudoWaveFunctions = d_numberPseudoAtomicWaveFunctions[iAtom];
+		for(int iElem = 0; iElem < numberElementsInAtomCompactSupport; ++iElem)
+		  {
+		    for(int iNode = 0; iNode < numberNodesPerElement; ++iNode)
+		      {
+			int origElemId = d_elementIdsInAtomCompactSupport[iAtom][iElem];
+			dealii::types::global_dof_index localNodeId = flattenedArrayCellLocalProcIndexIdMap[origElemId][iNode];
+			double alpha = invSqrtMassVector.local_element(localNodeId);
+
+			for(int iPseudoWave = 0; iPseudoWave < numberPseudoWaveFunctions; ++iPseudoWave)
+			  {
+			    for(int kPoint = 0; kPoint < maxkPoints; ++kPoint)
+			      {
+				d_nonLocalProjectorElementMatricesTranspose[iAtom][iElem][kPoint][numberPseudoWaveFunctions*iNode + iPseudoWave]*=alpha;
+
+				d_nonLocalProjectorElementMatrices[iAtom][iElem][kPoint][numberNodesPerElement*iPseudoWave + iNode] = d_nonLocalProjectorElementMatricesTranspose[iAtom][iElem][kPoint][numberPseudoWaveFunctions*iNode + iPseudoWave];
+
+				d_nonLocalProjectorElementMatricesConjugate[iAtom][iElem][kPoint][numberNodesPerElement*iPseudoWave + iNode] = std::conj(d_nonLocalProjectorElementMatrices[iAtom][iElem][kPoint][numberNodesPerElement*iPseudoWave + iNode]);
+			      }
+
+			  }
+
+		      }
+
+		  }
+
+	      }
+	  }
+#else
+	if(dftParameters::cellLevelMassMatrixScaling)
+	  {
+	    for(int iAtom = 0; iAtom < numberNonLocalAtoms; ++iAtom)
+	      {
+		int numberElementsInAtomCompactSupport = d_elementOneFieldIteratorsInAtomCompactSupport[iAtom].size();
+		int numberPseudoWaveFunctions = d_numberPseudoAtomicWaveFunctions[iAtom];
+		for(int iElem = 0; iElem < numberElementsInAtomCompactSupport; ++iElem)
+		  {
+		    for(int iNode = 0; iNode < numberNodesPerElement; ++iNode)
+		      {
+			int origElemId = d_elementIdsInAtomCompactSupport[iAtom][iElem];
+			dealii::types::global_dof_index localNodeId = flattenedArrayCellLocalProcIndexIdMap[origElemId][iNode];
+			double alpha = invSqrtMassVector.local_element(localNodeId);
+
+			for(int iPseudoWave = 0; iPseudoWave < numberPseudoWaveFunctions; ++iPseudoWave)
+			  {
+			    d_nonLocalProjectorElementMatricesTranspose[iAtom][iElem][numberPseudoWaveFunctions*iNode + iPseudoWave]*=alpha;
+
+			    d_nonLocalProjectorElementMatrices[iAtom][iElem][numberNodesPerElement*iPseudoWave + iNode] = d_nonLocalProjectorElementMatricesTranspose[iAtom][iElem][numberPseudoWaveFunctions*iNode + iPseudoWave];
+
+			  }
+
+		      }
+
+		  }
+
+	      }
+	  }
+#endif	
+
 	//
 	//Add mpi accumulation
 	//
 
 }
+
 	template<unsigned int FEOrder>
 void dftClass<FEOrder>::initNonLocalPseudoPotential_OV()
 {

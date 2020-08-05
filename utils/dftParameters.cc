@@ -63,6 +63,7 @@ namespace dftfe {
 		bool electrostaticsPRefinement = false;
 		bool meshAdaption = false;
 		bool pinnedNodeForPBC = true;
+	        bool cellLevelMassMatrixScaling = false;
 
 		std::string startingWFCType="";
 		bool useBatchGEMM=false;
@@ -382,6 +383,10 @@ namespace dftfe {
 				prm.declare_entry("MESH FILE", "",
 						Patterns::Anything(),
 						"[Developer] External mesh file path. If nothing is given auto mesh generation is performed. The option is only for testing purposes.");
+
+				prm.declare_entry("CELL LEVEL MASS MATRIX SCALING","false",
+							Patterns::Bool(),
+							"[Advanced] Scales the cell-level Hamiltonian matrix with inverse square root of the diagonal mass matrix at the cell-level Only valid when hanging nodes are not present. Default: false.");
 
 				prm.enter_subsection ("Auto mesh generation parameters");
 				{
@@ -939,6 +944,7 @@ namespace dftfe {
 			{
 				dftParameters::finiteElementPolynomialOrder  = prm.get_integer("POLYNOMIAL ORDER");
 				dftParameters::meshFileName                  = prm.get("MESH FILE");
+				dftParameters::cellLevelMassMatrixScaling    = prm.get_bool("CELL LEVEL MASS MATRIX SCALING");
 				prm.enter_subsection ("Auto mesh generation parameters");
 				{
 					dftParameters::outerAtomBallRadius           = prm.get_double("ATOM BALL RADIUS");

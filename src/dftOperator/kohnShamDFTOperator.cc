@@ -89,10 +89,17 @@ namespace dftfe {
 					d_sqrtMassVector,
 					d_invSqrtMassVector);
 
+			if(dftParameters::cellLevelMassMatrixScaling)
+			  {
+			    dftPtr->constraintsNone.distribute(d_invSqrtMassVector);
+			    d_invSqrtMassVector.update_ghost_values();
+			  }
+
 			operatorDFTClass::setInvSqrtMassVector(d_invSqrtMassVector);
 
 			d_cellHamiltonianMatrix.clear();
 			d_cellHamiltonianMatrix.resize(dftPtr->d_kPointWeights.size()*(1+dftParameters::spinPolarized));
+
 
 			computing_timer.exit_section("kohnShamDFTOperatorClass setup");
 		}
@@ -493,6 +500,10 @@ namespace dftfe {
 						&inc);
 			}
 
+			
+			
+			
+
 		}
 
 	template<unsigned int FEOrder>
@@ -528,28 +539,45 @@ namespace dftfe {
 			//
 			//scale src vector with M^{-1/2}
 			//
-			for(unsigned int i = 0; i < numberDofs; ++i)
-			{
-				const double scalingCoeff = d_invSqrtMassVector.local_element(i)*scalar;
+			if(!dftParameters::cellLevelMassMatrixScaling)
+			  {
+			    for(unsigned int i = 0; i < numberDofs; ++i)
+			      {
+				const double scalingCoeff = d_invSqrtMassVector.local_element(i);//*scalar;
 				dscal_(&numberWaveFunctions,
-						&scalingCoeff,
-						src.begin()+i*numberWaveFunctions,
-						&inc);
-			}
+				       &scalingCoeff,
+				       src.begin()+i*numberWaveFunctions,
+				       &inc);
+			      }
 
 
-			if(scaleFlag)
-			{
+			    if(scaleFlag)
+			      {
 				for(int i = 0; i < numberDofs; ++i)
-				{
-					const double scalingCoeff = d_sqrtMassVector.local_element(i);
-					dscal_(&numberWaveFunctions,
-							&scalingCoeff,
-							dst.begin()+i*numberWaveFunctions,
-							&inc);
+				  {
+				    const double scalingCoeff = d_sqrtMassVector.local_element(i);
+				    dscal_(&numberWaveFunctions,
+					   &scalingCoeff,
+					   dst.begin()+i*numberWaveFunctions,
+					   &inc);
 
-				}
-			}
+				  }
+			      }
+			  }
+			/*else
+			  {
+			   
+			    for(unsigned int i = 0; i < numberDofs; ++i)
+			      {
+				const double scalingCoeff = scalar;
+				dscal_(&numberWaveFunctions,
+				       &scalingCoeff,
+				       src.begin()+i*numberWaveFunctions,
+				       &inc);
+			      }
+
+			      }*/
+			
 
 			//
 			//update slave nodes before doing element-level matrix-vec multiplication
@@ -566,17 +594,21 @@ namespace dftfe {
 			if (dftParameters::useBatchGEMM && numberWaveFunctions<1000)
 			{
 				computeLocalHamiltonianTimesXBatchGEMM(src,
-						numberWaveFunctions,
-						dst);
+								       numberWaveFunctions,
+								       dst,
+								       scalar);
+								       
 			}
 			else
 				computeLocalHamiltonianTimesX(src,
-						numberWaveFunctions,
-						dst);
+							      numberWaveFunctions,
+							      dst,
+							      scalar);
 #else
 			computeLocalHamiltonianTimesX(src,
-					numberWaveFunctions,
-					dst);
+						      numberWaveFunctions,
+						      dst,
+						      scalar);
 #endif
 
 			//
@@ -588,17 +620,20 @@ namespace dftfe {
 				if (dftParameters::useBatchGEMM && numberWaveFunctions<1000)
 				{
 					computeNonLocalHamiltonianTimesXBatchGEMM(src,
-							numberWaveFunctions,
-							dst);
+										  numberWaveFunctions,
+										  dst,
+										  scalar);
 				}
 				else
 					computeNonLocalHamiltonianTimesX(src,
 							numberWaveFunctions,
-							dst);
+									 dst,
+									 scalar);
 #else
 				computeNonLocalHamiltonianTimesX(src,
-						numberWaveFunctions,
-						dst);
+								 numberWaveFunctions,
+								 dst,
+								 scalar);
 #endif
 			}
 
@@ -617,27 +652,43 @@ namespace dftfe {
 			//
 			//M^{-1/2}*H*M^{-1/2}*X
 			//
-			for(unsigned int i = 0; i < numberDofs; ++i)
-			{
+			if(!dftParameters::cellLevelMassMatrixScaling)
+			  {
+			    for(unsigned int i = 0; i < numberDofs; ++i)
+			      {
 				dscal_(&numberWaveFunctions,
-						&d_invSqrtMassVector.local_element(i),
-						dst.begin()+i*numberWaveFunctions,
-						&inc);
-			}
+				       &d_invSqrtMassVector.local_element(i),
+				       dst.begin()+i*numberWaveFunctions,
+				       &inc);
+			      }
 
-
-			//
-			//unscale src M^{1/2}*X
-			//
-			for(unsigned int i = 0; i < numberDofs; ++i)
-			{
+			    //
+			    //unscale src M^{1/2}*X
+			    //
+			    for(unsigned int i = 0; i < numberDofs; ++i)
+			      {
 				double scalingCoeff = d_sqrtMassVector.local_element(i)*(1.0/scalar);
 				dscal_(&numberWaveFunctions,
-						&scalingCoeff,
-						src.begin()+i*numberWaveFunctions,
-						&inc);
-			}
+				       &scalingCoeff,
+				       src.begin()+i*numberWaveFunctions,
+				       &inc);
+			      }
+			  }
+			else
+			  {
+			    /*for(unsigned int i = 0; i < numberDofs; ++i)
+			      {
+				double scalingCoeff = (1.0/scalar);
+				dscal_(&numberWaveFunctions,
+				       &scalingCoeff,
+				       src.begin()+i*numberWaveFunctions,
+				       &inc);
+				       }*/
 
+			    dftPtr->constraintsNoneDataInfo.set_zero(src,
+                                                                     numberWaveFunctions);
+
+			  }
 
 		}
 

@@ -244,7 +244,46 @@ void kohnShamDFTOperatorClass<FEOrder>::computeHamiltonianMatrix(const unsigned 
 			iElem += 1;
 		}
 
+	
+
 	}//macrocell loop
+
+	
+
+	if(dftParameters::cellLevelMassMatrixScaling)
+	  {
+	    unsigned int iElem = 0;
+	    for(unsigned int iMacroCell = 0; iMacroCell < numberMacroCells; ++iMacroCell)
+	      {
+
+#ifdef USE_COMPLEX
+
+#else		
+		for(unsigned int iSubCell = 0; iSubCell < n_sub_cells; ++iSubCell)
+		  {
+		    for(unsigned int iNode = 0; iNode < numberDofsPerElement; ++iNode)
+		      {
+			dealii::types::global_dof_index localProcINode = d_flattenedArrayMacroCellLocalProcIndexIdMap[iElem][iNode];
+			for(unsigned int jNode = iNode; jNode < numberDofsPerElement; ++jNode)
+			  {
+			    dealii::types::global_dof_index localProcJNode = d_flattenedArrayMacroCellLocalProcIndexIdMap[iElem][jNode];
+			    d_cellHamiltonianMatrix[kpointSpinIndex][iElem][numberDofsPerElement*iNode + jNode] = d_invSqrtMassVector.local_element(localProcINode)*d_cellHamiltonianMatrix[kpointSpinIndex][iElem][numberDofsPerElement*iNode + jNode][iSubCell]*d_invSqrtMassVector.local_element(localProcJNode);
+			  }
+			for(unsigned int jNode = 0; jNode < iNode; ++jNode)
+			  {
+			    d_cellHamiltonianMatrix[kpointSpinIndex][iElem][numberDofsPerElement*iNode + jNode] = d_cellHamiltonianMatrix[kpointSpinIndex][iElem][numberDofsPerElement*jNode + iNode];
+				
+			  }
+			    
+		      }
+
+		    iElem+=1;
+
+		  }
+		
+#endif
+	      }
+	  }
 
   MPI_Barrier(MPI_COMM_WORLD);
 	cpu_time = MPI_Wtime() - cpu_time;
