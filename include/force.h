@@ -420,18 +420,18 @@ namespace dftfe {
 				 std::vector<double> & accumForcesVector);        
 
 #ifdef USE_COMPLEX
-			void FnlGammaAtomsElementalContributionPeriodic
+			void FnlGammaAtomsElementalContribution
 				(std::map<unsigned int, std::vector<double> > & forceContributionFnlGammaAtoms,
 				 FEEvaluation<C_DIM,1,C_num1DQuad<FEOrder>(),C_DIM>  & forceEval,
 				 FEEvaluation<C_DIM,1,C_num1DQuadNLPSP<FEOrder>()*C_numCopies1DQuadNLPSP(),C_DIM>  & forceEvalNLP,
 				 const unsigned int cell,
-				 const std::vector<std::vector<std::vector<std::vector<Tensor<1,2, Tensor<1,C_DIM,VectorizedArray<double> > > > > > > & pspnlGammaAtomsQuads,
+				 const std::vector<std::vector<std::vector<std::vector<Tensor<1,2,VectorizedArray<double>  > > > > > & pspnlGammaAtomsQuads,
 				 const std::vector<std::vector<std::vector<std::complex<double> > > > & projectorKetTimesPsiTimesVTimesPartOcc,
-				 const std::vector<Tensor<1,2,VectorizedArray<double> > > & psiQuads,
+				 const std::vector<Tensor<1,2,Tensor<1,C_DIM,VectorizedArray<double> > > > & gradPsiQuads,
 				 const std::vector< std::vector<double> > & eigenValues,
 				 const std::vector<unsigned int> & nonlocalAtomsCompactSupportList);
 
-			void FnlGammaAtomsElementalContributionPeriodicSpinPolarized
+			void FnlGammaAtomsElementalContributionSpinPolarized
 				(std::map<unsigned int, std::vector<double> > & forceContributionFnlGammaAtoms,
 				 FEEvaluation<C_DIM,1,C_num1DQuad<FEOrder>(),C_DIM>  & forceEval,
 				 FEEvaluation<C_DIM,1,C_num1DQuadNLPSP<FEOrder>()*C_numCopies1DQuadNLPSP(),C_DIM>  & forceEvalNLP,
@@ -445,7 +445,7 @@ namespace dftfe {
 				 const std::vector<unsigned int> & nonlocalAtomsCompactSupportList);
 #else
 
-			void FnlGammaAtomsElementalContributionNonPeriodicSpinPolarized
+			void FnlGammaAtomsElementalContributionSpinPolarized
 				(std::map<unsigned int, std::vector<double> > & forceContributionFnlGammaAtoms,
 				 FEEvaluation<C_DIM,1,C_num1DQuad<FEOrder>(),C_DIM>  & forceEval,
 				 FEEvaluation<C_DIM,1,C_num1DQuadNLPSP<FEOrder>()*C_numCopies1DQuadNLPSP(),C_DIM>  & forceEvalNLP,
@@ -457,13 +457,13 @@ namespace dftfe {
 				 const std::vector< VectorizedArray<double> > & psiSpin1Quads,
 				 const std::vector<unsigned int> & nonlocalAtomsCompactSupportList);
 
-			void FnlGammaAtomsElementalContributionNonPeriodic
+			void FnlGammaAtomsElementalContribution
 				(std::map<unsigned int, std::vector<double> > & forceContributionFnlGammaAtoms,
 				 FEEvaluation<C_DIM,1,C_num1DQuad<FEOrder>(),C_DIM>  & forceEval,
 				 FEEvaluation<C_DIM,1,C_num1DQuadNLPSP<FEOrder>()*C_numCopies1DQuadNLPSP(),C_DIM>  & forceEvalNLP,
 				 const unsigned int cell,
-				 const std::vector<std::vector<std::vector<Tensor<1,C_DIM,VectorizedArray<double> > > > > & pspnlGammaAtomQuads,
-				 const std::vector<std::vector<VectorizedArray<double> > > & projectorKetTimesPsiTimesVTimesPartOcc,
+				 const std::vector<std::vector<std::vector<VectorizedArray<double> > > > & pspnlGammaAtomQuads,
+				 const std::vector<std::vector<Tensor<1,C_DIM,VectorizedArray<double> > > > & projectorKetTimesPsiTimesVTimesPartOccContractionPsi,
 				 const std::vector<bool> & isAtomInCell,
 				 const std::vector<unsigned int> & nonlocalPseudoWfcsAccum);
 

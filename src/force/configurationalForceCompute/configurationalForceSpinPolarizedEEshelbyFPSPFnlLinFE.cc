@@ -483,7 +483,7 @@ template<unsigned int FEOrder>
 
 #ifdef USE_COMPLEX
 
-					FnlGammaAtomsElementalContributionPeriodicSpinPolarized(forceContributionFnlGammaAtoms,
+					FnlGammaAtomsElementalContributionSpinPolarized(forceContributionFnlGammaAtoms,
 							forceEval,
 							forceEvalNLP,
 							cell,
@@ -500,7 +500,7 @@ template<unsigned int FEOrder>
 							macroIdToNonlocalAtomsSetMap[cell]);
 
 #else
-					FnlGammaAtomsElementalContributionNonPeriodicSpinPolarized
+					FnlGammaAtomsElementalContributionSpinPolarized
 						(forceContributionFnlGammaAtoms,
 						 forceEval,
 						 forceEvalNLP,

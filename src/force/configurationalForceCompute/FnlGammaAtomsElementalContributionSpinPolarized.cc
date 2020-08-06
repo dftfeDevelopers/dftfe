@@ -19,7 +19,7 @@
 #ifdef USE_COMPLEX
 //(locally used function) compute Fnl contibution due to Gamma(Rj) for given set of cells
 template<unsigned int FEOrder>
-	void forceClass<FEOrder>::FnlGammaAtomsElementalContributionPeriodicSpinPolarized
+	void forceClass<FEOrder>::FnlGammaAtomsElementalContributionSpinPolarized
 (std::map<unsigned int, std::vector<double> > & forceContributionFnlGammaAtoms,
  FEEvaluation<C_DIM,1,C_num1DQuad<FEOrder>(),C_DIM>  & forceEval,
  FEEvaluation<C_DIM,1,C_num1DQuadNLPSP<FEOrder>()*C_numCopies1DQuadNLPSP(),C_DIM>  & forceEvalNLP,
@@ -123,7 +123,7 @@ template<unsigned int FEOrder>
 #else
 
 template<unsigned int FEOrder>
-	void forceClass<FEOrder>::FnlGammaAtomsElementalContributionNonPeriodicSpinPolarized
+	void forceClass<FEOrder>::FnlGammaAtomsElementalContributionSpinPolarized
 (std::map<unsigned int, std::vector<double> > & forceContributionFnlGammaAtoms,
  FEEvaluation<C_DIM,1,C_num1DQuad<FEOrder>(),C_DIM>  & forceEval,
  FEEvaluation<C_DIM,1,C_num1DQuadNLPSP<FEOrder>()*C_numCopies1DQuadNLPSP(),C_DIM>  & forceEvalNLP,
