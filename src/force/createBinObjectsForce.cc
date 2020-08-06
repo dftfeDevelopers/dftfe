@@ -119,7 +119,7 @@ template<unsigned int FEOrder>
 					cellsVselfBallsDofHandlerForce[iBin].push_back(cellForce);
 					cellsVselfBallsClosestAtomIdDofHandler[iBin][cell->id()]=closestAtomId;
 					AtomIdBinIdLocalDofHandler[closestAtomId]=iBin;
-					cellFacesVselfBallSurfacesDofHandler[iBin][cell]= allFaceIdsOfCell;
+					cellFacesVselfBallSurfacesDofHandler[iBin][cell]= dirichletFaceIds;//allFaceIdsOfCell;
 					cellFacesVselfBallSurfacesDofHandlerForce[iBin][cellForce]= dirichletFaceIds;//allFaceIdsOfCell;
 				}
 			}//cell locally owned
