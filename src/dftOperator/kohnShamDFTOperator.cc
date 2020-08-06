@@ -135,8 +135,8 @@ namespace dftfe {
 					flattenedArray.get_partitioner(),
 					numberWaveFunctions);
 
+                        d_cellWaveFunctionMatrix.resize(dftPtr->matrix_free_data.n_physical_cells());
 
-			d_cellWaveFunctionMatrix.resize(d_numberNodesPerElement*numberWaveFunctions,0.0);
 			
 		}
 
@@ -568,20 +568,6 @@ namespace dftfe {
 				  }
 			      }
 			  }
-			/*else
-			  {
-			   
-			    for(unsigned int i = 0; i < numberDofs; ++i)
-			      {
-				const double scalingCoeff = scalar;
-				dscal_(&numberWaveFunctions,
-				       &scalingCoeff,
-				       src.begin()+i*numberWaveFunctions,
-				       &inc);
-			      }
-
-			      }*/
-			
 
 			//
 			//update slave nodes before doing element-level matrix-vec multiplication
@@ -680,18 +666,8 @@ namespace dftfe {
 			  }
 			else
 			  {
-			    /*for(unsigned int i = 0; i < numberDofs; ++i)
-			      {
-				double scalingCoeff = (1.0/scalar);
-				dscal_(&numberWaveFunctions,
-				       &scalingCoeff,
-				       src.begin()+i*numberWaveFunctions,
-				       &inc);
-				       }*/
-
 			    dftPtr->constraintsNoneDataInfo.set_zero(src,
                                                                      numberWaveFunctions);
-
 			  }
 
 		}

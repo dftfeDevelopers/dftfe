@@ -285,7 +285,7 @@ namespace dftfe{
 		void computeLocalHamiltonianTimesX(const distributedCPUVec<dataTypes::number> & src,
 						   const unsigned int numberWaveFunctions,
 						   distributedCPUVec<dataTypes::number> & dst,
-						   const double scalar = 1.0) const;
+						   const double scalar = 1.0);
 
 
 		void computeMassMatrixTimesX(const distributedCPUVec<dataTypes::number> & src,
@@ -370,7 +370,7 @@ namespace dftfe{
                 ///storage for shapefunctions
                 std::vector<double> d_shapeFunctionValueLpspQuad;
 
-                std::vector<double> d_cellWaveFunctionMatrix;
+                std::vector<std::vector<double> > d_cellWaveFunctionMatrix;
 
 		///storage for  matrix-free cell data
 		const unsigned int d_numberNodesPerElement;

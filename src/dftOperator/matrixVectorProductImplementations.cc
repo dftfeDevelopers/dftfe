@@ -26,7 +26,7 @@
 template<unsigned int FEOrder>
 void kohnShamDFTOperatorClass<FEOrder>::computeLocalHamiltonianTimesX(const distributedCPUVec<std::complex<double> > & src,
 		const unsigned int numberWaveFunctions,
-		distributedCPUVec<std::complex<double> > & dst) const
+		distributedCPUVec<std::complex<double> > & dst) 
 {
 	const unsigned int kpointSpinIndex=(1+dftParameters::spinPolarized)*d_kPointIndex+d_spinIndex;
 	//
@@ -179,7 +179,7 @@ template<unsigned int FEOrder>
 void kohnShamDFTOperatorClass<FEOrder>::computeLocalHamiltonianTimesX(const distributedCPUVec<double> & src,
 								      const unsigned int numberWaveFunctions,
 								      distributedCPUVec<double> & dst,
-								      const double scalar) const
+								      const double scalar) 
 {
 
 	const unsigned int kpointSpinIndex=(1+dftParameters::spinPolarized)*d_kPointIndex+d_spinIndex;
@@ -190,8 +190,8 @@ void kohnShamDFTOperatorClass<FEOrder>::computeLocalHamiltonianTimesX(const dist
 	const double scalarCoeffAlpha1 = scalar,scalarCoeffBeta = 0.0,scalarCoeffAlpha = 1.0;
 	const unsigned int inc = 1;
 
-	std::vector<double> cellWaveFunctionMatrix(d_numberNodesPerElement*numberWaveFunctions,0.0);
-        cellWaveFunctionMatrix = d_cellWaveFunctionMatrix;
+	//std::vector<double> cellWaveFunctionMatrix(d_numberNodesPerElement*numberWaveFunctions,0.0);
+        //cellWaveFunctionMatrix = d_cellWaveFunctionMatrix;
 	std::vector<double> cellHamMatrixTimesWaveMatrix(d_numberNodesPerElement*numberWaveFunctions,0.0);
 
 	unsigned int iElem = 0;
@@ -199,13 +199,14 @@ void kohnShamDFTOperatorClass<FEOrder>::computeLocalHamiltonianTimesX(const dist
 	{
 		for(unsigned int iCell = 0; iCell < d_macroCellSubCellMap[iMacroCell]; ++iCell)
 		{
+                    d_cellWaveFunctionMatrix[iElem].resize(d_numberNodesPerElement*numberWaveFunctions,0.0);
 			for(unsigned int iNode = 0; iNode < d_numberNodesPerElement; ++iNode)
 			{
 				dealii::types::global_dof_index localNodeId = d_flattenedArrayMacroCellLocalProcIndexIdMap[iElem][iNode];
 				dcopy_(&numberWaveFunctions,
 						src.begin()+localNodeId,
 						&inc,
-						&cellWaveFunctionMatrix[numberWaveFunctions*iNode],
+						&d_cellWaveFunctionMatrix[iElem][numberWaveFunctions*iNode],
 						&inc);
 			}
 
@@ -215,7 +216,7 @@ void kohnShamDFTOperatorClass<FEOrder>::computeLocalHamiltonianTimesX(const dist
 					&d_numberNodesPerElement,
 					&d_numberNodesPerElement,
 					&scalarCoeffAlpha1,
-					&cellWaveFunctionMatrix[0],
+					&d_cellWaveFunctionMatrix[iElem][0],
 					&numberWaveFunctions,
 					&d_cellHamiltonianMatrix[kpointSpinIndex][iElem][0],
 					&d_numberNodesPerElement,

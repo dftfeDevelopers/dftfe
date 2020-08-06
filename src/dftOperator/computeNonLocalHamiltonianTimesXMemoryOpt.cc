@@ -244,15 +244,15 @@ void kohnShamDFTOperatorClass<FEOrder>::computeNonLocalHamiltonianTimesX(const d
 			iElem++;
 			if (dftPtr->d_nonLocalAtomIdsInElement[iElem].size()>0)
 			{
-			  /*for(unsigned int iNode = 0; iNode < d_numberNodesPerElement; ++iNode)
+			  for(unsigned int iNode = 0; iNode < d_numberNodesPerElement; ++iNode)
 				{
 					dealii::types::global_dof_index localNodeId = d_flattenedArrayCellLocalProcIndexIdMap[iElem][iNode];
 					dcopy_(&numberWaveFunctions,
-							src.begin()+localNodeId,
-							&inc,
-							&d_cellWaveFunctionMatrix[numberWaveFunctions*iNode],
-							&inc);
-							}*/
+					       src.begin()+localNodeId,
+				               &inc,
+					       &cellWaveFunctionMatrix[numberWaveFunctions*iNode],
+					       &inc);
+	                         }
 			}
 
 			for(unsigned int iAtom = 0; iAtom < dftPtr->d_nonLocalAtomIdsInElement[iElem].size();++iAtom)
@@ -267,7 +267,7 @@ void kohnShamDFTOperatorClass<FEOrder>::computeNonLocalHamiltonianTimesX(const d
 						&numberPseudoWaveFunctions,
 						&d_numberNodesPerElement,
 						&alpha,
-						&d_cellWaveFunctionMatrix[0],
+						&cellWaveFunctionMatrix[0],
 						&numberWaveFunctions,
 						&dftPtr->d_nonLocalProjectorElementMatrices[atomId][nonZeroElementMatrixId][0],
 						&d_numberNodesPerElement,
