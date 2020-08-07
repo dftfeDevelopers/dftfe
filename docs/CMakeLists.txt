@@ -23,7 +23,7 @@ add_custom_command(OUTPUT ${DOXYGEN_INDEX_FILE}
 		VERBATIM)
 
 # Nice named target so we can run the job easily
-add_custom_target(Doxygen ALL DEPENDS ${DOXYGEN_INDEX_FILE})
+add_custom_target(Doxygen DEPENDS ${DOXYGEN_INDEX_FILE})
 
 set(SPHINX_SOURCE ${CMAKE_CURRENT_SOURCE_DIR})
 set(SPHINX_BUILD ${CMAKE_CURRENT_BINARY_DIR}/sphinx)
@@ -43,7 +43,7 @@ add_custom_command(OUTPUT ${SPHINX_INDEX_FILE}
 	DEPENDS 
 		# Other docs files you want to track should go here (or in some variable)
 		${CMAKE_CURRENT_SOURCE_DIR}/index.rst
-		${DOXYGEN_INDEX_FILE}
+                Doxygen
 	MAIN_DEPENDENCY ${SPHINX_SOURCE}/conf.py
 	COMMENT "Generating documentation with Sphinx")
 
