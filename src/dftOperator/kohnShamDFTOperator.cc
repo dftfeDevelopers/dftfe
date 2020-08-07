@@ -614,11 +614,11 @@ namespace dftfe {
 										  dst,
 										  scalar);
 				}
-				else
+				/*else
 					computeNonLocalHamiltonianTimesX(src,
 							numberWaveFunctions,
 									 dst,
-									 scalar);
+									 scalar);*/
 #else
 				computeNonLocalHamiltonianTimesX(src,
 								 numberWaveFunctions,
