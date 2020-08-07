@@ -363,7 +363,7 @@ namespace dftfe {
 							VectorizedArray<double>   zdvR=zetaDeltaV[iAtomNonLocal][iPseudoWave][ik][0];
 							VectorizedArray<double>   zdvI=zetaDeltaV[iAtomNonLocal][iPseudoWave][ik][1];
 							F-=four*fnk*(((gradPsi[0]*zdvR+gradPsi[1]*zdvI)*CReal-(gradPsi[0]*zdvI-gradPsi[1]*zdvR)*CImag)
-                 +((psi[1]*zdvR+psi[0]*zdvI)*CReal+(psi[0]*zdvR-psi[1]*zdvI)*CImag)*kcoord);
+                 +((-psi[1]*zdvR+psi[0]*zdvI)*CReal+(psi[0]*zdvR+psi[1]*zdvI)*CImag)*kcoord);
 						}
 					}
 
