@@ -840,7 +840,7 @@ void dftClass<FEOrder>::computeSparseStructureNonLocalProjectors_OV()
 							chargePoint[2] = d_imagePositionsTrunc[chargeId-numberGlobalCharges][2];
 						}
 
-						if (chargePoint.distance(cell->center())<4.0)
+						if (chargePoint.distance(cell->center())<10.0)
 						{
 							isSkipCell=false;
 							break;
