@@ -236,10 +236,17 @@ void kohnShamDFTOperatorClass<FEOrder>::computeHamiltonianMatrix(const unsigned 
 #endif
           }
 
+#ifdef USE_COMPLEX
+      for(unsigned int iNode = 0; iNode < numberDofsPerElement; ++iNode)
+        for(unsigned int jNode = 0; jNode < iNode; ++jNode)
+          d_cellHamiltonianMatrix[kpointSpinIndex][iElem][numberDofsPerElement*iNode + jNode]
+            = std::conj(d_cellHamiltonianMatrix[kpointSpinIndex][iElem][numberDofsPerElement*jNode + iNode]);
+#else
       for(unsigned int iNode = 0; iNode < numberDofsPerElement; ++iNode)
         for(unsigned int jNode = 0; jNode < iNode; ++jNode)
           d_cellHamiltonianMatrix[kpointSpinIndex][iElem][numberDofsPerElement*iNode + jNode]
             = d_cellHamiltonianMatrix[kpointSpinIndex][iElem][numberDofsPerElement*jNode + iNode];
+#endif            
 
 			iElem += 1;
 		}
