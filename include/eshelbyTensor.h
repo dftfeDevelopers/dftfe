@@ -141,8 +141,10 @@ namespace dftfe {
 		/// Nonlocal pseudopotential force contribution (for complex case)
 		Tensor<1,C_DIM,VectorizedArray<double> >  getFnlAtom(const std::vector<std::vector<std::vector<Tensor<1,2,VectorizedArray<double> > > > > & zetaDeltaV,
 				const std::vector<std::vector<std::vector<std::complex<double> > > >& projectorKetTimesPsiTimesVTimesPartOcc,
+        std::vector<Tensor<1,2,VectorizedArray<double> > >::const_iterator  psiBegin,
 				std::vector<Tensor<1,2,Tensor<1,C_DIM,VectorizedArray<double> > > >::const_iterator  gradPsiBegin,
 				const std::vector<double> & kPointWeights,
+        const std::vector<double> & kPointCoordinates,
 				const unsigned int numBlockedEigenvectors);
 
 		/** Force contribution due to the numerical difference between the input and output electron density (rhoIn and rhoOut)

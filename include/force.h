@@ -425,8 +425,9 @@ namespace dftfe {
 				 FEEvaluation<C_DIM,1,C_num1DQuad<FEOrder>(),C_DIM>  & forceEval,
 				 FEEvaluation<C_DIM,1,C_num1DQuadNLPSP<FEOrder>()*C_numCopies1DQuadNLPSP(),C_DIM>  & forceEvalNLP,
 				 const unsigned int cell,
-				 const std::vector<std::vector<std::vector<std::vector<Tensor<1,2,VectorizedArray<double>  > > > > > & pspnlGammaAtomsQuads,
+				 const std::vector<std::vector<std::vector<std::vector<Tensor<1,2,VectorizedArray<double>  > > > > > & zetaDeltaVQuads,
 				 const std::vector<std::vector<std::vector<std::complex<double> > > > & projectorKetTimesPsiTimesVTimesPartOcc,
+				 const std::vector<Tensor<1,2,VectorizedArray<double> > > & psiQuads,         
 				 const std::vector<Tensor<1,2,Tensor<1,C_DIM,VectorizedArray<double> > > > & gradPsiQuads,
 				 const std::vector< std::vector<double> > & eigenValues,
 				 const std::vector<unsigned int> & nonlocalAtomsCompactSupportList);
@@ -462,7 +463,7 @@ namespace dftfe {
 				 FEEvaluation<C_DIM,1,C_num1DQuad<FEOrder>(),C_DIM>  & forceEval,
 				 FEEvaluation<C_DIM,1,C_num1DQuadNLPSP<FEOrder>()*C_numCopies1DQuadNLPSP(),C_DIM>  & forceEvalNLP,
 				 const unsigned int cell,
-				 const std::vector<std::vector<std::vector<VectorizedArray<double> > > > & pspnlGammaAtomQuads,
+				 const std::vector<std::vector<std::vector<VectorizedArray<double> > > > & zetaDeltaVQuads,
 				 const std::vector<std::vector<Tensor<1,C_DIM,VectorizedArray<double> > > > & projectorKetTimesPsiTimesVTimesPartOccContractionPsi,
 				 const std::vector<bool> & isAtomInCell,
 				 const std::vector<unsigned int> & nonlocalPseudoWfcsAccum);

@@ -433,13 +433,14 @@ void forceClass<FEOrder>::computeStressEEshelbyEPSPEnlEk(const MatrixFree<3,doub
 
 			if(isPseudopotential && !dftParameters::useHigherQuadNLP)
 			{
+        /*
 				EKPoints+=eshelbyTensor::getEnlEshelbyTensorPeriodic(ZetaDeltaVQuads[q],
 						projectorKetTimesPsiTimesVTimesPartOcc,
 						psiQuads.begin()+q*numEigenVectors*numKPoints,
 						dftPtr->d_kPointWeights,
 						macroIdToNonlocalAtomsSetMap[cell],
 						numEigenVectors);
-
+        */
 				EKPoints+=eshelbyTensor::getEnlStress(gradZetalmDeltaVlDyadicDistImageAtomsQuads[q],
 						projectorKetTimesPsiTimesVTimesPartOcc,
 						psiQuads.begin()+q*numEigenVectors*numKPoints,
@@ -457,14 +458,7 @@ void forceClass<FEOrder>::computeStressEEshelbyEPSPEnlEk(const MatrixFree<3,doub
 			for (unsigned int q=0; q<numQuadPointsNLP; ++q)
 			{
 				Tensor<2,C_DIM,VectorizedArray<double> > EKPoints
-					=eshelbyTensor::getEnlEshelbyTensorPeriodic(ZetaDeltaVQuads[q],
-							projectorKetTimesPsiTimesVTimesPartOcc,
-							psiQuadsNLP.begin()+q*numEigenVectors*numKPoints,
-							dftPtr->d_kPointWeights,
-							macroIdToNonlocalAtomsSetMap[cell],
-							numEigenVectors);
-
-				EKPoints+=eshelbyTensor::getEnlStress(gradZetalmDeltaVlDyadicDistImageAtomsQuads[q],
+					=eshelbyTensor::getEnlStress(gradZetalmDeltaVlDyadicDistImageAtomsQuads[q],
 						projectorKetTimesPsiTimesVTimesPartOcc,
 						psiQuadsNLP.begin()+q*numEigenVectors*numKPoints,
 						dftPtr->d_kPointWeights,

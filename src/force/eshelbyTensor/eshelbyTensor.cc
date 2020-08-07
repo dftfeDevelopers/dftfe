@@ -315,9 +315,7 @@ namespace dftfe {
 
 			const unsigned int numberPseudoWaveFunctions = zetaDeltaV.size();
 			for (unsigned int iPseudoWave=0; iPseudoWave < numberPseudoWaveFunctions; ++iPseudoWave)
-			{
 				F-=four*zetaDeltaV[iPseudoWave]*projectorKetTimesPsiTimesVTimesPartOccContractionGradPsi[startingId+iPseudoWave];
-			}
 
 			return F;
 		}
@@ -333,17 +331,27 @@ namespace dftfe {
 
 		Tensor<1,C_DIM,VectorizedArray<double> >  getFnlAtom(const std::vector<std::vector<std::vector<Tensor<1,2,VectorizedArray<double> > > > > & zetaDeltaV,
 				const std::vector<std::vector<std::vector<std::complex<double> > > >& projectorKetTimesPsiTimesVTimesPartOcc,
+        std::vector<Tensor<1,2,VectorizedArray<double> > >::const_iterator  psiBegin,
 				std::vector<Tensor<1,2,Tensor<1,C_DIM,VectorizedArray<double> > > >::const_iterator  gradPsiBegin,
 				const std::vector<double> & kPointWeights,
+        const std::vector<double> & kPointCoordinates,
 				const unsigned int numBlockedEigenvectors)
 		{
 			Tensor<1,C_DIM,VectorizedArray<double> > F;
-			std::vector<Tensor<1,2,Tensor<1,C_DIM,VectorizedArray<double> > > >::const_iterator it1=gradPsiBegin;
+      std::vector<Tensor<1,2,VectorizedArray<double> > >::const_iterator it1=psiBegin;
+			std::vector<Tensor<1,2,Tensor<1,C_DIM,VectorizedArray<double> > > >::const_iterator it2=gradPsiBegin;
 			VectorizedArray<double> four=make_vectorized_array(4.0);
 			const int numKPoints=kPointWeights.size();
-			for (unsigned int ik=0; ik<numKPoints; ++ik){
-				for (unsigned int eigenIndex=0; eigenIndex<numBlockedEigenvectors; ++it1, ++ eigenIndex){
-					const Tensor<1,2,Tensor<1,C_DIM,VectorizedArray<double> > > & gradPsi= *it1;
+			for (unsigned int ik=0; ik<numKPoints; ++ik)
+      {
+        Tensor<1,C_DIM,VectorizedArray<double> > kcoord;
+        kcoord[0]=make_vectorized_array(kPointCoordinates[ik*3+0]);
+        kcoord[1]=make_vectorized_array(kPointCoordinates[ik*3+1]);
+        kcoord[2]=make_vectorized_array(kPointCoordinates[ik*3+2]);        
+				for (unsigned int eigenIndex=0; eigenIndex<numBlockedEigenvectors; ++it1, ++it2, ++ eigenIndex)
+        {
+					const Tensor<1,2,VectorizedArray<double> > & psi= *it1;          
+					const Tensor<1,2,Tensor<1,C_DIM,VectorizedArray<double> > > & gradPsi= *it2;
 					VectorizedArray<double> fnk=make_vectorized_array(kPointWeights[ik]);
 					for (unsigned int iAtomNonLocal=0; iAtomNonLocal < zetaDeltaV.size(); ++iAtomNonLocal)
 					{
@@ -354,7 +362,8 @@ namespace dftfe {
 							VectorizedArray<double> CImag=make_vectorized_array(projectorKetTimesPsiTimesVTimesPartOcc[ik][iAtomNonLocal][numberPseudoWaveFunctions*eigenIndex + iPseudoWave].imag());
 							VectorizedArray<double>   zdvR=zetaDeltaV[iAtomNonLocal][iPseudoWave][ik][0];
 							VectorizedArray<double>   zdvI=zetaDeltaV[iAtomNonLocal][iPseudoWave][ik][1];
-							F-=four*fnk*((gradPsi[0]*zdvR+gradPsi[1]*zdvI)*CReal-(gradPsi[0]*zdvI-gradPsi[1]*zdvR)*CImag);
+							F-=four*fnk*(((gradPsi[0]*zdvR+gradPsi[1]*zdvI)*CReal-(gradPsi[0]*zdvI-gradPsi[1]*zdvR)*CImag)
+                 +((psi[1]*zdvR+psi[0]*zdvI)*CReal+(psi[0]*zdvR-psi[1]*zdvI)*CImag)*kcoord);
 						}
 					}
 

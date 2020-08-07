@@ -323,7 +323,6 @@ template<unsigned int FEOrder>
 	//vector of quadPoints times macrocells, nonlocal atom id, pseudo wave, k point
 	//FIXME: flatten nonlocal atomid id and pseudo wave and k point
 	std::vector<std::vector<std::vector<std::vector<Tensor<1,2,VectorizedArray<double> > > > > >ZetaDeltaVQuads;
-	std::vector<std::vector<std::vector<std::vector<Tensor<1,2, Tensor<1,C_DIM,VectorizedArray<double> > > > > > >pspnlGammaAtomsQuads;
 #else
 	//FIXME: flatten nonlocal atom id and pseudo wave
 	//vector of quadPoints times macrocells, nonlocal atom id, pseudo wave
@@ -347,26 +346,19 @@ template<unsigned int FEOrder>
 		if(isPseudopotential)
 		{
 			ZetaDeltaVQuads.resize(numMacroCells*numQuadPointsNLP);
-#ifdef USE_COMPLEX
-			pspnlGammaAtomsQuads.resize(numMacroCells*numQuadPointsNLP);
-#endif
 
 			for (unsigned int q=0; q<numQuadPointsNLP*numMacroCells; ++q)
 			{
 				ZetaDeltaVQuads[q].resize(d_nonLocalPSP_ZetalmDeltaVl.size());
-#ifdef USE_COMPLEX
-				pspnlGammaAtomsQuads[q].resize(d_nonLocalPSP_ZetalmDeltaVl.size());
-#endif
+
 				for (unsigned int i=0; i < d_nonLocalPSP_ZetalmDeltaVl.size(); ++i)
 				{
 					const int numberPseudoWaveFunctions = d_nonLocalPSP_ZetalmDeltaVl[i].size();
 #ifdef USE_COMPLEX
 					ZetaDeltaVQuads[q][i].resize(numberPseudoWaveFunctions);
-					pspnlGammaAtomsQuads[q][i].resize(numberPseudoWaveFunctions);
 					for (unsigned int iPseudoWave=0; iPseudoWave < numberPseudoWaveFunctions; ++iPseudoWave)
 					{
 						ZetaDeltaVQuads[q][i][iPseudoWave].resize(numKPoints,zeroTensor1);
-						pspnlGammaAtomsQuads[q][i][iPseudoWave].resize(numKPoints,zeroTensor2);
 					}
 #else
 					ZetaDeltaVQuads[q][i].resize(numberPseudoWaveFunctions,make_vectorized_array(0.0));
@@ -397,11 +389,6 @@ template<unsigned int FEOrder>
 								{
 									ZetaDeltaVQuads[cell*numQuadPointsNLP+q][i][iPseudoWave][ikPoint][0][iSubCell]=d_nonLocalPSP_ZetalmDeltaVl[i][iPseudoWave][subCellId][ikPoint*numQuadPointsNLP*2+q*2+0];
 									ZetaDeltaVQuads[cell*numQuadPointsNLP+q][i][iPseudoWave][ikPoint][1][iSubCell]=d_nonLocalPSP_ZetalmDeltaVl[i][iPseudoWave][subCellId][ikPoint*numQuadPointsNLP*2+q*2+1];
-									for (unsigned int idim=0; idim<C_DIM; idim++)
-									{
-										pspnlGammaAtomsQuads[cell*numQuadPointsNLP+q][i][iPseudoWave][ikPoint][0][idim][iSubCell]=d_nonLocalPSP_gradZetalmDeltaVl_KPoint[i][iPseudoWave][subCellId][ikPoint*numQuadPointsNLP*C_DIM*2+q*C_DIM*2+idim*2+0];
-										pspnlGammaAtomsQuads[cell*numQuadPointsNLP+q][i][iPseudoWave][ikPoint][1][idim][iSubCell]=d_nonLocalPSP_gradZetalmDeltaVl_KPoint[i][iPseudoWave][subCellId][ikPoint*numQuadPointsNLP*C_DIM*2+q*C_DIM*2+idim*2+1];
-									}
 								}
 #else
 								ZetaDeltaVQuads[cell*numQuadPointsNLP+q][i][iPseudoWave][iSubCell]=d_nonLocalPSP_ZetalmDeltaVl[i][iPseudoWave][subCellId][q];
@@ -701,8 +688,9 @@ template<unsigned int FEOrder>
 							 forceEval,
 							 forceEvalNLP,
 							 cell,
-							 pspnlGammaAtomsQuads,
+				       ZetaDeltaVQuads,
 							 projectorKetTimesPsiTimesVTimesPartOcc,
+							 dftParameters::useHigherQuadNLP?psiQuadsNLP:psiQuads,               
 							 dftParameters::useHigherQuadNLP?gradPsiQuadsNLP:gradPsiQuads,
 							 blockedEigenValues,
 							 macroIdToNonlocalAtomsSetMap[cell]);
