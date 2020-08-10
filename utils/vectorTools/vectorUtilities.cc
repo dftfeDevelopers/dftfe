@@ -889,6 +889,50 @@ namespace dftfe
 			}
 #endif
 
+               void classifyInteriorSurfaceNodesInCell(const dealii::MatrixFree<3,double> & matrix_free_data,
+                                                       std::vector<unsigned int> &nodesPerCellClassificationMap)
+                  {
+                      
+                      dealii::ConditionalOStream pcout (std::cout, (dealii::Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0));
+                      const std::vector< dealii::Point<3> > & nodalCoordinatesRefCell = matrix_free_data.get_dof_handler().get_fe().get_unit_support_points();
+                      pcout<<"Size of Support Points: "<<nodalCoordinatesRefCell.size()<<std::endl;
+                      unsigned int numberNodesPerCell = nodalCoordinatesRefCell.size();
+                      nodesPerCellClassificationMap.resize(numberNodesPerCell,0);
+                      for(unsigned int iNode = 0; iNode < numberNodesPerCell; ++iNode)
+                       {
+                          pcout<<"Inode: "<<iNode<<" "<<nodalCoordinatesRefCell[iNode][0]<<" "<<nodalCoordinatesRefCell[iNode][1]<<" "<<nodalCoordinatesRefCell[iNode][2]<<std::endl;
+                       }
+
+                      double tol = 1e-05;
+
+                      for(unsigned int iNode = 0; iNode < numberNodesPerCell; ++iNode)
+                       {
+                          if(std::abs(nodalCoordinatesRefCell[iNode][0] - 1.0) < tol || std::abs(nodalCoordinatesRefCell[iNode][0]) < tol)
+                           {
+                             nodesPerCellClassificationMap[iNode] = 1;  
+                           }
+			  else if(std::abs(nodalCoordinatesRefCell[iNode][1] - 1.0) < tol || std::abs(nodalCoordinatesRefCell[iNode][1]) < tol)
+                           {
+                             nodesPerCellClassificationMap[iNode] = 1;
+                           }
+                          else if(std::abs(nodalCoordinatesRefCell[iNode][2] - 1.0) < tol || std::abs(nodalCoordinatesRefCell[iNode][2]) < tol)
+                           {
+                             nodesPerCellClassificationMap[iNode] = 1;
+                           }
+                       }
+                    unsigned int interiorNodes = 0;
+                    for(unsigned int iNode = 0; iNode < numberNodesPerCell; ++iNode)
+                       {
+                          if(nodesPerCellClassificationMap[iNode] == 0)
+                             interiorNodes += 1;                         
+                       }
+
+                   pcout<<"Number of interior Nodes: "<<interiorNodes<<std::endl;
+
+                  }
+
+
+
 		std::pair<dealii::Point<3>,dealii::Point<3>> createBoundingBoxTriaLocallyOwned
 			(const dealii::DoFHandler<3>  & dofHandler)
 			{

@@ -369,13 +369,15 @@ namespace dftfe{
 
                 ///storage for shapefunctions
                 std::vector<double> d_shapeFunctionValueLpspQuad;
-
+ 
+                ///storage for cell wavefunction matrix
                 std::vector<std::vector<double> > d_cellWaveFunctionMatrix;
 
 		///storage for  matrix-free cell data
 		const unsigned int d_numberNodesPerElement;
 		const unsigned int d_numberMacroCells;
 		std::vector<unsigned int> d_macroCellSubCellMap;
+                std::vector<unsigned int> d_nodesPerCellClassificationMap;
 
 		//parallel objects
 		const MPI_Comm mpi_communicator;

@@ -99,9 +99,12 @@ namespace dftfe {
 
 			d_cellHamiltonianMatrix.clear();
 			d_cellHamiltonianMatrix.resize(dftPtr->d_kPointWeights.size()*(1+dftParameters::spinPolarized));
+                        d_cellWaveFunctionMatrix.resize(dftPtr->matrix_free_data.n_physical_cells());
 
-
-			computing_timer.exit_section("kohnShamDFTOperatorClass setup");
+                        vectorTools::classifyInteriorSurfaceNodesInCell(dftPtr->matrix_free_data,
+                                                                        d_nodesPerCellClassificationMap);
+			
+                        computing_timer.exit_section("kohnShamDFTOperatorClass setup");
 		}
 
 	template<unsigned int FEOrder>
@@ -135,7 +138,6 @@ namespace dftfe {
 					flattenedArray.get_partitioner(),
 					numberWaveFunctions);
 
-                        d_cellWaveFunctionMatrix.resize(dftPtr->matrix_free_data.n_physical_cells());
 
 			
 		}
