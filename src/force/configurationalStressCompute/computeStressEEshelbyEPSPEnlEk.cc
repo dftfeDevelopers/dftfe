@@ -205,24 +205,24 @@ void forceClass<FEOrder>::computeStressEEshelbyEPSPEnlEk(const MatrixFree<3,doub
 		//allocate storage for vector of quadPoints, nonlocal atom id, pseudo wave, k point
 		//FIXME: flatten nonlocal atomid id and pseudo wave and k point
 		std::vector<std::vector<std::vector<std::vector<Tensor<1,2,VectorizedArray<double> > > > > >ZetaDeltaVQuads;
-		std::vector<std::vector<std::vector<std::vector<Tensor<1,2, Tensor<2,C_DIM,VectorizedArray<double> > > > > > >gradZetalmDeltaVlDyadicDistImageAtomsQuads;
+		std::vector<std::vector<std::vector<std::vector<Tensor<1,2, Tensor<1,C_DIM,VectorizedArray<double> > > > > > >zetalmDeltaVlProductDistImageAtomsQuads;
 		if(isPseudopotential)
 		{
 			ZetaDeltaVQuads.resize(numQuadPointsNLP);
-			gradZetalmDeltaVlDyadicDistImageAtomsQuads.resize(numQuadPointsNLP);
+			zetalmDeltaVlProductDistImageAtomsQuads.resize(numQuadPointsNLP);
 			for (unsigned int q=0; q<numQuadPointsNLP; ++q)
 			{
 				ZetaDeltaVQuads[q].resize(d_nonLocalPSP_ZetalmDeltaVl.size());
-				gradZetalmDeltaVlDyadicDistImageAtomsQuads[q].resize(d_nonLocalPSP_gradZetalmDeltaVlDyadicDistImageAtoms_KPoint.size());
-				for (unsigned int i=0; i < d_nonLocalPSP_gradZetalmDeltaVlDyadicDistImageAtoms_KPoint.size(); ++i)
+				zetalmDeltaVlProductDistImageAtomsQuads[q].resize(d_nonLocalPSP_zetalmDeltaVlProductDistImageAtoms_KPoint.size());
+				for (unsigned int i=0; i < d_nonLocalPSP_zetalmDeltaVlProductDistImageAtoms_KPoint.size(); ++i)
 				{
-					const int numberPseudoWaveFunctions = d_nonLocalPSP_gradZetalmDeltaVlDyadicDistImageAtoms_KPoint[i].size();
+					const int numberPseudoWaveFunctions = d_nonLocalPSP_zetalmDeltaVlProductDistImageAtoms_KPoint[i].size();
 					ZetaDeltaVQuads[q][i].resize(numberPseudoWaveFunctions);
-					gradZetalmDeltaVlDyadicDistImageAtomsQuads[q][i].resize(numberPseudoWaveFunctions);
+					zetalmDeltaVlProductDistImageAtomsQuads[q][i].resize(numberPseudoWaveFunctions);
 					for (unsigned int iPseudoWave=0; iPseudoWave < numberPseudoWaveFunctions; ++iPseudoWave)
 					{
 						ZetaDeltaVQuads[q][i][iPseudoWave].resize(numKPoints,zeroTensor1);
-						gradZetalmDeltaVlDyadicDistImageAtomsQuads[q][i][iPseudoWave].resize(numKPoints,zeroTensor5);
+						zetalmDeltaVlProductDistImageAtomsQuads[q][i][iPseudoWave].resize(numKPoints,zeroTensor2);
 					}
 				}
 			}
@@ -320,19 +320,22 @@ void forceClass<FEOrder>::computeStressEEshelbyEPSPEnlEk(const MatrixFree<3,doub
 						Utilities::MPI::sum(gradRhoQuads[q][idim][iSubCell],dftPtr->interpoolcomm);
 
 		std::vector<Tensor<1,2,VectorizedArray<double> > > psiQuadsNLP;
+		std::vector<Tensor<1,2,Tensor<1,C_DIM,VectorizedArray<double> > > > gradPsiQuadsNLP;    
 		if (isPseudopotential && dftParameters::useHigherQuadNLP)
 		{
 			psiQuadsNLP.resize(numQuadPointsNLP*numEigenVectors*numKPoints,zeroTensor1);
+      gradPsiQuadsNLP.resize(numQuadPointsNLP*numEigenVectors*numKPoints,zeroTensor2);   
 			for (unsigned int ikPoint=0; ikPoint<numKPoints; ++ikPoint)
 				for (unsigned int iEigenVec=0; iEigenVec<numEigenVectors; ++iEigenVec)
 				{
 					psiEvalNLP.read_dof_values_plain(eigenVectors[ikPoint][iEigenVec]);
-					psiEvalNLP.evaluate(true,false);
+				  psiEvalNLP.evaluate(true,true);
 
 					for (unsigned int q=0; q<numQuadPointsNLP; ++q)
 					{
 						const unsigned int id=q*numEigenVectors*numKPoints+numEigenVectors*ikPoint+iEigenVec;
 						psiQuadsNLP[id]=psiEvalNLP.get_value(q);
+            gradPsiQuadsNLP[id]=psiEvalNLP.get_gradient(q);
 					}//quad point loop
 				} //eigenvector loop
 		}
@@ -363,11 +366,8 @@ void forceClass<FEOrder>::computeStressEEshelbyEPSPEnlEk(const MatrixFree<3,doub
 									ZetaDeltaVQuads[q][i][iPseudoWave][ikPoint][1][iSubCell]=d_nonLocalPSP_ZetalmDeltaVl[i][iPseudoWave][subCellId][ikPoint*numQuadPointsNLP*2+q*2+1];
 									for (unsigned int idim=0; idim<C_DIM; idim++)
 									{
-										for (unsigned int jdim=0; jdim<C_DIM; jdim++)
-										{
-											gradZetalmDeltaVlDyadicDistImageAtomsQuads[q][i][iPseudoWave][ikPoint][0][idim][jdim][iSubCell]=d_nonLocalPSP_gradZetalmDeltaVlDyadicDistImageAtoms_KPoint[i][iPseudoWave][subCellId][ikPoint*numQuadPointsNLP*C_DIM*C_DIM*2+q*C_DIM*C_DIM*2+idim*C_DIM*2+jdim*2+0];
-											gradZetalmDeltaVlDyadicDistImageAtomsQuads[q][i][iPseudoWave][ikPoint][1][idim][jdim][iSubCell]=d_nonLocalPSP_gradZetalmDeltaVlDyadicDistImageAtoms_KPoint[i][iPseudoWave][subCellId][ikPoint*numQuadPointsNLP*C_DIM*C_DIM*2+q*C_DIM*C_DIM*2+idim*C_DIM*2+jdim*2+1];
-										}
+											zetalmDeltaVlProductDistImageAtomsQuads[q][i][iPseudoWave][ikPoint][0][idim][iSubCell]=d_nonLocalPSP_zetalmDeltaVlProductDistImageAtoms_KPoint[i][iPseudoWave][subCellId][ikPoint*numQuadPointsNLP*C_DIM*2+q*C_DIM*2+idim*2+0];
+											zetalmDeltaVlProductDistImageAtomsQuads[q][i][iPseudoWave][ikPoint][1][idim][iSubCell]=d_nonLocalPSP_zetalmDeltaVlProductDistImageAtoms_KPoint[i][iPseudoWave][subCellId][ikPoint*numQuadPointsNLP*C_DIM*2+q*C_DIM*2+idim*2+1];
 									}
 								}
 							}//non-trivial cellId check
@@ -433,18 +433,12 @@ void forceClass<FEOrder>::computeStressEEshelbyEPSPEnlEk(const MatrixFree<3,doub
 
 			if(isPseudopotential && !dftParameters::useHigherQuadNLP)
 			{
-        /*
-				EKPoints+=eshelbyTensor::getEnlEshelbyTensorPeriodic(ZetaDeltaVQuads[q],
+				EKPoints+=eshelbyTensor::getEnlStress(zetalmDeltaVlProductDistImageAtomsQuads[q],
 						projectorKetTimesPsiTimesVTimesPartOcc,
 						psiQuads.begin()+q*numEigenVectors*numKPoints,
+            gradPsiQuads.begin()+q*numEigenVectors*numKPoints, 
 						dftPtr->d_kPointWeights,
-						macroIdToNonlocalAtomsSetMap[cell],
-						numEigenVectors);
-        */
-				EKPoints+=eshelbyTensor::getEnlStress(gradZetalmDeltaVlDyadicDistImageAtomsQuads[q],
-						projectorKetTimesPsiTimesVTimesPartOcc,
-						psiQuads.begin()+q*numEigenVectors*numKPoints,
-						dftPtr->d_kPointWeights,
+            dftPtr->d_kPointCoordinates,
 						macroIdToNonlocalAtomsSetMap[cell],
 						numEigenVectors);
 
@@ -458,10 +452,12 @@ void forceClass<FEOrder>::computeStressEEshelbyEPSPEnlEk(const MatrixFree<3,doub
 			for (unsigned int q=0; q<numQuadPointsNLP; ++q)
 			{
 				Tensor<2,C_DIM,VectorizedArray<double> > EKPoints
-					=eshelbyTensor::getEnlStress(gradZetalmDeltaVlDyadicDistImageAtomsQuads[q],
+					=eshelbyTensor::getEnlStress(zetalmDeltaVlProductDistImageAtomsQuads[q],
 						projectorKetTimesPsiTimesVTimesPartOcc,
 						psiQuadsNLP.begin()+q*numEigenVectors*numKPoints,
+						gradPsiQuadsNLP.begin()+q*numEigenVectors*numKPoints,            
 						dftPtr->d_kPointWeights,
+            dftPtr->d_kPointCoordinates,            
 						macroIdToNonlocalAtomsSetMap[cell],
 						numEigenVectors);
 

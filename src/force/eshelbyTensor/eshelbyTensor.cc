@@ -425,17 +425,19 @@ namespace dftfe {
 			return eshelbyTensor;
 		}
 
-		Tensor<2,C_DIM,VectorizedArray<double> >  getEnlStress(const std::vector<std::vector<std::vector<Tensor<1,2, Tensor<2,C_DIM,VectorizedArray<double> > > > > > & gradZetalmDeltaVlDyadicDistImageAtoms,
+		Tensor<2,C_DIM,VectorizedArray<double> >  getEnlStress(const std::vector<std::vector<std::vector<Tensor<1,2, Tensor<1,C_DIM,VectorizedArray<double> > > > > > & zetalmDeltaVlProductDistImageAtoms,
 				const std::vector<std::vector<std::vector<std::complex<double> > > >& projectorKetTimesPsiTimesVTimesPartOcc,
 				std::vector<Tensor<1,2,VectorizedArray<double> > >::const_iterator  psiBegin,
+				std::vector<Tensor<1,2,Tensor<1,C_DIM,VectorizedArray<double> > > >::const_iterator  gradPsiBegin,        
 				const std::vector<double> & kPointWeights,
+				const std::vector<double> & kPointCoordinates,        
 				const std::vector<unsigned int> & nonlocalAtomsCompactSupportList,
 				const unsigned int numBlockedEigenvectors)
 		{
 			Tensor<2,C_DIM,VectorizedArray<double> > E;
 			VectorizedArray<double> four=make_vectorized_array(4.0);
 
-			for (unsigned int iAtomNonLocal=0; iAtomNonLocal < gradZetalmDeltaVlDyadicDistImageAtoms.size(); ++iAtomNonLocal)
+			for (unsigned int iAtomNonLocal=0; iAtomNonLocal < zetalmDeltaVlProductDistImageAtoms.size(); ++iAtomNonLocal)
 			{
 				bool isCellInCompactSupport=false;
 				for (unsigned int i=0;i<nonlocalAtomsCompactSupportList.size();i++)
@@ -448,23 +450,29 @@ namespace dftfe {
 				if (!isCellInCompactSupport)
 					continue;
 
-				const int numberPseudoWaveFunctions = gradZetalmDeltaVlDyadicDistImageAtoms[iAtomNonLocal].size();
+				const int numberPseudoWaveFunctions = zetalmDeltaVlProductDistImageAtoms[iAtomNonLocal].size();
 				const int numKPoints=kPointWeights.size();
 
 				std::vector<Tensor<1,2,VectorizedArray<double> > >::const_iterator it1=psiBegin;
+				std::vector<Tensor<1,2,Tensor<1,C_DIM,VectorizedArray<double> > > >::const_iterator it2=gradPsiBegin;
+		    Tensor<1,C_DIM,VectorizedArray<double> > kPointCoord;        
 				for (unsigned int ik=0; ik<numKPoints; ++ik)
 				{
+				  kPointCoord[0]=make_vectorized_array(kPointCoordinates[ik*C_DIM+0]);
+				  kPointCoord[1]=make_vectorized_array(kPointCoordinates[ik*C_DIM+1]);
+				  kPointCoord[2]=make_vectorized_array(kPointCoordinates[ik*C_DIM+2]);
 					VectorizedArray<double> fnk=make_vectorized_array(kPointWeights[ik]);
-					for (unsigned int eigenIndex=0; eigenIndex < numBlockedEigenvectors; ++it1, ++ eigenIndex)
+					for (unsigned int eigenIndex=0; eigenIndex < numBlockedEigenvectors; ++it1,++it2, ++ eigenIndex)
 					{
 						const Tensor<1,2,VectorizedArray<double> > & psi= *it1;
+						const Tensor<1,2, Tensor<1,C_DIM,VectorizedArray<double> > > & gradPsi= *it2;            
 						for (unsigned int iPseudoWave=0; iPseudoWave < numberPseudoWaveFunctions; ++iPseudoWave)
 						{
 							VectorizedArray<double> CReal=make_vectorized_array(projectorKetTimesPsiTimesVTimesPartOcc[ik][iAtomNonLocal][numberPseudoWaveFunctions*eigenIndex + iPseudoWave].real());
 							VectorizedArray<double> CImag=make_vectorized_array(projectorKetTimesPsiTimesVTimesPartOcc[ik][iAtomNonLocal][numberPseudoWaveFunctions*eigenIndex + iPseudoWave].imag());
-							Tensor<2,C_DIM,VectorizedArray<double> >  zdvR=gradZetalmDeltaVlDyadicDistImageAtoms[iAtomNonLocal][iPseudoWave][ik][0];
-							Tensor<2,C_DIM,VectorizedArray<double> >  zdvI=gradZetalmDeltaVlDyadicDistImageAtoms[iAtomNonLocal][iPseudoWave][ik][1];
-							E+=four*fnk*((psi[0]*zdvR+psi[1]*zdvI)*CReal-(psi[0]*zdvI-psi[1]*zdvR)*CImag);
+							Tensor<1,C_DIM,VectorizedArray<double> >  zdvR=zetalmDeltaVlProductDistImageAtoms[iAtomNonLocal][iPseudoWave][ik][0];
+							Tensor<1,C_DIM,VectorizedArray<double> >  zdvI=zetalmDeltaVlProductDistImageAtoms[iAtomNonLocal][iPseudoWave][ik][1];
+							E-=four*fnk*((outer_product(gradPsi[0],zdvR)+outer_product(gradPsi[1],zdvI))*CReal-(outer_product(gradPsi[0],zdvI)-outer_product(gradPsi[1],zdvR))*CImag +outer_product(((-psi[1]*zdvR+psi[0]*zdvI)*CReal+(psi[0]*zdvR+psi[1]*zdvI)*CImag),kPointCoord));
 						}
 					}
 				}
