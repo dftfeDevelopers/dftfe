@@ -439,19 +439,22 @@ namespace dftfe {
 			return eshelbyTensor;
 		}
 
-		Tensor<2,C_DIM,VectorizedArray<double> >  getEnlStress(const std::vector<std::vector<std::vector<Tensor<1,2, Tensor<2,C_DIM,VectorizedArray<double> > > > > > & gradZetalmDeltaVlDyadicDistImageAtoms,
+		Tensor<2,C_DIM,VectorizedArray<double> >  getEnlStress(const std::vector<std::vector<std::vector<Tensor<1,2, Tensor<1,C_DIM,VectorizedArray<double> > > > > > & zetalmDeltaVlProductDistImageAtoms,
 				const std::vector<std::vector<std::vector<std::complex<double> > > >& projectorKetTimesPsiSpin0TimesVTimesPartOcc,
 				const std::vector<std::vector<std::vector<std::complex<double> > > >& projectorKetTimesPsiSpin1TimesVTimesPartOcc,
-				std::vector<Tensor<1,2,VectorizedArray<double> > >::const_iterator  psiSpin0Begin,
-				std::vector<Tensor<1,2,VectorizedArray<double> > >::const_iterator  psiSpin1Begin,
+				std::vector<Tensor<1,2, VectorizedArray<double> > >::const_iterator  psiSpin0Begin,
+				std::vector<Tensor<1,2, VectorizedArray<double> > >::const_iterator  psiSpin1Begin,
+        std::vector<Tensor<1,2, Tensor<1,C_DIM,VectorizedArray<double> > > >::const_iterator  gradPsiSpin0Begin,
+				std::vector<Tensor<1,2, Tensor<1,C_DIM,VectorizedArray<double> > > >::const_iterator  gradPsiSpin1Begin,
 				const std::vector<double> & kPointWeights,
+				const std::vector<double> & kPointCoordinates,        
 				const std::vector<unsigned int> & nonlocalAtomsCompactSupportList,
 				const unsigned int numBlockedEigenvectors)
 		{
 			Tensor<2,C_DIM,VectorizedArray<double> > E;
 			VectorizedArray<double> two=make_vectorized_array(2.0);
 
-			for (unsigned int iAtomNonLocal=0; iAtomNonLocal < gradZetalmDeltaVlDyadicDistImageAtoms.size(); ++iAtomNonLocal)
+			for (unsigned int iAtomNonLocal=0; iAtomNonLocal < zetalmDeltaVlProductDistImageAtoms.size(); ++iAtomNonLocal)
 			{
 				bool isCellInCompactSupport=false;
 				for (unsigned int i=0;i<nonlocalAtomsCompactSupportList.size();i++)
@@ -464,30 +467,38 @@ namespace dftfe {
 				if (!isCellInCompactSupport)
 					continue;
 
-				const int numberPseudoWaveFunctions = gradZetalmDeltaVlDyadicDistImageAtoms[iAtomNonLocal].size();
+				const int numberPseudoWaveFunctions = zetalmDeltaVlProductDistImageAtoms[iAtomNonLocal].size();
 				const int numKPoints=kPointWeights.size();
 
 				std::vector<Tensor<1,2,VectorizedArray<double> > >::const_iterator it1Spin0=psiSpin0Begin;
 				std::vector<Tensor<1,2,VectorizedArray<double> > >::const_iterator it1Spin1=psiSpin1Begin;
+				std::vector<Tensor<1,2,Tensor<1,C_DIM,VectorizedArray<double> > > >::const_iterator it2Spin0=gradPsiSpin0Begin;
+				std::vector<Tensor<1,2,Tensor<1,C_DIM,VectorizedArray<double> > > >::const_iterator it2Spin1=gradPsiSpin1Begin;        
 
+		    Tensor<1,C_DIM,VectorizedArray<double> > kPointCoord;  
 				for (unsigned int ik=0; ik<numKPoints; ++ik)
 				{
+				  kPointCoord[0]=make_vectorized_array(kPointCoordinates[ik*C_DIM+0]);
+				  kPointCoord[1]=make_vectorized_array(kPointCoordinates[ik*C_DIM+1]);
+				  kPointCoord[2]=make_vectorized_array(kPointCoordinates[ik*C_DIM+2]);          
 					const VectorizedArray<double> fnkSpin0=make_vectorized_array(kPointWeights[ik]);
 					const VectorizedArray<double> fnkSpin1=make_vectorized_array(kPointWeights[ik]);
-					for (unsigned int eigenIndex=0; eigenIndex<numBlockedEigenvectors; ++it1Spin0,++it1Spin1, ++ eigenIndex)
+					for (unsigned int eigenIndex=0; eigenIndex<numBlockedEigenvectors; ++it1Spin0,++it1Spin1,++it2Spin0,++it2Spin1, ++ eigenIndex)
 					{
 						const Tensor<1,2,VectorizedArray<double> > & psiSpin0= *it1Spin0;
 						const Tensor<1,2,VectorizedArray<double> > & psiSpin1= *it1Spin1;
+						const Tensor<1,2,Tensor<1,C_DIM,VectorizedArray<double> > > & gradPsiSpin0= *it2Spin0;
+						const Tensor<1,2,Tensor<1,C_DIM,VectorizedArray<double> > > & gradPsiSpin1= *it2Spin1;            
 						for (unsigned int iPseudoWave=0; iPseudoWave < numberPseudoWaveFunctions; ++iPseudoWave)
 						{
 							const VectorizedArray<double> CRealSpin0=make_vectorized_array(projectorKetTimesPsiSpin0TimesVTimesPartOcc[ik][iAtomNonLocal][numberPseudoWaveFunctions*eigenIndex + iPseudoWave].real());
 							const VectorizedArray<double> CImagSpin0=make_vectorized_array(projectorKetTimesPsiSpin0TimesVTimesPartOcc[ik][iAtomNonLocal][numberPseudoWaveFunctions*eigenIndex + iPseudoWave].imag());
 							const VectorizedArray<double> CRealSpin1=make_vectorized_array(projectorKetTimesPsiSpin1TimesVTimesPartOcc[ik][iAtomNonLocal][numberPseudoWaveFunctions*eigenIndex + iPseudoWave].real());
 							const VectorizedArray<double> CImagSpin1=make_vectorized_array(projectorKetTimesPsiSpin1TimesVTimesPartOcc[ik][iAtomNonLocal][numberPseudoWaveFunctions*eigenIndex + iPseudoWave].imag());
-							const Tensor<2,C_DIM,VectorizedArray<double> >  zdvR=gradZetalmDeltaVlDyadicDistImageAtoms[iAtomNonLocal][iPseudoWave][ik][0];
-							const Tensor<2,C_DIM,VectorizedArray<double> >  zdvI=gradZetalmDeltaVlDyadicDistImageAtoms[iAtomNonLocal][iPseudoWave][ik][1];
-							E+=two*fnkSpin0*((psiSpin0[0]*zdvR+psiSpin0[1]*zdvI)*CRealSpin0-(psiSpin0[0]*zdvI-psiSpin0[1]*zdvR)*CImagSpin0);
-							E+=two*fnkSpin1*((psiSpin1[0]*zdvR+psiSpin1[1]*zdvI)*CRealSpin1-(psiSpin1[0]*zdvI-psiSpin1[1]*zdvR)*CImagSpin1);
+							const Tensor<1,C_DIM,VectorizedArray<double> >  zdvR=zetalmDeltaVlProductDistImageAtoms[iAtomNonLocal][iPseudoWave][ik][0];
+							const Tensor<1,C_DIM,VectorizedArray<double> >  zdvI=zetalmDeltaVlProductDistImageAtoms[iAtomNonLocal][iPseudoWave][ik][1];
+							E-=two*fnkSpin0*((outer_product(gradPsiSpin0[0],zdvR)+outer_product(gradPsiSpin0[1],zdvI))*CRealSpin0-(outer_product(gradPsiSpin0[0],zdvI)-outer_product(gradPsiSpin0[1],zdvR))*CImagSpin0 +outer_product(((-psiSpin0[1]*zdvR+psiSpin0[0]*zdvI)*CRealSpin0+(psiSpin0[0]*zdvR+psiSpin0[1]*zdvI)*CImagSpin0),kPointCoord));
+							E-=two*fnkSpin1*((outer_product(gradPsiSpin1[0],zdvR)+outer_product(gradPsiSpin1[1],zdvI))*CRealSpin1-(outer_product(gradPsiSpin1[0],zdvI)-outer_product(gradPsiSpin1[1],zdvR))*CImagSpin1 +outer_product(((-psiSpin1[1]*zdvR+psiSpin1[0]*zdvI)*CRealSpin1+(psiSpin1[0]*zdvR+psiSpin1[1]*zdvI)*CImagSpin1),kPointCoord));
 						}
 					}
 				}

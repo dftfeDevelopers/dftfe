@@ -643,14 +643,6 @@ namespace dftfe {
 			 */
 			std::vector<std::vector<std::map<dealii::CellId, std::vector<double > > > > d_nonLocalPSP_gradZetalmDeltaVl_minusZetalmDeltaVl_KPoint;
 
-			/* Storage for precomputed nonlocal pseudopotential quadrature data. This is to speedup the
-			 * configurational stress computation. Data format: vector(numNonLocalAtomsCurrentProcess with
-			 * non-zero compact support, vector(number pseudo wave functions,map<cellid,num_quad_points*num_k_points*3*3*2>)).
-			 * Refer to (https://link.aps.org/doi/10.1103/PhysRevB.97.165132) for details of the expression of the configurational force terms
-			 * for the norm-conserving Troullier-Martins pseudopotential in the Kleinman-Bylander form.
-			 * The same expressions also extend to the Optimized Norm-Conserving Vanderbilt (ONCV) pseudopotentials.
-			 */
-			std::vector<std::vector<std::map<dealii::CellId, std::vector<double > > > > d_nonLocalPSP_gradZetalmDeltaVlDyadicDistImageAtoms_KPoint;
 
 			/* Storage for precomputed nonlocal pseudopotential quadrature data. This is to speedup the
 			 * configurational stress computation. Data format: vector(numNonLocalAtomsCurrentProcess with

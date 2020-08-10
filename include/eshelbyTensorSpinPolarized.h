@@ -178,12 +178,15 @@ namespace dftfe {
 				const double tVal);
 
 		/// Nonlocal pseudopotential Eshelby tensor (used only for stress computation)
-		Tensor<2,C_DIM,VectorizedArray<double> >  getEnlStress(const std::vector<std::vector<std::vector<Tensor<1,2, Tensor<2,C_DIM,VectorizedArray<double> > > > > > & gradZetalmDeltaVlDyadicDistImageAtoms,
+		Tensor<2,C_DIM,VectorizedArray<double> >  getEnlStress(const std::vector<std::vector<std::vector<Tensor<1,2, Tensor<1,C_DIM,VectorizedArray<double> > > > > > & zetalmDeltaVlProductDistImageAtoms,
 				const std::vector<std::vector<std::vector<std::complex<double> > > >& projectorKetTimesPsiSpin0TimesVTimesPartOcc,
 				const std::vector<std::vector<std::vector<std::complex<double> > > >& projectorKetTimesPsiSpin1TimesVTimesPartOcc,
 				std::vector<Tensor<1,2,VectorizedArray<double> > >::const_iterator  psiSpin0Begin,
 				std::vector<Tensor<1,2,VectorizedArray<double> > >::const_iterator  psiSpin1Begin,
+        std::vector<Tensor<1,2, Tensor<1,C_DIM,VectorizedArray<double> > > >::const_iterator  gradPsiSpin0Begin,
+				std::vector<Tensor<1,2, Tensor<1,C_DIM,VectorizedArray<double> > > >::const_iterator  gradPsiSpin1Begin,
 				const std::vector<double> & kPointWeights,
+				const std::vector<double> & kPointCoordinates,        
 				const std::vector<unsigned int> & nonlocalAtomsCompactSupportList,
 				const unsigned int numBlockedEigenvectors);
 	};

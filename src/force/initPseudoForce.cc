@@ -55,7 +55,6 @@ void forceClass<FEOrder>::computeElementalNonLocalPseudoDataForce()
 #ifdef USE_COMPLEX
 	d_nonLocalPSP_gradZetalmDeltaVl_minusZetalmDeltaVl_KPoint.clear();
 	d_nonLocalPSP_gradZetalmDeltaVl_KPoint.clear();
-	d_nonLocalPSP_gradZetalmDeltaVlDyadicDistImageAtoms_KPoint.clear();
 #else
 	d_nonLocalPSP_gradZetalmDeltaVl.clear();
 #endif
@@ -71,7 +70,6 @@ void forceClass<FEOrder>::computeElementalNonLocalPseudoDataForce()
 #ifdef USE_COMPLEX
 	d_nonLocalPSP_gradZetalmDeltaVl_minusZetalmDeltaVl_KPoint.resize(numNonLocalAtomsCurrentProcess);
 	d_nonLocalPSP_gradZetalmDeltaVl_KPoint.resize(numNonLocalAtomsCurrentProcess);
-	d_nonLocalPSP_gradZetalmDeltaVlDyadicDistImageAtoms_KPoint.resize(numNonLocalAtomsCurrentProcess);
 #else
 	d_nonLocalPSP_gradZetalmDeltaVl.resize(numNonLocalAtomsCurrentProcess);
 #endif
@@ -108,7 +106,6 @@ void forceClass<FEOrder>::computeElementalNonLocalPseudoDataForce()
 #ifdef USE_COMPLEX
 			d_nonLocalPSP_gradZetalmDeltaVl_minusZetalmDeltaVl_KPoint[count].resize(numberPseudoWaveFunctions);
 			d_nonLocalPSP_gradZetalmDeltaVl_KPoint[count].resize(numberPseudoWaveFunctions);
-			d_nonLocalPSP_gradZetalmDeltaVlDyadicDistImageAtoms_KPoint[count].resize(numberPseudoWaveFunctions);
 #else
 			d_nonLocalPSP_gradZetalmDeltaVl[count].resize(numberPseudoWaveFunctions);
 #endif
@@ -131,7 +128,6 @@ void forceClass<FEOrder>::computeElementalNonLocalPseudoDataForce()
 				d_nonLocalPSP_ZetalmDeltaVl[count][iPseudoWave][cell->id()]=std::vector<double>(numkPoints*numberQuadraturePoints*2);
 				d_nonLocalPSP_gradZetalmDeltaVl_minusZetalmDeltaVl_KPoint[count][iPseudoWave][cell->id()]=std::vector<double>(numkPoints*numberQuadraturePoints*C_DIM*2);
 				d_nonLocalPSP_gradZetalmDeltaVl_KPoint[count][iPseudoWave][cell->id()]=std::vector<double>(numkPoints*numberQuadraturePoints*C_DIM*2);
-				d_nonLocalPSP_gradZetalmDeltaVlDyadicDistImageAtoms_KPoint[count][iPseudoWave][cell->id()]=std::vector<double>(numkPoints*numberQuadraturePoints*C_DIM*C_DIM*2);
 #else
 				d_nonLocalPSP_ZetalmDeltaVl[count][iPseudoWave][cell->id()]=std::vector<double>(numberQuadraturePoints);
 				d_nonLocalPSP_gradZetalmDeltaVl[count][iPseudoWave][cell->id()]=std::vector<double>(numberQuadraturePoints*C_DIM);
@@ -156,7 +152,6 @@ void forceClass<FEOrder>::computeElementalNonLocalPseudoDataForce()
 				std::vector<double>  ZetalmDeltaVl_KPoint(numkPoints*numberQuadraturePoints*2,0.0);
 				std::vector<double> gradZetalmDeltaVl_KPoint(numkPoints*numberQuadraturePoints*C_DIM*2,0.0);
 				std::vector<double> gradZetalmDeltaVl_minusZetalmDeltaVl_KPoint(numkPoints*numberQuadraturePoints*C_DIM*2,0.0);
-				std::vector<double> gradZetalmDeltaVlDyadicDistImageAtoms_KPoint(numkPoints*numberQuadraturePoints*C_DIM*C_DIM*2,0.0);
 #else
 				std::vector<double> ZetalmDeltaVl(numberQuadraturePoints,0.0);
 				std::vector<double> gradZetalmDeltaVl(numberQuadraturePoints*C_DIM,0.0);
@@ -256,11 +251,6 @@ void forceClass<FEOrder>::computeElementalNonLocalPseudoDataForce()
 									gradZetalmDeltaVl_minusZetalmDeltaVl_KPoint[ik*numberQuadraturePoints*C_DIM*2+iQuadPoint*C_DIM*2+iDim*2+1]+= tempImag*tempDer[iDim];
 									gradZetalmDeltaVl_minusZetalmDeltaVl_KPoint[ik*numberQuadraturePoints*C_DIM*2+iQuadPoint*C_DIM*2+iDim*2+0]+= tempImag*deltaVlValue*pseudoWaveFunctionValue*dftPtr->d_kPointCoordinates[ik*C_DIM+iDim];
 									gradZetalmDeltaVl_minusZetalmDeltaVl_KPoint[ik*numberQuadraturePoints*C_DIM*2+iQuadPoint*C_DIM*2+iDim*2+1]-= tempReal*deltaVlValue*pseudoWaveFunctionValue*dftPtr->d_kPointCoordinates[ik*C_DIM+iDim];
-									for(unsigned int jDim=0; jDim < C_DIM; ++jDim)
-									{
-										gradZetalmDeltaVlDyadicDistImageAtoms_KPoint[ik*numberQuadraturePoints*C_DIM*C_DIM*2+iQuadPoint*C_DIM*C_DIM*2+iDim*C_DIM*2+jDim*2+0]+= tempReal*tempDer[iDim]*x[jDim];
-										gradZetalmDeltaVlDyadicDistImageAtoms_KPoint[ik*numberQuadraturePoints*C_DIM*C_DIM*2+iQuadPoint*C_DIM*C_DIM*2+iDim*C_DIM*2+jDim*2+1]+= tempImag*tempDer[iDim]*x[jDim];
-									}
 								}
 							}
 #else
@@ -280,7 +270,6 @@ void forceClass<FEOrder>::computeElementalNonLocalPseudoDataForce()
 				d_nonLocalPSP_ZetalmDeltaVl[count][iPseudoWave][cell->id()]=ZetalmDeltaVl_KPoint;
 				d_nonLocalPSP_gradZetalmDeltaVl_KPoint[count][iPseudoWave][cell->id()]=gradZetalmDeltaVl_KPoint;
 				d_nonLocalPSP_gradZetalmDeltaVl_minusZetalmDeltaVl_KPoint[count][iPseudoWave][cell->id()]=gradZetalmDeltaVl_minusZetalmDeltaVl_KPoint;
-				d_nonLocalPSP_gradZetalmDeltaVlDyadicDistImageAtoms_KPoint[count][iPseudoWave][cell->id()]=gradZetalmDeltaVlDyadicDistImageAtoms_KPoint;
 #else
 				d_nonLocalPSP_ZetalmDeltaVl[count][iPseudoWave][cell->id()]=ZetalmDeltaVl;
 				d_nonLocalPSP_gradZetalmDeltaVl[count][iPseudoWave][cell->id()]=gradZetalmDeltaVl;
