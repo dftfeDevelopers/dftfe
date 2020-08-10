@@ -324,45 +324,27 @@ template<unsigned int FEOrder>
 				//vector of quadPoints, nonlocal atom id, pseudo wave, k point
 				//FIXME: flatten nonlocal atomid id and pseudo wave and k point
 				std::vector<std::vector<std::vector<std::vector<Tensor<1,2,VectorizedArray<double> > > > > >ZetaDeltaVQuads;
-				std::vector<std::vector<std::vector<std::vector<Tensor<1,2, Tensor<1,C_DIM,VectorizedArray<double> > > > > > >gradZetaDeltaVQuads;
-				std::vector<std::vector<std::vector<std::vector<Tensor<1,2, Tensor<1,C_DIM,VectorizedArray<double> > > > > > >pspnlGammaAtomsQuads;
 #else
 				//FIXME: flatten nonlocal atom id and pseudo wave
 				//vector of quadPoints, nonlocal atom id, pseudo wave
 				std::vector<std::vector<std::vector<VectorizedArray<double> > > > ZetaDeltaVQuads;
-				std::vector<std::vector<std::vector<Tensor<1,C_DIM,VectorizedArray<double> > > > > gradZetaDeltaVQuads;
 #endif
 				if(isPseudopotential)
 				{
 					ZetaDeltaVQuads.resize(numQuadPointsNLP);
-					gradZetaDeltaVQuads.resize(numQuadPointsNLP);
-#ifdef USE_COMPLEX
-					pspnlGammaAtomsQuads.resize(numQuadPointsNLP);
-#endif
 
 					for (unsigned int q=0; q<numQuadPointsNLP; ++q)
 					{
 						ZetaDeltaVQuads[q].resize(d_nonLocalPSP_ZetalmDeltaVl.size());
-						gradZetaDeltaVQuads[q].resize(d_nonLocalPSP_ZetalmDeltaVl.size());
-#ifdef USE_COMPLEX
-						pspnlGammaAtomsQuads[q].resize(d_nonLocalPSP_ZetalmDeltaVl.size());
-#endif
 						for (unsigned int i=0; i < d_nonLocalPSP_ZetalmDeltaVl.size(); ++i)
 						{
 							const int numberPseudoWaveFunctions = d_nonLocalPSP_ZetalmDeltaVl[i].size();
 #ifdef USE_COMPLEX
 							ZetaDeltaVQuads[q][i].resize(numberPseudoWaveFunctions);
-							gradZetaDeltaVQuads[q][i].resize(numberPseudoWaveFunctions);
-							pspnlGammaAtomsQuads[q][i].resize(numberPseudoWaveFunctions);
 							for (unsigned int iPseudoWave=0; iPseudoWave < numberPseudoWaveFunctions; ++iPseudoWave)
-							{
 								ZetaDeltaVQuads[q][i][iPseudoWave].resize(numKPoints,zeroTensor1);
-								gradZetaDeltaVQuads[q][i][iPseudoWave].resize(numKPoints,zeroTensor2);
-								pspnlGammaAtomsQuads[q][i][iPseudoWave].resize(numKPoints,zeroTensor2);
-							}
 #else
 							ZetaDeltaVQuads[q][i].resize(numberPseudoWaveFunctions,make_vectorized_array(0.0));
-							gradZetaDeltaVQuads[q][i].resize(numberPseudoWaveFunctions,zeroTensor3);
 #endif
 						}
 					}
@@ -404,9 +386,13 @@ template<unsigned int FEOrder>
 #ifdef USE_COMPLEX
 				std::vector<Tensor<1,2,VectorizedArray<double> > > psiSpin0QuadsNLP;
 				std::vector<Tensor<1,2,VectorizedArray<double> > > psiSpin1QuadsNLP;
+				std::vector<Tensor<1,2,Tensor<1,C_DIM,VectorizedArray<double> > > > gradPsiSpin0QuadsNLP;
+				std::vector<Tensor<1,2,Tensor<1,C_DIM,VectorizedArray<double> > > > gradPsiSpin1QuadsNLP;        
 #else
 				std::vector< VectorizedArray<double> > psiSpin0QuadsNLP;
 				std::vector< VectorizedArray<double> > psiSpin1QuadsNLP;
+				std::vector<Tensor<1,C_DIM,VectorizedArray<double> > > gradPsiSpin0QuadsNLP;
+				std::vector<Tensor<1,C_DIM,VectorizedArray<double> > > gradPsiSpin1QuadsNLP;        
 #endif
 
 				if (isPseudopotential && dftParameters::useHigherQuadNLP)
@@ -414,24 +400,30 @@ template<unsigned int FEOrder>
 #ifdef USE_COMPLEX
 					psiSpin0QuadsNLP.resize(numQuadPointsNLP*currentBlockSize*numKPoints,zeroTensor1);
 					psiSpin1QuadsNLP.resize(numQuadPointsNLP*currentBlockSize*numKPoints,zeroTensor1);
+          gradPsiSpin0QuadsNLP.resize(numQuadPointsNLP*currentBlockSize*numKPoints,zeroTensor2);
+          gradPsiSpin1QuadsNLP.resize(numQuadPointsNLP*currentBlockSize*numKPoints,zeroTensor2);
 #else
 					psiSpin0QuadsNLP.resize(numQuadPointsNLP*currentBlockSize,make_vectorized_array(0.0));
 					psiSpin1QuadsNLP.resize(numQuadPointsNLP*currentBlockSize,make_vectorized_array(0.0));
+          gradPsiSpin0QuadsNLP.resize(numQuadPointsNLP*currentBlockSize,zeroTensor3);
+          gradPsiSpin1QuadsNLP.resize(numQuadPointsNLP*currentBlockSize,zeroTensor3);          
 #endif
 					for (unsigned int ikPoint=0; ikPoint<numKPoints; ++ikPoint)
 						for (unsigned int iEigenVec=0; iEigenVec<currentBlockSize; ++iEigenVec)
 						{
 							psiEvalSpin0NLP.read_dof_values_plain(eigenVectors[2*ikPoint][iEigenVec]);
-							psiEvalSpin0NLP.evaluate(true,false);
+							psiEvalSpin0NLP.evaluate(true,true);
 
 							psiEvalSpin1NLP.read_dof_values_plain(eigenVectors[2*ikPoint+1][iEigenVec]);
-							psiEvalSpin1NLP.evaluate(true,false);
+							psiEvalSpin1NLP.evaluate(true,true);
 
 							for (unsigned int q=0; q<numQuadPointsNLP; ++q)
 							{
 								const int id=q*currentBlockSize*numKPoints+currentBlockSize*ikPoint+iEigenVec;
 								psiSpin0QuadsNLP[id]=psiEvalSpin0NLP.get_value(q);
 								psiSpin1QuadsNLP[id]=psiEvalSpin1NLP.get_value(q);
+								gradPsiSpin0QuadsNLP[id]=psiEvalSpin0NLP.get_gradient(q);
+								gradPsiSpin1QuadsNLP[id]=psiEvalSpin1NLP.get_gradient(q);                
 							}//quad point loop
 						} //eigenvector loop
 				}
@@ -457,22 +449,11 @@ template<unsigned int FEOrder>
 										{
 											ZetaDeltaVQuads[q][i][iPseudoWave][ikPoint][0][iSubCell]=d_nonLocalPSP_ZetalmDeltaVl[i][iPseudoWave][subCellId][ikPoint*numQuadPointsNLP*2+q*2+0];
 											ZetaDeltaVQuads[q][i][iPseudoWave][ikPoint][1][iSubCell]=d_nonLocalPSP_ZetalmDeltaVl[i][iPseudoWave][subCellId][ikPoint*numQuadPointsNLP*2+q*2+1];
-											for (unsigned int idim=0; idim<C_DIM; idim++)
-											{
-												gradZetaDeltaVQuads[q][i][iPseudoWave][ikPoint][0][idim][iSubCell]=d_nonLocalPSP_gradZetalmDeltaVl_minusZetalmDeltaVl_KPoint[i][iPseudoWave][subCellId][ikPoint*numQuadPointsNLP*C_DIM*2+q*C_DIM*2+idim*2+0];
-												gradZetaDeltaVQuads[q][i][iPseudoWave][ikPoint][1][idim][iSubCell]=d_nonLocalPSP_gradZetalmDeltaVl_minusZetalmDeltaVl_KPoint[i][iPseudoWave][subCellId][ikPoint*numQuadPointsNLP*C_DIM*2+q*C_DIM*2+idim*2+1];
-												pspnlGammaAtomsQuads[q][i][iPseudoWave][ikPoint][0][idim][iSubCell]=d_nonLocalPSP_gradZetalmDeltaVl_KPoint[i][iPseudoWave][subCellId][ikPoint*numQuadPointsNLP*C_DIM*2+q*C_DIM*2+idim*2+0];
-												pspnlGammaAtomsQuads[q][i][iPseudoWave][ikPoint][1][idim][iSubCell]=d_nonLocalPSP_gradZetalmDeltaVl_KPoint[i][iPseudoWave][subCellId][ikPoint*numQuadPointsNLP*C_DIM*2+q*C_DIM*2+idim*2+1];
-											}
 										}
 #else
 
 										ZetaDeltaVQuads[q][i][iPseudoWave][iSubCell]=
 											d_nonLocalPSP_ZetalmDeltaVl[i][iPseudoWave][subCellId][q];
-
-										for (unsigned int idim=0; idim<C_DIM; idim++)
-											gradZetaDeltaVQuads[q][i][iPseudoWave][idim][iSubCell]=
-												d_nonLocalPSP_gradZetalmDeltaVl[i][iPseudoWave][subCellId][q*C_DIM+idim];
 #endif
 									}//non-trivial cellId check
 								}//iPseudoWave loop
@@ -482,12 +463,11 @@ template<unsigned int FEOrder>
 					//compute FPSPLocalGammaAtoms  (contibution due to Gamma(Rj))
 
 #ifdef USE_COMPLEX
-
 					FnlGammaAtomsElementalContributionSpinPolarized(forceContributionFnlGammaAtoms,
 							forceEval,
 							forceEvalNLP,
 							cell,
-							pspnlGammaAtomsQuads,
+						  ZetaDeltaVQuads,
 							projectorKetTimesPsiSpin0TimesVTimesPartOcc,
 							projectorKetTimesPsiSpin1TimesVTimesPartOcc,
 							dftParameters::useHigherQuadNLP?
@@ -496,6 +476,12 @@ template<unsigned int FEOrder>
 							dftParameters::useHigherQuadNLP?
 							psiSpin1QuadsNLP:
 							psiSpin1Quads,
+							dftParameters::useHigherQuadNLP?
+							gradPsiSpin0QuadsNLP:
+							gradPsiSpin0Quads,
+							dftParameters::useHigherQuadNLP?
+							gradPsiSpin1QuadsNLP:
+							gradPsiSpin1Quads,              
 							blockedEigenValues,
 							macroIdToNonlocalAtomsSetMap[cell]);
 
@@ -505,7 +491,7 @@ template<unsigned int FEOrder>
 						 forceEval,
 						 forceEvalNLP,
 						 cell,
-						 gradZetaDeltaVQuads,
+						 ZetaDeltaVQuads,
 						 projectorKetTimesPsiSpin0TimesVTimesPartOcc[0],
 						 projectorKetTimesPsiSpin1TimesVTimesPartOcc[0],
 						 dftParameters::useHigherQuadNLP?
@@ -514,6 +500,12 @@ template<unsigned int FEOrder>
 						 dftParameters::useHigherQuadNLP?
 						 psiSpin1QuadsNLP:
 						 psiSpin1Quads,
+						 dftParameters::useHigherQuadNLP?
+						 gradPsiSpin0QuadsNLP:
+						 gradPsiSpin0Quads,
+						 dftParameters::useHigherQuadNLP?
+						 gradPsiSpin1QuadsNLP:
+						 gradPsiSpin1Quads,             
 						 macroIdToNonlocalAtomsSetMap[cell]);
 #endif
 				}//is pseudopotential check
@@ -554,38 +546,23 @@ template<unsigned int FEOrder>
 						{
 
 #ifdef USE_COMPLEX
-							Tensor<1,C_DIM,VectorizedArray<double> > FKPoints;
-							Tensor<2,C_DIM,VectorizedArray<double> > EnlKPoints;
-
-							eshelbyTensorSP::getFnlEnlMergedPeriodic(gradZetaDeltaVQuads[q],
-									ZetaDeltaVQuads[q],
+							Tensor<1,C_DIM,VectorizedArray<double> > FKPoints=eshelbyTensorSP::getFnl(ZetaDeltaVQuads[q],
 									projectorKetTimesPsiSpin0TimesVTimesPartOcc,
 									projectorKetTimesPsiSpin1TimesVTimesPartOcc,
-									psiSpin0Quads.begin()+q*currentBlockSize*numKPoints,
-									psiSpin1Quads.begin()+q*currentBlockSize*numKPoints,
+									gradPsiSpin0Quads.begin()+q*currentBlockSize*numKPoints,
+									gradPsiSpin1Quads.begin()+q*currentBlockSize*numKPoints,                  
 									dftPtr->d_kPointWeights,
 									currentBlockSize,
-									macroIdToNonlocalAtomsSetMap[cell],
-									FKPoints,
-									EnlKPoints);
-							EKPoints+=EnlKPoints;
+									macroIdToNonlocalAtomsSetMap[cell]);
 							forceEvalKPoints.submit_value(FKPoints,q);
 #else
-							Tensor<1,C_DIM,VectorizedArray<double> > Fnl;
-							Tensor<2,C_DIM,VectorizedArray<double> >	Enl;
-
-							eshelbyTensorSP::getFnlEnlMergedNonPeriodic(gradZetaDeltaVQuads[q],
-									ZetaDeltaVQuads[q],
+							F+=eshelbyTensorSP::getFnl(ZetaDeltaVQuads[q],
 									projectorKetTimesPsiSpin0TimesVTimesPartOcc[0],
 									projectorKetTimesPsiSpin1TimesVTimesPartOcc[0],
-									psiSpin0Quads.begin()+q*currentBlockSize,
-									psiSpin1Quads.begin()+q*currentBlockSize,
+									gradPsiSpin0Quads.begin()+q*currentBlockSize,
+									gradPsiSpin1Quads.begin()+q*currentBlockSize,                  
 									currentBlockSize,
-									macroIdToNonlocalAtomsSetMap[cell],
-									Fnl,
-									Enl);
-							F+=Fnl;
-							E+=Enl;
+									macroIdToNonlocalAtomsSetMap[cell]);
 #endif
 						}
 
@@ -604,39 +581,25 @@ template<unsigned int FEOrder>
 					{
 
 #ifdef USE_COMPLEX
-						Tensor<1,C_DIM,VectorizedArray<double> > FKPoints;
-						Tensor<2,C_DIM,VectorizedArray<double> > EKPoints;
-
-						eshelbyTensorSP::getFnlEnlMergedPeriodic(gradZetaDeltaVQuads[q],
-								ZetaDeltaVQuads[q],
+						Tensor<1,C_DIM,VectorizedArray<double> > FKPoints=eshelbyTensorSP::getFnl(ZetaDeltaVQuads[q],
 								projectorKetTimesPsiSpin0TimesVTimesPartOcc,
 								projectorKetTimesPsiSpin1TimesVTimesPartOcc,
-								psiSpin0QuadsNLP.begin()+q*currentBlockSize*numKPoints,
-								psiSpin1QuadsNLP.begin()+q*currentBlockSize*numKPoints,
+								gradPsiSpin0QuadsNLP.begin()+q*currentBlockSize*numKPoints,
+								gradPsiSpin1QuadsNLP.begin()+q*currentBlockSize*numKPoints,                
 								dftPtr->d_kPointWeights,
 								currentBlockSize,
-								macroIdToNonlocalAtomsSetMap[cell],
-								FKPoints,
-								EKPoints);
+								macroIdToNonlocalAtomsSetMap[cell]);
 						forceEvalKPointsNLP.submit_value(FKPoints,q);
-						forceEvalKPointsNLP.submit_gradient(EKPoints,q);
 #else
-						Tensor<1,C_DIM,VectorizedArray<double> > F;
-						Tensor<2,C_DIM,VectorizedArray<double> >	E;
-
-						eshelbyTensorSP::getFnlEnlMergedNonPeriodic(gradZetaDeltaVQuads[q],
-								ZetaDeltaVQuads[q],
+						Tensor<1,C_DIM,VectorizedArray<double> > F=eshelbyTensorSP::getFnl(ZetaDeltaVQuads[q],
 								projectorKetTimesPsiSpin0TimesVTimesPartOcc[0],
 								projectorKetTimesPsiSpin1TimesVTimesPartOcc[0],
-								psiSpin0QuadsNLP.begin()+q*currentBlockSize,
-								psiSpin1QuadsNLP.begin()+q*currentBlockSize,
+								gradPsiSpin0QuadsNLP.begin()+q*currentBlockSize,
+								gradPsiSpin1QuadsNLP.begin()+q*currentBlockSize,                
 								currentBlockSize,
-								macroIdToNonlocalAtomsSetMap[cell],
-								F,
-								E);
+								macroIdToNonlocalAtomsSetMap[cell]);
 
 						forceEvalNLP.submit_value(F,q);
-						forceEvalNLP.submit_gradient(E,q);
 #endif
 					}//nonlocal psp quad points loop
 
@@ -652,9 +615,9 @@ template<unsigned int FEOrder>
 					if (dftParameters::useHigherQuadNLP)
 					{
 #ifdef USE_COMPLEX
-						forceEvalKPointsNLP.integrate(true,true);
+						forceEvalKPointsNLP.integrate(true,false);
 #else
-						forceEvalNLP.integrate(true,true);
+						forceEvalNLP.integrate(true,false);
 #endif
 					}
 				}

@@ -342,9 +342,9 @@ namespace dftfe {
 			std::vector<Tensor<1,2,Tensor<1,C_DIM,VectorizedArray<double> > > >::const_iterator it2=gradPsiBegin;
 			VectorizedArray<double> four=make_vectorized_array(4.0);
 			const int numKPoints=kPointWeights.size();
+      Tensor<1,C_DIM,VectorizedArray<double> > kcoord;      
 			for (unsigned int ik=0; ik<numKPoints; ++ik)
       {
-        Tensor<1,C_DIM,VectorizedArray<double> > kcoord;
         kcoord[0]=make_vectorized_array(kPointCoordinates[ik*3+0]);
         kcoord[1]=make_vectorized_array(kPointCoordinates[ik*3+1]);
         kcoord[2]=make_vectorized_array(kPointCoordinates[ik*3+2]);        

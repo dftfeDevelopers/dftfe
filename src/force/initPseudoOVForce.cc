@@ -33,8 +33,6 @@ void forceClass<FEOrder>::computeElementalNonLocalPseudoOVDataForce()
 	//
 	//get FE data structures
 	//
-	//QGauss<3>  quadrature(C_num1DQuad<FEOrder>());
-	//QGauss<3>  quadratureHigh(C_num1DQuadNLPSP<FEOrder>());
   QIterated<3> quadrature(QGauss<1>(C_num1DQuad<FEOrder>()),1);
   QIterated<3> quadratureHigh(QGauss<1>(C_num1DQuadNLPSP<FEOrder>()),C_numCopies1DQuadNLPSP());
 	FEValues<3> fe_values(dftPtr->FE, dftParameters::useHigherQuadNLP?quadratureHigh:quadrature, update_quadrature_points);
@@ -54,11 +52,7 @@ void forceClass<FEOrder>::computeElementalNonLocalPseudoOVDataForce()
 	//
 	d_nonLocalPSP_ZetalmDeltaVl.clear();
 #ifdef USE_COMPLEX
-	d_nonLocalPSP_gradZetalmDeltaVl_minusZetalmDeltaVl_KPoint.clear();
-	d_nonLocalPSP_gradZetalmDeltaVl_KPoint.clear();
   d_nonLocalPSP_zetalmDeltaVlProductDistImageAtoms_KPoint.clear();
-#else
-	d_nonLocalPSP_gradZetalmDeltaVl.clear();
 #endif
 	//
 	//
@@ -68,11 +62,7 @@ void forceClass<FEOrder>::computeElementalNonLocalPseudoOVDataForce()
 	const unsigned int numNonLocalAtomsCurrentProcess= dftPtr->d_nonLocalAtomIdsInCurrentProcess.size();
 	d_nonLocalPSP_ZetalmDeltaVl.resize(numNonLocalAtomsCurrentProcess);
 #ifdef USE_COMPLEX
-	d_nonLocalPSP_gradZetalmDeltaVl_minusZetalmDeltaVl_KPoint.resize(numNonLocalAtomsCurrentProcess);
-	d_nonLocalPSP_gradZetalmDeltaVl_KPoint.resize(numNonLocalAtomsCurrentProcess);
   d_nonLocalPSP_zetalmDeltaVlProductDistImageAtoms_KPoint.resize(numNonLocalAtomsCurrentProcess);
-#else
-	d_nonLocalPSP_gradZetalmDeltaVl.resize(numNonLocalAtomsCurrentProcess);
 #endif
 	//MappingQ1<3,3> test;
 
@@ -105,11 +95,7 @@ void forceClass<FEOrder>::computeElementalNonLocalPseudoOVDataForce()
 		{
 			d_nonLocalPSP_ZetalmDeltaVl[count].resize(numberPseudoWaveFunctions);
 #ifdef USE_COMPLEX
-			d_nonLocalPSP_gradZetalmDeltaVl_minusZetalmDeltaVl_KPoint[count].resize(numberPseudoWaveFunctions);
-			d_nonLocalPSP_gradZetalmDeltaVl_KPoint[count].resize(numberPseudoWaveFunctions);
 			d_nonLocalPSP_zetalmDeltaVlProductDistImageAtoms_KPoint[count].resize(numberPseudoWaveFunctions);      
-#else
-			d_nonLocalPSP_gradZetalmDeltaVl[count].resize(numberPseudoWaveFunctions);
 #endif
 		}
 
@@ -133,12 +119,9 @@ void forceClass<FEOrder>::computeElementalNonLocalPseudoOVDataForce()
 			{
 #ifdef USE_COMPLEX
 				d_nonLocalPSP_ZetalmDeltaVl[count][iPseudoWave][cell->id()]=std::vector<double>(numkPoints*numberQuadraturePoints*2);
-				d_nonLocalPSP_gradZetalmDeltaVl_minusZetalmDeltaVl_KPoint[count][iPseudoWave][cell->id()]=std::vector<double>(numkPoints*numberQuadraturePoints*C_DIM*2);
-				d_nonLocalPSP_gradZetalmDeltaVl_KPoint[count][iPseudoWave][cell->id()]=std::vector<double>(numkPoints*numberQuadraturePoints*C_DIM*2);
 				d_nonLocalPSP_zetalmDeltaVlProductDistImageAtoms_KPoint[count][iPseudoWave][cell->id()]=std::vector<double>(numkPoints*numberQuadraturePoints*C_DIM*2);        
 #else
 				d_nonLocalPSP_ZetalmDeltaVl[count][iPseudoWave][cell->id()]=std::vector<double>(numberQuadraturePoints);
-				d_nonLocalPSP_gradZetalmDeltaVl[count][iPseudoWave][cell->id()]=std::vector<double>(numberQuadraturePoints*C_DIM);
 #endif
 
 				waveFunctionId = iPseudoWave + cumulativeWaveSplineId;
@@ -155,12 +138,9 @@ void forceClass<FEOrder>::computeElementalNonLocalPseudoOVDataForce()
 
 #ifdef USE_COMPLEX
 				std::vector<double>  ZetalmDeltaVl_KPoint(numkPoints*numberQuadraturePoints*2,0.0);
-				std::vector<double> gradZetalmDeltaVl_KPoint(numkPoints*numberQuadraturePoints*C_DIM*2,0.0);
-				std::vector<double> gradZetalmDeltaVl_minusZetalmDeltaVl_KPoint(numkPoints*numberQuadraturePoints*C_DIM*2,0.0);
         std::vector<double> zetalmDeltaVlProductDistImageAtoms_KPoint(numkPoints*numberQuadraturePoints*C_DIM*2,0.0);
 #else
 				std::vector<double> ZetalmDeltaVl(numberQuadraturePoints,0.0);
-				std::vector<double> gradZetalmDeltaVl(numberQuadraturePoints*C_DIM,0.0);
 #endif
 
 				double nlpValue = 0.0;
@@ -207,7 +187,6 @@ void forceClass<FEOrder>::computeElementalNonLocalPseudoOVDataForce()
 						//pseudoForceUtils::convertCartesianToSpherical(x,r,theta,phi);
 
 						double radialProjVal, sphericalHarmonicVal, projectorFunctionValue;
-						std::vector<double> projectorFunctionDerivatives(3,0.0);
 						if(std::sqrt(x[0]*x[0]+x[1]*x[1]+x[2]*x[2]) <=dftPtr->d_outerMostPointPseudoProjectorData[globalWaveSplineId]) //dftPtr->d_pspTail)//d_outerMostPointPseudoWaveFunctionsData[globalWaveSplineId])
 						{
 							double r,theta,phi;
@@ -223,20 +202,6 @@ void forceClass<FEOrder>::computeElementalNonLocalPseudoOVDataForce()
 							projectorFunctionValue = radialProjVal*sphericalHarmonicVal;
 
 
-
-							pseudoForceUtils::getPseudoWaveFunctionDerivatives(r,
-									theta,
-									phi,
-									lQuantumNumber,
-									mQuantumNumber,
-									projectorFunctionDerivatives,
-									dftPtr->d_pseudoWaveFunctionSplines[globalWaveSplineId]);
-
-							std::vector<double> tempDer(3);
-							for(unsigned int iDim = 0; iDim < C_DIM; ++iDim)
-							{
-								tempDer[iDim]=projectorFunctionDerivatives[iDim];
-							}
 #ifdef USE_COMPLEX
 							for (unsigned int ik=0; ik < numkPoints; ++ik)
 							{
@@ -248,12 +213,6 @@ void forceClass<FEOrder>::computeElementalNonLocalPseudoOVDataForce()
 								ZetalmDeltaVl_KPoint[ik*numberQuadraturePoints*2+2*iQuadPoint+1] += tempImag*projectorFunctionValue;
 								for(unsigned int iDim = 0; iDim < C_DIM; ++iDim)
 								{
-									gradZetalmDeltaVl_KPoint[ik*numberQuadraturePoints*C_DIM*2+iQuadPoint*C_DIM*2+iDim*2+0]+= tempReal*tempDer[iDim];
-									gradZetalmDeltaVl_KPoint[ik*numberQuadraturePoints*C_DIM*2+iQuadPoint*C_DIM*2+iDim*2+1]+= tempImag*tempDer[iDim];
-									gradZetalmDeltaVl_minusZetalmDeltaVl_KPoint[ik*numberQuadraturePoints*C_DIM*2+iQuadPoint*C_DIM*2+iDim*2+0]+= tempReal*tempDer[iDim];
-									gradZetalmDeltaVl_minusZetalmDeltaVl_KPoint[ik*numberQuadraturePoints*C_DIM*2+iQuadPoint*C_DIM*2+iDim*2+1]+= tempImag*tempDer[iDim];
-									gradZetalmDeltaVl_minusZetalmDeltaVl_KPoint[ik*numberQuadraturePoints*C_DIM*2+iQuadPoint*C_DIM*2+iDim*2+0]+= tempImag*projectorFunctionValue*dftPtr->d_kPointCoordinates[ik*C_DIM+iDim];
-									gradZetalmDeltaVl_minusZetalmDeltaVl_KPoint[ik*numberQuadraturePoints*C_DIM*2+iQuadPoint*C_DIM*2+iDim*2+1]-= tempReal*projectorFunctionValue*dftPtr->d_kPointCoordinates[ik*C_DIM+iDim];
                   zetalmDeltaVlProductDistImageAtoms_KPoint[ik*numberQuadraturePoints*C_DIM*2+iQuadPoint*C_DIM*2+iDim*2+0]+=tempReal*projectorFunctionValue*x[iDim];
                   zetalmDeltaVlProductDistImageAtoms_KPoint[ik*numberQuadraturePoints*C_DIM*2+iQuadPoint*C_DIM*2+iDim*2+1]+=tempImag*projectorFunctionValue*x[iDim];
 								}
@@ -261,9 +220,6 @@ void forceClass<FEOrder>::computeElementalNonLocalPseudoOVDataForce()
 #else
 
 							ZetalmDeltaVl[iQuadPoint] += projectorFunctionValue;
-
-							for(unsigned int iDim = 0; iDim < C_DIM; ++iDim)
-								gradZetalmDeltaVl[iQuadPoint*C_DIM+iDim]+= tempDer[iDim];
 
 #endif
 						}// within psp tail check
@@ -273,12 +229,9 @@ void forceClass<FEOrder>::computeElementalNonLocalPseudoOVDataForce()
 				}//end of quad loop
 #ifdef USE_COMPLEX
 				d_nonLocalPSP_ZetalmDeltaVl[count][iPseudoWave][cell->id()]=ZetalmDeltaVl_KPoint;
-				d_nonLocalPSP_gradZetalmDeltaVl_KPoint[count][iPseudoWave][cell->id()]=gradZetalmDeltaVl_KPoint;
-				d_nonLocalPSP_gradZetalmDeltaVl_minusZetalmDeltaVl_KPoint[count][iPseudoWave][cell->id()]=gradZetalmDeltaVl_minusZetalmDeltaVl_KPoint;
         d_nonLocalPSP_zetalmDeltaVlProductDistImageAtoms_KPoint[count][iPseudoWave][cell->id()]=zetalmDeltaVlProductDistImageAtoms_KPoint;
 #else
 				d_nonLocalPSP_ZetalmDeltaVl[count][iPseudoWave][cell->id()]=ZetalmDeltaVl;
-				d_nonLocalPSP_gradZetalmDeltaVl[count][iPseudoWave][cell->id()]=gradZetalmDeltaVl;
 #endif
 
 			}//end of iPseudoWave loop

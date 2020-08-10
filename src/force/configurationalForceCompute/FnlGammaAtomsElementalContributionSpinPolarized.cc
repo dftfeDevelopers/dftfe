@@ -24,11 +24,13 @@ template<unsigned int FEOrder>
  FEEvaluation<C_DIM,1,C_num1DQuad<FEOrder>(),C_DIM>  & forceEval,
  FEEvaluation<C_DIM,1,C_num1DQuadNLPSP<FEOrder>()*C_numCopies1DQuadNLPSP(),C_DIM>  & forceEvalNLP,
  const unsigned int cell,
- const std::vector<std::vector<std::vector<std::vector<Tensor<1,2, Tensor<1,C_DIM,VectorizedArray<double> > > > > > > & pspnlGammaAtomsQuads,
+ const std::vector<std::vector<std::vector<std::vector<Tensor<1,2, VectorizedArray<double> > > > > > & zetaDeltaVQuads,
  const std::vector<std::vector<std::vector<std::complex<double> > > > & projectorKetTimesPsiSpin0TimesVTimesPartOcc,
  const std::vector<std::vector<std::vector<std::complex<double> > > > & projectorKetTimesPsiSpin1TimesVTimesPartOcc,
  const std::vector<Tensor<1,2,VectorizedArray<double> > > & psiSpin0Quads,
  const std::vector<Tensor<1,2,VectorizedArray<double> > > & psiSpin1Quads,
+ const std::vector<Tensor<1,2,Tensor<1,C_DIM,VectorizedArray<double> > > > & gradPsiSpin0Quads,
+ const std::vector<Tensor<1,2,Tensor<1,C_DIM,VectorizedArray<double> > > > & gradPsiSpin1Quads, 
  const std::vector< std::vector<double> > & eigenValues,
  const std::vector<unsigned int> & nonlocalAtomsCompactSupportList)
 {
@@ -77,32 +79,38 @@ template<unsigned int FEOrder>
 			if (dftParameters::useHigherQuadNLP)
 				for (unsigned int q=0; q<numQuadPoints; ++q)
 				{
-					std::vector<std::vector<std::vector<Tensor<1,2, Tensor<1,C_DIM,VectorizedArray<double> > > > > > temp1(1);
-					temp1[0]=pspnlGammaAtomsQuads[q][iAtom];
+					std::vector<std::vector<std::vector<Tensor<1,2, VectorizedArray<double> > > > > temp1(1);
+					temp1[0]=zetaDeltaVQuads[q][iAtom];
 
 					const Tensor<1,C_DIM,VectorizedArray<double> >
-						F=-eshelbyTensorSP::getFnlPeriodic(temp1,
+						F=-eshelbyTensorSP::getFnlAtom(temp1,
 								temp2Spin0,
 								temp2Spin1,
 								psiSpin0Quads.begin()+q*numEigenVectors*numKPoints,
 								psiSpin1Quads.begin()+q*numEigenVectors*numKPoints,
+								gradPsiSpin0Quads.begin()+q*numEigenVectors*numKPoints,
+								gradPsiSpin1Quads.begin()+q*numEigenVectors*numKPoints,                
 								dftPtr->d_kPointWeights,
+								dftPtr->d_kPointCoordinates,                
 								numEigenVectors);
 					forceEvalNLP.submit_value(F,q);
 				}
 			else
 				for (unsigned int q=0; q<numQuadPoints; ++q)
 				{
-					std::vector<std::vector<std::vector<Tensor<1,2, Tensor<1,C_DIM,VectorizedArray<double> > > > > > temp1(1);
-					temp1[0]=pspnlGammaAtomsQuads[q][iAtom];
+					std::vector<std::vector<std::vector<Tensor<1,2,VectorizedArray<double> > > > > temp1(1);
+					temp1[0]=zetaDeltaVQuads[q][iAtom];
 
 					const Tensor<1,C_DIM,VectorizedArray<double> >
-						F=-eshelbyTensorSP::getFnlPeriodic(temp1,
+						F=-eshelbyTensorSP::getFnlAtom(temp1,
 								temp2Spin0,
 								temp2Spin1,
 								psiSpin0Quads.begin()+q*numEigenVectors*numKPoints,
 								psiSpin1Quads.begin()+q*numEigenVectors*numKPoints,
+								gradPsiSpin0Quads.begin()+q*numEigenVectors*numKPoints,
+								gradPsiSpin1Quads.begin()+q*numEigenVectors*numKPoints,                
 								dftPtr->d_kPointWeights,
+								dftPtr->d_kPointCoordinates,                
 								numEigenVectors);
 					forceEval.submit_value(F,q);
 				}
@@ -128,11 +136,13 @@ template<unsigned int FEOrder>
  FEEvaluation<C_DIM,1,C_num1DQuad<FEOrder>(),C_DIM>  & forceEval,
  FEEvaluation<C_DIM,1,C_num1DQuadNLPSP<FEOrder>()*C_numCopies1DQuadNLPSP(),C_DIM>  & forceEvalNLP,
  const unsigned int cell,
- const std::vector<std::vector<std::vector<Tensor<1,C_DIM,VectorizedArray<double> > > > > & pspnlGammaAtomQuads,
+ const std::vector<std::vector<std::vector<VectorizedArray<double> > > > & zetaDeltaVQuads,
  const std::vector<std::vector<double> >  & projectorKetTimesPsiSpin0TimesVTimesPartOcc,
  const std::vector<std::vector<double> >  & projectorKetTimesPsiSpin1TimesVTimesPartOcc,
  const std::vector< VectorizedArray<double> > & psiSpin0Quads,
  const std::vector< VectorizedArray<double> > & psiSpin1Quads,
+ const std::vector< Tensor<1,C_DIM,VectorizedArray<double> > > & gradPsiSpin0Quads,
+ const std::vector< Tensor<1,C_DIM,VectorizedArray<double> > > & gradPsiSpin1Quads, 
  const std::vector<unsigned int> & nonlocalAtomsCompactSupportList)
 {
 
@@ -175,30 +185,34 @@ template<unsigned int FEOrder>
 			if (dftParameters::useHigherQuadNLP)
 				for (unsigned int q=0; q<numQuadPoints; ++q)
 				{
-					std::vector<std::vector<Tensor<1,C_DIM,VectorizedArray<double> > > > temp1(1);
-					temp1[0]=pspnlGammaAtomQuads[q][iAtom];
+					std::vector<std::vector<VectorizedArray<double> > > temp1(1);
+					temp1[0]=zetaDeltaVQuads[q][iAtom];
 
 					const Tensor<1,C_DIM,VectorizedArray<double> > F=
-						-eshelbyTensorSP::getFnlNonPeriodic(temp1,
+						-eshelbyTensorSP::getFnlAtom(temp1,
 								temp2Spin0,
 								temp2Spin1,
 								psiSpin0Quads.begin()+q*numEigenVectors,
 								psiSpin1Quads.begin()+q*numEigenVectors,
+								gradPsiSpin0Quads.begin()+q*numEigenVectors,
+								gradPsiSpin1Quads.begin()+q*numEigenVectors,                
 								numEigenVectors);
 					forceEvalNLP.submit_value(F,q);
 				}
 			else
 				for (unsigned int q=0; q<numQuadPoints; ++q)
 				{
-					std::vector<std::vector<Tensor<1,C_DIM,VectorizedArray<double> > > > temp1(1);
-					temp1[0]=pspnlGammaAtomQuads[q][iAtom];
+					std::vector<std::vector<VectorizedArray<double> > > temp1(1);
+					temp1[0]=zetaDeltaVQuads[q][iAtom];
 
 					const Tensor<1,C_DIM,VectorizedArray<double> > F=
-						-eshelbyTensorSP::getFnlNonPeriodic(temp1,
+						-eshelbyTensorSP::getFnlAtom(temp1,
 								temp2Spin0,
 								temp2Spin1,
 								psiSpin0Quads.begin()+q*numEigenVectors,
 								psiSpin1Quads.begin()+q*numEigenVectors,
+								gradPsiSpin0Quads.begin()+q*numEigenVectors,
+								gradPsiSpin1Quads.begin()+q*numEigenVectors,                 
 								numEigenVectors);
 					forceEval.submit_value(F,q);
 				}
