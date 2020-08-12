@@ -370,7 +370,7 @@ IF (WITH_TESTING)
 ENDIF()
 
 # Build documentation
-option(BUILD_DOCS "Build documentation (requires doxygen and sphinx)" ON)
+option(BUILD_DOCS "Build documentation (requires doxygen and sphinx)" OFF)
 if(BUILD_DOCS)
   find_package(Doxygen)
   find_package(Sphinx)

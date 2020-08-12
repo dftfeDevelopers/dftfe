@@ -271,3 +271,21 @@ Assuming that you have already installed the above external dependencies, next f
 
       * /build/debug/real/dftfe
       * /build/debug/complex/dftfe
+
+Compiling DFT-FE with documentation
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Building documentation is disabled by default.  To enable it, add the
+following to the cmake command (by editing `setup.sh`):
+
+```
+  -D BUILD_DOCS=ON
+```
+
+DFT-FE's documentation is built with Doxygen and sphinx plus the breath plugin.
+On most systems, doxygen and python3-sphinx are available from the package manager
+(`apt-get`, `yum`, etc.).
+The necessary python packages can be installed using:
+
+  * pip3 install sphinx_rtd_theme
+  * pip3 install breathe
