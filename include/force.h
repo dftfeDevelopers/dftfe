@@ -121,7 +121,6 @@ namespace dftfe {
 				 const distributedCPUVec<double> & phiTotRhoIn,
 				 const distributedCPUVec<double> & phiTotRhoOut,
 				 const std::map<dealii::CellId, std::vector<double> > & pseudoVLoc,
-				 const ConstraintMatrix  & noConstraints,
 				 const vselfBinsManager<FEOrder>   & vselfBinsManagerEigen,
 				 const MatrixFree<3,double> & matrixFreeDataElectro,
 				 const unsigned int phiTotDofHandlerIndexElectro,
@@ -135,7 +134,7 @@ namespace dftfe {
 				 const std::map<dealii::CellId, std::vector<double> > & gradRhoOutValuesElectroLpsp,
 				 const std::map<dealii::CellId, std::vector<double> > & pseudoVLocElectro,
 				 const std::map<unsigned int,std::map<dealii::CellId, std::vector<double> > > & pseudoVLocAtomsElectro,
-				 const ConstraintMatrix  & noConstraintsElectro,
+				 const ConstraintMatrix  & hangingPlusPBCConstraintsElectro,
 				 const vselfBinsManager<FEOrder>   & vselfBinsManagerElectro,
 				 const std::map<dealii::CellId, std::vector<double> > & shadowKSRhoMinValues,
 				 const std::map<dealii::CellId, std::vector<double> > & shadowKSGradRhoMinValues,
@@ -180,7 +179,6 @@ namespace dftfe {
           const unsigned int lpspQuadratureIdElectro,
 					const distributedCPUVec<double> & phiTotRhoOut,
 					const std::map<dealii::CellId, std::vector<double> > & pseudoVLoc,
-					const ConstraintMatrix  & noConstraints,
 					const vselfBinsManager<FEOrder>   & vselfBinsManagerEigen,
 					const MatrixFree<3,double> & matrixFreeDataElectro,
 					const unsigned int phiTotDofHandlerIndexElectro,
@@ -194,7 +192,7 @@ namespace dftfe {
 				  const std::map<dealii::CellId, std::vector<double> > & gradRhoOutValuesElectroLpsp,
 					const std::map<dealii::CellId, std::vector<double> > & pseudoVLocElectro,
           const std::map<unsigned int,std::map<dealii::CellId, std::vector<double> > > & pseudoVLocAtomsElectro,
-					const ConstraintMatrix  & noConstraintsElectro,
+					const ConstraintMatrix  & hangingPlusPBCConstraintsElectro,
 					const vselfBinsManager<FEOrder>   & vselfBinsManagerElectro);
 
 			/** @brief prints the currently stored configurational stress tensor.
@@ -232,7 +230,7 @@ namespace dftfe {
 			void createBinObjectsForce
 				(const DoFHandler<3> & dofHandler,
 				 const DoFHandler<3> & dofHandlerForce,
-				 const ConstraintMatrix  & noConstraints,
+				 const ConstraintMatrix  & hangingPlusPBCConstraints,
 				 const vselfBinsManager<FEOrder> & vselfBinsManager,
 				 std::vector<std::vector<DoFHandler<C_DIM>::active_cell_iterator> > & cellsVselfBallsDofHandler,
 				 std::vector<std::vector<DoFHandler<C_DIM>::active_cell_iterator> > & cellsVselfBallsDofHandlerForce,
