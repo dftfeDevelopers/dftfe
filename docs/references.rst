@@ -20,9 +20,7 @@ We refer to the following articles for a background of the methods and algorithm
 
  1. P. Motamarri, M.R. Nowak, K. Leiter , J. Knap, V. Gavini, Higher-order adaptive finite-element methods for Kohn-Sham density functional theory, *J. Comput. Phys.* 253, 308-343 (2013).
  
- 2. P. Motamarri, V. Gavini, Subquadratic-scaling subspace projection method for large-scale Kohn-Sham DFT calculations using spectral finite-element discretization, *Phys. Rev. B* 90, 115127 (2014).
-
- 3. P. Motamarri, V. Gavini,  Configurational forces in electronic structure calculations using Kohn-Sham density functional theory, *Phys. Rev. B* 97 165132 (2018).
+ 2. P. Motamarri, V. Gavini,  Configurational forces in electronic structure calculations using Kohn-Sham density functional theory, *Phys. Rev. B* 97 165132 (2018).
 
 
 .. note::
