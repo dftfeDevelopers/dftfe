@@ -256,31 +256,35 @@ Assuming that you have already installed the above external dependencies, next f
 
  * To compile `DFT-FE` in release mode (the fast version), set `optimizedFlag=1` in `setup.sh` and do::
 
-        $ ./setup.sh
+        $ mkdir build; cd build; ../setup.sh
 
-   If compilation is successful, a `/build` directory will be created with the following executables:
+   Note that `setup.sh` expects to be located in the same directory as
+   the source code (CMakeLists.txt).  It uses its own path when invoking `cmake`.
+   This can case trouble if your build directory is a symbolic link instead of
+   a real directory.
 
-      * /build/release/real/dftfe
-      * /build/release/complex/dftfe
+   If compilation is successful, your `build` directory will contain the following executables:
 
-   To compile `DFT-FE` in debug mode (much slower but useful for debugging), set `optimizedFlag=0` in `setup.sh` and do::
+      * release/real/dftfe
+      * release/complex/dftfe
 
-        $ ./setup.sh
+   To compile `DFT-FE` in debug mode (much slower but useful for debugging), set `optimizedFlag=0` in `setup.sh` and do
+   (from your build directory)::
+
+        $ ../setup.sh
 
     which will create the following debug mode executables:
 
-      * /build/debug/real/dftfe
-      * /build/debug/complex/dftfe
+      * debug/real/dftfe
+      * debug/complex/dftfe
 
 Compiling DFT-FE with documentation
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Building documentation is disabled by default.  To enable it, add the
-following to the cmake command (by editing `setup.sh`):
+following to the cmake command (by editing `setup.sh`)::
 
-```
   -D BUILD_DOCS=ON
-```
 
 DFT-FE's documentation is built with Doxygen and sphinx plus the breath plugin.
 On most systems, doxygen and python3-sphinx are available from the package manager

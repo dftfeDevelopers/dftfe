@@ -40,7 +40,7 @@ if read_the_docs_build:
 
 # -- Project information -----------------------------------------------------
 
-project = 'DFT-FT'
+project = 'DFT-FE'
 copyright = '2020, The DFT-FE Developers'
 author = 'yes'
 
