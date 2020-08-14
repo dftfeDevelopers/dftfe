@@ -90,6 +90,10 @@ namespace dftfe{
 
 			virtual void reinit(const unsigned int wavefunBlockSize) = 0;
 
+
+	                virtual void initCellWaveFunctionMatrix(const unsigned int wavefunBlockSize,
+								distributedCPUVec<dataTypes::number> & X) = 0;
+
 			/**
 			 * @brief compute diagonal mass matrix
 			 *

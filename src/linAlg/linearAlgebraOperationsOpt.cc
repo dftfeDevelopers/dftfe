@@ -355,6 +355,175 @@ namespace dftfe{
 
 			}
 
+
+	        	//
+		//chebyshev filtering of given subspace XArray
+		//
+		template<typename T>
+		void chebyshevFilterOpt(operatorDFTClass & operatorMatrix,
+					distributedCPUVec<T> & XArray,
+					std::vector<std::vector<dataTypes::number> > & cellXWaveFunctionMatrix,	
+					const unsigned int numberWaveFunctions,
+					const unsigned int m,
+					const double a,
+					const double b,
+					const double a0)
+			{
+				double e, c, sigma, sigma1, sigma2, gamma;
+				e = (b-a)/2.0; c = (b+a)/2.0;
+				sigma = e/(a0-c); sigma1 = sigma; gamma = 2.0/sigma1;
+
+				distributedCPUVec<T> YArray;
+				std::vector<std::vector<T> > cellYWaveFunctionMatrix;
+				cellYWaveFunctionMatrix = cellXWaveFunctionMatrix;
+
+				//
+				//create YArray
+				//
+				YArray.reinit(XArray);
+
+
+				//
+				//initialize to zeros.
+				//x
+				const T zeroValue = 0.0;
+				YArray = zeroValue;
+
+
+				//
+				//call HX
+				//
+				bool scaleFlag = false;
+				double scalar = 1.0;
+
+				operatorMatrix.HX(XArray,
+						  cellXWaveFunctionMatrix,
+						  numberWaveFunctions,
+						  scaleFlag,
+						  scalar,
+						  YArray,
+						  cellYWaveFunctionMatrix);
+
+
+				double alpha1 = sigma1/e, alpha2 = -c;
+
+				//
+				//YArray = YArray + alpha2*XArray and YArray = alpha1*YArray
+				//
+				//YArray.add(alpha2,XArray);
+				//YArray *= alpha1;
+
+
+				//
+				//Do surface nodes recursive iteration for dealii vectors
+				//
+				const unsigned int numberDofs = YArray.local_size()/numberWaveFunctions;
+				for(unsigned int iDof = 0; iDof < numberDofs; ++iDof)
+				  {
+				    if(dealiiArrayNodeMap[iDof] == 1)
+				      {
+					for(unsigned int iWave = 0; iWave < numberWaveFunctions; ++iWave)
+					  {
+					    YArray.local_element(iDof*numberWaveFunctions+iWave) += alpha2*XArray.local_element(iDof*numberWaveFunctions+iWave);
+					    YArray.local_element(iDof*numberWaveFunctions+iWave) *= alpha1;
+					  }
+				      }
+
+				  }
+
+				//
+				//Do recursive iteration only for interior cell nodes using cell-level loop
+				// Y = a*X + Y
+				operatorMatrix.axpy(alpha2,
+						    numberWaveFunctions,
+						    cellXWaveFunctionMatrix,
+						    cellYWaveFunctionMatrix);
+
+				//scale a vector with a scalar
+				operatorMatrix.scale(alpha1,
+						     numberWaveFunctions,
+						     cellYWaveFunctionMatrix);
+						     
+			
+				//
+				for(unsigned int degree = 2; degree < m+1; ++degree)
+				{
+					sigma2 = 1.0/(gamma - sigma);
+					alpha1 = 2.0*sigma2/e, alpha2 = -(sigma*sigma2);
+
+					//
+					//multiply XArray with alpha2
+					//
+					//XArray *= alpha2;
+
+					//XArray = XArray - c*alpha1*YArray
+					//XArray.add(-c*alpha1,YArray);
+
+					//
+					//Do surface nodes recursive iteration for dealii vectors
+					//
+					for(unsigned int iDof = 0; iDof < numberDofs; ++iDof)
+					  {
+					    if(dealiiArrayNodeMap[iDof] == 1)
+					      {
+						for(unsigned int iWave = 0; iWave < numberWaveFunctions; ++iWave)
+						  {
+						    
+						    XArray.local_element(iDof*numberWaveFunctions+iWave) *= alpha2;
+						    XArray.local_element(iDof*numberWaveFunctions+iWave) += (-c*alpha1)*YArray.local_element(iDof*numberWaveFunctions+iWave);
+						  }
+					      }
+
+					  }
+
+					//Do recursive iteration only for interior cell nodes using cell-level loop
+					
+					//scale a vector with a scalar
+					operatorMatrix.scale(alpha2,
+							     numberWaveFunctions,
+							     cellXWaveFunctionMatrix);
+
+					// X = a*Y + X
+					operatorMatrix.axpy(-c*alpha1,
+							    numberWaveFunctions,
+							    cellYWaveFunctionMatrix,
+							    cellXWaveFunctionMatrix);
+
+
+					//
+					//call HX
+					//
+					bool scaleFlag = true;
+
+					operatorMatrix.HX(YArray,
+							  cellYWaveFunctionMatrix,
+							  numberWaveFunctions,
+							  scaleFlag,
+							  alpha1,
+							  XArray,
+							  cellXWaveFunctionMatrix);
+
+					//
+					//XArray = YArray (may have to optimize this, so that swap happens only for surface nodes for deallii vectors and interior nodes
+					//for cellwavefunction matrices
+					//
+					XArray.swap(YArray);
+					cellXWaveFunctionMatrix.swap(cellYWaveFunctionMatrix);
+
+					//
+					//YArray = YNewArray
+					//
+					sigma = sigma2;
+
+				}
+
+				//copy back YArray to XArray
+				XArray = YArray;
+				cellXWaveFunctionMatrix = cellYWaveFunctionMatrix;
+
+			}
+	  
+
 		template<typename T>
 			void gramSchmidtOrthogonalization(std::vector<T> & X,
 					const unsigned int numberVectors,

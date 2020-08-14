@@ -227,6 +227,10 @@ namespace dftfe{
 		void reinit(const unsigned int wavefunBlockSize);
 
 
+	        void initCellWaveFunctionMatrix(const unsigned int numberWaveFunctions,
+					        distributedCPUVec<dataTypes::number> & X);
+
+
 
 		/**
 		 * @brief Computes diagonal mass matrix
@@ -370,9 +374,7 @@ namespace dftfe{
                 ///storage for shapefunctions
                 std::vector<double> d_shapeFunctionValueLpspQuad;
  
-                ///storage for cell wavefunction matrix
-                std::vector<std::vector<double> > d_cellWaveFunctionMatrix;
-
+                	        
 		///storage for  matrix-free cell data
 		const unsigned int d_numberNodesPerElement;
 		const unsigned int d_numberMacroCells;

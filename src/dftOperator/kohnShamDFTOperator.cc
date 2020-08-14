@@ -76,10 +76,10 @@ namespace dftfe {
 			//
 			d_macroCellSubCellMap.resize(d_numberMacroCells);
 			for(unsigned int iMacroCell = 0; iMacroCell < d_numberMacroCells; ++iMacroCell)
-			{
-				const  unsigned int n_sub_cells = dftPtr->matrix_free_data.n_components_filled(iMacroCell);
-				d_macroCellSubCellMap[iMacroCell] = n_sub_cells;
-			}
+			  {
+			    const  unsigned int n_sub_cells = dftPtr->matrix_free_data.n_components_filled(iMacroCell);
+			    d_macroCellSubCellMap[iMacroCell] = n_sub_cells;
+			  }
 
 			//
 			//compute mass vector
@@ -99,7 +99,7 @@ namespace dftfe {
 
 			d_cellHamiltonianMatrix.clear();
 			d_cellHamiltonianMatrix.resize(dftPtr->d_kPointWeights.size()*(1+dftParameters::spinPolarized));
-                        d_cellWaveFunctionMatrix.resize(dftPtr->matrix_free_data.n_physical_cells());
+                     
 
                         vectorTools::classifyInteriorSurfaceNodesInCell(dftPtr->matrix_free_data,
                                                                         d_nodesPerCellClassificationMap);
@@ -119,24 +119,24 @@ namespace dftfe {
 						flattenedArray);
 
 			if(dftParameters::isPseudopotential)
-			{
-				vectorTools::createDealiiVector<dataTypes::number>(dftPtr->d_projectorKetTimesVectorPar[0].get_partitioner(),
-						numberWaveFunctions,
-						dftPtr->d_projectorKetTimesVectorParFlattened);
+			  {
+			    vectorTools::createDealiiVector<dataTypes::number>(dftPtr->d_projectorKetTimesVectorPar[0].get_partitioner(),
+									       numberWaveFunctions,
+									       dftPtr->d_projectorKetTimesVectorParFlattened);
 
-			}
-
+			  }
 
 
 			vectorTools::computeCellLocalIndexSetMap(flattenedArray.get_partitioner(),
-					dftPtr->matrix_free_data,
-					numberWaveFunctions,
-					d_flattenedArrayMacroCellLocalProcIndexIdMap,
-					d_flattenedArrayCellLocalProcIndexIdMap);
+								 dftPtr->matrix_free_data,
+								 numberWaveFunctions,
+								 d_flattenedArrayMacroCellLocalProcIndexIdMap,
+								 d_flattenedArrayCellLocalProcIndexIdMap);
+			
 
 			getOverloadedConstraintMatrix()->precomputeMaps(dftPtr->matrix_free_data.get_vector_partitioner(),
-					flattenedArray.get_partitioner(),
-					numberWaveFunctions);
+									flattenedArray.get_partitioner(),
+									numberWaveFunctions);
 
 
 			
@@ -155,6 +155,99 @@ namespace dftfe {
 
 		}
 
+        
+
+      template<unsigned int FEOrder>
+      void kohnShamDFTOperatorClass<FEOrder>::initCellWaveFunctionMatrix(const unsigned int numberWaveFunctions,
+									 distributedCPUVec<dataTypes::number> & src,
+									 std::vector<std::vector<dataTypes::number> > & cellWaveFunctionMatrix)
+		{
+		        cellWaveFunctionMatrix.resize(dftPtr->matrix_free_data.n_physical_cells());
+                      	unsigned int iElem = 0;
+			for(unsigned int iMacroCell = 0; iMacroCell < d_numberMacroCells; ++iMacroCell)
+			  {
+			    for(unsigned int iCell = 0; iCell < d_macroCellSubCellMap[iMacroCell]; ++iCell)
+			      {
+				cellWaveFunctionMatrix[iElem].resize(d_numberNodesPerElement*numberWaveFunctions,0.0);
+				for(unsigned int iNode = 0; iNode < d_numberNodesPerElement; ++iNode)
+				  {
+				    dealii::types::global_dof_index localNodeId = d_flattenedArrayMacroCellLocalProcIndexIdMap[iElem][iNode];
+				    dcopy_(&numberWaveFunctions,
+					   src.begin()+localNodeId,
+					   &inc,
+					   &cellWaveFunctionMatrix[iElem][numberWaveFunctions*iNode],
+					   &inc);
+				  }
+				++iElem;
+			      }
+			  }
+	
+		}
+
+
+  //Y = a*X + Y
+
+  template<unsigned int FEOrder>
+  void kohnShamDFTOperatorClass<FEOrder>::axpy(double scalar,
+					       const unsigned int numberWaveFunctions,
+					       std::vector<std::vector<dataTypes::number> > & cellXWaveFunctionMatrix,
+					       std::vector<std::vector<dataTypes::number> > & cellYWaveFunctionMatrix)
+  {
+    
+    unsigned int iElem = 0;
+    for(unsigned int iMacroCell = 0; iMacroCell < d_numberMacroCells; ++iMacroCell)
+      {
+	for(unsigned int iCell = 0; iCell < d_macroCellSubCellMap[iMacroCell]; ++iCell)
+	  {
+	    for(unsigned int iNode = 0; iNode < d_numberNodesPerElement; ++iNode)
+	      {
+		if(d_nodesPerCellClassificationMap[iNode] == 0)
+		  {
+		    for(unsigned int iWave = 0; iWave < numberWaveFunctions; ++iWave)
+		      {
+			cellYWaveFunctionMatrix[iElem][numberWaveFunctions*iNode + iWave] += scalar*cellXWaveFunctionMatrix[iElem][numberWaveFunctions*iNode + iWave];
+		      }
+
+		  }
+	      }
+	    ++iElem;
+	  }
+      }
+	
+
+  }
+
+
+  template<unsigned int FEOrder>
+  void kohnShamDFTOperatorClass<FEOrder>::scale(double scalar,
+					        const unsigned int numberWaveFunctions,
+					        std::vector<std::vector<dataTypes::number> > & cellWaveFunctionMatrix)
+					        
+  {
+    
+    unsigned int iElem = 0;
+    for(unsigned int iMacroCell = 0; iMacroCell < d_numberMacroCells; ++iMacroCell)
+      {
+	for(unsigned int iCell = 0; iCell < d_macroCellSubCellMap[iMacroCell]; ++iCell)
+	  {
+	    for(unsigned int iNode = 0; iNode < d_numberNodesPerElement; ++iNode)
+	      {
+		if(d_nodesPerCellClassificationMap[iNode] == 0)
+		  {
+		    for(unsigned int iWave = 0; iWave < numberWaveFunctions; ++iWave)
+		      {
+			cellWaveFunctionMatrix[iElem][numberWaveFunctions*iNode + iWave] *= scalar*cellWaveFunctionMatrix[iElem][numberWaveFunctions*iNode + iWave];
+		      }
+
+		  }
+	      }
+	    ++iElem;
+	  }
+      }
+	
+
+  }
+  
 
 	//
 	//compute mass Vector
@@ -674,6 +767,156 @@ namespace dftfe {
 
 		}
 
+       	template<unsigned int FEOrder>
+		void kohnShamDFTOperatorClass<FEOrder>::HX(distributedCPUVec<double> & src,
+							   std::vector<std::vector<double> > & cellSrcWaveFunctionMatrix,
+							   const unsigned int numberWaveFunctions,
+							   const bool scaleFlag,
+							   const double scalar,
+							   distributedCPUVec<double> & dst,
+							   std::vector<std::vector<double> > & cellDstWaveFunctionMatrix)
+
+
+		{
+			const unsigned int numberDofs = src.local_size()/numberWaveFunctions;
+			const unsigned int inc = 1;
+
+
+			//
+			//scale src vector with M^{-1/2}
+			//
+			if(!dftParameters::cellLevelMassMatrixScaling)
+			  {
+			    for(unsigned int i = 0; i < numberDofs; ++i)
+			      {
+				const double scalingCoeff = d_invSqrtMassVector.local_element(i);//*scalar;
+				dscal_(&numberWaveFunctions,
+				       &scalingCoeff,
+				       src.begin()+i*numberWaveFunctions,
+				       &inc);
+			      }
+
+
+			    if(scaleFlag)
+			      {
+				for(int i = 0; i < numberDofs; ++i)
+				  {
+				    const double scalingCoeff = d_sqrtMassVector.local_element(i);
+				    dscal_(&numberWaveFunctions,
+					   &scalingCoeff,
+					   dst.begin()+i*numberWaveFunctions,
+					   &inc);
+
+				  }
+			      }
+			  }
+
+			//
+			//update slave nodes before doing element-level matrix-vec multiplication
+			//
+			dftPtr->constraintsNoneDataInfo.distribute(src,
+					numberWaveFunctions);
+
+			//src.update_ghost_values();
+
+			//
+			//Hloc*M^{-1/2}*X
+			//
+#ifdef WITH_MKL
+			if (dftParameters::useBatchGEMM && numberWaveFunctions<1000)
+			{
+				computeLocalHamiltonianTimesXBatchGEMM(src,
+								       numberWaveFunctions,
+								       dst,
+								       scalar);
+								       
+			}
+			else
+				computeLocalHamiltonianTimesX(src,
+							      cellSrcWaveFunctionMatrix,
+							      numberWaveFunctions,
+							      dst,
+							      cellDstWaveFunctionMatrix,
+							      scalar);
+#else
+			computeLocalHamiltonianTimesX(src,
+						      numberWaveFunctions,
+						      dst,
+						      scalar);
+#endif
+
+			//
+			//required if its a pseudopotential calculation and number of nonlocal atoms are greater than zero
+			//H^{nloc}*M^{-1/2}*X
+			if(dftParameters::isPseudopotential && dftPtr->d_nonLocalAtomGlobalChargeIds.size() > 0)
+			{
+#ifdef WITH_MKL
+				if (dftParameters::useBatchGEMM && numberWaveFunctions<1000)
+				{
+					computeNonLocalHamiltonianTimesXBatchGEMM(src,
+										  numberWaveFunctions,
+										  dst,
+										  scalar);
+				}
+				/*else
+					computeNonLocalHamiltonianTimesX(src,
+							numberWaveFunctions,
+									 dst,
+									 scalar);*/
+#else
+				computeNonLocalHamiltonianTimesX(src,
+								 numberWaveFunctions,
+								 dst,
+								 scalar);
+#endif
+			}
+
+
+
+			//
+			//update master node contributions from its correponding slave nodes
+			//
+			dftPtr->constraintsNoneDataInfo.distribute_slave_to_master(dst,
+					numberWaveFunctions);
+
+
+			src.zero_out_ghosts();
+			dst.compress(VectorOperation::add);
+
+			//
+			//M^{-1/2}*H*M^{-1/2}*X
+			//
+			if(!dftParameters::cellLevelMassMatrixScaling)
+			  {
+			    for(unsigned int i = 0; i < numberDofs; ++i)
+			      {
+				dscal_(&numberWaveFunctions,
+				       &d_invSqrtMassVector.local_element(i),
+				       dst.begin()+i*numberWaveFunctions,
+				       &inc);
+			      }
+
+			    //
+			    //unscale src M^{1/2}*X
+			    //
+			    for(unsigned int i = 0; i < numberDofs; ++i)
+			      {
+				double scalingCoeff = d_sqrtMassVector.local_element(i);//*(1.0/scalar);
+				dscal_(&numberWaveFunctions,
+				       &scalingCoeff,
+				       src.begin()+i*numberWaveFunctions,
+				       &inc);
+			      }
+			  }
+			else
+			  {
+			    dftPtr->constraintsNoneDataInfo.set_zero(src,
+                                                                     numberWaveFunctions);
+			  }
+
+		}
+  
+
 	template<unsigned int FEOrder>
 		void kohnShamDFTOperatorClass<FEOrder>::HX(distributedCPUVec<double> & src,
 				const unsigned int numberWaveFunctions,
@@ -807,8 +1050,12 @@ dst);
 			dst.compress(VectorOperation::add);
 
 		}
+  
 #endif
 
+  
+
+  
 
 	template<unsigned int FEOrder>
 		void kohnShamDFTOperatorClass<FEOrder>::XtHX(const std::vector<dataTypes::number> & X,
