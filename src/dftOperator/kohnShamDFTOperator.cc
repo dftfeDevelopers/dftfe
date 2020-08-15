@@ -185,8 +185,63 @@ namespace dftfe {
 		}
 
 
-  //Y = a*X + Y
 
+
+  template<unsigned int FEOrder>
+  void kohnShamDFTOperatorClass<FEOrder>::fillGlobalArrayFromCellWaveFunctionMatrix(const unsigned int numberWaveFunctions,
+										    std::vector<std::vector<dataTypes::number> > & cellWaveFunctionMatrix,
+										    distributedCPUVec<dataTypes::number> & glbArray)
+									
+  {
+		        
+    unsigned int iElem = 0;
+    for(unsigned int iMacroCell = 0; iMacroCell < d_numberMacroCells; ++iMacroCell)
+      {
+	for(unsigned int iCell = 0; iCell < d_macroCellSubCellMap[iMacroCell]; ++iCell)
+	  {
+	    for(unsigned int iNode = 0; iNode < d_numberNodesPerElement; ++iNode)
+	      {
+		if(d_nodesPerCellClassificationMap[iNode] == 0)
+		  {
+		    dealii::types::global_dof_index localNodeId = d_flattenedArrayMacroCellLocalProcIndexIdMap[iElem][iNode];
+		    dcopy_(&numberWaveFunctions,
+			   &cellWaveFunctionMatrix[iElem][numberWaveFunctions*iNode],//src.begin()+localNodeId,
+			   &inc,
+			   glbArray.begin()+localNodeId,
+			   &inc);
+		  }
+	      }
+	    ++iElem;
+	  }
+      }
+	
+  }
+  
+
+   //Y = a*X + Y
+  template<unsigned int FEOrder>
+  void kohnShamDFTOperatorClass<FEOrder>::initWithScalar(const unsigned int numberWaveFunctions,
+							 double scalarValue,
+							 std::vector<std::vector<dataTypes::number> > & cellWaveFunctionMatrix)
+							 
+  {
+    cellWaveFunctionMatrix.resize(dftPtr->matrix_free_data.n_physical_cells());
+    unsigned int iElem = 0;
+    for(unsigned int iMacroCell = 0; iMacroCell < d_numberMacroCells; ++iMacroCell)
+      {
+	for(unsigned int iCell = 0; iCell < d_macroCellSubCellMap[iMacroCell]; ++iCell)
+	  {
+	    cellWaveFunctionMatrix[iElem].resize(d_numberNodesPerElement*numberWaveFunctions,scalarValue);
+	    ++iElem;
+	  }
+      }
+
+  }
+
+      
+
+
+  //Y = a*X + Y
   template<unsigned int FEOrder>
   void kohnShamDFTOperatorClass<FEOrder>::axpy(double scalar,
 					       const unsigned int numberWaveFunctions,
@@ -216,6 +271,9 @@ namespace dftfe {
 	
 
   }
+
+
+  
 
 
   template<unsigned int FEOrder>
@@ -775,6 +833,7 @@ namespace dftfe {
 							   const double scalar,
 							   distributedCPUVec<double> & dst,
 							   std::vector<std::vector<double> > & cellDstWaveFunctionMatrix)
+							   
 
 
 		{
@@ -815,7 +874,7 @@ namespace dftfe {
 			//update slave nodes before doing element-level matrix-vec multiplication
 			//
 			dftPtr->constraintsNoneDataInfo.distribute(src,
-					numberWaveFunctions);
+								   numberWaveFunctions);
 
 			//src.update_ghost_values();
 
@@ -838,6 +897,7 @@ namespace dftfe {
 							      dst,
 							      cellDstWaveFunctionMatrix,
 							      scalar);
+							      
 #else
 			computeLocalHamiltonianTimesX(src,
 						      numberWaveFunctions,

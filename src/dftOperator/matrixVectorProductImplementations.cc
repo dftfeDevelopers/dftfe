@@ -251,7 +251,8 @@ void kohnShamDFTOperatorClass<FEOrder>::computeLocalHamiltonianTimesX(const dist
 								      const unsigned int numberWaveFunctions,
 								      distributedCPUVec<double> & dst,
 								      std::vector<std::vector<double> > & cellDstWaveFunctionMatrix,
-								      const double scalar) 
+								      const double scalar)
+								       
 {
 
 	const unsigned int kpointSpinIndex=(1+dftParameters::spinPolarized)*d_kPointIndex+d_spinIndex;
@@ -264,7 +265,7 @@ void kohnShamDFTOperatorClass<FEOrder>::computeLocalHamiltonianTimesX(const dist
 
 	//std::vector<double> cellWaveFunctionMatrix(d_numberNodesPerElement*numberWaveFunctions,0.0);
         //cellWaveFunctionMatrix = d_cellWaveFunctionMatrix;
-	//std::vector<double> cellHamMatrixTimesWaveMatrix(d_numberNodesPerElement*numberWaveFunctions,0.0);
+	std::vector<double> cellHamMatrixTimesWaveMatrix(d_numberNodesPerElement*numberWaveFunctions,0.0);
 
 	unsigned int iElem = 0;
 	for(unsigned int iMacroCell = 0; iMacroCell < d_numberMacroCells; ++iMacroCell)
@@ -299,7 +300,7 @@ void kohnShamDFTOperatorClass<FEOrder>::computeLocalHamiltonianTimesX(const dist
 		       &d_cellHamiltonianMatrix[kpointSpinIndex][iElem][0],
 		       &d_numberNodesPerElement,
 		       &scalarCoeffBeta,
-		       &cellDstWaveFunctionMatrix[0],
+		       &cellHamMatrixTimesWaveMatrix[0],
 		       &numberWaveFunctions);
 
 		for(unsigned int iNode = 0; iNode < d_numberNodesPerElement; ++iNode)
@@ -309,10 +310,17 @@ void kohnShamDFTOperatorClass<FEOrder>::computeLocalHamiltonianTimesX(const dist
 			dealii::types::global_dof_index localNodeId = d_flattenedArrayMacroCellLocalProcIndexIdMap[iElem][iNode];
 			daxpy_(&numberWaveFunctions,
 			       &scalarCoeffAlpha,
-			       &cellDstWaveFunctionMatrix[numberWaveFunctions*iNode],
+			       &cellHamMatrixTimesWaveMatrix[numberWaveFunctions*iNode],
 			       &inc,
 			       dst.begin()+localNodeId,
 			       &inc);
+		      }
+		    else
+		      {
+			for(unsigned int iWave = 0; iWave < numberWaveFunctions; ++iWave)
+			  {
+			    cellDstWaveFunctionMatrix[iElem][numberWaveFunctions*iNode + iWave] += cellHamMatrixTimesWaveMatrix[numberWaveFunctions*iNode + iWave];
+			  }
 		      }
 		  }
 

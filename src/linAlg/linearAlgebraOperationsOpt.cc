@@ -375,7 +375,13 @@ namespace dftfe{
 
 				distributedCPUVec<T> YArray;
 				std::vector<std::vector<T> > cellYWaveFunctionMatrix;
-				cellYWaveFunctionMatrix = cellXWaveFunctionMatrix;
+
+				//init cellYWaveFunctionMatrix to a given scalar
+				double scalarValue = 0.0;
+				operatorMatrix.initWithScalar(numberWaveFunctions,
+							      scalarValue,
+							      cellYWaveFunctionMatrix);
+							      
 
 				//
 				//create YArray
@@ -395,6 +401,7 @@ namespace dftfe{
 				//
 				bool scaleFlag = false;
 				double scalar = 1.0;
+				
 
 				operatorMatrix.HX(XArray,
 						  cellXWaveFunctionMatrix,
@@ -418,6 +425,7 @@ namespace dftfe{
 				//Do surface nodes recursive iteration for dealii vectors
 				//
 				const unsigned int numberDofs = YArray.local_size()/numberWaveFunctions;
+				
 				for(unsigned int iDof = 0; iDof < numberDofs; ++iDof)
 				  {
 				    if(dealiiArrayNodeMap[iDof] == 1)
@@ -494,7 +502,6 @@ namespace dftfe{
 					//call HX
 					//
 					bool scaleFlag = true;
-
 					operatorMatrix.HX(YArray,
 							  cellYWaveFunctionMatrix,
 							  numberWaveFunctions,

@@ -266,6 +266,7 @@ namespace dftfe{
 											    d_lowerBoundWantedSpectrum);
 
 						//copy back cell wavefunction data interior nodes also into global dealii vectors
+						
 					}
 					else
 					  {
@@ -288,6 +289,15 @@ namespace dftfe{
 					  }
 					  
 					computing_timer.exit_section("Chebyshev filtering opt");
+
+
+					computing_timer.enter_section("Copy from cellwavefunction array to global array");
+					operatorMatrix.fillGlobalArrayFromCellWaveFunctionMatrix(BVec,
+												 cellWaveFunctionMatrix,
+												 eigenVectorsFlattenedArrayBlock);
+												 
+
+					computing_timer.exit_section("Copy from cellwavefunction array to global array");
 
 					if (dftParameters::verbosity>=4)
 						dftUtils::printCurrentMemoryUsage(operatorMatrix.getMPICommunicator(),
