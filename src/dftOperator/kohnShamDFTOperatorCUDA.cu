@@ -320,6 +320,24 @@ namespace dftfe
 		}
 
 	template<unsigned int FEOrder>
+		thrust::device_vector<double> & kohnShamDFTOperatorCUDAClass<FEOrder>::getShapeFunctionGradientValuesNLPXInverted()
+		{
+			return d_shapeFunctionGradientValueNLPXInvertedDevice;
+		}
+
+	template<unsigned int FEOrder>
+		thrust::device_vector<double> & kohnShamDFTOperatorCUDAClass<FEOrder>::getShapeFunctionGradientValuesNLPYInverted()
+		{
+			return d_shapeFunctionGradientValueNLPYInvertedDevice;
+		}
+
+	template<unsigned int FEOrder>
+		thrust::device_vector<double> & kohnShamDFTOperatorCUDAClass<FEOrder>::getShapeFunctionGradientValuesNLPZInverted()
+		{
+			return d_shapeFunctionGradientValueNLPZInvertedDevice;
+		}
+
+	template<unsigned int FEOrder>
 		thrust::device_vector<dealii::types::global_dof_index> & kohnShamDFTOperatorCUDAClass<FEOrder>::getFlattenedArrayCellLocalProcIndexIdMap()
 		{
 			return d_flattenedArrayCellLocalProcIndexIdMapDevice;

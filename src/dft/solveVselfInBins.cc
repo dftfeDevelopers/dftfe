@@ -537,7 +537,7 @@ namespace dftfe
 				rhs.reinit(tempvec);
 				rhs=0;
 
-				d_vselfBinConstraintMatrices[iBin].distribute(tempvec);
+				d_vselfBinConstraintMatrices[4*iBin].distribute(tempvec);
 				tempvec.update_ghost_values();
 
 				dealii::FEEvaluation<3,FEOrder,C_num1DQuad<FEOrder>()> fe_eval(matrix_free_data,
@@ -566,14 +566,14 @@ namespace dftfe
 					dealii::Vector<double> cell_rhs_origin (1);
 					cell_rhs_origin(0)=-(it->second); //atomic charge
 
-					d_vselfBinConstraintMatrices[iBin].distribute_local_to_global(cell_rhs_origin, local_dof_indices_origin, rhs);
+					d_vselfBinConstraintMatrices[4*iBin].distribute_local_to_global(cell_rhs_origin, local_dof_indices_origin, rhs);
 				}
 
 				//MPI operation to sync data
 				rhs.compress(dealii::VectorOperation::add);
 
 				//FIXME: check if this is really required
-				d_vselfBinConstraintMatrices[iBin].set_zero(rhs);
+				d_vselfBinConstraintMatrices[4*iBin].set_zero(rhs);
 
 				for(unsigned int i = 0; i < localSize; ++i)
 					rhsFlattened[i*numberBins+iBin]=rhs.local_element(i);
@@ -626,7 +626,7 @@ namespace dftfe
 				const dealii::types::global_dof_index globalNodeId=matrix_free_data.get_vector_partitioner()->local_to_global(i);
 				for(unsigned int iBin = 0; iBin < numberBins; ++iBin)
 				{
-					if( d_vselfBinConstraintMatrices[iBin].is_inhomogeneously_constrained(globalNodeId)
+					if( d_vselfBinConstraintMatrices[4*iBin].is_inhomogeneously_constrained(globalNodeId)
 							&& d_vselfBinConstraintMatrices[iBin].get_constraint_entries(globalNodeId)->size()==0)
 						inhomoIdsColoredVecFlattened[i*numberBins+iBin]=0.0;
 					//if( d_vselfBinConstraintMatrices[iBin].is_inhomogeneously_constrained(globalNodeId))
@@ -677,7 +677,7 @@ namespace dftfe
 
 				dftUtils::constraintMatrixInfo constraintsMatrixDataInfo;
 				constraintsMatrixDataInfo.initialize(matrix_free_data.get_vector_partitioner(constraintMatrixId),
-						d_vselfBinConstraintMatrices[iBin]);
+						d_vselfBinConstraintMatrices[4*iBin]);
 
 
 				constraintsMatrixDataInfo.precomputeMaps(matrix_free_data.get_vector_partitioner(constraintMatrixId),
@@ -686,7 +686,7 @@ namespace dftfe
 
 
 				//d_vselfBinConstraintMatrices[iBin].distribute(d_vselfFieldBins[iBin]);
-				d_vselfFieldBins[iBin].update_ghost_values();
+				d_vselfFieldBins[4*iBin].update_ghost_values();
 				constraintsMatrixDataInfo.distribute(d_vselfFieldBins[iBin],1);
 
 				//

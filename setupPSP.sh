@@ -32,7 +32,7 @@ SRC="$PWD"
 withIntelMkl=OFF
 
 #Toggle GPU compilation
-withGPU=OFF
+withGPU=ON
 
 #Compiler options and flags
 c_compiler=mpicc

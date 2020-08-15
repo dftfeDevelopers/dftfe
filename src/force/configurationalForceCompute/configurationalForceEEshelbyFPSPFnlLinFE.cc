@@ -330,7 +330,9 @@ template<unsigned int FEOrder>
 #endif
 
 #if defined(DFTFE_WITH_GPU) && !defined(USE_COMPLEX)
-	std::vector<double>  projectorKetTimesPsiTimesVTimesPartOccContractionPsiQuadsFlattened(nonTrivialNonLocalIdsAllCells.size()*numQuadPointsNLP,0.0);
+	std::vector<double>  projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiXQuadsFlattened(nonTrivialNonLocalIdsAllCells.size()*numQuadPointsNLP,0.0);
+	std::vector<double>  projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiYQuadsFlattened(nonTrivialNonLocalIdsAllCells.size()*numQuadPointsNLP,0.0);
+	std::vector<double>  projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiZQuadsFlattened(nonTrivialNonLocalIdsAllCells.size()*numQuadPointsNLP,0.0);  
 	std::vector<double> elocWfcEshelbyTensorQuadValuesH(numPhysicalCells*numQuadPoints*6,0.0);
 	//std::vector<double> elocWfcEshelbyTensorQuadValuesH10(numPhysicalCells*numQuadPoints,0.0);
 	//std::vector<double> elocWfcEshelbyTensorQuadValuesH11(numPhysicalCells*numQuadPoints,0.0);
@@ -427,7 +429,9 @@ template<unsigned int FEOrder>
 				dftPtr->matrix_free_data.get_dofs_per_cell(),
 				nonTrivialNonLocalIdsAllCells.size(),
 				&elocWfcEshelbyTensorQuadValuesH[0],
-				&projectorKetTimesPsiTimesVTimesPartOccContractionPsiQuadsFlattened[0],
+				&projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiXQuadsFlattened[0],
+				&projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiYQuadsFlattened[0],   
+				&projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiZQuadsFlattened[0],        
 				dftPtr->interBandGroupComm,
 				isPseudopotential,
 				isPseudopotential && dftParameters::useHigherQuadNLP);
@@ -848,7 +852,11 @@ template<unsigned int FEOrder>
 				const unsigned int cell=normalCellIdToMacroCellIdMap[nonTrivialIdToElemIdMap[i]];
 				const unsigned int id=nonTrivialIdToAllPseudoWfcIdMap[i];
 				for (unsigned int q=0; q<numQuadPointsNLP; ++q)
-					projectorKetTimesPsiTimesVTimesPartOccContractionPsiQuads[cell*numQuadPointsNLP+q][id]=make_vectorized_array(projectorKetTimesPsiTimesVTimesPartOccContractionPsiQuadsFlattened[i*numQuadPointsNLP+q]);
+        {
+            projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuads[cell*numQuadPointsNLP+q][id][0]=make_vectorized_array(projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiXQuadsFlattened[i*numQuadPointsNLP+q]);
+            projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuads[cell*numQuadPointsNLP+q][id][1]=make_vectorized_array(projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiYQuadsFlattened[i*numQuadPointsNLP+q]);
+            projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuads[cell*numQuadPointsNLP+q][id][2]=make_vectorized_array(projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiZQuadsFlattened[i*numQuadPointsNLP+q]);            
+        }
 
 			}
 	}

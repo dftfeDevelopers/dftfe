@@ -42,22 +42,18 @@ namespace dftfe
 				thrust::device_vector<double> & gradPsiQuadsXFlatD,
 				thrust::device_vector<double> & gradPsiQuadsYFlatD,
 				thrust::device_vector<double> & gradPsiQuadsZFlatD,
+				thrust::device_vector<double> & gradPsiQuadsNLPXFlatD,
+				thrust::device_vector<double> & gradPsiQuadsNLPYFlatD,
+				thrust::device_vector<double> & gradPsiQuadsNLPZFlatD,        
 				thrust::device_vector<double> & eshelbyTensorContributionsD,
 				thrust::device_vector<double> & eshelbyTensorQuadValuesD,
 				const bool interpolateForNLPQuad=false);
 
 
-		void interpolatePsiNLPD(operatorDFTCUDAClass & operatorMatrix,
-				distributedGPUVec<double> & Xb,
-				const unsigned int BVec,
-				const unsigned int N,
-				const unsigned int numCells,
-				const unsigned int numQuadsNLP,
-				const unsigned int numNodesPerElement,
-				thrust::device_vector<double> & psiQuadsNLPFlatD);
-
 		void nlpPsiContractionD(operatorDFTCUDAClass & operatorMatrix,
-				const thrust::device_vector<double> & psiQuadValuesNLPD,
+				const thrust::device_vector<double> & gradPsiQuadsXNLPD,
+				const thrust::device_vector<double> & gradPsiQuadsYNLPD,
+				const thrust::device_vector<double> & gradPsiQuadsZNLPD,
 				const thrust::device_vector<double> & partialOccupanciesD,
 				const thrust::device_vector<double> & onesVecD,
 				const double * projectorKetTimesVectorParFlattenedD,
@@ -69,7 +65,9 @@ namespace dftfe
 				const unsigned int totalNonTrivialPseudoWfcs,
 				const unsigned int innerBlockSizeEnlp,
 				thrust::device_vector<double> & nlpContractionContributionD,
-				thrust::device_vector<double> & projectorKetTimesPsiTimesVTimesPartOccContractionPsiQuadsFlattenedH);
+				thrust::device_vector<double> & projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiXQuadsFlattenedD,
+        thrust::device_vector<double> & projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiYQuadsFlattenedD,
+        thrust::device_vector<double> & projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiZQuadsFlattenedD);
 
 		void gpuPortedForceKernelsAllD(operatorDFTCUDAClass & operatorMatrix,
 				distributedGPUVec<double> & cudaFlattenedArrayBlock,
@@ -93,10 +91,15 @@ namespace dftfe
 				thrust::device_vector<double> & gradPsiQuadsXFlatD,
 				thrust::device_vector<double> & gradPsiQuadsYFlatD,
 				thrust::device_vector<double> & gradPsiQuadsZFlatD,
+				thrust::device_vector<double> & gradPsiQuadsNLPXFlatD,
+				thrust::device_vector<double> & gradPsiQuadsNLPYFlatD,
+				thrust::device_vector<double> & gradPsiQuadsNLPZFlatD,        
 				thrust::device_vector<double> & eshelbyTensorContributionsD,
 				thrust::device_vector<double> & eshelbyTensorQuadValuesD,
 				thrust::device_vector<double> & nlpContractionContributionD,
-				thrust::device_vector<double> & projectorKetTimesPsiTimesVTimesPartOccContractionPsiQuadsFlattenedD,
+				thrust::device_vector<double> & projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiXQuadsFlattenedD,
+				thrust::device_vector<double> & projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiYQuadsFlattenedD,   
+				thrust::device_vector<double> & projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiZQuadsFlattenedD,        
 				const unsigned int innerBlockSizeEloc,
 				const unsigned int innerBlockSizeEnlp,
 				const bool isPsp,
@@ -115,7 +118,9 @@ namespace dftfe
 				const unsigned int numNodesPerElement,
 				const unsigned int totalNonTrivialPseudoWfcs,
 				double * eshelbyTensorQuadValuesH,
-				double * projectorKetTimesPsiTimesVTimesPartOccContractionPsiQuadsFlattenedH,
+				double * projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiXQuadsFlattenedH,
+				double * projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiYQuadsFlattenedH,
+				double * projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiZQuadsFlattenedH,        
 				const MPI_Comm & interBandGroupComm,
 				const bool isPsp,
 				const bool interpolateForNLPQuad=false);
