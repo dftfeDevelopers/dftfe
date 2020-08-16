@@ -72,6 +72,18 @@ namespace dftfe{
 				const unsigned int numberComponents,
 				distributedCPUVec<dataTypes::number> & dst);
 
+
+	        void HX(distributedCPUVec<dataTypes::number> & src,
+		        std::vector<std::vector<dataTypes::number> > & cellSrcWaveFunctionMatrix,
+		        const unsigned int numberWaveFunctions,
+		        const bool scaleFlag,
+		        const double scalar,
+		        distributedCPUVec<dataTypes::number> & dst,
+		        std::vector<std::vector<dataTypes::number> > & cellDstWaveFunctionMatrix);
+
+
+	       
+
 		void MX(distributedCPUVec<dataTypes::number> & src,
 				const unsigned int numberComponents,
 				distributedCPUVec<dataTypes::number> & dst);
@@ -144,7 +156,7 @@ namespace dftfe{
 		void computeVEff(const std::map<dealii::CellId,std::vector<double> >* rhoValues,
 				const distributedCPUVec<double> & phi,
 				const std::map<dealii::CellId,std::vector<double> > & externalPotCorrValues,
-        const unsigned int externalPotCorrQuadratureId);
+				 const unsigned int externalPotCorrQuadratureId);
 
 
 		/**
@@ -231,6 +243,24 @@ namespace dftfe{
 					        distributedCPUVec<dataTypes::number> & X);
 
 
+	       void fillGlobalArrayFromCellWaveFunctionMatrix(const unsigned int wavefunBlockSize,
+							      std::vector<std::vector<dataTypes::number> > & cellWaveFunctionMatrix,
+							      distributedCPUVec<dataTypes::number> & X);
+
+	       void initWithScalar(const unsigned int numberWaveFunctions,
+				   double scalarValue,
+				   std::vector<std::vector<dataTypes::number> > & cellWaveFunctionMatrix);
+
+	       void axpy(double scalar,
+			 const unsigned int numberWaveFunctions,
+			 std::vector<std::vector<dataTypes::number> > & cellXWaveFunctionMatrix,
+			 std::vector<std::vector<dataTypes::number> > & cellYWaveFunctionMatrix);
+
+	       void scale(double scalar,
+			  const unsigned int numberWaveFunctions,
+			  std::vector<std::vector<dataTypes::number> > & cellXWaveFunctionMatrix);
+
+
 
 		/**
 		 * @brief Computes diagonal mass matrix
@@ -274,7 +304,7 @@ namespace dftfe{
 		std::vector<std::vector<std::vector<dataTypes::number> > > d_cellHamiltonianMatrix;
 
 
-    std::vector<std::vector<double> > d_cellHamiltonianMatrixExternalPotCorr;
+	        std::vector<std::vector<double> > d_cellHamiltonianMatrixExternalPotCorr;
 		std::vector<std::vector<dataTypes::number> > d_cellMassMatrix;
 
 		/**
@@ -290,6 +320,16 @@ namespace dftfe{
 						   const unsigned int numberWaveFunctions,
 						   distributedCPUVec<dataTypes::number> & dst,
 						   const double scalar = 1.0);
+
+	        void computeLocalHamiltonianTimesX(const distributedCPUVec<dataTypes::number> & src,
+					           std::vector<std::vector<double> > & cellSrcWaveFunctionMatrix,
+					           const unsigned int numberWaveFunctions,
+					           distributedCPUVec<dataTypes::number> & dst,
+						   std::vector<std::vector<double> > & cellDstWaveFunctionMatrix,
+						   const double scalar = 1.0);
+					     
+					     
+	  
 
 
 		void computeMassMatrixTimesX(const distributedCPUVec<dataTypes::number> & src,

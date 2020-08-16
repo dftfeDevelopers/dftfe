@@ -103,6 +103,11 @@ namespace dftfe {
 
                         vectorTools::classifyInteriorSurfaceNodesInCell(dftPtr->matrix_free_data,
                                                                         d_nodesPerCellClassificationMap);
+
+			vectorTools::classifyInteriorSurfaceNodesInGlobalArray(dftPtr->matrix_free_data,
+									       dftPtr->constraintsNone,
+									       d_nodesPerCellClassificationMap,
+									       d_globalArrayClassificationMap);
 			
                         computing_timer.exit_section("kohnShamDFTOperatorClass setup");
 		}

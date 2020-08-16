@@ -932,6 +932,43 @@ namespace dftfe
                   }
 
 
+	  void classifyInteriorSurfaceNodesInGlobalArray(const dealii::MatrixFree<3,double> & matrix_free_data,
+							 const dealii::ConstraintMatrix & constraintMatrix,
+							 std::vector<unsigned int> & nodesPerCellClassificationMap,
+							 std::vector<unsigned int> & globalArrayClassificationMap)
+	  {
+
+	    distributedCPUVec<double> dummyVector;
+	    dftPtr->matrix_free_data.initialize_dof_vector(dummyVector,0);
+
+	    typename dealii::DoFHandler<3>::active_cell_iterator cell = matrix_free_data.get_dof_handler().begin_active(), endc = matrix_free_data.get_dof_handler().end();
+	    std::vector<dealii::types::global_dof_index> cell_dof_indices(numberNodesPerElement);
+	    const unsigned int numberDoFs = dummyVector.local_size();
+	    globalArrayClassificationMap.resize(numberDoFs,0);
+
+	    //
+	    //create map
+	    //
+	    for(; cell!=endc; ++cell)
+	      {
+		if(cell->is_locally_owned())
+		  {
+		    cell->get_dof_indices(cell_dof_indices);
+		    for(unsigned int iNode = 0; iNode < numberNodesPerElement; ++iNode)
+		      {
+			dealii::types::global_dof_index globalIndex = cell_dof_indices[iNode];
+			dealii::types::global_dof_index localIndex = dummyVector.get_partitioner()->global_to_local(globalIndex);
+			if(nodesPerCellClassificationMap[iNode] == 1 && !constraintMatrix.is_constrained(globalIndex))
+			  {
+			    globalArrayClassificationMap[localIndex] = 1;
+			  }
+		      }
+		  }
+	      }
+
+	  }
+
+
 
 		std::pair<dealii::Point<3>,dealii::Point<3>> createBoundingBoxTriaLocallyOwned
 			(const dealii::DoFHandler<3>  & dofHandler)
