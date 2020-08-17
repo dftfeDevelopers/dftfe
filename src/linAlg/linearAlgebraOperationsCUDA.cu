@@ -510,7 +510,7 @@ namespace dftfe
 			std::vector<distributedCPUVec<double>> v(1),f(1);
 			v[0] = vVector;
 			f[0] = fVector;
-			operatorMatrix.HX(v,f);
+			//operatorMatrix.HX(v,f);
 			operatorMatrix.getConstraintMatrixEigen()->set_zero(v[0]);
 			fVector = f[0];
 
@@ -527,7 +527,7 @@ namespace dftfe
 				beta=fVector.l2_norm();
 				v0Vector = vVector; vVector.equ(1.0/beta,fVector);
 				v[0] = vVector,f[0] = fVector;
-				operatorMatrix.HX(v,f);
+				//operatorMatrix.HX(v,f);
 				operatorMatrix.getConstraintMatrixEigen()->set_zero(v[0]);
 				fVector = f[0];
 				fVector.add(-1.0*beta,v0Vector);//beta is real

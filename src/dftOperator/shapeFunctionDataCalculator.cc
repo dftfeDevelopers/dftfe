@@ -62,8 +62,6 @@ void kohnShamDFTOperatorClass<FEOrder>::preComputeShapeFunctionGradientIntegrals
 			cellPtr = dftPtr->matrix_free_data.get_cell_iterator(iMacroCell,iCell);
 			fe_values.reinit(cellPtr);
 
-			fe_values_lpsp.reinit(cellPtr);
-
 			for(unsigned int iNode = 0; iNode < numberDofsPerElement; ++iNode)
 			{
 				for(unsigned int jNode = 0; jNode < numberDofsPerElement; ++jNode)
@@ -83,6 +81,8 @@ void kohnShamDFTOperatorClass<FEOrder>::preComputeShapeFunctionGradientIntegrals
 
 			if(iMacroCell == 0 && iCell == 0)
       {
+        fe_values_lpsp.reinit(cellPtr);
+
 				for(unsigned int iNode = 0; iNode < numberDofsPerElement; ++iNode)
 					for(unsigned int q_point = 0; q_point < numberQuadraturePoints; ++q_point)
 						d_shapeFunctionValue[numberQuadraturePoints*iNode + q_point] = fe_values.shape_value(iNode,q_point);

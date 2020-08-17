@@ -110,14 +110,6 @@ namespace dftfe{
 
 		thrust::device_vector<unsigned int> & getLocallyOwnedProcProjectorKetBoundaryNodesVectorDevice();
 
-		/**
-		 * @brief Compute operator times vector or operator times bunch of vectors
-		 * @param X Vector of Vectors containing current values of X
-		 * @param Y Vector of Vectors containing operator times vectors product
-		 */
-		void HX(std::vector<distributedCPUVec<double>> & X,
-				std::vector<distributedCPUVec<double>> & Y);
-
 
 		/**
 		 * @brief Compute discretized operator matrix times multi-vectors and add it to the existing dst vector
@@ -384,8 +376,8 @@ namespace dftfe{
 		 */
 		void computeVEff(const std::map<dealii::CellId,std::vector<double> >* rhoValues,
 				const distributedCPUVec<double> & phi,
-				const distributedCPUVec<double> & phiExt,
-				const std::map<dealii::CellId,std::vector<double> > & pseudoValues);
+				const std::map<dealii::CellId,std::vector<double> > & externalPotCorrValues,
+        const unsigned int externalPotCorrQuadratureId);
 
 
 		/**
@@ -399,9 +391,9 @@ namespace dftfe{
 		 */
 		void computeVEffSpinPolarized(const std::map<dealii::CellId,std::vector<double> >* rhoValues,
 				const distributedCPUVec<double> & phi,
-				const distributedCPUVec<double> & phiExt,
 				unsigned int spinIndex,
-				const std::map<dealii::CellId,std::vector<double> > & pseudoValues);
+				const std::map<dealii::CellId,std::vector<double> > & externalPotCorrValues,
+        const unsigned int externalPotCorrQuadratureId);
 
 		/**
 		 * @brief Computes effective potential involving gradient density type exchange-correlation functionals
@@ -415,8 +407,8 @@ namespace dftfe{
 		void computeVEff(const std::map<dealii::CellId,std::vector<double> >* rhoValues,
 				const std::map<dealii::CellId,std::vector<double> >* gradRhoValues,
 				const distributedCPUVec<double> & phi,
-				const distributedCPUVec<double> & phiExt,
-				const std::map<dealii::CellId,std::vector<double> > & pseudoValues);
+				const std::map<dealii::CellId,std::vector<double> > & externalPotCorrValues,
+        const unsigned int externalPotCorrQuadratureId);
 
 
 		/**
@@ -432,9 +424,9 @@ namespace dftfe{
 		void computeVEffSpinPolarized(const std::map<dealii::CellId,std::vector<double> >* rhoValues,
 				const std::map<dealii::CellId,std::vector<double> >* gradRhoValues,
 				const distributedCPUVec<double> & phi,
-				const distributedCPUVec<double> & phiExt,
 				const unsigned int spinIndex,
-				const std::map<dealii::CellId,std::vector<double> > & pseudoValues);
+				const std::map<dealii::CellId,std::vector<double> > & externalPotCorrValues,
+        const unsigned int externalPotCorrQuadratureId);
 
 
 		/**
@@ -486,7 +478,7 @@ namespace dftfe{
 				distributedCPUVec<double> & invSqrtMassVec);
 
 		///precompute shapefunction gradient integral
-		void preComputeShapeFunctionGradientIntegrals();
+		void preComputeShapeFunctionGradientIntegrals(const unsigned int lpspQuadratureId);
 
 
 		void computeHamiltonianMatrix(const unsigned int kPointIndex, const unsigned int spinIndex);
@@ -506,26 +498,14 @@ namespace dftfe{
 				const unsigned int numberWaveFunctions);
 
 		private:
-		/**
-		 * @brief implementation of matrix-free based matrix-vector product at cell-level
-		 * @param data matrix-free data
-		 * @param dst Vector of Vectors containing matrix times vectors product
-		 * @param src Vector of Vectors containing input vectors
-		 * @param cell_range range of cell-blocks
-		 */
-		void computeLocalHamiltonianTimesXMF(const dealii::MatrixFree<3,double>  &data,
-				std::vector<distributedCPUVec<double>>  &dst,
-				const std::vector<distributedCPUVec<double>>  &src,
-				const std::pair<unsigned int,unsigned int> &cell_range) const;
 
 		/**
-		 * @brief implementation of  matrix-vector product for nonlocal Hamiltonian
-		 * @param src Vector of Vectors containing input vectors
-		 * @param dst Vector of Vectors containing matrix times vectors product
+		 * @brief Computes effective potential for external potential correction to phiTot
+		 *
+		 * @param externalPotCorrValues quadrature data of sum{Vext} minus sum{Vnu}
 		 */
-		void computeNonLocalHamiltonianTimesX(const std::vector<distributedCPUVec<double>> &src,
-				std::vector<distributedCPUVec<double>>       &dst) const;
-
+		void computeVEffExternalPotCorr(const std::map<dealii::CellId,std::vector<double> > & externalPotCorrValues,
+                                    const unsigned int externalPotCorrQuadratureId);
 
 
 
@@ -535,6 +515,7 @@ namespace dftfe{
 		 * of complex data type
 		 */
 		std::vector<dataTypes::number>  d_cellHamiltonianMatrixFlattened;
+		thrust::device_vector<dataTypes::number> d_cellHamiltonianMatrixExternalPotCorrFlattenedDevice;    
 		thrust::device_vector<dataTypes::number> d_cellHamiltonianMatrixFlattenedDevice;
 		//thrust::device_vector<dataTypes::number> d_cellWaveFunctionMatrix;
 		thrust::device_vector<dataTypes::number> d_cellHamMatrixTimesWaveMatrix;
@@ -609,21 +590,6 @@ namespace dftfe{
 		 * @param numberWaveFunctions Number of wavefunctions at a given node.
 		 * @param dst Vector containing matrix times given multi-vectors product
 		 */
-		void computeNonLocalHamiltonianTimesX(const distributedCPUVec<dataTypes::number> & src,
-				const unsigned int numberWaveFunctions,
-				distributedCPUVec<dataTypes::number> & dst) const;
-
-
-		/**
-		 * @brief implementation of non-local Hamiltonian matrix-vector product
-		 * using non-local discretized projectors at cell-level.
-		 * works for both complex and real data type
-		 * @param src Vector containing current values of source array with multi-vector array stored
-		 * in a flattened format with all the wavefunction value corresponding to a given node is stored
-		 * contiguously.
-		 * @param numberWaveFunctions Number of wavefunctions at a given node.
-		 * @param dst Vector containing matrix times given multi-vectors product
-		 */
 		void computeNonLocalHamiltonianTimesX(const double *src,
 				distributedGPUVec<double> & projectorKetTimesVector,
 				const unsigned int numberWaveFunctions,
@@ -643,18 +609,16 @@ namespace dftfe{
 		distributedCPUVec<double> d_invSqrtMassVector,d_sqrtMassVector;
 		thrust::device_vector<double> d_invSqrtMassVectorDevice, d_sqrtMassVectorDevice;
 
-		dealii::Table<2, dealii::VectorizedArray<double> > vEff;
-
 		std::vector<double> d_vEff;
+    std::vector<double> d_vEffExternalPotCorrJxW;
+		thrust::device_vector<double> d_vEffExternalPotCorrJxWDevice;    
 		std::vector<double> d_vEffJxW;
 		thrust::device_vector<double> d_vEffJxWDevice;
 
 		const unsigned int d_numQuadPoints;
+    unsigned int d_numQuadPointsLpsp;
 		const unsigned int d_numLocallyOwnedCells;
 
-		dealii::Table<2, dealii::Tensor<1,3,dealii::VectorizedArray<double> > > derExcWithSigmaTimesGradRho;
-
-		std::vector<double> d_derExcWithSigmaTimesGradRho;
 		std::vector<double> d_derExcWithSigmaTimesGradRhoJxW;
 		thrust::device_vector<double> d_derExcWithSigmaTimesGradRhoJxWDevice;
 
@@ -672,6 +636,9 @@ namespace dftfe{
 		/// storage for shapefunctions
 		std::vector<double> d_shapeFunctionValue;
 		std::vector<double> d_shapeFunctionValueInverted;
+
+		thrust::device_vector<double> d_shapeFunctionValueLpspDevice;
+		thrust::device_vector<double> d_shapeFunctionValueInvertedLpspDevice;    
 		//thrust::device_vector<double> d_shapeFunctionValueDevice;
 		//thrust::device_vector<double> d_shapeFunctionValueInvertedDevice;
 
@@ -728,12 +695,11 @@ namespace dftfe{
 		///storage for magma and cublas handles
 		cublasHandle_t  d_cublasHandle;
 
-		///storage for CUDA device dealii array
-		// distributedCPUVec<dataTypes::number,dealii::MemorySpace::CUDA> d_cudaFlattenedArrayBlock;
-		//distributedGPUVec<double> d_cudaFlattenedArrayBlock;
-		//distributedGPUVec<double> d_cudaFlattenedArrayBlock2;
-		//distributedGPUVec<double> d_cudaFlattenedArrayBlock3;
-		//distributedGPUVec<double> d_cudaFlattenedArrayBlock4;
+    /// flag for precomputing stiffness matrix contribution from sum{Vext}-sum{Vnuc}
+    bool d_isStiffnessMatrixExternalPotCorrComputed;
+
+    /// external potential correction quadrature id
+    unsigned int d_externalPotCorrQuadratureId;    
 	};
 }
 #endif

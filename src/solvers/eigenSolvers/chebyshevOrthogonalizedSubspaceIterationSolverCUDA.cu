@@ -558,8 +558,8 @@ namespace dftfe
 			{
 				computing_timer.enter_section("Lanczos k-step Upper Bound");
 				operatorMatrix.reinit(1);
-				const double upperBoundUnwantedSpectrum =linearAlgebraOperationsCUDA::lanczosUpperBoundEigenSpectrum(operatorMatrix,
-						tempEigenVec);
+				const double upperBoundUnwantedSpectrum =1400;//linearAlgebraOperationsCUDA::lanczosUpperBoundEigenSpectrum(operatorMatrix,
+						//tempEigenVec);
 				computing_timer.exit_section("Lanczos k-step Upper Bound");
 				cudaDeviceSynchronize();
 				MPI_Barrier(MPI_COMM_WORLD);
@@ -1219,7 +1219,7 @@ namespace dftfe
 
 			computing_timer.enter_section("Lanczos k-step Upper Bound");
 			operatorMatrix.reinit(1);
-			const double upperBoundUnwantedSpectrum =linearAlgebraOperationsCUDA::lanczosUpperBoundEigenSpectrum(operatorMatrix,
+		  const double upperBoundUnwantedSpectrum =linearAlgebraOperationsCUDA::lanczosUpperBoundEigenSpectrum(operatorMatrix,
 					tempEigenVec);
 			computing_timer.exit_section("Lanczos k-step Upper Bound");
 			unsigned int chebyshevOrder = dftParameters::chebyshevOrder;

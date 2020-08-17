@@ -117,7 +117,7 @@ namespace shapeFuncCUDA
 }
 
 	template<unsigned int FEOrder>
-void kohnShamDFTOperatorCUDAClass<FEOrder>::preComputeShapeFunctionGradientIntegrals()
+void kohnShamDFTOperatorCUDAClass<FEOrder>::preComputeShapeFunctionGradientIntegrals(const unsigned int lpspQuadratureId)
 {
 
 	//
@@ -128,6 +128,10 @@ void kohnShamDFTOperatorCUDAClass<FEOrder>::preComputeShapeFunctionGradientInteg
 	FEValues<3> fe_values(dftPtr->matrix_free_data.get_dof_handler().get_fe(), quadrature, update_values | update_gradients | update_JxW_values);
 	const unsigned int numberDofsPerElement = dftPtr->matrix_free_data.get_dof_handler().get_fe().dofs_per_cell;
 	const unsigned int numberQuadraturePoints = quadrature.size();
+
+	FEValues<3> fe_values_lpsp(dftPtr->matrix_free_data.get_dof_handler().get_fe(), dftPtr->matrix_free_data.get_quadrature(lpspQuadratureId), update_values);
+	const unsigned int numberQuadraturePointsLpsp = dftPtr->matrix_free_data.get_quadrature(lpspQuadratureId).size();
+  d_numQuadPointsLpsp=numberQuadraturePointsLpsp;
 
 	//
 	//resize data members
@@ -149,6 +153,10 @@ void kohnShamDFTOperatorCUDAClass<FEOrder>::preComputeShapeFunctionGradientInteg
 
 	d_shapeFunctionGradientValueZ.resize(numberPhysicalCells*numberQuadraturePoints*numberDofsPerElement,0.0);
 	d_shapeFunctionGradientValueZInverted.resize(numberPhysicalCells*numberQuadraturePoints*numberDofsPerElement,0.0);
+
+  std::vector<double> shapeFunctionValueLpsp(numberQuadraturePointsLpsp*numberDofsPerElement,0.0);
+  std::vector<double> shapeFunctionValueInvertedLpsp(numberQuadraturePointsLpsp*numberDofsPerElement,0.0);
+
 
 
 	typename dealii::DoFHandler<3>::active_cell_iterator cellPtr=dftPtr->matrix_free_data.get_dof_handler().begin_active();
@@ -202,6 +210,9 @@ void kohnShamDFTOperatorCUDAClass<FEOrder>::preComputeShapeFunctionGradientInteg
 			}
 
 			if(iElem == 0)
+      {
+        fe_values_lpsp.reinit(cellPtr);
+
 				for(unsigned int iNode = 0; iNode < numberDofsPerElement; ++iNode)
 					for(unsigned int q_point = 0; q_point < numberQuadraturePoints; ++q_point)
 					{
@@ -210,6 +221,14 @@ void kohnShamDFTOperatorCUDAClass<FEOrder>::preComputeShapeFunctionGradientInteg
 						d_shapeFunctionValueInverted[q_point*numberDofsPerElement+iNode] = val;
 					}
 
+				for(unsigned int iNode = 0; iNode < numberDofsPerElement; ++iNode)
+					for(unsigned int q_point = 0; q_point < numberQuadraturePointsLpsp; ++q_point)
+          {
+						const double val=fe_values_lpsp.shape_value(iNode,q_point);            
+						shapeFunctionValueLpsp[numberQuadraturePointsLpsp*iNode + q_point] = val; 
+            shapeFunctionValueInvertedLpsp[q_point*numberDofsPerElement+iNode] = val;  
+          }
+      }
 
 			iElem++;
 		}
@@ -225,6 +244,9 @@ void kohnShamDFTOperatorCUDAClass<FEOrder>::preComputeShapeFunctionGradientInteg
 
 	d_shapeFunctionGradientValueZDevice=d_shapeFunctionGradientValueZ;
 	d_shapeFunctionGradientValueZInvertedDevice=d_shapeFunctionGradientValueZInverted;
+
+	d_shapeFunctionValueLpspDevice=shapeFunctionValueLpsp;
+	d_shapeFunctionValueInvertedLpspDevice=shapeFunctionValueInvertedLpsp;  
 
 	//d_cellShapeFunctionGradientIntegralFlattenedDevice=d_cellShapeFunctionGradientIntegralFlattened;
 	d_cellJxWValuesDevice=d_cellJxWValues;

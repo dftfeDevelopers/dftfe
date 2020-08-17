@@ -150,15 +150,6 @@ namespace dftfe{
 
 
 			/**
-			 * @brief Compute operator times vector or operator times bunch of vectors
-			 * @param X Vector of Vectors containing current values of X
-			 * @param Y Vector of Vectors containing operator times vectors product
-			 */
-			virtual void HX(std::vector<distributedCPUVec<double>> & X,
-					std::vector<distributedCPUVec<double>> & Y) = 0;
-
-
-			/**
 			 * @brief Compute operator times multi-field vectors
 			 *
 			 * @param X Vector containing multi-wavefunction fields (though X does not
