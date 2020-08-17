@@ -272,7 +272,7 @@ void kohnShamDFTOperatorCUDAClass<FEOrder>::preComputeShapeFunctionGradientInteg
 	if (this_mpi_process==0 && dftParameters::verbosity>=2)
 		std::cout<<"Time for shapeFuncCUDA::computeShapeGradNINJIntegral: "<<gpu_time<<std::endl;
 
-  QGaussLobatto<3>  quadratureGl(C_num1DQuad<C_num1DKerkerPoly<FEOrder>()>());
+  QGaussLobatto<3>  quadratureGl(C_num1DKerkerPoly<FEOrder>()+1);
   FEValues<3> fe_valuesGl(dftPtr->matrix_free_data.get_dof_handler().get_fe(), quadratureGl, update_values | update_gradients);
   const unsigned int numberQuadraturePointsGl = quadratureGl.size();
 
