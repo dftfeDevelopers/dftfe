@@ -261,6 +261,8 @@ namespace dftfe{
 			  const unsigned int numberWaveFunctions,
 			  std::vector<std::vector<dataTypes::number> > & cellXWaveFunctionMatrix);
 
+	       void getInteriorSurfaceNodesMapFromGlobalArray(std::vector<unsigned int> & globalArrayClassificationMap);
+
 
 
 		/**

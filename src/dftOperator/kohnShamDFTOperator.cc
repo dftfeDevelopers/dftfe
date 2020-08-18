@@ -312,7 +312,15 @@ namespace dftfe {
 	
 
   }
+
   
+  template<unsigned int FEOrder>
+  void kohnShamDFTOperatorClass<FEOrder>::getInteriorSurfaceNodesMapFromGlobalArray(std::vector<unsigned int> & globalArrayClassificationMap)
+					        
+  {
+    globalArrayClassificationMap = d_globalArrayClassificationMap;
+
+  }
 
 	//
 	//compute mass Vector

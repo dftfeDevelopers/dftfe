@@ -51,16 +51,16 @@ namespace dftfe{
 			std::vector<double> work(lwork);
 
 			dsyevd_(&jobz,
-					&uplo,
-					&dimensionMatrix,
-					matrix,
-					&dimensionMatrix,
-					eigenValues,
-					&work[0],
-					&lwork,
-					&iwork[0],
-					&liwork,
-					&info);
+				&uplo,
+				&dimensionMatrix,
+				matrix,
+				&dimensionMatrix,
+				eigenValues,
+				&work[0],
+				&lwork,
+				&iwork[0],
+				&liwork,
+				&info);
 
 			//
 			//free up memory associated with work
@@ -381,6 +381,10 @@ namespace dftfe{
 				operatorMatrix.initWithScalar(numberWaveFunctions,
 							      scalarValue,
 							      cellYWaveFunctionMatrix);
+
+
+				std::vector<unsigned int> globalArrayClassificationMap;
+				operatorMatrix.getInteriorSurfaceNodesMapFromGlobalArray(globalArrayClassificationMap);
 							      
 
 				//
@@ -472,7 +476,7 @@ namespace dftfe{
 					//
 					for(unsigned int iDof = 0; iDof < numberDofs; ++iDof)
 					  {
-					    if(dealiiArrayNodeMap[iDof] == 1)
+					    if(globalArrayClassificationMap[iDof] == 1)
 					      {
 						for(unsigned int iWave = 0; iWave < numberWaveFunctions; ++iWave)
 						  {
