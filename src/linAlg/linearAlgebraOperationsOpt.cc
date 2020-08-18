@@ -3404,6 +3404,15 @@ namespace dftfe{
 				const double ,
 				const double);
 
+                template void chebyshevFilterOpt(operatorDFTClass & operatorMatrix,
+                                                 distributedCPUVec<dataTypes::number> & X,
+                                                 std::vector<std::vector<dataTypes::number> > & cellWaveFunctionMatrix,
+                                                 const unsigned int numberComponents,
+                                                 const unsigned int m,
+                                                 const double a,
+                                                 const double b,
+                                                 const double a0);
+
 
 		template void gramSchmidtOrthogonalization(std::vector<dataTypes::number> &,
 				const unsigned int,

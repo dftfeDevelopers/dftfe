@@ -169,6 +169,7 @@ namespace dftfe {
 		{
 		        cellWaveFunctionMatrix.resize(dftPtr->matrix_free_data.n_physical_cells());
                       	unsigned int iElem = 0;
+                        const unsigned int inc = 1;  
 			for(unsigned int iMacroCell = 0; iMacroCell < d_numberMacroCells; ++iMacroCell)
 			  {
 			    for(unsigned int iCell = 0; iCell < d_macroCellSubCellMap[iMacroCell]; ++iCell)
@@ -200,6 +201,7 @@ namespace dftfe {
   {
 		        
     unsigned int iElem = 0;
+    const unsigned int inc = 1;
     for(unsigned int iMacroCell = 0; iMacroCell < d_numberMacroCells; ++iMacroCell)
       {
 	for(unsigned int iCell = 0; iCell < d_macroCellSubCellMap[iMacroCell]; ++iCell)

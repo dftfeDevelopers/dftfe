@@ -240,7 +240,8 @@ namespace dftfe{
 
 
 	        void initCellWaveFunctionMatrix(const unsigned int numberWaveFunctions,
-					        distributedCPUVec<dataTypes::number> & X);
+					        distributedCPUVec<dataTypes::number> & X,
+                                                std::vector<std::vector<dataTypes::number> > & cellWaveFunctionMatrix);
 
 
 	       void fillGlobalArrayFromCellWaveFunctionMatrix(const unsigned int wavefunBlockSize,
@@ -420,6 +421,7 @@ namespace dftfe{
 		const unsigned int d_numberMacroCells;
 		std::vector<unsigned int> d_macroCellSubCellMap;
                 std::vector<unsigned int> d_nodesPerCellClassificationMap;
+                std::vector<unsigned int> d_globalArrayClassificationMap;
 
 		//parallel objects
 		const MPI_Comm mpi_communicator;

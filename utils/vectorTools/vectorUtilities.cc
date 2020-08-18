@@ -939,9 +939,11 @@ namespace dftfe
 	  {
 
 	    distributedCPUVec<double> dummyVector;
-	    dftPtr->matrix_free_data.initialize_dof_vector(dummyVector,0);
+	    matrix_free_data.initialize_dof_vector(dummyVector,0);
 
 	    typename dealii::DoFHandler<3>::active_cell_iterator cell = matrix_free_data.get_dof_handler().begin_active(), endc = matrix_free_data.get_dof_handler().end();
+
+            const unsigned int numberNodesPerElement = matrix_free_data.get_dofs_per_cell();
 	    std::vector<dealii::types::global_dof_index> cell_dof_indices(numberNodesPerElement);
 	    const unsigned int numberDoFs = dummyVector.local_size();
 	    globalArrayClassificationMap.resize(numberDoFs,0);

@@ -91,8 +91,9 @@ namespace dftfe{
 			virtual void reinit(const unsigned int wavefunBlockSize) = 0;
 
 
-	                virtual void initCellWaveFunctionMatrix(const unsigned int wavefunBlockSize,
-								distributedCPUVec<dataTypes::number> & X) = 0;
+                        virtual void initCellWaveFunctionMatrix(const unsigned int numberWaveFunctions,
+                                                                distributedCPUVec<dataTypes::number> & X,
+                                                                std::vector<std::vector<dataTypes::number> > & cellWaveFunctionMatrix) = 0;
 
 
 	                virtual void fillGlobalArrayFromCellWaveFunctionMatrix(const unsigned int wavefunBlockSize,
