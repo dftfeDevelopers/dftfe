@@ -506,7 +506,7 @@ namespace dftfe
 			//evaluate l2 norm
 			//
 			vVector/=vVector.l2_norm();
-			vVector.update_ghost_values();
+			//vVector.update_ghost_values();
 
 			//
 			//call matrix times X
