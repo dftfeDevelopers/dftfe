@@ -457,8 +457,6 @@ namespace dftfe{
 		 *
 		 */
 
-		void reinit(const unsigned int wavefunBlockSize);
-
 		void reinit(const unsigned int wavefunBlockSize,
 				bool flag);
 

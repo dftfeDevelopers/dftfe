@@ -696,20 +696,6 @@ namespace dftfe
 		}
 
 
-	template<unsigned int FEOrder>
-		void kohnShamDFTOperatorCUDAClass<FEOrder>::reinit(const unsigned int numberWaveFunctions)
-		{
-
-			if(dftParameters::isPseudopotential)
-			{
-				vectorTools::createDealiiVector<dataTypes::number>(dftPtr->d_projectorKetTimesVectorPar[0].get_partitioner(),
-						numberWaveFunctions,
-						dftPtr->d_projectorKetTimesVectorParFlattened);
-			}
-
-		}
-
-
 	//
 	//compute mass Vector
 	//

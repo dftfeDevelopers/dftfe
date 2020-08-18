@@ -130,7 +130,6 @@ namespace dftfe{
 			 * contiguously
 			 *
 			 */
-			virtual void reinit(const unsigned int wavefunBlockSize) = 0;
 
 			virtual void reinit(const unsigned int wavefunBlockSize,
 					bool flag) = 0;

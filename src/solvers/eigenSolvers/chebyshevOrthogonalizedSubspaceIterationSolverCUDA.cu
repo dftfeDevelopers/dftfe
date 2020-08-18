@@ -556,14 +556,23 @@ namespace dftfe
 
 			if(!isElpaStep2)
 			{
-				computing_timer.enter_section("Lanczos k-step Upper Bound");
-				operatorMatrix.reinit(1);
-				const double upperBoundUnwantedSpectrum =1400;//linearAlgebraOperationsCUDA::lanczosUpperBoundEigenSpectrum(operatorMatrix,
-						//tempEigenVec);
-				computing_timer.exit_section("Lanczos k-step Upper Bound");
 				cudaDeviceSynchronize();
 				MPI_Barrier(MPI_COMM_WORLD);
-				gpu_time = MPI_Wtime();
+				double lanczos_time = MPI_Wtime();
+
+				const double upperBoundUnwantedSpectrum =linearAlgebraOperationsCUDA::lanczosUpperBoundEigenSpectrum(operatorMatrix,
+						tempEigenVec,
+            cudaFlattenedArrayBlock,
+            YArray,
+            projectorKetTimesVector,
+            vectorsBlockSize);
+
+				cudaDeviceSynchronize();
+				MPI_Barrier(MPI_COMM_WORLD);
+				double gpu_time = MPI_Wtime();
+				if (this_process==0 && dftParameters::verbosity>=2)
+					std::cout<<"Time for Lanczos Upper Bound: "<<gpu_time-lanczos_time<<std::endl;
+
 				unsigned int chebyshevOrder = dftParameters::chebyshevOrder;
 
 				//
@@ -1218,9 +1227,12 @@ namespace dftfe
 				projectorKetTimesVector2.reinit(projectorKetTimesVector);
 
 			computing_timer.enter_section("Lanczos k-step Upper Bound");
-			operatorMatrix.reinit(1);
 		  const double upperBoundUnwantedSpectrum =linearAlgebraOperationsCUDA::lanczosUpperBoundEigenSpectrum(operatorMatrix,
-					tempEigenVec);
+					tempEigenVec,
+          cudaFlattenedArrayBlock,
+          YArray,
+          projectorKetTimesVector,          
+          chebyBlockSize);
 			computing_timer.exit_section("Lanczos k-step Upper Bound");
 			unsigned int chebyshevOrder = dftParameters::chebyshevOrder;
 
@@ -1553,9 +1565,12 @@ namespace dftfe
 				projectorKetTimesVector2.reinit(projectorKetTimesVector);
 
 			computing_timer.enter_section("Lanczos k-step Upper Bound");
-			operatorMatrix.reinit(1);
 			const double upperBoundUnwantedSpectrum =linearAlgebraOperationsCUDA::lanczosUpperBoundEigenSpectrum(operatorMatrix,
-					tempEigenVec);
+					tempEigenVec,
+          cudaFlattenedArrayBlock,
+          YArray,
+          projectorKetTimesVector,          
+          chebyBlockSize);
 			computing_timer.exit_section("Lanczos k-step Upper Bound");
 			unsigned int chebyshevOrder = dftParameters::chebyshevOrder;
 

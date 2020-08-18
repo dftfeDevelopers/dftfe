@@ -466,7 +466,11 @@ namespace dftfe
 		// evaluate upper bound of the spectrum using k-step Lanczos iteration
 		//
 		double lanczosUpperBoundEigenSpectrum(operatorDFTCUDAClass & operatorMatrix,
-				const distributedCPUVec<double> & vect)
+				const distributedCPUVec<double> & vect,
+        distributedGPUVec<double> & Xb,
+        distributedGPUVec<double> & Yb,
+				distributedGPUVec<double> & projectorKetTimesVector,        
+        const unsigned int blockSize)
 		{
 #ifdef USE_COMPLEX
 			AssertThrow(false,dftUtils::ExcNotImplementedYet());
@@ -510,7 +514,37 @@ namespace dftfe
 			std::vector<distributedCPUVec<double>> v(1),f(1);
 			v[0] = vVector;
 			f[0] = fVector;
+
+      std::vector<double> cpublock(local_size*blockSize,0.0);
 			//operatorMatrix.HX(v,f);
+
+      distributedCPUVec<double> & vvec=v[0];
+      for (unsigned int idof=0;idof<local_size; idof++)
+        cpublock[idof*blockSize]=vvec.local_element(idof);
+
+      cudaMemcpy(Xb.begin(),
+          &cpublock[0],
+          local_size*blockSize*sizeof(double),
+          cudaMemcpyHostToDevice);
+
+      Yb=0.0;
+      operatorMatrix.HX(Xb,
+          projectorKetTimesVector,
+          local_size,
+          blockSize,
+          false,
+          1.0,
+          Yb);
+
+      cudaMemcpy(&cpublock[0],
+          Yb.begin(),
+          local_size*blockSize*sizeof(double),
+          cudaMemcpyDeviceToHost);     
+
+      distributedCPUVec<double> & fvec=f[0];
+      for (unsigned int idof=0;idof<local_size; idof++)
+        fvec.local_element(idof)=cpublock[idof*blockSize];      
+
 			operatorMatrix.getConstraintMatrixEigen()->set_zero(v[0]);
 			fVector = f[0];
 
@@ -528,6 +562,34 @@ namespace dftfe
 				v0Vector = vVector; vVector.equ(1.0/beta,fVector);
 				v[0] = vVector,f[0] = fVector;
 				//operatorMatrix.HX(v,f);
+
+        distributedCPUVec<double> & vvec=v[0];
+        for (unsigned int idof=0;idof<local_size; idof++)
+          cpublock[idof*blockSize]=vvec.local_element(idof);
+
+        cudaMemcpy(Xb.begin(),
+            &cpublock[0],
+            local_size*blockSize*sizeof(double),
+            cudaMemcpyHostToDevice);
+
+        Yb=0.0;
+        operatorMatrix.HX(Xb,
+            projectorKetTimesVector,
+            local_size,
+            blockSize,
+            false,
+            1.0,
+            Yb);
+
+        cudaMemcpy(&cpublock[0],
+            Yb.begin(),
+            local_size*blockSize*sizeof(double),
+            cudaMemcpyDeviceToHost);     
+
+        distributedCPUVec<double> & fvec=f[0];
+        for (unsigned int idof=0;idof<local_size; idof++)
+          fvec.local_element(idof)=cpublock[idof*blockSize]; 
+
 				operatorMatrix.getConstraintMatrixEigen()->set_zero(v[0]);
 				fVector = f[0];
 				fVector.add(-1.0*beta,v0Vector);//beta is real

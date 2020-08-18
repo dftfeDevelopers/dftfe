@@ -245,7 +245,11 @@ namespace dftfe
 		 *  @return double An estimate of the upper bound of the given matrix
 		 */
 		double lanczosUpperBoundEigenSpectrum(operatorDFTCUDAClass & operatorMatrix,
-				const distributedCPUVec<double> & vect); 
+				const distributedCPUVec<double> & vect,
+        distributedGPUVec<double> & Xb,
+        distributedGPUVec<double> & Yb,
+				distributedGPUVec<double> & projectorKetTimesVector,        
+        const unsigned int blockSize); 
 
 
 		/** @brief Apply Chebyshev filter to a given subspace
