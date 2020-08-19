@@ -507,7 +507,7 @@ namespace dftfe
 
 			d_vselfFieldBins.resize(numberBins);
 			for(unsigned int iBin = 0; iBin < numberBins; ++iBin)
-				matrix_free_data.initialize_dof_vector(d_vselfFieldBins[iBin],iBin + offset);
+				matrix_free_data.initialize_dof_vector(d_vselfFieldBins[iBin],4*iBin + offset);
 
 			const unsigned int localSize=d_vselfFieldBins[0].local_size();
 			std::vector<double> vselfBinsFieldsFlattened(localSize*numberBins,0.0);
@@ -527,7 +527,7 @@ namespace dftfe
 			for(unsigned int iBin = 0; iBin < numberBins; ++iBin)
 			{ 
 				//rhs contribution from static condensation of dirichlet boundary conditions
-				const unsigned int constraintMatrixId = iBin + offset;
+				const unsigned int constraintMatrixId = 4*iBin + offset;
 
 				distributedCPUVec<double> tempvec;
 				matrix_free_data.initialize_dof_vector(tempvec,constraintMatrixId);
@@ -627,7 +627,7 @@ namespace dftfe
 				for(unsigned int iBin = 0; iBin < numberBins; ++iBin)
 				{
 					if( d_vselfBinConstraintMatrices[4*iBin].is_inhomogeneously_constrained(globalNodeId)
-							&& d_vselfBinConstraintMatrices[iBin].get_constraint_entries(globalNodeId)->size()==0)
+							&& d_vselfBinConstraintMatrices[4*iBin].get_constraint_entries(globalNodeId)->size()==0)
 						inhomoIdsColoredVecFlattened[i*numberBins+iBin]=0.0;
 					//if( d_vselfBinConstraintMatrices[iBin].is_inhomogeneously_constrained(globalNodeId))
 					//    inhomoIdsColoredVecFlattened[i*numberBins+iBin]=0.0;
@@ -673,7 +673,7 @@ namespace dftfe
 				for(unsigned int i = 0; i < localSize; ++i)
 					d_vselfFieldBins[iBin].local_element(i)=vselfBinsFieldsFlattened[numberBins*i+iBin];
 
-				const unsigned int constraintMatrixId = iBin + offset;
+				const unsigned int constraintMatrixId = 4*iBin + offset;
 
 				dftUtils::constraintMatrixInfo constraintsMatrixDataInfo;
 				constraintsMatrixDataInfo.initialize(matrix_free_data.get_vector_partitioner(constraintMatrixId),
@@ -686,7 +686,7 @@ namespace dftfe
 
 
 				//d_vselfBinConstraintMatrices[iBin].distribute(d_vselfFieldBins[iBin]);
-				d_vselfFieldBins[4*iBin].update_ghost_values();
+				d_vselfFieldBins[iBin].update_ghost_values();
 				constraintsMatrixDataInfo.distribute(d_vselfFieldBins[iBin],1);
 
 				//

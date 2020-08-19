@@ -1751,7 +1751,7 @@ namespace dftfe {
 				computing_timer.enter_section("Nuclear self-potential solve");
 				computingTimerStandard.enter_section("Nuclear self-potential solve");
 #ifdef DFTFE_WITH_GPU
-				if (dftParameters::useGPU && false)
+				if (dftParameters::useGPU)
 					d_vselfBinsManager.solveVselfInBinsGPU(matrix_free_data,
 							2,
 							kohnShamDFTEigenOperatorCUDA,
