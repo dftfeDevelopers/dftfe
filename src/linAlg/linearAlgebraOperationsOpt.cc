@@ -387,6 +387,8 @@ namespace dftfe{
 				operatorMatrix.getInteriorSurfaceNodesMapFromGlobalArray(globalArrayClassificationMap);
 							      
 
+
+
 				//
 				//create YArray
 				//
@@ -429,10 +431,10 @@ namespace dftfe{
 				//Do surface nodes recursive iteration for dealii vectors
 				//
 				const unsigned int numberDofs = YArray.local_size()/numberWaveFunctions;
-				
+				unsigned int countInterior = 0;
 				for(unsigned int iDof = 0; iDof < numberDofs; ++iDof)
 				  {
-				    if(dealiiArrayNodeMap[iDof] == 1)
+				    if(globalArrayClassificationMap[iDof] == 1)
 				      {
 					for(unsigned int iWave = 0; iWave < numberWaveFunctions; ++iWave)
 					  {
@@ -440,8 +442,14 @@ namespace dftfe{
 					    YArray.local_element(iDof*numberWaveFunctions+iWave) *= alpha1;
 					  }
 				      }
+                                    else
+                                      {
+                                        countInterior+=1;         
+                                      }
 
 				  }
+
+                                std::cout<<"Interior Nodes: "<<countInterior<<std::endl;
 
 				//
 				//Do recursive iteration only for interior cell nodes using cell-level loop

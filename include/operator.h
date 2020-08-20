@@ -112,7 +112,8 @@ namespace dftfe{
 	                virtual void scale(double scalar,
 			                   const unsigned int numberWaveFunctions,
 			                   std::vector<std::vector<dataTypes::number> > & cellXWaveFunctionMatrix) = 0;
-	  
+
+	                virtual void getInteriorSurfaceNodesMapFromGlobalArray(std::vector<unsigned int> & globalArrayClassificationMap) = 0; 
 	                
 
 			/**
