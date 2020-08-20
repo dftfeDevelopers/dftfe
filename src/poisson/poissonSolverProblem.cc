@@ -252,7 +252,7 @@ namespace dftfe {
 					if (cell->is_locally_owned())
 					{
 						const std::vector<double>& tempVec=d_smearedChargeValuesPtr->find(cell->id())->second;
-            if (std::abs(std::accumulate(tempVec.begin(),tempVec.end(),0.0))<1e-9)
+            if (tempVec.size()==0)
               continue;
 
 						fe_valuesSC.reinit (cell);
@@ -278,7 +278,7 @@ namespace dftfe {
 					if (cell->is_locally_owned())
 					{
 						const std::vector<double>& tempVec=d_smearedChargeValuesPtr->find(cell->id())->second;
-            if (std::abs(std::accumulate(tempVec.begin(),tempVec.end(),0.0))<1e-9)
+            if (tempVec.size()==0)
               continue;
 
 						fe_valuesSC.reinit (cell);
