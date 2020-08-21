@@ -66,7 +66,7 @@ namespace shapeFuncCUDA
 		//thrust::device_vector<double> gradPsiQuadValuesYDJ=gradPsiQuadValuesYD;
 		//thrust::device_vector<double> gradPsiQuadValuesZDJ=gradPsiQuadValuesZD;
 
-		const int blockSize=10;
+		const int blockSize=1;
 		const int numberBlocks=numElems/blockSize;
 		const int remBlockSize=numElems-numberBlocks*blockSize;
 
