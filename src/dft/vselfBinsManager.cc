@@ -463,7 +463,10 @@ namespace dftfe
 			std::map<int,std::set<int> > interactionMap;
 
 			double radiusAtomBallAdaptive=(d_storedAdaptiveBallRadius>1e-6)?
-				d_storedAdaptiveBallRadius:(dftParameters::meshSizeOuterBall>0.5?6.0:4.0);
+				d_storedAdaptiveBallRadius:((dftParameters::meshSizeOuterBall>0.5)?6.0:4.0);
+
+      if (dftParameters::smearedNuclearCharges && (d_storedAdaptiveBallRadius<1e-6))
+        radiusAtomBallAdaptive=3.0;
 
 			if (std::fabs(radiusAtomBall)<1e-6)
 			{
