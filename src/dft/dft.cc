@@ -924,7 +924,7 @@ namespace dftfe {
 			// update mesh and other data structures required for interpolating solution fields from previous
 			// atomic configuration mesh to the current atomic configuration during an automesh step. Currently
 			// this is only required if reuseWfcGeoOpt or reuseDensityGeoOpt is on.
-			if(dftParameters::isIonOpt && (dftParameters::reuseWfcGeoOpt || dftParameters::reuseDensityGeoOpt))
+			if(dftParameters::isIonOpt && (dftParameters::reuseWfcGeoOpt || dftParameters::reuseDensityGeoOpt) && !dftParameters::floatingNuclearCharges)
 				updatePrevMeshDataStructures();
 			//
 			//reinitialize dirichlet BCs for total potential and vSelf poisson solutions
@@ -933,7 +933,10 @@ namespace dftfe {
 			MPI_Barrier(MPI_COMM_WORLD);
 			init_bc = MPI_Wtime();
 
-			initBoundaryConditions(true);
+      if (dftParameters::floatingNuclearCharges)
+        initBoundaryConditions(false);
+      else
+        initBoundaryConditions(true);
 
 			MPI_Barrier(MPI_COMM_WORLD);
 			init_bc = MPI_Wtime() - init_bc;

@@ -752,7 +752,7 @@ namespace dftfe
 
                 for (unsigned int i=0; i<dofs_per_cell; ++i)
                   for (unsigned int q_point=0; q_point<n_q_points_sc; ++q_point)
-                    elementalRhs(i) += fe_values_sc.shape_grad(i, q_point)[idim]*tempVec[q_point]*fe_values_sc.JxW (q_point);;
+                    elementalRhs(i) += fe_values_sc.shape_grad(i, q_point)[idim]*tempVec[q_point]*fe_values_sc.JxW (q_point);
 
                 //assemble to global data structures
                 cell->get_dof_indices (local_dof_indices);

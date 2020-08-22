@@ -1095,13 +1095,14 @@ namespace dftfe {
 			if ((restartFromChk==true || dftParameters::restartMdFromChk) && (chkType==1 || chkType==3))
 			{
 				if (dftParameters::periodicX || dftParameters::periodicY || dftParameters::periodicZ)
-					dftParameters::coordinatesFile="atomsFracCoordAutomesh.chk";
+					dftParameters::coordinatesFile=dftParameters::floatingNuclearCharges?"atomsFracCoordCurrent.chk":"atomsFracCoordAutomesh.chk";
 				else
-					dftParameters::coordinatesFile="atomsCartCoordAutomesh.chk";
+					dftParameters::coordinatesFile=dftParameters::floatingNuclearCharges?"atomsCartCoordCurrent.chk":"atomsCartCoordAutomesh.chk";
 
 				dftParameters::domainBoundingVectorsFile="domainBoundingVectors.chk";
 
-				dftParameters::coordinatesGaussianDispFile="atomsGaussianDispCoord.chk";
+        if (!dftParameters::floatingNuclearCharges)
+          dftParameters::coordinatesGaussianDispFile="atomsGaussianDispCoord.chk";
 			}
 
 			if (dftParameters::algoType=="FAST")
