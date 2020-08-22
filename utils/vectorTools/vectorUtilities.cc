@@ -960,7 +960,7 @@ namespace dftfe
 		      {
 			dealii::types::global_dof_index globalIndex = cell_dof_indices[iNode];
 			dealii::types::global_dof_index localIndex = dummyVector.get_partitioner()->global_to_local(globalIndex);
-			if(nodesPerCellClassificationMap[iNode] == 1 && !constraintMatrix.is_constrained(globalIndex))
+			if(nodesPerCellClassificationMap[iNode] == 1 && !constraintMatrix.is_constrained(globalIndex) && dummyVector.get_partitioner()->in_local_range(globalIndex))
 			  {
 			    globalArrayClassificationMap[localIndex] = 1;
 			  }

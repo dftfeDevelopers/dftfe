@@ -136,6 +136,8 @@ namespace dftfe {
 								 dftPtr->matrix_free_data,
 								 numberWaveFunctions,
 								 d_flattenedArrayMacroCellLocalProcIndexIdMap,
+                                                                 d_normalCellIdToMacroCellIdMap,
+                                                                 d_macroCellIdToNormalCellIdMap,
 								 d_flattenedArrayCellLocalProcIndexIdMap);
 			
 
@@ -301,7 +303,7 @@ namespace dftfe {
 		  {
 		    for(unsigned int iWave = 0; iWave < numberWaveFunctions; ++iWave)
 		      {
-			cellWaveFunctionMatrix[iElem][numberWaveFunctions*iNode + iWave] *= scalar*cellWaveFunctionMatrix[iElem][numberWaveFunctions*iNode + iWave];
+			cellWaveFunctionMatrix[iElem][numberWaveFunctions*iNode + iWave] *= scalar;
 		      }
 
 		  }

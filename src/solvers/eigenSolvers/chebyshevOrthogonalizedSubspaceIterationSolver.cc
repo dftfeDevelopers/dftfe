@@ -195,12 +195,104 @@ namespace dftfe{
 			//
 			distributedCPUVec<dataTypes::number> eigenVectorsFlattenedArrayBlock;
 			operatorMatrix.reinit(vectorsBlockSize,
-					eigenVectorsFlattenedArrayBlock,
-					true);
+			       		      eigenVectorsFlattenedArrayBlock,
+					      true);
 
 			///storage for cell wavefunction matrix
 			std::vector<std::vector<dataTypes::number> > cellWaveFunctionMatrix;
-			
+
+                        //// Debug check lines///////////////////////////////////////////////
+                        /*distributedCPUVec<dataTypes::number> productArray;
+                        productArray.reinit(eigenVectorsFlattenedArrayBlock);
+                        productArray = 0.0;
+
+                        std::vector<std::vector<dataTypes::number> > productWaveFunctionMatrix;
+		        pcout<<"Vectors Block Size: "<<vectorsBlockSize<<std::endl;
+                        pcout<<"Total WaveFunctions: "<<totalNumberWaveFunctions<<std::endl;
+                        for(unsigned int iNode = 0; iNode < localVectorSize; ++iNode)
+                           for(unsigned int iWave = 0; iWave < vectorsBlockSize; ++iWave)
+                                 eigenVectorsFlattenedArrayBlock.local_element(iNode*vectorsBlockSize+iWave)
+                                                                = eigenVectorsFlattened[iNode*totalNumberWaveFunctions+iWave];	
+                       
+                        
+                        pcout<<"Src Eigen-Vectors Norm before old HX: "<<eigenVectorsFlattenedArrayBlock.l2_norm()<<std::endl;
+                        pcout<<"Product Eigen-Vectors Norm before old HX: "<<productArray.l2_norm()<<std::endl;
+                        
+
+                        operatorMatrix.HX(eigenVectorsFlattenedArrayBlock,
+                                          vectorsBlockSize,
+                                          false,
+                                          1.0,
+                                          productArray);
+
+                        pcout<<"Output Vectors Norm after old HX: "<<productArray.l2_norm()<<std::endl;
+
+                        double alpha2 = 25.0,alpha1=10.0;
+                        productArray.add(alpha2,eigenVectorsFlattenedArrayBlock);
+                        productArray *= alpha1;
+
+                        pcout<<"Output Vectors Norm after old HX and recursion: "<<productArray.l2_norm()<<std::endl; 
+
+                        operatorMatrix.initCellWaveFunctionMatrix(vectorsBlockSize,
+                                                                  eigenVectorsFlattenedArrayBlock,
+                                                                  cellWaveFunctionMatrix);
+
+                        productArray = 0.0;
+
+                        pcout<<"Src Eigen-Vectors Norm before new HX: "<<eigenVectorsFlattenedArrayBlock.l2_norm()<<std::endl;
+                        pcout<<"Product Eigen-Vectors Norm before new HX: "<<productArray.l2_norm()<<std::endl;
+
+
+                        std::vector<unsigned int> globalArrayClassificationMap;
+			operatorMatrix.getInteriorSurfaceNodesMapFromGlobalArray(globalArrayClassificationMap);
+
+                        operatorMatrix.initWithScalar(vectorsBlockSize,
+						      0.0,
+						      productWaveFunctionMatrix);
+
+
+                        operatorMatrix.HX(eigenVectorsFlattenedArrayBlock,
+	                                  cellWaveFunctionMatrix,
+			                  vectorsBlockSize,
+			                  false,
+			                  1.0,
+			                  productArray,
+		                          productWaveFunctionMatrix);
+
+                        const unsigned int numberDofs = eigenVectorsFlattenedArrayBlock.local_size()/vectorsBlockSize;
+				
+		        for(unsigned int iDof = 0; iDof < numberDofs; ++iDof)
+		         {
+		           if(globalArrayClassificationMap[iDof] == 1)
+			     {
+			        for(unsigned int iWave = 0; iWave < vectorsBlockSize; ++iWave)
+		                 {
+	                           productArray.local_element(iDof*vectorsBlockSize+iWave) += alpha2*eigenVectorsFlattenedArrayBlock.local_element(iDof*vectorsBlockSize+iWave);
+			           productArray.local_element(iDof*vectorsBlockSize+iWave) *= alpha1;
+		                 }
+		             }
+		        }
+
+  
+                        operatorMatrix.axpy(alpha2,
+				            vectorsBlockSize,
+					    cellWaveFunctionMatrix,
+				            productWaveFunctionMatrix);
+
+
+                        operatorMatrix.scale(alpha1,
+				             vectorsBlockSize,
+				             productWaveFunctionMatrix); 
+
+                        operatorMatrix.fillGlobalArrayFromCellWaveFunctionMatrix(vectorsBlockSize,
+								                 productWaveFunctionMatrix,
+										 productArray);
+
+                        pcout<<"Output Vectors Norm after new HX: "<<productArray.l2_norm()<<std::endl;
+
+                 
+                        exit(0);*/
+
 			int startIndexBandParal=totalNumberWaveFunctions;
 			int numVectorsBandParal=0;
 			for (unsigned int jvec = 0; jvec < totalNumberWaveFunctions; jvec += vectorsBlockSize)
