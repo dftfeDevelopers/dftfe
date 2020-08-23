@@ -172,21 +172,6 @@ void kohnShamDFTOperatorCUDAClass<FEOrder>::preComputeShapeFunctionGradientInteg
 				d_cellJxWValues[iElem*numberQuadraturePoints+q_point]=fe_values.JxW(q_point); 
 
 			for(unsigned int iNode = 0; iNode < numberDofsPerElement; ++iNode)
-			{
-				/*
-				   for(unsigned int jNode = 0; jNode < numberDofsPerElement; ++jNode)
-				   {
-				   double shapeFunctionGradientIntegralValue = 0.0;
-				   for(unsigned int q_point = 0; q_point < numberQuadraturePoints; ++q_point)
-				   {
-				   shapeFunctionGradientIntegralValue += (fe_values.shape_grad(iNode,q_point)*fe_values.shape_grad(jNode,q_point))
-				 *fe_values.JxW(q_point);
-				 }
-				 d_cellShapeFunctionGradientIntegralFlattened[iElem*numberDofsPerElement*numberDofsPerElement
-				 +iNode*numberDofsPerElement+jNode]=shapeFunctionGradientIntegralValue;
-				 }
-				 */
-
 				for(unsigned int q_point = 0; q_point < numberQuadraturePoints; ++q_point)
 				{
 					const dealii::Tensor<1,3,double> & shape_grad=fe_values.shape_grad(iNode,q_point);
@@ -207,7 +192,6 @@ void kohnShamDFTOperatorCUDAClass<FEOrder>::preComputeShapeFunctionGradientInteg
 						+q_point*numberDofsPerElement+iNode]=shape_grad[2];
 
 				}
-			}
 
 			if(iElem == 0)
       {
@@ -255,14 +239,60 @@ void kohnShamDFTOperatorCUDAClass<FEOrder>::preComputeShapeFunctionGradientInteg
 	MPI_Barrier(MPI_COMM_WORLD);
 	double gpu_time=MPI_Wtime();
 
+
+	QGauss<3>  quadraturePlusOne(FEOrder+1);
+  const unsigned int numberQuadraturePointsPlusOne = quadraturePlusOne.size();  
+	FEValues<3> fe_values_plusone(dftPtr->matrix_free_data.get_dof_handler().get_fe(), quadraturePlusOne, update_gradients | update_JxW_values);
+
+
+	std::vector<double> cellJxWValuesQuadPlusOne(numberPhysicalCells*numberQuadraturePointsPlusOne);
+	std::vector<double> shapeFunctionGradientValueQuadPlusOneX(numberPhysicalCells*numberQuadraturePointsPlusOne*numberDofsPerElement,0.0);
+	std::vector<double> shapeFunctionGradientValueQuadPlusOneY(numberPhysicalCells*numberQuadraturePointsPlusOne*numberDofsPerElement,0.0);
+	std::vector<double> shapeFunctionGradientValueQuadPlusOneZ(numberPhysicalCells*numberQuadraturePointsPlusOne*numberDofsPerElement,0.0);
+
+
+	cellPtr=dftPtr->matrix_free_data.get_dof_handler().begin_active();
+
+	iElem=0;
+	for(; cellPtr!=endcPtr; ++cellPtr)
+		if(cellPtr->is_locally_owned())
+		{
+			fe_values_plusone.reinit (cellPtr);
+
+			for(unsigned int q_point = 0; q_point < numberQuadraturePointsPlusOne; ++q_point)
+				cellJxWValuesQuadPlusOne[iElem*numberQuadraturePointsPlusOne+q_point]=fe_values_plusone.JxW(q_point); 
+
+			for(unsigned int iNode = 0; iNode < numberDofsPerElement; ++iNode)
+				for(unsigned int q_point = 0; q_point < numberQuadraturePointsPlusOne; ++q_point)
+				{
+					const dealii::Tensor<1,3,double> & shape_grad=fe_values_plusone.shape_grad(iNode,q_point);
+
+					shapeFunctionGradientValueQuadPlusOneX[iElem*numberDofsPerElement*numberQuadraturePointsPlusOne
+						+iNode*numberQuadraturePointsPlusOne+q_point]=shape_grad[0];
+
+					shapeFunctionGradientValueQuadPlusOneY[iElem*numberDofsPerElement*numberQuadraturePointsPlusOne
+						+iNode*numberQuadraturePointsPlusOne+q_point]=shape_grad[1];
+
+					shapeFunctionGradientValueQuadPlusOneZ[iElem*numberDofsPerElement*numberQuadraturePointsPlusOne
+						+iNode*numberQuadraturePointsPlusOne+q_point]=shape_grad[2];
+				}
+
+			iElem++;
+		}
+
+	thrust::device_vector<double> cellJxWValuesQuadPlusOneDevice=cellJxWValuesQuadPlusOne;
+	thrust::device_vector<double> shapeFunctionGradientValueQuadPlusOneXDevice=shapeFunctionGradientValueQuadPlusOneX;
+	thrust::device_vector<double> shapeFunctionGradientValueQuadPlusOneYDevice=shapeFunctionGradientValueQuadPlusOneY;
+	thrust::device_vector<double> shapeFunctionGradientValueQuadPlusOneZDevice=shapeFunctionGradientValueQuadPlusOneZ;
+
 	shapeFuncCUDA::computeShapeGradNINJIntegral(d_cublasHandle,
-			numberQuadraturePoints,
+			numberQuadraturePointsPlusOne,
 			numberDofsPerElement,
 			numberPhysicalCells,
-			d_shapeFunctionGradientValueXDevice,
-			d_shapeFunctionGradientValueYDevice,
-			d_shapeFunctionGradientValueZDevice,
-			d_cellJxWValuesDevice,
+			shapeFunctionGradientValueQuadPlusOneXDevice,
+			shapeFunctionGradientValueQuadPlusOneYDevice,
+			shapeFunctionGradientValueQuadPlusOneZDevice,
+			cellJxWValuesQuadPlusOneDevice,
 			d_cellShapeFunctionGradientIntegralFlattenedDevice);
 
 	cudaDeviceSynchronize();

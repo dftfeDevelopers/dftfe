@@ -13,7 +13,7 @@
 //
 // ---------------------------------------------------------------------
 //
-// @author  Phani Motamarri
+// @author  Phani Motamarri, Sambit Das
 //
 
 
@@ -27,9 +27,13 @@ void kohnShamDFTOperatorClass<FEOrder>::preComputeShapeFunctionGradientIntegrals
 	const unsigned int numberMacroCells = dftPtr->matrix_free_data.n_macro_cells();
 	const unsigned int numberPhysicalCells = dftPtr->matrix_free_data.n_physical_cells();
 	QGauss<3>  quadrature(C_num1DQuad<FEOrder>());
-	FEValues<3> fe_values(dftPtr->matrix_free_data.get_dof_handler().get_fe(), quadrature, update_values | update_gradients | update_JxW_values);
+	FEValues<3> fe_values(dftPtr->matrix_free_data.get_dof_handler().get_fe(), quadrature, update_values);
 	const unsigned int numberDofsPerElement = dftPtr->matrix_free_data.get_dof_handler().get_fe().dofs_per_cell;
-	const unsigned int numberQuadraturePoints = quadrature.size();
+  const unsigned int numberQuadraturePoints = quadrature.size();
+
+	QGauss<3>  quadraturePlusOne(FEOrder+1);
+	FEValues<3> fe_values_quadplusone(dftPtr->matrix_free_data.get_dof_handler().get_fe(), quadraturePlusOne, update_gradients | update_JxW_values);
+  const unsigned int numberQuadraturePointsPlusOne = quadraturePlusOne.size();
 
 	FEValues<3> fe_values_lpsp(dftPtr->matrix_free_data.get_dof_handler().get_fe(), dftPtr->matrix_free_data.get_quadrature(lpspQuadratureId), update_values);
 	const unsigned int numberQuadraturePointsLpsp = dftPtr->matrix_free_data.get_quadrature(lpspQuadratureId).size();
@@ -60,17 +64,15 @@ void kohnShamDFTOperatorClass<FEOrder>::preComputeShapeFunctionGradientIntegrals
 		for(unsigned int iCell = 0; iCell < n_sub_cells; ++iCell)
 		{
 			cellPtr = dftPtr->matrix_free_data.get_cell_iterator(iMacroCell,iCell);
-			fe_values.reinit(cellPtr);
+			fe_values_quadplusone.reinit(cellPtr);
 
 			for(unsigned int iNode = 0; iNode < numberDofsPerElement; ++iNode)
 			{
 				for(unsigned int jNode = 0; jNode < numberDofsPerElement; ++jNode)
 				{
 					double shapeFunctionGradientValue = 0.0;
-					for(unsigned int q_point = 0; q_point < numberQuadraturePoints; ++q_point)
-					{
-						shapeFunctionGradientValue += (fe_values.shape_grad(iNode,q_point)*fe_values.shape_grad(jNode,q_point))*fe_values.JxW(q_point);
-					}
+					for(unsigned int q_point = 0; q_point < numberQuadraturePointsPlusOne; ++q_point)
+						shapeFunctionGradientValue += (fe_values_quadplusone.shape_grad(iNode,q_point)*fe_values_quadplusone.shape_grad(jNode,q_point))*fe_values_quadplusone.JxW(q_point);
 
 					shapeFunctionGradients[numberDofsPerElement*iNode + jNode][iCell] = shapeFunctionGradientValue;
 				}//j node loop
@@ -81,6 +83,7 @@ void kohnShamDFTOperatorClass<FEOrder>::preComputeShapeFunctionGradientIntegrals
 
 			if(iMacroCell == 0 && iCell == 0)
       {
+			  fe_values.reinit(cellPtr);        
         fe_values_lpsp.reinit(cellPtr);
 
 				for(unsigned int iNode = 0; iNode < numberDofsPerElement; ++iNode)
