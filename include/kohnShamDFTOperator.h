@@ -167,11 +167,11 @@ namespace dftfe{
 		 * @param spinIndex flag to toggle spin-up or spin-down
 		 * @param externalPotCorrValues quadrature data of sum{Vext} minus sum{Vnu}
 		 */
-		void computeVEffSpinPolarized(const std::map<dealii::CellId,std::vector<double> >* rhoValues,
-				const distributedCPUVec<double> & phi,
-				unsigned int spinIndex,
-				const std::map<dealii::CellId,std::vector<double> > & externalPotCorrValues,
-        const unsigned int externalPotCorrQuadratureId);
+	  void computeVEffSpinPolarized(const std::map<dealii::CellId,std::vector<double> >* rhoValues,
+					const distributedCPUVec<double> & phi,
+					unsigned int spinIndex,
+					const std::map<dealii::CellId,std::vector<double> > & externalPotCorrValues,
+					const unsigned int externalPotCorrQuadratureId);
 
 		/**
 		 * @brief Computes effective potential involving gradient density type exchange-correlation functionals
@@ -372,6 +372,16 @@ namespace dftfe{
 						      const unsigned int numberWaveFunctions,
 						      distributedCPUVec<dataTypes::number> & dst,
 						      const double scalar = 1.0) const;
+
+
+	        void computeNonLocalHamiltonianTimesX(const distributedCPUVec<double> & src,
+						std::vector<std::vector<double> > & cellSrcWaveFunctionMatrix,
+						const unsigned int numberWaveFunctions,
+						distributedCPUVec<double>       & dst,
+						td::vector<std::vector<double> > & cellDstWaveFunctionMatrix,
+						const double scalar=1.0) const;
+
+	  
 
 #ifdef WITH_MKL
 		/**
