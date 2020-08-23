@@ -276,21 +276,6 @@ namespace dftfe
 				const double a0,
 				const bool mixedPrecOverall);
 
-		void chebyshevFilterComputeAvoidance(operatorDFTCUDAClass & operatorMatrix,
-				distributedGPUVec<double> & X,//thrust::device_vector<dataTypes::number> & X,
-				distributedGPUVec<double> & Y,
-				distributedGPUVec<double> & X2,
-				distributedGPUVec<float> & Z,
-				distributedGPUVec<double> & projectorKetTimesVector,
-				const unsigned int localVectorSize,
-				const unsigned int numberComponents,
-				const unsigned int m,
-				const double a,
-				const double b,
-				const double a0,
-				const bool isXlBOMDLinearizedSolve,
-				const bool communAvoidance,
-				const bool mixedPrecOverall);
 
 		void chebyshevFilter(operatorDFTCUDAClass & operatorMatrix,
 				distributedGPUVec<double> & X1,
@@ -308,27 +293,6 @@ namespace dftfe
 				const double b,
 				const double a0,
 				const bool mixedPrecOverall);
-
-		void chebyshevFilterComputeAvoidance(operatorDFTCUDAClass & operatorMatrix,
-				distributedGPUVec<double> & X1,
-				distributedGPUVec<double> & XArrayCA,
-				distributedGPUVec<double> & Y1,
-				distributedGPUVec<float> & Z,
-				distributedGPUVec<double> & projectorKetTimesVector1,
-				distributedGPUVec<float> & projectorKetTimesVectorFloat,
-				distributedGPUVec<double> & X2,
-				distributedGPUVec<double> & Y2,
-				distributedGPUVec<double> & projectorKetTimesVector2,
-				const unsigned int localVectorSize,
-				const unsigned int numberComponents,
-				const unsigned int m,
-				const double a,
-				const double b,
-				const double a0,
-				const bool isXlBOMDLinearizedSolve,
-				const bool communAvoidance,
-				const bool mixedPrecOverall,
-				const double computeAvoidanceTolerance);
 
 		void computeEigenResidualNorm(operatorDFTCUDAClass        & operatorMatrix,
 				double* X,

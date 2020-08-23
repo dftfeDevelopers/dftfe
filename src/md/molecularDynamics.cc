@@ -377,8 +377,7 @@ kohnShamDFTEigenOperatorCUDA
 					temp5p=dftParameters::useMixedPrecSubspaceRotRR;
 					temp6p=dftParameters::useMixedPrecCheby;
 					temp7p=dftParameters::useMixedPrecChebyNonLocal;
-					temp8p=dftParameters::chebyCommunAvoidanceAlgo;
-					temp9p=dftParameters::useSinglePrecXtHXOffDiag;
+					temp8p=dftParameters::useSinglePrecXtHXOffDiag;
 
 					dftParameters::useMixedPrecPGS_SR=false;
 					dftParameters::useMixedPrecPGS_O=false;
@@ -386,7 +385,6 @@ kohnShamDFTEigenOperatorCUDA
 					dftParameters::useMixedPrecSubspaceRotRR=false;
 					dftParameters::useMixedPrecCheby=false;
 					dftParameters::useMixedPrecChebyNonLocal=false;
-					dftParameters::chebyCommunAvoidanceAlgo=false;
 					dftParameters::useSinglePrecXtHXOffDiag=false;
 				}
 
@@ -409,8 +407,7 @@ kohnShamDFTEigenOperatorCUDA
 					dftParameters::useMixedPrecSubspaceRotRR=temp5p;
 					dftParameters::useMixedPrecCheby=temp6p;
 					dftParameters::useMixedPrecChebyNonLocal=temp7p;
-					dftParameters::chebyCommunAvoidanceAlgo=temp8p;
-					dftParameters::useSinglePrecXtHXOffDiag=temp9p;
+					dftParameters::useSinglePrecXtHXOffDiag=temp8p;
 				}
 
 				dftPtr->d_matrixFreeDataPRefined.initialize_dof_vector(atomicRho);
@@ -1084,8 +1081,7 @@ false);
 							temp5p=dftParameters::useMixedPrecSubspaceRotRR;
 							temp6p=dftParameters::useMixedPrecCheby;
 							temp7p=dftParameters::useMixedPrecChebyNonLocal;
-							temp8p=dftParameters::chebyCommunAvoidanceAlgo;
-							temp9p=dftParameters::useSinglePrecXtHXOffDiag;
+							temp8p=dftParameters::useSinglePrecXtHXOffDiag;
 
 							dftParameters::chebyshevFilterTolXLBOMD=dftParameters::xlbomdRestartChebyTol;
 							dftParameters::useMixedPrecPGS_SR=false;
@@ -1094,7 +1090,6 @@ false);
 							dftParameters::useMixedPrecSubspaceRotRR=false;
 							dftParameters::useMixedPrecCheby=false;
 							dftParameters::useMixedPrecChebyNonLocal=false;
-							dftParameters::chebyCommunAvoidanceAlgo=false;
 							dftParameters::useSinglePrecXtHXOffDiag=false;
 						}
 
@@ -1118,8 +1113,7 @@ false);
 							dftParameters::useMixedPrecSubspaceRotRR=temp5p;
 							dftParameters::useMixedPrecCheby=temp6p;
 							dftParameters::useMixedPrecChebyNonLocal=temp7p;
-							dftParameters::chebyCommunAvoidanceAlgo=temp8p;
-							dftParameters::useSinglePrecXtHXOffDiag=temp9p;
+							dftParameters::useSinglePrecXtHXOffDiag=temp8p;
 						}
 
 						if (dftParameters::verbosity>=1)
@@ -1914,8 +1908,7 @@ kohnShamDFTEigenOperatorCUDA
 					temp5p=dftParameters::useMixedPrecSubspaceRotRR;
 					temp6p=dftParameters::useMixedPrecCheby;
 					temp7p=dftParameters::useMixedPrecChebyNonLocal;
-					temp8p=dftParameters::chebyCommunAvoidanceAlgo;
-					temp9p=dftParameters::useSinglePrecXtHXOffDiag;
+					temp8p=dftParameters::useSinglePrecXtHXOffDiag;
 
 					dftParameters::useMixedPrecPGS_SR=false;
 					dftParameters::useMixedPrecPGS_O=false;
@@ -1923,7 +1916,6 @@ kohnShamDFTEigenOperatorCUDA
 					dftParameters::useMixedPrecSubspaceRotRR=false;
 					dftParameters::useMixedPrecCheby=false;
 					dftParameters::useMixedPrecChebyNonLocal=false;
-					dftParameters::chebyCommunAvoidanceAlgo=false;
 					dftParameters::useSinglePrecXtHXOffDiag=false;
 				}
 
@@ -1947,8 +1939,7 @@ kohnShamDFTEigenOperatorCUDA
 					dftParameters::useMixedPrecSubspaceRotRR=temp5p;
 					dftParameters::useMixedPrecCheby=temp6p;
 					dftParameters::useMixedPrecChebyNonLocal=temp7p;
-					dftParameters::chebyCommunAvoidanceAlgo=temp8p;
-					dftParameters::useSinglePrecXtHXOffDiag=temp9p;
+					dftParameters::useSinglePrecXtHXOffDiag=temp8p;
 				}
 
 				dftPtr->d_matrixFreeDataPRefined.initialize_dof_vector(atomicRho);
@@ -2622,8 +2613,7 @@ false);
 							temp5p=dftParameters::useMixedPrecSubspaceRotRR;
 							temp6p=dftParameters::useMixedPrecCheby;
 							temp7p=dftParameters::useMixedPrecChebyNonLocal;
-							temp8p=dftParameters::chebyCommunAvoidanceAlgo;
-							temp9p=dftParameters::useSinglePrecXtHXOffDiag;
+							temp8p=dftParameters::useSinglePrecXtHXOffDiag;
 
 							dftParameters::chebyshevFilterTolXLBOMD=dftParameters::xlbomdRestartChebyTol;
 							dftParameters::useMixedPrecPGS_SR=false;
@@ -2632,7 +2622,6 @@ false);
 							dftParameters::useMixedPrecSubspaceRotRR=false;
 							dftParameters::useMixedPrecCheby=false;
 							dftParameters::useMixedPrecChebyNonLocal=false;
-							dftParameters::chebyCommunAvoidanceAlgo=false;
 							dftParameters::useSinglePrecXtHXOffDiag=false;
 						}
 
@@ -2656,8 +2645,7 @@ false);
 							dftParameters::useMixedPrecSubspaceRotRR=temp5p;
 							dftParameters::useMixedPrecCheby=temp6p;
 							dftParameters::useMixedPrecChebyNonLocal=temp7p;
-							dftParameters::chebyCommunAvoidanceAlgo=temp8p;
-							dftParameters::useSinglePrecXtHXOffDiag=temp9p;
+							dftParameters::useSinglePrecXtHXOffDiag=temp8p;
 						}
 
 						if (dftParameters::verbosity>=1)

@@ -177,13 +177,6 @@ namespace dftfe{
 					bool returnBeforeCompressSkipUpdateSkipNonLocal=false,
 					bool returnBeforeCompressSkipUpdateSkipLocal=false) = 0;
 
-			virtual void HXChebyNoCommun(distributedGPUVec<double> & X,
-					distributedGPUVec<double> & projectorKetTimesVector,
-					const unsigned int localVectorSize,
-					const unsigned int numberComponents,
-					distributedGPUVec<double> & Y)=0;
-
-
 			/**
 			 * @brief implementation of non-local projector kets times psi product
 			 * using non-local discretized projectors at cell-level.
