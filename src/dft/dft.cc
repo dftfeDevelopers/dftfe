@@ -904,6 +904,8 @@ namespace dftfe {
 				}
 			}
 
+      d_netFloatingDisp.clear();
+      d_netFloatingDisp.resize(atomLocations.size()*3,0.0);
 			computingTimerStandard.exit_section("KSDFT problem initialization");
 		}
 
@@ -933,8 +935,22 @@ namespace dftfe {
 			MPI_Barrier(MPI_COMM_WORLD);
 			init_bc = MPI_Wtime();
 
+      double maxFloatingDispComponentMag=0.0;
       if (dftParameters::floatingNuclearCharges)
-        initBoundaryConditions(false);
+      {
+        for(unsigned int iAtom=0;iAtom < atomLocations.size(); iAtom++)
+          for(unsigned int idim=0;idim < 3; idim++)          
+          {
+            const double temp = std::fabs(d_netFloatingDisp[iAtom*3+idim]);
+
+            if(temp>maxFloatingDispComponentMag)
+              maxFloatingDispComponentMag=temp;
+          }
+      }
+
+      // false option reinitializes vself bins from scratch wheras true option only updates the boundary conditions
+      if (dftParameters::floatingNuclearCharges)
+        initBoundaryConditions(maxFloatingDispComponentMag>0.2?false:true);
       else
         initBoundaryConditions(true);
 

@@ -147,7 +147,8 @@ void dftClass<FEOrder>::updateAtomPositionsAndMoveMesh(const std::vector<Tensor<
     }
 
 	double maxCurrentDispAtom=-1;
-  if (!dftParameters::floatingNuclearCharges)  
+  if (!dftParameters::floatingNuclearCharges)
+  {
     for(unsigned int iAtom=0;iAtom < numberGlobalAtoms; iAtom++)
     {
       const double currentDisp = globalAtomsDisplacements[iAtom].norm();
@@ -156,7 +157,14 @@ void dftClass<FEOrder>::updateAtomPositionsAndMoveMesh(const std::vector<Tensor<
         maxCurrentDispAtom=currentDisp;
     }
 
-	tempGaussianMovementAtomsNetDisplacements = d_gaussianMovementAtomsNetDisplacements;
+	  tempGaussianMovementAtomsNetDisplacements = d_gaussianMovementAtomsNetDisplacements;
+  }
+
+
+  if (dftParameters::floatingNuclearCharges)  
+    for(unsigned int iAtom=0;iAtom < numberGlobalAtoms; iAtom++)
+      for(unsigned int idim=0;idim < 3; idim++)      
+         d_netFloatingDisp[3*iAtom+idim]+=globalAtomsDisplacements[iAtom][idim];
 
 	unsigned int useGaussian = 0;
 	const double tol=1e-6;

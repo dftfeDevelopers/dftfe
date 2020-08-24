@@ -716,6 +716,9 @@ namespace dftfe {
 			/// Gaussian displacements of atoms read from file
 			std::vector<Tensor<1,3,double> > d_atomsDisplacementsGaussianRead;
 
+      ///
+      std::vector<double> d_netFloatingDisp;
+
 			bool d_isAtomsGaussianDisplacementsReadFromFile=false;
 
 			/// Gaussian generator parameter for force computation and Gaussian deformation of atoms and FEM mesh

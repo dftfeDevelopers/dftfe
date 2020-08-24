@@ -100,9 +100,11 @@ namespace dftfe
         smearedChargeScaling[binAtomIdToGlobalAtomIdMapCurrentBin[iatom]]=1.0/smearedNuclearChargeIntegral[iatom];
       }
 
+      /*
 			if (dealii::Utilities::MPI::this_mpi_process(mpi_communicator) ==0)
 				for (unsigned int iatom=0; iatom< numberDomainAtomsInBin; ++iatom)
 					std::cout<<"Smeared charge integral before scaling (charge val=1): "<<smearedNuclearChargeIntegral[iatom]<<std::endl;       
+      */
 
 			std::vector<double> smearedNuclearChargeIntegralCheck(numberTotalAtomsInBin,0.0); 
 			cell = dofHandlerOfField.begin_active();
