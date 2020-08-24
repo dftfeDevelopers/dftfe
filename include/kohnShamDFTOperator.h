@@ -378,7 +378,7 @@ namespace dftfe{
 						std::vector<std::vector<double> > & cellSrcWaveFunctionMatrix,
 						const unsigned int numberWaveFunctions,
 						distributedCPUVec<double>       & dst,
-						td::vector<std::vector<double> > & cellDstWaveFunctionMatrix,
+						std::vector<std::vector<double> > & cellDstWaveFunctionMatrix,
 						const double scalar=1.0) const;
 
 	  
