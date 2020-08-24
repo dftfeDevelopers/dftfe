@@ -456,6 +456,8 @@ namespace dftfe{
 		//storage for precomputing index maps
 		std::vector<std::vector<dealii::types::global_dof_index> > d_flattenedArrayMacroCellLocalProcIndexIdMap, d_flattenedArrayCellLocalProcIndexIdMap;
 
+	        std::vector<dealii::types::global_dof_index> d_FullflattenedArrayMacroCellLocalProcIndexIdMap, d_FullflattenedArrayCellLocalProcIndexIdMap;
+
                 std::vector<unsigned int> d_normalCellIdToMacroCellIdMap;
                 std::vector<unsigned int> d_macroCellIdToNormalCellIdMap;
 

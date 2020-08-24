@@ -132,13 +132,23 @@ namespace dftfe {
 			  }
 
 
+
+
 			vectorTools::computeCellLocalIndexSetMap(flattenedArray.get_partitioner(),
 								 dftPtr->matrix_free_data,
 								 numberWaveFunctions,
 								 d_flattenedArrayMacroCellLocalProcIndexIdMap,
+								 d_flattenedArrayCellLocalProcIndexIdMap);
+
+						
+
+			vectorTools::computeCellLocalIndexSetMap(flattenedArray.get_partitioner(),
+								 dftPtr->matrix_free_data,
+								 numberWaveFunctions,
+								 d_FullflattenedArrayMacroCellLocalProcIndexIdMap,
                                                                  d_normalCellIdToMacroCellIdMap,
                                                                  d_macroCellIdToNormalCellIdMap,
-								 d_flattenedArrayCellLocalProcIndexIdMap);
+								 d_FullflattenedArrayCellLocalProcIndexIdMap);
 			
 
 			getOverloadedConstraintMatrix()->precomputeMaps(dftPtr->matrix_free_data.get_vector_partitioner(),
