@@ -342,12 +342,12 @@ namespace dftfe{
 						const double adaptiveOrder=0.5*chebyshevOrd
 							+jvec*0.3*chebyshevOrd/dftParameters::numAdaptiveFilterStates;
 						/*linearAlgebraOperations::chebyshevFilter(operatorMatrix,
-								eigenVectorsFlattenedArrayBlock,
-								BVec,
-								std::ceil(adaptiveOrder),
-								d_lowerBoundUnWantedSpectrum,
-								upperBoundUnwantedSpectrum,
-								d_lowerBoundWantedSpectrum);*/
+								                         eigenVectorsFlattenedArrayBlock,
+								                         BVec,
+								                         std::ceil(adaptiveOrder),
+								                         d_lowerBoundUnWantedSpectrum,
+								                         upperBoundUnwantedSpectrum,
+								                         d_lowerBoundWantedSpectrum);*/
 						linearAlgebraOperations::chebyshevFilterOpt(operatorMatrix,
 											    eigenVectorsFlattenedArrayBlock,
 											    cellWaveFunctionMatrix,
@@ -363,12 +363,12 @@ namespace dftfe{
 					else
 					  {
 					    /*linearAlgebraOperations::chebyshevFilter(operatorMatrix,
-					      eigenVectorsFlattenedArrayBlock,
-					      BVec,
-					      chebyshevOrder,
-					      d_lowerBoundUnWantedSpectrum,
-					      upperBoundUnwantedSpectrum,
-					      d_lowerBoundWantedSpectrum);*/
+					                                             eigenVectorsFlattenedArrayBlock,
+					                                             BVec,
+					                                             chebyshevOrder,
+					                                             d_lowerBoundUnWantedSpectrum,
+					                                             upperBoundUnwantedSpectrum,
+					                                             d_lowerBoundWantedSpectrum);*/
 					    
 					    linearAlgebraOperations::chebyshevFilterOpt(operatorMatrix,
 											eigenVectorsFlattenedArrayBlock,

@@ -573,7 +573,7 @@ void kohnShamDFTOperatorClass<FEOrder>::computeNonLocalHamiltonianTimesX(const d
 			    {
 			      for(unsigned int iWave = 0; iWave < numberWaveFunctions; ++iWave)
 				{
-				  cellDstWaveFunctionMatrix[d_normalCellIdToMacroCellIdMap[elementId]][numberWaveFunctions*iNode + iWave] += cellHamMatrixTimesWaveMatrix[numberWaveFunctions*iNode + iWave];
+				  cellDstWaveFunctionMatrix[d_normalCellIdToMacroCellIdMap[elementId]][numberWaveFunctions*iNode + iWave] += cellNonLocalHamTimesWaveMatrix[numberWaveFunctions*iNode + iWave];
 				}
 			    }
 			}
