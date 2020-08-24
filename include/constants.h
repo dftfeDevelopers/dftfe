@@ -46,16 +46,16 @@ namespace dftfe {
 
 	/// 1d quadrature rule order for non-local part of pseudopotential
 	template <unsigned int FEOrder> constexpr unsigned int C_num1DQuadNLPSP()
-	{return 8;}
+	{return 10;}
 
   /// number of copies 1d quad rule non-local PSP
-  constexpr unsigned int C_numCopies1DQuadNLPSP(){return 2;} 
+  constexpr unsigned int C_numCopies1DQuadNLPSP(){return 1;} 
 
 	/// 1d quadrature rule order for local part of pseudopotential
 	template <unsigned int FEOrder> constexpr unsigned int C_num1DQuadLPSP()
-	{return 9;}
+	{return 10;}
 
   /// number of copies 1d quad rule local PSP
-  constexpr unsigned int C_numCopies1DQuadLPSP(){return 2;}    
+  constexpr unsigned int C_numCopies1DQuadLPSP(){return 1;}    
 }
 #endif
