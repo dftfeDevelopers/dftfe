@@ -520,13 +520,13 @@ void kohnShamDFTOperatorClass<FEOrder>::computeNonLocalHamiltonianTimesX(const d
 	}
 
 
-	std::vector<double> cellNonLocalHamTimesWaveMatrix(d_numberNodesPerElement*numberWaveFunctions,0.0);
+	//std::vector<double> cellNonLocalHamTimesWaveMatrix(d_numberNodesPerElement*numberWaveFunctions,0.0);
 
 	//blas required settings
 	const char transA1 = 'N';
 	const char transB1 = 'N';
 	const double alpha1 = 1.0;
-	const double beta1 = 0.0;
+	const double beta1 = 1.0;
 	const unsigned int inc1 = 1;
 	const double alpha2 = scalar;
 
@@ -540,21 +540,23 @@ void kohnShamDFTOperatorClass<FEOrder>::computeNonLocalHamiltonianTimesX(const d
 		for(unsigned int iElemComp = 0; iElemComp < dftPtr->d_elementIteratorsInAtomCompactSupport[atomId].size(); ++iElemComp)
 		{
 
-			dgemm_(&transA1,
-					&transB1,
-					&numberWaveFunctions,
-					&d_numberNodesPerElement,
-					&numberPseudoWaveFunctions,
-					&alpha2,
-					&projectorKetTimesVector[atomId][0],
-					&numberWaveFunctions,
-					&dftPtr->d_nonLocalProjectorElementMatricesTranspose[atomId][iElemComp][0],
-					&numberPseudoWaveFunctions,
-					&beta1,
-					&cellNonLocalHamTimesWaveMatrix[0],
-					&numberWaveFunctions);
+		  unsigned int elementId =  dftPtr->d_elementIdsInAtomCompactSupport[atomId][iElemComp];
+		  
+		  dgemm_(&transA1,
+			 &transB1,
+			 &numberWaveFunctions,
+			 &d_numberNodesPerElement,
+			 &numberPseudoWaveFunctions,
+			 &alpha2,
+			 &projectorKetTimesVector[atomId][0],
+			 &numberWaveFunctions,
+			 &dftPtr->d_nonLocalProjectorElementMatricesTranspose[atomId][iElemComp][0],
+			 &numberPseudoWaveFunctions,
+			 &beta1,
+			 &cellDstWaveFunctionMatrix[d_normalCellIdToMacroCellIdMap[elementId]][0],
+			 &numberWaveFunctions);
 
-			unsigned int elementId =  dftPtr->d_elementIdsInAtomCompactSupport[atomId][iElemComp];
+			
 
 			for(unsigned int iNode = 0; iNode < d_numberNodesPerElement; ++iNode)
 			{
@@ -564,18 +566,18 @@ void kohnShamDFTOperatorClass<FEOrder>::computeNonLocalHamiltonianTimesX(const d
 			      dealii::types::global_dof_index localNodeId = d_flattenedArrayCellLocalProcIndexIdMap[elementId][iNode];
 			      daxpy_(&numberWaveFunctions,
 				     &alpha1,
-				     &cellNonLocalHamTimesWaveMatrix[numberWaveFunctions*iNode],
+				     &cellDstWaveFunctionMatrix[d_normalCellIdToMacroCellIdMap[elementId]][numberWaveFunctions*iNode],//&cellNonLocalHamTimesWaveMatrix[numberWaveFunctions*iNode],
 				     &inc1,
 				     dst.begin()+localNodeId,
 				     &inc1);
 			    }
-			  else
-			    {
-			      for(unsigned int iWave = 0; iWave < numberWaveFunctions; ++iWave)
-				{
-				  cellDstWaveFunctionMatrix[d_normalCellIdToMacroCellIdMap[elementId]][numberWaveFunctions*iNode + iWave] += cellNonLocalHamTimesWaveMatrix[numberWaveFunctions*iNode + iWave];
-				}
-			    }
+			  // else
+			  //{
+			  //  for(unsigned int iWave = 0; iWave < numberWaveFunctions; ++iWave)
+			  //	{
+			  //	  cellDstWaveFunctionMatrix[d_normalCellIdToMacroCellIdMap[elementId]][numberWaveFunctions*iNode + iWave] += cellNonLocalHamTimesWaveMatrix[numberWaveFunctions*iNode + iWave];
+			  //	}
+			  //}
 			}
 
 
