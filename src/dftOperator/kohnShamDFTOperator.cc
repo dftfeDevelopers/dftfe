@@ -291,7 +291,37 @@ namespace dftfe {
 
   }
 
+ //Y = a*X + b*Y
+  template<unsigned int FEOrder>
+  void kohnShamDFTOperatorClass<FEOrder>::axpby(double scalarA,
+						double scalarB,
+					        const unsigned int numberWaveFunctions,
+					        std::vector<std::vector<dataTypes::number> > & cellXWaveFunctionMatrix,
+					        std::vector<std::vector<dataTypes::number> > & cellYWaveFunctionMatrix)
+  {
+    
+    unsigned int iElem = 0;
+    for(unsigned int iMacroCell = 0; iMacroCell < d_numberMacroCells; ++iMacroCell)
+      {
+	for(unsigned int iCell = 0; iCell < d_macroCellSubCellMap[iMacroCell]; ++iCell)
+	  {
+	    for(unsigned int iNode = 0; iNode < d_numberNodesPerElement; ++iNode)
+	      {
+		if(d_nodesPerCellClassificationMap[iNode] == 0)
+		  {
+		    for(unsigned int iWave = 0; iWave < numberWaveFunctions; ++iWave)
+		      {
+			cellYWaveFunctionMatrix[iElem][numberWaveFunctions*iNode + iWave] = scalarA*cellXWaveFunctionMatrix[iElem][numberWaveFunctions*iNode + iWave]+scalarB*cellYWaveFunctionMatrix[iElem][numberWaveFunctions*iNode + iWave];
+		      }
 
+		  }
+	      }
+	    ++iElem;
+	  }
+      }
+	
+
+  }
   
 
 

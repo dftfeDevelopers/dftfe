@@ -438,8 +438,8 @@ namespace dftfe{
 				      {
 					for(unsigned int iWave = 0; iWave < numberWaveFunctions; ++iWave)
 					  {
-					    YArray.local_element(iDof*numberWaveFunctions+iWave) += alpha2*XArray.local_element(iDof*numberWaveFunctions+iWave);
-					    YArray.local_element(iDof*numberWaveFunctions+iWave) *= alpha1;
+					    YArray.local_element(iDof*numberWaveFunctions+iWave) = alpha1*YArray.local_element(iDof*numberWaveFunctions+iWave)+alpha1*alpha2*XArray.local_element(iDof*numberWaveFunctions+iWave);
+					    //YArray.local_element(iDof*numberWaveFunctions+iWave) *= alpha1;
 					  }
 				      }
                                     //else
@@ -454,7 +454,7 @@ namespace dftfe{
 				//
 				//Do recursive iteration only for interior cell nodes using cell-level loop
 				// Y = a*X + Y
-				operatorMatrix.axpy(alpha2,
+				/*operatorMatrix.axpy(alpha2,
 						    numberWaveFunctions,
 						    cellXWaveFunctionMatrix,
 						    cellYWaveFunctionMatrix);
@@ -462,6 +462,11 @@ namespace dftfe{
 				//scale a vector with a scalar
 				operatorMatrix.scale(alpha1,
 						     numberWaveFunctions,
+						     cellYWaveFunctionMatrix);*/
+
+				operatorMatrix.axpby(alpha1*alpha2,
+						     alpha1,
+						     cellXWaveFunctionMatrix,
 						     cellYWaveFunctionMatrix);
 						     
 			
@@ -489,8 +494,8 @@ namespace dftfe{
 						for(unsigned int iWave = 0; iWave < numberWaveFunctions; ++iWave)
 						  {
 						    
-						    XArray.local_element(iDof*numberWaveFunctions+iWave) *= alpha2;
-						    XArray.local_element(iDof*numberWaveFunctions+iWave) += (-c*alpha1)*YArray.local_element(iDof*numberWaveFunctions+iWave);
+						    //XArray.local_element(iDof*numberWaveFunctions+iWave) *= alpha2;
+						    XArray.local_element(iDof*numberWaveFunctions+iWave) = alpha2*XArray.local_element(iDof*numberWaveFunctions+iWave)-c*alpha1*YArray.local_element(iDof*numberWaveFunctions+iWave);
 						  }
 					      }
 
@@ -499,7 +504,7 @@ namespace dftfe{
 					//Do recursive iteration only for interior cell nodes using cell-level loop
 					
 					//scale a vector with a scalar
-					operatorMatrix.scale(alpha2,
+					/*operatorMatrix.scale(alpha2,
 							     numberWaveFunctions,
 							     cellXWaveFunctionMatrix);
 
@@ -507,7 +512,14 @@ namespace dftfe{
 					operatorMatrix.axpy(-c*alpha1,
 							    numberWaveFunctions,
 							    cellYWaveFunctionMatrix,
-							    cellXWaveFunctionMatrix);
+							    cellXWaveFunctionMatrix);*/
+
+
+					operatorMatrix.axpby(-c*alpha1,
+							     alpha2,
+							     numberWaveFunctions,
+							     cellYWaveFunctionMatrix,
+							     cellXWaveFunctionMatrix);
 
 
 					//

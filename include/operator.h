@@ -113,6 +113,12 @@ namespace dftfe{
 			                   const unsigned int numberWaveFunctions,
 			                   std::vector<std::vector<dataTypes::number> > & cellXWaveFunctionMatrix) = 0;
 
+	                virtual void axpby(double scalarA,
+					  double scalarB,
+					  const unsigned int numberWaveFunctions,
+					  std::vector<std::vector<dataTypes::number> > & cellXWaveFunctionMatrix,
+					  std::vector<std::vector<dataTypes::number> > & cellYWaveFunctionMatrix) = 0; 
+
 	                virtual void getInteriorSurfaceNodesMapFromGlobalArray(std::vector<unsigned int> & globalArrayClassificationMap) = 0; 
 	                
 

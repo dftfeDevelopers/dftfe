@@ -257,6 +257,14 @@ namespace dftfe{
 			 std::vector<std::vector<dataTypes::number> > & cellXWaveFunctionMatrix,
 			 std::vector<std::vector<dataTypes::number> > & cellYWaveFunctionMatrix);
 
+	       
+	       void axpby(double scalarA,
+			  double scalarB,
+			  const unsigned int numberWaveFunctions,
+			  std::vector<std::vector<dataTypes::number> > & cellXWaveFunctionMatrix,
+			  std::vector<std::vector<dataTypes::number> > & cellYWaveFunctionMatrix); 
+	  
+
 	       void scale(double scalar,
 			  const unsigned int numberWaveFunctions,
 			  std::vector<std::vector<dataTypes::number> > & cellXWaveFunctionMatrix);
