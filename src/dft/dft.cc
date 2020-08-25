@@ -904,8 +904,6 @@ namespace dftfe {
 				}
 			}
 
-      d_netFloatingDisp.clear();
-      d_netFloatingDisp.resize(atomLocations.size()*3,0.0);
 			computingTimerStandard.exit_section("KSDFT problem initialization");
 		}
 

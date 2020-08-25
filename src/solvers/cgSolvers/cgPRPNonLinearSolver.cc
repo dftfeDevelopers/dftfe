@@ -229,6 +229,19 @@ namespace dftfe {
 			for (unsigned int i=0; i< d_conjugateDirection.size();++i)
 				data.push_back(std::vector<double>(1,d_conjugateDirection[i]));
 
+			for (unsigned int i=0; i< d_steepestDirectionOld.size();++i)
+				data.push_back(std::vector<double>(1,d_steepestDirectionOld[i]));        
+        
+      data.push_back(std::vector<double>(1,d_lineSearchDampingParameter));
+      data.push_back(std::vector<double>(1,d_alphaChk));
+      data.push_back(std::vector<double>(1,d_etaPChk));
+      data.push_back(std::vector<double>(1,d_etaChk));   
+      data.push_back(std::vector<double>(1,d_lineSearchRestartIterChk)); 
+      data.push_back(std::vector<double>(1,d_functionValueChk));  
+
+      if (d_lineSearchRestartIterChk>1)
+        data.push_back(std::vector<double>(1,d_functionalValueAfterAlphUpdateChk));  
+
 			dftUtils::writeDataIntoFile(data,
 					checkpointFileName);
 		}
@@ -243,12 +256,32 @@ namespace dftfe {
 			std::vector<std::vector<double>> data;
 			dftUtils::readFile(1,data,checkpointFileName);
 
-			d_conjugateDirection.clear();
+			d_conjugateDirection.resize(d_numberUnknowns);
 			for (unsigned int i=0; i< d_numberUnknowns;++i)
-				d_conjugateDirection.push_back(data[i][0]);
+				d_conjugateDirection[i]=data[i][0];
 
-			AssertThrow (d_conjugateDirection.size()== d_numberUnknowns,
-					dealii::ExcMessage (std::string("DFT-FE Error: data size of cg solver checkpoint file doesn't match with number of unknowns in the problem.")));
+      d_steepestDirectionOld.resize(d_numberUnknowns);
+			for (unsigned int i=0; i< d_numberUnknowns;++i)
+				d_steepestDirectionOld[i]=data[i][0];
+
+      d_lineSearchDampingParameter= data[2*d_numberUnknowns][0];
+      d_alphaChk= data[2*d_numberUnknowns+1][0];
+      d_etaPChk= data[2*d_numberUnknowns+2][0];
+      d_etaChk= data[2*d_numberUnknowns+3][0];
+      d_lineSearchRestartIterChk= data[2*d_numberUnknowns+4][0];
+      d_functionValueChk= data[2*d_numberUnknowns+5][0]; 
+
+      if (d_lineSearchRestartIterChk>1)
+        d_functionalValueAfterAlphUpdateChk= data[2*d_numberUnknowns+6][0]; 
+
+      if (d_lineSearchRestartIterChk>1)
+      {
+        AssertThrow (data.size()== (2*d_numberUnknowns+7),dealii::ExcMessage (std::string("DFT-FE Error: data size of cg solver checkpoint file is incorrect.")));
+      }
+      else
+      {
+        AssertThrow (data.size()== (2*d_numberUnknowns+6),dealii::ExcMessage (std::string("DFT-FE Error: data size of cg solver checkpoint file is incorrect.")));  
+      }
 		}
 
 	//
@@ -382,13 +415,17 @@ namespace dftfe {
 		cgPRPNonLinearSolver::lineSearch(nonlinearSolverProblem &       problem,
 				const double           tolerance,
 				const unsigned int     maxNumberIterations,
-				const unsigned int     debugLevel)
+				const unsigned int     debugLevel,
+        const std::string checkpointFileName,
+        const int startingIter,
+        const bool isCheckpointRestart)
 		{
 			//
 			// local data
 			//
 			const double toleranceSqr = tolerance*tolerance;
 			std::vector<double> tempFuncValueVector;
+      double eta, etaP, functionValue, alpha, alphaNew, functionalValueAfterAlphUpdate;
 
 			//
 			//constants used in Wolfe conditions
@@ -398,115 +435,165 @@ namespace dftfe {
 			const double c1 = 1e-04;
 			const double c2 = 0.1;
 
-			//
-			// set the initial value of alpha
-			//
-			double alpha = -d_lineSearchDampingParameter;
+      if (isCheckpointRestart)
+      {
+        //fill checkpoint data
+        functionValue=d_functionValueChk;
+        if (startingIter>1)
+           functionalValueAfterAlphUpdate=d_functionalValueAfterAlphUpdateChk;
+        eta=d_etaChk;
+        etaP=d_etaPChk;
+        alpha=d_alphaChk;
+      }
+      else
+      {
+        //
+        // set the initial value of alpha
+        //
+        alpha = -d_lineSearchDampingParameter;
 
-			//
-			// evaluate problem gradient
-			//
-			problem.gradient(d_gradient);
+        //
+        // evaluate problem gradient
+        //
+        problem.gradient(d_gradient);
 
-			//
-			// evaluate function value
-			//
-			problem.value(tempFuncValueVector);
-			double functionValue = tempFuncValueVector[0];
+        //
+        // evaluate function value
+        //
+        problem.value(tempFuncValueVector);
+        functionValue = tempFuncValueVector[0];
 
-			//
-			// compute delta_d and eta_p
-			//
-			double etaP   = computeEta();
-			if (debugLevel >= 2)
-				pcout << "Initial guess for secant line search iteration, alpha: " << alpha << std::endl;
+        //
+        // compute delta_d and eta_p
+        //
+        etaP   = computeEta();
+        if (debugLevel >= 2)
+          pcout << "Initial guess for secant line search iteration, alpha: " << alpha << std::endl;
+      }
 
-			bool isRestartCG;
-			//
-			// update unknowns removing earlier update
-			//
-			isRestartCG=updateSolution(d_lineSearchDampingParameter,
-					d_conjugateDirection,
-					problem);
+      if (startingIter==-1)
+      {
+        d_functionValueChk=functionValue;
+        d_etaChk=etaP;
+        d_etaPChk=etaP;
+        d_alphaChk=alpha;
+        d_lineSearchRestartIterChk=-1;
 
-			if (isRestartCG)
-			{
-				if (debugLevel >= 2)
-					pcout << "Stopping line search and restarting CG as max increment criteria exceeded"<< std::endl;
-				return SUCCESS;
-			}
+        if (!checkpointFileName.empty())
+        {
+          save(checkpointFileName);
+          problem.save();
+        }
+
+        bool isRestartCG;
+        //
+        // update unknowns removing earlier update
+        //
+        isRestartCG=updateSolution(d_lineSearchDampingParameter,
+            d_conjugateDirection,
+            problem);
+
+        if (isRestartCG)
+        {
+          if (debugLevel >= 2)
+            pcout << "Stopping line search and restarting CG as max increment criteria exceeded"<< std::endl;
+          return SUCCESS;
+        }
+      }
 
 			//
 			// begin iteration (using secant method)
 			//
-			for (unsigned int iter = 0; iter < maxNumberIterations; ++iter) {
+			for (int iter = ((startingIter>=0)?startingIter:0); iter < maxNumberIterations; ++iter) 
+      {
+        if (iter>startingIter)
+        {
+          //
+          // evaluate problem gradient
+          //
+          problem.gradient(d_gradient);
 
-				//
-				// evaluate problem gradient
-				//
-				problem.gradient(d_gradient);
 
+          //
+          // compute eta
+          //
+          eta = computeEta();
 
-				//
-				// compute eta
-				//
-				double eta = computeEta();
+          unsigned int isSuccess=0;
+          if (std::fabs(eta) < toleranceSqr*d_numberUnknowns)
+            isSuccess=1;
+          MPI_Bcast(&(isSuccess),
+              1,
+              MPI_INT,
+              0,
+              MPI_COMM_WORLD);
+          if (isSuccess==1)
+            return SUCCESS;
 
-				unsigned int isSuccess=0;
-				if (std::fabs(eta) < toleranceSqr*d_numberUnknowns)
-					isSuccess=1;
-				MPI_Bcast(&(isSuccess),
-						1,
-						MPI_INT,
-						0,
-						MPI_COMM_WORLD);
-				if (isSuccess==1)
-					return SUCCESS;
+          //
+          //swap eta and etaP to make the notation consistent to PRP algorithm in "Painless Conjugate Algorithm"
+          //https://www.cs.cmu.edu/~quake-papers/painless-conjugate-gradient.pdf
+          //
+          if(iter == 0)
+          {
+            double temp = eta;
+            eta = etaP;
+            etaP = temp;
+          }
+         
+          if(iter > 1)
+          {
+            problem.value(tempFuncValueVector);
+            double functionalValueAfterAlphUpdate = tempFuncValueVector[0];
+          }
+        }
 
-				//
-				//swap eta and etaP to make the notation consistent to PRP algorithm in "Painless Conjugate Algorithm"
-				//https://www.cs.cmu.edu/~quake-papers/painless-conjugate-gradient.pdf
-				//
-				if(iter == 0)
+        d_functionValueChk=functionValue;
+        if (iter>1)
+           d_functionalValueAfterAlphUpdateChk=functionalValueAfterAlphUpdate;
+        d_etaChk=eta;
+        d_etaPChk=etaP;
+        d_alphaChk=alpha;
+        d_lineSearchRestartIterChk=iter;        
+
+				if (!checkpointFileName.empty())
 				{
-					double temp = eta;
-					eta = etaP;
-					etaP = temp;
+					save(checkpointFileName);
+					problem.save();
 				}
 
-				if(iter > 1)
-				{
-					problem.value(tempFuncValueVector);
-					double functionalValueAfterAlphUpdate = tempFuncValueVector[0];
+        //FIXME: check whether >1 or >=1 is the correct choice
+        if(iter > 1)
+        {
+          double condition1 = (functionalValueAfterAlphUpdate - functionValue) - (c1*alpha*etaP);
+          double condition2 = std::abs(eta) - c2*std::abs(etaP);
+          if(condition1 <= 1e-05 && condition2 <= 1e-05)
+          {
+            if (debugLevel >= 2)
+              pcout << "Satisfied Wolfe condition: " << std::endl;
 
-					double condition1 = (functionalValueAfterAlphUpdate - functionValue) - (c1*alpha*etaP);
-					double condition2 = std::abs(eta) - c2*std::abs(etaP);
-					if(condition1 <= 1e-05 && condition2 <= 1e-05)
-					{
-						if (debugLevel >= 2)
-							pcout << "Satisfied Wolfe condition: " << std::endl;
+            return SUCCESS;
 
-						return SUCCESS;
+          }
+        }
 
-					}
-				}
+        //
+        // update alpha
+        //
+        alphaNew=alpha*eta/(etaP-eta);
 
-				//
-				// update alpha
-				//
-				double alphaNew=alpha*eta/(etaP-eta);
-
-				//
-				// output
-				//
-				if (debugLevel >= 2)
-					pcout << "Line search iteration: " << iter << " alphaNew: " << alphaNew << " alpha: "<<alpha <<"  eta: "<< eta << " etaP: "<<etaP << std::endl;
-				else if(debugLevel>= 1)
-					pcout << "Line search iteration: " << iter <<std::endl;
+        //
+        // output
+        //
+        if (debugLevel >= 2)
+          pcout << "Line search iteration: " << iter << " alphaNew: " << alphaNew << " alpha: "<<alpha <<"  eta: "<< eta << " etaP: "<<etaP << std::endl;
+        else if(debugLevel>= 1)
+          pcout << "Line search iteration: " << iter <<std::endl;
 
 				//
 				// update unknowns
 				//
+        bool isRestartCG;
 				if(iter == 0)
 				{
 					isRestartCG=updateSolution(alphaNew-d_lineSearchDampingParameter,
@@ -598,12 +685,11 @@ namespace dftfe {
 				d_gradMax=0.0;
 				for (unsigned int i = 0; i < d_numberUnknowns; ++i)
 				{
-					const double r = -d_gradient[i];
-					d_steepestDirectionOld[i]  =r;
+					const double r = d_steepestDirectionOld[i];
 					d_deltaNew += d_unknownCountFlag[i]*r*r;
 
-					if (std::abs(d_gradient[i])>d_gradMax)
-						d_gradMax=std::abs(d_gradient[i]);
+					if (std::abs(-r)>d_gradMax)
+						d_gradMax=std::abs(-r);
 				}
 			}
 			//
@@ -623,7 +709,8 @@ namespace dftfe {
 
 
 
-			for (d_iter = 0; d_iter < d_maxNumberIterations; ++d_iter) {
+			for (d_iter = 0; d_iter < d_maxNumberIterations; ++d_iter)
+      {
 
 				if (d_debugLevel >= 2)
 					for(unsigned int i = 0; i < d_gradient.size(); ++i)
@@ -658,7 +745,10 @@ namespace dftfe {
 					lineSearch(problem,
 							d_lineSearchTolerance,
 							d_lineSearchMaxIterations,
-							d_debugLevel);
+							d_debugLevel,
+              checkpointFileName,
+              (restart && d_iter==0)?d_lineSearchRestartIterChk:-1,
+              restart && d_iter==0);
 
 				//
 				// evaluate gradient
@@ -700,11 +790,12 @@ namespace dftfe {
 				//
 				updateDirection();
 
-				if (!checkpointFileName.empty())
-				{
-					save(checkpointFileName);
-					problem.save();
-				}
+        // save current conjugate direction and solution 
+				//if (!checkpointFileName.empty())
+				//{
+				//	save(checkpointFileName);
+				//	problem.save();
+				//}
 
 				//
 				// check for convergence

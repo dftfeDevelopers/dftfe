@@ -1091,6 +1091,9 @@ namespace dftfe
 			for(int iBin = 0; iBin < numberBins; ++iBin)
 			{
 				inhomogBoundaryVec=0.0;
+        for (unsigned int idim=0; idim<3; idim++)
+            inhomogBoundaryVecVselfDerR[idim]=0.0;
+
 				std::map<dealii::types::global_dof_index, dealii::Point<3>> & dofClosestChargeLocationMap
 					= d_dofClosestChargeLocationMap[iBin];
 
