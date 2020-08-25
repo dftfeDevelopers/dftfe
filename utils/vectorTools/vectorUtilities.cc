@@ -920,14 +920,14 @@ namespace dftfe
                              nodesPerCellClassificationMap[iNode] = 1;
                            }
                        }
-                    unsigned int interiorNodes = 0;
-                    for(unsigned int iNode = 0; iNode < numberNodesPerCell; ++iNode)
-                       {
-                          if(nodesPerCellClassificationMap[iNode] == 0)
-                             interiorNodes += 1;                         
-                       }
+                    //unsigned int interiorNodes = 0;
+                    //for(unsigned int iNode = 0; iNode < numberNodesPerCell; ++iNode)
+                      // {
+                        //  if(nodesPerCellClassificationMap[iNode] == 0)
+                          //   interiorNodes += 1;                         
+                       //}
 
-                   pcout<<"Number of interior Nodes: "<<interiorNodes<<std::endl;
+                   //pcout<<"Number of interior Nodes: "<<interiorNodes<<std::endl;
 
                   }
 

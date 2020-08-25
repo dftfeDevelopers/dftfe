@@ -442,14 +442,14 @@ namespace dftfe{
 					    YArray.local_element(iDof*numberWaveFunctions+iWave) *= alpha1;
 					  }
 				      }
-                                    else
-                                      {
-                                        countInterior+=1;         
-                                      }
+                                    //else
+                                      //{
+                                        //countInterior+=1;         
+                                      //}
 
 				  }
 
-                                std::cout<<"Interior Nodes: "<<countInterior<<std::endl;
+                                //std::cout<<"Interior Nodes: "<<countInterior<<std::endl;
 
 				//
 				//Do recursive iteration only for interior cell nodes using cell-level loop
