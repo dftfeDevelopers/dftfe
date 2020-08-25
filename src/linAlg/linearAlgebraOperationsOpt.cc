@@ -466,6 +466,7 @@ namespace dftfe{
 
 				operatorMatrix.axpby(alpha1*alpha2,
 						     alpha1,
+                                                     numberWaveFunctions,
 						     cellXWaveFunctionMatrix,
 						     cellYWaveFunctionMatrix);
 						     
