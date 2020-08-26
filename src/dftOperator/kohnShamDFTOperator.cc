@@ -303,18 +303,21 @@ namespace dftfe {
   {
     
     unsigned int iElem = 0;
+    unsigned int productNumNodesWaveFunctions = d_numberNodesPerElement*numberWaveFunctions;
     for(unsigned int iMacroCell = 0; iMacroCell < d_numberMacroCells; ++iMacroCell)
       {
 	for(unsigned int iCell = 0; iCell < d_macroCellSubCellMap[iMacroCell]; ++iCell)
 	  {
+            unsigned int indexTemp = productNumNodesWaveFunctions*iElem;
 	    for(unsigned int iNode = 0; iNode < d_numberNodesPerElement; ++iNode)
 	      {
 		if(d_nodesPerCellClassificationMap[iNode] == 0)
 		  {
+                    unsigned int indexVal = indexTemp+numberWaveFunctions*iNode;
 		    for(unsigned int iWave = 0; iWave < numberWaveFunctions; ++iWave)
 		      {
 			//cellYWaveFunctionMatrix[iElem][numberWaveFunctions*iNode + iWave] = scalarA*cellXWaveFunctionMatrix[iElem][numberWaveFunctions*iNode + iWave]+scalarB*cellYWaveFunctionMatrix[iElem][numberWaveFunctions*iNode + iWave];
-			cellYWaveFunctionMatrix[d_numberNodesPerElement*numberWaveFunctions*iElem + numberWaveFunctions*iNode + iWave] = scalarB*cellYWaveFunctionMatrix[d_numberNodesPerElement*numberWaveFunctions*iElem + numberWaveFunctions*iNode + iWave] + scalarA*cellXWaveFunctionMatrix[d_numberNodesPerElement*numberWaveFunctions*iElem + numberWaveFunctions*iNode + iWave]
+			cellYWaveFunctionMatrix[indexVal + iWave] = scalarB*cellYWaveFunctionMatrix[indexVal + iWave] + scalarA*cellXWaveFunctionMatrix[indexVal + iWave];
 		      }
 
 		  }

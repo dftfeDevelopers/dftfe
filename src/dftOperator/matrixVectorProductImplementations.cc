@@ -266,21 +266,23 @@ void kohnShamDFTOperatorClass<FEOrder>::computeLocalHamiltonianTimesX(const dist
 	std::vector<double> cellHamMatrixTimesWaveMatrix(d_numberNodesPerElement*numberWaveFunctions,0.0);
 
 	unsigned int iElem = 0;
+        unsigned int indexTemp1 = d_numberNodesPerElement*numberWaveFunctions;
 	for(unsigned int iMacroCell = 0; iMacroCell < d_numberMacroCells; ++iMacroCell)
 	  {
 	    for(unsigned int iCell = 0; iCell < d_macroCellSubCellMap[iMacroCell]; ++iCell)
 	      {
-
+                unsigned int indexTemp2 = indexTemp1*iElem;
 		for(unsigned int iNode = 0; iNode < d_numberNodesPerElement; ++iNode)
 		  {
 		    if(d_nodesPerCellClassificationMap[iNode] == 1)
 		      {
+                        unsigned int indexVal = indexTemp2+numberWaveFunctions*iNode;
 			dealii::types::global_dof_index localNodeId = d_flattenedArrayMacroCellLocalProcIndexIdMap[iElem][iNode];
 
 			dcopy_(&numberWaveFunctions,
 			       src.begin()+localNodeId,
 			       &inc,
-			       &cellSrcWaveFunctionMatrix[d_numberNodesPerElement*numberWaveFunctions*iElem+numberWaveFunctions*iNode],//&cellSrcWaveFunctionMatrix[iElem][numberWaveFunctions*iNode],
+			       &cellSrcWaveFunctionMatrix[indexVal],//&cellSrcWaveFunctionMatrix[iElem][numberWaveFunctions*iNode],
 			       &inc);
 
 
@@ -329,9 +331,10 @@ void kohnShamDFTOperatorClass<FEOrder>::computeLocalHamiltonianTimesX(const dist
 		      }
 		    else
 		    {
+                      unsigned int indexVal = indexTemp2+numberWaveFunctions*iNode;
 		      for(unsigned int iWave = 0; iWave < numberWaveFunctions; ++iWave)
 		    	  {
-		    	    cellDstWaveFunctionMatrix[d_numberNodesPerElement*numberWaveFunctions*iElem+numberWaveFunctions*iNode + iWave] += cellHamMatrixTimesWaveMatrix[numberWaveFunctions*iNode + iWave];
+		    	    cellDstWaveFunctionMatrix[indexVal + iWave] += cellHamMatrixTimesWaveMatrix[numberWaveFunctions*iNode + iWave];
 		    	  }
 		    }
 		  }

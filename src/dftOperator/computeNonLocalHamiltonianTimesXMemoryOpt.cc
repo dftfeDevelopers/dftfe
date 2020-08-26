@@ -442,6 +442,7 @@ void kohnShamDFTOperatorClass<FEOrder>::computeNonLocalHamiltonianTimesX(const d
 	                         }
 				 }*/
 			const unsigned int macroCellId = d_normalCellIdToMacroCellIdMap[iElem];
+                        const unsigned int indexVal = d_numberNodesPerElement*numberWaveFunctions*macroCellId;
 			for(unsigned int iAtom = 0; iAtom < dftPtr->d_nonLocalAtomIdsInElement[iElem].size();++iAtom)
 			  {
 			    const unsigned int atomId = dftPtr->d_nonLocalAtomIdsInElement[iElem][iAtom];
@@ -455,7 +456,7 @@ void kohnShamDFTOperatorClass<FEOrder>::computeNonLocalHamiltonianTimesX(const d
 				   &numberPseudoWaveFunctions,
 				   &d_numberNodesPerElement,
 				   &alpha,
-				   &cellSrcWaveFunctionMatrix[d_numberNodesPerElement*numberWaveFunctions*macroCellId],
+				   &cellSrcWaveFunctionMatrix[indexVal],
 				   &numberWaveFunctions,
 				   &dftPtr->d_nonLocalProjectorElementMatrices[atomId][nonZeroElementMatrixId][0],
 				   &d_numberNodesPerElement,
@@ -543,6 +544,7 @@ void kohnShamDFTOperatorClass<FEOrder>::computeNonLocalHamiltonianTimesX(const d
 
 		  unsigned int elementId =  dftPtr->d_elementIdsInAtomCompactSupport[atomId][iElemComp];
 		  unsigned int macroCellId = d_normalCellIdToMacroCellIdMap[elementId];
+                  unsigned int indexValTemp = d_numberNodesPerElement*numberWaveFunctions*macroCellId;
 		  
 		  dgemm_(&transA1,
 			 &transB1,
@@ -581,9 +583,10 @@ void kohnShamDFTOperatorClass<FEOrder>::computeNonLocalHamiltonianTimesX(const d
 			    }
 			  else
 			  {
+                            unsigned int indexVal = indexValTemp + numberWaveFunctions*iNode;
 			    for(unsigned int iWave = 0; iWave < numberWaveFunctions; ++iWave)
 			  	{
-			  	  cellDstWaveFunctionMatrix[d_numberNodesPerElement*numberWaveFunctions*macroCellId+numberWaveFunctions*iNode + iWave] += cellNonLocalHamTimesWaveMatrix[numberWaveFunctions*iNode + iWave];
+			  	  cellDstWaveFunctionMatrix[indexVal + iWave] += cellNonLocalHamTimesWaveMatrix[numberWaveFunctions*iNode + iWave];
 			  	}
 			  }
 			}
