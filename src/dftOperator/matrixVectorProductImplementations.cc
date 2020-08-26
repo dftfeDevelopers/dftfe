@@ -258,12 +258,12 @@ void kohnShamDFTOperatorClass<FEOrder>::computeLocalHamiltonianTimesX(const dist
 	//element level matrix-vector multiplications
 	//
 	const char transA = 'N',transB = 'N';
-	const double scalarCoeffAlpha1 = scalar,scalarCoeffBeta = 1.0,scalarCoeffAlpha = 1.0;
+	const double scalarCoeffAlpha1 = scalar,scalarCoeffBeta = 0.0,scalarCoeffAlpha = 1.0;
 	const unsigned int inc = 1;
 
 	//std::vector<double> cellWaveFunctionMatrix(d_numberNodesPerElement*numberWaveFunctions,0.0);
         //cellWaveFunctionMatrix = d_cellWaveFunctionMatrix;
-	//std::vector<double> cellHamMatrixTimesWaveMatrix(d_numberNodesPerElement*numberWaveFunctions,0.0);
+	std::vector<double> cellHamMatrixTimesWaveMatrix(d_numberNodesPerElement*numberWaveFunctions,0.0);
 
 	unsigned int iElem = 0;
 	for(unsigned int iMacroCell = 0; iMacroCell < d_numberMacroCells; ++iMacroCell)
@@ -284,10 +284,10 @@ void kohnShamDFTOperatorClass<FEOrder>::computeLocalHamiltonianTimesX(const dist
 			       &inc);
 
 
-			for(unsigned int iWave = 0; iWave < numberWaveFunctions; ++iWave)
-			  {
-			    cellDstWaveFunctionMatrix[iElem][numberWaveFunctions*iNode + iWave] = 0.0;
-			  }
+			//for(unsigned int iWave = 0; iWave < numberWaveFunctions; ++iWave)
+			  //{
+			    //cellDstWaveFunctionMatrix[iElem][numberWaveFunctions*iNode + iWave] = 0.0;
+			  //}
 			
 		      }
 
@@ -305,7 +305,7 @@ void kohnShamDFTOperatorClass<FEOrder>::computeLocalHamiltonianTimesX(const dist
 		       &d_cellHamiltonianMatrix[kpointSpinIndex][iElem][0],
 		       &d_numberNodesPerElement,
 		       &scalarCoeffBeta,
-		       &cellDstWaveFunctionMatrix[iElem][0],
+		       &cellHamMatrixTimesWaveMatrix[0],//&cellDstWaveFunctionMatrix[iElem][0],
 		       &numberWaveFunctions);
 
 		for(unsigned int iNode = 0; iNode < d_numberNodesPerElement; ++iNode)
@@ -315,25 +315,25 @@ void kohnShamDFTOperatorClass<FEOrder>::computeLocalHamiltonianTimesX(const dist
 			dealii::types::global_dof_index localNodeId = d_flattenedArrayMacroCellLocalProcIndexIdMap[iElem][iNode];
 			daxpy_(&numberWaveFunctions,
 			       &scalarCoeffAlpha,
-			       &cellDstWaveFunctionMatrix[iElem][numberWaveFunctions*iNode],
+			       &cellHamMatrixTimesWaveMatrix[numberWaveFunctions*iNode],//&cellDstWaveFunctionMatrix[iElem][numberWaveFunctions*iNode],
 			       &inc,
 			       dst.begin()+localNodeId,
 			       &inc);
 
 			
-			for(unsigned int iWave = 0; iWave < numberWaveFunctions; ++iWave)
-			  {
-			    cellDstWaveFunctionMatrix[iElem][numberWaveFunctions*iNode + iWave] = 0.0;
-			  }
+			//for(unsigned int iWave = 0; iWave < numberWaveFunctions; ++iWave)
+			  //{
+			    //cellDstWaveFunctionMatrix[iElem][numberWaveFunctions*iNode + iWave] = 0.0;
+			 // }
 			
 		      }
-		    // else
-		    //{
-		    //for(unsigned int iWave = 0; iWave < numberWaveFunctions; ++iWave)
-		    //	  {
-		    //	    cellDstWaveFunctionMatrix[iElem][numberWaveFunctions*iNode + iWave] += cellHamMatrixTimesWaveMatrix[numberWaveFunctions*iNode + iWave];
-		    //	  }
-		    //}
+		    else
+		    {
+		      for(unsigned int iWave = 0; iWave < numberWaveFunctions; ++iWave)
+		    	  {
+		    	    cellDstWaveFunctionMatrix[iElem][numberWaveFunctions*iNode + iWave] += cellHamMatrixTimesWaveMatrix[numberWaveFunctions*iNode + iWave];
+		    	  }
+		    }
 		  }
 
 		++iElem;
