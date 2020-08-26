@@ -330,7 +330,14 @@ namespace dftfe{
 					           distributedCPUVec<dataTypes::number> & dst,
 						   std::vector<dataTypes::number>  & cellDstWaveFunctionMatrix,
 						   const double scalar = 1.0);
-					     
+
+
+	  void computeHamiltonianTimesX(const distributedCPUVec<dataTypes::number> & src,
+					std::vector<dataTypes::number>  & cellSrcWaveFunctionMatrix,
+					const unsigned int numberWaveFunctions,
+					distributedCPUVec<dataTypes::number> & dst,
+					std::vector<dataTypes::number>  & cellDstWaveFunctionMatrix,
+					const double scalar=1.0);	     
 					     
 	  
 

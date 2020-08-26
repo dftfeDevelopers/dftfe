@@ -29,6 +29,7 @@ namespace dftfe {
 
 #include "computeNonLocalHamiltonianTimesXMemoryOpt.cc"
 #include "computeNonLocalHamiltonianTimesXMemoryOptBatchGEMM.cc"
+#include "computeLocalAndNonLocalHamiltonianTimesX.cc"  
 #include "matrixVectorProductImplementations.cc"
 #include "shapeFunctionDataCalculator.cc"
 #include "hamiltonianMatrixCalculator.cc"
@@ -904,34 +905,7 @@ namespace dftfe {
 			const unsigned int inc = 1;
 
 
-			//
-			//scale src vector with M^{-1/2}
-			//
-			if(!dftParameters::cellLevelMassMatrixScaling)
-			  {
-			    for(unsigned int i = 0; i < numberDofs; ++i)
-			      {
-				const double scalingCoeff = d_invSqrtMassVector.local_element(i);//*scalar;
-				dscal_(&numberWaveFunctions,
-				       &scalingCoeff,
-				       src.begin()+i*numberWaveFunctions,
-				       &inc);
-			      }
-
-
-			    if(scaleFlag)
-			      {
-				for(int i = 0; i < numberDofs; ++i)
-				  {
-				    const double scalingCoeff = d_sqrtMassVector.local_element(i);
-				    dscal_(&numberWaveFunctions,
-					   &scalingCoeff,
-					   dst.begin()+i*numberWaveFunctions,
-					   &inc);
-
-				  }
-			      }
-			  }
+			
 
 			//
 			//update slave nodes before doing element-level matrix-vec multiplication
@@ -946,7 +920,7 @@ namespace dftfe {
 			//
 
 		
-			computeLocalHamiltonianTimesX(src,
+			/*computeLocalHamiltonianTimesX(src,
 						      cellSrcWaveFunctionMatrix,
 						      numberWaveFunctions,
 						      dst,
@@ -954,9 +928,7 @@ namespace dftfe {
 						      scalar);
 							      
 
-			//
-			//required if its a pseudopotential calculation and number of nonlocal atoms are greater than zero
-			//H^{nloc}*M^{-1/2}*X
+			
 			if(dftParameters::isPseudopotential && dftPtr->d_nonLocalAtomGlobalChargeIds.size() > 0)
 			  {
 
@@ -967,15 +939,23 @@ namespace dftfe {
 							     cellDstWaveFunctionMatrix,
 							     scalar);
 
-			  }
+							     }*/
 
+
+			
+			computeHamiltonianTimesX(src,
+						 cellSrcWaveFunctionMatrix,
+						 numberWaveFunctions,
+						 dst,
+						 cellDstWaveFunctionMatrix,
+						 scalar);
 
 
 			//
 			//update master node contributions from its correponding slave nodes
 			//
 			dftPtr->constraintsNoneDataInfo.distribute_slave_to_master(dst,
-					numberWaveFunctions);
+										   numberWaveFunctions);
 
 
 			src.zero_out_ghosts();
@@ -984,33 +964,9 @@ namespace dftfe {
 			//
 			//M^{-1/2}*H*M^{-1/2}*X
 			//
-			if(!dftParameters::cellLevelMassMatrixScaling)
-			  {
-			    for(unsigned int i = 0; i < numberDofs; ++i)
-			      {
-				dscal_(&numberWaveFunctions,
-				       &d_invSqrtMassVector.local_element(i),
-				       dst.begin()+i*numberWaveFunctions,
-				       &inc);
-			      }
-
-			    //
-			    //unscale src M^{1/2}*X
-			    //
-			    for(unsigned int i = 0; i < numberDofs; ++i)
-			      {
-				double scalingCoeff = d_sqrtMassVector.local_element(i);//*(1.0/scalar);
-				dscal_(&numberWaveFunctions,
-				       &scalingCoeff,
-				       src.begin()+i*numberWaveFunctions,
-				       &inc);
-			      }
-			  }
-			else
-			  {
-			    dftPtr->constraintsNoneDataInfo.set_zero(src,
-                                                                     numberWaveFunctions);
-			  }
+			dftPtr->constraintsNoneDataInfo.set_zero(src,
+								 numberWaveFunctions);
+			  
 
 		}
   
