@@ -429,7 +429,7 @@ void dftClass<FEOrder>::computeRhoNodalFromPSI(
 	//initialize variables to be used later
 	const unsigned int dofs_per_cell = d_dofHandlerPRefined.get_fe().dofs_per_cell;
 	typename DoFHandler<3>::active_cell_iterator cell = d_dofHandlerPRefined.begin_active(), endc = d_dofHandlerPRefined.end();
-	dealii::IndexSet locallyOwnedDofs = d_dofHandlerPRefined.locally_owned_dofs();
+	const dealii::IndexSet & locallyOwnedDofs = d_dofHandlerPRefined.locally_owned_dofs();
 	QGaussLobatto<3>  quadrature_formula(C_num1DKerkerPoly<FEOrder>()+1);
 	const unsigned int numQuadPoints = quadrature_formula.size();
 
