@@ -57,7 +57,9 @@ namespace dftfe {
 						const bool isPrecomputeShapeGradIntegral=false,
 						const bool isRhoValues=true,
             const bool isGradSmearedChargeRhs=false,
-            const unsigned int smearedChargeGradientComponentId=0);
+            const unsigned int smearedChargeGradientComponentId=0,
+            const bool storeSmearedChargeRhs=false,
+            const bool reuseSmearedChargeRhs=false);
 
 				/**
 				 * @brief reinitialize data structures for nuclear electrostatic potential solve
@@ -170,6 +172,9 @@ namespace dftfe {
 				/// storage for diagonal of the A matrix
 				distributedCPUVec<double> d_diagonalA;
 
+				/// storage for smeared charge rhs in case of total potential solve (doesn't change every scf)
+				distributedCPUVec<double> d_rhsSmearedCharge;        
+
 				/// pointer to dealii MatrixFree object
 				const dealii::MatrixFree<3,double>  * d_matrixFreeDataPtr;
 
@@ -208,6 +213,12 @@ namespace dftfe {
 
         ///
         bool d_isGradSmearedChargeRhs;
+
+        ///
+        bool d_isStoreSmearedChargeRhs;
+
+        ///
+        bool d_isReuseSmearedChargeRhs;
 
         ///
         unsigned int d_smearedChargeGradientComponentId;

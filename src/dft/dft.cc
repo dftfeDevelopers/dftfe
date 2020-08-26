@@ -2000,7 +2000,13 @@ namespace dftfe {
 							*rhoInValues,
 							false,
 							false,
-							dftParameters::smearedNuclearCharges);
+							dftParameters::smearedNuclearCharges,
+              false,
+              true,
+              false,
+              0,
+              false,
+              true);          
 				else
 					phiTotalSolverProblem.reinit(matrix_free_data,
 							d_phiTotRhoIn,
@@ -2012,7 +2018,13 @@ namespace dftfe {
 							*rhoInValues,
 							true,
 							dftParameters::periodicX && dftParameters::periodicY && dftParameters::periodicZ && !dftParameters::pinnedNodeForPBC,
-							dftParameters::smearedNuclearCharges);
+							dftParameters::smearedNuclearCharges,
+              false,
+              true,
+              false,
+              0,
+              true,
+              false);
 
 				computingTimerStandard.exit_section("phiTotalSolverProblem init");
 				computing_timer.enter_section("phiTot solve");
@@ -2591,7 +2603,13 @@ namespace dftfe {
 							*rhoOutValues,
 							false,
 							false,
-							dftParameters::smearedNuclearCharges);
+							dftParameters::smearedNuclearCharges,
+              false,
+              true,
+              false,
+              0,
+              false,
+              true);              
 
 
 					dealiiCGSolver.solve(phiTotalSolverProblem,
@@ -2732,7 +2750,13 @@ namespace dftfe {
 						*rhoOutValues,
 						false,
 						false,
-						dftParameters::smearedNuclearCharges);
+						dftParameters::smearedNuclearCharges,
+            false,
+            true,
+            false,
+            0,
+            false,
+            true);            
 
 
 				dealiiCGSolver.solve(phiTotalSolverProblem,

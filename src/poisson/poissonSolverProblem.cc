@@ -50,7 +50,9 @@ namespace dftfe {
 		 const bool isPrecomputeShapeGradIntegral,
 		 const bool isRhoValues,
      const bool isGradSmearedChargeRhs,
-     const unsigned int smearedChargeGradientComponentId)
+     const unsigned int smearedChargeGradientComponentId,
+     const bool storeSmearedChargeRhs,
+     const bool reuseSmearedChargeRhs)
 		{
 			int this_process;
 			MPI_Comm_rank(mpi_communicator, &this_process);
@@ -67,6 +69,10 @@ namespace dftfe {
       d_smearedChargeQuadratureId=smearedChargeQuadratureId;
       d_isGradSmearedChargeRhs=isGradSmearedChargeRhs;
       d_smearedChargeGradientComponentId=smearedChargeGradientComponentId;
+      d_isStoreSmearedChargeRhs=storeSmearedChargeRhs;      
+      d_isReuseSmearedChargeRhs=reuseSmearedChargeRhs;
+
+			AssertThrow(storeSmearedChargeRhs==false || reuseSmearedChargeRhs==false,dealii::ExcMessage("DFT-FE Error: both store and reuse smeared charge rhs cannot be true at the same time."));
 
 			if (isComputeMeanValueConstraint)
 			{
@@ -171,6 +177,12 @@ namespace dftfe {
 			rhs.reinit(*d_xPtr);
 			rhs=0;
 
+      if (d_isStoreSmearedChargeRhs)
+      {
+        d_rhsSmearedCharge.reinit(*d_xPtr);
+        d_rhsSmearedCharge=0;
+      }
+       
 			const dealii::DoFHandler<3> & dofHandler=
 				d_matrixFreeDataPtr->get_dof_handler(d_matrixFreeVectorComponent);
 
@@ -243,7 +255,7 @@ namespace dftfe {
 
 					d_constraintMatrixPtr->distribute_local_to_global(cell_rhs_origin, local_dof_indices_origin, rhs);
 				}
-			else if (d_smearedChargeValuesPtr!=NULL && !d_isGradSmearedChargeRhs)
+			else if (d_smearedChargeValuesPtr!=NULL && !d_isGradSmearedChargeRhs && !d_isReuseSmearedChargeRhs)
 			{
 				const unsigned int   num_quad_points_sc = d_matrixFreeDataPtr->get_quadrature(d_smearedChargeQuadratureId).size();
 				dealii::FEValues<3> fe_valuesSC (dofHandler.get_fe(), d_matrixFreeDataPtr->get_quadrature(d_smearedChargeQuadratureId),dealii::update_values | dealii::update_JxW_values);        
@@ -266,6 +278,9 @@ namespace dftfe {
 						//assemble to global data structures
 						cell->get_dof_indices (local_dof_indices);
 						d_constraintMatrixPtr->distribute_local_to_global(elementalRhs, local_dof_indices, rhs);
+
+            if (d_isStoreSmearedChargeRhs)
+              d_constraintMatrixPtr->distribute_local_to_global(elementalRhs, local_dof_indices, d_rhsSmearedCharge);            
 					}        
 			}
 			else if (d_smearedChargeValuesPtr!=NULL && d_isGradSmearedChargeRhs)
@@ -297,6 +312,12 @@ namespace dftfe {
 
 			//MPI operation to sync data
 			rhs.compress(dealii::VectorOperation::add);
+
+      if (d_isReuseSmearedChargeRhs)
+			   rhs+=d_rhsSmearedCharge;
+
+      if (d_isStoreSmearedChargeRhs)
+        d_rhsSmearedCharge.compress(dealii::VectorOperation::add);           
 
 			if (d_isMeanValueConstraintComputed)
 				meanValueConstraintDistributeSlaveToMaster(rhs);
