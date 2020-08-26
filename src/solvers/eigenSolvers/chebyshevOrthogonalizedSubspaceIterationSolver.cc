@@ -199,7 +199,7 @@ namespace dftfe{
 					      true);
 
 			///storage for cell wavefunction matrix
-			std::vector<std::vector<dataTypes::number> > cellWaveFunctionMatrix;
+			std::vector<dataTypes::number>  cellWaveFunctionMatrix;
 
                         //// Debug check lines///////////////////////////////////////////////
                         /*distributedCPUVec<dataTypes::number> productArray;

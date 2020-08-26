@@ -130,7 +130,7 @@ namespace linearAlgebraOperations
        template<typename T>
 		void chebyshevFilterOpt(operatorDFTClass & operatorMatrix,
 				distributedCPUVec<T> & X,
-				std::vector<std::vector<dataTypes::number> > & cellWaveFunctionMatrix,		
+				std::vector<dataTypes::number>  & cellWaveFunctionMatrix,		
 				const unsigned int numberComponents,
 				const unsigned int m,
 				const double a,

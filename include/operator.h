@@ -93,31 +93,22 @@ namespace dftfe{
 
                         virtual void initCellWaveFunctionMatrix(const unsigned int numberWaveFunctions,
                                                                 distributedCPUVec<dataTypes::number> & X,
-                                                                std::vector<std::vector<dataTypes::number> > & cellWaveFunctionMatrix) = 0;
+                                                                std::vector<dataTypes::number> & cellWaveFunctionMatrix) = 0;
 
 
 	                virtual void fillGlobalArrayFromCellWaveFunctionMatrix(const unsigned int wavefunBlockSize,
-								 std::vector<std::vector<dataTypes::number> > & cellWaveFunctionMatrix,
-								 distributedCPUVec<dataTypes::number> & X) = 0;
+									       std::vector<dataTypes::number> & cellWaveFunctionMatrix,
+									       distributedCPUVec<dataTypes::number> & X) = 0;
 
 	                virtual void initWithScalar(const unsigned int numberWaveFunctions,
 						    double scalarValue,
-						    std::vector<std::vector<dataTypes::number> > & cellWaveFunctionMatrix) = 0;
-
-	                virtual void axpy(double scalar,
-			                  const unsigned int numberWaveFunctions,
-			                  std::vector<std::vector<dataTypes::number> > & cellXWaveFunctionMatrix,
-			                  std::vector<std::vector<dataTypes::number> > & cellYWaveFunctionMatrix) = 0;
-
-	                virtual void scale(double scalar,
-			                   const unsigned int numberWaveFunctions,
-			                   std::vector<std::vector<dataTypes::number> > & cellXWaveFunctionMatrix) = 0;
-
+						    std::vector<dataTypes::number> & cellWaveFunctionMatrix) = 0;
+	        
 	                virtual void axpby(double scalarA,
-					  double scalarB,
-					  const unsigned int numberWaveFunctions,
-					  std::vector<std::vector<dataTypes::number> > & cellXWaveFunctionMatrix,
-					  std::vector<std::vector<dataTypes::number> > & cellYWaveFunctionMatrix) = 0; 
+					   double scalarB,
+					   const unsigned int numberWaveFunctions,
+					   std::vector<dataTypes::number> & cellXWaveFunctionMatrix,
+					   std::vector<dataTypes::number> & cellYWaveFunctionMatrix) = 0; 
 
 	                virtual void getInteriorSurfaceNodesMapFromGlobalArray(std::vector<unsigned int> & globalArrayClassificationMap) = 0; 
 	                
@@ -153,12 +144,12 @@ namespace dftfe{
 
 
 	                virtual void HX(distributedCPUVec<dataTypes::number> & src,
-		              	        std::vector<std::vector<dataTypes::number> > & cellSrcWaveFunctionMatrix,
+		              	        std::vector<dataTypes::number>  & cellSrcWaveFunctionMatrix,
 			                const unsigned int numberWaveFunctions,
 			                const bool scaleFlag,
 			                const double scalar,
 			                distributedCPUVec<dataTypes::number> & dst,
-			                std::vector<std::vector<dataTypes::number> > & cellDstWaveFunctionMatrix) = 0;
+			                std::vector<dataTypes::number>  & cellDstWaveFunctionMatrix) = 0;
 
 	  
 			virtual void MX(distributedCPUVec<dataTypes::number> & X,

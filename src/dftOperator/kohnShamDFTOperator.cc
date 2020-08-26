@@ -177,28 +177,29 @@ namespace dftfe {
       template<unsigned int FEOrder>
       void kohnShamDFTOperatorClass<FEOrder>::initCellWaveFunctionMatrix(const unsigned int numberWaveFunctions,
 									 distributedCPUVec<dataTypes::number> & src,
-									 std::vector<std::vector<dataTypes::number> > & cellWaveFunctionMatrix)
+									 std::vector<dataTypes::number> & cellWaveFunctionMatrix)
 		{
-		        cellWaveFunctionMatrix.resize(dftPtr->matrix_free_data.n_physical_cells());
-                      	unsigned int iElem = 0;
-                        const unsigned int inc = 1;  
-			for(unsigned int iMacroCell = 0; iMacroCell < d_numberMacroCells; ++iMacroCell)
-			  {
-			    for(unsigned int iCell = 0; iCell < d_macroCellSubCellMap[iMacroCell]; ++iCell)
-			      {
-				cellWaveFunctionMatrix[iElem].resize(d_numberNodesPerElement*numberWaveFunctions,0.0);
-				for(unsigned int iNode = 0; iNode < d_numberNodesPerElement; ++iNode)
-				  {
-				    dealii::types::global_dof_index localNodeId = d_flattenedArrayMacroCellLocalProcIndexIdMap[iElem][iNode];
-				    dcopy_(&numberWaveFunctions,
-					   src.begin()+localNodeId,
-					   &inc,
-					   &cellWaveFunctionMatrix[iElem][numberWaveFunctions*iNode],
-					   &inc);
-				  }
-				++iElem;
-			      }
-			  }
+
+		  unsigned int numberCells = dftPtr->matrix_free_data.n_physical_cells();
+		  cellWaveFunctionMatrix.resize(numberCells*d_numberNodesPerElement*numberWaveFunctions,0.0);
+		  unsigned int iElem = 0;
+		  const unsigned int inc = 1;  
+		  for(unsigned int iMacroCell = 0; iMacroCell < d_numberMacroCells; ++iMacroCell)
+		    {
+		      for(unsigned int iCell = 0; iCell < d_macroCellSubCellMap[iMacroCell]; ++iCell)
+			{
+			  for(unsigned int iNode = 0; iNode < d_numberNodesPerElement; ++iNode)
+			    {
+			      dealii::types::global_dof_index localNodeId = d_flattenedArrayMacroCellLocalProcIndexIdMap[iElem][iNode];
+			      dcopy_(&numberWaveFunctions,
+				     src.begin()+localNodeId,
+				     &inc,
+				     &cellWaveFunctionMatrix[d_numberNodesPerElement*numberWaveFunctions*iElem+numberWaveFunctions*iNode],//&cellWaveFunctionMatrix[iElem][numberWaveFunctions*iNode],
+				     &inc);
+			    }
+			  ++iElem;
+			}
+		    }
 	
 		}
 
@@ -207,7 +208,7 @@ namespace dftfe {
 
   template<unsigned int FEOrder>
   void kohnShamDFTOperatorClass<FEOrder>::fillGlobalArrayFromCellWaveFunctionMatrix(const unsigned int numberWaveFunctions,
-										    std::vector<std::vector<dataTypes::number> > & cellWaveFunctionMatrix,
+										    std::vector<dataTypes::number>  & cellWaveFunctionMatrix,
 										    distributedCPUVec<dataTypes::number> & glbArray)
 									
   {
@@ -224,7 +225,7 @@ namespace dftfe {
 		  {
 		    dealii::types::global_dof_index localNodeId = d_flattenedArrayMacroCellLocalProcIndexIdMap[iElem][iNode];
 		    dcopy_(&numberWaveFunctions,
-			   &cellWaveFunctionMatrix[iElem][numberWaveFunctions*iNode],//src.begin()+localNodeId,
+			   &cellWaveFunctionMatrix[d_numberNodesPerElement*numberWaveFunctions*iElem+numberWaveFunctions*iNode],//&cellWaveFunctionMatrix[iElem][numberWaveFunctions*iNode],//src.begin()+localNodeId,
 			   &inc,
 			   glbArray.begin()+localNodeId,
 			   &inc);
@@ -241,19 +242,20 @@ namespace dftfe {
   template<unsigned int FEOrder>
   void kohnShamDFTOperatorClass<FEOrder>::initWithScalar(const unsigned int numberWaveFunctions,
 							 double scalarValue,
-							 std::vector<std::vector<dataTypes::number> > & cellWaveFunctionMatrix)
+							 std::vector<dataTypes::number> & cellWaveFunctionMatrix)
 							 
   {
-    cellWaveFunctionMatrix.resize(dftPtr->matrix_free_data.n_physical_cells());
-    unsigned int iElem = 0;
+    unsigned int numberCells = dftPtr->matrix_free_data.n_physical_cells();
+    cellWaveFunctionMatrix.resize(numberCells*d_numberNodesPerElement*numberWaveFunctions,scalarValue);
+    /*unsigned int iElem = 0;
     for(unsigned int iMacroCell = 0; iMacroCell < d_numberMacroCells; ++iMacroCell)
       {
 	for(unsigned int iCell = 0; iCell < d_macroCellSubCellMap[iMacroCell]; ++iCell)
 	  {
-	    cellWaveFunctionMatrix[iElem].resize(d_numberNodesPerElement*numberWaveFunctions,scalarValue);
+	    cellWaveFunctionMatrix[iElem].resize(numberCells*d_numberNodesPerElement*numberWaveFunctions,scalarValue);
 	    ++iElem;
 	  }
-      }
+	  }*/
 
   }
 
@@ -261,7 +263,7 @@ namespace dftfe {
 
 
   //Y = a*X + Y
-  template<unsigned int FEOrder>
+  /*template<unsigned int FEOrder>
   void kohnShamDFTOperatorClass<FEOrder>::axpy(double scalar,
 					       const unsigned int numberWaveFunctions,
 					       std::vector<std::vector<dataTypes::number> > & cellXWaveFunctionMatrix,
@@ -289,15 +291,15 @@ namespace dftfe {
       }
 	
 
-  }
+      }*/
 
  //Y = a*X + b*Y
   template<unsigned int FEOrder>
   void kohnShamDFTOperatorClass<FEOrder>::axpby(double scalarA,
 						double scalarB,
 					        const unsigned int numberWaveFunctions,
-					        std::vector<std::vector<dataTypes::number> > & cellXWaveFunctionMatrix,
-					        std::vector<std::vector<dataTypes::number> > & cellYWaveFunctionMatrix)
+					        std::vector<dataTypes::number>  & cellXWaveFunctionMatrix,
+					        std::vector<dataTypes::number>  & cellYWaveFunctionMatrix)
   {
     
     unsigned int iElem = 0;
@@ -311,7 +313,8 @@ namespace dftfe {
 		  {
 		    for(unsigned int iWave = 0; iWave < numberWaveFunctions; ++iWave)
 		      {
-			cellYWaveFunctionMatrix[iElem][numberWaveFunctions*iNode + iWave] = scalarA*cellXWaveFunctionMatrix[iElem][numberWaveFunctions*iNode + iWave]+scalarB*cellYWaveFunctionMatrix[iElem][numberWaveFunctions*iNode + iWave];
+			//cellYWaveFunctionMatrix[iElem][numberWaveFunctions*iNode + iWave] = scalarA*cellXWaveFunctionMatrix[iElem][numberWaveFunctions*iNode + iWave]+scalarB*cellYWaveFunctionMatrix[iElem][numberWaveFunctions*iNode + iWave];
+			cellYWaveFunctionMatrix[d_numberNodesPerElement*numberWaveFunctions*iElem + numberWaveFunctions*iNode + iWave] = scalarB*cellYWaveFunctionMatrix[d_numberNodesPerElement*numberWaveFunctions*iElem + numberWaveFunctions*iNode + iWave] + scalarA*cellXWaveFunctionMatrix[d_numberNodesPerElement*numberWaveFunctions*iElem + numberWaveFunctions*iNode + iWave]
 		      }
 
 		  }
@@ -325,7 +328,7 @@ namespace dftfe {
   
 
 
-  template<unsigned int FEOrder>
+  /*template<unsigned int FEOrder>
   void kohnShamDFTOperatorClass<FEOrder>::scale(double scalar,
 					        const unsigned int numberWaveFunctions,
 					        std::vector<std::vector<dataTypes::number> > & cellWaveFunctionMatrix)
@@ -353,7 +356,7 @@ namespace dftfe {
       }
 	
 
-  }
+      }*/
 
   
   template<unsigned int FEOrder>
@@ -884,12 +887,12 @@ namespace dftfe {
 
        	template<unsigned int FEOrder>
 		void kohnShamDFTOperatorClass<FEOrder>::HX(distributedCPUVec<double> & src,
-							   std::vector<std::vector<double> > & cellSrcWaveFunctionMatrix,
+							   std::vector<double>  & cellSrcWaveFunctionMatrix,
 							   const unsigned int numberWaveFunctions,
 							   const bool scaleFlag,
 							   const double scalar,
 							   distributedCPUVec<double> & dst,
-							   std::vector<std::vector<double> > & cellDstWaveFunctionMatrix)
+							   std::vector<double> & cellDstWaveFunctionMatrix)
 							   
 
 
@@ -938,57 +941,30 @@ namespace dftfe {
 			//
 			//Hloc*M^{-1/2}*X
 			//
-#ifdef WITH_MKL
-			if (dftParameters::useBatchGEMM && numberWaveFunctions<1000)
-			{
-				computeLocalHamiltonianTimesXBatchGEMM(src,
-								       numberWaveFunctions,
-								       dst,
-								       scalar);
-								       
-			}
-			else
-				computeLocalHamiltonianTimesX(src,
-							      cellSrcWaveFunctionMatrix,
-							      numberWaveFunctions,
-							      dst,
-							      cellDstWaveFunctionMatrix,
-							      scalar);
-							      
-#else
+
+		
 			computeLocalHamiltonianTimesX(src,
+						      cellSrcWaveFunctionMatrix,
 						      numberWaveFunctions,
 						      dst,
+						      cellDstWaveFunctionMatrix,
 						      scalar);
-#endif
+							      
 
 			//
 			//required if its a pseudopotential calculation and number of nonlocal atoms are greater than zero
 			//H^{nloc}*M^{-1/2}*X
 			if(dftParameters::isPseudopotential && dftPtr->d_nonLocalAtomGlobalChargeIds.size() > 0)
-			{
-#ifdef WITH_MKL
-				if (dftParameters::useBatchGEMM && numberWaveFunctions<1000)
-				{
-					computeNonLocalHamiltonianTimesXBatchGEMM(src,
-										  numberWaveFunctions,
-										  dst,
-										  scalar);
-				}
-				else
-					computeNonLocalHamiltonianTimesX(src,
-                                                                         cellSrcWaveFunctionMatrix,
-						 	                 numberWaveFunctions,
-									 dst,
-                                                                         cellDstWaveFunctionMatrix,
-									 scalar);
-#else
-				computeNonLocalHamiltonianTimesX(src,
-								 numberWaveFunctions,
-								 dst,
-								 scalar);
-#endif
-			}
+			  {
+
+			    computeNonLocalHamiltonianTimesX(src,
+							     cellSrcWaveFunctionMatrix,
+							     numberWaveFunctions,
+							     dst,
+							     cellDstWaveFunctionMatrix,
+							     scalar);
+
+			  }
 
 
 

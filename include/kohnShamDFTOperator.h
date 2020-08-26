@@ -63,23 +63,23 @@ namespace dftfe{
 		 * @param dst Vector containing sum of dst vector and operator times given multi-vectors product
 		 */
 		void HX(distributedCPUVec<dataTypes::number> & src,
-				const unsigned int numberComponents,
-				const bool scaleFlag,
-				const double scalar,
-				distributedCPUVec<dataTypes::number> & dst);
+			const unsigned int numberComponents,
+			const bool scaleFlag,
+			const double scalar,
+			distributedCPUVec<dataTypes::number> & dst);
 
 		void HX(distributedCPUVec<dataTypes::number> & src,
-				const unsigned int numberComponents,
-				distributedCPUVec<dataTypes::number> & dst);
+			const unsigned int numberComponents,
+			distributedCPUVec<dataTypes::number> & dst);
 
 
 	        void HX(distributedCPUVec<dataTypes::number> & src,
-		        std::vector<std::vector<dataTypes::number> > & cellSrcWaveFunctionMatrix,
+		        std::vector<dataTypes::number> & cellSrcWaveFunctionMatrix,
 		        const unsigned int numberWaveFunctions,
 		        const bool scaleFlag,
 		        const double scalar,
 		        distributedCPUVec<dataTypes::number> & dst,
-		        std::vector<std::vector<dataTypes::number> > & cellDstWaveFunctionMatrix);
+		        std::vector<dataTypes::number>  & cellDstWaveFunctionMatrix);
 
 
 	       
@@ -167,11 +167,11 @@ namespace dftfe{
 		 * @param spinIndex flag to toggle spin-up or spin-down
 		 * @param externalPotCorrValues quadrature data of sum{Vext} minus sum{Vnu}
 		 */
-	  void computeVEffSpinPolarized(const std::map<dealii::CellId,std::vector<double> >* rhoValues,
-					const distributedCPUVec<double> & phi,
-					unsigned int spinIndex,
-					const std::map<dealii::CellId,std::vector<double> > & externalPotCorrValues,
-					const unsigned int externalPotCorrQuadratureId);
+	       void computeVEffSpinPolarized(const std::map<dealii::CellId,std::vector<double> >* rhoValues,
+					     const distributedCPUVec<double> & phi,
+					     unsigned int spinIndex,
+					     const std::map<dealii::CellId,std::vector<double> > & externalPotCorrValues,
+					     const unsigned int externalPotCorrQuadratureId);
 
 		/**
 		 * @brief Computes effective potential involving gradient density type exchange-correlation functionals
@@ -181,11 +181,11 @@ namespace dftfe{
 		 * @param phi electrostatic potential arising both from electron-density and nuclear charge
 		 * @param externalPotCorrValues quadrature data of sum{Vext} minus sum{Vnu}
 		 */
-		void computeVEff(const std::map<dealii::CellId,std::vector<double> >* rhoValues,
-				const std::map<dealii::CellId,std::vector<double> >* gradRhoValues,
-				const distributedCPUVec<double> & phi,
-				const std::map<dealii::CellId,std::vector<double> > & externalPotCorrValues,
-        const unsigned int externalPotCorrQuadratureId);
+	  void computeVEff(const std::map<dealii::CellId,std::vector<double> >* rhoValues,
+			   const std::map<dealii::CellId,std::vector<double> >* gradRhoValues,
+			   const distributedCPUVec<double> & phi,
+			   const std::map<dealii::CellId,std::vector<double> > & externalPotCorrValues,
+			   const unsigned int externalPotCorrQuadratureId);
 
 
 		/**
@@ -197,12 +197,12 @@ namespace dftfe{
 		 * @param spinIndex flag to toggle spin-up or spin-down
 		 * @param externalPotCorrValues quadrature data of sum{Vext} minus sum{Vnu}
 		 */
-		void computeVEffSpinPolarized(const std::map<dealii::CellId,std::vector<double> >* rhoValues,
-				const std::map<dealii::CellId,std::vector<double> >* gradRhoValues,
-				const distributedCPUVec<double> & phi,
-				const unsigned int spinIndex,
-				const std::map<dealii::CellId,std::vector<double> > & externalPotCorrValues,
-        const unsigned int externalPotCorrQuadratureId);
+	         void computeVEffSpinPolarized(const std::map<dealii::CellId,std::vector<double> >* rhoValues,
+					       const std::map<dealii::CellId,std::vector<double> >* gradRhoValues,
+					       const distributedCPUVec<double> & phi,
+					       const unsigned int spinIndex,
+					       const std::map<dealii::CellId,std::vector<double> > & externalPotCorrValues,
+					       const unsigned int externalPotCorrQuadratureId);
 
 
 		/**
@@ -233,42 +233,34 @@ namespace dftfe{
 		 *
 		 */
 		void reinit(const unsigned int wavefunBlockSize,
-				distributedCPUVec<dataTypes::number> & X,
-				bool flag);
+			    distributedCPUVec<dataTypes::number> & X,
+			    bool flag);
 
 		void reinit(const unsigned int wavefunBlockSize);
 
 
 	        void initCellWaveFunctionMatrix(const unsigned int numberWaveFunctions,
 					        distributedCPUVec<dataTypes::number> & X,
-                                                std::vector<std::vector<dataTypes::number> > & cellWaveFunctionMatrix);
+                                                std::vector<dataTypes::number> & cellWaveFunctionMatrix);
 
 
-	       void fillGlobalArrayFromCellWaveFunctionMatrix(const unsigned int wavefunBlockSize,
-							      std::vector<std::vector<dataTypes::number> > & cellWaveFunctionMatrix,
+	        void fillGlobalArrayFromCellWaveFunctionMatrix(const unsigned int wavefunBlockSize,
+							      std::vector<dataTypes::number> & cellWaveFunctionMatrix,
 							      distributedCPUVec<dataTypes::number> & X);
 
-	       void initWithScalar(const unsigned int numberWaveFunctions,
-				   double scalarValue,
-				   std::vector<std::vector<dataTypes::number> > & cellWaveFunctionMatrix);
+	        void initWithScalar(const unsigned int numberWaveFunctions,
+				    double scalarValue,
+				    std::vector<dataTypes::number> & cellWaveFunctionMatrix);
 
-	       void axpy(double scalar,
-			 const unsigned int numberWaveFunctions,
-			 std::vector<std::vector<dataTypes::number> > & cellXWaveFunctionMatrix,
-			 std::vector<std::vector<dataTypes::number> > & cellYWaveFunctionMatrix);
-
-	       
-	       void axpby(double scalarA,
-			  double scalarB,
-			  const unsigned int numberWaveFunctions,
-			  std::vector<std::vector<dataTypes::number> > & cellXWaveFunctionMatrix,
-			  std::vector<std::vector<dataTypes::number> > & cellYWaveFunctionMatrix); 
+	     	       
+	        void axpby(double scalarA,
+			   double scalarB,
+			   const unsigned int numberWaveFunctions,
+			   std::vector<dataTypes::number>  & cellXWaveFunctionMatrix,
+			   std::vector<dataTypes::number>  & cellYWaveFunctionMatrix); 
 	  
 
-	       void scale(double scalar,
-			  const unsigned int numberWaveFunctions,
-			  std::vector<std::vector<dataTypes::number> > & cellXWaveFunctionMatrix);
-
+	       
 	       void getInteriorSurfaceNodesMapFromGlobalArray(std::vector<unsigned int> & globalArrayClassificationMap);
 
 
@@ -282,9 +274,9 @@ namespace dftfe{
 		 * @param invSqrtMassVec output the value of inverse square root of diagonal mass matrix
 		 */
 		void computeMassVector(const dealii::DoFHandler<3> & dofHandler,
-				const dealii::ConstraintMatrix & constraintMatrix,
-				distributedCPUVec<double> & sqrtMassVec,
-				distributedCPUVec<double> & invSqrtMassVec);
+				       const dealii::ConstraintMatrix & constraintMatrix,
+				       distributedCPUVec<double> & sqrtMassVec,
+				       distributedCPUVec<double> & invSqrtMassVec);
 
 		///precompute shapefunction gradient integral
 		void preComputeShapeFunctionGradientIntegrals(const unsigned int lpspQuadratureId);
@@ -333,10 +325,10 @@ namespace dftfe{
 						   const double scalar = 1.0);
 
 	        void computeLocalHamiltonianTimesX(const distributedCPUVec<dataTypes::number> & src,
-					           std::vector<std::vector<double> > & cellSrcWaveFunctionMatrix,
+					           std::vector<dataTypes::number>  & cellSrcWaveFunctionMatrix,
 					           const unsigned int numberWaveFunctions,
 					           distributedCPUVec<dataTypes::number> & dst,
-						   std::vector<std::vector<double> > & cellDstWaveFunctionMatrix,
+						   std::vector<dataTypes::number>  & cellDstWaveFunctionMatrix,
 						   const double scalar = 1.0);
 					     
 					     
@@ -383,11 +375,11 @@ namespace dftfe{
 
 
 	        void computeNonLocalHamiltonianTimesX(const distributedCPUVec<double> & src,
-						std::vector<std::vector<double> > & cellSrcWaveFunctionMatrix,
-						const unsigned int numberWaveFunctions,
-						distributedCPUVec<double>       & dst,
-						std::vector<std::vector<double> > & cellDstWaveFunctionMatrix,
-						const double scalar=1.0) const;
+						      std::vector<dataTypes::number>  & cellSrcWaveFunctionMatrix,
+						      const unsigned int numberWaveFunctions,
+						      distributedCPUVec<double>       & dst,
+						      std::vector<dataTypes::number>  & cellDstWaveFunctionMatrix,
+						      const double scalar=1.0) const;
 
 	  
 

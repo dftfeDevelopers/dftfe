@@ -362,7 +362,7 @@ namespace dftfe{
 		template<typename T>
 		void chebyshevFilterOpt(operatorDFTClass & operatorMatrix,
 					distributedCPUVec<T> & XArray,
-					std::vector<std::vector<dataTypes::number> > & cellXWaveFunctionMatrix,	
+					std::vector<dataTypes::number>  & cellXWaveFunctionMatrix,	
 					const unsigned int numberWaveFunctions,
 					const unsigned int m,
 					const double a,
@@ -374,7 +374,7 @@ namespace dftfe{
 				sigma = e/(a0-c); sigma1 = sigma; gamma = 2.0/sigma1;
 
 				distributedCPUVec<T> YArray;
-				std::vector<std::vector<T> > cellYWaveFunctionMatrix;
+				std::vector<T>  cellYWaveFunctionMatrix;
 
 				//init cellYWaveFunctionMatrix to a given scalar
 				double scalarValue = 0.0;
