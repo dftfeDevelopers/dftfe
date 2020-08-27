@@ -126,6 +126,21 @@ template<unsigned int FEOrder>
       forceContributionSmearedChargesGammaAtoms.clear();
       for (unsigned int cell=0; cell<matrixFreeDataElectro.n_macro_cells(); ++cell)
       {
+
+        std::vector<unsigned int> nonTrivialSmearedChargeAtomIdsMacroCell;
+        const unsigned int numSubCells=matrixFreeDataElectro.n_components_filled(cell);
+        for (unsigned int iSubCell=0; iSubCell<numSubCells; ++iSubCell)
+        {
+          subCellPtr= matrixFreeDataElectro.get_cell_iterator(cell,iSubCell);
+          dealii::CellId subCellId=subCellPtr->id();
+          const std::vector<unsigned int> & temp=dftPtr->d_bCellNonTrivialAtomIdsBins[iBin].find(subCellId)->second;
+          for (int i=0;i <temp.size(); i++)
+              nonTrivialSmearedChargeAtomIdsMacroCell.push_back(temp[i]);
+        }
+
+        if (nonTrivialSmearedChargeAtomIdsMacroCell.size()==0)
+          continue;
+
         forceEvalSmearedCharge.reinit(cell);
         vselfEvalSmearedCharge.reinit(cell);
         vselfEvalSmearedCharge.read_dof_values_plain(vselfBinsManagerElectro.getVselfFieldBins()[iBin]);
@@ -133,8 +148,6 @@ template<unsigned int FEOrder>
 
         std::fill(smearedbQuads.begin(),smearedbQuads.end(),make_vectorized_array(0.0));
         std::fill(gradVselfSmearedChargeQuads.begin(),gradVselfSmearedChargeQuads.end(),zeroTensor);
-
-        const unsigned int numSubCells=matrixFreeDataElectro.n_components_filled(cell);
 
         bool isCellNonTrivial=false;
         for (unsigned int iSubCell=0; iSubCell<numSubCells; ++iSubCell)
@@ -176,7 +189,7 @@ template<unsigned int FEOrder>
             matrixFreeDataElectro,
             cell,
             gradVselfSmearedChargeQuads,
-            atomIdsInBin,
+            nonTrivialSmearedChargeAtomIdsMacroCell,
             dftPtr->d_bQuadAtomIdsAllAtoms,
             smearedbQuads);
       }//macrocell loop

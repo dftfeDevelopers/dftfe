@@ -1377,6 +1377,19 @@ template<unsigned int FEOrder>
 
 	for (unsigned int cell=0; cell<matrixFreeDataElectro.n_macro_cells(); ++cell)
 	{
+ 
+    std::vector<unsigned int> nonTrivialSmearedChargeAtomIdsMacroCell;
+
+		const unsigned int numSubCells=matrixFreeDataElectro.n_components_filled(cell);
+    for (unsigned int iSubCell=0; iSubCell<numSubCells; ++iSubCell)
+    {
+      subCellPtr= matrixFreeDataElectro.get_cell_iterator(cell,iSubCell);
+      dealii::CellId subCellId=subCellPtr->id();
+      const std::vector<unsigned int> & temp=dftPtr->d_bCellNonTrivialAtomIds.find(subCellId)->second;
+      for (int i=0;i <temp.size(); i++)
+          nonTrivialSmearedChargeAtomIdsMacroCell.push_back(temp[i]);
+    }
+
 		forceEvalElectro.reinit(cell);
     forceEvalElectroLpsp.reinit(cell);
 
@@ -1391,7 +1404,7 @@ template<unsigned int FEOrder>
 			phiTotEvalElectro2.evaluate(true,true);
 		}
 
-    if (dftParameters::smearedNuclearCharges)
+    if (dftParameters::smearedNuclearCharges && nonTrivialSmearedChargeAtomIdsMacroCell.size()>0)
     {
       forceEvalSmearedCharge.reinit(cell);
       phiTotEvalSmearedCharge.reinit(cell);
@@ -1409,8 +1422,6 @@ template<unsigned int FEOrder>
     std::fill(gradRhoQuadsElectroLpsp.begin(),gradRhoQuadsElectroLpsp.end(),zeroTensor);
 		std::fill(gradRhoAtomsQuadsElectro.begin(),gradRhoAtomsQuadsElectro.end(),zeroTensor);
 		std::fill(pseudoVLocQuadsElectro.begin(),pseudoVLocQuadsElectro.end(),make_vectorized_array(0.0));
-
-		const unsigned int numSubCells=matrixFreeDataElectro.n_components_filled(cell);
 
 		for (unsigned int iSubCell=0; iSubCell<numSubCells; ++iSubCell)
 		{
@@ -1453,7 +1464,7 @@ template<unsigned int FEOrder>
         }
       }
       
-      if (dftParameters::smearedNuclearCharges)
+      if (dftParameters::smearedNuclearCharges && nonTrivialSmearedChargeAtomIdsMacroCell.size()>0)
       {
         const std::vector<double> & bQuadValuesCell= dftPtr->d_bQuadValuesAllAtoms.find(subCellId)->second;
         for (unsigned int q=0; q<numQuadPointsSmearedb; ++q)
@@ -1561,7 +1572,7 @@ template<unsigned int FEOrder>
       forceEvalElectroLpsp.distribute_local_to_global(d_configForceVectorLinFEElectro);    
     }
 
-    if (dftParameters::smearedNuclearCharges)
+    if (dftParameters::smearedNuclearCharges && nonTrivialSmearedChargeAtomIdsMacroCell.size()>0)
       for (unsigned int q=0; q<numQuadPointsSmearedb; ++q)
       {
         gradPhiTotSmearedChargeQuads[q]=phiTotEvalSmearedCharge.get_gradient(q);
@@ -1572,7 +1583,7 @@ template<unsigned int FEOrder>
         forceEvalSmearedCharge.submit_value(F,q);
       }
 
-    if (dftParameters::smearedNuclearCharges)
+    if (dftParameters::smearedNuclearCharges && nonTrivialSmearedChargeAtomIdsMacroCell.size()>0)
     {
       forceEvalSmearedCharge.integrate(true,false);
       forceEvalSmearedCharge.distribute_local_to_global(d_configForceVectorLinFEElectro);      
@@ -1582,6 +1593,7 @@ template<unsigned int FEOrder>
 					matrixFreeDataElectro,
 					cell,
 					gradPhiTotSmearedChargeQuads,
+          nonTrivialSmearedChargeAtomIdsMacroCell,
           dftPtr->d_bQuadAtomIdsAllAtoms,
 				  smearedbQuads);    
     }
