@@ -55,14 +55,22 @@ template<unsigned int FEOrder>
 	std::vector<VectorizedArray<double> > pseudoVLocAtomsQuads(numQuadPoints,make_vectorized_array(0.0));
 	std::vector<Tensor<1,C_DIM,VectorizedArray<double> > > vselfDerRQuads(numQuadPoints,zeroTensor1);
   std::vector<Tensor<1,C_DIM,VectorizedArray<double> > > totalContribution(numQuadPoints,zeroTensor1);
+  std::vector<std::vector<dealii::Point<C_DIM> > > quadPointsSubCells(numSubCells,std::vector<dealii::Point<C_DIM> >(numQuadPoints));
 
 	DoFHandler<C_DIM>::active_cell_iterator subCellPtr;
 
+  for (unsigned int iSubCell=0; iSubCell<numSubCells; ++iSubCell)
+  {
+    subCellPtr= matrixFreeData.get_cell_iterator(cell,iSubCell);
+		feValues.reinit(subCellPtr);  
+
+    std::vector<dealii::Point<C_DIM> > & temp=quadPointsSubCells[iSubCell];
+    for (unsigned int q=0; q<numQuadPoints; ++q)
+      temp[q]=feValues.quadrature_point(q);
+  }
+
 	for (unsigned int iAtom=0;iAtom <totalNumberAtoms; iAtom++)
 	{
-
-    std::fill(surfaceIntegralSubcells.begin(),surfaceIntegralSubcells.end(),zeroTensorNonvect);
-
 		bool isLocalDomainOutsideVselfBall=false;
 		bool isLocalDomainOutsidePspTail= false;
 		if (pseudoVLocAtoms.find(iAtom)==pseudoVLocAtoms.end())
@@ -71,6 +79,8 @@ template<unsigned int FEOrder>
 		//Assuming psp tail is larger than vself ball
 		if (isLocalDomainOutsidePspTail)
 			continue;
+
+    std::fill(surfaceIntegralSubcells.begin(),surfaceIntegralSubcells.end(),zeroTensorNonvect);
 
 		double atomCharge;
 		unsigned int atomId=iAtom;
@@ -103,12 +113,12 @@ template<unsigned int FEOrder>
 		else
 			binIdiAtom=it1->second;
 
-
+    bool isTrivial=true;
 		for (unsigned int iSubCell=0; iSubCell<numSubCells; ++iSubCell)
 		{
 			subCellPtr= matrixFreeData.get_cell_iterator(cell,iSubCell);
 			dealii::CellId subCellId=subCellPtr->id();
-			feValues.reinit(subCellPtr);
+
 			//get derivative R vself for iAtom
 			bool isCellOutsideVselfBall=true;
 			if (!isLocalDomainOutsideVselfBall)
@@ -134,7 +144,8 @@ template<unsigned int FEOrder>
 					}
 
 					if(atomLocation.distance(closestAtomLocation)<1e-5)
-					{
+		 			{
+			      feValues.reinit(subCellPtr);            
 						isCellOutsideVselfBall=false;
 
             if (dftParameters::floatingNuclearCharges && dftParameters::smearedNuclearCharges)
@@ -178,16 +189,6 @@ template<unsigned int FEOrder>
 				}
 
 			}
-			if (isCellOutsideVselfBall)
-      {
-				for (unsigned int q=0; q<numQuadPoints; ++q)
-				{
-					Point<C_DIM> quadPoint=feValues.quadrature_point(q);
-					Tensor<1,C_DIM,double> dispAtom=quadPoint-atomLocation;
-					const double dist=dispAtom.norm();
-					vselfQuads[q][iSubCell]=-atomCharge/dist;
-				}
-      }
 
 			//get grad pseudo VLoc for iAtom
 			bool isCellOutsidePspTail=true;
@@ -203,14 +204,16 @@ template<unsigned int FEOrder>
 				}
 			}
 
-			if (isCellOutsidePspTail)
+			if (isCellOutsideVselfBall && !isCellOutsidePspTail)
+      {
+        std::vector<dealii::Point<C_DIM> > & temp=quadPointsSubCells[iSubCell];        
 				for (unsigned int q=0; q<numQuadPoints; ++q)
 				{
-					Point<C_DIM> quadPoint=feValues.quadrature_point(q);
-					Tensor<1,C_DIM,double> dispAtom=quadPoint-atomLocation;
+					Tensor<1,C_DIM,double> dispAtom=temp[q]-atomLocation;
 					const double dist=dispAtom.norm();
-					pseudoVLocAtomsQuads[q][iSubCell]=-atomCharge/dist;
+					vselfQuads[q][iSubCell]=-atomCharge/dist;
 				}
+      }
 
       if (!isCellOutsideVselfBall)
       {
@@ -241,19 +244,24 @@ template<unsigned int FEOrder>
         }//surface cells
       }// inside or intersecting vself ball
 
-      if (isCellOutsideVselfBall)
+      if (isCellOutsideVselfBall && !isCellOutsidePspTail)
       {
+        isTrivial=false;
         for (unsigned int q=0; q<numQuadPoints; ++q)
           	for (unsigned int idim=0; idim<C_DIM; idim++)
               totalContribution[q][idim][iSubCell]=-gradRhoQuads[q][idim][iSubCell]*vselfQuads[q][iSubCell]+gradRhoQuads[q][idim][iSubCell]*pseudoVLocAtomsQuads[q][iSubCell];
       }
-      else
+      else if (!isCellOutsideVselfBall)
       {
+        isTrivial=false;
         for (unsigned int q=0; q<numQuadPoints; ++q)
           for (unsigned int idim=0; idim<C_DIM; idim++)
             totalContribution[q][idim][iSubCell]=-rhoQuads[q][iSubCell]*vselfDerRQuads[q][idim][iSubCell]+gradRhoQuads[q][idim][iSubCell]*pseudoVLocAtomsQuads[q][iSubCell];
       }
 		}//subCell loop
+
+    if (isTrivial)
+       continue;
 
     for (unsigned int q=0; q<numQuadPoints; ++q)
       forceEval.submit_value(totalContribution[q],q);
