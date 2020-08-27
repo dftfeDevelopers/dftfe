@@ -21,7 +21,7 @@ template<unsigned int FEOrder>
 	void forceClass<FEOrder>::createBinObjectsForce
 (const DoFHandler<3> & dofHandler,
  const DoFHandler<3> & dofHandlerForce,
- const ConstraintMatrix  & noConstraints,
+ const ConstraintMatrix  & hangingPlusPBCConstraints,
  const vselfBinsManager<FEOrder> & vselfBinsManager,
  std::vector<std::vector<DoFHandler<C_DIM>::active_cell_iterator> > & cellsVselfBallsDofHandler,
  std::vector<std::vector<DoFHandler<C_DIM>::active_cell_iterator> > & cellsVselfBallsDofHandlerForce,
@@ -66,7 +66,7 @@ template<unsigned int FEOrder>
 				std::vector<unsigned int> faceIdsWithAtleastOneSolvedNonHangingNode;
 				std::vector<unsigned int> allFaceIdsOfCell;
 				unsigned int closestAtomIdSum=0;
-				unsigned int closestAtomId;
+				unsigned int closestAtomId=0;
 				unsigned int nonHangingNodeIdCountCell=0;
 				for(unsigned int iFace = 0; iFace < faces_per_cell; ++iFace)
 				{
@@ -78,7 +78,7 @@ template<unsigned int FEOrder>
 					for(unsigned int iFaceDof = 0; iFaceDof < dofs_per_face; ++iFaceDof)
 					{
 						const types::global_dof_index nodeId=iFaceGlobalDofIndices[iFaceDof];
-						if (!noConstraints.is_constrained(nodeId))
+						if (!hangingPlusPBCConstraints.is_constrained(nodeId))
 						{
 							Assert(boundaryNodeMap.find(nodeId)!=boundaryNodeMap.end(),ExcMessage("BUG"));
 							Assert(closestAtomBinMap.find(nodeId)!=closestAtomBinMap.end(),ExcMessage("BUG"));
@@ -93,6 +93,20 @@ template<unsigned int FEOrder>
 							nonHangingNodeIdCountCell++;
 							nonHangingNodeIdCountFace++;
 						}//non-hanging node check
+            else
+            {
+              const std::vector<std::pair<dealii::types::global_dof_index, double > > * rowData=hangingPlusPBCConstraints.get_constraint_entries(nodeId);
+              for(unsigned int j = 0; j < rowData->size();++j)
+              {
+                 Assert(boundaryNodeMap.find((*rowData)[j].first)!=boundaryNodeMap.end(),ExcMessage("BUG"));
+                 Assert(closestAtomBinMap.find((*rowData)[j].first)!=closestAtomBinMap.end(),ExcMessage("BUG"));
+
+                if (boundaryNodeMap.find((*rowData)[j].first)->second!=-1)
+                  isSolvedDofPresent=true;
+                else
+                  dirichletDofCount+=boundaryNodeMap.find((*rowData)[j].first)->second;
+              }
+            }
 
 					}//Face dof loop
 
@@ -109,18 +123,24 @@ template<unsigned int FEOrder>
 				}//Face loop
 
 				//fill the target objects
-				if (faceIdsWithAtleastOneSolvedNonHangingNode.size()>0){
+				if (faceIdsWithAtleastOneSolvedNonHangingNode.size()>0)
+        {
+          /*
 					if (!(closestAtomIdSum==closestAtomId*nonHangingNodeIdCountCell))
 					{
 						std::cout << "closestAtomIdSum: "<<closestAtomIdSum<< ", closestAtomId: "<<closestAtomId<< ", nonHangingNodeIdCountCell: "<<nonHangingNodeIdCountCell<<std::endl;
 					}
 					AssertThrow(closestAtomIdSum==closestAtomId*nonHangingNodeIdCountCell,ExcMessage("cell dofs on vself ball surface have different closest atom ids, remedy- increase separation between vself balls"));
+          */
 					cellsVselfBallsDofHandler[iBin].push_back(cell);
 					cellsVselfBallsDofHandlerForce[iBin].push_back(cellForce);
 					cellsVselfBallsClosestAtomIdDofHandler[iBin][cell->id()]=closestAtomId;
 					AtomIdBinIdLocalDofHandler[closestAtomId]=iBin;
-					cellFacesVselfBallSurfacesDofHandler[iBin][cell]= dirichletFaceIds;//allFaceIdsOfCell;
-					cellFacesVselfBallSurfacesDofHandlerForce[iBin][cellForce]= dirichletFaceIds;//allFaceIdsOfCell;
+          if (dirichletFaceIds.size()>0)
+          {
+            cellFacesVselfBallSurfacesDofHandler[iBin][cell]= dirichletFaceIds;
+            cellFacesVselfBallSurfacesDofHandlerForce[iBin][cellForce]= dirichletFaceIds;
+          }
 				}
 			}//cell locally owned
 		}// cell loop

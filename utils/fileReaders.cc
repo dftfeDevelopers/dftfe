@@ -224,7 +224,7 @@ namespace dftfe {
 							if (icol< data[irow].size()-1)
 								outFile<<" ";
 						}
-						outFile<<std::endl;
+						outFile<<"\n";
 					}
 
 					outFile.close();

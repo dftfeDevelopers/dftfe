@@ -119,44 +119,32 @@ namespace dftfe {
 				const Tensor<1,C_DIM,VectorizedArray<double> > & gradPhiExt);
 
 
-
-		/// Nonlocal pseudopotential Eshelby tensor (for periodic case)
-		Tensor<2,C_DIM,VectorizedArray<double> >  getEnlEshelbyTensorPeriodic(const std::vector<std::vector<std::vector<Tensor<1,2,VectorizedArray<double> > > > > & ZetaDeltaV,
+		/// Nonlocal pseudopotential force contribution (for complex case)
+		Tensor<1,C_DIM,VectorizedArray<double> >   getFnl(const std::vector<std::vector<std::vector<Tensor<1,2,VectorizedArray<double> > > > > & zetaDeltaV,
 				const std::vector<std::vector<std::vector<std::complex<double> > > >& projectorKetTimesPsiTimesVTimesPartOcc,
-				std::vector<Tensor<1,2,VectorizedArray<double> > >::const_iterator  psiBegin,
-				const std::vector<double> & kPointWeights,
-				const std::vector<unsigned int> & nonlocalAtomsCompactSupportList,
-				const unsigned int numBlockedEigenvectors);
-
-		/// Nonlocal pseudopotential force contribution (for periodic case)
-		void  getFnlEnlMergedPeriodic(const std::vector<std::vector<std::vector<Tensor<1,2, Tensor<1,C_DIM,VectorizedArray<double> > > > > > & gradZetaDeltaV,
-				const std::vector<std::vector<std::vector<Tensor<1,2,VectorizedArray<double> > > > > & ZetaDeltaV,
-				const std::vector<std::vector<std::vector<std::complex<double> > > >& projectorKetTimesPsiTimesVTimesPartOcc,
-				std::vector<Tensor<1,2,VectorizedArray<double> > >::const_iterator  psiBegin,
+				std::vector<Tensor<1,2,Tensor<1,C_DIM,VectorizedArray<double> > > >::const_iterator  gradPsiBegin,
 				const std::vector<double> & kPointWeights,
 				const unsigned int numBlockedEigenvectors,
-				const std::vector<unsigned int> & nonlocalAtomsCompactSupportList,
-				Tensor<1,C_DIM,VectorizedArray<double> > & Fnl,
-				Tensor<2,C_DIM,VectorizedArray<double> > & Enl);
+				const std::vector<unsigned int> & nonlocalAtomsCompactSupportList);
 
-		/// Nonlocal pseudopotential force contribution (for non periodic case)
-		void  getFnlEnlMergedNonPeriodic(const std::vector<std::vector<Tensor<1,C_DIM,VectorizedArray<double> > > > & gradZetaDeltaV,
-				const std::vector<std::vector<VectorizedArray<double> > > & ZetaDeltaV,
-				const std::vector<VectorizedArray<double> > & projectorKetTimesPsiTimesVTimesPartOcc,
+		/// Nonlocal pseudopotential force contribution (for real case)
+		Tensor<1,C_DIM,VectorizedArray<double> >   getFnl(const std::vector<std::vector<VectorizedArray<double> > > & zetaDeltaV,
+				const std::vector<Tensor<1,C_DIM,VectorizedArray<double> > > & projectorKetTimesPsiTimesVTimesPartOccContractionGradPsi,
 				const std::vector<bool> & isAtomInCell,
-				const std::vector<unsigned int> & nonlocalPseudoWfcsAccum,
-				Tensor<1,C_DIM,VectorizedArray<double> > & Fnl,
-				Tensor<2,C_DIM,VectorizedArray<double> > & Enl);
+				const std::vector<unsigned int> & nonlocalPseudoWfcsAccum);
 
-		Tensor<1,C_DIM,VectorizedArray<double> >  getFnlNonPeriodic(const std::vector<Tensor<1,C_DIM,VectorizedArray<double> > >  & gradZetaDeltaV,
-				const std::vector<VectorizedArray<double> > & projectorKetTimesPsiTimesVTimesPartOcc,
+		/// Nonlocal pseudopotential force contribution (for real case)
+		Tensor<1,C_DIM,VectorizedArray<double> >  getFnlAtom(const std::vector<VectorizedArray<double> >  & zetaDeltaV,
+				const std::vector<Tensor<1,C_DIM,VectorizedArray<double> > > & projectorKetTimesPsiTimesVTimesPartOccContractionGradPsi,
 				const unsigned int startingId);
 
-		/// Nonlocal pseudopotential force contribution (for periodic case)
-		Tensor<1,C_DIM,VectorizedArray<double> >  getFnlPeriodic(const std::vector<std::vector<std::vector<Tensor<1,2, Tensor<1,C_DIM,VectorizedArray<double> > > > > > & gradZetaDeltaV,
+		/// Nonlocal pseudopotential force contribution (for complex case)
+		Tensor<1,C_DIM,VectorizedArray<double> >  getFnlAtom(const std::vector<std::vector<std::vector<Tensor<1,2,VectorizedArray<double> > > > > & zetaDeltaV,
 				const std::vector<std::vector<std::vector<std::complex<double> > > >& projectorKetTimesPsiTimesVTimesPartOcc,
-				std::vector<Tensor<1,2,VectorizedArray<double> > >::const_iterator  psiBegin,
+        std::vector<Tensor<1,2,VectorizedArray<double> > >::const_iterator  psiBegin,
+				std::vector<Tensor<1,2,Tensor<1,C_DIM,VectorizedArray<double> > > >::const_iterator  gradPsiBegin,
 				const std::vector<double> & kPointWeights,
+        const std::vector<double> & kPointCoordinates,
 				const unsigned int numBlockedEigenvectors);
 
 		/** Force contribution due to the numerical difference between the input and output electron density (rhoIn and rhoOut)
@@ -180,10 +168,12 @@ namespace dftfe {
 				const double tVal);
 
 		/// Nonlocal pseudopotential Eshelby tensor (used only for stress computation)
-		Tensor<2,C_DIM,VectorizedArray<double> >  getEnlStress(const std::vector<std::vector<std::vector<Tensor<1,2, Tensor<2,C_DIM,VectorizedArray<double> > > > > > & gradZetalmDeltaVlDyadicDistImageAtoms,
+		Tensor<2,C_DIM,VectorizedArray<double> >  getEnlStress(const std::vector<std::vector<std::vector<Tensor<1,2, Tensor<1,C_DIM,VectorizedArray<double> > > > > > & zetalmDeltaVlProductDistImageAtoms,
 				const std::vector<std::vector<std::vector<std::complex<double> > > >& projectorKetTimesPsiTimesVTimesPartOcc,
 				std::vector<Tensor<1,2,VectorizedArray<double> > >::const_iterator  psiBegin,
+				std::vector<Tensor<1,2,Tensor<1,C_DIM,VectorizedArray<double> > > >::const_iterator  gradPsiBegin,          
 				const std::vector<double> & kPointWeights,
+				const std::vector<double> & kPointCoordinates,        
 				const std::vector<unsigned int> & nonlocalAtomsCompactSupportList,
 				const unsigned int numBlockedEigenvectors);
 

@@ -121,9 +121,9 @@ template<unsigned int FEOrder>
 
 	dealii::BoundingBox<3> boundingBoxTria(vectorTools::createBoundingBoxTriaLocallyOwned(_dofHandler));
 	dealii::Tensor<1,3,double> tempDisp;
-	tempDisp[0]=cutOffForPsp+5.0;
-	tempDisp[1]=cutOffForPsp+5.0;
-	tempDisp[2]=cutOffForPsp+5.0;
+	tempDisp[0]=cutOffForPsp;
+	tempDisp[1]=cutOffForPsp;
+	tempDisp[2]=cutOffForPsp;
 	std::pair< dealii::Point<3,double >,dealii::Point<3, double>> boundaryPoints;
 
 	std::vector<double> atomsImagesPositions((numberGlobalCharges+numberImageCharges)*3);
@@ -397,12 +397,14 @@ template<unsigned int FEOrder>
 					{
 						value=alglib::spline1dcalc(pseudoSpline[atomicNumber],
 								distanceToAtom);
-						isPseudoDataInCell=true;
 					}
-					else
-					{
-						value=-atomCharge/distanceToAtom;
-					}
+          else
+          {
+            value=-atomCharge/distanceToAtom;
+          }
+
+          if (distanceToAtom <= cutOffForPsp)
+            isPseudoDataInCell=true;
 
 					pseudoVLocAtom[q]=value;
 				}//loop over quad points

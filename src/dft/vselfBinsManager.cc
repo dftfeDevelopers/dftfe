@@ -463,7 +463,10 @@ namespace dftfe
 			std::map<int,std::set<int> > interactionMap;
 
 			double radiusAtomBallAdaptive=(d_storedAdaptiveBallRadius>1e-6)?
-				d_storedAdaptiveBallRadius:(dftParameters::meshSizeOuterBall>0.5?6.0:4.0);
+				d_storedAdaptiveBallRadius:((dftParameters::meshSizeOuterBall>0.5)?6.0:4.0);
+
+      if (dftParameters::smearedNuclearCharges && (d_storedAdaptiveBallRadius<1e-6))
+        radiusAtomBallAdaptive=(dftParameters::meshSizeOuterBall>2.0)?4.0:3.0;
 
 			if (std::fabs(radiusAtomBall)<1e-6)
 			{
@@ -1088,6 +1091,9 @@ namespace dftfe
 			for(int iBin = 0; iBin < numberBins; ++iBin)
 			{
 				inhomogBoundaryVec=0.0;
+        for (unsigned int idim=0; idim<3; idim++)
+            inhomogBoundaryVecVselfDerR[idim]=0.0;
+
 				std::map<dealii::types::global_dof_index, dealii::Point<3>> & dofClosestChargeLocationMap
 					= d_dofClosestChargeLocationMap[iBin];
 

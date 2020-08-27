@@ -105,6 +105,12 @@ namespace dftfe{
 
 			virtual thrust::device_vector<double> & getShapeFunctionGradientValuesZInverted(const bool use2pPlusOneGLQuad=false) = 0;
 
+			virtual thrust::device_vector<double> & getShapeFunctionGradientValuesNLPXInverted() = 0;
+
+			virtual thrust::device_vector<double> & getShapeFunctionGradientValuesNLPYInverted() = 0;
+
+			virtual thrust::device_vector<double> & getShapeFunctionGradientValuesNLPZInverted() = 0;      
+
 			virtual thrust::device_vector<dealii::types::global_dof_index> & getFlattenedArrayCellLocalProcIndexIdMap()=0;
 
 			virtual thrust::device_vector<dataTypes::number> & getCellWaveFunctionMatrix() = 0;
@@ -124,7 +130,6 @@ namespace dftfe{
 			 * contiguously
 			 *
 			 */
-			virtual void reinit(const unsigned int wavefunBlockSize) = 0;
 
 			virtual void reinit(const unsigned int wavefunBlockSize,
 					bool flag) = 0;
@@ -141,15 +146,6 @@ namespace dftfe{
 					const dealii::AffineConstraints<double> & constraintMatrix,
 					distributedCPUVec<double>                     & sqrtMassVec,
 					distributedCPUVec<double>                     & invSqrtMassVec) = 0;
-
-
-			/**
-			 * @brief Compute operator times vector or operator times bunch of vectors
-			 * @param X Vector of Vectors containing current values of X
-			 * @param Y Vector of Vectors containing operator times vectors product
-			 */
-			virtual void HX(std::vector<distributedCPUVec<double>> & X,
-					std::vector<distributedCPUVec<double>> & Y) = 0;
 
 
 			/**
@@ -180,13 +176,6 @@ namespace dftfe{
 					bool mixPrecFlag=false,
 					bool returnBeforeCompressSkipUpdateSkipNonLocal=false,
 					bool returnBeforeCompressSkipUpdateSkipLocal=false) = 0;
-
-			virtual void HXChebyNoCommun(distributedGPUVec<double> & X,
-					distributedGPUVec<double> & projectorKetTimesVector,
-					const unsigned int localVectorSize,
-					const unsigned int numberComponents,
-					distributedGPUVec<double> & Y)=0;
-
 
 			/**
 			 * @brief implementation of non-local projector kets times psi product
@@ -509,6 +498,12 @@ namespace dftfe{
 			thrust::device_vector<double> d_shapeFunctionGradientValueZDevice;
 
 			thrust::device_vector<double> d_shapeFunctionGradientValueZInvertedDevice;
+
+			thrust::device_vector<double> d_shapeFunctionGradientValueNLPXInvertedDevice;
+
+			thrust::device_vector<double> d_shapeFunctionGradientValueNLPYInvertedDevice;
+
+			thrust::device_vector<double> d_shapeFunctionGradientValueNLPZInvertedDevice;      
 
 			/// 2p+1 Gauss Lobotta quadrature shape function values and shape function gradients 
 			thrust::device_vector<double> d_glShapeFunctionValueInvertedDevice;

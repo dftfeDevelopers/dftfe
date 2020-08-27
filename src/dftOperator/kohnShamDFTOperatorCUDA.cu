@@ -174,6 +174,7 @@ namespace dftfe
 			d_numberMacroCells(_dftPtr->matrix_free_data.n_macro_cells()),
 			d_numLocallyOwnedCells(dftPtr->matrix_free_data.n_physical_cells()),
 			d_numQuadPoints(QGauss<3>(C_num1DQuad<FEOrder>()).size()),
+      d_isStiffnessMatrixExternalPotCorrComputed(false),
 			mpi_communicator (mpi_comm_replica),
 			n_mpi_processes (Utilities::MPI::n_mpi_processes(mpi_comm_replica)),
 			this_mpi_process (Utilities::MPI::this_mpi_process(mpi_comm_replica)),
@@ -320,6 +321,24 @@ namespace dftfe
 		}
 
 	template<unsigned int FEOrder>
+		thrust::device_vector<double> & kohnShamDFTOperatorCUDAClass<FEOrder>::getShapeFunctionGradientValuesNLPXInverted()
+		{
+			return d_shapeFunctionGradientValueNLPXInvertedDevice;
+		}
+
+	template<unsigned int FEOrder>
+		thrust::device_vector<double> & kohnShamDFTOperatorCUDAClass<FEOrder>::getShapeFunctionGradientValuesNLPYInverted()
+		{
+			return d_shapeFunctionGradientValueNLPYInvertedDevice;
+		}
+
+	template<unsigned int FEOrder>
+		thrust::device_vector<double> & kohnShamDFTOperatorCUDAClass<FEOrder>::getShapeFunctionGradientValuesNLPZInverted()
+		{
+			return d_shapeFunctionGradientValueNLPZInvertedDevice;
+		}
+
+	template<unsigned int FEOrder>
 		thrust::device_vector<dealii::types::global_dof_index> & kohnShamDFTOperatorCUDAClass<FEOrder>::getFlattenedArrayCellLocalProcIndexIdMap()
 		{
 			return d_flattenedArrayCellLocalProcIndexIdMapDevice;
@@ -457,6 +476,11 @@ namespace dftfe
 			const unsigned int totalLocallyOwnedCells = dftPtr->matrix_free_data.n_physical_cells(); 
 
 			d_cellHamiltonianMatrixFlattenedDevice.resize(d_numLocallyOwnedCells*d_numberNodesPerElement*d_numberNodesPerElement*dftPtr->d_kPointWeights.size()*(1+dftParameters::spinPolarized),0.0);
+
+			if(dftParameters::isPseudopotential)
+        d_cellHamiltonianMatrixExternalPotCorrFlattenedDevice.resize(d_numLocallyOwnedCells*d_numberNodesPerElement*d_numberNodesPerElement,0.0);
+      else
+        d_cellHamiltonianMatrixExternalPotCorrFlattenedDevice.resize(10,0.0);
 
 			d_cellWaveFunctionMatrix.resize(totalLocallyOwnedCells*d_numberNodesPerElement*numberWaveFunctions,0.0);
 
@@ -672,20 +696,6 @@ namespace dftfe
 		}
 
 
-	template<unsigned int FEOrder>
-		void kohnShamDFTOperatorCUDAClass<FEOrder>::reinit(const unsigned int numberWaveFunctions)
-		{
-
-			if(dftParameters::isPseudopotential)
-			{
-				vectorTools::createDealiiVector<dataTypes::number>(dftPtr->d_projectorKetTimesVectorPar[0].get_partitioner(),
-						numberWaveFunctions,
-						dftPtr->d_projectorKetTimesVectorParFlattened);
-			}
-
-		}
-
-
 	//
 	//compute mass Vector
 	//
@@ -762,62 +772,6 @@ namespace dftfe
 					(numberLocalDofs+numberGhostDofs)*sizeof(double),
 					cudaMemcpyHostToDevice);	      
 
-
-			distributedCPUVec<double> boundaryIdVec;
-			boundaryIdVec.reinit(d_invSqrtMassVector);
-			boundaryIdVec=0;
-			for(unsigned int i = 0; i < numberGhostDofs; ++i)
-				boundaryIdVec.local_element(numberLocalDofs+i)=1.0;
-
-			boundaryIdVec.compress(VectorOperation::add);
-			boundaryIdVec.update_ghost_values();
-			//boundary constrained node as well its masters should also be treated as boundary nodes
-			//constraintMatrix.distribute(boundaryIdVec);
-			//constraintMatrix.set_zero(boundaryIdVec); 
-			//boundaryIdVec.update_ghost_values(); 
-
-
-			//std::cout<<"CHECK: "<<boundaryId.l2_norm()<<std::endl;
-
-			std::vector<unsigned int> boundaryIdToLocalIdMap;
-			std::vector<unsigned int> boundaryIdsHost(numberLocalDofs+numberGhostDofs,0);
-			for(unsigned int i = 0; i < (numberLocalDofs+numberGhostDofs); ++i)
-			{
-				if (std::fabs(boundaryIdVec.local_element(i))>1e-8)
-				{
-					boundaryIdToLocalIdMap.push_back(i);
-					boundaryIdsHost[i]=1;
-				}
-			}
-
-			//boundary constrained node as well its masters should also be treated as boundary nodes
-			constraintMatrix.distribute(boundaryIdVec);
-
-			for(unsigned int i = 0; i < (numberLocalDofs+numberGhostDofs); ++i)
-			{
-				if (std::fabs(boundaryIdVec.local_element(i))>1e-8)
-				{
-					boundaryIdToLocalIdMap.push_back(i);
-					boundaryIdsHost[i]=1;
-				}
-			}
-
-
-			d_boundaryIdToLocalIdMapDevice.clear();
-			d_boundaryIdToLocalIdMapDevice.resize(boundaryIdToLocalIdMap.size());
-
-			cudaMemcpy(thrust::raw_pointer_cast(&d_boundaryIdToLocalIdMapDevice[0]),
-					&boundaryIdToLocalIdMap[0],
-					boundaryIdToLocalIdMap.size()*sizeof(unsigned int),
-					cudaMemcpyHostToDevice);
-
-			d_boundaryIdsVecDevice.clear();
-			d_boundaryIdsVecDevice.resize(numberLocalDofs+numberGhostDofs);
-			cudaMemcpy(thrust::raw_pointer_cast(&d_boundaryIdsVecDevice[0]),
-					&boundaryIdsHost[0],
-					(numberLocalDofs+numberGhostDofs)*sizeof(unsigned int),
-					cudaMemcpyHostToDevice);
-
 			computing_timer.exit_section("kohnShamDFTOperatorCUDAClass Mass assembly");
 		}
 
@@ -833,8 +787,8 @@ namespace dftfe
 	template<unsigned int FEOrder>
 		void kohnShamDFTOperatorCUDAClass<FEOrder>::computeVEff(const std::map<dealii::CellId,std::vector<double> >* rhoValues,
 				const distributedCPUVec<double> & phi,
-				const distributedCPUVec<double> & phiExt,
-				const std::map<dealii::CellId,std::vector<double> > & pseudoValues)
+				const std::map<dealii::CellId,std::vector<double> > & externalPotCorrValues,
+        const unsigned int externalPotCorrQuadratureId)
 		{
 			const unsigned int n_cells = dftPtr->matrix_free_data.n_macro_cells();
 			const unsigned int totalLocallyOwnedCells = dftPtr->matrix_free_data.n_physical_cells();
@@ -842,8 +796,6 @@ namespace dftfe
 			QGauss<3>  quadrature_formula(C_num1DQuad<FEOrder>());
 			FEValues<3> fe_values (dftPtr->FE, quadrature_formula,update_values | update_JxW_values);
 			const unsigned int numberQuadraturePoints = quadrature_formula.size();
-
-			vEff.reinit (n_cells, numberQuadraturePoints);
 
 			d_vEff.resize(totalLocallyOwnedCells*numberQuadraturePoints,0.0);
 			d_vEffJxW.resize(totalLocallyOwnedCells*numberQuadraturePoints,0.0);
@@ -863,9 +815,6 @@ namespace dftfe
 
 					fe_values.get_function_values(phi,tempPhi);
 
-					//if(dftParameters::isPseudopotential)
-					//  fe_values.get_function_values(phiExt,tempPhiExt);
-
 					for (unsigned int q=0; q<numberQuadraturePoints; ++q)
 					{
 						densityValue[q] = (*rhoValues).find(cellPtr->id())->second[q];
@@ -874,63 +823,29 @@ namespace dftfe
 					xc_lda_vxc(&(dftPtr->funcX),numberQuadraturePoints,&densityValue[0],&exchangePotentialVal[0]);
 					xc_lda_vxc(&(dftPtr->funcC),numberQuadraturePoints,&densityValue[0],&corrPotentialVal[0]);
 
+          for (unsigned int q=0; q<numberQuadraturePoints; ++q)
+          {
+            d_vEff[iElemCount*numberQuadraturePoints+q] = tempPhi[q]+exchangePotentialVal[q]+corrPotentialVal[q];
 
-					if(dftParameters::isPseudopotential)
-					{
-						for (unsigned int q=0; q<numberQuadraturePoints; ++q)
-						{
-							d_vEff[iElemCount*numberQuadraturePoints+q] = tempPhi[q]+exchangePotentialVal[q]+corrPotentialVal[q]
-								+(pseudoValues.find(cellPtr->id())->second[q]);//-tempPhiExt[q]);
+            d_vEffJxW[iElemCount*numberQuadraturePoints+q]=
+              d_vEff[iElemCount*numberQuadraturePoints+q]*fe_values.JxW(q);
 
-							d_vEffJxW[iElemCount*numberQuadraturePoints+q]=
-								d_vEff[iElemCount*numberQuadraturePoints+q]*fe_values.JxW(q);
-						}
-					}
-					else
-					{
-						for (unsigned int q=0; q<numberQuadraturePoints; ++q)
-						{
-							d_vEff[iElemCount*numberQuadraturePoints+q] = tempPhi[q]+exchangePotentialVal[q]+corrPotentialVal[q];
-
-							d_vEffJxW[iElemCount*numberQuadraturePoints+q]=
-								d_vEff[iElemCount*numberQuadraturePoints+q]*fe_values.JxW(q);
-
-						}
-					}
+          }
 
 					iElemCount++;
 				}
 
 			d_vEffJxWDevice=d_vEffJxW;
-
-			iElemCount=0;
-			for (unsigned int cell = 0; cell < n_cells; ++cell)
-			{
-				unsigned int n_sub_cells=dftPtr->matrix_free_data.n_components_filled(cell);
-
-				std::vector<VectorizedArray<double>>  val(numberQuadraturePoints);
-
-				for (unsigned int v = 0; v < n_sub_cells; ++v)
-				{
-
-					for (unsigned int q = 0; q < numberQuadraturePoints; ++q)
-						val[q][v]=d_vEff[d_macroCellIdToNormalCellIdMap[iElemCount]*numberQuadraturePoints+q];
-
-					iElemCount++;
-				}
-
-				for (unsigned int q = 0; q < numberQuadraturePoints; ++q)
-					vEff(cell,q)=val[q];
-			}
-
+      if (dftParameters::isPseudopotential && !d_isStiffnessMatrixExternalPotCorrComputed)
+         computeVEffExternalPotCorr(externalPotCorrValues,externalPotCorrQuadratureId);      
 		}
 
 	template<unsigned int FEOrder>
 		void kohnShamDFTOperatorCUDAClass<FEOrder>::computeVEff(const std::map<dealii::CellId,std::vector<double> >* rhoValues,
 				const std::map<dealii::CellId,std::vector<double> >* gradRhoValues,
 				const distributedCPUVec<double> & phi,
-				const distributedCPUVec<double> & phiExt,
-				const std::map<dealii::CellId,std::vector<double> > & pseudoValues)
+				const std::map<dealii::CellId,std::vector<double> > & externalPotCorrValues,
+        const unsigned int externalPotCorrQuadratureId)
 		{
 
 			const unsigned int n_cells = dftPtr->matrix_free_data.n_macro_cells();
@@ -940,12 +855,9 @@ namespace dftfe
 			FEValues<3> fe_values (dftPtr->FE, quadrature_formula,update_values | update_JxW_values);
 			const unsigned int numberQuadraturePoints = quadrature_formula.size();
 
-			vEff.reinit (n_cells, numberQuadraturePoints);
-			derExcWithSigmaTimesGradRho.reinit(TableIndices<2>(n_cells, numberQuadraturePoints));
 
 			d_vEff.resize(totalLocallyOwnedCells*numberQuadraturePoints,0.0);
 			d_vEffJxW.resize(totalLocallyOwnedCells*numberQuadraturePoints,0.0);
-			d_derExcWithSigmaTimesGradRho.resize(totalLocallyOwnedCells*numberQuadraturePoints*3,0.0);
 			d_derExcWithSigmaTimesGradRhoJxW.resize(totalLocallyOwnedCells*numberQuadraturePoints*3,0.0);
 
 			typename dealii::DoFHandler<3>::active_cell_iterator cellPtr=dftPtr->matrix_free_data.get_dof_handler().begin_active();
@@ -967,9 +879,6 @@ namespace dftfe
 					fe_values.reinit (cellPtr);
 
 					fe_values.get_function_values(phi,tempPhi);
-
-					//if(dftParameters::isPseudopotential)
-					//  fe_values.get_function_values(phiExt,tempPhiExt);
 
 					for (unsigned int q=0; q<numberQuadraturePoints; ++q)
 					{
@@ -1000,40 +909,20 @@ namespace dftfe
 						const double gradRhoY = (*gradRhoValues).find(cellPtr->id())->second[3*q + 1];
 						const double gradRhoZ = (*gradRhoValues).find(cellPtr->id())->second[3*q + 2];
 						const double term = derExchEnergyWithSigmaVal[q]+derCorrEnergyWithSigmaVal[q];
-						d_derExcWithSigmaTimesGradRho[iElemCount*numberQuadraturePoints*3+3*q] = term*gradRhoX;
-						d_derExcWithSigmaTimesGradRho[iElemCount*numberQuadraturePoints*3+3*q+1] = term*gradRhoY;
-						d_derExcWithSigmaTimesGradRho[iElemCount*numberQuadraturePoints*3+3*q+2] = term*gradRhoZ;
 						d_derExcWithSigmaTimesGradRhoJxW[iElemCount*numberQuadraturePoints*3+3*q] = term*gradRhoX*jxw;
 						d_derExcWithSigmaTimesGradRhoJxW[iElemCount*numberQuadraturePoints*3+3*q+1] = term*gradRhoY*jxw;
 						d_derExcWithSigmaTimesGradRhoJxW[iElemCount*numberQuadraturePoints*3+3*q+2] = term*gradRhoZ*jxw;
 					}
 
+          for (unsigned int q=0; q<numberQuadraturePoints; ++q)
+          {
+            d_vEff[iElemCount*numberQuadraturePoints+q] =tempPhi[q]
+              +derExchEnergyWithDensityVal[q]+derCorrEnergyWithDensityVal[q];
 
-					if(dftParameters::isPseudopotential)
-					{
-						for (unsigned int q=0; q<numberQuadraturePoints; ++q)
-						{
-							d_vEff[iElemCount*numberQuadraturePoints+q] =tempPhi[q]
-								+derExchEnergyWithDensityVal[q]+derCorrEnergyWithDensityVal[q]
-								+(pseudoValues.find(cellPtr->id())->second[q]);//-tempPhiExt[q]);
+            d_vEffJxW[iElemCount*numberQuadraturePoints+q]=
+              d_vEff[iElemCount*numberQuadraturePoints+q]*fe_values.JxW(q);
 
-
-							d_vEffJxW[iElemCount*numberQuadraturePoints+q]=
-								d_vEff[iElemCount*numberQuadraturePoints+q]*fe_values.JxW(q);
-						}
-					}
-					else
-					{
-						for (unsigned int q=0; q<numberQuadraturePoints; ++q)
-						{
-							d_vEff[iElemCount*numberQuadraturePoints+q] =tempPhi[q]
-								+derExchEnergyWithDensityVal[q]+derCorrEnergyWithDensityVal[q];
-
-							d_vEffJxW[iElemCount*numberQuadraturePoints+q]=
-								d_vEff[iElemCount*numberQuadraturePoints+q]*fe_values.JxW(q);
-
-						}
-					}
+          }
 
 					iElemCount++;
 				}
@@ -1041,50 +930,17 @@ namespace dftfe
 			d_vEffJxWDevice=d_vEffJxW;
 			d_derExcWithSigmaTimesGradRhoJxWDevice=d_derExcWithSigmaTimesGradRhoJxW;
 
-			iElemCount=0;
-			for (unsigned int cell = 0; cell < n_cells; ++cell)
-			{
-				unsigned int n_sub_cells=dftPtr->matrix_free_data.n_components_filled(cell);
-
-				std::vector<VectorizedArray<double>>  val(numberQuadraturePoints);
-				std::vector<dealii::Tensor<1,3,dealii::VectorizedArray<double> > > derExcWithSigmaTimesGradRhoVal(numberQuadraturePoints);
-
-				for (unsigned int v = 0; v < n_sub_cells; ++v)
-				{
-
-					for (unsigned int q = 0; q < numberQuadraturePoints; ++q)
-						val[q][v]=d_vEff[d_macroCellIdToNormalCellIdMap[iElemCount]*numberQuadraturePoints+q];
-
-
-					for (unsigned int q = 0; q < numberQuadraturePoints; ++q)
-						for (unsigned int i = 0; i < 3; ++i)
-							derExcWithSigmaTimesGradRhoVal[q][i][v]=d_derExcWithSigmaTimesGradRho[d_macroCellIdToNormalCellIdMap[iElemCount]*numberQuadraturePoints*3+3*q+i];
-
-
-					iElemCount++;
-				}
-
-				for (unsigned int q = 0; q < numberQuadraturePoints; ++q)
-				{
-					vEff(cell,q)=val[q];
-					derExcWithSigmaTimesGradRho(cell,q)=derExcWithSigmaTimesGradRhoVal[q];
-				}
-			}
+      if (dftParameters::isPseudopotential && !d_isStiffnessMatrixExternalPotCorrComputed)
+         computeVEffExternalPotCorr(externalPotCorrValues,externalPotCorrQuadratureId);      
 		}
-
-
-
-
-
 
 
 	template<unsigned int FEOrder>
 		void kohnShamDFTOperatorCUDAClass<FEOrder>::computeVEffSpinPolarized(const std::map<dealii::CellId,std::vector<double> >* rhoValues,
 				const distributedCPUVec<double> & phi,
-				const distributedCPUVec<double> & phiExt,
 				const unsigned int spinIndex,
-				const std::map<dealii::CellId,std::vector<double> > & pseudoValues)
-
+				const std::map<dealii::CellId,std::vector<double> > & externalPotCorrValues,
+        const unsigned int externalPotCorrQuadratureId)
 		{
 			const unsigned int n_cells = dftPtr->matrix_free_data.n_macro_cells();
 			const unsigned int totalLocallyOwnedCells = dftPtr->matrix_free_data.n_physical_cells();
@@ -1092,8 +948,6 @@ namespace dftfe
 			QGauss<3>  quadrature_formula(C_num1DQuad<FEOrder>());
 			FEValues<3> fe_values (dftPtr->FE, quadrature_formula,update_values | update_JxW_values);
 			const unsigned int numberQuadraturePoints = quadrature_formula.size();
-
-			vEff.reinit (n_cells, numberQuadraturePoints);
 
 			d_vEff.resize(totalLocallyOwnedCells*numberQuadraturePoints,0.0);
 			d_vEffJxW.resize(totalLocallyOwnedCells*numberQuadraturePoints,0.0);
@@ -1113,9 +967,6 @@ namespace dftfe
 
 					fe_values.get_function_values(phi,tempPhi);
 
-					//if(dftParameters::isPseudopotential)
-					//  fe_values.get_function_values(phiExt,tempPhiExt);
-
 					for (unsigned int q=0; q<numberQuadraturePoints; ++q)
 					{
 						densityValue[2*q+1] = (*rhoValues).find(cellPtr->id())->second[2*q+1];
@@ -1126,63 +977,31 @@ namespace dftfe
 					xc_lda_vxc(&(dftPtr->funcX),numberQuadraturePoints,&densityValue[0],&exchangePotentialVal[0]);
 					xc_lda_vxc(&(dftPtr->funcC),numberQuadraturePoints,&densityValue[0],&corrPotentialVal[0]);
 
+          for (unsigned int q=0; q<numberQuadraturePoints; ++q)
+          {
+            d_vEff[iElemCount*numberQuadraturePoints+q] = tempPhi[q]+exchangePotentialVal[2*q+spinIndex]+corrPotentialVal[2*q+spinIndex];
 
-					if(dftParameters::isPseudopotential)
-					{
-						for (unsigned int q=0; q<numberQuadraturePoints; ++q)
-						{
-							d_vEff[iElemCount*numberQuadraturePoints+q] = tempPhi[q]+exchangePotentialVal[2*q+spinIndex]+corrPotentialVal[2*q+spinIndex]
-								+(pseudoValues.find(cellPtr->id())->second[q]);//-tempPhiExt[q]);
+            d_vEffJxW[iElemCount*numberQuadraturePoints+q]=
+              d_vEff[iElemCount*numberQuadraturePoints+q]*fe_values.JxW(q);
 
-							d_vEffJxW[iElemCount*numberQuadraturePoints+q]=
-								d_vEff[iElemCount*numberQuadraturePoints+q]*fe_values.JxW(q);
-						}
-					}
-					else
-					{
-						for (unsigned int q=0; q<numberQuadraturePoints; ++q)
-						{
-							d_vEff[iElemCount*numberQuadraturePoints+q] = tempPhi[q]+exchangePotentialVal[2*q+spinIndex]+corrPotentialVal[2*q+spinIndex];
-
-							d_vEffJxW[iElemCount*numberQuadraturePoints+q]=
-								d_vEff[iElemCount*numberQuadraturePoints+q]*fe_values.JxW(q);
-
-						}
-					}
+          }
 
 					iElemCount++;
 				}
 
 			d_vEffJxWDevice=d_vEffJxW;
-
-			iElemCount=0;
-			for (unsigned int cell = 0; cell < n_cells; ++cell)
-			{
-				unsigned int n_sub_cells=dftPtr->matrix_free_data.n_components_filled(cell);
-
-				std::vector<VectorizedArray<double>>  val(numberQuadraturePoints);
-
-				for (unsigned int v = 0; v < n_sub_cells; ++v)
-				{
-
-					for (unsigned int q = 0; q < numberQuadraturePoints; ++q)
-						val[q][v]=d_vEff[d_macroCellIdToNormalCellIdMap[iElemCount]*numberQuadraturePoints+q];
-
-					iElemCount++;
-				}
-
-				for (unsigned int q = 0; q < numberQuadraturePoints; ++q)
-					vEff(cell,q)=val[q];
-			}
+     
+      if (dftParameters::isPseudopotential && !d_isStiffnessMatrixExternalPotCorrComputed)
+         computeVEffExternalPotCorr(externalPotCorrValues,externalPotCorrQuadratureId);     
 		}
 
 	template<unsigned int FEOrder>
 		void kohnShamDFTOperatorCUDAClass<FEOrder>::computeVEffSpinPolarized(const std::map<dealii::CellId,std::vector<double> >* rhoValues,
 				const std::map<dealii::CellId,std::vector<double> >* gradRhoValues,
 				const distributedCPUVec<double> & phi,
-				const distributedCPUVec<double> & phiExt,
 				const unsigned int spinIndex,
-				const std::map<dealii::CellId,std::vector<double> > & pseudoValues)
+				const std::map<dealii::CellId,std::vector<double> > & externalPotCorrValues,
+        const unsigned int externalPotCorrQuadratureId)
 		{
 			const unsigned int n_cells = dftPtr->matrix_free_data.n_macro_cells();
 			const unsigned int totalLocallyOwnedCells = dftPtr->matrix_free_data.n_physical_cells();
@@ -1191,12 +1010,8 @@ namespace dftfe
 			FEValues<3> fe_values (dftPtr->FE, quadrature_formula,update_values | update_JxW_values);
 			const unsigned int numberQuadraturePoints = quadrature_formula.size();
 
-			vEff.reinit (n_cells, numberQuadraturePoints);
-			derExcWithSigmaTimesGradRho.reinit(TableIndices<2>(n_cells, numberQuadraturePoints));
-
 			d_vEff.resize(totalLocallyOwnedCells*numberQuadraturePoints,0.0);
 			d_vEffJxW.resize(totalLocallyOwnedCells*numberQuadraturePoints,0.0);
-			d_derExcWithSigmaTimesGradRho.resize(totalLocallyOwnedCells*numberQuadraturePoints*3,0.0);
 			d_derExcWithSigmaTimesGradRhoJxW.resize(totalLocallyOwnedCells*numberQuadraturePoints*3,0.0);
 
 			typename dealii::DoFHandler<3>::active_cell_iterator cellPtr=dftPtr->matrix_free_data.get_dof_handler().begin_active();
@@ -1218,9 +1033,6 @@ namespace dftfe
 					fe_values.reinit (cellPtr);
 
 					fe_values.get_function_values(phi,tempPhi);
-
-					//if(dftParameters::isPseudopotential)
-					//  fe_values.get_function_values(phiExt,tempPhiExt);
 
 					for (unsigned int q=0; q<numberQuadraturePoints; ++q)
 					{
@@ -1264,40 +1076,20 @@ namespace dftfe
 						const double gradRhoOtherZ = (*gradRhoValues).find(cellPtr->id())->second[6*q + 2 + 3*(1-spinIndex)];
 						const double term = derExchEnergyWithSigmaVal[3*q+2*spinIndex]+derCorrEnergyWithSigmaVal[3*q+2*spinIndex];
 						const double termOff = derExchEnergyWithSigmaVal[3*q+1]+derCorrEnergyWithSigmaVal[3*q+1];
-						d_derExcWithSigmaTimesGradRho[iElemCount*numberQuadraturePoints*3+3*q] = term*gradRhoX + 0.5*termOff*gradRhoOtherX;
-						d_derExcWithSigmaTimesGradRho[iElemCount*numberQuadraturePoints*3+3*q+1] = term*gradRhoY + 0.5*termOff*gradRhoOtherY;
-						d_derExcWithSigmaTimesGradRho[iElemCount*numberQuadraturePoints*3+3*q+2] = term*gradRhoZ + 0.5*termOff*gradRhoOtherZ;
 						d_derExcWithSigmaTimesGradRhoJxW[iElemCount*numberQuadraturePoints*3+3*q] = (term*gradRhoX + 0.5*termOff*gradRhoOtherX)*jxw;
 						d_derExcWithSigmaTimesGradRhoJxW[iElemCount*numberQuadraturePoints*3+3*q+1] = (term*gradRhoY + 0.5*termOff*gradRhoOtherY)*jxw;
 						d_derExcWithSigmaTimesGradRhoJxW[iElemCount*numberQuadraturePoints*3+3*q+2] = (term*gradRhoZ + 0.5*termOff*gradRhoOtherZ)*jxw;
 					}
 
+          for (unsigned int q=0; q<numberQuadraturePoints; ++q)
+          {
+            d_vEff[iElemCount*numberQuadraturePoints+q] =tempPhi[q]
+              +derExchEnergyWithDensityVal[2*q+spinIndex]+derCorrEnergyWithDensityVal[2*q+spinIndex];
 
-					if(dftParameters::isPseudopotential)
-					{
-						for (unsigned int q=0; q<numberQuadraturePoints; ++q)
-						{
-							d_vEff[iElemCount*numberQuadraturePoints+q] =tempPhi[q]
-								+derExchEnergyWithDensityVal[2*q+spinIndex]+derCorrEnergyWithDensityVal[2*q+spinIndex]
-								+(pseudoValues.find(cellPtr->id())->second[q]);//-tempPhiExt[q]);
+            d_vEffJxW[iElemCount*numberQuadraturePoints+q]=
+              d_vEff[iElemCount*numberQuadraturePoints+q]*fe_values.JxW(q);
 
-
-							d_vEffJxW[iElemCount*numberQuadraturePoints+q]=
-								d_vEff[iElemCount*numberQuadraturePoints+q]*fe_values.JxW(q);
-						}
-					}
-					else
-					{
-						for (unsigned int q=0; q<numberQuadraturePoints; ++q)
-						{
-							d_vEff[iElemCount*numberQuadraturePoints+q] =tempPhi[q]
-								+derExchEnergyWithDensityVal[2*q+spinIndex]+derCorrEnergyWithDensityVal[2*q+spinIndex];
-
-							d_vEffJxW[iElemCount*numberQuadraturePoints+q]=
-								d_vEff[iElemCount*numberQuadraturePoints+q]*fe_values.JxW(q);
-
-						}
-					}
+          }
 
 					iElemCount++;
 				}
@@ -1305,80 +1097,39 @@ namespace dftfe
 			d_vEffJxWDevice=d_vEffJxW;
 			d_derExcWithSigmaTimesGradRhoJxWDevice=d_derExcWithSigmaTimesGradRhoJxW;
 
-			iElemCount=0;
-			for (unsigned int cell = 0; cell < n_cells; ++cell)
-			{
-				unsigned int n_sub_cells=dftPtr->matrix_free_data.n_components_filled(cell);
-
-				std::vector<VectorizedArray<double>>  val(numberQuadraturePoints);
-				std::vector<dealii::Tensor<1,3,dealii::VectorizedArray<double> > > derExcWithSigmaTimesGradRhoVal(numberQuadraturePoints);
-
-				for (unsigned int v = 0; v < n_sub_cells; ++v)
-				{
-
-					for (unsigned int q = 0; q < numberQuadraturePoints; ++q)
-						val[q][v]=d_vEff[d_macroCellIdToNormalCellIdMap[iElemCount]*numberQuadraturePoints+q];
-
-
-					for (unsigned int q = 0; q < numberQuadraturePoints; ++q)
-						for (unsigned int i = 0; i < 3; ++i)
-							derExcWithSigmaTimesGradRhoVal[q][i][v]=d_derExcWithSigmaTimesGradRho[d_macroCellIdToNormalCellIdMap[iElemCount]*numberQuadraturePoints*3+3*q+i];
-
-
-					iElemCount++;
-				}
-
-				for (unsigned int q = 0; q < numberQuadraturePoints; ++q)
-				{
-					vEff(cell,q)=val[q];
-					derExcWithSigmaTimesGradRho(cell,q)=derExcWithSigmaTimesGradRhoVal[q];
-				}
-			}
+      if (dftParameters::isPseudopotential && !d_isStiffnessMatrixExternalPotCorrComputed)
+         computeVEffExternalPotCorr(externalPotCorrValues,externalPotCorrQuadratureId);      
 		}
 
 	template<unsigned int FEOrder>
-		void kohnShamDFTOperatorCUDAClass<FEOrder>::HX(std::vector<distributedCPUVec<double>> &src,
-				std::vector<distributedCPUVec<double>> &dst)
-		{
-
-			for (unsigned int i = 0; i < src.size(); i++)
-			{
-				src[i].scale(d_invSqrtMassVector); //M^{-1/2}*X
-				//dftPtr->constraintsNoneEigen.distribute(src[i]);
-				dftPtr->getConstraintMatrixEigenDataInfo().distribute(src[i]);
-				src[i].update_ghost_values();
-				dst[i] = 0.0;
-			}
+		void kohnShamDFTOperatorCUDAClass<FEOrder>::computeVEffExternalPotCorr(const std::map<dealii::CellId,std::vector<double> > & externalPotCorrValues,
+                                                                       const unsigned int externalPotCorrQuadratureId)
+  {
+      d_externalPotCorrQuadratureId=externalPotCorrQuadratureId;
+    	const unsigned int numberPhysicalCells = dftPtr->matrix_free_data.n_physical_cells();
+			const int numberQuadraturePoints = dftPtr->matrix_free_data.get_quadrature(externalPotCorrQuadratureId).size();
+	    FEValues<3> feValues(dftPtr->matrix_free_data.get_dof_handler().get_fe(), dftPtr->matrix_free_data.get_quadrature(externalPotCorrQuadratureId), update_JxW_values);
+			d_vEffExternalPotCorrJxW.resize (numberPhysicalCells*numberQuadraturePoints);
 
 
-			//
-			//required if its a pseudopotential calculation and number of nonlocal atoms are greater than zero
-			//H^{nloc}*M^{-1/2}*X
-			if(dftParameters::isPseudopotential && dftPtr->d_nonLocalAtomGlobalChargeIds.size() > 0)
-				computeNonLocalHamiltonianTimesX(src,dst);
+      typename dealii::DoFHandler<3>::active_cell_iterator cellPtr=dftPtr->matrix_free_data.get_dof_handler().begin_active();
+      typename dealii::DoFHandler<3>::active_cell_iterator endcPtr = dftPtr->matrix_free_data.get_dof_handler().end();
 
-			//
-			//First evaluate H^{loc}*M^{-1/2}*X and then add to H^{nloc}*M^{-1/2}*X
-			//
-			dftPtr->matrix_free_data.cell_loop(&kohnShamDFTOperatorCUDAClass<FEOrder>::computeLocalHamiltonianTimesXMF, this, dst, src); //HMX
+      unsigned int iElem=0;
+      for(; cellPtr!=endcPtr; ++cellPtr)
+        if(cellPtr->is_locally_owned())
+        {
+          feValues.reinit (cellPtr);
+					const std::vector<double> & temp=externalPotCorrValues.find(cellPtr->id())->second;          
+          for (unsigned int q = 0; q < numberQuadraturePoints; ++q)     
+           d_vEffExternalPotCorrJxW[iElem*numberQuadraturePoints+q]=temp[q]*feValues.JxW(q);    
+          
+          iElem++;
+        }
 
-			//
-			//Finally evaluate M^{-1/2}*H*M^{-1/2}*X
-			//
-			for (std::vector<distributedCPUVec<double>>::iterator it=dst.begin(); it!=dst.end(); it++)
-			{
-				(*it).scale(d_invSqrtMassVector);
-			}
+      d_vEffExternalPotCorrJxWDevice= d_vEffExternalPotCorrJxW;
+  }
 
-			//
-			//unscale src back
-			//
-			for (std::vector<distributedCPUVec<double>>::iterator it=src.begin(); it!=src.end(); it++)
-			{
-				(*it).scale(d_sqrtMassVector); //MHMX
-			}
-
-		}
 
 	template<unsigned int FEOrder>
 		void kohnShamDFTOperatorCUDAClass<FEOrder>::HX(distributedGPUVec<double> & src,
@@ -1682,47 +1433,6 @@ namespace dftfe
 			}
 
 		}
-
-
-
-	template<unsigned int FEOrder>
-		void kohnShamDFTOperatorCUDAClass<FEOrder>::HXChebyNoCommun(distributedGPUVec<double> & src,
-				distributedGPUVec<double> & projectorKetTimesVector,
-				const unsigned int localVectorSize,
-				const unsigned int numberWaveFunctions,
-				distributedGPUVec<double> & dst)
-		{
-			const unsigned int n_ghosts   = dftPtr->matrix_free_data.get_vector_partitioner()->n_ghost_indices();
-			const unsigned int localSize  = dftPtr->matrix_free_data.get_vector_partitioner()->local_size();
-			const unsigned int totalSize  = localSize + n_ghosts;
-
-			getOverloadedConstraintMatrix()->distribute(src,
-					numberWaveFunctions);
-
-			computeLocalHamiltonianTimesX(src.begin(),
-					numberWaveFunctions,
-					dst.begin(),
-					false);
-
-
-			//H^{nloc}*M^{-1/2}*X
-			if(dftParameters::isPseudopotential && dftPtr->d_nonLocalAtomGlobalChargeIds.size() > 0)
-			{
-				computeNonLocalHamiltonianTimesX(src.begin(),
-						projectorKetTimesVector,
-						numberWaveFunctions,
-						dst.begin(),
-						false,
-						false,
-						false);
-			}
-
-
-
-			getOverloadedConstraintMatrix()->distribute_slave_to_master(dst,
-					numberWaveFunctions);
-		}
-
 
 
 	//XTHX
@@ -3595,7 +3305,6 @@ namespace dftfe
 #include "matrixVectorProductImplementationsCUDA.cu"
 #include "shapeFunctionDataCalculatorCUDA.cu"
 #include "hamiltonianMatrixCalculatorFlattenedCUDA.cu"
-#include "computeNonLocalHamiltonianTimesXCUDA.cu"
 #include "computeNonLocalHamiltonianTimesXMemoryOptBatchGEMMCUDA.cu"
 
 

@@ -101,7 +101,10 @@ namespace dftfe {
 				lineSearch(nonlinearSolverProblem & problem,
 						const double                 tolerance,
 						const unsigned int           maxNumberIterations,
-						const unsigned int           debugLevel);
+						const unsigned int           debugLevel,
+            const std::string checkpointFileName="",
+            const int startingIter=-1,
+            const bool isCheckpointRestart=false);
 
 			/**
 			 * @brief Compute delta_d and eta_p.
@@ -222,6 +225,24 @@ namespace dftfe {
 
 			/// maximum allowed increment (measured as L_{inf}(delta x)) in solution vector beyond which CG is restarted
 			double d_maxSolutionIncrementLinf;
+
+      /// line search data
+      double d_alphaChk;
+
+      /// line search data
+      double d_etaPChk;
+
+      /// line search data
+      double d_etaChk;
+
+      /// line search data
+      double d_functionValueChk;
+
+      /// line search data
+      double d_functionalValueAfterAlphUpdateChk;      
+
+      /// line search iter
+      int d_lineSearchRestartIterChk;
 
 			//parallel objects
 			MPI_Comm mpi_communicator;

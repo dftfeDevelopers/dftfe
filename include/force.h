@@ -121,7 +121,6 @@ namespace dftfe {
 				 const distributedCPUVec<double> & phiTotRhoIn,
 				 const distributedCPUVec<double> & phiTotRhoOut,
 				 const std::map<dealii::CellId, std::vector<double> > & pseudoVLoc,
-				 const ConstraintMatrix  & noConstraints,
 				 const vselfBinsManager<FEOrder>   & vselfBinsManagerEigen,
 				 const MatrixFree<3,double> & matrixFreeDataElectro,
 				 const unsigned int phiTotDofHandlerIndexElectro,
@@ -135,7 +134,7 @@ namespace dftfe {
 				 const std::map<dealii::CellId, std::vector<double> > & gradRhoOutValuesElectroLpsp,
 				 const std::map<dealii::CellId, std::vector<double> > & pseudoVLocElectro,
 				 const std::map<unsigned int,std::map<dealii::CellId, std::vector<double> > > & pseudoVLocAtomsElectro,
-				 const ConstraintMatrix  & noConstraintsElectro,
+				 const ConstraintMatrix  & hangingPlusPBCConstraintsElectro,
 				 const vselfBinsManager<FEOrder>   & vselfBinsManagerElectro,
 				 const std::map<dealii::CellId, std::vector<double> > & shadowKSRhoMinValues,
 				 const std::map<dealii::CellId, std::vector<double> > & shadowKSGradRhoMinValues,
@@ -180,7 +179,6 @@ namespace dftfe {
           const unsigned int lpspQuadratureIdElectro,
 					const distributedCPUVec<double> & phiTotRhoOut,
 					const std::map<dealii::CellId, std::vector<double> > & pseudoVLoc,
-					const ConstraintMatrix  & noConstraints,
 					const vselfBinsManager<FEOrder>   & vselfBinsManagerEigen,
 					const MatrixFree<3,double> & matrixFreeDataElectro,
 					const unsigned int phiTotDofHandlerIndexElectro,
@@ -194,7 +192,7 @@ namespace dftfe {
 				  const std::map<dealii::CellId, std::vector<double> > & gradRhoOutValuesElectroLpsp,
 					const std::map<dealii::CellId, std::vector<double> > & pseudoVLocElectro,
           const std::map<unsigned int,std::map<dealii::CellId, std::vector<double> > > & pseudoVLocAtomsElectro,
-					const ConstraintMatrix  & noConstraintsElectro,
+					const ConstraintMatrix  & hangingPlusPBCConstraintsElectro,
 					const vselfBinsManager<FEOrder>   & vselfBinsManagerElectro);
 
 			/** @brief prints the currently stored configurational stress tensor.
@@ -232,7 +230,7 @@ namespace dftfe {
 			void createBinObjectsForce
 				(const DoFHandler<3> & dofHandler,
 				 const DoFHandler<3> & dofHandlerForce,
-				 const ConstraintMatrix  & noConstraints,
+				 const ConstraintMatrix  & hangingPlusPBCConstraints,
 				 const vselfBinsManager<FEOrder> & vselfBinsManager,
 				 std::vector<std::vector<DoFHandler<C_DIM>::active_cell_iterator> > & cellsVselfBallsDofHandler,
 				 std::vector<std::vector<DoFHandler<C_DIM>::active_cell_iterator> > & cellsVselfBallsDofHandlerForce,
@@ -420,50 +418,55 @@ namespace dftfe {
 				 std::vector<double> & accumForcesVector);        
 
 #ifdef USE_COMPLEX
-			void FnlGammaAtomsElementalContributionPeriodic
+			void FnlGammaAtomsElementalContribution
 				(std::map<unsigned int, std::vector<double> > & forceContributionFnlGammaAtoms,
 				 FEEvaluation<C_DIM,1,C_num1DQuad<FEOrder>(),C_DIM>  & forceEval,
 				 FEEvaluation<C_DIM,1,C_num1DQuadNLPSP<FEOrder>()*C_numCopies1DQuadNLPSP(),C_DIM>  & forceEvalNLP,
 				 const unsigned int cell,
-				 const std::vector<std::vector<std::vector<std::vector<Tensor<1,2, Tensor<1,C_DIM,VectorizedArray<double> > > > > > > & pspnlGammaAtomsQuads,
+				 const std::vector<std::vector<std::vector<std::vector<Tensor<1,2,VectorizedArray<double>  > > > > > & zetaDeltaVQuads,
 				 const std::vector<std::vector<std::vector<std::complex<double> > > > & projectorKetTimesPsiTimesVTimesPartOcc,
-				 const std::vector<Tensor<1,2,VectorizedArray<double> > > & psiQuads,
+				 const std::vector<Tensor<1,2,VectorizedArray<double> > > & psiQuads,         
+				 const std::vector<Tensor<1,2,Tensor<1,C_DIM,VectorizedArray<double> > > > & gradPsiQuads,
 				 const std::vector< std::vector<double> > & eigenValues,
 				 const std::vector<unsigned int> & nonlocalAtomsCompactSupportList);
 
-			void FnlGammaAtomsElementalContributionPeriodicSpinPolarized
+			void FnlGammaAtomsElementalContributionSpinPolarized
 				(std::map<unsigned int, std::vector<double> > & forceContributionFnlGammaAtoms,
 				 FEEvaluation<C_DIM,1,C_num1DQuad<FEOrder>(),C_DIM>  & forceEval,
 				 FEEvaluation<C_DIM,1,C_num1DQuadNLPSP<FEOrder>()*C_numCopies1DQuadNLPSP(),C_DIM>  & forceEvalNLP,
 				 const unsigned int cell,
-				 const std::vector<std::vector<std::vector<std::vector<Tensor<1,2, Tensor<1,C_DIM,VectorizedArray<double> > > > > > > & pspnlGammaAtomsQuads,
+				 const std::vector<std::vector<std::vector<std::vector<Tensor<1,2, VectorizedArray<double> > > > > > & zetaDeltaVQuads,
 				 const std::vector<std::vector<std::vector<std::complex<double> > > > & projectorKetTimesPsiSpin0TimesVTimesPartOcc,
 				 const std::vector<std::vector<std::vector<std::complex<double> > > > & projectorKetTimesPsiSpin1TimesVTimesPartOcc,
 				 const std::vector<Tensor<1,2,VectorizedArray<double> > > & psiSpin0Quads,
 				 const std::vector<Tensor<1,2,VectorizedArray<double> > > & psiSpin1Quads,
+				 const std::vector<Tensor<1,2,Tensor<1,C_DIM,VectorizedArray<double> > > > & gradPsiSpin0Quads,
+				 const std::vector<Tensor<1,2,Tensor<1,C_DIM,VectorizedArray<double> > > > & gradPsiSpin1Quads,         
 				 const std::vector< std::vector<double> > & eigenValues,
 				 const std::vector<unsigned int> & nonlocalAtomsCompactSupportList);
 #else
 
-			void FnlGammaAtomsElementalContributionNonPeriodicSpinPolarized
+			void FnlGammaAtomsElementalContributionSpinPolarized
 				(std::map<unsigned int, std::vector<double> > & forceContributionFnlGammaAtoms,
 				 FEEvaluation<C_DIM,1,C_num1DQuad<FEOrder>(),C_DIM>  & forceEval,
 				 FEEvaluation<C_DIM,1,C_num1DQuadNLPSP<FEOrder>()*C_numCopies1DQuadNLPSP(),C_DIM>  & forceEvalNLP,
 				 const unsigned int cell,
-				 const std::vector<std::vector<std::vector<Tensor<1,C_DIM,VectorizedArray<double> > > > > & pspnlGammaAtomQuads,
+				 const std::vector<std::vector<std::vector<VectorizedArray<double> > > > & zetaDeltaVQuads,
 				 const std::vector<std::vector<double> >  & projectorKetTimesPsiSpin0TimesVTimesPartOcc,
 				 const std::vector<std::vector<double> >  & projectorKetTimesPsiSpin1TimesVTimesPartOcc,
 				 const std::vector< VectorizedArray<double> > & psiSpin0Quads,
 				 const std::vector< VectorizedArray<double> > & psiSpin1Quads,
+				 const std::vector< Tensor<1,C_DIM,VectorizedArray<double> > > & gradPsiSpin0Quads,
+				 const std::vector< Tensor<1,C_DIM,VectorizedArray<double> > > & gradPsiSpin1Quads,         
 				 const std::vector<unsigned int> & nonlocalAtomsCompactSupportList);
 
-			void FnlGammaAtomsElementalContributionNonPeriodic
+			void FnlGammaAtomsElementalContribution
 				(std::map<unsigned int, std::vector<double> > & forceContributionFnlGammaAtoms,
 				 FEEvaluation<C_DIM,1,C_num1DQuad<FEOrder>(),C_DIM>  & forceEval,
 				 FEEvaluation<C_DIM,1,C_num1DQuadNLPSP<FEOrder>()*C_numCopies1DQuadNLPSP(),C_DIM>  & forceEvalNLP,
 				 const unsigned int cell,
-				 const std::vector<std::vector<std::vector<Tensor<1,C_DIM,VectorizedArray<double> > > > > & pspnlGammaAtomQuads,
-				 const std::vector<std::vector<VectorizedArray<double> > > & projectorKetTimesPsiTimesVTimesPartOcc,
+				 const std::vector<std::vector<std::vector<VectorizedArray<double> > > > & zetaDeltaVQuads,
+				 const std::vector<std::vector<Tensor<1,C_DIM,VectorizedArray<double> > > > & projectorKetTimesPsiTimesVTimesPartOccContractionPsi,
 				 const std::vector<bool> & isAtomInCell,
 				 const std::vector<unsigned int> & nonlocalPseudoWfcsAccum);
 
@@ -624,32 +627,15 @@ namespace dftfe {
 			 */
 			std::vector<std::vector<std::map<dealii::CellId, std::vector<double > > > > d_nonLocalPSP_ZetalmDeltaVl;
 
-			/* Storage for precomputed nonlocal pseudopotential quadrature data. This is to speedup the
-			 * configurational force computation. Data format: vector(numNonLocalAtomsCurrentProcess with
-			 * non-zero compact support, vector(number pseudo wave functions,map<cellid,num_quad_points*num_k_points*3*2>)).
-			 * Refer to (https://link.aps.org/doi/10.1103/PhysRevB.97.165132) for details of the expression of the configurational force terms
-			 * for the norm-conserving Troullier-Martins pseudopotential in the Kleinman-Bylander form.
-			 * The same expressions also extend to the Optimized Norm-Conserving Vanderbilt (ONCV) pseudopotentials.
-			 */
-			std::vector<std::vector<std::map<dealii::CellId, std::vector<double > > > > d_nonLocalPSP_gradZetalmDeltaVl_KPoint;
-
-			/* Storage for precomputed nonlocal pseudopotential quadrature data. This is to speedup the
-			 * configurational force computation. Data format: vector(numNonLocalAtomsCurrentProcess with
-			 * non-zero compact support, vector(number pseudo wave functions,map<cellid,num_quad_points*num_k_points*3*2>)).
-			 * Refer to (https://link.aps.org/doi/10.1103/PhysRevB.97.165132) for details of the expression of the configurational force terms
-			 * for the norm-conserving Troullier-Martins pseudopotential in the Kleinman-Bylander form.
-			 * The same expressions also extend to the Optimized Norm-Conserving Vanderbilt (ONCV) pseudopotentials.
-			 */
-			std::vector<std::vector<std::map<dealii::CellId, std::vector<double > > > > d_nonLocalPSP_gradZetalmDeltaVl_minusZetalmDeltaVl_KPoint;
 
 			/* Storage for precomputed nonlocal pseudopotential quadrature data. This is to speedup the
 			 * configurational stress computation. Data format: vector(numNonLocalAtomsCurrentProcess with
-			 * non-zero compact support, vector(number pseudo wave functions,map<cellid,num_quad_points*num_k_points*3*3*2>)).
+			 * non-zero compact support, vector(number pseudo wave functions,map<cellid,num_quad_points*num_k_points*3*2>)).
 			 * Refer to (https://link.aps.org/doi/10.1103/PhysRevB.97.165132) for details of the expression of the configurational force terms
 			 * for the norm-conserving Troullier-Martins pseudopotential in the Kleinman-Bylander form.
 			 * The same expressions also extend to the Optimized Norm-Conserving Vanderbilt (ONCV) pseudopotentials.
 			 */
-			std::vector<std::vector<std::map<dealii::CellId, std::vector<double > > > > d_nonLocalPSP_gradZetalmDeltaVlDyadicDistImageAtoms_KPoint;
+			std::vector<std::vector<std::map<dealii::CellId, std::vector<double > > > > d_nonLocalPSP_zetalmDeltaVlProductDistImageAtoms_KPoint;      
 
 #else
 
@@ -661,15 +647,6 @@ namespace dftfe {
 			 * The same expressions also extend to the Optimized Norm-Conserving Vanderbilt (ONCV) pseudopotentials.
 			 */
 			std::vector<std::vector<std::map<dealii::CellId, std::vector<double > > > > d_nonLocalPSP_ZetalmDeltaVl;
-
-			/* Storage for precomputed nonlocal pseudopotential quadrature data. This is to speedup the
-			 * configurational stress computation. Data format: vector(numNonLocalAtomsCurrentProcess with
-			 * non-zero compact support, vector(number pseudo wave functions,map<cellid,num_quad_points*3>)).
-			 * Refer to (https://link.aps.org/doi/10.1103/PhysRevB.97.165132) for details of the expression of the configurational force terms
-			 * for the norm-conserving Troullier-Martins pseudopotential in the Kleinman-Bylander form.
-			 * The same expressions also extend to the Optimized Norm-Conserving Vanderbilt (ONCV) pseudopotentials.
-			 */
-			std::vector<std::vector<std::map<dealii::CellId, std::vector<double > > > > d_nonLocalPSP_gradZetalmDeltaVl;
 #endif
 
 			/// Gaussian generator constant. Gaussian generator: Gamma(r)= exp(-d_gaussianConstant*r^2)

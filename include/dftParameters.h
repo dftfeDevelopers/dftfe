@@ -131,7 +131,6 @@ namespace dftfe {
 		extern double ratioOfMeshMovementToForceGaussianBOMD;
 		extern bool useAtomicRhoXLBOMD;
 		extern bool useMeshSizesFromAtomsFile;
-		extern bool chebyCommunAvoidanceAlgo;
 		extern unsigned int numberPassesRRSkippedXLBOMD;
 		extern bool useSingleFullScfXLBOMD;
 		extern bool skipHarmonicOscillatorTermInitialStepsXLBOMD;

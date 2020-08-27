@@ -27,7 +27,6 @@ template<unsigned int FEOrder>
   const unsigned int lpspQuadratureIdElectro,         
  const distributedCPUVec<double> & phiTotRhoOut,
  const std::map<dealii::CellId, std::vector<double> > & pseudoVLoc,
- const ConstraintMatrix  & noConstraints,
  const vselfBinsManager<FEOrder> & vselfBinsManagerEigen,
  const MatrixFree<3,double> & matrixFreeDataElectro,
  const unsigned int phiTotDofHandlerIndexElectro,
@@ -41,13 +40,13 @@ template<unsigned int FEOrder>
   const std::map<dealii::CellId, std::vector<double> > & gradRhoOutValuesElectroLpsp,
   const std::map<dealii::CellId, std::vector<double> > & pseudoVLocElectro,
  const std::map<unsigned int,std::map<dealii::CellId, std::vector<double> > > & pseudoVLocAtomsElectro,
- const ConstraintMatrix  & noConstraintsElectro,
+ const ConstraintMatrix  & hangingPlusPBCConstraintsElectro,
  const vselfBinsManager<FEOrder> & vselfBinsManagerElectro)
 {
 
 	createBinObjectsForce(matrixFreeDataElectro.get_dof_handler(phiTotDofHandlerIndexElectro),
 			d_dofHandlerForceElectro,
-			noConstraintsElectro,
+			hangingPlusPBCConstraintsElectro,
 			vselfBinsManagerElectro,
 			d_cellsVselfBallsDofHandlerElectro,
 			d_cellsVselfBallsDofHandlerForceElectro,

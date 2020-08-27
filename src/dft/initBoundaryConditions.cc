@@ -176,6 +176,9 @@ void dftClass<FEOrder>::initBoundaryConditions(const bool meshOnlyDeformed){
 				d_imageIdsTrunc,
 				d_imageChargesTrunc,
 				dftParameters::radiusAtomBall);
+
+    d_netFloatingDisp.clear();
+    d_netFloatingDisp.resize(atomLocations.size()*3,0.0);
 		computing_timer.exit_section("Create atom bins");
 	}
 

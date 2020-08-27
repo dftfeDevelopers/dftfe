@@ -193,7 +193,7 @@ namespace dftfe {
 					{
 						pcout<<"-------------------Fractional coordinates of atoms----------------------"<<std::endl;
 						for(unsigned int i = 0; i < dftPtr->atomLocations.size(); ++i)
-							pcout<<"AtomId "<<i <<":  "<<dftPtr->atomLocationsFractional[i][2]<<" "<<dftPtr->atomLocationsFractional[i][3]<<" "<<dftPtr->atomLocationsFractional[i][4]<<"\n";
+							pcout<<(unsigned int)dftPtr->atomLocationsFractional[i][0] <<" "<<(unsigned int)dftPtr->atomLocationsFractional[i][1]<<" "<<dftPtr->atomLocationsFractional[i][3]<<" "<<dftPtr->atomLocationsFractional[i][4]<<"\n";
 						pcout<<"-----------------------------------------------------------------------------------------"<<std::endl;
 					}
 					else
@@ -204,7 +204,7 @@ namespace dftfe {
 						pcout<<"------------Cartesian coordinates of atoms (origin at center of domain)------------------"<<std::endl;
 						for(unsigned int i = 0; i < dftPtr->atomLocations.size(); ++i)
 						{
-							pcout<<"AtomId "<<i <<":  "<<dftPtr->atomLocations[i][2]<<" "<<dftPtr->atomLocations[i][3]<<" "<<dftPtr->atomLocations[i][4]<<"\n";
+							pcout<<(unsigned int)dftPtr->atomLocations[i][0] <<" "<<(unsigned int)dftPtr->atomLocations[i][1]<<" "<<dftPtr->atomLocations[i][2]<<" "<<dftPtr->atomLocations[i][3]<<" "<<dftPtr->atomLocations[i][4]<<"\n";
 						}
 						pcout<<"-----------------------------------------------------------------------------------------"<<std::endl;
 					}

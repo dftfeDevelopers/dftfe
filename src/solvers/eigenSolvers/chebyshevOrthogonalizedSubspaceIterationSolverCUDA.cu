@@ -516,11 +516,6 @@ namespace dftfe
 			distributedGPUVec<double> YArray;
 			YArray.reinit(cudaFlattenedArrayBlock);
 
-			distributedGPUVec<double> YArrayCA; 
-			if (dftParameters::chebyCommunAvoidanceAlgo)
-				YArrayCA.reinit(cudaFlattenedArrayBlock);
-
-
 			distributedGPUVec<float> cudaFlattenedFloatArrayBlock;
 			vectorTools::createDealiiVector(operatorMatrix.getMatrixFreeData()->get_vector_partitioner(),
 					vectorsBlockSize,
@@ -541,7 +536,7 @@ namespace dftfe
 
 
 			distributedGPUVec<double> cudaFlattenedArrayBlock2;
-			if (dftParameters::overlapComputeCommunCheby || dftParameters::chebyCommunAvoidanceAlgo)
+			if (dftParameters::overlapComputeCommunCheby)
 				cudaFlattenedArrayBlock2.reinit(cudaFlattenedArrayBlock);
 
 
@@ -556,14 +551,23 @@ namespace dftfe
 
 			if(!isElpaStep2)
 			{
-				computing_timer.enter_section("Lanczos k-step Upper Bound");
-				operatorMatrix.reinit(1);
-				const double upperBoundUnwantedSpectrum =linearAlgebraOperationsCUDA::lanczosUpperBoundEigenSpectrum(operatorMatrix,
-						tempEigenVec);
-				computing_timer.exit_section("Lanczos k-step Upper Bound");
 				cudaDeviceSynchronize();
 				MPI_Barrier(MPI_COMM_WORLD);
-				gpu_time = MPI_Wtime();
+				double lanczos_time = MPI_Wtime();
+
+				const double upperBoundUnwantedSpectrum =linearAlgebraOperationsCUDA::lanczosUpperBoundEigenSpectrum(operatorMatrix,
+						tempEigenVec,
+            cudaFlattenedArrayBlock,
+            YArray,
+            projectorKetTimesVector,
+            vectorsBlockSize);
+
+				cudaDeviceSynchronize();
+				MPI_Barrier(MPI_COMM_WORLD);
+				double gpu_time = MPI_Wtime();
+				if (this_process==0 && dftParameters::verbosity>=2)
+					std::cout<<"Time for Lanczos Upper Bound: "<<gpu_time-lanczos_time<<std::endl;
+
 				unsigned int chebyshevOrder = dftParameters::chebyshevOrder;
 
 				//
@@ -603,7 +607,6 @@ namespace dftfe
 						eigenVectorsFlattenedCUDA,
 						operatorMatrix.getSqrtMassVec());
 
-				double computeAvoidanceTolerance=1e-14;
 
 				//two blocks of wavefunctions are filtered simultaneously when overlap compute communication in chebyshev
 				//filtering is toggled on
@@ -653,76 +656,37 @@ namespace dftfe
 						//(in case of overlap computation and communication) to be filtered and does in-place filtering
 						if (dftParameters::overlapComputeCommunCheby && numSimultaneousBlocksCurrent==2)
 						{
-							if (dftParameters::chebyCommunAvoidanceAlgo && false)
-								linearAlgebraOperationsCUDA::chebyshevFilterComputeAvoidance(operatorMatrix,
-										cudaFlattenedArrayBlock,
-										YArray,
-										YArrayCA,
-										cudaFlattenedFloatArrayBlock,
-										projectorKetTimesVector,
-										projectorKetTimesVectorFloat,
-										cudaFlattenedArrayBlock2,
-										YArray2,
-										projectorKetTimesVector2,
-										localVectorSize,
-										BVec,
-										chebyshevOrder,
-										d_lowerBoundUnWantedSpectrum,
-										upperBoundUnwantedSpectrum,
-										d_lowerBoundWantedSpectrum,
-										isXlBOMDLinearizedSolve,
-										false,
-										useMixedPrecOverall,
-										computeAvoidanceTolerance);
-							else
-								linearAlgebraOperationsCUDA::chebyshevFilter(operatorMatrix,
-										cudaFlattenedArrayBlock,
-										YArray,
-										cudaFlattenedFloatArrayBlock,
-										projectorKetTimesVector,
-										projectorKetTimesVectorFloat,
-										cudaFlattenedArrayBlock2,
-										YArray2,
-										projectorKetTimesVector2,
-										localVectorSize,
-										BVec,
-										chebyshevOrder,
-										d_lowerBoundUnWantedSpectrum,
-										upperBoundUnwantedSpectrum,
-										d_lowerBoundWantedSpectrum,
-										useMixedPrecOverall);	
+              linearAlgebraOperationsCUDA::chebyshevFilter(operatorMatrix,
+                  cudaFlattenedArrayBlock,
+                  YArray,
+                  cudaFlattenedFloatArrayBlock,
+                  projectorKetTimesVector,
+                  projectorKetTimesVectorFloat,
+                  cudaFlattenedArrayBlock2,
+                  YArray2,
+                  projectorKetTimesVector2,
+                  localVectorSize,
+                  BVec,
+                  chebyshevOrder,
+                  d_lowerBoundUnWantedSpectrum,
+                  upperBoundUnwantedSpectrum,
+                  d_lowerBoundWantedSpectrum,
+                  useMixedPrecOverall);	
 						}
 						else
 						{
-							if (dftParameters::chebyCommunAvoidanceAlgo && false)
-								linearAlgebraOperationsCUDA::chebyshevFilterComputeAvoidance(operatorMatrix,
-										cudaFlattenedArrayBlock,
-										YArray,
-										cudaFlattenedArrayBlock2,
-										cudaFlattenedFloatArrayBlock,
-										projectorKetTimesVector,
-										localVectorSize,
-										BVec,
-										chebyshevOrder,
-										d_lowerBoundUnWantedSpectrum,
-										upperBoundUnwantedSpectrum,
-										d_lowerBoundWantedSpectrum,
-										isXlBOMDLinearizedSolve,
-										false,
-										useMixedPrecOverall);	
-							else 
-								linearAlgebraOperationsCUDA::chebyshevFilter(operatorMatrix,
-										cudaFlattenedArrayBlock,
-										YArray,
-										cudaFlattenedFloatArrayBlock,
-										projectorKetTimesVector,
-										localVectorSize,
-										BVec,
-										chebyshevOrder,
-										d_lowerBoundUnWantedSpectrum,
-										upperBoundUnwantedSpectrum,
-										d_lowerBoundWantedSpectrum,
-										useMixedPrecOverall);	
+              linearAlgebraOperationsCUDA::chebyshevFilter(operatorMatrix,
+                  cudaFlattenedArrayBlock,
+                  YArray,
+                  cudaFlattenedFloatArrayBlock,
+                  projectorKetTimesVector,
+                  localVectorSize,
+                  BVec,
+                  chebyshevOrder,
+                  d_lowerBoundUnWantedSpectrum,
+                  upperBoundUnwantedSpectrum,
+                  d_lowerBoundWantedSpectrum,
+                  useMixedPrecOverall);	
 						}
 
 						//copy current wavefunction vectors block to vector containing all wavefunction vectors
@@ -1179,10 +1143,6 @@ namespace dftfe
 			distributedGPUVec<double> YArray;
 			YArray.reinit(cudaFlattenedArrayBlock);
 
-			distributedGPUVec<double> YArrayCA; 
-			if (dftParameters::chebyCommunAvoidanceAlgo)
-				YArrayCA.reinit(cudaFlattenedArrayBlock);
-
 			distributedGPUVec<float> cudaFlattenedFloatArrayBlock;
 			vectorTools::createDealiiVector(operatorMatrix.getMatrixFreeData()->get_vector_partitioner(),
 					chebyBlockSize,
@@ -1204,7 +1164,7 @@ namespace dftfe
 
 
 			distributedGPUVec<double> cudaFlattenedArrayBlock2;
-			if (dftParameters::overlapComputeCommunCheby || dftParameters::chebyCommunAvoidanceAlgo)
+			if (dftParameters::overlapComputeCommunCheby)
 				cudaFlattenedArrayBlock2.reinit(cudaFlattenedArrayBlock);
 
 
@@ -1218,9 +1178,12 @@ namespace dftfe
 				projectorKetTimesVector2.reinit(projectorKetTimesVector);
 
 			computing_timer.enter_section("Lanczos k-step Upper Bound");
-			operatorMatrix.reinit(1);
-			const double upperBoundUnwantedSpectrum =linearAlgebraOperationsCUDA::lanczosUpperBoundEigenSpectrum(operatorMatrix,
-					tempEigenVec);
+		  const double upperBoundUnwantedSpectrum =linearAlgebraOperationsCUDA::lanczosUpperBoundEigenSpectrum(operatorMatrix,
+					tempEigenVec,
+          cudaFlattenedArrayBlock,
+          YArray,
+          projectorKetTimesVector,          
+          chebyBlockSize);
 			computing_timer.exit_section("Lanczos k-step Upper Bound");
 			unsigned int chebyshevOrder = dftParameters::chebyshevOrder;
 
@@ -1266,12 +1229,6 @@ namespace dftfe
 				if (this_process==0 && dftParameters::verbosity>=1)
 					std::cout<<"Beginning no RR Chebyshev filter subpspace iteration pass: "<<ipass+1<<std::endl;
 
-				double computeAvoidanceTolerance=1e-8;
-				if (ipass>=2 && ipass<4)
-					computeAvoidanceTolerance=1e-10;
-				else if (ipass>=4)
-					computeAvoidanceTolerance=1e-12;
-
 				for (unsigned int ivec = 0; ivec < totalNumberWaveFunctions; ivec += wfcBlockSize)
 				{
 					//two blocks of wavefunctions are filtered simultaneously when overlap compute communication in chebyshev
@@ -1316,76 +1273,37 @@ namespace dftfe
 							//(in case of overlap computation and communication) to be filtered and does in-place filtering
 							if (dftParameters::overlapComputeCommunCheby && numSimultaneousBlocksCurrent==2)
 							{
-								if (dftParameters::chebyCommunAvoidanceAlgo)
-									linearAlgebraOperationsCUDA::chebyshevFilterComputeAvoidance(operatorMatrix,
-											cudaFlattenedArrayBlock,
-											YArray,
-											YArrayCA,
-											cudaFlattenedFloatArrayBlock,
-											projectorKetTimesVector,
-											projectorKetTimesVectorFloat,
-											cudaFlattenedArrayBlock2,
-											YArray2,
-											projectorKetTimesVector2,
-											localVectorSize,
-											BVec,
-											chebyshevOrder,
-											d_lowerBoundUnWantedSpectrum,
-											upperBoundUnwantedSpectrum,
-											d_lowerBoundWantedSpectrum,
-											isXlBOMDLinearizedSolve,
-											false,
-											useMixedPrecOverall,
-											computeAvoidanceTolerance);
-								else
-									linearAlgebraOperationsCUDA::chebyshevFilter(operatorMatrix,
-											cudaFlattenedArrayBlock,
-											YArray,
-											cudaFlattenedFloatArrayBlock,
-											projectorKetTimesVector,
-											projectorKetTimesVectorFloat,
-											cudaFlattenedArrayBlock2,
-											YArray2,
-											projectorKetTimesVector2,
-											localVectorSize,
-											BVec,
-											chebyshevOrder,
-											d_lowerBoundUnWantedSpectrum,
-											upperBoundUnwantedSpectrum,
-											d_lowerBoundWantedSpectrum,
-											useMixedPrecOverall);	
+                linearAlgebraOperationsCUDA::chebyshevFilter(operatorMatrix,
+                    cudaFlattenedArrayBlock,
+                    YArray,
+                    cudaFlattenedFloatArrayBlock,
+                    projectorKetTimesVector,
+                    projectorKetTimesVectorFloat,
+                    cudaFlattenedArrayBlock2,
+                    YArray2,
+                    projectorKetTimesVector2,
+                    localVectorSize,
+                    BVec,
+                    chebyshevOrder,
+                    d_lowerBoundUnWantedSpectrum,
+                    upperBoundUnwantedSpectrum,
+                    d_lowerBoundWantedSpectrum,
+                    useMixedPrecOverall);	
 							}
 							else
 							{
-								if (dftParameters::chebyCommunAvoidanceAlgo)
-									linearAlgebraOperationsCUDA::chebyshevFilterComputeAvoidance(operatorMatrix,
-											cudaFlattenedArrayBlock,
-											YArray,
-											cudaFlattenedArrayBlock2,
-											cudaFlattenedFloatArrayBlock,
-											projectorKetTimesVector,
-											localVectorSize,
-											BVec,
-											chebyshevOrder,
-											d_lowerBoundUnWantedSpectrum,
-											upperBoundUnwantedSpectrum,
-											d_lowerBoundWantedSpectrum,
-											isXlBOMDLinearizedSolve,
-											false,
-											useMixedPrecOverall);	
-								else 
-									linearAlgebraOperationsCUDA::chebyshevFilter(operatorMatrix,
-											cudaFlattenedArrayBlock,
-											YArray,
-											cudaFlattenedFloatArrayBlock,
-											projectorKetTimesVector,
-											localVectorSize,
-											BVec,
-											chebyshevOrder,
-											d_lowerBoundUnWantedSpectrum,
-											upperBoundUnwantedSpectrum,
-											d_lowerBoundWantedSpectrum,
-											useMixedPrecOverall);	
+                linearAlgebraOperationsCUDA::chebyshevFilter(operatorMatrix,
+                    cudaFlattenedArrayBlock,
+                    YArray,
+                    cudaFlattenedFloatArrayBlock,
+                    projectorKetTimesVector,
+                    localVectorSize,
+                    BVec,
+                    chebyshevOrder,
+                    d_lowerBoundUnWantedSpectrum,
+                    upperBoundUnwantedSpectrum,
+                    d_lowerBoundWantedSpectrum,
+                    useMixedPrecOverall);	
 							}	
 
 							//copy current wavefunction vectors block to vector containing all wavefunction vectors
@@ -1515,10 +1433,6 @@ namespace dftfe
 			YArray.reinit(cudaFlattenedArrayBlock);
 
 
-			distributedGPUVec<double> YArrayCA;
-			if (dftParameters::chebyCommunAvoidanceAlgo) 
-				YArrayCA.reinit(cudaFlattenedArrayBlock);
-
 			distributedGPUVec<float> cudaFlattenedFloatArrayBlock;
 			vectorTools::createDealiiVector(operatorMatrix.getMatrixFreeData()->get_vector_partitioner(),
 					chebyBlockSize,
@@ -1539,7 +1453,7 @@ namespace dftfe
 
 
 			distributedGPUVec<double> cudaFlattenedArrayBlock2;
-			if (dftParameters::overlapComputeCommunCheby || dftParameters::chebyCommunAvoidanceAlgo)
+			if (dftParameters::overlapComputeCommunCheby)
 				cudaFlattenedArrayBlock2.reinit(cudaFlattenedArrayBlock);
 
 
@@ -1553,9 +1467,12 @@ namespace dftfe
 				projectorKetTimesVector2.reinit(projectorKetTimesVector);
 
 			computing_timer.enter_section("Lanczos k-step Upper Bound");
-			operatorMatrix.reinit(1);
 			const double upperBoundUnwantedSpectrum =linearAlgebraOperationsCUDA::lanczosUpperBoundEigenSpectrum(operatorMatrix,
-					tempEigenVec);
+					tempEigenVec,
+          cudaFlattenedArrayBlock,
+          YArray,
+          projectorKetTimesVector,          
+          chebyBlockSize);
 			computing_timer.exit_section("Lanczos k-step Upper Bound");
 			unsigned int chebyshevOrder = dftParameters::chebyshevOrder;
 
@@ -1646,14 +1563,6 @@ namespace dftfe
 			{
 				if (this_process==0 && dftParameters::verbosity>=1)
 					std::cout<<"Beginning no RR Chebyshev filter subpspace iteration pass: "<<ipass+1<<std::endl;
-
-
-				double computeAvoidanceTolerance=1e-8;
-				if (ipass>=2 && ipass<4)
-					computeAvoidanceTolerance=1e-10;
-				else if (ipass>=4)
-					computeAvoidanceTolerance=1e-12;
-
 
 
 				convDoubleArrToFloatArr<<<(N+255)/256*M,256>>>(N*M,
@@ -2052,76 +1961,37 @@ namespace dftfe
 								//(in case of overlap computation and communication) to be filtered and does in-place filtering
 								if (dftParameters::overlapComputeCommunCheby && numSimultaneousBlocksCurrent==2)
 								{
-									if (dftParameters::chebyCommunAvoidanceAlgo)
-										linearAlgebraOperationsCUDA::chebyshevFilterComputeAvoidance(operatorMatrix,
-												cudaFlattenedArrayBlock,
-												YArray,
-												YArrayCA,
-												cudaFlattenedFloatArrayBlock,
-												projectorKetTimesVector,
-												projectorKetTimesVectorFloat,
-												cudaFlattenedArrayBlock2,
-												YArray2,
-												projectorKetTimesVector2,
-												localVectorSize,
-												BVec,
-												chebyshevOrder,
-												d_lowerBoundUnWantedSpectrum,
-												upperBoundUnwantedSpectrum,
-												d_lowerBoundWantedSpectrum,
-												isXlBOMDLinearizedSolve,
-												false,
-												useMixedPrecOverall,
-												computeAvoidanceTolerance);
-									else
-										linearAlgebraOperationsCUDA::chebyshevFilter(operatorMatrix,
-												cudaFlattenedArrayBlock,
-												YArray,
-												cudaFlattenedFloatArrayBlock,
-												projectorKetTimesVector,
-												projectorKetTimesVectorFloat,
-												cudaFlattenedArrayBlock2,
-												YArray2,
-												projectorKetTimesVector2,
-												localVectorSize,
-												BVec,
-												chebyshevOrder,
-												d_lowerBoundUnWantedSpectrum,
-												upperBoundUnwantedSpectrum,
-												d_lowerBoundWantedSpectrum,
-												useMixedPrecOverall);
+                  linearAlgebraOperationsCUDA::chebyshevFilter(operatorMatrix,
+                      cudaFlattenedArrayBlock,
+                      YArray,
+                      cudaFlattenedFloatArrayBlock,
+                      projectorKetTimesVector,
+                      projectorKetTimesVectorFloat,
+                      cudaFlattenedArrayBlock2,
+                      YArray2,
+                      projectorKetTimesVector2,
+                      localVectorSize,
+                      BVec,
+                      chebyshevOrder,
+                      d_lowerBoundUnWantedSpectrum,
+                      upperBoundUnwantedSpectrum,
+                      d_lowerBoundWantedSpectrum,
+                      useMixedPrecOverall);
 								}
 								else
 								{
-									if (dftParameters::chebyCommunAvoidanceAlgo)
-										linearAlgebraOperationsCUDA::chebyshevFilterComputeAvoidance(operatorMatrix,
-												cudaFlattenedArrayBlock,
-												YArray,
-												cudaFlattenedArrayBlock2,
-												cudaFlattenedFloatArrayBlock,
-												projectorKetTimesVector,
-												localVectorSize,
-												BVec,
-												chebyshevOrder,
-												d_lowerBoundUnWantedSpectrum,
-												upperBoundUnwantedSpectrum,
-												d_lowerBoundWantedSpectrum,
-												isXlBOMDLinearizedSolve,
-												false,
-												useMixedPrecOverall);
-									else
-										linearAlgebraOperationsCUDA::chebyshevFilter(operatorMatrix,
-												cudaFlattenedArrayBlock,
-												YArray,
-												cudaFlattenedFloatArrayBlock,
-												projectorKetTimesVector,
-												localVectorSize,
-												BVec,
-												chebyshevOrder,
-												d_lowerBoundUnWantedSpectrum,
-												upperBoundUnwantedSpectrum,
-												d_lowerBoundWantedSpectrum,
-												useMixedPrecOverall);
+                  linearAlgebraOperationsCUDA::chebyshevFilter(operatorMatrix,
+                      cudaFlattenedArrayBlock,
+                      YArray,
+                      cudaFlattenedFloatArrayBlock,
+                      projectorKetTimesVector,
+                      localVectorSize,
+                      BVec,
+                      chebyshevOrder,
+                      d_lowerBoundUnWantedSpectrum,
+                      upperBoundUnwantedSpectrum,
+                      d_lowerBoundWantedSpectrum,
+                      useMixedPrecOverall);
 								}
 
 								//copy current wavefunction vectors block to vector containing all wavefunction vectors

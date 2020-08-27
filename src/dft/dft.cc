@@ -925,7 +925,7 @@ namespace dftfe {
 			// update mesh and other data structures required for interpolating solution fields from previous
 			// atomic configuration mesh to the current atomic configuration during an automesh step. Currently
 			// this is only required if reuseWfcGeoOpt or reuseDensityGeoOpt is on.
-			if(dftParameters::isIonOpt && (dftParameters::reuseWfcGeoOpt || dftParameters::reuseDensityGeoOpt))
+			if(dftParameters::isIonOpt && (dftParameters::reuseWfcGeoOpt || dftParameters::reuseDensityGeoOpt) && !dftParameters::floatingNuclearCharges)
 				updatePrevMeshDataStructures();
 			//
 			//reinitialize dirichlet BCs for total potential and vSelf poisson solutions
@@ -934,7 +934,24 @@ namespace dftfe {
 			MPI_Barrier(MPI_COMM_WORLD);
 			init_bc = MPI_Wtime();
 
-			initBoundaryConditions(true);
+      double maxFloatingDispComponentMag=0.0;
+      if (dftParameters::floatingNuclearCharges)
+      {
+        for(unsigned int iAtom=0;iAtom < atomLocations.size(); iAtom++)
+          for(unsigned int idim=0;idim < 3; idim++)          
+          {
+            const double temp = std::fabs(d_netFloatingDisp[iAtom*3+idim]);
+
+            if(temp>maxFloatingDispComponentMag)
+              maxFloatingDispComponentMag=temp;
+          }
+      }
+
+      // false option reinitializes vself bins from scratch wheras true option only updates the boundary conditions
+      if (dftParameters::floatingNuclearCharges)
+        initBoundaryConditions(maxFloatingDispComponentMag>0.2?false:true);
+      else
+        initBoundaryConditions(true);
 
 			MPI_Barrier(MPI_COMM_WORLD);
 			init_bc = MPI_Wtime() - init_bc;
@@ -1388,7 +1405,7 @@ namespace dftfe {
 				kohnShamDFTEigenOperator.preComputeShapeFunctionGradientIntegrals(5);
 #ifdef DFTFE_WITH_GPU
 			if (dftParameters::useGPU)
-				kohnShamDFTEigenOperatorCUDA.preComputeShapeFunctionGradientIntegrals();
+				kohnShamDFTEigenOperatorCUDA.preComputeShapeFunctionGradientIntegrals(5);
 #endif
 			computing_timer.exit_section("shapefunction data");
 
@@ -1470,7 +1487,7 @@ namespace dftfe {
 						computing_timer.enter_section("VEff Computation");
 #ifdef DFTFE_WITH_GPU
 						if (dftParameters::useGPU)
-							kohnShamDFTEigenOperatorCUDA.computeVEffSpinPolarized(rhoInValuesSpinPolarized, d_phiTotRhoIn, d_phiExt, s, d_pseudoVLoc);
+							kohnShamDFTEigenOperatorCUDA.computeVEffSpinPolarized(rhoInValuesSpinPolarized, d_phiTotRhoIn, s, d_pseudoVLoc, 5);
 #endif
 						if (!dftParameters::useGPU)
 							kohnShamDFTEigenOperator.computeVEffSpinPolarized(rhoInValuesSpinPolarized, d_phiTotRhoIn, s, d_pseudoVLoc,5);
@@ -1481,7 +1498,7 @@ namespace dftfe {
 						computing_timer.enter_section("VEff Computation");
 #ifdef DFTFE_WITH_GPU
 						if (dftParameters::useGPU)
-							kohnShamDFTEigenOperatorCUDA.computeVEffSpinPolarized(rhoInValuesSpinPolarized, gradRhoInValuesSpinPolarized, d_phiTotRhoIn, d_phiExt, s, d_pseudoVLoc);
+							kohnShamDFTEigenOperatorCUDA.computeVEffSpinPolarized(rhoInValuesSpinPolarized, gradRhoInValuesSpinPolarized, d_phiTotRhoIn, s, d_pseudoVLoc,5);
 #endif
 						if (!dftParameters::useGPU)
 							kohnShamDFTEigenOperator.computeVEffSpinPolarized(rhoInValuesSpinPolarized, gradRhoInValuesSpinPolarized, d_phiTotRhoIn, s, d_pseudoVLoc,5);
@@ -1560,7 +1577,7 @@ namespace dftfe {
 					computing_timer.enter_section("VEff Computation");
 #ifdef DFTFE_WITH_GPU
 					if (dftParameters::useGPU)
-						kohnShamDFTEigenOperatorCUDA.computeVEff(rhoInValues, d_phiTotRhoIn, d_phiExt, d_pseudoVLoc);
+						kohnShamDFTEigenOperatorCUDA.computeVEff(rhoInValues, d_phiTotRhoIn,d_pseudoVLoc,5);
 #endif
 					if (!dftParameters::useGPU)
 						kohnShamDFTEigenOperator.computeVEff(rhoInValues, d_phiTotRhoIn, d_pseudoVLoc,5);
@@ -1571,7 +1588,7 @@ namespace dftfe {
 					computing_timer.enter_section("VEff Computation");
 #ifdef DFTFE_WITH_GPU
 					if (dftParameters::useGPU)
-						kohnShamDFTEigenOperatorCUDA.computeVEff(rhoInValues, gradRhoInValues, d_phiTotRhoIn, d_phiExt, d_pseudoVLoc);
+						kohnShamDFTEigenOperatorCUDA.computeVEff(rhoInValues, gradRhoInValues, d_phiTotRhoIn, d_pseudoVLoc,5);
 #endif
 					if (!dftParameters::useGPU)
 						kohnShamDFTEigenOperator.computeVEff(rhoInValues, gradRhoInValues, d_phiTotRhoIn, d_pseudoVLoc,5);
@@ -1727,7 +1744,7 @@ namespace dftfe {
 				kohnShamDFTEigenOperator.preComputeShapeFunctionGradientIntegrals(5);
 #ifdef DFTFE_WITH_GPU
 			if (dftParameters::useGPU)
-				kohnShamDFTEigenOperatorCUDA.preComputeShapeFunctionGradientIntegrals();
+				kohnShamDFTEigenOperatorCUDA.preComputeShapeFunctionGradientIntegrals(5);
 #endif
 			computing_timer.exit_section("shapefunction data");
 
@@ -1984,7 +2001,13 @@ namespace dftfe {
 							*rhoInValues,
 							false,
 							false,
-							dftParameters::smearedNuclearCharges);
+							dftParameters::smearedNuclearCharges,
+              false,
+              true,
+              false,
+              0,
+              false,
+              true);          
 				else
 					phiTotalSolverProblem.reinit(matrix_free_data,
 							d_phiTotRhoIn,
@@ -1996,7 +2019,13 @@ namespace dftfe {
 							*rhoInValues,
 							true,
 							dftParameters::periodicX && dftParameters::periodicY && dftParameters::periodicZ && !dftParameters::pinnedNodeForPBC,
-							dftParameters::smearedNuclearCharges);
+							dftParameters::smearedNuclearCharges,
+              false,
+              true,
+              false,
+              0,
+              true,
+              false);
 
 				computingTimerStandard.exit_section("phiTotalSolverProblem init");
 				computing_timer.enter_section("phiTot solve");
@@ -2044,7 +2073,7 @@ namespace dftfe {
 							computing_timer.enter_section("VEff Computation");
 #ifdef DFTFE_WITH_GPU
 							if (dftParameters::useGPU)
-								kohnShamDFTEigenOperatorCUDA.computeVEffSpinPolarized(rhoInValuesSpinPolarized, d_phiTotRhoIn, d_phiExt, s, d_pseudoVLoc);
+								kohnShamDFTEigenOperatorCUDA.computeVEffSpinPolarized(rhoInValuesSpinPolarized, d_phiTotRhoIn, s, d_pseudoVLoc,5);
 #endif
 							if (!dftParameters::useGPU)
 								kohnShamDFTEigenOperator.computeVEffSpinPolarized(rhoInValuesSpinPolarized, d_phiTotRhoIn, s, d_pseudoVLoc,5);
@@ -2055,7 +2084,7 @@ namespace dftfe {
 							computing_timer.enter_section("VEff Computation");
 #ifdef DFTFE_WITH_GPU
 							if (dftParameters::useGPU)
-								kohnShamDFTEigenOperatorCUDA.computeVEffSpinPolarized(rhoInValuesSpinPolarized, gradRhoInValuesSpinPolarized, d_phiTotRhoIn, d_phiExt, s, d_pseudoVLoc);
+								kohnShamDFTEigenOperatorCUDA.computeVEffSpinPolarized(rhoInValuesSpinPolarized, gradRhoInValuesSpinPolarized, d_phiTotRhoIn, s, d_pseudoVLoc, 5);
 #endif
 							if (!dftParameters::useGPU)
 								kohnShamDFTEigenOperator.computeVEffSpinPolarized(rhoInValuesSpinPolarized, gradRhoInValuesSpinPolarized, d_phiTotRhoIn, s, d_pseudoVLoc,5);
@@ -2270,7 +2299,7 @@ namespace dftfe {
 						computing_timer.enter_section("VEff Computation");
 #ifdef DFTFE_WITH_GPU
 						if (dftParameters::useGPU)
-							kohnShamDFTEigenOperatorCUDA.computeVEff(rhoInValues, d_phiTotRhoIn, d_phiExt, d_pseudoVLoc);
+							kohnShamDFTEigenOperatorCUDA.computeVEff(rhoInValues, d_phiTotRhoIn, d_pseudoVLoc,5);
 #endif
 						if (!dftParameters::useGPU)
 							kohnShamDFTEigenOperator.computeVEff(rhoInValues, d_phiTotRhoIn, d_pseudoVLoc,5);
@@ -2281,7 +2310,7 @@ namespace dftfe {
 						computing_timer.enter_section("VEff Computation");
 #ifdef DFTFE_WITH_GPU
 						if (dftParameters::useGPU)
-							kohnShamDFTEigenOperatorCUDA.computeVEff(rhoInValues, gradRhoInValues, d_phiTotRhoIn, d_phiExt, d_pseudoVLoc);
+							kohnShamDFTEigenOperatorCUDA.computeVEff(rhoInValues, gradRhoInValues, d_phiTotRhoIn, d_pseudoVLoc,5);
 #endif
 						if (!dftParameters::useGPU)
 							kohnShamDFTEigenOperator.computeVEff(rhoInValues, gradRhoInValues, d_phiTotRhoIn, d_pseudoVLoc,5);
@@ -2575,7 +2604,13 @@ namespace dftfe {
 							*rhoOutValues,
 							false,
 							false,
-							dftParameters::smearedNuclearCharges);
+							dftParameters::smearedNuclearCharges,
+              false,
+              true,
+              false,
+              0,
+              false,
+              true);              
 
 
 					dealiiCGSolver.solve(phiTotalSolverProblem,
@@ -2716,7 +2751,13 @@ namespace dftfe {
 						*rhoOutValues,
 						false,
 						false,
-						dftParameters::smearedNuclearCharges);
+						dftParameters::smearedNuclearCharges,
+            false,
+            true,
+            false,
+            0,
+            false,
+            true);            
 
 
 				dealiiCGSolver.solve(phiTotalSolverProblem,
@@ -3126,7 +3167,6 @@ namespace dftfe {
 								d_phiTotRhoIn,
 								d_phiTotRhoIn,
 								d_pseudoVLoc,
-								d_noConstraints,
 								d_vselfBinsManager,
 								matrix_free_data,
 								phiTotDofHandlerIndex,
@@ -3140,7 +3180,7 @@ namespace dftfe {
                 d_gradRhoInValuesLpspQuad,
 								d_pseudoVLoc,
 								d_pseudoVLocAtoms,
-								d_noConstraints,
+								constraintsNone,
 								d_vselfBinsManager,
 								*rhoOutValues,
 								*gradRhoOutValues,
@@ -3159,7 +3199,6 @@ namespace dftfe {
 								d_phiTotRhoIn,
 								d_phiTotRhoOut,
 								d_pseudoVLoc,
-								d_noConstraints,
 								d_vselfBinsManager,
 								matrix_free_data,
 								phiTotDofHandlerIndex,
@@ -3173,7 +3212,7 @@ namespace dftfe {
                 d_gradRhoOutValuesLpspQuad,
 								d_pseudoVLoc,
 								d_pseudoVLocAtoms,
-								d_noConstraints,
+								constraintsNone,
 								d_vselfBinsManager,
 								*rhoOutValues,
 								*gradRhoOutValues,
@@ -3201,7 +3240,6 @@ namespace dftfe {
               5,
 							d_phiTotRhoOut,
 							d_pseudoVLoc,
-							d_noConstraints,
 							d_vselfBinsManager,
 							matrix_free_data,
 							phiTotDofHandlerIndex,
@@ -3215,7 +3253,7 @@ namespace dftfe {
               d_gradRhoOutValuesLpspQuad,
               d_pseudoVLoc,
               d_pseudoVLocAtoms,
-							d_noConstraints,
+							constraintsNone,
 							d_vselfBinsManager);
 					forcePtr->printStress();
 				}
