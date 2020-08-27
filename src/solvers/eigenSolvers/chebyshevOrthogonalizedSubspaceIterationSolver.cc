@@ -341,52 +341,52 @@ namespace dftfe{
 						const double chebyshevOrd=(double)chebyshevOrder;
 						const double adaptiveOrder=0.5*chebyshevOrd
 							+jvec*0.3*chebyshevOrd/dftParameters::numAdaptiveFilterStates;
-						/*linearAlgebraOperations::chebyshevFilter(operatorMatrix,
+						linearAlgebraOperations::chebyshevFilter(operatorMatrix,
 								                         eigenVectorsFlattenedArrayBlock,
 								                         BVec,
 								                         std::ceil(adaptiveOrder),
 								                         d_lowerBoundUnWantedSpectrum,
 								                         upperBoundUnwantedSpectrum,
-								                         d_lowerBoundWantedSpectrum);*/
-						linearAlgebraOperations::chebyshevFilterOpt(operatorMatrix,
+								                         d_lowerBoundWantedSpectrum);
+						/*linearAlgebraOperations::chebyshevFilterOpt(operatorMatrix,
 											    eigenVectorsFlattenedArrayBlock,
 											    cellWaveFunctionMatrix,
 											    BVec,
 											    std::ceil(adaptiveOrder),
 											    d_lowerBoundUnWantedSpectrum,
 											    upperBoundUnwantedSpectrum,
-											    d_lowerBoundWantedSpectrum);
+											    d_lowerBoundWantedSpectrum);*/
 
 						//copy back cell wavefunction data interior nodes also into global dealii vectors
 						
 					}
 					else
 					  {
-					    /*linearAlgebraOperations::chebyshevFilter(operatorMatrix,
+					    linearAlgebraOperations::chebyshevFilter(operatorMatrix,
 					                                             eigenVectorsFlattenedArrayBlock,
 					                                             BVec,
 					                                             chebyshevOrder,
 					                                             d_lowerBoundUnWantedSpectrum,
 					                                             upperBoundUnwantedSpectrum,
-					                                             d_lowerBoundWantedSpectrum);*/
+					                                             d_lowerBoundWantedSpectrum);
 					    
-					    linearAlgebraOperations::chebyshevFilterOpt(operatorMatrix,
+					    /*linearAlgebraOperations::chebyshevFilterOpt(operatorMatrix,
 											eigenVectorsFlattenedArrayBlock,
 											cellWaveFunctionMatrix,
 											BVec,
 											chebyshevOrder,
 											d_lowerBoundUnWantedSpectrum,
 											upperBoundUnwantedSpectrum,
-											d_lowerBoundWantedSpectrum);
+											d_lowerBoundWantedSpectrum);*/
 					  }
 					  
 					computing_timer.exit_section("Chebyshev filtering opt");
 
 
 					computing_timer.enter_section("Copy from cellwavefunction array to global array");
-					operatorMatrix.fillGlobalArrayFromCellWaveFunctionMatrix(BVec,
+					/*operatorMatrix.fillGlobalArrayFromCellWaveFunctionMatrix(BVec,
 												 cellWaveFunctionMatrix,
-												 eigenVectorsFlattenedArrayBlock);
+												 eigenVectorsFlattenedArrayBlock);*/
 												 
 
 					computing_timer.exit_section("Copy from cellwavefunction array to global array");

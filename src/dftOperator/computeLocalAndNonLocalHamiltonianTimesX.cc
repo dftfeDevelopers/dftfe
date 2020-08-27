@@ -222,8 +222,8 @@ void kohnShamDFTOperatorClass<FEOrder>::computeHamiltonianTimesX(const distribut
 
 	//start cell loop for assembling localHX and nonlocalHX simultaneously
 
-	cell = dftPtr->dofHandler.begin_active(), endc = dftPtr->dofHandler.end();
-	int iElem = -1;
+	typename DoFHandler<3>::active_cell_iterator cell = dftPtr->dofHandler.begin_active(), endc = dftPtr->dofHandler.end();
+	iElem = -1;
 	//blas required settings
 	const char transA1 = 'N';
 	const char transB1 = 'N';
