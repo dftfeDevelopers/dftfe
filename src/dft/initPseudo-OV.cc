@@ -13,7 +13,7 @@
 //
 // ---------------------------------------------------------------------
 //
-// @author Krishnendu Ghosh
+// @author Krishnendu Ghosh, Sambit Das
 //
 
 #include "stdafx.h"
