@@ -173,7 +173,7 @@ namespace dftfe {
 	template<unsigned int FEOrder>
 		void poissonSolverProblem<FEOrder>::computeRhs(distributedCPUVec<double>  & rhs)
 		{
-
+	    dealii::DoFHandler<3>::active_cell_iterator subCellPtr;
 			rhs.reinit(*d_xPtr);
 			rhs=0;
 
@@ -257,57 +257,95 @@ namespace dftfe {
 				}
 			else if (d_smearedChargeValuesPtr!=NULL && !d_isGradSmearedChargeRhs && !d_isReuseSmearedChargeRhs)
 			{
-				const unsigned int   num_quad_points_sc = d_matrixFreeDataPtr->get_quadrature(d_smearedChargeQuadratureId).size();
-				dealii::FEValues<3> fe_valuesSC (dofHandler.get_fe(), d_matrixFreeDataPtr->get_quadrature(d_smearedChargeQuadratureId),dealii::update_values | dealii::update_JxW_values);        
-				cell = dofHandler.begin_active();
-				for(; cell!=endc; ++cell)
-					if (cell->is_locally_owned())
-					{
-						const std::vector<double>& tempVec=d_smearedChargeValuesPtr->find(cell->id())->second;
+				//const unsigned int   num_quad_points_sc = d_matrixFreeDataPtr->get_quadrature(d_smearedChargeQuadratureId).size();
+
+        dealii::FEEvaluation<3,FEOrder,C_num1DQuadSmearedCharge<FEOrder>()*C_numCopies1DQuadSmearedCharge()> fe_eval_sc(*d_matrixFreeDataPtr,
+              d_matrixFreeVectorComponent,
+              d_smearedChargeQuadratureId);
+
+        const unsigned int numQuadPointsSmearedb=fe_eval_sc.n_q_points;  
+
+        std::vector<dealii::VectorizedArray<double> > smearedbQuads(numQuadPointsSmearedb,dealii::make_vectorized_array(0.0));          
+        for (unsigned int macrocell = 0;macrocell < d_matrixFreeDataPtr->n_macro_cells();
+            ++macrocell)
+        {
+
+          bool isMacroCellTrivial=true;
+          const unsigned int numSubCells=d_matrixFreeDataPtr->n_components_filled(macrocell);
+          for (unsigned int iSubCell=0; iSubCell<numSubCells; ++iSubCell)
+          {
+            subCellPtr= d_matrixFreeDataPtr->get_cell_iterator(macrocell,iSubCell);
+            dealii::CellId subCellId=subCellPtr->id();
+            const std::vector<double>& tempVec=d_smearedChargeValuesPtr->find(subCellId)->second;
             if (tempVec.size()==0)
               continue;
 
-						fe_valuesSC.reinit (cell);
-						elementalRhs=0.0;
+            for (unsigned int q=0; q<numQuadPointsSmearedb; ++q)
+              smearedbQuads[q][iSubCell]=tempVec[q];                
 
+            isMacroCellTrivial=false;  
+          }
 
-						for (unsigned int i=0; i<dofs_per_cell; ++i)
-							for (unsigned int q_point=0; q_point<num_quad_points_sc; ++q_point)
-								elementalRhs(i) += fe_valuesSC.shape_value(i, q_point)*tempVec[q_point]*fe_valuesSC.JxW (q_point);
+          if (!isMacroCellTrivial)
+          {
+            fe_eval_sc.reinit(macrocell);
+            for (unsigned int q=0; q<fe_eval_sc.n_q_points; ++q)
+            {
+              fe_eval_sc.submit_value(smearedbQuads[q], q);
+            }
+            fe_eval_sc.integrate(true, false);
 
-						//assemble to global data structures
-						cell->get_dof_indices (local_dof_indices);
-						d_constraintMatrixPtr->distribute_local_to_global(elementalRhs, local_dof_indices, rhs);
+            fe_eval_sc.distribute_local_to_global(rhs);
 
             if (d_isStoreSmearedChargeRhs)
-              d_constraintMatrixPtr->distribute_local_to_global(elementalRhs, local_dof_indices, d_rhsSmearedCharge);            
-					}        
+              fe_eval_sc.distribute_local_to_global(d_rhsSmearedCharge);
+          }
+        }
 			}
 			else if (d_smearedChargeValuesPtr!=NULL && d_isGradSmearedChargeRhs)
 			{
-        //Computes integration -Grad(b) * Ni 
-				const unsigned int   num_quad_points_sc = d_matrixFreeDataPtr->get_quadrature(d_smearedChargeQuadratureId).size();
-				dealii::FEValues<3> fe_valuesSC (dofHandler.get_fe(), d_matrixFreeDataPtr->get_quadrature(d_smearedChargeQuadratureId),dealii::update_gradients | dealii::update_JxW_values);        
-				cell = dofHandler.begin_active();
-				for(; cell!=endc; ++cell)
-					if (cell->is_locally_owned())
-					{
-						const std::vector<double>& tempVec=d_smearedChargeValuesPtr->find(cell->id())->second;
+
+        dealii::FEEvaluation<3,FEOrder,C_num1DQuadSmearedCharge<FEOrder>()*C_numCopies1DQuadSmearedCharge()> fe_eval_sc2(*d_matrixFreeDataPtr,
+              d_matrixFreeVectorComponent,
+              d_smearedChargeQuadratureId);
+
+        const unsigned int numQuadPointsSmearedb=fe_eval_sc2.n_q_points;      
+
+        dealii::Tensor<1,3,dealii::VectorizedArray<double> > zeroTensor;
+        for (unsigned int i=0; i<3; i++)
+          zeroTensor[i]=dealii::make_vectorized_array(0.0);
+
+        std::vector<dealii::Tensor<1,3,dealii::VectorizedArray<double> >  > smearedbQuads(numQuadPointsSmearedb,zeroTensor);          
+        for (unsigned int macrocell = 0;macrocell < d_matrixFreeDataPtr->n_macro_cells();
+            ++macrocell)
+        {
+          bool isMacroCellTrivial=true;
+          const unsigned int numSubCells=d_matrixFreeDataPtr->n_components_filled(macrocell);
+          for (unsigned int iSubCell=0; iSubCell<numSubCells; ++iSubCell)
+          {
+            subCellPtr= d_matrixFreeDataPtr->get_cell_iterator(macrocell,iSubCell);
+            dealii::CellId subCellId=subCellPtr->id();
+            const std::vector<double>& tempVec=d_smearedChargeValuesPtr->find(subCellId)->second;
             if (tempVec.size()==0)
               continue;
 
-						fe_valuesSC.reinit (cell);
-						elementalRhs=0.0;
+            for (unsigned int q=0; q<numQuadPointsSmearedb; ++q)
+              smearedbQuads[q][d_smearedChargeGradientComponentId][iSubCell]=tempVec[q];                
 
+            isMacroCellTrivial=false;  
+          }
 
-						for (unsigned int i=0; i<dofs_per_cell; ++i)
-							for (unsigned int q_point=0; q_point<num_quad_points_sc; ++q_point)
-								elementalRhs(i) += fe_valuesSC.shape_grad(i, q_point)[d_smearedChargeGradientComponentId]*tempVec[q_point]*fe_valuesSC.JxW (q_point);
-
-						//assemble to global data structures
-						cell->get_dof_indices (local_dof_indices);
-						d_constraintMatrixPtr->distribute_local_to_global(elementalRhs, local_dof_indices, rhs);
-					}        
+          if (!isMacroCellTrivial)
+          {
+            fe_eval_sc2.reinit(macrocell);
+            for (unsigned int q=0; q<fe_eval_sc2.n_q_points; ++q)
+            {
+              fe_eval_sc2.submit_gradient(smearedbQuads[q], q);
+            }
+            fe_eval_sc2.integrate(false, true);
+            fe_eval_sc2.distribute_local_to_global(rhs);
+          }
+        }
 			}      
 
 			//MPI operation to sync data
