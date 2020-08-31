@@ -101,23 +101,34 @@ void dftClass<FEOrder>::initnscf(kohnShamDFTOperatorClass<FEOrder> & kohnShamDFT
       4,
 			*rhoInValues,
 			false);
+
+  std::map<dealii::CellId,std::vector<double> > phiInValues;
+
 	dealiiCGSolver.solve(phiTotalSolverProblem,
 			dftParameters::absLinearSolverTolerance,
 			dftParameters::maxLinearSolverIterations,
 			dftParameters::verbosity);
+
+  std::map<dealii::CellId,std::vector<double> > dummy2;
+  interpolateNodalDataToQuadratureDataQuadGeneral(matrix_free_data,
+      phiTotDofHandlerIndex,
+      0,
+      d_phiTotRhoIn,
+      phiInValues,
+      dummy2); 
 
 	computing_timer.exit_section("nscf: phiTot solve");
 	//
 	if(dftParameters::xc_id < 4)
 	{
 		computing_timer.enter_section("nscf: VEff Computation");
-		kohnShamDFTEigenOperator.computeVEff(rhoInValues, d_phiTotRhoIn, d_pseudoVLoc,5);
+		kohnShamDFTEigenOperator.computeVEff(rhoInValues, phiInValues, d_pseudoVLoc,5);
 		computing_timer.exit_section("nscf: VEff Computation");
 	}
 	else if (dftParameters::xc_id == 4)
 	{
 		computing_timer.enter_section("nscf: VEff Computation");
-		kohnShamDFTEigenOperator.computeVEff(rhoInValues, gradRhoInValues, d_phiTotRhoIn, d_pseudoVLoc,5);
+		kohnShamDFTEigenOperator.computeVEff(rhoInValues, gradRhoInValues, phiInValues, d_pseudoVLoc,5);
 		computing_timer.exit_section("nscf: VEff Computation");
 	}
 

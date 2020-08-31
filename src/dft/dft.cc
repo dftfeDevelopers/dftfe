@@ -847,7 +847,7 @@ namespace dftfe {
 						d_rhoInNodalValues.local_element(i)=d_rhoInNodalValuesRead.local_element(i);
 
 					d_rhoInNodalValues.update_ghost_values();
-					interpolateNodalDataToQuadratureData(d_matrixFreeDataPRefined,
+					interpolateNodalDataToQuadratureDataPRefinedQuadGeneral(d_matrixFreeDataPRefined,
 							d_rhoInNodalValues,
 							*(rhoInValues),
 							*(gradRhoInValues),
@@ -893,7 +893,7 @@ namespace dftfe {
 						d_rhoInNodalValues.local_element(i)=d_rhoInNodalValuesRead.local_element(i);
 
 					d_rhoInNodalValues.update_ghost_values();
-					interpolateNodalDataToQuadratureData(d_matrixFreeDataPRefined,
+					interpolateNodalDataToQuadratureDataPRefinedQuadGeneral(d_matrixFreeDataPRefined,
 							d_rhoInNodalValues,
 							*(rhoInValues),
 							*(gradRhoInValues),
@@ -987,7 +987,7 @@ namespace dftfe {
 					d_rhoOutNodalValuesSplit+=d_atomicRho;
 
 					d_rhoOutNodalValuesSplit.update_ghost_values();
-					interpolateNodalDataToQuadratureData(d_matrixFreeDataPRefined,
+					interpolateNodalDataToQuadratureDataPRefinedQuadGeneral(d_matrixFreeDataPRefined,
 							d_rhoOutNodalValuesSplit,
 							*(rhoInValues),
 							*(gradRhoInValues),
@@ -1379,7 +1379,7 @@ namespace dftfe {
 
 			//set up solver functions for Poisson
 			poissonSolverProblem<FEOrder> phiTotalSolverProblem(mpi_communicator);
-
+      std::map<dealii::CellId,std::vector<double> > phiInValues;
 
 			if (!kohnShamDFTOperatorsInitialized || true)
 				initializeKohnShamDFTOperator(kohnShamDFTEigenOperator
@@ -1465,6 +1465,14 @@ namespace dftfe {
 					pcout<<"Value of integPhiIn: "<<totalCharge(dofHandler,d_phiTotRhoIn)<<std::endl;
 			}
 
+      std::map<dealii::CellId,std::vector<double> > dummy;
+      interpolateNodalDataToQuadratureDataQuadGeneral(matrix_free_data,
+          phiTotDofHandlerIndex,
+          0,
+          d_phiTotRhoIn,
+          phiInValues,
+          dummy); 
+
 			if (dftParameters::spinPolarized==1)
 			{
 
@@ -1486,10 +1494,10 @@ namespace dftfe {
 						computing_timer.enter_section("VEff Computation");
 #ifdef DFTFE_WITH_GPU
 						if (dftParameters::useGPU)
-							kohnShamDFTEigenOperatorCUDA.computeVEffSpinPolarized(rhoInValuesSpinPolarized, d_phiTotRhoIn, s, d_pseudoVLoc, 5);
+							kohnShamDFTEigenOperatorCUDA.computeVEffSpinPolarized(rhoInValuesSpinPolarized, phiInValues, s, d_pseudoVLoc, 5);
 #endif
 						if (!dftParameters::useGPU)
-							kohnShamDFTEigenOperator.computeVEffSpinPolarized(rhoInValuesSpinPolarized, d_phiTotRhoIn, s, d_pseudoVLoc,5);
+							kohnShamDFTEigenOperator.computeVEffSpinPolarized(rhoInValuesSpinPolarized, phiInValues, s, d_pseudoVLoc,5);
 						computing_timer.exit_section("VEff Computation");
 					}
 					else if (dftParameters::xc_id == 4)
@@ -1497,10 +1505,10 @@ namespace dftfe {
 						computing_timer.enter_section("VEff Computation");
 #ifdef DFTFE_WITH_GPU
 						if (dftParameters::useGPU)
-							kohnShamDFTEigenOperatorCUDA.computeVEffSpinPolarized(rhoInValuesSpinPolarized, gradRhoInValuesSpinPolarized, d_phiTotRhoIn, s, d_pseudoVLoc,5);
+							kohnShamDFTEigenOperatorCUDA.computeVEffSpinPolarized(rhoInValuesSpinPolarized, gradRhoInValuesSpinPolarized, phiInValues, s, d_pseudoVLoc,5);
 #endif
 						if (!dftParameters::useGPU)
-							kohnShamDFTEigenOperator.computeVEffSpinPolarized(rhoInValuesSpinPolarized, gradRhoInValuesSpinPolarized, d_phiTotRhoIn, s, d_pseudoVLoc,5);
+							kohnShamDFTEigenOperator.computeVEffSpinPolarized(rhoInValuesSpinPolarized, gradRhoInValuesSpinPolarized, phiInValues, s, d_pseudoVLoc,5);
 						computing_timer.exit_section("VEff Computation");
 					}
 					for (unsigned int kPoint = 0; kPoint < d_kPointWeights.size(); ++kPoint)
@@ -1576,10 +1584,10 @@ namespace dftfe {
 					computing_timer.enter_section("VEff Computation");
 #ifdef DFTFE_WITH_GPU
 					if (dftParameters::useGPU)
-						kohnShamDFTEigenOperatorCUDA.computeVEff(rhoInValues, d_phiTotRhoIn,d_pseudoVLoc,5);
+						kohnShamDFTEigenOperatorCUDA.computeVEff(rhoInValues, phiInValues,d_pseudoVLoc,5);
 #endif
 					if (!dftParameters::useGPU)
-						kohnShamDFTEigenOperator.computeVEff(rhoInValues, d_phiTotRhoIn, d_pseudoVLoc,5);
+						kohnShamDFTEigenOperator.computeVEff(rhoInValues, phiInValues, d_pseudoVLoc,5);
 					computing_timer.exit_section("VEff Computation");
 				}
 				else if (dftParameters::xc_id == 4)
@@ -1587,10 +1595,10 @@ namespace dftfe {
 					computing_timer.enter_section("VEff Computation");
 #ifdef DFTFE_WITH_GPU
 					if (dftParameters::useGPU)
-						kohnShamDFTEigenOperatorCUDA.computeVEff(rhoInValues, gradRhoInValues, d_phiTotRhoIn, d_pseudoVLoc,5);
+						kohnShamDFTEigenOperatorCUDA.computeVEff(rhoInValues, gradRhoInValues, phiInValues, d_pseudoVLoc,5);
 #endif
 					if (!dftParameters::useGPU)
-						kohnShamDFTEigenOperator.computeVEff(rhoInValues, gradRhoInValues, d_phiTotRhoIn, d_pseudoVLoc,5);
+						kohnShamDFTEigenOperator.computeVEff(rhoInValues, gradRhoInValues, phiInValues, d_pseudoVLoc,5);
 					computing_timer.exit_section("VEff Computation");
 				}
 
@@ -1708,7 +1716,8 @@ namespace dftfe {
 
 			//set up solver functions for Poisson
 			poissonSolverProblem<FEOrder> phiTotalSolverProblem(mpi_communicator);
-
+      std::map<dealii::CellId,std::vector<double> > phiInValues;
+ 
 			//
 			//set up solver functions for Helmholtz to be used only when Kerker mixing is on
 			//use 2p dofHandler
@@ -2040,6 +2049,14 @@ namespace dftfe {
 						dftParameters::maxLinearSolverIterations,
 						dftParameters::verbosity);
 
+        std::map<dealii::CellId,std::vector<double> > dummy;
+        interpolateNodalDataToQuadratureDataQuadGeneral(matrix_free_data,
+            phiTotDofHandlerIndex,
+            0,
+            d_phiTotRhoIn,
+            phiInValues,
+            dummy);           
+
 				//
 				//impose integral phi equals 0
 				//
@@ -2078,10 +2095,10 @@ namespace dftfe {
 							computing_timer.enter_section("VEff Computation");
 #ifdef DFTFE_WITH_GPU
 							if (dftParameters::useGPU)
-								kohnShamDFTEigenOperatorCUDA.computeVEffSpinPolarized(rhoInValuesSpinPolarized, d_phiTotRhoIn, s, d_pseudoVLoc,5);
+								kohnShamDFTEigenOperatorCUDA.computeVEffSpinPolarized(rhoInValuesSpinPolarized, phiInValues, s, d_pseudoVLoc,5);
 #endif
 							if (!dftParameters::useGPU)
-								kohnShamDFTEigenOperator.computeVEffSpinPolarized(rhoInValuesSpinPolarized, d_phiTotRhoIn, s, d_pseudoVLoc,5);
+								kohnShamDFTEigenOperator.computeVEffSpinPolarized(rhoInValuesSpinPolarized, phiInValues, s, d_pseudoVLoc,5);
 							computing_timer.exit_section("VEff Computation");
 						}
 						else if (dftParameters::xc_id == 4)
@@ -2089,10 +2106,10 @@ namespace dftfe {
 							computing_timer.enter_section("VEff Computation");
 #ifdef DFTFE_WITH_GPU
 							if (dftParameters::useGPU)
-								kohnShamDFTEigenOperatorCUDA.computeVEffSpinPolarized(rhoInValuesSpinPolarized, gradRhoInValuesSpinPolarized, d_phiTotRhoIn, s, d_pseudoVLoc, 5);
+								kohnShamDFTEigenOperatorCUDA.computeVEffSpinPolarized(rhoInValuesSpinPolarized, gradRhoInValuesSpinPolarized, phiInValues, s, d_pseudoVLoc, 5);
 #endif
 							if (!dftParameters::useGPU)
-								kohnShamDFTEigenOperator.computeVEffSpinPolarized(rhoInValuesSpinPolarized, gradRhoInValuesSpinPolarized, d_phiTotRhoIn, s, d_pseudoVLoc,5);
+								kohnShamDFTEigenOperator.computeVEffSpinPolarized(rhoInValuesSpinPolarized, gradRhoInValuesSpinPolarized, phiInValues, s, d_pseudoVLoc,5);
 							computing_timer.exit_section("VEff Computation");
 						}
 						for (unsigned int kPoint = 0; kPoint < d_kPointWeights.size(); ++kPoint)
@@ -2304,10 +2321,10 @@ namespace dftfe {
 						computing_timer.enter_section("VEff Computation");
 #ifdef DFTFE_WITH_GPU
 						if (dftParameters::useGPU)
-							kohnShamDFTEigenOperatorCUDA.computeVEff(rhoInValues, d_phiTotRhoIn, d_pseudoVLoc,5);
+							kohnShamDFTEigenOperatorCUDA.computeVEff(rhoInValues, phiInValues, d_pseudoVLoc,5);
 #endif
 						if (!dftParameters::useGPU)
-							kohnShamDFTEigenOperator.computeVEff(rhoInValues, d_phiTotRhoIn, d_pseudoVLoc,5);
+							kohnShamDFTEigenOperator.computeVEff(rhoInValues, phiInValues, d_pseudoVLoc,5);
 						computing_timer.exit_section("VEff Computation");
 					}
 					else if (dftParameters::xc_id == 4)
@@ -2315,10 +2332,10 @@ namespace dftfe {
 						computing_timer.enter_section("VEff Computation");
 #ifdef DFTFE_WITH_GPU
 						if (dftParameters::useGPU)
-							kohnShamDFTEigenOperatorCUDA.computeVEff(rhoInValues, gradRhoInValues, d_phiTotRhoIn, d_pseudoVLoc,5);
+							kohnShamDFTEigenOperatorCUDA.computeVEff(rhoInValues, gradRhoInValues, phiInValues, d_pseudoVLoc,5);
 #endif
 						if (!dftParameters::useGPU)
-							kohnShamDFTEigenOperator.computeVEff(rhoInValues, gradRhoInValues, d_phiTotRhoIn, d_pseudoVLoc,5);
+							kohnShamDFTEigenOperator.computeVEff(rhoInValues, gradRhoInValues, phiInValues, d_pseudoVLoc,5);
 						computing_timer.exit_section("VEff Computation");
 					}
 

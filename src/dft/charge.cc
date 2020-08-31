@@ -121,7 +121,7 @@ double dftClass<FEOrder>::totalCharge(const dealii::DoFHandler<3> & dofHandlerOf
 double dftClass<FEOrder>::totalCharge(const dealii::MatrixFree<3,double> & matrixFreeDataObject,
 		const distributedCPUVec<double> & nodalField)
 {
-	FEEvaluation<C_DIM,C_num1DKerkerPoly<FEOrder>(),C_num1DQuad<C_num1DKerkerPoly<FEOrder>()>(),1,double> fe_evalField(matrixFreeDataObject);
+	FEEvaluation<C_DIM,C_num1DKerkerPoly<FEOrder>(),C_num1DQuadKerker<C_num1DKerkerPoly<FEOrder>()>(),1,double> fe_evalField(matrixFreeDataObject);
 	VectorizedArray<double> normValueVectorized = make_vectorized_array(0.0);
 	const unsigned int numQuadPoints = fe_evalField.n_q_points;
 	for(unsigned int cell = 0; cell < matrixFreeDataObject.n_macro_cells(); ++cell)
@@ -181,7 +181,7 @@ double dftClass<FEOrder>::fieldl2Norm(const dealii::MatrixFree<3,double> & matri
 		const distributedCPUVec<double> & nodalField)
 
 {
-	FEEvaluation<C_DIM,C_num1DKerkerPoly<FEOrder>(),C_num1DQuad<C_num1DKerkerPoly<FEOrder>()>(),1,double> fe_evalField(matrixFreeDataObject);
+	FEEvaluation<C_DIM,C_num1DKerkerPoly<FEOrder>(),C_num1DQuadKerker<C_num1DKerkerPoly<FEOrder>()>(),1,double> fe_evalField(matrixFreeDataObject);
 	VectorizedArray<double> normValueVectorized = make_vectorized_array(0.0);
 	const unsigned int numQuadPoints = fe_evalField.n_q_points;
 	for(unsigned int cell = 0; cell < matrixFreeDataObject.n_macro_cells(); ++cell)

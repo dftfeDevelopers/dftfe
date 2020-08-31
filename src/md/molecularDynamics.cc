@@ -889,7 +889,7 @@ false);
 									dftPtr->d_rhoInNodalValues+=atomicRho;
 
 								dftPtr->d_rhoInNodalValues.update_ghost_values();
-								dftPtr->interpolateNodalDataToQuadratureData(dftPtr->d_matrixFreeDataPRefined,
+								dftPtr->interpolateNodalDataToQuadratureDataPRefinedQuadGeneral(dftPtr->d_matrixFreeDataPRefined,
 										dftPtr->d_rhoInNodalValues,
 										*(dftPtr->rhoInValues),
 										*(dftPtr->gradRhoInValues),
@@ -1051,7 +1051,7 @@ false);
 							dftPtr->d_rhoInNodalValues+=atomicRho;
 
 						dftPtr->d_rhoInNodalValues.update_ghost_values();
-						dftPtr->interpolateNodalDataToQuadratureData(dftPtr->d_matrixFreeDataPRefined,
+						dftPtr->interpolateNodalDataToQuadratureDataPRefinedQuadGeneral(dftPtr->d_matrixFreeDataPRefined,
 								dftPtr->d_rhoInNodalValues,
 								*(dftPtr->rhoInValues),
 								*(dftPtr->gradRhoInValues),
@@ -1230,7 +1230,7 @@ false);
 										dftPtr->d_rhoInNodalValues+=atomicRho;
 
 									dftPtr->d_rhoInNodalValues.update_ghost_values();
-									dftPtr->interpolateNodalDataToQuadratureData(dftPtr->d_matrixFreeDataPRefined,
+									dftPtr->interpolateNodalDataToQuadratureDataPRefinedQuadGeneral(dftPtr->d_matrixFreeDataPRefined,
 											dftPtr->d_rhoInNodalValues,
 											*(dftPtr->rhoInValues),
 											*(dftPtr->gradRhoInValues),
@@ -1313,7 +1313,7 @@ false);
 										dftPtr->d_rhoInNodalValues+=atomicRho;
 
 									dftPtr->d_rhoInNodalValues.update_ghost_values();
-									dftPtr->interpolateNodalDataToQuadratureData(dftPtr->d_matrixFreeDataPRefined,
+									dftPtr->interpolateNodalDataToQuadratureDataPRefinedQuadGeneral(dftPtr->d_matrixFreeDataPRefined,
 											dftPtr->d_rhoInNodalValues,
 											*(dftPtr->rhoInValues),
 											*(dftPtr->gradRhoInValues),
@@ -1460,7 +1460,7 @@ false);
 								dftPtr->d_rhoInNodalValues+=atomicRho;
 
 							dftPtr->d_rhoInNodalValues.update_ghost_values();
-							dftPtr->interpolateNodalDataToQuadratureData(dftPtr->d_matrixFreeDataPRefined,
+							dftPtr->interpolateNodalDataToQuadratureDataPRefinedQuadGeneral(dftPtr->d_matrixFreeDataPRefined,
 									dftPtr->d_rhoInNodalValues,
 									*(dftPtr->rhoInValues),
 									*(dftPtr->gradRhoInValues),
@@ -2421,7 +2421,7 @@ false);
 									dftPtr->d_rhoInNodalValues+=atomicRho;
 
 								dftPtr->d_rhoInNodalValues.update_ghost_values();
-								dftPtr->interpolateNodalDataToQuadratureData(dftPtr->d_matrixFreeDataPRefined,
+								dftPtr->interpolateNodalDataToQuadratureDataPRefinedQuadGeneral(dftPtr->d_matrixFreeDataPRefined,
 										dftPtr->d_rhoInNodalValues,
 										*(dftPtr->rhoInValues),
 										*(dftPtr->gradRhoInValues),
@@ -2583,7 +2583,7 @@ false);
 							dftPtr->d_rhoInNodalValues+=atomicRho;
 
 						dftPtr->d_rhoInNodalValues.update_ghost_values();
-						dftPtr->interpolateNodalDataToQuadratureData(dftPtr->d_matrixFreeDataPRefined,
+						dftPtr->interpolateNodalDataToQuadratureDataPRefinedQuadGeneral(dftPtr->d_matrixFreeDataPRefined,
 								dftPtr->d_rhoInNodalValues,
 								*(dftPtr->rhoInValues),
 								*(dftPtr->gradRhoInValues),
@@ -2762,7 +2762,7 @@ false);
 										dftPtr->d_rhoInNodalValues+=atomicRho;
 
 									dftPtr->d_rhoInNodalValues.update_ghost_values();
-									dftPtr->interpolateNodalDataToQuadratureData(dftPtr->d_matrixFreeDataPRefined,
+									dftPtr->interpolateNodalDataToQuadratureDataPRefinedQuadGeneral(dftPtr->d_matrixFreeDataPRefined,
 											dftPtr->d_rhoInNodalValues,
 											*(dftPtr->rhoInValues),
 											*(dftPtr->gradRhoInValues),
@@ -2845,7 +2845,7 @@ false);
 										dftPtr->d_rhoInNodalValues+=atomicRho;
 
 									dftPtr->d_rhoInNodalValues.update_ghost_values();
-									dftPtr->interpolateNodalDataToQuadratureData(dftPtr->d_matrixFreeDataPRefined,
+									dftPtr->interpolateNodalDataToQuadratureDataPRefinedQuadGeneral(dftPtr->d_matrixFreeDataPRefined,
 											dftPtr->d_rhoInNodalValues,
 											*(dftPtr->rhoInValues),
 											*(dftPtr->gradRhoInValues),
@@ -2982,7 +2982,7 @@ false);
 								dftPtr->d_rhoInNodalValues+=atomicRho;
 
 							dftPtr->d_rhoInNodalValues.update_ghost_values();
-							dftPtr->interpolateNodalDataToQuadratureData(dftPtr->d_matrixFreeDataPRefined,
+							dftPtr->interpolateNodalDataToQuadratureDataPRefinedQuadGeneral(dftPtr->d_matrixFreeDataPRefined,
 									dftPtr->d_rhoInNodalValues,
 									*(dftPtr->rhoInValues),
 									*(dftPtr->gradRhoInValues),

@@ -79,7 +79,7 @@ namespace dftfe {
 			const dealii::DoFHandler<3> & dofHandler=
 				d_matrixFreeDataPRefinedPtr->get_dof_handler();
 
-			dealii::QGauss<3>  quadrature(C_num1DQuad<FEOrder>());
+			dealii::QGauss<3>  quadrature(C_num1DQuadKerker<FEOrder>());
 			dealii::FEValues<3> fe_values (dofHandler.get_fe(), quadrature, dealii::update_values | dealii::update_gradients | dealii::update_JxW_values);
 			const unsigned int dofs_per_cell = dofHandler.get_fe().dofs_per_cell;
 			const unsigned int num_quad_points = quadrature.size();
@@ -143,7 +143,7 @@ namespace dftfe {
 			d_matrixFreeDataPRefinedPtr->initialize_dof_vector(d_diagonalA);
 			d_diagonalA = 0.0;
 
-			dealii::QGauss<3>  quadrature(C_num1DQuad<FEOrder>());
+			dealii::QGauss<3>  quadrature(C_num1DQuadKerker<FEOrder>());
 			dealii::FEValues<3> fe_values (dofHandler.get_fe(), quadrature, dealii::update_values | dealii::update_gradients | dealii::update_JxW_values);
 			const unsigned int   dofs_per_cell = dofHandler.get_fe().dofs_per_cell;
 			const unsigned int   num_quad_points = quadrature.size();
@@ -189,7 +189,7 @@ namespace dftfe {
 				const std::pair<unsigned int,unsigned int> &cell_range) const
 		{
 
-			dealii::FEEvaluation<3,FEOrder,C_num1DQuad<FEOrder>()> fe_eval(matrixFreeData,
+			dealii::FEEvaluation<3,FEOrder,C_num1DQuadKerker<FEOrder>()> fe_eval(matrixFreeData,
 					0,
 					0);
 			//double gamma = dftParameters::kerkerParameter;

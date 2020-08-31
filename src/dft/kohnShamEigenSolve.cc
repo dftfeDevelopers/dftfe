@@ -108,12 +108,21 @@ dataTypes::number dftClass<FEOrder>::computeTraceXtHX(unsigned int numberWaveFun
 			true,
 			dftParameters::periodicX && dftParameters::periodicY && dftParameters::periodicZ && !dftParameters::pinnedNodeForPBC,
 			dftParameters::smearedNuclearCharges);
-
+      
+  std::map<dealii::CellId,std::vector<double> > phiInValues;
 
 	dealiiCGSolver.solve(phiTotalSolverProblem,
 			dftParameters::absLinearSolverTolerance,
 			dftParameters::maxLinearSolverIterations,
 			dftParameters::verbosity);
+
+  std::map<dealii::CellId,std::vector<double> > dummy;
+  interpolateNodalDataToQuadratureDataQuadGeneral(matrix_free_data,
+      phiTotDofHandlerIndex,
+      0,
+      d_phiTotRhoIn,
+      phiInValues,
+      dummy); 
 
 	//
 	//create kohnShamDFTOperatorClass object
@@ -131,11 +140,11 @@ dataTypes::number dftClass<FEOrder>::computeTraceXtHX(unsigned int numberWaveFun
 	//
 	if(dftParameters::xc_id < 4)
 	{
-		kohnShamDFTEigenOperator.computeVEff(rhoInValues, d_phiTotRhoIn, d_pseudoVLoc,5);
+		kohnShamDFTEigenOperator.computeVEff(rhoInValues,phiInValues, d_pseudoVLoc,5);
 	}
 	else if (dftParameters::xc_id == 4)
 	{
-		kohnShamDFTEigenOperator.computeVEff(rhoInValues, gradRhoInValues, d_phiTotRhoIn, d_pseudoVLoc,5);
+		kohnShamDFTEigenOperator.computeVEff(rhoInValues, gradRhoInValues, phiInValues, d_pseudoVLoc,5);
 	}
 
 	//

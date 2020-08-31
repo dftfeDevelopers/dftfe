@@ -40,9 +40,11 @@ namespace dftfe {
   constexpr unsigned int C_numCopies1DQuadSmearedCharge(){return 2;}
   
 
-	//kerker Helmholtz solve polynomial Order
+	/// kerker Helmholtz solve polynomial Order
 	template <unsigned int FEOrder> constexpr unsigned int C_num1DKerkerPoly(){return FEOrder+2;}
 
+	/// Kerker Helmholtz 1d quadrature rule order, here FEOrder is the KerkerPoly return value above
+	template <unsigned int FEOrder> constexpr unsigned int C_num1DQuadKerker(){return FEOrder+1;}
 
 	/// 1d quadrature rule order for non-local part of pseudopotential
 	template <unsigned int FEOrder> constexpr unsigned int C_num1DQuadNLPSP()

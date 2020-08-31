@@ -786,7 +786,7 @@ namespace dftfe
 
 	template<unsigned int FEOrder>
 		void kohnShamDFTOperatorCUDAClass<FEOrder>::computeVEff(const std::map<dealii::CellId,std::vector<double> >* rhoValues,
-				const distributedCPUVec<double> & phi,
+				const std::map<dealii::CellId,std::vector<double> > & phiValues,
 				const std::map<dealii::CellId,std::vector<double> > & externalPotCorrValues,
         const unsigned int externalPotCorrQuadratureId)
 		{
@@ -794,7 +794,7 @@ namespace dftfe
 			const unsigned int totalLocallyOwnedCells = dftPtr->matrix_free_data.n_physical_cells();
 
 			QGauss<3>  quadrature_formula(C_num1DQuad<FEOrder>());
-			FEValues<3> fe_values (dftPtr->FE, quadrature_formula,update_values | update_JxW_values);
+			FEValues<3> fe_values (dftPtr->FE, quadrature_formula,update_JxW_values);
 			const unsigned int numberQuadraturePoints = quadrature_formula.size();
 
 			d_vEff.resize(totalLocallyOwnedCells*numberQuadraturePoints,0.0);
@@ -803,9 +803,6 @@ namespace dftfe
 			typename dealii::DoFHandler<3>::active_cell_iterator endcPtr = dftPtr->matrix_free_data.get_dof_handler().end();
 			unsigned int iElemCount = 0;
 
-			std::vector<double> tempPhi(numberQuadraturePoints);
-			std::vector<double> tempPhiExt(numberQuadraturePoints);
-			std::vector<double> densityValue(numberQuadraturePoints);
 			std::vector<double> exchangePotentialVal(numberQuadraturePoints);
 			std::vector<double> corrPotentialVal(numberQuadraturePoints);
 			for(; cellPtr!=endcPtr; ++cellPtr)
@@ -813,12 +810,8 @@ namespace dftfe
 				{
 					fe_values.reinit (cellPtr);
 
-					fe_values.get_function_values(phi,tempPhi);
-
-					for (unsigned int q=0; q<numberQuadraturePoints; ++q)
-					{
-						densityValue[q] = (*rhoValues).find(cellPtr->id())->second[q];
-					}
+					const std::vector<double> & densityValue = (*rhoValues).find(cellPtr->id())->second;
+          const std::vector<double> & tempPhi=phiValues.find(cellPtr->id())->second;          
 
 					xc_lda_vxc(&(dftPtr->funcX),numberQuadraturePoints,&densityValue[0],&exchangePotentialVal[0]);
 					xc_lda_vxc(&(dftPtr->funcC),numberQuadraturePoints,&densityValue[0],&corrPotentialVal[0]);
@@ -843,7 +836,7 @@ namespace dftfe
 	template<unsigned int FEOrder>
 		void kohnShamDFTOperatorCUDAClass<FEOrder>::computeVEff(const std::map<dealii::CellId,std::vector<double> >* rhoValues,
 				const std::map<dealii::CellId,std::vector<double> >* gradRhoValues,
-				const distributedCPUVec<double> & phi,
+				const std::map<dealii::CellId,std::vector<double> > & phiValues,
 				const std::map<dealii::CellId,std::vector<double> > & externalPotCorrValues,
         const unsigned int externalPotCorrQuadratureId)
 		{
@@ -852,7 +845,7 @@ namespace dftfe
 			const unsigned int totalLocallyOwnedCells = dftPtr->matrix_free_data.n_physical_cells();
 
 			QGauss<3>  quadrature_formula(C_num1DQuad<FEOrder>());
-			FEValues<3> fe_values (dftPtr->FE, quadrature_formula,update_values | update_JxW_values);
+			FEValues<3> fe_values (dftPtr->FE, quadrature_formula,update_JxW_values);
 			const unsigned int numberQuadraturePoints = quadrature_formula.size();
 
 
@@ -864,9 +857,6 @@ namespace dftfe
 			typename dealii::DoFHandler<3>::active_cell_iterator endcPtr = dftPtr->matrix_free_data.get_dof_handler().end();
 			unsigned int iElemCount = 0;
 
-			std::vector<double> tempPhi(numberQuadraturePoints);
-			std::vector<double> tempPhiExt(numberQuadraturePoints);
-			std::vector<double> densityValue(numberQuadraturePoints);
 			std::vector<double> sigmaValue(numberQuadraturePoints);
 			std::vector<double> derExchEnergyWithSigmaVal(numberQuadraturePoints);
 			std::vector<double> derCorrEnergyWithSigmaVal(numberQuadraturePoints);
@@ -878,14 +868,15 @@ namespace dftfe
 				{
 					fe_values.reinit (cellPtr);
 
-					fe_values.get_function_values(phi,tempPhi);
+					const std::vector<double> & densityValue = (*rhoValues).find(cellPtr->id())->second;
+					const std::vector<double> & gradDensityValue = (*gradRhoValues).find(cellPtr->id())->second;
+          const std::vector<double> & tempPhi=phiValues.find(cellPtr->id())->second;           
 
 					for (unsigned int q=0; q<numberQuadraturePoints; ++q)
 					{
-						densityValue[q] = (*rhoValues).find(cellPtr->id())->second[q];
-						double gradRhoX = (*gradRhoValues).find(cellPtr->id())->second[3*q + 0];
-						double gradRhoY = (*gradRhoValues).find(cellPtr->id())->second[3*q + 1];
-						double gradRhoZ = (*gradRhoValues).find(cellPtr->id())->second[3*q + 2];
+						double gradRhoX = gradDensityValue[3*q + 0];
+						double gradRhoY = gradDensityValue[3*q + 1];
+						double gradRhoZ = gradDensityValue[3*q + 2];
 						sigmaValue[q] = gradRhoX*gradRhoX + gradRhoY*gradRhoY + gradRhoZ*gradRhoZ;
 					}
 
@@ -937,7 +928,7 @@ namespace dftfe
 
 	template<unsigned int FEOrder>
 		void kohnShamDFTOperatorCUDAClass<FEOrder>::computeVEffSpinPolarized(const std::map<dealii::CellId,std::vector<double> >* rhoValues,
-				const distributedCPUVec<double> & phi,
+				const std::map<dealii::CellId,std::vector<double> > & phiValues,
 				const unsigned int spinIndex,
 				const std::map<dealii::CellId,std::vector<double> > & externalPotCorrValues,
         const unsigned int externalPotCorrQuadratureId)
@@ -946,7 +937,7 @@ namespace dftfe
 			const unsigned int totalLocallyOwnedCells = dftPtr->matrix_free_data.n_physical_cells();
 
 			QGauss<3>  quadrature_formula(C_num1DQuad<FEOrder>());
-			FEValues<3> fe_values (dftPtr->FE, quadrature_formula,update_values | update_JxW_values);
+			FEValues<3> fe_values (dftPtr->FE, quadrature_formula,update_JxW_values);
 			const unsigned int numberQuadraturePoints = quadrature_formula.size();
 
 			d_vEff.resize(totalLocallyOwnedCells*numberQuadraturePoints,0.0);
@@ -955,9 +946,6 @@ namespace dftfe
 			typename dealii::DoFHandler<3>::active_cell_iterator endcPtr = dftPtr->matrix_free_data.get_dof_handler().end();
 			unsigned int iElemCount = 0;
 
-			std::vector<double> tempPhi(numberQuadraturePoints);
-			std::vector<double> tempPhiExt(numberQuadraturePoints);
-			std::vector<double> densityValue(2*numberQuadraturePoints);
 			std::vector<double> exchangePotentialVal(2*numberQuadraturePoints);
 			std::vector<double> corrPotentialVal(2*numberQuadraturePoints);
 			for(; cellPtr!=endcPtr; ++cellPtr)
@@ -965,14 +953,8 @@ namespace dftfe
 				{
 					fe_values.reinit (cellPtr);
 
-					fe_values.get_function_values(phi,tempPhi);
-
-					for (unsigned int q=0; q<numberQuadraturePoints; ++q)
-					{
-						densityValue[2*q+1] = (*rhoValues).find(cellPtr->id())->second[2*q+1];
-						densityValue[2*q] = (*rhoValues).find(cellPtr->id())->second[2*q];
-
-					}
+					const std::vector<double> & densityValue= (*rhoValues).find(cellPtr->id())->second;
+          const std::vector<double> & tempPhi=phiValues.find(cellPtr->id())->second;  
 
 					xc_lda_vxc(&(dftPtr->funcX),numberQuadraturePoints,&densityValue[0],&exchangePotentialVal[0]);
 					xc_lda_vxc(&(dftPtr->funcC),numberQuadraturePoints,&densityValue[0],&corrPotentialVal[0]);
@@ -998,7 +980,7 @@ namespace dftfe
 	template<unsigned int FEOrder>
 		void kohnShamDFTOperatorCUDAClass<FEOrder>::computeVEffSpinPolarized(const std::map<dealii::CellId,std::vector<double> >* rhoValues,
 				const std::map<dealii::CellId,std::vector<double> >* gradRhoValues,
-				const distributedCPUVec<double> & phi,
+				const std::map<dealii::CellId,std::vector<double> > & phiValues,
 				const unsigned int spinIndex,
 				const std::map<dealii::CellId,std::vector<double> > & externalPotCorrValues,
         const unsigned int externalPotCorrQuadratureId)
@@ -1007,7 +989,7 @@ namespace dftfe
 			const unsigned int totalLocallyOwnedCells = dftPtr->matrix_free_data.n_physical_cells();
 
 			QGauss<3>  quadrature_formula(C_num1DQuad<FEOrder>());
-			FEValues<3> fe_values (dftPtr->FE, quadrature_formula,update_values | update_JxW_values);
+			FEValues<3> fe_values (dftPtr->FE, quadrature_formula,update_JxW_values);
 			const unsigned int numberQuadraturePoints = quadrature_formula.size();
 
 			d_vEff.resize(totalLocallyOwnedCells*numberQuadraturePoints,0.0);
@@ -1018,9 +1000,6 @@ namespace dftfe
 			typename dealii::DoFHandler<3>::active_cell_iterator endcPtr = dftPtr->matrix_free_data.get_dof_handler().end();
 			unsigned int iElemCount = 0;
 
-			std::vector<double> tempPhi(numberQuadraturePoints);
-			std::vector<double> tempPhiExt(numberQuadraturePoints);
-			std::vector<double> densityValue(2*numberQuadraturePoints);
 			std::vector<double> sigmaValue(3*numberQuadraturePoints);
 			std::vector<double> derExchEnergyWithSigmaVal(3*numberQuadraturePoints);
 			std::vector<double> derCorrEnergyWithSigmaVal(3*numberQuadraturePoints);
@@ -1032,19 +1011,18 @@ namespace dftfe
 				{
 					fe_values.reinit (cellPtr);
 
-					fe_values.get_function_values(phi,tempPhi);
+					const std::vector<double> & densityValue= (*rhoValues).find(cellPtr->id())->second;
+					const std::vector<double> & gradDensityValue= (*gradRhoValues).find(cellPtr->id())->second;
+          const std::vector<double> & tempPhi=phiValues.find(cellPtr->id())->second; 
 
 					for (unsigned int q=0; q<numberQuadraturePoints; ++q)
 					{
-						densityValue[2*q+1] = (*rhoValues).find(cellPtr->id())->second[2*q+1];
-						densityValue[2*q] = (*rhoValues).find(cellPtr->id())->second[2*q];
-
-						double gradRhoX1 = (*gradRhoValues).find(cellPtr->id())->second[6*q + 0];
-						double gradRhoY1 = (*gradRhoValues).find(cellPtr->id())->second[6*q + 1];
-						double gradRhoZ1 = (*gradRhoValues).find(cellPtr->id())->second[6*q + 2];
-						double gradRhoX2 = (*gradRhoValues).find(cellPtr->id())->second[6*q + 3];
-						double gradRhoY2 = (*gradRhoValues).find(cellPtr->id())->second[6*q + 4];
-						double gradRhoZ2 = (*gradRhoValues).find(cellPtr->id())->second[6*q + 5];
+						double gradRhoX1 = gradDensityValue[6*q + 0];
+						double gradRhoY1 = gradDensityValue[6*q + 1];
+						double gradRhoZ1 = gradDensityValue[6*q + 2];
+						double gradRhoX2 = gradDensityValue[6*q + 3];
+						double gradRhoY2 = gradDensityValue[6*q + 4];
+						double gradRhoZ2 = gradDensityValue[6*q + 5];
 						//
 						sigmaValue[3*q+0] = gradRhoX1*gradRhoX1 + gradRhoY1*gradRhoY1 + gradRhoZ1*gradRhoZ1;
 						sigmaValue[3*q+1] = gradRhoX1*gradRhoX2 + gradRhoY1*gradRhoY2 + gradRhoZ1*gradRhoZ2;

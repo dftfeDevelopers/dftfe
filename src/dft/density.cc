@@ -97,7 +97,7 @@ void dftClass<FEOrder>::compute_rhoOut(
 
 
 		//interpolate nodal rhoOut data to quadrature data
-		interpolateNodalDataToQuadratureData(d_matrixFreeDataPRefined,
+		interpolateNodalDataToQuadratureDataPRefinedQuadGeneral(d_matrixFreeDataPRefined,
 				d_rhoOutNodalValues,
 				*rhoOutValues,
 				*gradRhoOutValues,
@@ -231,7 +231,7 @@ void dftClass<FEOrder>::compute_rhoOut(
   {
     d_constraintsPRefined.distribute(d_rhoOutNodalValues);
     d_rhoOutNodalValues.update_ghost_values();
-		interpolateNodalDataToQuadratureData(d_matrixFreeDataPRefined,
+		interpolateNodalDataToQuadratureDataPRefinedQuadLpsp(d_matrixFreeDataPRefined,
         0,
         2,
 				d_rhoOutNodalValues,
@@ -257,7 +257,7 @@ void dftClass<FEOrder>::compute_rhoOut(
       d_rhoOutNodalValues.update_ghost_values();
     }
 
-		interpolateNodalDataToQuadratureData(d_matrixFreeDataPRefined,
+		interpolateNodalDataToQuadratureDataPRefinedQuadLpsp(d_matrixFreeDataPRefined,
         0,
         2,
 				d_rhoOutNodalValues,
@@ -392,7 +392,7 @@ void dftClass<FEOrder>::noRemeshRhoDataInit()
 			d_rhoInNodalValues *= scalingFactor;
 			d_rhoInNodalVals.push_back(d_rhoInNodalValues);
 
-			interpolateNodalDataToQuadratureData(d_matrixFreeDataPRefined,
+			interpolateNodalDataToQuadratureDataPRefinedQuadGeneral(d_matrixFreeDataPRefined,
 					d_rhoInNodalValues,
 					*rhoInValues,
 					*gradRhoInValues,

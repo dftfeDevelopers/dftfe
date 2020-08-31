@@ -369,7 +369,7 @@ namespace dftfe{
 		 * @param pseudoValues quadrature data of pseudopotential values
 		 */
 		void computeVEff(const std::map<dealii::CellId,std::vector<double> >* rhoValues,
-				const distributedCPUVec<double> & phi,
+				const std::map<dealii::CellId,std::vector<double> > & phiValues,
 				const std::map<dealii::CellId,std::vector<double> > & externalPotCorrValues,
         const unsigned int externalPotCorrQuadratureId);
 
@@ -384,7 +384,7 @@ namespace dftfe{
 		 * @param pseudoValues quadrature data of pseudopotential values
 		 */
 		void computeVEffSpinPolarized(const std::map<dealii::CellId,std::vector<double> >* rhoValues,
-				const distributedCPUVec<double> & phi,
+				const std::map<dealii::CellId,std::vector<double> > & phiValues,
 				unsigned int spinIndex,
 				const std::map<dealii::CellId,std::vector<double> > & externalPotCorrValues,
         const unsigned int externalPotCorrQuadratureId);
@@ -400,7 +400,7 @@ namespace dftfe{
 		 */
 		void computeVEff(const std::map<dealii::CellId,std::vector<double> >* rhoValues,
 				const std::map<dealii::CellId,std::vector<double> >* gradRhoValues,
-				const distributedCPUVec<double> & phi,
+				const std::map<dealii::CellId,std::vector<double> > & phiValues,
 				const std::map<dealii::CellId,std::vector<double> > & externalPotCorrValues,
         const unsigned int externalPotCorrQuadratureId);
 
@@ -417,7 +417,7 @@ namespace dftfe{
 		 */
 		void computeVEffSpinPolarized(const std::map<dealii::CellId,std::vector<double> >* rhoValues,
 				const std::map<dealii::CellId,std::vector<double> >* gradRhoValues,
-				const distributedCPUVec<double> & phi,
+				const std::map<dealii::CellId,std::vector<double> > & phiValues,
 				const unsigned int spinIndex,
 				const std::map<dealii::CellId,std::vector<double> > & externalPotCorrValues,
         const unsigned int externalPotCorrQuadratureId);

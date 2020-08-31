@@ -217,7 +217,7 @@ void dftClass<FEOrder>::initRho()
 			gradRhoInValues=&(gradRhoInVals.back());
 		}
 
-		interpolateNodalDataToQuadratureData(d_matrixFreeDataPRefined,
+		interpolateNodalDataToQuadratureDataPRefinedQuadGeneral(d_matrixFreeDataPRefined,
 				d_rhoInNodalValues,
 				*rhoInValues,
 				*gradRhoInValues,
@@ -1197,7 +1197,7 @@ void dftClass<FEOrder>::initAtomicRho(distributedCPUVec<double> & atomicRho)
 		//pcout<<"Total Charge after Normalizing rho on first atom: "<< totalCharge(d_matrixFreeDataPRefined,singleAtomsRho[0])<<std::endl;
 	}
 
-	interpolateNodalDataToQuadratureData(d_matrixFreeDataPRefined,
+	interpolateNodalDataToQuadratureDataPRefinedQuadGeneral(d_matrixFreeDataPRefined,
 			atomicRho,
 			d_rhoAtomsValues,
 			d_gradRhoAtomsValues,

@@ -21,7 +21,7 @@
 //interpolate nodal data to quadrature values using FEEvaluation
 //
 	template <unsigned int FEOrder>
-void dftClass<FEOrder>::interpolateNodalDataToQuadratureData(dealii::MatrixFree<3,double> & matrixFreeData,
+void dftClass<FEOrder>::interpolateNodalDataToQuadratureDataPRefinedQuadGeneral(dealii::MatrixFree<3,double> & matrixFreeData,
 		const distributedCPUVec<double> & nodalField,
 		std::map<dealii::CellId, std::vector<double> > & quadratureValueData,
 		std::map<dealii::CellId, std::vector<double> > & quadratureGradValueData,
@@ -100,7 +100,7 @@ void dftClass<FEOrder>::interpolateNodalDataToQuadratureData(dealii::MatrixFree<
 
 
 	template <unsigned int FEOrder>
-void dftClass<FEOrder>::interpolateNodalDataToQuadratureData(dealii::MatrixFree<3,double> & matrixFreeData,
+void dftClass<FEOrder>::interpolateNodalDataToQuadratureDataPRefinedQuadLpsp(dealii::MatrixFree<3,double> & matrixFreeData,
 		const unsigned int dofHandlerId,
 		const unsigned int quadratureId,
 		const distributedCPUVec<double> & nodalField,
@@ -155,6 +155,66 @@ void dftClass<FEOrder>::interpolateNodalDataToQuadratureData(dealii::MatrixFree<
 	}
 
 }
+
+
+
+	template <unsigned int FEOrder>
+void dftClass<FEOrder>::interpolateNodalDataToQuadratureDataQuadGeneral(dealii::MatrixFree<3,double> & matrixFreeData,
+		const unsigned int dofHandlerId,
+		const unsigned int quadratureId,
+		const distributedCPUVec<double> & nodalField,
+		std::map<dealii::CellId, std::vector<double> > & quadratureValueData,
+		std::map<dealii::CellId, std::vector<double> > & quadratureGradValueData,
+		const bool isEvaluateGradData)
+{
+
+	quadratureValueData.clear();
+	quadratureGradValueData.clear();
+  FEEvaluation<C_DIM,FEOrder,C_num1DQuad<FEOrder>(),1,double> feEvalObj(matrixFreeData,dofHandlerId,quadratureId);
+	const unsigned int numQuadPoints = feEvalObj.n_q_points;
+
+  AssertThrow(matrixFreeData.get_quadrature(quadratureId).size() == numQuadPoints,
+          dealii::ExcMessage("DFT-FE Error: mismatch in quadrature rule usage in interpolateNodalDataToQuadratureData."));
+
+	DoFHandler<C_DIM>::active_cell_iterator subCellPtr;
+	for(unsigned int cell = 0; cell < matrixFreeData.n_macro_cells(); ++cell)
+	{
+		feEvalObj.reinit(cell);
+		feEvalObj.read_dof_values(nodalField);
+		feEvalObj.evaluate(true,isEvaluateGradData?true:false);
+		for(unsigned int iSubCell = 0; iSubCell < matrixFreeData.n_components_filled(cell); ++iSubCell)
+		{
+			subCellPtr= matrixFreeData.get_cell_iterator(cell,iSubCell);
+			dealii::CellId subCellId=subCellPtr->id();
+			quadratureValueData[subCellId] = std::vector<double>(numQuadPoints);
+			std::vector<double> & tempVec = quadratureValueData.find(subCellId)->second;
+			for(unsigned int q_point = 0; q_point < numQuadPoints; ++q_point)
+			{
+				tempVec[q_point] = feEvalObj.get_value(q_point)[iSubCell];
+			}
+		}
+
+		if(isEvaluateGradData)
+		{
+			for(unsigned int iSubCell = 0; iSubCell < matrixFreeData.n_components_filled(cell); ++iSubCell)
+			{
+				subCellPtr= matrixFreeData.get_cell_iterator(cell,iSubCell);
+				dealii::CellId subCellId=subCellPtr->id();
+				quadratureGradValueData[subCellId]=std::vector<double>(3*numQuadPoints);
+				std::vector<double> & tempVec = quadratureGradValueData.find(subCellId)->second;
+				for(unsigned int q_point = 0; q_point < numQuadPoints; ++q_point)
+				{
+					tempVec[3*q_point + 0] = feEvalObj.get_gradient(q_point)[0][iSubCell];
+					tempVec[3*q_point + 1] = feEvalObj.get_gradient(q_point)[1][iSubCell];
+					tempVec[3*q_point + 2] = feEvalObj.get_gradient(q_point)[2][iSubCell];
+				}
+			}
+		}
+
+	}
+
+}
+
 
 	template <unsigned int FEOrder>
 void dftClass<FEOrder>::interpolateFieldsFromPrevToCurrentMesh(std::vector<distributedCPUVec<double>*> fieldsPrevious,

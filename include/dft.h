@@ -427,7 +427,7 @@ namespace dftfe {
 			 *@param[out] quadratureGradValueData to be computed at quadrature points
 			 *@param[in] isEvaluateGradData denotes a flag to evaluate gradients or not
 			 */
-			void interpolateNodalDataToQuadratureData(dealii::MatrixFree<3,double> & matrixFreeData,
+			void interpolateNodalDataToQuadratureDataPRefinedQuadGeneral(dealii::MatrixFree<3,double> & matrixFreeData,
 					const distributedCPUVec<double> & nodalField,
 					std::map<dealii::CellId, std::vector<double> > & quadratureValueData,
 					std::map<dealii::CellId, std::vector<double> > & quadratureGradValueData,
@@ -447,13 +447,32 @@ namespace dftfe {
 			 *@param[out] quadratureGradValueData to be computed at quadrature points
 			 *@param[in] isEvaluateGradData denotes a flag to evaluate gradients or not
 			 */
-			void interpolateNodalDataToQuadratureData(dealii::MatrixFree<3,double> & matrixFreeData,
+			void interpolateNodalDataToQuadratureDataPRefinedQuadLpsp(dealii::MatrixFree<3,double> & matrixFreeData,
 					const unsigned int dofHandlerId,
 					const unsigned int quadratureId,
 					const distributedCPUVec<double> & nodalField,
 					std::map<dealii::CellId, std::vector<double> > & quadratureValueData,
 					std::map<dealii::CellId, std::vector<double> > & quadratureGradValueData,
 					const bool isEvaluateGradData);
+
+			/**
+			 *@brief interpolate nodal data to quadrature data using FEEvaluation
+			 *
+			 *@param[in] matrixFreeData matrix free data object
+			 *@param[in] nodalField nodal data to be interpolated
+			 *@param[in] matrix free dofHandler id
+			 *@param[in] matrix free quadrature id
+			 *@param[out] quadratureValueData to be computed at quadrature points
+			 *@param[out] quadratureGradValueData to be computed at quadrature points
+			 *@param[in] isEvaluateGradData denotes a flag to evaluate gradients or not
+			 */
+			void interpolateNodalDataToQuadratureDataQuadGeneral(dealii::MatrixFree<3,double> & matrixFreeData,
+					const unsigned int dofHandlerId,
+					const unsigned int quadratureId,
+					const distributedCPUVec<double> & nodalField,
+					std::map<dealii::CellId, std::vector<double> > & quadratureValueData,
+					std::map<dealii::CellId, std::vector<double> > & quadratureGradValueData,
+					const bool isEvaluateGradData=false);      
 
 			/**
 			 *@brief Finds the global dof ids of the nodes containing atoms.
