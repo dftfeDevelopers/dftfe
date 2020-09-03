@@ -1,0 +1,12 @@
+template class dftClass<1>;
+template class dftClass<2>;
+template class dftClass<3>;
+template class dftClass<4>;
+template class dftClass<5>;
+template class dftClass<6>;
+template class dftClass<7>;
+template class dftClass<8>;
+template class dftClass<9>;
+template class dftClass<10>;
+template class dftClass<11>;
+template class dftClass<12>;

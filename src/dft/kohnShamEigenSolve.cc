@@ -101,6 +101,7 @@ dataTypes::number dftClass<FEOrder>::computeTraceXtHX(unsigned int numberWaveFun
 			d_phiTotRhoIn,
 			*d_constraintsVector[phiTotDofHandlerIndex],
 			phiTotDofHandlerIndex,
+      0,
 			d_atomNodeIdToChargeMap,
 			d_bQuadValuesAllAtoms,
       4,

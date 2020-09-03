@@ -446,6 +446,7 @@ void dftClass<FEOrder>::computeElectrostaticEnergyHRefined(
 			phiTotRhoOutHRefined,
 			*matrixFreeConstraintsInputVector[phiTotDofHandlerIndexHRefined],
 			phiTotDofHandlerIndexHRefined,
+      0,
 			atomHRefinedNodeIdToChargeMap,
       d_bQuadValuesAllAtoms,
       1,

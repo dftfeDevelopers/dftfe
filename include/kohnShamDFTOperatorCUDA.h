@@ -43,8 +43,8 @@ namespace dftfe{
 		//template <unsigned int T>
 		// friend class dftClass;
 
-		template <unsigned int T>
-			friend class symmetryClass;
+		//template <unsigned int T>
+		//	friend class symmetryClass;
 
 		public:
 		kohnShamDFTOperatorCUDAClass(dftClass<FEOrder>* _dftPtr, const MPI_Comm &mpi_comm_replica);

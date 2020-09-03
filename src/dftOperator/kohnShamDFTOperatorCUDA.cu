@@ -3285,19 +3285,6 @@ namespace dftfe
 #include "hamiltonianMatrixCalculatorFlattenedCUDA.cu"
 #include "computeNonLocalHamiltonianTimesXMemoryOptBatchGEMMCUDA.cu"
 
-
-	template class kohnShamDFTOperatorCUDAClass<1>;
-	template class kohnShamDFTOperatorCUDAClass<2>;
-	template class kohnShamDFTOperatorCUDAClass<3>;
-	template class kohnShamDFTOperatorCUDAClass<4>;
-	template class kohnShamDFTOperatorCUDAClass<5>;
-	template class kohnShamDFTOperatorCUDAClass<6>;
-	template class kohnShamDFTOperatorCUDAClass<7>;
-	template class kohnShamDFTOperatorCUDAClass<8>;
-	template class kohnShamDFTOperatorCUDAClass<9>;
-	template class kohnShamDFTOperatorCUDAClass<10>;
-	template class kohnShamDFTOperatorCUDAClass<11>;
-	template class kohnShamDFTOperatorCUDAClass<12>;
-
+#include "inst.cu"
 }
 #endif

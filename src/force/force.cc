@@ -570,17 +570,5 @@ namespace  dftfe {
 	   }
 	 */
 
-	template class forceClass<1>;
-	template class forceClass<2>;
-	template class forceClass<3>;
-	template class forceClass<4>;
-	template class forceClass<5>;
-	template class forceClass<6>;
-	template class forceClass<7>;
-	template class forceClass<8>;
-	template class forceClass<9>;
-	template class forceClass<10>;
-	template class forceClass<11>;
-	template class forceClass<12>;
-
+#include "force.inst.cc"
 }

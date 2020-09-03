@@ -501,17 +501,6 @@ namespace dftfe {
 			return ptemp;
 		}
 	//================================================================================================================================================
-	template class symmetryClass<1>;
-	template class symmetryClass<2>;
-	template class symmetryClass<3>;
-	template class symmetryClass<4>;
-	template class symmetryClass<5>;
-	template class symmetryClass<6>;
-	template class symmetryClass<7>;
-	template class symmetryClass<8>;
-	template class symmetryClass<9>;
-	template class symmetryClass<10>;
-	template class symmetryClass<11>;
-	template class symmetryClass<12>;
+#include "symmetrize.inst.cc"
 	//=================================================================================================================================================
 }

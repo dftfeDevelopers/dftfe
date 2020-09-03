@@ -422,17 +422,5 @@ namespace dftfe {
 			AssertThrow(false,dftUtils::ExcNotImplementedYet());
 		}
 
-
-	template class geoOptCell<1>;
-	template class geoOptCell<2>;
-	template class geoOptCell<3>;
-	template class geoOptCell<4>;
-	template class geoOptCell<5>;
-	template class geoOptCell<6>;
-	template class geoOptCell<7>;
-	template class geoOptCell<8>;
-	template class geoOptCell<9>;
-	template class geoOptCell<10>;
-	template class geoOptCell<11>;
-	template class geoOptCell<12>;
+#include "geoOptCell.inst.cc"
 }

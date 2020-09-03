@@ -41,9 +41,6 @@ namespace dftfe {
 			template <unsigned int T>
 				friend class dftClass;
 
-			template <unsigned int T>
-				friend class eigenClass;
-
 			public:
 			/**
 			 * symmetryClass constructor

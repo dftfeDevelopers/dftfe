@@ -96,6 +96,7 @@ void dftClass<FEOrder>::initnscf(kohnShamDFTOperatorClass<FEOrder> & kohnShamDFT
 			d_phiTotRhoIn,
 			*d_constraintsVector[phiTotDofHandlerIndex],
 			phiTotDofHandlerIndex,
+      0,
 			d_atomNodeIdToChargeMap,
 			dummy,
       4,

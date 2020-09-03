@@ -3257,17 +3257,5 @@ kohnShamDFTEigenOperatorCUDA
 		}
 
 
-	template class molecularDynamics<1>;
-	template class molecularDynamics<2>;
-	template class molecularDynamics<3>;
-	template class molecularDynamics<4>;
-	template class molecularDynamics<5>;
-	template class molecularDynamics<6>;
-	template class molecularDynamics<7>;
-	template class molecularDynamics<8>;
-	template class molecularDynamics<9>;
-	template class molecularDynamics<10>;
-	template class molecularDynamics<11>;
-	template class molecularDynamics<12>;
-
+#include "md.inst.cc"
 }

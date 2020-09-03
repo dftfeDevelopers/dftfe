@@ -379,17 +379,5 @@ namespace dftfe {
 			AssertThrow(false,dftUtils::ExcNotImplementedYet());
 		}
 
-	template class geoOptIon<1>;
-	template class geoOptIon<2>;
-	template class geoOptIon<3>;
-	template class geoOptIon<4>;
-	template class geoOptIon<5>;
-	template class geoOptIon<6>;
-	template class geoOptIon<7>;
-	template class geoOptIon<8>;
-	template class geoOptIon<9>;
-	template class geoOptIon<10>;
-	template class geoOptIon<11>;
-	template class geoOptIon<12>;
-
+#include "geoOptIon.inst.cc"
 }

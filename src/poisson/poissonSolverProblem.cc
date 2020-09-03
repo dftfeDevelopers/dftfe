@@ -40,6 +40,7 @@ namespace dftfe {
 		 distributedCPUVec<double> & x,
 		 const dealii::ConstraintMatrix & constraintMatrix,
 		 const unsigned int matrixFreeVectorComponent,
+		 const unsigned int matrixFreeQuadratureComponent,     
 		 const std::map<dealii::types::global_dof_index, double> & atoms,
 		 const std::map<dealii::CellId,std::vector<double> > & smearedChargeValues,
      const unsigned int smearedChargeQuadratureId,
@@ -63,6 +64,7 @@ namespace dftfe {
 			d_xPtr=&x;
 			d_constraintMatrixPtr=&constraintMatrix;
 			d_matrixFreeVectorComponent=matrixFreeVectorComponent;
+			d_matrixFreeQuadratureComponent=matrixFreeQuadratureComponent;      
 			d_rhoValuesPtr=isRhoValues?&rhoValues:NULL;
 			d_atomsPtr=smearedNuclearCharges?NULL:&atoms;
 			d_smearedChargeValuesPtr=smearedNuclearCharges?&smearedChargeValues:NULL;
@@ -94,6 +96,7 @@ namespace dftfe {
 		 distributedCPUVec<double> & x,
 		 const dealii::ConstraintMatrix & constraintMatrix,
 		 const unsigned int matrixFreeVectorComponent,
+		 const unsigned int matrixFreeQuadratureComponent,     
 		 const std::map<dealii::types::global_dof_index, double> & atoms,
 		 const bool isComputeDiagonalA,
 		 const bool isPrecomputeShapeGradIntegral)
@@ -102,6 +105,7 @@ namespace dftfe {
 			d_xPtr=&x;
 			d_constraintMatrixPtr=&constraintMatrix;
 			d_matrixFreeVectorComponent=matrixFreeVectorComponent;
+			d_matrixFreeQuadratureComponent=matrixFreeQuadratureComponent;       
 			d_rhoValuesPtr=NULL;
 			d_atomsPtr=&atoms;
 
@@ -136,7 +140,7 @@ namespace dftfe {
 			const dealii::DoFHandler<3> & dofHandler=
 				d_matrixFreeDataPtr->get_dof_handler(d_matrixFreeVectorComponent);
 
-			dealii::QGauss<3>  quadrature(C_num1DQuad<FEOrder>());
+			const dealii::Quadrature<3> &  quadrature=d_matrixFreeDataPtr->get_quadrature(d_matrixFreeQuadratureComponent);
 			dealii::FEValues<3> fe_values (dofHandler.get_fe(), quadrature, dealii::update_gradients | dealii::update_JxW_values);
 			const unsigned int   dofs_per_cell = dofHandler.get_fe().dofs_per_cell;
 			const unsigned int   num_quad_points = quadrature.size();
@@ -186,7 +190,7 @@ namespace dftfe {
 			const dealii::DoFHandler<3> & dofHandler=
 				d_matrixFreeDataPtr->get_dof_handler(d_matrixFreeVectorComponent);
 
-			dealii::QGauss<3>  quadrature(C_num1DQuad<FEOrder>());
+			const dealii::Quadrature<3> &  quadrature=d_matrixFreeDataPtr->get_quadrature(d_matrixFreeQuadratureComponent);
 			//dealii::FEValues<3> fe_values (dofHandler.get_fe(), quadrature,
 			//                               d_isShapeGradIntegralPrecomputed?dealii::update_values | dealii::update_JxW_values
 			//                                                               :dealii::update_values | dealii::update_gradients | dealii::update_JxW_values);
@@ -207,7 +211,7 @@ namespace dftfe {
 
 			dealii::FEEvaluation<3,FEOrder,C_num1DQuad<FEOrder>()> fe_eval(*d_matrixFreeDataPtr,
 					d_matrixFreeVectorComponent,
-					0);
+					d_matrixFreeQuadratureComponent);
 			dealii::VectorizedArray<double>  quarter = dealii::make_vectorized_array (1.0/(4.0*M_PI));
 			if (d_constraintMatrixPtr->has_inhomogeneities())
 				for (unsigned int macrocell = 0;macrocell < d_matrixFreeDataPtr->n_macro_cells();
@@ -431,7 +435,7 @@ namespace dftfe {
 			const dealii::DoFHandler<3> & dofHandler=
 				d_matrixFreeDataPtr->get_dof_handler(d_matrixFreeVectorComponent);
 
-			dealii::QGauss<3>  quadrature(C_num1DQuad<FEOrder>());
+			const dealii::Quadrature<3> &  quadrature=d_matrixFreeDataPtr->get_quadrature(d_matrixFreeQuadratureComponent);
 			dealii::FEValues<3> fe_values (dofHandler.get_fe(), quadrature, dealii::update_values| dealii::update_JxW_values);
 			const unsigned int   dofs_per_cell = dofHandler.get_fe().dofs_per_cell;
 			const unsigned int   num_quad_points = quadrature.size();
@@ -512,7 +516,7 @@ namespace dftfe {
 			const dealii::DoFHandler<3> & dofHandler=
 				d_matrixFreeDataPtr->get_dof_handler(d_matrixFreeVectorComponent);
 
-			dealii::QGauss<3>  quadrature(C_num1DQuad<FEOrder>());
+			const dealii::Quadrature<3> &  quadrature=d_matrixFreeDataPtr->get_quadrature(d_matrixFreeQuadratureComponent);
 			dealii::FEValues<3> fe_values (dofHandler.get_fe(), quadrature, dealii::update_values | dealii::update_gradients | dealii::update_JxW_values);
 			const unsigned int   dofs_per_cell = dofHandler.get_fe().dofs_per_cell;
 			const unsigned int   num_quad_points = quadrature.size();
@@ -560,7 +564,7 @@ namespace dftfe {
 
 			dealii::FEEvaluation<3,FEOrder,C_num1DQuad<FEOrder>()> fe_eval(matrixFreeData,
 					d_matrixFreeVectorComponent,
-					0);
+					d_matrixFreeQuadratureComponent);
 
 			for (unsigned int cell=cell_range.first; cell<cell_range.second; ++cell)
 			{

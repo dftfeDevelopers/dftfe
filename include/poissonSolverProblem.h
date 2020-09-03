@@ -47,6 +47,7 @@ namespace dftfe {
 						distributedCPUVec<double> & x,
 						const dealii::ConstraintMatrix & constraintMatrix,
 						const unsigned int matrixFreeVectorComponent,
+            const unsigned int matrixFreeQuadratureComponent,
 						const std::map<dealii::types::global_dof_index, double> & atoms,
 						const std::map<dealii::CellId,std::vector<double> > & smearedChargeValues,
             const unsigned int smearedChargeQuadratureId,
@@ -69,6 +70,7 @@ namespace dftfe {
 						distributedCPUVec<double> & x,
 						const dealii::ConstraintMatrix & constraintMatrix,
 						const unsigned int matrixFreeVectorComponent,
+            const unsigned int matrixFreeQuadratureComponent,
 						const std::map<dealii::types::global_dof_index, double> & atoms,
 						const bool isComputeDiagonalA=true,
 						const bool isPrecomputeShapeGradIntegral=false);
@@ -187,6 +189,9 @@ namespace dftfe {
 				/// matrix free index required to access the DofHandler and ConstraintMatrix objects corresponding to the
 				/// problem
 				unsigned int d_matrixFreeVectorComponent;
+
+				/// matrix free quadrature index
+				unsigned int d_matrixFreeQuadratureComponent;        
 
 				/// pointer to electron density cell quadrature data
 				const std::map<dealii::CellId,std::vector<double> >* d_rhoValuesPtr;

@@ -1631,17 +1631,5 @@ dst);
       }
   }
 
-	template class kohnShamDFTOperatorClass<1>;
-	template class kohnShamDFTOperatorClass<2>;
-	template class kohnShamDFTOperatorClass<3>;
-	template class kohnShamDFTOperatorClass<4>;
-	template class kohnShamDFTOperatorClass<5>;
-	template class kohnShamDFTOperatorClass<6>;
-	template class kohnShamDFTOperatorClass<7>;
-	template class kohnShamDFTOperatorClass<8>;
-	template class kohnShamDFTOperatorClass<9>;
-	template class kohnShamDFTOperatorClass<10>;
-	template class kohnShamDFTOperatorClass<11>;
-	template class kohnShamDFTOperatorClass<12>;
-
+#include "inst.cc"
 }

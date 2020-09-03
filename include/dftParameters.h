@@ -34,7 +34,7 @@ namespace dftfe {
 	namespace dftParameters
 	{
 
-		extern unsigned int finiteElementPolynomialOrder,n_refinement_steps,numberEigenValues,xc_id, spinPolarized, nkx,nky,nkz , offsetFlagX,offsetFlagY,offsetFlagZ;
+		extern unsigned int finiteElementPolynomialOrder, finiteElementPolynomialOrderElectrostatics, n_refinement_steps,numberEigenValues,xc_id, spinPolarized, nkx,nky,nkz , offsetFlagX,offsetFlagY,offsetFlagZ;
 		extern unsigned int chebyshevOrder,numPass,numSCFIterations,maxLinearSolverIterations, mixingHistory, npool, numberWaveFunctionsForEstimate, numLevels, maxLinearSolverIterationsHelmholtz;
 
 		extern double radiusAtomBall, mixingParameter;

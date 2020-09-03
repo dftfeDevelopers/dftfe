@@ -1,4 +1,5 @@
 // ---------------------------------------------------------------------
+
 //
 // Copyright (c) 2017-2018 The Regents of the University of Michigan and DFT-FE authors.
 //
@@ -386,6 +387,7 @@ namespace dftfe
 							vselfBinScratch,
 							d_vselfBinConstraintMatrices[4*iBin],
 							constraintMatrixIdVself,
+              0,
 							std::map<dealii::types::global_dof_index, double>(),
 							bQuadValuesBin,
               smearedChargeQuadratureId,
@@ -400,6 +402,7 @@ namespace dftfe
 							vselfBinScratch,
 							d_vselfBinConstraintMatrices[4*iBin],
 							constraintMatrixIdVself,
+              0,
 							d_atomsInBin[iBin],
 							true,
 							false);
@@ -426,6 +429,7 @@ namespace dftfe
                 vselfDerRBinScratch[idim] ,
                 d_vselfBinConstraintMatrices[4*iBin+idim+1],
                 constraintMatrixIdVselfDerR[idim],
+                0,
                 std::map<dealii::types::global_dof_index, double>(),
                 bQuadValuesBin,
                 smearedChargeQuadratureId,
