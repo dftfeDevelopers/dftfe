@@ -17,8 +17,8 @@
 //
 
 //(locally used function) compute FPSPLocal contibution due to Gamma(Rj) for given set of cells
-template<unsigned int FEOrder>
-	void forceClass<FEOrder>::FPSPLocalGammaAtomsElementalContribution
+template<unsigned int FEOrder,unsigned int FEOrderElectro>
+	void forceClass<FEOrder,FEOrderElectro>::FPSPLocalGammaAtomsElementalContribution
 (std::map<unsigned int, std::vector<double> > & forceContributionFPSPLocalGammaAtoms,
  FEValues<C_DIM> & feValues,
  FEFaceValues<C_DIM> & feFaceValues,
@@ -281,8 +281,8 @@ template<unsigned int FEOrder>
 }
 
 //(locally used function) accumulate and distribute FPSPLocal contibution due to Gamma(Rj)
-template<unsigned int FEOrder>
-	void forceClass<FEOrder>::distributeForceContributionFPSPLocalGammaAtoms
+template<unsigned int FEOrder,unsigned int FEOrderElectro>
+	void forceClass<FEOrder,FEOrderElectro>::distributeForceContributionFPSPLocalGammaAtoms
 (const std::map<unsigned int,std::vector<double> > & forceContributionFPSPLocalGammaAtoms,
  const std::map<std::pair<unsigned int,unsigned int>, unsigned int> & atomsForceDofs,
  const ConstraintMatrix &  constraintsNoneForce,

@@ -79,12 +79,12 @@ namespace dftfe {
 
 	/* code that must be skipped by Doxygen */
 	//forward declarations
-	template <unsigned int T> class forceClass;
-	template <unsigned int T> class symmetryClass;
-	template <unsigned int T> class forceClass;
-	template <unsigned int T> class geoOptIon;
-	template <unsigned int T> class geoOptCell;
-	template <unsigned int T> class molecularDynamics;
+	template <unsigned int T1, unsigned int T2> class forceClass;
+	template <unsigned int T1, unsigned int T2> class symmetryClass;
+	template <unsigned int T1, unsigned int T2> class forceClass;
+	template <unsigned int T1, unsigned int T2> class geoOptIon;
+	template <unsigned int T1, unsigned int T2> class geoOptCell;
+	template <unsigned int T1, unsigned int T2> class molecularDynamics;
 
 #endif /* DOXYGEN_SHOULD_SKIP_THIS */
 
@@ -94,28 +94,28 @@ namespace dftfe {
 	 *
 	 * @author Shiva Rudraraju, Phani Motamarri, Sambit Das
 	 */
-	template <unsigned int FEOrder>
+	template <unsigned int FEOrder, unsigned int FEOrderElectro>
 		class dftClass
 		{
-			template <unsigned int T>
+			template <unsigned int T1, unsigned int T2>
 				friend class kohnShamDFTOperatorClass;
 
-			template <unsigned int T>
+			template <unsigned int T1, unsigned int T2>
 				friend class kohnShamDFTOperatorCUDAClass;
 
-			template <unsigned int T>
+			template <unsigned int T1, unsigned int T2>
 				friend class forceClass;
 
-			template <unsigned int T>
+			template <unsigned int T1, unsigned int T2>
 				friend class geoOptIon;
 
-			template <unsigned int T>
+			template <unsigned int T1, unsigned int T2>
 				friend class geoOptCell;
 
-			template <unsigned int T>
+			template <unsigned int T1, unsigned int T2>
 				friend class symmetryClass;
 
-			template <unsigned int T>
+			template <unsigned int T1, unsigned int T2>
 				friend class molecularDynamics;
 
 			public:
@@ -170,9 +170,9 @@ namespace dftfe {
 			/**
 			 * @brief Kohn-Sham ground-state solve using SCF iteration
 			 */
-			void solve(kohnShamDFTOperatorClass<FEOrder> & kohnShamDFTEigenOperator,
+			void solve(kohnShamDFTOperatorClass<FEOrder,FEOrderElectro> & kohnShamDFTEigenOperator,
 #ifdef DFTFE_WITH_GPU
-					kohnShamDFTOperatorCUDAClass<FEOrder> & kohnShamDFTEigenOperatorCUDA,
+					kohnShamDFTOperatorCUDAClass<FEOrder,FEOrderElectro> & kohnShamDFTEigenOperatorCUDA,
 #endif
 					const bool kohnShamDFTOperatorsInitialized=false,
 					const bool computeForces=true,
@@ -186,34 +186,34 @@ namespace dftfe {
 			/**
 			 * @brief Kohn-Sham ground-state solve using SCF iteration
 			 */
-			void computeDensityPerturbation(kohnShamDFTOperatorClass<FEOrder> & kohnShamDFTEigenOperator,
+			void computeDensityPerturbation(kohnShamDFTOperatorClass<FEOrder,FEOrderElectro> & kohnShamDFTEigenOperator,
 #ifdef DFTFE_WITH_GPU
-					kohnShamDFTOperatorCUDAClass<FEOrder> & kohnShamDFTEigenOperatorCUDA,
+					kohnShamDFTOperatorCUDAClass<FEOrder,FEOrderElectro> & kohnShamDFTEigenOperatorCUDA,
 #endif
 					const bool kohnShamDFTOperatorsInitialized=false);
 
 
-			void initializeKohnShamDFTOperator(kohnShamDFTOperatorClass<FEOrder> & kohnShamDFTEigenOperator
+			void initializeKohnShamDFTOperator(kohnShamDFTOperatorClass<FEOrder,FEOrderElectro> & kohnShamDFTEigenOperator
 #ifdef DFTFE_WITH_GPU
 					,
-					kohnShamDFTOperatorCUDAClass<FEOrder> & kohnShamDFTEigenOperatorCUDA
+					kohnShamDFTOperatorCUDAClass<FEOrder,FEOrderElectro> & kohnShamDFTEigenOperatorCUDA
 #endif
 					,
 					const bool initializeCUDAScala=true);
 
 
-			void reInitializeKohnShamDFTOperator(kohnShamDFTOperatorClass<FEOrder> & kohnShamDFTEigenOperator
+			void reInitializeKohnShamDFTOperator(kohnShamDFTOperatorClass<FEOrder,FEOrderElectro> & kohnShamDFTEigenOperator
 #ifdef DFTFE_WITH_GPU
 					,
-					kohnShamDFTOperatorCUDAClass<FEOrder> & kohnShamDFTEigenOperatorCUDA
+					kohnShamDFTOperatorCUDAClass<FEOrder,FEOrderElectro> & kohnShamDFTEigenOperatorCUDA
 #endif
 					);
 
 
-			void finalizeKohnShamDFTOperator(kohnShamDFTOperatorClass<FEOrder> & kohnShamDFTEigenOperator
+			void finalizeKohnShamDFTOperator(kohnShamDFTOperatorClass<FEOrder,FEOrderElectro> & kohnShamDFTEigenOperator
 #ifdef DFTFE_WITH_GPU
 					,
-					kohnShamDFTOperatorCUDAClass<FEOrder> & kohnShamDFTEigenOperatorCUDA
+					kohnShamDFTOperatorCUDAClass<FEOrder,FEOrderElectro> & kohnShamDFTEigenOperatorCUDA
 #endif
 					);
 
@@ -513,7 +513,7 @@ namespace dftfe {
 			 */
 			void computeRhoNodalFromPSI(
 #ifdef DFTFE_WITH_GPU
-					kohnShamDFTOperatorCUDAClass<FEOrder> & kohnShamDFTEigenOperator,
+					kohnShamDFTOperatorCUDAClass<FEOrder,FEOrderElectro> & kohnShamDFTEigenOperator,
 #endif
 					bool isConsiderSpectrumSplitting);
 
@@ -607,7 +607,7 @@ namespace dftfe {
 			 */
 			void compute_rhoOut(
 #ifdef DFTFE_WITH_GPU
-					kohnShamDFTOperatorCUDAClass<FEOrder> & kohnShamDFTEigenOperator,
+					kohnShamDFTOperatorCUDAClass<FEOrder,FEOrderElectro> & kohnShamDFTEigenOperator,
 #endif
 					const bool isConsiderSpectrumSplitting,
 					const bool isGroundState=false);
@@ -624,9 +624,9 @@ namespace dftfe {
 			double mixing_anderson_spinPolarized();
 			double mixing_broyden();
 			double mixing_broyden_spinPolarized();
-			double nodalDensity_mixing_simple(kerkerSolverProblem<C_num1DKerkerPoly<FEOrder>()> & solverProblem,
+			double nodalDensity_mixing_simple(kerkerSolverProblem<FEOrderElectro> & solverProblem,
 					dealiiLinearSolver & dealiiLinearSolver);
-			double nodalDensity_mixing_anderson(kerkerSolverProblem<C_num1DKerkerPoly<FEOrder>()> & solverProblem,
+			double nodalDensity_mixing_anderson(kerkerSolverProblem<FEOrderElectro> & solverProblem,
 					dealiiLinearSolver & dealiiLinearSolver);
 
 
@@ -641,10 +641,9 @@ namespace dftfe {
 			 */
 			void computeElectrostaticEnergyHRefined(
 #ifdef DFTFE_WITH_GPU
-					kohnShamDFTOperatorCUDAClass<FEOrder> & kohnShamDFTEigenOperator,
+					kohnShamDFTOperatorCUDAClass<FEOrder,FEOrderElectro> & kohnShamDFTEigenOperator,
 #endif
 					const bool computeForces=true);
-			void computeElectrostaticEnergyPRefined();
 			/**
 			 *@brief Computes Fermi-energy obtained by imposing constraint on the number of electrons
 			 */
@@ -879,11 +878,11 @@ namespace dftfe {
 			std::vector<dealii::types::global_dof_index> localProc_dof_indicesReal,localProc_dof_indicesImag;
 			std::vector<bool> selectedDofsHanging;
 
-			forceClass<FEOrder> * forcePtr;
-			symmetryClass<FEOrder> * symmetryPtr;
-			geoOptIon<FEOrder> * geoOptIonPtr;
-			geoOptCell<FEOrder> * geoOptCellPtr;
-			molecularDynamics<FEOrder> * d_mdPtr;
+			forceClass<FEOrder,FEOrderElectro> * forcePtr;
+			symmetryClass<FEOrder,FEOrderElectro> * symmetryPtr;
+			geoOptIon<FEOrder,FEOrderElectro> * geoOptIonPtr;
+			geoOptCell<FEOrder,FEOrderElectro> * geoOptCellPtr;
+			molecularDynamics<FEOrder,FEOrderElectro> * d_mdPtr;
 
 			elpaScalaManager d_elpaScala;
 
@@ -1137,9 +1136,9 @@ namespace dftfe {
 			 * @ nscf variables
 			 */
 			bool scfConverged;
-			void nscf(kohnShamDFTOperatorClass<FEOrder> & kohnShamDFTEigenOperator,
+			void nscf(kohnShamDFTOperatorClass<FEOrder,FEOrderElectro> & kohnShamDFTEigenOperator,
 					chebyshevOrthogonalizedSubspaceIterationSolver & subspaceIterationSolver);
-			void initnscf(kohnShamDFTOperatorClass<FEOrder> & kohnShamDFTEigenOperator,poissonSolverProblem<FEOrder> & phiTotalSolverProblem,
+			void initnscf(kohnShamDFTOperatorClass<FEOrder,FEOrderElectro> & kohnShamDFTEigenOperator,poissonSolverProblem<FEOrder> & phiTotalSolverProblem,
 					dealiiLinearSolver & dealiiCGSolver) ;
 
 			/**
@@ -1152,7 +1151,7 @@ namespace dftfe {
 
 			void kohnShamEigenSpaceCompute(const unsigned int s,
 					const unsigned int kPointIndex,
-					kohnShamDFTOperatorClass<FEOrder> & kohnShamDFTEigenOperator,
+					kohnShamDFTOperatorClass<FEOrder,FEOrderElectro> & kohnShamDFTEigenOperator,
 					elpaScalaManager & elpaScala,
 					chebyshevOrthogonalizedSubspaceIterationSolver & subspaceIterationSolver,
 					std::vector<double> & residualNormWaveFunctions,
@@ -1165,7 +1164,7 @@ namespace dftfe {
 #ifdef DFTFE_WITH_GPU
 			void kohnShamEigenSpaceCompute(const unsigned int s,
 					const unsigned int kPointIndex,
-					kohnShamDFTOperatorCUDAClass<FEOrder> & kohnShamDFTEigenOperator,
+					kohnShamDFTOperatorCUDAClass<FEOrder,FEOrderElectro> & kohnShamDFTEigenOperator,
 					elpaScalaManager & elpaScala,
 					chebyshevOrthogonalizedSubspaceIterationSolverCUDA & subspaceIterationSolverCUDA,
 					std::vector<double> & residualNormWaveFunctions,
@@ -1181,7 +1180,7 @@ namespace dftfe {
 #ifdef DFTFE_WITH_GPU
 			void kohnShamEigenSpaceOnlyRRCompute(const unsigned int s,
 					const unsigned int kPointIndex,
-					kohnShamDFTOperatorCUDAClass<FEOrder> & kohnShamDFTEigenOperator,
+					kohnShamDFTOperatorCUDAClass<FEOrder,FEOrderElectro> & kohnShamDFTEigenOperator,
 					elpaScalaManager & elpaScala,
 					chebyshevOrthogonalizedSubspaceIterationSolverCUDA & subspaceIterationSolverCUDA,
 					const bool isSpectrumSplit=false,
@@ -1190,7 +1189,7 @@ namespace dftfe {
 
 			void kohnShamEigenSpaceComputeNSCF(const unsigned int spinType,
 					const unsigned int kPointIndex,
-					kohnShamDFTOperatorClass<FEOrder> & kohnShamDFTEigenOperator,
+					kohnShamDFTOperatorClass<FEOrder,FEOrderElectro> & kohnShamDFTEigenOperator,
 					chebyshevOrthogonalizedSubspaceIterationSolver & subspaceIterationSolver,
 					std::vector<double>                            & residualNormWaveFunctions,
 					unsigned int ipass) ;

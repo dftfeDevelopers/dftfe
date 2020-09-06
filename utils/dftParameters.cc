@@ -60,7 +60,6 @@ namespace dftfe {
 		bool restartMdFromChk=false;
 		bool reproducible_output=false;
 		bool electrostaticsHRefinement = false;
-		bool electrostaticsPRefinement = false;
 		bool meshAdaption = false;
 		bool pinnedNodeForPBC = true;
 
@@ -151,9 +150,6 @@ namespace dftfe {
 					Patterns::Bool(),
 					"[Advanced] Compute electrostatic energy and forces on a h refined mesh after each ground-state solve. Default: false.");
 
-			prm.declare_entry("P REFINED ELECTROSTATICS", "false",
-					Patterns::Bool(),
-					"[Advanced] Compute electrostatic energy on a p refined mesh after each ground-state solve. Default: false.");
 
 			prm.declare_entry("VERBOSITY", "1",
 					Patterns::Integer(0,5),
@@ -380,7 +376,7 @@ namespace dftfe {
 						"[Standard] The degree of the finite-element interpolating polynomial in the Kohn-Sham Hamitonian except the electrostatics. Default value is 4. POLYNOMIAL ORDER= 4 or 5 is usually a good choice for most pseudopotential as well as all-electron problems.");
 
 				prm.declare_entry("POLYNOMIAL ORDER ELECTROSTATICS", "4",
-						Patterns::Integer(1,12),
+						Patterns::Integer(1,24),
 						"[Standard] The degree of the finite-element interpolating polynomial for the electrostatics part of the Kohn-Sham Hamiltonian. Default value is 4.");        
 
 				prm.declare_entry("MESH FILE", "",
@@ -854,7 +850,6 @@ namespace dftfe {
 			dftParameters::verbosity                     = prm.get_integer("VERBOSITY");
 			dftParameters::reproducible_output           = prm.get_bool("REPRODUCIBLE OUTPUT");
 			dftParameters::electrostaticsHRefinement = prm.get_bool("H REFINED ELECTROSTATICS");
-			dftParameters::electrostaticsPRefinement = prm.get_bool("P REFINED ELECTROSTATICS");
 
 			prm.enter_subsection ("GPU");
 			{ 

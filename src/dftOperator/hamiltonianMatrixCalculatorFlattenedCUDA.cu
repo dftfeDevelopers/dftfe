@@ -153,8 +153,8 @@ namespace
 }
 
 
-	template<unsigned int FEOrder>
-void kohnShamDFTOperatorCUDAClass<FEOrder>::computeHamiltonianMatrix(const unsigned int kPointIndex, const unsigned int spinIndex)
+	template<unsigned int FEOrder,unsigned int FEOrderElectro>
+void kohnShamDFTOperatorCUDAClass<FEOrder,FEOrderElectro>::computeHamiltonianMatrix(const unsigned int kPointIndex, const unsigned int spinIndex)
 {
 	const unsigned int kpointSpinIndex=(1+dftParameters::spinPolarized)*kPointIndex+spinIndex;
 	//d_cellHamiltonianMatrixFlattenedDevice.resize(d_numLocallyOwnedCells*d_numberNodesPerElement*d_numberNodesPerElement,0.0);

@@ -17,8 +17,8 @@
 //
 
 //source file for locating core atom nodes
-template<unsigned int FEOrder>
-void dftClass<FEOrder>::locateAtomCoreNodes(const dealii::DoFHandler<3> & _dofHandler,
+template<unsigned int FEOrder,unsigned int FEOrderElectro>
+void dftClass<FEOrder,FEOrderElectro>::locateAtomCoreNodes(const dealii::DoFHandler<3> & _dofHandler,
 		std::map<dealii::types::global_dof_index, double> & atomNodeIdToChargeValueMap){
 	TimerOutput::Scope scope (computing_timer,"locate atom nodes");
 	atomNodeIdToChargeValueMap.clear();
@@ -95,8 +95,8 @@ void dftClass<FEOrder>::locateAtomCoreNodes(const dealii::DoFHandler<3> & _dofHa
 	AssertThrow(totalAtomNodesFound==numAtoms,ExcMessage("Atleast one atom doesn't lie on a triangulation vertex"));
 }
 
-	template<unsigned int FEOrder>
-void dftClass<FEOrder>::locatePeriodicPinnedNodes(const dealii::DoFHandler<3> & _dofHandler,
+	template<unsigned int FEOrder,unsigned int FEOrderElectro>
+void dftClass<FEOrder,FEOrderElectro>::locatePeriodicPinnedNodes(const dealii::DoFHandler<3> & _dofHandler,
 		const dealii::ConstraintMatrix & constraintsBase,
 		dealii::ConstraintMatrix & constraints)
 {

@@ -17,8 +17,8 @@
 //
 
 //source file for locating core atom nodes
-template<unsigned int FEOrder>
-	void forceClass<FEOrder>::locateAtomCoreNodesForce
+template<unsigned int FEOrder,unsigned int FEOrderElectro>
+	void forceClass<FEOrder,FEOrderElectro>::locateAtomCoreNodesForce
 (const DoFHandler<C_DIM> & dofHandlerForce,
  const IndexSet & locally_owned_dofsForce,
  std::map<std::pair<unsigned int,unsigned int>, unsigned int> & atomsForceDofs)

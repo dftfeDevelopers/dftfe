@@ -17,8 +17,8 @@
 //
 #ifdef USE_COMPLEX
 //(locally used function) compute Fnl contibution due to Gamma(Rj) for given set of cells
-	template<unsigned int FEOrder>
-void forceClass<FEOrder>::FnlGammaAtomsElementalContribution(std::map<unsigned int, std::vector<double> > & forceContributionFnlGammaAtoms,
+	template<unsigned int FEOrder,unsigned int FEOrderElectro>
+void forceClass<FEOrder,FEOrderElectro>::FnlGammaAtomsElementalContribution(std::map<unsigned int, std::vector<double> > & forceContributionFnlGammaAtoms,
 		FEEvaluation<C_DIM,1,C_num1DQuad<FEOrder>(),C_DIM>  & forceEval,
 		FEEvaluation<C_DIM,1,C_num1DQuadNLPSP<FEOrder>()*C_numCopies1DQuadNLPSP(),C_DIM>  & forceEvalNLP,
 		const unsigned int cell,
@@ -125,8 +125,8 @@ void forceClass<FEOrder>::FnlGammaAtomsElementalContribution(std::map<unsigned i
 
 #else
 
-	template<unsigned int FEOrder>
-void forceClass<FEOrder>::FnlGammaAtomsElementalContribution(std::map<unsigned int, std::vector<double> > & forceContributionFnlGammaAtoms,
+	template<unsigned int FEOrder,unsigned int FEOrderElectro>
+void forceClass<FEOrder,FEOrderElectro>::FnlGammaAtomsElementalContribution(std::map<unsigned int, std::vector<double> > & forceContributionFnlGammaAtoms,
 		FEEvaluation<C_DIM,1,C_num1DQuad<FEOrder>(),C_DIM>  & forceEval,
 		FEEvaluation<C_DIM,1,C_num1DQuadNLPSP<FEOrder>()*C_numCopies1DQuadNLPSP(),C_DIM>  & forceEvalNLP,
 		const unsigned int cell,
@@ -210,8 +210,8 @@ void forceClass<FEOrder>::FnlGammaAtomsElementalContribution(std::map<unsigned i
 #endif
 
 //(locally used function) accumulate and distribute Fnl contibution due to Gamma(Rj)
-	template<unsigned int FEOrder>
-void forceClass<FEOrder>::distributeForceContributionFnlGammaAtoms(const std::map<unsigned int,std::vector<double> > & forceContributionFnlGammaAtoms)
+	template<unsigned int FEOrder,unsigned int FEOrderElectro>
+void forceClass<FEOrder,FEOrderElectro>::distributeForceContributionFnlGammaAtoms(const std::map<unsigned int,std::vector<double> > & forceContributionFnlGammaAtoms)
 {
 	for (unsigned int iAtom=0;iAtom <dftPtr->atomLocations.size(); iAtom++)
 	{

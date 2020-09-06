@@ -18,8 +18,8 @@
 
 
 
-	template<unsigned int FEOrder>
-void kohnShamDFTOperatorClass<FEOrder>::computeHamiltonianMatrix(const unsigned int kPointIndex, const unsigned int spinIndex)
+	template<unsigned int FEOrder,unsigned int FEOrderElectro>
+void kohnShamDFTOperatorClass<FEOrder,FEOrderElectro>::computeHamiltonianMatrix(const unsigned int kPointIndex, const unsigned int spinIndex)
 {
   MPI_Barrier(MPI_COMM_WORLD);
 	double cpu_time=MPI_Wtime();
@@ -260,8 +260,8 @@ void kohnShamDFTOperatorClass<FEOrder>::computeHamiltonianMatrix(const unsigned 
 }
 
 
-	template<unsigned int FEOrder>
-void kohnShamDFTOperatorClass<FEOrder>::computeKineticMatrix()
+	template<unsigned int FEOrder,unsigned int FEOrderElectro>
+void kohnShamDFTOperatorClass<FEOrder,FEOrderElectro>::computeKineticMatrix()
 {
 
 	//

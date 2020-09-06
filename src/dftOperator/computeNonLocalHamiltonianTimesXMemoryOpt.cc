@@ -18,8 +18,8 @@
 
 
 #ifdef USE_COMPLEX
-template<unsigned int FEOrder>
-void kohnShamDFTOperatorClass<FEOrder>::computeNonLocalHamiltonianTimesX(const distributedCPUVec<std::complex<double> > & src,
+template<unsigned int FEOrder,unsigned int FEOrderElectro>
+void kohnShamDFTOperatorClass<FEOrder,FEOrderElectro>::computeNonLocalHamiltonianTimesX(const distributedCPUVec<std::complex<double> > & src,
 		const unsigned int numberWaveFunctions,
 		distributedCPUVec<std::complex<double> >       & dst) const
 {
@@ -201,8 +201,8 @@ void kohnShamDFTOperatorClass<FEOrder>::computeNonLocalHamiltonianTimesX(const d
 
 }
 #else
-template<unsigned int FEOrder>
-void kohnShamDFTOperatorClass<FEOrder>::computeNonLocalHamiltonianTimesX(const distributedCPUVec<double> & src,
+template<unsigned int FEOrder,unsigned int FEOrderElectro>
+void kohnShamDFTOperatorClass<FEOrder,FEOrderElectro>::computeNonLocalHamiltonianTimesX(const distributedCPUVec<double> & src,
 		const unsigned int numberWaveFunctions,
 		distributedCPUVec<double>       & dst) const
 {

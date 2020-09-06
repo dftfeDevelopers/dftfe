@@ -145,8 +145,8 @@ namespace  dftfe {
 	//
 	//constructor
 	//
-	template<unsigned int FEOrder>
-		forceClass<FEOrder>::forceClass(dftClass<FEOrder>* _dftPtr,const MPI_Comm &mpi_comm_replica):
+	template<unsigned int FEOrder,unsigned int FEOrderElectro>
+		forceClass<FEOrder,FEOrderElectro>::forceClass(dftClass<FEOrder,FEOrderElectro>* _dftPtr,const MPI_Comm &mpi_comm_replica):
 			dftPtr(_dftPtr),
 			FEForce (FE_Q<3>(QGaussLobatto<1>(2)), 3), //linear shape function
 			mpi_communicator (mpi_comm_replica),
@@ -160,8 +160,8 @@ namespace  dftfe {
 	//
 	//initialize forceClass object
 	//
-	template<unsigned int FEOrder>
-		void forceClass<FEOrder>::initUnmoved(const Triangulation<3,3> & triangulation,
+	template<unsigned int FEOrder,unsigned int FEOrderElectro>
+		void forceClass<FEOrder,FEOrderElectro>::initUnmoved(const Triangulation<3,3> & triangulation,
 				const Triangulation<3,3> & serialTriangulation,
 				const std::vector<std::vector<double> >  & domainBoundingVectors,
 				const bool isElectrostaticsMesh)
@@ -191,8 +191,8 @@ namespace  dftfe {
 
 
 	//reinitialize force class object after mesh update
-	template<unsigned int FEOrder>
-		void forceClass<FEOrder>::initMoved
+	template<unsigned int FEOrder,unsigned int FEOrderElectro>
+		void forceClass<FEOrder,FEOrderElectro>::initMoved
 		(std::vector<const DoFHandler<3> *> & dofHandlerVectorMatrixFree,
 		 std::vector<const ConstraintMatrix * > & constraintsVectorMatrixFree,
 		 const bool isElectrostaticsMesh,
@@ -248,8 +248,8 @@ namespace  dftfe {
 	//
 	//initialize pseudopotential data for force computation
 	//
-	template<unsigned int FEOrder>
-		void forceClass<FEOrder>::initPseudoData()
+	template<unsigned int FEOrder,unsigned int FEOrderElectro>
+		void forceClass<FEOrder,FEOrderElectro>::initPseudoData()
 		{
 
 			if(dftParameters::isPseudopotential)
@@ -257,11 +257,11 @@ namespace  dftfe {
 		}
 
 	//compute forces on atoms corresponding to a Gaussian generator
-	template<unsigned int FEOrder>
-		void forceClass<FEOrder>::computeAtomsForces
+	template<unsigned int FEOrder,unsigned int FEOrderElectro>
+		void forceClass<FEOrder,FEOrderElectro>::computeAtomsForces
 		(const MatrixFree<3,double> & matrixFreeData,
 #ifdef DFTFE_WITH_GPU
-		 kohnShamDFTOperatorCUDAClass<FEOrder> & kohnShamDFTEigenOperator,
+		 kohnShamDFTOperatorCUDAClass<FEOrder,FEOrderElectro> & kohnShamDFTEigenOperator,
 #endif
 		 const unsigned int eigenDofHandlerIndex,
 		 const unsigned int phiTotDofHandlerIndex,
@@ -350,8 +350,8 @@ namespace  dftfe {
 		 }
 
 
-	template<unsigned int FEOrder>
-		void forceClass<FEOrder>::configForceLinFEInit(const MatrixFree<3,double> & matrixFreeData,
+	template<unsigned int FEOrder,unsigned int FEOrderElectro>
+		void forceClass<FEOrder,FEOrderElectro>::configForceLinFEInit(const MatrixFree<3,double> & matrixFreeData,
 				const MatrixFree<3,double> & matrixFreeDataElectro)
 		{
 
@@ -379,8 +379,8 @@ namespace  dftfe {
 #endif      
 		}
 
-	template<unsigned int FEOrder>
-		void forceClass<FEOrder>::configForceLinFEFinalize()
+	template<unsigned int FEOrder,unsigned int FEOrderElectro>
+		void forceClass<FEOrder,FEOrderElectro>::configForceLinFEFinalize()
 		{
 			d_configForceVectorLinFE.compress(VectorOperation::add);//copies the ghost element cache to the owning element
 			//d_configForceVectorLinFE.update_ghost_values();
@@ -407,11 +407,11 @@ namespace  dftfe {
 	//cases. Also both LDA and GGA exchange correlation are handled. For details of the configurational
 	//force expressions refer to the Configurational force paper by Motamarri et.al.
 	//(https://arxiv.org/abs/1712.05535)
-	template<unsigned int FEOrder>
-		void forceClass<FEOrder>::computeConfigurationalForceTotalLinFE
+	template<unsigned int FEOrder,unsigned int FEOrderElectro>
+		void forceClass<FEOrder,FEOrderElectro>::computeConfigurationalForceTotalLinFE
 		(const MatrixFree<3,double> & matrixFreeData,
 #ifdef DFTFE_WITH_GPU
-		 kohnShamDFTOperatorCUDAClass<FEOrder> & kohnShamDFTEigenOperator,
+		 kohnShamDFTOperatorCUDAClass<FEOrder,FEOrderElectro> & kohnShamDFTEigenOperator,
 #endif
 		 const unsigned int eigenDofHandlerIndex,
 		 const unsigned int phiTotDofHandlerIndex,
@@ -543,26 +543,26 @@ namespace  dftfe {
 		 }
 
 
-	template<unsigned int FEOrder>
-		std::vector<double>  forceClass<FEOrder>::getAtomsForces()
+	template<unsigned int FEOrder,unsigned int FEOrderElectro>
+		std::vector<double>  forceClass<FEOrder,FEOrderElectro>::getAtomsForces()
 		{
 			return  d_globalAtomsForces;
 		}
 
-	template<unsigned int FEOrder>
-		Tensor<2,C_DIM,double>  forceClass<FEOrder>::getStress()
+	template<unsigned int FEOrder,unsigned int FEOrderElectro>
+		Tensor<2,C_DIM,double>  forceClass<FEOrder,FEOrderElectro>::getStress()
 		{
 			return d_stress;
 		}
 
 	/*
-	   template<unsigned int FEOrder>
+	   template<unsigned int FEOrder,unsigned int FEOrderElectro>
 	   double  forceClass<FEOrder>::getGaussianGeneratorParameter() const
 	   {
 	   return d_gaussianConstant;
 	   }
 
-	   template<unsigned int FEOrder>
+	   template<unsigned int FEOrder,unsigned int FEOrderElectro>
 	   void  forceClass<FEOrder>::updateGaussianConstant(const double newGaussianConstant)
 	   {
 	   if (!dftParameters::reproducible_output)

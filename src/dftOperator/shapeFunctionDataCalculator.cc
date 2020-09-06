@@ -17,8 +17,8 @@
 //
 
 
-	template<unsigned int FEOrder>
-void kohnShamDFTOperatorClass<FEOrder>::preComputeShapeFunctionGradientIntegrals(const unsigned int lpspQuadratureId)
+	template<unsigned int FEOrder,unsigned int FEOrderElectro>
+void kohnShamDFTOperatorClass<FEOrder,FEOrderElectro>::preComputeShapeFunctionGradientIntegrals(const unsigned int lpspQuadratureId)
 {
 
 	//

@@ -16,8 +16,8 @@
 // @author  Sambit Das
 //
 
-	template<unsigned int FEOrder>
-void dftClass<FEOrder>::applyHomogeneousDirichletBC(const dealii::DoFHandler<3> & _dofHandler,
+	template<unsigned int FEOrder,unsigned int FEOrderElectro>
+void dftClass<FEOrder,FEOrderElectro>::applyHomogeneousDirichletBC(const dealii::DoFHandler<3> & _dofHandler,
 		dealii::ConstraintMatrix & constraintMatrix)
 
 {

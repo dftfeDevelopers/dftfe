@@ -25,7 +25,7 @@
 namespace dftfe{
 
 #ifndef DOXYGEN_SHOULD_SKIP_THIS
-	template <unsigned int T> class dftClass;
+	template <unsigned int T1, unsigned int T2> class dftClass;
 #endif
 
 	/**
@@ -37,7 +37,7 @@ namespace dftfe{
 	//
 	//Define kohnShamDFTOperatorCUDAClass class
 	//
-	template <unsigned int FEOrder>
+	template <unsigned int FEOrder, unsigned int FEOrderElectro>
 		class kohnShamDFTOperatorCUDAClass : public operatorDFTCUDAClass
 	{
 		//template <unsigned int T>
@@ -47,7 +47,7 @@ namespace dftfe{
 		//	friend class symmetryClass;
 
 		public:
-		kohnShamDFTOperatorCUDAClass(dftClass<FEOrder>* _dftPtr, const MPI_Comm &mpi_comm_replica);
+		kohnShamDFTOperatorCUDAClass(dftClass<FEOrder,FEOrderElectro>* _dftPtr, const MPI_Comm &mpi_comm_replica);
 
 
 		void createCublasHandle();
@@ -587,7 +587,7 @@ namespace dftfe{
 
 
 		///pointer to dft class
-		dftClass<FEOrder>* dftPtr;
+		dftClass<FEOrder,FEOrderElectro>* dftPtr;
 
 
 		///data structures to store diagonal of inverse square root mass matrix and square root of mass matrix

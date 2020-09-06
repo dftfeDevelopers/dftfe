@@ -95,13 +95,12 @@ namespace dftfe {
 #include "restart.cc"
 #include "nscf.cc"
 #include "electrostaticHRefinedEnergy.cc"
-#include "electrostaticPRefinedEnergy.cc"
 
 	//
 	//dft constructor
 	//
-	template<unsigned int FEOrder>
-		dftClass<FEOrder>::dftClass(const MPI_Comm & mpi_comm_replica,
+	template<unsigned int FEOrder,unsigned int FEOrderElectro>
+		dftClass<FEOrder,FEOrderElectro>::dftClass(const MPI_Comm & mpi_comm_replica,
 				const MPI_Comm &_interpoolcomm,
 				const MPI_Comm & _interBandGroupComm):
 			FE (FE_Q<3>(QGaussLobatto<1>(FEOrder+1)), 1),
@@ -135,14 +134,14 @@ namespace dftfe {
 					|| dftParameters::verbosity<1? TimerOutput::never : TimerOutput::every_call_and_summary,
 					TimerOutput::wall_times)
 			{
-				forcePtr= new forceClass<FEOrder>(this, mpi_comm_replica);
-				symmetryPtr= new symmetryClass<FEOrder>(this, mpi_comm_replica, _interpoolcomm);
-				geoOptIonPtr= new geoOptIon<FEOrder>(this, mpi_comm_replica);
+				forcePtr= new forceClass<FEOrder,FEOrderElectro>(this, mpi_comm_replica);
+				symmetryPtr= new symmetryClass<FEOrder,FEOrderElectro>(this, mpi_comm_replica, _interpoolcomm);
+				geoOptIonPtr= new geoOptIon<FEOrder,FEOrderElectro>(this, mpi_comm_replica);
 
 #ifdef USE_COMPLEX
-				geoOptCellPtr= new geoOptCell<FEOrder>(this, mpi_comm_replica);
+				geoOptCellPtr= new geoOptCell<FEOrder,FEOrderElectro>(this, mpi_comm_replica);
 #endif
-				d_mdPtr= new molecularDynamics<FEOrder>(this, mpi_comm_replica);
+				d_mdPtr= new molecularDynamics<FEOrder,FEOrderElectro>(this, mpi_comm_replica);
 
 				d_isRestartGroundStateCalcFromChk=false;
 #ifdef DFTFE_WITH_ELPA
@@ -155,8 +154,8 @@ namespace dftfe {
 #endif
 			}
 
-	template<unsigned int FEOrder>
-		dftClass<FEOrder>::~dftClass()
+	template<unsigned int FEOrder,unsigned int FEOrderElectro>
+		dftClass<FEOrder,FEOrderElectro>::~dftClass()
 		{
 			delete symmetryPtr;
 			matrix_free_data.clear();
@@ -214,8 +213,8 @@ namespace dftfe {
 		}
 	}
 
-	template<unsigned int FEOrder>
-		double dftClass<FEOrder>::computeVolume(const dealii::DoFHandler<3> & _dofHandler)
+	template<unsigned int FEOrder,unsigned int FEOrderElectro>
+		double dftClass<FEOrder,FEOrderElectro>::computeVolume(const dealii::DoFHandler<3> & _dofHandler)
 		{
 			double domainVolume=0;
 			QGauss<3>  quadrature(C_num1DQuad<FEOrder>());
@@ -236,8 +235,8 @@ namespace dftfe {
 			return domainVolume;
 		}
 
-	template<unsigned int FEOrder>
-		void dftClass<FEOrder>::set()
+	template<unsigned int FEOrder,unsigned int FEOrderElectro>
+		void dftClass<FEOrder,FEOrderElectro>::set()
 		{
 			computingTimerStandard.enter_section("Atomic system initialization");
 			if (dftParameters::verbosity>=4)
@@ -571,8 +570,8 @@ namespace dftfe {
 		}
 
 	//dft pseudopotential init
-	template<unsigned int FEOrder>
-		void dftClass<FEOrder>::initPseudoPotentialAll(const bool meshOnlyDeformed)
+	template<unsigned int FEOrder,unsigned int FEOrderElectro>
+		void dftClass<FEOrder,FEOrderElectro>::initPseudoPotentialAll(const bool meshOnlyDeformed)
 		{
 			if(dftParameters::isPseudopotential)
 			{
@@ -631,8 +630,8 @@ namespace dftfe {
 
 
 	// generate image charges and update k point cartesian coordinates based on current lattice vectors
-	template<unsigned int FEOrder>
-		void dftClass<FEOrder>::initImageChargesUpdateKPoints(bool flag)
+	template<unsigned int FEOrder,unsigned int FEOrderElectro>
+		void dftClass<FEOrder,FEOrderElectro>::initImageChargesUpdateKPoints(bool flag)
 		{
 			TimerOutput::Scope scope (computing_timer, "image charges and k point generation");
 			pcout<<"-----------Simulation Domain bounding vectors (lattice vectors in fully periodic case)-------------"<<std::endl;
@@ -735,8 +734,8 @@ namespace dftfe {
 		}
 
 	//dft init
-	template<unsigned int FEOrder>
-		void dftClass<FEOrder>::init (const unsigned int usePreviousGroundStateFields)
+	template<unsigned int FEOrder,unsigned int FEOrderElectro>
+		void dftClass<FEOrder,FEOrderElectro>::init (const unsigned int usePreviousGroundStateFields)
 		{
 			computingTimerStandard.enter_section("KSDFT problem initialization");
 
@@ -907,8 +906,8 @@ namespace dftfe {
 			computingTimerStandard.exit_section("KSDFT problem initialization");
 		}
 
-	template<unsigned int FEOrder>
-		void dftClass<FEOrder>::initNoRemesh(const bool updateImageKPoints,
+	template<unsigned int FEOrder,unsigned int FEOrderElectro>
+		void dftClass<FEOrder,FEOrderElectro>::initNoRemesh(const bool updateImageKPoints,
 				const bool useSingleAtomSolution,
 				const bool useAtomicRhoSplitDensityUpdate)
 		{
@@ -1022,8 +1021,8 @@ namespace dftfe {
 	//
 	// deform domain and call appropriate reinits
 	//
-	template<unsigned int FEOrder>
-		void dftClass<FEOrder>::deformDomain(const Tensor<2,3,double> & deformationGradient)
+	template<unsigned int FEOrder,unsigned int FEOrderElectro>
+		void dftClass<FEOrder,FEOrderElectro>::deformDomain(const Tensor<2,3,double> & deformationGradient)
 		{
 			d_affineTransformMesh.initMoved(d_domainBoundingVectors);
 			d_affineTransformMesh.transform(deformationGradient);
@@ -1037,8 +1036,8 @@ namespace dftfe {
 	//
 	//generate a-posteriori mesh
 	//
-	template<unsigned int FEOrder>
-		void dftClass<FEOrder>::aposterioriMeshGenerate()
+	template<unsigned int FEOrder,unsigned int FEOrderElectro>
+		void dftClass<FEOrder,FEOrderElectro>::aposterioriMeshGenerate()
 		{
 			//
 			//get access to triangulation objects from meshGenerator class
@@ -1130,8 +1129,8 @@ namespace dftfe {
 	//
 	//dft run
 	//
-	template<unsigned int FEOrder>
-		void dftClass<FEOrder>::run()
+	template<unsigned int FEOrder,unsigned int FEOrderElectro>
+		void dftClass<FEOrder,FEOrderElectro>::run()
 		{
 			if(dftParameters::meshAdaption)
 				aposterioriMeshGenerate();
@@ -1147,9 +1146,9 @@ namespace dftfe {
 			{
 				if (true)
 				{
-					kohnShamDFTOperatorClass<FEOrder> kohnShamDFTEigenOperator(this,mpi_communicator);
+					kohnShamDFTOperatorClass<FEOrder,FEOrderElectro> kohnShamDFTEigenOperator(this,mpi_communicator);
 #ifdef DFTFE_WITH_GPU
-					kohnShamDFTOperatorCUDAClass<FEOrder> kohnShamDFTEigenOperatorCUDA(this,mpi_communicator);
+					kohnShamDFTOperatorCUDAClass<FEOrder,FEOrderElectro> kohnShamDFTEigenOperatorCUDA(this,mpi_communicator);
 #endif
 
 					solve(kohnShamDFTEigenOperator,
@@ -1226,11 +1225,11 @@ namespace dftfe {
 	//
 	//initialize
 	//
-	template<unsigned int FEOrder>
-		void dftClass<FEOrder>::initializeKohnShamDFTOperator(kohnShamDFTOperatorClass<FEOrder> & kohnShamDFTEigenOperator
+	template<unsigned int FEOrder,unsigned int FEOrderElectro>
+		void dftClass<FEOrder,FEOrderElectro>::initializeKohnShamDFTOperator(kohnShamDFTOperatorClass<FEOrder,FEOrderElectro> & kohnShamDFTEigenOperator
 #ifdef DFTFE_WITH_GPU
 				,
-				kohnShamDFTOperatorCUDAClass<FEOrder> & kohnShamDFTEigenOperatorCUDA
+				kohnShamDFTOperatorCUDAClass<FEOrder,FEOrderElectro> & kohnShamDFTEigenOperatorCUDA
 #endif
 				,
 				const bool initializeCUDAScala)
@@ -1304,11 +1303,11 @@ namespace dftfe {
 	//
 	//re-initialize (significantly cheaper than initialize)
 	//
-	template<unsigned int FEOrder>
-		void dftClass<FEOrder>::reInitializeKohnShamDFTOperator(kohnShamDFTOperatorClass<FEOrder> & kohnShamDFTEigenOperator
+	template<unsigned int FEOrder,unsigned int FEOrderElectro>
+		void dftClass<FEOrder,FEOrderElectro>::reInitializeKohnShamDFTOperator(kohnShamDFTOperatorClass<FEOrder,FEOrderElectro> & kohnShamDFTEigenOperator
 #ifdef DFTFE_WITH_GPU
 				,
-				kohnShamDFTOperatorCUDAClass<FEOrder> & kohnShamDFTEigenOperatorCUDA
+				kohnShamDFTOperatorCUDAClass<FEOrder,FEOrderElectro> & kohnShamDFTEigenOperatorCUDA
 #endif
 				)
 		{
@@ -1331,11 +1330,11 @@ namespace dftfe {
 	//
 	//finalize
 	//
-	template<unsigned int FEOrder>
-		void dftClass<FEOrder>::finalizeKohnShamDFTOperator(kohnShamDFTOperatorClass<FEOrder> & kohnShamDFTEigenOperator
+	template<unsigned int FEOrder,unsigned int FEOrderElectro>
+		void dftClass<FEOrder,FEOrderElectro>::finalizeKohnShamDFTOperator(kohnShamDFTOperatorClass<FEOrder,FEOrderElectro> & kohnShamDFTEigenOperator
 #ifdef DFTFE_WITH_GPU
 				,
-				kohnShamDFTOperatorCUDAClass<FEOrder> & kohnShamDFTEigenOperatorCUDA
+				kohnShamDFTOperatorCUDAClass<FEOrder,FEOrderElectro> & kohnShamDFTEigenOperatorCUDA
 #endif
 				)
 		{
@@ -1354,16 +1353,16 @@ namespace dftfe {
 	//
 	//dft solve
 	//
-	template<unsigned int FEOrder>
-		void dftClass<FEOrder>::computeDensityPerturbation(kohnShamDFTOperatorClass<FEOrder> & kohnShamDFTEigenOperatorD,
+	template<unsigned int FEOrder,unsigned int FEOrderElectro>
+		void dftClass<FEOrder,FEOrderElectro>::computeDensityPerturbation(kohnShamDFTOperatorClass<FEOrder,FEOrderElectro> & kohnShamDFTEigenOperatorD,
 #ifdef DFTFE_WITH_GPU
-				kohnShamDFTOperatorCUDAClass<FEOrder> & kohnShamDFTEigenOperatorCUDAD,
+				kohnShamDFTOperatorCUDAClass<FEOrder,FEOrderElectro> & kohnShamDFTEigenOperatorCUDAD,
 #endif
 				const bool kohnShamDFTOperatorsInitialized)
 		{
-			kohnShamDFTOperatorClass<FEOrder> kohnShamDFTEigenOperator(this,mpi_communicator);
+			kohnShamDFTOperatorClass<FEOrder,FEOrderElectro> kohnShamDFTEigenOperator(this,mpi_communicator);
 #ifdef DFTFE_WITH_GPU
-			kohnShamDFTOperatorCUDAClass<FEOrder> kohnShamDFTEigenOperatorCUDA(this,mpi_communicator);
+			kohnShamDFTOperatorCUDAClass<FEOrder,FEOrderElectro> kohnShamDFTEigenOperatorCUDA(this,mpi_communicator);
 #endif
 
 			QGauss<3>  quadrature(C_num1DQuad<FEOrder>()); 
@@ -1685,10 +1684,10 @@ namespace dftfe {
 	//
 	//dft solve
 	//
-	template<unsigned int FEOrder>
-		void dftClass<FEOrder>::solve(kohnShamDFTOperatorClass<FEOrder> & kohnShamDFTEigenOperatorD,
+	template<unsigned int FEOrder,unsigned int FEOrderElectro>
+		void dftClass<FEOrder,FEOrderElectro>::solve(kohnShamDFTOperatorClass<FEOrder,FEOrderElectro> & kohnShamDFTEigenOperatorD,
 #ifdef DFTFE_WITH_GPU
-				kohnShamDFTOperatorCUDAClass<FEOrder> & kohnShamDFTEigenOperatorCUDAD,
+				kohnShamDFTOperatorCUDAClass<FEOrder,FEOrderElectro> & kohnShamDFTEigenOperatorCUDAD,
 #endif
 				const bool kohnShamDFTOperatorsInitialized,
 				const bool computeForces,
@@ -1698,9 +1697,9 @@ namespace dftfe {
 				const bool rayleighRitzAvoidancePassesXLBOMD,
 				const bool isPerturbationSolveXLBOMD)
 		{
-			kohnShamDFTOperatorClass<FEOrder> kohnShamDFTEigenOperator(this,mpi_communicator);
+			kohnShamDFTOperatorClass<FEOrder,FEOrderElectro> kohnShamDFTEigenOperator(this,mpi_communicator);
 #ifdef DFTFE_WITH_GPU
-			kohnShamDFTOperatorCUDAClass<FEOrder> kohnShamDFTEigenOperatorCUDA(this,mpi_communicator);
+			kohnShamDFTOperatorCUDAClass<FEOrder,FEOrderElectro> kohnShamDFTEigenOperatorCUDA(this,mpi_communicator);
 #endif
 
 			QGauss<3>  quadrature(C_num1DQuad<FEOrder>());
@@ -1708,7 +1707,7 @@ namespace dftfe {
 			//computingTimerStandard.enter_section("Total scf solve");
 			computingTimerStandard.enter_section("Kohn-sham dft operator init");
 			energyCalculator energyCalc(mpi_communicator, interpoolcomm,interBandGroupComm);
-			DensityCalculator<FEOrder> densityCalc;
+			DensityCalculator<FEOrder,FEOrderElectro> densityCalc;
 
 
 
@@ -1723,7 +1722,7 @@ namespace dftfe {
 			//set up solver functions for Helmholtz to be used only when Kerker mixing is on
 			//use 2p dofHandler
 			//
-			kerkerSolverProblem<C_num1DKerkerPoly<FEOrder>()> kerkerPreconditionedResidualSolverProblem(mpi_communicator);
+			kerkerSolverProblem<FEOrderElectro> kerkerPreconditionedResidualSolverProblem(mpi_communicator);
 			if(dftParameters::mixingMethod=="ANDERSON_WITH_KERKER")
 				kerkerPreconditionedResidualSolverProblem.init(d_matrixFreeDataPRefined,
 						d_constraintsPRefined,
@@ -3297,9 +3296,6 @@ namespace dftfe {
 #endif
 						computeForces);
 
-			if(dftParameters::electrostaticsPRefinement)
-				computeElectrostaticEnergyPRefined();
-
 			if (dftParameters::writeWfcSolutionFields)
 				outputWfc();
 
@@ -3327,8 +3323,8 @@ namespace dftfe {
 		}
 
 	//Output wfc
-	template <unsigned int FEOrder>
-		void dftClass<FEOrder>::outputWfc()
+	template <unsigned int FEOrder,unsigned int FEOrderElectro>
+		void dftClass<FEOrder,FEOrderElectro>::outputWfc()
 		{
 
 			//
@@ -3440,8 +3436,8 @@ namespace dftfe {
 
 
 	//Output density
-	template <unsigned int FEOrder>
-		void dftClass<FEOrder>::outputDensity()
+	template <unsigned int FEOrder,unsigned int FEOrderElectro>
+		void dftClass<FEOrder,FEOrderElectro>::outputDensity()
 		{
 			//
 			//compute nodal electron-density from quad data
@@ -3524,8 +3520,8 @@ namespace dftfe {
 
 		}
 
-	template <unsigned int FEOrder>
-		void dftClass<FEOrder>::writeBands()
+	template <unsigned int FEOrder,unsigned int FEOrderElectro>
+		void dftClass<FEOrder,FEOrderElectro>::writeBands()
 		{
 			int numkPoints = (1+dftParameters::spinPolarized)*d_kPointWeights.size();
 			std::vector<double> eigenValuesFlattened ;

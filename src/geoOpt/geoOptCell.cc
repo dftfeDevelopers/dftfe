@@ -35,8 +35,8 @@ namespace dftfe {
 	//
 	//constructor
 	//
-	template<unsigned int FEOrder>
-		geoOptCell<FEOrder>::geoOptCell(dftClass<FEOrder>* _dftPtr,const MPI_Comm &mpi_comm_replica):
+	template<unsigned int FEOrder, unsigned int FEOrderElectro>
+		geoOptCell<FEOrder,FEOrderElectro>::geoOptCell(dftClass<FEOrder, FEOrderElectro>* _dftPtr,const MPI_Comm &mpi_comm_replica):
 			dftPtr(_dftPtr),
 			mpi_communicator (mpi_comm_replica),
 			n_mpi_processes (Utilities::MPI::n_mpi_processes(mpi_comm_replica)),
@@ -48,8 +48,8 @@ namespace dftfe {
 
 	//
 	//
-	template<unsigned int FEOrder>
-		void geoOptCell<FEOrder>::init()
+	template<unsigned int FEOrder, unsigned int FEOrderElectro>
+		void geoOptCell<FEOrder,FEOrderElectro>::init()
 		{
 			// initialize d_strainEpsilon to identity
 			d_strainEpsilon=0;
@@ -170,8 +170,8 @@ namespace dftfe {
 			}
 		}
 
-	template<unsigned int FEOrder>
-		void geoOptCell<FEOrder>::run()
+	template<unsigned int FEOrder, unsigned int FEOrderElectro>
+		void geoOptCell<FEOrder,FEOrderElectro>::run()
 		{
 			const double tol=dftParameters::stressRelaxTol*dftPtr->d_domainVolume;
 			const unsigned int  maxIter=100;
@@ -264,14 +264,14 @@ namespace dftfe {
 		}
 
 
-	template<unsigned int FEOrder>
-		unsigned int geoOptCell<FEOrder>::getNumberUnknowns() const
+	template<unsigned int FEOrder, unsigned int FEOrderElectro>
+		unsigned int geoOptCell<FEOrder,FEOrderElectro>::getNumberUnknowns() const
 		{
 			return std::accumulate(d_relaxationFlags.begin(), d_relaxationFlags.end(), 0 );
 		}
 
-	template<unsigned int FEOrder>
-		void geoOptCell<FEOrder>::value(std::vector<double> & functionValue)
+	template<unsigned int FEOrder, unsigned int FEOrderElectro>
+		void geoOptCell<FEOrder,FEOrderElectro>::value(std::vector<double> & functionValue)
 		{
 			//AssertThrow(false,dftUtils::ExcNotImplementedYet());
 			functionValue.clear();
@@ -279,8 +279,8 @@ namespace dftfe {
 
 		}
 
-	template<unsigned int FEOrder>
-		void geoOptCell<FEOrder>::gradient(std::vector<double> & gradient)
+	template<unsigned int FEOrder, unsigned int FEOrderElectro>
+		void geoOptCell<FEOrder,FEOrderElectro>::gradient(std::vector<double> & gradient)
 		{
 			gradient.clear();
 			const Tensor<2,3,double> tempGradient= dftPtr->forcePtr->getStress()*dftPtr->d_domainVolume;
@@ -306,15 +306,15 @@ namespace dftfe {
 		}
 
 
-	template<unsigned int FEOrder>
-		void geoOptCell<FEOrder>::precondition(std::vector<double>       & s,
+	template<unsigned int FEOrder, unsigned int FEOrderElectro>
+		void geoOptCell<FEOrder,FEOrderElectro>::precondition(std::vector<double>       & s,
 				const std::vector<double> & gradient) const
 		{
 			AssertThrow(false,dftUtils::ExcNotImplementedYet());
 		}
 
-	template<unsigned int FEOrder>
-		void geoOptCell<FEOrder>::update(const std::vector<double> & solution, const bool computeForces)
+	template<unsigned int FEOrder, unsigned int FEOrderElectro>
+		void geoOptCell<FEOrder,FEOrderElectro>::update(const std::vector<double> & solution, const bool computeForces)
 		{
 
 
@@ -384,9 +384,9 @@ namespace dftfe {
 			d_totalUpdateCalls+=1;
 			dftPtr->deformDomain(deformationGradient);
 
-			kohnShamDFTOperatorClass<FEOrder> kohnShamDFTEigenOperator(dftPtr,mpi_communicator);
+			kohnShamDFTOperatorClass<FEOrder,FEOrderElectro> kohnShamDFTEigenOperator(dftPtr,mpi_communicator);
 #ifdef DFTFE_WITH_GPU
-			kohnShamDFTOperatorCUDAClass<FEOrder> kohnShamDFTEigenOperatorCUDA(dftPtr,mpi_communicator);
+			kohnShamDFTOperatorCUDAClass<FEOrder,FEOrderElectro> kohnShamDFTEigenOperatorCUDA(dftPtr,mpi_communicator);
 #endif
 
 			dftPtr->solve(kohnShamDFTEigenOperator,
@@ -404,20 +404,20 @@ namespace dftfe {
 			}
 		}
 
-	template<unsigned int FEOrder>
-		void geoOptCell<FEOrder>::save()
+	template<unsigned int FEOrder, unsigned int FEOrderElectro>
+		void geoOptCell<FEOrder,FEOrderElectro>::save()
 		{
 			dftPtr->writeDomainAndAtomCoordinates();
 		}
 
-	template<unsigned int FEOrder>
-		void geoOptCell<FEOrder>::solution(std::vector<double> & solution)
+	template<unsigned int FEOrder, unsigned int FEOrderElectro>
+		void geoOptCell<FEOrder,FEOrderElectro>::solution(std::vector<double> & solution)
 		{
 			AssertThrow(false,dftUtils::ExcNotImplementedYet());
 		}
 
-	template<unsigned int FEOrder>
-		std::vector<unsigned int>  geoOptCell<FEOrder>::getUnknownCountFlag() const
+	template<unsigned int FEOrder, unsigned int FEOrderElectro>
+		std::vector<unsigned int>  geoOptCell<FEOrder,FEOrderElectro>::getUnknownCountFlag() const
 		{
 			AssertThrow(false,dftUtils::ExcNotImplementedYet());
 		}

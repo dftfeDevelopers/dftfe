@@ -16,8 +16,8 @@
 // @author Sambit Das
 //
 
-template<unsigned int FEOrder>
-	void forceClass<FEOrder>::computeConfigurationalForceSpinPolarizedEEshelbyTensorFPSPFnlLinFE
+template<unsigned int FEOrder,unsigned int FEOrderElectro>
+	void forceClass<FEOrder,FEOrderElectro>::computeConfigurationalForceSpinPolarizedEEshelbyTensorFPSPFnlLinFE
 (const MatrixFree<3,double> & matrixFreeData,
  const unsigned int eigenDofHandlerIndex,
  const unsigned int phiTotDofHandlerIndex,

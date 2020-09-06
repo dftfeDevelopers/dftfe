@@ -17,8 +17,8 @@
 //
 
 #ifdef USE_COMPLEX
-template<unsigned int FEOrder>
-	void forceClass<FEOrder>::computeStress
+template<unsigned int FEOrder,unsigned int FEOrderElectro>
+	void forceClass<FEOrder,FEOrderElectro>::computeStress
 (const MatrixFree<3,double> & matrixFreeData,
  const unsigned int eigenDofHandlerIndex,
  const unsigned int phiTotDofHandlerIndex,
@@ -132,8 +132,8 @@ template<unsigned int FEOrder>
 }
 
 
-	template<unsigned int FEOrder>
-void forceClass<FEOrder>::printStress()
+	template<unsigned int FEOrder,unsigned int FEOrderElectro>
+void forceClass<FEOrder,FEOrderElectro>::printStress()
 {
 	if (!dftParameters::reproducible_output)
 	{

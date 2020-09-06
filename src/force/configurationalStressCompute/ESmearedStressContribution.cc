@@ -17,8 +17,8 @@
 //
 #ifdef USE_COMPLEX
 //compute ESmeared contribution stress
-template<unsigned int FEOrder>
-	void forceClass<FEOrder>::addEPhiTotSmearedStressContribution
+template<unsigned int FEOrder,unsigned int FEOrderElectro>
+	void forceClass<FEOrder,FEOrderElectro>::addEPhiTotSmearedStressContribution
         (FEEvaluation<3,1,C_num1DQuadSmearedCharge<FEOrder>()*C_numCopies1DQuadSmearedCharge(),3>  & forceEval,
          const MatrixFree<3,double> & matrixFreeData,
          const unsigned int cell,
@@ -98,8 +98,8 @@ template<unsigned int FEOrder>
 }
 
 
-template<unsigned int FEOrder>
-	void forceClass<FEOrder>::addEVselfSmearedStressContribution
+template<unsigned int FEOrder,unsigned int FEOrderElectro>
+	void forceClass<FEOrder,FEOrderElectro>::addEVselfSmearedStressContribution
         (FEEvaluation<3,1,C_num1DQuadSmearedCharge<FEOrder>()*C_numCopies1DQuadSmearedCharge(),3>  & forceEval,
          const MatrixFree<3,double> & matrixFreeData,
          const unsigned int cell,

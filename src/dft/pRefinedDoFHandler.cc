@@ -21,10 +21,10 @@
 //
 //compute total charge using quad point values
 //
-	template <unsigned int FEOrder>
-void dftClass<FEOrder>::createpRefinedDofHandler(dealii::parallel::distributed::Triangulation<3> & triaObject)
+	template <unsigned int FEOrder,unsigned int FEOrderElectro>
+void dftClass<FEOrder,FEOrderElectro>::createpRefinedDofHandler(dealii::parallel::distributed::Triangulation<3> & triaObject)
 {
-	d_dofHandlerPRefined.initialize(triaObject,dealii::FE_Q<3>(dealii::QGaussLobatto<1>(C_num1DKerkerPoly<FEOrder>()+1)));
+	d_dofHandlerPRefined.initialize(triaObject,dealii::FE_Q<3>(dealii::QGaussLobatto<1>(FEOrderElectro+1)));
 	d_dofHandlerPRefined.distribute_dofs(d_dofHandlerPRefined.get_fe());
 
 	dealii::IndexSet locallyRelevantDofs;
@@ -82,8 +82,8 @@ void dftClass<FEOrder>::createpRefinedDofHandler(dealii::parallel::distributed::
 }
 
 
-	template <unsigned int FEOrder>
-void dftClass<FEOrder>::initpRefinedObjects()
+	template <unsigned int FEOrder,unsigned int FEOrderElectro>
+void dftClass<FEOrder,FEOrderElectro>::initpRefinedObjects()
 {
 	d_dofHandlerPRefined.distribute_dofs(d_dofHandlerPRefined.get_fe());
 
@@ -103,7 +103,7 @@ void dftClass<FEOrder>::initpRefinedObjects()
 		matrixFreeDofHandlerVectorInput.push_back(&d_dofHandlerPRefined);
 
 	std::vector<Quadrature<1> > quadratureVector;
-	quadratureVector.push_back(QGauss<1>(C_num1DQuadKerker<C_num1DKerkerPoly<FEOrder>()>()));
+	quadratureVector.push_back(QGauss<1>(C_num1DQuadElectro<FEOrderElectro>()));
 	quadratureVector.push_back(QGauss<1>(C_num1DQuad<FEOrder>()));
   quadratureVector.push_back(QIterated<1>(QGauss<1>(C_num1DQuadLPSP<FEOrder>()),C_numCopies1DQuadLPSP()));  
 

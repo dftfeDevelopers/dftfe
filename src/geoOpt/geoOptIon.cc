@@ -35,8 +35,8 @@ namespace dftfe {
 	//
 	//constructor
 	//
-	template<unsigned int FEOrder>
-		geoOptIon<FEOrder>::geoOptIon(dftClass<FEOrder>* _dftPtr,const MPI_Comm &mpi_comm_replica):
+	template<unsigned int FEOrder, unsigned int FEOrderElectro>
+		geoOptIon<FEOrder,FEOrderElectro>::geoOptIon(dftClass<FEOrder,FEOrderElectro>* _dftPtr,const MPI_Comm &mpi_comm_replica):
 			dftPtr(_dftPtr),
 			mpi_communicator (mpi_comm_replica),
 			n_mpi_processes (Utilities::MPI::n_mpi_processes(mpi_comm_replica)),
@@ -48,8 +48,8 @@ namespace dftfe {
 
 	//
 	//
-	template<unsigned int FEOrder>
-		void geoOptIon<FEOrder>::init()
+	template<unsigned int FEOrder, unsigned int FEOrderElectro>
+		void geoOptIon<FEOrder,FEOrderElectro>::init()
 		{
 			const int numberGlobalAtoms=dftPtr->atomLocations.size();
 			if (dftParameters::ionRelaxFlagsFile!="")
@@ -97,8 +97,8 @@ namespace dftfe {
 
 		}
 
-	template<unsigned int FEOrder>
-		void geoOptIon<FEOrder>::run()
+	template<unsigned int FEOrder, unsigned int FEOrderElectro>
+		void geoOptIon<FEOrder,FEOrderElectro>::run()
 		{
 			const double tol=dftParameters::forceRelaxTol;//(units: Hatree/Bohr)
 			const unsigned int  maxIter=100;
@@ -227,8 +227,8 @@ namespace dftfe {
 		}
 
 
-	template<unsigned int FEOrder>
-		unsigned int geoOptIon<FEOrder>::getNumberUnknowns() const
+	template<unsigned int FEOrder, unsigned int FEOrderElectro>
+		unsigned int geoOptIon<FEOrder,FEOrderElectro>::getNumberUnknowns() const
 		{
 			unsigned int count=0;
 			for (unsigned int i=0; i< d_relaxationFlags.size(); ++i)
@@ -238,8 +238,8 @@ namespace dftfe {
 			return count;
 		}
 
-	template<unsigned int FEOrder>
-		void geoOptIon<FEOrder>::value(std::vector<double> & functionValue)
+	template<unsigned int FEOrder, unsigned int FEOrderElectro>
+		void geoOptIon<FEOrder,FEOrderElectro>::value(std::vector<double> & functionValue)
 		{
 			//AssertThrow(false,dftUtils::ExcNotImplementedYet());
 			functionValue.clear();
@@ -247,8 +247,8 @@ namespace dftfe {
 
 		}
 
-	template<unsigned int FEOrder>
-		void geoOptIon<FEOrder>::gradient(std::vector<double> & gradient)
+	template<unsigned int FEOrder, unsigned int FEOrderElectro>
+		void geoOptIon<FEOrder,FEOrderElectro>::gradient(std::vector<double> & gradient)
 		{
 			gradient.clear();
 			const int numberGlobalAtoms=dftPtr->atomLocations.size();
@@ -276,15 +276,15 @@ namespace dftfe {
 
 		}
 
-	template<unsigned int FEOrder>
-		void geoOptIon<FEOrder>::precondition(std::vector<double>       & s,
+	template<unsigned int FEOrder, unsigned int FEOrderElectro>
+		void geoOptIon<FEOrder,FEOrderElectro>::precondition(std::vector<double>       & s,
 				const std::vector<double> & gradient) const
 		{
 			AssertThrow(false,dftUtils::ExcNotImplementedYet());
 		}
 
-	template<unsigned int FEOrder>
-		void geoOptIon<FEOrder>::update(const std::vector<double> & solution, const bool computeForces)
+	template<unsigned int FEOrder, unsigned int FEOrderElectro>
+		void geoOptIon<FEOrder,FEOrderElectro>::update(const std::vector<double> & solution, const bool computeForces)
 		{
 			const unsigned int numberGlobalAtoms=dftPtr->atomLocations.size();
 			std::vector<Tensor<1,3,double> > globalAtomsDisplacements(numberGlobalAtoms);
@@ -335,9 +335,9 @@ namespace dftfe {
 			  else if(d_maximumAtomForceToBeRelaxed >= 1e-05)
 			  dftParameters::selfConsistentSolverTolerance = 5e-06;*/
 
-			kohnShamDFTOperatorClass<FEOrder> kohnShamDFTEigenOperator(dftPtr,mpi_communicator);
+			kohnShamDFTOperatorClass<FEOrder,FEOrderElectro> kohnShamDFTEigenOperator(dftPtr,mpi_communicator);
 #ifdef DFTFE_WITH_GPU
-			kohnShamDFTOperatorCUDAClass<FEOrder> kohnShamDFTEigenOperatorCUDA(dftPtr,mpi_communicator);
+			kohnShamDFTOperatorCUDAClass<FEOrder,FEOrderElectro> kohnShamDFTEigenOperatorCUDA(dftPtr,mpi_communicator);
 #endif
 
 			dftPtr->solve(kohnShamDFTEigenOperator,
@@ -349,14 +349,14 @@ namespace dftfe {
 
 		}
 
-	template<unsigned int FEOrder>
-		void geoOptIon<FEOrder>::save()
+	template<unsigned int FEOrder, unsigned int FEOrderElectro>
+		void geoOptIon<FEOrder,FEOrderElectro>::save()
 		{
 			dftPtr->writeDomainAndAtomCoordinates();
 		}
 
-	template<unsigned int FEOrder>
-		void geoOptIon<FEOrder>::solution(std::vector<double> & solution)
+	template<unsigned int FEOrder, unsigned int FEOrderElectro>
+		void geoOptIon<FEOrder,FEOrderElectro>::solution(std::vector<double> & solution)
 		{
 			//AssertThrow(false,dftUtils::ExcNotImplementedYet());
 			solution.clear();
@@ -373,8 +373,8 @@ namespace dftfe {
 			}
 		}
 
-	template<unsigned int FEOrder>
-		std::vector<unsigned int>  geoOptIon<FEOrder>::getUnknownCountFlag() const
+	template<unsigned int FEOrder, unsigned int FEOrderElectro>
+		std::vector<unsigned int>  geoOptIon<FEOrder,FEOrderElectro>::getUnknownCountFlag() const
 		{
 			AssertThrow(false,dftUtils::ExcNotImplementedYet());
 		}

@@ -21,14 +21,14 @@
 namespace dftfe {
 
 	using namespace dealii;
-	template <unsigned int FEOrder> class dftClass;
+	template <unsigned int FEOrder, unsigned int FEOrderElectro> class dftClass;
 
 	/**
 	 * @brief problem class for cell stress relaxation solver.
 	 *
 	 * @author Sambit Das
 	 */
-	template <unsigned int FEOrder>
+	template <unsigned int FEOrder, unsigned int FEOrderElectro>
 		class geoOptCell : public nonlinearSolverProblem
 	{
 		public:
@@ -37,7 +37,7 @@ namespace dftfe {
 			 *  @param _dftPtr pointer to dftClass
 			 *  @param mpi_comm_replica mpi_communicator of the current pool
 			 */
-			geoOptCell(dftClass<FEOrder>* _dftPtr,const  MPI_Comm &mpi_comm_replica);
+			geoOptCell(dftClass<FEOrder,FEOrderElectro>* _dftPtr,const  MPI_Comm &mpi_comm_replica);
 
 			/**
 			 * @brief initializes the data member d_relaxationFlags.
@@ -118,7 +118,7 @@ namespace dftfe {
 			Tensor<2,C_DIM,double> d_strainEpsilon;
 
 			/// pointer to dft class
-			dftClass<FEOrder>* dftPtr;
+			dftClass<FEOrder,FEOrderElectro>* dftPtr;
 
 			/// parallel communication objects
 			const MPI_Comm mpi_communicator;

@@ -166,8 +166,8 @@ namespace dftfe
 	//
 	//constructor
 	//
-	template<unsigned int FEOrder>
-		kohnShamDFTOperatorCUDAClass<FEOrder>::kohnShamDFTOperatorCUDAClass(dftClass<FEOrder>* _dftPtr,const MPI_Comm &mpi_comm_replica):
+	template<unsigned int FEOrder,unsigned int FEOrderElectro>
+		kohnShamDFTOperatorCUDAClass<FEOrder,FEOrderElectro>::kohnShamDFTOperatorCUDAClass(dftClass<FEOrder,FEOrderElectro>* _dftPtr,const MPI_Comm &mpi_comm_replica):
 			dftPtr(_dftPtr),
 			d_kPointIndex(0),
 			d_numberNodesPerElement(_dftPtr->matrix_free_data.get_dofs_per_cell()),
@@ -192,8 +192,8 @@ namespace dftfe
 
 	}
 
-	template<unsigned int FEOrder>
-		void kohnShamDFTOperatorCUDAClass<FEOrder>::createCublasHandle()
+	template<unsigned int FEOrder,unsigned int FEOrderElectro>
+		void kohnShamDFTOperatorCUDAClass<FEOrder,FEOrderElectro>::createCublasHandle()
 		{
 			int n_devices = 0; cudaGetDeviceCount(&n_devices);
 			int device_id = dealii::Utilities::MPI::this_mpi_process(MPI_COMM_WORLD)%n_devices;
@@ -201,169 +201,169 @@ namespace dftfe
 			cublasCreate(&d_cublasHandle);
 		}
 
-	template<unsigned int FEOrder>
-		void kohnShamDFTOperatorCUDAClass<FEOrder>::destroyCublasHandle()
+	template<unsigned int FEOrder,unsigned int FEOrderElectro>
+		void kohnShamDFTOperatorCUDAClass<FEOrder,FEOrderElectro>::destroyCublasHandle()
 		{
 			cublasDestroy(d_cublasHandle);
 		}
 
-	template<unsigned int FEOrder>
-		cublasHandle_t & kohnShamDFTOperatorCUDAClass<FEOrder>::getCublasHandle()
+	template<unsigned int FEOrder,unsigned int FEOrderElectro>
+		cublasHandle_t & kohnShamDFTOperatorCUDAClass<FEOrder,FEOrderElectro>::getCublasHandle()
 		{
 			return d_cublasHandle; 
 		}
 
-	template<unsigned int FEOrder>
-		const double * kohnShamDFTOperatorCUDAClass<FEOrder>::getSqrtMassVec()
+	template<unsigned int FEOrder,unsigned int FEOrderElectro>
+		const double * kohnShamDFTOperatorCUDAClass<FEOrder,FEOrderElectro>::getSqrtMassVec()
 		{
 			return thrust::raw_pointer_cast(&d_sqrtMassVectorDevice[0]);
 		}
 
 
-	template<unsigned int FEOrder>
-		const double * kohnShamDFTOperatorCUDAClass<FEOrder>::getInvSqrtMassVec()
+	template<unsigned int FEOrder,unsigned int FEOrderElectro>
+		const double * kohnShamDFTOperatorCUDAClass<FEOrder,FEOrderElectro>::getInvSqrtMassVec()
 		{
 			return thrust::raw_pointer_cast(&d_invSqrtMassVectorDevice[0]);
 		}
 
 	/*
-	   template<unsigned int FEOrder> 
-	   distributedGPUVec<double> & kohnShamDFTOperatorCUDAClass<FEOrder>::getBlockCUDADealiiVector()
-	//thrust::device_vector<dataTypes::number> & kohnShamDFTOperatorCUDAClass<FEOrder>::getBlockCUDADealiiVector() 
+	   template<unsigned int FEOrder,unsigned int FEOrderElectro> 
+	   distributedGPUVec<double> & kohnShamDFTOperatorCUDAClass<FEOrder,FEOrderElectro>::getBlockCUDADealiiVector()
+	//thrust::device_vector<dataTypes::number> & kohnShamDFTOperatorCUDAClass<FEOrder,FEOrderElectro>::getBlockCUDADealiiVector() 
 	{
 	return d_cudaFlattenedArrayBlock;
 
 	}
 
-	template<unsigned int FEOrder>
-	//thrust::device_vector<dataTypes::number> & kohnShamDFTOperatorCUDAClass<FEOrder>::getBlockCUDADealiiVector2()
-	distributedGPUVec<double> & kohnShamDFTOperatorCUDAClass<FEOrder>::getBlockCUDADealiiVector2()
+	template<unsigned int FEOrder,unsigned int FEOrderElectro>
+	//thrust::device_vector<dataTypes::number> & kohnShamDFTOperatorCUDAClass<FEOrder,FEOrderElectro>::getBlockCUDADealiiVector2()
+	distributedGPUVec<double> & kohnShamDFTOperatorCUDAClass<FEOrder,FEOrderElectro>::getBlockCUDADealiiVector2()
 	{
 	return d_cudaFlattenedArrayBlock2;
 
 	}
 
-	template<unsigned int FEOrder> 
-	distributedGPUVec<double> & kohnShamDFTOperatorCUDAClass<FEOrder>::getBlockCUDADealiiVector3()
-	//thrust::device_vector<dataTypes::number> & kohnShamDFTOperatorCUDAClass<FEOrder>::getBlockCUDADealiiVector() 
+	template<unsigned int FEOrder,unsigned int FEOrderElectro> 
+	distributedGPUVec<double> & kohnShamDFTOperatorCUDAClass<FEOrder,FEOrderElectro>::getBlockCUDADealiiVector3()
+	//thrust::device_vector<dataTypes::number> & kohnShamDFTOperatorCUDAClass<FEOrder,FEOrderElectro>::getBlockCUDADealiiVector() 
 	{
 	return d_cudaFlattenedArrayBlock3;
 
 	}
 	 */
-	template<unsigned int FEOrder>
-		distributedCPUVec<dataTypes::number> &  kohnShamDFTOperatorCUDAClass<FEOrder>::getProjectorKetTimesVectorSingle()
+	template<unsigned int FEOrder,unsigned int FEOrderElectro>
+		distributedCPUVec<dataTypes::number> &  kohnShamDFTOperatorCUDAClass<FEOrder,FEOrderElectro>::getProjectorKetTimesVectorSingle()
 		{
 			return dftPtr->d_projectorKetTimesVectorPar[0];
 		}
 
 
-	template<unsigned int FEOrder>
-		thrust::device_vector<double> & kohnShamDFTOperatorCUDAClass<FEOrder>::getShapeFunctionGradientIntegral()
+	template<unsigned int FEOrder,unsigned int FEOrderElectro>
+		thrust::device_vector<double> & kohnShamDFTOperatorCUDAClass<FEOrder,FEOrderElectro>::getShapeFunctionGradientIntegral()
 		{
 			return d_cellShapeFunctionGradientIntegralFlattenedDevice;
 		}
 
 
-	template<unsigned int FEOrder>
-		thrust::device_vector<double> & kohnShamDFTOperatorCUDAClass<FEOrder>::getShapeFunctionValues()
+	template<unsigned int FEOrder,unsigned int FEOrderElectro>
+		thrust::device_vector<double> & kohnShamDFTOperatorCUDAClass<FEOrder,FEOrderElectro>::getShapeFunctionValues()
 		{
 			return d_shapeFunctionValueDevice;
 		}
 
 
-	template<unsigned int FEOrder>
-		thrust::device_vector<double> & kohnShamDFTOperatorCUDAClass<FEOrder>::getShapeFunctionValuesInverted(const bool use2pPlusOneGLQuad)
+	template<unsigned int FEOrder,unsigned int FEOrderElectro>
+		thrust::device_vector<double> & kohnShamDFTOperatorCUDAClass<FEOrder,FEOrderElectro>::getShapeFunctionValuesInverted(const bool use2pPlusOneGLQuad)
 		{
 			return use2pPlusOneGLQuad?d_glShapeFunctionValueInvertedDevice:d_shapeFunctionValueInvertedDevice;
 		}
 
-	template<unsigned int FEOrder>
-		thrust::device_vector<double> & kohnShamDFTOperatorCUDAClass<FEOrder>::getShapeFunctionValuesNLPInverted()
+	template<unsigned int FEOrder,unsigned int FEOrderElectro>
+		thrust::device_vector<double> & kohnShamDFTOperatorCUDAClass<FEOrder,FEOrderElectro>::getShapeFunctionValuesNLPInverted()
 		{
 			return d_shapeFunctionValueNLPInvertedDevice;
 		}
 
-	template<unsigned int FEOrder>
-		thrust::device_vector<double> & kohnShamDFTOperatorCUDAClass<FEOrder>::getShapeFunctionGradientValuesX()
+	template<unsigned int FEOrder,unsigned int FEOrderElectro>
+		thrust::device_vector<double> & kohnShamDFTOperatorCUDAClass<FEOrder,FEOrderElectro>::getShapeFunctionGradientValuesX()
 		{
 			return d_shapeFunctionGradientValueXDevice;
 		}
 
-	template<unsigned int FEOrder>
-		thrust::device_vector<double> & kohnShamDFTOperatorCUDAClass<FEOrder>::getShapeFunctionGradientValuesY()
+	template<unsigned int FEOrder,unsigned int FEOrderElectro>
+		thrust::device_vector<double> & kohnShamDFTOperatorCUDAClass<FEOrder,FEOrderElectro>::getShapeFunctionGradientValuesY()
 		{
 			return d_shapeFunctionGradientValueYDevice;
 		}
 
-	template<unsigned int FEOrder>
-		thrust::device_vector<double> & kohnShamDFTOperatorCUDAClass<FEOrder>::getShapeFunctionGradientValuesZ()
+	template<unsigned int FEOrder,unsigned int FEOrderElectro>
+		thrust::device_vector<double> & kohnShamDFTOperatorCUDAClass<FEOrder,FEOrderElectro>::getShapeFunctionGradientValuesZ()
 		{
 			return d_shapeFunctionGradientValueZDevice;
 		}
 
-	template<unsigned int FEOrder>
-		thrust::device_vector<double> & kohnShamDFTOperatorCUDAClass<FEOrder>::getShapeFunctionGradientValuesXInverted(const bool use2pPlusOneGLQuad)
+	template<unsigned int FEOrder,unsigned int FEOrderElectro>
+		thrust::device_vector<double> & kohnShamDFTOperatorCUDAClass<FEOrder,FEOrderElectro>::getShapeFunctionGradientValuesXInverted(const bool use2pPlusOneGLQuad)
 		{
 			return use2pPlusOneGLQuad?d_glShapeFunctionGradientValueXInvertedDevice:d_shapeFunctionGradientValueXInvertedDevice;
 		}
 
-	template<unsigned int FEOrder>
-		thrust::device_vector<double> & kohnShamDFTOperatorCUDAClass<FEOrder>::getShapeFunctionGradientValuesYInverted(const bool use2pPlusOneGLQuad)
+	template<unsigned int FEOrder,unsigned int FEOrderElectro>
+		thrust::device_vector<double> & kohnShamDFTOperatorCUDAClass<FEOrder,FEOrderElectro>::getShapeFunctionGradientValuesYInverted(const bool use2pPlusOneGLQuad)
 		{
 			return use2pPlusOneGLQuad?d_glShapeFunctionGradientValueYInvertedDevice:d_shapeFunctionGradientValueYInvertedDevice;
 		}
 
-	template<unsigned int FEOrder>
-		thrust::device_vector<double> & kohnShamDFTOperatorCUDAClass<FEOrder>::getShapeFunctionGradientValuesZInverted(const bool use2pPlusOneGLQuad)
+	template<unsigned int FEOrder,unsigned int FEOrderElectro>
+		thrust::device_vector<double> & kohnShamDFTOperatorCUDAClass<FEOrder,FEOrderElectro>::getShapeFunctionGradientValuesZInverted(const bool use2pPlusOneGLQuad)
 		{
 			return use2pPlusOneGLQuad?d_glShapeFunctionGradientValueZInvertedDevice:d_shapeFunctionGradientValueZInvertedDevice;
 		}
 
-	template<unsigned int FEOrder>
-		thrust::device_vector<double> & kohnShamDFTOperatorCUDAClass<FEOrder>::getShapeFunctionGradientValuesNLPXInverted()
+	template<unsigned int FEOrder,unsigned int FEOrderElectro>
+		thrust::device_vector<double> & kohnShamDFTOperatorCUDAClass<FEOrder,FEOrderElectro>::getShapeFunctionGradientValuesNLPXInverted()
 		{
 			return d_shapeFunctionGradientValueNLPXInvertedDevice;
 		}
 
-	template<unsigned int FEOrder>
-		thrust::device_vector<double> & kohnShamDFTOperatorCUDAClass<FEOrder>::getShapeFunctionGradientValuesNLPYInverted()
+	template<unsigned int FEOrder,unsigned int FEOrderElectro>
+		thrust::device_vector<double> & kohnShamDFTOperatorCUDAClass<FEOrder,FEOrderElectro>::getShapeFunctionGradientValuesNLPYInverted()
 		{
 			return d_shapeFunctionGradientValueNLPYInvertedDevice;
 		}
 
-	template<unsigned int FEOrder>
-		thrust::device_vector<double> & kohnShamDFTOperatorCUDAClass<FEOrder>::getShapeFunctionGradientValuesNLPZInverted()
+	template<unsigned int FEOrder,unsigned int FEOrderElectro>
+		thrust::device_vector<double> & kohnShamDFTOperatorCUDAClass<FEOrder,FEOrderElectro>::getShapeFunctionGradientValuesNLPZInverted()
 		{
 			return d_shapeFunctionGradientValueNLPZInvertedDevice;
 		}
 
-	template<unsigned int FEOrder>
-		thrust::device_vector<dealii::types::global_dof_index> & kohnShamDFTOperatorCUDAClass<FEOrder>::getFlattenedArrayCellLocalProcIndexIdMap()
+	template<unsigned int FEOrder,unsigned int FEOrderElectro>
+		thrust::device_vector<dealii::types::global_dof_index> & kohnShamDFTOperatorCUDAClass<FEOrder,FEOrderElectro>::getFlattenedArrayCellLocalProcIndexIdMap()
 		{
 			return d_flattenedArrayCellLocalProcIndexIdMapDevice;
 		}
 
-	template<unsigned int FEOrder>
-		thrust::device_vector<dataTypes::number> & kohnShamDFTOperatorCUDAClass<FEOrder>::getCellWaveFunctionMatrix()
+	template<unsigned int FEOrder,unsigned int FEOrderElectro>
+		thrust::device_vector<dataTypes::number> & kohnShamDFTOperatorCUDAClass<FEOrder,FEOrderElectro>::getCellWaveFunctionMatrix()
 		{
 			return d_cellWaveFunctionMatrix;
 		}
 
-	template<unsigned int FEOrder>
-		thrust::device_vector<unsigned int> & kohnShamDFTOperatorCUDAClass<FEOrder>::getLocallyOwnedProcBoundaryNodesVectorDevice()
+	template<unsigned int FEOrder,unsigned int FEOrderElectro>
+		thrust::device_vector<unsigned int> & kohnShamDFTOperatorCUDAClass<FEOrder,FEOrderElectro>::getLocallyOwnedProcBoundaryNodesVectorDevice()
 		{
 			return d_locallyOwnedProcBoundaryNodesVectorDevice;
 		}
 
-	template<unsigned int FEOrder>
-		thrust::device_vector<unsigned int> & kohnShamDFTOperatorCUDAClass<FEOrder>::getLocallyOwnedProcProjectorKetBoundaryNodesVectorDevice()
+	template<unsigned int FEOrder,unsigned int FEOrderElectro>
+		thrust::device_vector<unsigned int> & kohnShamDFTOperatorCUDAClass<FEOrder,FEOrderElectro>::getLocallyOwnedProcProjectorKetBoundaryNodesVectorDevice()
 		{
 			return d_locallyOwnedProcProjectorKetBoundaryNodesVectorDevice;
 		}
 
-	template<unsigned int FEOrder>
-		thrust::device_vector<unsigned int> & kohnShamDFTOperatorCUDAClass<FEOrder>::getBoundaryIdToLocalIdMap()
+	template<unsigned int FEOrder,unsigned int FEOrderElectro>
+		thrust::device_vector<unsigned int> & kohnShamDFTOperatorCUDAClass<FEOrder,FEOrderElectro>::getBoundaryIdToLocalIdMap()
 		{
 			return d_boundaryIdToLocalIdMapDevice;
 		}
@@ -371,8 +371,8 @@ namespace dftfe
 	//
 	//initialize kohnShamDFTOperatorCUDAClass object
 	//
-	template<unsigned int FEOrder>
-		void kohnShamDFTOperatorCUDAClass<FEOrder>::init()
+	template<unsigned int FEOrder,unsigned int FEOrderElectro>
+		void kohnShamDFTOperatorCUDAClass<FEOrder,FEOrderElectro>::init()
 		{
 			computing_timer.enter_section("kohnShamDFTOperatorCUDAClass setup");
 
@@ -394,8 +394,8 @@ namespace dftfe
 		}
 
 
-	template<unsigned int FEOrder>
-		void kohnShamDFTOperatorCUDAClass<FEOrder>::reinit(const unsigned int numberWaveFunctions,
+	template<unsigned int FEOrder,unsigned int FEOrderElectro>
+		void kohnShamDFTOperatorCUDAClass<FEOrder,FEOrderElectro>::reinit(const unsigned int numberWaveFunctions,
 				bool flag)
 		{
 
@@ -645,8 +645,8 @@ namespace dftfe
 
 		}
 
-	template<unsigned int FEOrder>
-		void kohnShamDFTOperatorCUDAClass<FEOrder>::reinitNoRemesh(const unsigned int numberWaveFunctions)
+	template<unsigned int FEOrder,unsigned int FEOrderElectro>
+		void kohnShamDFTOperatorCUDAClass<FEOrder,FEOrderElectro>::reinitNoRemesh(const unsigned int numberWaveFunctions)
 		{
 			if(dftParameters::isPseudopotential)
 			{
@@ -699,8 +699,8 @@ namespace dftfe
 	//
 	//compute mass Vector
 	//
-	template<unsigned int FEOrder>
-		void kohnShamDFTOperatorCUDAClass<FEOrder>::computeMassVector(const dealii::DoFHandler<3> & dofHandler,
+	template<unsigned int FEOrder,unsigned int FEOrderElectro>
+		void kohnShamDFTOperatorCUDAClass<FEOrder,FEOrderElectro>::computeMassVector(const dealii::DoFHandler<3> & dofHandler,
 				const dealii::AffineConstraints<double> & constraintMatrix,
 				distributedCPUVec<double> & sqrtMassVec,
 				distributedCPUVec<double> & invSqrtMassVec)
@@ -776,16 +776,16 @@ namespace dftfe
 		}
 
 
-	template<unsigned int FEOrder>
-		void kohnShamDFTOperatorCUDAClass<FEOrder>::reinitkPointSpinIndex(const unsigned int kPointIndex, const unsigned int spinIndex)
+	template<unsigned int FEOrder,unsigned int FEOrderElectro>
+		void kohnShamDFTOperatorCUDAClass<FEOrder,FEOrderElectro>::reinitkPointSpinIndex(const unsigned int kPointIndex, const unsigned int spinIndex)
 		{
 			d_kPointIndex = kPointIndex;
 			d_spinIndex   = spinIndex;
 		}
 
 
-	template<unsigned int FEOrder>
-		void kohnShamDFTOperatorCUDAClass<FEOrder>::computeVEff(const std::map<dealii::CellId,std::vector<double> >* rhoValues,
+	template<unsigned int FEOrder,unsigned int FEOrderElectro>
+		void kohnShamDFTOperatorCUDAClass<FEOrder,FEOrderElectro>::computeVEff(const std::map<dealii::CellId,std::vector<double> >* rhoValues,
 				const std::map<dealii::CellId,std::vector<double> > & phiValues,
 				const std::map<dealii::CellId,std::vector<double> > & externalPotCorrValues,
         const unsigned int externalPotCorrQuadratureId)
@@ -833,8 +833,8 @@ namespace dftfe
          computeVEffExternalPotCorr(externalPotCorrValues,externalPotCorrQuadratureId);      
 		}
 
-	template<unsigned int FEOrder>
-		void kohnShamDFTOperatorCUDAClass<FEOrder>::computeVEff(const std::map<dealii::CellId,std::vector<double> >* rhoValues,
+	template<unsigned int FEOrder,unsigned int FEOrderElectro>
+		void kohnShamDFTOperatorCUDAClass<FEOrder,FEOrderElectro>::computeVEff(const std::map<dealii::CellId,std::vector<double> >* rhoValues,
 				const std::map<dealii::CellId,std::vector<double> >* gradRhoValues,
 				const std::map<dealii::CellId,std::vector<double> > & phiValues,
 				const std::map<dealii::CellId,std::vector<double> > & externalPotCorrValues,
@@ -926,8 +926,8 @@ namespace dftfe
 		}
 
 
-	template<unsigned int FEOrder>
-		void kohnShamDFTOperatorCUDAClass<FEOrder>::computeVEffSpinPolarized(const std::map<dealii::CellId,std::vector<double> >* rhoValues,
+	template<unsigned int FEOrder,unsigned int FEOrderElectro>
+		void kohnShamDFTOperatorCUDAClass<FEOrder,FEOrderElectro>::computeVEffSpinPolarized(const std::map<dealii::CellId,std::vector<double> >* rhoValues,
 				const std::map<dealii::CellId,std::vector<double> > & phiValues,
 				const unsigned int spinIndex,
 				const std::map<dealii::CellId,std::vector<double> > & externalPotCorrValues,
@@ -977,8 +977,8 @@ namespace dftfe
          computeVEffExternalPotCorr(externalPotCorrValues,externalPotCorrQuadratureId);     
 		}
 
-	template<unsigned int FEOrder>
-		void kohnShamDFTOperatorCUDAClass<FEOrder>::computeVEffSpinPolarized(const std::map<dealii::CellId,std::vector<double> >* rhoValues,
+	template<unsigned int FEOrder,unsigned int FEOrderElectro>
+		void kohnShamDFTOperatorCUDAClass<FEOrder,FEOrderElectro>::computeVEffSpinPolarized(const std::map<dealii::CellId,std::vector<double> >* rhoValues,
 				const std::map<dealii::CellId,std::vector<double> >* gradRhoValues,
 				const std::map<dealii::CellId,std::vector<double> > & phiValues,
 				const unsigned int spinIndex,
@@ -1079,8 +1079,8 @@ namespace dftfe
          computeVEffExternalPotCorr(externalPotCorrValues,externalPotCorrQuadratureId);      
 		}
 
-	template<unsigned int FEOrder>
-		void kohnShamDFTOperatorCUDAClass<FEOrder>::computeVEffExternalPotCorr(const std::map<dealii::CellId,std::vector<double> > & externalPotCorrValues,
+	template<unsigned int FEOrder,unsigned int FEOrderElectro>
+		void kohnShamDFTOperatorCUDAClass<FEOrder,FEOrderElectro>::computeVEffExternalPotCorr(const std::map<dealii::CellId,std::vector<double> > & externalPotCorrValues,
                                                                        const unsigned int externalPotCorrQuadratureId)
   {
       d_externalPotCorrQuadratureId=externalPotCorrQuadratureId;
@@ -1109,8 +1109,8 @@ namespace dftfe
   }
 
 
-	template<unsigned int FEOrder>
-		void kohnShamDFTOperatorCUDAClass<FEOrder>::HX(distributedGPUVec<double> & src,
+	template<unsigned int FEOrder,unsigned int FEOrderElectro>
+		void kohnShamDFTOperatorCUDAClass<FEOrder,FEOrderElectro>::HX(distributedGPUVec<double> & src,
 				distributedGPUVec<float> & tempFloatArray,
 				distributedGPUVec<double> & projectorKetTimesVector,
 				const unsigned int localVectorSize,
@@ -1229,8 +1229,8 @@ namespace dftfe
 
 
 
-	template<unsigned int FEOrder>
-		void kohnShamDFTOperatorCUDAClass<FEOrder>::HX(distributedGPUVec<double> & src,
+	template<unsigned int FEOrder,unsigned int FEOrderElectro>
+		void kohnShamDFTOperatorCUDAClass<FEOrder,FEOrderElectro>::HX(distributedGPUVec<double> & src,
 				distributedGPUVec<double> & projectorKetTimesVector,
 				const unsigned int localVectorSize,
 				const unsigned int numberWaveFunctions,
@@ -1316,8 +1316,8 @@ namespace dftfe
 	// before the control returns back to chebyshevFilter. When computePart2 is set to true, the computations
 	// in computePart1 are skipped and only computations performed are: second compute part of nonlocalHX,
 	// assembly (only local processor), and distribute_slave_to_master.
-	template<unsigned int FEOrder>
-		void kohnShamDFTOperatorCUDAClass<FEOrder>::HXCheby(distributedGPUVec<double> & src,
+	template<unsigned int FEOrder,unsigned int FEOrderElectro>
+		void kohnShamDFTOperatorCUDAClass<FEOrder,FEOrderElectro>::HXCheby(distributedGPUVec<double> & src,
 				distributedGPUVec<float> & tempFloatArray,
 				distributedGPUVec<double> & projectorKetTimesVector,
 				const unsigned int localVectorSize,
@@ -1414,8 +1414,8 @@ namespace dftfe
 
 
 	//XTHX
-	template<unsigned int FEOrder>
-		void kohnShamDFTOperatorCUDAClass<FEOrder>::XtHX(const double *  X,
+	template<unsigned int FEOrder,unsigned int FEOrderElectro>
+		void kohnShamDFTOperatorCUDAClass<FEOrder,FEOrderElectro>::XtHX(const double *  X,
 				distributedGPUVec<double> & XBlock,
 				distributedGPUVec<double> & HXBlock,
 				distributedGPUVec<double> & projectorKetTimesVector,
@@ -1530,8 +1530,8 @@ namespace dftfe
 
 #ifdef DEAL_II_WITH_SCALAPACK 
 	//XTHX
-	template<unsigned int FEOrder>
-		void kohnShamDFTOperatorCUDAClass<FEOrder>::XtHX(const double *  X,
+	template<unsigned int FEOrder,unsigned int FEOrderElectro>
+		void kohnShamDFTOperatorCUDAClass<FEOrder,FEOrderElectro>::XtHX(const double *  X,
 				distributedGPUVec<double> & XBlock,
 				distributedGPUVec<double> & HXBlock,
 				distributedGPUVec<double> & projectorKetTimesVector,
@@ -1679,8 +1679,8 @@ namespace dftfe
 		}
 
 	//XTHX with overlap of computation and communication
-	template<unsigned int FEOrder>
-		void kohnShamDFTOperatorCUDAClass<FEOrder>::XtHXOverlapComputeCommun(const double *  X,
+	template<unsigned int FEOrder,unsigned int FEOrderElectro>
+		void kohnShamDFTOperatorCUDAClass<FEOrder,FEOrderElectro>::XtHXOverlapComputeCommun(const double *  X,
 				distributedGPUVec<double> & XBlock,
 				distributedGPUVec<double> & HXBlock,
 				distributedGPUVec<double> & projectorKetTimesVector,
@@ -1960,8 +1960,8 @@ namespace dftfe
 
 
 	//XTHX
-	template<unsigned int FEOrder>
-		void kohnShamDFTOperatorCUDAClass<FEOrder>::XtHXMixedPrec(const double *  X,
+	template<unsigned int FEOrder,unsigned int FEOrderElectro>
+		void kohnShamDFTOperatorCUDAClass<FEOrder,FEOrderElectro>::XtHXMixedPrec(const double *  X,
 				distributedGPUVec<double> & XBlock,
 				distributedGPUVec<float> & tempFloatBlock,
 				distributedGPUVec<double> & HXBlock,
@@ -2261,8 +2261,8 @@ namespace dftfe
 		}
 
 	//XTHX
-	template<unsigned int FEOrder>
-		void kohnShamDFTOperatorCUDAClass<FEOrder>::XtHXOffDiagBlockSinglePrec(const double *  X,
+	template<unsigned int FEOrder,unsigned int FEOrderElectro>
+		void kohnShamDFTOperatorCUDAClass<FEOrder,FEOrderElectro>::XtHXOffDiagBlockSinglePrec(const double *  X,
 				distributedGPUVec<double> & XBlock,
 				distributedGPUVec<float> & tempFloatBlock,
 				distributedGPUVec<double> & HXBlock,
@@ -2506,8 +2506,8 @@ namespace dftfe
 	// 6) Wait for COP event for current block to be completed
 	// 7) [COM] Perform blocking MPI_Allreduce on curent block and copy to scalapack matrix
 	/////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	template<unsigned int FEOrder>
-		void kohnShamDFTOperatorCUDAClass<FEOrder>::XtHXMixedPrecOverlapComputeCommun(const double *  X,
+	template<unsigned int FEOrder,unsigned int FEOrderElectro>
+		void kohnShamDFTOperatorCUDAClass<FEOrder,FEOrderElectro>::XtHXMixedPrecOverlapComputeCommun(const double *  X,
 				distributedGPUVec<double> & XBlock,
 				distributedGPUVec<float> & tempFloatBlock,
 				distributedGPUVec<double> & HXBlock,
@@ -2912,8 +2912,8 @@ namespace dftfe
 	// 6) Wait for COP event for current block to be completed
 	// 7) [COM] Perform blocking MPI_Allreduce on curent block and copy to scalapack matrix
 	/////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	template<unsigned int FEOrder>
-		void kohnShamDFTOperatorCUDAClass<FEOrder>::XtHXOffDiagBlockSinglePrecOverlapComputeCommun(const double *  X,
+	template<unsigned int FEOrder,unsigned int FEOrderElectro>
+		void kohnShamDFTOperatorCUDAClass<FEOrder,FEOrderElectro>::XtHXOffDiagBlockSinglePrecOverlapComputeCommun(const double *  X,
 				distributedGPUVec<double> & XBlock,
 				distributedGPUVec<float> & tempFloatBlock,
 				distributedGPUVec<double> & HXBlock,

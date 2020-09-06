@@ -61,7 +61,6 @@ namespace dftfe {
 		extern bool restartFromChk;
 		extern bool restartMdFromChk;
 		extern bool electrostaticsHRefinement;
-		extern bool electrostaticsPRefinement;
 
 		extern bool reproducible_output;
 

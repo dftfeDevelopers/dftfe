@@ -68,14 +68,14 @@ namespace dftfe
 	}
 
 	//constructor
-	template<unsigned int FEOrder>
-		DensityCalculator<FEOrder>::DensityCalculator()
+	template<unsigned int FEOrder,unsigned int FEOrderElectro>
+		DensityCalculator<FEOrder,FEOrderElectro>::DensityCalculator()
 		{
 
 		}
 
-	template<unsigned int FEOrder>
-		void  DensityCalculator<FEOrder>::computeRhoFromPSI
+	template<unsigned int FEOrder,unsigned int FEOrderElectro>
+		void  DensityCalculator<FEOrder,FEOrderElectro>::computeRhoFromPSI
 		(const std::vector<std::vector<dataTypes::number> > & eigenVectorsInput,
 		 const std::vector<std::vector<dataTypes::number> > & eigenVectorsFracInput,
 		 const unsigned int totalNumWaveFunctions,
@@ -105,10 +105,10 @@ namespace dftfe
 
 #ifdef USE_COMPLEX
 			 dealii::FEEvaluation<3,FEOrder,C_num1DQuad<FEOrder>(),2> psiEval(mfData,mfDofIndex,mfQuadIndex);
-			 dealii::FEEvaluation<3,FEOrder,C_num1DKerkerPoly<FEOrder>()+1,2> psiEvalGL(mfData,mfDofIndex,mfQuadIndex);
+			 dealii::FEEvaluation<3,FEOrder,FEOrderElectro+1,2> psiEvalGL(mfData,mfDofIndex,mfQuadIndex);
 #else
 			 dealii::FEEvaluation<3,FEOrder,C_num1DQuad<FEOrder>(),1> psiEval(mfData,mfDofIndex,mfQuadIndex);
-			 dealii::FEEvaluation<3,FEOrder,C_num1DKerkerPoly<FEOrder>()+1,1> psiEvalGL(mfData,mfDofIndex,mfQuadIndex);
+			 dealii::FEEvaluation<3,FEOrder,FEOrderElectro+1,1> psiEvalGL(mfData,mfDofIndex,mfQuadIndex);
 #endif
 
 			 dftUtils::constraintMatrixInfo constraintsNoneDataInfo;
@@ -814,21 +814,5 @@ namespace dftfe
 					 interpoolcomm);
 		 }
 
-
-	template class DensityCalculator<1>;
-	template class DensityCalculator<2>;
-	template class DensityCalculator<3>;
-	template class DensityCalculator<4>;
-	template class DensityCalculator<5>;
-	template class DensityCalculator<6>;
-	template class DensityCalculator<7>;
-	template class DensityCalculator<8>;
-	template class DensityCalculator<9>;
-	template class DensityCalculator<10>;
-	template class DensityCalculator<11>;
-	template class DensityCalculator<12>;
-	template class DensityCalculator<13>;
-	template class DensityCalculator<14>;
-	template class DensityCalculator<15>;
-	template class DensityCalculator<16>;
+#include "densityCalculator.inst.cc"
 }

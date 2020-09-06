@@ -38,8 +38,8 @@ namespace dftfe {
 	//
 	//constructor
 	//
-	template<unsigned int FEOrder>
-		kohnShamDFTOperatorClass<FEOrder>::kohnShamDFTOperatorClass(dftClass<FEOrder>* _dftPtr,const MPI_Comm &mpi_comm_replica):
+	template<unsigned int FEOrder,unsigned int FEOrderElectro>
+		kohnShamDFTOperatorClass<FEOrder,FEOrderElectro>::kohnShamDFTOperatorClass(dftClass<FEOrder,FEOrderElectro>* _dftPtr,const MPI_Comm &mpi_comm_replica):
 			dftPtr(_dftPtr),
 			d_kPointIndex(0),
 			d_numberNodesPerElement(_dftPtr->matrix_free_data.get_dofs_per_cell()),
@@ -61,8 +61,8 @@ namespace dftfe {
 	//
 	//initialize kohnShamDFTOperatorClass object
 	//
-	template<unsigned int FEOrder>
-		void kohnShamDFTOperatorClass<FEOrder>::init()
+	template<unsigned int FEOrder,unsigned int FEOrderElectro>
+		void kohnShamDFTOperatorClass<FEOrder,FEOrderElectro>::init()
 		{
 			computing_timer.enter_section("kohnShamDFTOperatorClass setup");
 
@@ -97,8 +97,8 @@ namespace dftfe {
 			computing_timer.exit_section("kohnShamDFTOperatorClass setup");
 		}
 
-	template<unsigned int FEOrder>
-		void kohnShamDFTOperatorClass<FEOrder>::reinit(const unsigned int numberWaveFunctions,
+	template<unsigned int FEOrder,unsigned int FEOrderElectro>
+		void kohnShamDFTOperatorClass<FEOrder,FEOrderElectro>::reinit(const unsigned int numberWaveFunctions,
 				distributedCPUVec<dataTypes::number> & flattenedArray,
 				bool flag)
 		{
@@ -129,8 +129,8 @@ namespace dftfe {
 					numberWaveFunctions);
 		}
 
-	template<unsigned int FEOrder>
-		void kohnShamDFTOperatorClass<FEOrder>::reinit(const unsigned int numberWaveFunctions)
+	template<unsigned int FEOrder,unsigned int FEOrderElectro>
+		void kohnShamDFTOperatorClass<FEOrder,FEOrderElectro>::reinit(const unsigned int numberWaveFunctions)
 		{
 
 			if(dftParameters::isPseudopotential)
@@ -146,8 +146,8 @@ namespace dftfe {
 	//
 	//compute mass Vector
 	//
-	template<unsigned int FEOrder>
-		void kohnShamDFTOperatorClass<FEOrder>::computeMassVector(const dealii::DoFHandler<3> & dofHandler,
+	template<unsigned int FEOrder,unsigned int FEOrderElectro>
+		void kohnShamDFTOperatorClass<FEOrder,FEOrderElectro>::computeMassVector(const dealii::DoFHandler<3> & dofHandler,
 				const dealii::ConstraintMatrix & constraintMatrix,
 				distributedCPUVec<double> & sqrtMassVec,
 				distributedCPUVec<double> & invSqrtMassVec)
@@ -203,16 +203,16 @@ namespace dftfe {
 
 
 
-	template<unsigned int FEOrder>
-		void kohnShamDFTOperatorClass<FEOrder>::reinitkPointSpinIndex(const unsigned int  kPointIndex, const unsigned int spinIndex)
+	template<unsigned int FEOrder,unsigned int FEOrderElectro>
+		void kohnShamDFTOperatorClass<FEOrder,FEOrderElectro>::reinitkPointSpinIndex(const unsigned int  kPointIndex, const unsigned int spinIndex)
 		{
 			d_kPointIndex = kPointIndex;
 			d_spinIndex= spinIndex;
 		}
 
 
-	template<unsigned int FEOrder>
-		void kohnShamDFTOperatorClass<FEOrder>::computeVEff(const std::map<dealii::CellId,std::vector<double> >* rhoValues,
+	template<unsigned int FEOrder,unsigned int FEOrderElectro>
+		void kohnShamDFTOperatorClass<FEOrder,FEOrderElectro>::computeVEff(const std::map<dealii::CellId,std::vector<double> >* rhoValues,
 				const std::map<dealii::CellId,std::vector<double> > & phiValues,
 				const std::map<dealii::CellId,std::vector<double> > & externalPotCorrValues,
         const unsigned int externalPotCorrQuadratureId)
@@ -275,8 +275,8 @@ namespace dftfe {
          computeVEffExternalPotCorr(externalPotCorrValues,externalPotCorrQuadratureId);
 		}
 
-	template<unsigned int FEOrder>
-		void kohnShamDFTOperatorClass<FEOrder>::computeVEff(const std::map<dealii::CellId,std::vector<double> >* rhoValues,
+	template<unsigned int FEOrder,unsigned int FEOrderElectro>
+		void kohnShamDFTOperatorClass<FEOrder,FEOrderElectro>::computeVEff(const std::map<dealii::CellId,std::vector<double> >* rhoValues,
 				const std::map<dealii::CellId,std::vector<double> >* gradRhoValues,
 				const std::map<dealii::CellId,std::vector<double> > & phiValues,
 				const std::map<dealii::CellId,std::vector<double> > & externalPotCorrValues,
@@ -360,8 +360,8 @@ namespace dftfe {
 
 
 #ifdef USE_COMPLEX
-	template<unsigned int FEOrder>
-		void kohnShamDFTOperatorClass<FEOrder>::HX(distributedCPUVec<std::complex<double> > & src,
+	template<unsigned int FEOrder,unsigned int FEOrderElectro>
+		void kohnShamDFTOperatorClass<FEOrder,FEOrderElectro>::HX(distributedCPUVec<std::complex<double> > & src,
 				const unsigned int numberWaveFunctions,
 				const bool scaleFlag,
 				const double scalar,
@@ -488,16 +488,16 @@ namespace dftfe {
 
 		}
 
-	template<unsigned int FEOrder>
-		void kohnShamDFTOperatorClass<FEOrder>::HX(distributedCPUVec<std::complex<double> > & src,
+	template<unsigned int FEOrder,unsigned int FEOrderElectro>
+		void kohnShamDFTOperatorClass<FEOrder,FEOrderElectro>::HX(distributedCPUVec<std::complex<double> > & src,
 				const unsigned int numberWaveFunctions,
 				distributedCPUVec<std::complex<double> > & dst)
 		{
 			AssertThrow(false,dftUtils::ExcNotImplementedYet());
 		}
 
-	template<unsigned int FEOrder>
-		void kohnShamDFTOperatorClass<FEOrder>::MX(distributedCPUVec<std::complex<double> > & src,
+	template<unsigned int FEOrder,unsigned int FEOrderElectro>
+		void kohnShamDFTOperatorClass<FEOrder,FEOrderElectro>::MX(distributedCPUVec<std::complex<double> > & src,
 				const unsigned int numberWaveFunctions,
 				distributedCPUVec<std::complex<double> > & dst)
 		{
@@ -505,8 +505,8 @@ namespace dftfe {
 		}
 
 #else
-	template<unsigned int FEOrder>
-		void kohnShamDFTOperatorClass<FEOrder>::HX(distributedCPUVec<double> & src,
+	template<unsigned int FEOrder,unsigned int FEOrderElectro>
+		void kohnShamDFTOperatorClass<FEOrder,FEOrderElectro>::HX(distributedCPUVec<double> & src,
 				const unsigned int numberWaveFunctions,
 				const bool scaleFlag,
 				const double scalar,
@@ -634,8 +634,8 @@ namespace dftfe {
 
 		}
 
-	template<unsigned int FEOrder>
-		void kohnShamDFTOperatorClass<FEOrder>::HX(distributedCPUVec<double> & src,
+	template<unsigned int FEOrder,unsigned int FEOrderElectro>
+		void kohnShamDFTOperatorClass<FEOrder,FEOrderElectro>::HX(distributedCPUVec<double> & src,
 				const unsigned int numberWaveFunctions,
 				distributedCPUVec<double> & dst)
 
@@ -711,8 +711,8 @@ namespace dftfe {
 
 		}
 
-	template<unsigned int FEOrder>
-		void kohnShamDFTOperatorClass<FEOrder>::MX(distributedCPUVec<double> & src,
+	template<unsigned int FEOrder,unsigned int FEOrderElectro>
+		void kohnShamDFTOperatorClass<FEOrder,FEOrderElectro>::MX(distributedCPUVec<double> & src,
 				const unsigned int numberWaveFunctions,
 				distributedCPUVec<double> & dst)
 
@@ -770,8 +770,8 @@ dst);
 #endif
 
 
-	template<unsigned int FEOrder>
-		void kohnShamDFTOperatorClass<FEOrder>::XtHX(const std::vector<dataTypes::number> & X,
+	template<unsigned int FEOrder,unsigned int FEOrderElectro>
+		void kohnShamDFTOperatorClass<FEOrder,FEOrderElectro>::XtHX(const std::vector<dataTypes::number> & X,
 				const unsigned int numberWaveFunctions,
 				std::vector<dataTypes::number> & ProjHam)
 		{
@@ -866,8 +866,8 @@ dst);
 
 		}
 
-	template<unsigned int FEOrder>
-		void kohnShamDFTOperatorClass<FEOrder>::XtHX(const std::vector<dataTypes::number> & X,
+	template<unsigned int FEOrder,unsigned int FEOrderElectro>
+		void kohnShamDFTOperatorClass<FEOrder,FEOrderElectro>::XtHX(const std::vector<dataTypes::number> & X,
 				const unsigned int numberWaveFunctions,
 				const std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid>  & processGrid,
 				dealii::ScaLAPACKMatrix<dataTypes::number> & projHamPar,
@@ -1038,8 +1038,8 @@ dst);
 #endif
 		}
 
-	template<unsigned int FEOrder>
-		void kohnShamDFTOperatorClass<FEOrder>::XtMX(const std::vector<dataTypes::number> & X,
+	template<unsigned int FEOrder,unsigned int FEOrderElectro>
+		void kohnShamDFTOperatorClass<FEOrder,FEOrderElectro>::XtMX(const std::vector<dataTypes::number> & X,
 				const unsigned int numberWaveFunctions,
 				const std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid>  & processGrid,
 				dealii::ScaLAPACKMatrix<dataTypes::number> & projMassPar)
@@ -1197,8 +1197,8 @@ dst);
 #endif
 		}
 
-	template<unsigned int FEOrder>
-		void kohnShamDFTOperatorClass<FEOrder>::XtHXMixedPrec
+	template<unsigned int FEOrder,unsigned int FEOrderElectro>
+		void kohnShamDFTOperatorClass<FEOrder,FEOrderElectro>::XtHXMixedPrec
 		(const std::vector<dataTypes::number> & X,
 		 const unsigned int N,
 		 const unsigned int Ncore,
@@ -1433,8 +1433,8 @@ dst);
 #endif
 		}
 
-	template<unsigned int FEOrder>
-		void kohnShamDFTOperatorClass<FEOrder>::computeVEffSpinPolarized(const std::map<dealii::CellId,std::vector<double> >* rhoValues,
+	template<unsigned int FEOrder,unsigned int FEOrderElectro>
+		void kohnShamDFTOperatorClass<FEOrder,FEOrderElectro>::computeVEffSpinPolarized(const std::map<dealii::CellId,std::vector<double> >* rhoValues,
 				const std::map<dealii::CellId,std::vector<double> > & phiValues,
 				const unsigned int spinIndex,
 				const std::map<dealii::CellId,std::vector<double> > & externalPotCorrValues,
@@ -1500,8 +1500,8 @@ dst);
          computeVEffExternalPotCorr(externalPotCorrValues,externalPotCorrQuadratureId);      
 		}
 
-	template<unsigned int FEOrder>
-		void kohnShamDFTOperatorClass<FEOrder>::computeVEffSpinPolarized(const std::map<dealii::CellId,std::vector<double> >* rhoValues,
+	template<unsigned int FEOrder,unsigned int FEOrderElectro>
+		void kohnShamDFTOperatorClass<FEOrder,FEOrderElectro>::computeVEffSpinPolarized(const std::map<dealii::CellId,std::vector<double> >* rhoValues,
 				const std::map<dealii::CellId,std::vector<double> >* gradRhoValues,
 				const std::map<dealii::CellId,std::vector<double> > & phiValues,
 				const unsigned int spinIndex,
@@ -1598,8 +1598,8 @@ dst);
          computeVEffExternalPotCorr(externalPotCorrValues,externalPotCorrQuadratureId);
 		}
 
-	template<unsigned int FEOrder>
-		void kohnShamDFTOperatorClass<FEOrder>::computeVEffExternalPotCorr(const std::map<dealii::CellId,std::vector<double> > & externalPotCorrValues,
+	template<unsigned int FEOrder,unsigned int FEOrderElectro>
+		void kohnShamDFTOperatorClass<FEOrder,FEOrderElectro>::computeVEffExternalPotCorr(const std::map<dealii::CellId,std::vector<double> > & externalPotCorrValues,
                                                                        const unsigned int externalPotCorrQuadratureId)
   {
       d_externalPotCorrQuadratureId=externalPotCorrQuadratureId;

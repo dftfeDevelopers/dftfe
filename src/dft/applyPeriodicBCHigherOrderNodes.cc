@@ -123,8 +123,8 @@ void exchangeMasterNodesList(std::vector<unsigned int> & masterNodeIdList,
 
 
 
-	template<unsigned int FEOrder>
-void dftClass<FEOrder>::applyPeriodicBCHigherOrderNodes()
+	template<unsigned int FEOrder,unsigned int FEOrderElectro>
+void dftClass<FEOrder,FEOrderElectro>::applyPeriodicBCHigherOrderNodes()
 
 {
 	double domainSizeX = d_domainBoundingVectors[0][0],domainSizeY = d_domainBoundingVectors[1][1],domainSizeZ=d_domainBoundingVectors[2][2];

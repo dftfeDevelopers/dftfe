@@ -23,8 +23,8 @@
  */
 
 
-	template<unsigned int FEOrder>
-void kohnShamDFTOperatorCUDAClass<FEOrder>::computeLocalHamiltonianTimesX(const double* src,
+	template<unsigned int FEOrder,unsigned int FEOrderElectro>
+void kohnShamDFTOperatorCUDAClass<FEOrder,FEOrderElectro>::computeLocalHamiltonianTimesX(const double* src,
 		const unsigned int numberWaveFunctions,
 		double* dst) 
 {

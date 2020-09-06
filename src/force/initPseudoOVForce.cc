@@ -16,8 +16,8 @@
 // @author Sambit Das (2018)
 //
 
-	template<unsigned int FEOrder>
-void forceClass<FEOrder>::computeElementalNonLocalPseudoOVDataForce()
+	template<unsigned int FEOrder,unsigned int FEOrderElectro>
+void forceClass<FEOrder, FEOrderElectro>::computeElementalNonLocalPseudoOVDataForce()
 {
 	//
 	//get the number of non-local atoms

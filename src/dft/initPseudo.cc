@@ -19,8 +19,8 @@
 //
 //Initialize rho by reading in single-atom electron-density and fit a spline
 //
-template<unsigned int FEOrder>
-	void dftClass<FEOrder>::initLocalPseudoPotential
+template<unsigned int FEOrder,unsigned int FEOrderElectro>
+	void dftClass<FEOrder,FEOrderElectro>::initLocalPseudoPotential
 (const DoFHandler<3> & _dofHandler,
  const unsigned int lpspQuadratureId,
  const dealii::MatrixFree<3,double> & _matrix_free_data,
@@ -425,8 +425,8 @@ template<unsigned int FEOrder>
 //
 //Initialize rho by reading in single-atom electron-density and fit a spline
 //
-template<unsigned int FEOrder>
-void dftClass<FEOrder>::initLocalPseudoPotential
+template<unsigned int FEOrder,unsigned int FEOrderElectro>
+void dftClass<FEOrder,FEOrderElectro>::initLocalPseudoPotential
 (const DoFHandler<3> & _dofHandler,
 const dealii::QGauss<3> & _quadrature,
 const dealii::MatrixFree<3,double> & _matrix_free_data,
@@ -724,8 +724,8 @@ if (dftParameters::verbosity>=1)
 	}
 */
 
-	template<unsigned int FEOrder>
-void dftClass<FEOrder>::initNonLocalPseudoPotential()
+	template<unsigned int FEOrder,unsigned int FEOrderElectro>
+void dftClass<FEOrder,FEOrderElectro>::initNonLocalPseudoPotential()
 {
 	d_pseudoWaveFunctionIdToFunctionIdDetails.clear();
 	d_deltaVlIdToFunctionIdDetails.clear();
@@ -1237,8 +1237,8 @@ void dftClass<FEOrder>::initNonLocalPseudoPotential()
 	return;
 }
 
-	template<unsigned int FEOrder>
-void dftClass<FEOrder>::computeSparseStructureNonLocalProjectors()
+	template<unsigned int FEOrder,unsigned int FEOrderElectro>
+void dftClass<FEOrder,FEOrderElectro>::computeSparseStructureNonLocalProjectors()
 {
 
 	//
@@ -1659,8 +1659,8 @@ void dftClass<FEOrder>::computeSparseStructureNonLocalProjectors()
 
 }
 
-	template<unsigned int FEOrder>
-void dftClass<FEOrder>::computeElementalProjectorKets()
+	template<unsigned int FEOrder,unsigned int FEOrderElectro>
+void dftClass<FEOrder,FEOrderElectro>::computeElementalProjectorKets()
 {
 
 	//

@@ -39,8 +39,8 @@ namespace dftfe
 	//=============================================================================================================================================
 	//				Following routine computes total density by summing over all the symmetry transformed points
 	//=============================================================================================================================================
-	template<unsigned int FEOrder>
-		void symmetryClass<FEOrder>::computeAndSymmetrize_rhoOut()
+	template<unsigned int FEOrder, unsigned int FEOrderElectro>
+		void symmetryClass<FEOrder,FEOrderElectro>::computeAndSymmetrize_rhoOut()
 		{
 			QGauss<3>  quadrature(C_num1DQuad<FEOrder>());
 			const unsigned int num_quad_points = quadrature.size();
@@ -192,8 +192,8 @@ namespace dftfe
 	//				        and scatters the density back to the corresponding processors
 	//=============================================================================================================================================
 	//=============================================================================================================================================
-	template<unsigned int FEOrder>
-		void symmetryClass<FEOrder>::computeLocalrhoOut()
+	template<unsigned int FEOrder, unsigned int FEOrderElectro>
+		void symmetryClass<FEOrder,FEOrderElectro>::computeLocalrhoOut()
 		{
 			std::vector<std::vector<distributedCPUVec<double>>> eigenVectors((1+dftParameters::spinPolarized)*dftPtr->d_kPointWeights.size());
 

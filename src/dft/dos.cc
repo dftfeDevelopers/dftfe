@@ -107,8 +107,8 @@ void loadSingleAtomPSIFiles(unsigned int Z,
 
 
 //compute fermi energy
-template<unsigned int FEOrder>
-void dftClass<FEOrder>::compute_tdos(const std::vector<std::vector<double>> & eigenValuesInput,
+template<unsigned int FEOrder,unsigned int FEOrderElectro>
+void dftClass<FEOrder,FEOrderElectro>::compute_tdos(const std::vector<std::vector<double>> & eigenValuesInput,
 		const std::string & dosFileName)
 {
 	computing_timer.enter_section("DOS computation");
@@ -206,8 +206,8 @@ void dftClass<FEOrder>::compute_tdos(const std::vector<std::vector<double>> & ei
 
 
 //compute local density of states
-template<unsigned int FEOrder>
-void dftClass<FEOrder>::compute_ldos(const std::vector<std::vector<double>> & eigenValuesInput,
+template<unsigned int FEOrder,unsigned int FEOrderElectro>
+void dftClass<FEOrder,FEOrderElectro>::compute_ldos(const std::vector<std::vector<double>> & eigenValuesInput,
 		const std::string & ldosFileName)
 {
 	computing_timer.enter_section("LDOS computation");
@@ -509,8 +509,8 @@ void dftClass<FEOrder>::compute_ldos(const std::vector<std::vector<double>> & ei
 			computing_timer.exit_section("LDOS computation");
 }
 
-template<unsigned int FEOrder>
-void dftClass<FEOrder>::compute_pdos(const std::vector<std::vector<double>> & eigenValuesInput,
+template<unsigned int FEOrder,unsigned int FEOrderElectro>
+void dftClass<FEOrder,FEOrderElectro>::compute_pdos(const std::vector<std::vector<double>> & eigenValuesInput,
 		const std::string & pdosFileName)
 {
 	

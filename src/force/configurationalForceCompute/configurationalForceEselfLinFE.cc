@@ -17,8 +17,8 @@
 //
 
 //compute configurational force contribution from nuclear self energy on the mesh nodes using linear shape function generators
-template<unsigned int FEOrder>
-	void forceClass<FEOrder>::computeConfigurationalForceEselfLinFE
+template<unsigned int FEOrder,unsigned int FEOrderElectro>
+	void forceClass<FEOrder,FEOrderElectro>::computeConfigurationalForceEselfLinFE
 (const DoFHandler<3> & dofHandlerElectro,
  const vselfBinsManager<FEOrder> & vselfBinsManagerElectro,
  const MatrixFree<3,double> & matrixFreeDataElectro,
@@ -302,8 +302,8 @@ template<unsigned int FEOrder>
 
 
 //compute configurational force on the mesh nodes using linear shape function generators
-	template<unsigned int FEOrder>
-void forceClass<FEOrder>::computeConfigurationalForcePhiExtLinFE()
+	template<unsigned int FEOrder,unsigned int FEOrderElectro>
+void forceClass<FEOrder,FEOrderElectro>::computeConfigurationalForcePhiExtLinFE()
 {
 
 	FEEvaluation<C_DIM,1,C_num1DQuad<FEOrder>(),C_DIM>  forceEval(dftPtr->matrix_free_data,d_forceDofHandlerIndex, 0);
@@ -327,8 +327,8 @@ void forceClass<FEOrder>::computeConfigurationalForcePhiExtLinFE()
 	}
 }
 
-	template<unsigned int FEOrder>
-void forceClass<FEOrder>::computeConfigurationalForceEselfNoSurfaceLinFE()
+	template<unsigned int FEOrder,unsigned int FEOrderElectro>
+void forceClass<FEOrder,FEOrderElectro>::computeConfigurationalForceEselfNoSurfaceLinFE()
 {
 	FEEvaluation<C_DIM,1,C_num1DQuad<FEOrder>(),C_DIM>  forceEval(dftPtr->matrix_free_data,d_forceDofHandlerIndex, 0);
 

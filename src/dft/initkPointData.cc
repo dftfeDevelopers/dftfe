@@ -122,8 +122,8 @@ namespace internaldft
 //				Not required in general, as one can use MP grid samplings to generate the k-grid
 //============================================================================================================================================
 //============================================================================================================================================ 
-	template<unsigned int FEOrder>
-void dftClass<FEOrder>::readkPointData()
+	template<unsigned int FEOrder,unsigned int FEOrderElectro>
+void dftClass<FEOrder,FEOrderElectro>::readkPointData()
 {
 	const int numberColumnskPointDataFile = 4;
 	std::vector<std::vector<double> > kPointData;
@@ -225,8 +225,8 @@ void dftClass<FEOrder>::readkPointData()
 //			           Following routine recomputes the cartesian k-points between successive relaxation steps
 //============================================================================================================================================
 //============================================================================================================================================ 
-	template<unsigned int FEOrder>
-void dftClass<FEOrder>::recomputeKPointCoordinates()
+	template<unsigned int FEOrder,unsigned int FEOrderElectro>
+void dftClass<FEOrder,FEOrderElectro>::recomputeKPointCoordinates()
 {
 	const std::array<unsigned int,3> periodic = {dftParameters::periodicX, dftParameters::periodicY, dftParameters::periodicZ};
 	d_reciprocalLatticeVectors=internaldft::getReciprocalLatticeVectors(d_domainBoundingVectors, periodic);
@@ -242,8 +242,8 @@ void dftClass<FEOrder>::recomputeKPointCoordinates()
 //				                        and scatter the k-points across pools
 //============================================================================================================================================
 //============================================================================================================================================ 
-	template<unsigned int FEOrder>
-void dftClass<FEOrder>::generateMPGrid()
+	template<unsigned int FEOrder,unsigned int FEOrderElectro>
+void dftClass<FEOrder,FEOrderElectro>::generateMPGrid()
 {
 	unsigned int nkx = dftParameters::nkx;
 	unsigned int nky = dftParameters::nky;

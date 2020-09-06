@@ -35,17 +35,17 @@ namespace dftfe {
 	 * @author Krishnendu Ghosh, krisg@umich.edu
 	 */
 
-	template <unsigned int FEOrder>
+	template <unsigned int FEOrder,unsigned int FEOrderElectro>
 		class symmetryClass
 		{
-			template <unsigned int T>
+			template <unsigned int T1, unsigned int T2>
 				friend class dftClass;
 
 			public:
 			/**
 			 * symmetryClass constructor
 			 */
-			symmetryClass(dftClass<FEOrder>* _dftPtr,const  MPI_Comm &mpi_comm_replica,const MPI_Comm &_interpoolcomm);
+			symmetryClass(dftClass<FEOrder,FEOrderElectro>* _dftPtr,const  MPI_Comm &mpi_comm_replica,const MPI_Comm &_interpoolcomm);
 			/**
 			 * Main driver routine to generate and communicate mapping tables
 			 */
@@ -72,7 +72,7 @@ namespace dftfe {
 
 
 			private:
-			dftClass<FEOrder>* dftPtr;
+			dftClass<FEOrder,FEOrderElectro>* dftPtr;
 			/**
 			 * dealii based FE data structres
 			 */

@@ -17,10 +17,10 @@
 //
 
 
-	template<unsigned int FEOrder>
-void dftClass<FEOrder>::computeElectrostaticEnergyHRefined(
+	template<unsigned int FEOrder,unsigned int FEOrderElectro>
+void dftClass<FEOrder,FEOrderElectro>::computeElectrostaticEnergyHRefined(
 #ifdef DFTFE_WITH_GPU
-		kohnShamDFTOperatorCUDAClass<FEOrder> & kohnShamDFTEigenOperator,
+		kohnShamDFTOperatorCUDAClass<FEOrder,FEOrderElectro> & kohnShamDFTEigenOperator,
 #endif
 		const bool computeForces)
 {

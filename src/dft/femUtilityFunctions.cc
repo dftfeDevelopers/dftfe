@@ -20,8 +20,8 @@
 //
 //interpolate nodal data to quadrature values using FEEvaluation
 //
-	template <unsigned int FEOrder>
-void dftClass<FEOrder>::interpolateNodalDataToQuadratureDataPRefinedQuadGeneral(dealii::MatrixFree<3,double> & matrixFreeData,
+	template <unsigned int FEOrder,unsigned int FEOrderElectro>
+void dftClass<FEOrder,FEOrderElectro>::interpolateNodalDataToQuadratureDataPRefinedQuadGeneral(dealii::MatrixFree<3,double> & matrixFreeData,
 		const distributedCPUVec<double> & nodalField,
 		std::map<dealii::CellId, std::vector<double> > & quadratureValueData,
 		std::map<dealii::CellId, std::vector<double> > & quadratureGradValueData,
@@ -35,7 +35,7 @@ void dftClass<FEOrder>::interpolateNodalDataToQuadratureDataPRefinedQuadGeneral(
 	if (isEvaluateHessianData)
 		quadratureHessianValueData.clear();
 
-	FEEvaluation<C_DIM,C_num1DKerkerPoly<FEOrder>(),C_num1DQuad<FEOrder>(),1,double> feEvalObj(matrixFreeData,0,1);
+	FEEvaluation<C_DIM,FEOrderElectro,C_num1DQuad<FEOrder>(),1,double> feEvalObj(matrixFreeData,0,1);
 	const unsigned int numQuadPoints = feEvalObj.n_q_points; 
 
   AssertThrow(matrixFreeData.get_quadrature(1).size() == numQuadPoints,
@@ -99,8 +99,8 @@ void dftClass<FEOrder>::interpolateNodalDataToQuadratureDataPRefinedQuadGeneral(
 
 
 
-	template <unsigned int FEOrder>
-void dftClass<FEOrder>::interpolateNodalDataToQuadratureDataPRefinedQuadLpsp(dealii::MatrixFree<3,double> & matrixFreeData,
+	template <unsigned int FEOrder,unsigned int FEOrderElectro>
+void dftClass<FEOrder,FEOrderElectro>::interpolateNodalDataToQuadratureDataPRefinedQuadLpsp(dealii::MatrixFree<3,double> & matrixFreeData,
 		const unsigned int dofHandlerId,
 		const unsigned int quadratureId,
 		const distributedCPUVec<double> & nodalField,
@@ -111,7 +111,7 @@ void dftClass<FEOrder>::interpolateNodalDataToQuadratureDataPRefinedQuadLpsp(dea
 
 	quadratureValueData.clear();
 	quadratureGradValueData.clear();
-  FEEvaluation<C_DIM,C_num1DKerkerPoly<FEOrder>(),C_num1DQuadLPSP<FEOrder>()*C_numCopies1DQuadLPSP(),1,double> feEvalObj(matrixFreeData,dofHandlerId,quadratureId);
+  FEEvaluation<C_DIM,FEOrderElectro,C_num1DQuadLPSP<FEOrder>()*C_numCopies1DQuadLPSP(),1,double> feEvalObj(matrixFreeData,dofHandlerId,quadratureId);
 	const unsigned int numQuadPoints = feEvalObj.n_q_points;
 
   AssertThrow(matrixFreeData.get_quadrature(quadratureId).size() == numQuadPoints,
@@ -158,8 +158,8 @@ void dftClass<FEOrder>::interpolateNodalDataToQuadratureDataPRefinedQuadLpsp(dea
 
 
 
-	template <unsigned int FEOrder>
-void dftClass<FEOrder>::interpolateNodalDataToQuadratureDataQuadGeneral(dealii::MatrixFree<3,double> & matrixFreeData,
+	template <unsigned int FEOrder,unsigned int FEOrderElectro>
+void dftClass<FEOrder,FEOrderElectro>::interpolateNodalDataToQuadratureDataQuadGeneral(dealii::MatrixFree<3,double> & matrixFreeData,
 		const unsigned int dofHandlerId,
 		const unsigned int quadratureId,
 		const distributedCPUVec<double> & nodalField,
@@ -216,8 +216,8 @@ void dftClass<FEOrder>::interpolateNodalDataToQuadratureDataQuadGeneral(dealii::
 }
 
 
-	template <unsigned int FEOrder>
-void dftClass<FEOrder>::interpolateFieldsFromPrevToCurrentMesh(std::vector<distributedCPUVec<double>*> fieldsPrevious,
+	template <unsigned int FEOrder,unsigned int FEOrderElectro>
+void dftClass<FEOrder,FEOrderElectro>::interpolateFieldsFromPrevToCurrentMesh(std::vector<distributedCPUVec<double>*> fieldsPrevious,
 		std::vector<distributedCPUVec<double>* > fieldsCurrent,
 		const dealii::FESystem<3> & FEPrev,
 		const dealii::FESystem<3> & FECurrent,
@@ -241,12 +241,12 @@ void dftClass<FEOrder>::interpolateFieldsFromPrevToCurrentMesh(std::vector<distr
 //
 //compute field l2 norm
 //
-	template <unsigned int FEOrder>
-double dftClass<FEOrder>::fieldGradl2Norm(const dealii::MatrixFree<3,double> & matrixFreeDataObject,
+	template <unsigned int FEOrder,unsigned int FEOrderElectro>
+double dftClass<FEOrder,FEOrderElectro>::fieldGradl2Norm(const dealii::MatrixFree<3,double> & matrixFreeDataObject,
 		const distributedCPUVec<double> & nodalField)
 
 {
-	FEEvaluation<C_DIM,C_num1DKerkerPoly<FEOrder>(),C_num1DQuad<C_num1DKerkerPoly<FEOrder>()>(),1,double> fe_evalField(matrixFreeDataObject);
+	FEEvaluation<C_DIM,FEOrderElectro,C_num1DQuadElectro<FEOrderElectro>(),1,double> fe_evalField(matrixFreeDataObject);
 	VectorizedArray<double> valueVectorized = make_vectorized_array(0.0);
 	const unsigned int numQuadPoints = fe_evalField.n_q_points;
 	for(unsigned int cell = 0; cell < matrixFreeDataObject.n_macro_cells(); ++cell)

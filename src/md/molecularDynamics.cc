@@ -190,8 +190,8 @@ namespace dftfe {
 	//
 	//constructor
 	//
-	template<unsigned int FEOrder>
-		molecularDynamics<FEOrder>::molecularDynamics(dftClass<FEOrder>* _dftPtr,const MPI_Comm &mpi_comm_replica):
+	template<unsigned int FEOrder, unsigned int FEOrderElectro>
+		molecularDynamics<FEOrder,FEOrderElectro>::molecularDynamics(dftClass<FEOrder,FEOrderElectro>* _dftPtr,const MPI_Comm &mpi_comm_replica):
 			dftPtr(_dftPtr),
 			mpi_communicator (mpi_comm_replica),
 			n_mpi_processes (Utilities::MPI::n_mpi_processes(mpi_comm_replica)),
@@ -203,8 +203,8 @@ namespace dftfe {
 
 
 
-	template<unsigned int FEOrder>
-		void molecularDynamics<FEOrder>::run()
+	template<unsigned int FEOrder, unsigned int FEOrderElectro>
+		void molecularDynamics<FEOrder,FEOrderElectro>::run()
 		{
 
 			//********************* Molecular dynamics simulation*****************************//
@@ -303,9 +303,9 @@ namespace dftfe {
 				c7=-1.0;
 			}
 
-			kohnShamDFTOperatorClass<FEOrder> kohnShamDFTEigenOperator(dftPtr,mpi_communicator);
+			kohnShamDFTOperatorClass<FEOrder,FEOrderElectro> kohnShamDFTEigenOperator(dftPtr,mpi_communicator);
 #ifdef DFTFE_WITH_GPU
-			kohnShamDFTOperatorCUDAClass<FEOrder> kohnShamDFTEigenOperatorCUDA(dftPtr,mpi_communicator);
+			kohnShamDFTOperatorCUDAClass<FEOrder,FEOrderElectro> kohnShamDFTEigenOperatorCUDA(dftPtr,mpi_communicator);
 #endif
 
 			const double diracDeltaKernelConstant=-dftParameters::diracDeltaKernelScalingConstant;
@@ -1734,8 +1734,8 @@ kohnShamDFTEigenOperatorCUDA
 		}
 
 
-	template<unsigned int FEOrder>
-		void molecularDynamics<FEOrder>::timingRun()
+	template<unsigned int FEOrder, unsigned int FEOrderElectro>
+		void molecularDynamics<FEOrder,FEOrderElectro>::timingRun()
 		{
 
 			//********************* Molecular dynamics simulation*****************************//
@@ -1834,9 +1834,9 @@ kohnShamDFTEigenOperatorCUDA
 				c7=-1.0;
 			}
 
-			kohnShamDFTOperatorClass<FEOrder> kohnShamDFTEigenOperator(dftPtr,mpi_communicator);
+			kohnShamDFTOperatorClass<FEOrder,FEOrderElectro> kohnShamDFTEigenOperator(dftPtr,mpi_communicator);
 #ifdef DFTFE_WITH_GPU
-			kohnShamDFTOperatorCUDAClass<FEOrder> kohnShamDFTEigenOperatorCUDA(dftPtr,mpi_communicator);
+			kohnShamDFTOperatorCUDAClass<FEOrder,FEOrderElectro> kohnShamDFTEigenOperatorCUDA(dftPtr,mpi_communicator);
 #endif
 
 			const double diracDeltaKernelConstant=-dftParameters::diracDeltaKernelScalingConstant;

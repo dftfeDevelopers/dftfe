@@ -21,8 +21,8 @@
 
 
 
-template<unsigned int FEOrder>
-void dftClass<FEOrder>::initBoundaryConditions(const bool meshOnlyDeformed){
+template<unsigned int FEOrder,unsigned int FEOrderElectro>
+void dftClass<FEOrder,FEOrderElectro>::initBoundaryConditions(const bool meshOnlyDeformed){
 	TimerOutput::Scope scope (computing_timer,"moved setup");
 
 	double init_dofhandlerobjs;
@@ -36,9 +36,11 @@ void dftClass<FEOrder>::initBoundaryConditions(const bool meshOnlyDeformed){
 
 	pcout << std::endl<<"Finite element mesh information"<<std::endl;
 	pcout<<"-------------------------------------------------"<<std::endl;
-	pcout << "number of elements: "
+	pcout << "Polynomial order: "<<FEOrder<<"\n"
+    <<"Polynomial order electrostatics: "<<FEOrderElectro<<"\n"
+    <<"number of elements: "
 		<< dofHandler.get_triangulation().n_global_active_cells()
-		<< std::endl
+		<< "\n"
 		<< "number of degrees of freedom: "
 		<< dofHandler.n_dofs()
 		<< std::endl;
@@ -238,7 +240,7 @@ void dftClass<FEOrder>::initBoundaryConditions(const bool meshOnlyDeformed){
 	quadratureVector.push_back(QGauss<1>(C_num1DQuad<FEOrder>()));
 	quadratureVector.push_back(QGaussLobatto<1>(FEOrder+1));
 	quadratureVector.push_back(QIterated<1>(QGauss<1>(C_num1DQuadNLPSP<FEOrder>()),C_numCopies1DQuadNLPSP()));
-	quadratureVector.push_back(QGaussLobatto<1>(C_num1DKerkerPoly<FEOrder>()+1));
+	quadratureVector.push_back(QGaussLobatto<1>(FEOrderElectro+1));
   quadratureVector.push_back(QIterated<1>(QGauss<1>(C_num1DQuadSmearedCharge<FEOrder>()),C_numCopies1DQuadSmearedCharge()));
 	quadratureVector.push_back(QIterated<1>(QGauss<1>(C_num1DQuadLPSP<FEOrder>()),C_numCopies1DQuadLPSP()));
 

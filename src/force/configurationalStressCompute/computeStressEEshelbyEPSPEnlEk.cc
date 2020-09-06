@@ -17,8 +17,8 @@
 //
 #ifdef USE_COMPLEX
 //compute configurational stress contribution from all terms except the nuclear self energy
-	template<unsigned int FEOrder>
-void forceClass<FEOrder>::computeStressEEshelbyEPSPEnlEk(const MatrixFree<3,double> & matrixFreeData,
+	template<unsigned int FEOrder,unsigned int FEOrderElectro>
+void forceClass<FEOrder,FEOrderElectro>::computeStressEEshelbyEPSPEnlEk(const MatrixFree<3,double> & matrixFreeData,
 		const unsigned int eigenDofHandlerIndex,
 		const unsigned int phiTotDofHandlerIndex,
     const unsigned int smearedChargeQuadratureId,
@@ -491,8 +491,8 @@ void forceClass<FEOrder>::computeStressEEshelbyEPSPEnlEk(const MatrixFree<3,doub
 		 vselfBinsManagerElectro);
 }
 
-template<unsigned int FEOrder>
-	void forceClass<FEOrder>::computeStressEEshelbyEElectroPhiTot
+template<unsigned int FEOrder,unsigned int FEOrderElectro>
+	void forceClass<FEOrder,FEOrderElectro>::computeStressEEshelbyEElectroPhiTot
 (const MatrixFree<3,double> & matrixFreeDataElectro,
  const unsigned int phiTotDofHandlerIndexElectro,
  const unsigned int smearedChargeQuadratureId,

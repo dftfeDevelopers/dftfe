@@ -20,8 +20,8 @@
 
 //
 //
-	template<unsigned int FEOrder>
-void dftClass<FEOrder>::saveTriaInfoAndRhoData()
+	template<unsigned int FEOrder,unsigned int FEOrderElectro>
+void dftClass<FEOrder,FEOrderElectro>::saveTriaInfoAndRhoData()
 {
 	pcout<< "Checkpointing tria info and rho data in progress..." << std::endl;
 	std::vector<const std::map<dealii::CellId, std::vector<double> > *>  cellQuadDataContainerIn;
@@ -80,8 +80,8 @@ void dftClass<FEOrder>::saveTriaInfoAndRhoData()
 	pcout<< "...checkpointing done." << std::endl;
 }
 
-	template<unsigned int FEOrder>
-void dftClass<FEOrder>::saveTriaInfoAndRhoNodalData()
+	template<unsigned int FEOrder,unsigned int FEOrderElectro>
+void dftClass<FEOrder,FEOrderElectro>::saveTriaInfoAndRhoNodalData()
 {
 	pcout<< "Checkpointing tria info and rho data in progress..." << std::endl;
 
@@ -114,7 +114,7 @@ void dftClass<FEOrder>::saveTriaInfoAndRhoNodalData()
 		solutionVectors.push_back(&tempVec);
 	}
 
-	d_mesh.saveTriangulationsSolutionVectors(C_num1DKerkerPoly<FEOrder>(),
+	d_mesh.saveTriangulationsSolutionVectors(FEOrderElectro,
 			1,
 			solutionVectors,
 			interpoolcomm,
@@ -125,8 +125,8 @@ void dftClass<FEOrder>::saveTriaInfoAndRhoNodalData()
 
 //
 //
-	template<unsigned int FEOrder>
-void dftClass<FEOrder>::loadTriaInfoAndRhoData()
+	template<unsigned int FEOrder,unsigned int FEOrderElectro>
+void dftClass<FEOrder,FEOrderElectro>::loadTriaInfoAndRhoData()
 {
 	pcout<< "Reading tria info and rho data from checkpoint in progress..." << std::endl;
 	//read mixing history size of the rhoData to be read in the next step
@@ -274,8 +274,8 @@ void dftClass<FEOrder>::loadTriaInfoAndRhoData()
 	pcout<< "...Reading from checkpoint done." << std::endl;
 }
 
-	template<unsigned int FEOrder>
-void dftClass<FEOrder>::loadTriaInfoAndRhoNodalData()
+	template<unsigned int FEOrder,unsigned int FEOrderElectro>
+void dftClass<FEOrder,FEOrderElectro>::loadTriaInfoAndRhoNodalData()
 {
 	pcout<< "Reading tria info and rho data from checkpoint in progress..." << std::endl;
 	//read rho data from checkpoint file
@@ -293,15 +293,15 @@ void dftClass<FEOrder>::loadTriaInfoAndRhoNodalData()
 		solutionVectors.push_back(&d_rhoInNodalValuesRead);
 	}
 
-	d_mesh.loadTriangulationsSolutionVectors(C_num1DKerkerPoly<FEOrder>(),
+	d_mesh.loadTriangulationsSolutionVectors(FEOrderElectro,
 			1,
 			solutionVectors);
 
 	pcout<< "...Reading from checkpoint done." << std::endl;
 }
 
-	template<unsigned int FEOrder>
-void dftClass<FEOrder>::writeDomainAndAtomCoordinates()
+	template<unsigned int FEOrder,unsigned int FEOrderElectro>
+void dftClass<FEOrder,FEOrderElectro>::writeDomainAndAtomCoordinates()
 {
 	dftUtils::writeDataIntoFile(d_domainBoundingVectors,
 			"domainBoundingVectors.chk");

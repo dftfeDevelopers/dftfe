@@ -17,8 +17,8 @@
 //
 #ifdef USE_COMPLEX
 //compute configurational stress contribution from all terms except the nuclear self energy
-template<unsigned int FEOrder>
-	void forceClass<FEOrder>::computeStressSpinPolarizedEEshelbyEPSPEnlEk
+template<unsigned int FEOrder,unsigned int FEOrderElectro>
+	void forceClass<FEOrder,FEOrderElectro>::computeStressSpinPolarizedEEshelbyEPSPEnlEk
 (const MatrixFree<3,double> & matrixFreeData,
  const unsigned int eigenDofHandlerIndex,
  const unsigned int phiTotDofHandlerIndex,

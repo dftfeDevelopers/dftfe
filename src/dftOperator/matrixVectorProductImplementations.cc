@@ -23,8 +23,8 @@
  */
 
 #ifdef USE_COMPLEX
-template<unsigned int FEOrder>
-void kohnShamDFTOperatorClass<FEOrder>::computeLocalHamiltonianTimesX(const distributedCPUVec<std::complex<double> > & src,
+template<unsigned int FEOrder,unsigned int FEOrderElectro>
+void kohnShamDFTOperatorClass<FEOrder,FEOrderElectro>::computeLocalHamiltonianTimesX(const distributedCPUVec<std::complex<double> > & src,
 		const unsigned int numberWaveFunctions,
 		distributedCPUVec<std::complex<double> > & dst) const
 {
@@ -86,8 +86,8 @@ void kohnShamDFTOperatorClass<FEOrder>::computeLocalHamiltonianTimesX(const dist
 }
 
 #ifdef WITH_MKL
-template<unsigned int FEOrder>
-void kohnShamDFTOperatorClass<FEOrder>::computeLocalHamiltonianTimesXBatchGEMM (const distributedCPUVec<std::complex<double> > & src,
+template<unsigned int FEOrder,unsigned int FEOrderElectro>
+void kohnShamDFTOperatorClass<FEOrder,FEOrderElectro>::computeLocalHamiltonianTimesXBatchGEMM (const distributedCPUVec<std::complex<double> > & src,
 		const unsigned int numberWaveFunctions,
 		distributedCPUVec<std::complex<double> > & dst) const
 
@@ -175,8 +175,8 @@ void kohnShamDFTOperatorClass<FEOrder>::computeLocalHamiltonianTimesXBatchGEMM (
 
 #endif
 #else
-template<unsigned int FEOrder>
-void kohnShamDFTOperatorClass<FEOrder>::computeLocalHamiltonianTimesX(const distributedCPUVec<double> & src,
+template<unsigned int FEOrder,unsigned int FEOrderElectro>
+void kohnShamDFTOperatorClass<FEOrder,FEOrderElectro>::computeLocalHamiltonianTimesX(const distributedCPUVec<double> & src,
 		const unsigned int numberWaveFunctions,
 		distributedCPUVec<double> & dst) const
 {
@@ -238,8 +238,8 @@ void kohnShamDFTOperatorClass<FEOrder>::computeLocalHamiltonianTimesX(const dist
 
 }
 
-template<unsigned int FEOrder>
-void kohnShamDFTOperatorClass<FEOrder>::computeMassMatrixTimesX(const distributedCPUVec<double> & src,
+template<unsigned int FEOrder,unsigned int FEOrderElectro>
+void kohnShamDFTOperatorClass<FEOrder,FEOrderElectro>::computeMassMatrixTimesX(const distributedCPUVec<double> & src,
 		const unsigned int numberWaveFunctions,
 		distributedCPUVec<double> & dst) const
 {
@@ -301,8 +301,8 @@ void kohnShamDFTOperatorClass<FEOrder>::computeMassMatrixTimesX(const distribute
 }
 
 #ifdef WITH_MKL
-template<unsigned int FEOrder>
-void kohnShamDFTOperatorClass<FEOrder>::computeLocalHamiltonianTimesXBatchGEMM (const distributedCPUVec<double> & src,
+template<unsigned int FEOrder,unsigned int FEOrderElectro>
+void kohnShamDFTOperatorClass<FEOrder,FEOrderElectro>::computeLocalHamiltonianTimesXBatchGEMM (const distributedCPUVec<double> & src,
 		const unsigned int numberWaveFunctions,
 		distributedCPUVec<double> & dst) const
 {

@@ -18,8 +18,8 @@
 
 //source file for electron density related computations
 
-	template<unsigned int FEOrder>
-void dftClass<FEOrder>::popOutRhoInRhoOutVals()
+	template<unsigned int FEOrder,unsigned int FEOrderElectro>
+void dftClass<FEOrder,FEOrderElectro>::popOutRhoInRhoOutVals()
 {
 
 	//pop out rhoInVals and rhoOutVals if their size exceeds mixing history size
@@ -76,10 +76,10 @@ void dftClass<FEOrder>::popOutRhoInRhoOutVals()
 
 
 //calculate electron density
-	template<unsigned int FEOrder>
-void dftClass<FEOrder>::compute_rhoOut(
+	template<unsigned int FEOrder,unsigned int FEOrderElectro>
+void dftClass<FEOrder,FEOrderElectro>::compute_rhoOut(
 #ifdef DFTFE_WITH_GPU
-		kohnShamDFTOperatorCUDAClass<FEOrder> & kohnShamDFTEigenOperator,
+		kohnShamDFTOperatorCUDAClass<FEOrder,FEOrderElectro> & kohnShamDFTEigenOperator,
 #endif
 		const bool isConsiderSpectrumSplitting,
 		const bool isGroundState)
@@ -131,7 +131,7 @@ void dftClass<FEOrder>::compute_rhoOut(
 				gradRhoOutValuesSpinPolarized = &(gradRhoOutValsSpinPolarized.back());
 		}
 
-		DensityCalculator<FEOrder> densityCalculator;
+		DensityCalculator<FEOrder,FEOrderElectro> densityCalculator;
 
 #ifdef DFTFE_WITH_GPU
 		if (dftParameters::useGPU)
@@ -280,8 +280,8 @@ void dftClass<FEOrder>::compute_rhoOut(
 
 
 
-template<unsigned int FEOrder>
-	void dftClass<FEOrder>::resizeAndAllocateRhoTableStorage
+template<unsigned int FEOrder,unsigned int FEOrderElectro>
+	void dftClass<FEOrder,FEOrderElectro>::resizeAndAllocateRhoTableStorage
 (std::deque<std::map<dealii::CellId,std::vector<double> >> & rhoVals,
  std::deque<std::map<dealii::CellId,std::vector<double> >> & gradRhoVals,
  std::deque<std::map<dealii::CellId,std::vector<double> >> & rhoValsSpinPolarized,
@@ -323,8 +323,8 @@ template<unsigned int FEOrder>
 
 
 //rho data reinitilization without remeshing. The rho out of last ground state solve is made the rho in of the new solve
-	template<unsigned int FEOrder>
-void dftClass<FEOrder>::noRemeshRhoDataInit()
+	template<unsigned int FEOrder,unsigned int FEOrderElectro>
+void dftClass<FEOrder,FEOrderElectro>::noRemeshRhoDataInit()
 {
 
 	if (rhoOutVals.size()>0 || d_rhoInNodalVals.size()>0)
@@ -417,10 +417,10 @@ void dftClass<FEOrder>::noRemeshRhoDataInit()
 	}
 }
 
-	template <unsigned int FEOrder>
-void dftClass<FEOrder>::computeRhoNodalFromPSI(
+	template <unsigned int FEOrder,unsigned int FEOrderElectro>
+void dftClass<FEOrder,FEOrderElectro>::computeRhoNodalFromPSI(
 #ifdef DFTFE_WITH_GPU
-		kohnShamDFTOperatorCUDAClass<FEOrder> & kohnShamDFTEigenOperator,
+		kohnShamDFTOperatorCUDAClass<FEOrder,FEOrderElectro> & kohnShamDFTEigenOperator,
 #endif
 		bool isConsiderSpectrumSplitting)
 {
@@ -430,7 +430,7 @@ void dftClass<FEOrder>::computeRhoNodalFromPSI(
 	const unsigned int dofs_per_cell = d_dofHandlerPRefined.get_fe().dofs_per_cell;
 	typename DoFHandler<3>::active_cell_iterator cell = d_dofHandlerPRefined.begin_active(), endc = d_dofHandlerPRefined.end();
 	const dealii::IndexSet & locallyOwnedDofs = d_dofHandlerPRefined.locally_owned_dofs();
-	QGaussLobatto<3>  quadrature_formula(C_num1DKerkerPoly<FEOrder>()+1);
+	QGaussLobatto<3>  quadrature_formula(FEOrderElectro+1);
 	const unsigned int numQuadPoints = quadrature_formula.size();
 
 	AssertThrow(numQuadPoints == matrix_free_data.get_n_q_points(3),ExcMessage("Number of quadrature points from Quadrature object does not match with number of quadrature points obtained from matrix_free object"));
@@ -490,7 +490,7 @@ void dftClass<FEOrder>::computeRhoNodalFromPSI(
 		}
 
 
-	DensityCalculator<FEOrder> densityCalculator;  
+	DensityCalculator<FEOrder,FEOrderElectro> densityCalculator;  
 
 	//compute rho from wavefunctions at nodal locations of 2p DoFHandler nodes in each cell
 #ifdef DFTFE_WITH_GPU

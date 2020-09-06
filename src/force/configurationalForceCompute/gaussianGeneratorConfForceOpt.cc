@@ -352,8 +352,8 @@ getMinDistanceFromImageToCell(const std::vector<double> & latticeVectors,
 }
 }
 //Configurational force on atoms corresponding to Gaussian generator. Generator is discretized using linear FE shape functions. Configurational force on nodes due to linear FE shape functions precomputed
-	template<unsigned int FEOrder>
-void forceClass<FEOrder>::computeAtomsForcesGaussianGenerator(bool allowGaussianOverlapOnAtoms)
+	template<unsigned int FEOrder,unsigned int FEOrderElectro>
+void forceClass<FEOrder,FEOrderElectro>::computeAtomsForcesGaussianGenerator(bool allowGaussianOverlapOnAtoms)
 {
 	unsigned int vertices_per_cell=GeometryInfo<C_DIM>::vertices_per_cell;
 	const std::vector<std::vector<double> > & atomLocations=dftPtr->atomLocations;
@@ -657,8 +657,8 @@ void forceClass<FEOrder>::computeAtomsForcesGaussianGenerator(bool allowGaussian
 
 }
 
-	template<unsigned int FEOrder>
-void forceClass<FEOrder>::printAtomsForces()
+	template<unsigned int FEOrder,unsigned int FEOrderElectro>
+void forceClass<FEOrder,FEOrderElectro>::printAtomsForces()
 {
 	const int numberGlobalAtoms = dftPtr->atomLocations.size();
 	if (!dftParameters::reproducible_output)

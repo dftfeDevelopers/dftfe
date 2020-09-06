@@ -17,8 +17,8 @@
 //
 
 //(locally used function) compute FPhiTotSmearedCharges contibution due to Gamma(Rj) for given set of cells
-template<unsigned int FEOrder>
-	void forceClass<FEOrder>::FPhiTotSmearedChargesGammaAtomsElementalContribution
+template<unsigned int FEOrder,unsigned int FEOrderElectro>
+	void forceClass<FEOrder,FEOrderElectro>::FPhiTotSmearedChargesGammaAtomsElementalContribution
 (std::map<unsigned int, std::vector<double> > & forceContributionSmearedChargesGammaAtoms,
  FEEvaluation<3,1,C_num1DQuadSmearedCharge<FEOrder>()*C_numCopies1DQuadSmearedCharge(),3>  & forceEval,
  const MatrixFree<3,double> & matrixFreeData,
@@ -73,8 +73,8 @@ template<unsigned int FEOrder>
 }
 
 //(locally used function) compute FVselfSmearedCharges contibution due to Gamma(Rj) for given set of cells
-template<unsigned int FEOrder>
-	void forceClass<FEOrder>::FVselfSmearedChargesGammaAtomsElementalContribution
+template<unsigned int FEOrder,unsigned int FEOrderElectro>
+	void forceClass<FEOrder,FEOrderElectro>::FVselfSmearedChargesGammaAtomsElementalContribution
 (std::map<unsigned int, std::vector<double> > & forceContributionSmearedChargesGammaAtoms,
  FEEvaluation<3,1,C_num1DQuadSmearedCharge<FEOrder>()*C_numCopies1DQuadSmearedCharge(),3>  & forceEval,
  const MatrixFree<3,double> & matrixFreeData,

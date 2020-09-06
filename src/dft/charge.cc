@@ -21,8 +21,8 @@
 //
 //compute total charge using quad point values
 //
-	template <unsigned int FEOrder>
-double dftClass<FEOrder>::totalCharge(const dealii::DoFHandler<3> & dofHandlerOfField,
+	template <unsigned int FEOrder,unsigned int FEOrderElectro>
+double dftClass<FEOrder,FEOrderElectro>::totalCharge(const dealii::DoFHandler<3> & dofHandlerOfField,
 		const std::map<dealii::CellId, std::vector<double> > *rhoQuadValues)
 {
 	double normValue = 0.0;
@@ -50,8 +50,8 @@ double dftClass<FEOrder>::totalCharge(const dealii::DoFHandler<3> & dofHandlerOf
 //
 //compute total charge using nodal point values 
 //
-	template <unsigned int FEOrder>
-double dftClass<FEOrder>::totalCharge(const dealii::DoFHandler<3> & dofHandlerOfField,
+	template <unsigned int FEOrder,unsigned int FEOrderElectro>
+double dftClass<FEOrder,FEOrderElectro>::totalCharge(const dealii::DoFHandler<3> & dofHandlerOfField,
 		const distributedCPUVec<double> & rhoNodalField)
 {
 	double normValue = 0.0;
@@ -82,8 +82,8 @@ double dftClass<FEOrder>::totalCharge(const dealii::DoFHandler<3> & dofHandlerOf
 //
 //compute total charge using nodal point values by filling the quadrature point values of the nodal field
 //
-	template <unsigned int FEOrder>
-double dftClass<FEOrder>::totalCharge(const dealii::DoFHandler<3> & dofHandlerOfField,
+	template <unsigned int FEOrder,unsigned int FEOrderElectro>
+double dftClass<FEOrder,FEOrderElectro>::totalCharge(const dealii::DoFHandler<3> & dofHandlerOfField,
 		const distributedCPUVec<double> & rhoNodalField,
 		std::map<dealii::CellId,std::vector<double> > & rhoQuadValues)
 {
@@ -117,11 +117,11 @@ double dftClass<FEOrder>::totalCharge(const dealii::DoFHandler<3> & dofHandlerOf
 //
 //compute total charge using nodal point values by using FEEvaluation object
 //
-	template <unsigned int FEOrder>
-double dftClass<FEOrder>::totalCharge(const dealii::MatrixFree<3,double> & matrixFreeDataObject,
+	template <unsigned int FEOrder,unsigned int FEOrderElectro>
+double dftClass<FEOrder,FEOrderElectro>::totalCharge(const dealii::MatrixFree<3,double> & matrixFreeDataObject,
 		const distributedCPUVec<double> & nodalField)
 {
-	FEEvaluation<C_DIM,C_num1DKerkerPoly<FEOrder>(),C_num1DQuadKerker<C_num1DKerkerPoly<FEOrder>()>(),1,double> fe_evalField(matrixFreeDataObject);
+	FEEvaluation<C_DIM,FEOrderElectro,C_num1DQuadElectro<FEOrderElectro>(),1,double> fe_evalField(matrixFreeDataObject);
 	VectorizedArray<double> normValueVectorized = make_vectorized_array(0.0);
 	const unsigned int numQuadPoints = fe_evalField.n_q_points;
 	for(unsigned int cell = 0; cell < matrixFreeDataObject.n_macro_cells(); ++cell)
@@ -151,8 +151,8 @@ double dftClass<FEOrder>::totalCharge(const dealii::MatrixFree<3,double> & matri
 //
 //compute total charge
 //
-template <unsigned int FEOrder>
-double dftClass<FEOrder>::totalMagnetization(const std::map<dealii::CellId, std::vector<double> > *rhoQuadValues){
+template <unsigned int FEOrder,unsigned int FEOrderElectro>
+double dftClass<FEOrder,FEOrderElectro>::totalMagnetization(const std::map<dealii::CellId, std::vector<double> > *rhoQuadValues){
 	double normValue=0.0;
 	QGauss<3>  quadrature_formula(C_num1DQuad<FEOrder>());
 	FEValues<3> fe_values (FE, quadrature_formula, update_JxW_values);
@@ -176,12 +176,12 @@ double dftClass<FEOrder>::totalMagnetization(const std::map<dealii::CellId, std:
 //
 //compute field l2 norm
 //
-	template <unsigned int FEOrder>
-double dftClass<FEOrder>::fieldl2Norm(const dealii::MatrixFree<3,double> & matrixFreeDataObject,
+	template <unsigned int FEOrder,unsigned int FEOrderElectro>
+double dftClass<FEOrder,FEOrderElectro>::fieldl2Norm(const dealii::MatrixFree<3,double> & matrixFreeDataObject,
 		const distributedCPUVec<double> & nodalField)
 
 {
-	FEEvaluation<C_DIM,C_num1DKerkerPoly<FEOrder>(),C_num1DQuadKerker<C_num1DKerkerPoly<FEOrder>()>(),1,double> fe_evalField(matrixFreeDataObject);
+	FEEvaluation<C_DIM,FEOrderElectro,C_num1DQuadElectro<FEOrderElectro>(),1,double> fe_evalField(matrixFreeDataObject);
 	VectorizedArray<double> normValueVectorized = make_vectorized_array(0.0);
 	const unsigned int numQuadPoints = fe_evalField.n_q_points;
 	for(unsigned int cell = 0; cell < matrixFreeDataObject.n_macro_cells(); ++cell)

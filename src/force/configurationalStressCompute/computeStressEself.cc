@@ -18,8 +18,8 @@
 
 #ifdef USE_COMPLEX
 //compute stress contribution from nuclear self energy
-	template<unsigned int FEOrder>
-void forceClass<FEOrder>::computeStressEself(const DoFHandler<3> & dofHandlerElectro,
+	template<unsigned int FEOrder,unsigned int FEOrderElectro>
+void forceClass<FEOrder,FEOrderElectro>::computeStressEself(const DoFHandler<3> & dofHandlerElectro,
 					const vselfBinsManager<FEOrder>   & vselfBinsManagerElectro,
           const MatrixFree<3,double> & matrixFreeDataElectro,
           const unsigned int smearedChargeQuadratureId)

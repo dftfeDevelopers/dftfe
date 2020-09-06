@@ -54,11 +54,11 @@ namespace internalforce
 }
 
 //compute configurational force contribution from all terms except the nuclear self energy
-template<unsigned int FEOrder>
-	void forceClass<FEOrder>::computeConfigurationalForceEEshelbyTensorFPSPFnlLinFE
+template<unsigned int FEOrder,unsigned int FEOrderElectro>
+	void forceClass<FEOrder,FEOrderElectro>::computeConfigurationalForceEEshelbyTensorFPSPFnlLinFE
 (const MatrixFree<3,double> & matrixFreeData,
 #ifdef DFTFE_WITH_GPU
- kohnShamDFTOperatorCUDAClass<FEOrder> & kohnShamDFTEigenOperator,
+ kohnShamDFTOperatorCUDAClass<FEOrder,FEOrderElectro> & kohnShamDFTEigenOperator,
 #endif
  const unsigned int eigenDofHandlerIndex,
  const unsigned int phiTotDofHandlerIndex,
@@ -1279,8 +1279,8 @@ template<unsigned int FEOrder>
 	}
 }
 
-template<unsigned int FEOrder>
-	void forceClass<FEOrder>::computeConfigurationalForceEEshelbyEElectroPhiTot
+template<unsigned int FEOrder,unsigned int FEOrderElectro>
+	void forceClass<FEOrder,FEOrderElectro>::computeConfigurationalForceEEshelbyEElectroPhiTot
 (const MatrixFree<3,double> & matrixFreeDataElectro,
  const unsigned int phiTotDofHandlerIndexElectro,
  const unsigned int smearedChargeQuadratureId,

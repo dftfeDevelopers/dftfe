@@ -27,8 +27,8 @@
 //
 
 
-	template<unsigned int FEOrder>
-void dftClass<FEOrder>::initUnmovedTriangulation(parallel::distributed::Triangulation<3> & triangulation)
+	template<unsigned int FEOrder,unsigned int FEOrderElectro>
+void dftClass<FEOrder,FEOrderElectro>::initUnmovedTriangulation(parallel::distributed::Triangulation<3> & triangulation)
 {
 	computing_timer.enter_section("unmoved setup");
 

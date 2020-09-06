@@ -89,8 +89,8 @@ namespace internal {
 }
 
 //compute fermi energy
-	template<unsigned int FEOrder>
-void dftClass<FEOrder>::compute_fermienergy(const std::vector<std::vector<double>> & eigenValuesInput,
+	template<unsigned int FEOrder,unsigned int FEOrderElectro>
+void dftClass<FEOrder,FEOrderElectro>::compute_fermienergy(const std::vector<std::vector<double>> & eigenValuesInput,
 		const double numElectronsInput)
 {
 
@@ -229,8 +229,8 @@ void dftClass<FEOrder>::compute_fermienergy(const std::vector<std::vector<double
 		pcout<< "Fermi energy                                     : "<< fermiEnergy<<std::endl;
 }
 //compute fermi energy constrained magnetization
-	template<unsigned int FEOrder>
-void dftClass<FEOrder>::compute_fermienergy_constraintMagnetization(const std::vector<std::vector<double>> & eigenValuesInput)
+	template<unsigned int FEOrder,unsigned int FEOrderElectro>
+void dftClass<FEOrder,FEOrderElectro>::compute_fermienergy_constraintMagnetization(const std::vector<std::vector<double>> & eigenValuesInput)
 {
 
 	int countUp =  numElectronsUp;

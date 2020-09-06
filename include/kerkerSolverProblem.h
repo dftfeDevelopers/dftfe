@@ -24,12 +24,12 @@
 namespace dftfe {
 
 	/**
-	 * @brief poisson solver problem class template. template parameter FEOrder
-	 * is the finite element polynomial order
+	 * @brief poisson solver problem class template. template parameter FEOrderElectro
+	 * is the finite element polynomial order for electrostatics
 	 *
 	 * @author Phani Motamarri
 	 */
-	template<unsigned int FEOrder>
+	template<unsigned int FEOrderElectro>
 		class kerkerSolverProblem: public dealiiLinearSolverProblem {
 
 			public:

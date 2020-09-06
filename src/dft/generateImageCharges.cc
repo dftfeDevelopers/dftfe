@@ -317,8 +317,8 @@ namespace internaldft
 		}
 }
 
-template<unsigned int FEOrder>
-	void dftClass<FEOrder>::generateImageCharges
+template<unsigned int FEOrder,unsigned int FEOrderElectro>
+	void dftClass<FEOrder,FEOrderElectro>::generateImageCharges
 (const double pspCutOff,
  std::vector<int> & imageIds,
  std::vector<double> & imageCharges,
@@ -486,8 +486,8 @@ template<unsigned int FEOrder>
 	}
 }
 
-template<unsigned int FEOrder>
-	void dftClass<FEOrder>::createMasterChargeIdToImageIdMaps
+template<unsigned int FEOrder,unsigned int FEOrderElectro>
+	void dftClass<FEOrder,FEOrderElectro>::createMasterChargeIdToImageIdMaps
 (const double pspCutOff,
  const std::vector<int> & imageIds,
  const std::vector<std::vector<double> > & imagePositions,

@@ -21,8 +21,8 @@
 //
 #include <dftParameters.h>
 
-	template<unsigned int FEOrder>
-void dftClass<FEOrder>::clearRhoData()
+	template<unsigned int FEOrder,unsigned int FEOrderElectro>
+void dftClass<FEOrder,FEOrderElectro>::clearRhoData()
 {
 	rhoInVals.clear();
 	rhoOutVals.clear();
@@ -40,8 +40,8 @@ void dftClass<FEOrder>::clearRhoData()
 	d_rhoOutNodalVals.clear();
 }
 
-	template<unsigned int FEOrder>
-void dftClass<FEOrder>::initRho()
+	template<unsigned int FEOrder,unsigned int FEOrderElectro>
+void dftClass<FEOrder,FEOrderElectro>::initRho()
 {
 	computing_timer.enter_section("initialize density");
 
@@ -434,8 +434,8 @@ void dftClass<FEOrder>::initRho()
 //
 //
 //
-	template <unsigned int FEOrder>
-void dftClass<FEOrder>::computeRhoInitialGuessFromPSI(std::vector<std::vector<distributedCPUVec<double>>> eigenVectors)
+	template <unsigned int FEOrder,unsigned int FEOrderElectro>
+void dftClass<FEOrder,FEOrderElectro>::computeRhoInitialGuessFromPSI(std::vector<std::vector<distributedCPUVec<double>>> eigenVectors)
 
 {
 	computing_timer.enter_section("initialize density");
@@ -697,8 +697,8 @@ void dftClass<FEOrder>::computeRhoInitialGuessFromPSI(std::vector<std::vector<di
 	computing_timer.exit_section("initialize density");
 }
 
-	template <unsigned int FEOrder>
-void dftClass<FEOrder>::computeNodalRhoFromQuadData()
+	template <unsigned int FEOrder,unsigned int FEOrderElectro>
+void dftClass<FEOrder,FEOrderElectro>::computeNodalRhoFromQuadData()
 {
 	//
 	//compute nodal electron-density from cell quadrature data
@@ -769,8 +769,8 @@ void dftClass<FEOrder>::computeNodalRhoFromQuadData()
 	}
 }
 
-	template <unsigned int FEOrder>
-void dftClass<FEOrder>::initRhoFromPreviousGroundStateRho()
+	template <unsigned int FEOrder,unsigned int FEOrderElectro>
+void dftClass<FEOrder,FEOrderElectro>::initRhoFromPreviousGroundStateRho()
 
 {
 	computing_timer.enter_section("init density from prev gs density");
@@ -943,8 +943,8 @@ void dftClass<FEOrder>::initRhoFromPreviousGroundStateRho()
 //
 //Normalize rho
 //
-	template<unsigned int FEOrder>
-void dftClass<FEOrder>::normalizeRho()
+	template<unsigned int FEOrder,unsigned int FEOrderElectro>
+void dftClass<FEOrder,FEOrderElectro>::normalizeRho()
 {
 	QGauss<3>  quadrature_formula(C_num1DQuad<FEOrder>());
 	const unsigned int n_q_points    = quadrature_formula.size();
@@ -990,8 +990,8 @@ void dftClass<FEOrder>::normalizeRho()
 //
 //Normalize rho
 //
-	template<unsigned int FEOrder>
-void dftClass<FEOrder>::normalizeAtomicRhoQuadValues()
+	template<unsigned int FEOrder,unsigned int FEOrderElectro>
+void dftClass<FEOrder,FEOrderElectro>::normalizeAtomicRhoQuadValues()
 {
 
 	const double charge = totalCharge(dofHandler,
@@ -1034,8 +1034,8 @@ void dftClass<FEOrder>::normalizeAtomicRhoQuadValues()
 		pcout<<"Total charge rho single atomic after normalizing: "<< chargeAfterScaling<<std::endl;
 }
 
-	template<unsigned int FEOrder>
-void dftClass<FEOrder>::initAtomicRho(distributedCPUVec<double> & atomicRho)
+	template<unsigned int FEOrder,unsigned int FEOrderElectro>
+void dftClass<FEOrder,FEOrderElectro>::initAtomicRho(distributedCPUVec<double> & atomicRho)
 {
 	computing_timer.enter_section("initialize atomic density for xl bomd");
 
@@ -1178,7 +1178,7 @@ void dftClass<FEOrder>::initAtomicRho(distributedCPUVec<double> & atomicRho)
 			atomicRho);
 
 	VectorizedArray<double> normValueVectorized = make_vectorized_array(0.0);
-	FEEvaluation<C_DIM,C_num1DKerkerPoly<FEOrder>(),C_num1DQuad<FEOrder>(),1,double> feEvalObj(d_matrixFreeDataPRefined,1,1);
+	FEEvaluation<C_DIM,FEOrderElectro,C_num1DQuad<FEOrder>(),1,double> feEvalObj(d_matrixFreeDataPRefined,1,1);
 	const unsigned int numQuadPoints = feEvalObj.n_q_points;
 
 

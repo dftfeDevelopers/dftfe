@@ -17,8 +17,8 @@
 //
 
 
-template<unsigned int FEOrder>
-	void forceClass<FEOrder>::createBinObjectsForce
+template<unsigned int FEOrder,unsigned int FEOrderElectro>
+	void forceClass<FEOrder,FEOrderElectro>::createBinObjectsForce
 (const DoFHandler<3> & dofHandler,
  const DoFHandler<3> & dofHandlerForce,
  const ConstraintMatrix  & hangingPlusPBCConstraints,

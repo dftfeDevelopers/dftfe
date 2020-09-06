@@ -27,7 +27,7 @@ namespace dftfe
 	 *
 	 * @author Sambit Das
 	 */
-	template<unsigned int FEOrder>
+	template<unsigned int FEOrder,unsigned int FEOrderElectro>
 		class DensityCalculator
 		{
 

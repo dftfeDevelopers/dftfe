@@ -21,8 +21,8 @@
 #include <dftParameters.h>
 
 
-	template<unsigned int FEOrder>
-void dftClass<FEOrder>::computeElementalOVProjectorKets()
+	template<unsigned int FEOrder,unsigned int FEOrderElectro>
+void dftClass<FEOrder,FEOrderElectro>::computeElementalOVProjectorKets()
 {
 
 	//
@@ -329,8 +329,8 @@ void dftClass<FEOrder>::computeElementalOVProjectorKets()
 	//
 
 }
-	template<unsigned int FEOrder>
-void dftClass<FEOrder>::initNonLocalPseudoPotential_OV()
+	template<unsigned int FEOrder,unsigned int FEOrderElectro>
+void dftClass<FEOrder,FEOrderElectro>::initNonLocalPseudoPotential_OV()
 {
 	d_pseudoWaveFunctionIdToFunctionIdDetails.clear();
 	d_numberPseudoAtomicWaveFunctions.clear();
@@ -720,8 +720,8 @@ void dftClass<FEOrder>::initNonLocalPseudoPotential_OV()
 
 
 }
-	template<unsigned int FEOrder>
-void dftClass<FEOrder>::computeSparseStructureNonLocalProjectors_OV()
+	template<unsigned int FEOrder,unsigned int FEOrderElectro>
+void dftClass<FEOrder,FEOrderElectro>::computeSparseStructureNonLocalProjectors_OV()
 {
 
 	//

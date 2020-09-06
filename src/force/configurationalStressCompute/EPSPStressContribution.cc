@@ -17,8 +17,8 @@
 //
 #ifdef USE_COMPLEX
 //compute EPSP contribution stress (local pseudopotential)
-template<unsigned int FEOrder>
-	void forceClass<FEOrder>::addEPSPStressContribution
+template<unsigned int FEOrder,unsigned int FEOrderElectro>
+	void forceClass<FEOrder,FEOrderElectro>::addEPSPStressContribution
 (FEValues<C_DIM> & feValues,
  FEEvaluation<C_DIM,1,C_num1DQuadLPSP<FEOrder>()*C_numCopies1DQuadLPSP(),C_DIM>  & forceEval,
  const MatrixFree<3,double> & matrixFreeData,

@@ -30,7 +30,7 @@ using namespace dealii;
 namespace dftfe {
 
 	// forward declaration
-	template <unsigned int T> class dftClass;
+	template <unsigned int T1, unsigned int T2> class dftClass;
 
 	/**
 	 * @brief computes configurational forces in KSDFT
@@ -42,18 +42,18 @@ namespace dftfe {
 	 *
 	 * @author Sambit Das
 	 */
-	template <unsigned int FEOrder>
+	template <unsigned int FEOrder,unsigned int FEOrderElectro>
 		class forceClass
 		{
 
-			template <unsigned int T>  friend class dftClass;
+			template <unsigned int T1, unsigned int T2>  friend class dftClass;
 			public:
 			/** @brief Constructor.
 			 *
 			 *  @param _dftPtr pointer to dftClass
 			 *  @param mpi_comm_replica mpi_communicator of the current pool
 			 */
-			forceClass(dftClass<FEOrder>* _dftPtr,const  MPI_Comm &mpi_comm_replica);
+			forceClass(dftClass<FEOrder,FEOrderElectro>* _dftPtr,const  MPI_Comm &mpi_comm_replica);
 
 			/** @brief initializes data structures inside forceClass assuming unmoved triangulation.
 			 *
@@ -111,7 +111,7 @@ namespace dftfe {
 			void computeAtomsForces
 				(const MatrixFree<3,double> & matrixFreeData,
 #ifdef DFTFE_WITH_GPU
-				 kohnShamDFTOperatorCUDAClass<FEOrder> & kohnShamDFTEigenOperator,
+				 kohnShamDFTOperatorCUDAClass<FEOrder,FEOrderElectro> & kohnShamDFTEigenOperator,
 #endif
 				 const unsigned int eigenDofHandlerIndex,
 				 const unsigned int phiTotDofHandlerIndex,
@@ -247,7 +247,7 @@ namespace dftfe {
 			void computeConfigurationalForceEEshelbyTensorFPSPFnlLinFE
 				(const MatrixFree<3,double> & matrixFreeData,
 #ifdef DFTFE_WITH_GPU
-				 kohnShamDFTOperatorCUDAClass<FEOrder> & kohnShamDFTEigenOperator,
+				 kohnShamDFTOperatorCUDAClass<FEOrder,FEOrderElectro> & kohnShamDFTEigenOperator,
 #endif
 				 const unsigned int eigenDofHandlerIndex,
 				 const unsigned int phiTotDofHandlerIndex,
@@ -332,7 +332,7 @@ namespace dftfe {
 			void computeConfigurationalForceTotalLinFE
 				(const MatrixFree<3,double> & matrixFreeData,
 #ifdef DFTFE_WITH_GPU
-				 kohnShamDFTOperatorCUDAClass<FEOrder> & kohnShamDFTEigenOperator,
+				 kohnShamDFTOperatorCUDAClass<FEOrder,FEOrderElectro> & kohnShamDFTEigenOperator,
 #endif
 				 const unsigned int eigenDofHandlerIndex,
 				 const unsigned int phiTotDofHandlerIndex,
@@ -572,8 +572,6 @@ namespace dftfe {
       
 #endif
 
-			void computeElementalNonLocalPseudoDataForce();
-
 			void computeElementalNonLocalPseudoOVDataForce();
 
 			void computeNonLocalProjectorKetTimesPsiTimesV(const std::vector<distributedCPUVec<double>> &src,
@@ -588,10 +586,6 @@ namespace dftfe {
 				 const unsigned int kPointIndex,
 				 const std::vector<double> & partialOccupancies,
 				 const bool oldRoute=false);
-
-			void computeNonLocalProjectorKetTimesPsiTimesVFlattened
-				(const distributedCPUVec<dataTypes::number> &src,
-				 const unsigned int numberWaveFunctions);
 
 			/// Parallel distributed vector field which stores the configurational force for each fem node corresponding
 			/// to linear shape function generator (see equations 52-53 in (https://link.aps.org/doi/10.1103/PhysRevB.97.165132)).
@@ -673,7 +667,7 @@ namespace dftfe {
 			const bool d_allowGaussianOverlapOnAtoms=false;
 
 			/// pointer to dft class
-			dftClass<FEOrder>* dftPtr;
+			dftClass<FEOrder,FEOrderElectro>* dftPtr;
 
 			/// Finite element object for configurational force computation. Linear finite elements with three force field components are used.
 			FESystem<C_DIM>  FEForce;

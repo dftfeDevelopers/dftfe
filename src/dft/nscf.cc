@@ -26,8 +26,8 @@
 
 using namespace dftParameters ;
 
-	template<unsigned int FEOrder>
-void dftClass<FEOrder>::initnscf(kohnShamDFTOperatorClass<FEOrder> & kohnShamDFTEigenOperator,
+	template<unsigned int FEOrder,unsigned int FEOrderElectro>
+void dftClass<FEOrder,FEOrderElectro>::initnscf(kohnShamDFTOperatorClass<FEOrder,FEOrderElectro> & kohnShamDFTEigenOperator,
 		poissonSolverProblem<FEOrder> & phiTotalSolverProblem,
 		dealiiLinearSolver & dealiiCGSolver)
 {
@@ -135,8 +135,8 @@ void dftClass<FEOrder>::initnscf(kohnShamDFTOperatorClass<FEOrder> & kohnShamDFT
 
 }
 
-	template<unsigned int FEOrder>
-void dftClass<FEOrder>::nscf(kohnShamDFTOperatorClass<FEOrder> & kohnShamDFTEigenOperator,
+	template<unsigned int FEOrder,unsigned int FEOrderElectro>
+void dftClass<FEOrder,FEOrderElectro>::nscf(kohnShamDFTOperatorClass<FEOrder,FEOrderElectro> & kohnShamDFTEigenOperator,
 		chebyshevOrthogonalizedSubspaceIterationSolver & subspaceIterationSolver)
 {
 

@@ -97,8 +97,8 @@ std::vector<double> wrapAtomsAcrossPeriodicBc(const Point<3> & cellCenteredCoord
 // Function to update the atom positions and mesh based on the provided displacement input.
 // Depending on the maximum displacement magnitude this function decides wether to do auto remeshing
 // or move mesh using Gaussian functions.
-	template<unsigned int FEOrder>
-void dftClass<FEOrder>::updateAtomPositionsAndMoveMesh(const std::vector<Tensor<1,3,double> > & globalAtomsDisplacements,
+	template<unsigned int FEOrder,unsigned int FEOrderElectro>
+void dftClass<FEOrder,FEOrderElectro>::updateAtomPositionsAndMoveMesh(const std::vector<Tensor<1,3,double> > & globalAtomsDisplacements,
 		const double maxJacobianRatioFactor,
 		const bool useSingleAtomSolutions,
 		const bool updateDensity)

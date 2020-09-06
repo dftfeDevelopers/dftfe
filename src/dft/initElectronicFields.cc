@@ -16,8 +16,8 @@
 // @author  Phani Motamarri, Sambit Das
 //
 
-	template<unsigned int FEOrder>
-void dftClass<FEOrder>::initPsiAndRhoFromPreviousGroundStatePsi(std::vector<std::vector<distributedCPUVec<double>>> eigenVectors)
+	template<unsigned int FEOrder,unsigned int FEOrderElectro>
+void dftClass<FEOrder,FEOrderElectro>::initPsiAndRhoFromPreviousGroundStatePsi(std::vector<std::vector<distributedCPUVec<double>>> eigenVectors)
 {
 	const unsigned int totalNumEigenVectors=(1+dftParameters::spinPolarized)*d_kPointWeights.size()*eigenVectors[0].size();
 	std::vector<distributedCPUVec<double>> eigenVectorsPrevious(totalNumEigenVectors);
@@ -66,8 +66,8 @@ void dftClass<FEOrder>::initPsiAndRhoFromPreviousGroundStatePsi(std::vector<std:
 }
 
 //init
-template<unsigned int FEOrder>
-void dftClass<FEOrder>::initElectronicFields(const unsigned int usePreviousGroundStateFields){
+template<unsigned int FEOrder,unsigned int FEOrderElectro>
+void dftClass<FEOrder,FEOrderElectro>::initElectronicFields(const unsigned int usePreviousGroundStateFields){
 	TimerOutput::Scope scope (computing_timer,"init electronic fields");
 
 	//reading data from pseudopotential files and fitting splines
@@ -275,8 +275,8 @@ void dftClass<FEOrder>::initElectronicFields(const unsigned int usePreviousGroun
 			pcout<< std::endl<<"net magnetization: "<< totalMagnetization(rhoInValuesSpinPolarized) <<std::endl;
 }
 
-	template<unsigned int FEOrder>
-void dftClass<FEOrder>::updatePrevMeshDataStructures()
+	template<unsigned int FEOrder,unsigned int FEOrderElectro>
+void dftClass<FEOrder,FEOrderElectro>::updatePrevMeshDataStructures()
 {
 	matrix_free_data.initialize_dof_vector(d_tempEigenVecPrev,eigenDofHandlerIndex);
 
