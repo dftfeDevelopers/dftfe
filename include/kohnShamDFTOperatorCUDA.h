@@ -609,7 +609,7 @@ namespace dftfe{
 
 
 		/**
-		 * @brief finite-element cell level matrix to store dot product between shapeFunction gradients (\int(del N_i \dot \del N_j))
+		 * @brief finite-element cell level matrix to store dot product between shapeFunction gradients (\int(\nabla N_i \cdot \nabla N_j))
 		 * with first dimension traversing the macro cell id
 		 * and second dimension storing the matrix of size numberNodesPerElement x numberNodesPerElement in a flattened 1D dealii Vectorized array
 		 */

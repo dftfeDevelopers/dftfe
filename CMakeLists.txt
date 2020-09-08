@@ -5,6 +5,7 @@
 # Set the name of the project and target:
 SET(TARGET "dftfe")
 SET(TARGETLIB "dftfem")
+SET(TARGET_VERSION "0.7.0") # used in docs/Doxyfile.in
 
 # Declare all source files the target consists of:
 SET(TARGET_SRC
@@ -75,6 +76,8 @@ ELSE()
   CMAKE_MINIMUM_REQUIRED(VERSION 2.8.12)
 ENDIF()
 
+LIST(APPEND CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake)
+
 FIND_PACKAGE(deal.II 9.1.0 REQUIRED
   HINTS ${deal.II_DIR} ${DEAL_II_DIR} ../ ../../ $ENV{DEAL_II_DIR}
   )
@@ -117,6 +120,7 @@ PROJECT(${TARGET} LANGUAGES CXX)
 IF (DEAL_II_WITH_CUDA)
     enable_language(CUDA)
 ENDIF()
+
 #
 # RPATHS: https://cmake.org/Wiki/CMake_RPATH_handling#Mac_OS_X_and_the_RPATH
 #
@@ -197,7 +201,9 @@ IF (WITH_GPU)
 
   find_package(CUDA REQUIRED)
   set(CUDA_PROPAGATE_HOST_FLAGS ON)
-  list(APPEND CUDA_NVCC_FLAGS -arch=sm_70; -std=c++11; -expt-relaxed-constexpr)
+  CUDA_SELECT_NVCC_ARCH_FLAGS(ARCH_FLAGS Auto)
+  LIST(APPEND CUDA_NVCC_FLAGS ${ARCH_FLAGS})
+  LIST(APPEND CUDA_NVCC_FLAGS -std=c++11; -expt-relaxed-constexpr)
 ENDIF()
 
 IF (WITH_GPU)
@@ -212,7 +218,6 @@ DEAL_II_SETUP_TARGET(${TARGETLIB})
 DEAL_II_SETUP_TARGET(${TARGET})
 
 TARGET_INCLUDE_DIRECTORIES(${TARGETLIB} PUBLIC ${CMAKE_SOURCE_DIR}/include)
-
 TARGET_LINK_LIBRARIES(${TARGET} ${TARGETLIB})
 
 #
@@ -223,7 +228,7 @@ IF (WITH_GPU)
   target_include_directories(${TARGETLIB} PUBLIC ${CUDA_INCLUDE_DIRS})
   SET(ALL_CUDA_LIBS ${CUDA_LIBRARIES} ${CUDA_cusparse_LIBRARY} ${CUDA_cublas_LIBRARY})
   message(STATUS "CUDA_LIBRARIES: ${CUDA_INCLUDE_DIRS} ${ALL_CUDA_LIBS}")
-  TARGET_LINK_LIBRARIES(${TARGET} "${ALL_CUDA_LIBS}")
+  TARGET_LINK_LIBRARIES(${TARGETLIB} "${ALL_CUDA_LIBS}")
 ENDIF()
 
 #
@@ -239,7 +244,7 @@ IF (DEFINED ALGLIB_DIR)
       MESSAGE(FATAL_ERROR "-- Alglib was not found in ${ALGLIB_DIR}")
   ENDIF()
   MESSAGE("-- Use Alglib from ${ALGLIB_DIR}")
-  TARGET_LINK_LIBRARIES(${TARGET}
+  TARGET_LINK_LIBRARIES(${TARGETLIB}
 	  "${ALGLIB_LIBRARY}"
   )
   TARGET_INCLUDE_DIRECTORIES (${TARGETLIB} PUBLIC "${ALGLIB_DIR}")
@@ -261,8 +266,8 @@ IF (DEFINED LIBXC_DIR)
       MESSAGE(FATAL_ERROR "-- LibXC was not found in ${LIBXC_DIR}")
   ENDIF()
   MESSAGE("-- Use LibXC from ${LIBXC_DIR}")
-  TARGET_LINK_LIBRARIES(${TARGET}
-	    "${LIBXC_LIBRARY}"
+  TARGET_LINK_LIBRARIES(${TARGETLIB}
+      "${LIBXC_LIBRARY}"
   )
   TARGET_INCLUDE_DIRECTORIES (${TARGETLIB} PUBLIC "${LIBXC_DIR}/include")
 ELSE()
@@ -282,8 +287,8 @@ IF (DEFINED XML_INCLUDE_DIR)
       MESSAGE(FATAL_ERROR "-- XML was not found in ${XML_LIB_DIR}")
   ENDIF()
   MESSAGE("-- Use Xml from ${XML_LIB_DIR}")
-  TARGET_LINK_LIBRARIES(${TARGET}
-	    "${XML_LIBRARY}"
+  TARGET_LINK_LIBRARIES(${TARGETLIB}
+      "${XML_LIBRARY}"
   )
   TARGET_INCLUDE_DIRECTORIES (${TARGETLIB} PUBLIC "${XML_INCLUDE_DIR}")
 ELSE()
@@ -305,8 +310,8 @@ IF (DEFINED SPGLIB_DIR)
       MESSAGE(FATAL_ERROR "-- SPGLib was not found in ${SPGLIB_DIR}")
   ENDIF()
   MESSAGE("-- Use SPGLib from ${SPGLIB_DIR}")
-  TARGET_LINK_LIBRARIES(${TARGET}
-	    "${SPGLIB_LIBRARY}"
+  TARGET_LINK_LIBRARIES(${TARGETLIB}
+      "${SPGLIB_LIBRARY}"
   )
   TARGET_INCLUDE_DIRECTORIES (${TARGETLIB} PUBLIC "${SPGLIB_DIR}/include")
 ELSE()
@@ -318,24 +323,10 @@ ENDIF (DEFINED SPGLIB_DIR)
 #
 IF (WITH_ELPA)
    ADD_DEFINITIONS(-DDFTFE_WITH_ELPA)
-
-   IF (DEFINED ELPA_INCLUDE_DIR)
-      FIND_LIBRARY(ELPA_LIBRARY
-	NAMES elpa elpa_openmp
-	HINTS ${ELPA_LIB_DIR}
-	NO_DEFAULT_PATH
-      )
-      IF(ELPA_LIBRARY STREQUAL "ELPA_LIBRARY-NOTFOUND")
-	  MESSAGE(FATAL_ERROR "-- ELPA was not found in ${ELPA_LIB_DIR}")
-      ENDIF()
-      MESSAGE("-- Use ELPA from ${ELPA_LIB_DIR}")
-      TARGET_LINK_LIBRARIES(${TARGET}
-		"${ELPA_LIBRARY}"
-      )
-      TARGET_INCLUDE_DIRECTORIES (${TARGETLIB} PUBLIC "${ELPA_INCLUDE_DIR}")
-   ELSE()
-      MESSAGE(FATAL_ERROR "-- Provide path of ELPA: -DELPA_LIB_DIR and -DELPA_INCLUDE_DIR")
-   ENDIF (DEFINED ELPA_INCLUDE_DIR)
+   find_package(ELPA 2020 REQUIRED)
+   MESSAGE(STATUS "Will Link With ELPA")
+   target_link_libraries(${TARGETLIB} ELPA::ELPA)
+   target_include_directories(${TARGETLIB} PUBLIC ELPA::ELPA)
 ENDIF()
 
 #
@@ -378,6 +369,17 @@ IF (WITH_TESTING)
   ENDIF()
 ENDIF()
 
+# Build documentation
+option(BUILD_DOCS "Build documentation (requires doxygen and sphinx)" OFF)
+if(BUILD_DOCS)
+  find_package(Doxygen)
+  find_package(Sphinx)
+  if(${Doxygen_FOUND} AND ${Sphinx_FOUND})
+    add_subdirectory("docs")
+  else()
+    message(WARNING "Doxygen and/or Sphinx not found -- unable to build documentation.")
+  endif()
+endif()
 
 #
 # installation target.
