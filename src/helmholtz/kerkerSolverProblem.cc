@@ -49,7 +49,7 @@ namespace dftfe {
       d_matrixFreeVectorComponent=matrixFreeVectorComponent;
       d_matrixFreeQuadratureComponent=matrixFreeQuadratureComponent;
 
-			matrixFreeDataPRefined.initialize_dof_vector(x);
+			matrixFreeDataPRefined.initialize_dof_vector(x,d_matrixFreeVectorComponent);
 			computeDiagonalA();
 		}
 
@@ -81,7 +81,7 @@ namespace dftfe {
 			rhs.reinit(*d_xPtr);
 
 			const dealii::DoFHandler<3> & dofHandler=
-				d_matrixFreeDataPRefinedPtr->get_dof_handler();
+				d_matrixFreeDataPRefinedPtr->get_dof_handler(d_matrixFreeVectorComponent);
 
 			dealii::QGauss<3>  quadrature(C_num1DQuad<FEOrderElectro>());
 			dealii::FEValues<3> fe_values (dofHandler.get_fe(), quadrature, dealii::update_values | dealii::update_gradients | dealii::update_JxW_values);
@@ -142,9 +142,9 @@ namespace dftfe {
 		{
 
 			const dealii::DoFHandler<3> & dofHandler=
-				d_matrixFreeDataPRefinedPtr->get_dof_handler();
+				d_matrixFreeDataPRefinedPtr->get_dof_handler(d_matrixFreeVectorComponent);
 
-			d_matrixFreeDataPRefinedPtr->initialize_dof_vector(d_diagonalA);
+			d_matrixFreeDataPRefinedPtr->initialize_dof_vector(d_diagonalA,d_matrixFreeVectorComponent);
 			d_diagonalA = 0.0;
 
 			dealii::QGauss<3>  quadrature(C_num1DQuad<FEOrderElectro>());
