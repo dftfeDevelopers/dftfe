@@ -31,7 +31,7 @@ namespace dftfe {
 	const int C_DIM = 3;
 
 	/// 1d quadrature rule order
-	template <unsigned int FEOrder> constexpr unsigned int C_num1DQuad(){return FEOrder+3;}
+	template <unsigned int FEOrder> constexpr unsigned int C_num1DQuad(){return FEOrder+1;}
 
 	/// 1d quad rule smeared nuclear charge
 	constexpr unsigned int C_num1DQuadSmearedCharge(){return 10;}
