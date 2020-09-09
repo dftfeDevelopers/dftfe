@@ -397,7 +397,7 @@ double dftClass<FEOrder,FEOrderElectro>::nodalDensity_mixing_anderson(kerkerSolv
 
 	interpolateElectroNodalDataToQuadratureDataGeneral(d_matrixFreeDataPRefined,
       d_densityDofHandlerIndexElectro,
-      0,
+      d_densityQuadratureIdElectro,
 			d_rhoInNodalValues,
 			*rhoInValues,
 			*gradRhoInValues,
