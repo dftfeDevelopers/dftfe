@@ -40,8 +40,8 @@ namespace dftfe{
 	template <unsigned int FEOrder, unsigned int FEOrderElectro>
 		class kohnShamDFTOperatorClass : public operatorDFTClass
 	{
-		template <unsigned int T1, unsigned int T2>
-			friend class dftClass;
+		//template <unsigned int T1, unsigned int T2>
+			friend class dftClass<FEOrder,FEOrderElectro>;
 
 		//template <unsigned int T>
 		//	friend class symmetryClass;

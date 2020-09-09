@@ -27,7 +27,7 @@ template<unsigned int FEOrder,unsigned int FEOrderElectro>
  const unsigned int _phiExtDofHandlerIndex,
  const dealii::ConstraintMatrix & _phiExtConstraintMatrix,
  const std::map<types::global_dof_index, Point<3> > & _supportPoints,
- const vselfBinsManager<FEOrder> & vselfBinManager,
+ const vselfBinsManager<FEOrderElectro> & vselfBinManager,
  distributedCPUVec<double> & phiExt,
  std::map<dealii::CellId, std::vector<double> > & _pseudoValues,
  std::map<unsigned int,std::map<dealii::CellId, std::vector<double> > > & _pseudoValuesAtoms)
@@ -233,7 +233,7 @@ template<unsigned int FEOrder,unsigned int FEOrderElectro>
 	MPI_Barrier(MPI_COMM_WORLD);
 	init_2 = MPI_Wtime();
 
-	FEEvaluation<3,FEOrder,C_num1DQuadLPSP<FEOrder>()*C_numCopies1DQuadLPSP()> feEvalObj(_matrix_free_data,_phiExtDofHandlerIndex,lpspQuadratureId);
+	FEEvaluation<3,FEOrderElectro,C_num1DQuadLPSP<FEOrderElectro>()*C_numCopies1DQuadLPSP()> feEvalObj(_matrix_free_data,_phiExtDofHandlerIndex,lpspQuadratureId);
   AssertThrow(_matrix_free_data.get_quadrature(lpspQuadratureId).size() == feEvalObj.n_q_points,
             dealii::ExcMessage("DFT-FE Error: mismatch in quadrature rule usage in initLocalPseudoPotential.")); 
 
@@ -1677,7 +1677,7 @@ void dftClass<FEOrder,FEOrderElectro>::computeElementalProjectorKets()
 	//
 	//get FE data structures
 	//
-	QGauss<3>  quadrature(C_num1DQuad<FEOrder>());
+	QGauss<3>  quadrature(C_num1DQuad<FEOrderElectro>());
 	//FEValues<3> fe_values(FE, quadrature, update_values | update_gradients | update_JxW_values);
 	FEValues<3> fe_values(FE, quadrature, update_values | update_JxW_values | update_quadrature_points);
 	const unsigned int numberNodesPerElement  = FE.dofs_per_cell;

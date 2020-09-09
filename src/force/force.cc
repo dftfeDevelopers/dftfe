@@ -201,15 +201,20 @@ namespace  dftfe {
 			if (isElectrostaticsMesh)
 			{
 				d_dofHandlerForceElectro.distribute_dofs(FEForce);
+        dofHandlerVectorMatrixFree.push_back(&d_dofHandlerForceElectro);
+        constraintsVectorMatrixFree.push_back(&d_constraintsNoneForceElectro);
 
 				if (isElectrostaticsEigenMeshDifferent)
 				{
-					dofHandlerVectorMatrixFree.push_back(&d_dofHandlerForceElectro);
-					constraintsVectorMatrixFree.push_back(&d_constraintsNoneForceElectro);
+					//dofHandlerVectorMatrixFree.push_back(&d_dofHandlerForceElectro);
+					//constraintsVectorMatrixFree.push_back(&d_constraintsNoneForceElectro);
 					d_isElectrostaticsMeshSubdivided=true;
 				}
 				else
+        {
+
 					d_isElectrostaticsMeshSubdivided=false;
+        }
 
 				d_forceDofHandlerIndexElectro = dofHandlerVectorMatrixFree.size()-1;
 
@@ -264,14 +269,10 @@ namespace  dftfe {
 		 kohnShamDFTOperatorCUDAClass<FEOrder,FEOrderElectro> & kohnShamDFTEigenOperator,
 #endif
 		 const unsigned int eigenDofHandlerIndex,
-		 const unsigned int phiTotDofHandlerIndex,
      const unsigned int smearedChargeQuadratureId,
               const unsigned int lpspQuadratureId,
              const unsigned int lpspQuadratureIdElectro,         
-		 const distributedCPUVec<double> & phiTotRhoIn,
-		 const distributedCPUVec<double> & phiTotRhoOut,
 		 const std::map<dealii::CellId, std::vector<double> > & pseudoVLoc,
-		 const vselfBinsManager<FEOrder> & vselfBinsManagerEigen,
 		 const MatrixFree<3,double> & matrixFreeDataElectro,
 		 const unsigned int phiTotDofHandlerIndexElectro,
 		 const distributedCPUVec<double> & phiTotRhoOutElectro,
@@ -285,7 +286,7 @@ namespace  dftfe {
 		 const std::map<dealii::CellId, std::vector<double> > & pseudoVLocElectro,
 		 const std::map<unsigned int,std::map<dealii::CellId, std::vector<double> > > & pseudoVLocAtomsElectro,
 		 const ConstraintMatrix  & hangingPlusPBCConstraintsElectro,
-		 const vselfBinsManager<FEOrder> & vselfBinsManagerElectro,
+		 const vselfBinsManager<FEOrderElectro> & vselfBinsManagerElectro,
 		 const std::map<dealii::CellId, std::vector<double> > & shadowKSRhoMinValues,
 		 const std::map<dealii::CellId, std::vector<double> > & shadowKSGradRhoMinValues,
 		 const distributedCPUVec<double> & phiRhoMinusApproxRho,
@@ -308,14 +309,10 @@ namespace  dftfe {
 					 kohnShamDFTEigenOperator,
 #endif
 					 eigenDofHandlerIndex,
-					 phiTotDofHandlerIndex,
            smearedChargeQuadratureId,
            lpspQuadratureId,
            lpspQuadratureIdElectro,
-					 phiTotRhoIn,
-					 phiTotRhoOut,
 					 pseudoVLoc,
-					 vselfBinsManagerEigen,
 					 matrixFreeDataElectro,
 					 phiTotDofHandlerIndexElectro,
 					 phiTotRhoOutElectro,
@@ -414,14 +411,10 @@ namespace  dftfe {
 		 kohnShamDFTOperatorCUDAClass<FEOrder,FEOrderElectro> & kohnShamDFTEigenOperator,
 #endif
 		 const unsigned int eigenDofHandlerIndex,
-		 const unsigned int phiTotDofHandlerIndex,
      const unsigned int smearedChargeQuadratureId,
               const unsigned int lpspQuadratureId,
             const unsigned int lpspQuadratureIdElectro,         
-		 const distributedCPUVec<double> & phiTotRhoIn,
-		 const distributedCPUVec<double> & phiTotRhoOut,
 		 const std::map<dealii::CellId, std::vector<double> > & pseudoVLoc,
-		 const vselfBinsManager<FEOrder> & vselfBinsManagerEigen,
 		 const MatrixFree<3,double> & matrixFreeDataElectro,
 		 const unsigned int phiTotDofHandlerIndexElectro,
 		 const distributedCPUVec<double> & phiTotRhoOutElectro,
@@ -434,7 +427,7 @@ namespace  dftfe {
        const std::map<dealii::CellId, std::vector<double> > & gradRhoOutValuesElectroLpsp,
 		 const std::map<dealii::CellId, std::vector<double> > & pseudoVLocElectro,
 		 const std::map<unsigned int,std::map<dealii::CellId, std::vector<double> > > & pseudoVLocAtomsElectro,
-		 const vselfBinsManager<FEOrder> & vselfBinsManagerElectro,
+		 const vselfBinsManager<FEOrderElectro> & vselfBinsManagerElectro,
 		 const std::map<dealii::CellId, std::vector<double> > & shadowKSRhoMinValues,
 		 const std::map<dealii::CellId, std::vector<double> > & shadowKSGradRhoMinValues,
 		 const distributedCPUVec<double> & phiRhoMinusApproxRho,
@@ -450,14 +443,10 @@ namespace  dftfe {
 				 computeConfigurationalForceSpinPolarizedEEshelbyTensorFPSPFnlLinFE
 					 (matrixFreeData,
 					  eigenDofHandlerIndex,
-					  phiTotDofHandlerIndex,
             smearedChargeQuadratureId,
             lpspQuadratureId,
             lpspQuadratureIdElectro,
-					  phiTotRhoIn,
-					  phiTotRhoOut,
 					  pseudoVLoc,
-					  vselfBinsManagerEigen,
 					  matrixFreeDataElectro,
 					  phiTotDofHandlerIndexElectro,
 					  phiTotRhoOutElectro,
@@ -480,14 +469,10 @@ namespace  dftfe {
 					  kohnShamDFTEigenOperator,
 #endif
 					  eigenDofHandlerIndex,
-					  phiTotDofHandlerIndex,
             smearedChargeQuadratureId,
             lpspQuadratureId,
             lpspQuadratureIdElectro,
-					  phiTotRhoIn,
-					  phiTotRhoOut,
 					  pseudoVLoc,
-					  vselfBinsManagerEigen,
 					  matrixFreeDataElectro,
 					  phiTotDofHandlerIndexElectro,
 					  phiTotRhoOutElectro,

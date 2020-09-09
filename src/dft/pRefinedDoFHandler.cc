@@ -27,16 +27,16 @@ void dftClass<FEOrder,FEOrderElectro>::createpRefinedDofHandler(dealii::parallel
 	d_dofHandlerPRefined.initialize(triaObject,dealii::FE_Q<3>(dealii::QGaussLobatto<1>(FEOrderElectro+1)));
 	d_dofHandlerPRefined.distribute_dofs(d_dofHandlerPRefined.get_fe());
 
-	dealii::IndexSet locallyRelevantDofs;
-	dealii::DoFTools::extract_locally_relevant_dofs(d_dofHandlerPRefined, locallyRelevantDofs);
+  d_locallyRelevantDofsPRefined.clear();
+	dealii::DoFTools::extract_locally_relevant_dofs(d_dofHandlerPRefined, d_locallyRelevantDofsPRefined);
 
 	d_constraintsPRefinedOnlyHanging.clear();
-	d_constraintsPRefinedOnlyHanging.reinit(locallyRelevantDofs);
+	d_constraintsPRefinedOnlyHanging.reinit(d_locallyRelevantDofsPRefined);
 	dealii::DoFTools::make_hanging_node_constraints(d_dofHandlerPRefined, d_constraintsPRefinedOnlyHanging);
 	d_constraintsPRefinedOnlyHanging.close();
 
 	d_constraintsPRefined.clear();
-	d_constraintsPRefined.reinit(locallyRelevantDofs);
+	d_constraintsPRefined.reinit(d_locallyRelevantDofsPRefined);
 	dealii::DoFTools::make_hanging_node_constraints(d_dofHandlerPRefined, d_constraintsPRefined);
 
 	std::vector<std::vector<double> > unitVectorsXYZ;
@@ -73,7 +73,7 @@ void dftClass<FEOrder,FEOrderElectro>::createpRefinedDofHandler(dealii::parallel
 
 	dealii::DoFTools::make_periodicity_constraints<dealii::DoFHandler<3> >(periodicity_vector2, d_constraintsPRefined);
 
-	applyHomogeneousDirichletBC(d_dofHandlerPRefined,d_constraintsPRefined);
+	//applyHomogeneousDirichletBC(d_dofHandlerPRefined,d_constraintsPRefined);
 
 	d_constraintsPRefined.close();
 
@@ -83,32 +83,135 @@ void dftClass<FEOrder,FEOrderElectro>::createpRefinedDofHandler(dealii::parallel
 
 
 	template <unsigned int FEOrder,unsigned int FEOrderElectro>
-void dftClass<FEOrder,FEOrderElectro>::initpRefinedObjects()
+void dftClass<FEOrder,FEOrderElectro>::initpRefinedObjects(const bool meshOnlyDeformed)
 {
 	d_dofHandlerPRefined.distribute_dofs(d_dofHandlerPRefined.get_fe());
+
+	d_supportPointsPRefined.clear();
+	DoFTools::map_dofs_to_support_points(MappingQ1<3,3>(), d_dofHandlerPRefined, d_supportPointsPRefined);
 
 	//matrix free data structure
 	typename dealii::MatrixFree<3>::AdditionalData additional_data;
 	additional_data.tasks_parallel_scheme = dealii::MatrixFree<3>::AdditionalData::partition_partition;
 	if (dftParameters::xc_id==4)
-		additional_data.mapping_update_flags = update_gradients|update_JxW_values|update_hessians;
+		additional_data.mapping_update_flags = update_values|update_gradients|update_JxW_values|update_hessians|update_quadrature_points;
+  else
+		additional_data.mapping_update_flags = update_values|update_gradients|update_JxW_values|update_quadrature_points;
 
 	//clear existing constraints matrix vector
-	std::vector<const dealii::ConstraintMatrix*> matrixFreeConstraintsInputVector;
-	matrixFreeConstraintsInputVector.push_back(&d_constraintsPRefined);
-	matrixFreeConstraintsInputVector.push_back(&d_constraintsPRefinedOnlyHanging);
+	d_constraintsVectorElectro.clear();
+	d_constraintsVectorElectro.push_back(&d_constraintsPRefined);
+  d_densityDofHandlerIndexElectro=d_constraintsVectorElectro.size()-1;
+
+
+	//Zero Dirichlet BC constraints on the boundary of the domain
+	//used for computing total electrostatic potential using Poisson problem
+	//with (rho+b) as the rhs
+	//
+	d_constraintsForTotalPotentialElectro.clear();
+	d_constraintsForTotalPotentialElectro.reinit(d_locallyRelevantDofsPRefined);
+
+	if (dftParameters::pinnedNodeForPBC)
+		locatePeriodicPinnedNodes(d_dofHandlerPRefined,d_constraintsPRefined,d_constraintsForTotalPotentialElectro);
+	applyHomogeneousDirichletBC(d_dofHandlerPRefined,d_constraintsForTotalPotentialElectro);
+	d_constraintsForTotalPotentialElectro.close ();
+	d_constraintsForTotalPotentialElectro.merge(d_constraintsPRefined,dealii::AffineConstraints<double>::MergeConflictBehavior::right_object_wins);
+	d_constraintsForTotalPotentialElectro.close();  
+
+	d_constraintsVectorElectro.push_back(&d_constraintsForTotalPotentialElectro);
+  d_phiTotDofHandlerIndexElectro=d_constraintsVectorElectro.size()-1;  
+
+  d_binsStartDofHandlerIndexElectro=d_constraintsVectorElectro.size();
+
+	double init_bins;
+	MPI_Barrier(MPI_COMM_WORLD);
+	init_bins = MPI_Wtime(); 
+	//
+	//Dirichlet BC constraints on the boundary of fictitious ball
+	//used for computing self-potential (Vself) using Poisson problem
+	//with atoms belonging to a given bin
+	//
+	if (meshOnlyDeformed)
+	{
+		computing_timer.enter_section("Update atom bins bc");
+		d_vselfBinsManager.updateBinsBc(d_constraintsVectorElectro,
+				d_constraintsPRefinedOnlyHanging,
+				d_dofHandlerPRefined,
+				d_constraintsPRefined,
+				atomLocations,
+				d_imagePositionsTrunc,
+				d_imageIdsTrunc,
+				d_imageChargesTrunc);
+		computing_timer.exit_section("Update atom bins bc");
+	}
+	else
+	{
+		computing_timer.enter_section("Create atom bins");
+		d_vselfBinsManager.createAtomBins(d_constraintsVectorElectro,
+			  d_constraintsPRefinedOnlyHanging,
+				d_dofHandlerPRefined,
+				d_constraintsPRefined,
+				atomLocations,
+				d_imagePositionsTrunc,
+				d_imageIdsTrunc,
+				d_imageChargesTrunc,
+				dftParameters::radiusAtomBall);
+
+    d_netFloatingDisp.clear();
+    d_netFloatingDisp.resize(atomLocations.size()*3,0.0);
+		computing_timer.exit_section("Create atom bins");
+	}
+
+	MPI_Barrier(MPI_COMM_WORLD);
+	init_bins = MPI_Wtime() - init_bins;
+	if (dftParameters::verbosity>=1)
+		pcout<<"updateAtomPositionsAndMoveMesh: initBoundaryConditions: Time taken for bins update: "<<init_bins<<std::endl;
+
+
+	//Zero Dirichlet BC constraints on the boundary of the domain
+	//used for Helmholtz solve
+	//
+	d_constraintsForHelmholtzElectro.clear();
+  d_constraintsForHelmholtzElectro.reinit(d_locallyRelevantDofsPRefined);
+
+	applyHomogeneousDirichletBC(d_dofHandlerPRefined,d_constraintsForHelmholtzElectro);
+	d_constraintsForHelmholtzElectro.close ();
+	d_constraintsForHelmholtzElectro.merge(d_constraintsPRefined,dealii::AffineConstraints<double>::MergeConflictBehavior::right_object_wins);
+	d_constraintsForHelmholtzElectro.close();   
+	d_constraintsVectorElectro.push_back(&d_constraintsForHelmholtzElectro);
+  d_helmholtzDofHandlerIndexElectro=d_constraintsVectorElectro.size()-1;   
+
+
+	d_constraintsVectorElectro.push_back(&d_constraintsPRefinedOnlyHanging);
+  d_phiExtDofHandlerIndexElectro=d_constraintsVectorElectro.size()-1;    
 
 	std::vector<const dealii::DoFHandler<3> *> matrixFreeDofHandlerVectorInput;
-	for(unsigned int i = 0; i < matrixFreeConstraintsInputVector.size(); ++i)
+	for(unsigned int i = 0; i < d_constraintsVectorElectro.size(); ++i)
 		matrixFreeDofHandlerVectorInput.push_back(&d_dofHandlerPRefined);
 
+	forcePtr->initMoved(matrixFreeDofHandlerVectorInput,
+			d_constraintsVectorElectro,
+			true);
+  d_forceDofHandlerIndexElectro=d_constraintsVectorElectro.size()-1;
+
+
 	std::vector<Quadrature<1> > quadratureVector;
-	quadratureVector.push_back(QGauss<1>(C_num1DQuadElectro<FEOrderElectro>()));
-	quadratureVector.push_back(QGauss<1>(C_num1DQuad<FEOrder>()));
-  quadratureVector.push_back(QIterated<1>(QGauss<1>(C_num1DQuadLPSP<FEOrder>()),C_numCopies1DQuadLPSP()));  
+	quadratureVector.push_back(QGauss<1>(C_num1DQuad<FEOrderElectro>()));
+  quadratureVector.push_back(QIterated<1>(QGauss<1>(C_num1DQuadLPSP<FEOrder>()),C_numCopies1DQuadLPSP())); 
+  quadratureVector.push_back(QIterated<1>(QGauss<1>(C_num1DQuadSmearedCharge()),C_numCopies1DQuadSmearedCharge()));
+
+  d_densityQuadratureIdElectro=0;
+  d_lpspQuadratureIdElectro=1;
+  d_smearedChargeQuadratureIdElectro=2;
 
 	d_matrixFreeDataPRefined.reinit(matrixFreeDofHandlerVectorInput,
-			matrixFreeConstraintsInputVector,
+			d_constraintsVectorElectro,
 			quadratureVector,
 			additional_data);
+
+	//
+	//locate atom core nodes
+	//
+  if (!dftParameters::floatingNuclearCharges)
+	   locateAtomCoreNodes(d_dofHandlerPRefined,d_atomNodeIdToChargeMap);   
 }

@@ -81,11 +81,11 @@ void dftClass<FEOrder,FEOrderElectro>::initElectronicFields(const unsigned int u
 				"Call to initNonLocalPseudoPotential");
 
 	//initialize electrostatics fields
-	matrix_free_data.initialize_dof_vector(d_phiTotRhoIn,phiTotDofHandlerIndex);
+	d_matrixFreeDataPRefined.initialize_dof_vector(d_phiTotRhoIn,d_phiTotDofHandlerIndexElectro);
 	d_phiTotRhoOut.reinit(d_phiTotRhoIn);
-	matrix_free_data.initialize_dof_vector(d_phiExt,phiExtDofHandlerIndex);
+	d_matrixFreeDataPRefined.initialize_dof_vector(d_phiExt,d_phiExtDofHandlerIndexElectro);
 
-	d_matrixFreeDataPRefined.initialize_dof_vector(d_rhoInNodalValues);
+	d_matrixFreeDataPRefined.initialize_dof_vector(d_rhoInNodalValues,d_densityDofHandlerIndexElectro);
 	d_rhoOutNodalValues.reinit(d_rhoInNodalValues);
 	d_rhoOutNodalValuesSplit.reinit(d_rhoInNodalValues);
 	d_atomicRho.reinit(d_rhoInNodalValues);
@@ -98,7 +98,7 @@ void dftClass<FEOrder,FEOrderElectro>::initElectronicFields(const unsigned int u
 	//
 	//initialize eigen vectors
 	//
-	matrix_free_data.initialize_dof_vector(d_tempEigenVec,eigenDofHandlerIndex);
+	matrix_free_data.initialize_dof_vector(d_tempEigenVec,d_eigenDofHandlerIndex);
 
 	//
 	//store constraintEigen Matrix entries into STL vector
@@ -278,7 +278,7 @@ void dftClass<FEOrder,FEOrderElectro>::initElectronicFields(const unsigned int u
 	template<unsigned int FEOrder,unsigned int FEOrderElectro>
 void dftClass<FEOrder,FEOrderElectro>::updatePrevMeshDataStructures()
 {
-	matrix_free_data.initialize_dof_vector(d_tempEigenVecPrev,eigenDofHandlerIndex);
+	matrix_free_data.initialize_dof_vector(d_tempEigenVecPrev,d_eigenDofHandlerIndex);
 
 
 	constraintsNoneEigenDataInfoPrev.initialize(d_tempEigenVecPrev.get_partitioner(),

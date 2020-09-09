@@ -101,10 +101,10 @@ fi
 wd="$PWD"
 cd "$wd/$out"
 echo -e "${Blu}Building Real executable in $build_type mode...${RCol}"
-cmake_real "$SRC" && make -j4
+cmake_real "$SRC" && make -j8
 
 cd "$wd/$out"
 echo -e "${Blu}Building Complex executable in $build_type mode...${RCol}"
-cmake_cplx "$SRC" && make -j4
+cmake_cplx "$SRC" && make -j8
 
 echo -e "${Blu}Build complete.${RCol}"

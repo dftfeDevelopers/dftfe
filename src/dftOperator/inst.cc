@@ -42,7 +42,3 @@ template class kohnShamDFTOperatorClass<8,13>;
 template class kohnShamDFTOperatorClass<8,14>;
 template class kohnShamDFTOperatorClass<8,15>;
 template class kohnShamDFTOperatorClass<8,16>;
-template class kohnShamDFTOperatorClass<9,9>;
-template class kohnShamDFTOperatorClass<10,10>;
-template class kohnShamDFTOperatorClass<11,11>;
-template class kohnShamDFTOperatorClass<12,12>;

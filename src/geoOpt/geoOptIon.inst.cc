@@ -42,7 +42,3 @@ template class geoOptIon<8,13>;
 template class geoOptIon<8,14>;
 template class geoOptIon<8,15>;
 template class geoOptIon<8,16>;
-template class geoOptIon<9,9>;
-template class geoOptIon<10,10>;
-template class geoOptIon<11,11>;
-template class geoOptIon<12,12>;

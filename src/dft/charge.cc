@@ -26,7 +26,7 @@ double dftClass<FEOrder,FEOrderElectro>::totalCharge(const dealii::DoFHandler<3>
 		const std::map<dealii::CellId, std::vector<double> > *rhoQuadValues)
 {
 	double normValue = 0.0;
-	QGauss<3>  quadrature_formula(C_num1DQuad<FEOrder>());
+	QGauss<3>  quadrature_formula(C_num1DQuad<FEOrderElectro>());
 	FEValues<3> fe_values (dofHandlerOfField.get_fe(), quadrature_formula, update_JxW_values);
 	const unsigned int dofs_per_cell = dofHandlerOfField.get_fe().dofs_per_cell;
 	const unsigned int n_q_points    = quadrature_formula.size();
@@ -55,7 +55,7 @@ double dftClass<FEOrder,FEOrderElectro>::totalCharge(const dealii::DoFHandler<3>
 		const distributedCPUVec<double> & rhoNodalField)
 {
 	double normValue = 0.0;
-	QGauss<3>  quadrature_formula(C_num1DQuad<FEOrder>());
+	QGauss<3>  quadrature_formula(C_num1DQuad<FEOrderElectro>());
 	FEValues<3> fe_values (dofHandlerOfField.get_fe(), quadrature_formula, update_values | update_JxW_values);
 	const unsigned int dofs_per_cell = dofHandlerOfField.get_fe().dofs_per_cell;
 	const unsigned int n_q_points    = quadrature_formula.size();
@@ -88,7 +88,7 @@ double dftClass<FEOrder,FEOrderElectro>::totalCharge(const dealii::DoFHandler<3>
 		std::map<dealii::CellId,std::vector<double> > & rhoQuadValues)
 {
 	double normValue = 0.0;
-	QGauss<3>  quadrature_formula(C_num1DQuad<FEOrder>());
+	QGauss<3>  quadrature_formula(C_num1DQuad<FEOrderElectro>());
 	FEValues<3> fe_values (dofHandlerOfField.get_fe(), quadrature_formula, update_values | update_JxW_values);
 	const unsigned int dofs_per_cell = dofHandlerOfField.get_fe().dofs_per_cell;
 	const unsigned int n_q_points    = quadrature_formula.size();
@@ -121,7 +121,7 @@ double dftClass<FEOrder,FEOrderElectro>::totalCharge(const dealii::DoFHandler<3>
 double dftClass<FEOrder,FEOrderElectro>::totalCharge(const dealii::MatrixFree<3,double> & matrixFreeDataObject,
 		const distributedCPUVec<double> & nodalField)
 {
-	FEEvaluation<C_DIM,FEOrderElectro,C_num1DQuadElectro<FEOrderElectro>(),1,double> fe_evalField(matrixFreeDataObject);
+	FEEvaluation<C_DIM,FEOrderElectro,C_num1DQuad<FEOrderElectro>(),1,double> fe_evalField(matrixFreeDataObject,d_densityDofHandlerIndexElectro,d_densityQuadratureIdElectro);
 	VectorizedArray<double> normValueVectorized = make_vectorized_array(0.0);
 	const unsigned int numQuadPoints = fe_evalField.n_q_points;
 	for(unsigned int cell = 0; cell < matrixFreeDataObject.n_macro_cells(); ++cell)
@@ -154,7 +154,7 @@ double dftClass<FEOrder,FEOrderElectro>::totalCharge(const dealii::MatrixFree<3,
 template <unsigned int FEOrder,unsigned int FEOrderElectro>
 double dftClass<FEOrder,FEOrderElectro>::totalMagnetization(const std::map<dealii::CellId, std::vector<double> > *rhoQuadValues){
 	double normValue=0.0;
-	QGauss<3>  quadrature_formula(C_num1DQuad<FEOrder>());
+	QGauss<3>  quadrature_formula(C_num1DQuad<FEOrderElectro>());
 	FEValues<3> fe_values (FE, quadrature_formula, update_JxW_values);
 	const unsigned int   dofs_per_cell = FE.dofs_per_cell;
 	const unsigned int   n_q_points    = quadrature_formula.size();
@@ -178,10 +178,12 @@ double dftClass<FEOrder,FEOrderElectro>::totalMagnetization(const std::map<deali
 //
 	template <unsigned int FEOrder,unsigned int FEOrderElectro>
 double dftClass<FEOrder,FEOrderElectro>::fieldl2Norm(const dealii::MatrixFree<3,double> & matrixFreeDataObject,
-		const distributedCPUVec<double> & nodalField)
+		const distributedCPUVec<double> & nodalField,
+    const unsigned int dofHandlerId,          
+    const unsigned int quadratureId)
 
 {
-	FEEvaluation<C_DIM,FEOrderElectro,C_num1DQuadElectro<FEOrderElectro>(),1,double> fe_evalField(matrixFreeDataObject);
+	FEEvaluation<C_DIM,FEOrderElectro,C_num1DQuad<FEOrderElectro>(),1,double> fe_evalField(matrixFreeDataObject,dofHandlerId,quadratureId);
 	VectorizedArray<double> normValueVectorized = make_vectorized_array(0.0);
 	const unsigned int numQuadPoints = fe_evalField.n_q_points;
 	for(unsigned int cell = 0; cell < matrixFreeDataObject.n_macro_cells(); ++cell)

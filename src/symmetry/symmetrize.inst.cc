@@ -42,7 +42,3 @@ template class symmetryClass<8,13>;
 template class symmetryClass<8,14>;
 template class symmetryClass<8,15>;
 template class symmetryClass<8,16>;
-template class symmetryClass<9,9>;
-template class symmetryClass<10,10>;
-template class symmetryClass<11,11>;
-template class symmetryClass<12,12>;

@@ -30,7 +30,7 @@ namespace dftfe {
 	 *
 	 * @author Sambit Das, Phani Motamarri
 	 */
-	template<unsigned int FEOrder>
+	template<unsigned int FEOrderElectro>
 		class vselfBinsManager {
 
 			public:

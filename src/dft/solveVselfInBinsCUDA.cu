@@ -369,7 +369,7 @@ namespace dftfe
 
 			const unsigned int blockSize = numberBins;
 			const unsigned int totalLocallyOwnedCells=matrixFreeData.n_physical_cells();
-			const unsigned int numberNodesPerElement=matrixFreeData.get_dofs_per_cell();
+			const unsigned int numberNodesPerElement=matrixFreeData.get_dofs_per_cell(0);
 
 			distributedGPUVec<double> xD;
 
@@ -441,7 +441,7 @@ namespace dftfe
 					constraintsMatrixDataInfoCUDA,
 					thrust::raw_pointer_cast(&bD[0]),
 					thrust::raw_pointer_cast(&diagonalAD[0]),
-					operatorMatrix.getShapeFunctionGradientIntegral(),
+					operatorMatrix.getShapeFunctionGradientIntegralElectro(),
 					inhomoIdsColoredVecFlattenedD,
 					cellLocalProcIndexIdMapD,
 					localSize,

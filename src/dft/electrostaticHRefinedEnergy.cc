@@ -35,14 +35,14 @@ void dftClass<FEOrder,FEOrderElectro>::computeElectrostaticEnergyHRefined(
 	//
 	//access quadrature object
 	//
-	dealii::QGauss<3> quadrature(C_num1DQuad<FEOrder>());
+	dealii::QGauss<3> quadrature(C_num1DQuad<FEOrderElectro>());
 	const unsigned int n_q_points = quadrature.size();
 
 	//
 	//project and create a nodal field of the same mesh from the quadrature data (L2 projection from quad points to nodes)
 	//
 	distributedCPUVec<double> rhoNodalFieldCoarse;
-	matrix_free_data.initialize_dof_vector(rhoNodalFieldCoarse);
+  d_matrixFreeDataPRefined.initialize_dof_vector(rhoNodalFieldCoarse,d_densityDofHandlerIndexElectro);
 	rhoNodalFieldCoarse = 0.0;
 
 	//
@@ -52,14 +52,14 @@ void dftClass<FEOrder,FEOrderElectro>::computeElectrostaticEnergyHRefined(
 	{return (*rhoOutValues).find(cell->id())->second[q];};
 
 	dealii::VectorTools::project<3,distributedCPUVec<double> >(dealii::MappingQ1<3,3>(),
-			matrix_free_data.get_dof_handler(),
-			constraintsNone,
+			d_matrixFreeDataPRefined.get_dof_handler(),
+			d_constraintsPRefined,
 			quadrature,
 			funcRho,
 			rhoNodalFieldCoarse);
   
 	rhoNodalFieldCoarse.update_ghost_values();
-	constraintsNone.distribute(rhoNodalFieldCoarse);
+	d_constraintsPRefined.distribute(rhoNodalFieldCoarse);
 	rhoNodalFieldCoarse.update_ghost_values();
 
 	//
@@ -67,7 +67,7 @@ void dftClass<FEOrder,FEOrderElectro>::computeElectrostaticEnergyHRefined(
 	//
 	if(dftParameters::verbosity >= 4)
 	{
-		const double integralRhoValue = totalCharge(matrix_free_data.get_dof_handler(),
+		const double integralRhoValue = totalCharge(d_matrixFreeDataPRefined.get_dof_handler(),
 				rhoNodalFieldCoarse);
 
 		pcout<<"Value of total charge on coarse mesh using L2 projected nodal field: "<< integralRhoValue<<std::endl;
@@ -84,7 +84,7 @@ void dftClass<FEOrder,FEOrderElectro>::computeElectrostaticEnergyHRefined(
 	dealii::parallel::distributed::Triangulation<3> & electrostaticsTriaRho = d_mesh.getElectrostaticsMeshRho();
 
 	dealii::DoFHandler<3> dofHandlerHRefined;
-	dofHandlerHRefined.initialize(electrostaticsTriaRho,dealii::FE_Q<3>(dealii::QGaussLobatto<1>(FEOrder+1)));
+	dofHandlerHRefined.initialize(electrostaticsTriaRho,dealii::FE_Q<3>(dealii::QGaussLobatto<1>(FEOrderElectro+1)));
 	dofHandlerHRefined.distribute_dofs(dofHandlerHRefined.get_fe());
 
 	//
@@ -340,7 +340,7 @@ void dftClass<FEOrder,FEOrderElectro>::computeElectrostaticEnergyHRefined(
 	//used for computing self-potential (Vself) using Poisson problem
 	//with atoms belonging to a given bin
 
-	vselfBinsManager<FEOrder> vselfBinsManagerHRefined(mpi_communicator);
+	vselfBinsManager<FEOrderElectro> vselfBinsManagerHRefined(mpi_communicator);
 	vselfBinsManagerHRefined.createAtomBins(matrixFreeConstraintsInputVector,
 			onlyHangingNodeConstraints,
 			dofHandlerHRefined,
@@ -392,8 +392,8 @@ void dftClass<FEOrder,FEOrderElectro>::computeElectrostaticEnergyHRefined(
 
 
 	std::vector<Quadrature<1> > quadratureVector;
-	quadratureVector.push_back(QGauss<1>(C_num1DQuad<FEOrder>()));
-  quadratureVector.push_back(QIterated<1>(QGauss<1>(C_num1DQuadSmearedCharge<FEOrder>()),C_numCopies1DQuadSmearedCharge()));
+	quadratureVector.push_back(QGauss<1>(C_num1DQuad<FEOrderElectro>()));
+  quadratureVector.push_back(QIterated<1>(QGauss<1>(C_num1DQuadSmearedCharge()),C_numCopies1DQuadSmearedCharge()));
 	quadratureVector.push_back(QIterated<1>(QGauss<1>(C_num1DQuadLPSP<FEOrder>()),C_numCopies1DQuadLPSP()));  
 
 	dealii::MatrixFree<3,double> matrixFreeDataHRefined;
@@ -440,7 +440,7 @@ void dftClass<FEOrder,FEOrderElectro>::computeElectrostaticEnergyHRefined(
 	matrixFreeDataHRefined.initialize_dof_vector(phiTotRhoOutHRefined,phiTotDofHandlerIndexHRefined);
 
 	dealiiLinearSolver dealiiCGSolver(mpi_communicator, dealiiLinearSolver::CG);
-	poissonSolverProblem<FEOrder> phiTotalSolverProblem(mpi_communicator);
+	poissonSolverProblem<FEOrderElectro> phiTotalSolverProblem(mpi_communicator);
 
 	phiTotalSolverProblem.reinit(matrixFreeDataHRefined,
 			phiTotRhoOutHRefined,
@@ -493,7 +493,7 @@ void dftClass<FEOrder,FEOrderElectro>::computeElectrostaticEnergyHRefined(
 				fermiEnergy,
 				funcX,
 				funcC,
-				d_phiTotRhoIn,
+				d_phiInValues,
 				phiTotRhoOutHRefined,
 				*rhoInValues,
 				*rhoOutValues,
@@ -525,7 +525,7 @@ void dftClass<FEOrder,FEOrderElectro>::computeElectrostaticEnergyHRefined(
 							fermiEnergyDown,
 							funcX,
 							funcC,
-							d_phiTotRhoIn,
+							d_phiInValues,
 							phiTotRhoOutHRefined,
 							*rhoInValues,
 							*rhoOutValues,
@@ -613,15 +613,11 @@ void dftClass<FEOrder,FEOrderElectro>::computeElectrostaticEnergyHRefined(
 #ifdef DFTFE_WITH_GPU
 					kohnShamDFTEigenOperator,
 #endif
-					eigenDofHandlerIndex,
-					phiTotDofHandlerIndex,
+					d_eigenDofHandlerIndex,
           1,
-          5,
+          d_lpspQuadratureId,
           2,
-					d_phiTotRhoIn,
-					d_phiTotRhoOut,
 					d_pseudoVLoc,
-					d_vselfBinsManager,
 					matrixFreeDataHRefined,
 					phiTotDofHandlerIndexHRefined,
 					phiTotRhoOutHRefined,
@@ -653,14 +649,11 @@ void dftClass<FEOrder,FEOrderElectro>::computeElectrostaticEnergyHRefined(
 		if (computeForces)
 		{
 			forcePtr->computeStress(matrix_free_data,
-					eigenDofHandlerIndex,
-					phiTotDofHandlerIndex,
+					d_eigenDofHandlerIndex,
           1,
-          5,
+          d_lpspQuadratureId,
           2,
-					d_phiTotRhoOut,
 					d_pseudoVLoc,
-					d_vselfBinsManager,
 					matrixFreeDataHRefined,
 					phiTotDofHandlerIndexHRefined,
 					phiTotRhoOutHRefined,

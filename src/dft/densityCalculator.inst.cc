@@ -42,7 +42,3 @@ template class DensityCalculator<8,13>;
 template class DensityCalculator<8,14>;
 template class DensityCalculator<8,15>;
 template class DensityCalculator<8,16>;
-template class DensityCalculator<9,9>;
-template class DensityCalculator<10,10>;
-template class DensityCalculator<11,11>;
-template class DensityCalculator<12,12>;

@@ -42,7 +42,3 @@ template class dftClass<8,13>;
 template class dftClass<8,14>;
 template class dftClass<8,15>;
 template class dftClass<8,16>;
-template class dftClass<9,9>;
-template class dftClass<10,10>;
-template class dftClass<11,11>;
-template class dftClass<12,12>;

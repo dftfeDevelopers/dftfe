@@ -104,10 +104,10 @@ namespace dftfe
 		 {
 
 #ifdef USE_COMPLEX
-			 dealii::FEEvaluation<3,FEOrder,C_num1DQuad<FEOrder>(),2> psiEval(mfData,mfDofIndex,mfQuadIndex);
+			 dealii::FEEvaluation<3,FEOrder,C_num1DQuad<FEOrderElectro>(),2> psiEval(mfData,mfDofIndex,mfQuadIndex);
 			 dealii::FEEvaluation<3,FEOrder,FEOrderElectro+1,2> psiEvalGL(mfData,mfDofIndex,mfQuadIndex);
 #else
-			 dealii::FEEvaluation<3,FEOrder,C_num1DQuad<FEOrder>(),1> psiEval(mfData,mfDofIndex,mfQuadIndex);
+			 dealii::FEEvaluation<3,FEOrder,C_num1DQuad<FEOrderElectro>(),1> psiEval(mfData,mfDofIndex,mfQuadIndex);
 			 dealii::FEEvaluation<3,FEOrder,FEOrderElectro+1,1> psiEvalGL(mfData,mfDofIndex,mfQuadIndex);
 #endif
 

@@ -73,14 +73,14 @@ dataTypes::number dftClass<FEOrder,FEOrderElectro>::computeTraceXtHX(unsigned in
 	//set up poisson solver
 	//
 	dealiiLinearSolver dealiiCGSolver(mpi_communicator, dealiiLinearSolver::CG);
-	poissonSolverProblem<FEOrder> phiTotalSolverProblem(mpi_communicator);
+	poissonSolverProblem<FEOrderElectro> phiTotalSolverProblem(mpi_communicator);
 
 	//
 	//solve for vself and compute Tr(XtHX)
 	//
-	d_vselfBinsManager.solveVselfInBins(matrix_free_data,
-			2,
-			constraintsNone,
+	d_vselfBinsManager.solveVselfInBins(d_matrixFreeDataPRefined,
+		  d_binsStartDofHandlerIndexElectro,
+			d_constraintsPRefined,
 			d_imagePositionsTrunc,
 			d_imageIdsTrunc,
 			d_imageChargesTrunc,
@@ -92,19 +92,19 @@ dataTypes::number dftClass<FEOrder,FEOrderElectro>::computeTraceXtHX(unsigned in
       d_bCellNonTrivialAtomIdsBins,
 			d_smearedChargeWidths,
       d_smearedChargeScaling,
-      4);
+      d_smearedChargeQuadratureIdElectro);
 
 	//
 	//solve for potential corresponding to initial electron-density
 	//
-	phiTotalSolverProblem.reinit(matrix_free_data,
+	phiTotalSolverProblem.reinit(d_matrixFreeDataPRefined,
 			d_phiTotRhoIn,
-			*d_constraintsVector[phiTotDofHandlerIndex],
-			phiTotDofHandlerIndex,
-      0,
+			*d_constraintsVectorElectro[d_phiTotDofHandlerIndexElectro],
+			d_phiTotDofHandlerIndexElectro,
+      d_densityQuadratureIdElectro,
 			d_atomNodeIdToChargeMap,
 			d_bQuadValuesAllAtoms,
-      4,
+      d_smearedChargeQuadratureIdElectro,
 			*rhoInValues,
 			true,
 			dftParameters::periodicX && dftParameters::periodicY && dftParameters::periodicZ && !dftParameters::pinnedNodeForPBC,
@@ -118,11 +118,12 @@ dataTypes::number dftClass<FEOrder,FEOrderElectro>::computeTraceXtHX(unsigned in
 			dftParameters::verbosity);
 
   std::map<dealii::CellId,std::vector<double> > dummy;
-  interpolateNodalDataToQuadratureDataQuadGeneral(matrix_free_data,
-      phiTotDofHandlerIndex,
-      0,
+  interpolateElectroNodalDataToQuadratureDataGeneral(d_matrixFreeDataPRefined,
+      d_phiTotDofHandlerIndexElectro,
+      d_densityQuadratureIdElectro,
       d_phiTotRhoIn,
       phiInValues,
+      dummy,
       dummy); 
 
 	//
@@ -134,18 +135,18 @@ dataTypes::number dftClass<FEOrder,FEOrderElectro>::computeTraceXtHX(unsigned in
 	//
 	//precompute shapeFunctions and shapeFunctionGradients and shapeFunctionGradientIntegrals
 	//
-	kohnShamDFTEigenOperator.preComputeShapeFunctionGradientIntegrals(5);
+	kohnShamDFTEigenOperator.preComputeShapeFunctionGradientIntegrals(d_lpspQuadratureId);
 
 	//
 	//compute Veff
 	//
 	if(dftParameters::xc_id < 4)
 	{
-		kohnShamDFTEigenOperator.computeVEff(rhoInValues,phiInValues, d_pseudoVLoc,5);
+		kohnShamDFTEigenOperator.computeVEff(rhoInValues,phiInValues, d_pseudoVLoc,d_lpspQuadratureId);
 	}
 	else if (dftParameters::xc_id == 4)
 	{
-		kohnShamDFTEigenOperator.computeVEff(rhoInValues, gradRhoInValues, phiInValues, d_pseudoVLoc,5);
+		kohnShamDFTEigenOperator.computeVEff(rhoInValues, gradRhoInValues, phiInValues, d_pseudoVLoc,d_lpspQuadratureId);
 	}
 
 	//
@@ -203,7 +204,7 @@ double dftClass<FEOrder,FEOrderElectro>::computeTraceXtKX(unsigned int numberWav
 	//
 	//precompute shapeFunctions and shapeFunctionGradients and shapeFunctionGradientIntegrals
 	//
-	kohnShamDFTEigenOperator.preComputeShapeFunctionGradientIntegrals(5);
+	kohnShamDFTEigenOperator.preComputeShapeFunctionGradientIntegrals(d_lpspQuadratureId);
 
 
 	//
@@ -330,7 +331,7 @@ void dftClass<FEOrder,FEOrderElectro>::solveNoSCF()
 			dofHandler,
 			constraintsNone,
 			matrix_free_data,
-			eigenDofHandlerIndex,
+			d_eigenDofHandlerIndex,
 			0,
 			localProc_dof_indicesReal,
 			localProc_dof_indicesImag,  

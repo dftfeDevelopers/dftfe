@@ -26,7 +26,7 @@ void kohnShamDFTOperatorClass<FEOrder,FEOrderElectro>::preComputeShapeFunctionGr
 	//
 	const unsigned int numberMacroCells = dftPtr->matrix_free_data.n_macro_cells();
 	const unsigned int numberPhysicalCells = dftPtr->matrix_free_data.n_physical_cells();
-	QGauss<3>  quadrature(C_num1DQuad<FEOrder>());
+	QGauss<3>  quadrature(C_num1DQuad<FEOrderElectro>());
 	FEValues<3> fe_values(dftPtr->matrix_free_data.get_dof_handler().get_fe(), quadrature, update_values);
 	const unsigned int numberDofsPerElement = dftPtr->matrix_free_data.get_dof_handler().get_fe().dofs_per_cell;
   const unsigned int numberQuadraturePoints = quadrature.size();

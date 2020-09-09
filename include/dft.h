@@ -35,7 +35,6 @@
 #include <chebyshevOrthogonalizedSubspaceIterationSolverCUDA.h>
 #endif
 
-#include <molecularDynamics.h>
 #include <kohnShamDFTOperator.h>
 #include <meshMovementAffineTransform.h>
 #include <meshMovementGaussian.h>
@@ -54,8 +53,6 @@
 #include <petsc.h>
 #include <slepceps.h>
 #endif
-#include <spglib.h>
-#include <stdafx.h>
 
 namespace dftfe {
 
@@ -79,7 +76,6 @@ namespace dftfe {
 
 	/* code that must be skipped by Doxygen */
 	//forward declarations
-	template <unsigned int T1, unsigned int T2> class forceClass;
 	template <unsigned int T1, unsigned int T2> class symmetryClass;
 	template <unsigned int T1, unsigned int T2> class forceClass;
 	template <unsigned int T1, unsigned int T2> class geoOptIon;
@@ -97,26 +93,21 @@ namespace dftfe {
 	template <unsigned int FEOrder, unsigned int FEOrderElectro>
 		class dftClass
 		{
-			template <unsigned int T1, unsigned int T2>
-				friend class kohnShamDFTOperatorClass;
+				friend class kohnShamDFTOperatorClass<FEOrder,FEOrderElectro>;
 
-			template <unsigned int T1, unsigned int T2>
-				friend class kohnShamDFTOperatorCUDAClass;
+#ifdef DFTFE_WITH_GPU
+				friend class kohnShamDFTOperatorCUDAClass<FEOrder,FEOrderElectro>;
+#endif        
 
-			template <unsigned int T1, unsigned int T2>
-				friend class forceClass;
+				friend class forceClass<FEOrder,FEOrderElectro>;
 
-			template <unsigned int T1, unsigned int T2>
-				friend class geoOptIon;
+				friend class geoOptIon<FEOrder,FEOrderElectro>;
 
-			template <unsigned int T1, unsigned int T2>
-				friend class geoOptCell;
+				friend class geoOptCell<FEOrder,FEOrderElectro>;
 
-			template <unsigned int T1, unsigned int T2>
-				friend class symmetryClass;
+				friend class symmetryClass<FEOrder,FEOrderElectro>;
 
-			template <unsigned int T1, unsigned int T2>
-				friend class molecularDynamics;
+				friend class molecularDynamics<FEOrder,FEOrderElectro>;
 
 			public:
 
@@ -416,7 +407,7 @@ namespace dftfe {
 			 * and initialize various objects related to this refined dofHandler
 			 */
 			void createpRefinedDofHandler(parallel::distributed::Triangulation<3> & triangulation);
-			void initpRefinedObjects();
+			void initpRefinedObjects(const bool meshOnlyDeformed);
 
 			/**
 			 *@brief interpolate nodal data to quadrature data using FEEvaluation
@@ -427,12 +418,14 @@ namespace dftfe {
 			 *@param[out] quadratureGradValueData to be computed at quadrature points
 			 *@param[in] isEvaluateGradData denotes a flag to evaluate gradients or not
 			 */
-			void interpolateNodalDataToQuadratureDataPRefinedQuadGeneral(dealii::MatrixFree<3,double> & matrixFreeData,
-					const distributedCPUVec<double> & nodalField,
+			void interpolateElectroNodalDataToQuadratureDataGeneral(dealii::MatrixFree<3,double> & matrixFreeData,
+					const unsigned int dofHandlerId,          
+					const unsigned int quadratureId, 
+					const distributedCPUVec<double> & nodalField,          
 					std::map<dealii::CellId, std::vector<double> > & quadratureValueData,
 					std::map<dealii::CellId, std::vector<double> > & quadratureGradValueData,
 					std::map<dealii::CellId, std::vector<double> > & quadratureHessianValueData,
-					const bool isEvaluateGradData,
+					const bool isEvaluateGradData=false,
 					const bool isEvaluateHessianData=false);
 
 
@@ -447,7 +440,7 @@ namespace dftfe {
 			 *@param[out] quadratureGradValueData to be computed at quadrature points
 			 *@param[in] isEvaluateGradData denotes a flag to evaluate gradients or not
 			 */
-			void interpolateNodalDataToQuadratureDataPRefinedQuadLpsp(dealii::MatrixFree<3,double> & matrixFreeData,
+			void interpolateElectroNodalDataToQuadratureDataLpsp(dealii::MatrixFree<3,double> & matrixFreeData,
 					const unsigned int dofHandlerId,
 					const unsigned int quadratureId,
 					const distributedCPUVec<double> & nodalField,
@@ -455,24 +448,6 @@ namespace dftfe {
 					std::map<dealii::CellId, std::vector<double> > & quadratureGradValueData,
 					const bool isEvaluateGradData);
 
-			/**
-			 *@brief interpolate nodal data to quadrature data using FEEvaluation
-			 *
-			 *@param[in] matrixFreeData matrix free data object
-			 *@param[in] nodalField nodal data to be interpolated
-			 *@param[in] matrix free dofHandler id
-			 *@param[in] matrix free quadrature id
-			 *@param[out] quadratureValueData to be computed at quadrature points
-			 *@param[out] quadratureGradValueData to be computed at quadrature points
-			 *@param[in] isEvaluateGradData denotes a flag to evaluate gradients or not
-			 */
-			void interpolateNodalDataToQuadratureDataQuadGeneral(dealii::MatrixFree<3,double> & matrixFreeData,
-					const unsigned int dofHandlerId,
-					const unsigned int quadratureId,
-					const distributedCPUVec<double> & nodalField,
-					std::map<dealii::CellId, std::vector<double> > & quadratureValueData,
-					std::map<dealii::CellId, std::vector<double> > & quadratureGradValueData,
-					const bool isEvaluateGradData=false);      
 
 			/**
 			 *@brief Finds the global dof ids of the nodes containing atoms.
@@ -537,7 +512,7 @@ namespace dftfe {
 					const unsigned int _phiExtDofHandlerIndex,
 					const dealii::ConstraintMatrix & phiExtConstraintMatrix,
 					const std::map<types::global_dof_index, Point<3> > & supportPoints,
-					const vselfBinsManager<FEOrder> & vselfBinManager,
+					const vselfBinsManager<FEOrderElectro> & vselfBinManager,
           distributedCPUVec<double> & phiExt,
 					std::map<dealii::CellId, std::vector<double> > & _pseudoValues,
           std::map<unsigned int,std::map<dealii::CellId, std::vector<double> > > & _pseudoValuesAtoms);
@@ -582,7 +557,9 @@ namespace dftfe {
 
 
 			double fieldl2Norm(const dealii::MatrixFree<3,double> & matrixFreeDataObject,
-					const distributedCPUVec<double> & rhoNodalField);
+					const distributedCPUVec<double> & rhoNodalField,
+					const unsigned int dofHandlerId,          
+					const unsigned int quadratureId);
 
 			double fieldGradl2Norm(const dealii::MatrixFree<3,double> & matrixFreeDataObject,
 					const distributedCPUVec<double> & field);
@@ -858,11 +835,24 @@ namespace dftfe {
 			 */
 			FESystem<3>        FE, FEEigen;
 			DoFHandler<3>      dofHandler, dofHandlerEigen, d_dofHandlerPRefined;
-			unsigned int       eigenDofHandlerIndex,phiExtDofHandlerIndex,phiTotDofHandlerIndex,forceDofHandlerIndex;
-			unsigned int       densityDofHandlerIndex;
+			unsigned int       d_eigenDofHandlerIndex,d_phiExtDofHandlerIndexElectro,d_forceDofHandlerIndex;
+			unsigned int       d_densityDofHandlerIndex;
+      unsigned int       d_densityDofHandlerIndexElectro;
+      unsigned int       d_forceDofHandlerIndexElectro;
+      unsigned int       d_smearedChargeQuadratureIdElectro;
+      unsigned int       d_nlpspQuadratureId;
+      unsigned int       d_lpspQuadratureId;
+      unsigned int       d_lpspQuadratureIdElectro;
+      unsigned int       d_gllQuadratureId;
+      unsigned int       d_phiTotDofHandlerIndexElectro;
+      unsigned int       d_helmholtzDofHandlerIndexElectro;
+      unsigned int       d_binsStartDofHandlerIndexElectro;
+      unsigned int       d_densityQuadratureId;
+      unsigned int       d_densityQuadratureIdElectro;      
 			MatrixFree<3,double> matrix_free_data, d_matrixFreeDataPRefined;
-			std::map<types::global_dof_index, Point<3> > d_supportPoints, d_supportPointsEigen;
+			std::map<types::global_dof_index, Point<3> > d_supportPoints, d_supportPointsPRefined, d_supportPointsEigen;
 			std::vector<const dealii::AffineConstraints<double> * > d_constraintsVector;
+      std::vector<const dealii::AffineConstraints<double> * > d_constraintsVectorElectro;
 
 			/**
 			 * parallel objects
@@ -873,7 +863,7 @@ namespace dftfe {
 			const unsigned int n_mpi_processes;
 			const unsigned int this_mpi_process;
 			IndexSet   locally_owned_dofs, locally_owned_dofsEigen;
-			IndexSet   locally_relevant_dofs, locally_relevant_dofsEigen;
+			IndexSet   locally_relevant_dofs, locally_relevant_dofsEigen, d_locallyRelevantDofsPRefined;
 			std::vector<dealii::types::global_dof_index> local_dof_indicesReal, local_dof_indicesImag;
 			std::vector<dealii::types::global_dof_index> localProc_dof_indicesReal,localProc_dof_indicesImag;
 			std::vector<bool> selectedDofsHanging;
@@ -920,7 +910,13 @@ namespace dftfe {
 #endif
 
 
-			dealii::AffineConstraints<double> constraintsNone, constraintsNoneEigen, d_constraintsForTotalPotential, d_noConstraints, d_constraintsPRefined;
+			dealii::AffineConstraints<double> constraintsNone, constraintsNoneEigen, d_noConstraints;
+     
+      dealii::AffineConstraints<double> d_constraintsForTotalPotentialElectro;
+
+      dealii::AffineConstraints<double> d_constraintsForHelmholtzElectro;
+
+      dealii::AffineConstraints<double> d_constraintsPRefined;
 
 
 			dealii::AffineConstraints<double> d_constraintsPRefinedOnlyHanging;
@@ -954,6 +950,7 @@ namespace dftfe {
 			//dft related objects
 			std::map<dealii::CellId, std::vector<double> > *rhoInValues, *rhoOutValues, *rhoInValuesSpinPolarized, *rhoOutValuesSpinPolarized;
 			std::deque<std::map<dealii::CellId,std::vector<double> >> rhoInVals, rhoOutVals, rhoInValsSpinPolarized, rhoOutValsSpinPolarized;
+      std::map<dealii::CellId, std::vector<double> > d_phiInValues;
 
 			distributedCPUVec<double> d_rhoInNodalValuesRead, d_rhoInNodalValues, d_rhoOutNodalValues, d_rhoOutNodalValuesSplit, d_preCondResidualVector, d_atomicRho, d_rhoNodalFieldRefined;
 			std::deque<distributedCPUVec<double>> d_rhoInNodalVals, d_rhoOutNodalVals;
@@ -1087,7 +1084,7 @@ namespace dftfe {
 			std::map<dealii::types::global_dof_index, double> d_atomNodeIdToChargeMap;
 
 			/// vselfBinsManager object
-			vselfBinsManager<FEOrder> d_vselfBinsManager;
+			vselfBinsManager<FEOrderElectro> d_vselfBinsManager;
 
 			/// kPoint cartesian coordinates
 			std::vector<double> d_kPointCoordinates;
@@ -1138,7 +1135,7 @@ namespace dftfe {
 			bool scfConverged;
 			void nscf(kohnShamDFTOperatorClass<FEOrder,FEOrderElectro> & kohnShamDFTEigenOperator,
 					chebyshevOrthogonalizedSubspaceIterationSolver & subspaceIterationSolver);
-			void initnscf(kohnShamDFTOperatorClass<FEOrder,FEOrderElectro> & kohnShamDFTEigenOperator,poissonSolverProblem<FEOrder> & phiTotalSolverProblem,
+			void initnscf(kohnShamDFTOperatorClass<FEOrder,FEOrderElectro> & kohnShamDFTEigenOperator,poissonSolverProblem<FEOrderElectro> & phiTotalSolverProblem,
 					dealiiLinearSolver & dealiiCGSolver) ;
 
 			/**

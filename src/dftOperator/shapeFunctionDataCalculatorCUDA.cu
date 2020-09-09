@@ -124,9 +124,10 @@ void kohnShamDFTOperatorCUDAClass<FEOrder,FEOrderElectro>::preComputeShapeFuncti
 	//get FE data
 	//
 	const unsigned int numberPhysicalCells = dftPtr->matrix_free_data.n_physical_cells();
-	QGauss<3>  quadrature(C_num1DQuad<FEOrder>());
+	QGauss<3>  quadrature(C_num1DQuad<FEOrderElectro>());
 	FEValues<3> fe_values(dftPtr->matrix_free_data.get_dof_handler().get_fe(), quadrature, update_values | update_gradients | update_JxW_values);
 	const unsigned int numberDofsPerElement = dftPtr->matrix_free_data.get_dof_handler().get_fe().dofs_per_cell;
+  const unsigned int numberDofsPerElementElectro = dftPtr->d_matrixFreeDataPRefined.get_dof_handler().get_fe().dofs_per_cell;
 	const unsigned int numberQuadraturePoints = quadrature.size();
 
 	FEValues<3> fe_values_lpsp(dftPtr->matrix_free_data.get_dof_handler().get_fe(), dftPtr->matrix_free_data.get_quadrature(lpspQuadratureId), update_values);
@@ -241,7 +242,7 @@ void kohnShamDFTOperatorCUDAClass<FEOrder,FEOrderElectro>::preComputeShapeFuncti
 
 
 	QGauss<3>  quadraturePlusOne(FEOrder+1);
-  const unsigned int numberQuadraturePointsPlusOne = quadraturePlusOne.size();  
+  unsigned int numberQuadraturePointsPlusOne = quadraturePlusOne.size();  
 	FEValues<3> fe_values_plusone(dftPtr->matrix_free_data.get_dof_handler().get_fe(), quadraturePlusOne, update_gradients | update_JxW_values);
 
 
@@ -300,7 +301,76 @@ void kohnShamDFTOperatorCUDAClass<FEOrder,FEOrderElectro>::preComputeShapeFuncti
 	gpu_time = MPI_Wtime() - gpu_time;
 
 	if (this_mpi_process==0 && dftParameters::verbosity>=2)
-		std::cout<<"Time for shapeFuncCUDA::computeShapeGradNINJIntegral: "<<gpu_time<<std::endl;
+		std::cout<<"Time for shapeFuncCUDA::computeShapeGradNINJIntegral for FEOrder: "<<gpu_time<<std::endl;
+
+	cudaDeviceSynchronize();
+	MPI_Barrier(MPI_COMM_WORLD);
+	gpu_time=MPI_Wtime();
+
+
+	QGauss<3>  quadratureElectroPlusOne(FEOrderElectro+1);
+  numberQuadraturePointsPlusOne = quadratureElectroPlusOne.size();  
+	FEValues<3> fe_values_electro_plusone(dftPtr->d_matrixFreeDataPRefined.get_dof_handler().get_fe(), quadratureElectroPlusOne, update_gradients | update_JxW_values);
+
+
+	cellJxWValuesQuadPlusOne.resize(numberPhysicalCells*numberQuadraturePointsPlusOne);
+	shapeFunctionGradientValueQuadPlusOneX.resize(numberPhysicalCells*numberQuadraturePointsPlusOne*numberDofsPerElementElectro,0.0);
+	shapeFunctionGradientValueQuadPlusOneY.resize(numberPhysicalCells*numberQuadraturePointsPlusOne*numberDofsPerElementElectro,0.0);
+	shapeFunctionGradientValueQuadPlusOneZ.resize(numberPhysicalCells*numberQuadraturePointsPlusOne*numberDofsPerElementElectro,0.0);
+
+
+	typename dealii::DoFHandler<3>::active_cell_iterator cellPtrElectro=dftPtr->d_matrixFreeDataPRefined.get_dof_handler().begin_active();
+	typename dealii::DoFHandler<3>::active_cell_iterator endcPtrElectro = dftPtr->d_matrixFreeDataPRefined.get_dof_handler().end();
+
+	iElem=0;
+	for(; cellPtrElectro!=endcPtrElectro; ++cellPtrElectro)
+		if(cellPtrElectro->is_locally_owned())
+		{
+			fe_values_electro_plusone.reinit (cellPtrElectro);
+
+			for(unsigned int q_point = 0; q_point < numberQuadraturePointsPlusOne; ++q_point)
+				cellJxWValuesQuadPlusOne[iElem*numberQuadraturePointsPlusOne+q_point]=fe_values_electro_plusone.JxW(q_point); 
+
+			for(unsigned int iNode = 0; iNode < numberDofsPerElementElectro; ++iNode)
+				for(unsigned int q_point = 0; q_point < numberQuadraturePointsPlusOne; ++q_point)
+				{
+					const dealii::Tensor<1,3,double> & shape_grad=fe_values_electro_plusone.shape_grad(iNode,q_point);
+
+					shapeFunctionGradientValueQuadPlusOneX[iElem*numberDofsPerElementElectro*numberQuadraturePointsPlusOne
+						+iNode*numberQuadraturePointsPlusOne+q_point]=shape_grad[0];
+
+					shapeFunctionGradientValueQuadPlusOneY[iElem*numberDofsPerElementElectro*numberQuadraturePointsPlusOne
+						+iNode*numberQuadraturePointsPlusOne+q_point]=shape_grad[1];
+
+					shapeFunctionGradientValueQuadPlusOneZ[iElem*numberDofsPerElementElectro*numberQuadraturePointsPlusOne
+						+iNode*numberQuadraturePointsPlusOne+q_point]=shape_grad[2];
+				}
+
+			iElem++;
+		}
+
+	cellJxWValuesQuadPlusOneDevice=cellJxWValuesQuadPlusOne;
+	shapeFunctionGradientValueQuadPlusOneXDevice=shapeFunctionGradientValueQuadPlusOneX;
+	shapeFunctionGradientValueQuadPlusOneYDevice=shapeFunctionGradientValueQuadPlusOneY;
+	shapeFunctionGradientValueQuadPlusOneZDevice=shapeFunctionGradientValueQuadPlusOneZ;
+
+	shapeFuncCUDA::computeShapeGradNINJIntegral(d_cublasHandle,
+			numberQuadraturePointsPlusOne,
+			numberDofsPerElementElectro,
+			numberPhysicalCells,
+			shapeFunctionGradientValueQuadPlusOneXDevice,
+			shapeFunctionGradientValueQuadPlusOneYDevice,
+			shapeFunctionGradientValueQuadPlusOneZDevice,
+			cellJxWValuesQuadPlusOneDevice,
+			d_cellShapeFunctionGradientIntegralFlattenedDeviceElectro);
+
+	cudaDeviceSynchronize();
+	MPI_Barrier(MPI_COMM_WORLD);
+	gpu_time = MPI_Wtime() - gpu_time;
+
+	if (this_mpi_process==0 && dftParameters::verbosity>=2)
+		std::cout<<"Time for shapeFuncCUDA::computeShapeGradNINJIntegral for FEOrderElectro: "<<gpu_time<<std::endl;
+    
 
   QGaussLobatto<3>  quadratureGl(FEOrderElectro+1);
   FEValues<3> fe_valuesGl(dftPtr->matrix_free_data.get_dof_handler().get_fe(), quadratureGl, update_values | update_gradients);

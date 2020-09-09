@@ -27,6 +27,7 @@
 #include <symmetry.h>
 #include <geoOptIon.h>
 #include <geoOptCell.h>
+#include <molecularDynamics.h>
 #include <meshMovementGaussian.h>
 #include <meshMovementAffineTransform.h>
 #include <fileReaders.h>
@@ -42,7 +43,7 @@
 #include <linearAlgebraOperationsInternal.h>
 #include <vectorUtilities.h>
 #include <pseudoConverter.h>
-#include <stdafx.h>
+//#include <stdafx.h>
 #include <boost/math/special_functions/spherical_harmonic.hpp>
 #include <boost/math/distributions/normal.hpp>
 #include <boost/random/normal_distribution.hpp>
@@ -53,8 +54,10 @@
 #include <limits>
 #include <sys/stat.h>
 
+#include <spglib.h>
+#include <stdafx.h>
+
 #ifdef DFTFE_WITH_GPU
-#include <kohnShamDFTOperatorCUDA.h>
 #include <densityCalculatorCUDA.h>
 #include <linearAlgebraOperationsCUDA.h>
 #endif
@@ -217,7 +220,7 @@ namespace dftfe {
 		double dftClass<FEOrder,FEOrderElectro>::computeVolume(const dealii::DoFHandler<3> & _dofHandler)
 		{
 			double domainVolume=0;
-			QGauss<3>  quadrature(C_num1DQuad<FEOrder>());
+			QGauss<3>  quadrature(C_num1DQuad<FEOrderElectro>());
 			FEValues<3> fe_values (_dofHandler.get_fe(), quadrature, update_JxW_values);
 
 			typename DoFHandler<3>::active_cell_iterator cell = _dofHandler.begin_active(), endc = _dofHandler.end();
@@ -580,7 +583,7 @@ namespace dftfe {
 
 				TimerOutput::Scope scope (computing_timer, "psp init");
 				pcout<<std::endl<<"Pseudopotential initalization...."<<std::endl;
-				QGauss<3>  quadrature(C_num1DQuad<FEOrder>());
+				QGauss<3>  quadrature(C_num1DQuad<FEOrderElectro>());
 
 				/*
 				   double init_psplocal;
@@ -846,7 +849,9 @@ namespace dftfe {
 						d_rhoInNodalValues.local_element(i)=d_rhoInNodalValuesRead.local_element(i);
 
 					d_rhoInNodalValues.update_ghost_values();
-					interpolateNodalDataToQuadratureDataPRefinedQuadGeneral(d_matrixFreeDataPRefined,
+					interpolateElectroNodalDataToQuadratureDataGeneral(d_matrixFreeDataPRefined,
+              d_densityDofHandlerIndexElectro,
+              d_densityQuadratureIdElectro,
 							d_rhoInNodalValues,
 							*(rhoInValues),
 							*(gradRhoInValues),
@@ -892,7 +897,9 @@ namespace dftfe {
 						d_rhoInNodalValues.local_element(i)=d_rhoInNodalValuesRead.local_element(i);
 
 					d_rhoInNodalValues.update_ghost_values();
-					interpolateNodalDataToQuadratureDataPRefinedQuadGeneral(d_matrixFreeDataPRefined,
+					interpolateElectroNodalDataToQuadratureDataGeneral(d_matrixFreeDataPRefined,
+              d_densityDofHandlerIndexElectro,
+              d_densityQuadratureIdElectro,
 							d_rhoInNodalValues,
 							*(rhoInValues),
 							*(gradRhoInValues),
@@ -986,7 +993,9 @@ namespace dftfe {
 					d_rhoOutNodalValuesSplit+=d_atomicRho;
 
 					d_rhoOutNodalValuesSplit.update_ghost_values();
-					interpolateNodalDataToQuadratureDataPRefinedQuadGeneral(d_matrixFreeDataPRefined,
+					interpolateElectroNodalDataToQuadratureDataGeneral(d_matrixFreeDataPRefined,
+              d_densityDofHandlerIndexElectro,
+              d_densityQuadratureIdElectro,
 							d_rhoOutNodalValuesSplit,
 							*(rhoInValues),
 							*(gradRhoInValues),
@@ -1365,7 +1374,7 @@ namespace dftfe {
 			kohnShamDFTOperatorCUDAClass<FEOrder,FEOrderElectro> kohnShamDFTEigenOperatorCUDA(this,mpi_communicator);
 #endif
 
-			QGauss<3>  quadrature(C_num1DQuad<FEOrder>()); 
+			QGauss<3>  quadrature(C_num1DQuad<FEOrderElectro>()); 
 
 			//computingTimerStandard.enter_section("Total scf solve");
 			computingTimerStandard.enter_section("Kohn-sham dft operator init");
@@ -1377,8 +1386,7 @@ namespace dftfe {
 			dealiiLinearSolver dealiiCGSolver(mpi_communicator, dealiiLinearSolver::CG);
 
 			//set up solver functions for Poisson
-			poissonSolverProblem<FEOrder> phiTotalSolverProblem(mpi_communicator);
-      std::map<dealii::CellId,std::vector<double> > phiInValues;
+			poissonSolverProblem<FEOrderElectro> phiTotalSolverProblem(mpi_communicator);
 
 			if (!kohnShamDFTOperatorsInitialized || true)
 				initializeKohnShamDFTOperator(kohnShamDFTEigenOperator
@@ -1400,10 +1408,10 @@ namespace dftfe {
 			//
 			computing_timer.enter_section("shapefunction data");
 			if (!dftParameters::useGPU)
-				kohnShamDFTEigenOperator.preComputeShapeFunctionGradientIntegrals(5);
+				kohnShamDFTEigenOperator.preComputeShapeFunctionGradientIntegrals(d_lpspQuadratureId);
 #ifdef DFTFE_WITH_GPU
 			if (dftParameters::useGPU)
-				kohnShamDFTEigenOperatorCUDA.preComputeShapeFunctionGradientIntegrals(5);
+				kohnShamDFTEigenOperatorCUDA.preComputeShapeFunctionGradientIntegrals(d_lpspQuadratureId);
 #endif
 			computing_timer.exit_section("shapefunction data");
 
@@ -1438,14 +1446,14 @@ namespace dftfe {
 
 			computingTimerStandard.enter_section("phiTotalSolverProblem init");
 
-			phiTotalSolverProblem.reinit(matrix_free_data,
+			phiTotalSolverProblem.reinit(d_matrixFreeDataPRefined,
 					d_phiTotRhoIn,
-					*d_constraintsVector[phiTotDofHandlerIndex],
-					phiTotDofHandlerIndex,
-          0,
+					*d_constraintsVectorElectro[d_phiTotDofHandlerIndexElectro],
+					d_phiTotDofHandlerIndexElectro,
+          d_densityQuadratureIdElectro,
 					d_atomNodeIdToChargeMap,
 					d_bQuadValuesAllAtoms,
-          4,
+          d_smearedChargeQuadratureIdElectro,
 					*rhoInValues,
 					true,
 					dftParameters::periodicX && dftParameters::periodicY && dftParameters::periodicZ && !dftParameters::pinnedNodeForPBC,
@@ -1462,15 +1470,16 @@ namespace dftfe {
 			if(dftParameters::periodicX && dftParameters::periodicY && dftParameters::periodicZ && !dftParameters::pinnedNodeForPBC)
 			{
 				if (dftParameters::verbosity>=2)
-					pcout<<"Value of integPhiIn: "<<totalCharge(dofHandler,d_phiTotRhoIn)<<std::endl;
+					pcout<<"Value of integPhiIn: "<<totalCharge(d_dofHandlerPRefined,d_phiTotRhoIn)<<std::endl;
 			}
 
       std::map<dealii::CellId,std::vector<double> > dummy;
-      interpolateNodalDataToQuadratureDataQuadGeneral(matrix_free_data,
-          phiTotDofHandlerIndex,
-          0,
+      interpolateElectroNodalDataToQuadratureDataGeneral(d_matrixFreeDataPRefined,
+          d_phiTotDofHandlerIndexElectro,
+          d_densityQuadratureIdElectro,
           d_phiTotRhoIn,
-          phiInValues,
+          d_phiInValues,
+          dummy,
           dummy); 
 
 			if (dftParameters::spinPolarized==1)
@@ -1494,10 +1503,10 @@ namespace dftfe {
 						computing_timer.enter_section("VEff Computation");
 #ifdef DFTFE_WITH_GPU
 						if (dftParameters::useGPU)
-							kohnShamDFTEigenOperatorCUDA.computeVEffSpinPolarized(rhoInValuesSpinPolarized, phiInValues, s, d_pseudoVLoc, 5);
+							kohnShamDFTEigenOperatorCUDA.computeVEffSpinPolarized(rhoInValuesSpinPolarized, d_phiInValues, s, d_pseudoVLoc, d_lpspQuadratureId);
 #endif
 						if (!dftParameters::useGPU)
-							kohnShamDFTEigenOperator.computeVEffSpinPolarized(rhoInValuesSpinPolarized, phiInValues, s, d_pseudoVLoc,5);
+							kohnShamDFTEigenOperator.computeVEffSpinPolarized(rhoInValuesSpinPolarized, d_phiInValues, s, d_pseudoVLoc,d_lpspQuadratureId);
 						computing_timer.exit_section("VEff Computation");
 					}
 					else if (dftParameters::xc_id == 4)
@@ -1505,10 +1514,10 @@ namespace dftfe {
 						computing_timer.enter_section("VEff Computation");
 #ifdef DFTFE_WITH_GPU
 						if (dftParameters::useGPU)
-							kohnShamDFTEigenOperatorCUDA.computeVEffSpinPolarized(rhoInValuesSpinPolarized, gradRhoInValuesSpinPolarized, phiInValues, s, d_pseudoVLoc,5);
+							kohnShamDFTEigenOperatorCUDA.computeVEffSpinPolarized(rhoInValuesSpinPolarized, gradRhoInValuesSpinPolarized, d_phiInValues, s, d_pseudoVLoc,d_lpspQuadratureId);
 #endif
 						if (!dftParameters::useGPU)
-							kohnShamDFTEigenOperator.computeVEffSpinPolarized(rhoInValuesSpinPolarized, gradRhoInValuesSpinPolarized, phiInValues, s, d_pseudoVLoc,5);
+							kohnShamDFTEigenOperator.computeVEffSpinPolarized(rhoInValuesSpinPolarized, gradRhoInValuesSpinPolarized, d_phiInValues, s, d_pseudoVLoc,d_lpspQuadratureId);
 						computing_timer.exit_section("VEff Computation");
 					}
 					for (unsigned int kPoint = 0; kPoint < d_kPointWeights.size(); ++kPoint)
@@ -1584,10 +1593,10 @@ namespace dftfe {
 					computing_timer.enter_section("VEff Computation");
 #ifdef DFTFE_WITH_GPU
 					if (dftParameters::useGPU)
-						kohnShamDFTEigenOperatorCUDA.computeVEff(rhoInValues, phiInValues,d_pseudoVLoc,5);
+						kohnShamDFTEigenOperatorCUDA.computeVEff(rhoInValues, d_phiInValues,d_pseudoVLoc,d_lpspQuadratureId);
 #endif
 					if (!dftParameters::useGPU)
-						kohnShamDFTEigenOperator.computeVEff(rhoInValues, phiInValues, d_pseudoVLoc,5);
+						kohnShamDFTEigenOperator.computeVEff(rhoInValues, d_phiInValues, d_pseudoVLoc,d_lpspQuadratureId);
 					computing_timer.exit_section("VEff Computation");
 				}
 				else if (dftParameters::xc_id == 4)
@@ -1595,10 +1604,10 @@ namespace dftfe {
 					computing_timer.enter_section("VEff Computation");
 #ifdef DFTFE_WITH_GPU
 					if (dftParameters::useGPU)
-						kohnShamDFTEigenOperatorCUDA.computeVEff(rhoInValues, gradRhoInValues, phiInValues, d_pseudoVLoc,5);
+						kohnShamDFTEigenOperatorCUDA.computeVEff(rhoInValues, gradRhoInValues, d_phiInValues, d_pseudoVLoc,d_lpspQuadratureId);
 #endif
 					if (!dftParameters::useGPU)
-						kohnShamDFTEigenOperator.computeVEff(rhoInValues, gradRhoInValues, phiInValues, d_pseudoVLoc,5);
+						kohnShamDFTEigenOperator.computeVEff(rhoInValues, gradRhoInValues, d_phiInValues, d_pseudoVLoc,d_lpspQuadratureId);
 					computing_timer.exit_section("VEff Computation");
 				}
 
@@ -1702,7 +1711,7 @@ namespace dftfe {
 			kohnShamDFTOperatorCUDAClass<FEOrder,FEOrderElectro> kohnShamDFTEigenOperatorCUDA(this,mpi_communicator);
 #endif
 
-			QGauss<3>  quadrature(C_num1DQuad<FEOrder>());
+			QGauss<3>  quadrature(C_num1DQuad<FEOrderElectro>());
 
 			//computingTimerStandard.enter_section("Total scf solve");
 			computingTimerStandard.enter_section("Kohn-sham dft operator init");
@@ -1715,8 +1724,7 @@ namespace dftfe {
 			dealiiLinearSolver dealiiCGSolver(mpi_communicator, dealiiLinearSolver::CG);
 
 			//set up solver functions for Poisson
-			poissonSolverProblem<FEOrder> phiTotalSolverProblem(mpi_communicator);
-      std::map<dealii::CellId,std::vector<double> > phiInValues;
+			poissonSolverProblem<FEOrderElectro> phiTotalSolverProblem(mpi_communicator);
  
 			//
 			//set up solver functions for Helmholtz to be used only when Kerker mixing is on
@@ -1725,9 +1733,11 @@ namespace dftfe {
 			kerkerSolverProblem<FEOrderElectro> kerkerPreconditionedResidualSolverProblem(mpi_communicator);
 			if(dftParameters::mixingMethod=="ANDERSON_WITH_KERKER")
 				kerkerPreconditionedResidualSolverProblem.init(d_matrixFreeDataPRefined,
-						d_constraintsPRefined,
+						d_constraintsForHelmholtzElectro,
 						d_preCondResidualVector,
-						dftParameters::kerkerParameter);
+						dftParameters::kerkerParameter,
+            d_helmholtzDofHandlerIndexElectro,
+            d_densityQuadratureIdElectro);
 
 			if (!kohnShamDFTOperatorsInitialized || true)
 				initializeKohnShamDFTOperator(kohnShamDFTEigenOperator
@@ -1749,10 +1759,10 @@ namespace dftfe {
 			//
 			computing_timer.enter_section("shapefunction data");
 			if (!dftParameters::useGPU)
-				kohnShamDFTEigenOperator.preComputeShapeFunctionGradientIntegrals(5);
+				kohnShamDFTEigenOperator.preComputeShapeFunctionGradientIntegrals(d_lpspQuadratureId);
 #ifdef DFTFE_WITH_GPU
 			if (dftParameters::useGPU)
-				kohnShamDFTEigenOperatorCUDA.preComputeShapeFunctionGradientIntegrals(5);
+				kohnShamDFTEigenOperatorCUDA.preComputeShapeFunctionGradientIntegrals(d_lpspQuadratureId);
 #endif
 			computing_timer.exit_section("shapefunction data");
 
@@ -1778,10 +1788,10 @@ namespace dftfe {
 				computingTimerStandard.enter_section("Nuclear self-potential solve");
 #ifdef DFTFE_WITH_GPU
 				if (dftParameters::useGPU)
-					d_vselfBinsManager.solveVselfInBinsGPU(matrix_free_data,
-							2,
+					d_vselfBinsManager.solveVselfInBinsGPU(d_matrixFreeDataPRefined,
+							d_binsStartDofHandlerIndexElectro,
 							kohnShamDFTEigenOperatorCUDA,
-							constraintsNone,
+							d_constraintsPRefined,
 							d_imagePositionsTrunc,
 							d_imageIdsTrunc,
 							d_imageChargesTrunc,
@@ -1793,12 +1803,12 @@ namespace dftfe {
               d_bCellNonTrivialAtomIdsBins,
 							d_smearedChargeWidths,
               d_smearedChargeScaling,
-              4,
+              d_smearedChargeQuadratureIdElectro,
 							dftParameters::smearedNuclearCharges);
 				else
-					d_vselfBinsManager.solveVselfInBins(matrix_free_data,
-							2,
-							constraintsNone,
+					d_vselfBinsManager.solveVselfInBins(d_matrixFreeDataPRefined,
+							d_binsStartDofHandlerIndexElectro,
+							d_constraintsPRefined,
 							d_imagePositionsTrunc,
 							d_imageIdsTrunc,
 							d_imageChargesTrunc,
@@ -1810,12 +1820,12 @@ namespace dftfe {
               d_bCellNonTrivialAtomIdsBins,
 							d_smearedChargeWidths,
               d_smearedChargeScaling,
-              4,
+              d_smearedChargeQuadratureIdElectro,
 							dftParameters::smearedNuclearCharges);
 #else
-				d_vselfBinsManager.solveVselfInBins(matrix_free_data,
-						2,
-						constraintsNone,
+				d_vselfBinsManager.solveVselfInBins(d_matrixFreeDataPRefined,
+					  d_binsStartDofHandlerIndexElectro,
+						d_constraintsPRefined,
 						d_imagePositionsTrunc,
 						d_imageIdsTrunc,
 						d_imageChargesTrunc,
@@ -1827,7 +1837,7 @@ namespace dftfe {
             d_bCellNonTrivialAtomIdsBins,
 						d_smearedChargeWidths,
             d_smearedChargeScaling,
-            4,
+            d_smearedChargeQuadratureIdElectro,
 						dftParameters::smearedNuclearCharges);
 #endif
 				computingTimerStandard.exit_section("Nuclear self-potential solve");
@@ -1840,12 +1850,12 @@ namespace dftfe {
 				double init_psplocal;
 				MPI_Barrier(MPI_COMM_WORLD);
 				init_psplocal = MPI_Wtime();
-				initLocalPseudoPotential(dofHandler,
-					  5,
-						matrix_free_data,
-						phiExtDofHandlerIndex,
-						d_noConstraints,
-						d_supportPoints,
+				initLocalPseudoPotential(d_dofHandlerPRefined,
+					  d_lpspQuadratureIdElectro,
+						d_matrixFreeDataPRefined,
+						d_phiExtDofHandlerIndexElectro,
+						d_constraintsPRefinedOnlyHanging,
+						d_supportPointsPRefined,
 						d_vselfBinsManager,
             d_phiExt,
 						d_pseudoVLoc,
@@ -2005,14 +2015,14 @@ namespace dftfe {
         computingTimerStandard.enter_section("phiTotalSolverProblem init");
 
 				if (scfIter>0)
-					phiTotalSolverProblem.reinit(matrix_free_data,
+					phiTotalSolverProblem.reinit(d_matrixFreeDataPRefined,
 							d_phiTotRhoIn,
-							*d_constraintsVector[phiTotDofHandlerIndex],
-							phiTotDofHandlerIndex,
-              0,
+							*d_constraintsVectorElectro[d_phiTotDofHandlerIndexElectro],
+							d_phiTotDofHandlerIndexElectro,
+              d_densityQuadratureIdElectro,
 							d_atomNodeIdToChargeMap,
 							d_bQuadValuesAllAtoms,
-              4,
+              d_smearedChargeQuadratureIdElectro,
 							*rhoInValues,
 							false,
 							false,
@@ -2024,14 +2034,14 @@ namespace dftfe {
               false,
               true);          
 				else
-					phiTotalSolverProblem.reinit(matrix_free_data,
+					phiTotalSolverProblem.reinit(d_matrixFreeDataPRefined,
 							d_phiTotRhoIn,
-							*d_constraintsVector[phiTotDofHandlerIndex],
-							phiTotDofHandlerIndex,
-              0,
+							*d_constraintsVectorElectro[d_phiTotDofHandlerIndexElectro],
+							d_phiTotDofHandlerIndexElectro,
+              d_densityQuadratureIdElectro,
 							d_atomNodeIdToChargeMap,
 							d_bQuadValuesAllAtoms,
-              4,
+              d_smearedChargeQuadratureIdElectro,
 							*rhoInValues,
 							true,
 							dftParameters::periodicX && dftParameters::periodicY && dftParameters::periodicZ && !dftParameters::pinnedNodeForPBC,
@@ -2052,12 +2062,13 @@ namespace dftfe {
 						dftParameters::verbosity);
 
         std::map<dealii::CellId,std::vector<double> > dummy;
-        interpolateNodalDataToQuadratureDataQuadGeneral(matrix_free_data,
-            phiTotDofHandlerIndex,
-            0,
+        interpolateElectroNodalDataToQuadratureDataGeneral(d_matrixFreeDataPRefined,
+            d_phiTotDofHandlerIndexElectro,
+            d_densityQuadratureIdElectro,
             d_phiTotRhoIn,
-            phiInValues,
-            dummy);           
+            d_phiInValues,
+            dummy,
+            dummy);         
 
 				//
 				//impose integral phi equals 0
@@ -2065,7 +2076,7 @@ namespace dftfe {
 				if(dftParameters::periodicX && dftParameters::periodicY && dftParameters::periodicZ && !dftParameters::pinnedNodeForPBC)
 				{
 					if (dftParameters::verbosity>=2)
-						pcout<<"Value of integPhiIn: "<<totalCharge(dofHandler,d_phiTotRhoIn)<<std::endl;
+						pcout<<"Value of integPhiIn: "<<totalCharge(d_dofHandlerPRefined,d_phiTotRhoIn)<<std::endl;
 				}
 
 				computing_timer.exit_section("phiTot solve");
@@ -2097,10 +2108,10 @@ namespace dftfe {
 							computing_timer.enter_section("VEff Computation");
 #ifdef DFTFE_WITH_GPU
 							if (dftParameters::useGPU)
-								kohnShamDFTEigenOperatorCUDA.computeVEffSpinPolarized(rhoInValuesSpinPolarized, phiInValues, s, d_pseudoVLoc,5);
+								kohnShamDFTEigenOperatorCUDA.computeVEffSpinPolarized(rhoInValuesSpinPolarized, d_phiInValues, s, d_pseudoVLoc,d_lpspQuadratureId);
 #endif
 							if (!dftParameters::useGPU)
-								kohnShamDFTEigenOperator.computeVEffSpinPolarized(rhoInValuesSpinPolarized, phiInValues, s, d_pseudoVLoc,5);
+								kohnShamDFTEigenOperator.computeVEffSpinPolarized(rhoInValuesSpinPolarized, d_phiInValues, s, d_pseudoVLoc,d_lpspQuadratureId);
 							computing_timer.exit_section("VEff Computation");
 						}
 						else if (dftParameters::xc_id == 4)
@@ -2108,10 +2119,10 @@ namespace dftfe {
 							computing_timer.enter_section("VEff Computation");
 #ifdef DFTFE_WITH_GPU
 							if (dftParameters::useGPU)
-								kohnShamDFTEigenOperatorCUDA.computeVEffSpinPolarized(rhoInValuesSpinPolarized, gradRhoInValuesSpinPolarized, phiInValues, s, d_pseudoVLoc, 5);
+								kohnShamDFTEigenOperatorCUDA.computeVEffSpinPolarized(rhoInValuesSpinPolarized, gradRhoInValuesSpinPolarized, d_phiInValues, s, d_pseudoVLoc, d_lpspQuadratureId);
 #endif
 							if (!dftParameters::useGPU)
-								kohnShamDFTEigenOperator.computeVEffSpinPolarized(rhoInValuesSpinPolarized, gradRhoInValuesSpinPolarized, phiInValues, s, d_pseudoVLoc,5);
+								kohnShamDFTEigenOperator.computeVEffSpinPolarized(rhoInValuesSpinPolarized, gradRhoInValuesSpinPolarized, d_phiInValues, s, d_pseudoVLoc,d_lpspQuadratureId);
 							computing_timer.exit_section("VEff Computation");
 						}
 						for (unsigned int kPoint = 0; kPoint < d_kPointWeights.size(); ++kPoint)
@@ -2323,10 +2334,10 @@ namespace dftfe {
 						computing_timer.enter_section("VEff Computation");
 #ifdef DFTFE_WITH_GPU
 						if (dftParameters::useGPU)
-							kohnShamDFTEigenOperatorCUDA.computeVEff(rhoInValues, phiInValues, d_pseudoVLoc,5);
+							kohnShamDFTEigenOperatorCUDA.computeVEff(rhoInValues, d_phiInValues, d_pseudoVLoc,d_lpspQuadratureId);
 #endif
 						if (!dftParameters::useGPU)
-							kohnShamDFTEigenOperator.computeVEff(rhoInValues, phiInValues, d_pseudoVLoc,5);
+							kohnShamDFTEigenOperator.computeVEff(rhoInValues, d_phiInValues, d_pseudoVLoc,d_lpspQuadratureId);
 						computing_timer.exit_section("VEff Computation");
 					}
 					else if (dftParameters::xc_id == 4)
@@ -2334,10 +2345,10 @@ namespace dftfe {
 						computing_timer.enter_section("VEff Computation");
 #ifdef DFTFE_WITH_GPU
 						if (dftParameters::useGPU)
-							kohnShamDFTEigenOperatorCUDA.computeVEff(rhoInValues, gradRhoInValues, phiInValues, d_pseudoVLoc,5);
+							kohnShamDFTEigenOperatorCUDA.computeVEff(rhoInValues, gradRhoInValues, d_phiInValues, d_pseudoVLoc,d_lpspQuadratureId);
 #endif
 						if (!dftParameters::useGPU)
-							kohnShamDFTEigenOperator.computeVEff(rhoInValues, gradRhoInValues, phiInValues, d_pseudoVLoc,5);
+							kohnShamDFTEigenOperator.computeVEff(rhoInValues, gradRhoInValues, d_phiInValues, d_pseudoVLoc,d_lpspQuadratureId);
 						computing_timer.exit_section("VEff Computation");
 					}
 
@@ -2600,7 +2611,7 @@ namespace dftfe {
 				//
 				//compute integral rhoOut
 				//
-				const double integralRhoValue=totalCharge(dofHandler,
+				const double integralRhoValue=totalCharge(d_dofHandlerPRefined,
 						rhoOutValues);
 
 				if (dftParameters::verbosity>=2){
@@ -2618,14 +2629,14 @@ namespace dftfe {
 
 					computing_timer.enter_section("phiTot solve");
 
-					phiTotalSolverProblem.reinit(matrix_free_data,
+					phiTotalSolverProblem.reinit(d_matrixFreeDataPRefined,
 							d_phiTotRhoOut,
-							*d_constraintsVector[phiTotDofHandlerIndex],
-							phiTotDofHandlerIndex,
-              0,
+							*d_constraintsVectorElectro[d_phiTotDofHandlerIndexElectro],
+							d_phiTotDofHandlerIndexElectro,
+              d_densityQuadratureIdElectro,
 							d_atomNodeIdToChargeMap,
 							d_bQuadValuesAllAtoms,
-              4,
+              d_smearedChargeQuadratureIdElectro,
 							*rhoOutValues,
 							false,
 							false,
@@ -2650,25 +2661,25 @@ namespace dftfe {
 					if(dftParameters::periodicX && dftParameters::periodicY && dftParameters::periodicZ && !dftParameters::pinnedNodeForPBC)
 					{
 						if(dftParameters::verbosity>=2)
-							pcout<<"Value of integPhiOut: "<<totalCharge(dofHandler,d_phiTotRhoOut);
+							pcout<<"Value of integPhiOut: "<<totalCharge(d_dofHandlerPRefined,d_phiTotRhoOut);
 					}
 
 					computing_timer.exit_section("phiTot solve");
 
-					QGauss<3>  quadrature(C_num1DQuad<FEOrder>());
+					QGauss<3>  quadrature(C_num1DQuad<FEOrderElectro>());
 					const double totalEnergy = dftParameters::spinPolarized==0 ?
-						energyCalc.computeEnergy(dofHandler,
+						energyCalc.computeEnergy(d_dofHandlerPRefined,
 								dofHandler,
 								quadrature,
 								quadrature,
-								matrix_free_data.get_quadrature(4),
-                matrix_free_data.get_quadrature(5),
+							  d_matrixFreeDataPRefined.get_quadrature(d_smearedChargeQuadratureIdElectro),
+                d_matrixFreeDataPRefined.get_quadrature(d_lpspQuadratureIdElectro),
 								eigenValues,
 								d_kPointWeights,
 								fermiEnergy,
 								funcX,
 								funcC,
-								d_phiTotRhoIn,
+								d_phiInValues,
 								d_phiTotRhoOut,
 								*rhoInValues,
 								*rhoOutValues,
@@ -2687,12 +2698,12 @@ namespace dftfe {
 								0,
 								dftParameters::verbosity>=2,
 								dftParameters::smearedNuclearCharges) :
-									energyCalc.computeEnergySpinPolarized(dofHandler,
-											dofHandler,
+									energyCalc.computeEnergySpinPolarized(d_dofHandlerPRefined,
+									    dofHandler,
 											quadrature,
 											quadrature,
-											matrix_free_data.get_quadrature(4),
-											matrix_free_data.get_quadrature(5),                      
+                      d_matrixFreeDataPRefined.get_quadrature(d_smearedChargeQuadratureIdElectro),
+                      d_matrixFreeDataPRefined.get_quadrature(d_lpspQuadratureIdElectro),                    
 											eigenValues,
 											d_kPointWeights,
 											fermiEnergy,
@@ -2700,7 +2711,7 @@ namespace dftfe {
 											fermiEnergyDown,
 											funcX,
 											funcC,
-											d_phiTotRhoIn,
+											d_phiInValues,
 											d_phiTotRhoOut,
 											*rhoInValues,
 											*rhoOutValues,
@@ -2766,14 +2777,14 @@ namespace dftfe {
 
 				computing_timer.enter_section("phiTot solve");
 
-				phiTotalSolverProblem.reinit(matrix_free_data,
+				phiTotalSolverProblem.reinit(d_matrixFreeDataPRefined,
 						d_phiTotRhoOut,
-						*d_constraintsVector[phiTotDofHandlerIndex],
-						phiTotDofHandlerIndex,
-            0,
+						*d_constraintsVectorElectro[d_phiTotDofHandlerIndexElectro],
+						d_phiTotDofHandlerIndexElectro,
+            d_densityQuadratureIdElectro,
 						d_atomNodeIdToChargeMap,
 						d_bQuadValuesAllAtoms,
-            4,
+            d_smearedChargeQuadratureIdElectro,
 						*rhoOutValues,
 						false,
 						false,
@@ -2820,14 +2831,14 @@ namespace dftfe {
 
 					}
 
-				phiTotalSolverProblem.reinit(matrix_free_data,
+				phiTotalSolverProblem.reinit(d_matrixFreeDataPRefined,
 						phiRhoMinusApproxRho,
-						*d_constraintsVector[phiTotDofHandlerIndex],
-						phiTotDofHandlerIndex,
-            0,
+						*d_constraintsVector[d_phiTotDofHandlerIndexElectro],
+						d_phiTotDofHandlerIndexElectro,
+            d_densityQuadratureIdElectro,
 						std::map<dealii::types::global_dof_index, double>(),
 						dummy,
-            4,
+            d_smearedChargeQuadratureIdElectro,
 						rhoMinMinusApproxRho,
 						false);
 
@@ -2847,18 +2858,18 @@ namespace dftfe {
 					&& !(dftParameters::isBOMD && dftParameters::isXLBOMD && solveLinearizedKS))
 			{
 				const double totalEnergy = dftParameters::spinPolarized==0 ?
-					energyCalc.computeEnergy(dofHandler,
+					energyCalc.computeEnergy(d_dofHandlerPRefined,
 							dofHandler,
 							quadrature,
 							quadrature,
-							matrix_free_data.get_quadrature(4),
-              matrix_free_data.get_quadrature(5),
+							d_matrixFreeDataPRefined.get_quadrature(d_smearedChargeQuadratureIdElectro),
+              d_matrixFreeDataPRefined.get_quadrature(d_lpspQuadratureIdElectro),
 							eigenValues,
 							d_kPointWeights,
 							fermiEnergy,
 							funcX,
 							funcC,
-							d_phiTotRhoIn,
+							d_phiInValues,
 							d_phiTotRhoOut,
 							*rhoInValues,
 							*rhoOutValues,
@@ -2877,12 +2888,12 @@ namespace dftfe {
 							1,
 							true,
 							dftParameters::smearedNuclearCharges) :
-								energyCalc.computeEnergySpinPolarized(dofHandler,
+								energyCalc.computeEnergySpinPolarized(d_dofHandlerPRefined,
 										dofHandler,
 										quadrature,
 										quadrature,
-										matrix_free_data.get_quadrature(4),
-                    matrix_free_data.get_quadrature(5),
+						      	d_matrixFreeDataPRefined.get_quadrature(d_smearedChargeQuadratureIdElectro),
+                    d_matrixFreeDataPRefined.get_quadrature(d_lpspQuadratureIdElectro),
 										eigenValues,
 										d_kPointWeights,
 										fermiEnergy,
@@ -2890,7 +2901,7 @@ namespace dftfe {
 										fermiEnergyDown,
 										funcX,
 										funcC,
-										d_phiTotRhoIn,
+										d_phiInValues,
 										d_phiTotRhoOut,
 										*rhoInValues,
 										*rhoOutValues,
@@ -2936,17 +2947,17 @@ namespace dftfe {
 			if (dftParameters::isBOMD && dftParameters::isXLBOMD && solveLinearizedKS && !isPerturbationSolveXLBOMD)
 			{
 				d_shadowPotentialEnergy =
-					energyCalc.computeShadowPotentialEnergyExtendedLagrangian(dofHandler,
+					energyCalc.computeShadowPotentialEnergyExtendedLagrangian(d_dofHandlerPRefined,
 							dofHandler,
 							quadrature,
 							quadrature,
-							matrix_free_data.get_quadrature(4),
+							d_matrixFreeDataPRefined.get_quadrature(d_smearedChargeQuadratureIdElectro),
 							eigenValues,
 							d_kPointWeights,
 							fermiEnergy,
 							funcX,
 							funcC,
-							d_phiTotRhoIn,
+							d_phiInValues,
 							d_phiTotRhoIn,
 							*rhoInValues,
 							*rhoOutValues,
@@ -3052,7 +3063,7 @@ namespace dftfe {
 								dofHandler,
 								matrix_free_data.n_physical_cells(),
 								matrix_free_data.get_dofs_per_cell(),
-								QGauss<3>(C_num1DQuad<FEOrder>()).size(),
+								QGauss<3>(C_num1DQuad<FEOrderElectro>()).size(),
 								d_kPointWeights,
 								rhoOutValues,
 								gradRhoOutValues,
@@ -3076,8 +3087,8 @@ namespace dftfe {
 								dofHandler,
 								constraintsNone,
 								matrix_free_data,
-								eigenDofHandlerIndex,
-								0,
+								d_eigenDofHandlerIndex,
+								d_densityQuadratureId,
 								localProc_dof_indicesReal,
 								localProc_dof_indicesImag,        
 								d_kPointWeights,
@@ -3103,8 +3114,8 @@ namespace dftfe {
 							dofHandler,
 							constraintsNone,
 							matrix_free_data,
-							eigenDofHandlerIndex,
-							0,
+							d_eigenDofHandlerIndex,
+							d_densityQuadratureId,
 							localProc_dof_indicesReal,
 							localProc_dof_indicesImag,
 							d_kPointWeights,
@@ -3186,17 +3197,13 @@ namespace dftfe {
 #ifdef DFTFE_WITH_GPU
 								kohnShamDFTEigenOperatorCUDA,
 #endif
-								eigenDofHandlerIndex,
-								phiTotDofHandlerIndex,
-                4,
-                5,
-                5,
-								d_phiTotRhoIn,
-								d_phiTotRhoIn,
+								d_eigenDofHandlerIndex,
+                d_smearedChargeQuadratureIdElectro,
+                d_lpspQuadratureId,
+                d_lpspQuadratureIdElectro,
 								d_pseudoVLoc,
-								d_vselfBinsManager,
-								matrix_free_data,
-								phiTotDofHandlerIndex,
+								d_matrixFreeDataPRefined,
+								d_phiTotDofHandlerIndexElectro,
 								d_phiTotRhoIn,
 								*rhoInValues,
 								*gradRhoInValues,
@@ -3207,7 +3214,7 @@ namespace dftfe {
                 d_gradRhoInValuesLpspQuad,
 								d_pseudoVLoc,
 								d_pseudoVLocAtoms,
-								constraintsNone,
+								d_constraintsPRefined,
 								d_vselfBinsManager,
 								*rhoOutValues,
 								*gradRhoOutValues,
@@ -3218,17 +3225,13 @@ namespace dftfe {
 #ifdef DFTFE_WITH_GPU
 								kohnShamDFTEigenOperatorCUDA,
 #endif
-								eigenDofHandlerIndex,
-								phiTotDofHandlerIndex,
-                4,
-                5,
-                5,
-								d_phiTotRhoIn,
-								d_phiTotRhoOut,
+								d_eigenDofHandlerIndex,
+                d_smearedChargeQuadratureIdElectro,
+                d_lpspQuadratureId,
+                d_lpspQuadratureIdElectro,
 								d_pseudoVLoc,
-								d_vselfBinsManager,
-								matrix_free_data,
-								phiTotDofHandlerIndex,
+								d_matrixFreeDataPRefined,
+								d_phiTotDofHandlerIndexElectro,
 								d_phiTotRhoOut,
 								*rhoOutValues,
 								*gradRhoOutValues,
@@ -3239,7 +3242,7 @@ namespace dftfe {
                 d_gradRhoOutValuesLpspQuad,
 								d_pseudoVLoc,
 								d_pseudoVLocAtoms,
-								constraintsNone,
+								d_constraintsPRefined,
 								d_vselfBinsManager,
 								*rhoOutValues,
 								*gradRhoOutValues,
@@ -3260,16 +3263,13 @@ namespace dftfe {
 				if (computeForces)
 				{
 					forcePtr->computeStress(matrix_free_data,
-							eigenDofHandlerIndex,
-							phiTotDofHandlerIndex,
-              4,
-              5,
-              5,
-							d_phiTotRhoOut,
+							d_eigenDofHandlerIndex,
+              d_smearedChargeQuadratureIdElectro,
+              d_lpspQuadratureId,
+              d_lpspQuadratureIdElectro,
 							d_pseudoVLoc,
-							d_vselfBinsManager,
-							matrix_free_data,
-							phiTotDofHandlerIndex,
+							d_matrixFreeDataPRefined,
+							d_phiTotDofHandlerIndexElectro,
 							d_phiTotRhoOut,
               *rhoOutValues,
               *gradRhoOutValues,
@@ -3280,7 +3280,7 @@ namespace dftfe {
               d_gradRhoOutValuesLpspQuad,
               d_pseudoVLoc,
               d_pseudoVLocAtoms,
-							constraintsNone,
+						  d_constraintsPRefined,
 							d_vselfBinsManager);
 					forcePtr->printStress();
 				}
@@ -3443,7 +3443,7 @@ namespace dftfe {
 			//compute nodal electron-density from quad data
 			//
 			distributedCPUVec<double>  rhoNodalField;
-			matrix_free_data.initialize_dof_vector(rhoNodalField,densityDofHandlerIndex);
+			d_matrixFreeDataPRefined.initialize_dof_vector(rhoNodalField,d_densityDofHandlerIndexElectro);
 			rhoNodalField=0;
 			std::function<double(const typename dealii::DoFHandler<3>::active_cell_iterator & cell ,
 					const unsigned int q)> funcRho =
@@ -3451,9 +3451,9 @@ namespace dftfe {
 						const unsigned int q)
 				{return (*rhoOutValues).find(cell->id())->second[q];};
 			dealii::VectorTools::project<3,distributedCPUVec<double>> (dealii::MappingQ1<3,3>(),
-					dofHandler,
-					constraintsNone,
-					QGauss<3>(C_num1DQuad<FEOrder>()),
+					d_dofHandlerPRefined,
+					d_constraintsPRefined,
+					d_matrixFreeDataPRefined.get_quadrature(d_densityQuadratureIdElectro),
 					funcRho,
 					rhoNodalField);
 			rhoNodalField.update_ghost_values();
@@ -3462,7 +3462,7 @@ namespace dftfe {
 			distributedCPUVec<double>  rhoNodalFieldSpin1;
 			if (dftParameters::spinPolarized==1)
 			{
-				matrix_free_data.initialize_dof_vector(rhoNodalFieldSpin0,densityDofHandlerIndex);
+		  	rhoNodalFieldSpin0.reinit(rhoNodalField);        
 				rhoNodalFieldSpin0=0;
 				std::function<double(const typename dealii::DoFHandler<3>::active_cell_iterator & cell ,
 						const unsigned int q)> funcRhoSpin0 =
@@ -3470,15 +3470,15 @@ namespace dftfe {
 							const unsigned int q)
 					{return (*rhoOutValuesSpinPolarized).find(cell->id())->second[2*q];};
 				dealii::VectorTools::project<3,distributedCPUVec<double>> (dealii::MappingQ1<3,3>(),
-						dofHandler,
-						constraintsNone,
-						QGauss<3>(C_num1DQuad<FEOrder>()),
+            d_dofHandlerPRefined,
+            d_constraintsPRefined,
+            d_matrixFreeDataPRefined.get_quadrature(d_densityQuadratureIdElectro),
 						funcRhoSpin0,
 						rhoNodalFieldSpin0);
 				rhoNodalFieldSpin0.update_ghost_values();
 
 
-				matrix_free_data.initialize_dof_vector(rhoNodalFieldSpin1,densityDofHandlerIndex);
+		  	rhoNodalFieldSpin1.reinit(rhoNodalField);   
 				rhoNodalFieldSpin1=0;
 				std::function<double(const typename dealii::DoFHandler<3>::active_cell_iterator & cell ,
 						const unsigned int q)> funcRhoSpin1 =
@@ -3486,9 +3486,9 @@ namespace dftfe {
 							const unsigned int q)
 					{return (*rhoOutValuesSpinPolarized).find(cell->id())->second[2*q+1];};
 				dealii::VectorTools::project<3,distributedCPUVec<double>> (dealii::MappingQ1<3,3>(),
-						dofHandler,
-						constraintsNone,
-						QGauss<3>(C_num1DQuad<FEOrder>()),
+            d_dofHandlerPRefined,
+            d_constraintsPRefined,
+            d_matrixFreeDataPRefined.get_quadrature(d_densityQuadratureIdElectro),
 						funcRhoSpin1,
 						rhoNodalFieldSpin1);
 				rhoNodalFieldSpin1.update_ghost_values();
@@ -3498,7 +3498,7 @@ namespace dftfe {
 			//only generate output for electron-density
 			//
 			DataOut<3> dataOutRho;
-			dataOutRho.attach_dof_handler(dofHandler);
+			dataOutRho.attach_dof_handler(d_dofHandlerPRefined);
 			dataOutRho.add_data_vector(rhoNodalField, std::string("density"));
 			if (dftParameters::spinPolarized==1)
 			{
@@ -3510,7 +3510,7 @@ namespace dftfe {
 			std::string tempFolder = "densityOutputFolder";
 			mkdir(tempFolder.c_str(),ACCESSPERMS);
 
-			dftUtils::writeDataVTUParallelLowestPoolId(dofHandler,
+			dftUtils::writeDataVTUParallelLowestPoolId(d_dofHandlerPRefined,
 					dataOutRho,
 					mpi_communicator,
 					interpoolcomm,

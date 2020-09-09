@@ -93,8 +93,8 @@ void kohnShamDFTOperatorClass<FEOrder,FEOrderElectro>::computeHamiltonianMatrix(
 	//
 	//Get some FE related Data
 	//
-	QGauss<3> quadrature(C_num1DQuad<FEOrder>());
-	FEEvaluation<3, FEOrder, C_num1DQuad<FEOrder>(), 1, double>  fe_eval(dftPtr->matrix_free_data, 0, 0);
+	QGauss<3> quadrature(C_num1DQuad<FEOrderElectro>());
+	FEEvaluation<3, FEOrder, C_num1DQuad<FEOrderElectro>(), 1, double>  fe_eval(dftPtr->matrix_free_data, 0, 0);
 	FEValues<3> fe_values(dftPtr->matrix_free_data.get_dof_handler().get_fe(), quadrature,update_gradients);
 	const unsigned int numberDofsPerElement = dftPtr->matrix_free_data.get_dof_handler().get_fe().dofs_per_cell;
 	const unsigned int numberQuadraturePoints = quadrature.size();
@@ -279,8 +279,8 @@ void kohnShamDFTOperatorClass<FEOrder,FEOrderElectro>::computeKineticMatrix()
 	//
 	//Get some FE related Data
 	//
-	QGauss<3> quadrature(C_num1DQuad<FEOrder>());
-	FEEvaluation<3, FEOrder, C_num1DQuad<FEOrder>(), 1, double>  fe_eval(dftPtr->matrix_free_data, 0, 0);
+	QGauss<3> quadrature(C_num1DQuad<FEOrderElectro>());
+	FEEvaluation<3, FEOrder, C_num1DQuad<FEOrderElectro>(), 1, double>  fe_eval(dftPtr->matrix_free_data, 0, 0);
 	FEValues<3> fe_values(dftPtr->matrix_free_data.get_dof_handler().get_fe(), quadrature,update_gradients);
 	const unsigned int numberDofsPerElement = dftPtr->matrix_free_data.get_dof_handler().get_fe().dofs_per_cell;
 

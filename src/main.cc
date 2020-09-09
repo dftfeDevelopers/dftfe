@@ -110,10 +110,6 @@ static run_fn order_list[] =
 	run_problem<8,14>,
 	run_problem<8,15>,
 	run_problem<8,16>,  
-	run_problem<9,9>,
-	run_problem<10,10>,
-	run_problem<11,11>,
-	run_problem<12,12> 
 };
 
 int main (int argc, char *argv[])
@@ -172,7 +168,7 @@ int main (int argc, char *argv[])
 	int order = dftfe::dftParameters::finiteElementPolynomialOrder;
 	int orderElectro = dftfe::dftParameters::finiteElementPolynomialOrderElectrostatics; 
 
-	if(order < 1 || order > 12) {
+	if(order < 1 || order > 8) {
 		std::cout << "Invalid DFT-FE order " << order << std::endl;
 		return -1;
 	}

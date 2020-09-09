@@ -28,7 +28,7 @@ template<unsigned int FEOrder,unsigned int FEOrderElectro>
  const std::vector<VectorizedArray<double> > & rhoQuads, 
  const std::vector<Tensor<1,C_DIM,VectorizedArray<double> > > & gradRhoQuads,
  const std::map<unsigned int,std::map<dealii::CellId, std::vector<double> > > & pseudoVLocAtoms,
- const vselfBinsManager<FEOrder> & vselfBinsManager,
+ const vselfBinsManager<FEOrderElectro> & vselfBinsManager,
  const std::vector<std::map<dealii::CellId , unsigned int> > & cellsVselfBallsClosestAtomIdDofHandler)
 {
 	Tensor<1,C_DIM,VectorizedArray<double> > zeroTensor1;

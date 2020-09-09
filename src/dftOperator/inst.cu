@@ -42,7 +42,3 @@ template class kohnShamDFTOperatorCUDAClass<8,13>;
 template class kohnShamDFTOperatorCUDAClass<8,14>;
 template class kohnShamDFTOperatorCUDAClass<8,15>;
 template class kohnShamDFTOperatorCUDAClass<8,16>;
-template class kohnShamDFTOperatorCUDAClass<9,9>;
-template class kohnShamDFTOperatorCUDAClass<10,10>;
-template class kohnShamDFTOperatorCUDAClass<11,11>;
-template class kohnShamDFTOperatorCUDAClass<12,12>;

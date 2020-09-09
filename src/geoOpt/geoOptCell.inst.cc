@@ -42,7 +42,3 @@ template class geoOptCell<8,13>;
 template class geoOptCell<8,14>;
 template class geoOptCell<8,15>;
 template class geoOptCell<8,16>;
-template class geoOptCell<9,9>;
-template class geoOptCell<10,10>;
-template class geoOptCell<11,11>;
-template class geoOptCell<12,12>;

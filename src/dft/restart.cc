@@ -143,7 +143,7 @@ void dftClass<FEOrder,FEOrderElectro>::loadTriaInfoAndRhoData()
 
 	Assert(mixingHistorySize>1,ExcInternalError());
 
-	QGauss<3>  quadrature(C_num1DQuad<FEOrder>());
+	QGauss<3>  quadrature(C_num1DQuad<FEOrderElectro>());
 	const unsigned int num_quad_points = quadrature.size();
 
 	//Fill input data for the load function call

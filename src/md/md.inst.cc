@@ -42,7 +42,3 @@ template class molecularDynamics<8,13>;
 template class molecularDynamics<8,14>;
 template class molecularDynamics<8,15>;
 template class molecularDynamics<8,16>;
-template class molecularDynamics<9,9>;
-template class molecularDynamics<10,10>;
-template class molecularDynamics<11,11>;
-template class molecularDynamics<12,12>;

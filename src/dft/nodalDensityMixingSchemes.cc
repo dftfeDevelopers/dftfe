@@ -38,11 +38,12 @@ double dftClass<FEOrder,FEOrderElectro>::nodalDensity_mixing_simple(kerkerSolver
 
 	//compute l2 norm of the field residual
 	normValue = fieldl2Norm(d_matrixFreeDataPRefined,
-			residualRho);
-
+			residualRho,
+      d_densityDofHandlerIndexElectro,
+      d_densityQuadratureIdElectro);
 
 	//create FEEval object to be used subsequently
-	FEEvaluation<C_DIM,FEOrderElectro,C_num1DQuadElectro<FEOrderElectro>(),1,double> fe_evalHelm(d_matrixFreeDataPRefined);
+	FEEvaluation<C_DIM,FEOrderElectro,C_num1DQuad<FEOrderElectro>(),1,double> fe_evalHelm(d_matrixFreeDataPRefined,d_densityDofHandlerIndexElectro,d_densityQuadratureIdElectro);
 	unsigned int numQuadPoints =  fe_evalHelm.n_q_points; 
 	DoFHandler<C_DIM>::active_cell_iterator subCellPtr;
 
@@ -56,7 +57,7 @@ double dftClass<FEOrder,FEOrderElectro>::nodalDensity_mixing_simple(kerkerSolver
 	{
 		fe_evalHelm.reinit(cell);
 		fe_evalHelm.read_dof_values(residualRho);
-		fe_evalHelm.evaluate(true,true);
+		fe_evalHelm.evaluate(false,true);
 
 		for(unsigned int iSubCell = 0; iSubCell < d_matrixFreeDataPRefined.n_components_filled(cell); ++iSubCell)
 		{
@@ -140,7 +141,9 @@ double dftClass<FEOrder,FEOrderElectro>::nodalDensity_mixing_simple(kerkerSolver
 	}*/
 
 	//interpolate nodal data to quadrature data
-	interpolateNodalDataToQuadratureDataPRefinedQuadGeneral(d_matrixFreeDataPRefined,
+	interpolateElectroNodalDataToQuadratureDataGeneral(d_matrixFreeDataPRefined,
+      d_densityDofHandlerIndexElectro,
+      0,
 			d_rhoInNodalValues,
 			*rhoInValues,
 			*gradRhoInValues,
@@ -172,7 +175,9 @@ double dftClass<FEOrder,FEOrderElectro>::nodalDensity_mixing_anderson(kerkerSolv
 
 	//compute l2 norm of the field residual
 	normValue = fieldl2Norm(d_matrixFreeDataPRefined,
-			residualRho);
+			residualRho,
+      d_densityDofHandlerIndexElectro,
+      d_densityQuadratureIdElectro);
 
 
 	//initialize data structures for computing mixing constants in Anderson mixing scheme
@@ -289,7 +294,7 @@ double dftClass<FEOrder,FEOrderElectro>::nodalDensity_mixing_anderson(kerkerSolv
 	diffRhoBar.update_ghost_values();
 
 	//create FEEval object to be used subsequently
-	FEEvaluation<C_DIM,FEOrderElectro,C_num1DQuadElectro<FEOrderElectro>(),1,double> fe_evalHelm(d_matrixFreeDataPRefined);
+	FEEvaluation<C_DIM,FEOrderElectro,C_num1DQuad<FEOrderElectro>(),1,double> fe_evalHelm(d_matrixFreeDataPRefined,d_densityDofHandlerIndexElectro,d_densityQuadratureIdElectro);
 	unsigned int numQuadPoints = fe_evalHelm.n_q_points; 
 	DoFHandler<C_DIM>::active_cell_iterator subCellPtr;
 
@@ -299,7 +304,7 @@ double dftClass<FEOrder,FEOrderElectro>::nodalDensity_mixing_anderson(kerkerSolv
 	{
 		fe_evalHelm.reinit(cell);
 		fe_evalHelm.read_dof_values(diffRhoBar);
-		fe_evalHelm.evaluate(true,true);
+		fe_evalHelm.evaluate(false,true);
 
 		for(unsigned int iSubCell = 0; iSubCell < d_matrixFreeDataPRefined.n_components_filled(cell); ++iSubCell)
 		{
@@ -390,7 +395,9 @@ double dftClass<FEOrder,FEOrderElectro>::nodalDensity_mixing_anderson(kerkerSolv
 
 	  }*/
 
-	interpolateNodalDataToQuadratureDataPRefinedQuadGeneral(d_matrixFreeDataPRefined,
+	interpolateElectroNodalDataToQuadratureDataGeneral(d_matrixFreeDataPRefined,
+      d_densityDofHandlerIndexElectro,
+      0,
 			d_rhoInNodalValues,
 			*rhoInValues,
 			*gradRhoInValues,

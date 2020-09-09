@@ -38,8 +38,8 @@ namespace dftfe {
 	template <unsigned int FEOrder,unsigned int FEOrderElectro>
 		class symmetryClass
 		{
-			template <unsigned int T1, unsigned int T2>
-				friend class dftClass;
+			//template <unsigned int T1, unsigned int T2>
+				friend class dftClass<FEOrder,FEOrderElectro>;
 
 			public:
 			/**

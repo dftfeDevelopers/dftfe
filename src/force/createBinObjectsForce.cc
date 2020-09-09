@@ -22,7 +22,7 @@ template<unsigned int FEOrder,unsigned int FEOrderElectro>
 (const DoFHandler<3> & dofHandler,
  const DoFHandler<3> & dofHandlerForce,
  const ConstraintMatrix  & hangingPlusPBCConstraints,
- const vselfBinsManager<FEOrder> & vselfBinsManager,
+ const vselfBinsManager<FEOrderElectro> & vselfBinsManager,
  std::vector<std::vector<DoFHandler<C_DIM>::active_cell_iterator> > & cellsVselfBallsDofHandler,
  std::vector<std::vector<DoFHandler<C_DIM>::active_cell_iterator> > & cellsVselfBallsDofHandlerForce,
  std::vector<std::map<dealii::CellId , unsigned int> > & cellsVselfBallsClosestAtomIdDofHandler,
@@ -147,8 +147,8 @@ template<unsigned int FEOrder,unsigned int FEOrderElectro>
 	}//Bin loop
 
   d_cellIdToActiveCellIteratorMapDofHandlerRhoNodalElectro.clear();
-  DoFHandler<C_DIM>::active_cell_iterator  cell = d_isElectrostaticsMeshSubdivided?dofHandler.begin_active():dftPtr->d_dofHandlerPRefined.begin_active();
-  DoFHandler<C_DIM>::active_cell_iterator  endc = d_isElectrostaticsMeshSubdivided?dofHandler.end():dftPtr->d_dofHandlerPRefined.end();
+  DoFHandler<C_DIM>::active_cell_iterator  cell = dofHandler.begin_active();
+  DoFHandler<C_DIM>::active_cell_iterator  endc = dofHandler.end();
   for(; cell!= endc; ++cell)
     if(cell->is_locally_owned())
       d_cellIdToActiveCellIteratorMapDofHandlerRhoNodalElectro[cell->id()]=cell;

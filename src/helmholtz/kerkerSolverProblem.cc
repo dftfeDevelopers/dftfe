@@ -39,11 +39,15 @@ namespace dftfe {
 		void kerkerSolverProblem<FEOrderElectro>::init(dealii::MatrixFree<3,double> & matrixFreeDataPRefined,
 				dealii::ConstraintMatrix & constraintMatrixPRefined,
 				distributedCPUVec<double> & x,
-				double kerkerMixingParameter)
+				double kerkerMixingParameter,
+        const unsigned int matrixFreeVectorComponent,
+        const unsigned int matrixFreeQuadratureComponent)        
 		{
 			d_matrixFreeDataPRefinedPtr = &matrixFreeDataPRefined;
 			d_constraintMatrixPRefinedPtr = &constraintMatrixPRefined;
 			d_gamma = kerkerMixingParameter;
+      d_matrixFreeVectorComponent=matrixFreeVectorComponent;
+      d_matrixFreeQuadratureComponent=matrixFreeQuadratureComponent;
 
 			matrixFreeDataPRefined.initialize_dof_vector(x);
 			computeDiagonalA();
@@ -79,7 +83,7 @@ namespace dftfe {
 			const dealii::DoFHandler<3> & dofHandler=
 				d_matrixFreeDataPRefinedPtr->get_dof_handler();
 
-			dealii::QGauss<3>  quadrature(C_num1DQuadElectro<FEOrderElectro>());
+			dealii::QGauss<3>  quadrature(C_num1DQuad<FEOrderElectro>());
 			dealii::FEValues<3> fe_values (dofHandler.get_fe(), quadrature, dealii::update_values | dealii::update_gradients | dealii::update_JxW_values);
 			const unsigned int dofs_per_cell = dofHandler.get_fe().dofs_per_cell;
 			const unsigned int num_quad_points = quadrature.size();
@@ -143,7 +147,7 @@ namespace dftfe {
 			d_matrixFreeDataPRefinedPtr->initialize_dof_vector(d_diagonalA);
 			d_diagonalA = 0.0;
 
-			dealii::QGauss<3>  quadrature(C_num1DQuadElectro<FEOrderElectro>());
+			dealii::QGauss<3>  quadrature(C_num1DQuad<FEOrderElectro>());
 			dealii::FEValues<3> fe_values (dofHandler.get_fe(), quadrature, dealii::update_values | dealii::update_gradients | dealii::update_JxW_values);
 			const unsigned int   dofs_per_cell = dofHandler.get_fe().dofs_per_cell;
 			const unsigned int   num_quad_points = quadrature.size();
@@ -189,9 +193,9 @@ namespace dftfe {
 				const std::pair<unsigned int,unsigned int> &cell_range) const
 		{
 
-			dealii::FEEvaluation<3,FEOrderElectro,C_num1DQuadElectro<FEOrderElectro>()> fe_eval(matrixFreeData,
-					0,
-					0);
+			dealii::FEEvaluation<3,FEOrderElectro,C_num1DQuad<FEOrderElectro>()> fe_eval(matrixFreeData,
+					d_matrixFreeVectorComponent,
+					d_matrixFreeQuadratureComponent);
 			//double gamma = dftParameters::kerkerParameter;
 
 			dealii::VectorizedArray<double>  kerkerConst = dealii::make_vectorized_array(4*M_PI*d_gamma);
@@ -237,12 +241,4 @@ namespace dftfe {
 	template class kerkerSolverProblem<14>;
 	template class kerkerSolverProblem<15>;
 	template class kerkerSolverProblem<16>;
-	template class kerkerSolverProblem<17>;
-	template class kerkerSolverProblem<18>;
-	template class kerkerSolverProblem<19>;
-	template class kerkerSolverProblem<20>;
-	template class kerkerSolverProblem<21>;
-	template class kerkerSolverProblem<22>;
-	template class kerkerSolverProblem<23>;
-	template class kerkerSolverProblem<24>;
 }

@@ -21,13 +21,10 @@ template<unsigned int FEOrder,unsigned int FEOrderElectro>
 	void forceClass<FEOrder,FEOrderElectro>::computeStress
 (const MatrixFree<3,double> & matrixFreeData,
  const unsigned int eigenDofHandlerIndex,
- const unsigned int phiTotDofHandlerIndex,
  const unsigned int smearedChargeQuadratureId,
           const unsigned int lpspQuadratureId,
   const unsigned int lpspQuadratureIdElectro,         
- const distributedCPUVec<double> & phiTotRhoOut,
  const std::map<dealii::CellId, std::vector<double> > & pseudoVLoc,
- const vselfBinsManager<FEOrder> & vselfBinsManagerEigen,
  const MatrixFree<3,double> & matrixFreeDataElectro,
  const unsigned int phiTotDofHandlerIndexElectro,
  const distributedCPUVec<double> & phiTotRhoOutElectro,
@@ -41,7 +38,7 @@ template<unsigned int FEOrder,unsigned int FEOrderElectro>
   const std::map<dealii::CellId, std::vector<double> > & pseudoVLocElectro,
  const std::map<unsigned int,std::map<dealii::CellId, std::vector<double> > > & pseudoVLocAtomsElectro,
  const ConstraintMatrix  & hangingPlusPBCConstraintsElectro,
- const vselfBinsManager<FEOrder> & vselfBinsManagerElectro)
+ const vselfBinsManager<FEOrderElectro> & vselfBinsManagerElectro)
 {
 
 	createBinObjectsForce(matrixFreeDataElectro.get_dof_handler(phiTotDofHandlerIndexElectro),
@@ -69,13 +66,10 @@ template<unsigned int FEOrder,unsigned int FEOrderElectro>
 	if (dftParameters::spinPolarized)
 		computeStressSpinPolarizedEEshelbyEPSPEnlEk(matrixFreeData,
 				eigenDofHandlerIndex,
-				phiTotDofHandlerIndex,
         smearedChargeQuadratureId,
         lpspQuadratureId,
         lpspQuadratureIdElectro,        
-				phiTotRhoOut,
 				pseudoVLoc,
-				vselfBinsManagerEigen,
 				matrixFreeDataElectro,
 				phiTotDofHandlerIndexElectro,
 				phiTotRhoOutElectro,
@@ -90,13 +84,10 @@ template<unsigned int FEOrder,unsigned int FEOrderElectro>
 	else
 		computeStressEEshelbyEPSPEnlEk(matrixFreeData,
 				eigenDofHandlerIndex,
-				phiTotDofHandlerIndex,
         smearedChargeQuadratureId,
         lpspQuadratureId,
         lpspQuadratureIdElectro,        
-				phiTotRhoOut,
 				pseudoVLoc,
-				vselfBinsManagerEigen,
 				matrixFreeDataElectro,
 				phiTotDofHandlerIndexElectro,
 				phiTotRhoOutElectro,

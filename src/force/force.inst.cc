@@ -42,7 +42,3 @@ template class forceClass<8,13>;
 template class forceClass<8,14>;
 template class forceClass<8,15>;
 template class forceClass<8,16>;
-template class forceClass<9,9>;
-template class forceClass<10,10>;
-template class forceClass<11,11>;
-template class forceClass<12,12>;
