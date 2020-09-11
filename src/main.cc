@@ -66,6 +66,17 @@ typedef void (*run_fn)(const MPI_Comm &mpi_comm_replica,
 
 static run_fn order_list[] = 
 {
+#ifdef DFTFE_MINIMAL_COMPILE
+	run_problem<4,4>,
+	run_problem<5,5>,
+	run_problem<6,6>,
+	run_problem<6,7>,
+	run_problem<6,8>,
+	run_problem<6,9>,
+	run_problem<6,10>,
+	run_problem<6,11>,
+	run_problem<6,12>,  
+#else  
 	run_problem<1,1>,
 	run_problem<1,2>,
 	run_problem<2,2>,
@@ -109,7 +120,8 @@ static run_fn order_list[] =
 	run_problem<8,13>,
 	run_problem<8,14>,
 	run_problem<8,15>,
-	run_problem<8,16>,  
+	run_problem<8,16>
+#endif  
 };
 
 int main (int argc, char *argv[])
@@ -168,6 +180,35 @@ int main (int argc, char *argv[])
 	int order = dftfe::dftParameters::finiteElementPolynomialOrder;
 	int orderElectro = dftfe::dftParameters::finiteElementPolynomialOrderElectrostatics; 
 
+#ifdef DFTFE_MINIMAL_COMPILE
+	if(order < 4 || order > 6) {
+		std::cout << "Invalid DFT-FE order " << order << std::endl;
+		return -1;
+	}
+
+  if (order>5)
+    if(orderElectro < order || orderElectro > order*2) 
+    {
+      std::cout << "Invalid DFT-FE order electrostatics " << orderElectro << std::endl;
+      return -1;
+    }
+  else  
+    if(orderElectro !=order) 
+    {
+      std::cout << "Invalid DFT-FE order electrostatics " << orderElectro << std::endl;
+      return -1;
+    }
+
+  int listIndex=0;
+  for (int i=4; i<=order; i++)
+  {
+    int maxElectroOrder=(i<order)?2*i:orderElectro;
+    if (i<6)
+      maxElectroOrder=i;
+    for (int j=i;j<=maxElectroOrder;j++)
+        listIndex++;
+  }
+#else
 	if(order < 1 || order > 8) {
 		std::cout << "Invalid DFT-FE order " << order << std::endl;
 		return -1;
@@ -186,12 +227,7 @@ int main (int argc, char *argv[])
     for (int j=i;j<=maxElectroOrder;j++)
         listIndex++;
   }
-  /*
-	if(order < 1 || order-1 >= sizeof(order_list)/sizeof(order_list[0])) {
-		std::cout << "Invalid DFT-FE order " << order << std::endl;
-		return -1;
-	}
-    */
+#endif
 
 	run_fn run = order_list[listIndex - 1];
 	run(bandGroupsPool.get_intrapool_comm(),

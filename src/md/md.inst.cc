@@ -1,3 +1,14 @@
+#ifdef DFTFE_MINIMAL_COMPILE
+template class molecularDynamics<4,4>;
+template class molecularDynamics<5,5>;
+template class molecularDynamics<6,6>;
+template class molecularDynamics<6,7>;
+template class molecularDynamics<6,8>;
+template class molecularDynamics<6,9>;
+template class molecularDynamics<6,10>;
+template class molecularDynamics<6,11>;
+template class molecularDynamics<6,12>;
+#else
 template class molecularDynamics<1,1>;
 template class molecularDynamics<1,2>;
 template class molecularDynamics<2,2>;
@@ -42,3 +53,4 @@ template class molecularDynamics<8,13>;
 template class molecularDynamics<8,14>;
 template class molecularDynamics<8,15>;
 template class molecularDynamics<8,16>;
+#endif

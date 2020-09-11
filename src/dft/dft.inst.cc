@@ -1,3 +1,14 @@
+#ifdef DFTFE_MINIMAL_COMPILE
+template class dftClass<4,4>;
+template class dftClass<5,5>;
+template class dftClass<6,6>;
+template class dftClass<6,7>;
+template class dftClass<6,8>;
+template class dftClass<6,9>;
+template class dftClass<6,10>;
+template class dftClass<6,11>;
+template class dftClass<6,12>;
+#else
 template class dftClass<1,1>;
 template class dftClass<1,2>;
 template class dftClass<2,2>;
@@ -42,3 +53,4 @@ template class dftClass<8,13>;
 template class dftClass<8,14>;
 template class dftClass<8,15>;
 template class dftClass<8,16>;
+#endif
