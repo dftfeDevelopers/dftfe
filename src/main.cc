@@ -187,17 +187,21 @@ int main (int argc, char *argv[])
 	}
 
   if (order>5)
+  {
     if(orderElectro < order || orderElectro > order*2) 
     {
       std::cout << "Invalid DFT-FE order electrostatics " << orderElectro << std::endl;
       return -1;
     }
-  else  
+  }
+  else
+  {
     if(orderElectro !=order) 
     {
       std::cout << "Invalid DFT-FE order electrostatics " << orderElectro << std::endl;
       return -1;
     }
+  }
 
   int listIndex=0;
   for (int i=4; i<=order; i++)
