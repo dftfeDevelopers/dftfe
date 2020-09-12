@@ -32,6 +32,12 @@ namespace dftfe {
 	{
 		d_isShapeGradIntegralPrecomputed=false;
 		d_isMeanValueConstraintComputed=false;
+    d_isGradSmearedChargeRhs=false;
+    d_isStoreSmearedChargeRhs=false;
+    d_isReuseSmearedChargeRhs=false;
+    d_rhoValuesPtr=NULL;
+    d_atomsPtr=NULL;
+    d_smearedChargeValuesPtr=NULL;
 	}
 
 	template<unsigned int FEOrderElectro>
