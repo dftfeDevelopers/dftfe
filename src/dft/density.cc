@@ -93,6 +93,17 @@ void dftClass<FEOrder,FEOrderElectro>::compute_rhoOut(
 		computeRhoNodalFromPSI(isConsiderSpectrumSplitting);
 #endif
 		d_rhoOutNodalValues.update_ghost_values();
+
+    //normalize rho
+    const double charge = totalCharge(d_matrixFreeDataPRefined,
+        d_rhoOutNodalValues);
+
+
+    const double scalingFactor = ((double)numElectrons)/charge;
+
+    //scale nodal vector with scalingFactor
+    d_rhoOutNodalValues *= scalingFactor;
+
 		d_rhoOutNodalVals.push_back(d_rhoOutNodalValues);
 
 
