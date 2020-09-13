@@ -134,11 +134,11 @@ namespace dftfe
         smearedChargeScaling[binAtomIdToGlobalAtomIdMapCurrentBin[iatom]]=1.0/smearedNuclearChargeIntegral[iatom];
       }
 
-      /*
+      
 			if (dealii::Utilities::MPI::this_mpi_process(mpi_communicator) ==0)
 				for (unsigned int iatom=0; iatom< numberDomainAtomsInBin; ++iatom)
 					std::cout<<"Smeared charge integral before scaling (charge val=1): "<<smearedNuclearChargeIntegral[iatom]<<std::endl;       
-      */
+      
 
 			std::vector<double> smearedNuclearChargeIntegralCheck(numberTotalAtomsInBin,0.0); 
 			cell = dofHandlerOfField.begin_active();
@@ -168,7 +168,7 @@ namespace dftfe
               const double scalingFac=(-atomCharges[atomId])/smearedNuclearChargeIntegral[atomId];
 
 							bQuadValuesCell[q]=chargeVal*scalingFac;
-							//smearedNuclearChargeIntegralCheck[atomId]+=bQuadValuesCell[q]*jxw;
+							smearedNuclearChargeIntegralCheck[atomId]+=bQuadValuesCell[q]*jxw;
               bQuadAtomIdsCell[q]=atomChargeId;
               bQuadAtomImageIdsCell[q]=binAtomIdToGlobalAtomIdMapCurrentBin[iatom];
               break;
@@ -177,7 +177,7 @@ namespace dftfe
 
 				}
 
-      /*
+      
 			MPI_Allreduce(MPI_IN_PLACE,
 					&smearedNuclearChargeIntegralCheck[0],
 					numberTotalAtomsInBin,
@@ -188,7 +188,7 @@ namespace dftfe
 			if (dealii::Utilities::MPI::this_mpi_process(mpi_communicator) ==0)
 				for (unsigned int iatom=0; iatom< numberDomainAtomsInBin; ++iatom)
 					std::cout<<"Smeared charge integral after scaling: "<<smearedNuclearChargeIntegralCheck[iatom]<<std::endl;
-      */
+      
 		}
 	}
 
@@ -474,7 +474,7 @@ namespace dftfe
           for (unsigned int macrocell = 0;macrocell < matrix_free_data.n_macro_cells();
               ++macrocell)
           {
-
+            std::fill(smearedbQuads.begin(),smearedbQuads.end(),dealii::make_vectorized_array(0.0));
             bool isMacroCellTrivial=true;
             const unsigned int numSubCells=matrix_free_data.n_components_filled(macrocell);
             for (unsigned int iSubCell=0; iSubCell<numSubCells; ++iSubCell)
@@ -765,7 +765,7 @@ namespace dftfe
           for (unsigned int macrocell = 0;macrocell < matrix_free_data.n_macro_cells();
               ++macrocell)
           {
-
+            std::fill(smearedbQuads.begin(),smearedbQuads.end(),dealii::make_vectorized_array(0.0));
             bool isMacroCellTrivial=true;
             const unsigned int numSubCells=matrix_free_data.n_components_filled(macrocell);
             for (unsigned int iSubCell=0; iSubCell<numSubCells; ++iSubCell)
@@ -859,6 +859,7 @@ namespace dftfe
             for (unsigned int macrocell = 0;macrocell < matrix_free_data.n_macro_cells();
                 ++macrocell)
             {
+              std::fill(smearedbQuads.begin(),smearedbQuads.end(),dealii::make_vectorized_array(0.0));
               bool isMacroCellTrivial=true;
               const unsigned int numSubCells=matrix_free_data.n_components_filled(macrocell);
               for (unsigned int iSubCell=0; iSubCell<numSubCells; ++iSubCell)
@@ -1063,7 +1064,7 @@ namespace dftfe
           for (unsigned int macrocell = 0;macrocell < matrix_free_data.n_macro_cells();
               ++macrocell)
           {
-
+            std::fill(smearedbQuads.begin(),smearedbQuads.end(),dealii::make_vectorized_array(0.0));
             bool isMacroCellTrivial=true;
             const unsigned int numSubCells=matrix_free_data.n_components_filled(macrocell);
             for (unsigned int iSubCell=0; iSubCell<numSubCells; ++iSubCell)
