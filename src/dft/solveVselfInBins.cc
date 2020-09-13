@@ -134,9 +134,9 @@ namespace dftfe
       }
 
       
-			if (dealii::Utilities::MPI::this_mpi_process(mpi_communicator) ==0)
-				for (unsigned int iatom=0; iatom< numberDomainAtomsInBin; ++iatom)
-					std::cout<<"Smeared charge integral before scaling (charge val=1): "<<smearedNuclearChargeIntegral[iatom]<<std::endl;       
+			//if (dealii::Utilities::MPI::this_mpi_process(mpi_communicator) ==0)
+			//	for (unsigned int iatom=0; iatom< numberDomainAtomsInBin; ++iatom)
+			//		std::cout<<"Smeared charge integral before scaling (charge val=1): "<<smearedNuclearChargeIntegral[iatom]<<std::endl;       
       
 
 			std::vector<double> smearedNuclearChargeIntegralCheck(numberTotalAtomsInBin,0.0); 
@@ -167,7 +167,7 @@ namespace dftfe
               const double scalingFac=(-atomCharges[atomId])/smearedNuclearChargeIntegral[atomId];
 
 							bQuadValuesCell[q]=chargeVal*scalingFac;
-							smearedNuclearChargeIntegralCheck[atomId]+=bQuadValuesCell[q]*jxw;
+							//smearedNuclearChargeIntegralCheck[atomId]+=bQuadValuesCell[q]*jxw;
               bQuadAtomIdsCell[q]=atomChargeId;
               bQuadAtomImageIdsCell[q]=binAtomIdToGlobalAtomIdMapCurrentBin[iatom];
               break;
@@ -176,7 +176,7 @@ namespace dftfe
 
 				}
 
-      
+      /* 
 			MPI_Allreduce(MPI_IN_PLACE,
 					&smearedNuclearChargeIntegralCheck[0],
 					numberTotalAtomsInBin,
@@ -187,6 +187,7 @@ namespace dftfe
 			if (dealii::Utilities::MPI::this_mpi_process(mpi_communicator) ==0)
 				for (unsigned int iatom=0; iatom< numberDomainAtomsInBin; ++iatom)
 					std::cout<<"Smeared charge integral after scaling: "<<smearedNuclearChargeIntegralCheck[iatom]<<std::endl;
+      */
       
 		}
 	}
