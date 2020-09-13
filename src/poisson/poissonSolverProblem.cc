@@ -275,7 +275,7 @@ namespace dftfe {
         for (unsigned int macrocell = 0;macrocell < d_matrixFreeDataPtr->n_macro_cells();
             ++macrocell)
         {
-
+          std::fill(smearedbQuads.begin(),smearedbQuads.end(),dealii::make_vectorized_array(0.0));
           bool isMacroCellTrivial=true;
           const unsigned int numSubCells=d_matrixFreeDataPtr->n_components_filled(macrocell);
           for (unsigned int iSubCell=0; iSubCell<numSubCells; ++iSubCell)
@@ -325,6 +325,7 @@ namespace dftfe {
         for (unsigned int macrocell = 0;macrocell < d_matrixFreeDataPtr->n_macro_cells();
             ++macrocell)
         {
+          std::fill(smearedbQuads.begin(),smearedbQuads.end(),dealii::make_vectorized_array(0.0));
           bool isMacroCellTrivial=true;
           const unsigned int numSubCells=d_matrixFreeDataPtr->n_components_filled(macrocell);
           for (unsigned int iSubCell=0; iSubCell<numSubCells; ++iSubCell)
