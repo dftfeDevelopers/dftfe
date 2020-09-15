@@ -76,12 +76,6 @@ template<unsigned int FEOrder>
 		if (pseudoVLocAtoms.find(iAtom)==pseudoVLocAtoms.end())
 			isLocalDomainOutsidePspTail=true;
 
-		//Assuming psp tail is larger than vself ball
-		if (isLocalDomainOutsidePspTail)
-			continue;
-
-    std::fill(surfaceIntegralSubcells.begin(),surfaceIntegralSubcells.end(),zeroTensorNonvect);
-
 		double atomCharge;
 		unsigned int atomId=iAtom;
 		Point<C_DIM> atomLocation;
@@ -103,7 +97,7 @@ template<unsigned int FEOrder>
 			atomLocation[0]=dftPtr->d_imagePositionsTrunc[imageId][0];
 			atomLocation[1]=dftPtr->d_imagePositionsTrunc[imageId][1];
 			atomLocation[2]=dftPtr->d_imagePositionsTrunc[imageId][2];
-		}      
+		}   
 
 		unsigned int binIdiAtom;
 		std::map<unsigned int,unsigned int>::const_iterator it1=
@@ -112,6 +106,16 @@ template<unsigned int FEOrder>
 			isLocalDomainOutsideVselfBall=true;
 		else
 			binIdiAtom=it1->second;
+
+		//Assuming psp tail is larger than vself ball
+		if (isLocalDomainOutsidePspTail && isLocalDomainOutsideVselfBall)
+			continue;
+
+    std::fill(surfaceIntegralSubcells.begin(),surfaceIntegralSubcells.end(),zeroTensorNonvect);
+	  std::fill(vselfQuads.begin(),vselfQuads.end(),make_vectorized_array(0.0));    
+	  std::fill(pseudoVLocAtomsQuads.begin(),pseudoVLocAtomsQuads.end(),make_vectorized_array(0.0));   
+    std::fill(vselfDerRQuads.begin(),vselfDerRQuads.end(),zeroTensor1);
+    std::fill(totalContribution.begin(),totalContribution.end(),zeroTensor1);
 
     bool isTrivial=true;
 		for (unsigned int iSubCell=0; iSubCell<numSubCells; ++iSubCell)
@@ -203,6 +207,16 @@ template<unsigned int FEOrder>
 						pseudoVLocAtomsQuads[q][iSubCell]=(it->second)[q];
 				}
 			}
+      else if (!isCellOutsideVselfBall)
+      {
+        std::vector<dealii::Point<C_DIM> > & temp=quadPointsSubCells[iSubCell];        
+				for (unsigned int q=0; q<numQuadPoints; ++q)
+				{
+					Tensor<1,C_DIM,double> dispAtom=temp[q]-atomLocation;
+					const double dist=dispAtom.norm();
+					pseudoVLocAtomsQuads[q][iSubCell]=-atomCharge/dist;
+				}        
+      }
 
 			if (isCellOutsideVselfBall && !isCellOutsidePspTail)
       {
