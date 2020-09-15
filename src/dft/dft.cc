@@ -2594,16 +2594,16 @@ namespace dftfe {
 				}
 				else
 					compute_rhoOut((scfIter<dftParameters::spectrumSplitStartingScfIter || scfConverged || performExtraNoMixedPrecNoSpectrumSplitPassInCaseOfXlBOMD)?false:true,
-							scfConverged);
+							scfConverged || (scfIter == (dftParameters::numSCFIterations-1)));
 #else
 
 #ifdef DFTFE_WITH_GPU
 				compute_rhoOut(kohnShamDFTEigenOperatorCUDA,
 						(scfIter<dftParameters::spectrumSplitStartingScfIter || scfConverged || performExtraNoMixedPrecNoSpectrumSplitPassInCaseOfXlBOMD)?false:true,
-						scfConverged);
+						scfConverged || (scfIter == (dftParameters::numSCFIterations-1)));
 #else
 				compute_rhoOut((scfIter<dftParameters::spectrumSplitStartingScfIter || scfConverged || performExtraNoMixedPrecNoSpectrumSplitPassInCaseOfXlBOMD)?false:true,
-						scfConverged);
+						scfConverged || (scfIter == (dftParameters::numSCFIterations-1)));
 #endif
 #endif
 				computing_timer.exit_section("compute rho");
@@ -3060,6 +3060,7 @@ namespace dftfe {
 								fermiEnergyUp,
 								fermiEnergyDown,
 								kohnShamDFTEigenOperatorCUDA,
+                d_eigenDofHandlerIndex,
 								dofHandler,
 								matrix_free_data.n_physical_cells(),
 								matrix_free_data.get_dofs_per_cell(),

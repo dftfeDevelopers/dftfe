@@ -160,6 +160,7 @@ namespace dftfe
 			 const double fermiEnergyUp,
 			 const double fermiEnergyDown,
 			 operatorDFTCUDAClass & operatorMatrix,
+       const unsigned int matrixFreeDofhandlerIndex,
 			 const dealii::DoFHandler<3> & dofHandler,
 			 const unsigned int totalLocallyOwnedCells,
 			 const unsigned int numNodesPerElement,
@@ -218,7 +219,7 @@ namespace dftfe
 				 //distributedGPUVec<double> & cudaFlattenedArrayBlock = operatorMatrix.getBlockCUDADealiiVector();
 
 				 distributedGPUVec<double> cudaFlattenedArrayBlock;
-				 vectorTools::createDealiiVector(operatorMatrix.getMatrixFreeData()->get_vector_partitioner(),
+				 vectorTools::createDealiiVector(operatorMatrix.getMatrixFreeData()->get_vector_partitioner(matrixFreeDofhandlerIndex),
 						 BVec,
 						 cudaFlattenedArrayBlock);
 
