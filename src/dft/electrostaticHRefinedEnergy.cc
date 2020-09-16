@@ -42,7 +42,7 @@ void dftClass<FEOrder,FEOrderElectro>::computeElectrostaticEnergyHRefined(
 	//project and create a nodal field of the same mesh from the quadrature data (L2 projection from quad points to nodes)
 	//
 	distributedCPUVec<double> rhoNodalFieldCoarse;
-  d_matrixFreeDataPRefined.initialize_dof_vector(rhoNodalFieldCoarse,d_densityDofHandlerIndexElectro);
+  d_matrixFreeDataPRefined.initialize_dof_vector(rhoNodalFieldCoarse,d_baseDofHandlerIndexElectro);
 	rhoNodalFieldCoarse = 0.0;
 
 	//
