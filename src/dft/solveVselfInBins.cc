@@ -193,8 +193,8 @@ namespace dftfe
 		}
 	}
 
-	template<unsigned int FEOrderElectro>
-		void vselfBinsManager<FEOrderElectro>::solveVselfInBins
+	template<unsigned int FEOrder, unsigned int FEOrderElectro>
+		void vselfBinsManager<FEOrder,FEOrderElectro>::solveVselfInBins
 		(const dealii::MatrixFree<3,double> & matrix_free_data,
 		 const unsigned int offset,
 		 const dealii::AffineConstraints<double> & hangingPeriodicConstraintMatrix,
@@ -253,7 +253,7 @@ namespace dftfe
 
 			//set up poisson solver
 			dealiiLinearSolver dealiiCGSolver(mpi_communicator,dealiiLinearSolver::CG);
-			poissonSolverProblem<FEOrderElectro> vselfSolverProblem(mpi_communicator);
+			poissonSolverProblem<FEOrder,FEOrderElectro> vselfSolverProblem(mpi_communicator);
 
 			std::map<dealii::types::global_dof_index, dealii::Point<3> > supportPoints;
 			dealii::DoFTools::map_dofs_to_support_points(dealii::MappingQ1<3,3>(), matrix_free_data.get_dof_handler(offset), supportPoints);
@@ -480,7 +480,7 @@ namespace dftfe
             const unsigned int numSubCells=matrix_free_data.n_components_filled(macrocell);
             for (unsigned int iSubCell=0; iSubCell<numSubCells; ++iSubCell)
             {
-              subCellPtr= matrix_free_data.get_cell_iterator(macrocell,iSubCell);
+              subCellPtr= matrix_free_data.get_cell_iterator(macrocell,iSubCell,constraintMatrixIdVself);
               dealii::CellId subCellId=subCellPtr->id();
               const std::vector<double>& tempVec=bQuadValuesBin.find(subCellId)->second;
               if (tempVec.size()==0)
@@ -558,9 +558,10 @@ namespace dftfe
 		}
 
 #ifdef DFTFE_WITH_GPU
-	template<unsigned int FEOrderElectro>
-		void vselfBinsManager<FEOrderElectro>::solveVselfInBinsGPU
+	template<unsigned int FEOrder, unsigned int FEOrderElectro>
+		void vselfBinsManager<FEOrder,FEOrderElectro>::solveVselfInBinsGPU
 		(const dealii::MatrixFree<3,double> & matrix_free_data,
+     const unsigned int mfBaseDofHandlerIndex,
 		 const unsigned int offset,
 		 operatorDFTCUDAClass & operatorMatrix,
 		 const dealii::AffineConstraints<double> & hangingPeriodicConstraintMatrix,
@@ -735,7 +736,7 @@ namespace dftfe
 
 				std::map<dealii::CellId,std::vector<double> > & bQuadValuesBin=bQuadValuesBins[iBin];
 
-				dealii::FEEvaluation<3,FEOrderElectro,C_num1DQuad<FEOrderElectro>()> fe_eval(matrix_free_data,
+				dealii::FEEvaluation<3,FEOrderElectro,C_num1DQuad<C_rhoNodalPolyOrder<FEOrder,FEOrderElectro>()>()> fe_eval(matrix_free_data,
 						constraintMatrixId,
 						0);
 
@@ -771,7 +772,7 @@ namespace dftfe
             const unsigned int numSubCells=matrix_free_data.n_components_filled(macrocell);
             for (unsigned int iSubCell=0; iSubCell<numSubCells; ++iSubCell)
             {
-              subCellPtr= matrix_free_data.get_cell_iterator(macrocell,iSubCell);
+              subCellPtr= matrix_free_data.get_cell_iterator(macrocell,iSubCell,constraintMatrixId);
               dealii::CellId subCellId=subCellPtr->id();
               const std::vector<double>& tempVec=bQuadValuesBin.find(subCellId)->second;
               if (tempVec.size()==0)
@@ -828,7 +829,7 @@ namespace dftfe
             d_vselfBinConstraintMatrices[4*iBin+idim+1].distribute(tempvec);
             tempvec.update_ghost_values();
 
-            dealii::FEEvaluation<3,FEOrderElectro,C_num1DQuad<FEOrderElectro>()> fe_eval2(matrix_free_data,
+            dealii::FEEvaluation<3,FEOrderElectro,C_num1DQuad<C_rhoNodalPolyOrder<FEOrder,FEOrderElectro>()>()> fe_eval2(matrix_free_data,
                 constraintMatrixId2,
                 0);
 
@@ -865,7 +866,7 @@ namespace dftfe
               const unsigned int numSubCells=matrix_free_data.n_components_filled(macrocell);
               for (unsigned int iSubCell=0; iSubCell<numSubCells; ++iSubCell)
               {
-                subCellPtr= matrix_free_data.get_cell_iterator(macrocell,iSubCell);
+                subCellPtr= matrix_free_data.get_cell_iterator(macrocell,iSubCell,constraintMatrixId2);
                 dealii::CellId subCellId=subCellPtr->id();
                 const std::vector<double>& tempVec=bQuadValuesBin.find(subCellId)->second;
                 if (tempVec.size()==0)
@@ -904,7 +905,7 @@ namespace dftfe
 			// compute diagonal
 			//
 			distributedCPUVec<double> diagonalA;
-			matrix_free_data.initialize_dof_vector(diagonalA,0);
+			matrix_free_data.initialize_dof_vector(diagonalA,mfBaseDofHandlerIndex);
 			diagonalA=0;
 
 
@@ -938,12 +939,12 @@ namespace dftfe
 
 			diagonalA.compress(dealii::VectorOperation::insert);
 
-			const unsigned int ghostSize   = matrix_free_data.get_vector_partitioner()->n_ghost_indices();
+			const unsigned int ghostSize   = matrix_free_data.get_vector_partitioner(mfBaseDofHandlerIndex)->n_ghost_indices();
 
 			std::vector<double> inhomoIdsColoredVecFlattened((localSize+ghostSize)*numberPoissonSolves,1.0);
 			for (unsigned int i = 0; i <(localSize+ghostSize); ++i)
 			{
-				const dealii::types::global_dof_index globalNodeId=matrix_free_data.get_vector_partitioner()->local_to_global(i);
+				const dealii::types::global_dof_index globalNodeId=matrix_free_data.get_vector_partitioner(mfBaseDofHandlerIndex)->local_to_global(i);
 				for(unsigned int iBin = 0; iBin < numberBins; ++iBin)
 				{
 					if( d_vselfBinConstraintMatrices[4*iBin].is_inhomogeneously_constrained(globalNodeId)
@@ -959,7 +960,7 @@ namespace dftfe
         for (unsigned int idim=0; idim<3; idim++) 
           for (unsigned int i = 0; i <(localSize+ghostSize); ++i)
           {
-            const dealii::types::global_dof_index globalNodeId=matrix_free_data.get_vector_partitioner()->local_to_global(i);
+            const dealii::types::global_dof_index globalNodeId=matrix_free_data.get_vector_partitioner(mfBaseDofHandlerIndex)->local_to_global(i);
             for(unsigned int iBin = 0; iBin < numberBins; ++iBin)
             {
               if( d_vselfBinConstraintMatrices[4*iBin+idim+1].is_inhomogeneously_constrained(globalNodeId)
@@ -981,6 +982,7 @@ namespace dftfe
 			poissonCUDA::solveVselfInBins
 				(operatorMatrix,
 				 matrix_free_data,
+         mfBaseDofHandlerIndex,
 				 hangingPeriodicConstraintMatrix,
 				 &rhsFlattened[0],
 				 diagonalA.begin(),
@@ -1070,7 +1072,7 @@ namespace dftfe
             const unsigned int numSubCells=matrix_free_data.n_components_filled(macrocell);
             for (unsigned int iSubCell=0; iSubCell<numSubCells; ++iSubCell)
             {
-              subCellPtr= matrix_free_data.get_cell_iterator(macrocell,iSubCell);
+              subCellPtr= matrix_free_data.get_cell_iterator(macrocell,iSubCell,constraintMatrixId);
               dealii::CellId subCellId=subCellPtr->id();
               const std::vector<double>& tempVec=bQuadValuesBin.find(subCellId)->second;
               if (tempVec.size()==0)

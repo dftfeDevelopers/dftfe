@@ -29,7 +29,7 @@ void forceClass<FEOrder,FEOrderElectro>::computeNonLocalProjectorKetTimesPsiTime
 	//
 	//get FE data
 	//
-	QGauss<3>  quadrature_formula(C_num1DQuad<FEOrderElectro>());
+  const Quadrature<3> &  quadrature_formula=dftPtr->matrix_free_data.get_quadrature(dftPtr->d_densityQuadratureId);  
 
 	const unsigned int dofs_per_cell = dftPtr->FEEigen.dofs_per_cell;
 

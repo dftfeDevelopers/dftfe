@@ -20,7 +20,7 @@
 template<unsigned int FEOrder,unsigned int FEOrderElectro>
 	void forceClass<FEOrder,FEOrderElectro>::computeConfigurationalForceEselfLinFE
 (const DoFHandler<3> & dofHandlerElectro,
- const vselfBinsManager<FEOrderElectro> & vselfBinsManagerElectro,
+ const vselfBinsManager<FEOrder,FEOrderElectro> & vselfBinsManagerElectro,
  const MatrixFree<3,double> & matrixFreeDataElectro,
  const unsigned int smearedChargeQuadratureId)
 {
@@ -30,7 +30,7 @@ template<unsigned int FEOrder,unsigned int FEOrderElectro>
 	//
 	//First add configurational force contribution from the volume integral
 	//
-	QGauss<C_DIM>  quadrature(C_num1DQuad<FEOrderElectro>());
+	QGauss<C_DIM>  quadrature(C_num1DQuad<C_rhoNodalPolyOrder<FEOrder,FEOrderElectro>()>());
 	FEValues<C_DIM> feForceValues (FEForce, quadrature, update_gradients | update_JxW_values);
 	FEValues<C_DIM> feVselfValues (dofHandlerElectro.get_fe(), quadrature, update_gradients);
 	const unsigned int   forceDofsPerCell = FEForce.dofs_per_cell;
@@ -119,7 +119,7 @@ template<unsigned int FEOrder,unsigned int FEOrderElectro>
     for(unsigned int iBin = 0; iBin < numberBins; ++iBin)
     {
       FEEvaluation<C_DIM,FEOrderElectro,C_num1DQuadSmearedCharge()*C_numCopies1DQuadSmearedCharge(),1>  vselfEvalSmearedCharge(matrixFreeDataElectro,
-        2+4*iBin,
+        dftPtr->d_binsStartDofHandlerIndexElectro+4*iBin,
         smearedChargeQuadratureId);
 
       const std::set<int> & atomIdsInBin=atomIdsBins.find(iBin)->second;
@@ -215,7 +215,7 @@ template<unsigned int FEOrder,unsigned int FEOrderElectro>
 	//the surface integral to the configurational force is negligible (< 1e-6 Hartree/Bohr)
 	//
 
-	QGauss<C_DIM-1>  faceQuadrature(C_num1DQuad<FEOrderElectro>());
+	QGauss<C_DIM-1>  faceQuadrature(C_num1DQuad<C_rhoNodalPolyOrder<FEOrder,FEOrderElectro>()>());
 	FEFaceValues<C_DIM> feForceFaceValues (FEForce, faceQuadrature, update_values | update_JxW_values | update_normal_vectors | update_quadrature_points);
 	const unsigned int faces_per_cell=GeometryInfo<C_DIM>::faces_per_cell;
 	const unsigned int   numFaceQuadPoints = faceQuadrature.size();
@@ -306,9 +306,9 @@ template<unsigned int FEOrder,unsigned int FEOrderElectro>
 void forceClass<FEOrder,FEOrderElectro>::computeConfigurationalForcePhiExtLinFE()
 {
 
-	FEEvaluation<C_DIM,1,C_num1DQuad<FEOrderElectro>(),C_DIM>  forceEval(dftPtr->matrix_free_data,d_forceDofHandlerIndex, 0);
+	FEEvaluation<C_DIM,1,C_num1DQuad<C_rhoNodalPolyOrder<FEOrder,FEOrderElectro>()>(),C_DIM>  forceEval(dftPtr->matrix_free_data,d_forceDofHandlerIndex, 0);
 
-	FEEvaluation<C_DIM,FEOrderElectro,C_num1DQuad<FEOrderElectro>(),1> eshelbyEval(dftPtr->d_matrixFreeDataPRefined,dftPtr->d_phiExtDofHandlerIndexElectro, 0);//no constraints
+	FEEvaluation<C_DIM,FEOrderElectro,C_num1DQuad<C_rhoNodalPolyOrder<FEOrder,FEOrderElectro>()>(),1> eshelbyEval(dftPtr->d_matrixFreeDataPRefined,dftPtr->d_phiExtDofHandlerIndexElectro, 0);//no constraints
 
 
 	for (unsigned int cell=0; cell<dftPtr->matrix_free_data.n_macro_cells(); ++cell){
@@ -330,9 +330,9 @@ void forceClass<FEOrder,FEOrderElectro>::computeConfigurationalForcePhiExtLinFE(
 	template<unsigned int FEOrder,unsigned int FEOrderElectro>
 void forceClass<FEOrder,FEOrderElectro>::computeConfigurationalForceEselfNoSurfaceLinFE()
 {
-	FEEvaluation<C_DIM,1,C_num1DQuad<FEOrderElectro>(),C_DIM>  forceEval(dftPtr->matrix_free_data,d_forceDofHandlerIndex, 0);
+	FEEvaluation<C_DIM,1,C_num1DQuad<C_rhoNodalPolyOrder<FEOrder,FEOrderElectro>()>(),C_DIM>  forceEval(dftPtr->matrix_free_data,d_forceDofHandlerIndex, 0);
 
-	FEEvaluation<C_DIM,FEOrderElectro,C_num1DQuad<FEOrderElectro>(),1> eshelbyEval(dftPtr->d_matrixFreeDataPRefined,dftPtr->d_phiExtDofHandlerIndexElectro, 0);//no constraints
+	FEEvaluation<C_DIM,FEOrderElectro,C_num1DQuad<C_rhoNodalPolyOrder<FEOrder,FEOrderElectro>()>(),1> eshelbyEval(dftPtr->d_matrixFreeDataPRefined,dftPtr->d_phiExtDofHandlerIndexElectro, 0);//no constraints
 
 	for (unsigned int iBin=0; iBin< dftPtr->d_vselfBinsManager.getVselfFieldBins().size() ; iBin++){
 		for (unsigned int cell=0; cell<dftPtr->matrix_free_data.n_macro_cells(); ++cell){

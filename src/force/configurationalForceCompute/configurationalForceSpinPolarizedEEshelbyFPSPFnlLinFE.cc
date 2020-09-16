@@ -34,7 +34,7 @@ template<unsigned int FEOrder,unsigned int FEOrderElectro>
 				 const std::map<dealii::CellId, std::vector<double> > & gradRhoOutValuesElectroLpsp,
  const std::map<dealii::CellId, std::vector<double> > & pseudoVLocElectro,
  const std::map<unsigned int,std::map<dealii::CellId, std::vector<double> > > & pseudoVLocAtomsElectro,
- const vselfBinsManager<FEOrderElectro> & vselfBinsManagerElectro,
+ const vselfBinsManager<FEOrder,FEOrderElectro> & vselfBinsManagerElectro,
  const std::map<dealii::CellId, std::vector<double> > & shadowKSRhoMinValues,
  const std::map<dealii::CellId, std::vector<double> > & shadowKSGradRhoMinValues,
  const distributedCPUVec<double> & phiRhoMinusApproxRho,
@@ -47,14 +47,14 @@ template<unsigned int FEOrder,unsigned int FEOrderElectro>
 	const bool isPseudopotential = dftParameters::isPseudopotential;
 
 	const unsigned int numVectorizedArrayElements=VectorizedArray<double>::n_array_elements;
-	FEEvaluation<C_DIM,1,C_num1DQuad<FEOrderElectro>(),C_DIM>  forceEval(matrixFreeData,
+	FEEvaluation<C_DIM,1,C_num1DQuad<C_rhoNodalPolyOrder<FEOrder,FEOrderElectro>()>(),C_DIM>  forceEval(matrixFreeData,
 			d_forceDofHandlerIndex,
 			0);
 	FEEvaluation<C_DIM,1,C_num1DQuadNLPSP<FEOrder>()*C_numCopies1DQuadNLPSP(),C_DIM>  forceEvalNLP(matrixFreeData,
 			d_forceDofHandlerIndex,
 			dftPtr->d_nlpspQuadratureId);
 #ifdef USE_COMPLEX
-	FEEvaluation<C_DIM,1,C_num1DQuad<FEOrderElectro>(),C_DIM>  forceEvalKPoints(matrixFreeData,
+	FEEvaluation<C_DIM,1,C_num1DQuad<C_rhoNodalPolyOrder<FEOrder,FEOrderElectro>()>(),C_DIM>  forceEvalKPoints(matrixFreeData,
 			d_forceDofHandlerIndex,
 			0);
 	FEEvaluation<C_DIM,1,C_num1DQuadNLPSP<FEOrder>()*C_numCopies1DQuadNLPSP(),C_DIM>  forceEvalKPointsNLP(matrixFreeData,
@@ -67,10 +67,10 @@ template<unsigned int FEOrder,unsigned int FEOrderElectro>
 			lpspQuadratureId);  
 
 #ifdef USE_COMPLEX
-	FEEvaluation<C_DIM,FEOrder,C_num1DQuad<FEOrderElectro>(),2> psiEvalSpin0(matrixFreeData,
+	FEEvaluation<C_DIM,FEOrder,C_num1DQuad<C_rhoNodalPolyOrder<FEOrder,FEOrderElectro>()>(),2> psiEvalSpin0(matrixFreeData,
 			eigenDofHandlerIndex,
 			0);
-	FEEvaluation<C_DIM,FEOrder,C_num1DQuad<FEOrderElectro>(),2> psiEvalSpin1(matrixFreeData,
+	FEEvaluation<C_DIM,FEOrder,C_num1DQuad<C_rhoNodalPolyOrder<FEOrder,FEOrderElectro>()>(),2> psiEvalSpin1(matrixFreeData,
 			eigenDofHandlerIndex,
 			0);
 	FEEvaluation<C_DIM,FEOrder,C_num1DQuadNLPSP<FEOrder>()*C_numCopies1DQuadNLPSP(),2> psiEvalSpin0NLP(matrixFreeData,
@@ -80,10 +80,10 @@ template<unsigned int FEOrder,unsigned int FEOrderElectro>
 			eigenDofHandlerIndex,
 			dftPtr->d_nlpspQuadratureId);
 #else
-	FEEvaluation<C_DIM,FEOrder,C_num1DQuad<FEOrderElectro>(),1> psiEvalSpin0(matrixFreeData,
+	FEEvaluation<C_DIM,FEOrder,C_num1DQuad<C_rhoNodalPolyOrder<FEOrder,FEOrderElectro>()>(),1> psiEvalSpin0(matrixFreeData,
 			eigenDofHandlerIndex,
 			0);
-	FEEvaluation<C_DIM,FEOrder,C_num1DQuad<FEOrderElectro>(),1> psiEvalSpin1(matrixFreeData,
+	FEEvaluation<C_DIM,FEOrder,C_num1DQuad<C_rhoNodalPolyOrder<FEOrder,FEOrderElectro>()>(),1> psiEvalSpin1(matrixFreeData,
 			eigenDofHandlerIndex,
 			0);
 	FEEvaluation<C_DIM,FEOrder,C_num1DQuadNLPSP<FEOrder>()*C_numCopies1DQuadNLPSP(),1> psiEvalSpin0NLP(matrixFreeData,
@@ -95,7 +95,7 @@ template<unsigned int FEOrder,unsigned int FEOrderElectro>
 #endif
 
 
-	QGauss<C_DIM>  quadrature(C_num1DQuad<FEOrderElectro>());
+	QGauss<C_DIM>  quadrature(C_num1DQuad<C_rhoNodalPolyOrder<FEOrder,FEOrderElectro>()>());
 
 	const unsigned int numQuadPoints=forceEval.n_q_points;
 	const unsigned int numQuadPointsNLP=dftParameters::useHigherQuadNLP?

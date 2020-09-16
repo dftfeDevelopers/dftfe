@@ -77,7 +77,7 @@ template<unsigned int FEOrder,unsigned int FEOrderElectro>
 				 const std::map<dealii::CellId, std::vector<double> > & gradRhoOutValuesElectroLpsp,
  const std::map<dealii::CellId, std::vector<double> > & pseudoVLocElectro,
  const std::map<unsigned int,std::map<dealii::CellId, std::vector<double> > > & pseudoVLocAtomsElectro,
- const vselfBinsManager<FEOrderElectro> & vselfBinsManagerElectro,
+ const vselfBinsManager<FEOrder,FEOrderElectro> & vselfBinsManagerElectro,
  const std::map<dealii::CellId, std::vector<double> > & shadowKSRhoMinValues,
  const std::map<dealii::CellId, std::vector<double> > & shadowKSGradRhoMinValues,
  const distributedCPUVec<double> & phiRhoMinusApproxRho,
@@ -97,14 +97,14 @@ template<unsigned int FEOrder,unsigned int FEOrderElectro>
 	const bool isPseudopotential = dftParameters::isPseudopotential;
 
 	const unsigned int numVectorizedArrayElements=VectorizedArray<double>::n_array_elements;
-	FEEvaluation<C_DIM,1,C_num1DQuad<FEOrderElectro>(),C_DIM>  forceEval(matrixFreeData,
+	FEEvaluation<C_DIM,1,C_num1DQuad<C_rhoNodalPolyOrder<FEOrder,FEOrderElectro>()>(),C_DIM>  forceEval(matrixFreeData,
 			d_forceDofHandlerIndex,
 			0);
 	FEEvaluation<C_DIM,1,C_num1DQuadNLPSP<FEOrder>()*C_numCopies1DQuadNLPSP(),C_DIM>  forceEvalNLP(matrixFreeData,
 			d_forceDofHandlerIndex,
 			dftPtr->d_nlpspQuadratureId);
 #ifdef USE_COMPLEX
-	FEEvaluation<C_DIM,1,C_num1DQuad<FEOrderElectro>(),C_DIM>  forceEvalKPoints(matrixFreeData,
+	FEEvaluation<C_DIM,1,C_num1DQuad<C_rhoNodalPolyOrder<FEOrder,FEOrderElectro>()>(),C_DIM>  forceEvalKPoints(matrixFreeData,
 			d_forceDofHandlerIndex,
 			0);
 	FEEvaluation<C_DIM,1,C_num1DQuadNLPSP<FEOrder>()*C_numCopies1DQuadNLPSP(),C_DIM>  forceEvalKPointsNLP(matrixFreeData,
@@ -118,7 +118,7 @@ template<unsigned int FEOrder,unsigned int FEOrderElectro>
 			lpspQuadratureId);   
 
 #ifdef USE_COMPLEX
-	FEEvaluation<C_DIM,FEOrder,C_num1DQuad<FEOrderElectro>(),2> psiEval(matrixFreeData,
+	FEEvaluation<C_DIM,FEOrder,C_num1DQuad<C_rhoNodalPolyOrder<FEOrder,FEOrderElectro>()>(),2> psiEval(matrixFreeData,
 			eigenDofHandlerIndex,
 			0);
 
@@ -126,7 +126,7 @@ template<unsigned int FEOrder,unsigned int FEOrderElectro>
 			eigenDofHandlerIndex,
 			dftPtr->d_nlpspQuadratureId);
 #else
-	FEEvaluation<C_DIM,FEOrder,C_num1DQuad<FEOrderElectro>(),1> psiEval(matrixFreeData,
+	FEEvaluation<C_DIM,FEOrder,C_num1DQuad<C_rhoNodalPolyOrder<FEOrder,FEOrderElectro>()>(),1> psiEval(matrixFreeData,
 			eigenDofHandlerIndex,
 			0);
 
@@ -136,15 +136,13 @@ template<unsigned int FEOrder,unsigned int FEOrderElectro>
 #endif
 
   /*
-	FEEvaluation<C_DIM,FEOrder,C_num1DQuad<FEOrderElectro>(),1> phiTotEval2(matrixFreeData,
+	FEEvaluation<C_DIM,FEOrder,C_num1DQuad<C_rhoNodalPolyOrder<FEOrder,FEOrderElectro>()>(),1> phiTotEval2(matrixFreeData,
 			phiTotDofHandlerIndex,
 			0);
   */
 
 	std::map<unsigned int, std::vector<double> > forceContributionShadowLocalGammaAtoms;
 
-
-	QGauss<C_DIM>  quadrature(C_num1DQuad<FEOrderElectro>());
 
 	const unsigned int numQuadPoints=forceEval.n_q_points;
 	const unsigned int numQuadPointsNLP=dftParameters::useHigherQuadNLP?
@@ -1276,20 +1274,20 @@ template<unsigned int FEOrder,unsigned int FEOrderElectro>
  const std::map<dealii::CellId, std::vector<double> > & gradRhoOutValuesElectroLpsp, 
  const std::map<dealii::CellId, std::vector<double> > & pseudoVLocElectro,
  const std::map<unsigned int,std::map<dealii::CellId, std::vector<double> > > & pseudoVLocAtomsElectro,
- const vselfBinsManager<FEOrderElectro> & vselfBinsManagerElectro,
+ const vselfBinsManager<FEOrder,FEOrderElectro> & vselfBinsManagerElectro,
  const std::map<dealii::CellId, std::vector<double> > & shadowKSRhoMinValues,
  const distributedCPUVec<double> & phiRhoMinusApproxRho,
  const bool shadowPotentialForce)
 {
-	FEEvaluation<C_DIM,1,C_num1DQuad<FEOrderElectro>(),C_DIM>  forceEvalElectro(matrixFreeDataElectro,
+	FEEvaluation<C_DIM,1,C_num1DQuad<C_rhoNodalPolyOrder<FEOrder,FEOrderElectro>()>(),C_DIM>  forceEvalElectro(matrixFreeDataElectro,
 			d_forceDofHandlerIndexElectro,
 			0);
 
-	FEEvaluation<C_DIM,FEOrderElectro,C_num1DQuad<FEOrderElectro>(),1> phiTotEvalElectro(matrixFreeDataElectro,
+	FEEvaluation<C_DIM,FEOrderElectro,C_num1DQuad<C_rhoNodalPolyOrder<FEOrder,FEOrderElectro>()>(),1> phiTotEvalElectro(matrixFreeDataElectro,
 			phiTotDofHandlerIndexElectro,
 			0);
 
-	FEEvaluation<C_DIM,FEOrderElectro,C_num1DQuad<FEOrderElectro>(),1> phiTotEvalElectro2(matrixFreeDataElectro,
+	FEEvaluation<C_DIM,FEOrderElectro,C_num1DQuad<C_rhoNodalPolyOrder<FEOrder,FEOrderElectro>()>(),1> phiTotEvalElectro2(matrixFreeDataElectro,
 			phiTotDofHandlerIndexElectro,
 			0);
 
@@ -1330,7 +1328,8 @@ template<unsigned int FEOrder,unsigned int FEOrderElectro>
 			update_values| update_gradients | update_quadrature_points);
 
 	QIterated<C_DIM-1>  faceQuadrature(QGauss<1>(C_num1DQuadLPSP<FEOrderElectro>()),C_numCopies1DQuadLPSP());
-	FEFaceValues<C_DIM> feFaceValuesElectro (matrixFreeDataElectro.get_dof_handler(phiTotDofHandlerIndexElectro).get_fe(),
+  FEFaceValues<C_DIM> feFaceValuesElectro (d_isElectrostaticsMeshSubdivided?matrixFreeDataElectro.
+      get_dof_handler(phiTotDofHandlerIndexElectro).get_fe():dftPtr->d_dofHandlerRhoNodal.get_fe(),
                                          faceQuadrature,
                                          update_values| update_JxW_values | update_normal_vectors | update_quadrature_points);
 
@@ -1464,6 +1463,7 @@ template<unsigned int FEOrder,unsigned int FEOrderElectro>
           feFaceValuesElectro,
 					forceEvalElectroLpsp,
 					matrixFreeDataElectro,
+          phiTotDofHandlerIndexElectro,
 					cell,
 					shadowPotentialForce?shadowKSRhoMinQuadsElectro:rhoQuadsElectroLpsp,
           gradRhoQuadsElectroLpsp,

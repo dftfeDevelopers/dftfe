@@ -336,9 +336,9 @@ namespace dftfe {
 			bool lastInterruptedStepPreviousRunAutoMesh=false;
 
 			dealii::IndexSet   locally_relevant_dofs_;
-			dealii::DoFTools::extract_locally_relevant_dofs(dftPtr->d_dofHandlerPRefined, locally_relevant_dofs_);
+			dealii::DoFTools::extract_locally_relevant_dofs(dftPtr->d_dofHandlerRhoNodal, locally_relevant_dofs_);
 
-			const dealii::IndexSet & locally_owned_dofs_= dftPtr->d_dofHandlerPRefined.locally_owned_dofs();
+			const dealii::IndexSet & locally_owned_dofs_= dftPtr->d_dofHandlerRhoNodal.locally_owned_dofs();
 			dealii::IndexSet  ghost_indices_=locally_relevant_dofs_;
 			ghost_indices_.subtract_set(locally_owned_dofs_);
 
@@ -839,12 +839,12 @@ false);
 						dftPtr->d_matrixFreeDataPRefined.initialize_dof_vector(fieldsCurrent[approxDensityContainer.size()],dftPtr->d_densityDofHandlerIndexElectro);
 						fieldsPtrsCurrent[approxDensityContainer.size()]=&fieldsCurrent[approxDensityContainer.size()]; 
 
-						dealii::FESystem<3> fe(dealii::FESystem<3>(dftPtr->d_matrixFreeDataPRefined.get_dof_handler().get_fe(),1));
+						dealii::FESystem<3> fe(dealii::FESystem<3>(dftPtr->d_matrixFreeDataPRefined.get_dof_handler(dftPtr->d_densityDofHandlerIndexElectro).get_fe(),1));
 						dftPtr->interpolateFieldsFromPrevToCurrentMesh(fieldsPtrsPrevious,
 								fieldsPtrsCurrent,
 								fe,
 								fe,
-								dftPtr->d_constraintsPRefined);    
+								dftPtr->d_constraintsRhoNodal);    
 
 						for (unsigned int i = 0; i < approxDensityContainer.size(); i++)
 						{
@@ -889,7 +889,7 @@ false);
 									dftPtr->d_rhoInNodalValues+=atomicRho;
 
 								dftPtr->d_rhoInNodalValues.update_ghost_values();
-								dftPtr->interpolateElectroNodalDataToQuadratureDataGeneral(dftPtr->d_matrixFreeDataPRefined,
+								dftPtr->interpolateRhoNodalDataToQuadratureDataGeneral(dftPtr->d_matrixFreeDataPRefined,
                     dftPtr->d_densityDofHandlerIndexElectro,
                     0,
 										dftPtr->d_rhoInNodalValues,
@@ -1053,7 +1053,7 @@ false);
 							dftPtr->d_rhoInNodalValues+=atomicRho;
 
 						dftPtr->d_rhoInNodalValues.update_ghost_values();
-						dftPtr->interpolateElectroNodalDataToQuadratureDataGeneral(dftPtr->d_matrixFreeDataPRefined,
+						dftPtr->interpolateRhoNodalDataToQuadratureDataGeneral(dftPtr->d_matrixFreeDataPRefined,
                 dftPtr->d_densityDofHandlerIndexElectro,
                 0,
 								dftPtr->d_rhoInNodalValues,
@@ -1176,7 +1176,7 @@ false);
 								dftParameters::useMixedPrecCheby=false;
 								dftParameters::useMixedPrecChebyNonLocal=false;
 
-								const double deltalambda=dftParameters::xlbomdKernelRankUpdateFDParameter*std::sqrt(dftPtr->fieldl2Norm(dftPtr->d_matrixFreeDataPRefined,approxDensityContainer.back(),dftPtr->d_densityDofHandlerIndexElectro,dftPtr->d_densityQuadratureIdElectro)/dftPtr->d_domainVolume);
+								const double deltalambda=dftParameters::xlbomdKernelRankUpdateFDParameter*std::sqrt(dftPtr->rhofieldl2Norm(dftPtr->d_matrixFreeDataPRefined,approxDensityContainer.back(),dftPtr->d_densityDofHandlerIndexElectro,dftPtr->d_densityQuadratureIdElectro)/dftPtr->d_domainVolume);
 
 								if (dftParameters::verbosity>=1)
 									pcout<<"deltalambda: "<<deltalambda<<std::endl;
@@ -1234,7 +1234,7 @@ false);
 										dftPtr->d_rhoInNodalValues+=atomicRho;
 
 									dftPtr->d_rhoInNodalValues.update_ghost_values();
-									dftPtr->interpolateElectroNodalDataToQuadratureDataGeneral(dftPtr->d_matrixFreeDataPRefined,
+									dftPtr->interpolateRhoNodalDataToQuadratureDataGeneral(dftPtr->d_matrixFreeDataPRefined,
                       dftPtr->d_densityDofHandlerIndexElectro,
                       0,
 											dftPtr->d_rhoInNodalValues,
@@ -1319,7 +1319,7 @@ false);
 										dftPtr->d_rhoInNodalValues+=atomicRho;
 
 									dftPtr->d_rhoInNodalValues.update_ghost_values();
-									dftPtr->interpolateElectroNodalDataToQuadratureDataGeneral(dftPtr->d_matrixFreeDataPRefined,
+									dftPtr->interpolateRhoNodalDataToQuadratureDataGeneral(dftPtr->d_matrixFreeDataPRefined,
                       dftPtr->d_densityDofHandlerIndexElectro,
                       0,
 											dftPtr->d_rhoInNodalValues,
@@ -1422,7 +1422,7 @@ false);
 							}
 						}
 
-						rmsErrorRho=std::sqrt(dftPtr->fieldl2Norm(dftPtr->d_matrixFreeDataPRefined,rhoErrorVec,dftPtr->d_densityDofHandlerIndexElectro,dftPtr->d_densityQuadratureIdElectro)/dftPtr->d_domainVolume);
+						rmsErrorRho=std::sqrt(dftPtr->rhofieldl2Norm(dftPtr->d_matrixFreeDataPRefined,rhoErrorVec,dftPtr->d_densityDofHandlerIndexElectro,dftPtr->d_densityQuadratureIdElectro)/dftPtr->d_domainVolume);
 						rmsErrorGradRho=std::sqrt(dftPtr->fieldGradl2Norm(dftPtr->d_matrixFreeDataPRefined,rhoErrorVec)/dftPtr->d_domainVolume);
 						MPI_Barrier(MPI_COMM_WORLD);
 						xlbomdpost_time = MPI_Wtime() - xlbomdpost_time;
@@ -1468,7 +1468,7 @@ false);
 								dftPtr->d_rhoInNodalValues+=atomicRho;
 
 							dftPtr->d_rhoInNodalValues.update_ghost_values();
-							dftPtr->interpolateElectroNodalDataToQuadratureDataGeneral(dftPtr->d_matrixFreeDataPRefined,
+							dftPtr->interpolateRhoNodalDataToQuadratureDataGeneral(dftPtr->d_matrixFreeDataPRefined,
                   dftPtr->d_densityDofHandlerIndexElectro,
                   0,
 									dftPtr->d_rhoInNodalValues,
@@ -1877,9 +1877,9 @@ kohnShamDFTEigenOperatorCUDA
 			bool lastInterruptedStepPreviousRunAutoMesh=false;
 
 			dealii::IndexSet   locally_relevant_dofs_;
-			dealii::DoFTools::extract_locally_relevant_dofs(dftPtr->d_dofHandlerPRefined, locally_relevant_dofs_);
+			dealii::DoFTools::extract_locally_relevant_dofs(dftPtr->d_dofHandlerRhoNodal, locally_relevant_dofs_);
 
-			const dealii::IndexSet & locally_owned_dofs_= dftPtr->d_dofHandlerPRefined.locally_owned_dofs();
+			const dealii::IndexSet & locally_owned_dofs_= dftPtr->d_dofHandlerRhoNodal.locally_owned_dofs();
 			dealii::IndexSet  ghost_indices_=locally_relevant_dofs_;
 			ghost_indices_.subtract_set(locally_owned_dofs_);
 
@@ -2381,12 +2381,12 @@ false);
 						dftPtr->d_matrixFreeDataPRefined.initialize_dof_vector(fieldsCurrent[approxDensityContainer.size()],dftPtr->d_densityDofHandlerIndexElectro);
 						fieldsPtrsCurrent[approxDensityContainer.size()]=&fieldsCurrent[approxDensityContainer.size()]; 
 
-						dealii::FESystem<3> fe(dealii::FESystem<3>(dftPtr->d_matrixFreeDataPRefined.get_dof_handler().get_fe(),1));
+						dealii::FESystem<3> fe(dealii::FESystem<3>(dftPtr->d_matrixFreeDataPRefined.get_dof_handler(dftPtr->d_densityDofHandlerIndexElectro).get_fe(),1));
 						dftPtr->interpolateFieldsFromPrevToCurrentMesh(fieldsPtrsPrevious,
 								fieldsPtrsCurrent,
 								fe,
 								fe,
-								dftPtr->d_constraintsPRefined);    
+								dftPtr->d_constraintsRhoNodal);    
 
 						for (unsigned int i = 0; i < approxDensityContainer.size(); i++)
 						{
@@ -2431,7 +2431,7 @@ false);
 									dftPtr->d_rhoInNodalValues+=atomicRho;
 
 								dftPtr->d_rhoInNodalValues.update_ghost_values();
-								dftPtr->interpolateElectroNodalDataToQuadratureDataGeneral(dftPtr->d_matrixFreeDataPRefined,
+								dftPtr->interpolateRhoNodalDataToQuadratureDataGeneral(dftPtr->d_matrixFreeDataPRefined,
                     dftPtr->d_densityDofHandlerIndexElectro,
                     0,
 										dftPtr->d_rhoInNodalValues,
@@ -2595,7 +2595,7 @@ false);
 							dftPtr->d_rhoInNodalValues+=atomicRho;
 
 						dftPtr->d_rhoInNodalValues.update_ghost_values();
-						dftPtr->interpolateElectroNodalDataToQuadratureDataGeneral(dftPtr->d_matrixFreeDataPRefined,
+						dftPtr->interpolateRhoNodalDataToQuadratureDataGeneral(dftPtr->d_matrixFreeDataPRefined,
                 dftPtr->d_densityDofHandlerIndexElectro,
                 0,
 								dftPtr->d_rhoInNodalValues,
@@ -2718,7 +2718,7 @@ false);
 								dftParameters::useMixedPrecCheby=false;
 								dftParameters::useMixedPrecChebyNonLocal=false;
 
-								const double deltalambda=dftParameters::xlbomdKernelRankUpdateFDParameter*std::sqrt(dftPtr->fieldl2Norm(dftPtr->d_matrixFreeDataPRefined,approxDensityContainer.back(),dftPtr->d_densityDofHandlerIndexElectro,dftPtr->d_densityQuadratureIdElectro)/dftPtr->d_domainVolume);
+								const double deltalambda=dftParameters::xlbomdKernelRankUpdateFDParameter*std::sqrt(dftPtr->rhofieldl2Norm(dftPtr->d_matrixFreeDataPRefined,approxDensityContainer.back(),dftPtr->d_densityDofHandlerIndexElectro,dftPtr->d_densityQuadratureIdElectro)/dftPtr->d_domainVolume);
 
 								if (dftParameters::verbosity>=1)
 									pcout<<"deltalambda: "<<deltalambda<<std::endl;
@@ -2776,7 +2776,7 @@ false);
 										dftPtr->d_rhoInNodalValues+=atomicRho;
 
 									dftPtr->d_rhoInNodalValues.update_ghost_values();
-									dftPtr->interpolateElectroNodalDataToQuadratureDataGeneral(dftPtr->d_matrixFreeDataPRefined,
+									dftPtr->interpolateRhoNodalDataToQuadratureDataGeneral(dftPtr->d_matrixFreeDataPRefined,
                       dftPtr->d_densityDofHandlerIndexElectro,
                       0,
 											dftPtr->d_rhoInNodalValues,
@@ -2861,7 +2861,7 @@ false);
 										dftPtr->d_rhoInNodalValues+=atomicRho;
 
 									dftPtr->d_rhoInNodalValues.update_ghost_values();
-									dftPtr->interpolateElectroNodalDataToQuadratureDataGeneral(dftPtr->d_matrixFreeDataPRefined,
+									dftPtr->interpolateRhoNodalDataToQuadratureDataGeneral(dftPtr->d_matrixFreeDataPRefined,
                       dftPtr->d_densityDofHandlerIndexElectro,
                       0,
 											dftPtr->d_rhoInNodalValues,
@@ -2964,7 +2964,7 @@ false);
 							}
 						}
 
-						rmsErrorRho=std::sqrt(dftPtr->fieldl2Norm(dftPtr->d_matrixFreeDataPRefined,rhoErrorVec,dftPtr->d_densityDofHandlerIndexElectro,dftPtr->d_densityQuadratureIdElectro)/dftPtr->d_domainVolume);
+						rmsErrorRho=std::sqrt(dftPtr->rhofieldl2Norm(dftPtr->d_matrixFreeDataPRefined,rhoErrorVec,dftPtr->d_densityDofHandlerIndexElectro,dftPtr->d_densityQuadratureIdElectro)/dftPtr->d_domainVolume);
 						rmsErrorGradRho=std::sqrt(dftPtr->fieldGradl2Norm(dftPtr->d_matrixFreeDataPRefined,rhoErrorVec)/dftPtr->d_domainVolume);
 						MPI_Barrier(MPI_COMM_WORLD);
 						xlbomdpost_time = MPI_Wtime() - xlbomdpost_time;
@@ -3000,7 +3000,7 @@ false);
 								dftPtr->d_rhoInNodalValues+=atomicRho;
 
 							dftPtr->d_rhoInNodalValues.update_ghost_values();
-							dftPtr->interpolateElectroNodalDataToQuadratureDataGeneral(dftPtr->d_matrixFreeDataPRefined,
+							dftPtr->interpolateRhoNodalDataToQuadratureDataGeneral(dftPtr->d_matrixFreeDataPRefined,
                   dftPtr->d_densityDofHandlerIndexElectro,
                   0,
 									dftPtr->d_rhoInNodalValues,

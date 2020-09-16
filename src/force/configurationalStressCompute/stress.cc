@@ -38,7 +38,7 @@ template<unsigned int FEOrder,unsigned int FEOrderElectro>
   const std::map<dealii::CellId, std::vector<double> > & pseudoVLocElectro,
  const std::map<unsigned int,std::map<dealii::CellId, std::vector<double> > > & pseudoVLocAtomsElectro,
  const ConstraintMatrix  & hangingPlusPBCConstraintsElectro,
- const vselfBinsManager<FEOrderElectro> & vselfBinsManagerElectro)
+ const vselfBinsManager<FEOrder,FEOrderElectro> & vselfBinsManagerElectro)
 {
 
 	createBinObjectsForce(matrixFreeDataElectro.get_dof_handler(phiTotDofHandlerIndexElectro),

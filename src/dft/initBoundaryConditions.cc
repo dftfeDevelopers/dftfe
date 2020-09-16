@@ -36,12 +36,13 @@ void dftClass<FEOrder,FEOrderElectro>::initBoundaryConditions(const bool meshOnl
 
 	pcout << std::endl<<"Finite element mesh information"<<std::endl;
 	pcout<<"-------------------------------------------------"<<std::endl;
-	pcout << "Polynomial order: "<<FEOrder<<"\n"
-    <<"Polynomial order electrostatics: "<<FEOrderElectro<<"\n"
+	pcout << "FE interpolating polynomial order for Kohn-Sham eigenvalue problem: "<<FEOrder<<"\n"
+    <<"FE interpolating polynomial order for electrostatics solve: "<<FEOrderElectro<<"\n"
+    <<"FE interpolating polynomial order for nodal electron density computation: "<<C_rhoNodalPolyOrder<FEOrder,FEOrderElectro>()<<"\n"
     <<"number of elements: "
 		<< dofHandler.get_triangulation().n_global_active_cells()
 		<< "\n"
-		<< "number of degrees of freedom: "
+		<< "number of degrees of freedom for the Kohn-Sham eigenvalue problem : "
 		<< dofHandler.n_dofs()
 		<< std::endl;
 
@@ -241,10 +242,10 @@ void dftClass<FEOrder,FEOrderElectro>::initBoundaryConditions(const bool meshOnl
 	//d_constraintsVector.push_back(&d_noConstraints);
 
 	std::vector<Quadrature<1> > quadratureVector;
-	quadratureVector.push_back(QGauss<1>(C_num1DQuad<FEOrderElectro>()));
+	quadratureVector.push_back(QGauss<1>(C_num1DQuad<C_rhoNodalPolyOrder<FEOrder,FEOrderElectro>()>()));
 	//quadratureVector.push_back(QGaussLobatto<1>(FEOrder+1));
 	quadratureVector.push_back(QIterated<1>(QGauss<1>(C_num1DQuadNLPSP<FEOrder>()),C_numCopies1DQuadNLPSP()));
-	quadratureVector.push_back(QGaussLobatto<1>(FEOrderElectro+1));
+  quadratureVector.push_back(QGaussLobatto<1>(C_rhoNodalPolyOrder<FEOrder,FEOrderElectro>()+1));
   //quadratureVector.push_back(QIterated<1>(QGauss<1>(C_num1DQuadSmearedCharge()),C_numCopies1DQuadSmearedCharge()));
 	quadratureVector.push_back(QIterated<1>(QGauss<1>(C_num1DQuadLPSP<FEOrder>()),C_numCopies1DQuadLPSP()));
 

@@ -73,7 +73,7 @@ dataTypes::number dftClass<FEOrder,FEOrderElectro>::computeTraceXtHX(unsigned in
 	//set up poisson solver
 	//
 	dealiiLinearSolver dealiiCGSolver(mpi_communicator, dealiiLinearSolver::CG);
-	poissonSolverProblem<FEOrderElectro> phiTotalSolverProblem(mpi_communicator);
+	poissonSolverProblem<FEOrder,FEOrderElectro> phiTotalSolverProblem(mpi_communicator);
 
 	//
 	//solve for vself and compute Tr(XtHX)
@@ -118,7 +118,7 @@ dataTypes::number dftClass<FEOrder,FEOrderElectro>::computeTraceXtHX(unsigned in
 			dftParameters::verbosity);
 
   std::map<dealii::CellId,std::vector<double> > dummy;
-  interpolateElectroNodalDataToQuadratureDataGeneral(d_matrixFreeDataPRefined,
+  interpolateRhoNodalDataToQuadratureDataGeneral(d_matrixFreeDataPRefined,
       d_phiTotDofHandlerIndexElectro,
       d_densityQuadratureIdElectro,
       d_phiTotRhoIn,

@@ -18,7 +18,7 @@
 
 
 	template<unsigned int FEOrder,unsigned int FEOrderElectro>
-double dftClass<FEOrder,FEOrderElectro>::nodalDensity_mixing_simple(kerkerSolverProblem<FEOrderElectro> & kerkerPreconditionedResidualSolverProblem,
+double dftClass<FEOrder,FEOrderElectro>::nodalDensity_mixing_simple(kerkerSolverProblem<C_rhoNodalPolyOrder<FEOrder,FEOrderElectro>()> & kerkerPreconditionedResidualSolverProblem,
 		dealiiLinearSolver & dealiiCGSolver)
 {
 	double normValue=0.0;
@@ -37,13 +37,13 @@ double dftClass<FEOrder,FEOrderElectro>::nodalDensity_mixing_simple(kerkerSolver
 	residualRho.update_ghost_values();
 
 	//compute l2 norm of the field residual
-	normValue = fieldl2Norm(d_matrixFreeDataPRefined,
+	normValue = rhofieldl2Norm(d_matrixFreeDataPRefined,
 			residualRho,
       d_densityDofHandlerIndexElectro,
       d_densityQuadratureIdElectro);
 
 	//create FEEval object to be used subsequently
-	FEEvaluation<C_DIM,FEOrderElectro,C_num1DQuad<FEOrderElectro>(),1,double> fe_evalHelm(d_matrixFreeDataPRefined,d_densityDofHandlerIndexElectro,d_densityQuadratureIdElectro);
+	FEEvaluation<C_DIM,C_rhoNodalPolyOrder<FEOrder,FEOrderElectro>(),C_num1DQuad<C_rhoNodalPolyOrder<FEOrder,FEOrderElectro>()>(),1,double> fe_evalHelm(d_matrixFreeDataPRefined,d_densityDofHandlerIndexElectro,d_densityQuadratureIdElectro);
 	unsigned int numQuadPoints =  fe_evalHelm.n_q_points; 
 	DoFHandler<C_DIM>::active_cell_iterator subCellPtr;
 
@@ -61,7 +61,7 @@ double dftClass<FEOrder,FEOrderElectro>::nodalDensity_mixing_simple(kerkerSolver
 
 		for(unsigned int iSubCell = 0; iSubCell < d_matrixFreeDataPRefined.n_components_filled(cell); ++iSubCell)
 		{
-			subCellPtr = d_matrixFreeDataPRefined.get_cell_iterator(cell,iSubCell);
+			subCellPtr = d_matrixFreeDataPRefined.get_cell_iterator(cell,iSubCell,d_densityDofHandlerIndexElectro);
 			dealii::CellId subCellId=subCellPtr->id();
 
 			gradDensityResidualValuesMap[subCellId] = std::vector<double>(3*numQuadPoints);
@@ -141,7 +141,7 @@ double dftClass<FEOrder,FEOrderElectro>::nodalDensity_mixing_simple(kerkerSolver
 	}*/
 
 	//interpolate nodal data to quadrature data
-	interpolateElectroNodalDataToQuadratureDataGeneral(d_matrixFreeDataPRefined,
+	interpolateRhoNodalDataToQuadratureDataGeneral(d_matrixFreeDataPRefined,
       d_densityDofHandlerIndexElectro,
       d_densityQuadratureIdElectro,
 			d_rhoInNodalValues,
@@ -155,7 +155,7 @@ double dftClass<FEOrder,FEOrderElectro>::nodalDensity_mixing_simple(kerkerSolver
 
 //implement nodal anderson mixing scheme with Kerker
 	template<unsigned int FEOrder,unsigned int FEOrderElectro>
-double dftClass<FEOrder,FEOrderElectro>::nodalDensity_mixing_anderson(kerkerSolverProblem<FEOrderElectro> & kerkerPreconditionedResidualSolverProblem,
+double dftClass<FEOrder,FEOrderElectro>::nodalDensity_mixing_anderson(kerkerSolverProblem<C_rhoNodalPolyOrder<FEOrder,FEOrderElectro>()> & kerkerPreconditionedResidualSolverProblem,
 		dealiiLinearSolver & dealiiCGSolver)
 {
 	double normValue=0.0;
@@ -174,7 +174,7 @@ double dftClass<FEOrder,FEOrderElectro>::nodalDensity_mixing_anderson(kerkerSolv
 	residualRho.update_ghost_values();
 
 	//compute l2 norm of the field residual
-	normValue = fieldl2Norm(d_matrixFreeDataPRefined,
+	normValue = rhofieldl2Norm(d_matrixFreeDataPRefined,
 			residualRho,
       d_densityDofHandlerIndexElectro,
       d_densityQuadratureIdElectro);
@@ -294,7 +294,7 @@ double dftClass<FEOrder,FEOrderElectro>::nodalDensity_mixing_anderson(kerkerSolv
 	diffRhoBar.update_ghost_values();
 
 	//create FEEval object to be used subsequently
-	FEEvaluation<C_DIM,FEOrderElectro,C_num1DQuad<FEOrderElectro>(),1,double> fe_evalHelm(d_matrixFreeDataPRefined,d_densityDofHandlerIndexElectro,d_densityQuadratureIdElectro);
+	FEEvaluation<C_DIM,C_rhoNodalPolyOrder<FEOrder,FEOrderElectro>(),C_num1DQuad<C_rhoNodalPolyOrder<FEOrder,FEOrderElectro>()>(),1,double> fe_evalHelm(d_matrixFreeDataPRefined,d_densityDofHandlerIndexElectro,d_densityQuadratureIdElectro);
 	unsigned int numQuadPoints = fe_evalHelm.n_q_points; 
 	DoFHandler<C_DIM>::active_cell_iterator subCellPtr;
 
@@ -308,7 +308,7 @@ double dftClass<FEOrder,FEOrderElectro>::nodalDensity_mixing_anderson(kerkerSolv
 
 		for(unsigned int iSubCell = 0; iSubCell < d_matrixFreeDataPRefined.n_components_filled(cell); ++iSubCell)
 		{
-			subCellPtr = d_matrixFreeDataPRefined.get_cell_iterator(cell,iSubCell);
+			subCellPtr = d_matrixFreeDataPRefined.get_cell_iterator(cell,iSubCell,d_densityDofHandlerIndexElectro);
 			dealii::CellId subCellId=subCellPtr->id();
 
 			gradDensityResidualValuesMap[subCellId] = std::vector<double>(3*numQuadPoints);
@@ -395,7 +395,7 @@ double dftClass<FEOrder,FEOrderElectro>::nodalDensity_mixing_anderson(kerkerSolv
 
 	  }*/
 
-	interpolateElectroNodalDataToQuadratureDataGeneral(d_matrixFreeDataPRefined,
+	interpolateRhoNodalDataToQuadratureDataGeneral(d_matrixFreeDataPRefined,
       d_densityDofHandlerIndexElectro,
       d_densityQuadratureIdElectro,
 			d_rhoInNodalValues,

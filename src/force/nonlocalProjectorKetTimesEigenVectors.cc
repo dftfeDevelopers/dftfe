@@ -34,6 +34,7 @@ template<unsigned int FEOrder,unsigned int FEOrderElectro>
 	std::vector<std::vector<dealii::types::global_dof_index> > flattenedArrayCellLocalProcIndexIdMap;
 	vectorTools::computeCellLocalIndexSetMap(src.get_partitioner(),
 			dftPtr->matrix_free_data,
+      dftPtr->d_densityDofHandlerIndex,
 			numberWaveFunctions,
 			flattenedArrayMacroCellLocalProcIndexIdMap,
 			flattenedArrayCellLocalProcIndexIdMap);

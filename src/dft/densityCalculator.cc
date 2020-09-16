@@ -104,11 +104,11 @@ namespace dftfe
 		 {
 
 #ifdef USE_COMPLEX
-			 dealii::FEEvaluation<3,FEOrder,C_num1DQuad<FEOrderElectro>(),2> psiEval(mfData,mfDofIndex,mfQuadIndex);
-			 dealii::FEEvaluation<3,FEOrder,FEOrderElectro+1,2> psiEvalGL(mfData,mfDofIndex,mfQuadIndex);
+			 dealii::FEEvaluation<3,FEOrder,C_num1DQuad<C_rhoNodalPolyOrder<FEOrder,FEOrderElectro>()>(),2> psiEval(mfData,mfDofIndex,mfQuadIndex);
+			 dealii::FEEvaluation<3,FEOrder,C_rhoNodalPolyOrder<FEOrder,FEOrderElectro>()+1,2> psiEvalGL(mfData,mfDofIndex,mfQuadIndex);
 #else
-			 dealii::FEEvaluation<3,FEOrder,C_num1DQuad<FEOrderElectro>(),1> psiEval(mfData,mfDofIndex,mfQuadIndex);
-			 dealii::FEEvaluation<3,FEOrder,FEOrderElectro+1,1> psiEvalGL(mfData,mfDofIndex,mfQuadIndex);
+			 dealii::FEEvaluation<3,FEOrder,C_num1DQuad<C_rhoNodalPolyOrder<FEOrder,FEOrderElectro>()>(),1> psiEval(mfData,mfDofIndex,mfQuadIndex);
+			 dealii::FEEvaluation<3,FEOrder,C_rhoNodalPolyOrder<FEOrder,FEOrderElectro>()+1,1> psiEvalGL(mfData,mfDofIndex,mfQuadIndex);
 #endif
 
 			 dftUtils::constraintMatrixInfo constraintsNoneDataInfo;
@@ -463,7 +463,7 @@ namespace dftfe
 
 						 for (unsigned int iSubCell=0; iSubCell<numSubCells; ++iSubCell)
 						 {
-							 const dealii::CellId subCellId=mfData.get_cell_iterator(cell,iSubCell)->id();
+							 const dealii::CellId subCellId=mfData.get_cell_iterator(cell,iSubCell,mfDofIndex)->id();
 
 							 std::fill(rhoTemp.begin(),rhoTemp.end(),0.0); std::fill(rho.begin(),rho.end(),0.0);
 

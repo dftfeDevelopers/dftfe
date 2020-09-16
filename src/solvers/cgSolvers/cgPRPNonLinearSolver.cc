@@ -467,12 +467,13 @@ namespace dftfe {
         // compute delta_d and eta_p
         //
         etaP   = computeEta();
-        if (debugLevel >= 2)
-          pcout << "Initial guess for secant line search iteration, alpha: " << alpha << std::endl;
       }
 
       if (startingIter==-1)
       {
+        if (debugLevel >= 2)
+          pcout << "Initial guess for secant line search iteration, alpha: " << alpha << std::endl;
+
         d_functionValueChk=functionValue;
         d_etaChk=etaP;
         d_etaPChk=etaP;

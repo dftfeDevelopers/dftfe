@@ -108,7 +108,7 @@ void dftClass<FEOrder,FEOrderElectro>::compute_rhoOut(
 
 
 		//interpolate nodal rhoOut data to quadrature data
-		interpolateElectroNodalDataToQuadratureDataGeneral(d_matrixFreeDataPRefined,
+		interpolateRhoNodalDataToQuadratureDataGeneral(d_matrixFreeDataPRefined,
         d_densityDofHandlerIndexElectro,
         d_densityQuadratureIdElectro,
 				d_rhoOutNodalValues,
@@ -163,7 +163,7 @@ void dftClass<FEOrder,FEOrderElectro>::compute_rhoOut(
 					dofHandler,
 					matrix_free_data.n_physical_cells(),
 					matrix_free_data.get_dofs_per_cell(),
-					QGauss<3>(C_num1DQuad<FEOrderElectro>()).size(),
+				  matrix_free_data.get_quadrature(d_densityQuadratureId).size(),
 					d_kPointWeights,
 					rhoOutValues,
 					gradRhoOutValues,
@@ -243,9 +243,9 @@ void dftClass<FEOrder,FEOrderElectro>::compute_rhoOut(
 
   if (isGroundState)
   {
-    d_constraintsPRefined.distribute(d_rhoOutNodalValues);
+    d_constraintsRhoNodal.distribute(d_rhoOutNodalValues);
     d_rhoOutNodalValues.update_ghost_values();
-		interpolateElectroNodalDataToQuadratureDataLpsp(d_matrixFreeDataPRefined,
+		interpolateRhoNodalDataToQuadratureDataLpsp(d_matrixFreeDataPRefined,
         d_densityDofHandlerIndexElectro,
         d_lpspQuadratureIdElectro,
 				d_rhoOutNodalValues,
@@ -263,15 +263,15 @@ void dftClass<FEOrder,FEOrderElectro>::compute_rhoOut(
             const unsigned int q)
         {return (*rhoOutValues).find(cell->id())->second[q];};
       dealii::VectorTools::project<3,distributedCPUVec<double>> (dealii::MappingQ1<3,3>(),
-          d_dofHandlerPRefined,
-          d_constraintsPRefined,
-          QGauss<3>(C_num1DQuad<FEOrderElectro>()),
+          d_dofHandlerRhoNodal,
+          d_constraintsRhoNodal,
+          d_matrixFreeDataPRefined.get_quadrature(d_densityQuadratureIdElectro),
           funcRho,
           d_rhoOutNodalValues);
       d_rhoOutNodalValues.update_ghost_values();
     }
 
-		interpolateElectroNodalDataToQuadratureDataLpsp(d_matrixFreeDataPRefined,
+		interpolateRhoNodalDataToQuadratureDataLpsp(d_matrixFreeDataPRefined,
         d_densityDofHandlerIndexElectro,
         d_lpspQuadratureIdElectro,
 				d_rhoOutNodalValues,
@@ -406,7 +406,7 @@ void dftClass<FEOrder,FEOrderElectro>::noRemeshRhoDataInit()
 			d_rhoInNodalValues *= scalingFactor;
 			d_rhoInNodalVals.push_back(d_rhoInNodalValues);
 
-			interpolateElectroNodalDataToQuadratureDataGeneral(d_matrixFreeDataPRefined,
+			interpolateRhoNodalDataToQuadratureDataGeneral(d_matrixFreeDataPRefined,
           d_densityDofHandlerIndexElectro,
           d_densityQuadratureIdElectro,
 					d_rhoInNodalValues,
@@ -443,17 +443,15 @@ void dftClass<FEOrder,FEOrderElectro>::computeRhoNodalFromPSI(
 	std::map<dealii::CellId, std::vector<double> >  rhoPRefinedNodalData;
 
 	//initialize variables to be used later
-	const unsigned int dofs_per_cell = d_dofHandlerPRefined.get_fe().dofs_per_cell;
-	typename DoFHandler<3>::active_cell_iterator cell = d_dofHandlerPRefined.begin_active(), endc = d_dofHandlerPRefined.end();
-	const dealii::IndexSet & locallyOwnedDofs = d_dofHandlerPRefined.locally_owned_dofs();
-	QGaussLobatto<3>  quadrature_formula(FEOrderElectro+1);
+	const unsigned int dofs_per_cell = d_dofHandlerRhoNodal.get_fe().dofs_per_cell;
+	typename DoFHandler<3>::active_cell_iterator cell = d_dofHandlerRhoNodal.begin_active(), endc = d_dofHandlerRhoNodal.end();
+	const dealii::IndexSet & locallyOwnedDofs = d_dofHandlerRhoNodal.locally_owned_dofs();
+  const Quadrature<3> &  quadrature_formula=matrix_free_data.get_quadrature(d_gllQuadratureId);
 	const unsigned int numQuadPoints = quadrature_formula.size();
-
-	AssertThrow(numQuadPoints == matrix_free_data.get_n_q_points(d_gllQuadratureId),ExcMessage("Number of quadrature points from Quadrature object does not match with number of quadrature points obtained from matrix_free object"));
 
 	//get access to quadrature point coordinates and 2p DoFHandler nodal points
 	const std::vector<Point<3> > & quadraturePointCoor = quadrature_formula.get_points();
-	const std::vector<Point<3> > & supportPointNaturalCoor = d_dofHandlerPRefined.get_fe().get_unit_support_points();
+	const std::vector<Point<3> > & supportPointNaturalCoor = d_dofHandlerRhoNodal.get_fe().get_unit_support_points();
 	std::vector<unsigned int> renumberingMap(numQuadPoints);
 
 	//create renumbering map between the numbering order of quadrature points and lobatto support points
@@ -596,8 +594,8 @@ void dftClass<FEOrder,FEOrderElectro>::computeRhoNodalFromPSI(
 
 	//copy Lobatto quadrature data to fill in 2p DoFHandler nodal data  
 	DoFHandler<3>::active_cell_iterator
-		cellP = d_dofHandlerPRefined.begin_active(),
-		      endcP = d_dofHandlerPRefined.end();
+		cellP = d_dofHandlerRhoNodal.begin_active(),
+		      endcP = d_dofHandlerRhoNodal.end();
 
 	for (; cellP!=endcP; ++cellP)
 	{
@@ -611,7 +609,7 @@ void dftClass<FEOrder,FEOrderElectro>::computeRhoNodalFromPSI(
 			for(unsigned int iNode = 0; iNode < dofs_per_cell; ++iNode)
 			{
 				const dealii::types::global_dof_index nodeID = cell_dof_indices[iNode];
-				if(!d_constraintsPRefined.is_constrained(nodeID))
+				if(!d_constraintsRhoNodal.is_constrained(nodeID))
 				{
 					if(locallyOwnedDofs.is_element(nodeID))
 						d_rhoOutNodalValues(nodeID) =  nodalValues[renumberingMap[iNode]];

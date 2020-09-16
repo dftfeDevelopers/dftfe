@@ -28,7 +28,7 @@ using namespace dftParameters ;
 
 	template<unsigned int FEOrder,unsigned int FEOrderElectro>
 void dftClass<FEOrder,FEOrderElectro>::initnscf(kohnShamDFTOperatorClass<FEOrder,FEOrderElectro> & kohnShamDFTEigenOperator,
-		poissonSolverProblem<FEOrderElectro> & phiTotalSolverProblem,
+		poissonSolverProblem<FEOrder,FEOrderElectro> & phiTotalSolverProblem,
 		dealiiLinearSolver & dealiiCGSolver)
 {
 	//
@@ -111,7 +111,7 @@ void dftClass<FEOrder,FEOrderElectro>::initnscf(kohnShamDFTOperatorClass<FEOrder
 			dftParameters::verbosity);
 
   std::map<dealii::CellId,std::vector<double> > dummy2;
-  interpolateElectroNodalDataToQuadratureDataGeneral(d_matrixFreeDataPRefined,
+  interpolateRhoNodalDataToQuadratureDataGeneral(d_matrixFreeDataPRefined,
       d_phiTotDofHandlerIndexElectro,
       d_densityQuadratureIdElectro,
       d_phiTotRhoIn,

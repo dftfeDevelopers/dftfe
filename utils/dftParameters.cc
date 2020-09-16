@@ -375,9 +375,9 @@ namespace dftfe {
 						Patterns::Integer(1,12),
 						"[Standard] The degree of the finite-element interpolating polynomial in the Kohn-Sham Hamitonian except the electrostatics. Default value is 4. POLYNOMIAL ORDER= 4 or 5 is usually a good choice for most pseudopotential as well as all-electron problems.");
 
-				prm.declare_entry("POLYNOMIAL ORDER ELECTROSTATICS", "4",
-						Patterns::Integer(1,24),
-						"[Standard] The degree of the finite-element interpolating polynomial for the electrostatics part of the Kohn-Sham Hamiltonian. Default value is 4.");        
+				prm.declare_entry("POLYNOMIAL ORDER ELECTROSTATICS", "0",
+						Patterns::Integer(0,24),
+						"[Standard] The degree of the finite-element interpolating polynomial for the electrostatics part of the Kohn-Sham Hamiltonian. Default value is set to POLYNOMIAL ORDER if POLYNOMIAL ORDER ELECTROSTATICS set to a non-zero value.");        
 
 				prm.declare_entry("MESH FILE", "",
 						Patterns::Anything(),
@@ -933,7 +933,7 @@ namespace dftfe {
 			prm.enter_subsection ("Finite element mesh parameters");
 			{
 				dftParameters::finiteElementPolynomialOrder  = prm.get_integer("POLYNOMIAL ORDER");
-				dftParameters::finiteElementPolynomialOrderElectrostatics  = prm.get_integer("POLYNOMIAL ORDER ELECTROSTATICS");        
+				dftParameters::finiteElementPolynomialOrderElectrostatics  = prm.get_integer("POLYNOMIAL ORDER ELECTROSTATICS")==0?prm.get_integer("POLYNOMIAL ORDER"):prm.get_integer("POLYNOMIAL ORDER ELECTROSTATICS");        
 				dftParameters::meshFileName                  = prm.get("MESH FILE");
 				prm.enter_subsection ("Auto mesh generation parameters");
 				{

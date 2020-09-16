@@ -89,9 +89,9 @@ void dftClass<FEOrder,FEOrderElectro>::saveTriaInfoAndRhoNodalData()
 
 
 	dealii::IndexSet   locally_relevant_dofs_;
-	dealii::DoFTools::extract_locally_relevant_dofs(d_dofHandlerPRefined, locally_relevant_dofs_);
+	dealii::DoFTools::extract_locally_relevant_dofs(d_dofHandlerRhoNodal, locally_relevant_dofs_);
 
-	const dealii::IndexSet & locally_owned_dofs_= d_dofHandlerPRefined.locally_owned_dofs();
+	const dealii::IndexSet & locally_owned_dofs_= d_dofHandlerRhoNodal.locally_owned_dofs();
 	dealii::IndexSet  ghost_indices_=locally_relevant_dofs_;
 	ghost_indices_.subtract_set(locally_owned_dofs_);
 
@@ -143,7 +143,7 @@ void dftClass<FEOrder,FEOrderElectro>::loadTriaInfoAndRhoData()
 
 	Assert(mixingHistorySize>1,ExcInternalError());
 
-	QGauss<3>  quadrature(C_num1DQuad<FEOrderElectro>());
+  const Quadrature<3> &  quadrature=matrix_free_data.get_quadrature(d_densityQuadratureId);
 	const unsigned int num_quad_points = quadrature.size();
 
 	//Fill input data for the load function call

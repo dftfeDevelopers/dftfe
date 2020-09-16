@@ -20,7 +20,7 @@
 //compute stress contribution from nuclear self energy
 	template<unsigned int FEOrder,unsigned int FEOrderElectro>
 void forceClass<FEOrder,FEOrderElectro>::computeStressEself(const DoFHandler<3> & dofHandlerElectro,
-					const vselfBinsManager<FEOrderElectro>   & vselfBinsManagerElectro,
+					const vselfBinsManager<FEOrder,FEOrderElectro>   & vselfBinsManagerElectro,
           const MatrixFree<3,double> & matrixFreeDataElectro,
           const unsigned int smearedChargeQuadratureId)
 {
@@ -36,7 +36,7 @@ void forceClass<FEOrder,FEOrderElectro>::computeStressEself(const DoFHandler<3> 
 	//
 	//First add configurational stress contribution from the volume integral
 	//
-	QGauss<C_DIM>  quadrature(C_num1DQuad<FEOrderElectro>());
+	QGauss<C_DIM>  quadrature(C_num1DQuad<C_rhoNodalPolyOrder<FEOrder,FEOrderElectro>()>());
 	FEValues<C_DIM> feVselfValues (dofHandlerElectro.get_fe(), quadrature, update_gradients | update_JxW_values);
 	const unsigned int   numQuadPoints = quadrature.size();
 	const unsigned int numberBins=vselfBinsManagerElectro.getAtomIdsBins().size();
@@ -65,7 +65,7 @@ void forceClass<FEOrder,FEOrderElectro>::computeStressEself(const DoFHandler<3> 
 	//
 	//second add configurational stress contribution from the surface integral
 	//
-	QGauss<C_DIM-1>  faceQuadrature(C_num1DQuad<FEOrderElectro>());
+	QGauss<C_DIM-1>  faceQuadrature(C_num1DQuad<C_rhoNodalPolyOrder<FEOrder,FEOrderElectro>()>());
 	FEFaceValues<C_DIM> feVselfFaceValues (dofHandlerElectro.get_fe(), faceQuadrature, update_gradients| update_JxW_values | update_normal_vectors | update_quadrature_points);
 	const unsigned int faces_per_cell=GeometryInfo<C_DIM>::faces_per_cell;
 	const unsigned int   numFaceQuadPoints = faceQuadrature.size();
@@ -156,7 +156,7 @@ void forceClass<FEOrder,FEOrderElectro>::computeStressEself(const DoFHandler<3> 
     for(unsigned int iBin = 0; iBin < numberBins; ++iBin)
     {
       FEEvaluation<C_DIM,FEOrderElectro,C_num1DQuadSmearedCharge()*C_numCopies1DQuadSmearedCharge(),1>  vselfEvalSmearedCharge(matrixFreeDataElectro,
-        2+4*iBin,
+        dftPtr->d_binsStartDofHandlerIndexElectro+4*iBin,
         smearedChargeQuadratureId);
 
       const std::set<int> & atomImageIdsInBin=atomImageIdsBins.find(iBin)->second;

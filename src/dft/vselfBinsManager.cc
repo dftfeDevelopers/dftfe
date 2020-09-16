@@ -397,8 +397,8 @@ namespace dftfe
 	}
 
 	//constructor
-	template<unsigned int FEOrderElectro>
-		vselfBinsManager<FEOrderElectro>::vselfBinsManager(const MPI_Comm &mpi_comm):
+	template<unsigned int FEOrder, unsigned int FEOrderElectro>
+		vselfBinsManager<FEOrder,FEOrderElectro>::vselfBinsManager(const MPI_Comm &mpi_comm):
 			mpi_communicator (mpi_comm),
 			n_mpi_processes (dealii::Utilities::MPI::n_mpi_processes(mpi_comm)),
 			this_mpi_process (dealii::Utilities::MPI::this_mpi_process(mpi_comm)),
@@ -408,8 +408,8 @@ namespace dftfe
 
 	}
 
-	template<unsigned int FEOrderElectro>
-		void vselfBinsManager<FEOrderElectro>::createAtomBins(std::vector<const dealii::AffineConstraints<double> * > & constraintsVector,
+	template<unsigned int FEOrder, unsigned int FEOrderElectro>
+		void vselfBinsManager<FEOrder,FEOrderElectro>::createAtomBins(std::vector<const dealii::AffineConstraints<double> * > & constraintsVector,
 				const dealii::AffineConstraints<double> & onlyHangingNodeConstraints,
 				const dealii::DoFHandler<3> &  dofHandler,
 				const dealii::AffineConstraints<double> & constraintMatrix,
@@ -1038,8 +1038,8 @@ namespace dftfe
 
 		}//
 
-	template<unsigned int FEOrderElectro>
-		void vselfBinsManager<FEOrderElectro>::updateBinsBc(std::vector<const dealii::AffineConstraints<double> * > & constraintsVector,
+	template<unsigned int FEOrder, unsigned int FEOrderElectro>
+		void vselfBinsManager<FEOrder,FEOrderElectro>::updateBinsBc(std::vector<const dealii::AffineConstraints<double> * > & constraintsVector,
 				const dealii::AffineConstraints<double> & onlyHangingNodeConstraints,
 				const dealii::DoFHandler<3> &  dofHandler,
 				const dealii::AffineConstraints<double> & constraintMatrix,
@@ -1201,8 +1201,8 @@ namespace dftfe
 			}//bin loop
 		}
 
-	template<unsigned int FEOrderElectro>
-		void vselfBinsManager<FEOrderElectro>::locateAtomsInBins(const dealii::DoFHandler<3> & dofHandler)
+	template<unsigned int FEOrder, unsigned int FEOrderElectro>
+		void vselfBinsManager<FEOrder,FEOrderElectro>::locateAtomsInBins(const dealii::DoFHandler<3> & dofHandler)
 		{
 			d_atomsInBin.clear();
 
@@ -1277,50 +1277,36 @@ namespace dftfe
 			}//iBin loop
 		}
 
-	template<unsigned int FEOrderElectro>
-		const std::map<int,std::set<int> > & vselfBinsManager<FEOrderElectro>::getAtomIdsBins() const {return d_bins;}
+	template<unsigned int FEOrder, unsigned int FEOrderElectro>
+		const std::map<int,std::set<int> > & vselfBinsManager<FEOrder,FEOrderElectro>::getAtomIdsBins() const {return d_bins;}
 
-  template<unsigned int FEOrderElectro>
-      const std::map<int,std::set<int> > & vselfBinsManager<FEOrderElectro>::getAtomImageIdsBins() const {return d_binsImages;}
+  template<unsigned int FEOrder, unsigned int FEOrderElectro>
+      const std::map<int,std::set<int> > & vselfBinsManager<FEOrder,FEOrderElectro>::getAtomImageIdsBins() const {return d_binsImages;}
 
-	template<unsigned int FEOrderElectro>
-		const std::vector<std::map<dealii::types::global_dof_index, int> > & vselfBinsManager<FEOrderElectro>::getBoundaryFlagsBins() const {return d_boundaryFlag;}
+	template<unsigned int FEOrder, unsigned int FEOrderElectro>
+		const std::vector<std::map<dealii::types::global_dof_index, int> > & vselfBinsManager<FEOrder,FEOrderElectro>::getBoundaryFlagsBins() const {return d_boundaryFlag;}
 
-	template<unsigned int FEOrderElectro>
-		const std::vector<std::map<dealii::types::global_dof_index, int> > & vselfBinsManager<FEOrderElectro>::getBoundaryFlagsBinsOnlyChargeId() const {return d_boundaryFlagOnlyChargeId;}
+	template<unsigned int FEOrder, unsigned int FEOrderElectro>
+		const std::vector<std::map<dealii::types::global_dof_index, int> > & vselfBinsManager<FEOrder,FEOrderElectro>::getBoundaryFlagsBinsOnlyChargeId() const {return d_boundaryFlagOnlyChargeId;}
 
-	template<unsigned int FEOrderElectro>
-		const std::vector<std::map<dealii::types::global_dof_index, int> > & vselfBinsManager<FEOrderElectro>::getClosestAtomIdsBins() const {return d_closestAtomBin;}
+	template<unsigned int FEOrder, unsigned int FEOrderElectro>
+		const std::vector<std::map<dealii::types::global_dof_index, int> > & vselfBinsManager<FEOrder,FEOrderElectro>::getClosestAtomIdsBins() const {return d_closestAtomBin;}
 
-	template<unsigned int FEOrderElectro>
-		const std::vector<std::map<dealii::types::global_dof_index, dealii::Point<3>> > & vselfBinsManager<FEOrderElectro>::getClosestAtomLocationsBins() const {return  d_dofClosestChargeLocationMap;}
+	template<unsigned int FEOrder, unsigned int FEOrderElectro>
+		const std::vector<std::map<dealii::types::global_dof_index, dealii::Point<3>> > & vselfBinsManager<FEOrder,FEOrderElectro>::getClosestAtomLocationsBins() const {return  d_dofClosestChargeLocationMap;}
 
-	template<unsigned int FEOrderElectro>
-		const std::vector<distributedCPUVec<double>> & vselfBinsManager<FEOrderElectro>::getVselfFieldBins() const {return d_vselfFieldBins;}
+	template<unsigned int FEOrder, unsigned int FEOrderElectro>
+		const std::vector<distributedCPUVec<double>> & vselfBinsManager<FEOrder,FEOrderElectro>::getVselfFieldBins() const {return d_vselfFieldBins;}
 
-	template<unsigned int FEOrderElectro>
-		const std::vector<distributedCPUVec<double>> & vselfBinsManager<FEOrderElectro>::getVselfFieldDerRBins() const {return d_vselfFieldDerRBins;}    
+	template<unsigned int FEOrder, unsigned int FEOrderElectro>
+		const std::vector<distributedCPUVec<double>> & vselfBinsManager<FEOrder,FEOrderElectro>::getVselfFieldDerRBins() const {return d_vselfFieldDerRBins;}    
 
-	template<unsigned int FEOrderElectro>
-		const std::map<unsigned int, unsigned int>  & vselfBinsManager<FEOrderElectro>::getAtomIdBinIdMapLocalAllImages() const {return d_atomIdBinIdMapLocalAllImages;}
+	template<unsigned int FEOrder, unsigned int FEOrderElectro>
+		const std::map<unsigned int, unsigned int>  & vselfBinsManager<FEOrder,FEOrderElectro>::getAtomIdBinIdMapLocalAllImages() const {return d_atomIdBinIdMapLocalAllImages;}
 
-	template<unsigned int FEOrderElectro>
-		double vselfBinsManager<FEOrderElectro>::getStoredAdaptiveBallRadius() const {return d_storedAdaptiveBallRadius;}
+	template<unsigned int FEOrder, unsigned int FEOrderElectro>
+		double vselfBinsManager<FEOrder,FEOrderElectro>::getStoredAdaptiveBallRadius() const {return d_storedAdaptiveBallRadius;}
 
-	template class vselfBinsManager<1>;
-	template class vselfBinsManager<2>;
-	template class vselfBinsManager<3>;
-	template class vselfBinsManager<4>;
-	template class vselfBinsManager<5>;
-	template class vselfBinsManager<6>;
-	template class vselfBinsManager<7>;
-	template class vselfBinsManager<8>;
-	template class vselfBinsManager<9>;
-	template class vselfBinsManager<10>;
-	template class vselfBinsManager<11>;
-	template class vselfBinsManager<12>;
-	template class vselfBinsManager<13>;
-	template class vselfBinsManager<14>;
-	template class vselfBinsManager<15>;
-	template class vselfBinsManager<16>;
+#include "vselfBinsManager.inst.cc"
+
 }

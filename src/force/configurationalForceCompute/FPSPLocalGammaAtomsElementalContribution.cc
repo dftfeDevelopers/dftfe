@@ -24,11 +24,12 @@ template<unsigned int FEOrder,unsigned int FEOrderElectro>
  FEFaceValues<C_DIM> & feFaceValues,
  FEEvaluation<C_DIM,1,C_num1DQuadLPSP<FEOrder>()*C_numCopies1DQuadLPSP(),C_DIM>  & forceEval,
  const MatrixFree<3,double> & matrixFreeData,
+ const unsigned int phiTotDofHandlerIndexElectro,
  const unsigned int cell,
  const std::vector<VectorizedArray<double> > & rhoQuads, 
  const std::vector<Tensor<1,C_DIM,VectorizedArray<double> > > & gradRhoQuads,
  const std::map<unsigned int,std::map<dealii::CellId, std::vector<double> > > & pseudoVLocAtoms,
- const vselfBinsManager<FEOrderElectro> & vselfBinsManager,
+ const vselfBinsManager<FEOrder,FEOrderElectro> & vselfBinsManager,
  const std::vector<std::map<dealii::CellId , unsigned int> > & cellsVselfBallsClosestAtomIdDofHandler)
 {
 	Tensor<1,C_DIM,VectorizedArray<double> > zeroTensor1;
@@ -61,7 +62,7 @@ template<unsigned int FEOrder,unsigned int FEOrderElectro>
 
   for (unsigned int iSubCell=0; iSubCell<numSubCells; ++iSubCell)
   {
-    subCellPtr= matrixFreeData.get_cell_iterator(cell,iSubCell);
+    subCellPtr= matrixFreeData.get_cell_iterator(cell,iSubCell,phiTotDofHandlerIndexElectro);
 		feValues.reinit(subCellPtr);  
 
     std::vector<dealii::Point<C_DIM> > & temp=quadPointsSubCells[iSubCell];
@@ -116,7 +117,7 @@ template<unsigned int FEOrder,unsigned int FEOrderElectro>
     bool isTrivial=true;
 		for (unsigned int iSubCell=0; iSubCell<numSubCells; ++iSubCell)
 		{
-			subCellPtr= matrixFreeData.get_cell_iterator(cell,iSubCell);
+			subCellPtr= matrixFreeData.get_cell_iterator(cell,iSubCell,phiTotDofHandlerIndexElectro);
 			dealii::CellId subCellId=subCellPtr->id();
 
 			//get derivative R vself for iAtom

@@ -24,6 +24,10 @@
 	template <unsigned int FEOrder,unsigned int FEOrderElectro>
 void dftClass<FEOrder,FEOrderElectro>::createpRefinedDofHandler(dealii::parallel::distributed::Triangulation<3> & triaObject)
 {
+  //
+  // initialize electrostatics dofHandler and constraint matrices
+  //
+
 	d_dofHandlerPRefined.initialize(triaObject,dealii::FE_Q<3>(dealii::QGaussLobatto<1>(FEOrderElectro+1)));
 	d_dofHandlerPRefined.distribute_dofs(d_dofHandlerPRefined.get_fe());
 
@@ -73,11 +77,34 @@ void dftClass<FEOrder,FEOrderElectro>::createpRefinedDofHandler(dealii::parallel
 
 	dealii::DoFTools::make_periodicity_constraints<dealii::DoFHandler<3> >(periodicity_vector2, d_constraintsPRefined);
 
-	//applyHomogeneousDirichletBC(d_dofHandlerPRefined,d_constraintsPRefined);
-
 	d_constraintsPRefined.close();
 
+  //
+  // initialize rho nodal dofHandler and constraint matrices
+  //
 
+	d_dofHandlerRhoNodal.initialize(triaObject,dealii::FE_Q<3>(dealii::QGaussLobatto<1>(C_rhoNodalPolyOrder<FEOrder,FEOrderElectro>()+1)));
+	d_dofHandlerRhoNodal.distribute_dofs(d_dofHandlerRhoNodal.get_fe());  
+
+  d_locallyRelevantDofsRhoNodal.clear();
+	dealii::DoFTools::extract_locally_relevant_dofs(d_dofHandlerRhoNodal, d_locallyRelevantDofsRhoNodal);
+
+	d_constraintsRhoNodalOnlyHanging.clear();
+	d_constraintsRhoNodalOnlyHanging.reinit(d_locallyRelevantDofsRhoNodal);
+	dealii::DoFTools::make_hanging_node_constraints(d_dofHandlerRhoNodal, d_constraintsRhoNodalOnlyHanging);
+	d_constraintsRhoNodalOnlyHanging.close();
+
+	d_constraintsRhoNodal.clear();
+	d_constraintsRhoNodal.reinit(d_locallyRelevantDofsRhoNodal);
+	dealii::DoFTools::make_hanging_node_constraints(d_dofHandlerRhoNodal, d_constraintsRhoNodal);
+
+	std::vector<dealii::GridTools::PeriodicFacePair<typename dealii::DoFHandler<3>::cell_iterator> > periodicity_vector_rhonodal;
+	for (unsigned int i = 0; i < std::accumulate(periodic.begin(),periodic.end(),0); ++i)
+		GridTools::collect_periodic_faces(d_dofHandlerRhoNodal, /*b_id1*/ 2*i+1, /*b_id2*/ 2*i+2,/*direction*/ periodicDirectionVector[i], periodicity_vector_rhonodal,offsetVectors[periodicDirectionVector[i]]);
+
+	dealii::DoFTools::make_periodicity_constraints<dealii::DoFHandler<3> >(periodicity_vector_rhonodal, d_constraintsRhoNodal);
+
+	d_constraintsRhoNodal.close();
 
 }
 
@@ -86,6 +113,7 @@ void dftClass<FEOrder,FEOrderElectro>::createpRefinedDofHandler(dealii::parallel
 void dftClass<FEOrder,FEOrderElectro>::initpRefinedObjects(const bool meshOnlyDeformed)
 {
 	d_dofHandlerPRefined.distribute_dofs(d_dofHandlerPRefined.get_fe());
+  d_dofHandlerRhoNodal.distribute_dofs(d_dofHandlerRhoNodal.get_fe());
 
 	d_supportPointsPRefined.clear();
 	DoFTools::map_dofs_to_support_points(MappingQ1<3,3>(), d_dofHandlerPRefined, d_supportPointsPRefined);
@@ -100,9 +128,27 @@ void dftClass<FEOrder,FEOrderElectro>::initpRefinedObjects(const bool meshOnlyDe
 
 	//clear existing constraints matrix vector
 	d_constraintsVectorElectro.clear();
-	d_constraintsVectorElectro.push_back(&d_constraintsPRefined);
+	d_constraintsVectorElectro.push_back(&d_constraintsRhoNodal);
   d_densityDofHandlerIndexElectro=d_constraintsVectorElectro.size()-1;
 
+	d_constraintsVectorElectro.push_back(&d_constraintsRhoNodalOnlyHanging);
+  d_nonPeriodicDensityDofHandlerIndexElectro=d_constraintsVectorElectro.size()-1;
+
+	//Zero Dirichlet BC constraints on the boundary of the domain
+	//used for Helmholtz solve
+	//
+	d_constraintsForHelmholtzRhoNodal.clear();
+  d_constraintsForHelmholtzRhoNodal.reinit(d_locallyRelevantDofsRhoNodal);
+
+	applyHomogeneousDirichletBC(d_dofHandlerRhoNodal,d_constraintsForHelmholtzRhoNodal);
+	d_constraintsForHelmholtzRhoNodal.close ();
+	d_constraintsForHelmholtzRhoNodal.merge(d_constraintsRhoNodal,dealii::AffineConstraints<double>::MergeConflictBehavior::right_object_wins);
+	d_constraintsForHelmholtzRhoNodal.close();   
+	d_constraintsVectorElectro.push_back(&d_constraintsForHelmholtzRhoNodal);
+  d_helmholtzDofHandlerIndexElectro=d_constraintsVectorElectro.size()-1;   
+
+	d_constraintsVectorElectro.push_back(&d_constraintsPRefined);
+  d_baseDofHandlerIndexElectro=d_constraintsVectorElectro.size()-1;
 
 	//Zero Dirichlet BC constraints on the boundary of the domain
 	//used for computing total electrostatic potential using Poisson problem
@@ -167,26 +213,17 @@ void dftClass<FEOrder,FEOrderElectro>::initpRefinedObjects(const bool meshOnlyDe
 	if (dftParameters::verbosity>=1)
 		pcout<<"updateAtomPositionsAndMoveMesh: initBoundaryConditions: Time taken for bins update: "<<init_bins<<std::endl;
 
-
-	//Zero Dirichlet BC constraints on the boundary of the domain
-	//used for Helmholtz solve
-	//
-	d_constraintsForHelmholtzElectro.clear();
-  d_constraintsForHelmholtzElectro.reinit(d_locallyRelevantDofsPRefined);
-
-	applyHomogeneousDirichletBC(d_dofHandlerPRefined,d_constraintsForHelmholtzElectro);
-	d_constraintsForHelmholtzElectro.close ();
-	d_constraintsForHelmholtzElectro.merge(d_constraintsPRefined,dealii::AffineConstraints<double>::MergeConflictBehavior::right_object_wins);
-	d_constraintsForHelmholtzElectro.close();   
-	d_constraintsVectorElectro.push_back(&d_constraintsForHelmholtzElectro);
-  d_helmholtzDofHandlerIndexElectro=d_constraintsVectorElectro.size()-1;   
-
-
 	d_constraintsVectorElectro.push_back(&d_constraintsPRefinedOnlyHanging);
   d_phiExtDofHandlerIndexElectro=d_constraintsVectorElectro.size()-1;    
 
-	std::vector<const dealii::DoFHandler<3> *> matrixFreeDofHandlerVectorInput;
-	for(unsigned int i = 0; i < d_constraintsVectorElectro.size(); ++i)
+
+	//Fill dofHandler vector
+  std::vector<const dealii::DoFHandler<3> *> matrixFreeDofHandlerVectorInput;
+  matrixFreeDofHandlerVectorInput.push_back(&d_dofHandlerRhoNodal);
+  matrixFreeDofHandlerVectorInput.push_back(&d_dofHandlerRhoNodal);
+  matrixFreeDofHandlerVectorInput.push_back(&d_dofHandlerRhoNodal);
+
+	for(unsigned int i = 3; i < d_constraintsVectorElectro.size(); ++i)
 		matrixFreeDofHandlerVectorInput.push_back(&d_dofHandlerPRefined);
 
 	forcePtr->initMoved(matrixFreeDofHandlerVectorInput,
@@ -196,7 +233,7 @@ void dftClass<FEOrder,FEOrderElectro>::initpRefinedObjects(const bool meshOnlyDe
 
 
 	std::vector<Quadrature<1> > quadratureVector;
-	quadratureVector.push_back(QGauss<1>(C_num1DQuad<FEOrderElectro>()));
+	quadratureVector.push_back(QGauss<1>(C_num1DQuad<C_rhoNodalPolyOrder<FEOrder,FEOrderElectro>()>()));
   quadratureVector.push_back(QIterated<1>(QGauss<1>(C_num1DQuadLPSP<FEOrder>()),C_numCopies1DQuadLPSP())); 
   quadratureVector.push_back(QIterated<1>(QGauss<1>(C_num1DQuadSmearedCharge()),C_numCopies1DQuadSmearedCharge()));
 

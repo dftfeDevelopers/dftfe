@@ -42,7 +42,7 @@ namespace dftfe {
 		kohnShamDFTOperatorClass<FEOrder,FEOrderElectro>::kohnShamDFTOperatorClass(dftClass<FEOrder,FEOrderElectro>* _dftPtr,const MPI_Comm &mpi_comm_replica):
 			dftPtr(_dftPtr),
 			d_kPointIndex(0),
-			d_numberNodesPerElement(_dftPtr->matrix_free_data.get_dofs_per_cell()),
+			d_numberNodesPerElement(_dftPtr->matrix_free_data.get_dofs_per_cell(dftPtr->d_densityDofHandlerIndex)),
 			d_numberMacroCells(_dftPtr->matrix_free_data.n_macro_cells()),
       d_isStiffnessMatrixExternalPotCorrComputed(false),
 			mpi_communicator (mpi_comm_replica),
@@ -120,6 +120,7 @@ namespace dftfe {
 
 			vectorTools::computeCellLocalIndexSetMap(flattenedArray.get_partitioner(),
 					dftPtr->matrix_free_data,
+          dftPtr->d_densityDofHandlerIndex,
 					numberWaveFunctions,
 					d_flattenedArrayMacroCellLocalProcIndexIdMap,
 					d_flattenedArrayCellLocalProcIndexIdMap);

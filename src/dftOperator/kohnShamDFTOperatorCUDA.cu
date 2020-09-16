@@ -173,7 +173,7 @@ namespace dftfe
 			d_numberNodesPerElement(_dftPtr->matrix_free_data.get_dofs_per_cell()),
 			d_numberMacroCells(_dftPtr->matrix_free_data.n_macro_cells()),
 			d_numLocallyOwnedCells(dftPtr->matrix_free_data.n_physical_cells()),
-			d_numQuadPoints(QGauss<3>(C_num1DQuad<FEOrderElectro>()).size()),
+			d_numQuadPoints(dftPtr->matrix_free_data.get_quadrature(dftPtr->d_densityQuadratureId).size()),
       d_isStiffnessMatrixExternalPotCorrComputed(false),
 			mpi_communicator (mpi_comm_replica),
 			n_mpi_processes (Utilities::MPI::n_mpi_processes(mpi_comm_replica)),
@@ -465,6 +465,7 @@ namespace dftfe
 
 			vectorTools::computeCellLocalIndexSetMap(flattenedArray.get_partitioner(),
 					dftPtr->matrix_free_data,
+          dftPtr->d_densityDofHandlerIndex,
 					numberWaveFunctions,
 					d_flattenedArrayMacroCellLocalProcIndexIdMapFlattened,
 					d_normalCellIdToMacroCellIdMap,
@@ -800,7 +801,7 @@ namespace dftfe
 			const unsigned int n_cells = dftPtr->matrix_free_data.n_macro_cells();
 			const unsigned int totalLocallyOwnedCells = dftPtr->matrix_free_data.n_physical_cells();
 
-			QGauss<3>  quadrature_formula(C_num1DQuad<FEOrderElectro>());
+			const Quadrature<3> &  quadrature_formula=dftPtr->matrix_free_data.get_quadrature(dftPtr->d_densityQuadratureId);
 			FEValues<3> fe_values (dftPtr->FE, quadrature_formula,update_JxW_values);
 			const unsigned int numberQuadraturePoints = quadrature_formula.size();
 
@@ -851,7 +852,7 @@ namespace dftfe
 			const unsigned int n_cells = dftPtr->matrix_free_data.n_macro_cells();
 			const unsigned int totalLocallyOwnedCells = dftPtr->matrix_free_data.n_physical_cells();
 
-			QGauss<3>  quadrature_formula(C_num1DQuad<FEOrderElectro>());
+			const Quadrature<3> &  quadrature_formula=dftPtr->matrix_free_data.get_quadrature(dftPtr->d_densityQuadratureId);
 			FEValues<3> fe_values (dftPtr->FE, quadrature_formula,update_JxW_values);
 			const unsigned int numberQuadraturePoints = quadrature_formula.size();
 
@@ -943,7 +944,7 @@ namespace dftfe
 			const unsigned int n_cells = dftPtr->matrix_free_data.n_macro_cells();
 			const unsigned int totalLocallyOwnedCells = dftPtr->matrix_free_data.n_physical_cells();
 
-			QGauss<3>  quadrature_formula(C_num1DQuad<FEOrderElectro>());
+			const Quadrature<3> &  quadrature_formula=dftPtr->matrix_free_data.get_quadrature(dftPtr->d_densityQuadratureId);
 			FEValues<3> fe_values (dftPtr->FE, quadrature_formula,update_JxW_values);
 			const unsigned int numberQuadraturePoints = quadrature_formula.size();
 
@@ -995,7 +996,7 @@ namespace dftfe
 			const unsigned int n_cells = dftPtr->matrix_free_data.n_macro_cells();
 			const unsigned int totalLocallyOwnedCells = dftPtr->matrix_free_data.n_physical_cells();
 
-			QGauss<3>  quadrature_formula(C_num1DQuad<FEOrderElectro>());
+			const Quadrature<3> &  quadrature_formula=dftPtr->matrix_free_data.get_quadrature(dftPtr->d_densityQuadratureId);
 			FEValues<3> fe_values (dftPtr->FE, quadrature_formula,update_JxW_values);
 			const unsigned int numberQuadraturePoints = quadrature_formula.size();
 

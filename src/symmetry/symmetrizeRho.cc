@@ -42,7 +42,7 @@ namespace dftfe
 	template<unsigned int FEOrder, unsigned int FEOrderElectro>
 		void symmetryClass<FEOrder,FEOrderElectro>::computeAndSymmetrize_rhoOut()
 		{
-			QGauss<3>  quadrature(C_num1DQuad<FEOrderElectro>());
+			const Quadrature<3> &  quadrature=dftPtr->matrix_free_data.get_quadrature(dftPtr->d_densityQuadratureId);
 			const unsigned int num_quad_points = quadrature.size();
 			//
 			dftPtr->rhoOutVals.push_back(std::map<dealii::CellId,std::vector<double> >());
@@ -234,7 +234,7 @@ namespace dftfe
 #endif
 			}
 			//
-			QGauss<3>  quadrature(C_num1DQuad<FEOrderElectro>());
+			const Quadrature<3> &  quadrature=dftPtr->matrix_free_data.get_quadrature(dftPtr->d_densityQuadratureId);
 			const unsigned int num_quad_points = quadrature.size();
 			totPoints = recvdData1[0].size() ;
 			double px, py, pz;

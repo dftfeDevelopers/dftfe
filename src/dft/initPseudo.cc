@@ -27,7 +27,7 @@ template<unsigned int FEOrder,unsigned int FEOrderElectro>
  const unsigned int _phiExtDofHandlerIndex,
  const dealii::ConstraintMatrix & _phiExtConstraintMatrix,
  const std::map<types::global_dof_index, Point<3> > & _supportPoints,
- const vselfBinsManager<FEOrderElectro> & vselfBinManager,
+ const vselfBinsManager<FEOrder,FEOrderElectro> & vselfBinManager,
  distributedCPUVec<double> & phiExt,
  std::map<dealii::CellId, std::vector<double> > & _pseudoValues,
  std::map<unsigned int,std::map<dealii::CellId, std::vector<double> > > & _pseudoValuesAtoms)
@@ -245,7 +245,7 @@ template<unsigned int FEOrder,unsigned int FEOrderElectro>
 
 		for(unsigned int iSubCell = 0; iSubCell < _matrix_free_data.n_components_filled(macrocell); ++iSubCell)
 		{
-			subCellPtr= _matrix_free_data.get_cell_iterator(macrocell,iSubCell);
+			subCellPtr= _matrix_free_data.get_cell_iterator(macrocell,iSubCell,_phiExtDofHandlerIndex);
 			dealii::CellId subCellId=subCellPtr->id();
 
       std::vector<double> & pseudoVLoc=_pseudoValues[subCellId];
@@ -260,7 +260,7 @@ template<unsigned int FEOrder,unsigned int FEOrderElectro>
 		for(unsigned int iSubCell = 0; iSubCell < _matrix_free_data.n_components_filled(macrocell); ++iSubCell)
 		{
 
-			subCellPtr= _matrix_free_data.get_cell_iterator(macrocell,iSubCell);
+			subCellPtr= _matrix_free_data.get_cell_iterator(macrocell,iSubCell,_phiExtDofHandlerIndex);
 			dealii::CellId subCellId=subCellPtr->id();
 
       std::vector<double> & pseudoVLoc=_pseudoValues[subCellId];
@@ -321,7 +321,7 @@ template<unsigned int FEOrder,unsigned int FEOrderElectro>
 
 		for(unsigned int iSubCell = 0; iSubCell < _matrix_free_data.n_components_filled(macrocell); ++iSubCell)
 		{
-			subCellPtr= _matrix_free_data.get_cell_iterator(macrocell,iSubCell);
+			subCellPtr= _matrix_free_data.get_cell_iterator(macrocell,iSubCell,_phiExtDofHandlerIndex);
 			dealii::CellId subCellId=subCellPtr->id();
       std::vector<double> & pseudoVLoc=_pseudoValues[subCellId];
 			//loop over quad points
@@ -1278,7 +1278,7 @@ void dftClass<FEOrder,FEOrderElectro>::computeSparseStructureNonLocalProjectors(
 	//
 	//get FE data structures
 	//
-	QGauss<3>  quadrature(C_num1DQuad<FEOrder>());
+	const Quadrature<3> &  quadrature=matrix_free_data.get_quadrature(d_densityQuadratureId);
 	//FEValues<3> fe_values(FE, quadrature, update_values | update_gradients | update_JxW_values);
 	FEValues<3> fe_values(FE, quadrature, update_quadrature_points);
 	const unsigned int numberQuadraturePoints = quadrature.size();
@@ -1677,7 +1677,7 @@ void dftClass<FEOrder,FEOrderElectro>::computeElementalProjectorKets()
 	//
 	//get FE data structures
 	//
-	QGauss<3>  quadrature(C_num1DQuad<FEOrderElectro>());
+	const Quadrature<3> &  quadrature=matrix_free_data.get_quadrature(d_densityQuadratureId);
 	//FEValues<3> fe_values(FE, quadrature, update_values | update_gradients | update_JxW_values);
 	FEValues<3> fe_values(FE, quadrature, update_values | update_JxW_values | update_quadrature_points);
 	const unsigned int numberNodesPerElement  = FE.dofs_per_cell;

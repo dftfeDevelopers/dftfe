@@ -95,7 +95,7 @@ void dftClass<FEOrder,FEOrderElectro>::initRho()
 
 
 	//Initialize rho
-	QGauss<3>  quadrature_formula(C_num1DQuad<FEOrderElectro>());
+	const Quadrature<3> &  quadrature_formula=matrix_free_data.get_quadrature(d_densityQuadratureId);
 	FEValues<3> fe_values (FE, quadrature_formula, update_quadrature_points);
 	const unsigned int n_q_points    = quadrature_formula.size();
 
@@ -146,20 +146,20 @@ void dftClass<FEOrder,FEOrderElectro>::initRho()
 	if(dftParameters::mixingMethod == "ANDERSON_WITH_KERKER")
 	{
 		IndexSet locallyOwnedSet;
-		DoFTools::extract_locally_owned_dofs(d_dofHandlerPRefined,locallyOwnedSet);
+		DoFTools::extract_locally_owned_dofs(d_dofHandlerRhoNodal,locallyOwnedSet);
 		std::vector<IndexSet::size_type> locallyOwnedDOFs;
 		locallyOwnedSet.fill_index_vector(locallyOwnedDOFs);
 		unsigned int numberDofs = locallyOwnedDOFs.size();
-		std::map<types::global_dof_index, Point<3> > supportPointsPRefined;
-		DoFTools::map_dofs_to_support_points(MappingQ1<3,3>(), d_dofHandlerPRefined, supportPointsPRefined);
+		std::map<types::global_dof_index, Point<3> > supportPointsRhoNodal;
+		DoFTools::map_dofs_to_support_points(MappingQ1<3,3>(), d_dofHandlerRhoNodal, supportPointsRhoNodal);
 
 		//d_matrixFreeDataPRefined.initialize_dof_vector(d_rhoInNodalValues);
 
 		for(unsigned int dof = 0; dof < numberDofs; ++dof)
 		{
 			const dealii::types::global_dof_index dofID = locallyOwnedDOFs[dof];
-			Point<3> nodalCoor = supportPointsPRefined[dofID];
-			if(!d_constraintsPRefined.is_constrained(dofID))
+			Point<3> nodalCoor = supportPointsRhoNodal[dofID];
+			if(!d_constraintsRhoNodal.is_constrained(dofID))
 			{
 				//loop over atoms and superimpose electron-density at a given dof from all atoms
 				double rhoNodalValue = 0.0;
@@ -217,7 +217,7 @@ void dftClass<FEOrder,FEOrderElectro>::initRho()
 			gradRhoInValues=&(gradRhoInVals.back());
 		}
 
-		interpolateElectroNodalDataToQuadratureDataGeneral(d_matrixFreeDataPRefined,
+		interpolateRhoNodalDataToQuadratureDataGeneral(d_matrixFreeDataPRefined,
         d_densityDofHandlerIndexElectro,
         d_densityQuadratureIdElectro,
 				d_rhoInNodalValues,
@@ -445,7 +445,7 @@ void dftClass<FEOrder,FEOrderElectro>::computeRhoInitialGuessFromPSI(std::vector
 	//clear existing data
 	clearRhoData();
 
-	QGauss<3>  quadrature(C_num1DQuad<FEOrderElectro>());
+	const Quadrature<3> &  quadrature=matrix_free_data.get_quadrature(d_densityQuadratureId);
 	FEValues<3> fe_values (FEEigen, quadrature, update_values | update_gradients);
 	const unsigned int num_quad_points = quadrature.size();
 
@@ -719,7 +719,7 @@ void dftClass<FEOrder,FEOrderElectro>::computeNodalRhoFromQuadData()
 		(dealii::MappingQ1<3,3>(),
 		 dofHandler,
 		 constraintsNone,
-		 QGauss<3>(C_num1DQuad<FEOrderElectro>()),
+		 matrix_free_data.get_quadrature(d_densityQuadratureId),
 		 funcRho,
 		 d_rhoNodalField);
 
@@ -743,7 +743,7 @@ void dftClass<FEOrder,FEOrderElectro>::computeNodalRhoFromQuadData()
 			(dealii::MappingQ1<3,3>(),
 			 dofHandler,
 			 constraintsNone,
-			 QGauss<3>(C_num1DQuad<FEOrderElectro>()),
+		   matrix_free_data.get_quadrature(d_densityQuadratureId),
 			 funcRhoSpin0,
 			 d_rhoNodalFieldSpin0);
 
@@ -763,7 +763,7 @@ void dftClass<FEOrder,FEOrderElectro>::computeNodalRhoFromQuadData()
 			(dealii::MappingQ1<3,3>(),
 			 dofHandler,
 			 constraintsNone,
-			 QGauss<3>(C_num1DQuad<FEOrderElectro>()),
+			 matrix_free_data.get_quadrature(d_densityQuadratureId),
 			 funcRhoSpin1,
 			 d_rhoNodalFieldSpin1);
 
@@ -845,7 +845,7 @@ void dftClass<FEOrder,FEOrderElectro>::initRhoFromPreviousGroundStateRho()
 			gradRhoInValuesSpinPolarized = &(gradRhoInValsSpinPolarized.back());
 	}
 
-	FEEvaluation<3,FEOrder,C_num1DQuad<FEOrderElectro>(),1> rhoEval(matrix_free_data,d_densityDofHandlerIndex , 0);
+	FEEvaluation<3,FEOrder,C_num1DQuad<C_rhoNodalPolyOrder<FEOrder,FEOrderElectro>()>(),1> rhoEval(matrix_free_data,d_densityDofHandlerIndex , 0);
 
 	Tensor<1,3,VectorizedArray<double> > zeroTensor;
 	for (unsigned int idim=0; idim<3; idim++)
@@ -907,7 +907,7 @@ void dftClass<FEOrder,FEOrderElectro>::initRhoFromPreviousGroundStateRho()
 
 		for (unsigned int iSubCell=0; iSubCell<numSubCells; ++iSubCell)
 		{
-			const dealii::CellId subCellId=matrix_free_data.get_cell_iterator(cell,iSubCell)->id();
+			const dealii::CellId subCellId=matrix_free_data.get_cell_iterator(cell,iSubCell,d_densityDofHandlerIndex)->id();
 
 			for (unsigned int q=0; q<numQuadPoints; ++q)
 			{
@@ -948,10 +948,10 @@ void dftClass<FEOrder,FEOrderElectro>::initRhoFromPreviousGroundStateRho()
 	template<unsigned int FEOrder,unsigned int FEOrderElectro>
 void dftClass<FEOrder,FEOrderElectro>::normalizeRho()
 {
-	QGauss<3>  quadrature_formula(C_num1DQuad<FEOrderElectro>());
+	const Quadrature<3> &  quadrature_formula=matrix_free_data.get_quadrature(d_densityQuadratureId);
 	const unsigned int n_q_points    = quadrature_formula.size();
 
-	const double charge = totalCharge(d_dofHandlerPRefined,
+	const double charge = totalCharge(d_dofHandlerRhoNodal,
 			rhoInValues);
 	const double scaling=((double)numElectrons)/charge;
 
@@ -982,7 +982,7 @@ void dftClass<FEOrder,FEOrderElectro>::normalizeRho()
 			}
 		}
 	}
-	double chargeAfterScaling = totalCharge(d_dofHandlerPRefined,
+	double chargeAfterScaling = totalCharge(d_dofHandlerRhoNodal,
 			rhoInValues);
 
 	if (dftParameters::verbosity>=1)
@@ -996,7 +996,7 @@ void dftClass<FEOrder,FEOrderElectro>::normalizeRho()
 void dftClass<FEOrder,FEOrderElectro>::normalizeAtomicRhoQuadValues()
 {
 
-	const double charge = totalCharge(d_dofHandlerPRefined,
+  const double charge = totalCharge(dofHandler,
 			&d_rhoAtomsValues);
 	const double scaling=((double)numElectrons)/charge;
 
@@ -1029,7 +1029,7 @@ void dftClass<FEOrder,FEOrderElectro>::normalizeAtomicRhoQuadValues()
 					(it2->second)[i]*=scaling;
 	}
 
-	double chargeAfterScaling = totalCharge(d_dofHandlerPRefined,
+	double chargeAfterScaling = totalCharge(dofHandler,
 			&d_rhoAtomsValues);
 
 	if (dftParameters::verbosity>=2)
@@ -1090,7 +1090,7 @@ void dftClass<FEOrder,FEOrderElectro>::initAtomicRho(distributedCPUVec<double> &
 
 
 	//Initialize rho
-	QGauss<3>  quadrature_formula(C_num1DQuad<FEOrderElectro>());
+  const Quadrature<3> &  quadrature_formula=matrix_free_data.get_quadrature(d_densityQuadratureId);
 	FEValues<3> fe_values (FE, quadrature_formula, update_quadrature_points);
 	const unsigned int n_q_points    = quadrature_formula.size();
 
@@ -1104,15 +1104,15 @@ void dftClass<FEOrder,FEOrderElectro>::initAtomicRho(distributedCPUVec<double> &
 	//std::vector<IndexSet::size_type> locallyOwnedDOFs;
 	//locallyOwnedSet.fill_index_vector(locallyOwnedDOFs);
 	//unsigned int numberDofs = locallyOwnedDOFs.size();
-	std::map<types::global_dof_index, Point<3> > supportPointsPRefined;
-	DoFTools::map_dofs_to_support_points(MappingQ1<3,3>(), d_dofHandlerPRefined, supportPointsPRefined);
+	std::map<types::global_dof_index, Point<3> > supportPointsRhoNodal;
+	DoFTools::map_dofs_to_support_points(MappingQ1<3,3>(), d_dofHandlerRhoNodal, supportPointsRhoNodal);
 
 	//d_matrixFreeDataPRefined.initialize_dof_vector(d_rhoInNodalValues);
 	std::vector<distributedCPUVec<double>> singleAtomsRho(atomLocations.size()+numberImageCharges);
 	for(unsigned int iAtom = 0; iAtom < atomLocations.size()+numberImageCharges; ++iAtom)
 	{
 		if (iAtom==0)
-			d_matrixFreeDataPRefined.initialize_dof_vector(singleAtomsRho[iAtom],1);
+		  d_matrixFreeDataPRefined.initialize_dof_vector(singleAtomsRho[iAtom],d_nonPeriodicDensityDofHandlerIndexElectro);
 		else
 			singleAtomsRho[iAtom].reinit(singleAtomsRho[0]);
 
@@ -1130,8 +1130,8 @@ void dftClass<FEOrder,FEOrderElectro>::initAtomicRho(distributedCPUVec<double> &
 	{ 
 		//const dealii::types::global_dof_index dofID = locallyOwnedDOFs[dof];
 		const dealii::types::global_dof_index dofID = partitioner->local_to_global(dof);
-		Point<3> nodalCoor = supportPointsPRefined[dofID];
-		if(!d_constraintsPRefinedOnlyHanging.is_constrained(dofID))
+	  Point<3> nodalCoor = supportPointsRhoNodal[dofID];
+		if(!d_constraintsRhoNodalOnlyHanging.is_constrained(dofID))
 		{
 			//loop over atoms and superimpose electron-density at a given dof from all atoms
 			double rhoNodalValue = 0.0;
@@ -1180,7 +1180,7 @@ void dftClass<FEOrder,FEOrderElectro>::initAtomicRho(distributedCPUVec<double> &
 			atomicRho);
 
 	VectorizedArray<double> normValueVectorized = make_vectorized_array(0.0);
-	FEEvaluation<C_DIM,FEOrderElectro,C_num1DQuad<FEOrderElectro>(),1,double> feEvalObj(d_matrixFreeDataPRefined,1,1);
+	FEEvaluation<C_DIM,C_rhoNodalPolyOrder<FEOrder,FEOrderElectro>(),C_num1DQuad<C_rhoNodalPolyOrder<FEOrder,FEOrderElectro>()>(),1,double> feEvalObj(d_matrixFreeDataPRefined,d_nonPeriodicDensityDofHandlerIndexElectro,d_densityQuadratureIdElectro);
 	const unsigned int numQuadPoints = feEvalObj.n_q_points;
 
 
@@ -1199,7 +1199,7 @@ void dftClass<FEOrder,FEOrderElectro>::initAtomicRho(distributedCPUVec<double> &
 		//pcout<<"Total Charge after Normalizing rho on first atom: "<< totalCharge(d_matrixFreeDataPRefined,singleAtomsRho[0])<<std::endl;
 	}
 
-	interpolateElectroNodalDataToQuadratureDataGeneral(d_matrixFreeDataPRefined,
+	interpolateRhoNodalDataToQuadratureDataGeneral(d_matrixFreeDataPRefined,
       d_densityDofHandlerIndexElectro,
       d_densityQuadratureIdElectro,
 			atomicRho,
@@ -1245,7 +1245,7 @@ void dftClass<FEOrder,FEOrderElectro>::initAtomicRho(distributedCPUVec<double> &
 			if (!isRhoNonZero)
 				for(unsigned int iSubCell = 0; iSubCell < d_matrixFreeDataPRefined.n_components_filled(cell); ++iSubCell)
 				{
-					subCellPtr= d_matrixFreeDataPRefined.get_cell_iterator(cell,iSubCell);
+					subCellPtr= d_matrixFreeDataPRefined.get_cell_iterator(cell,iSubCell,d_nonPeriodicDensityDofHandlerIndexElectro);
 					dealii::CellId subCellId=subCellPtr->id();
 					d_gradRhoAtomsValuesSeparate[iatom][subCellId]=std::vector<double>(3*numQuadPoints);
 					std::vector<double> & tempVec1 = d_gradRhoAtomsValuesSeparate[iatom].find(subCellId)->second;

@@ -124,13 +124,13 @@ void kohnShamDFTOperatorCUDAClass<FEOrder,FEOrderElectro>::preComputeShapeFuncti
 	//get FE data
 	//
 	const unsigned int numberPhysicalCells = dftPtr->matrix_free_data.n_physical_cells();
-	QGauss<3>  quadrature(C_num1DQuad<FEOrderElectro>());
-	FEValues<3> fe_values(dftPtr->matrix_free_data.get_dof_handler().get_fe(), quadrature, update_values | update_gradients | update_JxW_values);
-	const unsigned int numberDofsPerElement = dftPtr->matrix_free_data.get_dof_handler().get_fe().dofs_per_cell;
-  const unsigned int numberDofsPerElementElectro = dftPtr->d_matrixFreeDataPRefined.get_dof_handler().get_fe().dofs_per_cell;
+	const Quadrature<3> &  quadrature=dftPtr->matrix_free_data.get_quadrature(dftPtr->d_densityQuadratureId);
+	FEValues<3> fe_values(dftPtr->matrix_free_data.get_dof_handler(dftPtr->d_densityDofHandlerIndex).get_fe(), quadrature, update_values | update_gradients | update_JxW_values);
+	const unsigned int numberDofsPerElement = dftPtr->matrix_free_data.get_dof_handler(dftPtr->d_densityDofHandlerIndex).get_fe().dofs_per_cell;
+  const unsigned int numberDofsPerElementElectro = dftPtr->d_matrixFreeDataPRefined.get_dof_handler(dftPtr->d_baseDofHandlerIndexElectro).get_fe().dofs_per_cell;
 	const unsigned int numberQuadraturePoints = quadrature.size();
 
-	FEValues<3> fe_values_lpsp(dftPtr->matrix_free_data.get_dof_handler().get_fe(), dftPtr->matrix_free_data.get_quadrature(lpspQuadratureId), update_values);
+	FEValues<3> fe_values_lpsp(dftPtr->matrix_free_data.get_dof_handler(dftPtr->d_densityDofHandlerIndex).get_fe(), dftPtr->matrix_free_data.get_quadrature(lpspQuadratureId), update_values);
 	const unsigned int numberQuadraturePointsLpsp = dftPtr->matrix_free_data.get_quadrature(lpspQuadratureId).size();
   d_numQuadPointsLpsp=numberQuadraturePointsLpsp;
 
@@ -160,8 +160,8 @@ void kohnShamDFTOperatorCUDAClass<FEOrder,FEOrderElectro>::preComputeShapeFuncti
 
 
 
-	typename dealii::DoFHandler<3>::active_cell_iterator cellPtr=dftPtr->matrix_free_data.get_dof_handler().begin_active();
-	typename dealii::DoFHandler<3>::active_cell_iterator endcPtr = dftPtr->matrix_free_data.get_dof_handler().end();
+	typename dealii::DoFHandler<3>::active_cell_iterator cellPtr=dftPtr->matrix_free_data.get_dof_handler(dftPtr->d_densityDofHandlerIndex).begin_active();
+	typename dealii::DoFHandler<3>::active_cell_iterator endcPtr = dftPtr->matrix_free_data.get_dof_handler(dftPtr->d_densityDofHandlerIndex).end();
 
 	unsigned int iElem=0;
 	for(; cellPtr!=endcPtr; ++cellPtr)
@@ -243,7 +243,7 @@ void kohnShamDFTOperatorCUDAClass<FEOrder,FEOrderElectro>::preComputeShapeFuncti
 
 	QGauss<3>  quadraturePlusOne(FEOrder+1);
   unsigned int numberQuadraturePointsPlusOne = quadraturePlusOne.size();  
-	FEValues<3> fe_values_plusone(dftPtr->matrix_free_data.get_dof_handler().get_fe(), quadraturePlusOne, update_gradients | update_JxW_values);
+	FEValues<3> fe_values_plusone(dftPtr->matrix_free_data.get_dof_handler(dftPtr->d_densityDofHandlerIndex).get_fe(), quadraturePlusOne, update_gradients | update_JxW_values);
 
 
 	std::vector<double> cellJxWValuesQuadPlusOne(numberPhysicalCells*numberQuadraturePointsPlusOne);
@@ -252,7 +252,7 @@ void kohnShamDFTOperatorCUDAClass<FEOrder,FEOrderElectro>::preComputeShapeFuncti
 	std::vector<double> shapeFunctionGradientValueQuadPlusOneZ(numberPhysicalCells*numberQuadraturePointsPlusOne*numberDofsPerElement,0.0);
 
 
-	cellPtr=dftPtr->matrix_free_data.get_dof_handler().begin_active();
+	cellPtr=dftPtr->matrix_free_data.get_dof_handler(dftPtr->d_densityDofHandlerIndex).begin_active();
 
 	iElem=0;
 	for(; cellPtr!=endcPtr; ++cellPtr)
@@ -310,7 +310,7 @@ void kohnShamDFTOperatorCUDAClass<FEOrder,FEOrderElectro>::preComputeShapeFuncti
 
 	QGauss<3>  quadratureElectroPlusOne(FEOrderElectro+1);
   numberQuadraturePointsPlusOne = quadratureElectroPlusOne.size();  
-	FEValues<3> fe_values_electro_plusone(dftPtr->d_matrixFreeDataPRefined.get_dof_handler().get_fe(), quadratureElectroPlusOne, update_gradients | update_JxW_values);
+	FEValues<3> fe_values_electro_plusone(dftPtr->d_matrixFreeDataPRefined.get_dof_handler(dftPtr->d_baseDofHandlerIndexElectro).get_fe(), quadratureElectroPlusOne, update_gradients | update_JxW_values);
 
 
 	cellJxWValuesQuadPlusOne.resize(numberPhysicalCells*numberQuadraturePointsPlusOne);
@@ -319,8 +319,8 @@ void kohnShamDFTOperatorCUDAClass<FEOrder,FEOrderElectro>::preComputeShapeFuncti
 	shapeFunctionGradientValueQuadPlusOneZ.resize(numberPhysicalCells*numberQuadraturePointsPlusOne*numberDofsPerElementElectro,0.0);
 
 
-	typename dealii::DoFHandler<3>::active_cell_iterator cellPtrElectro=dftPtr->d_matrixFreeDataPRefined.get_dof_handler().begin_active();
-	typename dealii::DoFHandler<3>::active_cell_iterator endcPtrElectro = dftPtr->d_matrixFreeDataPRefined.get_dof_handler().end();
+	typename dealii::DoFHandler<3>::active_cell_iterator cellPtrElectro=dftPtr->d_matrixFreeDataPRefined.get_dof_handler(dftPtr->d_baseDofHandlerIndexElectro).begin_active();
+	typename dealii::DoFHandler<3>::active_cell_iterator endcPtrElectro = dftPtr->d_matrixFreeDataPRefined.get_dof_handler(dftPtr->d_baseDofHandlerIndexElectro).end();
 
 	iElem=0;
 	for(; cellPtrElectro!=endcPtrElectro; ++cellPtrElectro)
@@ -372,8 +372,8 @@ void kohnShamDFTOperatorCUDAClass<FEOrder,FEOrderElectro>::preComputeShapeFuncti
 		std::cout<<"Time for shapeFuncCUDA::computeShapeGradNINJIntegral for FEOrderElectro: "<<gpu_time<<std::endl;
     
 
-  QGaussLobatto<3>  quadratureGl(FEOrderElectro+1);
-  FEValues<3> fe_valuesGl(dftPtr->matrix_free_data.get_dof_handler().get_fe(), quadratureGl, update_values | update_gradients);
+  QGaussLobatto<3>  quadratureGl(C_rhoNodalPolyOrder<FEOrder,FEOrderElectro>()+1);
+  FEValues<3> fe_valuesGl(dftPtr->matrix_free_data.get_dof_handler(dftPtr->d_densityDofHandlerIndex).get_fe(), quadratureGl, update_values | update_gradients);
   const unsigned int numberQuadraturePointsGl = quadratureGl.size();
 
   //
@@ -388,8 +388,8 @@ void kohnShamDFTOperatorCUDAClass<FEOrder,FEOrderElectro>::preComputeShapeFuncti
   std::vector<double> glShapeFunctionGradientValueZInverted(numberPhysicalCells*numberQuadraturePointsGl*numberDofsPerElement,0.0);
 
 
-  cellPtr=dftPtr->matrix_free_data.get_dof_handler().begin_active();
-  endcPtr = dftPtr->matrix_free_data.get_dof_handler().end();
+  cellPtr=dftPtr->matrix_free_data.get_dof_handler(dftPtr->d_densityDofHandlerIndex).begin_active();
+  endcPtr = dftPtr->matrix_free_data.get_dof_handler(dftPtr->d_densityDofHandlerIndex).end();
 
   iElem=0;
   for(; cellPtr!=endcPtr; ++cellPtr)
@@ -438,7 +438,7 @@ void kohnShamDFTOperatorCUDAClass<FEOrder,FEOrderElectro>::preComputeShapeFuncti
 	{
 		//QGauss<3>  quadratureNLP(C_num1DQuadNLPSP<FEOrder>());
     QIterated<3> quadratureNLP(QGauss<1>(C_num1DQuadNLPSP<FEOrder>()),C_numCopies1DQuadNLPSP());
-		FEValues<3> fe_valuesNLP(dftPtr->matrix_free_data.get_dof_handler().get_fe(), quadratureNLP, update_values|update_gradients);
+		FEValues<3> fe_valuesNLP(dftPtr->matrix_free_data.get_dof_handler(dftPtr->d_densityDofHandlerIndex).get_fe(), quadratureNLP, update_values|update_gradients);
 		const unsigned int numberQuadraturePointsNLP = quadratureNLP.size();
 
 		//
@@ -449,8 +449,8 @@ void kohnShamDFTOperatorCUDAClass<FEOrder,FEOrderElectro>::preComputeShapeFuncti
 		std::vector<double> shapeFunctionGradientValueNLPYInverted(numberPhysicalCells*numberQuadraturePointsNLP*numberDofsPerElement,0.0);
 		std::vector<double> shapeFunctionGradientValueNLPZInverted(numberPhysicalCells*numberQuadraturePointsNLP*numberDofsPerElement,0.0);    
 
-		cellPtr=dftPtr->matrix_free_data.get_dof_handler().begin_active();
-		endcPtr = dftPtr->matrix_free_data.get_dof_handler().end();
+		cellPtr=dftPtr->matrix_free_data.get_dof_handler(dftPtr->d_densityDofHandlerIndex).begin_active();
+		endcPtr = dftPtr->matrix_free_data.get_dof_handler(dftPtr->d_densityDofHandlerIndex).end();
 
 
     iElem=0;

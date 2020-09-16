@@ -354,6 +354,7 @@ namespace dftfe
 
 		void solveVselfInBins(operatorDFTCUDAClass & operatorMatrix,
 				const dealii::MatrixFree<3,double> & matrixFreeData,
+        const unsigned int mfDofHandlerIndex,
 				const dealii::AffineConstraints<double> & hangingPeriodicConstraintMatrix,
 				const double * bH,
 				const double * diagonalAH,
@@ -369,14 +370,14 @@ namespace dftfe
 
 			const unsigned int blockSize = numberBins;
 			const unsigned int totalLocallyOwnedCells=matrixFreeData.n_physical_cells();
-			const unsigned int numberNodesPerElement=matrixFreeData.get_dofs_per_cell(0);
+			const unsigned int numberNodesPerElement=matrixFreeData.get_dofs_per_cell(mfDofHandlerIndex);
 
 			distributedGPUVec<double> xD;
 
 			MPI_Barrier(MPI_COMM_WORLD);
 			double time = MPI_Wtime(); 
 
-			vectorTools::createDealiiVector(matrixFreeData.get_vector_partitioner(),
+			vectorTools::createDealiiVector(matrixFreeData.get_vector_partitioner(mfDofHandlerIndex),
 					blockSize,
 					xD);
 			xD=0.0;
@@ -389,15 +390,16 @@ namespace dftfe
 			std::vector<dealii::types::global_dof_index> cellLocalProcIndexIdMapH;
 			vectorTools::computeCellLocalIndexSetMap(xD.get_partitioner(),
 					matrixFreeData,
+          mfDofHandlerIndex,
 					blockSize,
 					cellLocalProcIndexIdMapH);
 
 			dftUtils::constraintMatrixInfoCUDA constraintsMatrixDataInfoCUDA;
-			constraintsMatrixDataInfoCUDA.initialize(matrixFreeData.get_vector_partitioner(),
+			constraintsMatrixDataInfoCUDA.initialize(matrixFreeData.get_vector_partitioner(mfDofHandlerIndex),
 					hangingPeriodicConstraintMatrix);
 
 
-			constraintsMatrixDataInfoCUDA.precomputeMaps(matrixFreeData.get_vector_partitioner(),
+			constraintsMatrixDataInfoCUDA.precomputeMaps(matrixFreeData.get_vector_partitioner(mfDofHandlerIndex),
 					xD.get_partitioner(),
 					blockSize);
 

@@ -35,7 +35,7 @@ void dftClass<FEOrder,FEOrderElectro>::computeElectrostaticEnergyHRefined(
 	//
 	//access quadrature object
 	//
-	dealii::QGauss<3> quadrature(C_num1DQuad<FEOrderElectro>());
+	dealii::QGauss<3> quadrature(C_num1DQuad<C_rhoNodalPolyOrder<FEOrder,FEOrderElectro>()>());
 	const unsigned int n_q_points = quadrature.size();
 
 	//
@@ -52,7 +52,7 @@ void dftClass<FEOrder,FEOrderElectro>::computeElectrostaticEnergyHRefined(
 	{return (*rhoOutValues).find(cell->id())->second[q];};
 
 	dealii::VectorTools::project<3,distributedCPUVec<double> >(dealii::MappingQ1<3,3>(),
-			d_matrixFreeDataPRefined.get_dof_handler(),
+			d_matrixFreeDataPRefined.get_dof_handler(d_baseDofHandlerIndexElectro),
 			d_constraintsPRefined,
 			quadrature,
 			funcRho,
@@ -67,7 +67,7 @@ void dftClass<FEOrder,FEOrderElectro>::computeElectrostaticEnergyHRefined(
 	//
 	if(dftParameters::verbosity >= 4)
 	{
-		const double integralRhoValue = totalCharge(d_matrixFreeDataPRefined.get_dof_handler(),
+		const double integralRhoValue = totalCharge(d_matrixFreeDataPRefined.get_dof_handler(d_baseDofHandlerIndexElectro),
 				rhoNodalFieldCoarse);
 
 		pcout<<"Value of total charge on coarse mesh using L2 projected nodal field: "<< integralRhoValue<<std::endl;
@@ -340,7 +340,7 @@ void dftClass<FEOrder,FEOrderElectro>::computeElectrostaticEnergyHRefined(
 	//used for computing self-potential (Vself) using Poisson problem
 	//with atoms belonging to a given bin
 
-	vselfBinsManager<FEOrderElectro> vselfBinsManagerHRefined(mpi_communicator);
+	vselfBinsManager<FEOrder,FEOrderElectro> vselfBinsManagerHRefined(mpi_communicator);
 	vselfBinsManagerHRefined.createAtomBins(matrixFreeConstraintsInputVector,
 			onlyHangingNodeConstraints,
 			dofHandlerHRefined,
@@ -392,7 +392,7 @@ void dftClass<FEOrder,FEOrderElectro>::computeElectrostaticEnergyHRefined(
 
 
 	std::vector<Quadrature<1> > quadratureVector;
-	quadratureVector.push_back(QGauss<1>(C_num1DQuad<FEOrderElectro>()));
+	quadratureVector.push_back(QGauss<1>(C_num1DQuad<C_rhoNodalPolyOrder<FEOrder,FEOrderElectro>()>()));
   quadratureVector.push_back(QIterated<1>(QGauss<1>(C_num1DQuadSmearedCharge()),C_numCopies1DQuadSmearedCharge()));
 	quadratureVector.push_back(QIterated<1>(QGauss<1>(C_num1DQuadLPSP<FEOrder>()),C_numCopies1DQuadLPSP()));  
 
@@ -440,7 +440,7 @@ void dftClass<FEOrder,FEOrderElectro>::computeElectrostaticEnergyHRefined(
 	matrixFreeDataHRefined.initialize_dof_vector(phiTotRhoOutHRefined,phiTotDofHandlerIndexHRefined);
 
 	dealiiLinearSolver dealiiCGSolver(mpi_communicator, dealiiLinearSolver::CG);
-	poissonSolverProblem<FEOrderElectro> phiTotalSolverProblem(mpi_communicator);
+	poissonSolverProblem<FEOrder,FEOrderElectro> phiTotalSolverProblem(mpi_communicator);
 
 	phiTotalSolverProblem.reinit(matrixFreeDataHRefined,
 			phiTotRhoOutHRefined,

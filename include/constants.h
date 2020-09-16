@@ -33,6 +33,9 @@ namespace dftfe {
 	/// 1d quadrature rule order
 	template <unsigned int FEOrder> constexpr unsigned int C_num1DQuad(){return FEOrder+1;}
 
+	/// rho nodal polynomial order
+	template <unsigned int FEOrder, unsigned int FEOrderElectro> constexpr unsigned int C_rhoNodalPolyOrder(){return ((FEOrder+2)>FEOrderElectro?(FEOrder+2):FEOrderElectro);}  
+
 	/// 1d quad rule smeared nuclear charge
 	constexpr unsigned int C_num1DQuadSmearedCharge(){return 10;}
 

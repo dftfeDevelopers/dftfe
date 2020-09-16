@@ -90,6 +90,7 @@ namespace dftfe{
 		 */
 		void computeCellLocalIndexSetMap(const std::shared_ptr< const dealii::Utilities::MPI::Partitioner > & partitioner,
 				const dealii::MatrixFree<3,double>                                 & matrix_free_data,
+        const unsigned int                                                   mfDofHandlerIndex,
 				const unsigned int                                                   blockSize,
 				std::vector<std::vector<dealii::types::global_dof_index> >         & flattenedArrayMacroCellLocalProcIndexId,
 				std::vector<std::vector<dealii::types::global_dof_index> >         & flattenedArrayCellLocalProcIndexId);
@@ -106,6 +107,7 @@ namespace dftfe{
 		 */
 		void computeCellLocalIndexSetMap(const std::shared_ptr< const dealii::Utilities::MPI::Partitioner > & partitioner,
 				const dealii::MatrixFree<3,double>                                 & matrix_free_data,
+        const unsigned int                                                   mfDofHandlerIndex,        
 				const unsigned int                                                   blockSize,
 				std::vector<dealii::types::global_dof_index>                       & flattenedArrayMacroCellLocalProcIndexId,
 				std::vector<unsigned int>                       & normalCellIdToMacroCellIdMap,
@@ -123,6 +125,7 @@ namespace dftfe{
 		 */
 		void computeCellLocalIndexSetMap(const std::shared_ptr< const dealii::Utilities::MPI::Partitioner > & partitioner,
 				const dealii::MatrixFree<3,double>                                 & matrix_free_data,
+        const unsigned int                                                   mfDofHandlerIndex,        
 				const unsigned int                                                   blockSize,
 				std::vector<dealii::types::global_dof_index>         & flattenedArrayCellLocalProcIndexId);
 

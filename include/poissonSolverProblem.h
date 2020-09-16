@@ -24,11 +24,12 @@ namespace dftfe {
 
 	/**
 	 * @brief poisson solver problem class template. template parameter FEOrderElectro
-	 * is the finite element polynomial order
+	 * is the finite element polynomial order. FEOrder template parameter is used in conjunction
+   * with FEOrderElectro to determine the order of the Gauss quadrature rule
 	 *
 	 * @author Shiva Rudraraju, Phani Motamarri, Sambit Das
 	 */
-	template<unsigned int FEOrderElectro>
+	template<unsigned int FEOrder, unsigned int FEOrderElectro>
 		class poissonSolverProblem: public dealiiLinearSolverProblem {
 
 			public:
