@@ -71,10 +71,6 @@ template<unsigned int FEOrder,unsigned int FEOrderElectro>
 		if (pseudoVLocAtoms.find(iAtom)==pseudoVLocAtoms.end())
 			isLocalDomainOutsidePspTail=true;
 
-		//Assuming psp tail is larger than vself ball
-		if (isLocalDomainOutsidePspTail)
-			continue;
-
 		unsigned int binIdiAtom;
 		std::map<unsigned int,unsigned int>::const_iterator it1=
 			vselfBinsManager.getAtomIdBinIdMapLocalAllImages().find(atomId);
@@ -82,6 +78,11 @@ template<unsigned int FEOrder,unsigned int FEOrderElectro>
 			isLocalDomainOutsideVselfBall=true;
 		else
 			binIdiAtom=it1->second;
+
+		if (isLocalDomainOutsidePspTail && isLocalDomainOutsideVselfBall)
+			continue;
+
+
 
 		for (unsigned int iSubCell=0; iSubCell<numSubCells; ++iSubCell)
 		{
