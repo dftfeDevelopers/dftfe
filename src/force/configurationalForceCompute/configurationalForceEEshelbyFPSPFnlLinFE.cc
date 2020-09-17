@@ -1378,7 +1378,7 @@ template<unsigned int FEOrder>
 	for (unsigned int cell=0; cell<matrixFreeDataElectro.n_macro_cells(); ++cell)
 	{
  
-    std::vector<unsigned int> nonTrivialSmearedChargeAtomIdsMacroCell;
+    std::set<unsigned int> nonTrivialSmearedChargeAtomIdsMacroCell;
 
 		const unsigned int numSubCells=matrixFreeDataElectro.n_components_filled(cell);
     for (unsigned int iSubCell=0; iSubCell<numSubCells; ++iSubCell)
@@ -1387,7 +1387,7 @@ template<unsigned int FEOrder>
       dealii::CellId subCellId=subCellPtr->id();
       const std::vector<unsigned int> & temp=dftPtr->d_bCellNonTrivialAtomIds.find(subCellId)->second;
       for (int i=0;i <temp.size(); i++)
-          nonTrivialSmearedChargeAtomIdsMacroCell.push_back(temp[i]);
+          nonTrivialSmearedChargeAtomIdsMacroCell.insert(temp[i]);
     }
 
 		forceEvalElectro.reinit(cell);
@@ -1593,7 +1593,7 @@ template<unsigned int FEOrder>
 					matrixFreeDataElectro,
 					cell,
 					gradPhiTotSmearedChargeQuads,
-          nonTrivialSmearedChargeAtomIdsMacroCell,
+          std::vector<unsigned int>(nonTrivialSmearedChargeAtomIdsMacroCell.begin(),nonTrivialSmearedChargeAtomIdsMacroCell.end()),
           dftPtr->d_bQuadAtomIdsAllAtoms,
 				  smearedbQuads);    
     }
