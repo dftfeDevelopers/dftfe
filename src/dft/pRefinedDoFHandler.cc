@@ -236,10 +236,12 @@ void dftClass<FEOrder,FEOrderElectro>::initpRefinedObjects(const bool meshOnlyDe
 	quadratureVector.push_back(QGauss<1>(C_num1DQuad<C_rhoNodalPolyOrder<FEOrder,FEOrderElectro>()>()));
   quadratureVector.push_back(QIterated<1>(QGauss<1>(C_num1DQuadLPSP<FEOrder>()),C_numCopies1DQuadLPSP())); 
   quadratureVector.push_back(QIterated<1>(QGauss<1>(C_num1DQuadSmearedCharge()),C_numCopies1DQuadSmearedCharge()));
+  quadratureVector.push_back(QGauss<1>(FEOrderElectro+1));
 
   d_densityQuadratureIdElectro=0;
   d_lpspQuadratureIdElectro=1;
   d_smearedChargeQuadratureIdElectro=2;
+  d_phiTotAXQuadratureIdElectro=3;
 
 	d_matrixFreeDataPRefined.reinit(matrixFreeDofHandlerVectorInput,
 			d_constraintsVectorElectro,

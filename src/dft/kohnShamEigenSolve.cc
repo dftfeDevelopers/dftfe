@@ -80,6 +80,7 @@ dataTypes::number dftClass<FEOrder,FEOrderElectro>::computeTraceXtHX(unsigned in
 	//
 	d_vselfBinsManager.solveVselfInBins(d_matrixFreeDataPRefined,
 		  d_binsStartDofHandlerIndexElectro,
+      d_phiTotAXQuadratureIdElectro,
 			d_constraintsPRefined,
 			d_imagePositionsTrunc,
 			d_imageIdsTrunc,
@@ -101,6 +102,7 @@ dataTypes::number dftClass<FEOrder,FEOrderElectro>::computeTraceXtHX(unsigned in
 			d_phiTotRhoIn,
 			*d_constraintsVectorElectro[d_phiTotDofHandlerIndexElectro],
 			d_phiTotDofHandlerIndexElectro,
+      d_phiTotAXQuadratureIdElectro,
       d_densityQuadratureIdElectro,
 			d_atomNodeIdToChargeMap,
 			d_bQuadValuesAllAtoms,

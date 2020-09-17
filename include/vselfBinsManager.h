@@ -106,6 +106,7 @@ namespace dftfe {
 				 */
 				void solveVselfInBins(const dealii::MatrixFree<3,double> & matrix_free_data,
 						const unsigned int offset,
+            const unsigned int matrixFreeQuadratureIdAX,
 						const dealii::ConstraintMatrix & hangingPeriodicConstraintMatrix,
 						const std::vector<std::vector<double> > & imagePositions,
 						const std::vector<int> & imageIds,
@@ -136,6 +137,7 @@ namespace dftfe {
 				 */
 				void solveVselfInBinsGPU(const dealii::MatrixFree<3,double> & matrix_free_data,
             const unsigned int mfBaseDofHandlerIndex,
+            const unsigned int matrixFreeQuadratureIdAX,
 						const unsigned int offset,
 						operatorDFTCUDAClass & operatorMatrix,
 						const dealii::ConstraintMatrix & hangingPeriodicConstraintMatrix,

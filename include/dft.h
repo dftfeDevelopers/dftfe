@@ -864,6 +864,7 @@ namespace dftfe {
       unsigned int       d_lpspQuadratureIdElectro;
       unsigned int       d_gllQuadratureId;
       unsigned int       d_phiTotDofHandlerIndexElectro;
+      unsigned int       d_phiTotAXQuadratureIdElectro;
       unsigned int       d_helmholtzDofHandlerIndexElectro;
       unsigned int       d_binsStartDofHandlerIndexElectro;
       unsigned int       d_densityQuadratureId;

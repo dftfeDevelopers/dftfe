@@ -30,7 +30,6 @@ namespace dftfe {
 			this_mpi_process (dealii::Utilities::MPI::this_mpi_process(mpi_comm)),
 			pcout (std::cout, (dealii::Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0))
 	{
-		d_isShapeGradIntegralPrecomputed=false;
 		d_isMeanValueConstraintComputed=false;
     d_isGradSmearedChargeRhs=false;
     d_isStoreSmearedChargeRhs=false;
@@ -46,7 +45,8 @@ namespace dftfe {
 		 distributedCPUVec<double> & x,
 		 const dealii::ConstraintMatrix & constraintMatrix,
 		 const unsigned int matrixFreeVectorComponent,
-		 const unsigned int matrixFreeQuadratureComponent,     
+     const unsigned int matrixFreeQuadratureComponentRhsDensity,
+     const unsigned int matrixFreeQuadratureComponentAX,    
 		 const std::map<dealii::types::global_dof_index, double> & atoms,
 		 const std::map<dealii::CellId,std::vector<double> > & smearedChargeValues,
      const unsigned int smearedChargeQuadratureId,
@@ -54,7 +54,6 @@ namespace dftfe {
 		 const bool isComputeDiagonalA,
 		 const bool isComputeMeanValueConstraint,
 		 const bool smearedNuclearCharges,
-		 const bool isPrecomputeShapeGradIntegral,
 		 const bool isRhoValues,
      const bool isGradSmearedChargeRhs,
      const unsigned int smearedChargeGradientComponentId,
@@ -70,7 +69,8 @@ namespace dftfe {
 			d_xPtr=&x;
 			d_constraintMatrixPtr=&constraintMatrix;
 			d_matrixFreeVectorComponent=matrixFreeVectorComponent;
-			d_matrixFreeQuadratureComponent=matrixFreeQuadratureComponent;      
+			d_matrixFreeQuadratureComponentRhsDensity=matrixFreeQuadratureComponentRhsDensity;     
+			d_matrixFreeQuadratureComponentAX=matrixFreeQuadratureComponentAX;           
 			d_rhoValuesPtr=isRhoValues?&rhoValues:NULL;
 			d_atomsPtr=smearedNuclearCharges?NULL:&atoms;
 			d_smearedChargeValuesPtr=smearedNuclearCharges?&smearedChargeValues:NULL;
@@ -91,36 +91,6 @@ namespace dftfe {
 			if (isComputeDiagonalA)
 				computeDiagonalA();
 
-			if (isPrecomputeShapeGradIntegral)
-				precomputeShapeFunctionGradientIntegral();     
-		}
-
-
-	template<unsigned int FEOrder, unsigned int FEOrderElectro>
-		void poissonSolverProblem<FEOrder,FEOrderElectro>::reinit
-		(const dealii::MatrixFree<3,double> & matrixFreeData,
-		 distributedCPUVec<double> & x,
-		 const dealii::ConstraintMatrix & constraintMatrix,
-		 const unsigned int matrixFreeVectorComponent,
-		 const unsigned int matrixFreeQuadratureComponent,     
-		 const std::map<dealii::types::global_dof_index, double> & atoms,
-		 const bool isComputeDiagonalA,
-		 const bool isPrecomputeShapeGradIntegral)
-		{
-			d_matrixFreeDataPtr=&matrixFreeData;
-			d_xPtr=&x;
-			d_constraintMatrixPtr=&constraintMatrix;
-			d_matrixFreeVectorComponent=matrixFreeVectorComponent;
-			d_matrixFreeQuadratureComponent=matrixFreeQuadratureComponent;       
-			d_rhoValuesPtr=NULL;
-			d_atomsPtr=&atoms;
-
-			if (isComputeDiagonalA)
-				computeDiagonalA();
-
-			if (isPrecomputeShapeGradIntegral)
-				precomputeShapeFunctionGradientIntegral();
-
 		}
 
 
@@ -139,46 +109,6 @@ namespace dftfe {
 			return *d_xPtr;
 		}
 
-	template<unsigned int FEOrder, unsigned int FEOrderElectro>
-		void poissonSolverProblem<FEOrder,FEOrderElectro>::precomputeShapeFunctionGradientIntegral()
-		{
-
-			const dealii::DoFHandler<3> & dofHandler=
-				d_matrixFreeDataPtr->get_dof_handler(d_matrixFreeVectorComponent);
-
-			const dealii::Quadrature<3> &  quadrature=d_matrixFreeDataPtr->get_quadrature(d_matrixFreeQuadratureComponent);
-			dealii::FEValues<3> fe_values (dofHandler.get_fe(), quadrature, dealii::update_gradients | dealii::update_JxW_values);
-			const unsigned int   dofs_per_cell = dofHandler.get_fe().dofs_per_cell;
-			const unsigned int   num_quad_points = quadrature.size();
-
-			d_cellShapeFunctionGradientIntegralFlattened.clear();
-			d_cellShapeFunctionGradientIntegralFlattened.resize(d_matrixFreeDataPtr->n_physical_cells()*dofs_per_cell*dofs_per_cell);
-
-			typename dealii::DoFHandler<3>::active_cell_iterator cell = dofHandler.begin_active(), endc = dofHandler.end();
-			unsigned int iElem=0;
-			for(; cell!=endc; ++cell)
-				if(cell->is_locally_owned())
-				{
-					fe_values.reinit(cell);
-
-					for(unsigned int j = 0; j < dofs_per_cell; ++j)
-					{
-						for (unsigned int i = 0; i < dofs_per_cell; ++i)
-						{
-							double shapeFunctionGradientIntegralValue = 0.0;
-							for (unsigned int q_point=0; q_point<num_quad_points; ++q_point)
-								shapeFunctionGradientIntegralValue +=(fe_values.shape_grad(i,q_point)*fe_values.shape_grad(j,q_point))*fe_values.JxW(q_point);
-
-							d_cellShapeFunctionGradientIntegralFlattened[iElem*dofs_per_cell*dofs_per_cell
-								+j*dofs_per_cell+i]=shapeFunctionGradientIntegralValue;
-						}
-
-					}
-
-					iElem++;
-				}
-			d_isShapeGradIntegralPrecomputed=true;
-		}
 
 	template<unsigned int FEOrder, unsigned int FEOrderElectro>
 		void poissonSolverProblem<FEOrder,FEOrderElectro>::computeRhs(distributedCPUVec<double>  & rhs)
@@ -196,14 +126,7 @@ namespace dftfe {
 			const dealii::DoFHandler<3> & dofHandler=
 				d_matrixFreeDataPtr->get_dof_handler(d_matrixFreeVectorComponent);
 
-			const dealii::Quadrature<3> &  quadrature=d_matrixFreeDataPtr->get_quadrature(d_matrixFreeQuadratureComponent);
-			//dealii::FEValues<3> fe_values (dofHandler.get_fe(), quadrature,
-			//                               d_isShapeGradIntegralPrecomputed?dealii::update_values | dealii::update_JxW_values
-			//                                                               :dealii::update_values | dealii::update_gradients | dealii::update_JxW_values);
-
-			dealii::FEValues<3> fe_values (dofHandler.get_fe(), quadrature,dealii::update_values | dealii::update_JxW_values);
 			const unsigned int   dofs_per_cell = dofHandler.get_fe().dofs_per_cell;
-			const unsigned int   num_quad_points = quadrature.size();
 			dealii::Vector<double>  elementalRhs(dofs_per_cell);
 			std::vector<dealii::types::global_dof_index> local_dof_indices (dofs_per_cell);
 			typename dealii::DoFHandler<3>::active_cell_iterator cell = dofHandler.begin_active(), endc = dofHandler.end();
@@ -215,9 +138,9 @@ namespace dftfe {
 			d_constraintMatrixPtr->distribute(tempvec);
 			tempvec.update_ghost_values();
 
-			dealii::FEEvaluation<3,FEOrderElectro,C_num1DQuad<C_rhoNodalPolyOrder<FEOrder,FEOrderElectro>()>()> fe_eval(*d_matrixFreeDataPtr,
+			dealii::FEEvaluation<3,FEOrderElectro,FEOrderElectro+1> fe_eval(*d_matrixFreeDataPtr,
 					d_matrixFreeVectorComponent,
-					d_matrixFreeQuadratureComponent);
+					d_matrixFreeQuadratureComponentAX);
 			dealii::VectorizedArray<double>  quarter = dealii::make_vectorized_array (1.0/(4.0*M_PI));
 			if (d_constraintMatrixPtr->has_inhomogeneities())
 				for (unsigned int macrocell = 0;macrocell < d_matrixFreeDataPtr->n_macro_cells();
@@ -237,6 +160,7 @@ namespace dftfe {
 			//rhs contribution from electronic charge
 			if (d_rhoValuesPtr)
 			{
+        /*
 				cell = dofHandler.begin_active();
 				for(; cell!=endc; ++cell)
 					if (cell->is_locally_owned())
@@ -253,6 +177,38 @@ namespace dftfe {
 						cell->get_dof_indices (local_dof_indices);
 						d_constraintMatrixPtr->distribute_local_to_global(elementalRhs, local_dof_indices, rhs);
 					}
+        */  
+
+        dealii::FEEvaluation<3,FEOrderElectro,C_num1DQuad<C_rhoNodalPolyOrder<FEOrder,FEOrderElectro>()>()> fe_eval_density(*d_matrixFreeDataPtr,
+            d_matrixFreeVectorComponent,
+            d_matrixFreeQuadratureComponentRhsDensity);
+              
+        std::vector<dealii::VectorizedArray<double> > rhoQuads(fe_eval_density.n_q_points,dealii::make_vectorized_array(0.0));  
+        for (unsigned int macrocell = 0;macrocell < d_matrixFreeDataPtr->n_macro_cells();
+            ++macrocell)
+        {
+          fe_eval_density.reinit(macrocell);
+
+          std::fill(rhoQuads.begin(),rhoQuads.end(),dealii::make_vectorized_array(0.0));
+          const unsigned int numSubCells=d_matrixFreeDataPtr->n_components_filled(macrocell);
+          for (unsigned int iSubCell=0; iSubCell<numSubCells; ++iSubCell)
+          {
+            subCellPtr= d_matrixFreeDataPtr->get_cell_iterator(macrocell,iSubCell,d_matrixFreeVectorComponent);
+            dealii::CellId subCellId=subCellPtr->id();
+            const std::vector<double>& tempVec=d_rhoValuesPtr->find(subCellId)->second;
+
+            for (unsigned int q=0; q<fe_eval_density.n_q_points; ++q)
+              rhoQuads[q][iSubCell]=tempVec[q];                
+          }
+
+
+          for (unsigned int q=0; q<fe_eval_density.n_q_points; ++q)
+          {
+            fe_eval_density.submit_value(rhoQuads[q], q);
+          }
+          fe_eval_density.integrate(true, false);
+          fe_eval_density.distribute_local_to_global(rhs);
+        }          
 			}
 
 			//rhs contribution from atomic charge at fem nodes
@@ -442,7 +398,7 @@ namespace dftfe {
 			const dealii::DoFHandler<3> & dofHandler=
 				d_matrixFreeDataPtr->get_dof_handler(d_matrixFreeVectorComponent);
 
-			const dealii::Quadrature<3> &  quadrature=d_matrixFreeDataPtr->get_quadrature(d_matrixFreeQuadratureComponent);
+			const dealii::Quadrature<3> &  quadrature=d_matrixFreeDataPtr->get_quadrature(d_matrixFreeQuadratureComponentAX);
 			dealii::FEValues<3> fe_values (dofHandler.get_fe(), quadrature, dealii::update_values| dealii::update_JxW_values);
 			const unsigned int   dofs_per_cell = dofHandler.get_fe().dofs_per_cell;
 			const unsigned int   num_quad_points = quadrature.size();
@@ -523,7 +479,7 @@ namespace dftfe {
 			const dealii::DoFHandler<3> & dofHandler=
 				d_matrixFreeDataPtr->get_dof_handler(d_matrixFreeVectorComponent);
 
-			const dealii::Quadrature<3> &  quadrature=d_matrixFreeDataPtr->get_quadrature(d_matrixFreeQuadratureComponent);
+			const dealii::Quadrature<3> &  quadrature=d_matrixFreeDataPtr->get_quadrature(d_matrixFreeQuadratureComponentAX);
 			dealii::FEValues<3> fe_values (dofHandler.get_fe(), quadrature, dealii::update_values | dealii::update_gradients | dealii::update_JxW_values);
 			const unsigned int   dofs_per_cell = dofHandler.get_fe().dofs_per_cell;
 			const unsigned int   num_quad_points = quadrature.size();
@@ -569,9 +525,9 @@ namespace dftfe {
 		{
 			dealii::VectorizedArray<double>  quarter = dealii::make_vectorized_array (1.0/(4.0*M_PI));
 
-			dealii::FEEvaluation<3,FEOrderElectro,C_num1DQuad<C_rhoNodalPolyOrder<FEOrder,FEOrderElectro>()>()> fe_eval(matrixFreeData,
+			dealii::FEEvaluation<3,FEOrderElectro,FEOrderElectro+1> fe_eval(matrixFreeData,
 					d_matrixFreeVectorComponent,
-					d_matrixFreeQuadratureComponent);
+					d_matrixFreeQuadratureComponentAX);
 
 			for (unsigned int cell=cell_range.first; cell<cell_range.second; ++cell)
 			{

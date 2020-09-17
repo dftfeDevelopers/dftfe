@@ -197,6 +197,7 @@ namespace dftfe
 		void vselfBinsManager<FEOrder,FEOrderElectro>::solveVselfInBins
 		(const dealii::MatrixFree<3,double> & matrix_free_data,
 		 const unsigned int offset,
+     const unsigned int matrixFreeQuadratureIdAX,
 		 const dealii::AffineConstraints<double> & hangingPeriodicConstraintMatrix,
 		 const std::vector<std::vector<double> > & imagePositions,
 		 const std::vector<int> & imageIds,
@@ -389,6 +390,7 @@ namespace dftfe
 							d_vselfBinConstraintMatrices[4*iBin],
 							constraintMatrixIdVself,
               0,
+              matrixFreeQuadratureIdAX,
 							std::map<dealii::types::global_dof_index, double>(),
 							bQuadValuesBin,
               smearedChargeQuadratureId,
@@ -396,7 +398,6 @@ namespace dftfe
 							true,
 							false,
 							true,
-							false,
 							false);        
 				else
 					vselfSolverProblem.reinit(matrix_free_data,
@@ -404,9 +405,15 @@ namespace dftfe
 							d_vselfBinConstraintMatrices[4*iBin],
 							constraintMatrixIdVself,
               0,
+              matrixFreeQuadratureIdAX,
 							d_atomsInBin[iBin],
+							bQuadValuesBin,
+              smearedChargeQuadratureId,
+							dummy,
 							true,
-							false);
+							false,
+							false,
+							false);            
 
 				MPI_Barrier(MPI_COMM_WORLD);
 				vselfinit_time = MPI_Wtime() - vselfinit_time;
@@ -431,6 +438,7 @@ namespace dftfe
                 d_vselfBinConstraintMatrices[4*iBin+idim+1],
                 constraintMatrixIdVselfDerR[idim],
                 0,
+                matrixFreeQuadratureIdAX,
                 std::map<dealii::types::global_dof_index, double>(),
                 bQuadValuesBin,
                 smearedChargeQuadratureId,
@@ -438,7 +446,6 @@ namespace dftfe
                 true,
                 false,
                 true,
-                false,
                 false,
                 true,
                 idim);        
@@ -562,6 +569,7 @@ namespace dftfe
 		void vselfBinsManager<FEOrder,FEOrderElectro>::solveVselfInBinsGPU
 		(const dealii::MatrixFree<3,double> & matrix_free_data,
      const unsigned int mfBaseDofHandlerIndex,
+     const unsigned int matrixFreeQuadratureIdAX,
 		 const unsigned int offset,
 		 operatorDFTCUDAClass & operatorMatrix,
 		 const dealii::AffineConstraints<double> & hangingPeriodicConstraintMatrix,
@@ -736,9 +744,9 @@ namespace dftfe
 
 				std::map<dealii::CellId,std::vector<double> > & bQuadValuesBin=bQuadValuesBins[iBin];
 
-				dealii::FEEvaluation<3,FEOrderElectro,C_num1DQuad<C_rhoNodalPolyOrder<FEOrder,FEOrderElectro>()>()> fe_eval(matrix_free_data,
+				dealii::FEEvaluation<3,FEOrderElectro,FEOrderElectro+1> fe_eval(matrix_free_data,
 						constraintMatrixId,
-						0);
+						matrixFreeQuadratureIdAX);
 
         dealii::FEEvaluation<3,FEOrderElectro,C_num1DQuadSmearedCharge()*C_numCopies1DQuadSmearedCharge()> fe_eval_sc(matrix_free_data,
               constraintMatrixId,
@@ -829,9 +837,9 @@ namespace dftfe
             d_vselfBinConstraintMatrices[4*iBin+idim+1].distribute(tempvec);
             tempvec.update_ghost_values();
 
-            dealii::FEEvaluation<3,FEOrderElectro,C_num1DQuad<C_rhoNodalPolyOrder<FEOrder,FEOrderElectro>()>()> fe_eval2(matrix_free_data,
+            dealii::FEEvaluation<3,FEOrderElectro,FEOrderElectro+1> fe_eval2(matrix_free_data,
                 constraintMatrixId2,
-                0);
+                matrixFreeQuadratureIdAX);
 
             dealii::FEEvaluation<3,FEOrderElectro,C_num1DQuadSmearedCharge()*C_numCopies1DQuadSmearedCharge()> fe_eval_sc2(matrix_free_data,
                   constraintMatrixId2,

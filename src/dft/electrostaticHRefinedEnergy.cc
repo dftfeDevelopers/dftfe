@@ -395,6 +395,7 @@ void dftClass<FEOrder,FEOrderElectro>::computeElectrostaticEnergyHRefined(
 	quadratureVector.push_back(QGauss<1>(C_num1DQuad<C_rhoNodalPolyOrder<FEOrder,FEOrderElectro>()>()));
   quadratureVector.push_back(QIterated<1>(QGauss<1>(C_num1DQuadSmearedCharge()),C_numCopies1DQuadSmearedCharge()));
 	quadratureVector.push_back(QIterated<1>(QGauss<1>(C_num1DQuadLPSP<FEOrder>()),C_numCopies1DQuadLPSP()));  
+  quadratureVector.push_back(QGauss<1>(FEOrderElectro+1));
 
 	dealii::MatrixFree<3,double> matrixFreeDataHRefined;
 
@@ -418,6 +419,7 @@ void dftClass<FEOrder,FEOrderElectro>::computeElectrostaticEnergyHRefined(
 		pcout<< std::endl<<"Solving for nuclear charge self potential in bins on h refined mesh: ";
 	vselfBinsManagerHRefined.solveVselfInBins(matrixFreeDataHRefined,
 			2,
+      3,
 			constraintsHRefined,
 			d_imagePositionsTrunc,
 			d_imageIdsTrunc,
@@ -447,6 +449,7 @@ void dftClass<FEOrder,FEOrderElectro>::computeElectrostaticEnergyHRefined(
 			*matrixFreeConstraintsInputVector[phiTotDofHandlerIndexHRefined],
 			phiTotDofHandlerIndexHRefined,
       0,
+      3,
 			atomHRefinedNodeIdToChargeMap,
       d_bQuadValuesAllAtoms,
       1,
