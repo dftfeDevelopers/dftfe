@@ -40,8 +40,8 @@ void dftClass<FEOrder,FEOrderElectro>::interpolateRhoNodalDataToQuadratureDataGe
 	FEEvaluation<C_DIM,C_rhoNodalPolyOrder<FEOrder,FEOrderElectro>(),C_num1DQuad<C_rhoNodalPolyOrder<FEOrder,FEOrderElectro>()>(),1,double> feEvalObj(matrixFreeData,dofHandlerId,quadratureId);
 	const unsigned int numQuadPoints = feEvalObj.n_q_points; 
 
-  AssertThrow(nodalField.partitioners_are_globally_compatible(*matrixFreeData.get_vector_partitioner(dofHandlerId)),
-          dealii::ExcMessage("DFT-FE Error: mismatch in partitioner/dofHandler."));
+  //AssertThrow(nodalField.partitioners_are_globally_compatible(*matrixFreeData.get_vector_partitioner(dofHandlerId)),
+  //        dealii::ExcMessage("DFT-FE Error: mismatch in partitioner/dofHandler."));
 
   AssertThrow(matrixFreeData.get_quadrature(quadratureId).size() == numQuadPoints,
           dealii::ExcMessage("DFT-FE Error: mismatch in quadrature rule usage in interpolateNodalDataToQuadratureData."));
@@ -120,8 +120,8 @@ void dftClass<FEOrder,FEOrderElectro>::interpolateElectroNodalDataToQuadratureDa
 	FEEvaluation<C_DIM,FEOrderElectro,C_num1DQuad<C_rhoNodalPolyOrder<FEOrder,FEOrderElectro>()>(),1,double> feEvalObj(matrixFreeData,dofHandlerId,quadratureId);
 	const unsigned int numQuadPoints = feEvalObj.n_q_points; 
 
-  AssertThrow(nodalField.partitioners_are_globally_compatible(*matrixFreeData.get_vector_partitioner(dofHandlerId)),
-          dealii::ExcMessage("DFT-FE Error: mismatch in partitioner/dofHandler."));
+  //AssertThrow(nodalField.partitioners_are_globally_compatible(*matrixFreeData.get_vector_partitioner(dofHandlerId)),
+  //        dealii::ExcMessage("DFT-FE Error: mismatch in partitioner/dofHandler."));
 
   AssertThrow(matrixFreeData.get_quadrature(quadratureId).size() == numQuadPoints,
           dealii::ExcMessage("DFT-FE Error: mismatch in quadrature rule usage in interpolateNodalDataToQuadratureData."));
@@ -181,8 +181,8 @@ void dftClass<FEOrder,FEOrderElectro>::interpolateRhoNodalDataToQuadratureDataLp
   FEEvaluation<C_DIM,C_rhoNodalPolyOrder<FEOrder,FEOrderElectro>(),C_num1DQuadLPSP<FEOrder>()*C_numCopies1DQuadLPSP(),1,double> feEvalObj(matrixFreeData,dofHandlerId,quadratureId);
 	const unsigned int numQuadPoints = feEvalObj.n_q_points;
 
-  AssertThrow(nodalField.partitioners_are_globally_compatible(*matrixFreeData.get_vector_partitioner(dofHandlerId)),
-          dealii::ExcMessage("DFT-FE Error: mismatch in partitioner/dofHandler."));
+  //AssertThrow(nodalField.partitioners_are_globally_compatible(*matrixFreeData.get_vector_partitioner(dofHandlerId)),
+  //        dealii::ExcMessage("DFT-FE Error: mismatch in partitioner/dofHandler."));
 
   AssertThrow(matrixFreeData.get_quadrature(quadratureId).size() == numQuadPoints,
           dealii::ExcMessage("DFT-FE Error: mismatch in quadrature rule usage in interpolateNodalDataToQuadratureData."));
@@ -262,8 +262,8 @@ double dftClass<FEOrder,FEOrderElectro>::fieldGradl2Norm(const dealii::MatrixFre
 	FEEvaluation<C_DIM,C_rhoNodalPolyOrder<FEOrder,FEOrderElectro>(),C_num1DQuad<C_rhoNodalPolyOrder<FEOrder,FEOrderElectro>()>(),1,double> fe_evalField(matrixFreeDataObject,0,0);
 	const unsigned int numQuadPoints = fe_evalField.n_q_points;
 
-  AssertThrow(nodalField.partitioners_are_globally_compatible(*matrixFreeDataObject.get_vector_partitioner(0)),
-          dealii::ExcMessage("DFT-FE Error: mismatch in partitioner/dofHandler."));
+  //AssertThrow(nodalField.partitioners_are_globally_compatible(*matrixFreeDataObject.get_vector_partitioner(0)),
+  //        dealii::ExcMessage("DFT-FE Error: mismatch in partitioner/dofHandler."));
 
   AssertThrow(matrixFreeDataObject.get_quadrature(0).size() == numQuadPoints,
           dealii::ExcMessage("DFT-FE Error: mismatch in quadrature rule usage in interpolateNodalDataToQuadratureData."));
