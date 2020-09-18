@@ -170,7 +170,7 @@ void dftClass<FEOrder,FEOrderElectro>::updateAtomPositionsAndMoveMesh(const std:
 	const double tol=1e-6;
 	const double break1 = 1.0;
 
-	if(maxDispAtom <= break1+tol)
+	if(maxDispAtom <= (break1+tol) && !dftParameters::floatingNuclearCharges)
 		useGaussian = 1;
 
 	//for synchrozination in case the updateCase are different in different processors due to floating point comparison
@@ -568,9 +568,9 @@ void dftClass<FEOrder,FEOrderElectro>::updateAtomPositionsAndMoveMesh(const std:
     init_time = MPI_Wtime(); 
 
     if (dftParameters::isBOMD)
-      initNoRemesh(false,false,updateDensity);
+      initNoRemesh(true,false,updateDensity);
     else
-      initNoRemesh(false,false,updateDensity);
+      initNoRemesh(true,false,updateDensity);
     if (!dftParameters::reproducible_output)
       pcout << "...Reinitialization end" << std::endl;
 
