@@ -225,7 +225,7 @@ void dftClass<FEOrder,FEOrderElectro>::initRho()
 				*gradRhoInValues,
 				*gradRhoInValues,
 				dftParameters::xc_id == 4);
-		normalizeRho();
+		normalizeRhoInQuadValues();
 
 		/*FEEvaluation<C_DIM,C_num1DKerkerPoly<FEOrder>(),C_num1DQuad<FEOrderElectro>(),1,double> rhoEval(d_matrixFreeDataPRefined,0,1);
 		  const unsigned int numQuadPoints = rhoEval.n_q_points; 
@@ -427,7 +427,7 @@ void dftClass<FEOrder,FEOrderElectro>::initRho()
 			}
 		}
 
-		normalizeRho();
+		normalizeRhoInQuadValues();
 	}
 	//
 	computing_timer.exit_section("initialize density");
@@ -694,7 +694,7 @@ void dftClass<FEOrder,FEOrderElectro>::computeRhoInitialGuessFromPSI(std::vector
 
 		}
 
-	normalizeRho();
+	normalizeRhoInQuadValues();
 	//
 	computing_timer.exit_section("initialize density");
 }
@@ -938,7 +938,7 @@ void dftClass<FEOrder,FEOrderElectro>::initRhoFromPreviousGroundStateRho()
 	}//macro cell loop
 
 	//normalize density
-	normalizeRho();
+	normalizeRhoInQuadValues();
 	computing_timer.exit_section("init density from prev gs density");
 }
 
@@ -946,7 +946,7 @@ void dftClass<FEOrder,FEOrderElectro>::initRhoFromPreviousGroundStateRho()
 //Normalize rho
 //
 	template<unsigned int FEOrder,unsigned int FEOrderElectro>
-void dftClass<FEOrder,FEOrderElectro>::normalizeRho()
+void dftClass<FEOrder,FEOrderElectro>::normalizeRhoInQuadValues()
 {
 	const Quadrature<3> &  quadrature_formula=matrix_free_data.get_quadrature(d_densityQuadratureId);
 	const unsigned int n_q_points    = quadrature_formula.size();
@@ -987,6 +987,53 @@ void dftClass<FEOrder,FEOrderElectro>::normalizeRho()
 
 	if (dftParameters::verbosity>=1)
 		pcout<<"Initial total charge: "<< chargeAfterScaling<<std::endl;
+}
+
+//
+//Normalize rho
+//
+	template<unsigned int FEOrder,unsigned int FEOrderElectro>
+void dftClass<FEOrder,FEOrderElectro>::normalizeRhoOutQuadValues()
+{
+	const Quadrature<3> &  quadrature_formula=matrix_free_data.get_quadrature(d_densityQuadratureId);
+	const unsigned int n_q_points    = quadrature_formula.size();
+
+	const double charge = totalCharge(d_dofHandlerRhoNodal,
+			rhoOutValues);
+	const double scaling=((double)numElectrons)/charge;
+
+	if (dftParameters::verbosity>=2)
+		pcout<< "Total charge out before normalizing to number of electrons: "<< charge<<std::endl;
+
+	//scaling rho
+	typename DoFHandler<3>::active_cell_iterator cell = dofHandler.begin_active(), endc = dofHandler.end();
+	for (; cell!=endc; ++cell) {
+		if (cell->is_locally_owned()){
+			for (unsigned int q=0; q<n_q_points; ++q){
+				(*rhoOutValues)[cell->id()][q]*=scaling;
+
+				if(dftParameters::xc_id == 4)
+					for (unsigned int idim=0; idim<3; ++idim)
+						(*gradRhoOutValues)[cell->id()][3*q+idim]*=scaling;
+				if (dftParameters::spinPolarized==1)
+				{
+					(*rhoOutValuesSpinPolarized)[cell->id()][2*q+1]*=scaling;
+					(*rhoOutValuesSpinPolarized)[cell->id()][2*q]*=scaling;
+					if(dftParameters::xc_id == 4)
+						for (unsigned int idim=0; idim<3; ++idim)
+						{
+							(*gradRhoOutValuesSpinPolarized)[cell->id()][6*q+idim]*=scaling;
+							(*gradRhoOutValuesSpinPolarized)[cell->id()][6*q+3+idim]*=scaling;
+						}
+				}
+			}
+		}
+	}
+	double chargeAfterScaling = totalCharge(d_dofHandlerRhoNodal,
+			rhoOutValues);
+
+	if (dftParameters::verbosity>=1)
+		pcout<<"Total charge out after scaling: "<< chargeAfterScaling<<std::endl;
 }
 
 //

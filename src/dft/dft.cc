@@ -858,7 +858,7 @@ namespace dftfe {
 							*(gradRhoInValues),
 							dftParameters::xc_id == 4);
 
-					normalizeRho();
+					normalizeRhoInQuadValues();
 				}
 
 				d_isRestartGroundStateCalcFromChk=true;
@@ -906,7 +906,7 @@ namespace dftfe {
 							*(gradRhoInValues),
 							dftParameters::xc_id == 4);
 
-					normalizeRho();
+					normalizeRhoInQuadValues();
 				}
 			}
 
@@ -1001,7 +1001,7 @@ namespace dftfe {
 							*(gradRhoInValues),
 							*(gradRhoInValues),
 							dftParameters::xc_id == 4);	
-					normalizeRho();
+					normalizeRhoInQuadValues();
 				}
 			}
 

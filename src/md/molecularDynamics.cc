@@ -897,7 +897,7 @@ false);
 										*(dftPtr->gradRhoInValues),
 										*(dftPtr->gradRhoInValues),
 										dftParameters::xc_id == 4);	
-								dftPtr->normalizeRho();
+								dftPtr->normalizeRhoInQuadValues();
 							}
 
 						dftPtr->solve(kohnShamDFTEigenOperator,
@@ -1062,7 +1062,7 @@ false);
 								*(dftPtr->gradRhoInValues),
 								dftParameters::xc_id == 4);		
 
-						dftPtr->normalizeRho();
+						dftPtr->normalizeRhoInQuadValues();
 
 						MPI_Barrier(MPI_COMM_WORLD);
 						xlbomdpre_time = MPI_Wtime() - xlbomdpre_time;
@@ -1243,7 +1243,7 @@ false);
 											*(dftPtr->gradRhoInValues),
 											dftParameters::xc_id == 4);		
 
-									dftPtr->normalizeRho();
+									dftPtr->normalizeRhoInQuadValues();
 
 									if (dftParameters::verbosity>=1)
 										pcout<<"----------Start shadow potential energy solve with approx density= n+lamda*v1-------------"<<std::endl;
@@ -1328,7 +1328,7 @@ false);
 											*(dftPtr->gradRhoInValues),
 											dftParameters::xc_id == 4);		
 
-									dftPtr->normalizeRho();
+									dftPtr->normalizeRhoInQuadValues();
 
 									if (dftParameters::verbosity>=1)
 										pcout<<"----------Start shadow potential energy solve with approx density= n-lamda*v1-------------"<<std::endl;
@@ -1476,7 +1476,7 @@ false);
 									*(dftPtr->gradRhoInValues),
 									*(dftPtr->gradRhoInValues),
 									dftParameters::xc_id == 4);	
-							dftPtr->normalizeRho();
+							dftPtr->normalizeRhoInQuadValues();
 						}
 
 					//
@@ -2439,7 +2439,7 @@ false);
 										*(dftPtr->gradRhoInValues),
 										*(dftPtr->gradRhoInValues),
 										dftParameters::xc_id == 4);	
-								dftPtr->normalizeRho();
+								dftPtr->normalizeRhoInQuadValues();
 							}
 
 						dftPtr->solve(kohnShamDFTEigenOperator,
@@ -2604,7 +2604,7 @@ false);
 								*(dftPtr->gradRhoInValues),
 								dftParameters::xc_id == 4);		
 
-						dftPtr->normalizeRho();
+						dftPtr->normalizeRhoInQuadValues();
 
 						MPI_Barrier(MPI_COMM_WORLD);
 						xlbomdpre_time = MPI_Wtime() - xlbomdpre_time;
@@ -2785,7 +2785,7 @@ false);
 											*(dftPtr->gradRhoInValues),
 											dftParameters::xc_id == 4);		
 
-									dftPtr->normalizeRho();
+									dftPtr->normalizeRhoInQuadValues();
 
 									if (dftParameters::verbosity>=1)
 										pcout<<"----------Start shadow potential energy solve with approx density= n+lamda*v1-------------"<<std::endl;
@@ -2870,7 +2870,7 @@ false);
 											*(dftPtr->gradRhoInValues),
 											dftParameters::xc_id == 4);		
 
-									dftPtr->normalizeRho();
+									dftPtr->normalizeRhoInQuadValues();
 
 									if (dftParameters::verbosity>=1)
 										pcout<<"----------Start shadow potential energy solve with approx density= n-lamda*v1-------------"<<std::endl;
@@ -3008,7 +3008,7 @@ false);
 									*(dftPtr->gradRhoInValues),
 									*(dftPtr->gradRhoInValues),
 									dftParameters::xc_id == 4);	
-							dftPtr->normalizeRho();
+							dftPtr->normalizeRhoInQuadValues();
 						}
 
 					//

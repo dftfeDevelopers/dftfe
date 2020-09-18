@@ -587,9 +587,14 @@ namespace dftfe {
 			double totalMagnetization(const std::map<dealii::CellId, std::vector<double> > *rhoQuadValues) ;
 
 			/**
-			 *@brief normalize the electron density
+			 *@brief normalize the input electron density
 			 */
-			void normalizeRho();
+			void normalizeRhoInQuadValues();
+
+			/**
+			 *@brief normalize the output electron density in each scf
+			 */
+			void normalizeRhoOutQuadValues();      
 
 			/**
 			 *@brief normalize the electron density
@@ -976,7 +981,7 @@ namespace dftfe {
 			std::deque<std::map<dealii::CellId,std::vector<double> >> rhoInVals, rhoOutVals, rhoInValsSpinPolarized, rhoOutValsSpinPolarized;
       std::map<dealii::CellId, std::vector<double> > d_phiInValues;
 
-			distributedCPUVec<double> d_rhoInNodalValuesRead, d_rhoInNodalValues, d_rhoOutNodalValues, d_rhoOutNodalValuesSplit, d_preCondResidualVector, d_atomicRho, d_rhoNodalFieldRefined;
+			distributedCPUVec<double> d_rhoInNodalValuesRead, d_rhoInNodalValues, d_rhoOutNodalValues, d_rhoOutNodalValuesSplit, d_preCondResidualVector, d_atomicRho, d_rhoNodalFieldRefined, d_rhoOutNodalValuesDistributed;
 			std::deque<distributedCPUVec<double>> d_rhoInNodalVals, d_rhoOutNodalVals;
 
       std::map<dealii::CellId, std::vector<double> > d_rhoOutValuesLpspQuad, d_rhoInValuesLpspQuad, d_gradRhoOutValuesLpspQuad, d_gradRhoInValuesLpspQuad;

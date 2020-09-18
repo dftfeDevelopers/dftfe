@@ -155,7 +155,9 @@ SET(CMAKE_INSTALL_NAME_DIR "${CMAKE_INSTALL_PREFIX}/lib")
 SET(WARNINGSLIST  "-w -Wno-sign-compare -Wno-ignored-qualifiers -Wno-deprecated-declarations -Wno-vla-extension -Wno-reorder -Wno-sometimes-uninitialized -Wno-undefined-var-template -Wno-ignored-qualifiers")
 SET(DEAL_II_CXX_FLAGS  "${DEAL_II_CXX_FLAGS} ${WARNINGSLIST}" )
 
-ADD_DEFINITIONS(-DDFTFE_MINIMAL_COMPILE)
+IF (MINIMAL_COMPILE)
+  ADD_DEFINITIONS(-DDFTFE_MINIMAL_COMPILE)
+ENDIF()
 
 #
 #Set use complex/use real flag

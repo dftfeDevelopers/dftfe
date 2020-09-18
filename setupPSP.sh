@@ -53,7 +53,7 @@ withELPA=ON
 # build type: "Release" or "Debug"
 build_type=Release
 testing=OFF
-
+minimal_compile=ON
 ###########################################################################
 #Usually, no changes are needed below this line
 #
@@ -76,7 +76,7 @@ function cmake_real() {
 	-DXML_INCLUDE_DIR=$xmlIncludeDir -DWITH_INTEL_MKL=$withIntelMkl \
 	-DWITH_ELPA=$withELPA -DCMAKE_PREFIX_PATH="$PREFIX_PATH" \
 	-DWITH_COMPLEX=OFF -DWITH_GPU=$withGPU \
-	-DWITH_TESTING=$testing \
+	-DWITH_TESTING=$testing -DMINIMAL_COMPILE=$minimal_compile\
 	  $1
 }
 
@@ -89,7 +89,7 @@ function cmake_cplx() {
 	-DALGLIB_DIR=$alglibDir -DLIBXC_DIR=$libxcDir \
 	-DSPGLIB_DIR=$spglibDir -DXML_LIB_DIR=$xmlLibDir \
 	-DXML_INCLUDE_DIR=$xmlIncludeDir -DWITH_INTEL_MKL=$withIntelMkl \
-	-DWITH_COMPLEX=ON -DWITH_TESTING=$testing \
+	-DWITH_COMPLEX=ON -DWITH_TESTING=$testing -DMINIMAL_COMPILE=$minimal_compile\
 	  $1
 }
 

@@ -245,7 +245,7 @@ template<unsigned int FEOrder,unsigned int FEOrderElectro>
             const unsigned int faceId=dirichletFaceIds[index];
 
             feFaceValues.reinit(d_cellIdToActiveCellIteratorMapDofHandlerRhoNodalElectro.find(subCellId)->second,faceId);
-            feFaceValues.get_function_values(d_isElectrostaticsMeshSubdivided?dftPtr->d_rhoNodalFieldRefined:dftPtr->d_rhoOutNodalValues,rhoFaceQuads);
+            feFaceValues.get_function_values(d_isElectrostaticsMeshSubdivided?dftPtr->d_rhoNodalFieldRefined:dftPtr->d_rhoOutNodalValuesDistributed,rhoFaceQuads);
             for (unsigned int qPoint=0; qPoint<numFaceQuadPoints; ++qPoint)
             {
               const Point<C_DIM> quadPoint=feFaceValues.quadrature_point(qPoint);

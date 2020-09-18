@@ -229,6 +229,7 @@ void dftClass<FEOrder,FEOrderElectro>::compute_rhoOut(
 				isConsiderSpectrumSplitting,
 				false);
 #endif
+    normalizeRhoOutQuadValues();
 
 		if (isGroundState && dftParameters::mixingMethod!="ANDERSON_WITH_KERKER")
 		{
@@ -238,13 +239,24 @@ void dftClass<FEOrder,FEOrderElectro>::compute_rhoOut(
 			computeRhoNodalFromPSI(isConsiderSpectrumSplitting);
 #endif
 			d_rhoOutNodalValues.update_ghost_values();
+
+      //normalize rho
+      const double charge = totalCharge(d_matrixFreeDataPRefined,
+          d_rhoOutNodalValues);
+
+
+      const double scalingFactor = ((double)numElectrons)/charge;
+
+      //scale nodal vector with scalingFactor
+      d_rhoOutNodalValues *= scalingFactor;      
 		}
 	}
 
   if (isGroundState)
   {
-    d_constraintsRhoNodal.distribute(d_rhoOutNodalValues);
-    d_rhoOutNodalValues.update_ghost_values();
+    d_rhoOutNodalValuesDistributed=d_rhoOutNodalValues;
+    d_constraintsRhoNodal.distribute(d_rhoOutNodalValuesDistributed);
+    d_rhoOutNodalValuesDistributed.update_ghost_values();
 		interpolateRhoNodalDataToQuadratureDataLpsp(d_matrixFreeDataPRefined,
         d_densityDofHandlerIndexElectro,
         d_lpspQuadratureIdElectro,
@@ -429,7 +441,7 @@ void dftClass<FEOrder,FEOrderElectro>::noRemeshRhoDataInit()
 		}
 
 		//scale quadrature values
-		normalizeRho();
+		normalizeRhoInQuadValues();
 	}
 }
 
