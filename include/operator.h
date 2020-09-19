@@ -148,6 +148,8 @@ namespace dftfe{
 			                const unsigned int numberWaveFunctions,
 			                const bool scaleFlag,
 			                const double scalar,
+                                        const double scalarA,
+                                        const double scalarB,
 			                distributedCPUVec<dataTypes::number> & dst,
 			                std::vector<dataTypes::number>  & cellDstWaveFunctionMatrix) = 0;
 

@@ -414,6 +414,8 @@ namespace dftfe{
 						  numberWaveFunctions,
 						  scaleFlag,
 						  scalar,
+                                                  scalar,
+                                                  scalar,
 						  YArray,
 						  cellYWaveFunctionMatrix);
 
@@ -503,35 +505,28 @@ namespace dftfe{
 					  }
 
 					//Do recursive iteration only for interior cell nodes using cell-level loop
-					
-					//scale a vector with a scalar
-					/*operatorMatrix.scale(alpha2,
-							     numberWaveFunctions,
-							     cellXWaveFunctionMatrix);
 
 					// X = a*Y + X
-					operatorMatrix.axpy(-c*alpha1,
-							    numberWaveFunctions,
-							    cellYWaveFunctionMatrix,
-							    cellXWaveFunctionMatrix);*/
-
-
-					operatorMatrix.axpby(-c*alpha1,
+					/*operatorMatrix.axpby(-c*alpha1,
 							     alpha2,
 							     numberWaveFunctions,
 							     cellYWaveFunctionMatrix,
-							     cellXWaveFunctionMatrix);
+							     cellXWaveFunctionMatrix);*/
 
 
 					//
 					//call HX
 					//
 					bool scaleFlag = true;
+                                        double scalarA = -c*alpha1;
+                                        double scalarB = alpha2;
 					operatorMatrix.HX(YArray,
 							  cellYWaveFunctionMatrix,
 							  numberWaveFunctions,
 							  scaleFlag,
 							  alpha1,
+                                                          scalarA,
+                                                          scalarB,
 							  XArray,
 							  cellXWaveFunctionMatrix);
 

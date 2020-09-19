@@ -224,7 +224,7 @@ void kohnShamDFTOperatorClass<FEOrder>::computeLocalHamiltonianTimesX(const dist
 			 &cellHamMatrixTimesWaveMatrix[0],
 			 &numberWaveFunctions);
 
-		  for(unsigned int iNode = 0; iNode < d_numberNodesPerElement; ++iNode)
+		 for(unsigned int iNode = 0; iNode < d_numberNodesPerElement; ++iNode)
 		    {
 			  
 		      dealii::types::global_dof_index localNodeId = d_flattenedArrayMacroCellLocalProcIndexIdMap[iElem][iNode];
@@ -240,7 +240,6 @@ void kohnShamDFTOperatorClass<FEOrder>::computeLocalHamiltonianTimesX(const dist
 			++iElem;
 		}//subcell loop
 	}//macrocell loop
-
 }
 
 template<unsigned int FEOrder>

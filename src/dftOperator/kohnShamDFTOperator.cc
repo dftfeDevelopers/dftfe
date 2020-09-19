@@ -895,6 +895,8 @@ namespace dftfe {
 							   const unsigned int numberWaveFunctions,
 							   const bool scaleFlag,
 							   const double scalar,
+                                                           const double scalarA,
+                                                           const double scalarB,
 							   distributedCPUVec<double> & dst,
 							   std::vector<double> & cellDstWaveFunctionMatrix)
 							   
@@ -942,13 +944,16 @@ namespace dftfe {
 							     }*/
 
 
-			
+		       	
 			computeHamiltonianTimesX(src,
 						 cellSrcWaveFunctionMatrix,
 						 numberWaveFunctions,
 						 dst,
 						 cellDstWaveFunctionMatrix,
-						 scalar);
+						 scalar,
+                                                 scalarA,
+                                                 scalarB,
+                                                 scaleFlag);
 
 
 			//

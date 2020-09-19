@@ -206,32 +206,42 @@ namespace dftfe{
                         productArray.reinit(eigenVectorsFlattenedArrayBlock);
                         productArray = 0.0;
 
-                        std::vector<std::vector<dataTypes::number> > productWaveFunctionMatrix;
-		        pcout<<"Vectors Block Size: "<<vectorsBlockSize<<std::endl;
-                        pcout<<"Total WaveFunctions: "<<totalNumberWaveFunctions<<std::endl;
+                        std::vector<dataTypes::number> productWaveFunctionMatrix;
+		        //pcout<<"Vectors Block Size: "<<vectorsBlockSize<<std::endl;
+                        //pcout<<"Total WaveFunctions: "<<totalNumberWaveFunctions<<std::endl;
                         for(unsigned int iNode = 0; iNode < localVectorSize; ++iNode)
                            for(unsigned int iWave = 0; iWave < vectorsBlockSize; ++iWave)
                                  eigenVectorsFlattenedArrayBlock.local_element(iNode*vectorsBlockSize+iWave)
                                                                 = eigenVectorsFlattened[iNode*totalNumberWaveFunctions+iWave];	
                        
                         
-                        pcout<<"Src Eigen-Vectors Norm before old HX: "<<eigenVectorsFlattenedArrayBlock.l2_norm()<<std::endl;
+                         pcout<<"Src Eigen-Vectors Norm before old HX: "<<eigenVectorsFlattenedArrayBlock.l2_norm()<<std::endl;
                         pcout<<"Product Eigen-Vectors Norm before old HX: "<<productArray.l2_norm()<<std::endl;
-                        
-
-                        operatorMatrix.HX(eigenVectorsFlattenedArrayBlock,
-                                          vectorsBlockSize,
-                                          false,
-                                          1.0,
-                                          productArray);
+                        MPI_Barrier(MPI_COMM_WORLD); 
+                        double oldHX_time = MPI_Wtime();
+                       //for (unsigned int jvec = 0; jvec < totalNumberWaveFunctions; jvec += vectorsBlockSize)
+                       //{
+                        for(unsigned int i = 0; i < 1; ++i)
+                          {
+                            operatorMatrix.HX(eigenVectorsFlattenedArrayBlock,
+                                              vectorsBlockSize,
+                                              false,
+                                              1.0,
+                                              productArray);
+                          }
+                        //}
+                        MPI_Barrier(MPI_COMM_WORLD);
+                        oldHX_time = MPI_Wtime() - oldHX_time;
+                        if (this_process==0 && dftParameters::verbosity>=2)
+                              std::cout<<"Time for old HX time: "<<oldHX_time<<std::endl;
 
                         pcout<<"Output Vectors Norm after old HX: "<<productArray.l2_norm()<<std::endl;
 
-                        double alpha2 = 25.0,alpha1=10.0;
-                        productArray.add(alpha2,eigenVectorsFlattenedArrayBlock);
-                        productArray *= alpha1;
+                        //double alpha2 = 25.0,alpha1=10.0;
+                       // productArray.add(alpha2,eigenVectorsFlattenedArrayBlock);
+                        //productArray *= alpha1;
 
-                        pcout<<"Output Vectors Norm after old HX and recursion: "<<productArray.l2_norm()<<std::endl; 
+                        //pcout<<"Output Vectors Norm after old HX and recursion: "<<productArray.l2_norm()<<std::endl; 
 
                         operatorMatrix.initCellWaveFunctionMatrix(vectorsBlockSize,
                                                                   eigenVectorsFlattenedArrayBlock,
@@ -243,23 +253,35 @@ namespace dftfe{
                         pcout<<"Product Eigen-Vectors Norm before new HX: "<<productArray.l2_norm()<<std::endl;
 
 
-                        std::vector<unsigned int> globalArrayClassificationMap;
-			operatorMatrix.getInteriorSurfaceNodesMapFromGlobalArray(globalArrayClassificationMap);
+                        //std::vector<unsigned int> globalArrayClassificationMap;
+			//operatorMatrix.getInteriorSurfaceNodesMapFromGlobalArray(globalArrayClassificationMap);
 
                         operatorMatrix.initWithScalar(vectorsBlockSize,
 						      0.0,
 						      productWaveFunctionMatrix);
 
-
-                        operatorMatrix.HX(eigenVectorsFlattenedArrayBlock,
+                 
+                        MPI_Barrier(MPI_COMM_WORLD);
+                        double newHX_time = MPI_Wtime();
+                       //for (unsigned int jvec = 0; jvec < totalNumberWaveFunctions; jvec += vectorsBlockSize)
+                       //{ 
+                        for(unsigned int i = 0; i < 1;++i)
+                          {
+                           operatorMatrix.HX(eigenVectorsFlattenedArrayBlock,
 	                                  cellWaveFunctionMatrix,
 			                  vectorsBlockSize,
 			                  false,
 			                  1.0,
 			                  productArray,
 		                          productWaveFunctionMatrix);
+                          }
+                        //}
+                        MPI_Barrier(MPI_COMM_WORLD);
+                        newHX_time = MPI_Wtime() - newHX_time;
+                        if (this_process==0 && dftParameters::verbosity>=2)
+                            std::cout<<"Time for new HX time: "<<newHX_time<<std::endl;
 
-                        const unsigned int numberDofs = eigenVectorsFlattenedArrayBlock.local_size()/vectorsBlockSize;
+                        //const unsigned int numberDofs = eigenVectorsFlattenedArrayBlock.local_size()/vectorsBlockSize;
 				
 		        for(unsigned int iDof = 0; iDof < numberDofs; ++iDof)
 		         {
@@ -273,16 +295,6 @@ namespace dftfe{
 		             }
 		        }
 
-  
-                        operatorMatrix.axpy(alpha2,
-				            vectorsBlockSize,
-					    cellWaveFunctionMatrix,
-				            productWaveFunctionMatrix);
-
-
-                        operatorMatrix.scale(alpha1,
-				             vectorsBlockSize,
-				             productWaveFunctionMatrix); 
 
                         operatorMatrix.fillGlobalArrayFromCellWaveFunctionMatrix(vectorsBlockSize,
 								                 productWaveFunctionMatrix,
@@ -341,52 +353,52 @@ namespace dftfe{
 						const double chebyshevOrd=(double)chebyshevOrder;
 						const double adaptiveOrder=0.5*chebyshevOrd
 							+jvec*0.3*chebyshevOrd/dftParameters::numAdaptiveFilterStates;
-						linearAlgebraOperations::chebyshevFilter(operatorMatrix,
+						/*linearAlgebraOperations::chebyshevFilter(operatorMatrix,
 								                         eigenVectorsFlattenedArrayBlock,
 								                         BVec,
 								                         std::ceil(adaptiveOrder),
 								                         d_lowerBoundUnWantedSpectrum,
 								                         upperBoundUnwantedSpectrum,
-								                         d_lowerBoundWantedSpectrum);
-						/*linearAlgebraOperations::chebyshevFilterOpt(operatorMatrix,
+								                         d_lowerBoundWantedSpectrum);*/
+						linearAlgebraOperations::chebyshevFilterOpt(operatorMatrix,
 											    eigenVectorsFlattenedArrayBlock,
 											    cellWaveFunctionMatrix,
 											    BVec,
 											    std::ceil(adaptiveOrder),
 											    d_lowerBoundUnWantedSpectrum,
 											    upperBoundUnwantedSpectrum,
-											    d_lowerBoundWantedSpectrum);*/
+											    d_lowerBoundWantedSpectrum);
 
 						//copy back cell wavefunction data interior nodes also into global dealii vectors
 						
 					}
 					else
 					  {
-					    linearAlgebraOperations::chebyshevFilter(operatorMatrix,
+					   /*linearAlgebraOperations::chebyshevFilter(operatorMatrix,
 					                                             eigenVectorsFlattenedArrayBlock,
 					                                             BVec,
 					                                             chebyshevOrder,
 					                                             d_lowerBoundUnWantedSpectrum,
 					                                             upperBoundUnwantedSpectrum,
-					                                             d_lowerBoundWantedSpectrum);
+					                                             d_lowerBoundWantedSpectrum);*/
 					    
-					    /*linearAlgebraOperations::chebyshevFilterOpt(operatorMatrix,
+					 linearAlgebraOperations::chebyshevFilterOpt(operatorMatrix,
 											eigenVectorsFlattenedArrayBlock,
 											cellWaveFunctionMatrix,
 											BVec,
 											chebyshevOrder,
 											d_lowerBoundUnWantedSpectrum,
 											upperBoundUnwantedSpectrum,
-											d_lowerBoundWantedSpectrum);*/
+											d_lowerBoundWantedSpectrum);
 					  }
 					  
 					computing_timer.exit_section("Chebyshev filtering opt");
 
 
 					computing_timer.enter_section("Copy from cellwavefunction array to global array");
-					/*operatorMatrix.fillGlobalArrayFromCellWaveFunctionMatrix(BVec,
+					operatorMatrix.fillGlobalArrayFromCellWaveFunctionMatrix(BVec,
 												 cellWaveFunctionMatrix,
-												 eigenVectorsFlattenedArrayBlock);*/
+												 eigenVectorsFlattenedArrayBlock);
 												 
 
 					computing_timer.exit_section("Copy from cellwavefunction array to global array");

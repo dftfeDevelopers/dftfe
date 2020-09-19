@@ -24,8 +24,8 @@ withIntelMkl=ON
 #Compiler options and flags
 c_compiler=mpicc
 cxx_compiler=mpicxx
-c_flagsRelease="-O3 -fPIC -fopenmp"
-cxx_flagsRelease="-O3 -fPIC -fopenmp"
+c_flagsRelease="-O3 -fPIC -fopenmp -xCORE-AVX512 -qopt-zmm-usage=high"
+cxx_flagsRelease="-O3 -fPIC -fopenmp -xCORE-AVX512 -qopt-zmm-usage=high"
 
 #Option to link to ELPA
 withELPA=OFF
