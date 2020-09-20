@@ -23,12 +23,13 @@
 namespace dftfe {
 
 	/**
-	 * @brief poisson solver problem class template. template parameter FEOrder
-	 * is the finite element polynomial order
+	 * @brief poisson solver problem class template. template parameter FEOrderElectro
+	 * is the finite element polynomial order. FEOrder template parameter is used in conjunction
+   * with FEOrderElectro to determine the order of the Gauss quadrature rule
 	 *
 	 * @author Shiva Rudraraju, Phani Motamarri, Sambit Das
 	 */
-	template<unsigned int FEOrder>
+	template<unsigned int FEOrder, unsigned int FEOrderElectro>
 		class poissonSolverProblem: public dealiiLinearSolverProblem {
 
 			public:
@@ -47,6 +48,8 @@ namespace dftfe {
 						distributedCPUVec<double> & x,
 						const dealii::ConstraintMatrix & constraintMatrix,
 						const unsigned int matrixFreeVectorComponent,
+            const unsigned int matrixFreeQuadratureComponentRhsDensity,
+            const unsigned int matrixFreeQuadratureComponentAX,            
 						const std::map<dealii::types::global_dof_index, double> & atoms,
 						const std::map<dealii::CellId,std::vector<double> > & smearedChargeValues,
             const unsigned int smearedChargeQuadratureId,
@@ -54,24 +57,12 @@ namespace dftfe {
 						const bool isComputeDiagonalA=true,
 						const bool isComputeMeanValueConstraints=false,
 						const bool smearedNuclearCharges=false,
-						const bool isPrecomputeShapeGradIntegral=false,
 						const bool isRhoValues=true,
             const bool isGradSmearedChargeRhs=false,
             const unsigned int smearedChargeGradientComponentId=0,
             const bool storeSmearedChargeRhs=false,
             const bool reuseSmearedChargeRhs=false);
 
-				/**
-				 * @brief reinitialize data structures for nuclear electrostatic potential solve
-				 *
-				 */
-				void reinit(const dealii::MatrixFree<3,double> & matrixFreeData,
-						distributedCPUVec<double> & x,
-						const dealii::ConstraintMatrix & constraintMatrix,
-						const unsigned int matrixFreeVectorComponent,
-						const std::map<dealii::types::global_dof_index, double> & atoms,
-						const bool isComputeDiagonalA=true,
-						const bool isPrecomputeShapeGradIntegral=false);
 
 				/**
 				 * @brief get the reference to x field
@@ -162,12 +153,6 @@ namespace dftfe {
 				 */
 				void meanValueConstraintSetZero(distributedCPUVec<double>& vec) const;
 
-				/**
-				 * @brief precompute shape function gradient integral.
-				 *
-				 */
-				void precomputeShapeFunctionGradientIntegral();
-
 
 				/// storage for diagonal of the A matrix
 				distributedCPUVec<double> d_diagonalA;
@@ -188,6 +173,12 @@ namespace dftfe {
 				/// problem
 				unsigned int d_matrixFreeVectorComponent;
 
+				/// matrix free quadrature index
+				unsigned int d_matrixFreeQuadratureComponentRhsDensity;    
+
+				/// matrix free quadrature index
+				unsigned int d_matrixFreeQuadratureComponentAX;         
+
 				/// pointer to electron density cell quadrature data
 				const std::map<dealii::CellId,std::vector<double> >* d_rhoValuesPtr;
 
@@ -202,8 +193,6 @@ namespace dftfe {
 
 				/// shape function gradient integral storage
 				std::vector<double> d_cellShapeFunctionGradientIntegralFlattened;
-
-				bool d_isShapeGradIntegralPrecomputed;
 
 				/// storage for mean value constraint vector
 				distributedCPUVec<double> d_meanValueConstraintVec;

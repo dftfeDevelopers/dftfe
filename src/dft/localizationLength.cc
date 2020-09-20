@@ -18,8 +18,8 @@
 
 
 //compute localization lengths currently implemented for spin unpolarized case
-	template<unsigned int FEOrder>
-void dftClass<FEOrder>::compute_localizationLength(const std::string & locLengthFileName)
+	template<unsigned int FEOrder,unsigned int FEOrderElectro>
+void dftClass<FEOrder,FEOrderElectro>::compute_localizationLength(const std::string & locLengthFileName)
 {
 
 	QGauss<3>  quadrature_formula(C_num1DQuad<FEOrder>());

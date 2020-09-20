@@ -66,21 +66,22 @@ namespace internal
 }
 
 //
-	template<unsigned int FEOrder>
-dataTypes::number dftClass<FEOrder>::computeTraceXtHX(unsigned int numberWaveFunctionsEstimate)
+	template<unsigned int FEOrder,unsigned int FEOrderElectro>
+dataTypes::number dftClass<FEOrder,FEOrderElectro>::computeTraceXtHX(unsigned int numberWaveFunctionsEstimate)
 {
 	//
 	//set up poisson solver
 	//
 	dealiiLinearSolver dealiiCGSolver(mpi_communicator, dealiiLinearSolver::CG);
-	poissonSolverProblem<FEOrder> phiTotalSolverProblem(mpi_communicator);
+	poissonSolverProblem<FEOrder,FEOrderElectro> phiTotalSolverProblem(mpi_communicator);
 
 	//
 	//solve for vself and compute Tr(XtHX)
 	//
-	d_vselfBinsManager.solveVselfInBins(matrix_free_data,
-			2,
-			constraintsNone,
+	d_vselfBinsManager.solveVselfInBins(d_matrixFreeDataPRefined,
+		  d_binsStartDofHandlerIndexElectro,
+      d_phiTotAXQuadratureIdElectro,
+			d_constraintsPRefined,
 			d_imagePositionsTrunc,
 			d_imageIdsTrunc,
 			d_imageChargesTrunc,
@@ -88,52 +89,66 @@ dataTypes::number dftClass<FEOrder>::computeTraceXtHX(unsigned int numberWaveFun
 			d_bQuadValuesAllAtoms,
       d_bQuadAtomIdsAllAtomsImages,
       d_bQuadAtomIdsAllAtoms,
+      d_bCellNonTrivialAtomIds,
+      d_bCellNonTrivialAtomIdsBins,
 			d_smearedChargeWidths,
       d_smearedChargeScaling,
-      4);
+      d_smearedChargeQuadratureIdElectro);
 
 	//
 	//solve for potential corresponding to initial electron-density
 	//
-	phiTotalSolverProblem.reinit(matrix_free_data,
+	phiTotalSolverProblem.reinit(d_matrixFreeDataPRefined,
 			d_phiTotRhoIn,
-			*d_constraintsVector[phiTotDofHandlerIndex],
-			phiTotDofHandlerIndex,
+			*d_constraintsVectorElectro[d_phiTotDofHandlerIndexElectro],
+			d_phiTotDofHandlerIndexElectro,
+      d_phiTotAXQuadratureIdElectro,
+      d_densityQuadratureIdElectro,
 			d_atomNodeIdToChargeMap,
 			d_bQuadValuesAllAtoms,
-      4,
+      d_smearedChargeQuadratureIdElectro,
 			*rhoInValues,
 			true,
 			dftParameters::periodicX && dftParameters::periodicY && dftParameters::periodicZ && !dftParameters::pinnedNodeForPBC,
 			dftParameters::smearedNuclearCharges);
-
+      
+  std::map<dealii::CellId,std::vector<double> > phiInValues;
 
 	dealiiCGSolver.solve(phiTotalSolverProblem,
 			dftParameters::absLinearSolverTolerance,
 			dftParameters::maxLinearSolverIterations,
 			dftParameters::verbosity);
 
+  std::map<dealii::CellId,std::vector<double> > dummy;
+  interpolateRhoNodalDataToQuadratureDataGeneral(d_matrixFreeDataPRefined,
+      d_phiTotDofHandlerIndexElectro,
+      d_densityQuadratureIdElectro,
+      d_phiTotRhoIn,
+      phiInValues,
+      dummy,
+      dummy); 
+
 	//
 	//create kohnShamDFTOperatorClass object
 	//
-	kohnShamDFTOperatorClass<FEOrder> kohnShamDFTEigenOperator(this,mpi_communicator);
+	kohnShamDFTOperatorClass<FEOrder,FEOrderElectro> kohnShamDFTEigenOperator(this,mpi_communicator);
 	kohnShamDFTEigenOperator.init();
 
 	//
 	//precompute shapeFunctions and shapeFunctionGradients and shapeFunctionGradientIntegrals
 	//
-	kohnShamDFTEigenOperator.preComputeShapeFunctionGradientIntegrals(5);
+	kohnShamDFTEigenOperator.preComputeShapeFunctionGradientIntegrals(d_lpspQuadratureId);
 
 	//
 	//compute Veff
 	//
 	if(dftParameters::xc_id < 4)
 	{
-		kohnShamDFTEigenOperator.computeVEff(rhoInValues, d_phiTotRhoIn, d_pseudoVLoc,5);
+		kohnShamDFTEigenOperator.computeVEff(rhoInValues,phiInValues, d_pseudoVLoc,d_lpspQuadratureId);
 	}
 	else if (dftParameters::xc_id == 4)
 	{
-		kohnShamDFTEigenOperator.computeVEff(rhoInValues, gradRhoInValues, d_phiTotRhoIn, d_pseudoVLoc,5);
+		kohnShamDFTEigenOperator.computeVEff(rhoInValues, gradRhoInValues, phiInValues, d_pseudoVLoc,d_lpspQuadratureId);
 	}
 
 	//
@@ -178,20 +193,20 @@ dataTypes::number dftClass<FEOrder>::computeTraceXtHX(unsigned int numberWaveFun
 
 }
 
-	template<unsigned int FEOrder>
-double dftClass<FEOrder>::computeTraceXtKX(unsigned int numberWaveFunctionsEstimate)
+	template<unsigned int FEOrder,unsigned int FEOrderElectro>
+double dftClass<FEOrder,FEOrderElectro>::computeTraceXtKX(unsigned int numberWaveFunctionsEstimate)
 {
 
 	//
 	//create kohnShamDFTOperatorClass object
 	//
-	kohnShamDFTOperatorClass<FEOrder> kohnShamDFTEigenOperator(this,mpi_communicator);
+	kohnShamDFTOperatorClass<FEOrder,FEOrderElectro> kohnShamDFTEigenOperator(this,mpi_communicator);
 	kohnShamDFTEigenOperator.init();
 
 	//
 	//precompute shapeFunctions and shapeFunctionGradients and shapeFunctionGradientIntegrals
 	//
-	kohnShamDFTEigenOperator.preComputeShapeFunctionGradientIntegrals(5);
+	kohnShamDFTEigenOperator.preComputeShapeFunctionGradientIntegrals(d_lpspQuadratureId);
 
 
 	//
@@ -248,14 +263,14 @@ double dftClass<FEOrder>::computeTraceXtKX(unsigned int numberWaveFunctionsEstim
 }
 
 
-	template<unsigned int FEOrder>
-void dftClass<FEOrder>::solveNoSCF()
+	template<unsigned int FEOrder,unsigned int FEOrderElectro>
+void dftClass<FEOrder,FEOrderElectro>::solveNoSCF()
 {
 
 	//
 	//create kohnShamDFTOperatorClass object
 	//
-	kohnShamDFTOperatorClass<FEOrder> kohnShamDFTEigenOperator(this,mpi_communicator);
+	kohnShamDFTOperatorClass<FEOrder,FEOrderElectro> kohnShamDFTEigenOperator(this,mpi_communicator);
 	kohnShamDFTEigenOperator.init();
 
 	kohnShamDFTEigenOperator.processGridOptionalELPASetup(d_numEigenValues,
@@ -304,7 +319,7 @@ void dftClass<FEOrder>::solveNoSCF()
 		}
 	}
 
-	DensityCalculator<FEOrder> densityCalc;
+	DensityCalculator<FEOrder,FEOrderElectro> densityCalc;
 
 	densityCalc.computeRhoFromPSI(
 			d_eigenVectorsFlattenedSTL,
@@ -318,7 +333,7 @@ void dftClass<FEOrder>::solveNoSCF()
 			dofHandler,
 			constraintsNone,
 			matrix_free_data,
-			eigenDofHandlerIndex,
+			d_eigenDofHandlerIndex,
 			0,
 			localProc_dof_indicesReal,
 			localProc_dof_indicesImag,  
@@ -335,10 +350,10 @@ void dftClass<FEOrder>::solveNoSCF()
 }
 
 //chebyshev solver
-	template<unsigned int FEOrder>
-void dftClass<FEOrder>::kohnShamEigenSpaceCompute(const unsigned int spinType,
+	template<unsigned int FEOrder,unsigned int FEOrderElectro>
+void dftClass<FEOrder,FEOrderElectro>::kohnShamEigenSpaceCompute(const unsigned int spinType,
 		const unsigned int kPointIndex,
-		kohnShamDFTOperatorClass<FEOrder> & kohnShamDFTEigenOperator,
+		kohnShamDFTOperatorClass<FEOrder,FEOrderElectro> & kohnShamDFTEigenOperator,
 		elpaScalaManager & elpaScala,
 		chebyshevOrthogonalizedSubspaceIterationSolver & subspaceIterationSolver,
 		std::vector<double>                            & residualNormWaveFunctions,
@@ -457,10 +472,10 @@ void dftClass<FEOrder>::kohnShamEigenSpaceCompute(const unsigned int spinType,
 
 #ifdef DFTFE_WITH_GPU
 //chebyshev solver
-	template<unsigned int FEOrder>
-void dftClass<FEOrder>::kohnShamEigenSpaceCompute(const unsigned int spinType,
+	template<unsigned int FEOrder,unsigned int FEOrderElectro>
+void dftClass<FEOrder,FEOrderElectro>::kohnShamEigenSpaceCompute(const unsigned int spinType,
 		const unsigned int kPointIndex,
-		kohnShamDFTOperatorCUDAClass<FEOrder> & kohnShamDFTEigenOperator,
+		kohnShamDFTOperatorCUDAClass<FEOrder,FEOrderElectro> & kohnShamDFTEigenOperator,
 		elpaScalaManager & elpaScala,
 		chebyshevOrthogonalizedSubspaceIterationSolverCUDA & subspaceIterationSolverCUDA,
 		std::vector<double>                            & residualNormWaveFunctions,
@@ -737,10 +752,10 @@ void dftClass<FEOrder>::kohnShamEigenSpaceCompute(const unsigned int spinType,
 
 #ifdef DFTFE_WITH_GPU
 //chebyshev solver
-	template<unsigned int FEOrder>
-void dftClass<FEOrder>::kohnShamEigenSpaceOnlyRRCompute(const unsigned int spinType,
+	template<unsigned int FEOrder,unsigned int FEOrderElectro>
+void dftClass<FEOrder,FEOrderElectro>::kohnShamEigenSpaceOnlyRRCompute(const unsigned int spinType,
 		const unsigned int kPointIndex,
-		kohnShamDFTOperatorCUDAClass<FEOrder> & kohnShamDFTEigenOperator,
+		kohnShamDFTOperatorCUDAClass<FEOrder,FEOrderElectro> & kohnShamDFTEigenOperator,
 		elpaScalaManager & elpaScala,
 		chebyshevOrthogonalizedSubspaceIterationSolverCUDA & subspaceIterationSolverCUDA,
 		const bool isSpectrumSplit,
@@ -933,10 +948,10 @@ void dftClass<FEOrder>::kohnShamEigenSpaceOnlyRRCompute(const unsigned int spinT
 
 
 //chebyshev solver
-	template<unsigned int FEOrder>
-void dftClass<FEOrder>::kohnShamEigenSpaceComputeNSCF(const unsigned int spinType,
+	template<unsigned int FEOrder,unsigned int FEOrderElectro>
+void dftClass<FEOrder,FEOrderElectro>::kohnShamEigenSpaceComputeNSCF(const unsigned int spinType,
 		const unsigned int kPointIndex,
-		kohnShamDFTOperatorClass<FEOrder> & kohnShamDFTEigenOperator,
+		kohnShamDFTOperatorClass<FEOrder,FEOrderElectro> & kohnShamDFTEigenOperator,
 		chebyshevOrthogonalizedSubspaceIterationSolver & subspaceIterationSolver,
 		std::vector<double>                            & residualNormWaveFunctions,
 		unsigned int ipass)
@@ -1015,8 +1030,8 @@ void dftClass<FEOrder>::kohnShamEigenSpaceComputeNSCF(const unsigned int spinTyp
 
 
 //compute the maximum of the residual norm of the highest occupied state among all k points
-	template<unsigned int FEOrder>
-double dftClass<FEOrder>::computeMaximumHighestOccupiedStateResidualNorm(const std::vector<std::vector<double> > & residualNormWaveFunctionsAllkPoints,
+	template<unsigned int FEOrder,unsigned int FEOrderElectro>
+double dftClass<FEOrder,FEOrderElectro>::computeMaximumHighestOccupiedStateResidualNorm(const std::vector<std::vector<double> > & residualNormWaveFunctionsAllkPoints,
 		const std::vector<std::vector<double> > & eigenValuesAllkPoints,
 		const double fermiEnergy)
 {

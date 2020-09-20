@@ -20,8 +20,8 @@
 // When either skip1 or skip2 flags are set to true all communication calls are skipped as they are directly called in chebyshevFilter
 // Only one of the skip flags is set to true in a call. When skip1 is set to true extraction and C^{T}*X computation are skipped
 // and computations directly start from V*C^{T}*X. When skip2 is set to true only extraction and C^{T}*X computations are performed.
-	template<unsigned int FEOrder>
-void kohnShamDFTOperatorCUDAClass<FEOrder>::computeNonLocalHamiltonianTimesX(const double* src,
+	template<unsigned int FEOrder,unsigned int FEOrderElectro>
+void kohnShamDFTOperatorCUDAClass<FEOrder,FEOrderElectro>::computeNonLocalHamiltonianTimesX(const double* src,
 		distributedGPUVec<double> &  projectorKetTimesVector,
 		const unsigned int numberWaveFunctions,
 		double* dst,
@@ -183,8 +183,8 @@ void kohnShamDFTOperatorCUDAClass<FEOrder>::computeNonLocalHamiltonianTimesX(con
 }
 
 
-	template<unsigned int FEOrder>
-void kohnShamDFTOperatorCUDAClass<FEOrder>::computeNonLocalProjectorKetTimesXTimesV(const double* src,
+	template<unsigned int FEOrder,unsigned int FEOrderElectro>
+void kohnShamDFTOperatorCUDAClass<FEOrder,FEOrderElectro>::computeNonLocalProjectorKetTimesXTimesV(const double* src,
 		distributedGPUVec<double> &  projectorKetTimesVector,
 		const unsigned int numberWaveFunctions)
 {

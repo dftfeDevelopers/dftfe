@@ -37,6 +37,7 @@ namespace dftfe
 			 const double fermiEnergyUp,
 			 const double fermiEnergyDown,
 			 operatorDFTCUDAClass & operatorMatrix,
+       const unsigned int matrixFreeDofhandlerIndex,
 			 const dealii::DoFHandler<3> & dofHandler,
 			 const unsigned int totalLocallyOwnedCells,
 			 const unsigned int numberNodesPerElement,

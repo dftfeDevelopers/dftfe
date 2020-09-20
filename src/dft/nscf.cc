@@ -26,9 +26,9 @@
 
 using namespace dftParameters ;
 
-	template<unsigned int FEOrder>
-void dftClass<FEOrder>::initnscf(kohnShamDFTOperatorClass<FEOrder> & kohnShamDFTEigenOperator,
-		poissonSolverProblem<FEOrder> & phiTotalSolverProblem,
+	template<unsigned int FEOrder,unsigned int FEOrderElectro>
+void dftClass<FEOrder,FEOrderElectro>::initnscf(kohnShamDFTOperatorClass<FEOrder,FEOrderElectro> & kohnShamDFTEigenOperator,
+		poissonSolverProblem<FEOrder,FEOrderElectro> & phiTotalSolverProblem,
 		dealiiLinearSolver & dealiiCGSolver)
 {
 	//
@@ -92,39 +92,53 @@ void dftClass<FEOrder>::initnscf(kohnShamDFTOperatorClass<FEOrder> & kohnShamDFT
 	computing_timer.enter_section("nscf: phiTot solve");
 	//
 	std::map<dealii::CellId,std::vector<double> > dummy;
-	phiTotalSolverProblem.reinit(matrix_free_data,
+	phiTotalSolverProblem.reinit(d_matrixFreeDataPRefined,
 			d_phiTotRhoIn,
-			*d_constraintsVector[phiTotDofHandlerIndex],
-			phiTotDofHandlerIndex,
+			*d_constraintsVectorElectro[d_phiTotDofHandlerIndexElectro],
+			d_phiTotDofHandlerIndexElectro,
+      d_densityQuadratureIdElectro,
+      d_phiTotAXQuadratureIdElectro,
 			d_atomNodeIdToChargeMap,
 			dummy,
-      4,
+      d_smearedChargeQuadratureIdElectro,
 			*rhoInValues,
 			false);
+
+  std::map<dealii::CellId,std::vector<double> > phiInValues;
+
 	dealiiCGSolver.solve(phiTotalSolverProblem,
 			dftParameters::absLinearSolverTolerance,
 			dftParameters::maxLinearSolverIterations,
 			dftParameters::verbosity);
+
+  std::map<dealii::CellId,std::vector<double> > dummy2;
+  interpolateRhoNodalDataToQuadratureDataGeneral(d_matrixFreeDataPRefined,
+      d_phiTotDofHandlerIndexElectro,
+      d_densityQuadratureIdElectro,
+      d_phiTotRhoIn,
+      phiInValues,
+      dummy2,
+      dummy2); 
 
 	computing_timer.exit_section("nscf: phiTot solve");
 	//
 	if(dftParameters::xc_id < 4)
 	{
 		computing_timer.enter_section("nscf: VEff Computation");
-		kohnShamDFTEigenOperator.computeVEff(rhoInValues, d_phiTotRhoIn, d_pseudoVLoc,5);
+		kohnShamDFTEigenOperator.computeVEff(rhoInValues, phiInValues, d_pseudoVLoc,d_lpspQuadratureId);
 		computing_timer.exit_section("nscf: VEff Computation");
 	}
 	else if (dftParameters::xc_id == 4)
 	{
 		computing_timer.enter_section("nscf: VEff Computation");
-		kohnShamDFTEigenOperator.computeVEff(rhoInValues, gradRhoInValues, d_phiTotRhoIn, d_pseudoVLoc,5);
+		kohnShamDFTEigenOperator.computeVEff(rhoInValues, gradRhoInValues, phiInValues, d_pseudoVLoc,d_lpspQuadratureId);
 		computing_timer.exit_section("nscf: VEff Computation");
 	}
 
 }
 
-	template<unsigned int FEOrder>
-void dftClass<FEOrder>::nscf(kohnShamDFTOperatorClass<FEOrder> & kohnShamDFTEigenOperator,
+	template<unsigned int FEOrder,unsigned int FEOrderElectro>
+void dftClass<FEOrder,FEOrderElectro>::nscf(kohnShamDFTOperatorClass<FEOrder,FEOrderElectro> & kohnShamDFTEigenOperator,
 		chebyshevOrthogonalizedSubspaceIterationSolver & subspaceIterationSolver)
 {
 

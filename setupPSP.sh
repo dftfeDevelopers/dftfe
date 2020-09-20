@@ -4,9 +4,18 @@
 set -e
 set -o pipefail
 
+if [ -s CMakeLists.txt ]; then
+    echo "This script must be run from the build directory!"
+    exit 1
+fi
+
+# Path to project source
+SRC=`dirname $0` # location of source directory
+
 PROJ=/ccs/proj/eng110
 
 . $PROJ/setup-env.sh
+. $PROJ/venvs/summit/bin/activate # for building docs
 
 ########################################################################
 #Provide paths below for external libraries, compiler options and flags,
@@ -19,13 +28,11 @@ libxcDir="$PROJ/software/libxc/installGcc6.4.0"
 spglibDir="$PROJ/software/spglib/installGcc6.4.0"
 xmlIncludeDir="/usr/include/libxml2"
 xmlLibDir="/usr/lib64"
-elpaIncludeDir="$PROJ/software/elpaSMPI20200121/installElpa2020Gcc6.4.0CUDA10/include/elpa-2020.05.001.rc1"
-elpaLibDir="$PROJ/software/elpaSMPI20200121/installElpa2020Gcc6.4.0CUDA10/lib"
+#elpaIncludeDir="$PROJ/software/elpaSMPI20200121/installElpa2020Gcc6.4.0CUDA10/include/elpa-2020.05.001.rc1"
+#elpaLibDir="$PROJ/software/elpaSMPI20200121/installElpa2020Gcc6.4.0CUDA10/lib"
 #elpaIncludeDir="$PROJ/Rogers_Tests/elpaSMPI202005/include/elpa_openmp-2020.05.001.rc1"
 #elpaLibDir="$PROJ/Rogers_Tests/elpaSMPI202005/lib"
-
-# Path to project source (should be script run directory)
-SRC="$PWD"
+PREFIX_PATH="$PROJ/software/elpaSMPI20200121/installElpa2020Gcc6.4.0CUDA10"
 
 #If you have installed dealii by linking with intel mkl library set underlying flag to "ON",
 #otherwise set it to "OFF"
@@ -46,7 +53,7 @@ withELPA=ON
 # build type: "Release" or "Debug"
 build_type=Release
 testing=OFF
-
+minimal_compile=ON
 ###########################################################################
 #Usually, no changes are needed below this line
 #
@@ -56,7 +63,7 @@ testing=OFF
 #  cxx_flags="$c_flagsRelease"
 #else
 #fi
-out=`echo "build/$build_type" | tr '[:upper:]' '[:lower:]'`
+out=`echo "$build_type" | tr '[:upper:]' '[:lower:]'`
 
 function cmake_real() {
   mkdir -p real && cd real
@@ -67,10 +74,9 @@ function cmake_real() {
 	-DALGLIB_DIR=$alglibDir -DLIBXC_DIR=$libxcDir \
 	-DSPGLIB_DIR=$spglibDir -DXML_LIB_DIR=$xmlLibDir \
 	-DXML_INCLUDE_DIR=$xmlIncludeDir -DWITH_INTEL_MKL=$withIntelMkl \
-	-DWITH_ELPA=$withELPA -DELPA_LIB_DIR=$elpaLibDir \
-	-DELPA_INCLUDE_DIR=$elpaIncludeDir \
+	-DWITH_ELPA=$withELPA -DCMAKE_PREFIX_PATH="$PREFIX_PATH" \
 	-DWITH_COMPLEX=OFF -DWITH_GPU=$withGPU \
-	-DWITH_TESTING=$testing \
+	-DWITH_TESTING=$testing -DMINIMAL_COMPILE=$minimal_compile\
 	  $1
 }
 
@@ -83,28 +89,28 @@ function cmake_cplx() {
 	-DALGLIB_DIR=$alglibDir -DLIBXC_DIR=$libxcDir \
 	-DSPGLIB_DIR=$spglibDir -DXML_LIB_DIR=$xmlLibDir \
 	-DXML_INCLUDE_DIR=$xmlIncludeDir -DWITH_INTEL_MKL=$withIntelMkl \
-	-DWITH_COMPLEX=ON -DWITH_TESTING=$testing \
+	-DWITH_COMPLEX=ON -DWITH_TESTING=$testing -DMINIMAL_COMPILE=$minimal_compile\
 	  $1
 }
 
 RCol='\e[0m'
 Blu='\e[0;34m';
-if [ -d "$out" ]; then
+if [ -d "$out" ]; then # build directory exists
     echo -e "${Blu}$out directory already present${RCol}"
-    # Control will enter here if build directory exists.
 else
     rm -rf "$out"
     echo -e "${Blu}Creating $out ${RCol}"
     mkdir -p "$out"
 fi
 
-wd="$PWD"
-cd "$wd/$out"
-echo -e "${Blu}Building Real executable in $build_type mode...${RCol}"
-cmake_real "$SRC" && make -j4
+cd $out
 
-cd "$wd/$out"
+echo -e "${Blu}Building Real executable in $build_type mode...${RCol}"
+cmake_real "$SRC" && make -j8
+cd ..
+
 echo -e "${Blu}Building Complex executable in $build_type mode...${RCol}"
-cmake_cplx "$SRC" && make -j4
+cmake_cplx "$SRC" && make -j8
+cd ..
 
 echo -e "${Blu}Build complete.${RCol}"

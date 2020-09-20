@@ -1,4 +1,5 @@
 // ---------------------------------------------------------------------
+
 //
 // Copyright (c) 2017-2018 The Regents of the University of Michigan and DFT-FE authors.
 //
@@ -44,6 +45,8 @@ namespace dftfe
 				std::map<dealii::CellId, std::vector<double> > & bQuadValues,
         std::map<dealii::CellId, std::vector<int> >  & bQuadAtomIdsAllAtoms,
         std::map<dealii::CellId, std::vector<int> > & bQuadAtomIdsAllAtomsImages,
+        std::map<dealii::CellId, std::vector<unsigned int> > & bCellNonTrivialAtomIdsAllAtoms,
+        std::map<dealii::CellId, std::vector<unsigned int> > & bCellNonTrivialAtomIdsBin,         
         std::vector<double> & smearedChargeScaling)
 		{
 			dealii::FEValues<3> fe_values (dofHandlerOfField.get_fe(), quadrature_formula, dealii::update_quadrature_points|dealii::update_JxW_values);
@@ -57,18 +60,36 @@ namespace dftfe
 			const unsigned int numberTotalAtomsInBin=atomLocations.size();
 			std::vector<double> smearedNuclearChargeIntegral(numberTotalAtomsInBin,0.0); 
 
-      // FIXME: optimize loops by first finding maps of cell id and intersecting smeared charges. 
+			const double cutoff=10.0;
+      std::map<dealii::CellId, std::vector<unsigned int> > cellNonTrivialIdsBinMap;
+      for (; cell!=endc; ++cell) 
+				if (cell->is_locally_owned())
+				{
+            std::vector<unsigned int> & nonTrivialIdsBin=cellNonTrivialIdsBinMap[cell->id()];
+            const dealii::Point<3> & cellCenter=cell->center();
+						for (unsigned int iatom=0; iatom< numberTotalAtomsInBin; ++iatom)
+							if ((cellCenter-atomLocations[iatom]).norm()<cutoff)
+                nonTrivialIdsBin.push_back(iatom);
+				}
+
+
+      cell = dofHandlerOfField.begin_active();      
 			for (; cell!=endc; ++cell) 
 				if (cell->is_locally_owned())
 				{
 					fe_values.reinit (cell);
           bool isCellTrivial=true;
+          std::vector<unsigned int> & nonTrivialIdsBin=cellNonTrivialIdsBinMap[cell->id()];  
+          std::vector<unsigned int> & nonTrivialAtomIdsBin=bCellNonTrivialAtomIdsBin[cell->id()]; 
+          std::vector<unsigned int> & nonTrivialAtomIdsAllAtoms=bCellNonTrivialAtomIdsAllAtoms[cell->id()];  
+
 					for (unsigned int q = 0; q < n_q_points; ++q)
 					{
 						const dealii::Point<3> & quadPoint=fe_values.quadrature_point(q);
 						const double jxw=fe_values.JxW(q);
-						for (unsigned int iatom=0; iatom< numberTotalAtomsInBin; ++iatom)
+						for (unsigned int iatomNonTrivial=0; iatomNonTrivial< nonTrivialIdsBin.size(); ++iatomNonTrivial)
 						{
+              const unsigned int iatom=nonTrivialIdsBin[iatomNonTrivial];
 							const double r=(quadPoint-atomLocations[iatom]).norm();
 							const unsigned int atomId=iatom<numberDomainAtomsInBin?iatom:imageIdToDomainAtomIdMapCurrentBin[iatom-numberDomainAtomsInBin];
 							if (r>rc[binAtomIdToGlobalAtomIdMapCurrentBin[atomId]])
@@ -84,6 +105,19 @@ namespace dftfe
           {
             bQuadValues[cell->id()].resize(n_q_points,0.0);
             std::fill(bQuadValues[cell->id()].begin(),bQuadValues[cell->id()].end(),0.0);
+
+						for (unsigned int iatomNonTrivial=0; iatomNonTrivial< nonTrivialIdsBin.size(); ++iatomNonTrivial)
+            {
+              const unsigned int iatom=nonTrivialIdsBin[iatomNonTrivial];              
+							const unsigned int atomId=iatom<numberDomainAtomsInBin?iatom:imageIdToDomainAtomIdMapCurrentBin[iatom-numberDomainAtomsInBin]; 
+              const unsigned int chargeId=binAtomIdToGlobalAtomIdMapCurrentBin[atomId];
+              nonTrivialAtomIdsAllAtoms.push_back(chargeId);
+              nonTrivialAtomIdsBin.push_back(chargeId);
+            }
+          }
+          else
+          {
+            nonTrivialIdsBin.resize(0);
           }
 
 				}
@@ -100,11 +134,11 @@ namespace dftfe
         smearedChargeScaling[binAtomIdToGlobalAtomIdMapCurrentBin[iatom]]=1.0/smearedNuclearChargeIntegral[iatom];
       }
 
-      /*
-			if (dealii::Utilities::MPI::this_mpi_process(mpi_communicator) ==0)
-				for (unsigned int iatom=0; iatom< numberDomainAtomsInBin; ++iatom)
-					std::cout<<"Smeared charge integral before scaling (charge val=1): "<<smearedNuclearChargeIntegral[iatom]<<std::endl;       
-      */
+      
+			//if (dealii::Utilities::MPI::this_mpi_process(mpi_communicator) ==0)
+			//	for (unsigned int iatom=0; iatom< numberDomainAtomsInBin; ++iatom)
+			//		std::cout<<"Smeared charge integral before scaling (charge val=1): "<<smearedNuclearChargeIntegral[iatom]<<std::endl;       
+      
 
 			std::vector<double> smearedNuclearChargeIntegralCheck(numberTotalAtomsInBin,0.0); 
 			cell = dofHandlerOfField.begin_active();
@@ -115,12 +149,15 @@ namespace dftfe
 					std::vector<double> & bQuadValuesCell=bQuadValues[cell->id()];
           std::vector<int> & bQuadAtomIdsCell=bQuadAtomIdsAllAtoms[cell->id()];
           std::vector<int> & bQuadAtomImageIdsCell=bQuadAtomIdsAllAtomsImages[cell->id()];
+          const std::vector<unsigned int> & nonTrivialIdsBin=cellNonTrivialIdsBinMap[cell->id()];  
+
 					for (unsigned int q = 0; q < n_q_points; ++q)
 					{
 						const dealii::Point<3> & quadPoint=fe_values.quadrature_point(q);
 						const double jxw=fe_values.JxW(q);
-						for (unsigned int iatom=0; iatom< numberTotalAtomsInBin; ++iatom)
+						for (unsigned int iatomNonTrivial=0; iatomNonTrivial< nonTrivialIdsBin.size(); ++iatomNonTrivial)
 						{
+              const unsigned int iatom=nonTrivialIdsBin[iatomNonTrivial];              
 							const double r=(quadPoint-atomLocations[iatom]).norm();
 							const unsigned int atomId=iatom<numberDomainAtomsInBin?iatom:imageIdToDomainAtomIdMapCurrentBin[iatom-numberDomainAtomsInBin];
 							if (r>rc[binAtomIdToGlobalAtomIdMapCurrentBin[atomId]])
@@ -140,7 +177,7 @@ namespace dftfe
 
 				}
 
-      /*
+      /* 
 			MPI_Allreduce(MPI_IN_PLACE,
 					&smearedNuclearChargeIntegralCheck[0],
 					numberTotalAtomsInBin,
@@ -152,13 +189,15 @@ namespace dftfe
 				for (unsigned int iatom=0; iatom< numberDomainAtomsInBin; ++iatom)
 					std::cout<<"Smeared charge integral after scaling: "<<smearedNuclearChargeIntegralCheck[iatom]<<std::endl;
       */
+      
 		}
 	}
 
-	template<unsigned int FEOrder>
-		void vselfBinsManager<FEOrder>::solveVselfInBins
+	template<unsigned int FEOrder, unsigned int FEOrderElectro>
+		void vselfBinsManager<FEOrder,FEOrderElectro>::solveVselfInBins
 		(const dealii::MatrixFree<3,double> & matrix_free_data,
 		 const unsigned int offset,
+     const unsigned int matrixFreeQuadratureIdAX,
 		 const dealii::AffineConstraints<double> & hangingPeriodicConstraintMatrix,
 		 const std::vector<std::vector<double> > & imagePositions,
 		 const std::vector<int> & imageIds,
@@ -167,6 +206,8 @@ namespace dftfe
 		 std::map<dealii::CellId, std::vector<double> > & bQuadValuesAllAtoms,
      std::map<dealii::CellId, std::vector<int> > & bQuadAtomIdsAllAtoms,
      std::map<dealii::CellId, std::vector<int> > & bQuadAtomIdsAllAtomsImages,
+     std::map<dealii::CellId, std::vector<unsigned int> > & bCellNonTrivialAtomIds,
+     std::vector<std::map<dealii::CellId, std::vector<unsigned int> > > & bCellNonTrivialAtomIdsBins, 
 		 const std::vector<double> & smearingWidths,
      std::vector<double> & smearedChargeScaling,
      const unsigned int smearedChargeQuadratureId,
@@ -179,10 +220,16 @@ namespace dftfe
 			bQuadValuesAllAtoms.clear();
       bQuadAtomIdsAllAtoms.clear();
       bQuadAtomIdsAllAtomsImages.clear();
+      bCellNonTrivialAtomIds.clear();
+      bCellNonTrivialAtomIdsBins.clear();
+
+	    dealii::DoFHandler<3>::active_cell_iterator subCellPtr;
+
 			const unsigned int numberBins = d_boundaryFlagOnlyChargeId.size();
 			const unsigned int numberGlobalCharges = d_atomLocations.size();
 
       smearedChargeScaling.resize(numberGlobalCharges,0.0);
+      bCellNonTrivialAtomIdsBins.resize(numberBins);
 
 			const dealii::DoFHandler<3> & dofHandler=matrix_free_data.get_dof_handler(offset); 
 			const dealii::Quadrature<3> & quadratureFormula=matrix_free_data.get_quadrature();
@@ -207,7 +254,7 @@ namespace dftfe
 
 			//set up poisson solver
 			dealiiLinearSolver dealiiCGSolver(mpi_communicator,dealiiLinearSolver::CG);
-			poissonSolverProblem<FEOrder> vselfSolverProblem(mpi_communicator);
+			poissonSolverProblem<FEOrder,FEOrderElectro> vselfSolverProblem(mpi_communicator);
 
 			std::map<dealii::types::global_dof_index, dealii::Point<3> > supportPoints;
 			dealii::DoFTools::map_dofs_to_support_points(dealii::MappingQ1<3,3>(), matrix_free_data.get_dof_handler(offset), supportPoints);
@@ -286,6 +333,8 @@ namespace dftfe
 							bQuadValuesBin,
               bQuadAtomIdsAllAtoms,
               bQuadAtomIdsAllAtomsImages,
+              bCellNonTrivialAtomIds,
+              bCellNonTrivialAtomIdsBins[iBin],
               smearedChargeScaling);
 
 				const unsigned int constraintMatrixIdVself = 4*iBin + offset;
@@ -340,6 +389,8 @@ namespace dftfe
 							vselfBinScratch,
 							d_vselfBinConstraintMatrices[4*iBin],
 							constraintMatrixIdVself,
+              0,
+              matrixFreeQuadratureIdAX,
 							std::map<dealii::types::global_dof_index, double>(),
 							bQuadValuesBin,
               smearedChargeQuadratureId,
@@ -347,16 +398,22 @@ namespace dftfe
 							true,
 							false,
 							true,
-							false,
 							false);        
 				else
 					vselfSolverProblem.reinit(matrix_free_data,
 							vselfBinScratch,
 							d_vselfBinConstraintMatrices[4*iBin],
 							constraintMatrixIdVself,
+              0,
+              matrixFreeQuadratureIdAX,
 							d_atomsInBin[iBin],
+							bQuadValuesBin,
+              smearedChargeQuadratureId,
+							dummy,
 							true,
-							false);
+							false,
+							false,
+							false);            
 
 				MPI_Barrier(MPI_COMM_WORLD);
 				vselfinit_time = MPI_Wtime() - vselfinit_time;
@@ -380,6 +437,8 @@ namespace dftfe
                 vselfDerRBinScratch[idim] ,
                 d_vselfBinConstraintMatrices[4*iBin+idim+1],
                 constraintMatrixIdVselfDerR[idim],
+                0,
+                matrixFreeQuadratureIdAX,
                 std::map<dealii::types::global_dof_index, double>(),
                 bQuadValuesBin,
                 smearedChargeQuadratureId,
@@ -387,7 +446,6 @@ namespace dftfe
                 true,
                 false,
                 true,
-                false,
                 false,
                 true,
                 idim);        
@@ -413,8 +471,50 @@ namespace dftfe
 				  MPI_Barrier(MPI_COMM_WORLD);
 				  selfenergy_time = MPI_Wtime();
 
+          dealii::FEEvaluation<3,FEOrderElectro,C_num1DQuadSmearedCharge()*C_numCopies1DQuadSmearedCharge()> fe_eval_sc(matrix_free_data,
+                constraintMatrixIdVself,
+                smearedChargeQuadratureId);
+
 					double vselfTimesSmearedChargesIntegralBin=0.0;
-					const unsigned int vertices_per_cell=dealii::GeometryInfo<3>::vertices_per_cell;
+
+          const unsigned int numQuadPointsSmearedb=fe_eval_sc.n_q_points;          
+         	std::vector<dealii::VectorizedArray<double> > smearedbQuads(numQuadPointsSmearedb,dealii::make_vectorized_array(0.0));          
+          for (unsigned int macrocell = 0;macrocell < matrix_free_data.n_macro_cells();
+              ++macrocell)
+          {
+            std::fill(smearedbQuads.begin(),smearedbQuads.end(),dealii::make_vectorized_array(0.0));
+            bool isMacroCellTrivial=true;
+            const unsigned int numSubCells=matrix_free_data.n_components_filled(macrocell);
+            for (unsigned int iSubCell=0; iSubCell<numSubCells; ++iSubCell)
+            {
+              subCellPtr= matrix_free_data.get_cell_iterator(macrocell,iSubCell,constraintMatrixIdVself);
+              dealii::CellId subCellId=subCellPtr->id();
+              const std::vector<double>& tempVec=bQuadValuesBin.find(subCellId)->second;
+              if (tempVec.size()==0)
+                continue;
+
+              for (unsigned int q=0; q<numQuadPointsSmearedb; ++q)
+                smearedbQuads[q][iSubCell]=tempVec[q];                
+
+              isMacroCellTrivial=false;  
+            }
+
+            if (!isMacroCellTrivial)
+            {
+              fe_eval_sc.reinit(macrocell);
+              fe_eval_sc.read_dof_values_plain(vselfBinScratch);
+              fe_eval_sc.evaluate(true,false);              
+              for (unsigned int q=0; q<fe_eval_sc.n_q_points; ++q)
+              {
+                fe_eval_sc.submit_value(fe_eval_sc.get_value(q)*smearedbQuads[q], q);
+              }
+              dealii::VectorizedArray<double> val=fe_eval_sc.integrate_value();
+
+              for (unsigned int iSubCell=0; iSubCell<numSubCells; ++iSubCell)
+                vselfTimesSmearedChargesIntegralBin+=val[iSubCell];
+            }
+          }
+
 					cell = dofHandler.begin_active();
 					for (; cell!=endc; ++cell) 
 						if (cell->is_locally_owned())
@@ -428,19 +528,6 @@ namespace dftfe
 
 							for (unsigned int q = 0; q < n_q_points_sc; ++q)
 								bQuadValuesAllAtomsCell[q]+=bQuadValuesBinCell[q];
-
-              fe_values_sc.reinit (cell);
-
-              std::vector<double> tempVself(n_q_points_sc);
-              fe_values_sc.get_function_values(vselfBinScratch,tempVself);
-
-
-              double temp=0;
-              for (unsigned int q = 0; q < n_q_points_sc; ++q)
-              {
-                temp+=tempVself[q]*bQuadValuesBinCell[q]*fe_values_sc.JxW(q);
-              }
-              vselfTimesSmearedChargesIntegralBin+=temp;
 						}
 
 					localVselfs[0][0]+=vselfTimesSmearedChargesIntegralBin;
@@ -478,9 +565,11 @@ namespace dftfe
 		}
 
 #ifdef DFTFE_WITH_GPU
-	template<unsigned int FEOrder>
-		void vselfBinsManager<FEOrder>::solveVselfInBinsGPU
+	template<unsigned int FEOrder, unsigned int FEOrderElectro>
+		void vselfBinsManager<FEOrder,FEOrderElectro>::solveVselfInBinsGPU
 		(const dealii::MatrixFree<3,double> & matrix_free_data,
+     const unsigned int mfBaseDofHandlerIndex,
+     const unsigned int matrixFreeQuadratureIdAX,
 		 const unsigned int offset,
 		 operatorDFTCUDAClass & operatorMatrix,
 		 const dealii::AffineConstraints<double> & hangingPeriodicConstraintMatrix,
@@ -491,6 +580,8 @@ namespace dftfe
 		 std::map<dealii::CellId, std::vector<double> > & bQuadValuesAllAtoms,
      std::map<dealii::CellId, std::vector<int> > & bQuadAtomIdsAllAtoms,
      std::map<dealii::CellId, std::vector<int> > & bQuadAtomIdsAllAtomsImages,
+     std::map<dealii::CellId, std::vector<unsigned int> > & bCellNonTrivialAtomIds,
+     std::vector<std::map<dealii::CellId, std::vector<unsigned int> > > & bCellNonTrivialAtomIdsBins,      
 		 const std::vector<double> & smearingWidths,
      std::vector<double> & smearedChargeScaling,
      const unsigned int smearedChargeQuadratureId,
@@ -503,15 +594,18 @@ namespace dftfe
 			bQuadValuesAllAtoms.clear();
       bQuadAtomIdsAllAtoms.clear();
       bQuadAtomIdsAllAtomsImages.clear();
+      bCellNonTrivialAtomIds.clear();
+      bCellNonTrivialAtomIdsBins.clear();
+
 			const unsigned int numberBins = d_boundaryFlagOnlyChargeId.size();
 			const unsigned int numberGlobalCharges = d_atomLocations.size();
 
       smearedChargeScaling.resize(numberGlobalCharges,0.0);
+      bCellNonTrivialAtomIdsBins.resize(numberBins);
 
 			const dealii::DoFHandler<3> & dofHandler=matrix_free_data.get_dof_handler(offset); 
 			const dealii::Quadrature<3> & quadratureFormula=matrix_free_data.get_quadrature();
 
-			dealii::FEValues<3> fe_values_sc (dofHandler.get_fe(), matrix_free_data.get_quadrature(smearedChargeQuadratureId), dealii::update_values|dealii::update_gradients|dealii::update_JxW_values);
 			const unsigned int n_q_points_sc    =matrix_free_data.get_quadrature(smearedChargeQuadratureId).size();
 
 			dealii::DoFHandler<3>::active_cell_iterator cell = dofHandler.begin_active(), endc = dofHandler.end();
@@ -529,6 +623,7 @@ namespace dftfe
 				localVselfs[0][0]=0.0;           
 			}
 
+	    dealii::DoFHandler<3>::active_cell_iterator subCellPtr;
 
 			d_vselfFieldBins.resize(numberBins);
       d_vselfFieldDerRBins.resize(numberBins*3);      
@@ -624,6 +719,8 @@ namespace dftfe
 							bQuadValuesBins[iBin],
               bQuadAtomIdsAllAtoms,
               bQuadAtomIdsAllAtomsImages,
+              bCellNonTrivialAtomIds,
+              bCellNonTrivialAtomIdsBins[iBin],
               smearedChargeScaling);
 
 				MPI_Barrier(MPI_COMM_WORLD);
@@ -647,9 +744,14 @@ namespace dftfe
 
 				std::map<dealii::CellId,std::vector<double> > & bQuadValuesBin=bQuadValuesBins[iBin];
 
-				dealii::FEEvaluation<3,FEOrder,C_num1DQuad<FEOrder>()> fe_eval(matrix_free_data,
+				dealii::FEEvaluation<3,FEOrderElectro,FEOrderElectro+1> fe_eval(matrix_free_data,
 						constraintMatrixId,
-						0);
+						matrixFreeQuadratureIdAX);
+
+        dealii::FEEvaluation<3,FEOrderElectro,C_num1DQuadSmearedCharge()*C_numCopies1DQuadSmearedCharge()> fe_eval_sc(matrix_free_data,
+              constraintMatrixId,
+              smearedChargeQuadratureId);
+
 				dealii::VectorizedArray<double>  quarter = dealii::make_vectorized_array (1.0/(4.0*M_PI));
 				for (unsigned int macrocell = 0;macrocell < matrix_free_data.n_macro_cells();
 						++macrocell)
@@ -668,26 +770,39 @@ namespace dftfe
 				//rhs contribution from atomic charge at fem nodes
         if (useSmearedCharges)
         {
-          cell = dofHandler.begin_active();
-          for(; cell!=endc; ++cell)
-            if (cell->is_locally_owned())
+          const unsigned int numQuadPointsSmearedb=fe_eval_sc.n_q_points;          
+         	std::vector<dealii::VectorizedArray<double> > smearedbQuads(numQuadPointsSmearedb,dealii::make_vectorized_array(0.0));          
+          for (unsigned int macrocell = 0;macrocell < matrix_free_data.n_macro_cells();
+              ++macrocell)
+          {
+            std::fill(smearedbQuads.begin(),smearedbQuads.end(),dealii::make_vectorized_array(0.0));
+            bool isMacroCellTrivial=true;
+            const unsigned int numSubCells=matrix_free_data.n_components_filled(macrocell);
+            for (unsigned int iSubCell=0; iSubCell<numSubCells; ++iSubCell)
             {
-              const std::vector<double>& tempVec=bQuadValuesBin.find(cell->id())->second;
+              subCellPtr= matrix_free_data.get_cell_iterator(macrocell,iSubCell,constraintMatrixId);
+              dealii::CellId subCellId=subCellPtr->id();
+              const std::vector<double>& tempVec=bQuadValuesBin.find(subCellId)->second;
               if (tempVec.size()==0)
                 continue;
 
-              fe_values_sc.reinit (cell);
-              elementalRhs=0.0;
+              for (unsigned int q=0; q<numQuadPointsSmearedb; ++q)
+                smearedbQuads[q][iSubCell]=tempVec[q];                
 
+              isMacroCellTrivial=false;  
+            }
 
-              for (unsigned int i=0; i<dofs_per_cell; ++i)
-                for (unsigned int q_point=0; q_point<n_q_points_sc; ++q_point)
-                  elementalRhs(i) += fe_values_sc.shape_value(i, q_point)*tempVec[q_point]*fe_values_sc.JxW (q_point);
-
-              //assemble to global data structures
-              cell->get_dof_indices (local_dof_indices);
-              d_vselfBinConstraintMatrices[4*iBin].distribute_local_to_global(elementalRhs, local_dof_indices, rhs);
-            }            
+            if (!isMacroCellTrivial)
+            {
+              fe_eval_sc.reinit(macrocell);
+              for (unsigned int q=0; q<fe_eval_sc.n_q_points; ++q)
+              {
+                fe_eval_sc.submit_value(smearedbQuads[q], q);
+              }
+              fe_eval_sc.integrate(true, false);
+              fe_eval_sc.distribute_local_to_global(rhs);
+            }
+          }
         }
         else
           for (std::map<dealii::types::global_dof_index, double>::const_iterator it=d_atomsInBin[iBin].begin(); it!=d_atomsInBin[iBin].end(); ++it)
@@ -722,9 +837,13 @@ namespace dftfe
             d_vselfBinConstraintMatrices[4*iBin+idim+1].distribute(tempvec);
             tempvec.update_ghost_values();
 
-            dealii::FEEvaluation<3,FEOrder,C_num1DQuad<FEOrder>()> fe_eval2(matrix_free_data,
+            dealii::FEEvaluation<3,FEOrderElectro,FEOrderElectro+1> fe_eval2(matrix_free_data,
                 constraintMatrixId2,
-                0);
+                matrixFreeQuadratureIdAX);
+
+            dealii::FEEvaluation<3,FEOrderElectro,C_num1DQuadSmearedCharge()*C_numCopies1DQuadSmearedCharge()> fe_eval_sc2(matrix_free_data,
+                  constraintMatrixId2,
+                  smearedChargeQuadratureId);
 
             for (unsigned int macrocell = 0;macrocell < matrix_free_data.n_macro_cells();
                 ++macrocell)
@@ -740,27 +859,44 @@ namespace dftfe
               fe_eval2.distribute_local_to_global(rhs);
             }
 
-            cell = dofHandler.begin_active();
-            for(; cell!=endc; ++cell)
-              if (cell->is_locally_owned())
+            const unsigned int numQuadPointsSmearedb=fe_eval_sc2.n_q_points;      
+
+            dealii::Tensor<1,3,dealii::VectorizedArray<double> > zeroTensor;
+            for (unsigned int i=0; i<3; i++)
+              zeroTensor[i]=dealii::make_vectorized_array(0.0);
+
+            std::vector<dealii::Tensor<1,3,dealii::VectorizedArray<double> >  > smearedbQuads(numQuadPointsSmearedb,zeroTensor);          
+            for (unsigned int macrocell = 0;macrocell < matrix_free_data.n_macro_cells();
+                ++macrocell)
+            {
+              std::fill(smearedbQuads.begin(),smearedbQuads.end(),dealii::make_vectorized_array(0.0));
+              bool isMacroCellTrivial=true;
+              const unsigned int numSubCells=matrix_free_data.n_components_filled(macrocell);
+              for (unsigned int iSubCell=0; iSubCell<numSubCells; ++iSubCell)
               {
-                const std::vector<double>& tempVec=bQuadValuesBin.find(cell->id())->second;
+                subCellPtr= matrix_free_data.get_cell_iterator(macrocell,iSubCell,constraintMatrixId2);
+                dealii::CellId subCellId=subCellPtr->id();
+                const std::vector<double>& tempVec=bQuadValuesBin.find(subCellId)->second;
                 if (tempVec.size()==0)
                   continue;
 
-                fe_values_sc.reinit (cell);
-                elementalRhs=0.0;
+                for (unsigned int q=0; q<numQuadPointsSmearedb; ++q)
+                  smearedbQuads[q][idim][iSubCell]=tempVec[q];                
 
+                isMacroCellTrivial=false;  
+              }
 
-                for (unsigned int i=0; i<dofs_per_cell; ++i)
-                  for (unsigned int q_point=0; q_point<n_q_points_sc; ++q_point)
-                    elementalRhs(i) += fe_values_sc.shape_grad(i, q_point)[idim]*tempVec[q_point]*fe_values_sc.JxW (q_point);
-
-                //assemble to global data structures
-                cell->get_dof_indices (local_dof_indices);
-                d_vselfBinConstraintMatrices[4*iBin+idim+1].distribute_local_to_global(elementalRhs, local_dof_indices, rhs);
-              }            
-
+              if (!isMacroCellTrivial)
+              {
+                fe_eval_sc2.reinit(macrocell);
+                for (unsigned int q=0; q<fe_eval_sc2.n_q_points; ++q)
+                {
+                  fe_eval_sc2.submit_gradient(smearedbQuads[q], q);
+                }
+                fe_eval_sc2.integrate(false, true);
+                fe_eval_sc2.distribute_local_to_global(rhs);
+              }
+            }
 
             //MPI operation to sync data
             rhs.compress(dealii::VectorOperation::add);
@@ -777,7 +913,7 @@ namespace dftfe
 			// compute diagonal
 			//
 			distributedCPUVec<double> diagonalA;
-			matrix_free_data.initialize_dof_vector(diagonalA,0);
+			matrix_free_data.initialize_dof_vector(diagonalA,mfBaseDofHandlerIndex);
 			diagonalA=0;
 
 
@@ -811,12 +947,12 @@ namespace dftfe
 
 			diagonalA.compress(dealii::VectorOperation::insert);
 
-			const unsigned int ghostSize   = matrix_free_data.get_vector_partitioner()->n_ghost_indices();
+			const unsigned int ghostSize   = matrix_free_data.get_vector_partitioner(mfBaseDofHandlerIndex)->n_ghost_indices();
 
 			std::vector<double> inhomoIdsColoredVecFlattened((localSize+ghostSize)*numberPoissonSolves,1.0);
 			for (unsigned int i = 0; i <(localSize+ghostSize); ++i)
 			{
-				const dealii::types::global_dof_index globalNodeId=matrix_free_data.get_vector_partitioner()->local_to_global(i);
+				const dealii::types::global_dof_index globalNodeId=matrix_free_data.get_vector_partitioner(mfBaseDofHandlerIndex)->local_to_global(i);
 				for(unsigned int iBin = 0; iBin < numberBins; ++iBin)
 				{
 					if( d_vselfBinConstraintMatrices[4*iBin].is_inhomogeneously_constrained(globalNodeId)
@@ -832,7 +968,7 @@ namespace dftfe
         for (unsigned int idim=0; idim<3; idim++) 
           for (unsigned int i = 0; i <(localSize+ghostSize); ++i)
           {
-            const dealii::types::global_dof_index globalNodeId=matrix_free_data.get_vector_partitioner()->local_to_global(i);
+            const dealii::types::global_dof_index globalNodeId=matrix_free_data.get_vector_partitioner(mfBaseDofHandlerIndex)->local_to_global(i);
             for(unsigned int iBin = 0; iBin < numberBins; ++iBin)
             {
               if( d_vselfBinConstraintMatrices[4*iBin+idim+1].is_inhomogeneously_constrained(globalNodeId)
@@ -854,6 +990,7 @@ namespace dftfe
 			poissonCUDA::solveVselfInBins
 				(operatorMatrix,
 				 matrix_free_data,
+         mfBaseDofHandlerIndex,
 				 hangingPeriodicConstraintMatrix,
 				 &rhsFlattened[0],
 				 diagonalA.begin(),
@@ -925,11 +1062,53 @@ namespace dftfe
 				  MPI_Barrier(MPI_COMM_WORLD);
 				  selfenergy_time = MPI_Wtime();
 
+          dealii::FEEvaluation<3,FEOrderElectro,C_num1DQuadSmearedCharge()*C_numCopies1DQuadSmearedCharge()> fe_eval_sc(matrix_free_data,
+                constraintMatrixId,
+                smearedChargeQuadratureId);
 
 					std::map<dealii::CellId,std::vector<double> > & bQuadValuesBin=bQuadValuesBins[iBin];
 
 					double vselfTimesSmearedChargesIntegralBin=0.0;
-					const unsigned int vertices_per_cell=dealii::GeometryInfo<3>::vertices_per_cell;
+
+          const unsigned int numQuadPointsSmearedb=fe_eval_sc.n_q_points;          
+         	std::vector<dealii::VectorizedArray<double> > smearedbQuads(numQuadPointsSmearedb,dealii::make_vectorized_array(0.0));          
+          for (unsigned int macrocell = 0;macrocell < matrix_free_data.n_macro_cells();
+              ++macrocell)
+          {
+            std::fill(smearedbQuads.begin(),smearedbQuads.end(),dealii::make_vectorized_array(0.0));
+            bool isMacroCellTrivial=true;
+            const unsigned int numSubCells=matrix_free_data.n_components_filled(macrocell);
+            for (unsigned int iSubCell=0; iSubCell<numSubCells; ++iSubCell)
+            {
+              subCellPtr= matrix_free_data.get_cell_iterator(macrocell,iSubCell,constraintMatrixId);
+              dealii::CellId subCellId=subCellPtr->id();
+              const std::vector<double>& tempVec=bQuadValuesBin.find(subCellId)->second;
+              if (tempVec.size()==0)
+                continue;
+
+              for (unsigned int q=0; q<numQuadPointsSmearedb; ++q)
+                smearedbQuads[q][iSubCell]=tempVec[q];                
+
+              isMacroCellTrivial=false;  
+            }
+
+            if (!isMacroCellTrivial)
+            {
+              fe_eval_sc.reinit(macrocell);
+              fe_eval_sc.read_dof_values_plain(d_vselfFieldBins[iBin]);
+              fe_eval_sc.evaluate(true,false);              
+              for (unsigned int q=0; q<fe_eval_sc.n_q_points; ++q)
+              {
+                fe_eval_sc.submit_value(fe_eval_sc.get_value(q)*smearedbQuads[q], q);
+              }
+              dealii::VectorizedArray<double> val=fe_eval_sc.integrate_value();
+
+              for (unsigned int iSubCell=0; iSubCell<numSubCells; ++iSubCell)
+                vselfTimesSmearedChargesIntegralBin+=val[iSubCell];
+            }
+          }
+
+          
 					cell = dofHandler.begin_active();
 					for (; cell!=endc; ++cell) 
 						if (cell->is_locally_owned())
@@ -943,20 +1122,8 @@ namespace dftfe
 
 							for (unsigned int q = 0; q < n_q_points_sc; ++q)
 								bQuadValuesAllAtomsCell[q]+=bQuadValuesBinCell[q];
-
-              fe_values_sc.reinit (cell);
-
-              std::vector<double> tempVself(n_q_points_sc);
-              fe_values_sc.get_function_values(d_vselfFieldBins[iBin],tempVself);
-
-
-              double temp=0;
-              for (unsigned int q = 0; q < n_q_points_sc; ++q)
-              {
-                temp+=tempVself[q]*bQuadValuesBinCell[q]*fe_values_sc.JxW(q);
-              }
-              vselfTimesSmearedChargesIntegralBin+=temp;
 						}
+            
 
 					localVselfs[0][0]+=vselfTimesSmearedChargesIntegralBin;
 

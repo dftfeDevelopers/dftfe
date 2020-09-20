@@ -16,8 +16,8 @@
 // @author Sambit Das (2018)
 //
 
-	template<unsigned int FEOrder>
-void forceClass<FEOrder>::computeElementalNonLocalPseudoOVDataForce()
+	template<unsigned int FEOrder,unsigned int FEOrderElectro>
+void forceClass<FEOrder, FEOrderElectro>::computeElementalNonLocalPseudoOVDataForce()
 {
 	//
 	//get the number of non-local atoms
@@ -33,7 +33,7 @@ void forceClass<FEOrder>::computeElementalNonLocalPseudoOVDataForce()
 	//
 	//get FE data structures
 	//
-  QIterated<3> quadrature(QGauss<1>(C_num1DQuad<FEOrder>()),1);
+  QIterated<3> quadrature(QGauss<1>(C_num1DQuad<C_rhoNodalPolyOrder<FEOrder,FEOrderElectro>()>()),1);
   QIterated<3> quadratureHigh(QGauss<1>(C_num1DQuadNLPSP<FEOrder>()),C_numCopies1DQuadNLPSP());
 	FEValues<3> fe_values(dftPtr->FE, dftParameters::useHigherQuadNLP?quadratureHigh:quadrature, update_quadrature_points);
 	const unsigned int numberNodesPerElement  = dftPtr->FE.dofs_per_cell;

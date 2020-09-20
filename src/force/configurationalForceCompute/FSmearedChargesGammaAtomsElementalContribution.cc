@@ -17,13 +17,14 @@
 //
 
 //(locally used function) compute FPhiTotSmearedCharges contibution due to Gamma(Rj) for given set of cells
-template<unsigned int FEOrder>
-	void forceClass<FEOrder>::FPhiTotSmearedChargesGammaAtomsElementalContribution
+template<unsigned int FEOrder,unsigned int FEOrderElectro>
+	void forceClass<FEOrder,FEOrderElectro>::FPhiTotSmearedChargesGammaAtomsElementalContribution
 (std::map<unsigned int, std::vector<double> > & forceContributionSmearedChargesGammaAtoms,
- FEEvaluation<3,1,C_num1DQuadSmearedCharge<FEOrder>()*C_numCopies1DQuadSmearedCharge(),3>  & forceEval,
+ FEEvaluation<3,1,C_num1DQuadSmearedCharge()*C_numCopies1DQuadSmearedCharge(),3>  & forceEval,
  const MatrixFree<3,double> & matrixFreeData,
  const unsigned int cell,
  const std::vector<Tensor<1,3,VectorizedArray<double> > > & gradPhiTotQuads,
+ const std::vector<unsigned int> & nonTrivialAtomIdsMacroCell,
  const std::map<dealii::CellId, std::vector<int> > & bQuadAtomIdsAllAtoms,
  const std::vector<VectorizedArray<double> > & smearedbQuads)
 {
@@ -35,9 +36,10 @@ template<unsigned int FEOrder>
 	const unsigned int numQuadPoints=forceEval.n_q_points;
 	DoFHandler<3>::active_cell_iterator subCellPtr;
 
-  //FIXME: only loop over non-trivial atoms
-	for (int iAtom=0;iAtom <numberGlobalAtoms; iAtom++)
+
+	for (int iAtomNonTrivial=0;iAtomNonTrivial <nonTrivialAtomIdsMacroCell.size(); iAtomNonTrivial++)
 	{
+    const int iAtom=nonTrivialAtomIdsMacroCell[iAtomNonTrivial];
     std::vector<VectorizedArray<double>> smearedbQuadsiAtom(numQuadPoints,make_vectorized_array(0.0));
 
 		for (unsigned int iSubCell=0; iSubCell<numSubCells; ++iSubCell)
@@ -71,15 +73,15 @@ template<unsigned int FEOrder>
 }
 
 //(locally used function) compute FVselfSmearedCharges contibution due to Gamma(Rj) for given set of cells
-template<unsigned int FEOrder>
-	void forceClass<FEOrder>::FVselfSmearedChargesGammaAtomsElementalContribution
+template<unsigned int FEOrder,unsigned int FEOrderElectro>
+	void forceClass<FEOrder,FEOrderElectro>::FVselfSmearedChargesGammaAtomsElementalContribution
 (std::map<unsigned int, std::vector<double> > & forceContributionSmearedChargesGammaAtoms,
- FEEvaluation<3,1,C_num1DQuadSmearedCharge<FEOrder>()*C_numCopies1DQuadSmearedCharge(),3>  & forceEval,
+ FEEvaluation<3,1,C_num1DQuadSmearedCharge()*C_numCopies1DQuadSmearedCharge(),3>  & forceEval,
  const MatrixFree<3,double> & matrixFreeData,
  const unsigned int cell,
  const std::vector<Tensor<1,3,VectorizedArray<double> > > & gradVselfBinQuads,
- const std::set<int> & atomIdsInBin,
- const std::map<dealii::CellId, std::vector<int> > & bQuadAtomIdsAllAtoms,
+ const std::vector<unsigned int> & nonTrivialAtomIdsMacroCell,
+ const std::map<dealii::CellId, std::vector<int> > & bQuadAtomIdsAllAtoms, 
  const std::vector<VectorizedArray<double> > & smearedbQuads)
 {
 	Tensor<1,3,VectorizedArray<double> > zeroTensor1;
@@ -89,12 +91,10 @@ template<unsigned int FEOrder>
 	const unsigned int numQuadPoints=forceEval.n_q_points;
 	DoFHandler<3>::active_cell_iterator subCellPtr;
 
-  std::vector<int> atomsInCurrentBin(atomIdsInBin.begin(),atomIdsInBin.end());
 
-  //FIXME: only loop over non-trivial atoms
-	for (int iAtom=0;iAtom <atomsInCurrentBin.size(); iAtom++)
+	for (int iAtomNonTrivial=0;iAtomNonTrivial <nonTrivialAtomIdsMacroCell.size(); iAtomNonTrivial++)
 	{
-    const int atomId=atomsInCurrentBin[iAtom];
+    const int atomId=nonTrivialAtomIdsMacroCell[iAtomNonTrivial];
 
     std::vector<VectorizedArray<double> > smearedbQuadsiAtom(numQuadPoints,make_vectorized_array(0.0));
 

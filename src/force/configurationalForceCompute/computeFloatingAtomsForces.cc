@@ -17,8 +17,8 @@
 //
 
 
-	template<unsigned int FEOrder>
-void forceClass<FEOrder>::computeFloatingAtomsForces()
+	template<unsigned int FEOrder,unsigned int FEOrderElectro>
+void forceClass<FEOrder,FEOrderElectro>::computeFloatingAtomsForces()
 {
 	unsigned int vertices_per_cell=GeometryInfo<3>::vertices_per_cell;
 	const std::vector<std::vector<double> > & atomLocations=dftPtr->atomLocations;

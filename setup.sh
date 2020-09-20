@@ -1,7 +1,17 @@
 #!/bin/bash
+# script to setup and build DFT-FE.
+
 set -e
 set -o pipefail
-#script to setup and build DFT-FE
+
+if [ -s CMakeLists.txt ]; then
+    echo "This script must be run from the build directory!"
+    exit 1
+fi
+
+# Path to project source
+SRC=`dirname $0` # location of source directory
+
 
 ########################################################################
 #Provide paths below for external libraries, compiler options and flags,
@@ -31,53 +41,67 @@ cxx_flagsRelease="-O3 -fPIC -fopenmp -xCORE-AVX512 -qopt-zmm-usage=high"
 withELPA=OFF
 
 #Optmization flag: 1 for optimized mode and 0 for debug mode compilation
-optimizedMode=1
+build_type=Release
 
 testing=ON
+minimal_compile=ON
 ###########################################################################
 #Usually, no changes are needed below this line
 #
+
+#if [[ x"$build_type" == x"Release" ]]; then
+#  c_flags="$c_flagsRelease"
+#  cxx_flags="$c_flagsRelease"
+#else
+#fi
+out=`echo "$build_type" | tr '[:upper:]' '[:lower:]'`
+
+function cmake_real() {
+  mkdir -p real && cd real
+  cmake -DCMAKE_C_COMPILER=$c_compiler -DCMAKE_CXX_COMPILER=$cxx_compiler \
+	-DCMAKE_CXX_FLAGS_RELEASE="$cxx_flagsRelease" \
+	-DCMAKE_C_FLAGS_RELEASE="$c_flagsRelease" \
+	-DCMAKE_BUILD_TYPE=$build_type -DDEAL_II_DIR=$dealiiPetscRealDir \
+	-DALGLIB_DIR=$alglibDir -DLIBXC_DIR=$libxcDir \
+	-DSPGLIB_DIR=$spglibDir -DXML_LIB_DIR=$xmlLibDir \
+	-DXML_INCLUDE_DIR=$xmlIncludeDir -DWITH_INTEL_MKL=$withIntelMkl \
+	-DWITH_ELPA=$withELPA -DCMAKE_PREFIX_PATH="$PREFIX_PATH" \
+	-DWITH_COMPLEX=OFF -DWITH_GPU=$withGPU \
+	-DWITH_TESTING=$testing -DMINIMAL_COMPILE=$minimal_compile\
+	  $1
+}
+
+function cmake_cplx() {
+  mkdir -p complex && cd complex
+  cmake -DCMAKE_C_COMPILER=$c_compiler -DCMAKE_CXX_COMPILER=$cxx_compiler \
+	-DCMAKE_CXX_FLAGS_RELEASE="$cxx_flagsRelease" \
+	-DCMAKE_C_FLAGS_RELEASE="$c_flagsRelease" \
+	-DCMAKE_BUILD_TYPE=$build_type -DDEAL_II_DIR=$dealiiPetscComplexDir \
+	-DALGLIB_DIR=$alglibDir -DLIBXC_DIR=$libxcDir \
+	-DSPGLIB_DIR=$spglibDir -DXML_LIB_DIR=$xmlLibDir \
+	-DXML_INCLUDE_DIR=$xmlIncludeDir -DWITH_INTEL_MKL=$withIntelMkl \
+	-DWITH_COMPLEX=ON -DWITH_TESTING=$testing -DMINIMAL_COMPILE=$minimal_compile\
+	  $1
+}
+
 RCol='\e[0m'
 Blu='\e[0;34m';
-if [ $optimizedMode == 1 ]; then
-  if [ -d "build/release" ]; then
-    echo -e "${Blu}build/release directory already present${RCol}"
-    # Control will enter here if build directory exists.
-    cd build
-    cd release
-    echo -e "${Blu}Building Real executable in Optimized (Release) mode...${RCol}"
-    mkdir -p real && cd real && cmake -DCMAKE_C_COMPILER=$c_compiler -DCMAKE_CXX_COMPILER=$cxx_compiler -DCMAKE_CXX_FLAGS_RELEASE="$cxx_flagsRelease" -DCMAKE_C_FLAGS_RELEASE="$c_flagsRelease" -DCMAKE_BUILD_TYPE=Release -DDEAL_II_DIR=$dealiiPetscRealDir -DALGLIB_DIR=$alglibDir -DLIBXC_DIR=$libxcDir -DSPGLIB_DIR=$spglibDir -DXML_LIB_DIR=$xmlLibDir -DXML_INCLUDE_DIR=$xmlIncludeDir -DWITH_INTEL_MKL=$withIntelMkl -DWITH_ELPA=$withELPA -DELPA_LIB_DIR=$elpaLibDir -DELPA_INCLUDE_DIR=$elpaIncludeDir -DWITH_COMPLEX=OFF -DWITH_TESTING=$testing ../../../. && make -j 2 && cd ..
-    echo -e "${Blu}Building Complex executable in Optimized (Release) mode...${RCol}"
-    mkdir -p complex && cd complex && cmake -DCMAKE_C_COMPILER=$c_compiler -DCMAKE_CXX_COMPILER=$cxx_compiler -DCMAKE_CXX_FLAGS_RELEASE="$cxx_flagsRelease" -DCMAKE_C_FLAGS_RELEASE="$c_flagsRelease" -DCMAKE_BUILD_TYPE=Release -DDEAL_II_DIR=$dealiiPetscComplexDir -DALGLIB_DIR=$alglibDir -DLIBXC_DIR=$libxcDir -DSPGLIB_DIR=$spglibDir -DXML_LIB_DIR=$xmlLibDir -DXML_INCLUDE_DIR=$xmlIncludeDir -DWITH_INTEL_MKL=$withIntelMkl -DWITH_COMPLEX=ON -DWITH_TESTING=$testing ../../../. && make -j 2 && cd ../..
-  else
-    rm -rf build/release
-    echo -e "${Blu}Creating build directory...${RCol}"
-    mkdir -p build && cd build
-    mkdir -p release && cd release
-    echo -e "${Blu}Building Real executable in Optimized (Release) mode...${RCol}"
-    mkdir -p real && cd real && cmake -DCMAKE_C_COMPILER=$c_compiler -DCMAKE_CXX_COMPILER=$cxx_compiler -DCMAKE_CXX_FLAGS_RELEASE="$cxx_flagsRelease" -DCMAKE_C_FLAGS_RELEASE="$c_flagsRelease" -DCMAKE_BUILD_TYPE=Release -DDEAL_II_DIR=$dealiiPetscRealDir -DALGLIB_DIR=$alglibDir -DLIBXC_DIR=$libxcDir -DSPGLIB_DIR=$spglibDir -DXML_LIB_DIR=$xmlLibDir -DXML_INCLUDE_DIR=$xmlIncludeDir -DWITH_INTEL_MKL=$withIntelMkl -DWITH_ELPA=$withELPA -DELPA_LIB_DIR=$elpaLibDir -DELPA_INCLUDE_DIR=$elpaIncludeDir -DWITH_COMPLEX=OFF -DWITH_TESTING=$testing ../../../. && make -j 2 && cd ..
-    echo -e "${Blu}Building Complex executable in Optimized (Release) mode...${RCol}"
-    mkdir -p complex && cd complex && cmake -DCMAKE_C_COMPILER=$c_compiler -DCMAKE_CXX_COMPILER=$cxx_compiler -DCMAKE_CXX_FLAGS_RELEASE="$cxx_flagsRelease" -DCMAKE_BUILD_TYPE=Release -DDEAL_II_DIR=$dealiiPetscComplexDir -DALGLIB_DIR=$alglibDir -DLIBXC_DIR=$libxcDir -DSPGLIB_DIR=$spglibDir -DXML_LIB_DIR=$xmlLibDir -DXML_INCLUDE_DIR=$xmlIncludeDir -DWITH_INTEL_MKL=$withIntelMkl -DWITH_COMPLEX=ON -DWITH_TESTING=$testing ../../../. && make -j 2 && cd ../..
-  fi
+if [ -d "$out" ]; then # build directory exists
+    echo -e "${Blu}$out directory already present${RCol}"
 else
-  if [ -d "build/debug" ]; then
-    echo -e "${Blu}build/debug directory already present${RCol}"
-    # Control will enter here if build directory exists.
-    cd build
-    cd debug
-    echo -e "${Blu}Building Real executable in Debug mode...${RCol}"
-    mkdir -p real && cd real && cmake -DCMAKE_C_COMPILER=$c_compiler -DCMAKE_CXX_COMPILER=$cxx_compiler -DCMAKE_BUILD_TYPE=Debug -DDEAL_II_DIR=$dealiiPetscRealDir -DALGLIB_DIR=$alglibDir -DLIBXC_DIR=$libxcDir -DSPGLIB_DIR=$spglibDir -DXML_LIB_DIR=$xmlLibDir -DXML_INCLUDE_DIR=$xmlIncludeDir -DWITH_INTEL_MKL=$withIntelMkl -DWITH_ELPA=$withELPA -DELPA_LIB_DIR=$elpaLibDir -DELPA_INCLUDE_DIR=$elpaIncludeDir -DWITH_COMPLEX=OFF -DWITH_TESTING=$testing ../../../. && make -j 2 && cd ..
-    echo -e "${Blu}Building Complex executable in Debug mode...${RCol}"
-    mkdir -p complex && cd complex && cmake -DCMAKE_C_COMPILER=$c_compiler -DCMAKE_CXX_COMPILER=$cxx_compiler -DCMAKE_BUILD_TYPE=Debug -DDEAL_II_DIR=$dealiiPetscComplexDir -DALGLIB_DIR=$alglibDir -DLIBXC_DIR=$libxcDir -DSPGLIB_DIR=$spglibDir -DXML_LIB_DIR=$xmlLibDir -DXML_INCLUDE_DIR=$xmlIncludeDir -DWITH_INTEL_MKL=$withIntelMkl -DWITH_COMPLEX=ON -DWITH_TESTING=$testing ../../../. && make -j 2 && cd ../..
-  else
-    rm -rf build/debug
-    echo -e "${Blu}Creating build directory...${RCol}"
-    mkdir -p build && cd build
-    mkdir -p debug && cd debug
-    echo -e "${Blu}Building Real executable in Debug mode...${RCol}"
-    mkdir -p real && cd real && cmake -DCMAKE_C_COMPILER=$c_compiler -DCMAKE_CXX_COMPILER=$cxx_compiler -DCMAKE_BUILD_TYPE=Debug -DDEAL_II_DIR=$dealiiPetscRealDir -DALGLIB_DIR=$alglibDir -DLIBXC_DIR=$libxcDir -DSPGLIB_DIR=$spglibDir -DXML_LIB_DIR=$xmlLibDir -DXML_INCLUDE_DIR=$xmlIncludeDir -DWITH_INTEL_MKL=$withIntelMkl -DWITH_ELPA=$withELPA -DELPA_LIB_DIR=$elpaLibDir -DELPA_INCLUDE_DIR=$elpaIncludeDir -DWITH_COMPLEX=OFF -DWITH_TESTING=$testing ../../../. && make -j 2 && cd ..
-    echo -e "${Blu}Building Complex executable in Debug mode...${RCol}"
-    mkdir -p complex && cd complex && cmake -DCMAKE_C_COMPILER=$c_compiler -DCMAKE_CXX_COMPILER=$cxx_compiler -DCMAKE_BUILD_TYPE=Debug -DDEAL_II_DIR=$dealiiPetscComplexDir -DALGLIB_DIR=$alglibDir -DLIBXC_DIR=$libxcDir -DSPGLIB_DIR=$spglibDir -DXML_LIB_DIR=$xmlLibDir -DXML_INCLUDE_DIR=$xmlIncludeDir -DWITH_INTEL_MKL=$withIntelMkl -DWITH_COMPLEX=ON -DWITH_TESTING=$testing ../../../. && make -j 2 && cd ../..
-  fi
+    rm -rf "$out"
+    echo -e "${Blu}Creating $out ${RCol}"
+    mkdir -p "$out"
 fi
+
+cd $out
+
+echo -e "${Blu}Building Real executable in $build_type mode...${RCol}"
+cmake_real "$SRC" && make -j4
+cd ..
+
+echo -e "${Blu}Building Complex executable in $build_type mode...${RCol}"
+cmake_cplx "$SRC" && make -j4
+cd ..
+
 echo -e "${Blu}Build complete.${RCol}"

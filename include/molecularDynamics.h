@@ -21,18 +21,18 @@
 namespace dftfe {
 
 	using namespace dealii;
-	template <unsigned int FEOrder> class dftClass;
+	template <unsigned int FEOrder, unsigned int FEOrderElectro> class dftClass;
 
 	/** @file molecularDynamics.h
 	 *
 	 *  @author Sambit Das
 	 */
-	template <unsigned int FEOrder>
+	template <unsigned int FEOrder, unsigned int FEOrderElectro>
 		class molecularDynamics
 		{
 			public:
 
-				molecularDynamics(dftClass<FEOrder>* _dftPtr,const  MPI_Comm &mpi_comm_replica);
+				molecularDynamics(dftClass<FEOrder,FEOrderElectro>* _dftPtr,const  MPI_Comm &mpi_comm_replica);
 
 
 				void run();
@@ -43,7 +43,7 @@ namespace dftfe {
 			private:
 
 				/// pointer to dft class
-				dftClass<FEOrder>* dftPtr;
+				dftClass<FEOrder,FEOrderElectro>* dftPtr;
 
 				/// parallel communication objects
 				const MPI_Comm mpi_communicator;

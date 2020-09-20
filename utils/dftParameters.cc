@@ -27,7 +27,7 @@ namespace dftfe {
 	namespace dftParameters
 	{
 
-		unsigned int finiteElementPolynomialOrder=1,n_refinement_steps=1,numberEigenValues=1,xc_id=1, spinPolarized=0, nkx=1,nky=1,nkz=1, offsetFlagX=0,offsetFlagY=0,offsetFlagZ=0;
+		unsigned int finiteElementPolynomialOrder=1, finiteElementPolynomialOrderElectrostatics=1, n_refinement_steps=1,numberEigenValues=1,xc_id=1, spinPolarized=0, nkx=1,nky=1,nkz=1, offsetFlagX=0,offsetFlagY=0,offsetFlagZ=0;
 		unsigned int chebyshevOrder=1,numPass=1, numSCFIterations=1,maxLinearSolverIterations=1, mixingHistory=1, npool=1,maxLinearSolverIterationsHelmholtz=1;
 
 		double radiusAtomBall=0.0, mixingParameter=0.5;
@@ -60,7 +60,6 @@ namespace dftfe {
 		bool restartMdFromChk=false;
 		bool reproducible_output=false;
 		bool electrostaticsHRefinement = false;
-		bool electrostaticsPRefinement = false;
 		bool meshAdaption = false;
 		bool pinnedNodeForPBC = true;
 	        bool cellLevelMassMatrixScaling = false;
@@ -152,9 +151,6 @@ namespace dftfe {
 					Patterns::Bool(),
 					"[Advanced] Compute electrostatic energy and forces on a h refined mesh after each ground-state solve. Default: false.");
 
-			prm.declare_entry("P REFINED ELECTROSTATICS", "false",
-					Patterns::Bool(),
-					"[Advanced] Compute electrostatic energy on a p refined mesh after each ground-state solve. Default: false.");
 
 			prm.declare_entry("VERBOSITY", "1",
 					Patterns::Integer(0,5),
@@ -378,7 +374,11 @@ namespace dftfe {
 
 				prm.declare_entry("POLYNOMIAL ORDER", "4",
 						Patterns::Integer(1,12),
-						"[Standard] The degree of the finite-element interpolating polynomial. Default value is 4. POLYNOMIAL ORDER= 4 or 5 is usually a good choice for most pseudopotential as well as all-electron problems.");
+						"[Standard] The degree of the finite-element interpolating polynomial in the Kohn-Sham Hamitonian except the electrostatics. Default value is 4. POLYNOMIAL ORDER= 4 or 5 is usually a good choice for most pseudopotential as well as all-electron problems.");
+
+				prm.declare_entry("POLYNOMIAL ORDER ELECTROSTATICS", "0",
+						Patterns::Integer(0,24),
+						"[Standard] The degree of the finite-element interpolating polynomial for the electrostatics part of the Kohn-Sham Hamiltonian. Default value is set to POLYNOMIAL ORDER if POLYNOMIAL ORDER ELECTROSTATICS set to a non-zero value.");        
 
 				prm.declare_entry("MESH FILE", "",
 						Patterns::Anything(),
@@ -855,7 +855,6 @@ namespace dftfe {
 			dftParameters::verbosity                     = prm.get_integer("VERBOSITY");
 			dftParameters::reproducible_output           = prm.get_bool("REPRODUCIBLE OUTPUT");
 			dftParameters::electrostaticsHRefinement = prm.get_bool("H REFINED ELECTROSTATICS");
-			dftParameters::electrostaticsPRefinement = prm.get_bool("P REFINED ELECTROSTATICS");
 
 			prm.enter_subsection ("GPU");
 			{ 
@@ -939,6 +938,7 @@ namespace dftfe {
 			prm.enter_subsection ("Finite element mesh parameters");
 			{
 				dftParameters::finiteElementPolynomialOrder  = prm.get_integer("POLYNOMIAL ORDER");
+				dftParameters::finiteElementPolynomialOrderElectrostatics  = prm.get_integer("POLYNOMIAL ORDER ELECTROSTATICS")==0?prm.get_integer("POLYNOMIAL ORDER"):prm.get_integer("POLYNOMIAL ORDER ELECTROSTATICS");        
 				dftParameters::meshFileName                  = prm.get("MESH FILE");
 				dftParameters::cellLevelMassMatrixScaling    = prm.get_bool("CELL LEVEL MASS MATRIX SCALING");
 				prm.enter_subsection ("Auto mesh generation parameters");

@@ -41,12 +41,12 @@
 using namespace dealii;
 
 // The central DFT-FE run invocation:
-template <int n>
+template <int n1, int n2>
 void run_problem(const MPI_Comm &mpi_comm_replica,
 		const MPI_Comm &interpoolcomm,
 		const MPI_Comm &interBandGroupComm,
 		const unsigned int &numberEigenValues) {
-	dftfe::dftClass<n> problemFE(mpi_comm_replica, interpoolcomm, interBandGroupComm);
+	dftfe::dftClass<n1,n2> problemFE(mpi_comm_replica, interpoolcomm, interBandGroupComm);
 	problemFE.d_numEigenValues = numberEigenValues;
 	problemFE.set();
 	problemFE.init();
@@ -64,19 +64,65 @@ typedef void (*run_fn)(const MPI_Comm &mpi_comm_replica,
 		const MPI_Comm &interBandGroupComm,
 		const unsigned int &numberEigenValues);
 
-static run_fn order_list[] = {
-	run_problem<1>,
-	run_problem<2>,
-	run_problem<3>,
-	run_problem<4>,
-	run_problem<5>,
-	run_problem<6>,
-	run_problem<7>,
-	run_problem<8>,
-	run_problem<9>,
-	run_problem<10>,
-	run_problem<11>,
-	run_problem<12> };
+static run_fn order_list[] = 
+{
+#ifdef DFTFE_MINIMAL_COMPILE
+	run_problem<4,4>,
+	run_problem<5,5>,
+	run_problem<6,6>,
+	run_problem<6,7>,
+	run_problem<6,8>,
+	run_problem<6,9>,
+	run_problem<6,10>,
+	run_problem<6,11>,
+	run_problem<6,12>,  
+#else  
+	run_problem<1,1>,
+	run_problem<1,2>,
+	run_problem<2,2>,
+	run_problem<2,3>,
+	run_problem<2,4>,  
+	run_problem<3,3>,
+	run_problem<3,4>,
+	run_problem<3,5>,
+	run_problem<3,6>,  
+	run_problem<4,4>,
+	run_problem<4,5>,
+	run_problem<4,6>,
+	run_problem<4,7>,
+	run_problem<4,8>,  
+	run_problem<5,5>,
+	run_problem<5,6>,
+	run_problem<5,7>,
+	run_problem<5,8>,
+	run_problem<5,9>, 
+	run_problem<5,10>,  
+	run_problem<6,6>,
+	run_problem<6,7>,
+	run_problem<6,8>,
+	run_problem<6,9>,
+	run_problem<6,10>,
+	run_problem<6,11>,
+	run_problem<6,12>,  
+	run_problem<7,7>,
+	run_problem<7,8>,
+	run_problem<7,9>,
+	run_problem<7,10>,
+	run_problem<7,11>,
+	run_problem<7,12>,
+	run_problem<7,13>,
+	run_problem<7,14>,  
+	run_problem<8,8>,
+	run_problem<8,9>,
+	run_problem<8,10>,
+	run_problem<8,11>,
+	run_problem<8,12>,
+	run_problem<8,13>,
+	run_problem<8,14>,
+	run_problem<8,15>,
+	run_problem<8,16>
+#endif  
+};
 
 int main (int argc, char *argv[])
 {
@@ -132,12 +178,62 @@ int main (int argc, char *argv[])
 	std::cout << std::scientific << std::setprecision(18);
 
 	int order = dftfe::dftParameters::finiteElementPolynomialOrder;
-	if(order < 1 || order-1 >= sizeof(order_list)/sizeof(order_list[0])) {
+	int orderElectro = dftfe::dftParameters::finiteElementPolynomialOrderElectrostatics; 
+
+#ifdef DFTFE_MINIMAL_COMPILE
+	if(order < 4 || order > 6) {
 		std::cout << "Invalid DFT-FE order " << order << std::endl;
 		return -1;
 	}
 
-	run_fn run = order_list[order - 1];
+  if (order>5)
+  {
+    if(orderElectro < order || orderElectro > order*2) 
+    {
+      std::cout << "Invalid DFT-FE order electrostatics " << orderElectro << std::endl;
+      return -1;
+    }
+  }
+  else
+  {
+    if(orderElectro !=order) 
+    {
+      std::cout << "Invalid DFT-FE order electrostatics " << orderElectro << std::endl;
+      return -1;
+    }
+  }
+
+  int listIndex=0;
+  for (int i=4; i<=order; i++)
+  {
+    int maxElectroOrder=(i<order)?2*i:orderElectro;
+    if (i<6)
+      maxElectroOrder=i;
+    for (int j=i;j<=maxElectroOrder;j++)
+        listIndex++;
+  }
+#else
+	if(order < 1 || order > 8) {
+		std::cout << "Invalid DFT-FE order " << order << std::endl;
+		return -1;
+	}
+
+	if(orderElectro < order || orderElectro > order*2) {
+		std::cout << "Invalid DFT-FE order electrostatics " << orderElectro << std::endl;
+		return -1;
+	}
+
+
+  int listIndex=0;
+  for (int i=1; i<=order; i++)
+  {
+    int maxElectroOrder=(i<order)?2*i:orderElectro;
+    for (int j=i;j<=maxElectroOrder;j++)
+        listIndex++;
+  }
+#endif
+
+	run_fn run = order_list[listIndex - 1];
 	run(bandGroupsPool.get_intrapool_comm(),
 			kPointPool.get_interpool_comm(),
 			bandGroupsPool.get_interpool_comm(),

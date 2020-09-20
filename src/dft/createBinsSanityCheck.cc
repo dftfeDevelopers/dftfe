@@ -18,8 +18,8 @@
 
 namespace dftfe{
 
-	template<unsigned int FEOrder>
-		void vselfBinsManager<FEOrder>::createAtomBinsSanityCheck(const dealii::DoFHandler<3> & dofHandler,
+	template<unsigned int FEOrder,unsigned int FEOrderElectro>
+		void vselfBinsManager<FEOrder,FEOrderElectro>::createAtomBinsSanityCheck(const dealii::DoFHandler<3> & dofHandler,
 				const dealii::ConstraintMatrix & onlyHangingNodeConstraints)
 		{
 			const unsigned int faces_per_cell=dealii::GeometryInfo<3>::faces_per_cell;

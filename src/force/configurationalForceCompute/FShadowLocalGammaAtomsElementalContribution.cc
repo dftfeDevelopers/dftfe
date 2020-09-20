@@ -17,10 +17,10 @@
 //
 
 //(locally used function) compute FShadowLocal contibution due to Gamma(Rj) for given set of cells
-template<unsigned int FEOrder>
-	void forceClass<FEOrder>::FShadowLocalGammaAtomsElementalContribution
+template<unsigned int FEOrder,unsigned int FEOrderElectro>
+	void forceClass<FEOrder,FEOrderElectro>::FShadowLocalGammaAtomsElementalContribution
 (std::map<unsigned int, std::vector<double> > & forceContributionLocalGammaAtoms,
- FEEvaluation<C_DIM,1,C_num1DQuad<FEOrder>(),C_DIM>  & forceEval,
+ FEEvaluation<C_DIM,1,C_num1DQuad<C_rhoNodalPolyOrder<FEOrder,FEOrderElectro>()>(),C_DIM>  & forceEval,
  const MatrixFree<3,double> & matrixFreeData,
  const unsigned int cell,
  const std::map<unsigned int,std::map<dealii::CellId, std::vector<double> > > & gradRhoAtomsQuads,

@@ -16,8 +16,8 @@
 // @author Sambit Das
 //
 
-template<unsigned int FEOrder>
-	void forceClass<FEOrder>::accumulateForceContributionGammaAtomsFloating
+template<unsigned int FEOrder,unsigned int FEOrderElectro>
+	void forceClass<FEOrder,FEOrderElectro>::accumulateForceContributionGammaAtomsFloating
 (const std::map<unsigned int,std::vector<double> > & forceContributionLocalGammaAtoms,
  std::vector<double> & accumForcesVector)
 {

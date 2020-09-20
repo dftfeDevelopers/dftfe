@@ -39,11 +39,11 @@ namespace dftfe {
 	//
 	//constructor
 	//
-	template<unsigned int FEOrder>
-		kohnShamDFTOperatorClass<FEOrder>::kohnShamDFTOperatorClass(dftClass<FEOrder>* _dftPtr,const MPI_Comm &mpi_comm_replica):
+	template<unsigned int FEOrder,unsigned int FEOrderElectro>
+		kohnShamDFTOperatorClass<FEOrder,FEOrderElectro>::kohnShamDFTOperatorClass(dftClass<FEOrder,FEOrderElectro>* _dftPtr,const MPI_Comm &mpi_comm_replica):
 			dftPtr(_dftPtr),
 			d_kPointIndex(0),
-			d_numberNodesPerElement(_dftPtr->matrix_free_data.get_dofs_per_cell()),
+			d_numberNodesPerElement(_dftPtr->matrix_free_data.get_dofs_per_cell(dftPtr->d_densityDofHandlerIndex)),
 			d_numberMacroCells(_dftPtr->matrix_free_data.n_macro_cells()),
       d_isStiffnessMatrixExternalPotCorrComputed(false),
 			mpi_communicator (mpi_comm_replica),
@@ -62,8 +62,8 @@ namespace dftfe {
 	//
 	//initialize kohnShamDFTOperatorClass object
 	//
-	template<unsigned int FEOrder>
-		void kohnShamDFTOperatorClass<FEOrder>::init()
+	template<unsigned int FEOrder,unsigned int FEOrderElectro>
+		void kohnShamDFTOperatorClass<FEOrder,FEOrderElectro>::init()
 		{
 			computing_timer.enter_section("kohnShamDFTOperatorClass setup");
 
@@ -103,9 +103,11 @@ namespace dftfe {
                      
 
                         vectorTools::classifyInteriorSurfaceNodesInCell(dftPtr->matrix_free_data,
+                                                                        dftPtr->d_densityDofHandlerIndex,
                                                                         d_nodesPerCellClassificationMap);
 
 			vectorTools::classifyInteriorSurfaceNodesInGlobalArray(dftPtr->matrix_free_data,
+                                                                               dftPtr->d_densityDofHandlerIndex,
 									       dftPtr->constraintsNone,
 									       d_nodesPerCellClassificationMap,
 									       d_globalArrayClassificationMap);
@@ -113,8 +115,8 @@ namespace dftfe {
                         computing_timer.exit_section("kohnShamDFTOperatorClass setup");
 		}
 
-	template<unsigned int FEOrder>
-		void kohnShamDFTOperatorClass<FEOrder>::reinit(const unsigned int numberWaveFunctions,
+	template<unsigned int FEOrder,unsigned int FEOrderElectro>
+		void kohnShamDFTOperatorClass<FEOrder,FEOrderElectro>::reinit(const unsigned int numberWaveFunctions,
 				distributedCPUVec<dataTypes::number> & flattenedArray,
 				bool flag)
 		{
@@ -137,6 +139,7 @@ namespace dftfe {
 
 			vectorTools::computeCellLocalIndexSetMap(flattenedArray.get_partitioner(),
 								 dftPtr->matrix_free_data,
+                                                                 dftPtr->d_densityDofHandlerIndex,
 								 numberWaveFunctions,
 								 d_flattenedArrayMacroCellLocalProcIndexIdMap,
 								 d_flattenedArrayCellLocalProcIndexIdMap);
@@ -145,13 +148,13 @@ namespace dftfe {
 
 			vectorTools::computeCellLocalIndexSetMap(flattenedArray.get_partitioner(),
 								 dftPtr->matrix_free_data,
+                                                                 dftPtr->d_densityDofHandlerIndex, 
 								 numberWaveFunctions,
 								 d_FullflattenedArrayMacroCellLocalProcIndexIdMap,
                                                                  d_normalCellIdToMacroCellIdMap,
                                                                  d_macroCellIdToNormalCellIdMap,
 								 d_FullflattenedArrayCellLocalProcIndexIdMap);
 			
-
 			getOverloadedConstraintMatrix()->precomputeMaps(dftPtr->matrix_free_data.get_vector_partitioner(),
 									flattenedArray.get_partitioner(),
 									numberWaveFunctions);
@@ -160,8 +163,8 @@ namespace dftfe {
 			
 		}
 
-	template<unsigned int FEOrder>
-		void kohnShamDFTOperatorClass<FEOrder>::reinit(const unsigned int numberWaveFunctions)
+	template<unsigned int FEOrder,unsigned int FEOrderElectro>
+		void kohnShamDFTOperatorClass<FEOrder,FEOrderElectro>::reinit(const unsigned int numberWaveFunctions)
 		{
 
 			if(dftParameters::isPseudopotential)
@@ -374,8 +377,8 @@ namespace dftfe {
 	//
 	//compute mass Vector
 	//
-	template<unsigned int FEOrder>
-		void kohnShamDFTOperatorClass<FEOrder>::computeMassVector(const dealii::DoFHandler<3> & dofHandler,
+	template<unsigned int FEOrder,unsigned int FEOrderElectro>
+		void kohnShamDFTOperatorClass<FEOrder,FEOrderElectro>::computeMassVector(const dealii::DoFHandler<3> & dofHandler,
 				const dealii::ConstraintMatrix & constraintMatrix,
 				distributedCPUVec<double> & sqrtMassVec,
 				distributedCPUVec<double> & invSqrtMassVec)
@@ -431,24 +434,23 @@ namespace dftfe {
 
 
 
-	template<unsigned int FEOrder>
-		void kohnShamDFTOperatorClass<FEOrder>::reinitkPointSpinIndex(const unsigned int  kPointIndex, const unsigned int spinIndex)
+	template<unsigned int FEOrder,unsigned int FEOrderElectro>
+		void kohnShamDFTOperatorClass<FEOrder,FEOrderElectro>::reinitkPointSpinIndex(const unsigned int  kPointIndex, const unsigned int spinIndex)
 		{
 			d_kPointIndex = kPointIndex;
 			d_spinIndex= spinIndex;
 		}
 
 
-	template<unsigned int FEOrder>
-		void kohnShamDFTOperatorClass<FEOrder>::computeVEff(const std::map<dealii::CellId,std::vector<double> >* rhoValues,
-				const distributedCPUVec<double> & phi,
+	template<unsigned int FEOrder,unsigned int FEOrderElectro>
+		void kohnShamDFTOperatorClass<FEOrder,FEOrderElectro>::computeVEff(const std::map<dealii::CellId,std::vector<double> >* rhoValues,
+				const std::map<dealii::CellId,std::vector<double> > & phiValues,
 				const std::map<dealii::CellId,std::vector<double> > & externalPotCorrValues,
         const unsigned int externalPotCorrQuadratureId)
 		{
 			const unsigned int n_cells = dftPtr->matrix_free_data.n_macro_cells();
 			const unsigned int n_array_elements = VectorizedArray<double>::n_array_elements;
-			FEEvaluation<3,FEOrder,C_num1DQuad<FEOrder>()> fe_eval_phi(dftPtr->matrix_free_data, dftPtr->phiTotDofHandlerIndex ,0);
-			const int numberQuadraturePoints = fe_eval_phi.n_q_points;
+			const int numberQuadraturePoints = dftPtr->matrix_free_data.get_quadrature(0).size();
 			vEff.reinit (n_cells, numberQuadraturePoints);
 			typename dealii::DoFHandler<3>::active_cell_iterator cellPtr;
 
@@ -457,22 +459,20 @@ namespace dftfe {
 			//
 			for (unsigned int cell = 0; cell < n_cells; ++cell)
 			{
-
-				//
-				//extract total potential to interpolate from nodes to quad points
-				//
-				fe_eval_phi.reinit(cell);
-				fe_eval_phi.read_dof_values_plain(phi);
-				fe_eval_phi.evaluate(true, false, false);
-
+        std::vector<dealii::VectorizedArray<double> > tempPhi(numberQuadraturePoints,dealii::make_vectorized_array(0.0));        
 				const unsigned int n_sub_cells=dftPtr->matrix_free_data.n_components_filled(cell);
 				std::vector< std::vector<double>> tempRho(n_sub_cells);
 				std::vector< std::vector<double>> tempPseudo(n_sub_cells);
 				for (unsigned int v = 0; v < n_sub_cells; ++v)
 				{
 					cellPtr=dftPtr->matrix_free_data.get_cell_iterator(cell, v);
-					tempRho[v]=(*rhoValues).find(cellPtr->id())->second;
+          tempRho[v]=(*rhoValues).find(cellPtr->id())->second;
+
+          const std::vector<double> & temp=phiValues.find(cellPtr->id())->second;
+          for (unsigned int q = 0; q < numberQuadraturePoints; ++q)
+            tempPhi[q][v]=temp[q];
 				}
+
 				for (unsigned int q = 0; q < numberQuadraturePoints; ++q)
 				{
 					//
@@ -498,7 +498,7 @@ namespace dftfe {
 					//
 					//sum all to vEffective
 					//
-					vEff(cell,q) = fe_eval_phi.get_value(q)+exchangePotential+corrPotential;
+					vEff(cell,q) = tempPhi[q]+exchangePotential+corrPotential;
 				}
 			}
       
@@ -506,17 +506,16 @@ namespace dftfe {
          computeVEffExternalPotCorr(externalPotCorrValues,externalPotCorrQuadratureId);
 		}
 
-	template<unsigned int FEOrder>
-		void kohnShamDFTOperatorClass<FEOrder>::computeVEff(const std::map<dealii::CellId,std::vector<double> >* rhoValues,
+	template<unsigned int FEOrder,unsigned int FEOrderElectro>
+		void kohnShamDFTOperatorClass<FEOrder,FEOrderElectro>::computeVEff(const std::map<dealii::CellId,std::vector<double> >* rhoValues,
 				const std::map<dealii::CellId,std::vector<double> >* gradRhoValues,
-				const distributedCPUVec<double> & phi,
+				const std::map<dealii::CellId,std::vector<double> > & phiValues,
 				const std::map<dealii::CellId,std::vector<double> > & externalPotCorrValues,
         const unsigned int externalPotCorrQuadratureId)
 		{
 			const unsigned int n_cells = dftPtr->matrix_free_data.n_macro_cells();
 			const unsigned int n_array_elements = VectorizedArray<double>::n_array_elements;
-			FEEvaluation<3,FEOrder,C_num1DQuad<FEOrder>()> fe_eval_phi(dftPtr->matrix_free_data, dftPtr->phiTotDofHandlerIndex ,0);
-			int numberQuadraturePoints = fe_eval_phi.n_q_points;
+			const int numberQuadraturePoints = dftPtr->matrix_free_data.get_quadrature(0).size();
 			vEff.reinit (n_cells, numberQuadraturePoints);
 			derExcWithSigmaTimesGradRho.reinit(TableIndices<2>(n_cells, numberQuadraturePoints));
 			typename dealii::DoFHandler<3>::active_cell_iterator cellPtr;
@@ -526,14 +525,7 @@ namespace dftfe {
 			//
 			for (unsigned int cell = 0; cell < n_cells; ++cell)
 			{
-
-				//
-				//extract total potential
-				//
-				fe_eval_phi.reinit(cell);
-				fe_eval_phi.read_dof_values_plain(phi);
-				fe_eval_phi.evaluate(true, false, false);
-
+        std::vector<dealii::VectorizedArray<double> >  tempPhi(numberQuadraturePoints,dealii::make_vectorized_array(0.0));        
 				const unsigned int n_sub_cells=dftPtr->matrix_free_data.n_components_filled(cell);
 				std::vector< std::vector<double>> tempRho(n_sub_cells);
 				std::vector< std::vector<double>> tempGradRho(n_sub_cells);
@@ -543,6 +535,10 @@ namespace dftfe {
 					cellPtr=dftPtr->matrix_free_data.get_cell_iterator(cell, v);
 					tempRho[v]=(*rhoValues).find(cellPtr->id())->second;
 					tempGradRho[v]=(*gradRhoValues).find(cellPtr->id())->second;
+
+          const std::vector<double> & temp=phiValues.find(cellPtr->id())->second;
+          for (unsigned int q = 0; q < numberQuadraturePoints; ++q)
+            tempPhi[q][v]=temp[q];          
 				}
 				for (unsigned int q = 0; q < numberQuadraturePoints; ++q)
 				{
@@ -582,7 +578,7 @@ namespace dftfe {
 					//
 					//sum all to vEffective
 					//
-          vEff(cell,q)=fe_eval_phi.get_value(q)+derExchEnergyWithDensity+derCorrEnergyWithDensity;
+          vEff(cell,q)=tempPhi[q]+derExchEnergyWithDensity+derCorrEnergyWithDensity;
           derExcWithSigmaTimesGradRho(cell,q)[0] = derExcWithSigmaTimesGradRhoX;
           derExcWithSigmaTimesGradRho(cell,q)[1] = derExcWithSigmaTimesGradRhoY;
           derExcWithSigmaTimesGradRho(cell,q)[2] = derExcWithSigmaTimesGradRhoZ;
@@ -595,8 +591,8 @@ namespace dftfe {
 
 
 #ifdef USE_COMPLEX
-	template<unsigned int FEOrder>
-		void kohnShamDFTOperatorClass<FEOrder>::HX(distributedCPUVec<std::complex<double> > & src,
+	template<unsigned int FEOrder,unsigned int FEOrderElectro>
+		void kohnShamDFTOperatorClass<FEOrder,FEOrderElectro>::HX(distributedCPUVec<std::complex<double> > & src,
 				const unsigned int numberWaveFunctions,
 				const bool scaleFlag,
 				const double scalar,
@@ -727,16 +723,16 @@ namespace dftfe {
 
 		}
 
-	template<unsigned int FEOrder>
-		void kohnShamDFTOperatorClass<FEOrder>::HX(distributedCPUVec<std::complex<double> > & src,
+	template<unsigned int FEOrder,unsigned int FEOrderElectro>
+		void kohnShamDFTOperatorClass<FEOrder,FEOrderElectro>::HX(distributedCPUVec<std::complex<double> > & src,
 				const unsigned int numberWaveFunctions,
 				distributedCPUVec<std::complex<double> > & dst)
 		{
 			AssertThrow(false,dftUtils::ExcNotImplementedYet());
 		}
 
-	template<unsigned int FEOrder>
-		void kohnShamDFTOperatorClass<FEOrder>::MX(distributedCPUVec<std::complex<double> > & src,
+	template<unsigned int FEOrder,unsigned int FEOrderElectro>
+		void kohnShamDFTOperatorClass<FEOrder,FEOrderElectro>::MX(distributedCPUVec<std::complex<double> > & src,
 				const unsigned int numberWaveFunctions,
 				distributedCPUVec<std::complex<double> > & dst)
 		{
@@ -744,8 +740,8 @@ namespace dftfe {
 		}
 
 #else
-	template<unsigned int FEOrder>
-		void kohnShamDFTOperatorClass<FEOrder>::HX(distributedCPUVec<double> & src,
+	template<unsigned int FEOrder,unsigned int FEOrderElectro>
+		void kohnShamDFTOperatorClass<FEOrder,FEOrderElectro>::HX(distributedCPUVec<double> & src,
 				const unsigned int numberWaveFunctions,
 				const bool scaleFlag,
 				const double scalar,
@@ -976,8 +972,8 @@ namespace dftfe {
 		}
   
 
-	template<unsigned int FEOrder>
-		void kohnShamDFTOperatorClass<FEOrder>::HX(distributedCPUVec<double> & src,
+	template<unsigned int FEOrder,unsigned int FEOrderElectro>
+		void kohnShamDFTOperatorClass<FEOrder,FEOrderElectro>::HX(distributedCPUVec<double> & src,
 				const unsigned int numberWaveFunctions,
 				distributedCPUVec<double> & dst)
 
@@ -1053,8 +1049,8 @@ namespace dftfe {
 
 		}
 
-	template<unsigned int FEOrder>
-		void kohnShamDFTOperatorClass<FEOrder>::MX(distributedCPUVec<double> & src,
+	template<unsigned int FEOrder,unsigned int FEOrderElectro>
+		void kohnShamDFTOperatorClass<FEOrder,FEOrderElectro>::MX(distributedCPUVec<double> & src,
 				const unsigned int numberWaveFunctions,
 				distributedCPUVec<double> & dst)
 
@@ -1116,8 +1112,8 @@ dst);
 
   
 
-	template<unsigned int FEOrder>
-		void kohnShamDFTOperatorClass<FEOrder>::XtHX(const std::vector<dataTypes::number> & X,
+	template<unsigned int FEOrder,unsigned int FEOrderElectro>
+		void kohnShamDFTOperatorClass<FEOrder,FEOrderElectro>::XtHX(const std::vector<dataTypes::number> & X,
 				const unsigned int numberWaveFunctions,
 				std::vector<dataTypes::number> & ProjHam)
 		{
@@ -1212,8 +1208,8 @@ dst);
 
 		}
 
-	template<unsigned int FEOrder>
-		void kohnShamDFTOperatorClass<FEOrder>::XtHX(const std::vector<dataTypes::number> & X,
+	template<unsigned int FEOrder,unsigned int FEOrderElectro>
+		void kohnShamDFTOperatorClass<FEOrder,FEOrderElectro>::XtHX(const std::vector<dataTypes::number> & X,
 				const unsigned int numberWaveFunctions,
 				const std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid>  & processGrid,
 				dealii::ScaLAPACKMatrix<dataTypes::number> & projHamPar,
@@ -1384,8 +1380,8 @@ dst);
 #endif
 		}
 
-	template<unsigned int FEOrder>
-		void kohnShamDFTOperatorClass<FEOrder>::XtMX(const std::vector<dataTypes::number> & X,
+	template<unsigned int FEOrder,unsigned int FEOrderElectro>
+		void kohnShamDFTOperatorClass<FEOrder,FEOrderElectro>::XtMX(const std::vector<dataTypes::number> & X,
 				const unsigned int numberWaveFunctions,
 				const std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid>  & processGrid,
 				dealii::ScaLAPACKMatrix<dataTypes::number> & projMassPar)
@@ -1543,8 +1539,8 @@ dst);
 #endif
 		}
 
-	template<unsigned int FEOrder>
-		void kohnShamDFTOperatorClass<FEOrder>::XtHXMixedPrec
+	template<unsigned int FEOrder,unsigned int FEOrderElectro>
+		void kohnShamDFTOperatorClass<FEOrder,FEOrderElectro>::XtHXMixedPrec
 		(const std::vector<dataTypes::number> & X,
 		 const unsigned int N,
 		 const unsigned int Ncore,
@@ -1779,9 +1775,9 @@ dst);
 #endif
 		}
 
-	template<unsigned int FEOrder>
-		void kohnShamDFTOperatorClass<FEOrder>::computeVEffSpinPolarized(const std::map<dealii::CellId,std::vector<double> >* rhoValues,
-				const distributedCPUVec<double> & phi,
+	template<unsigned int FEOrder,unsigned int FEOrderElectro>
+		void kohnShamDFTOperatorClass<FEOrder,FEOrderElectro>::computeVEffSpinPolarized(const std::map<dealii::CellId,std::vector<double> >* rhoValues,
+				const std::map<dealii::CellId,std::vector<double> > & phiValues,
 				const unsigned int spinIndex,
 				const std::map<dealii::CellId,std::vector<double> > & externalPotCorrValues,
         const unsigned int externalPotCorrQuadratureId)
@@ -1789,8 +1785,7 @@ dst);
 		{
 			const unsigned int n_cells = dftPtr->matrix_free_data.n_macro_cells();
 			const unsigned int n_array_elements = VectorizedArray<double>::n_array_elements;
-			FEEvaluation<3,FEOrder,C_num1DQuad<FEOrder>()> fe_eval_phi(dftPtr->matrix_free_data, dftPtr->phiTotDofHandlerIndex ,0);
-			int numberQuadraturePoints = fe_eval_phi.n_q_points;
+			const int numberQuadraturePoints = dftPtr->matrix_free_data.get_quadrature(0).size();
 			vEff.reinit (n_cells, numberQuadraturePoints);
 			typename dealii::DoFHandler<3>::active_cell_iterator cellPtr;
 
@@ -1799,15 +1794,7 @@ dst);
 			//
 			for (unsigned int cell = 0; cell < n_cells; ++cell)
 			{
-
-				//
-				//extract total potential
-				//
-				fe_eval_phi.reinit(cell);
-				fe_eval_phi.read_dof_values_plain(phi);
-				fe_eval_phi.evaluate(true, false, false);
-
-
+        std::vector<dealii::VectorizedArray<double> > tempPhi(numberQuadraturePoints,dealii::make_vectorized_array(0.0));          
 				const unsigned int n_sub_cells=dftPtr->matrix_free_data.n_components_filled(cell);
 				std::vector< std::vector<double>> tempRho(n_sub_cells);
 				std::vector< std::vector<double>> tempPseudo(n_sub_cells);
@@ -1815,6 +1802,10 @@ dst);
 				{
 					cellPtr=dftPtr->matrix_free_data.get_cell_iterator(cell, v);
 					tempRho[v]=(*rhoValues).find(cellPtr->id())->second;
+
+          const std::vector<double> & temp=phiValues.find(cellPtr->id())->second;
+          for (unsigned int q = 0; q < numberQuadraturePoints; ++q)
+            tempPhi[q][v]=temp[q];           
 				}
 
 				for (unsigned int q = 0; q < numberQuadraturePoints; ++q)
@@ -1843,7 +1834,7 @@ dst);
 					//
 					//sum all to vEffective
 					//
-          vEff(cell,q)=fe_eval_phi.get_value(q)+exchangePotential+corrPotential;
+          vEff(cell,q)=tempPhi[q]+exchangePotential+corrPotential;
 				}
 			}
 
@@ -1851,18 +1842,17 @@ dst);
          computeVEffExternalPotCorr(externalPotCorrValues,externalPotCorrQuadratureId);      
 		}
 
-	template<unsigned int FEOrder>
-		void kohnShamDFTOperatorClass<FEOrder>::computeVEffSpinPolarized(const std::map<dealii::CellId,std::vector<double> >* rhoValues,
+	template<unsigned int FEOrder,unsigned int FEOrderElectro>
+		void kohnShamDFTOperatorClass<FEOrder,FEOrderElectro>::computeVEffSpinPolarized(const std::map<dealii::CellId,std::vector<double> >* rhoValues,
 				const std::map<dealii::CellId,std::vector<double> >* gradRhoValues,
-				const distributedCPUVec<double> & phi,
+				const std::map<dealii::CellId,std::vector<double> > & phiValues,
 				const unsigned int spinIndex,
 				const std::map<dealii::CellId,std::vector<double> > & externalPotCorrValues,
         const unsigned int externalPotCorrQuadratureId)
 		{
 			const unsigned int n_cells = dftPtr->matrix_free_data.n_macro_cells();
 			const unsigned int n_array_elements = VectorizedArray<double>::n_array_elements;
-			FEEvaluation<3,FEOrder,C_num1DQuad<FEOrder>()> fe_eval_phi(dftPtr->matrix_free_data, dftPtr->phiTotDofHandlerIndex ,0);
-			int numberQuadraturePoints = fe_eval_phi.n_q_points;
+			const int numberQuadraturePoints = dftPtr->matrix_free_data.get_quadrature(0).size();
 			vEff.reinit (n_cells, numberQuadraturePoints);
 			derExcWithSigmaTimesGradRho.reinit(TableIndices<2>(n_cells, numberQuadraturePoints));
 			typename dealii::DoFHandler<3>::active_cell_iterator cellPtr;
@@ -1872,14 +1862,7 @@ dst);
 			//
 			for (unsigned int cell = 0; cell < n_cells; ++cell)
 			{
-
-				//
-				//extract total potential
-				//
-				fe_eval_phi.reinit(cell);
-				fe_eval_phi.read_dof_values_plain(phi);
-				fe_eval_phi.evaluate(true, false, false);
-
+        std::vector<dealii::VectorizedArray<double> > tempPhi(numberQuadraturePoints,dealii::make_vectorized_array(0.0));         
 				const unsigned int n_sub_cells=dftPtr->matrix_free_data.n_components_filled(cell);
 				std::vector< std::vector<double>> tempRho(n_sub_cells);
 				std::vector< std::vector<double>> tempGradRho(n_sub_cells);
@@ -1889,6 +1872,10 @@ dst);
 					cellPtr=dftPtr->matrix_free_data.get_cell_iterator(cell, v);
 					tempRho[v]=(*rhoValues).find(cellPtr->id())->second;
 					tempGradRho[v]=(*gradRhoValues).find(cellPtr->id())->second;
+
+          const std::vector<double> & temp=phiValues.find(cellPtr->id())->second;
+          for (unsigned int q = 0; q < numberQuadraturePoints; ++q)
+            tempPhi[q][v]=temp[q];          
 				}
 
 				for (unsigned int q = 0; q < numberQuadraturePoints; ++q)
@@ -1942,7 +1929,7 @@ dst);
 					//
 					//sum all to vEffective
 					//
-          vEff(cell,q)=fe_eval_phi.get_value(q)+derExchEnergyWithDensity+derCorrEnergyWithDensity;
+          vEff(cell,q)=tempPhi[q]+derExchEnergyWithDensity+derCorrEnergyWithDensity;
           derExcWithSigmaTimesGradRho(cell,q)[0] = derExcWithSigmaTimesGradRhoX;
           derExcWithSigmaTimesGradRho(cell,q)[1] = derExcWithSigmaTimesGradRhoY;
           derExcWithSigmaTimesGradRho(cell,q)[2] = derExcWithSigmaTimesGradRhoZ;
@@ -1953,8 +1940,8 @@ dst);
          computeVEffExternalPotCorr(externalPotCorrValues,externalPotCorrQuadratureId);
 		}
 
-	template<unsigned int FEOrder>
-		void kohnShamDFTOperatorClass<FEOrder>::computeVEffExternalPotCorr(const std::map<dealii::CellId,std::vector<double> > & externalPotCorrValues,
+	template<unsigned int FEOrder,unsigned int FEOrderElectro>
+		void kohnShamDFTOperatorClass<FEOrder,FEOrderElectro>::computeVEffExternalPotCorr(const std::map<dealii::CellId,std::vector<double> > & externalPotCorrValues,
                                                                        const unsigned int externalPotCorrQuadratureId)
   {
       d_externalPotCorrQuadratureId=externalPotCorrQuadratureId;
@@ -1986,17 +1973,5 @@ dst);
       }
   }
 
-	template class kohnShamDFTOperatorClass<1>;
-	template class kohnShamDFTOperatorClass<2>;
-	template class kohnShamDFTOperatorClass<3>;
-	template class kohnShamDFTOperatorClass<4>;
-	template class kohnShamDFTOperatorClass<5>;
-	template class kohnShamDFTOperatorClass<6>;
-	template class kohnShamDFTOperatorClass<7>;
-	template class kohnShamDFTOperatorClass<8>;
-	template class kohnShamDFTOperatorClass<9>;
-	template class kohnShamDFTOperatorClass<10>;
-	template class kohnShamDFTOperatorClass<11>;
-	template class kohnShamDFTOperatorClass<12>;
-
+#include "inst.cc"
 }

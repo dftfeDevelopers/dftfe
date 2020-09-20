@@ -35,7 +35,6 @@
 .*.swp
 
 #CMAKE files
-*.cmake
 CMakeCache.txt
 CMakeFiles/
 Makefile

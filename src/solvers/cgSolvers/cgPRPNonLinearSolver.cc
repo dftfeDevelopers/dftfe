@@ -467,12 +467,13 @@ namespace dftfe {
         // compute delta_d and eta_p
         //
         etaP   = computeEta();
-        if (debugLevel >= 2)
-          pcout << "Initial guess for secant line search iteration, alpha: " << alpha << std::endl;
       }
 
       if (startingIter==-1)
       {
+        if (debugLevel >= 2)
+          pcout << "Initial guess for secant line search iteration, alpha: " << alpha << std::endl;
+
         d_functionValueChk=functionValue;
         d_etaChk=etaP;
         d_etaPChk=etaP;
@@ -481,6 +482,7 @@ namespace dftfe {
 
         if (!checkpointFileName.empty())
         {
+          MPI_Barrier(MPI_COMM_WORLD);
           save(checkpointFileName);
           problem.save();
         }
@@ -558,6 +560,7 @@ namespace dftfe {
 
 				if (!checkpointFileName.empty())
 				{
+          MPI_Barrier(MPI_COMM_WORLD);
 					save(checkpointFileName);
 					problem.save();
 				}
@@ -679,6 +682,7 @@ namespace dftfe {
 			else
 			{
 				load(checkpointFileName);
+        MPI_Barrier(MPI_COMM_WORLD);
 
 				// compute deltaNew, and initialize steepestDirectionOld to current steepest direction
 				d_deltaNew = 0.0;

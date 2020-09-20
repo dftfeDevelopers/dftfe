@@ -17,10 +17,10 @@
 //
 
 //compute configurational force contribution from nuclear self energy on the mesh nodes using linear shape function generators
-template<unsigned int FEOrder>
-	void forceClass<FEOrder>::computeConfigurationalForceEselfLinFE
+template<unsigned int FEOrder,unsigned int FEOrderElectro>
+	void forceClass<FEOrder,FEOrderElectro>::computeConfigurationalForceEselfLinFE
 (const DoFHandler<3> & dofHandlerElectro,
- const vselfBinsManager<FEOrder> & vselfBinsManagerElectro,
+ const vselfBinsManager<FEOrder,FEOrderElectro> & vselfBinsManagerElectro,
  const MatrixFree<3,double> & matrixFreeDataElectro,
  const unsigned int smearedChargeQuadratureId)
 {
@@ -30,7 +30,7 @@ template<unsigned int FEOrder>
 	//
 	//First add configurational force contribution from the volume integral
 	//
-	QGauss<C_DIM>  quadrature(C_num1DQuad<FEOrder>());
+	QGauss<C_DIM>  quadrature(C_num1DQuad<C_rhoNodalPolyOrder<FEOrder,FEOrderElectro>()>());
 	FEValues<C_DIM> feForceValues (FEForce, quadrature, update_gradients | update_JxW_values);
 	FEValues<C_DIM> feVselfValues (dofHandlerElectro.get_fe(), quadrature, update_gradients);
 	const unsigned int   forceDofsPerCell = FEForce.dofs_per_cell;
@@ -91,7 +91,7 @@ template<unsigned int FEOrder>
   {
     const std::map<int,std::set<int> > & atomIdsBins= vselfBinsManagerElectro.getAtomIdsBins();
 
-    FEEvaluation<C_DIM,1,C_num1DQuadSmearedCharge<FEOrder>()*C_numCopies1DQuadSmearedCharge(),C_DIM>  forceEvalSmearedCharge(matrixFreeDataElectro,
+    FEEvaluation<C_DIM,1,C_num1DQuadSmearedCharge()*C_numCopies1DQuadSmearedCharge(),C_DIM>  forceEvalSmearedCharge(matrixFreeDataElectro,
         d_forceDofHandlerIndexElectro,
         smearedChargeQuadratureId); 
 
@@ -118,14 +118,29 @@ template<unsigned int FEOrder>
 
     for(unsigned int iBin = 0; iBin < numberBins; ++iBin)
     {
-      FEEvaluation<C_DIM,FEOrder,C_num1DQuadSmearedCharge<FEOrder>()*C_numCopies1DQuadSmearedCharge(),1>  vselfEvalSmearedCharge(matrixFreeDataElectro,
-        2+4*iBin,
+      FEEvaluation<C_DIM,FEOrderElectro,C_num1DQuadSmearedCharge()*C_numCopies1DQuadSmearedCharge(),1>  vselfEvalSmearedCharge(matrixFreeDataElectro,
+        dftPtr->d_binsStartDofHandlerIndexElectro+4*iBin,
         smearedChargeQuadratureId);
 
       const std::set<int> & atomIdsInBin=atomIdsBins.find(iBin)->second;
       forceContributionSmearedChargesGammaAtoms.clear();
       for (unsigned int cell=0; cell<matrixFreeDataElectro.n_macro_cells(); ++cell)
       {
+
+        std::set<unsigned int> nonTrivialSmearedChargeAtomIdsMacroCell;
+        const unsigned int numSubCells=matrixFreeDataElectro.n_components_filled(cell);
+        for (unsigned int iSubCell=0; iSubCell<numSubCells; ++iSubCell)
+        {
+          subCellPtr= matrixFreeDataElectro.get_cell_iterator(cell,iSubCell);
+          dealii::CellId subCellId=subCellPtr->id();
+          const std::vector<unsigned int> & temp=dftPtr->d_bCellNonTrivialAtomIdsBins[iBin].find(subCellId)->second;
+          for (int i=0;i <temp.size(); i++)
+              nonTrivialSmearedChargeAtomIdsMacroCell.insert(temp[i]);
+        }
+
+        if (nonTrivialSmearedChargeAtomIdsMacroCell.size()==0)
+          continue;
+
         forceEvalSmearedCharge.reinit(cell);
         vselfEvalSmearedCharge.reinit(cell);
         vselfEvalSmearedCharge.read_dof_values_plain(vselfBinsManagerElectro.getVselfFieldBins()[iBin]);
@@ -133,8 +148,6 @@ template<unsigned int FEOrder>
 
         std::fill(smearedbQuads.begin(),smearedbQuads.end(),make_vectorized_array(0.0));
         std::fill(gradVselfSmearedChargeQuads.begin(),gradVselfSmearedChargeQuads.end(),zeroTensor);
-
-        const unsigned int numSubCells=matrixFreeDataElectro.n_components_filled(cell);
 
         bool isCellNonTrivial=false;
         for (unsigned int iSubCell=0; iSubCell<numSubCells; ++iSubCell)
@@ -176,7 +189,7 @@ template<unsigned int FEOrder>
             matrixFreeDataElectro,
             cell,
             gradVselfSmearedChargeQuads,
-            atomIdsInBin,
+            std::vector<unsigned int>(nonTrivialSmearedChargeAtomIdsMacroCell.begin(),nonTrivialSmearedChargeAtomIdsMacroCell.end()),
             dftPtr->d_bQuadAtomIdsAllAtoms,
             smearedbQuads);
       }//macrocell loop
@@ -202,7 +215,7 @@ template<unsigned int FEOrder>
 	//the surface integral to the configurational force is negligible (< 1e-6 Hartree/Bohr)
 	//
 
-	QGauss<C_DIM-1>  faceQuadrature(C_num1DQuad<FEOrder>());
+	QGauss<C_DIM-1>  faceQuadrature(C_num1DQuad<C_rhoNodalPolyOrder<FEOrder,FEOrderElectro>()>());
 	FEFaceValues<C_DIM> feForceFaceValues (FEForce, faceQuadrature, update_values | update_JxW_values | update_normal_vectors | update_quadrature_points);
 	const unsigned int faces_per_cell=GeometryInfo<C_DIM>::faces_per_cell;
 	const unsigned int   numFaceQuadPoints = faceQuadrature.size();
@@ -289,13 +302,13 @@ template<unsigned int FEOrder>
 
 
 //compute configurational force on the mesh nodes using linear shape function generators
-	template<unsigned int FEOrder>
-void forceClass<FEOrder>::computeConfigurationalForcePhiExtLinFE()
+	template<unsigned int FEOrder,unsigned int FEOrderElectro>
+void forceClass<FEOrder,FEOrderElectro>::computeConfigurationalForcePhiExtLinFE()
 {
 
-	FEEvaluation<C_DIM,1,C_num1DQuad<FEOrder>(),C_DIM>  forceEval(dftPtr->matrix_free_data,d_forceDofHandlerIndex, 0);
+	FEEvaluation<C_DIM,1,C_num1DQuad<C_rhoNodalPolyOrder<FEOrder,FEOrderElectro>()>(),C_DIM>  forceEval(dftPtr->matrix_free_data,d_forceDofHandlerIndex, 0);
 
-	FEEvaluation<C_DIM,FEOrder,C_num1DQuad<FEOrder>(),1> eshelbyEval(dftPtr->matrix_free_data,dftPtr->phiExtDofHandlerIndex, 0);//no constraints
+	FEEvaluation<C_DIM,FEOrderElectro,C_num1DQuad<C_rhoNodalPolyOrder<FEOrder,FEOrderElectro>()>(),1> eshelbyEval(dftPtr->d_matrixFreeDataPRefined,dftPtr->d_phiExtDofHandlerIndexElectro, 0);//no constraints
 
 
 	for (unsigned int cell=0; cell<dftPtr->matrix_free_data.n_macro_cells(); ++cell){
@@ -314,12 +327,12 @@ void forceClass<FEOrder>::computeConfigurationalForcePhiExtLinFE()
 	}
 }
 
-	template<unsigned int FEOrder>
-void forceClass<FEOrder>::computeConfigurationalForceEselfNoSurfaceLinFE()
+	template<unsigned int FEOrder,unsigned int FEOrderElectro>
+void forceClass<FEOrder,FEOrderElectro>::computeConfigurationalForceEselfNoSurfaceLinFE()
 {
-	FEEvaluation<C_DIM,1,C_num1DQuad<FEOrder>(),C_DIM>  forceEval(dftPtr->matrix_free_data,d_forceDofHandlerIndex, 0);
+	FEEvaluation<C_DIM,1,C_num1DQuad<C_rhoNodalPolyOrder<FEOrder,FEOrderElectro>()>(),C_DIM>  forceEval(dftPtr->matrix_free_data,d_forceDofHandlerIndex, 0);
 
-	FEEvaluation<C_DIM,FEOrder,C_num1DQuad<FEOrder>(),1> eshelbyEval(dftPtr->matrix_free_data,dftPtr->phiExtDofHandlerIndex, 0);//no constraints
+	FEEvaluation<C_DIM,FEOrderElectro,C_num1DQuad<C_rhoNodalPolyOrder<FEOrder,FEOrderElectro>()>(),1> eshelbyEval(dftPtr->d_matrixFreeDataPRefined,dftPtr->d_phiExtDofHandlerIndexElectro, 0);//no constraints
 
 	for (unsigned int iBin=0; iBin< dftPtr->d_vselfBinsManager.getVselfFieldBins().size() ; iBin++){
 		for (unsigned int cell=0; cell<dftPtr->matrix_free_data.n_macro_cells(); ++cell){

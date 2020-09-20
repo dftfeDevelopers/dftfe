@@ -16,8 +16,8 @@
 // @author Sambit Das
 //
 
-	template<unsigned int FEOrder>
-void dftClass<FEOrder>::calculateNearestAtomDistances()
+	template<unsigned int FEOrder,unsigned int FEOrderElectro>
+void dftClass<FEOrder,FEOrderElectro>::calculateNearestAtomDistances()
 {
 	const unsigned int numberGlobalAtoms = atomLocations.size();
 	const unsigned int numberImageAtoms = d_imageIdsTrunc.size();  
@@ -67,8 +67,8 @@ void dftClass<FEOrder>::calculateNearestAtomDistances()
 }
 
 
-	template<unsigned int FEOrder>
-void dftClass<FEOrder>::moveMeshToAtoms(Triangulation<3,3> & triangulationMove,
+	template<unsigned int FEOrder,unsigned int FEOrderElectro>
+void dftClass<FEOrder,FEOrderElectro>::moveMeshToAtoms(Triangulation<3,3> & triangulationMove,
 		Triangulation<3,3> & triangulationSerial,
 		bool reuseClosestTriaVertices,
 		bool moveSubdivided)
@@ -215,8 +215,8 @@ void dftClass<FEOrder>::moveMeshToAtoms(Triangulation<3,3> & triangulationMove,
       d_gaussianConstantsForce[iAtom]=dftParameters::reproducible_output?1/std::sqrt(5.0):(dftParameters::useFlatTopGenerator?d_generatorFlatTopWidths[iAtom]+0.4:(std::min(d_nearestAtomDistances[iAtom]/2.0-0.3,dftParameters::gaussianConstantForce)));  
 }
 
-	template<unsigned int FEOrder>
-void dftClass<FEOrder>::calculateSmearedChargeWidths()
+	template<unsigned int FEOrder,unsigned int FEOrderElectro>
+void dftClass<FEOrder,FEOrderElectro>::calculateSmearedChargeWidths()
 {
 
   d_smearedChargeWidths.clear();

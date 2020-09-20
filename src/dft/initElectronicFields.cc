@@ -16,8 +16,8 @@
 // @author  Phani Motamarri, Sambit Das
 //
 
-	template<unsigned int FEOrder>
-void dftClass<FEOrder>::initPsiAndRhoFromPreviousGroundStatePsi(std::vector<std::vector<distributedCPUVec<double>>> eigenVectors)
+	template<unsigned int FEOrder,unsigned int FEOrderElectro>
+void dftClass<FEOrder,FEOrderElectro>::initPsiAndRhoFromPreviousGroundStatePsi(std::vector<std::vector<distributedCPUVec<double>>> eigenVectors)
 {
 	const unsigned int totalNumEigenVectors=(1+dftParameters::spinPolarized)*d_kPointWeights.size()*eigenVectors[0].size();
 	std::vector<distributedCPUVec<double>> eigenVectorsPrevious(totalNumEigenVectors);
@@ -66,8 +66,8 @@ void dftClass<FEOrder>::initPsiAndRhoFromPreviousGroundStatePsi(std::vector<std:
 }
 
 //init
-template<unsigned int FEOrder>
-void dftClass<FEOrder>::initElectronicFields(const unsigned int usePreviousGroundStateFields){
+template<unsigned int FEOrder,unsigned int FEOrderElectro>
+void dftClass<FEOrder,FEOrderElectro>::initElectronicFields(const unsigned int usePreviousGroundStateFields){
 	TimerOutput::Scope scope (computing_timer,"init electronic fields");
 
 	//reading data from pseudopotential files and fitting splines
@@ -81,11 +81,11 @@ void dftClass<FEOrder>::initElectronicFields(const unsigned int usePreviousGroun
 				"Call to initNonLocalPseudoPotential");
 
 	//initialize electrostatics fields
-	matrix_free_data.initialize_dof_vector(d_phiTotRhoIn,phiTotDofHandlerIndex);
+	d_matrixFreeDataPRefined.initialize_dof_vector(d_phiTotRhoIn,d_phiTotDofHandlerIndexElectro);
 	d_phiTotRhoOut.reinit(d_phiTotRhoIn);
-	matrix_free_data.initialize_dof_vector(d_phiExt,phiExtDofHandlerIndex);
+	d_matrixFreeDataPRefined.initialize_dof_vector(d_phiExt,d_phiExtDofHandlerIndexElectro);
 
-	d_matrixFreeDataPRefined.initialize_dof_vector(d_rhoInNodalValues);
+	d_matrixFreeDataPRefined.initialize_dof_vector(d_rhoInNodalValues,d_densityDofHandlerIndexElectro);
 	d_rhoOutNodalValues.reinit(d_rhoInNodalValues);
 	d_rhoOutNodalValuesSplit.reinit(d_rhoInNodalValues);
 	d_atomicRho.reinit(d_rhoInNodalValues);
@@ -98,7 +98,7 @@ void dftClass<FEOrder>::initElectronicFields(const unsigned int usePreviousGroun
 	//
 	//initialize eigen vectors
 	//
-	matrix_free_data.initialize_dof_vector(d_tempEigenVec,eigenDofHandlerIndex);
+	matrix_free_data.initialize_dof_vector(d_tempEigenVec,d_eigenDofHandlerIndex);
 
 	//
 	//store constraintEigen Matrix entries into STL vector
@@ -275,10 +275,10 @@ void dftClass<FEOrder>::initElectronicFields(const unsigned int usePreviousGroun
 			pcout<< std::endl<<"net magnetization: "<< totalMagnetization(rhoInValuesSpinPolarized) <<std::endl;
 }
 
-	template<unsigned int FEOrder>
-void dftClass<FEOrder>::updatePrevMeshDataStructures()
+	template<unsigned int FEOrder,unsigned int FEOrderElectro>
+void dftClass<FEOrder,FEOrderElectro>::updatePrevMeshDataStructures()
 {
-	matrix_free_data.initialize_dof_vector(d_tempEigenVecPrev,eigenDofHandlerIndex);
+	matrix_free_data.initialize_dof_vector(d_tempEigenVecPrev,d_eigenDofHandlerIndex);
 
 
 	constraintsNoneEigenDataInfoPrev.initialize(d_tempEigenVecPrev.get_partitioner(),

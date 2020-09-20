@@ -30,7 +30,7 @@ using namespace dealii;
 namespace dftfe {
 
 	// forward declaration
-	template <unsigned int T> class dftClass;
+	template <unsigned int T1, unsigned int T2> class dftClass;
 
 	/**
 	 * @brief computes configurational forces in KSDFT
@@ -42,18 +42,18 @@ namespace dftfe {
 	 *
 	 * @author Sambit Das
 	 */
-	template <unsigned int FEOrder>
+	template <unsigned int FEOrder,unsigned int FEOrderElectro>
 		class forceClass
 		{
 
-			template <unsigned int T>  friend class dftClass;
+			friend class dftClass<FEOrder,FEOrderElectro>;
 			public:
 			/** @brief Constructor.
 			 *
 			 *  @param _dftPtr pointer to dftClass
 			 *  @param mpi_comm_replica mpi_communicator of the current pool
 			 */
-			forceClass(dftClass<FEOrder>* _dftPtr,const  MPI_Comm &mpi_comm_replica);
+			forceClass(dftClass<FEOrder,FEOrderElectro>* _dftPtr,const  MPI_Comm &mpi_comm_replica);
 
 			/** @brief initializes data structures inside forceClass assuming unmoved triangulation.
 			 *
@@ -111,17 +111,13 @@ namespace dftfe {
 			void computeAtomsForces
 				(const MatrixFree<3,double> & matrixFreeData,
 #ifdef DFTFE_WITH_GPU
-				 kohnShamDFTOperatorCUDAClass<FEOrder> & kohnShamDFTEigenOperator,
+				 kohnShamDFTOperatorCUDAClass<FEOrder,FEOrderElectro> & kohnShamDFTEigenOperator,
 #endif
 				 const unsigned int eigenDofHandlerIndex,
-				 const unsigned int phiTotDofHandlerIndex,
          const unsigned int smearedChargeQuadratureId,
          const unsigned int lpspQuadratureId,
          const unsigned int lpspQuadratureIdElectro,         
-				 const distributedCPUVec<double> & phiTotRhoIn,
-				 const distributedCPUVec<double> & phiTotRhoOut,
 				 const std::map<dealii::CellId, std::vector<double> > & pseudoVLoc,
-				 const vselfBinsManager<FEOrder>   & vselfBinsManagerEigen,
 				 const MatrixFree<3,double> & matrixFreeDataElectro,
 				 const unsigned int phiTotDofHandlerIndexElectro,
 				 const distributedCPUVec<double> & phiTotRhoOutElectro,
@@ -135,7 +131,7 @@ namespace dftfe {
 				 const std::map<dealii::CellId, std::vector<double> > & pseudoVLocElectro,
 				 const std::map<unsigned int,std::map<dealii::CellId, std::vector<double> > > & pseudoVLocAtomsElectro,
 				 const ConstraintMatrix  & hangingPlusPBCConstraintsElectro,
-				 const vselfBinsManager<FEOrder>   & vselfBinsManagerElectro,
+				 const vselfBinsManager<FEOrder,FEOrderElectro>   & vselfBinsManagerElectro,
 				 const std::map<dealii::CellId, std::vector<double> > & shadowKSRhoMinValues,
 				 const std::map<dealii::CellId, std::vector<double> > & shadowKSGradRhoMinValues,
 				 const distributedCPUVec<double> & phiRhoMinusApproxRho,
@@ -173,13 +169,10 @@ namespace dftfe {
 			 */
 			void computeStress(const MatrixFree<3,double> & matrixFreeData,
 					const unsigned int eigenDofHandlerIndex,
-					const unsigned int phiTotDofHandlerIndex,
           const unsigned int smearedChargeQuadratureId,
           const unsigned int lpspQuadratureId,
           const unsigned int lpspQuadratureIdElectro,
-					const distributedCPUVec<double> & phiTotRhoOut,
 					const std::map<dealii::CellId, std::vector<double> > & pseudoVLoc,
-					const vselfBinsManager<FEOrder>   & vselfBinsManagerEigen,
 					const MatrixFree<3,double> & matrixFreeDataElectro,
 					const unsigned int phiTotDofHandlerIndexElectro,
 					const distributedCPUVec<double> & phiTotRhoOutElectro,
@@ -193,7 +186,7 @@ namespace dftfe {
 					const std::map<dealii::CellId, std::vector<double> > & pseudoVLocElectro,
           const std::map<unsigned int,std::map<dealii::CellId, std::vector<double> > > & pseudoVLocAtomsElectro,
 					const ConstraintMatrix  & hangingPlusPBCConstraintsElectro,
-					const vselfBinsManager<FEOrder>   & vselfBinsManagerElectro);
+					const vselfBinsManager<FEOrder,FEOrderElectro>   & vselfBinsManagerElectro);
 
 			/** @brief prints the currently stored configurational stress tensor.
 			 *
@@ -231,7 +224,7 @@ namespace dftfe {
 				(const DoFHandler<3> & dofHandler,
 				 const DoFHandler<3> & dofHandlerForce,
 				 const ConstraintMatrix  & hangingPlusPBCConstraints,
-				 const vselfBinsManager<FEOrder> & vselfBinsManager,
+				 const vselfBinsManager<FEOrder,FEOrderElectro> & vselfBinsManager,
 				 std::vector<std::vector<DoFHandler<C_DIM>::active_cell_iterator> > & cellsVselfBallsDofHandler,
 				 std::vector<std::vector<DoFHandler<C_DIM>::active_cell_iterator> > & cellsVselfBallsDofHandlerForce,
 				 std::vector<std::map<dealii::CellId , unsigned int> > & cellsVselfBallsClosestAtomIdDofHandler,
@@ -247,17 +240,13 @@ namespace dftfe {
 			void computeConfigurationalForceEEshelbyTensorFPSPFnlLinFE
 				(const MatrixFree<3,double> & matrixFreeData,
 #ifdef DFTFE_WITH_GPU
-				 kohnShamDFTOperatorCUDAClass<FEOrder> & kohnShamDFTEigenOperator,
+				 kohnShamDFTOperatorCUDAClass<FEOrder,FEOrderElectro> & kohnShamDFTEigenOperator,
 #endif
 				 const unsigned int eigenDofHandlerIndex,
-				 const unsigned int phiTotDofHandlerIndex,
          const unsigned int smearedChargeQuadratureId,
          const unsigned int lpspQuadratureId,
          const unsigned int lpspQuadratureIdElectro,          
-				 const distributedCPUVec<double> & phiTotRhoIn,
-				 const distributedCPUVec<double> & phiTotRhoOut,
 				 const std::map<dealii::CellId, std::vector<double> > & pseudoVLoc,
-				 const vselfBinsManager<FEOrder>   & vselfBinsManagerEigen,
 				 const MatrixFree<3,double> & matrixFreeDataElectro,
 				 const unsigned int phiTotDofHandlerIndexElectro,
 				 const distributedCPUVec<double> & phiTotRhoOutElectro,
@@ -270,7 +259,7 @@ namespace dftfe {
 				 const std::map<dealii::CellId, std::vector<double> > & gradRhoOutValuesElectroLpsp,
 				 const std::map<dealii::CellId, std::vector<double> > & pseudoVLocElectro,
 				 const std::map<unsigned int,std::map<dealii::CellId, std::vector<double> > > & pseudoVLocAtomsElectro,
-				 const vselfBinsManager<FEOrder> & vselfBinsManagerElectro,
+				 const vselfBinsManager<FEOrder,FEOrderElectro> & vselfBinsManagerElectro,
 				 const std::map<dealii::CellId, std::vector<double> > & shadowKSRhoMinValues,
 				 const std::map<dealii::CellId, std::vector<double> > & shadowKSGradRhoMinValues,
 				 const distributedCPUVec<double> & phiRhoMinusApproxRho,
@@ -279,14 +268,10 @@ namespace dftfe {
 			void computeConfigurationalForceSpinPolarizedEEshelbyTensorFPSPFnlLinFE
 				(const MatrixFree<3,double> & matrixFreeData,
 				 const unsigned int eigenDofHandlerIndex,
-				 const unsigned int phiTotDofHandlerIndex,
          const unsigned int smearedChargeQuadratureId,
          const unsigned int lpspQuadratureId,
          const unsigned int lpspQuadratureIdElectro,         
-				 const distributedCPUVec<double> & phiTotRhoIn,
-				 const distributedCPUVec<double> & phiTotRhoOut,
 				 const std::map<dealii::CellId, std::vector<double> > & pseudoVLoc,
-				 const vselfBinsManager<FEOrder>   & vselfBinsManagerEigen,
 				 const MatrixFree<3,double> & matrixFreeDataElectro,
 				 const unsigned int phiTotDofHandlerIndexElectro,
 				 const distributedCPUVec<double> & phiTotRhoOutElectro,
@@ -297,7 +282,7 @@ namespace dftfe {
 				 const std::map<dealii::CellId, std::vector<double> > & gradRhoOutValuesElectroLpsp,
 				 const std::map<dealii::CellId, std::vector<double> > & pseudoVLocElectro,
 				 const std::map<unsigned int,std::map<dealii::CellId, std::vector<double> > > & pseudoVLocAtomsElectro,
-				 const vselfBinsManager<FEOrder> & vselfBinsManagerElectro,
+				 const vselfBinsManager<FEOrder,FEOrderElectro> & vselfBinsManagerElectro,
 				 const std::map<dealii::CellId, std::vector<double> > & shadowKSRhoMinValues,
 				 const std::map<dealii::CellId, std::vector<double> > & shadowKSGradRhoMinValues,
 				 const distributedCPUVec<double> & phiRhoMinusApproxRho,
@@ -315,7 +300,7 @@ namespace dftfe {
 				 const std::map<dealii::CellId, std::vector<double> > & gradRhoOutValuesElectroLpsp,
 				 const std::map<dealii::CellId, std::vector<double> > & pseudoVLocElectro,
 				 const std::map<unsigned int,std::map<dealii::CellId, std::vector<double> > > & pseudoVLocAtomsElectro,
-				 const vselfBinsManager<FEOrder> & vselfBinsManagerElectro,
+				 const vselfBinsManager<FEOrder,FEOrderElectro> & vselfBinsManagerElectro,
 				 const std::map<dealii::CellId, std::vector<double> > & shadowKSRhoMinValues,
 				 const distributedCPUVec<double> & phiRhoMinusApproxRho,
 				 const bool shadowPotentialForce=false);
@@ -323,7 +308,7 @@ namespace dftfe {
 			void computeConfigurationalForcePhiExtLinFE();
 
 			void computeConfigurationalForceEselfLinFE(const DoFHandler<3> & dofHandlerElectro,
-					const vselfBinsManager<FEOrder>   & vselfBinsManagerElectro,
+					const vselfBinsManager<FEOrder,FEOrderElectro>   & vselfBinsManagerElectro,
           const MatrixFree<3,double> & matrixFreeDataElectro,
           const unsigned int smearedChargeQuadratureId);
 
@@ -332,17 +317,13 @@ namespace dftfe {
 			void computeConfigurationalForceTotalLinFE
 				(const MatrixFree<3,double> & matrixFreeData,
 #ifdef DFTFE_WITH_GPU
-				 kohnShamDFTOperatorCUDAClass<FEOrder> & kohnShamDFTEigenOperator,
+				 kohnShamDFTOperatorCUDAClass<FEOrder,FEOrderElectro> & kohnShamDFTEigenOperator,
 #endif
 				 const unsigned int eigenDofHandlerIndex,
-				 const unsigned int phiTotDofHandlerIndex,
          const unsigned int smearedChargeQuadratureId,
                  const unsigned int lpspQuadratureId,
           const unsigned int lpspQuadratureIdElectro,         
-				 const distributedCPUVec<double> & phiTotRhoIn,
-				 const distributedCPUVec<double> & phiTotRhoOut,
 				 const std::map<dealii::CellId, std::vector<double> > & pseudoVLoc,
-				 const vselfBinsManager<FEOrder>   & vselfBinsManagerEigen,
 				 const MatrixFree<3,double> & matrixFreeDataElectro,
 				 const unsigned int phiTotDofHandlerIndexElectro,
 				 const distributedCPUVec<double> & phiTotRhoOutElectro,
@@ -355,7 +336,7 @@ namespace dftfe {
 				 const std::map<dealii::CellId, std::vector<double> > & gradRhoOutValuesElectroLpsp,
 				 const std::map<dealii::CellId, std::vector<double> > & pseudoVLocElectro,
 				 const std::map<unsigned int,std::map<dealii::CellId, std::vector<double> > > & pseudoVLocAtomsElectro,
-				 const vselfBinsManager<FEOrder>   & vselfBinsManagerElectro,
+				 const vselfBinsManager<FEOrder,FEOrderElectro>   & vselfBinsManagerElectro,
 				 const std::map<dealii::CellId, std::vector<double> > & shadowKSRhoMinValues,
 				 const std::map<dealii::CellId, std::vector<double> > & shadowKSGradRhoMinValues,
 				 const distributedCPUVec<double> & phiRhoMinusApproxRho,
@@ -367,35 +348,37 @@ namespace dftfe {
          FEFaceValues<C_DIM> & feFaceValues,
 				 FEEvaluation<C_DIM,1,C_num1DQuadLPSP<FEOrder>()*C_numCopies1DQuadLPSP(),C_DIM>  & forceEval,
 				 const MatrixFree<3,double> & matrixFreeData,
+         const unsigned int phiTotDofHandlerIndexElectro,
 				 const unsigned int cell,
          const std::vector<VectorizedArray<double> > & rhoQuads,
 				 const std::vector<Tensor<1,C_DIM,VectorizedArray<double> >  > & gradRhoQuads,
 				 const std::map<unsigned int,std::map<dealii::CellId, std::vector<double> > > & pseudoVLocAtoms,
-				 const vselfBinsManager<FEOrder> & vselfBinsManager,
+				 const vselfBinsManager<FEOrder,FEOrderElectro> & vselfBinsManager,
 				 const std::vector<std::map<dealii::CellId , unsigned int> > & cellsVselfBallsClosestAtomIdDofHandler);
 
       void FPhiTotSmearedChargesGammaAtomsElementalContribution
         (std::map<unsigned int, std::vector<double> > & forceContributionSmearedChargesGammaAtoms,
-         FEEvaluation<3,1,C_num1DQuadSmearedCharge<FEOrder>()*C_numCopies1DQuadSmearedCharge(),3>  & forceEval,
+         FEEvaluation<3,1,C_num1DQuadSmearedCharge()*C_numCopies1DQuadSmearedCharge(),3>  & forceEval,
          const MatrixFree<3,double> & matrixFreeData,
          const unsigned int cell,
          const std::vector<Tensor<1,C_DIM,VectorizedArray<double> >  > & gradPhiTotQuads,
+         const std::vector<unsigned int> & nonTrivialAtomIdsMacroCell,
          const std::map<dealii::CellId, std::vector<int> > & bQuadAtomIdsAllAtoms,
          const std::vector<VectorizedArray<double> > & smearedbQuads);  
 
       void FVselfSmearedChargesGammaAtomsElementalContribution
         (std::map<unsigned int, std::vector<double> > & forceContributionSmearedChargesGammaAtoms,
-         FEEvaluation<3,1,C_num1DQuadSmearedCharge<FEOrder>()*C_numCopies1DQuadSmearedCharge(),3>  & forceEval,
+         FEEvaluation<3,1,C_num1DQuadSmearedCharge()*C_numCopies1DQuadSmearedCharge(),3>  & forceEval,
          const MatrixFree<3,double> & matrixFreeData,
          const unsigned int cell,
          const std::vector<Tensor<1,C_DIM,VectorizedArray<double> > > & gradVselfBinQuads,
-         const std::set<int> & atomIdsInBin,
+         const std::vector<unsigned int> & nonTrivialAtomIdsMacroCell,         
          const std::map<dealii::CellId, std::vector<int> > & bQuadAtomIdsAllAtoms,
          const std::vector<VectorizedArray<double> > & smearedbQuads);         
 
 			void FShadowLocalGammaAtomsElementalContribution
 				(std::map<unsigned int, std::vector<double> > & forceContributionLocalGammaAtoms,
-				 FEEvaluation<C_DIM,1,C_num1DQuad<FEOrder>(),C_DIM>  & forceEval,
+				 FEEvaluation<C_DIM,1,C_num1DQuad<C_rhoNodalPolyOrder<FEOrder,FEOrderElectro>()>(),C_DIM>  & forceEval,
 				 const MatrixFree<3,double> & matrixFreeData,
 				 const unsigned int cell,
 				 const std::map<unsigned int,std::map<dealii::CellId, std::vector<double> > > & gradRhoAtomsQuads,
@@ -420,7 +403,7 @@ namespace dftfe {
 #ifdef USE_COMPLEX
 			void FnlGammaAtomsElementalContribution
 				(std::map<unsigned int, std::vector<double> > & forceContributionFnlGammaAtoms,
-				 FEEvaluation<C_DIM,1,C_num1DQuad<FEOrder>(),C_DIM>  & forceEval,
+				 FEEvaluation<C_DIM,1,C_num1DQuad<C_rhoNodalPolyOrder<FEOrder,FEOrderElectro>()>(),C_DIM>  & forceEval,
 				 FEEvaluation<C_DIM,1,C_num1DQuadNLPSP<FEOrder>()*C_numCopies1DQuadNLPSP(),C_DIM>  & forceEvalNLP,
 				 const unsigned int cell,
 				 const std::vector<std::vector<std::vector<std::vector<Tensor<1,2,VectorizedArray<double>  > > > > > & zetaDeltaVQuads,
@@ -432,7 +415,7 @@ namespace dftfe {
 
 			void FnlGammaAtomsElementalContributionSpinPolarized
 				(std::map<unsigned int, std::vector<double> > & forceContributionFnlGammaAtoms,
-				 FEEvaluation<C_DIM,1,C_num1DQuad<FEOrder>(),C_DIM>  & forceEval,
+				 FEEvaluation<C_DIM,1,C_num1DQuad<C_rhoNodalPolyOrder<FEOrder,FEOrderElectro>()>(),C_DIM>  & forceEval,
 				 FEEvaluation<C_DIM,1,C_num1DQuadNLPSP<FEOrder>()*C_numCopies1DQuadNLPSP(),C_DIM>  & forceEvalNLP,
 				 const unsigned int cell,
 				 const std::vector<std::vector<std::vector<std::vector<Tensor<1,2, VectorizedArray<double> > > > > > & zetaDeltaVQuads,
@@ -448,7 +431,7 @@ namespace dftfe {
 
 			void FnlGammaAtomsElementalContributionSpinPolarized
 				(std::map<unsigned int, std::vector<double> > & forceContributionFnlGammaAtoms,
-				 FEEvaluation<C_DIM,1,C_num1DQuad<FEOrder>(),C_DIM>  & forceEval,
+				 FEEvaluation<C_DIM,1,C_num1DQuad<C_rhoNodalPolyOrder<FEOrder,FEOrderElectro>()>(),C_DIM>  & forceEval,
 				 FEEvaluation<C_DIM,1,C_num1DQuadNLPSP<FEOrder>()*C_numCopies1DQuadNLPSP(),C_DIM>  & forceEvalNLP,
 				 const unsigned int cell,
 				 const std::vector<std::vector<std::vector<VectorizedArray<double> > > > & zetaDeltaVQuads,
@@ -462,7 +445,7 @@ namespace dftfe {
 
 			void FnlGammaAtomsElementalContribution
 				(std::map<unsigned int, std::vector<double> > & forceContributionFnlGammaAtoms,
-				 FEEvaluation<C_DIM,1,C_num1DQuad<FEOrder>(),C_DIM>  & forceEval,
+				 FEEvaluation<C_DIM,1,C_num1DQuad<C_rhoNodalPolyOrder<FEOrder,FEOrderElectro>()>(),C_DIM>  & forceEval,
 				 FEEvaluation<C_DIM,1,C_num1DQuadNLPSP<FEOrder>()*C_numCopies1DQuadNLPSP(),C_DIM>  & forceEvalNLP,
 				 const unsigned int cell,
 				 const std::vector<std::vector<std::vector<VectorizedArray<double> > > > & zetaDeltaVQuads,
@@ -480,19 +463,16 @@ namespace dftfe {
 
 #ifdef USE_COMPLEX
 			void computeStressEself(const DoFHandler<3> & dofHandlerElectro,
-					const vselfBinsManager<FEOrder>   & vselfBinsManagerElectro,
+					const vselfBinsManager<FEOrder,FEOrderElectro>   & vselfBinsManagerElectro,
           const MatrixFree<3,double> & matrixFreeDataElectro,
           const unsigned int smearedChargeQuadratureId);
 
 			void computeStressEEshelbyEPSPEnlEk(const MatrixFree<3,double> & matrixFreeData,
 					const unsigned int eigenDofHandlerIndex,
-					const unsigned int phiTotDofHandlerIndex,
           const unsigned int smearedChargeQuadratureId,
                    const unsigned int lpspQuadratureId,
             const unsigned int lpspQuadratureIdElectro,         
-					const distributedCPUVec<double> & phiTotRhoOut,
 					const std::map<dealii::CellId, std::vector<double> > & pseudoVLoc,
-					const vselfBinsManager<FEOrder>   & vselfBinsManagerEigen,
 					const MatrixFree<3,double> & matrixFreeDataElectro,
 					const unsigned int phiTotDofHandlerIndexElectro,
 					const distributedCPUVec<double> & phiTotRhoOutElectro,
@@ -505,7 +485,7 @@ namespace dftfe {
 				  const std::map<dealii::CellId, std::vector<double> > & gradRhoOutValuesElectroLpsp,
 					const std::map<dealii::CellId, std::vector<double> > & pseudoVLocElectro,
 					const std::map<unsigned int,std::map<dealii::CellId, std::vector<double> > > & pseudoVLocAtomsElectro,
-					const vselfBinsManager<FEOrder> & vselfBinsManagerElectro);
+					const vselfBinsManager<FEOrder,FEOrderElectro> & vselfBinsManagerElectro);
 
 			void computeStressEEshelbyEElectroPhiTot
 				(const MatrixFree<3,double> & matrixFreeDataElectro,
@@ -519,17 +499,14 @@ namespace dftfe {
 				  const std::map<dealii::CellId, std::vector<double> > & gradRhoOutValuesElectroLpsp,
           					const std::map<dealii::CellId, std::vector<double> > & pseudoVLocElectro,
 				 const std::map<unsigned int,std::map<dealii::CellId, std::vector<double> > > & pseudoVLocAtomsElectro,
-				 const vselfBinsManager<FEOrder> & vselfBinsManagerElectro);
+				 const vselfBinsManager<FEOrder,FEOrderElectro> & vselfBinsManagerElectro);
 
 			void computeStressSpinPolarizedEEshelbyEPSPEnlEk(const MatrixFree<3,double> & matrixFreeData,
           const unsigned int eigenDofHandlerIndex,
-					const unsigned int phiTotDofHandlerIndex,
           const unsigned int smearedChargeQuadratureId,
                    const unsigned int lpspQuadratureId,
                    const unsigned int lpspQuadratureIdElectro,
-					const distributedCPUVec<double> & phiTotRhoOut,
 					const std::map<dealii::CellId, std::vector<double> > & pseudoVLoc,
-					const vselfBinsManager<FEOrder>   & vselfBinsManagerEigen,
 					const MatrixFree<3,double> & matrixFreeDataElectro,
 					const unsigned int phiTotDofHandlerIndexElectro,
 					const distributedCPUVec<double> & phiTotRhoOutElectro,
@@ -540,7 +517,7 @@ namespace dftfe {
 				  const std::map<dealii::CellId, std::vector<double> > & gradRhoOutValuesElectroLpsp,
 					const std::map<dealii::CellId, std::vector<double> > & pseudoVLocElectro,
 					const std::map<unsigned int,std::map<dealii::CellId, std::vector<double> > > & pseudoVLocAtomsElectro,
-					const vselfBinsManager<FEOrder> & vselfBinsManagerElectro);
+					const vselfBinsManager<FEOrder,FEOrderElectro> & vselfBinsManagerElectro);
 
 			void addEPSPStressContribution
 				(FEValues<C_DIM> & feValues,
@@ -549,11 +526,11 @@ namespace dftfe {
 				 const unsigned int cell,
 				 const std::vector< Tensor<1,3,VectorizedArray<double> > > & gradRhoQuads,
 				 const std::map<unsigned int,std::map<dealii::CellId, std::vector<double> > > & pseudoVLocAtoms,
-				 const vselfBinsManager<FEOrder>   & vselfBinsManager,
+				 const vselfBinsManager<FEOrder,FEOrderElectro>   & vselfBinsManager,
 				 const std::vector<std::map<dealii::CellId , unsigned int> > & cellsVselfBallsClosestAtomIdDofHandler);
 
 			void addEPhiTotSmearedStressContribution
-        (FEEvaluation<3,1,C_num1DQuadSmearedCharge<FEOrder>()*C_numCopies1DQuadSmearedCharge(),3>  & forceEval,
+        (FEEvaluation<3,1,C_num1DQuadSmearedCharge()*C_numCopies1DQuadSmearedCharge(),3>  & forceEval,
          const MatrixFree<3,double> & matrixFreeData,
          const unsigned int cell,
          const std::vector<Tensor<1,3,VectorizedArray<double> > > & gradPhiTotQuads,
@@ -561,7 +538,7 @@ namespace dftfe {
          const std::vector< VectorizedArray<double> > & smearedbQuads);
 
 			void addEVselfSmearedStressContribution
-        (FEEvaluation<3,1,C_num1DQuadSmearedCharge<FEOrder>()*C_numCopies1DQuadSmearedCharge(),3>  & forceEval,
+        (FEEvaluation<3,1,C_num1DQuadSmearedCharge()*C_numCopies1DQuadSmearedCharge(),3>  & forceEval,
          const MatrixFree<3,double> & matrixFreeData,
          const unsigned int cell,
          const std::vector<Tensor<1,3,VectorizedArray<double> > > & gradVselfQuads,         
@@ -570,8 +547,6 @@ namespace dftfe {
          const std::vector< VectorizedArray<double> > & smearedbQuads);      
       
 #endif
-
-			void computeElementalNonLocalPseudoDataForce();
 
 			void computeElementalNonLocalPseudoOVDataForce();
 
@@ -587,10 +562,6 @@ namespace dftfe {
 				 const unsigned int kPointIndex,
 				 const std::vector<double> & partialOccupancies,
 				 const bool oldRoute=false);
-
-			void computeNonLocalProjectorKetTimesPsiTimesVFlattened
-				(const distributedCPUVec<dataTypes::number> &src,
-				 const unsigned int numberWaveFunctions);
 
 			/// Parallel distributed vector field which stores the configurational force for each fem node corresponding
 			/// to linear shape function generator (see equations 52-53 in (https://link.aps.org/doi/10.1103/PhysRevB.97.165132)).
@@ -672,7 +643,7 @@ namespace dftfe {
 			const bool d_allowGaussianOverlapOnAtoms=false;
 
 			/// pointer to dft class
-			dftClass<FEOrder>* dftPtr;
+			dftClass<FEOrder,FEOrderElectro>* dftPtr;
 
 			/// Finite element object for configurational force computation. Linear finite elements with three force field components are used.
 			FESystem<C_DIM>  FEForce;

@@ -29,6 +29,7 @@ namespace dftfe
 		void solveVselfInBins
 			(operatorDFTCUDAClass & operatorMatrix,
 			 const dealii::MatrixFree<3,double> & matrixFreeData,
+       const unsigned int mfDofHandlerIndex,
 			 const dealii::AffineConstraints<double> & hangingPeriodicConstraintMatrix,
 			 const double * rhsFlattenedH,
 			 const double * diagonalAH,

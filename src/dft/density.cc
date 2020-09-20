@@ -18,8 +18,8 @@
 
 //source file for electron density related computations
 
-	template<unsigned int FEOrder>
-void dftClass<FEOrder>::popOutRhoInRhoOutVals()
+	template<unsigned int FEOrder,unsigned int FEOrderElectro>
+void dftClass<FEOrder,FEOrderElectro>::popOutRhoInRhoOutVals()
 {
 
 	//pop out rhoInVals and rhoOutVals if their size exceeds mixing history size
@@ -76,10 +76,10 @@ void dftClass<FEOrder>::popOutRhoInRhoOutVals()
 
 
 //calculate electron density
-	template<unsigned int FEOrder>
-void dftClass<FEOrder>::compute_rhoOut(
+	template<unsigned int FEOrder,unsigned int FEOrderElectro>
+void dftClass<FEOrder,FEOrderElectro>::compute_rhoOut(
 #ifdef DFTFE_WITH_GPU
-		kohnShamDFTOperatorCUDAClass<FEOrder> & kohnShamDFTEigenOperator,
+		kohnShamDFTOperatorCUDAClass<FEOrder,FEOrderElectro> & kohnShamDFTEigenOperator,
 #endif
 		const bool isConsiderSpectrumSplitting,
 		const bool isGroundState)
@@ -93,11 +93,24 @@ void dftClass<FEOrder>::compute_rhoOut(
 		computeRhoNodalFromPSI(isConsiderSpectrumSplitting);
 #endif
 		d_rhoOutNodalValues.update_ghost_values();
+
+    //normalize rho
+    const double charge = totalCharge(d_matrixFreeDataPRefined,
+        d_rhoOutNodalValues);
+
+
+    const double scalingFactor = ((double)numElectrons)/charge;
+
+    //scale nodal vector with scalingFactor
+    d_rhoOutNodalValues *= scalingFactor;
+
 		d_rhoOutNodalVals.push_back(d_rhoOutNodalValues);
 
 
 		//interpolate nodal rhoOut data to quadrature data
-		interpolateNodalDataToQuadratureData(d_matrixFreeDataPRefined,
+		interpolateRhoNodalDataToQuadratureDataGeneral(d_matrixFreeDataPRefined,
+        d_densityDofHandlerIndexElectro,
+        d_densityQuadratureIdElectro,
 				d_rhoOutNodalValues,
 				*rhoOutValues,
 				*gradRhoOutValues,
@@ -131,7 +144,7 @@ void dftClass<FEOrder>::compute_rhoOut(
 				gradRhoOutValuesSpinPolarized = &(gradRhoOutValsSpinPolarized.back());
 		}
 
-		DensityCalculator<FEOrder> densityCalculator;
+		DensityCalculator<FEOrder,FEOrderElectro> densityCalculator;
 
 #ifdef DFTFE_WITH_GPU
 		if (dftParameters::useGPU)
@@ -146,10 +159,11 @@ void dftClass<FEOrder>::compute_rhoOut(
 					fermiEnergyUp,
 					fermiEnergyDown,
 					kohnShamDFTEigenOperator,
+          d_eigenDofHandlerIndex,
 					dofHandler,
 					matrix_free_data.n_physical_cells(),
 					matrix_free_data.get_dofs_per_cell(),
-					QGauss<3>(C_num1DQuad<FEOrder>()).size(),
+				  matrix_free_data.get_quadrature(d_densityQuadratureId).size(),
 					d_kPointWeights,
 					rhoOutValues,
 					gradRhoOutValues,
@@ -173,8 +187,8 @@ void dftClass<FEOrder>::compute_rhoOut(
 					dofHandler,
 					constraintsNone,
 					matrix_free_data,
-					eigenDofHandlerIndex,
-					0,
+					d_eigenDofHandlerIndex,
+					d_densityQuadratureId,
 					localProc_dof_indicesReal,
 					localProc_dof_indicesImag,           
 					d_kPointWeights,
@@ -200,8 +214,8 @@ void dftClass<FEOrder>::compute_rhoOut(
 				dofHandler,
 				constraintsNone,
 				matrix_free_data,
-				eigenDofHandlerIndex,
-				0,
+				d_eigenDofHandlerIndex,
+				d_densityQuadratureId,
 				localProc_dof_indicesReal,
 				localProc_dof_indicesImag,         
 				d_kPointWeights,
@@ -215,6 +229,7 @@ void dftClass<FEOrder>::compute_rhoOut(
 				isConsiderSpectrumSplitting,
 				false);
 #endif
+    normalizeRhoOutQuadValues();
 
 		if (isGroundState && dftParameters::mixingMethod!="ANDERSON_WITH_KERKER")
 		{
@@ -224,16 +239,27 @@ void dftClass<FEOrder>::compute_rhoOut(
 			computeRhoNodalFromPSI(isConsiderSpectrumSplitting);
 #endif
 			d_rhoOutNodalValues.update_ghost_values();
+
+      //normalize rho
+      const double charge = totalCharge(d_matrixFreeDataPRefined,
+          d_rhoOutNodalValues);
+
+
+      const double scalingFactor = ((double)numElectrons)/charge;
+
+      //scale nodal vector with scalingFactor
+      d_rhoOutNodalValues *= scalingFactor;      
 		}
 	}
 
   if (isGroundState)
   {
-    d_constraintsPRefined.distribute(d_rhoOutNodalValues);
-    d_rhoOutNodalValues.update_ghost_values();
-		interpolateNodalDataToQuadratureData(d_matrixFreeDataPRefined,
-        0,
-        2,
+    d_rhoOutNodalValuesDistributed=d_rhoOutNodalValues;
+    d_constraintsRhoNodal.distribute(d_rhoOutNodalValuesDistributed);
+    d_rhoOutNodalValuesDistributed.update_ghost_values();
+		interpolateRhoNodalDataToQuadratureDataLpsp(d_matrixFreeDataPRefined,
+        d_densityDofHandlerIndexElectro,
+        d_lpspQuadratureIdElectro,
 				d_rhoOutNodalValues,
 				d_rhoOutValuesLpspQuad,
 				d_gradRhoOutValuesLpspQuad,
@@ -249,17 +275,17 @@ void dftClass<FEOrder>::compute_rhoOut(
             const unsigned int q)
         {return (*rhoOutValues).find(cell->id())->second[q];};
       dealii::VectorTools::project<3,distributedCPUVec<double>> (dealii::MappingQ1<3,3>(),
-          d_dofHandlerPRefined,
-          d_constraintsPRefined,
-          QGauss<3>(C_num1DQuad<FEOrder>()),
+          d_dofHandlerRhoNodal,
+          d_constraintsRhoNodal,
+          d_matrixFreeDataPRefined.get_quadrature(d_densityQuadratureIdElectro),
           funcRho,
           d_rhoOutNodalValues);
       d_rhoOutNodalValues.update_ghost_values();
     }
 
-		interpolateNodalDataToQuadratureData(d_matrixFreeDataPRefined,
-        0,
-        2,
+		interpolateRhoNodalDataToQuadratureDataLpsp(d_matrixFreeDataPRefined,
+        d_densityDofHandlerIndexElectro,
+        d_lpspQuadratureIdElectro,
 				d_rhoOutNodalValues,
 				d_rhoOutValuesLpspQuad,
 				d_gradRhoOutValuesLpspQuad,
@@ -280,14 +306,14 @@ void dftClass<FEOrder>::compute_rhoOut(
 
 
 
-template<unsigned int FEOrder>
-	void dftClass<FEOrder>::resizeAndAllocateRhoTableStorage
+template<unsigned int FEOrder,unsigned int FEOrderElectro>
+	void dftClass<FEOrder,FEOrderElectro>::resizeAndAllocateRhoTableStorage
 (std::deque<std::map<dealii::CellId,std::vector<double> >> & rhoVals,
  std::deque<std::map<dealii::CellId,std::vector<double> >> & gradRhoVals,
  std::deque<std::map<dealii::CellId,std::vector<double> >> & rhoValsSpinPolarized,
  std::deque<std::map<dealii::CellId,std::vector<double> >> & gradRhoValsSpinPolarized)
 {
-	const unsigned int numQuadPoints = matrix_free_data.get_n_q_points(0);;
+	const unsigned int numQuadPoints = matrix_free_data.get_n_q_points(d_densityQuadratureId);;
 
 	//create new rhoValue tables
 	rhoVals.push_back(std::map<dealii::CellId,std::vector<double> > ());
@@ -323,8 +349,8 @@ template<unsigned int FEOrder>
 
 
 //rho data reinitilization without remeshing. The rho out of last ground state solve is made the rho in of the new solve
-	template<unsigned int FEOrder>
-void dftClass<FEOrder>::noRemeshRhoDataInit()
+	template<unsigned int FEOrder,unsigned int FEOrderElectro>
+void dftClass<FEOrder,FEOrderElectro>::noRemeshRhoDataInit()
 {
 
 	if (rhoOutVals.size()>0 || d_rhoInNodalVals.size()>0)
@@ -392,7 +418,9 @@ void dftClass<FEOrder>::noRemeshRhoDataInit()
 			d_rhoInNodalValues *= scalingFactor;
 			d_rhoInNodalVals.push_back(d_rhoInNodalValues);
 
-			interpolateNodalDataToQuadratureData(d_matrixFreeDataPRefined,
+			interpolateRhoNodalDataToQuadratureDataGeneral(d_matrixFreeDataPRefined,
+          d_densityDofHandlerIndexElectro,
+          d_densityQuadratureIdElectro,
 					d_rhoInNodalValues,
 					*rhoInValues,
 					*gradRhoInValues,
@@ -413,31 +441,29 @@ void dftClass<FEOrder>::noRemeshRhoDataInit()
 		}
 
 		//scale quadrature values
-		normalizeRho();
+		normalizeRhoInQuadValues();
 	}
 }
 
-	template <unsigned int FEOrder>
-void dftClass<FEOrder>::computeRhoNodalFromPSI(
+	template <unsigned int FEOrder,unsigned int FEOrderElectro>
+void dftClass<FEOrder,FEOrderElectro>::computeRhoNodalFromPSI(
 #ifdef DFTFE_WITH_GPU
-		kohnShamDFTOperatorCUDAClass<FEOrder> & kohnShamDFTEigenOperator,
+		kohnShamDFTOperatorCUDAClass<FEOrder,FEOrderElectro> & kohnShamDFTEigenOperator,
 #endif
 		bool isConsiderSpectrumSplitting)
 {
 	std::map<dealii::CellId, std::vector<double> >  rhoPRefinedNodalData;
 
 	//initialize variables to be used later
-	const unsigned int dofs_per_cell = d_dofHandlerPRefined.get_fe().dofs_per_cell;
-	typename DoFHandler<3>::active_cell_iterator cell = d_dofHandlerPRefined.begin_active(), endc = d_dofHandlerPRefined.end();
-	dealii::IndexSet locallyOwnedDofs = d_dofHandlerPRefined.locally_owned_dofs();
-	QGaussLobatto<3>  quadrature_formula(C_num1DKerkerPoly<FEOrder>()+1);
+	const unsigned int dofs_per_cell = d_dofHandlerRhoNodal.get_fe().dofs_per_cell;
+	typename DoFHandler<3>::active_cell_iterator cell = d_dofHandlerRhoNodal.begin_active(), endc = d_dofHandlerRhoNodal.end();
+	const dealii::IndexSet & locallyOwnedDofs = d_dofHandlerRhoNodal.locally_owned_dofs();
+  const Quadrature<3> &  quadrature_formula=matrix_free_data.get_quadrature(d_gllQuadratureId);
 	const unsigned int numQuadPoints = quadrature_formula.size();
-
-	AssertThrow(numQuadPoints == matrix_free_data.get_n_q_points(3),ExcMessage("Number of quadrature points from Quadrature object does not match with number of quadrature points obtained from matrix_free object"));
 
 	//get access to quadrature point coordinates and 2p DoFHandler nodal points
 	const std::vector<Point<3> > & quadraturePointCoor = quadrature_formula.get_points();
-	const std::vector<Point<3> > & supportPointNaturalCoor = d_dofHandlerPRefined.get_fe().get_unit_support_points();
+	const std::vector<Point<3> > & supportPointNaturalCoor = d_dofHandlerRhoNodal.get_fe().get_unit_support_points();
 	std::vector<unsigned int> renumberingMap(numQuadPoints);
 
 	//create renumbering map between the numbering order of quadrature points and lobatto support points
@@ -490,7 +516,7 @@ void dftClass<FEOrder>::computeRhoNodalFromPSI(
 		}
 
 
-	DensityCalculator<FEOrder> densityCalculator;  
+	DensityCalculator<FEOrder,FEOrderElectro> densityCalculator;  
 
 	//compute rho from wavefunctions at nodal locations of 2p DoFHandler nodes in each cell
 #ifdef DFTFE_WITH_GPU
@@ -506,6 +532,7 @@ void dftClass<FEOrder>::computeRhoNodalFromPSI(
 				fermiEnergyUp,
 				fermiEnergyDown,
 				kohnShamDFTEigenOperator,
+        d_eigenDofHandlerIndex,
 				dofHandler,
 				matrix_free_data.n_physical_cells(),
 				matrix_free_data.get_dofs_per_cell(),
@@ -534,8 +561,8 @@ void dftClass<FEOrder>::computeRhoNodalFromPSI(
 				dofHandler,
 				constraintsNone,
 				matrix_free_data,
-				eigenDofHandlerIndex,
-				3,
+				d_eigenDofHandlerIndex,
+				d_gllQuadratureId,
 				localProc_dof_indicesReal,
 				localProc_dof_indicesImag,        
 				d_kPointWeights,
@@ -561,8 +588,8 @@ void dftClass<FEOrder>::computeRhoNodalFromPSI(
 			dofHandler,
 			constraintsNone,
 			matrix_free_data,
-			eigenDofHandlerIndex,
-			3,
+			d_eigenDofHandlerIndex,
+			d_gllQuadratureId,
 			localProc_dof_indicesReal,
 			localProc_dof_indicesImag,
 			d_kPointWeights,
@@ -579,8 +606,8 @@ void dftClass<FEOrder>::computeRhoNodalFromPSI(
 
 	//copy Lobatto quadrature data to fill in 2p DoFHandler nodal data  
 	DoFHandler<3>::active_cell_iterator
-		cellP = d_dofHandlerPRefined.begin_active(),
-		      endcP = d_dofHandlerPRefined.end();
+		cellP = d_dofHandlerRhoNodal.begin_active(),
+		      endcP = d_dofHandlerRhoNodal.end();
 
 	for (; cellP!=endcP; ++cellP)
 	{
@@ -594,7 +621,7 @@ void dftClass<FEOrder>::computeRhoNodalFromPSI(
 			for(unsigned int iNode = 0; iNode < dofs_per_cell; ++iNode)
 			{
 				const dealii::types::global_dof_index nodeID = cell_dof_indices[iNode];
-				if(!d_constraintsPRefined.is_constrained(nodeID))
+				if(!d_constraintsRhoNodal.is_constrained(nodeID))
 				{
 					if(locallyOwnedDofs.is_element(nodeID))
 						d_rhoOutNodalValues(nodeID) =  nodalValues[renumberingMap[iNode]];

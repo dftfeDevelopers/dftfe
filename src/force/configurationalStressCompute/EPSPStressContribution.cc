@@ -17,15 +17,15 @@
 //
 #ifdef USE_COMPLEX
 //compute EPSP contribution stress (local pseudopotential)
-template<unsigned int FEOrder>
-	void forceClass<FEOrder>::addEPSPStressContribution
+template<unsigned int FEOrder,unsigned int FEOrderElectro>
+	void forceClass<FEOrder,FEOrderElectro>::addEPSPStressContribution
 (FEValues<C_DIM> & feValues,
  FEEvaluation<C_DIM,1,C_num1DQuadLPSP<FEOrder>()*C_numCopies1DQuadLPSP(),C_DIM>  & forceEval,
  const MatrixFree<3,double> & matrixFreeData,
  const unsigned int cell,
  const std::vector< Tensor<1,3,VectorizedArray<double> >  > & gradRhoQuads,
  const std::map<unsigned int,std::map<dealii::CellId, std::vector<double> > > & pseudoVLocAtoms,
- const vselfBinsManager<FEOrder> & vselfBinsManager,
+ const vselfBinsManager<FEOrder,FEOrderElectro> & vselfBinsManager,
  const std::vector<std::map<dealii::CellId , unsigned int> > & cellsVselfBallsClosestAtomIdDofHandler)
 {
 	Tensor<1,C_DIM,VectorizedArray<double> > zeroTensor1;
@@ -71,10 +71,6 @@ template<unsigned int FEOrder>
 		if (pseudoVLocAtoms.find(iAtom)==pseudoVLocAtoms.end())
 			isLocalDomainOutsidePspTail=true;
 
-		//Assuming psp tail is larger than vself ball
-		if (isLocalDomainOutsidePspTail)
-			continue;
-
 		unsigned int binIdiAtom;
 		std::map<unsigned int,unsigned int>::const_iterator it1=
 			vselfBinsManager.getAtomIdBinIdMapLocalAllImages().find(atomId);
@@ -82,6 +78,11 @@ template<unsigned int FEOrder>
 			isLocalDomainOutsideVselfBall=true;
 		else
 			binIdiAtom=it1->second;
+
+		if (isLocalDomainOutsidePspTail && isLocalDomainOutsideVselfBall)
+			continue;
+
+
 
 		for (unsigned int iSubCell=0; iSubCell<numSubCells; ++iSubCell)
 		{

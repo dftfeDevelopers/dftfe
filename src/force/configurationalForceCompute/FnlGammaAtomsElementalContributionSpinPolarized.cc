@@ -18,10 +18,10 @@
 
 #ifdef USE_COMPLEX
 //(locally used function) compute Fnl contibution due to Gamma(Rj) for given set of cells
-template<unsigned int FEOrder>
-	void forceClass<FEOrder>::FnlGammaAtomsElementalContributionSpinPolarized
+template<unsigned int FEOrder,unsigned int FEOrderElectro>
+	void forceClass<FEOrder,FEOrderElectro>::FnlGammaAtomsElementalContributionSpinPolarized
 (std::map<unsigned int, std::vector<double> > & forceContributionFnlGammaAtoms,
- FEEvaluation<C_DIM,1,C_num1DQuad<FEOrder>(),C_DIM>  & forceEval,
+ FEEvaluation<C_DIM,1,C_num1DQuad<C_rhoNodalPolyOrder<FEOrder,FEOrderElectro>()>(),C_DIM>  & forceEval,
  FEEvaluation<C_DIM,1,C_num1DQuadNLPSP<FEOrder>()*C_numCopies1DQuadNLPSP(),C_DIM>  & forceEvalNLP,
  const unsigned int cell,
  const std::vector<std::vector<std::vector<std::vector<Tensor<1,2, VectorizedArray<double> > > > > > & zetaDeltaVQuads,
@@ -130,10 +130,10 @@ template<unsigned int FEOrder>
 
 #else
 
-template<unsigned int FEOrder>
-	void forceClass<FEOrder>::FnlGammaAtomsElementalContributionSpinPolarized
+template<unsigned int FEOrder,unsigned int FEOrderElectro>
+	void forceClass<FEOrder,FEOrderElectro>::FnlGammaAtomsElementalContributionSpinPolarized
 (std::map<unsigned int, std::vector<double> > & forceContributionFnlGammaAtoms,
- FEEvaluation<C_DIM,1,C_num1DQuad<FEOrder>(),C_DIM>  & forceEval,
+ FEEvaluation<C_DIM,1,C_num1DQuad<C_rhoNodalPolyOrder<FEOrder,FEOrderElectro>()>(),C_DIM>  & forceEval,
  FEEvaluation<C_DIM,1,C_num1DQuadNLPSP<FEOrder>()*C_numCopies1DQuadNLPSP(),C_DIM>  & forceEvalNLP,
  const unsigned int cell,
  const std::vector<std::vector<std::vector<VectorizedArray<double> > > > & zetaDeltaVQuads,

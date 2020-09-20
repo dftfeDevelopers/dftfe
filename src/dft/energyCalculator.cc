@@ -285,7 +285,7 @@ namespace dftfe
 		 const double fermiEnergy,
 		 const xc_func_type & funcX,
 		 const xc_func_type & funcC,
-		 const distributedCPUVec<double> & phiTotRhoIn,
+     const std::map<dealii::CellId, std::vector<double> > & phiTotRhoInValues,
 		 const distributedCPUVec<double> & phiTotRhoOut,
 		 const std::map<dealii::CellId, std::vector<double> > & rhoInValues,
 		 const std::map<dealii::CellId, std::vector<double> > & rhoOutValues,
@@ -336,7 +336,7 @@ namespace dftfe
        }       
 
 			 const double TVal = dftParameters::TVal;
-			 std::vector<double> cellPhiTotRhoIn(num_quad_points_electronic);
+			 //std::vector<double> cellPhiTotRhoIn(num_quad_points_electronic);
 			 std::vector<double> cellPhiTotRhoOut(num_quad_points_electrostatic);
 
 			 const dealii::ConditionalOStream scout (std::cout,
@@ -367,7 +367,7 @@ namespace dftfe
 				 {
 
 					 feValuesElectronic.reinit (cellElectronic);
-					 feValuesElectronic.get_function_values(phiTotRhoIn,cellPhiTotRhoIn);
+					 //feValuesElectronic.get_function_values(phiTotRhoIn,cellPhiTotRhoIn);
 
            feValuesElectronicLpsp.reinit(cellElectronic);
 
@@ -418,7 +418,7 @@ namespace dftfe
 
 							 correlationEnergy+=(corrEnergyDensity[q_point])*(rhoOutValues.find(cellElectronic->id())->second[q_point])*feValuesElectronic.JxW(q_point);
 
-							 electrostaticPotentialTimesRho+=(cellPhiTotRhoIn[q_point])
+							 electrostaticPotentialTimesRho+=(phiTotRhoInValues.find(cellElectronic->id())->second[q_point])
 								 *(rhoOutValues.find(cellElectronic->id())->second[q_point])
 								 *feValuesElectronic.JxW (q_point);
 						 }
@@ -452,7 +452,7 @@ namespace dftfe
 
 							 correlationEnergy+=(corrEnergyVal[q_point])*(rhoOutValues.find(cellElectronic->id())->second[q_point])*feValuesElectronic.JxW(q_point);
 
-							 electrostaticPotentialTimesRho+=(cellPhiTotRhoIn[q_point])
+							 electrostaticPotentialTimesRho+=(phiTotRhoInValues.find(cellElectronic->id())->second[q_point])
 								 *(rhoOutValues.find(cellElectronic->id())->second[q_point])
 								 *feValuesElectronic.JxW (q_point);
 						 }
@@ -569,7 +569,7 @@ double energyCalculator::computeShadowPotentialEnergyExtendedLagrangian
  const double fermiEnergy,
  const xc_func_type & funcX,
  const xc_func_type & funcC,
- const distributedCPUVec<double> & phiTotRhoIn,
+ const std::map<dealii::CellId, std::vector<double> > & phiTotRhoInValues,
  const distributedCPUVec<double> & phiTotRhoInElec,
  const std::map<dealii::CellId, std::vector<double> > & rhoInValues,
  const std::map<dealii::CellId, std::vector<double> > & rhoOutValues,
@@ -592,7 +592,7 @@ double energyCalculator::computeShadowPotentialEnergyExtendedLagrangian
 	const unsigned int   num_quad_points_electronic    = quadratureElectronic.size();
 
 	const double TVal = dftParameters::TVal;
-	std::vector<double> cellPhiTotRhoIn(num_quad_points_electronic);
+	//std::vector<double> cellPhiTotRhoIn(num_quad_points_electronic);
 	std::vector<double> cellPhiTotRhoInElec(num_quad_points_electrostatic);
 
 	const dealii::ConditionalOStream scout (std::cout,
@@ -627,7 +627,7 @@ double energyCalculator::computeShadowPotentialEnergyExtendedLagrangian
 		{
 
 			feValuesElectronic.reinit (cellElectronic);
-			feValuesElectronic.get_function_values(phiTotRhoIn,cellPhiTotRhoIn);
+			//feValuesElectronic.get_function_values(phiTotRhoIn,cellPhiTotRhoIn);
 
 			if(dftParameters::xc_id == 4)
 			{
@@ -676,7 +676,7 @@ double energyCalculator::computeShadowPotentialEnergyExtendedLagrangian
 
 					correlationEnergy+=(corrEnergyDensity[q_point])*(rhoInValues.find(cellElectronic->id())->second[q_point])*feValuesElectronic.JxW(q_point);
 
-					electrostaticPotentialTimesRhoIn+=(cellPhiTotRhoIn[q_point])
+					electrostaticPotentialTimesRhoIn+=(phiTotRhoInValues.find(cellElectronic->id())->second[q_point])
 						*(rhoInValues.find(cellElectronic->id())->second[q_point])
 						*feValuesElectronic.JxW (q_point);
 				}
@@ -710,7 +710,7 @@ double energyCalculator::computeShadowPotentialEnergyExtendedLagrangian
 
 					correlationEnergy+=(corrEnergyVal[q_point])*(rhoInValues.find(cellElectronic->id())->second[q_point])*feValuesElectronic.JxW(q_point);
 
-					electrostaticPotentialTimesRhoIn+=(cellPhiTotRhoIn[q_point])
+					electrostaticPotentialTimesRhoIn+=(phiTotRhoInValues.find(cellElectronic->id())->second[q_point])
 						*(2*rhoInValues.find(cellElectronic->id())->second[q_point]-rhoOutValues.find(cellElectronic->id())->second[q_point])
 						*feValuesElectronic.JxW (q_point);
 
@@ -739,7 +739,7 @@ double energyCalculator::computeShadowPotentialEnergyExtendedLagrangian
 	double energy=-potentialTimesRhoIn+exchangeEnergy+correlationEnergy+electrostaticEnergyTotPot;
 
 
-	const double nuclearElectrostaticEnergy=internal::nuclearElectrostaticEnergyLocal(phiTotRhoIn,
+	const double nuclearElectrostaticEnergy=internal::nuclearElectrostaticEnergyLocal(phiTotRhoInElec,
 			localVselfs,
 			smearedbValues,
 			dofHandlerElectrostatic,
@@ -787,7 +787,7 @@ double energyCalculator::computeEnergySpinPolarized
  const double fermiEnergyDown,
  const xc_func_type & funcX,
  const xc_func_type & funcC,
- const distributedCPUVec<double> & phiTotRhoIn,
+ const std::map<dealii::CellId, std::vector<double> > & phiTotRhoInValues,
  const distributedCPUVec<double> & phiTotRhoOut,
  const std::map<dealii::CellId, std::vector<double> > & rhoInValues,
  const std::map<dealii::CellId, std::vector<double> > & rhoOutValues,
@@ -842,7 +842,7 @@ double energyCalculator::computeEnergySpinPolarized
           dealii::ExcMessage("DFT-FE Error: mismatch in quadrature data in energyCalculator::computeEnergy."));   
    } 
 
-	std::vector<double> cellPhiTotRhoIn(num_quad_points_electronic);
+	//std::vector<double> cellPhiTotRhoIn(num_quad_points_electronic);
 	std::vector<double> cellPhiTotRhoOut(num_quad_points_electrostatic);
 	//
 	const dealii::ConditionalOStream scout (std::cout, (dealii::Utilities::MPI::this_mpi_process(mpi_communicator) == 0)) ;
@@ -871,7 +871,7 @@ double energyCalculator::computeEnergySpinPolarized
 		{
 
 			feValuesElectronic.reinit (cellElectronic);
-			feValuesElectronic.get_function_values(phiTotRhoIn,cellPhiTotRhoIn);
+			//feValuesElectronic.get_function_values(phiTotRhoIn,cellPhiTotRhoIn);
 
 
       feValuesElectronicLpsp.reinit(cellElectronic);
@@ -948,7 +948,7 @@ double energyCalculator::computeEnergySpinPolarized
 
 					correlationEnergy+=(corrEnergyDensity[q_point])*(rhoOutValues.find(cellElectronic->id())->second[q_point])*feValuesElectronic.JxW(q_point);
 
-					electrostaticPotentialTimesRho+=(cellPhiTotRhoIn[q_point])
+					electrostaticPotentialTimesRho+=(phiTotRhoInValues.find(cellElectronic->id())->second[q_point])
 						*(rhoOutValues.find(cellElectronic->id())->second[q_point])
 						*feValuesElectronic.JxW (q_point);
 				}
@@ -986,7 +986,7 @@ double energyCalculator::computeEnergySpinPolarized
 					exchangeEnergy+=(exchangeEnergyVal[q_point])*(rhoOutValues.find(cellElectronic->id())->second[q_point])*feValuesElectronic.JxW(q_point);
 					correlationEnergy+=(corrEnergyVal[q_point])*(rhoOutValues.find(cellElectronic->id())->second[q_point])*feValuesElectronic.JxW(q_point) ;
 
-					electrostaticPotentialTimesRho+=(cellPhiTotRhoIn[q_point])
+					electrostaticPotentialTimesRho+=(phiTotRhoInValues.find(cellElectronic->id())->second[q_point])
 						*(rhoOutValues.find(cellElectronic->id())->second[q_point])
 						*feValuesElectronic.JxW (q_point);
 				}

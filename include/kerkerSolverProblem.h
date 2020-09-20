@@ -24,12 +24,12 @@
 namespace dftfe {
 
 	/**
-	 * @brief poisson solver problem class template. template parameter FEOrder
-	 * is the finite element polynomial order
+	 * @brief poisson solver problem class template. template parameter FEOrderElectro
+	 * is the finite element polynomial order for electrostatics
 	 *
 	 * @author Phani Motamarri
 	 */
-	template<unsigned int FEOrder>
+	template<unsigned int FEOrderElectro>
 		class kerkerSolverProblem: public dealiiLinearSolverProblem {
 
 			public:
@@ -51,7 +51,10 @@ namespace dftfe {
 				void init(dealii::MatrixFree<3,double> & matrixFreeData,
 						dealii::ConstraintMatrix & constraintMatrix,
 						distributedCPUVec<double> & x,
-						double kerkerMixingParameter);
+						double kerkerMixingParameter,
+            const unsigned int matrixFreeVectorComponent,
+            const unsigned int matrixFreeQuadratureComponent);
+
 
 
 				/**
@@ -139,6 +142,14 @@ namespace dftfe {
 
 				//kerker mixing constant
 				double d_gamma;
+
+        /// matrix free index required to access the DofHandler and ConstraintMatrix objects corresponding to the
+        /// problem
+        unsigned int d_matrixFreeVectorComponent;
+
+        /// matrix free quadrature index
+        unsigned int d_matrixFreeQuadratureComponent;
+
 
 				/// pointer to electron density cell and grad residual data
 				const std::map<dealii::CellId,std::vector<double> >* d_quadGradResidualValuesPtr;

@@ -39,11 +39,11 @@ void calldgesv(const unsigned int dimensionMatrix,
 }
 
 //implement simple mixing scheme
-	template<unsigned int FEOrder>
-double dftClass<FEOrder>::mixing_simple()
+	template<unsigned int FEOrder,unsigned int FEOrderElectro>
+double dftClass<FEOrder,FEOrderElectro>::mixing_simple()
 {
 	double normValue=0.0;
-	QGauss<3>  quadrature(C_num1DQuad<FEOrder>());
+	const Quadrature<3> &  quadrature=matrix_free_data.get_quadrature(d_densityQuadratureId);
 	FEValues<3> fe_values (FE, quadrature, update_JxW_values);
 	const unsigned int num_quad_points = quadrature.size();
 
@@ -104,10 +104,10 @@ double dftClass<FEOrder>::mixing_simple()
 }
 
 //implement anderson mixing scheme
-template<unsigned int FEOrder>
-double dftClass<FEOrder>::mixing_anderson(){
+template<unsigned int FEOrder,unsigned int FEOrderElectro>
+double dftClass<FEOrder,FEOrderElectro>::mixing_anderson(){
 	double normValue=0.0;
-	QGauss<3>  quadrature(C_num1DQuad<FEOrder>());
+  const Quadrature<3> &  quadrature=matrix_free_data.get_quadrature(d_densityQuadratureId);
 	FEValues<3> fe_values (FE, quadrature, update_JxW_values);
 	const unsigned int num_quad_points = quadrature.size();
 
@@ -298,10 +298,10 @@ double dftClass<FEOrder>::mixing_anderson(){
 
 
 //implement Broyden mixing scheme
-template<unsigned int FEOrder>
-double dftClass<FEOrder>::mixing_broyden(){
+template<unsigned int FEOrder,unsigned int FEOrderElectro>
+double dftClass<FEOrder,FEOrderElectro>::mixing_broyden(){
 	double normValue=0.0;
-	QGauss<3>  quadrature(C_num1DQuad<FEOrder>());
+	const Quadrature<3> &  quadrature=matrix_free_data.get_quadrature(d_densityQuadratureId);
 	FEValues<3> fe_values (FE, quadrature, update_JxW_values);
 	const unsigned int num_quad_points = quadrature.size();
 	//
@@ -505,10 +505,10 @@ double dftClass<FEOrder>::mixing_broyden(){
 
 
 //implement Broyden mixing scheme
-template<unsigned int FEOrder>
-double dftClass<FEOrder>::mixing_broyden_spinPolarized(){
+template<unsigned int FEOrder,unsigned int FEOrderElectro>
+double dftClass<FEOrder,FEOrderElectro>::mixing_broyden_spinPolarized(){
 	double normValue=0.0;
-	QGauss<3>  quadrature(C_num1DQuad<FEOrder>());
+	const Quadrature<3> &  quadrature=matrix_free_data.get_quadrature(d_densityQuadratureId);
 	FEValues<3> fe_values (FE, quadrature, update_JxW_values);
 	const unsigned int num_quad_points = quadrature.size();
 	//
@@ -755,11 +755,11 @@ double dftClass<FEOrder>::mixing_broyden_spinPolarized(){
 
 
 
-	template<unsigned int FEOrder>
-double dftClass<FEOrder>::mixing_simple_spinPolarized()
+	template<unsigned int FEOrder,unsigned int FEOrderElectro>
+double dftClass<FEOrder,FEOrderElectro>::mixing_simple_spinPolarized()
 {
 	double normValue=0.0;
-	QGauss<3>  quadrature(C_num1DQuad<FEOrder>());
+	const Quadrature<3> &  quadrature=matrix_free_data.get_quadrature(d_densityQuadratureId);
 	FEValues<3> fe_values (FE, quadrature,update_JxW_values);
 	const unsigned int num_quad_points = quadrature.size();
 
@@ -847,10 +847,10 @@ double dftClass<FEOrder>::mixing_simple_spinPolarized()
 }
 
 //implement anderson mixing scheme
-template<unsigned int FEOrder>
-double dftClass<FEOrder>::mixing_anderson_spinPolarized(){
+template<unsigned int FEOrder,unsigned int FEOrderElectro>
+double dftClass<FEOrder,FEOrderElectro>::mixing_anderson_spinPolarized(){
 	double normValue=0.0;
-	QGauss<3>  quadrature(C_num1DQuad<FEOrder>());
+	const Quadrature<3> &  quadrature=matrix_free_data.get_quadrature(d_densityQuadratureId);
 	FEValues<3> fe_values (FE, quadrature,update_JxW_values);
 	const unsigned int num_quad_points = quadrature.size();
 

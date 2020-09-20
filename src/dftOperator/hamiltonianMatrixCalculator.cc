@@ -18,8 +18,8 @@
 
 
 
-	template<unsigned int FEOrder>
-void kohnShamDFTOperatorClass<FEOrder>::computeHamiltonianMatrix(const unsigned int kPointIndex, const unsigned int spinIndex)
+	template<unsigned int FEOrder,unsigned int FEOrderElectro>
+void kohnShamDFTOperatorClass<FEOrder,FEOrderElectro>::computeHamiltonianMatrix(const unsigned int kPointIndex, const unsigned int spinIndex)
 {
   MPI_Barrier(MPI_COMM_WORLD);
 	double cpu_time=MPI_Wtime();
@@ -33,7 +33,7 @@ void kohnShamDFTOperatorClass<FEOrder>::computeHamiltonianMatrix(const unsigned 
 
   if (dftParameters::isPseudopotential && !d_isStiffnessMatrixExternalPotCorrComputed)
   {
-    const unsigned int numberDofsPerElement = dftPtr->matrix_free_data.get_dof_handler().get_fe().dofs_per_cell;
+    const unsigned int numberDofsPerElement = dftPtr->matrix_free_data.get_dof_handler(dftPtr->d_densityDofHandlerIndex).get_fe().dofs_per_cell;
     d_cellHamiltonianMatrixExternalPotCorr.clear();
   	d_cellHamiltonianMatrixExternalPotCorr.resize(totalLocallyOwnedCells,std::vector<double>(numberDofsPerElement*numberDofsPerElement,0.0));   
 
@@ -93,10 +93,10 @@ void kohnShamDFTOperatorClass<FEOrder>::computeHamiltonianMatrix(const unsigned 
 	//
 	//Get some FE related Data
 	//
-	QGauss<3> quadrature(C_num1DQuad<FEOrder>());
-	FEEvaluation<3, FEOrder, C_num1DQuad<FEOrder>(), 1, double>  fe_eval(dftPtr->matrix_free_data, 0, 0);
-	FEValues<3> fe_values(dftPtr->matrix_free_data.get_dof_handler().get_fe(), quadrature,update_gradients);
-	const unsigned int numberDofsPerElement = dftPtr->matrix_free_data.get_dof_handler().get_fe().dofs_per_cell;
+	const Quadrature<3> &  quadrature=dftPtr->matrix_free_data.get_quadrature(dftPtr->d_densityQuadratureId);
+	FEEvaluation<3, FEOrder, C_num1DQuad<C_rhoNodalPolyOrder<FEOrder,FEOrderElectro>()>(), 1, double>  fe_eval(dftPtr->matrix_free_data, 0, 0);
+	FEValues<3> fe_values(dftPtr->matrix_free_data.get_dof_handler(dftPtr->d_densityDofHandlerIndex).get_fe(), quadrature,update_gradients);
+	const unsigned int numberDofsPerElement = dftPtr->matrix_free_data.get_dof_handler(dftPtr->d_densityDofHandlerIndex).get_fe().dofs_per_cell;
 	const unsigned int numberQuadraturePoints = quadrature.size();
 	typename dealii::DoFHandler<3>::active_cell_iterator cellPtr;
 
@@ -133,7 +133,7 @@ void kohnShamDFTOperatorClass<FEOrder>::computeHamiltonianMatrix(const unsigned 
 		nonCachedShapeGrad.resize(numberDofsPerElement*numberQuadraturePoints);
 		for(unsigned int iCell = 0; iCell < n_sub_cells; ++iCell)
 		{
-			cellPtr = dftPtr->matrix_free_data.get_cell_iterator(iMacroCell,iCell);
+			cellPtr = dftPtr->matrix_free_data.get_cell_iterator(iMacroCell,iCell,dftPtr->d_densityDofHandlerIndex);
 			fe_values.reinit(cellPtr);
 
 			for(unsigned int iNode = 0; iNode < numberDofsPerElement; ++iNode)
@@ -303,8 +303,8 @@ void kohnShamDFTOperatorClass<FEOrder>::computeHamiltonianMatrix(const unsigned 
 }
 
 
-	template<unsigned int FEOrder>
-void kohnShamDFTOperatorClass<FEOrder>::computeKineticMatrix()
+	template<unsigned int FEOrder,unsigned int FEOrderElectro>
+void kohnShamDFTOperatorClass<FEOrder,FEOrderElectro>::computeKineticMatrix()
 {
 
 	//
@@ -322,10 +322,10 @@ void kohnShamDFTOperatorClass<FEOrder>::computeKineticMatrix()
 	//
 	//Get some FE related Data
 	//
-	QGauss<3> quadrature(C_num1DQuad<FEOrder>());
-	FEEvaluation<3, FEOrder, C_num1DQuad<FEOrder>(), 1, double>  fe_eval(dftPtr->matrix_free_data, 0, 0);
-	FEValues<3> fe_values(dftPtr->matrix_free_data.get_dof_handler().get_fe(), quadrature,update_gradients);
-	const unsigned int numberDofsPerElement = dftPtr->matrix_free_data.get_dof_handler().get_fe().dofs_per_cell;
+	const Quadrature<3> &  quadrature=dftPtr->matrix_free_data.get_quadrature(dftPtr->d_densityQuadratureId);
+	FEEvaluation<3, FEOrder, C_num1DQuad<C_rhoNodalPolyOrder<FEOrder,FEOrderElectro>()>(), 1, double>  fe_eval(dftPtr->matrix_free_data, 0, 0);
+	FEValues<3> fe_values(dftPtr->matrix_free_data.get_dof_handler(dftPtr->d_densityDofHandlerIndex).get_fe(), quadrature,update_gradients);
+	const unsigned int numberDofsPerElement = dftPtr->matrix_free_data.get_dof_handler(dftPtr->d_densityDofHandlerIndex).get_fe().dofs_per_cell;
 
 
 	//

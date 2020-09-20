@@ -17,8 +17,8 @@
 //
 
 
-	template<unsigned int FEOrder>
-void kohnShamDFTOperatorClass<FEOrder>::preComputeShapeFunctionGradientIntegrals(const unsigned int lpspQuadratureId)
+	template<unsigned int FEOrder,unsigned int FEOrderElectro>
+void kohnShamDFTOperatorClass<FEOrder,FEOrderElectro>::preComputeShapeFunctionGradientIntegrals(const unsigned int lpspQuadratureId)
 {
 
 	//
@@ -26,7 +26,7 @@ void kohnShamDFTOperatorClass<FEOrder>::preComputeShapeFunctionGradientIntegrals
 	//
 	const unsigned int numberMacroCells = dftPtr->matrix_free_data.n_macro_cells();
 	const unsigned int numberPhysicalCells = dftPtr->matrix_free_data.n_physical_cells();
-	QGauss<3>  quadrature(C_num1DQuad<FEOrder>());
+	const Quadrature<3> &  quadrature=dftPtr->matrix_free_data.get_quadrature(dftPtr->d_densityQuadratureId);
 	FEValues<3> fe_values(dftPtr->matrix_free_data.get_dof_handler().get_fe(), quadrature, update_values);
 	const unsigned int numberDofsPerElement = dftPtr->matrix_free_data.get_dof_handler().get_fe().dofs_per_cell;
   const unsigned int numberQuadraturePoints = quadrature.size();
@@ -63,7 +63,7 @@ void kohnShamDFTOperatorClass<FEOrder>::preComputeShapeFunctionGradientIntegrals
 
 		for(unsigned int iCell = 0; iCell < n_sub_cells; ++iCell)
 		{
-			cellPtr = dftPtr->matrix_free_data.get_cell_iterator(iMacroCell,iCell);
+			cellPtr = dftPtr->matrix_free_data.get_cell_iterator(iMacroCell,iCell,dftPtr->d_densityDofHandlerIndex);
 			fe_values_quadplusone.reinit(cellPtr);
 
 			for(unsigned int iNode = 0; iNode < numberDofsPerElement; ++iNode)

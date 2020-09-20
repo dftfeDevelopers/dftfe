@@ -166,14 +166,14 @@ namespace dftfe
 	//
 	//constructor
 	//
-	template<unsigned int FEOrder>
-		kohnShamDFTOperatorCUDAClass<FEOrder>::kohnShamDFTOperatorCUDAClass(dftClass<FEOrder>* _dftPtr,const MPI_Comm &mpi_comm_replica):
+	template<unsigned int FEOrder,unsigned int FEOrderElectro>
+		kohnShamDFTOperatorCUDAClass<FEOrder,FEOrderElectro>::kohnShamDFTOperatorCUDAClass(dftClass<FEOrder,FEOrderElectro>* _dftPtr,const MPI_Comm &mpi_comm_replica):
 			dftPtr(_dftPtr),
 			d_kPointIndex(0),
 			d_numberNodesPerElement(_dftPtr->matrix_free_data.get_dofs_per_cell()),
 			d_numberMacroCells(_dftPtr->matrix_free_data.n_macro_cells()),
 			d_numLocallyOwnedCells(dftPtr->matrix_free_data.n_physical_cells()),
-			d_numQuadPoints(QGauss<3>(C_num1DQuad<FEOrder>()).size()),
+			d_numQuadPoints(dftPtr->matrix_free_data.get_quadrature(dftPtr->d_densityQuadratureId).size()),
       d_isStiffnessMatrixExternalPotCorrComputed(false),
 			mpi_communicator (mpi_comm_replica),
 			n_mpi_processes (Utilities::MPI::n_mpi_processes(mpi_comm_replica)),
@@ -192,8 +192,8 @@ namespace dftfe
 
 	}
 
-	template<unsigned int FEOrder>
-		void kohnShamDFTOperatorCUDAClass<FEOrder>::createCublasHandle()
+	template<unsigned int FEOrder,unsigned int FEOrderElectro>
+		void kohnShamDFTOperatorCUDAClass<FEOrder,FEOrderElectro>::createCublasHandle()
 		{
 			int n_devices = 0; cudaGetDeviceCount(&n_devices);
 			int device_id = dealii::Utilities::MPI::this_mpi_process(MPI_COMM_WORLD)%n_devices;
@@ -201,169 +201,176 @@ namespace dftfe
 			cublasCreate(&d_cublasHandle);
 		}
 
-	template<unsigned int FEOrder>
-		void kohnShamDFTOperatorCUDAClass<FEOrder>::destroyCublasHandle()
+	template<unsigned int FEOrder,unsigned int FEOrderElectro>
+		void kohnShamDFTOperatorCUDAClass<FEOrder,FEOrderElectro>::destroyCublasHandle()
 		{
 			cublasDestroy(d_cublasHandle);
 		}
 
-	template<unsigned int FEOrder>
-		cublasHandle_t & kohnShamDFTOperatorCUDAClass<FEOrder>::getCublasHandle()
+	template<unsigned int FEOrder,unsigned int FEOrderElectro>
+		cublasHandle_t & kohnShamDFTOperatorCUDAClass<FEOrder,FEOrderElectro>::getCublasHandle()
 		{
 			return d_cublasHandle; 
 		}
 
-	template<unsigned int FEOrder>
-		const double * kohnShamDFTOperatorCUDAClass<FEOrder>::getSqrtMassVec()
+	template<unsigned int FEOrder,unsigned int FEOrderElectro>
+		const double * kohnShamDFTOperatorCUDAClass<FEOrder,FEOrderElectro>::getSqrtMassVec()
 		{
 			return thrust::raw_pointer_cast(&d_sqrtMassVectorDevice[0]);
 		}
 
 
-	template<unsigned int FEOrder>
-		const double * kohnShamDFTOperatorCUDAClass<FEOrder>::getInvSqrtMassVec()
+	template<unsigned int FEOrder,unsigned int FEOrderElectro>
+		const double * kohnShamDFTOperatorCUDAClass<FEOrder,FEOrderElectro>::getInvSqrtMassVec()
 		{
 			return thrust::raw_pointer_cast(&d_invSqrtMassVectorDevice[0]);
 		}
 
 	/*
-	   template<unsigned int FEOrder> 
-	   distributedGPUVec<double> & kohnShamDFTOperatorCUDAClass<FEOrder>::getBlockCUDADealiiVector()
-	//thrust::device_vector<dataTypes::number> & kohnShamDFTOperatorCUDAClass<FEOrder>::getBlockCUDADealiiVector() 
+	   template<unsigned int FEOrder,unsigned int FEOrderElectro> 
+	   distributedGPUVec<double> & kohnShamDFTOperatorCUDAClass<FEOrder,FEOrderElectro>::getBlockCUDADealiiVector()
+	//thrust::device_vector<dataTypes::number> & kohnShamDFTOperatorCUDAClass<FEOrder,FEOrderElectro>::getBlockCUDADealiiVector() 
 	{
 	return d_cudaFlattenedArrayBlock;
 
 	}
 
-	template<unsigned int FEOrder>
-	//thrust::device_vector<dataTypes::number> & kohnShamDFTOperatorCUDAClass<FEOrder>::getBlockCUDADealiiVector2()
-	distributedGPUVec<double> & kohnShamDFTOperatorCUDAClass<FEOrder>::getBlockCUDADealiiVector2()
+	template<unsigned int FEOrder,unsigned int FEOrderElectro>
+	//thrust::device_vector<dataTypes::number> & kohnShamDFTOperatorCUDAClass<FEOrder,FEOrderElectro>::getBlockCUDADealiiVector2()
+	distributedGPUVec<double> & kohnShamDFTOperatorCUDAClass<FEOrder,FEOrderElectro>::getBlockCUDADealiiVector2()
 	{
 	return d_cudaFlattenedArrayBlock2;
 
 	}
 
-	template<unsigned int FEOrder> 
-	distributedGPUVec<double> & kohnShamDFTOperatorCUDAClass<FEOrder>::getBlockCUDADealiiVector3()
-	//thrust::device_vector<dataTypes::number> & kohnShamDFTOperatorCUDAClass<FEOrder>::getBlockCUDADealiiVector() 
+	template<unsigned int FEOrder,unsigned int FEOrderElectro> 
+	distributedGPUVec<double> & kohnShamDFTOperatorCUDAClass<FEOrder,FEOrderElectro>::getBlockCUDADealiiVector3()
+	//thrust::device_vector<dataTypes::number> & kohnShamDFTOperatorCUDAClass<FEOrder,FEOrderElectro>::getBlockCUDADealiiVector() 
 	{
 	return d_cudaFlattenedArrayBlock3;
 
 	}
 	 */
-	template<unsigned int FEOrder>
-		distributedCPUVec<dataTypes::number> &  kohnShamDFTOperatorCUDAClass<FEOrder>::getProjectorKetTimesVectorSingle()
+	template<unsigned int FEOrder,unsigned int FEOrderElectro>
+		distributedCPUVec<dataTypes::number> &  kohnShamDFTOperatorCUDAClass<FEOrder,FEOrderElectro>::getProjectorKetTimesVectorSingle()
 		{
 			return dftPtr->d_projectorKetTimesVectorPar[0];
 		}
 
 
-	template<unsigned int FEOrder>
-		thrust::device_vector<double> & kohnShamDFTOperatorCUDAClass<FEOrder>::getShapeFunctionGradientIntegral()
+	template<unsigned int FEOrder,unsigned int FEOrderElectro>
+		thrust::device_vector<double> & kohnShamDFTOperatorCUDAClass<FEOrder,FEOrderElectro>::getShapeFunctionGradientIntegral()
 		{
 			return d_cellShapeFunctionGradientIntegralFlattenedDevice;
 		}
 
 
-	template<unsigned int FEOrder>
-		thrust::device_vector<double> & kohnShamDFTOperatorCUDAClass<FEOrder>::getShapeFunctionValues()
+	template<unsigned int FEOrder,unsigned int FEOrderElectro>
+		thrust::device_vector<double> & kohnShamDFTOperatorCUDAClass<FEOrder,FEOrderElectro>::getShapeFunctionGradientIntegralElectro()
+		{
+			return d_cellShapeFunctionGradientIntegralFlattenedDeviceElectro;
+		}
+
+
+	template<unsigned int FEOrder,unsigned int FEOrderElectro>
+		thrust::device_vector<double> & kohnShamDFTOperatorCUDAClass<FEOrder,FEOrderElectro>::getShapeFunctionValues()
 		{
 			return d_shapeFunctionValueDevice;
 		}
 
 
-	template<unsigned int FEOrder>
-		thrust::device_vector<double> & kohnShamDFTOperatorCUDAClass<FEOrder>::getShapeFunctionValuesInverted(const bool use2pPlusOneGLQuad)
+	template<unsigned int FEOrder,unsigned int FEOrderElectro>
+		thrust::device_vector<double> & kohnShamDFTOperatorCUDAClass<FEOrder,FEOrderElectro>::getShapeFunctionValuesInverted(const bool use2pPlusOneGLQuad)
 		{
 			return use2pPlusOneGLQuad?d_glShapeFunctionValueInvertedDevice:d_shapeFunctionValueInvertedDevice;
 		}
 
-	template<unsigned int FEOrder>
-		thrust::device_vector<double> & kohnShamDFTOperatorCUDAClass<FEOrder>::getShapeFunctionValuesNLPInverted()
+	template<unsigned int FEOrder,unsigned int FEOrderElectro>
+		thrust::device_vector<double> & kohnShamDFTOperatorCUDAClass<FEOrder,FEOrderElectro>::getShapeFunctionValuesNLPInverted()
 		{
 			return d_shapeFunctionValueNLPInvertedDevice;
 		}
 
-	template<unsigned int FEOrder>
-		thrust::device_vector<double> & kohnShamDFTOperatorCUDAClass<FEOrder>::getShapeFunctionGradientValuesX()
+	template<unsigned int FEOrder,unsigned int FEOrderElectro>
+		thrust::device_vector<double> & kohnShamDFTOperatorCUDAClass<FEOrder,FEOrderElectro>::getShapeFunctionGradientValuesX()
 		{
 			return d_shapeFunctionGradientValueXDevice;
 		}
 
-	template<unsigned int FEOrder>
-		thrust::device_vector<double> & kohnShamDFTOperatorCUDAClass<FEOrder>::getShapeFunctionGradientValuesY()
+	template<unsigned int FEOrder,unsigned int FEOrderElectro>
+		thrust::device_vector<double> & kohnShamDFTOperatorCUDAClass<FEOrder,FEOrderElectro>::getShapeFunctionGradientValuesY()
 		{
 			return d_shapeFunctionGradientValueYDevice;
 		}
 
-	template<unsigned int FEOrder>
-		thrust::device_vector<double> & kohnShamDFTOperatorCUDAClass<FEOrder>::getShapeFunctionGradientValuesZ()
+	template<unsigned int FEOrder,unsigned int FEOrderElectro>
+		thrust::device_vector<double> & kohnShamDFTOperatorCUDAClass<FEOrder,FEOrderElectro>::getShapeFunctionGradientValuesZ()
 		{
 			return d_shapeFunctionGradientValueZDevice;
 		}
 
-	template<unsigned int FEOrder>
-		thrust::device_vector<double> & kohnShamDFTOperatorCUDAClass<FEOrder>::getShapeFunctionGradientValuesXInverted(const bool use2pPlusOneGLQuad)
+	template<unsigned int FEOrder,unsigned int FEOrderElectro>
+		thrust::device_vector<double> & kohnShamDFTOperatorCUDAClass<FEOrder,FEOrderElectro>::getShapeFunctionGradientValuesXInverted(const bool use2pPlusOneGLQuad)
 		{
 			return use2pPlusOneGLQuad?d_glShapeFunctionGradientValueXInvertedDevice:d_shapeFunctionGradientValueXInvertedDevice;
 		}
 
-	template<unsigned int FEOrder>
-		thrust::device_vector<double> & kohnShamDFTOperatorCUDAClass<FEOrder>::getShapeFunctionGradientValuesYInverted(const bool use2pPlusOneGLQuad)
+	template<unsigned int FEOrder,unsigned int FEOrderElectro>
+		thrust::device_vector<double> & kohnShamDFTOperatorCUDAClass<FEOrder,FEOrderElectro>::getShapeFunctionGradientValuesYInverted(const bool use2pPlusOneGLQuad)
 		{
 			return use2pPlusOneGLQuad?d_glShapeFunctionGradientValueYInvertedDevice:d_shapeFunctionGradientValueYInvertedDevice;
 		}
 
-	template<unsigned int FEOrder>
-		thrust::device_vector<double> & kohnShamDFTOperatorCUDAClass<FEOrder>::getShapeFunctionGradientValuesZInverted(const bool use2pPlusOneGLQuad)
+	template<unsigned int FEOrder,unsigned int FEOrderElectro>
+		thrust::device_vector<double> & kohnShamDFTOperatorCUDAClass<FEOrder,FEOrderElectro>::getShapeFunctionGradientValuesZInverted(const bool use2pPlusOneGLQuad)
 		{
 			return use2pPlusOneGLQuad?d_glShapeFunctionGradientValueZInvertedDevice:d_shapeFunctionGradientValueZInvertedDevice;
 		}
 
-	template<unsigned int FEOrder>
-		thrust::device_vector<double> & kohnShamDFTOperatorCUDAClass<FEOrder>::getShapeFunctionGradientValuesNLPXInverted()
+	template<unsigned int FEOrder,unsigned int FEOrderElectro>
+		thrust::device_vector<double> & kohnShamDFTOperatorCUDAClass<FEOrder,FEOrderElectro>::getShapeFunctionGradientValuesNLPXInverted()
 		{
 			return d_shapeFunctionGradientValueNLPXInvertedDevice;
 		}
 
-	template<unsigned int FEOrder>
-		thrust::device_vector<double> & kohnShamDFTOperatorCUDAClass<FEOrder>::getShapeFunctionGradientValuesNLPYInverted()
+	template<unsigned int FEOrder,unsigned int FEOrderElectro>
+		thrust::device_vector<double> & kohnShamDFTOperatorCUDAClass<FEOrder,FEOrderElectro>::getShapeFunctionGradientValuesNLPYInverted()
 		{
 			return d_shapeFunctionGradientValueNLPYInvertedDevice;
 		}
 
-	template<unsigned int FEOrder>
-		thrust::device_vector<double> & kohnShamDFTOperatorCUDAClass<FEOrder>::getShapeFunctionGradientValuesNLPZInverted()
+	template<unsigned int FEOrder,unsigned int FEOrderElectro>
+		thrust::device_vector<double> & kohnShamDFTOperatorCUDAClass<FEOrder,FEOrderElectro>::getShapeFunctionGradientValuesNLPZInverted()
 		{
 			return d_shapeFunctionGradientValueNLPZInvertedDevice;
 		}
 
-	template<unsigned int FEOrder>
-		thrust::device_vector<dealii::types::global_dof_index> & kohnShamDFTOperatorCUDAClass<FEOrder>::getFlattenedArrayCellLocalProcIndexIdMap()
+	template<unsigned int FEOrder,unsigned int FEOrderElectro>
+		thrust::device_vector<dealii::types::global_dof_index> & kohnShamDFTOperatorCUDAClass<FEOrder,FEOrderElectro>::getFlattenedArrayCellLocalProcIndexIdMap()
 		{
 			return d_flattenedArrayCellLocalProcIndexIdMapDevice;
 		}
 
-	template<unsigned int FEOrder>
-		thrust::device_vector<dataTypes::number> & kohnShamDFTOperatorCUDAClass<FEOrder>::getCellWaveFunctionMatrix()
+	template<unsigned int FEOrder,unsigned int FEOrderElectro>
+		thrust::device_vector<dataTypes::number> & kohnShamDFTOperatorCUDAClass<FEOrder,FEOrderElectro>::getCellWaveFunctionMatrix()
 		{
 			return d_cellWaveFunctionMatrix;
 		}
 
-	template<unsigned int FEOrder>
-		thrust::device_vector<unsigned int> & kohnShamDFTOperatorCUDAClass<FEOrder>::getLocallyOwnedProcBoundaryNodesVectorDevice()
+	template<unsigned int FEOrder,unsigned int FEOrderElectro>
+		thrust::device_vector<unsigned int> & kohnShamDFTOperatorCUDAClass<FEOrder,FEOrderElectro>::getLocallyOwnedProcBoundaryNodesVectorDevice()
 		{
 			return d_locallyOwnedProcBoundaryNodesVectorDevice;
 		}
 
-	template<unsigned int FEOrder>
-		thrust::device_vector<unsigned int> & kohnShamDFTOperatorCUDAClass<FEOrder>::getLocallyOwnedProcProjectorKetBoundaryNodesVectorDevice()
+	template<unsigned int FEOrder,unsigned int FEOrderElectro>
+		thrust::device_vector<unsigned int> & kohnShamDFTOperatorCUDAClass<FEOrder,FEOrderElectro>::getLocallyOwnedProcProjectorKetBoundaryNodesVectorDevice()
 		{
 			return d_locallyOwnedProcProjectorKetBoundaryNodesVectorDevice;
 		}
 
-	template<unsigned int FEOrder>
-		thrust::device_vector<unsigned int> & kohnShamDFTOperatorCUDAClass<FEOrder>::getBoundaryIdToLocalIdMap()
+	template<unsigned int FEOrder,unsigned int FEOrderElectro>
+		thrust::device_vector<unsigned int> & kohnShamDFTOperatorCUDAClass<FEOrder,FEOrderElectro>::getBoundaryIdToLocalIdMap()
 		{
 			return d_boundaryIdToLocalIdMapDevice;
 		}
@@ -371,13 +378,13 @@ namespace dftfe
 	//
 	//initialize kohnShamDFTOperatorCUDAClass object
 	//
-	template<unsigned int FEOrder>
-		void kohnShamDFTOperatorCUDAClass<FEOrder>::init()
+	template<unsigned int FEOrder,unsigned int FEOrderElectro>
+		void kohnShamDFTOperatorCUDAClass<FEOrder,FEOrderElectro>::init()
 		{
 			computing_timer.enter_section("kohnShamDFTOperatorCUDAClass setup");
 
 
-			dftPtr->matrix_free_data.initialize_dof_vector(d_invSqrtMassVector,dftPtr->eigenDofHandlerIndex);
+			dftPtr->matrix_free_data.initialize_dof_vector(d_invSqrtMassVector,dftPtr->d_eigenDofHandlerIndex);
 			d_sqrtMassVector.reinit(d_invSqrtMassVector);
 
 
@@ -394,8 +401,8 @@ namespace dftfe
 		}
 
 
-	template<unsigned int FEOrder>
-		void kohnShamDFTOperatorCUDAClass<FEOrder>::reinit(const unsigned int numberWaveFunctions,
+	template<unsigned int FEOrder,unsigned int FEOrderElectro>
+		void kohnShamDFTOperatorCUDAClass<FEOrder,FEOrderElectro>::reinit(const unsigned int numberWaveFunctions,
 				bool flag)
 		{
 
@@ -458,6 +465,7 @@ namespace dftfe
 
 			vectorTools::computeCellLocalIndexSetMap(flattenedArray.get_partitioner(),
 					dftPtr->matrix_free_data,
+          dftPtr->d_densityDofHandlerIndex,
 					numberWaveFunctions,
 					d_flattenedArrayMacroCellLocalProcIndexIdMapFlattened,
 					d_normalCellIdToMacroCellIdMap,
@@ -645,8 +653,8 @@ namespace dftfe
 
 		}
 
-	template<unsigned int FEOrder>
-		void kohnShamDFTOperatorCUDAClass<FEOrder>::reinitNoRemesh(const unsigned int numberWaveFunctions)
+	template<unsigned int FEOrder,unsigned int FEOrderElectro>
+		void kohnShamDFTOperatorCUDAClass<FEOrder,FEOrderElectro>::reinitNoRemesh(const unsigned int numberWaveFunctions)
 		{
 			if(dftParameters::isPseudopotential)
 			{
@@ -699,8 +707,8 @@ namespace dftfe
 	//
 	//compute mass Vector
 	//
-	template<unsigned int FEOrder>
-		void kohnShamDFTOperatorCUDAClass<FEOrder>::computeMassVector(const dealii::DoFHandler<3> & dofHandler,
+	template<unsigned int FEOrder,unsigned int FEOrderElectro>
+		void kohnShamDFTOperatorCUDAClass<FEOrder,FEOrderElectro>::computeMassVector(const dealii::DoFHandler<3> & dofHandler,
 				const dealii::AffineConstraints<double> & constraintMatrix,
 				distributedCPUVec<double> & sqrtMassVec,
 				distributedCPUVec<double> & invSqrtMassVec)
@@ -776,25 +784,25 @@ namespace dftfe
 		}
 
 
-	template<unsigned int FEOrder>
-		void kohnShamDFTOperatorCUDAClass<FEOrder>::reinitkPointSpinIndex(const unsigned int kPointIndex, const unsigned int spinIndex)
+	template<unsigned int FEOrder,unsigned int FEOrderElectro>
+		void kohnShamDFTOperatorCUDAClass<FEOrder,FEOrderElectro>::reinitkPointSpinIndex(const unsigned int kPointIndex, const unsigned int spinIndex)
 		{
 			d_kPointIndex = kPointIndex;
 			d_spinIndex   = spinIndex;
 		}
 
 
-	template<unsigned int FEOrder>
-		void kohnShamDFTOperatorCUDAClass<FEOrder>::computeVEff(const std::map<dealii::CellId,std::vector<double> >* rhoValues,
-				const distributedCPUVec<double> & phi,
+	template<unsigned int FEOrder,unsigned int FEOrderElectro>
+		void kohnShamDFTOperatorCUDAClass<FEOrder,FEOrderElectro>::computeVEff(const std::map<dealii::CellId,std::vector<double> >* rhoValues,
+				const std::map<dealii::CellId,std::vector<double> > & phiValues,
 				const std::map<dealii::CellId,std::vector<double> > & externalPotCorrValues,
         const unsigned int externalPotCorrQuadratureId)
 		{
 			const unsigned int n_cells = dftPtr->matrix_free_data.n_macro_cells();
 			const unsigned int totalLocallyOwnedCells = dftPtr->matrix_free_data.n_physical_cells();
 
-			QGauss<3>  quadrature_formula(C_num1DQuad<FEOrder>());
-			FEValues<3> fe_values (dftPtr->FE, quadrature_formula,update_values | update_JxW_values);
+			const Quadrature<3> &  quadrature_formula=dftPtr->matrix_free_data.get_quadrature(dftPtr->d_densityQuadratureId);
+			FEValues<3> fe_values (dftPtr->FE, quadrature_formula,update_JxW_values);
 			const unsigned int numberQuadraturePoints = quadrature_formula.size();
 
 			d_vEff.resize(totalLocallyOwnedCells*numberQuadraturePoints,0.0);
@@ -803,9 +811,6 @@ namespace dftfe
 			typename dealii::DoFHandler<3>::active_cell_iterator endcPtr = dftPtr->matrix_free_data.get_dof_handler().end();
 			unsigned int iElemCount = 0;
 
-			std::vector<double> tempPhi(numberQuadraturePoints);
-			std::vector<double> tempPhiExt(numberQuadraturePoints);
-			std::vector<double> densityValue(numberQuadraturePoints);
 			std::vector<double> exchangePotentialVal(numberQuadraturePoints);
 			std::vector<double> corrPotentialVal(numberQuadraturePoints);
 			for(; cellPtr!=endcPtr; ++cellPtr)
@@ -813,12 +818,8 @@ namespace dftfe
 				{
 					fe_values.reinit (cellPtr);
 
-					fe_values.get_function_values(phi,tempPhi);
-
-					for (unsigned int q=0; q<numberQuadraturePoints; ++q)
-					{
-						densityValue[q] = (*rhoValues).find(cellPtr->id())->second[q];
-					}
+					const std::vector<double> & densityValue = (*rhoValues).find(cellPtr->id())->second;
+          const std::vector<double> & tempPhi=phiValues.find(cellPtr->id())->second;          
 
 					xc_lda_vxc(&(dftPtr->funcX),numberQuadraturePoints,&densityValue[0],&exchangePotentialVal[0]);
 					xc_lda_vxc(&(dftPtr->funcC),numberQuadraturePoints,&densityValue[0],&corrPotentialVal[0]);
@@ -840,10 +841,10 @@ namespace dftfe
          computeVEffExternalPotCorr(externalPotCorrValues,externalPotCorrQuadratureId);      
 		}
 
-	template<unsigned int FEOrder>
-		void kohnShamDFTOperatorCUDAClass<FEOrder>::computeVEff(const std::map<dealii::CellId,std::vector<double> >* rhoValues,
+	template<unsigned int FEOrder,unsigned int FEOrderElectro>
+		void kohnShamDFTOperatorCUDAClass<FEOrder,FEOrderElectro>::computeVEff(const std::map<dealii::CellId,std::vector<double> >* rhoValues,
 				const std::map<dealii::CellId,std::vector<double> >* gradRhoValues,
-				const distributedCPUVec<double> & phi,
+				const std::map<dealii::CellId,std::vector<double> > & phiValues,
 				const std::map<dealii::CellId,std::vector<double> > & externalPotCorrValues,
         const unsigned int externalPotCorrQuadratureId)
 		{
@@ -851,8 +852,8 @@ namespace dftfe
 			const unsigned int n_cells = dftPtr->matrix_free_data.n_macro_cells();
 			const unsigned int totalLocallyOwnedCells = dftPtr->matrix_free_data.n_physical_cells();
 
-			QGauss<3>  quadrature_formula(C_num1DQuad<FEOrder>());
-			FEValues<3> fe_values (dftPtr->FE, quadrature_formula,update_values | update_JxW_values);
+			const Quadrature<3> &  quadrature_formula=dftPtr->matrix_free_data.get_quadrature(dftPtr->d_densityQuadratureId);
+			FEValues<3> fe_values (dftPtr->FE, quadrature_formula,update_JxW_values);
 			const unsigned int numberQuadraturePoints = quadrature_formula.size();
 
 
@@ -864,9 +865,6 @@ namespace dftfe
 			typename dealii::DoFHandler<3>::active_cell_iterator endcPtr = dftPtr->matrix_free_data.get_dof_handler().end();
 			unsigned int iElemCount = 0;
 
-			std::vector<double> tempPhi(numberQuadraturePoints);
-			std::vector<double> tempPhiExt(numberQuadraturePoints);
-			std::vector<double> densityValue(numberQuadraturePoints);
 			std::vector<double> sigmaValue(numberQuadraturePoints);
 			std::vector<double> derExchEnergyWithSigmaVal(numberQuadraturePoints);
 			std::vector<double> derCorrEnergyWithSigmaVal(numberQuadraturePoints);
@@ -878,14 +876,15 @@ namespace dftfe
 				{
 					fe_values.reinit (cellPtr);
 
-					fe_values.get_function_values(phi,tempPhi);
+					const std::vector<double> & densityValue = (*rhoValues).find(cellPtr->id())->second;
+					const std::vector<double> & gradDensityValue = (*gradRhoValues).find(cellPtr->id())->second;
+          const std::vector<double> & tempPhi=phiValues.find(cellPtr->id())->second;           
 
 					for (unsigned int q=0; q<numberQuadraturePoints; ++q)
 					{
-						densityValue[q] = (*rhoValues).find(cellPtr->id())->second[q];
-						double gradRhoX = (*gradRhoValues).find(cellPtr->id())->second[3*q + 0];
-						double gradRhoY = (*gradRhoValues).find(cellPtr->id())->second[3*q + 1];
-						double gradRhoZ = (*gradRhoValues).find(cellPtr->id())->second[3*q + 2];
+						double gradRhoX = gradDensityValue[3*q + 0];
+						double gradRhoY = gradDensityValue[3*q + 1];
+						double gradRhoZ = gradDensityValue[3*q + 2];
 						sigmaValue[q] = gradRhoX*gradRhoX + gradRhoY*gradRhoY + gradRhoZ*gradRhoZ;
 					}
 
@@ -935,9 +934,9 @@ namespace dftfe
 		}
 
 
-	template<unsigned int FEOrder>
-		void kohnShamDFTOperatorCUDAClass<FEOrder>::computeVEffSpinPolarized(const std::map<dealii::CellId,std::vector<double> >* rhoValues,
-				const distributedCPUVec<double> & phi,
+	template<unsigned int FEOrder,unsigned int FEOrderElectro>
+		void kohnShamDFTOperatorCUDAClass<FEOrder,FEOrderElectro>::computeVEffSpinPolarized(const std::map<dealii::CellId,std::vector<double> >* rhoValues,
+				const std::map<dealii::CellId,std::vector<double> > & phiValues,
 				const unsigned int spinIndex,
 				const std::map<dealii::CellId,std::vector<double> > & externalPotCorrValues,
         const unsigned int externalPotCorrQuadratureId)
@@ -945,8 +944,8 @@ namespace dftfe
 			const unsigned int n_cells = dftPtr->matrix_free_data.n_macro_cells();
 			const unsigned int totalLocallyOwnedCells = dftPtr->matrix_free_data.n_physical_cells();
 
-			QGauss<3>  quadrature_formula(C_num1DQuad<FEOrder>());
-			FEValues<3> fe_values (dftPtr->FE, quadrature_formula,update_values | update_JxW_values);
+			const Quadrature<3> &  quadrature_formula=dftPtr->matrix_free_data.get_quadrature(dftPtr->d_densityQuadratureId);
+			FEValues<3> fe_values (dftPtr->FE, quadrature_formula,update_JxW_values);
 			const unsigned int numberQuadraturePoints = quadrature_formula.size();
 
 			d_vEff.resize(totalLocallyOwnedCells*numberQuadraturePoints,0.0);
@@ -955,9 +954,6 @@ namespace dftfe
 			typename dealii::DoFHandler<3>::active_cell_iterator endcPtr = dftPtr->matrix_free_data.get_dof_handler().end();
 			unsigned int iElemCount = 0;
 
-			std::vector<double> tempPhi(numberQuadraturePoints);
-			std::vector<double> tempPhiExt(numberQuadraturePoints);
-			std::vector<double> densityValue(2*numberQuadraturePoints);
 			std::vector<double> exchangePotentialVal(2*numberQuadraturePoints);
 			std::vector<double> corrPotentialVal(2*numberQuadraturePoints);
 			for(; cellPtr!=endcPtr; ++cellPtr)
@@ -965,14 +961,8 @@ namespace dftfe
 				{
 					fe_values.reinit (cellPtr);
 
-					fe_values.get_function_values(phi,tempPhi);
-
-					for (unsigned int q=0; q<numberQuadraturePoints; ++q)
-					{
-						densityValue[2*q+1] = (*rhoValues).find(cellPtr->id())->second[2*q+1];
-						densityValue[2*q] = (*rhoValues).find(cellPtr->id())->second[2*q];
-
-					}
+					const std::vector<double> & densityValue= (*rhoValues).find(cellPtr->id())->second;
+          const std::vector<double> & tempPhi=phiValues.find(cellPtr->id())->second;  
 
 					xc_lda_vxc(&(dftPtr->funcX),numberQuadraturePoints,&densityValue[0],&exchangePotentialVal[0]);
 					xc_lda_vxc(&(dftPtr->funcC),numberQuadraturePoints,&densityValue[0],&corrPotentialVal[0]);
@@ -995,10 +985,10 @@ namespace dftfe
          computeVEffExternalPotCorr(externalPotCorrValues,externalPotCorrQuadratureId);     
 		}
 
-	template<unsigned int FEOrder>
-		void kohnShamDFTOperatorCUDAClass<FEOrder>::computeVEffSpinPolarized(const std::map<dealii::CellId,std::vector<double> >* rhoValues,
+	template<unsigned int FEOrder,unsigned int FEOrderElectro>
+		void kohnShamDFTOperatorCUDAClass<FEOrder,FEOrderElectro>::computeVEffSpinPolarized(const std::map<dealii::CellId,std::vector<double> >* rhoValues,
 				const std::map<dealii::CellId,std::vector<double> >* gradRhoValues,
-				const distributedCPUVec<double> & phi,
+				const std::map<dealii::CellId,std::vector<double> > & phiValues,
 				const unsigned int spinIndex,
 				const std::map<dealii::CellId,std::vector<double> > & externalPotCorrValues,
         const unsigned int externalPotCorrQuadratureId)
@@ -1006,8 +996,8 @@ namespace dftfe
 			const unsigned int n_cells = dftPtr->matrix_free_data.n_macro_cells();
 			const unsigned int totalLocallyOwnedCells = dftPtr->matrix_free_data.n_physical_cells();
 
-			QGauss<3>  quadrature_formula(C_num1DQuad<FEOrder>());
-			FEValues<3> fe_values (dftPtr->FE, quadrature_formula,update_values | update_JxW_values);
+			const Quadrature<3> &  quadrature_formula=dftPtr->matrix_free_data.get_quadrature(dftPtr->d_densityQuadratureId);
+			FEValues<3> fe_values (dftPtr->FE, quadrature_formula,update_JxW_values);
 			const unsigned int numberQuadraturePoints = quadrature_formula.size();
 
 			d_vEff.resize(totalLocallyOwnedCells*numberQuadraturePoints,0.0);
@@ -1018,9 +1008,6 @@ namespace dftfe
 			typename dealii::DoFHandler<3>::active_cell_iterator endcPtr = dftPtr->matrix_free_data.get_dof_handler().end();
 			unsigned int iElemCount = 0;
 
-			std::vector<double> tempPhi(numberQuadraturePoints);
-			std::vector<double> tempPhiExt(numberQuadraturePoints);
-			std::vector<double> densityValue(2*numberQuadraturePoints);
 			std::vector<double> sigmaValue(3*numberQuadraturePoints);
 			std::vector<double> derExchEnergyWithSigmaVal(3*numberQuadraturePoints);
 			std::vector<double> derCorrEnergyWithSigmaVal(3*numberQuadraturePoints);
@@ -1032,19 +1019,18 @@ namespace dftfe
 				{
 					fe_values.reinit (cellPtr);
 
-					fe_values.get_function_values(phi,tempPhi);
+					const std::vector<double> & densityValue= (*rhoValues).find(cellPtr->id())->second;
+					const std::vector<double> & gradDensityValue= (*gradRhoValues).find(cellPtr->id())->second;
+          const std::vector<double> & tempPhi=phiValues.find(cellPtr->id())->second; 
 
 					for (unsigned int q=0; q<numberQuadraturePoints; ++q)
 					{
-						densityValue[2*q+1] = (*rhoValues).find(cellPtr->id())->second[2*q+1];
-						densityValue[2*q] = (*rhoValues).find(cellPtr->id())->second[2*q];
-
-						double gradRhoX1 = (*gradRhoValues).find(cellPtr->id())->second[6*q + 0];
-						double gradRhoY1 = (*gradRhoValues).find(cellPtr->id())->second[6*q + 1];
-						double gradRhoZ1 = (*gradRhoValues).find(cellPtr->id())->second[6*q + 2];
-						double gradRhoX2 = (*gradRhoValues).find(cellPtr->id())->second[6*q + 3];
-						double gradRhoY2 = (*gradRhoValues).find(cellPtr->id())->second[6*q + 4];
-						double gradRhoZ2 = (*gradRhoValues).find(cellPtr->id())->second[6*q + 5];
+						double gradRhoX1 = gradDensityValue[6*q + 0];
+						double gradRhoY1 = gradDensityValue[6*q + 1];
+						double gradRhoZ1 = gradDensityValue[6*q + 2];
+						double gradRhoX2 = gradDensityValue[6*q + 3];
+						double gradRhoY2 = gradDensityValue[6*q + 4];
+						double gradRhoZ2 = gradDensityValue[6*q + 5];
 						//
 						sigmaValue[3*q+0] = gradRhoX1*gradRhoX1 + gradRhoY1*gradRhoY1 + gradRhoZ1*gradRhoZ1;
 						sigmaValue[3*q+1] = gradRhoX1*gradRhoX2 + gradRhoY1*gradRhoY2 + gradRhoZ1*gradRhoZ2;
@@ -1101,8 +1087,8 @@ namespace dftfe
          computeVEffExternalPotCorr(externalPotCorrValues,externalPotCorrQuadratureId);      
 		}
 
-	template<unsigned int FEOrder>
-		void kohnShamDFTOperatorCUDAClass<FEOrder>::computeVEffExternalPotCorr(const std::map<dealii::CellId,std::vector<double> > & externalPotCorrValues,
+	template<unsigned int FEOrder,unsigned int FEOrderElectro>
+		void kohnShamDFTOperatorCUDAClass<FEOrder,FEOrderElectro>::computeVEffExternalPotCorr(const std::map<dealii::CellId,std::vector<double> > & externalPotCorrValues,
                                                                        const unsigned int externalPotCorrQuadratureId)
   {
       d_externalPotCorrQuadratureId=externalPotCorrQuadratureId;
@@ -1131,8 +1117,8 @@ namespace dftfe
   }
 
 
-	template<unsigned int FEOrder>
-		void kohnShamDFTOperatorCUDAClass<FEOrder>::HX(distributedGPUVec<double> & src,
+	template<unsigned int FEOrder,unsigned int FEOrderElectro>
+		void kohnShamDFTOperatorCUDAClass<FEOrder,FEOrderElectro>::HX(distributedGPUVec<double> & src,
 				distributedGPUVec<float> & tempFloatArray,
 				distributedGPUVec<double> & projectorKetTimesVector,
 				const unsigned int localVectorSize,
@@ -1251,8 +1237,8 @@ namespace dftfe
 
 
 
-	template<unsigned int FEOrder>
-		void kohnShamDFTOperatorCUDAClass<FEOrder>::HX(distributedGPUVec<double> & src,
+	template<unsigned int FEOrder,unsigned int FEOrderElectro>
+		void kohnShamDFTOperatorCUDAClass<FEOrder,FEOrderElectro>::HX(distributedGPUVec<double> & src,
 				distributedGPUVec<double> & projectorKetTimesVector,
 				const unsigned int localVectorSize,
 				const unsigned int numberWaveFunctions,
@@ -1338,8 +1324,8 @@ namespace dftfe
 	// before the control returns back to chebyshevFilter. When computePart2 is set to true, the computations
 	// in computePart1 are skipped and only computations performed are: second compute part of nonlocalHX,
 	// assembly (only local processor), and distribute_slave_to_master.
-	template<unsigned int FEOrder>
-		void kohnShamDFTOperatorCUDAClass<FEOrder>::HXCheby(distributedGPUVec<double> & src,
+	template<unsigned int FEOrder,unsigned int FEOrderElectro>
+		void kohnShamDFTOperatorCUDAClass<FEOrder,FEOrderElectro>::HXCheby(distributedGPUVec<double> & src,
 				distributedGPUVec<float> & tempFloatArray,
 				distributedGPUVec<double> & projectorKetTimesVector,
 				const unsigned int localVectorSize,
@@ -1436,8 +1422,8 @@ namespace dftfe
 
 
 	//XTHX
-	template<unsigned int FEOrder>
-		void kohnShamDFTOperatorCUDAClass<FEOrder>::XtHX(const double *  X,
+	template<unsigned int FEOrder,unsigned int FEOrderElectro>
+		void kohnShamDFTOperatorCUDAClass<FEOrder,FEOrderElectro>::XtHX(const double *  X,
 				distributedGPUVec<double> & XBlock,
 				distributedGPUVec<double> & HXBlock,
 				distributedGPUVec<double> & projectorKetTimesVector,
@@ -1552,8 +1538,8 @@ namespace dftfe
 
 #ifdef DEAL_II_WITH_SCALAPACK 
 	//XTHX
-	template<unsigned int FEOrder>
-		void kohnShamDFTOperatorCUDAClass<FEOrder>::XtHX(const double *  X,
+	template<unsigned int FEOrder,unsigned int FEOrderElectro>
+		void kohnShamDFTOperatorCUDAClass<FEOrder,FEOrderElectro>::XtHX(const double *  X,
 				distributedGPUVec<double> & XBlock,
 				distributedGPUVec<double> & HXBlock,
 				distributedGPUVec<double> & projectorKetTimesVector,
@@ -1701,8 +1687,8 @@ namespace dftfe
 		}
 
 	//XTHX with overlap of computation and communication
-	template<unsigned int FEOrder>
-		void kohnShamDFTOperatorCUDAClass<FEOrder>::XtHXOverlapComputeCommun(const double *  X,
+	template<unsigned int FEOrder,unsigned int FEOrderElectro>
+		void kohnShamDFTOperatorCUDAClass<FEOrder,FEOrderElectro>::XtHXOverlapComputeCommun(const double *  X,
 				distributedGPUVec<double> & XBlock,
 				distributedGPUVec<double> & HXBlock,
 				distributedGPUVec<double> & projectorKetTimesVector,
@@ -1982,8 +1968,8 @@ namespace dftfe
 
 
 	//XTHX
-	template<unsigned int FEOrder>
-		void kohnShamDFTOperatorCUDAClass<FEOrder>::XtHXMixedPrec(const double *  X,
+	template<unsigned int FEOrder,unsigned int FEOrderElectro>
+		void kohnShamDFTOperatorCUDAClass<FEOrder,FEOrderElectro>::XtHXMixedPrec(const double *  X,
 				distributedGPUVec<double> & XBlock,
 				distributedGPUVec<float> & tempFloatBlock,
 				distributedGPUVec<double> & HXBlock,
@@ -2283,8 +2269,8 @@ namespace dftfe
 		}
 
 	//XTHX
-	template<unsigned int FEOrder>
-		void kohnShamDFTOperatorCUDAClass<FEOrder>::XtHXOffDiagBlockSinglePrec(const double *  X,
+	template<unsigned int FEOrder,unsigned int FEOrderElectro>
+		void kohnShamDFTOperatorCUDAClass<FEOrder,FEOrderElectro>::XtHXOffDiagBlockSinglePrec(const double *  X,
 				distributedGPUVec<double> & XBlock,
 				distributedGPUVec<float> & tempFloatBlock,
 				distributedGPUVec<double> & HXBlock,
@@ -2528,8 +2514,8 @@ namespace dftfe
 	// 6) Wait for COP event for current block to be completed
 	// 7) [COM] Perform blocking MPI_Allreduce on curent block and copy to scalapack matrix
 	/////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	template<unsigned int FEOrder>
-		void kohnShamDFTOperatorCUDAClass<FEOrder>::XtHXMixedPrecOverlapComputeCommun(const double *  X,
+	template<unsigned int FEOrder,unsigned int FEOrderElectro>
+		void kohnShamDFTOperatorCUDAClass<FEOrder,FEOrderElectro>::XtHXMixedPrecOverlapComputeCommun(const double *  X,
 				distributedGPUVec<double> & XBlock,
 				distributedGPUVec<float> & tempFloatBlock,
 				distributedGPUVec<double> & HXBlock,
@@ -2934,8 +2920,8 @@ namespace dftfe
 	// 6) Wait for COP event for current block to be completed
 	// 7) [COM] Perform blocking MPI_Allreduce on curent block and copy to scalapack matrix
 	/////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	template<unsigned int FEOrder>
-		void kohnShamDFTOperatorCUDAClass<FEOrder>::XtHXOffDiagBlockSinglePrecOverlapComputeCommun(const double *  X,
+	template<unsigned int FEOrder,unsigned int FEOrderElectro>
+		void kohnShamDFTOperatorCUDAClass<FEOrder,FEOrderElectro>::XtHXOffDiagBlockSinglePrecOverlapComputeCommun(const double *  X,
 				distributedGPUVec<double> & XBlock,
 				distributedGPUVec<float> & tempFloatBlock,
 				distributedGPUVec<double> & HXBlock,
@@ -3307,19 +3293,6 @@ namespace dftfe
 #include "hamiltonianMatrixCalculatorFlattenedCUDA.cu"
 #include "computeNonLocalHamiltonianTimesXMemoryOptBatchGEMMCUDA.cu"
 
-
-	template class kohnShamDFTOperatorCUDAClass<1>;
-	template class kohnShamDFTOperatorCUDAClass<2>;
-	template class kohnShamDFTOperatorCUDAClass<3>;
-	template class kohnShamDFTOperatorCUDAClass<4>;
-	template class kohnShamDFTOperatorCUDAClass<5>;
-	template class kohnShamDFTOperatorCUDAClass<6>;
-	template class kohnShamDFTOperatorCUDAClass<7>;
-	template class kohnShamDFTOperatorCUDAClass<8>;
-	template class kohnShamDFTOperatorCUDAClass<9>;
-	template class kohnShamDFTOperatorCUDAClass<10>;
-	template class kohnShamDFTOperatorCUDAClass<11>;
-	template class kohnShamDFTOperatorCUDAClass<12>;
-
+#include "inst.cu"
 }
 #endif

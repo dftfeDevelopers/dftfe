@@ -31,18 +31,17 @@ namespace dftfe {
 	const int C_DIM = 3;
 
 	/// 1d quadrature rule order
-	template <unsigned int FEOrder> constexpr unsigned int C_num1DQuad(){return FEOrder+3;}
+	template <unsigned int FEOrder> constexpr unsigned int C_num1DQuad(){return FEOrder+1;}
+
+	/// rho nodal polynomial order
+	template <unsigned int FEOrder, unsigned int FEOrderElectro> constexpr unsigned int C_rhoNodalPolyOrder(){return ((FEOrder+2)>FEOrderElectro?(FEOrder+2):FEOrderElectro);}  
 
 	/// 1d quad rule smeared nuclear charge
-	template <unsigned int FEOrder> constexpr unsigned int C_num1DQuadSmearedCharge(){return 8;}
+	constexpr unsigned int C_num1DQuadSmearedCharge(){return 10;}
 
   /// number of copies 1d quad rule smeared nuclear charge
-  constexpr unsigned int C_numCopies1DQuadSmearedCharge(){return 3;}
+  constexpr unsigned int C_numCopies1DQuadSmearedCharge(){return 2;}
   
-
-	//kerker Helmholtz solve polynomial Order
-	template <unsigned int FEOrder> constexpr unsigned int C_num1DKerkerPoly(){return FEOrder+2;}
-
 
 	/// 1d quadrature rule order for non-local part of pseudopotential
 	template <unsigned int FEOrder> constexpr unsigned int C_num1DQuadNLPSP()

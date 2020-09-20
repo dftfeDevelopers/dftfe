@@ -30,8 +30,8 @@ namespace dftfe {
 	//================================================================================================================================================
 	//							Class constructor
 	//================================================================================================================================================
-	template<unsigned int FEOrder>
-		symmetryClass<FEOrder>::symmetryClass(dftClass<FEOrder>* _dftPtr,const MPI_Comm &mpi_comm_replica,const MPI_Comm &_interpoolcomm):
+	template<unsigned int FEOrder, unsigned int FEOrderElectro>
+		symmetryClass<FEOrder,FEOrderElectro>::symmetryClass(dftClass<FEOrder,FEOrderElectro>* _dftPtr,const MPI_Comm &mpi_comm_replica,const MPI_Comm &_interpoolcomm):
 			dftPtr(_dftPtr),
 			FE (QGaussLobatto<1>(FEOrder+1)),
 			mpi_communicator (mpi_comm_replica),
@@ -46,8 +46,8 @@ namespace dftfe {
 	//================================================================================================================================================
 	//					Wiping out mapping tables; needed between relaxation steps
 	//================================================================================================================================================
-	template<unsigned int FEOrder>
-		void symmetryClass<FEOrder>::clearMaps()
+	template<unsigned int FEOrder, unsigned int FEOrderElectro>
+		void symmetryClass<FEOrder,FEOrderElectro>::clearMaps()
 		{
 			mappedGroup.clear() ;
 			mappedGroupSend0.clear() ;
@@ -68,11 +68,11 @@ namespace dftfe {
 	//			     The following is the main driver routine to generate and communicate mapping tables
 	//================================================================================================================================================
 	//================================================================================================================================================
-	template<unsigned int FEOrder>
-		void symmetryClass<FEOrder>::initSymmetry()
+	template<unsigned int FEOrder, unsigned int FEOrderElectro>
+		void symmetryClass<FEOrder,FEOrderElectro>::initSymmetry()
 		{
 			//
-			QGauss<3>  quadrature(C_num1DQuad<FEOrder>());
+			const Quadrature<3> &  quadrature=dftPtr->matrix_free_data.get_quadrature(dftPtr->d_densityQuadratureId);
 			FEValues<3> fe_values (dftPtr->FEEigen, quadrature, update_values | update_gradients| update_JxW_values | update_quadrature_points);
 			const unsigned int num_quad_points = quadrature.size();
 			Point<3> p, ptemp, p0 ;
@@ -462,8 +462,8 @@ namespace dftfe {
 	//			              flag==1 takes crystal to cartesian and flag==-1 does the other way around.
 	//================================================================================================================================================
 	//================================================================================================================================================ 
-	template<unsigned int FEOrder>
-		Point<3> symmetryClass<FEOrder>::crys2cart(Point<3> p, int flag)
+	template<unsigned int FEOrder, unsigned int FEOrderElectro>
+		Point<3> symmetryClass<FEOrder,FEOrderElectro>::crys2cart(Point<3> p, int flag)
 		{
 			Point<3> ptemp ;
 			if (flag==1){
@@ -501,17 +501,6 @@ namespace dftfe {
 			return ptemp;
 		}
 	//================================================================================================================================================
-	template class symmetryClass<1>;
-	template class symmetryClass<2>;
-	template class symmetryClass<3>;
-	template class symmetryClass<4>;
-	template class symmetryClass<5>;
-	template class symmetryClass<6>;
-	template class symmetryClass<7>;
-	template class symmetryClass<8>;
-	template class symmetryClass<9>;
-	template class symmetryClass<10>;
-	template class symmetryClass<11>;
-	template class symmetryClass<12>;
+#include "symmetrize.inst.cc"
 	//=================================================================================================================================================
 }

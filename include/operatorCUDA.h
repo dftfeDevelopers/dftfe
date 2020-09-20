@@ -87,6 +87,8 @@ namespace dftfe{
 
 			virtual thrust::device_vector<double> & getShapeFunctionGradientIntegral() = 0;
 
+      virtual thrust::device_vector<double> & getShapeFunctionGradientIntegralElectro() = 0;
+
 			virtual thrust::device_vector<double> & getShapeFunctionValues() = 0;
 
 			virtual thrust::device_vector<double> & getShapeFunctionValuesInverted(const bool use2pPlusOneGLQuad=false) = 0;
@@ -480,6 +482,7 @@ namespace dftfe{
 
 			thrust::device_vector<double> d_cellShapeFunctionGradientIntegralFlattenedDevice;
 
+      thrust::device_vector<double> d_cellShapeFunctionGradientIntegralFlattenedDeviceElectro;
 
 			thrust::device_vector<double> d_shapeFunctionValueDevice;
 

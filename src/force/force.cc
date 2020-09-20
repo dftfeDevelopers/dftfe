@@ -145,8 +145,8 @@ namespace  dftfe {
 	//
 	//constructor
 	//
-	template<unsigned int FEOrder>
-		forceClass<FEOrder>::forceClass(dftClass<FEOrder>* _dftPtr,const MPI_Comm &mpi_comm_replica):
+	template<unsigned int FEOrder,unsigned int FEOrderElectro>
+		forceClass<FEOrder,FEOrderElectro>::forceClass(dftClass<FEOrder,FEOrderElectro>* _dftPtr,const MPI_Comm &mpi_comm_replica):
 			dftPtr(_dftPtr),
 			FEForce (FE_Q<3>(QGaussLobatto<1>(2)), 3), //linear shape function
 			mpi_communicator (mpi_comm_replica),
@@ -160,8 +160,8 @@ namespace  dftfe {
 	//
 	//initialize forceClass object
 	//
-	template<unsigned int FEOrder>
-		void forceClass<FEOrder>::initUnmoved(const Triangulation<3,3> & triangulation,
+	template<unsigned int FEOrder,unsigned int FEOrderElectro>
+		void forceClass<FEOrder,FEOrderElectro>::initUnmoved(const Triangulation<3,3> & triangulation,
 				const Triangulation<3,3> & serialTriangulation,
 				const std::vector<std::vector<double> >  & domainBoundingVectors,
 				const bool isElectrostaticsMesh)
@@ -191,8 +191,8 @@ namespace  dftfe {
 
 
 	//reinitialize force class object after mesh update
-	template<unsigned int FEOrder>
-		void forceClass<FEOrder>::initMoved
+	template<unsigned int FEOrder,unsigned int FEOrderElectro>
+		void forceClass<FEOrder,FEOrderElectro>::initMoved
 		(std::vector<const DoFHandler<3> *> & dofHandlerVectorMatrixFree,
 		 std::vector<const ConstraintMatrix * > & constraintsVectorMatrixFree,
 		 const bool isElectrostaticsMesh,
@@ -201,15 +201,20 @@ namespace  dftfe {
 			if (isElectrostaticsMesh)
 			{
 				d_dofHandlerForceElectro.distribute_dofs(FEForce);
+        dofHandlerVectorMatrixFree.push_back(&d_dofHandlerForceElectro);
+        constraintsVectorMatrixFree.push_back(&d_constraintsNoneForceElectro);
 
 				if (isElectrostaticsEigenMeshDifferent)
 				{
-					dofHandlerVectorMatrixFree.push_back(&d_dofHandlerForceElectro);
-					constraintsVectorMatrixFree.push_back(&d_constraintsNoneForceElectro);
+					//dofHandlerVectorMatrixFree.push_back(&d_dofHandlerForceElectro);
+					//constraintsVectorMatrixFree.push_back(&d_constraintsNoneForceElectro);
 					d_isElectrostaticsMeshSubdivided=true;
 				}
 				else
+        {
+
 					d_isElectrostaticsMeshSubdivided=false;
+        }
 
 				d_forceDofHandlerIndexElectro = dofHandlerVectorMatrixFree.size()-1;
 
@@ -248,8 +253,8 @@ namespace  dftfe {
 	//
 	//initialize pseudopotential data for force computation
 	//
-	template<unsigned int FEOrder>
-		void forceClass<FEOrder>::initPseudoData()
+	template<unsigned int FEOrder,unsigned int FEOrderElectro>
+		void forceClass<FEOrder,FEOrderElectro>::initPseudoData()
 		{
 
 			if(dftParameters::isPseudopotential)
@@ -257,21 +262,17 @@ namespace  dftfe {
 		}
 
 	//compute forces on atoms corresponding to a Gaussian generator
-	template<unsigned int FEOrder>
-		void forceClass<FEOrder>::computeAtomsForces
+	template<unsigned int FEOrder,unsigned int FEOrderElectro>
+		void forceClass<FEOrder,FEOrderElectro>::computeAtomsForces
 		(const MatrixFree<3,double> & matrixFreeData,
 #ifdef DFTFE_WITH_GPU
-		 kohnShamDFTOperatorCUDAClass<FEOrder> & kohnShamDFTEigenOperator,
+		 kohnShamDFTOperatorCUDAClass<FEOrder,FEOrderElectro> & kohnShamDFTEigenOperator,
 #endif
 		 const unsigned int eigenDofHandlerIndex,
-		 const unsigned int phiTotDofHandlerIndex,
      const unsigned int smearedChargeQuadratureId,
               const unsigned int lpspQuadratureId,
              const unsigned int lpspQuadratureIdElectro,         
-		 const distributedCPUVec<double> & phiTotRhoIn,
-		 const distributedCPUVec<double> & phiTotRhoOut,
 		 const std::map<dealii::CellId, std::vector<double> > & pseudoVLoc,
-		 const vselfBinsManager<FEOrder> & vselfBinsManagerEigen,
 		 const MatrixFree<3,double> & matrixFreeDataElectro,
 		 const unsigned int phiTotDofHandlerIndexElectro,
 		 const distributedCPUVec<double> & phiTotRhoOutElectro,
@@ -285,7 +286,7 @@ namespace  dftfe {
 		 const std::map<dealii::CellId, std::vector<double> > & pseudoVLocElectro,
 		 const std::map<unsigned int,std::map<dealii::CellId, std::vector<double> > > & pseudoVLocAtomsElectro,
 		 const ConstraintMatrix  & hangingPlusPBCConstraintsElectro,
-		 const vselfBinsManager<FEOrder> & vselfBinsManagerElectro,
+		 const vselfBinsManager<FEOrder,FEOrderElectro> & vselfBinsManagerElectro,
 		 const std::map<dealii::CellId, std::vector<double> > & shadowKSRhoMinValues,
 		 const std::map<dealii::CellId, std::vector<double> > & shadowKSGradRhoMinValues,
 		 const distributedCPUVec<double> & phiRhoMinusApproxRho,
@@ -308,14 +309,10 @@ namespace  dftfe {
 					 kohnShamDFTEigenOperator,
 #endif
 					 eigenDofHandlerIndex,
-					 phiTotDofHandlerIndex,
            smearedChargeQuadratureId,
            lpspQuadratureId,
            lpspQuadratureIdElectro,
-					 phiTotRhoIn,
-					 phiTotRhoOut,
 					 pseudoVLoc,
-					 vselfBinsManagerEigen,
 					 matrixFreeDataElectro,
 					 phiTotDofHandlerIndexElectro,
 					 phiTotRhoOutElectro,
@@ -350,8 +347,8 @@ namespace  dftfe {
 		 }
 
 
-	template<unsigned int FEOrder>
-		void forceClass<FEOrder>::configForceLinFEInit(const MatrixFree<3,double> & matrixFreeData,
+	template<unsigned int FEOrder,unsigned int FEOrderElectro>
+		void forceClass<FEOrder,FEOrderElectro>::configForceLinFEInit(const MatrixFree<3,double> & matrixFreeData,
 				const MatrixFree<3,double> & matrixFreeDataElectro)
 		{
 
@@ -379,8 +376,8 @@ namespace  dftfe {
 #endif      
 		}
 
-	template<unsigned int FEOrder>
-		void forceClass<FEOrder>::configForceLinFEFinalize()
+	template<unsigned int FEOrder,unsigned int FEOrderElectro>
+		void forceClass<FEOrder,FEOrderElectro>::configForceLinFEFinalize()
 		{
 			d_configForceVectorLinFE.compress(VectorOperation::add);//copies the ghost element cache to the owning element
 			//d_configForceVectorLinFE.update_ghost_values();
@@ -407,21 +404,17 @@ namespace  dftfe {
 	//cases. Also both LDA and GGA exchange correlation are handled. For details of the configurational
 	//force expressions refer to the Configurational force paper by Motamarri et.al.
 	//(https://arxiv.org/abs/1712.05535)
-	template<unsigned int FEOrder>
-		void forceClass<FEOrder>::computeConfigurationalForceTotalLinFE
+	template<unsigned int FEOrder,unsigned int FEOrderElectro>
+		void forceClass<FEOrder,FEOrderElectro>::computeConfigurationalForceTotalLinFE
 		(const MatrixFree<3,double> & matrixFreeData,
 #ifdef DFTFE_WITH_GPU
-		 kohnShamDFTOperatorCUDAClass<FEOrder> & kohnShamDFTEigenOperator,
+		 kohnShamDFTOperatorCUDAClass<FEOrder,FEOrderElectro> & kohnShamDFTEigenOperator,
 #endif
 		 const unsigned int eigenDofHandlerIndex,
-		 const unsigned int phiTotDofHandlerIndex,
      const unsigned int smearedChargeQuadratureId,
               const unsigned int lpspQuadratureId,
             const unsigned int lpspQuadratureIdElectro,         
-		 const distributedCPUVec<double> & phiTotRhoIn,
-		 const distributedCPUVec<double> & phiTotRhoOut,
 		 const std::map<dealii::CellId, std::vector<double> > & pseudoVLoc,
-		 const vselfBinsManager<FEOrder> & vselfBinsManagerEigen,
 		 const MatrixFree<3,double> & matrixFreeDataElectro,
 		 const unsigned int phiTotDofHandlerIndexElectro,
 		 const distributedCPUVec<double> & phiTotRhoOutElectro,
@@ -434,7 +427,7 @@ namespace  dftfe {
        const std::map<dealii::CellId, std::vector<double> > & gradRhoOutValuesElectroLpsp,
 		 const std::map<dealii::CellId, std::vector<double> > & pseudoVLocElectro,
 		 const std::map<unsigned int,std::map<dealii::CellId, std::vector<double> > > & pseudoVLocAtomsElectro,
-		 const vselfBinsManager<FEOrder> & vselfBinsManagerElectro,
+		 const vselfBinsManager<FEOrder,FEOrderElectro> & vselfBinsManagerElectro,
 		 const std::map<dealii::CellId, std::vector<double> > & shadowKSRhoMinValues,
 		 const std::map<dealii::CellId, std::vector<double> > & shadowKSGradRhoMinValues,
 		 const distributedCPUVec<double> & phiRhoMinusApproxRho,
@@ -450,14 +443,10 @@ namespace  dftfe {
 				 computeConfigurationalForceSpinPolarizedEEshelbyTensorFPSPFnlLinFE
 					 (matrixFreeData,
 					  eigenDofHandlerIndex,
-					  phiTotDofHandlerIndex,
             smearedChargeQuadratureId,
             lpspQuadratureId,
             lpspQuadratureIdElectro,
-					  phiTotRhoIn,
-					  phiTotRhoOut,
 					  pseudoVLoc,
-					  vselfBinsManagerEigen,
 					  matrixFreeDataElectro,
 					  phiTotDofHandlerIndexElectro,
 					  phiTotRhoOutElectro,
@@ -480,14 +469,10 @@ namespace  dftfe {
 					  kohnShamDFTEigenOperator,
 #endif
 					  eigenDofHandlerIndex,
-					  phiTotDofHandlerIndex,
             smearedChargeQuadratureId,
             lpspQuadratureId,
             lpspQuadratureIdElectro,
-					  phiTotRhoIn,
-					  phiTotRhoOut,
 					  pseudoVLoc,
-					  vselfBinsManagerEigen,
 					  matrixFreeDataElectro,
 					  phiTotDofHandlerIndexElectro,
 					  phiTotRhoOutElectro,
@@ -543,26 +528,26 @@ namespace  dftfe {
 		 }
 
 
-	template<unsigned int FEOrder>
-		std::vector<double>  forceClass<FEOrder>::getAtomsForces()
+	template<unsigned int FEOrder,unsigned int FEOrderElectro>
+		std::vector<double>  forceClass<FEOrder,FEOrderElectro>::getAtomsForces()
 		{
 			return  d_globalAtomsForces;
 		}
 
-	template<unsigned int FEOrder>
-		Tensor<2,C_DIM,double>  forceClass<FEOrder>::getStress()
+	template<unsigned int FEOrder,unsigned int FEOrderElectro>
+		Tensor<2,C_DIM,double>  forceClass<FEOrder,FEOrderElectro>::getStress()
 		{
 			return d_stress;
 		}
 
 	/*
-	   template<unsigned int FEOrder>
+	   template<unsigned int FEOrder,unsigned int FEOrderElectro>
 	   double  forceClass<FEOrder>::getGaussianGeneratorParameter() const
 	   {
 	   return d_gaussianConstant;
 	   }
 
-	   template<unsigned int FEOrder>
+	   template<unsigned int FEOrder,unsigned int FEOrderElectro>
 	   void  forceClass<FEOrder>::updateGaussianConstant(const double newGaussianConstant)
 	   {
 	   if (!dftParameters::reproducible_output)
@@ -570,17 +555,5 @@ namespace  dftfe {
 	   }
 	 */
 
-	template class forceClass<1>;
-	template class forceClass<2>;
-	template class forceClass<3>;
-	template class forceClass<4>;
-	template class forceClass<5>;
-	template class forceClass<6>;
-	template class forceClass<7>;
-	template class forceClass<8>;
-	template class forceClass<9>;
-	template class forceClass<10>;
-	template class forceClass<11>;
-	template class forceClass<12>;
-
+#include "force.inst.cc"
 }

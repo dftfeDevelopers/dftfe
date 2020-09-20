@@ -97,8 +97,8 @@ std::vector<double> wrapAtomsAcrossPeriodicBc(const Point<3> & cellCenteredCoord
 // Function to update the atom positions and mesh based on the provided displacement input.
 // Depending on the maximum displacement magnitude this function decides wether to do auto remeshing
 // or move mesh using Gaussian functions.
-	template<unsigned int FEOrder>
-void dftClass<FEOrder>::updateAtomPositionsAndMoveMesh(const std::vector<Tensor<1,3,double> > & globalAtomsDisplacements,
+	template<unsigned int FEOrder,unsigned int FEOrderElectro>
+void dftClass<FEOrder,FEOrderElectro>::updateAtomPositionsAndMoveMesh(const std::vector<Tensor<1,3,double> > & globalAtomsDisplacements,
 		const double maxJacobianRatioFactor,
 		const bool useSingleAtomSolutions,
 		const bool updateDensity)
@@ -170,7 +170,7 @@ void dftClass<FEOrder>::updateAtomPositionsAndMoveMesh(const std::vector<Tensor<
 	const double tol=1e-6;
 	const double break1 = 1.0;
 
-	if(maxDispAtom <= break1+tol)
+	if(maxDispAtom <= (break1+tol) && !dftParameters::floatingNuclearCharges)
 		useGaussian = 1;
 
 	//for synchrozination in case the updateCase are different in different processors due to floating point comparison
@@ -568,9 +568,9 @@ void dftClass<FEOrder>::updateAtomPositionsAndMoveMesh(const std::vector<Tensor<
     init_time = MPI_Wtime(); 
 
     if (dftParameters::isBOMD)
-      initNoRemesh(false,false,updateDensity);
+      initNoRemesh(true,false,updateDensity);
     else
-      initNoRemesh(false,false,updateDensity);
+      initNoRemesh(true,false,updateDensity);
     if (!dftParameters::reproducible_output)
       pcout << "...Reinitialization end" << std::endl;
 

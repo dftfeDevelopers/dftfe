@@ -18,8 +18,8 @@
 
 
 
-	template<unsigned int FEOrder>
-void kohnShamDFTOperatorClass<FEOrder>::computeMassMatrix()
+	template<unsigned int FEOrder,unsigned int FEOrderElectro>
+void kohnShamDFTOperatorClass<FEOrder,FEOrderElectro>::computeMassMatrix()
 {
 
 	//

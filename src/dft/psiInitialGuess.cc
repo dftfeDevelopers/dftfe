@@ -17,8 +17,8 @@
 //
 
 
-	template<unsigned int FEOrder>
-void dftClass<FEOrder>::loadPSIFiles(unsigned int Z,
+	template<unsigned int FEOrder,unsigned int FEOrderElectro>
+void dftClass<FEOrder,FEOrderElectro>::loadPSIFiles(unsigned int Z,
 		unsigned int n,
 		unsigned int l,
 		unsigned int &fileReadFlag)
@@ -102,8 +102,8 @@ void dftClass<FEOrder>::loadPSIFiles(unsigned int Z,
 //
 //determine orbital ordering
 //
-	template<unsigned int FEOrder>
-void dftClass<FEOrder>::determineOrbitalFilling()
+	template<unsigned int FEOrder,unsigned int FEOrderElectro>
+void dftClass<FEOrder,FEOrderElectro>::determineOrbitalFilling()
 {
 	//
 	//create a stencil following orbital filling order
@@ -232,8 +232,8 @@ void dftClass<FEOrder>::determineOrbitalFilling()
 }
 
 //
-template<unsigned int FEOrder>
-void dftClass<FEOrder>::readPSIRadialValues(){
+template<unsigned int FEOrder,unsigned int FEOrderElectro>
+void dftClass<FEOrder,FEOrderElectro>::readPSIRadialValues(){
 
 	IndexSet locallyOwnedSet;
 	DoFTools::extract_locally_owned_dofs(dofHandler,locallyOwnedSet);
@@ -425,8 +425,8 @@ void dftClass<FEOrder>::readPSIRadialValues(){
 }
 
 //
-	template<unsigned int FEOrder>
-void dftClass<FEOrder>::readPSI()
+	template<unsigned int FEOrder,unsigned int FEOrderElectro>
+void dftClass<FEOrder,FEOrderElectro>::readPSI()
 {
 	computing_timer.enter_section("initialize wave functions");
 	readPSIRadialValues();

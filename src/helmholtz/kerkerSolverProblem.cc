@@ -24,8 +24,8 @@ namespace dftfe {
 	//
 	//constructor
 	//
-	template<unsigned int FEOrder>
-		kerkerSolverProblem<FEOrder>::kerkerSolverProblem(const  MPI_Comm &mpi_comm):
+	template<unsigned int FEOrderElectro>
+		kerkerSolverProblem<FEOrderElectro>::kerkerSolverProblem(const  MPI_Comm &mpi_comm):
 			mpi_communicator (mpi_comm),
 			n_mpi_processes (dealii::Utilities::MPI::n_mpi_processes(mpi_comm)),
 			this_mpi_process (dealii::Utilities::MPI::this_mpi_process(mpi_comm)),
@@ -35,51 +35,55 @@ namespace dftfe {
 	}
 
 
-	template<unsigned int FEOrder>
-		void kerkerSolverProblem<FEOrder>::init(dealii::MatrixFree<3,double> & matrixFreeDataPRefined,
+	template<unsigned int FEOrderElectro>
+		void kerkerSolverProblem<FEOrderElectro>::init(dealii::MatrixFree<3,double> & matrixFreeDataPRefined,
 				dealii::ConstraintMatrix & constraintMatrixPRefined,
 				distributedCPUVec<double> & x,
-				double kerkerMixingParameter)
+				double kerkerMixingParameter,
+        const unsigned int matrixFreeVectorComponent,
+        const unsigned int matrixFreeQuadratureComponent)        
 		{
 			d_matrixFreeDataPRefinedPtr = &matrixFreeDataPRefined;
 			d_constraintMatrixPRefinedPtr = &constraintMatrixPRefined;
 			d_gamma = kerkerMixingParameter;
+      d_matrixFreeVectorComponent=matrixFreeVectorComponent;
+      d_matrixFreeQuadratureComponent=matrixFreeQuadratureComponent;
 
-			matrixFreeDataPRefined.initialize_dof_vector(x);
+			matrixFreeDataPRefined.initialize_dof_vector(x,d_matrixFreeVectorComponent);
 			computeDiagonalA();
 		}
 
 
-	template<unsigned int FEOrder>
-		void kerkerSolverProblem<FEOrder>::reinit(distributedCPUVec<double> & x,
+	template<unsigned int FEOrderElectro>
+		void kerkerSolverProblem<FEOrderElectro>::reinit(distributedCPUVec<double> & x,
 				const std::map<dealii::CellId,std::vector<double> > & quadPointValues)
 		{
 			d_xPtr = &x;
 			d_quadGradResidualValuesPtr = &quadPointValues;
 		}
 
-	template<unsigned int FEOrder>
-		void kerkerSolverProblem<FEOrder>::distributeX()
+	template<unsigned int FEOrderElectro>
+		void kerkerSolverProblem<FEOrderElectro>::distributeX()
 		{
 			d_constraintMatrixPRefinedPtr->distribute(*d_xPtr);
 		}
 
-	template<unsigned int FEOrder>
-		distributedCPUVec<double> & kerkerSolverProblem<FEOrder>::getX()
+	template<unsigned int FEOrderElectro>
+		distributedCPUVec<double> & kerkerSolverProblem<FEOrderElectro>::getX()
 		{
 			return *d_xPtr;
 		}
 
-	template<unsigned int FEOrder>
-		void kerkerSolverProblem<FEOrder>::computeRhs(distributedCPUVec<double>  & rhs)
+	template<unsigned int FEOrderElectro>
+		void kerkerSolverProblem<FEOrderElectro>::computeRhs(distributedCPUVec<double>  & rhs)
 		{
 
 			rhs.reinit(*d_xPtr);
 
 			const dealii::DoFHandler<3> & dofHandler=
-				d_matrixFreeDataPRefinedPtr->get_dof_handler();
+				d_matrixFreeDataPRefinedPtr->get_dof_handler(d_matrixFreeVectorComponent);
 
-			dealii::QGauss<3>  quadrature(C_num1DQuad<FEOrder>());
+			dealii::QGauss<3>  quadrature(C_num1DQuad<FEOrderElectro>());
 			dealii::FEValues<3> fe_values (dofHandler.get_fe(), quadrature, dealii::update_values | dealii::update_gradients | dealii::update_JxW_values);
 			const unsigned int dofs_per_cell = dofHandler.get_fe().dofs_per_cell;
 			const unsigned int num_quad_points = quadrature.size();
@@ -124,8 +128,8 @@ namespace dftfe {
 		}
 
 	//Matrix-Free Jacobi preconditioner application
-	template<unsigned int FEOrder>
-		void  kerkerSolverProblem<FEOrder>::precondition_Jacobi(distributedCPUVec<double>& dst,
+	template<unsigned int FEOrderElectro>
+		void  kerkerSolverProblem<FEOrderElectro>::precondition_Jacobi(distributedCPUVec<double>& dst,
 				const distributedCPUVec<double>& src,
 				const double omega) const
 		{
@@ -133,17 +137,17 @@ namespace dftfe {
 			dst.scale(d_diagonalA);
 		}
 
-	template<unsigned int FEOrder>
-		void kerkerSolverProblem<FEOrder>::computeDiagonalA()
+	template<unsigned int FEOrderElectro>
+		void kerkerSolverProblem<FEOrderElectro>::computeDiagonalA()
 		{
 
 			const dealii::DoFHandler<3> & dofHandler=
-				d_matrixFreeDataPRefinedPtr->get_dof_handler();
+				d_matrixFreeDataPRefinedPtr->get_dof_handler(d_matrixFreeVectorComponent);
 
-			d_matrixFreeDataPRefinedPtr->initialize_dof_vector(d_diagonalA);
+			d_matrixFreeDataPRefinedPtr->initialize_dof_vector(d_diagonalA,d_matrixFreeVectorComponent);
 			d_diagonalA = 0.0;
 
-			dealii::QGauss<3>  quadrature(C_num1DQuad<FEOrder>());
+			dealii::QGauss<3>  quadrature(C_num1DQuad<FEOrderElectro>());
 			dealii::FEValues<3> fe_values (dofHandler.get_fe(), quadrature, dealii::update_values | dealii::update_gradients | dealii::update_JxW_values);
 			const unsigned int   dofs_per_cell = dofHandler.get_fe().dofs_per_cell;
 			const unsigned int   num_quad_points = quadrature.size();
@@ -182,16 +186,16 @@ namespace dftfe {
 		}
 
 	//Ax
-	template<unsigned int FEOrder>
-		void kerkerSolverProblem<FEOrder>::AX(const dealii::MatrixFree<3,double> & matrixFreeData,
+	template<unsigned int FEOrderElectro>
+		void kerkerSolverProblem<FEOrderElectro>::AX(const dealii::MatrixFree<3,double> & matrixFreeData,
 				distributedCPUVec<double> &dst,
 				const distributedCPUVec<double> &src,
 				const std::pair<unsigned int,unsigned int> &cell_range) const
 		{
 
-			dealii::FEEvaluation<3,FEOrder,C_num1DQuad<FEOrder>()> fe_eval(matrixFreeData,
-					0,
-					0);
+			dealii::FEEvaluation<3,FEOrderElectro,C_num1DQuad<FEOrderElectro>()> fe_eval(matrixFreeData,
+					d_matrixFreeVectorComponent,
+					d_matrixFreeQuadratureComponent);
 			//double gamma = dftParameters::kerkerParameter;
 
 			dealii::VectorizedArray<double>  kerkerConst = dealii::make_vectorized_array(4*M_PI*d_gamma);
@@ -213,11 +217,11 @@ namespace dftfe {
 		}
 
 
-	template<unsigned int FEOrder>
-		void kerkerSolverProblem<FEOrder>::vmult(distributedCPUVec<double> &Ax,const distributedCPUVec<double> &x) const
+	template<unsigned int FEOrderElectro>
+		void kerkerSolverProblem<FEOrderElectro>::vmult(distributedCPUVec<double> &Ax,const distributedCPUVec<double> &x) const
 		{
 			Ax=0.0;
-			d_matrixFreeDataPRefinedPtr->cell_loop (&kerkerSolverProblem<FEOrder>::AX, this, Ax, x);
+			d_matrixFreeDataPRefinedPtr->cell_loop (&kerkerSolverProblem<FEOrderElectro>::AX, this, Ax, x);
 		}
 
 
@@ -237,12 +241,4 @@ namespace dftfe {
 	template class kerkerSolverProblem<14>;
 	template class kerkerSolverProblem<15>;
 	template class kerkerSolverProblem<16>;
-	template class kerkerSolverProblem<17>;
-	template class kerkerSolverProblem<18>;
-	template class kerkerSolverProblem<19>;
-	template class kerkerSolverProblem<20>;
-	template class kerkerSolverProblem<21>;
-	template class kerkerSolverProblem<22>;
-	template class kerkerSolverProblem<23>;
-	template class kerkerSolverProblem<24>;
 }

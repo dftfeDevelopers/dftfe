@@ -19,15 +19,15 @@
 //
 //Initialize rho by reading in single-atom electron-density and fit a spline
 //
-template<unsigned int FEOrder>
-	void dftClass<FEOrder>::initLocalPseudoPotential
+template<unsigned int FEOrder,unsigned int FEOrderElectro>
+	void dftClass<FEOrder,FEOrderElectro>::initLocalPseudoPotential
 (const DoFHandler<3> & _dofHandler,
  const unsigned int lpspQuadratureId,
  const dealii::MatrixFree<3,double> & _matrix_free_data,
  const unsigned int _phiExtDofHandlerIndex,
  const dealii::ConstraintMatrix & _phiExtConstraintMatrix,
  const std::map<types::global_dof_index, Point<3> > & _supportPoints,
- const vselfBinsManager<FEOrder> & vselfBinManager,
+ const vselfBinsManager<FEOrder,FEOrderElectro> & vselfBinManager,
  distributedCPUVec<double> & phiExt,
  std::map<dealii::CellId, std::vector<double> > & _pseudoValues,
  std::map<unsigned int,std::map<dealii::CellId, std::vector<double> > > & _pseudoValuesAtoms)
@@ -233,7 +233,7 @@ template<unsigned int FEOrder>
 	MPI_Barrier(MPI_COMM_WORLD);
 	init_2 = MPI_Wtime();
 
-	FEEvaluation<3,FEOrder,C_num1DQuadLPSP<FEOrder>()*C_numCopies1DQuadLPSP()> feEvalObj(_matrix_free_data,_phiExtDofHandlerIndex,lpspQuadratureId);
+	FEEvaluation<3,FEOrderElectro,C_num1DQuadLPSP<FEOrderElectro>()*C_numCopies1DQuadLPSP()> feEvalObj(_matrix_free_data,_phiExtDofHandlerIndex,lpspQuadratureId);
   AssertThrow(_matrix_free_data.get_quadrature(lpspQuadratureId).size() == feEvalObj.n_q_points,
             dealii::ExcMessage("DFT-FE Error: mismatch in quadrature rule usage in initLocalPseudoPotential.")); 
 
@@ -245,7 +245,7 @@ template<unsigned int FEOrder>
 
 		for(unsigned int iSubCell = 0; iSubCell < _matrix_free_data.n_components_filled(macrocell); ++iSubCell)
 		{
-			subCellPtr= _matrix_free_data.get_cell_iterator(macrocell,iSubCell);
+			subCellPtr= _matrix_free_data.get_cell_iterator(macrocell,iSubCell,_phiExtDofHandlerIndex);
 			dealii::CellId subCellId=subCellPtr->id();
 
       std::vector<double> & pseudoVLoc=_pseudoValues[subCellId];
@@ -260,7 +260,7 @@ template<unsigned int FEOrder>
 		for(unsigned int iSubCell = 0; iSubCell < _matrix_free_data.n_components_filled(macrocell); ++iSubCell)
 		{
 
-			subCellPtr= _matrix_free_data.get_cell_iterator(macrocell,iSubCell);
+			subCellPtr= _matrix_free_data.get_cell_iterator(macrocell,iSubCell,_phiExtDofHandlerIndex);
 			dealii::CellId subCellId=subCellPtr->id();
 
       std::vector<double> & pseudoVLoc=_pseudoValues[subCellId];
@@ -321,7 +321,7 @@ template<unsigned int FEOrder>
 
 		for(unsigned int iSubCell = 0; iSubCell < _matrix_free_data.n_components_filled(macrocell); ++iSubCell)
 		{
-			subCellPtr= _matrix_free_data.get_cell_iterator(macrocell,iSubCell);
+			subCellPtr= _matrix_free_data.get_cell_iterator(macrocell,iSubCell,_phiExtDofHandlerIndex);
 			dealii::CellId subCellId=subCellPtr->id();
       std::vector<double> & pseudoVLoc=_pseudoValues[subCellId];
 			//loop over quad points
@@ -425,8 +425,8 @@ template<unsigned int FEOrder>
 //
 //Initialize rho by reading in single-atom electron-density and fit a spline
 //
-template<unsigned int FEOrder>
-void dftClass<FEOrder>::initLocalPseudoPotential
+template<unsigned int FEOrder,unsigned int FEOrderElectro>
+void dftClass<FEOrder,FEOrderElectro>::initLocalPseudoPotential
 (const DoFHandler<3> & _dofHandler,
 const dealii::QGauss<3> & _quadrature,
 const dealii::MatrixFree<3,double> & _matrix_free_data,
@@ -724,8 +724,8 @@ if (dftParameters::verbosity>=1)
 	}
 */
 
-	template<unsigned int FEOrder>
-void dftClass<FEOrder>::initNonLocalPseudoPotential()
+	template<unsigned int FEOrder,unsigned int FEOrderElectro>
+void dftClass<FEOrder,FEOrderElectro>::initNonLocalPseudoPotential()
 {
 	d_pseudoWaveFunctionIdToFunctionIdDetails.clear();
 	d_deltaVlIdToFunctionIdDetails.clear();
@@ -1237,8 +1237,8 @@ void dftClass<FEOrder>::initNonLocalPseudoPotential()
 	return;
 }
 
-	template<unsigned int FEOrder>
-void dftClass<FEOrder>::computeSparseStructureNonLocalProjectors()
+	template<unsigned int FEOrder,unsigned int FEOrderElectro>
+void dftClass<FEOrder,FEOrderElectro>::computeSparseStructureNonLocalProjectors()
 {
 
 	//
@@ -1278,7 +1278,7 @@ void dftClass<FEOrder>::computeSparseStructureNonLocalProjectors()
 	//
 	//get FE data structures
 	//
-	QGauss<3>  quadrature(C_num1DQuad<FEOrder>());
+	const Quadrature<3> &  quadrature=matrix_free_data.get_quadrature(d_densityQuadratureId);
 	//FEValues<3> fe_values(FE, quadrature, update_values | update_gradients | update_JxW_values);
 	FEValues<3> fe_values(FE, quadrature, update_quadrature_points);
 	const unsigned int numberQuadraturePoints = quadrature.size();
@@ -1659,8 +1659,8 @@ void dftClass<FEOrder>::computeSparseStructureNonLocalProjectors()
 
 }
 
-	template<unsigned int FEOrder>
-void dftClass<FEOrder>::computeElementalProjectorKets()
+	template<unsigned int FEOrder,unsigned int FEOrderElectro>
+void dftClass<FEOrder,FEOrderElectro>::computeElementalProjectorKets()
 {
 
 	//
@@ -1677,7 +1677,7 @@ void dftClass<FEOrder>::computeElementalProjectorKets()
 	//
 	//get FE data structures
 	//
-	QGauss<3>  quadrature(C_num1DQuad<FEOrder>());
+	const Quadrature<3> &  quadrature=matrix_free_data.get_quadrature(d_densityQuadratureId);
 	//FEValues<3> fe_values(FE, quadrature, update_values | update_gradients | update_JxW_values);
 	FEValues<3> fe_values(FE, quadrature, update_values | update_JxW_values | update_quadrature_points);
 	const unsigned int numberNodesPerElement  = FE.dofs_per_cell;

@@ -19,8 +19,8 @@
 
 #ifdef WITH_MKL
 #ifdef USE_COMPLEX
-template<unsigned int FEOrder>
-void kohnShamDFTOperatorClass<FEOrder>::computeNonLocalHamiltonianTimesXBatchGEMM(const distributedCPUVec<std::complex<double> > & src,
+template<unsigned int FEOrder,unsigned int FEOrderElectro>
+void kohnShamDFTOperatorClass<FEOrder,FEOrderElectro>::computeNonLocalHamiltonianTimesXBatchGEMM(const distributedCPUVec<std::complex<double> > & src,
 		const unsigned int numberWaveFunctions,
 		distributedCPUVec<std::complex<double> >       & dst) const
 {
@@ -219,11 +219,11 @@ void kohnShamDFTOperatorClass<FEOrder>::computeNonLocalHamiltonianTimesXBatchGEM
 }
 
 #else
-template<unsigned int FEOrder>
-void kohnShamDFTOperatorClass<FEOrder>::computeNonLocalHamiltonianTimesXBatchGEMM(const distributedCPUVec<double> & src,
-										  const unsigned int numberWaveFunctions,
-										  distributedCPUVec<double>       & dst,
-										  const double scalar) const
+template<unsigned int FEOrder,unsigned int FEOrderElectro>
+void kohnShamDFTOperatorClass<FEOrder,FEOrderElectro>::computeNonLocalHamiltonianTimesXBatchGEMM(const distributedCPUVec<double> & src,
+		const unsigned int numberWaveFunctions,
+		distributedCPUVec<double>       & dst,
+                const double scalar) const
 {
 
 

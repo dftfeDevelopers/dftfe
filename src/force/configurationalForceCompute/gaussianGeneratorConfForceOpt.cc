@@ -352,8 +352,8 @@ getMinDistanceFromImageToCell(const std::vector<double> & latticeVectors,
 }
 }
 //Configurational force on atoms corresponding to Gaussian generator. Generator is discretized using linear FE shape functions. Configurational force on nodes due to linear FE shape functions precomputed
-	template<unsigned int FEOrder>
-void forceClass<FEOrder>::computeAtomsForcesGaussianGenerator(bool allowGaussianOverlapOnAtoms)
+	template<unsigned int FEOrder,unsigned int FEOrderElectro>
+void forceClass<FEOrder,FEOrderElectro>::computeAtomsForcesGaussianGenerator(bool allowGaussianOverlapOnAtoms)
 {
 	unsigned int vertices_per_cell=GeometryInfo<C_DIM>::vertices_per_cell;
 	const std::vector<std::vector<double> > & atomLocations=dftPtr->atomLocations;
@@ -657,8 +657,8 @@ void forceClass<FEOrder>::computeAtomsForcesGaussianGenerator(bool allowGaussian
 
 }
 
-	template<unsigned int FEOrder>
-void forceClass<FEOrder>::printAtomsForces()
+	template<unsigned int FEOrder,unsigned int FEOrderElectro>
+void forceClass<FEOrder,FEOrderElectro>::printAtomsForces()
 {
 	const int numberGlobalAtoms = dftPtr->atomLocations.size();
 	if (!dftParameters::reproducible_output)
@@ -674,6 +674,7 @@ void forceClass<FEOrder>::printAtomsForces()
 	double sumAbsValForceComp=0;
 	std::vector<double> sumForce(3);
 	unsigned int maxForceAtomId=0;
+	std::vector<std::vector<double> > forceData(numberGlobalAtoms,std::vector<double>(3,0.0));   
 	for (unsigned int i=0; i< numberGlobalAtoms; i++)
 	{
 		if (!dftParameters::reproducible_output)
@@ -686,6 +687,10 @@ void forceClass<FEOrder>::printAtomsForces()
 
 			pcout<< "AtomId "<< std::setw(4) << i << ":  "<< std::fixed<<std::setprecision(6)<< truncatedForce[0]<<","<<truncatedForce[1]<<","<<truncatedForce[2]<<std::endl;
 		}
+
+    forceData[i][0]=-d_globalAtomsForces[3*i];
+    forceData[i][1]=-d_globalAtomsForces[3*i+1];
+    forceData[i][2]=-d_globalAtomsForces[3*i+2]; 
 
 		double absForce=0.0;
 		for (unsigned int idim=0; idim< C_DIM; idim++)
@@ -711,4 +716,7 @@ void forceClass<FEOrder>::printAtomsForces()
 		pcout<<" Sum of absolute value of all force components over all atoms: "<<sumAbsValForceComp<<std::endl;
 		pcout<<" Sum of all forces in each component: "<<sumForce[0]<<" "<< sumForce[1]<<" "<<sumForce[2]<<std::endl;
 	}
+
+  dftUtils::writeDataIntoFile(forceData,
+      "forces.txt");  
 }

@@ -17,9 +17,9 @@
 //
 #ifdef USE_COMPLEX
 //compute ESmeared contribution stress
-template<unsigned int FEOrder>
-	void forceClass<FEOrder>::addEPhiTotSmearedStressContribution
-        (FEEvaluation<3,1,C_num1DQuadSmearedCharge<FEOrder>()*C_numCopies1DQuadSmearedCharge(),3>  & forceEval,
+template<unsigned int FEOrder,unsigned int FEOrderElectro>
+	void forceClass<FEOrder,FEOrderElectro>::addEPhiTotSmearedStressContribution
+        (FEEvaluation<3,1,C_num1DQuadSmearedCharge()*C_numCopies1DQuadSmearedCharge(),3>  & forceEval,
          const MatrixFree<3,double> & matrixFreeData,
          const unsigned int cell,
          const std::vector<Tensor<1,3,VectorizedArray<double> > > & gradPhiTotQuads,
@@ -98,9 +98,9 @@ template<unsigned int FEOrder>
 }
 
 
-template<unsigned int FEOrder>
-	void forceClass<FEOrder>::addEVselfSmearedStressContribution
-        (FEEvaluation<3,1,C_num1DQuadSmearedCharge<FEOrder>()*C_numCopies1DQuadSmearedCharge(),3>  & forceEval,
+template<unsigned int FEOrder,unsigned int FEOrderElectro>
+	void forceClass<FEOrder,FEOrderElectro>::addEVselfSmearedStressContribution
+        (FEEvaluation<3,1,C_num1DQuadSmearedCharge()*C_numCopies1DQuadSmearedCharge(),3>  & forceEval,
          const MatrixFree<3,double> & matrixFreeData,
          const unsigned int cell,
          const std::vector<Tensor<1,3,VectorizedArray<double> > > & gradVselfQuads,         

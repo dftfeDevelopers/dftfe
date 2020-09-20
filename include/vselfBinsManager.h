@@ -27,10 +27,11 @@ namespace dftfe {
 
 	/**
 	 * @brief Categorizes atoms into bins for efficient solution of nuclear electrostatic self-potential.
+   * template parameter FEOrderElectro is the finite element polynomial order.
 	 *
 	 * @author Sambit Das, Phani Motamarri
 	 */
-	template<unsigned int FEOrder>
+	template<unsigned int FEOrder, unsigned int FEOrderElectro>
 		class vselfBinsManager {
 
 			public:
@@ -105,6 +106,7 @@ namespace dftfe {
 				 */
 				void solveVselfInBins(const dealii::MatrixFree<3,double> & matrix_free_data,
 						const unsigned int offset,
+            const unsigned int matrixFreeQuadratureIdAX,
 						const dealii::ConstraintMatrix & hangingPeriodicConstraintMatrix,
 						const std::vector<std::vector<double> > & imagePositions,
 						const std::vector<int> & imageIds,
@@ -113,6 +115,8 @@ namespace dftfe {
 						std::map<dealii::CellId, std::vector<double> > & bQuadValuesAllAtoms,
             std::map<dealii::CellId, std::vector<int> > & bQuadAtomIdsAllAtoms,
             std::map<dealii::CellId, std::vector<int> > & bQuadAtomIdsAllAtomsImages,
+            std::map<dealii::CellId, std::vector<unsigned int> > & bCellNonTrivialAtomIds,
+            std::vector<std::map<dealii::CellId, std::vector<unsigned int> > > & bCellNonTrivialAtomIdsBins,
 						const std::vector<double> & smearingWidths,
             std::vector<double> & smearedChargeScaling,
             const unsigned int smearedChargeQuadratureId,
@@ -132,6 +136,8 @@ namespace dftfe {
 				 * @param[out] localVselfs peak self-potential values of atoms in the local processor
 				 */
 				void solveVselfInBinsGPU(const dealii::MatrixFree<3,double> & matrix_free_data,
+            const unsigned int mfBaseDofHandlerIndex,
+            const unsigned int matrixFreeQuadratureIdAX,
 						const unsigned int offset,
 						operatorDFTCUDAClass & operatorMatrix,
 						const dealii::ConstraintMatrix & hangingPeriodicConstraintMatrix,
@@ -142,6 +148,8 @@ namespace dftfe {
 						std::map<dealii::CellId, std::vector<double> > & bQuadValuesAllAtoms,
             std::map<dealii::CellId, std::vector<int> > & bQuadAtomIdsAllAtoms,
             std::map<dealii::CellId, std::vector<int> > & bQuadAtomIdsAllAtomsImages,
+            std::map<dealii::CellId, std::vector<unsigned int> > & bCellNonTrivialAtomIds,
+            std::vector<std::map<dealii::CellId, std::vector<unsigned int> > > & bCellNonTrivialAtomIdsBins,            
 						const std::vector<double> & smearingWidths,
             std::vector<double> & smearedChargeScaling,            
             const unsigned int smearedChargeQuadratureId,

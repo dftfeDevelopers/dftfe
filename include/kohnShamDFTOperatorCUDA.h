@@ -25,7 +25,7 @@
 namespace dftfe{
 
 #ifndef DOXYGEN_SHOULD_SKIP_THIS
-	template <unsigned int T> class dftClass;
+	template <unsigned int T1, unsigned int T2> class dftClass;
 #endif
 
 	/**
@@ -37,17 +37,17 @@ namespace dftfe{
 	//
 	//Define kohnShamDFTOperatorCUDAClass class
 	//
-	template <unsigned int FEOrder>
+	template <unsigned int FEOrder, unsigned int FEOrderElectro>
 		class kohnShamDFTOperatorCUDAClass : public operatorDFTCUDAClass
 	{
 		//template <unsigned int T>
 		// friend class dftClass;
 
-		template <unsigned int T>
-			friend class symmetryClass;
+		//template <unsigned int T>
+		//	friend class symmetryClass;
 
 		public:
-		kohnShamDFTOperatorCUDAClass(dftClass<FEOrder>* _dftPtr, const MPI_Comm &mpi_comm_replica);
+		kohnShamDFTOperatorCUDAClass(dftClass<FEOrder,FEOrderElectro>* _dftPtr, const MPI_Comm &mpi_comm_replica);
 
 
 		void createCublasHandle();
@@ -77,6 +77,8 @@ namespace dftfe{
 		distributedCPUVec<dataTypes::number> &  getProjectorKetTimesVectorSingle();
 
 		thrust::device_vector<double> & getShapeFunctionGradientIntegral();
+
+    thrust::device_vector<double> & getShapeFunctionGradientIntegralElectro();
 
 		thrust::device_vector<double> & getShapeFunctionValues();
 
@@ -369,7 +371,7 @@ namespace dftfe{
 		 * @param pseudoValues quadrature data of pseudopotential values
 		 */
 		void computeVEff(const std::map<dealii::CellId,std::vector<double> >* rhoValues,
-				const distributedCPUVec<double> & phi,
+				const std::map<dealii::CellId,std::vector<double> > & phiValues,
 				const std::map<dealii::CellId,std::vector<double> > & externalPotCorrValues,
         const unsigned int externalPotCorrQuadratureId);
 
@@ -384,7 +386,7 @@ namespace dftfe{
 		 * @param pseudoValues quadrature data of pseudopotential values
 		 */
 		void computeVEffSpinPolarized(const std::map<dealii::CellId,std::vector<double> >* rhoValues,
-				const distributedCPUVec<double> & phi,
+				const std::map<dealii::CellId,std::vector<double> > & phiValues,
 				unsigned int spinIndex,
 				const std::map<dealii::CellId,std::vector<double> > & externalPotCorrValues,
         const unsigned int externalPotCorrQuadratureId);
@@ -400,7 +402,7 @@ namespace dftfe{
 		 */
 		void computeVEff(const std::map<dealii::CellId,std::vector<double> >* rhoValues,
 				const std::map<dealii::CellId,std::vector<double> >* gradRhoValues,
-				const distributedCPUVec<double> & phi,
+				const std::map<dealii::CellId,std::vector<double> > & phiValues,
 				const std::map<dealii::CellId,std::vector<double> > & externalPotCorrValues,
         const unsigned int externalPotCorrQuadratureId);
 
@@ -417,7 +419,7 @@ namespace dftfe{
 		 */
 		void computeVEffSpinPolarized(const std::map<dealii::CellId,std::vector<double> >* rhoValues,
 				const std::map<dealii::CellId,std::vector<double> >* gradRhoValues,
-				const distributedCPUVec<double> & phi,
+				const std::map<dealii::CellId,std::vector<double> > & phiValues,
 				const unsigned int spinIndex,
 				const std::map<dealii::CellId,std::vector<double> > & externalPotCorrValues,
         const unsigned int externalPotCorrQuadratureId);
@@ -587,7 +589,7 @@ namespace dftfe{
 
 
 		///pointer to dft class
-		dftClass<FEOrder>* dftPtr;
+		dftClass<FEOrder,FEOrderElectro>* dftPtr;
 
 
 		///data structures to store diagonal of inverse square root mass matrix and square root of mass matrix
@@ -609,7 +611,7 @@ namespace dftfe{
 
 
 		/**
-		 * @brief finite-element cell level matrix to store dot product between shapeFunction gradients (\int(del N_i \dot \del N_j))
+		 * @brief finite-element cell level matrix to store dot product between shapeFunction gradients (\int(\nabla N_i \cdot \nabla N_j))
 		 * with first dimension traversing the macro cell id
 		 * and second dimension storing the matrix of size numberNodesPerElement x numberNodesPerElement in a flattened 1D dealii Vectorized array
 		 */

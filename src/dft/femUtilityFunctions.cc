@@ -20,9 +20,11 @@
 //
 //interpolate nodal data to quadrature values using FEEvaluation
 //
-	template <unsigned int FEOrder>
-void dftClass<FEOrder>::interpolateNodalDataToQuadratureData(dealii::MatrixFree<3,double> & matrixFreeData,
-		const distributedCPUVec<double> & nodalField,
+	template <unsigned int FEOrder,unsigned int FEOrderElectro>
+void dftClass<FEOrder,FEOrderElectro>::interpolateRhoNodalDataToQuadratureDataGeneral(dealii::MatrixFree<3,double> & matrixFreeData,
+		const unsigned int dofHandlerId,          
+		const unsigned int quadratureId,  
+		const distributedCPUVec<double> & nodalField,    
 		std::map<dealii::CellId, std::vector<double> > & quadratureValueData,
 		std::map<dealii::CellId, std::vector<double> > & quadratureGradValueData,
 		std::map<dealii::CellId, std::vector<double> > & quadratureHessianValueData,
@@ -35,10 +37,13 @@ void dftClass<FEOrder>::interpolateNodalDataToQuadratureData(dealii::MatrixFree<
 	if (isEvaluateHessianData)
 		quadratureHessianValueData.clear();
 
-	FEEvaluation<C_DIM,C_num1DKerkerPoly<FEOrder>(),C_num1DQuad<FEOrder>(),1,double> feEvalObj(matrixFreeData,0,1);
+	FEEvaluation<C_DIM,C_rhoNodalPolyOrder<FEOrder,FEOrderElectro>(),C_num1DQuad<C_rhoNodalPolyOrder<FEOrder,FEOrderElectro>()>(),1,double> feEvalObj(matrixFreeData,dofHandlerId,quadratureId);
 	const unsigned int numQuadPoints = feEvalObj.n_q_points; 
 
-  AssertThrow(matrixFreeData.get_quadrature(1).size() == numQuadPoints,
+  //AssertThrow(nodalField.partitioners_are_globally_compatible(*matrixFreeData.get_vector_partitioner(dofHandlerId)),
+  //        dealii::ExcMessage("DFT-FE Error: mismatch in partitioner/dofHandler."));
+
+  AssertThrow(matrixFreeData.get_quadrature(quadratureId).size() == numQuadPoints,
           dealii::ExcMessage("DFT-FE Error: mismatch in quadrature rule usage in interpolateNodalDataToQuadratureData."));
 
 	DoFHandler<C_DIM>::active_cell_iterator subCellPtr;
@@ -46,13 +51,11 @@ void dftClass<FEOrder>::interpolateNodalDataToQuadratureData(dealii::MatrixFree<
 	{
 		feEvalObj.reinit(cell);
 		feEvalObj.read_dof_values(nodalField);
-		if (isEvaluateHessianData)
-			feEvalObj.evaluate(true,true,true);
-		else
-			feEvalObj.evaluate(true,true);
+		feEvalObj.evaluate(true,isEvaluateGradData?true:false,isEvaluateHessianData?true:false);
+
 		for(unsigned int iSubCell = 0; iSubCell < matrixFreeData.n_components_filled(cell); ++iSubCell)
 		{
-			subCellPtr= matrixFreeData.get_cell_iterator(cell,iSubCell);
+			subCellPtr= matrixFreeData.get_cell_iterator(cell,iSubCell,dofHandlerId);
 			dealii::CellId subCellId=subCellPtr->id();
 			quadratureValueData[subCellId] = std::vector<double>(numQuadPoints);
 
@@ -98,9 +101,73 @@ void dftClass<FEOrder>::interpolateNodalDataToQuadratureData(dealii::MatrixFree<
 }
 
 
+//
+//interpolate nodal data to quadrature values using FEEvaluation
+//
+	template <unsigned int FEOrder,unsigned int FEOrderElectro>
+void dftClass<FEOrder,FEOrderElectro>::interpolateElectroNodalDataToQuadratureDataGeneral(dealii::MatrixFree<3,double> & matrixFreeData,
+		const unsigned int dofHandlerId,          
+		const unsigned int quadratureId,  
+		const distributedCPUVec<double> & nodalField,    
+		std::map<dealii::CellId, std::vector<double> > & quadratureValueData,
+		std::map<dealii::CellId, std::vector<double> > & quadratureGradValueData,
+		const bool isEvaluateGradData)
+{
+	quadratureValueData.clear();
+	if(isEvaluateGradData)
+		quadratureGradValueData.clear();
 
-	template <unsigned int FEOrder>
-void dftClass<FEOrder>::interpolateNodalDataToQuadratureData(dealii::MatrixFree<3,double> & matrixFreeData,
+	FEEvaluation<C_DIM,FEOrderElectro,C_num1DQuad<C_rhoNodalPolyOrder<FEOrder,FEOrderElectro>()>(),1,double> feEvalObj(matrixFreeData,dofHandlerId,quadratureId);
+	const unsigned int numQuadPoints = feEvalObj.n_q_points; 
+
+  //AssertThrow(nodalField.partitioners_are_globally_compatible(*matrixFreeData.get_vector_partitioner(dofHandlerId)),
+  //        dealii::ExcMessage("DFT-FE Error: mismatch in partitioner/dofHandler."));
+
+  AssertThrow(matrixFreeData.get_quadrature(quadratureId).size() == numQuadPoints,
+          dealii::ExcMessage("DFT-FE Error: mismatch in quadrature rule usage in interpolateNodalDataToQuadratureData."));
+
+	DoFHandler<C_DIM>::active_cell_iterator subCellPtr;
+	for(unsigned int cell = 0; cell < matrixFreeData.n_macro_cells(); ++cell)
+	{
+		feEvalObj.reinit(cell);
+		feEvalObj.read_dof_values(nodalField);
+		feEvalObj.evaluate(true,isEvaluateGradData?true:false);
+
+		for(unsigned int iSubCell = 0; iSubCell < matrixFreeData.n_components_filled(cell); ++iSubCell)
+		{
+			subCellPtr= matrixFreeData.get_cell_iterator(cell,iSubCell,dofHandlerId);
+			dealii::CellId subCellId=subCellPtr->id();
+			quadratureValueData[subCellId] = std::vector<double>(numQuadPoints);
+
+			std::vector<double> & tempVec = quadratureValueData.find(subCellId)->second;
+
+			for(unsigned int q_point = 0; q_point < numQuadPoints; ++q_point)
+			{
+				tempVec[q_point] = feEvalObj.get_value(q_point)[iSubCell];
+			}
+
+			if(isEvaluateGradData)
+			{ 
+				quadratureGradValueData[subCellId]=std::vector<double>(3*numQuadPoints);
+
+				std::vector<double> & tempVec2 = quadratureGradValueData.find(subCellId)->second;
+
+				for(unsigned int q_point = 0; q_point < numQuadPoints; ++q_point)
+				{
+					const Tensor< 1, 3, VectorizedArray< double> >  & gradVals=	feEvalObj.get_gradient(q_point);
+					tempVec2[3*q_point + 0] = gradVals[0][iSubCell];
+					tempVec2[3*q_point + 1] = gradVals[1][iSubCell];
+					tempVec2[3*q_point + 2] = gradVals[2][iSubCell];
+				}
+			}
+		}
+	}
+
+}
+
+
+	template <unsigned int FEOrder,unsigned int FEOrderElectro>
+void dftClass<FEOrder,FEOrderElectro>::interpolateRhoNodalDataToQuadratureDataLpsp(dealii::MatrixFree<3,double> & matrixFreeData,
 		const unsigned int dofHandlerId,
 		const unsigned int quadratureId,
 		const distributedCPUVec<double> & nodalField,
@@ -111,8 +178,11 @@ void dftClass<FEOrder>::interpolateNodalDataToQuadratureData(dealii::MatrixFree<
 
 	quadratureValueData.clear();
 	quadratureGradValueData.clear();
-  FEEvaluation<C_DIM,C_num1DKerkerPoly<FEOrder>(),C_num1DQuadLPSP<FEOrder>()*C_numCopies1DQuadLPSP(),1,double> feEvalObj(matrixFreeData,dofHandlerId,quadratureId);
+  FEEvaluation<C_DIM,C_rhoNodalPolyOrder<FEOrder,FEOrderElectro>(),C_num1DQuadLPSP<FEOrder>()*C_numCopies1DQuadLPSP(),1,double> feEvalObj(matrixFreeData,dofHandlerId,quadratureId);
 	const unsigned int numQuadPoints = feEvalObj.n_q_points;
+
+  //AssertThrow(nodalField.partitioners_are_globally_compatible(*matrixFreeData.get_vector_partitioner(dofHandlerId)),
+  //        dealii::ExcMessage("DFT-FE Error: mismatch in partitioner/dofHandler."));
 
   AssertThrow(matrixFreeData.get_quadrature(quadratureId).size() == numQuadPoints,
           dealii::ExcMessage("DFT-FE Error: mismatch in quadrature rule usage in interpolateNodalDataToQuadratureData."));
@@ -125,7 +195,7 @@ void dftClass<FEOrder>::interpolateNodalDataToQuadratureData(dealii::MatrixFree<
 		feEvalObj.evaluate(true,true);
 		for(unsigned int iSubCell = 0; iSubCell < matrixFreeData.n_components_filled(cell); ++iSubCell)
 		{
-			subCellPtr= matrixFreeData.get_cell_iterator(cell,iSubCell);
+			subCellPtr= matrixFreeData.get_cell_iterator(cell,iSubCell,dofHandlerId);
 			dealii::CellId subCellId=subCellPtr->id();
 			quadratureValueData[subCellId] = std::vector<double>(numQuadPoints);
 			std::vector<double> & tempVec = quadratureValueData.find(subCellId)->second;
@@ -139,7 +209,7 @@ void dftClass<FEOrder>::interpolateNodalDataToQuadratureData(dealii::MatrixFree<
 		{
 			for(unsigned int iSubCell = 0; iSubCell < matrixFreeData.n_components_filled(cell); ++iSubCell)
 			{
-				subCellPtr= matrixFreeData.get_cell_iterator(cell,iSubCell);
+				subCellPtr= matrixFreeData.get_cell_iterator(cell,iSubCell,dofHandlerId);
 				dealii::CellId subCellId=subCellPtr->id();
 				quadratureGradValueData[subCellId]=std::vector<double>(3*numQuadPoints);
 				std::vector<double> & tempVec = quadratureGradValueData.find(subCellId)->second;
@@ -156,8 +226,11 @@ void dftClass<FEOrder>::interpolateNodalDataToQuadratureData(dealii::MatrixFree<
 
 }
 
-	template <unsigned int FEOrder>
-void dftClass<FEOrder>::interpolateFieldsFromPrevToCurrentMesh(std::vector<distributedCPUVec<double>*> fieldsPrevious,
+
+
+
+	template <unsigned int FEOrder,unsigned int FEOrderElectro>
+void dftClass<FEOrder,FEOrderElectro>::interpolateFieldsFromPrevToCurrentMesh(std::vector<distributedCPUVec<double>*> fieldsPrevious,
 		std::vector<distributedCPUVec<double>* > fieldsCurrent,
 		const dealii::FESystem<3> & FEPrev,
 		const dealii::FESystem<3> & FECurrent,
@@ -181,14 +254,22 @@ void dftClass<FEOrder>::interpolateFieldsFromPrevToCurrentMesh(std::vector<distr
 //
 //compute field l2 norm
 //
-	template <unsigned int FEOrder>
-double dftClass<FEOrder>::fieldGradl2Norm(const dealii::MatrixFree<3,double> & matrixFreeDataObject,
+	template <unsigned int FEOrder,unsigned int FEOrderElectro>
+double dftClass<FEOrder,FEOrderElectro>::fieldGradl2Norm(const dealii::MatrixFree<3,double> & matrixFreeDataObject,
 		const distributedCPUVec<double> & nodalField)
 
 {
-	FEEvaluation<C_DIM,C_num1DKerkerPoly<FEOrder>(),C_num1DQuad<C_num1DKerkerPoly<FEOrder>()>(),1,double> fe_evalField(matrixFreeDataObject);
-	VectorizedArray<double> valueVectorized = make_vectorized_array(0.0);
+	FEEvaluation<C_DIM,C_rhoNodalPolyOrder<FEOrder,FEOrderElectro>(),C_num1DQuad<C_rhoNodalPolyOrder<FEOrder,FEOrderElectro>()>(),1,double> fe_evalField(matrixFreeDataObject,0,0);
 	const unsigned int numQuadPoints = fe_evalField.n_q_points;
+
+  //AssertThrow(nodalField.partitioners_are_globally_compatible(*matrixFreeDataObject.get_vector_partitioner(0)),
+  //        dealii::ExcMessage("DFT-FE Error: mismatch in partitioner/dofHandler."));
+
+  AssertThrow(matrixFreeDataObject.get_quadrature(0).size() == numQuadPoints,
+          dealii::ExcMessage("DFT-FE Error: mismatch in quadrature rule usage in interpolateNodalDataToQuadratureData."));
+
+	VectorizedArray<double> valueVectorized = make_vectorized_array(0.0);
+
 	for(unsigned int cell = 0; cell < matrixFreeDataObject.n_macro_cells(); ++cell)
 	{
 		fe_evalField.reinit(cell);
