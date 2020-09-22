@@ -568,9 +568,9 @@ void dftClass<FEOrder,FEOrderElectro>::updateAtomPositionsAndMoveMesh(const std:
     init_time = MPI_Wtime(); 
 
     if (dftParameters::isBOMD)
-      initNoRemesh(true,false,updateDensity);
+      initNoRemesh(true,useSingleAtomSolutions,updateDensity);
     else
-      initNoRemesh(true,false,updateDensity);
+      initNoRemesh(true,useSingleAtomSolutions,updateDensity);
     if (!dftParameters::reproducible_output)
       pcout << "...Reinitialization end" << std::endl;
 

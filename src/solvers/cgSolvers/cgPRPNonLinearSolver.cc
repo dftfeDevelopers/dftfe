@@ -43,6 +43,7 @@ namespace dftfe {
 		pcout(std::cout, (dealii::Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0))
 	{
 		d_isCGRestartDueToLargeIncrement=false;
+    d_useSingleAtomSolutionsInitialGuess=false;
 	}
 
 	//
@@ -230,8 +231,8 @@ namespace dftfe {
 				data.push_back(std::vector<double>(1,d_conjugateDirection[i]));
 
 			for (unsigned int i=0; i< d_steepestDirectionOld.size();++i)
-				data.push_back(std::vector<double>(1,d_steepestDirectionOld[i]));        
-        
+				data.push_back(std::vector<double>(1,d_steepestDirectionOld[i]));    
+
       data.push_back(std::vector<double>(1,d_lineSearchDampingParameter));
       data.push_back(std::vector<double>(1,d_alphaChk));
       data.push_back(std::vector<double>(1,d_etaPChk));
@@ -261,8 +262,12 @@ namespace dftfe {
 				d_conjugateDirection[i]=data[i][0];
 
       d_steepestDirectionOld.resize(d_numberUnknowns);
+      d_gradient.resize(d_numberUnknowns);
 			for (unsigned int i=0; i< d_numberUnknowns;++i)
-				d_steepestDirectionOld[i]=data[i][0];
+      {
+				d_steepestDirectionOld[i]=data[d_numberUnknowns+i][0];
+        d_gradient[i]=-data[d_numberUnknowns+i][0];
+      }
 
       d_lineSearchDampingParameter= data[2*d_numberUnknowns][0];
       d_alphaChk= data[2*d_numberUnknowns+1][0];
@@ -399,7 +404,11 @@ namespace dftfe {
 			//
 			// call solver problem update
 			//
-			problem.update(incrementVector);
+			problem.update(incrementVector,
+                     true,
+                     d_useSingleAtomSolutionsInitialGuess);
+
+      d_useSingleAtomSolutionsInitialGuess=false;
 
 			//
 			//
@@ -670,21 +679,24 @@ namespace dftfe {
 			d_steepestDirectionOld.resize(d_numberUnknowns);
 
 			//
-			// compute initial values of problem and problem gradient
-			//
-			problem.gradient(d_gradient);
-
-			//
 			// initialize delta new and direction
 			//
 			if (!restart)
+      {
+        //
+        // compute initial values of problem and problem gradient
+        //
+        problem.gradient(d_gradient);
+
 				initializeDirection();
+      }
 			else
 			{
 				load(checkpointFileName);
         MPI_Barrier(MPI_COMM_WORLD);
+        d_useSingleAtomSolutionsInitialGuess=true;
 
-				// compute deltaNew, and initialize steepestDirectionOld to current steepest direction
+				// compute deltaNew
 				d_deltaNew = 0.0;
 				d_gradMax=0.0;
 				for (unsigned int i = 0; i < d_numberUnknowns; ++i)

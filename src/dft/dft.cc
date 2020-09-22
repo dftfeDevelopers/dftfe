@@ -1153,7 +1153,7 @@ namespace dftfe {
 			}
 			else
 			{
-				if (true)
+				if (!(dftParameters::chkType==1  && dftParameters::restartFromChk && dftParameters::ionOptSolver == "CGPRP"))
 				{
 					kohnShamDFTOperatorClass<FEOrder,FEOrderElectro> kohnShamDFTEigenOperator(this,mpi_communicator);
 #ifdef DFTFE_WITH_GPU

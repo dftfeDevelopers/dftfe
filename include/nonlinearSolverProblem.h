@@ -76,7 +76,8 @@ namespace dftfe {
 			 * @param solution Updated solution.
 			 */
 			virtual void update(const std::vector<double> & solution,
-					const bool computeForces=true) = 0;
+					const bool computeForces=true,
+          const bool useSingleAtomSolutionsInitialGuess=false) = 0;
 
 			/**
 			 * @brief Obtain current solution.

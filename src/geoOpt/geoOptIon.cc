@@ -284,7 +284,9 @@ namespace dftfe {
 		}
 
 	template<unsigned int FEOrder, unsigned int FEOrderElectro>
-		void geoOptIon<FEOrder,FEOrderElectro>::update(const std::vector<double> & solution, const bool computeForces)
+		void geoOptIon<FEOrder,FEOrderElectro>::update(const std::vector<double> & solution,
+                                                   const bool computeForces,
+                                                   const bool useSingleAtomSolutionsInitialGuess)
 		{
 			const unsigned int numberGlobalAtoms=dftPtr->atomLocations.size();
 			std::vector<Tensor<1,3,double> > globalAtomsDisplacements(numberGlobalAtoms);
@@ -322,7 +324,7 @@ namespace dftfe {
 			else if(d_maximumAtomForceToBeRelaxed < 1e-04)
 				factor = 1.15;
 
-			dftPtr->updateAtomPositionsAndMoveMesh(globalAtomsDisplacements,factor);
+			dftPtr->updateAtomPositionsAndMoveMesh(globalAtomsDisplacements,factor,useSingleAtomSolutionsInitialGuess);
 			d_totalUpdateCalls+=1;
 
 

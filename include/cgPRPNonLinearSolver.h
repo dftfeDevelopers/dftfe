@@ -244,6 +244,9 @@ namespace dftfe {
       /// line search iter
       int d_lineSearchRestartIterChk;
 
+      ///
+      bool d_useSingleAtomSolutionsInitialGuess;
+
 			//parallel objects
 			MPI_Comm mpi_communicator;
 			const unsigned int n_mpi_processes;

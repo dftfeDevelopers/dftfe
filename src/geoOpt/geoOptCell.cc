@@ -314,7 +314,7 @@ namespace dftfe {
 		}
 
 	template<unsigned int FEOrder, unsigned int FEOrderElectro>
-		void geoOptCell<FEOrder,FEOrderElectro>::update(const std::vector<double> & solution, const bool computeForces)
+		void geoOptCell<FEOrder,FEOrderElectro>::update(const std::vector<double> & solution, const bool computeForces,const bool useSingleAtomSolutionsInitialGuess)
 		{
 
 

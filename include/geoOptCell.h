@@ -84,7 +84,8 @@ namespace dftfe {
 			 * @param solution delta(epsilon).
 			 */
 			void update(const std::vector<double> & solution,
-					const bool computeForces=true);
+					const bool computeForces=true,
+          const bool useSingleAtomSolutionsInitialGuess=false);
 
 			/**
 			 * @brief create checkpoint file for current domain bounding vectors and atomic coordinates.
