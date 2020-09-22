@@ -954,7 +954,7 @@ namespace dftfe {
 
       // false option reinitializes vself bins from scratch wheras true option only updates the boundary conditions
       if (dftParameters::floatingNuclearCharges)
-        initBoundaryConditions(maxFloatingDispComponentMag>0.2?false:true);
+        initBoundaryConditions(false);
       else
         initBoundaryConditions(true);
 
