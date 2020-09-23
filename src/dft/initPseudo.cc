@@ -226,7 +226,7 @@ template<unsigned int FEOrder,unsigned int FEOrderElectro>
 
 	MPI_Barrier(MPI_COMM_WORLD);
 	init_1 = MPI_Wtime() - init_1;
-	if (dftParameters::verbosity>=1)
+	if (dftParameters::verbosity>=4)
 		pcout<<"initLocalPSP: Time taken for init1: "<<init_1<<std::endl;
 
 	double init_2;
@@ -334,7 +334,7 @@ template<unsigned int FEOrder,unsigned int FEOrderElectro>
 
 	MPI_Barrier(MPI_COMM_WORLD);
 	init_2 = MPI_Wtime() - init_2;
-	if (dftParameters::verbosity>=1)
+	if (dftParameters::verbosity>=4)
 		pcout<<"initLocalPSP: Time taken for init2: "<<init_2<<std::endl;
 
 	double init_3;
@@ -418,7 +418,7 @@ template<unsigned int FEOrder,unsigned int FEOrderElectro>
 
 	MPI_Barrier(MPI_COMM_WORLD);
 	init_3 = MPI_Wtime() - init_3;
-	if (dftParameters::verbosity>=1)
+	if (dftParameters::verbosity>=4)
 		pcout<<"initLocalPSP: Time taken for init3: "<<init_3<<std::endl;
 } 
 /*

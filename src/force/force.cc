@@ -342,7 +342,7 @@ namespace  dftfe {
 			 MPI_Barrier(MPI_COMM_WORLD); 
 			 gaussian_time = MPI_Wtime() -gaussian_time;
 
-			 if (this_mpi_process ==0 && dftParameters::verbosity>=1)
+			 if (this_mpi_process ==0 && dftParameters::verbosity>=4)
 				 std::cout<<"Time for contraction of nodal foces with gaussian generator: "<<gaussian_time <<std::endl;
 		 }
 
@@ -507,7 +507,7 @@ namespace  dftfe {
 			 MPI_Barrier(MPI_COMM_WORLD); 
 			 vselfforce_time = MPI_Wtime() -vselfforce_time;
 
-			 if (this_mpi_process ==0 && dftParameters::verbosity>=1)
+			 if (this_mpi_process ==0 && dftParameters::verbosity>=4)
 				 std::cout<<"Time for configurational force computation of Eself contribution and configForceLinFEFinalize(): "<<vselfforce_time <<std::endl;
 
 #ifdef DEBUG

@@ -375,7 +375,7 @@ namespace dftfe
 
 				MPI_Barrier(MPI_COMM_WORLD);
 				init_time = MPI_Wtime() - init_time;
-				if (dftParameters::verbosity>=1)
+				if (dftParameters::verbosity>=4)
 					pcout<<" Time taken for vself field initialization for current bin: "<<init_time<<std::endl;
 
 				double vselfinit_time;
@@ -417,7 +417,7 @@ namespace dftfe
 
 				MPI_Barrier(MPI_COMM_WORLD);
 				vselfinit_time = MPI_Wtime() - vselfinit_time;
-				if (dftParameters::verbosity>=1)
+				if (dftParameters::verbosity>=4)
 					pcout<<" Time taken for vself solver problem init for current bin: "<<vselfinit_time<<std::endl;
 
 				dealiiCGSolver.solve(vselfSolverProblem,
@@ -453,7 +453,7 @@ namespace dftfe
 
             MPI_Barrier(MPI_COMM_WORLD);
             vselfinit_time = MPI_Wtime() - vselfinit_time;
-            if (dftParameters::verbosity>=1)
+            if (dftParameters::verbosity>=4)
               pcout<<" Time taken for vself solver problem init for current bin: "<<vselfinit_time<<std::endl;         
 
             dealiiCGSolver.solve(vselfSolverProblem,
@@ -534,7 +534,7 @@ namespace dftfe
 
           MPI_Barrier(MPI_COMM_WORLD);
           selfenergy_time = MPI_Wtime() - selfenergy_time;
-          if (dftParameters::verbosity>=1)
+          if (dftParameters::verbosity>=4)
             pcout<<" Time taken for vself self energy for current bin: "<<selfenergy_time<<std::endl;          
 
 				}
@@ -725,7 +725,7 @@ namespace dftfe
 
 				MPI_Barrier(MPI_COMM_WORLD);
 				smeared_init_time = MPI_Wtime() - smeared_init_time;
-				if (dftParameters::verbosity>=1)
+				if (dftParameters::verbosity>=4)
 					pcout<<" Time taken for smeared charge initialization for current bin: "<<smeared_init_time<<std::endl;
 
 				//rhs contribution from static condensation of dirichlet boundary conditions
@@ -979,7 +979,7 @@ namespace dftfe
 
 			MPI_Barrier(MPI_COMM_WORLD);
 			time = MPI_Wtime() - time;
-			if (dftParameters::verbosity >= 2 && this_mpi_process==0)
+			if (dftParameters::verbosity >= 4 && this_mpi_process==0)
 				std::cout<<"Solve vself in bins: time for smeared charge initialization, compute rhs and diagonal: "<<time<<std::endl;
 
 			MPI_Barrier(MPI_COMM_WORLD);
@@ -1004,7 +1004,7 @@ namespace dftfe
 
 			MPI_Barrier(MPI_COMM_WORLD);
 			time = MPI_Wtime() - time;
-			if (dftParameters::verbosity >= 2 && this_mpi_process==0)
+			if (dftParameters::verbosity >= 4 && this_mpi_process==0)
 				std::cout<<"Solve vself in bins: time for poissonCUDA::solveVselfInBins : "<<time<<std::endl; 
 
 			MPI_Barrier(MPI_COMM_WORLD);
@@ -1130,7 +1130,7 @@ namespace dftfe
 
           MPI_Barrier(MPI_COMM_WORLD);
           selfenergy_time = MPI_Wtime() - selfenergy_time;
-          if (dftParameters::verbosity>=1)
+          if (dftParameters::verbosity>=4)
             pcout<<" Time taken for vself self energy for current bin: "<<selfenergy_time<<std::endl;          
 
 				}
@@ -1150,7 +1150,7 @@ namespace dftfe
 
 			MPI_Barrier(MPI_COMM_WORLD);
 			time = MPI_Wtime() - time;
-			if (dftParameters::verbosity >= 2 && this_mpi_process==0)
+			if (dftParameters::verbosity >= 4 && this_mpi_process==0)
 				std::cout<<"Solve vself in bins: time for updating d_vselfFieldBins : "<<time<<std::endl; 
 		}
 #endif

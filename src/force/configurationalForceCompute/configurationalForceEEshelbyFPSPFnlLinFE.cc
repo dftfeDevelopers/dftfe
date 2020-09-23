@@ -425,7 +425,7 @@ template<unsigned int FEOrder,unsigned int FEOrderElectro>
 
 		gpu_time=MPI_Wtime()-gpu_time;
 
-		if (this_process==0 && dftParameters::verbosity>=1)
+		if (this_process==0 && dftParameters::verbosity>=4)
 			std::cout<<"Time for gpuPortedForceKernelsAllH: "<<gpu_time<<std::endl;
 #endif
 	}
@@ -1251,10 +1251,10 @@ template<unsigned int FEOrder,unsigned int FEOrderElectro>
 
 	forcetotal_time = MPI_Wtime() - forcetotal_time;
 
-	if (this_process==0 && dftParameters::verbosity>=1)
+	if (this_process==0 && dftParameters::verbosity>=4)
 		std::cout<<"Total time for configurational force computation except Eself contribution: "<<forcetotal_time<<std::endl;
 
-	if (dftParameters::verbosity>=1)
+	if (dftParameters::verbosity>=4)
 	{
 		pcout<<" Time taken for initialization in force: "<<init_time<<std::endl;
 		pcout<<" Time taken for non wfc in force: "<<enowfc_time<<std::endl;

@@ -613,7 +613,7 @@ namespace dftfe {
 					MPI_Barrier(MPI_COMM_WORLD);
 					init_nonlocal1 = MPI_Wtime() - init_nonlocal1;
 					if (dftParameters::verbosity>=1)
-						pcout<<"updateAtomPositionsAndMoveMesh: initPseudoPotentialAll: Time taken for computeSparseStructureNonLocalProjectors_OV: "<<init_nonlocal1<<std::endl;
+						pcout<<"initPseudoPotentialAll: Time taken for computeSparseStructureNonLocalProjectors_OV: "<<init_nonlocal1<<std::endl;
 				}
 
 				double init_nonlocal2;
@@ -627,7 +627,7 @@ namespace dftfe {
 				MPI_Barrier(MPI_COMM_WORLD);
 				init_nonlocal2 = MPI_Wtime() - init_nonlocal2;
 				if (dftParameters::verbosity>=1)
-					pcout<<"updateAtomPositionsAndMoveMesh: initPseudoPotentialAll: Time taken for non local psp init: "<<init_nonlocal2<<std::endl;
+					pcout<<"initPseudoPotentialAll: Time taken for non local psp init: "<<init_nonlocal2<<std::endl;
 			}
 		}
 
@@ -1022,7 +1022,7 @@ namespace dftfe {
 			MPI_Barrier(MPI_COMM_WORLD);
 			init_pseudo = MPI_Wtime() - init_pseudo;
 			if (dftParameters::verbosity>=1)
-				pcout<<"updateAtomPositionsAndMoveMesh: Time taken for initPseudoPotentialAll: "<<init_pseudo<<std::endl;
+				pcout<<"Time taken for initPseudoPotentialAll: "<<init_pseudo<<std::endl;
 
 			computingTimerStandard.exit_section("KSDFT problem initialization");
 		}
@@ -1444,7 +1444,6 @@ namespace dftfe {
 					0.0);
 #endif
 
-			computingTimerStandard.enter_section("phiTotalSolverProblem init");
 
 			phiTotalSolverProblem.reinit(d_matrixFreeDataPRefined,
 					d_phiTotRhoIn,
@@ -1460,7 +1459,6 @@ namespace dftfe {
 					dftParameters::periodicX && dftParameters::periodicY && dftParameters::periodicZ && !dftParameters::pinnedNodeForPBC,
 					dftParameters::smearedNuclearCharges);
 
-			computingTimerStandard.exit_section("phiTotalSolverProblem init");
 
 			dealiiCGSolver.solve(phiTotalSolverProblem,
 					dftParameters::absLinearSolverTolerance,
@@ -1870,7 +1868,7 @@ namespace dftfe {
 				MPI_Barrier(MPI_COMM_WORLD);
 				init_psplocal = MPI_Wtime() - init_psplocal;
 				if (dftParameters::verbosity>=1)
-					pcout<<"updateAtomPositionsAndMoveMesh: initPseudoPotentialAll: Time taken for local psp init: "<<init_psplocal<<std::endl;
+					pcout<<"initPseudoPotentialAll: Time taken for local psp init: "<<init_psplocal<<std::endl;
 			}
 
 
@@ -2018,7 +2016,6 @@ namespace dftfe {
 				if (dftParameters::verbosity>=2)
 					pcout<< std::endl<<"Poisson solve for total electrostatic potential (rhoIn+b): ";
 				
-        computingTimerStandard.enter_section("phiTotalSolverProblem init");
 
 				if (scfIter>0)
 					phiTotalSolverProblem.reinit(d_matrixFreeDataPRefined,
@@ -2059,7 +2056,6 @@ namespace dftfe {
               true,
               false);
 
-				computingTimerStandard.exit_section("phiTotalSolverProblem init");
 				computing_timer.enter_section("phiTot solve");
 
 				dealiiCGSolver.solve(phiTotalSolverProblem,
@@ -2864,8 +2860,7 @@ namespace dftfe {
 			//
 			// compute and print ground state energy or energy after max scf iterations
 			//
-			if ((!dftParameters::electrostaticsHRefinement || dftParameters::verbosity>=4 || dftParameters::reproducible_output)
-					&& !(dftParameters::isBOMD && dftParameters::isXLBOMD && solveLinearizedKS))
+			if (!(dftParameters::isBOMD && dftParameters::isXLBOMD && solveLinearizedKS))
 			{
 				const double totalEnergy = dftParameters::spinPolarized==0 ?
 					energyCalc.computeEnergy(d_dofHandlerPRefined,
@@ -3194,7 +3189,7 @@ namespace dftfe {
 				 */
 			}
 
-			if (dftParameters::isIonForce && (!dftParameters::electrostaticsHRefinement || dftParameters::verbosity>=4 || dftParameters::reproducible_output))
+			if (dftParameters::isIonForce)
 			{
 				if(dftParameters::selfConsistentSolverTolerance>1e-4 && dftParameters::verbosity>=1)
 					pcout<<"DFT-FE Warning: Ion force accuracy may be affected for the given scf iteration solve tolerance: "<<dftParameters::selfConsistentSolverTolerance<<", recommended to use TOLERANCE below 1e-4."<<std::endl;
@@ -3264,7 +3259,7 @@ namespace dftfe {
 				computing_timer.exit_section("Ion force computation");
 			}
 #ifdef USE_COMPLEX
-			if (dftParameters::isCellStress && (!dftParameters::electrostaticsHRefinement || dftParameters::verbosity>=4 || dftParameters::reproducible_output))
+			if (dftParameters::isCellStress)
 			{
 				if(dftParameters::selfConsistentSolverTolerance>1e-4 && dftParameters::verbosity>=1)
 					pcout<<"DFT-FE Warning: Cell stress accuracy may be affected for the given scf iteration solve tolerance: "<<dftParameters::selfConsistentSolverTolerance<<", recommended to use TOLERANCE below 1e-4."<<std::endl;

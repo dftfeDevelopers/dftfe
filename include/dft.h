@@ -1129,7 +1129,7 @@ namespace dftfe {
 			std::vector<Tensor<1,3,double> > d_dispClosestTriaVerticesToAtoms;
 
 			/// global k index of lower bound of the local k point set
-			unsigned int lowerBoundKindex ;
+			unsigned int lowerBoundKindex=0;
 			/**
 			 * Recomputes the k point cartesian coordinates from the crystal k point coordinates
 			 * and the current lattice vectors, which can change in each ground state solve when

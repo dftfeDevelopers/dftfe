@@ -646,7 +646,7 @@ void dftClass<FEOrder,FEOrderElectro>::computeElectrostaticEnergyHRefined(
 #ifdef USE_COMPLEX
 	if (dftParameters::isCellStress)
 	{
-
+    /*
 		computing_timer.enter_section("Cell stress computation");
 		computingTimerStandard.enter_section("Cell stress computation");
 		if (computeForces)
@@ -675,6 +675,7 @@ void dftClass<FEOrder,FEOrderElectro>::computeElectrostaticEnergyHRefined(
 		}
 		computingTimerStandard.exit_section("Cell stress computation");
 		computing_timer.exit_section("Cell stress computation");
+    */
 	}
 #endif
 }
