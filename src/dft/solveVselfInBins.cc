@@ -999,7 +999,8 @@ namespace dftfe
 				 ghostSize,
 				 numberPoissonSolves,
 				 mpi_communicator,
-				 &vselfBinsFieldsFlattened[0]);
+				 &vselfBinsFieldsFlattened[0],
+         FEOrderElectro!=FEOrder?true:false);
 
 			MPI_Barrier(MPI_COMM_WORLD);
 			time = MPI_Wtime() - time;

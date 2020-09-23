@@ -363,7 +363,8 @@ namespace dftfe
 				const unsigned int ghostSize,
 				const unsigned int numberBins, 
 				const MPI_Comm & mpiComm, 
-				double * xH)
+				double * xH,
+        const bool isElectroFEOrderDifferentFromFEOrder)
 		{
 			int this_process;
 			MPI_Comm_rank(MPI_COMM_WORLD, &this_process);
@@ -443,7 +444,7 @@ namespace dftfe
 					constraintsMatrixDataInfoCUDA,
 					thrust::raw_pointer_cast(&bD[0]),
 					thrust::raw_pointer_cast(&diagonalAD[0]),
-					operatorMatrix.getShapeFunctionGradientIntegralElectro(),
+					isElectroFEOrderDifferentFromFEOrder?operatorMatrix.getShapeFunctionGradientIntegralElectro():operatorMatrix.getShapeFunctionGradientIntegral(),
 					inhomoIdsColoredVecFlattenedD,
 					cellLocalProcIndexIdMapD,
 					localSize,
