@@ -114,10 +114,10 @@ namespace dftfe
 			 dftUtils::constraintMatrixInfo constraintsNoneDataInfo;
 			 dftUtils::constraintMatrixInfo constraintsNoneDataInfo2;
 
-			 constraintsNoneDataInfo.initialize(mfData.get_vector_partitioner(mfDofIndex),
+			 constraintsNoneDataInfo.initialize(mfData.get_vector_partitioner(0),
 					 constraints);
 
-			 constraintsNoneDataInfo2.initialize(mfData.get_vector_partitioner(mfDofIndex),
+			 constraintsNoneDataInfo2.initialize(mfData.get_vector_partitioner(0),
 					 constraints);
 
 			 distributedCPUVec<double> tempEigenVec;
@@ -200,13 +200,13 @@ namespace dftfe
 							 eigenVectors[kPoint][i].reinit(tempEigenVec);
 
 
-						 vectorTools::createDealiiVector<dataTypes::number>(mfData.get_vector_partitioner(mfDofIndex),
+						 vectorTools::createDealiiVector<dataTypes::number>(mfData.get_vector_partitioner(0),
 								 currentBlockSize,
 								 eigenVectorsFlattenedBlock[kPoint]);
 						 eigenVectorsFlattenedBlock[kPoint] = dataTypes::number(0.0);
 					 }
 
-					 constraintsNoneDataInfo.precomputeMaps(mfData.get_vector_partitioner(mfDofIndex),
+					 constraintsNoneDataInfo.precomputeMaps(mfData.get_vector_partitioner(0),
 							 eigenVectorsFlattenedBlock[0].get_partitioner(),
 							 currentBlockSize);
 				 }
@@ -244,13 +244,13 @@ namespace dftfe
 
 
 							 vectorTools::createDealiiVector<dataTypes::number>
-								 (mfData.get_vector_partitioner(mfDofIndex),
+								 (mfData.get_vector_partitioner(0),
 								  currentBlockSizeFrac,
 								  eigenVectorsRotFracFlattenedBlock[kPoint]);
 							 eigenVectorsRotFracFlattenedBlock[kPoint] = dataTypes::number(0.0);
 						 }
 
-						 constraintsNoneDataInfo2.precomputeMaps(mfData.get_vector_partitioner(mfDofIndex),
+						 constraintsNoneDataInfo2.precomputeMaps(mfData.get_vector_partitioner(0),
 								 eigenVectorsRotFracFlattenedBlock[0].get_partitioner(),
 								 currentBlockSizeFrac);
 					 }
