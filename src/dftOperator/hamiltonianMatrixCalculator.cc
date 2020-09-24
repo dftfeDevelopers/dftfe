@@ -21,8 +21,13 @@
 	template<unsigned int FEOrder,unsigned int FEOrderElectro>
 void kohnShamDFTOperatorClass<FEOrder,FEOrderElectro>::computeHamiltonianMatrix(const unsigned int kPointIndex, const unsigned int spinIndex)
 {
-  MPI_Barrier(MPI_COMM_WORLD);
-	double cpu_time=MPI_Wtime();
+  dealii::TimerOutput computingTimerStandard(mpi_communicator,
+      pcout,
+      dftParameters::reproducible_output
+      || dftParameters::verbosity<1? dealii::TimerOutput::never : dealii::TimerOutput::every_call,
+      dealii::TimerOutput::wall_times);
+
+  computingTimerStandard.enter_section("Elemental Hamiltonian matrix computation on CPU");
 
 	//
 	//Get the number of locally owned cells
@@ -253,10 +258,7 @@ void kohnShamDFTOperatorClass<FEOrder,FEOrderElectro>::computeHamiltonianMatrix(
 
 	}//macrocell loop
 
-  MPI_Barrier(MPI_COMM_WORLD);
-	cpu_time = MPI_Wtime() - cpu_time;
-	if (dftParameters::verbosity>=2)
-		pcout<<"Time for elemental Hamiltonian matrix computation on CPU: "<<cpu_time<<std::endl;
+  computingTimerStandard.exit_section("Elemental Hamiltonian matrix computation on CPU");
 }
 
 

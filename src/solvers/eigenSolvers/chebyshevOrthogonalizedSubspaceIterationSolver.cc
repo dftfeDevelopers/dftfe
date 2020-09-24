@@ -114,6 +114,11 @@ namespace dftfe{
 				const bool isFirstScf,
 				const bool useFullMassMatrixGEP)
 		{
+      dealii::TimerOutput computingTimerStandard(operatorMatrix.getMPICommunicator(),
+          pcout,
+          dftParameters::reproducible_output
+          || dftParameters::verbosity<1? dealii::TimerOutput::never : dealii::TimerOutput::every_call,
+          dealii::TimerOutput::wall_times);
 
 
 			if (dftParameters::verbosity>=4)
@@ -157,11 +162,7 @@ namespace dftfe{
 				pcout << buffer;
 			}
 
-			int this_process;
-			MPI_Comm_rank(MPI_COMM_WORLD, &this_process);
-
-			MPI_Barrier(MPI_COMM_WORLD);
-			double cheby_time = MPI_Wtime();
+			computingTimerStandard.enter_section("Chebyshev filtering on CPU");
 
 			//
 			//Set the constraints to zero
@@ -280,11 +281,6 @@ namespace dftfe{
 
 			eigenVectorsFlattenedArrayBlock.reinit(0);
 
-			MPI_Barrier(MPI_COMM_WORLD);
-			cheby_time = MPI_Wtime() - cheby_time;
-			if (this_process==0 && dftParameters::verbosity>=2)
-					std::cout<<"Time for chebyshev filtering on CPU: "<<cheby_time<<std::endl;
-
 			if (numberBandGroups>1)
 			{
 				if (!dftParameters::bandParalOpt)
@@ -363,7 +359,7 @@ namespace dftfe{
 				}
 			}
 
-
+			computingTimerStandard.exit_section("Chebyshev filtering on CPU");
 			if(dftParameters::verbosity >= 4)
 				pcout<<"ChebyShev Filtering Done: "<<std::endl;
 
