@@ -1250,6 +1250,8 @@ namespace dftfe {
 					AssertThrow(dftParameters::rrGEP
 							,ExcMessage("DFT-FE Error: if band parallelization is used, RR GEP must be set to true."));
 			}
+#else
+     dftParameters::useGPU=false;
 #endif
 			if (dftParameters::useMixedPrecCheby)
 				AssertThrow(dftParameters::useELPA
