@@ -9,6 +9,8 @@ subsection Geometry
 end
 
 subsection Boundary conditions
+  set SMEARED NUCLEAR CHARGES=false
+  set FLOATING NUCLEAR CHARGES=false
   set PERIODIC1                       = false
   set PERIODIC2                       = false
   set PERIODIC3                       = false

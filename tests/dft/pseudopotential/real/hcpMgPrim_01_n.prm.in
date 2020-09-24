@@ -20,6 +20,8 @@ end
 
 
 subsection Boundary conditions
+  set SMEARED NUCLEAR CHARGES=false
+  set FLOATING NUCLEAR CHARGES=false
   set SELF POTENTIAL RADIUS = 1.6
   set PERIODIC1 = true
   set PERIODIC2 = true
