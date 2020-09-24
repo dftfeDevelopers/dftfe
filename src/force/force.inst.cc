@@ -1,13 +1,12 @@
 #ifdef DFTFE_MINIMAL_COMPILE
+template class forceClass<2,2>;
+template class forceClass<3,3>;
 template class forceClass<4,4>;
 template class forceClass<5,5>;
 template class forceClass<6,6>;
 template class forceClass<6,7>;
 template class forceClass<6,8>;
 template class forceClass<6,9>;
-template class forceClass<6,10>;
-template class forceClass<6,11>;
-template class forceClass<6,12>;
 #else
 template class forceClass<1,1>;
 template class forceClass<1,2>;

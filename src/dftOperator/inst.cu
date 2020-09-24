@@ -1,13 +1,12 @@
 #ifdef DFTFE_MINIMAL_COMPILE
+template class kohnShamDFTOperatorCUDAClass<2,2>;
+template class kohnShamDFTOperatorCUDAClass<3,3>;
 template class kohnShamDFTOperatorCUDAClass<4,4>;
 template class kohnShamDFTOperatorCUDAClass<5,5>;
 template class kohnShamDFTOperatorCUDAClass<6,6>;
 template class kohnShamDFTOperatorCUDAClass<6,7>;
 template class kohnShamDFTOperatorCUDAClass<6,8>;
 template class kohnShamDFTOperatorCUDAClass<6,9>;
-template class kohnShamDFTOperatorCUDAClass<6,10>;
-template class kohnShamDFTOperatorCUDAClass<6,11>;
-template class kohnShamDFTOperatorCUDAClass<6,12>;
 #else
 template class kohnShamDFTOperatorCUDAClass<1,1>;
 template class kohnShamDFTOperatorCUDAClass<1,2>;
