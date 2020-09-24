@@ -585,6 +585,7 @@ template<unsigned int FEOrder,unsigned int FEOrderElectro>
 			addEPSPStressContribution(feVselfValuesElectro,
 					forceEvalElectroLpsp,
 					matrixFreeDataElectro,
+          phiTotDofHandlerIndexElectro,
 					cell,
 					gradRhoQuadsElectroLpsp,
 					pseudoVLocAtomsElectro,
