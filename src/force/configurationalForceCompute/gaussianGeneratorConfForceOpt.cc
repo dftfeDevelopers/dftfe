@@ -717,6 +717,7 @@ void forceClass<FEOrder,FEOrderElectro>::printAtomsForces()
 		pcout<<" Sum of all forces in each component: "<<sumForce[0]<<" "<< sumForce[1]<<" "<<sumForce[2]<<std::endl;
 	}
 
-  dftUtils::writeDataIntoFile(forceData,
-      "forces.txt");  
+  if (!dftParameters::reproducible_output)
+     dftUtils::writeDataIntoFile(forceData,
+        "forces.txt");  
 }
