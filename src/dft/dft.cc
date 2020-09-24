@@ -2591,9 +2591,31 @@ namespace dftfe {
 				}
 				computing_timer.enter_section("compute rho");
 #ifdef USE_COMPLEX
-				if(dftParameters::useSymm){
+				if(dftParameters::useSymm)
+        {
 					symmetryPtr->computeLocalrhoOut();
 					symmetryPtr->computeAndSymmetrize_rhoOut();
+         
+          std::function<double(const typename dealii::DoFHandler<3>::active_cell_iterator & cell ,
+              const unsigned int q)> funcRho =
+            [&](const typename dealii::DoFHandler<3>::active_cell_iterator & cell ,
+                const unsigned int q)
+            {return (*rhoOutValues).find(cell->id())->second[q];};
+          dealii::VectorTools::project<3,distributedCPUVec<double>> (dealii::MappingQ1<3,3>(),
+              d_dofHandlerRhoNodal,
+              d_constraintsRhoNodal,
+              d_matrixFreeDataPRefined.get_quadrature(d_densityQuadratureIdElectro),
+              funcRho,
+              d_rhoOutNodalValues);
+          d_rhoOutNodalValues.update_ghost_values();
+
+          interpolateRhoNodalDataToQuadratureDataLpsp(d_matrixFreeDataPRefined,
+              d_densityDofHandlerIndexElectro,
+              d_lpspQuadratureIdElectro,
+              d_rhoOutNodalValues,
+              d_rhoOutValuesLpspQuad,
+              d_gradRhoOutValuesLpspQuad,
+              true);           
 				}
 				else
 					compute_rhoOut((scfIter<dftParameters::spectrumSplitStartingScfIter || scfConverged || performExtraNoMixedPrecNoSpectrumSplitPassInCaseOfXlBOMD)?false:true,
