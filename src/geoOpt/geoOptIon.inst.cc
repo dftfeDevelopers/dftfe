@@ -1,13 +1,12 @@
 #ifdef DFTFE_MINIMAL_COMPILE
+template class geoOptIon<2,2>;
+template class geoOptIon<3,3>;
 template class geoOptIon<4,4>;
 template class geoOptIon<5,5>;
 template class geoOptIon<6,6>;
 template class geoOptIon<6,7>;
 template class geoOptIon<6,8>;
 template class geoOptIon<6,9>;
-template class geoOptIon<6,10>;
-template class geoOptIon<6,11>;
-template class geoOptIon<6,12>;
 #else
 template class geoOptIon<1,1>;
 template class geoOptIon<1,2>;

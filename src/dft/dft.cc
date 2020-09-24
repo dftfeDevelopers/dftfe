@@ -2947,7 +2947,7 @@ namespace dftfe {
 						dftParameters::TVal);
 
       if (dftParameters::verbosity>=1)
-         pcout<<"Entropic energy: "<<d_entropicEnergy<<std::endl;
+         pcout<<"Total entropic energy: "<<d_entropicEnergy<<std::endl;
 
 			if (dftParameters::isBOMD && dftParameters::isXLBOMD && solveLinearizedKS && !isPerturbationSolveXLBOMD)
 			{

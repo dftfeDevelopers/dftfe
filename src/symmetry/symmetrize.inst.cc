@@ -1,13 +1,12 @@
 #ifdef DFTFE_MINIMAL_COMPILE
+template class symmetryClass<2,2>;
+template class symmetryClass<3,3>;
 template class symmetryClass<4,4>;
 template class symmetryClass<5,5>;
 template class symmetryClass<6,6>;
 template class symmetryClass<6,7>;
 template class symmetryClass<6,8>;
 template class symmetryClass<6,9>;
-template class symmetryClass<6,10>;
-template class symmetryClass<6,11>;
-template class symmetryClass<6,12>;
 #else
 template class symmetryClass<1,1>;
 template class symmetryClass<1,2>;
