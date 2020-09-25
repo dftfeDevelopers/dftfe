@@ -356,13 +356,13 @@ namespace dftfe {
 						Patterns::Bool(),
 						"[Developer] Check constraints from serial dofHandler.");
 
-				prm.declare_entry("SMEARED NUCLEAR CHARGES", "false",
+				prm.declare_entry("SMEARED NUCLEAR CHARGES", "true",
 						Patterns::Bool(),
 						"[Developer] Nuclear charges are smeared for solving electrostatic fields.");  
 
-				prm.declare_entry("FLOATING NUCLEAR CHARGES", "false",
+				prm.declare_entry("FLOATING NUCLEAR CHARGES", "true",
 						Patterns::Bool(),
-						"[Developer] Nuclear charges are smeared for solving electrostatic fields.");          
+						"[Developer] Nuclear charges are allowed to float independent of the FEM mesh nodal positions. Only allowed for pseudopotential calculations. Internally set to false for all-electron calculations.");          
 
 			}
 			prm.leave_subsection ();
@@ -1264,6 +1264,12 @@ namespace dftfe {
 		//without changing the global dftParameters
 		void setHeuristicParameters()
 		{
+			if (!dftParameters::isPseudopotential)
+      {
+        dftParameters::smearedNuclearCharges=false;
+        dftParameters::floatingNuclearCharges=false;
+      }
+
 			if (dftParameters::meshSizeOuterDomain<1.0e-6)
 				if (dftParameters::periodicX ||dftParameters::periodicY ||dftParameters::periodicZ)
 					dftParameters::meshSizeOuterDomain=4.0;
