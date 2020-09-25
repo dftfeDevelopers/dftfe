@@ -181,7 +181,7 @@ namespace dftfe {
 			}
 		}
 
-		if (dftParameters::autoAdaptBaseMeshSize && !dftParameters::reproducible_output)
+		if (dftParameters::autoAdaptBaseMeshSize)
 		{
 			double baseMeshSize1, baseMeshSize2, baseMeshSize3;
 			if (dftParameters::periodicX ||dftParameters::periodicY ||dftParameters::periodicZ)
@@ -364,7 +364,7 @@ namespace dftfe {
 					}
 				}
 
-				if (dftParameters::autoAdaptBaseMeshSize  && !dftParameters::reproducible_output)
+				if (dftParameters::autoAdaptBaseMeshSize)
 				{
 					bool inOuterAtomBall = false;
 
