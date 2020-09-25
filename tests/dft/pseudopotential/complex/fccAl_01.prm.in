@@ -39,6 +39,7 @@ end
 subsection Finite element mesh parameters
   set POLYNOMIAL ORDER = 2
   subsection Auto mesh generation parameters
+    set AUTO ADAPT BASE MESH SIZE=false
     set ATOM BALL RADIUS     = 0.0
     set BASE MESH SIZE       = 0.7
     set MESH SIZE AT ATOM  = 0.7

@@ -181,14 +181,15 @@ namespace dftfe {
 			}
 		}
 
-		if (dftParameters::autoUserMeshParams && !dftParameters::reproducible_output)
+		if (dftParameters::autoAdaptBaseMeshSize && !dftParameters::reproducible_output)
 		{
 			double baseMeshSize1, baseMeshSize2, baseMeshSize3;
 			if (dftParameters::periodicX ||dftParameters::periodicY ||dftParameters::periodicZ)
 			{
-				baseMeshSize1=std::pow(2,round(log2(2.0/largestMeshSizeAroundAtom)))*largestMeshSizeAroundAtom;
-				baseMeshSize2=std::pow(2,round(log2(2.0/largestMeshSizeAroundAtom)))*largestMeshSizeAroundAtom;
-				baseMeshSize3=std::pow(2,round(log2(2.0/largestMeshSizeAroundAtom)))*largestMeshSizeAroundAtom;
+        const double targetBaseMeshSize= (std::min(std::min(domainBoundingVectorMag1,domainBoundingVectorMag2),domainBoundingVectorMag3)>40.0)?4.0:2.0;
+				baseMeshSize1=std::pow(2,round(log2(targetBaseMeshSize/largestMeshSizeAroundAtom)))*largestMeshSizeAroundAtom;
+				baseMeshSize2=std::pow(2,round(log2(targetBaseMeshSize/largestMeshSizeAroundAtom)))*largestMeshSizeAroundAtom;
+				baseMeshSize3=std::pow(2,round(log2(targetBaseMeshSize/largestMeshSizeAroundAtom)))*largestMeshSizeAroundAtom;
 			}
 			else
 			{
@@ -363,7 +364,7 @@ namespace dftfe {
 					}
 				}
 
-				if (dftParameters::autoUserMeshParams  && !dftParameters::reproducible_output)
+				if (dftParameters::autoAdaptBaseMeshSize  && !dftParameters::reproducible_output)
 				{
 					bool inOuterAtomBall = false;
 
@@ -400,7 +401,8 @@ namespace dftfe {
 						cellRefineFlag = true;
 				}
 
-				if (dftParameters::autoUserMeshParams  && !dftParameters::reproducible_output)
+        /*
+				if (dftParameters::autoAdaptBaseMeshSize  && !dftParameters::reproducible_output)
 				{
 					bool inBiggerAtomBall = false;
 
@@ -410,6 +412,7 @@ namespace dftfe {
 					if(inBiggerAtomBall && currentMeshSize > 6.0)
 						cellRefineFlag = true;
 				}
+        */
 
 				MappingQ1<3,3> mapping;
 				try
@@ -417,7 +420,7 @@ namespace dftfe {
 					Point<3> p_cell = mapping.transform_real_to_unit_cell(cell,closestAtom);
 					double dist = GeometryInfo<3>::distance_to_unit_cell(p_cell);
 
-					if(dist < 1e-08 && currentMeshSize > (dftParameters::autoUserMeshParams?1.2:1)*dftParameters::meshSizeInnerBall)
+					if(dist < 1e-08 && currentMeshSize > dftParameters::meshSizeInnerBall)
 						cellRefineFlag = true;
 
 				}
@@ -482,7 +485,7 @@ namespace dftfe {
 				if (cell->is_locally_owned())
 				{
 					if(cell->at_boundary()
-							&& cell->minimum_vertex_distance()>(dftParameters::autoUserMeshParams?1.5:1)*smootheningFactor*smallestMeshSizeAroundAtom
+							&& cell->minimum_vertex_distance()>(dftParameters::autoAdaptBaseMeshSize?1.5:1)*smootheningFactor*smallestMeshSizeAroundAtom
 							&& !cell->refine_flag_set() )
 						for(unsigned int iFace = 0; iFace < faces_per_cell; ++iFace)
 							if (cell->has_periodic_neighbor(iFace))

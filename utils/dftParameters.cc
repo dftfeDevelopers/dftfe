@@ -42,7 +42,7 @@ namespace dftfe {
 
 		std::string coordinatesGaussianDispFile="";
 
-		double outerAtomBallRadius=2.0, innerAtomBallRadius=0.0, meshSizeOuterDomain=10.0;
+		double outerAtomBallRadius=2.5, innerAtomBallRadius=0.0, meshSizeOuterDomain=10.0;
 		double meshSizeInnerBall=1.0, meshSizeOuterBall=1.0;
 		unsigned int numLevels = 1,numberWaveFunctionsForEstimate = 5;
 		double topfrac = 0.1;
@@ -99,7 +99,7 @@ namespace dftfe {
 		bool bandParalOpt=true;
 		bool rrGEP=false;
 		bool rrGEPFullMassMatrix=false;
-		bool autoUserMeshParams=false;
+		bool autoAdaptBaseMeshSize=true;
 		bool readWfcForPdosPspFile=false;
 		bool useGPU=false;
 		bool gpuFineGrainedTimings=false;
@@ -371,9 +371,9 @@ namespace dftfe {
 			prm.enter_subsection ("Finite element mesh parameters");
 			{
 
-				prm.declare_entry("POLYNOMIAL ORDER", "4",
+				prm.declare_entry("POLYNOMIAL ORDER", "6",
 						Patterns::Integer(1,12),
-						"[Standard] The degree of the finite-element interpolating polynomial in the Kohn-Sham Hamitonian except the electrostatics. Default value is 4. POLYNOMIAL ORDER= 4 or 5 is usually a good choice for most pseudopotential as well as all-electron problems.");
+						"[Standard] The degree of the finite-element interpolating polynomial in the Kohn-Sham Hamitonian except the electrostatics. Default value is 6 which is good choice for most pseudopotential calculations. POLYNOMIAL ORDER= 4 or 5 is usually a good choice for all-electron problems.");
 
 				prm.declare_entry("POLYNOMIAL ORDER ELECTROSTATICS", "0",
 						Patterns::Integer(0,24),
@@ -390,18 +390,18 @@ namespace dftfe {
 							Patterns::Double(0,20),
 							"[Advanced] Mesh size of the base mesh on which refinement is performed. For the default value of 0.0, a heuristically determined base mesh size is used, which is good enough for most cases. Standard users do not need to tune this parameter. Units: a.u.");
 
-					prm.declare_entry("ATOM BALL RADIUS","2.0",
+					prm.declare_entry("ATOM BALL RADIUS","0.0",
 							Patterns::Double(0,20),
-							"[Advanced] Radius of ball enclosing every atom, inside which the mesh size is set close to MESH SIZE AROUND ATOM. The default value of 2.0 is good enough for most cases. On rare cases, where the nonlocal pseudopotential projectors have a compact support beyond 2.0, a slightly larger ATOM BALL RADIUS between 2.0 to 2.5 may be required. Standard users do not need to tune this parameter. Units: a.u.");
+							"[Advanced] Radius of ball enclosing every atom, inside which the mesh size is set close to MESH SIZE AROUND ATOM. For the default value of 0.0, a heuristically determined value is used. Standard users do not need to tune this parameter. Units: a.u.");
 
 					prm.declare_entry("INNER ATOM BALL RADIUS","0.0",
 							Patterns::Double(0,20),
 							"[Advanced] Radius of ball enclosing every atom, inside which the mesh size is set close to MESH SIZE AT ATOM. Standard users do not need to tune this parameter. Units: a.u.");
 
 
-					prm.declare_entry("MESH SIZE AROUND ATOM", "0.8",
+					prm.declare_entry("MESH SIZE AROUND ATOM", "1.0",
 							Patterns::Double(0.0001,10),
-							"[Standard] Mesh size in a ball of radius ATOM BALL RADIUS around every atom. For pseudopotential calculations, a value between 0.5 to 1.0 is usually a good choice. For all-electron calculations, a value between 0.1 to 0.3 would be a good starting choice. In most cases, MESH SIZE AROUND ATOM is the only parameter to be tuned to achieve the desired accuracy in energy and forces with respect to the mesh refinement. Units: a.u.");
+							"[Standard] Mesh size in a ball of radius ATOM BALL RADIUS around every atom. For pseudopotential calculations, the value ranges between 0.5 to 2.5 depending on the cutoff energy for the pseudopotential. For all-electron calculations, a value between 0.1 to 0.3 would be a good starting choice. In most cases, MESH SIZE AROUND ATOM is the only parameter to be tuned to achieve the desired accuracy in energy and forces with respect to the mesh refinement. Units: a.u.");
 
 					prm.declare_entry("MESH SIZE AT ATOM", "0.0",
 							Patterns::Double(0.0,10),
@@ -411,9 +411,9 @@ namespace dftfe {
 							Patterns::Bool(),
 							"[Standard] Generates adaptive mesh based on a-posteriori mesh adaption strategy using single atom wavefunctions before computing the ground-state. Default: false.");
 
-					prm.declare_entry("AUTO USER MESH PARAMS","false",
+					prm.declare_entry("AUTO ADAPT BASE MESH SIZE","true",
 							Patterns::Bool(),
-							"[Standard] Except MESH SIZE AROUND ATOM, all other user defined mesh parameters are heuristically set. Default: false.");
+							"[Developer] Automatically adapt the BASE MESH SIZE such that subdivisions of that during refinement leads closest to the desired MESH SIZE AROUND ATOM. Default: true.");
 
 
 					prm.declare_entry("TOP FRAC", "0.1",
@@ -943,7 +943,7 @@ namespace dftfe {
 					dftParameters::meshSizeInnerBall             = prm.get_double("MESH SIZE AT ATOM");
 					dftParameters::meshSizeOuterBall             = prm.get_double("MESH SIZE AROUND ATOM");
 					dftParameters::meshAdaption                  = prm.get_bool("MESH ADAPTION");
-					dftParameters::autoUserMeshParams            = prm.get_bool("AUTO USER MESH PARAMS");
+					dftParameters::autoAdaptBaseMeshSize         = prm.get_bool("AUTO ADAPT BASE MESH SIZE");
 					dftParameters::topfrac                       = prm.get_double("TOP FRAC");
 					dftParameters::numLevels                     = prm.get_double("NUM LEVELS");
 					dftParameters::numberWaveFunctionsForEstimate = prm.get_integer("ERROR ESTIMATE WAVEFUNCTIONS");
@@ -1272,9 +1272,22 @@ namespace dftfe {
 
 			if (dftParameters::meshSizeInnerBall<1.0e-6)
 				if (dftParameters::isPseudopotential)
-					dftParameters::meshSizeInnerBall=2.0*dftParameters::meshSizeOuterBall;
+					dftParameters::meshSizeInnerBall=10.0*dftParameters::meshSizeOuterBall;
 				else
 					dftParameters::meshSizeInnerBall=0.1*dftParameters::meshSizeOuterBall;
+
+			if (dftParameters::outerAtomBallRadius<1.0e-6)
+      {
+				if (dftParameters::isPseudopotential)
+        {
+          if (!dftParameters::floatingNuclearCharges)
+            dftParameters::outerAtomBallRadius=2.5;
+          else
+            dftParameters::outerAtomBallRadius=4.0;            
+        }
+				else
+					dftParameters::outerAtomBallRadius=2.0;  
+      }
 
 			if (dftParameters::isPseudopotential && dftParameters::orthogType=="Auto")
 			{
