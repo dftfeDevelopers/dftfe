@@ -420,7 +420,7 @@ namespace dftfe {
 					Point<3> p_cell = mapping.transform_real_to_unit_cell(cell,closestAtom);
 					double dist = GeometryInfo<3>::distance_to_unit_cell(p_cell);
 
-					if(dist < 1e-08 && currentMeshSize > dftParameters::meshSizeInnerBall)
+					if(dist < 1e-08 && ((currentMeshSize > dftParameters::meshSizeInnerBall) || (currentMeshSize > meshSizeAroundAtomLocalAtoms[closestId])))
 						cellRefineFlag = true;
 
 				}
