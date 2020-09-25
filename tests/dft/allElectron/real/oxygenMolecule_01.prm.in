@@ -41,6 +41,8 @@ subsection DFT functional parameters
 end
 
 subsection SCF parameters
+   set COMPUTE ENERGY EACH ITER=false
+
   set MIXING HISTORY   = 5
   set MIXING PARAMETER = 0.2
   set CONSTRAINT MAGNETIZATION = true

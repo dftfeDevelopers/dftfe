@@ -69,6 +69,8 @@ end
 
 
 subsection SCF parameters
+   set COMPUTE ENERGY EACH ITER=false
+
   set MIXING HISTORY   = 70
   set MIXING PARAMETER = 0.2
   set MIXING METHOD = BROYDEN

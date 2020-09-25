@@ -387,6 +387,8 @@ template<unsigned int FEOrder,unsigned int FEOrderElectro>
 		{
 			psiSpin0QuadsNLP.resize(numQuadPointsNLP*numEigenVectors*numKPoints,zeroTensor1);
 			psiSpin1QuadsNLP.resize(numQuadPointsNLP*numEigenVectors*numKPoints,zeroTensor1);
+			gradPsiSpin0QuadsNLP.resize(numQuadPointsNLP*numEigenVectors*numKPoints,zeroTensor2);
+			gradPsiSpin1QuadsNLP.resize(numQuadPointsNLP*numEigenVectors*numKPoints,zeroTensor2);      
 			for (unsigned int ikPoint=0; ikPoint<numKPoints; ++ikPoint)
 				for (unsigned int iEigenVec=0; iEigenVec<numEigenVectors; ++iEigenVec)
 				{

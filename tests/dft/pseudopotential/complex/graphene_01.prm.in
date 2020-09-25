@@ -67,6 +67,8 @@ end
 
 
 subsection SCF parameters
+   set COMPUTE ENERGY EACH ITER=false
+
   set MAXIMUM ITERATIONS = 40 
   set TOLERANCE          = 1e-6
   set MIXING PARAMETER   = 0.5

@@ -14,12 +14,15 @@ v3 : 0.000000000000000000e+00 0.000000000000000000e+00 7.599999999999999645e+00
 -----Fractional coordinates of atoms------ 
 AtomId 0:  5.000000000000000000e-01 5.000000000000000000e-01 5.000000000000000000e-01
 -----------------------------------------------------------------------------------------
-Number Image Charges  918
+Number Image Charges  460
 
 Finite element mesh information
 -------------------------------------------------
+FE interpolating polynomial order for Kohn-Sham eigenvalue problem: 2
+FE interpolating polynomial order for electrostatics solve: 2
+FE interpolating polynomial order for nodal electron density computation: 4
 number of elements: 736
-number of degrees of freedom: 7377
+number of degrees of freedom for the Kohn-Sham eigenvalue problem : 7377
 -------------------------------------------------
 
 Setting initial guess for wavefunctions....
@@ -29,20 +32,20 @@ Reading initial guess for electron-density.....
 Pseudopotential initalization....
 
 Starting SCF iterations....
-SCF iterations converged to the specified tolerance after: 12 iterations.
+SCF iterations converged to the specified tolerance after: 11 iterations.
 
 Energy computations (Hartree) 
 -------------------
-             Total energy:         -68.90663056
+             Total energy:         -68.90573700
 
 Absolute values of ion forces (Hartree/Bohr)
 --------------------------------------------------------------------------------------------
-AtomId    0:  0.000000,0.000010,0.000108
+AtomId    0:  0.000017,0.000003,0.000106
 --------------------------------------------------------------------------------------------
 
 Absolute value of cell stress (Hartree/Bohr^3)
 ------------------------------------------------------------------------
-0.000669  0.000000  0.000000
-0.000000  0.000669  0.000006
-0.000000  0.000006  0.000039
+0.000685  0.000000  0.000000
+0.000000  0.000685  0.000006
+0.000000  0.000006  0.000057
 ------------------------------------------------------------------------
