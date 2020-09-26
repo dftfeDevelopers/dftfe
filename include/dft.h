@@ -979,7 +979,7 @@ namespace dftfe {
 			//dft related objects
 			std::map<dealii::CellId, std::vector<double> > *rhoInValues, *rhoOutValues, *rhoInValuesSpinPolarized, *rhoOutValuesSpinPolarized;
 			std::deque<std::map<dealii::CellId,std::vector<double> >> rhoInVals, rhoOutVals, rhoInValsSpinPolarized, rhoOutValsSpinPolarized;
-      std::map<dealii::CellId, std::vector<double> > d_phiInValues;
+      std::map<dealii::CellId, std::vector<double> > d_phiInValues,d_phiOutValues;
 
 			distributedCPUVec<double> d_rhoInNodalValuesRead, d_rhoInNodalValues, d_rhoOutNodalValues, d_rhoOutNodalValuesSplit, d_preCondResidualVector, d_atomicRho, d_rhoNodalFieldRefined, d_rhoOutNodalValuesDistributed;
 			std::deque<distributedCPUVec<double>> d_rhoInNodalVals, d_rhoOutNodalVals;

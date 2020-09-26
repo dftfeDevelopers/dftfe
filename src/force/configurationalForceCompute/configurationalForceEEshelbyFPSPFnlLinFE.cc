@@ -943,6 +943,7 @@ template<unsigned int FEOrder,unsigned int FEOrderElectro>
 	if (bandGroupTaskId==0)
 	{
 		std::vector<VectorizedArray<double> > rhoQuads(numQuadPoints,make_vectorized_array(0.0));
+		std::vector<VectorizedArray<double> > phiTotRhoOutQuads(numQuadPoints,make_vectorized_array(0.0));    
 		std::vector<VectorizedArray<double> > derVxcWithRhoOutTimesRhoDiffQuads(numQuadPoints,make_vectorized_array(0.0));
 		std::vector<VectorizedArray<double> > phiRhoMinMinusApproxRhoQuads(numQuadPoints,make_vectorized_array(0.0));
 		std::vector<VectorizedArray<double> > shadowKSRhoMinMinusRhoQuads(numQuadPoints,make_vectorized_array(0.0));
@@ -975,6 +976,7 @@ template<unsigned int FEOrder,unsigned int FEOrderElectro>
 			}
 
 			std::fill(rhoQuads.begin(),rhoQuads.end(),make_vectorized_array(0.0));
+			std::fill(phiTotRhoOutQuads.begin(),phiTotRhoOutQuads.end(),make_vectorized_array(0.0));      
 			std::fill(derVxcWithRhoOutTimesRhoDiffQuads.begin(),derVxcWithRhoOutTimesRhoDiffQuads.end(),make_vectorized_array(0.0));
 			std::fill(phiRhoMinMinusApproxRhoQuads.begin(),phiRhoMinMinusApproxRhoQuads.end(),make_vectorized_array(0.0));
 			std::fill(shadowKSRhoMinMinusRhoQuads.begin(),shadowKSRhoMinMinusRhoQuads.end(),make_vectorized_array(0.0));
@@ -1115,6 +1117,10 @@ template<unsigned int FEOrder,unsigned int FEOrderElectro>
           for (unsigned int q=0; q<numQuadPointsLpsp; ++q)
               for (unsigned int idim=0; idim<C_DIM; idim++)
                 gradRhoQuadsLpsp[q][idim][iSubCell]=tempGradRho[3*q+idim];
+
+          const std::vector<double> & tempPhiTot=dftPtr->d_phiOutValues.find(subCellId)->second;
+          for (unsigned int q=0; q<numQuadPoints; ++q)
+              phiTotRhoOutQuads[q][iSubCell]=tempPhiTot[q];                
         }
 			}
 
@@ -1133,7 +1139,7 @@ template<unsigned int FEOrder,unsigned int FEOrderElectro>
 			for (unsigned int q=0; q<numQuadPoints; ++q)
 			{
         
-				const VectorizedArray<double> phiTot_q=make_vectorized_array(0.0);// =phiTotQuads[q];
+				const VectorizedArray<double> phiTot_q=phiTotRhoOutQuads[q];
 
 				if (shadowPotentialForce)
 				{

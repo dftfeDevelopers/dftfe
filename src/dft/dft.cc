@@ -3213,6 +3213,17 @@ namespace dftfe {
 
 			if (dftParameters::isIonForce)
 			{
+		  	if(dftParameters::electrostaticsHRefinement)
+        {
+          std::map<dealii::CellId,std::vector<double> > dummy;
+          interpolateElectroNodalDataToQuadratureDataGeneral(d_matrixFreeDataPRefined,
+              d_phiTotDofHandlerIndexElectro,
+              d_densityQuadratureIdElectro,
+              d_phiTotRhoOut,
+              d_phiOutValues,
+              dummy);     
+        }
+
 				if(dftParameters::selfConsistentSolverTolerance>1e-4 && dftParameters::verbosity>=1)
 					pcout<<"DFT-FE Warning: Ion force accuracy may be affected for the given scf iteration solve tolerance: "<<dftParameters::selfConsistentSolverTolerance<<", recommended to use TOLERANCE below 1e-4."<<std::endl;
 
