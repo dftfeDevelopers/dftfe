@@ -19,7 +19,9 @@
 namespace shapeFuncCUDA
 {
 	__global__
-		void computeShapeGradNINJIntegralContribution(const unsigned int numQuads,
+		void computeShapeGradNINJIntegralContribution(const unsigned int numQuadsBlock,
+        const unsigned int numQuadsTotal,
+        const unsigned int startingQuadId,
 				const unsigned int numNodesPerElem,
 				const unsigned int numElems,
 				const double * gradNQuadValuesXI,
@@ -33,19 +35,19 @@ namespace shapeFuncCUDA
 		{
 
 			const unsigned int globalThreadId = blockIdx.x*blockDim.x + threadIdx.x;
-			const unsigned int numberEntries = numElems*numNodesPerElem*numNodesPerElem*numQuads;
+			const unsigned int numberEntries = numElems*numNodesPerElem*numNodesPerElem*numQuadsBlock;
 
 			for(unsigned int index = globalThreadId; index < numberEntries; index+= blockDim.x*gridDim.x)
 			{
-				const unsigned int blockIndex1 = index/numQuads;
-				const unsigned int quadIndex=index-blockIndex1*numQuads;
+				const unsigned int blockIndex1 = index/numQuadsBlock;
+				const unsigned int quadIndex=index-blockIndex1*numQuadsBlock;
 				const unsigned int blockIndex2=blockIndex1/numNodesPerElem;
 				const unsigned int cellId=blockIndex2/numNodesPerElem;
-				const unsigned int idJ=cellId*numNodesPerElem*numQuads+(blockIndex1-blockIndex2*numNodesPerElem)*numQuads+quadIndex;
-				const unsigned int idI=cellId*numNodesPerElem*numQuads+(blockIndex2-cellId*numNodesPerElem)*numQuads+quadIndex;
+				const unsigned int idJ=cellId*numNodesPerElem*numQuadsTotal+(blockIndex1-blockIndex2*numNodesPerElem)*numQuadsTotal+quadIndex+startingQuadId;
+				const unsigned int idI=cellId*numNodesPerElem*numQuadsTotal+(blockIndex2-cellId*numNodesPerElem)*numQuadsTotal+quadIndex+startingQuadId;
 
 
-				shapeGradNINJIntegralContribution[index]=(gradNQuadValuesXI[idI]*gradNQuadValuesXJ[idJ]+gradNQuadValuesYI[idI]*gradNQuadValuesYJ[idJ]+gradNQuadValuesZI[idI]*gradNQuadValuesZJ[idJ])*jxwQuadValues[cellId*numQuads+quadIndex];
+				shapeGradNINJIntegralContribution[index]=(gradNQuadValuesXI[idI]*gradNQuadValuesXJ[idJ]+gradNQuadValuesYI[idI]*gradNQuadValuesYJ[idJ]+gradNQuadValuesZI[idI]*gradNQuadValuesZJ[idJ])*jxwQuadValues[cellId*numQuadsTotal+quadIndex+startingQuadId];
 			}
 
 		}
@@ -66,53 +68,66 @@ namespace shapeFuncCUDA
 		//thrust::device_vector<double> gradPsiQuadValuesYDJ=gradPsiQuadValuesYD;
 		//thrust::device_vector<double> gradPsiQuadValuesZDJ=gradPsiQuadValuesZD;
 
-		const int blockSize=1;
-		const int numberBlocks=numElems/blockSize;
-		const int remBlockSize=numElems-numberBlocks*blockSize;
+		const int blockSizeElems=1;
+    const int blockSizeQuads=100;
+		const int numberElemBlocks=numElems/blockSizeElems;
+		const int remBlockSizeElems=numElems-numberElemBlocks*blockSizeElems;
 
-		thrust::device_vector<double> shapeGradNINJIntegralContributionD(blockSize*numNodesPerElem*numNodesPerElem*numQuads,0.0);
-		thrust::device_vector<double> onesVecD(numQuads,1.0); 
-		for (int iblock=0; iblock<(numberBlocks+1); iblock++)
-		{
-			const int currentBlockSize= (iblock==numberBlocks)?remBlockSize:blockSize;
-			if (currentBlockSize>0)
-			{
-				const int startingId=iblock*blockSize;
+		const int numberQuadsBlocks=numQuads/blockSizeQuads;
+		const int remBlockSizeQuads=numQuads-numberQuadsBlocks*blockSizeQuads;    
 
-				computeShapeGradNINJIntegralContribution<<<(numQuads+255)/256*numNodesPerElem*numNodesPerElem*currentBlockSize,256>>>
-					(numQuads,
-					 numNodesPerElem,
-					 currentBlockSize,
-					 thrust::raw_pointer_cast(&gradNQuadValuesXD[startingId*numNodesPerElem*numQuads]),
-					 thrust::raw_pointer_cast(&gradNQuadValuesYD[startingId*numNodesPerElem*numQuads]),
-					 thrust::raw_pointer_cast(&gradNQuadValuesZD[startingId*numNodesPerElem*numQuads]),
-					 thrust::raw_pointer_cast(&gradNQuadValuesXD[startingId*numNodesPerElem*numQuads]),
-					 thrust::raw_pointer_cast(&gradNQuadValuesYD[startingId*numNodesPerElem*numQuads]),
-					 thrust::raw_pointer_cast(&gradNQuadValuesZD[startingId*numNodesPerElem*numQuads]),
-					 thrust::raw_pointer_cast(&jxwQuadValuesD[startingId*numQuads]),
-					 thrust::raw_pointer_cast(&shapeGradNINJIntegralContributionD[0]));
+		thrust::device_vector<double> shapeGradNINJIntegralContributionD(blockSizeElems*numNodesPerElem*numNodesPerElem*blockSizeQuads,0.0);
+		thrust::device_vector<double> onesVecD(blockSizeQuads,1.0);
+    for (int iblock=0; iblock<(numberElemBlocks+1); iblock++)
+    {
+      const int currentElemsBlockSize= (iblock==numberElemBlocks)?remBlockSizeElems:blockSizeElems;
+      if (currentElemsBlockSize>0)
+      {     
+        const int startingElemId=iblock*blockSizeElems;        
+        for (int jblock=0; jblock<(numberQuadsBlocks+1); jblock++)
+        {
+          const int currentQuadsBlockSize= (jblock==numberQuadsBlocks)?remBlockSizeQuads:blockSizeQuads;          
+          const int startingQuadId=jblock*blockSizeQuads;           
+          if (currentQuadsBlockSize>0)
+          {             
+            computeShapeGradNINJIntegralContribution<<<(currentQuadsBlockSize+255)/256*numNodesPerElem*numNodesPerElem*currentElemsBlockSize,256>>>
+              (currentQuadsBlockSize,
+               numQuads,
+               startingQuadId,
+               numNodesPerElem,
+               currentElemsBlockSize,
+               thrust::raw_pointer_cast(&gradNQuadValuesXD[startingElemId*numNodesPerElem*numQuads]),
+               thrust::raw_pointer_cast(&gradNQuadValuesYD[startingElemId*numNodesPerElem*numQuads]),
+               thrust::raw_pointer_cast(&gradNQuadValuesZD[startingElemId*numNodesPerElem*numQuads]),
+               thrust::raw_pointer_cast(&gradNQuadValuesXD[startingElemId*numNodesPerElem*numQuads]),
+               thrust::raw_pointer_cast(&gradNQuadValuesYD[startingElemId*numNodesPerElem*numQuads]),
+               thrust::raw_pointer_cast(&gradNQuadValuesZD[startingElemId*numNodesPerElem*numQuads]),
+               thrust::raw_pointer_cast(&jxwQuadValuesD[startingElemId*numQuads]),
+               thrust::raw_pointer_cast(&shapeGradNINJIntegralContributionD[0]));
 
-				const double scalarCoeffAlpha = 1.0;
-				const double scalarCoeffBeta = 0.0;
+            const double scalarCoeffAlpha = 1.0;
+            const double scalarCoeffBeta = 1.0;
 
 
 
-				cublasDgemm(handle,
-						CUBLAS_OP_N,
-						CUBLAS_OP_N,
-						1,
-						currentBlockSize*numNodesPerElem*numNodesPerElem,
-						numQuads,
-						&scalarCoeffAlpha,
-						thrust::raw_pointer_cast(&onesVecD[0]),
-						1,
-						thrust::raw_pointer_cast(&shapeGradNINJIntegralContributionD[0]),
-						numQuads,
-						&scalarCoeffBeta,
-						thrust::raw_pointer_cast(&shapeGradNINJIntegralD[startingId*numNodesPerElem*numNodesPerElem]),
-						1);
-			}
-		}
+            cublasDgemm(handle,
+                CUBLAS_OP_N,
+                CUBLAS_OP_N,
+                1,
+                currentElemsBlockSize*numNodesPerElem*numNodesPerElem,
+                currentQuadsBlockSize,
+                &scalarCoeffAlpha,
+                thrust::raw_pointer_cast(&onesVecD[0]),
+                1,
+                thrust::raw_pointer_cast(&shapeGradNINJIntegralContributionD[0]),
+                currentQuadsBlockSize,
+                &scalarCoeffBeta,
+                thrust::raw_pointer_cast(&shapeGradNINJIntegralD[startingElemId*numNodesPerElem*numNodesPerElem]),
+                1);
+          }
+        }//block loop over nodes per elem
+      }
+    }//block loop over elems
 	} 
 }
 
