@@ -175,6 +175,7 @@ namespace dftfe
 			d_numLocallyOwnedCells(dftPtr->matrix_free_data.n_physical_cells()),
 			d_numQuadPoints(dftPtr->matrix_free_data.get_quadrature(dftPtr->d_densityQuadratureId).size()),
       d_isStiffnessMatrixExternalPotCorrComputed(false),
+      d_isMallocCalled(false),
 			mpi_communicator (mpi_comm_replica),
 			n_mpi_processes (Utilities::MPI::n_mpi_processes(mpi_comm_replica)),
 			this_mpi_process (Utilities::MPI::this_mpi_process(mpi_comm_replica)),
@@ -190,6 +191,23 @@ namespace dftfe
 					_dftPtr->d_constraintsNoneDataInfoCUDA)
 	{
 
+	}
+
+	//
+	//destructor
+	//
+	template<unsigned int FEOrder,unsigned int FEOrderElectro>
+		kohnShamDFTOperatorCUDAClass<FEOrder,FEOrderElectro>::~kohnShamDFTOperatorCUDAClass()
+	{
+      if (d_isMallocCalled)
+      {
+        free(h_d_A);
+        free(h_d_B);
+        free(h_d_C);
+        cudaFree(d_A);
+        cudaFree(d_B);
+        cudaFree(d_C); 
+      }
 	}
 
 	template<unsigned int FEOrder,unsigned int FEOrderElectro>
@@ -544,7 +562,6 @@ namespace dftfe
 				}
 
 				d_maxSingleAtomPseudoWfc=maxPseudoWfc;
-				d_cellWaveFunctionMatrixNonLocalDevice.resize(d_totalNonlocalElems*numberWaveFunctions*d_numberNodesPerElement,0.0);
 				d_cellHamMatrixTimesWaveMatrixNonLocalDevice.resize(d_totalNonlocalElems*numberWaveFunctions*d_numberNodesPerElement,0.0);
 				d_cellHamiltonianMatrixNonLocalFlattened.resize(d_totalNonlocalElems*d_numberNodesPerElement*d_maxSingleAtomPseudoWfc,0.0);
 				d_cellHamiltonianMatrixNonLocalFlattenedTranspose.resize(d_totalNonlocalElems*d_numberNodesPerElement*d_maxSingleAtomPseudoWfc,0.0);
@@ -558,6 +575,9 @@ namespace dftfe
 
 				d_indexMapFromPaddedNonLocalVecToParallelNonLocalVec.clear();
 				d_indexMapFromPaddedNonLocalVecToParallelNonLocalVec.resize(d_totalNonlocalElems*d_maxSingleAtomPseudoWfc,-1);
+
+        d_nonlocalElemIdToLocalElemIdMap.clear();
+        d_nonlocalElemIdToLocalElemIdMap.resize(d_totalNonlocalElems,0);
 
 				d_projectorKetTimesVectorAllCellsReduction.clear();
 				d_projectorKetTimesVectorAllCellsReduction.resize(d_totalNonlocalElems*d_maxSingleAtomPseudoWfc*d_totalPseudoWfcNonLocal,0.0);
@@ -608,6 +628,8 @@ namespace dftfe
 
 					for(unsigned int iElemComp = 0; iElemComp < dftPtr->d_elementIteratorsInAtomCompactSupport[atomId].size(); ++iElemComp)
 					{ 
+            const unsigned int elementId =  dftPtr->d_elementIdsInAtomCompactSupport[atomId][iElemComp];
+            d_nonlocalElemIdToLocalElemIdMap[countElem]=elementId;
 						for(unsigned int iNode = 0; iNode < d_numberNodesPerElement; ++iNode)
 						{
 							for(unsigned int iPseudoWave = 0; iPseudoWave < numberPseudoWaveFunctions; ++iPseudoWave)
@@ -645,6 +667,26 @@ namespace dftfe
 				d_cellNodeIdMapNonLocalToLocalDevice=d_cellNodeIdMapNonLocalToLocal;
 
 
+        h_d_A = (double**)malloc(d_totalNonlocalElems*sizeof(double*));
+        h_d_B = (double**)malloc(d_totalNonlocalElems*sizeof(double*));
+        h_d_C = (double**)malloc(d_totalNonlocalElems*sizeof(double*));
+     
+        for(unsigned int i=0; i<d_totalNonlocalElems; i++) 
+        {
+           h_d_A[i]=thrust::raw_pointer_cast(&d_cellWaveFunctionMatrix[d_nonlocalElemIdToLocalElemIdMap[i]*numberWaveFunctions*d_numberNodesPerElement]);
+           h_d_B[i]=thrust::raw_pointer_cast(&d_cellHamiltonianMatrixNonLocalFlattenedDevice[i*d_numberNodesPerElement*d_maxSingleAtomPseudoWfc]);
+           h_d_C[i]=thrust::raw_pointer_cast(&d_projectorKetTimesVectorAllCellsDevice[i*numberWaveFunctions*d_maxSingleAtomPseudoWfc]);
+        }
+        
+        cudaMalloc((void**)&d_A, d_totalNonlocalElems*sizeof(double*));
+        cudaMalloc((void**)&d_B, d_totalNonlocalElems*sizeof(double*));
+        cudaMalloc((void**)&d_C, d_totalNonlocalElems*sizeof(double*));
+
+        cudaMemcpy(d_A, h_d_A, d_totalNonlocalElems*sizeof(double*), cudaMemcpyHostToDevice);
+        cudaMemcpy(d_B, h_d_B, d_totalNonlocalElems*sizeof(double*), cudaMemcpyHostToDevice);
+        cudaMemcpy(d_C, h_d_C, d_totalNonlocalElems*sizeof(double*), cudaMemcpyHostToDevice);
+
+        d_isMallocCalled=true;
 			}
 
 			cudaMemGetInfo(&free_t,&total_t);
