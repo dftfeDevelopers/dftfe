@@ -399,7 +399,7 @@ namespace dftfe {
 			void initUnmovedTriangulation(parallel::distributed::Triangulation<3> & triangulation);
 			void initBoundaryConditions(const bool meshOnlyDeformed=false);
 			void initElectronicFields(const unsigned int usePreviousGroundStateFields=0);
-			void initPseudoPotentialAll(const bool meshOnlyDeformed=false);
+			void initPseudoPotentialAll(const bool updateNonlocalSparsity=true);
 
 			/**
 			 * create a dofHandler containing finite-element interpolating polynomial twice of the original polynomial
