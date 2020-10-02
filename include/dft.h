@@ -491,6 +491,7 @@ namespace dftfe {
 
 			void initAtomicRho(distributedCPUVec<double> & atomicRhoNodal);
 			void initRho();
+      void initCoreRho();
 			void computeRhoInitialGuessFromPSI(std::vector<std::vector<distributedCPUVec<double>>> eigenVectors);
 			void clearRhoData();
 
@@ -1035,6 +1036,17 @@ namespace dftfe {
 			std::vector<std::vector<double> > d_localVselfs;
 
 			//nonlocal pseudopotential related objects used only for pseudopotential calculation
+      std::map<dealii::CellId, std::vector<double> > d_rhoCore;
+
+      std::map<dealii::CellId, std::vector<double> > d_gradRhoCore;
+
+      std::map<unsigned int,std::map<dealii::CellId, std::vector<double> > > d_gradRhoCoreAtoms;
+
+      std::map<dealii::CellId, std::vector<double> > d_hessianRhoCore;
+
+      std::map<unsigned int,std::map<dealii::CellId, std::vector<double> > > d_hessianRhoCoreAtoms;
+
+      double d_coreRhoTail = 8.0;
 
 			//
 			// Store the map between the "pseudo" wave function Id and the function Id details (i.e., global splineId, l quantum number, m quantum number)

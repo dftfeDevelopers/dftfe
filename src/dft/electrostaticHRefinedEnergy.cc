@@ -505,6 +505,8 @@ void dftClass<FEOrder,FEOrderElectro>::computeElectrostaticEnergyHRefined(
         rhoOutValuesLpspQuadHRefined,
 				*gradRhoInValues,
 				*gradRhoOutValues,
+				d_rhoCore,
+				d_gradRhoCore,        
 				d_bQuadValuesAllAtoms,
 				localVselfsHRefined,
 				d_pseudoVLoc,

@@ -138,6 +138,7 @@ namespace dftfe {
 		bool xlbomdStepTimingRun=false;
 		bool smearedNuclearCharges=false;
     bool floatingNuclearCharges=false;
+    bool nonLinearCoreCorrection=false;
 
 		void declare_parameters(ParameterHandler &prm)
 		{

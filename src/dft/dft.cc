@@ -82,6 +82,7 @@ namespace dftfe {
 #include "initPseudo-OV.cc"
 #include "femUtilityFunctions.cc"
 #include "initRho.cc"
+#include "initCoreRho.cc"  
 #include "dos.cc"
 #include "localizationLength.cc"
 #include "publicMethods.cc"
@@ -562,8 +563,18 @@ namespace dftfe {
 				pcout<<std::endl<<"Reading Pseudo-potential data for each atom from the list given in : " <<dftParameters::pseudoPotentialFile<<std::endl;
 			}
 
+      int nlccFlag=0;
 			if(Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0 && dftParameters::isPseudopotential == true)
-				pseudoUtils::convert(dftParameters::pseudoPotentialFile);
+				nlccFlag=pseudoUtils::convert(dftParameters::pseudoPotentialFile);
+
+      nlccFlag = Utilities::MPI::sum(nlccFlag, MPI_COMM_WORLD);
+
+			if(nlccFlag > 0 && dftParameters::isPseudopotential == true)
+          dftParameters::nonLinearCoreCorrection = true;
+
+			if(dftParameters::verbosity>=1)
+        if(dftParameters::nonLinearCoreCorrection == true)
+          pcout<<"Atleast one atom has pseudopotential with nonlinear core correction"<<std::endl;
 
 			d_elpaScala.processGridOptionalELPASetup(d_numEigenValues,
 					d_numEigenValuesRR);
@@ -578,29 +589,12 @@ namespace dftfe {
 		{
 			if(dftParameters::isPseudopotential)
 			{
-				//std::string fileName = "sample_text";
-
-
 				TimerOutput::Scope scope (computing_timer, "psp init");
 				pcout<<std::endl<<"Pseudopotential initalization...."<<std::endl;
 				const Quadrature<3> &  quadrature=matrix_free_data.get_quadrature(d_densityQuadratureId);
 
-				/*
-				   double init_psplocal;
-				   MPI_Barrier(MPI_COMM_WORLD);
-				   init_psplocal = MPI_Wtime();
-
-				   initLocalPseudoPotential(dofHandler,
-				   quadrature,
-				   d_pseudoVLoc,
-				   d_gradPseudoVLoc,
-				   d_gradPseudoVLocAtoms);
-
-				   MPI_Barrier(MPI_COMM_WORLD);
-				   init_psplocal = MPI_Wtime() - init_psplocal;
-				   if (dftParameters::verbosity>=1)
-				   pcout<<"updateAtomPositionsAndMoveMesh: initPseudoPotentialAll: Time taken for local psp init: "<<init_psplocal<<std::endl;
-				 */
+        if(dftParameters::nonLinearCoreCorrection == true)
+				  initCoreRho();
 
 				if (!meshOnlyDeformed)
 				{
@@ -2715,6 +2709,8 @@ namespace dftfe {
                 d_rhoOutValuesLpspQuad,
 								*gradRhoInValues,
 								*gradRhoOutValues,
+						   	d_rhoCore,
+							  d_gradRhoCore,	                
 								d_bQuadValuesAllAtoms,
 								d_localVselfs,
 								d_pseudoVLoc,
@@ -2905,6 +2901,8 @@ namespace dftfe {
               d_rhoOutValuesLpspQuad,
 							*gradRhoInValues,
 							*gradRhoOutValues,
+              d_rhoCore,
+							d_gradRhoCore,	 
 							d_bQuadValuesAllAtoms,
 							d_localVselfs,
 							d_pseudoVLoc,
