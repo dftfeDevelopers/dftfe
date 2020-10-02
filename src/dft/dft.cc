@@ -585,7 +585,7 @@ namespace dftfe {
 
 	//dft pseudopotential init
 	template<unsigned int FEOrder,unsigned int FEOrderElectro>
-		void dftClass<FEOrder,FEOrderElectro>::initPseudoPotentialAll(const bool meshOnlyDeformed)
+		void dftClass<FEOrder,FEOrderElectro>::initPseudoPotentialAll(const bool updateNonlocalSparsity)
 		{
 			if(dftParameters::isPseudopotential)
 			{
@@ -596,7 +596,7 @@ namespace dftfe {
         if(dftParameters::nonLinearCoreCorrection == true)
 				  initCoreRho();
 
-				if (!meshOnlyDeformed)
+				if (updateNonlocalSparsity)
 				{
 					double init_nonlocal1;
 					MPI_Barrier(MPI_COMM_WORLD);
@@ -1011,7 +1011,7 @@ namespace dftfe {
 			MPI_Barrier(MPI_COMM_WORLD);
 			init_pseudo = MPI_Wtime();
 
-			initPseudoPotentialAll(true);
+			initPseudoPotentialAll(dftParameters::floatingNuclearCharges?true:false);
 
 			MPI_Barrier(MPI_COMM_WORLD);
 			init_pseudo = MPI_Wtime() - init_pseudo;
