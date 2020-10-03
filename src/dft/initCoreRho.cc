@@ -25,8 +25,6 @@
 template<unsigned int FEOrder,unsigned int FEOrderElectro>
 void dftClass<FEOrder,FEOrderElectro>::initCoreRho()
 {
-  computing_timer.enter_section("initialize core density for non-linear core correction");
-
   //clear existing data
   d_rhoCore.clear();
   d_gradRhoCore.clear();
@@ -369,8 +367,6 @@ void dftClass<FEOrder,FEOrderElectro>::initCoreRho()
 	  
 	}//cell loop
     }
-
-  computing_timer.exit_section("initialize core density for non-linear core correction");
 }
 
 

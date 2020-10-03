@@ -838,6 +838,7 @@ namespace dftfe
 		void kohnShamDFTOperatorCUDAClass<FEOrder,FEOrderElectro>::computeVEff(const std::map<dealii::CellId,std::vector<double> >* rhoValues,
 				const std::map<dealii::CellId,std::vector<double> > & phiValues,
 				const std::map<dealii::CellId,std::vector<double> > & externalPotCorrValues,
+        const std::map<dealii::CellId,std::vector<double> > & rhoCoreValues,
         const unsigned int externalPotCorrQuadratureId)
 		{
 			const unsigned int n_cells = dftPtr->matrix_free_data.n_macro_cells();
@@ -860,7 +861,15 @@ namespace dftfe
 				{
 					fe_values.reinit (cellPtr);
 
-					const std::vector<double> & densityValue = (*rhoValues).find(cellPtr->id())->second;
+					std::vector<double>  densityValue = (*rhoValues).find(cellPtr->id())->second;
+
+					if(dftParameters::nonLinearCoreCorrection)
+          {
+            const std::vector<double> & temp2= rhoCoreValues.find(cellPtr->id())->second;
+            for (unsigned int q = 0; q < numberQuadraturePoints; ++q)
+              densityValue[q]+=temp2[q];
+          }
+
           const std::vector<double> & tempPhi=phiValues.find(cellPtr->id())->second;          
 
 					xc_lda_vxc(&(dftPtr->funcX),numberQuadraturePoints,&densityValue[0],&exchangePotentialVal[0]);
@@ -888,6 +897,8 @@ namespace dftfe
 				const std::map<dealii::CellId,std::vector<double> >* gradRhoValues,
 				const std::map<dealii::CellId,std::vector<double> > & phiValues,
 				const std::map<dealii::CellId,std::vector<double> > & externalPotCorrValues,
+        const std::map<dealii::CellId,std::vector<double> > & rhoCoreValues,
+        const std::map<dealii::CellId,std::vector<double> > & gradRhoCoreValues,        
         const unsigned int externalPotCorrQuadratureId)
 		{
 
@@ -918,15 +929,29 @@ namespace dftfe
 				{
 					fe_values.reinit (cellPtr);
 
-					const std::vector<double> & densityValue = (*rhoValues).find(cellPtr->id())->second;
-					const std::vector<double> & gradDensityValue = (*gradRhoValues).find(cellPtr->id())->second;
+			    std::vector<double>  densityValue = (*rhoValues).find(cellPtr->id())->second;
+					std::vector<double>  gradDensityValue = (*gradRhoValues).find(cellPtr->id())->second;
+
+					if(dftParameters::nonLinearCoreCorrection)
+          {
+            const std::vector<double> & temp2= rhoCoreValues.find(cellPtr->id())->second;
+            const std::vector<double> & temp3= gradRhoCoreValues.find(cellPtr->id())->second;
+            for (unsigned int q = 0; q < numberQuadraturePoints; ++q)
+            {
+              densityValue[q]+=temp2[q];
+              gradDensityValue[3*q+0]+=temp3[3*q+0];
+              gradDensityValue[3*q+1]+=temp3[3*q+1];
+              gradDensityValue[3*q+2]+=temp3[3*q+2];
+            }
+          }
+
           const std::vector<double> & tempPhi=phiValues.find(cellPtr->id())->second;           
 
 					for (unsigned int q=0; q<numberQuadraturePoints; ++q)
 					{
-						double gradRhoX = gradDensityValue[3*q + 0];
-						double gradRhoY = gradDensityValue[3*q + 1];
-						double gradRhoZ = gradDensityValue[3*q + 2];
+						const double gradRhoX = gradDensityValue[3*q + 0];
+						const double gradRhoY = gradDensityValue[3*q + 1];
+						const double gradRhoZ = gradDensityValue[3*q + 2];
 						sigmaValue[q] = gradRhoX*gradRhoX + gradRhoY*gradRhoY + gradRhoZ*gradRhoZ;
 					}
 
@@ -946,9 +971,9 @@ namespace dftfe
 					for (unsigned int q = 0; q < numberQuadraturePoints; ++q)
 					{
 						const double jxw=fe_values.JxW(q);
-						const double gradRhoX = (*gradRhoValues).find(cellPtr->id())->second[3*q + 0];
-						const double gradRhoY = (*gradRhoValues).find(cellPtr->id())->second[3*q + 1];
-						const double gradRhoZ = (*gradRhoValues).find(cellPtr->id())->second[3*q + 2];
+						const double gradRhoX = gradDensityValue[3*q + 0];
+						const double gradRhoY = gradDensityValue[3*q + 1];
+						const double gradRhoZ = gradDensityValue[3*q + 2];
 						const double term = derExchEnergyWithSigmaVal[q]+derCorrEnergyWithSigmaVal[q];
 						d_derExcWithSigmaTimesGradRhoJxW[iElemCount*numberQuadraturePoints*3+3*q] = term*gradRhoX*jxw;
 						d_derExcWithSigmaTimesGradRhoJxW[iElemCount*numberQuadraturePoints*3+3*q+1] = term*gradRhoY*jxw;
@@ -981,6 +1006,7 @@ namespace dftfe
 				const std::map<dealii::CellId,std::vector<double> > & phiValues,
 				const unsigned int spinIndex,
 				const std::map<dealii::CellId,std::vector<double> > & externalPotCorrValues,
+        const std::map<dealii::CellId,std::vector<double> > & rhoCoreValues,
         const unsigned int externalPotCorrQuadratureId)
 		{
 			const unsigned int n_cells = dftPtr->matrix_free_data.n_macro_cells();
@@ -1033,6 +1059,8 @@ namespace dftfe
 				const std::map<dealii::CellId,std::vector<double> > & phiValues,
 				const unsigned int spinIndex,
 				const std::map<dealii::CellId,std::vector<double> > & externalPotCorrValues,
+        const std::map<dealii::CellId,std::vector<double> > & rhoCoreValues,
+        const std::map<dealii::CellId,std::vector<double> > & gradRhoCoreValues,        
         const unsigned int externalPotCorrQuadratureId)
 		{
 			const unsigned int n_cells = dftPtr->matrix_free_data.n_macro_cells();
@@ -1096,12 +1124,12 @@ namespace dftfe
 					for (unsigned int q = 0; q < numberQuadraturePoints; ++q)
 					{
 						const double jxw=fe_values.JxW(q);
-						const double gradRhoX = (*gradRhoValues).find(cellPtr->id())->second[6*q + 0 + 3*spinIndex];
-						const double gradRhoY = (*gradRhoValues).find(cellPtr->id())->second[6*q + 1 + 3*spinIndex];
-						const double gradRhoZ = (*gradRhoValues).find(cellPtr->id())->second[6*q + 2 + 3*spinIndex];
-						const double gradRhoOtherX = (*gradRhoValues).find(cellPtr->id())->second[6*q + 0 + 3*(1-spinIndex)];
-						const double gradRhoOtherY = (*gradRhoValues).find(cellPtr->id())->second[6*q + 1 + 3*(1-spinIndex)];
-						const double gradRhoOtherZ = (*gradRhoValues).find(cellPtr->id())->second[6*q + 2 + 3*(1-spinIndex)];
+					  const double gradRhoX = gradDensityValue[6*q + 0 + 3*spinIndex];
+						const double gradRhoY = gradDensityValue[6*q + 1 + 3*spinIndex];
+						const double gradRhoZ = gradDensityValue[6*q + 2 + 3*spinIndex];
+						const double gradRhoOtherX = gradDensityValue[6*q + 0 + 3*(1-spinIndex)];
+						const double gradRhoOtherY = gradDensityValue[6*q + 1 + 3*(1-spinIndex)];
+						const double gradRhoOtherZ = gradDensityValue[6*q + 2 + 3*(1-spinIndex)];
 						const double term = derExchEnergyWithSigmaVal[3*q+2*spinIndex]+derCorrEnergyWithSigmaVal[3*q+2*spinIndex];
 						const double termOff = derExchEnergyWithSigmaVal[3*q+1]+derCorrEnergyWithSigmaVal[3*q+1];
 						d_derExcWithSigmaTimesGradRhoJxW[iElemCount*numberQuadraturePoints*3+3*q] = (term*gradRhoX + 0.5*termOff*gradRhoOtherX)*jxw;

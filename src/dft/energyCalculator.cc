@@ -442,9 +442,16 @@ namespace dftfe
 
 							 excCorrPotentialTimesRho+=(Vxc*(rhoOutValues.find(cellElectronic->id())->second[q_point])+VxcGrad)*feValuesElectronic.JxW (q_point);
 
-							 exchangeEnergy+=(exchangeEnergyDensity[q_point])*(rhoOutValues.find(cellElectronic->id())->second[q_point])*feValuesElectronic.JxW(q_point);
-
-							 correlationEnergy+=(corrEnergyDensity[q_point])*(rhoOutValues.find(cellElectronic->id())->second[q_point])*feValuesElectronic.JxW(q_point);
+               if(dftParameters::nonLinearCoreCorrection)
+               {
+                 exchangeEnergy+=(exchangeEnergyDensity[q_point])*(rhoOutValues.find(cellElectronic->id())->second[q_point]+rhoCoreValues.find(cellElectronic->id())->second[q_point])*feValuesElectronic.JxW(q_point);
+                 correlationEnergy+=(corrEnergyDensity[q_point])*(rhoOutValues.find(cellElectronic->id())->second[q_point]+rhoCoreValues.find(cellElectronic->id())->second[q_point])*feValuesElectronic.JxW(q_point);                 
+               }
+               else
+               {
+                 exchangeEnergy+=(exchangeEnergyDensity[q_point])*(rhoOutValues.find(cellElectronic->id())->second[q_point])*feValuesElectronic.JxW(q_point);
+                 correlationEnergy+=(corrEnergyDensity[q_point])*(rhoOutValues.find(cellElectronic->id())->second[q_point])*feValuesElectronic.JxW(q_point);
+               }
 
 							 electrostaticPotentialTimesRho+=(phiTotRhoInValues.find(cellElectronic->id())->second[q_point])
 								 *(rhoOutValues.find(cellElectronic->id())->second[q_point])
@@ -489,9 +496,16 @@ namespace dftfe
 						 {
 							 excCorrPotentialTimesRho+=(exchangePotentialVal[q_point]+corrPotentialVal[q_point])*(rhoOutValues.find(cellElectronic->id())->second[q_point])*feValuesElectronic.JxW (q_point);
 
-							 exchangeEnergy+=(exchangeEnergyVal[q_point])*(rhoOutValues.find(cellElectronic->id())->second[q_point])*feValuesElectronic.JxW(q_point);
-
-							 correlationEnergy+=(corrEnergyVal[q_point])*(rhoOutValues.find(cellElectronic->id())->second[q_point])*feValuesElectronic.JxW(q_point);
+               if(dftParameters::nonLinearCoreCorrection)
+               {
+                 exchangeEnergy+=(exchangeEnergyVal[q_point])*(rhoOutValues.find(cellElectronic->id())->second[q_point]+rhoCoreValues.find(cellElectronic->id())->second[q_point])*feValuesElectronic.JxW(q_point);
+                 correlationEnergy+=(corrEnergyVal[q_point])*(rhoOutValues.find(cellElectronic->id())->second[q_point]+rhoCoreValues.find(cellElectronic->id())->second[q_point])*feValuesElectronic.JxW(q_point);                 
+               }
+               else
+               {
+                 exchangeEnergy+=(exchangeEnergyVal[q_point])*(rhoOutValues.find(cellElectronic->id())->second[q_point])*feValuesElectronic.JxW(q_point);
+                 correlationEnergy+=(corrEnergyVal[q_point])*(rhoOutValues.find(cellElectronic->id())->second[q_point])*feValuesElectronic.JxW(q_point);
+               }
 
 							 electrostaticPotentialTimesRho+=(phiTotRhoInValues.find(cellElectronic->id())->second[q_point])
 								 *(rhoOutValues.find(cellElectronic->id())->second[q_point])

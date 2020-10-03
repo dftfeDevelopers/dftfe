@@ -216,6 +216,7 @@ namespace dftfe {
 		void kohnShamDFTOperatorClass<FEOrder,FEOrderElectro>::computeVEff(const std::map<dealii::CellId,std::vector<double> >* rhoValues,
 				const std::map<dealii::CellId,std::vector<double> > & phiValues,
 				const std::map<dealii::CellId,std::vector<double> > & externalPotCorrValues,
+        const std::map<dealii::CellId,std::vector<double> > & rhoCoreValues,
         const unsigned int externalPotCorrQuadratureId)
 		{
 			const unsigned int n_cells = dftPtr->matrix_free_data.n_macro_cells();
@@ -241,6 +242,13 @@ namespace dftfe {
           const std::vector<double> & temp=phiValues.find(cellPtr->id())->second;
           for (unsigned int q = 0; q < numberQuadraturePoints; ++q)
             tempPhi[q][v]=temp[q];
+
+					if(dftParameters::nonLinearCoreCorrection)
+          {
+            const std::vector<double> & temp2= rhoCoreValues.find(cellPtr->id())->second;
+            for (unsigned int q = 0; q < numberQuadraturePoints; ++q)
+              tempRho[v][q]+=temp2[q];
+          }
 				}
 
 				for (unsigned int q = 0; q < numberQuadraturePoints; ++q)
@@ -251,7 +259,6 @@ namespace dftfe {
 					std::vector<double> densityValue(n_sub_cells), exchangePotentialVal(n_sub_cells), corrPotentialVal(n_sub_cells);
 					for (unsigned int v = 0; v < n_sub_cells; ++v)
 					{
-						cellPtr=dftPtr->matrix_free_data.get_cell_iterator(cell, v);
 						densityValue[v] = tempRho[v][q];
 					}
 
@@ -281,6 +288,8 @@ namespace dftfe {
 				const std::map<dealii::CellId,std::vector<double> >* gradRhoValues,
 				const std::map<dealii::CellId,std::vector<double> > & phiValues,
 				const std::map<dealii::CellId,std::vector<double> > & externalPotCorrValues,
+        const std::map<dealii::CellId,std::vector<double> > & rhoCoreValues,
+        const std::map<dealii::CellId,std::vector<double> > & gradRhoCoreValues,        
         const unsigned int externalPotCorrQuadratureId)
 		{
 			const unsigned int n_cells = dftPtr->matrix_free_data.n_macro_cells();
@@ -308,7 +317,20 @@ namespace dftfe {
 
           const std::vector<double> & temp=phiValues.find(cellPtr->id())->second;
           for (unsigned int q = 0; q < numberQuadraturePoints; ++q)
-            tempPhi[q][v]=temp[q];          
+            tempPhi[q][v]=temp[q];         
+
+					if(dftParameters::nonLinearCoreCorrection)
+          {
+            const std::vector<double> & temp2= rhoCoreValues.find(cellPtr->id())->second;
+            const std::vector<double> & temp3= gradRhoCoreValues.find(cellPtr->id())->second;
+            for (unsigned int q = 0; q < numberQuadraturePoints; ++q)
+            {
+              tempRho[v][q]+=temp2[q];
+              tempGradRho[v][3*q+0]+=temp3[3*q+0];
+              tempGradRho[v][3*q+1]+=temp3[3*q+1];
+              tempGradRho[v][3*q+2]+=temp3[3*q+2];
+            }
+          }
 				}
 				for (unsigned int q = 0; q < numberQuadraturePoints; ++q)
 				{
@@ -318,7 +340,6 @@ namespace dftfe {
 					std::vector<double> densityValue(n_sub_cells), derExchEnergyWithDensityVal(n_sub_cells), derCorrEnergyWithDensityVal(n_sub_cells), derExchEnergyWithSigma(n_sub_cells), derCorrEnergyWithSigma(n_sub_cells), sigmaValue(n_sub_cells);
 					for (unsigned int v = 0; v < n_sub_cells; ++v)
 					{
-						cellPtr=dftPtr->matrix_free_data.get_cell_iterator(cell, v);
 						densityValue[v] = tempRho[v][q];
 						double gradRhoX = tempGradRho[v][3*q + 0];
 						double gradRhoY = tempGradRho[v][3*q + 1];
@@ -333,7 +354,6 @@ namespace dftfe {
 					VectorizedArray<double>  derExchEnergyWithDensity, derCorrEnergyWithDensity, derExcWithSigmaTimesGradRhoX, derExcWithSigmaTimesGradRhoY, derExcWithSigmaTimesGradRhoZ;
 					for (unsigned int v = 0; v < n_sub_cells; ++v)
 					{
-						cellPtr=dftPtr->matrix_free_data.get_cell_iterator(cell, v);
 						derExchEnergyWithDensity[v]=derExchEnergyWithDensityVal[v];
 						derCorrEnergyWithDensity[v]=derCorrEnergyWithDensityVal[v];
 						double gradRhoX = tempGradRho[v][3*q + 0];
@@ -1439,6 +1459,7 @@ dst);
 				const std::map<dealii::CellId,std::vector<double> > & phiValues,
 				const unsigned int spinIndex,
 				const std::map<dealii::CellId,std::vector<double> > & externalPotCorrValues,
+        const std::map<dealii::CellId,std::vector<double> > & rhoCoreValues,
         const unsigned int externalPotCorrQuadratureId)
 
 		{
@@ -1475,7 +1496,6 @@ dst);
 					std::vector<double> densityValue(2*n_sub_cells), exchangePotentialVal(2*n_sub_cells), corrPotentialVal(2*n_sub_cells);
 					for (unsigned int v = 0; v < n_sub_cells; ++v)
 					{
-						cellPtr=dftPtr->matrix_free_data.get_cell_iterator(cell, v);
 						densityValue[2*v+1] =tempRho[v][2*q+1];
 						densityValue[2*v] = tempRho[v][2*q];
 					}
@@ -1507,6 +1527,8 @@ dst);
 				const std::map<dealii::CellId,std::vector<double> > & phiValues,
 				const unsigned int spinIndex,
 				const std::map<dealii::CellId,std::vector<double> > & externalPotCorrValues,
+        const std::map<dealii::CellId,std::vector<double> > & rhoCoreValues,
+        const std::map<dealii::CellId,std::vector<double> > & gradRhoCoreValues,        
         const unsigned int externalPotCorrQuadratureId)
 		{
 			const unsigned int n_cells = dftPtr->matrix_free_data.n_macro_cells();
@@ -1546,7 +1568,6 @@ dst);
 						derExchEnergyWithSigma(3*n_sub_cells), derCorrEnergyWithSigma(3*n_sub_cells), sigmaValue(3*n_sub_cells);
 					for (unsigned int v = 0; v < n_sub_cells; ++v)
 					{
-						cellPtr=dftPtr->matrix_free_data.get_cell_iterator(cell, v);
 						densityValue[2*v+1] = tempRho[v][2*q+1];
 						densityValue[2*v] = tempRho[v][2*q];
 						double gradRhoX1 = tempGradRho[v][6*q + 0];
@@ -1569,7 +1590,6 @@ dst);
 					VectorizedArray<double>  derExchEnergyWithDensity, derCorrEnergyWithDensity, derExcWithSigmaTimesGradRhoX, derExcWithSigmaTimesGradRhoY, derExcWithSigmaTimesGradRhoZ;
 					for (unsigned int v = 0; v < n_sub_cells; ++v)
 					{
-						cellPtr=dftPtr->matrix_free_data.get_cell_iterator(cell, v);
 						derExchEnergyWithDensity[v]=derExchEnergyWithDensityVal[2*v+spinIndex];
 						derCorrEnergyWithDensity[v]=derCorrEnergyWithDensityVal[2*v+spinIndex];
 						double gradRhoX = tempGradRho[v][6*q + 0 + 3*spinIndex];
