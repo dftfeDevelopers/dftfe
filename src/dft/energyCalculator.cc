@@ -294,6 +294,8 @@ namespace dftfe
      const std::map<dealii::CellId, std::vector<double> > & rhoOutValuesElectrostaticLpsp,     
 		 const std::map<dealii::CellId, std::vector<double> > & gradRhoInValues,
 		 const std::map<dealii::CellId, std::vector<double> > & gradRhoOutValues,
+		 const std::map<dealii::CellId, std::vector<double> > & rhoCoreValues,
+     const std::map<dealii::CellId, std::vector<double> > & gradRhoCoreValues,       
 		 const std::map<dealii::CellId, std::vector<double> > & smearedbValues,
 		 const std::vector<std::vector<double> > & localVselfs,
 		 const std::map<dealii::CellId, std::vector<double> > & pseudoValuesElectronic,
@@ -386,20 +388,46 @@ namespace dftfe
 							 sigmaWithInputGradDensity(num_quad_points_electronic);
 						 std::vector<double> gradRhoInDotgradRhoOut(num_quad_points_electronic);
 
-						 for (unsigned int q_point=0; q_point<num_quad_points_electronic; ++q_point)
-						 {
-							 densityValueIn[q_point] = rhoInValues.find(cellElectronic->id())->second[q_point];
-							 densityValueOut[q_point] = rhoOutValues.find(cellElectronic->id())->second[q_point];
-							 const double gradRhoInX = (gradRhoInValues.find(cellElectronic->id())->second[3*q_point + 0]);
-							 const double gradRhoInY = (gradRhoInValues.find(cellElectronic->id())->second[3*q_point + 1]);
-							 const double gradRhoInZ = (gradRhoInValues.find(cellElectronic->id())->second[3*q_point + 2]);
-							 const double gradRhoOutX = (gradRhoOutValues.find(cellElectronic->id())->second[3*q_point + 0]);
-							 const double gradRhoOutY = (gradRhoOutValues.find(cellElectronic->id())->second[3*q_point + 1]);
-							 const double gradRhoOutZ = (gradRhoOutValues.find(cellElectronic->id())->second[3*q_point + 2]);
-							 sigmaWithInputGradDensity[q_point] = gradRhoInX*gradRhoInX + gradRhoInY*gradRhoInY + gradRhoInZ*gradRhoInZ;
-							 sigmaWithOutputGradDensity[q_point] = gradRhoOutX*gradRhoOutX + gradRhoOutY*gradRhoOutY + gradRhoOutZ*gradRhoOutZ;
-							 gradRhoInDotgradRhoOut[q_point] = gradRhoInX*gradRhoOutX + gradRhoInY*gradRhoOutY + gradRhoInZ*gradRhoOutZ;
-						 }
+						 if(dftParameters::nonLinearCoreCorrection == true)
+             {
+               for (unsigned int q_point=0; q_point<num_quad_points_electronic; ++q_point)
+               {
+                 densityValueIn[q_point] = rhoInValues.find(cellElectronic->id())->second[q_point] + rhoCoreValues.find(cellElectronic->id())->second[q_point];
+                 densityValueOut[q_point] = rhoOutValues.find(cellElectronic->id())->second[q_point] + rhoCoreValues.find(cellElectronic->id())->second[q_point];
+                 const double gradRhoInX = (gradRhoInValues.find(cellElectronic->id())->second[3*q_point + 0])+(gradRhoCoreValues.find(cellElectronic->id())->second[3*q_point + 0]);
+                 const double gradRhoInY = (gradRhoInValues.find(cellElectronic->id())->second[3*q_point + 1])+(gradRhoCoreValues.find(cellElectronic->id())->second[3*q_point + 1]);
+                 const double gradRhoInZ = (gradRhoInValues.find(cellElectronic->id())->second[3*q_point + 2])+(gradRhoCoreValues.find(cellElectronic->id())->second[3*q_point + 2]);
+                 const double gradRhoOutX = (gradRhoOutValues.find(cellElectronic->id())->second[3*q_point + 0])+(gradRhoCoreValues.find(cellElectronic->id())->second[3*q_point + 0]);
+                 const double gradRhoOutY = (gradRhoOutValues.find(cellElectronic->id())->second[3*q_point + 1])+(gradRhoCoreValues.find(cellElectronic->id())->second[3*q_point + 1]);
+                 const double gradRhoOutZ = (gradRhoOutValues.find(cellElectronic->id())->second[3*q_point + 2])+(gradRhoCoreValues.find(cellElectronic->id())->second[3*q_point + 2]);
+                 const double gradValRhoOutX = (gradRhoOutValues.find(cellElectronic->id())->second[3*q_point + 0]);
+                 const double gradValRhoOutY = (gradRhoOutValues.find(cellElectronic->id())->second[3*q_point + 1]);
+                 const double gradValRhoOutZ = (gradRhoOutValues.find(cellElectronic->id())->second[3*q_point + 2]);
+            
+                 sigmaWithInputGradDensity[q_point] = gradRhoInX*gradRhoInX + gradRhoInY*gradRhoInY + gradRhoInZ*gradRhoInZ;
+                 sigmaWithOutputGradDensity[q_point] = gradRhoOutX*gradRhoOutX + gradRhoOutY*gradRhoOutY + gradRhoOutZ*gradRhoOutZ;
+                 gradRhoInDotgradRhoOut[q_point] = gradRhoInX*gradValRhoOutX + gradRhoInY*gradValRhoOutY + gradRhoInZ*gradValRhoOutZ;
+               }
+
+             }
+						 else
+             {
+               for (unsigned int q_point=0; q_point<num_quad_points_electronic; ++q_point)
+               {
+                 densityValueIn[q_point] = rhoInValues.find(cellElectronic->id())->second[q_point];
+                 densityValueOut[q_point] = rhoOutValues.find(cellElectronic->id())->second[q_point];
+                 const double gradRhoInX = (gradRhoInValues.find(cellElectronic->id())->second[3*q_point + 0]);
+                 const double gradRhoInY = (gradRhoInValues.find(cellElectronic->id())->second[3*q_point + 1]);
+                 const double gradRhoInZ = (gradRhoInValues.find(cellElectronic->id())->second[3*q_point + 2]);
+                 const double gradRhoOutX = (gradRhoOutValues.find(cellElectronic->id())->second[3*q_point + 0]);
+                 const double gradRhoOutY = (gradRhoOutValues.find(cellElectronic->id())->second[3*q_point + 1]);
+                 const double gradRhoOutZ = (gradRhoOutValues.find(cellElectronic->id())->second[3*q_point + 2]);
+                 sigmaWithInputGradDensity[q_point] = gradRhoInX*gradRhoInX + gradRhoInY*gradRhoInY + gradRhoInZ*gradRhoInZ;
+                 sigmaWithOutputGradDensity[q_point] = gradRhoOutX*gradRhoOutX + gradRhoOutY*gradRhoOutY + gradRhoOutZ*gradRhoOutZ;
+                 gradRhoInDotgradRhoOut[q_point] = gradRhoInX*gradRhoOutX + gradRhoInY*gradRhoOutY + gradRhoInZ*gradRhoOutZ;
+               }
+             }
+
 						 xc_gga_exc(&funcX,num_quad_points_electronic,&densityValueOut[0],&sigmaWithOutputGradDensity[0],&exchangeEnergyDensity[0]);
 						 xc_gga_exc(&funcC,num_quad_points_electronic,&densityValueOut[0],&sigmaWithOutputGradDensity[0],&corrEnergyDensity[0]);
 
@@ -414,9 +442,16 @@ namespace dftfe
 
 							 excCorrPotentialTimesRho+=(Vxc*(rhoOutValues.find(cellElectronic->id())->second[q_point])+VxcGrad)*feValuesElectronic.JxW (q_point);
 
-							 exchangeEnergy+=(exchangeEnergyDensity[q_point])*(rhoOutValues.find(cellElectronic->id())->second[q_point])*feValuesElectronic.JxW(q_point);
-
-							 correlationEnergy+=(corrEnergyDensity[q_point])*(rhoOutValues.find(cellElectronic->id())->second[q_point])*feValuesElectronic.JxW(q_point);
+               if(dftParameters::nonLinearCoreCorrection)
+               {
+                 exchangeEnergy+=(exchangeEnergyDensity[q_point])*(rhoOutValues.find(cellElectronic->id())->second[q_point]+rhoCoreValues.find(cellElectronic->id())->second[q_point])*feValuesElectronic.JxW(q_point);
+                 correlationEnergy+=(corrEnergyDensity[q_point])*(rhoOutValues.find(cellElectronic->id())->second[q_point]+rhoCoreValues.find(cellElectronic->id())->second[q_point])*feValuesElectronic.JxW(q_point);                 
+               }
+               else
+               {
+                 exchangeEnergy+=(exchangeEnergyDensity[q_point])*(rhoOutValues.find(cellElectronic->id())->second[q_point])*feValuesElectronic.JxW(q_point);
+                 correlationEnergy+=(corrEnergyDensity[q_point])*(rhoOutValues.find(cellElectronic->id())->second[q_point])*feValuesElectronic.JxW(q_point);
+               }
 
 							 electrostaticPotentialTimesRho+=(phiTotRhoInValues.find(cellElectronic->id())->second[q_point])
 								 *(rhoOutValues.find(cellElectronic->id())->second[q_point])
@@ -434,11 +469,24 @@ namespace dftfe
 						 std::vector<double> exchangePotentialVal(num_quad_points_electronic),
 							 corrPotentialVal(num_quad_points_electronic);
 
-						 for (unsigned int q_point=0; q_point<num_quad_points_electronic; ++q_point)
-						 {
-							 densityValueIn[q_point] = rhoInValues.find(cellElectronic->id())->second[q_point];
-							 densityValueOut[q_point] = rhoOutValues.find(cellElectronic->id())->second[q_point];
-						 }
+						 if(dftParameters::nonLinearCoreCorrection == true)
+             {
+               for (unsigned int q_point=0; q_point<num_quad_points_electronic; ++q_point)
+               {
+                 densityValueIn[q_point] = rhoInValues.find(cellElectronic->id())->second[q_point] + rhoCoreValues.find(cellElectronic->id())->second[q_point];
+                 densityValueOut[q_point] = rhoOutValues.find(cellElectronic->id())->second[q_point] + rhoCoreValues.find(cellElectronic->id())->second[q_point];
+               }
+
+             }
+						 else
+             {
+               for (unsigned int q_point=0; q_point<num_quad_points_electronic; ++q_point)
+               {
+                 densityValueIn[q_point] = rhoInValues.find(cellElectronic->id())->second[q_point];
+                 densityValueOut[q_point] = rhoOutValues.find(cellElectronic->id())->second[q_point];
+               }
+             }
+
 						 xc_lda_exc(&funcX,num_quad_points_electronic,&densityValueOut[0],&exchangeEnergyVal[0]);
 						 xc_lda_exc(&funcC,num_quad_points_electronic,&densityValueOut[0],&corrEnergyVal[0]);
 						 xc_lda_vxc(&funcX,num_quad_points_electronic,&densityValueIn[0],&exchangePotentialVal[0]);
@@ -448,9 +496,16 @@ namespace dftfe
 						 {
 							 excCorrPotentialTimesRho+=(exchangePotentialVal[q_point]+corrPotentialVal[q_point])*(rhoOutValues.find(cellElectronic->id())->second[q_point])*feValuesElectronic.JxW (q_point);
 
-							 exchangeEnergy+=(exchangeEnergyVal[q_point])*(rhoOutValues.find(cellElectronic->id())->second[q_point])*feValuesElectronic.JxW(q_point);
-
-							 correlationEnergy+=(corrEnergyVal[q_point])*(rhoOutValues.find(cellElectronic->id())->second[q_point])*feValuesElectronic.JxW(q_point);
+               if(dftParameters::nonLinearCoreCorrection)
+               {
+                 exchangeEnergy+=(exchangeEnergyVal[q_point])*(rhoOutValues.find(cellElectronic->id())->second[q_point]+rhoCoreValues.find(cellElectronic->id())->second[q_point])*feValuesElectronic.JxW(q_point);
+                 correlationEnergy+=(corrEnergyVal[q_point])*(rhoOutValues.find(cellElectronic->id())->second[q_point]+rhoCoreValues.find(cellElectronic->id())->second[q_point])*feValuesElectronic.JxW(q_point);                 
+               }
+               else
+               {
+                 exchangeEnergy+=(exchangeEnergyVal[q_point])*(rhoOutValues.find(cellElectronic->id())->second[q_point])*feValuesElectronic.JxW(q_point);
+                 correlationEnergy+=(corrEnergyVal[q_point])*(rhoOutValues.find(cellElectronic->id())->second[q_point])*feValuesElectronic.JxW(q_point);
+               }
 
 							 electrostaticPotentialTimesRho+=(phiTotRhoInValues.find(cellElectronic->id())->second[q_point])
 								 *(rhoOutValues.find(cellElectronic->id())->second[q_point])

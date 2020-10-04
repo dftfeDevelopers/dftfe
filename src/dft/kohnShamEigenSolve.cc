@@ -144,11 +144,11 @@ dataTypes::number dftClass<FEOrder,FEOrderElectro>::computeTraceXtHX(unsigned in
 	//
 	if(dftParameters::xc_id < 4)
 	{
-		kohnShamDFTEigenOperator.computeVEff(rhoInValues,phiInValues, d_pseudoVLoc,d_lpspQuadratureId);
+		kohnShamDFTEigenOperator.computeVEff(rhoInValues,phiInValues, d_pseudoVLoc, d_rhoCore, d_lpspQuadratureId);
 	}
 	else if (dftParameters::xc_id == 4)
 	{
-		kohnShamDFTEigenOperator.computeVEff(rhoInValues, gradRhoInValues, phiInValues, d_pseudoVLoc,d_lpspQuadratureId);
+		kohnShamDFTEigenOperator.computeVEff(rhoInValues, gradRhoInValues, phiInValues, d_pseudoVLoc, d_rhoCore, d_gradRhoCore, d_lpspQuadratureId);
 	}
 
 	//

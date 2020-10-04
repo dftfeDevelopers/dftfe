@@ -98,8 +98,7 @@ template<unsigned int FEOrder,unsigned int FEOrderElectro>
               const std::vector<std::pair<dealii::types::global_dof_index, double > > * rowData=hangingPlusPBCConstraints.get_constraint_entries(nodeId);
               for(unsigned int j = 0; j < rowData->size();++j)
               {
-                 Assert(boundaryNodeMap.find((*rowData)[j].first)!=boundaryNodeMap.end(),ExcMessage("BUG"));
-                 Assert(closestAtomBinMap.find((*rowData)[j].first)!=closestAtomBinMap.end(),ExcMessage("BUG"));
+                Assert(boundaryNodeMap.find((*rowData)[j].first)!=boundaryNodeMap.end(),ExcMessage("BUG"));
 
                 if (boundaryNodeMap.find((*rowData)[j].first)->second!=-1)
                   isSolvedDofPresent=true;
@@ -125,13 +124,13 @@ template<unsigned int FEOrder,unsigned int FEOrderElectro>
 				//fill the target objects
 				if (faceIdsWithAtleastOneSolvedNonHangingNode.size()>0)
         {
-          /*
+          
 					if (!(closestAtomIdSum==closestAtomId*nonHangingNodeIdCountCell))
 					{
 						std::cout << "closestAtomIdSum: "<<closestAtomIdSum<< ", closestAtomId: "<<closestAtomId<< ", nonHangingNodeIdCountCell: "<<nonHangingNodeIdCountCell<<std::endl;
 					}
 					AssertThrow(closestAtomIdSum==closestAtomId*nonHangingNodeIdCountCell,ExcMessage("cell dofs on vself ball surface have different closest atom ids, remedy- increase separation between vself balls"));
-          */
+          
 					cellsVselfBallsDofHandler[iBin].push_back(cell);
 					cellsVselfBallsDofHandlerForce[iBin].push_back(cellForce);
 					cellsVselfBallsClosestAtomIdDofHandler[iBin][cell->id()]=closestAtomId;

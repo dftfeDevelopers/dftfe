@@ -463,10 +463,10 @@ namespace dftfe
 			std::map<int,std::set<int> > interactionMap;
 
 			double radiusAtomBallAdaptive=(d_storedAdaptiveBallRadius>1e-6)?
-				d_storedAdaptiveBallRadius:((dftParameters::meshSizeOuterBall>0.5)?6.0:4.0);
+				d_storedAdaptiveBallRadius:((dftParameters::meshSizeOuterBall>0.5)?6.0:4.5);
 
       if (dftParameters::smearedNuclearCharges && (d_storedAdaptiveBallRadius<1e-6))
-        radiusAtomBallAdaptive=(dftParameters::meshSizeOuterBall>2.0)?4.0:3.0;
+        radiusAtomBallAdaptive=(dftParameters::meshSizeOuterBall>2.0)?4.0:4.0;
 
 			if (std::fabs(radiusAtomBall)<1e-6)
 			{
@@ -607,6 +607,8 @@ namespace dftfe
 			computing_timer.exit_section("create bins: put in bins");
 
 			computing_timer.enter_section("create bins: set boundary conditions");
+	    const unsigned int faces_per_cell=dealii::GeometryInfo<3>::faces_per_cell;
+	    const unsigned int dofs_per_face=dofHandler.get_fe().dofs_per_face;
 
 			std::vector<std::vector<int> > imageIdsInBins(numberBins);
 			d_boundaryFlag.resize(numberBins);
@@ -629,6 +631,8 @@ namespace dftfe
       for (unsigned int idim=0; idim<3; idim++)
           inhomogBoundaryVecVselfDerR[idim].reinit(inhomogBoundaryVec);
 
+      double radiusAtomBallReduced=radiusAtomBallAdaptive;    
+
 			//d_inhomoIdsColoredVecFlattened.clear();
 			//d_inhomoIdsColoredVecFlattened.resize(numberBins*locally_owned_dofs.size(),1.0);
 
@@ -637,9 +641,11 @@ namespace dftfe
 			//
 			for(int iBin = 0; iBin < numberBins; ++iBin)
 			{
+        /*
 				inhomogBoundaryVec=0.0;
         for (unsigned int idim=0; idim<3; idim++)
             inhomogBoundaryVecVselfDerR[idim]=0.0;
+        */
 
 				std::set<int> & atomsInBinSet = d_bins[iBin];
 				std::vector<int> atomsInCurrentBin(atomsInBinSet.begin(),atomsInBinSet.end());
@@ -679,6 +685,13 @@ namespace dftfe
 
 				int numberImageAtomsInBin = imageIdsOfAtomsInCurrentBin.size();
 
+        std::map<dealii::types::global_dof_index, int> & boundaryNodeMap = d_boundaryFlag[iBin];
+        std::map<dealii::types::global_dof_index, int> & boundaryNodeMapOnlyChargeId
+          = d_boundaryFlagOnlyChargeId[iBin];
+        std::map<dealii::types::global_dof_index, dealii::Point<3>> & dofClosestChargeLocationMap
+          = d_dofClosestChargeLocationMap[iBin];
+        std::map<dealii::types::global_dof_index, double> & vSelfBinNodeMap = d_vselfBinField[iBin];
+
 				//
 				//create constraint matrix for current bin
 				//
@@ -687,292 +700,320 @@ namespace dftfe
           d_vselfBinConstraintMatrices[4*iBin+idim+1].reinit(locally_relevant_dofs);
 
 
-				unsigned int inNodes=0, outNodes=0;
 				std::map<dealii::types::global_dof_index,dealii::Point<3> >::const_iterator iterMap;
-				for(iterMap = supportPoints.begin(); iterMap != supportPoints.end(); ++iterMap)
-				{
-					if(locally_relevant_dofs.is_element(iterMap->first))
-					{
-						if(!onlyHangingNodeConstraints.is_constrained(iterMap->first))
-						{
-							int overlapFlag = 0;
-							const dealii::Point<3> & nodalCoor = iterMap->second;
-							std::vector<double> distanceFromNode;
 
-							for(unsigned int iAtom = 0; iAtom < numberGlobalAtomsInBin+numberImageAtomsInBin; ++iAtom)
-							{
-								dealii::Point<3> atomCoor;
-								if(iAtom < numberGlobalAtomsInBin)
-								{
-									atomCoor = atomPositionsInCurrentBin[iAtom];
-								}
-								else
-								{
-									atomCoor[0] = imagePositionsOfAtomsInCurrentBin[iAtom - numberGlobalAtomsInBin][0];
-									atomCoor[1] = imagePositionsOfAtomsInCurrentBin[iAtom - numberGlobalAtomsInBin][1];
-									atomCoor[2] = imagePositionsOfAtomsInCurrentBin[iAtom - numberGlobalAtomsInBin][2];
-								}
+        bool areBoundaryConditionsCorrectInCaseOfHangingNodes=false;
+        while (!areBoundaryConditionsCorrectInCaseOfHangingNodes)
+        {
+          inhomogBoundaryVec=0.0;
+          for (unsigned int idim=0; idim<3; idim++)
+              inhomogBoundaryVecVselfDerR[idim]=0.0;
 
+          for(iterMap = supportPoints.begin(); iterMap != supportPoints.end(); ++iterMap)
+          {
+            if(locally_relevant_dofs.is_element(iterMap->first))
+            {
+              if(!onlyHangingNodeConstraints.is_constrained(iterMap->first))
+              {
+                int overlapFlag = 0;
+                const dealii::Point<3> & nodalCoor = iterMap->second;
+                std::vector<double> distanceFromNode;
 
-								double distance = nodalCoor.distance(atomCoor);
-
-								if(distance < radiusAtomBallAdaptive)
-									overlapFlag += 1;
-
-								AssertThrow(overlapFlag<=1,dealii::ExcMessage("One of your Bins has a problem. It has interacting atoms"));
-
-								distanceFromNode.push_back(distance);
-
-							}//atom loop
-
-							std::vector<double>::iterator minDistanceIter = std::min_element(distanceFromNode.begin(),
-									distanceFromNode.end());
-
-							std::iterator_traits<std::vector<double>::iterator>::difference_type minDistanceAtomId
-								= std::distance(distanceFromNode.begin(),minDistanceIter);
-
-							double minDistance = *minDistanceIter;
-
-							int chargeId;
-							int domainChargeId;
-
-							if(minDistanceAtomId < numberGlobalAtomsInBin)
-							{
-								chargeId = atomsInCurrentBin[minDistanceAtomId];
-								domainChargeId=chargeId;
-							}
-							else
-							{
-								chargeId = imageIdsOfAtomsInCurrentBin[minDistanceAtomId-numberGlobalAtomsInBin]+numberGlobalAtoms;
-								domainChargeId=imageIds[imageIdsOfAtomsInCurrentBin[minDistanceAtomId-numberGlobalAtomsInBin]];
-							}
-
-							d_closestAtomBin[iBin][iterMap->first] = chargeId;
-
-							//FIXME: These two can be moved to the outermost bin loop
-							std::map<dealii::types::global_dof_index, int> & boundaryNodeMap = d_boundaryFlag[iBin];
-							std::map<dealii::types::global_dof_index, int> & boundaryNodeMapOnlyChargeId
-								= d_boundaryFlagOnlyChargeId[iBin];
-							std::map<dealii::types::global_dof_index, dealii::Point<3>> & dofClosestChargeLocationMap
-								= d_dofClosestChargeLocationMap[iBin];
-							std::map<dealii::types::global_dof_index, double> & vSelfBinNodeMap = d_vselfBinField[iBin];
-
-							if(minDistanceAtomId < numberGlobalAtomsInBin)
-							{
-								dofClosestChargeLocationMap[iterMap->first][0] = atomLocations[chargeId][2];
-								dofClosestChargeLocationMap[iterMap->first][1] = atomLocations[chargeId][3];
-								dofClosestChargeLocationMap[iterMap->first][2] = atomLocations[chargeId][4];
-							}
-							else
-							{
-								dofClosestChargeLocationMap[iterMap->first][0] =
-									imagePositions[chargeId-numberGlobalAtoms][0];
-								dofClosestChargeLocationMap[iterMap->first][1] =
-									imagePositions[chargeId-numberGlobalAtoms][1];
-								dofClosestChargeLocationMap[iterMap->first][2] =
-									imagePositions[chargeId-numberGlobalAtoms][2];
-							}
-
-							if(minDistance < radiusAtomBallAdaptive)
-							{
-								boundaryNodeMap[iterMap->first] = chargeId;
-								boundaryNodeMapOnlyChargeId[iterMap->first] = domainChargeId;
-
-								inNodes++;
-
-								double atomCharge;
-
-								if(minDistanceAtomId < numberGlobalAtomsInBin)
-								{
-									if(dftParameters::isPseudopotential)
-										atomCharge = atomLocations[chargeId][1];
-									else
-										atomCharge = atomLocations[chargeId][0];
-								}
-								else
-									atomCharge = imageCharges[imageIdsOfAtomsInCurrentBin[minDistanceAtomId-numberGlobalAtomsInBin]];
-
-								if(minDistance <= 1e-05)
-									vSelfBinNodeMap[iterMap->first] = 0.0;
-								else
-									vSelfBinNodeMap[iterMap->first] = -atomCharge/minDistance;
-
-							}
-							else
-							{
-								double atomCharge;
-
-								if(minDistanceAtomId < numberGlobalAtomsInBin)
-								{
-									if(dftParameters::isPseudopotential)
-										atomCharge = atomLocations[chargeId][1];
-									else
-										atomCharge = atomLocations[chargeId][0];
-								}
-								else
-									atomCharge = imageCharges[imageIdsOfAtomsInCurrentBin[minDistanceAtomId-numberGlobalAtomsInBin]];
-
-								const double potentialValue = -atomCharge/minDistance;
-
-								boundaryNodeMap[iterMap->first] = -1;
-								boundaryNodeMapOnlyChargeId[iterMap->first] = -1;
-								vSelfBinNodeMap[iterMap->first] = potentialValue;
-
-                
-                inhomogBoundaryVec[iterMap->first]=potentialValue;
-                for (unsigned int idim=0; idim<3; idim++)
-                      inhomogBoundaryVecVselfDerR[idim][iterMap->first]=potentialValue/minDistance*(nodalCoor[idim]-dofClosestChargeLocationMap[iterMap->first][idim])/minDistance;
-                
-								outNodes++;
-
-							}//else loop
-
-						}//non-hanging node check
-
-					}//locally relevant dofs
-
-				}//nodal loop
-
-				//First Apply correct dirichlet boundary conditions on elements with atleast one solved node
-				dealii::DoFHandler<3>::active_cell_iterator cell = dofHandler.begin_active(),endc = dofHandler.end();
-				for(; cell!= endc; ++cell)
-				{
-					if(cell->is_locally_owned() || cell->is_ghost())
-					{
-
-						std::vector<dealii::types::global_dof_index> cell_dof_indices(dofs_per_cell);
-						cell->get_dof_indices(cell_dof_indices);
-
-						int closestChargeIdSolvedNode=-1;
-						bool isDirichletNodePresent=false;
-						bool isSolvedNodePresent=false;
-						int numSolvedNodes=0;
-						int closestChargeIdSolvedSum=0;
-						for(unsigned int iNode = 0; iNode < dofs_per_cell; ++iNode)
-						{
-							const dealii::types::global_dof_index globalNodeId=cell_dof_indices[iNode];
-							if(!onlyHangingNodeConstraints.is_constrained(globalNodeId))
-							{
-								const int boundaryId=d_boundaryFlag[iBin][globalNodeId];
-								if(boundaryId == -1)
-								{
-									isDirichletNodePresent=true;
-								}
-								else
-								{
-									isSolvedNodePresent=true;
-									closestChargeIdSolvedNode=boundaryId;
-									numSolvedNodes++;
-									closestChargeIdSolvedSum+=boundaryId;
-								}
-							}
-
-						}//element node loop
+                for(unsigned int iAtom = 0; iAtom < numberGlobalAtomsInBin+numberImageAtomsInBin; ++iAtom)
+                {
+                  dealii::Point<3> atomCoor;
+                  if(iAtom < numberGlobalAtomsInBin)
+                  {
+                    atomCoor = atomPositionsInCurrentBin[iAtom];
+                  }
+                  else
+                  {
+                    atomCoor[0] = imagePositionsOfAtomsInCurrentBin[iAtom - numberGlobalAtomsInBin][0];
+                    atomCoor[1] = imagePositionsOfAtomsInCurrentBin[iAtom - numberGlobalAtomsInBin][1];
+                    atomCoor[2] = imagePositionsOfAtomsInCurrentBin[iAtom - numberGlobalAtomsInBin][2];
+                  }
 
 
+                  double distance = nodalCoor.distance(atomCoor);
 
-						if(isDirichletNodePresent && isSolvedNodePresent)
-						{
-							double closestAtomChargeSolved;
-							dealii::Point<3> closestAtomLocationSolved;
-							Assert(numSolvedNodes*closestChargeIdSolvedNode==closestChargeIdSolvedSum,dealii::ExcMessage("BUG"));
-							if(closestChargeIdSolvedNode < numberGlobalAtoms)
-							{
-								closestAtomLocationSolved[0]=atomLocations[closestChargeIdSolvedNode][2];
-								closestAtomLocationSolved[1]=atomLocations[closestChargeIdSolvedNode][3];
-								closestAtomLocationSolved[2]=atomLocations[closestChargeIdSolvedNode][4];
-								if(dftParameters::isPseudopotential)
-									closestAtomChargeSolved = atomLocations[closestChargeIdSolvedNode][1];
-								else
-									closestAtomChargeSolved = atomLocations[closestChargeIdSolvedNode][0];
-							}
-							else
-							{
-								const int imageId=closestChargeIdSolvedNode-numberGlobalAtoms;
-								closestAtomChargeSolved = imageCharges[imageId];
-								closestAtomLocationSolved[0]=imagePositions[imageId][0];
-								closestAtomLocationSolved[1]=imagePositions[imageId][1];
-								closestAtomLocationSolved[2]=imagePositions[imageId][2];
-							}
+                  if(distance < radiusAtomBallReduced)
+                    overlapFlag += 1;
 
-              //FIXME: dofs touched optimization to be done
-							for(unsigned int iNode = 0; iNode < dofs_per_cell; ++iNode)
-							{
+                  AssertThrow(overlapFlag<=1,dealii::ExcMessage("One of your Bins has a problem. It has interacting atoms"));
 
-								const dealii::types::global_dof_index globalNodeId=cell_dof_indices[iNode];
-								const int boundaryId=d_boundaryFlag[iBin][globalNodeId];
-								if(!onlyHangingNodeConstraints.is_constrained(globalNodeId) && boundaryId==-1)
-								{
-									//d_vselfBinConstraintMatrices[iBin].add_line(globalNodeId);
-                  const dealii::Point<3> & nodalPoint=supportPoints[globalNodeId];
-									const double distance=nodalPoint.distance(closestAtomLocationSolved);
-									const double newPotentialValue =-closestAtomChargeSolved/distance;
-									//d_vselfBinConstraintMatrices[iBin].set_inhomogeneity(globalNodeId,newPotentialValue);
-									d_vselfBinField[iBin][globalNodeId] = newPotentialValue;
-									d_closestAtomBin[iBin][globalNodeId] = closestChargeIdSolvedNode;
-									inhomogBoundaryVec[globalNodeId]=newPotentialValue;
+                  distanceFromNode.push_back(distance);
 
+                }//atom loop
+
+                std::vector<double>::iterator minDistanceIter = std::min_element(distanceFromNode.begin(),
+                    distanceFromNode.end());
+
+                std::iterator_traits<std::vector<double>::iterator>::difference_type minDistanceAtomId
+                  = std::distance(distanceFromNode.begin(),minDistanceIter);
+
+                double minDistance = *minDistanceIter;
+
+                int chargeId;
+                int domainChargeId;
+
+                if(minDistanceAtomId < numberGlobalAtomsInBin)
+                {
+                  chargeId = atomsInCurrentBin[minDistanceAtomId];
+                  domainChargeId=chargeId;
+                }
+                else
+                {
+                  chargeId = imageIdsOfAtomsInCurrentBin[minDistanceAtomId-numberGlobalAtomsInBin]+numberGlobalAtoms;
+                  domainChargeId=imageIds[imageIdsOfAtomsInCurrentBin[minDistanceAtomId-numberGlobalAtomsInBin]];
+                }
+
+                d_closestAtomBin[iBin][iterMap->first] = chargeId;
+
+                if(minDistanceAtomId < numberGlobalAtomsInBin)
+                {
+                  dofClosestChargeLocationMap[iterMap->first][0] = atomLocations[chargeId][2];
+                  dofClosestChargeLocationMap[iterMap->first][1] = atomLocations[chargeId][3];
+                  dofClosestChargeLocationMap[iterMap->first][2] = atomLocations[chargeId][4];
+                }
+                else
+                {
+                  dofClosestChargeLocationMap[iterMap->first][0] =
+                    imagePositions[chargeId-numberGlobalAtoms][0];
+                  dofClosestChargeLocationMap[iterMap->first][1] =
+                    imagePositions[chargeId-numberGlobalAtoms][1];
+                  dofClosestChargeLocationMap[iterMap->first][2] =
+                    imagePositions[chargeId-numberGlobalAtoms][2];
+                }
+
+                if(minDistance < radiusAtomBallReduced)
+                {
+                  boundaryNodeMap[iterMap->first] = chargeId;
+                  boundaryNodeMapOnlyChargeId[iterMap->first] = domainChargeId;
+
+                  double atomCharge;
+
+                  if(minDistanceAtomId < numberGlobalAtomsInBin)
+                  {
+                    if(dftParameters::isPseudopotential)
+                      atomCharge = atomLocations[chargeId][1];
+                    else
+                      atomCharge = atomLocations[chargeId][0];
+                  }
+                  else
+                    atomCharge = imageCharges[imageIdsOfAtomsInCurrentBin[minDistanceAtomId-numberGlobalAtomsInBin]];
+
+                  if(minDistance <= 1e-05)
+                    vSelfBinNodeMap[iterMap->first] = 0.0;
+                  else
+                    vSelfBinNodeMap[iterMap->first] = -atomCharge/minDistance;
+
+                }
+                else
+                {
+                  double atomCharge;
+
+                  if(minDistanceAtomId < numberGlobalAtomsInBin)
+                  {
+                    if(dftParameters::isPseudopotential)
+                      atomCharge = atomLocations[chargeId][1];
+                    else
+                      atomCharge = atomLocations[chargeId][0];
+                  }
+                  else
+                    atomCharge = imageCharges[imageIdsOfAtomsInCurrentBin[minDistanceAtomId-numberGlobalAtomsInBin]];
+
+                  const double potentialValue = -atomCharge/minDistance;
+
+                  boundaryNodeMap[iterMap->first] = -1;
+                  boundaryNodeMapOnlyChargeId[iterMap->first] = -1;
+                  vSelfBinNodeMap[iterMap->first] = potentialValue;
+
+                  
+                  inhomogBoundaryVec[iterMap->first]=potentialValue;
                   for (unsigned int idim=0; idim<3; idim++)
-                      inhomogBoundaryVecVselfDerR[idim][globalNodeId]=newPotentialValue/distance*(nodalPoint[idim]-closestAtomLocationSolved[idim])/distance;                  
-									//outNodes2++;
-								}//check non hanging node and vself consraints not already set
-							}//element node loop
+                        inhomogBoundaryVecVselfDerR[idim][iterMap->first]=potentialValue/minDistance*(nodalCoor[idim]-dofClosestChargeLocationMap[iterMap->first][idim])/minDistance;
+                  
+                }//else loop
 
-						}//check if element has atleast one dirichlet node and atleast one solved node
-					}//cell locally owned
-				}// cell loop
+              }//non-hanging node check
 
-        /*
-				//Next apply correct dirichlet boundary conditions on elements with all dirichlet nodes
-				cell = dofHandler.begin_active();
-				for(; cell!= endc; ++cell) {
-					if(cell->is_locally_owned() || cell->is_ghost())
-					{
+            }//locally relevant dofs
 
-						std::vector<dealii::types::global_dof_index> cell_dof_indices(dofs_per_cell);
-						cell->get_dof_indices(cell_dof_indices);
+          }//nodal loop
+      
+          //First Apply correct dirichlet boundary conditions on elements with atleast one solved node
+          dealii::DoFHandler<3>::active_cell_iterator cell = dofHandler.begin_active(),endc = dofHandler.end();
+          for(; cell!= endc; ++cell)
+          {
+            if(cell->is_locally_owned() || cell->is_ghost())
+            {
 
-						bool isDirichletNodePresent=false;
-						bool isSolvedNodePresent=false;
-						for(unsigned int iNode = 0; iNode < dofs_per_cell; ++iNode)
-						{
-							const dealii::types::global_dof_index globalNodeId=cell_dof_indices[iNode];
-							if(!onlyHangingNodeConstraints.is_constrained(globalNodeId))
-							{
-								const int boundaryId=d_boundaryFlag[iBin][globalNodeId];
-								if(boundaryId == -1)
-								{
-									isDirichletNodePresent=true;
-								}
-								else
-								{
-									isSolvedNodePresent=true;
-								}
-							}
+              std::vector<dealii::types::global_dof_index> cell_dof_indices(dofs_per_cell);
+              cell->get_dof_indices(cell_dof_indices);
 
-						}//element node loop
+              int closestChargeIdSolvedNode=-1;
+              bool isDirichletNodePresent=false;
+              bool isSolvedNodePresent=false;
+              int numSolvedNodes=0;
+              int closestChargeIdSolvedSum=0;
+              for(unsigned int iNode = 0; iNode < dofs_per_cell; ++iNode)
+              {
+                const dealii::types::global_dof_index globalNodeId=cell_dof_indices[iNode];
+                if(!onlyHangingNodeConstraints.is_constrained(globalNodeId))
+                {
+                  const int boundaryId=d_boundaryFlag[iBin][globalNodeId];
+                  if(boundaryId == -1)
+                  {
+                    isDirichletNodePresent=true;
+                  }
+                  else
+                  {
+                    isSolvedNodePresent=true;
+                    closestChargeIdSolvedNode=boundaryId;
+                    numSolvedNodes++;
+                    closestChargeIdSolvedSum+=boundaryId;
+                  }
+                }
 
-						if(isDirichletNodePresent && !isSolvedNodePresent)
-						{
-							for(unsigned int iNode = 0; iNode < dofs_per_cell; ++iNode)
-							{
+              }//element node loop
 
-								const dealii::types::global_dof_index globalNodeId=cell_dof_indices[iNode];
-								const int boundaryId=d_boundaryFlag[iBin][globalNodeId];
-								if(!onlyHangingNodeConstraints.is_constrained(globalNodeId) && boundaryId==-1 && !(std::abs(inhomogBoundaryVec[globalNodeId])>1e-10))
-								{
-									//d_vselfBinConstraintMatrices[iBin].add_line(globalNodeId);
-									//d_vselfBinConstraintMatrices[iBin].set_inhomogeneity(globalNodeId,d_vselfBinField[iBin][globalNodeId]);
-									//outNodes2++;
-									inhomogBoundaryVec[globalNodeId]=d_vselfBinField[iBin][globalNodeId];
-								}//check non hanging node and vself consraints not already set
-							}//element node loop
 
-						}//check if element has atleast one dirichlet node and atleast one solved node
-					}//cell locally owned
-				} //cell loop
-        */
-         
+
+              if(isDirichletNodePresent && isSolvedNodePresent)
+              {
+                double closestAtomChargeSolved;
+                dealii::Point<3> closestAtomLocationSolved;
+                Assert(numSolvedNodes*closestChargeIdSolvedNode==closestChargeIdSolvedSum,dealii::ExcMessage("BUG"));
+                if(closestChargeIdSolvedNode < numberGlobalAtoms)
+                {
+                  closestAtomLocationSolved[0]=atomLocations[closestChargeIdSolvedNode][2];
+                  closestAtomLocationSolved[1]=atomLocations[closestChargeIdSolvedNode][3];
+                  closestAtomLocationSolved[2]=atomLocations[closestChargeIdSolvedNode][4];
+                  if(dftParameters::isPseudopotential)
+                    closestAtomChargeSolved = atomLocations[closestChargeIdSolvedNode][1];
+                  else
+                    closestAtomChargeSolved = atomLocations[closestChargeIdSolvedNode][0];
+                }
+                else
+                {
+                  const int imageId=closestChargeIdSolvedNode-numberGlobalAtoms;
+                  closestAtomChargeSolved = imageCharges[imageId];
+                  closestAtomLocationSolved[0]=imagePositions[imageId][0];
+                  closestAtomLocationSolved[1]=imagePositions[imageId][1];
+                  closestAtomLocationSolved[2]=imagePositions[imageId][2];
+                }
+
+                //FIXME: dofs touched optimization to be done
+                for(unsigned int iNode = 0; iNode < dofs_per_cell; ++iNode)
+                {
+
+                  const dealii::types::global_dof_index globalNodeId=cell_dof_indices[iNode];
+                  const int boundaryId=d_boundaryFlag[iBin][globalNodeId];
+                  if(!onlyHangingNodeConstraints.is_constrained(globalNodeId) && boundaryId==-1)
+                  {
+                    //d_vselfBinConstraintMatrices[iBin].add_line(globalNodeId);
+                    const dealii::Point<3> & nodalPoint=supportPoints[globalNodeId];
+                    const double distance=nodalPoint.distance(closestAtomLocationSolved);
+                    const double newPotentialValue =-closestAtomChargeSolved/distance;
+                    //d_vselfBinConstraintMatrices[iBin].set_inhomogeneity(globalNodeId,newPotentialValue);
+                    d_vselfBinField[iBin][globalNodeId] = newPotentialValue;
+                    d_closestAtomBin[iBin][globalNodeId] = closestChargeIdSolvedNode;
+                    inhomogBoundaryVec[globalNodeId]=newPotentialValue;
+
+                    for (unsigned int idim=0; idim<3; idim++)
+                        inhomogBoundaryVecVselfDerR[idim][globalNodeId]=newPotentialValue/distance*(nodalPoint[idim]-closestAtomLocationSolved[idim])/distance;                  
+                  }//check non hanging node and vself consraints not already set
+                }//element node loop
+
+              }//check if element has atleast one dirichlet node and atleast one solved node
+            }//cell locally owned
+          }// cell loop
+
+          const std::map<dealii::types::global_dof_index, int> & closestAtomBinMap =
+            d_closestAtomBin[iBin];
+
+          bool checkPassed=true;
+			  	cell = dofHandler.begin_active(),endc = dofHandler.end();          
+          for(; cell!= endc; ++cell)
+            if(cell->is_locally_owned())
+            {
+              std::vector<unsigned int> faceIdsWithAtleastOneSolvedNonHangingNode;
+              unsigned int closestAtomIdSum=0;
+              unsigned int closestAtomId=0;
+              unsigned int nonHangingNodeIdCountCell=0;
+              for(unsigned int iFace = 0; iFace < faces_per_cell; ++iFace)
+              {
+                int dirichletDofCount=0;
+                bool isSolvedDofPresent=false;
+                int nonHangingNodeIdCountFace=0;
+                std::vector<dealii::types::global_dof_index> iFaceGlobalDofIndices(dofs_per_face);
+                cell->face(iFace)->get_dof_indices(iFaceGlobalDofIndices);
+                for(unsigned int iFaceDof = 0; iFaceDof < dofs_per_face; ++iFaceDof)
+                {
+                  const dealii::types::global_dof_index nodeId=iFaceGlobalDofIndices[iFaceDof];
+                  if (!constraintMatrix.is_constrained(nodeId))
+                  {
+                    Assert(boundaryNodeMap.find(nodeId)!=boundaryNodeMap.end(),dealii::ExcMessage("BUG"));
+                    Assert(closestAtomBinMap.find(nodeId)!=closestAtomBinMap.end(),dealii::ExcMessage("BUG"));
+
+                    if (boundaryNodeMap.find(nodeId)->second!=-1)
+                      isSolvedDofPresent=true;
+                    else
+                      dirichletDofCount+=boundaryNodeMap.find(nodeId)->second;
+
+                    closestAtomId=closestAtomBinMap.find(nodeId)->second;
+                    closestAtomIdSum+=closestAtomId;
+                    nonHangingNodeIdCountCell++;
+                  }//non-hanging node check
+                  else
+                  {
+                    const std::vector<std::pair<dealii::types::global_dof_index, double > > * rowData=constraintMatrix.get_constraint_entries(nodeId);
+                    for(unsigned int j = 0; j < rowData->size();++j)
+                    {
+                      Assert(boundaryNodeMap.find((*rowData)[j].first)!=boundaryNodeMap.end(),dealii::ExcMessage("BUG"));
+
+                      if (boundaryNodeMap.find((*rowData)[j].first)->second!=-1)
+                        isSolvedDofPresent=true;
+                      else
+                        dirichletDofCount+=boundaryNodeMap.find((*rowData)[j].first)->second;
+                    }
+                  }
+                }//Face dof loop
+
+                if (isSolvedDofPresent)
+                {
+                  faceIdsWithAtleastOneSolvedNonHangingNode.push_back(iFace);
+                }
+              }//Face loop
+
+              //fill the target objects
+              if (faceIdsWithAtleastOneSolvedNonHangingNode.size()>0)
+              {
+                
+                if (!(closestAtomIdSum==closestAtomId*nonHangingNodeIdCountCell))
+                  checkPassed=false;
+              }
+            }//cell locally owned
+
+
+          int temp=0;
+          if (!checkPassed)
+              temp=1;
+
+          temp=dealii::Utilities::MPI::sum(temp, mpi_communicator);
+
+          if (temp==0)
+            areBoundaryConditionsCorrectInCaseOfHangingNodes=true;
+
+          if (!areBoundaryConditionsCorrectInCaseOfHangingNodes)
+            radiusAtomBallReduced-=0.5;
+
+          if (!dftParameters::reproducible_output)
+             AssertThrow(radiusAtomBallReduced>=2.0,dealii::ExcMessage("DFT-FE error: Adaptively determined reduced ball radius is less than minimum value of 2.0. The starting SELF POTENTIAL RADIUS needs to be increased"));           
+        } 
+    
+        if (dftParameters::verbosity>=4 && !dftParameters::reproducible_output)
+          pcout<<"Reduced ball radius for setting boundary conditions taking hanging nodes into consideration: "<< radiusAtomBallReduced<<std::endl; 
 
 				inhomogBoundaryVec.update_ghost_values();
 				for (auto index : locally_relevant_dofs)

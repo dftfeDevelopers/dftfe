@@ -140,6 +140,7 @@ namespace dftfe {
 		extern double xlbomdKernelRankUpdateFDParameter;
 		extern bool smearedNuclearCharges;
     extern bool floatingNuclearCharges;
+    extern bool nonLinearCoreCorrection;
 
 		/**
 		 * Declare parameters.

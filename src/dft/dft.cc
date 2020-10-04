@@ -82,6 +82,7 @@ namespace dftfe {
 #include "initPseudo-OV.cc"
 #include "femUtilityFunctions.cc"
 #include "initRho.cc"
+#include "initCoreRho.cc"  
 #include "dos.cc"
 #include "localizationLength.cc"
 #include "publicMethods.cc"
@@ -562,8 +563,18 @@ namespace dftfe {
 				pcout<<std::endl<<"Reading Pseudo-potential data for each atom from the list given in : " <<dftParameters::pseudoPotentialFile<<std::endl;
 			}
 
+      int nlccFlag=0;
 			if(Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0 && dftParameters::isPseudopotential == true)
-				pseudoUtils::convert(dftParameters::pseudoPotentialFile);
+				nlccFlag=pseudoUtils::convert(dftParameters::pseudoPotentialFile);
+
+      nlccFlag = Utilities::MPI::sum(nlccFlag, MPI_COMM_WORLD);
+
+			if(nlccFlag > 0 && dftParameters::isPseudopotential == true)
+          dftParameters::nonLinearCoreCorrection = true;
+
+			if(dftParameters::verbosity>=1)
+        if(dftParameters::nonLinearCoreCorrection == true)
+          pcout<<"Atleast one atom has pseudopotential with nonlinear core correction"<<std::endl;
 
 			d_elpaScala.processGridOptionalELPASetup(d_numEigenValues,
 					d_numEigenValuesRR);
@@ -578,29 +589,22 @@ namespace dftfe {
 		{
 			if(dftParameters::isPseudopotential)
 			{
-				//std::string fileName = "sample_text";
-
-
 				TimerOutput::Scope scope (computing_timer, "psp init");
 				pcout<<std::endl<<"Pseudopotential initalization...."<<std::endl;
 				const Quadrature<3> &  quadrature=matrix_free_data.get_quadrature(d_densityQuadratureId);
 
-				/*
-				   double init_psplocal;
-				   MPI_Barrier(MPI_COMM_WORLD);
-				   init_psplocal = MPI_Wtime();
+        double init_core;
+        MPI_Barrier(MPI_COMM_WORLD);
+        init_core = MPI_Wtime();
 
-				   initLocalPseudoPotential(dofHandler,
-				   quadrature,
-				   d_pseudoVLoc,
-				   d_gradPseudoVLoc,
-				   d_gradPseudoVLocAtoms);
+        if(dftParameters::nonLinearCoreCorrection == true)
+				  initCoreRho();
 
-				   MPI_Barrier(MPI_COMM_WORLD);
-				   init_psplocal = MPI_Wtime() - init_psplocal;
-				   if (dftParameters::verbosity>=1)
-				   pcout<<"updateAtomPositionsAndMoveMesh: initPseudoPotentialAll: Time taken for local psp init: "<<init_psplocal<<std::endl;
-				 */
+        MPI_Barrier(MPI_COMM_WORLD);
+        init_core = MPI_Wtime() - init_core;
+        if (dftParameters::verbosity>=1)
+          pcout<<"initPseudoPotentialAll: Time taken for initializing core density for non-linear core correction: "<<init_core<<std::endl;
+
 
 				if (updateNonlocalSparsity)
 				{
@@ -1503,10 +1507,10 @@ namespace dftfe {
 						computing_timer.enter_section("VEff Computation");
 #ifdef DFTFE_WITH_GPU
 						if (dftParameters::useGPU)
-							kohnShamDFTEigenOperatorCUDA.computeVEffSpinPolarized(rhoInValuesSpinPolarized, d_phiInValues, s, d_pseudoVLoc, d_lpspQuadratureId);
+							kohnShamDFTEigenOperatorCUDA.computeVEffSpinPolarized(rhoInValuesSpinPolarized, d_phiInValues, s, d_pseudoVLoc, d_rhoCore, d_lpspQuadratureId);
 #endif
 						if (!dftParameters::useGPU)
-							kohnShamDFTEigenOperator.computeVEffSpinPolarized(rhoInValuesSpinPolarized, d_phiInValues, s, d_pseudoVLoc,d_lpspQuadratureId);
+							kohnShamDFTEigenOperator.computeVEffSpinPolarized(rhoInValuesSpinPolarized, d_phiInValues, s, d_pseudoVLoc, d_rhoCore, d_lpspQuadratureId);
 						computing_timer.exit_section("VEff Computation");
 					}
 					else if (dftParameters::xc_id == 4)
@@ -1514,10 +1518,10 @@ namespace dftfe {
 						computing_timer.enter_section("VEff Computation");
 #ifdef DFTFE_WITH_GPU
 						if (dftParameters::useGPU)
-							kohnShamDFTEigenOperatorCUDA.computeVEffSpinPolarized(rhoInValuesSpinPolarized, gradRhoInValuesSpinPolarized, d_phiInValues, s, d_pseudoVLoc,d_lpspQuadratureId);
+							kohnShamDFTEigenOperatorCUDA.computeVEffSpinPolarized(rhoInValuesSpinPolarized, gradRhoInValuesSpinPolarized, d_phiInValues, s, d_pseudoVLoc, d_rhoCore, d_gradRhoCore, d_lpspQuadratureId);
 #endif
 						if (!dftParameters::useGPU)
-							kohnShamDFTEigenOperator.computeVEffSpinPolarized(rhoInValuesSpinPolarized, gradRhoInValuesSpinPolarized, d_phiInValues, s, d_pseudoVLoc,d_lpspQuadratureId);
+							kohnShamDFTEigenOperator.computeVEffSpinPolarized(rhoInValuesSpinPolarized, gradRhoInValuesSpinPolarized, d_phiInValues, s, d_pseudoVLoc, d_rhoCore, d_gradRhoCore, d_lpspQuadratureId);
 						computing_timer.exit_section("VEff Computation");
 					}
 					for (unsigned int kPoint = 0; kPoint < d_kPointWeights.size(); ++kPoint)
@@ -1593,10 +1597,10 @@ namespace dftfe {
 					computing_timer.enter_section("VEff Computation");
 #ifdef DFTFE_WITH_GPU
 					if (dftParameters::useGPU)
-						kohnShamDFTEigenOperatorCUDA.computeVEff(rhoInValues, d_phiInValues,d_pseudoVLoc,d_lpspQuadratureId);
+						kohnShamDFTEigenOperatorCUDA.computeVEff(rhoInValues, d_phiInValues,d_pseudoVLoc, d_rhoCore, d_lpspQuadratureId);
 #endif
 					if (!dftParameters::useGPU)
-						kohnShamDFTEigenOperator.computeVEff(rhoInValues, d_phiInValues, d_pseudoVLoc,d_lpspQuadratureId);
+						kohnShamDFTEigenOperator.computeVEff(rhoInValues, d_phiInValues, d_pseudoVLoc, d_rhoCore, d_lpspQuadratureId);
 					computing_timer.exit_section("VEff Computation");
 				}
 				else if (dftParameters::xc_id == 4)
@@ -1604,10 +1608,10 @@ namespace dftfe {
 					computing_timer.enter_section("VEff Computation");
 #ifdef DFTFE_WITH_GPU
 					if (dftParameters::useGPU)
-						kohnShamDFTEigenOperatorCUDA.computeVEff(rhoInValues, gradRhoInValues, d_phiInValues, d_pseudoVLoc,d_lpspQuadratureId);
+						kohnShamDFTEigenOperatorCUDA.computeVEff(rhoInValues, gradRhoInValues, d_phiInValues, d_pseudoVLoc, d_rhoCore, d_gradRhoCore, d_lpspQuadratureId);
 #endif
 					if (!dftParameters::useGPU)
-						kohnShamDFTEigenOperator.computeVEff(rhoInValues, gradRhoInValues, d_phiInValues, d_pseudoVLoc,d_lpspQuadratureId);
+						kohnShamDFTEigenOperator.computeVEff(rhoInValues, gradRhoInValues, d_phiInValues, d_pseudoVLoc, d_rhoCore, d_gradRhoCore, d_lpspQuadratureId);
 					computing_timer.exit_section("VEff Computation");
 				}
 
@@ -2111,10 +2115,10 @@ namespace dftfe {
 							computing_timer.enter_section("VEff Computation");
 #ifdef DFTFE_WITH_GPU
 							if (dftParameters::useGPU)
-								kohnShamDFTEigenOperatorCUDA.computeVEffSpinPolarized(rhoInValuesSpinPolarized, d_phiInValues, s, d_pseudoVLoc,d_lpspQuadratureId);
+								kohnShamDFTEigenOperatorCUDA.computeVEffSpinPolarized(rhoInValuesSpinPolarized, d_phiInValues, s, d_pseudoVLoc, d_rhoCore, d_lpspQuadratureId);
 #endif
 							if (!dftParameters::useGPU)
-								kohnShamDFTEigenOperator.computeVEffSpinPolarized(rhoInValuesSpinPolarized, d_phiInValues, s, d_pseudoVLoc,d_lpspQuadratureId);
+								kohnShamDFTEigenOperator.computeVEffSpinPolarized(rhoInValuesSpinPolarized, d_phiInValues, s, d_pseudoVLoc, d_rhoCore, d_lpspQuadratureId);
 							computing_timer.exit_section("VEff Computation");
 						}
 						else if (dftParameters::xc_id == 4)
@@ -2122,10 +2126,10 @@ namespace dftfe {
 							computing_timer.enter_section("VEff Computation");
 #ifdef DFTFE_WITH_GPU
 							if (dftParameters::useGPU)
-								kohnShamDFTEigenOperatorCUDA.computeVEffSpinPolarized(rhoInValuesSpinPolarized, gradRhoInValuesSpinPolarized, d_phiInValues, s, d_pseudoVLoc, d_lpspQuadratureId);
+								kohnShamDFTEigenOperatorCUDA.computeVEffSpinPolarized(rhoInValuesSpinPolarized, gradRhoInValuesSpinPolarized, d_phiInValues, s, d_pseudoVLoc, d_rhoCore, d_gradRhoCore, d_lpspQuadratureId);
 #endif
 							if (!dftParameters::useGPU)
-								kohnShamDFTEigenOperator.computeVEffSpinPolarized(rhoInValuesSpinPolarized, gradRhoInValuesSpinPolarized, d_phiInValues, s, d_pseudoVLoc,d_lpspQuadratureId);
+								kohnShamDFTEigenOperator.computeVEffSpinPolarized(rhoInValuesSpinPolarized, gradRhoInValuesSpinPolarized, d_phiInValues, s, d_pseudoVLoc, d_rhoCore, d_gradRhoCore, d_lpspQuadratureId);
 							computing_timer.exit_section("VEff Computation");
 						}
 						for (unsigned int kPoint = 0; kPoint < d_kPointWeights.size(); ++kPoint)
@@ -2337,10 +2341,10 @@ namespace dftfe {
 						computing_timer.enter_section("VEff Computation");
 #ifdef DFTFE_WITH_GPU
 						if (dftParameters::useGPU)
-							kohnShamDFTEigenOperatorCUDA.computeVEff(rhoInValues, d_phiInValues, d_pseudoVLoc,d_lpspQuadratureId);
+							kohnShamDFTEigenOperatorCUDA.computeVEff(rhoInValues, d_phiInValues, d_pseudoVLoc, d_rhoCore, d_lpspQuadratureId);
 #endif
 						if (!dftParameters::useGPU)
-							kohnShamDFTEigenOperator.computeVEff(rhoInValues, d_phiInValues, d_pseudoVLoc,d_lpspQuadratureId);
+							kohnShamDFTEigenOperator.computeVEff(rhoInValues, d_phiInValues, d_pseudoVLoc, d_rhoCore, d_lpspQuadratureId);
 						computing_timer.exit_section("VEff Computation");
 					}
 					else if (dftParameters::xc_id == 4)
@@ -2348,10 +2352,10 @@ namespace dftfe {
 						computing_timer.enter_section("VEff Computation");
 #ifdef DFTFE_WITH_GPU
 						if (dftParameters::useGPU)
-							kohnShamDFTEigenOperatorCUDA.computeVEff(rhoInValues, gradRhoInValues, d_phiInValues, d_pseudoVLoc,d_lpspQuadratureId);
+							kohnShamDFTEigenOperatorCUDA.computeVEff(rhoInValues, gradRhoInValues, d_phiInValues, d_pseudoVLoc, d_rhoCore, d_gradRhoCore, d_lpspQuadratureId);
 #endif
 						if (!dftParameters::useGPU)
-							kohnShamDFTEigenOperator.computeVEff(rhoInValues, gradRhoInValues, d_phiInValues, d_pseudoVLoc,d_lpspQuadratureId);
+							kohnShamDFTEigenOperator.computeVEff(rhoInValues, gradRhoInValues, d_phiInValues, d_pseudoVLoc, d_rhoCore, d_gradRhoCore, d_lpspQuadratureId);
 						computing_timer.exit_section("VEff Computation");
 					}
 
@@ -2715,6 +2719,8 @@ namespace dftfe {
                 d_rhoOutValuesLpspQuad,
 								*gradRhoInValues,
 								*gradRhoOutValues,
+						   	d_rhoCore,
+							  d_gradRhoCore,	                
 								d_bQuadValuesAllAtoms,
 								d_localVselfs,
 								d_pseudoVLoc,
@@ -2905,6 +2911,8 @@ namespace dftfe {
               d_rhoOutValuesLpspQuad,
 							*gradRhoInValues,
 							*gradRhoOutValues,
+              d_rhoCore,
+							d_gradRhoCore,	 
 							d_bQuadValuesAllAtoms,
 							d_localVselfs,
 							d_pseudoVLoc,
@@ -3251,6 +3259,11 @@ namespace dftfe {
                 d_rhoInValuesLpspQuad,
 								*gradRhoInValues,
                 d_gradRhoInValuesLpspQuad,
+								d_rhoCore,
+                d_gradRhoCore, 
+                d_hessianRhoCore,
+                d_gradRhoCoreAtoms,
+                d_hessianRhoCoreAtoms,	                
 								d_pseudoVLoc,
 								d_pseudoVLocAtoms,
 								d_constraintsPRefined,
@@ -3279,6 +3292,11 @@ namespace dftfe {
                 d_rhoOutValuesLpspQuad,
 								*gradRhoOutValues,
                 d_gradRhoOutValuesLpspQuad,
+								d_rhoCore,
+                d_gradRhoCore, 
+                d_hessianRhoCore,
+                d_gradRhoCoreAtoms,
+                d_hessianRhoCoreAtoms,                
 								d_pseudoVLoc,
 								d_pseudoVLocAtoms,
 								d_constraintsPRefined,

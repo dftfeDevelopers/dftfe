@@ -42,6 +42,7 @@ namespace  dftfe {
 #include "configurationalForceCompute/configurationalForceEEshelbyFPSPFnlLinFE.cc"
 #include "configurationalForceCompute/configurationalForceSpinPolarizedEEshelbyFPSPFnlLinFE.cc"
 #include "configurationalForceCompute/FPSPLocalGammaAtomsElementalContribution.cc"
+#include "configurationalForceCompute/FNonlinearCoreCorrectionGammaAtomsElementalContribution.cc"
 #include "configurationalForceCompute/FSmearedChargesGammaAtomsElementalContribution.cc"
 #include "configurationalForceCompute/FShadowLocalGammaAtomsElementalContribution.cc"
 #include "configurationalForceCompute/FnlGammaAtomsElementalContribution.cc"
@@ -283,6 +284,11 @@ namespace  dftfe {
 				 const std::map<dealii::CellId, std::vector<double> > & rhoOutValuesElectroLpsp,         
 				 const std::map<dealii::CellId, std::vector<double> > & gradRhoOutValuesElectro,
 				 const std::map<dealii::CellId, std::vector<double> > & gradRhoOutValuesElectroLpsp,
+				 const std::map<dealii::CellId, std::vector<double> > & rhoCoreValues,
+				 const std::map<dealii::CellId, std::vector<double> > & gradRhoCoreValues,
+				 const std::map<dealii::CellId, std::vector<double> > & hessianRhoCoreValues,
+				 const std::map<unsigned int,std::map<dealii::CellId, std::vector<double> > > & gradRhoCoreAtoms,
+				 const std::map<unsigned int,std::map<dealii::CellId, std::vector<double> > > & hessianRhoCoreAtoms,         
 		 const std::map<dealii::CellId, std::vector<double> > & pseudoVLocElectro,
 		 const std::map<unsigned int,std::map<dealii::CellId, std::vector<double> > > & pseudoVLocAtomsElectro,
 		 const ConstraintMatrix  & hangingPlusPBCConstraintsElectro,
@@ -323,6 +329,11 @@ namespace  dftfe {
            rhoOutValuesElectroLpsp,
 					 gradRhoOutValuesElectro,
            gradRhoOutValuesElectroLpsp,
+				   rhoCoreValues,
+				   gradRhoCoreValues,
+				   hessianRhoCoreValues,
+				   gradRhoCoreAtoms,
+				   hessianRhoCoreAtoms,             
 					 pseudoVLocElectro,
 					 pseudoVLocAtomsElectro,
 					 vselfBinsManagerElectro,
@@ -425,6 +436,11 @@ namespace  dftfe {
        const std::map<dealii::CellId, std::vector<double> > & rhoOutValuesElectroLpsp,         
        const std::map<dealii::CellId, std::vector<double> > & gradRhoOutValuesElectro,
        const std::map<dealii::CellId, std::vector<double> > & gradRhoOutValuesElectroLpsp,
+			 const std::map<dealii::CellId, std::vector<double> > & rhoCoreValues,
+			 const std::map<dealii::CellId, std::vector<double> > & gradRhoCoreValues,
+			 const std::map<dealii::CellId, std::vector<double> > & hessianRhoCoreValues,
+			 const std::map<unsigned int,std::map<dealii::CellId, std::vector<double> > > & gradRhoCoreAtoms,
+			 const std::map<unsigned int,std::map<dealii::CellId, std::vector<double> > > & hessianRhoCoreAtoms,        
 		 const std::map<dealii::CellId, std::vector<double> > & pseudoVLocElectro,
 		 const std::map<unsigned int,std::map<dealii::CellId, std::vector<double> > > & pseudoVLocAtomsElectro,
 		 const vselfBinsManager<FEOrder,FEOrderElectro> & vselfBinsManagerElectro,
@@ -455,6 +471,11 @@ namespace  dftfe {
            rhoOutValuesElectroLpsp,
 					 gradRhoOutValuesElectro,
            gradRhoOutValuesElectroLpsp,
+				   rhoCoreValues,
+				   gradRhoCoreValues,
+				   hessianRhoCoreValues,
+				   gradRhoCoreAtoms,
+				   hessianRhoCoreAtoms,            
 					  pseudoVLocElectro,
 					  pseudoVLocAtomsElectro,
 					  vselfBinsManagerElectro,
@@ -483,6 +504,11 @@ namespace  dftfe {
            rhoOutValuesElectroLpsp,
 					 gradRhoOutValuesElectro,
            gradRhoOutValuesElectroLpsp,
+				   rhoCoreValues,
+				   gradRhoCoreValues,
+				   hessianRhoCoreValues,
+				   gradRhoCoreAtoms,
+				   hessianRhoCoreAtoms,             
 					  pseudoVLocElectro,
 					  pseudoVLocAtomsElectro,
 					  vselfBinsManagerElectro,
