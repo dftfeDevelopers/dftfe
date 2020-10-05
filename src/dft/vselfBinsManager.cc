@@ -736,12 +736,13 @@ namespace dftfe
 
                   double distance = nodalCoor.distance(atomCoor);
 
-                  if(distance < radiusAtomBallReduced)
-                    overlapFlag += 1;
-
-                  AssertThrow(overlapFlag<=1,dealii::ExcMessage("One of your Bins has a problem. It has interacting atoms"));
-
                   distanceFromNode.push_back(distance);
+
+                  if(distance < radiusAtomBallReduced)
+                  {
+                    overlapFlag += 1;
+                    break;
+                  }
 
                 }//atom loop
 
