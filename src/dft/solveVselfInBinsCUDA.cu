@@ -237,20 +237,22 @@ namespace dftfe
 				temp.update_ghost_values(); 
 				constraintsMatrixDataInfoCUDA.distribute(temp,numberVectors);
 
-				scaleKernel<<<(numberVectors+255)/256*(localSize+ghostSize),256>>>(numberVectors*(localSize+ghostSize),
-						temp.begin(),
-						thrust::raw_pointer_cast(&inhomoIdsColoredVecFlattenedD[0]));
+        if ((localSize+ghostSize)>0)
+          scaleKernel<<<(numberVectors+255)/256*(localSize+ghostSize),256>>>(numberVectors*(localSize+ghostSize),
+              temp.begin(),
+              thrust::raw_pointer_cast(&inhomoIdsColoredVecFlattenedD[0]));
 
 				//
 				//elemental matrix-multiplication
 				//
 				const double scalarCoeffAlpha = 1.0/(4.0*M_PI), scalarCoeffBeta = 0.0;
 
-				copyCUDAKernel<<<(numberVectors+255)/256*totalLocallyOwnedCells*numberNodesPerElement,256>>>(numberVectors,
-						totalLocallyOwnedCells*numberNodesPerElement,
-						temp.begin(),//src.begin(),
-						thrust::raw_pointer_cast(&cellNodalVectorD[0]),
-						thrust::raw_pointer_cast(&cellLocalProcIndexIdMapD[0]));  
+        if (totalLocallyOwnedCells>0)
+          copyCUDAKernel<<<(numberVectors+255)/256*totalLocallyOwnedCells*numberNodesPerElement,256>>>(numberVectors,
+              totalLocallyOwnedCells*numberNodesPerElement,
+              temp.begin(),//src.begin(),
+              thrust::raw_pointer_cast(&cellNodalVectorD[0]),
+              thrust::raw_pointer_cast(&cellLocalProcIndexIdMapD[0]));  
 
 
 
@@ -280,27 +282,28 @@ namespace dftfe
 						strideC,
 						totalLocallyOwnedCells);
 
+        if (totalLocallyOwnedCells>0)
+          daxpyAtomicAddKernel<<<(numberVectors+255)/256*totalLocallyOwnedCells*numberNodesPerElement,256>>>(numberVectors,
+              totalLocallyOwnedCells*numberNodesPerElement,
+              thrust::raw_pointer_cast(&cellStiffnessMatrixTimesVectorD[0]),
+              dst.begin(),
+              thrust::raw_pointer_cast(&cellLocalProcIndexIdMapD[0]));
 
-				daxpyAtomicAddKernel<<<(numberVectors+255)/256*totalLocallyOwnedCells*numberNodesPerElement,256>>>(numberVectors,
-						totalLocallyOwnedCells*numberNodesPerElement,
-						thrust::raw_pointer_cast(&cellStiffnessMatrixTimesVectorD[0]),
-						dst.begin(),
-						thrust::raw_pointer_cast(&cellLocalProcIndexIdMapD[0]));
-
-				// think dirichlet hanging node linked to two master solved nodes 
-				scaleKernel<<<(numberVectors+255)/256*(localSize+ghostSize),256>>>(numberVectors*(localSize+ghostSize),
-						dst.begin(),
-						thrust::raw_pointer_cast(&inhomoIdsColoredVecFlattenedD[0]));
+				// think dirichlet hanging node linked to two master solved nodes
+        if ((localSize+ghostSize)>0)
+          scaleKernel<<<(numberVectors+255)/256*(localSize+ghostSize),256>>>(numberVectors*(localSize+ghostSize),
+              dst.begin(),
+              thrust::raw_pointer_cast(&inhomoIdsColoredVecFlattenedD[0]));
 
 
 				constraintsMatrixDataInfoCUDA.distribute_slave_to_master(dst,numberVectors);
 
 				dst.compress(dealii::VectorOperation::add);
 
-
-				scaleKernel<<<(numberVectors+255)/256*localSize,256>>>(numberVectors*localSize,
-						dst.begin(),
-						thrust::raw_pointer_cast(&inhomoIdsColoredVecFlattenedD[0]));
+        if (localSize>0)
+          scaleKernel<<<(numberVectors+255)/256*localSize,256>>>(numberVectors*localSize,
+              dst.begin(),
+              thrust::raw_pointer_cast(&inhomoIdsColoredVecFlattenedD[0]));
 
 				//src.zero_out_ghosts();
 				//constraintsMatrixDataInfoCUDA.set_zero(src,numberVectors);
@@ -312,12 +315,12 @@ namespace dftfe
 					const unsigned int localSize,
 					double * dst)
 			{
-
-				diagScaleKernel<<<(numberVectors+255)/256*localSize,256>>>(numberVectors,
-						localSize,
-						src,
-						diagonalA,
-						dst);
+        if (localSize>0)
+          diagScaleKernel<<<(numberVectors+255)/256*localSize,256>>>(numberVectors,
+              localSize,
+              src,
+              diagonalA,
+              dst);
 			}
 
 			void computeResidualSq(cublasHandle_t &handle,
@@ -329,10 +332,11 @@ namespace dftfe
 					const unsigned int localSize,
 					double * residualNormSq)
 			{
-				dotProductContributionBlockedKernel<<<(numberVectors+255)/256*localSize,256>>>(numberVectors*localSize,
-						vec1,
-						vec2,
-						vecTemp);
+        if (localSize>0)
+          dotProductContributionBlockedKernel<<<(numberVectors+255)/256*localSize,256>>>(numberVectors*localSize,
+              vec1,
+              vec2,
+              vecTemp);
 
 				const double alpha = 1.0, beta = 0.0;
 				cublasDgemm(handle,
@@ -778,11 +782,12 @@ namespace dftfe
 				   thrust::raw_pointer_cast(&x[0]),
 				   inc);
 				 */
-				daxpyBlockedKernel<<<(numberBins+255)/256*localSize,256>>>(numberBins,
-						localSize,
-						d.begin(),
-						thrust::raw_pointer_cast(&alphaD[0]),
-						x.begin());
+        if (localSize>0)
+          daxpyBlockedKernel<<<(numberBins+255)/256*localSize,256>>>(numberBins,
+              localSize,
+              d.begin(),
+              thrust::raw_pointer_cast(&alphaD[0]),
+              x.begin());
 
 				if(iter%50 == 0)
 				{
@@ -820,11 +825,12 @@ namespace dftfe
 					   thrust::raw_pointer_cast(&r[0]),
 					   inc);
 					 */
-					daxpyBlockedKernel<<<(numberBins+255)/256*localSize,256>>>(numberBins,
-							localSize,
-							Ax.begin(),
-							thrust::raw_pointer_cast(&negOneD[0]),
-							r.begin());
+          if (localSize>0)
+            daxpyBlockedKernel<<<(numberBins+255)/256*localSize,256>>>(numberBins,
+                localSize,
+                Ax.begin(),
+                thrust::raw_pointer_cast(&negOneD[0]),
+                r.begin());
 				}
 				else
 				{
@@ -838,11 +844,12 @@ namespace dftfe
 					   thrust::raw_pointer_cast(&r[0]),
 					   inc);
 					 */
-					dmaxpyBlockedKernel<<<(numberBins+255)/256*localSize,256>>>(numberBins,
-							localSize,
-							q.begin(),
-							thrust::raw_pointer_cast(&alphaD[0]),
-							r.begin());
+          if (localSize>0)
+            dmaxpyBlockedKernel<<<(numberBins+255)/256*localSize,256>>>(numberBins,
+                localSize,
+                q.begin(),
+                thrust::raw_pointer_cast(&alphaD[0]),
+                r.begin());
 				}
 
 				//precondition_Jacobi(r,s);
@@ -921,10 +928,11 @@ namespace dftfe
 				   thrust::raw_pointer_cast(&d[0]),
 				   inc);
 				 */
-				scaleBlockedKernel<<<(numberBins+255)/256*localSize,256>>>(numberBins,
-						localSize,
-						d.begin(),
-						thrust::raw_pointer_cast(&betaD[0]));
+        if (localSize>0)
+          scaleBlockedKernel<<<(numberBins+255)/256*localSize,256>>>(numberBins,
+              localSize,
+              d.begin(),
+              thrust::raw_pointer_cast(&betaD[0]));
 
 				//d.add(1.0,s);
 				/*
@@ -936,11 +944,13 @@ namespace dftfe
 				   d.begin(),
 				   inc);
 				 */
-				daxpyBlockedKernel<<<(numberBins+255)/256*localSize,256>>>(numberBins,
-						localSize,
-						s.begin(),
-						thrust::raw_pointer_cast(&posOneD[0]),
-						d.begin());
+
+        if (localSize>0)
+          daxpyBlockedKernel<<<(numberBins+255)/256*localSize,256>>>(numberBins,
+              localSize,
+              s.begin(),
+              thrust::raw_pointer_cast(&posOneD[0]),
+              d.begin());
 				unsigned int isBreak = 1;
 				//if(delta_new < relTolerance*relTolerance*delta_0)
 				//  isBreak = 1;
