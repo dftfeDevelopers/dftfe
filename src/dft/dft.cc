@@ -3349,9 +3349,9 @@ namespace dftfe {
 			if(dftParameters::electrostaticsHRefinement)
 				computeElectrostaticEnergyHRefined(
 #ifdef DFTFE_WITH_GPU
-						kohnShamDFTEigenOperatorCUDA,
+						kohnShamDFTEigenOperatorCUDA
 #endif
-						computeForces);
+      );
 
 			if (dftParameters::writeWfcSolutionFields)
 				outputWfc();

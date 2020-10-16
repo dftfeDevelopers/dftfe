@@ -756,25 +756,13 @@ template<unsigned int FEOrder,unsigned int FEOrderElectro>
 				{
 					rhoQuads[q][iSubCell]=(*dftPtr->rhoOutValues)[subCellId][q];
 
-					if(d_isElectrostaticsMeshSubdivided || dftParameters::xc_id == 4)
+					if(dftParameters::xc_id == 4)
 						for (unsigned int idim=0; idim<C_DIM; idim++)
 						{
 							gradRhoSpin0Quads[q][idim][iSubCell]=(*dftPtr->gradRhoOutValuesSpinPolarized)[subCellId][6*q+idim];
 							gradRhoSpin1Quads[q][idim][iSubCell]=(*dftPtr->gradRhoOutValuesSpinPolarized)[subCellId][6*q+3+idim];
 						}
 				}
-       
-        if (d_isElectrostaticsMeshSubdivided)
-        { 
-          const std::vector<double> & tempGradRho=gradRhoOutValuesLpsp.find(subCellId)->second;
-          for (unsigned int q=0; q<numQuadPointsLpsp; ++q)
-              for (unsigned int idim=0; idim<C_DIM; idim++)
-                gradRhoQuadsLpsp[q][idim][iSubCell]=tempGradRho[3*q+idim];
-
-          const std::vector<double> & tempPhiTot=dftPtr->d_phiOutValues.find(subCellId)->second;
-          for (unsigned int q=0; q<numQuadPoints; ++q)
-              phiTotRhoOutQuads[q][iSubCell]=tempPhiTot[q];                  
-        }       
 			}
 
 			if(isPseudopotential)
@@ -802,29 +790,12 @@ template<unsigned int FEOrder,unsigned int FEOrderElectro>
 
 				Tensor<1,C_DIM,VectorizedArray<double> > F=zeroTensor3;
 
-				if(d_isElectrostaticsMeshSubdivided)
-					F-=(gradRhoSpin0Quads[q]+gradRhoSpin1Quads[q])*phiTot_q;
-
 				forceEval.submit_value(F,q);
 				forceEval.submit_gradient(E,q);
 			}//quad point loop
 
-      if(isPseudopotential && d_isElectrostaticsMeshSubdivided)
-        for (unsigned int q=0; q<numQuadPointsLpsp; ++q)
-        {
-            Tensor<1,C_DIM,VectorizedArray<double> > F=-gradRhoQuadsLpsp[q]*(pseudoVLocQuads[q]);
-
-            forceEvalLpsp.submit_value(F,q);        
-        }
-
 			forceEval.integrate(true,true);
 			forceEval.distribute_local_to_global(d_configForceVectorLinFE);//also takes care of constraints
-
-      if(isPseudopotential && d_isElectrostaticsMeshSubdivided)
-      {
-        forceEvalLpsp.integrate(true,false);
-        forceEvalLpsp.distribute_local_to_global(d_configForceVectorLinFE);//also takes care of constraints   
-      }
 		}
 
 		////Add electrostatic configurational force contribution////////////////

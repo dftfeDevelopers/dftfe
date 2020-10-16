@@ -1175,22 +1175,10 @@ template<unsigned int FEOrder,unsigned int FEOrderElectro>
 						}
 					}
 
-					if(dftParameters::xc_id == 4 || d_isElectrostaticsMeshSubdivided)
+					if(dftParameters::xc_id == 4)
 						for (unsigned int idim=0; idim<C_DIM; idim++)
 							gradRhoQuads[q][idim][iSubCell]=gradRhoOutValues.find(subCellId)->second[3*q+idim];
 				}
-
-        if (d_isElectrostaticsMeshSubdivided)
-        { 
-          const std::vector<double> & tempGradRho=gradRhoOutValuesLpsp.find(subCellId)->second;
-          for (unsigned int q=0; q<numQuadPointsLpsp; ++q)
-              for (unsigned int idim=0; idim<C_DIM; idim++)
-                gradRhoQuadsLpsp[q][idim][iSubCell]=tempGradRho[3*q+idim];
-
-          const std::vector<double> & tempPhiTot=dftPtr->d_phiOutValues.find(subCellId)->second;
-          for (unsigned int q=0; q<numQuadPoints; ++q)
-              phiTotRhoOutQuads[q][iSubCell]=tempPhiTot[q];                
-        }
 			}//subcell loop
 
 			if(dftParameters::nonLinearCoreCorrection)
@@ -1275,20 +1263,10 @@ template<unsigned int FEOrder,unsigned int FEOrderElectro>
                         hessianRhoCoreQuads[q]);
         }
 
-				if(d_isElectrostaticsMeshSubdivided)
-					F-=gradRhoQuads[q]*phiTot_q;
-
 				forceEval.submit_value(F,q);
 				forceEval.submit_gradient(E,q);
 			}//quad point loop
 
-      if(isPseudopotential && d_isElectrostaticsMeshSubdivided)
-        for (unsigned int q=0; q<numQuadPointsLpsp; ++q)
-        {
-            Tensor<1,C_DIM,VectorizedArray<double> > F=-gradRhoQuadsLpsp[q]*(pseudoVLocQuads[q]);
-
-            forceEvalLpsp.submit_value(F,q);        
-        }
 
 			if(shadowPotentialForce && dftParameters::useAtomicRhoXLBOMD)
 				FShadowLocalGammaAtomsElementalContribution(forceContributionShadowLocalGammaAtoms,
@@ -1308,12 +1286,6 @@ template<unsigned int FEOrder,unsigned int FEOrderElectro>
 
 			forceEval.integrate(true,true);
 			forceEval.distribute_local_to_global(d_configForceVectorLinFE);//also takes care of constraints
-
-      if(isPseudopotential && d_isElectrostaticsMeshSubdivided)
-      {
-        forceEvalLpsp.integrate(true,false);
-        forceEvalLpsp.distribute_local_to_global(d_configForceVectorLinFE);//also takes care of constraints
-      }
 		}//cell loop
 
 
@@ -1458,8 +1430,7 @@ template<unsigned int FEOrder,unsigned int FEOrderElectro>
 			update_values| update_gradients | update_quadrature_points);
 
 	QIterated<C_DIM-1>  faceQuadrature(QGauss<1>(C_num1DQuadLPSP<FEOrderElectro>()),C_numCopies1DQuadLPSP());
-  FEFaceValues<C_DIM> feFaceValuesElectro (d_isElectrostaticsMeshSubdivided?matrixFreeDataElectro.
-      get_dof_handler(phiTotDofHandlerIndexElectro).get_fe():dftPtr->d_dofHandlerRhoNodal.get_fe(),
+  FEFaceValues<C_DIM> feFaceValuesElectro (dftPtr->d_dofHandlerRhoNodal.get_fe(),
                                          faceQuadrature,
                                          update_values| update_JxW_values | update_normal_vectors | update_quadrature_points);
 
@@ -1553,14 +1524,6 @@ template<unsigned int FEOrder,unsigned int FEOrderElectro>
 				}
 			}
 
-			if(d_isElectrostaticsMeshSubdivided)
-				for (unsigned int q=0; q<numQuadPoints; ++q)
-				{
-					gradRhoQuadsElectro[q][0][iSubCell]=gradRhoOutValuesElectro.find(subCellId)->second[C_DIM*q+0];
-					gradRhoQuadsElectro[q][1][iSubCell]=gradRhoOutValuesElectro.find(subCellId)->second[C_DIM*q+1];
-					gradRhoQuadsElectro[q][2][iSubCell]=gradRhoOutValuesElectro.find(subCellId)->second[C_DIM*q+2];
-				}
-
 			if(dftParameters::isPseudopotential)
       {
         const std::vector<double> & tempPseudoVal=pseudoVLocElectro.find(subCellId)->second;
@@ -1623,9 +1586,6 @@ template<unsigned int FEOrder,unsigned int FEOrderElectro>
 
 			Tensor<1,C_DIM,VectorizedArray<double> > F=zeroTensor;
 
-			if(d_isElectrostaticsMeshSubdivided)
-				F+=gradRhoQuadsElectro[q]*phiTotElectro_q;
-
 			if (shadowPotentialForce)
 			{
 				VectorizedArray<double> phiRhoMinusApproxRho_q =phiTotEvalElectro2.get_value(q);
@@ -1659,9 +1619,6 @@ template<unsigned int FEOrder,unsigned int FEOrderElectro>
         Tensor<1,C_DIM,VectorizedArray<double> > F=zeroTensor;
         Tensor<1,C_DIM,VectorizedArray<double> > gradPhiExt_q =zeroTensor;
         F-=gradRhoQuadsElectroLpsp[q]*pseudoVLocQuadsElectro[q];
-
-        if(d_isElectrostaticsMeshSubdivided)
-            F+=gradRhoQuadsElectroLpsp[q]*(pseudoVLocQuadsElectro[q]);
 
         //FIXME: quadrature mismatch
         /*

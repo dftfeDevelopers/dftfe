@@ -85,8 +85,7 @@ namespace dftfe {
 			 */
 			void initMoved(std::vector<const DoFHandler<3> *> & dofHandlerVectorMatrixFree,
 					std::vector<const ConstraintMatrix * > & constraintsVectorMatrixFree,
-					const bool isElectrostaticsMesh,
-					const bool isElectrostaticsEigenMeshDifferent=false);
+					const bool isElectrostaticsMesh);
 
 			/** @brief initializes and precomputes pseudopotential related data structuers required for configurational force
 			 *  and stress computation.
@@ -786,8 +785,6 @@ namespace dftfe {
       std::map<dealii::CellId, DoFHandler<3>::active_cell_iterator> d_cellIdToActiveCellIteratorMapDofHandlerRhoNodalElectro;
 
 			std::vector<distributedCPUVec<double>> d_gaussianWeightsVecAtoms;
-
-			bool d_isElectrostaticsMeshSubdivided=false;
 
 			/// map from cell id to set of non local atom ids (local numbering)
 			std::map<dealii::CellId,std::set<unsigned int>> d_cellIdToNonlocalAtomIdsLocalCompactSupportMap;
