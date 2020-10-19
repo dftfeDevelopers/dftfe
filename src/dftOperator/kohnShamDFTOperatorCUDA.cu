@@ -888,7 +888,7 @@ namespace dftfe
 				}
 
 			d_vEffJxWDevice=d_vEffJxW;
-      if (dftParameters::isPseudopotential && !d_isStiffnessMatrixExternalPotCorrComputed)
+      if ((dftParameters::isPseudopotential || dftParameters::smearedNuclearCharges) && !d_isStiffnessMatrixExternalPotCorrComputed)
          computeVEffExternalPotCorr(externalPotCorrValues,externalPotCorrQuadratureId);      
 		}
 
@@ -996,7 +996,7 @@ namespace dftfe
 			d_vEffJxWDevice=d_vEffJxW;
 			d_derExcWithSigmaTimesGradRhoJxWDevice=d_derExcWithSigmaTimesGradRhoJxW;
 
-      if (dftParameters::isPseudopotential && !d_isStiffnessMatrixExternalPotCorrComputed)
+      if ((dftParameters::isPseudopotential || dftParameters::smearedNuclearCharges) && !d_isStiffnessMatrixExternalPotCorrComputed)
          computeVEffExternalPotCorr(externalPotCorrValues,externalPotCorrQuadratureId);      
 		}
 
@@ -1049,7 +1049,7 @@ namespace dftfe
 
 			d_vEffJxWDevice=d_vEffJxW;
      
-      if (dftParameters::isPseudopotential && !d_isStiffnessMatrixExternalPotCorrComputed)
+      if ((dftParameters::isPseudopotential || dftParameters::smearedNuclearCharges) && !d_isStiffnessMatrixExternalPotCorrComputed)
          computeVEffExternalPotCorr(externalPotCorrValues,externalPotCorrQuadratureId);     
 		}
 
@@ -1153,7 +1153,7 @@ namespace dftfe
 			d_vEffJxWDevice=d_vEffJxW;
 			d_derExcWithSigmaTimesGradRhoJxWDevice=d_derExcWithSigmaTimesGradRhoJxW;
 
-      if (dftParameters::isPseudopotential && !d_isStiffnessMatrixExternalPotCorrComputed)
+      if ((dftParameters::isPseudopotential || dftParameters::smearedNuclearCharges) && !d_isStiffnessMatrixExternalPotCorrComputed)
          computeVEffExternalPotCorr(externalPotCorrValues,externalPotCorrQuadratureId);      
 		}
 

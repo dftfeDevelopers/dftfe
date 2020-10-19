@@ -36,7 +36,7 @@ void kohnShamDFTOperatorClass<FEOrder,FEOrderElectro>::computeHamiltonianMatrix(
 	const unsigned int totalLocallyOwnedCells = dftPtr->matrix_free_data.n_physical_cells();
 	const unsigned int kpointSpinIndex=(1+dftParameters::spinPolarized)*kPointIndex+spinIndex;
 
-  if (dftParameters::isPseudopotential && !d_isStiffnessMatrixExternalPotCorrComputed)
+  if ((dftParameters::isPseudopotential || dftParameters::smearedNuclearCharges) && !d_isStiffnessMatrixExternalPotCorrComputed)
   {
     const unsigned int numberDofsPerElement = dftPtr->matrix_free_data.get_dof_handler(dftPtr->d_densityDofHandlerIndex).get_fe().dofs_per_cell;
     d_cellHamiltonianMatrixExternalPotCorr.clear();
@@ -229,7 +229,7 @@ void kohnShamDFTOperatorClass<FEOrder,FEOrderElectro>::computeHamiltonianMatrix(
 				}
 			}
 
-      if (dftParameters::isPseudopotential)
+      if (dftParameters::isPseudopotential || dftParameters::smearedNuclearCharges)
         for(unsigned int iNode = 0; iNode < numberDofsPerElement; ++iNode)
           for(unsigned int jNode = iNode; jNode < numberDofsPerElement; ++jNode)
           {

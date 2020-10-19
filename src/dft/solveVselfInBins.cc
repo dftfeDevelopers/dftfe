@@ -134,11 +134,11 @@ namespace dftfe
         smearedChargeScaling[binAtomIdToGlobalAtomIdMapCurrentBin[iatom]]=1.0/smearedNuclearChargeIntegral[iatom];
       }
 
-      
-			//if (dealii::Utilities::MPI::this_mpi_process(mpi_communicator) ==0)
-			//	for (unsigned int iatom=0; iatom< numberDomainAtomsInBin; ++iatom)
-			//		std::cout<<"Smeared charge integral before scaling (charge val=1): "<<smearedNuclearChargeIntegral[iatom]<<std::endl;       
-      
+      /*
+			if (dealii::Utilities::MPI::this_mpi_process(mpi_communicator) ==0)
+				for (unsigned int iatom=0; iatom< numberDomainAtomsInBin; ++iatom)
+					std::cout<<"Smeared charge integral before scaling (charge val=1): "<<smearedNuclearChargeIntegral[iatom]<<std::endl;
+      */
 
 			std::vector<double> smearedNuclearChargeIntegralCheck(numberTotalAtomsInBin,0.0); 
 			cell = dofHandlerOfField.begin_active();
@@ -176,8 +176,7 @@ namespace dftfe
 					}
 
 				}
-
-      /* 
+      /*
 			MPI_Allreduce(MPI_IN_PLACE,
 					&smearedNuclearChargeIntegralCheck[0],
 					numberTotalAtomsInBin,
@@ -302,7 +301,10 @@ namespace dftfe
 					atomPointsBin[i][0] = d_atomLocations[atomsInCurrentBin[i]][2];
 					atomPointsBin[i][1] = d_atomLocations[atomsInCurrentBin[i]][3];
 					atomPointsBin[i][2] = d_atomLocations[atomsInCurrentBin[i]][4];
-					atomChargesBin[i]=d_atomLocations[atomsInCurrentBin[i]][1];
+          if (dftParameters::isPseudopotential)
+            atomChargesBin[i]=d_atomLocations[atomsInCurrentBin[i]][1];
+          else
+            atomChargesBin[i]=d_atomLocations[atomsInCurrentBin[i]][0]; 
 				}       
 
 				for (unsigned int i=0; i<imageIdsOfAtomsInCurrentBin.size(); ++i)
@@ -315,7 +317,10 @@ namespace dftfe
 					imagePoint[2]
 						= imagePositions[imageIdsOfAtomsInCurrentBin[i]][2];
 					atomPointsBin.push_back(imagePoint);
-					atomChargesBin.push_back(d_atomLocations[imageChargeIdsOfAtomsInCurrentBin[i]][1]);
+          if(dftParameters::isPseudopotential)
+            atomChargesBin.push_back(d_atomLocations[imageChargeIdsOfAtomsInCurrentBin[i]][1]);
+          else
+            atomChargesBin.push_back(d_atomLocations[imageChargeIdsOfAtomsInCurrentBin[i]][0]);            
           atomsInCurrentBin.push_back(imageIdsOfAtomsInCurrentBin[i]+ numberGlobalCharges);
 				}        
 
@@ -689,7 +694,10 @@ namespace dftfe
 					atomPointsBin[i][0] = d_atomLocations[atomsInCurrentBin[i]][2];
 					atomPointsBin[i][1] = d_atomLocations[atomsInCurrentBin[i]][3];
 					atomPointsBin[i][2] = d_atomLocations[atomsInCurrentBin[i]][4];
-					atomChargesBin[i]=d_atomLocations[atomsInCurrentBin[i]][1];
+          if (dftParameters::isPseudopotential)
+            atomChargesBin[i]=d_atomLocations[atomsInCurrentBin[i]][1];
+          else
+            atomChargesBin[i]=d_atomLocations[atomsInCurrentBin[i]][0];            
 				}       
 
 				for (unsigned int i=0; i<imageIdsOfAtomsInCurrentBin.size(); ++i)
@@ -702,7 +710,10 @@ namespace dftfe
 					imagePoint[2]
 						= imagePositions[imageIdsOfAtomsInCurrentBin[i]][2];
 					atomPointsBin.push_back(imagePoint);
-					atomChargesBin.push_back(d_atomLocations[imageChargeIdsOfAtomsInCurrentBin[i]][1]);
+          if(dftParameters::isPseudopotential)
+            atomChargesBin.push_back(d_atomLocations[imageChargeIdsOfAtomsInCurrentBin[i]][1]);
+          else
+            atomChargesBin.push_back(d_atomLocations[imageChargeIdsOfAtomsInCurrentBin[i]][0]);  
           atomsInCurrentBin.push_back(imageIdsOfAtomsInCurrentBin[i]+ numberGlobalCharges);
 				}        
 

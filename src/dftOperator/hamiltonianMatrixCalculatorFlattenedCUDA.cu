@@ -162,7 +162,7 @@ void kohnShamDFTOperatorCUDAClass<FEOrder,FEOrderElectro>::computeHamiltonianMat
   MPI_Barrier(MPI_COMM_WORLD);
 	double gpu_time=MPI_Wtime();
 
-  if (dftParameters::isPseudopotential && !d_isStiffnessMatrixExternalPotCorrComputed)
+  if ((dftParameters::isPseudopotential || dftParameters::smearedNuclearCharges) && !d_isStiffnessMatrixExternalPotCorrComputed)
   {
       hamMatrixExtPotCorr<<<(d_numLocallyOwnedCells*d_numberNodesPerElement*d_numberNodesPerElement+255)/256,256>>>
         (d_numLocallyOwnedCells,
@@ -194,7 +194,7 @@ void kohnShamDFTOperatorCUDAClass<FEOrder,FEOrderElectro>::computeHamiltonianMat
 			 thrust::raw_pointer_cast(&d_derExcWithSigmaTimesGradRhoJxWDevice[0]),
        thrust::raw_pointer_cast(&d_cellHamiltonianMatrixExternalPotCorrFlattenedDevice[0]),       
 			 thrust::raw_pointer_cast(&d_cellHamiltonianMatrixFlattenedDevice[kpointSpinIndex*d_numLocallyOwnedCells*d_numberNodesPerElement*d_numberNodesPerElement]),
-       dftParameters::isPseudopotential);
+       dftParameters::isPseudopotential || dftParameters::smearedNuclearCharges);
 	else
 		hamMatrixKernelLDA<<<(d_numLocallyOwnedCells*d_numberNodesPerElement*d_numberNodesPerElement+255)/256,256>>>
 			(d_numLocallyOwnedCells,
@@ -206,7 +206,7 @@ void kohnShamDFTOperatorCUDAClass<FEOrder,FEOrderElectro>::computeHamiltonianMat
 			 thrust::raw_pointer_cast(&d_vEffJxWDevice[0]),
        thrust::raw_pointer_cast(&d_cellHamiltonianMatrixExternalPotCorrFlattenedDevice[0]),       
 			 thrust::raw_pointer_cast(&d_cellHamiltonianMatrixFlattenedDevice[kpointSpinIndex*d_numLocallyOwnedCells*d_numberNodesPerElement*d_numberNodesPerElement]),
-       dftParameters::isPseudopotential);
+       dftParameters::isPseudopotential || dftParameters::smearedNuclearCharges);
 
 	cudaDeviceSynchronize();
   MPI_Barrier(MPI_COMM_WORLD);
