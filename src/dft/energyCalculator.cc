@@ -513,7 +513,7 @@ namespace dftfe
 						 }
 					 }
 
-           if(dftParameters::isPseudopotential)
+           if(dftParameters::isPseudopotential || smearedNuclearCharges)
            {
              const std::vector<double> & tempRho=rhoOutValuesLpsp.find(cellElectronic->id())->second;
              const std::vector<double> & tempPspCorr=pseudoValuesElectronic.find(cellElectronic->id())->second;
@@ -539,7 +539,7 @@ namespace dftfe
 						 electrostaticEnergyTotPot  += 0.5*(cellPhiTotRhoOut[q_point])*(rhoOutValuesElectrostatic.find(cellElectrostatic->id())->second[q_point])*feValuesElectrostatic.JxW(q_point);
 					 }
 
-           if(dftParameters::isPseudopotential)
+           if(dftParameters::isPseudopotential || smearedNuclearCharges)
            {
              const std::vector<double> & tempRho=rhoOutValuesElectrostaticLpsp.find(cellElectrostatic->id())->second;
              const std::vector<double> & tempPspCorr=pseudoValuesElectrostatic.find(cellElectrostatic->id())->second;
@@ -1047,7 +1047,7 @@ double energyCalculator::computeEnergySpinPolarized
 				}
 			}
 
-       if(dftParameters::isPseudopotential)
+       if(dftParameters::isPseudopotential || smearedNuclearCharges)
        {
          const std::vector<double> & tempRho=rhoOutValuesLpsp.find(cellElectronic->id())->second;
          const std::vector<double> & tempPspCorr=pseudoValuesElectronic.find(cellElectronic->id())->second;
@@ -1071,7 +1071,7 @@ double energyCalculator::computeEnergySpinPolarized
 				electrostaticEnergyTotPot+=0.5*(cellPhiTotRhoOut[q_point])*(rhoOutValuesElectrostatic.find(cellElectrostatic->id())->second[q_point])*feValuesElectrostatic.JxW(q_point);
 			}
 
-       if(dftParameters::isPseudopotential)
+       if(dftParameters::isPseudopotential || smearedNuclearCharges)
        {
          const std::vector<double> & tempRho=rhoOutValuesElectrostaticLpsp.find(cellElectrostatic->id())->second;
          const std::vector<double> & tempPspCorr=pseudoValuesElectrostatic.find(cellElectrostatic->id())->second;

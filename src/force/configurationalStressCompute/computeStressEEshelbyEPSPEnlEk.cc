@@ -21,9 +21,7 @@
 void forceClass<FEOrder,FEOrderElectro>::computeStressEEshelbyEPSPEnlEk(const MatrixFree<3,double> & matrixFreeData,
 		const unsigned int eigenDofHandlerIndex,
     const unsigned int smearedChargeQuadratureId,
-             const unsigned int lpspQuadratureId,
       const unsigned int lpspQuadratureIdElectro,          
-		const std::map<dealii::CellId, std::vector<double> > & pseudoVLoc,
 		const MatrixFree<3,double> & matrixFreeDataElectro,
 		const unsigned int phiTotDofHandlerIndexElectro,
 		const distributedCPUVec<double> & phiTotRhoOutElectro,
@@ -141,7 +139,6 @@ void forceClass<FEOrder,FEOrderElectro>::computeStressEEshelbyEPSPEnlEk(const Ma
 	std::vector<VectorizedArray<double> > rhoQuads(numQuadPoints,make_vectorized_array(0.0));
 	std::vector<Tensor<1,C_DIM,VectorizedArray<double> > > gradRhoQuads(numQuadPoints,zeroTensor3);
 	std::vector<VectorizedArray<double> > excQuads(numQuadPoints,make_vectorized_array(0.0));
-	std::vector<VectorizedArray<double> > pseudoVLocQuads(numQuadPoints,make_vectorized_array(0.0));
 	std::vector<Tensor<1,C_DIM,VectorizedArray<double> > > derExchCorrEnergyWithGradRhoOutQuads(numQuadPoints,zeroTensor3);
 
 	std::map<unsigned int,std::vector<unsigned int>> macroIdToNonlocalAtomsSetMap;
@@ -178,7 +175,6 @@ void forceClass<FEOrder,FEOrderElectro>::computeStressEEshelbyEPSPEnlEk(const Ma
 		std::fill(rhoQuads.begin(),rhoQuads.end(),make_vectorized_array(0.0));
 		std::fill(gradRhoQuads.begin(),gradRhoQuads.end(),zeroTensor3);
 		std::fill(excQuads.begin(),excQuads.end(),make_vectorized_array(0.0));
-		std::fill(pseudoVLocQuads.begin(),pseudoVLocQuads.end(),make_vectorized_array(0.0));
 		std::fill(derExchCorrEnergyWithGradRhoOutQuads.begin(),derExchCorrEnergyWithGradRhoOutQuads.end(),zeroTensor3);
 
 		//allocate storage for vector of quadPoints, nonlocal atom id, pseudo wave, k point
@@ -323,10 +319,6 @@ void forceClass<FEOrder,FEOrderElectro>::computeStressEEshelbyEPSPEnlEk(const Ma
 			{
 				subCellPtr= matrixFreeData.get_cell_iterator(cell,iSubCell);
 				dealii::CellId subCellId=subCellPtr->id();
-				for (unsigned int q=0; q<numQuadPoints; ++q)
-				{
-					pseudoVLocQuads[q][iSubCell]=pseudoVLoc.find(subCellId)->second[q];
-				}
 
 				for (unsigned int q=0; q<numQuadPointsNLP; ++q)
 				{
@@ -553,7 +545,7 @@ template<unsigned int FEOrder,unsigned int FEOrderElectro>
 				rhoQuadsElectro[q][iSubCell]=rhoOutValuesElectro.find(subCellId)->second[q];
 
 
-			if(dftParameters::isPseudopotential)
+			if(dftParameters::isPseudopotential || dftParameters::smearedNuclearCharges)
       {
         const std::vector<double> & tempPseudoVal=pseudoVLocElectro.find(subCellId)->second;
         const std::vector<double> & tempLpspRhoVal=rhoOutValuesElectroLpsp.find(subCellId)->second;
@@ -579,9 +571,8 @@ template<unsigned int FEOrder,unsigned int FEOrderElectro>
       }
 		}
 
-		if (dftParameters::isPseudopotential)
+		if (dftParameters::isPseudopotential || dftParameters::smearedNuclearCharges)
 		{
-
 			addEPSPStressContribution(feVselfValuesElectro,
 					forceEvalElectroLpsp,
 					matrixFreeDataElectro,
@@ -591,7 +582,6 @@ template<unsigned int FEOrder,unsigned int FEOrderElectro>
 					pseudoVLocAtomsElectro,
 					vselfBinsManagerElectro,
 					d_cellsVselfBallsClosestAtomIdDofHandlerElectro);
-
 		}
 
 		Tensor<2,C_DIM,VectorizedArray<double> > EQuadSum=zeroTensor2;
@@ -609,7 +599,7 @@ template<unsigned int FEOrder,unsigned int FEOrderElectro>
 			EQuadSum+=E*forceEvalElectro.JxW(q);
 		}
 
-		if(dftParameters::isPseudopotential)
+		if(dftParameters::isPseudopotential || dftParameters::smearedNuclearCharges)
       for (unsigned int q=0; q<numQuadPointsLpsp; ++q)
       {
 			  VectorizedArray<double> phiExtElectro_q =make_vectorized_array(0.0);

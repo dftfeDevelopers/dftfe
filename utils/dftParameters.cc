@@ -1267,7 +1267,6 @@ namespace dftfe {
 		{
 			if (!dftParameters::isPseudopotential)
       {
-        dftParameters::smearedNuclearCharges=false;
         dftParameters::floatingNuclearCharges=false;
       }
 
