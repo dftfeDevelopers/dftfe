@@ -1,7 +1,6 @@
 set VERBOSITY=0
 set REPRODUCIBLE OUTPUT=true
-set H REFINED ELECTROSTATICS = true
-
+set H REFINED ELECTROSTATICS=true
 subsection GPU
   set USE GPU = true
   set AUTO GPU BLOCK SIZES=false
@@ -12,7 +11,7 @@ subsection Geometry
   set ATOMIC COORDINATES FILE      = coordinates.inp 
   set DOMAIN VECTORS FILE = domainVectors.inp
   subsection Optimization
-    set ION FORCE = true
+    set ION FORCE = false
   end
 end
 
