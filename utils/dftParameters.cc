@@ -1267,6 +1267,8 @@ namespace dftfe {
 		{
 			if (!dftParameters::isPseudopotential)
       {
+        if (!dftParameters::reproducible_output)
+          dftParameters::smearedNuclearCharges=false;
         dftParameters::floatingNuclearCharges=false;
       }
 
