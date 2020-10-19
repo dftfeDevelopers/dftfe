@@ -146,8 +146,8 @@ template<unsigned int FEOrder,unsigned int FEOrderElectro>
 	}//Bin loop
 
   d_cellIdToActiveCellIteratorMapDofHandlerRhoNodalElectro.clear();
-  DoFHandler<C_DIM>::active_cell_iterator  cell = d_isElectrostaticsMeshSubdivided?dofHandler.begin_active():dftPtr->d_dofHandlerRhoNodal.begin_active();
-  DoFHandler<C_DIM>::active_cell_iterator  endc = d_isElectrostaticsMeshSubdivided?dofHandler.end():dftPtr->d_dofHandlerRhoNodal.end();
+  DoFHandler<C_DIM>::active_cell_iterator  cell = dftPtr->d_dofHandlerRhoNodal.begin_active();
+  DoFHandler<C_DIM>::active_cell_iterator  endc = dftPtr->d_dofHandlerRhoNodal.end();
   for(; cell!= endc; ++cell)
     if(cell->is_locally_owned())
       d_cellIdToActiveCellIteratorMapDofHandlerRhoNodalElectro[cell->id()]=cell;

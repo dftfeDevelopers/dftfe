@@ -2,48 +2,42 @@ set VERBOSITY = 0
 set REPRODUCIBLE OUTPUT = true
 
 subsection Geometry
-  set NATOMS=2
-  set NATOM TYPES=1
-  set ATOMIC COORDINATES FILE = @SOURCE_DIR@/nitrogenMolecule_coordinates.inp
-  set DOMAIN VECTORS FILE = @SOURCE_DIR@/nitrogenMolecule_domainVectors.inp
+  set NATOMS=5
+  set NATOM TYPES=2
+  set ATOMIC COORDINATES FILE = @SOURCE_DIR@/methane_coordinates.inp
+  set DOMAIN VECTORS FILE = @SOURCE_DIR@/methane_domainVectors.inp
+
   subsection Optimization
     set ION FORCE=true
-  end
+    set CELL STRESS=false
+  end 
 end
 
 subsection Boundary conditions
-  set SMEARED NUCLEAR CHARGES=false
+  set SMEARED NUCLEAR CHARGES=true
   set FLOATING NUCLEAR CHARGES=false
   set PERIODIC1                       = false
   set PERIODIC2                       = false
   set PERIODIC3                       = false
   set SELF POTENTIAL RADIUS = 4.0
-  set CONSTRAINTS PARALLEL CHECK=false
+  set CONSTRAINTS PARALLEL CHECK=true
 end
 
 subsection Finite element mesh parameters
-  set POLYNOMIAL ORDER=3
+  set POLYNOMIAL ORDER=2
   subsection Auto mesh generation parameters
     set AUTO ADAPT BASE MESH SIZE=false
-
-    set MESH SIZE AROUND ATOM  = 0.7
+    set MESH SIZE AROUND ATOM  = 0.5
     set BASE MESH SIZE = 10.0
     set ATOM BALL RADIUS = 2.0
-    set MESH SIZE AT ATOM = 0.7
+    set MESH SIZE AT ATOM = 0.1
   end
 end
 
 subsection DFT functional parameters
   set EXCHANGE CORRELATION TYPE   = 4
-  set PSEUDOPOTENTIAL CALCULATION = true
-  set PSEUDO TESTS FLAG = true
-  set PSEUDOPOTENTIAL FILE NAMES LIST = @SOURCE_DIR@/pseudoNGGA.inp
+  set PSEUDOPOTENTIAL CALCULATION = false
 end
-
-subsection Parallelization
-  set NPBAND=1
-end
-
 
 subsection SCF parameters
    set COMPUTE ENERGY EACH ITER=false
@@ -52,14 +46,13 @@ subsection SCF parameters
   set MIXING PARAMETER = 0.5
   set MAXIMUM ITERATIONS               = 40
   set TEMPERATURE                      = 500
-  set TOLERANCE                        = 1e-5
-  set HIGHER QUAD NLP  = true
+  set TOLERANCE                        = 1e-6
   set STARTING WFC=ATOMIC
   subsection Eigen-solver parameters
       set NUMBER OF KOHN-SHAM WAVEFUNCTIONS = 10
-      set ORTHOGONALIZATION TYPE=PGS
-      set CHEBYSHEV POLYNOMIAL DEGREE = 20
-      set CHEBYSHEV FILTER TOLERANCE=1e-4
-      set RR GEP=false
+      set ORTHOGONALIZATION TYPE=GS
+      set CHEBYSHEV POLYNOMIAL DEGREE = 80
+      set CHEBYSHEV FILTER TOLERANCE=1e-3
   end
 end
+set H REFINED ELECTROSTATICS=false

@@ -1,6 +1,7 @@
-number of atoms: 2
-number of atoms types: 1
-Z:7
+number of atoms: 5
+number of atoms types: 2
+Z:6
+Z:1
 =============================================================================================================================
 number of electrons: 10
 number of eigen values: 10
@@ -11,34 +12,38 @@ v2 : 0.000000000000000000e+00 8.000000000000000000e+01 0.000000000000000000e+00
 v3 : 0.000000000000000000e+00 0.000000000000000000e+00 8.000000000000000000e+01
 -----------------------------------------------------------------------------------------
 ------------Cartesian coordinates of atoms (origin at center of domain)------------------
-AtomId 0:  -1.199999999999999956e+00 0.000000000000000000e+00 0.000000000000000000e+00
-AtomId 1:  1.199999999999999956e+00 0.000000000000000000e+00 0.000000000000000000e+00
+AtomId 0:  0.000000000000000000e+00 0.000000000000000000e+00 0.000000000000000000e+00
+AtomId 1:  1.199999999999999956e+00 1.199999999999999956e+00 1.199999999999999956e+00
+AtomId 2:  -1.199999999999999956e+00 -1.199999999999999956e+00 1.199999999999999956e+00
+AtomId 3:  1.199999999999999956e+00 -1.199999999999999956e+00 -1.199999999999999956e+00
+AtomId 4:  -1.199999999999999956e+00 1.199999999999999956e+00 -1.199999999999999956e+00
 -----------------------------------------------------------------------------------------
 
 Finite element mesh information
 -------------------------------------------------
-FE interpolating polynomial order for Kohn-Sham eigenvalue problem: 3
-FE interpolating polynomial order for electrostatics solve: 3
-FE interpolating polynomial order for nodal electron density computation: 5
-number of elements: 960
-number of degrees of freedom for the Kohn-Sham eigenvalue problem : 31257
+FE interpolating polynomial order for Kohn-Sham eigenvalue problem: 2
+FE interpolating polynomial order for electrostatics solve: 2
+FE interpolating polynomial order for nodal electron density computation: 4
+number of elements: 7232
+number of degrees of freedom for the Kohn-Sham eigenvalue problem : 70571
 -------------------------------------------------
 
 Setting initial guess for wavefunctions....
 
 Reading initial guess for electron-density.....
 
-Pseudopotential initalization....
-
 Starting SCF iterations....
-SCF iterations converged to the specified tolerance after: 12 iterations.
+SCF iterations converged to the specified tolerance after: 13 iterations.
 
 Energy computations (Hartree) 
 -------------------
-             Total energy:         -19.83273099
+             Total energy:         -40.22114838
 
 Absolute values of ion forces (Hartree/Bohr)
 --------------------------------------------------------------------------------------------
-AtomId    0:  0.244383,0.000000,0.000000
-AtomId    1:  0.244383,0.000000,0.000000
+AtomId    0:  0.000000,0.000000,0.000000
+AtomId    1:  0.001544,0.001544,0.001544
+AtomId    2:  0.001544,0.001544,0.001544
+AtomId    3:  0.001544,0.001544,0.001544
+AtomId    4:  0.001544,0.001544,0.001544
 --------------------------------------------------------------------------------------------

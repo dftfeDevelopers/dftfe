@@ -1853,7 +1853,7 @@ namespace dftfe {
 			}
 
 
-			if(dftParameters::isPseudopotential && !skipVselfSolveInitLocalPSP)
+			if((dftParameters::isPseudopotential || dftParameters::smearedNuclearCharges) && !skipVselfSolveInitLocalPSP)
 			{
 				double init_psplocal;
 				MPI_Barrier(MPI_COMM_WORLD);
@@ -3246,9 +3246,7 @@ namespace dftfe {
 #endif
 								d_eigenDofHandlerIndex,
                 d_smearedChargeQuadratureIdElectro,
-                d_lpspQuadratureId,
                 d_lpspQuadratureIdElectro,
-								d_pseudoVLoc,
 								d_matrixFreeDataPRefined,
 								d_phiTotDofHandlerIndexElectro,
 								d_phiTotRhoIn,
@@ -3279,9 +3277,7 @@ namespace dftfe {
 #endif
 								d_eigenDofHandlerIndex,
                 d_smearedChargeQuadratureIdElectro,
-                d_lpspQuadratureId,
                 d_lpspQuadratureIdElectro,
-								d_pseudoVLoc,
 								d_matrixFreeDataPRefined,
 								d_phiTotDofHandlerIndexElectro,
 								d_phiTotRhoOut,
@@ -3322,9 +3318,7 @@ namespace dftfe {
 					forcePtr->computeStress(matrix_free_data,
 							d_eigenDofHandlerIndex,
               d_smearedChargeQuadratureIdElectro,
-              d_lpspQuadratureId,
               d_lpspQuadratureIdElectro,
-							d_pseudoVLoc,
 							d_matrixFreeDataPRefined,
 							d_phiTotDofHandlerIndexElectro,
 							d_phiTotRhoOut,
@@ -3349,9 +3343,9 @@ namespace dftfe {
 			if(dftParameters::electrostaticsHRefinement)
 				computeElectrostaticEnergyHRefined(
 #ifdef DFTFE_WITH_GPU
-						kohnShamDFTEigenOperatorCUDA,
+						kohnShamDFTEigenOperatorCUDA
 #endif
-						computeForces);
+      );
 
 			if (dftParameters::writeWfcSolutionFields)
 				outputWfc();

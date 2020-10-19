@@ -641,9 +641,10 @@ namespace dftfe {
 			 */
 			void computeElectrostaticEnergyHRefined(
 #ifdef DFTFE_WITH_GPU
-					kohnShamDFTOperatorCUDAClass<FEOrder,FEOrderElectro> & kohnShamDFTEigenOperator,
+					kohnShamDFTOperatorCUDAClass<FEOrder,FEOrderElectro> & kohnShamDFTEigenOperator
 #endif
-					const bool computeForces=true);
+      );
+
 			/**
 			 *@brief Computes Fermi-energy obtained by imposing constraint on the number of electrons
 			 */

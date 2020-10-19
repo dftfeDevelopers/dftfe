@@ -85,8 +85,7 @@ namespace dftfe {
 			 */
 			void initMoved(std::vector<const DoFHandler<3> *> & dofHandlerVectorMatrixFree,
 					std::vector<const ConstraintMatrix * > & constraintsVectorMatrixFree,
-					const bool isElectrostaticsMesh,
-					const bool isElectrostaticsEigenMeshDifferent=false);
+					const bool isElectrostaticsMesh);
 
 			/** @brief initializes and precomputes pseudopotential related data structuers required for configurational force
 			 *  and stress computation.
@@ -115,9 +114,7 @@ namespace dftfe {
 #endif
 				 const unsigned int eigenDofHandlerIndex,
          const unsigned int smearedChargeQuadratureId,
-         const unsigned int lpspQuadratureId,
          const unsigned int lpspQuadratureIdElectro,         
-				 const std::map<dealii::CellId, std::vector<double> > & pseudoVLoc,
 				 const MatrixFree<3,double> & matrixFreeDataElectro,
 				 const unsigned int phiTotDofHandlerIndexElectro,
 				 const distributedCPUVec<double> & phiTotRhoOutElectro,
@@ -175,9 +172,7 @@ namespace dftfe {
 			void computeStress(const MatrixFree<3,double> & matrixFreeData,
 					const unsigned int eigenDofHandlerIndex,
           const unsigned int smearedChargeQuadratureId,
-          const unsigned int lpspQuadratureId,
           const unsigned int lpspQuadratureIdElectro,
-					const std::map<dealii::CellId, std::vector<double> > & pseudoVLoc,
 					const MatrixFree<3,double> & matrixFreeDataElectro,
 					const unsigned int phiTotDofHandlerIndexElectro,
 					const distributedCPUVec<double> & phiTotRhoOutElectro,
@@ -249,9 +244,7 @@ namespace dftfe {
 #endif
 				 const unsigned int eigenDofHandlerIndex,
          const unsigned int smearedChargeQuadratureId,
-         const unsigned int lpspQuadratureId,
          const unsigned int lpspQuadratureIdElectro,          
-				 const std::map<dealii::CellId, std::vector<double> > & pseudoVLoc,
 				 const MatrixFree<3,double> & matrixFreeDataElectro,
 				 const unsigned int phiTotDofHandlerIndexElectro,
 				 const distributedCPUVec<double> & phiTotRhoOutElectro,
@@ -279,9 +272,7 @@ namespace dftfe {
 				(const MatrixFree<3,double> & matrixFreeData,
 				 const unsigned int eigenDofHandlerIndex,
          const unsigned int smearedChargeQuadratureId,
-         const unsigned int lpspQuadratureId,
          const unsigned int lpspQuadratureIdElectro,         
-				 const std::map<dealii::CellId, std::vector<double> > & pseudoVLoc,
 				 const MatrixFree<3,double> & matrixFreeDataElectro,
 				 const unsigned int phiTotDofHandlerIndexElectro,
 				 const distributedCPUVec<double> & phiTotRhoOutElectro,
@@ -336,9 +327,7 @@ namespace dftfe {
 #endif
 				 const unsigned int eigenDofHandlerIndex,
          const unsigned int smearedChargeQuadratureId,
-                 const unsigned int lpspQuadratureId,
           const unsigned int lpspQuadratureIdElectro,         
-				 const std::map<dealii::CellId, std::vector<double> > & pseudoVLoc,
 				 const MatrixFree<3,double> & matrixFreeDataElectro,
 				 const unsigned int phiTotDofHandlerIndexElectro,
 				 const distributedCPUVec<double> & phiTotRhoOutElectro,
@@ -507,9 +496,7 @@ namespace dftfe {
 			void computeStressEEshelbyEPSPEnlEk(const MatrixFree<3,double> & matrixFreeData,
 					const unsigned int eigenDofHandlerIndex,
           const unsigned int smearedChargeQuadratureId,
-                   const unsigned int lpspQuadratureId,
             const unsigned int lpspQuadratureIdElectro,         
-					const std::map<dealii::CellId, std::vector<double> > & pseudoVLoc,
 					const MatrixFree<3,double> & matrixFreeDataElectro,
 					const unsigned int phiTotDofHandlerIndexElectro,
 					const distributedCPUVec<double> & phiTotRhoOutElectro,
@@ -541,9 +528,7 @@ namespace dftfe {
 			void computeStressSpinPolarizedEEshelbyEPSPEnlEk(const MatrixFree<3,double> & matrixFreeData,
           const unsigned int eigenDofHandlerIndex,
           const unsigned int smearedChargeQuadratureId,
-                   const unsigned int lpspQuadratureId,
                    const unsigned int lpspQuadratureIdElectro,
-					const std::map<dealii::CellId, std::vector<double> > & pseudoVLoc,
 					const MatrixFree<3,double> & matrixFreeDataElectro,
 					const unsigned int phiTotDofHandlerIndexElectro,
 					const distributedCPUVec<double> & phiTotRhoOutElectro,
@@ -786,8 +771,6 @@ namespace dftfe {
       std::map<dealii::CellId, DoFHandler<3>::active_cell_iterator> d_cellIdToActiveCellIteratorMapDofHandlerRhoNodalElectro;
 
 			std::vector<distributedCPUVec<double>> d_gaussianWeightsVecAtoms;
-
-			bool d_isElectrostaticsMeshSubdivided=false;
 
 			/// map from cell id to set of non local atom ids (local numbering)
 			std::map<dealii::CellId,std::set<unsigned int>> d_cellIdToNonlocalAtomIdsLocalCompactSupportMap;

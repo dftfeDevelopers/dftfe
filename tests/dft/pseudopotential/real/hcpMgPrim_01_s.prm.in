@@ -1,6 +1,5 @@
 set VERBOSITY= 0
 set REPRODUCIBLE OUTPUT=true
-set H REFINED ELECTROSTATICS=true
 subsection Geometry
   set NATOMS=2
   set NATOM TYPES=1

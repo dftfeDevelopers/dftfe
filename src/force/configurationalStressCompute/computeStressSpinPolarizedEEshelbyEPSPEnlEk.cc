@@ -22,9 +22,7 @@ template<unsigned int FEOrder,unsigned int FEOrderElectro>
 (const MatrixFree<3,double> & matrixFreeData,
  const unsigned int eigenDofHandlerIndex,
  const unsigned int smearedChargeQuadratureId,
-          const unsigned int lpspQuadratureId,
   const unsigned int lpspQuadratureIdElectro,          
- const std::map<dealii::CellId, std::vector<double> > & pseudoVLoc,
  const MatrixFree<3,double> & matrixFreeDataElectro,
  const unsigned int phiTotDofHandlerIndexElectro,
  const distributedCPUVec<double> & phiTotRhoOutElectro,
@@ -164,12 +162,10 @@ template<unsigned int FEOrder,unsigned int FEOrderElectro>
 			}
 		}
 
-	VectorizedArray<double> phiExtFactor=make_vectorized_array(0.0);
 	std::vector<std::vector<std::vector<dataTypes::number > > > projectorKetTimesPsiSpin0TimesVTimesPartOcc(numKPoints);
 	std::vector<std::vector<std::vector<dataTypes::number > > > projectorKetTimesPsiSpin1TimesVTimesPartOcc(numKPoints);
 	if (isPseudopotential)
 	{
-		phiExtFactor=make_vectorized_array(1.0);
 		for (unsigned int ikPoint=0; ikPoint<numKPoints; ++ikPoint)
 		{
 			computeNonLocalProjectorKetTimesPsiTimesVFlattened(dftPtr->d_eigenVectorsFlattened[2*ikPoint],
@@ -194,7 +190,6 @@ template<unsigned int FEOrder,unsigned int FEOrderElectro>
 	std::vector<Tensor<1,C_DIM,VectorizedArray<double> > > gradRhoSpin0Quads(numQuadPoints,zeroTensor3);
 	std::vector<Tensor<1,C_DIM,VectorizedArray<double> > > gradRhoSpin1Quads(numQuadPoints,zeroTensor3);
 	std::vector<VectorizedArray<double> > excQuads(numQuadPoints,make_vectorized_array(0.0));
-	std::vector<VectorizedArray<double> > pseudoVLocQuads(numQuadPoints,make_vectorized_array(0.0));
 	std::vector<VectorizedArray<double> > vEffRhoOutSpin0Quads(numQuadPoints,make_vectorized_array(0.0));
 	std::vector<VectorizedArray<double> > vEffRhoOutSpin1Quads(numQuadPoints,make_vectorized_array(0.0));
 	std::vector<Tensor<1,C_DIM,VectorizedArray<double> > > derExchCorrEnergyWithGradRhoOutSpin0Quads(numQuadPoints,zeroTensor3);
@@ -218,7 +213,6 @@ template<unsigned int FEOrder,unsigned int FEOrderElectro>
 		std::fill(gradRhoSpin0Quads.begin(),gradRhoSpin0Quads.end(),zeroTensor3);
 		std::fill(gradRhoSpin1Quads.begin(),gradRhoSpin1Quads.end(),zeroTensor3);
 		std::fill(excQuads.begin(),excQuads.end(),make_vectorized_array(0.0));
-		std::fill(pseudoVLocQuads.begin(),pseudoVLocQuads.end(),make_vectorized_array(0.0));
 		std::fill(vEffRhoOutSpin0Quads.begin(),vEffRhoOutSpin0Quads.end(),make_vectorized_array(0.0));
 		std::fill(vEffRhoOutSpin1Quads.begin(),vEffRhoOutSpin1Quads.end(),make_vectorized_array(0.0));
 		std::fill(derExchCorrEnergyWithGradRhoOutSpin0Quads.begin(),derExchCorrEnergyWithGradRhoOutSpin0Quads.end(),zeroTensor3);
@@ -415,10 +409,6 @@ template<unsigned int FEOrder,unsigned int FEOrderElectro>
 			{
 				subCellPtr= matrixFreeData.get_cell_iterator(cell,iSubCell);
 				dealii::CellId subCellId=subCellPtr->id();
-				for (unsigned int q=0; q<numQuadPoints; ++q)
-				{
-					pseudoVLocQuads[q][iSubCell]=pseudoVLoc.find(subCellId)->second[q];
-				}
 
 				for (unsigned int q=0; q<numQuadPointsNLP; ++q)
 				{
