@@ -346,22 +346,17 @@ namespace dftfe
 		}
 
 	template<unsigned int FEOrder,unsigned int FEOrderElectro>
-		thrust::device_vector<double> & kohnShamDFTOperatorCUDAClass<FEOrder,FEOrderElectro>::getShapeFunctionGradientValuesNLPXInverted()
+		thrust::device_vector<double> & kohnShamDFTOperatorCUDAClass<FEOrder,FEOrderElectro>::getShapeFunctionGradientValuesNLPInverted()
 		{
-			return d_shapeFunctionGradientValueNLPXInvertedDevice;
+			return d_shapeFunctionGradientValueNLPInvertedDevice;
 		}
 
 	template<unsigned int FEOrder,unsigned int FEOrderElectro>
-		thrust::device_vector<double> & kohnShamDFTOperatorCUDAClass<FEOrder,FEOrderElectro>::getShapeFunctionGradientValuesNLPYInverted()
+		thrust::device_vector<double> & kohnShamDFTOperatorCUDAClass<FEOrder,FEOrderElectro>::getInverseJacobiansNLP()
 		{
-			return d_shapeFunctionGradientValueNLPYInvertedDevice;
+			return d_inverseJacobiansNLPDevice;
 		}
 
-	template<unsigned int FEOrder,unsigned int FEOrderElectro>
-		thrust::device_vector<double> & kohnShamDFTOperatorCUDAClass<FEOrder,FEOrderElectro>::getShapeFunctionGradientValuesNLPZInverted()
-		{
-			return d_shapeFunctionGradientValueNLPZInvertedDevice;
-		}
 
 	template<unsigned int FEOrder,unsigned int FEOrderElectro>
 		thrust::device_vector<dealii::types::global_dof_index> & kohnShamDFTOperatorCUDAClass<FEOrder,FEOrderElectro>::getFlattenedArrayCellLocalProcIndexIdMap()

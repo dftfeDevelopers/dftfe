@@ -102,11 +102,9 @@ namespace dftfe{
 
 		thrust::device_vector<double> & getShapeFunctionGradientValuesZInverted(const bool use2pPlusOneGLQuad=false);
 
-		thrust::device_vector<double> & getShapeFunctionGradientValuesNLPXInverted();
+		thrust::device_vector<double> & getShapeFunctionGradientValuesNLPInverted();
 
-		thrust::device_vector<double> & getShapeFunctionGradientValuesNLPYInverted();
-
-		thrust::device_vector<double> & getShapeFunctionGradientValuesNLPZInverted();    
+		thrust::device_vector<double> & getInverseJacobiansNLP();       
 
 		thrust::device_vector<dealii::types::global_dof_index> & getFlattenedArrayCellLocalProcIndexIdMap();
 

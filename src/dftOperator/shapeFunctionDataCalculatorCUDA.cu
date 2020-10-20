@@ -410,16 +410,15 @@ void kohnShamDFTOperatorCUDAClass<FEOrder,FEOrderElectro>::preComputeShapeFuncti
 	{
 		//QGauss<3>  quadratureNLP(C_num1DQuadNLPSP<FEOrder>());
     QIterated<3> quadratureNLP(QGauss<1>(C_num1DQuadNLPSP<FEOrder>()),C_numCopies1DQuadNLPSP());
-		FEValues<3> fe_valuesNLP(dftPtr->matrix_free_data.get_dof_handler(dftPtr->d_densityDofHandlerIndex).get_fe(), quadratureNLP, update_values|update_gradients);
+		FEValues<3> fe_valuesNLP(dftPtr->matrix_free_data.get_dof_handler(dftPtr->d_densityDofHandlerIndex).get_fe(), quadratureNLP, update_values|update_gradients|update_jacobians|update_inverse_jacobians);
 		const unsigned int numberQuadraturePointsNLP = quadratureNLP.size();
 
 		//
 		//resize data members
 		//
 		std::vector<double> nlpShapeFunctionValueInverted(numberQuadraturePointsNLP*numberDofsPerElement,0.0);
-		std::vector<double> shapeFunctionGradientValueNLPXInverted(numberPhysicalCells*numberQuadraturePointsNLP*numberDofsPerElement,0.0);
-		std::vector<double> shapeFunctionGradientValueNLPYInverted(numberPhysicalCells*numberQuadraturePointsNLP*numberDofsPerElement,0.0);
-		std::vector<double> shapeFunctionGradientValueNLPZInverted(numberPhysicalCells*numberQuadraturePointsNLP*numberDofsPerElement,0.0);    
+    std::vector<double> inverseJacobiansNLP(numberPhysicalCells*numberQuadraturePointsNLP*3*3,0.0);
+		std::vector<double> shapeFunctionGradientValueNLPInverted(numberQuadraturePointsNLP*numberDofsPerElement*3,0.0);
 
 		cellPtr=dftPtr->matrix_free_data.get_dof_handler(dftPtr->d_densityDofHandlerIndex).begin_active();
 		endcPtr = dftPtr->matrix_free_data.get_dof_handler(dftPtr->d_densityDofHandlerIndex).end();
@@ -431,36 +430,37 @@ void kohnShamDFTOperatorCUDAClass<FEOrder,FEOrderElectro>::preComputeShapeFuncti
 			{ 
 				fe_valuesNLP.reinit (cellPtr);
 
-        for(unsigned int iNode = 0; iNode < numberDofsPerElement; ++iNode)
-          for(unsigned int q_point = 0; q_point < numberQuadraturePointsNLP; ++q_point)
-          {
-            const dealii::Tensor<1,3,double> & shape_grad=fe_valuesNLP.shape_grad(iNode,q_point);
-
-            shapeFunctionGradientValueNLPXInverted[iElem*numberQuadraturePointsNLP*numberDofsPerElement
-              +q_point*numberDofsPerElement+iNode]=shape_grad[0];
-
-            shapeFunctionGradientValueNLPYInverted[iElem*numberQuadraturePointsNLP*numberDofsPerElement
-              +q_point*numberDofsPerElement+iNode]=shape_grad[1];
-
-            shapeFunctionGradientValueNLPZInverted[iElem*numberQuadraturePointsNLP*numberDofsPerElement
-              +q_point*numberDofsPerElement+iNode]=shape_grad[2];
-
-          }
+        const std::vector<DerivativeForm<1,3,3> >& inverseJacobians=fe_valuesNLP.get_inverse_jacobians();
+        //store in transposed format
+        for(unsigned int q_point = 0; q_point < numberQuadraturePointsNLP; ++q_point)
+          for(unsigned int i = 0; i < 3; ++i)  
+            for(unsigned int j = 0; j < 3; ++j)
+              inverseJacobiansNLP[iElem*numberQuadraturePointsNLP*3*3+q_point*3*3+j*3+i]=inverseJacobians[q_point][j][i];
 
         if (iElem==0)
+        {
+          const std::vector<DerivativeForm<1,3,3> >& jacobians=fe_valuesNLP.get_jacobians();
           for(unsigned int iNode = 0; iNode < numberDofsPerElement; ++iNode)
             for(unsigned int q_point = 0; q_point < numberQuadraturePointsNLP; ++q_point)
             {
               const double val=fe_valuesNLP.shape_value(iNode,q_point);
               nlpShapeFunctionValueInverted[q_point*numberDofsPerElement+iNode] = val;
-            }      
+
+              const dealii::Tensor<1,3,double> & shape_grad_real=fe_valuesNLP.shape_grad(iNode,q_point);
+              
+              const dealii::Tensor<1,3,double> & shape_grad_reference= apply_transformation(jacobians[q_point],shape_grad_real);
+
+              shapeFunctionGradientValueNLPInverted[q_point*numberDofsPerElement*3+iNode*3+0]=shape_grad_reference[0];
+              shapeFunctionGradientValueNLPInverted[q_point*numberDofsPerElement*3+iNode*3+1]=shape_grad_reference[1];
+              shapeFunctionGradientValueNLPInverted[q_point*numberDofsPerElement*3+iNode*3+2]=shape_grad_reference[2];
+            }     
+        }
 
         iElem++;
 			}
 
 		d_shapeFunctionValueNLPInvertedDevice=nlpShapeFunctionValueInverted;
-	  d_shapeFunctionGradientValueNLPXInvertedDevice=shapeFunctionGradientValueNLPXInverted;
-    d_shapeFunctionGradientValueNLPYInvertedDevice=shapeFunctionGradientValueNLPYInverted;
-    d_shapeFunctionGradientValueNLPZInvertedDevice=shapeFunctionGradientValueNLPZInverted;    
+	  d_shapeFunctionGradientValueNLPInvertedDevice=shapeFunctionGradientValueNLPInverted;
+    d_inverseJacobiansNLPDevice=inverseJacobiansNLP;
 	}
 }
