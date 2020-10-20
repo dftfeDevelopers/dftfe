@@ -175,9 +175,9 @@ namespace dftfe {
 		{
 			const double tol=dftParameters::stressRelaxTol*dftPtr->d_domainVolume;
 			const unsigned int  maxIter=100;
-			const double lineSearchTol=tol*2.0;
+			const double lineSearchTol=tol*2.0;//Dummy parameter for CGPRP, the actual stopping criteria are the Wolfe conditions and maxLineSearchIter
 			const double lineSearchDampingParameter=0.1;
-			const unsigned int maxLineSearchIter=4;
+			const unsigned int maxLineSearchIter=dftParameters::maxLineSearchIterCGPRP;
 			const unsigned int debugLevel=Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) ==0?dftParameters::verbosity:0;
 
 			d_totalUpdateCalls=0;

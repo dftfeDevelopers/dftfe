@@ -104,7 +104,7 @@ namespace dftfe {
 			const unsigned int  maxIter=100;
 			const double lineSearchTol=1e-4;//Dummy parameter for CGPRP, the actual stopping criteria are the Wolfe conditions and maxLineSearchIter
 			const double lineSearchDampingParameter=0.8;
-			const unsigned int maxLineSearchIter=5;
+			const unsigned int maxLineSearchIter=dftParameters::maxLineSearchIterCGPRP;
 			const double maxDisplacmentInAnyComponent=0.5;//Bohr
 			const unsigned int debugLevel=Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) ==0?dftParameters::verbosity:0;
 
