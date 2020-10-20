@@ -238,178 +238,6 @@ namespace dftfe
 				 thrust::raw_pointer_cast(&cellWaveFunctionMatrix[0]),
 				 thrust::raw_pointer_cast(&(operatorMatrix.getFlattenedArrayCellLocalProcIndexIdMap())[0]));
 
-			double scalarCoeffAlpha = 1.0,scalarCoeffBeta = 0.0;
-			int strideA = BVec*numNodesPerElement;
-			int strideB = 0;
-			int strideC = BVec*numQuads;
-
-
-			cublasDgemmStridedBatched(operatorMatrix.getCublasHandle(),
-					CUBLAS_OP_N,
-					CUBLAS_OP_N,
-					BVec,
-					numQuads,
-					numNodesPerElement,
-					&scalarCoeffAlpha,
-					thrust::raw_pointer_cast(&cellWaveFunctionMatrix[0]),
-					BVec,
-					strideA,
-					thrust::raw_pointer_cast(&(operatorMatrix.getShapeFunctionValuesInverted())[0]),
-					numNodesPerElement,
-					strideB,
-					&scalarCoeffBeta,
-					thrust::raw_pointer_cast(&psiQuadsFlatD[0]),
-					BVec,
-					strideC,
-					numCells);
-
-			if (interpolateForNLPQuad)
-			{
-				int strideCNLP = BVec*numQuadsNLP;
-				cublasDgemmStridedBatched(operatorMatrix.getCublasHandle(),
-						CUBLAS_OP_N,
-						CUBLAS_OP_N,
-						BVec,
-						numQuadsNLP,
-						numNodesPerElement,
-						&scalarCoeffAlpha,
-						thrust::raw_pointer_cast(&cellWaveFunctionMatrix[0]),
-						BVec,
-						strideA,
-						thrust::raw_pointer_cast(&(operatorMatrix.getShapeFunctionValuesNLPInverted())[0]),
-						numNodesPerElement,
-						strideB,
-						&scalarCoeffBeta,
-						thrust::raw_pointer_cast(&psiQuadsNLPFlatD[0]),
-						BVec,
-						strideCNLP,
-						numCells);
-			}
-
-			strideB=numNodesPerElement*numQuads;
-
-			cublasDgemmStridedBatched(operatorMatrix.getCublasHandle(),
-					CUBLAS_OP_N,
-					CUBLAS_OP_N,
-					BVec,
-					numQuads,
-					numNodesPerElement,
-					&scalarCoeffAlpha,
-					thrust::raw_pointer_cast(&cellWaveFunctionMatrix[0]),
-					BVec,
-					strideA,
-					thrust::raw_pointer_cast(&(operatorMatrix.getShapeFunctionGradientValuesXInverted())[0]),
-					numNodesPerElement,
-					strideB,
-					&scalarCoeffBeta,
-					thrust::raw_pointer_cast(&gradPsiQuadsXFlatD[0]),
-					BVec,
-					strideC,
-					numCells);
-
-
-			cublasDgemmStridedBatched(operatorMatrix.getCublasHandle(),
-					CUBLAS_OP_N,
-					CUBLAS_OP_N,
-					BVec,
-					numQuads,
-					numNodesPerElement,
-					&scalarCoeffAlpha,
-					thrust::raw_pointer_cast(&cellWaveFunctionMatrix[0]),
-					BVec,
-					strideA,
-					thrust::raw_pointer_cast(&(operatorMatrix.getShapeFunctionGradientValuesYInverted())[0]),
-					numNodesPerElement,
-					strideB,
-					&scalarCoeffBeta,
-					thrust::raw_pointer_cast(&gradPsiQuadsYFlatD[0]),
-					BVec,
-					strideC,
-					numCells);
-
-			cublasDgemmStridedBatched(operatorMatrix.getCublasHandle(),
-					CUBLAS_OP_N,
-					CUBLAS_OP_N,
-					BVec,
-					numQuads,
-					numNodesPerElement,
-					&scalarCoeffAlpha,
-					thrust::raw_pointer_cast(&cellWaveFunctionMatrix[0]),
-					BVec,
-					strideA,
-					thrust::raw_pointer_cast(&(operatorMatrix.getShapeFunctionGradientValuesZInverted())[0]),
-					numNodesPerElement,
-					strideB,
-					&scalarCoeffBeta,
-					thrust::raw_pointer_cast(&gradPsiQuadsZFlatD[0]),
-					BVec,
-					strideC,
-					numCells);
-
-			if (interpolateForNLPQuad)
-			{
-				int strideCNLP = BVec*numQuadsNLP;
-			  int strideBNLP=numNodesPerElement*numQuadsNLP;
-
-        cublasDgemmStridedBatched(operatorMatrix.getCublasHandle(),
-            CUBLAS_OP_N,
-            CUBLAS_OP_N,
-            BVec,
-            numQuadsNLP,
-            numNodesPerElement,
-            &scalarCoeffAlpha,
-            thrust::raw_pointer_cast(&cellWaveFunctionMatrix[0]),
-            BVec,
-            strideA,
-            thrust::raw_pointer_cast(&(operatorMatrix.getShapeFunctionGradientValuesNLPXInverted())[0]),
-            numNodesPerElement,
-            strideBNLP,
-            &scalarCoeffBeta,
-            thrust::raw_pointer_cast(&gradPsiQuadsNLPXFlatD[0]),
-            BVec,
-            strideCNLP,
-            numCells);
-
-
-        cublasDgemmStridedBatched(operatorMatrix.getCublasHandle(),
-            CUBLAS_OP_N,
-            CUBLAS_OP_N,
-            BVec,
-            numQuadsNLP,
-            numNodesPerElement,
-            &scalarCoeffAlpha,
-            thrust::raw_pointer_cast(&cellWaveFunctionMatrix[0]),
-            BVec,
-            strideA,
-            thrust::raw_pointer_cast(&(operatorMatrix.getShapeFunctionGradientValuesNLPYInverted())[0]),
-            numNodesPerElement,
-            strideBNLP,
-            &scalarCoeffBeta,
-            thrust::raw_pointer_cast(&gradPsiQuadsNLPYFlatD[0]),
-            BVec,
-            strideCNLP,
-            numCells);
-
-        cublasDgemmStridedBatched(operatorMatrix.getCublasHandle(),
-            CUBLAS_OP_N,
-            CUBLAS_OP_N,
-            BVec,
-            numQuadsNLP,
-            numNodesPerElement,
-            &scalarCoeffAlpha,
-            thrust::raw_pointer_cast(&cellWaveFunctionMatrix[0]),
-            BVec,
-            strideA,
-            thrust::raw_pointer_cast(&(operatorMatrix.getShapeFunctionGradientValuesNLPZInverted())[0]),
-            numNodesPerElement,
-            strideBNLP,
-            &scalarCoeffBeta,
-            thrust::raw_pointer_cast(&gradPsiQuadsNLPZFlatD[0]),
-            BVec,
-            strideCNLP,
-            numCells);
-			}
-
 			const int blockSize=innerBlockSizeEloc;
 			const int numberBlocks=numCells/blockSize;
 			const int remBlockSize=numCells-numberBlocks*blockSize;
@@ -421,6 +249,176 @@ namespace dftfe
 
 				if (currentBlockSize>0)
 				{
+          double scalarCoeffAlpha = 1.0,scalarCoeffBeta = 0.0;
+          int strideA = BVec*numNodesPerElement;
+          int strideB = 0;
+          int strideC = BVec*numQuads;
+
+          cublasDgemmStridedBatched(operatorMatrix.getCublasHandle(),
+              CUBLAS_OP_N,
+              CUBLAS_OP_N,
+              BVec,
+              numQuads,
+              numNodesPerElement,
+              &scalarCoeffAlpha,
+              thrust::raw_pointer_cast(&cellWaveFunctionMatrix[startingId*numNodesPerElement*BVec]),
+              BVec,
+              strideA,
+              thrust::raw_pointer_cast(&(operatorMatrix.getShapeFunctionValuesInverted())[0]),
+              numNodesPerElement,
+              strideB,
+              &scalarCoeffBeta,
+              thrust::raw_pointer_cast(&psiQuadsFlatD[startingId*numQuads*BVec]),
+              BVec,
+              strideC,
+              currentBlockSize);
+
+          if (interpolateForNLPQuad)
+          {
+            int strideCNLP = BVec*numQuadsNLP;
+            cublasDgemmStridedBatched(operatorMatrix.getCublasHandle(),
+                CUBLAS_OP_N,
+                CUBLAS_OP_N,
+                BVec,
+                numQuadsNLP,
+                numNodesPerElement,
+                &scalarCoeffAlpha,
+                thrust::raw_pointer_cast(&cellWaveFunctionMatrix[startingId*numNodesPerElement*BVec]),
+                BVec,
+                strideA,
+                thrust::raw_pointer_cast(&(operatorMatrix.getShapeFunctionValuesNLPInverted())[0]),
+                numNodesPerElement,
+                strideB,
+                &scalarCoeffBeta,
+                thrust::raw_pointer_cast(&psiQuadsNLPFlatD[startingId*numQuads*BVec]),
+                BVec,
+                strideCNLP,
+                currentBlockSize);
+          }
+
+          strideB=numNodesPerElement*numQuads;
+
+          cublasDgemmStridedBatched(operatorMatrix.getCublasHandle(),
+              CUBLAS_OP_N,
+              CUBLAS_OP_N,
+              BVec,
+              numQuads,
+              numNodesPerElement,
+              &scalarCoeffAlpha,
+              thrust::raw_pointer_cast(&cellWaveFunctionMatrix[startingId*numNodesPerElement*BVec]),
+              BVec,
+              strideA,
+              thrust::raw_pointer_cast(&(operatorMatrix.getShapeFunctionGradientValuesXInverted())[startingId*numQuads*numNodesPerElement]),
+              numNodesPerElement,
+              strideB,
+              &scalarCoeffBeta,
+              thrust::raw_pointer_cast(&gradPsiQuadsXFlatD[startingId*numQuads*BVec]),
+              BVec,
+              strideC,
+              currentBlockSize);
+
+
+          cublasDgemmStridedBatched(operatorMatrix.getCublasHandle(),
+              CUBLAS_OP_N,
+              CUBLAS_OP_N,
+              BVec,
+              numQuads,
+              numNodesPerElement,
+              &scalarCoeffAlpha,
+              thrust::raw_pointer_cast(&cellWaveFunctionMatrix[startingId*numNodesPerElement*BVec]),
+              BVec,
+              strideA,
+              thrust::raw_pointer_cast(&(operatorMatrix.getShapeFunctionGradientValuesYInverted())[startingId*numQuads*numNodesPerElement]),
+              numNodesPerElement,
+              strideB,
+              &scalarCoeffBeta,
+              thrust::raw_pointer_cast(&gradPsiQuadsYFlatD[startingId*numQuads*BVec]),
+              BVec,
+              strideC,
+              currentBlockSize);
+
+          cublasDgemmStridedBatched(operatorMatrix.getCublasHandle(),
+              CUBLAS_OP_N,
+              CUBLAS_OP_N,
+              BVec,
+              numQuads,
+              numNodesPerElement,
+              &scalarCoeffAlpha,
+              thrust::raw_pointer_cast(&cellWaveFunctionMatrix[startingId*numNodesPerElement*BVec]),
+              BVec,
+              strideA,
+              thrust::raw_pointer_cast(&(operatorMatrix.getShapeFunctionGradientValuesZInverted())[startingId*numQuads*numNodesPerElement]),
+              numNodesPerElement,
+              strideB,
+              &scalarCoeffBeta,
+              thrust::raw_pointer_cast(&gradPsiQuadsZFlatD[startingId*numQuads*BVec]),
+              BVec,
+              strideC,
+              currentBlockSize);
+
+          if (interpolateForNLPQuad)
+          {
+            int strideCNLP = BVec*numQuadsNLP;
+            int strideBNLP=numNodesPerElement*numQuadsNLP;
+
+            cublasDgemmStridedBatched(operatorMatrix.getCublasHandle(),
+                CUBLAS_OP_N,
+                CUBLAS_OP_N,
+                BVec,
+                numQuadsNLP,
+                numNodesPerElement,
+                &scalarCoeffAlpha,
+                thrust::raw_pointer_cast(&cellWaveFunctionMatrix[startingId*numNodesPerElement*BVec]),
+                BVec,
+                strideA,
+                thrust::raw_pointer_cast(&(operatorMatrix.getShapeFunctionGradientValuesNLPXInverted())[startingId*numQuadsNLP*numNodesPerElement]),
+                numNodesPerElement,
+                strideBNLP,
+                &scalarCoeffBeta,
+                thrust::raw_pointer_cast(&gradPsiQuadsNLPXFlatD[startingId*numQuadsNLP*BVec]),
+                BVec,
+                strideCNLP,
+                currentBlockSize);
+
+
+            cublasDgemmStridedBatched(operatorMatrix.getCublasHandle(),
+                CUBLAS_OP_N,
+                CUBLAS_OP_N,
+                BVec,
+                numQuadsNLP,
+                numNodesPerElement,
+                &scalarCoeffAlpha,
+                thrust::raw_pointer_cast(&cellWaveFunctionMatrix[startingId*numNodesPerElement*BVec]),
+                BVec,
+                strideA,
+                thrust::raw_pointer_cast(&(operatorMatrix.getShapeFunctionGradientValuesNLPYInverted())[startingId*numQuadsNLP*numNodesPerElement]),
+                numNodesPerElement,
+                strideBNLP,
+                &scalarCoeffBeta,
+                thrust::raw_pointer_cast(&gradPsiQuadsNLPYFlatD[startingId*numQuadsNLP*BVec]),
+                BVec,
+                strideCNLP,
+                currentBlockSize);
+
+            cublasDgemmStridedBatched(operatorMatrix.getCublasHandle(),
+                CUBLAS_OP_N,
+                CUBLAS_OP_N,
+                BVec,
+                numQuadsNLP,
+                numNodesPerElement,
+                &scalarCoeffAlpha,
+                thrust::raw_pointer_cast(&cellWaveFunctionMatrix[startingId*numNodesPerElement*BVec]),
+                BVec,
+                strideA,
+                thrust::raw_pointer_cast(&(operatorMatrix.getShapeFunctionGradientValuesNLPZInverted())[startingId*numQuadsNLP*numNodesPerElement]),
+                numNodesPerElement,
+                strideBNLP,
+                &scalarCoeffBeta,
+                thrust::raw_pointer_cast(&gradPsiQuadsNLPZFlatD[startingId*numQuadsNLP*BVec]),
+                BVec,
+                strideCNLP,
+                currentBlockSize);
+          }          
 
 					computeELocWfcEshelbyTensorContributions<<<(BVec+255)/256*currentBlockSize*numQuads*6,256>>>
 						(BVec,
