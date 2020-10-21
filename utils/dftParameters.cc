@@ -906,7 +906,7 @@ namespace dftfe {
 				{
 					dftParameters::isIonOpt                      = prm.get_bool("ION OPT");
 					dftParameters::ionOptSolver                  = prm.get("ION OPT SOLVER");
-				  dftParameters::maxLineSearchIterCGPRP        = prm.get("MAX LINE SEARCH ITER");          
+				  dftParameters::maxLineSearchIterCGPRP        = prm.get_integer("MAX LINE SEARCH ITER");          
 					dftParameters::nonSelfConsistentForce        = prm.get_bool("NON SELF CONSISTENT FORCE");
 					dftParameters::isIonForce                    = dftParameters::isIonOpt || prm.get_bool("ION FORCE");
 					dftParameters::forceRelaxTol                 = prm.get_double("FORCE TOL");
