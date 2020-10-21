@@ -35,7 +35,7 @@ Reading initial guess for electron-density.....
 Pseudopotential initalization....
 
 Starting SCF iterations....
-SCF iterations converged to the specified tolerance after: 11 iterations.
+SCF iterations converged to the specified tolerance after: 12 iterations.
 
 Energy computations (Hartree) 
 -------------------
@@ -76,18 +76,18 @@ SCF iterations converged to the specified tolerance after: 13 iterations.
 
 Energy computations (Hartree) 
 -------------------
-             Total energy:          -8.36735490
+             Total energy:          -8.36735491
 
 Absolute value of cell stress (Hartree/Bohr^3)
 ------------------------------------------------------------------------
-0.000015  0.000000  0.000000
-0.000000  0.000015  0.000000
+0.000014  0.000000  0.000000
+0.000000  0.000014  0.000000
 0.000000  0.000000  0.000015
 ------------------------------------------------------------------------
 -----------Simulation Domain bounding vectors (lattice vectors in fully periodic case)-------------
-v1 : 7.578236 0.000000 0.000000
-v2 : 0.000000 7.578236 0.000000
-v3 : 0.000000 0.000000 7.578236
+v1 : 7.578804 0.000000 0.000000
+v2 : 0.000000 7.578804 0.000000
+v3 : 0.000000 0.000000 7.578804
 -----------------------------------------------------------------------------------------
 -----Fractional coordinates of atoms------ 
 AtomId 0:  0.000000 0.000000 0.000000
@@ -113,7 +113,7 @@ SCF iterations converged to the specified tolerance after: 13 iterations.
 
 Energy computations (Hartree) 
 -------------------
-             Total energy:          -8.36740445
+             Total energy:          -8.36740320
 
 Absolute value of cell stress (Hartree/Bohr^3)
 ------------------------------------------------------------------------
@@ -122,9 +122,9 @@ Absolute value of cell stress (Hartree/Bohr^3)
 0.000000  0.000000  0.000000
 ------------------------------------------------------------------------
 -----------Simulation Domain bounding vectors (lattice vectors in fully periodic case)-------------
-v1 : 7.578564 0.000000 0.000000
-v2 : 0.000000 7.578564 0.000000
-v3 : 0.000000 0.000000 7.578564
+v1 : 7.578807 0.000000 0.000000
+v2 : 0.000000 7.578807 0.000000
+v3 : 0.000000 0.000000 7.578807
 -----------------------------------------------------------------------------------------
 -----Fractional coordinates of atoms------ 
 AtomId 0:  0.000000 0.000000 0.000000
@@ -150,7 +150,7 @@ SCF iterations converged to the specified tolerance after: 13 iterations.
 
 Energy computations (Hartree) 
 -------------------
-             Total energy:          -8.36740373
+             Total energy:          -8.36740319
 
 Absolute value of cell stress (Hartree/Bohr^3)
 ------------------------------------------------------------------------
@@ -159,9 +159,9 @@ Absolute value of cell stress (Hartree/Bohr^3)
 0.000000  0.000000  0.000000
 ------------------------------------------------------------------------
 -----------Simulation Domain bounding vectors (lattice vectors in fully periodic case)-------------
-v1 : 7.578596 0.000000 0.000000
-v2 : 0.000000 7.578596 0.000000
-v3 : 0.000000 0.000000 7.578596
+v1 : 7.578804 0.000000 0.000000
+v2 : 0.000000 7.578804 0.000000
+v3 : 0.000000 0.000000 7.578804
 -----------------------------------------------------------------------------------------
 -----Fractional coordinates of atoms------ 
 AtomId 0:  0.000000 0.000000 0.000000
@@ -187,7 +187,7 @@ SCF iterations converged to the specified tolerance after: 13 iterations.
 
 Energy computations (Hartree) 
 -------------------
-             Total energy:          -8.36740366
+             Total energy:          -8.36740320
 
 Absolute value of cell stress (Hartree/Bohr^3)
 ------------------------------------------------------------------------
@@ -196,9 +196,9 @@ Absolute value of cell stress (Hartree/Bohr^3)
 0.000000  0.000000  0.000000
 ------------------------------------------------------------------------
 -----------Simulation Domain bounding vectors (lattice vectors in fully periodic case)-------------
-v1 : 7.578591 0.000000 0.000000
-v2 : 0.000000 7.578591 0.000000
-v3 : 0.000000 0.000000 7.578591
+v1 : 7.578532 0.000000 0.000000
+v2 : 0.000000 7.578532 0.000000
+v3 : 0.000000 0.000000 7.578532
 -----------------------------------------------------------------------------------------
 -----Fractional coordinates of atoms------ 
 AtomId 0:  0.000000 0.000000 0.000000
@@ -224,7 +224,7 @@ SCF iterations converged to the specified tolerance after: 13 iterations.
 
 Energy computations (Hartree) 
 -------------------
-             Total energy:          -8.36740367
+             Total energy:          -8.36740381
 
 Absolute value of cell stress (Hartree/Bohr^3)
 ------------------------------------------------------------------------
@@ -233,9 +233,9 @@ Absolute value of cell stress (Hartree/Bohr^3)
 0.000000  0.000000  0.000000
 ------------------------------------------------------------------------
 -----------Simulation Domain bounding vectors (lattice vectors in fully periodic case)-------------
-v1 : 7.578587 0.000000 0.000000
-v2 : 0.000000 7.578587 0.000000
-v3 : 0.000000 0.000000 7.578587
+v1 : 7.578642 0.000000 0.000000
+v2 : 0.000000 7.578642 0.000000
+v3 : 0.000000 0.000000 7.578642
 -----------------------------------------------------------------------------------------
 -----Fractional coordinates of atoms------ 
 AtomId 0:  0.000000 0.000000 0.000000
@@ -261,7 +261,7 @@ SCF iterations converged to the specified tolerance after: 13 iterations.
 
 Energy computations (Hartree) 
 -------------------
-             Total energy:          -8.36740368
+             Total energy:          -8.36740357
 
 Absolute value of cell stress (Hartree/Bohr^3)
 ------------------------------------------------------------------------
