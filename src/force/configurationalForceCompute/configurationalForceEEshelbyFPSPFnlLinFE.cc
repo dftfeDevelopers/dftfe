@@ -830,8 +830,8 @@ template<unsigned int FEOrder,unsigned int FEOrderElectro>
 				const unsigned int id=nonTrivialIdToAllPseudoWfcIdMap[i];
 				for (unsigned int q=0; q<numQuadPointsNLP; ++q)
         {
-            projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuads[cell*numQuadPointsNLP+q][id][0]=make_vectorized_array(projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuadsFlattened[i*numQuadPointsNLP*3+3*q+1]);
-            projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuads[cell*numQuadPointsNLP+q][id][1]=make_vectorized_array(projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuadsFlattened[i*numQuadPointsNLP*3+3*q+2]);
+            projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuads[cell*numQuadPointsNLP+q][id][0]=make_vectorized_array(projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuadsFlattened[i*numQuadPointsNLP*3+3*q+0]);
+            projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuads[cell*numQuadPointsNLP+q][id][1]=make_vectorized_array(projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuadsFlattened[i*numQuadPointsNLP*3+3*q+1]);
             projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuads[cell*numQuadPointsNLP+q][id][2]=make_vectorized_array(projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuadsFlattened[i*numQuadPointsNLP*3+3*q+2]);            
         }
 

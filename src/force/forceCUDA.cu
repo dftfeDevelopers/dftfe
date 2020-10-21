@@ -244,9 +244,9 @@ namespace dftfe
 			thrust::device_vector<double> shapeFunctionGradientValuesNLPD(blockSize*numQuadsNLP*3*numNodesPerElement,0.0);
 
       for (unsigned int i=0; i<blockSize;i++)
-        thrust::copy(operatorMatrix.getShapeFunctionGradientValuesNLPInverted().begin(), operatorMatrix.getShapeFunctionGradientValuesNLPInverted().end(), shapeFunctionGradientValuesNLPReferenceD.begin()+numQuadsNLP*3*numNodesPerElement);
-
-			for (int iblock=0; iblock<(numberBlocks+1); iblock++)
+        thrust::copy(operatorMatrix.getShapeFunctionGradientValuesNLPInverted().begin(), operatorMatrix.getShapeFunctionGradientValuesNLPInverted().end(), shapeFunctionGradientValuesNLPReferenceD.begin()+i*numQuadsNLP*3*numNodesPerElement);
+			
+      for (int iblock=0; iblock<(numberBlocks+1); iblock++)
 			{
 				const int currentBlockSize= (iblock==numberBlocks)?remBlockSize:blockSize;
 				const int startingId=iblock*blockSize;
@@ -375,10 +375,12 @@ namespace dftfe
               thrust::raw_pointer_cast(&shapeFunctionGradientValuesNLPD[0]),
               numNodesPerElement,
               numNodesPerElement*3,
-              currentBlockSize*numQuadsNLP);          
+              currentBlockSize*numQuadsNLP);  
+          
 
           const int strideCNLPGrad = BVec*3*numQuadsNLP;
           const int strideBNLPGrad=numNodesPerElement*3*numQuadsNLP;
+          
           cublasDgemmStridedBatched(operatorMatrix.getCublasHandle(),
               CUBLAS_OP_N,
               CUBLAS_OP_N,
@@ -393,11 +395,31 @@ namespace dftfe
               numNodesPerElement,
               strideBNLPGrad,
               &scalarCoeffBeta,
-              thrust::raw_pointer_cast(&gradPsiQuadsNLPFlatD[startingId*3*numQuadsNLP*BVec]),
+              thrust::raw_pointer_cast(&gradPsiQuadsNLPFlatD[startingId*numQuadsNLP*3*BVec]),
               BVec,
               strideCNLPGrad,
               currentBlockSize);
-
+          
+          /*
+          cublasDgemmStridedBatched(operatorMatrix.getCublasHandle(),
+              CUBLAS_OP_N,
+              CUBLAS_OP_N,
+              BVec,
+              3*numQuadsNLP,
+              numNodesPerElement,
+              &scalarCoeffAlpha,
+              thrust::raw_pointer_cast(&cellWaveFunctionMatrix[startingId*numNodesPerElement*BVec]),
+              BVec,
+              strideA,
+              thrust::raw_pointer_cast(&(operatorMatrix.getShapeFunctionGradientValuesNLPInverted())[startingId*numQuadsNLP*3*numNodesPerElement]),
+              numNodesPerElement,
+              strideBNLPGrad,
+              &scalarCoeffBeta,
+              thrust::raw_pointer_cast(&gradPsiQuadsNLPFlatD[startingId*numQuadsNLP*3*BVec]),
+              BVec,
+              strideCNLPGrad,
+              currentBlockSize);
+          */
 
 					computeELocWfcEshelbyTensorContributions<<<(BVec+255)/256*currentBlockSize*numQuads*6,256>>>
 						(BVec,
@@ -700,7 +722,7 @@ namespace dftfe
 			thrust::device_vector<double> eshelbyTensorContributionsD(innerBlockSizeEloc*numQuads*blockSize*6,0.0);
 
 			const unsigned int innerBlockSizeEnlp=std::min((unsigned int)10,totalNonTrivialPseudoWfcs);
-			thrust::device_vector<double> nlpContractionContributionD(innerBlockSizeEnlp*numQuadsNLP*blockSize,0.0);
+			thrust::device_vector<double> nlpContractionContributionD(innerBlockSizeEnlp*numQuadsNLP*3*blockSize,0.0);
 			thrust::device_vector<double> projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuadsFlattenedD;
 			thrust::device_vector<unsigned int> projecterKetTimesFlattenedVectorLocalIdsD;
 			thrust::device_vector<unsigned int> nonTrivialIdToElemIdMapD;
