@@ -36,16 +36,14 @@ namespace dftfe
 				const thrust::device_vector<double> & eigenValuesD,
 				const thrust::device_vector<double> & partialOccupanciesD,
 				const thrust::device_vector<double> & onesVecD,
-				const unsigned int innerBlockSizeEloc,
+				const unsigned int cellsBlockSize,
 				thrust::device_vector<double> & psiQuadsFlatD,
-				thrust::device_vector<double> & psiQuadsNLPFlatD,
 				thrust::device_vector<double> & gradPsiQuadsXFlatD,
 				thrust::device_vector<double> & gradPsiQuadsYFlatD,
 				thrust::device_vector<double> & gradPsiQuadsZFlatD,
 				thrust::device_vector<double> & gradPsiQuadsNLPFlatD,
 				thrust::device_vector<double> & eshelbyTensorContributionsD,
-				thrust::device_vector<double> & eshelbyTensorQuadValuesD,
-				const bool interpolateForNLPQuad=false);
+				thrust::device_vector<double> & eshelbyTensorQuadValuesD);
 
 
 		void nlpPsiContractionD(operatorDFTCUDAClass & operatorMatrix,
@@ -92,10 +90,9 @@ namespace dftfe
 				thrust::device_vector<double> & eshelbyTensorQuadValuesD,
 				thrust::device_vector<double> & nlpContractionContributionD,
 				thrust::device_vector<double> & projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuadsFlattenedD,
-				const unsigned int innerBlockSizeEloc,
+				const unsigned int cellsBlockSize,
 				const unsigned int innerBlockSizeEnlp,
-				const bool isPsp,
-				const bool interpolateForNLPQuad=false);
+				const bool isPsp);
 
 		void gpuPortedForceKernelsAllH(operatorDFTCUDAClass & operatorMatrix,
 				const double * X,
@@ -112,8 +109,7 @@ namespace dftfe
 				double * eshelbyTensorQuadValuesH,
 				double * projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuadsFlattenedH,
 				const MPI_Comm & interBandGroupComm,
-				const bool isPsp,
-				const bool interpolateForNLPQuad=false);
+				const bool isPsp);
 	}
 }
 #endif

@@ -416,7 +416,6 @@ void kohnShamDFTOperatorCUDAClass<FEOrder,FEOrderElectro>::preComputeShapeFuncti
   //
   std::vector<double> nlpShapeFunctionValueInverted(numberQuadraturePointsNLP*numberDofsPerElement,0.0);
   std::vector<double> inverseJacobiansNLP(numberPhysicalCells*numberQuadraturePointsNLP*3*3,0.0);
-  //std::vector<double> shapeFunctionGradientValueNLPInverted(numberPhysicalCells*numberQuadraturePointsNLP*3*numberDofsPerElement,0.0);
   std::vector<double> shapeFunctionGradientValueNLPInverted(numberQuadraturePointsNLP*numberDofsPerElement*3,0.0);
 
   cellPtr=dftPtr->matrix_free_data.get_dof_handler(dftPtr->d_densityDofHandlerIndex).begin_active();
@@ -436,17 +435,7 @@ void kohnShamDFTOperatorCUDAClass<FEOrder,FEOrderElectro>::preComputeShapeFuncti
         for(unsigned int i = 0; i < 3; ++i)  
           for(unsigned int j = 0; j < 3; ++j)
             inverseJacobiansNLP[iElem*numberQuadraturePointsNLP*3*3+q_point*3*3+j*3+i]=inverseJacobians[q_point][i][j];
-      /*
-      for(unsigned int iNode = 0; iNode < numberDofsPerElement; ++iNode)
-        for(unsigned int q_point = 0; q_point < numberQuadraturePointsNLP; ++q_point)
-        {
-          const dealii::Tensor<1,3,double> & shape_grad=fe_valuesNLP.shape_grad(iNode,q_point);
-          
-          shapeFunctionGradientValueNLPInverted[iElem*numberQuadraturePointsNLP*numberDofsPerElement*3+q_point*numberDofsPerElement*3+iNode]=shape_grad[0];
-          shapeFunctionGradientValueNLPInverted[iElem*numberQuadraturePointsNLP*numberDofsPerElement*3+q_point*numberDofsPerElement*3+numberDofsPerElement+iNode]=shape_grad[1];
-          shapeFunctionGradientValueNLPInverted[iElem*numberQuadraturePointsNLP*numberDofsPerElement*3+q_point*numberDofsPerElement*3+2*numberDofsPerElement+iNode]=shape_grad[2];
-        } 
-        */
+
 
       if (iElem==0)
       {

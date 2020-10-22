@@ -409,7 +409,6 @@ template<unsigned int FEOrder,unsigned int FEOrderElectro>
 				&elocWfcEshelbyTensorQuadValuesH[0],
 				&projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuadsFlattened[0],
 				dftPtr->interBandGroupComm,
-				isPseudopotential,
 				isPseudopotential);
 
 		gpu_time=MPI_Wtime()-gpu_time;
