@@ -54,7 +54,6 @@ end
 
 subsection SCF parameters
   set COMPUTE ENERGY EACH ITER = false
-  set HIGHER QUAD NLP          = false
   set MAXIMUM ITERATIONS               = 100
   set TEMPERATURE                      = 500
   set TOLERANCE                        = 5e-6
