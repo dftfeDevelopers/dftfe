@@ -79,7 +79,7 @@ subsection SCF parameters
   set MIXING HISTORY     = 70
   set TEMPERATURE                        = 500
   set STARTING WFC= ATOMIC
-  set HIGHER QUAD NLP  = true
+  
   subsection Eigen-solver parameters
      set NUMBER OF KOHN-SHAM WAVEFUNCTIONS = 16
      set SPECTRUM SPLIT CORE EIGENSTATES=7

@@ -56,7 +56,7 @@ subsection SCF parameters
   set MAXIMUM ITERATIONS               = 40
   set TEMPERATURE                      = 500
   set TOLERANCE                        = 5e-6
-  set HIGHER QUAD NLP  = true
+  
   set STARTING WFC=ATOMIC
   subsection Eigen-solver parameters
       set NUMBER OF KOHN-SHAM WAVEFUNCTIONS = 10
