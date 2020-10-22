@@ -81,7 +81,6 @@ namespace dftfe
 				const unsigned int numNodesPerElement,
 				const unsigned int totalNonTrivialPseudoWfcs,
 				thrust::device_vector<double> & psiQuadsFlatD,
-				thrust::device_vector<double> & psiQuadsNLPFlatD,
 				thrust::device_vector<double> & gradPsiQuadsXFlatD,
 				thrust::device_vector<double> & gradPsiQuadsYFlatD,
 				thrust::device_vector<double> & gradPsiQuadsZFlatD,
