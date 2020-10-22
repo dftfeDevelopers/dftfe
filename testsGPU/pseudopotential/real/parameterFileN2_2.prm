@@ -2,7 +2,7 @@ set VERBOSITY=0
 set REPRODUCIBLE OUTPUT=true
 
 subsection GPU
-  set USE GPU = true
+  set USE GPU =true
   set AUTO GPU BLOCK SIZES=false
 end
 subsection Geometry
