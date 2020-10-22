@@ -78,7 +78,7 @@ subsection SCF parameters
   set TEMPERATURE                      = 500 
   set TOLERANCE                        = 1e-6
   set STARTING WFC=ATOMIC
-  set HIGHER QUAD NLP  = false
+  set HIGHER QUAD NLP  = true
   subsection Eigen-solver parameters
      set NUMBER OF KOHN-SHAM WAVEFUNCTIONS = 20
      set CHEBYSHEV FILTER TOLERANCE=5e-4
