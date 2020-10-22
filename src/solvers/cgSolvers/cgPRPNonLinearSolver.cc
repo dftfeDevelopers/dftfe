@@ -530,17 +530,6 @@ namespace dftfe {
           //
           eta = computeEta();
 
-          unsigned int isSuccess=0;
-          if (std::fabs(eta) < toleranceSqr*d_numberUnknowns)
-            isSuccess=1;
-          MPI_Bcast(&(isSuccess),
-              1,
-              MPI_INT,
-              0,
-              MPI_COMM_WORLD);
-          if (isSuccess==1)
-            return SUCCESS;
-
           //
           //swap eta and etaP to make the notation consistent to PRP algorithm in "Painless Conjugate Algorithm"
           //https://www.cs.cmu.edu/~quake-papers/painless-conjugate-gradient.pdf

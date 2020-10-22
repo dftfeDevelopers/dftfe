@@ -138,6 +138,7 @@ namespace dftfe {
 		bool smearedNuclearCharges=false;
     bool floatingNuclearCharges=false;
     bool nonLinearCoreCorrection=false;
+    unsigned int maxLineSearchIterCGPRP=5;
 
 		void declare_parameters(ParameterHandler &prm)
 		{
@@ -287,6 +288,9 @@ namespace dftfe {
 							Patterns::Selection("CGDESCENT|LBFGS|CGPRP"),
 							"[Standard] Method for Ion relaxation solver. CGPRP (Nonlinear conjugate gradient with Secant and Polak-Ribiere approach) is the default");
 
+					prm.declare_entry("MAX LINE SEARCH ITER", "5",
+							Patterns::Integer(1,100),
+							"[Standard] Sets the maximum number of line search iterations in the case of CGPRP. Default is 5.");
 
 					prm.declare_entry("FORCE TOL", "1e-4",
 							Patterns::Double(0,1.0),
@@ -897,6 +901,7 @@ namespace dftfe {
 				{
 					dftParameters::isIonOpt                      = prm.get_bool("ION OPT");
 					dftParameters::ionOptSolver                  = prm.get("ION OPT SOLVER");
+				  dftParameters::maxLineSearchIterCGPRP        = prm.get_integer("MAX LINE SEARCH ITER");          
 					dftParameters::nonSelfConsistentForce        = prm.get_bool("NON SELF CONSISTENT FORCE");
 					dftParameters::isIonForce                    = dftParameters::isIonOpt || prm.get_bool("ION FORCE");
 					dftParameters::forceRelaxTol                 = prm.get_double("FORCE TOL");

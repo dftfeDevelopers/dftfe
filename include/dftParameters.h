@@ -140,6 +140,7 @@ namespace dftfe {
 		extern bool smearedNuclearCharges;
     extern bool floatingNuclearCharges;
     extern bool nonLinearCoreCorrection;
+    extern unsigned int maxLineSearchIterCGPRP;
 
 		/**
 		 * Declare parameters.
