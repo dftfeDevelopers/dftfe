@@ -98,8 +98,7 @@ template<unsigned int FEOrder,unsigned int FEOrderElectro>
 	QGauss<C_DIM>  quadrature(C_num1DQuad<C_rhoNodalPolyOrder<FEOrder,FEOrderElectro>()>());
 
 	const unsigned int numQuadPoints=forceEval.n_q_points;
-	const unsigned int numQuadPointsNLP=dftParameters::useHigherQuadNLP?
-		forceEvalNLP.n_q_points:numQuadPoints;
+	const unsigned int numQuadPointsNLP=forceEvalNLP.n_q_points;
 
 	const unsigned int numEigenVectors=dftPtr->d_numEigenValues;
 	const unsigned int numKPoints=dftPtr->d_kPointWeights.size();
@@ -287,7 +286,7 @@ template<unsigned int FEOrder,unsigned int FEOrderElectro>
 				psiEvalSpin0.reinit(cell);
 				psiEvalSpin1.reinit(cell);
 
-				if (isPseudopotential && dftParameters::useHigherQuadNLP)
+				if (isPseudopotential)
 				{
 					forceEvalNLP.reinit(cell);
 #ifdef USE_COMPLEX
@@ -374,7 +373,7 @@ template<unsigned int FEOrder,unsigned int FEOrderElectro>
 				std::vector<Tensor<1,C_DIM,VectorizedArray<double> > > gradPsiSpin1QuadsNLP;        
 #endif
 
-				if (isPseudopotential && dftParameters::useHigherQuadNLP)
+				if (isPseudopotential)
 				{
 #ifdef USE_COMPLEX
 					psiSpin0QuadsNLP.resize(numQuadPointsNLP*currentBlockSize*numKPoints,zeroTensor1);
@@ -449,18 +448,10 @@ template<unsigned int FEOrder,unsigned int FEOrderElectro>
 						  ZetaDeltaVQuads,
 							projectorKetTimesPsiSpin0TimesVTimesPartOcc,
 							projectorKetTimesPsiSpin1TimesVTimesPartOcc,
-							dftParameters::useHigherQuadNLP?
-							psiSpin0QuadsNLP:
-							psiSpin0Quads,
-							dftParameters::useHigherQuadNLP?
-							psiSpin1QuadsNLP:
-							psiSpin1Quads,
-							dftParameters::useHigherQuadNLP?
-							gradPsiSpin0QuadsNLP:
-							gradPsiSpin0Quads,
-							dftParameters::useHigherQuadNLP?
-							gradPsiSpin1QuadsNLP:
-							gradPsiSpin1Quads,              
+							psiSpin0QuadsNLP,
+							psiSpin1QuadsNLP,
+							gradPsiSpin0QuadsNLP,
+							gradPsiSpin1QuadsNLP,
 							blockedEigenValues,
 							macroIdToNonlocalAtomsSetMap[cell]);
 
@@ -473,18 +464,10 @@ template<unsigned int FEOrder,unsigned int FEOrderElectro>
 						 ZetaDeltaVQuads,
 						 projectorKetTimesPsiSpin0TimesVTimesPartOcc[0],
 						 projectorKetTimesPsiSpin1TimesVTimesPartOcc[0],
-						 dftParameters::useHigherQuadNLP?
-						 psiSpin0QuadsNLP:
-						 psiSpin0Quads,
-						 dftParameters::useHigherQuadNLP?
-						 psiSpin1QuadsNLP:
-						 psiSpin1Quads,
-						 dftParameters::useHigherQuadNLP?
-						 gradPsiSpin0QuadsNLP:
-						 gradPsiSpin0Quads,
-						 dftParameters::useHigherQuadNLP?
-						 gradPsiSpin1QuadsNLP:
-						 gradPsiSpin1Quads,             
+						 psiSpin0QuadsNLP,
+						 psiSpin1QuadsNLP,
+						 gradPsiSpin0QuadsNLP,
+						 gradPsiSpin1QuadsNLP,
 						 macroIdToNonlocalAtomsSetMap[cell]);
 #endif
 				}//is pseudopotential check
@@ -517,45 +500,13 @@ template<unsigned int FEOrder,unsigned int FEOrderElectro>
 						 dftPtr->fermiEnergyDown,
 						 dftParameters::TVal);
 #endif
-					Tensor<1,C_DIM,VectorizedArray<double> > F=zeroTensor3;
-
-					if(isPseudopotential)
-					{
-						if (!dftParameters::useHigherQuadNLP)
-						{
-
-#ifdef USE_COMPLEX
-							Tensor<1,C_DIM,VectorizedArray<double> > FKPoints=eshelbyTensorSP::getFnl(ZetaDeltaVQuads[q],
-									projectorKetTimesPsiSpin0TimesVTimesPartOcc,
-									projectorKetTimesPsiSpin1TimesVTimesPartOcc,
-									gradPsiSpin0Quads.begin()+q*currentBlockSize*numKPoints,
-									gradPsiSpin1Quads.begin()+q*currentBlockSize*numKPoints,                  
-									dftPtr->d_kPointWeights,
-									currentBlockSize,
-									macroIdToNonlocalAtomsSetMap[cell]);
-							forceEvalKPoints.submit_value(FKPoints,q);
-#else
-							F+=eshelbyTensorSP::getFnl(ZetaDeltaVQuads[q],
-									projectorKetTimesPsiSpin0TimesVTimesPartOcc[0],
-									projectorKetTimesPsiSpin1TimesVTimesPartOcc[0],
-									gradPsiSpin0Quads.begin()+q*currentBlockSize,
-									gradPsiSpin1Quads.begin()+q*currentBlockSize,                  
-									currentBlockSize,
-									macroIdToNonlocalAtomsSetMap[cell]);
-#endif
-						}
-
-
-					}
-
-					forceEval.submit_value(F,q);
 					forceEval.submit_gradient(E,q);
 #ifdef USE_COMPLEX
 					forceEvalKPoints.submit_gradient(EKPoints,q);
 #endif
 				}//quad point loop
 
-				if (isPseudopotential && dftParameters::useHigherQuadNLP)
+				if (isPseudopotential)
 					for (unsigned int q=0; q<numQuadPointsNLP; ++q)
 					{
 
@@ -584,21 +535,16 @@ template<unsigned int FEOrder,unsigned int FEOrderElectro>
 
 				if(isPseudopotential)
 				{
-					forceEval.integrate(true,true);
+					forceEval.integrate(false,true);
 #ifdef USE_COMPLEX
-					if (dftParameters::useHigherQuadNLP)
-						forceEvalKPoints.integrate(false,true);
-					else
-						forceEvalKPoints.integrate(true,true);
+					forceEvalKPoints.integrate(false,true);
 #endif
-					if (dftParameters::useHigherQuadNLP)
-					{
+
 #ifdef USE_COMPLEX
-						forceEvalKPointsNLP.integrate(true,false);
+          forceEvalKPointsNLP.integrate(true,false);
 #else
-						forceEvalNLP.integrate(true,false);
+          forceEvalNLP.integrate(true,false);
 #endif
-					}
 				}
 				else
 				{
@@ -612,7 +558,7 @@ template<unsigned int FEOrder,unsigned int FEOrderElectro>
 #ifdef USE_COMPLEX
 				forceEvalKPoints.distribute_local_to_global(d_configForceVectorLinFEKPoints);
 #endif
-				if (isPseudopotential && dftParameters::useHigherQuadNLP)
+				if (isPseudopotential)
 				{
 #ifdef USE_COMPLEX
 					forceEvalKPointsNLP.distribute_local_to_global(d_configForceVectorLinFEKPoints);

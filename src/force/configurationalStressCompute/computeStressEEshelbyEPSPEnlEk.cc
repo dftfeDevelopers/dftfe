@@ -84,8 +84,7 @@ void forceClass<FEOrder,FEOrderElectro>::computeStressEEshelbyEPSPEnlEk(const Ma
 	QGauss<C_DIM>  quadrature(C_num1DQuad<C_rhoNodalPolyOrder<FEOrder,FEOrderElectro>()>());
 
 	const unsigned int numQuadPoints=forceEval.n_q_points;
-	const unsigned int numQuadPointsNLP=dftParameters::useHigherQuadNLP?
-		forceEvalNLP.n_q_points:numQuadPoints;
+	const unsigned int numQuadPointsNLP=forceEvalNLP.n_q_points;
 	const unsigned int numEigenVectors=dftPtr->d_numEigenValues;
 	const unsigned int numKPoints=dftPtr->d_kPointWeights.size();
 
@@ -166,7 +165,7 @@ void forceClass<FEOrder,FEOrderElectro>::computeStressEEshelbyEPSPEnlEk(const Ma
 		forceEval.reinit(cell);
 		psiEval.reinit(cell);
 
-		if (isPseudopotential && dftParameters::useHigherQuadNLP)
+		if (isPseudopotential)
 		{
 			forceEvalNLP.reinit(cell);
 			psiEvalNLP.reinit(cell);
@@ -294,7 +293,7 @@ void forceClass<FEOrder,FEOrderElectro>::computeStressEEshelbyEPSPEnlEk(const Ma
 
 		std::vector<Tensor<1,2,VectorizedArray<double> > > psiQuadsNLP;
 		std::vector<Tensor<1,2,Tensor<1,C_DIM,VectorizedArray<double> > > > gradPsiQuadsNLP;    
-		if (isPseudopotential && dftParameters::useHigherQuadNLP)
+		if (isPseudopotential)
 		{
 			psiQuadsNLP.resize(numQuadPointsNLP*numEigenVectors*numKPoints,zeroTensor1);
       gradPsiQuadsNLP.resize(numQuadPointsNLP*numEigenVectors*numKPoints,zeroTensor2);   
@@ -380,24 +379,11 @@ void forceClass<FEOrder,FEOrderElectro>::computeStressEEshelbyEPSPEnlEk(const Ma
 				 dftPtr->fermiEnergy,
 				 dftParameters::TVal);
 
-			if(isPseudopotential && !dftParameters::useHigherQuadNLP)
-			{
-				EKPoints+=eshelbyTensor::getEnlStress(zetalmDeltaVlProductDistImageAtomsQuads[q],
-						projectorKetTimesPsiTimesVTimesPartOcc,
-						psiQuads.begin()+q*numEigenVectors*numKPoints,
-            gradPsiQuads.begin()+q*numEigenVectors*numKPoints, 
-						dftPtr->d_kPointWeights,
-            dftPtr->d_kPointCoordinates,
-						macroIdToNonlocalAtomsSetMap[cell],
-						numEigenVectors);
-
-			}//is pseudopotential check
-
 			EQuadSum+=E*forceEval.JxW(q);
 			EKPointsQuadSum+=EKPoints*forceEval.JxW(q);
 		}//quad point loop
 
-		if (isPseudopotential && dftParameters::useHigherQuadNLP)
+		if (isPseudopotential)
 			for (unsigned int q=0; q<numQuadPointsNLP; ++q)
 			{
 				Tensor<2,C_DIM,VectorizedArray<double> > EKPoints

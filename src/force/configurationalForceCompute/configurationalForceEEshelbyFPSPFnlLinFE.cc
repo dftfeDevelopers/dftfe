@@ -144,8 +144,7 @@ template<unsigned int FEOrder,unsigned int FEOrderElectro>
 
 
 	const unsigned int numQuadPoints=forceEval.n_q_points;
-	const unsigned int numQuadPointsNLP=dftParameters::useHigherQuadNLP?
-		forceEvalNLP.n_q_points:numQuadPoints;
+	const unsigned int numQuadPointsNLP=forceEvalNLP.n_q_points;
 
 	const unsigned int numEigenVectors=dftPtr->d_numEigenValues;
 	const unsigned int numKPoints=dftPtr->d_kPointWeights.size();
@@ -411,7 +410,7 @@ template<unsigned int FEOrder,unsigned int FEOrderElectro>
 				&projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuadsFlattened[0],
 				dftPtr->interBandGroupComm,
 				isPseudopotential,
-				isPseudopotential && dftParameters::useHigherQuadNLP);
+				isPseudopotential);
 
 		gpu_time=MPI_Wtime()-gpu_time;
 
@@ -527,15 +526,12 @@ template<unsigned int FEOrder,unsigned int FEOrderElectro>
 
 					psiEval.reinit(cell);
 
-					if (isPseudopotential && dftParameters::useHigherQuadNLP)
-					{
-						forceEvalNLP.reinit(cell);
+          forceEvalNLP.reinit(cell);
 #ifdef USE_COMPLEX
-						forceEvalKPointsNLP.reinit(cell);
+          forceEvalKPointsNLP.reinit(cell);
 #endif
 
-						psiEvalNLP.reinit(cell);
-					}
+          psiEvalNLP.reinit(cell);
 
 					const unsigned int numSubCells=matrixFreeData.n_components_filled(cell);
 #ifdef USE_COMPLEX
@@ -568,7 +564,7 @@ template<unsigned int FEOrder,unsigned int FEOrderElectro>
           std::vector<Tensor<1,C_DIM,VectorizedArray<double> > > gradPsiQuadsNLP;
 #endif
 
-					if (isPseudopotential && dftParameters::useHigherQuadNLP)
+					if (isPseudopotential)
 					{
 #ifdef USE_COMPLEX
 						psiQuadsNLP.resize(numQuadPointsNLP*currentBlockSize*numKPoints,zeroTensor1);
@@ -611,51 +607,26 @@ template<unsigned int FEOrder,unsigned int FEOrderElectro>
 								}
 						}
 
+            for (unsigned int q=0; q<numQuadPointsNLP; ++q)
+            {
+              std::vector<Tensor<1,C_DIM,VectorizedArray<double> > > & tempContract= projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuads[cell*numQuadPointsNLP+q];
+              //std::fill(temp1.begin(),temp1.end(),make_vectorized_array(0.0));
+              for (unsigned int i=0; i<nonTrivialNonLocalIds.size(); ++i)
+              {
+                const unsigned int iatom=nonTrivialNonLocalIds[i];
+                const unsigned int numberSingleAtomPseudoWaveFunctions=numPseudoWfcsAtom[iatom];
+                const unsigned int startingId=nonlocalPseudoWfcsAccum[iatom];
+                const std::vector<double> & temp2=projectorKetTimesPsiTimesVTimesPartOcc[0][iatom];
+                for (unsigned int ipsp=0; ipsp<numberSingleAtomPseudoWaveFunctions; ++ipsp) 
+                  for (unsigned int iEigenVec=0; iEigenVec<currentBlockSize; ++iEigenVec)
+                  {
+                    tempContract[startingId+ipsp]
+                      += gradPsiQuadsNLP[q*currentBlockSize+iEigenVec]
+                      *make_vectorized_array(temp2[ipsp*currentBlockSize+iEigenVec]);
+                  }
+              }
+            }
 
-						if (dftParameters::useHigherQuadNLP)
-						{
-							for (unsigned int q=0; q<numQuadPointsNLP; ++q)
-							{
-								std::vector<Tensor<1,C_DIM,VectorizedArray<double> > > & tempContract= projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuads[cell*numQuadPointsNLP+q];
-								//std::fill(temp1.begin(),temp1.end(),make_vectorized_array(0.0));
-								for (unsigned int i=0; i<nonTrivialNonLocalIds.size(); ++i)
-								{
-									const unsigned int iatom=nonTrivialNonLocalIds[i];
-									const unsigned int numberSingleAtomPseudoWaveFunctions=numPseudoWfcsAtom[iatom];
-									const unsigned int startingId=nonlocalPseudoWfcsAccum[iatom];
-									const std::vector<double> & temp2=projectorKetTimesPsiTimesVTimesPartOcc[0][iatom];
-									for (unsigned int ipsp=0; ipsp<numberSingleAtomPseudoWaveFunctions; ++ipsp) 
-										for (unsigned int iEigenVec=0; iEigenVec<currentBlockSize; ++iEigenVec)
-										{
-											tempContract[startingId+ipsp]
-												+= gradPsiQuadsNLP[q*currentBlockSize+iEigenVec]
-												*make_vectorized_array(temp2[ipsp*currentBlockSize+iEigenVec]);
-										}
-								}
-							}
-						}
-						else
-						{
-							for (unsigned int q=0; q<numQuadPoints; ++q)
-							{
-								std::vector<Tensor<1,C_DIM,VectorizedArray<double> > > & tempContract= projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuads[cell*numQuadPoints+q];
-								//std::fill(temp1.begin(),temp1.end(),make_vectorized_array(0.0));
-								for (unsigned int i=0; i<nonTrivialNonLocalIds.size(); ++i)
-								{
-									const unsigned int iatom=nonTrivialNonLocalIds[i];
-									const unsigned int numberSingleAtomPseudoWaveFunctions=numPseudoWfcsAtom[iatom];
-									const unsigned int startingId=nonlocalPseudoWfcsAccum[iatom];
-									const std::vector<double> & temp2=projectorKetTimesPsiTimesVTimesPartOcc[0][iatom];
-									for (unsigned int ipsp=0; ipsp<numberSingleAtomPseudoWaveFunctions; ++ipsp) 
-										for (unsigned int iEigenVec=0; iEigenVec<currentBlockSize; ++iEigenVec)
-										{
-											tempContract[startingId+ipsp]
-												+= gradPsiQuads[q*currentBlockSize+iEigenVec]
-												*make_vectorized_array(temp2[ipsp*currentBlockSize+iEigenVec]);
-										}
-								}
-							}
-						}
 					}
 
 #endif
@@ -671,16 +642,13 @@ template<unsigned int FEOrder,unsigned int FEOrderElectro>
 							 cell,
 				       ZetaDeltaVQuads,
 							 projectorKetTimesPsiTimesVTimesPartOcc,
-							 dftParameters::useHigherQuadNLP?psiQuadsNLP:psiQuads,               
-							 dftParameters::useHigherQuadNLP?gradPsiQuadsNLP:gradPsiQuads,
+							 psiQuadsNLP,               
+							 gradPsiQuadsNLP,
 							 blockedEigenValues,
 							 macroIdToNonlocalAtomsSetMap[cell]);
-
-
 #else
 
 #endif
-
 					}//is pseudopotential check
 
 					for (unsigned int q=0; q<numQuadPoints; ++q)
@@ -703,35 +671,13 @@ template<unsigned int FEOrder,unsigned int FEOrderElectro>
 							 blockedEigenValues[0],
 							 blockedPartialOccupancies[0]);
 #endif
-						Tensor<1,C_DIM,VectorizedArray<double> > F=zeroTensor3;
-
-						if(isPseudopotential)
-						{
-							if (!dftParameters::useHigherQuadNLP)
-							{
-#ifdef USE_COMPLEX
-								Tensor<1,C_DIM,VectorizedArray<double> > FKPoints=eshelbyTensor::getFnl(ZetaDeltaVQuads[cell*numQuadPoints+q],
-										projectorKetTimesPsiTimesVTimesPartOcc,
-										gradPsiQuads.begin()+q*currentBlockSize*numKPoints,
-										dftPtr->d_kPointWeights,
-										currentBlockSize,
-										macroIdToNonlocalAtomsSetMap[cell]);
-								forceEvalKPoints.submit_value(FKPoints,q);
-#else
-
-#endif
-							}
-
-						}
-
-						forceEval.submit_value(F,q);
 						forceEval.submit_gradient(E,q);
 #ifdef USE_COMPLEX
 						forceEvalKPoints.submit_gradient(EKPoints,q);
 #endif
 					}//quad point loop
 
-					if (isPseudopotential && dftParameters::useHigherQuadNLP)
+					if (isPseudopotential)
 						for (unsigned int q=0; q<numQuadPointsNLP; ++q)
 						{
 #ifdef USE_COMPLEX
@@ -748,25 +694,14 @@ template<unsigned int FEOrder,unsigned int FEOrderElectro>
 						}//nonlocal psp quad points loop
 
 
-					forceEval.integrate(true,true);
+					forceEval.integrate(false,true);
 
 					if(isPseudopotential)
 					{
 #ifdef USE_COMPLEX
-						if (dftParameters::useHigherQuadNLP)
-							forceEvalKPoints.integrate(false,true);
-						else
-							forceEvalKPoints.integrate(true,true);
+						forceEvalKPoints.integrate(false,true);
+            forceEvalKPointsNLP.integrate(true,false);
 #endif
-
-						if (dftParameters::useHigherQuadNLP)
-						{
-
-#ifdef USE_COMPLEX
-							forceEvalKPointsNLP.integrate(true,false);
-#else
-#endif
-						}
 					}
 					else
 					{
@@ -780,12 +715,10 @@ template<unsigned int FEOrder,unsigned int FEOrderElectro>
 					forceEvalKPoints.distribute_local_to_global(d_configForceVectorLinFEKPoints);
 #endif
 
-					if (isPseudopotential && dftParameters::useHigherQuadNLP)
+					if (isPseudopotential)
 					{
 #ifdef USE_COMPLEX
 						forceEvalKPointsNLP.distribute_local_to_global(d_configForceVectorLinFEKPoints);
-#else
-						//forceEvalNLP.distribute_local_to_global(d_configForceVectorLinFE);
 #endif
 					}
 				}//macro cell loop
@@ -843,12 +776,9 @@ template<unsigned int FEOrder,unsigned int FEOrderElectro>
 	if (isPseudopotential)
 		for (unsigned int cell=0; cell<matrixFreeData.n_macro_cells(); ++cell)
 		{
-			if (dftParameters::useHigherQuadNLP)
-				forceEvalNLP.reinit(cell);
-			else
-				forceEval.reinit(cell);
-
-			const unsigned int numNonLocalAtomsCurrentProc=dftPtr->d_nonLocalAtomIdsInCurrentProcess.size();
+			forceEvalNLP.reinit(cell);
+			
+      const unsigned int numNonLocalAtomsCurrentProc=dftPtr->d_nonLocalAtomIdsInCurrentProcess.size();
 			std::vector<bool> isAtomInCell(numNonLocalAtomsCurrentProc,false);
 
 			std::vector<unsigned int> nonTrivialNonLocalIds;
@@ -886,28 +816,13 @@ template<unsigned int FEOrder,unsigned int FEOrderElectro>
 						isAtomInCell,
 						nonlocalPseudoWfcsAccum);
 
-				if (dftParameters::useHigherQuadNLP)
-				{
-					forceEvalNLP.submit_value(F,q);
-				}
-				else
-				{
-					forceEval.submit_value(F,q);
-				}
+				forceEvalNLP.submit_value(F,q);
 			}//nonlocal psp quad points loop
 
 
+			forceEvalNLP.integrate(true,false);
 
-			if (dftParameters::useHigherQuadNLP)
-				forceEvalNLP.integrate(true,false);
-			else
-				forceEval.integrate(true,false); 
-
-
-			if (dftParameters::useHigherQuadNLP)
-				forceEvalNLP.distribute_local_to_global(d_configForceVectorLinFE);
-			else
-				forceEval.distribute_local_to_global(d_configForceVectorLinFE);
+			forceEvalNLP.distribute_local_to_global(d_configForceVectorLinFE);
 		}
 #endif
 

@@ -35,10 +35,9 @@ void forceClass<FEOrder, FEOrderElectro>::computeElementalNonLocalPseudoOVDataFo
 	//
   QIterated<3> quadrature(QGauss<1>(C_num1DQuad<C_rhoNodalPolyOrder<FEOrder,FEOrderElectro>()>()),1);
   QIterated<3> quadratureHigh(QGauss<1>(C_num1DQuadNLPSP<FEOrder>()),C_numCopies1DQuadNLPSP());
-	FEValues<3> fe_values(dftPtr->FE, dftParameters::useHigherQuadNLP?quadratureHigh:quadrature, update_quadrature_points);
+	FEValues<3> fe_values(dftPtr->FE, quadratureHigh, update_quadrature_points);
 	const unsigned int numberNodesPerElement  = dftPtr->FE.dofs_per_cell;
-	const unsigned int numberQuadraturePoints = dftParameters::useHigherQuadNLP?quadratureHigh.size()
-		:quadrature.size();
+	const unsigned int numberQuadraturePoints = quadratureHigh.size();
 	const unsigned int numKPoints=dftPtr->d_kPointWeights.size();
 
 	//

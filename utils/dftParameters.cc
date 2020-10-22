@@ -83,7 +83,6 @@ namespace dftfe {
 		bool reuseWfcGeoOpt=false;
 		bool reuseDensityGeoOpt=false;
 		double mpiAllReduceMessageBlockSizeMB=2.0;
-		bool useHigherQuadNLP=true;
 		bool useMixedPrecPGS_SR=false;
 		bool useMixedPrecPGS_O=false;
 		bool useAsyncChebPGS_SR = false;
@@ -577,10 +576,6 @@ namespace dftfe {
 						Patterns::Bool(),
 						"[Advanced] Boolean parameter specifying whether to compute the total energy at the end of every SCF. Setting it to false can lead to some computational time savings.");
 
-				prm.declare_entry("HIGHER QUAD NLP", "true",
-						Patterns::Bool(),
-						"[Advanced] Boolean parameter specifying whether to use a higher order quadrature rule for the calculations involving the non-local part of the pseudopotential. Default setting is true. Could be safely set to false if you are using a very refined mesh.");
-
 				prm.enter_subsection ("Eigen-solver parameters");
 				{
 					prm.declare_entry("NUMBER OF KOHN-SHAM WAVEFUNCTIONS", "1",
@@ -1002,7 +997,6 @@ namespace dftfe {
 				dftParameters::constraintMagnetization       = prm.get_bool("CONSTRAINT MAGNETIZATION");
 				dftParameters::startingWFCType               = prm.get("STARTING WFC");
 				dftParameters::computeEnergyEverySCF         = prm.get_bool("COMPUTE ENERGY EACH ITER");
-				dftParameters::useHigherQuadNLP              = prm.get_bool("HIGHER QUAD NLP");
 
 
 				prm.enter_subsection ("Eigen-solver parameters");

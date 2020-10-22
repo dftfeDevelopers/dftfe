@@ -88,8 +88,7 @@ template<unsigned int FEOrder,unsigned int FEOrderElectro>
 	QGauss<C_DIM>  quadrature(C_num1DQuad<C_rhoNodalPolyOrder<FEOrder,FEOrderElectro>()>());
 
 	const unsigned int numQuadPoints=forceEval.n_q_points;
-	const unsigned int numQuadPointsNLP=dftParameters::useHigherQuadNLP?
-		forceEvalNLP.n_q_points:numQuadPoints;
+	const unsigned int numQuadPointsNLP=forceEvalNLP.n_q_points;
 	const unsigned int numEigenVectors=dftPtr->d_numEigenValues;
 	const unsigned int numKPoints=dftPtr->d_kPointWeights.size();
 
@@ -201,7 +200,7 @@ template<unsigned int FEOrder,unsigned int FEOrderElectro>
 		psiEvalSpin0.reinit(cell);
 		psiEvalSpin1.reinit(cell);
 
-		if (isPseudopotential && dftParameters::useHigherQuadNLP)
+		if (isPseudopotential)
 		{
 			forceEvalNLP.reinit(cell);
 			psiEvalSpin0NLP.reinit(cell);
@@ -377,7 +376,7 @@ template<unsigned int FEOrder,unsigned int FEOrderElectro>
 		std::vector<Tensor<1,2,VectorizedArray<double> > > psiSpin1QuadsNLP;
 		std::vector<Tensor<1,2,Tensor<1,C_DIM,VectorizedArray<double> > > > gradPsiSpin0QuadsNLP;
 		std::vector<Tensor<1,2,Tensor<1,C_DIM,VectorizedArray<double> > > > gradPsiSpin1QuadsNLP;    
-		if (isPseudopotential && dftParameters::useHigherQuadNLP)
+		if (isPseudopotential)
 		{
 			psiSpin0QuadsNLP.resize(numQuadPointsNLP*numEigenVectors*numKPoints,zeroTensor1);
 			psiSpin1QuadsNLP.resize(numQuadPointsNLP*numEigenVectors*numKPoints,zeroTensor1);
@@ -477,28 +476,12 @@ template<unsigned int FEOrder,unsigned int FEOrderElectro>
 				 dftPtr->fermiEnergyDown,
 				 dftParameters::TVal);
 
-			if(isPseudopotential && !dftParameters::useHigherQuadNLP)
-			{
-				EKPoints+=eshelbyTensorSP::getEnlStress(zetalmDeltaVlProductDistImageAtomsQuads[q],
-						projectorKetTimesPsiSpin0TimesVTimesPartOcc,
-						projectorKetTimesPsiSpin1TimesVTimesPartOcc,
-						psiSpin0Quads.begin()+q*numEigenVectors*numKPoints,
-						psiSpin1Quads.begin()+q*numEigenVectors*numKPoints,
-            gradPsiSpin0Quads.begin()+q*numEigenVectors*numKPoints,
-						gradPsiSpin1Quads.begin()+q*numEigenVectors*numKPoints,
-						dftPtr->d_kPointWeights,
-						dftPtr->d_kPointCoordinates,            
-						macroIdToNonlocalAtomsSetMap[cell],
-						numEigenVectors);
-
-			}//is pseudopotential check
-
 			EQuadSum+=E*forceEval.JxW(q);
 			EKPointsQuadSum+=EKPoints*forceEval.JxW(q);
 
 		}//quad point loop
 
-		if (isPseudopotential && dftParameters::useHigherQuadNLP)
+		if (isPseudopotential)
 			for (unsigned int q=0; q<numQuadPointsNLP; ++q)
 			{
 				Tensor<2,C_DIM,VectorizedArray<double> > EKPoints
