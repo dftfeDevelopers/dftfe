@@ -458,8 +458,9 @@ void kohnShamDFTOperatorCUDAClass<FEOrder,FEOrderElectro>::preComputeShapeFuncti
             nlpShapeFunctionValueInverted[q_point*numberDofsPerElement+iNode] = val;
 
             const dealii::Tensor<1,3,double> & shape_grad_real=fe_valuesNLP.shape_grad(iNode,q_point);
-            
-            const dealii::Tensor<1,3,double> & shape_grad_reference= apply_transformation(jacobians[q_point],shape_grad_real);
+           
+            // J^{T}*grad(u_h)
+            const dealii::Tensor<1,3,double> & shape_grad_reference= apply_transformation(jacobians[q_point].transpose(),shape_grad_real);
 
             shapeFunctionGradientValueNLPInverted[q_point*numberDofsPerElement*3+iNode]=shape_grad_reference[0];
             shapeFunctionGradientValueNLPInverted[q_point*numberDofsPerElement*3+numberDofsPerElement+iNode]=shape_grad_reference[1];

@@ -721,7 +721,7 @@ namespace dftfe
 			const unsigned int innerBlockSizeEloc=std::min((unsigned int)10,numCells);
 			thrust::device_vector<double> eshelbyTensorContributionsD(innerBlockSizeEloc*numQuads*blockSize*6,0.0);
 
-			const unsigned int innerBlockSizeEnlp=std::min((unsigned int)10,totalNonTrivialPseudoWfcs);
+		  const unsigned int innerBlockSizeEnlp=std::min((unsigned int)10,totalNonTrivialPseudoWfcs);
 			thrust::device_vector<double> nlpContractionContributionD(innerBlockSizeEnlp*numQuadsNLP*3*blockSize,0.0);
 			thrust::device_vector<double> projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuadsFlattenedD;
 			thrust::device_vector<unsigned int> projecterKetTimesFlattenedVectorLocalIdsD;
