@@ -56,7 +56,7 @@ subsection Geometry
   set ATOMIC COORDINATES FILE      = @SOURCE_DIR@/fccAl_coordinates.inp
   set DOMAIN VECTORS FILE = @SOURCE_DIR@/fccAl_domainBoundingVectors.inp
   subsection Optimization
-    set STRESS TOL            = 1e-5
+    set STRESS TOL            = 2e-5
     set CELL OPT              = true
     set CELL CONSTRAINT TYPE  = 1
   end 
@@ -83,7 +83,7 @@ subsection SCF parameters
      set NUMBER OF KOHN-SHAM WAVEFUNCTIONS = 20
      set CHEBYSHEV FILTER TOLERANCE=5e-4
      set ORTHOGONALIZATION TYPE=PGS
-     set CHEBYSHEV POLYNOMIAL DEGREE=20
+     set CHEBYSHEV POLYNOMIAL DEGREE=15
   end
 end
 set H REFINED ELECTROSTATICS=false
