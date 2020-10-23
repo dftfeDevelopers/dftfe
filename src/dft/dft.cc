@@ -769,9 +769,7 @@ namespace dftfe {
 						d_imageIdsTrunc,
             d_nearestAtomDistances,
 						d_domainBoundingVectors,
-						dftParameters::useSymm
-						|| ((dftParameters::isIonOpt && (dftParameters::reuseWfcGeoOpt || dftParameters::reuseDensityGeoOpt)) || (dftParameters::isBOMD && dftParameters::autoMeshStepInterpolateBOMD))
-						|| dftParameters::createConstraintsFromSerialDofhandler);
+						dftParameters::useSymm || dftParameters::createConstraintsFromSerialDofhandler);
 
 				if (dftParameters::chkType==2)
 					loadTriaInfoAndRhoData();
@@ -785,9 +783,7 @@ namespace dftfe {
 						d_imageIdsTrunc,
             d_nearestAtomDistances,
 						d_domainBoundingVectors,
-						dftParameters::useSymm
-						|| ((dftParameters::isIonOpt && (dftParameters::reuseWfcGeoOpt || dftParameters::reuseDensityGeoOpt)) || (dftParameters::isBOMD && dftParameters::autoMeshStepInterpolateBOMD))
-						|| dftParameters::createConstraintsFromSerialDofhandler,
+						dftParameters::useSymm || dftParameters::createConstraintsFromSerialDofhandler,
 						dftParameters::electrostaticsHRefinement);
 
 			}
@@ -843,7 +839,7 @@ namespace dftfe {
 			//
 			//initialize guesses for electron-density and wavefunctions
 			//
-			initElectronicFields(usePreviousGroundStateFields);
+			initElectronicFields();
 
 			if (dftParameters::chkType==3 && dftParameters::restartFromChk)
 			{
@@ -931,11 +927,6 @@ namespace dftfe {
       if (dftParameters::smearedNuclearCharges)
         calculateSmearedChargeWidths(); 
 
-			// update mesh and other data structures required for interpolating solution fields from previous
-			// atomic configuration mesh to the current atomic configuration during an automesh step. Currently
-			// this is only required if reuseWfcGeoOpt or reuseDensityGeoOpt is on.
-			if(dftParameters::isIonOpt && (dftParameters::reuseWfcGeoOpt || dftParameters::reuseDensityGeoOpt) && !dftParameters::floatingNuclearCharges)
-				updatePrevMeshDataStructures();
 			//
 			//reinitialize dirichlet BCs for total potential and vSelf poisson solutions
 			//
@@ -1150,10 +1141,7 @@ namespace dftfe {
 
 			if (dftParameters::isBOMD)
 			{
-				if (dftParameters::xlbomdStepTimingRun)
-					d_mdPtr->timingRun();
-				else
-					d_mdPtr->run();
+				d_mdPtr->run();
 			}
 			else
 			{
@@ -1418,9 +1406,6 @@ namespace dftfe {
 				kohnShamDFTEigenOperatorCUDA.preComputeShapeFunctionGradientIntegrals(d_lpspQuadratureId);
 #endif
 			computing_timer.exit_section("shapefunction data");
-
-			if(dftParameters::rrGEPFullMassMatrix && !dftParameters::useGPU)
-				kohnShamDFTEigenOperator.computeMassMatrix();
 
 			if (dftParameters::verbosity>=4)
 				dftUtils::printCurrentMemoryUsage(mpi_communicator,
@@ -1770,8 +1755,6 @@ namespace dftfe {
 #endif
 			computing_timer.exit_section("shapefunction data");
 
-			if(dftParameters::rrGEPFullMassMatrix && !dftParameters::useGPU)
-				kohnShamDFTEigenOperator.computeMassMatrix();
 
 			if (dftParameters::verbosity>=4)
 				dftUtils::printCurrentMemoryUsage(mpi_communicator,
@@ -2176,8 +2159,7 @@ namespace dftfe {
 											rayleighRitzAvoidancePassesXLBOMD?dftParameters::numberPassesRRSkippedXLBOMD:0,
 											(scfIter<dftParameters::spectrumSplitStartingScfIter || scfConverged)?false:true,
 											scfConverged?false:true,
-											scfIter==0,
-											(scfConverged && dftParameters::rrGEPFullMassMatrix && dftParameters::rrGEP)?true:false);
+											scfIter==0);
 #endif
 								if (!dftParameters::useGPU)
 									kohnShamEigenSpaceCompute(s,
@@ -2188,8 +2170,7 @@ namespace dftfe {
 											residualNormWaveFunctionsAllkPointsSpins[s][kPoint],
 											(scfIter<dftParameters::spectrumSplitStartingScfIter || scfConverged)?false:true,
 											scfConverged?false:true,
-											scfIter==0,
-											(scfConverged && dftParameters::rrGEPFullMassMatrix && dftParameters::rrGEP)?true:false);
+											scfIter==0);
 							}
 						}
 					}
@@ -2404,8 +2385,7 @@ namespace dftfe {
 										rayleighRitzAvoidancePassesXLBOMD?dftParameters::numberPassesRRSkippedXLBOMD:0,
 										(scfIter<dftParameters::spectrumSplitStartingScfIter || scfConverged)?false:true,
 										scfConverged?false:true,
-										scfIter==0,
-										(scfConverged && dftParameters::rrGEPFullMassMatrix && dftParameters::rrGEP)?true:false);
+										scfIter==0);
 #endif
 							if (!dftParameters::useGPU)
 								kohnShamEigenSpaceCompute(0,
@@ -2416,8 +2396,7 @@ namespace dftfe {
 										residualNormWaveFunctionsAllkPoints[kPoint],
 										(scfIter<dftParameters::spectrumSplitStartingScfIter || scfConverged)?false:true,
 										scfConverged?false:true,
-										scfIter==0,
-										(scfConverged && dftParameters::rrGEPFullMassMatrix && dftParameters::rrGEP)?true:false);
+										scfIter==0);
 						}
 					}
 

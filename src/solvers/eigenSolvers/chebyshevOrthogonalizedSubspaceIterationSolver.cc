@@ -111,8 +111,7 @@ namespace dftfe{
 				std::vector<double>        & residualNorms,
 				const MPI_Comm &interBandGroupComm,
 				const bool useMixedPrec,
-				const bool isFirstScf,
-				const bool useFullMassMatrixGEP)
+				const bool isFirstScf)
 		{
       dealii::TimerOutput computingTimerStandard(operatorMatrix.getMPICommunicator(),
           pcout,
@@ -380,27 +379,13 @@ namespace dftfe{
 				}
 				else
 				{
-
-					if(useFullMassMatrixGEP)
-					{
-						linearAlgebraOperations::rayleighRitzGEPFullMassMatrix(operatorMatrix,
-								eigenVectorsFlattened,
-								totalNumberWaveFunctions,
-								interBandGroupComm,
-								operatorMatrix.getMPICommunicator(),
-								eigenValues,
-								useMixedPrec);
-					}
-					else
-					{
-						linearAlgebraOperations::rayleighRitzGEP(operatorMatrix,
-								eigenVectorsFlattened,
-								totalNumberWaveFunctions,
-								interBandGroupComm,
-								operatorMatrix.getMPICommunicator(),
-								eigenValues,
-								useMixedPrec);
-					}
+          linearAlgebraOperations::rayleighRitzGEP(operatorMatrix,
+              eigenVectorsFlattened,
+              totalNumberWaveFunctions,
+              interBandGroupComm,
+              operatorMatrix.getMPICommunicator(),
+              eigenValues,
+              useMixedPrec);
 				}
 				computing_timer.exit_section("Rayleigh-Ritz GEP");
 
@@ -416,13 +401,12 @@ namespace dftfe{
 				}
 				else
 				{
-					if(!useFullMassMatrixGEP)
-						linearAlgebraOperations::computeEigenResidualNorm(operatorMatrix,
-								eigenVectorsFlattened,
-								eigenValues,
-								operatorMatrix.getMPICommunicator(),
-								interBandGroupComm,
-								residualNorms);
+          linearAlgebraOperations::computeEigenResidualNorm(operatorMatrix,
+              eigenVectorsFlattened,
+              eigenValues,
+              operatorMatrix.getMPICommunicator(),
+              interBandGroupComm,
+              residualNorms);
 				}
 				computing_timer.exit_section("eigen vectors residuals opt");
 			}

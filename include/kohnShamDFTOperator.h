@@ -68,15 +68,6 @@ namespace dftfe{
 				const double scalar,
 				distributedCPUVec<dataTypes::number> & dst);
 
-		void HX(distributedCPUVec<dataTypes::number> & src,
-				const unsigned int numberComponents,
-				distributedCPUVec<dataTypes::number> & dst);
-
-		void MX(distributedCPUVec<dataTypes::number> & src,
-				const unsigned int numberComponents,
-				distributedCPUVec<dataTypes::number> & dst);
-
-
 		/**
 		 * @brief Compute projection of the operator into orthogonal basis
 		 *
@@ -103,14 +94,8 @@ namespace dftfe{
 		void XtHX(const std::vector<dataTypes::number> & X,
 				const unsigned int numberComponents,
 				const std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid>  & processGrid,
-				dealii::ScaLAPACKMatrix<dataTypes::number> & projHamPar,
-				bool origHFlag=false);
+				dealii::ScaLAPACKMatrix<dataTypes::number> & projHamPar);
 
-
-		void XtMX(const std::vector<dataTypes::number> & X,
-				const unsigned int numberComponents,
-				const std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid>  & processGrid,
-				dealii::ScaLAPACKMatrix<dataTypes::number> & projMassPar);
 
 		/**
 		 * @brief Compute projection of the operator into a subspace spanned by a given orthogonal basis
@@ -129,8 +114,7 @@ namespace dftfe{
 			 const unsigned int N,
 			 const unsigned int Ncore,
 			 const std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid>  & processGrid,
-			 dealii::ScaLAPACKMatrix<dataTypes::number> & projHamPar,
-			 bool origHFlag = false);
+			 dealii::ScaLAPACKMatrix<dataTypes::number> & projHamPar);
 
 
 		/**
@@ -253,9 +237,6 @@ namespace dftfe{
 		///compute element Hamiltonian matrix
 		void computeHamiltonianMatrix(const unsigned int kPointIndex, const unsigned int spinIndex);
 		void computeKineticMatrix();
-		void computeMassMatrix();
-
-
 
 
 		private:
@@ -277,7 +258,6 @@ namespace dftfe{
 
 
     std::vector<std::vector<double> > d_cellHamiltonianMatrixExternalPotCorr;
-		std::vector<std::vector<dataTypes::number> > d_cellMassMatrix;
 
 		/**
 		 * @brief implementation of matrix-vector product using cell-level stiffness matrices.
@@ -292,10 +272,6 @@ namespace dftfe{
 				const unsigned int numberWaveFunctions,
 				distributedCPUVec<dataTypes::number> & dst) const;
 
-
-		void computeMassMatrixTimesX(const distributedCPUVec<dataTypes::number> & src,
-				const unsigned int numberWaveFunctions,
-				distributedCPUVec<dataTypes::number> & dst) const;
 
 #ifdef WITH_MKL
 

@@ -100,7 +100,6 @@ namespace dftfe {
 		extern bool createConstraintsFromSerialDofhandler;
 		extern bool bandParalOpt;
 		extern bool rrGEP;
-		extern bool rrGEPFullMassMatrix;
 		extern bool useGPU;
 		extern bool gpuFineGrainedTimings;
 		extern bool allowFullCPUMemSubspaceRot;
@@ -135,7 +134,6 @@ namespace dftfe {
 		extern double xlbomdRestartChebyTol;
 		extern bool xlbomdRRPassMixedPrec;
 		extern bool useDensityMatrixPerturbationRankUpdates;
-		extern bool xlbomdStepTimingRun; 
 		extern double xlbomdKernelRankUpdateFDParameter;
 		extern bool smearedNuclearCharges;
     extern bool floatingNuclearCharges;

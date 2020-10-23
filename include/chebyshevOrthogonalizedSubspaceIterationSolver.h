@@ -64,8 +64,7 @@ namespace dftfe{
 					std::vector<double> & residuals,
 					const MPI_Comm &interBandGroupComm,
 					const bool useMixedPrec=false,
-					const bool isFirstScf=false,
-					const bool useFullMassMatrixGEP=false);
+					const bool isFirstScf=false);
 
 			/**
 			 * @brief Solve a generalized eigen problem.

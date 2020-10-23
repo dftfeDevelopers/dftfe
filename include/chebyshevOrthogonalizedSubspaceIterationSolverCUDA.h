@@ -73,7 +73,6 @@ namespace dftfe
 					const bool isXlBOMDLinearizedSolve,
 					const bool useMixedPrecOverall=false,
 					const bool isFirstScf=false,
-					const bool useFullMassMatrixGEP=false,
 					const bool isElpaStep1=false,
 					const bool isElpaStep2=false);
 

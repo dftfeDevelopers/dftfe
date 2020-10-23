@@ -97,7 +97,6 @@ namespace dftfe {
 		bool createConstraintsFromSerialDofhandler=true;
 		bool bandParalOpt=true;
 		bool rrGEP=false;
-		bool rrGEPFullMassMatrix=false;
 		bool autoAdaptBaseMeshSize=true;
 		bool readWfcForPdosPspFile=false;
 		bool useGPU=false;
@@ -134,7 +133,6 @@ namespace dftfe {
 		bool xlbomdRRPassMixedPrec=false;
 		bool useDensityMatrixPerturbationRankUpdates=false;
 		double xlbomdKernelRankUpdateFDParameter=1e-2;
-		bool xlbomdStepTimingRun=false;
 		bool smearedNuclearCharges=false;
     bool floatingNuclearCharges=false;
     bool nonLinearCoreCorrection=false;
@@ -597,9 +595,6 @@ namespace dftfe {
 					prm.declare_entry("RR GEP", "true",
 							Patterns::Bool(),"[Advanced] Solve generalized eigenvalue problem instead of standard eignevalue problem in Rayleigh-Ritz step. This approach is not extended yet to complex executable. Default value is true for real executable and false for complex executable.");
 
-					prm.declare_entry("RR GEP FULL MASS MATRIX", "false",
-							Patterns::Bool(),"[Advanced] Solve generalized eigenvalue problem instead of standard eignevalue problem in Rayleigh-Ritz step with finite-element overlap matrix evaluated using full quadrature rule (Gauss quadrature rule) only during the solution of the generalized eigenvalue problem in the RR step.  Default value is false.");
-
 					prm.declare_entry("LOWER BOUND WANTED SPECTRUM", "-10.0",
 							Patterns::Double(),
 							"[Developer] The lower bound of the wanted eigen spectrum. It is only used for the first iteration of the Chebyshev filtered subspace iteration procedure. A rough estimate based on single atom eigen values can be used here. Default value is good enough for most problems.");
@@ -830,10 +825,6 @@ namespace dftfe {
 						Patterns::Bool(),
 						"[Standard] Use density matrix perturbation theory for rank updates.");
 
-				prm.declare_entry("XL BOMD STEP TIMING RUN", "false",
-						Patterns::Bool(),
-						"[Standard] Time one XL BOMD md step for performance measurements.");
-
 				prm.declare_entry("XL BOMD KERNEL RANK UPDATE FD PARAMETER", "1e-2",
 						Patterns::Double(0.0),
 						"[Standard] Finite difference perturbation parameter.");
@@ -1010,7 +1001,6 @@ namespace dftfe {
 					dftParameters::numCoreWfcRR                  = prm.get_integer("SPECTRUM SPLIT CORE EIGENSTATES");
 					dftParameters::spectrumSplitStartingScfIter  = prm.get_integer("SPECTRUM SPLIT STARTING SCF ITER");
 					dftParameters::rrGEP= prm.get_bool("RR GEP");
-					dftParameters::rrGEPFullMassMatrix = prm.get_bool("RR GEP FULL MASS MATRIX");
 					dftParameters::lowerEndWantedSpectrum        = prm.get_double("LOWER BOUND WANTED SPECTRUM");
 					dftParameters::lowerBoundUnwantedFracUpper   = prm.get_double("LOWER BOUND UNWANTED FRAC UPPER");
 					dftParameters::chebyshevOrder                = prm.get_integer("CHEBYSHEV POLYNOMIAL DEGREE");
@@ -1082,7 +1072,6 @@ namespace dftfe {
 				dftParameters::xlbomdRestartChebyTol           = prm.get_double("CHEBY TOL XL BOMD RESTART");  
 				dftParameters::xlbomdRRPassMixedPrec           = prm.get_bool("XL BOMD RR PASS MIXED PREC");
 				dftParameters::useDensityMatrixPerturbationRankUpdates           = prm.get_bool("DENSITY MATRIX PERTURBATION RANK UPDATES XL BOMD");  
-				dftParameters::xlbomdStepTimingRun           = prm.get_bool("XL BOMD STEP TIMING RUN");
 				dftParameters::xlbomdKernelRankUpdateFDParameter=prm.get_double("XL BOMD KERNEL RANK UPDATE FD PARAMETER");
 			}
 			prm.leave_subsection ();
@@ -1110,13 +1099,11 @@ namespace dftfe {
 			}
 #ifdef USE_COMPLEX
 			dftParameters::rrGEP=false;
-			dftParameters::rrGEPFullMassMatrix=false;
 #endif
 
 			if (!dftParameters::isPseudopotential)
 			{
 				dftParameters::rrGEP=false;
-				dftParameters::rrGEPFullMassMatrix=false;
 			}
 
 #ifndef DFTFE_WITH_ELPA

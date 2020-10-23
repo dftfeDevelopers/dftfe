@@ -296,22 +296,6 @@ namespace dftfe {
 			 */
 			void initImageChargesUpdateKPoints(bool flag=true);
 
-			/**
-			 */
-			void initPsiAndRhoFromPreviousGroundStatePsi(std::vector<std::vector<distributedCPUVec<double>>> eigenVectors);
-
-
-			/**
-			 * @brief interpolate rho quadrature data on current mesh from the ground state rho on previous mesh.
-			 * This is used whenver the mesh is changed due to atom movement.
-			 */
-			void initRhoFromPreviousGroundStateRho();
-
-			/**
-			 * @brief update previous mesh data structures which are required for interpolating wfc and
-			 * density during geometry optimization.
-			 */
-			void updatePrevMeshDataStructures();
 
 			void interpolateFieldsFromPrevToCurrentMesh(std::vector<distributedCPUVec<double>*> fieldsPrevious,
 					std::vector<distributedCPUVec<double>* > fieldsCurrent,
@@ -398,7 +382,7 @@ namespace dftfe {
 			 */
 			void initUnmovedTriangulation(parallel::distributed::Triangulation<3> & triangulation);
 			void initBoundaryConditions(const bool meshOnlyDeformed=false);
-			void initElectronicFields(const unsigned int usePreviousGroundStateFields=0);
+			void initElectronicFields();
 			void initPseudoPotentialAll(const bool updateNonlocalSparsity=true);
 
 			/**
@@ -1196,8 +1180,7 @@ namespace dftfe {
 					std::vector<double> & residualNormWaveFunctions,
 					const bool isSpectrumSplit=false,
 					const bool useMixedPrec=false,
-					const bool isFirstScf=false,
-					const bool useFullMassMatrixGEP=false);
+					const bool isFirstScf=false);
 
 
 #ifdef DFTFE_WITH_GPU
@@ -1211,8 +1194,7 @@ namespace dftfe {
 					const unsigned int numberRayleighRitzAvoidanceXLBOMDPasses=0,
 					const bool isSpectrumSplit=false,
 					const bool useMixedPrec=false,
-					const bool isFirstScf=false,
-					const bool useFullMassMatrixGEP=false);
+					const bool isFirstScf=false);
 #endif
 
 
