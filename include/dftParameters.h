@@ -124,7 +124,6 @@ namespace dftfe {
 		extern double diracDeltaKernelScalingConstant;
 		extern unsigned int kernelUpdateRankXLBOMD;
 		extern unsigned int kmaxXLBOMD;
-		extern bool autoMeshStepInterpolateBOMD;
 		extern double ratioOfMeshMovementToForceGaussianBOMD;
 		extern bool useAtomicRhoXLBOMD;
 		extern bool useMeshSizesFromAtomsFile;

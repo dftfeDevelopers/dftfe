@@ -120,7 +120,6 @@ namespace dftfe {
 		double diracDeltaKernelScalingConstant=0.1;
 		unsigned int kernelUpdateRankXLBOMD=0;
 		unsigned int kmaxXLBOMD=8;
-		bool autoMeshStepInterpolateBOMD=false;
 		double ratioOfMeshMovementToForceGaussianBOMD=1.0;
 		bool useAtomicRhoXLBOMD=true;
 		bool useMeshSizesFromAtomsFile=false;
@@ -801,10 +800,6 @@ namespace dftfe {
 						Patterns::Integer(0),
 						"[Standard] Number of starting chebsyev filtering passes without Rayleigh Ritz in XL BOMD.");
 
-				prm.declare_entry("AUTO MESH STEP INTERPOLATE BOMD", "false",
-						Patterns::Bool(),
-						"[Standard] Perform interpolation of previous density to new auto mesh.");  
-
 				prm.declare_entry("RATIO MESH MOVEMENT TO FORCE GAUSSIAN", "1.0",
 						Patterns::Double(0.0),
 						"[Standard] Ratio of mesh movement to force Gaussian."); 
@@ -1064,7 +1059,6 @@ namespace dftfe {
 				dftParameters::kernelUpdateRankXLBOMD        = prm.get_integer("KERNEL RANK XL BOMD");
 				dftParameters::kmaxXLBOMD        = prm.get_integer("NUMBER DISSIPATION TERMS XL BOMD");
 				dftParameters::numberPassesRRSkippedXLBOMD        = prm.get_integer("NUMBER PASSES RR SKIPPED XL BOMD");
-				dftParameters::autoMeshStepInterpolateBOMD   = prm.get_bool("AUTO MESH STEP INTERPOLATE BOMD");
 				dftParameters::ratioOfMeshMovementToForceGaussianBOMD       = prm.get_double("RATIO MESH MOVEMENT TO FORCE GAUSSIAN");    
 				dftParameters::useAtomicRhoXLBOMD     = prm.get_bool("USE ATOMIC RHO XL BOMD");   
 				dftParameters::useSingleFullScfXLBOMD = prm.get_bool("STARTING SINGLE FULL SCF XL BOMD");
