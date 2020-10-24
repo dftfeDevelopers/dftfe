@@ -238,7 +238,8 @@ namespace dftfe {
       data.push_back(std::vector<double>(1,d_etaPChk));
       data.push_back(std::vector<double>(1,d_etaChk));   
       data.push_back(std::vector<double>(1,d_lineSearchRestartIterChk)); 
-      data.push_back(std::vector<double>(1,d_functionValueChk));  
+      data.push_back(std::vector<double>(1,d_functionValueChk)); 
+      data.push_back(std::vector<double>(1,d_etaAlphaZeroChk));        
 
       if (d_lineSearchRestartIterChk>1)
         data.push_back(std::vector<double>(1,d_functionalValueAfterAlphUpdateChk));  
@@ -274,18 +275,19 @@ namespace dftfe {
       d_etaPChk= data[2*d_numberUnknowns+2][0];
       d_etaChk= data[2*d_numberUnknowns+3][0];
       d_lineSearchRestartIterChk= data[2*d_numberUnknowns+4][0];
-      d_functionValueChk= data[2*d_numberUnknowns+5][0]; 
+      d_functionValueChk= data[2*d_numberUnknowns+5][0];
+      d_etaAlphaZeroChk= data[2*d_numberUnknowns+6][0]; 
 
       if (d_lineSearchRestartIterChk>1)
-        d_functionalValueAfterAlphUpdateChk= data[2*d_numberUnknowns+6][0]; 
+        d_functionalValueAfterAlphUpdateChk= data[2*d_numberUnknowns+7][0]; 
 
       if (d_lineSearchRestartIterChk>1)
       {
-        AssertThrow (data.size()== (2*d_numberUnknowns+7),dealii::ExcMessage (std::string("DFT-FE Error: data size of cg solver checkpoint file is incorrect.")));
+        AssertThrow (data.size()== (2*d_numberUnknowns+8),dealii::ExcMessage (std::string("DFT-FE Error: data size of cg solver checkpoint file is incorrect.")));
       }
       else
       {
-        AssertThrow (data.size()== (2*d_numberUnknowns+6),dealii::ExcMessage (std::string("DFT-FE Error: data size of cg solver checkpoint file is incorrect.")));  
+        AssertThrow (data.size()== (2*d_numberUnknowns+7),dealii::ExcMessage (std::string("DFT-FE Error: data size of cg solver checkpoint file is incorrect.")));  
       }
 		}
 
@@ -434,7 +436,7 @@ namespace dftfe {
 			//
 			const double toleranceSqr = tolerance*tolerance;
 			std::vector<double> tempFuncValueVector;
-      double eta, etaP, functionValue, alpha, alphaNew, functionalValueAfterAlphUpdate;
+      double eta, etaP, etaAlphaZero, functionValue, alpha, alphaNew, functionalValueAfterAlphUpdate;
 
 			//
 			//constants used in Wolfe conditions
@@ -451,6 +453,7 @@ namespace dftfe {
         if (startingIter>1)
            functionalValueAfterAlphUpdate=d_functionalValueAfterAlphUpdateChk;
         eta=d_etaChk;
+        etaAlphaZero=d_etaAlphaZeroChk;
         etaP=d_etaPChk;
         alpha=d_alphaChk;
       }
@@ -476,6 +479,8 @@ namespace dftfe {
         // compute delta_d and eta_p
         //
         etaP   = computeEta();
+
+        etaAlphaZero=etaP;
       }
 
       if (startingIter==-1)
@@ -487,6 +492,7 @@ namespace dftfe {
         d_etaChk=etaP;
         d_etaPChk=etaP;
         d_alphaChk=alpha;
+        d_etaAlphaZeroChk=etaAlphaZero;
         d_lineSearchRestartIterChk=-1;
 
         if (!checkpointFileName.empty())
@@ -554,6 +560,7 @@ namespace dftfe {
         d_etaChk=eta;
         d_etaPChk=etaP;
         d_alphaChk=alpha;
+        d_etaAlphaZeroChk=etaAlphaZero;        
         d_lineSearchRestartIterChk=iter;        
 
 				if (!checkpointFileName.empty())
@@ -566,8 +573,8 @@ namespace dftfe {
         //FIXME: check whether >1 or >=1 is the correct choice
         if(iter > 1)
         {
-          double condition1 = (functionalValueAfterAlphUpdate - functionValue) - (c1*alpha*etaP);
-          double condition2 = std::abs(eta) - c2*std::abs(etaP);
+          double condition1 = (functionalValueAfterAlphUpdate - functionValue) - (c1*alpha*etaAlphaZero);
+          double condition2 = std::abs(eta) - c2*std::abs(etaAlphaZero);
           if(condition1 <= 1e-05 && condition2 <= 1e-05)
           {
             if (debugLevel >= 2)
