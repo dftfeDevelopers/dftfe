@@ -914,12 +914,12 @@ namespace dftfe {
 		}
 
 	template<unsigned int FEOrder,unsigned int FEOrderElectro>
-		void dftClass<FEOrder,FEOrderElectro>::initNoRemesh(const bool updateImageKPoints,
-				const bool useSingleAtomSolution,
-				const bool useAtomicRhoSplitDensityUpdate)
+		void dftClass<FEOrder,FEOrderElectro>::initNoRemesh(const bool updateImagesAndKPoints,
+				const bool useSingleAtomSolutionOverride,
+				const bool useAtomicRhoSplitDensityUpdateForGeoOpt)
 		{
 			computingTimerStandard.enter_section("KSDFT problem initialization");
-			if(updateImageKPoints)
+			if(updateImagesAndKPoints)
 				initImageChargesUpdateKPoints();
 
       calculateNearestAtomDistances(); 
@@ -962,7 +962,7 @@ namespace dftfe {
 			MPI_Barrier(MPI_COMM_WORLD);
 			init_rho = MPI_Wtime();
 
-			if (useSingleAtomSolution)
+			if (useSingleAtomSolutionOverride)
 			{
 				readPSI();
 				initRho();
@@ -977,27 +977,37 @@ namespace dftfe {
 
 				noRemeshRhoDataInit();
 
-				if (useAtomicRhoSplitDensityUpdate && (dftParameters::isIonOpt || dftParameters::isCellOpt))
-				{
-					double charge = totalCharge(d_matrixFreeDataPRefined,
-							d_rhoOutNodalValuesSplit);
+        if (dftParameters::isIonOpt || dftParameters::isCellOpt)
+        {
+          if (!reuseWfcGeoOpt)
+            readPSI();
 
-					d_rhoOutNodalValuesSplit.add(-charge/d_domainVolume);
+          if (reuseDensityGeoOpt && useAtomicRhoSplitDensityUpdateForGeoOpt)
+          {
+            double charge = totalCharge(d_matrixFreeDataPRefined,
+                d_rhoOutNodalValuesSplit);
 
-					initAtomicRho(d_atomicRho);
-					d_rhoOutNodalValuesSplit+=d_atomicRho;
+            d_rhoOutNodalValuesSplit.add(-charge/d_domainVolume);
 
-					d_rhoOutNodalValuesSplit.update_ghost_values();
-					interpolateRhoNodalDataToQuadratureDataGeneral(d_matrixFreeDataPRefined,
-              d_densityDofHandlerIndexElectro,
-              d_densityQuadratureIdElectro,
-							d_rhoOutNodalValuesSplit,
-							*(rhoInValues),
-							*(gradRhoInValues),
-							*(gradRhoInValues),
-							dftParameters::xc_id == 4);	
-					normalizeRhoInQuadValues();
-				}
+            initAtomicRho(d_atomicRho);
+            d_rhoOutNodalValuesSplit+=d_atomicRho;
+
+            d_rhoOutNodalValuesSplit.update_ghost_values();
+            interpolateRhoNodalDataToQuadratureDataGeneral(d_matrixFreeDataPRefined,
+                d_densityDofHandlerIndexElectro,
+                d_densityQuadratureIdElectro,
+                d_rhoOutNodalValuesSplit,
+                *(rhoInValues),
+                *(gradRhoInValues),
+                *(gradRhoInValues),
+                dftParameters::xc_id == 4);	
+            normalizeRhoInQuadValues();
+          }
+          else
+          {
+            initRho();
+          }
+        }
 			}
 
 			MPI_Barrier(MPI_COMM_WORLD);

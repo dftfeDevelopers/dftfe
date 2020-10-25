@@ -145,9 +145,9 @@ namespace dftfe {
 			/**
 			 * @brief Does KSDFT problem pre-processing steps but without remeshing.
 			 */
-			void initNoRemesh(const bool updateImageKPoints = true,
-					const bool useSingleAtomSolution = false ,
-					const bool updateDensity=true);
+			void initNoRemesh(const bool updateImagesAndKPoints = true,
+					const bool useSingleAtomSolutionOverride = false ,
+					const bool useAtomicRhoSplitDensityUpdateForGeoOpt=true);
 
 			/**
 			 * @brief Selects between only electronic field relaxation or combined electronic and geometry relaxation
@@ -277,8 +277,8 @@ namespace dftfe {
 			 */
 			void updateAtomPositionsAndMoveMesh(const std::vector<Tensor<1,3,double> > & globalAtomsDisplacements,
 					const double maxJacobianRatioFactor,
-					const bool useSingleAtomSolutions=false,
-					const bool useAtomicRhoSplitDensityUpdate=true);
+					const bool useSingleAtomSolutionsOverride=false,
+					const bool useAtomicRhoSplitDensityUpdateForGeoOpt=true);
 
 
 			/**
