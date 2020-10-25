@@ -550,7 +550,7 @@ namespace dftfe {
           if(iter >=1)
           {
             problem.value(tempFuncValueVector);
-            double functionalValueAfterAlphUpdate = tempFuncValueVector[0];
+            functionalValueAfterAlphUpdate = tempFuncValueVector[0];
           }
         }
 
