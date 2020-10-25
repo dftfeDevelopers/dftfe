@@ -2864,19 +2864,6 @@ namespace dftfe {
 				computing_timer.exit_section("Poisson solve for (rho_min-approx_rho)");
 			}
 
-			//if (dftParameters::isBOMD)
-		  d_entropicEnergy=energyCalc.computeEntropicEnergy(eigenValues,
-						d_kPointWeights,
-						fermiEnergy,
-						fermiEnergyUp,
-						fermiEnergyDown,
-						dftParameters::spinPolarized==1,
-						dftParameters::constraintMagnetization,
-						dftParameters::TVal);
-
-      if (dftParameters::verbosity>=1)
-         pcout<<"Total entropic energy: "<<d_entropicEnergy<<std::endl;
-
 			//
 			// compute and print ground state energy or energy after max scf iterations
 			//
@@ -2953,10 +2940,23 @@ namespace dftfe {
 										dftParameters::smearedNuclearCharges);
 
 				d_groundStateEnergy = totalEnergy;
-        d_freeEnergy=d_groundStateEnergy-d_entropicEnergy;
 			}
 
 			MPI_Barrier(interpoolcomm);
+
+		  d_entropicEnergy=energyCalc.computeEntropicEnergy(eigenValues,
+						d_kPointWeights,
+						fermiEnergy,
+						fermiEnergyUp,
+						fermiEnergyDown,
+						dftParameters::spinPolarized==1,
+						dftParameters::constraintMagnetization,
+						dftParameters::TVal);
+
+      if (dftParameters::verbosity>=1)
+         pcout<<"Total entropic energy: "<<d_entropicEnergy<<std::endl;    
+      
+      d_freeEnergy=d_groundStateEnergy-d_entropicEnergy;         
 
 			if (dftParameters::isBOMD && dftParameters::isXLBOMD && solveLinearizedKS && !isPerturbationSolveXLBOMD)
 			{
