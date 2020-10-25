@@ -1135,7 +1135,11 @@ namespace dftfe {
 			void recomputeKPointCoordinates();
 
 			/// fermi energy
-			double fermiEnergy, fermiEnergyUp, fermiEnergyDown, d_groundStateEnergy, d_groundStateEnergyInitial;
+			double fermiEnergy, fermiEnergyUp, fermiEnergyDown, d_groundStateEnergy;
+      
+      double d_freeEnergyInitial;
+
+      double d_freeEnergy;
 
 			/// shadow potential energy in extended Lagrangian framework
 			double d_shadowPotentialEnergy;
