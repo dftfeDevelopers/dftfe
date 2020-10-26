@@ -233,7 +233,6 @@ namespace dftfe {
 			for (unsigned int i=0; i< d_steepestDirectionOld.size();++i)
 				data.push_back(std::vector<double>(1,d_steepestDirectionOld[i]));    
 
-      data.push_back(std::vector<double>(1,d_lineSearchDampingParameter));
       data.push_back(std::vector<double>(1,d_alphaChk));
       data.push_back(std::vector<double>(1,d_etaPChk));
       data.push_back(std::vector<double>(1,d_etaChk));   
@@ -270,24 +269,23 @@ namespace dftfe {
         d_gradient[i]=-data[d_numberUnknowns+i][0];
       }
 
-      d_lineSearchDampingParameter= data[2*d_numberUnknowns][0];
-      d_alphaChk= data[2*d_numberUnknowns+1][0];
-      d_etaPChk= data[2*d_numberUnknowns+2][0];
-      d_etaChk= data[2*d_numberUnknowns+3][0];
-      d_lineSearchRestartIterChk= data[2*d_numberUnknowns+4][0];
-      d_functionValueChk= data[2*d_numberUnknowns+5][0];
-      d_etaAlphaZeroChk= data[2*d_numberUnknowns+6][0]; 
+      d_alphaChk= data[2*d_numberUnknowns][0];
+      d_etaPChk= data[2*d_numberUnknowns+1][0];
+      d_etaChk= data[2*d_numberUnknowns+2][0];
+      d_lineSearchRestartIterChk= data[2*d_numberUnknowns+3][0];
+      d_functionValueChk= data[2*d_numberUnknowns+4][0];
+      d_etaAlphaZeroChk= data[2*d_numberUnknowns+5][0]; 
 
       if (d_lineSearchRestartIterChk>=1)
-        d_functionalValueAfterAlphUpdateChk= data[2*d_numberUnknowns+7][0]; 
+        d_functionalValueAfterAlphUpdateChk= data[2*d_numberUnknowns+6][0]; 
 
       if (d_lineSearchRestartIterChk>=1)
       {
-        AssertThrow (data.size()== (2*d_numberUnknowns+8),dealii::ExcMessage (std::string("DFT-FE Error: data size of cg solver checkpoint file is incorrect.")));
+        AssertThrow (data.size()== (2*d_numberUnknowns+7),dealii::ExcMessage (std::string("DFT-FE Error: data size of cg solver checkpoint file is incorrect.")));
       }
       else
       {
-        AssertThrow (data.size()== (2*d_numberUnknowns+7),dealii::ExcMessage (std::string("DFT-FE Error: data size of cg solver checkpoint file is incorrect.")));  
+        AssertThrow (data.size()== (2*d_numberUnknowns+6),dealii::ExcMessage (std::string("DFT-FE Error: data size of cg solver checkpoint file is incorrect.")));  
       }
 		}
 
@@ -631,8 +629,6 @@ namespace dftfe {
 				alpha=alphaNew;
 
 			}
-
-			d_lineSearchDampingParameter = alpha;
 
 			//
 			//
