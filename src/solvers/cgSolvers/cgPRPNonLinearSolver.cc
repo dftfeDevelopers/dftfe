@@ -573,7 +573,7 @@ namespace dftfe {
         {
           double condition1 = (functionalValueAfterAlphUpdate - functionValue) - (c1*alpha*etaAlphaZero);
           double condition2 = std::abs(eta) - c2*std::abs(etaAlphaZero);
-          if(condition1 <= 1e-05 && condition2 <= 1e-05)
+          if(condition1 <= 1e-08 && condition2 <= 1e-08)
           {
             if (debugLevel >= 2)
               pcout << "Satisfied Wolfe condition: " << std::endl;
