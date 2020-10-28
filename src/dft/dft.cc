@@ -2966,7 +2966,10 @@ namespace dftfe {
       if (dftParameters::verbosity>=1)
          pcout<<"Total entropic energy: "<<d_entropicEnergy<<std::endl;    
       
-      d_freeEnergy=d_groundStateEnergy-d_entropicEnergy;         
+      d_freeEnergy=d_groundStateEnergy-d_entropicEnergy;    
+
+      if (dftParameters::verbosity>=1)
+         pcout<<"Total free energy: "<<d_freeEnergy<<std::endl;          
 
 			if (dftParameters::isBOMD && dftParameters::isXLBOMD && solveLinearizedKS && !isPerturbationSolveXLBOMD)
 			{
