@@ -278,7 +278,8 @@ bool xmlTodftfeParser::outputData(const std::string & baseOutputPath)
     ad_file.open(baseOutputPath + "/" + "density.inp");
 
     std::ofstream cd_file;
-    cd_file.open(baseOutputPath + "/" + "coreDensity.inp");
+    if(coreDensity.size() > 0) 
+      cd_file.open(baseOutputPath + "/" + "coreDensity.inp");
     
     std::ofstream l0;
     l0.open(baseOutputPath + "/" + "proj_l0.dat");
