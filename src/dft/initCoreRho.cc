@@ -134,6 +134,9 @@ void dftClass<FEOrder,FEOrderElectro>::initCoreRho()
 				//loop over atoms
 				for (unsigned int n = 0; n < atomLocations.size(); n++)
 				{
+          if (atomTypeNLCCFlagMap[atomLocations[n][0]]==0)
+            continue;
+
 					Point<3> atom(atomLocations[n][2],atomLocations[n][3],atomLocations[n][4]);
 					double distanceToAtom = quadPoint.distance(atom);
 					if(distanceToAtom <= d_coreRhoTail)
@@ -149,12 +152,17 @@ void dftClass<FEOrder,FEOrderElectro>::initCoreRho()
 				//loop over image charges
 				for(int iImageCharge = 0; iImageCharge < numberImageCharges; ++iImageCharge)
 				{
+					int masterAtomId = d_imageIdsTrunc[iImageCharge];
+
+          if (atomTypeNLCCFlagMap[atomLocations[masterAtomId][0]]==0)
+            continue;
+
 					Point<3> imageAtom(d_imagePositionsTrunc[iImageCharge][0],
 							d_imagePositionsTrunc[iImageCharge][1],
 							d_imagePositionsTrunc[iImageCharge][2]);
 
 					double distanceToAtom = quadPoint.distance(imageAtom);
-					int masterAtomId = d_imageIdsTrunc[iImageCharge];
+          
 					if(distanceToAtom <= d_coreRhoTail)
 					{
 						rhoValueAtQuadPt += alglib::spline1dcalc(coreDenSpline[atomLocations[masterAtomId][0]], distanceToAtom);
@@ -199,6 +207,9 @@ void dftClass<FEOrder,FEOrderElectro>::initCoreRho()
 				{
 					Point<3> atom(atomLocations[iAtom][2],atomLocations[iAtom][3],atomLocations[iAtom][4]);
 					bool isCoreRhoDataInCell=false;
+
+          if (atomTypeNLCCFlagMap[atomLocations[iAtom][0]]==0)
+            continue;
 
 					//loop over quad points
 					for(unsigned int q = 0; q < n_q_points; ++q)
@@ -279,6 +290,10 @@ void dftClass<FEOrder,FEOrderElectro>::initCoreRho()
 				//loop over image charges
 				for(unsigned int iImageCharge = 0; iImageCharge < numberImageCharges; ++iImageCharge)
 				{
+					const int masterAtomId = d_imageIdsTrunc[iImageCharge];          
+          if (atomTypeNLCCFlagMap[atomLocations[masterAtomId][0]]==0)
+            continue;
+
 					Point<3> imageAtom(d_imagePositionsTrunc[iImageCharge][0],
 							d_imagePositionsTrunc[iImageCharge][1],
 							d_imagePositionsTrunc[iImageCharge][2]);
@@ -290,7 +305,7 @@ void dftClass<FEOrder,FEOrderElectro>::initCoreRho()
 					{
 						Point<3> quadPoint=fe_values.quadrature_point(q);
 						double distanceToAtom = quadPoint.distance(imageAtom);
-						int masterAtomId = d_imageIdsTrunc[iImageCharge];
+
 						double value,radialDensityFirstDerivative,radialDensitySecondDerivative;
 						if(distanceToAtom <= d_coreRhoTail)
 						{
