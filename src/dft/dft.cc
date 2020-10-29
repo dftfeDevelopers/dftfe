@@ -914,12 +914,12 @@ namespace dftfe {
 		}
 
 	template<unsigned int FEOrder,unsigned int FEOrderElectro>
-		void dftClass<FEOrder,FEOrderElectro>::initNoRemesh(const bool updateImageKPoints,
-				const bool useSingleAtomSolution,
-				const bool useAtomicRhoSplitDensityUpdate)
+		void dftClass<FEOrder,FEOrderElectro>::initNoRemesh(const bool updateImagesAndKPoints,
+				const bool useSingleAtomSolutionOverride,
+				const bool useAtomicRhoSplitDensityUpdateForGeoOpt)
 		{
 			computingTimerStandard.enter_section("KSDFT problem initialization");
-			if(updateImageKPoints)
+			if(updateImagesAndKPoints)
 				initImageChargesUpdateKPoints();
 
       calculateNearestAtomDistances(); 
@@ -962,7 +962,7 @@ namespace dftfe {
 			MPI_Barrier(MPI_COMM_WORLD);
 			init_rho = MPI_Wtime();
 
-			if (useSingleAtomSolution)
+			if (useSingleAtomSolutionOverride)
 			{
 				readPSI();
 				initRho();
@@ -977,27 +977,37 @@ namespace dftfe {
 
 				noRemeshRhoDataInit();
 
-				if (useAtomicRhoSplitDensityUpdate && (dftParameters::isIonOpt || dftParameters::isCellOpt))
-				{
-					double charge = totalCharge(d_matrixFreeDataPRefined,
-							d_rhoOutNodalValuesSplit);
+        if (dftParameters::isIonOpt || dftParameters::isCellOpt)
+        {
+          if (!reuseWfcGeoOpt)
+            readPSI();
 
-					d_rhoOutNodalValuesSplit.add(-charge/d_domainVolume);
+          if (reuseDensityGeoOpt && useAtomicRhoSplitDensityUpdateForGeoOpt)
+          {
+            double charge = totalCharge(d_matrixFreeDataPRefined,
+                d_rhoOutNodalValuesSplit);
 
-					initAtomicRho(d_atomicRho);
-					d_rhoOutNodalValuesSplit+=d_atomicRho;
+            d_rhoOutNodalValuesSplit.add(-charge/d_domainVolume);
 
-					d_rhoOutNodalValuesSplit.update_ghost_values();
-					interpolateRhoNodalDataToQuadratureDataGeneral(d_matrixFreeDataPRefined,
-              d_densityDofHandlerIndexElectro,
-              d_densityQuadratureIdElectro,
-							d_rhoOutNodalValuesSplit,
-							*(rhoInValues),
-							*(gradRhoInValues),
-							*(gradRhoInValues),
-							dftParameters::xc_id == 4);	
-					normalizeRhoInQuadValues();
-				}
+            initAtomicRho(d_atomicRho);
+            d_rhoOutNodalValuesSplit+=d_atomicRho;
+
+            d_rhoOutNodalValuesSplit.update_ghost_values();
+            interpolateRhoNodalDataToQuadratureDataGeneral(d_matrixFreeDataPRefined,
+                d_densityDofHandlerIndexElectro,
+                d_densityQuadratureIdElectro,
+                d_rhoOutNodalValuesSplit,
+                *(rhoInValues),
+                *(gradRhoInValues),
+                *(gradRhoInValues),
+                dftParameters::xc_id == 4);	
+            normalizeRhoInQuadValues();
+          }
+          else
+          {
+            initRho();
+          }
+        }
 			}
 
 			MPI_Barrier(MPI_COMM_WORLD);
@@ -1166,7 +1176,7 @@ namespace dftfe {
 				if (dftParameters::isIonOpt && !dftParameters::isCellOpt)
 				{
 					d_atomLocationsInitial = atomLocations;
-					d_groundStateEnergyInitial = d_groundStateEnergy;
+					d_freeEnergyInitial = d_freeEnergy;
 
 					geoOptIonPtr->init();
 					geoOptIonPtr->run();
@@ -1174,7 +1184,7 @@ namespace dftfe {
 				else if (!dftParameters::isIonOpt && dftParameters::isCellOpt)
 				{
 					d_atomLocationsInitial = atomLocations;
-					d_groundStateEnergyInitial = d_groundStateEnergy;
+					d_freeEnergyInitial = d_freeEnergy;
 
 #ifdef USE_COMPLEX
 					geoOptCellPtr->init();
@@ -1186,7 +1196,7 @@ namespace dftfe {
 				else if (dftParameters::isIonOpt && dftParameters::isCellOpt)
 				{
 					d_atomLocationsInitial = atomLocations;
-					d_groundStateEnergyInitial = d_groundStateEnergy;
+					d_freeEnergyInitial = d_freeEnergy;
 
 #ifdef USE_COMPLEX
 					//first relax ion positions in the starting cell configuration
@@ -2940,12 +2950,10 @@ namespace dftfe {
 										dftParameters::smearedNuclearCharges);
 
 				d_groundStateEnergy = totalEnergy;
-
 			}
 
 			MPI_Barrier(interpoolcomm);
 
-			//if (dftParameters::isBOMD)
 		  d_entropicEnergy=energyCalc.computeEntropicEnergy(eigenValues,
 						d_kPointWeights,
 						fermiEnergy,
@@ -2956,7 +2964,12 @@ namespace dftfe {
 						dftParameters::TVal);
 
       if (dftParameters::verbosity>=1)
-         pcout<<"Total entropic energy: "<<d_entropicEnergy<<std::endl;
+         pcout<<"Total entropic energy: "<<d_entropicEnergy<<std::endl;    
+      
+      d_freeEnergy=d_groundStateEnergy-d_entropicEnergy;    
+
+      if (dftParameters::verbosity>=1)
+         pcout<<"Total free energy: "<<d_freeEnergy<<std::endl;          
 
 			if (dftParameters::isBOMD && dftParameters::isXLBOMD && solveLinearizedKS && !isPerturbationSolveXLBOMD)
 			{

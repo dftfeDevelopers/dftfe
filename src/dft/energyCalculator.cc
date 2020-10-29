@@ -1224,6 +1224,10 @@ double energyCalculator::computeEntropicEnergy(const std::vector<std::vector<dou
 				entropy += -2.0*C_kb*kPointWeights[kPoint]*(fTimeslogf + oneminusfTimeslogoneminusf);
 			}
 		}
+
+  //Sum across k point parallelization pools
+  entropy=dealii::Utilities::MPI::sum(entropy, interpoolcomm);  
+
 	return temperature*entropy;
 }
 }

@@ -275,7 +275,7 @@ namespace dftfe {
 		{
 			//AssertThrow(false,dftUtils::ExcNotImplementedYet());
 			functionValue.clear();
-			functionValue.push_back(dftPtr->d_groundStateEnergy);
+			functionValue.push_back(dftPtr->d_freeEnergy);
 
 		}
 
