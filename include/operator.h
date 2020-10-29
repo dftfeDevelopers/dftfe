@@ -99,7 +99,7 @@ namespace dftfe{
 			 * @param invSqrtMassVec output the value of inverse square root of diagonal mass matrix
 			 */
 			virtual void computeMassVector(const dealii::DoFHandler<3>    & dofHandler,
-					const dealii::ConstraintMatrix & constraintMatrix,
+					const dealii::AffineConstraints<double> & constraintMatrix,
 					distributedCPUVec<double>                     & sqrtMassVec,
 					distributedCPUVec<double>                     & invSqrtMassVec) = 0;
 

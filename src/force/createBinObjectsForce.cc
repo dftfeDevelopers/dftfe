@@ -21,7 +21,7 @@ template<unsigned int FEOrder,unsigned int FEOrderElectro>
 	void forceClass<FEOrder,FEOrderElectro>::createBinObjectsForce
 (const DoFHandler<3> & dofHandler,
  const DoFHandler<3> & dofHandlerForce,
- const ConstraintMatrix  & hangingPlusPBCConstraints,
+ const dealii::AffineConstraints<double>  & hangingPlusPBCConstraints,
  const vselfBinsManager<FEOrder,FEOrderElectro> & vselfBinsManager,
  std::vector<std::vector<DoFHandler<C_DIM>::active_cell_iterator> > & cellsVselfBallsDofHandler,
  std::vector<std::vector<DoFHandler<C_DIM>::active_cell_iterator> > & cellsVselfBallsDofHandlerForce,

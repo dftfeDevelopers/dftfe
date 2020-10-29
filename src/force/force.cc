@@ -70,7 +70,7 @@ namespace  dftfe {
 				const MPI_Comm & mpi_comm,
 				DoFHandler<C_DIM> & dofHandlerForce,
 				FESystem<C_DIM> & FEForce,
-				ConstraintMatrix  & constraintsForce,
+				dealii::AffineConstraints<double>  & constraintsForce,
 				IndexSet  & locally_owned_dofsForce,
 				IndexSet  & locally_relevant_dofsForce)
 		{
@@ -132,7 +132,7 @@ namespace  dftfe {
 
 			if (dftParameters::createConstraintsFromSerialDofhandler)
 			{
-				ConstraintMatrix  dummy;
+				dealii::AffineConstraints<double>  dummy;
 				vectorTools::createParallelConstraintMatrixFromSerial(serialTriangulation,
 						dofHandlerForce,
 						mpi_comm,
@@ -195,7 +195,7 @@ namespace  dftfe {
 	template<unsigned int FEOrder,unsigned int FEOrderElectro>
 		void forceClass<FEOrder,FEOrderElectro>::initMoved
 		(std::vector<const DoFHandler<3> *> & dofHandlerVectorMatrixFree,
-		 std::vector<const ConstraintMatrix * > & constraintsVectorMatrixFree,
+		 std::vector<const dealii::AffineConstraints<double> * > & constraintsVectorMatrixFree,
 		 const bool isElectrostaticsMesh)
 		{
 			if (isElectrostaticsMesh)
@@ -276,7 +276,7 @@ namespace  dftfe {
 				 const std::map<unsigned int,std::map<dealii::CellId, std::vector<double> > > & hessianRhoCoreAtoms,         
 		 const std::map<dealii::CellId, std::vector<double> > & pseudoVLocElectro,
 		 const std::map<unsigned int,std::map<dealii::CellId, std::vector<double> > > & pseudoVLocAtomsElectro,
-		 const ConstraintMatrix  & hangingPlusPBCConstraintsElectro,
+		 const dealii::AffineConstraints<double>  & hangingPlusPBCConstraintsElectro,
 		 const vselfBinsManager<FEOrder,FEOrderElectro> & vselfBinsManagerElectro,
 		 const std::map<dealii::CellId, std::vector<double> > & shadowKSRhoMinValues,
 		 const std::map<dealii::CellId, std::vector<double> > & shadowKSGradRhoMinValues,

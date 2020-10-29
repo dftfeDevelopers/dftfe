@@ -165,7 +165,7 @@ namespace dftfe {
 		//store constraintMatrix row data in STL vector
 		//
 		void constraintMatrixInfoCUDA::initialize(const std::shared_ptr< const dealii::Utilities::MPI::Partitioner > & partitioner,
-				const dealii::ConstraintMatrix & constraintMatrixData)
+				const dealii::AffineConstraints<double> & constraintMatrixData)
 
 		{
 

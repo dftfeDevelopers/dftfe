@@ -148,7 +148,7 @@ namespace dftfe {
 	//
 	template<unsigned int FEOrder,unsigned int FEOrderElectro>
 		void kohnShamDFTOperatorClass<FEOrder,FEOrderElectro>::computeMassVector(const dealii::DoFHandler<3> & dofHandler,
-				const dealii::ConstraintMatrix & constraintMatrix,
+				const dealii::AffineConstraints<double> & constraintMatrix,
 				distributedCPUVec<double> & sqrtMassVec,
 				distributedCPUVec<double> & invSqrtMassVec)
 		{

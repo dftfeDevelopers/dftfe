@@ -127,12 +127,12 @@ void dftClass<FEOrder,FEOrderElectro>::computeElectrostaticEnergyHRefined(
 	ghost_indices.subtract_set(dofHandlerHRefined.locally_owned_dofs());
 
 
-	dealii::ConstraintMatrix onlyHangingNodeConstraints;
+	dealii::AffineConstraints<double> onlyHangingNodeConstraints;
 	onlyHangingNodeConstraints.reinit(locallyRelevantDofs);
 	dealii::DoFTools::make_hanging_node_constraints(dofHandlerHRefined, onlyHangingNodeConstraints);
 	onlyHangingNodeConstraints.close();
 
-	dealii::ConstraintMatrix constraintsHRefined;
+	dealii::AffineConstraints<double> constraintsHRefined;
 	constraintsHRefined.reinit(locallyRelevantDofs);
 	dealii::DoFTools::make_hanging_node_constraints(dofHandlerHRefined, constraintsHRefined);
 	std::vector<std::vector<double> > unitVectorsXYZ;
@@ -308,7 +308,7 @@ void dftClass<FEOrder,FEOrderElectro>::computeElectrostaticEnergyHRefined(
 	//Zero Dirichlet BC constraints on the boundary of the domain
 	//used for computing total electrostatic potential using Poisson problem
 	//with (rho+b) as the rhs
-	dealii::ConstraintMatrix constraintsForTotalPotential;
+	dealii::AffineConstraints<double> constraintsForTotalPotential;
 	constraintsForTotalPotential.reinit(locallyRelevantDofs);
 
 	if (dftParameters::pinnedNodeForPBC)
@@ -322,7 +322,7 @@ void dftClass<FEOrder,FEOrderElectro>::computeElectrostaticEnergyHRefined(
 	constraintsForTotalPotential.close();
 
 	//clear existing constraints matrix vector
-	std::vector<const dealii::ConstraintMatrix*> matrixFreeConstraintsInputVector;
+	std::vector<const dealii::AffineConstraints<double>*> matrixFreeConstraintsInputVector;
 
 	matrixFreeConstraintsInputVector.push_back(&constraintsHRefined);
 

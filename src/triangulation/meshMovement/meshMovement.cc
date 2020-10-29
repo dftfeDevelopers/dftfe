@@ -152,7 +152,7 @@ namespace dftfe {
 		if (dftParameters::createConstraintsFromSerialDofhandler)
 		{
 			d_triaPtrSerial=&serialTriangulation;
-			ConstraintMatrix  dummy;
+			dealii::AffineConstraints<double>  dummy;
 			vectorTools::createParallelConstraintMatrixFromSerial(serialTriangulation,
 					d_dofHandlerMoveMesh,
 					mpi_communicator,

@@ -67,7 +67,7 @@ namespace dftfe
 				 * the same number of components.
 				 * @param fieldsPreviousMesh parallel distributed fields on previous mesh to be interpolated from
 				 * @param fieldsCurrentMesh  parallel distributed fields on current mesh to be interpolated upon
-				 * @param constraintsCurrentPtr  pointer to ConstraintMatrix object of current mesh. Default value
+				 * @param constraintsCurrentPtr  pointer to dealii::AffineConstraints<double> object of current mesh. Default value
 				 * is NULL in which case the distribute operation doesn't happen inside interpolate. We have this
 				 * function so that outside interpolate function we can use the inhouse distribute function.
 				 */
@@ -78,7 +78,7 @@ namespace dftfe
 						const dealii::FESystem<3> & FECurrent,
 						const std::vector<distributedCPUVec<double>*> & fieldsPreviousMesh,
 						std::vector<distributedCPUVec<double>*> & fieldsCurrentMesh,
-						const dealii::ConstraintMatrix * constraintsCurrentPtr=NULL);
+						const dealii::AffineConstraints<double> * constraintsCurrentPtr=NULL);
 
 			private:
 

@@ -103,7 +103,7 @@ namespace dftfe {
 			Triangulation<3,3>  * d_triaPtrSerial;
 			IndexSet   d_locally_owned_dofs;
 			IndexSet   d_locally_relevant_dofs;
-			ConstraintMatrix d_constraintsMoveMesh;
+			dealii::AffineConstraints<double> d_constraintsMoveMesh;
 			std::vector<GridTools::PeriodicFacePair<typename DoFHandler<C_DIM>::cell_iterator> > d_periodicity_vector;
 			std::vector<std::vector<double> >  d_domainBoundingVectors;
 

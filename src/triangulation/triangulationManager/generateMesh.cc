@@ -644,7 +644,7 @@ namespace dftfe {
 		IndexSet   locally_relevant_dofs;
 		DoFTools::extract_locally_relevant_dofs(dofHandler, locally_relevant_dofs);
 
-		ConstraintMatrix constraints;
+		dealii::AffineConstraints<double> constraints;
 		constraints.clear();
 		constraints.reinit(locally_relevant_dofs);
 		DoFTools::make_hanging_node_constraints(dofHandler, constraints);

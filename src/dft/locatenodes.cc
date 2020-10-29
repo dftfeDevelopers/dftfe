@@ -97,8 +97,8 @@ void dftClass<FEOrder,FEOrderElectro>::locateAtomCoreNodes(const dealii::DoFHand
 
 	template<unsigned int FEOrder,unsigned int FEOrderElectro>
 void dftClass<FEOrder,FEOrderElectro>::locatePeriodicPinnedNodes(const dealii::DoFHandler<3> & _dofHandler,
-		const dealii::ConstraintMatrix & constraintsBase,
-		dealii::ConstraintMatrix & constraints)
+		const dealii::AffineConstraints<double> & constraintsBase,
+		dealii::AffineConstraints<double> & constraints)
 {
 	// pin a node away from all atoms in case of full PBC for total electrostatic potential solve
 	if (!(dftParameters::periodicX && dftParameters::periodicY && dftParameters::periodicZ))

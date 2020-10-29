@@ -300,7 +300,7 @@ template<unsigned int FEOrder,unsigned int FEOrderElectro>
 	void forceClass<FEOrder,FEOrderElectro>::distributeForceContributionFPSPLocalGammaAtoms
 (const std::map<unsigned int,std::vector<double> > & forceContributionFPSPLocalGammaAtoms,
  const std::map<std::pair<unsigned int,unsigned int>, unsigned int> & atomsForceDofs,
- const ConstraintMatrix &  constraintsNoneForce,
+ const dealii::AffineConstraints<double> &  constraintsNoneForce,
  distributedCPUVec<double> & configForceVectorLinFE)
 {
 	for (unsigned int iAtom=0;iAtom <dftPtr->atomLocations.size(); iAtom++)

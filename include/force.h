@@ -84,7 +84,7 @@ namespace dftfe {
 			 *  @return void.
 			 */
 			void initMoved(std::vector<const DoFHandler<3> *> & dofHandlerVectorMatrixFree,
-					std::vector<const ConstraintMatrix * > & constraintsVectorMatrixFree,
+					std::vector<const dealii::AffineConstraints<double> * > & constraintsVectorMatrixFree,
 					const bool isElectrostaticsMesh);
 
 			/** @brief initializes and precomputes pseudopotential related data structuers required for configurational force
@@ -132,7 +132,7 @@ namespace dftfe {
 				 const std::map<unsigned int,std::map<dealii::CellId, std::vector<double> > > & hessianRhoCoreAtoms,          
 				 const std::map<dealii::CellId, std::vector<double> > & pseudoVLocElectro,
 				 const std::map<unsigned int,std::map<dealii::CellId, std::vector<double> > > & pseudoVLocAtomsElectro,
-				 const ConstraintMatrix  & hangingPlusPBCConstraintsElectro,
+				 const dealii::AffineConstraints<double>  & hangingPlusPBCConstraintsElectro,
 				 const vselfBinsManager<FEOrder,FEOrderElectro>   & vselfBinsManagerElectro,
 				 const std::map<dealii::CellId, std::vector<double> > & shadowKSRhoMinValues,
 				 const std::map<dealii::CellId, std::vector<double> > & shadowKSGradRhoMinValues,
@@ -185,7 +185,7 @@ namespace dftfe {
 				  const std::map<dealii::CellId, std::vector<double> > & gradRhoOutValuesElectroLpsp,
 					const std::map<dealii::CellId, std::vector<double> > & pseudoVLocElectro,
           const std::map<unsigned int,std::map<dealii::CellId, std::vector<double> > > & pseudoVLocAtomsElectro,
-					const ConstraintMatrix  & hangingPlusPBCConstraintsElectro,
+					const dealii::AffineConstraints<double>  & hangingPlusPBCConstraintsElectro,
 					const vselfBinsManager<FEOrder,FEOrderElectro>   & vselfBinsManagerElectro);
 
 			/** @brief prints the currently stored configurational stress tensor.
@@ -223,7 +223,7 @@ namespace dftfe {
 			void createBinObjectsForce
 				(const DoFHandler<3> & dofHandler,
 				 const DoFHandler<3> & dofHandlerForce,
-				 const ConstraintMatrix  & hangingPlusPBCConstraints,
+				 const dealii::AffineConstraints<double>  & hangingPlusPBCConstraints,
 				 const vselfBinsManager<FEOrder,FEOrderElectro> & vselfBinsManager,
 				 std::vector<std::vector<DoFHandler<C_DIM>::active_cell_iterator> > & cellsVselfBallsDofHandler,
 				 std::vector<std::vector<DoFHandler<C_DIM>::active_cell_iterator> > & cellsVselfBallsDofHandlerForce,
@@ -419,7 +419,7 @@ namespace dftfe {
 			void distributeForceContributionFPSPLocalGammaAtoms
 				(const std::map<unsigned int,std::vector<double> > & forceContributionFPSPLocalGammaAtoms,
 				 const std::map<std::pair<unsigned int,unsigned int>, unsigned int> & atomsForceDofs,
-				 const ConstraintMatrix &  constraintsNoneForce,
+				 const dealii::AffineConstraints<double> &  constraintsNoneForce,
 				 distributedCPUVec<double> & configForceVectorLinFE);
 
 			void accumulateForceContributionGammaAtomsFloating
@@ -705,10 +705,10 @@ namespace dftfe {
 			IndexSet   d_locally_relevant_dofsForceElectro;
 
 			/// Constraint matrix for hanging node and periodic constaints on d_dofHandlerForce.
-			ConstraintMatrix d_constraintsNoneForce;
+			dealii::AffineConstraints<double> d_constraintsNoneForce;
 
 			/// Constraint matrix for hanging node and periodic constaints on d_dofHandlerForceElectro.
-			ConstraintMatrix d_constraintsNoneForceElectro;
+			dealii::AffineConstraints<double> d_constraintsNoneForceElectro;
 
 			/// Internal data: map < <atomId,force component>, globaldof in d_dofHandlerForce>
 			std::map<std::pair<unsigned int,unsigned int>, unsigned int>  d_atomsForceDofs;

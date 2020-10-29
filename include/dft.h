@@ -301,7 +301,7 @@ namespace dftfe {
 					std::vector<distributedCPUVec<double>* > fieldsCurrent,
 					const dealii::FESystem<3> & FEPrev,
 					const dealii::FESystem<3> & FECurrent,
-					const dealii::ConstraintMatrix & constraintsCurrent);
+					const dealii::AffineConstraints<double> & constraintsCurrent);
 
 			/**
 			 *@brief project ground state electron density from previous mesh into
@@ -465,8 +465,8 @@ namespace dftfe {
 			 * to get an unique solution to the total electrostatic potential problem.
 			 *
 			 * @param[in] dofHandler
-			 * @param[in] constraintMatrixBase base ConstraintMatrix object
-			 * @param[out] constraintMatrix ConstraintMatrix object with homogeneous
+			 * @param[in] constraintMatrixBase base dealii::AffineConstraints<double> object
+			 * @param[out] constraintMatrix dealii::AffineConstraints<double> object with homogeneous
 			 * Dirichlet boundary condition entries added
 			 */
 			void locatePeriodicPinnedNodes(const dealii::DoFHandler<3> & _dofHandler,
@@ -512,7 +512,7 @@ namespace dftfe {
 					const unsigned int lpspQuadratureId,
 					const dealii::MatrixFree<3,double> & _matrix_free_data,
 					const unsigned int _phiExtDofHandlerIndex,
-					const dealii::ConstraintMatrix & phiExtConstraintMatrix,
+					const dealii::AffineConstraints<double> & phiExtConstraintMatrix,
 					const std::map<types::global_dof_index, Point<3> > & supportPoints,
 					const vselfBinsManager<FEOrder,FEOrderElectro> & vselfBinManager,
           distributedCPUVec<double> & phiExt,
@@ -530,7 +530,7 @@ namespace dftfe {
 			 * non-periodic boundary (boundary id==0).
 			 *
 			 * @param[in] dofHandler
-			 * @param[out] constraintMatrix ConstraintMatrix object with homogeneous
+			 * @param[out] constraintMatrix dealii::AffineConstraints<double> object with homogeneous
 			 * Dirichlet boundary condition entries added
 			 */
 			void applyHomogeneousDirichletBC(const dealii::DoFHandler<3> & _dofHandler,

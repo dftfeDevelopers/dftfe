@@ -818,7 +818,7 @@ namespace dftfe
         else
           for (std::map<dealii::types::global_dof_index, double>::const_iterator it=d_atomsInBin[iBin].begin(); it!=d_atomsInBin[iBin].end(); ++it)
           {
-            std::vector<dealii::ConstraintMatrix::size_type> local_dof_indices_origin(1, it->first); //atomic node
+            std::vector<dealii::AffineConstraints<double>::size_type> local_dof_indices_origin(1, it->first); //atomic node
             dealii::Vector<double> cell_rhs_origin (1);
             cell_rhs_origin(0)=-(it->second); //atomic charge
 

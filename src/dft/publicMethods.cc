@@ -42,7 +42,7 @@ const std::vector<dealii::types::global_dof_index> & dftClass<FEOrder,FEOrderEle
 }
 
 template<unsigned int FEOrder,unsigned int FEOrderElectro>
-const ConstraintMatrix & dftClass<FEOrder,FEOrderElectro>::getConstraintMatrixEigen() const
+const dealii::AffineConstraints<double> & dftClass<FEOrder,FEOrderElectro>::getConstraintMatrixEigen() const
 {
 	return  constraintsNoneEigen;
 }

@@ -35,7 +35,7 @@ template<unsigned int FEOrder,unsigned int FEOrderElectro>
   const std::map<dealii::CellId, std::vector<double> > & gradRhoOutValuesElectroLpsp,
   const std::map<dealii::CellId, std::vector<double> > & pseudoVLocElectro,
  const std::map<unsigned int,std::map<dealii::CellId, std::vector<double> > > & pseudoVLocAtomsElectro,
- const ConstraintMatrix  & hangingPlusPBCConstraintsElectro,
+ const dealii::AffineConstraints<double>  & hangingPlusPBCConstraintsElectro,
  const vselfBinsManager<FEOrder,FEOrderElectro> & vselfBinsManagerElectro)
 {
 

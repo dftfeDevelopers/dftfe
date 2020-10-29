@@ -25,7 +25,7 @@ template<unsigned int FEOrder,unsigned int FEOrderElectro>
  const unsigned int lpspQuadratureId,
  const dealii::MatrixFree<3,double> & _matrix_free_data,
  const unsigned int _phiExtDofHandlerIndex,
- const dealii::ConstraintMatrix & _phiExtConstraintMatrix,
+ const dealii::AffineConstraints<double> & _phiExtConstraintMatrix,
  const std::map<types::global_dof_index, Point<3> > & _supportPoints,
  const vselfBinsManager<FEOrder,FEOrderElectro> & vselfBinManager,
  distributedCPUVec<double> & phiExt,
