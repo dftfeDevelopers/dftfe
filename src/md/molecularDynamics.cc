@@ -331,7 +331,6 @@ namespace dftfe {
 			boost::variate_generator<boost::mt19937&,boost::normal_distribution<> > generator(rng,gaussianDist);
 			double averageKineticEnergy;
 			double temperatureFromVelocities;
-			double accumTotEnergyCorrection=0.0;
 			double totalEnergyStartingTimeStep=0.0;
 			bool lastInterruptedStepPreviousRunAutoMesh=false;
 
@@ -518,16 +517,11 @@ kohnShamDFTEigenOperatorCUDA
 
 				std::vector<std::vector<double> > fileTemperatueData;
 				std::vector<std::vector<double> > timeIndexData;
-				std::vector<std::vector<double> > accumTotEnergyCorrectionData;
 				std::vector<std::vector<double> > autoMeshData;
 
 				dftUtils::readFile(1,
 						fileTemperatueData,
 						"temperature.chk");
-
-				dftUtils::readFile(1,
-						accumTotEnergyCorrectionData,
-						"accumEnergyCorrection.chk");
 
 				dftUtils::readFile(1,
 						timeIndexData,
@@ -542,7 +536,6 @@ kohnShamDFTEigenOperatorCUDA
 
 				startingTimeStep=timeIndexData[0][0];
 
-				accumTotEnergyCorrection=accumTotEnergyCorrectionData[0][0];
 
 				lastInterruptedStepPreviousRunAutoMesh=(autoMeshData[0][0]>1e-6)?true:false;
 
@@ -556,7 +549,6 @@ kohnShamDFTEigenOperatorCUDA
 
 				pcout<<" Ending time step read from file: "<<startingTimeStep<<std::endl;
 				pcout<<" Temperature read from file: "<<temperatureFromVelocities<<std::endl;
-				pcout<<" Accumulated total energy correction due to auto remeshing read from file: "<<accumTotEnergyCorrection<<std::endl;
 
 				if (lastInterruptedStepPreviousRunAutoMesh)
 					xlbomdHistoryRestart=false;
@@ -835,7 +827,7 @@ false);
 								dftPtr->d_rhoInNodalValues.update_ghost_values();
 								dftPtr->interpolateRhoNodalDataToQuadratureDataGeneral(dftPtr->d_matrixFreeDataPRefined,
                     dftPtr->d_densityDofHandlerIndexElectro,
-                    0,
+                    dftPtr->d_densityQuadratureIdElectro,
 										dftPtr->d_rhoInNodalValues,
 										*(dftPtr->rhoInValues),
 										*(dftPtr->gradRhoInValues),
@@ -999,7 +991,7 @@ false);
 						dftPtr->d_rhoInNodalValues.update_ghost_values();
 						dftPtr->interpolateRhoNodalDataToQuadratureDataGeneral(dftPtr->d_matrixFreeDataPRefined,
                 dftPtr->d_densityDofHandlerIndexElectro,
-                0,
+                dftPtr->d_densityQuadratureIdElectro,
 								dftPtr->d_rhoInNodalValues,
 								*(dftPtr->rhoInValues),
 								*(dftPtr->gradRhoInValues),
@@ -1180,7 +1172,7 @@ false);
 									dftPtr->d_rhoInNodalValues.update_ghost_values();
 									dftPtr->interpolateRhoNodalDataToQuadratureDataGeneral(dftPtr->d_matrixFreeDataPRefined,
                       dftPtr->d_densityDofHandlerIndexElectro,
-                      0,
+                      dftPtr->d_densityQuadratureIdElectro,
 											dftPtr->d_rhoInNodalValues,
 											*(dftPtr->rhoInValues),
 											*(dftPtr->gradRhoInValues),
@@ -1265,7 +1257,7 @@ false);
 									dftPtr->d_rhoInNodalValues.update_ghost_values();
 									dftPtr->interpolateRhoNodalDataToQuadratureDataGeneral(dftPtr->d_matrixFreeDataPRefined,
                       dftPtr->d_densityDofHandlerIndexElectro,
-                      0,
+                      dftPtr->d_densityQuadratureIdElectro,
 											dftPtr->d_rhoInNodalValues,
 											*(dftPtr->rhoInValues),
 											*(dftPtr->gradRhoInValues),
@@ -1414,7 +1406,7 @@ false);
 							dftPtr->d_rhoInNodalValues.update_ghost_values();
 							dftPtr->interpolateRhoNodalDataToQuadratureDataGeneral(dftPtr->d_matrixFreeDataPRefined,
                   dftPtr->d_densityDofHandlerIndexElectro,
-                  0,
+                  dftPtr->d_densityQuadratureIdElectro,
 									dftPtr->d_rhoInNodalValues,
 									*(dftPtr->rhoInValues),
 									*(dftPtr->gradRhoInValues),
@@ -1478,19 +1470,6 @@ false);
 				internalEnergyVector[timeIndex-startingTimeStep] = isXlBOMDStep?shadowPotentialInternalEnergy:dftPtr->d_groundStateEnergy;
 				entropicEnergyVector[timeIndex-startingTimeStep] = isXlBOMDStep?entropicEnergyShadowPotential:dftPtr->d_entropicEnergy;
 				totalEnergyVector[timeIndex-startingTimeStep] = kineticEnergyVector[timeIndex-startingTimeStep] +internalEnergyVector[timeIndex-startingTimeStep] -entropicEnergyVector[timeIndex-startingTimeStep];
-
-				double totalEnergyChangeAutoMesh=0.0;
-				if (dftPtr->d_autoMesh==1)
-				{
-					totalEnergyChangeAutoMesh=(totalEnergyVector[timeIndex-startingTimeStep]-accumTotEnergyCorrection)-totalEnergyVector[timeIndex-startingTimeStep-1];
-					accumTotEnergyCorrection+=totalEnergyChangeAutoMesh;
-				}
-				else if ((timeIndex == (startingTimeStep+1)&& restartFlag==1) && lastInterruptedStepPreviousRunAutoMesh)
-				{
-					totalEnergyChangeAutoMesh=(totalEnergyVector[timeIndex-startingTimeStep]-accumTotEnergyCorrection)-totalEnergyStartingTimeStep;
-					accumTotEnergyCorrection+=totalEnergyChangeAutoMesh;
-				}
-				totalEnergyVector[timeIndex-startingTimeStep]-=accumTotEnergyCorrection;
 
 				rmsErrorRhoVector[timeIndex-startingTimeStep] = rmsErrorRho;
 				rmsErrorGradRhoVector[timeIndex-startingTimeStep] = rmsErrorGradRho;
@@ -1619,7 +1598,6 @@ false);
 				std::vector<std::vector<double> > fileVelData(numberGlobalCharges,std::vector<double>(3,0.0));
 				std::vector<std::vector<double> > fileTemperatureData(1,std::vector<double>(1,0.0));
 				std::vector<std::vector<double> > timeIndexData(1,std::vector<double>(1,0.0));
-				std::vector<std::vector<double> > accumTotEnergyCorrectionData(1,std::vector<double>(1,0.0));
 
 				for(int iCharge = 0; iCharge < numberGlobalCharges; ++iCharge)
 				{
@@ -1646,10 +1624,6 @@ false);
 				timeIndexData[0][0]=timeIndex;
 				dftUtils::writeDataIntoFile(timeIndexData,
 						"time.chk");
-
-				accumTotEnergyCorrectionData[0][0]=accumTotEnergyCorrection;
-				dftUtils::writeDataIntoFile(accumTotEnergyCorrectionData,
-						"accumEnergyCorrection.chk");
 
 				if (dftParameters::chkType>=1)
 					dftPtr->writeDomainAndAtomCoordinates();
