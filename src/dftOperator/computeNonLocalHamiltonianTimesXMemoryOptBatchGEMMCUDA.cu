@@ -39,36 +39,24 @@ void kohnShamDFTOperatorCUDAClass<FEOrder,FEOrderElectro>::computeNonLocalHamilt
 	unsigned int strideC = numberWaveFunctions*d_maxSingleAtomPseudoWfc;
 
 	if (d_totalNonlocalElems>0 && !skip1)
-	{ 
-		copyCUDAKernel<<<(numberWaveFunctions+255)/256*d_totalNonlocalElems*d_numberNodesPerElement,256>>>
-			(numberWaveFunctions, 
-			 d_totalNonlocalElems*d_numberNodesPerElement,
-			 src,
-			 thrust::raw_pointer_cast(&d_cellWaveFunctionMatrixNonLocalDevice[0]),
-			 thrust::raw_pointer_cast(&d_flattenedArrayCellLocalProcIndexIdFlattenedMapNonLocalDevice[0]));
-
-
-
-		cublasDgemmStridedBatched(d_cublasHandle,
+	{
+		cublasDgemmBatched(d_cublasHandle,
 				CUBLAS_OP_N,
 				CUBLAS_OP_N,
 				numberWaveFunctions,
 				d_maxSingleAtomPseudoWfc,
 				d_numberNodesPerElement,
 				&scalarCoeffAlpha,
-				thrust::raw_pointer_cast(&d_cellWaveFunctionMatrixNonLocalDevice[0]),
+			  (const double**)d_A,
 				numberWaveFunctions,
-				strideA,
-				thrust::raw_pointer_cast(&d_cellHamiltonianMatrixNonLocalFlattenedDevice[0]),
+				(const double**)d_B,
 				d_numberNodesPerElement,
-				strideB,
 				&scalarCoeffBeta,
-				thrust::raw_pointer_cast(&d_projectorKetTimesVectorAllCellsDevice[0]),
+				d_C,
 				numberWaveFunctions,
-				strideC,
 				d_totalNonlocalElems);
-
-		cublasDgemm(d_cublasHandle,
+		
+    cublasDgemm(d_cublasHandle,
 				CUBLAS_OP_N,
 				CUBLAS_OP_N,
 				numberWaveFunctions,
@@ -188,7 +176,7 @@ void kohnShamDFTOperatorCUDAClass<FEOrder,FEOrderElectro>::computeNonLocalProjec
 		distributedGPUVec<double> &  projectorKetTimesVector,
 		const unsigned int numberWaveFunctions)
 {
-
+  const unsigned int totalLocallyOwnedCells = dftPtr->matrix_free_data.n_physical_cells();
 	const double scalarCoeffAlpha = 1.0,scalarCoeffBeta = 0.0;
 
 	//
@@ -200,32 +188,28 @@ void kohnShamDFTOperatorCUDAClass<FEOrder,FEOrderElectro>::computeNonLocalProjec
 
 	if (d_totalNonlocalElems>0)
 	{ 
-		copyCUDAKernel<<<(numberWaveFunctions+255)/256*d_totalNonlocalElems*d_numberNodesPerElement,256>>>
-			(numberWaveFunctions, 
-			 d_totalNonlocalElems*d_numberNodesPerElement,
-			 src,
-			 thrust::raw_pointer_cast(&d_cellWaveFunctionMatrixNonLocalDevice[0]),
-			 thrust::raw_pointer_cast(&d_flattenedArrayCellLocalProcIndexIdFlattenedMapNonLocalDevice[0]));
+    copyCUDAKernel<<<(numberWaveFunctions+255)/256*totalLocallyOwnedCells*d_numberNodesPerElement,256>>>(numberWaveFunctions, 
+        totalLocallyOwnedCells*d_numberNodesPerElement,
+        src,
+        thrust::raw_pointer_cast(&d_cellWaveFunctionMatrix[0]),
+        thrust::raw_pointer_cast(&d_flattenedArrayCellLocalProcIndexIdMapDevice[0]));
 
 
 
-		cublasDgemmStridedBatched(d_cublasHandle,
+		cublasDgemmBatched(d_cublasHandle,
 				CUBLAS_OP_N,
 				CUBLAS_OP_N,
 				numberWaveFunctions,
 				d_maxSingleAtomPseudoWfc,
 				d_numberNodesPerElement,
 				&scalarCoeffAlpha,
-				thrust::raw_pointer_cast(&d_cellWaveFunctionMatrixNonLocalDevice[0]),
+			  (const double**)d_A,
 				numberWaveFunctions,
-				strideA,
-				thrust::raw_pointer_cast(&d_cellHamiltonianMatrixNonLocalFlattenedDevice[0]),
+				(const double**)d_B,
 				d_numberNodesPerElement,
-				strideB,
 				&scalarCoeffBeta,
-				thrust::raw_pointer_cast(&d_projectorKetTimesVectorAllCellsDevice[0]),
+				d_C,
 				numberWaveFunctions,
-				strideC,
 				d_totalNonlocalElems);
 
 		cublasDgemm(d_cublasHandle,

@@ -33,7 +33,6 @@ namespace dftfe {
 #include "matrixVectorProductImplementations.cc"
 #include "shapeFunctionDataCalculator.cc"
 #include "hamiltonianMatrixCalculator.cc"
-#include "massMatrixCalculator.cc"
 
 
 	//
@@ -379,7 +378,7 @@ namespace dftfe {
 	//
 	template<unsigned int FEOrder,unsigned int FEOrderElectro>
 		void kohnShamDFTOperatorClass<FEOrder,FEOrderElectro>::computeMassVector(const dealii::DoFHandler<3> & dofHandler,
-				const dealii::ConstraintMatrix & constraintMatrix,
+				const dealii::AffineConstraints<double> & constraintMatrix,
 				distributedCPUVec<double> & sqrtMassVec,
 				distributedCPUVec<double> & invSqrtMassVec)
 		{
@@ -446,6 +445,7 @@ namespace dftfe {
 		void kohnShamDFTOperatorClass<FEOrder,FEOrderElectro>::computeVEff(const std::map<dealii::CellId,std::vector<double> >* rhoValues,
 				const std::map<dealii::CellId,std::vector<double> > & phiValues,
 				const std::map<dealii::CellId,std::vector<double> > & externalPotCorrValues,
+        const std::map<dealii::CellId,std::vector<double> > & rhoCoreValues,
         const unsigned int externalPotCorrQuadratureId)
 		{
 			const unsigned int n_cells = dftPtr->matrix_free_data.n_macro_cells();
@@ -471,6 +471,13 @@ namespace dftfe {
           const std::vector<double> & temp=phiValues.find(cellPtr->id())->second;
           for (unsigned int q = 0; q < numberQuadraturePoints; ++q)
             tempPhi[q][v]=temp[q];
+
+					if(dftParameters::nonLinearCoreCorrection)
+          {
+            const std::vector<double> & temp2= rhoCoreValues.find(cellPtr->id())->second;
+            for (unsigned int q = 0; q < numberQuadraturePoints; ++q)
+              tempRho[v][q]+=temp2[q];
+          }
 				}
 
 				for (unsigned int q = 0; q < numberQuadraturePoints; ++q)
@@ -481,7 +488,6 @@ namespace dftfe {
 					std::vector<double> densityValue(n_sub_cells), exchangePotentialVal(n_sub_cells), corrPotentialVal(n_sub_cells);
 					for (unsigned int v = 0; v < n_sub_cells; ++v)
 					{
-						cellPtr=dftPtr->matrix_free_data.get_cell_iterator(cell, v);
 						densityValue[v] = tempRho[v][q];
 					}
 
@@ -502,7 +508,7 @@ namespace dftfe {
 				}
 			}
       
-      if (dftParameters::isPseudopotential && !d_isStiffnessMatrixExternalPotCorrComputed)
+      if ((dftParameters::isPseudopotential || dftParameters::smearedNuclearCharges) && !d_isStiffnessMatrixExternalPotCorrComputed)
          computeVEffExternalPotCorr(externalPotCorrValues,externalPotCorrQuadratureId);
 		}
 
@@ -511,6 +517,8 @@ namespace dftfe {
 				const std::map<dealii::CellId,std::vector<double> >* gradRhoValues,
 				const std::map<dealii::CellId,std::vector<double> > & phiValues,
 				const std::map<dealii::CellId,std::vector<double> > & externalPotCorrValues,
+        const std::map<dealii::CellId,std::vector<double> > & rhoCoreValues,
+        const std::map<dealii::CellId,std::vector<double> > & gradRhoCoreValues,        
         const unsigned int externalPotCorrQuadratureId)
 		{
 			const unsigned int n_cells = dftPtr->matrix_free_data.n_macro_cells();
@@ -538,7 +546,20 @@ namespace dftfe {
 
           const std::vector<double> & temp=phiValues.find(cellPtr->id())->second;
           for (unsigned int q = 0; q < numberQuadraturePoints; ++q)
-            tempPhi[q][v]=temp[q];          
+            tempPhi[q][v]=temp[q];         
+
+					if(dftParameters::nonLinearCoreCorrection)
+          {
+            const std::vector<double> & temp2= rhoCoreValues.find(cellPtr->id())->second;
+            const std::vector<double> & temp3= gradRhoCoreValues.find(cellPtr->id())->second;
+            for (unsigned int q = 0; q < numberQuadraturePoints; ++q)
+            {
+              tempRho[v][q]+=temp2[q];
+              tempGradRho[v][3*q+0]+=temp3[3*q+0];
+              tempGradRho[v][3*q+1]+=temp3[3*q+1];
+              tempGradRho[v][3*q+2]+=temp3[3*q+2];
+            }
+          }
 				}
 				for (unsigned int q = 0; q < numberQuadraturePoints; ++q)
 				{
@@ -548,7 +569,6 @@ namespace dftfe {
 					std::vector<double> densityValue(n_sub_cells), derExchEnergyWithDensityVal(n_sub_cells), derCorrEnergyWithDensityVal(n_sub_cells), derExchEnergyWithSigma(n_sub_cells), derCorrEnergyWithSigma(n_sub_cells), sigmaValue(n_sub_cells);
 					for (unsigned int v = 0; v < n_sub_cells; ++v)
 					{
-						cellPtr=dftPtr->matrix_free_data.get_cell_iterator(cell, v);
 						densityValue[v] = tempRho[v][q];
 						double gradRhoX = tempGradRho[v][3*q + 0];
 						double gradRhoY = tempGradRho[v][3*q + 1];
@@ -563,7 +583,6 @@ namespace dftfe {
 					VectorizedArray<double>  derExchEnergyWithDensity, derCorrEnergyWithDensity, derExcWithSigmaTimesGradRhoX, derExcWithSigmaTimesGradRhoY, derExcWithSigmaTimesGradRhoZ;
 					for (unsigned int v = 0; v < n_sub_cells; ++v)
 					{
-						cellPtr=dftPtr->matrix_free_data.get_cell_iterator(cell, v);
 						derExchEnergyWithDensity[v]=derExchEnergyWithDensityVal[v];
 						derCorrEnergyWithDensity[v]=derCorrEnergyWithDensityVal[v];
 						double gradRhoX = tempGradRho[v][3*q + 0];
@@ -585,7 +604,7 @@ namespace dftfe {
 				}
 			}
 
-      if (dftParameters::isPseudopotential && !d_isStiffnessMatrixExternalPotCorrComputed)
+      if ((dftParameters::isPseudopotential || dftParameters::smearedNuclearCharges) && !d_isStiffnessMatrixExternalPotCorrComputed)
          computeVEffExternalPotCorr(externalPotCorrValues,externalPotCorrQuadratureId);
 		}
 
@@ -723,21 +742,6 @@ namespace dftfe {
 
 		}
 
-	template<unsigned int FEOrder,unsigned int FEOrderElectro>
-		void kohnShamDFTOperatorClass<FEOrder,FEOrderElectro>::HX(distributedCPUVec<std::complex<double> > & src,
-				const unsigned int numberWaveFunctions,
-				distributedCPUVec<std::complex<double> > & dst)
-		{
-			AssertThrow(false,dftUtils::ExcNotImplementedYet());
-		}
-
-	template<unsigned int FEOrder,unsigned int FEOrderElectro>
-		void kohnShamDFTOperatorClass<FEOrder,FEOrderElectro>::MX(distributedCPUVec<std::complex<double> > & src,
-				const unsigned int numberWaveFunctions,
-				distributedCPUVec<std::complex<double> > & dst)
-		{
-			AssertThrow(false,dftUtils::ExcNotImplementedYet());
-		}
 
 #else
 	template<unsigned int FEOrder,unsigned int FEOrderElectro>
@@ -970,142 +974,6 @@ namespace dftfe {
 			  
 
 		}
-  
-
-	template<unsigned int FEOrder,unsigned int FEOrderElectro>
-		void kohnShamDFTOperatorClass<FEOrder,FEOrderElectro>::HX(distributedCPUVec<double> & src,
-				const unsigned int numberWaveFunctions,
-				distributedCPUVec<double> & dst)
-
-
-		{
-			const unsigned int numberDofs = src.local_size()/numberWaveFunctions;
-			const unsigned int inc = 1;
-
-
-			//
-			//update slave nodes before doing element-level matrix-vec multiplication
-			//
-			dftPtr->constraintsNoneDataInfo.distribute(src,
-					numberWaveFunctions);
-
-			//src.update_ghost_values();
-
-			//
-			//Hloc*X
-			//
-#ifdef WITH_MKL
-			if (dftParameters::useBatchGEMM && numberWaveFunctions<1000)
-			{
-				computeLocalHamiltonianTimesXBatchGEMM(src,
-						numberWaveFunctions,
-						dst);
-			}
-			else
-				computeLocalHamiltonianTimesX(src,
-						numberWaveFunctions,
-						dst);
-#else
-			computeLocalHamiltonianTimesX(src,
-					numberWaveFunctions,
-					dst);
-#endif
-
-			//
-			//required if its a pseudopotential calculation and number of nonlocal atoms are greater than zero
-			//H^{nloc}*X
-			if(dftParameters::isPseudopotential && dftPtr->d_nonLocalAtomGlobalChargeIds.size() > 0)
-			{
-#ifdef WITH_MKL
-				if (dftParameters::useBatchGEMM && numberWaveFunctions<1000)
-				{
-					computeNonLocalHamiltonianTimesXBatchGEMM(src,
-							numberWaveFunctions,
-							dst);
-				}
-				else
-					computeNonLocalHamiltonianTimesX(src,
-							numberWaveFunctions,
-							dst);
-#else
-				computeNonLocalHamiltonianTimesX(src,
-						numberWaveFunctions,
-						dst);
-#endif
-			}
-
-
-
-			//
-			//update master node contributions from its correponding slave nodes
-			//
-			dftPtr->constraintsNoneDataInfo.distribute_slave_to_master(dst,
-					numberWaveFunctions);
-
-
-			src.zero_out_ghosts();
-			dst.compress(VectorOperation::add);
-
-
-		}
-
-	template<unsigned int FEOrder,unsigned int FEOrderElectro>
-		void kohnShamDFTOperatorClass<FEOrder,FEOrderElectro>::MX(distributedCPUVec<double> & src,
-				const unsigned int numberWaveFunctions,
-				distributedCPUVec<double> & dst)
-
-
-		{
-			const unsigned int numberDofs = src.local_size()/numberWaveFunctions;
-			const unsigned int inc = 1;
-
-
-			//
-			//update slave nodes before doing element-level matrix-vec multiplication
-			//
-			dftPtr->constraintsNoneDataInfo.distribute(src,
-					numberWaveFunctions);
-
-
-			//
-			//Hloc*M^{-1/2}*X
-			//
-
-			/*#ifdef WITH_MKL
-			  if (dftParameters::useBatchGEMM && numberWaveFunctions<1000)
-			  {
-			  computeLocalHamiltonianTimesXBatchGEMM(src,
-			  numberWaveFunctions,
-			  dst);
-			  }
-			  else
-			  computeLocalHamiltonianTimesX(src,
-			  numberWaveFunctions,
-			  dst);
-#else
-computeLocalHamiltonianTimesX(src,
-numberWaveFunctions,
-dst);
-#endif*/
-
-			computeMassMatrixTimesX(src,
-					numberWaveFunctions,
-					dst);
-
-
-
-			//
-			//update master node contributions from its correponding slave nodes
-			//
-			dftPtr->constraintsNoneDataInfo.distribute_slave_to_master(dst,
-					numberWaveFunctions);
-
-
-			src.zero_out_ghosts();
-			dst.compress(VectorOperation::add);
-
-		}
-  
 #endif
 
   
@@ -1212,8 +1080,7 @@ dst);
 		void kohnShamDFTOperatorClass<FEOrder,FEOrderElectro>::XtHX(const std::vector<dataTypes::number> & X,
 				const unsigned int numberWaveFunctions,
 				const std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid>  & processGrid,
-				dealii::ScaLAPACKMatrix<dataTypes::number> & projHamPar,
-				bool origHFlag)
+				dealii::ScaLAPACKMatrix<dataTypes::number> & projHamPar)
 		{
 #ifdef USE_COMPLEX
 			AssertThrow(false,dftUtils::ExcNotImplementedYet());
@@ -1300,20 +1167,12 @@ dst);
 					HXBlock=0;
 					const bool scaleFlag = false;
 					const dataTypes::number scalar = 1.0;
-					if(origHFlag)
-					{
-						HX(XBlock,
-								B,
-								HXBlock);
-					}
-					else
-					{
-						HX(XBlock,
-								B,
-								scaleFlag,
-								scalar,
-								HXBlock);
-					}
+						
+          HX(XBlock,
+						 B,
+						 scaleFlag,
+						 scalar,
+						 HXBlock);
 
 					MPI_Barrier(getMPICommunicator());
 
@@ -1381,172 +1240,12 @@ dst);
 		}
 
 	template<unsigned int FEOrder,unsigned int FEOrderElectro>
-		void kohnShamDFTOperatorClass<FEOrder,FEOrderElectro>::XtMX(const std::vector<dataTypes::number> & X,
-				const unsigned int numberWaveFunctions,
-				const std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid>  & processGrid,
-				dealii::ScaLAPACKMatrix<dataTypes::number> & projMassPar)
-		{
-#ifdef USE_COMPLEX
-			AssertThrow(false,dftUtils::ExcNotImplementedYet());
-#else
-			//
-			//Get access to number of locally owned nodes on the current processor
-			//
-			const unsigned int numberDofs = X.size()/numberWaveFunctions;
-
-			//create temporary arrays XBlock,Hx
-			distributedCPUVec<dataTypes::number> XBlock,MXBlock;
-
-			std::map<unsigned int, unsigned int> globalToLocalColumnIdMap;
-			std::map<unsigned int, unsigned int> globalToLocalRowIdMap;
-			linearAlgebraOperations::internal::createGlobalToLocalIdMapsScaLAPACKMat(processGrid,
-					projMassPar,
-					globalToLocalRowIdMap,
-					globalToLocalColumnIdMap);
-			//band group parallelization data structures
-			const unsigned int numberBandGroups=
-				dealii::Utilities::MPI::n_mpi_processes(dftPtr->interBandGroupComm);
-			const unsigned int bandGroupTaskId = dealii::Utilities::MPI::this_mpi_process(dftPtr->interBandGroupComm);
-			std::vector<unsigned int> bandGroupLowHighPlusOneIndices;
-			dftUtils::createBandParallelizationIndices(dftPtr->interBandGroupComm,
-					numberWaveFunctions,
-					bandGroupLowHighPlusOneIndices);
-
-			/*
-			 * X^{T}*M*Xc is done in a blocked approach for memory optimization:
-			 * Sum_{blocks} X^{T}*M*XcBlock. The result of each X^{T}*M*XcBlock
-			 * has a much smaller memory compared to X^{T}*M*Xc.
-			 * X^{T} (denoted by X in the code with column major format storage)
-			 * is a matrix with size (N x MLoc).
-			 * N is denoted by numberWaveFunctions in the code.
-			 * MLoc, which is number of local dofs is denoted by numberDofs in the code.
-			 * Xc denotes complex conjugate of X.
-			 * XcBlock is a matrix of size (MLoc x B). B is the block size.
-			 * A further optimization is done to reduce floating point operations:
-			 * As X^{T}*M*Xc is a Hermitian matrix, it suffices to compute only the lower
-			 * triangular part. To exploit this, we do
-			 * X^{T}*M*Xc=Sum_{blocks} XTrunc^{T}*M*XcBlock
-			 * where XTrunc^{T} is a (D x MLoc) sub matrix of X^{T} with the row indices
-			 * ranging from the lowest global index of XcBlock (denoted by jvec in the code)
-			 * to N. D=N-jvec.
-			 * The parallel ScaLapack matrix projMassPar is directly filled from
-			 * the XTrunc^{T}*M*XcBlock result
-			 */
-
-			const unsigned int vectorsBlockSize=std::min(dftParameters::wfcBlockSize,
-					bandGroupLowHighPlusOneIndices[1]);
-
-			std::vector<dataTypes::number> projMassBlock(numberWaveFunctions*vectorsBlockSize,0.0);
-
-			if (dftParameters::verbosity>=4)
-				dftUtils::printCurrentMemoryUsage(mpi_communicator,
-						"Inside Blocked XtMX with parallel projected Mass matrix");
-
-			for (unsigned int jvec = 0; jvec < numberWaveFunctions; jvec += vectorsBlockSize)
-			{
-				// Correct block dimensions if block "goes off edge of" the matrix
-				const unsigned int B = std::min(vectorsBlockSize, numberWaveFunctions-jvec);
-				if (jvec==0 || B!=vectorsBlockSize)
-				{
-					reinit(B,
-							XBlock,
-							true);
-					MXBlock.reinit(XBlock);
-				}
-
-				if ((jvec+B)<=bandGroupLowHighPlusOneIndices[2*bandGroupTaskId+1] &&
-						(jvec+B)>bandGroupLowHighPlusOneIndices[2*bandGroupTaskId])
-				{
-					XBlock=0;
-					//fill XBlock^{T} from X:
-					for(unsigned int iNode = 0; iNode<numberDofs; ++iNode)
-						for(unsigned int iWave = 0; iWave < B; ++iWave)
-							XBlock.local_element(iNode*B
-									+iWave)
-								= X[iNode*numberWaveFunctions+jvec+iWave];
-
-
-					MPI_Barrier(getMPICommunicator());
-					//evaluate M times XBlock^{T} and store in XBlock^{T}
-					MXBlock=0;
-					const bool scaleFlag = false;
-					const dataTypes::number scalar = 1.0;
-					MX(XBlock,
-							B,
-							MXBlock);
-					MPI_Barrier(getMPICommunicator());
-
-					const char transA = 'N';
-					const char transB = 'T';
-
-					const dataTypes::number alpha = 1.0,beta = 0.0;
-					std::fill(projMassBlock.begin(),projMassBlock.end(),0.);
-
-					const unsigned int D = numberWaveFunctions-jvec;
-
-					// Comptute local XTrunc^{T}*MXcBlock.
-					dgemm_(&transA,
-							&transB,
-							&D,
-							&B,
-							&numberDofs,
-							&alpha,
-							&X[0]+jvec,
-							&numberWaveFunctions,
-							MXBlock.begin(),
-							&B,
-							&beta,
-							&projMassBlock[0],
-							&D);
-
-					MPI_Barrier(getMPICommunicator());
-					// Sum local XTrunc^{T}*MXcBlock across domain decomposition processors
-					MPI_Allreduce(MPI_IN_PLACE,
-							&projMassBlock[0],
-							D*B,
-							dataTypes::mpi_type_id(&projMassBlock[0]),
-							MPI_SUM,
-							getMPICommunicator());
-
-					//Copying only the lower triangular part to the ScaLAPACK projected Hamiltonian matrix
-					if (processGrid->is_process_active())
-						for (unsigned int j = 0; j <B; ++j)
-							if(globalToLocalColumnIdMap.find(j+jvec)!=globalToLocalColumnIdMap.end())
-							{
-								const unsigned int localColumnId=globalToLocalColumnIdMap[j+jvec];
-								for (unsigned int i = j+jvec; i <numberWaveFunctions; ++i)
-								{
-									std::map<unsigned int, unsigned int>::iterator it=
-										globalToLocalRowIdMap.find(i);
-									if (it!=globalToLocalRowIdMap.end())
-										projMassPar.local_el(it->second,
-												localColumnId)
-											=projMassBlock[j*D+i-jvec];
-								}
-							}
-
-				}//band parallelization
-
-			}//block loop
-
-			if (numberBandGroups>1)
-			{
-				MPI_Barrier(dftPtr->interBandGroupComm);
-				linearAlgebraOperations::internal::sumAcrossInterCommScaLAPACKMat(processGrid,
-						projMassPar,
-						dftPtr->interBandGroupComm);
-			}
-#endif
-		}
-
-	template<unsigned int FEOrder,unsigned int FEOrderElectro>
 		void kohnShamDFTOperatorClass<FEOrder,FEOrderElectro>::XtHXMixedPrec
 		(const std::vector<dataTypes::number> & X,
 		 const unsigned int N,
 		 const unsigned int Ncore,
 		 const std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid>  & processGrid,
-		 dealii::ScaLAPACKMatrix<dataTypes::number> & projHamPar,
-		 bool origHFlag)
+		 dealii::ScaLAPACKMatrix<dataTypes::number> & projHamPar)
 		{
 #ifdef USE_COMPLEX
 			AssertThrow(false,dftUtils::ExcNotImplementedYet());
@@ -1638,21 +1337,14 @@ dst);
 					HXBlock=0;
 					const bool scaleFlag = false;
 					const dataTypes::number scalar = 1.0;
-					if(origHFlag)
-					{
-						HX(XBlock,
-								B,
-								HXBlock);
-					}
-					else
-					{
-						HX(XBlock,
-								B,
-								scaleFlag,
-								scalar,
-								HXBlock);
-					}
-					MPI_Barrier(getMPICommunicator());
+					
+          HX(XBlock,
+					   B,
+						 scaleFlag,
+						 scalar,
+						 HXBlock);
+					
+          MPI_Barrier(getMPICommunicator());
 
 					const char transA = 'N';
 #ifdef USE_COMPLEX
@@ -1780,6 +1472,7 @@ dst);
 				const std::map<dealii::CellId,std::vector<double> > & phiValues,
 				const unsigned int spinIndex,
 				const std::map<dealii::CellId,std::vector<double> > & externalPotCorrValues,
+        const std::map<dealii::CellId,std::vector<double> > & rhoCoreValues,
         const unsigned int externalPotCorrQuadratureId)
 
 		{
@@ -1816,7 +1509,6 @@ dst);
 					std::vector<double> densityValue(2*n_sub_cells), exchangePotentialVal(2*n_sub_cells), corrPotentialVal(2*n_sub_cells);
 					for (unsigned int v = 0; v < n_sub_cells; ++v)
 					{
-						cellPtr=dftPtr->matrix_free_data.get_cell_iterator(cell, v);
 						densityValue[2*v+1] =tempRho[v][2*q+1];
 						densityValue[2*v] = tempRho[v][2*q];
 					}
@@ -1838,7 +1530,7 @@ dst);
 				}
 			}
 
-      if (dftParameters::isPseudopotential && !d_isStiffnessMatrixExternalPotCorrComputed)
+      if ((dftParameters::isPseudopotential || dftParameters::smearedNuclearCharges) && !d_isStiffnessMatrixExternalPotCorrComputed)
          computeVEffExternalPotCorr(externalPotCorrValues,externalPotCorrQuadratureId);      
 		}
 
@@ -1848,6 +1540,8 @@ dst);
 				const std::map<dealii::CellId,std::vector<double> > & phiValues,
 				const unsigned int spinIndex,
 				const std::map<dealii::CellId,std::vector<double> > & externalPotCorrValues,
+        const std::map<dealii::CellId,std::vector<double> > & rhoCoreValues,
+        const std::map<dealii::CellId,std::vector<double> > & gradRhoCoreValues,        
         const unsigned int externalPotCorrQuadratureId)
 		{
 			const unsigned int n_cells = dftPtr->matrix_free_data.n_macro_cells();
@@ -1887,7 +1581,6 @@ dst);
 						derExchEnergyWithSigma(3*n_sub_cells), derCorrEnergyWithSigma(3*n_sub_cells), sigmaValue(3*n_sub_cells);
 					for (unsigned int v = 0; v < n_sub_cells; ++v)
 					{
-						cellPtr=dftPtr->matrix_free_data.get_cell_iterator(cell, v);
 						densityValue[2*v+1] = tempRho[v][2*q+1];
 						densityValue[2*v] = tempRho[v][2*q];
 						double gradRhoX1 = tempGradRho[v][6*q + 0];
@@ -1910,7 +1603,6 @@ dst);
 					VectorizedArray<double>  derExchEnergyWithDensity, derCorrEnergyWithDensity, derExcWithSigmaTimesGradRhoX, derExcWithSigmaTimesGradRhoY, derExcWithSigmaTimesGradRhoZ;
 					for (unsigned int v = 0; v < n_sub_cells; ++v)
 					{
-						cellPtr=dftPtr->matrix_free_data.get_cell_iterator(cell, v);
 						derExchEnergyWithDensity[v]=derExchEnergyWithDensityVal[2*v+spinIndex];
 						derCorrEnergyWithDensity[v]=derCorrEnergyWithDensityVal[2*v+spinIndex];
 						double gradRhoX = tempGradRho[v][6*q + 0 + 3*spinIndex];
@@ -1936,7 +1628,7 @@ dst);
 				}
 			}
 
-      if (dftParameters::isPseudopotential && !d_isStiffnessMatrixExternalPotCorrComputed)
+      if ((dftParameters::isPseudopotential || dftParameters::smearedNuclearCharges) && !d_isStiffnessMatrixExternalPotCorrComputed)
          computeVEffExternalPotCorr(externalPotCorrValues,externalPotCorrQuadratureId);
 		}
 

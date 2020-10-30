@@ -245,7 +245,7 @@ template<unsigned int FEOrder,unsigned int FEOrderElectro>
             const unsigned int faceId=dirichletFaceIds[index];
 
             feFaceValues.reinit(d_cellIdToActiveCellIteratorMapDofHandlerRhoNodalElectro.find(subCellId)->second,faceId);
-            feFaceValues.get_function_values(d_isElectrostaticsMeshSubdivided?dftPtr->d_rhoNodalFieldRefined:dftPtr->d_rhoOutNodalValuesDistributed,rhoFaceQuads);
+            feFaceValues.get_function_values(dftPtr->d_rhoOutNodalValuesDistributed,rhoFaceQuads);
             for (unsigned int qPoint=0; qPoint<numFaceQuadPoints; ++qPoint)
             {
               const Point<C_DIM> quadPoint=feFaceValues.quadrature_point(qPoint);
@@ -300,7 +300,7 @@ template<unsigned int FEOrder,unsigned int FEOrderElectro>
 	void forceClass<FEOrder,FEOrderElectro>::distributeForceContributionFPSPLocalGammaAtoms
 (const std::map<unsigned int,std::vector<double> > & forceContributionFPSPLocalGammaAtoms,
  const std::map<std::pair<unsigned int,unsigned int>, unsigned int> & atomsForceDofs,
- const ConstraintMatrix &  constraintsNoneForce,
+ const dealii::AffineConstraints<double> &  constraintsNoneForce,
  distributedCPUVec<double> & configForceVectorLinFE)
 {
 	for (unsigned int iAtom=0;iAtom <dftPtr->atomLocations.size(); iAtom++)

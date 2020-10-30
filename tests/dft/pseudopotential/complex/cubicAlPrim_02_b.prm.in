@@ -1,25 +1,23 @@
 set VERBOSITY= 0
 set REPRODUCIBLE OUTPUT=true
 
-subsection Parallelization
-  set NPBAND=4
-end
-
 subsection Geometry
-  set NATOMS=2
+  set NATOMS=1
   set NATOM TYPES=1
-  set ATOMIC COORDINATES FILE = @SOURCE_DIR@/hcpAlPrim_coordinates.inp
-  set DOMAIN VECTORS FILE = @SOURCE_DIR@/hcpAlPrim_domainBoundingVectors.inp
+  set ATOMIC COORDINATES FILE = @SOURCE_DIR@/cubicAlONCV_coordinates.inp
+  set DOMAIN VECTORS FILE = @SOURCE_DIR@/cubicAl_domainBoundingVectors.inp
   
   subsection Optimization
     set ION FORCE=true
-    set CELL STRESS=false
+    set CELL STRESS=true
   end 
  
 end
 
 
 subsection Boundary conditions
+  set SMEARED NUCLEAR CHARGES=true
+  set FLOATING NUCLEAR CHARGES=false
   set SELF POTENTIAL RADIUS = 1.6
   set PERIODIC1 = true
   set PERIODIC2 = true
@@ -33,6 +31,7 @@ subsection Finite element mesh parameters
   set POLYNOMIAL ORDER = 2
   
   subsection Auto mesh generation parameters
+    set AUTO ADAPT BASE MESH SIZE=false
     set BASE MESH SIZE = 1.0 
     set ATOM BALL RADIUS = 2.0
     set MESH SIZE AROUND ATOM = 0.5
@@ -47,11 +46,14 @@ subsection Brillouin zone k point sampling options
   subsection Monkhorst-Pack (MP) grid generation
     set SAMPLING POINTS 1 = 1
     set SAMPLING POINTS 2 = 1
-    set SAMPLING POINTS 3 = 1
+    set SAMPLING POINTS 3 = 2
     set SAMPLING SHIFT 1 = 0
     set SAMPLING SHIFT 2 = 0
     set SAMPLING SHIFT 3 = 0
   end
+
+  set USE GROUP SYMMETRY =false
+  set USE TIME REVERSAL SYMMETRY =false
 end
 
 
@@ -59,31 +61,29 @@ end
 subsection DFT functional parameters
   set PSEUDOPOTENTIAL CALCULATION =true
   set PSEUDOPOTENTIAL FILE NAMES LIST = @SOURCE_DIR@/pseudoAlONCV.inp
-  set PSEUDO TESTS FLAG = true
   set EXCHANGE CORRELATION TYPE = 4
+  set PSEUDO TESTS FLAG = true
+  set SPIN POLARIZATION=1
+  set START MAGNETIZATION=0.4
 end
 
 
 subsection SCF parameters
+   set COMPUTE ENERGY EACH ITER=false
+
   set MAXIMUM ITERATIONS = 40 
-  set TOLERANCE          = 1e-5
+  set TOLERANCE          = 1e-6
   set MIXING PARAMETER   = 0.5
   set MIXING HISTORY     = 70
   set TEMPERATURE                        = 500
-  set STARTING WFC= ATOMIC
-  set HIGHER QUAD NLP  = false
+  set STARTING WFC=ATOMIC
+  
   subsection Eigen-solver parameters
-     set NUMBER OF KOHN-SHAM WAVEFUNCTIONS = 16
-     set SPECTRUM SPLIT CORE EIGENSTATES=7
-     set SPECTRUM SPLIT STARTING SCF ITER=0
-     set LOWER BOUND WANTED SPECTRUM = -10.0
-     set CHEBYSHEV POLYNOMIAL DEGREE = 8
-     set CHEBYSHEV FILTER TOLERANCE=1e-3
-     set ORTHOGONALIZATION TYPE=PGS
-     set WFC BLOCK SIZE=5
-     set CHEBY WFC BLOCK SIZE=5
-     set RR GEP=true
-     set RR GEP FULL MASS MATRIX=true
+      set NUMBER OF KOHN-SHAM WAVEFUNCTIONS = 20
+      set LOWER BOUND WANTED SPECTRUM = -10.0
+      set CHEBYSHEV POLYNOMIAL DEGREE = 20
+      set CHEBYSHEV FILTER TOLERANCE=1e-3
+      set ORTHOGONALIZATION TYPE=GS
   end
 end
 

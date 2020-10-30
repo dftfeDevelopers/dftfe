@@ -399,33 +399,11 @@ void forceClass<FEOrder,FEOrderElectro>::computeAtomsForcesGaussianGenerator(boo
 		boundaryPoints.second=atomCoor+tempDisp;
 		dealii::BoundingBox<3> boundingBoxAroundAtom(boundaryPoints);
 
-		if (boundingBoxTria.get_neighbor_type(boundingBoxAroundAtom)!=NeighborType::not_neighbors || d_isElectrostaticsMeshSubdivided)
+		if (boundingBoxTria.get_neighbor_type(boundingBoxAroundAtom)!=NeighborType::not_neighbors)
 		{
 			nontrivialAtomCoords.push_back(atomCoor);
 			nontrivialAtomIds.push_back(iAtom);
 			nontrivialAtomChargeIds.push_back(atomId);
-		}
-	}
-
-	if (d_isElectrostaticsMeshSubdivided)
-	{
-		IndexSet  ghostIndicesForce=d_locally_relevant_dofsForce;
-		ghostIndicesForce.subtract_set(d_locally_owned_dofsForce);
-
-		d_gaussianWeightsVecAtoms.resize(totalNumberAtoms);
-
-		for (unsigned int iatom=0;iatom<totalNumberAtoms;++iatom)
-		{
-			if (iatom==0)
-				d_gaussianWeightsVecAtoms[iatom]
-					= distributedCPUVec<double>(d_locally_owned_dofsForce,
-							ghostIndicesForce,
-							mpi_communicator);
-			else
-				d_gaussianWeightsVecAtoms[iatom].reinit(d_gaussianWeightsVecAtoms[0]);
-
-			(d_gaussianWeightsVecAtoms[iatom]) = 0.0;
-			d_gaussianWeightsVecAtoms[iatom].zero_out_ghosts();
 		}
 	}
 
@@ -480,9 +458,6 @@ void forceClass<FEOrder,FEOrderElectro>::computeAtomsForcesGaussianGenerator(boo
 						const unsigned int globalDofIndex=cell->vertex_dof_index(i,idim);
 						if (!d_constraintsNoneForce.is_constrained(globalDofIndex) && d_locally_owned_dofsForce.is_element(globalDofIndex))
 						{
-							if (d_isElectrostaticsMeshSubdivided)
-								d_gaussianWeightsVecAtoms[atomId][globalDofIndex]=gaussianWeight;
-
 							globalAtomsGaussianForcesLocalPart[C_DIM*atomChargeId+idim]+=
 								gaussianWeight*(d_configForceVectorLinFE[globalDofIndex]);
 #ifdef USE_COMPLEX
@@ -496,58 +471,6 @@ void forceClass<FEOrder,FEOrderElectro>::computeAtomsForcesGaussianGenerator(boo
 		}//locally owned check
 	}//cell loop
 
-	if (d_isElectrostaticsMeshSubdivided)
-	{
-		for (unsigned int iatom=0;iatom<totalNumberAtoms;++iatom)
-		{
-			d_constraintsNoneForce.distribute(d_gaussianWeightsVecAtoms[iatom]);
-			d_gaussianWeightsVecAtoms[iatom].update_ghost_values();
-		}
-
-		dealii::parallel::distributed::Triangulation<3> & electrostaticsTriaForce
-			= dftPtr->d_mesh.getElectrostaticsMeshForce();
-
-		dealii::DoFHandler<3> dofHandlerSolTrans;
-		dofHandlerSolTrans.initialize(electrostaticsTriaForce,
-				FESystem<3>(FE_Q<3>(dealii::QGaussLobatto<1>(2)),3));
-		dofHandlerSolTrans.distribute_dofs(dofHandlerSolTrans.get_fe());
-
-		parallel::distributed::SolutionTransfer<3,distributedCPUVec<double>> solTrans(dofHandlerSolTrans);
-		electrostaticsTriaForce.set_all_refine_flags();
-		electrostaticsTriaForce.prepare_coarsening_and_refinement();
-
-		std::vector<const distributedCPUVec<double> *> vecAllIn(d_gaussianWeightsVecAtoms.size());
-		for (unsigned int i=0; i<d_gaussianWeightsVecAtoms.size(); ++i)
-			vecAllIn[i]=&d_gaussianWeightsVecAtoms[i];
-
-		solTrans.prepare_for_coarsening_and_refinement(vecAllIn);
-		electrostaticsTriaForce.execute_coarsening_and_refinement();
-
-		IndexSet  ghostIndicesForceElectro=d_locally_relevant_dofsForceElectro;
-		ghostIndicesForceElectro.subtract_set(d_locally_owned_dofsForceElectro);
-
-		dofHandlerSolTrans.distribute_dofs(dofHandlerSolTrans.get_fe());
-
-		for (unsigned int iatom=0;iatom<totalNumberAtoms;++iatom)
-		{
-			if (iatom==0)
-				d_gaussianWeightsVecAtoms[iatom]
-					= distributedCPUVec<double>(d_locally_owned_dofsForceElectro,
-							ghostIndicesForceElectro,
-							mpi_communicator);
-			else
-				d_gaussianWeightsVecAtoms[iatom].reinit(d_gaussianWeightsVecAtoms[0]);
-
-			(d_gaussianWeightsVecAtoms[iatom]) = 0.0;
-			d_gaussianWeightsVecAtoms[iatom].zero_out_ghosts();
-		}
-
-		std::vector<distributedCPUVec<double> *> vecAllOut(d_gaussianWeightsVecAtoms.size());
-		for (unsigned int i=0; i<d_gaussianWeightsVecAtoms.size(); ++i)
-			vecAllOut[i]=&d_gaussianWeightsVecAtoms[i];
-
-		solTrans.interpolate(vecAllOut);
-	}
 
 	vertex_touched.clear();
 	vertex_touched.resize(d_dofHandlerForceElectro.get_triangulation().n_vertices(),false);
@@ -595,9 +518,6 @@ void forceClass<FEOrder,FEOrderElectro>::computeAtomsForcesGaussianGenerator(boo
 						if (!d_constraintsNoneForceElectro.is_constrained(globalDofIndex)
 								&& d_locally_owned_dofsForceElectro.is_element(globalDofIndex))
 						{
-							if (d_isElectrostaticsMeshSubdivided)
-								gaussianWeight=d_gaussianWeightsVecAtoms[atomId][globalDofIndex];
-
 							globalAtomsGaussianForcesLocalPart[C_DIM*atomChargeId+idim]+=
 								gaussianWeight*(d_configForceVectorLinFEElectro[globalDofIndex]);
 						}
@@ -717,6 +637,7 @@ void forceClass<FEOrder,FEOrderElectro>::printAtomsForces()
 		pcout<<" Sum of all forces in each component: "<<sumForce[0]<<" "<< sumForce[1]<<" "<<sumForce[2]<<std::endl;
 	}
 
-  dftUtils::writeDataIntoFile(forceData,
-      "forces.txt");  
+  if (!dftParameters::reproducible_output)
+     dftUtils::writeDataIntoFile(forceData,
+        "forces.txt");  
 }

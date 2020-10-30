@@ -1,13 +1,12 @@
 #ifdef DFTFE_MINIMAL_COMPILE
+template class vselfBinsManager<2,2>;
+template class vselfBinsManager<3,3>;
 template class vselfBinsManager<4,4>;
 template class vselfBinsManager<5,5>;
 template class vselfBinsManager<6,6>;
 template class vselfBinsManager<6,7>;
 template class vselfBinsManager<6,8>;
 template class vselfBinsManager<6,9>;
-template class vselfBinsManager<6,10>;
-template class vselfBinsManager<6,11>;
-template class vselfBinsManager<6,12>;
 #else
 template class vselfBinsManager<1,1>;
 template class vselfBinsManager<1,2>;

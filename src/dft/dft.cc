@@ -82,6 +82,7 @@ namespace dftfe {
 #include "initPseudo-OV.cc"
 #include "femUtilityFunctions.cc"
 #include "initRho.cc"
+#include "initCoreRho.cc"  
 #include "dos.cc"
 #include "localizationLength.cc"
 #include "publicMethods.cc"
@@ -562,8 +563,18 @@ namespace dftfe {
 				pcout<<std::endl<<"Reading Pseudo-potential data for each atom from the list given in : " <<dftParameters::pseudoPotentialFile<<std::endl;
 			}
 
+      int nlccFlag=0;
 			if(Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0 && dftParameters::isPseudopotential == true)
-				pseudoUtils::convert(dftParameters::pseudoPotentialFile);
+				nlccFlag=pseudoUtils::convert(dftParameters::pseudoPotentialFile);
+
+      nlccFlag = Utilities::MPI::sum(nlccFlag, MPI_COMM_WORLD);
+
+			if(nlccFlag > 0 && dftParameters::isPseudopotential == true)
+          dftParameters::nonLinearCoreCorrection = true;
+
+			if(dftParameters::verbosity>=1)
+        if(dftParameters::nonLinearCoreCorrection == true)
+          pcout<<"Atleast one atom has pseudopotential with nonlinear core correction"<<std::endl;
 
 			d_elpaScala.processGridOptionalELPASetup(d_numEigenValues,
 					d_numEigenValuesRR);
@@ -574,35 +585,28 @@ namespace dftfe {
 
 	//dft pseudopotential init
 	template<unsigned int FEOrder,unsigned int FEOrderElectro>
-		void dftClass<FEOrder,FEOrderElectro>::initPseudoPotentialAll(const bool meshOnlyDeformed)
+		void dftClass<FEOrder,FEOrderElectro>::initPseudoPotentialAll(const bool updateNonlocalSparsity)
 		{
 			if(dftParameters::isPseudopotential)
 			{
-				//std::string fileName = "sample_text";
-
-
 				TimerOutput::Scope scope (computing_timer, "psp init");
 				pcout<<std::endl<<"Pseudopotential initalization...."<<std::endl;
 				const Quadrature<3> &  quadrature=matrix_free_data.get_quadrature(d_densityQuadratureId);
 
-				/*
-				   double init_psplocal;
-				   MPI_Barrier(MPI_COMM_WORLD);
-				   init_psplocal = MPI_Wtime();
+        double init_core;
+        MPI_Barrier(MPI_COMM_WORLD);
+        init_core = MPI_Wtime();
 
-				   initLocalPseudoPotential(dofHandler,
-				   quadrature,
-				   d_pseudoVLoc,
-				   d_gradPseudoVLoc,
-				   d_gradPseudoVLocAtoms);
+        if(dftParameters::nonLinearCoreCorrection == true)
+				  initCoreRho();
 
-				   MPI_Barrier(MPI_COMM_WORLD);
-				   init_psplocal = MPI_Wtime() - init_psplocal;
-				   if (dftParameters::verbosity>=1)
-				   pcout<<"updateAtomPositionsAndMoveMesh: initPseudoPotentialAll: Time taken for local psp init: "<<init_psplocal<<std::endl;
-				 */
+        MPI_Barrier(MPI_COMM_WORLD);
+        init_core = MPI_Wtime() - init_core;
+        if (dftParameters::verbosity>=1)
+          pcout<<"initPseudoPotentialAll: Time taken for initializing core density for non-linear core correction: "<<init_core<<std::endl;
 
-				if (!meshOnlyDeformed)
+
+				if (updateNonlocalSparsity)
 				{
 					double init_nonlocal1;
 					MPI_Barrier(MPI_COMM_WORLD);
@@ -613,7 +617,7 @@ namespace dftfe {
 					MPI_Barrier(MPI_COMM_WORLD);
 					init_nonlocal1 = MPI_Wtime() - init_nonlocal1;
 					if (dftParameters::verbosity>=1)
-						pcout<<"updateAtomPositionsAndMoveMesh: initPseudoPotentialAll: Time taken for computeSparseStructureNonLocalProjectors_OV: "<<init_nonlocal1<<std::endl;
+						pcout<<"initPseudoPotentialAll: Time taken for computeSparseStructureNonLocalProjectors_OV: "<<init_nonlocal1<<std::endl;
 				}
 
 				double init_nonlocal2;
@@ -628,7 +632,7 @@ namespace dftfe {
 				MPI_Barrier(MPI_COMM_WORLD);
 				init_nonlocal2 = MPI_Wtime() - init_nonlocal2;
 				if (dftParameters::verbosity>=1)
-					pcout<<"updateAtomPositionsAndMoveMesh: initPseudoPotentialAll: Time taken for non local psp init: "<<init_nonlocal2<<std::endl;
+					pcout<<"initPseudoPotentialAll: Time taken for non local psp init: "<<init_nonlocal2<<std::endl;
 			}
 		}
 
@@ -766,9 +770,7 @@ namespace dftfe {
 						d_imageIdsTrunc,
             d_nearestAtomDistances,
 						d_domainBoundingVectors,
-						dftParameters::useSymm
-						|| ((dftParameters::isIonOpt && (dftParameters::reuseWfcGeoOpt || dftParameters::reuseDensityGeoOpt)) || (dftParameters::isBOMD && dftParameters::autoMeshStepInterpolateBOMD))
-						|| dftParameters::createConstraintsFromSerialDofhandler);
+						dftParameters::useSymm || dftParameters::createConstraintsFromSerialDofhandler);
 
 				if (dftParameters::chkType==2)
 					loadTriaInfoAndRhoData();
@@ -782,9 +784,7 @@ namespace dftfe {
 						d_imageIdsTrunc,
             d_nearestAtomDistances,
 						d_domainBoundingVectors,
-						dftParameters::useSymm
-						|| ((dftParameters::isIonOpt && (dftParameters::reuseWfcGeoOpt || dftParameters::reuseDensityGeoOpt)) || (dftParameters::isBOMD && dftParameters::autoMeshStepInterpolateBOMD))
-						|| dftParameters::createConstraintsFromSerialDofhandler,
+						dftParameters::useSymm || dftParameters::createConstraintsFromSerialDofhandler,
 						dftParameters::electrostaticsHRefinement);
 
 			}
@@ -840,7 +840,7 @@ namespace dftfe {
 			//
 			//initialize guesses for electron-density and wavefunctions
 			//
-			initElectronicFields(usePreviousGroundStateFields);
+			initElectronicFields();
 
 			if (dftParameters::chkType==3 && dftParameters::restartFromChk)
 			{
@@ -915,12 +915,12 @@ namespace dftfe {
 		}
 
 	template<unsigned int FEOrder,unsigned int FEOrderElectro>
-		void dftClass<FEOrder,FEOrderElectro>::initNoRemesh(const bool updateImageKPoints,
-				const bool useSingleAtomSolution,
-				const bool useAtomicRhoSplitDensityUpdate)
+		void dftClass<FEOrder,FEOrderElectro>::initNoRemesh(const bool updateImagesAndKPoints,
+				const bool useSingleAtomSolutionOverride,
+				const bool useAtomicRhoSplitDensityUpdateForGeoOpt)
 		{
 			computingTimerStandard.enter_section("KSDFT problem initialization");
-			if(updateImageKPoints)
+			if(updateImagesAndKPoints)
 				initImageChargesUpdateKPoints();
 
       calculateNearestAtomDistances(); 
@@ -928,11 +928,6 @@ namespace dftfe {
       if (dftParameters::smearedNuclearCharges)
         calculateSmearedChargeWidths(); 
 
-			// update mesh and other data structures required for interpolating solution fields from previous
-			// atomic configuration mesh to the current atomic configuration during an automesh step. Currently
-			// this is only required if reuseWfcGeoOpt or reuseDensityGeoOpt is on.
-			if(dftParameters::isIonOpt && (dftParameters::reuseWfcGeoOpt || dftParameters::reuseDensityGeoOpt) && !dftParameters::floatingNuclearCharges)
-				updatePrevMeshDataStructures();
 			//
 			//reinitialize dirichlet BCs for total potential and vSelf poisson solutions
 			//
@@ -955,7 +950,7 @@ namespace dftfe {
 
       // false option reinitializes vself bins from scratch wheras true option only updates the boundary conditions
       if (dftParameters::floatingNuclearCharges)
-        initBoundaryConditions(maxFloatingDispComponentMag>0.2?false:true);
+        initBoundaryConditions(false);
       else
         initBoundaryConditions(true);
 
@@ -968,7 +963,7 @@ namespace dftfe {
 			MPI_Barrier(MPI_COMM_WORLD);
 			init_rho = MPI_Wtime();
 
-			if (useSingleAtomSolution)
+			if (useSingleAtomSolutionOverride)
 			{
 				readPSI();
 				initRho();
@@ -983,27 +978,37 @@ namespace dftfe {
 
 				noRemeshRhoDataInit();
 
-				if (useAtomicRhoSplitDensityUpdate && (dftParameters::isIonOpt || dftParameters::isCellOpt))
-				{
-					double charge = totalCharge(d_matrixFreeDataPRefined,
-							d_rhoOutNodalValuesSplit);
+        if (dftParameters::isIonOpt || dftParameters::isCellOpt)
+        {
+          if (!reuseWfcGeoOpt)
+            readPSI();
 
-					d_rhoOutNodalValuesSplit.add(-charge/d_domainVolume);
+          if (reuseDensityGeoOpt && useAtomicRhoSplitDensityUpdateForGeoOpt)
+          {
+            double charge = totalCharge(d_matrixFreeDataPRefined,
+                d_rhoOutNodalValuesSplit);
 
-					initAtomicRho(d_atomicRho);
-					d_rhoOutNodalValuesSplit+=d_atomicRho;
+            d_rhoOutNodalValuesSplit.add(-charge/d_domainVolume);
 
-					d_rhoOutNodalValuesSplit.update_ghost_values();
-					interpolateRhoNodalDataToQuadratureDataGeneral(d_matrixFreeDataPRefined,
-              d_densityDofHandlerIndexElectro,
-              d_densityQuadratureIdElectro,
-							d_rhoOutNodalValuesSplit,
-							*(rhoInValues),
-							*(gradRhoInValues),
-							*(gradRhoInValues),
-							dftParameters::xc_id == 4);	
-					normalizeRhoInQuadValues();
-				}
+            initAtomicRho(d_atomicRho);
+            d_rhoOutNodalValuesSplit+=d_atomicRho;
+
+            d_rhoOutNodalValuesSplit.update_ghost_values();
+            interpolateRhoNodalDataToQuadratureDataGeneral(d_matrixFreeDataPRefined,
+                d_densityDofHandlerIndexElectro,
+                d_densityQuadratureIdElectro,
+                d_rhoOutNodalValuesSplit,
+                *(rhoInValues),
+                *(gradRhoInValues),
+                *(gradRhoInValues),
+                dftParameters::xc_id == 4);	
+            normalizeRhoInQuadValues();
+          }
+          else
+          {
+            initRho();
+          }
+        }
 			}
 
 			MPI_Barrier(MPI_COMM_WORLD);
@@ -1018,12 +1023,12 @@ namespace dftfe {
 			MPI_Barrier(MPI_COMM_WORLD);
 			init_pseudo = MPI_Wtime();
 
-			initPseudoPotentialAll(true);
+			initPseudoPotentialAll(dftParameters::floatingNuclearCharges?true:false);
 
 			MPI_Barrier(MPI_COMM_WORLD);
 			init_pseudo = MPI_Wtime() - init_pseudo;
 			if (dftParameters::verbosity>=1)
-				pcout<<"updateAtomPositionsAndMoveMesh: Time taken for initPseudoPotentialAll: "<<init_pseudo<<std::endl;
+				pcout<<"Time taken for initPseudoPotentialAll: "<<init_pseudo<<std::endl;
 
 			computingTimerStandard.exit_section("KSDFT problem initialization");
 		}
@@ -1147,14 +1152,11 @@ namespace dftfe {
 
 			if (dftParameters::isBOMD)
 			{
-				if (dftParameters::xlbomdStepTimingRun)
-					d_mdPtr->timingRun();
-				else
-					d_mdPtr->run();
+				d_mdPtr->run();
 			}
 			else
 			{
-				if (true)
+				if (!(dftParameters::chkType==1  && dftParameters::restartFromChk && dftParameters::ionOptSolver == "CGPRP"))
 				{
 					kohnShamDFTOperatorClass<FEOrder,FEOrderElectro> kohnShamDFTEigenOperator(this,mpi_communicator);
 #ifdef DFTFE_WITH_GPU
@@ -1175,7 +1177,7 @@ namespace dftfe {
 				if (dftParameters::isIonOpt && !dftParameters::isCellOpt)
 				{
 					d_atomLocationsInitial = atomLocations;
-					d_groundStateEnergyInitial = d_groundStateEnergy;
+					d_freeEnergyInitial = d_freeEnergy;
 
 					geoOptIonPtr->init();
 					geoOptIonPtr->run();
@@ -1183,7 +1185,7 @@ namespace dftfe {
 				else if (!dftParameters::isIonOpt && dftParameters::isCellOpt)
 				{
 					d_atomLocationsInitial = atomLocations;
-					d_groundStateEnergyInitial = d_groundStateEnergy;
+					d_freeEnergyInitial = d_freeEnergy;
 
 #ifdef USE_COMPLEX
 					geoOptCellPtr->init();
@@ -1195,7 +1197,7 @@ namespace dftfe {
 				else if (dftParameters::isIonOpt && dftParameters::isCellOpt)
 				{
 					d_atomLocationsInitial = atomLocations;
-					d_groundStateEnergyInitial = d_groundStateEnergy;
+					d_freeEnergyInitial = d_freeEnergy;
 
 #ifdef USE_COMPLEX
 					//first relax ion positions in the starting cell configuration
@@ -1416,9 +1418,6 @@ namespace dftfe {
 #endif
 			computing_timer.exit_section("shapefunction data");
 
-			if(dftParameters::rrGEPFullMassMatrix && !dftParameters::useGPU)
-				kohnShamDFTEigenOperator.computeMassMatrix();
-
 			if (dftParameters::verbosity>=4)
 				dftUtils::printCurrentMemoryUsage(mpi_communicator,
 						"Precompute shapefunction grad integrals, just before starting scf solve");
@@ -1445,7 +1444,6 @@ namespace dftfe {
 					0.0);
 #endif
 
-			computingTimerStandard.enter_section("phiTotalSolverProblem init");
 
 			phiTotalSolverProblem.reinit(d_matrixFreeDataPRefined,
 					d_phiTotRhoIn,
@@ -1461,7 +1459,6 @@ namespace dftfe {
 					dftParameters::periodicX && dftParameters::periodicY && dftParameters::periodicZ && !dftParameters::pinnedNodeForPBC,
 					dftParameters::smearedNuclearCharges);
 
-			computingTimerStandard.exit_section("phiTotalSolverProblem init");
 
 			dealiiCGSolver.solve(phiTotalSolverProblem,
 					dftParameters::absLinearSolverTolerance,
@@ -1506,10 +1503,10 @@ namespace dftfe {
 						computing_timer.enter_section("VEff Computation");
 #ifdef DFTFE_WITH_GPU
 						if (dftParameters::useGPU)
-							kohnShamDFTEigenOperatorCUDA.computeVEffSpinPolarized(rhoInValuesSpinPolarized, d_phiInValues, s, d_pseudoVLoc, d_lpspQuadratureId);
+							kohnShamDFTEigenOperatorCUDA.computeVEffSpinPolarized(rhoInValuesSpinPolarized, d_phiInValues, s, d_pseudoVLoc, d_rhoCore, d_lpspQuadratureId);
 #endif
 						if (!dftParameters::useGPU)
-							kohnShamDFTEigenOperator.computeVEffSpinPolarized(rhoInValuesSpinPolarized, d_phiInValues, s, d_pseudoVLoc,d_lpspQuadratureId);
+							kohnShamDFTEigenOperator.computeVEffSpinPolarized(rhoInValuesSpinPolarized, d_phiInValues, s, d_pseudoVLoc, d_rhoCore, d_lpspQuadratureId);
 						computing_timer.exit_section("VEff Computation");
 					}
 					else if (dftParameters::xc_id == 4)
@@ -1517,10 +1514,10 @@ namespace dftfe {
 						computing_timer.enter_section("VEff Computation");
 #ifdef DFTFE_WITH_GPU
 						if (dftParameters::useGPU)
-							kohnShamDFTEigenOperatorCUDA.computeVEffSpinPolarized(rhoInValuesSpinPolarized, gradRhoInValuesSpinPolarized, d_phiInValues, s, d_pseudoVLoc,d_lpspQuadratureId);
+							kohnShamDFTEigenOperatorCUDA.computeVEffSpinPolarized(rhoInValuesSpinPolarized, gradRhoInValuesSpinPolarized, d_phiInValues, s, d_pseudoVLoc, d_rhoCore, d_gradRhoCore, d_lpspQuadratureId);
 #endif
 						if (!dftParameters::useGPU)
-							kohnShamDFTEigenOperator.computeVEffSpinPolarized(rhoInValuesSpinPolarized, gradRhoInValuesSpinPolarized, d_phiInValues, s, d_pseudoVLoc,d_lpspQuadratureId);
+							kohnShamDFTEigenOperator.computeVEffSpinPolarized(rhoInValuesSpinPolarized, gradRhoInValuesSpinPolarized, d_phiInValues, s, d_pseudoVLoc, d_rhoCore, d_gradRhoCore, d_lpspQuadratureId);
 						computing_timer.exit_section("VEff Computation");
 					}
 					for (unsigned int kPoint = 0; kPoint < d_kPointWeights.size(); ++kPoint)
@@ -1596,10 +1593,10 @@ namespace dftfe {
 					computing_timer.enter_section("VEff Computation");
 #ifdef DFTFE_WITH_GPU
 					if (dftParameters::useGPU)
-						kohnShamDFTEigenOperatorCUDA.computeVEff(rhoInValues, d_phiInValues,d_pseudoVLoc,d_lpspQuadratureId);
+						kohnShamDFTEigenOperatorCUDA.computeVEff(rhoInValues, d_phiInValues,d_pseudoVLoc, d_rhoCore, d_lpspQuadratureId);
 #endif
 					if (!dftParameters::useGPU)
-						kohnShamDFTEigenOperator.computeVEff(rhoInValues, d_phiInValues, d_pseudoVLoc,d_lpspQuadratureId);
+						kohnShamDFTEigenOperator.computeVEff(rhoInValues, d_phiInValues, d_pseudoVLoc, d_rhoCore, d_lpspQuadratureId);
 					computing_timer.exit_section("VEff Computation");
 				}
 				else if (dftParameters::xc_id == 4)
@@ -1607,10 +1604,10 @@ namespace dftfe {
 					computing_timer.enter_section("VEff Computation");
 #ifdef DFTFE_WITH_GPU
 					if (dftParameters::useGPU)
-						kohnShamDFTEigenOperatorCUDA.computeVEff(rhoInValues, gradRhoInValues, d_phiInValues, d_pseudoVLoc,d_lpspQuadratureId);
+						kohnShamDFTEigenOperatorCUDA.computeVEff(rhoInValues, gradRhoInValues, d_phiInValues, d_pseudoVLoc, d_rhoCore, d_gradRhoCore, d_lpspQuadratureId);
 #endif
 					if (!dftParameters::useGPU)
-						kohnShamDFTEigenOperator.computeVEff(rhoInValues, gradRhoInValues, d_phiInValues, d_pseudoVLoc,d_lpspQuadratureId);
+						kohnShamDFTEigenOperator.computeVEff(rhoInValues, gradRhoInValues, d_phiInValues, d_pseudoVLoc, d_rhoCore, d_gradRhoCore, d_lpspQuadratureId);
 					computing_timer.exit_section("VEff Computation");
 				}
 
@@ -1769,8 +1766,6 @@ namespace dftfe {
 #endif
 			computing_timer.exit_section("shapefunction data");
 
-			if(dftParameters::rrGEPFullMassMatrix && !dftParameters::useGPU)
-				kohnShamDFTEigenOperator.computeMassMatrix();
 
 			if (dftParameters::verbosity>=4)
 				dftUtils::printCurrentMemoryUsage(mpi_communicator,
@@ -1852,7 +1847,7 @@ namespace dftfe {
 			}
 
 
-			if(dftParameters::isPseudopotential && !skipVselfSolveInitLocalPSP)
+			if((dftParameters::isPseudopotential || dftParameters::smearedNuclearCharges) && !skipVselfSolveInitLocalPSP)
 			{
 				double init_psplocal;
 				MPI_Barrier(MPI_COMM_WORLD);
@@ -1871,7 +1866,7 @@ namespace dftfe {
 				MPI_Barrier(MPI_COMM_WORLD);
 				init_psplocal = MPI_Wtime() - init_psplocal;
 				if (dftParameters::verbosity>=1)
-					pcout<<"updateAtomPositionsAndMoveMesh: initPseudoPotentialAll: Time taken for local psp init: "<<init_psplocal<<std::endl;
+					pcout<<"initPseudoPotentialAll: Time taken for local psp init: "<<init_psplocal<<std::endl;
 			}
 
 
@@ -2019,7 +2014,6 @@ namespace dftfe {
 				if (dftParameters::verbosity>=2)
 					pcout<< std::endl<<"Poisson solve for total electrostatic potential (rhoIn+b): ";
 				
-        computingTimerStandard.enter_section("phiTotalSolverProblem init");
 
 				if (scfIter>0)
 					phiTotalSolverProblem.reinit(d_matrixFreeDataPRefined,
@@ -2060,7 +2054,6 @@ namespace dftfe {
               true,
               false);
 
-				computingTimerStandard.exit_section("phiTotalSolverProblem init");
 				computing_timer.enter_section("phiTot solve");
 
 				dealiiCGSolver.solve(phiTotalSolverProblem,
@@ -2116,10 +2109,10 @@ namespace dftfe {
 							computing_timer.enter_section("VEff Computation");
 #ifdef DFTFE_WITH_GPU
 							if (dftParameters::useGPU)
-								kohnShamDFTEigenOperatorCUDA.computeVEffSpinPolarized(rhoInValuesSpinPolarized, d_phiInValues, s, d_pseudoVLoc,d_lpspQuadratureId);
+								kohnShamDFTEigenOperatorCUDA.computeVEffSpinPolarized(rhoInValuesSpinPolarized, d_phiInValues, s, d_pseudoVLoc, d_rhoCore, d_lpspQuadratureId);
 #endif
 							if (!dftParameters::useGPU)
-								kohnShamDFTEigenOperator.computeVEffSpinPolarized(rhoInValuesSpinPolarized, d_phiInValues, s, d_pseudoVLoc,d_lpspQuadratureId);
+								kohnShamDFTEigenOperator.computeVEffSpinPolarized(rhoInValuesSpinPolarized, d_phiInValues, s, d_pseudoVLoc, d_rhoCore, d_lpspQuadratureId);
 							computing_timer.exit_section("VEff Computation");
 						}
 						else if (dftParameters::xc_id == 4)
@@ -2127,10 +2120,10 @@ namespace dftfe {
 							computing_timer.enter_section("VEff Computation");
 #ifdef DFTFE_WITH_GPU
 							if (dftParameters::useGPU)
-								kohnShamDFTEigenOperatorCUDA.computeVEffSpinPolarized(rhoInValuesSpinPolarized, gradRhoInValuesSpinPolarized, d_phiInValues, s, d_pseudoVLoc, d_lpspQuadratureId);
+								kohnShamDFTEigenOperatorCUDA.computeVEffSpinPolarized(rhoInValuesSpinPolarized, gradRhoInValuesSpinPolarized, d_phiInValues, s, d_pseudoVLoc, d_rhoCore, d_gradRhoCore, d_lpspQuadratureId);
 #endif
 							if (!dftParameters::useGPU)
-								kohnShamDFTEigenOperator.computeVEffSpinPolarized(rhoInValuesSpinPolarized, gradRhoInValuesSpinPolarized, d_phiInValues, s, d_pseudoVLoc,d_lpspQuadratureId);
+								kohnShamDFTEigenOperator.computeVEffSpinPolarized(rhoInValuesSpinPolarized, gradRhoInValuesSpinPolarized, d_phiInValues, s, d_pseudoVLoc, d_rhoCore, d_gradRhoCore, d_lpspQuadratureId);
 							computing_timer.exit_section("VEff Computation");
 						}
 						for (unsigned int kPoint = 0; kPoint < d_kPointWeights.size(); ++kPoint)
@@ -2177,8 +2170,7 @@ namespace dftfe {
 											rayleighRitzAvoidancePassesXLBOMD?dftParameters::numberPassesRRSkippedXLBOMD:0,
 											(scfIter<dftParameters::spectrumSplitStartingScfIter || scfConverged)?false:true,
 											scfConverged?false:true,
-											scfIter==0,
-											(scfConverged && dftParameters::rrGEPFullMassMatrix && dftParameters::rrGEP)?true:false);
+											scfIter==0);
 #endif
 								if (!dftParameters::useGPU)
 									kohnShamEigenSpaceCompute(s,
@@ -2189,8 +2181,7 @@ namespace dftfe {
 											residualNormWaveFunctionsAllkPointsSpins[s][kPoint],
 											(scfIter<dftParameters::spectrumSplitStartingScfIter || scfConverged)?false:true,
 											scfConverged?false:true,
-											scfIter==0,
-											(scfConverged && dftParameters::rrGEPFullMassMatrix && dftParameters::rrGEP)?true:false);
+											scfIter==0);
 							}
 						}
 					}
@@ -2342,10 +2333,10 @@ namespace dftfe {
 						computing_timer.enter_section("VEff Computation");
 #ifdef DFTFE_WITH_GPU
 						if (dftParameters::useGPU)
-							kohnShamDFTEigenOperatorCUDA.computeVEff(rhoInValues, d_phiInValues, d_pseudoVLoc,d_lpspQuadratureId);
+							kohnShamDFTEigenOperatorCUDA.computeVEff(rhoInValues, d_phiInValues, d_pseudoVLoc, d_rhoCore, d_lpspQuadratureId);
 #endif
 						if (!dftParameters::useGPU)
-							kohnShamDFTEigenOperator.computeVEff(rhoInValues, d_phiInValues, d_pseudoVLoc,d_lpspQuadratureId);
+							kohnShamDFTEigenOperator.computeVEff(rhoInValues, d_phiInValues, d_pseudoVLoc, d_rhoCore, d_lpspQuadratureId);
 						computing_timer.exit_section("VEff Computation");
 					}
 					else if (dftParameters::xc_id == 4)
@@ -2353,10 +2344,10 @@ namespace dftfe {
 						computing_timer.enter_section("VEff Computation");
 #ifdef DFTFE_WITH_GPU
 						if (dftParameters::useGPU)
-							kohnShamDFTEigenOperatorCUDA.computeVEff(rhoInValues, gradRhoInValues, d_phiInValues, d_pseudoVLoc,d_lpspQuadratureId);
+							kohnShamDFTEigenOperatorCUDA.computeVEff(rhoInValues, gradRhoInValues, d_phiInValues, d_pseudoVLoc, d_rhoCore, d_gradRhoCore, d_lpspQuadratureId);
 #endif
 						if (!dftParameters::useGPU)
-							kohnShamDFTEigenOperator.computeVEff(rhoInValues, gradRhoInValues, d_phiInValues, d_pseudoVLoc,d_lpspQuadratureId);
+							kohnShamDFTEigenOperator.computeVEff(rhoInValues, gradRhoInValues, d_phiInValues, d_pseudoVLoc, d_rhoCore, d_gradRhoCore, d_lpspQuadratureId);
 						computing_timer.exit_section("VEff Computation");
 					}
 
@@ -2405,8 +2396,7 @@ namespace dftfe {
 										rayleighRitzAvoidancePassesXLBOMD?dftParameters::numberPassesRRSkippedXLBOMD:0,
 										(scfIter<dftParameters::spectrumSplitStartingScfIter || scfConverged)?false:true,
 										scfConverged?false:true,
-										scfIter==0,
-										(scfConverged && dftParameters::rrGEPFullMassMatrix && dftParameters::rrGEP)?true:false);
+										scfIter==0);
 #endif
 							if (!dftParameters::useGPU)
 								kohnShamEigenSpaceCompute(0,
@@ -2417,8 +2407,7 @@ namespace dftfe {
 										residualNormWaveFunctionsAllkPoints[kPoint],
 										(scfIter<dftParameters::spectrumSplitStartingScfIter || scfConverged)?false:true,
 										scfConverged?false:true,
-										scfIter==0,
-										(scfConverged && dftParameters::rrGEPFullMassMatrix && dftParameters::rrGEP)?true:false);
+										scfIter==0);
 						}
 					}
 
@@ -2596,9 +2585,31 @@ namespace dftfe {
 				}
 				computing_timer.enter_section("compute rho");
 #ifdef USE_COMPLEX
-				if(dftParameters::useSymm){
+				if(dftParameters::useSymm)
+        {
 					symmetryPtr->computeLocalrhoOut();
 					symmetryPtr->computeAndSymmetrize_rhoOut();
+         
+          std::function<double(const typename dealii::DoFHandler<3>::active_cell_iterator & cell ,
+              const unsigned int q)> funcRho =
+            [&](const typename dealii::DoFHandler<3>::active_cell_iterator & cell ,
+                const unsigned int q)
+            {return (*rhoOutValues).find(cell->id())->second[q];};
+          dealii::VectorTools::project<3,distributedCPUVec<double>> (dealii::MappingQ1<3,3>(),
+              d_dofHandlerRhoNodal,
+              d_constraintsRhoNodal,
+              d_matrixFreeDataPRefined.get_quadrature(d_densityQuadratureIdElectro),
+              funcRho,
+              d_rhoOutNodalValues);
+          d_rhoOutNodalValues.update_ghost_values();
+
+          interpolateRhoNodalDataToQuadratureDataLpsp(d_matrixFreeDataPRefined,
+              d_densityDofHandlerIndexElectro,
+              d_lpspQuadratureIdElectro,
+              d_rhoOutNodalValues,
+              d_rhoOutValuesLpspQuad,
+              d_gradRhoOutValuesLpspQuad,
+              true);           
 				}
 				else
 					compute_rhoOut((scfIter<dftParameters::spectrumSplitStartingScfIter || scfConverged || performExtraNoMixedPrecNoSpectrumSplitPassInCaseOfXlBOMD)?false:true,
@@ -2698,6 +2709,8 @@ namespace dftfe {
                 d_rhoOutValuesLpspQuad,
 								*gradRhoInValues,
 								*gradRhoOutValues,
+						   	d_rhoCore,
+							  d_gradRhoCore,	                
 								d_bQuadValuesAllAtoms,
 								d_localVselfs,
 								d_pseudoVLoc,
@@ -2865,8 +2878,7 @@ namespace dftfe {
 			//
 			// compute and print ground state energy or energy after max scf iterations
 			//
-			if ((!dftParameters::electrostaticsHRefinement || dftParameters::verbosity>=4 || dftParameters::reproducible_output)
-					&& !(dftParameters::isBOMD && dftParameters::isXLBOMD && solveLinearizedKS))
+			if (!(dftParameters::isBOMD && dftParameters::isXLBOMD && solveLinearizedKS))
 			{
 				const double totalEnergy = dftParameters::spinPolarized==0 ?
 					energyCalc.computeEnergy(d_dofHandlerPRefined,
@@ -2889,6 +2901,8 @@ namespace dftfe {
               d_rhoOutValuesLpspQuad,
 							*gradRhoInValues,
 							*gradRhoOutValues,
+              d_rhoCore,
+							d_gradRhoCore,	 
 							d_bQuadValuesAllAtoms,
 							d_localVselfs,
 							d_pseudoVLoc,
@@ -2937,12 +2951,10 @@ namespace dftfe {
 										dftParameters::smearedNuclearCharges);
 
 				d_groundStateEnergy = totalEnergy;
-
 			}
 
 			MPI_Barrier(interpoolcomm);
 
-			//if (dftParameters::isBOMD)
 		  d_entropicEnergy=energyCalc.computeEntropicEnergy(eigenValues,
 						d_kPointWeights,
 						fermiEnergy,
@@ -2953,7 +2965,12 @@ namespace dftfe {
 						dftParameters::TVal);
 
       if (dftParameters::verbosity>=1)
-         pcout<<"Entropic energy: "<<d_entropicEnergy<<std::endl;
+         pcout<<"Total entropic energy: "<<d_entropicEnergy<<std::endl;    
+      
+      d_freeEnergy=d_groundStateEnergy-d_entropicEnergy;    
+
+      if (dftParameters::verbosity>=1)
+         pcout<<"Total free energy: "<<d_freeEnergy<<std::endl;          
 
 			if (dftParameters::isBOMD && dftParameters::isXLBOMD && solveLinearizedKS && !isPerturbationSolveXLBOMD)
 			{
@@ -3195,8 +3212,19 @@ namespace dftfe {
 				 */
 			}
 
-			if (dftParameters::isIonForce && (!dftParameters::electrostaticsHRefinement || dftParameters::verbosity>=4 || dftParameters::reproducible_output))
+			if (dftParameters::isIonForce)
 			{
+		  	if(dftParameters::electrostaticsHRefinement)
+        {
+          std::map<dealii::CellId,std::vector<double> > dummy;
+          interpolateElectroNodalDataToQuadratureDataGeneral(d_matrixFreeDataPRefined,
+              d_phiTotDofHandlerIndexElectro,
+              d_densityQuadratureIdElectro,
+              d_phiTotRhoOut,
+              d_phiOutValues,
+              dummy);     
+        }
+
 				if(dftParameters::selfConsistentSolverTolerance>1e-4 && dftParameters::verbosity>=1)
 					pcout<<"DFT-FE Warning: Ion force accuracy may be affected for the given scf iteration solve tolerance: "<<dftParameters::selfConsistentSolverTolerance<<", recommended to use TOLERANCE below 1e-4."<<std::endl;
 
@@ -3211,9 +3239,7 @@ namespace dftfe {
 #endif
 								d_eigenDofHandlerIndex,
                 d_smearedChargeQuadratureIdElectro,
-                d_lpspQuadratureId,
                 d_lpspQuadratureIdElectro,
-								d_pseudoVLoc,
 								d_matrixFreeDataPRefined,
 								d_phiTotDofHandlerIndexElectro,
 								d_phiTotRhoIn,
@@ -3224,6 +3250,11 @@ namespace dftfe {
                 d_rhoInValuesLpspQuad,
 								*gradRhoInValues,
                 d_gradRhoInValuesLpspQuad,
+								d_rhoCore,
+                d_gradRhoCore, 
+                d_hessianRhoCore,
+                d_gradRhoCoreAtoms,
+                d_hessianRhoCoreAtoms,	                
 								d_pseudoVLoc,
 								d_pseudoVLocAtoms,
 								d_constraintsPRefined,
@@ -3239,9 +3270,7 @@ namespace dftfe {
 #endif
 								d_eigenDofHandlerIndex,
                 d_smearedChargeQuadratureIdElectro,
-                d_lpspQuadratureId,
                 d_lpspQuadratureIdElectro,
-								d_pseudoVLoc,
 								d_matrixFreeDataPRefined,
 								d_phiTotDofHandlerIndexElectro,
 								d_phiTotRhoOut,
@@ -3252,6 +3281,11 @@ namespace dftfe {
                 d_rhoOutValuesLpspQuad,
 								*gradRhoOutValues,
                 d_gradRhoOutValuesLpspQuad,
+								d_rhoCore,
+                d_gradRhoCore, 
+                d_hessianRhoCore,
+                d_gradRhoCoreAtoms,
+                d_hessianRhoCoreAtoms,                
 								d_pseudoVLoc,
 								d_pseudoVLocAtoms,
 								d_constraintsPRefined,
@@ -3265,7 +3299,7 @@ namespace dftfe {
 				computing_timer.exit_section("Ion force computation");
 			}
 #ifdef USE_COMPLEX
-			if (dftParameters::isCellStress && (!dftParameters::electrostaticsHRefinement || dftParameters::verbosity>=4 || dftParameters::reproducible_output))
+			if (dftParameters::isCellStress)
 			{
 				if(dftParameters::selfConsistentSolverTolerance>1e-4 && dftParameters::verbosity>=1)
 					pcout<<"DFT-FE Warning: Cell stress accuracy may be affected for the given scf iteration solve tolerance: "<<dftParameters::selfConsistentSolverTolerance<<", recommended to use TOLERANCE below 1e-4."<<std::endl;
@@ -3277,9 +3311,7 @@ namespace dftfe {
 					forcePtr->computeStress(matrix_free_data,
 							d_eigenDofHandlerIndex,
               d_smearedChargeQuadratureIdElectro,
-              d_lpspQuadratureId,
               d_lpspQuadratureIdElectro,
-							d_pseudoVLoc,
 							d_matrixFreeDataPRefined,
 							d_phiTotDofHandlerIndexElectro,
 							d_phiTotRhoOut,
@@ -3304,9 +3336,9 @@ namespace dftfe {
 			if(dftParameters::electrostaticsHRefinement)
 				computeElectrostaticEnergyHRefined(
 #ifdef DFTFE_WITH_GPU
-						kohnShamDFTEigenOperatorCUDA,
+						kohnShamDFTEigenOperatorCUDA
 #endif
-						computeForces);
+      );
 
 			if (dftParameters::writeWfcSolutionFields)
 				outputWfc();

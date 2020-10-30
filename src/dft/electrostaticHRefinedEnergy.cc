@@ -20,9 +20,9 @@
 	template<unsigned int FEOrder,unsigned int FEOrderElectro>
 void dftClass<FEOrder,FEOrderElectro>::computeElectrostaticEnergyHRefined(
 #ifdef DFTFE_WITH_GPU
-		kohnShamDFTOperatorCUDAClass<FEOrder,FEOrderElectro> & kohnShamDFTEigenOperator,
+		kohnShamDFTOperatorCUDAClass<FEOrder,FEOrderElectro> & kohnShamDFTEigenOperator
 #endif
-		const bool computeForces)
+    )
 {
 	computing_timer.enter_section("h refinement electrostatics");
 	computingTimerStandard.enter_section("h refinement electrostatics");
@@ -127,12 +127,12 @@ void dftClass<FEOrder,FEOrderElectro>::computeElectrostaticEnergyHRefined(
 	ghost_indices.subtract_set(dofHandlerHRefined.locally_owned_dofs());
 
 
-	dealii::ConstraintMatrix onlyHangingNodeConstraints;
+	dealii::AffineConstraints<double> onlyHangingNodeConstraints;
 	onlyHangingNodeConstraints.reinit(locallyRelevantDofs);
 	dealii::DoFTools::make_hanging_node_constraints(dofHandlerHRefined, onlyHangingNodeConstraints);
 	onlyHangingNodeConstraints.close();
 
-	dealii::ConstraintMatrix constraintsHRefined;
+	dealii::AffineConstraints<double> constraintsHRefined;
 	constraintsHRefined.reinit(locallyRelevantDofs);
 	dealii::DoFTools::make_hanging_node_constraints(dofHandlerHRefined, constraintsHRefined);
 	std::vector<std::vector<double> > unitVectorsXYZ;
@@ -221,14 +221,6 @@ void dftClass<FEOrder,FEOrderElectro>::computeElectrostaticEnergyHRefined(
     }
   }
 
-	//
-	//call init for the force computation subsequently
-	//
-	forcePtr->initUnmoved(electrostaticsTriaRho,
-			d_mesh.getSerialMeshElectrostatics(),
-			d_domainBoundingVectors,
-			true);
-
   if (!dftParameters::floatingNuclearCharges)
     d_mesh.resetMesh(electrostaticsTriaDisp,
         electrostaticsTriaRho);
@@ -316,7 +308,7 @@ void dftClass<FEOrder,FEOrderElectro>::computeElectrostaticEnergyHRefined(
 	//Zero Dirichlet BC constraints on the boundary of the domain
 	//used for computing total electrostatic potential using Poisson problem
 	//with (rho+b) as the rhs
-	dealii::ConstraintMatrix constraintsForTotalPotential;
+	dealii::AffineConstraints<double> constraintsForTotalPotential;
 	constraintsForTotalPotential.reinit(locallyRelevantDofs);
 
 	if (dftParameters::pinnedNodeForPBC)
@@ -330,7 +322,7 @@ void dftClass<FEOrder,FEOrderElectro>::computeElectrostaticEnergyHRefined(
 	constraintsForTotalPotential.close();
 
 	//clear existing constraints matrix vector
-	std::vector<const dealii::ConstraintMatrix*> matrixFreeConstraintsInputVector;
+	std::vector<const dealii::AffineConstraints<double>*> matrixFreeConstraintsInputVector;
 
 	matrixFreeConstraintsInputVector.push_back(&constraintsHRefined);
 
@@ -382,13 +374,6 @@ void dftClass<FEOrder,FEOrderElectro>::computeElectrostaticEnergyHRefined(
 	matrixFreeDofHandlerVectorInput.push_back(&dofHandlerHRefined);
 	const unsigned phiExtDofHandlerIndexHRefined = matrixFreeDofHandlerVectorInput.size()-1;
 	matrixFreeConstraintsInputVector.push_back(&onlyHangingNodeConstraints);
-
-
-
-	forcePtr->initMoved(matrixFreeDofHandlerVectorInput,
-			matrixFreeConstraintsInputVector,
-			true,
-			true);
 
 
 	std::vector<Quadrature<1> > quadratureVector;
@@ -505,6 +490,8 @@ void dftClass<FEOrder,FEOrderElectro>::computeElectrostaticEnergyHRefined(
         rhoOutValuesLpspQuadHRefined,
 				*gradRhoInValues,
 				*gradRhoOutValues,
+				d_rhoCore,
+				d_gradRhoCore,        
 				d_bQuadValuesAllAtoms,
 				localVselfsHRefined,
 				d_pseudoVLoc,
@@ -557,124 +544,6 @@ void dftClass<FEOrder,FEOrderElectro>::computeElectrostaticEnergyHRefined(
     pcout<<"Entropic energy: "<<d_entropicEnergy<<std::endl;
 
 
-	if(dftParameters::isCellStress)
-	{
-		//
-		//Create the full dealii partitioned array
-		//
-		d_eigenVectorsFlattened.resize((1+dftParameters::spinPolarized)*d_kPointWeights.size());
-
-		for(unsigned int kPoint = 0; kPoint < (1+dftParameters::spinPolarized)*d_kPointWeights.size(); ++kPoint)
-		{
-			vectorTools::createDealiiVector<dataTypes::number>(matrix_free_data.get_vector_partitioner(),
-					d_numEigenValues,
-					d_eigenVectorsFlattened[kPoint]);
-
-
-			d_eigenVectorsFlattened[kPoint] = dataTypes::number(0.0);
-
-		}
-
-
-		Assert(d_eigenVectorsFlattened[0].local_size()==d_eigenVectorsFlattenedSTL[0].size(),
-				dealii::ExcMessage("Incorrect local sizes of STL and dealii arrays"));
-
-		constraintsNoneDataInfo.precomputeMaps(matrix_free_data.get_vector_partitioner(),
-				d_eigenVectorsFlattened[0].get_partitioner(),
-				d_numEigenValues);
-
-		const unsigned int localVectorSize = d_eigenVectorsFlattenedSTL[0].size()/d_numEigenValues;
-
-		for(unsigned int kPoint = 0; kPoint < (1+dftParameters::spinPolarized)*d_kPointWeights.size(); ++kPoint)
-		{
-			for(unsigned int iNode = 0; iNode < localVectorSize; ++iNode)
-			{
-				for(unsigned int iWave = 0; iWave < d_numEigenValues; ++iWave)
-				{
-					d_eigenVectorsFlattened[kPoint].local_element(iNode*d_numEigenValues+iWave)
-						= d_eigenVectorsFlattenedSTL[kPoint][iNode*d_numEigenValues+iWave];
-				}
-			}
-
-			constraintsNoneDataInfo.distribute(d_eigenVectorsFlattened[kPoint],
-					d_numEigenValues);
-
-		}
-	}
-
 	computing_timer.exit_section("h refinement electrostatics");
 	computingTimerStandard.exit_section("h refinement electrostatics");
-
-	if (dftParameters::isIonForce)
-	{
-
-		computing_timer.enter_section("Ion force computation");
-		computingTimerStandard.enter_section("Ion force computation");
-		if (computeForces)
-		{
-			forcePtr->computeAtomsForces(matrix_free_data,
-#ifdef DFTFE_WITH_GPU
-					kohnShamDFTEigenOperator,
-#endif
-					d_eigenDofHandlerIndex,
-          1,
-          d_lpspQuadratureId,
-          2,
-					d_pseudoVLoc,
-					matrixFreeDataHRefined,
-					phiTotDofHandlerIndexHRefined,
-					phiTotRhoOutHRefined,
-					*rhoOutValues,
-					*gradRhoOutValues,
-          d_gradRhoOutValuesLpspQuad,
-					rhoOutHRefinedQuadValues,
-          rhoOutValuesLpspQuadHRefined,
-					gradRhoOutHRefinedQuadValues,
-          gradRhoOutValuesLpspQuadHRefined,
-					pseudoVLocHRefined,
-					pseudoVLocAtomsHRefined,
-					constraintsHRefined,
-					vselfBinsManagerHRefined,
-					*rhoOutValues,
-					*gradRhoOutValues,
-					d_phiTotRhoIn);
-			forcePtr->printAtomsForces();
-		}
-		computingTimerStandard.exit_section("Ion force computation");
-		computing_timer.exit_section("Ion force computation");
-	}
-#ifdef USE_COMPLEX
-	if (dftParameters::isCellStress)
-	{
-
-		computing_timer.enter_section("Cell stress computation");
-		computingTimerStandard.enter_section("Cell stress computation");
-		if (computeForces)
-		{
-			forcePtr->computeStress(matrix_free_data,
-					d_eigenDofHandlerIndex,
-          1,
-          d_lpspQuadratureId,
-          2,
-					d_pseudoVLoc,
-					matrixFreeDataHRefined,
-					phiTotDofHandlerIndexHRefined,
-					phiTotRhoOutHRefined,
-					*rhoOutValues,
-					*gradRhoOutValues,
-          d_gradRhoOutValuesLpspQuad,
-					rhoOutHRefinedQuadValues,
-          rhoOutValuesLpspQuadHRefined,
-					gradRhoOutHRefinedQuadValues,
-          gradRhoOutValuesLpspQuadHRefined,
-					pseudoVLocHRefined,
-					pseudoVLocAtomsHRefined,
-					constraintsHRefined,
-					vselfBinsManagerHRefined);
-			forcePtr->printStress();
-		}
-		computingTimerStandard.exit_section("Cell stress computation");
-		computing_timer.exit_section("Cell stress computation");
-	}
-#endif
 }

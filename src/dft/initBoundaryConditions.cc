@@ -93,7 +93,7 @@ void dftClass<FEOrder,FEOrderElectro>::initBoundaryConditions(const bool meshOnl
 	MPI_Barrier(MPI_COMM_WORLD);
 	init_dofhandlerobjs = MPI_Wtime() - init_dofhandlerobjs;
 	if (dftParameters::verbosity>=1)
-		pcout<<"updateAtomPositionsAndMoveMesh: initBoundaryConditions: Time taken for creating dofhandler related objects: "<<init_dofhandlerobjs<<std::endl;
+		pcout<<"initBoundaryConditions: Time taken for creating dofhandler related objects: "<<init_dofhandlerobjs<<std::endl;
 
 	if (dftParameters::verbosity>=4)
 		dftUtils::printCurrentMemoryUsage(mpi_communicator,
@@ -277,7 +277,7 @@ void dftClass<FEOrder,FEOrderElectro>::initBoundaryConditions(const bool meshOnl
 	MPI_Barrier(MPI_COMM_WORLD);
 	init_force = MPI_Wtime() - init_force;
 	if (dftParameters::verbosity>=1)
-		pcout<<"updateAtomPositionsAndMoveMesh: initBoundaryConditions: Time taken for force init moved: "<<init_force<<std::endl;
+		pcout<<"initBoundaryConditions: Time taken for force init moved: "<<init_force<<std::endl;
 
 
 	double init_mf;
@@ -289,7 +289,7 @@ void dftClass<FEOrder,FEOrderElectro>::initBoundaryConditions(const bool meshOnl
 	MPI_Barrier(MPI_COMM_WORLD);
 	init_mf = MPI_Wtime() - init_mf;
 	if (dftParameters::verbosity>=1)
-		pcout<<"updateAtomPositionsAndMoveMesh: initBoundaryConditions: Time taken for matrix free reinit: "<<init_mf<<std::endl;
+		pcout<<"initBoundaryConditions: Time taken for matrix free reinit: "<<init_mf<<std::endl;
 
 	if (dftParameters::verbosity>=4)
 		dftUtils::printCurrentMemoryUsage(mpi_communicator,
@@ -316,7 +316,7 @@ void dftClass<FEOrder,FEOrderElectro>::initBoundaryConditions(const bool meshOnl
 	MPI_Barrier(MPI_COMM_WORLD);
 	init_pref = MPI_Wtime() - init_pref;
 	if (dftParameters::verbosity>=1)
-		pcout<<"updateAtomPositionsAndMoveMesh: initBoundaryConditions: Time taken for initpRefinedObjects: "<<init_pref<<std::endl;
+		pcout<<"initBoundaryConditions: Time taken for initpRefinedObjects: "<<init_pref<<std::endl;
 
 	if (!meshOnlyDeformed)
 		createMasterChargeIdToImageIdMaps(d_pspCutOff,

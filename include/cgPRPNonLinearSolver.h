@@ -236,6 +236,12 @@ namespace dftfe {
       double d_etaChk;
 
       /// line search data
+      double d_eta;
+
+      /// line search data
+      double d_etaAlphaZeroChk;      
+
+      /// line search data
       double d_functionValueChk;
 
       /// line search data
@@ -243,6 +249,9 @@ namespace dftfe {
 
       /// line search iter
       int d_lineSearchRestartIterChk;
+
+      ///
+      bool d_useSingleAtomSolutionsInitialGuess;
 
 			//parallel objects
 			MPI_Comm mpi_communicator;

@@ -10,12 +10,14 @@ subsection Geometry
     set ION OPT=true
     set FORCE TOL=0.1
     set ION RELAX FLAGS FILE =@SOURCE_DIR@/nitrogenMolecule_relaxationFlags.inp
-    set REUSE WFC=false
-    set REUSE DENSITY=false
+    set REUSE WFC=true
+    set REUSE DENSITY=true
   end
 end
 
 subsection Boundary conditions
+  set SMEARED NUCLEAR CHARGES=false
+  set FLOATING NUCLEAR CHARGES=false
   set PERIODIC1                       = true
   set PERIODIC2                       = true
   set PERIODIC3                       = true
@@ -27,6 +29,7 @@ end
 subsection Finite element mesh parameters
   set POLYNOMIAL ORDER=2
   subsection Auto mesh generation parameters
+    set AUTO ADAPT BASE MESH SIZE=false
     set MESH SIZE AROUND ATOM  = 0.5
     set BASE MESH SIZE = 13.0
     set ATOM BALL RADIUS = 2.0
@@ -48,12 +51,14 @@ end
 
 
 subsection SCF parameters
+   set COMPUTE ENERGY EACH ITER=false
+
   set MIXING HISTORY   = 70
   set MIXING PARAMETER = 0.5
   set MAXIMUM ITERATIONS               = 40
   set TEMPERATURE                      = 500
   set TOLERANCE                        = 5e-6
-  set HIGHER QUAD NLP  = false
+  
   set STARTING WFC=ATOMIC
   subsection Eigen-solver parameters
       set NUMBER OF KOHN-SHAM WAVEFUNCTIONS = 10

@@ -1149,7 +1149,7 @@ namespace dftfe
 				gpu_time = MPI_Wtime() - gpu_time;
 
 				if (this_process==0)
-					if (useMixedPrecOverall && dftParameters::useMixedPrecSubspaceRotRR)
+					if (useMixedPrecOverall && dftParameters::useMixedPrecPGS_SR)
 						std::cout<<"Time for X=X*L^{-1}^{T} mixed prec, RR GEP step: "<<gpu_time<<std::endl;
 					else
 						std::cout<<"Time for X=X*L^{-1}^{T}, RR GEP step: "<<gpu_time<<std::endl;

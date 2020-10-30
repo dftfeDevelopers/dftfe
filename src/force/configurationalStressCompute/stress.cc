@@ -22,9 +22,7 @@ template<unsigned int FEOrder,unsigned int FEOrderElectro>
 (const MatrixFree<3,double> & matrixFreeData,
  const unsigned int eigenDofHandlerIndex,
  const unsigned int smearedChargeQuadratureId,
-          const unsigned int lpspQuadratureId,
   const unsigned int lpspQuadratureIdElectro,         
- const std::map<dealii::CellId, std::vector<double> > & pseudoVLoc,
  const MatrixFree<3,double> & matrixFreeDataElectro,
  const unsigned int phiTotDofHandlerIndexElectro,
  const distributedCPUVec<double> & phiTotRhoOutElectro,
@@ -37,7 +35,7 @@ template<unsigned int FEOrder,unsigned int FEOrderElectro>
   const std::map<dealii::CellId, std::vector<double> > & gradRhoOutValuesElectroLpsp,
   const std::map<dealii::CellId, std::vector<double> > & pseudoVLocElectro,
  const std::map<unsigned int,std::map<dealii::CellId, std::vector<double> > > & pseudoVLocAtomsElectro,
- const ConstraintMatrix  & hangingPlusPBCConstraintsElectro,
+ const dealii::AffineConstraints<double>  & hangingPlusPBCConstraintsElectro,
  const vselfBinsManager<FEOrder,FEOrderElectro> & vselfBinsManagerElectro)
 {
 
@@ -67,9 +65,7 @@ template<unsigned int FEOrder,unsigned int FEOrderElectro>
 		computeStressSpinPolarizedEEshelbyEPSPEnlEk(matrixFreeData,
 				eigenDofHandlerIndex,
         smearedChargeQuadratureId,
-        lpspQuadratureId,
         lpspQuadratureIdElectro,        
-				pseudoVLoc,
 				matrixFreeDataElectro,
 				phiTotDofHandlerIndexElectro,
 				phiTotRhoOutElectro,
@@ -85,9 +81,7 @@ template<unsigned int FEOrder,unsigned int FEOrderElectro>
 		computeStressEEshelbyEPSPEnlEk(matrixFreeData,
 				eigenDofHandlerIndex,
         smearedChargeQuadratureId,
-        lpspQuadratureId,
         lpspQuadratureIdElectro,        
-				pseudoVLoc,
 				matrixFreeDataElectro,
 				phiTotDofHandlerIndexElectro,
 				phiTotRhoOutElectro,

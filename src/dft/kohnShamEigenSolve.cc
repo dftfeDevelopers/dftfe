@@ -144,11 +144,11 @@ dataTypes::number dftClass<FEOrder,FEOrderElectro>::computeTraceXtHX(unsigned in
 	//
 	if(dftParameters::xc_id < 4)
 	{
-		kohnShamDFTEigenOperator.computeVEff(rhoInValues,phiInValues, d_pseudoVLoc,d_lpspQuadratureId);
+		kohnShamDFTEigenOperator.computeVEff(rhoInValues,phiInValues, d_pseudoVLoc, d_rhoCore, d_lpspQuadratureId);
 	}
 	else if (dftParameters::xc_id == 4)
 	{
-		kohnShamDFTEigenOperator.computeVEff(rhoInValues, gradRhoInValues, phiInValues, d_pseudoVLoc,d_lpspQuadratureId);
+		kohnShamDFTEigenOperator.computeVEff(rhoInValues, gradRhoInValues, phiInValues, d_pseudoVLoc, d_rhoCore, d_gradRhoCore, d_lpspQuadratureId);
 	}
 
 	//
@@ -359,8 +359,7 @@ void dftClass<FEOrder,FEOrderElectro>::kohnShamEigenSpaceCompute(const unsigned 
 		std::vector<double>                            & residualNormWaveFunctions,
 		const bool isSpectrumSplit,
 		const bool useMixedPrec,
-		const bool isFirstScf,
-		const bool useFullMassMatrixGEP)
+		const bool isFirstScf)
 {
 	computing_timer.enter_section("Chebyshev solve");
 
@@ -395,17 +394,15 @@ void dftClass<FEOrder,FEOrderElectro>::kohnShamEigenSpaceCompute(const unsigned 
 			residualNormWaveFunctions,
 			interBandGroupComm,
 			useMixedPrec,
-			isFirstScf,
-			useFullMassMatrixGEP);
+			isFirstScf);
 
 	//
 	//scale the eigenVectors with M^{-1/2} to represent the wavefunctions in the usual FE basis
 	//
-	if (!useFullMassMatrixGEP)
-		internal::pointWiseScaleWithDiagonal(kohnShamDFTEigenOperator.d_invSqrtMassVector,
-				matrix_free_data.get_vector_partitioner(),
-				d_numEigenValues,
-				d_eigenVectorsFlattenedSTL[(1+dftParameters::spinPolarized)*kPointIndex+spinType]);
+  internal::pointWiseScaleWithDiagonal(kohnShamDFTEigenOperator.d_invSqrtMassVector,
+      matrix_free_data.get_vector_partitioner(),
+      d_numEigenValues,
+      d_eigenVectorsFlattenedSTL[(1+dftParameters::spinPolarized)*kPointIndex+spinType]);
 
 	if (isSpectrumSplit && d_numEigenValuesRR!=d_numEigenValues)
 	{
@@ -483,8 +480,7 @@ void dftClass<FEOrder,FEOrderElectro>::kohnShamEigenSpaceCompute(const unsigned 
 		const unsigned int numberRayleighRitzAvoidanceXLBOMDPasses,
 		const bool isSpectrumSplit,
 		const bool useMixedPrec,
-		const bool isFirstScf,
-		const bool useFullMassMatrixGEP)
+		const bool isFirstScf)
 {
 	computing_timer.enter_section("Chebyshev solve CUDA");
 
@@ -579,7 +575,6 @@ void dftClass<FEOrder,FEOrderElectro>::kohnShamEigenSpaceCompute(const unsigned 
 					isXlBOMDLinearizedSolve,
 					useMixedPrec,
 					isFirstScf,
-					useFullMassMatrixGEP,
 					true,
 					false);
 			MPI_Barrier(MPI_COMM_WORLD);
@@ -650,7 +645,6 @@ void dftClass<FEOrder,FEOrderElectro>::kohnShamEigenSpaceCompute(const unsigned 
 					isXlBOMDLinearizedSolve,
 					useMixedPrec,
 					isFirstScf,
-					useFullMassMatrixGEP,
 					false,
 					true);
 		}
@@ -672,8 +666,7 @@ void dftClass<FEOrder,FEOrderElectro>::kohnShamEigenSpaceCompute(const unsigned 
 					processGrid,
 					isXlBOMDLinearizedSolve,
 					useMixedPrec,
-					isFirstScf,
-					useFullMassMatrixGEP);
+					isFirstScf);
 		}
 #else
 		subspaceIterationSolverCUDA.solve(kohnShamDFTEigenOperator,
@@ -692,8 +685,7 @@ void dftClass<FEOrder,FEOrderElectro>::kohnShamEigenSpaceCompute(const unsigned 
 				processGrid,
 				isXlBOMDLinearizedSolve,
 				useMixedPrec,
-				isFirstScf,
-				useFullMassMatrixGEP);
+				isFirstScf);
 #endif
 
 

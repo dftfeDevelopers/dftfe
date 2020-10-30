@@ -21,8 +21,13 @@
 	template<unsigned int FEOrder,unsigned int FEOrderElectro>
 void kohnShamDFTOperatorClass<FEOrder,FEOrderElectro>::computeHamiltonianMatrix(const unsigned int kPointIndex, const unsigned int spinIndex)
 {
-  MPI_Barrier(MPI_COMM_WORLD);
-	double cpu_time=MPI_Wtime();
+  dealii::TimerOutput computingTimerStandard(mpi_communicator,
+      pcout,
+      dftParameters::reproducible_output
+      || dftParameters::verbosity<1? dealii::TimerOutput::never : dealii::TimerOutput::every_call,
+      dealii::TimerOutput::wall_times);
+
+  computingTimerStandard.enter_section("Elemental Hamiltonian matrix computation on CPU");
 
 	//
 	//Get the number of locally owned cells
@@ -31,7 +36,7 @@ void kohnShamDFTOperatorClass<FEOrder,FEOrderElectro>::computeHamiltonianMatrix(
 	const unsigned int totalLocallyOwnedCells = dftPtr->matrix_free_data.n_physical_cells();
 	const unsigned int kpointSpinIndex=(1+dftParameters::spinPolarized)*kPointIndex+spinIndex;
 
-  if (dftParameters::isPseudopotential && !d_isStiffnessMatrixExternalPotCorrComputed)
+  if ((dftParameters::isPseudopotential || dftParameters::smearedNuclearCharges) && !d_isStiffnessMatrixExternalPotCorrComputed)
   {
     const unsigned int numberDofsPerElement = dftPtr->matrix_free_data.get_dof_handler(dftPtr->d_densityDofHandlerIndex).get_fe().dofs_per_cell;
     d_cellHamiltonianMatrixExternalPotCorr.clear();
@@ -228,7 +233,7 @@ void kohnShamDFTOperatorClass<FEOrder,FEOrderElectro>::computeHamiltonianMatrix(
 				}
 			}
 
-      if (dftParameters::isPseudopotential)
+      if (dftParameters::isPseudopotential || dftParameters::smearedNuclearCharges)
         for(unsigned int iNode = 0; iNode < numberDofsPerElement; ++iNode)
           for(unsigned int jNode = iNode; jNode < numberDofsPerElement; ++jNode)
           {
@@ -259,7 +264,6 @@ void kohnShamDFTOperatorClass<FEOrder,FEOrderElectro>::computeHamiltonianMatrix(
 
 	}//macrocell loop
 
-	
 
 	if(dftParameters::cellLevelMassMatrixScaling)
 	  {
@@ -300,6 +304,7 @@ void kohnShamDFTOperatorClass<FEOrder,FEOrderElectro>::computeHamiltonianMatrix(
 	cpu_time = MPI_Wtime() - cpu_time;
 	if (dftParameters::verbosity>=2)
 		pcout<<"Time for elemental Hamiltonian matrix computation on CPU: "<<cpu_time<<std::endl;
+  computingTimerStandard.exit_section("Elemental Hamiltonian matrix computation on CPU");
 }
 
 

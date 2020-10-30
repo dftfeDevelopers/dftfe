@@ -100,8 +100,8 @@ std::vector<double> wrapAtomsAcrossPeriodicBc(const Point<3> & cellCenteredCoord
 	template<unsigned int FEOrder,unsigned int FEOrderElectro>
 void dftClass<FEOrder,FEOrderElectro>::updateAtomPositionsAndMoveMesh(const std::vector<Tensor<1,3,double> > & globalAtomsDisplacements,
 		const double maxJacobianRatioFactor,
-		const bool useSingleAtomSolutions,
-		const bool updateDensity)
+		const bool useSingleAtomSolutionsOverride,
+		const bool useAtomicRhoSplitDensityUpdateForGeoOpt)
 {
 	bool isAutoRemeshSupressed=false;
 	const int numberGlobalAtoms = atomLocations.size();
@@ -547,9 +547,9 @@ void dftClass<FEOrder,FEOrderElectro>::updateAtomPositionsAndMoveMesh(const std:
           init_time = MPI_Wtime(); 
 
           if (dftParameters::isBOMD)
-            initNoRemesh(false,(!dftParameters::reproducible_output && maxCurrentDispAtom>0.2) || useSingleAtomSolutions,updateDensity);
+            initNoRemesh(false,(!dftParameters::reproducible_output && maxCurrentDispAtom>0.2) || useSingleAtomSolutionsOverride,useAtomicRhoSplitDensityUpdateForGeoOpt);
           else
-            initNoRemesh(false,(!dftParameters::reproducible_output && maxCurrentDispAtom>0.2) || useSingleAtomSolutions,updateDensity);
+            initNoRemesh(false,(!dftParameters::reproducible_output && maxCurrentDispAtom>0.2) || useSingleAtomSolutionsOverride,useAtomicRhoSplitDensityUpdateForGeoOpt);
           if (!dftParameters::reproducible_output)
             pcout << "...Reinitialization end" << std::endl;
 
@@ -568,9 +568,9 @@ void dftClass<FEOrder,FEOrderElectro>::updateAtomPositionsAndMoveMesh(const std:
     init_time = MPI_Wtime(); 
 
     if (dftParameters::isBOMD)
-      initNoRemesh(true,false,updateDensity);
+      initNoRemesh(true,useSingleAtomSolutionsOverride,useAtomicRhoSplitDensityUpdateForGeoOpt);
     else
-      initNoRemesh(true,false,updateDensity);
+      initNoRemesh(true,useSingleAtomSolutionsOverride,useAtomicRhoSplitDensityUpdateForGeoOpt);
     if (!dftParameters::reproducible_output)
       pcout << "...Reinitialization end" << std::endl;
 

@@ -46,7 +46,7 @@ namespace dftfe {
 		extern std::string coordinatesGaussianDispFile;
 
 		extern double outerAtomBallRadius, innerAtomBallRadius, meshSizeOuterDomain;
-	        extern bool autoUserMeshParams,cellLevelMassMatrixScaling;
+	        extern bool autoAdaptBaseMeshSize,cellLevelMassMatrixScaling;
 		extern double meshSizeInnerBall, meshSizeOuterBall;
 		extern double chebyshevTolerance, topfrac, kerkerParameter;
 		extern std::string mixingMethod,ionOptSolver;
@@ -86,7 +86,6 @@ namespace dftfe {
 		extern bool reuseWfcGeoOpt;
 		extern bool reuseDensityGeoOpt;
 		extern double mpiAllReduceMessageBlockSizeMB;
-		extern bool useHigherQuadNLP;
 		extern bool useMixedPrecPGS_SR;
 		extern bool useMixedPrecPGS_O;
 		extern bool useMixedPrecXTHXSpectrumSplit;
@@ -101,7 +100,6 @@ namespace dftfe {
 		extern bool createConstraintsFromSerialDofhandler;
 		extern bool bandParalOpt;
 		extern bool rrGEP;
-		extern bool rrGEPFullMassMatrix;
 		extern bool useGPU;
 		extern bool gpuFineGrainedTimings;
 		extern bool allowFullCPUMemSubspaceRot;
@@ -126,7 +124,6 @@ namespace dftfe {
 		extern double diracDeltaKernelScalingConstant;
 		extern unsigned int kernelUpdateRankXLBOMD;
 		extern unsigned int kmaxXLBOMD;
-		extern bool autoMeshStepInterpolateBOMD;
 		extern double ratioOfMeshMovementToForceGaussianBOMD;
 		extern bool useAtomicRhoXLBOMD;
 		extern bool useMeshSizesFromAtomsFile;
@@ -136,10 +133,11 @@ namespace dftfe {
 		extern double xlbomdRestartChebyTol;
 		extern bool xlbomdRRPassMixedPrec;
 		extern bool useDensityMatrixPerturbationRankUpdates;
-		extern bool xlbomdStepTimingRun; 
 		extern double xlbomdKernelRankUpdateFDParameter;
 		extern bool smearedNuclearCharges;
     extern bool floatingNuclearCharges;
+    extern bool nonLinearCoreCorrection;
+    extern unsigned int maxLineSearchIterCGPRP;
 
 		/**
 		 * Declare parameters.

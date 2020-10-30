@@ -38,9 +38,7 @@ template<unsigned int FEOrder,unsigned int FEOrderElectro>
 	const unsigned int numberGlobalAtoms = dftPtr->atomLocations.size();
 	const unsigned int numKPoints=dftPtr->d_kPointWeights.size();
 	const unsigned int numSubCells= dftPtr->matrix_free_data.n_components_filled(cell);
-	const unsigned int numQuadPoints=dftParameters::useHigherQuadNLP?
-		forceEvalNLP.n_q_points
-		:forceEval.n_q_points;
+	const unsigned int numQuadPoints=forceEvalNLP.n_q_points;
 	const unsigned int numEigenVectors=psiSpin0Quads.size()/numQuadPoints/numKPoints;
 	DoFHandler<C_DIM>::active_cell_iterator subCellPtr;
 
@@ -76,49 +74,28 @@ template<unsigned int FEOrder,unsigned int FEOrderElectro>
 
 		if (isCellInCompactSupport)
 		{
-			if (dftParameters::useHigherQuadNLP)
-				for (unsigned int q=0; q<numQuadPoints; ++q)
-				{
-					std::vector<std::vector<std::vector<Tensor<1,2, VectorizedArray<double> > > > > temp1(1);
-					temp1[0]=zetaDeltaVQuads[q][iAtom];
+      for (unsigned int q=0; q<numQuadPoints; ++q)
+      {
+        std::vector<std::vector<std::vector<Tensor<1,2, VectorizedArray<double> > > > > temp1(1);
+        temp1[0]=zetaDeltaVQuads[q][iAtom];
 
-					const Tensor<1,C_DIM,VectorizedArray<double> >
-						F=-eshelbyTensorSP::getFnlAtom(temp1,
-								temp2Spin0,
-								temp2Spin1,
-								psiSpin0Quads.begin()+q*numEigenVectors*numKPoints,
-								psiSpin1Quads.begin()+q*numEigenVectors*numKPoints,
-								gradPsiSpin0Quads.begin()+q*numEigenVectors*numKPoints,
-								gradPsiSpin1Quads.begin()+q*numEigenVectors*numKPoints,                
-								dftPtr->d_kPointWeights,
-								dftPtr->d_kPointCoordinates,                
-								numEigenVectors);
-					forceEvalNLP.submit_value(F,q);
-				}
-			else
-				for (unsigned int q=0; q<numQuadPoints; ++q)
-				{
-					std::vector<std::vector<std::vector<Tensor<1,2,VectorizedArray<double> > > > > temp1(1);
-					temp1[0]=zetaDeltaVQuads[q][iAtom];
+        const Tensor<1,C_DIM,VectorizedArray<double> >
+          F=-eshelbyTensorSP::getFnlAtom(temp1,
+              temp2Spin0,
+              temp2Spin1,
+              psiSpin0Quads.begin()+q*numEigenVectors*numKPoints,
+              psiSpin1Quads.begin()+q*numEigenVectors*numKPoints,
+              gradPsiSpin0Quads.begin()+q*numEigenVectors*numKPoints,
+              gradPsiSpin1Quads.begin()+q*numEigenVectors*numKPoints,                
+              dftPtr->d_kPointWeights,
+              dftPtr->d_kPointCoordinates,                
+              numEigenVectors);
+        forceEvalNLP.submit_value(F,q);
+      }
 
-					const Tensor<1,C_DIM,VectorizedArray<double> >
-						F=-eshelbyTensorSP::getFnlAtom(temp1,
-								temp2Spin0,
-								temp2Spin1,
-								psiSpin0Quads.begin()+q*numEigenVectors*numKPoints,
-								psiSpin1Quads.begin()+q*numEigenVectors*numKPoints,
-								gradPsiSpin0Quads.begin()+q*numEigenVectors*numKPoints,
-								gradPsiSpin1Quads.begin()+q*numEigenVectors*numKPoints,                
-								dftPtr->d_kPointWeights,
-								dftPtr->d_kPointCoordinates,                
-								numEigenVectors);
-					forceEval.submit_value(F,q);
-				}
 
 			const Tensor<1,C_DIM,VectorizedArray<double> > forceContributionFnlGammaiAtomCells
-				=dftParameters::useHigherQuadNLP?
-				forceEvalNLP.integrate_value()
-				:forceEval.integrate_value();
+				=forceEvalNLP.integrate_value();
 
 			for (unsigned int iSubCell=0; iSubCell<numSubCells; ++iSubCell)
 				for (unsigned int idim=0; idim<C_DIM; idim++)
@@ -148,9 +125,7 @@ template<unsigned int FEOrder,unsigned int FEOrderElectro>
 
 	const unsigned int numberGlobalAtoms = dftPtr->atomLocations.size();
 	const unsigned int numSubCells= dftPtr->matrix_free_data.n_components_filled(cell);
-	const unsigned int numQuadPoints=dftParameters::useHigherQuadNLP?
-		forceEvalNLP.n_q_points
-		:forceEval.n_q_points;
+	const unsigned int numQuadPoints=forceEvalNLP.n_q_points;
 	const unsigned int numEigenVectors=psiSpin0Quads.size()/numQuadPoints;
 	DoFHandler<C_DIM>::active_cell_iterator subCellPtr;
 
@@ -181,46 +156,26 @@ template<unsigned int FEOrder,unsigned int FEOrderElectro>
 
 		if (isCellInCompactSupport)
 		{
+      for (unsigned int q=0; q<numQuadPoints; ++q)
+      {
+        std::vector<std::vector<VectorizedArray<double> > > temp1(1);
+        temp1[0]=zetaDeltaVQuads[q][iAtom];
 
-			if (dftParameters::useHigherQuadNLP)
-				for (unsigned int q=0; q<numQuadPoints; ++q)
-				{
-					std::vector<std::vector<VectorizedArray<double> > > temp1(1);
-					temp1[0]=zetaDeltaVQuads[q][iAtom];
+        const Tensor<1,C_DIM,VectorizedArray<double> > F=
+          -eshelbyTensorSP::getFnlAtom(temp1,
+              temp2Spin0,
+              temp2Spin1,
+              psiSpin0Quads.begin()+q*numEigenVectors,
+              psiSpin1Quads.begin()+q*numEigenVectors,
+              gradPsiSpin0Quads.begin()+q*numEigenVectors,
+              gradPsiSpin1Quads.begin()+q*numEigenVectors,                
+              numEigenVectors);
+        forceEvalNLP.submit_value(F,q);
+      }
 
-					const Tensor<1,C_DIM,VectorizedArray<double> > F=
-						-eshelbyTensorSP::getFnlAtom(temp1,
-								temp2Spin0,
-								temp2Spin1,
-								psiSpin0Quads.begin()+q*numEigenVectors,
-								psiSpin1Quads.begin()+q*numEigenVectors,
-								gradPsiSpin0Quads.begin()+q*numEigenVectors,
-								gradPsiSpin1Quads.begin()+q*numEigenVectors,                
-								numEigenVectors);
-					forceEvalNLP.submit_value(F,q);
-				}
-			else
-				for (unsigned int q=0; q<numQuadPoints; ++q)
-				{
-					std::vector<std::vector<VectorizedArray<double> > > temp1(1);
-					temp1[0]=zetaDeltaVQuads[q][iAtom];
-
-					const Tensor<1,C_DIM,VectorizedArray<double> > F=
-						-eshelbyTensorSP::getFnlAtom(temp1,
-								temp2Spin0,
-								temp2Spin1,
-								psiSpin0Quads.begin()+q*numEigenVectors,
-								psiSpin1Quads.begin()+q*numEigenVectors,
-								gradPsiSpin0Quads.begin()+q*numEigenVectors,
-								gradPsiSpin1Quads.begin()+q*numEigenVectors,                 
-								numEigenVectors);
-					forceEval.submit_value(F,q);
-				}
 
 			const Tensor<1,C_DIM,VectorizedArray<double> > forceContributionFnlGammaiAtomCells
-				=dftParameters::useHigherQuadNLP?
-				forceEvalNLP.integrate_value()
-				:forceEval.integrate_value();
+				=forceEvalNLP.integrate_value();
 
 
 			for (unsigned int iSubCell=0; iSubCell<numSubCells; ++iSubCell)

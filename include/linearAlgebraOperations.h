@@ -207,16 +207,6 @@ namespace linearAlgebraOperations
 				const bool useMixedPrec);
 
 
-	template<typename T>
-		void rayleighRitzGEPFullMassMatrix(operatorDFTClass        & operatorMatrix,
-				std::vector<T> & X,
-				const unsigned int numberComponents,
-				const MPI_Comm &interBandGroupComm,
-				const MPI_Comm &mpiComm,
-				std::vector<double>     & eigenValues,
-				const bool useMixedPrec);
-
-
 	/** @brief Compute Rayleigh-Ritz projection
 	 *  (serial version using LAPACK, parallel version using ScaLAPACK)
 	 *

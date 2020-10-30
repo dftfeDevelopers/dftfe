@@ -39,17 +39,14 @@ void dftClass<FEOrder,FEOrderElectro>::computeElementalOVProjectorKets()
 	//
 	//get FE data structures
 	//
-	//QGauss<3>  quadrature(C_num1DQuad<FEOrder>());
-	//QGauss<3>  quadratureHigh(C_num1DQuadNLPSP<FEOrder>());
   QIterated<3> quadrature(QGauss<1>(C_num1DQuad<C_rhoNodalPolyOrder<FEOrder,FEOrderElectro>()>()),1);
   QIterated<3> quadratureHigh(QGauss<1>(C_num1DQuadNLPSP<FEOrder>()),C_numCopies1DQuadNLPSP());
 
 	//FEValues<3> fe_values(FE, quadrature, update_values | update_gradients | update_JxW_values);
-	FEValues<3> fe_values(FE, dftParameters::useHigherQuadNLP?quadratureHigh:quadrature,
+	FEValues<3> fe_values(FE, quadratureHigh,
 			update_values | update_JxW_values| update_quadrature_points);
 	const unsigned int numberNodesPerElement  = FE.dofs_per_cell;
-	const unsigned int numberQuadraturePoints = dftParameters::useHigherQuadNLP?quadratureHigh.size()
-		:quadrature.size();
+	const unsigned int numberQuadraturePoints = quadratureHigh.size();
 
 
 	//
@@ -861,7 +858,7 @@ void dftClass<FEOrder,FEOrderElectro>::computeSparseStructureNonLocalProjectors_
 	//
 	//get FE data structures
 	//
-	QGauss<3>  quadrature(C_num1DQuad<FEOrder>());
+	QGauss<3>  quadrature(C_num1DQuad<3>());
 	//FEValues<3> fe_values(FE, quadrature, update_values | update_gradients | update_JxW_values);
 	FEValues<3> fe_values(FE, quadrature, update_quadrature_points);
 	const unsigned int numberQuadraturePoints = quadrature.size();
@@ -968,7 +965,7 @@ void dftClass<FEOrder,FEOrderElectro>::computeSparseStructureNonLocalProjectors_
 							lTemp = lQuantumNumber ;
 							for(int iQuadPoint = 0; iQuadPoint < numberQuadraturePoints; ++iQuadPoint)
 							{
-								Point<3> quadPoint=fe_values.quadrature_point(iQuadPoint);
+								const Point<3> & quadPoint=fe_values.quadrature_point(iQuadPoint);
 
 								for(int iImageAtomCount = 0; iImageAtomCount < imageIdsList.size(); ++iImageAtomCount)
 								{

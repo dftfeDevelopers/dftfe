@@ -122,7 +122,7 @@ namespace dftfe{
 			 * @param invSqrtMassVec output the value of inverse square root of diagonal mass matrix
 			 */
 			virtual void computeMassVector(const dealii::DoFHandler<3>    & dofHandler,
-					const dealii::ConstraintMatrix & constraintMatrix,
+					const dealii::AffineConstraints<double> & constraintMatrix,
 					distributedCPUVec<double>                     & sqrtMassVec,
 					distributedCPUVec<double>                     & invSqrtMassVec) = 0;
 
@@ -152,18 +152,6 @@ namespace dftfe{
                                         const double scalarB,
 			                distributedCPUVec<dataTypes::number> & dst,
 			                std::vector<dataTypes::number>  & cellDstWaveFunctionMatrix) = 0;
-
-	  
-			virtual void MX(distributedCPUVec<dataTypes::number> & X,
-					const unsigned int numberComponents,
-					distributedCPUVec<dataTypes::number> & Y) = 0;
-
-
-			virtual void HX(distributedCPUVec<dataTypes::number> & X,
-					const unsigned int numberComponents,
-					distributedCPUVec<dataTypes::number> & Y) = 0;
-
-
 			/**
 			 * @brief Compute projection of the operator into a subspace spanned by a given orthogonal basis
 			 *
@@ -187,16 +175,7 @@ namespace dftfe{
 			virtual void XtHX(const std::vector<dataTypes::number> & X,
 					const unsigned int numberComponents,
 					const std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid>  & processGrid,
-					dealii::ScaLAPACKMatrix<dataTypes::number> & projHamPar,
-					bool origHFlag=false) = 0;
-
-
-			virtual void XtMX(const std::vector<dataTypes::number> & X,
-					const unsigned int numberComponents,
-					const std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid>  & processGrid,
-					dealii::ScaLAPACKMatrix<dataTypes::number> & projMassPar) = 0;
-
-
+					dealii::ScaLAPACKMatrix<dataTypes::number> & projHamPar)=0;
 
 
 			/**
@@ -216,8 +195,7 @@ namespace dftfe{
 				 const unsigned int totalNumberComponents,
 				 const unsigned int singlePrecComponents,
 				 const std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid>  & processGrid,
-				 dealii::ScaLAPACKMatrix<dataTypes::number> & projHamPar,
-				 bool origHFlag=false) = 0;
+				 dealii::ScaLAPACKMatrix<dataTypes::number> & projHamPar)=0;
 
 
 			void setInvSqrtMassVector(distributedCPUVec<double> & X);

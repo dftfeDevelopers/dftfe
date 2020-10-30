@@ -16,58 +16,10 @@
 // @author  Phani Motamarri, Sambit Das
 //
 
-	template<unsigned int FEOrder,unsigned int FEOrderElectro>
-void dftClass<FEOrder,FEOrderElectro>::initPsiAndRhoFromPreviousGroundStatePsi(std::vector<std::vector<distributedCPUVec<double>>> eigenVectors)
-{
-	const unsigned int totalNumEigenVectors=(1+dftParameters::spinPolarized)*d_kPointWeights.size()*eigenVectors[0].size();
-	std::vector<distributedCPUVec<double>> eigenVectorsPrevious(totalNumEigenVectors);
-	std::vector<distributedCPUVec<double>* > eigenVectorsPreviousPtrs(totalNumEigenVectors);
-	std::vector<distributedCPUVec<double>* > eigenVectorsCurrentPtrs(totalNumEigenVectors);
-
-	for(unsigned int kPoint = 0; kPoint < (1+dftParameters::spinPolarized)*d_kPointWeights.size(); ++kPoint)
-		for(unsigned int i = 0; i < eigenVectors[kPoint].size(); ++i)
-		{
-			eigenVectorsPrevious[kPoint* eigenVectors[0].size()+i]=eigenVectors[kPoint][i];
-			eigenVectorsPreviousPtrs[kPoint* eigenVectors[0].size()+i]=&(eigenVectorsPrevious[kPoint* eigenVectors[0].size()+i]);
-			eigenVectors[kPoint][i].reinit(d_tempEigenVec);
-			eigenVectorsCurrentPtrs[kPoint* eigenVectors[0].size()+i]=&(eigenVectors[kPoint][i]);
-		}
-
-	if (dftParameters::verbosity>=2)
-		pcout<<"L2 Norm Value of previous eigenvector 0: "<<eigenVectorsPreviousPtrs[0]->l2_norm()<<std::endl;
-
-	computing_timer.enter_section("interpolate previous PSI");
-
-	pcout <<std::endl<< "Interpolating previous groundstate PSI into the new finite element mesh...."<<std::endl;
-	vectorTools::interpolateFieldsFromPreviousMesh interpolateEigenVecPrev(mpi_communicator);
-	interpolateEigenVecPrev.interpolate(d_mesh.getSerialMeshUnmovedPrevious(),
-			d_mesh.getParallelMeshUnmovedPrevious(),
-			d_mesh.getParallelMeshUnmoved(),
-			FEEigen,
-			FEEigen,
-			eigenVectorsPreviousPtrs,
-			eigenVectorsCurrentPtrs);
-
-	computing_timer.exit_section("interpolate previous PSI");
-
-	for(unsigned int kPoint = 0; kPoint < (1+dftParameters::spinPolarized)*d_kPointWeights.size(); ++kPoint)
-		for(unsigned int i = 0; i < eigenVectors[kPoint].size(); ++i)
-		{
-			constraintsNoneEigenDataInfo.distribute(eigenVectors[kPoint][i]);
-			eigenVectors[kPoint][i].update_ghost_values();
-		}
-
-	if (dftParameters::verbosity>=2)
-		pcout<<"L2 Norm Value of interpolated eigenvector 0: "<<eigenVectorsCurrentPtrs[0]->l2_norm()<<std::endl;
-
-	initRhoFromPreviousGroundStateRho();
-	//pcout <<std::endl<< "Computing rho initial guess from previous ground state PSI...."<<std::endl;
-	//computeRhoInitialGuessFromPSI(eigenVectors);
-}
-
 //init
 template<unsigned int FEOrder,unsigned int FEOrderElectro>
-void dftClass<FEOrder,FEOrderElectro>::initElectronicFields(const unsigned int usePreviousGroundStateFields){
+void dftClass<FEOrder,FEOrderElectro>::initElectronicFields()
+{
 	TimerOutput::Scope scope (computing_timer,"init electronic fields");
 
 	//reading data from pseudopotential files and fitting splines
@@ -122,130 +74,38 @@ void dftClass<FEOrder,FEOrderElectro>::initElectronicFields(const unsigned int u
 	//
 	//initialize density and PSI/ interpolate from previous ground state solution
 	//
-	if (usePreviousGroundStateFields==0)
-	{
-		for(unsigned int kPoint = 0; kPoint < (1+dftParameters::spinPolarized)*d_kPointWeights.size(); ++kPoint)
-		{
+  for(unsigned int kPoint = 0; kPoint < (1+dftParameters::spinPolarized)*d_kPointWeights.size(); ++kPoint)
+  {
 
-			d_eigenVectorsFlattenedSTL[kPoint].resize(d_numEigenValues*matrix_free_data.get_vector_partitioner()->local_size(),dataTypes::number(0.0));
+    d_eigenVectorsFlattenedSTL[kPoint].resize(d_numEigenValues*matrix_free_data.get_vector_partitioner()->local_size(),dataTypes::number(0.0));
 
-			if (d_numEigenValuesRR!=d_numEigenValues)
-			{
-				d_eigenVectorsRotFracDensityFlattenedSTL[kPoint].resize(d_numEigenValuesRR*matrix_free_data.get_vector_partitioner()->local_size(),dataTypes::number(0.0));
-			}
-		}
+    if (d_numEigenValuesRR!=d_numEigenValues)
+    {
+      d_eigenVectorsRotFracDensityFlattenedSTL[kPoint].resize(d_numEigenValuesRR*matrix_free_data.get_vector_partitioner()->local_size(),dataTypes::number(0.0));
+    }
+  }
 
-		pcout <<std::endl<< "Setting initial guess for wavefunctions...."<<std::endl;
+  pcout <<std::endl<< "Setting initial guess for wavefunctions...."<<std::endl;
 
-		if (dftParameters::verbosity>=4)
-			dftUtils::printCurrentMemoryUsage(mpi_communicator,
-					"Created flattened array eigenvectors before update ghost values");
+  if (dftParameters::verbosity>=4)
+    dftUtils::printCurrentMemoryUsage(mpi_communicator,
+        "Created flattened array eigenvectors before update ghost values");
 
-		readPSI();
+  readPSI();
 
-		if (dftParameters::verbosity>=4)
-			dftUtils::printCurrentMemoryUsage(mpi_communicator,
-					"Created flattened array eigenvectors");
+  if (dftParameters::verbosity>=4)
+    dftUtils::printCurrentMemoryUsage(mpi_communicator,
+        "Created flattened array eigenvectors");
 
-		if(!(dftParameters::chkType==2 && dftParameters::restartFromChk))
-		{
-			initRho();
-			//d_rhoOutNodalValues.reinit(d_rhoInNodalValues);
-		}
+  if(!(dftParameters::chkType==2 && dftParameters::restartFromChk))
+  {
+    initRho();
+    //d_rhoOutNodalValues.reinit(d_rhoInNodalValues);
+  }
 
-		if (dftParameters::verbosity>=4)
-			dftUtils::printCurrentMemoryUsage(mpi_communicator,
-					"initRho called");
-
-	}
-	else if (usePreviousGroundStateFields==1)
-	{
-		for(unsigned int kPoint = 0; kPoint < (1+dftParameters::spinPolarized)*d_kPointWeights.size(); ++kPoint)
-		{
-			d_eigenVectorsFlattenedSTL[kPoint].resize(d_numEigenValues*matrix_free_data.get_vector_partitioner()->local_size(),dataTypes::number(0.0));
-
-			if (d_numEigenValuesRR!=d_numEigenValues)
-			{
-				d_eigenVectorsRotFracDensityFlattenedSTL[kPoint].resize(d_numEigenValuesRR*matrix_free_data.get_vector_partitioner()->local_size(),dataTypes::number(0.0));
-			}
-		}
-
-		pcout <<std::endl<< "Reading initial guess for PSI...."<<std::endl;
-		readPSI();
-
-		initRhoFromPreviousGroundStateRho();
-	}
-	else if (usePreviousGroundStateFields==2)
-	{
-		std::vector<std::vector<distributedCPUVec<double>>> eigenVectors((1+dftParameters::spinPolarized)*d_kPointWeights.size(),
-				std::vector<distributedCPUVec<double>>(d_numEigenValues));
-
-		for(unsigned int kPoint = 0; kPoint < (1+dftParameters::spinPolarized)*d_kPointWeights.size(); ++kPoint)
-			for(unsigned int i= 0; i < d_numEigenValues; ++i)
-				eigenVectors[kPoint][i].reinit(d_tempEigenVecPrev);
-		for(unsigned int kPoint = 0; kPoint < (1+dftParameters::spinPolarized)*d_kPointWeights.size(); ++kPoint)
-		{
-#ifdef USE_COMPLEX
-			vectorTools::copyFlattenedSTLVecToSingleCompVec
-				(d_eigenVectorsFlattenedSTL[kPoint],
-				 d_numEigenValues,
-				 std::make_pair(0,d_numEigenValues),
-				 localProc_dof_indicesReal,
-				 localProc_dof_indicesImag,
-				 eigenVectors[kPoint]);
-#else
-			vectorTools::copyFlattenedSTLVecToSingleCompVec
-				(d_eigenVectorsFlattenedSTL[kPoint],
-				 d_numEigenValues,
-				 std::make_pair(0,d_numEigenValues),
-				 eigenVectors[kPoint]);
-
-#endif
-			for(unsigned int i= 0; i < d_numEigenValues; ++i)
-			{
-				constraintsNoneEigenDataInfoPrev.distribute(eigenVectors[kPoint][i]);
-				eigenVectors[kPoint][i].update_ghost_values();
-			}
-
-			d_eigenVectorsFlattenedSTL[kPoint].clear();
-			std::vector<dataTypes::number>().swap(d_eigenVectorsFlattenedSTL[kPoint]);
-		}
-
-		initPsiAndRhoFromPreviousGroundStatePsi(eigenVectors);
-
-		//Create the full STL array
-		for(unsigned int kPoint = 0; kPoint < (1+dftParameters::spinPolarized)*d_kPointWeights.size(); ++kPoint)
-		{
-			d_eigenVectorsFlattenedSTL[kPoint].resize
-				(d_numEigenValues*matrix_free_data.get_vector_partitioner()->local_size(),
-				 dataTypes::number(0.0));
-
-			if (d_numEigenValuesRR!=d_numEigenValues)
-				d_eigenVectorsRotFracDensityFlattenedSTL[kPoint].resize
-					(d_numEigenValuesRR*matrix_free_data.get_vector_partitioner()->local_size()
-					 ,dataTypes::number(0.0));
-		}
-
-		for(unsigned int kPoint = 0; kPoint < (1+dftParameters::spinPolarized)*d_kPointWeights.size(); ++kPoint)
-		{
-#ifdef USE_COMPLEX
-			vectorTools::copySingleCompVecToFlattenedSTLVec
-				(d_eigenVectorsFlattenedSTL[kPoint],
-				 d_numEigenValues,
-				 std::make_pair(0,d_numEigenValues),
-				 localProc_dof_indicesReal,
-				 localProc_dof_indicesImag,
-				 eigenVectors[kPoint]);
-#else
-			vectorTools::copySingleCompVecToFlattenedSTLVec
-				(d_eigenVectorsFlattenedSTL[kPoint],
-				 d_numEigenValues,
-				 std::make_pair(0,d_numEigenValues),
-				 eigenVectors[kPoint]);
-
-#endif
-		}
-	}
+  if (dftParameters::verbosity>=4)
+    dftUtils::printCurrentMemoryUsage(mpi_communicator,
+        "initRho called");
 
 #ifdef DFTFE_WITH_GPU
 	if (dftParameters::useGPU)
@@ -267,32 +127,7 @@ void dftClass<FEOrder,FEOrderElectro>::initElectronicFields(const unsigned int u
 	}
 #endif
 
-	if  (dftParameters::isIonOpt && (dftParameters::reuseWfcGeoOpt || dftParameters::reuseDensityGeoOpt))
-		updatePrevMeshDataStructures();
-
 	if (dftParameters::verbosity>=2)
 		if (dftParameters::spinPolarized==1)
 			pcout<< std::endl<<"net magnetization: "<< totalMagnetization(rhoInValuesSpinPolarized) <<std::endl;
-}
-
-	template<unsigned int FEOrder,unsigned int FEOrderElectro>
-void dftClass<FEOrder,FEOrderElectro>::updatePrevMeshDataStructures()
-{
-	matrix_free_data.initialize_dof_vector(d_tempEigenVecPrev,d_eigenDofHandlerIndex);
-
-
-	constraintsNoneEigenDataInfoPrev.initialize(d_tempEigenVecPrev.get_partitioner(),
-			constraintsNoneEigen);
-
-	//
-	//update serial and parallel unmoved previous mesh
-	//
-	d_mesh.generateSerialAndParallelUnmovedPreviousMesh(atomLocations,
-			d_imagePositions,
-			d_imageIds,
-      d_nearestAtomDistances,
-			d_domainBoundingVectors);
-	if (dftParameters::verbosity>=4)
-		dftUtils::printCurrentMemoryUsage(mpi_communicator,
-				"Serial and parallel prev mesh generated");
 }

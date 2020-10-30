@@ -80,7 +80,6 @@ namespace dftfe
 			__global__
 				void computeELocWfcEshelbyTensorContributions(const unsigned int contiguousBlockSize,
 						const unsigned int numContiguousBlocks,
-						const unsigned int startingCellId,
 						const unsigned int numQuads,
 						const double * psiQuadValues,
 						const double * gradPsiQuadValuesX,
@@ -102,7 +101,7 @@ namespace dftfe
 						const unsigned int eshelbyIndex=blockIndex-6*blockIndex2;
 						const unsigned int cellIndex=blockIndex2/numQuads;
 						const unsigned int quadId=blockIndex2-cellIndex*numQuads;
-						const unsigned int tempIndex=(startingCellId+cellIndex)*numQuads*contiguousBlockSize+quadId*contiguousBlockSize+intraBlockIndex;
+						const unsigned int tempIndex=(cellIndex)*numQuads*contiguousBlockSize+quadId*contiguousBlockSize+intraBlockIndex;
 						const double psi=psiQuadValues[tempIndex];
 						const double gradPsiX=gradPsiQuadValuesX[tempIndex];
 						const double gradPsiY=gradPsiQuadValuesY[tempIndex];
@@ -216,18 +215,14 @@ namespace dftfe
 				const thrust::device_vector<double> & eigenValuesD,
 				const thrust::device_vector<double> & partialOccupanciesD,
 				const thrust::device_vector<double> & onesVecD,
-				const unsigned int innerBlockSizeEloc,
+				const unsigned int cellsBlockSize,
 				thrust::device_vector<double> & psiQuadsFlatD,
-				thrust::device_vector<double> & psiQuadsNLPFlatD,
 				thrust::device_vector<double> & gradPsiQuadsXFlatD,
 				thrust::device_vector<double> & gradPsiQuadsYFlatD,
 				thrust::device_vector<double> & gradPsiQuadsZFlatD,
-				thrust::device_vector<double> & gradPsiQuadsNLPXFlatD,
-				thrust::device_vector<double> & gradPsiQuadsNLPYFlatD,
-				thrust::device_vector<double> & gradPsiQuadsNLPZFlatD,        
+				thrust::device_vector<double> & gradPsiQuadsNLPFlatD,
 				thrust::device_vector<double> & eshelbyTensorContributionsD,
-				thrust::device_vector<double> & eshelbyTensorQuadValuesD,
-				const bool interpolateForNLPQuad)
+				thrust::device_vector<double> & eshelbyTensorQuadValuesD)
 		{
 			thrust::device_vector<double> & cellWaveFunctionMatrix = operatorMatrix.getCellWaveFunctionMatrix();
 
@@ -238,194 +233,153 @@ namespace dftfe
 				 thrust::raw_pointer_cast(&cellWaveFunctionMatrix[0]),
 				 thrust::raw_pointer_cast(&(operatorMatrix.getFlattenedArrayCellLocalProcIndexIdMap())[0]));
 
-			double scalarCoeffAlpha = 1.0,scalarCoeffBeta = 0.0;
-			int strideA = BVec*numNodesPerElement;
-			int strideB = 0;
-			int strideC = BVec*numQuads;
-
-
-			cublasDgemmStridedBatched(operatorMatrix.getCublasHandle(),
-					CUBLAS_OP_N,
-					CUBLAS_OP_N,
-					BVec,
-					numQuads,
-					numNodesPerElement,
-					&scalarCoeffAlpha,
-					thrust::raw_pointer_cast(&cellWaveFunctionMatrix[0]),
-					BVec,
-					strideA,
-					thrust::raw_pointer_cast(&(operatorMatrix.getShapeFunctionValuesInverted())[0]),
-					numNodesPerElement,
-					strideB,
-					&scalarCoeffBeta,
-					thrust::raw_pointer_cast(&psiQuadsFlatD[0]),
-					BVec,
-					strideC,
-					numCells);
-
-			if (interpolateForNLPQuad)
-			{
-				int strideCNLP = BVec*numQuadsNLP;
-				cublasDgemmStridedBatched(operatorMatrix.getCublasHandle(),
-						CUBLAS_OP_N,
-						CUBLAS_OP_N,
-						BVec,
-						numQuadsNLP,
-						numNodesPerElement,
-						&scalarCoeffAlpha,
-						thrust::raw_pointer_cast(&cellWaveFunctionMatrix[0]),
-						BVec,
-						strideA,
-						thrust::raw_pointer_cast(&(operatorMatrix.getShapeFunctionValuesNLPInverted())[0]),
-						numNodesPerElement,
-						strideB,
-						&scalarCoeffBeta,
-						thrust::raw_pointer_cast(&psiQuadsNLPFlatD[0]),
-						BVec,
-						strideCNLP,
-						numCells);
-			}
-
-			strideB=numNodesPerElement*numQuads;
-
-			cublasDgemmStridedBatched(operatorMatrix.getCublasHandle(),
-					CUBLAS_OP_N,
-					CUBLAS_OP_N,
-					BVec,
-					numQuads,
-					numNodesPerElement,
-					&scalarCoeffAlpha,
-					thrust::raw_pointer_cast(&cellWaveFunctionMatrix[0]),
-					BVec,
-					strideA,
-					thrust::raw_pointer_cast(&(operatorMatrix.getShapeFunctionGradientValuesXInverted())[0]),
-					numNodesPerElement,
-					strideB,
-					&scalarCoeffBeta,
-					thrust::raw_pointer_cast(&gradPsiQuadsXFlatD[0]),
-					BVec,
-					strideC,
-					numCells);
-
-
-			cublasDgemmStridedBatched(operatorMatrix.getCublasHandle(),
-					CUBLAS_OP_N,
-					CUBLAS_OP_N,
-					BVec,
-					numQuads,
-					numNodesPerElement,
-					&scalarCoeffAlpha,
-					thrust::raw_pointer_cast(&cellWaveFunctionMatrix[0]),
-					BVec,
-					strideA,
-					thrust::raw_pointer_cast(&(operatorMatrix.getShapeFunctionGradientValuesYInverted())[0]),
-					numNodesPerElement,
-					strideB,
-					&scalarCoeffBeta,
-					thrust::raw_pointer_cast(&gradPsiQuadsYFlatD[0]),
-					BVec,
-					strideC,
-					numCells);
-
-			cublasDgemmStridedBatched(operatorMatrix.getCublasHandle(),
-					CUBLAS_OP_N,
-					CUBLAS_OP_N,
-					BVec,
-					numQuads,
-					numNodesPerElement,
-					&scalarCoeffAlpha,
-					thrust::raw_pointer_cast(&cellWaveFunctionMatrix[0]),
-					BVec,
-					strideA,
-					thrust::raw_pointer_cast(&(operatorMatrix.getShapeFunctionGradientValuesZInverted())[0]),
-					numNodesPerElement,
-					strideB,
-					&scalarCoeffBeta,
-					thrust::raw_pointer_cast(&gradPsiQuadsZFlatD[0]),
-					BVec,
-					strideC,
-					numCells);
-
-			if (interpolateForNLPQuad)
-			{
-				int strideCNLP = BVec*numQuadsNLP;
-			  int strideBNLP=numNodesPerElement*numQuadsNLP;
-
-        cublasDgemmStridedBatched(operatorMatrix.getCublasHandle(),
-            CUBLAS_OP_N,
-            CUBLAS_OP_N,
-            BVec,
-            numQuadsNLP,
-            numNodesPerElement,
-            &scalarCoeffAlpha,
-            thrust::raw_pointer_cast(&cellWaveFunctionMatrix[0]),
-            BVec,
-            strideA,
-            thrust::raw_pointer_cast(&(operatorMatrix.getShapeFunctionGradientValuesNLPXInverted())[0]),
-            numNodesPerElement,
-            strideBNLP,
-            &scalarCoeffBeta,
-            thrust::raw_pointer_cast(&gradPsiQuadsNLPXFlatD[0]),
-            BVec,
-            strideCNLP,
-            numCells);
-
-
-        cublasDgemmStridedBatched(operatorMatrix.getCublasHandle(),
-            CUBLAS_OP_N,
-            CUBLAS_OP_N,
-            BVec,
-            numQuadsNLP,
-            numNodesPerElement,
-            &scalarCoeffAlpha,
-            thrust::raw_pointer_cast(&cellWaveFunctionMatrix[0]),
-            BVec,
-            strideA,
-            thrust::raw_pointer_cast(&(operatorMatrix.getShapeFunctionGradientValuesNLPYInverted())[0]),
-            numNodesPerElement,
-            strideBNLP,
-            &scalarCoeffBeta,
-            thrust::raw_pointer_cast(&gradPsiQuadsNLPYFlatD[0]),
-            BVec,
-            strideCNLP,
-            numCells);
-
-        cublasDgemmStridedBatched(operatorMatrix.getCublasHandle(),
-            CUBLAS_OP_N,
-            CUBLAS_OP_N,
-            BVec,
-            numQuadsNLP,
-            numNodesPerElement,
-            &scalarCoeffAlpha,
-            thrust::raw_pointer_cast(&cellWaveFunctionMatrix[0]),
-            BVec,
-            strideA,
-            thrust::raw_pointer_cast(&(operatorMatrix.getShapeFunctionGradientValuesNLPZInverted())[0]),
-            numNodesPerElement,
-            strideBNLP,
-            &scalarCoeffBeta,
-            thrust::raw_pointer_cast(&gradPsiQuadsNLPZFlatD[0]),
-            BVec,
-            strideCNLP,
-            numCells);
-			}
-
-			const int blockSize=innerBlockSizeEloc;
+			const int blockSize=cellsBlockSize;
 			const int numberBlocks=numCells/blockSize;
 			const int remBlockSize=numCells-numberBlocks*blockSize;
 
-			for (int iblock=0; iblock<(numberBlocks+1); iblock++)
+			thrust::device_vector<double> shapeFunctionGradientValuesNLPReferenceD(blockSize*numQuadsNLP*3*numNodesPerElement,0.0);
+			thrust::device_vector<double> shapeFunctionGradientValuesNLPD(blockSize*numQuadsNLP*3*numNodesPerElement,0.0);
+
+      for (unsigned int i=0; i<blockSize;i++)
+        thrust::copy(operatorMatrix.getShapeFunctionGradientValuesNLPInverted().begin(), operatorMatrix.getShapeFunctionGradientValuesNLPInverted().end(), shapeFunctionGradientValuesNLPReferenceD.begin()+i*numQuadsNLP*3*numNodesPerElement);
+			
+      for (int iblock=0; iblock<(numberBlocks+1); iblock++)
 			{
 				const int currentBlockSize= (iblock==numberBlocks)?remBlockSize:blockSize;
 				const int startingId=iblock*blockSize;
 
 				if (currentBlockSize>0)
 				{
+          double scalarCoeffAlpha = 1.0,scalarCoeffBeta = 0.0;
+          int strideA = BVec*numNodesPerElement;
+          int strideB = 0;
+          int strideC = BVec*numQuads;
 
+          cublasDgemmStridedBatched(operatorMatrix.getCublasHandle(),
+              CUBLAS_OP_N,
+              CUBLAS_OP_N,
+              BVec,
+              numQuads,
+              numNodesPerElement,
+              &scalarCoeffAlpha,
+              thrust::raw_pointer_cast(&cellWaveFunctionMatrix[startingId*numNodesPerElement*BVec]),
+              BVec,
+              strideA,
+              thrust::raw_pointer_cast(&(operatorMatrix.getShapeFunctionValuesInverted())[0]),
+              numNodesPerElement,
+              strideB,
+              &scalarCoeffBeta,
+              thrust::raw_pointer_cast(&psiQuadsFlatD[0]),
+              BVec,
+              strideC,
+              currentBlockSize);
+
+          strideB=numNodesPerElement*numQuads;
+
+          cublasDgemmStridedBatched(operatorMatrix.getCublasHandle(),
+              CUBLAS_OP_N,
+              CUBLAS_OP_N,
+              BVec,
+              numQuads,
+              numNodesPerElement,
+              &scalarCoeffAlpha,
+              thrust::raw_pointer_cast(&cellWaveFunctionMatrix[startingId*numNodesPerElement*BVec]),
+              BVec,
+              strideA,
+              thrust::raw_pointer_cast(&(operatorMatrix.getShapeFunctionGradientValuesXInverted())[startingId*numQuads*numNodesPerElement]),
+              numNodesPerElement,
+              strideB,
+              &scalarCoeffBeta,
+              thrust::raw_pointer_cast(&gradPsiQuadsXFlatD[0]),
+              BVec,
+              strideC,
+              currentBlockSize);
+
+
+          cublasDgemmStridedBatched(operatorMatrix.getCublasHandle(),
+              CUBLAS_OP_N,
+              CUBLAS_OP_N,
+              BVec,
+              numQuads,
+              numNodesPerElement,
+              &scalarCoeffAlpha,
+              thrust::raw_pointer_cast(&cellWaveFunctionMatrix[startingId*numNodesPerElement*BVec]),
+              BVec,
+              strideA,
+              thrust::raw_pointer_cast(&(operatorMatrix.getShapeFunctionGradientValuesYInverted())[startingId*numQuads*numNodesPerElement]),
+              numNodesPerElement,
+              strideB,
+              &scalarCoeffBeta,
+              thrust::raw_pointer_cast(&gradPsiQuadsYFlatD[0]),
+              BVec,
+              strideC,
+              currentBlockSize);
+
+          cublasDgemmStridedBatched(operatorMatrix.getCublasHandle(),
+              CUBLAS_OP_N,
+              CUBLAS_OP_N,
+              BVec,
+              numQuads,
+              numNodesPerElement,
+              &scalarCoeffAlpha,
+              thrust::raw_pointer_cast(&cellWaveFunctionMatrix[startingId*numNodesPerElement*BVec]),
+              BVec,
+              strideA,
+              thrust::raw_pointer_cast(&(operatorMatrix.getShapeFunctionGradientValuesZInverted())[startingId*numQuads*numNodesPerElement]),
+              numNodesPerElement,
+              strideB,
+              &scalarCoeffBeta,
+              thrust::raw_pointer_cast(&gradPsiQuadsZFlatD[0]),
+              BVec,
+              strideC,
+              currentBlockSize);
+
+          //shapeGradRef^T*invJacobian^T
+          cublasDgemmStridedBatched(operatorMatrix.getCublasHandle(),
+              CUBLAS_OP_N,
+              CUBLAS_OP_N,
+              numNodesPerElement,
+              3,
+              3,
+              &scalarCoeffAlpha,
+              thrust::raw_pointer_cast(&shapeFunctionGradientValuesNLPReferenceD[0]),
+              numNodesPerElement,
+              numNodesPerElement*3,
+              thrust::raw_pointer_cast(&(operatorMatrix.getInverseJacobiansNLP())[startingId*numQuadsNLP*3*3]),
+              3,
+              3*3,
+              &scalarCoeffBeta,
+              thrust::raw_pointer_cast(&shapeFunctionGradientValuesNLPD[0]),
+              numNodesPerElement,
+              numNodesPerElement*3,
+              currentBlockSize*numQuadsNLP);  
+          
+
+          const int strideCNLPGrad = BVec*3*numQuadsNLP;
+          const int strideBNLPGrad=numNodesPerElement*3*numQuadsNLP;
+          
+          cublasDgemmStridedBatched(operatorMatrix.getCublasHandle(),
+              CUBLAS_OP_N,
+              CUBLAS_OP_N,
+              BVec,
+              3*numQuadsNLP,
+              numNodesPerElement,
+              &scalarCoeffAlpha,
+              thrust::raw_pointer_cast(&cellWaveFunctionMatrix[startingId*numNodesPerElement*BVec]),
+              BVec,
+              strideA,
+              thrust::raw_pointer_cast(&shapeFunctionGradientValuesNLPD[0]),
+              numNodesPerElement,
+              strideBNLPGrad,
+              &scalarCoeffBeta,
+              thrust::raw_pointer_cast(&gradPsiQuadsNLPFlatD[startingId*numQuadsNLP*3*BVec]),
+              BVec,
+              strideCNLPGrad,
+              currentBlockSize);
+          
 					computeELocWfcEshelbyTensorContributions<<<(BVec+255)/256*currentBlockSize*numQuads*6,256>>>
 						(BVec,
 						 currentBlockSize*numQuads*6,
-						 startingId,
 						 numQuads,
 						 thrust::raw_pointer_cast(&psiQuadsFlatD[0]),
 						 thrust::raw_pointer_cast(&gradPsiQuadsXFlatD[0]),
@@ -460,9 +414,7 @@ namespace dftfe
 		}
 
 		void nlpPsiContractionD(operatorDFTCUDAClass & operatorMatrix,
-				const thrust::device_vector<double> & gradPsiQuadsXNLPD,
-				const thrust::device_vector<double> & gradPsiQuadsYNLPD,
-				const thrust::device_vector<double> & gradPsiQuadsZNLPD,
+				const thrust::device_vector<double> & gradPsiQuadsNLPD,
 				const thrust::device_vector<double> & partialOccupanciesD,
 				const thrust::device_vector<double> & onesVecD,
 				const double * projectorKetTimesVectorParFlattenedD,
@@ -474,31 +426,27 @@ namespace dftfe
 				const unsigned int totalNonTrivialPseudoWfcs,
 				const unsigned int innerBlockSizeEnlp,
 				thrust::device_vector<double> & nlpContractionContributionD,
-				thrust::device_vector<double> & projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiXQuadsFlattenedD,
-        thrust::device_vector<double> & projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiYQuadsFlattenedD,
-        thrust::device_vector<double> & projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiZQuadsFlattenedD)
+				thrust::device_vector<double> & projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuadsFlattenedD)
 		{
-			const int blockSize=innerBlockSizeEnlp;
-			const int numberBlocks=totalNonTrivialPseudoWfcs/blockSize;
-			const int remBlockSize=totalNonTrivialPseudoWfcs-numberBlocks*blockSize;
-			//thrust::device_vector<double> nlpContractionContributionD(blockSize*numQuadsNLP*numPsi,0.0);
-			//thrust::device_vector<double> onesMatD(numPsi,1.0);
+			const int blockSizeNlp=innerBlockSizeEnlp;
+			const int numberBlocksNlp=totalNonTrivialPseudoWfcs/blockSizeNlp;
+			const int remBlockSizeNlp=totalNonTrivialPseudoWfcs-numberBlocksNlp*blockSizeNlp;
 
-			double scalarCoeffAlpha = 1.0,scalarCoeffBeta = 1.0;      
+			double scalarCoeffAlphaNlp = 1.0,scalarCoeffBetaNlp = 1.0;      
 
-			for (int iblock=0; iblock<(numberBlocks+1); iblock++)
+			for (int iblocknlp=0; iblocknlp<(numberBlocksNlp+1); iblocknlp++)
 			{
-				const int currentBlockSize= (iblock==numberBlocks)?remBlockSize:blockSize;
-				const int startingId=iblock*blockSize;
-				if (currentBlockSize>0)
+				const int currentBlockSizeNlp= (iblocknlp==numberBlocksNlp)?remBlockSizeNlp:blockSizeNlp;
+				const int startingIdNlp=iblocknlp*blockSizeNlp;
+				if (currentBlockSizeNlp>0)
 				{
-					nlpPsiContractionCUDAKernel<<<(numPsi+255)/256*numQuadsNLP*currentBlockSize,256>>>
+					nlpPsiContractionCUDAKernel<<<(numPsi+255)/256*numQuadsNLP*3*currentBlockSizeNlp,256>>>
 						(numPsi,
-						 numQuadsNLP,
-						 currentBlockSize,
-						 startingId,
+						 numQuadsNLP*3,
+						 currentBlockSizeNlp,
+						 startingIdNlp,
 						 projectorKetTimesVectorParFlattenedD,
-						 thrust::raw_pointer_cast(&gradPsiQuadsXNLPD[0]),
+						 thrust::raw_pointer_cast(&gradPsiQuadsNLPD[0]),
 						 thrust::raw_pointer_cast(&partialOccupanciesD[0]),
 						 thrust::raw_pointer_cast(&nonTrivialIdToElemIdMapD[0]),
 						 thrust::raw_pointer_cast(&projecterKetTimesFlattenedVectorLocalIdsD[0]),
@@ -508,70 +456,16 @@ namespace dftfe
 							CUBLAS_OP_N,
 							CUBLAS_OP_N,
 							1,
-							currentBlockSize*numQuadsNLP,
+							currentBlockSizeNlp*numQuadsNLP*3,
 							numPsi,
-							&scalarCoeffAlpha,
+							&scalarCoeffAlphaNlp,
 							thrust::raw_pointer_cast(&onesVecD[0]),
 							1,
 							thrust::raw_pointer_cast(&nlpContractionContributionD[0]),
 							numPsi,
-							&scalarCoeffBeta,
-							thrust::raw_pointer_cast(&projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiXQuadsFlattenedD[startingId*numQuadsNLP]),
+							&scalarCoeffBetaNlp,
+							thrust::raw_pointer_cast(&projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuadsFlattenedD[startingIdNlp*numQuadsNLP*3]),
 							1);
-
-					nlpPsiContractionCUDAKernel<<<(numPsi+255)/256*numQuadsNLP*currentBlockSize,256>>>
-						(numPsi,
-						 numQuadsNLP,
-						 currentBlockSize,
-						 startingId,
-						 projectorKetTimesVectorParFlattenedD,
-						 thrust::raw_pointer_cast(&gradPsiQuadsYNLPD[0]),
-						 thrust::raw_pointer_cast(&partialOccupanciesD[0]),
-						 thrust::raw_pointer_cast(&nonTrivialIdToElemIdMapD[0]),
-						 thrust::raw_pointer_cast(&projecterKetTimesFlattenedVectorLocalIdsD[0]),
-						 thrust::raw_pointer_cast(&nlpContractionContributionD[0]));
-
-					cublasDgemm(operatorMatrix.getCublasHandle(),
-							CUBLAS_OP_N,
-							CUBLAS_OP_N,
-							1,
-							currentBlockSize*numQuadsNLP,
-							numPsi,
-							&scalarCoeffAlpha,
-							thrust::raw_pointer_cast(&onesVecD[0]),
-							1,
-							thrust::raw_pointer_cast(&nlpContractionContributionD[0]),
-							numPsi,
-							&scalarCoeffBeta,
-							thrust::raw_pointer_cast(&projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiYQuadsFlattenedD[startingId*numQuadsNLP]),
-							1);
-
-					nlpPsiContractionCUDAKernel<<<(numPsi+255)/256*numQuadsNLP*currentBlockSize,256>>>
-						(numPsi,
-						 numQuadsNLP,
-						 currentBlockSize,
-						 startingId,
-						 projectorKetTimesVectorParFlattenedD,
-						 thrust::raw_pointer_cast(&gradPsiQuadsZNLPD[0]),
-						 thrust::raw_pointer_cast(&partialOccupanciesD[0]),
-						 thrust::raw_pointer_cast(&nonTrivialIdToElemIdMapD[0]),
-						 thrust::raw_pointer_cast(&projecterKetTimesFlattenedVectorLocalIdsD[0]),
-						 thrust::raw_pointer_cast(&nlpContractionContributionD[0]));
-
-					cublasDgemm(operatorMatrix.getCublasHandle(),
-							CUBLAS_OP_N,
-							CUBLAS_OP_N,
-							1,
-							currentBlockSize*numQuadsNLP,
-							numPsi,
-							&scalarCoeffAlpha,
-							thrust::raw_pointer_cast(&onesVecD[0]),
-							1,
-							thrust::raw_pointer_cast(&nlpContractionContributionD[0]),
-							numPsi,
-							&scalarCoeffBeta,
-							thrust::raw_pointer_cast(&projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiZQuadsFlattenedD[startingId*numQuadsNLP]),
-							1);          
 				}
 			}
 		}
@@ -595,23 +489,17 @@ namespace dftfe
 				const unsigned int numNodesPerElement,
 				const unsigned int totalNonTrivialPseudoWfcs,
 				thrust::device_vector<double> & psiQuadsFlatD,
-				thrust::device_vector<double> & psiQuadsNLPFlatD,
 				thrust::device_vector<double> & gradPsiQuadsXFlatD,
 				thrust::device_vector<double> & gradPsiQuadsYFlatD,
 				thrust::device_vector<double> & gradPsiQuadsZFlatD,
-				thrust::device_vector<double> & gradPsiQuadsNLPXFlatD,
-				thrust::device_vector<double> & gradPsiQuadsNLPYFlatD,
-				thrust::device_vector<double> & gradPsiQuadsNLPZFlatD,        
+				thrust::device_vector<double> & gradPsiQuadsNLPFlatD,
 				thrust::device_vector<double> & eshelbyTensorContributionsD,
 				thrust::device_vector<double> & eshelbyTensorQuadValuesD,
 				thrust::device_vector<double> & nlpContractionContributionD,
-				thrust::device_vector<double> & projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiXQuadsFlattenedD,
-				thrust::device_vector<double> & projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiYQuadsFlattenedD,   
-				thrust::device_vector<double> & projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiZQuadsFlattenedD,          
-				const unsigned int innerBlockSizeEloc,
+				thrust::device_vector<double> & projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuadsFlattenedD,
+				const unsigned int cellsBlockSize,
 				const unsigned int innerBlockSizeEnlp,
-				const bool isPsp,
-				const bool interpolateForNLPQuad)
+				const bool isPsp)
 				{
 
 					int this_process;
@@ -644,18 +532,14 @@ namespace dftfe
 							eigenValuesD,
 							partialOccupanciesD,
 							onesVecD,
-							innerBlockSizeEloc,
+							cellsBlockSize,
 							psiQuadsFlatD,
-							psiQuadsNLPFlatD,
 							gradPsiQuadsXFlatD,
 							gradPsiQuadsYFlatD,
 							gradPsiQuadsZFlatD,
-				      gradPsiQuadsNLPXFlatD,
-				      gradPsiQuadsNLPYFlatD,
-				      gradPsiQuadsNLPZFlatD,              
+				      gradPsiQuadsNLPFlatD,
 							eshelbyTensorContributionsD,
-							eshelbyTensorQuadValuesD,
-							interpolateForNLPQuad);
+							eshelbyTensorQuadValuesD);
 
 					//cudaDeviceSynchronize();
 					//MPI_Barrier(MPI_COMM_WORLD);
@@ -688,9 +572,7 @@ namespace dftfe
 						if (totalNonTrivialPseudoWfcs>0)
 						{
 							nlpPsiContractionD(operatorMatrix,
-									interpolateForNLPQuad?gradPsiQuadsNLPXFlatD:gradPsiQuadsXFlatD,
-									interpolateForNLPQuad?gradPsiQuadsNLPYFlatD:gradPsiQuadsYFlatD,
-									interpolateForNLPQuad?gradPsiQuadsNLPZFlatD:gradPsiQuadsZFlatD,                  
+									gradPsiQuadsNLPFlatD,
 									partialOccupanciesD,
 									onesVecD,
 									projectorKetTimesVectorD.begin(),
@@ -702,9 +584,7 @@ namespace dftfe
 									totalNonTrivialPseudoWfcs,
 									innerBlockSizeEnlp,
 									nlpContractionContributionD,
-									projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiXQuadsFlattenedD,
-                  projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiYQuadsFlattenedD,
-                  projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiZQuadsFlattenedD);
+									projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuadsFlattenedD);
 						}
 
 						//cudaDeviceSynchronize();
@@ -729,12 +609,9 @@ namespace dftfe
 				const unsigned int numNodesPerElement,
 				const unsigned int totalNonTrivialPseudoWfcs,
 				double * eshelbyTensorQuadValuesH,
-				double * projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiXQuadsFlattenedH,
-				double * projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiYQuadsFlattenedH,
-				double * projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiZQuadsFlattenedH,        
+				double * projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuadsFlattenedH,
 				const MPI_Comm & interBandGroupComm,
-				const bool isPsp,
-				const bool interpolateForNLPQuad)
+				const bool isPsp)
 		{
 			//band group parallelization data structures
 			const unsigned int numberBandGroups=
@@ -775,41 +652,27 @@ namespace dftfe
 			thrust::device_vector<double> eigenValuesD(blockSize,0.0);
 			thrust::device_vector<double> partialOccupanciesD(blockSize,0.0);
 			thrust::device_vector<double> elocWfcEshelbyTensorQuadValuesD(numCells*numQuads*6,0.0);
-
-			thrust::device_vector<double> psiQuadsFlatD(numCells*numQuads*blockSize,0.0);
-			thrust::device_vector<double> gradPsiQuadsXFlatD(numCells*numQuads*blockSize,0.0);
-			thrust::device_vector<double> gradPsiQuadsYFlatD(numCells*numQuads*blockSize,0.0);
-			thrust::device_vector<double> gradPsiQuadsZFlatD(numCells*numQuads*blockSize,0.0);
-
-			thrust::device_vector<double> psiQuadsNLPFlatD;
-			thrust::device_vector<double> gradPsiQuadsNLPXFlatD;
-			thrust::device_vector<double> gradPsiQuadsNLPYFlatD;
-			thrust::device_vector<double> gradPsiQuadsNLPZFlatD;      
-			if (interpolateForNLPQuad)
-      {
-				psiQuadsNLPFlatD.resize(numCells*numQuadsNLP*blockSize,0.0);
-			  gradPsiQuadsNLPXFlatD.resize(numCells*numQuadsNLP*blockSize,0.0);
-			  gradPsiQuadsNLPYFlatD.resize(numCells*numQuadsNLP*blockSize,0.0);
-			  gradPsiQuadsNLPZFlatD.resize(numCells*numQuadsNLP*blockSize,0.0);           
-      }
-
+				
 			thrust::device_vector<double> onesVecD(blockSize,1.0);
 
-			const unsigned int innerBlockSizeEloc=std::min((unsigned int)10,numCells);
-			thrust::device_vector<double> eshelbyTensorContributionsD(innerBlockSizeEloc*numQuads*blockSize*6,0.0);
+			const unsigned int cellsBlockSize=std::min((unsigned int)10,numCells);
 
-			const unsigned int innerBlockSizeEnlp=std::min((unsigned int)10,totalNonTrivialPseudoWfcs);
-			thrust::device_vector<double> nlpContractionContributionD(innerBlockSizeEnlp*numQuadsNLP*blockSize,0.0);
-			thrust::device_vector<double> projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiXQuadsFlattenedD;
-			thrust::device_vector<double> projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiYQuadsFlattenedD;
-			thrust::device_vector<double> projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiZQuadsFlattenedD;      
+			thrust::device_vector<double> psiQuadsFlatD(cellsBlockSize*numQuads*blockSize,0.0);
+			thrust::device_vector<double> gradPsiQuadsXFlatD(cellsBlockSize*numQuads*blockSize,0.0);
+			thrust::device_vector<double> gradPsiQuadsYFlatD(cellsBlockSize*numQuads*blockSize,0.0);
+			thrust::device_vector<double> gradPsiQuadsZFlatD(cellsBlockSize*numQuads*blockSize,0.0);
+			thrust::device_vector<double> gradPsiQuadsNLPFlatD(numCells*numQuadsNLP*3*blockSize,0.0);
+
+			thrust::device_vector<double> eshelbyTensorContributionsD(cellsBlockSize*numQuads*blockSize*6,0.0);
+
+		  const unsigned int innerBlockSizeEnlp=std::min((unsigned int)10,totalNonTrivialPseudoWfcs);
+			thrust::device_vector<double> nlpContractionContributionD(innerBlockSizeEnlp*numQuadsNLP*3*blockSize,0.0);
+			thrust::device_vector<double> projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuadsFlattenedD;
 			thrust::device_vector<unsigned int> projecterKetTimesFlattenedVectorLocalIdsD;
 			thrust::device_vector<unsigned int> nonTrivialIdToElemIdMapD;
 			if (totalNonTrivialPseudoWfcs>0)
 			{
-				projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiXQuadsFlattenedD.resize(totalNonTrivialPseudoWfcs*numQuadsNLP,0.0);
-				projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiYQuadsFlattenedD.resize(totalNonTrivialPseudoWfcs*numQuadsNLP,0.0);
-				projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiZQuadsFlattenedD.resize(totalNonTrivialPseudoWfcs*numQuadsNLP,0.0);        
+				projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuadsFlattenedD.resize(totalNonTrivialPseudoWfcs*numQuadsNLP*3,0.0);
 				projecterKetTimesFlattenedVectorLocalIdsD.resize(totalNonTrivialPseudoWfcs,0.0);
 				nonTrivialIdToElemIdMapD.resize(totalNonTrivialPseudoWfcs,0.0);
 
@@ -878,23 +741,17 @@ namespace dftfe
 							numNodesPerElement,
 							totalNonTrivialPseudoWfcs,
 							psiQuadsFlatD,
-							psiQuadsNLPFlatD,
 							gradPsiQuadsXFlatD,
 							gradPsiQuadsYFlatD,
 							gradPsiQuadsZFlatD,
-							gradPsiQuadsNLPXFlatD,
-							gradPsiQuadsNLPYFlatD,
-							gradPsiQuadsNLPZFlatD,              
+							gradPsiQuadsNLPFlatD,
 							eshelbyTensorContributionsD,
 							elocWfcEshelbyTensorQuadValuesD,
 							nlpContractionContributionD,
-							projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiXQuadsFlattenedD,
-							projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiYQuadsFlattenedD,
-							projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiZQuadsFlattenedD,              
-							innerBlockSizeEloc,
+							projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuadsFlattenedD,
+							cellsBlockSize,
 							innerBlockSizeEnlp,
-							isPsp,
-							interpolateForNLPQuad);
+							isPsp);
 
 					//cudaDeviceSynchronize();
 					//MPI_Barrier(MPI_COMM_WORLD);
@@ -913,20 +770,10 @@ namespace dftfe
 
 			if (totalNonTrivialPseudoWfcs>0)
       {
-				cudaMemcpy(projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiXQuadsFlattenedH,
-						thrust::raw_pointer_cast(&projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiXQuadsFlattenedD[0]),
-						totalNonTrivialPseudoWfcs*numQuadsNLP*sizeof(double),
+				cudaMemcpy(projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuadsFlattenedH,
+						thrust::raw_pointer_cast(&projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuadsFlattenedD[0]),
+						totalNonTrivialPseudoWfcs*numQuadsNLP*3*sizeof(double),
 						cudaMemcpyDeviceToHost);
-
-				cudaMemcpy(projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiYQuadsFlattenedH,
-						thrust::raw_pointer_cast(&projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiYQuadsFlattenedD[0]),
-						totalNonTrivialPseudoWfcs*numQuadsNLP*sizeof(double),
-						cudaMemcpyDeviceToHost); 
-
-				cudaMemcpy(projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiZQuadsFlattenedH,
-						thrust::raw_pointer_cast(&projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiZQuadsFlattenedD[0]),
-						totalNonTrivialPseudoWfcs*numQuadsNLP*sizeof(double),
-						cudaMemcpyDeviceToHost); 
       }
 			cudaDeviceSynchronize();
 			MPI_Barrier(MPI_COMM_WORLD);

@@ -102,9 +102,9 @@ namespace dftfe {
 		{
 			const double tol=dftParameters::forceRelaxTol;//(units: Hatree/Bohr)
 			const unsigned int  maxIter=100;
-			const double lineSearchTol=1e-4;
+			const double lineSearchTol=1e-4;//Dummy parameter for CGPRP, the actual stopping criteria are the Wolfe conditions and maxLineSearchIter
 			const double lineSearchDampingParameter=0.8;
-			const unsigned int maxLineSearchIter=50;
+			const unsigned int maxLineSearchIter=dftParameters::maxLineSearchIterCGPRP;
 			const double maxDisplacmentInAnyComponent=0.5;//Bohr
 			const unsigned int debugLevel=Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) ==0?dftParameters::verbosity:0;
 
@@ -243,7 +243,10 @@ namespace dftfe {
 		{
 			//AssertThrow(false,dftUtils::ExcNotImplementedYet());
 			functionValue.clear();
-			functionValue.push_back(dftPtr->d_groundStateEnergy-dftPtr->d_groundStateEnergyInitial);
+
+      //Relative to initial free energy supressed in case of CGPRP
+      //as that would not work in case of restarted CGPRP
+			functionValue.push_back(dftPtr->d_freeEnergy- ((dftParameters::ionOptSolver == "CGPRP")?0.0:dftPtr->d_freeEnergyInitial));
 
 		}
 
@@ -284,7 +287,9 @@ namespace dftfe {
 		}
 
 	template<unsigned int FEOrder, unsigned int FEOrderElectro>
-		void geoOptIon<FEOrder,FEOrderElectro>::update(const std::vector<double> & solution, const bool computeForces)
+		void geoOptIon<FEOrder,FEOrderElectro>::update(const std::vector<double> & solution,
+                                                   const bool computeForces,
+                                                   const bool useSingleAtomSolutionsInitialGuess)
 		{
 			const unsigned int numberGlobalAtoms=dftPtr->atomLocations.size();
 			std::vector<Tensor<1,3,double> > globalAtomsDisplacements(numberGlobalAtoms);
@@ -322,7 +327,7 @@ namespace dftfe {
 			else if(d_maximumAtomForceToBeRelaxed < 1e-04)
 				factor = 1.15;
 
-			dftPtr->updateAtomPositionsAndMoveMesh(globalAtomsDisplacements,factor);
+			dftPtr->updateAtomPositionsAndMoveMesh(globalAtomsDisplacements,factor,useSingleAtomSolutionsInitialGuess);
 			d_totalUpdateCalls+=1;
 
 

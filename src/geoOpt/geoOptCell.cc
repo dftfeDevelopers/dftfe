@@ -175,9 +175,9 @@ namespace dftfe {
 		{
 			const double tol=dftParameters::stressRelaxTol*dftPtr->d_domainVolume;
 			const unsigned int  maxIter=100;
-			const double lineSearchTol=tol*2.0;
+			const double lineSearchTol=tol*2.0;//Dummy parameter for CGPRP, the actual stopping criteria are the Wolfe conditions and maxLineSearchIter
 			const double lineSearchDampingParameter=0.1;
-			const unsigned int maxLineSearchIter=4;
+			const unsigned int maxLineSearchIter=dftParameters::maxLineSearchIterCGPRP;
 			const unsigned int debugLevel=Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) ==0?dftParameters::verbosity:0;
 
 			d_totalUpdateCalls=0;
@@ -275,7 +275,7 @@ namespace dftfe {
 		{
 			//AssertThrow(false,dftUtils::ExcNotImplementedYet());
 			functionValue.clear();
-			functionValue.push_back(dftPtr->d_groundStateEnergy);
+			functionValue.push_back(dftPtr->d_freeEnergy);
 
 		}
 
@@ -314,7 +314,7 @@ namespace dftfe {
 		}
 
 	template<unsigned int FEOrder, unsigned int FEOrderElectro>
-		void geoOptCell<FEOrder,FEOrderElectro>::update(const std::vector<double> & solution, const bool computeForces)
+		void geoOptCell<FEOrder,FEOrderElectro>::update(const std::vector<double> & solution, const bool computeForces,const bool useSingleAtomSolutionsInitialGuess)
 		{
 
 

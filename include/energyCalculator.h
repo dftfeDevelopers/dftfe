@@ -102,6 +102,8 @@ namespace dftfe {
           const std::map<dealii::CellId, std::vector<double> > & rhoOutValuesElectrostaticLpsp,
 					const std::map<dealii::CellId, std::vector<double> > & gradRhoInValues,
 					const std::map<dealii::CellId, std::vector<double> > & gradRhoOutValues,
+					const std::map<dealii::CellId, std::vector<double> > & rhoCoreValues,
+          const std::map<dealii::CellId, std::vector<double> > & gradRhoCoreValues,           
 					const std::map<dealii::CellId, std::vector<double> > & smearedbValues,
 					const std::vector<std::vector<double> > & localVselfs,
 					const std::map<dealii::CellId, std::vector<double> > & pseudoValuesElectronic,

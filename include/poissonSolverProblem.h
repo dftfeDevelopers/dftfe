@@ -46,7 +46,7 @@ namespace dftfe {
 				 */
 				void reinit(const dealii::MatrixFree<3,double> & matrixFreeData,
 						distributedCPUVec<double> & x,
-						const dealii::ConstraintMatrix & constraintMatrix,
+						const dealii::AffineConstraints<double> & constraintMatrix,
 						const unsigned int matrixFreeVectorComponent,
             const unsigned int matrixFreeQuadratureComponentRhsDensity,
             const unsigned int matrixFreeQuadratureComponentAX,            
@@ -166,10 +166,10 @@ namespace dftfe {
 				/// pointer to the x vector being solved for
 				distributedCPUVec<double> * d_xPtr;
 
-				/// pointer to dealii ConstraintMatrix object
-				const dealii::ConstraintMatrix * d_constraintMatrixPtr;
+				/// pointer to dealii dealii::AffineConstraints<double> object
+				const dealii::AffineConstraints<double> * d_constraintMatrixPtr;
 
-				/// matrix free index required to access the DofHandler and ConstraintMatrix objects corresponding to the
+				/// matrix free index required to access the DofHandler and dealii::AffineConstraints<double> objects corresponding to the
 				/// problem
 				unsigned int d_matrixFreeVectorComponent;
 

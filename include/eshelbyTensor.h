@@ -177,6 +177,14 @@ namespace dftfe {
 				const std::vector<unsigned int> & nonlocalAtomsCompactSupportList,
 				const unsigned int numBlockedEigenvectors);
 
+     /// Nonlocal core correction pseudopotential force contribution
+     Tensor<1,C_DIM,VectorizedArray<double> >  getFNonlinearCoreCorrection(const VectorizedArray<double> & vxc,
+                                                                           const Tensor<1,C_DIM,VectorizedArray<double> > & gradRhoCore);
+
+     /// Nonlocal core correction pseudopotential force contribution
+     Tensor<1,C_DIM,VectorizedArray<double> >  getFNonlinearCoreCorrection(const Tensor<1,C_DIM,VectorizedArray<double> > & derExcGradRho,
+                                                                           const Tensor<2,C_DIM,VectorizedArray<double> > & hessianRhoCore);    
+
 	};
 
 }

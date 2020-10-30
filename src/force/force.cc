@@ -42,6 +42,7 @@ namespace  dftfe {
 #include "configurationalForceCompute/configurationalForceEEshelbyFPSPFnlLinFE.cc"
 #include "configurationalForceCompute/configurationalForceSpinPolarizedEEshelbyFPSPFnlLinFE.cc"
 #include "configurationalForceCompute/FPSPLocalGammaAtomsElementalContribution.cc"
+#include "configurationalForceCompute/FNonlinearCoreCorrectionGammaAtomsElementalContribution.cc"
 #include "configurationalForceCompute/FSmearedChargesGammaAtomsElementalContribution.cc"
 #include "configurationalForceCompute/FShadowLocalGammaAtomsElementalContribution.cc"
 #include "configurationalForceCompute/FnlGammaAtomsElementalContribution.cc"
@@ -69,7 +70,7 @@ namespace  dftfe {
 				const MPI_Comm & mpi_comm,
 				DoFHandler<C_DIM> & dofHandlerForce,
 				FESystem<C_DIM> & FEForce,
-				ConstraintMatrix  & constraintsForce,
+				dealii::AffineConstraints<double>  & constraintsForce,
 				IndexSet  & locally_owned_dofsForce,
 				IndexSet  & locally_relevant_dofsForce)
 		{
@@ -131,7 +132,7 @@ namespace  dftfe {
 
 			if (dftParameters::createConstraintsFromSerialDofhandler)
 			{
-				ConstraintMatrix  dummy;
+				dealii::AffineConstraints<double>  dummy;
 				vectorTools::createParallelConstraintMatrixFromSerial(serialTriangulation,
 						dofHandlerForce,
 						mpi_comm,
@@ -194,27 +195,14 @@ namespace  dftfe {
 	template<unsigned int FEOrder,unsigned int FEOrderElectro>
 		void forceClass<FEOrder,FEOrderElectro>::initMoved
 		(std::vector<const DoFHandler<3> *> & dofHandlerVectorMatrixFree,
-		 std::vector<const ConstraintMatrix * > & constraintsVectorMatrixFree,
-		 const bool isElectrostaticsMesh,
-		 const bool isElectrostaticsEigenMeshDifferent)
+		 std::vector<const dealii::AffineConstraints<double> * > & constraintsVectorMatrixFree,
+		 const bool isElectrostaticsMesh)
 		{
 			if (isElectrostaticsMesh)
 			{
 				d_dofHandlerForceElectro.distribute_dofs(FEForce);
         dofHandlerVectorMatrixFree.push_back(&d_dofHandlerForceElectro);
         constraintsVectorMatrixFree.push_back(&d_constraintsNoneForceElectro);
-
-				if (isElectrostaticsEigenMeshDifferent)
-				{
-					//dofHandlerVectorMatrixFree.push_back(&d_dofHandlerForceElectro);
-					//constraintsVectorMatrixFree.push_back(&d_constraintsNoneForceElectro);
-					d_isElectrostaticsMeshSubdivided=true;
-				}
-				else
-        {
-
-					d_isElectrostaticsMeshSubdivided=false;
-        }
 
 				d_forceDofHandlerIndexElectro = dofHandlerVectorMatrixFree.size()-1;
 
@@ -270,9 +258,7 @@ namespace  dftfe {
 #endif
 		 const unsigned int eigenDofHandlerIndex,
      const unsigned int smearedChargeQuadratureId,
-              const unsigned int lpspQuadratureId,
              const unsigned int lpspQuadratureIdElectro,         
-		 const std::map<dealii::CellId, std::vector<double> > & pseudoVLoc,
 		 const MatrixFree<3,double> & matrixFreeDataElectro,
 		 const unsigned int phiTotDofHandlerIndexElectro,
 		 const distributedCPUVec<double> & phiTotRhoOutElectro,
@@ -283,9 +269,14 @@ namespace  dftfe {
 				 const std::map<dealii::CellId, std::vector<double> > & rhoOutValuesElectroLpsp,         
 				 const std::map<dealii::CellId, std::vector<double> > & gradRhoOutValuesElectro,
 				 const std::map<dealii::CellId, std::vector<double> > & gradRhoOutValuesElectroLpsp,
+				 const std::map<dealii::CellId, std::vector<double> > & rhoCoreValues,
+				 const std::map<dealii::CellId, std::vector<double> > & gradRhoCoreValues,
+				 const std::map<dealii::CellId, std::vector<double> > & hessianRhoCoreValues,
+				 const std::map<unsigned int,std::map<dealii::CellId, std::vector<double> > > & gradRhoCoreAtoms,
+				 const std::map<unsigned int,std::map<dealii::CellId, std::vector<double> > > & hessianRhoCoreAtoms,         
 		 const std::map<dealii::CellId, std::vector<double> > & pseudoVLocElectro,
 		 const std::map<unsigned int,std::map<dealii::CellId, std::vector<double> > > & pseudoVLocAtomsElectro,
-		 const ConstraintMatrix  & hangingPlusPBCConstraintsElectro,
+		 const dealii::AffineConstraints<double>  & hangingPlusPBCConstraintsElectro,
 		 const vselfBinsManager<FEOrder,FEOrderElectro> & vselfBinsManagerElectro,
 		 const std::map<dealii::CellId, std::vector<double> > & shadowKSRhoMinValues,
 		 const std::map<dealii::CellId, std::vector<double> > & shadowKSGradRhoMinValues,
@@ -310,9 +301,7 @@ namespace  dftfe {
 #endif
 					 eigenDofHandlerIndex,
            smearedChargeQuadratureId,
-           lpspQuadratureId,
            lpspQuadratureIdElectro,
-					 pseudoVLoc,
 					 matrixFreeDataElectro,
 					 phiTotDofHandlerIndexElectro,
 					 phiTotRhoOutElectro,
@@ -323,6 +312,11 @@ namespace  dftfe {
            rhoOutValuesElectroLpsp,
 					 gradRhoOutValuesElectro,
            gradRhoOutValuesElectroLpsp,
+				   rhoCoreValues,
+				   gradRhoCoreValues,
+				   hessianRhoCoreValues,
+				   gradRhoCoreAtoms,
+				   hessianRhoCoreAtoms,             
 					 pseudoVLocElectro,
 					 pseudoVLocAtomsElectro,
 					 vselfBinsManagerElectro,
@@ -342,7 +336,7 @@ namespace  dftfe {
 			 MPI_Barrier(MPI_COMM_WORLD); 
 			 gaussian_time = MPI_Wtime() -gaussian_time;
 
-			 if (this_mpi_process ==0 && dftParameters::verbosity>=1)
+			 if (this_mpi_process ==0 && dftParameters::verbosity>=4)
 				 std::cout<<"Time for contraction of nodal foces with gaussian generator: "<<gaussian_time <<std::endl;
 		 }
 
@@ -412,9 +406,7 @@ namespace  dftfe {
 #endif
 		 const unsigned int eigenDofHandlerIndex,
      const unsigned int smearedChargeQuadratureId,
-              const unsigned int lpspQuadratureId,
             const unsigned int lpspQuadratureIdElectro,         
-		 const std::map<dealii::CellId, std::vector<double> > & pseudoVLoc,
 		 const MatrixFree<3,double> & matrixFreeDataElectro,
 		 const unsigned int phiTotDofHandlerIndexElectro,
 		 const distributedCPUVec<double> & phiTotRhoOutElectro,
@@ -425,6 +417,11 @@ namespace  dftfe {
        const std::map<dealii::CellId, std::vector<double> > & rhoOutValuesElectroLpsp,         
        const std::map<dealii::CellId, std::vector<double> > & gradRhoOutValuesElectro,
        const std::map<dealii::CellId, std::vector<double> > & gradRhoOutValuesElectroLpsp,
+			 const std::map<dealii::CellId, std::vector<double> > & rhoCoreValues,
+			 const std::map<dealii::CellId, std::vector<double> > & gradRhoCoreValues,
+			 const std::map<dealii::CellId, std::vector<double> > & hessianRhoCoreValues,
+			 const std::map<unsigned int,std::map<dealii::CellId, std::vector<double> > > & gradRhoCoreAtoms,
+			 const std::map<unsigned int,std::map<dealii::CellId, std::vector<double> > > & hessianRhoCoreAtoms,        
 		 const std::map<dealii::CellId, std::vector<double> > & pseudoVLocElectro,
 		 const std::map<unsigned int,std::map<dealii::CellId, std::vector<double> > > & pseudoVLocAtomsElectro,
 		 const vselfBinsManager<FEOrder,FEOrderElectro> & vselfBinsManagerElectro,
@@ -444,9 +441,7 @@ namespace  dftfe {
 					 (matrixFreeData,
 					  eigenDofHandlerIndex,
             smearedChargeQuadratureId,
-            lpspQuadratureId,
             lpspQuadratureIdElectro,
-					  pseudoVLoc,
 					  matrixFreeDataElectro,
 					  phiTotDofHandlerIndexElectro,
 					  phiTotRhoOutElectro,
@@ -455,6 +450,11 @@ namespace  dftfe {
            rhoOutValuesElectroLpsp,
 					 gradRhoOutValuesElectro,
            gradRhoOutValuesElectroLpsp,
+				   rhoCoreValues,
+				   gradRhoCoreValues,
+				   hessianRhoCoreValues,
+				   gradRhoCoreAtoms,
+				   hessianRhoCoreAtoms,            
 					  pseudoVLocElectro,
 					  pseudoVLocAtomsElectro,
 					  vselfBinsManagerElectro,
@@ -470,9 +470,7 @@ namespace  dftfe {
 #endif
 					  eigenDofHandlerIndex,
             smearedChargeQuadratureId,
-            lpspQuadratureId,
             lpspQuadratureIdElectro,
-					  pseudoVLoc,
 					  matrixFreeDataElectro,
 					  phiTotDofHandlerIndexElectro,
 					  phiTotRhoOutElectro,
@@ -483,6 +481,11 @@ namespace  dftfe {
            rhoOutValuesElectroLpsp,
 					 gradRhoOutValuesElectro,
            gradRhoOutValuesElectroLpsp,
+				   rhoCoreValues,
+				   gradRhoCoreValues,
+				   hessianRhoCoreValues,
+				   gradRhoCoreAtoms,
+				   hessianRhoCoreAtoms,             
 					  pseudoVLocElectro,
 					  pseudoVLocAtomsElectro,
 					  vselfBinsManagerElectro,
@@ -507,7 +510,7 @@ namespace  dftfe {
 			 MPI_Barrier(MPI_COMM_WORLD); 
 			 vselfforce_time = MPI_Wtime() -vselfforce_time;
 
-			 if (this_mpi_process ==0 && dftParameters::verbosity>=1)
+			 if (this_mpi_process ==0 && dftParameters::verbosity>=4)
 				 std::cout<<"Time for configurational force computation of Eself contribution and configForceLinFEFinalize(): "<<vselfforce_time <<std::endl;
 
 #ifdef DEBUG

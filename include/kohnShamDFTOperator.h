@@ -68,10 +68,6 @@ namespace dftfe{
 			const double scalar,
 			distributedCPUVec<dataTypes::number> & dst);
 
-		void HX(distributedCPUVec<dataTypes::number> & src,
-			const unsigned int numberComponents,
-			distributedCPUVec<dataTypes::number> & dst);
-
 
 	        void HX(distributedCPUVec<dataTypes::number> & src,
 		        std::vector<dataTypes::number> & cellSrcWaveFunctionMatrix,
@@ -82,13 +78,6 @@ namespace dftfe{
                         const double scalarB,
 		        distributedCPUVec<dataTypes::number> & dst,
 		        std::vector<dataTypes::number>  & cellDstWaveFunctionMatrix);
-
-
-	       
-
-		void MX(distributedCPUVec<dataTypes::number> & src,
-				const unsigned int numberComponents,
-				distributedCPUVec<dataTypes::number> & dst);
 
 
 		/**
@@ -117,14 +106,8 @@ namespace dftfe{
 		void XtHX(const std::vector<dataTypes::number> & X,
 				const unsigned int numberComponents,
 				const std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid>  & processGrid,
-				dealii::ScaLAPACKMatrix<dataTypes::number> & projHamPar,
-				bool origHFlag=false);
+				dealii::ScaLAPACKMatrix<dataTypes::number> & projHamPar);
 
-
-		void XtMX(const std::vector<dataTypes::number> & X,
-				const unsigned int numberComponents,
-				const std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid>  & processGrid,
-				dealii::ScaLAPACKMatrix<dataTypes::number> & projMassPar);
 
 		/**
 		 * @brief Compute projection of the operator into a subspace spanned by a given orthogonal basis
@@ -143,8 +126,7 @@ namespace dftfe{
 			 const unsigned int N,
 			 const unsigned int Ncore,
 			 const std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid>  & processGrid,
-			 dealii::ScaLAPACKMatrix<dataTypes::number> & projHamPar,
-			 bool origHFlag = false);
+			 dealii::ScaLAPACKMatrix<dataTypes::number> & projHamPar);
 
 
 		/**
@@ -158,7 +140,12 @@ namespace dftfe{
 		void computeVEff(const std::map<dealii::CellId,std::vector<double> >* rhoValues,
 				const std::map<dealii::CellId,std::vector<double> > & phiValues,
 				const std::map<dealii::CellId,std::vector<double> > & externalPotCorrValues,
+<<<<<<< HEAD
 				 const unsigned int externalPotCorrQuadratureId);
+=======
+        const std::map<dealii::CellId,std::vector<double> > & rhoCoreValues,
+        const unsigned int externalPotCorrQuadratureId);
+>>>>>>> 79b4dceaf7bf50511738c1de0b1b244c954c5be7
 
 
 		/**
@@ -173,7 +160,12 @@ namespace dftfe{
 				const std::map<dealii::CellId,std::vector<double> > & phiValues,
 				unsigned int spinIndex,
 				const std::map<dealii::CellId,std::vector<double> > & externalPotCorrValues,
+<<<<<<< HEAD
                                 const unsigned int externalPotCorrQuadratureId);
+=======
+        const std::map<dealii::CellId,std::vector<double> > & rhoCoreValues,
+        const unsigned int externalPotCorrQuadratureId);
+>>>>>>> 79b4dceaf7bf50511738c1de0b1b244c954c5be7
 
 		/**
 		 * @brief Computes effective potential involving gradient density type exchange-correlation functionals
@@ -187,7 +179,13 @@ namespace dftfe{
 				const std::map<dealii::CellId,std::vector<double> >* gradRhoValues,
 				const std::map<dealii::CellId,std::vector<double> > & phiValues,
 				const std::map<dealii::CellId,std::vector<double> > & externalPotCorrValues,
+<<<<<<< HEAD
                                 const unsigned int externalPotCorrQuadratureId);
+=======
+        const std::map<dealii::CellId,std::vector<double> > & rhoCoreValues,
+        const std::map<dealii::CellId,std::vector<double> > & gradRhoCoreValues,
+        const unsigned int externalPotCorrQuadratureId);
+>>>>>>> 79b4dceaf7bf50511738c1de0b1b244c954c5be7
 
 
 		/**
@@ -204,7 +202,13 @@ namespace dftfe{
 				const std::map<dealii::CellId,std::vector<double> > & phiValues,
 				const unsigned int spinIndex,
 				const std::map<dealii::CellId,std::vector<double> > & externalPotCorrValues,
+<<<<<<< HEAD
                                 const unsigned int externalPotCorrQuadratureId);
+=======
+        const std::map<dealii::CellId,std::vector<double> > & rhoCoreValues,
+        const std::map<dealii::CellId,std::vector<double> > & gradRhoCoreValues,
+        const unsigned int externalPotCorrQuadratureId);
+>>>>>>> 79b4dceaf7bf50511738c1de0b1b244c954c5be7
 
 
 		/**
@@ -276,9 +280,15 @@ namespace dftfe{
 		 * @param invSqrtMassVec output the value of inverse square root of diagonal mass matrix
 		 */
 		void computeMassVector(const dealii::DoFHandler<3> & dofHandler,
+<<<<<<< HEAD
 				       const dealii::ConstraintMatrix & constraintMatrix,
 				       distributedCPUVec<double> & sqrtMassVec,
 				       distributedCPUVec<double> & invSqrtMassVec);
+=======
+				const dealii::AffineConstraints<double> & constraintMatrix,
+				distributedCPUVec<double> & sqrtMassVec,
+				distributedCPUVec<double> & invSqrtMassVec);
+>>>>>>> 79b4dceaf7bf50511738c1de0b1b244c954c5be7
 
 		///precompute shapefunction gradient integral
 		void preComputeShapeFunctionGradientIntegrals(const unsigned int lpspQuadratureId);
@@ -286,9 +296,6 @@ namespace dftfe{
 		///compute element Hamiltonian matrix
 		void computeHamiltonianMatrix(const unsigned int kPointIndex, const unsigned int spinIndex);
 		void computeKineticMatrix();
-		void computeMassMatrix();
-
-
 
 
 		private:
@@ -309,8 +316,12 @@ namespace dftfe{
 		std::vector<std::vector<std::vector<dataTypes::number> > > d_cellHamiltonianMatrix;
 
 
+<<<<<<< HEAD
 	        std::vector<std::vector<double> > d_cellHamiltonianMatrixExternalPotCorr;
 		std::vector<std::vector<dataTypes::number> > d_cellMassMatrix;
+=======
+    std::vector<std::vector<double> > d_cellHamiltonianMatrixExternalPotCorr;
+>>>>>>> 79b4dceaf7bf50511738c1de0b1b244c954c5be7
 
 		/**
 		 * @brief implementation of matrix-vector product using cell-level stiffness matrices.
@@ -346,10 +357,6 @@ namespace dftfe{
 					     
 	  
 
-
-		void computeMassMatrixTimesX(const distributedCPUVec<dataTypes::number> & src,
-				const unsigned int numberWaveFunctions,
-				distributedCPUVec<dataTypes::number> & dst) const;
 
 #ifdef WITH_MKL
 

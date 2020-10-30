@@ -22,6 +22,7 @@ template<unsigned int FEOrder,unsigned int FEOrderElectro>
 (FEValues<C_DIM> & feValues,
  FEEvaluation<C_DIM,1,C_num1DQuadLPSP<FEOrder>()*C_numCopies1DQuadLPSP(),C_DIM>  & forceEval,
  const MatrixFree<3,double> & matrixFreeData,
+ const unsigned int phiTotDofHandlerIndexElectro,
  const unsigned int cell,
  const std::vector< Tensor<1,3,VectorizedArray<double> >  > & gradRhoQuads,
  const std::map<unsigned int,std::map<dealii::CellId, std::vector<double> > > & pseudoVLocAtoms,
@@ -86,7 +87,7 @@ template<unsigned int FEOrder,unsigned int FEOrderElectro>
 
 		for (unsigned int iSubCell=0; iSubCell<numSubCells; ++iSubCell)
 		{
-			subCellPtr= matrixFreeData.get_cell_iterator(cell,iSubCell);
+			subCellPtr= matrixFreeData.get_cell_iterator(cell,iSubCell,phiTotDofHandlerIndexElectro);
 			dealii::CellId subCellId=subCellPtr->id();
 			feValues.reinit(subCellPtr);
 

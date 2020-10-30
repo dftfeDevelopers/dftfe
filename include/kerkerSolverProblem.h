@@ -49,7 +49,7 @@ namespace dftfe {
 				 *
 				 */
 				void init(dealii::MatrixFree<3,double> & matrixFreeData,
-						dealii::ConstraintMatrix & constraintMatrix,
+						dealii::AffineConstraints<double> & constraintMatrix,
 						distributedCPUVec<double> & x,
 						double kerkerMixingParameter,
             const unsigned int matrixFreeVectorComponent,
@@ -143,7 +143,7 @@ namespace dftfe {
 				//kerker mixing constant
 				double d_gamma;
 
-        /// matrix free index required to access the DofHandler and ConstraintMatrix objects corresponding to the
+        /// matrix free index required to access the DofHandler and dealii::AffineConstraints<double> objects corresponding to the
         /// problem
         unsigned int d_matrixFreeVectorComponent;
 
@@ -154,7 +154,7 @@ namespace dftfe {
 				/// pointer to electron density cell and grad residual data
 				const std::map<dealii::CellId,std::vector<double> >* d_quadGradResidualValuesPtr;
 				const dealii::DoFHandler<3> * d_dofHandlerPRefinedPtr;
-				const dealii::ConstraintMatrix * d_constraintMatrixPRefinedPtr;
+				const dealii::AffineConstraints<double> * d_constraintMatrixPRefinedPtr;
 				const dealii::MatrixFree<3,double> * d_matrixFreeDataPRefinedPtr;
 
 				const MPI_Comm mpi_communicator;

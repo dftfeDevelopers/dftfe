@@ -37,7 +37,7 @@ namespace dftfe {
 
 	template<unsigned int FEOrderElectro>
 		void kerkerSolverProblem<FEOrderElectro>::init(dealii::MatrixFree<3,double> & matrixFreeDataPRefined,
-				dealii::ConstraintMatrix & constraintMatrixPRefined,
+				dealii::AffineConstraints<double> & constraintMatrixPRefined,
 				distributedCPUVec<double> & x,
 				double kerkerMixingParameter,
         const unsigned int matrixFreeVectorComponent,

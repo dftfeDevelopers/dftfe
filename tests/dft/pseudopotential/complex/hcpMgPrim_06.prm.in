@@ -16,6 +16,8 @@ end
 
 
 subsection Boundary conditions
+  set SMEARED NUCLEAR CHARGES=false
+  set FLOATING NUCLEAR CHARGES=false
   set SELF POTENTIAL RADIUS = 1.6
   set PERIODIC1 = true
   set PERIODIC2 = true
@@ -29,6 +31,7 @@ subsection Finite element mesh parameters
   set POLYNOMIAL ORDER = 3
   
   subsection Auto mesh generation parameters
+    set AUTO ADAPT BASE MESH SIZE=false
     set BASE MESH SIZE = 1.0 
     set ATOM BALL RADIUS = 2.0
     set MESH SIZE AROUND ATOM = 0.5
@@ -66,13 +69,15 @@ end
 
 
 subsection SCF parameters
+   set COMPUTE ENERGY EACH ITER=false
+
   set MAXIMUM ITERATIONS = 40 
   set TOLERANCE          = 1e-5
   set MIXING PARAMETER   = 0.5
   set MIXING HISTORY     = 70
   set TEMPERATURE                        = 500
   set STARTING WFC=ATOMIC
-  set HIGHER QUAD NLP  = false
+  
   subsection Eigen-solver parameters
       set NUMBER OF KOHN-SHAM WAVEFUNCTIONS = 16
       set LOWER BOUND WANTED SPECTRUM = -10.0

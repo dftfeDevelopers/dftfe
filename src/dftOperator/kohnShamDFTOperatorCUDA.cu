@@ -175,6 +175,7 @@ namespace dftfe
 			d_numLocallyOwnedCells(dftPtr->matrix_free_data.n_physical_cells()),
 			d_numQuadPoints(dftPtr->matrix_free_data.get_quadrature(dftPtr->d_densityQuadratureId).size()),
       d_isStiffnessMatrixExternalPotCorrComputed(false),
+      d_isMallocCalled(false),
 			mpi_communicator (mpi_comm_replica),
 			n_mpi_processes (Utilities::MPI::n_mpi_processes(mpi_comm_replica)),
 			this_mpi_process (Utilities::MPI::this_mpi_process(mpi_comm_replica)),
@@ -190,6 +191,23 @@ namespace dftfe
 					_dftPtr->d_constraintsNoneDataInfoCUDA)
 	{
 
+	}
+
+	//
+	//destructor
+	//
+	template<unsigned int FEOrder,unsigned int FEOrderElectro>
+		kohnShamDFTOperatorCUDAClass<FEOrder,FEOrderElectro>::~kohnShamDFTOperatorCUDAClass()
+	{
+      if (d_isMallocCalled)
+      {
+        free(h_d_A);
+        free(h_d_B);
+        free(h_d_C);
+        cudaFree(d_A);
+        cudaFree(d_B);
+        cudaFree(d_C); 
+      }
 	}
 
 	template<unsigned int FEOrder,unsigned int FEOrderElectro>
@@ -328,22 +346,17 @@ namespace dftfe
 		}
 
 	template<unsigned int FEOrder,unsigned int FEOrderElectro>
-		thrust::device_vector<double> & kohnShamDFTOperatorCUDAClass<FEOrder,FEOrderElectro>::getShapeFunctionGradientValuesNLPXInverted()
+		thrust::device_vector<double> & kohnShamDFTOperatorCUDAClass<FEOrder,FEOrderElectro>::getShapeFunctionGradientValuesNLPInverted()
 		{
-			return d_shapeFunctionGradientValueNLPXInvertedDevice;
+			return d_shapeFunctionGradientValueNLPInvertedDevice;
 		}
 
 	template<unsigned int FEOrder,unsigned int FEOrderElectro>
-		thrust::device_vector<double> & kohnShamDFTOperatorCUDAClass<FEOrder,FEOrderElectro>::getShapeFunctionGradientValuesNLPYInverted()
+		thrust::device_vector<double> & kohnShamDFTOperatorCUDAClass<FEOrder,FEOrderElectro>::getInverseJacobiansNLP()
 		{
-			return d_shapeFunctionGradientValueNLPYInvertedDevice;
+			return d_inverseJacobiansNLPDevice;
 		}
 
-	template<unsigned int FEOrder,unsigned int FEOrderElectro>
-		thrust::device_vector<double> & kohnShamDFTOperatorCUDAClass<FEOrder,FEOrderElectro>::getShapeFunctionGradientValuesNLPZInverted()
-		{
-			return d_shapeFunctionGradientValueNLPZInvertedDevice;
-		}
 
 	template<unsigned int FEOrder,unsigned int FEOrderElectro>
 		thrust::device_vector<dealii::types::global_dof_index> & kohnShamDFTOperatorCUDAClass<FEOrder,FEOrderElectro>::getFlattenedArrayCellLocalProcIndexIdMap()
@@ -544,7 +557,6 @@ namespace dftfe
 				}
 
 				d_maxSingleAtomPseudoWfc=maxPseudoWfc;
-				d_cellWaveFunctionMatrixNonLocalDevice.resize(d_totalNonlocalElems*numberWaveFunctions*d_numberNodesPerElement,0.0);
 				d_cellHamMatrixTimesWaveMatrixNonLocalDevice.resize(d_totalNonlocalElems*numberWaveFunctions*d_numberNodesPerElement,0.0);
 				d_cellHamiltonianMatrixNonLocalFlattened.resize(d_totalNonlocalElems*d_numberNodesPerElement*d_maxSingleAtomPseudoWfc,0.0);
 				d_cellHamiltonianMatrixNonLocalFlattenedTranspose.resize(d_totalNonlocalElems*d_numberNodesPerElement*d_maxSingleAtomPseudoWfc,0.0);
@@ -558,6 +570,9 @@ namespace dftfe
 
 				d_indexMapFromPaddedNonLocalVecToParallelNonLocalVec.clear();
 				d_indexMapFromPaddedNonLocalVecToParallelNonLocalVec.resize(d_totalNonlocalElems*d_maxSingleAtomPseudoWfc,-1);
+
+        d_nonlocalElemIdToLocalElemIdMap.clear();
+        d_nonlocalElemIdToLocalElemIdMap.resize(d_totalNonlocalElems,0);
 
 				d_projectorKetTimesVectorAllCellsReduction.clear();
 				d_projectorKetTimesVectorAllCellsReduction.resize(d_totalNonlocalElems*d_maxSingleAtomPseudoWfc*d_totalPseudoWfcNonLocal,0.0);
@@ -608,6 +623,8 @@ namespace dftfe
 
 					for(unsigned int iElemComp = 0; iElemComp < dftPtr->d_elementIteratorsInAtomCompactSupport[atomId].size(); ++iElemComp)
 					{ 
+            const unsigned int elementId =  dftPtr->d_elementIdsInAtomCompactSupport[atomId][iElemComp];
+            d_nonlocalElemIdToLocalElemIdMap[countElem]=elementId;
 						for(unsigned int iNode = 0; iNode < d_numberNodesPerElement; ++iNode)
 						{
 							for(unsigned int iPseudoWave = 0; iPseudoWave < numberPseudoWaveFunctions; ++iPseudoWave)
@@ -645,6 +662,26 @@ namespace dftfe
 				d_cellNodeIdMapNonLocalToLocalDevice=d_cellNodeIdMapNonLocalToLocal;
 
 
+        h_d_A = (double**)malloc(d_totalNonlocalElems*sizeof(double*));
+        h_d_B = (double**)malloc(d_totalNonlocalElems*sizeof(double*));
+        h_d_C = (double**)malloc(d_totalNonlocalElems*sizeof(double*));
+     
+        for(unsigned int i=0; i<d_totalNonlocalElems; i++) 
+        {
+           h_d_A[i]=thrust::raw_pointer_cast(&d_cellWaveFunctionMatrix[d_nonlocalElemIdToLocalElemIdMap[i]*numberWaveFunctions*d_numberNodesPerElement]);
+           h_d_B[i]=thrust::raw_pointer_cast(&d_cellHamiltonianMatrixNonLocalFlattenedDevice[i*d_numberNodesPerElement*d_maxSingleAtomPseudoWfc]);
+           h_d_C[i]=thrust::raw_pointer_cast(&d_projectorKetTimesVectorAllCellsDevice[i*numberWaveFunctions*d_maxSingleAtomPseudoWfc]);
+        }
+        
+        cudaMalloc((void**)&d_A, d_totalNonlocalElems*sizeof(double*));
+        cudaMalloc((void**)&d_B, d_totalNonlocalElems*sizeof(double*));
+        cudaMalloc((void**)&d_C, d_totalNonlocalElems*sizeof(double*));
+
+        cudaMemcpy(d_A, h_d_A, d_totalNonlocalElems*sizeof(double*), cudaMemcpyHostToDevice);
+        cudaMemcpy(d_B, h_d_B, d_totalNonlocalElems*sizeof(double*), cudaMemcpyHostToDevice);
+        cudaMemcpy(d_C, h_d_C, d_totalNonlocalElems*sizeof(double*), cudaMemcpyHostToDevice);
+
+        d_isMallocCalled=true;
 			}
 
 			cudaMemGetInfo(&free_t,&total_t);
@@ -796,6 +833,7 @@ namespace dftfe
 		void kohnShamDFTOperatorCUDAClass<FEOrder,FEOrderElectro>::computeVEff(const std::map<dealii::CellId,std::vector<double> >* rhoValues,
 				const std::map<dealii::CellId,std::vector<double> > & phiValues,
 				const std::map<dealii::CellId,std::vector<double> > & externalPotCorrValues,
+        const std::map<dealii::CellId,std::vector<double> > & rhoCoreValues,
         const unsigned int externalPotCorrQuadratureId)
 		{
 			const unsigned int n_cells = dftPtr->matrix_free_data.n_macro_cells();
@@ -818,7 +856,15 @@ namespace dftfe
 				{
 					fe_values.reinit (cellPtr);
 
-					const std::vector<double> & densityValue = (*rhoValues).find(cellPtr->id())->second;
+					std::vector<double>  densityValue = (*rhoValues).find(cellPtr->id())->second;
+
+					if(dftParameters::nonLinearCoreCorrection)
+          {
+            const std::vector<double> & temp2= rhoCoreValues.find(cellPtr->id())->second;
+            for (unsigned int q = 0; q < numberQuadraturePoints; ++q)
+              densityValue[q]+=temp2[q];
+          }
+
           const std::vector<double> & tempPhi=phiValues.find(cellPtr->id())->second;          
 
 					xc_lda_vxc(&(dftPtr->funcX),numberQuadraturePoints,&densityValue[0],&exchangePotentialVal[0]);
@@ -837,7 +883,7 @@ namespace dftfe
 				}
 
 			d_vEffJxWDevice=d_vEffJxW;
-      if (dftParameters::isPseudopotential && !d_isStiffnessMatrixExternalPotCorrComputed)
+      if ((dftParameters::isPseudopotential || dftParameters::smearedNuclearCharges) && !d_isStiffnessMatrixExternalPotCorrComputed)
          computeVEffExternalPotCorr(externalPotCorrValues,externalPotCorrQuadratureId);      
 		}
 
@@ -846,6 +892,8 @@ namespace dftfe
 				const std::map<dealii::CellId,std::vector<double> >* gradRhoValues,
 				const std::map<dealii::CellId,std::vector<double> > & phiValues,
 				const std::map<dealii::CellId,std::vector<double> > & externalPotCorrValues,
+        const std::map<dealii::CellId,std::vector<double> > & rhoCoreValues,
+        const std::map<dealii::CellId,std::vector<double> > & gradRhoCoreValues,        
         const unsigned int externalPotCorrQuadratureId)
 		{
 
@@ -876,15 +924,29 @@ namespace dftfe
 				{
 					fe_values.reinit (cellPtr);
 
-					const std::vector<double> & densityValue = (*rhoValues).find(cellPtr->id())->second;
-					const std::vector<double> & gradDensityValue = (*gradRhoValues).find(cellPtr->id())->second;
+			    std::vector<double>  densityValue = (*rhoValues).find(cellPtr->id())->second;
+					std::vector<double>  gradDensityValue = (*gradRhoValues).find(cellPtr->id())->second;
+
+					if(dftParameters::nonLinearCoreCorrection)
+          {
+            const std::vector<double> & temp2= rhoCoreValues.find(cellPtr->id())->second;
+            const std::vector<double> & temp3= gradRhoCoreValues.find(cellPtr->id())->second;
+            for (unsigned int q = 0; q < numberQuadraturePoints; ++q)
+            {
+              densityValue[q]+=temp2[q];
+              gradDensityValue[3*q+0]+=temp3[3*q+0];
+              gradDensityValue[3*q+1]+=temp3[3*q+1];
+              gradDensityValue[3*q+2]+=temp3[3*q+2];
+            }
+          }
+
           const std::vector<double> & tempPhi=phiValues.find(cellPtr->id())->second;           
 
 					for (unsigned int q=0; q<numberQuadraturePoints; ++q)
 					{
-						double gradRhoX = gradDensityValue[3*q + 0];
-						double gradRhoY = gradDensityValue[3*q + 1];
-						double gradRhoZ = gradDensityValue[3*q + 2];
+						const double gradRhoX = gradDensityValue[3*q + 0];
+						const double gradRhoY = gradDensityValue[3*q + 1];
+						const double gradRhoZ = gradDensityValue[3*q + 2];
 						sigmaValue[q] = gradRhoX*gradRhoX + gradRhoY*gradRhoY + gradRhoZ*gradRhoZ;
 					}
 
@@ -904,9 +966,9 @@ namespace dftfe
 					for (unsigned int q = 0; q < numberQuadraturePoints; ++q)
 					{
 						const double jxw=fe_values.JxW(q);
-						const double gradRhoX = (*gradRhoValues).find(cellPtr->id())->second[3*q + 0];
-						const double gradRhoY = (*gradRhoValues).find(cellPtr->id())->second[3*q + 1];
-						const double gradRhoZ = (*gradRhoValues).find(cellPtr->id())->second[3*q + 2];
+						const double gradRhoX = gradDensityValue[3*q + 0];
+						const double gradRhoY = gradDensityValue[3*q + 1];
+						const double gradRhoZ = gradDensityValue[3*q + 2];
 						const double term = derExchEnergyWithSigmaVal[q]+derCorrEnergyWithSigmaVal[q];
 						d_derExcWithSigmaTimesGradRhoJxW[iElemCount*numberQuadraturePoints*3+3*q] = term*gradRhoX*jxw;
 						d_derExcWithSigmaTimesGradRhoJxW[iElemCount*numberQuadraturePoints*3+3*q+1] = term*gradRhoY*jxw;
@@ -929,7 +991,7 @@ namespace dftfe
 			d_vEffJxWDevice=d_vEffJxW;
 			d_derExcWithSigmaTimesGradRhoJxWDevice=d_derExcWithSigmaTimesGradRhoJxW;
 
-      if (dftParameters::isPseudopotential && !d_isStiffnessMatrixExternalPotCorrComputed)
+      if ((dftParameters::isPseudopotential || dftParameters::smearedNuclearCharges) && !d_isStiffnessMatrixExternalPotCorrComputed)
          computeVEffExternalPotCorr(externalPotCorrValues,externalPotCorrQuadratureId);      
 		}
 
@@ -939,6 +1001,7 @@ namespace dftfe
 				const std::map<dealii::CellId,std::vector<double> > & phiValues,
 				const unsigned int spinIndex,
 				const std::map<dealii::CellId,std::vector<double> > & externalPotCorrValues,
+        const std::map<dealii::CellId,std::vector<double> > & rhoCoreValues,
         const unsigned int externalPotCorrQuadratureId)
 		{
 			const unsigned int n_cells = dftPtr->matrix_free_data.n_macro_cells();
@@ -981,7 +1044,7 @@ namespace dftfe
 
 			d_vEffJxWDevice=d_vEffJxW;
      
-      if (dftParameters::isPseudopotential && !d_isStiffnessMatrixExternalPotCorrComputed)
+      if ((dftParameters::isPseudopotential || dftParameters::smearedNuclearCharges) && !d_isStiffnessMatrixExternalPotCorrComputed)
          computeVEffExternalPotCorr(externalPotCorrValues,externalPotCorrQuadratureId);     
 		}
 
@@ -991,6 +1054,8 @@ namespace dftfe
 				const std::map<dealii::CellId,std::vector<double> > & phiValues,
 				const unsigned int spinIndex,
 				const std::map<dealii::CellId,std::vector<double> > & externalPotCorrValues,
+        const std::map<dealii::CellId,std::vector<double> > & rhoCoreValues,
+        const std::map<dealii::CellId,std::vector<double> > & gradRhoCoreValues,        
         const unsigned int externalPotCorrQuadratureId)
 		{
 			const unsigned int n_cells = dftPtr->matrix_free_data.n_macro_cells();
@@ -1054,12 +1119,12 @@ namespace dftfe
 					for (unsigned int q = 0; q < numberQuadraturePoints; ++q)
 					{
 						const double jxw=fe_values.JxW(q);
-						const double gradRhoX = (*gradRhoValues).find(cellPtr->id())->second[6*q + 0 + 3*spinIndex];
-						const double gradRhoY = (*gradRhoValues).find(cellPtr->id())->second[6*q + 1 + 3*spinIndex];
-						const double gradRhoZ = (*gradRhoValues).find(cellPtr->id())->second[6*q + 2 + 3*spinIndex];
-						const double gradRhoOtherX = (*gradRhoValues).find(cellPtr->id())->second[6*q + 0 + 3*(1-spinIndex)];
-						const double gradRhoOtherY = (*gradRhoValues).find(cellPtr->id())->second[6*q + 1 + 3*(1-spinIndex)];
-						const double gradRhoOtherZ = (*gradRhoValues).find(cellPtr->id())->second[6*q + 2 + 3*(1-spinIndex)];
+					  const double gradRhoX = gradDensityValue[6*q + 0 + 3*spinIndex];
+						const double gradRhoY = gradDensityValue[6*q + 1 + 3*spinIndex];
+						const double gradRhoZ = gradDensityValue[6*q + 2 + 3*spinIndex];
+						const double gradRhoOtherX = gradDensityValue[6*q + 0 + 3*(1-spinIndex)];
+						const double gradRhoOtherY = gradDensityValue[6*q + 1 + 3*(1-spinIndex)];
+						const double gradRhoOtherZ = gradDensityValue[6*q + 2 + 3*(1-spinIndex)];
 						const double term = derExchEnergyWithSigmaVal[3*q+2*spinIndex]+derCorrEnergyWithSigmaVal[3*q+2*spinIndex];
 						const double termOff = derExchEnergyWithSigmaVal[3*q+1]+derCorrEnergyWithSigmaVal[3*q+1];
 						d_derExcWithSigmaTimesGradRhoJxW[iElemCount*numberQuadraturePoints*3+3*q] = (term*gradRhoX + 0.5*termOff*gradRhoOtherX)*jxw;
@@ -1083,7 +1148,7 @@ namespace dftfe
 			d_vEffJxWDevice=d_vEffJxW;
 			d_derExcWithSigmaTimesGradRhoJxWDevice=d_derExcWithSigmaTimesGradRhoJxW;
 
-      if (dftParameters::isPseudopotential && !d_isStiffnessMatrixExternalPotCorrComputed)
+      if ((dftParameters::isPseudopotential || dftParameters::smearedNuclearCharges) && !d_isStiffnessMatrixExternalPotCorrComputed)
          computeVEffExternalPotCorr(externalPotCorrValues,externalPotCorrQuadratureId);      
 		}
 

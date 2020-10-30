@@ -229,7 +229,7 @@ void dftClass<FEOrder,FEOrderElectro>::compute_rhoOut(
 				isConsiderSpectrumSplitting,
 				false);
 #endif
-    normalizeRhoOutQuadValues();
+    //normalizeRhoOutQuadValues();
 
 		if (isGroundState && dftParameters::mixingMethod!="ANDERSON_WITH_KERKER")
 		{

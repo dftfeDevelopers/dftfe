@@ -145,9 +145,9 @@ namespace dftfe {
 			/**
 			 * @brief Does KSDFT problem pre-processing steps but without remeshing.
 			 */
-			void initNoRemesh(const bool updateImageKPoints = true,
-					const bool useSingleAtomSolution = false ,
-					const bool updateDensity=true);
+			void initNoRemesh(const bool updateImagesAndKPoints = true,
+					const bool useSingleAtomSolutionOverride = false ,
+					const bool useAtomicRhoSplitDensityUpdateForGeoOpt=true);
 
 			/**
 			 * @brief Selects between only electronic field relaxation or combined electronic and geometry relaxation
@@ -277,8 +277,8 @@ namespace dftfe {
 			 */
 			void updateAtomPositionsAndMoveMesh(const std::vector<Tensor<1,3,double> > & globalAtomsDisplacements,
 					const double maxJacobianRatioFactor,
-					const bool useSingleAtomSolutions=false,
-					const bool useAtomicRhoSplitDensityUpdate=true);
+					const bool useSingleAtomSolutionsOverride=false,
+					const bool useAtomicRhoSplitDensityUpdateForGeoOpt=true);
 
 
 			/**
@@ -296,28 +296,12 @@ namespace dftfe {
 			 */
 			void initImageChargesUpdateKPoints(bool flag=true);
 
-			/**
-			 */
-			void initPsiAndRhoFromPreviousGroundStatePsi(std::vector<std::vector<distributedCPUVec<double>>> eigenVectors);
-
-
-			/**
-			 * @brief interpolate rho quadrature data on current mesh from the ground state rho on previous mesh.
-			 * This is used whenver the mesh is changed due to atom movement.
-			 */
-			void initRhoFromPreviousGroundStateRho();
-
-			/**
-			 * @brief update previous mesh data structures which are required for interpolating wfc and
-			 * density during geometry optimization.
-			 */
-			void updatePrevMeshDataStructures();
 
 			void interpolateFieldsFromPrevToCurrentMesh(std::vector<distributedCPUVec<double>*> fieldsPrevious,
 					std::vector<distributedCPUVec<double>* > fieldsCurrent,
 					const dealii::FESystem<3> & FEPrev,
 					const dealii::FESystem<3> & FECurrent,
-					const dealii::ConstraintMatrix & constraintsCurrent);
+					const dealii::AffineConstraints<double> & constraintsCurrent);
 
 			/**
 			 *@brief project ground state electron density from previous mesh into
@@ -398,8 +382,8 @@ namespace dftfe {
 			 */
 			void initUnmovedTriangulation(parallel::distributed::Triangulation<3> & triangulation);
 			void initBoundaryConditions(const bool meshOnlyDeformed=false);
-			void initElectronicFields(const unsigned int usePreviousGroundStateFields=0);
-			void initPseudoPotentialAll(const bool meshOnlyDeformed=false);
+			void initElectronicFields();
+			void initPseudoPotentialAll(const bool updateNonlocalSparsity=true);
 
 			/**
 			 * create a dofHandler containing finite-element interpolating polynomial twice of the original polynomial
@@ -481,8 +465,8 @@ namespace dftfe {
 			 * to get an unique solution to the total electrostatic potential problem.
 			 *
 			 * @param[in] dofHandler
-			 * @param[in] constraintMatrixBase base ConstraintMatrix object
-			 * @param[out] constraintMatrix ConstraintMatrix object with homogeneous
+			 * @param[in] constraintMatrixBase base dealii::AffineConstraints<double> object
+			 * @param[out] constraintMatrix dealii::AffineConstraints<double> object with homogeneous
 			 * Dirichlet boundary condition entries added
 			 */
 			void locatePeriodicPinnedNodes(const dealii::DoFHandler<3> & _dofHandler,
@@ -491,6 +475,7 @@ namespace dftfe {
 
 			void initAtomicRho(distributedCPUVec<double> & atomicRhoNodal);
 			void initRho();
+      void initCoreRho();
 			void computeRhoInitialGuessFromPSI(std::vector<std::vector<distributedCPUVec<double>>> eigenVectors);
 			void clearRhoData();
 
@@ -527,7 +512,7 @@ namespace dftfe {
 					const unsigned int lpspQuadratureId,
 					const dealii::MatrixFree<3,double> & _matrix_free_data,
 					const unsigned int _phiExtDofHandlerIndex,
-					const dealii::ConstraintMatrix & phiExtConstraintMatrix,
+					const dealii::AffineConstraints<double> & phiExtConstraintMatrix,
 					const std::map<types::global_dof_index, Point<3> > & supportPoints,
 					const vselfBinsManager<FEOrder,FEOrderElectro> & vselfBinManager,
           distributedCPUVec<double> & phiExt,
@@ -545,7 +530,7 @@ namespace dftfe {
 			 * non-periodic boundary (boundary id==0).
 			 *
 			 * @param[in] dofHandler
-			 * @param[out] constraintMatrix ConstraintMatrix object with homogeneous
+			 * @param[out] constraintMatrix dealii::AffineConstraints<double> object with homogeneous
 			 * Dirichlet boundary condition entries added
 			 */
 			void applyHomogeneousDirichletBC(const dealii::DoFHandler<3> & _dofHandler,
@@ -640,9 +625,10 @@ namespace dftfe {
 			 */
 			void computeElectrostaticEnergyHRefined(
 #ifdef DFTFE_WITH_GPU
-					kohnShamDFTOperatorCUDAClass<FEOrder,FEOrderElectro> & kohnShamDFTEigenOperator,
+					kohnShamDFTOperatorCUDAClass<FEOrder,FEOrderElectro> & kohnShamDFTEigenOperator
 #endif
-					const bool computeForces=true);
+      );
+
 			/**
 			 *@brief Computes Fermi-energy obtained by imposing constraint on the number of electrons
 			 */
@@ -979,7 +965,7 @@ namespace dftfe {
 			//dft related objects
 			std::map<dealii::CellId, std::vector<double> > *rhoInValues, *rhoOutValues, *rhoInValuesSpinPolarized, *rhoOutValuesSpinPolarized;
 			std::deque<std::map<dealii::CellId,std::vector<double> >> rhoInVals, rhoOutVals, rhoInValsSpinPolarized, rhoOutValsSpinPolarized;
-      std::map<dealii::CellId, std::vector<double> > d_phiInValues;
+      std::map<dealii::CellId, std::vector<double> > d_phiInValues,d_phiOutValues;
 
 			distributedCPUVec<double> d_rhoInNodalValuesRead, d_rhoInNodalValues, d_rhoOutNodalValues, d_rhoOutNodalValuesSplit, d_preCondResidualVector, d_atomicRho, d_rhoNodalFieldRefined, d_rhoOutNodalValuesDistributed;
 			std::deque<distributedCPUVec<double>> d_rhoInNodalVals, d_rhoOutNodalVals;
@@ -1035,6 +1021,17 @@ namespace dftfe {
 			std::vector<std::vector<double> > d_localVselfs;
 
 			//nonlocal pseudopotential related objects used only for pseudopotential calculation
+      std::map<dealii::CellId, std::vector<double> > d_rhoCore;
+
+      std::map<dealii::CellId, std::vector<double> > d_gradRhoCore;
+
+      std::map<unsigned int,std::map<dealii::CellId, std::vector<double> > > d_gradRhoCoreAtoms;
+
+      std::map<dealii::CellId, std::vector<double> > d_hessianRhoCore;
+
+      std::map<unsigned int,std::map<dealii::CellId, std::vector<double> > > d_hessianRhoCoreAtoms;
+
+      double d_coreRhoTail = 8.0;
 
 			//
 			// Store the map between the "pseudo" wave function Id and the function Id details (i.e., global splineId, l quantum number, m quantum number)
@@ -1132,7 +1129,7 @@ namespace dftfe {
 		        std::vector<double> d_cellWaveFunctionMatrix;
 
 			/// global k index of lower bound of the local k point set
-			unsigned int lowerBoundKindex ;
+			unsigned int lowerBoundKindex=0;
 			/**
 			 * Recomputes the k point cartesian coordinates from the crystal k point coordinates
 			 * and the current lattice vectors, which can change in each ground state solve when
@@ -1141,7 +1138,11 @@ namespace dftfe {
 			void recomputeKPointCoordinates();
 
 			/// fermi energy
-			double fermiEnergy, fermiEnergyUp, fermiEnergyDown, d_groundStateEnergy, d_groundStateEnergyInitial;
+			double fermiEnergy, fermiEnergyUp, fermiEnergyDown, d_groundStateEnergy;
+      
+      double d_freeEnergyInitial;
+
+      double d_freeEnergy;
 
 			/// shadow potential energy in extended Lagrangian framework
 			double d_shadowPotentialEnergy;
@@ -1186,8 +1187,7 @@ namespace dftfe {
 					std::vector<double> & residualNormWaveFunctions,
 					const bool isSpectrumSplit=false,
 					const bool useMixedPrec=false,
-					const bool isFirstScf=false,
-					const bool useFullMassMatrixGEP=false);
+					const bool isFirstScf=false);
 
 
 #ifdef DFTFE_WITH_GPU
@@ -1201,8 +1201,7 @@ namespace dftfe {
 					const unsigned int numberRayleighRitzAvoidanceXLBOMDPasses=0,
 					const bool isSpectrumSplit=false,
 					const bool useMixedPrec=false,
-					const bool isFirstScf=false,
-					const bool useFullMassMatrixGEP=false);
+					const bool isFirstScf=false);
 #endif
 
 

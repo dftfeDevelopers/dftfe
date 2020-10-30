@@ -132,7 +132,7 @@ void dftClass<FEOrder,FEOrderElectro>::applyPeriodicBCHigherOrderNodes()
 	//
 	//modify constraintsNone to account for the bug in higher order nodes
 	//
-	ConstraintMatrix constraintsTemp(constraintsNone); constraintsNone.clear(); 
+	dealii::AffineConstraints<double> constraintsTemp(constraintsNone); constraintsNone.clear(); 
 	std::set<unsigned int> masterNodes;
 	double periodicPrecision = 1.0e-5;
 
@@ -248,7 +248,7 @@ void dftClass<FEOrder,FEOrderElectro>::applyPeriodicBCHigherOrderNodes()
 	//
 	//modify constraintsNone to account for the bug in higher order nodes for edge nodes
 	//
-	ConstraintMatrix constraintsTemp1(constraintsNone); constraintsNone.clear(); 
+	dealii::AffineConstraints<double> constraintsTemp1(constraintsNone); constraintsNone.clear(); 
 	std::vector<unsigned int> masterNodesForLocallyOwnedSlaveNodes; 
 
 	for(types::global_dof_index i = 0; i < dofHandler.n_dofs(); ++i)
@@ -384,7 +384,7 @@ void dftClass<FEOrder,FEOrderElectro>::applyPeriodicBCHigherOrderNodes()
 	//
 	//fix periodic match for two-component fields
 	//
-	ConstraintMatrix constraintsTempEigen(constraintsNoneEigen); constraintsNoneEigen.clear();
+	dealii::AffineConstraints<double> constraintsTempEigen(constraintsNoneEigen); constraintsNoneEigen.clear();
 
 	//
 	//fill temp masterNodes and slaveNodes set
@@ -596,7 +596,7 @@ void dftClass<FEOrder,FEOrderElectro>::applyPeriodicBCHigherOrderNodes()
 	//
 	//modify constraintsNoneEigen to account for bug in higher order nodes for edge nodes in two-field case
 	//
-	ConstraintMatrix constraintsTemp1Eigen(constraintsNoneEigen); constraintsNoneEigen.clear(); 
+	dealii::AffineConstraints<double> constraintsTemp1Eigen(constraintsNoneEigen); constraintsNoneEigen.clear(); 
 	std::vector<unsigned int> masterNodesForLocallyOwnedSlaveNodesEigen; 
 
 	for(types::global_dof_index i = 0; i < dofHandlerEigen.n_dofs(); ++i)

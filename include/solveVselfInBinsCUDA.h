@@ -38,7 +38,8 @@ namespace dftfe
 			 const unsigned int ghostSize,
 			 const unsigned int numberBins,
 			 const MPI_Comm & mpiComm,  
-			 double * xH);
+			 double * xH,
+       const bool isElectroFEOrderDifferentFromFEOrder=false);
 
 		void cgSolver(cublasHandle_t &handle,
 				dftUtils::constraintMatrixInfoCUDA & constraintsMatrixDataInfoCUDA,

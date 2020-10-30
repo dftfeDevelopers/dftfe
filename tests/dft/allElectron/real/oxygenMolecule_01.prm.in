@@ -14,6 +14,8 @@ subsection Geometry
 end
 
 subsection Boundary conditions
+  set SMEARED NUCLEAR CHARGES=false
+  set FLOATING NUCLEAR CHARGES=false
   set PERIODIC1                       = false
   set PERIODIC2                       = false
   set PERIODIC3                       = false
@@ -24,6 +26,7 @@ end
 subsection Finite element mesh parameters
   set POLYNOMIAL ORDER=2
   subsection Auto mesh generation parameters
+    set AUTO ADAPT BASE MESH SIZE=false
     set MESH SIZE AROUND ATOM  = 0.5
     set BASE MESH SIZE = 10.0
     set ATOM BALL RADIUS = 2.0
@@ -39,6 +42,8 @@ subsection DFT functional parameters
 end
 
 subsection SCF parameters
+   set COMPUTE ENERGY EACH ITER=false
+
   set MIXING HISTORY   = 5
   set MIXING PARAMETER = 0.2
   set CONSTRAINT MAGNETIZATION = true

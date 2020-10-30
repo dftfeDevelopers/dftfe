@@ -33,71 +33,72 @@
 #define xmlTodftfeParser_h
 
 namespace dftfe{
-	//
-	//Declare pseudoUtils function
-	//
+  //
+  //Declare pseudoUtils function
+  //
 
+  
+namespace pseudoUtils
+{
 
-	namespace pseudoUtils
-	{
+  /** 
+   *  @brief converts pseudopotential file from xml format to dftfe format
+   *
+   *  This class parses the xmlfile and identifies appropriate tags and converts
+   *  into file formats which can be read by dftfe code
+   *
+   *  @author Shukan Parekh, Phani Motamarri
+   */
+class xmlTodftfeParser{
 
-		/** 
-		 *  @brief converts pseudopotential file from xml format to dftfe format
-		 *
-		 *  This class parses the xmlfile and identifies appropriate tags and converts
-		 *  into file formats which can be read by dftfe code
-		 *
-		 *  @author Shukan Parekh, Phani Motamarri
-		 */
-		class xmlTodftfeParser{
+private:
+    xmlDoc *doc;
+    xmlNode *root;
+    double mesh_spacing;
+    std::vector<std::string> local_potential;
+    std::vector<std::string> density;
+    std::vector<std::string> coreDensity;
+    std::vector<std::string> mesh;
+    std::vector<std::tuple<size_t, size_t, std::vector<std::string>>> projectors;
+    std::vector<std::tuple<size_t, size_t, size_t, double>> d_ij;
+    
+    std::ofstream loc_pot;
+    std::ofstream dense;
+    std::ofstream denom;
+    std::ofstream l1;
+    std::ofstream l2;
+    std::ofstream l3;
+    std::ofstream ad_file;
+    std::ofstream pseudo;
+    
+public:
+    /**
+     * class constructor
+     */
+    xmlTodftfeParser();
 
-			private:
-				xmlDoc *doc;
-				xmlNode *root;
-				double mesh_spacing;
-				std::vector<std::string> local_potential;
-				std::vector<std::string> density;
-				std::vector<std::string> mesh;
-				std::vector<std::tuple<size_t, size_t, std::vector<std::string>>> projectors;
-				std::vector<std::tuple<size_t, size_t, size_t, double>> d_ij;
+    /**
+     * class destructor
+     */
+    ~xmlTodftfeParser();
 
-				std::ofstream loc_pot;
-				std::ofstream dense;
-				std::ofstream denom;
-				std::ofstream l1;
-				std::ofstream l2;
-				std::ofstream l3;
-				std::ofstream ad_file;
-				std::ofstream pseudo;
+    /**
+     * @brief parse a given xml pseudopotential file 
+     * 
+     * @param filePath location of the xml file
+     */
+    bool parseFile(const std::string & filePath);
 
-			public:
-				/**
-				 * class constructor
-				 */
-				xmlTodftfeParser();
+    /**
+     * @brief output the parsed xml pseudopotential file into dat files required by dftfe code
+     * 
+     * @param filePath location to write the data
+     */
+    bool outputData(const std::string & filePath);
 
-				/**
-				 * class destructor
-				 */
-				~xmlTodftfeParser();
+};
 
-				/**
-				 * @brief parse a given xml pseudopotential file 
-				 * 
-				 * @param filePath location of the xml file
-				 */
-				bool parseFile(const std::string & filePath);
-
-				/**
-				 * @brief output the parsed xml pseudopotential file into dat files required by dftfe code
-				 * 
-				 * @param filePath location to write the data
-				 */
-				bool outputData(const std::string & filePath);
-
-		};
-
-	}
+}
 
 }
 #endif /* parser_h */

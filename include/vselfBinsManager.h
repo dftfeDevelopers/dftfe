@@ -51,7 +51,7 @@ namespace dftfe {
 				 * @param[out] constraintsVector constraintsVector to which the vself bins solve constraint
 				 * matrices will be pushed back
 				 * @param[in] dofHandler DofHandler object
-				 * @param[in] constraintMatrix ConstraintMatrix which was used for the total electrostatics solve
+				 * @param[in] constraintMatrix dealii::AffineConstraints<double> which was used for the total electrostatics solve
 				 * @param[in] atomLocations global atom locations and charge values data
 				 * @param[in] imagePositions image atoms positions data
 				 * @param[in] imageIds image atoms Ids data
@@ -76,7 +76,7 @@ namespace dftfe {
 				 * @param[out] constraintsVector constraintsVector to which the vself bins solve constraint
 				 * matrices will be pushed back
 				 * @param[in] dofHandler DofHandler object
-				 * @param[in] constraintMatrix ConstraintMatrix which was used for the total electrostatics solve
+				 * @param[in] constraintMatrix dealii::AffineConstraints<double> which was used for the total electrostatics solve
 				 * @param[in] atomLocations global atom locations and charge values data
 				 * @param[in] imagePositions image atoms positions data
 				 * @param[in] imageIds image atoms Ids data
@@ -107,7 +107,7 @@ namespace dftfe {
 				void solveVselfInBins(const dealii::MatrixFree<3,double> & matrix_free_data,
 						const unsigned int offset,
             const unsigned int matrixFreeQuadratureIdAX,
-						const dealii::ConstraintMatrix & hangingPeriodicConstraintMatrix,
+						const dealii::AffineConstraints<double> & hangingPeriodicConstraintMatrix,
 						const std::vector<std::vector<double> > & imagePositions,
 						const std::vector<int> & imageIds,
 						const std::vector<double> & imageCharges,
@@ -140,7 +140,7 @@ namespace dftfe {
             const unsigned int matrixFreeQuadratureIdAX,
 						const unsigned int offset,
 						operatorDFTCUDAClass & operatorMatrix,
-						const dealii::ConstraintMatrix & hangingPeriodicConstraintMatrix,
+						const dealii::AffineConstraints<double> & hangingPeriodicConstraintMatrix,
 						const std::vector<std::vector<double> > & imagePositions,
 						const std::vector<int> & imageIds,
 						const std::vector<double> & imageCharges,
@@ -202,14 +202,14 @@ namespace dftfe {
 				 *
 				 */
 				void createAtomBinsSanityCheck(const dealii::DoFHandler<3> & dofHandler,
-						const dealii::ConstraintMatrix & onlyHangingNodeConstraints);
+						const dealii::AffineConstraints<double> & onlyHangingNodeConstraints);
 
 				/// storage for input atomLocations argument in createAtomBins function
 				std::vector<std::vector<double> >  d_atomLocations;
 
 
 				/// vector of constraint matrices for vself bins
-				std::vector<dealii::ConstraintMatrix> d_vselfBinConstraintMatrices;
+				std::vector<dealii::AffineConstraints<double>> d_vselfBinConstraintMatrices;
 
 				/// map of binIds and atomIds
 				std::map<int,std::set<int> > d_bins;

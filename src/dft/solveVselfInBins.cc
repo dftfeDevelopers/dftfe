@@ -134,11 +134,11 @@ namespace dftfe
         smearedChargeScaling[binAtomIdToGlobalAtomIdMapCurrentBin[iatom]]=1.0/smearedNuclearChargeIntegral[iatom];
       }
 
-      
-			//if (dealii::Utilities::MPI::this_mpi_process(mpi_communicator) ==0)
-			//	for (unsigned int iatom=0; iatom< numberDomainAtomsInBin; ++iatom)
-			//		std::cout<<"Smeared charge integral before scaling (charge val=1): "<<smearedNuclearChargeIntegral[iatom]<<std::endl;       
-      
+      /*
+			if (dealii::Utilities::MPI::this_mpi_process(mpi_communicator) ==0)
+				for (unsigned int iatom=0; iatom< numberDomainAtomsInBin; ++iatom)
+					std::cout<<"Smeared charge integral before scaling (charge val=1): "<<smearedNuclearChargeIntegral[iatom]<<std::endl;
+      */
 
 			std::vector<double> smearedNuclearChargeIntegralCheck(numberTotalAtomsInBin,0.0); 
 			cell = dofHandlerOfField.begin_active();
@@ -176,8 +176,7 @@ namespace dftfe
 					}
 
 				}
-
-      /* 
+      /*
 			MPI_Allreduce(MPI_IN_PLACE,
 					&smearedNuclearChargeIntegralCheck[0],
 					numberTotalAtomsInBin,
@@ -302,7 +301,10 @@ namespace dftfe
 					atomPointsBin[i][0] = d_atomLocations[atomsInCurrentBin[i]][2];
 					atomPointsBin[i][1] = d_atomLocations[atomsInCurrentBin[i]][3];
 					atomPointsBin[i][2] = d_atomLocations[atomsInCurrentBin[i]][4];
-					atomChargesBin[i]=d_atomLocations[atomsInCurrentBin[i]][1];
+          if (dftParameters::isPseudopotential)
+            atomChargesBin[i]=d_atomLocations[atomsInCurrentBin[i]][1];
+          else
+            atomChargesBin[i]=d_atomLocations[atomsInCurrentBin[i]][0]; 
 				}       
 
 				for (unsigned int i=0; i<imageIdsOfAtomsInCurrentBin.size(); ++i)
@@ -315,7 +317,10 @@ namespace dftfe
 					imagePoint[2]
 						= imagePositions[imageIdsOfAtomsInCurrentBin[i]][2];
 					atomPointsBin.push_back(imagePoint);
-					atomChargesBin.push_back(d_atomLocations[imageChargeIdsOfAtomsInCurrentBin[i]][1]);
+          if(dftParameters::isPseudopotential)
+            atomChargesBin.push_back(d_atomLocations[imageChargeIdsOfAtomsInCurrentBin[i]][1]);
+          else
+            atomChargesBin.push_back(d_atomLocations[imageChargeIdsOfAtomsInCurrentBin[i]][0]);            
           atomsInCurrentBin.push_back(imageIdsOfAtomsInCurrentBin[i]+ numberGlobalCharges);
 				}        
 
@@ -375,7 +380,7 @@ namespace dftfe
 
 				MPI_Barrier(MPI_COMM_WORLD);
 				init_time = MPI_Wtime() - init_time;
-				if (dftParameters::verbosity>=1)
+				if (dftParameters::verbosity>=4)
 					pcout<<" Time taken for vself field initialization for current bin: "<<init_time<<std::endl;
 
 				double vselfinit_time;
@@ -417,7 +422,7 @@ namespace dftfe
 
 				MPI_Barrier(MPI_COMM_WORLD);
 				vselfinit_time = MPI_Wtime() - vselfinit_time;
-				if (dftParameters::verbosity>=1)
+				if (dftParameters::verbosity>=4)
 					pcout<<" Time taken for vself solver problem init for current bin: "<<vselfinit_time<<std::endl;
 
 				dealiiCGSolver.solve(vselfSolverProblem,
@@ -453,7 +458,7 @@ namespace dftfe
 
             MPI_Barrier(MPI_COMM_WORLD);
             vselfinit_time = MPI_Wtime() - vselfinit_time;
-            if (dftParameters::verbosity>=1)
+            if (dftParameters::verbosity>=4)
               pcout<<" Time taken for vself solver problem init for current bin: "<<vselfinit_time<<std::endl;         
 
             dealiiCGSolver.solve(vselfSolverProblem,
@@ -534,7 +539,7 @@ namespace dftfe
 
           MPI_Barrier(MPI_COMM_WORLD);
           selfenergy_time = MPI_Wtime() - selfenergy_time;
-          if (dftParameters::verbosity>=1)
+          if (dftParameters::verbosity>=4)
             pcout<<" Time taken for vself self energy for current bin: "<<selfenergy_time<<std::endl;          
 
 				}
@@ -689,7 +694,10 @@ namespace dftfe
 					atomPointsBin[i][0] = d_atomLocations[atomsInCurrentBin[i]][2];
 					atomPointsBin[i][1] = d_atomLocations[atomsInCurrentBin[i]][3];
 					atomPointsBin[i][2] = d_atomLocations[atomsInCurrentBin[i]][4];
-					atomChargesBin[i]=d_atomLocations[atomsInCurrentBin[i]][1];
+          if (dftParameters::isPseudopotential)
+            atomChargesBin[i]=d_atomLocations[atomsInCurrentBin[i]][1];
+          else
+            atomChargesBin[i]=d_atomLocations[atomsInCurrentBin[i]][0];            
 				}       
 
 				for (unsigned int i=0; i<imageIdsOfAtomsInCurrentBin.size(); ++i)
@@ -702,7 +710,10 @@ namespace dftfe
 					imagePoint[2]
 						= imagePositions[imageIdsOfAtomsInCurrentBin[i]][2];
 					atomPointsBin.push_back(imagePoint);
-					atomChargesBin.push_back(d_atomLocations[imageChargeIdsOfAtomsInCurrentBin[i]][1]);
+          if(dftParameters::isPseudopotential)
+            atomChargesBin.push_back(d_atomLocations[imageChargeIdsOfAtomsInCurrentBin[i]][1]);
+          else
+            atomChargesBin.push_back(d_atomLocations[imageChargeIdsOfAtomsInCurrentBin[i]][0]);  
           atomsInCurrentBin.push_back(imageIdsOfAtomsInCurrentBin[i]+ numberGlobalCharges);
 				}        
 
@@ -725,7 +736,7 @@ namespace dftfe
 
 				MPI_Barrier(MPI_COMM_WORLD);
 				smeared_init_time = MPI_Wtime() - smeared_init_time;
-				if (dftParameters::verbosity>=1)
+				if (dftParameters::verbosity>=4)
 					pcout<<" Time taken for smeared charge initialization for current bin: "<<smeared_init_time<<std::endl;
 
 				//rhs contribution from static condensation of dirichlet boundary conditions
@@ -807,7 +818,7 @@ namespace dftfe
         else
           for (std::map<dealii::types::global_dof_index, double>::const_iterator it=d_atomsInBin[iBin].begin(); it!=d_atomsInBin[iBin].end(); ++it)
           {
-            std::vector<dealii::ConstraintMatrix::size_type> local_dof_indices_origin(1, it->first); //atomic node
+            std::vector<dealii::AffineConstraints<double>::size_type> local_dof_indices_origin(1, it->first); //atomic node
             dealii::Vector<double> cell_rhs_origin (1);
             cell_rhs_origin(0)=-(it->second); //atomic charge
 
@@ -979,7 +990,7 @@ namespace dftfe
 
 			MPI_Barrier(MPI_COMM_WORLD);
 			time = MPI_Wtime() - time;
-			if (dftParameters::verbosity >= 2 && this_mpi_process==0)
+			if (dftParameters::verbosity >= 4 && this_mpi_process==0)
 				std::cout<<"Solve vself in bins: time for smeared charge initialization, compute rhs and diagonal: "<<time<<std::endl;
 
 			MPI_Barrier(MPI_COMM_WORLD);
@@ -999,11 +1010,12 @@ namespace dftfe
 				 ghostSize,
 				 numberPoissonSolves,
 				 mpi_communicator,
-				 &vselfBinsFieldsFlattened[0]);
+				 &vselfBinsFieldsFlattened[0],
+         FEOrderElectro!=FEOrder?true:false);
 
 			MPI_Barrier(MPI_COMM_WORLD);
 			time = MPI_Wtime() - time;
-			if (dftParameters::verbosity >= 2 && this_mpi_process==0)
+			if (dftParameters::verbosity >= 4 && this_mpi_process==0)
 				std::cout<<"Solve vself in bins: time for poissonCUDA::solveVselfInBins : "<<time<<std::endl; 
 
 			MPI_Barrier(MPI_COMM_WORLD);
@@ -1129,7 +1141,7 @@ namespace dftfe
 
           MPI_Barrier(MPI_COMM_WORLD);
           selfenergy_time = MPI_Wtime() - selfenergy_time;
-          if (dftParameters::verbosity>=1)
+          if (dftParameters::verbosity>=4)
             pcout<<" Time taken for vself self energy for current bin: "<<selfenergy_time<<std::endl;          
 
 				}
@@ -1149,7 +1161,7 @@ namespace dftfe
 
 			MPI_Barrier(MPI_COMM_WORLD);
 			time = MPI_Wtime() - time;
-			if (dftParameters::verbosity >= 2 && this_mpi_process==0)
+			if (dftParameters::verbosity >= 4 && this_mpi_process==0)
 				std::cout<<"Solve vself in bins: time for updating d_vselfFieldBins : "<<time<<std::endl; 
 		}
 #endif

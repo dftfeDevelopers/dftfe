@@ -234,7 +234,7 @@ void dftClass<FEOrder,FEOrderElectro>::interpolateFieldsFromPrevToCurrentMesh(st
 		std::vector<distributedCPUVec<double>* > fieldsCurrent,
 		const dealii::FESystem<3> & FEPrev,
 		const dealii::FESystem<3> & FECurrent,
-		const dealii::ConstraintMatrix & constraintsCurrent)
+		const dealii::AffineConstraints<double> & constraintsCurrent)
 
 {
 	vectorTools::interpolateFieldsFromPreviousMesh interpolateFromPrev(mpi_communicator);

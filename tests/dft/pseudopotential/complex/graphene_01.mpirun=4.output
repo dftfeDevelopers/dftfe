@@ -15,12 +15,15 @@ v3 : 0.000000000000000000e+00 0.000000000000000000e+00 5.000000000000000000e+01
 AtomId 0:  3.333333332999999787e-01 3.333333333330000259e-01 5.000000000000000000e-01
 AtomId 1:  6.666666665999999575e-01 6.666666666660000518e-01 5.000000000000000000e-01
 -----------------------------------------------------------------------------------------
-Number Image Charges  620
+Number Image Charges  360
 
 Finite element mesh information
 -------------------------------------------------
+FE interpolating polynomial order for Kohn-Sham eigenvalue problem: 2
+FE interpolating polynomial order for electrostatics solve: 2
+FE interpolating polynomial order for nodal electron density computation: 4
 number of elements: 1768
-number of degrees of freedom: 17475
+number of degrees of freedom for the Kohn-Sham eigenvalue problem : 17475
 -------------------------------------------------
 
 Setting initial guess for wavefunctions....
@@ -34,4 +37,4 @@ SCF iterations converged to the specified tolerance after: 10 iterations.
 
 Energy computations (Hartree) 
 -------------------
-             Total energy:         -11.41386717
+             Total energy:         -11.40253043

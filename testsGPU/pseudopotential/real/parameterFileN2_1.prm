@@ -1,7 +1,6 @@
 set VERBOSITY=0
 set REPRODUCIBLE OUTPUT=true
-set H REFINED ELECTROSTATICS = true
-
+set H REFINED ELECTROSTATICS=true
 subsection GPU
   set USE GPU = true
   set AUTO GPU BLOCK SIZES=false
@@ -12,11 +11,13 @@ subsection Geometry
   set ATOMIC COORDINATES FILE      = coordinates.inp 
   set DOMAIN VECTORS FILE = domainVectors.inp
   subsection Optimization
-    set ION FORCE = true
+    set ION FORCE = false
   end
 end
 
 subsection Boundary conditions
+  set SMEARED NUCLEAR CHARGES=false
+  set FLOATING NUCLEAR CHARGES=false
   set PERIODIC1                       = false
   set PERIODIC2                       = false
   set PERIODIC3                       = false
@@ -28,8 +29,10 @@ end
 subsection Finite element mesh parameters
   set POLYNOMIAL ORDER=2
   subsection Auto mesh generation parameters
-    set AUTO USER MESH PARAMS = true
-    set MESH SIZE AROUND ATOM = 1.0
+    set AUTO ADAPT BASE MESH SIZE=false
+    set MESH SIZE AROUND ATOM = 0.7
+    set ATOM BALL RADIUS=2.0
+    set BASE MESH SIZE        = 10.0
   end
 end
 
@@ -51,7 +54,7 @@ subsection SCF parameters
   set TOLERANCE                        = 1e-5
   set STARTING WFC                     = ATOMIC
   subsection Eigen-solver parameters
-      set CHEBYSHEV POLYNOMIAL DEGREE=10
+      set CHEBYSHEV POLYNOMIAL DEGREE=15
       set NUMBER OF KOHN-SHAM WAVEFUNCTIONS = 8
       set SUBSPACE ROT DOFS BLOCK SIZE        = 2000
       set WFC BLOCK SIZE=2
@@ -60,7 +63,6 @@ subsection SCF parameters
       set USE ELPA=true
       set SCALAPACKPROCS=2
       set RR GEP=true
-      set RR GEP FULL MASS MATRIX=false
       set OVERLAP COMPUTE COMMUN ORTHO RR=false
       set OVERLAP COMPUTE COMMUN CHEBY=false
   end

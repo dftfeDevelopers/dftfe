@@ -345,69 +345,6 @@ void kohnShamDFTOperatorClass<FEOrder,FEOrderElectro>::computeLocalHamiltonianTi
 }
 
 
-
-template<unsigned int FEOrder,unsigned int FEOrderElectro>
-void kohnShamDFTOperatorClass<FEOrder,FEOrderElectro>::computeMassMatrixTimesX(const distributedCPUVec<double> & src,
-		                                                               const unsigned int numberWaveFunctions,
-	                                                                       distributedCPUVec<double> & dst) const
-{
-	const unsigned int kpointSpinIndex=(1+dftParameters::spinPolarized)*d_kPointIndex+d_spinIndex;
-	//
-	//element level matrix-vector multiplications
-	//
-	const char transA = 'N',transB = 'N';
-	const double scalarCoeffAlpha = 1.0,scalarCoeffBeta = 0.0;
-	const unsigned int inc = 1;
-
-	std::vector<double> cellWaveFunctionMatrix(d_numberNodesPerElement*numberWaveFunctions,0.0);
-	std::vector<double> cellMassMatrixTimesWaveMatrix(d_numberNodesPerElement*numberWaveFunctions,0.0);
-
-	unsigned int iElem = 0;
-	for(unsigned int iMacroCell = 0; iMacroCell < d_numberMacroCells; ++iMacroCell)
-	{
-		for(unsigned int iCell = 0; iCell < d_macroCellSubCellMap[iMacroCell]; ++iCell)
-		{
-			for(unsigned int iNode = 0; iNode < d_numberNodesPerElement; ++iNode)
-			{
-				dealii::types::global_dof_index localNodeId = d_flattenedArrayMacroCellLocalProcIndexIdMap[iElem][iNode];
-				dcopy_(&numberWaveFunctions,
-				       src.begin()+localNodeId,
-				       &inc,
-				       &cellWaveFunctionMatrix[numberWaveFunctions*iNode],
-				       &inc);
-			}
-
-			dgemm_(&transA,
-			       &transB,
-			       &numberWaveFunctions,
-			       &d_numberNodesPerElement,
-			       &d_numberNodesPerElement,
-			       &scalarCoeffAlpha,
-			       &cellWaveFunctionMatrix[0],
-			       &numberWaveFunctions,
-			       &d_cellMassMatrix[iElem][0],
-			       &d_numberNodesPerElement,
-			       &scalarCoeffBeta,
-			       &cellMassMatrixTimesWaveMatrix[0],
-			       &numberWaveFunctions);
-
-			for(unsigned int iNode = 0; iNode < d_numberNodesPerElement; ++iNode)
-			{
-				dealii::types::global_dof_index localNodeId = d_flattenedArrayMacroCellLocalProcIndexIdMap[iElem][iNode];
-				daxpy_(&numberWaveFunctions,
-						&scalarCoeffAlpha,
-						&cellMassMatrixTimesWaveMatrix[numberWaveFunctions*iNode],
-						&inc,
-						dst.begin()+localNodeId,
-						&inc);
-			}
-
-			++iElem;
-		}//subcell loop
-	}//macrocell loop
-
-}
-
 #ifdef WITH_MKL
 template<unsigned int FEOrder,unsigned int FEOrderElectro>
 void kohnShamDFTOperatorClass<FEOrder,FEOrderElectro>::computeLocalHamiltonianTimesXBatchGEMM (const distributedCPUVec<double> & src,

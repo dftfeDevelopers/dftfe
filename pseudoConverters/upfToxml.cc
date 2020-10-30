@@ -141,7 +141,8 @@ namespace dftfe
 
 
 		int upfToxml(const std::string & inputFileName, 
-				const std::string & outputFileName)
+			     const std::string & outputFileName,
+			     unsigned int & nlccFlag)
 		{
 
 			dealii::ConditionalOStream   pcout(std::cout, (dealii::Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0));
@@ -240,7 +241,8 @@ namespace dftfe
 				std::string upf_nlcc_flag = get_attr(tag,"core_correction");
 				if ( upf_nlcc_flag == "T" )
 				{
-					std::cerr << " Potential includes a non-linear core correction" << std::endl;
+				  //std::cerr << " Potential includes a non-linear core correction" << std::endl;
+					nlccFlag = 1;
 				}
 				//std::cerr << " upf_nlcc_flag = " << upf_nlcc_flag << std::endl;
 
@@ -314,16 +316,7 @@ namespace dftfe
 				find_end_element("PP_RAB",upfFile);
 				find_end_element("PP_MESH",upfFile);
 
-				// NLCC
-				std::vector<double> upf_nlcc;
-				if ( upf_nlcc_flag == "T" )
-				{
-					find_start_element("PP_NLCC",upfFile);
-					upf_nlcc.resize(upf_mesh_size);
-					for ( int i = 0; i < upf_mesh_size; i++ )
-						upfFile >> upf_nlcc[i];
-					find_end_element("PP_NLCC",upfFile);
-				}
+			
 
 				find_start_element("PP_LOCAL",upfFile);
 				std::vector<double> upf_vloc(upf_mesh_size);
@@ -418,6 +411,17 @@ namespace dftfe
 
 				find_end_element("PP_NONLOCAL",upfFile);
 
+				// NLCC
+				std::vector<double> upf_nlcc;
+				if ( upf_nlcc_flag == "T" )
+				{
+					find_start_element("PP_NLCC",upfFile);
+					upf_nlcc.resize(upf_mesh_size);
+					for ( int i = 0; i < upf_mesh_size; i++ )
+						upfFile >> upf_nlcc[i];
+					find_end_element("PP_NLCC",upfFile);
+				}
+
 				find_start_element("PP_RHOATOM",upfFile);
 				std::vector<double> upf_den(upf_mesh_size);
 				for ( int i = 0; i < upf_mesh_size; i++ )
@@ -447,39 +451,7 @@ namespace dftfe
 
 				if(pseudo_type == "NC" || pseudo_type == "SL")
 				{
-					//std::cerr << " NC potential" << std::endl;
-					// output original data in file upf.dat
-					/*std::ofstream upf("upf.dat");
-					  upf << "# vloc" << std::endl;
-					  for ( int i = 0; i < upf_vloc.size(); i++ )
-					  upf << upf_r[i] << " " << upf_vloc[i] << std::endl;
-					  upf << std::endl << std::endl;
-					  for ( int j = 0; j < upf_nproj; j++ )
-					  {
-					  upf << "# proj j=" << j << std::endl;
-					  for ( int i = 0; i < upf_vnl[j].size(); i++ )
-					  upf << upf_r[i] << " " << upf_vnl[j][i] << std::endl;
-					  upf << std::endl << std::endl;
-					  }
-
-					  upf << "# dij " << std::endl;
-					  for ( int j = 0; j < upf_d.size(); j++ )
-					  {
-					  upf << j << " " << upf_d[j] << std::endl;
-					  }
-					  upf.close();*/
-
-					// print summary
-					/*std::cerr << "PP_INFO:" << std::endl << upf_pp_info << std::endl;
-					  std::cerr << "Element: " << upf_symbol << std::endl;
-					  std::cerr << "NLCC: " << upf_nlcc_flag << std::endl;
-					// std::cerr << "XC: " << upf_xcf[0] << " " << upf_xcf[1] << " "
-					//      << upf_xcf[2] << " " << upf_xcf[3] << std::endl;
-					std::cerr << "Zv: " << upf_zval << std::endl;
-					std::cerr << "lmax: " << qso_lmax << std::endl;
-					std::cerr << "nproj: " << upf_nproj << std::endl;
-					std::cerr << "mesh_size: " << upf_mesh_size << std::endl;*/
-
+				
 					// interpolate functions on linear mesh
 					int nplin = upf_mesh_size;
 
@@ -528,19 +500,7 @@ namespace dftfe
 						}
 					}
 
-					// write local potential and projectors in gnuplot format on file vlin.dat
-					/*std::ofstream vlin("vlin.dat");
-					  vlin << "# vlocal" << std::endl;
-					  for ( int i = 0; i < nplin; i++ )
-					  vlin << vloc_lin[i] << std::endl;
-					  vlin << std::endl << std::endl;
-					  for ( int iproj = 0; iproj < vnl_lin.size(); iproj++ )
-					  {
-					  vlin << "# projector, l=" << upf_proj_l[iproj] << std::endl;
-					  for ( int i = 0; i < nplin; i++ )
-					  vlin << upf_r[i] << " " << vnl_lin[iproj][i] << std::endl;
-					  vlin << std::endl << std::endl;
-					  }*/
+				
 
 					// Generate XML file
 
@@ -649,6 +609,18 @@ namespace dftfe
 						if(count3 % 4 == 0) xmlFile << std::endl;
 					}
 					xmlFile << "</atom_density>" << std::endl;
+
+					if(upf_nlcc_flag == "T" )
+					  {
+					    xmlFile << "<core_charge size=\"" << nplin << "\">" << std::endl;
+					    int count4 = 0;
+					    for(int i = 0; i < nplin; i++ ){
+					      count4 += 1;
+					      xmlFile << std::setprecision(14) << upf_nlcc[i] << "   ";
+					      if(count4 % 4 == 0) xmlFile << std::endl;
+					    }
+					    xmlFile << "</core_charge>" << std::endl;
+					  }
 
 
 					xmlFile << "<mesh size=\"" << nplin << "\">" << std::endl;

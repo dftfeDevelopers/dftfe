@@ -43,6 +43,7 @@ namespace dftfe {
 		pcout(std::cout, (dealii::Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0))
 	{
 		d_isCGRestartDueToLargeIncrement=false;
+    d_useSingleAtomSolutionsInitialGuess=false;
 	}
 
 	//
@@ -230,16 +231,16 @@ namespace dftfe {
 				data.push_back(std::vector<double>(1,d_conjugateDirection[i]));
 
 			for (unsigned int i=0; i< d_steepestDirectionOld.size();++i)
-				data.push_back(std::vector<double>(1,d_steepestDirectionOld[i]));        
-        
-      data.push_back(std::vector<double>(1,d_lineSearchDampingParameter));
+				data.push_back(std::vector<double>(1,d_steepestDirectionOld[i]));    
+
       data.push_back(std::vector<double>(1,d_alphaChk));
       data.push_back(std::vector<double>(1,d_etaPChk));
       data.push_back(std::vector<double>(1,d_etaChk));   
       data.push_back(std::vector<double>(1,d_lineSearchRestartIterChk)); 
-      data.push_back(std::vector<double>(1,d_functionValueChk));  
+      data.push_back(std::vector<double>(1,d_functionValueChk)); 
+      data.push_back(std::vector<double>(1,d_etaAlphaZeroChk));        
 
-      if (d_lineSearchRestartIterChk>1)
+      if (d_lineSearchRestartIterChk>=1)
         data.push_back(std::vector<double>(1,d_functionalValueAfterAlphUpdateChk));  
 
 			dftUtils::writeDataIntoFile(data,
@@ -261,20 +262,24 @@ namespace dftfe {
 				d_conjugateDirection[i]=data[i][0];
 
       d_steepestDirectionOld.resize(d_numberUnknowns);
+      d_gradient.resize(d_numberUnknowns);
 			for (unsigned int i=0; i< d_numberUnknowns;++i)
-				d_steepestDirectionOld[i]=data[i][0];
+      {
+				d_steepestDirectionOld[i]=data[d_numberUnknowns+i][0];
+        d_gradient[i]=-data[d_numberUnknowns+i][0];
+      }
 
-      d_lineSearchDampingParameter= data[2*d_numberUnknowns][0];
-      d_alphaChk= data[2*d_numberUnknowns+1][0];
-      d_etaPChk= data[2*d_numberUnknowns+2][0];
-      d_etaChk= data[2*d_numberUnknowns+3][0];
-      d_lineSearchRestartIterChk= data[2*d_numberUnknowns+4][0];
-      d_functionValueChk= data[2*d_numberUnknowns+5][0]; 
+      d_alphaChk= data[2*d_numberUnknowns][0];
+      d_etaPChk= data[2*d_numberUnknowns+1][0];
+      d_etaChk= data[2*d_numberUnknowns+2][0];
+      d_lineSearchRestartIterChk= data[2*d_numberUnknowns+3][0];
+      d_functionValueChk= data[2*d_numberUnknowns+4][0];
+      d_etaAlphaZeroChk= data[2*d_numberUnknowns+5][0]; 
 
-      if (d_lineSearchRestartIterChk>1)
+      if (d_lineSearchRestartIterChk>=1)
         d_functionalValueAfterAlphUpdateChk= data[2*d_numberUnknowns+6][0]; 
 
-      if (d_lineSearchRestartIterChk>1)
+      if (d_lineSearchRestartIterChk>=1)
       {
         AssertThrow (data.size()== (2*d_numberUnknowns+7),dealii::ExcMessage (std::string("DFT-FE Error: data size of cg solver checkpoint file is incorrect.")));
       }
@@ -399,7 +404,11 @@ namespace dftfe {
 			//
 			// call solver problem update
 			//
-			problem.update(incrementVector);
+			problem.update(incrementVector,
+                     true,
+                     d_useSingleAtomSolutionsInitialGuess);
+
+      d_useSingleAtomSolutionsInitialGuess=false;
 
 			//
 			//
@@ -425,7 +434,7 @@ namespace dftfe {
 			//
 			const double toleranceSqr = tolerance*tolerance;
 			std::vector<double> tempFuncValueVector;
-      double eta, etaP, functionValue, alpha, alphaNew, functionalValueAfterAlphUpdate;
+      double eta, etaP, etaAlphaZero, functionValue, alpha, alphaNew, functionalValueAfterAlphUpdate;
 
 			//
 			//constants used in Wolfe conditions
@@ -439,9 +448,10 @@ namespace dftfe {
       {
         //fill checkpoint data
         functionValue=d_functionValueChk;
-        if (startingIter>1)
+        if (startingIter>=1)
            functionalValueAfterAlphUpdate=d_functionalValueAfterAlphUpdateChk;
         eta=d_etaChk;
+        etaAlphaZero=d_etaAlphaZeroChk;
         etaP=d_etaPChk;
         alpha=d_alphaChk;
       }
@@ -467,6 +477,8 @@ namespace dftfe {
         // compute delta_d and eta_p
         //
         etaP   = computeEta();
+
+        etaAlphaZero=etaP;
       }
 
       if (startingIter==-1)
@@ -478,6 +490,7 @@ namespace dftfe {
         d_etaChk=etaP;
         d_etaPChk=etaP;
         d_alphaChk=alpha;
+        d_etaAlphaZeroChk=etaAlphaZero;
         d_lineSearchRestartIterChk=-1;
 
         if (!checkpointFileName.empty())
@@ -521,17 +534,6 @@ namespace dftfe {
           //
           eta = computeEta();
 
-          unsigned int isSuccess=0;
-          if (std::fabs(eta) < toleranceSqr*d_numberUnknowns)
-            isSuccess=1;
-          MPI_Bcast(&(isSuccess),
-              1,
-              MPI_INT,
-              0,
-              MPI_COMM_WORLD);
-          if (isSuccess==1)
-            return SUCCESS;
-
           //
           //swap eta and etaP to make the notation consistent to PRP algorithm in "Painless Conjugate Algorithm"
           //https://www.cs.cmu.edu/~quake-papers/painless-conjugate-gradient.pdf
@@ -543,19 +545,20 @@ namespace dftfe {
             etaP = temp;
           }
          
-          if(iter > 1)
+          if(iter >=1)
           {
             problem.value(tempFuncValueVector);
-            double functionalValueAfterAlphUpdate = tempFuncValueVector[0];
+            functionalValueAfterAlphUpdate = tempFuncValueVector[0];
           }
         }
 
         d_functionValueChk=functionValue;
-        if (iter>1)
+        if (iter>=1)
            d_functionalValueAfterAlphUpdateChk=functionalValueAfterAlphUpdate;
         d_etaChk=eta;
         d_etaPChk=etaP;
         d_alphaChk=alpha;
+        d_etaAlphaZeroChk=etaAlphaZero;        
         d_lineSearchRestartIterChk=iter;        
 
 				if (!checkpointFileName.empty())
@@ -566,11 +569,11 @@ namespace dftfe {
 				}
 
         //FIXME: check whether >1 or >=1 is the correct choice
-        if(iter > 1)
+        if(iter >=1)
         {
-          double condition1 = (functionalValueAfterAlphUpdate - functionValue) - (c1*alpha*etaP);
-          double condition2 = std::abs(eta) - c2*std::abs(etaP);
-          if(condition1 <= 1e-05 && condition2 <= 1e-05)
+          double condition1 = (functionalValueAfterAlphUpdate - functionValue) - (c1*alpha*etaAlphaZero);
+          double condition2 = std::abs(eta) - c2*std::abs(etaAlphaZero);
+          if(condition1 <= 1e-08 && condition2 <= 1e-08)
           {
             if (debugLevel >= 2)
               pcout << "Satisfied Wolfe condition: " << std::endl;
@@ -627,8 +630,6 @@ namespace dftfe {
 
 			}
 
-			d_lineSearchDampingParameter = alpha;
-
 			//
 			//
 			//
@@ -670,21 +671,24 @@ namespace dftfe {
 			d_steepestDirectionOld.resize(d_numberUnknowns);
 
 			//
-			// compute initial values of problem and problem gradient
-			//
-			problem.gradient(d_gradient);
-
-			//
 			// initialize delta new and direction
 			//
 			if (!restart)
+      {
+        //
+        // compute initial values of problem and problem gradient
+        //
+        problem.gradient(d_gradient);
+
 				initializeDirection();
+      }
 			else
 			{
 				load(checkpointFileName);
         MPI_Barrier(MPI_COMM_WORLD);
+        d_useSingleAtomSolutionsInitialGuess=true;
 
-				// compute deltaNew, and initialize steepestDirectionOld to current steepest direction
+				// compute deltaNew
 				d_deltaNew = 0.0;
 				d_gradMax=0.0;
 				for (unsigned int i = 0; i < d_numberUnknowns; ++i)

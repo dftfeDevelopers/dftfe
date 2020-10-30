@@ -36,18 +36,14 @@ namespace dftfe
 				const thrust::device_vector<double> & eigenValuesD,
 				const thrust::device_vector<double> & partialOccupanciesD,
 				const thrust::device_vector<double> & onesVecD,
-				const unsigned int innerBlockSizeEloc,
+				const unsigned int cellsBlockSize,
 				thrust::device_vector<double> & psiQuadsFlatD,
-				thrust::device_vector<double> & psiQuadsNLPFlatD,
 				thrust::device_vector<double> & gradPsiQuadsXFlatD,
 				thrust::device_vector<double> & gradPsiQuadsYFlatD,
 				thrust::device_vector<double> & gradPsiQuadsZFlatD,
-				thrust::device_vector<double> & gradPsiQuadsNLPXFlatD,
-				thrust::device_vector<double> & gradPsiQuadsNLPYFlatD,
-				thrust::device_vector<double> & gradPsiQuadsNLPZFlatD,        
+				thrust::device_vector<double> & gradPsiQuadsNLPFlatD,
 				thrust::device_vector<double> & eshelbyTensorContributionsD,
-				thrust::device_vector<double> & eshelbyTensorQuadValuesD,
-				const bool interpolateForNLPQuad=false);
+				thrust::device_vector<double> & eshelbyTensorQuadValuesD);
 
 
 		void nlpPsiContractionD(operatorDFTCUDAClass & operatorMatrix,
@@ -65,9 +61,7 @@ namespace dftfe
 				const unsigned int totalNonTrivialPseudoWfcs,
 				const unsigned int innerBlockSizeEnlp,
 				thrust::device_vector<double> & nlpContractionContributionD,
-				thrust::device_vector<double> & projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiXQuadsFlattenedD,
-        thrust::device_vector<double> & projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiYQuadsFlattenedD,
-        thrust::device_vector<double> & projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiZQuadsFlattenedD);
+				thrust::device_vector<double> & projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuadsFlattenedD);
 
 		void gpuPortedForceKernelsAllD(operatorDFTCUDAClass & operatorMatrix,
 				distributedGPUVec<double> & cudaFlattenedArrayBlock,
@@ -87,23 +81,17 @@ namespace dftfe
 				const unsigned int numNodesPerElement,
 				const unsigned int totalNonTrivialPseudoWfcs,
 				thrust::device_vector<double> & psiQuadsFlatD,
-				thrust::device_vector<double> & psiQuadsNLPFlatD,
 				thrust::device_vector<double> & gradPsiQuadsXFlatD,
 				thrust::device_vector<double> & gradPsiQuadsYFlatD,
 				thrust::device_vector<double> & gradPsiQuadsZFlatD,
-				thrust::device_vector<double> & gradPsiQuadsNLPXFlatD,
-				thrust::device_vector<double> & gradPsiQuadsNLPYFlatD,
-				thrust::device_vector<double> & gradPsiQuadsNLPZFlatD,        
+				thrust::device_vector<double> & gradPsiQuadsNLPFlatD,
 				thrust::device_vector<double> & eshelbyTensorContributionsD,
 				thrust::device_vector<double> & eshelbyTensorQuadValuesD,
 				thrust::device_vector<double> & nlpContractionContributionD,
-				thrust::device_vector<double> & projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiXQuadsFlattenedD,
-				thrust::device_vector<double> & projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiYQuadsFlattenedD,   
-				thrust::device_vector<double> & projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiZQuadsFlattenedD,        
-				const unsigned int innerBlockSizeEloc,
+				thrust::device_vector<double> & projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuadsFlattenedD,
+				const unsigned int cellsBlockSize,
 				const unsigned int innerBlockSizeEnlp,
-				const bool isPsp,
-				const bool interpolateForNLPQuad=false);
+				const bool isPsp);
 
 		void gpuPortedForceKernelsAllH(operatorDFTCUDAClass & operatorMatrix,
 				const double * X,
@@ -118,12 +106,9 @@ namespace dftfe
 				const unsigned int numNodesPerElement,
 				const unsigned int totalNonTrivialPseudoWfcs,
 				double * eshelbyTensorQuadValuesH,
-				double * projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiXQuadsFlattenedH,
-				double * projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiYQuadsFlattenedH,
-				double * projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiZQuadsFlattenedH,        
+				double * projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuadsFlattenedH,
 				const MPI_Comm & interBandGroupComm,
-				const bool isPsp,
-				const bool interpolateForNLPQuad=false);
+				const bool isPsp);
 	}
 }
 #endif

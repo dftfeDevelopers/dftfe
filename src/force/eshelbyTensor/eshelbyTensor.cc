@@ -171,7 +171,7 @@ namespace dftfe {
 			 const Tensor<1,C_DIM,VectorizedArray<double> > & derExcGradRho)
 			{
 
-				Tensor<2,C_DIM,VectorizedArray<double> > eshelbyTensor=-outer_product(derExcGradRho,gradRho);
+				Tensor<2,C_DIM,VectorizedArray<double> > eshelbyTensor=-outer_product(gradRho,derExcGradRho);
 				VectorizedArray<double> identityTensorFactor=exc*rho;
 
 
@@ -479,6 +479,21 @@ namespace dftfe {
 			}
 			return E;
 		}
+
+	  Tensor<1,C_DIM,VectorizedArray<double> >  getFNonlinearCoreCorrection(const VectorizedArray<double> & vxc,
+										const Tensor<1,C_DIM,VectorizedArray<double> > & gradRhoCore)
+
+	  {
+	    return vxc*gradRhoCore;
+	  }
+
+
+	  Tensor<1,C_DIM,VectorizedArray<double> >  getFNonlinearCoreCorrection(const Tensor<1,C_DIM,VectorizedArray<double> > & derExcGradRho,
+										const Tensor<2,C_DIM,VectorizedArray<double> > & hessianRhoCore)
+
+	  {
+	    return hessianRhoCore*derExcGradRho;
+	  }    
 	}
 
 }

@@ -45,7 +45,7 @@ namespace dftfe
 			 const dealii::FESystem<3> & FECurrent,
 			 const std::vector<distributedCPUVec<double>*> & fieldsPreviousMesh,
 			 std::vector<distributedCPUVec<double>*> & fieldsCurrentMesh,
-			 const dealii::ConstraintMatrix * constraintsCurrentPtr)
+			 const dealii::AffineConstraints<double> * constraintsCurrentPtr)
 			{
 				AssertThrow(FEPrev.components==FECurrent.components,dealii::ExcMessage("FEPrev and FECurrent must have the same number of components."));
 

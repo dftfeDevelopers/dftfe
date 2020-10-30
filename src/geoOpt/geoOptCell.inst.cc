@@ -1,13 +1,12 @@
 #ifdef DFTFE_MINIMAL_COMPILE
+template class geoOptCell<2,2>;
+template class geoOptCell<3,3>;
 template class geoOptCell<4,4>;
 template class geoOptCell<5,5>;
 template class geoOptCell<6,6>;
 template class geoOptCell<6,7>;
 template class geoOptCell<6,8>;
 template class geoOptCell<6,9>;
-template class geoOptCell<6,10>;
-template class geoOptCell<6,11>;
-template class geoOptCell<6,12>;
 #else
 template class geoOptCell<1,1>;
 template class geoOptCell<1,2>;

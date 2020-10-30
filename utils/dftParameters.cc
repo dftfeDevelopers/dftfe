@@ -42,7 +42,7 @@ namespace dftfe {
 
 		std::string coordinatesGaussianDispFile="";
 
-		double outerAtomBallRadius=2.0, innerAtomBallRadius=0.0, meshSizeOuterDomain=10.0;
+		double outerAtomBallRadius=2.5, innerAtomBallRadius=0.0, meshSizeOuterDomain=10.0;
 		double meshSizeInnerBall=1.0, meshSizeOuterBall=1.0;
 		unsigned int numLevels = 1,numberWaveFunctionsForEstimate = 5;
 		double topfrac = 0.1;
@@ -84,7 +84,6 @@ namespace dftfe {
 		bool reuseWfcGeoOpt=false;
 		bool reuseDensityGeoOpt=false;
 		double mpiAllReduceMessageBlockSizeMB=2.0;
-		bool useHigherQuadNLP=true;
 		bool useMixedPrecPGS_SR=false;
 		bool useMixedPrecPGS_O=false;
 		bool useAsyncChebPGS_SR = false;
@@ -99,8 +98,7 @@ namespace dftfe {
 		bool createConstraintsFromSerialDofhandler=true;
 		bool bandParalOpt=true;
 		bool rrGEP=false;
-		bool rrGEPFullMassMatrix=false;
-		bool autoUserMeshParams=false;
+		bool autoAdaptBaseMeshSize=true;
 		bool readWfcForPdosPspFile=false;
 		bool useGPU=false;
 		bool gpuFineGrainedTimings=false;
@@ -123,7 +121,6 @@ namespace dftfe {
 		double diracDeltaKernelScalingConstant=0.1;
 		unsigned int kernelUpdateRankXLBOMD=0;
 		unsigned int kmaxXLBOMD=8;
-		bool autoMeshStepInterpolateBOMD=false;
 		double ratioOfMeshMovementToForceGaussianBOMD=1.0;
 		bool useAtomicRhoXLBOMD=true;
 		bool useMeshSizesFromAtomsFile=false;
@@ -136,9 +133,10 @@ namespace dftfe {
 		bool xlbomdRRPassMixedPrec=false;
 		bool useDensityMatrixPerturbationRankUpdates=false;
 		double xlbomdKernelRankUpdateFDParameter=1e-2;
-		bool xlbomdStepTimingRun=false;
 		bool smearedNuclearCharges=false;
     bool floatingNuclearCharges=false;
+    bool nonLinearCoreCorrection=false;
+    unsigned int maxLineSearchIterCGPRP=5;
 
 		void declare_parameters(ParameterHandler &prm)
 		{
@@ -288,6 +286,9 @@ namespace dftfe {
 							Patterns::Selection("CGDESCENT|LBFGS|CGPRP"),
 							"[Standard] Method for Ion relaxation solver. CGPRP (Nonlinear conjugate gradient with Secant and Polak-Ribiere approach) is the default");
 
+					prm.declare_entry("MAX LINE SEARCH ITER", "5",
+							Patterns::Integer(1,100),
+							"[Standard] Sets the maximum number of line search iterations in the case of CGPRP. Default is 5.");
 
 					prm.declare_entry("FORCE TOL", "1e-4",
 							Patterns::Double(0,1.0),
@@ -357,13 +358,13 @@ namespace dftfe {
 						Patterns::Bool(),
 						"[Developer] Check constraints from serial dofHandler.");
 
-				prm.declare_entry("SMEARED NUCLEAR CHARGES", "false",
+				prm.declare_entry("SMEARED NUCLEAR CHARGES", "true",
 						Patterns::Bool(),
 						"[Developer] Nuclear charges are smeared for solving electrostatic fields.");  
 
-				prm.declare_entry("FLOATING NUCLEAR CHARGES", "false",
+				prm.declare_entry("FLOATING NUCLEAR CHARGES", "true",
 						Patterns::Bool(),
-						"[Developer] Nuclear charges are smeared for solving electrostatic fields.");          
+						"[Developer] Nuclear charges are allowed to float independent of the FEM mesh nodal positions. Only allowed for pseudopotential calculations. Internally set to false for all-electron calculations.");          
 
 			}
 			prm.leave_subsection ();
@@ -372,9 +373,9 @@ namespace dftfe {
 			prm.enter_subsection ("Finite element mesh parameters");
 			{
 
-				prm.declare_entry("POLYNOMIAL ORDER", "4",
+				prm.declare_entry("POLYNOMIAL ORDER", "6",
 						Patterns::Integer(1,12),
-						"[Standard] The degree of the finite-element interpolating polynomial in the Kohn-Sham Hamitonian except the electrostatics. Default value is 4. POLYNOMIAL ORDER= 4 or 5 is usually a good choice for most pseudopotential as well as all-electron problems.");
+						"[Standard] The degree of the finite-element interpolating polynomial in the Kohn-Sham Hamitonian except the electrostatics. Default value is 6 which is good choice for most pseudopotential calculations. POLYNOMIAL ORDER= 4 or 5 is usually a good choice for all-electron problems.");
 
 				prm.declare_entry("POLYNOMIAL ORDER ELECTROSTATICS", "0",
 						Patterns::Integer(0,24),
@@ -395,18 +396,18 @@ namespace dftfe {
 							Patterns::Double(0,20),
 							"[Advanced] Mesh size of the base mesh on which refinement is performed. For the default value of 0.0, a heuristically determined base mesh size is used, which is good enough for most cases. Standard users do not need to tune this parameter. Units: a.u.");
 
-					prm.declare_entry("ATOM BALL RADIUS","2.0",
+					prm.declare_entry("ATOM BALL RADIUS","0.0",
 							Patterns::Double(0,20),
-							"[Advanced] Radius of ball enclosing every atom, inside which the mesh size is set close to MESH SIZE AROUND ATOM. The default value of 2.0 is good enough for most cases. On rare cases, where the nonlocal pseudopotential projectors have a compact support beyond 2.0, a slightly larger ATOM BALL RADIUS between 2.0 to 2.5 may be required. Standard users do not need to tune this parameter. Units: a.u.");
+							"[Advanced] Radius of ball enclosing every atom, inside which the mesh size is set close to MESH SIZE AROUND ATOM. For the default value of 0.0, a heuristically determined value is used. Standard users do not need to tune this parameter. Units: a.u.");
 
 					prm.declare_entry("INNER ATOM BALL RADIUS","0.0",
 							Patterns::Double(0,20),
 							"[Advanced] Radius of ball enclosing every atom, inside which the mesh size is set close to MESH SIZE AT ATOM. Standard users do not need to tune this parameter. Units: a.u.");
 
 
-					prm.declare_entry("MESH SIZE AROUND ATOM", "0.8",
+					prm.declare_entry("MESH SIZE AROUND ATOM", "1.0",
 							Patterns::Double(0.0001,10),
-							"[Standard] Mesh size in a ball of radius ATOM BALL RADIUS around every atom. For pseudopotential calculations, a value between 0.5 to 1.0 is usually a good choice. For all-electron calculations, a value between 0.1 to 0.3 would be a good starting choice. In most cases, MESH SIZE AROUND ATOM is the only parameter to be tuned to achieve the desired accuracy in energy and forces with respect to the mesh refinement. Units: a.u.");
+							"[Standard] Mesh size in a ball of radius ATOM BALL RADIUS around every atom. For pseudopotential calculations, the value ranges between 0.5 to 2.5 depending on the cutoff energy for the pseudopotential. For all-electron calculations, a value between 0.1 to 0.3 would be a good starting choice. In most cases, MESH SIZE AROUND ATOM is the only parameter to be tuned to achieve the desired accuracy in energy and forces with respect to the mesh refinement. Units: a.u.");
 
 					prm.declare_entry("MESH SIZE AT ATOM", "0.0",
 							Patterns::Double(0.0,10),
@@ -416,9 +417,9 @@ namespace dftfe {
 							Patterns::Bool(),
 							"[Standard] Generates adaptive mesh based on a-posteriori mesh adaption strategy using single atom wavefunctions before computing the ground-state. Default: false.");
 
-					prm.declare_entry("AUTO USER MESH PARAMS","false",
+					prm.declare_entry("AUTO ADAPT BASE MESH SIZE","true",
 							Patterns::Bool(),
-							"[Standard] Except MESH SIZE AROUND ATOM, all other user defined mesh parameters are heuristically set. Default: false.");
+							"[Developer] Automatically adapt the BASE MESH SIZE such that subdivisions of that during refinement leads closest to the desired MESH SIZE AROUND ATOM. Default: true.");
 
 
 					prm.declare_entry("TOP FRAC", "0.1",
@@ -581,10 +582,6 @@ namespace dftfe {
 						Patterns::Bool(),
 						"[Advanced] Boolean parameter specifying whether to compute the total energy at the end of every SCF. Setting it to false can lead to some computational time savings.");
 
-				prm.declare_entry("HIGHER QUAD NLP", "true",
-						Patterns::Bool(),
-						"[Advanced] Boolean parameter specifying whether to use a higher order quadrature rule for the calculations involving the non-local part of the pseudopotential. Default setting is true. Could be safely set to false if you are using a very refined mesh.");
-
 				prm.enter_subsection ("Eigen-solver parameters");
 				{
 					prm.declare_entry("NUMBER OF KOHN-SHAM WAVEFUNCTIONS", "1",
@@ -601,9 +598,6 @@ namespace dftfe {
 
 					prm.declare_entry("RR GEP", "true",
 							Patterns::Bool(),"[Advanced] Solve generalized eigenvalue problem instead of standard eignevalue problem in Rayleigh-Ritz step. This approach is not extended yet to complex executable. Default value is true for real executable and false for complex executable.");
-
-					prm.declare_entry("RR GEP FULL MASS MATRIX", "false",
-							Patterns::Bool(),"[Advanced] Solve generalized eigenvalue problem instead of standard eignevalue problem in Rayleigh-Ritz step with finite-element overlap matrix evaluated using full quadrature rule (Gauss quadrature rule) only during the solution of the generalized eigenvalue problem in the RR step.  Default value is false.");
 
 					prm.declare_entry("LOWER BOUND WANTED SPECTRUM", "-10.0",
 							Patterns::Double(),
@@ -811,10 +805,6 @@ namespace dftfe {
 						Patterns::Integer(0),
 						"[Standard] Number of starting chebsyev filtering passes without Rayleigh Ritz in XL BOMD.");
 
-				prm.declare_entry("AUTO MESH STEP INTERPOLATE BOMD", "false",
-						Patterns::Bool(),
-						"[Standard] Perform interpolation of previous density to new auto mesh.");  
-
 				prm.declare_entry("RATIO MESH MOVEMENT TO FORCE GAUSSIAN", "1.0",
 						Patterns::Double(0.0),
 						"[Standard] Ratio of mesh movement to force Gaussian."); 
@@ -834,10 +824,6 @@ namespace dftfe {
 				prm.declare_entry("DENSITY MATRIX PERTURBATION RANK UPDATES XL BOMD", "false",
 						Patterns::Bool(),
 						"[Standard] Use density matrix perturbation theory for rank updates.");
-
-				prm.declare_entry("XL BOMD STEP TIMING RUN", "false",
-						Patterns::Bool(),
-						"[Standard] Time one XL BOMD md step for performance measurements.");
 
 				prm.declare_entry("XL BOMD KERNEL RANK UPDATE FD PARAMETER", "1e-2",
 						Patterns::Double(0.0),
@@ -906,6 +892,7 @@ namespace dftfe {
 				{
 					dftParameters::isIonOpt                      = prm.get_bool("ION OPT");
 					dftParameters::ionOptSolver                  = prm.get("ION OPT SOLVER");
+				  dftParameters::maxLineSearchIterCGPRP        = prm.get_integer("MAX LINE SEARCH ITER");          
 					dftParameters::nonSelfConsistentForce        = prm.get_bool("NON SELF CONSISTENT FORCE");
 					dftParameters::isIonForce                    = dftParameters::isIonOpt || prm.get_bool("ION FORCE");
 					dftParameters::forceRelaxTol                 = prm.get_double("FORCE TOL");
@@ -949,7 +936,7 @@ namespace dftfe {
 					dftParameters::meshSizeInnerBall             = prm.get_double("MESH SIZE AT ATOM");
 					dftParameters::meshSizeOuterBall             = prm.get_double("MESH SIZE AROUND ATOM");
 					dftParameters::meshAdaption                  = prm.get_bool("MESH ADAPTION");
-					dftParameters::autoUserMeshParams            = prm.get_bool("AUTO USER MESH PARAMS");
+					dftParameters::autoAdaptBaseMeshSize         = prm.get_bool("AUTO ADAPT BASE MESH SIZE");
 					dftParameters::topfrac                       = prm.get_double("TOP FRAC");
 					dftParameters::numLevels                     = prm.get_double("NUM LEVELS");
 					dftParameters::numberWaveFunctionsForEstimate = prm.get_integer("ERROR ESTIMATE WAVEFUNCTIONS");
@@ -1007,7 +994,6 @@ namespace dftfe {
 				dftParameters::constraintMagnetization       = prm.get_bool("CONSTRAINT MAGNETIZATION");
 				dftParameters::startingWFCType               = prm.get("STARTING WFC");
 				dftParameters::computeEnergyEverySCF         = prm.get_bool("COMPUTE ENERGY EACH ITER");
-				dftParameters::useHigherQuadNLP              = prm.get_bool("HIGHER QUAD NLP");
 
 
 				prm.enter_subsection ("Eigen-solver parameters");
@@ -1016,7 +1002,6 @@ namespace dftfe {
 					dftParameters::numCoreWfcRR                  = prm.get_integer("SPECTRUM SPLIT CORE EIGENSTATES");
 					dftParameters::spectrumSplitStartingScfIter  = prm.get_integer("SPECTRUM SPLIT STARTING SCF ITER");
 					dftParameters::rrGEP= prm.get_bool("RR GEP");
-					dftParameters::rrGEPFullMassMatrix = prm.get_bool("RR GEP FULL MASS MATRIX");
 					dftParameters::lowerEndWantedSpectrum        = prm.get_double("LOWER BOUND WANTED SPECTRUM");
 					dftParameters::lowerBoundUnwantedFracUpper   = prm.get_double("LOWER BOUND UNWANTED FRAC UPPER");
 					dftParameters::chebyshevOrder                = prm.get_integer("CHEBYSHEV POLYNOMIAL DEGREE");
@@ -1080,7 +1065,6 @@ namespace dftfe {
 				dftParameters::kernelUpdateRankXLBOMD        = prm.get_integer("KERNEL RANK XL BOMD");
 				dftParameters::kmaxXLBOMD        = prm.get_integer("NUMBER DISSIPATION TERMS XL BOMD");
 				dftParameters::numberPassesRRSkippedXLBOMD        = prm.get_integer("NUMBER PASSES RR SKIPPED XL BOMD");
-				dftParameters::autoMeshStepInterpolateBOMD   = prm.get_bool("AUTO MESH STEP INTERPOLATE BOMD");
 				dftParameters::ratioOfMeshMovementToForceGaussianBOMD       = prm.get_double("RATIO MESH MOVEMENT TO FORCE GAUSSIAN");    
 				dftParameters::useAtomicRhoXLBOMD     = prm.get_bool("USE ATOMIC RHO XL BOMD");   
 				dftParameters::useSingleFullScfXLBOMD = prm.get_bool("STARTING SINGLE FULL SCF XL BOMD");
@@ -1088,7 +1072,6 @@ namespace dftfe {
 				dftParameters::xlbomdRestartChebyTol           = prm.get_double("CHEBY TOL XL BOMD RESTART");  
 				dftParameters::xlbomdRRPassMixedPrec           = prm.get_bool("XL BOMD RR PASS MIXED PREC");
 				dftParameters::useDensityMatrixPerturbationRankUpdates           = prm.get_bool("DENSITY MATRIX PERTURBATION RANK UPDATES XL BOMD");  
-				dftParameters::xlbomdStepTimingRun           = prm.get_bool("XL BOMD STEP TIMING RUN");
 				dftParameters::xlbomdKernelRankUpdateFDParameter=prm.get_double("XL BOMD KERNEL RANK UPDATE FD PARAMETER");
 			}
 			prm.leave_subsection ();
@@ -1116,13 +1099,11 @@ namespace dftfe {
 			}
 #ifdef USE_COMPLEX
 			dftParameters::rrGEP=false;
-			dftParameters::rrGEPFullMassMatrix=false;
 #endif
 
 			if (!dftParameters::isPseudopotential)
 			{
 				dftParameters::rrGEP=false;
-				dftParameters::rrGEPFullMassMatrix=false;
 			}
 
 #ifndef DFTFE_WITH_ELPA
@@ -1256,6 +1237,8 @@ namespace dftfe {
 					AssertThrow(dftParameters::rrGEP
 							,ExcMessage("DFT-FE Error: if band parallelization is used, RR GEP must be set to true."));
 			}
+#else
+     dftParameters::useGPU=false;
 #endif
 			if (dftParameters::useMixedPrecCheby)
 				AssertThrow(dftParameters::useELPA
@@ -1268,6 +1251,13 @@ namespace dftfe {
 		//without changing the global dftParameters
 		void setHeuristicParameters()
 		{
+			if (!dftParameters::isPseudopotential)
+      {
+        if (!dftParameters::reproducible_output)
+          dftParameters::smearedNuclearCharges=false;
+        dftParameters::floatingNuclearCharges=false;
+      }
+
 			if (dftParameters::meshSizeOuterDomain<1.0e-6)
 				if (dftParameters::periodicX ||dftParameters::periodicY ||dftParameters::periodicZ)
 					dftParameters::meshSizeOuterDomain=4.0;
@@ -1276,9 +1266,22 @@ namespace dftfe {
 
 			if (dftParameters::meshSizeInnerBall<1.0e-6)
 				if (dftParameters::isPseudopotential)
-					dftParameters::meshSizeInnerBall=2.0*dftParameters::meshSizeOuterBall;
+					dftParameters::meshSizeInnerBall=10.0*dftParameters::meshSizeOuterBall;
 				else
 					dftParameters::meshSizeInnerBall=0.1*dftParameters::meshSizeOuterBall;
+
+			if (dftParameters::outerAtomBallRadius<1.0e-6)
+      {
+				if (dftParameters::isPseudopotential)
+        {
+          if (!dftParameters::floatingNuclearCharges)
+            dftParameters::outerAtomBallRadius=2.5;
+          else
+            dftParameters::outerAtomBallRadius=4.0;            
+        }
+				else
+					dftParameters::outerAtomBallRadius=2.0;  
+      }
 
 			if (dftParameters::isPseudopotential && dftParameters::orthogType=="Auto")
 			{

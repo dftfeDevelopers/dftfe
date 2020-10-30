@@ -49,6 +49,10 @@ namespace dftfe{
 		public:
 		kohnShamDFTOperatorCUDAClass(dftClass<FEOrder,FEOrderElectro>* _dftPtr, const MPI_Comm &mpi_comm_replica);
 
+    /**
+     * @brief destructor
+     */
+    ~kohnShamDFTOperatorCUDAClass();
 
 		void createCublasHandle();
 
@@ -98,11 +102,9 @@ namespace dftfe{
 
 		thrust::device_vector<double> & getShapeFunctionGradientValuesZInverted(const bool use2pPlusOneGLQuad=false);
 
-		thrust::device_vector<double> & getShapeFunctionGradientValuesNLPXInverted();
+		thrust::device_vector<double> & getShapeFunctionGradientValuesNLPInverted();
 
-		thrust::device_vector<double> & getShapeFunctionGradientValuesNLPYInverted();
-
-		thrust::device_vector<double> & getShapeFunctionGradientValuesNLPZInverted();    
+		thrust::device_vector<double> & getInverseJacobiansNLP();       
 
 		thrust::device_vector<dealii::types::global_dof_index> & getFlattenedArrayCellLocalProcIndexIdMap();
 
@@ -373,6 +375,7 @@ namespace dftfe{
 		void computeVEff(const std::map<dealii::CellId,std::vector<double> >* rhoValues,
 				const std::map<dealii::CellId,std::vector<double> > & phiValues,
 				const std::map<dealii::CellId,std::vector<double> > & externalPotCorrValues,
+        const std::map<dealii::CellId,std::vector<double> > & rhoCoreValues,
         const unsigned int externalPotCorrQuadratureId);
 
 
@@ -389,6 +392,7 @@ namespace dftfe{
 				const std::map<dealii::CellId,std::vector<double> > & phiValues,
 				unsigned int spinIndex,
 				const std::map<dealii::CellId,std::vector<double> > & externalPotCorrValues,
+        const std::map<dealii::CellId,std::vector<double> > & rhoCoreValues,
         const unsigned int externalPotCorrQuadratureId);
 
 		/**
@@ -404,6 +408,8 @@ namespace dftfe{
 				const std::map<dealii::CellId,std::vector<double> >* gradRhoValues,
 				const std::map<dealii::CellId,std::vector<double> > & phiValues,
 				const std::map<dealii::CellId,std::vector<double> > & externalPotCorrValues,
+        const std::map<dealii::CellId,std::vector<double> > & rhoCoreValues,
+        const std::map<dealii::CellId,std::vector<double> > & gradRhoCoreValues,        
         const unsigned int externalPotCorrQuadratureId);
 
 
@@ -422,6 +428,8 @@ namespace dftfe{
 				const std::map<dealii::CellId,std::vector<double> > & phiValues,
 				const unsigned int spinIndex,
 				const std::map<dealii::CellId,std::vector<double> > & externalPotCorrValues,
+        const std::map<dealii::CellId,std::vector<double> > & rhoCoreValues,
+        const std::map<dealii::CellId,std::vector<double> > & gradRhoCoreValues,        
         const unsigned int externalPotCorrQuadratureId);
 
 
@@ -520,7 +528,6 @@ namespace dftfe{
 		thrust::device_vector<dataTypes::number> d_cellHamiltonianMatrixNonLocalFlattenedDevice;
 		std::vector<dataTypes::number> d_cellHamiltonianMatrixNonLocalFlattenedTranspose;
 		thrust::device_vector<dataTypes::number> d_cellHamiltonianMatrixNonLocalFlattenedTransposeDevice;
-		thrust::device_vector<dataTypes::number> d_cellWaveFunctionMatrixNonLocalDevice;
 		thrust::device_vector<dataTypes::number> d_cellHamMatrixTimesWaveMatrixNonLocalDevice;
 		//distributedGPUVec<double> d_projectorKetTimesVectorDealiiParFlattenedDevice;
 		thrust::device_vector<dataTypes::number> d_projectorKetTimesVectorParFlattenedDevice;
@@ -536,6 +543,7 @@ namespace dftfe{
 		unsigned int d_totalNonlocalElems;
 		unsigned int d_totalPseudoWfcNonLocal;
 		unsigned int d_maxSingleAtomPseudoWfc;
+    std::vector<unsigned int> d_nonlocalElemIdToLocalElemIdMap;
 		std::vector<unsigned int> d_pseduoWfcNonLocalAtoms;
 		std::vector<unsigned int> d_numberCellsNonLocalAtoms;
 		std::vector<unsigned int> d_numberCellsAccumNonLocalAtoms;
@@ -554,6 +562,8 @@ namespace dftfe{
 
 		thrust::device_vector<unsigned int> d_locallyOwnedProcProjectorKetBoundaryNodesVectorDevice;
 
+    bool d_isMallocCalled=false;
+    double **d_A, **d_B, **d_C, **h_d_A, **h_d_B, **h_d_C;
 
 		/**
 		 * @brief implementation of matrix-vector product using cell-level stiffness matrices.

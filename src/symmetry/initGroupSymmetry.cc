@@ -72,7 +72,7 @@ namespace dftfe {
 		void symmetryClass<FEOrder,FEOrderElectro>::initSymmetry()
 		{
 			//
-			const Quadrature<3> &  quadrature=dftPtr->matrix_free_data.get_quadrature(dftPtr->d_densityQuadratureId);
+			QGauss<3>  quadrature(C_num1DQuad<C_rhoNodalPolyOrder<FEOrder,FEOrderElectro>()>());
 			FEValues<3> fe_values (dftPtr->FEEigen, quadrature, update_values | update_gradients| update_JxW_values | update_quadrature_points);
 			const unsigned int num_quad_points = quadrature.size();
 			Point<3> p, ptemp, p0 ;
