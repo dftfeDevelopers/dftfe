@@ -332,7 +332,6 @@ namespace dftfe {
 			double averageKineticEnergy;
 			double temperatureFromVelocities;
 			double totalEnergyStartingTimeStep=0.0;
-			bool lastInterruptedStepPreviousRunAutoMesh=false;
 
 			dealii::IndexSet   locally_relevant_dofs_;
 			dealii::DoFTools::extract_locally_relevant_dofs(dftPtr->d_dofHandlerRhoNodal, locally_relevant_dofs_);
@@ -517,7 +516,6 @@ kohnShamDFTEigenOperatorCUDA
 
 				std::vector<std::vector<double> > fileTemperatueData;
 				std::vector<std::vector<double> > timeIndexData;
-				std::vector<std::vector<double> > autoMeshData;
 
 				dftUtils::readFile(1,
 						fileTemperatueData,
@@ -527,17 +525,11 @@ kohnShamDFTEigenOperatorCUDA
 						timeIndexData,
 						"time.chk");
 
-				dftUtils::readFile(1,
-						autoMeshData,
-						"autoMeshMd.chk");
 
 				temperatureFromVelocities=fileTemperatueData[0][0];
 
 
 				startingTimeStep=timeIndexData[0][0];
-
-
-				lastInterruptedStepPreviousRunAutoMesh=(autoMeshData[0][0]>1e-6)?true:false;
 
 
 				std::vector<std::vector<double> > totalEnergyData;
@@ -549,9 +541,6 @@ kohnShamDFTEigenOperatorCUDA
 
 				pcout<<" Ending time step read from file: "<<startingTimeStep<<std::endl;
 				pcout<<" Temperature read from file: "<<temperatureFromVelocities<<std::endl;
-
-				if (lastInterruptedStepPreviousRunAutoMesh)
-					xlbomdHistoryRestart=false;
 
 				if (xlbomdHistoryRestart)
 				{
@@ -668,7 +657,6 @@ kohnShamDFTEigenOperatorCUDA
 			}
 
 			bool isFirstXLBOMDStep=true;
-			unsigned int autoMeshTimeIndex=(restartFlag==1)?(startingTimeStep+1):startingTimeStep;
 			//
 			//start the MD simulation
 			//
@@ -766,17 +754,12 @@ kohnShamDFTEigenOperatorCUDA
 					pcout<<"Time taken for updateAtomPositionsAndMoveMesh: "<<update_time<<std::endl;
 
 
-				std::vector<std::vector<double> > autoMeshData(1,std::vector<double>(1,0.0));
-
-				autoMeshData[0][0]=dftPtr->d_autoMesh==1?1.0:0.0;
-				dftUtils::writeDataIntoFile(autoMeshData,
-						"autoMeshMd.chk");
 
 				double atomicrho_time;
 				MPI_Barrier(MPI_COMM_WORLD);
 				atomicrho_time = MPI_Wtime();
 
-				if (dftPtr->d_autoMesh==1 || (timeIndex == (startingTimeStep+1) && restartFlag==1))
+				if ((timeIndex == (startingTimeStep+1) && restartFlag==1))
 				{
 					dftPtr->d_matrixFreeDataPRefined.initialize_dof_vector(atomicRho,dftPtr->d_densityDofHandlerIndexElectro);
 					/*
@@ -804,7 +787,7 @@ false);
 				double shadowPotentialInternalEnergy;
 				double entropicEnergyShadowPotential;
 
-				if (dftPtr->d_autoMesh==1 || (timeIndex == (startingTimeStep+1) && restartFlag==1))
+				if ((timeIndex == (startingTimeStep+1) && restartFlag==1))
 					isFirstXLBOMDStep=true;
 
 				bool isXlBOMDStep=false;
@@ -812,12 +795,10 @@ false);
 				if (dftParameters::isXLBOMD)
 				{
 
-					if ((dftPtr->d_autoMesh==1
-								|| (timeIndex == (startingTimeStep+1) && restartFlag==1)
-								|| (timeIndex < (fullScfSolvesBeforeStartingXLBOMD+autoMeshTimeIndex))) && !xlbomdHistoryRestart)
+					if (((timeIndex == (startingTimeStep+1) && restartFlag==1)
+								|| (timeIndex < (fullScfSolvesBeforeStartingXLBOMD))) && !xlbomdHistoryRestart)
 					{
 
-						if (!dftPtr->d_autoMesh==1)
 							if (!(timeIndex ==startingTimeStep+1 && restartFlag==1))
 							{
 								dftPtr->d_rhoInNodalValues=shadowKSRhoMin;
@@ -856,11 +837,6 @@ false);
 						else
 							shadowKSRhoMin *= ((double)dftPtr->numElectrons)/charge;  
 
-						if (dftPtr->d_autoMesh==1)
-						{
-							autoMeshTimeIndex=timeIndex;
-							approxDensityContainer.clear();
-						}
 
 						if (fullScfSolvesBeforeStartingXLBOMD==1)
 						{
@@ -914,7 +890,7 @@ false);
 						const unsigned int local_size = approxDensityNext.local_size();
 
 
-						if (dftParameters::skipHarmonicOscillatorTermInitialStepsXLBOMD && fullScfSolvesBeforeStartingXLBOMD==1 && (timeIndex <= (numberStepsKappaTermSkipped+autoMeshTimeIndex)))
+						if (dftParameters::skipHarmonicOscillatorTermInitialStepsXLBOMD && fullScfSolvesBeforeStartingXLBOMD==1 && (timeIndex <= (numberStepsKappaTermSkipped)))
 						{
 							for (unsigned int i = 0; i < local_size; i++)
 								approxDensityNext.local_element(i)=approxDensityTimeT.local_element(i)*2.0
@@ -1089,7 +1065,7 @@ false);
 						rhoErrorVec=shadowKSRhoMin;
 						rhoErrorVec-=approxDensityContainer.back();
 
-						if (!(dftParameters::skipHarmonicOscillatorTermInitialStepsXLBOMD && fullScfSolvesBeforeStartingXLBOMD==1 && (timeIndex < (numberStepsKappaTermSkipped+autoMeshTimeIndex))))
+						if (!(dftParameters::skipHarmonicOscillatorTermInitialStepsXLBOMD && fullScfSolvesBeforeStartingXLBOMD==1 && (timeIndex < (numberStepsKappaTermSkipped))))
 						{
 							if (dftParameters::kernelUpdateRankXLBOMD>0)
 							{
@@ -1386,34 +1362,33 @@ false);
 				}
 				else
 				{
-					if (!dftPtr->d_autoMesh==1)
-						if (!(timeIndex ==startingTimeStep+1 && restartFlag==1))
-						{
-							//normalize shadowKSRhoMin
-							double charge = dftPtr->totalCharge(dftPtr->d_matrixFreeDataPRefined,
-									shadowKSRhoMin);
+          if (!(timeIndex ==startingTimeStep+1 && restartFlag==1))
+          {
+            //normalize shadowKSRhoMin
+            double charge = dftPtr->totalCharge(dftPtr->d_matrixFreeDataPRefined,
+                shadowKSRhoMin);
 
-							if (dftParameters::useAtomicRhoXLBOMD)
-								shadowKSRhoMin.add(-charge/dftPtr->d_domainVolume);
-							else
-								shadowKSRhoMin *= ((double)dftPtr->numElectrons)/charge;
+            if (dftParameters::useAtomicRhoXLBOMD)
+              shadowKSRhoMin.add(-charge/dftPtr->d_domainVolume);
+            else
+              shadowKSRhoMin *= ((double)dftPtr->numElectrons)/charge;
 
 
-							dftPtr->d_rhoInNodalValues=shadowKSRhoMin;
-							if (dftParameters::useAtomicRhoXLBOMD)
-								dftPtr->d_rhoInNodalValues+=atomicRho;
+            dftPtr->d_rhoInNodalValues=shadowKSRhoMin;
+            if (dftParameters::useAtomicRhoXLBOMD)
+              dftPtr->d_rhoInNodalValues+=atomicRho;
 
-							dftPtr->d_rhoInNodalValues.update_ghost_values();
-							dftPtr->interpolateRhoNodalDataToQuadratureDataGeneral(dftPtr->d_matrixFreeDataPRefined,
-                  dftPtr->d_densityDofHandlerIndexElectro,
-                  dftPtr->d_densityQuadratureIdElectro,
-									dftPtr->d_rhoInNodalValues,
-									*(dftPtr->rhoInValues),
-									*(dftPtr->gradRhoInValues),
-									*(dftPtr->gradRhoInValues),
-									dftParameters::xc_id == 4);	
-							dftPtr->normalizeRhoInQuadValues();
-						}
+            dftPtr->d_rhoInNodalValues.update_ghost_values();
+            dftPtr->interpolateRhoNodalDataToQuadratureDataGeneral(dftPtr->d_matrixFreeDataPRefined,
+                dftPtr->d_densityDofHandlerIndexElectro,
+                dftPtr->d_densityQuadratureIdElectro,
+                dftPtr->d_rhoInNodalValues,
+                *(dftPtr->rhoInValues),
+                *(dftPtr->gradRhoInValues),
+                *(dftPtr->gradRhoInValues),
+                dftParameters::xc_id == 4);	
+            dftPtr->normalizeRhoInQuadValues();
+          }
 
 					//
 					//do an scf calculation
@@ -1644,7 +1619,7 @@ false);
 					dftPtr->saveTriaInfoAndRhoNodalData();  
 				}
 
-				if (timeIndex == (fullScfSolvesBeforeStartingXLBOMD+autoMeshTimeIndex) && xlbomdHistoryRestart)
+				if (timeIndex == (fullScfSolvesBeforeStartingXLBOMD) && xlbomdHistoryRestart)
 					xlbomdHistoryRestart=false;
 			}
 
