@@ -136,6 +136,7 @@ namespace dftfe {
     bool floatingNuclearCharges=false;
     bool nonLinearCoreCorrection=false;
     unsigned int maxLineSearchIterCGPRP=5;
+    std::string atomicMassesFile="";
 
 		void declare_parameters(ParameterHandler &prm)
 		{
@@ -748,6 +749,10 @@ namespace dftfe {
 
 			prm.enter_subsection ("Molecular Dynamics");
 			{
+				prm.declare_entry("ATOMIC MASSES FILE", "",
+						Patterns::Anything(),
+						"[Standard] Input atomic masses file name. File format: atomicNumber1 atomicMass1 (row1), atomicNumber2 atomicMass2 (row2) and so on. Units: a.m.u.");
+
 				prm.declare_entry("BOMD", "false",
 						Patterns::Bool(),
 						"[Standard] Perform Born-Oppenheimer NVE molecular dynamics. Input parameters for molecular dynamics have to be modified directly in the code in the file md/molecularDynamics.cc.");
@@ -1047,6 +1052,7 @@ namespace dftfe {
 
 			prm.enter_subsection ("Molecular Dynamics");
 			{
+        dftParameters::atomicMassesFile              = prm.get("ATOMIC MASSES FILE");
 				dftParameters::isBOMD                        = prm.get_bool("BOMD");
 				dftParameters::maxJacobianRatioFactorForMD   = prm.get_double("MAX JACOBIAN RATIO FACTOR");
 				dftParameters::isXLBOMD                      = prm.get_bool("XL BOMD");
