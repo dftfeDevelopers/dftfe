@@ -515,7 +515,11 @@ namespace dftfe
 			v[0] = vVector;
 			f[0] = fVector;
 
-      std::vector<double> cpublock(local_size*blockSize,0.0);
+      double* cpublock;
+			cudaMallocHost((void **)&cpublock,local_size*blockSize*sizeof(double));
+			std::memset(cpublock,0,local_size*blockSize*sizeof(double));      
+
+
 			//operatorMatrix.HX(v,f);
 
       distributedCPUVec<double> & vvec=v[0];
@@ -523,7 +527,7 @@ namespace dftfe
         cpublock[idof*blockSize]=vvec.local_element(idof);
 
       cudaMemcpy(Xb.begin(),
-          &cpublock[0],
+          cpublock,
           local_size*blockSize*sizeof(double),
           cudaMemcpyHostToDevice);
 
@@ -536,7 +540,7 @@ namespace dftfe
           1.0,
           Yb);
 
-      cudaMemcpy(&cpublock[0],
+      cudaMemcpy(cpublock,
           Yb.begin(),
           local_size*blockSize*sizeof(double),
           cudaMemcpyDeviceToHost);     
@@ -568,7 +572,7 @@ namespace dftfe
           cpublock[idof*blockSize]=vvec.local_element(idof);
 
         cudaMemcpy(Xb.begin(),
-            &cpublock[0],
+            cpublock,
             local_size*blockSize*sizeof(double),
             cudaMemcpyHostToDevice);
 
@@ -581,7 +585,7 @@ namespace dftfe
             1.0,
             Yb);
 
-        cudaMemcpy(&cpublock[0],
+        cudaMemcpy(cpublock,
             Yb.begin(),
             local_size*blockSize*sizeof(double),
             cudaMemcpyDeviceToHost);     
@@ -623,6 +627,8 @@ namespace dftfe
 				//pcout << buffer;
 			}
 			double upperBound=eigenValuesT[lanczosIterations-1]+fVector.l2_norm();
+
+      cudaFreeHost(cpublock);
 			return (std::ceil(upperBound));
 #endif
 		}
