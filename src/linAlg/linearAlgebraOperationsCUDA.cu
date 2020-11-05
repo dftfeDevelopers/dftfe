@@ -515,21 +515,15 @@ namespace dftfe
 			v[0] = vVector;
 			f[0] = fVector;
 
-      double* cpublock;
-			cudaMallocHost((void **)&cpublock,local_size*blockSize*sizeof(double));
-			std::memset(cpublock,0,local_size*blockSize*sizeof(double));      
-
-
-			//operatorMatrix.HX(v,f);
-
       distributedCPUVec<double> & vvec=v[0];
-      for (unsigned int idof=0;idof<local_size; idof++)
-        cpublock[idof*blockSize]=vvec.local_element(idof);
 
-      cudaMemcpy(Xb.begin(),
-          cpublock,
-          local_size*blockSize*sizeof(double),
-          cudaMemcpyHostToDevice);
+      cudaMemcpy2D(Xb.begin(),
+          blockSize*sizeof(double),
+          vvec.begin(),
+          1*sizeof(double),
+          1*sizeof(double),
+          local_size,
+          cudaMemcpyHostToDevice);      
 
       Yb=0.0;
       operatorMatrix.HX(Xb,
@@ -540,14 +534,14 @@ namespace dftfe
           1.0,
           Yb);
 
-      cudaMemcpy(cpublock,
-          Yb.begin(),
-          local_size*blockSize*sizeof(double),
-          cudaMemcpyDeviceToHost);     
-
       distributedCPUVec<double> & fvec=f[0];
-      for (unsigned int idof=0;idof<local_size; idof++)
-        fvec.local_element(idof)=cpublock[idof*blockSize];      
+      cudaMemcpy2D(fvec.begin(),
+          1*sizeof(double),
+          Yb.begin(),
+          blockSize*sizeof(double),
+          1*sizeof(double),
+          local_size,
+          cudaMemcpyDeviceToHost);        
 
 			operatorMatrix.getConstraintMatrixEigen()->set_zero(v[0]);
 			fVector = f[0];
@@ -568,13 +562,13 @@ namespace dftfe
 				//operatorMatrix.HX(v,f);
 
         distributedCPUVec<double> & vvec=v[0];
-        for (unsigned int idof=0;idof<local_size; idof++)
-          cpublock[idof*blockSize]=vvec.local_element(idof);
-
-        cudaMemcpy(Xb.begin(),
-            cpublock,
-            local_size*blockSize*sizeof(double),
-            cudaMemcpyHostToDevice);
+        cudaMemcpy2D(Xb.begin(),
+            blockSize*sizeof(double),
+            vvec.begin(),
+            1*sizeof(double),
+            1*sizeof(double),
+            local_size,
+            cudaMemcpyHostToDevice);           
 
         Yb=0.0;
         operatorMatrix.HX(Xb,
@@ -585,14 +579,14 @@ namespace dftfe
             1.0,
             Yb);
 
-        cudaMemcpy(cpublock,
+        distributedCPUVec<double> & fvec=f[0];        
+        cudaMemcpy2D(fvec.begin(),
+            1*sizeof(double),
             Yb.begin(),
-            local_size*blockSize*sizeof(double),
-            cudaMemcpyDeviceToHost);     
-
-        distributedCPUVec<double> & fvec=f[0];
-        for (unsigned int idof=0;idof<local_size; idof++)
-          fvec.local_element(idof)=cpublock[idof*blockSize]; 
+            blockSize*sizeof(double),
+            1*sizeof(double),
+            local_size,
+            cudaMemcpyDeviceToHost);        
 
 				operatorMatrix.getConstraintMatrixEigen()->set_zero(v[0]);
 				fVector = f[0];
@@ -628,7 +622,6 @@ namespace dftfe
 			}
 			double upperBound=eigenValuesT[lanczosIterations-1]+fVector.l2_norm();
 
-      cudaFreeHost(cpublock);
 			return (std::ceil(upperBound));
 #endif
 		}
