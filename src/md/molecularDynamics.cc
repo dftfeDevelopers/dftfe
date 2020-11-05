@@ -211,7 +211,7 @@ namespace dftfe {
 
 			pcout<<"---------------Starting Molecular dynamics simulation---------------------"<<std::endl;
 			const unsigned int numberGlobalCharges=dftPtr->atomLocations.size();
-			//https://lammps.sandia.gov/doc/units.html
+			//https://lammps.sandia.gov/doc/units.html (We are using metal units)
 			const double initialTemperature = dftParameters::startingTempBOMDNVE;//K
 			const unsigned int restartFlag =((dftParameters::chkType==1 || dftParameters::chkType==3) && dftParameters::restartMdFromChk)?1:0; //1; //0;//1;
 			bool xlbomdHistoryRestart=(dftParameters::chkType==3 && dftParameters::restartMdFromChk)?true:false;
@@ -219,7 +219,7 @@ namespace dftfe {
 
 			double massAtomAl = 26.982;//mass proton is chosen 1 **49611.513**
 			double massAtomMg= 24.305;
-			const double timeStep = dftParameters::timeStepBOMD/10.0; //0.5 femtoseconds
+			const double timeStep = dftParameters::timeStepBOMD*0.09822694541304546435; //Conversion factor from femteseconds: 0.09822694541304546435 based on NIST constants 
 			const unsigned int numberTimeSteps = dftParameters::numberStepsBOMD;
 
 			//https://physics.nist.gov/cuu/Constants/Table/allascii.txt
@@ -231,23 +231,27 @@ namespace dftfe {
 			const double AngTobohr = 1.0/bohrToAng;
 
 			std::vector<double> massAtoms(numberGlobalCharges);
+      //
+      //read atomic masses
+      //
+      std::vector<std::vector<double>> atomTypesMasses;
+      dftUtils::readFile(2, atomTypesMasses, dftParameters::atomicMassesFile);   
+			AssertThrow(dftPtr->atomTypes.size()==atomTypesMasses.size(),ExcMessage("DFT-FE Error: check ATOM MASSES FILE"));
+
 			for(int iCharge = 0; iCharge < numberGlobalCharges; ++iCharge)
 			{
-				const double charge= dftPtr->atomLocations[iCharge][0];
-				if (std::fabs(charge-12.0)<1e-8)
-					massAtoms[iCharge]=massAtomMg;
-				else if(std::fabs(charge-13.0)<1e-8)
-					massAtoms[iCharge]=massAtomAl;
-				else if(std::fabs(charge-49.0)<1e-8)
-					massAtoms[iCharge]=114.82;
-				else if(std::fabs(charge-15.0)<1e-8)
-					massAtoms[iCharge]=30.97376;
-				else if(std::fabs(charge-8.0)<1e-8)
-					massAtoms[iCharge]=15.9994;
-				else if(std::fabs(charge-1.0)<1e-8)
-					massAtoms[iCharge]=1.00797;
-				else
-					AssertThrow(false,ExcMessage("Currently md capability is hardcoded for systems with Al, Mg, In, P, O, and H atom types only."));
+        bool isFound=false;
+        for(int jatomtype = 0; jatomtype < atomTypesMasses.size(); ++jatomtype)
+        {
+          const double charge= dftPtr->atomLocations[iCharge][0];
+          if (std::fabs(charge-atomTypesMasses[jatomtype][0])<1e-8)
+          {
+            massAtoms[iCharge]=atomTypesMasses[jatomtype][1];
+            isFound=true;
+          }
+        }
+
+				AssertThrow(isFound,ExcMessage("DFT-FE Error: check ATOM MASSES FILE"));
 			}
 
 			std::vector<dealii::Tensor<1,3,double> > displacements(numberGlobalCharges);

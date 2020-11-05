@@ -138,6 +138,7 @@ namespace dftfe {
     extern bool floatingNuclearCharges;
     extern bool nonLinearCoreCorrection;
     extern unsigned int maxLineSearchIterCGPRP;
+    extern std::string atomicMassesFile;
 
 		/**
 		 * Declare parameters.
