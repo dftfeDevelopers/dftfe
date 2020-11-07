@@ -179,6 +179,15 @@ void dftClass<FEOrder,FEOrderElectro>::initCoreRho()
 		}
 	}
 
+  Tensor<1,3,double> zeroTensor1;
+  for (unsigned int i=0; i<3;i++)
+    zeroTensor1[i]=0.0;
+
+  Tensor<2,3,double> zeroTensor2;
+
+  for (unsigned int i=0; i<3;i++)
+    for (unsigned int j=0; j<3;j++)    
+      zeroTensor2[i][j]=0.0;  
 
 	//loop over elements
 	if(dftParameters::xc_id == 4 || dftParameters::nonLinearCoreCorrection == true)
@@ -198,8 +207,8 @@ void dftClass<FEOrder,FEOrderElectro>::initCoreRho()
 				if(dftParameters::xc_id == 4)
 					hessianRhoCoreQuadValues.resize(n_q_points*9,0.0);
 
-				std::vector<Tensor<1,3,double> > gradRhoCoreAtom(n_q_points);
-				std::vector<Tensor<2,3,double> > hessianRhoCoreAtom(n_q_points);
+				std::vector<Tensor<1,3,double> > gradRhoCoreAtom(n_q_points,zeroTensor1);
+				std::vector<Tensor<2,3,double> > hessianRhoCoreAtom(n_q_points,zeroTensor2);
 
 
 				//loop over atoms
@@ -216,6 +225,10 @@ void dftClass<FEOrder,FEOrderElectro>::initCoreRho()
 					{
 						Point<3> quadPoint = fe_values.quadrature_point(q);
 						double distanceToAtom = quadPoint.distance(atom);
+
+            if (dftParameters::floatingNuclearCharges && distanceToAtom<1.0e-2)
+              continue;
+
 						double value,radialDensityFirstDerivative,radialDensitySecondDerivative;
 						if(distanceToAtom <= d_coreRhoTail)
 						{
@@ -261,11 +274,11 @@ void dftClass<FEOrder,FEOrderElectro>::initCoreRho()
 					if(isCoreRhoDataInCell)
 					{
 						std::vector<double> & gradRhoCoreAtomCell = d_gradRhoCoreAtoms[iAtom][cell->id()];
-						gradRhoCoreAtomCell.resize(n_q_points*3);
+						gradRhoCoreAtomCell.resize(n_q_points*3,0.0);
 
 						std::vector<double> & hessianRhoCoreAtomCell = d_hessianRhoCoreAtoms[iAtom][cell->id()];
 						if(dftParameters::xc_id == 4)
-							hessianRhoCoreAtomCell.resize(n_q_points*9);
+							hessianRhoCoreAtomCell.resize(n_q_points*9,0.0);
 
 						for(unsigned int q = 0; q < n_q_points; ++q)
 						{
@@ -305,6 +318,9 @@ void dftClass<FEOrder,FEOrderElectro>::initCoreRho()
 					{
 						Point<3> quadPoint=fe_values.quadrature_point(q);
 						double distanceToAtom = quadPoint.distance(imageAtom);
+
+            if (dftParameters::floatingNuclearCharges && distanceToAtom<1.0e-2)
+              continue;
 
 						double value,radialDensityFirstDerivative,radialDensitySecondDerivative;
 						if(distanceToAtom <= d_coreRhoTail)
