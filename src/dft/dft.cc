@@ -1848,9 +1848,7 @@ namespace dftfe {
 
 			if((dftParameters::isPseudopotential || dftParameters::smearedNuclearCharges) && !skipVselfSolveInitLocalPSP)
 			{
-				double init_psplocal;
-				MPI_Barrier(MPI_COMM_WORLD);
-				init_psplocal = MPI_Wtime();
+        computingTimerStandard.enter_section("Init local PSP");
 				initLocalPseudoPotential(d_dofHandlerPRefined,
 					  d_lpspQuadratureIdElectro,
 						d_matrixFreeDataPRefined,
@@ -1862,10 +1860,7 @@ namespace dftfe {
 						d_pseudoVLoc,
 						d_pseudoVLocAtoms);
 
-				MPI_Barrier(MPI_COMM_WORLD);
-				init_psplocal = MPI_Wtime() - init_psplocal;
-				if (dftParameters::verbosity>=1)
-					pcout<<"initPseudoPotentialAll: Time taken for local psp init: "<<init_psplocal<<std::endl;
+        computingTimerStandard.exit_section("Init local PSP");
 			}
 
 
