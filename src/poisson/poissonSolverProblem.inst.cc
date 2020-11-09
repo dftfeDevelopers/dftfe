@@ -7,6 +7,7 @@ template class poissonSolverProblem<6,6>;
 template class poissonSolverProblem<6,7>;
 template class poissonSolverProblem<6,8>;
 template class poissonSolverProblem<6,9>;
+template class poissonSolverProblem<7,7>;
 #else
 template class poissonSolverProblem<1,1>;
 template class poissonSolverProblem<1,2>;

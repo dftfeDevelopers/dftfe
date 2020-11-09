@@ -7,6 +7,7 @@ template class kohnShamDFTOperatorCUDAClass<6,6>;
 template class kohnShamDFTOperatorCUDAClass<6,7>;
 template class kohnShamDFTOperatorCUDAClass<6,8>;
 template class kohnShamDFTOperatorCUDAClass<6,9>;
+template class kohnShamDFTOperatorCUDAClass<7,7>;
 #else
 template class kohnShamDFTOperatorCUDAClass<1,1>;
 template class kohnShamDFTOperatorCUDAClass<1,2>;

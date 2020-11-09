@@ -7,6 +7,7 @@ template class vselfBinsManager<6,6>;
 template class vselfBinsManager<6,7>;
 template class vselfBinsManager<6,8>;
 template class vselfBinsManager<6,9>;
+template class vselfBinsManager<7,7>;
 #else
 template class vselfBinsManager<1,1>;
 template class vselfBinsManager<1,2>;
