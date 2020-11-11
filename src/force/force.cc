@@ -58,7 +58,6 @@ namespace  dftfe {
 #include "configurationalStressCompute/EPSPStressContribution.cc"
 #include "configurationalStressCompute/ESmearedStressContribution.cc"
 #include "initPseudoForce.cc"
-#include "initPseudoOVForce.cc"
 #include "createBinObjectsForce.cc"
 #include "locateAtomCoreNodesForce.cc"
 
@@ -245,8 +244,8 @@ namespace  dftfe {
 		void forceClass<FEOrder,FEOrderElectro>::initPseudoData()
 		{
 
-			if(dftParameters::isPseudopotential)
-				computeElementalNonLocalPseudoOVDataForce();
+			//if(dftParameters::isPseudopotential)
+			//	computeElementalNonLocalPseudoOVDataForce();
 		}
 
 	//compute forces on atoms corresponding to a Gaussian generator

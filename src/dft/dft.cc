@@ -626,7 +626,7 @@ namespace dftfe {
 
 				computeElementalOVProjectorKets();
 
-				forcePtr->initPseudoData();
+				//forcePtr->initPseudoData();
 
 				MPI_Barrier(MPI_COMM_WORLD);
 				init_nonlocal2 = MPI_Wtime() - init_nonlocal2;

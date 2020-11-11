@@ -619,7 +619,7 @@ namespace dftfe {
 			 * for the norm-conserving Troullier-Martins pseudopotential in the Kleinman-Bylander form.
 			 * The same expressions also extend to the Optimized Norm-Conserving Vanderbilt (ONCV) pseudopotentials.
 			 */
-			std::vector<std::vector<std::map<dealii::CellId, std::vector<double > > > > d_nonLocalPSP_ZetalmDeltaVl;
+			//std::vector<std::vector<std::map<dealii::CellId, std::vector<double > > > > d_nonLocalPSP_ZetalmDeltaVl;
 
 
 			/* Storage for precomputed nonlocal pseudopotential quadrature data. This is to speedup the
@@ -629,7 +629,7 @@ namespace dftfe {
 			 * for the norm-conserving Troullier-Martins pseudopotential in the Kleinman-Bylander form.
 			 * The same expressions also extend to the Optimized Norm-Conserving Vanderbilt (ONCV) pseudopotentials.
 			 */
-			std::vector<std::vector<std::map<dealii::CellId, std::vector<double > > > > d_nonLocalPSP_zetalmDeltaVlProductDistImageAtoms_KPoint;      
+			//std::vector<std::vector<std::map<dealii::CellId, std::vector<double > > > > d_nonLocalPSP_zetalmDeltaVlProductDistImageAtoms_KPoint;      
 
 #else
 
@@ -640,7 +640,7 @@ namespace dftfe {
 			 * for the norm-conserving Troullier-Martins pseudopotential in the Kleinman-Bylander form.
 			 * The same expressions also extend to the Optimized Norm-Conserving Vanderbilt (ONCV) pseudopotentials.
 			 */
-			std::vector<std::vector<std::map<dealii::CellId, std::vector<double > > > > d_nonLocalPSP_ZetalmDeltaVl;
+			//std::vector<std::vector<std::map<dealii::CellId, std::vector<double > > > > d_nonLocalPSP_ZetalmDeltaVl;
 #endif
 
 			/// Gaussian generator constant. Gaussian generator: Gamma(r)= exp(-d_gaussianConstant*r^2)
@@ -773,7 +773,7 @@ namespace dftfe {
 			std::vector<distributedCPUVec<double>> d_gaussianWeightsVecAtoms;
 
 			/// map from cell id to set of non local atom ids (local numbering)
-			std::map<dealii::CellId,std::set<unsigned int>> d_cellIdToNonlocalAtomIdsLocalCompactSupportMap;
+			//std::map<dealii::CellId,std::set<unsigned int>> d_cellIdToNonlocalAtomIdsLocalCompactSupportMap;
 
 			/// mpi_communicator in the current pool
 			const MPI_Comm mpi_communicator;

@@ -48,6 +48,38 @@ void dftClass<FEOrder,FEOrderElectro>::computeElementalOVProjectorKets()
 	const unsigned int numberNodesPerElement  = FE.dofs_per_cell;
 	const unsigned int numberQuadraturePoints = quadratureHigh.size();
 
+  std::map<DoFHandler<3>::active_cell_iterator,std::vector<double>> cellIteratorQuadPointsMap;
+  std::vector<double> shapeValQuads(numberNodesPerElement*numberQuadraturePoints);
+  std::map<DoFHandler<3>::active_cell_iterator,std::vector<double>> cellIteratorJxWQuadsMap;
+
+  DoFHandler<3>::active_cell_iterator
+    cell = dofHandler.begin_active(),
+         endc = dofHandler.end();
+  int iElem=0;
+  for (; cell!=endc; ++cell) 
+    if (cell->is_locally_owned())
+    {
+      fe_values.reinit (cell);
+      std::vector<double> & temp1=cellIteratorQuadPointsMap[cell];
+      std::vector<double> & temp2=cellIteratorJxWQuadsMap[cell];        
+      temp1.resize(numberQuadraturePoints*3);
+      temp2.resize(numberQuadraturePoints);
+      for (unsigned int q_point=0; q_point<numberQuadraturePoints; ++q_point)
+      {
+        temp1[3*q_point+0]=fe_values.quadrature_point(q_point)[0];
+        temp1[3*q_point+1]=fe_values.quadrature_point(q_point)[1];
+        temp1[3*q_point+2]=fe_values.quadrature_point(q_point)[2];
+        temp2[q_point]=fe_values.JxW(q_point);
+      }
+
+      if (iElem==0)
+      {
+        for (unsigned int inode=0; inode<numberNodesPerElement; ++inode)           
+          for (unsigned int q_point=0; q_point<numberQuadraturePoints; ++q_point)
+            shapeValQuads[inode*numberQuadraturePoints+q_point]=fe_values.shape_value(inode,q_point);
+      }
+      iElem++;
+    }
 
 	//
 	//get number of kPoints
@@ -61,6 +93,11 @@ void dftClass<FEOrder,FEOrderElectro>::computeElementalOVProjectorKets()
 	d_nonLocalProjectorElementMatrices.clear();
 	d_nonLocalProjectorElementMatricesConjugate.clear();
 	d_nonLocalProjectorElementMatricesTranspose.clear();
+	d_nonLocalPSP_ZetalmDeltaVl.clear();
+#ifdef USE_COMPLEX
+  d_nonLocalPSP_zetalmDeltaVlProductDistImageAtoms_KPoint.clear();
+#endif
+  d_cellIdToNonlocalAtomIdsLocalCompactSupportMap.clear();
 
 	d_nonLocalProjectorElementMatrices.resize(numberNonLocalAtoms);
 	d_nonLocalProjectorElementMatricesConjugate.resize(numberNonLocalAtoms);
@@ -69,8 +106,21 @@ void dftClass<FEOrder,FEOrderElectro>::computeElementalOVProjectorKets()
 	std::vector<double> nonLocalProjectorBasisReal(maxkPoints*numberQuadraturePoints,0.0);
 	std::vector<double> nonLocalProjectorBasisImag(maxkPoints*numberQuadraturePoints,0.0);
 
+#ifdef USE_COMPLEX
+  std::vector<double>  ZetalmDeltaVl_KPoint(maxkPoints*numberQuadraturePoints*2,0.0);
+  std::vector<double> zetalmDeltaVlProductDistImageAtoms_KPoint(maxkPoints*numberQuadraturePoints*C_DIM*2,0.0);
+#else
+  std::vector<double> ZetalmDeltaVl(numberQuadraturePoints,0.0);
+#endif
+
 	int cumulativeWaveSplineId = 0;
 	int waveFunctionId;
+  unsigned int count=0;
+	const unsigned int numNonLocalAtomsCurrentProcess= d_nonLocalAtomIdsInCurrentProcess.size();
+	d_nonLocalPSP_ZetalmDeltaVl.resize(numNonLocalAtomsCurrentProcess);
+#ifdef USE_COMPLEX
+  d_nonLocalPSP_zetalmDeltaVlProductDistImageAtoms_KPoint.resize(numNonLocalAtomsCurrentProcess);
+#endif  
 	//
 	//
 	for(int iAtom = 0; iAtom < numberNonLocalAtoms; ++iAtom)
@@ -109,15 +159,25 @@ void dftClass<FEOrder,FEOrderElectro>::computeElementalOVProjectorKets()
 			d_nonLocalProjectorElementMatrices[iAtom].resize(numberElementsInAtomCompactSupport);
 			d_nonLocalProjectorElementMatricesConjugate[iAtom].resize(numberElementsInAtomCompactSupport);
 			d_nonLocalProjectorElementMatricesTranspose[iAtom].resize(numberElementsInAtomCompactSupport);
+
+			d_nonLocalPSP_ZetalmDeltaVl[count].resize(numberPseudoWaveFunctions);
+#ifdef USE_COMPLEX
+			d_nonLocalPSP_zetalmDeltaVlProductDistImageAtoms_KPoint[count].resize(numberPseudoWaveFunctions);      
+#endif      
 		}
 
 		for(int iElemComp = 0; iElemComp < numberElementsInAtomCompactSupport; ++iElemComp)
 		{
 
-			DoFHandler<3>::active_cell_iterator cell = d_elementOneFieldIteratorsInAtomCompactSupport[iAtom][iElemComp];
+			cell = d_elementOneFieldIteratorsInAtomCompactSupport[iAtom][iElemComp];
+
+			d_cellIdToNonlocalAtomIdsLocalCompactSupportMap[cell->id()].insert(count);      
+
+      const std::vector<double> & quadPoints=cellIteratorQuadPointsMap[cell];  
+      const std::vector<double> & jxwQuads=cellIteratorJxWQuadsMap[cell];    
 
 			//compute values for the current elements
-			fe_values.reinit(cell);
+			//fe_values.reinit(cell);
 
 #ifdef USE_COMPLEX
 			d_nonLocalProjectorElementMatrices[iAtom][iElemComp].resize(maxkPoints,
@@ -152,6 +212,13 @@ void dftClass<FEOrder,FEOrderElectro>::computeElementalOVProjectorKets()
 
 			for(int iPseudoWave = 0; iPseudoWave < numberPseudoWaveFunctions; ++iPseudoWave)
 			{
+#ifdef USE_COMPLEX
+				d_nonLocalPSP_ZetalmDeltaVl[count][iPseudoWave][cell->id()]=std::vector<double>(maxkPoints*numberQuadraturePoints*2);
+				d_nonLocalPSP_zetalmDeltaVlProductDistImageAtoms_KPoint[count][iPseudoWave][cell->id()]=std::vector<double>(maxkPoints*numberQuadraturePoints*C_DIM*2);        
+#else
+				d_nonLocalPSP_ZetalmDeltaVl[count][iPseudoWave][cell->id()]=std::vector<double>(numberQuadraturePoints);
+#endif
+
 				waveFunctionId = iPseudoWave + cumulativeWaveSplineId;
 				const int globalWaveSplineId = d_pseudoWaveFunctionIdToFunctionIdDetails[waveFunctionId][0];
 				const int lQuantumNumber = d_pseudoWaveFunctionIdToFunctionIdDetails[waveFunctionId][1];
@@ -168,108 +235,121 @@ void dftClass<FEOrder,FEOrderElectro>::computeElementalOVProjectorKets()
 				std::fill(nonLocalProjectorBasisReal.begin(),nonLocalProjectorBasisReal.end(),0.0);
 				std::fill(nonLocalProjectorBasisImag.begin(),nonLocalProjectorBasisImag.end(),0.0);
 
-				double nlpValue = 0.0;
-				for(int iQuadPoint = 0; iQuadPoint < numberQuadraturePoints; ++iQuadPoint)
-				{
-
-					//MappingQ1<3,3> test;
-					//Point<3> quadPoint(test.transform_unit_to_real_cell(cell, fe_values.get_quadrature().point(iQuadPoint)));
-					Point<3> quadPoint=fe_values.quadrature_point(iQuadPoint);
-
-					for(int iImageAtomCount = 0; iImageAtomCount < imageIdsList.size(); ++iImageAtomCount)
-					{
-
-						int chargeId = imageIdsList[iImageAtomCount];
-
-						//const Point & chargePoint = chargeId < numberGlobalCharges? d_nuclearContainer.getGlobalPoint(chargeId,meshId):
-						//d_nuclearContainer.getImagePoint(chargeId-numberGlobalCharges,meshId);
-
-						Point<3> chargePoint(0.0,0.0,0.0);
-
-						if(chargeId < numberGlobalCharges)
-						{
-							chargePoint[0] = atomLocations[chargeId][2];
-							chargePoint[1] = atomLocations[chargeId][3];
-							chargePoint[2] = atomLocations[chargeId][4];
-						}
-						else
-						{
-							chargePoint[0] = d_imagePositionsTrunc[chargeId-numberGlobalCharges][0];
-							chargePoint[1] = d_imagePositionsTrunc[chargeId-numberGlobalCharges][1];
-							chargePoint[2] = d_imagePositionsTrunc[chargeId-numberGlobalCharges][2];
-						}
-
-
-						double x[3];
-
-						x[0] = quadPoint[0] - chargePoint[0];
-						x[1] = quadPoint[1] - chargePoint[1];
-						x[2] = quadPoint[2] - chargePoint[2];
-
-						//
-						// get the spherical coordinates from cartesian
-						//
-						//double r,theta,phi;
-						//pseudoUtils::convertCartesianToSpherical(x,r,theta,phi);
-
-
-						double sphericalHarmonicVal, radialProjVal, projectorFunctionValue;
-						if(std::sqrt(x[0]*x[0]+x[1]*x[1]+x[2]*x[2]) <= d_outerMostPointPseudoProjectorData[globalWaveSplineId])
-						{
-							double r,theta,phi;
-							pseudoUtils::convertCartesianToSpherical(x,r,theta,phi);
-
-
-							pseudoUtils::getRadialFunctionVal(r,
-									radialProjVal,
-									&d_pseudoWaveFunctionSplines[globalWaveSplineId]);
-
-							pseudoUtils::getSphericalHarmonicVal(theta,phi,lQuantumNumber,mQuantumNumber,sphericalHarmonicVal);
-
-							projectorFunctionValue = radialProjVal*sphericalHarmonicVal;
-
-						}
-						else
-						{
-							projectorFunctionValue = 0.0;
-						}
-
-
-						/*if(iElemComp == 0 && iQuadPoint == 0 && iPseudoWave == 0)
-						  {
-						  std::cout<<"ChargeId : "<<chargeId<<std::endl;
-						  std::cout<<"Coordinates: "<<chargePoint[0]<<" "<<chargePoint[1]<<" "<<chargePoint[2]<<std::endl;
-						  std::cout<<"Distance : "<<r<<std::endl;
-						  std::cout<<"DeltaVl: "<<deltaVlValue<<std::endl;
-						  std::cout<<"JacTimesWeight: "<<fe_values.JxW(iQuadPoint)<<std::endl;
-						  }*/
-
-						//
-						//kpoint loop
-						//
-						double pointMinusLatticeVector[3];
-						pointMinusLatticeVector[0] = x[0] + nuclearCoordinates[0];
-						pointMinusLatticeVector[1] = x[1] + nuclearCoordinates[1];
-						pointMinusLatticeVector[2] = x[2] + nuclearCoordinates[2];
-						for(int kPoint = 0; kPoint < maxkPoints; ++kPoint)
-						{
-							double angle = d_kPointCoordinates[3*kPoint+0]*pointMinusLatticeVector[0] + d_kPointCoordinates[3*kPoint+1]*pointMinusLatticeVector[1] + d_kPointCoordinates[3*kPoint+2]*pointMinusLatticeVector[2];
-							nonLocalProjectorBasisReal[maxkPoints*iQuadPoint + kPoint] += cos(angle)*projectorFunctionValue;
 #ifdef USE_COMPLEX
-							nonLocalProjectorBasisImag[maxkPoints*iQuadPoint + kPoint] += -sin(angle)*projectorFunctionValue;
+				std::fill(ZetalmDeltaVl_KPoint.begin(),ZetalmDeltaVl_KPoint.end(),0.0);
+        std::fill(zetalmDeltaVlProductDistImageAtoms_KPoint.begin(),zetalmDeltaVlProductDistImageAtoms_KPoint.end(),0.0);
+#else
+				std::fill(ZetalmDeltaVl.begin(),ZetalmDeltaVl.end(),0.0);
 #endif
-						}
 
-					}//image atom loop
+				double nlpValue = 0.0;
+      
+        for(int iImageAtomCount = 0; iImageAtomCount < imageIdsList.size(); ++iImageAtomCount)
+        {
 
-				}//end of quad loop
+          int chargeId = imageIdsList[iImageAtomCount];
 
+          //const Point & chargePoint = chargeId < numberGlobalCharges? d_nuclearContainer.getGlobalPoint(chargeId,meshId):
+          //d_nuclearContainer.getImagePoint(chargeId-numberGlobalCharges,meshId);
+
+          Point<3> chargePoint(0.0,0.0,0.0);
+
+          if(chargeId < numberGlobalCharges)
+          {
+            chargePoint[0] = atomLocations[chargeId][2];
+            chargePoint[1] = atomLocations[chargeId][3];
+            chargePoint[2] = atomLocations[chargeId][4];
+          }
+          else
+          {
+            chargePoint[0] = d_imagePositionsTrunc[chargeId-numberGlobalCharges][0];
+            chargePoint[1] = d_imagePositionsTrunc[chargeId-numberGlobalCharges][1];
+            chargePoint[2] = d_imagePositionsTrunc[chargeId-numberGlobalCharges][2];
+          }
+
+					if (chargePoint.distance(cell->center())>d_nlPSPCutOff)
+            continue;
+
+					double x[3],pointMinusLatticeVector[3];
+					double sphericalHarmonicVal, radialProjVal, projectorFunctionValue;     
+          double r,theta,phi,angle;
+
+          for(int iQuadPoint = 0; iQuadPoint < numberQuadraturePoints; ++iQuadPoint)
+          {
+						x[0] = quadPoints[3*iQuadPoint] - chargePoint[0];
+						x[1] = quadPoints[3*iQuadPoint+1] - chargePoint[1];
+						x[2] = quadPoints[3*iQuadPoint+2] - chargePoint[2];
+
+
+						if((x[0]*x[0]+x[1]*x[1]+x[2]*x[2]) <= d_outerMostPointPseudoProjectorData[globalWaveSplineId]*d_outerMostPointPseudoProjectorData[globalWaveSplineId])
+            {
+              pseudoUtils::convertCartesianToSpherical(x,r,theta,phi);
+
+
+              pseudoUtils::getRadialFunctionVal(r,
+                    radialProjVal,
+                    &d_pseudoWaveFunctionSplines[globalWaveSplineId]);
+
+              pseudoUtils::getSphericalHarmonicVal(theta,phi,lQuantumNumber,mQuantumNumber,sphericalHarmonicVal);
+
+              projectorFunctionValue = radialProjVal*sphericalHarmonicVal;
+
+              /*if(iElemComp == 0 && iQuadPoint == 0 && iPseudoWave == 0)
+                {
+                std::cout<<"ChargeId : "<<chargeId<<std::endl;
+                std::cout<<"Coordinates: "<<chargePoint[0]<<" "<<chargePoint[1]<<" "<<chargePoint[2]<<std::endl;
+                std::cout<<"Distance : "<<r<<std::endl;
+                std::cout<<"DeltaVl: "<<deltaVlValue<<std::endl;
+                std::cout<<"JacTimesWeight: "<<fe_values.JxW(iQuadPoint)<<std::endl;
+                }*/
+
+              //
+              //kpoint loop
+              //
+#ifdef USE_COMPLEX
+              pointMinusLatticeVector[0] = x[0] + nuclearCoordinates[0];
+              pointMinusLatticeVector[1] = x[1] + nuclearCoordinates[1];
+              pointMinusLatticeVector[2] = x[2] + nuclearCoordinates[2];
+              for(int kPoint = 0; kPoint < maxkPoints; ++kPoint)
+              {
+                angle = d_kPointCoordinates[3*kPoint+0]*pointMinusLatticeVector[0] + d_kPointCoordinates[3*kPoint+1]*pointMinusLatticeVector[1] + d_kPointCoordinates[3*kPoint+2]*pointMinusLatticeVector[2];
+                nonLocalProjectorBasisReal[maxkPoints*iQuadPoint + kPoint] += cos(angle)*projectorFunctionValue;                
+                nonLocalProjectorBasisImag[maxkPoints*iQuadPoint + kPoint] += -sin(angle)*projectorFunctionValue;
+								
+                const double tempReal=std::cos(-angle);
+								const double tempImag=std::sin(-angle);
+								ZetalmDeltaVl_KPoint[kPoint*numberQuadraturePoints*2+2*iQuadPoint+0] += tempReal*projectorFunctionValue;
+								ZetalmDeltaVl_KPoint[kPoint*numberQuadraturePoints*2+2*iQuadPoint+1] += tempImag*projectorFunctionValue;
+								for(unsigned int iDim = 0; iDim < C_DIM; ++iDim)
+								{
+                  zetalmDeltaVlProductDistImageAtoms_KPoint[kPoint*numberQuadraturePoints*C_DIM*2+iQuadPoint*C_DIM*2+iDim*2+0]+=tempReal*projectorFunctionValue*x[iDim];
+                  zetalmDeltaVlProductDistImageAtoms_KPoint[kPoint*numberQuadraturePoints*C_DIM*2+iQuadPoint*C_DIM*2+iDim*2+1]+=tempImag*projectorFunctionValue*x[iDim];
+								}
+							}
+#else
+
+						  ZetalmDeltaVl[iQuadPoint] += projectorFunctionValue;
+
+#endif              
+            }//inside psp tail
+
+					}//quad loop
+
+				}//image atom loop
+
+#ifdef USE_COMPLEX
+				d_nonLocalPSP_ZetalmDeltaVl[count][iPseudoWave][cell->id()]=ZetalmDeltaVl_KPoint;
+        d_nonLocalPSP_zetalmDeltaVlProductDistImageAtoms_KPoint[count][iPseudoWave][cell->id()]=zetalmDeltaVlProductDistImageAtoms_KPoint;
+#else
+				d_nonLocalPSP_ZetalmDeltaVl[count][iPseudoWave][cell->id()]=ZetalmDeltaVl;
+#endif
 
 				//
 				// access shape functions values at quad points
 				//
 				//ElementQuadShapeFunctions shapeFunctions = dft::ShapeFunctionDataCalculator::v_shapeFunctions[meshId][quadratureRuleId][elementId];
 
+        //FIXME: Optimize below using dgemm
 				for(int iNode = 0; iNode < numberNodesPerElement; ++iNode)
 				{
 					for(int kPoint = 0; kPoint < maxkPoints; ++kPoint)
@@ -278,8 +358,8 @@ void dftClass<FEOrder,FEOrderElectro>::computeElementalOVProjectorKets()
 						double tempImag = 0;
 						for(int iQuadPoint = 0; iQuadPoint < numberQuadraturePoints; ++iQuadPoint)
 						{
-							const double shapeval=fe_values.shape_value(iNode,iQuadPoint);
-							const double jxw=fe_values.JxW(iQuadPoint);
+							const double shapeval=shapeValQuads[iNode*numberQuadraturePoints+iQuadPoint];
+							const double jxw=jxwQuads[iQuadPoint];
 #ifdef USE_COMPLEX
 							tempReal += nonLocalProjectorBasisReal[maxkPoints*iQuadPoint+kPoint]*shapeval*jxw;
 							tempImag += nonLocalProjectorBasisImag[maxkPoints*iQuadPoint+kPoint]*shapeval*jxw;
@@ -287,11 +367,11 @@ void dftClass<FEOrder,FEOrderElectro>::computeElementalOVProjectorKets()
 
 							nonLocalProjectorElementMatricesAtomElem
 								[numberNodesPerElement*iPseudoWave + iNode]
-								+= nonLocalProjectorBasisReal[maxkPoints*iQuadPoint]*shapeval*jxw;
+								+= ZetalmDeltaVl[maxkPoints*iQuadPoint]*shapeval*jxw;
 
 							nonLocalProjectorElementMatricesTransposeAtomElem
 								[numberPseudoWaveFunctions*iNode+iPseudoWave]
-								+= nonLocalProjectorBasisReal[maxkPoints*iQuadPoint]*shapeval*jxw;
+								+= ZetalmDeltaVl[maxkPoints*iQuadPoint]*shapeval*jxw;
 
 #endif
 						}
@@ -318,6 +398,8 @@ void dftClass<FEOrder,FEOrderElectro>::computeElementalOVProjectorKets()
 		}//element loop
 
 		cumulativeWaveSplineId += numberPseudoWaveFunctions;
+		if (numberElementsInAtomCompactSupport !=0)
+			count++;
 
 	}//atom loop
 
@@ -839,7 +921,7 @@ void dftClass<FEOrder,FEOrderElectro>::computeSparseStructureNonLocalProjectors_
 							chargePoint[2] = d_imagePositionsTrunc[chargeId-numberGlobalCharges][2];
 						}
 
-						if (chargePoint.distance(cell->center())<10.0)
+						if (chargePoint.distance(cell->center())<d_nlPSPCutOff)
 						{
 							isSkipCell=false;
 							break;

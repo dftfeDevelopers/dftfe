@@ -267,7 +267,7 @@ void dftClass<FEOrder,FEOrderElectro>::initRho()
 		  }*/
 
 	}
-	else
+	//else
 	{
 		//loop over elements
 		typename DoFHandler<3>::active_cell_iterator cell = dofHandler.begin_active(), endc = dofHandler.end();
