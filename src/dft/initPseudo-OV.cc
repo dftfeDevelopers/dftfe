@@ -94,9 +94,7 @@ void dftClass<FEOrder,FEOrderElectro>::computeElementalOVProjectorKets()
 	d_nonLocalProjectorElementMatricesConjugate.clear();
 	d_nonLocalProjectorElementMatricesTranspose.clear();
 	d_nonLocalPSP_ZetalmDeltaVl.clear();
-#ifdef USE_COMPLEX
   d_nonLocalPSP_zetalmDeltaVlProductDistImageAtoms_KPoint.clear();
-#endif
   d_cellIdToNonlocalAtomIdsLocalCompactSupportMap.clear();
 
 	d_nonLocalProjectorElementMatrices.resize(numberNonLocalAtoms);
@@ -111,6 +109,7 @@ void dftClass<FEOrder,FEOrderElectro>::computeElementalOVProjectorKets()
   std::vector<double> zetalmDeltaVlProductDistImageAtoms_KPoint(maxkPoints*numberQuadraturePoints*C_DIM*2,0.0);
 #else
   std::vector<double> ZetalmDeltaVl(numberQuadraturePoints,0.0);
+  std::vector<double> zetalmDeltaVlProductDistImageAtoms_KPoint(maxkPoints*numberQuadraturePoints*C_DIM,0.0);  
 #endif
 
 	int cumulativeWaveSplineId = 0;
@@ -118,9 +117,7 @@ void dftClass<FEOrder,FEOrderElectro>::computeElementalOVProjectorKets()
   unsigned int count=0;
 	const unsigned int numNonLocalAtomsCurrentProcess= d_nonLocalAtomIdsInCurrentProcess.size();
 	d_nonLocalPSP_ZetalmDeltaVl.resize(numNonLocalAtomsCurrentProcess);
-#ifdef USE_COMPLEX
   d_nonLocalPSP_zetalmDeltaVlProductDistImageAtoms_KPoint.resize(numNonLocalAtomsCurrentProcess);
-#endif  
 	//
 	//
 	for(int iAtom = 0; iAtom < numberNonLocalAtoms; ++iAtom)
@@ -161,9 +158,7 @@ void dftClass<FEOrder,FEOrderElectro>::computeElementalOVProjectorKets()
 			d_nonLocalProjectorElementMatricesTranspose[iAtom].resize(numberElementsInAtomCompactSupport);
 
 			d_nonLocalPSP_ZetalmDeltaVl[count].resize(numberPseudoWaveFunctions);
-#ifdef USE_COMPLEX
 			d_nonLocalPSP_zetalmDeltaVlProductDistImageAtoms_KPoint[count].resize(numberPseudoWaveFunctions);      
-#endif      
 		}
 
 		for(int iElemComp = 0; iElemComp < numberElementsInAtomCompactSupport; ++iElemComp)
@@ -217,6 +212,7 @@ void dftClass<FEOrder,FEOrderElectro>::computeElementalOVProjectorKets()
 				d_nonLocalPSP_zetalmDeltaVlProductDistImageAtoms_KPoint[count][iPseudoWave][cell->id()]=std::vector<double>(maxkPoints*numberQuadraturePoints*C_DIM*2);        
 #else
 				d_nonLocalPSP_ZetalmDeltaVl[count][iPseudoWave][cell->id()]=std::vector<double>(numberQuadraturePoints);
+				d_nonLocalPSP_zetalmDeltaVlProductDistImageAtoms_KPoint[count][iPseudoWave][cell->id()]=std::vector<double>(maxkPoints*numberQuadraturePoints*C_DIM);             
 #endif
 
 				waveFunctionId = iPseudoWave + cumulativeWaveSplineId;
@@ -237,10 +233,10 @@ void dftClass<FEOrder,FEOrderElectro>::computeElementalOVProjectorKets()
 
 #ifdef USE_COMPLEX
 				std::fill(ZetalmDeltaVl_KPoint.begin(),ZetalmDeltaVl_KPoint.end(),0.0);
-        std::fill(zetalmDeltaVlProductDistImageAtoms_KPoint.begin(),zetalmDeltaVlProductDistImageAtoms_KPoint.end(),0.0);
 #else
 				std::fill(ZetalmDeltaVl.begin(),ZetalmDeltaVl.end(),0.0);
 #endif
+        std::fill(zetalmDeltaVlProductDistImageAtoms_KPoint.begin(),zetalmDeltaVlProductDistImageAtoms_KPoint.end(),0.0);        
 
 				double nlpValue = 0.0;
       
@@ -329,7 +325,8 @@ void dftClass<FEOrder,FEOrderElectro>::computeElementalOVProjectorKets()
 #else
 
 						  ZetalmDeltaVl[iQuadPoint] += projectorFunctionValue;
-
+              for(unsigned int iDim = 0; iDim < C_DIM; ++iDim)
+                zetalmDeltaVlProductDistImageAtoms_KPoint[iQuadPoint*C_DIM+iDim]+=projectorFunctionValue*x[iDim];
 #endif              
             }//inside psp tail
 

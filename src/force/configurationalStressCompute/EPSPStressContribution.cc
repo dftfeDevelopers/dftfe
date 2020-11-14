@@ -15,7 +15,7 @@
 //
 // @author Sambit Das (2018)
 //
-#ifdef USE_COMPLEX
+
 //compute EPSP contribution stress (local pseudopotential)
 template<unsigned int FEOrder,unsigned int FEOrderElectro>
 	void forceClass<FEOrder,FEOrderElectro>::addEPSPStressContribution
@@ -191,4 +191,3 @@ template<unsigned int FEOrder,unsigned int FEOrderElectro>
 					d_stress[idim][jdim]+=EPSPStressContribution[idim][jdim][iSubCell];
 	}//iAtom loop
 }
-#endif

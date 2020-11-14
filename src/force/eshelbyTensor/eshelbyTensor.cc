@@ -425,6 +425,7 @@ namespace dftfe {
 			return eshelbyTensor;
 		}
 
+    // for complex mode
 		Tensor<2,C_DIM,VectorizedArray<double> >  getEnlStress(const std::vector<std::vector<std::vector<Tensor<1,2, Tensor<1,C_DIM,VectorizedArray<double> > > > > > & zetalmDeltaVlProductDistImageAtoms,
 				const std::vector<std::vector<std::vector<std::complex<double> > > >& projectorKetTimesPsiTimesVTimesPartOcc,
 				std::vector<Tensor<1,2,VectorizedArray<double> > >::const_iterator  psiBegin,
@@ -479,6 +480,50 @@ namespace dftfe {
 			}
 			return E;
 		}
+
+    // for real mode
+		Tensor<2,C_DIM,VectorizedArray<double> >  getEnlStress(const std::vector<std::vector<Tensor<1,C_DIM,VectorizedArray<double> > > > & zetalmDeltaVlProductDistImageAtoms,
+				const std::vector<std::vector<std::vector<double> > >& projectorKetTimesPsiTimesVTimesPartOcc,
+				std::vector<VectorizedArray<double> >::const_iterator  psiBegin,
+				std::vector<Tensor<1,C_DIM,VectorizedArray<double> > >::const_iterator  gradPsiBegin,        
+				const std::vector<unsigned int> & nonlocalAtomsCompactSupportList,
+				const unsigned int numBlockedEigenvectors)
+		{
+			Tensor<2,C_DIM,VectorizedArray<double> > E;
+			VectorizedArray<double> four=make_vectorized_array(4.0);
+
+			for (unsigned int iAtomNonLocal=0; iAtomNonLocal < zetalmDeltaVlProductDistImageAtoms.size(); ++iAtomNonLocal)
+			{
+				bool isCellInCompactSupport=false;
+				for (unsigned int i=0;i<nonlocalAtomsCompactSupportList.size();i++)
+					if (nonlocalAtomsCompactSupportList[i]==iAtomNonLocal)
+					{
+						isCellInCompactSupport=true;
+						break;
+					}
+
+				if (!isCellInCompactSupport)
+					continue;
+
+				const int numberPseudoWaveFunctions = zetalmDeltaVlProductDistImageAtoms[iAtomNonLocal].size();
+
+				std::vector<VectorizedArray<double>>::const_iterator it1=psiBegin;
+				std::vector<Tensor<1,C_DIM,VectorizedArray<double> > >::const_iterator it2=gradPsiBegin;
+        for (unsigned int eigenIndex=0; eigenIndex < numBlockedEigenvectors; ++it1,++it2, ++ eigenIndex)
+        {
+          const VectorizedArray<double> & psi= *it1;
+          const Tensor<1,C_DIM,VectorizedArray<double> > & gradPsi= *it2;            
+          for (unsigned int iPseudoWave=0; iPseudoWave < numberPseudoWaveFunctions; ++iPseudoWave)
+          {
+            VectorizedArray<double> CReal=make_vectorized_array(projectorKetTimesPsiTimesVTimesPartOcc[0][iAtomNonLocal][numberPseudoWaveFunctions*eigenIndex + iPseudoWave]);
+            Tensor<1,C_DIM,VectorizedArray<double> >  zdvR=zetalmDeltaVlProductDistImageAtoms[iAtomNonLocal][iPseudoWave];
+            E-=four*outer_product(gradPsi,zdvR);
+          }
+        }
+			}
+			return E;
+		}
+
 
 	  Tensor<1,C_DIM,VectorizedArray<double> >  getFNonlinearCoreCorrection(const VectorizedArray<double> & vxc,
 										const Tensor<1,C_DIM,VectorizedArray<double> > & gradRhoCore)

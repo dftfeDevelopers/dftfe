@@ -16,7 +16,6 @@
 // @author Sambit Das(2018)
 //
 
-#ifdef USE_COMPLEX
 template<unsigned int FEOrder,unsigned int FEOrderElectro>
 	void forceClass<FEOrder,FEOrderElectro>::computeStress
 (const MatrixFree<3,double> & matrixFreeData,
@@ -145,5 +144,3 @@ void forceClass<FEOrder,FEOrderElectro>::printStress()
 	}
 
 }
-
-#endif

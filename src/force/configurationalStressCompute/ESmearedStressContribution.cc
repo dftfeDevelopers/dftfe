@@ -15,7 +15,7 @@
 //
 // @author Sambit Das
 //
-#ifdef USE_COMPLEX
+
 //compute ESmeared contribution stress
 template<unsigned int FEOrder,unsigned int FEOrderElectro>
 	void forceClass<FEOrder,FEOrderElectro>::addEPhiTotSmearedStressContribution
@@ -177,4 +177,3 @@ template<unsigned int FEOrder,unsigned int FEOrderElectro>
 					d_stress[idim][jdim]+=EPSPStressContribution[idim][jdim][iSubCell];
 	}//iAtom loop  
 }
-#endif
