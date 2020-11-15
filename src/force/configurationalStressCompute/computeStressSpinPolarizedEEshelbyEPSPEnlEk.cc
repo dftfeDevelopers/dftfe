@@ -194,11 +194,8 @@ template<unsigned int FEOrder,unsigned int FEOrderElectro>
 					numEigenVectors,
 					projectorKetTimesPsiSpin1TimesVTimesPartOcc[ikPoint],
 					ikPoint,
-					partialOccupanciesSpin1[ikPoint]
-#ifdef USE_COMPLEX            
-          ,
+					partialOccupanciesSpin1[ikPoint],
 					true
-#endif          
           );
 		}
 	}
