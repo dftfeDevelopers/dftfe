@@ -161,7 +161,6 @@ namespace dftfe {
 			 */
 			//void updateGaussianConstant(const double newGaussianConstant);
 
-#ifdef USE_COMPLEX
 			/** @brief computes the configurational stress on the domain corresponding to
 			 *  affine deformation of the periodic cell.
 			 *
@@ -193,7 +192,6 @@ namespace dftfe {
 			 *  @return void.
 			 */
 			void printStress();
-#endif
 
 			/** @brief returns a copy of the current stress tensor value.
 			 *
@@ -487,7 +485,6 @@ namespace dftfe {
 
       void computeFloatingAtomsForces();
 
-#ifdef USE_COMPLEX
 			void computeStressEself(const DoFHandler<3> & dofHandlerElectro,
 					const vselfBinsManager<FEOrder,FEOrderElectro>   & vselfBinsManagerElectro,
           const MatrixFree<3,double> & matrixFreeDataElectro,
@@ -568,8 +565,6 @@ namespace dftfe {
          const std::set<int> & atomImageIdsInBin,
          const std::map<dealii::CellId, std::vector<int> > & bQuadAtomIdsAllAtomsImages,
          const std::vector< VectorizedArray<double> > & smearedbQuads);      
-      
-#endif
 
 			void computeElementalNonLocalPseudoOVDataForce();
 
@@ -611,37 +606,6 @@ namespace dftfe {
 #endif
 
 
-#ifdef USE_COMPLEX
-			/* Storage for precomputed nonlocal pseudopotential quadrature data. This is to speedup the
-			 * configurational force computation. Data format: vector(numNonLocalAtomsCurrentProcess with
-			 * non-zero compact support, vector(number pseudo wave functions,map<cellid,num_quad_points*2>)).
-			 * Refer to (https://link.aps.org/doi/10.1103/PhysRevB.97.165132) for details of the expression of the configurational force terms
-			 * for the norm-conserving Troullier-Martins pseudopotential in the Kleinman-Bylander form.
-			 * The same expressions also extend to the Optimized Norm-Conserving Vanderbilt (ONCV) pseudopotentials.
-			 */
-			//std::vector<std::vector<std::map<dealii::CellId, std::vector<double > > > > d_nonLocalPSP_ZetalmDeltaVl;
-
-
-			/* Storage for precomputed nonlocal pseudopotential quadrature data. This is to speedup the
-			 * configurational stress computation. Data format: vector(numNonLocalAtomsCurrentProcess with
-			 * non-zero compact support, vector(number pseudo wave functions,map<cellid,num_quad_points*num_k_points*3*2>)).
-			 * Refer to (https://link.aps.org/doi/10.1103/PhysRevB.97.165132) for details of the expression of the configurational force terms
-			 * for the norm-conserving Troullier-Martins pseudopotential in the Kleinman-Bylander form.
-			 * The same expressions also extend to the Optimized Norm-Conserving Vanderbilt (ONCV) pseudopotentials.
-			 */
-			//std::vector<std::vector<std::map<dealii::CellId, std::vector<double > > > > d_nonLocalPSP_zetalmDeltaVlProductDistImageAtoms_KPoint;      
-
-#else
-
-			/* Storage for precomputed nonlocal pseudopotential quadrature data. This is to speedup the
-			 * configurational stress computation. Data format: vector(numNonLocalAtomsCurrentProcess with
-			 * non-zero compact support, vector(number pseudo wave functions,map<cellid,num_quad_points>)).
-			 * Refer to (https://link.aps.org/doi/10.1103/PhysRevB.97.165132) for details of the expression of the configurational force terms
-			 * for the norm-conserving Troullier-Martins pseudopotential in the Kleinman-Bylander form.
-			 * The same expressions also extend to the Optimized Norm-Conserving Vanderbilt (ONCV) pseudopotentials.
-			 */
-			//std::vector<std::vector<std::map<dealii::CellId, std::vector<double > > > > d_nonLocalPSP_ZetalmDeltaVl;
-#endif
 
 			/// Gaussian generator constant. Gaussian generator: Gamma(r)= exp(-d_gaussianConstant*r^2)
 			/// FIXME: Until the hanging nodes surface integral issue is fixed use a value >=4.0
@@ -653,14 +617,13 @@ namespace dftfe {
 			/// Storage for configurational stress tensor
 			Tensor<2,C_DIM,double> d_stress;
 
-#ifdef USE_COMPLEX
 			/* Part of the stress tensor which is summed over k points.
 			 * It is a temporary data structure required for stress evaluation (d_stress)
 			 * when parallization over k points is on.
 			 */
 			Tensor<2,C_DIM,double> d_stressKPoints;
-#endif
-			/* Dont use true except for debugging forces only without mesh movement, as gaussian ovelap
+			
+      /* Dont use true except for debugging forces only without mesh movement, as gaussian ovelap
 			 * on atoms for move mesh is by default set to false
 			 */
 			const bool d_allowGaussianOverlapOnAtoms=false;

@@ -167,13 +167,22 @@ namespace dftfe {
 				const double fermiEnergy_,
 				const double tVal);
 
-		/// Nonlocal pseudopotential Eshelby tensor (used only for stress computation)
+		/// Nonlocal pseudopotential Eshelby tensor (used only for stress computation) multiple k point and complex case
 		Tensor<2,C_DIM,VectorizedArray<double> >  getEnlStress(const std::vector<std::vector<std::vector<Tensor<1,2, Tensor<1,C_DIM,VectorizedArray<double> > > > > > & zetalmDeltaVlProductDistImageAtoms,
 				const std::vector<std::vector<std::vector<std::complex<double> > > >& projectorKetTimesPsiTimesVTimesPartOcc,
 				std::vector<Tensor<1,2,VectorizedArray<double> > >::const_iterator  psiBegin,
 				std::vector<Tensor<1,2,Tensor<1,C_DIM,VectorizedArray<double> > > >::const_iterator  gradPsiBegin,          
 				const std::vector<double> & kPointWeights,
 				const std::vector<double> & kPointCoordinates,        
+				const std::vector<unsigned int> & nonlocalAtomsCompactSupportList,
+				const unsigned int numBlockedEigenvectors);
+
+
+		/// Nonlocal pseudopotential Eshelby tensor (used only for stress computation) for Gamma point case
+		Tensor<2,C_DIM,VectorizedArray<double> >  getEnlStress(const std::vector<std::vector<Tensor<1,C_DIM,VectorizedArray<double> > > > & zetalmDeltaVlProductDistImageAtoms,
+			  const std::vector<std::vector<std::vector<double > > >& projectorKetTimesPsiTimesVTimesPartOcc,
+				std::vector<VectorizedArray<double> >::const_iterator  psiBegin,
+				std::vector<Tensor<1,C_DIM,VectorizedArray<double> > >::const_iterator  gradPsiBegin,          
 				const std::vector<unsigned int> & nonlocalAtomsCompactSupportList,
 				const unsigned int numBlockedEigenvectors);
 

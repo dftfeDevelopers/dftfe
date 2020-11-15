@@ -15,7 +15,6 @@
 //
 // @author Sambit Das
 //
-#ifdef USE_COMPLEX
 //compute configurational stress contribution from all terms except the nuclear self energy
 template<unsigned int FEOrder,unsigned int FEOrderElectro>
 	void forceClass<FEOrder,FEOrderElectro>::computeStressSpinPolarizedEEshelbyEPSPEnlEk
@@ -63,7 +62,6 @@ template<unsigned int FEOrder,unsigned int FEOrderElectro>
 	const unsigned int numberImageCharges = dftPtr->d_imageIds.size();
 	const unsigned int totalNumberAtoms = numberGlobalAtoms + numberImageCharges;
 	const bool isPseudopotential = dftParameters::isPseudopotential;
-	const unsigned int numVectorizedArrayElements=VectorizedArray<double>::n_array_elements;
 
 	FEEvaluation<C_DIM,1,C_num1DQuad<C_rhoNodalPolyOrder<FEOrder,FEOrderElectro>()>(),C_DIM>  forceEval(matrixFreeData,
 			d_forceDofHandlerIndex,
@@ -72,6 +70,7 @@ template<unsigned int FEOrder,unsigned int FEOrderElectro>
 			d_forceDofHandlerIndex,
 			dftPtr->d_nlpspQuadratureId);
 
+#ifdef USE_COMPLEX
 	FEEvaluation<C_DIM,FEOrder,C_num1DQuad<C_rhoNodalPolyOrder<FEOrder,FEOrderElectro>()>(),2> psiEvalSpin0(matrixFreeData,
 			eigenDofHandlerIndex,
 			0);
@@ -84,6 +83,20 @@ template<unsigned int FEOrder,unsigned int FEOrderElectro>
 	FEEvaluation<C_DIM,FEOrder,C_num1DQuadNLPSP<FEOrder>()*C_numCopies1DQuadNLPSP(),2> psiEvalSpin1NLP(matrixFreeData,
 			eigenDofHandlerIndex,
 			dftPtr->d_nlpspQuadratureId);
+#else
+	FEEvaluation<C_DIM,FEOrder,C_num1DQuad<C_rhoNodalPolyOrder<FEOrder,FEOrderElectro>()>(),1> psiEvalSpin0(matrixFreeData,
+			eigenDofHandlerIndex,
+			0);
+	FEEvaluation<C_DIM,FEOrder,C_num1DQuad<C_rhoNodalPolyOrder<FEOrder,FEOrderElectro>()>(),1> psiEvalSpin1(matrixFreeData,
+			eigenDofHandlerIndex,
+			0);
+	FEEvaluation<C_DIM,FEOrder,C_num1DQuadNLPSP<FEOrder>()*C_numCopies1DQuadNLPSP(),1> psiEvalSpin0NLP(matrixFreeData,
+			eigenDofHandlerIndex,
+			dftPtr->d_nlpspQuadratureId);
+	FEEvaluation<C_DIM,FEOrder,C_num1DQuadNLPSP<FEOrder>()*C_numCopies1DQuadNLPSP(),1> psiEvalSpin1NLP(matrixFreeData,
+			eigenDofHandlerIndex,
+			dftPtr->d_nlpspQuadratureId);
+#endif  
 
 	QGauss<C_DIM>  quadrature(C_num1DQuad<C_rhoNodalPolyOrder<FEOrder,FEOrderElectro>()>());
 
@@ -172,7 +185,8 @@ template<unsigned int FEOrder,unsigned int FEOrderElectro>
 					projectorKetTimesPsiSpin0TimesVTimesPartOcc[ikPoint],
 					ikPoint,
 					partialOccupanciesSpin0[ikPoint],
-					true);
+					true
+          );
 		}
 		for (unsigned int ikPoint=0; ikPoint<numKPoints; ++ikPoint)
 		{
@@ -181,7 +195,8 @@ template<unsigned int FEOrder,unsigned int FEOrderElectro>
 					projectorKetTimesPsiSpin1TimesVTimesPartOcc[ikPoint],
 					ikPoint,
 					partialOccupanciesSpin1[ikPoint],
-					true);
+					true
+          );
 		}
 	}
 
@@ -220,25 +235,26 @@ template<unsigned int FEOrder,unsigned int FEOrderElectro>
 
 		//allocate storage for vector of quadPoints, nonlocal atom id, pseudo wave, k point
 		//FIXME: flatten nonlocal atomid id and pseudo wave and k point
-		std::vector<std::vector<std::vector<std::vector<Tensor<1,2,VectorizedArray<double> > > > > >ZetaDeltaVQuads;
+#ifdef USE_COMPLEX
 		std::vector<std::vector<std::vector<std::vector<Tensor<1,2, Tensor<1,C_DIM,VectorizedArray<double> > > > > > >zetalmDeltaVlProductDistImageAtomsQuads;
+#else  
+		std::vector<std::vector<std::vector<Tensor<1,C_DIM,VectorizedArray<double> > > > > zetalmDeltaVlProductDistImageAtomsQuads;
+#endif    
 		if(isPseudopotential)
 		{
-			ZetaDeltaVQuads.resize(numQuadPointsNLP);
 			zetalmDeltaVlProductDistImageAtomsQuads.resize(numQuadPointsNLP);
 			for (unsigned int q=0; q<numQuadPointsNLP; ++q)
 			{
-				ZetaDeltaVQuads[q].resize(dftPtr->d_nonLocalPSP_ZetalmDeltaVl.size());
 				zetalmDeltaVlProductDistImageAtomsQuads[q].resize(dftPtr->d_nonLocalPSP_zetalmDeltaVlProductDistImageAtoms_KPoint.size());
 				for (unsigned int i=0; i < dftPtr->d_nonLocalPSP_zetalmDeltaVlProductDistImageAtoms_KPoint.size(); ++i)
 				{
 					const int numberPseudoWaveFunctions = dftPtr->d_nonLocalPSP_zetalmDeltaVlProductDistImageAtoms_KPoint[i].size();
-					ZetaDeltaVQuads[q][i].resize(numberPseudoWaveFunctions);
 					zetalmDeltaVlProductDistImageAtomsQuads[q][i].resize(numberPseudoWaveFunctions);
 					for (unsigned int iPseudoWave=0; iPseudoWave < numberPseudoWaveFunctions; ++iPseudoWave)
 					{
-						ZetaDeltaVQuads[q][i][iPseudoWave].resize(numKPoints,zeroTensor1);
+#ifdef USE_COMPLEX              
 						zetalmDeltaVlProductDistImageAtomsQuads[q][i][iPseudoWave].resize(numKPoints,zeroTensor2);
+#endif            
 					}
 				}
 			}
@@ -310,13 +326,27 @@ template<unsigned int FEOrder,unsigned int FEOrderElectro>
 			for (unsigned int q=0; q<numQuadPoints; ++q)
 			{
 				rhoQuads[q][iSubCell]=(*dftPtr->rhoOutValues)[subCellId][q];
+
+        if(dftParameters::xc_id == 4)
+          for (unsigned int idim=0; idim<C_DIM; idim++)
+          {
+            gradRhoSpin0Quads[q][idim][iSubCell]=(*dftPtr->gradRhoOutValuesSpinPolarized)[subCellId][6*q+idim];
+            gradRhoSpin1Quads[q][idim][iSubCell]=(*dftPtr->gradRhoOutValuesSpinPolarized)[subCellId][6*q+3+idim];
+          }        
 			}
 		}
 
+#ifdef USE_COMPLEX  
 		std::vector<Tensor<1,2,VectorizedArray<double> > > psiSpin0Quads(numQuadPoints*numEigenVectors*numKPoints,zeroTensor1);
 		std::vector<Tensor<1,2,VectorizedArray<double> > > psiSpin1Quads(numQuadPoints*numEigenVectors*numKPoints,zeroTensor1);
 		std::vector<Tensor<1,2,Tensor<1,C_DIM,VectorizedArray<double> > > > gradPsiSpin0Quads(numQuadPoints*numEigenVectors*numKPoints,zeroTensor2);
 		std::vector<Tensor<1,2,Tensor<1,C_DIM,VectorizedArray<double> > > > gradPsiSpin1Quads(numQuadPoints*numEigenVectors*numKPoints,zeroTensor2);
+#else
+		std::vector<VectorizedArray<double> > psiSpin0Quads(numQuadPoints*numEigenVectors*numKPoints,make_vectorized_array(0.0));
+		std::vector<VectorizedArray<double> > psiSpin1Quads(numQuadPoints*numEigenVectors*numKPoints,make_vectorized_array(0.0));
+		std::vector<Tensor<1,C_DIM,VectorizedArray<double> > > gradPsiSpin0Quads(numQuadPoints*numEigenVectors*numKPoints,zeroTensor3);
+		std::vector<Tensor<1,C_DIM,VectorizedArray<double> > > gradPsiSpin1Quads(numQuadPoints*numEigenVectors*numKPoints,zeroTensor3);
+#endif    
 
 		for (unsigned int ikPoint=0; ikPoint<numKPoints; ++ikPoint)
 			for (unsigned int iEigenVec=0; iEigenVec<numEigenVectors; ++iEigenVec)
@@ -333,55 +363,33 @@ template<unsigned int FEOrder,unsigned int FEOrderElectro>
 					psiSpin1Quads[id]=psiEvalSpin1.get_value(q);
 					gradPsiSpin0Quads[id]=psiEvalSpin0.get_gradient(q);
 					gradPsiSpin1Quads[id]=psiEvalSpin1.get_gradient(q);
-
-					double partOccSpin0 =dftUtils::getPartialOccupancy
-						(dftPtr->eigenValues[ikPoint][iEigenVec],
-						 dftPtr->fermiEnergy,
-						 C_kb,
-						 dftParameters::TVal);
-					double partOccSpin1 =dftUtils::getPartialOccupancy
-						(dftPtr->eigenValues[ikPoint][iEigenVec+numEigenVectors],
-						 dftPtr->fermiEnergy,
-						 C_kb,
-						 dftParameters::TVal);
-
-					if(dftParameters::constraintMagnetization)
-					{
-						partOccSpin0 = 1.0 , partOccSpin1 = 1.0 ;
-						if ( dftPtr->eigenValues[ikPoint][iEigenVec+numEigenVectors]> dftPtr->fermiEnergyDown)
-							partOccSpin1 = 0.0 ;
-						if (dftPtr->eigenValues[ikPoint][iEigenVec] > dftPtr->fermiEnergyUp)
-							partOccSpin0 = 0.0 ;
-					}
-
-					const VectorizedArray<double> factor0=make_vectorized_array(dftPtr->d_kPointWeights[ikPoint]*partOccSpin0);
-					const VectorizedArray<double> factor1=make_vectorized_array(dftPtr->d_kPointWeights[ikPoint]*partOccSpin1);
-
-					gradRhoSpin0Quads[q]+=factor0*internalforce::computeGradRhoContribution(psiSpin0Quads[id],gradPsiSpin0Quads[id]);
-					gradRhoSpin1Quads[q]+=factor1*internalforce::computeGradRhoContribution(psiSpin1Quads[id],gradPsiSpin1Quads[id]);
-
 				}//quad point loop
 			} //eigenvector loop
 
-		//accumulate grad rho quad point contribution from all pools
-		for (unsigned int iSubCell=0; iSubCell<numSubCells; ++iSubCell)
-			for (unsigned int q=0; q<numQuadPoints; ++q)
-				for (unsigned int idim=0; idim<C_DIM; idim++)
-				{
-					gradRhoSpin0Quads[q][idim][iSubCell]=Utilities::MPI::sum(gradRhoSpin0Quads[q][idim][iSubCell],dftPtr->interpoolcomm);
-					gradRhoSpin1Quads[q][idim][iSubCell]=Utilities::MPI::sum(gradRhoSpin1Quads[q][idim][iSubCell],dftPtr->interpoolcomm);
-				}
-
+#ifdef USE_COMPLEX  
 		std::vector<Tensor<1,2,VectorizedArray<double> > > psiSpin0QuadsNLP;
 		std::vector<Tensor<1,2,VectorizedArray<double> > > psiSpin1QuadsNLP;
 		std::vector<Tensor<1,2,Tensor<1,C_DIM,VectorizedArray<double> > > > gradPsiSpin0QuadsNLP;
 		std::vector<Tensor<1,2,Tensor<1,C_DIM,VectorizedArray<double> > > > gradPsiSpin1QuadsNLP;    
+#else   
+		std::vector<VectorizedArray<double> > psiSpin0QuadsNLP;
+		std::vector<VectorizedArray<double> > psiSpin1QuadsNLP;
+		std::vector<Tensor<1,C_DIM,VectorizedArray<double> > > gradPsiSpin0QuadsNLP;
+		std::vector<Tensor<1,C_DIM,VectorizedArray<double> > > gradPsiSpin1QuadsNLP; 
+#endif    
 		if (isPseudopotential)
 		{
+#ifdef USE_COMPLEX        
 			psiSpin0QuadsNLP.resize(numQuadPointsNLP*numEigenVectors*numKPoints,zeroTensor1);
 			psiSpin1QuadsNLP.resize(numQuadPointsNLP*numEigenVectors*numKPoints,zeroTensor1);
 			gradPsiSpin0QuadsNLP.resize(numQuadPointsNLP*numEigenVectors*numKPoints,zeroTensor2);
-			gradPsiSpin1QuadsNLP.resize(numQuadPointsNLP*numEigenVectors*numKPoints,zeroTensor2);      
+			gradPsiSpin1QuadsNLP.resize(numQuadPointsNLP*numEigenVectors*numKPoints,zeroTensor2);    
+#else
+			psiSpin0QuadsNLP.resize(numQuadPointsNLP*numEigenVectors*numKPoints,make_vectorized_array(0.0));
+			psiSpin1QuadsNLP.resize(numQuadPointsNLP*numEigenVectors*numKPoints,make_vectorized_array(0.0));
+			gradPsiSpin0QuadsNLP.resize(numQuadPointsNLP*numEigenVectors*numKPoints,zeroTensor3);
+			gradPsiSpin1QuadsNLP.resize(numQuadPointsNLP*numEigenVectors*numKPoints,zeroTensor3);
+#endif
 			for (unsigned int ikPoint=0; ikPoint<numKPoints; ++ikPoint)
 				for (unsigned int iEigenVec=0; iEigenVec<numEigenVectors; ++iEigenVec)
 				{
@@ -420,12 +428,14 @@ template<unsigned int FEOrder,unsigned int FEOrderElectro>
 							{
 								for (unsigned int ikPoint=0; ikPoint<numKPoints; ++ikPoint)
 								{
-									ZetaDeltaVQuads[q][i][iPseudoWave][ikPoint][0][iSubCell]=dftPtr->d_nonLocalPSP_ZetalmDeltaVl[i][iPseudoWave][subCellId][ikPoint*numQuadPointsNLP*2+q*2+0];
-									ZetaDeltaVQuads[q][i][iPseudoWave][ikPoint][1][iSubCell]=dftPtr->d_nonLocalPSP_ZetalmDeltaVl[i][iPseudoWave][subCellId][ikPoint*numQuadPointsNLP*2+q*2+1];
 									for (unsigned int idim=0; idim<C_DIM; idim++)
 									{
+#ifdef USE_COMPLEX  
 										  zetalmDeltaVlProductDistImageAtomsQuads[q][i][iPseudoWave][ikPoint][0][idim][iSubCell]=dftPtr->d_nonLocalPSP_zetalmDeltaVlProductDistImageAtoms_KPoint[i][iPseudoWave][subCellId][ikPoint*numQuadPointsNLP*C_DIM*2+q*C_DIM*2+idim*2+0];
 											zetalmDeltaVlProductDistImageAtomsQuads[q][i][iPseudoWave][ikPoint][1][idim][iSubCell]=dftPtr->d_nonLocalPSP_zetalmDeltaVlProductDistImageAtoms_KPoint[i][iPseudoWave][subCellId][ikPoint*numQuadPointsNLP*C_DIM*2+q*C_DIM*2+idim*2+1];
+#else  
+										  zetalmDeltaVlProductDistImageAtomsQuads[q][i][iPseudoWave][idim][iSubCell]=dftPtr->d_nonLocalPSP_zetalmDeltaVlProductDistImageAtoms_KPoint[i][iPseudoWave][subCellId][ikPoint*numQuadPointsNLP*C_DIM+q*C_DIM+idim];
+#endif                      
 									}
 								}
 							}//non-trivial cellId check
@@ -449,7 +459,7 @@ template<unsigned int FEOrder,unsigned int FEOrderElectro>
 				 derExchCorrEnergyWithGradRhoOutSpin0Quads[q],
 				 derExchCorrEnergyWithGradRhoOutSpin1Quads[q]);
 
-
+#ifdef USE_COMPLEX
 			Tensor<2,C_DIM,VectorizedArray<double> > EKPoints=eshelbyTensorSP::getELocWfcEshelbyTensorPeriodicKPoints
 				(psiSpin0Quads.begin()+q*numEigenVectors*numKPoints,
 				 psiSpin1Quads.begin()+q*numEigenVectors*numKPoints,
@@ -475,6 +485,18 @@ template<unsigned int FEOrder,unsigned int FEOrderElectro>
 				 dftPtr->fermiEnergyUp,
 				 dftPtr->fermiEnergyDown,
 				 dftParameters::TVal);
+#else
+			Tensor<2,C_DIM,VectorizedArray<double> > EKPoints=eshelbyTensorSP::getELocWfcEshelbyTensorNonPeriodic
+				(psiSpin0Quads.begin()+q*numEigenVectors*numKPoints,
+				 psiSpin1Quads.begin()+q*numEigenVectors*numKPoints,
+				 gradPsiSpin0Quads.begin()+q*numEigenVectors*numKPoints,
+				 gradPsiSpin1Quads.begin()+q*numEigenVectors*numKPoints,
+				 dftPtr->eigenValues[0],
+				 dftPtr->fermiEnergy,
+				 dftPtr->fermiEnergyUp,
+				 dftPtr->fermiEnergyDown,
+				 dftParameters::TVal);
+#endif        
 
 			EQuadSum+=E*forceEval.JxW(q);
 			EKPointsQuadSum+=EKPoints*forceEval.JxW(q);
@@ -484,7 +506,8 @@ template<unsigned int FEOrder,unsigned int FEOrderElectro>
 		if (isPseudopotential)
 			for (unsigned int q=0; q<numQuadPointsNLP; ++q)
 			{
-				Tensor<2,C_DIM,VectorizedArray<double> > EKPoints
+#ifdef USE_COMPLEX              
+				Tensor<2,C_DIM,VectorizedArray<double> > Enl
 					=eshelbyTensorSP::getEnlStress(zetalmDeltaVlProductDistImageAtomsQuads[q],
 						projectorKetTimesPsiSpin0TimesVTimesPartOcc,
 						projectorKetTimesPsiSpin1TimesVTimesPartOcc,
@@ -496,9 +519,21 @@ template<unsigned int FEOrder,unsigned int FEOrderElectro>
             dftPtr->d_kPointCoordinates,
 						macroIdToNonlocalAtomsSetMap[cell],
 						numEigenVectors);
+#else
+				Tensor<2,C_DIM,VectorizedArray<double> > Enl
+					=eshelbyTensorSP::getEnlStress(zetalmDeltaVlProductDistImageAtomsQuads[q],
+						projectorKetTimesPsiSpin0TimesVTimesPartOcc,
+						projectorKetTimesPsiSpin1TimesVTimesPartOcc,
+						psiSpin0QuadsNLP.begin()+q*numEigenVectors*numKPoints,
+						psiSpin1QuadsNLP.begin()+q*numEigenVectors*numKPoints,
+						gradPsiSpin0QuadsNLP.begin()+q*numEigenVectors*numKPoints,
+						gradPsiSpin1QuadsNLP.begin()+q*numEigenVectors*numKPoints,            
+						macroIdToNonlocalAtomsSetMap[cell],
+						numEigenVectors);
+#endif          
 
 
-				EKPointsQuadSum+=EKPoints*forceEvalNLP.JxW(q);
+				EKPointsQuadSum+=Enl*forceEvalNLP.JxW(q);
 			}
 
 		for (unsigned int iSubCell=0; iSubCell<numSubCells; ++iSubCell)
@@ -525,4 +560,3 @@ template<unsigned int FEOrder,unsigned int FEOrderElectro>
 		 pseudoVLocAtomsElectro,
 		 vselfBinsManagerElectro);
 }
-#endif
