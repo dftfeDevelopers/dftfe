@@ -517,7 +517,7 @@ namespace dftfe {
           {
             VectorizedArray<double> CReal=make_vectorized_array(projectorKetTimesPsiTimesVTimesPartOcc[0][iAtomNonLocal][numberPseudoWaveFunctions*eigenIndex + iPseudoWave]);
             Tensor<1,C_DIM,VectorizedArray<double> >  zdvR=zetalmDeltaVlProductDistImageAtoms[iAtomNonLocal][iPseudoWave];
-            E-=four*outer_product(gradPsi,zdvR);
+            E-=four*outer_product(gradPsi,zdvR)*CReal;
           }
         }
 			}

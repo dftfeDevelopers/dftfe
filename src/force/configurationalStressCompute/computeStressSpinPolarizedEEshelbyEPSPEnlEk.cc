@@ -62,7 +62,6 @@ template<unsigned int FEOrder,unsigned int FEOrderElectro>
 	const unsigned int numberImageCharges = dftPtr->d_imageIds.size();
 	const unsigned int totalNumberAtoms = numberGlobalAtoms + numberImageCharges;
 	const bool isPseudopotential = dftParameters::isPseudopotential;
-	const unsigned int numVectorizedArrayElements=VectorizedArray<double>::n_array_elements;
 
 	FEEvaluation<C_DIM,1,C_num1DQuad<C_rhoNodalPolyOrder<FEOrder,FEOrderElectro>()>(),C_DIM>  forceEval(matrixFreeData,
 			d_forceDofHandlerIndex,
@@ -185,11 +184,8 @@ template<unsigned int FEOrder,unsigned int FEOrderElectro>
 					numEigenVectors,
 					projectorKetTimesPsiSpin0TimesVTimesPartOcc[ikPoint],
 					ikPoint,
-					partialOccupanciesSpin0[ikPoint]
-#ifdef USE_COMPLEX          
-          ,
+					partialOccupanciesSpin0[ikPoint],
 					true
-#endif          
           );
 		}
 		for (unsigned int ikPoint=0; ikPoint<numKPoints; ++ikPoint)

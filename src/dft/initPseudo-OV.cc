@@ -109,7 +109,8 @@ void dftClass<FEOrder,FEOrderElectro>::computeElementalOVProjectorKets()
   std::vector<double> zetalmDeltaVlProductDistImageAtoms_KPoint(maxkPoints*numberQuadraturePoints*C_DIM*2,0.0);
 #else
   std::vector<double> ZetalmDeltaVl(numberQuadraturePoints,0.0);
-  std::vector<double> zetalmDeltaVlProductDistImageAtoms_KPoint(maxkPoints*numberQuadraturePoints*C_DIM,0.0);  
+  std::vector<double> zetalmDeltaVlProductDistImageAtoms_KPoint(maxkPoints*numberQuadraturePoints*C_DIM,0.0); 
+	AssertThrow(maxkPoints==1,ExcMessage("DFT-FE Error"));  
 #endif
 
 	int cumulativeWaveSplineId = 0;
@@ -336,10 +337,10 @@ void dftClass<FEOrder,FEOrderElectro>::computeElementalOVProjectorKets()
 
 #ifdef USE_COMPLEX
 				d_nonLocalPSP_ZetalmDeltaVl[count][iPseudoWave][cell->id()]=ZetalmDeltaVl_KPoint;
-        d_nonLocalPSP_zetalmDeltaVlProductDistImageAtoms_KPoint[count][iPseudoWave][cell->id()]=zetalmDeltaVlProductDistImageAtoms_KPoint;
 #else
 				d_nonLocalPSP_ZetalmDeltaVl[count][iPseudoWave][cell->id()]=ZetalmDeltaVl;
 #endif
+        d_nonLocalPSP_zetalmDeltaVlProductDistImageAtoms_KPoint[count][iPseudoWave][cell->id()]=zetalmDeltaVlProductDistImageAtoms_KPoint;
 
 				//
 				// access shape functions values at quad points

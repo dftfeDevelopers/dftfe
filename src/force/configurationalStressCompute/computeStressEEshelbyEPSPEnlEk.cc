@@ -49,13 +49,25 @@ void forceClass<FEOrder,FEOrderElectro>::computeStressEEshelbyEPSPEnlEk(const Ma
 			 std::make_pair(0,dftPtr->d_numEigenValues),
 			 dftPtr->localProc_dof_indicesReal,
 			 dftPtr->localProc_dof_indicesImag,
-			 eigenVectors[kPoint]);
+			 eigenVectors[kPoint],
+       false);
+
+    //FIXME: The underlying call to update_ghost_values
+    //is required because currently localProc_dof_indicesReal
+    //and localProc_dof_indicesImag are only available for
+    //locally owned nodes. Once they are also made available
+    //for ghost nodes- use true for the last argument in
+    //copyFlattenedDealiiVecToSingleCompVec(..) above and supress
+    //underlying call.
+    for(unsigned int i= 0; i < dftPtr->d_numEigenValues; ++i)
+      eigenVectors[kPoint][i].update_ghost_values();      
 #else
 		vectorTools::copyFlattenedDealiiVecToSingleCompVec
 			(dftPtr->d_eigenVectorsFlattened[kPoint],
 			 dftPtr->d_numEigenValues,
 			 std::make_pair(0,dftPtr->d_numEigenValues),
-			 eigenVectors[kPoint]);
+			 eigenVectors[kPoint],
+       true);
 #endif
 	}
 
@@ -63,7 +75,6 @@ void forceClass<FEOrder,FEOrderElectro>::computeStressEEshelbyEPSPEnlEk(const Ma
 	const unsigned int numberImageCharges = dftPtr->d_imageIds.size();
 	const unsigned int totalNumberAtoms = numberGlobalAtoms + numberImageCharges;
 	const bool isPseudopotential = dftParameters::isPseudopotential;
-	const unsigned int numVectorizedArrayElements=VectorizedArray<double>::n_array_elements;
 
 	FEEvaluation<C_DIM,1,C_num1DQuad<C_rhoNodalPolyOrder<FEOrder,FEOrderElectro>()>(),C_DIM>  forceEval(matrixFreeData,
 			d_forceDofHandlerIndex,
@@ -137,11 +148,8 @@ void forceClass<FEOrder,FEOrderElectro>::computeStressEEshelbyEPSPEnlEk(const Ma
 				 numEigenVectors,
 				 projectorKetTimesPsiTimesVTimesPartOcc[ikPoint],
 				 ikPoint,
-				 partialOccupancies[ikPoint]
-#ifdef USE_COMPLEX
-         ,
+				 partialOccupancies[ikPoint],
 				 true
-#endif         
          );
 	}
 
@@ -207,6 +215,8 @@ void forceClass<FEOrder,FEOrderElectro>::computeStressEEshelbyEPSPEnlEk(const Ma
 					{
 #ifdef USE_COMPLEX            
 						zetalmDeltaVlProductDistImageAtomsQuads[q][i][iPseudoWave].resize(numKPoints,zeroTensor2);
+#else
+            zetalmDeltaVlProductDistImageAtomsQuads[q][i][iPseudoWave]=zeroTensor3;
 #endif            
 					}
 				}

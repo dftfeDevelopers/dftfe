@@ -99,7 +99,6 @@ template<unsigned int FEOrder,unsigned int FEOrderElectro>
 
 	const bool isPseudopotential = dftParameters::isPseudopotential;
 
-	const unsigned int numVectorizedArrayElements=VectorizedArray<double>::n_array_elements;
 	FEEvaluation<C_DIM,1,C_num1DQuad<C_rhoNodalPolyOrder<FEOrder,FEOrderElectro>()>(),C_DIM>  forceEval(matrixFreeData,
 			d_forceDofHandlerIndex,
 			0);

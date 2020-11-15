@@ -1174,8 +1174,6 @@ namespace dftfe {
 			AssertThrow( dftParameters::nkx==1 &&  dftParameters::nky==1 &&  dftParameters::nkz==1
 					&& dftParameters::offsetFlagX==0 &&  dftParameters::offsetFlagY==0 &&  dftParameters::offsetFlagZ==0
 					,ExcMessage("DFT-FE Error: Real executable cannot be used for non-zero k point."));
-
-			AssertThrow(!dftParameters::isCellStress,ExcMessage("DFT-FE Error: Currently CELL STRESS cannot be set true if using real executable for a periodic Gamma point problem. This functionality will be added soon."));
 #endif
 			AssertThrow(!(dftParameters::chkType==2 && (dftParameters::isIonOpt || dftParameters::isCellOpt)),ExcMessage("DFT-FE Error: CHK TYPE=2 cannot be used if geometry optimization is being performed."));
 
