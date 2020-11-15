@@ -78,7 +78,8 @@ namespace dftfe{
 			 * @brief reinit spectrum bounds
 			 */
 			void reinitSpectrumBounds(double lowerBoundWantedSpectrum,
-					double lowerBoundUnWantedSpectrum);
+					double lowerBoundUnWantedSpectrum,
+          double upperBoundUnWantedSpectrum);
 
 		private:
 			//
@@ -90,6 +91,12 @@ namespace dftfe{
 			//stores lower bound of unwanted spectrum
 			//
 			double d_lowerBoundUnWantedSpectrum;
+
+
+			//
+			//stores upper bound of unwanted spectrum
+			//
+			double d_upperBoundUnWantedSpectrum;      
 
 			//
 			//variables for printing out and timing

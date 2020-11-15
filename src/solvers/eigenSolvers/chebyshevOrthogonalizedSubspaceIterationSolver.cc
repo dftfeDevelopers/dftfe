@@ -91,10 +91,12 @@ namespace dftfe{
 	//
 	void
 		chebyshevOrthogonalizedSubspaceIterationSolver::reinitSpectrumBounds(double lowerBoundWantedSpectrum,
-				double lowerBoundUnWantedSpectrum)
+				double lowerBoundUnWantedSpectrum,
+        double upperBoundUnWantedSpectrum)
 		{
 			d_lowerBoundWantedSpectrum = lowerBoundWantedSpectrum;
 			d_lowerBoundUnWantedSpectrum = lowerBoundUnWantedSpectrum;
+      d_upperBoundUnWantedSpectrum= upperBoundUnWantedSpectrum;
 		}
 
 
