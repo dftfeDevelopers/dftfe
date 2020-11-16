@@ -41,6 +41,7 @@ void dftClass<FEOrder,FEOrderElectro>::initCoreRho()
 	const double truncationTol = 1e-12;
 	unsigned int fileReadFlag = 0;
 
+  double maxCoreRhoTail=0.0;
 	//loop over atom types
 	for(std::set<unsigned int>::iterator it = atomTypes.begin(); it != atomTypes.end(); it++)
 	{
@@ -83,15 +84,16 @@ void dftClass<FEOrder,FEOrderElectro>::initCoreRho()
 			spline1dbuildcubic(x, y, numRows, natural_bound_type_L, 0.0, natural_bound_type_R, 0.0, coreDenSpline[*it]);
 			outerMostPointCoreDen[*it]= xData[maxRowId];
 
-			if(outerMostPointCoreDen[*it] < d_coreRhoTail)
-				d_coreRhoTail = outerMostPointCoreDen[*it];
+      if(outerMostPointCoreDen[*it]>maxCoreRhoTail)
+        maxCoreRhoTail = outerMostPointCoreDen[*it];
 
 			if(dftParameters::verbosity>=4)
 				pcout<<" Atomic number: "<<*it<<" Outermost Point Core Den: "<<outerMostPointCoreDen[*it]<<std::endl;
-
-
 		}
 	}
+
+  if(maxCoreRhoTail < d_coreRhoTail)
+    d_coreRhoTail = maxCoreRhoTail;
 
 	if(dftParameters::verbosity>=2)
 		pcout << " d_coreRhoTail adjusted to " << d_coreRhoTail << std::endl ;
