@@ -42,6 +42,7 @@ template<unsigned int FEOrder,unsigned int FEOrderElectro>
 	std::map<unsigned int, std::vector<std::vector<double> > > pseudoPotentialData;
 	std::map<unsigned int, double> outerMostPointPseudo;
 
+  double maxPspTail=0.0;
   if (dftParameters::isPseudopotential)
   {
     //
@@ -77,9 +78,13 @@ template<unsigned int FEOrder,unsigned int FEOrderElectro>
       spline1dbuildcubic(x, y, numRows, bound_type_l, slopeL, bound_type_r, slopeR, pseudoSpline[*it]);
       outerMostPointPseudo[*it]= xData[numRows-1];
 
-      if(outerMostPointPseudo[*it] < d_pspTail)
-        d_pspTail = outerMostPointPseudo[*it] ;
+      if (outerMostPointPseudo[*it]>maxPspTail)
+        maxPspTail=outerMostPointPseudo[*it];
     }
+
+    if(maxPspTail < d_pspTail)
+      d_pspTail = maxPspTail;
+
     if(dftParameters::verbosity>=2)
       pcout << " d_pspTail adjusted to " << d_pspTail << std::endl ;
   }
