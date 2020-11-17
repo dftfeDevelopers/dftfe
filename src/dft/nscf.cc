@@ -52,7 +52,7 @@ void dftClass<FEOrder,FEOrderElectro>::initnscf(kohnShamDFTOperatorClass<FEOrder
 	//
 	//set size of eigenvalues and eigenvectors data structures
 	eigenValues.resize(d_maxkPoints);
-	a0.resize(d_maxkPoints,lowerEndWantedSpectrum);
+	a0.resize(d_maxkPoints,0.0);
 	bLow.resize(d_maxkPoints,0.0);
 	d_eigenVectorsFlattenedSTL.resize(d_maxkPoints);
 	//

@@ -38,7 +38,7 @@ namespace dftfe {
 		extern unsigned int chebyshevOrder,numPass,numSCFIterations,maxLinearSolverIterations, mixingHistory, npool, numberWaveFunctionsForEstimate, numLevels, maxLinearSolverIterationsHelmholtz;
 
 		extern double radiusAtomBall, mixingParameter;
-		extern double lowerEndWantedSpectrum,absLinearSolverTolerance,selfConsistentSolverTolerance,TVal, start_magnetization,absLinearSolverToleranceHelmholtz;
+		extern double absLinearSolverTolerance,selfConsistentSolverTolerance,TVal, start_magnetization,absLinearSolverToleranceHelmholtz;
 
 		extern bool isPseudopotential, periodicX, periodicY, periodicZ, useSymm, timeReversal,pseudoTestsFlag, constraintMagnetization, writeDosFile, writeLdosFile,writeLocalizationLengths, pinnedNodeForPBC, writePdosFile;
 		extern std::string meshFileName,coordinatesFile,domainBoundingVectorsFile,kPointDataFile, ionRelaxFlagsFile, orthogType, algoType, pseudoPotentialFile;

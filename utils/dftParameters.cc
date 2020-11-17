@@ -31,7 +31,7 @@ namespace dftfe {
 		unsigned int chebyshevOrder=1,numPass=1, numSCFIterations=1,maxLinearSolverIterations=1, mixingHistory=1, npool=1,maxLinearSolverIterationsHelmholtz=1;
 
 		double radiusAtomBall=0.0, mixingParameter=0.5;
-		double lowerEndWantedSpectrum=0.0,absLinearSolverTolerance=1e-10,selfConsistentSolverTolerance=1e-10,TVal=500, start_magnetization=0.0,absLinearSolverToleranceHelmholtz=1e-10;
+		double absLinearSolverTolerance=1e-10,selfConsistentSolverTolerance=1e-10,TVal=500, start_magnetization=0.0,absLinearSolverToleranceHelmholtz=1e-10;
 		double chebyshevTolerance = 1e-02;
 		double chebyshevFilterTolXLBOMDRankUpdates = 1e-07;
 		std::string mixingMethod = "";
@@ -595,10 +595,6 @@ namespace dftfe {
 					prm.declare_entry("RR GEP", "true",
 							Patterns::Bool(),"[Advanced] Solve generalized eigenvalue problem instead of standard eignevalue problem in Rayleigh-Ritz step. This approach is not extended yet to complex executable. Default value is true for real executable and false for complex executable.");
 
-					prm.declare_entry("LOWER BOUND WANTED SPECTRUM", "-10.0",
-							Patterns::Double(),
-							"[Developer] The lower bound of the wanted eigen spectrum. It is only used for the first iteration of the Chebyshev filtered subspace iteration procedure. A rough estimate based on single atom eigen values can be used here. Default value is good enough for most problems.");
-
 					prm.declare_entry("CHEBYSHEV POLYNOMIAL DEGREE", "0",
 							Patterns::Integer(0,2000),
 							"[Advanced] Chebyshev polynomial degree to be employed for the Chebyshev filtering subspace iteration procedure to dampen the unwanted spectrum of the Kohn-Sham Hamiltonian. If set to 0, a default value depending on the upper bound of the eigen-spectrum is used. See Phani Motamarri et.al., J. Comp. Phys. 253, 308-343 (2013).");
@@ -1001,7 +997,6 @@ namespace dftfe {
 					dftParameters::numCoreWfcRR                  = prm.get_integer("SPECTRUM SPLIT CORE EIGENSTATES");
 					dftParameters::spectrumSplitStartingScfIter  = prm.get_integer("SPECTRUM SPLIT STARTING SCF ITER");
 					dftParameters::rrGEP= prm.get_bool("RR GEP");
-					dftParameters::lowerEndWantedSpectrum        = prm.get_double("LOWER BOUND WANTED SPECTRUM");
 					dftParameters::lowerBoundUnwantedFracUpper   = prm.get_double("LOWER BOUND UNWANTED FRAC UPPER");
 					dftParameters::chebyshevOrder                = prm.get_integer("CHEBYSHEV POLYNOMIAL DEGREE");
 					dftParameters::useELPA= prm.get_bool("USE ELPA");

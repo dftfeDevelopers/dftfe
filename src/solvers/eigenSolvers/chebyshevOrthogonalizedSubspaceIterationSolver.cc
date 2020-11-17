@@ -121,33 +121,17 @@ namespace dftfe{
           || dftParameters::verbosity<1? dealii::TimerOutput::never : dealii::TimerOutput::every_call,
           dealii::TimerOutput::wall_times);
 
-
-			if (dftParameters::verbosity>=4)
-				dftUtils::printCurrentMemoryUsage(operatorMatrix.getMPICommunicator(),
-						"Before Lanczos k-step upper Bound");
-
-			computing_timer.enter_section("Lanczos k-step Upper Bound");
-			distributedCPUVec<dataTypes::number> vecForLanczos;
-			operatorMatrix.reinit(1,
-					vecForLanczos,
-					true);			
-			const double upperBoundUnwantedSpectrum =linearAlgebraOperations::lanczosUpperBoundEigenSpectrum(operatorMatrix,
-					vecForLanczos);
-			computing_timer.exit_section("Lanczos k-step Upper Bound");
-
-			unsigned int chebyshevOrder = dftParameters::chebyshevOrder;
-
-
+      unsigned int chebyshevOrder = dftParameters::chebyshevOrder;
 			//
 			//set Chebyshev order
 			//
 			if(chebyshevOrder == 0)
-				chebyshevOrder=internal::setChebyshevOrder(upperBoundUnwantedSpectrum);
+				chebyshevOrder=internal::setChebyshevOrder(d_upperBoundUnWantedSpectrum);
 
 			chebyshevOrder=(isFirstScf && dftParameters::isPseudopotential)?chebyshevOrder*dftParameters::chebyshevFilterPolyDegreeFirstScfScalingFactor:chebyshevOrder;
 
 			if (dftParameters::lowerBoundUnwantedFracUpper>1e-6)
-				d_lowerBoundUnWantedSpectrum=dftParameters::lowerBoundUnwantedFracUpper*upperBoundUnwantedSpectrum;
+				d_lowerBoundUnWantedSpectrum=dftParameters::lowerBoundUnwantedFracUpper*d_upperBoundUnWantedSpectrum;
 			//
 			//output statements
 			//
@@ -155,7 +139,7 @@ namespace dftfe{
 			{
 				char buffer[100];
 
-				sprintf(buffer, "%s:%18.10e\n", "upper bound of unwanted spectrum", upperBoundUnwantedSpectrum);
+				sprintf(buffer, "%s:%18.10e\n", "upper bound of unwanted spectrum", d_upperBoundUnWantedSpectrum);
 				pcout << buffer;
 				sprintf(buffer, "%s:%18.10e\n", "lower bound of unwanted spectrum", d_lowerBoundUnWantedSpectrum);
 				pcout << buffer;
@@ -243,7 +227,7 @@ namespace dftfe{
 								BVec,
 								std::ceil(adaptiveOrder),
 								d_lowerBoundUnWantedSpectrum,
-								upperBoundUnwantedSpectrum,
+								d_upperBoundUnWantedSpectrum,
 								d_lowerBoundWantedSpectrum);
 					}
 					else
@@ -252,7 +236,7 @@ namespace dftfe{
 								BVec,
 								chebyshevOrder,
 								d_lowerBoundUnWantedSpectrum,
-								upperBoundUnwantedSpectrum,
+								d_upperBoundUnWantedSpectrum,
 								d_lowerBoundWantedSpectrum);
 					computing_timer.exit_section("Chebyshev filtering opt");
 
@@ -552,101 +536,7 @@ namespace dftfe{
 				std::vector<double>        & residualNorms)
 		{
 
-			/*
-			   computing_timer.enter_section("Lanczos k-step Upper Bound");
-			   operatorMatrix.reinit(1);
-			   double upperBoundUnwantedSpectrum = linearAlgebraOperations::lanczosUpperBoundEigenSpectrum(operatorMatrix,
-			   eigenVectors[0]);
-
-			   computing_timer.exit_section("Lanczos k-step Upper Bound");
-
-			   unsigned int chebyshevOrder = dftParameters::chebyshevOrder;
-
-			   const unsigned int totalNumberWaveFunctions = eigenVectors.size();
-
-			//set Chebyshev order
-			if(chebyshevOrder == 0)
-			chebyshevOrder=internal::setChebyshevOrder(upperBoundUnwantedSpectrum);
-
-			//
-			//output statements
-			//
-			if (dftParameters::verbosity>=2)
-			{
-			char buffer[100];
-
-			sprintf(buffer, "%s:%18.10e\n", "upper bound of unwanted spectrum", upperBoundUnwantedSpectrum);
-			pcout << buffer;
-			sprintf(buffer, "%s:%18.10e\n", "lower bound of unwanted spectrum", d_lowerBoundUnWantedSpectrum);
-			pcout << buffer;
-			sprintf(buffer, "%s: %u\n\n", "Chebyshev polynomial degree", chebyshevOrder);
-			pcout << buffer;
-			}
-
-
-			//
-			//Set the constraints to zero
-			//
-			for(unsigned int i = 0; i < totalNumberWaveFunctions; ++i)
-			operatorMatrix.getConstraintMatrixEigen()->set_zero(eigenVectors[i]);
-
-
-			if(dftParameters::verbosity >= 4)
-			{
-#ifdef USE_PETSC
-PetscLogDouble bytes;
-PetscMemoryGetCurrentUsage(&bytes);
-FILE *dummy;
-unsigned int this_mpi_process = dealii::Utilities::MPI::this_mpi_process(operatorMatrix.getMPICommunicator());
-PetscSynchronizedPrintf(operatorMatrix.getMPICommunicator(),"[%d] Memory Usage before starting eigen solution  %e\n",this_mpi_process,bytes);
-PetscSynchronizedFlush(operatorMatrix.getMPICommunicator(),dummy);
-#endif
-}
-
-operatorMatrix.reinit(totalNumberWaveFunctions);
-
-		//
-		//call chebyshev filtering routine
-		//
-		computing_timer.enter_section("Chebyshev filtering");
-
-		linearAlgebraOperations::chebyshevFilter(operatorMatrix,
-		eigenVectors,
-		chebyshevOrder,
-		d_lowerBoundUnWantedSpectrum,
-		upperBoundUnwantedSpectrum,
-		d_lowerBoundWantedSpectrum);
-
-		computing_timer.exit_section("Chebyshev filtering");
-
-
-		computing_timer.enter_section("Gram-Schmidt Orthogonalization");
-
-		linearAlgebraOperations::gramSchmidtOrthogonalization(operatorMatrix,
-		eigenVectors);
-
-
-computing_timer.exit_section("Gram-Schmidt Orthogonalization");
-
-
-computing_timer.enter_section("Rayleigh Ritz Projection");
-
-linearAlgebraOperations::rayleighRitz(operatorMatrix,
-		eigenVectors,
-		eigenValues);
-
-computing_timer.exit_section("Rayleigh Ritz Projection");
-
-
-computing_timer.enter_section("compute eigen vectors residuals");
-//linearAlgebraOperations::computeEigenResidualNorm(operatorMatrix,
-//						      eigenVectors,
-//						      eigenValues,
-//						      residualNorms);
-computing_timer.exit_section("compute eigen vectors residuals");
-
-return;
-*/
-}
+			
+    }
 
 }
