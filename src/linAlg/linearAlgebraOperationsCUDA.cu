@@ -465,7 +465,7 @@ namespace dftfe
 		//
 		// evaluate upper bound of the spectrum using k-step Lanczos iteration
 		//
-		double lanczosUpperBoundEigenSpectrum(operatorDFTCUDAClass & operatorMatrix,
+		std::pair<double,double> lanczosLowerUpperBoundEigenSpectrum(operatorDFTCUDAClass & operatorMatrix,
 				const distributedCPUVec<double> & vect,
         distributedGPUVec<double> & Xb,
         distributedGPUVec<double> & Yb,
@@ -611,18 +611,19 @@ namespace dftfe
 			dsyevd_(&jobz, &uplo, &n, &T[0], &lda, &eigenValuesT[0], &work[0], &lwork, &iwork[0], &liwork, &info);
 
 
-			for (unsigned int i=0; i<eigenValuesT.size(); i++){eigenValuesT[i]=std::abs(eigenValuesT[i]);}
+			for (unsigned int i=0; i<eigenValuesT.size(); i++){eigenValuesT[i]=eigenValuesT[i];}
 			std::sort(eigenValuesT.begin(),eigenValuesT.end());
 			//
-			if (dftParameters::verbosity==2)
-			{
-				char buffer[100];
-				sprintf(buffer, "bUp1: %18.10e,  bUp2: %18.10e\n", eigenValuesT[lanczosIterations-1], fVector.l2_norm());
-				//pcout << buffer;
-			}
-			double upperBound=eigenValuesT[lanczosIterations-1]+fVector.l2_norm();
+      const double fvectorNorm=fVector.l2_norm();
+      if (dftParameters::verbosity>=5 && this_mpi_process==0)
+      {
+        std::cout<<"bUp1: "<< eigenValuesT[lanczosIterations-1] << ", fvector norm: "<< fvectorNorm<<std::endl;
+        std::cout<<"aLow: "<< eigenValuesT[0] <<std::endl;
+      }
 
-			return (std::ceil(upperBound));
+      double lowerBound=std::floor(eigenValuesT[0]);
+      double upperBound=std::ceil(eigenValuesT[lanczosIterations-1]+(dftParameters::reproducible_output?fvectorNorm:fvectorNorm/10.0));
+      return (std::make_pair(lowerBound,upperBound));
 #endif
 		}
 

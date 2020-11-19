@@ -60,9 +60,11 @@ namespace dftfe{
 	chebyshevOrthogonalizedSubspaceIterationSolver::chebyshevOrthogonalizedSubspaceIterationSolver
 		(const MPI_Comm &mpi_comm,
 		 double lowerBoundWantedSpectrum,
-		 double lowerBoundUnWantedSpectrum):
+		 double lowerBoundUnWantedSpectrum,
+     double upperBoundUnWantedSpectrum):
 			d_lowerBoundWantedSpectrum(lowerBoundWantedSpectrum),
 			d_lowerBoundUnWantedSpectrum(lowerBoundUnWantedSpectrum),
+      d_upperBoundUnWantedSpectrum(upperBoundUnWantedSpectrum),
 			pcout(std::cout, (dealii::Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0)),
 			computing_timer(mpi_comm,
 					pcout,
@@ -130,8 +132,6 @@ namespace dftfe{
 
 			chebyshevOrder=(isFirstScf && dftParameters::isPseudopotential)?chebyshevOrder*dftParameters::chebyshevFilterPolyDegreeFirstScfScalingFactor:chebyshevOrder;
 
-			if (dftParameters::lowerBoundUnwantedFracUpper>1e-6)
-				d_lowerBoundUnWantedSpectrum=dftParameters::lowerBoundUnwantedFracUpper*d_upperBoundUnWantedSpectrum;
 			//
 			//output statements
 			//

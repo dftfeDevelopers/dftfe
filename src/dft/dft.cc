@@ -545,8 +545,13 @@ namespace dftfe {
 			eigenValues.resize(d_kPointWeights.size());
 			eigenValuesRRSplit.resize(d_kPointWeights.size());
 
+      a0.clear();
+      bLow.clear();
+      d_isFirstFilteringCall.clear();
+
 			a0.resize((dftParameters::spinPolarized+1)*d_kPointWeights.size(),0.0);
 			bLow.resize((dftParameters::spinPolarized+1)*d_kPointWeights.size(),0.0);
+      d_isFirstFilteringCall.resize((dftParameters::spinPolarized+1)*d_kPointWeights.size(),true);
 
 			d_eigenVectorsFlattenedSTL.resize((1+dftParameters::spinPolarized)*d_kPointWeights.size());
 			d_eigenVectorsRotFracDensityFlattenedSTL.resize((1+dftParameters::spinPolarized)*d_kPointWeights.size());
@@ -1436,11 +1441,13 @@ namespace dftfe {
 			//
 			chebyshevOrthogonalizedSubspaceIterationSolver subspaceIterationSolver(mpi_communicator,
 					0.0,
-					0.0);
+					0.0,
+          0.0);
 #ifdef DFTFE_WITH_GPU
 			chebyshevOrthogonalizedSubspaceIterationSolverCUDA subspaceIterationSolverCUDA(mpi_communicator,
 					0.0,
-					0.0);
+					0.0,
+          0.0);
 #endif
 
 
@@ -1871,11 +1878,13 @@ namespace dftfe {
 			//
 			chebyshevOrthogonalizedSubspaceIterationSolver subspaceIterationSolver(mpi_communicator,
 					0.0,
-					0.0);
+					0.0,
+          0.0);
 #ifdef DFTFE_WITH_GPU
 			chebyshevOrthogonalizedSubspaceIterationSolverCUDA subspaceIterationSolverCUDA(mpi_communicator,
 					0.0,
-					0.0);
+					0.0,
+          0.0);
 #endif
 
 			//

@@ -81,7 +81,6 @@ namespace dftfe {
 		extern unsigned int scalapackBlockSize;
 		extern unsigned int natoms;
 		extern unsigned int natomTypes;
-		extern double lowerBoundUnwantedFracUpper;
 		extern bool triMatPGSOpt;
 		extern bool reuseWfcGeoOpt;
 		extern bool reuseDensityGeoOpt;

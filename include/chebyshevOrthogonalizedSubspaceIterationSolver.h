@@ -43,7 +43,8 @@ namespace dftfe{
 			 */
 			chebyshevOrthogonalizedSubspaceIterationSolver(const MPI_Comm &mpi_comm,
 					double lowerBoundWantedSpectrum,
-					double lowerBoundUnWantedSpectrum);
+					double lowerBoundUnWantedSpectrum,
+          double upperBoundUnWantedSpectrum);
 
 
 			/**

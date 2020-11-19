@@ -77,7 +77,6 @@ namespace dftfe {
 		unsigned int scalapackBlockSize=50;
 		unsigned int natoms=0;
 		unsigned int natomTypes=0;
-		double lowerBoundUnwantedFracUpper=0;
 		unsigned int numCoreWfcRR=0;
 		bool triMatPGSOpt=true;
 		bool reuseWfcGeoOpt=false;
@@ -604,10 +603,6 @@ namespace dftfe {
 							"[Advanced] Chebyshev polynomial degree first scf scaling factor.");
 
 
-					prm.declare_entry("LOWER BOUND UNWANTED FRAC UPPER", "0",
-							Patterns::Double(0,1),
-							"[Developer] The value of the fraction of the upper bound of the unwanted spectrum, the lower bound of the unwanted spectrum will be set. Default value is 0.");
-
 					prm.declare_entry("CHEBYSHEV FILTER TOLERANCE","5e-02",
 							Patterns::Double(1e-10),
 							"[Advanced] Parameter specifying the accuracy of the occupied eigenvectors close to the Fermi-energy computed using Chebyshev filtering subspace iteration procedure. Default value is sufficient for most purposes");
@@ -997,7 +992,6 @@ namespace dftfe {
 					dftParameters::numCoreWfcRR                  = prm.get_integer("SPECTRUM SPLIT CORE EIGENSTATES");
 					dftParameters::spectrumSplitStartingScfIter  = prm.get_integer("SPECTRUM SPLIT STARTING SCF ITER");
 					dftParameters::rrGEP= prm.get_bool("RR GEP");
-					dftParameters::lowerBoundUnwantedFracUpper   = prm.get_double("LOWER BOUND UNWANTED FRAC UPPER");
 					dftParameters::chebyshevOrder                = prm.get_integer("CHEBYSHEV POLYNOMIAL DEGREE");
 					dftParameters::useELPA= prm.get_bool("USE ELPA");
 					dftParameters::useBatchGEMM= prm.get_bool("BATCH GEMM");
