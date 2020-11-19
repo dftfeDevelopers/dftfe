@@ -81,7 +81,6 @@ subsection SCF parameters
   set STARTING WFC=RANDOM
   subsection Eigen-solver parameters
       set NUMBER OF KOHN-SHAM WAVEFUNCTIONS = 80
-      set LOWER BOUND WANTED SPECTRUM = -70.0
       set CHEBYSHEV POLYNOMIAL DEGREE = 30
       set CHEBYSHEV FILTER TOLERANCE=1e-4
       set ORTHOGONALIZATION TYPE=LW

@@ -382,8 +382,41 @@ void dftClass<FEOrder,FEOrderElectro>::kohnShamEigenSpaceCompute(const unsigned 
 	std::vector<double> eigenValuesTemp(isSpectrumSplit?d_numEigenValuesRR
 			:d_numEigenValues,0.0);
 
-	subspaceIterationSolver.reinitSpectrumBounds(a0[(1+dftParameters::spinPolarized)*kPointIndex+spinType],
-			bLow[(1+dftParameters::spinPolarized)*kPointIndex+spinType]);
+  if (d_isFirstFilteringCall[(1+dftParameters::spinPolarized)*kPointIndex+spinType])
+  {
+    distributedCPUVec<dataTypes::number> vecForLanczos;
+    kohnShamDFTEigenOperator.reinit(1,
+        vecForLanczos,
+        true);			
+
+    computing_timer.enter_section("Lanczos k-step Upper Bound");
+    std::pair<double,double> bounds =linearAlgebraOperations::lanczosLowerUpperBoundEigenSpectrum(kohnShamDFTEigenOperator,
+        vecForLanczos);
+    const double upperBoundUnwantedSpectrum=bounds.second;
+    const double lowerBoundWantedSpectrum=bounds.first;
+    a0[(1+dftParameters::spinPolarized)*kPointIndex+spinType]=lowerBoundWantedSpectrum;
+    computing_timer.exit_section("Lanczos k-step Upper Bound");    
+
+    subspaceIterationSolver.reinitSpectrumBounds(lowerBoundWantedSpectrum,
+        lowerBoundWantedSpectrum+(upperBoundUnwantedSpectrum-lowerBoundWantedSpectrum)/vecForLanczos.size()*d_numEigenValues*10.0,
+        upperBoundUnwantedSpectrum);
+  }
+  else
+  {
+    computing_timer.enter_section("Lanczos k-step Upper Bound");
+    distributedCPUVec<dataTypes::number> vecForLanczos;
+    kohnShamDFTEigenOperator.reinit(1,
+        vecForLanczos,
+        true);			
+    std::pair<double,double> bounds =linearAlgebraOperations::lanczosLowerUpperBoundEigenSpectrum(kohnShamDFTEigenOperator,
+        vecForLanczos);
+    const double upperBoundUnwantedSpectrum=bounds.second;
+    computing_timer.exit_section("Lanczos k-step Upper Bound");
+
+    subspaceIterationSolver.reinitSpectrumBounds(a0[(1+dftParameters::spinPolarized)*kPointIndex+spinType],
+        bLow[(1+dftParameters::spinPolarized)*kPointIndex+spinType],
+        upperBoundUnwantedSpectrum);    
+  }
 
 	subspaceIterationSolver.solve(kohnShamDFTEigenOperator,
 			d_eigenVectorsFlattenedSTL[(1+dftParameters::spinPolarized)*kPointIndex+spinType],
@@ -458,6 +491,7 @@ void dftClass<FEOrder,FEOrderElectro>::kohnShamEigenSpaceCompute(const unsigned 
 
 
 	bLow[(1+dftParameters::spinPolarized)*kPointIndex+spinType]=eigenValuesTemp.back();
+  d_isFirstFilteringCall[(1+dftParameters::spinPolarized)*kPointIndex+spinType]=false;
 
 	if(!isSpectrumSplit)
 	{
@@ -572,6 +606,7 @@ void dftClass<FEOrder,FEOrderElectro>::kohnShamEigenSpaceCompute(const unsigned 
 					projHamPar,
 					overlapMatPar,
 					processGrid,
+          d_isFirstFilteringCall[(1+dftParameters::spinPolarized)*kPointIndex+spinType],
 					isXlBOMDLinearizedSolve,
 					useMixedPrec,
 					isFirstScf,
@@ -642,6 +677,7 @@ void dftClass<FEOrder,FEOrderElectro>::kohnShamEigenSpaceCompute(const unsigned 
 					projHamPar,
 					overlapMatPar,
 					processGrid,
+          d_isFirstFilteringCall[(1+dftParameters::spinPolarized)*kPointIndex+spinType],
 					isXlBOMDLinearizedSolve,
 					useMixedPrec,
 					isFirstScf,
@@ -664,6 +700,7 @@ void dftClass<FEOrder,FEOrderElectro>::kohnShamEigenSpaceCompute(const unsigned 
 					projHamPar,
 					overlapMatPar,
 					processGrid,
+          d_isFirstFilteringCall[(1+dftParameters::spinPolarized)*kPointIndex+spinType],
 					isXlBOMDLinearizedSolve,
 					useMixedPrec,
 					isFirstScf);
@@ -683,6 +720,7 @@ void dftClass<FEOrder,FEOrderElectro>::kohnShamEigenSpaceCompute(const unsigned 
 				projHamPar,
 				overlapMatPar,
 				processGrid,
+        d_isFirstFilteringCall[(1+dftParameters::spinPolarized)*kPointIndex+spinType],
 				isXlBOMDLinearizedSolve,
 				useMixedPrec,
 				isFirstScf);
@@ -731,7 +769,7 @@ void dftClass<FEOrder,FEOrderElectro>::kohnShamEigenSpaceCompute(const unsigned 
 
 
 		bLow[(1+dftParameters::spinPolarized)*kPointIndex+spinType]=eigenValuesTemp.back();
-
+    d_isFirstFilteringCall[(1+dftParameters::spinPolarized)*kPointIndex+spinType]=false;
 		if(!isSpectrumSplit)
 		{
 			a0[(1+dftParameters::spinPolarized)*kPointIndex+spinType] = eigenValuesTemp[0];
@@ -929,7 +967,7 @@ void dftClass<FEOrder,FEOrderElectro>::kohnShamEigenSpaceOnlyRRCompute(const uns
 
 
 	bLow[(1+dftParameters::spinPolarized)*kPointIndex+spinType]=eigenValuesTemp.back();
-
+  d_isFirstFilteringCall[(1+dftParameters::spinPolarized)*kPointIndex+spinType]=false;
 	if(!isSpectrumSplit)
 	{
 		a0[(1+dftParameters::spinPolarized)*kPointIndex+spinType] = eigenValuesTemp[0];
@@ -968,8 +1006,41 @@ void dftClass<FEOrder,FEOrderElectro>::kohnShamEigenSpaceComputeNSCF(const unsig
 
 	std::vector<double> eigenValuesTemp(d_numEigenValues,0.0);
 
-	subspaceIterationSolver.reinitSpectrumBounds(a0[(1+dftParameters::spinPolarized)*kPointIndex+spinType],
-			bLow[(1+dftParameters::spinPolarized)*kPointIndex+spinType]);
+  if (d_isFirstFilteringCall[(1+dftParameters::spinPolarized)*kPointIndex+spinType])
+  {
+    distributedCPUVec<dataTypes::number> vecForLanczos;
+    kohnShamDFTEigenOperator.reinit(1,
+        vecForLanczos,
+        true);			
+
+    computing_timer.enter_section("Lanczos k-step Upper Bound");
+    std::pair<double,double> bounds =linearAlgebraOperations::lanczosLowerUpperBoundEigenSpectrum(kohnShamDFTEigenOperator,
+        vecForLanczos);
+    const double upperBoundUnwantedSpectrum=bounds.second;
+    const double lowerBoundWantedSpectrum=bounds.first;
+    a0[(1+dftParameters::spinPolarized)*kPointIndex+spinType]=lowerBoundWantedSpectrum;
+    computing_timer.exit_section("Lanczos k-step Upper Bound");    
+
+    subspaceIterationSolver.reinitSpectrumBounds(lowerBoundWantedSpectrum,
+        lowerBoundWantedSpectrum+(upperBoundUnwantedSpectrum-lowerBoundWantedSpectrum)/vecForLanczos.size()*d_numEigenValues*10.0,
+        upperBoundUnwantedSpectrum);
+  }
+  else
+  {
+    computing_timer.enter_section("Lanczos k-step Upper Bound");
+    distributedCPUVec<dataTypes::number> vecForLanczos;
+    kohnShamDFTEigenOperator.reinit(1,
+        vecForLanczos,
+        true);			
+    std::pair<double,double> bounds =linearAlgebraOperations::lanczosLowerUpperBoundEigenSpectrum(kohnShamDFTEigenOperator,
+        vecForLanczos);
+    const double upperBoundUnwantedSpectrum=bounds.second;
+    computing_timer.exit_section("Lanczos k-step Upper Bound");
+
+    subspaceIterationSolver.reinitSpectrumBounds(a0[(1+dftParameters::spinPolarized)*kPointIndex+spinType],
+        bLow[(1+dftParameters::spinPolarized)*kPointIndex+spinType],
+        upperBoundUnwantedSpectrum);    
+  }
 
 
 	subspaceIterationSolver.solve(kohnShamDFTEigenOperator,
@@ -1014,6 +1085,7 @@ void dftClass<FEOrder,FEOrderElectro>::kohnShamEigenSpaceComputeNSCF(const unsig
 	//set a0 and bLow
 	a0[(1+dftParameters::spinPolarized)*kPointIndex+spinType]=eigenValuesTemp[0];
 	bLow[(1+dftParameters::spinPolarized)*kPointIndex+spinType]=eigenValuesTemp.back();
+  d_isFirstFilteringCall[(1+dftParameters::spinPolarized)*kPointIndex+spinType]=false;
 	//
 
 

@@ -545,8 +545,13 @@ namespace dftfe {
 			eigenValues.resize(d_kPointWeights.size());
 			eigenValuesRRSplit.resize(d_kPointWeights.size());
 
-			a0.resize((dftParameters::spinPolarized+1)*d_kPointWeights.size(),dftParameters::lowerEndWantedSpectrum);
+      a0.clear();
+      bLow.clear();
+      d_isFirstFilteringCall.clear();
+
+			a0.resize((dftParameters::spinPolarized+1)*d_kPointWeights.size(),0.0);
 			bLow.resize((dftParameters::spinPolarized+1)*d_kPointWeights.size(),0.0);
+      d_isFirstFilteringCall.resize((dftParameters::spinPolarized+1)*d_kPointWeights.size(),true);
 
 			d_eigenVectorsFlattenedSTL.resize((1+dftParameters::spinPolarized)*d_kPointWeights.size());
 			d_eigenVectorsRotFracDensityFlattenedSTL.resize((1+dftParameters::spinPolarized)*d_kPointWeights.size());
@@ -1435,12 +1440,14 @@ namespace dftfe {
 			//create eigen solver object
 			//
 			chebyshevOrthogonalizedSubspaceIterationSolver subspaceIterationSolver(mpi_communicator,
-					dftParameters::lowerEndWantedSpectrum,
-					0.0);
+					0.0,
+					0.0,
+          0.0);
 #ifdef DFTFE_WITH_GPU
 			chebyshevOrthogonalizedSubspaceIterationSolverCUDA subspaceIterationSolverCUDA(mpi_communicator,
-					dftParameters::lowerEndWantedSpectrum,
-					0.0);
+					0.0,
+					0.0,
+          0.0);
 #endif
 
 
@@ -1870,12 +1877,14 @@ namespace dftfe {
 			//create eigen solver object
 			//
 			chebyshevOrthogonalizedSubspaceIterationSolver subspaceIterationSolver(mpi_communicator,
-					dftParameters::lowerEndWantedSpectrum,
-					0.0);
+					0.0,
+					0.0,
+          0.0);
 #ifdef DFTFE_WITH_GPU
 			chebyshevOrthogonalizedSubspaceIterationSolverCUDA subspaceIterationSolverCUDA(mpi_communicator,
-					dftParameters::lowerEndWantedSpectrum,
-					0.0);
+					0.0,
+					0.0,
+          0.0);
 #endif
 
 			//

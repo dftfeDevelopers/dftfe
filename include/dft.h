@@ -1178,6 +1178,7 @@ namespace dftfe {
 
 			std::vector<double> a0;
 			std::vector<double> bLow;
+      std::vector<bool> d_isFirstFilteringCall;
 
 
 			distributedCPUVec<double> d_tempEigenVec;
