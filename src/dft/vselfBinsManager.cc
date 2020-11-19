@@ -386,12 +386,14 @@ namespace dftfe
 			if (dealii::Utilities::MPI::sum(ilegalInteraction, mpi_communicator)>0)
 				return 1;
 
+      /*
 			computing_timer.enter_section("create bins: exchange interaction maps");
 			internal::exchangeInteractionMaps(totalNumberAtoms,
 					interactionMap,
 					n_mpi_processes,
 					mpi_communicator);
 			computing_timer.exit_section("create bins: exchange interaction maps");
+      */
 			return 0;
 		}
 	}
@@ -557,7 +559,12 @@ namespace dftfe
 				//
 				//treat spl case when no atom intersects with another. e.g. simple cubic
 				//
-				if(interactingAtoms.size() == 0){
+        int isInteraction=1;
+        if(interactingAtoms.size() == 0)
+          isInteraction=0;
+
+        if (dealii::Utilities::MPI::sum(isInteraction,mpi_communicator)==0)
+				{
 					(d_bins[binCount]).insert(i);
 					continue;
 				}
@@ -571,6 +578,7 @@ namespace dftfe
 					int index = std::distance(d_bins.begin(),iter);
 
 					isBinFound = true;
+          int isBinIntersecting=0;
 
 					// to belong to this bin, this atom must not overlap with any other
 					// atom already present in this bin
@@ -579,10 +587,15 @@ namespace dftfe
 						int atom = *iter2;
 
 						if(atomsInThisBin.find(atom) != atomsInThisBin.end()){
-							isBinFound = false;
+							isBinIntersecting = 1;
 							break;
 						}
 					}
+
+          if (dealii::Utilities::MPI::sum(isBinIntersecting,mpi_communicator)>0)
+          {
+            isBinFound=false;
+          }
 
 					if(isBinFound == true){
 						(d_bins[index]).insert(i);
