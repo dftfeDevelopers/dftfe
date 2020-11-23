@@ -184,6 +184,11 @@ namespace dftfe {
 				  const std::map<dealii::CellId, std::vector<double> > & gradRhoOutValuesElectroLpsp,
 					const std::map<dealii::CellId, std::vector<double> > & pseudoVLocElectro,
           const std::map<unsigned int,std::map<dealii::CellId, std::vector<double> > > & pseudoVLocAtomsElectro,
+				  const std::map<dealii::CellId, std::vector<double> > & rhoCoreValues,
+				  const std::map<dealii::CellId, std::vector<double> > & gradRhoCoreValues,
+				  const std::map<dealii::CellId, std::vector<double> > & hessianRhoCoreValues,     
+        	const std::map<unsigned int,std::map<dealii::CellId, std::vector<double> > > & gradRhoCoreAtoms,
+	        const std::map<unsigned int,std::map<dealii::CellId, std::vector<double> > > & hessianRhoCoreAtoms,            
 					const dealii::AffineConstraints<double>  & hangingPlusPBCConstraintsElectro,
 					const vselfBinsManager<FEOrder,FEOrderElectro>   & vselfBinsManagerElectro);
 
@@ -506,6 +511,11 @@ namespace dftfe {
 				  const std::map<dealii::CellId, std::vector<double> > & gradRhoOutValuesElectroLpsp,
 					const std::map<dealii::CellId, std::vector<double> > & pseudoVLocElectro,
 					const std::map<unsigned int,std::map<dealii::CellId, std::vector<double> > > & pseudoVLocAtomsElectro,
+				  const std::map<dealii::CellId, std::vector<double> > & rhoCoreValues,
+				  const std::map<dealii::CellId, std::vector<double> > & gradRhoCoreValues,
+				  const std::map<dealii::CellId, std::vector<double> > & hessianRhoCoreValues,   
+        	const std::map<unsigned int,std::map<dealii::CellId, std::vector<double> > > & gradRhoCoreAtoms,
+	        const std::map<unsigned int,std::map<dealii::CellId, std::vector<double> > > & hessianRhoCoreAtoms,            
 					const vselfBinsManager<FEOrder,FEOrderElectro> & vselfBinsManagerElectro);
 
 			void computeStressEEshelbyEElectroPhiTot
@@ -536,6 +546,11 @@ namespace dftfe {
 				  const std::map<dealii::CellId, std::vector<double> > & gradRhoOutValuesElectroLpsp,
 					const std::map<dealii::CellId, std::vector<double> > & pseudoVLocElectro,
 					const std::map<unsigned int,std::map<dealii::CellId, std::vector<double> > > & pseudoVLocAtomsElectro,
+				  const std::map<dealii::CellId, std::vector<double> > & rhoCoreValues,
+				  const std::map<dealii::CellId, std::vector<double> > & gradRhoCoreValues,
+				  const std::map<dealii::CellId, std::vector<double> > & hessianRhoCoreValues,    
+        	const std::map<unsigned int,std::map<dealii::CellId, std::vector<double> > > & gradRhoCoreAtoms,
+        	const std::map<unsigned int,std::map<dealii::CellId, std::vector<double> > > & hessianRhoCoreAtoms,            
 					const vselfBinsManager<FEOrder,FEOrderElectro> & vselfBinsManagerElectro);
 
 			void addEPSPStressContribution
@@ -548,6 +563,15 @@ namespace dftfe {
 				 const std::map<unsigned int,std::map<dealii::CellId, std::vector<double> > > & pseudoVLocAtoms,
 				 const vselfBinsManager<FEOrder,FEOrderElectro>   & vselfBinsManager,
 				 const std::vector<std::map<dealii::CellId , unsigned int> > & cellsVselfBallsClosestAtomIdDofHandler);
+
+			void addENonlinearCoreCorrectionStressContribution
+				 (FEEvaluation<C_DIM,1,C_num1DQuad<C_rhoNodalPolyOrder<FEOrder,FEOrderElectro>()>(),C_DIM>  & forceEval,
+				 const MatrixFree<3,double> & matrixFreeData,
+				 const unsigned int cell,
+         const std::vector<VectorizedArray<double> > & vxcQuads,
+         const std::vector<Tensor<1,C_DIM,VectorizedArray<double> > > & derExcGradRho,
+         const std::map<unsigned int,std::map<dealii::CellId, std::vector<double> > > & gradRhoCoreAtoms,
+         const std::map<unsigned int,std::map<dealii::CellId, std::vector<double> > > & hessianRhoCoreAtoms);       
 
 			void addEPhiTotSmearedStressContribution
         (FEEvaluation<3,1,C_num1DQuadSmearedCharge()*C_numCopies1DQuadSmearedCharge(),3>  & forceEval,

@@ -930,6 +930,7 @@ template<unsigned int FEOrder,unsigned int FEOrderElectro>
 				for (unsigned int q=0; q<numQuadPoints; ++q)
         {
 					rhoOutQuadsXC[q]=temp1[q];
+          rhoQuads[q][iSubCell]=temp1[q];
           rhoXCQuads[q][iSubCell]=temp1[q];
         }
 
@@ -947,11 +948,11 @@ template<unsigned int FEOrder,unsigned int FEOrderElectro>
 				{
           const std::vector<double> & temp3=gradRhoOutValues.find(subCellId)->second;          
 					for (unsigned int q = 0; q < numQuadPoints; ++q)
-					{
-						gradRhoOutQuadsXC[q][0] = temp3[3*q + 0];
-						gradRhoOutQuadsXC[q][1] = temp3[3*q + 1];
-						gradRhoOutQuadsXC[q][2] = temp3[3*q + 2];
-					}
+						for (unsigned int idim=0; idim<C_DIM; idim++)
+            {
+              gradRhoOutQuadsXC[q][idim] = temp3[3*q + idim];
+							gradRhoQuads[q][idim][iSubCell]=temp3[3*q+idim];     
+            }
 
           if(dftParameters::nonLinearCoreCorrection)
           {
@@ -981,7 +982,6 @@ template<unsigned int FEOrder,unsigned int FEOrderElectro>
 					for (unsigned int q=0; q<numQuadPoints; ++q)
 					{
 						excQuads[q][iSubCell]=exchValRhoOut[q]+corrValRhoOut[q];
-						const double temp = derExchEnergyWithSigmaRhoOut[q]+derCorrEnergyWithSigmaRhoOut[q];
 						vxcRhoOutQuads[q][iSubCell]= derExchEnergyWithDensityValRhoOut[q]+derCorrEnergyWithDensityValRhoOut[q];
 
 						if  (shadowPotentialForce)
@@ -1028,9 +1028,6 @@ template<unsigned int FEOrder,unsigned int FEOrderElectro>
 
 				for (unsigned int q=0; q<numQuadPoints; ++q)
 				{
-					rhoQuads[q][iSubCell]=rhoOutValues.find(subCellId)->second[q];
-
-
    				if(dftParameters::nonLinearCoreCorrection == true)
 			    {
             const std::vector<double> & temp1=gradRhoCoreValues.find(subCellId)->second;
@@ -1066,10 +1063,6 @@ template<unsigned int FEOrder,unsigned int FEOrderElectro>
 									-gradRhoOutValues.find(subCellId)->second[3*q+idim];
 						}
 					}
-
-					if(dftParameters::xc_id == 4)
-						for (unsigned int idim=0; idim<C_DIM; idim++)
-							gradRhoQuads[q][idim][iSubCell]=gradRhoOutValues.find(subCellId)->second[3*q+idim];
 				}
 			}//subcell loop
 

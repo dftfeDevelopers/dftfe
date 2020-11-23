@@ -3327,6 +3327,11 @@ namespace dftfe {
               d_gradRhoOutValuesLpspQuad,
               d_pseudoVLoc,
               d_pseudoVLocAtoms,
+							d_rhoCore,
+              d_gradRhoCore, 
+              d_hessianRhoCore,  
+              d_gradRhoCoreAtoms,
+              d_hessianRhoCoreAtoms,                
 						  d_constraintsPRefined,
 							d_vselfBinsManager);
 					forcePtr->printStress();

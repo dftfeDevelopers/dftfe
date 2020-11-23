@@ -30,8 +30,13 @@ template<unsigned int FEOrder,unsigned int FEOrderElectro>
   const std::map<dealii::CellId, std::vector<double> > & rhoOutValuesElectroLpsp,         
   const std::map<dealii::CellId, std::vector<double> > & gradRhoOutValuesElectro,
   const std::map<dealii::CellId, std::vector<double> > & gradRhoOutValuesElectroLpsp,
- const std::map<dealii::CellId, std::vector<double> > & pseudoVLocElectro,
- const std::map<unsigned int,std::map<dealii::CellId, std::vector<double> > > & pseudoVLocAtomsElectro,
+  const std::map<dealii::CellId, std::vector<double> > & pseudoVLocElectro,
+  const std::map<unsigned int,std::map<dealii::CellId, std::vector<double> > > & pseudoVLocAtomsElectro,
+	const std::map<dealii::CellId, std::vector<double> > & rhoCoreValues,
+	const std::map<dealii::CellId, std::vector<double> > & gradRhoCoreValues,
+	const std::map<dealii::CellId, std::vector<double> > & hessianRhoCoreValues,
+	const std::map<unsigned int,std::map<dealii::CellId, std::vector<double> > > & gradRhoCoreAtoms,
+	const std::map<unsigned int,std::map<dealii::CellId, std::vector<double> > > & hessianRhoCoreAtoms,    
  const vselfBinsManager<FEOrder,FEOrderElectro> & vselfBinsManagerElectro)
 {
 	std::vector<std::vector<distributedCPUVec<double>>> eigenVectors((1+dftParameters::spinPolarized)*dftPtr->d_kPointWeights.size());
