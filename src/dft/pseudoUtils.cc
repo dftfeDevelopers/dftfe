@@ -173,7 +173,7 @@ namespace pseudoUtils
 
 			r = std::sqrt(x[0]*x[0] + x[1]*x[1] + x[2]*x[2]);
 
-			if(r == 0)
+			if(std::fabs(r-0.0)<=tolerance)
 			{
 				theta = 0.0;
 				phi = 0.0;
