@@ -310,8 +310,8 @@ void dftClass<FEOrder,FEOrderElectro>::computeElementalOVProjectorKets()
               for(int kPoint = 0; kPoint < maxkPoints; ++kPoint)
               {
                 angle = d_kPointCoordinates[3*kPoint+0]*pointMinusLatticeVector[0] + d_kPointCoordinates[3*kPoint+1]*pointMinusLatticeVector[1] + d_kPointCoordinates[3*kPoint+2]*pointMinusLatticeVector[2];
-                nonLocalProjectorBasisReal[maxkPoints*iQuadPoint + kPoint] += cos(angle)*projectorFunctionValue;                
-                nonLocalProjectorBasisImag[maxkPoints*iQuadPoint + kPoint] += -sin(angle)*projectorFunctionValue;
+                nonLocalProjectorBasisReal[kPoint*numberQuadraturePoints+iQuadPoint] += cos(angle)*projectorFunctionValue;                
+                nonLocalProjectorBasisImag[kPoint*numberQuadraturePoints+iQuadPoint] += -sin(angle)*projectorFunctionValue;
 								
                 const double tempReal=std::cos(-angle);
 								const double tempImag=std::sin(-angle);
@@ -342,35 +342,39 @@ void dftClass<FEOrder,FEOrderElectro>::computeElementalOVProjectorKets()
 #endif
         d_nonLocalPSP_zetalmDeltaVlProductDistImageAtoms_KPoint[count][iPseudoWave][cell->id()]=zetalmDeltaVlProductDistImageAtoms_KPoint;
 
-				//
-				// access shape functions values at quad points
-				//
-				//ElementQuadShapeFunctions shapeFunctions = dft::ShapeFunctionDataCalculator::v_shapeFunctions[meshId][quadratureRuleId][elementId];
+#ifdef USE_COMPLEX
+				std::vector<double> nonLocalProjectorBasisRealTimesJxW=nonLocalProjectorBasisReal;
+        std::vector<double> nonLocalProjectorBasisImagTimesJxW=nonLocalProjectorBasisImag;
+   
+				for(int kPoint = 0; kPoint < maxkPoints; ++kPoint)   
+          for(int iQuadPoint = 0; iQuadPoint < numberQuadraturePoints; ++iQuadPoint)
+          {
+             nonLocalProjectorBasisRealTimesJxW[kPoint*numberQuadraturePoints+iQuadPoint]*=jxwQuads[iQuadPoint];
+             nonLocalProjectorBasisImagTimesJxW[kPoint*numberQuadraturePoints+iQuadPoint]*=jxwQuads[iQuadPoint];
+          }
+#else
+				std::vector<double> ZetalmDeltaVlTimesJxW=ZetalmDeltaVl;
+        for(int iQuadPoint = 0; iQuadPoint < numberQuadraturePoints; ++iQuadPoint)
+        {
+           ZetalmDeltaVlTimesJxW[iQuadPoint]*=jxwQuads[iQuadPoint];
+        }        
+#endif
 
-        //FIXME: Optimize below using dgemm
-				for(int iNode = 0; iNode < numberNodesPerElement; ++iNode)
-				{
-					for(int kPoint = 0; kPoint < maxkPoints; ++kPoint)
-					{
+        for(int kPoint = 0; kPoint < maxkPoints; ++kPoint)
+        {   
+          //FIXME: To be optimized          
+          for(int iNode = 0; iNode < numberNodesPerElement; ++iNode)
+          {
 						double tempReal = 0;
 						double tempImag = 0;
 						for(int iQuadPoint = 0; iQuadPoint < numberQuadraturePoints; ++iQuadPoint)
 						{
 							const double shapeval=shapeValQuads[iNode*numberQuadraturePoints+iQuadPoint];
-							const double jxw=jxwQuads[iQuadPoint];
 #ifdef USE_COMPLEX
-							tempReal += nonLocalProjectorBasisReal[maxkPoints*iQuadPoint+kPoint]*shapeval*jxw;
-							tempImag += nonLocalProjectorBasisImag[maxkPoints*iQuadPoint+kPoint]*shapeval*jxw;
+							tempReal += nonLocalProjectorBasisRealTimesJxW[kPoint*numberQuadraturePoints+iQuadPoint]*shapeval;
+							tempImag += nonLocalProjectorBasisImagTimesJxW[kPoint*numberQuadraturePoints+iQuadPoint]*shapeval;
 #else
-
-							nonLocalProjectorElementMatricesAtomElem
-								[numberNodesPerElement*iPseudoWave + iNode]
-								+= ZetalmDeltaVl[maxkPoints*iQuadPoint]*shapeval*jxw;
-
-							nonLocalProjectorElementMatricesTransposeAtomElem
-								[numberPseudoWaveFunctions*iNode+iPseudoWave]
-								+= ZetalmDeltaVl[maxkPoints*iQuadPoint]*shapeval*jxw;
-
+							tempReal+= ZetalmDeltaVlTimesJxW[iQuadPoint]*shapeval;
 #endif
 						}
 #ifdef USE_COMPLEX
@@ -384,11 +388,17 @@ void dftClass<FEOrder,FEOrderElectro>::computeElementalOVProjectorKets()
 							[numberPseudoWaveFunctions*iNode+iPseudoWave].real(tempReal);
 						nonLocalProjectorElementMatricesTransposeAtomElem[kPoint]
 							[numberPseudoWaveFunctions*iNode+iPseudoWave].imag(tempImag);
+#else              
+							nonLocalProjectorElementMatricesAtomElem
+								[numberNodesPerElement*iPseudoWave + iNode]
+								= tempReal;
 
+							nonLocalProjectorElementMatricesTransposeAtomElem
+								[numberPseudoWaveFunctions*iNode+iPseudoWave]
+								= tempReal;
 #endif
-					}
-
-				}
+					}//node loop
+				}//k point loop
 
 			}//end of iPseudoWave loop
 
