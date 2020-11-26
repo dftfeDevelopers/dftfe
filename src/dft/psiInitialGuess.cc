@@ -289,6 +289,7 @@ void dftClass<FEOrder,FEOrderElectro>::readPSIRadialValues(){
 		waveFunctionsVectorTruncated.push_back(*it);
 	}
 
+	boost::math::normal normDist;
 	bool pp=false;
 	for(unsigned int dof=0; dof<numberDofs; dof++)
 	{
@@ -388,8 +389,9 @@ void dftClass<FEOrder,FEOrderElectro>::readPSIRadialValues(){
 					//
 					// assign the rest of the wavefunctions using a standard normal distribution
 					//
-					boost::math::normal normDist;
+					//boost::math::normal normDist;
 
+          std::vector<dataTypes::number> & temp=d_eigenVectorsFlattenedSTL[kPoint];
 					for(unsigned int iWave = waveFunctionsVector.size(); iWave < d_numEigenValues; ++iWave)
 					{
 
@@ -398,7 +400,7 @@ void dftClass<FEOrder,FEOrderElectro>::readPSIRadialValues(){
 						if(rand()%2 == 0)
 							value = -1.0*value;
 
-						d_eigenVectorsFlattenedSTL[kPoint][dof*d_numEigenValues+iWave] = dataTypes::number(value);
+						temp[dof*d_numEigenValues+iWave] = dataTypes::number(value);
 
 					}
 				}

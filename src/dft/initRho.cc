@@ -169,8 +169,6 @@ void dftClass<FEOrder,FEOrderElectro>::initRho()
 					double distanceToAtom = nodalCoor.distance(atom);
 					if(distanceToAtom <= outerMostPointDen[atomLocations[iAtom][0]])
 						rhoNodalValue += alglib::spline1dcalc(denSpline[atomLocations[iAtom][0]], distanceToAtom);
-					else
-						rhoNodalValue += 0.0;
 				}
 
 				//loop over image charges and do as above
@@ -183,8 +181,6 @@ void dftClass<FEOrder,FEOrderElectro>::initRho()
 					int masterAtomId = d_imageIdsTrunc[iImageCharge];
 					if(distanceToAtom <= outerMostPointDen[atomLocations[masterAtomId][0]])
 						rhoNodalValue += alglib::spline1dcalc(denSpline[atomLocations[masterAtomId][0]], distanceToAtom);
-					else
-						rhoNodalValue += 0.0;
 				}
 				d_rhoInNodalValues.local_element(dof) = std::abs(rhoNodalValue);
 			}
