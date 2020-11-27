@@ -23,20 +23,24 @@
  */
 
 #ifdef USE_COMPLEX
-void kohnShamDFTOperatorClass<FEOrder>::computeHamiltonianTimesX(const distributedCPUVec<std::complex<double> > & src,
+template<unsigned int FEOrder,unsigned int FEOrderElectro>
+void kohnShamDFTOperatorClass<FEOrder,FEOrderElectro>::computeHamiltonianTimesX(const distributedCPUVec<std::complex<double> > & src,
 								      std::vector<std::complex<double> >  & cellSrcWaveFunctionMatrix,
 								      const unsigned int numberWaveFunctions,
 								      distributedCPUVec<std::complex<double> > & dst,
 								      std::vector<std::complex<double> >  & cellDstWaveFunctionMatrix,
-								      const double scalar)
+								      const double scalar,
+                                                                      const double scalarA,
+                                                                      const double scalarB,
+                                                                      bool scaleFlag)
 {
 
   AssertThrow(false,dftUtils::ExcNotImplementedYet());
 
 }
 #else
-template<unsigned int FEOrder>
-void kohnShamDFTOperatorClass<FEOrder>::computeHamiltonianTimesX(const distributedCPUVec<double> & src,
+template<unsigned int FEOrder,unsigned int FEOrderElectro>
+void kohnShamDFTOperatorClass<FEOrder,FEOrderElectro>::computeHamiltonianTimesX(const distributedCPUVec<double> & src,
 										 std::vector<double>  & cellSrcWaveFunctionMatrix,
 										 const unsigned int numberWaveFunctions,
 										 distributedCPUVec<double> & dst,

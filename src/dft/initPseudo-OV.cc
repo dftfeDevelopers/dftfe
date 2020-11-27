@@ -57,7 +57,7 @@ void dftClass<FEOrder,FEOrderElectro>::computeElementalOVProjectorKets()
 	//
 	//reinit kohnShamDFTOperator for getting access to global to local element nodeIds
 	//
-	kohnShamDFTOperatorClass<FEOrder> kohnShamDFTEigenOperator(this,mpi_communicator);
+	kohnShamDFTOperatorClass<FEOrder,FEOrderElectro> kohnShamDFTEigenOperator(this,mpi_communicator);
 	distributedCPUVec<double> sqrtMassVector,invSqrtMassVector;
 
 	if(dftParameters::cellLevelMassMatrixScaling)
@@ -83,6 +83,7 @@ void dftClass<FEOrder,FEOrderElectro>::computeElementalOVProjectorKets()
 	
 	vectorTools::computeCellLocalIndexSetMap(tmpVector.get_partitioner(),
 						 matrix_free_data,
+                                                 d_densityDofHandlerIndex,
 						 1,
 						 flattenedArrayMacroCellLocalProcIndexIdMap,
 						 flattenedArrayCellLocalProcIndexIdMap);

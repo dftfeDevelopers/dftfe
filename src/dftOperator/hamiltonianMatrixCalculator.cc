@@ -300,10 +300,6 @@ void kohnShamDFTOperatorClass<FEOrder,FEOrderElectro>::computeHamiltonianMatrix(
 	      }
 	  }
 
-  MPI_Barrier(MPI_COMM_WORLD);
-	cpu_time = MPI_Wtime() - cpu_time;
-	if (dftParameters::verbosity>=2)
-		pcout<<"Time for elemental Hamiltonian matrix computation on CPU: "<<cpu_time<<std::endl;
   computingTimerStandard.exit_section("Elemental Hamiltonian matrix computation on CPU");
 }
 

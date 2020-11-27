@@ -21,7 +21,8 @@
 template<unsigned int FEOrder,unsigned int FEOrderElectro>
 void kohnShamDFTOperatorClass<FEOrder,FEOrderElectro>::computeNonLocalHamiltonianTimesX(const distributedCPUVec<std::complex<double> > & src,
 		const unsigned int numberWaveFunctions,
-		distributedCPUVec<std::complex<double> >       & dst) const
+		distributedCPUVec<std::complex<double> >       & dst,
+                const double scalar) const
 {
 
 	std::map<unsigned int, std::vector<std::complex<double> > > projectorKetTimesVector;
@@ -384,8 +385,8 @@ void kohnShamDFTOperatorClass<FEOrder,FEOrderElectro>::computeNonLocalHamiltonia
 	}
 
 }
-template<unsigned int FEOrder>
-void kohnShamDFTOperatorClass<FEOrder>::computeNonLocalHamiltonianTimesX(const distributedCPUVec<double> & src,
+template<unsigned int FEOrder,unsigned int FEOrderElectro>
+void kohnShamDFTOperatorClass<FEOrder,FEOrderElectro>::computeNonLocalHamiltonianTimesX(const distributedCPUVec<double> & src,
 									 std::vector<double> & cellSrcWaveFunctionMatrix,
 									 const unsigned int numberWaveFunctions,
 									 distributedCPUVec<double>       & dst,

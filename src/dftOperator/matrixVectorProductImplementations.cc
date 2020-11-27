@@ -26,7 +26,8 @@
 template<unsigned int FEOrder,unsigned int FEOrderElectro>
 void kohnShamDFTOperatorClass<FEOrder,FEOrderElectro>::computeLocalHamiltonianTimesX(const distributedCPUVec<std::complex<double> > & src,
 		const unsigned int numberWaveFunctions,
-		distributedCPUVec<std::complex<double> > & dst) 
+		distributedCPUVec<std::complex<double> > & dst,
+                const double scalar) 
 {
 	const unsigned int kpointSpinIndex=(1+dftParameters::spinPolarized)*d_kPointIndex+d_spinIndex;
 	//
@@ -89,7 +90,8 @@ void kohnShamDFTOperatorClass<FEOrder,FEOrderElectro>::computeLocalHamiltonianTi
 template<unsigned int FEOrder,unsigned int FEOrderElectro>
 void kohnShamDFTOperatorClass<FEOrder,FEOrderElectro>::computeLocalHamiltonianTimesXBatchGEMM (const distributedCPUVec<std::complex<double> > & src,
 		const unsigned int numberWaveFunctions,
-		distributedCPUVec<std::complex<double> > & dst) const
+		distributedCPUVec<std::complex<double> > & dst,
+                const double scalar) const
 
 {
 	const unsigned int kpointSpinIndex=(1+dftParameters::spinPolarized)*d_kPointIndex+d_spinIndex;
@@ -349,7 +351,8 @@ void kohnShamDFTOperatorClass<FEOrder,FEOrderElectro>::computeLocalHamiltonianTi
 template<unsigned int FEOrder,unsigned int FEOrderElectro>
 void kohnShamDFTOperatorClass<FEOrder,FEOrderElectro>::computeLocalHamiltonianTimesXBatchGEMM (const distributedCPUVec<double> & src,
 		                                                                               const unsigned int numberWaveFunctions,
-		                                                                               distributedCPUVec<double> & dst) const
+		                                                                               distributedCPUVec<double> & dst,
+                                                                                               const double scalar) const
 {
 	const unsigned int kpointSpinIndex=(1+dftParameters::spinPolarized)*d_kPointIndex+d_spinIndex;
 	//
