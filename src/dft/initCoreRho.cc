@@ -232,7 +232,7 @@ void dftClass<FEOrder,FEOrderElectro>::initCoreRho()
             if (dftParameters::floatingNuclearCharges && distanceToAtom<1.0e-4)
             {
               if(dftParameters::verbosity>=4)
-                pcout<<"Atomic close to quad point, iatom: "<<iAtom<<std::endl;
+                std::cout<<"Atomic close to quad point, iatom: "<<iAtom<<std::endl;
 
               distanceToAtom=1.0e-4;
               diff[0]=(1.0e-4)/std::sqrt(3.0);
