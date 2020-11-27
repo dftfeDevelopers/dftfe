@@ -398,7 +398,7 @@ void dftClass<FEOrder,FEOrderElectro>::kohnShamEigenSpaceCompute(const unsigned 
     computing_timer.exit_section("Lanczos k-step Upper Bound");    
 
     subspaceIterationSolver.reinitSpectrumBounds(lowerBoundWantedSpectrum,
-        lowerBoundWantedSpectrum+(upperBoundUnwantedSpectrum-lowerBoundWantedSpectrum)/vecForLanczos.size()*d_numEigenValues*10.0,
+        lowerBoundWantedSpectrum+(upperBoundUnwantedSpectrum-lowerBoundWantedSpectrum)/vecForLanczos.size()*d_numEigenValues*(dftParameters::reproducible_output?10.0:50.0),
         upperBoundUnwantedSpectrum);
   }
   else
@@ -1022,7 +1022,7 @@ void dftClass<FEOrder,FEOrderElectro>::kohnShamEigenSpaceComputeNSCF(const unsig
     computing_timer.exit_section("Lanczos k-step Upper Bound");    
 
     subspaceIterationSolver.reinitSpectrumBounds(lowerBoundWantedSpectrum,
-        lowerBoundWantedSpectrum+(upperBoundUnwantedSpectrum-lowerBoundWantedSpectrum)/vecForLanczos.size()*d_numEigenValues*10.0,
+        lowerBoundWantedSpectrum+(upperBoundUnwantedSpectrum-lowerBoundWantedSpectrum)/vecForLanczos.size()*d_numEigenValues*(dftParameters::reproducible_output?10.0:50.0),
         upperBoundUnwantedSpectrum);
   }
   else
