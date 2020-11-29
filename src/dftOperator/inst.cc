@@ -7,6 +7,7 @@ template class kohnShamDFTOperatorClass<6,6>;
 template class kohnShamDFTOperatorClass<6,7>;
 template class kohnShamDFTOperatorClass<6,8>;
 template class kohnShamDFTOperatorClass<6,9>;
+template class kohnShamDFTOperatorClass<7,7>;
 #else
 template class kohnShamDFTOperatorClass<1,1>;
 template class kohnShamDFTOperatorClass<1,2>;

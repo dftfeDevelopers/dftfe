@@ -94,15 +94,15 @@ namespace dftfe
 namespace linearAlgebraOperations
 {
 
-	/** @brief Calculates an estimate of upper bound of a matrix using
+	/** @brief Calculates an estimate of lower and upper bounds of a matrix using
 	 *  k-step Lanczos method.
 	 *
 	 *  @param  operatorMatrix An object which has access to the given matrix
 	 *  @param  vect A dummy vector
-	 *  @return double An estimate of the upper bound of the given matrix
+	 *  @return std::pair<double,double> An estimate of the lower and upper bound of the given matrix
 	 */
 	template<typename T>
-		double lanczosUpperBoundEigenSpectrum(operatorDFTClass & operatorMatrix,
+		std::pair<double,double> lanczosLowerUpperBoundEigenSpectrum(operatorDFTClass & operatorMatrix,
 				const distributedCPUVec<T> & vect);
 
 

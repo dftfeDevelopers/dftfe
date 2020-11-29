@@ -216,9 +216,9 @@ namespace dftfe
 				}
 
 				dealii::Tensor<1,3,double> tempDisp;
-				tempDisp[0]=radiusAtomBall+10.0;
-				tempDisp[1]=radiusAtomBall+10.0;
-				tempDisp[2]=radiusAtomBall+10.0;
+				tempDisp[0]=radiusAtomBall+0.1;
+				tempDisp[1]=radiusAtomBall+0.1;
+				tempDisp[2]=radiusAtomBall+0.1;
 				std::pair< dealii::Point<3,double >,dealii::Point<3, double>> boundaryPoints;
 				boundaryPoints.first=atomCoor-tempDisp;
 				boundaryPoints.second=atomCoor+tempDisp;
@@ -226,24 +226,26 @@ namespace dftfe
 
 				if(boundingBoxTria.get_neighbor_type(boundingBoxAroundPoint)==dealii::NeighborType::not_neighbors)
 					continue;
-				// std::cout<<"Atom Coor: "<<atomCoor[0]<<" "<<atomCoor[1]<<" "<<atomCoor[2]<<std::endl;
 
 				dealii::DoFHandler<3>::active_cell_iterator cell = dofHandler.begin_active(),endc = dofHandler.end();
 				std::vector<dealii::types::global_dof_index> cell_dof_indices(dofs_per_cell);
 
+        //loop over ghost cells is need to account for interactions between atom balls of diferent atoms interecting 
+        //a locally owned cell and a neighbouring ghost cell.
 				for(; cell!= endc; ++cell)
 					if(cell->is_locally_owned() || cell->is_ghost())
 					{
-            if(cell->bounding_box().get_neighbor_type(boundingBoxAroundPoint)==dealii::NeighborType::not_neighbors)
+            const dealii::BoundingBox<3> & cellBoundingBox=cell->bounding_box();
+            if(cellBoundingBox.get_neighbor_type(boundingBoxAroundPoint)==dealii::NeighborType::not_neighbors)
               continue;
             
 						int cutOffFlag = 0;
-						cell->get_dof_indices(cell_dof_indices);
+						//cell->get_dof_indices(cell_dof_indices);
 
-						for(unsigned int iNode = 0; iNode < dofs_per_cell; ++iNode)
+						for(unsigned int iNode = 0; iNode < vertices_per_cell; ++iNode)
 						{
 
-							const dealii::Point<3> & feNodeGlobalCoord = supportPoints.find(cell_dof_indices[iNode])->second;
+							const dealii::Point<3> & feNodeGlobalCoord = supportPoints.find(cell->vertex_dof_index(iNode,0))->second;
 							const double distance = atomCoor.distance(feNodeGlobalCoord);
 
 							if(distance < radiusAtomBall)
@@ -252,7 +254,33 @@ namespace dftfe
 								break;
 							}
 
-						}//element node loop
+						}//element vertex loop
+
+            if (cutOffFlag==0)
+              for (const auto &face : cell->face_iterators())
+              {
+                  const auto center = face->center();    
+                  if(atomCoor.distance(center) < radiusAtomBall)
+                  {
+                    cutOffFlag = 1;
+                    break;
+                  } 
+              }
+
+            if (cutOffFlag==0)
+            {
+              cell->get_dof_indices(cell_dof_indices);
+              for(unsigned int iNode = 0; iNode < dofs_per_cell; ++iNode)
+              {
+                const dealii::Point<3> & feNodeGlobalCoord = supportPoints.find(cell_dof_indices[iNode])->second;
+                const double distance = atomCoor.distance(feNodeGlobalCoord);
+                if(distance < radiusAtomBall)
+                {
+                  cutOffFlag = 1;
+                  break;
+                }
+              }//element dofs loop
+            }
 
 						if(cutOffFlag == 1)
 						{
@@ -261,7 +289,6 @@ namespace dftfe
 								const dealii::types::global_dof_index nodeID=cell->vertex_dof_index(iNode,0);
 								tempNodalSet.insert(nodeID);
 							}
-
 						}
 
 					}//cell locally owned if loop
@@ -386,12 +413,14 @@ namespace dftfe
 			if (dealii::Utilities::MPI::sum(ilegalInteraction, mpi_communicator)>0)
 				return 1;
 
+      /*
 			computing_timer.enter_section("create bins: exchange interaction maps");
 			internal::exchangeInteractionMaps(totalNumberAtoms,
 					interactionMap,
 					n_mpi_processes,
 					mpi_communicator);
 			computing_timer.exit_section("create bins: exchange interaction maps");
+      */
 			return 0;
 		}
 	}
@@ -557,7 +586,12 @@ namespace dftfe
 				//
 				//treat spl case when no atom intersects with another. e.g. simple cubic
 				//
-				if(interactingAtoms.size() == 0){
+        int isInteraction=1;
+        if(interactingAtoms.size() == 0)
+          isInteraction=0;
+
+        if (dealii::Utilities::MPI::sum(isInteraction,mpi_communicator)==0)
+				{
 					(d_bins[binCount]).insert(i);
 					continue;
 				}
@@ -571,6 +605,7 @@ namespace dftfe
 					int index = std::distance(d_bins.begin(),iter);
 
 					isBinFound = true;
+          int isBinIntersecting=0;
 
 					// to belong to this bin, this atom must not overlap with any other
 					// atom already present in this bin
@@ -579,10 +614,15 @@ namespace dftfe
 						int atom = *iter2;
 
 						if(atomsInThisBin.find(atom) != atomsInThisBin.end()){
-							isBinFound = false;
+							isBinIntersecting = 1;
 							break;
 						}
 					}
+
+          if (dealii::Utilities::MPI::sum(isBinIntersecting,mpi_communicator)>0)
+          {
+            isBinFound=false;
+          }
 
 					if(isBinFound == true){
 						(d_bins[index]).insert(i);

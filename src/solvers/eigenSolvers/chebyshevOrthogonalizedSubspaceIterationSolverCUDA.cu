@@ -191,10 +191,10 @@ namespace dftfe
 
 		namespace internal
 		{
-			unsigned int setChebyshevOrder(const unsigned int upperBoundUnwantedSpectrum)
+			unsigned int setChebyshevOrder(const unsigned int d_upperBoundUnWantedSpectrum)
 			{
 				for(int i=0; i<sizeof(order_lookup)/sizeof(order_lookup[0]); i++) {
-					if(upperBoundUnwantedSpectrum <= order_lookup[i][0])
+					if(d_upperBoundUnWantedSpectrum <= order_lookup[i][0])
 						return order_lookup[i][1];
 				}
 				return 1250;
@@ -208,9 +208,11 @@ namespace dftfe
 	chebyshevOrthogonalizedSubspaceIterationSolverCUDA::chebyshevOrthogonalizedSubspaceIterationSolverCUDA
 		(const MPI_Comm &mpi_comm,
 		 double lowerBoundWantedSpectrum,
-		 double lowerBoundUnWantedSpectrum):
+		 double lowerBoundUnWantedSpectrum,
+     double upperBoundUnWantedSpectrum):
 			d_lowerBoundWantedSpectrum(lowerBoundWantedSpectrum),
 			d_lowerBoundUnWantedSpectrum(lowerBoundUnWantedSpectrum),
+      d_upperBoundUnWantedSpectrum(upperBoundUnWantedSpectrum),
 			pcout(std::cout, (dealii::Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0)),
 			computing_timer(mpi_comm,
 					pcout,
@@ -464,6 +466,7 @@ namespace dftfe
 				dealii::ScaLAPACKMatrix<double> & projHamPar,
 				dealii::ScaLAPACKMatrix<double> & overlapMatPar,
 				const std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid> & processGrid,
+        const bool isFirstFilteringCall,
 				const bool isXlBOMDLinearizedSolve,
 				const bool useMixedPrecOverall,
 				const bool isFirstScf,
@@ -554,12 +557,23 @@ namespace dftfe
 				MPI_Barrier(MPI_COMM_WORLD);
 				double lanczos_time = MPI_Wtime();
 
-				const double upperBoundUnwantedSpectrum =linearAlgebraOperationsCUDA::lanczosUpperBoundEigenSpectrum(operatorMatrix,
-						tempEigenVec,
+        const std::pair<double,double> bounds =linearAlgebraOperationsCUDA::lanczosLowerUpperBoundEigenSpectrum(operatorMatrix,
+            tempEigenVec,
             cudaFlattenedArrayBlock,
             YArray,
             projectorKetTimesVector,
             vectorsBlockSize);
+
+        if (isFirstFilteringCall)
+        {
+          d_lowerBoundWantedSpectrum=bounds.first;
+          d_upperBoundUnWantedSpectrum=bounds.second;
+          d_lowerBoundUnWantedSpectrum=d_lowerBoundWantedSpectrum+(d_upperBoundUnWantedSpectrum-d_lowerBoundWantedSpectrum)*totalNumberWaveFunctions/tempEigenVec.size()*10.0;
+        }
+        else
+        {
+          d_upperBoundUnWantedSpectrum=bounds.second;
+        }
 
 				cudaDeviceSynchronize();
 				MPI_Barrier(MPI_COMM_WORLD);
@@ -573,13 +587,10 @@ namespace dftfe
 				//set Chebyshev order
 				//
 				if(chebyshevOrder == 0)
-					chebyshevOrder=internal::setChebyshevOrder(upperBoundUnwantedSpectrum);
+					chebyshevOrder=internal::setChebyshevOrder(d_upperBoundUnWantedSpectrum);
 
 				chebyshevOrder = (isFirstScf && dftParameters::isPseudopotential)?chebyshevOrder*dftParameters::chebyshevFilterPolyDegreeFirstScfScalingFactor:chebyshevOrder;
 
-
-				if(dftParameters::lowerBoundUnwantedFracUpper > 1e-6)
-					d_lowerBoundUnWantedSpectrum=dftParameters::lowerBoundUnwantedFracUpper*upperBoundUnwantedSpectrum;
 
 				//
 				//output statements
@@ -588,7 +599,7 @@ namespace dftfe
 				{
 					char buffer[100];
 
-					sprintf(buffer, "%s:%18.10e\n", "upper bound of unwanted spectrum", upperBoundUnwantedSpectrum);
+					sprintf(buffer, "%s:%18.10e\n", "upper bound of unwanted spectrum", d_upperBoundUnWantedSpectrum);
 					pcout << buffer;
 					sprintf(buffer, "%s:%18.10e\n", "lower bound of unwanted spectrum", d_lowerBoundUnWantedSpectrum);
 					pcout << buffer;
@@ -668,7 +679,7 @@ namespace dftfe
                   BVec,
                   chebyshevOrder,
                   d_lowerBoundUnWantedSpectrum,
-                  upperBoundUnwantedSpectrum,
+                  d_upperBoundUnWantedSpectrum,
                   d_lowerBoundWantedSpectrum,
                   useMixedPrecOverall);	
 						}
@@ -683,7 +694,7 @@ namespace dftfe
                   BVec,
                   chebyshevOrder,
                   d_lowerBoundUnWantedSpectrum,
-                  upperBoundUnwantedSpectrum,
+                  d_upperBoundUnWantedSpectrum,
                   d_lowerBoundWantedSpectrum,
                   useMixedPrecOverall);	
 						}
@@ -1177,12 +1188,12 @@ namespace dftfe
 				projectorKetTimesVector2.reinit(projectorKetTimesVector);
 
 			computing_timer.enter_section("Lanczos k-step Upper Bound");
-		  const double upperBoundUnwantedSpectrum =linearAlgebraOperationsCUDA::lanczosUpperBoundEigenSpectrum(operatorMatrix,
+		  const double d_upperBoundUnWantedSpectrum =linearAlgebraOperationsCUDA::lanczosLowerUpperBoundEigenSpectrum(operatorMatrix,
 					tempEigenVec,
           cudaFlattenedArrayBlock,
           YArray,
           projectorKetTimesVector,          
-          chebyBlockSize);
+          chebyBlockSize).second;
 			computing_timer.exit_section("Lanczos k-step Upper Bound");
 			unsigned int chebyshevOrder = dftParameters::chebyshevOrder;
 
@@ -1190,13 +1201,10 @@ namespace dftfe
 			//set Chebyshev order
 			//
 			if(chebyshevOrder == 0)
-				chebyshevOrder=internal::setChebyshevOrder(upperBoundUnwantedSpectrum);
+				chebyshevOrder=internal::setChebyshevOrder(d_upperBoundUnWantedSpectrum);
 
 			chebyshevOrder = (dftParameters::isPseudopotential)?chebyshevOrder*dftParameters::chebyshevFilterPolyDegreeFirstScfScalingFactor:chebyshevOrder;
 
-
-			if(dftParameters::lowerBoundUnwantedFracUpper > 1e-6)
-				d_lowerBoundUnWantedSpectrum=dftParameters::lowerBoundUnwantedFracUpper*upperBoundUnwantedSpectrum;
 
 			//
 			//output statements
@@ -1205,7 +1213,7 @@ namespace dftfe
 			{
 				char buffer[100];
 
-				sprintf(buffer, "%s:%18.10e\n", "upper bound of unwanted spectrum", upperBoundUnwantedSpectrum);
+				sprintf(buffer, "%s:%18.10e\n", "upper bound of unwanted spectrum", d_upperBoundUnWantedSpectrum);
 				pcout << buffer;
 				sprintf(buffer, "%s:%18.10e\n", "lower bound of unwanted spectrum", d_lowerBoundUnWantedSpectrum);
 				pcout << buffer;
@@ -1285,7 +1293,7 @@ namespace dftfe
                     BVec,
                     chebyshevOrder,
                     d_lowerBoundUnWantedSpectrum,
-                    upperBoundUnwantedSpectrum,
+                    d_upperBoundUnWantedSpectrum,
                     d_lowerBoundWantedSpectrum,
                     useMixedPrecOverall);	
 							}
@@ -1300,7 +1308,7 @@ namespace dftfe
                     BVec,
                     chebyshevOrder,
                     d_lowerBoundUnWantedSpectrum,
-                    upperBoundUnwantedSpectrum,
+                    d_upperBoundUnWantedSpectrum,
                     d_lowerBoundWantedSpectrum,
                     useMixedPrecOverall);	
 							}	
@@ -1466,12 +1474,12 @@ namespace dftfe
 				projectorKetTimesVector2.reinit(projectorKetTimesVector);
 
 			computing_timer.enter_section("Lanczos k-step Upper Bound");
-			const double upperBoundUnwantedSpectrum =linearAlgebraOperationsCUDA::lanczosUpperBoundEigenSpectrum(operatorMatrix,
+			const double d_upperBoundUnWantedSpectrum =linearAlgebraOperationsCUDA::lanczosLowerUpperBoundEigenSpectrum(operatorMatrix,
 					tempEigenVec,
           cudaFlattenedArrayBlock,
           YArray,
           projectorKetTimesVector,          
-          chebyBlockSize);
+          chebyBlockSize).second;
 			computing_timer.exit_section("Lanczos k-step Upper Bound");
 			unsigned int chebyshevOrder = dftParameters::chebyshevOrder;
 
@@ -1479,13 +1487,10 @@ namespace dftfe
 			//set Chebyshev order
 			//
 			if(chebyshevOrder == 0)
-				chebyshevOrder=internal::setChebyshevOrder(upperBoundUnwantedSpectrum);
+				chebyshevOrder=internal::setChebyshevOrder(d_upperBoundUnWantedSpectrum);
 
 			chebyshevOrder = (dftParameters::isPseudopotential)?chebyshevOrder*dftParameters::chebyshevFilterPolyDegreeFirstScfScalingFactor:chebyshevOrder;
 
-
-			if(dftParameters::lowerBoundUnwantedFracUpper > 1e-6)
-				d_lowerBoundUnWantedSpectrum=dftParameters::lowerBoundUnwantedFracUpper*upperBoundUnwantedSpectrum;
 
 			//
 			//output statements
@@ -1494,7 +1499,7 @@ namespace dftfe
 			{
 				char buffer[100];
 
-				sprintf(buffer, "%s:%18.10e\n", "upper bound of unwanted spectrum", upperBoundUnwantedSpectrum);
+				sprintf(buffer, "%s:%18.10e\n", "upper bound of unwanted spectrum", d_upperBoundUnWantedSpectrum);
 				pcout << buffer;
 				sprintf(buffer, "%s:%18.10e\n", "lower bound of unwanted spectrum", d_lowerBoundUnWantedSpectrum);
 				pcout << buffer;
@@ -1973,7 +1978,7 @@ namespace dftfe
                       BVec,
                       chebyshevOrder,
                       d_lowerBoundUnWantedSpectrum,
-                      upperBoundUnwantedSpectrum,
+                      d_upperBoundUnWantedSpectrum,
                       d_lowerBoundWantedSpectrum,
                       useMixedPrecOverall);
 								}
@@ -1988,7 +1993,7 @@ namespace dftfe
                       BVec,
                       chebyshevOrder,
                       d_lowerBoundUnWantedSpectrum,
-                      upperBoundUnwantedSpectrum,
+                      d_upperBoundUnWantedSpectrum,
                       d_lowerBoundWantedSpectrum,
                       useMixedPrecOverall);
 								}

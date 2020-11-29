@@ -31,7 +31,7 @@ namespace dftfe {
 		unsigned int chebyshevOrder=1,numPass=1, numSCFIterations=1,maxLinearSolverIterations=1, mixingHistory=1, npool=1,maxLinearSolverIterationsHelmholtz=1;
 
 		double radiusAtomBall=0.0, mixingParameter=0.5;
-		double lowerEndWantedSpectrum=0.0,absLinearSolverTolerance=1e-10,selfConsistentSolverTolerance=1e-10,TVal=500, start_magnetization=0.0,absLinearSolverToleranceHelmholtz=1e-10;
+		double absLinearSolverTolerance=1e-10,selfConsistentSolverTolerance=1e-10,TVal=500, start_magnetization=0.0,absLinearSolverToleranceHelmholtz=1e-10;
 		double chebyshevTolerance = 1e-02;
 		double chebyshevFilterTolXLBOMDRankUpdates = 1e-07;
 		std::string mixingMethod = "";
@@ -78,7 +78,6 @@ namespace dftfe {
 		unsigned int scalapackBlockSize=50;
 		unsigned int natoms=0;
 		unsigned int natomTypes=0;
-		double lowerBoundUnwantedFracUpper=0;
 		unsigned int numCoreWfcRR=0;
 		bool triMatPGSOpt=true;
 		bool reuseWfcGeoOpt=false;
@@ -137,6 +136,7 @@ namespace dftfe {
     bool floatingNuclearCharges=false;
     bool nonLinearCoreCorrection=false;
     unsigned int maxLineSearchIterCGPRP=5;
+    std::string atomicMassesFile="";
 
 		void declare_parameters(ParameterHandler &prm)
 		{
@@ -599,10 +599,6 @@ namespace dftfe {
 					prm.declare_entry("RR GEP", "true",
 							Patterns::Bool(),"[Advanced] Solve generalized eigenvalue problem instead of standard eignevalue problem in Rayleigh-Ritz step. This approach is not extended yet to complex executable. Default value is true for real executable and false for complex executable.");
 
-					prm.declare_entry("LOWER BOUND WANTED SPECTRUM", "-10.0",
-							Patterns::Double(),
-							"[Developer] The lower bound of the wanted eigen spectrum. It is only used for the first iteration of the Chebyshev filtered subspace iteration procedure. A rough estimate based on single atom eigen values can be used here. Default value is good enough for most problems.");
-
 					prm.declare_entry("CHEBYSHEV POLYNOMIAL DEGREE", "0",
 							Patterns::Integer(0,2000),
 							"[Advanced] Chebyshev polynomial degree to be employed for the Chebyshev filtering subspace iteration procedure to dampen the unwanted spectrum of the Kohn-Sham Hamiltonian. If set to 0, a default value depending on the upper bound of the eigen-spectrum is used. See Phani Motamarri et.al., J. Comp. Phys. 253, 308-343 (2013).");
@@ -611,10 +607,6 @@ namespace dftfe {
 							Patterns::Double(0,2000),
 							"[Advanced] Chebyshev polynomial degree first scf scaling factor.");
 
-
-					prm.declare_entry("LOWER BOUND UNWANTED FRAC UPPER", "0",
-							Patterns::Double(0,1),
-							"[Developer] The value of the fraction of the upper bound of the unwanted spectrum, the lower bound of the unwanted spectrum will be set. Default value is 0.");
 
 					prm.declare_entry("CHEBYSHEV FILTER TOLERANCE","5e-02",
 							Patterns::Double(1e-10),
@@ -645,9 +637,9 @@ namespace dftfe {
 							Patterns::Integer(1),
 							"[Advanced]  This parameter specifies the block size of the wavefunction matrix to be used for memory optimization purposes in the orthogonalization, Rayleigh-Ritz, and density computation steps. The optimum block size is dependent on the computing architecture. For optimum work sharing during band parallelization (NPBAND > 1), we recommend adjusting WFC BLOCK SIZE and NUMBER OF KOHN-SHAM WAVEFUNCTIONS such that NUMBER OF KOHN-SHAM WAVEFUNCTIONS/NPBAND/WFC BLOCK SIZE equals an integer value. Default value is 400.");
 
-					prm.declare_entry("SUBSPACE ROT DOFS BLOCK SIZE", "5000",
+					prm.declare_entry("SUBSPACE ROT DOFS BLOCK SIZE", "10000",
 							Patterns::Integer(1),
-							"[Developer] This block size is used for memory optimization purposes in subspace rotation step in Pseudo-Gram-Schmidt orthogonalization and Rayleigh-Ritz steps. Default value is 5000.");
+							"[Developer] This block size is used for memory optimization purposes in subspace rotation step in Pseudo-Gram-Schmidt orthogonalization and Rayleigh-Ritz steps. Default value is 10000.");
 
 					prm.declare_entry("SCALAPACKPROCS", "0",
 							Patterns::Integer(0,300),
@@ -753,6 +745,10 @@ namespace dftfe {
 
 			prm.enter_subsection ("Molecular Dynamics");
 			{
+				prm.declare_entry("ATOMIC MASSES FILE", "",
+						Patterns::Anything(),
+						"[Standard] Input atomic masses file name. File format: atomicNumber1 atomicMass1 (row1), atomicNumber2 atomicMass2 (row2) and so on. Units: a.m.u.");
+
 				prm.declare_entry("BOMD", "false",
 						Patterns::Bool(),
 						"[Standard] Perform Born-Oppenheimer NVE molecular dynamics. Input parameters for molecular dynamics have to be modified directly in the code in the file md/molecularDynamics.cc.");
@@ -1002,8 +998,6 @@ namespace dftfe {
 					dftParameters::numCoreWfcRR                  = prm.get_integer("SPECTRUM SPLIT CORE EIGENSTATES");
 					dftParameters::spectrumSplitStartingScfIter  = prm.get_integer("SPECTRUM SPLIT STARTING SCF ITER");
 					dftParameters::rrGEP= prm.get_bool("RR GEP");
-					dftParameters::lowerEndWantedSpectrum        = prm.get_double("LOWER BOUND WANTED SPECTRUM");
-					dftParameters::lowerBoundUnwantedFracUpper   = prm.get_double("LOWER BOUND UNWANTED FRAC UPPER");
 					dftParameters::chebyshevOrder                = prm.get_integer("CHEBYSHEV POLYNOMIAL DEGREE");
 					dftParameters::useELPA= prm.get_bool("USE ELPA");
 					dftParameters::useBatchGEMM= prm.get_bool("BATCH GEMM");
@@ -1053,6 +1047,7 @@ namespace dftfe {
 
 			prm.enter_subsection ("Molecular Dynamics");
 			{
+        dftParameters::atomicMassesFile              = prm.get("ATOMIC MASSES FILE");
 				dftParameters::isBOMD                        = prm.get_bool("BOMD");
 				dftParameters::maxJacobianRatioFactorForMD   = prm.get_double("MAX JACOBIAN RATIO FACTOR");
 				dftParameters::isXLBOMD                      = prm.get_bool("XL BOMD");
@@ -1174,8 +1169,6 @@ namespace dftfe {
 			AssertThrow( dftParameters::nkx==1 &&  dftParameters::nky==1 &&  dftParameters::nkz==1
 					&& dftParameters::offsetFlagX==0 &&  dftParameters::offsetFlagY==0 &&  dftParameters::offsetFlagZ==0
 					,ExcMessage("DFT-FE Error: Real executable cannot be used for non-zero k point."));
-
-			AssertThrow(!dftParameters::isCellStress,ExcMessage("DFT-FE Error: Currently CELL STRESS cannot be set true if using real executable for a periodic Gamma point problem. This functionality will be added soon."));
 #endif
 			AssertThrow(!(dftParameters::chkType==2 && (dftParameters::isIonOpt || dftParameters::isCellOpt)),ExcMessage("DFT-FE Error: CHK TYPE=2 cannot be used if geometry optimization is being performed."));
 

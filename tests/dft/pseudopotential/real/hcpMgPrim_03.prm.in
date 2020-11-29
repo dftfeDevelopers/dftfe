@@ -9,7 +9,7 @@ subsection Geometry
   
   subsection Optimization
     set ION FORCE=true
-    set CELL STRESS=false
+    set CELL STRESS=true
   end 
  
 end
@@ -76,12 +76,9 @@ subsection SCF parameters
   
   subsection Eigen-solver parameters
       set NUMBER OF KOHN-SHAM WAVEFUNCTIONS = 16
-      set LOWER BOUND WANTED SPECTRUM = -10.0
       set CHEBYSHEV POLYNOMIAL DEGREE = 20
       set CHEBYSHEV FILTER TOLERANCE=1e-3
-      set ORTHOGONALIZATION TYPE=LW
-      set ENABLE SWITCH TO GS=true
-      set RR GEP=false
+      set RR GEP=true
   end
 end
 

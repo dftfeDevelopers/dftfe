@@ -545,8 +545,13 @@ namespace dftfe {
 			eigenValues.resize(d_kPointWeights.size());
 			eigenValuesRRSplit.resize(d_kPointWeights.size());
 
-			a0.resize((dftParameters::spinPolarized+1)*d_kPointWeights.size(),dftParameters::lowerEndWantedSpectrum);
+      a0.clear();
+      bLow.clear();
+      d_isFirstFilteringCall.clear();
+
+			a0.resize((dftParameters::spinPolarized+1)*d_kPointWeights.size(),0.0);
 			bLow.resize((dftParameters::spinPolarized+1)*d_kPointWeights.size(),0.0);
+      d_isFirstFilteringCall.resize((dftParameters::spinPolarized+1)*d_kPointWeights.size(),true);
 
 			d_eigenVectorsFlattenedSTL.resize((1+dftParameters::spinPolarized)*d_kPointWeights.size());
 			d_eigenVectorsRotFracDensityFlattenedSTL.resize((1+dftParameters::spinPolarized)*d_kPointWeights.size());
@@ -627,7 +632,7 @@ namespace dftfe {
 								
 				computeElementalOVProjectorKets();
 
-				forcePtr->initPseudoData();
+				//forcePtr->initPseudoData();
 
 				MPI_Barrier(MPI_COMM_WORLD);
 				init_nonlocal2 = MPI_Wtime() - init_nonlocal2;
@@ -1436,12 +1441,14 @@ namespace dftfe {
 			//create eigen solver object
 			//
 			chebyshevOrthogonalizedSubspaceIterationSolver subspaceIterationSolver(mpi_communicator,
-					dftParameters::lowerEndWantedSpectrum,
-					0.0);
+					0.0,
+					0.0,
+          0.0);
 #ifdef DFTFE_WITH_GPU
 			chebyshevOrthogonalizedSubspaceIterationSolverCUDA subspaceIterationSolverCUDA(mpi_communicator,
-					dftParameters::lowerEndWantedSpectrum,
-					0.0);
+					0.0,
+					0.0,
+          0.0);
 #endif
 
 
@@ -1849,9 +1856,7 @@ namespace dftfe {
 
 			if((dftParameters::isPseudopotential || dftParameters::smearedNuclearCharges) && !skipVselfSolveInitLocalPSP)
 			{
-				double init_psplocal;
-				MPI_Barrier(MPI_COMM_WORLD);
-				init_psplocal = MPI_Wtime();
+        computingTimerStandard.enter_section("Init local PSP");
 				initLocalPseudoPotential(d_dofHandlerPRefined,
 					  d_lpspQuadratureIdElectro,
 						d_matrixFreeDataPRefined,
@@ -1863,10 +1868,7 @@ namespace dftfe {
 						d_pseudoVLoc,
 						d_pseudoVLocAtoms);
 
-				MPI_Barrier(MPI_COMM_WORLD);
-				init_psplocal = MPI_Wtime() - init_psplocal;
-				if (dftParameters::verbosity>=1)
-					pcout<<"initPseudoPotentialAll: Time taken for local psp init: "<<init_psplocal<<std::endl;
+        computingTimerStandard.exit_section("Init local PSP");
 			}
 
 
@@ -1876,12 +1878,14 @@ namespace dftfe {
 			//create eigen solver object
 			//
 			chebyshevOrthogonalizedSubspaceIterationSolver subspaceIterationSolver(mpi_communicator,
-					dftParameters::lowerEndWantedSpectrum,
-					0.0);
+					0.0,
+					0.0,
+          0.0);
 #ifdef DFTFE_WITH_GPU
 			chebyshevOrthogonalizedSubspaceIterationSolverCUDA subspaceIterationSolverCUDA(mpi_communicator,
-					dftParameters::lowerEndWantedSpectrum,
-					0.0);
+					0.0,
+					0.0,
+          0.0);
 #endif
 
 			//
@@ -3298,8 +3302,8 @@ namespace dftfe {
 				computingTimerStandard.exit_section("Ion force computation");
 				computing_timer.exit_section("Ion force computation");
 			}
-#ifdef USE_COMPLEX
-			if (dftParameters::isCellStress)
+			
+      if (dftParameters::isCellStress)
 			{
 				if(dftParameters::selfConsistentSolverTolerance>1e-4 && dftParameters::verbosity>=1)
 					pcout<<"DFT-FE Warning: Cell stress accuracy may be affected for the given scf iteration solve tolerance: "<<dftParameters::selfConsistentSolverTolerance<<", recommended to use TOLERANCE below 1e-4."<<std::endl;
@@ -3324,6 +3328,11 @@ namespace dftfe {
               d_gradRhoOutValuesLpspQuad,
               d_pseudoVLoc,
               d_pseudoVLocAtoms,
+							d_rhoCore,
+              d_gradRhoCore, 
+              d_hessianRhoCore,  
+              d_gradRhoCoreAtoms,
+              d_hessianRhoCoreAtoms,                
 						  d_constraintsPRefined,
 							d_vselfBinsManager);
 					forcePtr->printStress();
@@ -3331,7 +3340,6 @@ namespace dftfe {
 				computingTimerStandard.exit_section("Cell stress computation");
 				computing_timer.exit_section("Cell stress computation");
 			}
-#endif
 
 			if(dftParameters::electrostaticsHRefinement)
 				computeElectrostaticEnergyHRefined(

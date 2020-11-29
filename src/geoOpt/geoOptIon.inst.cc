@@ -7,6 +7,7 @@ template class geoOptIon<6,6>;
 template class geoOptIon<6,7>;
 template class geoOptIon<6,8>;
 template class geoOptIon<6,9>;
+template class geoOptIon<7,7>;
 #else
 template class geoOptIon<1,1>;
 template class geoOptIon<1,2>;

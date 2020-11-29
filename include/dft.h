@@ -789,6 +789,9 @@ namespace dftfe {
 			/// distance from the domain till which periodic images will be considered
 			const double d_pspCutOffTrunc=15.0;
 
+      /// cut-off distance from atom till which non-local projectors are non-trivial
+      double d_nlPSPCutOff=8.0;
+
 			/// non-intersecting smeared charges of all atoms at quad points
 			std::map<dealii::CellId, std::vector<double> >  d_bQuadValuesAllAtoms;
 
@@ -1099,6 +1102,29 @@ namespace dftfe {
 			//
 			std::vector<alglib::spline1dinterpolant> d_deltaVlSplines;
 
+			/* Storage for precomputed nonlocal pseudopotential quadrature data. This is to speedup the
+			 * configurational force computation. Data format: vector(numNonLocalAtomsCurrentProcess with
+			 * non-zero compact support, vector(number pseudo wave functions,map<cellid,num_quad_points*2>)).
+			 * Refer to (https://link.aps.org/doi/10.1103/PhysRevB.97.165132) for details of the expression of the configurational force terms
+			 * for the norm-conserving Troullier-Martins pseudopotential in the Kleinman-Bylander form.
+			 * The same expressions also extend to the Optimized Norm-Conserving Vanderbilt (ONCV) pseudopotentials.
+			 */
+			std::vector<std::vector<std::map<dealii::CellId, std::vector<double > > > > d_nonLocalPSP_ZetalmDeltaVl;
+
+
+			/* Storage for precomputed nonlocal pseudopotential quadrature data. This is to speedup the
+			 * configurational stress computation. Data format: vector(numNonLocalAtomsCurrentProcess with
+			 * non-zero compact support, vector(number pseudo wave functions,map<cellid,num_quad_points*num_k_points*3*2>)).
+			 * Refer to (https://link.aps.org/doi/10.1103/PhysRevB.97.165132) for details of the expression of the configurational force terms
+			 * for the norm-conserving Troullier-Martins pseudopotential in the Kleinman-Bylander form.
+			 * The same expressions also extend to the Optimized Norm-Conserving Vanderbilt (ONCV) pseudopotentials.
+			 */
+			std::vector<std::vector<std::map<dealii::CellId, std::vector<double > > > > d_nonLocalPSP_zetalmDeltaVlProductDistImageAtoms_KPoint;      
+
+
+			/// map from cell id to set of non local atom ids (local numbering)
+			std::map<dealii::CellId,std::set<unsigned int>> d_cellIdToNonlocalAtomIdsLocalCompactSupportMap;
+
 			//
 			//vector of outermost Points for various radial Data
 			//
@@ -1155,6 +1181,7 @@ namespace dftfe {
 
 			std::vector<double> a0;
 			std::vector<double> bLow;
+      std::vector<bool> d_isFirstFilteringCall;
 
 
 			distributedCPUVec<double> d_tempEigenVec;

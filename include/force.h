@@ -161,7 +161,6 @@ namespace dftfe {
 			 */
 			//void updateGaussianConstant(const double newGaussianConstant);
 
-#ifdef USE_COMPLEX
 			/** @brief computes the configurational stress on the domain corresponding to
 			 *  affine deformation of the periodic cell.
 			 *
@@ -185,6 +184,11 @@ namespace dftfe {
 				  const std::map<dealii::CellId, std::vector<double> > & gradRhoOutValuesElectroLpsp,
 					const std::map<dealii::CellId, std::vector<double> > & pseudoVLocElectro,
           const std::map<unsigned int,std::map<dealii::CellId, std::vector<double> > > & pseudoVLocAtomsElectro,
+				  const std::map<dealii::CellId, std::vector<double> > & rhoCoreValues,
+				  const std::map<dealii::CellId, std::vector<double> > & gradRhoCoreValues,
+				  const std::map<dealii::CellId, std::vector<double> > & hessianRhoCoreValues,     
+        	const std::map<unsigned int,std::map<dealii::CellId, std::vector<double> > > & gradRhoCoreAtoms,
+	        const std::map<unsigned int,std::map<dealii::CellId, std::vector<double> > > & hessianRhoCoreAtoms,            
 					const dealii::AffineConstraints<double>  & hangingPlusPBCConstraintsElectro,
 					const vselfBinsManager<FEOrder,FEOrderElectro>   & vselfBinsManagerElectro);
 
@@ -193,7 +197,6 @@ namespace dftfe {
 			 *  @return void.
 			 */
 			void printStress();
-#endif
 
 			/** @brief returns a copy of the current stress tensor value.
 			 *
@@ -487,7 +490,6 @@ namespace dftfe {
 
       void computeFloatingAtomsForces();
 
-#ifdef USE_COMPLEX
 			void computeStressEself(const DoFHandler<3> & dofHandlerElectro,
 					const vselfBinsManager<FEOrder,FEOrderElectro>   & vselfBinsManagerElectro,
           const MatrixFree<3,double> & matrixFreeDataElectro,
@@ -509,6 +511,11 @@ namespace dftfe {
 				  const std::map<dealii::CellId, std::vector<double> > & gradRhoOutValuesElectroLpsp,
 					const std::map<dealii::CellId, std::vector<double> > & pseudoVLocElectro,
 					const std::map<unsigned int,std::map<dealii::CellId, std::vector<double> > > & pseudoVLocAtomsElectro,
+				  const std::map<dealii::CellId, std::vector<double> > & rhoCoreValues,
+				  const std::map<dealii::CellId, std::vector<double> > & gradRhoCoreValues,
+				  const std::map<dealii::CellId, std::vector<double> > & hessianRhoCoreValues,   
+        	const std::map<unsigned int,std::map<dealii::CellId, std::vector<double> > > & gradRhoCoreAtoms,
+	        const std::map<unsigned int,std::map<dealii::CellId, std::vector<double> > > & hessianRhoCoreAtoms,            
 					const vselfBinsManager<FEOrder,FEOrderElectro> & vselfBinsManagerElectro);
 
 			void computeStressEEshelbyEElectroPhiTot
@@ -539,6 +546,11 @@ namespace dftfe {
 				  const std::map<dealii::CellId, std::vector<double> > & gradRhoOutValuesElectroLpsp,
 					const std::map<dealii::CellId, std::vector<double> > & pseudoVLocElectro,
 					const std::map<unsigned int,std::map<dealii::CellId, std::vector<double> > > & pseudoVLocAtomsElectro,
+				  const std::map<dealii::CellId, std::vector<double> > & rhoCoreValues,
+				  const std::map<dealii::CellId, std::vector<double> > & gradRhoCoreValues,
+				  const std::map<dealii::CellId, std::vector<double> > & hessianRhoCoreValues,    
+        	const std::map<unsigned int,std::map<dealii::CellId, std::vector<double> > > & gradRhoCoreAtoms,
+        	const std::map<unsigned int,std::map<dealii::CellId, std::vector<double> > > & hessianRhoCoreAtoms,            
 					const vselfBinsManager<FEOrder,FEOrderElectro> & vselfBinsManagerElectro);
 
 			void addEPSPStressContribution
@@ -551,6 +563,15 @@ namespace dftfe {
 				 const std::map<unsigned int,std::map<dealii::CellId, std::vector<double> > > & pseudoVLocAtoms,
 				 const vselfBinsManager<FEOrder,FEOrderElectro>   & vselfBinsManager,
 				 const std::vector<std::map<dealii::CellId , unsigned int> > & cellsVselfBallsClosestAtomIdDofHandler);
+
+			void addENonlinearCoreCorrectionStressContribution
+				 (FEEvaluation<C_DIM,1,C_num1DQuad<C_rhoNodalPolyOrder<FEOrder,FEOrderElectro>()>(),C_DIM>  & forceEval,
+				 const MatrixFree<3,double> & matrixFreeData,
+				 const unsigned int cell,
+         const std::vector<VectorizedArray<double> > & vxcQuads,
+         const std::vector<Tensor<1,C_DIM,VectorizedArray<double> > > & derExcGradRho,
+         const std::map<unsigned int,std::map<dealii::CellId, std::vector<double> > > & gradRhoCoreAtoms,
+         const std::map<unsigned int,std::map<dealii::CellId, std::vector<double> > > & hessianRhoCoreAtoms);       
 
 			void addEPhiTotSmearedStressContribution
         (FEEvaluation<3,1,C_num1DQuadSmearedCharge()*C_numCopies1DQuadSmearedCharge(),3>  & forceEval,
@@ -568,8 +589,6 @@ namespace dftfe {
          const std::set<int> & atomImageIdsInBin,
          const std::map<dealii::CellId, std::vector<int> > & bQuadAtomIdsAllAtomsImages,
          const std::vector< VectorizedArray<double> > & smearedbQuads);      
-      
-#endif
 
 			void computeElementalNonLocalPseudoOVDataForce();
 
@@ -611,37 +630,6 @@ namespace dftfe {
 #endif
 
 
-#ifdef USE_COMPLEX
-			/* Storage for precomputed nonlocal pseudopotential quadrature data. This is to speedup the
-			 * configurational force computation. Data format: vector(numNonLocalAtomsCurrentProcess with
-			 * non-zero compact support, vector(number pseudo wave functions,map<cellid,num_quad_points*2>)).
-			 * Refer to (https://link.aps.org/doi/10.1103/PhysRevB.97.165132) for details of the expression of the configurational force terms
-			 * for the norm-conserving Troullier-Martins pseudopotential in the Kleinman-Bylander form.
-			 * The same expressions also extend to the Optimized Norm-Conserving Vanderbilt (ONCV) pseudopotentials.
-			 */
-			std::vector<std::vector<std::map<dealii::CellId, std::vector<double > > > > d_nonLocalPSP_ZetalmDeltaVl;
-
-
-			/* Storage for precomputed nonlocal pseudopotential quadrature data. This is to speedup the
-			 * configurational stress computation. Data format: vector(numNonLocalAtomsCurrentProcess with
-			 * non-zero compact support, vector(number pseudo wave functions,map<cellid,num_quad_points*num_k_points*3*2>)).
-			 * Refer to (https://link.aps.org/doi/10.1103/PhysRevB.97.165132) for details of the expression of the configurational force terms
-			 * for the norm-conserving Troullier-Martins pseudopotential in the Kleinman-Bylander form.
-			 * The same expressions also extend to the Optimized Norm-Conserving Vanderbilt (ONCV) pseudopotentials.
-			 */
-			std::vector<std::vector<std::map<dealii::CellId, std::vector<double > > > > d_nonLocalPSP_zetalmDeltaVlProductDistImageAtoms_KPoint;      
-
-#else
-
-			/* Storage for precomputed nonlocal pseudopotential quadrature data. This is to speedup the
-			 * configurational stress computation. Data format: vector(numNonLocalAtomsCurrentProcess with
-			 * non-zero compact support, vector(number pseudo wave functions,map<cellid,num_quad_points>)).
-			 * Refer to (https://link.aps.org/doi/10.1103/PhysRevB.97.165132) for details of the expression of the configurational force terms
-			 * for the norm-conserving Troullier-Martins pseudopotential in the Kleinman-Bylander form.
-			 * The same expressions also extend to the Optimized Norm-Conserving Vanderbilt (ONCV) pseudopotentials.
-			 */
-			std::vector<std::vector<std::map<dealii::CellId, std::vector<double > > > > d_nonLocalPSP_ZetalmDeltaVl;
-#endif
 
 			/// Gaussian generator constant. Gaussian generator: Gamma(r)= exp(-d_gaussianConstant*r^2)
 			/// FIXME: Until the hanging nodes surface integral issue is fixed use a value >=4.0
@@ -653,14 +641,13 @@ namespace dftfe {
 			/// Storage for configurational stress tensor
 			Tensor<2,C_DIM,double> d_stress;
 
-#ifdef USE_COMPLEX
 			/* Part of the stress tensor which is summed over k points.
 			 * It is a temporary data structure required for stress evaluation (d_stress)
 			 * when parallization over k points is on.
 			 */
 			Tensor<2,C_DIM,double> d_stressKPoints;
-#endif
-			/* Dont use true except for debugging forces only without mesh movement, as gaussian ovelap
+			
+      /* Dont use true except for debugging forces only without mesh movement, as gaussian ovelap
 			 * on atoms for move mesh is by default set to false
 			 */
 			const bool d_allowGaussianOverlapOnAtoms=false;
@@ -773,7 +760,7 @@ namespace dftfe {
 			std::vector<distributedCPUVec<double>> d_gaussianWeightsVecAtoms;
 
 			/// map from cell id to set of non local atom ids (local numbering)
-			std::map<dealii::CellId,std::set<unsigned int>> d_cellIdToNonlocalAtomIdsLocalCompactSupportMap;
+			//std::map<dealii::CellId,std::set<unsigned int>> d_cellIdToNonlocalAtomIdsLocalCompactSupportMap;
 
 			/// mpi_communicator in the current pool
 			const MPI_Comm mpi_communicator;

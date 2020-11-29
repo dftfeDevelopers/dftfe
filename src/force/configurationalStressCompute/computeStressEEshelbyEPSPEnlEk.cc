@@ -15,7 +15,6 @@
 //
 // @author Sambit Das
 //
-#ifdef USE_COMPLEX
 //compute configurational stress contribution from all terms except the nuclear self energy
 	template<unsigned int FEOrder,unsigned int FEOrderElectro>
 void forceClass<FEOrder,FEOrderElectro>::computeStressEEshelbyEPSPEnlEk(const MatrixFree<3,double> & matrixFreeData,
@@ -34,6 +33,11 @@ void forceClass<FEOrder,FEOrderElectro>::computeStressEEshelbyEPSPEnlEk(const Ma
     const std::map<dealii::CellId, std::vector<double> > & gradRhoOutValuesElectroLpsp,
 		const std::map<dealii::CellId, std::vector<double> > & pseudoVLocElectro,
 		const std::map<unsigned int,std::map<dealii::CellId, std::vector<double> > > & pseudoVLocAtomsElectro,
+		const std::map<dealii::CellId, std::vector<double> > & rhoCoreValues,
+		const std::map<dealii::CellId, std::vector<double> > & gradRhoCoreValues,
+		const std::map<dealii::CellId, std::vector<double> > & hessianRhoCoreValues,
+		const std::map<unsigned int,std::map<dealii::CellId, std::vector<double> > > & gradRhoCoreAtoms,
+		const std::map<unsigned int,std::map<dealii::CellId, std::vector<double> > > & hessianRhoCoreAtoms,      
 		const vselfBinsManager<FEOrder,FEOrderElectro> & vselfBinsManagerElectro)
 {
 	std::vector<std::vector<distributedCPUVec<double>>> eigenVectors((1+dftParameters::spinPolarized)*dftPtr->d_kPointWeights.size());
@@ -50,13 +54,25 @@ void forceClass<FEOrder,FEOrderElectro>::computeStressEEshelbyEPSPEnlEk(const Ma
 			 std::make_pair(0,dftPtr->d_numEigenValues),
 			 dftPtr->localProc_dof_indicesReal,
 			 dftPtr->localProc_dof_indicesImag,
-			 eigenVectors[kPoint]);
+			 eigenVectors[kPoint],
+       false);
+
+    //FIXME: The underlying call to update_ghost_values
+    //is required because currently localProc_dof_indicesReal
+    //and localProc_dof_indicesImag are only available for
+    //locally owned nodes. Once they are also made available
+    //for ghost nodes- use true for the last argument in
+    //copyFlattenedDealiiVecToSingleCompVec(..) above and supress
+    //underlying call.
+    for(unsigned int i= 0; i < dftPtr->d_numEigenValues; ++i)
+      eigenVectors[kPoint][i].update_ghost_values();      
 #else
 		vectorTools::copyFlattenedDealiiVecToSingleCompVec
 			(dftPtr->d_eigenVectorsFlattened[kPoint],
 			 dftPtr->d_numEigenValues,
 			 std::make_pair(0,dftPtr->d_numEigenValues),
-			 eigenVectors[kPoint]);
+			 eigenVectors[kPoint],
+       true);
 #endif
 	}
 
@@ -64,7 +80,6 @@ void forceClass<FEOrder,FEOrderElectro>::computeStressEEshelbyEPSPEnlEk(const Ma
 	const unsigned int numberImageCharges = dftPtr->d_imageIds.size();
 	const unsigned int totalNumberAtoms = numberGlobalAtoms + numberImageCharges;
 	const bool isPseudopotential = dftParameters::isPseudopotential;
-	const unsigned int numVectorizedArrayElements=VectorizedArray<double>::n_array_elements;
 
 	FEEvaluation<C_DIM,1,C_num1DQuad<C_rhoNodalPolyOrder<FEOrder,FEOrderElectro>()>(),C_DIM>  forceEval(matrixFreeData,
 			d_forceDofHandlerIndex,
@@ -73,13 +88,21 @@ void forceClass<FEOrder,FEOrderElectro>::computeStressEEshelbyEPSPEnlEk(const Ma
 			d_forceDofHandlerIndex,
 			dftPtr->d_nlpspQuadratureId);
 
+#ifdef USE_COMPLEX
 	FEEvaluation<C_DIM,FEOrder,C_num1DQuad<C_rhoNodalPolyOrder<FEOrder,FEOrderElectro>()>(),2> psiEval(matrixFreeData,
 			eigenDofHandlerIndex,
 			0);
 	FEEvaluation<C_DIM,FEOrder,C_num1DQuadNLPSP<FEOrder>()*C_numCopies1DQuadNLPSP(),2> psiEvalNLP(matrixFreeData,
 			eigenDofHandlerIndex,
 		  dftPtr->d_nlpspQuadratureId);
-
+#else
+	FEEvaluation<C_DIM,FEOrder,C_num1DQuad<C_rhoNodalPolyOrder<FEOrder,FEOrderElectro>()>(),1> psiEval(matrixFreeData,
+			eigenDofHandlerIndex,
+			0);
+	FEEvaluation<C_DIM,FEOrder,C_num1DQuadNLPSP<FEOrder>()*C_numCopies1DQuadNLPSP(),1> psiEvalNLP(matrixFreeData,
+			eigenDofHandlerIndex,
+		  dftPtr->d_nlpspQuadratureId);
+#endif  
 
 	QGauss<C_DIM>  quadrature(C_num1DQuad<C_rhoNodalPolyOrder<FEOrder,FEOrderElectro>()>());
 
@@ -121,10 +144,9 @@ void forceClass<FEOrder,FEOrderElectro>::computeStressEEshelbyEPSPEnlEk(const Ma
 
 		}
 
-	VectorizedArray<double> phiExtFactor=make_vectorized_array(0.0);
 	std::vector<std::vector<std::vector<dataTypes::number > > > projectorKetTimesPsiTimesVTimesPartOcc(numKPoints);
-	if (isPseudopotential){
-		phiExtFactor=make_vectorized_array(1.0);
+	if (isPseudopotential)
+  {
 		for (unsigned int ikPoint=0; ikPoint<numKPoints; ++ikPoint)
 			computeNonLocalProjectorKetTimesPsiTimesVFlattened
 				(dftPtr->d_eigenVectorsFlattened[ikPoint],
@@ -132,12 +154,14 @@ void forceClass<FEOrder,FEOrderElectro>::computeStressEEshelbyEPSPEnlEk(const Ma
 				 projectorKetTimesPsiTimesVTimesPartOcc[ikPoint],
 				 ikPoint,
 				 partialOccupancies[ikPoint],
-				 true);
+				 true
+         );
 	}
 
-	std::vector<VectorizedArray<double> > rhoQuads(numQuadPoints,make_vectorized_array(0.0));
+  std::vector<VectorizedArray<double> > rhoXCQuads(numQuadPoints,make_vectorized_array(0.0));  
 	std::vector<Tensor<1,C_DIM,VectorizedArray<double> > > gradRhoQuads(numQuadPoints,zeroTensor3);
 	std::vector<VectorizedArray<double> > excQuads(numQuadPoints,make_vectorized_array(0.0));
+  std::vector<VectorizedArray<double> > vxcRhoOutQuads(numQuadPoints,make_vectorized_array(0.0));
 	std::vector<Tensor<1,C_DIM,VectorizedArray<double> > > derExchCorrEnergyWithGradRhoOutQuads(numQuadPoints,zeroTensor3);
 
 	std::map<unsigned int,std::vector<unsigned int>> macroIdToNonlocalAtomsSetMap;
@@ -152,7 +176,7 @@ void forceClass<FEOrder,FEOrderElectro>::computeStressEEshelbyEPSPEnlEk(const Ma
 
 			std::set<unsigned int> s;
 			std::set_union(mergedSet.begin(), mergedSet.end(),
-					d_cellIdToNonlocalAtomIdsLocalCompactSupportMap[subCellId].begin(), d_cellIdToNonlocalAtomIdsLocalCompactSupportMap[subCellId].end(),
+					dftPtr->d_cellIdToNonlocalAtomIdsLocalCompactSupportMap[subCellId].begin(), dftPtr->d_cellIdToNonlocalAtomIdsLocalCompactSupportMap[subCellId].end(),
 					std::inserter(s, s.begin()));
 			mergedSet=s;
 		}
@@ -171,32 +195,36 @@ void forceClass<FEOrder,FEOrderElectro>::computeStressEEshelbyEPSPEnlEk(const Ma
 			psiEvalNLP.reinit(cell);
 		}
 
-		std::fill(rhoQuads.begin(),rhoQuads.end(),make_vectorized_array(0.0));
+    std::fill(rhoXCQuads.begin(),rhoXCQuads.end(),make_vectorized_array(0.0));
 		std::fill(gradRhoQuads.begin(),gradRhoQuads.end(),zeroTensor3);
 		std::fill(excQuads.begin(),excQuads.end(),make_vectorized_array(0.0));
+	  std::fill(vxcRhoOutQuads.begin(),vxcRhoOutQuads.end(),make_vectorized_array(0.0));    
 		std::fill(derExchCorrEnergyWithGradRhoOutQuads.begin(),derExchCorrEnergyWithGradRhoOutQuads.end(),zeroTensor3);
 
 		//allocate storage for vector of quadPoints, nonlocal atom id, pseudo wave, k point
 		//FIXME: flatten nonlocal atomid id and pseudo wave and k point
-		std::vector<std::vector<std::vector<std::vector<Tensor<1,2,VectorizedArray<double> > > > > >ZetaDeltaVQuads;
+#ifdef USE_COMPLEX
 		std::vector<std::vector<std::vector<std::vector<Tensor<1,2, Tensor<1,C_DIM,VectorizedArray<double> > > > > > >zetalmDeltaVlProductDistImageAtomsQuads;
+#else   
+		std::vector<std::vector<std::vector<Tensor<1,C_DIM,VectorizedArray<double> > > > > zetalmDeltaVlProductDistImageAtomsQuads;
+#endif    
 		if(isPseudopotential)
 		{
-			ZetaDeltaVQuads.resize(numQuadPointsNLP);
 			zetalmDeltaVlProductDistImageAtomsQuads.resize(numQuadPointsNLP);
 			for (unsigned int q=0; q<numQuadPointsNLP; ++q)
 			{
-				ZetaDeltaVQuads[q].resize(d_nonLocalPSP_ZetalmDeltaVl.size());
-				zetalmDeltaVlProductDistImageAtomsQuads[q].resize(d_nonLocalPSP_zetalmDeltaVlProductDistImageAtoms_KPoint.size());
-				for (unsigned int i=0; i < d_nonLocalPSP_zetalmDeltaVlProductDistImageAtoms_KPoint.size(); ++i)
+				zetalmDeltaVlProductDistImageAtomsQuads[q].resize(dftPtr->d_nonLocalPSP_zetalmDeltaVlProductDistImageAtoms_KPoint.size());
+				for (unsigned int i=0; i < dftPtr->d_nonLocalPSP_zetalmDeltaVlProductDistImageAtoms_KPoint.size(); ++i)
 				{
-					const int numberPseudoWaveFunctions = d_nonLocalPSP_zetalmDeltaVlProductDistImageAtoms_KPoint[i].size();
-					ZetaDeltaVQuads[q][i].resize(numberPseudoWaveFunctions);
+					const int numberPseudoWaveFunctions = dftPtr->d_nonLocalPSP_zetalmDeltaVlProductDistImageAtoms_KPoint[i].size();
 					zetalmDeltaVlProductDistImageAtomsQuads[q][i].resize(numberPseudoWaveFunctions);
 					for (unsigned int iPseudoWave=0; iPseudoWave < numberPseudoWaveFunctions; ++iPseudoWave)
 					{
-						ZetaDeltaVQuads[q][i][iPseudoWave].resize(numKPoints,zeroTensor1);
+#ifdef USE_COMPLEX            
 						zetalmDeltaVlProductDistImageAtomsQuads[q][i][iPseudoWave].resize(numKPoints,zeroTensor2);
+#else
+            zetalmDeltaVlProductDistImageAtomsQuads[q][i][iPseudoWave]=zeroTensor3;
+#endif            
 					}
 				}
 			}
@@ -208,59 +236,98 @@ void forceClass<FEOrder,FEOrderElectro>::computeStressEEshelbyEPSPEnlEk(const Ma
 		std::vector<double> corrValRhoOut(numQuadPoints);
 		std::vector<double> exchPotValRhoOut(numQuadPoints);
 		std::vector<double> corrPotValRhoOut(numQuadPoints);
+		std::vector<double> rhoOutQuadsXC(numQuadPoints);
+
 		//
 		//For GGA
 		std::vector<double> sigmaValRhoOut(numQuadPoints);
 		std::vector<double> derExchEnergyWithDensityValRhoOut(numQuadPoints), derCorrEnergyWithDensityValRhoOut(numQuadPoints), derExchEnergyWithSigmaRhoOut(numQuadPoints),derCorrEnergyWithSigmaRhoOut(numQuadPoints);
-		std::vector<Tensor<1,C_DIM,double > > gradRhoOut(numQuadPoints);
+    std::vector<Tensor<1,C_DIM,double > > gradRhoOutQuadsXC(numQuadPoints);
+
 		//
 		for (unsigned int iSubCell=0; iSubCell<numSubCells; ++iSubCell)
 		{
 			subCellPtr= matrixFreeData.get_cell_iterator(cell,iSubCell);
 			dealii::CellId subCellId=subCellPtr->id();
+
+      const std::vector<double> & temp1=rhoOutValues.find(subCellId)->second;
+      for (unsigned int q=0; q<numQuadPoints; ++q)
+      {
+        rhoOutQuadsXC[q]=temp1[q];
+        rhoXCQuads[q][iSubCell]=temp1[q];
+      }
+
+      if(dftParameters::nonLinearCoreCorrection)
+      {
+        const std::vector<double> & temp2=rhoCoreValues.find(subCellId)->second;
+        for (unsigned int q=0; q<numQuadPoints; ++q)
+        {
+          rhoOutQuadsXC[q]+=temp2[q];
+          rhoXCQuads[q][iSubCell]+=temp2[q];
+        }
+      }
+
+      if(dftParameters::xc_id == 4)
+      {
+        const std::vector<double> & temp3=gradRhoOutValues.find(subCellId)->second;          
+        for (unsigned int q = 0; q < numQuadPoints; ++q)
+          for (unsigned int idim=0; idim<C_DIM; idim++)
+          {
+            gradRhoOutQuadsXC[q][idim] = temp3[3*q + idim];
+            gradRhoQuads[q][idim][iSubCell]=temp3[3*q+idim];     
+          }
+
+        if(dftParameters::nonLinearCoreCorrection)
+        {
+          const std::vector<double> & temp4=gradRhoCoreValues.find(subCellId)->second;
+          for (unsigned int q = 0; q < numQuadPoints; ++q)
+          {
+            gradRhoOutQuadsXC[q][0] += temp4[3*q + 0];
+            gradRhoOutQuadsXC[q][1] += temp4[3*q + 1];
+            gradRhoOutQuadsXC[q][2] += temp4[3*q + 2];
+          }        
+        }          
+      }
+
 			if(dftParameters::xc_id == 4)
 			{
 				for (unsigned int q = 0; q < numQuadPoints; ++q)
-				{
-					gradRhoOut[q][0] = ((*dftPtr->gradRhoOutValues)[subCellId][3*q + 0]);
-					gradRhoOut[q][1] = ((*dftPtr->gradRhoOutValues)[subCellId][3*q + 1]);
-					gradRhoOut[q][2] = ((*dftPtr->gradRhoOutValues)[subCellId][3*q + 2]);
-					sigmaValRhoOut[q] = gradRhoOut[q].norm_square();
+					sigmaValRhoOut[q] = gradRhoOutQuadsXC[q].norm_square();
 
-				}
-				xc_gga_exc_vxc(&(dftPtr->funcX),numQuadPoints,&((*dftPtr->rhoOutValues)[subCellId][0]),&sigmaValRhoOut[0],&exchValRhoOut[0],&derExchEnergyWithDensityValRhoOut[0],&derExchEnergyWithSigmaRhoOut[0]);
-				xc_gga_exc_vxc(&(dftPtr->funcC),numQuadPoints,&((*dftPtr->rhoOutValues)[subCellId][0]),&sigmaValRhoOut[0],&corrValRhoOut[0],&derCorrEnergyWithDensityValRhoOut[0],&derCorrEnergyWithSigmaRhoOut[0]);
+				xc_gga_exc_vxc(&(dftPtr->funcX),numQuadPoints,&(rhoOutQuadsXC[0]),&sigmaValRhoOut[0],&exchValRhoOut[0],&derExchEnergyWithDensityValRhoOut[0],&derExchEnergyWithSigmaRhoOut[0]);
+				xc_gga_exc_vxc(&(dftPtr->funcC),numQuadPoints,&(rhoOutQuadsXC[0]),&sigmaValRhoOut[0],&corrValRhoOut[0],&derCorrEnergyWithDensityValRhoOut[0],&derCorrEnergyWithSigmaRhoOut[0]);
 				for (unsigned int q=0; q<numQuadPoints; ++q)
 				{
 					excQuads[q][iSubCell]=exchValRhoOut[q]+corrValRhoOut[q];
-					const double temp = derExchEnergyWithSigmaRhoOut[q]+derCorrEnergyWithSigmaRhoOut[q];
+          vxcRhoOutQuads[q][iSubCell]= derExchEnergyWithDensityValRhoOut[q]+derCorrEnergyWithDensityValRhoOut[q];
 					for (unsigned int idim=0; idim<C_DIM; idim++)
 					{
-						derExchCorrEnergyWithGradRhoOutQuads[q][idim][iSubCell]=2.0*(derExchEnergyWithSigmaRhoOut[q]+derCorrEnergyWithSigmaRhoOut[q])*gradRhoOut[q][idim];
+						derExchCorrEnergyWithGradRhoOutQuads[q][idim][iSubCell]=2.0*(derExchEnergyWithSigmaRhoOut[q]+derCorrEnergyWithSigmaRhoOut[q])*gradRhoOutQuadsXC[q][idim];
 					}
 				}
 
 			}
 			else
 			{
-				xc_lda_exc(&(dftPtr->funcX),numQuadPoints,&((*dftPtr->rhoOutValues)[subCellId][0]),&exchValRhoOut[0]);
-				xc_lda_exc(&(dftPtr->funcC),numQuadPoints,&((*dftPtr->rhoOutValues)[subCellId][0]),&corrValRhoOut[0]);
-				xc_lda_vxc(&(dftPtr->funcX),numQuadPoints,&((*dftPtr->rhoOutValues)[subCellId][0]),&exchPotValRhoOut[0]);
-				xc_lda_vxc(&(dftPtr->funcC),numQuadPoints,&((*dftPtr->rhoOutValues)[subCellId][0]),&corrPotValRhoOut[0]);
+				xc_lda_exc(&(dftPtr->funcX),numQuadPoints,&(rhoOutQuadsXC[0]),&exchValRhoOut[0]);
+				xc_lda_exc(&(dftPtr->funcC),numQuadPoints,&(rhoOutQuadsXC[0]),&corrValRhoOut[0]);
+				xc_lda_vxc(&(dftPtr->funcX),numQuadPoints,&(rhoOutQuadsXC[0]),&exchPotValRhoOut[0]);
+				xc_lda_vxc(&(dftPtr->funcC),numQuadPoints,&(rhoOutQuadsXC[0]),&corrPotValRhoOut[0]);
 				for (unsigned int q=0; q<numQuadPoints; ++q)
 				{
 					excQuads[q][iSubCell]=exchValRhoOut[q]+corrValRhoOut[q];
+					vxcRhoOutQuads[q][iSubCell]= exchPotValRhoOut[q]+corrPotValRhoOut[q];          
 				}
-			}
-
-			for (unsigned int q=0; q<numQuadPoints; ++q)
-			{
-				rhoQuads[q][iSubCell]=(*dftPtr->rhoOutValues)[subCellId][q];
 			}
 		}
 
+#ifdef USE_COMPLEX  
 		std::vector<Tensor<1,2,VectorizedArray<double> > > psiQuads(numQuadPoints*numEigenVectors*numKPoints,zeroTensor1);
 		std::vector<Tensor<1,2,Tensor<1,C_DIM,VectorizedArray<double> > > > gradPsiQuads(numQuadPoints*numEigenVectors*numKPoints,zeroTensor2);
+#else
+		std::vector<VectorizedArray<double> > psiQuads(numQuadPoints*numEigenVectors*numKPoints,make_vectorized_array(0.0));
+		std::vector<Tensor<1,C_DIM,VectorizedArray<double> > > gradPsiQuads(numQuadPoints*numEigenVectors*numKPoints,zeroTensor3);
+#endif    
 
 		for (unsigned int ikPoint=0; ikPoint<numKPoints; ++ikPoint)
 			for (unsigned int iEigenVec=0; iEigenVec<numEigenVectors; ++iEigenVec)
@@ -273,30 +340,26 @@ void forceClass<FEOrder,FEOrderElectro>::computeStressEEshelbyEPSPEnlEk(const Ma
 					const unsigned int id=q*numEigenVectors*numKPoints+numEigenVectors*ikPoint+iEigenVec;
 					psiQuads[id]=psiEval.get_value(q);
 					gradPsiQuads[id]=psiEval.get_gradient(q);
-
-					const double partOcc =dftUtils::getPartialOccupancy(dftPtr->eigenValues[ikPoint][iEigenVec],
-							dftPtr->fermiEnergy,
-							C_kb,
-							dftParameters::TVal);
-					const VectorizedArray<double> factor=make_vectorized_array(2.0*dftPtr->d_kPointWeights[ikPoint]*partOcc);
-					gradRhoQuads[q]+=factor*internalforce::computeGradRhoContribution(psiQuads[id],gradPsiQuads[id]);
-
 				}//quad point loop
 			} //eigenvector loop
 
-		//accumulate gradRho quad point contribution from all pools
-		for (unsigned int iSubCell=0; iSubCell<numSubCells; ++iSubCell)
-			for (unsigned int q=0; q<numQuadPoints; ++q)
-				for (unsigned int idim=0; idim<C_DIM; idim++)
-					gradRhoQuads[q][idim][iSubCell]=
-						Utilities::MPI::sum(gradRhoQuads[q][idim][iSubCell],dftPtr->interpoolcomm);
 
+#ifdef USE_COMPLEX  
 		std::vector<Tensor<1,2,VectorizedArray<double> > > psiQuadsNLP;
 		std::vector<Tensor<1,2,Tensor<1,C_DIM,VectorizedArray<double> > > > gradPsiQuadsNLP;    
+#else
+		std::vector<VectorizedArray<double> > psiQuadsNLP;
+		std::vector<Tensor<1,C_DIM,VectorizedArray<double> > > gradPsiQuadsNLP;       
+#endif   
 		if (isPseudopotential)
 		{
+#ifdef USE_COMPLEX        
 			psiQuadsNLP.resize(numQuadPointsNLP*numEigenVectors*numKPoints,zeroTensor1);
-      gradPsiQuadsNLP.resize(numQuadPointsNLP*numEigenVectors*numKPoints,zeroTensor2);   
+      gradPsiQuadsNLP.resize(numQuadPointsNLP*numEigenVectors*numKPoints,zeroTensor2);  
+#else
+			psiQuadsNLP.resize(numQuadPointsNLP*numEigenVectors*numKPoints,make_vectorized_array(0.0));
+      gradPsiQuadsNLP.resize(numQuadPointsNLP*numEigenVectors*numKPoints,zeroTensor3);  
+#endif      
 			for (unsigned int ikPoint=0; ikPoint<numKPoints; ++ikPoint)
 				for (unsigned int iEigenVec=0; iEigenVec<numEigenVectors; ++iEigenVec)
 				{
@@ -321,21 +384,23 @@ void forceClass<FEOrder,FEOrderElectro>::computeStressEEshelbyEPSPEnlEk(const Ma
 
 				for (unsigned int q=0; q<numQuadPointsNLP; ++q)
 				{
-					for (unsigned int i=0; i < d_nonLocalPSP_zetalmDeltaVlProductDistImageAtoms_KPoint.size(); ++i)
+					for (unsigned int i=0; i < dftPtr->d_nonLocalPSP_zetalmDeltaVlProductDistImageAtoms_KPoint.size(); ++i)
 					{
-						const int numberPseudoWaveFunctions = d_nonLocalPSP_zetalmDeltaVlProductDistImageAtoms_KPoint[i].size();
+						const int numberPseudoWaveFunctions = dftPtr->d_nonLocalPSP_zetalmDeltaVlProductDistImageAtoms_KPoint[i].size();
 						for (unsigned int iPseudoWave=0; iPseudoWave < numberPseudoWaveFunctions; ++iPseudoWave)
 						{
-							if (d_nonLocalPSP_zetalmDeltaVlProductDistImageAtoms_KPoint[i][iPseudoWave].find(subCellId)!=d_nonLocalPSP_zetalmDeltaVlProductDistImageAtoms_KPoint[i][iPseudoWave].end())
+							if (dftPtr->d_nonLocalPSP_zetalmDeltaVlProductDistImageAtoms_KPoint[i][iPseudoWave].find(subCellId)!=dftPtr->d_nonLocalPSP_zetalmDeltaVlProductDistImageAtoms_KPoint[i][iPseudoWave].end())
 							{
 								for (unsigned int ikPoint=0; ikPoint<numKPoints; ++ikPoint)
 								{
-									ZetaDeltaVQuads[q][i][iPseudoWave][ikPoint][0][iSubCell]=d_nonLocalPSP_ZetalmDeltaVl[i][iPseudoWave][subCellId][ikPoint*numQuadPointsNLP*2+q*2+0];
-									ZetaDeltaVQuads[q][i][iPseudoWave][ikPoint][1][iSubCell]=d_nonLocalPSP_ZetalmDeltaVl[i][iPseudoWave][subCellId][ikPoint*numQuadPointsNLP*2+q*2+1];
 									for (unsigned int idim=0; idim<C_DIM; idim++)
 									{
-											zetalmDeltaVlProductDistImageAtomsQuads[q][i][iPseudoWave][ikPoint][0][idim][iSubCell]=d_nonLocalPSP_zetalmDeltaVlProductDistImageAtoms_KPoint[i][iPseudoWave][subCellId][ikPoint*numQuadPointsNLP*C_DIM*2+q*C_DIM*2+idim*2+0];
-											zetalmDeltaVlProductDistImageAtomsQuads[q][i][iPseudoWave][ikPoint][1][idim][iSubCell]=d_nonLocalPSP_zetalmDeltaVlProductDistImageAtoms_KPoint[i][iPseudoWave][subCellId][ikPoint*numQuadPointsNLP*C_DIM*2+q*C_DIM*2+idim*2+1];
+#ifdef USE_COMPLEX                      
+											zetalmDeltaVlProductDistImageAtomsQuads[q][i][iPseudoWave][ikPoint][0][idim][iSubCell]=dftPtr->d_nonLocalPSP_zetalmDeltaVlProductDistImageAtoms_KPoint[i][iPseudoWave][subCellId][ikPoint*numQuadPointsNLP*C_DIM*2+q*C_DIM*2+idim*2+0];
+											zetalmDeltaVlProductDistImageAtomsQuads[q][i][iPseudoWave][ikPoint][1][idim][iSubCell]=dftPtr->d_nonLocalPSP_zetalmDeltaVlProductDistImageAtoms_KPoint[i][iPseudoWave][subCellId][ikPoint*numQuadPointsNLP*C_DIM*2+q*C_DIM*2+idim*2+1];
+#else
+											zetalmDeltaVlProductDistImageAtomsQuads[q][i][iPseudoWave][idim][iSubCell]=dftPtr->d_nonLocalPSP_zetalmDeltaVlProductDistImageAtoms_KPoint[i][iPseudoWave][subCellId][ikPoint*numQuadPointsNLP*C_DIM+q*C_DIM+idim];
+#endif                      
 									}
 								}
 							}//non-trivial cellId check
@@ -355,12 +420,12 @@ void forceClass<FEOrder,FEOrderElectro>::computeStressEEshelbyEPSPEnlEk(const Ma
 			Point< 3, VectorizedArray<double> > quadPoint_q;
 
 			Tensor<2,C_DIM,VectorizedArray<double> > E=eshelbyTensor::getELocXcEshelbyTensor
-				(rhoQuads[q],
+				(rhoXCQuads[q],
 				 gradRhoQuads[q],
 				 excQuads[q],
 				 derExchCorrEnergyWithGradRhoOutQuads[q]);
 
-
+#ifdef USE_COMPLEX
 			Tensor<2,C_DIM,VectorizedArray<double> > EKPoints=eshelbyTensor::getELocWfcEshelbyTensorPeriodicKPoints
 				(psiQuads.begin()+q*numEigenVectors*numKPoints,
 				 gradPsiQuads.begin()+q*numEigenVectors*numKPoints,
@@ -378,15 +443,24 @@ void forceClass<FEOrder,FEOrderElectro>::computeStressEEshelbyEPSPEnlEk(const Ma
 				 dftPtr->eigenValues,
 				 dftPtr->fermiEnergy,
 				 dftParameters::TVal);
+#else        
+			Tensor<2,C_DIM,VectorizedArray<double> > EKPoints=eshelbyTensor::getELocWfcEshelbyTensorNonPeriodic
+				(psiQuads.begin()+q*numEigenVectors*numKPoints,
+				 gradPsiQuads.begin()+q*numEigenVectors*numKPoints,
+				 dftPtr->eigenValues[0],
+				 partialOccupancies[0]);
+#endif
 
 			EQuadSum+=E*forceEval.JxW(q);
 			EKPointsQuadSum+=EKPoints*forceEval.JxW(q);
 		}//quad point loop
 
 		if (isPseudopotential)
+    {
 			for (unsigned int q=0; q<numQuadPointsNLP; ++q)
 			{
-				Tensor<2,C_DIM,VectorizedArray<double> > EKPoints
+#ifdef USE_COMPLEX        
+				Tensor<2,C_DIM,VectorizedArray<double> > Enl
 					=eshelbyTensor::getEnlStress(zetalmDeltaVlProductDistImageAtomsQuads[q],
 						projectorKetTimesPsiTimesVTimesPartOcc,
 						psiQuadsNLP.begin()+q*numEigenVectors*numKPoints,
@@ -395,11 +469,29 @@ void forceClass<FEOrder,FEOrderElectro>::computeStressEEshelbyEPSPEnlEk(const Ma
             dftPtr->d_kPointCoordinates,            
 						macroIdToNonlocalAtomsSetMap[cell],
 						numEigenVectors);
+#else
+				Tensor<2,C_DIM,VectorizedArray<double> > Enl
+					=eshelbyTensor::getEnlStress(zetalmDeltaVlProductDistImageAtomsQuads[q],
+						projectorKetTimesPsiTimesVTimesPartOcc,
+						psiQuadsNLP.begin()+q*numEigenVectors*numKPoints,
+						gradPsiQuadsNLP.begin()+q*numEigenVectors*numKPoints,            
+						macroIdToNonlocalAtomsSetMap[cell],
+						numEigenVectors);
+#endif          
 
 
-				EKPointsQuadSum+=EKPoints*forceEvalNLP.JxW(q);
-
+				EKPointsQuadSum+=Enl*forceEvalNLP.JxW(q);
 			}
+
+      if (dftParameters::nonLinearCoreCorrection)
+        addENonlinearCoreCorrectionStressContribution(forceEval,
+            matrixFreeData,
+            cell,
+            vxcRhoOutQuads,
+            derExchCorrEnergyWithGradRhoOutQuads,
+            gradRhoCoreAtoms,
+            hessianRhoCoreAtoms);
+    }
 
 		for (unsigned int iSubCell=0; iSubCell<numSubCells; ++iSubCell)
 			for (unsigned int idim=0; idim<C_DIM; ++idim)
@@ -616,4 +708,3 @@ template<unsigned int FEOrder,unsigned int FEOrderElectro>
 
 	}//cell loop
 }
-#endif

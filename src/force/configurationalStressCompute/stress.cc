@@ -16,7 +16,6 @@
 // @author Sambit Das(2018)
 //
 
-#ifdef USE_COMPLEX
 template<unsigned int FEOrder,unsigned int FEOrderElectro>
 	void forceClass<FEOrder,FEOrderElectro>::computeStress
 (const MatrixFree<3,double> & matrixFreeData,
@@ -34,7 +33,12 @@ template<unsigned int FEOrder,unsigned int FEOrderElectro>
   const std::map<dealii::CellId, std::vector<double> > & gradRhoOutValuesElectro,
   const std::map<dealii::CellId, std::vector<double> > & gradRhoOutValuesElectroLpsp,
   const std::map<dealii::CellId, std::vector<double> > & pseudoVLocElectro,
- const std::map<unsigned int,std::map<dealii::CellId, std::vector<double> > > & pseudoVLocAtomsElectro,
+  const std::map<unsigned int,std::map<dealii::CellId, std::vector<double> > > & pseudoVLocAtomsElectro,
+	const std::map<dealii::CellId, std::vector<double> > & rhoCoreValues,
+	const std::map<dealii::CellId, std::vector<double> > & gradRhoCoreValues,
+	const std::map<dealii::CellId, std::vector<double> > & hessianRhoCoreValues,   
+	const std::map<unsigned int,std::map<dealii::CellId, std::vector<double> > > & gradRhoCoreAtoms,
+	const std::map<unsigned int,std::map<dealii::CellId, std::vector<double> > > & hessianRhoCoreAtoms,    
  const dealii::AffineConstraints<double>  & hangingPlusPBCConstraintsElectro,
  const vselfBinsManager<FEOrder,FEOrderElectro> & vselfBinsManagerElectro)
 {
@@ -76,6 +80,11 @@ template<unsigned int FEOrder,unsigned int FEOrderElectro>
         gradRhoOutValuesElectroLpsp,
 				pseudoVLocElectro,
 				pseudoVLocAtomsElectro,
+        rhoCoreValues,
+	      gradRhoCoreValues,
+	      hessianRhoCoreValues,  
+	      gradRhoCoreAtoms,
+	      hessianRhoCoreAtoms,            
 				vselfBinsManagerElectro);
 	else
 		computeStressEEshelbyEPSPEnlEk(matrixFreeData,
@@ -94,6 +103,11 @@ template<unsigned int FEOrder,unsigned int FEOrderElectro>
         gradRhoOutValuesElectroLpsp,
         pseudoVLocElectro,
 				pseudoVLocAtomsElectro,
+        rhoCoreValues,
+	      gradRhoCoreValues,
+	      hessianRhoCoreValues,   
+	      gradRhoCoreAtoms,
+	      hessianRhoCoreAtoms,        
 				vselfBinsManagerElectro);
 
 	//configurational stress contribution from nuclear self energy. This is handled separately as it involves
@@ -145,5 +159,3 @@ void forceClass<FEOrder,FEOrderElectro>::printStress()
 	}
 
 }
-
-#endif

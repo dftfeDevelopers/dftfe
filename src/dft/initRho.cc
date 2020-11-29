@@ -169,8 +169,6 @@ void dftClass<FEOrder,FEOrderElectro>::initRho()
 					double distanceToAtom = nodalCoor.distance(atom);
 					if(distanceToAtom <= outerMostPointDen[atomLocations[iAtom][0]])
 						rhoNodalValue += alglib::spline1dcalc(denSpline[atomLocations[iAtom][0]], distanceToAtom);
-					else
-						rhoNodalValue += 0.0;
 				}
 
 				//loop over image charges and do as above
@@ -183,8 +181,6 @@ void dftClass<FEOrder,FEOrderElectro>::initRho()
 					int masterAtomId = d_imageIdsTrunc[iImageCharge];
 					if(distanceToAtom <= outerMostPointDen[atomLocations[masterAtomId][0]])
 						rhoNodalValue += alglib::spline1dcalc(denSpline[atomLocations[masterAtomId][0]], distanceToAtom);
-					else
-						rhoNodalValue += 0.0;
 				}
 				d_rhoInNodalValues.local_element(dof) = std::abs(rhoNodalValue);
 			}
@@ -267,7 +263,7 @@ void dftClass<FEOrder,FEOrderElectro>::initRho()
 		  }*/
 
 	}
-	else
+	//else
 	{
 		//loop over elements
 		typename DoFHandler<3>::active_cell_iterator cell = dofHandler.begin_active(), endc = dofHandler.end();
@@ -341,13 +337,13 @@ void dftClass<FEOrder,FEOrderElectro>::initRho()
 				{
 					fe_values.reinit(cell);
 
-					(*gradRhoInValues)[cell->id()]=std::vector<double>(3*n_q_points);
+					(*gradRhoInValues)[cell->id()]=std::vector<double>(3*n_q_points,0.0);
 					double *gradRhoInValuesPtr = &((*gradRhoInValues)[cell->id()][0]);
 
 					double *gradRhoInValuesSpinPolarizedPtr;
 					if(dftParameters::spinPolarized==1)
 					{
-						(*gradRhoInValuesSpinPolarized)[cell->id()]=std::vector<double>(6*n_q_points);
+						(*gradRhoInValuesSpinPolarized)[cell->id()]=std::vector<double>(6*n_q_points,0.0);
 						gradRhoInValuesSpinPolarizedPtr = &((*gradRhoInValuesSpinPolarized)[cell->id()][0]);
 					}
 					for (unsigned int q = 0; q < n_q_points; ++q)
@@ -361,6 +357,10 @@ void dftClass<FEOrder,FEOrderElectro>::initRho()
 						{
 							Point<3> atom(atomLocations[n][2],atomLocations[n][3],atomLocations[n][4]);
 							double distanceToAtom = quadPoint.distance(atom);
+
+              if (dftParameters::floatingNuclearCharges && distanceToAtom<1.0e-2)
+                continue;
+
 							if(distanceToAtom <= outerMostPointDen[atomLocations[n][0]])
 							{
 								//rhoValueAtQuadPt+=alglib::spline1dcalc(denSpline[atomLocations[n][0]], distanceToAtom);
@@ -383,6 +383,10 @@ void dftClass<FEOrder,FEOrderElectro>::initRho()
 									d_imagePositionsTrunc[iImageCharge][1],
 									d_imagePositionsTrunc[iImageCharge][2]);
 							double distanceToAtom = quadPoint.distance(imageAtom);
+
+              if (dftParameters::floatingNuclearCharges && distanceToAtom<1.0e-2)
+                continue;
+
 							int masterAtomId = d_imageIdsTrunc[iImageCharge];
 							if(distanceToAtom <= outerMostPointDen[atomLocations[masterAtomId][0]])//outerMostPointPseudo[atomLocations[masterAtomId][0]])
 							{

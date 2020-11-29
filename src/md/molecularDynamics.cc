@@ -211,7 +211,7 @@ namespace dftfe {
 
 			pcout<<"---------------Starting Molecular dynamics simulation---------------------"<<std::endl;
 			const unsigned int numberGlobalCharges=dftPtr->atomLocations.size();
-			//https://lammps.sandia.gov/doc/units.html
+			//https://lammps.sandia.gov/doc/units.html (We are using metal units)
 			const double initialTemperature = dftParameters::startingTempBOMDNVE;//K
 			const unsigned int restartFlag =((dftParameters::chkType==1 || dftParameters::chkType==3) && dftParameters::restartMdFromChk)?1:0; //1; //0;//1;
 			bool xlbomdHistoryRestart=(dftParameters::chkType==3 && dftParameters::restartMdFromChk)?true:false;
@@ -219,7 +219,7 @@ namespace dftfe {
 
 			double massAtomAl = 26.982;//mass proton is chosen 1 **49611.513**
 			double massAtomMg= 24.305;
-			const double timeStep = dftParameters::timeStepBOMD/10.0; //0.5 femtoseconds
+			const double timeStep = dftParameters::timeStepBOMD*0.09822694541304546435; //Conversion factor from femteseconds: 0.09822694541304546435 based on NIST constants 
 			const unsigned int numberTimeSteps = dftParameters::numberStepsBOMD;
 
 			//https://physics.nist.gov/cuu/Constants/Table/allascii.txt
@@ -231,23 +231,27 @@ namespace dftfe {
 			const double AngTobohr = 1.0/bohrToAng;
 
 			std::vector<double> massAtoms(numberGlobalCharges);
+      //
+      //read atomic masses
+      //
+      std::vector<std::vector<double>> atomTypesMasses;
+      dftUtils::readFile(2, atomTypesMasses, dftParameters::atomicMassesFile);   
+			AssertThrow(dftPtr->atomTypes.size()==atomTypesMasses.size(),ExcMessage("DFT-FE Error: check ATOM MASSES FILE"));
+
 			for(int iCharge = 0; iCharge < numberGlobalCharges; ++iCharge)
 			{
-				const double charge= dftPtr->atomLocations[iCharge][0];
-				if (std::fabs(charge-12.0)<1e-8)
-					massAtoms[iCharge]=massAtomMg;
-				else if(std::fabs(charge-13.0)<1e-8)
-					massAtoms[iCharge]=massAtomAl;
-				else if(std::fabs(charge-49.0)<1e-8)
-					massAtoms[iCharge]=114.82;
-				else if(std::fabs(charge-15.0)<1e-8)
-					massAtoms[iCharge]=30.97376;
-				else if(std::fabs(charge-8.0)<1e-8)
-					massAtoms[iCharge]=15.9994;
-				else if(std::fabs(charge-1.0)<1e-8)
-					massAtoms[iCharge]=1.00797;
-				else
-					AssertThrow(false,ExcMessage("Currently md capability is hardcoded for systems with Al, Mg, In, P, O, and H atom types only."));
+        bool isFound=false;
+        for(int jatomtype = 0; jatomtype < atomTypesMasses.size(); ++jatomtype)
+        {
+          const double charge= dftPtr->atomLocations[iCharge][0];
+          if (std::fabs(charge-atomTypesMasses[jatomtype][0])<1e-8)
+          {
+            massAtoms[iCharge]=atomTypesMasses[jatomtype][1];
+            isFound=true;
+          }
+        }
+
+				AssertThrow(isFound,ExcMessage("DFT-FE Error: check ATOM MASSES FILE"));
 			}
 
 			std::vector<dealii::Tensor<1,3,double> > displacements(numberGlobalCharges);
@@ -331,9 +335,7 @@ namespace dftfe {
 			boost::variate_generator<boost::mt19937&,boost::normal_distribution<> > generator(rng,gaussianDist);
 			double averageKineticEnergy;
 			double temperatureFromVelocities;
-			double accumTotEnergyCorrection=0.0;
 			double totalEnergyStartingTimeStep=0.0;
-			bool lastInterruptedStepPreviousRunAutoMesh=false;
 
 			dealii::IndexSet   locally_relevant_dofs_;
 			dealii::DoFTools::extract_locally_relevant_dofs(dftPtr->d_dofHandlerRhoNodal, locally_relevant_dofs_);
@@ -518,33 +520,20 @@ kohnShamDFTEigenOperatorCUDA
 
 				std::vector<std::vector<double> > fileTemperatueData;
 				std::vector<std::vector<double> > timeIndexData;
-				std::vector<std::vector<double> > accumTotEnergyCorrectionData;
-				std::vector<std::vector<double> > autoMeshData;
 
 				dftUtils::readFile(1,
 						fileTemperatueData,
 						"temperature.chk");
 
 				dftUtils::readFile(1,
-						accumTotEnergyCorrectionData,
-						"accumEnergyCorrection.chk");
-
-				dftUtils::readFile(1,
 						timeIndexData,
 						"time.chk");
 
-				dftUtils::readFile(1,
-						autoMeshData,
-						"autoMeshMd.chk");
 
 				temperatureFromVelocities=fileTemperatueData[0][0];
 
 
 				startingTimeStep=timeIndexData[0][0];
-
-				accumTotEnergyCorrection=accumTotEnergyCorrectionData[0][0];
-
-				lastInterruptedStepPreviousRunAutoMesh=(autoMeshData[0][0]>1e-6)?true:false;
 
 
 				std::vector<std::vector<double> > totalEnergyData;
@@ -556,10 +545,6 @@ kohnShamDFTEigenOperatorCUDA
 
 				pcout<<" Ending time step read from file: "<<startingTimeStep<<std::endl;
 				pcout<<" Temperature read from file: "<<temperatureFromVelocities<<std::endl;
-				pcout<<" Accumulated total energy correction due to auto remeshing read from file: "<<accumTotEnergyCorrection<<std::endl;
-
-				if (lastInterruptedStepPreviousRunAutoMesh)
-					xlbomdHistoryRestart=false;
 
 				if (xlbomdHistoryRestart)
 				{
@@ -676,7 +661,6 @@ kohnShamDFTEigenOperatorCUDA
 			}
 
 			bool isFirstXLBOMDStep=true;
-			unsigned int autoMeshTimeIndex=(restartFlag==1)?(startingTimeStep+1):startingTimeStep;
 			//
 			//start the MD simulation
 			//
@@ -774,17 +758,12 @@ kohnShamDFTEigenOperatorCUDA
 					pcout<<"Time taken for updateAtomPositionsAndMoveMesh: "<<update_time<<std::endl;
 
 
-				std::vector<std::vector<double> > autoMeshData(1,std::vector<double>(1,0.0));
-
-				autoMeshData[0][0]=dftPtr->d_autoMesh==1?1.0:0.0;
-				dftUtils::writeDataIntoFile(autoMeshData,
-						"autoMeshMd.chk");
 
 				double atomicrho_time;
 				MPI_Barrier(MPI_COMM_WORLD);
 				atomicrho_time = MPI_Wtime();
 
-				if (dftPtr->d_autoMesh==1 || (timeIndex == (startingTimeStep+1) && restartFlag==1))
+				if ((timeIndex == (startingTimeStep+1) && restartFlag==1))
 				{
 					dftPtr->d_matrixFreeDataPRefined.initialize_dof_vector(atomicRho,dftPtr->d_densityDofHandlerIndexElectro);
 					/*
@@ -812,7 +791,7 @@ false);
 				double shadowPotentialInternalEnergy;
 				double entropicEnergyShadowPotential;
 
-				if (dftPtr->d_autoMesh==1 || (timeIndex == (startingTimeStep+1) && restartFlag==1))
+				if ((timeIndex == (startingTimeStep+1) && restartFlag==1))
 					isFirstXLBOMDStep=true;
 
 				bool isXlBOMDStep=false;
@@ -820,12 +799,10 @@ false);
 				if (dftParameters::isXLBOMD)
 				{
 
-					if ((dftPtr->d_autoMesh==1
-								|| (timeIndex == (startingTimeStep+1) && restartFlag==1)
-								|| (timeIndex < (fullScfSolvesBeforeStartingXLBOMD+autoMeshTimeIndex))) && !xlbomdHistoryRestart)
+					if (((timeIndex == (startingTimeStep+1) && restartFlag==1)
+								|| (timeIndex < (fullScfSolvesBeforeStartingXLBOMD))) && !xlbomdHistoryRestart)
 					{
 
-						if (!dftPtr->d_autoMesh==1)
 							if (!(timeIndex ==startingTimeStep+1 && restartFlag==1))
 							{
 								dftPtr->d_rhoInNodalValues=shadowKSRhoMin;
@@ -835,7 +812,7 @@ false);
 								dftPtr->d_rhoInNodalValues.update_ghost_values();
 								dftPtr->interpolateRhoNodalDataToQuadratureDataGeneral(dftPtr->d_matrixFreeDataPRefined,
                     dftPtr->d_densityDofHandlerIndexElectro,
-                    0,
+                    dftPtr->d_densityQuadratureIdElectro,
 										dftPtr->d_rhoInNodalValues,
 										*(dftPtr->rhoInValues),
 										*(dftPtr->gradRhoInValues),
@@ -864,11 +841,6 @@ false);
 						else
 							shadowKSRhoMin *= ((double)dftPtr->numElectrons)/charge;  
 
-						if (dftPtr->d_autoMesh==1)
-						{
-							autoMeshTimeIndex=timeIndex;
-							approxDensityContainer.clear();
-						}
 
 						if (fullScfSolvesBeforeStartingXLBOMD==1)
 						{
@@ -922,7 +894,7 @@ false);
 						const unsigned int local_size = approxDensityNext.local_size();
 
 
-						if (dftParameters::skipHarmonicOscillatorTermInitialStepsXLBOMD && fullScfSolvesBeforeStartingXLBOMD==1 && (timeIndex <= (numberStepsKappaTermSkipped+autoMeshTimeIndex)))
+						if (dftParameters::skipHarmonicOscillatorTermInitialStepsXLBOMD && fullScfSolvesBeforeStartingXLBOMD==1 && (timeIndex <= (numberStepsKappaTermSkipped)))
 						{
 							for (unsigned int i = 0; i < local_size; i++)
 								approxDensityNext.local_element(i)=approxDensityTimeT.local_element(i)*2.0
@@ -999,7 +971,7 @@ false);
 						dftPtr->d_rhoInNodalValues.update_ghost_values();
 						dftPtr->interpolateRhoNodalDataToQuadratureDataGeneral(dftPtr->d_matrixFreeDataPRefined,
                 dftPtr->d_densityDofHandlerIndexElectro,
-                0,
+                dftPtr->d_densityQuadratureIdElectro,
 								dftPtr->d_rhoInNodalValues,
 								*(dftPtr->rhoInValues),
 								*(dftPtr->gradRhoInValues),
@@ -1097,7 +1069,7 @@ false);
 						rhoErrorVec=shadowKSRhoMin;
 						rhoErrorVec-=approxDensityContainer.back();
 
-						if (!(dftParameters::skipHarmonicOscillatorTermInitialStepsXLBOMD && fullScfSolvesBeforeStartingXLBOMD==1 && (timeIndex < (numberStepsKappaTermSkipped+autoMeshTimeIndex))))
+						if (!(dftParameters::skipHarmonicOscillatorTermInitialStepsXLBOMD && fullScfSolvesBeforeStartingXLBOMD==1 && (timeIndex < (numberStepsKappaTermSkipped))))
 						{
 							if (dftParameters::kernelUpdateRankXLBOMD>0)
 							{
@@ -1180,7 +1152,7 @@ false);
 									dftPtr->d_rhoInNodalValues.update_ghost_values();
 									dftPtr->interpolateRhoNodalDataToQuadratureDataGeneral(dftPtr->d_matrixFreeDataPRefined,
                       dftPtr->d_densityDofHandlerIndexElectro,
-                      0,
+                      dftPtr->d_densityQuadratureIdElectro,
 											dftPtr->d_rhoInNodalValues,
 											*(dftPtr->rhoInValues),
 											*(dftPtr->gradRhoInValues),
@@ -1265,7 +1237,7 @@ false);
 									dftPtr->d_rhoInNodalValues.update_ghost_values();
 									dftPtr->interpolateRhoNodalDataToQuadratureDataGeneral(dftPtr->d_matrixFreeDataPRefined,
                       dftPtr->d_densityDofHandlerIndexElectro,
-                      0,
+                      dftPtr->d_densityQuadratureIdElectro,
 											dftPtr->d_rhoInNodalValues,
 											*(dftPtr->rhoInValues),
 											*(dftPtr->gradRhoInValues),
@@ -1394,34 +1366,33 @@ false);
 				}
 				else
 				{
-					if (!dftPtr->d_autoMesh==1)
-						if (!(timeIndex ==startingTimeStep+1 && restartFlag==1))
-						{
-							//normalize shadowKSRhoMin
-							double charge = dftPtr->totalCharge(dftPtr->d_matrixFreeDataPRefined,
-									shadowKSRhoMin);
+          if (!(timeIndex ==startingTimeStep+1 && restartFlag==1))
+          {
+            //normalize shadowKSRhoMin
+            double charge = dftPtr->totalCharge(dftPtr->d_matrixFreeDataPRefined,
+                shadowKSRhoMin);
 
-							if (dftParameters::useAtomicRhoXLBOMD)
-								shadowKSRhoMin.add(-charge/dftPtr->d_domainVolume);
-							else
-								shadowKSRhoMin *= ((double)dftPtr->numElectrons)/charge;
+            if (dftParameters::useAtomicRhoXLBOMD)
+              shadowKSRhoMin.add(-charge/dftPtr->d_domainVolume);
+            else
+              shadowKSRhoMin *= ((double)dftPtr->numElectrons)/charge;
 
 
-							dftPtr->d_rhoInNodalValues=shadowKSRhoMin;
-							if (dftParameters::useAtomicRhoXLBOMD)
-								dftPtr->d_rhoInNodalValues+=atomicRho;
+            dftPtr->d_rhoInNodalValues=shadowKSRhoMin;
+            if (dftParameters::useAtomicRhoXLBOMD)
+              dftPtr->d_rhoInNodalValues+=atomicRho;
 
-							dftPtr->d_rhoInNodalValues.update_ghost_values();
-							dftPtr->interpolateRhoNodalDataToQuadratureDataGeneral(dftPtr->d_matrixFreeDataPRefined,
-                  dftPtr->d_densityDofHandlerIndexElectro,
-                  0,
-									dftPtr->d_rhoInNodalValues,
-									*(dftPtr->rhoInValues),
-									*(dftPtr->gradRhoInValues),
-									*(dftPtr->gradRhoInValues),
-									dftParameters::xc_id == 4);	
-							dftPtr->normalizeRhoInQuadValues();
-						}
+            dftPtr->d_rhoInNodalValues.update_ghost_values();
+            dftPtr->interpolateRhoNodalDataToQuadratureDataGeneral(dftPtr->d_matrixFreeDataPRefined,
+                dftPtr->d_densityDofHandlerIndexElectro,
+                dftPtr->d_densityQuadratureIdElectro,
+                dftPtr->d_rhoInNodalValues,
+                *(dftPtr->rhoInValues),
+                *(dftPtr->gradRhoInValues),
+                *(dftPtr->gradRhoInValues),
+                dftParameters::xc_id == 4);	
+            dftPtr->normalizeRhoInQuadValues();
+          }
 
 					//
 					//do an scf calculation
@@ -1478,19 +1449,6 @@ false);
 				internalEnergyVector[timeIndex-startingTimeStep] = isXlBOMDStep?shadowPotentialInternalEnergy:dftPtr->d_groundStateEnergy;
 				entropicEnergyVector[timeIndex-startingTimeStep] = isXlBOMDStep?entropicEnergyShadowPotential:dftPtr->d_entropicEnergy;
 				totalEnergyVector[timeIndex-startingTimeStep] = kineticEnergyVector[timeIndex-startingTimeStep] +internalEnergyVector[timeIndex-startingTimeStep] -entropicEnergyVector[timeIndex-startingTimeStep];
-
-				double totalEnergyChangeAutoMesh=0.0;
-				if (dftPtr->d_autoMesh==1)
-				{
-					totalEnergyChangeAutoMesh=(totalEnergyVector[timeIndex-startingTimeStep]-accumTotEnergyCorrection)-totalEnergyVector[timeIndex-startingTimeStep-1];
-					accumTotEnergyCorrection+=totalEnergyChangeAutoMesh;
-				}
-				else if ((timeIndex == (startingTimeStep+1)&& restartFlag==1) && lastInterruptedStepPreviousRunAutoMesh)
-				{
-					totalEnergyChangeAutoMesh=(totalEnergyVector[timeIndex-startingTimeStep]-accumTotEnergyCorrection)-totalEnergyStartingTimeStep;
-					accumTotEnergyCorrection+=totalEnergyChangeAutoMesh;
-				}
-				totalEnergyVector[timeIndex-startingTimeStep]-=accumTotEnergyCorrection;
 
 				rmsErrorRhoVector[timeIndex-startingTimeStep] = rmsErrorRho;
 				rmsErrorGradRhoVector[timeIndex-startingTimeStep] = rmsErrorGradRho;
@@ -1619,7 +1577,6 @@ false);
 				std::vector<std::vector<double> > fileVelData(numberGlobalCharges,std::vector<double>(3,0.0));
 				std::vector<std::vector<double> > fileTemperatureData(1,std::vector<double>(1,0.0));
 				std::vector<std::vector<double> > timeIndexData(1,std::vector<double>(1,0.0));
-				std::vector<std::vector<double> > accumTotEnergyCorrectionData(1,std::vector<double>(1,0.0));
 
 				for(int iCharge = 0; iCharge < numberGlobalCharges; ++iCharge)
 				{
@@ -1647,10 +1604,6 @@ false);
 				dftUtils::writeDataIntoFile(timeIndexData,
 						"time.chk");
 
-				accumTotEnergyCorrectionData[0][0]=accumTotEnergyCorrection;
-				dftUtils::writeDataIntoFile(accumTotEnergyCorrectionData,
-						"accumEnergyCorrection.chk");
-
 				if (dftParameters::chkType>=1)
 					dftPtr->writeDomainAndAtomCoordinates();
 
@@ -1670,7 +1623,7 @@ false);
 					dftPtr->saveTriaInfoAndRhoNodalData();  
 				}
 
-				if (timeIndex == (fullScfSolvesBeforeStartingXLBOMD+autoMeshTimeIndex) && xlbomdHistoryRestart)
+				if (timeIndex == (fullScfSolvesBeforeStartingXLBOMD) && xlbomdHistoryRestart)
 					xlbomdHistoryRestart=false;
 			}
 

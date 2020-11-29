@@ -7,6 +7,7 @@ template class forceClass<6,6>;
 template class forceClass<6,7>;
 template class forceClass<6,8>;
 template class forceClass<6,9>;
+template class forceClass<7,7>;
 #else
 template class forceClass<1,1>;
 template class forceClass<1,2>;

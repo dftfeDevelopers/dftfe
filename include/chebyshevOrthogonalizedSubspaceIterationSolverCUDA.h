@@ -46,7 +46,8 @@ namespace dftfe
 			chebyshevOrthogonalizedSubspaceIterationSolverCUDA
 				(const MPI_Comm &mpi_comm,
 				 double lowerBoundWantedSpectrum,
-				 double lowerBoundUnWantedSpectrum);
+				 double lowerBoundUnWantedSpectrum,
+         double upperBoundUnWantedSpectrum);
 
 
 			/**
@@ -70,6 +71,7 @@ namespace dftfe
 					dealii::ScaLAPACKMatrix<double> & projHamPar,
 					dealii::ScaLAPACKMatrix<double> & overlapMatPar,
 					const std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid> & processGrid,
+          const bool isFirstFilteringCall,
 					const bool isXlBOMDLinearizedSolve,
 					const bool useMixedPrecOverall=false,
 					const bool isFirstScf=false,
@@ -138,6 +140,11 @@ namespace dftfe
 			//stores lower bound of unwanted spectrum
 			//
 			double d_lowerBoundUnWantedSpectrum;
+
+			//
+			//stores upper bound of unwanted spectrum
+			//
+			double d_upperBoundUnWantedSpectrum;      
 
 			//
 			//variables for printing out and timing

@@ -7,6 +7,7 @@ template class geoOptCell<6,6>;
 template class geoOptCell<6,7>;
 template class geoOptCell<6,8>;
 template class geoOptCell<6,9>;
+template class geoOptCell<7,7>;
 #else
 template class geoOptCell<1,1>;
 template class geoOptCell<1,2>;

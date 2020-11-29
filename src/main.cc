@@ -75,6 +75,7 @@ static run_fn order_list[] =
 	run_problem<6,7>,
 	run_problem<6,8>,
 	run_problem<6,9>,
+  run_problem<7,7>
 #else  
 	run_problem<1,1>,
 	run_problem<1,2>,
@@ -180,12 +181,12 @@ int main (int argc, char *argv[])
 	int orderElectro = dftfe::dftParameters::finiteElementPolynomialOrderElectrostatics; 
 
 #ifdef DFTFE_MINIMAL_COMPILE
-	if(order < 2 || order > 6) {
+	if(order < 2 || order > 7) {
 		std::cout << "Invalid DFT-FE order " << order << std::endl;
 		return -1;
 	}
 
-  if (order>5)
+  if (order>5 && order<7)
   {
     if(orderElectro < order || orderElectro > (order+3)) 
     {
@@ -206,7 +207,7 @@ int main (int argc, char *argv[])
   for (int i=2; i<=order; i++)
   {
     int maxElectroOrder=(i<order)?(i+3):orderElectro;
-    if (i<6)
+    if (i!=6)
       maxElectroOrder=i;
     for (int j=i;j<=maxElectroOrder;j++)
         listIndex++;

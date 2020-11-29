@@ -154,13 +154,13 @@ namespace pseudoUtils
 		{
 
 			if(m < 0)
-				sphericalHarmonicVal = sqrt(2.0)*boost::math::spherical_harmonic_i(l,-m,theta,phi);
+				sphericalHarmonicVal = std::sqrt(2.0)*boost::math::spherical_harmonic_i(l,-m,theta,phi);
 
 			else if (m == 0)
 				sphericalHarmonicVal = boost::math::spherical_harmonic_r(l,m,theta,phi);
 
 			else if (m > 0)
-				sphericalHarmonicVal = sqrt(2.0)*boost::math::spherical_harmonic_r(l,m,theta,phi);
+				sphericalHarmonicVal = std::sqrt(2.0)*boost::math::spherical_harmonic_r(l,m,theta,phi);
 
 			return;
 
@@ -171,16 +171,16 @@ namespace pseudoUtils
 		convertCartesianToSpherical(double *x, double & r, double & theta, double & phi)
 		{
 
-			r = sqrt(x[0]*x[0] + x[1]*x[1] + x[2]*x[2]);
+			r = std::sqrt(x[0]*x[0] + x[1]*x[1] + x[2]*x[2]);
 
-			if(r == 0)
+			if(std::fabs(r-0.0)<=tolerance)
 			{
 				theta = 0.0;
 				phi = 0.0;
 			}
 			else
 			{
-				theta = acos(x[2]/r);
+				theta = std::acos(x[2]/r);
 				//
 				// check if theta = 0 or PI (i.e, whether the point is on the Z-axis)
 				// If yes, assign phi = 0.0.
@@ -189,7 +189,7 @@ namespace pseudoUtils
 				// its gradient. We assign phi = 0.0 here just as a dummy value
 				//
 				if(fabs(theta - 0.0) >= tolerance && fabs(theta - M_PI) >= tolerance)
-					phi = atan2(x[1],x[0]);
+					phi = std::atan2(x[1],x[0]);
 				else
 					phi = 0.0;
 			}

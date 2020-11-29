@@ -16,7 +16,6 @@
 // @author Sambit Das
 //
 
-#ifdef USE_COMPLEX
 //compute stress contribution from nuclear self energy
 	template<unsigned int FEOrder,unsigned int FEOrderElectro>
 void forceClass<FEOrder,FEOrderElectro>::computeStressEself(const DoFHandler<3> & dofHandlerElectro,
@@ -211,4 +210,3 @@ void forceClass<FEOrder,FEOrderElectro>::computeStressEself(const DoFHandler<3> 
   }
 
 }
-#endif

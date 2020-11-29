@@ -41,6 +41,10 @@ cxx_flagsRelease="-O3 -fPIC -fopenmp"
 #Option to link to ELPA
 withELPA=OFF
 
+#Option to compile with default or higher order quadrature for storing pseudopotential data
+#ON is recommended for MD simulations with hard pseudopotentials
+withHigherQuadPSP=OFF
+
 # build type: "Release" or "Debug"
 build_type=Release
 testing=OFF
@@ -68,7 +72,7 @@ function cmake_real() {
 	-DWITH_ELPA=$withELPA -DCMAKE_PREFIX_PATH="$PREFIX_PATH" \
 	-DWITH_COMPLEX=OFF -DWITH_GPU=$withGPU \
 	-DWITH_TESTING=$testing -DMINIMAL_COMPILE=$minimal_compile\
-	  $1
+  -DHIGHERQUAD_PSP=$withHigherQuadPSP $1
 }
 
 function cmake_cplx() {
@@ -80,8 +84,8 @@ function cmake_cplx() {
 	-DALGLIB_DIR=$alglibDir -DLIBXC_DIR=$libxcDir \
 	-DSPGLIB_DIR=$spglibDir -DXML_LIB_DIR=$xmlLibDir \
 	-DXML_INCLUDE_DIR=$xmlIncludeDir -DWITH_INTEL_MKL=$withIntelMkl \
-	-DWITH_COMPLEX=ON -DWITH_TESTING=$testing -DMINIMAL_COMPILE=$minimal_compile\
-	  $1
+	-DWITH_COMPLEX=ON -DWITH_TESTING=$testing -DMINIMAL_COMPILE=$minimal_compile\\
+  -DHIGHERQUAD_PSP=$withHigherQuadPSP $1
 }
 
 RCol='\e[0m'

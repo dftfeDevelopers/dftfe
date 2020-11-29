@@ -7,6 +7,7 @@ template class molecularDynamics<6,6>;
 template class molecularDynamics<6,7>;
 template class molecularDynamics<6,8>;
 template class molecularDynamics<6,9>;
+template class molecularDynamics<7,7>;
 #else
 template class molecularDynamics<1,1>;
 template class molecularDynamics<1,2>;

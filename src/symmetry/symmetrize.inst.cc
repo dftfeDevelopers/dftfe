@@ -7,6 +7,7 @@ template class symmetryClass<6,6>;
 template class symmetryClass<6,7>;
 template class symmetryClass<6,8>;
 template class symmetryClass<6,9>;
+template class symmetryClass<7,7>;
 #else
 template class symmetryClass<1,1>;
 template class symmetryClass<1,2>;

@@ -41,6 +41,7 @@ void dftClass<FEOrder,FEOrderElectro>::initCoreRho()
 	const double truncationTol = 1e-12;
 	unsigned int fileReadFlag = 0;
 
+  double maxCoreRhoTail=0.0;
 	//loop over atom types
 	for(std::set<unsigned int>::iterator it = atomTypes.begin(); it != atomTypes.end(); it++)
 	{
@@ -83,15 +84,16 @@ void dftClass<FEOrder,FEOrderElectro>::initCoreRho()
 			spline1dbuildcubic(x, y, numRows, natural_bound_type_L, 0.0, natural_bound_type_R, 0.0, coreDenSpline[*it]);
 			outerMostPointCoreDen[*it]= xData[maxRowId];
 
-			if(outerMostPointCoreDen[*it] < d_coreRhoTail)
-				d_coreRhoTail = outerMostPointCoreDen[*it];
+      if(outerMostPointCoreDen[*it]>maxCoreRhoTail)
+        maxCoreRhoTail = outerMostPointCoreDen[*it];
 
 			if(dftParameters::verbosity>=4)
 				pcout<<" Atomic number: "<<*it<<" Outermost Point Core Den: "<<outerMostPointCoreDen[*it]<<std::endl;
-
-
 		}
 	}
+
+  if(maxCoreRhoTail < d_coreRhoTail)
+    d_coreRhoTail = maxCoreRhoTail;
 
 	if(dftParameters::verbosity>=2)
 		pcout << " d_coreRhoTail adjusted to " << d_coreRhoTail << std::endl ;
@@ -179,6 +181,15 @@ void dftClass<FEOrder,FEOrderElectro>::initCoreRho()
 		}
 	}
 
+  Tensor<1,3,double> zeroTensor1;
+  for (unsigned int i=0; i<3;i++)
+    zeroTensor1[i]=0.0;
+
+  Tensor<2,3,double> zeroTensor2;
+
+  for (unsigned int i=0; i<3;i++)
+    for (unsigned int j=0; j<3;j++)    
+      zeroTensor2[i][j]=0.0;  
 
 	//loop over elements
 	if(dftParameters::xc_id == 4 || dftParameters::nonLinearCoreCorrection == true)
@@ -198,8 +209,8 @@ void dftClass<FEOrder,FEOrderElectro>::initCoreRho()
 				if(dftParameters::xc_id == 4)
 					hessianRhoCoreQuadValues.resize(n_q_points*9,0.0);
 
-				std::vector<Tensor<1,3,double> > gradRhoCoreAtom(n_q_points);
-				std::vector<Tensor<2,3,double> > hessianRhoCoreAtom(n_q_points);
+				std::vector<Tensor<1,3,double> > gradRhoCoreAtom(n_q_points,zeroTensor1);
+				std::vector<Tensor<2,3,double> > hessianRhoCoreAtom(n_q_points,zeroTensor2);
 
 
 				//loop over atoms
@@ -215,7 +226,20 @@ void dftClass<FEOrder,FEOrderElectro>::initCoreRho()
 					for(unsigned int q = 0; q < n_q_points; ++q)
 					{
 						Point<3> quadPoint = fe_values.quadrature_point(q);
+            Tensor<1,3,double> diff=quadPoint-atom; 
 						double distanceToAtom = quadPoint.distance(atom);
+
+            if (dftParameters::floatingNuclearCharges && distanceToAtom<1.0e-4)
+            {
+              if(dftParameters::verbosity>=4)
+                std::cout<<"Atomic close to quad point, iatom: "<<iAtom<<std::endl;
+
+              distanceToAtom=1.0e-4;
+              diff[0]=(1.0e-4)/std::sqrt(3.0);
+              diff[0]=(1.0e-4)/std::sqrt(3.0);
+              diff[0]=(1.0e-4)/std::sqrt(3.0);              
+            }
+
 						double value,radialDensityFirstDerivative,radialDensitySecondDerivative;
 						if(distanceToAtom <= d_coreRhoTail)
 						{
@@ -235,7 +259,7 @@ void dftClass<FEOrder,FEOrderElectro>::initCoreRho()
 							radialDensitySecondDerivative = 0.0;
 						}
 
-						gradRhoCoreAtom[q] = radialDensityFirstDerivative*(quadPoint-atom)/distanceToAtom;
+						gradRhoCoreAtom[q] = radialDensityFirstDerivative*diff/distanceToAtom;
 						gradRhoCoreQuadValues[3*q + 0] += gradRhoCoreAtom[q][0];
 						gradRhoCoreQuadValues[3*q + 1] += gradRhoCoreAtom[q][1];
 						gradRhoCoreQuadValues[3*q + 2] += gradRhoCoreAtom[q][2];
@@ -246,7 +270,7 @@ void dftClass<FEOrder,FEOrderElectro>::initCoreRho()
 							{
 								for(unsigned int jDim = 0; jDim < 3; ++jDim)
 								{
-									double temp = (radialDensitySecondDerivative -radialDensityFirstDerivative/distanceToAtom)*(quadPoint[iDim] - atomLocations[iAtom][2+iDim])*(quadPoint[jDim] - atomLocations[iAtom][2+jDim])/(distanceToAtom*distanceToAtom);
+									double temp = (radialDensitySecondDerivative -radialDensityFirstDerivative/distanceToAtom)*diff[iDim]*diff[jDim]/(distanceToAtom*distanceToAtom);
 									if(iDim == jDim)
 										temp += radialDensityFirstDerivative/distanceToAtom;
 
@@ -261,11 +285,11 @@ void dftClass<FEOrder,FEOrderElectro>::initCoreRho()
 					if(isCoreRhoDataInCell)
 					{
 						std::vector<double> & gradRhoCoreAtomCell = d_gradRhoCoreAtoms[iAtom][cell->id()];
-						gradRhoCoreAtomCell.resize(n_q_points*3);
+						gradRhoCoreAtomCell.resize(n_q_points*3,0.0);
 
 						std::vector<double> & hessianRhoCoreAtomCell = d_hessianRhoCoreAtoms[iAtom][cell->id()];
 						if(dftParameters::xc_id == 4)
-							hessianRhoCoreAtomCell.resize(n_q_points*9);
+							hessianRhoCoreAtomCell.resize(n_q_points*9,0.0);
 
 						for(unsigned int q = 0; q < n_q_points; ++q)
 						{
@@ -304,7 +328,16 @@ void dftClass<FEOrder,FEOrderElectro>::initCoreRho()
 					for (unsigned int q = 0; q < n_q_points; ++q)
 					{
 						Point<3> quadPoint=fe_values.quadrature_point(q);
+            Tensor<1,3,double> diff=quadPoint-imageAtom; 
 						double distanceToAtom = quadPoint.distance(imageAtom);
+
+            if (dftParameters::floatingNuclearCharges && distanceToAtom<1.0e-4)
+            {
+              distanceToAtom=1.0e-4;
+              diff[0]=(1.0e-4)/std::sqrt(3.0);
+              diff[0]=(1.0e-4)/std::sqrt(3.0);
+              diff[0]=(1.0e-4)/std::sqrt(3.0);              
+            }
 
 						double value,radialDensityFirstDerivative,radialDensitySecondDerivative;
 						if(distanceToAtom <= d_coreRhoTail)
@@ -325,7 +358,7 @@ void dftClass<FEOrder,FEOrderElectro>::initCoreRho()
 							radialDensitySecondDerivative = 0.0;
 						}
 
-						gradRhoCoreAtom[q] = radialDensityFirstDerivative*(quadPoint-imageAtom)/distanceToAtom;
+						gradRhoCoreAtom[q] = radialDensityFirstDerivative*diff/distanceToAtom;
 						gradRhoCoreQuadValues[3*q + 0] += gradRhoCoreAtom[q][0];
 						gradRhoCoreQuadValues[3*q + 1] += gradRhoCoreAtom[q][1];
 						gradRhoCoreQuadValues[3*q + 2] += gradRhoCoreAtom[q][2];
@@ -336,7 +369,7 @@ void dftClass<FEOrder,FEOrderElectro>::initCoreRho()
 							{
 								for(unsigned int jDim = 0; jDim < 3; ++jDim)
 								{
-									double temp = (radialDensitySecondDerivative -radialDensityFirstDerivative/distanceToAtom)*(quadPoint[iDim] - d_imagePositionsTrunc[iImageCharge][iDim])*(quadPoint[jDim] - d_imagePositionsTrunc[iImageCharge][jDim])/(distanceToAtom*distanceToAtom);
+									double temp = (radialDensitySecondDerivative -radialDensityFirstDerivative/distanceToAtom)*diff[iDim]*diff[jDim]/(distanceToAtom*distanceToAtom);
 									if(iDim == jDim)
 										temp += radialDensityFirstDerivative/distanceToAtom;
 									hessianRhoCoreAtom[q][iDim][jDim] = temp;

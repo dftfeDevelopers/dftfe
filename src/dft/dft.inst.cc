@@ -7,6 +7,7 @@ template class dftClass<6,6>;
 template class dftClass<6,7>;
 template class dftClass<6,8>;
 template class dftClass<6,9>;
+template class dftClass<7,7>;
 #else
 template class dftClass<1,1>;
 template class dftClass<1,2>;

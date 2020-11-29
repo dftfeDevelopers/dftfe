@@ -324,7 +324,7 @@ void dftClass<FEOrder,FEOrderElectro>::initBoundaryConditions(const bool meshOnl
 				d_imagePositions,
 				d_globalChargeIdToImageIdMap);
 
-	createMasterChargeIdToImageIdMaps(10.0,
+	createMasterChargeIdToImageIdMaps(d_nlPSPCutOff,
 			d_imageIdsTrunc,
 			d_imagePositionsTrunc,
 			d_globalChargeIdToImageIdMapTrunc);
