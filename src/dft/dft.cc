@@ -925,12 +925,14 @@ namespace dftfe {
 		{
 			computingTimerStandard.enter_section("KSDFT problem initialization");
 			if(updateImagesAndKPoints)
+      {
 				initImageChargesUpdateKPoints();
 
-      calculateNearestAtomDistances(); 
+        calculateNearestAtomDistances(); 
 
-      if (dftParameters::smearedNuclearCharges)
-        calculateSmearedChargeWidths(); 
+        if (dftParameters::smearedNuclearCharges)
+          calculateSmearedChargeWidths();
+      }
 
 			//
 			//reinitialize dirichlet BCs for total potential and vSelf poisson solutions
@@ -939,24 +941,10 @@ namespace dftfe {
 			MPI_Barrier(MPI_COMM_WORLD);
 			init_bc = MPI_Wtime();
 
-      double maxFloatingDispComponentMag=0.0;
-      if (dftParameters::floatingNuclearCharges)
-      {
-        for(unsigned int iAtom=0;iAtom < atomLocations.size(); iAtom++)
-          for(unsigned int idim=0;idim < 3; idim++)          
-          {
-            const double temp = std::fabs(d_netFloatingDisp[iAtom*3+idim]);
-
-            if(temp>maxFloatingDispComponentMag)
-              maxFloatingDispComponentMag=temp;
-          }
-      }
 
       // false option reinitializes vself bins from scratch wheras true option only updates the boundary conditions
-      if (dftParameters::floatingNuclearCharges)
-        initBoundaryConditions(false);
-      else
-        initBoundaryConditions(true);
+      const bool updateOnlyBinsBc=!updateImagesAndKPoints;
+      initBoundaryConditions(updateOnlyBinsBc);
 
 			MPI_Barrier(MPI_COMM_WORLD);
 			init_bc = MPI_Wtime() - init_bc;

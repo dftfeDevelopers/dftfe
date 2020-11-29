@@ -328,6 +328,7 @@ void dftClass<FEOrder,FEOrderElectro>::writeDomainAndAtomCoordinates()
 		periodicBc[0]=dftParameters::periodicX;periodicBc[1]=dftParameters::periodicY;periodicBc[2]=dftParameters::periodicZ;
 
     if (!dftParameters::floatingNuclearCharges)
+    {
       for (unsigned int iAtom = 0; iAtom < numberGlobalAtoms; iAtom++)
       {
         Point<C_DIM> atomCoor;
@@ -351,6 +352,33 @@ void dftClass<FEOrder,FEOrderElectro>::writeDomainAndAtomCoordinates()
         atomLocationsFractional[iAtom][3]=newFracCoord[1];
         atomLocationsFractional[iAtom][4]=newFracCoord[2];
       }
+    }
+    else
+    {
+      for (unsigned int iAtom = 0; iAtom < numberGlobalAtoms; iAtom++)
+      {
+        Point<C_DIM> atomCoor;
+        int atomId=iAtom;
+        atomCoor[0] = atomLocations[iAtom][2];
+        atomCoor[1] = atomLocations[iAtom][3];
+        atomCoor[2] = atomLocations[iAtom][4];
+
+        std::vector<double> newFracCoord=internal::wrapAtomsAcrossPeriodicBc(atomCoor,
+            corner,
+            latticeVectorsFlattened,
+            periodicBc);
+        //for synchrozination
+        MPI_Bcast(&(newFracCoord[0]),
+            3,
+            MPI_DOUBLE,
+            0,
+            MPI_COMM_WORLD);
+
+        atomLocationsFractionalCurrent[iAtom][2]=newFracCoord[0];
+        atomLocationsFractionalCurrent[iAtom][3]=newFracCoord[1];
+        atomLocationsFractionalCurrent[iAtom][4]=newFracCoord[2];
+      }      
+    }
 	}
 
 	std::vector<std::vector<double> > atomLocationsAutoMesh=atomLocations;
