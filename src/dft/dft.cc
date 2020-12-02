@@ -156,6 +156,12 @@ namespace dftfe {
 					exit(1);
 				}
 #endif
+
+#if defined(DFTFE_WITH_GPU)      
+        d_gpucclMpiCommDomainPtr= new GPUCCLWrapper;
+        if (dftParameters::useGPUDirectAllReduce)
+          d_gpucclMpiCommDomainPtr->init(mpi_comm_replica);
+#endif            
 			}
 
 	template<unsigned int FEOrder,unsigned int FEOrderElectro>
@@ -179,6 +185,10 @@ namespace dftfe {
 			AssertThrow(error == ELPA_OK,
 					dealii::ExcMessage("DFT-FE Error: elpa error."));
 #endif
+    
+#if defined(DFTFE_WITH_GPU)      
+      delete d_gpucclMpiCommDomainPtr;
+#endif    
 		}
 
 	namespace internaldft

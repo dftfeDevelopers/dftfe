@@ -28,11 +28,9 @@ libxcDir="$PROJ/software/libxc/installGcc6.4.0"
 spglibDir="$PROJ/software/spglib/installGcc6.4.0"
 xmlIncludeDir="/usr/include/libxml2"
 xmlLibDir="/usr/lib64"
-#elpaIncludeDir="$PROJ/software/elpaSMPI20200121/installElpa2020Gcc6.4.0CUDA10/include/elpa-2020.05.001.rc1"
-#elpaLibDir="$PROJ/software/elpaSMPI20200121/installElpa2020Gcc6.4.0CUDA10/lib"
-#elpaIncludeDir="$PROJ/Rogers_Tests/elpaSMPI202005/include/elpa_openmp-2020.05.001.rc1"
-#elpaLibDir="$PROJ/Rogers_Tests/elpaSMPI202005/lib"
-PREFIX_PATH="$PROJ/software/elpaSMPI20200121/installElpa2020Gcc6.4.0CUDA10"
+ELPA_PATH="$PROJ/software/elpaSMPI20200121/installElpa2020Gcc6.4.0CUDA10"
+NCCL_PATH="$PROJ/software/nccl/ncclDevelopBranch/build"
+
 
 #If you have installed dealii by linking with intel mkl library set underlying flag to "ON",
 #otherwise set it to "OFF"
@@ -40,6 +38,9 @@ withIntelMkl=OFF
 
 #Toggle GPU compilation
 withGPU=ON
+
+#Option to link to NCCL library
+withNCCL=ON
 
 #Compiler options and flags
 c_compiler=mpicc
@@ -78,7 +79,7 @@ function cmake_real() {
 	-DALGLIB_DIR=$alglibDir -DLIBXC_DIR=$libxcDir \
 	-DSPGLIB_DIR=$spglibDir -DXML_LIB_DIR=$xmlLibDir \
 	-DXML_INCLUDE_DIR=$xmlIncludeDir -DWITH_INTEL_MKL=$withIntelMkl \
-	-DWITH_ELPA=$withELPA -DCMAKE_PREFIX_PATH="$PREFIX_PATH" \
+  -DWITH_ELPA=$withELPA -DWITH_NCCL=$withNCCL -DCMAKE_PREFIX_PATH="$ELPA_PATH;$NCCL_PATH" \
 	-DWITH_COMPLEX=OFF -DWITH_GPU=$withGPU \
 	-DWITH_TESTING=$testing -DMINIMAL_COMPILE=$minimal_compile \
   -DHIGHERQUAD_PSP=$withHigherQuadPSP $1

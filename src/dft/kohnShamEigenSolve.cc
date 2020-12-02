@@ -554,38 +554,22 @@ void dftClass<FEOrder,FEOrderElectro>::kohnShamEigenSpaceCompute(const unsigned 
 	if (numberRayleighRitzAvoidanceXLBOMDPasses>0)
 	{
 		bool isFirstPass=false;
-		if(useMixedPrec && dftParameters::useAsyncChebPGS_SR && dftParameters::useMixedPrecPGS_SR)
-		{
-			subspaceIterationSolverCUDA.solveNoRRMixedPrec(kohnShamDFTEigenOperator,
-					d_eigenVectorsFlattenedCUDA.begin()
-					+((1+dftParameters::spinPolarized)*kPointIndex+spinType)*d_eigenVectorsFlattenedSTL[0].size(),
-					d_eigenVectorsFlattenedSTL[0].size(),
-					d_tempEigenVec,
-					d_numEigenValues,
-					eigenValuesDummy,
-					interBandGroupComm,
-					isXlBOMDLinearizedSolve,
-					numberRayleighRitzAvoidanceXLBOMDPasses+1,
-					useMixedPrec);
-		}
-		else
-		{
-			subspaceIterationSolverCUDA.solveNoRR(kohnShamDFTEigenOperator,
-					d_eigenVectorsFlattenedCUDA.begin()
-					+((1+dftParameters::spinPolarized)*kPointIndex+spinType)*d_eigenVectorsFlattenedSTL[0].size(),
-					d_eigenVectorsFlattenedSTL[0].size(),
-					d_tempEigenVec,
-					d_numEigenValues,
-					eigenValuesDummy,
-					interBandGroupComm,
-					projHamPar,
-					overlapMatPar,
-					processGrid,
-					isXlBOMDLinearizedSolve,
-					numberRayleighRitzAvoidanceXLBOMDPasses,
-					useMixedPrec);
 
-		}
+    subspaceIterationSolverCUDA.solveNoRR(kohnShamDFTEigenOperator,
+        d_eigenVectorsFlattenedCUDA.begin()
+        +((1+dftParameters::spinPolarized)*kPointIndex+spinType)*d_eigenVectorsFlattenedSTL[0].size(),
+        d_eigenVectorsFlattenedSTL[0].size(),
+        d_tempEigenVec,
+        d_numEigenValues,
+        eigenValuesDummy,
+        *d_gpucclMpiCommDomainPtr,
+        interBandGroupComm,
+        projHamPar,
+        overlapMatPar,
+        processGrid,
+        isXlBOMDLinearizedSolve,
+        numberRayleighRitzAvoidanceXLBOMDPasses,
+        useMixedPrec);
 	}
 	else	  
 	{
@@ -602,6 +586,7 @@ void dftClass<FEOrder,FEOrderElectro>::kohnShamEigenSpaceCompute(const unsigned 
 					d_numEigenValues,
 					eigenValuesDummy,
 					residualNormWaveFunctions,
+          *d_gpucclMpiCommDomainPtr,
 					interBandGroupComm,
 					projHamPar,
 					overlapMatPar,
@@ -673,6 +658,7 @@ void dftClass<FEOrder,FEOrderElectro>::kohnShamEigenSpaceCompute(const unsigned 
 					d_numEigenValues,
 					eigenValuesTemp,
 					residualNormWaveFunctions,
+          *d_gpucclMpiCommDomainPtr,
 					interBandGroupComm,
 					projHamPar,
 					overlapMatPar,
@@ -696,6 +682,7 @@ void dftClass<FEOrder,FEOrderElectro>::kohnShamEigenSpaceCompute(const unsigned 
 					d_numEigenValues,
 					eigenValuesTemp,
 					residualNormWaveFunctions,
+          *d_gpucclMpiCommDomainPtr,
 					interBandGroupComm,
 					projHamPar,
 					overlapMatPar,
@@ -716,6 +703,7 @@ void dftClass<FEOrder,FEOrderElectro>::kohnShamEigenSpaceCompute(const unsigned 
 				d_numEigenValues,
 				eigenValuesTemp,
 				residualNormWaveFunctions,
+        *d_gpucclMpiCommDomainPtr,
 				interBandGroupComm,
 				projHamPar,
 				overlapMatPar,
@@ -834,6 +822,7 @@ void dftClass<FEOrder,FEOrderElectro>::kohnShamEigenSpaceOnlyRRCompute(const uns
 				d_tempEigenVec,
 				d_numEigenValues,
 				eigenValuesDummy,
+        *d_gpucclMpiCommDomainPtr,
 				interBandGroupComm,
 				projHamPar,
 				overlapMatPar,
@@ -882,6 +871,7 @@ void dftClass<FEOrder,FEOrderElectro>::kohnShamEigenSpaceOnlyRRCompute(const uns
 				d_tempEigenVec,
 				d_numEigenValues,
 				eigenValuesTemp,
+        *d_gpucclMpiCommDomainPtr,
 				interBandGroupComm,
 				projHamPar,
 				overlapMatPar,
@@ -901,6 +891,7 @@ void dftClass<FEOrder,FEOrderElectro>::kohnShamEigenSpaceOnlyRRCompute(const uns
 				d_tempEigenVec,
 				d_numEigenValues,
 				eigenValuesTemp,
+        *d_gpucclMpiCommDomainPtr,
 				interBandGroupComm,
 				projHamPar,
 				overlapMatPar,
@@ -917,6 +908,7 @@ void dftClass<FEOrder,FEOrderElectro>::kohnShamEigenSpaceOnlyRRCompute(const uns
 			d_tempEigenVec,
 			d_numEigenValues,
 			eigenValuesTemp,
+      *d_gpucclMpiCommDomainPtr,
 			interBandGroupComm,
 			projHamPar,
 			overlapMatPar,

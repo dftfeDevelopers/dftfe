@@ -91,7 +91,6 @@ namespace dftfe {
 		extern bool useMixedPrecSubspaceRotSpectrumSplit;
 		extern bool useMixedPrecSubspaceRotRR;
 		extern bool useSinglePrecXtHXOffDiag;
-		extern bool useAsyncChebPGS_SR;
 		extern unsigned int numAdaptiveFilterStates;
 		extern unsigned int spectrumSplitStartingScfIter;
 		extern bool useELPA;
@@ -138,6 +137,7 @@ namespace dftfe {
     extern bool nonLinearCoreCorrection;
     extern unsigned int maxLineSearchIterCGPRP;
     extern std::string atomicMassesFile;
+    extern bool useGPUDirectAllReduce;
 
 		/**
 		 * Declare parameters.

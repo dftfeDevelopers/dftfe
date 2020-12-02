@@ -33,6 +33,7 @@
 #include <vectorUtilitiesCUDA.h>
 #include <kohnShamDFTOperatorCUDA.h>
 #include <chebyshevOrthogonalizedSubspaceIterationSolverCUDA.h>
+#include "gpuDirectCCLWrapper.h"
 #endif
 
 #include <kohnShamDFTOperator.h>
@@ -872,6 +873,9 @@ namespace dftfe {
 			 * parallel objects
 			 */
 			const MPI_Comm   mpi_communicator;
+#if defined(DFTFE_WITH_GPU)      
+      GPUCCLWrapper * d_gpucclMpiCommDomainPtr;
+#endif      
 			const MPI_Comm   interpoolcomm;
 			const MPI_Comm   interBandGroupComm;
 			const unsigned int n_mpi_processes;

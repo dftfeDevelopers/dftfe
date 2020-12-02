@@ -18,7 +18,7 @@
 
 
 #include <headers.h>
-#include <setupGPU.h>
+#include <cudaHelpers.h>
 
 namespace dftfe
 {

@@ -53,7 +53,8 @@ SET(TARGET_SRC
   )
 
 SET(CUDA_SRC
-  ./src/setupGPU.cu
+  ./src/gpuBase/cudaHelpers.cu
+  ./src/gpuBase/gpuDirectCCLWrapper.cu  
   ./src/dft/densityCalculatorCUDA.cu
   ./src/dftOperator/operatorCUDA.cu
   ./src/dftOperator/kohnShamDFTOperatorCUDA.cu
@@ -327,7 +328,7 @@ ELSE()
 ENDIF (DEFINED SPGLIB_DIR)
 
 #
-# ELPA. Set with -DELPA_LIB_DIR and -DELPA_INCLUDE_DIR
+# ELPA. Pass path to -DCMAKE_PREFIX_PATH
 #
 IF (WITH_ELPA)
    ADD_DEFINITIONS(-DDFTFE_WITH_ELPA)
@@ -335,6 +336,19 @@ IF (WITH_ELPA)
    MESSAGE(STATUS "Will Link With ELPA")
    target_link_libraries(${TARGETLIB} ELPA::ELPA)
    target_include_directories(${TARGETLIB} PUBLIC ELPA::ELPA)
+ENDIF()
+
+#
+# NCCL. Pass path to -DCMAKE_PREFIX_PATH 
+#
+IF (WITH_NCCL)
+  find_package(NCCL REQUIRED)
+  IF (NCCL_FOUND)
+     MESSAGE(STATUS "Will Link With NCCL")
+     ADD_DEFINITIONS(-DDFTFE_WITH_NCCL)
+     find_package(MPI REQUIRED)
+     target_link_libraries(${TARGETLIB} NCCL MPI::MPI_CXX)
+  ENDIF()   
 ENDIF()
 
 #

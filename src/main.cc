@@ -28,7 +28,7 @@
 #include "dft.h"
 #include <dftUtils.h>
 #include <dftParameters.h>
-#include <setupGPU.h>
+#include <cudaHelpers.h>
 
 
 //

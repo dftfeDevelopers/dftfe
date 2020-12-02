@@ -206,7 +206,7 @@ namespace dftfe
 	// Constructor.
 	//
 	chebyshevOrthogonalizedSubspaceIterationSolverCUDA::chebyshevOrthogonalizedSubspaceIterationSolverCUDA
-		(const MPI_Comm &mpi_comm,
+		(const MPI_Comm &mpi_comm_domain,
 		 double lowerBoundWantedSpectrum,
 		 double lowerBoundUnWantedSpectrum,
      double upperBoundUnWantedSpectrum):
@@ -214,7 +214,7 @@ namespace dftfe
 			d_lowerBoundUnWantedSpectrum(lowerBoundUnWantedSpectrum),
       d_upperBoundUnWantedSpectrum(upperBoundUnWantedSpectrum),
 			pcout(std::cout, (dealii::Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0)),
-			computing_timer(mpi_comm,
+			computing_timer(mpi_comm_domain,
 					pcout,
 					dftParameters::reproducible_output ||
 					dftParameters::verbosity<4? dealii::TimerOutput::never : dealii::TimerOutput::summary,
@@ -258,6 +258,7 @@ namespace dftfe
 				distributedCPUVec<double>  & tempEigenVec,
 				const unsigned int totalNumberWaveFunctions,
 				std::vector<double>        & eigenValues,
+        GPUCCLWrapper & gpucclMpiCommDomain,
 				const MPI_Comm &interBandGroupComm,
 				dealii::ScaLAPACKMatrix<double> & projHamPar,
 				dealii::ScaLAPACKMatrix<double> & overlapMatPar,
@@ -357,6 +358,7 @@ namespace dftfe
 						isElpaStep1,
 						isElpaStep2,
 						operatorMatrix.getMPICommunicator(),
+            gpucclMpiCommDomain,
 						&eigenValues[0],
 						cublasHandle,
 						projHamPar,
@@ -388,6 +390,7 @@ namespace dftfe
 						isElpaStep1,
 						isElpaStep2,
 						operatorMatrix.getMPICommunicator(),
+            gpucclMpiCommDomain,
 						interBandGroupComm,
 						&eigenValues[0],
 						cublasHandle,
@@ -462,6 +465,7 @@ namespace dftfe
 				const unsigned int totalNumberWaveFunctions,
 				std::vector<double>        & eigenValues,
 				std::vector<double>        & residualNorms,
+        GPUCCLWrapper & gpucclMpiCommDomain,
 				const MPI_Comm &interBandGroupComm,
 				dealii::ScaLAPACKMatrix<double> & projHamPar,
 				dealii::ScaLAPACKMatrix<double> & overlapMatPar,
@@ -875,6 +879,7 @@ namespace dftfe
 							 localVectorSize,
 							 totalNumberWaveFunctions,
 							 operatorMatrix.getMPICommunicator(),
+               gpucclMpiCommDomain,
 							 interBandGroupComm,
 							 cublasHandle,
 							 useMixedPrecOverall);
@@ -918,6 +923,7 @@ namespace dftfe
 							isElpaStep1,
 							isElpaStep2,
 							operatorMatrix.getMPICommunicator(),
+              gpucclMpiCommDomain,
 							&eigenValues[0],
 							cublasHandle,
 							projHamPar,
@@ -937,6 +943,7 @@ namespace dftfe
 							isElpaStep1,
 							isElpaStep2,
 							operatorMatrix.getMPICommunicator(),
+              gpucclMpiCommDomain,
 							interBandGroupComm,
 							&eigenValues[0],
 							cublasHandle,
@@ -970,6 +977,7 @@ namespace dftfe
 							isElpaStep1,
 							isElpaStep2,
 							operatorMatrix.getMPICommunicator(),
+              gpucclMpiCommDomain,
 							interBandGroupComm,
 							&eigenValues[0],
 							cublasHandle,
@@ -988,6 +996,7 @@ namespace dftfe
 							isElpaStep1,
 							isElpaStep2,
 							operatorMatrix.getMPICommunicator(),
+              gpucclMpiCommDomain,
 							interBandGroupComm,
 							&eigenValues[0],
 							cublasHandle,
@@ -1097,6 +1106,7 @@ namespace dftfe
 				distributedCPUVec<double>  & tempEigenVec,
 				const unsigned int totalNumberWaveFunctions,
 				std::vector<double>        & eigenValues,
+        GPUCCLWrapper & gpucclMpiCommDomain,
 				const MPI_Comm &interBandGroupComm,
 				dealii::ScaLAPACKMatrix<double> & projHamPar,
 				dealii::ScaLAPACKMatrix<double> & overlapMatPar,
@@ -1352,6 +1362,7 @@ namespace dftfe
 					 localVectorSize,
 					 totalNumberWaveFunctions,
 					 operatorMatrix.getMPICommunicator(),
+           gpucclMpiCommDomain,
 					 interBandGroupComm,
 					 cublasHandle,
 					 useMixedPrecOverall);
@@ -1375,757 +1386,4 @@ namespace dftfe
 				std::cout<<"Time for all no RR Chebyshev filtering passes on GPU: "<<gpu_time<<std::endl;
 #endif
 		}
-
-	//
-	// solve
-	//
-	void
-		chebyshevOrthogonalizedSubspaceIterationSolverCUDA::solveNoRRMixedPrec(operatorDFTCUDAClass  & operatorMatrix,
-				double* eigenVectorsFlattenedCUDA,
-				const unsigned int flattenedSize,
-				distributedCPUVec<double>  & tempEigenVec,
-				const unsigned int totalNumberWaveFunctions,
-				std::vector<double>        & eigenValues,
-				const MPI_Comm &interBandGroupComm,
-				const bool isXlBOMDLinearizedSolve,
-				const unsigned int numberPasses,
-				const bool useMixedPrecOverall)
-		{
-#ifdef USE_COMPLEX
-			AssertThrow(false,dftUtils::ExcNotImplementedYet());
-#else
-			double gpu_time, start_time, sub_gpu_time;
-			int this_process;
-
-			MPI_Comm_rank(MPI_COMM_WORLD, &this_process);
-
-
-			cublasHandle_t & cublasHandle =
-				operatorMatrix.getCublasHandle();
-
-			//
-			//allocate memory for full flattened array on device and fill it up
-			//
-			const unsigned int localVectorSize = flattenedSize/totalNumberWaveFunctions;
-
-			cudaDeviceSynchronize(); 
-			MPI_Barrier(MPI_COMM_WORLD);
-			start_time = MPI_Wtime();
-
-			//band group parallelization data structures
-			const unsigned int numberBandGroups=
-				dealii::Utilities::MPI::n_mpi_processes(interBandGroupComm);
-
-
-			const unsigned int bandGroupTaskId = dealii::Utilities::MPI::this_mpi_process(interBandGroupComm);
-			std::vector<unsigned int> bandGroupLowHighPlusOneIndices;
-			dftUtils::createBandParallelizationIndices(interBandGroupComm,
-					totalNumberWaveFunctions,
-					bandGroupLowHighPlusOneIndices);
-
-			const unsigned int wfcBlockSize=std::min(dftParameters::wfcBlockSize,
-					totalNumberWaveFunctions);
-
-
-			const unsigned int chebyBlockSize=std::min(dftParameters::chebyWfcBlockSize,
-					totalNumberWaveFunctions);
-
-			distributedGPUVec<double> cudaFlattenedArrayBlock;
-			vectorTools::createDealiiVector(operatorMatrix.getMatrixFreeData()->get_vector_partitioner(),
-					chebyBlockSize,
-					cudaFlattenedArrayBlock);
-
-
-			distributedGPUVec<double> YArray;
-			YArray.reinit(cudaFlattenedArrayBlock);
-
-
-			distributedGPUVec<float> cudaFlattenedFloatArrayBlock;
-			vectorTools::createDealiiVector(operatorMatrix.getMatrixFreeData()->get_vector_partitioner(),
-					chebyBlockSize,
-					cudaFlattenedFloatArrayBlock);
-
-
-			distributedGPUVec<double> projectorKetTimesVector;
-			vectorTools::createDealiiVector(operatorMatrix.getProjectorKetTimesVectorSingle().get_partitioner(),
-					chebyBlockSize,
-					projectorKetTimesVector);
-
-
-			distributedGPUVec<float>  projectorKetTimesVectorFloat;
-			if (dftParameters::useMixedPrecChebyNonLocal)
-				vectorTools::createDealiiVector(operatorMatrix.getProjectorKetTimesVectorSingle().get_partitioner(),
-						chebyBlockSize,
-						projectorKetTimesVectorFloat);
-
-
-			distributedGPUVec<double> cudaFlattenedArrayBlock2;
-			if (dftParameters::overlapComputeCommunCheby)
-				cudaFlattenedArrayBlock2.reinit(cudaFlattenedArrayBlock);
-
-
-			distributedGPUVec<double> YArray2;
-			if (dftParameters::overlapComputeCommunCheby)
-				YArray2.reinit(cudaFlattenedArrayBlock2);
-
-
-			distributedGPUVec<double> projectorKetTimesVector2;
-			if (dftParameters::overlapComputeCommunCheby)
-				projectorKetTimesVector2.reinit(projectorKetTimesVector);
-
-			computing_timer.enter_section("Lanczos k-step Upper Bound");
-			const double d_upperBoundUnWantedSpectrum =linearAlgebraOperationsCUDA::lanczosLowerUpperBoundEigenSpectrum(operatorMatrix,
-					tempEigenVec,
-          cudaFlattenedArrayBlock,
-          YArray,
-          projectorKetTimesVector,          
-          chebyBlockSize).second;
-			computing_timer.exit_section("Lanczos k-step Upper Bound");
-			unsigned int chebyshevOrder = dftParameters::chebyshevOrder;
-
-			//
-			//set Chebyshev order
-			//
-			if(chebyshevOrder == 0)
-				chebyshevOrder=internal::setChebyshevOrder(d_upperBoundUnWantedSpectrum);
-
-			chebyshevOrder = (dftParameters::isPseudopotential)?chebyshevOrder*dftParameters::chebyshevFilterPolyDegreeFirstScfScalingFactor:chebyshevOrder;
-
-
-			//
-			//output statements
-			//
-			if (dftParameters::verbosity>=2)
-			{
-				char buffer[100];
-
-				sprintf(buffer, "%s:%18.10e\n", "upper bound of unwanted spectrum", d_upperBoundUnWantedSpectrum);
-				pcout << buffer;
-				sprintf(buffer, "%s:%18.10e\n", "lower bound of unwanted spectrum", d_lowerBoundUnWantedSpectrum);
-				pcout << buffer;
-				sprintf(buffer, "%s: %u\n\n", "Chebyshev polynomial degree", chebyshevOrder);
-				pcout << buffer;
-			}
-
-
-			//
-			//scale the eigenVectors (initial guess of single atom wavefunctions or previous guess) to convert into Lowden Orthonormalized FE basis
-			//multiply by M^{1/2}
-			scaleCUDAKernel<<<(totalNumberWaveFunctions+255)/256*localVectorSize,256>>>(totalNumberWaveFunctions,
-					localVectorSize,
-					1.0,
-					eigenVectorsFlattenedCUDA,
-					operatorMatrix.getSqrtMassVec());
-
-			const unsigned int M = localVectorSize;
-			const unsigned int N = totalNumberWaveFunctions;
-
-			unsigned int vectorsBlockSize=std::min(dftParameters::wfcBlockSize,
-					N);
-
-			const unsigned int maxNumLocalDofs=dealii::Utilities::MPI::max(M,operatorMatrix.getMPICommunicator());
-
-			const unsigned int dofsBlockSize=std::min(maxNumLocalDofs,
-					dftParameters::subspaceRotDofsBlockSize);
-
-			const float scalarCoeffAlphaSP = 1.0,scalarCoeffBetaSP = 0.0;
-
-			thrust::device_vector<float> rotationMatBlockSP(vectorsBlockSize*N,0.0);
-			thrust::device_vector<float> rotatedVectorsMatBlockSP(vectorsBlockSize*dofsBlockSize,0.0);
-
-			float * rotationMatBlockHostSP;
-			cudaMallocHost((void **)&rotationMatBlockHostSP,vectorsBlockSize*N*sizeof(float));
-			std::memset(rotationMatBlockHostSP,0,vectorsBlockSize*N*sizeof(float));
-
-			double * diagValuesHost;
-			cudaMallocHost((void **)&diagValuesHost,N*sizeof(double));
-
-
-			const unsigned int MPadded=std::ceil(M*1.0/8.0)*8.0+0.5;
-			thrust::device_vector<float> XSP(MPadded*N,0.0);
-
-
-			std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid> processGrid;
-
-			const unsigned int rowsBlockSize=operatorMatrix.getScalapackBlockSize();
-			linearAlgebraOperationsCUDA::internal::createProcessGridSquareMatrix(operatorMatrix.getMPICommunicator(),
-					N,
-					processGrid);
-
-			dealii::ScaLAPACKMatrix<double> LMatPar(N,
-					processGrid,
-					rowsBlockSize);
-
-
-			dealii::ScaLAPACKMatrix<double> overlapMatPar(N,
-					processGrid,
-					rowsBlockSize);
-
-
-
-			for (unsigned int ipass = 0; ipass < numberPasses; ipass++)
-			{
-				if (this_process==0 && dftParameters::verbosity>=1)
-					std::cout<<"Beginning no RR Chebyshev filter subpspace iteration pass: "<<ipass+1<<std::endl;
-
-
-				convDoubleArrToFloatArr<<<(N+255)/256*M,256>>>(N*M,
-						eigenVectorsFlattenedCUDA,
-						thrust::raw_pointer_cast(&XSP[0]));
-
-
-				if (dftParameters::gpuFineGrainedTimings)
-				{
-					cudaDeviceSynchronize();
-					MPI_Barrier(MPI_COMM_WORLD);
-					gpu_time = MPI_Wtime();
-				}
-
-
-				if(dftParameters::gpuFineGrainedTimings)
-				{
-					cudaDeviceSynchronize();
-					MPI_Barrier(MPI_COMM_WORLD);
-					gpu_time = MPI_Wtime() - gpu_time;
-					if (this_process==0)
-						std::cout<<"Time for creating processGrid and ScaLAPACK matrix for pass: "<<ipass<<" is "<<gpu_time<<std::endl;
-				}
-
-
-
-				if(ipass > 0)
-				{
-
-					if(dftParameters::gpuFineGrainedTimings)
-					{
-						cudaDeviceSynchronize();
-						MPI_Barrier(MPI_COMM_WORLD);
-						gpu_time = MPI_Wtime();
-					}
-
-
-					//S=X*X^{T}. Implemented as S=X^{T}*X with X^{T} stored in the column major format
-					if (dftParameters::useMixedPrecPGS_O && useMixedPrecOverall)
-					{
-						if(dftParameters::overlapComputeCommunOrthoRR)
-							linearAlgebraOperationsCUDA::
-								fillParallelOverlapMatMixedPrecScalapackAsyncComputeCommun
-								(eigenVectorsFlattenedCUDA,
-								 M,
-								 N,
-								 cublasHandle,
-								 operatorMatrix.getMPICommunicator(),
-								 interBandGroupComm,
-								 processGrid,
-								 overlapMatPar);
-						else
-							linearAlgebraOperationsCUDA::
-								fillParallelOverlapMatMixedPrecScalapack
-								(eigenVectorsFlattenedCUDA,
-								 M,
-								 N,
-								 cublasHandle,
-								 operatorMatrix.getMPICommunicator(),
-								 interBandGroupComm,
-								 processGrid,
-								 overlapMatPar);
-					}
-					else
-					{
-						if(dftParameters::overlapComputeCommunOrthoRR)
-							linearAlgebraOperationsCUDA::
-								fillParallelOverlapMatScalapackAsyncComputeCommun
-								(eigenVectorsFlattenedCUDA,
-								 M,
-								 N,
-								 cublasHandle,
-								 operatorMatrix.getMPICommunicator(),
-								 interBandGroupComm,
-								 processGrid,
-								 overlapMatPar); 
-						else
-							linearAlgebraOperationsCUDA::
-								fillParallelOverlapMatScalapack
-								(eigenVectorsFlattenedCUDA,
-								 M,
-								 N,
-								 cublasHandle,
-								 operatorMatrix.getMPICommunicator(),
-								 interBandGroupComm,
-								 processGrid,
-								 overlapMatPar); 
-					}
-
-					if (dftParameters::gpuFineGrainedTimings)
-					{
-						cudaDeviceSynchronize();
-						MPI_Barrier(MPI_COMM_WORLD);
-						gpu_time = MPI_Wtime() - gpu_time;
-						if (this_process==0)
-						{
-							if (dftParameters::useMixedPrecPGS_O && useMixedPrecOverall)
-								std::cout<<"Time for PGS Fill overlap matrix GPU mixed prec (option 0): "<<gpu_time<<std::endl;
-							else
-								std::cout<<"Time for PGS Fill overlap matrix (option 0): "<<gpu_time<<std::endl;
-						}
-					}
-
-					if(dftParameters::gpuFineGrainedTimings)  
-					{
-						cudaDeviceSynchronize();
-						MPI_Barrier(MPI_COMM_WORLD);
-						gpu_time = MPI_Wtime(); 
-					}
-
-					overlapMatPar.compute_cholesky_factorization();
-
-					dealii::LAPACKSupport::Property overlapMatPropertyPostCholesky=overlapMatPar.get_property();
-
-					AssertThrow(overlapMatPropertyPostCholesky==dealii::LAPACKSupport::Property::lower_triangular
-							||overlapMatPropertyPostCholesky==dealii::LAPACKSupport::Property::upper_triangular
-							,dealii::ExcMessage("DFT-FE Error: overlap matrix property after cholesky factorization incorrect"));
-
-
-					LMatPar.set_property(overlapMatPropertyPostCholesky);
-
-
-					//copy triangular part of projHamPar into LMatPar
-					if (processGrid->is_process_active())
-						for (unsigned int i = 0; i < overlapMatPar.local_n(); ++i)
-						{
-							const unsigned int glob_i = overlapMatPar.global_column(i);
-							for (unsigned int j = 0; j < overlapMatPar.local_m(); ++j)
-							{
-								const unsigned int glob_j = overlapMatPar.global_row(j);
-								if (overlapMatPropertyPostCholesky==dealii::LAPACKSupport::Property::lower_triangular)
-								{
-									if (glob_i <= glob_j)
-										LMatPar.local_el(j, i)=overlapMatPar.local_el(j, i);
-									else
-										LMatPar.local_el(j, i)=0;
-								}
-								else
-								{
-									if (glob_j <= glob_i)
-										LMatPar.local_el(j, i)=overlapMatPar.local_el(j, i);
-									else
-										LMatPar.local_el(j, i)=0;
-								}
-							}
-						}
-
-					LMatPar.invert();
-
-					if(dftParameters::gpuFineGrainedTimings)
-					{
-						cudaDeviceSynchronize();
-						MPI_Barrier(MPI_COMM_WORLD);
-						gpu_time = MPI_Wtime() - gpu_time;
-						if(this_process==0)
-							std::cout<<"Time for PGS Cholesky Triangular Mat inverse ScaLAPACK (option 0): "<<gpu_time<<std::endl;
-					}
-
-				}//end of iPass
-
-				//start of subspace rotation procedure
-				std::map<unsigned int, unsigned int> globalToLocalColumnIdMap;
-				std::map<unsigned int, unsigned int> globalToLocalRowIdMap;
-				linearAlgebraOperationsCUDA::internal::createGlobalToLocalIdMapsScaLAPACKMat(processGrid,
-						LMatPar,
-						globalToLocalRowIdMap,
-						globalToLocalColumnIdMap);
-
-				thrust::device_vector<double> diagValues(N,0.0);
-				std::memset(diagValuesHost,0,N*sizeof(double));
-
-
-				if(ipass > 0)
-				{
-					//Extract DiagQ from parallel ScaLAPACK matrix Q
-					if(LMatPar.get_property()==dealii::LAPACKSupport::Property::upper_triangular)
-					{
-						if (processGrid->is_process_active())
-							for (unsigned int i = 0; i <N; ++i)
-								if (globalToLocalRowIdMap.find(i)
-										!=globalToLocalRowIdMap.end())
-								{
-									const unsigned int localRowId=globalToLocalRowIdMap[i];
-									std::map<unsigned int, unsigned int>::iterator it=
-										globalToLocalColumnIdMap.find(i);
-									if (it!=globalToLocalColumnIdMap.end())
-									{
-										diagValuesHost[i]=LMatPar.local_el(localRowId,
-												it->second);
-									}
-								}
-					}
-					else
-					{
-						if (processGrid->is_process_active())
-							for (unsigned int i = 0; i <N; ++i)
-								if(globalToLocalColumnIdMap.find(i)
-										!=globalToLocalColumnIdMap.end())
-								{
-									const unsigned int localColumnId=globalToLocalColumnIdMap[i];
-									std::map<unsigned int, unsigned int>::iterator it=
-										globalToLocalRowIdMap.find(i);
-									if (globalToLocalRowIdMap.find(i)!=globalToLocalRowIdMap.end())
-									{
-										diagValuesHost[i]
-											=LMatPar.local_el(it->second,
-													localColumnId);
-									}
-								}
-					}
-
-					MPI_Allreduce(MPI_IN_PLACE,
-							diagValuesHost,
-							N,
-							MPI_DOUBLE,
-							MPI_SUM,
-							operatorMatrix.getMPICommunicator());
-
-					cudaMemcpy(thrust::raw_pointer_cast(&diagValues[0]),
-							diagValuesHost,
-							N*sizeof(double),
-							cudaMemcpyHostToDevice);
-
-					computeDiagQTimesXKernel<<<(M*N+255)/256,256>>>(thrust::raw_pointer_cast(&diagValues[0]),
-							eigenVectorsFlattenedCUDA,
-							N,
-							M);
-
-
-
-				}//end of iPass condition
-
-
-				//think you have to modify ivec limits
-				unsigned int iVecLimit = vectorsBlockSize;
-
-
-				for (unsigned int ivec = 0; ivec < totalNumberWaveFunctions+iVecLimit; ivec += vectorsBlockSize)
-				{
-
-					// Correct block dimensions if block "goes off edge of" the matrix
-					const unsigned int BVecSR = std::min(vectorsBlockSize, N-ivec);
-					const unsigned int D=ivec+BVecSR;
-					MPI_Request requestForExtractingLMatInv;
-
-					if(ipass > 0 && ivec < totalNumberWaveFunctions)
-					{
-						if(dftParameters::verbosity >= 4)
-							pcout<<" Begin extraction of inverse Cholesky factor for the WFC BLOCK : "<<ivec<<std::endl;
-
-						std::memset(rotationMatBlockHostSP,0,BVecSR*N*sizeof(float));
-
-						//Extract QBVec from parallel ScaLAPACK matrix Q
-						if(LMatPar.get_property()==dealii::LAPACKSupport::Property::upper_triangular)
-						{
-							if (processGrid->is_process_active())
-								for (unsigned int i = 0; i <D; ++i)
-									if (globalToLocalRowIdMap.find(i)
-											!=globalToLocalRowIdMap.end())
-									{
-										const unsigned int localRowId=globalToLocalRowIdMap[i];
-										for (unsigned int j = 0; j <BVecSR; ++j)
-										{
-											std::map<unsigned int, unsigned int>::iterator it=
-												globalToLocalColumnIdMap.find(j+ivec);
-											if(it!=globalToLocalColumnIdMap.end())
-											{
-												rotationMatBlockHostSP[i*BVecSR+j]=
-													LMatPar.local_el(localRowId,
-															it->second);
-											}
-										}
-
-										if (i>=ivec && i<(ivec+BVecSR))
-										{
-											std::map<unsigned int, unsigned int>::iterator it=
-												globalToLocalColumnIdMap.find(i);
-											if (it!=globalToLocalColumnIdMap.end())
-											{
-												rotationMatBlockHostSP[i*BVecSR+i-ivec]=0.0;
-											}
-										}
-									}
-						}
-						else
-						{
-							if (processGrid->is_process_active())
-								for (unsigned int i = 0; i <D; ++i)
-									if(globalToLocalColumnIdMap.find(i)
-											!=globalToLocalColumnIdMap.end())
-									{
-										const unsigned int localColumnId=globalToLocalColumnIdMap[i];
-										for (unsigned int j = 0; j <BVecSR; ++j)
-										{
-											std::map<unsigned int, unsigned int>::iterator it=
-												globalToLocalRowIdMap.find(j+ivec);
-											if (it!=globalToLocalRowIdMap.end())
-											{
-												rotationMatBlockHostSP[i*BVecSR+j]=
-													LMatPar.local_el(it->second,
-															localColumnId);
-											}
-										}
-
-										if (i>=ivec && i<(ivec+BVecSR))
-										{
-											std::map<unsigned int, unsigned int>::iterator it=
-												globalToLocalRowIdMap.find(i);
-											if (globalToLocalRowIdMap.find(i)!=globalToLocalRowIdMap.end())
-											{
-												rotationMatBlockHostSP[i*BVecSR+i-ivec]=0.0;
-											}
-										}
-									}
-						}
-
-						//call MPI_IAllReduce later
-						if(ivec == 0)
-						{
-							MPI_Allreduce(MPI_IN_PLACE,
-									rotationMatBlockHostSP,
-									BVecSR*D,
-									MPI_FLOAT,
-									MPI_SUM,
-									operatorMatrix.getMPICommunicator());
-						}
-						else
-						{
-							MPI_Iallreduce(MPI_IN_PLACE,
-									rotationMatBlockHostSP,
-									BVecSR*D,
-									MPI_FLOAT,
-									MPI_SUM,
-									operatorMatrix.getMPICommunicator(),
-									&requestForExtractingLMatInv);
-						}
-
-
-						if(dftParameters::verbosity >= 4)
-							pcout<<" End extraction of inverse Cholesky factor for the WFC BLOCK : "<<ivec<<std::endl;
-
-					}//end of iPass>0
-
-					//two blocks of wavefunctions are filtered simultaneously when overlap compute communication in chebyshev
-					//filtering is toggled on
-					const unsigned int numSimultaneousBlocks=dftParameters::overlapComputeCommunCheby?2:1;
-					unsigned int numSimultaneousBlocksCurrent=numSimultaneousBlocks;
-					const unsigned int numWfcsInBandGroup= totalNumberWaveFunctions;//bandGroupLowHighPlusOneIndices[2*bandGroupTaskId+1]-bandGroupLowHighPlusOneIndices[2*bandGroupTaskId];
-					unsigned int jvecInit = ivec;
-					if(ivec > 0)
-						jvecInit = ivec - vectorsBlockSize;
-
-					if((ivec > 0 && ipass < numberPasses - 1))
-					{
-						if(dftParameters::verbosity >= 4)
-							pcout<<" Begin ChebyShev Filtering of WFC BLOCK : "<<jvecInit<<std::endl;
-
-						for (unsigned int jvec = jvecInit; jvec < (jvecInit+wfcBlockSize); jvec += numSimultaneousBlocksCurrent*chebyBlockSize)
-						{
-							if(dftParameters::verbosity >= 4)
-								pcout<<" Begin ChebyShev Filtering of CHEB BLOCK : "<<jvec<<std::endl;
-
-							// Correct block dimensions if block "goes off edge of" the matrix
-							const unsigned int BVec = chebyBlockSize;//std::min(vectorsBlockSize, totalNumberWaveFunctions-jvec);
-
-							//handle edge case when total number of blocks in a given band group is not even in case of 
-							//overlapping computation and communciation in chebyshev filtering 
-							const unsigned int leftIndexBandGroupMargin=(jvec/numWfcsInBandGroup)*numWfcsInBandGroup;
-							numSimultaneousBlocksCurrent
-								=((jvec+numSimultaneousBlocks*BVec-leftIndexBandGroupMargin)<=numWfcsInBandGroup && numSimultaneousBlocks==2)?2:1;
-
-							//if ((jvec+numSimultaneousBlocksCurrent*BVec)<=bandGroupLowHighPlusOneIndices[2*bandGroupTaskId+1] &&
-							//(jvec+numSimultaneousBlocksCurrent*BVec)>bandGroupLowHighPlusOneIndices[2*bandGroupTaskId])
-							if((jvec+numSimultaneousBlocksCurrent*BVec)<=totalNumberWaveFunctions &&
-									(jvec+numSimultaneousBlocksCurrent*BVec)> 0)
-							{
-
-								//copy from vector containg all wavefunction vectors to current wavefunction vectors block
-								stridedCopyToBlockKernel<<<(BVec+255)/256*localVectorSize, 256>>>(BVec,
-										localVectorSize,
-										eigenVectorsFlattenedCUDA,
-										totalNumberWaveFunctions,
-										cudaFlattenedArrayBlock.begin(),
-										jvec);
-
-								if (dftParameters::overlapComputeCommunCheby && numSimultaneousBlocksCurrent==2)
-									stridedCopyToBlockKernel<<<(BVec+255)/256*localVectorSize, 256>>>(BVec,
-											localVectorSize,
-											eigenVectorsFlattenedCUDA,
-											totalNumberWaveFunctions,
-											cudaFlattenedArrayBlock2.begin(),
-											jvec+BVec);
-
-								//
-								//call Chebyshev filtering function only for the current block or two simulataneous blocks
-								//(in case of overlap computation and communication) to be filtered and does in-place filtering
-								if (dftParameters::overlapComputeCommunCheby && numSimultaneousBlocksCurrent==2)
-								{
-                  linearAlgebraOperationsCUDA::chebyshevFilter(operatorMatrix,
-                      cudaFlattenedArrayBlock,
-                      YArray,
-                      cudaFlattenedFloatArrayBlock,
-                      projectorKetTimesVector,
-                      projectorKetTimesVectorFloat,
-                      cudaFlattenedArrayBlock2,
-                      YArray2,
-                      projectorKetTimesVector2,
-                      localVectorSize,
-                      BVec,
-                      chebyshevOrder,
-                      d_lowerBoundUnWantedSpectrum,
-                      d_upperBoundUnWantedSpectrum,
-                      d_lowerBoundWantedSpectrum,
-                      useMixedPrecOverall);
-								}
-								else
-								{
-                  linearAlgebraOperationsCUDA::chebyshevFilter(operatorMatrix,
-                      cudaFlattenedArrayBlock,
-                      YArray,
-                      cudaFlattenedFloatArrayBlock,
-                      projectorKetTimesVector,
-                      localVectorSize,
-                      BVec,
-                      chebyshevOrder,
-                      d_lowerBoundUnWantedSpectrum,
-                      d_upperBoundUnWantedSpectrum,
-                      d_lowerBoundWantedSpectrum,
-                      useMixedPrecOverall);
-								}
-
-								//copy current wavefunction vectors block to vector containing all wavefunction vectors
-								stridedCopyFromBlockKernel<<<(BVec+255)/256*localVectorSize, 256>>>(BVec,
-										localVectorSize,
-										cudaFlattenedArrayBlock.begin(),
-										totalNumberWaveFunctions,
-										eigenVectorsFlattenedCUDA,
-										jvec);
-
-								if (dftParameters::overlapComputeCommunCheby && numSimultaneousBlocksCurrent==2)
-									stridedCopyFromBlockKernel<<<(BVec+255)/256*localVectorSize, 256>>>(BVec,
-											localVectorSize,
-											cudaFlattenedArrayBlock2.begin(),
-											totalNumberWaveFunctions,
-											eigenVectorsFlattenedCUDA,
-											jvec+BVec);
-							}
-							else
-							{
-								//set to zero wavefunctions which wont go through chebyshev filtering inside a given band group
-								setZeroKernel<<<(numSimultaneousBlocksCurrent*BVec+255)/256*localVectorSize, 256>>>(numSimultaneousBlocksCurrent*BVec,
-										localVectorSize,
-										totalNumberWaveFunctions,
-										eigenVectorsFlattenedCUDA,
-										jvec);
-							}
-
-						}//cheby block loop
-
-						if(dftParameters::verbosity >= 4)
-							pcout<<" End ChebyShev Filtering of WFC BLOCK : "<<jvecInit<<std::endl;
-
-					}//if(ivec > 0 || iPass == 0) condition
-
-
-					if(ipass > 0 && ivec < totalNumberWaveFunctions)
-					{
-						if(dftParameters::verbosity >= 4)
-							pcout<<" Begin compute operation of subspace rotation in WFC BLOCK : "<<ivec<<std::endl;
-
-						if(ivec > 0)
-							MPI_Wait(&requestForExtractingLMatInv,MPI_STATUS_IGNORE);
-
-						cudaMemcpy(thrust::raw_pointer_cast(&rotationMatBlockSP[0]),
-								rotationMatBlockHostSP,
-								BVecSR*D*sizeof(float),
-								cudaMemcpyHostToDevice);
-
-						for (unsigned int idof = 0; idof < maxNumLocalDofs; idof += dofsBlockSize)
-						{
-
-							// Correct block dimensions if block "goes off edge of" the matrix
-							unsigned int BDof=0;
-							if (M>=idof)
-								BDof = std::min(dofsBlockSize, M-idof);
-
-							if (BDof!=0)
-							{
-								cublasSgemm(cublasHandle,
-										CUBLAS_OP_N,
-										CUBLAS_OP_N,
-										BVecSR,
-										BDof,
-										D,
-										&scalarCoeffAlphaSP,
-										thrust::raw_pointer_cast(&rotationMatBlockSP[0]),
-										BVecSR,
-										thrust::raw_pointer_cast(&XSP[0])+idof*N,
-										N,
-										&scalarCoeffBetaSP,
-										thrust::raw_pointer_cast(&rotatedVectorsMatBlockSP[0]),
-										BVecSR);
-
-
-								addSubspaceRotatedBlockToXKernel<<<(BVecSR*BDof+255)/256,256>>>(BDof,
-										BVecSR,
-										thrust::raw_pointer_cast(&rotatedVectorsMatBlockSP[0]),
-										eigenVectorsFlattenedCUDA,
-										idof,
-										ivec,
-										N);
-							}
-						}//block loop over dofs
-
-						if(dftParameters::verbosity >= 4)
-							pcout<<" End compute operation of subspace rotation in WFC BLOCK : "<<ivec<<std::endl;
-
-					}
-				}//wfc block loop
-
-				if(dftParameters::verbosity >= 4)
-					pcout<<" ChebyShev Filtering with Orthogonalization overlap Done: "<<std::endl;
-
-				//copy eigenVectorsFlattenedCUDANext to eigenVectorsFlattenedCUDA after cheb filtering of all the wavefunctions
-
-
-				/*linearAlgebraOperationsCUDA::pseudoGramSchmidtOrthogonalization
-				  (operatorMatrix,
-				  eigenVectorsFlattenedCUDA,
-				  localVectorSize,
-				  totalNumberWaveFunctions,
-				  operatorMatrix.getMPICommunicator(),
-				  interBandGroupComm,
-				  cublasHandle,
-				  useMixedPrecOverall);*/
-
-				//cudaFreeHost(diagValuesHost);
-				//cudaFreeHost(rotationMatBlockHostSP);
-			}
-			cudaFreeHost(diagValuesHost);
-			cudaFreeHost(rotationMatBlockHostSP);
-
-
-			//
-			//scale the eigenVectors with M^{-1/2} to represent the wavefunctions in the usual FE basis
-			//
-			scaleCUDAKernel<<<(totalNumberWaveFunctions+255)/256*localVectorSize,256>>>(totalNumberWaveFunctions,
-					localVectorSize,
-					1.0,
-					eigenVectorsFlattenedCUDA,
-					operatorMatrix.getInvSqrtMassVec());
-
-			cudaDeviceSynchronize();
-			MPI_Barrier(MPI_COMM_WORLD);
-			gpu_time = MPI_Wtime() - start_time;
-
-			if (this_process==0 && dftParameters::verbosity>=2)
-				std::cout<<"Time for all no RR Chebyshev filtering passes on GPU: "<<gpu_time<<std::endl;
-#endif
-		}
-
 }

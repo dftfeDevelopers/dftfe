@@ -84,7 +84,6 @@ namespace dftfe {
 		double mpiAllReduceMessageBlockSizeMB=2.0;
 		bool useMixedPrecPGS_SR=false;
 		bool useMixedPrecPGS_O=false;
-		bool useAsyncChebPGS_SR = false;
 		bool useMixedPrecXTHXSpectrumSplit=false;
 		bool useMixedPrecSubspaceRotSpectrumSplit=false;
 		bool useMixedPrecSubspaceRotRR=false;
@@ -136,6 +135,7 @@ namespace dftfe {
     bool nonLinearCoreCorrection=false;
     unsigned int maxLineSearchIterCGPRP=5;
     std::string atomicMassesFile="";
+    bool useGPUDirectAllReduce=false;
 
 		void declare_parameters(ParameterHandler &prm)
 		{
@@ -171,6 +171,10 @@ namespace dftfe {
 				prm.declare_entry("SUBSPACE ROT FULL CPU MEM", "true",
 						Patterns::Bool(),
 						"[Developer] Option to use full NxN memory on CPU in subspace rotation and when mixed precision optimization is not being used. This reduces the number of MPI_Allreduce communication calls. Default: true.");
+
+				prm.declare_entry("USE GPUDIRECT MPI ALL REDUCE", "false",
+						Patterns::Bool(),
+						"[Developer] Use GPUDIRECT MPI_Allreduce. This route will only work if DFT-FE is compiled with NVIDIA NCCL library. Default: false.");        
 			}
 			prm.leave_subsection ();
 
@@ -686,11 +690,6 @@ namespace dftfe {
 							Patterns::Bool(),
 							"[Advanced] Overlap communication and computation in Chebyshev filtering. This option can only be activated for USE GPU=true. Default setting is true.");
 
-
-					prm.declare_entry("OVERLAP CHEB PGS SR","false",
-							Patterns::Bool(),
-							"[Advanced] Overlap Chebyshev filtering and subspace rotation. This option can only be activated when RR step is skipped for certial problems. Default setting is false.");
-
 					prm.declare_entry("OVERLAP COMPUTE COMMUN ORTHO RR", "true",
 							Patterns::Bool(),
 							"[Advanced] Overlap communication and computation in orthogonalization and Rayleigh-Ritz. This option can only be activated for USE GPU=true. Default setting is true.");
@@ -839,6 +838,7 @@ namespace dftfe {
 				dftParameters::gpuFineGrainedTimings=prm.get_bool("FINE GRAINED GPU TIMINGS");
 				dftParameters::allowFullCPUMemSubspaceRot=prm.get_bool("SUBSPACE ROT FULL CPU MEM");
 				dftParameters::autoGPUBlockSizes=prm.get_bool("AUTO GPU BLOCK SIZES");
+        dftParameters::useGPUDirectAllReduce=prm.get_bool("USE GPUDIRECT MPI ALL REDUCE");
 			}
 			prm.leave_subsection ();
 
@@ -1011,7 +1011,6 @@ namespace dftfe {
 					dftParameters::useMixedPrecSubspaceRotRR= prm.get_bool("USE MIXED PREC RR_SR");
 					dftParameters::useMixedPrecCheby= prm.get_bool("USE MIXED PREC CHEBY");
 					dftParameters::useMixedPrecChebyNonLocal= prm.get_bool("USE MIXED PREC CHEBY NON LOCAL");
-					dftParameters::useAsyncChebPGS_SR = prm.get_bool("OVERLAP CHEB PGS SR");
 					dftParameters::useSinglePrecXtHXOffDiag=prm.get_bool("USE SINGLE PREC XTHX OFF DIAGONAL");
 					dftParameters::overlapComputeCommunCheby= prm.get_bool("OVERLAP COMPUTE COMMUN CHEBY");
 					dftParameters::overlapComputeCommunOrthoRR= prm.get_bool("OVERLAP COMPUTE COMMUN ORTHO RR");
@@ -1097,6 +1096,10 @@ namespace dftfe {
 
 #ifndef DFTFE_WITH_ELPA
 			dftParameters::useELPA=false;
+#endif
+
+#ifndef DFTFE_WITH_NCCL
+			dftParameters::useGPUDirectAllReduce=false;
 #endif
 
 			if (dftParameters::isCellStress)

@@ -22,7 +22,7 @@
 #include "headers.h"
 #include "operatorCUDA.h"
 #include "dftParameters.h"
-
+#include "gpuDirectCCLWrapper.h"
 
 namespace dftfe
 {
@@ -44,7 +44,7 @@ namespace dftfe
 			 * @param lowerBoundUnWantedSpectrum Lower Bound of the UnWanted Spectrum.
 			 */
 			chebyshevOrthogonalizedSubspaceIterationSolverCUDA
-				(const MPI_Comm &mpi_comm,
+				(const MPI_Comm &mpi_comm_domain,
 				 double lowerBoundWantedSpectrum,
 				 double lowerBoundUnWantedSpectrum,
          double upperBoundUnWantedSpectrum);
@@ -67,6 +67,7 @@ namespace dftfe
 					const unsigned int totalNumberWaveFunctions,
 					std::vector<double> & eigenValues,
 					std::vector<double> & residuals,
+          GPUCCLWrapper & gpucclMpiCommDomain,
 					const MPI_Comm &interBandGroupComm,
 					dealii::ScaLAPACKMatrix<double> & projHamPar,
 					dealii::ScaLAPACKMatrix<double> & overlapMatPar,
@@ -78,7 +79,9 @@ namespace dftfe
 					const bool isElpaStep1=false,
 					const bool isElpaStep2=false);
 
-
+			/**
+			 * @brief Used for XL-BOMD.
+			 */
 			void onlyRR(operatorDFTCUDAClass & operatorMatrix,
 					double* eigenVectorsFlattenedCUDA,
 					double* eigenVectorsRotFracDensityFlattenedCUDA,
@@ -86,6 +89,7 @@ namespace dftfe
 					distributedCPUVec<double> & tempEigenVec,
 					const unsigned int totalNumberWaveFunctions,
 					std::vector<double> & eigenValues,
+          GPUCCLWrapper & gpucclMpiCommDomain,
 					const MPI_Comm &interBandGroupComm,
 					dealii::ScaLAPACKMatrix<double> & projHamPar,
 					dealii::ScaLAPACKMatrix<double> & overlapMatPar,
@@ -95,7 +99,7 @@ namespace dftfe
 					const bool isElpaStep2=false);
 
 			/**
-			 * @brief Solve a generalized eigen problem.
+			 * @brief Used for XL-BOMD.
 			 */
 			void solveNoRR(operatorDFTCUDAClass & operatorMatrix,
 					double* eigenVectorsFlattenedCUDA,
@@ -103,22 +107,11 @@ namespace dftfe
 					distributedCPUVec<double> & tempEigenVec,
 					const unsigned int totalNumberWaveFunctions,
 					std::vector<double> & eigenValues,
+          GPUCCLWrapper & gpucclMpiCommDomain,
 					const MPI_Comm &interBandGroupComm,
 					dealii::ScaLAPACKMatrix<double> & projHamPar,
 					dealii::ScaLAPACKMatrix<double> & overlapMatPar,
 					const std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid> & processGrid,
-					const bool isXlBOMDLinearizedSolve,
-					const unsigned int numberPasses,
-					const bool useMixedPrecOverall);
-
-
-			void solveNoRRMixedPrec(operatorDFTCUDAClass & operatorMatrix,
-					double* eigenVectorsFlattenedCUDA,
-					const unsigned int flattenedSize,
-					distributedCPUVec<double> & tempEigenVec,
-					const unsigned int totalNumberWaveFunctions,
-					std::vector<double> & eigenValues,
-					const MPI_Comm &interBandGroupComm,
 					const bool isXlBOMDLinearizedSolve,
 					const unsigned int numberPasses,
 					const bool useMixedPrecOverall);
