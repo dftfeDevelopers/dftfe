@@ -2945,7 +2945,7 @@ namespace dftfe
 					}
 
           // Before swap host thread needs to wait till compute on currentblock is over.
-          // Since swap occurs on the null stream, any future calls in the streamDataMove
+          // Since swap occurs on the null stream, any future operations in the streamDataMove
           // will only occur after both the compute on currentblock and swap is over.
           // Note that at this point there is nothing queued in the streamDataMove
           // as all previous operations in that stream are over.
@@ -3415,7 +3415,7 @@ namespace dftfe
 					}
 
           // Before swap host thread needs to wait till compute on currentblock is over.
-          // Since swap occurs on the null stream, any future calls in the streamDataMove
+          // Since swap occurs on the null stream, any future operations in the streamDataMove
           // will only occur after both the compute on currentblock and swap is over.
           // Note that at this point there is nothing queued in the streamDataMove
           // as all previous operations in that stream are over.
