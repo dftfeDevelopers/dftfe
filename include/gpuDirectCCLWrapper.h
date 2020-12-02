@@ -22,6 +22,12 @@
 
 namespace dftfe
 {
+ 
+  /**
+   *  @brief Wrapper class for GPU Direct collective communications library. 
+   *
+   *  @author Sambit Das
+   */
   class GPUCCLWrapper 
   {
       public:
@@ -36,6 +42,8 @@ namespace dftfe
 
 
         int gpuDirectAllReduceWrapper(const double *send, double *recv, int size, cudaStream_t & stream);
+
+        int gpuDirectAllReduceMixedPrecGroupWrapper(const double *send1, const float *send2, double *recv1, float *recv2, int size1, int size2, cudaStream_t & stream);        
 
       private:
 

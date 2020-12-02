@@ -174,7 +174,7 @@ namespace dftfe {
 
 				prm.declare_entry("USE GPUDIRECT MPI ALL REDUCE", "false",
 						Patterns::Bool(),
-						"[Developer] Use GPUDIRECT MPI_Allreduce. This route will only work if DFT-FE is compiled with NVIDIA NCCL library. Default: false.");        
+						"[Developer] Use GPUDIRECT MPI_Allreduce. This route will only work if DFT-FE is compiled with NVIDIA NCCL library. Also only one MPI rank per GPU can be used when using this option. Default: false.");        
 			}
 			prm.leave_subsection ();
 

@@ -95,6 +95,19 @@ namespace dftfe
                               *((ncclComm_t *)ncclCommPtr), stream));
 #endif      
       return 0;
-  }  
+  } 
+
+  int GPUCCLWrapper::gpuDirectAllReduceMixedPrecGroupWrapper(const double *send1, const float * send2, double * recv1, float *recv2, int size1, int size2, cudaStream_t & stream) 
+  {
+#ifdef DFTFE_WITH_NCCL    
+      ncclGroupStart();
+      NCCLCHECK(ncclAllReduce((const void*)send1, (void*)recv1, size1, ncclDouble, ncclSum,
+                              *((ncclComm_t *)ncclCommPtr), stream));
+      NCCLCHECK(ncclAllReduce((const void*)send2, (void*)recv2, size2, ncclFloat, ncclSum,
+                              *((ncclComm_t *)ncclCommPtr), stream));      
+      ncclGroupEnd();
+#endif      
+      return 0;
+  }    
 }
 #endif
