@@ -13,7 +13,7 @@
 //
 // ---------------------------------------------------------------------
 //
-// @author Sambit Das
+// @author Sambit Das, David M. Rogers
 //
 
 #if defined(DFTFE_WITH_GPU)

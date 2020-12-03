@@ -12,7 +12,7 @@
 // the top level of the DFT-FE distribution.
 //
 // ---------------------------------------------------------------------
-// @author Sambit Das
+// @author Sambit Das, David M. Rogers
 
 #if defined(DFTFE_WITH_GPU)
 #ifndef gpuDirectCCLWrapper_h
@@ -24,9 +24,10 @@ namespace dftfe
 {
  
   /**
-   *  @brief Wrapper class for GPU Direct collective communications library. 
+   *  @brief Wrapper class for GPU Direct collective communications library.
+   *  Adapted from https://code.ornl.gov/99R/olcf-cookbook/-/blob/develop/comms/nccl_allreduce.rst
    *
-   *  @author Sambit Das
+   *  @author Sambit Das, David M. Rogers
    */
   class GPUCCLWrapper 
   {
