@@ -161,7 +161,8 @@ namespace dftfe {
         d_gpucclMpiCommDomainPtr= new GPUCCLWrapper;
         if (dftParameters::useGPUDirectAllReduce)
           d_gpucclMpiCommDomainPtr->init(mpi_comm_replica);
-#endif            
+#endif 
+        d_pspCutOff=dftParameters::reproducible_output?30.0:(std::max(dftParameters::pspCutoffImageCharges,d_pspCutOffTrunc));
 			}
 
 	template<unsigned int FEOrder,unsigned int FEOrderElectro>

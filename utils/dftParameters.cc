@@ -136,6 +136,7 @@ namespace dftfe {
     unsigned int maxLineSearchIterCGPRP=5;
     std::string atomicMassesFile="";
     bool useGPUDirectAllReduce=false;
+    double pspCutoffImageCharges=15.0;
 
 		void declare_parameters(ParameterHandler &prm)
 		{
@@ -534,6 +535,10 @@ namespace dftfe {
 				prm.declare_entry("START MAGNETIZATION", "0.0",
 						Patterns::Double(-0.5,0.5),
 						"[Standard] Starting magnetization to be used for spin-polarized DFT calculations (must be between -0.5 and +0.5). Corresponding magnetization per simulation domain will be (2 x START MAGNETIZATION x Number of electrons) a.u. ");
+
+				prm.declare_entry("PSP CUTOFF IMAGE CHARGES", "15.0",
+						Patterns::Double(),
+						"[Standard] Distance from the domain till which periodic images will be considered for the local part of the pseudopotential. Units in a.u. ");        
 			}
 			prm.leave_subsection ();
 
@@ -969,6 +974,7 @@ namespace dftfe {
 				dftParameters::xc_id                         = prm.get_integer("EXCHANGE CORRELATION TYPE");
 				dftParameters::spinPolarized                 = prm.get_integer("SPIN POLARIZATION");
 				dftParameters::start_magnetization           = prm.get_double("START MAGNETIZATION");
+        dftParameters::pspCutoffImageCharges         = prm.get_double("PSP CUTOFF IMAGE CHARGES");
 			}
 			prm.leave_subsection ();
 

@@ -785,7 +785,7 @@ namespace dftfe {
 			std::vector<std::vector<int> > d_globalChargeIdToImageIdMapTrunc;
 
 			/// distance from the domain till which periodic images will be considered
-			const double d_pspCutOff=30.0;
+			double d_pspCutOff=15.0;
 
 			/// distance from the domain till which periodic images will be considered
 			const double d_pspCutOffTrunc=15.0;

@@ -138,6 +138,7 @@ namespace dftfe {
     extern unsigned int maxLineSearchIterCGPRP;
     extern std::string atomicMassesFile;
     extern bool useGPUDirectAllReduce;
+    extern double pspCutoffImageCharges;
 
 		/**
 		 * Declare parameters.
