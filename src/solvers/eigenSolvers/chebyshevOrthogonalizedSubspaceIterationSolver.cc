@@ -114,6 +114,7 @@ namespace dftfe{
 				std::vector<double>        & eigenValues,
 				std::vector<double>        & residualNorms,
 				const MPI_Comm &interBandGroupComm,
+        const bool computeResidual,
 				const bool useMixedPrec,
 				const bool isFirstScf)
 		{
@@ -490,28 +491,30 @@ namespace dftfe{
 					pcout<<std::endl;
 				}
 
-				computing_timer.enter_section("eigen vectors residuals opt");
+        if (computeResidual)
+        {
+          computing_timer.enter_section("eigen vectors residuals opt");
 
-				if (eigenValues.size()!=totalNumberWaveFunctions)
-				{
-					linearAlgebraOperations::computeEigenResidualNorm(operatorMatrix,
-							eigenVectorsRotFracDensityFlattened,
-							eigenValues,
-							operatorMatrix.getMPICommunicator(),
-							interBandGroupComm,
-							residualNorms);
-				}
-				else
-					linearAlgebraOperations::computeEigenResidualNorm(operatorMatrix,
-							eigenVectorsFlattened,
-							eigenValues,
-							operatorMatrix.getMPICommunicator(),
-							interBandGroupComm,
-							residualNorms);
-				computing_timer.exit_section("eigen vectors residuals opt");
-			}
-
-
+          if (eigenValues.size()!=totalNumberWaveFunctions)
+          {
+            linearAlgebraOperations::computeEigenResidualNorm(operatorMatrix,
+                eigenVectorsRotFracDensityFlattened,
+                eigenValues,
+                operatorMatrix.getMPICommunicator(),
+                interBandGroupComm,
+                residualNorms);
+          }
+          else
+            linearAlgebraOperations::computeEigenResidualNorm(operatorMatrix,
+                eigenVectorsFlattened,
+                eigenValues,
+                operatorMatrix.getMPICommunicator(),
+                interBandGroupComm,
+                residualNorms);
+          computing_timer.exit_section("eigen vectors residuals opt");
+        }
+      }
+  
 
 			if(dftParameters::verbosity >= 4)
 			{

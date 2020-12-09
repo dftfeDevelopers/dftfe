@@ -241,10 +241,12 @@ namespace dftfe
 	//
 	void
 		chebyshevOrthogonalizedSubspaceIterationSolverCUDA::reinitSpectrumBounds(double lowerBoundWantedSpectrum,
-				double lowerBoundUnWantedSpectrum)
+				double lowerBoundUnWantedSpectrum,
+        double upperBoundUnWantedSpectrum)
 		{
 			d_lowerBoundWantedSpectrum = lowerBoundWantedSpectrum;
 			d_lowerBoundUnWantedSpectrum = lowerBoundUnWantedSpectrum;
+      d_upperBoundUnWantedSpectrum =  upperBoundUnWantedSpectrum;
 		}
 
 	//
@@ -456,7 +458,7 @@ namespace dftfe
 	//
 	// solve
 	//
-	void
+	double
 		chebyshevOrthogonalizedSubspaceIterationSolverCUDA::solve(operatorDFTCUDAClass  & operatorMatrix,
 				double* eigenVectorsFlattenedCUDA,
 				double* eigenVectorsRotFracDensityFlattenedCUDA,
@@ -471,6 +473,7 @@ namespace dftfe
 				dealii::ScaLAPACKMatrix<double> & overlapMatPar,
 				const std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid> & processGrid,
         const bool isFirstFilteringCall,
+        const bool computeResidual,
 				const bool isXlBOMDLinearizedSolve,
 				const bool useMixedPrecOverall,
 				const bool isFirstScf,
@@ -557,33 +560,55 @@ namespace dftfe
 
 			if(!isElpaStep2)
 			{
-				cudaDeviceSynchronize();
-				MPI_Barrier(MPI_COMM_WORLD);
-				double lanczos_time = MPI_Wtime();
-
-        const std::pair<double,double> bounds =linearAlgebraOperationsCUDA::lanczosLowerUpperBoundEigenSpectrum(operatorMatrix,
-            tempEigenVec,
-            cudaFlattenedArrayBlock,
-            YArray,
-            projectorKetTimesVector,
-            vectorsBlockSize);
-
         if (isFirstFilteringCall)
         {
+          cudaDeviceSynchronize();
+          MPI_Barrier(MPI_COMM_WORLD);
+          double lanczos_time = MPI_Wtime();
+
+          const std::pair<double,double> bounds =linearAlgebraOperationsCUDA::lanczosLowerUpperBoundEigenSpectrum(operatorMatrix,
+              tempEigenVec,
+              cudaFlattenedArrayBlock,
+              YArray,
+              projectorKetTimesVector,
+              vectorsBlockSize);
+
+          cudaDeviceSynchronize();
+          MPI_Barrier(MPI_COMM_WORLD);
+          lanczos_time = MPI_Wtime()-lanczos_time;
+          if (this_process==0 && dftParameters::verbosity>=2)
+            std::cout<<"Time for Lanczos Upper Bound: "<<lanczos_time<<std::endl;
+
           d_lowerBoundWantedSpectrum=bounds.first;
           d_upperBoundUnWantedSpectrum=bounds.second;
           d_lowerBoundUnWantedSpectrum=d_lowerBoundWantedSpectrum+(d_upperBoundUnWantedSpectrum-d_lowerBoundWantedSpectrum)*totalNumberWaveFunctions/tempEigenVec.size()*10.0;
         }
-        else
+        else if (!dftParameters::reuseLanczosUpperBoundFromFirstCall)
         {
+          cudaDeviceSynchronize();
+          MPI_Barrier(MPI_COMM_WORLD);
+          double lanczos_time = MPI_Wtime();
+
+          const std::pair<double,double> bounds =linearAlgebraOperationsCUDA::lanczosLowerUpperBoundEigenSpectrum(operatorMatrix,
+              tempEigenVec,
+              cudaFlattenedArrayBlock,
+              YArray,
+              projectorKetTimesVector,
+              vectorsBlockSize);
+
+          cudaDeviceSynchronize();
+          MPI_Barrier(MPI_COMM_WORLD);
+          lanczos_time = MPI_Wtime()-lanczos_time;
+          if (this_process==0 && dftParameters::verbosity>=2)
+            std::cout<<"Time for Lanczos Upper Bound: "<<lanczos_time<<std::endl;
+
           d_upperBoundUnWantedSpectrum=bounds.second;
         }
 
 				cudaDeviceSynchronize();
 				MPI_Barrier(MPI_COMM_WORLD);
 				double gpu_time = MPI_Wtime();
-				if (this_process==0 && dftParameters::verbosity>=2)
-					std::cout<<"Time for Lanczos Upper Bound: "<<gpu_time-lanczos_time<<std::endl;
+
 
 				unsigned int chebyshevOrder = dftParameters::chebyshevOrder;
 
@@ -1029,42 +1054,45 @@ namespace dftfe
 				pcout<<std::endl;
 			}
 
-			cudaDeviceSynchronize();
-			MPI_Barrier(MPI_COMM_WORLD);
-			gpu_time = MPI_Wtime();
-			if (eigenValues.size()!=totalNumberWaveFunctions)
-				linearAlgebraOperationsCUDA::computeEigenResidualNorm(operatorMatrix,
-						eigenVectorsRotFracDensityFlattenedCUDA,
-						cudaFlattenedArrayBlock,
-						YArray,
-						projectorKetTimesVector,
-						localVectorSize,
-						eigenValues.size(),
-						eigenValues,
-						operatorMatrix.getMPICommunicator(),
-						interBandGroupComm,
-						cublasHandle,
-						residualNorms);
-			else
-				linearAlgebraOperationsCUDA::computeEigenResidualNorm(operatorMatrix,
-						eigenVectorsFlattenedCUDA,
-						cudaFlattenedArrayBlock,
-						YArray,
-						projectorKetTimesVector,
-						localVectorSize,
-						totalNumberWaveFunctions,
-						eigenValues,
-						operatorMatrix.getMPICommunicator(),
-						interBandGroupComm,
-						cublasHandle,
-						residualNorms,
-						true);
+      if (computeResidual)
+      {
+        cudaDeviceSynchronize();
+        MPI_Barrier(MPI_COMM_WORLD);
+        gpu_time = MPI_Wtime();
+        if (eigenValues.size()!=totalNumberWaveFunctions)
+          linearAlgebraOperationsCUDA::computeEigenResidualNorm(operatorMatrix,
+              eigenVectorsRotFracDensityFlattenedCUDA,
+              cudaFlattenedArrayBlock,
+              YArray,
+              projectorKetTimesVector,
+              localVectorSize,
+              eigenValues.size(),
+              eigenValues,
+              operatorMatrix.getMPICommunicator(),
+              interBandGroupComm,
+              cublasHandle,
+              residualNorms);
+        else
+          linearAlgebraOperationsCUDA::computeEigenResidualNorm(operatorMatrix,
+              eigenVectorsFlattenedCUDA,
+              cudaFlattenedArrayBlock,
+              YArray,
+              projectorKetTimesVector,
+              localVectorSize,
+              totalNumberWaveFunctions,
+              eigenValues,
+              operatorMatrix.getMPICommunicator(),
+              interBandGroupComm,
+              cublasHandle,
+              residualNorms,
+              true);
 
-			cudaDeviceSynchronize();
-			MPI_Barrier(MPI_COMM_WORLD);
-			gpu_time = MPI_Wtime() - gpu_time;
-			if (this_process==0 && dftParameters::verbosity>=2)
-				std::cout<<"Time to compute residual norm: "<<gpu_time<<std::endl;
+        cudaDeviceSynchronize();
+        MPI_Barrier(MPI_COMM_WORLD);
+        gpu_time = MPI_Wtime() - gpu_time;
+        if (this_process==0 && dftParameters::verbosity>=2)
+          std::cout<<"Time to compute residual norm: "<<gpu_time<<std::endl;
+      }
 
 			//
 			//scale the eigenVectors with M^{-1/2} to represent the wavefunctions in the usual FE basis
@@ -1092,7 +1120,7 @@ namespace dftfe
 				else
 					if (this_process==0 && dftParameters::verbosity>=2)
 						std::cout<<"Time for all steps of subspace iteration on GPU: "<<gpu_time<<std::endl;
-			return;
+			return d_upperBoundUnWantedSpectrum;
 #endif
 		}
 

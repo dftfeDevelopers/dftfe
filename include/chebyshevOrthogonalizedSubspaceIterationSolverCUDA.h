@@ -59,7 +59,7 @@ namespace dftfe
 			/**
 			 * @brief Solve a generalized eigen problem.
 			 */
-			void solve(operatorDFTCUDAClass & operatorMatrix,
+			double solve(operatorDFTCUDAClass & operatorMatrix,
 					double* eigenVectorsFlattenedCUDA,
 					double* eigenVectorsRotFracDensityFlattenedCUDA,
 					const unsigned int flattenedSize,
@@ -73,6 +73,7 @@ namespace dftfe
 					dealii::ScaLAPACKMatrix<double> & overlapMatPar,
 					const std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid> & processGrid,
           const bool isFirstFilteringCall,
+          const bool computeResidual,
 					const bool isXlBOMDLinearizedSolve,
 					const bool useMixedPrecOverall=false,
 					const bool isFirstScf=false,
@@ -121,7 +122,8 @@ namespace dftfe
 			 * @brief reinit spectrum bounds
 			 */
 			void reinitSpectrumBounds(double lowerBoundWantedSpectrum,
-					double lowerBoundUnWantedSpectrum);
+					double lowerBoundUnWantedSpectrum,
+          double upperBoundUnWantedSpectrum);
 
 		private:
 			//

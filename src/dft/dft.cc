@@ -558,11 +558,12 @@ namespace dftfe {
 
       a0.clear();
       bLow.clear();
-      d_isFirstFilteringCall.clear();
 
 			a0.resize((dftParameters::spinPolarized+1)*d_kPointWeights.size(),0.0);
 			bLow.resize((dftParameters::spinPolarized+1)*d_kPointWeights.size(),0.0);
-      d_isFirstFilteringCall.resize((dftParameters::spinPolarized+1)*d_kPointWeights.size(),true);
+
+      d_upperBoundUnwantedSpectrumValues.clear();
+      d_upperBoundUnwantedSpectrumValues.resize((dftParameters::spinPolarized+1)*d_kPointWeights.size(),0.0);
 
 			d_eigenVectorsFlattenedSTL.resize((1+dftParameters::spinPolarized)*d_kPointWeights.size());
 			d_eigenVectorsRotFracDensityFlattenedSTL.resize((1+dftParameters::spinPolarized)*d_kPointWeights.size());
@@ -925,6 +926,9 @@ namespace dftfe {
 					normalizeRhoInQuadValues();
 				}
 			}
+
+      d_isFirstFilteringCall.clear();
+      d_isFirstFilteringCall.resize((dftParameters::spinPolarized+1)*d_kPointWeights.size(),true);
 
 			computingTimerStandard.exit_section("KSDFT problem initialization");
 		}
@@ -2168,6 +2172,7 @@ namespace dftfe {
 											d_elpaScala,
 											subspaceIterationSolverCUDA,
 											residualNormWaveFunctionsAllkPointsSpins[s][kPoint],
+                      (scfIter==0 || allowMultipleFilteringPassesAfterFirstScf)?true:false,
 											solveLinearizedKS,
 											rayleighRitzAvoidancePassesXLBOMD?dftParameters::numberPassesRRSkippedXLBOMD:0,
 											(scfIter<dftParameters::spectrumSplitStartingScfIter || scfConverged)?false:true,
@@ -2181,6 +2186,7 @@ namespace dftfe {
 											d_elpaScala,
 											subspaceIterationSolver,
 											residualNormWaveFunctionsAllkPointsSpins[s][kPoint],
+                      (scfIter==0 || allowMultipleFilteringPassesAfterFirstScf)?true:false,                      
 											(scfIter<dftParameters::spectrumSplitStartingScfIter || scfConverged)?false:true,
 											scfConverged?false:true,
 											scfIter==0);
@@ -2212,7 +2218,7 @@ namespace dftfe {
 
 					unsigned int count=(rayleighRitzAvoidancePassesXLBOMD && dftParameters::numberPassesRRSkippedXLBOMD>0)?numberPassesRRSkippedXLBOMD:1;
 
-					if (!scfConverged)
+					if (!scfConverged && (scfIter==0 || allowMultipleFilteringPassesAfterFirstScf))
 					{
 
 						//maximum of the residual norm of the state closest to and below the Fermi level among all k points,
@@ -2263,6 +2269,7 @@ namespace dftfe {
 												d_elpaScala,
 												subspaceIterationSolverCUDA,
 												residualNormWaveFunctionsAllkPointsSpins[s][kPoint],
+                        true,
 												solveLinearizedKS,
 												0, 
 												(scfIter<dftParameters::spectrumSplitStartingScfIter)?false:true,
@@ -2276,6 +2283,7 @@ namespace dftfe {
 												d_elpaScala,
 												subspaceIterationSolver,
 												residualNormWaveFunctionsAllkPointsSpins[s][kPoint],
+                        true,
 												(scfIter<dftParameters::spectrumSplitStartingScfIter)?false:true,
 												rrPassesNoMixedPrecXlBOMD?false:true,
 												scfIter==0);
@@ -2394,6 +2402,7 @@ namespace dftfe {
 										d_elpaScala,
 										subspaceIterationSolverCUDA,
 										residualNormWaveFunctionsAllkPoints[kPoint],
+                    (scfIter==0 || allowMultipleFilteringPassesAfterFirstScf)?true:false,                    
 										solveLinearizedKS,
 										rayleighRitzAvoidancePassesXLBOMD?dftParameters::numberPassesRRSkippedXLBOMD:0,
 										(scfIter<dftParameters::spectrumSplitStartingScfIter || scfConverged)?false:true,
@@ -2407,6 +2416,7 @@ namespace dftfe {
 										d_elpaScala,
 										subspaceIterationSolver,
 										residualNormWaveFunctionsAllkPoints[kPoint],
+                    (scfIter==0 || allowMultipleFilteringPassesAfterFirstScf)?true:false,                      
 										(scfIter<dftParameters::spectrumSplitStartingScfIter || scfConverged)?false:true,
 										scfConverged?false:true,
 										scfIter==0);
@@ -2427,7 +2437,7 @@ namespace dftfe {
 
 					unsigned int count=(rayleighRitzAvoidancePassesXLBOMD && dftParameters::numberPassesRRSkippedXLBOMD>0)?dftParameters::numberPassesRRSkippedXLBOMD:1;
 
-					if (!scfConverged)
+					if (!scfConverged && (scfIter==0 || allowMultipleFilteringPassesAfterFirstScf))
 					{
 						//
 						//maximum of the residual norm of the state closest to and below the Fermi level among all k points
@@ -2470,6 +2480,7 @@ namespace dftfe {
 											d_elpaScala,
 											subspaceIterationSolverCUDA,
 											residualNormWaveFunctionsAllkPoints[kPoint],
+                      true,
 											solveLinearizedKS,
 											0,
 											(scfIter<dftParameters::spectrumSplitStartingScfIter)?false:true,
@@ -2484,6 +2495,7 @@ namespace dftfe {
 											d_elpaScala,
 											subspaceIterationSolver,
 											residualNormWaveFunctionsAllkPoints[kPoint],
+                      true,
 											(scfIter<dftParameters::spectrumSplitStartingScfIter)?false:true,
 											rrPassesNoMixedPrecXlBOMD?false:true,
 											scfIter==0);
@@ -2542,6 +2554,7 @@ namespace dftfe {
 											d_elpaScala,
 											subspaceIterationSolverCUDA,
 											residualNormWaveFunctionsAllkPoints[kPoint],
+                      true,
 											solveLinearizedKS,
 											0,
 											false,
@@ -2556,6 +2569,7 @@ namespace dftfe {
 											d_elpaScala,
 											subspaceIterationSolver,
 											residualNormWaveFunctionsAllkPoints[kPoint],
+                      true,
 											false,
 											false,
 											scfIter==0);

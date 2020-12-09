@@ -137,6 +137,8 @@ namespace dftfe {
     std::string atomicMassesFile="";
     bool useGPUDirectAllReduce=false;
     double pspCutoffImageCharges=15.0;
+    bool reuseLanczosUpperBoundFromFirstCall=false;
+    bool allowMultipleFilteringPassesAfterFirstScf=true;
 
 		void declare_parameters(ParameterHandler &prm)
 		{
@@ -711,6 +713,14 @@ namespace dftfe {
 					prm.declare_entry("ADAPTIVE FILTER STATES", "0",
 							Patterns::Integer(0),
 							"[Advanced] Number of lowest Kohn-Sham eigenstates which are filtered with Chebyshev polynomial degree linearly varying from 50 percent (starting from the lowest) to 80 percent of the value specified by CHEBYSHEV POLYNOMIAL DEGREE. This imposes a step function filtering polynomial order on the ADAPTIVE FILTER STATES as filtering is done with blocks of size WFC BLOCK SIZE. This setting is recommended for large systems (greater than 5000 electrons). Default value is 0 i.e., all states are filtered with the same Chebyshev polynomial degree.");
+
+					prm.declare_entry("REUSE LANCZOS UPPER BOUND", "false",
+							Patterns::Bool(),
+							"[Advanced] Reuse upper bound of unwanted spectrum computed in the first SCF iteration via Lanczos iterations. Default setting is false.");
+
+					prm.declare_entry("ALLOW MULTIPLE PASSES POST FIRST SCF", "true",
+							Patterns::Bool(),
+							"[Advanced] Allow multiple chebyshev filtering passes in the SCF iterations after the first one. Default setting is true.");          
 				}
 				prm.leave_subsection ();
 			}
@@ -1024,6 +1034,8 @@ namespace dftfe {
 					dftParameters::algoType= prm.get("ALGO");
 					dftParameters::numAdaptiveFilterStates= prm.get_integer("ADAPTIVE FILTER STATES");
 					dftParameters::chebyshevFilterPolyDegreeFirstScfScalingFactor=prm.get_double("CHEBYSHEV POLYNOMIAL DEGREE SCALING FACTOR FIRST SCF");
+          dftParameters::reuseLanczosUpperBoundFromFirstCall=prm.get_bool("REUSE LANCZOS UPPER BOUND");;
+          dftParameters::allowMultipleFilteringPassesAfterFirstScf=prm.get_bool("ALLOW MULTIPLE PASSES POST FIRST SCF");          
 				}
 				prm.leave_subsection ();
 			}

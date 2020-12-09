@@ -64,6 +64,7 @@ namespace dftfe{
 					std::vector<double> & eigenValues,
 					std::vector<double> & residuals,
 					const MPI_Comm &interBandGroupComm,
+          const bool computeResidual,
 					const bool useMixedPrec=false,
 					const bool isFirstScf=false);
 

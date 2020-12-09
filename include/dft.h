@@ -1182,8 +1182,12 @@ namespace dftfe {
 
 			std::vector<double> a0;
 			std::vector<double> bLow;
+
+      /// stores flag for first ever call to chebyshev filtering for a given FEM mesh
+      /// vector for each k point and spin
       std::vector<bool> d_isFirstFilteringCall;
 
+      std::vector<double> d_upperBoundUnwantedSpectrumValues;
 
 			distributedCPUVec<double> d_tempEigenVec;
 			distributedCPUVec<double> d_tempEigenVecPrev;
@@ -1213,6 +1217,7 @@ namespace dftfe {
 					elpaScalaManager & elpaScala,
 					chebyshevOrthogonalizedSubspaceIterationSolver & subspaceIterationSolver,
 					std::vector<double> & residualNormWaveFunctions,
+          const bool computeResidual,
 					const bool isSpectrumSplit=false,
 					const bool useMixedPrec=false,
 					const bool isFirstScf=false);
@@ -1225,6 +1230,7 @@ namespace dftfe {
 					elpaScalaManager & elpaScala,
 					chebyshevOrthogonalizedSubspaceIterationSolverCUDA & subspaceIterationSolverCUDA,
 					std::vector<double> & residualNormWaveFunctions,
+          const bool computeResidual,
 					const bool isXlBOMDLinearizedSolve,
 					const unsigned int numberRayleighRitzAvoidanceXLBOMDPasses=0,
 					const bool isSpectrumSplit=false,

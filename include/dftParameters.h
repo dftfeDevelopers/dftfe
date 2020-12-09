@@ -139,6 +139,8 @@ namespace dftfe {
     extern std::string atomicMassesFile;
     extern bool useGPUDirectAllReduce;
     extern double pspCutoffImageCharges;
+    extern bool reuseLanczosUpperBoundFromFirstCall;
+    extern bool allowMultipleFilteringPassesAfterFirstScf;
 
 		/**
 		 * Declare parameters.
