@@ -984,7 +984,7 @@ namespace dftfe
 					gpu_time = MPI_Wtime() - start_time;
 					if (this_process==0 && dftParameters::verbosity>=2)
 						std::cout<<"Time for all steps of subspace iteration on GPU till ELPA step 1: "<<gpu_time<<std::endl; 
-					return;
+					return d_upperBoundUnWantedSpectrum;
 				}
 
 			}
@@ -1038,7 +1038,7 @@ namespace dftfe
 					gpu_time = MPI_Wtime() - start_time;
 					if (this_process==0 && dftParameters::verbosity>=2)
 						std::cout<<"Time for all steps of subspace iteration on GPU till ELPA step 1: "<<gpu_time<<std::endl; 
-					return;
+					return d_upperBoundUnWantedSpectrum;
 				}
 
 			}
