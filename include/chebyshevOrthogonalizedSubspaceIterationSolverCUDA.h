@@ -139,7 +139,26 @@ namespace dftfe
 			//
 			//stores upper bound of unwanted spectrum
 			//
-			double d_upperBoundUnWantedSpectrum;      
+			double d_upperBoundUnWantedSpectrum;     
+
+      //
+      //temporary parallel vectors needed for Chebyshev filtering
+      //
+			distributedGPUVec<double> d_cudaFlattenedArrayBlock;
+
+			distributedGPUVec<double> d_YArray;
+
+			distributedGPUVec<float> d_cudaFlattenedFloatArrayBlock;
+
+			distributedGPUVec<double> d_projectorKetTimesVector;
+
+			distributedGPUVec<float>  d_projectorKetTimesVectorFloat;
+
+			distributedGPUVec<double> d_cudaFlattenedArrayBlock2;
+
+			distributedGPUVec<double> d_YArray2;
+
+			distributedGPUVec<double> d_projectorKetTimesVector2;
 
 			//
 			//variables for printing out and timing
