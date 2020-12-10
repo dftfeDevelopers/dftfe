@@ -14,22 +14,22 @@ SRC=`dirname $0` # location of source directory
 
 PROJ=/ccs/proj/eng110
 
-. $PROJ/setup-env.sh
-. $PROJ/venvs/summit/bin/activate # for building docs
+. $PROJ/setup-env-cuda11.sh
+#. $PROJ/venvs/summit/bin/activate # for building docs
 
 ########################################################################
 #Provide paths below for external libraries, compiler options and flags,
 # and optimization flag
 
 #Paths for external libraries
-dealiiDir="$PROJ/software/dealiiDevelop/installDealii"
+dealiiDir="$PROJ/softwareCUDA11Gcc9.3/dealii/install"
 alglibDir="$PROJ/software/alglib/cpp/src"
 libxcDir="$PROJ/software/libxc/installGcc6.4.0"
 spglibDir="$PROJ/software/spglib/installGcc6.4.0"
 xmlIncludeDir="/usr/include/libxml2"
 xmlLibDir="/usr/lib64"
-ELPA_PATH="$PROJ/software/elpaSMPI20200121/installElpa2020Gcc6.4.0CUDA10"
-NCCL_PATH="$PROJ/software/nccl/ncclDevelopBranch/build"
+ELPA_PATH="$PROJ/softwareCUDA11Gcc9.3/elpa/installNoVsxCUDA"
+NCCL_PATH="$PROJ/softwareCUDA11Gcc9.3/nccl/nccdev/build"
 
 
 #If you have installed dealii by linking with intel mkl library set underlying flag to "ON",

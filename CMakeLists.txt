@@ -52,6 +52,10 @@ SET(TARGET_SRC
   ./utils/xmlTodftfeParser.cc
   )
 
+IF (WITH_GPU)
+    set_source_files_properties(${TARGET_SRC} PROPERTIES LANGUAGE CUDA)
+ENDIF()
+
 SET(CUDA_SRC
   ./src/gpuBase/cudaHelpers.cu
   ./src/gpuBase/gpuDirectCCLWrapper.cu  
@@ -215,11 +219,7 @@ IF (WITH_GPU)
   LIST(APPEND CUDA_NVCC_FLAGS -arch=sm_70;-std=c++14; -expt-relaxed-constexpr)
 ENDIF()
 
-IF (WITH_GPU)
-  CUDA_ADD_LIBRARY(${TARGETLIB} SHARED ${TARGET_SRC})
-ELSE()
-  ADD_LIBRARY(${TARGETLIB} SHARED ${TARGET_SRC})
-ENDIF()
+ADD_LIBRARY(${TARGETLIB} SHARED ${TARGET_SRC})
 
 ADD_EXECUTABLE(${TARGET}   src/main.cc)
 
