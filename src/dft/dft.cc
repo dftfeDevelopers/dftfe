@@ -1037,6 +1037,9 @@ namespace dftfe {
 			if (dftParameters::verbosity>=1)
 				pcout<<"Time taken for initPseudoPotentialAll: "<<init_pseudo<<std::endl;
 
+      d_isFirstFilteringCall.clear();
+      d_isFirstFilteringCall.resize((dftParameters::spinPolarized+1)*d_kPointWeights.size(),true);
+
 			computingTimerStandard.exit_section("KSDFT problem initialization");
 		}
 
