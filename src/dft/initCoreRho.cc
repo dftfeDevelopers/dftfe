@@ -222,6 +222,9 @@ void dftClass<FEOrder,FEOrderElectro>::initCoreRho()
           if (atomTypeNLCCFlagMap[atomLocations[iAtom][0]]==0)
             continue;
 
+					if (atom.distance(cell->center())>d_nlPSPCutOff)
+            continue;            
+
 					//loop over quad points
 					for(unsigned int q = 0; q < n_q_points; ++q)
 					{
@@ -321,6 +324,9 @@ void dftClass<FEOrder,FEOrderElectro>::initCoreRho()
 					Point<3> imageAtom(d_imagePositionsTrunc[iImageCharge][0],
 							d_imagePositionsTrunc[iImageCharge][1],
 							d_imagePositionsTrunc[iImageCharge][2]);
+
+					if (imageAtom.distance(cell->center())>d_nlPSPCutOff)
+            continue;  
 
 					bool isCoreRhoDataInCell = false;
 
