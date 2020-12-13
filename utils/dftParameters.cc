@@ -1252,9 +1252,9 @@ namespace dftfe {
       if (dftParameters::scalapackBlockSize==0)
       {
         if (dftParameters::useELPAGPUKernel)
-          dftParameters::scalapackBlockSize=32;
+          dftParameters::scalapackBlockSize=16;
         else
-          dftParameters::scalapackBlockSize=50;
+          dftParameters::scalapackBlockSize=32;
       }
 #else
       if (dftParameters::scalapackBlockSize==0)
