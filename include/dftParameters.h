@@ -141,6 +141,7 @@ namespace dftfe {
     extern double pspCutoffImageCharges;
     extern bool reuseLanczosUpperBoundFromFirstCall;
     extern bool allowMultipleFilteringPassesAfterFirstScf;
+    extern bool useELPAGPUKernel;
 
 		/**
 		 * Declare parameters.

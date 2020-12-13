@@ -28,7 +28,7 @@ libxcDir="$PROJ/software/libxc/installGcc6.4.0"
 spglibDir="$PROJ/software/spglib/installGcc6.4.0"
 xmlIncludeDir="/usr/include/libxml2"
 xmlLibDir="/usr/lib64"
-ELPA_PATH="$PROJ/software/elpaSMPI20200121/installElpa2020Gcc6.4.0CUDA10"
+ELPA_PATH="$PROJ/software/elpaSMPI20200121/installElpa202011Gcc6.4.0CUDA10"
 NCCL_PATH="$PROJ/software/nccl/ncclDevelopBranch/build"
 
 

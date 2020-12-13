@@ -139,6 +139,7 @@ namespace dftfe {
     double pspCutoffImageCharges=15.0;
     bool reuseLanczosUpperBoundFromFirstCall=false;
     bool allowMultipleFilteringPassesAfterFirstScf=true;
+    bool useELPAGPUKernel=false;
 
 		void declare_parameters(ParameterHandler &prm)
 		{
@@ -177,7 +178,11 @@ namespace dftfe {
 
 				prm.declare_entry("USE GPUDIRECT MPI ALL REDUCE", "false",
 						Patterns::Bool(),
-						"[Developer] Use GPUDIRECT MPI_Allreduce. This route will only work if DFT-FE is compiled with NVIDIA NCCL library. Also only one MPI rank per GPU can be used when using this option. Default: false.");        
+						"[Developer] Use GPUDIRECT MPI_Allreduce. This route will only work if DFT-FE is compiled with NVIDIA NCCL library. Also note that one MPI rank per GPU can be used when using this option. Default: false."); 
+
+				prm.declare_entry("USE ELPA GPU KERNEL", "false",
+						Patterns::Bool(),
+						"[Developer] If DFT-FE is linked to ELPA eigensolver library configured to run on GPUs, this parameter toggles the use of ELPA GPU kernels for dense symmetric matrix diagonalization calls in DFT-FE. This route will only work if DFT-FE is compiled with NVIDIA NCCL library. Note that one MPI rank per GPU can be used when using this option. Default: false.");          
 			}
 			prm.leave_subsection ();
 
@@ -651,9 +656,9 @@ namespace dftfe {
 							Patterns::Integer(0,300),
 							"[Advanced] Uses a processor grid of SCALAPACKPROCS times SCALAPACKPROCS for parallel distribution of the subspace projected matrix in the Rayleigh-Ritz step and the overlap matrix in the Pseudo-Gram-Schmidt step. Default value is 0 for which a thumb rule is used (see http://netlib.org/scalapack/slug/node106.html). If ELPA is used, twice the value obtained from the thumb rule is used as ELPA scales much better than ScaLAPACK.");
 
-					prm.declare_entry("SCALAPACK BLOCK SIZE", "50",
-							Patterns::Integer(1,300),
-							"[Advanced] ScaLAPACK process grid block size.");
+					prm.declare_entry("SCALAPACK BLOCK SIZE", "0",
+							Patterns::Integer(0,300),
+							"[Advanced] ScaLAPACK process grid block size. Also sets the block size for ELPA if linked to ELPA. Default value of zero sets a heuristic block size. Note that if ELPA GPU KERNEL is set to true and ELPA is configured to run on GPUs, the SCALAPACK BLOCK SIZE is set to a power of 2.");
 
 					prm.declare_entry("USE ELPA", "true",
 							Patterns::Bool(),
@@ -854,6 +859,7 @@ namespace dftfe {
 				dftParameters::allowFullCPUMemSubspaceRot=prm.get_bool("SUBSPACE ROT FULL CPU MEM");
 				dftParameters::autoGPUBlockSizes=prm.get_bool("AUTO GPU BLOCK SIZES");
         dftParameters::useGPUDirectAllReduce=prm.get_bool("USE GPUDIRECT MPI ALL REDUCE");
+        dftParameters::useELPAGPUKernel=prm.get_bool("USE ELPA GPU KERNEL");
 			}
 			prm.leave_subsection ();
 
@@ -1112,14 +1118,6 @@ namespace dftfe {
 				dftParameters::rrGEP=false;
 			}
 
-#ifndef DFTFE_WITH_ELPA
-			dftParameters::useELPA=false;
-#endif
-
-#ifndef DFTFE_WITH_NCCL
-			dftParameters::useGPUDirectAllReduce=false;
-#endif
-
 			if (dftParameters::isCellStress)
 				dftParameters::electrostaticsHRefinement=false;
 			//
@@ -1247,7 +1245,29 @@ namespace dftfe {
 			}
 #else
      dftParameters::useGPU=false;
+     dftParameters::useELPAGPUKernel=false;
 #endif
+
+#ifdef DFTFE_WITH_ELPA
+      if (dftParameters::scalapackBlockSize==0)
+      {
+        if (dftParameters::useELPAGPUKernel)
+          dftParameters::scalapackBlockSize=32;
+        else
+          dftParameters::scalapackBlockSize=50;
+      }
+#else
+      if (dftParameters::scalapackBlockSize==0)
+      {
+        dftParameters::scalapackBlockSize=50;
+      }
+			dftParameters::useELPA=false;
+#endif
+
+#ifndef DFTFE_WITH_NCCL
+			dftParameters::useGPUDirectAllReduce=false;
+#endif
+
 			if (dftParameters::useMixedPrecCheby)
 				AssertThrow(dftParameters::useELPA
 						,ExcMessage("DFT-FE Error: USE ELPA must be set to true for USE MIXED PREC CHEBY."));
