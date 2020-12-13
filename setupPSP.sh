@@ -31,7 +31,6 @@ xmlLibDir="/usr/lib64"
 ELPA_PATH="$PROJ/softwareCUDA11Gcc9.3/elpa/installNoVsxCUDA"
 NCCL_PATH="$PROJ/softwareCUDA11Gcc9.3/nccl/nccdev/build"
 
-
 #If you have installed dealii by linking with intel mkl library set underlying flag to "ON",
 #otherwise set it to "OFF"
 withIntelMkl=OFF

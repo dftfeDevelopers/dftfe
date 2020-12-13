@@ -140,6 +140,17 @@ namespace dftfe
 					AssertThrow(error==ELPA_OK,
 							dealii::ExcMessage("DFT-FE Error: ELPA Error."));
 
+          if (dftParameters::useELPAGPUKernel)
+          {
+            elpa_set_integer(elpaHandle, "gpu", 1, &error);
+                      AssertThrow(error==ELPA_OK,
+                                    dealii::ExcMessage("DFT-FE Error: ELPA Error."));
+
+            elpa_set_integer(elpaHandle, "real_kernel",ELPA_2STAGE_REAL_GPU, &error);
+            AssertThrow(error==ELPA_OK,
+               dealii::ExcMessage("DFT-FE Error: ELPA Error."));            
+          }
+
 					//elpa_set_integer(elpaHandle, "real_kernel",ELPA_2STAGE_REAL_AVX512_BLOCK6, &error);
 					//AssertThrow(error==ELPA_OK,
 					//   dealii::ExcMessage("DFT-FE Error: ELPA Error."));
