@@ -182,7 +182,7 @@ namespace dftfe {
 
 				prm.declare_entry("USE ELPA GPU KERNEL", "false",
 						Patterns::Bool(),
-						"[Developer] If DFT-FE is linked to ELPA eigensolver library configured to run on GPUs, this parameter toggles the use of ELPA GPU kernels for dense symmetric matrix diagonalization calls in DFT-FE. This route will only work if DFT-FE is compiled with NVIDIA NCCL library. Note that one MPI rank per GPU can be used when using this option. Default: false.");          
+						"[Developer] If DFT-FE is linked to ELPA eigensolver library configured to run on GPUs, this parameter toggles the use of ELPA GPU kernels for dense symmetric matrix diagonalization calls in DFT-FE. Default: false.");          
 			}
 			prm.leave_subsection ();
 
