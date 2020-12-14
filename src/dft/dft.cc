@@ -987,10 +987,10 @@ namespace dftfe {
 
         if (dftParameters::isIonOpt || dftParameters::isCellOpt)
         {
-          if (!reuseWfcGeoOpt)
+          if (!dftParameters::reuseWfcGeoOpt)
             readPSI();
 
-          if (reuseDensityGeoOpt && useAtomicRhoSplitDensityUpdateForGeoOpt)
+          if (dftParameters::reuseDensityGeoOpt && useAtomicRhoSplitDensityUpdateForGeoOpt)
           {
             double charge = totalCharge(d_matrixFreeDataPRefined,
                 d_rhoOutNodalValuesSplit);
