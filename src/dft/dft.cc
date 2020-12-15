@@ -142,9 +142,7 @@ namespace dftfe {
 				symmetryPtr= new symmetryClass<FEOrder,FEOrderElectro>(this, mpi_comm_replica, _interpoolcomm);
 				geoOptIonPtr= new geoOptIon<FEOrder,FEOrderElectro>(this, mpi_comm_replica);
 
-#ifdef USE_COMPLEX
 				geoOptCellPtr= new geoOptCell<FEOrder,FEOrderElectro>(this, mpi_comm_replica);
-#endif
 				d_mdPtr= new molecularDynamics<FEOrder,FEOrderElectro>(this, mpi_comm_replica);
 
 				d_isRestartGroundStateCalcFromChk=false;
@@ -172,9 +170,7 @@ namespace dftfe {
 			matrix_free_data.clear();
 			delete forcePtr;
 			delete geoOptIonPtr;
-#ifdef USE_COMPLEX
 			delete geoOptCellPtr;
-#endif
 
 #ifdef DFTFE_WITH_ELPA
 			if (dftParameters::useELPA)
@@ -1197,19 +1193,14 @@ namespace dftfe {
 					d_atomLocationsInitial = atomLocations;
 					d_freeEnergyInitial = d_freeEnergy;
 
-#ifdef USE_COMPLEX
 					geoOptCellPtr->init();
 					geoOptCellPtr->run();
-#else
-					AssertThrow(false,ExcMessage("CELL OPT cannot be set to true for fully non-periodic domain."));
-#endif
 				}
 				else if (dftParameters::isIonOpt && dftParameters::isCellOpt)
 				{
 					d_atomLocationsInitial = atomLocations;
 					d_freeEnergyInitial = d_freeEnergy;
 
-#ifdef USE_COMPLEX
 					//first relax ion positions in the starting cell configuration
 					geoOptIonPtr->init();
 					geoOptIonPtr->run();
@@ -1217,9 +1208,6 @@ namespace dftfe {
 					//start cell relaxation, where for each cell relaxation update the ion positions are again relaxed
 					geoOptCellPtr->init();
 					geoOptCellPtr->run();
-#else
-					AssertThrow(false,ExcMessage("CELL OPT cannot be set to true for fully non-periodic domain."));
-#endif
 				}
 			}
 
