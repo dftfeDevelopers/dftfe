@@ -401,7 +401,7 @@ void dftClass<FEOrder,FEOrderElectro>::kohnShamEigenSpaceCompute(const unsigned 
     d_upperBoundUnwantedSpectrumValues[(1+dftParameters::spinPolarized)*kPointIndex+spinType]=upperBoundUnwantedSpectrum;
 
     subspaceIterationSolver.reinitSpectrumBounds(lowerBoundWantedSpectrum,
-        lowerBoundWantedSpectrum+(upperBoundUnwantedSpectrum-lowerBoundWantedSpectrum)/vecForLanczos.size()*d_numEigenValues*(dftParameters::reproducible_output?10.0:50.0),
+        lowerBoundWantedSpectrum+(upperBoundUnwantedSpectrum-lowerBoundWantedSpectrum)/vecForLanczos.size()*d_numEigenValues*(dftParameters::reproducible_output?10.0:200.0),
         upperBoundUnwantedSpectrum);
   }
   else
@@ -1027,7 +1027,7 @@ void dftClass<FEOrder,FEOrderElectro>::kohnShamEigenSpaceComputeNSCF(const unsig
     computing_timer.exit_section("Lanczos k-step Upper Bound");    
 
     subspaceIterationSolver.reinitSpectrumBounds(lowerBoundWantedSpectrum,
-        lowerBoundWantedSpectrum+(upperBoundUnwantedSpectrum-lowerBoundWantedSpectrum)/vecForLanczos.size()*d_numEigenValues*(dftParameters::reproducible_output?10.0:50.0),
+        lowerBoundWantedSpectrum+(upperBoundUnwantedSpectrum-lowerBoundWantedSpectrum)/vecForLanczos.size()*d_numEigenValues*(dftParameters::reproducible_output?10.0:200.0),
         upperBoundUnwantedSpectrum);
   }
   else
