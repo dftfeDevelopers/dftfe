@@ -817,7 +817,7 @@ false);
 										*(dftPtr->rhoInValues),
 										*(dftPtr->gradRhoInValues),
 										*(dftPtr->gradRhoInValues),
-										dftParameters::xc_id == 4);	
+										dftParameters::xcFamilyType=="GGA");	
 								dftPtr->normalizeRhoInQuadValues();
 							}
 
@@ -976,7 +976,7 @@ false);
 								*(dftPtr->rhoInValues),
 								*(dftPtr->gradRhoInValues),
 								*(dftPtr->gradRhoInValues),
-								dftParameters::xc_id == 4);		
+								dftParameters::xcFamilyType=="GGA");		
 
 						dftPtr->normalizeRhoInQuadValues();
 
@@ -1157,7 +1157,7 @@ false);
 											*(dftPtr->rhoInValues),
 											*(dftPtr->gradRhoInValues),
 											*(dftPtr->gradRhoInValues),
-											dftParameters::xc_id == 4);		
+											dftParameters::xcFamilyType=="GGA");		
 
 									dftPtr->normalizeRhoInQuadValues();
 
@@ -1242,7 +1242,7 @@ false);
 											*(dftPtr->rhoInValues),
 											*(dftPtr->gradRhoInValues),
 											*(dftPtr->gradRhoInValues),
-											dftParameters::xc_id == 4);		
+											dftParameters::xcFamilyType=="GGA");		
 
 									dftPtr->normalizeRhoInQuadValues();
 
@@ -1390,7 +1390,7 @@ false);
                 *(dftPtr->rhoInValues),
                 *(dftPtr->gradRhoInValues),
                 *(dftPtr->gradRhoInValues),
-                dftParameters::xc_id == 4);	
+                dftParameters::xcFamilyType=="GGA");	
             dftPtr->normalizeRhoInQuadValues();
           }
 

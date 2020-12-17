@@ -52,7 +52,7 @@ namespace dftfe
 				dftPtr->rhoOutValsSpinPolarized.push_back(std::map<dealii::CellId,std::vector<double> >());
 				dftPtr->rhoOutValuesSpinPolarized= &(dftPtr->rhoOutValsSpinPolarized.back());
 			}
-			if(dftParameters::xc_id == 4)
+			if(dftParameters::xcFamilyType=="GGA")
 			{
 				dftPtr->gradRhoOutVals.push_back(std::map<dealii::CellId, std::vector<double> >());
 				dftPtr->gradRhoOutValues=&(dftPtr->gradRhoOutVals.back());
@@ -79,7 +79,7 @@ namespace dftfe
 						std::fill(rhoOutSpinPolarized.begin(),rhoOutSpinPolarized.end(),0.0);
 					}
 					//
-					if(dftParameters::xc_id == 4)
+					if(dftParameters::xcFamilyType=="GGA")
 					{
 						(*(dftPtr->gradRhoOutValues))[cell->id()] = std::vector<double>(3*num_quad_points);
 						std::fill(gradRhoOut.begin(),gradRhoOut.end(),0.0);
@@ -105,7 +105,7 @@ namespace dftfe
 							}
 							else
 								rhoOut[q_point] += rhoRecvd[iSymm][globalCellId[cell->id()]][proc][point];
-							if(dftParameters::xc_id==4)
+							if(dftParameters::xcFamilyType=="GGA")
 							{
 								if(dftParameters::spinPolarized==1)
 								{
@@ -128,7 +128,7 @@ namespace dftfe
 						else
 							(*(dftPtr->rhoOutValues))[cell->id()][q_point]  = rhoOut[q_point];
 						//
-						if(dftParameters::xc_id==4)
+						if(dftParameters::xcFamilyType=="GGA")
 						{
 							if(dftParameters::spinPolarized==1)
 							{
@@ -161,7 +161,7 @@ namespace dftfe
 					dftPtr->rhoOutValsSpinPolarized.pop_front();
 				}
 				//
-				if(dftParameters::xc_id == 4)
+				if(dftParameters::xcFamilyType=="GGA")
 				{
 					dftPtr->gradRhoInVals.pop_front();
 					dftPtr->gradRhoOutVals.pop_front();
@@ -177,7 +177,7 @@ namespace dftfe
 				{
 					dftPtr->dFBroyden.pop_front();
 					dftPtr->uBroyden.pop_front();
-					if(dftParameters::xc_id == 4)//GGA
+					if(dftParameters::xcFamilyType=="GGA")//GGA
 					{
 						dftPtr->graddFBroyden.pop_front();
 						dftPtr->gradUBroyden.pop_front();
@@ -254,7 +254,7 @@ namespace dftfe
 				rhoTempSpinPolarized.resize(2*totPoints, 0.0);
 			}
 			//
-			if(dftParameters::xc_id == 4)
+			if(dftParameters::xcFamilyType=="GGA")
 			{
 				gradRhoLocal.resize(3*totPoints, 0.0);
 				gradRhoTemp.resize(3*totPoints, 0.0);
@@ -278,7 +278,7 @@ namespace dftfe
 					tempPsiBeta.resize(numPoint);
 					quadPointList.resize(numPoint);
 					//
-					if(dftParameters::xc_id == 4)
+					if(dftParameters::xcFamilyType=="GGA")
 					{
 						tempGradPsi.resize(numPoint);
 						tempGradPsiTempAlpha.resize(numPoint);
@@ -296,7 +296,7 @@ namespace dftfe
 						tempPsiAlpha[iList].reinit(2);
 						tempPsiBeta[iList].reinit(2);
 						//
-						if(dftParameters::xc_id == 4)
+						if(dftParameters::xcFamilyType=="GGA")
 						{
 							tempGradPsi[iList].resize(2);
 							tempGradPsiTempAlpha[iList].resize(2);
@@ -340,7 +340,7 @@ namespace dftfe
 								if (dftParameters::spinPolarized==1)
 									fe_values.get_function_values((eigenVectors[(1+dftParameters::spinPolarized)*kPoint+1][i]), tempPsiBeta);
 								//
-								if(dftParameters::xc_id == 4)
+								if(dftParameters::xcFamilyType=="GGA")
 								{
 									fe_values.get_function_gradients((eigenVectors[(1+dftParameters::spinPolarized)*kPoint][i]),tempGradPsiTempAlpha);
 									if (dftParameters::spinPolarized==1)
@@ -363,7 +363,7 @@ namespace dftfe
 										rhoTemp[numPointsDone+iList] += 1.0 / (double(numSymmUnderGroup[kPoint]))  *
 											2.0*partialOccupancyAlpha*(dftPtr->d_kPointWeights)[kPoint]*(tempPsiAlpha[iList](0)*tempPsiAlpha[iList](0) +
 													tempPsiAlpha[iList](1)*tempPsiAlpha[iList](1));
-									if(dftParameters::xc_id == 4)
+									if(dftParameters::xcFamilyType=="GGA")
 									{
 										for (unsigned int j = 0; j < 3; ++j)
 										{
@@ -426,12 +426,12 @@ namespace dftfe
 			} // loop on proc
 			//
 			MPI_Allreduce(&rhoTemp[0], &rhoLocal[0], totPoints, MPI_DOUBLE, MPI_SUM, interpoolcomm) ;
-			if (dftParameters::xc_id==4)
+			if (dftParameters::xcFamilyType=="GGA")
 				MPI_Allreduce(&gradRhoTemp[0], &gradRhoLocal[0], 3*totPoints, MPI_DOUBLE, MPI_SUM, interpoolcomm) ;
 			if (dftParameters::spinPolarized==1)
 			{
 				MPI_Allreduce(&rhoTempSpinPolarized[0], &rhoLocalSpinPolarized[0], 2*totPoints, MPI_DOUBLE, MPI_SUM, interpoolcomm) ;
-				if (dftParameters::xc_id==4)
+				if (dftParameters::xcFamilyType=="GGA")
 					MPI_Allreduce(&gradRhoTempSpinPolarized[0], &gradRhoLocalSpinPolarized[0], 6*totPoints, MPI_DOUBLE, MPI_SUM, interpoolcomm) ;
 			}
 			//================================================================================================================================================
@@ -471,7 +471,7 @@ namespace dftfe
 				recvdData.clear();
 			}
 			//
-			if (dftParameters::xc_id==4)
+			if (dftParameters::xcFamilyType=="GGA")
 			{
 				sendData.resize(3*(1+dftParameters::spinPolarized)*totPoints) ;
 				if (dftParameters::spinPolarized==1)

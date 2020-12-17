@@ -869,7 +869,7 @@ namespace dftfe {
 							*(rhoInValues),
 							*(gradRhoInValues),
 							*(gradRhoInValues),
-							dftParameters::xc_id == 4);
+							dftParameters::xcFamilyType=="GGA");
 
 					normalizeRhoInQuadValues();
 				}
@@ -917,7 +917,7 @@ namespace dftfe {
 							*(rhoInValues),
 							*(gradRhoInValues),
 							*(gradRhoInValues),
-							dftParameters::xc_id == 4);
+							dftParameters::xcFamilyType=="GGA");
 
 					normalizeRhoInQuadValues();
 				}
@@ -1004,7 +1004,7 @@ namespace dftfe {
                 *(rhoInValues),
                 *(gradRhoInValues),
                 *(gradRhoInValues),
-                dftParameters::xc_id == 4);	
+                dftParameters::xcFamilyType=="GGA");	
             normalizeRhoInQuadValues();
           }
           else
@@ -1498,7 +1498,7 @@ namespace dftfe {
 
 				for(unsigned int s=0; s<2; ++s)
 				{
-					if(dftParameters::xc_id < 4)
+					if(dftParameters::xcFamilyType=="LDA")
 					{
 						computing_timer.enter_section("VEff Computation");
 #ifdef DFTFE_WITH_GPU
@@ -1509,7 +1509,7 @@ namespace dftfe {
 							kohnShamDFTEigenOperator.computeVEffSpinPolarized(rhoInValuesSpinPolarized, d_phiInValues, s, d_pseudoVLoc, d_rhoCore, d_lpspQuadratureId);
 						computing_timer.exit_section("VEff Computation");
 					}
-					else if (dftParameters::xc_id == 4)
+					else if (dftParameters::xcFamilyType=="GGA")
 					{
 						computing_timer.enter_section("VEff Computation");
 #ifdef DFTFE_WITH_GPU
@@ -1588,7 +1588,7 @@ namespace dftfe {
 				for(unsigned int kPoint = 0; kPoint < d_kPointWeights.size(); ++kPoint)
 					residualNormWaveFunctionsAllkPoints[kPoint].resize(d_numEigenValuesRR);
 
-				if(dftParameters::xc_id < 4)
+				if(dftParameters::xcFamilyType=="LDA")
 				{
 					computing_timer.enter_section("VEff Computation");
 #ifdef DFTFE_WITH_GPU
@@ -1599,7 +1599,7 @@ namespace dftfe {
 						kohnShamDFTEigenOperator.computeVEff(rhoInValues, d_phiInValues, d_pseudoVLoc, d_rhoCore, d_lpspQuadratureId);
 					computing_timer.exit_section("VEff Computation");
 				}
-				else if (dftParameters::xc_id == 4)
+				else if (dftParameters::xcFamilyType=="GGA")
 				{
 					computing_timer.enter_section("VEff Computation");
 #ifdef DFTFE_WITH_GPU
@@ -2101,7 +2101,7 @@ namespace dftfe {
 
 					for(unsigned int s=0; s<2; ++s)
 					{
-						if(dftParameters::xc_id < 4)
+						if(dftParameters::xcFamilyType=="LDA")
 						{
 							computing_timer.enter_section("VEff Computation");
 #ifdef DFTFE_WITH_GPU
@@ -2112,7 +2112,7 @@ namespace dftfe {
 								kohnShamDFTEigenOperator.computeVEffSpinPolarized(rhoInValuesSpinPolarized, d_phiInValues, s, d_pseudoVLoc, d_rhoCore, d_lpspQuadratureId);
 							computing_timer.exit_section("VEff Computation");
 						}
-						else if (dftParameters::xc_id == 4)
+						else if (dftParameters::xcFamilyType=="GGA")
 						{
 							computing_timer.enter_section("VEff Computation");
 #ifdef DFTFE_WITH_GPU
@@ -2329,7 +2329,7 @@ namespace dftfe {
 					for(unsigned int kPoint = 0; kPoint < d_kPointWeights.size(); ++kPoint)
 						residualNormWaveFunctionsAllkPoints[kPoint].resize((scfIter<dftParameters::spectrumSplitStartingScfIter || scfConverged || performExtraNoMixedPrecNoSpectrumSplitPassInCaseOfXlBOMD)?d_numEigenValues:d_numEigenValuesRR);
 
-					if(dftParameters::xc_id < 4)
+					if(dftParameters::xcFamilyType=="LDA")
 					{
 						computing_timer.enter_section("VEff Computation");
 #ifdef DFTFE_WITH_GPU
@@ -2340,7 +2340,7 @@ namespace dftfe {
 							kohnShamDFTEigenOperator.computeVEff(rhoInValues, d_phiInValues, d_pseudoVLoc, d_rhoCore, d_lpspQuadratureId);
 						computing_timer.exit_section("VEff Computation");
 					}
-					else if (dftParameters::xc_id == 4)
+					else if (dftParameters::xcFamilyType=="GGA")
 					{
 						computing_timer.enter_section("VEff Computation");
 #ifdef DFTFE_WITH_GPU
@@ -3055,7 +3055,7 @@ namespace dftfe {
 			if(dftParameters::electrostaticsHRefinement || ((dftParameters::isIonForce || dftParameters::isCellStress) && solveLinearizedKS))
 			{
 				const unsigned int n_q_points = quadrature.size();
-				if (!(dftParameters::xc_id == 4))
+				if (!(dftParameters::xcFamilyType=="GGA"))
 				{
 					gradRhoOutVals.push_back(std::map<dealii::CellId, std::vector<double> >());
 					if (dftParameters::spinPolarized==1)

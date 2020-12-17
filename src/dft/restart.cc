@@ -33,7 +33,7 @@ void dftClass<FEOrder,FEOrderElectro>::saveTriaInfoAndRhoData()
 	for(auto it = rhoOutVals.cbegin(); it != rhoOutVals.cend(); it++)
 		cellQuadDataContainerIn.push_back(&(*it));
 
-	if (dftParameters::xc_id==4)
+	if (dftParameters::xcFamilyType=="GGA")
 	{
 		for(auto it = gradRhoInVals.cbegin(); it != gradRhoInVals.cend(); it++)
 			cellQuadDataContainerIn.push_back(&(*it));
@@ -52,7 +52,7 @@ void dftClass<FEOrder,FEOrderElectro>::saveTriaInfoAndRhoData()
 
 	}
 
-	if (dftParameters::xc_id==4 && dftParameters::spinPolarized==1)
+	if (dftParameters::xcFamilyType=="GGA" && dftParameters::spinPolarized==1)
 	{
 		for(auto it = gradRhoInValsSpinPolarized.cbegin(); it != gradRhoInValsSpinPolarized.cend(); it++)
 			cellQuadDataContainerIn.push_back(&(*it));
@@ -162,7 +162,7 @@ void dftClass<FEOrder,FEOrderElectro>::loadTriaInfoAndRhoData()
 		cellQuadDataContainerOut.push_back(std::map<dealii::CellId, std::vector<double> >());
 	}
 
-	if (dftParameters::xc_id==4)
+	if (dftParameters::xcFamilyType=="GGA")
 	{
 		for(unsigned int i=0; i< mixingHistorySize; i++)
 		{
@@ -190,7 +190,7 @@ void dftClass<FEOrder,FEOrderElectro>::loadTriaInfoAndRhoData()
 		}
 	}
 
-	if (dftParameters::xc_id==4 && dftParameters::spinPolarized==1)
+	if (dftParameters::xcFamilyType=="GGA" && dftParameters::spinPolarized==1)
 	{
 		for(unsigned int i=0; i< mixingHistorySize; i++)
 		{
@@ -224,7 +224,7 @@ void dftClass<FEOrder,FEOrderElectro>::loadTriaInfoAndRhoData()
 	}
 	rhoOutValues=&(rhoOutVals.back());
 
-	if (dftParameters::xc_id==4)
+	if (dftParameters::xcFamilyType=="GGA")
 	{
 		for(unsigned int i=0; i< mixingHistorySize; i++)
 		{
@@ -256,7 +256,7 @@ void dftClass<FEOrder,FEOrderElectro>::loadTriaInfoAndRhoData()
 		rhoOutValuesSpinPolarized=&(rhoOutValsSpinPolarized.back());
 	}
 
-	if (dftParameters::xc_id==4 && dftParameters::spinPolarized==1)
+	if (dftParameters::xcFamilyType=="GGA" && dftParameters::spinPolarized==1)
 	{
 		for(unsigned int i=0; i< mixingHistorySize; i++)
 		{

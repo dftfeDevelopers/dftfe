@@ -121,7 +121,7 @@ double dftClass<FEOrder,FEOrderElectro>::nodalDensity_mixing_simple(kerkerSolver
 	}
 	}
 
-	if(dftParameters::xc_id == 4)
+	if(dftParameters::xcFamilyType=="GGA")
 	{
 	for(unsigned int iSubCell = 0; iSubCell < d_matrixFreeDataPRefined.n_components_filled(cell); ++iSubCell)
 	{
@@ -148,7 +148,7 @@ double dftClass<FEOrder,FEOrderElectro>::nodalDensity_mixing_simple(kerkerSolver
 			*rhoInValues,
 			*gradRhoInValues,
 			*gradRhoInValues,
-			dftParameters::xc_id == 4);
+			dftParameters::xcFamilyType=="GGA");
 
 	return normValue;
 }
@@ -376,7 +376,7 @@ double dftClass<FEOrder,FEOrderElectro>::nodalDensity_mixing_anderson(kerkerSolv
 	  }
 	  }
 
-	  if(dftParameters::xc_id == 4)
+	  if(dftParameters::xcFamilyType=="GGA")
 	  {
 	  for(unsigned int iSubCell = 0; iSubCell < d_matrixFreeDataPRefined.n_components_filled(cell); ++iSubCell)
 	  {
@@ -402,7 +402,7 @@ double dftClass<FEOrder,FEOrderElectro>::nodalDensity_mixing_anderson(kerkerSolv
 			*rhoInValues,
 			*gradRhoInValues,
 			*gradRhoInValues,
-			dftParameters::xc_id == 4);
+			dftParameters::xcFamilyType=="GGA");
 
 
 	return normValue;

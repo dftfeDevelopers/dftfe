@@ -97,7 +97,7 @@ template<unsigned int FEOrder,unsigned int FEOrderElectro>
 					gradRhoQuadsiAtom[q][1][iSubCell]=(it->second)[q*C_DIM+1];
 					gradRhoQuadsiAtom[q][2][iSubCell]=(it->second)[q*C_DIM+2];
 
-					if(dftParameters::xc_id == 4)
+					if(dftParameters::xcFamilyType=="GGA")
 						for (unsigned int idim=0; idim<C_DIM; idim++)
 							for (unsigned int jdim=0; jdim<C_DIM; jdim++)
 								hessianRhoQuadsiAtom[q][idim][jdim][iSubCell]=(it2->second)[9*q+idim*C_DIM+jdim];
@@ -105,7 +105,7 @@ template<unsigned int FEOrder,unsigned int FEOrderElectro>
 
 		}//subCell loop
 
-		if(dftParameters::xc_id == 4)
+		if(dftParameters::xcFamilyType=="GGA")
 			for (unsigned int q=0; q<numQuadPoints; ++q)
 				forceEval.submit_value(-gradRhoQuadsiAtom[q]*(derVxcWithRhoOutTimesRhoDiffQuads[q]+phiRhoMinusApproxRhoQuads[q])
 						-shadowKSGradRhoMinMinusGradRhoQuads[q]*der2ExcWithGradRhoOutQuads[q]*hessianRhoQuadsiAtom[q]

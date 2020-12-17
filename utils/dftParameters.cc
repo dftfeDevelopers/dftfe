@@ -140,6 +140,7 @@ namespace dftfe {
     bool reuseLanczosUpperBoundFromFirstCall=false;
     bool allowMultipleFilteringPassesAfterFirstScf=true;
     bool useELPAGPUKernel=false;
+    std::string xcFamilyType="";
 
 		void declare_parameters(ParameterHandler &prm)
 		{
@@ -532,8 +533,8 @@ namespace dftfe {
 						"[Standard] Pseudopotential file. This file contains the list of pseudopotential file names in UPF format corresponding to the atoms involved in the calculations. UPF version 2.0 or greater and norm-conserving pseudopotentials(ONCV and Troullier Martins) in UPF format are only accepted. File format (example for two atoms Mg(z=12), Al(z=13)): 12 filename1.upf(row1), 13 filename2.upf (row2). Important Note: ONCV pseudopotentials data base in UPF format can be downloaded from http://www.quantum-simulation.org/potentials/sg15_oncv.  Troullier-Martins pseudopotentials in UPF format can be downloaded from http://www.quantum-espresso.org/pseudopotentials/fhi-pp-from-abinit-web-site.");
 
 				prm.declare_entry("EXCHANGE CORRELATION TYPE", "1",
-						Patterns::Integer(1,4),
-						"[Standard] Parameter specifying the type of exchange-correlation to be used: 1(LDA: Perdew Zunger Ceperley Alder correlation with Slater Exchange[PRB. 23, 5048 (1981)]), 2(LDA: Perdew-Wang 92 functional with Slater Exchange [PRB. 45, 13244 (1992)]), 3(LDA: Vosko, Wilk \\& Nusair with Slater Exchange[Can. J. Phys. 58, 1200 (1980)]), 4(GGA: Perdew-Burke-Ernzerhof functional [PRL. 77, 3865 (1996)]).");
+						Patterns::Integer(1,5),
+						"[Standard] Parameter specifying the type of exchange-correlation to be used: 1(LDA: Perdew Zunger Ceperley Alder correlation with Slater Exchange[PRB. 23, 5048 (1981)]), 2(LDA: Perdew-Wang 92 functional with Slater Exchange [PRB. 45, 13244 (1992)]), 3(LDA: Vosko, Wilk \\& Nusair with Slater Exchange[Can. J. Phys. 58, 1200 (1980)]), 4(GGA: Perdew-Burke-Ernzerhof functional [PRL. 77, 3865 (1996)], 5(RPBE: B. Hammer, L. B. Hansen, and J. K. Nørskov, Phys. Rev. B 59, 7413 (1999)).");
 
 				prm.declare_entry("SPIN POLARIZATION", "0",
 						Patterns::Integer(0,1),
@@ -1123,6 +1124,7 @@ namespace dftfe {
 			//
 			check_print_parameters(prm);
 			setHeuristicParameters();
+      setXCFamilyType();
 		}
 
 
@@ -1345,6 +1347,30 @@ namespace dftfe {
       //}
 
 		}
+
+		void setXCFamilyType()
+		{
+      if(dftParameters::xc_id == 1)
+      {
+        dftParameters::xcFamilyType="LDA";
+      }
+      else if(dftParameters::xc_id == 2)
+      {
+        dftParameters::xcFamilyType="LDA";        
+      }
+      else if(dftParameters::xc_id == 3)
+      {
+        dftParameters::xcFamilyType="LDA";        
+      }
+      else if(dftParameters::xc_id == 4)
+      {
+        dftParameters::xcFamilyType="GGA";        
+      }
+      else if(dftParameters::xc_id == 5)
+      {
+        dftParameters::xcFamilyType="GGA";          
+      }        
+    }
 
 	}
 

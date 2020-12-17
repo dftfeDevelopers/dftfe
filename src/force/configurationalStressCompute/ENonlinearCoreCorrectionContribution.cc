@@ -102,7 +102,7 @@ template<unsigned int FEOrder,unsigned int FEOrderElectro>
          }
        }
 
-       if(dftParameters::xc_id == 4 && !isCellOutsideCoreRhoTail)
+       if(dftParameters::xcFamilyType=="GGA" && !isCellOutsideCoreRhoTail)
        {
          std::map<dealii::CellId, std::vector<double> >::const_iterator it2
               =hessianRhoCoreAtoms.find(iAtom)->second.find(subCellId);

@@ -192,7 +192,7 @@ void dftClass<FEOrder,FEOrderElectro>::initCoreRho()
       zeroTensor2[i][j]=0.0;  
 
 	//loop over elements
-	if(dftParameters::xc_id == 4 || dftParameters::nonLinearCoreCorrection == true)
+	if(dftParameters::xcFamilyType=="GGA" || dftParameters::nonLinearCoreCorrection == true)
 	{
 		//
 		cell = dofHandler.begin_active();
@@ -206,7 +206,7 @@ void dftClass<FEOrder,FEOrderElectro>::initCoreRho()
 				gradRhoCoreQuadValues.resize(n_q_points*3,0.0);
 
 				std::vector<double> & hessianRhoCoreQuadValues = d_hessianRhoCore[cell->id()];
-				if(dftParameters::xc_id == 4)
+				if(dftParameters::xcFamilyType=="GGA")
 					hessianRhoCoreQuadValues.resize(n_q_points*9,0.0);
 
 				std::vector<Tensor<1,3,double> > gradRhoCoreAtom(n_q_points,zeroTensor1);
@@ -267,7 +267,7 @@ void dftClass<FEOrder,FEOrderElectro>::initCoreRho()
 						gradRhoCoreQuadValues[3*q + 1] += gradRhoCoreAtom[q][1];
 						gradRhoCoreQuadValues[3*q + 2] += gradRhoCoreAtom[q][2];
 
-						if(dftParameters::xc_id == 4)
+						if(dftParameters::xcFamilyType=="GGA")
 						{
 							for(unsigned int iDim = 0; iDim < 3; ++iDim)
 							{
@@ -291,7 +291,7 @@ void dftClass<FEOrder,FEOrderElectro>::initCoreRho()
 						gradRhoCoreAtomCell.resize(n_q_points*3,0.0);
 
 						std::vector<double> & hessianRhoCoreAtomCell = d_hessianRhoCoreAtoms[iAtom][cell->id()];
-						if(dftParameters::xc_id == 4)
+						if(dftParameters::xcFamilyType=="GGA")
 							hessianRhoCoreAtomCell.resize(n_q_points*9,0.0);
 
 						for(unsigned int q = 0; q < n_q_points; ++q)
@@ -300,7 +300,7 @@ void dftClass<FEOrder,FEOrderElectro>::initCoreRho()
 							gradRhoCoreAtomCell[3*q+1] = gradRhoCoreAtom[q][1];
 							gradRhoCoreAtomCell[3*q+2] = gradRhoCoreAtom[q][2];
 
-							if(dftParameters::xc_id == 4)
+							if(dftParameters::xcFamilyType=="GGA")
 							{
 								for(unsigned int iDim = 0; iDim < 3; ++iDim)
 								{
@@ -369,7 +369,7 @@ void dftClass<FEOrder,FEOrderElectro>::initCoreRho()
 						gradRhoCoreQuadValues[3*q + 1] += gradRhoCoreAtom[q][1];
 						gradRhoCoreQuadValues[3*q + 2] += gradRhoCoreAtom[q][2];
 
-						if(dftParameters::xc_id == 4)
+						if(dftParameters::xcFamilyType=="GGA")
 						{
 							for(unsigned int iDim = 0; iDim < 3; ++iDim)
 							{
@@ -393,7 +393,7 @@ void dftClass<FEOrder,FEOrderElectro>::initCoreRho()
 						gradRhoCoreAtomCell.resize(n_q_points*3);
 
 						std::vector<double> & hessianRhoCoreAtomCell = d_hessianRhoCoreAtoms[numberGlobalCharges+iImageCharge][cell->id()];
-						if(dftParameters::xc_id == 4)
+						if(dftParameters::xcFamilyType=="GGA")
 							hessianRhoCoreAtomCell.resize(n_q_points*9);
 
 						for(unsigned int q = 0; q < n_q_points; ++q)
@@ -402,7 +402,7 @@ void dftClass<FEOrder,FEOrderElectro>::initCoreRho()
 							gradRhoCoreAtomCell[3*q+1] = gradRhoCoreAtom[q][1];
 							gradRhoCoreAtomCell[3*q+2] = gradRhoCoreAtom[q][2];
 
-							if(dftParameters::xc_id == 4)
+							if(dftParameters::xcFamilyType=="GGA")
 							{
 								for(unsigned int iDim = 0; iDim < 3; ++iDim)
 								{

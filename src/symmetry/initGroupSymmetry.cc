@@ -60,7 +60,7 @@ namespace dftfe {
 			recv_buf_size.clear() ;
 			rhoRecvd.clear() ;
 			groupOffsets.clear() ;
-			if (dftParameters::xc_id==4)
+			if (dftParameters::xcFamilyType=="GGA")
 				gradRhoRecvd.clear() ;
 		}
 	//================================================================================================================================================
@@ -107,7 +107,7 @@ namespace dftfe {
 			recv_buf_size.resize(numSymm) ;
 			rhoRecvd.resize(numSymm) ;
 			groupOffsets.resize(numSymm) ;
-			if (dftParameters::xc_id==4)
+			if (dftParameters::xcFamilyType=="GGA")
 				gradRhoRecvd.resize(numSymm) ;
 			//
 			const parallel::distributed::Triangulation<3> & triangulationSer = (dftPtr->d_mesh).getSerialMeshUnmoved();
@@ -133,7 +133,7 @@ namespace dftfe {
 				recv_buf_size[iSymm]=std::vector<std::vector<std::vector<int>> >(cell_id);
 				rhoRecvd[iSymm]=std::vector<std::vector<std::vector<double>> >(cell_id);
 				groupOffsets[iSymm]=std::vector<std::vector<std::vector<int>> >(cell_id);
-				if (dftParameters::xc_id==4)
+				if (dftParameters::xcFamilyType=="GGA")
 					gradRhoRecvd[iSymm]=std::vector<std::vector<std::vector<double>> >(cell_id);
 			}
 			//================================================================================================================================================
@@ -418,7 +418,7 @@ namespace dftfe {
 				mpi_offsets1[i] = (1 + dftParameters::spinPolarized)*mpi_offsets1[i] ;
 			}
 			//
-			if (dftParameters::xc_id==4)
+			if (dftParameters::xcFamilyType=="GGA")
 			{
 				cell = (dftPtr->dofHandlerEigen).begin_active();
 				for(int i = 0; i < dftPtr->n_mpi_processes; i++) 
