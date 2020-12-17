@@ -142,11 +142,11 @@ dataTypes::number dftClass<FEOrder,FEOrderElectro>::computeTraceXtHX(unsigned in
 	//
 	//compute Veff
 	//
-	if(dftParameters::xc_id < 4)
+	if(dftParameters::xcFamilyType=="LDA")
 	{
 		kohnShamDFTEigenOperator.computeVEff(rhoInValues,phiInValues, d_pseudoVLoc, d_rhoCore, d_lpspQuadratureId);
 	}
-	else if (dftParameters::xc_id == 4)
+	else if (dftParameters::xcFamilyType=="GGA")
 	{
 		kohnShamDFTEigenOperator.computeVEff(rhoInValues, gradRhoInValues, phiInValues, d_pseudoVLoc, d_rhoCore, d_gradRhoCore, d_lpspQuadratureId);
 	}
@@ -342,7 +342,7 @@ void dftClass<FEOrder,FEOrderElectro>::solveNoSCF()
 			gradRhoOutValues,
 			rhoOutValuesSpinPolarized,
 			gradRhoOutValuesSpinPolarized,
-			dftParameters::xc_id == 4,
+			dftParameters::xcFamilyType=="GGA",
 			interpoolcomm,
 			interBandGroupComm,
 			false,

@@ -122,13 +122,13 @@ void dftClass<FEOrder,FEOrderElectro>::initnscf(kohnShamDFTOperatorClass<FEOrder
 
 	computing_timer.exit_section("nscf: phiTot solve");
 	//
-	if(dftParameters::xc_id < 4)
+	if(dftParameters::xcFamilyType=="LDA")
 	{
 		computing_timer.enter_section("nscf: VEff Computation");
 		kohnShamDFTEigenOperator.computeVEff(rhoInValues, phiInValues, d_pseudoVLoc, d_rhoCore, d_lpspQuadratureId);
 		computing_timer.exit_section("nscf: VEff Computation");
 	}
-	else if (dftParameters::xc_id == 4)
+	else if (dftParameters::xcFamilyType=="GGA")
 	{
 		computing_timer.enter_section("nscf: VEff Computation");
 		kohnShamDFTEigenOperator.computeVEff(rhoInValues, gradRhoInValues, phiInValues, d_pseudoVLoc, d_rhoCore, d_gradRhoCore, d_lpspQuadratureId);

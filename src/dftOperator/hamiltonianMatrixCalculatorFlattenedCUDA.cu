@@ -176,7 +176,7 @@ void kohnShamDFTOperatorCUDAClass<FEOrder,FEOrderElectro>::computeHamiltonianMat
       d_isStiffnessMatrixExternalPotCorrComputed=true;
   }
 
-	if(dftParameters::xc_id == 4)
+	if(dftParameters::xcFamilyType=="GGA")
 		hamMatrixKernelGGA<<<(d_numLocallyOwnedCells*d_numberNodesPerElement*d_numberNodesPerElement+255)/256,256>>>
 			(d_numLocallyOwnedCells,
 			 d_numberNodesPerElement,

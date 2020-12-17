@@ -944,7 +944,7 @@ template<unsigned int FEOrder,unsigned int FEOrderElectro>
           }
         }
 
-				if(dftParameters::xc_id == 4)
+				if(dftParameters::xcFamilyType=="GGA")
 				{
           const std::vector<double> & temp3=gradRhoOutValues.find(subCellId)->second;          
 					for (unsigned int q = 0; q < numQuadPoints; ++q)
@@ -966,7 +966,7 @@ template<unsigned int FEOrder,unsigned int FEOrderElectro>
           }          
         }
 
-				if(dftParameters::xc_id == 4)
+				if(dftParameters::xcFamilyType=="GGA")
 				{
 					for (unsigned int q = 0; q < numQuadPoints; ++q)
 						sigmaValRhoOut[q] = gradRhoOutQuadsXC[q].norm_square();
@@ -1035,7 +1035,7 @@ template<unsigned int FEOrder,unsigned int FEOrderElectro>
        				for (unsigned int idim=0; idim<C_DIM; idim++)
 				          gradRhoCoreQuads[q][idim][iSubCell] = temp1[3*q+idim];
 
-            if(dftParameters::xc_id == 4)
+            if(dftParameters::xcFamilyType=="GGA")
             {
               const std::vector<double> & temp2=hessianRhoCoreValues.find(subCellId)->second;
               for (unsigned int q=0; q<numQuadPoints; ++q)
@@ -1052,7 +1052,7 @@ template<unsigned int FEOrder,unsigned int FEOrderElectro>
 						for (unsigned int idim=0; idim<C_DIM; idim++)
 							gradRhoAtomsQuads[q][idim][iSubCell]=dftPtr->d_gradRhoAtomsValues.find(subCellId)->second[3*q+idim];
 
-						if(dftParameters::xc_id == 4)
+						if(dftParameters::xcFamilyType=="GGA")
 						{
 							for (unsigned int idim=0; idim<C_DIM; idim++)
 								for (unsigned int jdim=0; jdim<C_DIM; jdim++)
@@ -1076,7 +1076,7 @@ template<unsigned int FEOrder,unsigned int FEOrderElectro>
 										    gradRhoCoreAtoms);
 
 
-			    if(dftParameters::xc_id == 4)
+			    if(dftParameters::xcFamilyType=="GGA")
             FNonlinearCoreCorrectionGammaAtomsElementalContribution(forceContributionHessianRhoNonlinearCoreCorrectionGammaAtoms,
                           forceEval,
                           matrixFreeData,
@@ -1119,7 +1119,7 @@ template<unsigned int FEOrder,unsigned int FEOrderElectro>
 				{
 					F+=gradRhoAtomsQuads[q]*(derVxcWithRhoOutTimesRhoDiffQuads[q]+phiRhoMinMinusApproxRhoQuads[q]);
 
-					if(dftParameters::xc_id == 4)
+					if(dftParameters::xcFamilyType=="GGA")
 					{
 						F+=shadowKSGradRhoMinMinusGradRhoQuads[q]*der2ExcWithGradRhoOutQuads[q]*hessianRhoAtomsQuads[q];
 						F+=shadowKSGradRhoMinMinusGradRhoQuads[q]*outer_product(derVxcWithGradRhoOutQuads[q],gradRhoAtomsQuads[q]);
@@ -1132,7 +1132,7 @@ template<unsigned int FEOrder,unsigned int FEOrderElectro>
           F += eshelbyTensor::getFNonlinearCoreCorrection(vxcRhoOutQuads[q],
                       gradRhoCoreQuads[q]);
 
-          if(dftParameters::xc_id == 4)
+          if(dftParameters::xcFamilyType=="GGA")
             F += eshelbyTensor::getFNonlinearCoreCorrection(derExchCorrEnergyWithGradRhoOutQuads[q],
                         hessianRhoCoreQuads[q]);
         }
@@ -1170,7 +1170,7 @@ template<unsigned int FEOrder,unsigned int FEOrderElectro>
          accumulateForceContributionGammaAtomsFloating(forceContributionGradRhoNonlinearCoreCorrectionGammaAtoms,
                                                        d_forceAtomsFloating);
 
-         if(dftParameters::xc_id == 4)
+         if(dftParameters::xcFamilyType=="GGA")
            accumulateForceContributionGammaAtomsFloating(forceContributionHessianRhoNonlinearCoreCorrectionGammaAtoms,
                                                          d_forceAtomsFloating);       
       }
@@ -1181,7 +1181,7 @@ template<unsigned int FEOrder,unsigned int FEOrderElectro>
                       d_constraintsNoneForce,
                       d_configForceVectorLinFE);
          
-        if(dftParameters::xc_id == 4)
+        if(dftParameters::xcFamilyType=="GGA")
           distributeForceContributionFPSPLocalGammaAtoms(forceContributionHessianRhoNonlinearCoreCorrectionGammaAtoms,
                         d_atomsForceDofs,
                         d_constraintsNoneForce,

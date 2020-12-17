@@ -142,6 +142,7 @@ namespace dftfe {
     extern bool reuseLanczosUpperBoundFromFirstCall;
     extern bool allowMultipleFilteringPassesAfterFirstScf;
     extern bool useELPAGPUKernel;
+    extern std::string xcFamilyType;
 
 		/**
 		 * Declare parameters.
@@ -159,10 +160,15 @@ namespace dftfe {
 		void check_print_parameters(const dealii::ParameterHandler &prm);
 
 		/**
-		 * Check and print parameters
+		 * Set heuristic parameters
 		 */
 		void setHeuristicParameters();
 
+    /**
+     * set family type exchange correlation functional
+     *
+     */
+    void setXCFamilyType();
 	};
 
 }

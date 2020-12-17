@@ -322,7 +322,7 @@ namespace dftfe
        {
          AssertThrow( num_quad_points_electronic == rhoOutValues.begin()->second.size(),
               dealii::ExcMessage("DFT-FE Error: mismatch in quadrature data in energyCalculator::computeEnergy."));
-         if(dftParameters::xc_id == 4)
+         if(dftParameters::xcFamilyType=="GGA")
            AssertThrow( num_quad_points_electronic*3 == gradRhoOutValues.begin()->second.size(),
                 dealii::ExcMessage("DFT-FE Error: mismatch in quadrature data in energyCalculator::computeEnergy."));  
          AssertThrow( num_quad_points_lpsp == rhoOutValuesLpsp.begin()->second.size(),
@@ -373,7 +373,7 @@ namespace dftfe
 
            feValuesElectronicLpsp.reinit(cellElectronic);
 
-					 if(dftParameters::xc_id == 4)
+					 if(dftParameters::xcFamilyType=="GGA")
 					 {
 						 // Get exc
 						 std::vector<double> densityValueIn(num_quad_points_electronic),
@@ -684,7 +684,7 @@ double energyCalculator::computeShadowPotentialEnergyExtendedLagrangian
 			feValuesElectronic.reinit (cellElectronic);
 			//feValuesElectronic.get_function_values(phiTotRhoIn,cellPhiTotRhoIn);
 
-			if(dftParameters::xc_id == 4)
+			if(dftParameters::xcFamilyType=="GGA")
 			{
 				// Get exc
 				std::vector<double> densityValueIn(num_quad_points_electronic),
@@ -882,7 +882,7 @@ double energyCalculator::computeEnergySpinPolarized
    {
      AssertThrow( num_quad_points_electronic == rhoOutValues.begin()->second.size(),
           dealii::ExcMessage("DFT-FE Error: mismatch in quadrature data in energyCalculator::computeEnergy."));
-     if(dftParameters::xc_id == 4)
+     if(dftParameters::xcFamilyType=="GGA")
        AssertThrow( num_quad_points_electronic*3 == gradRhoOutValues.begin()->second.size(),
             dealii::ExcMessage("DFT-FE Error: mismatch in quadrature data in energyCalculator::computeEnergy."));  
      AssertThrow( num_quad_points_lpsp == rhoOutValuesLpsp.begin()->second.size(),
@@ -931,7 +931,7 @@ double energyCalculator::computeEnergySpinPolarized
 
       feValuesElectronicLpsp.reinit(cellElectronic);
 
-			if(dftParameters::xc_id == 4)
+			if(dftParameters::xcFamilyType=="GGA")
 			{
 				// Get exc
 				std::vector<double> densityValueIn(2*num_quad_points_electronic),

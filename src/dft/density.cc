@@ -46,13 +46,13 @@ void dftClass<FEOrder,FEOrderElectro>::popOutRhoInRhoOutVals()
 				rhoOutValsSpinPolarized.pop_front();
 			}
 
-			if(dftParameters::xc_id == 4)//GGA
+			if(dftParameters::xcFamilyType=="GGA")//GGA
 			{
 				gradRhoInVals.pop_front();
 				gradRhoOutVals.pop_front();
 			}
 
-			if(dftParameters::spinPolarized==1 && dftParameters::xc_id==4)
+			if(dftParameters::spinPolarized==1 && dftParameters::xcFamilyType=="GGA")
 			{
 				gradRhoInValsSpinPolarized.pop_front();
 				gradRhoOutValsSpinPolarized.pop_front();
@@ -62,7 +62,7 @@ void dftClass<FEOrder,FEOrderElectro>::popOutRhoInRhoOutVals()
 			{
 				dFBroyden.pop_front();
 				uBroyden.pop_front();
-				if(dftParameters::xc_id == 4)//GGA
+				if(dftParameters::xcFamilyType=="GGA")//GGA
 				{
 					graddFBroyden.pop_front();
 					gradUBroyden.pop_front();
@@ -115,7 +115,7 @@ void dftClass<FEOrder,FEOrderElectro>::compute_rhoOut(
 				*rhoOutValues,
 				*gradRhoOutValues,
 				*gradRhoOutValues,
-				dftParameters::xc_id == 4);
+				dftParameters::xcFamilyType=="GGA");
 
 
 		if(dftParameters::verbosity>=3)
@@ -137,7 +137,7 @@ void dftClass<FEOrder,FEOrderElectro>::compute_rhoOut(
 		if (dftParameters::spinPolarized==1)
 			rhoOutValuesSpinPolarized = &(rhoOutValsSpinPolarized.back());
 
-		if(dftParameters::xc_id == 4)
+		if(dftParameters::xcFamilyType=="GGA")
 		{
 			gradRhoOutValues = &(gradRhoOutVals.back());
 			if (dftParameters::spinPolarized==1)
@@ -169,7 +169,7 @@ void dftClass<FEOrder,FEOrderElectro>::compute_rhoOut(
 					gradRhoOutValues,
 					rhoOutValuesSpinPolarized,
 					gradRhoOutValuesSpinPolarized,
-					dftParameters::xc_id == 4,
+					dftParameters::xcFamilyType=="GGA",
 					interpoolcomm,
 					interBandGroupComm,
 					isConsiderSpectrumSplitting && d_numEigenValues!=d_numEigenValuesRR);
@@ -196,7 +196,7 @@ void dftClass<FEOrder,FEOrderElectro>::compute_rhoOut(
 					gradRhoOutValues,
 					rhoOutValuesSpinPolarized,
 					gradRhoOutValuesSpinPolarized,
-					dftParameters::xc_id == 4,
+					dftParameters::xcFamilyType=="GGA",
 					interpoolcomm,
 					interBandGroupComm,
 					isConsiderSpectrumSplitting,
@@ -223,7 +223,7 @@ void dftClass<FEOrder,FEOrderElectro>::compute_rhoOut(
 				gradRhoOutValues,
 				rhoOutValuesSpinPolarized,
 				gradRhoOutValuesSpinPolarized,
-				dftParameters::xc_id == 4,
+				dftParameters::xcFamilyType=="GGA",
 				interpoolcomm,
 				interBandGroupComm,
 				isConsiderSpectrumSplitting,
@@ -320,7 +320,7 @@ template<unsigned int FEOrder,unsigned int FEOrderElectro>
 	if (dftParameters::spinPolarized==1)
 		rhoValsSpinPolarized.push_back(std::map<dealii::CellId,std::vector<double> > ());
 
-	if(dftParameters::xc_id == 4)
+	if(dftParameters::xcFamilyType=="GGA")
 	{
 		gradRhoVals.push_back(std::map<dealii::CellId, std::vector<double> >());
 		if (dftParameters::spinPolarized==1)
@@ -334,13 +334,13 @@ template<unsigned int FEOrder,unsigned int FEOrderElectro>
 		{
 			const dealii::CellId cellId=cell->id();
 			rhoVals.back()[cellId] = std::vector<double>(numQuadPoints,0.0);
-			if(dftParameters::xc_id == 4)
+			if(dftParameters::xcFamilyType=="GGA")
 				gradRhoVals.back()[cellId] = std::vector<double>(3*numQuadPoints,0.0);
 
 			if (dftParameters::spinPolarized==1)
 			{
 				rhoValsSpinPolarized.back()[cellId] = std::vector<double>(2*numQuadPoints,0.0);
-				if(dftParameters::xc_id == 4)
+				if(dftParameters::xcFamilyType=="GGA")
 					gradRhoValsSpinPolarized.back()[cellId]
 						= std::vector<double>(6*numQuadPoints,0.0);
 			}
@@ -359,7 +359,7 @@ void dftClass<FEOrder,FEOrderElectro>::noRemeshRhoDataInit()
 		std::map<dealii::CellId, std::vector<double> > rhoOutValuesCopy=*(rhoOutValues);
 
 		std::map<dealii::CellId, std::vector<double> > gradRhoOutValuesCopy;
-		if (dftParameters::xc_id==4)
+		if (dftParameters::xcFamilyType=="GGA")
 		{
 			gradRhoOutValuesCopy=*(gradRhoOutValues);
 		}
@@ -372,7 +372,7 @@ void dftClass<FEOrder,FEOrderElectro>::noRemeshRhoDataInit()
 		}
 
 		std::map<dealii::CellId, std::vector<double> > gradRhoOutValuesSpinPolarizedCopy;
-		if(dftParameters::spinPolarized==1 && dftParameters::xc_id==4)
+		if(dftParameters::spinPolarized==1 && dftParameters::xcFamilyType=="GGA")
 		{
 			gradRhoOutValuesSpinPolarizedCopy=*(gradRhoOutValuesSpinPolarized);
 
@@ -385,7 +385,7 @@ void dftClass<FEOrder,FEOrderElectro>::noRemeshRhoDataInit()
 		rhoInVals.push_back(rhoOutValuesCopy);
 		rhoInValues=&(rhoInVals.back());
 
-		if (dftParameters::xc_id==4)
+		if (dftParameters::xcFamilyType=="GGA")
 		{
 			gradRhoInVals.push_back(gradRhoOutValuesCopy);
 			gradRhoInValues=&(gradRhoInVals.back());
@@ -397,7 +397,7 @@ void dftClass<FEOrder,FEOrderElectro>::noRemeshRhoDataInit()
 			rhoInValuesSpinPolarized=&(rhoInValsSpinPolarized.back());
 		}
 
-		if (dftParameters::xc_id==4 && dftParameters::spinPolarized==1)
+		if (dftParameters::xcFamilyType=="GGA" && dftParameters::spinPolarized==1)
 		{
 			gradRhoInValsSpinPolarized.push_back(gradRhoOutValuesSpinPolarizedCopy);
 			gradRhoInValuesSpinPolarized=&(gradRhoInValsSpinPolarized.back());
@@ -425,13 +425,13 @@ void dftClass<FEOrder,FEOrderElectro>::noRemeshRhoDataInit()
 					*rhoInValues,
 					*gradRhoInValues,
 					*gradRhoInValues,
-					dftParameters::xc_id == 4);
+					dftParameters::xcFamilyType=="GGA");
 
 
 			rhoOutVals.push_back(std::map<dealii::CellId,std::vector<double> > ());
 			rhoOutValues = &(rhoOutVals.back());
 
-			if(dftParameters::xc_id == 4)
+			if(dftParameters::xcFamilyType=="GGA")
 			{
 				gradRhoOutVals.push_back(std::map<dealii::CellId, std::vector<double> >());
 				gradRhoOutValues= &(gradRhoOutVals.back());
@@ -503,13 +503,13 @@ void dftClass<FEOrder,FEOrderElectro>::computeRhoNodalFromPSI(
 		if (cell->is_locally_owned())
 		{
 			const dealii::CellId cellId=cell->id();
-			if(dftParameters::xc_id == 4)
+			if(dftParameters::xcFamilyType=="GGA")
 				(_gradRhoValues)[cellId] = std::vector<double>(3*numQuadPoints,0.0);
 
 			if (dftParameters::spinPolarized==1)
 			{
 				(_rhoValuesSpinPolarized)[cellId] = std::vector<double>(2*numQuadPoints,0.0);
-				if(dftParameters::xc_id == 4)
+				if(dftParameters::xcFamilyType=="GGA")
 					(_gradRhoValuesSpinPolarized)[cellId]
 						= std::vector<double>(6*numQuadPoints,0.0);
 			}

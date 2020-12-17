@@ -634,7 +634,7 @@ template<unsigned int FEOrder,unsigned int FEOrderElectro>
 			{
 				subCellPtr= matrixFreeData.get_cell_iterator(cell,iSubCell);
 				dealii::CellId subCellId=subCellPtr->id();
-				if(dftParameters::xc_id == 4)
+				if(dftParameters::xcFamilyType=="GGA")
 				{
 					for (unsigned int q = 0; q < numQuadPoints; ++q)
 					{
@@ -685,7 +685,7 @@ template<unsigned int FEOrder,unsigned int FEOrderElectro>
 				{
 					rhoQuads[q][iSubCell]=(*dftPtr->rhoOutValues)[subCellId][q];
 
-					if(dftParameters::xc_id == 4)
+					if(dftParameters::xcFamilyType=="GGA")
 						for (unsigned int idim=0; idim<C_DIM; idim++)
 						{
 							gradRhoSpin0Quads[q][idim][iSubCell]=(*dftPtr->gradRhoOutValuesSpinPolarized)[subCellId][6*q+idim];

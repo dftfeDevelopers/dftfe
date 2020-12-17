@@ -137,13 +137,13 @@ namespace dftfe
 				 {
 					 const dealii::CellId cellId=cell->id();
 					 (*_rhoValues)[cellId] = std::vector<double>(numQuadPoints,0.0);
-					 if(dftParameters::xc_id == 4)
+					 if(dftParameters::xcFamilyType=="GGA")
 						 (*_gradRhoValues)[cellId] = std::vector<double>(3*numQuadPoints,0.0);
 
 					 if (dftParameters::spinPolarized==1)
 					 {
 						 (*_rhoValuesSpinPolarized)[cellId] = std::vector<double>(2*numQuadPoints,0.0);
-						 if(dftParameters::xc_id == 4)
+						 if(dftParameters::xcFamilyType=="GGA")
 							 (*_gradRhoValuesSpinPolarized)[cellId]
 								 = std::vector<double>(6*numQuadPoints,0.0);
 					 }

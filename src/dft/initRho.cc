@@ -109,7 +109,7 @@ void dftClass<FEOrder,FEOrderElectro>::initRho()
 		rhoInValuesSpinPolarized=&(rhoInValsSpinPolarized.back());
 	}
 
-	if(dftParameters::xc_id == 4)
+	if(dftParameters::xcFamilyType=="GGA")
 	{
 		gradRhoInVals.push_back(std::map<dealii::CellId, std::vector<double> >());
 		gradRhoInValues= &(gradRhoInVals.back());
@@ -129,7 +129,7 @@ void dftClass<FEOrder,FEOrderElectro>::initRho()
 		rhoOutVals.push_back(std::map<dealii::CellId,std::vector<double> > ());
 		rhoOutValues = &(rhoOutVals.back());
 
-		if(dftParameters::xc_id == 4)
+		if(dftParameters::xcFamilyType=="GGA")
 		{
 			gradRhoOutVals.push_back(std::map<dealii::CellId, std::vector<double> >());
 			gradRhoOutValues= &(gradRhoOutVals.back());
@@ -207,7 +207,7 @@ void dftClass<FEOrder,FEOrderElectro>::initRho()
 			pcout<<"Total Charge after Normalizing nodal Rho: "<< totalCharge(d_matrixFreeDataPRefined,d_rhoInNodalValues)<<std::endl;
 		}
 
-		if(dftParameters::xc_id == 4)
+		if(dftParameters::xcFamilyType=="GGA")
 		{
 			gradRhoInVals.push_back(std::map<dealii::CellId,std::vector<double> >());
 			gradRhoInValues=&(gradRhoInVals.back());
@@ -220,7 +220,7 @@ void dftClass<FEOrder,FEOrderElectro>::initRho()
 				*rhoInValues,
 				*gradRhoInValues,
 				*gradRhoInValues,
-				dftParameters::xc_id == 4);
+				dftParameters::xcFamilyType=="GGA");
 		normalizeRhoInQuadValues();
 
 		/*FEEvaluation<C_DIM,C_num1DKerkerPoly<FEOrder>(),C_num1DQuad<FEOrderElectro>(),1,double> rhoEval(d_matrixFreeDataPRefined,0,1);
@@ -243,7 +243,7 @@ void dftClass<FEOrder,FEOrderElectro>::initRho()
 		  }
 		  }
 
-		  if(dftParameters::xc_id == 4)
+		  if(dftParameters::xcFamilyType=="GGA")
 		  {
 		  for(unsigned int iSubCell = 0; iSubCell < d_matrixFreeDataPRefined.n_components_filled(cell); ++iSubCell)
 		  {
@@ -327,7 +327,7 @@ void dftClass<FEOrder,FEOrderElectro>::initRho()
 
 
 		//loop over elements
-		if(dftParameters::xc_id == 4)
+		if(dftParameters::xcFamilyType=="GGA")
 		{
 			//
 			cell = dofHandler.begin_active();
@@ -463,7 +463,7 @@ void dftClass<FEOrder,FEOrderElectro>::computeRhoInitialGuessFromPSI(std::vector
 		rhoInValuesSpinPolarized=&(rhoInValsSpinPolarized.back());
 	}
 
-	if(dftParameters::xc_id == 4)
+	if(dftParameters::xcFamilyType=="GGA")
 	{
 		gradRhoInVals.push_back(std::map<dealii::CellId, std::vector<double> >());
 		gradRhoInValues= &(gradRhoInVals.back());
@@ -507,7 +507,7 @@ void dftClass<FEOrder,FEOrderElectro>::computeRhoInitialGuessFromPSI(std::vector
 
 
 
-			if(dftParameters::xc_id == 4)//GGA
+			if(dftParameters::xcFamilyType=="GGA")//GGA
 			{
 				(*gradRhoInValues)[cell->id()] = std::vector<double>(3*num_quad_points);
 				std::fill(gradRhoTemp.begin(),gradRhoTemp.end(),0.0);
@@ -799,14 +799,14 @@ void dftClass<FEOrder,FEOrderElectro>::normalizeRhoInQuadValues()
 			for (unsigned int q=0; q<n_q_points; ++q){
 				(*rhoInValues)[cell->id()][q]*=scaling;
 
-				if(dftParameters::xc_id == 4)
+				if(dftParameters::xcFamilyType=="GGA")
 					for (unsigned int idim=0; idim<3; ++idim)
 						(*gradRhoInValues)[cell->id()][3*q+idim]*=scaling;
 				if (dftParameters::spinPolarized==1)
 				{
 					(*rhoInValuesSpinPolarized)[cell->id()][2*q+1]*=scaling;
 					(*rhoInValuesSpinPolarized)[cell->id()][2*q]*=scaling;
-					if(dftParameters::xc_id == 4)
+					if(dftParameters::xcFamilyType=="GGA")
 						for (unsigned int idim=0; idim<3; ++idim)
 						{
 							(*gradRhoInValuesSpinPolarized)[cell->id()][6*q+idim]*=scaling;
@@ -846,14 +846,14 @@ void dftClass<FEOrder,FEOrderElectro>::normalizeRhoOutQuadValues()
 			for (unsigned int q=0; q<n_q_points; ++q){
 				(*rhoOutValues)[cell->id()][q]*=scaling;
 
-				if(dftParameters::xc_id == 4)
+				if(dftParameters::xcFamilyType=="GGA")
 					for (unsigned int idim=0; idim<3; ++idim)
 						(*gradRhoOutValues)[cell->id()][3*q+idim]*=scaling;
 				if (dftParameters::spinPolarized==1)
 				{
 					(*rhoOutValuesSpinPolarized)[cell->id()][2*q+1]*=scaling;
 					(*rhoOutValuesSpinPolarized)[cell->id()][2*q]*=scaling;
-					if(dftParameters::xc_id == 4)
+					if(dftParameters::xcFamilyType=="GGA")
 						for (unsigned int idim=0; idim<3; ++idim)
 						{
 							(*gradRhoOutValuesSpinPolarized)[cell->id()][6*q+idim]*=scaling;
@@ -898,7 +898,7 @@ void dftClass<FEOrder,FEOrderElectro>::normalizeAtomicRhoQuadValues()
 			for (unsigned int i=0; i<(it2->second).size(); ++i)
 				(it2->second)[i]*=scaling;
 
-	if (dftParameters::xc_id==4)
+	if (dftParameters::xcFamilyType=="GGA")
 	{
 		for (auto it1=d_hessianRhoAtomsValues.begin(); it1!=d_hessianRhoAtomsValues.end(); ++it1)
 			for (unsigned int i=0; i<(it1->second).size(); ++i)
@@ -1088,11 +1088,11 @@ void dftClass<FEOrder,FEOrderElectro>::initAtomicRho(distributedCPUVec<double> &
 			d_gradRhoAtomsValues,
 			d_hessianRhoAtomsValues,
 			true,
-			dftParameters::xc_id==4);
+			dftParameters::xcFamilyType=="GGA");
 
 	d_gradRhoAtomsValuesSeparate.clear();
 
-	if (dftParameters::xc_id==4)
+	if (dftParameters::xcFamilyType=="GGA")
 		d_hessianRhoAtomsValuesSeparate.clear();
 
 	DoFHandler<C_DIM>::active_cell_iterator subCellPtr;
@@ -1105,7 +1105,7 @@ void dftClass<FEOrder,FEOrderElectro>::initAtomicRho(distributedCPUVec<double> &
 				continue;
 
 			feEvalObj.read_dof_values(singleAtomsRho[iatom]);
-			if (dftParameters::xc_id==4)
+			if (dftParameters::xcFamilyType=="GGA")
 				feEvalObj.evaluate(true,true,true);
 			else
 				feEvalObj.evaluate(true,true);
@@ -1137,7 +1137,7 @@ void dftClass<FEOrder,FEOrderElectro>::initAtomicRho(distributedCPUVec<double> &
 						tempVec1[3*q_point + 2] = feEvalObj.get_gradient(q_point)[2][iSubCell]*scalingFactor;
 					}
 
-					if (dftParameters::xc_id==4)
+					if (dftParameters::xcFamilyType=="GGA")
 					{
 
 						d_hessianRhoAtomsValuesSeparate[iatom][subCellId]=std::vector<double>(9*numQuadPoints);

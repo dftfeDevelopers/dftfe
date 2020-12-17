@@ -121,7 +121,7 @@ void dftClass<FEOrder,FEOrderElectro>::initpRefinedObjects(const bool meshOnlyDe
 	//matrix free data structure
 	typename dealii::MatrixFree<3>::AdditionalData additional_data;
 	additional_data.tasks_parallel_scheme = dealii::MatrixFree<3>::AdditionalData::partition_partition;
-	if (dftParameters::xc_id==4)
+	if (dftParameters::xcFamilyType=="GGA")
 		additional_data.mapping_update_flags = update_values|update_gradients|update_JxW_values|update_hessians|update_quadrature_points;
   else
 		additional_data.mapping_update_flags = update_values|update_gradients|update_JxW_values|update_quadrature_points;

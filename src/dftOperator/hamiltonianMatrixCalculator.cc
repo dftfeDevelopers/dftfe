@@ -148,7 +148,7 @@ void kohnShamDFTOperatorClass<FEOrder,FEOrderElectro>::computeHamiltonianMatrix(
 
 		std::vector<VectorizedArray<double> > shapeGradDotDerExcWithSigmaTimesGradRho;
 
-    if(dftParameters::xc_id == 4)
+    if(dftParameters::xcFamilyType=="GGA")
     {
       shapeGradDotDerExcWithSigmaTimesGradRho.resize(numberDofsPerElement*numberQuadraturePoints);
       for(unsigned int iNode = 0; iNode < numberDofsPerElement; ++iNode)
@@ -170,7 +170,7 @@ void kohnShamDFTOperatorClass<FEOrder,FEOrderElectro>::computeHamiltonianMatrix(
 					VectorizedArray<double> temp = vEff(iMacroCell,q_point)*shapei*shapej;
 #endif
           
-          if(dftParameters::xc_id == 4)
+          if(dftParameters::xcFamilyType=="GGA")
           {
 						temp +=
 							shapeGradDotDerExcWithSigmaTimesGradRho[iNode*numberQuadraturePoints+q_point]*shapej
