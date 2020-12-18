@@ -210,12 +210,12 @@ namespace dftfe
 				 thrust::device_vector<double> rhoDevice(totalLocallyOwnedCells*numQuadPoints,0.0);
 				 thrust::device_vector<double> rhoWfcContributionsDevice(cellsBlockSize*numQuadPoints*BVec,0.0);
 
-				 thrust::device_vector<double> gradRhoDeviceX(totalLocallyOwnedCells*numQuadPoints,0.0);
-				 thrust::device_vector<double> gradRhoDeviceY(totalLocallyOwnedCells*numQuadPoints,0.0);
-				 thrust::device_vector<double> gradRhoDeviceZ(totalLocallyOwnedCells*numQuadPoints,0.0);
-				 thrust::device_vector<double> gradRhoWfcContributionsDeviceX(cellsBlockSize*numQuadPoints*BVec,0.0);
-				 thrust::device_vector<double> gradRhoWfcContributionsDeviceY(cellsBlockSize*numQuadPoints*BVec,0.0);
-				 thrust::device_vector<double> gradRhoWfcContributionsDeviceZ(cellsBlockSize*numQuadPoints*BVec,0.0);
+				 thrust::device_vector<double> gradRhoDeviceX(isEvaluateGradRho?(totalLocallyOwnedCells*numQuadPoints):1,0.0);
+				 thrust::device_vector<double> gradRhoDeviceY(isEvaluateGradRho?(totalLocallyOwnedCells*numQuadPoints):1,0.0);
+				 thrust::device_vector<double> gradRhoDeviceZ(isEvaluateGradRho?(totalLocallyOwnedCells*numQuadPoints):1,0.0);
+				 thrust::device_vector<double> gradRhoWfcContributionsDeviceX(isEvaluateGradRho?(cellsBlockSize*numQuadPoints*BVec):1,0.0);
+				 thrust::device_vector<double> gradRhoWfcContributionsDeviceY(isEvaluateGradRho?(cellsBlockSize*numQuadPoints*BVec):1,0.0);
+				 thrust::device_vector<double> gradRhoWfcContributionsDeviceZ(isEvaluateGradRho?(cellsBlockSize*numQuadPoints*BVec):1,0.0);
              
          thrust::device_vector<double> rhoSpinPolarizedDevice;
          thrust::device_vector<double> gradRhoSpinPolarizedDeviceX;
