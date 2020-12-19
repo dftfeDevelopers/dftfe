@@ -7,6 +7,7 @@ subsection GPU
   set AUTO GPU BLOCK SIZES=false
   set USE GPUDIRECT MPI ALL REDUCE = true
   set USE ELPA GPU KERNEL=true
+  set SUBSPACE ROT FULL CPU MEM    = false
 end
 
 subsection Boundary conditions
