@@ -1651,14 +1651,14 @@ namespace dftfe
 					{
             if (dftParameters::useGPUDirectAllReduce)
             {
-              CUDACHECK(cudaMemcpyAsync(thrust::raw_pointer_cast(&rotationMatBlock[0]),
+              CUDACHECK(cudaMemcpyAsync(thrust::raw_pointer_cast(&rotationMatBlockNext[0]),
                   rotationMatBlockHost,
                   BVec*N*sizeof(double),
                   cudaMemcpyHostToDevice,
                   streamGPUCCL));   
 
-              gpucclMpiCommDomain.gpuDirectAllReduceWrapper(thrust::raw_pointer_cast(&rotationMatBlock[0]),
-                                   thrust::raw_pointer_cast(&rotationMatBlock[0]), 
+              gpucclMpiCommDomain.gpuDirectAllReduceWrapper(thrust::raw_pointer_cast(&rotationMatBlockNext[0]),
+                                   thrust::raw_pointer_cast(&rotationMatBlockNext[0]), 
                                    BVec*N, 
                                    streamGPUCCL);
             }
