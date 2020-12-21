@@ -22,7 +22,7 @@ PROJ=/ccs/proj/eng110
 # and optimization flag
 
 #Paths for external libraries
-dealiiDir="$PROJ/software/dealiiDevelop/installDealii"
+dealiiDir="$PROJ/software/dealiiCustomizedSMPI20200121/installDealiiCustomizedCUDA10.1.243Gcc6.4.0"
 alglibDir="$PROJ/software/alglib/cpp/src"
 libxcDir="$PROJ/software/libxc/installGcc6.4.0"
 spglibDir="$PROJ/software/spglib/installGcc6.4.0"
