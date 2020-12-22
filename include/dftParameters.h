@@ -143,6 +143,7 @@ namespace dftfe {
     extern bool allowMultipleFilteringPassesAfterFirstScf;
     extern bool useELPAGPUKernel;
     extern std::string xcFamilyType;
+    extern bool gpuMemOptMode; 
 
 		/**
 		 * Declare parameters.

@@ -141,6 +141,7 @@ namespace dftfe {
     bool allowMultipleFilteringPassesAfterFirstScf=true;
     bool useELPAGPUKernel=false;
     std::string xcFamilyType="";
+    bool gpuMemOptMode=false;
 
 		void declare_parameters(ParameterHandler &prm)
 		{
@@ -179,11 +180,15 @@ namespace dftfe {
 
 				prm.declare_entry("USE GPUDIRECT MPI ALL REDUCE", "false",
 						Patterns::Bool(),
-						"[Developer] Use GPUDIRECT MPI_Allreduce. This route will only work if DFT-FE is compiled with NVIDIA NCCL library. Also note that one MPI rank per GPU can be used when using this option. Default: false."); 
+						"[Adavanced] Use GPUDIRECT MPI_Allreduce. This route will only work if DFT-FE is compiled with NVIDIA NCCL library. Also note that one MPI rank per GPU can be used when using this option. Default: false."); 
 
 				prm.declare_entry("USE ELPA GPU KERNEL", "false",
 						Patterns::Bool(),
-						"[Developer] If DFT-FE is linked to ELPA eigensolver library configured to run on GPUs, this parameter toggles the use of ELPA GPU kernels for dense symmetric matrix diagonalization calls in DFT-FE. Default: false.");          
+						"[Advanced] If DFT-FE is linked to ELPA eigensolver library configured to run on GPUs, this parameter toggles the use of ELPA GPU kernels for dense symmetric matrix diagonalization calls in DFT-FE. Default: false.");       
+
+			  prm.declare_entry("GPU MEM OPT MODE", "false",
+						Patterns::Bool(),
+						"[Adavanced] Uses algorithms which have lower peak memory on GPUs but with a marginal performance degradation. Recommended when using more than 100k degrees of freedom per GPU. Default: false.");                
 			}
 			prm.leave_subsection ();
 
@@ -861,6 +866,7 @@ namespace dftfe {
 				dftParameters::autoGPUBlockSizes=prm.get_bool("AUTO GPU BLOCK SIZES");
         dftParameters::useGPUDirectAllReduce=prm.get_bool("USE GPUDIRECT MPI ALL REDUCE");
         dftParameters::useELPAGPUKernel=prm.get_bool("USE ELPA GPU KERNEL");
+        dftParameters::gpuMemOptMode=prm.get_bool("GPU MEM OPT MODE");        
 			}
 			prm.leave_subsection ();
 
