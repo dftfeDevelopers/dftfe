@@ -220,7 +220,14 @@ namespace dftfe
 					dftParameters::verbosity<4? dealii::TimerOutput::never : dealii::TimerOutput::summary,
 					dealii::TimerOutput::wall_times)
 			{
-
+        d_cudaFlattenedArrayBlockPtr=(void *) (new distributedGPUVec<double>);
+        d_YArrayPtr=(void *) (new distributedGPUVec<double>);
+        d_cudaFlattenedFloatArrayBlockPtr=(void *) (new distributedGPUVec<float>);
+        d_projectorKetTimesVectorPtr=(void *) (new distributedGPUVec<double>);     
+        d_projectorKetTimesVectorFloatPtr=(void *) (new distributedGPUVec<float>);    
+        d_cudaFlattenedArrayBlock2Ptr=(void *) (new distributedGPUVec<double>);
+        d_YArray2Ptr=(void *) (new distributedGPUVec<double>);
+        d_projectorKetTimesVector2Ptr=(void *) (new distributedGPUVec<double>);          
 			}
 
 	//
@@ -229,6 +236,14 @@ namespace dftfe
 	chebyshevOrthogonalizedSubspaceIterationSolverCUDA::~chebyshevOrthogonalizedSubspaceIterationSolverCUDA()
 	{
 
+        delete (distributedGPUVec<double> * ) d_cudaFlattenedArrayBlockPtr;
+        delete (distributedGPUVec<double> * ) d_YArrayPtr;
+        delete (distributedGPUVec<float> * ) d_cudaFlattenedFloatArrayBlockPtr;
+        delete (distributedGPUVec<double> * ) d_projectorKetTimesVectorPtr;     
+        delete (distributedGPUVec<float> * ) d_projectorKetTimesVectorFloatPtr;    
+        delete (distributedGPUVec<double> * ) d_cudaFlattenedArrayBlock2Ptr;
+        delete (distributedGPUVec<double> * ) d_YArray2Ptr;
+        delete (distributedGPUVec<double> *) d_projectorKetTimesVector2Ptr;  
 		//
 		//
 		//
@@ -521,37 +536,37 @@ namespace dftfe
       {
         vectorTools::createDealiiVector(operatorMatrix.getMatrixFreeData()->get_vector_partitioner(),
             vectorsBlockSize,
-            d_cudaFlattenedArrayBlock);
+            *((distributedGPUVec<double> *)d_cudaFlattenedArrayBlockPtr));
 
 
-        d_YArray.reinit(d_cudaFlattenedArrayBlock);
+        ((distributedGPUVec<double> *)d_YArrayPtr)->reinit(*((distributedGPUVec<double> *)d_cudaFlattenedArrayBlockPtr));
 
         vectorTools::createDealiiVector(operatorMatrix.getMatrixFreeData()->get_vector_partitioner(),
             vectorsBlockSize,
-            d_cudaFlattenedFloatArrayBlock);
+            *((distributedGPUVec<float> *)d_cudaFlattenedFloatArrayBlockPtr));
 
 
         vectorTools::createDealiiVector(operatorMatrix.getProjectorKetTimesVectorSingle().get_partitioner(),
             vectorsBlockSize,
-            d_projectorKetTimesVector);
+            *((distributedGPUVec<double> *)d_projectorKetTimesVectorPtr));
 
 
         if (dftParameters::useMixedPrecChebyNonLocal)
           vectorTools::createDealiiVector(operatorMatrix.getProjectorKetTimesVectorSingle().get_partitioner(),
               vectorsBlockSize,
-              d_projectorKetTimesVectorFloat);
+              *((distributedGPUVec<float> *)d_projectorKetTimesVectorFloatPtr));
 
 
         if (dftParameters::overlapComputeCommunCheby)
-          d_cudaFlattenedArrayBlock2.reinit(d_cudaFlattenedArrayBlock);
+          ((distributedGPUVec<double> *)d_cudaFlattenedArrayBlock2Ptr)->reinit(*((distributedGPUVec<double> *)d_cudaFlattenedArrayBlockPtr));
 
 
         if (dftParameters::overlapComputeCommunCheby)
-          d_YArray2.reinit(d_cudaFlattenedArrayBlock2);
+          ((distributedGPUVec<double> *)d_YArray2Ptr)->reinit(*((distributedGPUVec<double> *)d_cudaFlattenedArrayBlock2Ptr));
 
 
         if (dftParameters::overlapComputeCommunCheby)
-          d_projectorKetTimesVector2.reinit(d_projectorKetTimesVector);
+          ((distributedGPUVec<double> *)d_projectorKetTimesVector2Ptr)->reinit(*((distributedGPUVec<double> *)d_projectorKetTimesVectorPtr));
       }
 
 			if(!isElpaStep2)
@@ -564,9 +579,9 @@ namespace dftfe
 
           const std::pair<double,double> bounds =linearAlgebraOperationsCUDA::lanczosLowerUpperBoundEigenSpectrum(operatorMatrix,
               tempEigenVec,
-              d_cudaFlattenedArrayBlock,
-              d_YArray,
-              d_projectorKetTimesVector,
+              *((distributedGPUVec<double> *)d_cudaFlattenedArrayBlockPtr),
+              *((distributedGPUVec<double> *)d_YArrayPtr),
+              *((distributedGPUVec<double> *)d_projectorKetTimesVectorPtr),
               vectorsBlockSize);
 
           cudaDeviceSynchronize();
@@ -587,9 +602,9 @@ namespace dftfe
 
           const std::pair<double,double> bounds =linearAlgebraOperationsCUDA::lanczosLowerUpperBoundEigenSpectrum(operatorMatrix,
               tempEigenVec,
-              d_cudaFlattenedArrayBlock,
-              d_YArray,
-              d_projectorKetTimesVector,
+              *((distributedGPUVec<double> *)d_cudaFlattenedArrayBlockPtr),
+              *((distributedGPUVec<double> *)d_YArrayPtr),
+              *((distributedGPUVec<double> *)d_projectorKetTimesVectorPtr),
               vectorsBlockSize);
 
           cudaDeviceSynchronize();
@@ -675,7 +690,7 @@ namespace dftfe
 								localVectorSize,
 								eigenVectorsFlattenedCUDA,
 								totalNumberWaveFunctions,
-								d_cudaFlattenedArrayBlock.begin(),
+								((distributedGPUVec<double> *)d_cudaFlattenedArrayBlockPtr)->begin(),
 								jvec);
 
 						if (dftParameters::overlapComputeCommunCheby && numSimultaneousBlocksCurrent==2)
@@ -683,7 +698,7 @@ namespace dftfe
 									localVectorSize,
 									eigenVectorsFlattenedCUDA,
 									totalNumberWaveFunctions,
-									d_cudaFlattenedArrayBlock2.begin(),
+									((distributedGPUVec<double> *)d_cudaFlattenedArrayBlock2Ptr)->begin(),
 									jvec+BVec);
 
 						//
@@ -692,14 +707,14 @@ namespace dftfe
 						if (dftParameters::overlapComputeCommunCheby && numSimultaneousBlocksCurrent==2)
 						{
               linearAlgebraOperationsCUDA::chebyshevFilter(operatorMatrix,
-                  d_cudaFlattenedArrayBlock,
-                  d_YArray,
-                  d_cudaFlattenedFloatArrayBlock,
-                  d_projectorKetTimesVector,
-                  d_projectorKetTimesVectorFloat,
-                  d_cudaFlattenedArrayBlock2,
-                  d_YArray2,
-                  d_projectorKetTimesVector2,
+                  *((distributedGPUVec<double> *)d_cudaFlattenedArrayBlockPtr),
+                  *((distributedGPUVec<double> *)d_YArrayPtr),
+                  *((distributedGPUVec<float> *)d_cudaFlattenedFloatArrayBlockPtr),
+                  *((distributedGPUVec<double> *)d_projectorKetTimesVectorPtr),
+                  *((distributedGPUVec<float> *)d_projectorKetTimesVectorFloatPtr),
+                  *((distributedGPUVec<double> *)d_cudaFlattenedArrayBlock2Ptr),
+                  *((distributedGPUVec<double> *)d_YArray2Ptr),
+                  *((distributedGPUVec<double> *)d_projectorKetTimesVector2Ptr),
                   localVectorSize,
                   BVec,
                   chebyshevOrder,
@@ -711,10 +726,10 @@ namespace dftfe
 						else
 						{
               linearAlgebraOperationsCUDA::chebyshevFilter(operatorMatrix,
-                  d_cudaFlattenedArrayBlock,
-                  d_YArray,
-                  d_cudaFlattenedFloatArrayBlock,
-                  d_projectorKetTimesVector,
+                  *((distributedGPUVec<double> *)d_cudaFlattenedArrayBlockPtr),
+                  *((distributedGPUVec<double> *)d_YArrayPtr),
+                  *((distributedGPUVec<float> *)d_cudaFlattenedFloatArrayBlockPtr),
+                  *((distributedGPUVec<double> *)d_projectorKetTimesVectorPtr),
                   localVectorSize,
                   BVec,
                   chebyshevOrder,
@@ -727,7 +742,7 @@ namespace dftfe
 						//copy current wavefunction vectors block to vector containing all wavefunction vectors
 						stridedCopyFromBlockKernel<<<(BVec+255)/256*localVectorSize, 256>>>(BVec,
 								localVectorSize,
-								d_cudaFlattenedArrayBlock.begin(),
+								((distributedGPUVec<double> *)d_cudaFlattenedArrayBlockPtr)->begin(),
 								totalNumberWaveFunctions,
 								eigenVectorsFlattenedCUDA,
 								jvec);
@@ -735,7 +750,7 @@ namespace dftfe
 						if (dftParameters::overlapComputeCommunCheby && numSimultaneousBlocksCurrent==2)
 							stridedCopyFromBlockKernel<<<(BVec+255)/256*localVectorSize, 256>>>(BVec,
 									localVectorSize,
-									d_cudaFlattenedArrayBlock2.begin(),
+									((distributedGPUVec<double> *)d_cudaFlattenedArrayBlock2Ptr)->begin(),
 									totalNumberWaveFunctions,
 									eigenVectorsFlattenedCUDA,
 									jvec+BVec);
@@ -934,10 +949,10 @@ namespace dftfe
 					linearAlgebraOperationsCUDA::rayleighRitzSpectrumSplitDirect(operatorMatrix,
 							eigenVectorsFlattenedCUDA,
 							eigenVectorsRotFracDensityFlattenedCUDA,
-							d_cudaFlattenedArrayBlock,
-							d_cudaFlattenedFloatArrayBlock,
-							d_YArray,
-							d_projectorKetTimesVector,
+							*((distributedGPUVec<double> *)d_cudaFlattenedArrayBlockPtr),
+							*((distributedGPUVec<float> *)d_cudaFlattenedFloatArrayBlockPtr),
+							*((distributedGPUVec<double> *)d_YArrayPtr),
+							*((distributedGPUVec<double> *)d_projectorKetTimesVectorPtr),
 							localVectorSize,
 							totalNumberWaveFunctions,
 							totalNumberWaveFunctions-eigenValues.size(),
@@ -954,10 +969,10 @@ namespace dftfe
 					linearAlgebraOperationsCUDA::rayleighRitzGEPSpectrumSplitDirect(operatorMatrix,
 							eigenVectorsFlattenedCUDA,
 							eigenVectorsRotFracDensityFlattenedCUDA,
-							d_cudaFlattenedArrayBlock,
-							d_cudaFlattenedFloatArrayBlock,
-							d_YArray,
-							d_projectorKetTimesVector,
+							*((distributedGPUVec<double> *)d_cudaFlattenedArrayBlockPtr),
+							*((distributedGPUVec<float> *)d_cudaFlattenedFloatArrayBlockPtr),
+							*((distributedGPUVec<double> *)d_YArrayPtr),
+							*((distributedGPUVec<double> *)d_projectorKetTimesVectorPtr),
 							localVectorSize,
 							totalNumberWaveFunctions,
 							totalNumberWaveFunctions-eigenValues.size(),
@@ -989,10 +1004,10 @@ namespace dftfe
 				if (dftParameters::rrGEP==false)
 					linearAlgebraOperationsCUDA::rayleighRitz(operatorMatrix,
 							eigenVectorsFlattenedCUDA,
-							d_cudaFlattenedArrayBlock,
-							d_cudaFlattenedFloatArrayBlock,
-							d_YArray,
-							d_projectorKetTimesVector,
+							*((distributedGPUVec<double> *)d_cudaFlattenedArrayBlockPtr),
+							*((distributedGPUVec<float> *)d_cudaFlattenedFloatArrayBlockPtr),
+							*((distributedGPUVec<double> *)d_YArrayPtr),
+							*((distributedGPUVec<double> *)d_projectorKetTimesVectorPtr),
 							localVectorSize,
 							totalNumberWaveFunctions,
 							isElpaStep1,
@@ -1008,10 +1023,10 @@ namespace dftfe
 				else
 					linearAlgebraOperationsCUDA::rayleighRitzGEP(operatorMatrix,
 							eigenVectorsFlattenedCUDA,
-							d_cudaFlattenedArrayBlock,
-							d_cudaFlattenedFloatArrayBlock,
-							d_YArray,
-							d_projectorKetTimesVector,
+							*((distributedGPUVec<double> *)d_cudaFlattenedArrayBlockPtr),
+							*((distributedGPUVec<float> *)d_cudaFlattenedFloatArrayBlockPtr),
+							*((distributedGPUVec<double> *)d_YArrayPtr),
+							*((distributedGPUVec<double> *)d_projectorKetTimesVectorPtr),
 							localVectorSize,
 							totalNumberWaveFunctions,
 							isElpaStep1,
@@ -1058,9 +1073,9 @@ namespace dftfe
         if (eigenValues.size()!=totalNumberWaveFunctions)
           linearAlgebraOperationsCUDA::computeEigenResidualNorm(operatorMatrix,
               eigenVectorsRotFracDensityFlattenedCUDA,
-              d_cudaFlattenedArrayBlock,
-              d_YArray,
-              d_projectorKetTimesVector,
+              *((distributedGPUVec<double> *)d_cudaFlattenedArrayBlockPtr),
+              *((distributedGPUVec<double> *)d_YArrayPtr),
+              *((distributedGPUVec<double> *)d_projectorKetTimesVectorPtr),
               localVectorSize,
               eigenValues.size(),
               eigenValues,
@@ -1071,9 +1086,9 @@ namespace dftfe
         else
           linearAlgebraOperationsCUDA::computeEigenResidualNorm(operatorMatrix,
               eigenVectorsFlattenedCUDA,
-              d_cudaFlattenedArrayBlock,
-              d_YArray,
-              d_projectorKetTimesVector,
+              *((distributedGPUVec<double> *)d_cudaFlattenedArrayBlockPtr),
+              *((distributedGPUVec<double> *)d_YArrayPtr),
+              *((distributedGPUVec<double> *)d_projectorKetTimesVectorPtr),
               localVectorSize,
               totalNumberWaveFunctions,
               eigenValues,
