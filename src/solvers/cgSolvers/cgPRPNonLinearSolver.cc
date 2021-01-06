@@ -571,16 +571,38 @@ namespace dftfe {
         //FIXME: check whether >1 or >=1 is the correct choice
         if(iter >=1)
         {
+          int isSuccess=0;
+
+          d_gradMax=0.0;
+          for (unsigned int i = 0; i < d_numberUnknowns; ++i)
+          {
+            if (std::abs(d_gradient[i])>d_gradMax)
+              d_gradMax=std::abs(d_gradient[i]);
+          }
+
           double condition1 = (functionalValueAfterAlphUpdate - functionValue) - (c1*alpha*etaAlphaZero);
           double condition2 = std::abs(eta) - c2*std::abs(etaAlphaZero);
           if(condition1 <= 1e-08 && condition2 <= 1e-08)
           {
-            if (debugLevel >= 2)
+            if (debugLevel >= 1)
               pcout << "Satisfied Wolfe condition: " << std::endl;
 
-            return SUCCESS;
+            isSuccess=1;
 
           }
+          else if (d_gradMax < d_tolerance)
+          {
+            isSuccess=1;            
+          }
+
+          MPI_Bcast(&(isSuccess),
+              1,
+              MPI_INT,
+              0,
+              MPI_COMM_WORLD);
+
+          if (isSuccess==1)
+            return SUCCESS;          
         }
 
         //
@@ -629,6 +651,9 @@ namespace dftfe {
 				alpha=alphaNew;
 
 			}
+
+      if (debugLevel >= 1)
+        pcout << "Maximum number of line-search iterations reached: " << std::endl;
 
 			//
 			//
