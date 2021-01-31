@@ -1445,19 +1445,24 @@ namespace dftfe {
 #endif
 
 
-			phiTotalSolverProblem.reinit(d_matrixFreeDataPRefined,
-					d_phiTotRhoIn,
-					*d_constraintsVectorElectro[d_phiTotDofHandlerIndexElectro],
-					d_phiTotDofHandlerIndexElectro,
+      phiTotalSolverProblem.reinit(d_matrixFreeDataPRefined,
+          d_phiTotRhoIn,
+          *d_constraintsVectorElectro[d_phiTotDofHandlerIndexElectro],
+          d_phiTotDofHandlerIndexElectro,
           d_densityQuadratureIdElectro,
           d_phiTotAXQuadratureIdElectro,
-					d_atomNodeIdToChargeMap,
-					d_bQuadValuesAllAtoms,
+          d_atomNodeIdToChargeMap,
+          d_bQuadValuesAllAtoms,
           d_smearedChargeQuadratureIdElectro,
-					*rhoInValues,
-					true,
-					dftParameters::periodicX && dftParameters::periodicY && dftParameters::periodicZ && !dftParameters::pinnedNodeForPBC,
-					dftParameters::smearedNuclearCharges);
+          *rhoInValues,
+          true,
+          dftParameters::periodicX && dftParameters::periodicY && dftParameters::periodicZ && !dftParameters::pinnedNodeForPBC,
+          dftParameters::smearedNuclearCharges,
+          true,
+          false,
+          0,
+          true,
+          false);
 
 
 			dealiiCGSolver.solve(phiTotalSolverProblem,
@@ -1482,105 +1487,6 @@ namespace dftfe {
           d_phiInValues,
           dummy);
 
-			if (dftParameters::spinPolarized==1)
-			{
-
-				std::vector<std::vector<std::vector<double> > >
-					eigenValuesSpins(2,
-							std::vector<std::vector<double> >(d_kPointWeights.size(),
-								std::vector<double>(d_numEigenValuesRR)));
-
-				std::vector<std::vector<std::vector<double>>>
-					residualNormWaveFunctionsAllkPointsSpins
-					(2,
-					 std::vector<std::vector<double> >(d_kPointWeights.size(),
-						 std::vector<double>(d_numEigenValuesRR)));
-
-				for(unsigned int s=0; s<2; ++s)
-				{
-					if(dftParameters::xcFamilyType=="LDA")
-					{
-						computing_timer.enter_section("VEff Computation");
-#ifdef DFTFE_WITH_GPU
-						if (dftParameters::useGPU)
-							kohnShamDFTEigenOperatorCUDA.computeVEffSpinPolarized(rhoInValuesSpinPolarized, d_phiInValues, s, d_pseudoVLoc, d_rhoCore, d_lpspQuadratureId);
-#endif
-						if (!dftParameters::useGPU)
-							kohnShamDFTEigenOperator.computeVEffSpinPolarized(rhoInValuesSpinPolarized, d_phiInValues, s, d_pseudoVLoc, d_rhoCore, d_lpspQuadratureId);
-						computing_timer.exit_section("VEff Computation");
-					}
-					else if (dftParameters::xcFamilyType=="GGA")
-					{
-						computing_timer.enter_section("VEff Computation");
-#ifdef DFTFE_WITH_GPU
-						if (dftParameters::useGPU)
-							kohnShamDFTEigenOperatorCUDA.computeVEffSpinPolarized(rhoInValuesSpinPolarized, gradRhoInValuesSpinPolarized, d_phiInValues, s, d_pseudoVLoc, d_rhoCore, d_gradRhoCore, d_lpspQuadratureId);
-#endif
-						if (!dftParameters::useGPU)
-							kohnShamDFTEigenOperator.computeVEffSpinPolarized(rhoInValuesSpinPolarized, gradRhoInValuesSpinPolarized, d_phiInValues, s, d_pseudoVLoc, d_rhoCore, d_gradRhoCore, d_lpspQuadratureId);
-						computing_timer.exit_section("VEff Computation");
-					}
-					for (unsigned int kPoint = 0; kPoint < d_kPointWeights.size(); ++kPoint)
-					{
-#ifdef DFTFE_WITH_GPU
-						if (dftParameters::useGPU)
-							kohnShamDFTEigenOperatorCUDA.reinitkPointSpinIndex(kPoint,s);
-#endif
-						if (!dftParameters::useGPU)
-							kohnShamDFTEigenOperator.reinitkPointSpinIndex(kPoint,s);
-
-						computing_timer.enter_section("Hamiltonian Matrix Computation");
-#ifdef DFTFE_WITH_GPU
-						if (dftParameters::useGPU)
-							kohnShamDFTEigenOperatorCUDA.computeHamiltonianMatrix(kPoint,s);
-#endif
-						if (!dftParameters::useGPU)
-							kohnShamDFTEigenOperator.computeHamiltonianMatrix(kPoint,s);
-						computing_timer.exit_section("Hamiltonian Matrix Computation");
-
-						if (dftParameters::verbosity>=4)
-							dftUtils::printCurrentMemoryUsage(mpi_communicator,
-									"Hamiltonian Matrix computed");
-
-						for(unsigned int j = 0; j < 1; ++j)
-						{
-#ifdef DFTFE_WITH_GPU
-							if (dftParameters::useGPU)
-								kohnShamEigenSpaceOnlyRRCompute(s,
-										kPoint,
-										kohnShamDFTEigenOperatorCUDA,
-										d_elpaScala,
-										subspaceIterationSolverCUDA,
-										true,
-										true);
-#endif
-						}
-					}
-				}
-
-
-				for(unsigned int s=0; s<2; ++s)
-					for (unsigned int kPoint = 0; kPoint < d_kPointWeights.size(); ++kPoint)
-					{
-						for (unsigned int i = 0; i<d_numEigenValuesRR; ++i)
-							eigenValuesSpins[s][kPoint][i]=eigenValuesRRSplit[kPoint][d_numEigenValuesRR*s+i];
-					}
-				//
-				//fermi energy
-				//
-				if (dftParameters::constraintMagnetization)
-					compute_fermienergy_constraintMagnetization(eigenValues) ;
-				else
-					compute_fermienergy(eigenValues,
-							numElectrons);
-
-				if(dftParameters::verbosity>=1)
-				{
-					pcout  << "Fermi Energy computed: "<<fermiEnergy<<std::endl;
-				}
-
-			}
-			else
 			{
 
 				std::vector<std::vector<double>> residualNormWaveFunctionsAllkPoints;
@@ -1632,19 +1538,32 @@ namespace dftfe {
 					if (dftParameters::verbosity>=4)
 						dftUtils::printCurrentMemoryUsage(mpi_communicator,
 								"Hamiltonian Matrix computed");
-					for(unsigned int j = 0; j < 1; ++j)
-					{
 #ifdef DFTFE_WITH_GPU
-						if (dftParameters::useGPU)
-							kohnShamEigenSpaceOnlyRRCompute(0,
-									kPoint,
-									kohnShamDFTEigenOperatorCUDA,
-									d_elpaScala,
-									subspaceIterationSolverCUDA,
-									true,
-									true);
+          if (dftParameters::useGPU)
+            kohnShamEigenSpaceOnlyRRCompute(0,
+                kPoint,
+                kohnShamDFTEigenOperatorCUDA,
+                d_elpaScala,
+                subspaceIterationSolverCUDA,
+                true,
+                true);
+          else
+            kohnShamEigenSpaceOnlyRRCompute(0,
+                kPoint,
+                kohnShamDFTEigenOperator,
+                d_elpaScala,
+                subspaceIterationSolver,
+                true,
+                true);            
+#else  
+          kohnShamEigenSpaceOnlyRRCompute(0,
+              kPoint,
+              kohnShamDFTEigenOperator,
+              d_elpaScala,
+              subspaceIterationSolver,
+              true,
+              true);              
 #endif
-					}
 				}
 
 				//
@@ -1703,8 +1622,7 @@ namespace dftfe {
 				const bool solveLinearizedKS,
 				const bool isRestartGroundStateCalcFromChk,
 				const bool skipVselfSolveInitLocalPSP,
-				const bool rayleighRitzAvoidancePassesXLBOMD,
-				const bool isPerturbationSolveXLBOMD)
+				const bool rayleighRitzAvoidancePassesXLBOMD)
 		{
 			kohnShamDFTOperatorClass<FEOrder,FEOrderElectro> kohnShamDFTEigenOperator(this,mpi_communicator);
 #ifdef DFTFE_WITH_GPU
@@ -1885,17 +1803,6 @@ namespace dftfe {
 			//solve
 			//
 			computing_timer.enter_section("scf solve");
-
-			const bool performExtraNoMixedPrecNoSpectrumSplitPassInCaseOfXlBOMD=((dftParameters::useMixedPrecXTHXSpectrumSplit || dftParameters::mixedPrecXtHXFracStates!=0) && solveLinearizedKS)?true:false;
-			const bool rrPassesNoMixedPrecXlBOMD=((dftParameters::useMixedPrecPGS_SR
-						|| dftParameters::useMixedPrecPGS_O
-						|| dftParameters::useMixedPrecXTHXSpectrumSplit
-						|| dftParameters::useMixedPrecSubspaceRotRR
-						|| dftParameters::useMixedPrecCheby
-						|| dftParameters::useMixedPrecChebyNonLocal
-						|| dftParameters::useSinglePrecXtHXOffDiag)
-					&& (solveLinearizedKS && !isPerturbationSolveXLBOMD)
-					&& (!dftParameters::xlbomdRRPassMixedPrec))?true:false;
 
 			double firstScfChebyTol=dftParameters::mixingMethod=="ANDERSON_WITH_KERKER"?1e-2:2e-2;
 
@@ -2164,7 +2071,6 @@ namespace dftfe {
 											subspaceIterationSolverCUDA,
 											residualNormWaveFunctionsAllkPointsSpins[s][kPoint],
                       (scfIter==0 || allowMultipleFilteringPassesAfterFirstScf)?true:false,
-											solveLinearizedKS,
 											rayleighRitzAvoidancePassesXLBOMD?dftParameters::numberPassesRRSkippedXLBOMD:0,
 											(scfIter<dftParameters::spectrumSplitStartingScfIter || scfConverged)?false:true,
 											scfConverged?false:true,
@@ -2261,10 +2167,9 @@ namespace dftfe {
 												subspaceIterationSolverCUDA,
 												residualNormWaveFunctionsAllkPointsSpins[s][kPoint],
                         true,
-												solveLinearizedKS,
 												0, 
 												(scfIter<dftParameters::spectrumSplitStartingScfIter)?false:true,
-												rrPassesNoMixedPrecXlBOMD?false:true,
+												true,
 												scfIter==0);
 #endif
 									if (!dftParameters::useGPU)
@@ -2276,7 +2181,7 @@ namespace dftfe {
 												residualNormWaveFunctionsAllkPointsSpins[s][kPoint],
                         true,
 												(scfIter<dftParameters::spectrumSplitStartingScfIter)?false:true,
-												rrPassesNoMixedPrecXlBOMD?false:true,
+												true,
 												scfIter==0);
 
 								}
@@ -2327,7 +2232,7 @@ namespace dftfe {
 					std::vector<std::vector<double>> residualNormWaveFunctionsAllkPoints;
 					residualNormWaveFunctionsAllkPoints.resize(d_kPointWeights.size());
 					for(unsigned int kPoint = 0; kPoint < d_kPointWeights.size(); ++kPoint)
-						residualNormWaveFunctionsAllkPoints[kPoint].resize((scfIter<dftParameters::spectrumSplitStartingScfIter || scfConverged || performExtraNoMixedPrecNoSpectrumSplitPassInCaseOfXlBOMD)?d_numEigenValues:d_numEigenValuesRR);
+						residualNormWaveFunctionsAllkPoints[kPoint].resize((scfIter<dftParameters::spectrumSplitStartingScfIter || scfConverged)?d_numEigenValues:d_numEigenValuesRR);
 
 					if(dftParameters::xcFamilyType=="LDA")
 					{
@@ -2394,7 +2299,6 @@ namespace dftfe {
 										subspaceIterationSolverCUDA,
 										residualNormWaveFunctionsAllkPoints[kPoint],
                     (scfIter==0 || allowMultipleFilteringPassesAfterFirstScf)?true:false,                    
-										solveLinearizedKS,
 										rayleighRitzAvoidancePassesXLBOMD?dftParameters::numberPassesRRSkippedXLBOMD:0,
 										(scfIter<dftParameters::spectrumSplitStartingScfIter || scfConverged)?false:true,
 										scfConverged?false:true,
@@ -2472,10 +2376,9 @@ namespace dftfe {
 											subspaceIterationSolverCUDA,
 											residualNormWaveFunctionsAllkPoints[kPoint],
                       true,
-											solveLinearizedKS,
 											0,
 											(scfIter<dftParameters::spectrumSplitStartingScfIter)?false:true,
-											rrPassesNoMixedPrecXlBOMD?false:true,
+											true,
 											scfIter==0);
 
 #endif
@@ -2488,7 +2391,7 @@ namespace dftfe {
 											residualNormWaveFunctionsAllkPoints[kPoint],
                       true,
 											(scfIter<dftParameters::spectrumSplitStartingScfIter)?false:true,
-											rrPassesNoMixedPrecXlBOMD?false:true,
+											true,
 											scfIter==0);
 
 							}
@@ -2508,78 +2411,6 @@ namespace dftfe {
 								pcout << "Maximum residual norm of the state closest to and below Fermi level: "<< maxRes << std::endl;
 
 							count++;
-						}
-
-						if (performExtraNoMixedPrecNoSpectrumSplitPassInCaseOfXlBOMD)
-						{
-
-							for (unsigned int kPoint = 0; kPoint < d_kPointWeights.size(); ++kPoint)
-							{
-								if (dftParameters::verbosity>=2)
-									pcout<< "Perform extra pass for xlbomd mixed precison spectrum splitting case "<< 1+count<<std::endl;
-
-#ifdef DFTFE_WITH_GPU
-								if (dftParameters::useGPU)
-									kohnShamDFTEigenOperatorCUDA.reinitkPointSpinIndex(kPoint,0);
-#endif
-								if (!dftParameters::useGPU)
-									kohnShamDFTEigenOperator.reinitkPointSpinIndex(kPoint,0);
-
-								computing_timer.enter_section("Hamiltonian Matrix Computation");
-#ifdef DFTFE_WITH_GPU
-								if (dftParameters::useGPU)
-									kohnShamDFTEigenOperatorCUDA.computeHamiltonianMatrix(kPoint,0);
-#endif
-								if (!dftParameters::useGPU)
-									kohnShamDFTEigenOperator.computeHamiltonianMatrix(kPoint,0);
-								computing_timer.exit_section("Hamiltonian Matrix Computation");
-
-								if(dftParameters::verbosity>=4)
-									dftUtils::printCurrentMemoryUsage(mpi_communicator,
-											"Hamiltonian Matrix computed");
-#ifdef DFTFE_WITH_GPU
-								if (dftParameters::useGPU)
-									kohnShamEigenSpaceCompute(0,
-											kPoint,
-											kohnShamDFTEigenOperatorCUDA,
-											d_elpaScala,
-											subspaceIterationSolverCUDA,
-											residualNormWaveFunctionsAllkPoints[kPoint],
-                      true,
-											solveLinearizedKS,
-											0,
-											false,
-											false,
-											scfIter==0);
-
-#endif
-								if (!dftParameters::useGPU)
-									kohnShamEigenSpaceCompute(0,
-											kPoint,
-											kohnShamDFTEigenOperator,
-											d_elpaScala,
-											subspaceIterationSolver,
-											residualNormWaveFunctionsAllkPoints[kPoint],
-                      true,
-											false,
-											false,
-											scfIter==0);
-
-							}
-							count++;
-							//
-							if (dftParameters::constraintMagnetization)
-								compute_fermienergy_constraintMagnetization(eigenValues) ;
-							else
-								compute_fermienergy(eigenValues,
-										numElectrons);
-							//
-							maxRes = computeMaximumHighestOccupiedStateResidualNorm
-								(residualNormWaveFunctionsAllkPoints,
-								 eigenValues,
-								 fermiEnergy);
-							if (dftParameters::verbosity>=2)
-								pcout << "Maximum residual norm of the state closest to and below Fermi level: "<< maxRes << std::endl;
 						}
 					}
 
@@ -2619,16 +2450,16 @@ namespace dftfe {
               true);           
 				}
 				else
-					compute_rhoOut((scfIter<dftParameters::spectrumSplitStartingScfIter || scfConverged || performExtraNoMixedPrecNoSpectrumSplitPassInCaseOfXlBOMD)?false:true,
+					compute_rhoOut((scfIter<dftParameters::spectrumSplitStartingScfIter || scfConverged)?false:true,
 							scfConverged || (scfIter == (dftParameters::numSCFIterations-1)));
 #else
 
 #ifdef DFTFE_WITH_GPU
 				compute_rhoOut(kohnShamDFTEigenOperatorCUDA,
-						(scfIter<dftParameters::spectrumSplitStartingScfIter || scfConverged || performExtraNoMixedPrecNoSpectrumSplitPassInCaseOfXlBOMD)?false:true,
+						(scfIter<dftParameters::spectrumSplitStartingScfIter || scfConverged)?false:true,
 						scfConverged || (scfIter == (dftParameters::numSCFIterations-1)));
 #else
-				compute_rhoOut((scfIter<dftParameters::spectrumSplitStartingScfIter || scfConverged || performExtraNoMixedPrecNoSpectrumSplitPassInCaseOfXlBOMD)?false:true,
+				compute_rhoOut((scfIter<dftParameters::spectrumSplitStartingScfIter || scfConverged)?false:true,
 						scfConverged || (scfIter == (dftParameters::numSCFIterations-1)));
 #endif
 #endif
@@ -2871,7 +2702,8 @@ namespace dftfe {
 						dummy,
             d_smearedChargeQuadratureIdElectro,
 						rhoMinMinusApproxRho,
-						false);
+						false,
+            dftParameters::periodicX && dftParameters::periodicY && dftParameters::periodicZ && !dftParameters::pinnedNodeForPBC);
 
 
 				dealiiCGSolver.solve(phiTotalSolverProblem,
@@ -2979,12 +2811,11 @@ namespace dftfe {
       if (dftParameters::verbosity>=1)
          pcout<<"Total free energy: "<<d_freeEnergy<<std::endl;          
 
-			if (dftParameters::isBOMD && dftParameters::isXLBOMD && solveLinearizedKS && !isPerturbationSolveXLBOMD)
+			if (dftParameters::isBOMD && dftParameters::isXLBOMD && solveLinearizedKS)
 			{
 				d_shadowPotentialEnergy =
 					energyCalc.computeShadowPotentialEnergyExtendedLagrangian(d_dofHandlerPRefined,
 							dofHandler,
-							quadrature,
 							quadrature,
 							d_matrixFreeDataPRefined.get_quadrature(d_smearedChargeQuadratureIdElectro),
 							eigenValues,
@@ -2995,14 +2826,11 @@ namespace dftfe {
 							d_phiInValues,
 							d_phiTotRhoIn,
 							*rhoInValues,
-							*rhoOutValues,
-							*rhoInValues,
 							*gradRhoInValues,
-							*gradRhoOutValues,
+              d_rhoCore,
+							d_gradRhoCore,	              
 							d_bQuadValuesAllAtoms,
 							d_localVselfs,
-							d_pseudoVLoc,
-							d_pseudoVLoc,
 							d_atomNodeIdToChargeMap,
 							atomLocations.size(),
 							lowerBoundKindex,

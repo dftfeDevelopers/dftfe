@@ -731,6 +731,7 @@ template<unsigned int FEOrder,unsigned int FEOrderElectro>
 			 pseudoVLocAtomsElectro,
 			 vselfBinsManagerElectro,
 			 shadowKSRhoMinValues,
+       shadowKSGradRhoMinValues,
 			 phiRhoMinusApproxRho,
 			 shadowPotentialForce);
 	}

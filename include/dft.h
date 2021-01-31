@@ -171,8 +171,7 @@ namespace dftfe {
 					const bool solveLinearizedKS=false,
 					const bool restartGroundStateCalcFromChk=false,
 					const bool skipVselfSolveInitLocalPSP=false,
-					const bool rayleighRitzAvoidancePassesXLBOMD=false,
-					const bool isPerturbationSolveXLBOMD=false);
+					const bool rayleighRitzAvoidancePassesXLBOMD=false);
 
 
 			/**
@@ -1231,7 +1230,6 @@ namespace dftfe {
 					chebyshevOrthogonalizedSubspaceIterationSolverCUDA & subspaceIterationSolverCUDA,
 					std::vector<double> & residualNormWaveFunctions,
           const bool computeResidual,
-					const bool isXlBOMDLinearizedSolve,
 					const unsigned int numberRayleighRitzAvoidanceXLBOMDPasses=0,
 					const bool isSpectrumSplit=false,
 					const bool useMixedPrec=false,
@@ -1248,6 +1246,14 @@ namespace dftfe {
 					const bool isSpectrumSplit=false,
 					const bool useMixedPrec=false);
 #endif
+
+			void kohnShamEigenSpaceOnlyRRCompute(const unsigned int s,
+					const unsigned int kPointIndex,
+					kohnShamDFTOperatorClass<FEOrder,FEOrderElectro> & kohnShamDFTEigenOperator,
+					elpaScalaManager & elpaScala,
+					chebyshevOrthogonalizedSubspaceIterationSolver & subspaceIterationSolver,
+					const bool isSpectrumSplit=false,
+					const bool useMixedPrec=false);
 
 			void kohnShamEigenSpaceComputeNSCF(const unsigned int spinType,
 					const unsigned int kPointIndex,

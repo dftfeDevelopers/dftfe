@@ -74,7 +74,6 @@ namespace dftfe
 					const std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid> & processGrid,
           const bool isFirstFilteringCall,
           const bool computeResidual,
-					const bool isXlBOMDLinearizedSolve,
 					const bool useMixedPrecOverall=false,
 					const bool isFirstScf=false,
 					const bool isElpaStep1=false,
@@ -113,7 +112,6 @@ namespace dftfe
 					dealii::ScaLAPACKMatrix<double> & projHamPar,
 					dealii::ScaLAPACKMatrix<double> & overlapMatPar,
 					const std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid> & processGrid,
-					const bool isXlBOMDLinearizedSolve,
 					const unsigned int numberPasses,
 					const bool useMixedPrecOverall);
 

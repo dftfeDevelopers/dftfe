@@ -311,6 +311,7 @@ namespace dftfe {
 				 const std::map<unsigned int,std::map<dealii::CellId, std::vector<double> > > & pseudoVLocAtomsElectro,
 				 const vselfBinsManager<FEOrder,FEOrderElectro> & vselfBinsManagerElectro,
 				 const std::map<dealii::CellId, std::vector<double> > & shadowKSRhoMinValues,
+				 const std::map<dealii::CellId, std::vector<double> > & shadowKSGradRhoMinValues,         
 				 const distributedCPUVec<double> & phiRhoMinusApproxRho,
 				 const bool shadowPotentialForce=false);
 

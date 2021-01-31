@@ -101,14 +101,14 @@ template<unsigned int FEOrder,unsigned int FEOrderElectro>
 
 	FEEvaluation<C_DIM,1,C_num1DQuad<C_rhoNodalPolyOrder<FEOrder,FEOrderElectro>()>(),C_DIM>  forceEval(matrixFreeData,
 			d_forceDofHandlerIndex,
-			0);
+			dftPtr->d_densityQuadratureId);
 	FEEvaluation<C_DIM,1,C_num1DQuadNLPSP<FEOrder>()*C_numCopies1DQuadNLPSP(),C_DIM>  forceEvalNLP(matrixFreeData,
 			d_forceDofHandlerIndex,
 			dftPtr->d_nlpspQuadratureId);
 #ifdef USE_COMPLEX
 	FEEvaluation<C_DIM,1,C_num1DQuad<C_rhoNodalPolyOrder<FEOrder,FEOrderElectro>()>(),C_DIM>  forceEvalKPoints(matrixFreeData,
 			d_forceDofHandlerIndex,
-			0);
+			dftPtr->d_densityQuadratureId);
 	FEEvaluation<C_DIM,1,C_num1DQuadNLPSP<FEOrder>()*C_numCopies1DQuadNLPSP(),C_DIM>  forceEvalKPointsNLP(matrixFreeData,
 			d_forceDofHandlerIndex,
 			dftPtr->d_nlpspQuadratureId);
@@ -118,7 +118,7 @@ template<unsigned int FEOrder,unsigned int FEOrderElectro>
 #ifdef USE_COMPLEX
 	FEEvaluation<C_DIM,FEOrder,C_num1DQuad<C_rhoNodalPolyOrder<FEOrder,FEOrderElectro>()>(),2> psiEval(matrixFreeData,
 			eigenDofHandlerIndex,
-			0);
+			dftPtr->d_densityQuadratureId);
 
 	FEEvaluation<C_DIM,FEOrder,C_num1DQuadNLPSP<FEOrder>()*C_numCopies1DQuadNLPSP(),2> psiEvalNLP(matrixFreeData,
 			eigenDofHandlerIndex,
@@ -126,7 +126,7 @@ template<unsigned int FEOrder,unsigned int FEOrderElectro>
 #else
 	FEEvaluation<C_DIM,FEOrder,C_num1DQuad<C_rhoNodalPolyOrder<FEOrder,FEOrderElectro>()>(),1> psiEval(matrixFreeData,
 			eigenDofHandlerIndex,
-			0);
+			dftPtr->d_densityQuadratureId);
 
 	FEEvaluation<C_DIM,FEOrder,C_num1DQuadNLPSP<FEOrder>()*C_numCopies1DQuadNLPSP(),1> psiEvalNLP(matrixFreeData,
 			eigenDofHandlerIndex,
@@ -1103,6 +1103,8 @@ template<unsigned int FEOrder,unsigned int FEOrderElectro>
 					 gradRhoQuads[q],
 					 excQuads[q],
 					 derExchCorrEnergyWithGradRhoOutQuads[q]);
+
+        /*
 				if (shadowPotentialForce)
 					E+=eshelbyTensor::getShadowPotentialForceRhoDiffXcEshelbyTensor
 						(shadowKSRhoMinMinusRhoQuads[q],
@@ -1112,11 +1114,13 @@ template<unsigned int FEOrder,unsigned int FEOrderElectro>
 						 derVxcWithGradRhoOutQuads[q],
 						 derExchCorrEnergyWithGradRhoOutQuads[q],
 						 der2ExcWithGradRhoOutQuads[q]);
+        */
 
 				Tensor<1,C_DIM,VectorizedArray<double> > F=zeroTensor3;
 
 				if (shadowPotentialForce && dftParameters::useAtomicRhoXLBOMD)
 				{
+          /*
 					F+=gradRhoAtomsQuads[q]*(derVxcWithRhoOutTimesRhoDiffQuads[q]+phiRhoMinMinusApproxRhoQuads[q]);
 
 					if(dftParameters::xcFamilyType=="GGA")
@@ -1125,6 +1129,7 @@ template<unsigned int FEOrder,unsigned int FEOrderElectro>
 						F+=shadowKSGradRhoMinMinusGradRhoQuads[q]*outer_product(derVxcWithGradRhoOutQuads[q],gradRhoAtomsQuads[q]);
 						F+=shadowKSRhoMinMinusRhoQuads[q]*derVxcWithGradRhoOutQuads[q]*hessianRhoAtomsQuads[q];
 					}
+          */
 				}
 
 				if(dftParameters::nonLinearCoreCorrection)
@@ -1218,6 +1223,7 @@ template<unsigned int FEOrder,unsigned int FEOrderElectro>
 			 pseudoVLocAtomsElectro,
 			 vselfBinsManagerElectro,
 			 shadowKSRhoMinValues,
+       shadowKSGradRhoMinValues,
 			 phiRhoMinusApproxRho,
 			 shadowPotentialForce);
 	}
@@ -1252,20 +1258,21 @@ template<unsigned int FEOrder,unsigned int FEOrderElectro>
  const std::map<unsigned int,std::map<dealii::CellId, std::vector<double> > > & pseudoVLocAtomsElectro,
  const vselfBinsManager<FEOrder,FEOrderElectro> & vselfBinsManagerElectro,
  const std::map<dealii::CellId, std::vector<double> > & shadowKSRhoMinValues,
- const distributedCPUVec<double> & phiRhoMinusApproxRho,
+ const std::map<dealii::CellId, std::vector<double> > & shadowKSGradRhoMinValues, 
+ const distributedCPUVec<double> & phiRhoMinusApproxRhoElectro,
  const bool shadowPotentialForce)
 {
 	FEEvaluation<C_DIM,1,C_num1DQuad<C_rhoNodalPolyOrder<FEOrder,FEOrderElectro>()>(),C_DIM>  forceEvalElectro(matrixFreeDataElectro,
 			d_forceDofHandlerIndexElectro,
-			0);
+			dftPtr->d_densityQuadratureIdElectro);
 
 	FEEvaluation<C_DIM,FEOrderElectro,C_num1DQuad<C_rhoNodalPolyOrder<FEOrder,FEOrderElectro>()>(),1> phiTotEvalElectro(matrixFreeDataElectro,
 			phiTotDofHandlerIndexElectro,
-			0);
+			dftPtr->d_densityQuadratureIdElectro);
 
-	FEEvaluation<C_DIM,FEOrderElectro,C_num1DQuad<C_rhoNodalPolyOrder<FEOrder,FEOrderElectro>()>(),1> phiTotEvalElectro2(matrixFreeDataElectro,
-			phiTotDofHandlerIndexElectro,
-			0);
+	//FEEvaluation<C_DIM,FEOrderElectro,C_num1DQuad<C_rhoNodalPolyOrder<FEOrder,FEOrderElectro>()>(),1> phiTotEvalElectro2(matrixFreeDataElectro,
+	//		phiTotDofHandlerIndexElectro,
+	//		0);
 
 	FEEvaluation<C_DIM,FEOrderElectro,C_num1DQuadSmearedCharge()*C_numCopies1DQuadSmearedCharge(),1>  phiTotEvalSmearedCharge(matrixFreeDataElectro,
 			phiTotDofHandlerIndexElectro,
@@ -1321,12 +1328,16 @@ template<unsigned int FEOrder,unsigned int FEOrderElectro>
 			zeroTensor2[idim][jdim]=make_vectorized_array(0.0);
 		}
 
+  //In case of shadow potential force the standard rhoQuads input is the rhoIn (or rhoTilde in the XLBOMD formulation)
+
 	std::vector<VectorizedArray<double> > rhoQuadsElectro(numQuadPoints,make_vectorized_array(0.0));
   std::vector<VectorizedArray<double> > rhoQuadsElectroLpsp(numQuadPointsLpsp,make_vectorized_array(0.0));
   std::vector<VectorizedArray<double> > smearedbQuads(numQuadPointsSmearedb,make_vectorized_array(0.0));
   std::vector< Tensor<1,C_DIM,VectorizedArray<double> >  > gradPhiTotSmearedChargeQuads(numQuadPointsSmearedb,zeroTensor);
+  std::vector< Tensor<1,C_DIM,VectorizedArray<double> >  > gradPhiTotPlusPhiRhoMinusApproxRhoSmearedChargeQuads(numQuadPointsSmearedb,zeroTensor);
 	std::vector<VectorizedArray<double> > shadowKSRhoMinQuadsElectro(numQuadPoints,make_vectorized_array(0.0));
-	std::vector<VectorizedArray<double> > shadowKSRhoMinMinusRhoQuadsElectro(numQuadPoints,make_vectorized_array(0.0));
+	std::vector< Tensor<1,C_DIM,VectorizedArray<double> > > gradShadowKSRhoMinQuadsElectro(numQuadPoints,zeroTensor);  
+	//std::vector<VectorizedArray<double> > shadowKSRhoMinMinusRhoQuadsElectro(numQuadPoints,make_vectorized_array(0.0));
 	std::vector<Tensor<1,C_DIM,VectorizedArray<double> > > gradRhoQuadsElectro(numQuadPoints,zeroTensor);
   std::vector<Tensor<1,C_DIM,VectorizedArray<double> > > gradRhoQuadsElectroLpsp(numQuadPointsLpsp,zeroTensor);
 	std::vector<Tensor<1,C_DIM,VectorizedArray<double> > > gradRhoAtomsQuadsElectro(numQuadPoints,zeroTensor);
@@ -1356,25 +1367,29 @@ template<unsigned int FEOrder,unsigned int FEOrderElectro>
 
 		if (shadowPotentialForce)
 		{
-			phiTotEvalElectro2.reinit(cell);
-			phiTotEvalElectro2.read_dof_values_plain(phiRhoMinusApproxRho);
-			phiTotEvalElectro2.evaluate(true,true);
+			//phiTotEvalElectro2.reinit(cell);
+			//phiTotEvalElectro2.read_dof_values_plain(phiRhoMinusApproxRho);
+			//phiTotEvalElectro2.evaluate(true,true);
 		}
 
     if (dftParameters::smearedNuclearCharges && nonTrivialSmearedChargeAtomIdsMacroCell.size()>0)
     {
       forceEvalSmearedCharge.reinit(cell);
       phiTotEvalSmearedCharge.reinit(cell);
-      phiTotEvalSmearedCharge.read_dof_values_plain(phiTotRhoOutElectro);
-      phiTotEvalSmearedCharge.evaluate(false,true);        
+      //phiTotEvalSmearedCharge.read_dof_values_plain(phiTotRhoOutElectro);
+      //phiTotEvalSmearedCharge.evaluate(false,true);        
     }
 
 		std::fill(rhoQuadsElectro.begin(),rhoQuadsElectro.end(),make_vectorized_array(0.0));
 		std::fill(rhoQuadsElectroLpsp.begin(),rhoQuadsElectroLpsp.end(),make_vectorized_array(0.0));    
     std::fill(smearedbQuads.begin(),smearedbQuads.end(),make_vectorized_array(0.0));
     std::fill(gradPhiTotSmearedChargeQuads.begin(),gradPhiTotSmearedChargeQuads.end(),zeroTensor);
-		std::fill(shadowKSRhoMinQuadsElectro.begin(),shadowKSRhoMinQuadsElectro.end(),make_vectorized_array(0.0));
-		std::fill(shadowKSRhoMinMinusRhoQuadsElectro.begin(),shadowKSRhoMinMinusRhoQuadsElectro.end(),make_vectorized_array(0.0));
+    if (shadowPotentialForce)
+    {
+      std::fill(shadowKSRhoMinQuadsElectro.begin(),shadowKSRhoMinQuadsElectro.end(),make_vectorized_array(0.0));
+      std::fill(gradShadowKSRhoMinQuadsElectro.begin(),gradShadowKSRhoMinQuadsElectro.end(),zeroTensor);
+      std::fill(gradPhiTotPlusPhiRhoMinusApproxRhoSmearedChargeQuads.begin(),gradPhiTotPlusPhiRhoMinusApproxRhoSmearedChargeQuads.end(),zeroTensor);       
+    }
 		std::fill(gradRhoQuadsElectro.begin(),gradRhoQuadsElectro.end(),zeroTensor);
     std::fill(gradRhoQuadsElectroLpsp.begin(),gradRhoQuadsElectroLpsp.end(),zeroTensor);
 		std::fill(gradRhoAtomsQuadsElectro.begin(),gradRhoAtomsQuadsElectro.end(),zeroTensor);
@@ -1390,7 +1405,11 @@ template<unsigned int FEOrder,unsigned int FEOrderElectro>
 				if (shadowPotentialForce)
 				{
 					shadowKSRhoMinQuadsElectro[q][iSubCell]=shadowKSRhoMinValues.find(subCellId)->second[q];
-					shadowKSRhoMinMinusRhoQuadsElectro[q][iSubCell]=shadowKSRhoMinQuadsElectro[q][iSubCell]-rhoQuadsElectro[q][iSubCell];
+					gradShadowKSRhoMinQuadsElectro[q][0][iSubCell]=shadowKSGradRhoMinValues.find(subCellId)->second[C_DIM*q+0];
+					gradShadowKSRhoMinQuadsElectro[q][1][iSubCell]=shadowKSGradRhoMinValues.find(subCellId)->second[C_DIM*q+1];
+					gradShadowKSRhoMinQuadsElectro[q][2][iSubCell]=shadowKSGradRhoMinValues.find(subCellId)->second[C_DIM*q+2];
+
+					//shadowKSRhoMinMinusRhoQuadsElectro[q][iSubCell]=shadowKSRhoMinQuadsElectro[q][iSubCell]-rhoQuadsElectro[q][iSubCell];
 
 					gradRhoAtomsQuadsElectro[q][0][iSubCell]=dftPtr->d_gradRhoAtomsValues.find(subCellId)->second[C_DIM*q+0];
 					gradRhoAtomsQuadsElectro[q][1][iSubCell]=dftPtr->d_gradRhoAtomsValues.find(subCellId)->second[C_DIM*q+1];
@@ -1433,7 +1452,7 @@ template<unsigned int FEOrder,unsigned int FEOrderElectro>
           phiTotDofHandlerIndexElectro,
 					cell,
 					shadowPotentialForce?shadowKSRhoMinQuadsElectro:rhoQuadsElectroLpsp,
-          gradRhoQuadsElectroLpsp,
+          shadowPotentialForce?gradShadowKSRhoMinQuadsElectro:gradRhoQuadsElectroLpsp,
 					pseudoVLocAtomsElectro,
 					vselfBinsManagerElectro,
 					d_cellsVselfBallsClosestAtomIdDofHandlerElectro);
@@ -1451,17 +1470,20 @@ template<unsigned int FEOrder,unsigned int FEOrderElectro>
 				 rhoQuadsElectro[q]);
 			if (shadowPotentialForce)
 			{
+        /*
 				VectorizedArray<double> identityTensorFactor=shadowKSRhoMinMinusRhoQuadsElectro[q]*phiTotElectro_q;
 
 				E[0][0]+=identityTensorFactor;
 				E[1][1]+=identityTensorFactor;
 				E[2][2]+=identityTensorFactor;
+        */
 			}
 
 			Tensor<1,C_DIM,VectorizedArray<double> > F=zeroTensor;
 
 			if (shadowPotentialForce)
 			{
+        /*
 				VectorizedArray<double> phiRhoMinusApproxRho_q =phiTotEvalElectro2.get_value(q);
 				Tensor<1,C_DIM,VectorizedArray<double> > gradPhiRhoMinusApproxRho_q =phiTotEvalElectro2.get_gradient(q);
 				VectorizedArray<double> identityTensorFactor=make_vectorized_array(-1.0/(4.0*M_PI))*scalar_product(gradPhiRhoMinusApproxRho_q,gradPhiTotElectro_q)+phiRhoMinusApproxRho_q*rhoQuadsElectro[q];
@@ -1469,6 +1491,7 @@ template<unsigned int FEOrder,unsigned int FEOrderElectro>
 				E[0][0]+=identityTensorFactor;
 				E[1][1]+=identityTensorFactor;
 				E[2][2]+=identityTensorFactor;
+        */
 			}
 
 			forceEvalElectro.submit_value(F,q);
@@ -1484,11 +1507,13 @@ template<unsigned int FEOrder,unsigned int FEOrderElectro>
         Tensor<2,C_DIM,VectorizedArray<double> > E=zeroTensor2;
 
         //FIXME: quadrature mismatch
+        /*
 				if (shadowPotentialForce)
 					E+=eshelbyTensor::getELocPspEshelbyTensor
 						(shadowKSRhoMinMinusRhoQuadsElectro[q],
 						 pseudoVLocQuadsElectro[q],
 						 phiExtElectro_q);
+        */
 
         Tensor<1,C_DIM,VectorizedArray<double> > F=zeroTensor;
         Tensor<1,C_DIM,VectorizedArray<double> > gradPhiExt_q =zeroTensor;
@@ -1517,6 +1542,10 @@ template<unsigned int FEOrder,unsigned int FEOrderElectro>
     }
 
     if (dftParameters::smearedNuclearCharges && nonTrivialSmearedChargeAtomIdsMacroCell.size()>0)
+    {
+      phiTotEvalSmearedCharge.read_dof_values_plain(phiTotRhoOutElectro);
+      phiTotEvalSmearedCharge.evaluate(false,true); 
+
       for (unsigned int q=0; q<numQuadPointsSmearedb; ++q)
       {
         gradPhiTotSmearedChargeQuads[q]=phiTotEvalSmearedCharge.get_gradient(q);
@@ -1527,6 +1556,18 @@ template<unsigned int FEOrder,unsigned int FEOrderElectro>
         forceEvalSmearedCharge.submit_value(F,q);
       }
 
+			if (shadowPotentialForce)
+      {
+        phiTotEvalSmearedCharge.read_dof_values_plain(phiRhoMinusApproxRhoElectro);
+        phiTotEvalSmearedCharge.evaluate(false,true); 
+
+        for (unsigned int q=0; q<numQuadPointsSmearedb; ++q)
+        {
+          gradPhiTotPlusPhiRhoMinusApproxRhoSmearedChargeQuads[q]=phiTotEvalSmearedCharge.get_gradient(q)+gradPhiTotSmearedChargeQuads[q];
+        }        
+      }
+    }
+
     if (dftParameters::smearedNuclearCharges && nonTrivialSmearedChargeAtomIdsMacroCell.size()>0)
     {
       forceEvalSmearedCharge.integrate(true,false);
@@ -1536,7 +1577,7 @@ template<unsigned int FEOrder,unsigned int FEOrderElectro>
 					forceEvalSmearedCharge,
 					matrixFreeDataElectro,
 					cell,
-					gradPhiTotSmearedChargeQuads,
+					shadowPotentialForce?gradPhiTotPlusPhiRhoMinusApproxRhoSmearedChargeQuads:gradPhiTotSmearedChargeQuads,
           std::vector<unsigned int>(nonTrivialSmearedChargeAtomIdsMacroCell.begin(),nonTrivialSmearedChargeAtomIdsMacroCell.end()),
           dftPtr->d_bQuadAtomIdsAllAtoms,
 				  smearedbQuads);    

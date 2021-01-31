@@ -76,44 +76,6 @@ namespace dftfe {
 		return recenteredPoint;
 	}
 
-	std::vector<double> wrapAtomsAcrossPeriodicBc(const Point<3> & cellCenteredCoord,
-			const Point<3> & corner,
-			const std::vector<double> & latticeVectors,
-			const std::vector<bool> & periodicBc)
-	{
-		const double tol=1e-8;
-		std::vector<double> fracCoord= getFractionalCoordinates(latticeVectors,
-				cellCenteredCoord,                                                                                                corner);
-
-
-		//if(Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0)
-		//std::cout<<"Fractional Coordinates before wrapping: "<<fracCoord[0]<<" "<<fracCoord[1]<<" "<<fracCoord[2]<<std::endl;
-
-
-		//wrap fractional coordinate
-		for(unsigned int i = 0; i < 3; ++i)
-		{
-			if (periodicBc[i])
-			{
-				if (fracCoord[i]<-tol)
-					fracCoord[i]+=1.0;
-				else if (fracCoord[i]>1.0+tol)
-					fracCoord[i]-=1.0;
-
-				if(Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0)
-					std::cout<<fracCoord[i]<<" ";
-
-				AssertThrow(fracCoord[i]>-2.0*tol && fracCoord[i]<1.0+2.0*tol,ExcMessage("Moved atom position doesnt't lie inside the cell after wrapping across periodic boundary"));
-			}
-		}
-
-		//if(Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0)
-		//std::cout<<std::endl;
-
-		return fracCoord;
-	}
-
-
 	void recursiveKernelApply(const std::vector<distributedCPUVec<double>> & ucontainer,
 			const std::vector<distributedCPUVec<double>> & vcontainer,
 			const double k0,
@@ -217,14 +179,12 @@ namespace dftfe {
 			bool xlbomdHistoryRestart=(dftParameters::chkType==3 && dftParameters::restartMdFromChk)?true:false;
 			int startingTimeStep = 0; //625;//450;// 50;//300; //0;// 300;
 
-			double massAtomAl = 26.982;//mass proton is chosen 1 **49611.513**
-			double massAtomMg= 24.305;
 			const double timeStep = dftParameters::timeStepBOMD*0.09822694541304546435; //Conversion factor from femteseconds: 0.09822694541304546435 based on NIST constants 
 			const unsigned int numberTimeSteps = dftParameters::numberStepsBOMD;
 
 			//https://physics.nist.gov/cuu/Constants/Table/allascii.txt
 			const double kb = 8.617333262e-05;//eV/K **3.166811429e-6**;
-			const double initialVelocityDeviation = sqrt(kb*initialTemperature/massAtomAl);
+			const double initialVelocityDeviation = sqrt(kb*initialTemperature/27.0);
 			const double haPerBohrToeVPerAng = 27.211386245988/0.529177210903;
 			const double haToeV = 27.211386245988;
 			const double bohrToAng = 0.529177210903;
@@ -232,7 +192,7 @@ namespace dftfe {
 
 			std::vector<double> massAtoms(numberGlobalCharges);
       //
-      //read atomic masses
+      //read atomic masses in amu
       //
       std::vector<std::vector<double>> atomTypesMasses;
       dftUtils::readFile(2, atomTypesMasses, dftParameters::atomicMassesFile);   
@@ -349,45 +309,9 @@ namespace dftfe {
 					mpi_communicator);
 
 			double temp1p;
-			bool temp2p;
-			bool temp3p;
-			bool temp4p;
-			bool temp5p;
-			bool temp6p;
-			bool temp7p;
-			bool temp8p;
-			bool temp9p;
 
 			if(restartFlag == 0)
 			{
-				/*
-				   dftPtr->initializeKohnShamDFTOperator(kohnShamDFTEigenOperator
-#ifdef DFTFE_WITH_GPU
-,
-kohnShamDFTEigenOperatorCUDA
-#endif
-);
-				 */
-
-				if (fullScfSolvesBeforeStartingXLBOMD &&  dftParameters::chkType==3 && dftParameters::restartFromChk)
-				{
-					temp2p=dftParameters::useMixedPrecPGS_SR;
-					temp3p=dftParameters::useMixedPrecPGS_O;
-					temp4p=dftParameters::useMixedPrecXTHXSpectrumSplit;
-					temp5p=dftParameters::useMixedPrecSubspaceRotRR;
-					temp6p=dftParameters::useMixedPrecCheby;
-					temp7p=dftParameters::useMixedPrecChebyNonLocal;
-					temp8p=dftParameters::useSinglePrecXtHXOffDiag;
-
-					dftParameters::useMixedPrecPGS_SR=false;
-					dftParameters::useMixedPrecPGS_O=false;
-					dftParameters::useMixedPrecXTHXSpectrumSplit=false;
-					dftParameters::useMixedPrecSubspaceRotRR=false;
-					dftParameters::useMixedPrecCheby=false;
-					dftParameters::useMixedPrecChebyNonLocal=false;
-					dftParameters::useSinglePrecXtHXOffDiag=false;
-				}
-
 				dftPtr->solve(kohnShamDFTEigenOperator,
 #ifdef DFTFE_WITH_GPU
 						kohnShamDFTEigenOperatorCUDA,
@@ -398,17 +322,6 @@ kohnShamDFTEigenOperatorCUDA
 						dftPtr->d_isRestartGroundStateCalcFromChk);
 				dftPtr->d_isRestartGroundStateCalcFromChk=false;
 				const std::vector<double> forceOnAtoms= dftPtr->forcePtr->getAtomsForces();
-
-				if (fullScfSolvesBeforeStartingXLBOMD &&  dftParameters::chkType==3 && dftParameters::restartFromChk)
-				{
-					dftParameters::useMixedPrecPGS_SR=temp2p;
-					dftParameters::useMixedPrecPGS_O=temp3p;
-					dftParameters::useMixedPrecXTHXSpectrumSplit=temp4p;
-					dftParameters::useMixedPrecSubspaceRotRR=temp5p;
-					dftParameters::useMixedPrecCheby=temp6p;
-					dftParameters::useMixedPrecChebyNonLocal=temp7p;
-					dftParameters::useSinglePrecXtHXOffDiag=temp8p;
-				}
 
 				dftPtr->d_matrixFreeDataPRefined.initialize_dof_vector(atomicRho,dftPtr->d_densityDofHandlerIndexElectro);
 				dftPtr->initAtomicRho(atomicRho);
@@ -766,15 +679,6 @@ kohnShamDFTEigenOperatorCUDA
 				if ((timeIndex == (startingTimeStep+1) && restartFlag==1))
 				{
 					dftPtr->d_matrixFreeDataPRefined.initialize_dof_vector(atomicRho,dftPtr->d_densityDofHandlerIndexElectro);
-					/*
-					   dftPtr->initializeKohnShamDFTOperator(kohnShamDFTEigenOperator
-#ifdef DFTFE_WITH_GPU
-,
-kohnShamDFTEigenOperatorCUDA
-#endif
-,
-false);
-					 */
 				}
 
 				dftPtr->initAtomicRho(atomicRho);
@@ -995,22 +899,7 @@ false);
 						if (isFirstXLBOMDStep && xlbomdHistoryRestart)
 						{
 							temp1p=dftParameters::chebyshevFilterTolXLBOMD;
-							temp2p=dftParameters::useMixedPrecPGS_SR;
-							temp3p=dftParameters::useMixedPrecPGS_O;
-							temp4p=dftParameters::useMixedPrecXTHXSpectrumSplit;
-							temp5p=dftParameters::useMixedPrecSubspaceRotRR;
-							temp6p=dftParameters::useMixedPrecCheby;
-							temp7p=dftParameters::useMixedPrecChebyNonLocal;
-							temp8p=dftParameters::useSinglePrecXtHXOffDiag;
-
 							dftParameters::chebyshevFilterTolXLBOMD=dftParameters::xlbomdRestartChebyTol;
-							dftParameters::useMixedPrecPGS_SR=false;
-							dftParameters::useMixedPrecPGS_O=false;
-							dftParameters::useMixedPrecXTHXSpectrumSplit=false;
-							dftParameters::useMixedPrecSubspaceRotRR=false;
-							dftParameters::useMixedPrecCheby=false;
-							dftParameters::useMixedPrecChebyNonLocal=false;
-							dftParameters::useSinglePrecXtHXOffDiag=false;
 						}
 
 						dftPtr->solve(kohnShamDFTEigenOperator,
@@ -1027,13 +916,6 @@ false);
 						if (isFirstXLBOMDStep && xlbomdHistoryRestart)
 						{
 							dftParameters::chebyshevFilterTolXLBOMD=temp1p;
-							dftParameters::useMixedPrecPGS_SR=temp2p;
-							dftParameters::useMixedPrecPGS_O=temp3p;
-							dftParameters::useMixedPrecXTHXSpectrumSplit=temp4p;
-							dftParameters::useMixedPrecSubspaceRotRR=temp5p;
-							dftParameters::useMixedPrecCheby=temp6p;
-							dftParameters::useMixedPrecChebyNonLocal=temp7p;
-							dftParameters::useSinglePrecXtHXOffDiag=temp8p;
 						}
 
 						if (dftParameters::verbosity>=1)
@@ -1085,12 +967,7 @@ false);
 #endif
 
 								temp1p=dftParameters::chebyshevFilterTolXLBOMD;
-								temp6p=dftParameters::useMixedPrecCheby;
-								temp7p=dftParameters::useMixedPrecChebyNonLocal;
-
 								dftParameters::chebyshevFilterTolXLBOMD=dftParameters::chebyshevFilterTolXLBOMDRankUpdates;
-								dftParameters::useMixedPrecCheby=false;
-								dftParameters::useMixedPrecChebyNonLocal=false;
 
 								const double deltalambda=dftParameters::xlbomdKernelRankUpdateFDParameter*std::sqrt(dftPtr->rhofieldl2Norm(dftPtr->d_matrixFreeDataPRefined,approxDensityContainer.back(),dftPtr->d_densityDofHandlerIndexElectro,dftPtr->d_densityQuadratureIdElectro)/dftPtr->d_domainVolume);
 
@@ -1191,8 +1068,7 @@ false);
 												true,
 												false,
 												true,
-												false,
-												true);
+												false);
 
 									if (dftParameters::verbosity>=1)
 										pcout<<"----------End shadow potential energy solve with approx density= n+lamda*v1-------------"<<std::endl;
@@ -1276,8 +1152,7 @@ false);
 												true,
 												false,
 												true,
-												false,
-												true);
+												false);
 
 									if (dftParameters::verbosity>=1)
 										pcout<<"----------End shadow potential energy solve with approx density= n-lamda*v1-------------"<<std::endl;
@@ -1322,8 +1197,6 @@ false);
 										kernelAction);
 
 								dftParameters::chebyshevFilterTolXLBOMD=temp1p;
-								dftParameters::useMixedPrecCheby=temp6p;
-								dftParameters::useMixedPrecChebyNonLocal=temp7p;
 
 #ifdef DFTFE_WITH_GPU
 								if (dftParameters::useGPU && dftParameters::useDensityMatrixPerturbationRankUpdates)
@@ -1626,17 +1499,6 @@ false);
 				if (timeIndex == (fullScfSolvesBeforeStartingXLBOMD) && xlbomdHistoryRestart)
 					xlbomdHistoryRestart=false;
 			}
-
-			/*
-			   dftPtr->finalizeKohnShamDFTOperator(kohnShamDFTEigenOperator
-#ifdef DFTFE_WITH_GPU
-,
-kohnShamDFTEigenOperatorCUDA
-#endif
-);
-			 */
-
-
 
 		}
 
