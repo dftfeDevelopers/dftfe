@@ -166,6 +166,8 @@ namespace dftfe
 			//distributedGPUVec<double>
       void * d_projectorKetTimesVector2Ptr;
 
+      bool d_isTemporaryParallelVectorsCreated;
+
 			//
 			//variables for printing out and timing
 			//

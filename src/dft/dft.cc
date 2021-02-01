@@ -136,7 +136,18 @@ namespace dftfe {
 					pcout,
 					dftParameters::reproducible_output
 					|| dftParameters::verbosity<1? TimerOutput::never : TimerOutput::every_call_and_summary,
-					TimerOutput::wall_times)
+					TimerOutput::wall_times),
+	    d_subspaceIterationSolver(mpi_comm_replica,
+					0.0,
+					0.0,
+          0.0)
+#ifdef DFTFE_WITH_GPU
+           ,
+			d_subspaceIterationSolverCUDA(mpi_comm_replica,
+					0.0,
+					0.0,
+          0.0)
+#endif          
 			{
 				forcePtr= new forceClass<FEOrder,FEOrderElectro>(this, mpi_comm_replica);
 				symmetryPtr= new symmetryClass<FEOrder,FEOrderElectro>(this, mpi_comm_replica, _interpoolcomm);
@@ -1164,16 +1175,7 @@ namespace dftfe {
 			{
 				if (!(dftParameters::chkType==1  && dftParameters::restartFromChk && dftParameters::ionOptSolver == "CGPRP"))
 				{
-					kohnShamDFTOperatorClass<FEOrder,FEOrderElectro> kohnShamDFTEigenOperator(this,mpi_communicator);
-#ifdef DFTFE_WITH_GPU
-					kohnShamDFTOperatorCUDAClass<FEOrder,FEOrderElectro> kohnShamDFTEigenOperatorCUDA(this,mpi_communicator);
-#endif
-
-					solve(kohnShamDFTEigenOperator,
-#ifdef DFTFE_WITH_GPU
-							kohnShamDFTEigenOperatorCUDA,
-#endif
-							false,
+					solve(false,
 							true,
 							false,
 							d_isRestartGroundStateCalcFromChk);
@@ -1364,11 +1366,7 @@ namespace dftfe {
 	//dft solve
 	//
 	template<unsigned int FEOrder,unsigned int FEOrderElectro>
-		void dftClass<FEOrder,FEOrderElectro>::computeDensityPerturbation(kohnShamDFTOperatorClass<FEOrder,FEOrderElectro> & kohnShamDFTEigenOperatorD,
-#ifdef DFTFE_WITH_GPU
-				kohnShamDFTOperatorCUDAClass<FEOrder,FEOrderElectro> & kohnShamDFTEigenOperatorCUDAD,
-#endif
-				const bool kohnShamDFTOperatorsInitialized)
+		void dftClass<FEOrder,FEOrderElectro>::computeDensityPerturbation(const bool kohnShamDFTOperatorsInitialized)
 		{
 			kohnShamDFTOperatorClass<FEOrder,FEOrderElectro> kohnShamDFTEigenOperator(this,mpi_communicator);
 #ifdef DFTFE_WITH_GPU
@@ -1430,20 +1428,6 @@ namespace dftfe {
 
 			computingTimerStandard.enter_section("Density perturbation computation");
 			computing_timer.enter_section("Density perturbation computation");
-			//
-			//create eigen solver object
-			//
-			chebyshevOrthogonalizedSubspaceIterationSolver subspaceIterationSolver(mpi_communicator,
-					0.0,
-					0.0,
-          0.0);
-#ifdef DFTFE_WITH_GPU
-			chebyshevOrthogonalizedSubspaceIterationSolverCUDA subspaceIterationSolverCUDA(mpi_communicator,
-					0.0,
-					0.0,
-          0.0);
-#endif
-
 
       phiTotalSolverProblem.reinit(d_matrixFreeDataPRefined,
           d_phiTotRhoIn,
@@ -1544,7 +1528,7 @@ namespace dftfe {
                 kPoint,
                 kohnShamDFTEigenOperatorCUDA,
                 d_elpaScala,
-                subspaceIterationSolverCUDA,
+                d_subspaceIterationSolverCUDA,
                 true,
                 true);
           else
@@ -1552,7 +1536,7 @@ namespace dftfe {
                 kPoint,
                 kohnShamDFTEigenOperator,
                 d_elpaScala,
-                subspaceIterationSolver,
+                d_subspaceIterationSolver,
                 true,
                 true);            
 #else  
@@ -1560,7 +1544,7 @@ namespace dftfe {
               kPoint,
               kohnShamDFTEigenOperator,
               d_elpaScala,
-              subspaceIterationSolver,
+              d_subspaceIterationSolver,
               true,
               true);              
 #endif
@@ -1613,16 +1597,10 @@ namespace dftfe {
 	//dft solve
 	//
 	template<unsigned int FEOrder,unsigned int FEOrderElectro>
-		void dftClass<FEOrder,FEOrderElectro>::solve(kohnShamDFTOperatorClass<FEOrder,FEOrderElectro> & kohnShamDFTEigenOperatorD,
-#ifdef DFTFE_WITH_GPU
-				kohnShamDFTOperatorCUDAClass<FEOrder,FEOrderElectro> & kohnShamDFTEigenOperatorCUDAD,
-#endif
-				const bool kohnShamDFTOperatorsInitialized,
+		void dftClass<FEOrder,FEOrderElectro>::solve(const bool kohnShamDFTOperatorsInitialized,
 				const bool computeForces,
 				const bool solveLinearizedKS,
-				const bool isRestartGroundStateCalcFromChk,
-				const bool skipVselfSolveInitLocalPSP,
-				const bool rayleighRitzAvoidancePassesXLBOMD)
+				const bool isRestartGroundStateCalcFromChk)
 		{
 			kohnShamDFTOperatorClass<FEOrder,FEOrderElectro> kohnShamDFTEigenOperator(this,mpi_communicator);
 #ifdef DFTFE_WITH_GPU
@@ -1698,74 +1676,70 @@ namespace dftfe {
 			//
 			//solve vself in bins
 			//
-			if (!skipVselfSolveInitLocalPSP)
-			{
-				computing_timer.enter_section("Nuclear self-potential solve");
-				computingTimerStandard.enter_section("Nuclear self-potential solve");
+      computing_timer.enter_section("Nuclear self-potential solve");
+      computingTimerStandard.enter_section("Nuclear self-potential solve");
 #ifdef DFTFE_WITH_GPU
-				if (dftParameters::useGPU)
-					d_vselfBinsManager.solveVselfInBinsGPU(d_matrixFreeDataPRefined,
-              d_baseDofHandlerIndexElectro,
-              d_phiTotAXQuadratureIdElectro,
-							d_binsStartDofHandlerIndexElectro,
-							kohnShamDFTEigenOperatorCUDA,
-							d_constraintsPRefined,
-							d_imagePositionsTrunc,
-							d_imageIdsTrunc,
-							d_imageChargesTrunc,
-							d_localVselfs,
-							d_bQuadValuesAllAtoms,
-              d_bQuadAtomIdsAllAtoms,
-              d_bQuadAtomIdsAllAtomsImages,
-              d_bCellNonTrivialAtomIds,
-              d_bCellNonTrivialAtomIdsBins,
-							d_smearedChargeWidths,
-              d_smearedChargeScaling,
-              d_smearedChargeQuadratureIdElectro,
-							dftParameters::smearedNuclearCharges);
-				else
-					d_vselfBinsManager.solveVselfInBins(d_matrixFreeDataPRefined,
-							d_binsStartDofHandlerIndexElectro,
-              d_phiTotAXQuadratureIdElectro,
-							d_constraintsPRefined,
-							d_imagePositionsTrunc,
-							d_imageIdsTrunc,
-							d_imageChargesTrunc,
-							d_localVselfs,
-							d_bQuadValuesAllAtoms,
-              d_bQuadAtomIdsAllAtoms,
-              d_bQuadAtomIdsAllAtomsImages,
-              d_bCellNonTrivialAtomIds,
-              d_bCellNonTrivialAtomIdsBins,
-							d_smearedChargeWidths,
-              d_smearedChargeScaling,
-              d_smearedChargeQuadratureIdElectro,
-							dftParameters::smearedNuclearCharges);
-#else
-				d_vselfBinsManager.solveVselfInBins(d_matrixFreeDataPRefined,
-					  d_binsStartDofHandlerIndexElectro,
+      if (dftParameters::useGPU)
+        d_vselfBinsManager.solveVselfInBinsGPU(d_matrixFreeDataPRefined,
+            d_baseDofHandlerIndexElectro,
             d_phiTotAXQuadratureIdElectro,
-						d_constraintsPRefined,
-						d_imagePositionsTrunc,
-						d_imageIdsTrunc,
-						d_imageChargesTrunc,
-						d_localVselfs,
-						d_bQuadValuesAllAtoms,
+            d_binsStartDofHandlerIndexElectro,
+            kohnShamDFTEigenOperatorCUDA,
+            d_constraintsPRefined,
+            d_imagePositionsTrunc,
+            d_imageIdsTrunc,
+            d_imageChargesTrunc,
+            d_localVselfs,
+            d_bQuadValuesAllAtoms,
             d_bQuadAtomIdsAllAtoms,
             d_bQuadAtomIdsAllAtomsImages,
             d_bCellNonTrivialAtomIds,
             d_bCellNonTrivialAtomIdsBins,
-						d_smearedChargeWidths,
+            d_smearedChargeWidths,
             d_smearedChargeScaling,
             d_smearedChargeQuadratureIdElectro,
-						dftParameters::smearedNuclearCharges);
+            dftParameters::smearedNuclearCharges);
+      else
+        d_vselfBinsManager.solveVselfInBins(d_matrixFreeDataPRefined,
+            d_binsStartDofHandlerIndexElectro,
+            d_phiTotAXQuadratureIdElectro,
+            d_constraintsPRefined,
+            d_imagePositionsTrunc,
+            d_imageIdsTrunc,
+            d_imageChargesTrunc,
+            d_localVselfs,
+            d_bQuadValuesAllAtoms,
+            d_bQuadAtomIdsAllAtoms,
+            d_bQuadAtomIdsAllAtomsImages,
+            d_bCellNonTrivialAtomIds,
+            d_bCellNonTrivialAtomIdsBins,
+            d_smearedChargeWidths,
+            d_smearedChargeScaling,
+            d_smearedChargeQuadratureIdElectro,
+            dftParameters::smearedNuclearCharges);
+#else
+      d_vselfBinsManager.solveVselfInBins(d_matrixFreeDataPRefined,
+          d_binsStartDofHandlerIndexElectro,
+          d_phiTotAXQuadratureIdElectro,
+          d_constraintsPRefined,
+          d_imagePositionsTrunc,
+          d_imageIdsTrunc,
+          d_imageChargesTrunc,
+          d_localVselfs,
+          d_bQuadValuesAllAtoms,
+          d_bQuadAtomIdsAllAtoms,
+          d_bQuadAtomIdsAllAtomsImages,
+          d_bCellNonTrivialAtomIds,
+          d_bCellNonTrivialAtomIdsBins,
+          d_smearedChargeWidths,
+          d_smearedChargeScaling,
+          d_smearedChargeQuadratureIdElectro,
+          dftParameters::smearedNuclearCharges);
 #endif
-				computingTimerStandard.exit_section("Nuclear self-potential solve");
-				computing_timer.exit_section("Nuclear self-potential solve");
-			}
+      computingTimerStandard.exit_section("Nuclear self-potential solve");
+      computing_timer.exit_section("Nuclear self-potential solve");
 
-
-			if((dftParameters::isPseudopotential || dftParameters::smearedNuclearCharges) && !skipVselfSolveInitLocalPSP)
+			if((dftParameters::isPseudopotential || dftParameters::smearedNuclearCharges))
 			{
         computingTimerStandard.enter_section("Init local PSP");
 				initLocalPseudoPotential(d_dofHandlerPRefined,
@@ -1784,20 +1758,6 @@ namespace dftfe {
 
 
 			computingTimerStandard.enter_section("Total scf solve");
-
-			//
-			//create eigen solver object
-			//
-			chebyshevOrthogonalizedSubspaceIterationSolver subspaceIterationSolver(mpi_communicator,
-					0.0,
-					0.0,
-          0.0);
-#ifdef DFTFE_WITH_GPU
-			chebyshevOrthogonalizedSubspaceIterationSolverCUDA subspaceIterationSolverCUDA(mpi_communicator,
-					0.0,
-					0.0,
-          0.0);
-#endif
 
 			//
 			//solve
@@ -2056,7 +2016,7 @@ namespace dftfe {
 							{
 								if (dftParameters::verbosity>=2)
 								{
-									if (rayleighRitzAvoidancePassesXLBOMD && dftParameters::numberPassesRRSkippedXLBOMD>0)
+									if (dftParameters::numberPassesRRSkippedXLBOMD>0)
 										pcout<<"Beginning no RR XL-BOMD Chebyshev filter passes with total such passes: "<< dftParameters::numberPassesRRSkippedXLBOMD<< " for spin "<< s+1<<std::endl;
 									else
 										pcout<<"Beginning Chebyshev filter pass "<< j+1<< " for spin "<< s+1<<std::endl;
@@ -2068,10 +2028,10 @@ namespace dftfe {
 											kPoint,
 											kohnShamDFTEigenOperatorCUDA,
 											d_elpaScala,
-											subspaceIterationSolverCUDA,
+											d_subspaceIterationSolverCUDA,
 											residualNormWaveFunctionsAllkPointsSpins[s][kPoint],
                       (scfIter==0 || allowMultipleFilteringPassesAfterFirstScf)?true:false,
-											rayleighRitzAvoidancePassesXLBOMD?dftParameters::numberPassesRRSkippedXLBOMD:0,
+											dftParameters::numberPassesRRSkippedXLBOMD,
 											(scfIter<dftParameters::spectrumSplitStartingScfIter || scfConverged)?false:true,
 											scfConverged?false:true,
 											scfIter==0);
@@ -2081,7 +2041,7 @@ namespace dftfe {
 											kPoint,
 											kohnShamDFTEigenOperator,
 											d_elpaScala,
-											subspaceIterationSolver,
+											d_subspaceIterationSolver,
 											residualNormWaveFunctionsAllkPointsSpins[s][kPoint],
                       (scfIter==0 || allowMultipleFilteringPassesAfterFirstScf)?true:false,                      
 											(scfIter<dftParameters::spectrumSplitStartingScfIter || scfConverged)?false:true,
@@ -2091,7 +2051,7 @@ namespace dftfe {
 						}
 					}
 
-					if (!(rayleighRitzAvoidancePassesXLBOMD && dftParameters::numberPassesRRSkippedXLBOMD>0))
+					if (!(dftParameters::numberPassesRRSkippedXLBOMD>0))
 					{
 						for(unsigned int s=0; s<2; ++s)
 							for (unsigned int kPoint = 0; kPoint < d_kPointWeights.size(); ++kPoint)
@@ -2113,14 +2073,14 @@ namespace dftfe {
 									numElectrons);
 					}
 
-					unsigned int count=(rayleighRitzAvoidancePassesXLBOMD && dftParameters::numberPassesRRSkippedXLBOMD>0)?numberPassesRRSkippedXLBOMD:1;
+					unsigned int count=(dftParameters::numberPassesRRSkippedXLBOMD>0)?numberPassesRRSkippedXLBOMD:1;
 
 					if (!scfConverged && (scfIter==0 || allowMultipleFilteringPassesAfterFirstScf))
 					{
 
 						//maximum of the residual norm of the state closest to and below the Fermi level among all k points,
 						//and also the maximum between the two spins
-						double maxRes =(rayleighRitzAvoidancePassesXLBOMD && dftParameters::numberPassesRRSkippedXLBOMD>0)?1e+6:std::max(computeMaximumHighestOccupiedStateResidualNorm
+						double maxRes =(dftParameters::numberPassesRRSkippedXLBOMD>0)?1e+6:std::max(computeMaximumHighestOccupiedStateResidualNorm
 								(residualNormWaveFunctionsAllkPointsSpins[0],
 								 eigenValuesSpins[0],
 								 fermiEnergy),
@@ -2129,7 +2089,7 @@ namespace dftfe {
 								 eigenValuesSpins[1],
 								 fermiEnergy));
 
-						if (dftParameters::verbosity>=2 && !rayleighRitzAvoidancePassesXLBOMD)
+						if (dftParameters::verbosity>=2 && !(dftParameters::numberPassesRRSkippedXLBOMD>0))
 						{
 							pcout << "Maximum residual norm of the state closest to and below Fermi level: "<< maxRes << std::endl;
 						}
@@ -2164,7 +2124,7 @@ namespace dftfe {
 												kPoint,
 												kohnShamDFTEigenOperatorCUDA,
 												d_elpaScala,
-												subspaceIterationSolverCUDA,
+												d_subspaceIterationSolverCUDA,
 												residualNormWaveFunctionsAllkPointsSpins[s][kPoint],
                         true,
 												0, 
@@ -2177,7 +2137,7 @@ namespace dftfe {
 												kPoint,
 												kohnShamDFTEigenOperator,
 												d_elpaScala,
-												subspaceIterationSolver,
+												d_subspaceIterationSolver,
 												residualNormWaveFunctionsAllkPointsSpins[s][kPoint],
                         true,
 												(scfIter<dftParameters::spectrumSplitStartingScfIter)?false:true,
@@ -2283,7 +2243,7 @@ namespace dftfe {
 						{
 							if (dftParameters::verbosity>=2)
 							{
-								if (rayleighRitzAvoidancePassesXLBOMD && dftParameters::numberPassesRRSkippedXLBOMD>0)
+								if (dftParameters::numberPassesRRSkippedXLBOMD>0)
 									pcout<<"Beginning no RR XL-BOMD Chebyshev filter passes with total such passes: "<< dftParameters::numberPassesRRSkippedXLBOMD<<std::endl;
 								else
 									pcout<< "Beginning Chebyshev filter pass "<< j+1<<std::endl;
@@ -2296,10 +2256,10 @@ namespace dftfe {
 										kPoint,
 										kohnShamDFTEigenOperatorCUDA,
 										d_elpaScala,
-										subspaceIterationSolverCUDA,
+										d_subspaceIterationSolverCUDA,
 										residualNormWaveFunctionsAllkPoints[kPoint],
                     (scfIter==0 || allowMultipleFilteringPassesAfterFirstScf)?true:false,                    
-										rayleighRitzAvoidancePassesXLBOMD?dftParameters::numberPassesRRSkippedXLBOMD:0,
+										dftParameters::numberPassesRRSkippedXLBOMD,
 										(scfIter<dftParameters::spectrumSplitStartingScfIter || scfConverged)?false:true,
 										scfConverged?false:true,
 										scfIter==0);
@@ -2309,7 +2269,7 @@ namespace dftfe {
 										kPoint,
 										kohnShamDFTEigenOperator,
 										d_elpaScala,
-										subspaceIterationSolver,
+										d_subspaceIterationSolver,
 										residualNormWaveFunctionsAllkPoints[kPoint],
                     (scfIter==0 || allowMultipleFilteringPassesAfterFirstScf)?true:false,                      
 										(scfIter<dftParameters::spectrumSplitStartingScfIter || scfConverged)?false:true,
@@ -2318,7 +2278,7 @@ namespace dftfe {
 						}
 					}
 
-					if (!(rayleighRitzAvoidancePassesXLBOMD && dftParameters::numberPassesRRSkippedXLBOMD>0))
+					if (!(dftParameters::numberPassesRRSkippedXLBOMD>0))
 					{
 						//
 						//fermi energy
@@ -2330,18 +2290,18 @@ namespace dftfe {
 									numElectrons);
 					}
 
-					unsigned int count=(rayleighRitzAvoidancePassesXLBOMD && dftParameters::numberPassesRRSkippedXLBOMD>0)?dftParameters::numberPassesRRSkippedXLBOMD:1;
+					unsigned int count=(dftParameters::numberPassesRRSkippedXLBOMD>0)?dftParameters::numberPassesRRSkippedXLBOMD:1;
 
 					if (!scfConverged && (scfIter==0 || allowMultipleFilteringPassesAfterFirstScf))
 					{
 						//
 						//maximum of the residual norm of the state closest to and below the Fermi level among all k points
 						//
-						double maxRes = (rayleighRitzAvoidancePassesXLBOMD && dftParameters::numberPassesRRSkippedXLBOMD>0)?1e+6:computeMaximumHighestOccupiedStateResidualNorm
+						double maxRes = (dftParameters::numberPassesRRSkippedXLBOMD>0)?1e+6:computeMaximumHighestOccupiedStateResidualNorm
 							(residualNormWaveFunctionsAllkPoints,
 							 (scfIter<dftParameters::spectrumSplitStartingScfIter)?eigenValues:eigenValuesRRSplit,
 							 fermiEnergy);
-						if (dftParameters::verbosity>=2 && !rayleighRitzAvoidancePassesXLBOMD)
+						if (dftParameters::verbosity>=2 && !(dftParameters::numberPassesRRSkippedXLBOMD>0))
 							pcout << "Maximum residual norm of the state closest to and below Fermi level: "<< maxRes << std::endl;
 
 						//if the residual norm is greater than adaptiveChebysevFilterPassesTol (a heuristic value)
@@ -2373,7 +2333,7 @@ namespace dftfe {
 											kPoint,
 											kohnShamDFTEigenOperatorCUDA,
 											d_elpaScala,
-											subspaceIterationSolverCUDA,
+											d_subspaceIterationSolverCUDA,
 											residualNormWaveFunctionsAllkPoints[kPoint],
                       true,
 											0,
@@ -2387,7 +2347,7 @@ namespace dftfe {
 											kPoint,
 											kohnShamDFTEigenOperator,
 											d_elpaScala,
-											subspaceIterationSolver,
+											d_subspaceIterationSolver,
 											residualNormWaveFunctionsAllkPoints[kPoint],
                       true,
 											(scfIter<dftParameters::spectrumSplitStartingScfIter)?false:true,
@@ -2451,16 +2411,16 @@ namespace dftfe {
 				}
 				else
 					compute_rhoOut((scfIter<dftParameters::spectrumSplitStartingScfIter || scfConverged)?false:true,
-							scfConverged || (scfIter == (dftParameters::numSCFIterations-1)));
+							scfConverged || (scfIter == (dftParameters::numSCFIterations-1)) || solveLinearizedKS);
 #else
 
 #ifdef DFTFE_WITH_GPU
 				compute_rhoOut(kohnShamDFTEigenOperatorCUDA,
 						(scfIter<dftParameters::spectrumSplitStartingScfIter || scfConverged)?false:true,
-						scfConverged || (scfIter == (dftParameters::numSCFIterations-1)));
+						scfConverged || (scfIter == (dftParameters::numSCFIterations-1)) || solveLinearizedKS);
 #else
 				compute_rhoOut((scfIter<dftParameters::spectrumSplitStartingScfIter || scfConverged)?false:true,
-						scfConverged || (scfIter == (dftParameters::numSCFIterations-1)));
+						scfConverged || (scfIter == (dftParameters::numSCFIterations-1)) || solveLinearizedKS);
 #endif
 #endif
 				computing_timer.exit_section("compute rho");
@@ -2678,23 +2638,23 @@ namespace dftfe {
 				std::map<dealii::CellId, std::vector<double> > rhoMinMinusApproxRho;
 				std::map<dealii::CellId, std::vector<double> > dummy;
 				DoFHandler<3>::active_cell_iterator
-					cell = dofHandler.begin_active(),
-					     endc = dofHandler.end();
+					cell = d_matrixFreeDataPRefined.get_dof_handler(d_phiTotDofHandlerIndexElectro).begin_active(),
+					     endc = d_matrixFreeDataPRefined.get_dof_handler(d_phiTotDofHandlerIndexElectro).end();
 				for (; cell!=endc; ++cell) 
 					if (cell->is_locally_owned())
 					{
 						std::vector<double> & temp= rhoMinMinusApproxRho[cell->id()];
 						const std::vector<double> & rhoOut=(*rhoOutValues).find(cell->id())->second;
 						const std::vector<double> & rhoIn=(*rhoInValues).find(cell->id())->second;
-						temp.resize(quadrature.size());
-						for (unsigned int q_point=0; q_point<quadrature.size(); ++q_point)
+						temp.resize(d_matrixFreeDataPRefined.get_quadrature(d_densityQuadratureIdElectro).size());
+						for (unsigned int q_point=0; q_point<temp.size(); ++q_point)
 							temp[q_point]=rhoOut[q_point]-rhoIn[q_point];
 
 					}
 
 				phiTotalSolverProblem.reinit(d_matrixFreeDataPRefined,
 						phiRhoMinusApproxRho,
-						*d_constraintsVector[d_phiTotDofHandlerIndexElectro],
+						*d_constraintsVectorElectro[d_phiTotDofHandlerIndexElectro],
 						d_phiTotDofHandlerIndexElectro,
             d_densityQuadratureIdElectro,
             d_phiTotAXQuadratureIdElectro,
@@ -2703,9 +2663,9 @@ namespace dftfe {
             d_smearedChargeQuadratureIdElectro,
 						rhoMinMinusApproxRho,
 						false,
-            dftParameters::periodicX && dftParameters::periodicY && dftParameters::periodicZ && !dftParameters::pinnedNodeForPBC);
+            false);
 
-
+        phiRhoMinusApproxRho=0;
 				dealiiCGSolver.solve(phiTotalSolverProblem,
 						dftParameters::absLinearSolverTolerance,
 						dftParameters::maxLinearSolverIterations,
@@ -2806,10 +2766,13 @@ namespace dftfe {
       if (dftParameters::verbosity>=1)
          pcout<<"Total entropic energy: "<<d_entropicEnergy<<std::endl;    
       
-      d_freeEnergy=d_groundStateEnergy-d_entropicEnergy;    
+			if (!(dftParameters::isXLBOMD && solveLinearizedKS))
+			{
+        d_freeEnergy=d_groundStateEnergy-d_entropicEnergy;    
 
-      if (dftParameters::verbosity>=1)
-         pcout<<"Total free energy: "<<d_freeEnergy<<std::endl;          
+        if (dftParameters::verbosity>=1)
+           pcout<<"Total free energy: "<<d_freeEnergy<<std::endl; 
+      }
 
 			if (dftParameters::isBOMD && dftParameters::isXLBOMD && solveLinearizedKS)
 			{
@@ -2880,7 +2843,8 @@ namespace dftfe {
 			//
 			//move this to a common routine
 			//
-			if(dftParameters::electrostaticsHRefinement || ((dftParameters::isIonForce || dftParameters::isCellStress) && solveLinearizedKS))
+      //FIXME: remove if not required
+			if((dftParameters::isIonForce || dftParameters::isCellStress) && solveLinearizedKS)
 			{
 				const unsigned int n_q_points = quadrature.size();
 				if (!(dftParameters::xcFamilyType=="GGA"))
@@ -3049,17 +3013,6 @@ namespace dftfe {
 
 			if (dftParameters::isIonForce)
 			{
-		  	if(dftParameters::electrostaticsHRefinement)
-        {
-          std::map<dealii::CellId,std::vector<double> > dummy;
-          interpolateElectroNodalDataToQuadratureDataGeneral(d_matrixFreeDataPRefined,
-              d_phiTotDofHandlerIndexElectro,
-              d_densityQuadratureIdElectro,
-              d_phiTotRhoOut,
-              d_phiOutValues,
-              dummy);     
-        }
-
 				if(dftParameters::selfConsistentSolverTolerance>1e-4 && dftParameters::verbosity>=1)
 					pcout<<"DFT-FE Warning: Ion force accuracy may be affected for the given scf iteration solve tolerance: "<<dftParameters::selfConsistentSolverTolerance<<", recommended to use TOLERANCE below 1e-4."<<std::endl;
 
@@ -3080,11 +3033,11 @@ namespace dftfe {
 								d_phiTotRhoIn,
 								*rhoInValues,
 								*gradRhoInValues,
-                d_gradRhoInValuesLpspQuad,
+                d_gradRhoOutValuesLpspQuad,
 								*rhoInValues,
-                d_rhoInValuesLpspQuad,
+                d_rhoOutValuesLpspQuad,
 								*gradRhoInValues,
-                d_gradRhoInValuesLpspQuad,
+                d_gradRhoOutValuesLpspQuad,
 								d_rhoCore,
                 d_gradRhoCore, 
                 d_hessianRhoCore,
@@ -3191,7 +3144,7 @@ namespace dftfe {
 			{
 				readkPointData();
 				initnscf(kohnShamDFTEigenOperator, phiTotalSolverProblem,dealiiCGSolver) ;
-				nscf(kohnShamDFTEigenOperator,subspaceIterationSolver) ;
+				nscf(kohnShamDFTEigenOperator,d_subspaceIterationSolver) ;
 				writeBands() ;
 			}
 #endif

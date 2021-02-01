@@ -25,11 +25,6 @@
 #include <dftParameters.h>
 #include <dftUtils.h>
 
-#include <kohnShamDFTOperator.h>
-#ifdef DFTFE_WITH_GPU
-#include <kohnShamDFTOperatorCUDA.h>
-#endif
-
 namespace dftfe {
 
 	//
@@ -384,16 +379,8 @@ namespace dftfe {
 			d_totalUpdateCalls+=1;
 			dftPtr->deformDomain(deformationGradient);
 
-			kohnShamDFTOperatorClass<FEOrder,FEOrderElectro> kohnShamDFTEigenOperator(dftPtr,mpi_communicator);
-#ifdef DFTFE_WITH_GPU
-			kohnShamDFTOperatorCUDAClass<FEOrder,FEOrderElectro> kohnShamDFTEigenOperatorCUDA(dftPtr,mpi_communicator);
-#endif
 
-			dftPtr->solve(kohnShamDFTEigenOperator,
-#ifdef DFTFE_WITH_GPU
-					kohnShamDFTEigenOperatorCUDA,
-#endif
-					false,
+			dftPtr->solve(false,
 					computeForces);
 
 			// if ion optimization is on, then for every cell relaxation also relax the atomic forces

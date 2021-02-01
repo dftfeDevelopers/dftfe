@@ -213,6 +213,7 @@ namespace dftfe
 			d_lowerBoundWantedSpectrum(lowerBoundWantedSpectrum),
 			d_lowerBoundUnWantedSpectrum(lowerBoundUnWantedSpectrum),
       d_upperBoundUnWantedSpectrum(upperBoundUnWantedSpectrum),
+      d_isTemporaryParallelVectorsCreated(false),
 			pcout(std::cout, (dealii::Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0)),
 			computing_timer(mpi_comm_domain,
 					pcout,
@@ -320,7 +321,7 @@ namespace dftfe
 			const unsigned int vectorsBlockSize=std::min(dftParameters::chebyWfcBlockSize,
 					totalNumberWaveFunctions);
 
-      if (true)
+      if (!d_isTemporaryParallelVectorsCreated)
       {
         vectorTools::createDealiiVector(operatorMatrix.getMatrixFreeData()->get_vector_partitioner(),
             vectorsBlockSize,
@@ -529,7 +530,7 @@ namespace dftfe
 					totalNumberWaveFunctions);
 
 
-      if (isFirstFilteringCall)
+      if (isFirstFilteringCall || !d_isTemporaryParallelVectorsCreated)
       {
         vectorTools::createDealiiVector(operatorMatrix.getMatrixFreeData()->get_vector_partitioner(),
             vectorsBlockSize,
@@ -564,6 +565,8 @@ namespace dftfe
 
         if (dftParameters::overlapComputeCommunCheby)
           ((distributedGPUVec<double> *)d_projectorKetTimesVector2Ptr)->reinit(*((distributedGPUVec<double> *)d_projectorKetTimesVectorPtr));
+
+        d_isTemporaryParallelVectorsCreated=true;  
       }
 
 			if(!isElpaStep2)
@@ -1189,28 +1192,28 @@ namespace dftfe
 			const unsigned int chebyBlockSize=std::min(dftParameters::chebyWfcBlockSize,
 					totalNumberWaveFunctions);
 
-      if (true)
+      if (!d_isTemporaryParallelVectorsCreated)
       {
         vectorTools::createDealiiVector(operatorMatrix.getMatrixFreeData()->get_vector_partitioner(),
-            vectorsBlockSize,
+            chebyBlockSize,
             *((distributedGPUVec<double> *)d_cudaFlattenedArrayBlockPtr));
 
 
         ((distributedGPUVec<double> *)d_YArrayPtr)->reinit(*((distributedGPUVec<double> *)d_cudaFlattenedArrayBlockPtr));
 
         vectorTools::createDealiiVector(operatorMatrix.getMatrixFreeData()->get_vector_partitioner(),
-            vectorsBlockSize,
+            chebyBlockSize,
             *((distributedGPUVec<float> *)d_cudaFlattenedFloatArrayBlockPtr));
 
 
         vectorTools::createDealiiVector(operatorMatrix.getProjectorKetTimesVectorSingle().get_partitioner(),
-            vectorsBlockSize,
+            chebyBlockSize,
             *((distributedGPUVec<double> *)d_projectorKetTimesVectorPtr));
 
 
         if (dftParameters::useMixedPrecChebyNonLocal)
           vectorTools::createDealiiVector(operatorMatrix.getProjectorKetTimesVectorSingle().get_partitioner(),
-              vectorsBlockSize,
+              chebyBlockSize,
               *((distributedGPUVec<float> *)d_projectorKetTimesVectorFloatPtr));
 
 
@@ -1237,7 +1240,7 @@ namespace dftfe
             *((distributedGPUVec<double> *)d_cudaFlattenedArrayBlockPtr),
             *((distributedGPUVec<double> *)d_YArrayPtr),
             *((distributedGPUVec<double> *)d_projectorKetTimesVectorPtr),
-            vectorsBlockSize);
+            chebyBlockSize);
 
         cudaDeviceSynchronize();
         MPI_Barrier(MPI_COMM_WORLD);
@@ -1247,6 +1250,8 @@ namespace dftfe
 
         d_upperBoundUnWantedSpectrum=bounds.second;
       }
+
+			unsigned int chebyshevOrder = dftParameters::chebyshevOrder;
 
 			//
 			//set Chebyshev order
@@ -1315,7 +1320,7 @@ namespace dftfe
 									localVectorSize,
 									eigenVectorsFlattenedCUDA,
 									totalNumberWaveFunctions,
-									cudaFlattenedArrayBlock.begin(),
+								  ((distributedGPUVec<double> *)d_cudaFlattenedArrayBlockPtr)->begin(),
 									jvec);
 
 							if (dftParameters::overlapComputeCommunCheby && numSimultaneousBlocksCurrent==2)
@@ -1323,7 +1328,7 @@ namespace dftfe
 										localVectorSize,
 										eigenVectorsFlattenedCUDA,
 										totalNumberWaveFunctions,
-										cudaFlattenedArrayBlock2.begin(),
+								  ((distributedGPUVec<double> *)d_cudaFlattenedArrayBlock2Ptr)->begin(),
 										jvec+BVec);
 
 							//
@@ -1367,7 +1372,7 @@ namespace dftfe
 							//copy current wavefunction vectors block to vector containing all wavefunction vectors
 							stridedCopyFromBlockKernel<<<(BVec+255)/256*localVectorSize, 256>>>(BVec,
 									localVectorSize,
-									cudaFlattenedArrayBlock.begin(),
+								  ((distributedGPUVec<double> *)d_cudaFlattenedArrayBlockPtr)->begin(),
 									totalNumberWaveFunctions,
 									eigenVectorsFlattenedCUDA,
 									jvec);
@@ -1375,7 +1380,7 @@ namespace dftfe
 							if (dftParameters::overlapComputeCommunCheby && numSimultaneousBlocksCurrent==2)
 								stridedCopyFromBlockKernel<<<(BVec+255)/256*localVectorSize, 256>>>(BVec,
 										localVectorSize,
-										cudaFlattenedArrayBlock2.begin(),
+								    ((distributedGPUVec<double> *)d_cudaFlattenedArrayBlock2Ptr)->begin(),
 										totalNumberWaveFunctions,
 										eigenVectorsFlattenedCUDA,
 										jvec+BVec);

@@ -349,7 +349,7 @@ void dftClass<FEOrder,FEOrderElectro>::updateAtomPositionsAndMoveMesh(const std:
       controlPointDisplacementsInitialMove.push_back(d_dispClosestTriaVerticesToAtoms[iAtom]);
       controlPointDisplacementsCurrentMove.push_back(d_gaussianMovementAtomsNetDisplacements[iAtom]);
       gaussianConstantsInitialMove.push_back(d_gaussianConstantsAutoMesh[atomId]);
-      gaussianConstantsCurrentMove.push_back(dftParameters::isBOMD?dftParameters::ratioOfMeshMovementToForceGaussianBOMD*d_gaussianConstantsForce[atomId]:d_gaussianConstantsForce[atomId]);
+      gaussianConstantsCurrentMove.push_back(d_gaussianConstantsForce[atomId]);
       flatTopWidths.push_back(d_flatTopWidthsAutoMeshMove[atomId]);
     }
 

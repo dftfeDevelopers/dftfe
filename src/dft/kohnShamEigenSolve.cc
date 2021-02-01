@@ -983,7 +983,7 @@ void dftClass<FEOrder,FEOrderElectro>:: kohnShamEigenSpaceOnlyRRCompute(const un
 
 
 	//
-	//scale the eigenVectors (initial guess of single atom wavefunctions or previous guess) to convert into Lowden Orthonormalized FE basis
+	//scale the eigenVectors to convert into Lowden Orthonormalized FE basis
 	//multiply by M^{1/2}
 	internal::pointWiseScaleWithDiagonal(kohnShamDFTEigenOperator.d_sqrtMassVector,
 			matrix_free_data.get_vector_partitioner(),
@@ -994,6 +994,14 @@ void dftClass<FEOrder,FEOrderElectro>:: kohnShamEigenSpaceOnlyRRCompute(const un
 			:d_numEigenValues,0.0);
 
 
+	subspaceIterationSolver.onlyRR(kohnShamDFTEigenOperator,
+			d_eigenVectorsFlattenedSTL[(1+dftParameters::spinPolarized)*kPointIndex+spinType],
+			d_eigenVectorsRotFracDensityFlattenedSTL[(1+dftParameters::spinPolarized)*kPointIndex+spinType],
+			d_tempEigenVec,
+			d_numEigenValues,
+			eigenValuesTemp,
+			interBandGroupComm,
+			useMixedPrec);
 
 	//
 	//scale the eigenVectors with M^{-1/2} to represent the wavefunctions in the usual FE basis

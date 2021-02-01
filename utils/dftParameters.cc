@@ -118,16 +118,12 @@ namespace dftfe {
 		double diracDeltaKernelScalingConstant=0.1;
 		unsigned int kernelUpdateRankXLBOMD=0;
 		unsigned int kmaxXLBOMD=8;
-		double ratioOfMeshMovementToForceGaussianBOMD=1.0;
 		bool useAtomicRhoXLBOMD=true;
 		bool useMeshSizesFromAtomsFile=false;
 		bool chebyCommunAvoidanceAlgo=false;
 		double chebyshevFilterPolyDegreeFirstScfScalingFactor=1.34;
 		unsigned int numberPassesRRSkippedXLBOMD=0;
-		bool useSingleFullScfXLBOMD=false;
-		bool skipHarmonicOscillatorTermInitialStepsXLBOMD=false;
 		double xlbomdRestartChebyTol=1e-9;
-		bool xlbomdRRPassMixedPrec=false;
 		bool useDensityMatrixPerturbationRankUpdates=false;
 		double xlbomdKernelRankUpdateFDParameter=1e-2;
 		bool smearedNuclearCharges=false;
@@ -814,28 +810,16 @@ namespace dftfe {
 						"[Standard] Maximum rank for low rank kernel update in XL BOMD.");
 
 				prm.declare_entry("NUMBER DISSIPATION TERMS XL BOMD", "8",
-						Patterns::Integer(6,8),
+						Patterns::Integer(1,8),
 						"[Standard] Number of dissipation terms in XL BOMD.");
 
 				prm.declare_entry("NUMBER PASSES RR SKIPPED XL BOMD", "0",
 						Patterns::Integer(0),
 						"[Standard] Number of starting chebsyev filtering passes without Rayleigh Ritz in XL BOMD.");
 
-				prm.declare_entry("RATIO MESH MOVEMENT TO FORCE GAUSSIAN", "1.0",
-						Patterns::Double(0.0),
-						"[Standard] Ratio of mesh movement to force Gaussian."); 
-
 				prm.declare_entry("USE ATOMIC RHO XL BOMD", "true",
 						Patterns::Bool(),
 						"[Standard] Use atomic rho xl bomd.");  
-
-				prm.declare_entry("STARTING SINGLE FULL SCF XL BOMD", "false",
-						Patterns::Bool(),
-						"[Standard] Only do first ground-state in full scf for XL BOMD.");
-
-				prm.declare_entry("XL BOMD RR PASS MIXED PREC", "false",
-						Patterns::Bool(),
-						"[Standard] Allow mixed precision for RR passes in XL BOMD.");
 
 				prm.declare_entry("DENSITY MATRIX PERTURBATION RANK UPDATES XL BOMD", "false",
 						Patterns::Bool(),
@@ -844,10 +828,6 @@ namespace dftfe {
 				prm.declare_entry("XL BOMD KERNEL RANK UPDATE FD PARAMETER", "1e-2",
 						Patterns::Double(0.0),
 						"[Standard] Finite difference perturbation parameter.");
-
-				prm.declare_entry("SKIP HARMONIC OSCILLATOR INITIAL STEPS XL BOMD", "false",
-						Patterns::Bool(),
-						"[Standard] Numerical strategy to remove oscillations in initial steps.");
 			}
 			prm.leave_subsection ();
 		}
@@ -1084,12 +1064,8 @@ namespace dftfe {
 				dftParameters::kernelUpdateRankXLBOMD        = prm.get_integer("KERNEL RANK XL BOMD");
 				dftParameters::kmaxXLBOMD        = prm.get_integer("NUMBER DISSIPATION TERMS XL BOMD");
 				dftParameters::numberPassesRRSkippedXLBOMD        = prm.get_integer("NUMBER PASSES RR SKIPPED XL BOMD");
-				dftParameters::ratioOfMeshMovementToForceGaussianBOMD       = prm.get_double("RATIO MESH MOVEMENT TO FORCE GAUSSIAN");    
 				dftParameters::useAtomicRhoXLBOMD     = prm.get_bool("USE ATOMIC RHO XL BOMD");   
-				dftParameters::useSingleFullScfXLBOMD = prm.get_bool("STARTING SINGLE FULL SCF XL BOMD");
-				dftParameters::skipHarmonicOscillatorTermInitialStepsXLBOMD= prm.get_bool("SKIP HARMONIC OSCILLATOR INITIAL STEPS XL BOMD"); 
 				dftParameters::xlbomdRestartChebyTol           = prm.get_double("CHEBY TOL XL BOMD RESTART");  
-				dftParameters::xlbomdRRPassMixedPrec           = prm.get_bool("XL BOMD RR PASS MIXED PREC");
 				dftParameters::useDensityMatrixPerturbationRankUpdates           = prm.get_bool("DENSITY MATRIX PERTURBATION RANK UPDATES XL BOMD");  
 				dftParameters::xlbomdKernelRankUpdateFDParameter=prm.get_double("XL BOMD KERNEL RANK UPDATE FD PARAMETER");
 			}

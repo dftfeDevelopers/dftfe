@@ -162,26 +162,16 @@ namespace dftfe {
 			/**
 			 * @brief Kohn-Sham ground-state solve using SCF iteration
 			 */
-			void solve(kohnShamDFTOperatorClass<FEOrder,FEOrderElectro> & kohnShamDFTEigenOperator,
-#ifdef DFTFE_WITH_GPU
-					kohnShamDFTOperatorCUDAClass<FEOrder,FEOrderElectro> & kohnShamDFTEigenOperatorCUDA,
-#endif
-					const bool kohnShamDFTOperatorsInitialized=false,
+			void solve(const bool kohnShamDFTOperatorsInitialized=false,
 					const bool computeForces=true,
 					const bool solveLinearizedKS=false,
-					const bool restartGroundStateCalcFromChk=false,
-					const bool skipVselfSolveInitLocalPSP=false,
-					const bool rayleighRitzAvoidancePassesXLBOMD=false);
+					const bool restartGroundStateCalcFromChk=false);
 
 
 			/**
 			 * @brief Kohn-Sham ground-state solve using SCF iteration
 			 */
-			void computeDensityPerturbation(kohnShamDFTOperatorClass<FEOrder,FEOrderElectro> & kohnShamDFTEigenOperator,
-#ifdef DFTFE_WITH_GPU
-					kohnShamDFTOperatorCUDAClass<FEOrder,FEOrderElectro> & kohnShamDFTEigenOperatorCUDA,
-#endif
-					const bool kohnShamDFTOperatorsInitialized=false);
+			void computeDensityPerturbation(const bool kohnShamDFTOperatorsInitialized=false);
 
 
 			void initializeKohnShamDFTOperator(kohnShamDFTOperatorClass<FEOrder,FEOrderElectro> & kohnShamDFTEigenOperator
@@ -892,6 +882,16 @@ namespace dftfe {
 			molecularDynamics<FEOrder,FEOrderElectro> * d_mdPtr;
 
 			elpaScalaManager d_elpaScala;
+
+
+			/**
+       * chebyshev subspace iteration solver objects
+       *
+       */
+			chebyshevOrthogonalizedSubspaceIterationSolver d_subspaceIterationSolver;
+#ifdef DFTFE_WITH_GPU
+			chebyshevOrthogonalizedSubspaceIterationSolverCUDA d_subspaceIterationSolverCUDA;
+#endif
 
 			/**
 			 * constraint Matrices

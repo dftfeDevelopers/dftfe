@@ -1223,7 +1223,6 @@ template<unsigned int FEOrder,unsigned int FEOrderElectro>
 			 pseudoVLocAtomsElectro,
 			 vselfBinsManagerElectro,
 			 shadowKSRhoMinValues,
-       shadowKSGradRhoMinValues,
 			 phiRhoMinusApproxRho,
 			 shadowPotentialForce);
 	}
@@ -1258,7 +1257,6 @@ template<unsigned int FEOrder,unsigned int FEOrderElectro>
  const std::map<unsigned int,std::map<dealii::CellId, std::vector<double> > > & pseudoVLocAtomsElectro,
  const vselfBinsManager<FEOrder,FEOrderElectro> & vselfBinsManagerElectro,
  const std::map<dealii::CellId, std::vector<double> > & shadowKSRhoMinValues,
- const std::map<dealii::CellId, std::vector<double> > & shadowKSGradRhoMinValues, 
  const distributedCPUVec<double> & phiRhoMinusApproxRhoElectro,
  const bool shadowPotentialForce)
 {
@@ -1329,6 +1327,7 @@ template<unsigned int FEOrder,unsigned int FEOrderElectro>
 		}
 
   //In case of shadow potential force the standard rhoQuads input is the rhoIn (or rhoTilde in the XLBOMD formulation)
+  //except for the external potential correction term where the rhoQuads is the variationally optimized one (rhOut)
 
 	std::vector<VectorizedArray<double> > rhoQuadsElectro(numQuadPoints,make_vectorized_array(0.0));
   std::vector<VectorizedArray<double> > rhoQuadsElectroLpsp(numQuadPointsLpsp,make_vectorized_array(0.0));
@@ -1336,7 +1335,6 @@ template<unsigned int FEOrder,unsigned int FEOrderElectro>
   std::vector< Tensor<1,C_DIM,VectorizedArray<double> >  > gradPhiTotSmearedChargeQuads(numQuadPointsSmearedb,zeroTensor);
   std::vector< Tensor<1,C_DIM,VectorizedArray<double> >  > gradPhiTotPlusPhiRhoMinusApproxRhoSmearedChargeQuads(numQuadPointsSmearedb,zeroTensor);
 	std::vector<VectorizedArray<double> > shadowKSRhoMinQuadsElectro(numQuadPoints,make_vectorized_array(0.0));
-	std::vector< Tensor<1,C_DIM,VectorizedArray<double> > > gradShadowKSRhoMinQuadsElectro(numQuadPoints,zeroTensor);  
 	//std::vector<VectorizedArray<double> > shadowKSRhoMinMinusRhoQuadsElectro(numQuadPoints,make_vectorized_array(0.0));
 	std::vector<Tensor<1,C_DIM,VectorizedArray<double> > > gradRhoQuadsElectro(numQuadPoints,zeroTensor);
   std::vector<Tensor<1,C_DIM,VectorizedArray<double> > > gradRhoQuadsElectroLpsp(numQuadPointsLpsp,zeroTensor);
@@ -1387,7 +1385,6 @@ template<unsigned int FEOrder,unsigned int FEOrderElectro>
     if (shadowPotentialForce)
     {
       std::fill(shadowKSRhoMinQuadsElectro.begin(),shadowKSRhoMinQuadsElectro.end(),make_vectorized_array(0.0));
-      std::fill(gradShadowKSRhoMinQuadsElectro.begin(),gradShadowKSRhoMinQuadsElectro.end(),zeroTensor);
       std::fill(gradPhiTotPlusPhiRhoMinusApproxRhoSmearedChargeQuads.begin(),gradPhiTotPlusPhiRhoMinusApproxRhoSmearedChargeQuads.end(),zeroTensor);       
     }
 		std::fill(gradRhoQuadsElectro.begin(),gradRhoQuadsElectro.end(),zeroTensor);
@@ -1405,15 +1402,12 @@ template<unsigned int FEOrder,unsigned int FEOrderElectro>
 				if (shadowPotentialForce)
 				{
 					shadowKSRhoMinQuadsElectro[q][iSubCell]=shadowKSRhoMinValues.find(subCellId)->second[q];
-					gradShadowKSRhoMinQuadsElectro[q][0][iSubCell]=shadowKSGradRhoMinValues.find(subCellId)->second[C_DIM*q+0];
-					gradShadowKSRhoMinQuadsElectro[q][1][iSubCell]=shadowKSGradRhoMinValues.find(subCellId)->second[C_DIM*q+1];
-					gradShadowKSRhoMinQuadsElectro[q][2][iSubCell]=shadowKSGradRhoMinValues.find(subCellId)->second[C_DIM*q+2];
 
 					//shadowKSRhoMinMinusRhoQuadsElectro[q][iSubCell]=shadowKSRhoMinQuadsElectro[q][iSubCell]-rhoQuadsElectro[q][iSubCell];
 
-					gradRhoAtomsQuadsElectro[q][0][iSubCell]=dftPtr->d_gradRhoAtomsValues.find(subCellId)->second[C_DIM*q+0];
-					gradRhoAtomsQuadsElectro[q][1][iSubCell]=dftPtr->d_gradRhoAtomsValues.find(subCellId)->second[C_DIM*q+1];
-					gradRhoAtomsQuadsElectro[q][2][iSubCell]=dftPtr->d_gradRhoAtomsValues.find(subCellId)->second[C_DIM*q+2];
+					//gradRhoAtomsQuadsElectro[q][0][iSubCell]=dftPtr->d_gradRhoAtomsValues.find(subCellId)->second[C_DIM*q+0];
+					//gradRhoAtomsQuadsElectro[q][1][iSubCell]=dftPtr->d_gradRhoAtomsValues.find(subCellId)->second[C_DIM*q+1];
+					//gradRhoAtomsQuadsElectro[q][2][iSubCell]=dftPtr->d_gradRhoAtomsValues.find(subCellId)->second[C_DIM*q+2];
 				}
 			}
 
@@ -1451,8 +1445,8 @@ template<unsigned int FEOrder,unsigned int FEOrderElectro>
 					matrixFreeDataElectro,
           phiTotDofHandlerIndexElectro,
 					cell,
-					shadowPotentialForce?shadowKSRhoMinQuadsElectro:rhoQuadsElectroLpsp,
-          shadowPotentialForce?gradShadowKSRhoMinQuadsElectro:gradRhoQuadsElectroLpsp,
+					rhoQuadsElectroLpsp,
+          gradRhoQuadsElectroLpsp,
 					pseudoVLocAtomsElectro,
 					vselfBinsManagerElectro,
 					d_cellsVselfBallsClosestAtomIdDofHandlerElectro);
