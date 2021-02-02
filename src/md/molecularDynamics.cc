@@ -927,17 +927,6 @@ namespace dftfe {
 
 						if (dftParameters::kernelUpdateRankXLBOMD>0)
             {
-
-#ifdef DFTFE_WITH_GPU
-              if (dftParameters::useGPU && dftParameters::useDensityMatrixPerturbationRankUpdates)
-                for(unsigned int kPoint = 0; kPoint < (1+dftParameters::spinPolarized)*dftPtr->d_kPointWeights.size(); ++kPoint)
-                {
-                  vectorToolsCUDA::copyCUDAVecToHostVec(dftPtr->d_eigenVectorsFlattenedCUDA.begin()+kPoint*dftPtr->d_eigenVectorsFlattenedSTL[0].size(),
-                      &dftPtr->d_eigenVectorsFlattenedSTL[kPoint][0],
-                      dftPtr->d_eigenVectorsFlattenedSTL[kPoint].size());
-                }
-#endif
-
               temp1p=dftParameters::chebyshevFilterTolXLBOMD;
               dftParameters::chebyshevFilterTolXLBOMD=dftParameters::chebyshevFilterTolXLBOMDRankUpdates;
 
@@ -1012,16 +1001,6 @@ namespace dftfe {
 
                 if (dftParameters::verbosity>=1)
                   pcout<<"----------Start shadow potential energy solve with approx density= n+lamda*v1-------------"<<std::endl;
-#ifdef DFTFE_WITH_GPU
-                if (dftParameters::useGPU && dftParameters::useDensityMatrixPerturbationRankUpdates)
-                  for(unsigned int kPoint = 0; kPoint < (1+dftParameters::spinPolarized)*dftPtr->d_kPointWeights.size(); ++kPoint)
-                  {
-                    vectorToolsCUDA::copyHostVecToCUDAVec(&dftPtr->d_eigenVectorsFlattenedSTL[kPoint][0],
-                        dftPtr->d_eigenVectorsFlattenedCUDA.begin()+kPoint*dftPtr->d_eigenVectorsFlattenedSTL[0].size(),
-                        dftPtr->d_eigenVectorsFlattenedSTL[0].size());
-
-                  }
-#endif
 
 
                 if (dftParameters::useDensityMatrixPerturbationRankUpdates)
@@ -1087,16 +1066,6 @@ namespace dftfe {
                 if (dftParameters::verbosity>=1)
                   pcout<<"----------Start shadow potential energy solve with approx density= n-lamda*v1-------------"<<std::endl;
 
-#ifdef DFTFE_WITH_GPU
-                if (dftParameters::useGPU && dftParameters::useDensityMatrixPerturbationRankUpdates)
-                  for(unsigned int kPoint = 0; kPoint < (1+dftParameters::spinPolarized)*dftPtr->d_kPointWeights.size(); ++kPoint)
-                  {
-                    vectorToolsCUDA::copyHostVecToCUDAVec(&dftPtr->d_eigenVectorsFlattenedSTL[kPoint][0],
-                        dftPtr->d_eigenVectorsFlattenedCUDA.begin()+kPoint*dftPtr->d_eigenVectorsFlattenedSTL[0].size(),
-                        dftPtr->d_eigenVectorsFlattenedSTL[0].size());
-
-                  }
-#endif
 
                 if (dftParameters::useDensityMatrixPerturbationRankUpdates)
                   dftPtr->computeDensityPerturbation(true);
@@ -1149,17 +1118,6 @@ namespace dftfe {
                   kernelAction);
 
               dftParameters::chebyshevFilterTolXLBOMD=temp1p;
-
-#ifdef DFTFE_WITH_GPU
-              if (dftParameters::useGPU && dftParameters::useDensityMatrixPerturbationRankUpdates)
-                for(unsigned int kPoint = 0; kPoint < (1+dftParameters::spinPolarized)*dftPtr->d_kPointWeights.size(); ++kPoint)
-                {
-                  vectorToolsCUDA::copyHostVecToCUDAVec(&dftPtr->d_eigenVectorsFlattenedSTL[kPoint][0],
-                      dftPtr->d_eigenVectorsFlattenedCUDA.begin()+kPoint*dftPtr->d_eigenVectorsFlattenedSTL[0].size(),
-                      dftPtr->d_eigenVectorsFlattenedSTL[0].size());
-
-                }
-#endif
             }
 
 						rmsErrorRho=std::sqrt(dftPtr->rhofieldl2Norm(dftPtr->d_matrixFreeDataPRefined,rhoErrorVec,dftPtr->d_densityDofHandlerIndexElectro,dftPtr->d_densityQuadratureIdElectro)/dftPtr->d_domainVolume);

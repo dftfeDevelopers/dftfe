@@ -1380,6 +1380,7 @@ namespace dftfe {
 			energyCalculator energyCalc(mpi_communicator, interpoolcomm,interBandGroupComm);
 
 
+      std::vector<std::vector<dataTypes::number> > eigenVectorsFlattenedSTLTemp=d_eigenVectorsFlattenedSTL;
 
 			//set up linear solver
 			dealiiLinearSolver dealiiCGSolver(mpi_communicator, dealiiLinearSolver::CG);
@@ -1472,12 +1473,6 @@ namespace dftfe {
           dummy);
 
 			{
-
-				std::vector<std::vector<double>> residualNormWaveFunctionsAllkPoints;
-				residualNormWaveFunctionsAllkPoints.resize(d_kPointWeights.size());
-				for(unsigned int kPoint = 0; kPoint < d_kPointWeights.size(); ++kPoint)
-					residualNormWaveFunctionsAllkPoints[kPoint].resize(d_numEigenValuesRR);
-
 				if(dftParameters::xcFamilyType=="LDA")
 				{
 					computing_timer.enter_section("VEff Computation");
@@ -1582,6 +1577,7 @@ namespace dftfe {
 			computing_timer.exit_section("Density perturbation computation");
 			computingTimerStandard.exit_section("Density perturbation computation");
 
+      d_eigenVectorsFlattenedSTL=eigenVectorsFlattenedSTLTemp;
 
 			if (!kohnShamDFTOperatorsInitialized || true)
 				finalizeKohnShamDFTOperator(kohnShamDFTEigenOperator
