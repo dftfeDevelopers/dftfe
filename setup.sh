@@ -42,7 +42,7 @@ withELPA=OFF
 
 #Option to compile with default or higher order quadrature for storing pseudopotential data
 #ON is recommended for MD simulations with hard pseudopotentials
-withHigherQuadPSP=OFF
+withHigherQuadPSP=ON
 
 #Optmization flag: 1 for optimized mode and 0 for debug mode compilation
 build_type=Release

@@ -2762,14 +2762,6 @@ namespace dftfe {
       if (dftParameters::verbosity>=1)
          pcout<<"Total entropic energy: "<<d_entropicEnergy<<std::endl;    
       
-			if (!(dftParameters::isXLBOMD && solveLinearizedKS))
-			{
-        d_freeEnergy=d_groundStateEnergy-d_entropicEnergy;    
-
-        if (dftParameters::verbosity>=1)
-           pcout<<"Total free energy: "<<d_freeEnergy<<std::endl; 
-      }
-
 			if (dftParameters::isBOMD && dftParameters::isXLBOMD && solveLinearizedKS)
 			{
 				d_shadowPotentialEnergy =
@@ -2795,6 +2787,11 @@ namespace dftfe {
 							lowerBoundKindex,
 							dftParameters::smearedNuclearCharges);
 			}
+
+      d_freeEnergy=((dftParameters::isXLBOMD && solveLinearizedKS)?d_shadowPotentialEnergy:d_groundStateEnergy)-d_entropicEnergy;    
+
+      if (dftParameters::verbosity>=1)
+         pcout<<"Total free energy: "<<d_freeEnergy<<std::endl; 
 
 			//This step is required for interpolating rho from current mesh to the new
 			//mesh in case of atomic relaxation
@@ -2840,6 +2837,7 @@ namespace dftfe {
 			//move this to a common routine
 			//
       //FIXME: remove if not required
+      /*
 			if((dftParameters::isIonForce || dftParameters::isCellStress) && solveLinearizedKS)
 			{
 				const unsigned int n_q_points = quadrature.size();
@@ -2955,6 +2953,7 @@ namespace dftfe {
 #endif
 				}
 			}
+      */
 
 			if(dftParameters::isCellStress)
 			{

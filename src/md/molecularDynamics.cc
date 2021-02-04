@@ -887,6 +887,96 @@ namespace dftfe {
 								true,
 								false);
 
+            //Finite difference check for shadow potential forces
+            if (false)
+            {
+              for(int iCharge = 0; iCharge < numberGlobalCharges; ++iCharge)
+              {
+                if (iCharge==0)
+                {
+                  displacements[iCharge][0] = 1e-3;
+                  displacements[iCharge][1] = 0.0;
+                  displacements[iCharge][2] = 0.0;
+                }
+                else
+                {
+                  displacements[iCharge][0] = 0.0;
+                  displacements[iCharge][1] = 0.0;
+                  displacements[iCharge][2] = 0.0;                
+                }
+              }
+
+              dftPtr->updateAtomPositionsAndMoveMesh(displacements,
+                  dftParameters::maxJacobianRatioFactorForMD,
+                  (timeIndex ==startingTimeStep+1 && restartFlag==1)?true:false,
+                  false);
+
+              dftPtr->d_rhoInNodalValues=approxDensityContainer.back();
+              if (dftParameters::useAtomicRhoXLBOMD)
+                dftPtr->d_rhoInNodalValues+=atomicRho;
+
+              dftPtr->d_rhoInNodalValues.update_ghost_values();
+              dftPtr->interpolateRhoNodalDataToQuadratureDataGeneral(dftPtr->d_matrixFreeDataPRefined,
+                  dftPtr->d_densityDofHandlerIndexElectro,
+                  dftPtr->d_densityQuadratureIdElectro,
+                  dftPtr->d_rhoInNodalValues,
+                  *(dftPtr->rhoInValues),
+                  *(dftPtr->gradRhoInValues),
+                  *(dftPtr->gradRhoInValues),
+                  dftParameters::xcFamilyType=="GGA");		
+
+              dftPtr->normalizeRhoInQuadValues();
+
+              dftPtr->solve(true,
+                  true,
+                  true,
+                  false);
+
+              for(int iCharge = 0; iCharge < numberGlobalCharges; ++iCharge)
+              {
+                if (iCharge==0)
+                {
+                  displacements[iCharge][0] = -2e-3;
+                  displacements[iCharge][1] = 0.0;
+                  displacements[iCharge][2] = 0.0;
+                }
+                else
+                {
+                  displacements[iCharge][0] = 0.0;
+                  displacements[iCharge][1] = 0.0;
+                  displacements[iCharge][2] = 0.0;                
+                }
+              }
+
+              dftPtr->updateAtomPositionsAndMoveMesh(displacements,
+                  dftParameters::maxJacobianRatioFactorForMD,
+                  (timeIndex ==startingTimeStep+1 && restartFlag==1)?true:false,
+                  false);
+
+              dftPtr->d_rhoInNodalValues=approxDensityContainer.back();
+              if (dftParameters::useAtomicRhoXLBOMD)
+                dftPtr->d_rhoInNodalValues+=atomicRho;
+
+              dftPtr->d_rhoInNodalValues.update_ghost_values();
+
+              dftPtr->interpolateRhoNodalDataToQuadratureDataGeneral(dftPtr->d_matrixFreeDataPRefined,
+                  dftPtr->d_densityDofHandlerIndexElectro,
+                  dftPtr->d_densityQuadratureIdElectro,
+                  dftPtr->d_rhoInNodalValues,
+                  *(dftPtr->rhoInValues),
+                  *(dftPtr->gradRhoInValues),
+                  *(dftPtr->gradRhoInValues),
+                  dftParameters::xcFamilyType=="GGA");		
+
+              dftPtr->normalizeRhoInQuadValues();
+
+              dftPtr->solve(true,
+                  true,
+                  true,
+                  false);
+            }
+
+
 						if (isFirstXLBOMDStep && xlbomdHistoryRestart)
 						{
 							dftParameters::chebyshevFilterTolXLBOMD=temp1p;
