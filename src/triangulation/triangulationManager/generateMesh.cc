@@ -186,7 +186,7 @@ namespace dftfe {
 			double baseMeshSize1, baseMeshSize2, baseMeshSize3;
 			if (dftParameters::periodicX ||dftParameters::periodicY ||dftParameters::periodicZ)
 			{
-        const double targetBaseMeshSize= (std::min(std::min(domainBoundingVectorMag1,domainBoundingVectorMag2),domainBoundingVectorMag3)>50.0)?7.0:2.0;
+        const double targetBaseMeshSize= (std::min(std::min(domainBoundingVectorMag1,domainBoundingVectorMag2),domainBoundingVectorMag3)>50.0)?7.0:std::max(2.0,largestMeshSizeAroundAtom);
 				baseMeshSize1=std::pow(2,round(log2(targetBaseMeshSize/largestMeshSizeAroundAtom)))*largestMeshSizeAroundAtom;
 				baseMeshSize2=std::pow(2,round(log2(targetBaseMeshSize/largestMeshSizeAroundAtom)))*largestMeshSizeAroundAtom;
 				baseMeshSize3=std::pow(2,round(log2(targetBaseMeshSize/largestMeshSizeAroundAtom)))*largestMeshSizeAroundAtom;
