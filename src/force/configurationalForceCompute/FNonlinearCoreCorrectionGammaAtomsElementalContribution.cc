@@ -40,27 +40,11 @@ void forceClass<FEOrder,FEOrderElectro>::FNonlinearCoreCorrectionGammaAtomsEleme
   {
     std::vector<Tensor<1,C_DIM,VectorizedArray<double> > > gradRhoCoreAtomsQuads(numQuadPoints,zeroTensor1);
     
-    double atomCharge;
     unsigned int atomId = iAtom;
-    Point<C_DIM> atomLocation;
-    if(iAtom < numberGlobalAtoms)
-    {
-       atomLocation[0]=dftPtr->atomLocations[iAtom][2];
-       atomLocation[1]=dftPtr->atomLocations[iAtom][3];
-       atomLocation[2]=dftPtr->atomLocations[iAtom][4];
-       if(dftParameters::isPseudopotential)
-         atomCharge = dftPtr->atomLocations[iAtom][1];
-       else
-         atomCharge = dftPtr->atomLocations[iAtom][0];
-    }
-    else
+    if(iAtom >= numberGlobalAtoms)
     {
        const int imageId=iAtom-numberGlobalAtoms;
        atomId=dftPtr->d_imageIdsTrunc[imageId];
-       atomCharge = dftPtr->d_imageChargesTrunc[imageId];
-       atomLocation[0]=dftPtr->d_imagePositionsTrunc[imageId][0];
-       atomLocation[1]=dftPtr->d_imagePositionsTrunc[imageId][1];
-       atomLocation[2]=dftPtr->d_imagePositionsTrunc[imageId][2];
     }
 
     bool isLocalDomainOutsideCoreRhoTail= false;
@@ -150,27 +134,11 @@ void forceClass<FEOrder,FEOrderElectro>::FNonlinearCoreCorrectionGammaAtomsEleme
   {
     std::vector<Tensor<2,C_DIM,VectorizedArray<double> > > hessianRhoCoreAtomsQuads(numQuadPoints,zeroTensor1);
     
-    double atomCharge;
     unsigned int atomId = iAtom;
-    Point<C_DIM> atomLocation;
-    if(iAtom < numberGlobalAtoms)
-    {
-       atomLocation[0]=dftPtr->atomLocations[iAtom][2];
-       atomLocation[1]=dftPtr->atomLocations[iAtom][3];
-       atomLocation[2]=dftPtr->atomLocations[iAtom][4];
-       if(dftParameters::isPseudopotential)
-         atomCharge = dftPtr->atomLocations[iAtom][1];
-       else
-         atomCharge = dftPtr->atomLocations[iAtom][0];
-    }
-    else
+    if(iAtom >= numberGlobalAtoms)
     {
        const int imageId=iAtom-numberGlobalAtoms;
        atomId=dftPtr->d_imageIdsTrunc[imageId];
-       atomCharge = dftPtr->d_imageChargesTrunc[imageId];
-       atomLocation[0]=dftPtr->d_imagePositionsTrunc[imageId][0];
-       atomLocation[1]=dftPtr->d_imagePositionsTrunc[imageId][1];
-       atomLocation[2]=dftPtr->d_imagePositionsTrunc[imageId][2];
     }
 
     bool isLocalDomainOutsideCoreRhoTail= false;

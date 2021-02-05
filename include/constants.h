@@ -33,9 +33,6 @@ namespace dftfe {
 	/// 1d quadrature rule order
 	template <unsigned int FEOrder> constexpr unsigned int C_num1DQuad(){return FEOrder+1;}
 
-	/// rho nodal polynomial order
-	template <unsigned int FEOrder, unsigned int FEOrderElectro> constexpr unsigned int C_rhoNodalPolyOrder(){return ((FEOrder+2)>FEOrderElectro?(FEOrder+2):FEOrderElectro);}  
-
 	/// 1d quad rule smeared nuclear charge
 	constexpr unsigned int C_num1DQuadSmearedCharge(){return 10;}
 
@@ -43,6 +40,9 @@ namespace dftfe {
   constexpr unsigned int C_numCopies1DQuadSmearedCharge(){return 2;}
   
 #ifdef DFTFE_WITH_HIGHERQUAD_PSP
+	/// rho nodal polynomial order
+	template <unsigned int FEOrder, unsigned int FEOrderElectro> constexpr unsigned int C_rhoNodalPolyOrder(){return ((FEOrder+2)>FEOrderElectro?(FEOrder+2):FEOrderElectro);}  
+
 	/// 1d quadrature rule order for non-local part of pseudopotential
 	template <unsigned int FEOrder> constexpr unsigned int C_num1DQuadNLPSP()
 	{return 14;}
@@ -57,6 +57,10 @@ namespace dftfe {
   /// number of copies 1d quad rule local PSP
   constexpr unsigned int C_numCopies1DQuadLPSP(){return 1;}
 #else  
+
+	/// rho nodal polynomial order
+	template <unsigned int FEOrder, unsigned int FEOrderElectro> constexpr unsigned int C_rhoNodalPolyOrder(){return ((FEOrder+2)>FEOrderElectro?(FEOrder+2):FEOrderElectro);}  
+
 	/// 1d quadrature rule order for non-local part of pseudopotential
 	template <unsigned int FEOrder> constexpr unsigned int C_num1DQuadNLPSP()
 	{return 10;}

@@ -293,3 +293,27 @@ double dftClass<FEOrder,FEOrderElectro>::fieldGradl2Norm(const dealii::MatrixFre
 	return Utilities::MPI::sum(value, mpi_communicator);
 
 }
+
+//
+//compute l2 projection of quad data to nodal data
+//
+	template <unsigned int FEOrder,unsigned int FEOrderElectro>
+void dftClass<FEOrder,FEOrderElectro>::l2ProjectionQuadToNodal(const dealii::MatrixFree<3,double> & matrixFreeDataObject,
+    const dealii::AffineConstraints<double> & constraintMatrix,
+		const unsigned int dofHandlerId,
+		const unsigned int quadratureId,
+		const std::map<dealii::CellId, std::vector<double> > & quadratureValueData,
+		distributedCPUVec<double> & nodalField)
+{
+    std::function<double(const typename dealii::DoFHandler<3>::active_cell_iterator & cell ,
+        const unsigned int q)> funcRho =
+      [&](const typename dealii::DoFHandler<3>::active_cell_iterator & cell ,
+          const unsigned int q)
+      {return quadratureValueData.find(cell->id())->second[q];};
+    dealii::VectorTools::project<3,distributedCPUVec<double>> (dealii::MappingQ1<3,3>(),
+        matrixFreeDataObject.get_dof_handler(dofHandlerId),
+        constraintMatrix,
+        matrixFreeDataObject.get_quadrature(quadratureId),
+        funcRho,
+        nodalField);
+}

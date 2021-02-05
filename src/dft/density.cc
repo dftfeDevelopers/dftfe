@@ -231,8 +231,11 @@ void dftClass<FEOrder,FEOrderElectro>::compute_rhoOut(
 #endif
     //normalizeRhoOutQuadValues();
 
-		if (isGroundState && dftParameters::mixingMethod!="ANDERSON_WITH_KERKER")
+	  if (isGroundState)
 		{
+      if (dftParameters::isBOMD && dftParameters::isXLBOMD)
+        normalizeRhoOutQuadValues();
+
 #ifdef DFTFE_WITH_GPU
 			computeRhoNodalFromPSI(kohnShamDFTEigenOperator,isConsiderSpectrumSplitting);
 #else
@@ -294,12 +297,20 @@ void dftClass<FEOrder,FEOrderElectro>::compute_rhoOut(
 
 	popOutRhoInRhoOutVals();
 
-	if (isGroundState && (dftParameters::isIonOpt || dftParameters::isCellOpt))
+	if (isGroundState && dftParameters::isIonOpt && dftParameters::spinPolarized!=1)
 	{
-		d_rhoOutNodalValuesSplit=d_rhoOutNodalValues;
-		d_rhoOutNodalValuesSplit-=d_atomicRho;
+		d_rhoOutNodalValuesSplit.reinit(d_rhoOutNodalValues);
+		//d_rhoOutNodalValuesSplit-=d_atomicRho;
 
-		d_rhoOutNodalValuesSplit.update_ghost_values();
+		//d_rhoOutNodalValuesSplit.update_ghost_values();
+    normalizeRhoOutQuadValues();
+    l2ProjectionQuadDensityMinusAtomicDensity(d_matrixFreeDataPRefined,
+        d_constraintsRhoNodal,
+        d_densityDofHandlerIndexElectro,
+        d_densityQuadratureIdElectro,
+        *rhoOutValues,
+        d_rhoOutNodalValuesSplit);
+    d_rhoOutNodalValuesSplit.update_ghost_values();
 	}
 }
 

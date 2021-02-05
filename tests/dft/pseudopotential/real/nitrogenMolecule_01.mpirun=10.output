@@ -24,6 +24,8 @@ number of elements: 960
 number of degrees of freedom for the Kohn-Sham eigenvalue problem : 31257
 -------------------------------------------------
 
+Reading initial guess for electron-density.....
+
 Setting initial guess for wavefunctions....
 
 Reading initial guess for electron-density.....
@@ -35,12 +37,12 @@ SCF iterations converged to the specified tolerance after: 12 iterations.
 
 Energy computations (Hartree) 
 -------------------
-             Total energy:         -19.83273099
+             Total energy:         -19.83273016
 
 Absolute values of ion forces (Hartree/Bohr)
 --------------------------------------------------------------------------------------------
-AtomId    0:  0.244383,0.000000,0.000000
-AtomId    1:  0.244384,0.000000,0.000000
+AtomId    0:  0.245019,0.000000,0.000000
+AtomId    1:  0.245020,0.000000,0.000000
 --------------------------------------------------------------------------------------------
 
 Finite element mesh information
@@ -52,19 +54,21 @@ number of elements: 960
 number of degrees of freedom for the Kohn-Sham eigenvalue problem : 31257
 -------------------------------------------------
 
+Reading initial guess for electron-density.....
+
 Pseudopotential initalization....
 
 Starting SCF iterations....
-SCF iterations converged to the specified tolerance after: 9 iterations.
+SCF iterations converged to the specified tolerance after: 11 iterations.
 
 Energy computations (Hartree) 
 -------------------
-             Total energy:         -19.88298154
+             Total energy:         -19.88287083
 
 Absolute values of ion forces (Hartree/Bohr)
 --------------------------------------------------------------------------------------------
-AtomId    0:  0.260344,0.000000,0.000000
-AtomId    1:  0.260345,0.000000,0.000000
+AtomId    0:  0.261587,0.000001,0.000001
+AtomId    1:  0.261587,0.000001,0.000001
 --------------------------------------------------------------------------------------------
 
 Finite element mesh information
@@ -76,17 +80,19 @@ number of elements: 960
 number of degrees of freedom for the Kohn-Sham eigenvalue problem : 31257
 -------------------------------------------------
 
+Reading initial guess for electron-density.....
+
 Pseudopotential initalization....
 
 Starting SCF iterations....
-SCF iterations converged to the specified tolerance after: 9 iterations.
+SCF iterations converged to the specified tolerance after: 10 iterations.
 
 Energy computations (Hartree) 
 -------------------
-             Total energy:         -19.87433997
+             Total energy:         -19.87438351
 
 Absolute values of ion forces (Hartree/Bohr)
 --------------------------------------------------------------------------------------------
-AtomId    0:  0.077638,0.000000,0.000000
-AtomId    1:  0.077636,0.000000,0.000000
+AtomId    0:  0.078090,0.000001,0.000001
+AtomId    1:  0.078091,0.000001,0.000001
 --------------------------------------------------------------------------------------------

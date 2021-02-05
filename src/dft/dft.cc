@@ -82,7 +82,8 @@ namespace dftfe {
 #include "initPseudo-OV.cc"
 #include "femUtilityFunctions.cc"
 #include "initRho.cc"
-#include "initCoreRho.cc"  
+#include "initCoreRho.cc" 
+#include "atomicRho.cc"    
 #include "dos.cc"
 #include "localizationLength.cc"
 #include "publicMethods.cc"
@@ -992,22 +993,18 @@ namespace dftfe {
 
 				noRemeshRhoDataInit();
 
-        if (dftParameters::isIonOpt || dftParameters::isCellOpt)
+        if (dftParameters::isIonOpt)
         {
           if (!dftParameters::reuseWfcGeoOpt)
             readPSI();
 
-          if (dftParameters::reuseDensityGeoOpt && useAtomicRhoSplitDensityUpdateForGeoOpt)
+          if (dftParameters::reuseDensityGeoOpt && useAtomicRhoSplitDensityUpdateForGeoOpt && dftParameters::spinPolarized!=1)
           {
-            double charge = totalCharge(d_matrixFreeDataPRefined,
-                d_rhoOutNodalValuesSplit);
+            d_rhoOutNodalValuesSplit.add(-totalCharge(d_matrixFreeDataPRefined,
+                d_rhoOutNodalValuesSplit)/d_domainVolume);
 
-            d_rhoOutNodalValuesSplit.add(-charge/d_domainVolume);
+            initAtomicRho();
 
-            initAtomicRho(d_atomicRho);
-            d_rhoOutNodalValuesSplit+=d_atomicRho;
-
-            d_rhoOutNodalValuesSplit.update_ghost_values();
             interpolateRhoNodalDataToQuadratureDataGeneral(d_matrixFreeDataPRefined,
                 d_densityDofHandlerIndexElectro,
                 d_densityQuadratureIdElectro,
@@ -1015,7 +1012,12 @@ namespace dftfe {
                 *(rhoInValues),
                 *(gradRhoInValues),
                 *(gradRhoInValues),
-                dftParameters::xcFamilyType=="GGA");	
+                dftParameters::xcFamilyType=="GGA");
+
+            addAtomicRhoQuadValuesGradients(*(rhoInValues),
+                                            *(gradRhoInValues),
+                                            dftParameters::xcFamilyType=="GGA");
+
             normalizeRhoInQuadValues();
           }
           else
@@ -1061,7 +1063,7 @@ namespace dftfe {
 
 			dftUtils::transformDomainBoundingVectors(d_domainBoundingVectors,deformationGradient);
 
-			initNoRemesh();
+			initNoRemesh(true,false,false);
 		}
 
 
@@ -2832,128 +2834,6 @@ namespace dftfe {
 							MPI_SUM,
 							interBandGroupComm);
 #endif
-
-			//
-			//move this to a common routine
-			//
-      //FIXME: remove if not required
-      /*
-			if((dftParameters::isIonForce || dftParameters::isCellStress) && solveLinearizedKS)
-			{
-				const unsigned int n_q_points = quadrature.size();
-				if (!(dftParameters::xcFamilyType=="GGA"))
-				{
-					gradRhoOutVals.push_back(std::map<dealii::CellId, std::vector<double> >());
-					if (dftParameters::spinPolarized==1)
-						gradRhoOutValsSpinPolarized.push_back(std::map<dealii::CellId, std::vector<double> >());
-
-					gradRhoOutValues=&gradRhoOutVals.back();
-					if (dftParameters::spinPolarized==1)
-						gradRhoOutValuesSpinPolarized=&gradRhoOutValsSpinPolarized.back();
-
-					typename DoFHandler<3>::active_cell_iterator cell = dofHandler.begin_active(), endc = dofHandler.end();
-					for (; cell!=endc; ++cell)
-						if (cell->is_locally_owned())
-						{
-							const dealii::CellId cellId=cell->id();
-							(*rhoOutValues)[cellId] = std::vector<double>(n_q_points,0.0);
-							(*gradRhoOutValues)[cellId] = std::vector<double>(3*n_q_points,0.0);
-
-							if (dftParameters::spinPolarized==1)
-							{
-								(*rhoOutValuesSpinPolarized)[cellId]
-									= std::vector<double>(2*n_q_points,0.0);
-								(*gradRhoOutValuesSpinPolarized)[cellId]
-									= std::vector<double>(6*n_q_points,0.0);
-							}
-						}
-
-#ifdef DFTFE_WITH_GPU
-					if (dftParameters::useGPU)
-						CUDA::computeRhoFromPSI(
-								d_eigenVectorsFlattenedCUDA.begin(),
-								d_eigenVectorsRotFracFlattenedCUDA.begin(),
-								d_numEigenValues,
-								d_numEigenValuesRR,
-								d_eigenVectorsFlattenedSTL[0].size()/d_numEigenValues,
-								eigenValues,
-								fermiEnergy,
-								fermiEnergyUp,
-								fermiEnergyDown,
-								kohnShamDFTEigenOperatorCUDA,
-                d_eigenDofHandlerIndex,
-								dofHandler,
-								matrix_free_data.n_physical_cells(),
-								matrix_free_data.get_dofs_per_cell(),
-								matrix_free_data.get_quadrature(d_densityQuadratureId).size(),
-								d_kPointWeights,
-								rhoOutValues,
-								gradRhoOutValues,
-								rhoOutValuesSpinPolarized,
-								gradRhoOutValuesSpinPolarized,
-								true,
-								interpoolcomm,
-								interBandGroupComm,
-								false);
-
-					else
-						densityCalc.computeRhoFromPSI(
-								d_eigenVectorsFlattenedSTL,
-								d_eigenVectorsRotFracDensityFlattenedSTL,
-								d_numEigenValues,
-								d_numEigenValuesRR,
-								eigenValues,
-								fermiEnergy,
-								fermiEnergyUp,
-								fermiEnergyDown,
-								dofHandler,
-								constraintsNone,
-								matrix_free_data,
-								d_eigenDofHandlerIndex,
-								d_densityQuadratureId,
-								localProc_dof_indicesReal,
-								localProc_dof_indicesImag,        
-								d_kPointWeights,
-								rhoOutValues,
-								gradRhoOutValues,
-								rhoOutValuesSpinPolarized,
-								gradRhoOutValuesSpinPolarized,
-								true,
-								interpoolcomm,
-								interBandGroupComm,
-								false,
-								false);
-#else
-					densityCalc.computeRhoFromPSI(
-							d_eigenVectorsFlattenedSTL,
-							d_eigenVectorsRotFracDensityFlattenedSTL,
-							d_numEigenValues,
-							d_numEigenValuesRR,
-							eigenValues,
-							fermiEnergy,
-							fermiEnergyUp,
-							fermiEnergyDown,
-							dofHandler,
-							constraintsNone,
-							matrix_free_data,
-							d_eigenDofHandlerIndex,
-							d_densityQuadratureId,
-							localProc_dof_indicesReal,
-							localProc_dof_indicesImag,
-							d_kPointWeights,
-							rhoOutValues,
-							gradRhoOutValues,
-							rhoOutValuesSpinPolarized,
-							gradRhoOutValuesSpinPolarized,
-							true,
-							interpoolcomm,
-							interBandGroupComm,
-							false,
-							false);
-#endif
-				}
-			}
-      */
 
 			if(dftParameters::isCellStress)
 			{

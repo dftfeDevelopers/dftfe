@@ -388,19 +388,22 @@ namespace dftfe {
          const std::map<dealii::CellId, std::vector<int> > & bQuadAtomIdsAllAtoms,
          const std::vector<VectorizedArray<double> > & smearedbQuads);         
 
-			void FShadowLocalGammaAtomsElementalContribution
+			void FShadowLocalGammaAtomsElementalContributionElectronic
 				(std::map<unsigned int, std::vector<double> > & forceContributionLocalGammaAtoms,
 				 FEEvaluation<C_DIM,1,C_num1DQuad<C_rhoNodalPolyOrder<FEOrder,FEOrderElectro>()>(),C_DIM>  & forceEval,
 				 const MatrixFree<3,double> & matrixFreeData,
 				 const unsigned int cell,
-				 const std::map<unsigned int,std::map<dealii::CellId, std::vector<double> > > & gradRhoAtomsQuads,
-				 const std::vector< VectorizedArray<double> > & derVxcWithRhoOutTimesRhoDiffQuads,
-				 const std::vector< VectorizedArray<double> > & phiRhoMinusApproxRhoQuads,
-				 const std::map<unsigned int,std::map<dealii::CellId, std::vector<double> > > & hessianRhoAtomsQuads,
-				 const std::vector<Tensor<2,C_DIM,VectorizedArray<double> > >  & der2ExcWithGradRhoOutQuads,
-				 const std::vector<Tensor<1,C_DIM,VectorizedArray<double> > >  & derVxcWithGradRhoOutQuads,
-				 const std::vector<Tensor<1,C_DIM,VectorizedArray<double> > >  & shadowKSGradRhoMinMinusGradRhoQuads,
-				 const std::vector<VectorizedArray<double> >  & shadowKSRhoMinMinusRhoQuads);
+         const std::vector< VectorizedArray<double> > & derVxcWithRhoTimesRhoDiffQuads,
+				 const std::map<unsigned int,std::map<dealii::CellId, std::vector<double> > > & gradRhoAtomsQuads);
+
+			void FShadowLocalGammaAtomsElementalContributionElectrostatic
+				(std::map<unsigned int, std::vector<double> > & forceContributionLocalGammaAtoms,
+				 FEEvaluation<C_DIM,1,C_num1DQuad<C_rhoNodalPolyOrder<FEOrder,FEOrderElectro>()>(),C_DIM>  & forceEval,
+				 const MatrixFree<3,double> & matrixFreeData,
+				 const unsigned int cell,
+         const std::vector< VectorizedArray<double> > & phiRhoMinusApproxRhoElectroQuads,
+				 const std::map<unsigned int,std::map<dealii::CellId, std::vector<double> > > & gradRhoAtomsQuads);        
+
 
 		  void FNonlinearCoreCorrectionGammaAtomsElementalContribution
 			  (std::map<unsigned int, std::vector<double> > & forceContributionFNonlinearCoreCorrectionGammaAtoms,

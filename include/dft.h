@@ -439,6 +439,22 @@ namespace dftfe {
 					std::map<dealii::CellId, std::vector<double> > & quadratureGradValueData,
 					const bool isEvaluateGradData);
 
+			/**
+			 *@brief add atomic densities at quadrature points
+			 *
+			 */
+			void addAtomicRhoQuadValuesGradients(std::map<dealii::CellId, std::vector<double> > & quadratureValueData,
+					std::map<dealii::CellId, std::vector<double> > & quadratureGradValueData,
+					const bool isConsiderGradData=false);
+
+			/**
+			 *@brief subtract atomic densities at quadrature points
+			 *
+			 */
+			void subtractAtomicRhoQuadValuesGradients(std::map<dealii::CellId, std::vector<double> > & quadratureValueData,
+					std::map<dealii::CellId, std::vector<double> > & quadratureGradValueData,
+					const bool isConsiderGradData=false);      
+
 
 			/**
 			 *@brief Finds the global dof ids of the nodes containing atoms.
@@ -463,7 +479,7 @@ namespace dftfe {
 					const dealii::AffineConstraints<double> & constraintMatrixBase,
 					dealii::AffineConstraints<double> & constraintMatrix);
 
-			void initAtomicRho(distributedCPUVec<double> & atomicRhoNodal);
+			void initAtomicRho();
 			void initRho();
       void initCoreRho();
 			void computeRhoInitialGuessFromPSI(std::vector<std::vector<distributedCPUVec<double>>> eigenVectors);
@@ -555,6 +571,26 @@ namespace dftfe {
 
 			double fieldGradl2Norm(const dealii::MatrixFree<3,double> & matrixFreeDataObject,
 					const distributedCPUVec<double> & field);
+
+			/**
+			 *@brief l2 projection
+			 */
+      void l2ProjectionQuadToNodal(const dealii::MatrixFree<3,double> & matrixFreeDataObject,
+          const dealii::AffineConstraints<double> & constraintMatrix,
+          const unsigned int dofHandlerId,
+          const unsigned int quadratureId,
+          const std::map<dealii::CellId, std::vector<double> > & quadratureValueData,
+          distributedCPUVec<double> & nodalField);
+
+			/**
+			 *@brief l2 projection
+			 */
+      void l2ProjectionQuadDensityMinusAtomicDensity(const dealii::MatrixFree<3,double> & matrixFreeDataObject,
+           const dealii::AffineConstraints<double> & constraintMatrix,
+		       const unsigned int dofHandlerId,
+		       const unsigned int quadratureId,
+         	 const std::map<dealii::CellId, std::vector<double> > & quadratureValueData,
+		       distributedCPUVec<double> & nodalField);    
 
 			/**
 			 *@brief Computes net magnetization from the difference of local spin densities
@@ -973,7 +1009,7 @@ namespace dftfe {
 			std::deque<std::map<dealii::CellId,std::vector<double> >> rhoInVals, rhoOutVals, rhoInValsSpinPolarized, rhoOutValsSpinPolarized;
       std::map<dealii::CellId, std::vector<double> > d_phiInValues,d_phiOutValues;
 
-			distributedCPUVec<double> d_rhoInNodalValuesRead, d_rhoInNodalValues, d_rhoOutNodalValues, d_rhoOutNodalValuesSplit, d_preCondResidualVector, d_atomicRho, d_rhoNodalFieldRefined, d_rhoOutNodalValuesDistributed;
+			distributedCPUVec<double> d_rhoInNodalValuesRead, d_rhoInNodalValues, d_rhoOutNodalValues, d_rhoOutNodalValuesSplit, d_preCondResidualVector, d_rhoNodalFieldRefined, d_rhoOutNodalValuesDistributed;
 			std::deque<distributedCPUVec<double>> d_rhoInNodalVals, d_rhoOutNodalVals;
 
       std::map<dealii::CellId, std::vector<double> > d_rhoOutValuesLpspQuad, d_rhoInValuesLpspQuad, d_gradRhoOutValuesLpspQuad, d_gradRhoInValuesLpspQuad;
