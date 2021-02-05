@@ -699,6 +699,13 @@ namespace dftfe {
                                                   dftParameters::xcFamilyType=="GGA");
 
 								dftPtr->normalizeRhoInQuadValues();
+
+                dftPtr->l2ProjectionQuadToNodal(dftPtr->d_matrixFreeDataPRefined,
+                    dftPtr->d_constraintsRhoNodal,
+                    dftPtr->d_densityDofHandlerIndexElectro,
+                    dftPtr->d_densityQuadratureIdElectro,
+                    *(dftPtr->rhoInValues),
+                    dftPtr->d_rhoInNodalValues);                
 							}
 
 						dftPtr->solve(true);
@@ -1237,6 +1244,13 @@ namespace dftfe {
                                               dftParameters::xcFamilyType=="GGA"); 
 
             dftPtr->normalizeRhoInQuadValues();
+
+            dftPtr->l2ProjectionQuadToNodal(dftPtr->d_matrixFreeDataPRefined,
+                dftPtr->d_constraintsRhoNodal,
+                dftPtr->d_densityDofHandlerIndexElectro,
+                dftPtr->d_densityQuadratureIdElectro,
+                *(dftPtr->rhoInValues),
+                dftPtr->d_rhoInNodalValues);               
           }
 
 					//

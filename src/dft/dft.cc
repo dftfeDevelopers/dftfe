@@ -1019,6 +1019,14 @@ namespace dftfe {
                                             dftParameters::xcFamilyType=="GGA");
 
             normalizeRhoInQuadValues();
+
+            l2ProjectionQuadToNodal(d_matrixFreeDataPRefined,
+                d_constraintsRhoNodal,
+                d_densityDofHandlerIndexElectro,
+                d_densityQuadratureIdElectro,
+                *rhoInValues,
+                d_rhoInNodalValues);
+
           }
           else
           {
