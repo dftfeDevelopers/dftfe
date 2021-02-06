@@ -79,6 +79,8 @@ void dftClass<FEOrder,FEOrderElectro>::initAtomicRho()
       maxRhoTail = outerMostPointDen[*it];
 	}
 
+  const double cellCenterCutOff=maxRhoTail+5.0;
+
 	//
 	//Initialize rho
 	//
@@ -134,7 +136,7 @@ void dftClass<FEOrder,FEOrderElectro>::initAtomicRho()
         Point<3> atom(atomLocations[iAtom][2],atomLocations[iAtom][3],atomLocations[iAtom][4]);
         bool isRhoDataInCell=false;
 
-        if (atom.distance(cell->center())>d_nlPSPCutOff)
+        if (atom.distance(cell->center())>cellCenterCutOff)
           continue;            
 
         //loop over quad points
@@ -237,7 +239,7 @@ void dftClass<FEOrder,FEOrderElectro>::initAtomicRho()
             d_imagePositionsTrunc[iImageCharge][1],
             d_imagePositionsTrunc[iImageCharge][2]);
 
-        if (imageAtom.distance(cell->center())>d_nlPSPCutOff)
+        if (imageAtom.distance(cell->center())>cellCenterCutOff)
           continue;  
 
         bool isRhoDataInCell = false;
