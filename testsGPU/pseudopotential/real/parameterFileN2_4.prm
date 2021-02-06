@@ -63,7 +63,7 @@ subsection SCF parameters
       set SUBSPACE ROT DOFS BLOCK SIZE        = 2000
       set WFC BLOCK SIZE=2
       set CHEBY WFC BLOCK SIZE=2
-      set CHEBYSHEV FILTER TOLERANCE=1e-4
+      set CHEBYSHEV FILTER TOLERANCE=1e-5
       set USE ELPA=true
       set SCALAPACKPROCS=2
       set RR GEP=true

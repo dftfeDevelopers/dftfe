@@ -5,6 +5,7 @@ set H REFINED ELECTROSTATICS = false
 subsection GPU
   set USE GPU=true
   set AUTO GPU BLOCK SIZES=false
+  set USE GPUDIRECT MPI ALL REDUCE = true
 end
 
 subsection Boundary conditions
@@ -16,7 +17,7 @@ subsection Boundary conditions
   set PERIODIC2                       = true
   set PERIODIC3                       = true
   set SELF POTENTIAL RADIUS           = 3.0
-  set POINT WISE DIRICHLET CONSTRAINT = true
+  set POINT WISE DIRICHLET CONSTRAINT  =true
 end
 
 
@@ -44,7 +45,7 @@ subsection Geometry
   set ATOMIC COORDINATES FILE      = coordinatesMg2x.inp
   set DOMAIN VECTORS FILE = domainVectorsMg2x.inp
   subsection Optimization
-    set ION FORCE                 = true
+    set ION FORCE                 = false
   end
 end
 
@@ -61,11 +62,11 @@ subsection SCF parameters
   subsection Eigen-solver parameters
        set CHEBYSHEV POLYNOMIAL DEGREE       = 20
        set NUMBER OF KOHN-SHAM WAVEFUNCTIONS = 180
-       set CHEBY WFC BLOCK SIZE=45
-       set WFC BLOCK SIZE=45
+       set CHEBY WFC BLOCK SIZE=90
+       set WFC BLOCK SIZE=90
        set CHEBYSHEV FILTER TOLERANCE=1e-5
        set RR GEP=true
        set OVERLAP COMPUTE COMMUN ORTHO RR=true
-       set OVERLAP COMPUTE COMMUN CHEBY=false
+       set USE MIXED PREC PGS O=true
   end
 end

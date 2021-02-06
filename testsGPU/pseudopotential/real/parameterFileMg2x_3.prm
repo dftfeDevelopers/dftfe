@@ -56,7 +56,7 @@ subsection SCF parameters
   set COMPUTE ENERGY EACH ITER = false
   set MAXIMUM ITERATIONS               = 100
   set TEMPERATURE                      = 500
-  set TOLERANCE                        = 5e-6
+  set TOLERANCE                        = 1e-6
   set STARTING WFC=ATOMIC
   subsection Eigen-solver parameters
        set CHEBYSHEV POLYNOMIAL DEGREE       = 20
@@ -64,7 +64,7 @@ subsection SCF parameters
        set SPECTRUM SPLIT CORE EIGENSTATES=90
        set CHEBY WFC BLOCK SIZE=45
        set WFC BLOCK SIZE=45
-       set CHEBYSHEV FILTER TOLERANCE=1e-3
+       set CHEBYSHEV FILTER TOLERANCE=1e-5
        set RR GEP=true
        set USE MIXED PREC PGS SR=true
        set OVERLAP COMPUTE COMMUN ORTHO RR=false
