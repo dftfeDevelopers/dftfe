@@ -95,6 +95,8 @@ void dftClass<FEOrder,FEOrderElectro>::initCoreRho()
   if(maxCoreRhoTail < d_coreRhoTail)
     d_coreRhoTail = maxCoreRhoTail;
 
+  const double cellCenterCutOff=d_coreRhoTail+5.0;
+
 	if(dftParameters::verbosity>=2)
 		pcout << " d_coreRhoTail adjusted to " << d_coreRhoTail << std::endl ;
 
@@ -222,7 +224,7 @@ void dftClass<FEOrder,FEOrderElectro>::initCoreRho()
           if (atomTypeNLCCFlagMap[atomLocations[iAtom][0]]==0)
             continue;
 
-					if (atom.distance(cell->center())>d_nlPSPCutOff)
+					if (atom.distance(cell->center())>cellCenterCutOff)
             continue;            
 
 					//loop over quad points
@@ -325,7 +327,7 @@ void dftClass<FEOrder,FEOrderElectro>::initCoreRho()
 							d_imagePositionsTrunc[iImageCharge][1],
 							d_imagePositionsTrunc[iImageCharge][2]);
 
-					if (imageAtom.distance(cell->center())>d_nlPSPCutOff)
+					if (imageAtom.distance(cell->center())>cellCenterCutOff)
             continue;  
 
 					bool isCoreRhoDataInCell = false;
