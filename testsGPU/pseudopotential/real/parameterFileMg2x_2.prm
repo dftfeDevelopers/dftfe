@@ -56,14 +56,14 @@ subsection SCF parameters
   set COMPUTE ENERGY EACH ITER = false
   set MAXIMUM ITERATIONS               = 100
   set TEMPERATURE                      = 500
-  set TOLERANCE                        = 1e-5
+  set TOLERANCE                        = 1e-6
   set STARTING WFC=ATOMIC
   subsection Eigen-solver parameters
        set CHEBYSHEV POLYNOMIAL DEGREE       = 20
        set NUMBER OF KOHN-SHAM WAVEFUNCTIONS = 180
        set CHEBY WFC BLOCK SIZE=45
        set WFC BLOCK SIZE=45
-       set CHEBYSHEV FILTER TOLERANCE=1e-3
+       set CHEBYSHEV FILTER TOLERANCE=1e-5
        set OVERLAP COMPUTE COMMUN CHEBY=true
   end
 end

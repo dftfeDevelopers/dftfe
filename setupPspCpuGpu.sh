@@ -12,9 +12,9 @@ fi
 # Path to project source
 SRC=`dirname $0` # location of source directory
 
-PROJ=/ccs/proj/eng110
+#PROJ=/ccs/proj/eng110
 
-. $PROJ/setup-env-cuda11.sh
+#. $PROJ/setup-env.sh
 #. $PROJ/venvs/summit/bin/activate # for building docs
 
 ########################################################################
@@ -22,14 +22,14 @@ PROJ=/ccs/proj/eng110
 # and optimization flag
 
 #Paths for external libraries
-dealiiDir="$PROJ/softwareCUDA11Gcc9.3/dealii/install"
-alglibDir="$PROJ/software/alglib/cpp/src"
-libxcDir="$PROJ/software/libxc/installGcc6.4.0"
-spglibDir="$PROJ/software/spglib/installGcc6.4.0"
+dealiiDir="/global/project/projectdirs/m1759/dsambit/softwaresDFTFE/dealii/installGcc8.3CUDA11"
+alglibDir="/global/project/projectdirs/m1759/dsambit/softwaresDFTFE/alglib/cpp/src"
+libxcDir="/global/project/projectdirs/m1759/dsambit/softwaresDFTFE/libxc/installGcc8.3.0"
+spglibDir="/global/project/projectdirs/m1759/dsambit/softwaresDFTFE/spglib/installGcc8.3.0"
 xmlIncludeDir="/usr/include/libxml2"
 xmlLibDir="/usr/lib64"
-ELPA_PATH="$PROJ/softwareCUDA11Gcc9.3/elpa/installNoVsxCUDA"
-NCCL_PATH="$PROJ/softwareCUDA11Gcc9.3/nccl/nccdev/build"
+ELPA_PATH="/global/project/projectdirs/m1759/dsambit/softwaresDFTFE/elpa/installGcc8.3Elpa2020.11"
+NCCL_PATH="/global/project/projectdirs/m1759/dsambit/softwaresDFTFE/nccl/build"
 
 #If you have installed dealii by linking with intel mkl library set underlying flag to "ON",
 #otherwise set it to "OFF"
@@ -43,9 +43,9 @@ withNCCL=ON
 
 #Compiler options and flags
 c_compiler=mpicc
-cxx_compiler=mpicxx
-c_flagsRelease="-O2 -fPIC -fopenmp"
-cxx_flagsRelease="-O2 -fPIC -fopenmp"
+cxx_compiler=mpic++
+c_flagsRelease="-O2 -fopenmp -fPIC"
+cxx_flagsRelease="-O2 -fopenmp -fPIC"
 
 #Option to link to ELPA
 withELPA=ON
@@ -78,10 +78,10 @@ function cmake_real() {
 	-DALGLIB_DIR=$alglibDir -DLIBXC_DIR=$libxcDir \
 	-DSPGLIB_DIR=$spglibDir -DXML_LIB_DIR=$xmlLibDir \
 	-DXML_INCLUDE_DIR=$xmlIncludeDir -DWITH_INTEL_MKL=$withIntelMkl \
-  -DWITH_ELPA=$withELPA -DWITH_NCCL=$withNCCL -DCMAKE_PREFIX_PATH="$ELPA_PATH;$NCCL_PATH" \
+	-DWITH_ELPA=$withELPA -DWITH_NCCL=$withNCCL -DCMAKE_PREFIX_PATH="$ELPA_PATH;$NCCL_PATH"\
 	-DWITH_COMPLEX=OFF -DWITH_GPU=$withGPU \
-	-DWITH_TESTING=$testing -DMINIMAL_COMPILE=$minimal_compile \
-  -DHIGHERQUAD_PSP=$withHigherQuadPSP $1
+	-DWITH_TESTING=$testing -DMINIMAL_COMPILE=$minimal_compile\
+	-DHIGHERQUAD_PSP=$withHigherQuadPSP $1
 }
 
 function cmake_cplx() {
@@ -94,7 +94,7 @@ function cmake_cplx() {
 	-DSPGLIB_DIR=$spglibDir -DXML_LIB_DIR=$xmlLibDir \
 	-DXML_INCLUDE_DIR=$xmlIncludeDir -DWITH_INTEL_MKL=$withIntelMkl \
 	-DWITH_COMPLEX=ON -DWITH_TESTING=$testing -DMINIMAL_COMPILE=$minimal_compile\
-  -DHIGHERQUAD_PSP=$withHigherQuadPSP $1
+	-DHIGHERQUAD_PSP=$withHigherQuadPSP $1
 }
 
 RCol='\e[0m'
@@ -113,8 +113,8 @@ echo -e "${Blu}Building Real executable in $build_type mode...${RCol}"
 cmake_real "$SRC" && make -j8
 cd ..
 
-echo -e "${Blu}Building Complex executable in $build_type mode...${RCol}"
-cmake_cplx "$SRC" && make -j8
-cd ..
+#echo -e "${Blu}Building Complex executable in $build_type mode...${RCol}"
+#cmake_cplx "$SRC" && make -j8
+#cd ..
 
 echo -e "${Blu}Build complete.${RCol}"
