@@ -172,6 +172,7 @@ void dftClass<FEOrder,FEOrderElectro>::initAtomicRho()
           }
           else
           {
+            value=0.0;
             radialDensityFirstDerivative = 0.0;
             radialDensitySecondDerivative = 0.0;
           }
@@ -274,6 +275,7 @@ void dftClass<FEOrder,FEOrderElectro>::initAtomicRho()
           }
           else
           {
+            value=0.0;
             radialDensityFirstDerivative = 0.0;
             radialDensitySecondDerivative = 0.0;
           }
