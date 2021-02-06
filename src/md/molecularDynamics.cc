@@ -705,7 +705,9 @@ namespace dftfe {
                     dftPtr->d_densityDofHandlerIndexElectro,
                     dftPtr->d_densityQuadratureIdElectro,
                     *(dftPtr->rhoInValues),
-                    dftPtr->d_rhoInNodalValues);                
+                    dftPtr->d_rhoInNodalValues);   
+
+                dftPtr->d_rhoInNodalValues.update_ghost_values();
 							}
 
 						dftPtr->solve(true);
@@ -1250,7 +1252,9 @@ namespace dftfe {
                 dftPtr->d_densityDofHandlerIndexElectro,
                 dftPtr->d_densityQuadratureIdElectro,
                 *(dftPtr->rhoInValues),
-                dftPtr->d_rhoInNodalValues);               
+                dftPtr->d_rhoInNodalValues); 
+
+            dftPtr->d_rhoInNodalValues.update_ghost_values();
           }
 
 					//

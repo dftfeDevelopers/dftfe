@@ -1027,6 +1027,8 @@ namespace dftfe {
                 *rhoInValues,
                 d_rhoInNodalValues);
 
+            d_rhoInNodalValues.update_ghost_values();
+
           }
           else
           {
