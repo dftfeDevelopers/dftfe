@@ -27,6 +27,7 @@ void dftClass<FEOrder,FEOrderElectro>::initAtomicRho()
 	d_rhoAtomsValues.clear();
 	d_gradRhoAtomsValues.clear();
   d_hessianRhoAtomsValues.clear();
+  d_rhoAtomsValues.clear();
 	d_gradRhoAtomsValuesSeparate.clear();
 	d_hessianRhoAtomsValuesSeparate.clear();
 
@@ -126,6 +127,7 @@ void dftClass<FEOrder,FEOrderElectro>::initAtomicRho()
       if(dftParameters::xcFamilyType=="GGA")
         hessianRhoAtomsQuadValues.resize(n_q_points*9,0.0);
 
+      std::vector<double> rhoAtom(n_q_points,0.0);
       std::vector<Tensor<1,3,double> > gradRhoAtom(n_q_points,zeroTensor1);
       std::vector<Tensor<2,3,double> > hessianRhoAtom(n_q_points,zeroTensor2);
 
@@ -177,6 +179,7 @@ void dftClass<FEOrder,FEOrderElectro>::initAtomicRho()
             radialDensitySecondDerivative = 0.0;
           }
 
+          rhoAtom[q]=value;
           rhoAtomsQuadValues[q]+=value;
           gradRhoAtom[q] = radialDensityFirstDerivative*diff/distanceToAtom;
           gradRhoAtomsQuadValues[3*q + 0] += gradRhoAtom[q][0];
@@ -204,6 +207,8 @@ void dftClass<FEOrder,FEOrderElectro>::initAtomicRho()
 
         if(isRhoDataInCell)
         {
+          d_rhoAtomsValuesSeparate[iAtom][cell->id()]=rhoAtom;
+
           std::vector<double> & gradRhoAtomCell = d_gradRhoAtomsValuesSeparate[iAtom][cell->id()];
           gradRhoAtomCell.resize(n_q_points*3,0.0);
 
@@ -280,6 +285,7 @@ void dftClass<FEOrder,FEOrderElectro>::initAtomicRho()
             radialDensitySecondDerivative = 0.0;
           }
 
+          rhoAtom[q]=value;
           rhoAtomsQuadValues[q]+=value;
           gradRhoAtom[q] = radialDensityFirstDerivative*diff/distanceToAtom;
           gradRhoAtomsQuadValues[3*q + 0] += gradRhoAtom[q][0];
@@ -306,6 +312,8 @@ void dftClass<FEOrder,FEOrderElectro>::initAtomicRho()
 
         if(isRhoDataInCell)
         {
+          d_rhoAtomsValuesSeparate[numberGlobalCharges+iImageCharge][cell->id()]=rhoAtom;
+
           std::vector<double> & gradRhoAtomCell = d_gradRhoAtomsValuesSeparate[numberGlobalCharges+iImageCharge][cell->id()];
           gradRhoAtomCell.resize(n_q_points*3);
 
@@ -364,6 +372,11 @@ void dftClass<FEOrder,FEOrderElectro>::normalizeAtomicRhoQuadValues()
 	for (auto it1=d_gradRhoAtomsValues.begin(); it1!=d_gradRhoAtomsValues.end(); ++it1)
 		for (unsigned int i=0; i<(it1->second).size(); ++i)
 			(it1->second)[i]*=scaling;
+
+	for (auto it1=d_rhoAtomsValuesSeparate.begin(); it1!=d_rhoAtomsValuesSeparate.end(); ++it1)
+		for (auto it2=it1->second.begin(); it2!=it1->second.end(); ++it2)
+			for (unsigned int i=0; i<(it2->second).size(); ++i)
+				(it2->second)[i]*=scaling;
 
 	for (auto it1=d_gradRhoAtomsValuesSeparate.begin(); it1!=d_gradRhoAtomsValuesSeparate.end(); ++it1)
 		for (auto it2=it1->second.begin(); it2!=it1->second.end(); ++it2)

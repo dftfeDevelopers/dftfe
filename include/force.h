@@ -394,15 +394,21 @@ namespace dftfe {
 				 const MatrixFree<3,double> & matrixFreeData,
 				 const unsigned int cell,
          const std::vector< VectorizedArray<double> > & derVxcWithRhoTimesRhoDiffQuads,
-				 const std::map<unsigned int,std::map<dealii::CellId, std::vector<double> > > & gradRhoAtomsQuads);
+				 const std::map<unsigned int,std::map<dealii::CellId, std::vector<double> > > & gradRhoAtomsQuadsSeparate,
+				 const std::vector<Tensor<2,C_DIM,VectorizedArray<double> > >  & der2ExcWithGradRhoOutQuads,
+				 const std::vector<Tensor<1,C_DIM,VectorizedArray<double> > >  & derVxcWithGradRhoOutQuads,
+				 const std::vector<VectorizedArray<double> >  & shadowKSRhoMinMinusGradRhoQuads,         
+				 const std::vector<Tensor<1,C_DIM,VectorizedArray<double> > >  & shadowKSGradRhoMinMinusGradRhoQuads,         
+				 const std::map<unsigned int,std::map<dealii::CellId, std::vector<double> > > & hessianRhoAtomsQuadsSeparate,         
+         const bool isXCGGA=false);
 
 			void FShadowLocalGammaAtomsElementalContributionElectrostatic
 				(std::map<unsigned int, std::vector<double> > & forceContributionLocalGammaAtoms,
 				 FEEvaluation<C_DIM,1,C_num1DQuad<C_rhoNodalPolyOrder<FEOrder,FEOrderElectro>()>(),C_DIM>  & forceEval,
 				 const MatrixFree<3,double> & matrixFreeData,
 				 const unsigned int cell,
-         const std::vector< VectorizedArray<double> > & phiRhoMinusApproxRhoElectroQuads,
-				 const std::map<unsigned int,std::map<dealii::CellId, std::vector<double> > > & gradRhoAtomsQuads);        
+	       const std::vector<Tensor<1,C_DIM,VectorizedArray<double> > > & gradPhiRhoMinusApproxRhoElectroQuads,
+         const std::map<unsigned int,std::map<dealii::CellId, std::vector<double> > > & rhoAtomsQuadsSeparate);   
 
 
 		  void FNonlinearCoreCorrectionGammaAtomsElementalContribution
