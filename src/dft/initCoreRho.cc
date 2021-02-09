@@ -241,8 +241,8 @@ void dftClass<FEOrder,FEOrderElectro>::initCoreRho()
 
               distanceToAtom=1.0e-4;
               diff[0]=(1.0e-4)/std::sqrt(3.0);
-              diff[0]=(1.0e-4)/std::sqrt(3.0);
-              diff[0]=(1.0e-4)/std::sqrt(3.0);              
+              diff[1]=(1.0e-4)/std::sqrt(3.0);
+              diff[2]=(1.0e-4)/std::sqrt(3.0);              
             }
 
 						double value,radialDensityFirstDerivative,radialDensitySecondDerivative;
@@ -343,8 +343,8 @@ void dftClass<FEOrder,FEOrderElectro>::initCoreRho()
             {
               distanceToAtom=1.0e-4;
               diff[0]=(1.0e-4)/std::sqrt(3.0);
-              diff[0]=(1.0e-4)/std::sqrt(3.0);
-              diff[0]=(1.0e-4)/std::sqrt(3.0);              
+              diff[1]=(1.0e-4)/std::sqrt(3.0);
+              diff[2]=(1.0e-4)/std::sqrt(3.0);              
             }
 
 						double value,radialDensityFirstDerivative,radialDensitySecondDerivative;
