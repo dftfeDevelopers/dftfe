@@ -61,10 +61,10 @@ namespace dftfe{
 		(const MPI_Comm &mpi_comm,
 		 double lowerBoundWantedSpectrum,
 		 double lowerBoundUnWantedSpectrum,
-     double upperBoundUnWantedSpectrum):
+		 double upperBoundUnWantedSpectrum):
 			d_lowerBoundWantedSpectrum(lowerBoundWantedSpectrum),
 			d_lowerBoundUnWantedSpectrum(lowerBoundUnWantedSpectrum),
-      d_upperBoundUnWantedSpectrum(upperBoundUnWantedSpectrum),
+			d_upperBoundUnWantedSpectrum(upperBoundUnWantedSpectrum),
 			pcout(std::cout, (dealii::Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0)),
 			computing_timer(mpi_comm,
 					pcout,

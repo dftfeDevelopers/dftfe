@@ -44,7 +44,7 @@ namespace dftfe {
 			d_kPointIndex(0),
 			d_numberNodesPerElement(_dftPtr->matrix_free_data.get_dofs_per_cell(dftPtr->d_densityDofHandlerIndex)),
 			d_numberMacroCells(_dftPtr->matrix_free_data.n_macro_cells()),
-      d_isStiffnessMatrixExternalPotCorrComputed(false),
+			d_isStiffnessMatrixExternalPotCorrComputed(false),
 			mpi_communicator (mpi_comm_replica),
 			n_mpi_processes (Utilities::MPI::n_mpi_processes(mpi_comm_replica)),
 			this_mpi_process (Utilities::MPI::this_mpi_process(mpi_comm_replica)),
@@ -316,6 +316,39 @@ namespace dftfe {
 
   }
 
+
+
+  template<unsigned int FEOrder,unsigned int FEOrderElectro>
+  void kohnShamDFTOperatorClass<FEOrder>::scale(double scalar,
+					        const unsigned int numberWaveFunctions,
+					        std::vector<std::vector<dataTypes::number> > & cellWaveFunctionMatrix)
+					        
+  {
+    
+    unsigned int iElem = 0;
+    for(unsigned int iMacroCell = 0; iMacroCell < d_numberMacroCells; ++iMacroCell)
+      {
+	for(unsigned int iCell = 0; iCell < d_macroCellSubCellMap[iMacroCell]; ++iCell)
+	  {
+	    for(unsigned int iNode = 0; iNode < d_numberNodesPerElement; ++iNode)
+	      {
+		if(d_nodesPerCellClassificationMap[iNode] == 0)
+		  {
+		    for(unsigned int iWave = 0; iWave < numberWaveFunctions; ++iWave)
+		      {
+			cellWaveFunctionMatrix[iElem][numberWaveFunctions*iNode + iWave] *= scalar;
+		      }
+
+		  }
+	      }
+	    ++iElem;
+	  }
+      }
+	
+
+  }
+
+  
 	//
 	//compute mass Vector
 	//
@@ -540,10 +573,10 @@ namespace dftfe {
 					//
 					//sum all to vEffective
 					//
-          vEff(cell,q)=tempPhi[q]+derExchEnergyWithDensity+derCorrEnergyWithDensity;
-          derExcWithSigmaTimesGradRho(cell,q)[0] = derExcWithSigmaTimesGradRhoX;
-          derExcWithSigmaTimesGradRho(cell,q)[1] = derExcWithSigmaTimesGradRhoY;
-          derExcWithSigmaTimesGradRho(cell,q)[2] = derExcWithSigmaTimesGradRhoZ;
+					vEff(cell,q)=tempPhi[q]+derExchEnergyWithDensity+derCorrEnergyWithDensity;
+					derExcWithSigmaTimesGradRho(cell,q)[0] = derExcWithSigmaTimesGradRhoX;
+					derExcWithSigmaTimesGradRho(cell,q)[1] = derExcWithSigmaTimesGradRhoY;
+					derExcWithSigmaTimesGradRho(cell,q)[2] = derExcWithSigmaTimesGradRhoZ;
 				}
 			}
 
@@ -864,6 +897,22 @@ namespace dftfe {
 			const unsigned int inc = 1;
 
 
+
+			if(!dftParameters::cellLevelMassMatrixScaling)
+			  {
+			    for(unsigned int iDof = 0; iDof < numberDofs; ++iDof)
+			      {
+				const double scalingCoeff = d_invSqrtMassVector.local_element(iDof);
+				if(globalArrayClassificationMap[iDof] == 1)
+				  {
+				    for(unsigned int iWave = 0; iWave < numberWaveFunctions; ++iWave)
+				      {
+					src.local_element(iDof*numberWaveFunctions+iWave) *= scalingCoeff;
+
+				      }
+				  }
+			      }
+			  }
 			
 
 			//

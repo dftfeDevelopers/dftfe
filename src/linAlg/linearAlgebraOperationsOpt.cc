@@ -159,7 +159,6 @@ namespace dftfe{
 
 
 
-
 		void callevr(const unsigned int dimensionMatrix,
 				double *matrixInput,
 				double *eigenVectorMatrixOutput,
