@@ -23,13 +23,12 @@
 	template<unsigned int FEOrder,unsigned int FEOrderElectro>
 void dftClass<FEOrder,FEOrderElectro>::initAtomicRho()
 {
+  computing_timer.enter_section("initialize atomic density for density splitting approach in md and relaxations");    
 	//clear existing data
 	d_rhoAtomsValues.clear();
 	d_gradRhoAtomsValues.clear();
-  d_hessianRhoAtomsValues.clear();
-  d_rhoAtomsValues.clear();
-	d_gradRhoAtomsValuesSeparate.clear();
-	d_hessianRhoAtomsValuesSeparate.clear();
+	d_derRRhoAtomsValuesSeparate.clear();
+	d_der2RRhoAtomsValuesSeparate.clear();
 
 	//Reading single atom rho initial guess
 	pcout <<std::endl<< "Reading initial guess for electron-density....."<<std::endl;
@@ -80,273 +79,325 @@ void dftClass<FEOrder,FEOrderElectro>::initAtomicRho()
       maxRhoTail = outerMostPointDen[*it];
 	}
 
-  const double cellCenterCutOff=maxRhoTail+5.0;
-
-	//
 	//Initialize rho
-	//
-	const Quadrature<3> &  quadrature_formula=matrix_free_data.get_quadrature(d_densityQuadratureId);
+  const Quadrature<3> &  quadrature_formula=matrix_free_data.get_quadrature(d_densityQuadratureId);
 	FEValues<3> fe_values (FE, quadrature_formula, update_quadrature_points);
-	const unsigned int n_q_points = quadrature_formula.size();
-
-	//
-	//get number of global charges
-	//
-	const int numberGlobalCharges = atomLocations.size();
+	const unsigned int n_q_points    = quadrature_formula.size();
 
 	//
 	//get number of image charges used only for periodic
 	//
 	const int numberImageCharges = d_imageIdsTrunc.size();
 
-  Tensor<1,3,double> zeroTensor1;
-  for (unsigned int i=0; i<3;i++)
-    zeroTensor1[i]=0.0;
+	//IndexSet locallyOwnedSet;
+	//DoFTools::extract_locally_owned_dofs(d_dofHandlerPRefined,locallyOwnedSet);
+	//std::vector<IndexSet::size_type> locallyOwnedDOFs;
+	//locallyOwnedSet.fill_index_vector(locallyOwnedDOFs);
+	//unsigned int numberDofs = locallyOwnedDOFs.size();
+	std::map<types::global_dof_index, Point<3> > supportPointsRhoNodal;
+	DoFTools::map_dofs_to_support_points(MappingQ1<3,3>(), d_dofHandlerRhoNodal, supportPointsRhoNodal);
 
-  Tensor<2,3,double> zeroTensor2;
+	//d_matrixFreeDataPRefined.initialize_dof_vector(d_rhoInNodalValues);
+	std::vector<distributedCPUVec<double>> singleAtomsRho(atomLocations.size()+numberImageCharges);
+  std::vector<distributedCPUVec<double>> singleAtomsDerRRho(3*(atomLocations.size()+numberImageCharges));
+  std::vector<distributedCPUVec<double>> singleAtomsDer2RRho(9*(atomLocations.size()+numberImageCharges));
 
-  for (unsigned int i=0; i<3;i++)
-    for (unsigned int j=0; j<3;j++)    
-      zeroTensor2[i][j]=0.0;  
+  d_atomicRho=0.0;
 
-	//loop over elements
-	typename DoFHandler<3>::active_cell_iterator cell = dofHandler.begin_active(), endc = dofHandler.end();
-  for(; cell!=endc; ++cell)
+  for(unsigned int iAtom = 0; iAtom < atomLocations.size()+numberImageCharges; ++iAtom)
   {
-    if(cell->is_locally_owned())
+    if (iAtom==0)
+      d_matrixFreeDataPRefined.initialize_dof_vector(singleAtomsRho[iAtom],d_nonPeriodicDensityDofHandlerIndexElectro);
+    else
+      singleAtomsRho[iAtom].reinit(singleAtomsRho[0]);
+
+    singleAtomsRho[iAtom]=0.0;
+  }
+
+  if (dftParameters::isBOMD && dftParameters::isXLBOMD)
+  {
+    for(unsigned int i = 0; i < singleAtomsDerRRho.size(); ++i)
     {
-      fe_values.reinit(cell);
+      singleAtomsDerRRho[i].reinit(singleAtomsRho[0]);
+      singleAtomsDerRRho[i]=0.0;
+    }
 
-			std::vector<double> & rhoAtomsQuadValues = d_rhoAtomsValues[cell->id()];
-			rhoAtomsQuadValues.resize(n_q_points,0.0);
-
-      std::vector<double> & gradRhoAtomsQuadValues = d_gradRhoAtomsValues[cell->id()];
-      gradRhoAtomsQuadValues.resize(n_q_points*3,0.0);
-
-      std::vector<double> & hessianRhoAtomsQuadValues = d_hessianRhoAtomsValues[cell->id()];
-      if(dftParameters::xcFamilyType=="GGA")
-        hessianRhoAtomsQuadValues.resize(n_q_points*9,0.0);
-
-      std::vector<double> rhoAtom(n_q_points,0.0);
-      std::vector<Tensor<1,3,double> > gradRhoAtom(n_q_points,zeroTensor1);
-      std::vector<Tensor<2,3,double> > hessianRhoAtom(n_q_points,zeroTensor2);
-
-
-      //loop over atoms
-      for(unsigned int iAtom = 0; iAtom < atomLocations.size(); ++iAtom)
+    if (dftParameters::xcFamilyType=="GGA")
+    {
+      for(unsigned int i = 0; i < singleAtomsDer2RRho.size(); ++i)
       {
-        Point<3> atom(atomLocations[iAtom][2],atomLocations[iAtom][3],atomLocations[iAtom][4]);
-        bool isRhoDataInCell=false;
+        singleAtomsDer2RRho[i].reinit(singleAtomsRho[0]);
+        singleAtomsDer2RRho[i]=0.0;
+      }
+    }
+  }
 
-        if (atom.distance(cell->center())>cellCenterCutOff)
-          continue;            
+	const std::shared_ptr< const dealii::Utilities::MPI::Partitioner > & partitioner
+		=singleAtomsRho[0].get_partitioner();
+	const unsigned int localSize =  partitioner->local_size();
+	const unsigned int n_ghosts   = partitioner->n_ghost_indices();
+	const unsigned int relevantDofs = localSize + n_ghosts;
 
-        //loop over quad points
-        for(unsigned int q = 0; q < n_q_points; ++q)
+	std::vector<bool> isAtomLocal(atomLocations.size()+numberImageCharges,false);
+	for(unsigned int dof = 0; dof < relevantDofs; ++dof)
+	{ 
+		//const dealii::types::global_dof_index dofID = locallyOwnedDOFs[dof];
+		const dealii::types::global_dof_index dofID = partitioner->local_to_global(dof);
+	  Point<3> nodalCoor = supportPointsRhoNodal[dofID];
+		if(!d_constraintsRhoNodalOnlyHanging.is_constrained(dofID))
+		{
+			//loop over atoms and superimpose electron-density at a given dof from all atoms
+			double rhoNodalValue = 0.0;
+			for(unsigned int iAtom = 0; iAtom < atomLocations.size(); ++iAtom)
+			{
+				Point<3> atom(atomLocations[iAtom][2],atomLocations[iAtom][3],atomLocations[iAtom][4]);
+				double distanceToAtom = nodalCoor.distance(atom);
+
+        Tensor<1,3,double> diff=nodalCoor-atom; 
+
+        if (dftParameters::floatingNuclearCharges && distanceToAtom<1.0e-5)
         {
-          Point<3> quadPoint = fe_values.quadrature_point(q);
-          Tensor<1,3,double> diff=quadPoint-atom; 
-          double distanceToAtom = quadPoint.distance(atom);
+          if(dftParameters::verbosity>=4)
+            std::cout<<"Atom close to nodal point, iatom: "<<iAtom<<std::endl;
 
-          if (dftParameters::floatingNuclearCharges && distanceToAtom<1.0e-4)
+          distanceToAtom=1.0e-5;
+          diff[0]=(1.0e-5)/std::sqrt(3.0);
+          diff[1]=(1.0e-5)/std::sqrt(3.0);
+          diff[2]=(1.0e-5)/std::sqrt(3.0);              
+        }
+
+				double value,radialDensityFirstDerivative,radialDensitySecondDerivative;
+				if(distanceToAtom <= outerMostPointDen[atomLocations[iAtom][0]])
+				{
+					alglib::spline1ddiff(denSpline[atomLocations[iAtom][0]],
+                               distanceToAtom,
+                               value,
+                               radialDensityFirstDerivative,
+                               radialDensitySecondDerivative);
+					rhoNodalValue += value;
+					isAtomLocal[iAtom]=true;
+
+          if (dftParameters::isBOMD && dftParameters::isXLBOMD)
           {
-            if(dftParameters::verbosity>=4)
-              std::cout<<"Atom close to quad point, iatom: "<<iAtom<<std::endl;
+					  singleAtomsRho[iAtom].local_element(dof)=std::abs(value);
+            singleAtomsDerRRho[iAtom*3+0].local_element(dof)=-radialDensityFirstDerivative*(diff[0]/distanceToAtom);
+            singleAtomsDerRRho[iAtom*3+1].local_element(dof)=-radialDensityFirstDerivative*(diff[1]/distanceToAtom);
+            singleAtomsDerRRho[iAtom*3+2].local_element(dof)=-radialDensityFirstDerivative*(diff[2]/distanceToAtom);   
 
-            distanceToAtom=1.0e-4;
-            diff[0]=(1.0e-4)/std::sqrt(3.0);
-            diff[0]=(1.0e-4)/std::sqrt(3.0);
-            diff[0]=(1.0e-4)/std::sqrt(3.0);              
-          }
-
-          double value,radialDensityFirstDerivative,radialDensitySecondDerivative;
-          if(distanceToAtom <= maxRhoTail)
-          {
-
-            alglib::spline1ddiff(denSpline[atomLocations[iAtom][0]],
-                distanceToAtom,
-                value,
-                radialDensityFirstDerivative,
-                radialDensitySecondDerivative);
-
-            isRhoDataInCell = true;
-
-          }
-          else
-          {
-            value=0.0;
-            radialDensityFirstDerivative = 0.0;
-            radialDensitySecondDerivative = 0.0;
-          }
-
-          rhoAtom[q]=value;
-          rhoAtomsQuadValues[q]+=value;
-          gradRhoAtom[q] = radialDensityFirstDerivative*diff/distanceToAtom;
-          gradRhoAtomsQuadValues[3*q + 0] += gradRhoAtom[q][0];
-          gradRhoAtomsQuadValues[3*q + 1] += gradRhoAtom[q][1];
-          gradRhoAtomsQuadValues[3*q + 2] += gradRhoAtom[q][2];
-
-          if(dftParameters::xcFamilyType=="GGA")
-          {
-            for(unsigned int iDim = 0; iDim < 3; ++iDim)
+            if (dftParameters::xcFamilyType=="GGA")
             {
-              for(unsigned int jDim = 0; jDim < 3; ++jDim)
-              {
-                double temp = (radialDensitySecondDerivative -radialDensityFirstDerivative/distanceToAtom)*diff[iDim]*diff[jDim]/(distanceToAtom*distanceToAtom);
-                if(iDim == jDim)
-                  temp += radialDensityFirstDerivative/distanceToAtom;
+							for(unsigned int iDim = 0; iDim < 3; ++iDim)
+								for(unsigned int jDim = 0; jDim < 3; ++jDim)
+								{
+									double temp = (radialDensitySecondDerivative -radialDensityFirstDerivative/distanceToAtom)*(diff[iDim]/distanceToAtom)*(diff[jDim]/distanceToAtom);
+									if(iDim == jDim)
+										temp += radialDensityFirstDerivative/distanceToAtom;
 
-                hessianRhoAtom[q][iDim][jDim] = temp;
-                hessianRhoAtomsQuadValues[9*q + 3*iDim + jDim] += temp;
-              }
+									singleAtomsDer2RRho[iAtom*9+iDim*3+jDim].local_element(dof) = -temp;
+								}
+            }
+          }
+				}
+			}
+
+			//loop over image charges and do as above
+			for(int iImageCharge = 0; iImageCharge < numberImageCharges; ++iImageCharge)
+			{
+				Point<3> imageAtom(d_imagePositionsTrunc[iImageCharge][0],
+						d_imagePositionsTrunc[iImageCharge][1],
+						d_imagePositionsTrunc[iImageCharge][2]);
+				double distanceToAtom = nodalCoor.distance(imageAtom);
+
+        Tensor<1,3,double> diff=nodalCoor-imageAtom; 
+
+        if (dftParameters::floatingNuclearCharges && distanceToAtom<1.0e-5)
+        {
+          if(dftParameters::verbosity>=4)
+            std::cout<<"Atom close to nodal point, iatom: "<<iImageCharge<<std::endl;
+
+          distanceToAtom=1.0e-5;
+          diff[0]=(1.0e-5)/std::sqrt(3.0);
+          diff[1]=(1.0e-5)/std::sqrt(3.0);
+          diff[2]=(1.0e-5)/std::sqrt(3.0);              
+        }
+
+				int masterAtomId = d_imageIdsTrunc[iImageCharge];
+        double value,radialDensityFirstDerivative,radialDensitySecondDerivative;
+				if(distanceToAtom <= outerMostPointDen[atomLocations[masterAtomId][0]])
+				{
+					alglib::spline1ddiff(denSpline[atomLocations[masterAtomId][0]],
+                               distanceToAtom,
+                               value,
+                               radialDensityFirstDerivative,
+                               radialDensitySecondDerivative);
+
+					rhoNodalValue += value;
+					isAtomLocal[iImageCharge+atomLocations.size()]=true;
+
+          if (dftParameters::isBOMD && dftParameters::isXLBOMD)
+          {
+					  singleAtomsRho[iImageCharge+atomLocations.size()].local_element(dof)=std::abs(value);
+            singleAtomsDerRRho[(iImageCharge+atomLocations.size())*3+0].local_element(dof)=-radialDensityFirstDerivative*(diff[0]/distanceToAtom);
+            singleAtomsDerRRho[(iImageCharge+atomLocations.size())*3+1].local_element(dof)=-radialDensityFirstDerivative*(diff[1]/distanceToAtom);
+            singleAtomsDerRRho[(iImageCharge+atomLocations.size())*3+2].local_element(dof)=-radialDensityFirstDerivative*(diff[2]/distanceToAtom);              
+            if (dftParameters::xcFamilyType=="GGA")
+            {
+							for(unsigned int iDim = 0; iDim < 3; ++iDim)
+								for(unsigned int jDim = 0; jDim < 3; ++jDim)
+								{
+									double temp = (radialDensitySecondDerivative -radialDensityFirstDerivative/distanceToAtom)*(diff[iDim]/distanceToAtom)*(diff[jDim]/distanceToAtom);
+									if(iDim == jDim)
+										temp += radialDensityFirstDerivative/distanceToAtom;
+
+									singleAtomsDer2RRho[(iImageCharge+atomLocations.size())*9+iDim*3+jDim].local_element(dof) = -temp;
+								}
+
+            }
+          }
+          
+				}
+			}
+
+			if (dof<localSize && !d_constraintsRhoNodal.is_constrained(dofID))
+      {
+				d_atomicRho.local_element(dof) = std::abs(rhoNodalValue);
+      }
+		}
+	}
+
+	d_atomicRho.update_ghost_values();
+
+	interpolateRhoNodalDataToQuadratureDataGeneral(d_matrixFreeDataPRefined,
+      d_densityDofHandlerIndexElectro,
+      d_densityQuadratureIdElectro,
+			d_atomicRho,
+			d_rhoAtomsValues,
+			d_gradRhoAtomsValues,
+			d_gradRhoAtomsValues,
+			dftParameters::xcFamilyType=="GGA",
+      false);
+
+	//normalize rho
+	const double charge = totalCharge(d_matrixFreeDataPRefined,
+			d_atomicRho);
+
+
+	const double scalingFactor = ((double)numElectrons)/charge;
+
+	//scale nodal vector with scalingFactor
+	d_atomicRho *= scalingFactor;
+
+	//for(unsigned int iAtom = 0; iAtom < atomLocations.size()+numberImageCharges; ++iAtom)
+	//   singleAtomsRho[iAtom]*=scalingFactor; 
+
+	if (dftParameters::verbosity>=3)
+	{
+		pcout<<"Total Charge before Normalizing nodal Rho:  "<<charge<<std::endl;
+		pcout<<"Total Charge after Normalizing nodal Rho: "<< totalCharge(d_matrixFreeDataPRefined,d_atomicRho)<<std::endl;
+	}
+
+  if (dftParameters::isBOMD && dftParameters::isXLBOMD)
+  {
+    /*
+	  for(unsigned int i = 0; i < singleAtomsRho.size(); ++i)
+	   singleAtomsRho[i].update_ghost_values();
+
+	  for(unsigned int i = 0; i < singleAtomsDerRRho.size(); ++i)
+	   singleAtomsDerRRho[i].update_ghost_values(); 
+
+    if (dftParameters::xcFamilyType=="GGA")
+    {
+      for(unsigned int i = 0; i < singleAtomsDer2RRho.size(); ++i)
+       singleAtomsDer2RRho[i].update_ghost_values();   
+    }
+    */
+
+    FEEvaluation<C_DIM,C_rhoNodalPolyOrder<FEOrder,FEOrderElectro>(),C_num1DQuad<C_rhoNodalPolyOrder<FEOrder,FEOrderElectro>()>(),1,double> feEvalObj(d_matrixFreeDataPRefined,d_nonPeriodicDensityDofHandlerIndexElectro,d_densityQuadratureIdElectro);
+    const unsigned int numQuadPoints = feEvalObj.n_q_points;
+
+    DoFHandler<C_DIM>::active_cell_iterator subCellPtr;
+    for(unsigned int cell = 0; cell < d_matrixFreeDataPRefined.n_macro_cells(); ++cell)
+    {
+      feEvalObj.reinit(cell);
+      for (unsigned int iatom=0; iatom<(atomLocations.size()+numberImageCharges); iatom++)
+      {
+        //if (!isAtomLocal[iatom])
+        //  continue;
+
+        feEvalObj.read_dof_values(singleAtomsRho[iatom]);
+        feEvalObj.evaluate(true,false,false);
+
+        bool isRhoNonZero=true;
+
+        for(unsigned int q_point = 0; q_point < numQuadPoints; ++q_point)
+        {
+          VectorizedArray<double> val=feEvalObj.get_value(q_point);
+          for(unsigned int iSubCell = 0; iSubCell < d_matrixFreeDataPRefined.n_components_filled(cell); ++iSubCell)
+          {
+            if (val[iSubCell]>truncationTol)
+              isRhoNonZero=false; 
+          }
+        }
+
+
+        if (!isRhoNonZero)
+        {
+          for(unsigned int iSubCell = 0; iSubCell < d_matrixFreeDataPRefined.n_components_filled(cell); ++iSubCell)
+          {
+            subCellPtr= d_matrixFreeDataPRefined.get_cell_iterator(cell,iSubCell,d_nonPeriodicDensityDofHandlerIndexElectro);
+            dealii::CellId subCellId=subCellPtr->id();
+            d_derRRhoAtomsValuesSeparate[iatom][subCellId]=std::vector<double>(3*numQuadPoints);
+
+            if (dftParameters::xcFamilyType=="GGA")
+            {
+              d_der2RRhoAtomsValuesSeparate[iatom][subCellId]=std::vector<double>(9*numQuadPoints);            
             }
           }
 
-
-        }//end loop over quad points
-
-        if(isRhoDataInCell)
-        {
-          d_rhoAtomsValuesSeparate[iAtom][cell->id()]=rhoAtom;
-
-          std::vector<double> & gradRhoAtomCell = d_gradRhoAtomsValuesSeparate[iAtom][cell->id()];
-          gradRhoAtomCell.resize(n_q_points*3,0.0);
-
-          std::vector<double> & hessianRhoAtomCell = d_hessianRhoAtomsValuesSeparate[iAtom][cell->id()];
-          if(dftParameters::xcFamilyType=="GGA")
-            hessianRhoAtomCell.resize(n_q_points*9,0.0);
-
-          for(unsigned int q = 0; q < n_q_points; ++q)
+          for (unsigned int idim=0; idim<3;++idim)
           {
-            gradRhoAtomCell[3*q+0] = gradRhoAtom[q][0];
-            gradRhoAtomCell[3*q+1] = gradRhoAtom[q][1];
-            gradRhoAtomCell[3*q+2] = gradRhoAtom[q][2];
+            feEvalObj.read_dof_values(singleAtomsDerRRho[3*iatom+idim]);
+            feEvalObj.evaluate(true,false,false); 
 
-            if(dftParameters::xcFamilyType=="GGA")
+            for(unsigned int iSubCell = 0; iSubCell < d_matrixFreeDataPRefined.n_components_filled(cell); ++iSubCell)
             {
-              for(unsigned int iDim = 0; iDim < 3; ++iDim)
+              subCellPtr= d_matrixFreeDataPRefined.get_cell_iterator(cell,iSubCell,d_nonPeriodicDensityDofHandlerIndexElectro);
+              dealii::CellId subCellId=subCellPtr->id();
+
+              std::vector<double> & tempVec1 = d_derRRhoAtomsValuesSeparate[iatom].find(subCellId)->second;
+              for(unsigned int q_point = 0; q_point < numQuadPoints; ++q_point)
+                tempVec1[3*q_point+idim] = feEvalObj.get_value(q_point)[iSubCell];
+            }
+          }
+
+          if (dftParameters::xcFamilyType=="GGA")
+          {
+            for (unsigned int idim=0; idim<3;++idim)
+              for (unsigned int jdim=0; jdim<3;++jdim)
               {
-                for(unsigned int jDim = 0; jDim < 3; ++jDim)
+                feEvalObj.read_dof_values(singleAtomsDer2RRho[9*iatom+3*idim+jdim]);
+                feEvalObj.evaluate(true,false,false); 
+
+                for(unsigned int iSubCell = 0; iSubCell < d_matrixFreeDataPRefined.n_components_filled(cell); ++iSubCell)
                 {
-                  hessianRhoAtomCell[9*q + 3*iDim + jDim] = hessianRhoAtom[q][iDim][jDim];
+                  subCellPtr= d_matrixFreeDataPRefined.get_cell_iterator(cell,iSubCell,d_nonPeriodicDensityDofHandlerIndexElectro);
+                  dealii::CellId subCellId=subCellPtr->id();
+
+                  std::vector<double> & tempVec1 = d_der2RRhoAtomsValuesSeparate[iatom].find(subCellId)->second;
+                  for(unsigned int q_point = 0; q_point < numQuadPoints; ++q_point)
+                    tempVec1[9*q_point+3*idim+jdim] = feEvalObj.get_value(q_point)[iSubCell];
                 }
               }
-            }
-          }//q_point loop
-        }//if loop
-      }//loop over atoms
+          }//GGA
+        }//non-zero rho
+      }//iatom loop
 
-      //loop over image charges
-      for(unsigned int iImageCharge = 0; iImageCharge < numberImageCharges; ++iImageCharge)
-      {
-        const int masterAtomId = d_imageIdsTrunc[iImageCharge];          
+    }//cell loop
 
-        Point<3> imageAtom(d_imagePositionsTrunc[iImageCharge][0],
-            d_imagePositionsTrunc[iImageCharge][1],
-            d_imagePositionsTrunc[iImageCharge][2]);
-
-        if (imageAtom.distance(cell->center())>cellCenterCutOff)
-          continue;  
-
-        bool isRhoDataInCell = false;
-
-        // loop over quad points
-        for (unsigned int q = 0; q < n_q_points; ++q)
-        {
-          Point<3> quadPoint=fe_values.quadrature_point(q);
-          Tensor<1,3,double> diff=quadPoint-imageAtom; 
-          double distanceToAtom = quadPoint.distance(imageAtom);
-
-          if (dftParameters::floatingNuclearCharges && distanceToAtom<1.0e-4)
-          {
-            distanceToAtom=1.0e-4;
-            diff[0]=(1.0e-4)/std::sqrt(3.0);
-            diff[0]=(1.0e-4)/std::sqrt(3.0);
-            diff[0]=(1.0e-4)/std::sqrt(3.0);              
-          }
-
-          double value,radialDensityFirstDerivative,radialDensitySecondDerivative;
-          if(distanceToAtom <= maxRhoTail)
-          {
-
-            alglib::spline1ddiff(denSpline[atomLocations[masterAtomId][0]],
-                distanceToAtom,
-                value,
-                radialDensityFirstDerivative,
-                radialDensitySecondDerivative);
-
-            isRhoDataInCell = true;
-
-          }
-          else
-          {
-            value=0.0;
-            radialDensityFirstDerivative = 0.0;
-            radialDensitySecondDerivative = 0.0;
-          }
-
-          rhoAtom[q]=value;
-          rhoAtomsQuadValues[q]+=value;
-          gradRhoAtom[q] = radialDensityFirstDerivative*diff/distanceToAtom;
-          gradRhoAtomsQuadValues[3*q + 0] += gradRhoAtom[q][0];
-          gradRhoAtomsQuadValues[3*q + 1] += gradRhoAtom[q][1];
-          gradRhoAtomsQuadValues[3*q + 2] += gradRhoAtom[q][2];
-
-          if(dftParameters::xcFamilyType=="GGA")
-          {
-            for(unsigned int iDim = 0; iDim < 3; ++iDim)
-            {
-              for(unsigned int jDim = 0; jDim < 3; ++jDim)
-              {
-                double temp = (radialDensitySecondDerivative -radialDensityFirstDerivative/distanceToAtom)*diff[iDim]*diff[jDim]/(distanceToAtom*distanceToAtom);
-                if(iDim == jDim)
-                  temp += radialDensityFirstDerivative/distanceToAtom;
-                hessianRhoAtom[q][iDim][jDim] = temp;
-                hessianRhoAtomsQuadValues[9*q + 3*iDim + jDim] += temp;
-              }
-            }
-
-          }
-
-        }//quad point loop
-
-        if(isRhoDataInCell)
-        {
-          d_rhoAtomsValuesSeparate[numberGlobalCharges+iImageCharge][cell->id()]=rhoAtom;
-
-          std::vector<double> & gradRhoAtomCell = d_gradRhoAtomsValuesSeparate[numberGlobalCharges+iImageCharge][cell->id()];
-          gradRhoAtomCell.resize(n_q_points*3);
-
-          std::vector<double> & hessianRhoAtomCell = d_hessianRhoAtomsValuesSeparate[numberGlobalCharges+iImageCharge][cell->id()];
-          if(dftParameters::xcFamilyType=="GGA")
-            hessianRhoAtomCell.resize(n_q_points*9);
-
-          for(unsigned int q = 0; q < n_q_points; ++q)
-          {
-            gradRhoAtomCell[3*q+0] = gradRhoAtom[q][0];
-            gradRhoAtomCell[3*q+1] = gradRhoAtom[q][1];
-            gradRhoAtomCell[3*q+2] = gradRhoAtom[q][2];
-
-            if(dftParameters::xcFamilyType=="GGA")
-            {
-              for(unsigned int iDim = 0; iDim < 3; ++iDim)
-              {
-                for(unsigned int jDim = 0; jDim < 3; ++jDim)
-                {
-                  hessianRhoAtomCell[9*q + 3*iDim + jDim] = hessianRhoAtom[q][iDim][jDim];
-                }
-              }
-            }
-          }//q_point loop
-        }//if loop
-
-      }//end of image charges
-
-    }//cell locally owned check
-
-  }//cell loop
+  }
 
   normalizeAtomicRhoQuadValues();
+  computing_timer.exit_section("initialize atomic density for density splitting approach in md and relaxations");  
 }
 
 
@@ -369,30 +420,28 @@ void dftClass<FEOrder,FEOrderElectro>::normalizeAtomicRhoQuadValues()
 		for (unsigned int i=0; i<(it1->second).size(); ++i)
 			(it1->second)[i]*=scaling;
 
-	for (auto it1=d_gradRhoAtomsValues.begin(); it1!=d_gradRhoAtomsValues.end(); ++it1)
-		for (unsigned int i=0; i<(it1->second).size(); ++i)
-			(it1->second)[i]*=scaling;
+  if (dftParameters::isBOMD && dftParameters::isXLBOMD)
+  {
+      for (auto it1=d_derRRhoAtomsValuesSeparate.begin(); it1!=d_derRRhoAtomsValuesSeparate.end(); ++it1)
+        for (auto it2=it1->second.begin(); it2!=it1->second.end(); ++it2)
+          for (unsigned int i=0; i<(it2->second).size(); ++i)
+            (it2->second)[i]*=scaling;
+  }
 
-	for (auto it1=d_rhoAtomsValuesSeparate.begin(); it1!=d_rhoAtomsValuesSeparate.end(); ++it1)
-		for (auto it2=it1->second.begin(); it2!=it1->second.end(); ++it2)
-			for (unsigned int i=0; i<(it2->second).size(); ++i)
-				(it2->second)[i]*=scaling;
-
-	for (auto it1=d_gradRhoAtomsValuesSeparate.begin(); it1!=d_gradRhoAtomsValuesSeparate.end(); ++it1)
-		for (auto it2=it1->second.begin(); it2!=it1->second.end(); ++it2)
-			for (unsigned int i=0; i<(it2->second).size(); ++i)
-				(it2->second)[i]*=scaling;
 
 	if (dftParameters::xcFamilyType=="GGA")
 	{
-		for (auto it1=d_hessianRhoAtomsValues.begin(); it1!=d_hessianRhoAtomsValues.end(); ++it1)
-			for (unsigned int i=0; i<(it1->second).size(); ++i)
-				(it1->second)[i]*=scaling;
+    for (auto it1=d_gradRhoAtomsValues.begin(); it1!=d_gradRhoAtomsValues.end(); ++it1)
+      for (unsigned int i=0; i<(it1->second).size(); ++i)
+        (it1->second)[i]*=scaling;
 
-		for (auto it1=d_hessianRhoAtomsValuesSeparate.begin(); it1!=d_hessianRhoAtomsValuesSeparate.end(); ++it1)
-			for (auto it2=it1->second.begin(); it2!=it1->second.end(); ++it2)
-				for (unsigned int i=0; i<(it2->second).size(); ++i)
-					(it2->second)[i]*=scaling;
+    if (dftParameters::isBOMD && dftParameters::isXLBOMD)
+    {
+      for (auto it1=d_der2RRhoAtomsValuesSeparate.begin(); it1!=d_der2RRhoAtomsValuesSeparate.end(); ++it1)
+        for (auto it2=it1->second.begin(); it2!=it1->second.end(); ++it2)
+          for (unsigned int i=0; i<(it2->second).size(); ++i)
+            (it2->second)[i]*=scaling;
+    }
 	}
 
 	double chargeAfterScaling = totalCharge(dofHandler,
