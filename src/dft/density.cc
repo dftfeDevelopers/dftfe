@@ -233,7 +233,7 @@ void dftClass<FEOrder,FEOrderElectro>::compute_rhoOut(
 
 	  if (isGroundState)
 		{
-      if (dftParameters::isBOMD && dftParameters::isXLBOMD)
+      if (dftParameters::isBOMD)
         normalizeRhoOutQuadValues();
 
 #ifdef DFTFE_WITH_GPU
