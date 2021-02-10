@@ -154,15 +154,15 @@ void dftClass<FEOrder,FEOrderElectro>::initAtomicRho(const bool reusePreviousSca
 
         Tensor<1,3,double> diff=nodalCoor-atom; 
 
-        if (dftParameters::floatingNuclearCharges && distanceToAtom<1.0e-5)
+        if (dftParameters::floatingNuclearCharges && distanceToAtom<1.0e-4)
         {
           if(dftParameters::verbosity>=4)
             std::cout<<"Atom close to nodal point, iatom: "<<iAtom<<std::endl;
 
-          distanceToAtom=1.0e-5;
-          diff[0]=(1.0e-5)/std::sqrt(3.0);
-          diff[1]=(1.0e-5)/std::sqrt(3.0);
-          diff[2]=(1.0e-5)/std::sqrt(3.0);              
+          distanceToAtom=1.0e-4;
+          diff[0]=(1.0e-4)/std::sqrt(3.0);
+          diff[1]=(1.0e-4)/std::sqrt(3.0);
+          diff[2]=(1.0e-4)/std::sqrt(3.0);              
         }
 
 				double value,radialDensityFirstDerivative,radialDensitySecondDerivative;
@@ -192,7 +192,7 @@ void dftClass<FEOrder,FEOrderElectro>::initAtomicRho(const bool reusePreviousSca
 									if(iDim == jDim)
 										temp += radialDensityFirstDerivative/distanceToAtom;
 
-									singleAtomsDer2RRho[iAtom*9+iDim*3+jDim].local_element(dof) = -temp;
+									singleAtomsDer2RRho[iAtom*9+iDim*3+jDim].local_element(dof) = temp;
 								}
             }
           }
@@ -209,15 +209,15 @@ void dftClass<FEOrder,FEOrderElectro>::initAtomicRho(const bool reusePreviousSca
 
         Tensor<1,3,double> diff=nodalCoor-imageAtom; 
 
-        if (dftParameters::floatingNuclearCharges && distanceToAtom<1.0e-5)
+        if (dftParameters::floatingNuclearCharges && distanceToAtom<1.0e-4)
         {
           if(dftParameters::verbosity>=4)
             std::cout<<"Atom close to nodal point, iatom: "<<iImageCharge<<std::endl;
 
-          distanceToAtom=1.0e-5;
-          diff[0]=(1.0e-5)/std::sqrt(3.0);
-          diff[1]=(1.0e-5)/std::sqrt(3.0);
-          diff[2]=(1.0e-5)/std::sqrt(3.0);              
+          distanceToAtom=1.0e-4;
+          diff[0]=(1.0e-4)/std::sqrt(3.0);
+          diff[1]=(1.0e-4)/std::sqrt(3.0);
+          diff[2]=(1.0e-4)/std::sqrt(3.0);              
         }
 
 				int masterAtomId = d_imageIdsTrunc[iImageCharge];
@@ -248,7 +248,7 @@ void dftClass<FEOrder,FEOrderElectro>::initAtomicRho(const bool reusePreviousSca
 									if(iDim == jDim)
 										temp += radialDensityFirstDerivative/distanceToAtom;
 
-									singleAtomsDer2RRho[(iImageCharge+atomLocations.size())*9+iDim*3+jDim].local_element(dof) = -temp;
+									singleAtomsDer2RRho[(iImageCharge+atomLocations.size())*9+iDim*3+jDim].local_element(dof) = temp;
 								}
 
             }
@@ -304,7 +304,7 @@ void dftClass<FEOrder,FEOrderElectro>::initAtomicRho(const bool reusePreviousSca
 
   if (dftParameters::isBOMD && dftParameters::isXLBOMD)
   {
-    /*
+    /* 
 	  for(unsigned int i = 0; i < singleAtomsRho.size(); ++i)
 	   singleAtomsRho[i].update_ghost_values();
 
