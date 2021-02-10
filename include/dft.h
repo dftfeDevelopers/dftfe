@@ -479,7 +479,10 @@ namespace dftfe {
 					const dealii::AffineConstraints<double> & constraintMatrixBase,
 					dealii::AffineConstraints<double> & constraintMatrix);
 
-			void initAtomicRho();
+			void initAtomicRho(const bool reusePreviousScalingFactor=false);
+
+      double d_atomicRhoScalingFac;
+
 			void initRho();
       void initCoreRho();
 			void computeRhoInitialGuessFromPSI(std::vector<std::vector<distributedCPUVec<double>>> eigenVectors);
@@ -610,7 +613,7 @@ namespace dftfe {
 			/**
 			 *@brief normalize the electron density
 			 */
-			void normalizeAtomicRhoQuadValues();
+			void normalizeAtomicRhoQuadValues(const bool reusePreviousScalingFactor=false);
 
 			/**
 			 *@brief Computes output electron-density from wavefunctions

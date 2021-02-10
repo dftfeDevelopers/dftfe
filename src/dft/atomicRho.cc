@@ -21,7 +21,7 @@
 //
 
 	template<unsigned int FEOrder,unsigned int FEOrderElectro>
-void dftClass<FEOrder,FEOrderElectro>::initAtomicRho()
+void dftClass<FEOrder,FEOrderElectro>::initAtomicRho(const bool reusePreviousScalingFactor)
 {
   computing_timer.enter_section("initialize atomic density for density splitting approach in md and relaxations");    
 	//clear existing data
@@ -35,7 +35,7 @@ void dftClass<FEOrder,FEOrderElectro>::initAtomicRho()
 	std::map<unsigned int, alglib::spline1dinterpolant> denSpline;
 	std::map<unsigned int, std::vector<std::vector<double> > > singleAtomElectronDensity;
 	std::map<unsigned int, double> outerMostPointDen;
-	const double truncationTol=1e-8;
+	const double truncationTol=1e-10;//1e-8
   double maxRhoTail=0.0;
  
 	//loop over atom types
@@ -81,7 +81,6 @@ void dftClass<FEOrder,FEOrderElectro>::initAtomicRho()
 
 	//Initialize rho
   const Quadrature<3> &  quadrature_formula=matrix_free_data.get_quadrature(d_densityQuadratureId);
-	FEValues<3> fe_values (FE, quadrature_formula, update_quadrature_points);
 	const unsigned int n_q_points    = quadrature_formula.size();
 
 	//
@@ -277,24 +276,31 @@ void dftClass<FEOrder,FEOrderElectro>::initAtomicRho()
 			dftParameters::xcFamilyType=="GGA",
       false);
 
-	//normalize rho
-	const double charge = totalCharge(d_matrixFreeDataPRefined,
-			d_atomicRho);
+  //normalize rho
+  const double charge = totalCharge(d_matrixFreeDataPRefined,
+      d_atomicRho);
 
+  if (!reusePreviousScalingFactor)
+  {
+    const double scalingFactor = ((double)numElectrons)/charge;
+    d_atomicRhoScalingFac=scalingFactor;
 
-	const double scalingFactor = ((double)numElectrons)/charge;
+    //scale nodal vector with scalingFactor
+    d_atomicRho *= scalingFactor;
 
-	//scale nodal vector with scalingFactor
-	d_atomicRho *= scalingFactor;
+    //for(unsigned int iAtom = 0; iAtom < atomLocations.size()+numberImageCharges; ++iAtom)
+    //   singleAtomsRho[iAtom]*=scalingFactor; 
 
-	//for(unsigned int iAtom = 0; iAtom < atomLocations.size()+numberImageCharges; ++iAtom)
-	//   singleAtomsRho[iAtom]*=scalingFactor; 
-
-	if (dftParameters::verbosity>=3)
-	{
-		pcout<<"Total Charge before Normalizing nodal Rho:  "<<charge<<std::endl;
-		pcout<<"Total Charge after Normalizing nodal Rho: "<< totalCharge(d_matrixFreeDataPRefined,d_atomicRho)<<std::endl;
-	}
+    if (dftParameters::verbosity>=3)
+    {
+      pcout<<"Total Charge before Normalizing nodal Rho:  "<<charge<<std::endl;
+      pcout<<"Total Charge after Normalizing nodal Rho: "<< totalCharge(d_matrixFreeDataPRefined,d_atomicRho)<<std::endl;
+    }
+  }
+  else
+  {
+    d_atomicRho*=d_atomicRhoScalingFac;
+  }
 
   if (dftParameters::isBOMD && dftParameters::isXLBOMD)
   {
@@ -396,7 +402,7 @@ void dftClass<FEOrder,FEOrderElectro>::initAtomicRho()
 
   }
 
-  normalizeAtomicRhoQuadValues();
+  normalizeAtomicRhoQuadValues(reusePreviousScalingFactor);
   computing_timer.exit_section("initialize atomic density for density splitting approach in md and relaxations");  
 }
 
@@ -405,12 +411,12 @@ void dftClass<FEOrder,FEOrderElectro>::initAtomicRho()
 //Normalize rho
 //
 	template<unsigned int FEOrder,unsigned int FEOrderElectro>
-void dftClass<FEOrder,FEOrderElectro>::normalizeAtomicRhoQuadValues()
+void dftClass<FEOrder,FEOrderElectro>::normalizeAtomicRhoQuadValues(const bool reusePreviousScalingFactor)
 {
 
   const double charge = totalCharge(dofHandler,
 			&d_rhoAtomsValues);
-	const double scaling=((double)numElectrons)/charge;
+	const double scaling=reusePreviousScalingFactor?d_atomicRhoScalingFac:(((double)numElectrons)/charge);
 
 	if (dftParameters::verbosity>=2)
 		pcout<< "Total charge rho single atomic before normalizing to number of electrons: "<< charge<<std::endl;
