@@ -29,7 +29,7 @@ template<unsigned int FEOrder,unsigned int FEOrderElectro>
  const std::vector<Tensor<1,C_DIM,VectorizedArray<double> > >  & derVxcWithGradRhoQuads,
  const std::vector<VectorizedArray<double> >  & shadowKSRhoMinMinusRhoQuads,         
  const std::vector<Tensor<1,C_DIM,VectorizedArray<double> > >  & shadowKSGradRhoMinMinusGradRhoQuads,         
- const std::map<unsigned int,std::map<dealii::CellId, std::vector<double> > > & der2RRhoAtomsQuadsSeparate,         
+ const std::map<unsigned int,std::map<dealii::CellId, std::vector<double> > > & der2XRRhoAtomsQuadsSeparate,         
  const bool isXCGGA) 
 {
   Tensor<1,C_DIM,VectorizedArray<double> > zeroTensor1;
@@ -51,7 +51,7 @@ template<unsigned int FEOrder,unsigned int FEOrderElectro>
   for (unsigned int iAtom = 0;iAtom < totalNumberAtoms; iAtom++)
   {
     std::vector<Tensor<1,C_DIM,VectorizedArray<double> > > derRRhoAtomQuads(numQuadPoints,zeroTensor1);
-		std::vector<Tensor<2,C_DIM,VectorizedArray<double> > > der2RRhoAtomQuads(numQuadPoints,zeroTensor2);   
+		std::vector<Tensor<2,C_DIM,VectorizedArray<double> > > der2XRRhoAtomQuads(numQuadPoints,zeroTensor2);   
 
     unsigned int atomId = iAtom;
     if(iAtom >= numberGlobalAtoms)
@@ -92,15 +92,15 @@ template<unsigned int FEOrder,unsigned int FEOrderElectro>
         if (isXCGGA)
         {
           std::map<dealii::CellId, std::vector<double> >::const_iterator it2
-              =der2RRhoAtomsQuadsSeparate.find(iAtom)->second.find(subCellId);
-          if(it2!=der2RRhoAtomsQuadsSeparate.find(iAtom)->second.end())
+              =der2XRRhoAtomsQuadsSeparate.find(iAtom)->second.find(subCellId);
+          if(it2!=der2XRRhoAtomsQuadsSeparate.find(iAtom)->second.end())
           {
             const std::vector<double> & temp=it2->second;
             for (unsigned int q=0; q<numQuadPoints; ++q)
             {
               for (unsigned int idim=0; idim<C_DIM; idim++)
                 for (unsigned int jdim=0; jdim<C_DIM; jdim++)
-                  der2RRhoAtomQuads[q][idim][jdim][iSubCell]=(it2->second)[9*q+idim*C_DIM+jdim];
+                  der2XRRhoAtomQuads[q][idim][jdim][iSubCell]=(it2->second)[9*q+idim*C_DIM+jdim];
             }
           }          
         }
@@ -115,9 +115,9 @@ template<unsigned int FEOrder,unsigned int FEOrderElectro>
       if (isXCGGA)
       {
 				forceEval.submit_value(derVxcWithRhoTimesRhoDiffQuads[q]*derRRhoAtomQuads[q]
-						+shadowKSGradRhoMinMinusGradRhoQuads[q]*(der2ExcWithGradRhoQuads[q]*der2RRhoAtomQuads[q])
+						+shadowKSGradRhoMinMinusGradRhoQuads[q]*(der2ExcWithGradRhoQuads[q]*der2XRRhoAtomQuads[q])
 						+shadowKSGradRhoMinMinusGradRhoQuads[q]*outer_product(derVxcWithGradRhoQuads[q],derRRhoAtomQuads[q])
-						+shadowKSRhoMinMinusRhoQuads[q]*derVxcWithGradRhoQuads[q]*der2RRhoAtomQuads[q],
+						+shadowKSRhoMinMinusRhoQuads[q]*derVxcWithGradRhoQuads[q]*der2XRRhoAtomQuads[q],
 						q);        
       }
       else

@@ -1019,7 +1019,7 @@ namespace dftfe {
 
 			/// for xl-bomd
 			std::map<dealii::CellId, std::vector<double> > d_rhoAtomsValues,d_gradRhoAtomsValues;
-			std::map<unsigned int,std::map<dealii::CellId, std::vector<double> > > d_derRRhoAtomsValuesSeparate,d_der2RRhoAtomsValuesSeparate;  
+			std::map<unsigned int,std::map<dealii::CellId, std::vector<double> > > d_derRRhoAtomsValuesSeparate,d_der2XRRhoAtomsValuesSeparate;  
 
 			std::map<dealii::CellId, std::vector<double> > * gradRhoInValues, *gradRhoInValuesSpinPolarized;
 			std::map<dealii::CellId, std::vector<double> > * gradRhoOutValues, *gradRhoOutValuesSpinPolarized;

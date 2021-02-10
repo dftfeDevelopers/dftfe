@@ -28,7 +28,7 @@ void dftClass<FEOrder,FEOrderElectro>::initAtomicRho(const bool reusePreviousSca
 	d_rhoAtomsValues.clear();
 	d_gradRhoAtomsValues.clear();
 	d_derRRhoAtomsValuesSeparate.clear();
-	d_der2RRhoAtomsValuesSeparate.clear();
+	d_der2XRRhoAtomsValuesSeparate.clear();
 
 	//Reading single atom rho initial guess
 	pcout <<std::endl<< "Reading initial guess for electron-density....."<<std::endl;
@@ -192,7 +192,7 @@ void dftClass<FEOrder,FEOrderElectro>::initAtomicRho(const bool reusePreviousSca
 									if(iDim == jDim)
 										temp += radialDensityFirstDerivative/distanceToAtom;
 
-									singleAtomsDer2RRho[iAtom*9+iDim*3+jDim].local_element(dof) = temp;
+									singleAtomsDer2RRho[iAtom*9+iDim*3+jDim].local_element(dof) = -temp;
 								}
             }
           }
@@ -248,7 +248,7 @@ void dftClass<FEOrder,FEOrderElectro>::initAtomicRho(const bool reusePreviousSca
 									if(iDim == jDim)
 										temp += radialDensityFirstDerivative/distanceToAtom;
 
-									singleAtomsDer2RRho[(iImageCharge+atomLocations.size())*9+iDim*3+jDim].local_element(dof) = temp;
+									singleAtomsDer2RRho[(iImageCharge+atomLocations.size())*9+iDim*3+jDim].local_element(dof) = -temp;
 								}
 
             }
@@ -356,7 +356,7 @@ void dftClass<FEOrder,FEOrderElectro>::initAtomicRho(const bool reusePreviousSca
 
             if (dftParameters::xcFamilyType=="GGA")
             {
-              d_der2RRhoAtomsValuesSeparate[iatom][subCellId]=std::vector<double>(9*numQuadPoints);            
+              d_der2XRRhoAtomsValuesSeparate[iatom][subCellId]=std::vector<double>(9*numQuadPoints);            
             }
           }
 
@@ -389,7 +389,7 @@ void dftClass<FEOrder,FEOrderElectro>::initAtomicRho(const bool reusePreviousSca
                   subCellPtr= d_matrixFreeDataPRefined.get_cell_iterator(cell,iSubCell,d_nonPeriodicDensityDofHandlerIndexElectro);
                   dealii::CellId subCellId=subCellPtr->id();
 
-                  std::vector<double> & tempVec1 = d_der2RRhoAtomsValuesSeparate[iatom].find(subCellId)->second;
+                  std::vector<double> & tempVec1 = d_der2XRRhoAtomsValuesSeparate[iatom].find(subCellId)->second;
                   for(unsigned int q_point = 0; q_point < numQuadPoints; ++q_point)
                     tempVec1[9*q_point+3*idim+jdim] = feEvalObj.get_value(q_point)[iSubCell];
                 }
@@ -443,7 +443,7 @@ void dftClass<FEOrder,FEOrderElectro>::normalizeAtomicRhoQuadValues(const bool r
 
     if (dftParameters::isBOMD && dftParameters::isXLBOMD)
     {
-      for (auto it1=d_der2RRhoAtomsValuesSeparate.begin(); it1!=d_der2RRhoAtomsValuesSeparate.end(); ++it1)
+      for (auto it1=d_der2XRRhoAtomsValuesSeparate.begin(); it1!=d_der2XRRhoAtomsValuesSeparate.end(); ++it1)
         for (auto it2=it1->second.begin(); it2!=it1->second.end(); ++it2)
           for (unsigned int i=0; i<(it2->second).size(); ++i)
             (it2->second)[i]*=scaling;

@@ -1154,7 +1154,7 @@ template<unsigned int FEOrder,unsigned int FEOrderElectro>
             derVxcWithGradRhoQuads,
             shadowKSRhoMinMinusRhoQuads,
             shadowKSGradRhoMinMinusGradRhoQuads,
-            dftPtr->d_der2RRhoAtomsValuesSeparate,            
+            dftPtr->d_der2XRRhoAtomsValuesSeparate,            
             dftParameters::xcFamilyType=="GGA");
       }
 

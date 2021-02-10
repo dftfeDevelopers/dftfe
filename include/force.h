@@ -399,7 +399,7 @@ namespace dftfe {
 				 const std::vector<Tensor<1,C_DIM,VectorizedArray<double> > >  & derVxcWithGradRhoOutQuads,
 				 const std::vector<VectorizedArray<double> >  & shadowKSRhoMinMinusGradRhoQuads,         
 				 const std::vector<Tensor<1,C_DIM,VectorizedArray<double> > >  & shadowKSGradRhoMinMinusGradRhoQuads,         
-				 const std::map<unsigned int,std::map<dealii::CellId, std::vector<double> > > & der2RRhoAtomsQuadsSeparate,         
+				 const std::map<unsigned int,std::map<dealii::CellId, std::vector<double> > > & der2XRRhoAtomsQuadsSeparate,         
          const bool isXCGGA=false);
 
 			void FShadowLocalGammaAtomsElementalContributionElectrostatic
