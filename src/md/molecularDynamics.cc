@@ -871,7 +871,7 @@ namespace dftfe {
 								false);
 
             //Finite difference check for shadow potential forces
-            if (true)
+            if (false)
             {
               for(int iCharge = 0; iCharge < numberGlobalCharges; ++iCharge)
               {
