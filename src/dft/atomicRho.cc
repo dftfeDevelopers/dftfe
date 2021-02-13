@@ -35,7 +35,7 @@ void dftClass<FEOrder,FEOrderElectro>::initAtomicRho(const bool reusePreviousSca
 	std::map<unsigned int, alglib::spline1dinterpolant> denSpline;
 	std::map<unsigned int, std::vector<std::vector<double> > > singleAtomElectronDensity;
 	std::map<unsigned int, double> outerMostPointDen;
-	const double truncationTol=1e-6;//1e-8
+	const double truncationTol=1e-10;
   double maxRhoTail=0.0;
  
 	//loop over atom types

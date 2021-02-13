@@ -53,7 +53,7 @@ void dftClass<FEOrder,FEOrderElectro>::initRho()
 	std::map<unsigned int, alglib::spline1dinterpolant> denSpline;
 	std::map<unsigned int, std::vector<std::vector<double> > > singleAtomElectronDensity;
 	std::map<unsigned int, double> outerMostPointDen;
-	const double truncationTol=1e-8;
+	const double truncationTol=1e-10;
 
 	//loop over atom types
 	for (std::set<unsigned int>::iterator it=atomTypes.begin(); it!=atomTypes.end(); it++)
@@ -81,6 +81,8 @@ void dftClass<FEOrder,FEOrderElectro>::initRho()
 			if (yData[irow]>truncationTol)
 				maxRowId=irow;
 		}
+
+    yData[0]=yData[1];
 
 		//interpolate rho
 		alglib::real_1d_array x;
@@ -222,46 +224,6 @@ void dftClass<FEOrder,FEOrderElectro>::initRho()
 				*gradRhoInValues,
 				dftParameters::xcFamilyType=="GGA");
 		normalizeRhoInQuadValues();
-
-		/*FEEvaluation<C_DIM,C_num1DKerkerPoly<FEOrder>(),C_num1DQuad<FEOrderElectro>(),1,double> rhoEval(d_matrixFreeDataPRefined,0,1);
-		  const unsigned int numQuadPoints = rhoEval.n_q_points; 
-		  DoFHandler<C_DIM>::active_cell_iterator subCellPtr;
-		  for(unsigned int cell = 0; cell < d_matrixFreeDataPRefined.n_macro_cells(); ++cell)
-		  {
-		  rhoEval.reinit(cell);
-		  rhoEval.read_dof_values(d_rhoInNodalValues);
-		  rhoEval.evaluate(true,true);
-		  for(unsigned int iSubCell = 0; iSubCell < d_matrixFreeDataPRefined.n_components_filled(cell); ++iSubCell)
-		  {
-		  subCellPtr= d_matrixFreeDataPRefined.get_cell_iterator(cell,iSubCell);
-		  dealii::CellId subCellId=subCellPtr->id();
-		  (*rhoInValues)[subCellId] = std::vector<double>(numQuadPoints);
-		  std::vector<double> & tempVec = rhoInValues->find(subCellId)->second;
-		  for(unsigned int q_point = 0; q_point < numQuadPoints; ++q_point)
-		  {
-		  tempVec[q_point] = rhoEval.get_value(q_point)[iSubCell];
-		  }
-		  }
-
-		  if(dftParameters::xcFamilyType=="GGA")
-		  {
-		  for(unsigned int iSubCell = 0; iSubCell < d_matrixFreeDataPRefined.n_components_filled(cell); ++iSubCell)
-		  {
-		  subCellPtr= d_matrixFreeDataPRefined.get_cell_iterator(cell,iSubCell);
-		  dealii::CellId subCellId=subCellPtr->id();
-		  (*gradRhoInValues)[subCellId]=std::vector<double>(3*numQuadPoints);
-		  std::vector<double> & tempVec = gradRhoInValues->find(subCellId)->second;
-		  for(unsigned int q_point = 0; q_point < numQuadPoints; ++q_point)
-		  {
-		  tempVec[3*q_point + 0] = rhoEval.get_gradient(q_point)[0][iSubCell];
-		  tempVec[3*q_point + 1] = rhoEval.get_gradient(q_point)[1][iSubCell];
-		  tempVec[3*q_point + 2] = rhoEval.get_gradient(q_point)[2][iSubCell];
-		  }
-		  }
-		  }
-
-		  }*/
-
 	}
 	//else
 	{
