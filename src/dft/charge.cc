@@ -131,6 +131,7 @@ double dftClass<FEOrder,FEOrderElectro>::totalCharge(const dealii::MatrixFree<3,
   AssertThrow(matrixFreeDataObject.get_quadrature(d_densityQuadratureIdElectro).size() == numQuadPoints,
           dealii::ExcMessage("DFT-FE Error: mismatch in quadrature rule usage in interpolateNodalDataToQuadratureData."));
 
+	double normValue = 0.0;
 	for(unsigned int cell = 0; cell < matrixFreeDataObject.n_macro_cells(); ++cell)
 	{
 		fe_evalField.reinit(cell);
@@ -142,13 +143,12 @@ double dftClass<FEOrder,FEOrderElectro>::totalCharge(const dealii::MatrixFree<3,
 			fe_evalField.submit_value(temp,q_point);
 		}
 
-		normValueVectorized += fe_evalField.integrate_value();
-	}
+		normValueVectorized = fe_evalField.integrate_value();
 
-	double normValue = 0.0;
-	for(unsigned int iSubCell = 0; iSubCell < VectorizedArray<double>::n_array_elements; ++iSubCell)
-	{
-		normValue += normValueVectorized[iSubCell];
+    for(unsigned int iSubCell = 0; iSubCell < matrixFreeDataObject.n_components_filled(cell); ++iSubCell)
+    {
+      normValue += normValueVectorized[iSubCell];
+    }
 	}
 
 	return Utilities::MPI::sum(normValue, mpi_communicator);
@@ -200,6 +200,7 @@ double dftClass<FEOrder,FEOrderElectro>::rhofieldl2Norm(const dealii::MatrixFree
   AssertThrow(matrixFreeDataObject.get_quadrature(quadratureId).size() == numQuadPoints,
           dealii::ExcMessage("DFT-FE Error: mismatch in quadrature rule usage in interpolateNodalDataToQuadratureData."));
 
+	double normValue = 0.0;
 	for(unsigned int cell = 0; cell < matrixFreeDataObject.n_macro_cells(); ++cell)
 	{
 		fe_evalField.reinit(cell);
@@ -211,13 +212,12 @@ double dftClass<FEOrder,FEOrderElectro>::rhofieldl2Norm(const dealii::MatrixFree
 			fe_evalField.submit_value(temp,q_point);
 		}
 
-		normValueVectorized += fe_evalField.integrate_value();
-	}
+		normValueVectorized = fe_evalField.integrate_value();
 
-	double normValue = 0.0;
-	for(unsigned int iSubCell = 0; iSubCell < VectorizedArray<double>::n_array_elements; ++iSubCell)
-	{
-		normValue += normValueVectorized[iSubCell];
+    for(unsigned int iSubCell = 0; iSubCell < matrixFreeDataObject.n_components_filled(cell); ++iSubCell)
+    {
+      normValue += normValueVectorized[iSubCell];
+    }
 	}
 
 	return Utilities::MPI::sum(normValue, mpi_communicator);

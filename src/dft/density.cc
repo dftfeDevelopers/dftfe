@@ -233,7 +233,7 @@ void dftClass<FEOrder,FEOrderElectro>::compute_rhoOut(
 
 	  if (isGroundState)
 		{
-      if (dftParameters::isBOMD && dftParameters::isXLBOMD)
+      if (dftParameters::isBOMD)
         normalizeRhoOutQuadValues();
 
 #ifdef DFTFE_WITH_GPU
@@ -299,18 +299,9 @@ void dftClass<FEOrder,FEOrderElectro>::compute_rhoOut(
 
 	if (isGroundState && dftParameters::isIonOpt && dftParameters::spinPolarized!=1)
 	{
-		d_rhoOutNodalValuesSplit.reinit(d_rhoOutNodalValues);
-		//d_rhoOutNodalValuesSplit-=d_atomicRho;
-
-		//d_rhoOutNodalValuesSplit.update_ghost_values();
-    normalizeRhoOutQuadValues();
-    l2ProjectionQuadDensityMinusAtomicDensity(d_matrixFreeDataPRefined,
-        d_constraintsRhoNodal,
-        d_densityDofHandlerIndexElectro,
-        d_densityQuadratureIdElectro,
-        *rhoOutValues,
-        d_rhoOutNodalValuesSplit);
-    d_rhoOutNodalValuesSplit.update_ghost_values();
+		d_rhoOutNodalValuesSplit=d_rhoOutNodalValues;
+		d_rhoOutNodalValuesSplit-=d_atomicRho;
+		d_rhoOutNodalValuesSplit.update_ghost_values();
 	}
 }
 

@@ -479,7 +479,10 @@ namespace dftfe {
 					const dealii::AffineConstraints<double> & constraintMatrixBase,
 					dealii::AffineConstraints<double> & constraintMatrix);
 
-			void initAtomicRho();
+			void initAtomicRho(const bool reusePreviousScalingFactor=false);
+
+      double d_atomicRhoScalingFac;
+
 			void initRho();
       void initCoreRho();
 			void computeRhoInitialGuessFromPSI(std::vector<std::vector<distributedCPUVec<double>>> eigenVectors);
@@ -610,7 +613,7 @@ namespace dftfe {
 			/**
 			 *@brief normalize the electron density
 			 */
-			void normalizeAtomicRhoQuadValues();
+			void normalizeAtomicRhoQuadValues(const bool reusePreviousScalingFactor=false);
 
 			/**
 			 *@brief Computes output electron-density from wavefunctions
@@ -1009,14 +1012,14 @@ namespace dftfe {
 			std::deque<std::map<dealii::CellId,std::vector<double> >> rhoInVals, rhoOutVals, rhoInValsSpinPolarized, rhoOutValsSpinPolarized;
       std::map<dealii::CellId, std::vector<double> > d_phiInValues,d_phiOutValues;
 
-			distributedCPUVec<double> d_rhoInNodalValuesRead, d_rhoInNodalValues, d_rhoOutNodalValues, d_rhoOutNodalValuesSplit, d_preCondResidualVector, d_rhoNodalFieldRefined, d_rhoOutNodalValuesDistributed;
+			distributedCPUVec<double> d_rhoInNodalValuesRead, d_rhoInNodalValues, d_rhoOutNodalValues, d_rhoOutNodalValuesSplit, d_preCondResidualVector, d_rhoNodalFieldRefined, d_rhoOutNodalValuesDistributed, d_atomicRho;
 			std::deque<distributedCPUVec<double>> d_rhoInNodalVals, d_rhoOutNodalVals;
 
       std::map<dealii::CellId, std::vector<double> > d_rhoOutValuesLpspQuad, d_rhoInValuesLpspQuad, d_gradRhoOutValuesLpspQuad, d_gradRhoInValuesLpspQuad;
 
 			/// for xl-bomd
-			std::map<dealii::CellId, std::vector<double> > d_rhoAtomsValues,d_gradRhoAtomsValues, d_hessianRhoAtomsValues;
-			std::map<unsigned int,std::map<dealii::CellId, std::vector<double> > > d_gradRhoAtomsValuesSeparate,d_hessianRhoAtomsValuesSeparate;  
+			std::map<dealii::CellId, std::vector<double> > d_rhoAtomsValues,d_gradRhoAtomsValues;
+			std::map<unsigned int,std::map<dealii::CellId, std::vector<double> > > d_derRRhoAtomsValuesSeparate,d_der2XRRhoAtomsValuesSeparate;  
 
 			std::map<dealii::CellId, std::vector<double> > * gradRhoInValues, *gradRhoInValuesSpinPolarized;
 			std::map<dealii::CellId, std::vector<double> > * gradRhoOutValues, *gradRhoOutValuesSpinPolarized;

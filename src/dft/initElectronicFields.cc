@@ -40,7 +40,7 @@ void dftClass<FEOrder,FEOrderElectro>::initElectronicFields()
 	d_matrixFreeDataPRefined.initialize_dof_vector(d_rhoInNodalValues,d_densityDofHandlerIndexElectro);
 	d_rhoOutNodalValues.reinit(d_rhoInNodalValues);
 	d_rhoOutNodalValuesSplit.reinit(d_rhoInNodalValues);
-	//d_atomicRho.reinit(d_rhoInNodalValues);
+	d_atomicRho.reinit(d_rhoInNodalValues);
 
 	if (dftParameters::isIonOpt || dftParameters::isCellOpt)
 	{
