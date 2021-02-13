@@ -65,7 +65,8 @@ void dftClass<FEOrder,FEOrderElectro>::initAtomicRho(const bool reusePreviousSca
 				maxRowId=irow;
 		}
 
-    yData[0]=yData[1];
+    if (dftParameters::isPseudopotential)
+      yData[0]=yData[1];
 
 		//interpolate rho
 		alglib::real_1d_array x;
