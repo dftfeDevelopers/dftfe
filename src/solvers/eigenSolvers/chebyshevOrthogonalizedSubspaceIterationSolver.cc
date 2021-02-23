@@ -352,7 +352,7 @@ namespace dftfe{
 											    BVec,
 											    std::ceil(adaptiveOrder),
 											    d_lowerBoundUnWantedSpectrum,
-											    upperBoundUnwantedSpectrum,
+											    d_upperBoundUnWantedSpectrum,
 											    d_lowerBoundWantedSpectrum);
 
 						//copy back cell wavefunction data interior nodes also into global dealii vectors
@@ -374,7 +374,7 @@ namespace dftfe{
 											BVec,
 											chebyshevOrder,
 											d_lowerBoundUnWantedSpectrum,
-											upperBoundUnwantedSpectrum,
+											d_upperBoundUnWantedSpectrum,
 											d_lowerBoundWantedSpectrum);
 					  }
 					  
