@@ -65,10 +65,14 @@ void kohnShamDFTOperatorClass<FEOrder,FEOrderElectro>::computeHamiltonianTimesX(
 
 	unsigned int iElem = 0;
         unsigned int indexTemp1 = d_numberNodesPerElement*numberWaveFunctions;
+
 	for(unsigned int iMacroCell = 0; iMacroCell < d_numberMacroCells; ++iMacroCell)
 	  {
 	    for(unsigned int iCell = 0; iCell < d_macroCellSubCellMap[iMacroCell]; ++iCell)
 	      {
+		if(!dftParameters::cellLevelMassMatrixScaling)
+		   dftPtr->matrix_free_data.get_cell_iterator(iMacroCell,iCell)->get_dof_indices(cell_dof_indicesGlobal);
+		
                 unsigned int indexTemp2 = indexTemp1*iElem;
 		for(unsigned int iNode = 0; iNode < d_numberNodesPerElement; ++iNode)
 		  {
@@ -293,34 +297,51 @@ void kohnShamDFTOperatorClass<FEOrder,FEOrderElectro>::computeHamiltonianTimesX(
 
 		    if(d_nodesPerCellClassificationMap[iNode] == 1)
 		      {
-			 dealii::types::global_dof_index localNodeId = d_flattenedArrayCellLocalProcIndexIdMap[iElem][iNode];
+			dealii::types::global_dof_index localNodeId = d_flattenedArrayCellLocalProcIndexIdMap[iElem][iNode];
 
-                         //unsigned int indexVal = indexTemp2+numberWaveFunctions*iNode;
+			//unsigned int indexVal = indexTemp2+numberWaveFunctions*iNode;
 
-			 daxpy_(&numberWaveFunctions,
-				&alpha1,
-                                &cellHamMatrixTimesWaveMatrix[numberWaveFunctions*iNode],//&cellDstWaveFunctionMatrix[indexVal],
-				&inc1,
-				dst.begin()+localNodeId,
-				&inc1);
+			daxpy_(&numberWaveFunctions,
+			       &alpha1,
+			       &cellHamMatrixTimesWaveMatrix[numberWaveFunctions*iNode],//&cellDstWaveFunctionMatrix[indexVal],
+			       &inc1,
+			       dst.begin()+localNodeId,
+			       &inc1);
 		      }
                     else
                       {
-                      unsigned int indexVal = indexTemp2+numberWaveFunctions*iNode;
-                      if(scaleFlag)
-                        {
-                         for(unsigned int iWave = 0; iWave < numberWaveFunctions; ++iWave)
-                          {
-                             cellDstWaveFunctionMatrix[indexVal + iWave] = scalarB*cellDstWaveFunctionMatrix[indexVal + iWave]+scalarA*cellSrcWaveFunctionMatrix[indexVal+iWave] + cellHamMatrixTimesWaveMatrix[numberWaveFunctions*iNode + iWave];
-                          }
-                        }
-                      else
-                        {
-                         for(unsigned int iWave = 0; iWave < numberWaveFunctions; ++iWave)
-                          {
-                            cellDstWaveFunctionMatrix[indexVal + iWave] += cellHamMatrixTimesWaveMatrix[numberWaveFunctions*iNode + iWave];
-                          }
-                        }
+			unsigned int indexVal = indexTemp2+numberWaveFunctions*iNode;
+			if(scaleFlag)
+			  {
+			    if(!dftParameters::cellLevelMassMatrixScaling)
+			      {
+				 std::vector<dealii::types::global_dof_index> cell_dof_indicesGlobal(d_numberNodesPerElement);
+				 dealii::types::global_dof_index localDoFId = dftPtr->matrix_free_data.get_vector_partitioner()->global_to_local(cell_dof_indicesGlobal[iNode]);
+				 const double scalingCoeff = d_invSqrtMassVector.local_element(localDoFId);
+				   
+				 for(unsigned int iWave = 0; iWave < numberWaveFunctions; ++iWave)
+				  {
+				    cellDstWaveFunctionMatrix[indexVal + iWave] = scalarB*cellDstWaveFunctionMatrix[indexVal + iWave]+scalarA*cellSrcWaveFunctionMatrix[indexVal+iWave] + scalingCoeff*cellHamMatrixTimesWaveMatrix[numberWaveFunctions*iNode + iWave];
+				  }
+				   
+			      }
+			    else
+			      {
+
+				for(unsigned int iWave = 0; iWave < numberWaveFunctions; ++iWave)
+				  {
+				    cellDstWaveFunctionMatrix[indexVal + iWave] = scalarB*cellDstWaveFunctionMatrix[indexVal + iWave]+scalarA*cellSrcWaveFunctionMatrix[indexVal+iWave] + cellHamMatrixTimesWaveMatrix[numberWaveFunctions*iNode + iWave];
+				  }
+
+			      }
+			  }
+			else
+			  {
+			    for(unsigned int iWave = 0; iWave < numberWaveFunctions; ++iWave)
+			      {
+				cellDstWaveFunctionMatrix[indexVal + iWave] += cellHamMatrixTimesWaveMatrix[numberWaveFunctions*iNode + iWave];
+			      }
+			  }
                       }
               
 		  }

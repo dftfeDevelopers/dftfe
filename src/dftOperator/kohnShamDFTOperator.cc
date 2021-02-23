@@ -772,7 +772,6 @@ namespace dftfe {
 					   &scalingCoeff,
 					   dst.begin()+i*numberWaveFunctions,
 					   &inc);
-
 				  }
 			      }
 			  }
@@ -813,25 +812,25 @@ namespace dftfe {
 			//H^{nloc}*M^{-1/2}*X
 			if(dftParameters::isPseudopotential && dftPtr->d_nonLocalAtomGlobalChargeIds.size() > 0)
 			{
-#ifdef WITH_MKL
-				if (dftParameters::useBatchGEMM && numberWaveFunctions<1000)
-				{
-					computeNonLocalHamiltonianTimesXBatchGEMM(src,
-										  numberWaveFunctions,
-										  dst,
-										  scalar);
-				}
-				else
-					computeNonLocalHamiltonianTimesX(src,
-							numberWaveFunctions,
-									 dst,
-									 scalar);
-#else
+			  //#ifdef WITH_MKL
+			  //	if (dftParameters::useBatchGEMM && numberWaveFunctions<1000)
+			  //	{
+			  //		computeNonLocalHamiltonianTimesXBatchGEMM(src,
+			  //							  numberWaveFunctions,
+			  //							  dst,
+			  //							  scalar);
+			  //	}
+			  //	else
+			  //		computeNonLocalHamiltonianTimesX(src,
+			  //				numberWaveFunctions,
+			  //						 dst,
+			  //						 scalar);
+			  //#else
 				computeNonLocalHamiltonianTimesX(src,
 								 numberWaveFunctions,
 								 dst,
 								 scalar);
-#endif
+				//#endif
 			}
 
 
@@ -902,9 +901,9 @@ namespace dftfe {
 			  {
 			    for(unsigned int iDof = 0; iDof < numberDofs; ++iDof)
 			      {
-				const double scalingCoeff = d_invSqrtMassVector.local_element(iDof);
-				if(globalArrayClassificationMap[iDof] == 1)
+				if(d_globalArrayClassificationMap[iDof] == 1)
 				  {
+				    const double scalingCoeff = d_invSqrtMassVector.local_element(iDof);
 				    for(unsigned int iWave = 0; iWave < numberWaveFunctions; ++iWave)
 				      {
 					src.local_element(iDof*numberWaveFunctions+iWave) *= scalingCoeff;
@@ -912,6 +911,48 @@ namespace dftfe {
 				      }
 				  }
 			      }
+
+			    std::vector<dealii::types::global_dof_index> cell_dof_indicesGlobal(d_numberNodesPerElement);
+			    for(unsigned int iMacroCell = 0; iMacroCell < d_numberMacroCells; ++iMacroCell)
+			      {
+				for(unsigned int iCell = 0; iCell < d_macroCellSubCellMap[iMacroCell]; ++iCell)
+				  {
+				    dftPtr->matrix_free_data.get_cell_iterator(iMacroCell,iCell)->get_dof_indices(cell_dof_indicesGlobal);
+				    for(unsigned int iNode = 0; iNode < d_numberNodesPerElement; ++iNode)
+				      {
+										
+					if(d_nodesPerCellClassificationMap[iNode] == 0)
+					  {
+					    dealii::types::global_dof_index localDoFId = dftPtr->matrix_free_data.get_vector_partitioner()->global_to_local(cell_dof_indicesGlobal[iNode]);
+					    const double scalingCoeff = d_invSqrtMassVector.local_element(localDoFId);
+					    for(unsigned int iWave = 0; iWave < numberWaveFunctions; ++iWave)
+					      {
+						unsigned int indexVal = indexTemp+numberWaveFunctions*iNode;
+						cellSrcWaveFunctionMatrix[indexVal + iWave] *= scalingCoeff;
+					      }
+
+					  }
+
+				      }
+				    
+				  }
+			      }
+
+			    if(scaleFlag)
+			      {
+				for(int i = 0; i < numberDofs; ++i)
+				  {
+				    if(d_globalArrayClassificationMap[i] == 1)
+				      {
+					const double scalingCoeff = d_sqrtMassVector.local_element(i);
+					dscal_(&numberWaveFunctions,
+					       &scalingCoeff,
+					       dst.begin()+i*numberWaveFunctions,
+					       &inc);
+				      }
+				  }
+			      }
+			    
 			  }
 			
 
@@ -944,11 +985,69 @@ namespace dftfe {
 			src.zero_out_ghosts();
 			dst.compress(VectorOperation::add);
 
-			//
-			//M^{-1/2}*H*M^{-1/2}*X
-			//
-			dftPtr->constraintsNoneDataInfo.set_zero(src,
-								 numberWaveFunctions);
+			if(!dftParameters::cellLevelMassMatrixScaling)
+			  {
+			    //unscale cell level src vector
+			    for(unsigned int iDof = 0; iDof < numberDofs; ++iDof)
+			      {
+				const double scalingCoeff = d_sqrtMassVector.local_element(iDof);
+				if(d_globalArrayClassificationMap[iDof] == 1)
+				  {
+				    for(unsigned int iWave = 0; iWave < numberWaveFunctions; ++iWave)
+				      {
+					src.local_element(iDof*numberWaveFunctions+iWave) *= scalingCoeff;
+
+				      }
+				  }
+			      }
+
+			    std::vector<dealii::types::global_dof_index> cell_dof_indicesGlobal(d_numberNodesPerElement);
+			    for(unsigned int iMacroCell = 0; iMacroCell < d_numberMacroCells; ++iMacroCell)
+			      {
+				for(unsigned int iCell = 0; iCell < d_macroCellSubCellMap[iMacroCell]; ++iCell)
+				  {
+				    dftPtr->matrix_free_data.get_cell_iterator(iMacroCell,iCell)->get_dof_indices(cell_dof_indicesGlobal);
+				    for(unsigned int iNode = 0; iNode < d_numberNodesPerElement; ++iNode)
+				      {
+										
+					if(d_nodesPerCellClassificationMap[iNode] == 0)
+					  {
+					    dealii::types::global_dof_index localDoFId = dftPtr->matrix_free_data.get_vector_partitioner()->global_to_local(cell_dof_indicesGlobal[iNode]);
+					    const double scalingCoeff = d_sqrtMassVector.local_element(localDoFId);
+					    for(unsigned int iWave = 0; iWave < numberWaveFunctions; ++iWave)
+					      {
+						unsigned int indexVal = indexTemp+numberWaveFunctions*iNode;
+						cellSrcWaveFunctionMatrix[indexVal + iWave] *= scalingCoeff;
+					      }
+
+					  }
+
+				      }
+				    
+				  }
+			      }
+
+			    //
+			    //M^{-1/2}*H*M^{-1/2}*X
+			    //
+			    for(unsigned int i = 0; i < numberDofs; ++i)
+			      {
+				if(d_globalArrayClassificationMap[i] == 1)
+				  {
+				    dscal_(&numberWaveFunctions,
+					   &d_invSqrtMassVector.local_element(i),
+					   dst.begin()+i*numberWaveFunctions,
+					   &inc);
+				  }
+			      }
+			    
+			  }
+			else
+			  {
+			   
+			    dftPtr->constraintsNoneDataInfo.set_zero(src,
+								     numberWaveFunctions);
+			  }
 			  
 
 		}
