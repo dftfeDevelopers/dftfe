@@ -699,16 +699,23 @@ double energyCalculator::computeShadowPotentialEnergyExtendedLagrangian
 							 derCorrEnergyWithSigmaGradDenInput(num_quad_points_density);
 						 std::vector<double> sigmaWithInputGradDensity(num_quad_points_density);
 
+						 std::vector<double> gradXCDensityDotGradDensity(num_quad_points_density);             
+
 						 if(dftParameters::nonLinearCoreCorrection == true)
              {
                for (unsigned int q_point=0; q_point<num_quad_points_density; ++q_point)
                {
                  densityValueIn[q_point] = rhoInValues.find(cellElectronic->id())->second[q_point] + rhoCoreValues.find(cellElectronic->id())->second[q_point];
-                 const double gradRhoInX = (gradRhoInValues.find(cellElectronic->id())->second[3*q_point + 0])+(gradRhoCoreValues.find(cellElectronic->id())->second[3*q_point + 0]);
-                 const double gradRhoInY = (gradRhoInValues.find(cellElectronic->id())->second[3*q_point + 1])+(gradRhoCoreValues.find(cellElectronic->id())->second[3*q_point + 1]);
-                 const double gradRhoInZ = (gradRhoInValues.find(cellElectronic->id())->second[3*q_point + 2])+(gradRhoCoreValues.find(cellElectronic->id())->second[3*q_point + 2]);
-            
-                 sigmaWithInputGradDensity[q_point] = gradRhoInX*gradRhoInX + gradRhoInY*gradRhoInY + gradRhoInZ*gradRhoInZ;
+                 const double gradXCRhoInX = (gradRhoInValues.find(cellElectronic->id())->second[3*q_point + 0])+(gradRhoCoreValues.find(cellElectronic->id())->second[3*q_point + 0]);
+                 const double gradXCRhoInY = (gradRhoInValues.find(cellElectronic->id())->second[3*q_point + 1])+(gradRhoCoreValues.find(cellElectronic->id())->second[3*q_point + 1]);
+                 const double gradXCRhoInZ = (gradRhoInValues.find(cellElectronic->id())->second[3*q_point + 2])+(gradRhoCoreValues.find(cellElectronic->id())->second[3*q_point + 2]);
+           
+                 const double gradRhoInX = (gradRhoInValues.find(cellElectronic->id())->second[3*q_point + 0]);
+                 const double gradRhoInY = (gradRhoInValues.find(cellElectronic->id())->second[3*q_point + 1]);
+                 const double gradRhoInZ = (gradRhoInValues.find(cellElectronic->id())->second[3*q_point + 2]);
+
+                 sigmaWithInputGradDensity[q_point] = gradXCRhoInX*gradXCRhoInX + gradXCRhoInY*gradXCRhoInY + gradXCRhoInZ*gradXCRhoInZ;
+                 gradXCDensityDotGradDensity[q_point] = gradXCRhoInX*gradRhoInX + gradXCRhoInY*gradRhoInY + gradXCRhoInZ*gradRhoInZ;                 
                }
 
              }
@@ -721,6 +728,7 @@ double energyCalculator::computeShadowPotentialEnergyExtendedLagrangian
                  const double gradRhoInY = (gradRhoInValues.find(cellElectronic->id())->second[3*q_point + 1]);
                  const double gradRhoInZ = (gradRhoInValues.find(cellElectronic->id())->second[3*q_point + 2]);
                  sigmaWithInputGradDensity[q_point] = gradRhoInX*gradRhoInX + gradRhoInY*gradRhoInY + gradRhoInZ*gradRhoInZ;
+                 gradXCDensityDotGradDensity[q_point]=sigmaWithInputGradDensity[q_point];
                }
              }
 
@@ -734,7 +742,7 @@ double energyCalculator::computeShadowPotentialEnergyExtendedLagrangian
 						 {
 							 // Vxc computed with rhoIn
 							 const double Vxc=derExchEnergyWithInputDensity[q_point]+derCorrEnergyWithInputDensity[q_point];
-							 const double VxcGrad = 2.0*(derExchEnergyWithSigmaGradDenInput[q_point]+derCorrEnergyWithSigmaGradDenInput[q_point])*sigmaWithInputGradDensity[q_point];
+							 const double VxcGrad = 2.0*(derExchEnergyWithSigmaGradDenInput[q_point]+derCorrEnergyWithSigmaGradDenInput[q_point])*gradXCDensityDotGradDensity[q_point];
 
 							 excCorrPotentialTimesRhoIn+=(Vxc*(rhoInValues.find(cellElectronic->id())->second[q_point])+VxcGrad)*feValuesElectronic.JxW (q_point);
 

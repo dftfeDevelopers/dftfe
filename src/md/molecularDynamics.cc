@@ -328,7 +328,12 @@ namespace dftfe {
 				shadowKSRhoMin=dftPtr->d_rhoOutNodalValues;
 				if (dftParameters::useAtomicRhoXLBOMD)
         {
-          shadowKSRhoMin-=dftPtr->d_atomicRho;
+          dftPtr->l2ProjectionQuadDensityMinusAtomicDensity(dftPtr->d_matrixFreeDataPRefined,
+              dftPtr->d_constraintsRhoNodal,
+              dftPtr->d_densityDofHandlerIndexElectro,
+              dftPtr->d_densityQuadratureIdElectro,
+              *(dftPtr->rhoOutValues),
+              shadowKSRhoMin);           
         }
         
         shadowKSRhoMin.update_ghost_values();
@@ -679,32 +684,30 @@ namespace dftfe {
 
 							if (!(timeIndex ==startingTimeStep+1 && restartFlag==1))
 							{
-
-                //normalize shadowKSRhoMin
-                double charge = dftPtr->totalCharge(dftPtr->d_matrixFreeDataPRefined,
-                    shadowKSRhoMin);
-
-                if (dftParameters::useAtomicRhoXLBOMD)
-                  shadowKSRhoMin.add(-charge/dftPtr->d_domainVolume);
-                else
-                  shadowKSRhoMin *= ((double)dftPtr->numElectrons)/charge;
-
-                dftPtr->d_rhoInNodalValues=shadowKSRhoMin;
-                if (dftParameters::useAtomicRhoXLBOMD)
-                  dftPtr->d_rhoInNodalValues+=dftPtr->d_atomicRho;
-
-                dftPtr->d_rhoInNodalValues.update_ghost_values();
-
 								dftPtr->interpolateRhoNodalDataToQuadratureDataGeneral(dftPtr->d_matrixFreeDataPRefined,
                     dftPtr->d_densityDofHandlerIndexElectro,
                     dftPtr->d_densityQuadratureIdElectro,
-										dftPtr->d_rhoInNodalValues,
+										shadowKSRhoMin,
 										*(dftPtr->rhoInValues),
 										*(dftPtr->gradRhoInValues),
 										*(dftPtr->gradRhoInValues),
-										dftParameters::xcFamilyType=="GGA");
+										dftParameters::xcFamilyType=="GGA");	
 
-                dftPtr->normalizeRhoInQuadValues();
+								if (dftParameters::useAtomicRhoXLBOMD)
+                  dftPtr->addAtomicRhoQuadValuesGradients(*(dftPtr->rhoInValues),
+                                                  *(dftPtr->gradRhoInValues),
+                                                  dftParameters::xcFamilyType=="GGA");
+
+								dftPtr->normalizeRhoInQuadValues();
+
+                dftPtr->l2ProjectionQuadToNodal(dftPtr->d_matrixFreeDataPRefined,
+                    dftPtr->d_constraintsRhoNodal,
+                    dftPtr->d_densityDofHandlerIndexElectro,
+                    dftPtr->d_densityQuadratureIdElectro,
+                    *(dftPtr->rhoInValues),
+                    dftPtr->d_rhoInNodalValues);   
+
+                dftPtr->d_rhoInNodalValues.update_ghost_values();
 							}
 
 						dftPtr->solve(true);
@@ -712,7 +715,12 @@ namespace dftfe {
 						shadowKSRhoMin=dftPtr->d_rhoOutNodalValues;
             if (dftParameters::useAtomicRhoXLBOMD)
             {
-              shadowKSRhoMin-=dftPtr->d_atomicRho;
+              dftPtr->l2ProjectionQuadDensityMinusAtomicDensity(dftPtr->d_matrixFreeDataPRefined,
+                  dftPtr->d_constraintsRhoNodal,
+                  dftPtr->d_densityDofHandlerIndexElectro,
+                  dftPtr->d_densityQuadratureIdElectro,
+                  *(dftPtr->rhoOutValues),
+                  shadowKSRhoMin);           
             }
             shadowKSRhoMin.update_ghost_values();
 
@@ -831,19 +839,20 @@ namespace dftfe {
 						if (dftParameters::verbosity>=1)
 							pcout<<"Total Charge after Normalizing new approxDensityVec:  "<<dftPtr->totalCharge(dftPtr->d_matrixFreeDataPRefined,approxDensityContainer.back())<<std::endl;
 
-            dftPtr->d_rhoInNodalValues=approxDensityContainer.back();
-            if (dftParameters::useAtomicRhoXLBOMD)
-              dftPtr->d_rhoInNodalValues+=dftPtr->d_atomicRho;
-
-            dftPtr->d_rhoInNodalValues.update_ghost_values();
+					  approxDensityContainer.back().update_ghost_values();
 						dftPtr->interpolateRhoNodalDataToQuadratureDataGeneral(dftPtr->d_matrixFreeDataPRefined,
                 dftPtr->d_densityDofHandlerIndexElectro,
                 dftPtr->d_densityQuadratureIdElectro,
-								dftPtr->d_rhoInNodalValues,
+								approxDensityContainer.back(),
 								*(dftPtr->rhoInValues),
 								*(dftPtr->gradRhoInValues),
 								*(dftPtr->gradRhoInValues),
 								dftParameters::xcFamilyType=="GGA");	
+
+            if (dftParameters::useAtomicRhoXLBOMD)
+              dftPtr->addAtomicRhoQuadValuesGradients(*(dftPtr->rhoInValues),
+                                              *(dftPtr->gradRhoInValues),
+                                              dftParameters::xcFamilyType=="GGA");            
 
 						dftPtr->normalizeRhoInQuadValues();
 
@@ -871,7 +880,7 @@ namespace dftfe {
 								false);
 
             //Finite difference check for shadow potential forces
-            if (false)
+            if(false)
             {
               for(int iCharge = 0; iCharge < numberGlobalCharges; ++iCharge)
               {
@@ -896,22 +905,23 @@ namespace dftfe {
 			
               dftPtr->initAtomicRho();
 
-              dftPtr->d_rhoInNodalValues=approxDensityContainer.back();
-              if (dftParameters::useAtomicRhoXLBOMD)
-                dftPtr->d_rhoInNodalValues+=dftPtr->d_atomicRho;
+              approxDensityContainer.back().update_ghost_values();
 
-              dftPtr->d_rhoInNodalValues.update_ghost_values();
               dftPtr->interpolateRhoNodalDataToQuadratureDataGeneral(dftPtr->d_matrixFreeDataPRefined,
                   dftPtr->d_densityDofHandlerIndexElectro,
                   dftPtr->d_densityQuadratureIdElectro,
-                  dftPtr->d_rhoInNodalValues,
+                  approxDensityContainer.back(),
                   *(dftPtr->rhoInValues),
                   *(dftPtr->gradRhoInValues),
                   *(dftPtr->gradRhoInValues),
-                  dftParameters::xcFamilyType=="GGA");
+                  dftParameters::xcFamilyType=="GGA");	
+
+              if (dftParameters::useAtomicRhoXLBOMD)
+                dftPtr->addAtomicRhoQuadValuesGradients(*(dftPtr->rhoInValues),
+                                                *(dftPtr->gradRhoInValues),
+                                                dftParameters::xcFamilyType=="GGA");   	
 
               dftPtr->normalizeRhoInQuadValues();
-
 
               dftPtr->solve(true,
                   true,
@@ -941,19 +951,21 @@ namespace dftfe {
 
               dftPtr->initAtomicRho();
 
-              dftPtr->d_rhoInNodalValues=approxDensityContainer.back();
-              if (dftParameters::useAtomicRhoXLBOMD)
-                dftPtr->d_rhoInNodalValues+=dftPtr->d_atomicRho;
+              approxDensityContainer.back().update_ghost_values();
 
-              dftPtr->d_rhoInNodalValues.update_ghost_values();
               dftPtr->interpolateRhoNodalDataToQuadratureDataGeneral(dftPtr->d_matrixFreeDataPRefined,
                   dftPtr->d_densityDofHandlerIndexElectro,
                   dftPtr->d_densityQuadratureIdElectro,
-                  dftPtr->d_rhoInNodalValues,
+                  approxDensityContainer.back(),
                   *(dftPtr->rhoInValues),
                   *(dftPtr->gradRhoInValues),
                   *(dftPtr->gradRhoInValues),
-                  dftParameters::xcFamilyType=="GGA");
+                  dftParameters::xcFamilyType=="GGA");	
+
+              if (dftParameters::useAtomicRhoXLBOMD)
+                dftPtr->addAtomicRhoQuadValuesGradients(*(dftPtr->rhoInValues),
+                                                *(dftPtr->gradRhoInValues),
+                                                dftParameters::xcFamilyType=="GGA");    
 
               dftPtr->normalizeRhoInQuadValues();
 
@@ -984,11 +996,18 @@ namespace dftfe {
 						MPI_Barrier(MPI_COMM_WORLD);
 						xlbomdpost_time = MPI_Wtime(); 
 
-						shadowKSRhoMin=dftPtr->d_rhoOutNodalValues;
             if (dftParameters::useAtomicRhoXLBOMD)
             {
-              shadowKSRhoMin-=dftPtr->d_atomicRho;
+              dftPtr->l2ProjectionQuadDensityMinusAtomicDensity(dftPtr->d_matrixFreeDataPRefined,
+                  dftPtr->d_constraintsRhoNodal,
+                  dftPtr->d_densityDofHandlerIndexElectro,
+                  dftPtr->d_densityQuadratureIdElectro,
+                  *(dftPtr->rhoOutValues),
+                  shadowKSRhoMin);           
             }
+            else
+             shadowKSRhoMin=dftPtr->d_rhoOutNodalValues;
+
             shadowKSRhoMin.update_ghost_values();
 
 						rhoErrorVec=shadowKSRhoMin;
@@ -1052,21 +1071,22 @@ namespace dftfe {
                 else
                   peturbedApproxDensity *= ((double)dftPtr->numElectrons)/charge;
 
-                dftPtr->d_rhoInNodalValues=peturbedApproxDensity;
-                if (dftParameters::useAtomicRhoXLBOMD)
-                  dftPtr->d_rhoInNodalValues+=dftPtr->d_atomicRho;
-
-                dftPtr->d_rhoInNodalValues.update_ghost_values();
+                peturbedApproxDensity.update_ghost_values();
                 dftPtr->interpolateRhoNodalDataToQuadratureDataGeneral(dftPtr->d_matrixFreeDataPRefined,
                     dftPtr->d_densityDofHandlerIndexElectro,
                     dftPtr->d_densityQuadratureIdElectro,
-                    dftPtr->d_rhoInNodalValues,
+                    peturbedApproxDensity,
                     *(dftPtr->rhoInValues),
                     *(dftPtr->gradRhoInValues),
                     *(dftPtr->gradRhoInValues),
-                    dftParameters::xcFamilyType=="GGA");
+                    dftParameters::xcFamilyType=="GGA");	
 
-                dftPtr->normalizeRhoInQuadValues(); 
+                if (dftParameters::useAtomicRhoXLBOMD)
+                  dftPtr->addAtomicRhoQuadValuesGradients(*(dftPtr->rhoInValues),
+                                                  *(dftPtr->gradRhoInValues),
+                                                  dftParameters::xcFamilyType=="GGA");  
+
+                dftPtr->normalizeRhoInQuadValues();
 
                 if (dftParameters::verbosity>=1)
                   pcout<<"----------Start density perturbation solve with approx density= n+lamda*v1-------------"<<std::endl;
@@ -1083,12 +1103,18 @@ namespace dftfe {
                 if (dftParameters::verbosity>=1)
                   pcout<<"----------End density perturbation solve with approx density= n+lamda*v1-------------"<<std::endl;
 
-                temp1Vec=dftPtr->d_rhoOutNodalValues;
+                temp1Vec.reinit(shadowKSRhoMin);
                 if (dftParameters::useAtomicRhoXLBOMD)
                 {
-                  temp1Vec-=dftPtr->d_atomicRho;
+                  dftPtr->l2ProjectionQuadDensityMinusAtomicDensity(dftPtr->d_matrixFreeDataPRefined,
+                      dftPtr->d_constraintsRhoNodal,
+                      dftPtr->d_densityDofHandlerIndexElectro,
+                      dftPtr->d_densityQuadratureIdElectro,
+                      *(dftPtr->rhoOutValues),
+                      temp1Vec);           
                 }
-                temp1Vec.update_ghost_values();
+                else
+                  temp1Vec=dftPtr->d_rhoOutNodalValues;
 
                 peturbedApproxDensity=approxDensityContainer.back();
                 peturbedApproxDensity.add(-deltalambda,vcontainer[irank]);
@@ -1108,21 +1134,23 @@ namespace dftfe {
                 else
                   peturbedApproxDensity *= ((double)dftPtr->numElectrons)/charge;
 
-                dftPtr->d_rhoInNodalValues=peturbedApproxDensity;
-                if (dftParameters::useAtomicRhoXLBOMD)
-                  dftPtr->d_rhoInNodalValues+=dftPtr->d_atomicRho;
-
-                dftPtr->d_rhoInNodalValues.update_ghost_values();
+                peturbedApproxDensity.update_ghost_values();
                 dftPtr->interpolateRhoNodalDataToQuadratureDataGeneral(dftPtr->d_matrixFreeDataPRefined,
                     dftPtr->d_densityDofHandlerIndexElectro,
                     dftPtr->d_densityQuadratureIdElectro,
-                    dftPtr->d_rhoInNodalValues,
+                    peturbedApproxDensity,
                     *(dftPtr->rhoInValues),
                     *(dftPtr->gradRhoInValues),
                     *(dftPtr->gradRhoInValues),
-                    dftParameters::xcFamilyType=="GGA");
+                    dftParameters::xcFamilyType=="GGA");	
 
-                dftPtr->normalizeRhoInQuadValues(); 
+                if (dftParameters::useAtomicRhoXLBOMD)
+                  dftPtr->addAtomicRhoQuadValuesGradients(*(dftPtr->rhoInValues),
+                                                  *(dftPtr->gradRhoInValues),
+                                                  dftParameters::xcFamilyType=="GGA");   
+
+
+                dftPtr->normalizeRhoInQuadValues();
 
                 if (dftParameters::verbosity>=1)
                   pcout<<"----------Start density perturbation solve with approx density= n-lamda*v1-------------"<<std::endl;
@@ -1139,11 +1167,18 @@ namespace dftfe {
                 if (dftParameters::verbosity>=1)
                   pcout<<"----------End density perturbation solve with approx density= n-lamda*v1-------------"<<std::endl;
 
-                temp2Vec=dftPtr->d_rhoOutNodalValues;
+                temp2Vec.reinit(shadowKSRhoMin);
                 if (dftParameters::useAtomicRhoXLBOMD)
-                  temp2Vec-=dftPtr->d_atomicRho;
-
-                temp2Vec.update_ghost_values();
+                {
+                  dftPtr->l2ProjectionQuadDensityMinusAtomicDensity(dftPtr->d_matrixFreeDataPRefined,
+                      dftPtr->d_constraintsRhoNodal,
+                      dftPtr->d_densityDofHandlerIndexElectro,
+                      dftPtr->d_densityQuadratureIdElectro,
+                      *(dftPtr->rhoOutValues),
+                      temp2Vec);           
+                }
+                else
+                  temp2Vec=dftPtr->d_rhoOutNodalValues;
 
                 ucontainer[irank].reinit(shadowKSRhoMin);
                 ucontainer[irank]=0;
@@ -1203,31 +1238,30 @@ namespace dftfe {
 				{
           if (!(timeIndex ==startingTimeStep+1 && restartFlag==1))
           {
-              //normalize shadowKSRhoMin
-              double charge = dftPtr->totalCharge(dftPtr->d_matrixFreeDataPRefined,
-                  shadowKSRhoMin);
+            dftPtr->interpolateRhoNodalDataToQuadratureDataGeneral(dftPtr->d_matrixFreeDataPRefined,
+                dftPtr->d_densityDofHandlerIndexElectro,
+                dftPtr->d_densityQuadratureIdElectro,
+                shadowKSRhoMin,
+                *(dftPtr->rhoInValues),
+                *(dftPtr->gradRhoInValues),
+                *(dftPtr->gradRhoInValues),
+                dftParameters::xcFamilyType=="GGA");	
 
-              if (dftParameters::useAtomicRhoXLBOMD)
-                shadowKSRhoMin.add(-charge/dftPtr->d_domainVolume);
-              else
-                shadowKSRhoMin *= ((double)dftPtr->numElectrons)/charge;
+            if (dftParameters::useAtomicRhoXLBOMD)
+              dftPtr->addAtomicRhoQuadValuesGradients(*(dftPtr->rhoInValues),
+                                              *(dftPtr->gradRhoInValues),
+                                              dftParameters::xcFamilyType=="GGA"); 
 
+            dftPtr->normalizeRhoInQuadValues();
 
-              dftPtr->d_rhoInNodalValues=shadowKSRhoMin;
-              if (dftParameters::useAtomicRhoXLBOMD)
-                dftPtr->d_rhoInNodalValues+=dftPtr->d_atomicRho;
+            dftPtr->l2ProjectionQuadToNodal(dftPtr->d_matrixFreeDataPRefined,
+                dftPtr->d_constraintsRhoNodal,
+                dftPtr->d_densityDofHandlerIndexElectro,
+                dftPtr->d_densityQuadratureIdElectro,
+                *(dftPtr->rhoInValues),
+                dftPtr->d_rhoInNodalValues); 
 
-              dftPtr->d_rhoInNodalValues.update_ghost_values();
-              dftPtr->interpolateRhoNodalDataToQuadratureDataGeneral(dftPtr->d_matrixFreeDataPRefined,
-                  dftPtr->d_densityDofHandlerIndexElectro,
-                  dftPtr->d_densityQuadratureIdElectro,
-                  dftPtr->d_rhoInNodalValues,
-                  *(dftPtr->rhoInValues),
-                  *(dftPtr->gradRhoInValues),
-                  *(dftPtr->gradRhoInValues),
-                  dftParameters::xcFamilyType=="GGA");
-
-              dftPtr->normalizeRhoInQuadValues();
+            dftPtr->d_rhoInNodalValues.update_ghost_values();
           }
 
 					//
@@ -1235,12 +1269,18 @@ namespace dftfe {
 					//
 					dftPtr->solve(true);
 
-          shadowKSRhoMin=dftPtr->d_rhoOutNodalValues;
+					shadowKSRhoMin=dftPtr->d_rhoOutNodalValues;
           if (dftParameters::useAtomicRhoXLBOMD)
           {
-            shadowKSRhoMin-=dftPtr->d_atomicRho;
+            dftPtr->l2ProjectionQuadDensityMinusAtomicDensity(dftPtr->d_matrixFreeDataPRefined,
+                dftPtr->d_constraintsRhoNodal,
+                dftPtr->d_densityDofHandlerIndexElectro,
+                dftPtr->d_densityQuadratureIdElectro,
+                *(dftPtr->rhoOutValues),
+                shadowKSRhoMin);           
           }
-          shadowKSRhoMin.update_ghost_values();
+
+					shadowKSRhoMin.update_ghost_values();
 				}
 
 				double bomdpost_time;

@@ -1000,15 +1000,11 @@ namespace dftfe {
 
           if (dftParameters::reuseDensityGeoOpt && useAtomicRhoSplitDensityUpdateForGeoOpt && dftParameters::spinPolarized!=1)
           {
-            double charge = totalCharge(d_matrixFreeDataPRefined,
-                d_rhoOutNodalValuesSplit);
-
-            d_rhoOutNodalValuesSplit.add(-charge/d_domainVolume);
+            d_rhoOutNodalValuesSplit.add(-totalCharge(d_matrixFreeDataPRefined,
+                d_rhoOutNodalValuesSplit)/d_domainVolume);
 
             initAtomicRho();
-            d_rhoOutNodalValuesSplit+=d_atomicRho;
 
-            d_rhoOutNodalValuesSplit.update_ghost_values();
             interpolateRhoNodalDataToQuadratureDataGeneral(d_matrixFreeDataPRefined,
                 d_densityDofHandlerIndexElectro,
                 d_densityQuadratureIdElectro,
@@ -1017,7 +1013,21 @@ namespace dftfe {
                 *(gradRhoInValues),
                 *(gradRhoInValues),
                 dftParameters::xcFamilyType=="GGA");
+
+            addAtomicRhoQuadValuesGradients(*(rhoInValues),
+                                            *(gradRhoInValues),
+                                            dftParameters::xcFamilyType=="GGA");
+
             normalizeRhoInQuadValues();
+
+            l2ProjectionQuadToNodal(d_matrixFreeDataPRefined,
+                d_constraintsRhoNodal,
+                d_densityDofHandlerIndexElectro,
+                d_densityQuadratureIdElectro,
+                *rhoInValues,
+                d_rhoInNodalValues);
+
+            d_rhoInNodalValues.update_ghost_values();
           }
           else
           {

@@ -39,12 +39,12 @@ SCF iterations converged to the specified tolerance after: 12 iterations.
 
 Energy computations (Hartree) 
 -------------------
-             Total energy:         -19.76913805
+             Total energy:         -19.76905965
 
 Absolute values of ion forces (Hartree/Bohr)
 --------------------------------------------------------------------------------------------
-AtomId    0:  0.283262,0.000016,0.000020
-AtomId    1:  0.282755,0.000389,0.000406
+AtomId    0:  0.285800,0.000016,0.000020
+AtomId    1:  0.285293,0.000389,0.000406
 --------------------------------------------------------------------------------------------
 
 Finite element mesh information
@@ -65,12 +65,12 @@ SCF iterations converged to the specified tolerance after: 11 iterations.
 
 Energy computations (Hartree) 
 -------------------
-             Total energy:         -19.87540098
+             Total energy:         -19.87568841
 
 Absolute values of ion forces (Hartree/Bohr)
 --------------------------------------------------------------------------------------------
-AtomId    0:  0.104132,0.000012,0.000015
-AtomId    1:  0.104371,0.000275,0.000294
+AtomId    0:  0.105022,0.000012,0.000015
+AtomId    1:  0.105263,0.000274,0.000293
 --------------------------------------------------------------------------------------------
 
 Finite element mesh information
@@ -91,11 +91,11 @@ SCF iterations converged to the specified tolerance after: 9 iterations.
 
 Energy computations (Hartree) 
 -------------------
-             Total energy:         -19.85681277
+             Total energy:         -19.85732762
 
 Absolute values of ion forces (Hartree/Bohr)
 --------------------------------------------------------------------------------------------
-AtomId    0:  0.042362,0.000012,0.000015
-AtomId    1:  0.042113,0.000302,0.000320
+AtomId    0:  0.043177,0.000012,0.000015
+AtomId    1:  0.042926,0.000301,0.000320
 --------------------------------------------------------------------------------------------
 0.483750 0.000000 0.000000 0.516250 0.000000 0.000000 

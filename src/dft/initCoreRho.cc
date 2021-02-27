@@ -92,13 +92,7 @@ void dftClass<FEOrder,FEOrderElectro>::initCoreRho()
 		}
 	}
 
-  if(maxCoreRhoTail < d_coreRhoTail)
-    d_coreRhoTail = maxCoreRhoTail;
-
-  const double cellCenterCutOff=d_coreRhoTail+5.0;
-
-	if(dftParameters::verbosity>=2)
-		pcout << " d_coreRhoTail adjusted to " << d_coreRhoTail << std::endl ;
+  const double cellCenterCutOff=maxCoreRhoTail+5.0;
 
 	//
 	//Initialize rho
@@ -143,7 +137,7 @@ void dftClass<FEOrder,FEOrderElectro>::initCoreRho()
 
 					Point<3> atom(atomLocations[n][2],atomLocations[n][3],atomLocations[n][4]);
 					double distanceToAtom = quadPoint.distance(atom);
-					if(distanceToAtom <= d_coreRhoTail)
+					if(distanceToAtom <= outerMostPointCoreDen[atomLocations[n][0]])
 					{
 						rhoValueAtQuadPt += alglib::spline1dcalc(coreDenSpline[atomLocations[n][0]], distanceToAtom);
 					}
@@ -167,7 +161,7 @@ void dftClass<FEOrder,FEOrderElectro>::initCoreRho()
 
 					double distanceToAtom = quadPoint.distance(imageAtom);
           
-					if(distanceToAtom <= d_coreRhoTail)
+					if(distanceToAtom <= outerMostPointCoreDen[atomLocations[masterAtomId][0]])
 					{
 						rhoValueAtQuadPt += alglib::spline1dcalc(coreDenSpline[atomLocations[masterAtomId][0]], distanceToAtom);
 					}
@@ -246,7 +240,7 @@ void dftClass<FEOrder,FEOrderElectro>::initCoreRho()
             }
 
 						double value,radialDensityFirstDerivative,radialDensitySecondDerivative;
-						if(distanceToAtom <= d_coreRhoTail)
+						if(distanceToAtom <= outerMostPointCoreDen[atomLocations[iAtom][0]])
 						{
 
 							alglib::spline1ddiff(coreDenSpline[atomLocations[iAtom][0]],
@@ -348,7 +342,7 @@ void dftClass<FEOrder,FEOrderElectro>::initCoreRho()
             }
 
 						double value,radialDensityFirstDerivative,radialDensitySecondDerivative;
-						if(distanceToAtom <= d_coreRhoTail)
+						if(distanceToAtom <= outerMostPointCoreDen[atomLocations[masterAtomId][0]])
 						{
 
 							alglib::spline1ddiff(coreDenSpline[atomLocations[masterAtomId][0]],

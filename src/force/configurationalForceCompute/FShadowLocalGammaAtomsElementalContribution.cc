@@ -24,13 +24,17 @@ template<unsigned int FEOrder,unsigned int FEOrderElectro>
  const MatrixFree<3,double> & matrixFreeData,
  const unsigned int cell,
  const std::vector<VectorizedArray<double> > & derVxcWithRhoTimesRhoDiffQuads,
- const std::map<unsigned int,std::map<dealii::CellId, std::vector<double> > > & derRRhoAtomsQuadsSeparate,
+ const std::map<unsigned int,std::map<dealii::CellId, std::vector<double> > > & gradRhoAtomsQuadsSeparate,
  const std::vector<Tensor<2,C_DIM,VectorizedArray<double> > >  & der2ExcWithGradRhoQuads,
  const std::vector<Tensor<1,C_DIM,VectorizedArray<double> > >  & derVxcWithGradRhoQuads,
  const std::vector<VectorizedArray<double> >  & shadowKSRhoMinMinusRhoQuads,         
  const std::vector<Tensor<1,C_DIM,VectorizedArray<double> > >  & shadowKSGradRhoMinMinusGradRhoQuads,         
- const std::map<unsigned int,std::map<dealii::CellId, std::vector<double> > > & der2XRRhoAtomsQuadsSeparate,         
- const bool isXCGGA) 
+ const std::map<unsigned int,std::map<dealii::CellId, std::vector<double> > > & hessianRhoAtomsQuadsSeparate,       
+ const std::map<unsigned int,std::map<dealii::CellId, std::vector<double> > > & gradRhoCoreAtoms,
+ const std::map<unsigned int,std::map<dealii::CellId, std::vector<double> > > & hessianRhoCoreAtoms,
+ const bool isAtomicRhoSplitting, 
+ const bool isXCGGA,
+ const bool isNLCC) 
 {
   Tensor<1,C_DIM,VectorizedArray<double> > zeroTensor1;
   for (unsigned int idim=0; idim<C_DIM; idim++)
@@ -48,93 +52,219 @@ template<unsigned int FEOrder,unsigned int FEOrderElectro>
   const unsigned int numQuadPoints=forceEval.n_q_points;
   DoFHandler<C_DIM>::active_cell_iterator subCellPtr;
 
-  for (unsigned int iAtom = 0;iAtom < totalNumberAtoms; iAtom++)
-  {
-    std::vector<Tensor<1,C_DIM,VectorizedArray<double> > > derRRhoAtomQuads(numQuadPoints,zeroTensor1);
-		std::vector<Tensor<2,C_DIM,VectorizedArray<double> > > der2XRRhoAtomQuads(numQuadPoints,zeroTensor2);   
-
-    unsigned int atomId = iAtom;
-    if(iAtom >= numberGlobalAtoms)
+  if (isAtomicRhoSplitting)
+    for (unsigned int iAtom = 0;iAtom < totalNumberAtoms; iAtom++)
     {
-       const int imageId=iAtom-numberGlobalAtoms;
-       atomId=dftPtr->d_imageIdsTrunc[imageId];
-    }
+      std::vector<Tensor<1,C_DIM,VectorizedArray<double> > > gradRhoAtomQuads(numQuadPoints,zeroTensor1);
+      std::vector<Tensor<2,C_DIM,VectorizedArray<double> > > hessianRhoAtomQuads(numQuadPoints,zeroTensor2);   
 
-    bool isLocalDomainOutsideRhoTail= false;
-    if(derRRhoAtomsQuadsSeparate.find(iAtom)==derRRhoAtomsQuadsSeparate.end())
-       isLocalDomainOutsideRhoTail = true;
+      unsigned int atomId = iAtom;
+      if(iAtom >= numberGlobalAtoms)
+      {
+         const int imageId=iAtom-numberGlobalAtoms;
+         atomId=dftPtr->d_imageIdsTrunc[imageId];
+      }
+
+      bool isLocalDomainOutsideRhoTail= false;
+      if(gradRhoAtomsQuadsSeparate.find(iAtom)==gradRhoAtomsQuadsSeparate.end())
+         isLocalDomainOutsideRhoTail = true;
+      
+      if(isLocalDomainOutsideRhoTail)
+         continue;
+
+      bool isCellOutsideRhoTail = true;
+      for(unsigned int iSubCell = 0; iSubCell < numSubCells; ++iSubCell)
+      {
+         subCellPtr = matrixFreeData.get_cell_iterator(cell,iSubCell);
+         dealii::CellId subCellId = subCellPtr->id();
     
-    if(isLocalDomainOutsideRhoTail)
-       continue;
-
-    bool isCellOutsideRhoTail = true;
-    for(unsigned int iSubCell = 0; iSubCell < numSubCells; ++iSubCell)
-    {
-       subCellPtr = matrixFreeData.get_cell_iterator(cell,iSubCell);
-       dealii::CellId subCellId = subCellPtr->id();
-  
-       if(!isLocalDomainOutsideRhoTail)
-       {
-        std::map<dealii::CellId, std::vector<double> >::const_iterator it
-            =derRRhoAtomsQuadsSeparate.find(iAtom)->second.find(subCellId);
-        if(it!=derRRhoAtomsQuadsSeparate.find(iAtom)->second.end())
-        {
-          isCellOutsideRhoTail=false;
-          const std::vector<double> & temp=it->second;
-          for (unsigned int q=0; q<numQuadPoints; ++q)
+         //get grad rho for iAtom
+         if(!isLocalDomainOutsideRhoTail)
+         {
+          std::map<dealii::CellId, std::vector<double> >::const_iterator it
+              =gradRhoAtomsQuadsSeparate.find(iAtom)->second.find(subCellId);
+          if(it!=gradRhoAtomsQuadsSeparate.find(iAtom)->second.end())
           {
-             derRRhoAtomQuads[q][0][iSubCell]=temp[q*C_DIM];
-             derRRhoAtomQuads[q][1][iSubCell]=temp[q*C_DIM+1];
-             derRRhoAtomQuads[q][2][iSubCell]=temp[q*C_DIM+2];
-          }
-        }
-
-        if (isXCGGA)
-        {
-          std::map<dealii::CellId, std::vector<double> >::const_iterator it2
-              =der2XRRhoAtomsQuadsSeparate.find(iAtom)->second.find(subCellId);
-          if(it2!=der2XRRhoAtomsQuadsSeparate.find(iAtom)->second.end())
-          {
-            const std::vector<double> & temp=it2->second;
+            isCellOutsideRhoTail=false;
+            const std::vector<double> & temp=it->second;
             for (unsigned int q=0; q<numQuadPoints; ++q)
             {
-              for (unsigned int idim=0; idim<C_DIM; idim++)
-                for (unsigned int jdim=0; jdim<C_DIM; jdim++)
-                  der2XRRhoAtomQuads[q][idim][jdim][iSubCell]=(it2->second)[9*q+idim*C_DIM+jdim];
+               gradRhoAtomQuads[q][0][iSubCell]=temp[q*C_DIM];
+               gradRhoAtomQuads[q][1][iSubCell]=temp[q*C_DIM+1];
+               gradRhoAtomQuads[q][2][iSubCell]=temp[q*C_DIM+2];
             }
-          }          
-        }
-       }
-    }//subCell loop
+          }
 
-    if (isCellOutsideRhoTail)
-      continue;
+          if (isXCGGA)
+          {
+            std::map<dealii::CellId, std::vector<double> >::const_iterator it2
+                =hessianRhoAtomsQuadsSeparate.find(iAtom)->second.find(subCellId);
+            if(it2!=hessianRhoAtomsQuadsSeparate.find(iAtom)->second.end())
+            {
+              const std::vector<double> & temp=it2->second;
+              for (unsigned int q=0; q<numQuadPoints; ++q)
+              {
+                for (unsigned int idim=0; idim<C_DIM; idim++)
+                  for (unsigned int jdim=0; jdim<C_DIM; jdim++)
+                    hessianRhoAtomQuads[q][idim][jdim][iSubCell]=(it2->second)[9*q+idim*C_DIM+jdim];
+              }
+            }          
+          }
+         }
+      }//subCell loop
 
-    for(unsigned int q=0; q<numQuadPoints; ++q)
-    {
-      if (isXCGGA)
+      if (isCellOutsideRhoTail)
+        continue;
+
+      for(unsigned int q=0; q<numQuadPoints; ++q)
       {
-				forceEval.submit_value(derVxcWithRhoTimesRhoDiffQuads[q]*derRRhoAtomQuads[q]
-						+shadowKSGradRhoMinMinusGradRhoQuads[q]*(der2ExcWithGradRhoQuads[q]*der2XRRhoAtomQuads[q])
-						+shadowKSGradRhoMinMinusGradRhoQuads[q]*outer_product(derVxcWithGradRhoQuads[q],derRRhoAtomQuads[q])
-						+shadowKSRhoMinMinusRhoQuads[q]*derVxcWithGradRhoQuads[q]*der2XRRhoAtomQuads[q],
-						q);        
-      }
-      else
-        forceEval.submit_value(derVxcWithRhoTimesRhoDiffQuads[q]*derRRhoAtomQuads[q],q);
-    }
-    Tensor<1,C_DIM,VectorizedArray<double> > forceContributionLocalGammaiAtom
-						 = forceEval.integrate_value();
+        if (isXCGGA)
+        {
+          Tensor<1,3,VectorizedArray<double> > temp;
+          for (unsigned int i=0; i<3;i++)
+          {
+            temp[i]=make_vectorized_array(0.0);
+            for (unsigned int j=0; j<3;j++)   
+               for (unsigned int k=0; k<3;k++)
+                 temp[i]+=shadowKSGradRhoMinMinusGradRhoQuads[q][j]*der2ExcWithGradRhoQuads[q][j][k]*hessianRhoAtomQuads[q][k][i];
+              
+            for (unsigned int j=0; j<3;j++)                 
+               temp[i]+=shadowKSGradRhoMinMinusGradRhoQuads[q][j]*derVxcWithGradRhoQuads[q][j]*gradRhoAtomQuads[q][i]
+                      +shadowKSRhoMinMinusRhoQuads[q]*derVxcWithGradRhoQuads[q][j]*hessianRhoAtomQuads[q][j][i];
+          }         
 
-    if(forceContributionLocalGammaAtoms.find(atomId)==forceContributionLocalGammaAtoms.end())
-       forceContributionLocalGammaAtoms[atomId]=std::vector<double>(C_DIM,0.0);
-    for(unsigned int iSubCell=0; iSubCell<numSubCells; ++iSubCell)
-       for(unsigned int idim=0; idim<C_DIM; idim++)
-       {
-         forceContributionLocalGammaAtoms[atomId][idim]+=
-	       forceContributionLocalGammaiAtom[idim][iSubCell];
-       }
-  }//iAtom loop
+          forceEval.submit_value(-derVxcWithRhoTimesRhoDiffQuads[q]*gradRhoAtomQuads[q]-temp,q);  
+
+          /*
+          forceEval.submit_value(-derVxcWithRhoTimesRhoDiffQuads[q]*gradRhoAtomQuads[q]
+              -shadowKSGradRhoMinMinusGradRhoQuads[q]*(der2ExcWithGradRhoQuads[q]*hessianRhoAtomQuads[q])
+              -shadowKSGradRhoMinMinusGradRhoQuads[q]*outer_product(derVxcWithGradRhoQuads[q],gradRhoAtomQuads[q])
+              -shadowKSRhoMinMinusRhoQuads[q]*derVxcWithGradRhoQuads[q]*hessianRhoAtomQuads[q],
+              q);  
+          */
+        }
+        else
+          forceEval.submit_value(-derVxcWithRhoTimesRhoDiffQuads[q]*gradRhoAtomQuads[q],q);
+      }
+      Tensor<1,C_DIM,VectorizedArray<double> > forceContributionLocalGammaiAtom
+               = forceEval.integrate_value();
+
+      if(forceContributionLocalGammaAtoms.find(atomId)==forceContributionLocalGammaAtoms.end())
+         forceContributionLocalGammaAtoms[atomId]=std::vector<double>(C_DIM,0.0);
+      for(unsigned int iSubCell=0; iSubCell<numSubCells; ++iSubCell)
+         for(unsigned int idim=0; idim<C_DIM; idim++)
+         {
+           forceContributionLocalGammaAtoms[atomId][idim]+=
+           forceContributionLocalGammaiAtom[idim][iSubCell];
+         }
+    }//iAtom loop
+
+  if (isNLCC)
+    for (unsigned int iAtom = 0;iAtom < totalNumberAtoms; iAtom++)
+    {
+      std::vector<Tensor<1,C_DIM,VectorizedArray<double> > > gradRhoCoreAtomQuads(numQuadPoints,zeroTensor1);
+      std::vector<Tensor<2,C_DIM,VectorizedArray<double> > > hessianRhoCoreAtomQuads(numQuadPoints,zeroTensor2);   
+
+      unsigned int atomId = iAtom;
+      if(iAtom >= numberGlobalAtoms)
+      {
+         const int imageId=iAtom-numberGlobalAtoms;
+         atomId=dftPtr->d_imageIdsTrunc[imageId];
+      }
+
+      bool isLocalDomainOutsideRhoCoreTail= false;
+      if(gradRhoCoreAtoms.find(iAtom)==gradRhoCoreAtoms.end())
+         isLocalDomainOutsideRhoCoreTail = true;
+      
+      if(isLocalDomainOutsideRhoCoreTail)
+         continue;
+
+      bool isCellOutsideRhoCoreTail = true;
+      for(unsigned int iSubCell = 0; iSubCell < numSubCells; ++iSubCell)
+      {
+         subCellPtr = matrixFreeData.get_cell_iterator(cell,iSubCell);
+         dealii::CellId subCellId = subCellPtr->id();
+    
+         //get grad rho for iAtom
+         if(!isLocalDomainOutsideRhoCoreTail)
+         {
+          std::map<dealii::CellId, std::vector<double> >::const_iterator it
+              =gradRhoCoreAtoms.find(iAtom)->second.find(subCellId);
+          if(it!=gradRhoCoreAtoms.find(iAtom)->second.end())
+          {
+            isCellOutsideRhoCoreTail=false;
+            const std::vector<double> & temp=it->second;
+            for (unsigned int q=0; q<numQuadPoints; ++q)
+            {
+               gradRhoCoreAtomQuads[q][0][iSubCell]=temp[q*C_DIM];
+               gradRhoCoreAtomQuads[q][1][iSubCell]=temp[q*C_DIM+1];
+               gradRhoCoreAtomQuads[q][2][iSubCell]=temp[q*C_DIM+2];
+            }
+          }
+
+          if (isXCGGA)
+          {
+            std::map<dealii::CellId, std::vector<double> >::const_iterator it2
+                =hessianRhoCoreAtoms.find(iAtom)->second.find(subCellId);
+            if(it2!=hessianRhoCoreAtoms.find(iAtom)->second.end())
+            {
+              const std::vector<double> & temp=it2->second;
+              for (unsigned int q=0; q<numQuadPoints; ++q)
+              {
+                for (unsigned int idim=0; idim<C_DIM; idim++)
+                  for (unsigned int jdim=0; jdim<C_DIM; jdim++)
+                    hessianRhoCoreAtomQuads[q][idim][jdim][iSubCell]=(it2->second)[9*q+idim*C_DIM+jdim];
+              }
+            }          
+          }
+         }
+      }//subCell loop
+
+      if (isCellOutsideRhoCoreTail)
+        continue;
+
+      for(unsigned int q=0; q<numQuadPoints; ++q)
+      {
+        if (isXCGGA)
+        {
+          Tensor<1,3,VectorizedArray<double> > temp;
+          for (unsigned int i=0; i<3;i++)
+          {
+            temp[i]=make_vectorized_array(0.0);
+            for (unsigned int j=0; j<3;j++)   
+               for (unsigned int k=0; k<3;k++)
+                 temp[i]+=shadowKSGradRhoMinMinusGradRhoQuads[q][j]*der2ExcWithGradRhoQuads[q][j][k]*hessianRhoCoreAtomQuads[q][k][i];
+              
+            for (unsigned int j=0; j<3;j++)                 
+               temp[i]+=shadowKSGradRhoMinMinusGradRhoQuads[q][j]*derVxcWithGradRhoQuads[q][j]*gradRhoCoreAtomQuads[q][i]
+                      +shadowKSRhoMinMinusRhoQuads[q]*derVxcWithGradRhoQuads[q][j]*hessianRhoCoreAtomQuads[q][j][i];
+          }         
+
+          forceEval.submit_value(-derVxcWithRhoTimesRhoDiffQuads[q]*gradRhoCoreAtomQuads[q]-temp,q);  
+
+          /*
+          forceEval.submit_value(-derVxcWithRhoTimesRhoDiffQuads[q]*gradRhoCoreAtomQuads[q]
+              -shadowKSGradRhoMinMinusGradRhoQuads[q]*(der2ExcWithGradRhoQuads[q]*hessianRhoCoreAtomQuads[q])
+              -shadowKSGradRhoMinMinusGradRhoQuads[q]*outer_product(derVxcWithGradRhoQuads[q],gradRhoCoreAtomQuads[q])
+              -shadowKSRhoMinMinusRhoQuads[q]*derVxcWithGradRhoQuads[q]*hessianRhoCoreAtomQuads[q],
+              q);    
+          */
+        }
+        else
+          forceEval.submit_value(-derVxcWithRhoTimesRhoDiffQuads[q]*gradRhoCoreAtomQuads[q],q);
+      }
+      Tensor<1,C_DIM,VectorizedArray<double> > forceContributionLocalGammaiAtom
+               = forceEval.integrate_value();
+
+      if(forceContributionLocalGammaAtoms.find(atomId)==forceContributionLocalGammaAtoms.end())
+         forceContributionLocalGammaAtoms[atomId]=std::vector<double>(C_DIM,0.0);
+      for(unsigned int iSubCell=0; iSubCell<numSubCells; ++iSubCell)
+         for(unsigned int idim=0; idim<C_DIM; idim++)
+         {
+           forceContributionLocalGammaAtoms[atomId][idim]+=
+           forceContributionLocalGammaiAtom[idim][iSubCell];
+         }
+    }//iAtom loop  
 }
 
 template<unsigned int FEOrder,unsigned int FEOrderElectro>
@@ -143,8 +273,8 @@ void forceClass<FEOrder,FEOrderElectro>::FShadowLocalGammaAtomsElementalContribu
 	      FEEvaluation<C_DIM,1,C_num1DQuad<C_rhoNodalPolyOrder<FEOrder,FEOrderElectro>()>(),C_DIM>  & forceEval,
 	      const MatrixFree<3,double> & matrixFreeData,
 	      const unsigned int cell,
-	      const std::vector<VectorizedArray<double> > & phiRhoMinusApproxRhoElectroQuads,
-        const std::map<unsigned int,std::map<dealii::CellId, std::vector<double> > > & derRRhoAtomsQuadsSeparate)
+	      const std::vector<Tensor<1,C_DIM,VectorizedArray<double> > > & gradPhiRhoMinusApproxRhoElectroQuads,
+        const std::map<unsigned int,std::map<dealii::CellId, std::vector<double> > > & rhoAtomsQuadsSeparate)
 {
   Tensor<1,C_DIM,VectorizedArray<double> > zeroTensor1;
   for (unsigned int idim=0; idim<C_DIM; idim++)
@@ -158,7 +288,7 @@ void forceClass<FEOrder,FEOrderElectro>::FShadowLocalGammaAtomsElementalContribu
 
   for (unsigned int iAtom = 0;iAtom < totalNumberAtoms; iAtom++)
   {
-    std::vector<Tensor<1,C_DIM,VectorizedArray<double> > > derRRhoAtomQuads(numQuadPoints,zeroTensor1);
+    std::vector<VectorizedArray<double> > rhoAtomQuads(numQuadPoints,make_vectorized_array(0.0));
     
     unsigned int atomId = iAtom;
     if(iAtom >= numberGlobalAtoms)
@@ -168,7 +298,7 @@ void forceClass<FEOrder,FEOrderElectro>::FShadowLocalGammaAtomsElementalContribu
     }
 
     bool isLocalDomainOutsideRhoTail= false;
-    if(derRRhoAtomsQuadsSeparate.find(iAtom)==derRRhoAtomsQuadsSeparate.end())
+    if(rhoAtomsQuadsSeparate.find(iAtom)==rhoAtomsQuadsSeparate.end())
        isLocalDomainOutsideRhoTail = true;
     
     if(isLocalDomainOutsideRhoTail)
@@ -184,16 +314,14 @@ void forceClass<FEOrder,FEOrderElectro>::FShadowLocalGammaAtomsElementalContribu
        if(!isLocalDomainOutsideRhoTail)
        {
         std::map<dealii::CellId, std::vector<double> >::const_iterator it
-            =derRRhoAtomsQuadsSeparate.find(iAtom)->second.find(subCellId);
-        if(it!=derRRhoAtomsQuadsSeparate.find(iAtom)->second.end())
+            =rhoAtomsQuadsSeparate.find(iAtom)->second.find(subCellId);
+        if(it!=rhoAtomsQuadsSeparate.find(iAtom)->second.end())
         {
           isCellOutsideRhoTail=false;
           const std::vector<double> & temp=it->second;
           for (unsigned int q=0; q<numQuadPoints; ++q)
           {
-             derRRhoAtomQuads[q][0][iSubCell]=temp[q*C_DIM];
-             derRRhoAtomQuads[q][1][iSubCell]=temp[q*C_DIM+1];
-             derRRhoAtomQuads[q][2][iSubCell]=temp[q*C_DIM+2];
+             rhoAtomQuads[q][iSubCell]=temp[q];
           }
         }
        }
@@ -204,7 +332,7 @@ void forceClass<FEOrder,FEOrderElectro>::FShadowLocalGammaAtomsElementalContribu
 
     for(unsigned int q=0; q<numQuadPoints; ++q)
     {
-      forceEval.submit_value(phiRhoMinusApproxRhoElectroQuads[q]*derRRhoAtomQuads[q],q);
+      forceEval.submit_value(gradPhiRhoMinusApproxRhoElectroQuads[q]*rhoAtomQuads[q],q);
     }
     Tensor<1,C_DIM,VectorizedArray<double> > forceContributionLocalGammaiAtom
 						 = forceEval.integrate_value();
