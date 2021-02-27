@@ -156,21 +156,40 @@ void kohnShamDFTOperatorClass<FEOrder,FEOrderElectro>::computeHamiltonianTimesX(
 			const unsigned int atomId = dftPtr->d_nonLocalAtomIdsInElement[iElem][iAtom];
 			const unsigned int numberPseudoWaveFunctions = dftPtr->d_numberPseudoAtomicWaveFunctions[atomId];
 			const int nonZeroElementMatrixId = dftPtr->d_sparsityPattern[atomId][iElem];
-			    
 
-			dgemm_(&transA,
-			       &transB,
-			       &numberWaveFunctions,
-			       &numberPseudoWaveFunctions,
-			       &d_numberNodesPerElement,
-			       &alpha,
-			       &cellSrcWaveFunctionMatrix[indexVal],
-			       &numberWaveFunctions,
-			       &dftPtr->d_nonLocalProjectorElementMatrices[atomId][nonZeroElementMatrixId][0],
-			       &d_numberNodesPerElement,
-			       &beta,
-			       &projectorKetTimesVector[atomId][0],
-			       &numberWaveFunctions);
+			if(dftParameters::cellLevelMassMatrixScaling)
+			  {
+			    dgemm_(&transA,
+				   &transB,
+				   &numberWaveFunctions,
+				   &numberPseudoWaveFunctions,
+				   &d_numberNodesPerElement,
+				   &alpha,
+				   &cellSrcWaveFunctionMatrix[indexVal],
+				   &numberWaveFunctions,
+				   &dftPtr->d_nonLocalProjectorElementMatricesCellMassMatrixScaled[atomId][nonZeroElementMatrixId][0],
+				   &d_numberNodesPerElement,
+				   &beta,
+				   &projectorKetTimesVector[atomId][0],
+				   &numberWaveFunctions);
+
+			  }
+			else
+			  {
+			    dgemm_(&transA,
+				   &transB,
+				   &numberWaveFunctions,
+				   &numberPseudoWaveFunctions,
+				   &d_numberNodesPerElement,
+				   &alpha,
+				   &cellSrcWaveFunctionMatrix[indexVal],
+				   &numberWaveFunctions,
+				   &dftPtr->d_nonLocalProjectorElementMatrices[atomId][nonZeroElementMatrixId][0],
+				   &d_numberNodesPerElement,
+				   &beta,
+				   &projectorKetTimesVector[atomId][0],
+				   &numberWaveFunctions);
+			  }
 		      }
 
 
@@ -274,20 +293,39 @@ void kohnShamDFTOperatorClass<FEOrder,FEOrderElectro>::computeHamiltonianTimesX(
 			const unsigned int numberPseudoWaveFunctions = dftPtr->d_numberPseudoAtomicWaveFunctions[atomId];
 			const int nonZeroElementMatrixId = dftPtr->d_sparsityPattern[atomId][iElem];
 		    
-
-			dgemm_(&transA1,
-			       &transB1,
-			       &numberWaveFunctions,
-			       &d_numberNodesPerElement,
-			       &numberPseudoWaveFunctions,
-			       &alpha2,
-			       &projectorKetTimesVector[atomId][0],
-			       &numberWaveFunctions,
-			       &dftPtr->d_nonLocalProjectorElementMatricesTranspose[atomId][nonZeroElementMatrixId][0],
-			       &numberPseudoWaveFunctions,
-			       &beta1,
-			       &cellHamMatrixTimesWaveMatrix[0],
-			       &numberWaveFunctions);
+			if(dftParameters::cellLevelMassMatrixScaling)
+			  {
+			    
+			    dgemm_(&transA1,
+				   &transB1,
+				   &numberWaveFunctions,
+				   &d_numberNodesPerElement,
+				   &numberPseudoWaveFunctions,
+				   &alpha2,
+				   &projectorKetTimesVector[atomId][0],
+				   &numberWaveFunctions,
+				   &dftPtr->d_nonLocalProjectorElementMatricesTransposeCellMassMatrixScaled[atomId][nonZeroElementMatrixId][0],
+				   &numberPseudoWaveFunctions,
+				   &beta1,
+				   &cellHamMatrixTimesWaveMatrix[0],
+				   &numberWaveFunctions);
+			  }
+			else
+			  {
+			    dgemm_(&transA1,
+				   &transB1,
+				   &numberWaveFunctions,
+				   &d_numberNodesPerElement,
+				   &numberPseudoWaveFunctions,
+				   &alpha2,
+				   &projectorKetTimesVector[atomId][0],
+				   &numberWaveFunctions,
+				   &dftPtr->d_nonLocalProjectorElementMatricesTranspose[atomId][nonZeroElementMatrixId][0],
+				   &numberPseudoWaveFunctions,
+				   &beta1,
+				   &cellHamMatrixTimesWaveMatrix[0],
+				   &numberWaveFunctions);
+			  }
 
 		      }
 		  }
