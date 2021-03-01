@@ -367,12 +367,7 @@ namespace dftfe{
 						      const double scalar = 1.0) const;
 
 
-	        void computeNonLocalHamiltonianTimesX(const distributedCPUVec<double> & src,
-						      std::vector<dataTypes::number>  & cellSrcWaveFunctionMatrix,
-						      const unsigned int numberWaveFunctions,
-						      distributedCPUVec<double>       & dst,
-						      std::vector<dataTypes::number>  & cellDstWaveFunctionMatrix,
-						      const double scalar=1.0) const;
+	
 
 	  
 
@@ -387,10 +382,10 @@ namespace dftfe{
 		 * @param numberWaveFunctions Number of wavefunctions at a given node.
 		 * @param dst Vector containing matrix times given multi-vectors product
 		 */
-		void computeNonLocalHamiltonianTimesXBatchGEMM(const distributedCPUVec<dataTypes::number> & src,
-				const unsigned int numberWaveFunctions,
-							       distributedCPUVec<dataTypes::number> & dst,
-							       const double scalar=1.0) const;
+	  void computeNonLocalHamiltonianTimesXBatchGEMM(const distributedCPUVec<dataTypes::number> & src,
+							 const unsigned int numberWaveFunctions,
+							 distributedCPUVec<dataTypes::number> & dst,
+							 const double scalar=1.0) const;
 
 
 #endif
@@ -403,7 +398,7 @@ namespace dftfe{
 		distributedCPUVec<double> d_invSqrtMassVector,d_sqrtMassVector;
 
 		dealii::Table<2, dealii::VectorizedArray<double> > vEff;
-    dealii::Table<2, dealii::VectorizedArray<double> > d_vEffExternalPotCorr;
+	        dealii::Table<2, dealii::VectorizedArray<double> > d_vEffExternalPotCorr;
 		dealii::Table<2, dealii::Tensor<1,3,dealii::VectorizedArray<double> > > derExcWithSigmaTimesGradRho;
 
 

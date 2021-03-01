@@ -1024,17 +1024,17 @@ namespace dftfe {
 			std::vector<std::vector<double> > d_localVselfs;
 
 			//nonlocal pseudopotential related objects used only for pseudopotential calculation
-      std::map<dealii::CellId, std::vector<double> > d_rhoCore;
+		  std::map<dealii::CellId, std::vector<double> > d_rhoCore;
 
-      std::map<dealii::CellId, std::vector<double> > d_gradRhoCore;
+		  std::map<dealii::CellId, std::vector<double> > d_gradRhoCore;
 
-      std::map<unsigned int,std::map<dealii::CellId, std::vector<double> > > d_gradRhoCoreAtoms;
+		  std::map<unsigned int,std::map<dealii::CellId, std::vector<double> > > d_gradRhoCoreAtoms;
 
-      std::map<dealii::CellId, std::vector<double> > d_hessianRhoCore;
+		  std::map<dealii::CellId, std::vector<double> > d_hessianRhoCore;
 
-      std::map<unsigned int,std::map<dealii::CellId, std::vector<double> > > d_hessianRhoCoreAtoms;
+		  std::map<unsigned int,std::map<dealii::CellId, std::vector<double> > > d_hessianRhoCoreAtoms;
 
-      double d_coreRhoTail = 8.0;
+		  double d_coreRhoTail = 8.0;
 
 			//
 			// Store the map between the "pseudo" wave function Id and the function Id details (i.e., global splineId, l quantum number, m quantum number)
@@ -1066,7 +1066,7 @@ namespace dftfe {
 			IndexSet d_ghostProjectorIdsCurrentProcess;
 			std::map<std::pair<unsigned int,unsigned int>, unsigned int> d_projectorIdsNumberingMapCurrentProcess;
 #ifdef USE_COMPLEX
-			std::vector<std::vector<std::vector<std::vector<std::complex<double> > > > > d_nonLocalProjectorElementMatrices,d_nonLocalProjectorElementMatricesConjugate,d_nonLocalProjectorElementMatricesTranspose;
+		  std::vector<std::vector<std::vector<std::vector<std::complex<double> > > > > d_nonLocalProjectorElementMatrices,d_nonLocalProjectorElementMatricesConjugate,d_nonLocalProjectorElementMatricesTranspose,d_nonLocalProjectorElementMatricesConjugateCellMassMatrixScaled,d_nonLocalProjectorElementMatricesTransposeCellMassMatrixScaled;
 
 
 			std::vector<distributedCPUVec<std::complex<double> > > d_projectorKetTimesVectorPar;
@@ -1076,7 +1076,7 @@ namespace dftfe {
 			/// layout for every nonLocalHamiltionan times wavefunction computation
 			distributedCPUVec<std::complex<double> >  d_projectorKetTimesVectorParFlattened;
 #else
-			std::vector<std::vector<std::vector<double> > > d_nonLocalProjectorElementMatrices,d_nonLocalProjectorElementMatricesConjugate,d_nonLocalProjectorElementMatricesTranspose;
+		  std::vector<std::vector<std::vector<double> > > d_nonLocalProjectorElementMatrices,d_nonLocalProjectorElementMatricesConjugate,d_nonLocalProjectorElementMatricesTranspose,d_nonLocalProjectorElementMatricesTransposeCellMassMatrixScaled,d_nonLocalProjectorElementMatricesCellMassMatrixScaled;
 
 
 			std::vector<distributedCPUVec<double> > d_projectorKetTimesVectorPar;
