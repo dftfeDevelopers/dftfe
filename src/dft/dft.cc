@@ -942,19 +942,23 @@ namespace dftfe {
 		}
 
 	template<unsigned int FEOrder,unsigned int FEOrderElectro>
-		void dftClass<FEOrder,FEOrderElectro>::initNoRemesh(const bool updateImagesAndKPoints,
+		void dftClass<FEOrder,FEOrderElectro>::initNoRemesh(const bool updateImagesAndKPointsAndVselfBins,
+        const bool updateSmearedChargeWidths,
 				const bool useSingleAtomSolutionOverride,
 				const bool useAtomicRhoSplitDensityUpdateForGeoOpt)
 		{
 			computingTimerStandard.enter_section("KSDFT problem initialization");
-			if(updateImagesAndKPoints)
+			if(updateImagesAndKPointsAndVselfBins)
       {
 				initImageChargesUpdateKPoints();
 
-        calculateNearestAtomDistances(); 
+        if (updateSmearedChargeWidths)
+        {
+          calculateNearestAtomDistances(); 
 
-        if (dftParameters::smearedNuclearCharges)
-          calculateSmearedChargeWidths();
+          if (dftParameters::smearedNuclearCharges)
+            calculateSmearedChargeWidths();
+        }
       }
 
 			//
@@ -966,7 +970,7 @@ namespace dftfe {
 
 
       // false option reinitializes vself bins from scratch wheras true option only updates the boundary conditions
-      const bool updateOnlyBinsBc=!updateImagesAndKPoints;
+      const bool updateOnlyBinsBc=!updateImagesAndKPointsAndVselfBins;
       initBoundaryConditions(updateOnlyBinsBc);
 
 			MPI_Barrier(MPI_COMM_WORLD);
@@ -1072,7 +1076,7 @@ namespace dftfe {
 
 			dftUtils::transformDomainBoundingVectors(d_domainBoundingVectors,deformationGradient);
 
-			initNoRemesh(true,false,false);
+			initNoRemesh(true,true,false,false);
 		}
 
 
