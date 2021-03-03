@@ -142,6 +142,7 @@ void dftClass<FEOrder,FEOrderElectro>::computeElementalOVProjectorKets()
 	if(dftParameters::cellLevelMassMatrixScaling)
 	  {
 	    d_nonLocalProjectorElementMatricesTransposeCellMassMatrixScaled.resize(numberNonLocalAtoms);
+            d_nonLocalProjectorElementMatricesConjugateCellMassMatrixScaled.resize(numberNonLocalAtoms);
 	    d_nonLocalProjectorElementMatricesCellMassMatrixScaled.resize(numberNonLocalAtoms);
 	  }
 

@@ -384,7 +384,7 @@ namespace dftfe{
 								                         BVec,
 								                         std::ceil(adaptiveOrder),
 								                         d_lowerBoundUnWantedSpectrum,
-								                         upperBoundUnwantedSpectrum,
+								                         d_upperBoundUnWantedSpectrum,
 								                         d_lowerBoundWantedSpectrum);*/
 						linearAlgebraOperations::chebyshevFilterOpt(operatorMatrix,
 											    eigenVectorsFlattenedArrayBlock,
@@ -405,17 +405,17 @@ namespace dftfe{
 					                                             BVec,
 					                                             chebyshevOrder,
 					                                             d_lowerBoundUnWantedSpectrum,
-					                                             upperBoundUnwantedSpectrum,
+					                                             d_upperBoundUnWantedSpectrum,
 					                                             d_lowerBoundWantedSpectrum);*/
 					    
 					 linearAlgebraOperations::chebyshevFilterOpt(operatorMatrix,
-											eigenVectorsFlattenedArrayBlock,
-											cellWaveFunctionMatrix,
-											BVec,
-											chebyshevOrder,
-											d_lowerBoundUnWantedSpectrum,
-											d_upperBoundUnWantedSpectrum,
-											d_lowerBoundWantedSpectrum);
+									             eigenVectorsFlattenedArrayBlock,
+										     cellWaveFunctionMatrix,
+										     BVec,
+									             chebyshevOrder,
+									             d_lowerBoundUnWantedSpectrum,
+									             d_upperBoundUnWantedSpectrum,
+									             d_lowerBoundWantedSpectrum);
 					  }
 					  
 					computing_timer.exit_section("Chebyshev filtering opt");

@@ -928,16 +928,16 @@ namespace dftfe {
 					  {
 					    dealii::types::global_dof_index localDoFId = dftPtr->matrix_free_data.get_vector_partitioner()->global_to_local(cell_dof_indicesGlobal[iNode]);
 					    const double scalingCoeff = d_invSqrtMassVector.local_element(localDoFId);
+                                            unsigned int indexVal = indexTemp+numberWaveFunctions*iNode;  
 					    for(unsigned int iWave = 0; iWave < numberWaveFunctions; ++iWave)
 					      {
-						unsigned int indexVal = indexTemp+numberWaveFunctions*iNode;
 						cellSrcWaveFunctionMatrix[indexVal + iWave] *= scalingCoeff;
 					      }
 
 					  }
 
 				      }
-				    
+                                   ++iElem;
 				  }
 			      }
 
@@ -1030,7 +1030,7 @@ namespace dftfe {
 					  }
 
 				      }
-				    
+                                    ++iElem;
 				  }
 			      }
 
