@@ -128,6 +128,7 @@ void dftClass<FEOrder,FEOrderElectro>::computeElementalOVProjectorKets()
 	d_nonLocalProjectorElementMatricesConjugate.clear();
 	d_nonLocalProjectorElementMatricesTranspose.clear();
 	d_nonLocalProjectorElementMatricesCellMassMatrixScaled.clear();
+        d_nonLocalProjectorElementMatricesConjugateCellMassMatrixScaled.clear();  
 	d_nonLocalProjectorElementMatricesTransposeCellMassMatrixScaled.clear();
 	d_nonLocalPSP_ZetalmDeltaVl.clear();
 	d_nonLocalPSP_zetalmDeltaVlProductDistImageAtoms_KPoint.clear();
@@ -136,6 +137,7 @@ void dftClass<FEOrder,FEOrderElectro>::computeElementalOVProjectorKets()
 	d_nonLocalProjectorElementMatrices.resize(numberNonLocalAtoms);
 	d_nonLocalProjectorElementMatricesConjugate.resize(numberNonLocalAtoms);
 	d_nonLocalProjectorElementMatricesTranspose.resize(numberNonLocalAtoms);
+
 
 	if(dftParameters::cellLevelMassMatrixScaling)
 	  {
@@ -573,7 +575,7 @@ void dftClass<FEOrder,FEOrderElectro>::computeElementalOVProjectorKets()
 
 			for(int iPseudoWave = 0; iPseudoWave < numberPseudoWaveFunctions; ++iPseudoWave)
 			  {
-			    d_nonLocalProjectorElementMatricesTransposeCellMassMatrixScaled[iAtom][iElem][numberPseudoWaveFunctions*iNode + iPseudoWave] = d_nonLocalProjectorElementMatricesTranspose*alpha;
+			    d_nonLocalProjectorElementMatricesTransposeCellMassMatrixScaled[iAtom][iElem][numberPseudoWaveFunctions*iNode + iPseudoWave] = d_nonLocalProjectorElementMatricesTranspose[iAtom][iElem][numberPseudoWaveFunctions*iNode + iPseudoWave]*alpha;
 
 			    d_nonLocalProjectorElementMatricesCellMassMatrixScaled[iAtom][iElem][numberNodesPerElement*iPseudoWave + iNode] = d_nonLocalProjectorElementMatricesTransposeCellMassMatrixScaled[iAtom][iElem][numberPseudoWaveFunctions*iNode + iPseudoWave];
 

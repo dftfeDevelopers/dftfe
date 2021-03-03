@@ -318,7 +318,7 @@ namespace dftfe {
 
 
 
-  template<unsigned int FEOrder,unsigned int FEOrderElectro>
+  /*template<unsigned int FEOrder,unsigned int FEOrderElectro>
   void kohnShamDFTOperatorClass<FEOrder>::scale(double scalar,
 					        const unsigned int numberWaveFunctions,
 					        std::vector<std::vector<dataTypes::number> > & cellWaveFunctionMatrix)
@@ -346,7 +346,7 @@ namespace dftfe {
       }
 	
 
-  }
+  }*/
 
   
 	//
@@ -912,11 +912,14 @@ namespace dftfe {
 				  }
 			      }
 
+                            unsigned int iElem = 0;
+                            unsigned int productNumNodesWaveFunctions = d_numberNodesPerElement*numberWaveFunctions;
 			    std::vector<dealii::types::global_dof_index> cell_dof_indicesGlobal(d_numberNodesPerElement);
 			    for(unsigned int iMacroCell = 0; iMacroCell < d_numberMacroCells; ++iMacroCell)
 			      {
 				for(unsigned int iCell = 0; iCell < d_macroCellSubCellMap[iMacroCell]; ++iCell)
 				  {
+                                    unsigned int indexTemp = productNumNodesWaveFunctions*iElem; 
 				    dftPtr->matrix_free_data.get_cell_iterator(iMacroCell,iCell)->get_dof_indices(cell_dof_indicesGlobal);
 				    for(unsigned int iNode = 0; iNode < d_numberNodesPerElement; ++iNode)
 				      {
@@ -1002,11 +1005,14 @@ namespace dftfe {
 			      }
 
 			    std::vector<dealii::types::global_dof_index> cell_dof_indicesGlobal(d_numberNodesPerElement);
+                            unsigned int iElem = 0;
+                            unsigned int productNumNodesWaveFunctions = d_numberNodesPerElement*numberWaveFunctions; 
 			    for(unsigned int iMacroCell = 0; iMacroCell < d_numberMacroCells; ++iMacroCell)
 			      {
 				for(unsigned int iCell = 0; iCell < d_macroCellSubCellMap[iMacroCell]; ++iCell)
 				  {
 				    dftPtr->matrix_free_data.get_cell_iterator(iMacroCell,iCell)->get_dof_indices(cell_dof_indicesGlobal);
+                                    unsigned int indexTemp = productNumNodesWaveFunctions*iElem;
 				    for(unsigned int iNode = 0; iNode < d_numberNodesPerElement; ++iNode)
 				      {
 										
@@ -1014,6 +1020,7 @@ namespace dftfe {
 					  {
 					    dealii::types::global_dof_index localDoFId = dftPtr->matrix_free_data.get_vector_partitioner()->global_to_local(cell_dof_indicesGlobal[iNode]);
 					    const double scalingCoeff = d_sqrtMassVector.local_element(localDoFId);
+                                            unsigned int indexVal = indexTemp+numberWaveFunctions*iNode;
 					    for(unsigned int iWave = 0; iWave < numberWaveFunctions; ++iWave)
 					      {
 						unsigned int indexVal = indexTemp+numberWaveFunctions*iNode;

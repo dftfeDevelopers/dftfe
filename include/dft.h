@@ -1066,7 +1066,7 @@ namespace dftfe {
 			IndexSet d_ghostProjectorIdsCurrentProcess;
 			std::map<std::pair<unsigned int,unsigned int>, unsigned int> d_projectorIdsNumberingMapCurrentProcess;
 #ifdef USE_COMPLEX
-		  std::vector<std::vector<std::vector<std::vector<std::complex<double> > > > > d_nonLocalProjectorElementMatrices,d_nonLocalProjectorElementMatricesConjugate,d_nonLocalProjectorElementMatricesTranspose,d_nonLocalProjectorElementMatricesConjugateCellMassMatrixScaled,d_nonLocalProjectorElementMatricesTransposeCellMassMatrixScaled;
+		  std::vector<std::vector<std::vector<std::vector<std::complex<double> > > > > d_nonLocalProjectorElementMatrices,d_nonLocalProjectorElementMatricesConjugate,d_nonLocalProjectorElementMatricesTranspose,d_nonLocalProjectorElementMatricesConjugateCellMassMatrixScaled,d_nonLocalProjectorElementMatricesTransposeCellMassMatrixScaled,d_nonLocalProjectorElementMatricesCellMassMatrixScaled;
 
 
 			std::vector<distributedCPUVec<std::complex<double> > > d_projectorKetTimesVectorPar;
@@ -1076,7 +1076,7 @@ namespace dftfe {
 			/// layout for every nonLocalHamiltionan times wavefunction computation
 			distributedCPUVec<std::complex<double> >  d_projectorKetTimesVectorParFlattened;
 #else
-		  std::vector<std::vector<std::vector<double> > > d_nonLocalProjectorElementMatrices,d_nonLocalProjectorElementMatricesConjugate,d_nonLocalProjectorElementMatricesTranspose,d_nonLocalProjectorElementMatricesTransposeCellMassMatrixScaled,d_nonLocalProjectorElementMatricesCellMassMatrixScaled;
+		  std::vector<std::vector<std::vector<double> > > d_nonLocalProjectorElementMatrices,d_nonLocalProjectorElementMatricesConjugate,d_nonLocalProjectorElementMatricesTranspose,d_nonLocalProjectorElementMatricesTransposeCellMassMatrixScaled,d_nonLocalProjectorElementMatricesCellMassMatrixScaled,d_nonLocalProjectorElementMatricesConjugateCellMassMatrixScaled;
 
 
 			std::vector<distributedCPUVec<double> > d_projectorKetTimesVectorPar;
