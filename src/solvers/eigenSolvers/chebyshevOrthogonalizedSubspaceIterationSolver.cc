@@ -106,6 +106,45 @@ namespace dftfe{
 	// solve
 	//
 	void
+		chebyshevOrthogonalizedSubspaceIterationSolver::onlyRR(operatorDFTClass  & operatorMatrix,
+				std::vector<dataTypes::number> & eigenVectorsFlattened,
+				std::vector<dataTypes::number> & eigenVectorsRotFracDensityFlattened,
+				distributedCPUVec<double>  & tempEigenVec,
+				const unsigned int totalNumberWaveFunctions,
+				std::vector<double>        & eigenValues,
+				const MPI_Comm &interBandGroupComm,
+				const bool useMixedPrec)
+		{
+      computing_timer.enter_section("Rayleigh-Ritz proj Opt");
+      if (eigenValues.size()!=totalNumberWaveFunctions)
+      {
+        linearAlgebraOperations::rayleighRitzSpectrumSplitDirect(operatorMatrix,
+            eigenVectorsFlattened,
+            eigenVectorsRotFracDensityFlattened,
+            totalNumberWaveFunctions,
+            totalNumberWaveFunctions-eigenValues.size(),
+            interBandGroupComm,
+            operatorMatrix.getMPICommunicator(),
+            useMixedPrec,
+            eigenValues);
+      }
+      else
+      {
+        linearAlgebraOperations::rayleighRitz(operatorMatrix,
+            eigenVectorsFlattened,
+            totalNumberWaveFunctions,
+            interBandGroupComm,
+            operatorMatrix.getMPICommunicator(),
+            eigenValues,
+            false);
+      }
+      computing_timer.exit_section("Rayleigh-Ritz proj Opt");
+    }
+
+	//
+	// solve
+	//
+	void
 		chebyshevOrthogonalizedSubspaceIterationSolver::solve(operatorDFTClass  & operatorMatrix,
 				std::vector<dataTypes::number> & eigenVectorsFlattened,
 				std::vector<dataTypes::number> & eigenVectorsRotFracDensityFlattened,
@@ -114,6 +153,7 @@ namespace dftfe{
 				std::vector<double>        & eigenValues,
 				std::vector<double>        & residualNorms,
 				const MPI_Comm &interBandGroupComm,
+        const bool computeResidual,
 				const bool useMixedPrec,
 				const bool isFirstScf)
 		{
@@ -639,28 +679,30 @@ namespace dftfe{
 					pcout<<std::endl;
 				}
 
-				computing_timer.enter_section("eigen vectors residuals opt");
+        if (computeResidual)
+        {
+          computing_timer.enter_section("eigen vectors residuals opt");
 
-				if (eigenValues.size()!=totalNumberWaveFunctions)
-				{
-					linearAlgebraOperations::computeEigenResidualNorm(operatorMatrix,
-							eigenVectorsRotFracDensityFlattened,
-							eigenValues,
-							operatorMatrix.getMPICommunicator(),
-							interBandGroupComm,
-							residualNorms);
-				}
-				else
-					linearAlgebraOperations::computeEigenResidualNorm(operatorMatrix,
-							eigenVectorsFlattened,
-							eigenValues,
-							operatorMatrix.getMPICommunicator(),
-							interBandGroupComm,
-							residualNorms);
-				computing_timer.exit_section("eigen vectors residuals opt");
-			}
-
-
+          if (eigenValues.size()!=totalNumberWaveFunctions)
+          {
+            linearAlgebraOperations::computeEigenResidualNorm(operatorMatrix,
+                eigenVectorsRotFracDensityFlattened,
+                eigenValues,
+                operatorMatrix.getMPICommunicator(),
+                interBandGroupComm,
+                residualNorms);
+          }
+          else
+            linearAlgebraOperations::computeEigenResidualNorm(operatorMatrix,
+                eigenVectorsFlattened,
+                eigenValues,
+                operatorMatrix.getMPICommunicator(),
+                interBandGroupComm,
+                residualNorms);
+          computing_timer.exit_section("eigen vectors residuals opt");
+        }
+      }
+  
 
 			if(dftParameters::verbosity >= 4)
 			{

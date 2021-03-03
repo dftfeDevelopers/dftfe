@@ -142,11 +142,11 @@ dataTypes::number dftClass<FEOrder,FEOrderElectro>::computeTraceXtHX(unsigned in
 	//
 	//compute Veff
 	//
-	if(dftParameters::xc_id < 4)
+	if(dftParameters::xcFamilyType=="LDA")
 	{
 		kohnShamDFTEigenOperator.computeVEff(rhoInValues,phiInValues, d_pseudoVLoc, d_rhoCore, d_lpspQuadratureId);
 	}
-	else if (dftParameters::xc_id == 4)
+	else if (dftParameters::xcFamilyType=="GGA")
 	{
 		kohnShamDFTEigenOperator.computeVEff(rhoInValues, gradRhoInValues, phiInValues, d_pseudoVLoc, d_rhoCore, d_gradRhoCore, d_lpspQuadratureId);
 	}
@@ -342,7 +342,7 @@ void dftClass<FEOrder,FEOrderElectro>::solveNoSCF()
 			gradRhoOutValues,
 			rhoOutValuesSpinPolarized,
 			gradRhoOutValuesSpinPolarized,
-			dftParameters::xc_id == 4,
+			dftParameters::xcFamilyType=="GGA",
 			interpoolcomm,
 			interBandGroupComm,
 			false,
@@ -357,6 +357,7 @@ void dftClass<FEOrder,FEOrderElectro>::kohnShamEigenSpaceCompute(const unsigned 
 		elpaScalaManager & elpaScala,
 		chebyshevOrthogonalizedSubspaceIterationSolver & subspaceIterationSolver,
 		std::vector<double>                            & residualNormWaveFunctions,
+    const bool computeResidual,
 		const bool isSpectrumSplit,
 		const bool useMixedPrec,
 		const bool isFirstScf)
@@ -397,25 +398,30 @@ void dftClass<FEOrder,FEOrderElectro>::kohnShamEigenSpaceCompute(const unsigned 
     a0[(1+dftParameters::spinPolarized)*kPointIndex+spinType]=lowerBoundWantedSpectrum;
     computing_timer.exit_section("Lanczos k-step Upper Bound");    
 
+    d_upperBoundUnwantedSpectrumValues[(1+dftParameters::spinPolarized)*kPointIndex+spinType]=upperBoundUnwantedSpectrum;
+
     subspaceIterationSolver.reinitSpectrumBounds(lowerBoundWantedSpectrum,
-        lowerBoundWantedSpectrum+(upperBoundUnwantedSpectrum-lowerBoundWantedSpectrum)/vecForLanczos.size()*d_numEigenValues*(dftParameters::reproducible_output?10.0:50.0),
+        lowerBoundWantedSpectrum+(upperBoundUnwantedSpectrum-lowerBoundWantedSpectrum)/vecForLanczos.size()*d_numEigenValues*(dftParameters::reproducible_output?10.0:200.0),
         upperBoundUnwantedSpectrum);
   }
   else
   {
-    computing_timer.enter_section("Lanczos k-step Upper Bound");
-    distributedCPUVec<dataTypes::number> vecForLanczos;
-    kohnShamDFTEigenOperator.reinit(1,
-        vecForLanczos,
-        true);			
-    std::pair<double,double> bounds =linearAlgebraOperations::lanczosLowerUpperBoundEigenSpectrum(kohnShamDFTEigenOperator,
-        vecForLanczos);
-    const double upperBoundUnwantedSpectrum=bounds.second;
-    computing_timer.exit_section("Lanczos k-step Upper Bound");
+    if (!dftParameters::reuseLanczosUpperBoundFromFirstCall)
+    {
+      computing_timer.enter_section("Lanczos k-step Upper Bound");
+      distributedCPUVec<dataTypes::number> vecForLanczos;
+      kohnShamDFTEigenOperator.reinit(1,
+          vecForLanczos,
+          true);			
+      std::pair<double,double> bounds =linearAlgebraOperations::lanczosLowerUpperBoundEigenSpectrum(kohnShamDFTEigenOperator,
+          vecForLanczos);
+      d_upperBoundUnwantedSpectrumValues[(1+dftParameters::spinPolarized)*kPointIndex+spinType]=bounds.second;
+      computing_timer.exit_section("Lanczos k-step Upper Bound");
+    }
 
     subspaceIterationSolver.reinitSpectrumBounds(a0[(1+dftParameters::spinPolarized)*kPointIndex+spinType],
         bLow[(1+dftParameters::spinPolarized)*kPointIndex+spinType],
-        upperBoundUnwantedSpectrum);    
+        d_upperBoundUnwantedSpectrumValues[(1+dftParameters::spinPolarized)*kPointIndex+spinType]);    
   }
 
 	subspaceIterationSolver.solve(kohnShamDFTEigenOperator,
@@ -426,6 +432,7 @@ void dftClass<FEOrder,FEOrderElectro>::kohnShamEigenSpaceCompute(const unsigned 
 			eigenValuesTemp,
 			residualNormWaveFunctions,
 			interBandGroupComm,
+      computeResidual,
 			useMixedPrec,
 			isFirstScf);
 
@@ -510,7 +517,7 @@ void dftClass<FEOrder,FEOrderElectro>::kohnShamEigenSpaceCompute(const unsigned 
 		elpaScalaManager & elpaScala,
 		chebyshevOrthogonalizedSubspaceIterationSolverCUDA & subspaceIterationSolverCUDA,
 		std::vector<double>                            & residualNormWaveFunctions,
-		const bool isXlBOMDLinearizedSolve,
+    const bool computeResidual,
 		const unsigned int numberRayleighRitzAvoidanceXLBOMDPasses,
 		const bool isSpectrumSplit,
 		const bool useMixedPrec,
@@ -531,7 +538,8 @@ void dftClass<FEOrder,FEOrderElectro>::kohnShamEigenSpaceCompute(const unsigned 
 			:d_numEigenValues,0.0);
 
 	subspaceIterationSolverCUDA.reinitSpectrumBounds(a0[(1+dftParameters::spinPolarized)*kPointIndex+spinType],
-			bLow[(1+dftParameters::spinPolarized)*kPointIndex+spinType]);
+			bLow[(1+dftParameters::spinPolarized)*kPointIndex+spinType],
+      d_upperBoundUnwantedSpectrumValues[(1+dftParameters::spinPolarized)*kPointIndex+spinType]);
 
 	const unsigned int rowsBlockSize=elpaScala.getScalapackBlockSize();
 	std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid>  processGrid;
@@ -553,46 +561,27 @@ void dftClass<FEOrder,FEOrderElectro>::kohnShamEigenSpaceCompute(const unsigned 
 
 	if (numberRayleighRitzAvoidanceXLBOMDPasses>0)
 	{
-		bool isFirstPass=false;
-		if(useMixedPrec && dftParameters::useAsyncChebPGS_SR && dftParameters::useMixedPrecPGS_SR)
-		{
-			subspaceIterationSolverCUDA.solveNoRRMixedPrec(kohnShamDFTEigenOperator,
-					d_eigenVectorsFlattenedCUDA.begin()
-					+((1+dftParameters::spinPolarized)*kPointIndex+spinType)*d_eigenVectorsFlattenedSTL[0].size(),
-					d_eigenVectorsFlattenedSTL[0].size(),
-					d_tempEigenVec,
-					d_numEigenValues,
-					eigenValuesDummy,
-					interBandGroupComm,
-					isXlBOMDLinearizedSolve,
-					numberRayleighRitzAvoidanceXLBOMDPasses+1,
-					useMixedPrec);
-		}
-		else
-		{
-			subspaceIterationSolverCUDA.solveNoRR(kohnShamDFTEigenOperator,
-					d_eigenVectorsFlattenedCUDA.begin()
-					+((1+dftParameters::spinPolarized)*kPointIndex+spinType)*d_eigenVectorsFlattenedSTL[0].size(),
-					d_eigenVectorsFlattenedSTL[0].size(),
-					d_tempEigenVec,
-					d_numEigenValues,
-					eigenValuesDummy,
-					interBandGroupComm,
-					projHamPar,
-					overlapMatPar,
-					processGrid,
-					isXlBOMDLinearizedSolve,
-					numberRayleighRitzAvoidanceXLBOMDPasses,
-					useMixedPrec);
-
-		}
+    subspaceIterationSolverCUDA.solveNoRR(kohnShamDFTEigenOperator,
+        d_eigenVectorsFlattenedCUDA.begin()
+        +((1+dftParameters::spinPolarized)*kPointIndex+spinType)*d_eigenVectorsFlattenedSTL[0].size(),
+        d_eigenVectorsFlattenedSTL[0].size(),
+        d_tempEigenVec,
+        d_numEigenValues,
+        eigenValuesDummy,
+        *d_gpucclMpiCommDomainPtr,
+        interBandGroupComm,
+        projHamPar,
+        overlapMatPar,
+        processGrid,
+        numberRayleighRitzAvoidanceXLBOMDPasses,
+        useMixedPrec);
 	}
 	else	  
 	{
 #ifdef DFTFE_WITH_ELPA
 		if (dftParameters::useELPA)
 		{
-			subspaceIterationSolverCUDA.solve(kohnShamDFTEigenOperator,
+			d_upperBoundUnwantedSpectrumValues[(1+dftParameters::spinPolarized)*kPointIndex+spinType]=subspaceIterationSolverCUDA.solve(kohnShamDFTEigenOperator,
 					d_eigenVectorsFlattenedCUDA.begin()
 					+((1+dftParameters::spinPolarized)*kPointIndex+spinType)*d_eigenVectorsFlattenedSTL[0].size(),
 					d_eigenVectorsRotFracFlattenedCUDA.begin()
@@ -602,12 +591,13 @@ void dftClass<FEOrder,FEOrderElectro>::kohnShamEigenSpaceCompute(const unsigned 
 					d_numEigenValues,
 					eigenValuesDummy,
 					residualNormWaveFunctions,
+          *d_gpucclMpiCommDomainPtr,
 					interBandGroupComm,
 					projHamPar,
 					overlapMatPar,
 					processGrid,
           d_isFirstFilteringCall[(1+dftParameters::spinPolarized)*kPointIndex+spinType],
-					isXlBOMDLinearizedSolve,
+          computeResidual,
 					useMixedPrec,
 					isFirstScf,
 					true,
@@ -663,7 +653,7 @@ void dftClass<FEOrder,FEOrderElectro>::kohnShamEigenSpaceCompute(const unsigned 
 					std::cout<<"Time for ELPA eigen decomp, RR step: "<<time<<std::endl;
 
 
-			subspaceIterationSolverCUDA.solve(kohnShamDFTEigenOperator,
+			d_upperBoundUnwantedSpectrumValues[(1+dftParameters::spinPolarized)*kPointIndex+spinType]=subspaceIterationSolverCUDA.solve(kohnShamDFTEigenOperator,
 					d_eigenVectorsFlattenedCUDA.begin()
 					+((1+dftParameters::spinPolarized)*kPointIndex+spinType)*d_eigenVectorsFlattenedSTL[0].size(),
 					d_eigenVectorsRotFracFlattenedCUDA.begin()
@@ -673,12 +663,13 @@ void dftClass<FEOrder,FEOrderElectro>::kohnShamEigenSpaceCompute(const unsigned 
 					d_numEigenValues,
 					eigenValuesTemp,
 					residualNormWaveFunctions,
+          *d_gpucclMpiCommDomainPtr,
 					interBandGroupComm,
 					projHamPar,
 					overlapMatPar,
 					processGrid,
           d_isFirstFilteringCall[(1+dftParameters::spinPolarized)*kPointIndex+spinType],
-					isXlBOMDLinearizedSolve,
+          computeResidual,
 					useMixedPrec,
 					isFirstScf,
 					false,
@@ -686,7 +677,7 @@ void dftClass<FEOrder,FEOrderElectro>::kohnShamEigenSpaceCompute(const unsigned 
 		}
 		else
 		{
-			subspaceIterationSolverCUDA.solve(kohnShamDFTEigenOperator,
+			d_upperBoundUnwantedSpectrumValues[(1+dftParameters::spinPolarized)*kPointIndex+spinType]=subspaceIterationSolverCUDA.solve(kohnShamDFTEigenOperator,
 					d_eigenVectorsFlattenedCUDA.begin()
 					+((1+dftParameters::spinPolarized)*kPointIndex+spinType)*d_eigenVectorsFlattenedSTL[0].size(),
 					d_eigenVectorsRotFracFlattenedCUDA.begin()
@@ -696,17 +687,18 @@ void dftClass<FEOrder,FEOrderElectro>::kohnShamEigenSpaceCompute(const unsigned 
 					d_numEigenValues,
 					eigenValuesTemp,
 					residualNormWaveFunctions,
+          *d_gpucclMpiCommDomainPtr,
 					interBandGroupComm,
 					projHamPar,
 					overlapMatPar,
 					processGrid,
           d_isFirstFilteringCall[(1+dftParameters::spinPolarized)*kPointIndex+spinType],
-					isXlBOMDLinearizedSolve,
+          computeResidual,
 					useMixedPrec,
 					isFirstScf);
 		}
 #else
-		subspaceIterationSolverCUDA.solve(kohnShamDFTEigenOperator,
+		d_upperBoundUnwantedSpectrumValues[(1+dftParameters::spinPolarized)*kPointIndex+spinType]=subspaceIterationSolverCUDA.solve(kohnShamDFTEigenOperator,
 				d_eigenVectorsFlattenedCUDA.begin()
 				+((1+dftParameters::spinPolarized)*kPointIndex+spinType)*d_eigenVectorsFlattenedSTL[0].size(),
 				d_eigenVectorsRotFracFlattenedCUDA.begin()
@@ -716,12 +708,13 @@ void dftClass<FEOrder,FEOrderElectro>::kohnShamEigenSpaceCompute(const unsigned 
 				d_numEigenValues,
 				eigenValuesTemp,
 				residualNormWaveFunctions,
+        *d_gpucclMpiCommDomainPtr,
 				interBandGroupComm,
 				projHamPar,
 				overlapMatPar,
 				processGrid,
         d_isFirstFilteringCall[(1+dftParameters::spinPolarized)*kPointIndex+spinType],
-				isXlBOMDLinearizedSolve,
+        computeResidual,
 				useMixedPrec,
 				isFirstScf);
 #endif
@@ -834,6 +827,7 @@ void dftClass<FEOrder,FEOrderElectro>::kohnShamEigenSpaceOnlyRRCompute(const uns
 				d_tempEigenVec,
 				d_numEigenValues,
 				eigenValuesDummy,
+        *d_gpucclMpiCommDomainPtr,
 				interBandGroupComm,
 				projHamPar,
 				overlapMatPar,
@@ -882,6 +876,7 @@ void dftClass<FEOrder,FEOrderElectro>::kohnShamEigenSpaceOnlyRRCompute(const uns
 				d_tempEigenVec,
 				d_numEigenValues,
 				eigenValuesTemp,
+        *d_gpucclMpiCommDomainPtr,
 				interBandGroupComm,
 				projHamPar,
 				overlapMatPar,
@@ -901,6 +896,7 @@ void dftClass<FEOrder,FEOrderElectro>::kohnShamEigenSpaceOnlyRRCompute(const uns
 				d_tempEigenVec,
 				d_numEigenValues,
 				eigenValuesTemp,
+        *d_gpucclMpiCommDomainPtr,
 				interBandGroupComm,
 				projHamPar,
 				overlapMatPar,
@@ -917,6 +913,7 @@ void dftClass<FEOrder,FEOrderElectro>::kohnShamEigenSpaceOnlyRRCompute(const uns
 			d_tempEigenVec,
 			d_numEigenValues,
 			eigenValuesTemp,
+      *d_gpucclMpiCommDomainPtr,
 			interBandGroupComm,
 			projHamPar,
 			overlapMatPar,
@@ -964,17 +961,102 @@ void dftClass<FEOrder,FEOrderElectro>::kohnShamEigenSpaceOnlyRRCompute(const uns
 
 	if (dftParameters::verbosity>=4)
 		pcout <<std::endl;
-
-
-	bLow[(1+dftParameters::spinPolarized)*kPointIndex+spinType]=eigenValuesTemp.back();
-  d_isFirstFilteringCall[(1+dftParameters::spinPolarized)*kPointIndex+spinType]=false;
-	if(!isSpectrumSplit)
-	{
-		a0[(1+dftParameters::spinPolarized)*kPointIndex+spinType] = eigenValuesTemp[0];
-	}
 }
 #endif
 
+
+	template<unsigned int FEOrder,unsigned int FEOrderElectro>
+void dftClass<FEOrder,FEOrderElectro>:: kohnShamEigenSpaceOnlyRRCompute(const unsigned int spinType,
+		const unsigned int kPointIndex,
+		kohnShamDFTOperatorClass<FEOrder,FEOrderElectro> & kohnShamDFTEigenOperator,
+		elpaScalaManager & elpaScala,
+		chebyshevOrthogonalizedSubspaceIterationSolver & subspaceIterationSolver,
+		const bool isSpectrumSplit,
+		const bool useMixedPrec)
+{
+	if (dftParameters::verbosity>=2)
+	{
+		pcout << "kPoint: "<< kPointIndex<<std::endl;
+		if (dftParameters::spinPolarized==1)
+			pcout << "spin: "<< spinType+1 <<std::endl;
+	}
+
+
+	//
+	//scale the eigenVectors to convert into Lowden Orthonormalized FE basis
+	//multiply by M^{1/2}
+	internal::pointWiseScaleWithDiagonal(kohnShamDFTEigenOperator.d_sqrtMassVector,
+			matrix_free_data.get_vector_partitioner(),
+			d_numEigenValues,
+			d_eigenVectorsFlattenedSTL[(1+dftParameters::spinPolarized)*kPointIndex+spinType]);
+
+	std::vector<double> eigenValuesTemp(isSpectrumSplit?d_numEigenValuesRR
+			:d_numEigenValues,0.0);
+
+
+	subspaceIterationSolver.onlyRR(kohnShamDFTEigenOperator,
+			d_eigenVectorsFlattenedSTL[(1+dftParameters::spinPolarized)*kPointIndex+spinType],
+			d_eigenVectorsRotFracDensityFlattenedSTL[(1+dftParameters::spinPolarized)*kPointIndex+spinType],
+			d_tempEigenVec,
+			d_numEigenValues,
+			eigenValuesTemp,
+			interBandGroupComm,
+			useMixedPrec);
+
+	//
+	//scale the eigenVectors with M^{-1/2} to represent the wavefunctions in the usual FE basis
+	//
+  internal::pointWiseScaleWithDiagonal(kohnShamDFTEigenOperator.d_invSqrtMassVector,
+      matrix_free_data.get_vector_partitioner(),
+      d_numEigenValues,
+      d_eigenVectorsFlattenedSTL[(1+dftParameters::spinPolarized)*kPointIndex+spinType]);
+
+	if (isSpectrumSplit && d_numEigenValuesRR!=d_numEigenValues)
+	{
+		internal::pointWiseScaleWithDiagonal(kohnShamDFTEigenOperator.d_invSqrtMassVector,
+				matrix_free_data.get_vector_partitioner(),
+				d_numEigenValuesRR,
+				d_eigenVectorsRotFracDensityFlattenedSTL[(1+dftParameters::spinPolarized)*kPointIndex+spinType]);
+	}
+
+	//
+	//copy the eigenValues and corresponding residual norms back to data members
+	//
+	if (isSpectrumSplit)
+	{
+		for(unsigned int i = 0; i < d_numEigenValuesRR; i++)
+		{
+			if(dftParameters::verbosity>=4 && d_numEigenValues==d_numEigenValuesRR)
+				pcout<<"eigen value "<< std::setw(3) <<i <<": "<<eigenValuesTemp[i] <<std::endl;
+			else if(dftParameters::verbosity>=4 && d_numEigenValues!=d_numEigenValuesRR)
+				pcout<<"valence eigen value "<< std::setw(3) <<i <<": "<<eigenValuesTemp[i] <<std::endl;
+
+			eigenValuesRRSplit[kPointIndex][spinType*d_numEigenValuesRR + i] =  eigenValuesTemp[i];
+		}
+
+		for(unsigned int i = 0; i < d_numEigenValues; i++)
+		{
+			if (i>=(d_numEigenValues-d_numEigenValuesRR))
+				eigenValues[kPointIndex][spinType*d_numEigenValues + i]
+					= eigenValuesTemp[i-(d_numEigenValues-d_numEigenValuesRR)];
+			else
+				eigenValues[kPointIndex][spinType*d_numEigenValues + i]=-100.0;
+		}
+	}
+	else
+	{
+		for(unsigned int i = 0; i < d_numEigenValues; i++)
+		{
+			if(dftParameters::verbosity>=4)
+				pcout<<"eigen value "<< std::setw(3) <<i <<": "<<eigenValuesTemp[i] <<std::endl;
+
+			eigenValues[kPointIndex][spinType*d_numEigenValues + i] =  eigenValuesTemp[i];
+		}
+	}
+
+	if (dftParameters::verbosity>=4)
+		pcout <<std::endl;
+}
 
 
 //chebyshev solver
@@ -1022,7 +1104,7 @@ void dftClass<FEOrder,FEOrderElectro>::kohnShamEigenSpaceComputeNSCF(const unsig
     computing_timer.exit_section("Lanczos k-step Upper Bound");    
 
     subspaceIterationSolver.reinitSpectrumBounds(lowerBoundWantedSpectrum,
-        lowerBoundWantedSpectrum+(upperBoundUnwantedSpectrum-lowerBoundWantedSpectrum)/vecForLanczos.size()*d_numEigenValues*(dftParameters::reproducible_output?10.0:50.0),
+        lowerBoundWantedSpectrum+(upperBoundUnwantedSpectrum-lowerBoundWantedSpectrum)/vecForLanczos.size()*d_numEigenValues*(dftParameters::reproducible_output?10.0:200.0),
         upperBoundUnwantedSpectrum);
   }
   else
@@ -1051,6 +1133,7 @@ void dftClass<FEOrder,FEOrderElectro>::kohnShamEigenSpaceComputeNSCF(const unsig
 			eigenValuesTemp,
 			residualNormWaveFunctions,
 			interBandGroupComm,
+      true,
 			false);
 
 	if(dftParameters::verbosity >= 4)

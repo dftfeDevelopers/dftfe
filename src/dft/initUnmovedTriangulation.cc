@@ -280,7 +280,12 @@ void dftClass<FEOrder,FEOrderElectro>::initUnmovedTriangulation(parallel::distri
 		exceptParamX = xc_func_init(&funcX,XC_GGA_X_PBE,isSpinPolarized);
 		exceptParamC = xc_func_init(&funcC,XC_GGA_C_PBE,isSpinPolarized);
 	}
-	else if(dftParameters::xc_id > 4)
+	else if(dftParameters::xc_id == 5)
+	{
+		exceptParamX = xc_func_init(&funcX,XC_GGA_X_RPBE,isSpinPolarized);
+		exceptParamC = xc_func_init(&funcC,XC_GGA_C_PBE,isSpinPolarized);
+	}  
+	else if(dftParameters::xc_id > 5)
 	{
 		pcout<<"-------------------------------------"<<std::endl;
 		pcout<<"Exchange or Correlation Functional not found"<<std::endl;

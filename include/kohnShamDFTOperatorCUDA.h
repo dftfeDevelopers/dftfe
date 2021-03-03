@@ -200,7 +200,8 @@ namespace dftfe{
 				const unsigned int N,
 				cublasHandle_t &handle,
 				const std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid>  & processGrid,
-				dealii::ScaLAPACKMatrix<double> & projHamPar);
+				dealii::ScaLAPACKMatrix<double> & projHamPar,
+        GPUCCLWrapper & gpucclMpiCommDomain);
 
 		/**
 		 * @brief Compute projection of the operator into a subspace spanned by a given basis.
@@ -227,7 +228,8 @@ namespace dftfe{
 				const unsigned int N,
 				cublasHandle_t &handle,
 				const std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid>  & processGrid,
-				dealii::ScaLAPACKMatrix<double> & projHamPar);
+				dealii::ScaLAPACKMatrix<double> & projHamPar,
+        GPUCCLWrapper & gpucclMpiCommDomain);
 
 
 		/**
@@ -260,7 +262,8 @@ namespace dftfe{
 				const unsigned int Noc,
 				cublasHandle_t &handle,
 				const std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid>  & processGrid,
-				dealii::ScaLAPACKMatrix<double> & projHamPar);
+				dealii::ScaLAPACKMatrix<double> & projHamPar,
+        GPUCCLWrapper & gpucclMpiCommDomain);
 
 
 		/**
@@ -291,7 +294,8 @@ namespace dftfe{
 				const unsigned int N,
 				cublasHandle_t &handle,
 				const std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid>  & processGrid,
-				dealii::ScaLAPACKMatrix<double> & projHamPar);
+				dealii::ScaLAPACKMatrix<double> & projHamPar,
+        GPUCCLWrapper & gpucclMpiCommDomain);
 
 
 		/**
@@ -325,7 +329,8 @@ namespace dftfe{
 				const unsigned int Noc,
 				cublasHandle_t &handle,
 				const std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid>  & processGrid,
-				dealii::ScaLAPACKMatrix<double> & projHamPar);
+				dealii::ScaLAPACKMatrix<double> & projHamPar,
+        GPUCCLWrapper & gpucclMpiCommDomain);
 
 
 		/**
@@ -357,7 +362,8 @@ namespace dftfe{
 				const unsigned int N,
 				cublasHandle_t &handle,
 				const std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid>  & processGrid,
-				dealii::ScaLAPACKMatrix<double> & projHamPar);
+				dealii::ScaLAPACKMatrix<double> & projHamPar,
+        GPUCCLWrapper & gpucclMpiCommDomain);
 
 
 #endif

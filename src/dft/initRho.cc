@@ -53,7 +53,7 @@ void dftClass<FEOrder,FEOrderElectro>::initRho()
 	std::map<unsigned int, alglib::spline1dinterpolant> denSpline;
 	std::map<unsigned int, std::vector<std::vector<double> > > singleAtomElectronDensity;
 	std::map<unsigned int, double> outerMostPointDen;
-	const double truncationTol=1e-8;
+	const double truncationTol=1e-10;
 
 	//loop over atom types
 	for (std::set<unsigned int>::iterator it=atomTypes.begin(); it!=atomTypes.end(); it++)
@@ -82,6 +82,9 @@ void dftClass<FEOrder,FEOrderElectro>::initRho()
 				maxRowId=irow;
 		}
 
+    if (dftParameters::isPseudopotential)
+      yData[0]=yData[1];
+
 		//interpolate rho
 		alglib::real_1d_array x;
 		x.setcontent(numRows,&xData[0]);
@@ -109,7 +112,7 @@ void dftClass<FEOrder,FEOrderElectro>::initRho()
 		rhoInValuesSpinPolarized=&(rhoInValsSpinPolarized.back());
 	}
 
-	if(dftParameters::xc_id == 4)
+	if(dftParameters::xcFamilyType=="GGA")
 	{
 		gradRhoInVals.push_back(std::map<dealii::CellId, std::vector<double> >());
 		gradRhoInValues= &(gradRhoInVals.back());
@@ -129,7 +132,7 @@ void dftClass<FEOrder,FEOrderElectro>::initRho()
 		rhoOutVals.push_back(std::map<dealii::CellId,std::vector<double> > ());
 		rhoOutValues = &(rhoOutVals.back());
 
-		if(dftParameters::xc_id == 4)
+		if(dftParameters::xcFamilyType=="GGA")
 		{
 			gradRhoOutVals.push_back(std::map<dealii::CellId, std::vector<double> >());
 			gradRhoOutValues= &(gradRhoOutVals.back());
@@ -207,7 +210,7 @@ void dftClass<FEOrder,FEOrderElectro>::initRho()
 			pcout<<"Total Charge after Normalizing nodal Rho: "<< totalCharge(d_matrixFreeDataPRefined,d_rhoInNodalValues)<<std::endl;
 		}
 
-		if(dftParameters::xc_id == 4)
+		if(dftParameters::xcFamilyType=="GGA")
 		{
 			gradRhoInVals.push_back(std::map<dealii::CellId,std::vector<double> >());
 			gradRhoInValues=&(gradRhoInVals.back());
@@ -220,48 +223,8 @@ void dftClass<FEOrder,FEOrderElectro>::initRho()
 				*rhoInValues,
 				*gradRhoInValues,
 				*gradRhoInValues,
-				dftParameters::xc_id == 4);
+				dftParameters::xcFamilyType=="GGA");
 		normalizeRhoInQuadValues();
-
-		/*FEEvaluation<C_DIM,C_num1DKerkerPoly<FEOrder>(),C_num1DQuad<FEOrderElectro>(),1,double> rhoEval(d_matrixFreeDataPRefined,0,1);
-		  const unsigned int numQuadPoints = rhoEval.n_q_points; 
-		  DoFHandler<C_DIM>::active_cell_iterator subCellPtr;
-		  for(unsigned int cell = 0; cell < d_matrixFreeDataPRefined.n_macro_cells(); ++cell)
-		  {
-		  rhoEval.reinit(cell);
-		  rhoEval.read_dof_values(d_rhoInNodalValues);
-		  rhoEval.evaluate(true,true);
-		  for(unsigned int iSubCell = 0; iSubCell < d_matrixFreeDataPRefined.n_components_filled(cell); ++iSubCell)
-		  {
-		  subCellPtr= d_matrixFreeDataPRefined.get_cell_iterator(cell,iSubCell);
-		  dealii::CellId subCellId=subCellPtr->id();
-		  (*rhoInValues)[subCellId] = std::vector<double>(numQuadPoints);
-		  std::vector<double> & tempVec = rhoInValues->find(subCellId)->second;
-		  for(unsigned int q_point = 0; q_point < numQuadPoints; ++q_point)
-		  {
-		  tempVec[q_point] = rhoEval.get_value(q_point)[iSubCell];
-		  }
-		  }
-
-		  if(dftParameters::xc_id == 4)
-		  {
-		  for(unsigned int iSubCell = 0; iSubCell < d_matrixFreeDataPRefined.n_components_filled(cell); ++iSubCell)
-		  {
-		  subCellPtr= d_matrixFreeDataPRefined.get_cell_iterator(cell,iSubCell);
-		  dealii::CellId subCellId=subCellPtr->id();
-		  (*gradRhoInValues)[subCellId]=std::vector<double>(3*numQuadPoints);
-		  std::vector<double> & tempVec = gradRhoInValues->find(subCellId)->second;
-		  for(unsigned int q_point = 0; q_point < numQuadPoints; ++q_point)
-		  {
-		  tempVec[3*q_point + 0] = rhoEval.get_gradient(q_point)[0][iSubCell];
-		  tempVec[3*q_point + 1] = rhoEval.get_gradient(q_point)[1][iSubCell];
-		  tempVec[3*q_point + 2] = rhoEval.get_gradient(q_point)[2][iSubCell];
-		  }
-		  }
-		  }
-
-		  }*/
-
 	}
 	//else
 	{
@@ -327,7 +290,7 @@ void dftClass<FEOrder,FEOrderElectro>::initRho()
 
 
 		//loop over elements
-		if(dftParameters::xc_id == 4)
+		if(dftParameters::xcFamilyType=="GGA")
 		{
 			//
 			cell = dofHandler.begin_active();
@@ -463,7 +426,7 @@ void dftClass<FEOrder,FEOrderElectro>::computeRhoInitialGuessFromPSI(std::vector
 		rhoInValuesSpinPolarized=&(rhoInValsSpinPolarized.back());
 	}
 
-	if(dftParameters::xc_id == 4)
+	if(dftParameters::xcFamilyType=="GGA")
 	{
 		gradRhoInVals.push_back(std::map<dealii::CellId, std::vector<double> >());
 		gradRhoInValues= &(gradRhoInVals.back());
@@ -507,7 +470,7 @@ void dftClass<FEOrder,FEOrderElectro>::computeRhoInitialGuessFromPSI(std::vector
 
 
 
-			if(dftParameters::xc_id == 4)//GGA
+			if(dftParameters::xcFamilyType=="GGA")//GGA
 			{
 				(*gradRhoInValues)[cell->id()] = std::vector<double>(3*num_quad_points);
 				std::fill(gradRhoTemp.begin(),gradRhoTemp.end(),0.0);
@@ -799,14 +762,14 @@ void dftClass<FEOrder,FEOrderElectro>::normalizeRhoInQuadValues()
 			for (unsigned int q=0; q<n_q_points; ++q){
 				(*rhoInValues)[cell->id()][q]*=scaling;
 
-				if(dftParameters::xc_id == 4)
+				if(dftParameters::xcFamilyType=="GGA")
 					for (unsigned int idim=0; idim<3; ++idim)
 						(*gradRhoInValues)[cell->id()][3*q+idim]*=scaling;
 				if (dftParameters::spinPolarized==1)
 				{
 					(*rhoInValuesSpinPolarized)[cell->id()][2*q+1]*=scaling;
 					(*rhoInValuesSpinPolarized)[cell->id()][2*q]*=scaling;
-					if(dftParameters::xc_id == 4)
+					if(dftParameters::xcFamilyType=="GGA")
 						for (unsigned int idim=0; idim<3; ++idim)
 						{
 							(*gradRhoInValuesSpinPolarized)[cell->id()][6*q+idim]*=scaling;
@@ -846,14 +809,14 @@ void dftClass<FEOrder,FEOrderElectro>::normalizeRhoOutQuadValues()
 			for (unsigned int q=0; q<n_q_points; ++q){
 				(*rhoOutValues)[cell->id()][q]*=scaling;
 
-				if(dftParameters::xc_id == 4)
+				if(dftParameters::xcFamilyType=="GGA")
 					for (unsigned int idim=0; idim<3; ++idim)
 						(*gradRhoOutValues)[cell->id()][3*q+idim]*=scaling;
 				if (dftParameters::spinPolarized==1)
 				{
 					(*rhoOutValuesSpinPolarized)[cell->id()][2*q+1]*=scaling;
 					(*rhoOutValuesSpinPolarized)[cell->id()][2*q]*=scaling;
-					if(dftParameters::xc_id == 4)
+					if(dftParameters::xcFamilyType=="GGA")
 						for (unsigned int idim=0; idim<3; ++idim)
 						{
 							(*gradRhoOutValuesSpinPolarized)[cell->id()][6*q+idim]*=scaling;
@@ -868,293 +831,4 @@ void dftClass<FEOrder,FEOrderElectro>::normalizeRhoOutQuadValues()
 
 	if (dftParameters::verbosity>=1)
 		pcout<<"Total charge out after scaling: "<< chargeAfterScaling<<std::endl;
-}
-
-//
-//Normalize rho
-//
-	template<unsigned int FEOrder,unsigned int FEOrderElectro>
-void dftClass<FEOrder,FEOrderElectro>::normalizeAtomicRhoQuadValues()
-{
-
-  const double charge = totalCharge(dofHandler,
-			&d_rhoAtomsValues);
-	const double scaling=((double)numElectrons)/charge;
-
-	if (dftParameters::verbosity>=2)
-		pcout<< "Total charge rho single atomic before normalizing to number of electrons: "<< charge<<std::endl;
-
-
-	for (auto it1=d_rhoAtomsValues.begin(); it1!=d_rhoAtomsValues.end(); ++it1)
-		for (unsigned int i=0; i<(it1->second).size(); ++i)
-			(it1->second)[i]*=scaling;
-
-	for (auto it1=d_gradRhoAtomsValues.begin(); it1!=d_gradRhoAtomsValues.end(); ++it1)
-		for (unsigned int i=0; i<(it1->second).size(); ++i)
-			(it1->second)[i]*=scaling;
-
-	for (auto it1=d_gradRhoAtomsValuesSeparate.begin(); it1!=d_gradRhoAtomsValuesSeparate.end(); ++it1)
-		for (auto it2=it1->second.begin(); it2!=it1->second.end(); ++it2)
-			for (unsigned int i=0; i<(it2->second).size(); ++i)
-				(it2->second)[i]*=scaling;
-
-	if (dftParameters::xc_id==4)
-	{
-		for (auto it1=d_hessianRhoAtomsValues.begin(); it1!=d_hessianRhoAtomsValues.end(); ++it1)
-			for (unsigned int i=0; i<(it1->second).size(); ++i)
-				(it1->second)[i]*=scaling;
-
-		for (auto it1=d_hessianRhoAtomsValuesSeparate.begin(); it1!=d_hessianRhoAtomsValuesSeparate.end(); ++it1)
-			for (auto it2=it1->second.begin(); it2!=it1->second.end(); ++it2)
-				for (unsigned int i=0; i<(it2->second).size(); ++i)
-					(it2->second)[i]*=scaling;
-	}
-
-	double chargeAfterScaling = totalCharge(dofHandler,
-			&d_rhoAtomsValues);
-
-	if (dftParameters::verbosity>=2)
-		pcout<<"Total charge rho single atomic after normalizing: "<< chargeAfterScaling<<std::endl;
-}
-
-	template<unsigned int FEOrder,unsigned int FEOrderElectro>
-void dftClass<FEOrder,FEOrderElectro>::initAtomicRho(distributedCPUVec<double> & atomicRho)
-{
-	computing_timer.enter_section("initialize atomic density for xl bomd");
-
-	//Reading single atom rho initial guess
-	if (dftParameters::verbosity>=1)
-		pcout <<std::endl<< "Reading initial guess for electron-density....."<<std::endl;
-
-	std::map<unsigned int, alglib::spline1dinterpolant> denSpline;
-	std::map<unsigned int, std::vector<std::vector<double> > > singleAtomElectronDensity;
-	std::map<unsigned int, double> outerMostPointDen;
-	const double truncationTol=1e-8;
-
-	//loop over atom types
-	for (std::set<unsigned int>::iterator it=atomTypes.begin(); it!=atomTypes.end(); it++)
-	{
-		char densityFile[256];
-		if(dftParameters::isPseudopotential)
-		{
-			sprintf(densityFile,"temp/z%u/density.inp",*it);
-		}
-		else
-		{
-			sprintf(densityFile, "%s/data/electronicStructure/allElectron/z%u/singleAtomData/density.inp", DFT_PATH, *it);
-		}
-
-		dftUtils::readFile(2, singleAtomElectronDensity[*it], densityFile);
-		unsigned int numRows = singleAtomElectronDensity[*it].size()-1;
-		std::vector<double> xData(numRows), yData(numRows);
-
-		unsigned int maxRowId=0;
-		for(unsigned int irow = 0; irow < numRows; ++irow)
-		{
-			xData[irow] = singleAtomElectronDensity[*it][irow][0];
-			yData[irow] = singleAtomElectronDensity[*it][irow][1];
-
-			if (yData[irow]>truncationTol)
-				maxRowId=irow;
-		}
-
-		//interpolate rho
-		alglib::real_1d_array x;
-		x.setcontent(numRows,&xData[0]);
-		alglib::real_1d_array y;
-		y.setcontent(numRows,&yData[0]);
-		alglib::ae_int_t natural_bound_type_L = 1;
-		alglib::ae_int_t natural_bound_type_R = 1;
-		spline1dbuildcubic(x, y, numRows, natural_bound_type_L, 0.0, natural_bound_type_R, 0.0, denSpline[*it]);
-		outerMostPointDen[*it]= xData[maxRowId];
-	}
-
-
-	//Initialize rho
-  const Quadrature<3> &  quadrature_formula=matrix_free_data.get_quadrature(d_densityQuadratureId);
-	FEValues<3> fe_values (FE, quadrature_formula, update_quadrature_points);
-	const unsigned int n_q_points    = quadrature_formula.size();
-
-	//
-	//get number of image charges used only for periodic
-	//
-	const int numberImageCharges = d_imageIdsTrunc.size();
-
-	//IndexSet locallyOwnedSet;
-	//DoFTools::extract_locally_owned_dofs(d_dofHandlerPRefined,locallyOwnedSet);
-	//std::vector<IndexSet::size_type> locallyOwnedDOFs;
-	//locallyOwnedSet.fill_index_vector(locallyOwnedDOFs);
-	//unsigned int numberDofs = locallyOwnedDOFs.size();
-	std::map<types::global_dof_index, Point<3> > supportPointsRhoNodal;
-	DoFTools::map_dofs_to_support_points(MappingQ1<3,3>(), d_dofHandlerRhoNodal, supportPointsRhoNodal);
-
-	//d_matrixFreeDataPRefined.initialize_dof_vector(d_rhoInNodalValues);
-	std::vector<distributedCPUVec<double>> singleAtomsRho(atomLocations.size()+numberImageCharges);
-	for(unsigned int iAtom = 0; iAtom < atomLocations.size()+numberImageCharges; ++iAtom)
-	{
-		if (iAtom==0)
-		  d_matrixFreeDataPRefined.initialize_dof_vector(singleAtomsRho[iAtom],d_nonPeriodicDensityDofHandlerIndexElectro);
-		else
-			singleAtomsRho[iAtom].reinit(singleAtomsRho[0]);
-
-		singleAtomsRho[iAtom]=0.0;
-	}
-
-	const std::shared_ptr< const dealii::Utilities::MPI::Partitioner > & partitioner
-		=singleAtomsRho[0].get_partitioner();
-	const unsigned int localSize =  partitioner->local_size();
-	const unsigned int n_ghosts   = partitioner->n_ghost_indices();
-	const unsigned int relevantDofs = localSize + n_ghosts;
-
-	std::vector<bool> isAtomLocal(atomLocations.size()+numberImageCharges,false);
-	for(unsigned int dof = 0; dof < relevantDofs; ++dof)
-	{ 
-		//const dealii::types::global_dof_index dofID = locallyOwnedDOFs[dof];
-		const dealii::types::global_dof_index dofID = partitioner->local_to_global(dof);
-	  Point<3> nodalCoor = supportPointsRhoNodal[dofID];
-		if(!d_constraintsRhoNodalOnlyHanging.is_constrained(dofID))
-		{
-			//loop over atoms and superimpose electron-density at a given dof from all atoms
-			double rhoNodalValue = 0.0;
-			for(unsigned int iAtom = 0; iAtom < atomLocations.size(); ++iAtom)
-			{
-				Point<3> atom(atomLocations[iAtom][2],atomLocations[iAtom][3],atomLocations[iAtom][4]);
-				double distanceToAtom = nodalCoor.distance(atom);
-				if(distanceToAtom <= outerMostPointDen[atomLocations[iAtom][0]])
-				{
-					const double rhoVal=alglib::spline1dcalc(denSpline[atomLocations[iAtom][0]], distanceToAtom);
-					singleAtomsRho[iAtom].local_element(dof)=std::abs(rhoVal);
-					rhoNodalValue += rhoVal;
-					isAtomLocal[iAtom]=true;
-				}
-			}
-
-			//loop over image charges and do as above
-			for(int iImageCharge = 0; iImageCharge < numberImageCharges; ++iImageCharge)
-			{
-				Point<3> imageAtom(d_imagePositionsTrunc[iImageCharge][0],
-						d_imagePositionsTrunc[iImageCharge][1],
-						d_imagePositionsTrunc[iImageCharge][2]);
-				double distanceToAtom = nodalCoor.distance(imageAtom);
-				int masterAtomId = d_imageIdsTrunc[iImageCharge];
-				if(distanceToAtom <= outerMostPointDen[atomLocations[masterAtomId][0]])
-				{
-					const double rhoVal = alglib::spline1dcalc(denSpline[atomLocations[masterAtomId][0]], distanceToAtom);
-					singleAtomsRho[iImageCharge+atomLocations.size()].local_element(dof)=std::abs(rhoVal);
-					rhoNodalValue += rhoVal;
-					isAtomLocal[iImageCharge+atomLocations.size()]=true;
-				}
-			}
-
-			if (dof<localSize)
-				atomicRho.local_element(dof) = std::abs(rhoNodalValue);
-		}
-	}
-
-	atomicRho.update_ghost_values();
-
-	//for(unsigned int iAtom = 0; iAtom < atomLocations.size()+numberImageCharges; ++iAtom)
-	//   singleAtomsRho[iAtom].update_ghost_values(); 
-
-	//normalize rho
-	const double charge = totalCharge(d_matrixFreeDataPRefined,
-			atomicRho);
-
-	VectorizedArray<double> normValueVectorized = make_vectorized_array(0.0);
-	FEEvaluation<C_DIM,C_rhoNodalPolyOrder<FEOrder,FEOrderElectro>(),C_num1DQuad<C_rhoNodalPolyOrder<FEOrder,FEOrderElectro>()>(),1,double> feEvalObj(d_matrixFreeDataPRefined,d_nonPeriodicDensityDofHandlerIndexElectro,d_densityQuadratureIdElectro);
-	const unsigned int numQuadPoints = feEvalObj.n_q_points;
-
-
-	const double scalingFactor = ((double)numElectrons)/charge;
-
-	//scale nodal vector with scalingFactor
-	atomicRho *= scalingFactor;
-
-	//for(unsigned int iAtom = 0; iAtom < atomLocations.size()+numberImageCharges; ++iAtom)
-	//   singleAtomsRho[iAtom]*=scalingFactor; 
-
-	if (dftParameters::verbosity>=3)
-	{
-		pcout<<"Total Charge before Normalizing nodal Rho:  "<<charge<<std::endl;
-		pcout<<"Total Charge after Normalizing nodal Rho: "<< totalCharge(d_matrixFreeDataPRefined,atomicRho)<<std::endl;
-		//pcout<<"Total Charge after Normalizing rho on first atom: "<< totalCharge(d_matrixFreeDataPRefined,singleAtomsRho[0])<<std::endl;
-	}
-
-	interpolateRhoNodalDataToQuadratureDataGeneral(d_matrixFreeDataPRefined,
-      d_densityDofHandlerIndexElectro,
-      d_densityQuadratureIdElectro,
-			atomicRho,
-			d_rhoAtomsValues,
-			d_gradRhoAtomsValues,
-			d_hessianRhoAtomsValues,
-			true,
-			dftParameters::xc_id==4);
-
-	d_gradRhoAtomsValuesSeparate.clear();
-
-	if (dftParameters::xc_id==4)
-		d_hessianRhoAtomsValuesSeparate.clear();
-
-	DoFHandler<C_DIM>::active_cell_iterator subCellPtr;
-	for(unsigned int cell = 0; cell < d_matrixFreeDataPRefined.n_macro_cells(); ++cell)
-	{
-		feEvalObj.reinit(cell);
-		for (unsigned int iatom=0; iatom<(atomLocations.size()+numberImageCharges); iatom++)
-		{
-			if (!isAtomLocal[iatom])
-				continue;
-
-			feEvalObj.read_dof_values(singleAtomsRho[iatom]);
-			if (dftParameters::xc_id==4)
-				feEvalObj.evaluate(true,true,true);
-			else
-				feEvalObj.evaluate(true,true);
-
-			bool isRhoNonZero=true;
-
-			for(unsigned int q_point = 0; q_point < numQuadPoints; ++q_point)
-			{
-				VectorizedArray<double> val=feEvalObj.get_value(q_point);
-				for(unsigned int iSubCell = 0; iSubCell < d_matrixFreeDataPRefined.n_components_filled(cell); ++iSubCell)
-				{
-					if (val[iSubCell]>truncationTol)
-						isRhoNonZero=false; 
-				}
-			}
-
-
-			if (!isRhoNonZero)
-				for(unsigned int iSubCell = 0; iSubCell < d_matrixFreeDataPRefined.n_components_filled(cell); ++iSubCell)
-				{
-					subCellPtr= d_matrixFreeDataPRefined.get_cell_iterator(cell,iSubCell,d_nonPeriodicDensityDofHandlerIndexElectro);
-					dealii::CellId subCellId=subCellPtr->id();
-					d_gradRhoAtomsValuesSeparate[iatom][subCellId]=std::vector<double>(3*numQuadPoints);
-					std::vector<double> & tempVec1 = d_gradRhoAtomsValuesSeparate[iatom].find(subCellId)->second;
-					for(unsigned int q_point = 0; q_point < numQuadPoints; ++q_point)
-					{
-						tempVec1[3*q_point + 0] = feEvalObj.get_gradient(q_point)[0][iSubCell]*scalingFactor;
-						tempVec1[3*q_point + 1] = feEvalObj.get_gradient(q_point)[1][iSubCell]*scalingFactor;
-						tempVec1[3*q_point + 2] = feEvalObj.get_gradient(q_point)[2][iSubCell]*scalingFactor;
-					}
-
-					if (dftParameters::xc_id==4)
-					{
-
-						d_hessianRhoAtomsValuesSeparate[iatom][subCellId]=std::vector<double>(9*numQuadPoints);
-						std::vector<double> & tempVec2 = d_hessianRhoAtomsValuesSeparate[iatom][subCellId];
-						for(unsigned int q_point = 0; q_point < numQuadPoints; ++q_point)
-						{
-							const Tensor< 2, 3, VectorizedArray< double> >   & hessianVals=feEvalObj.get_hessian(q_point);
-							for (unsigned int i=0; i<3;i++)
-								for (unsigned int j=0; j<3;j++)
-									tempVec2[9*q_point + 3*i+j] = hessianVals[i][j][iSubCell]*scalingFactor;
-						}
-					}
-				}
-		}
-
-	}
-
-	normalizeAtomicRhoQuadValues();
-	computing_timer.exit_section("initialize atomic density for xl bomd");  
 }

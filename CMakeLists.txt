@@ -52,8 +52,13 @@ SET(TARGET_SRC
   ./utils/xmlTodftfeParser.cc
   )
 
+IF (WITH_GPU)
+    set_source_files_properties(${TARGET_SRC} PROPERTIES LANGUAGE CUDA)
+ENDIF()
+
 SET(CUDA_SRC
-  ./src/setupGPU.cu
+  ./src/gpuBase/cudaHelpers.cu
+  ./src/gpuBase/gpuDirectCCLWrapper.cu  
   ./src/dft/densityCalculatorCUDA.cu
   ./src/dftOperator/operatorCUDA.cu
   ./src/dftOperator/kohnShamDFTOperatorCUDA.cu
@@ -70,10 +75,10 @@ SET(CUDA_SRC
   )
 
 IF (WITH_GPU)
-  CMAKE_MINIMUM_REQUIRED(VERSION 3.11)
+  CMAKE_MINIMUM_REQUIRED(VERSION 3.17)
   LIST(APPEND TARGET_SRC ${CUDA_SRC})
 ELSE()
-  CMAKE_MINIMUM_REQUIRED(VERSION 2.8.12)
+  CMAKE_MINIMUM_REQUIRED(VERSION 3.17)
 ENDIF()
 
 LIST(APPEND CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake)
@@ -209,16 +214,12 @@ IF (WITH_GPU)
 
   find_package(CUDA REQUIRED)
   set(CUDA_PROPAGATE_HOST_FLAGS ON)
-  CUDA_SELECT_NVCC_ARCH_FLAGS(ARCH_FLAGS Auto)
-  LIST(APPEND CUDA_NVCC_FLAGS ${ARCH_FLAGS})
-  LIST(APPEND CUDA_NVCC_FLAGS -std=c++11; -expt-relaxed-constexpr)
+  #CUDA_SELECT_NVCC_ARCH_FLAGS(ARCH_FLAGS Auto)
+  #LIST(APPEND CUDA_NVCC_FLAGS ${ARCH_FLAGS})
+  LIST(APPEND CUDA_NVCC_FLAGS -arch=sm_70;-std=c++14; -expt-relaxed-constexpr)
 ENDIF()
 
-IF (WITH_GPU)
-  CUDA_ADD_LIBRARY(${TARGETLIB} SHARED ${TARGET_SRC})
-ELSE()
-  ADD_LIBRARY(${TARGETLIB} SHARED ${TARGET_SRC})
-ENDIF()
+ADD_LIBRARY(${TARGETLIB} SHARED ${TARGET_SRC})
 
 ADD_EXECUTABLE(${TARGET}   src/main.cc)
 
@@ -233,10 +234,11 @@ TARGET_LINK_LIBRARIES(${TARGET} ${TARGETLIB})
 #
 
 IF (WITH_GPU)
-  target_include_directories(${TARGETLIB} PUBLIC ${CUDA_INCLUDE_DIRS})
-  SET(ALL_CUDA_LIBS ${CUDA_LIBRARIES} ${CUDA_cusparse_LIBRARY} ${CUDA_cublas_LIBRARY})
-  message(STATUS "CUDA_LIBRARIES: ${CUDA_INCLUDE_DIRS} ${ALL_CUDA_LIBS}")
-  TARGET_LINK_LIBRARIES(${TARGETLIB} "${ALL_CUDA_LIBS}")
+  find_package(CUDAToolkit REQUIRED)
+  target_include_directories(${TARGETLIB} PUBLIC ${CUDAToolkit_INCLUDE_DIRS})
+  target_link_libraries(${TARGETLIB} CUDA::cudart)
+  target_link_libraries(${TARGETLIB} CUDA::cublas)
+  target_link_libraries(${TARGETLIB} CUDA::cusparse)
 ENDIF()
 
 #
@@ -327,7 +329,7 @@ ELSE()
 ENDIF (DEFINED SPGLIB_DIR)
 
 #
-# ELPA. Set with -DELPA_LIB_DIR and -DELPA_INCLUDE_DIR
+# ELPA. Pass path to -DCMAKE_PREFIX_PATH
 #
 IF (WITH_ELPA)
    ADD_DEFINITIONS(-DDFTFE_WITH_ELPA)
@@ -335,6 +337,19 @@ IF (WITH_ELPA)
    MESSAGE(STATUS "Will Link With ELPA")
    target_link_libraries(${TARGETLIB} ELPA::ELPA)
    target_include_directories(${TARGETLIB} PUBLIC ELPA::ELPA)
+ENDIF()
+
+#
+# NCCL. Pass path to -DCMAKE_PREFIX_PATH 
+#
+IF (WITH_NCCL)
+  find_package(NCCL REQUIRED)
+  IF (NCCL_FOUND)
+     MESSAGE(STATUS "Will Link With NCCL")
+     ADD_DEFINITIONS(-DDFTFE_WITH_NCCL)
+     find_package(MPI REQUIRED)
+     target_link_libraries(${TARGETLIB} NCCL MPI::MPI_CXX)
+  ENDIF()   
 ENDIF()
 
 #

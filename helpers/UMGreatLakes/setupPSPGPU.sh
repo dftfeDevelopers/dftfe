@@ -17,7 +17,7 @@ SRC=`dirname $0` # location of source directory
 # and optimization flag
 
 #Paths for external libraries
-dealiiDir="/home/vikramg/DFT-FE-softwares/dealiinew/install_gcc8.2.0_openmp3.1.4_cuda10.1.243"
+dealiiDir="/home/vikramg/DFT-FE-softwares/dealiinew/install_gcc8.2.0_openmp3.1.4_cuda11.0.2_poissonopt"
 alglibDir="/home/vikramg/DFT-FE-softwares/alglibGCC/cpp/src"
 libxcDir="/home/vikramg/DFT-FE-softwares/libxc/gcc8.2.0_libxc_4.3.4"
 spglibDir="/home/vikramg/DFT-FE-softwares/spglibGCC"
@@ -84,7 +84,7 @@ function cmake_cplx() {
 	-DALGLIB_DIR=$alglibDir -DLIBXC_DIR=$libxcDir \
 	-DSPGLIB_DIR=$spglibDir -DXML_LIB_DIR=$xmlLibDir \
 	-DXML_INCLUDE_DIR=$xmlIncludeDir -DWITH_INTEL_MKL=$withIntelMkl \
-	-DWITH_COMPLEX=ON -DWITH_TESTING=$testing -DMINIMAL_COMPILE=$minimal_compile\\
+	-DWITH_COMPLEX=ON -DWITH_TESTING=$testing -DMINIMAL_COMPILE=$minimal_compile\
   -DHIGHERQUAD_PSP=$withHigherQuadPSP $1
 }
 

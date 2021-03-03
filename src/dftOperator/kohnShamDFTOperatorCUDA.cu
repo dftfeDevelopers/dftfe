@@ -25,6 +25,7 @@
 #include <linearAlgebraOperations.h>
 #include <linearAlgebraOperationsInternalCUDA.h>
 #include <kohnShamDFTOperatorCUDAKernels.h>
+#include <cudaHelpers.h>
 
 namespace dftfe 
 {
@@ -1612,7 +1613,8 @@ namespace dftfe
 				const unsigned int N,
 				cublasHandle_t &handle,
 				const std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid>  & processGrid,
-				dealii::ScaLAPACKMatrix<double> & projHamPar)
+				dealii::ScaLAPACKMatrix<double> & projHamPar,
+        GPUCCLWrapper & gpucclMpiCommDomain)
 		{
 
 			std::map<unsigned int, unsigned int> globalToLocalColumnIdMap;
@@ -1761,7 +1763,8 @@ namespace dftfe
 				const unsigned int N,
 				cublasHandle_t &handle,
 				const std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid>  & processGrid,
-				dealii::ScaLAPACKMatrix<double> & projHamPar)
+				dealii::ScaLAPACKMatrix<double> & projHamPar,
+        GPUCCLWrapper & gpucclMpiCommDomain)
 		{
 
 			/////////////PSEUDO CODE for the implementation below for Overlapping compute and communication/////////////////
@@ -1812,9 +1815,9 @@ namespace dftfe
 			const unsigned int numberBlocks=N/vectorsBlockSize;
 
 			// create separate CUDA streams for GPU->CPU copy and computation
-			cudaStream_t streamCompute, streamCopy;
-			cudaStreamCreate(&streamCompute);
-			cudaStreamCreate(&streamCopy);
+			cudaStream_t streamCompute, streamDataMove;
+			CUDACHECK(cudaStreamCreate(&streamCompute));
+			CUDACHECK(cudaStreamCreate(&streamDataMove));
 
 			// attach cublas handle to compute stream
 			cublasSetStream(handle,streamCompute);  
@@ -1828,12 +1831,12 @@ namespace dftfe
 
 			for(int i = 0; i < numberBlocks; ++i)
 			{
-				cudaEventCreate(&computeEvents[i]);
-				cudaEventCreate(&copyEvents[i]);
+				CUDACHECK(cudaEventCreate(&computeEvents[i]));
+				CUDACHECK(cudaEventCreate(&copyEvents[i]));
 			}
 
 			double *  projHamBlockHost;
-			cudaMallocHost((void **)&projHamBlockHost,vectorsBlockSize*N*sizeof(double));
+			CUDACHECK(cudaMallocHost((void **)&projHamBlockHost,vectorsBlockSize*N*sizeof(double)));
 			std::memset(projHamBlockHost,0,vectorsBlockSize*N*sizeof(double));
 
 			thrust::device_vector<double> HXBlockFull(vectorsBlockSize*M,0.0);
@@ -1908,24 +1911,17 @@ namespace dftfe
 								D);
 
 						// record completion of compute for first block
-						cudaEventRecord(computeEvents[blockCount],streamCompute);
+						CUDACHECK(cudaEventRecord(computeEvents[blockCount],streamCompute));
 					}
 
-					// check for completion of compute on current block before proceeding
-					// to swapping memories and GPU->CPU copy on current block
-					cudaStreamWaitEvent(streamCopy,computeEvents[blockCount],0);
 
-					if(jvec > bandGroupLowHighPlusOneIndices[2*bandGroupTaskId])
+          // Before swap host thread needs to wait till compute on currentblock is over.
+          // Since swap occurs on the null stream, any future calls in the streamDataMove
+          // will only occur after both the compute on currentblock and swap is over.
+          // Note that at this point there is nothing queued in the streamDataMove
+          // as all previous operations in that stream are over.
+					if((cudaEventSynchronize(computeEvents[blockCount]) == cudaSuccess) && (jvec > bandGroupLowHighPlusOneIndices[2*bandGroupTaskId]))
 						projHamBlock.swap(projHamBlockNext);
-
-					cudaMemcpyAsync(projHamBlockHost,
-							thrust::raw_pointer_cast(&projHamBlock[0]),
-							D*B*sizeof(double),
-							cudaMemcpyDeviceToHost,
-							streamCopy);
-
-					// record completion of GPU->CPU copy for current block
-					cudaEventRecord(copyEvents[blockCount],streamCopy);
 
 					const unsigned int jvecNew = jvec + vectorsBlockSize; 
 					const unsigned int DNew = N - jvecNew;
@@ -1980,20 +1976,39 @@ namespace dftfe
 								DNew);
 
 						// record completion of compute for next block
-						cudaEventRecord(computeEvents[blockCount+1],streamCompute);
+						CUDACHECK(cudaEventRecord(computeEvents[blockCount+1],streamCompute));
 					}
+
+          if (dftParameters::useGPUDirectAllReduce)
+          {
+						// Sum local projHamBlock across domain decomposition processors
+            gpucclMpiCommDomain.gpuDirectAllReduceWrapper(thrust::raw_pointer_cast(&projHamBlock[0]),
+                                 thrust::raw_pointer_cast(&projHamBlock[0]), 
+                                 D*B, 
+                                 streamDataMove);
+          }
+
+					cudaMemcpyAsync(projHamBlockHost,
+							thrust::raw_pointer_cast(&projHamBlock[0]),
+							D*B*sizeof(double),
+							cudaMemcpyDeviceToHost,
+							streamDataMove);
+
+					// record completion of GPU->CPU copy for current block
+					CUDACHECK(cudaEventRecord(copyEvents[blockCount],streamDataMove));
 
 					// Check that GPU->CPU on the current block has been completed. If completed,
 					// perform blocking MPI commmunication on the current block and copy to ScaLAPACK matrix
 					if(cudaEventSynchronize(copyEvents[blockCount])==cudaSuccess)
 					{
-						// Sum local projHamBlock across domain decomposition processors 
-						MPI_Allreduce(MPI_IN_PLACE,
-								projHamBlockHost,
-								D*B,
-								MPI_DOUBLE,
-								MPI_SUM,
-								mpi_communicator);
+						// Sum local projHamBlock across domain decomposition processors
+            if (!dftParameters::useGPUDirectAllReduce)
+              MPI_Allreduce(MPI_IN_PLACE,
+                  projHamBlockHost,
+                  D*B,
+                  MPI_DOUBLE,
+                  MPI_SUM,
+                  mpi_communicator);
 
 						//Copying only the lower triangular part to the ScaLAPACK projected Hamiltonian matrix
 						if (processGrid->is_process_active())
@@ -2017,9 +2032,19 @@ namespace dftfe
 				blockCount+=1;
 			}
 
-			cudaFreeHost(projHamBlockHost);
+			CUDACHECK(cudaFreeHost(projHamBlockHost));
 			// return cublas handle to default stream
 			cublasSetStream(handle,NULL);
+
+			for(int i = 0; i < numberBlocks; ++i)
+			{
+				CUDACHECK(cudaEventDestroy(computeEvents[i]));
+				CUDACHECK(cudaEventDestroy(copyEvents[i]));
+			}
+
+			CUDACHECK(cudaStreamDestroy(streamCompute));
+			CUDACHECK(cudaStreamDestroy(streamDataMove));
+
 			if (numberBandGroups>1)
 			{
 				MPI_Barrier(dftPtr->interBandGroupComm);
@@ -2044,7 +2069,8 @@ namespace dftfe
 				const unsigned int Noc,
 				cublasHandle_t &handle,
 				const std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid>  & processGrid,
-				dealii::ScaLAPACKMatrix<double> & projHamPar)
+				dealii::ScaLAPACKMatrix<double> & projHamPar,
+        GPUCCLWrapper & gpucclMpiCommDomain)
 		{
 
 			pcout<<"XtHX Mixed Prec: "<<std::endl;
@@ -2344,7 +2370,8 @@ namespace dftfe
 				const unsigned int N,
 				cublasHandle_t &handle,
 				const std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid>  & processGrid,
-				dealii::ScaLAPACKMatrix<double> & projHamPar)
+				dealii::ScaLAPACKMatrix<double> & projHamPar,
+        GPUCCLWrapper & gpucclMpiCommDomain)
 		{
 
 			pcout<<"XtHX Single Prec off diag: "<<std::endl;
@@ -2590,7 +2617,8 @@ namespace dftfe
 				const unsigned int Noc,
 				cublasHandle_t &handle,
 				const std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid>  & processGrid,
-				dealii::ScaLAPACKMatrix<double> & projHamPar)
+				dealii::ScaLAPACKMatrix<double> & projHamPar,
+        GPUCCLWrapper & gpucclMpiCommDomain)
 		{
 			std::map<unsigned int, unsigned int> globalToLocalColumnIdMap;
 			std::map<unsigned int, unsigned int> globalToLocalRowIdMap;
@@ -2615,9 +2643,9 @@ namespace dftfe
 			const unsigned int numberBlocks=N/vectorsBlockSize;
 
 			// create cuda compute and copy streams
-			cudaStream_t streamCompute, streamCopy;
-			cudaStreamCreate(&streamCompute);
-			cudaStreamCreate(&streamCopy);
+			cudaStream_t streamCompute, streamDataMove;
+			CUDACHECK(cudaStreamCreate(&streamCompute));
+			CUDACHECK(cudaStreamCreate(&streamDataMove));
 
 			// attach cublas handle to compute stream
 			cublasSetStream(handle,streamCompute);  
@@ -2631,8 +2659,8 @@ namespace dftfe
 
 			for(int i = 0; i < numberBlocks; ++i)
 			{
-				cudaEventCreate(&computeEvents[i]);
-				cudaEventCreate(&copyEvents[i]);
+				CUDACHECK(cudaEventCreate(&computeEvents[i]));
+				CUDACHECK(cudaEventCreate(&copyEvents[i]));
 			}
 
 			thrust::device_vector<float> XSP(M*N,0.0);
@@ -2641,11 +2669,11 @@ namespace dftfe
 					thrust::raw_pointer_cast(&XSP[0]));
 
 			double *  projHamBlockHost;
-			cudaMallocHost((void **)&projHamBlockHost,vectorsBlockSize*N*sizeof(double));
+			CUDACHECK(cudaMallocHost((void **)&projHamBlockHost,vectorsBlockSize*N*sizeof(double)));
 			std::memset(projHamBlockHost,0,vectorsBlockSize*N*sizeof(double));
 
 			float *  projHamBlockHostSP;
-			cudaMallocHost((void **)&projHamBlockHostSP,vectorsBlockSize*N*sizeof(float));
+			CUDACHECK(cudaMallocHost((void **)&projHamBlockHostSP,vectorsBlockSize*N*sizeof(float)));
 			std::memset(projHamBlockHostSP,0,vectorsBlockSize*N*sizeof(float));
 
 			thrust::device_vector<double> HXBlockFull(vectorsBlockSize*M,0.0);
@@ -2760,37 +2788,22 @@ namespace dftfe
 									D);
 
 						// record completion of compute for next block
-						cudaEventRecord(computeEvents[blockCount],streamCompute);
+						CUDACHECK(cudaEventRecord(computeEvents[blockCount],streamCompute));
 
 					}
 
-					// check for completion of compute on current block before proceeding
-					// to swapping memories and GPU->CPU copy on current block
-					cudaStreamWaitEvent(streamCopy,computeEvents[blockCount],0);
-
-					if(jvec > bandGroupLowHighPlusOneIndices[2*bandGroupTaskId])
+          // Before swap host thread needs to wait till compute on currentblock is over.
+          // Since swap occurs on the null stream, any future calls in the streamDataMove
+          // will only occur after both the compute on currentblock and swap is over.
+          // Note that at this point there is nothing queued in the streamDataMove
+          // as all previous operations in that stream are over.
+					if((cudaEventSynchronize(computeEvents[blockCount]) == cudaSuccess) && (jvec > bandGroupLowHighPlusOneIndices[2*bandGroupTaskId]))
 					{
 						if (jvec+B>Noc)
 							projHamBlock.swap(projHamBlockNext);
 						else
 							projHamBlockSP.swap(projHamBlockSPNext);
 					}
-
-					if (jvec+B>Noc)
-						cudaMemcpyAsync(projHamBlockHost,
-								thrust::raw_pointer_cast(&projHamBlock[0]),
-								D*B*sizeof(double),
-								cudaMemcpyDeviceToHost,
-								streamCopy);
-					else
-						cudaMemcpyAsync(projHamBlockHostSP,
-								thrust::raw_pointer_cast(&projHamBlockSP[0]),
-								D*B*sizeof(float),
-								cudaMemcpyDeviceToHost,
-								streamCopy);
-
-					// record completion of GPU->CPU copy for current block
-					cudaEventRecord(copyEvents[blockCount],streamCopy);
 
 					const unsigned int jvecNew = jvec + vectorsBlockSize; 
 					const unsigned int DNew = N - jvecNew;
@@ -2881,8 +2894,42 @@ namespace dftfe
 									DNew);
 
 						// record completion of compute for next block
-						cudaEventRecord(computeEvents[blockCount+1],streamCompute);
+						CUDACHECK(cudaEventRecord(computeEvents[blockCount+1],streamCompute));
 					}
+
+          if (dftParameters::useGPUDirectAllReduce)
+          {
+            if (jvec+B>Noc)
+            {
+              gpucclMpiCommDomain.gpuDirectAllReduceWrapper(thrust::raw_pointer_cast(&projHamBlock[0]),
+                                   thrust::raw_pointer_cast(&projHamBlock[0]), 
+                                   D*B, 
+                                   streamDataMove);
+            }
+            else
+            {
+              gpucclMpiCommDomain.gpuDirectAllReduceWrapper(thrust::raw_pointer_cast(&projHamBlockSP[0]),
+                                   thrust::raw_pointer_cast(&projHamBlockSP[0]), 
+                                   D*B, 
+                                   streamDataMove);              
+            }
+          }
+
+					if (jvec+B>Noc)
+						cudaMemcpyAsync(projHamBlockHost,
+								thrust::raw_pointer_cast(&projHamBlock[0]),
+								D*B*sizeof(double),
+								cudaMemcpyDeviceToHost,
+								streamDataMove);
+					else
+						cudaMemcpyAsync(projHamBlockHostSP,
+								thrust::raw_pointer_cast(&projHamBlockSP[0]),
+								D*B*sizeof(float),
+								cudaMemcpyDeviceToHost,
+								streamDataMove);
+
+					// record completion of GPU->CPU copy for current block
+					CUDACHECK(cudaEventRecord(copyEvents[blockCount],streamDataMove));
 
 					// Check that GPU->CPU on the current block has been completed. If completed,
 					// perform blocking MPI commmunication on the current block and copy to ScaLAPACK matrix 
@@ -2891,12 +2938,13 @@ namespace dftfe
 						if (jvec+B>Noc)
 						{
 							// Sum local projHamBlock across domain decomposition processors 
-							MPI_Allreduce(MPI_IN_PLACE,
-									projHamBlockHost,
-									D*B,
-									MPI_DOUBLE,
-									MPI_SUM,
-									mpi_communicator);
+              if (!dftParameters::useGPUDirectAllReduce)
+                MPI_Allreduce(MPI_IN_PLACE,
+                    projHamBlockHost,
+                    D*B,
+                    MPI_DOUBLE,
+                    MPI_SUM,
+                    mpi_communicator);
 
 							//Copying only the lower triangular part to the ScaLAPACK projected Hamiltonian matrix
 							if (processGrid->is_process_active())
@@ -2918,12 +2966,13 @@ namespace dftfe
 						else
 						{
 							// Sum local projHamBlock across domain decomposition processors
-							MPI_Allreduce(MPI_IN_PLACE,
-									projHamBlockHostSP,
-									D*B,
-									MPI_FLOAT,
-									MPI_SUM,
-									mpi_communicator);
+              if (!dftParameters::useGPUDirectAllReduce)              
+                MPI_Allreduce(MPI_IN_PLACE,
+                    projHamBlockHostSP,
+                    D*B,
+                    MPI_FLOAT,
+                    MPI_SUM,
+                    mpi_communicator);
 
 							//Copying only the lower triangular part to the ScaLAPACK projected Hamiltonian matrix
 							if (processGrid->is_process_active())
@@ -2946,11 +2995,21 @@ namespace dftfe
 				}//band parallelization
 				blockCount+=1;
 			}
-			cudaFreeHost(projHamBlockHost);
-			cudaFreeHost(projHamBlockHostSP);
+			
+      CUDACHECK(cudaFreeHost(projHamBlockHost));
+			CUDACHECK(cudaFreeHost(projHamBlockHostSP));
 
 			// return cublas handle to default stream     
 			cublasSetStream(handle,NULL);
+
+			for(int i = 0; i < numberBlocks; ++i)
+			{
+				CUDACHECK(cudaEventDestroy(computeEvents[i]));
+				CUDACHECK(cudaEventDestroy(copyEvents[i]));
+			}
+
+			CUDACHECK(cudaStreamDestroy(streamCompute));
+			CUDACHECK(cudaStreamDestroy(streamDataMove));
 
 			if (numberBandGroups>1)
 			{
@@ -2995,7 +3054,8 @@ namespace dftfe
 				const unsigned int N,
 				cublasHandle_t &handle,
 				const std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid>  & processGrid,
-				dealii::ScaLAPACKMatrix<double> & projHamPar)
+				dealii::ScaLAPACKMatrix<double> & projHamPar,
+        GPUCCLWrapper & gpucclMpiCommDomain)
 		{
 
 			pcout<<"XtHX OffDiag Single Prec Asyn Compute Commn: "<<std::endl;
@@ -3023,9 +3083,9 @@ namespace dftfe
 			const unsigned int numberBlocks=N/vectorsBlockSize;
 
 			// create cuda compute and copy streams
-			cudaStream_t streamCompute, streamCopy;
-			cudaStreamCreate(&streamCompute);
-			cudaStreamCreate(&streamCopy);
+			cudaStream_t streamCompute, streamDataMove;
+			CUDACHECK(cudaStreamCreate(&streamCompute));
+			CUDACHECK(cudaStreamCreate(&streamDataMove));
 
 			// attach cublas handle to compute stream
 			cublasSetStream(handle,streamCompute);  
@@ -3039,8 +3099,8 @@ namespace dftfe
 
 			for(int i = 0; i < numberBlocks; ++i)
 			{
-				cudaEventCreate(&computeEvents[i]);
-				cudaEventCreate(&copyEvents[i]);
+				CUDACHECK(cudaEventCreate(&computeEvents[i]));
+				CUDACHECK(cudaEventCreate(&copyEvents[i]));
 			}
 
 			thrust::device_vector<float> XSP(M*N,0.0);
@@ -3049,11 +3109,11 @@ namespace dftfe
 					thrust::raw_pointer_cast(&XSP[0]));
 
 			double *  projHamBlockHostDP;
-			cudaMallocHost((void **)&projHamBlockHostDP,vectorsBlockSize*N*sizeof(double));
+			CUDACHECK(cudaMallocHost((void **)&projHamBlockHostDP,vectorsBlockSize*N*sizeof(double)));
 			std::memset(projHamBlockHostDP,0,vectorsBlockSize*N*sizeof(double));
 
 			float *  projHamBlockHostSP;
-			cudaMallocHost((void **)&projHamBlockHostSP,vectorsBlockSize*N*sizeof(float));
+			CUDACHECK(cudaMallocHost((void **)&projHamBlockHostSP,vectorsBlockSize*N*sizeof(float)));
 			std::memset(projHamBlockHostSP,0,vectorsBlockSize*N*sizeof(float));
 
 			thrust::device_vector<double> HXBlockFullDP(vectorsBlockSize*M,0.0);
@@ -3161,36 +3221,21 @@ namespace dftfe
 						}
 
 						// record completion of compute for next block
-						cudaEventRecord(computeEvents[blockCount],streamCompute);
+						CUDACHECK(cudaEventRecord(computeEvents[blockCount],streamCompute));
 					}
 
-					// check for completion of compute on current block before proceeding
-					// to swapping memories and GPU->CPU copy on current block
-					cudaStreamWaitEvent(streamCopy,computeEvents[blockCount],0);
-
-					if(jvec > bandGroupLowHighPlusOneIndices[2*bandGroupTaskId])
-					{
+          // Before swap host thread needs to wait till compute on currentblock is over.
+          // Since swap occurs on the null stream, any future calls in the streamDataMove
+          // will only occur after both the compute on currentblock and swap is over.
+          // Note that at this point there is nothing queued in the streamDataMove
+          // as all previous operations in that stream are over.
+					if((cudaEventSynchronize(computeEvents[blockCount]) == cudaSuccess) && (jvec > bandGroupLowHighPlusOneIndices[2*bandGroupTaskId]))
+          {
 						projHamBlockDP.swap(projHamBlockDPNext);
 						projHamBlockSP.swap(projHamBlockSPNext);
 					}
 
 					const unsigned int DRem=D-B;
-
-
-					cudaMemcpyAsync(projHamBlockHostDP,
-							thrust::raw_pointer_cast(&projHamBlockDP[0]),
-							B*B*sizeof(double),
-							cudaMemcpyDeviceToHost,
-							streamCopy);
-
-					cudaMemcpyAsync(projHamBlockHostSP,
-							thrust::raw_pointer_cast(&projHamBlockSP[0]),
-							DRem*B*sizeof(float),
-							cudaMemcpyDeviceToHost,
-							streamCopy);
-
-					// record completion of GPU->CPU copy for current block
-					cudaEventRecord(copyEvents[blockCount],streamCopy);
 
 					const unsigned int jvecNew = jvec + vectorsBlockSize; 
 					const unsigned int DNew = N - jvecNew;
@@ -3278,8 +3323,36 @@ namespace dftfe
 						}
 
 						// record completion of compute for next block
-						cudaEventRecord(computeEvents[blockCount+1],streamCompute);
+						CUDACHECK(cudaEventRecord(computeEvents[blockCount+1],streamCompute));
 					}
+
+          if (dftParameters::useGPUDirectAllReduce)
+          {
+            gpucclMpiCommDomain.gpuDirectAllReduceWrapper(thrust::raw_pointer_cast(&projHamBlockDP[0]),
+                                 thrust::raw_pointer_cast(&projHamBlockDP[0]), 
+                                 B*B, 
+                                 streamDataMove);
+
+            gpucclMpiCommDomain.gpuDirectAllReduceWrapper(thrust::raw_pointer_cast(&projHamBlockSP[0]),
+                                 thrust::raw_pointer_cast(&projHamBlockSP[0]), 
+                                 DRem*B, 
+                                 streamDataMove);            
+          }
+
+					CUDACHECK(cudaMemcpyAsync(projHamBlockHostDP,
+							thrust::raw_pointer_cast(&projHamBlockDP[0]),
+							B*B*sizeof(double),
+							cudaMemcpyDeviceToHost,
+							streamDataMove));
+
+					CUDACHECK(cudaMemcpyAsync(projHamBlockHostSP,
+							thrust::raw_pointer_cast(&projHamBlockSP[0]),
+							DRem*B*sizeof(float),
+							cudaMemcpyDeviceToHost,
+							streamDataMove));
+
+					// record completion of GPU->CPU copy for current block
+					CUDACHECK(cudaEventRecord(copyEvents[blockCount],streamDataMove));
 
 					// Check that GPU->CPU on the current block has been completed. If completed,
 					// perform blocking MPI commmunication on the current block and copy to ScaLAPACK matrix 
@@ -3288,21 +3361,23 @@ namespace dftfe
 
 						const unsigned int DRem=D-B;
 
+            if (!dftParameters::useGPUDirectAllReduce)
+            {
+              // Sum local projHamBlock across domain decomposition processors 
+              MPI_Allreduce(MPI_IN_PLACE,
+                  projHamBlockHostDP,
+                  B*B,
+                  MPI_DOUBLE,
+                  MPI_SUM,
+                  mpi_communicator);
 
-						// Sum local projHamBlock across domain decomposition processors 
-						MPI_Allreduce(MPI_IN_PLACE,
-								projHamBlockHostDP,
-								B*B,
-								MPI_DOUBLE,
-								MPI_SUM,
-								mpi_communicator);
-
-						MPI_Allreduce(MPI_IN_PLACE,
-								projHamBlockHostSP,
-								DRem*B,
-								MPI_FLOAT,
-								MPI_SUM,
-								mpi_communicator);
+              MPI_Allreduce(MPI_IN_PLACE,
+                  projHamBlockHostSP,
+                  DRem*B,
+                  MPI_FLOAT,
+                  MPI_SUM,
+                  mpi_communicator);
+            }
 
 						//Copying only the lower triangular part to the ScaLAPACK projected Hamiltonian matrix
 						if (processGrid->is_process_active())
@@ -3337,11 +3412,21 @@ namespace dftfe
 				}//band parallelization
 				blockCount+=1;
 			}//end block loop
-			cudaFreeHost(projHamBlockHostDP);
-			cudaFreeHost(projHamBlockHostSP);
+			
+      CUDACHECK(cudaFreeHost(projHamBlockHostDP));
+			CUDACHECK(cudaFreeHost(projHamBlockHostSP));
 
 			// return cublas handle to default stream     
 			cublasSetStream(handle,NULL);
+
+			for(int i = 0; i < numberBlocks; ++i)
+			{
+				CUDACHECK(cudaEventDestroy(computeEvents[i]));
+				CUDACHECK(cudaEventDestroy(copyEvents[i]));
+			}
+
+			CUDACHECK(cudaStreamDestroy(streamCompute));
+			CUDACHECK(cudaStreamDestroy(streamDataMove));
 
 			if (numberBandGroups>1)
 			{

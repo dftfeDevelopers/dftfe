@@ -12,34 +12,24 @@ fi
 # Path to project source
 SRC=`dirname $0` # location of source directory
 
-PROJ=/ccs/proj/eng110
-
-. $PROJ/setup-env.sh
-. $PROJ/venvs/summit/bin/activate # for building docs
 
 ########################################################################
 #Provide paths below for external libraries, compiler options and flags,
 # and optimization flag
 
 #Paths for external libraries
-dealiiDir="$PROJ/software/dealiiDevelop/installDealii"
-alglibDir="$PROJ/software/alglib/cpp/src"
-libxcDir="$PROJ/software/libxc/installGcc6.4.0"
-spglibDir="$PROJ/software/spglib/installGcc6.4.0"
+dealiiPetscRealDir="/home/vikramg/DFT-FE-softwares/dealiinew/intel18.0.5_dealiicustom_real"
+dealiiPetscComplexDir="/home/vikramg/DFT-FE-softwares/dealiinew/intel18.0.5_dealiicustom_complex"
+alglibDir="/home/vikramg/DFT-FE-softwares/alglib/cpp/src"
+libxcDir="/home/vikramg/DFT-FE-softwares/libxc/intel2018_libxc_4.3.4"
+spglibDir="/home/vikramg/DFT-FE-softwares/spglib"
 xmlIncludeDir="/usr/include/libxml2"
 xmlLibDir="/usr/lib64"
-#elpaIncludeDir="$PROJ/software/elpaSMPI20200121/installElpa2020Gcc6.4.0CUDA10/include/elpa-2020.05.001.rc1"
-#elpaLibDir="$PROJ/software/elpaSMPI20200121/installElpa2020Gcc6.4.0CUDA10/lib"
-#elpaIncludeDir="$PROJ/Rogers_Tests/elpaSMPI202005/include/elpa_openmp-2020.05.001.rc1"
-#elpaLibDir="$PROJ/Rogers_Tests/elpaSMPI202005/lib"
-PREFIX_PATH="$PROJ/software/elpaSMPI20200121/installElpa2020Gcc6.4.0CUDA10"
+
 
 #If you have installed dealii by linking with intel mkl library set underlying flag to "ON",
 #otherwise set it to "OFF"
-withIntelMkl=OFF
-
-#Toggle GPU compilation
-withGPU=ON
+withIntelMkl=ON
 
 #Compiler options and flags
 c_compiler=mpicc
@@ -48,15 +38,16 @@ c_flagsRelease="-O2 -fPIC -fopenmp"
 cxx_flagsRelease="-O2 -fPIC -fopenmp"
 
 #Option to link to ELPA
-withELPA=ON
+withELPA=OFF
 
 #Option to compile with default or higher order quadrature for storing pseudopotential data
 #ON is recommended for MD simulations with hard pseudopotentials
-withHigherQuadPSP=OFF
+withHigherQuadPSP=ON
 
-# build type: "Release" or "Debug"
+#Optmization flag: 1 for optimized mode and 0 for debug mode compilation
 build_type=Release
-testing=OFF
+
+testing=ON
 minimal_compile=ON
 ###########################################################################
 #Usually, no changes are needed below this line
@@ -74,14 +65,15 @@ function cmake_real() {
   cmake -DCMAKE_C_COMPILER=$c_compiler -DCMAKE_CXX_COMPILER=$cxx_compiler \
 	-DCMAKE_CXX_FLAGS_RELEASE="$cxx_flagsRelease" \
 	-DCMAKE_C_FLAGS_RELEASE="$c_flagsRelease" \
-	-DCMAKE_BUILD_TYPE=$build_type -DDEAL_II_DIR=$dealiiDir \
+	-DCMAKE_BUILD_TYPE=$build_type -DDEAL_II_DIR=$dealiiPetscRealDir \
 	-DALGLIB_DIR=$alglibDir -DLIBXC_DIR=$libxcDir \
 	-DSPGLIB_DIR=$spglibDir -DXML_LIB_DIR=$xmlLibDir \
 	-DXML_INCLUDE_DIR=$xmlIncludeDir -DWITH_INTEL_MKL=$withIntelMkl \
 	-DWITH_ELPA=$withELPA -DCMAKE_PREFIX_PATH="$PREFIX_PATH" \
 	-DWITH_COMPLEX=OFF -DWITH_GPU=$withGPU \
 	-DWITH_TESTING=$testing -DMINIMAL_COMPILE=$minimal_compile \
-  -DHIGHERQUAD_PSP=$withHigherQuadPSP $1
+  -DHIGHERQUAD_PSP=$withHigherQuadPSP\
+	  $1
 }
 
 function cmake_cplx() {
@@ -89,12 +81,13 @@ function cmake_cplx() {
   cmake -DCMAKE_C_COMPILER=$c_compiler -DCMAKE_CXX_COMPILER=$cxx_compiler \
 	-DCMAKE_CXX_FLAGS_RELEASE="$cxx_flagsRelease" \
 	-DCMAKE_C_FLAGS_RELEASE="$c_flagsRelease" \
-	-DCMAKE_BUILD_TYPE=$build_type -DDEAL_II_DIR=$dealiiDir \
+	-DCMAKE_BUILD_TYPE=$build_type -DDEAL_II_DIR=$dealiiPetscComplexDir \
 	-DALGLIB_DIR=$alglibDir -DLIBXC_DIR=$libxcDir \
 	-DSPGLIB_DIR=$spglibDir -DXML_LIB_DIR=$xmlLibDir \
 	-DXML_INCLUDE_DIR=$xmlIncludeDir -DWITH_INTEL_MKL=$withIntelMkl \
-	-DWITH_COMPLEX=ON -DWITH_TESTING=$testing -DMINIMAL_COMPILE=$minimal_compile\
-  -DHIGHERQUAD_PSP=$withHigherQuadPSP $1
+	-DWITH_COMPLEX=ON -DWITH_TESTING=$testing -DMINIMAL_COMPILE=$minimal_compile \
+  -DHIGHERQUAD_PSP=$withHigherQuadPSP\
+	  $1
 }
 
 RCol='\e[0m'
@@ -110,11 +103,11 @@ fi
 cd $out
 
 echo -e "${Blu}Building Real executable in $build_type mode...${RCol}"
-cmake_real "$SRC" && make -j8
+cmake_real "$SRC" && make -j4
 cd ..
 
 echo -e "${Blu}Building Complex executable in $build_type mode...${RCol}"
-cmake_cplx "$SRC" && make -j8
+cmake_cplx "$SRC" && make -j4
 cd ..
 
 echo -e "${Blu}Build complete.${RCol}"

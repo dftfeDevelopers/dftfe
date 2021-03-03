@@ -166,7 +166,21 @@ void dftClass<FEOrder,FEOrderElectro>::updateAtomPositionsAndMoveMesh(const std:
       for(unsigned int idim=0;idim < 3; idim++)      
          d_netFloatingDisp[3*iAtom+idim]+=globalAtomsDisplacements[iAtom][idim];
 
+  double maxFloatingDispComponentMag=0.0;
+  if (dftParameters::floatingNuclearCharges)
+  {
+    for(unsigned int iAtom=0;iAtom < atomLocations.size(); iAtom++)
+      for(unsigned int idim=0;idim < 3; idim++)          
+      {
+        const double temp = std::fabs(d_netFloatingDisp[iAtom*3+idim]);
+
+        if(temp>maxFloatingDispComponentMag)
+          maxFloatingDispComponentMag=temp;
+      }
+  }         
+
 	unsigned int useGaussian = 0;
+  unsigned int atomsPeriodicWrapped=1;
 	const double tol=1e-6;
 	const double break1 = 1.0;
 
@@ -180,8 +194,17 @@ void dftClass<FEOrder,FEOrderElectro>::updateAtomPositionsAndMoveMesh(const std:
 			0,
 			MPI_COMM_WORLD);
 
+  if (useGaussian || (maxFloatingDispComponentMag<0.5 && dftParameters::floatingNuclearCharges))
+    atomsPeriodicWrapped=0;
 
-	if((dftParameters::periodicX || dftParameters::periodicY || dftParameters::periodicZ) && useGaussian == 0)
+	MPI_Bcast(&(atomsPeriodicWrapped),
+			1,
+			MPI_INT,
+			0,
+			MPI_COMM_WORLD);  
+
+
+	if((dftParameters::periodicX || dftParameters::periodicY || dftParameters::periodicZ) && atomsPeriodicWrapped==1)
 	{
 		for (unsigned int iAtom = 0; iAtom < numberGlobalAtoms; iAtom++)
 		{
@@ -211,7 +234,7 @@ void dftClass<FEOrder,FEOrderElectro>::updateAtomPositionsAndMoveMesh(const std:
 			atomLocationsFractional[iAtom][4]=newFracCoord[2];
 		}
 	}
-	else if((dftParameters::periodicX || dftParameters::periodicY || dftParameters::periodicZ) && useGaussian == 1)
+	else if((dftParameters::periodicX || dftParameters::periodicY || dftParameters::periodicZ) && atomsPeriodicWrapped==0)
 	{
 
 		for (unsigned int iAtom=0;iAtom < numberGlobalAtoms; iAtom++)
@@ -326,7 +349,7 @@ void dftClass<FEOrder,FEOrderElectro>::updateAtomPositionsAndMoveMesh(const std:
       controlPointDisplacementsInitialMove.push_back(d_dispClosestTriaVerticesToAtoms[iAtom]);
       controlPointDisplacementsCurrentMove.push_back(d_gaussianMovementAtomsNetDisplacements[iAtom]);
       gaussianConstantsInitialMove.push_back(d_gaussianConstantsAutoMesh[atomId]);
-      gaussianConstantsCurrentMove.push_back(dftParameters::isBOMD?dftParameters::ratioOfMeshMovementToForceGaussianBOMD*d_gaussianConstantsForce[atomId]:d_gaussianConstantsForce[atomId]);
+      gaussianConstantsCurrentMove.push_back(d_gaussianConstantsForce[atomId]);
       flatTopWidths.push_back(d_flatTopWidthsAutoMeshMove[atomId]);
     }
 
@@ -568,9 +591,13 @@ void dftClass<FEOrder,FEOrderElectro>::updateAtomPositionsAndMoveMesh(const std:
     init_time = MPI_Wtime(); 
 
     if (dftParameters::isBOMD)
-      initNoRemesh(true,useSingleAtomSolutionsOverride,useAtomicRhoSplitDensityUpdateForGeoOpt);
+      initNoRemesh(atomsPeriodicWrapped==1,
+                   useSingleAtomSolutionsOverride,
+                   useAtomicRhoSplitDensityUpdateForGeoOpt);
     else
-      initNoRemesh(true,useSingleAtomSolutionsOverride,useAtomicRhoSplitDensityUpdateForGeoOpt);
+      initNoRemesh(atomsPeriodicWrapped==1,
+                   useSingleAtomSolutionsOverride,
+                   useAtomicRhoSplitDensityUpdateForGeoOpt);
     if (!dftParameters::reproducible_output)
       pcout << "...Reinitialization end" << std::endl;
 

@@ -267,7 +267,7 @@ void forceClass<FEOrder,FEOrderElectro>::computeStressEEshelbyEPSPEnlEk(const Ma
         }
       }
 
-      if(dftParameters::xc_id == 4)
+      if(dftParameters::xcFamilyType=="GGA")
       {
         const std::vector<double> & temp3=gradRhoOutValues.find(subCellId)->second;          
         for (unsigned int q = 0; q < numQuadPoints; ++q)
@@ -289,7 +289,7 @@ void forceClass<FEOrder,FEOrderElectro>::computeStressEEshelbyEPSPEnlEk(const Ma
         }          
       }
 
-			if(dftParameters::xc_id == 4)
+			if(dftParameters::xcFamilyType=="GGA")
 			{
 				for (unsigned int q = 0; q < numQuadPoints; ++q)
 					sigmaValRhoOut[q] = gradRhoOutQuadsXC[q].norm_square();

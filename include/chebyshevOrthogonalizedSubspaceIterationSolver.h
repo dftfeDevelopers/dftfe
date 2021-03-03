@@ -64,8 +64,21 @@ namespace dftfe{
 					std::vector<double> & eigenValues,
 					std::vector<double> & residuals,
 					const MPI_Comm &interBandGroupComm,
+          const bool computeResidual,
 					const bool useMixedPrec=false,
 					const bool isFirstScf=false);
+
+			/**
+			 * @brief  Rayleigh ritz step.
+			 */
+			void onlyRR(operatorDFTClass & operatorMatrix,
+					std::vector<dataTypes::number> & eigenVectorsFlattened,
+					std::vector<dataTypes::number> & eigenVectorsRotFracDensityFlattened,
+					distributedCPUVec<double> & tempEigenVec,
+					const unsigned int totalNumberWaveFunctions,
+					std::vector<double> & eigenValues,
+					const MPI_Comm &interBandGroupComm,
+					const bool useMixedPrec=false);
 
 			/**
 			 * @brief Solve a generalized eigen problem.

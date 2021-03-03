@@ -1,0 +1,60 @@
+set VERBOSITY = 0
+set REPRODUCIBLE OUTPUT = true
+
+subsection Geometry
+  set NATOMS=5
+  set NATOM TYPES=2
+  set ATOMIC COORDINATES FILE = @SOURCE_DIR@/methane_coordinates.inp
+  set DOMAIN VECTORS FILE = @SOURCE_DIR@/methane_domainVectors.inp
+
+  subsection Optimization
+    set ION FORCE=true
+    set CELL STRESS=false
+  end 
+end
+
+subsection Boundary conditions
+  set SMEARED NUCLEAR CHARGES=true
+  set FLOATING NUCLEAR CHARGES=true
+  set PERIODIC1                       = false
+  set PERIODIC2                       = false
+  set PERIODIC3                       = false
+  set SELF POTENTIAL RADIUS = 4.0
+  set CONSTRAINTS PARALLEL CHECK=true
+end
+
+subsection Finite element mesh parameters
+  set POLYNOMIAL ORDER=2
+  subsection Auto mesh generation parameters
+    set AUTO ADAPT BASE MESH SIZE=false
+    set MESH SIZE AROUND ATOM  = 0.5
+    set BASE MESH SIZE = 10.0
+    set ATOM BALL RADIUS = 2.0
+    set MESH SIZE AT ATOM = 0.5
+  end
+end
+
+subsection DFT functional parameters
+  set EXCHANGE CORRELATION TYPE   = 5
+  set PSEUDOPOTENTIAL CALCULATION = true
+  set PSEUDOPOTENTIAL FILE NAMES LIST = @SOURCE_DIR@/pseudoMethaneNLCC.inp
+  set PSEUDO TESTS FLAG = true
+end
+
+subsection SCF parameters
+  set COMPUTE ENERGY EACH ITER=false
+  set MIXING METHOD=ANDERSON
+  set MIXING HISTORY   = 70
+  set MIXING PARAMETER = 0.2
+  set MAXIMUM ITERATIONS               = 100
+  set TEMPERATURE                      = 500
+  set TOLERANCE                        = 1e-6
+  set STARTING WFC=RANDOM
+  subsection Eigen-solver parameters
+      set NUMBER OF KOHN-SHAM WAVEFUNCTIONS = 10
+      set RR GEP=true
+      set CHEBYSHEV POLYNOMIAL DEGREE = 20
+      set CHEBYSHEV FILTER TOLERANCE=5e-4
+  end
+end
+set H REFINED ELECTROSTATICS=false

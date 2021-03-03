@@ -537,7 +537,16 @@ namespace dftfe {
 										const Tensor<2,C_DIM,VectorizedArray<double> > & hessianRhoCore)
 
 	  {
-	    return hessianRhoCore*derExcGradRho;
+      Tensor<1,C_DIM,VectorizedArray<double> > temp;
+      for (unsigned int i=0; i<C_DIM;i++)
+      {
+        temp[i]=make_vectorized_array(0.0);
+        for (unsigned int j=0; j<C_DIM;j++)     
+          temp[i]+=derExcGradRho[j]*hessianRhoCore[j][i];
+      }
+
+      return temp;
+	    //return hessianRhoCore*derExcGradRho;
 	  }    
 	}
 

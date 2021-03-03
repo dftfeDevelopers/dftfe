@@ -22,6 +22,7 @@
 #include <thrust/device_vector.h>
 #include <cublas_v2.h>
 #include <operatorCUDA.h>
+#include "gpuDirectCCLWrapper.h"
 
 namespace dftfe
 {
@@ -47,7 +48,8 @@ namespace dftfe
 				const unsigned int M,
 				const unsigned int N,
 				cublasHandle_t &handle,
-				const MPI_Comm &mpiComm,
+				const MPI_Comm &mpiCommDomain,
+        GPUCCLWrapper & gpucclMpiCommDomain,        
 				const MPI_Comm &interBandGroupComm,
 				const std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid>  & processGrid,
 				dealii::ScaLAPACKMatrix<double> & overlapMatPar);
@@ -62,7 +64,8 @@ namespace dftfe
 				const unsigned int M,
 				const unsigned int N,
 				cublasHandle_t &handle,
-				const MPI_Comm &mpiComm,
+				const MPI_Comm &mpiCommDomain,
+        GPUCCLWrapper & gpucclMpiCommDomain,
 				const MPI_Comm &interBandGroupComm,
 				const std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid>  & processGrid,
 				dealii::ScaLAPACKMatrix<double> & overlapMatPar);
@@ -78,7 +81,8 @@ namespace dftfe
 				const unsigned int M,
 				const unsigned int N,
 				cublasHandle_t &handle,
-				const MPI_Comm &mpiComm,
+				const MPI_Comm &mpiCommDomain,
+        GPUCCLWrapper & gpucclMpiCommDomain,        
 				const MPI_Comm &interBandGroupComm,
 				const std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid>  & processGrid,
 				dealii::ScaLAPACKMatrix<double> & overlapMatPar);
@@ -93,7 +97,8 @@ namespace dftfe
 				const unsigned int M,
 				const unsigned int N,
 				cublasHandle_t &handle,
-				const MPI_Comm &mpiComm,
+				const MPI_Comm &mpiCommDomain,
+        GPUCCLWrapper & gpucclMpiCommDomain,        
 				const MPI_Comm &interBandGroupComm,
 				const std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid>  & processGrid,
 				dealii::ScaLAPACKMatrix<double> & overlapMatPar);
@@ -106,7 +111,8 @@ namespace dftfe
 				double * X,
 				const unsigned int M,
 				const unsigned int N,
-				const MPI_Comm &mpiComm,
+				const MPI_Comm &mpiCommDomain,
+        GPUCCLWrapper & gpucclMpiCommDomain,
 				const MPI_Comm &interBandGroupComm,
 				cublasHandle_t & handle,
 				const bool useMixedPrecOverall=false);
@@ -116,7 +122,8 @@ namespace dftfe
 				const unsigned int N,
 				cublasHandle_t &handle,
 				const std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid>  & processGrid,
-				const MPI_Comm &mpiComm,
+				const MPI_Comm &mpiCommDomain,
+        GPUCCLWrapper & gpucclMpiCommDomain,        
 				const MPI_Comm &interBandGroupComm,
 				const dealii::ScaLAPACKMatrix<double> & rotationMatPar,
 				const bool rotationMatTranspose=false,
@@ -130,7 +137,8 @@ namespace dftfe
 				const unsigned int Nfr,
 				cublasHandle_t &handle,
 				const std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid>  & processGrid,
-				const MPI_Comm &mpiComm,
+				const MPI_Comm &mpiCommDomain,
+        GPUCCLWrapper & gpucclMpiCommDomain,        
 				const dealii::ScaLAPACKMatrix<double> & rotationMatPar,
 				const bool rotationMatTranspose=false);
 
@@ -140,7 +148,8 @@ namespace dftfe
 			 const unsigned int N,
 			 cublasHandle_t &handle,
 			 const std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid>  & processGrid,
-			 const MPI_Comm &mpiComm,
+			 const MPI_Comm &mpiCommDomain,
+      GPUCCLWrapper & gpucclMpiCommDomain,       
 			 const MPI_Comm &interBandGroupComm,
 			 const dealii::ScaLAPACKMatrix<double> & rotationMatPar,
 			 const bool rotationMatTranspose=false);
@@ -152,7 +161,8 @@ namespace dftfe
 			 const unsigned int N,
 			 cublasHandle_t &handle,
 			 const std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid>  & processGrid,
-			 const MPI_Comm &mpiComm,
+			 const MPI_Comm &mpiCommDomain,
+       GPUCCLWrapper & gpucclMpiCommDomain,       
 			 const MPI_Comm &interBandGroupComm,
 			 const dealii::ScaLAPACKMatrix<double> & rotationMatPar,
 			 const bool rotationMatTranspose=false);
@@ -169,7 +179,8 @@ namespace dftfe
 				const unsigned int Noc,
 				const bool isElpaStep1,
 				const bool isElpaStep2,
-				const MPI_Comm &mpiComm,
+				const MPI_Comm &mpiCommDomain,
+        GPUCCLWrapper & gpucclMpiCommDomain,        
 				double* eigenValues,
 				cublasHandle_t & handle,
 				dealii::ScaLAPACKMatrix<double> & projHamPar,
@@ -187,7 +198,8 @@ namespace dftfe
 				const unsigned int N,
 				const bool isElpaStep1,
 				const bool isElpaStep2,
-				const MPI_Comm &mpiComm,
+				const MPI_Comm &mpiCommDomain,
+        GPUCCLWrapper & gpucclMpiCommDomain,        
 				const MPI_Comm &interBandGroupComm,
 				double* eigenValues,
 				cublasHandle_t & handle,
@@ -206,7 +218,8 @@ namespace dftfe
 				const unsigned int N,
 				const bool isElpaStep1,
 				const bool isElpaStep2,
-				const MPI_Comm &mpiComm,
+				const MPI_Comm &mpiCommDomain,
+        GPUCCLWrapper & gpucclMpiCommDomain,
 				const MPI_Comm &interBandGroupComm,
 				double* eigenValues,
 				cublasHandle_t & handle,
@@ -227,7 +240,8 @@ namespace dftfe
 				const unsigned int Noc,
 				const bool isElpaStep1,
 				const bool isElpaStep2,
-				const MPI_Comm &mpiComm,
+				const MPI_Comm &mpiCommDomain,
+        GPUCCLWrapper & gpucclMpiCommDomain,        
 				const MPI_Comm &interBandGroupComm,
 				double* eigenValues,
 				cublasHandle_t & handle,
@@ -302,7 +316,7 @@ namespace dftfe
 				const unsigned int M,
 				const unsigned int N,
 				const std::vector<double>     & eigenValues,
-				const MPI_Comm &mpiComm,
+				const MPI_Comm &mpiCommDomain,
 				const MPI_Comm &interBandGroupComm,
 				cublasHandle_t & handle,
 				std::vector<double> & residualNorm,

@@ -91,7 +91,6 @@ namespace dftfe {
 		extern bool useMixedPrecSubspaceRotSpectrumSplit;
 		extern bool useMixedPrecSubspaceRotRR;
 		extern bool useSinglePrecXtHXOffDiag;
-		extern bool useAsyncChebPGS_SR;
 		extern unsigned int numAdaptiveFilterStates;
 		extern unsigned int spectrumSplitStartingScfIter;
 		extern bool useELPA;
@@ -123,14 +122,10 @@ namespace dftfe {
 		extern double diracDeltaKernelScalingConstant;
 		extern unsigned int kernelUpdateRankXLBOMD;
 		extern unsigned int kmaxXLBOMD;
-		extern double ratioOfMeshMovementToForceGaussianBOMD;
 		extern bool useAtomicRhoXLBOMD;
 		extern bool useMeshSizesFromAtomsFile;
 		extern unsigned int numberPassesRRSkippedXLBOMD;
-		extern bool useSingleFullScfXLBOMD;
-		extern bool skipHarmonicOscillatorTermInitialStepsXLBOMD;
 		extern double xlbomdRestartChebyTol;
-		extern bool xlbomdRRPassMixedPrec;
 		extern bool useDensityMatrixPerturbationRankUpdates;
 		extern double xlbomdKernelRankUpdateFDParameter;
 		extern bool smearedNuclearCharges;
@@ -138,6 +133,13 @@ namespace dftfe {
     extern bool nonLinearCoreCorrection;
     extern unsigned int maxLineSearchIterCGPRP;
     extern std::string atomicMassesFile;
+    extern bool useGPUDirectAllReduce;
+    extern double pspCutoffImageCharges;
+    extern bool reuseLanczosUpperBoundFromFirstCall;
+    extern bool allowMultipleFilteringPassesAfterFirstScf;
+    extern bool useELPAGPUKernel;
+    extern std::string xcFamilyType;
+    extern bool gpuMemOptMode; 
 
 		/**
 		 * Declare parameters.
@@ -155,10 +157,15 @@ namespace dftfe {
 		void check_print_parameters(const dealii::ParameterHandler &prm);
 
 		/**
-		 * Check and print parameters
+		 * Set heuristic parameters
 		 */
 		void setHeuristicParameters();
 
+    /**
+     * set family type exchange correlation functional
+     *
+     */
+    void setXCFamilyType();
 	};
 
 }

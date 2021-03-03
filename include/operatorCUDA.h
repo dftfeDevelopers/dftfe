@@ -27,6 +27,7 @@
 #include <thrust/device_vector.h>
 #include <thrust/host_vector.h>
 #include <cublas_v2.h>
+#include "gpuDirectCCLWrapper.h"
 
 namespace dftfe{
 
@@ -230,7 +231,8 @@ namespace dftfe{
 					const unsigned int N,
 					cublasHandle_t &handle,
 					const std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid>  & processGrid,
-					dealii::ScaLAPACKMatrix<double> & projHamPar)=0;
+					dealii::ScaLAPACKMatrix<double> & projHamPar,
+          GPUCCLWrapper & gpucclMpiCommDomain)=0;
 
 			/**
 			 * @brief Compute projection of the operator into a subspace spanned by a given basis.
@@ -257,7 +259,8 @@ namespace dftfe{
 					const unsigned int N,
 					cublasHandle_t &handle,
 					const std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid>  & processGrid,
-					dealii::ScaLAPACKMatrix<double> & projHamPar)=0;
+					dealii::ScaLAPACKMatrix<double> & projHamPar,
+          GPUCCLWrapper & gpucclMpiCommDomain)=0;
 
 			/**
 			 * @brief Compute projection of the operator into a subspace spanned by a given basis.
@@ -289,7 +292,8 @@ namespace dftfe{
 					const unsigned int Noc,
 					cublasHandle_t &handle,
 					const std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid>  & processGrid,
-					dealii::ScaLAPACKMatrix<double> & projHamPar)=0;
+					dealii::ScaLAPACKMatrix<double> & projHamPar,
+          GPUCCLWrapper & gpucclMpiCommDomain)=0;
 
 
 			virtual void XtHXOffDiagBlockSinglePrec(const double *  X,
@@ -301,7 +305,8 @@ namespace dftfe{
 					const unsigned int N,
 					cublasHandle_t &handle,
 					const std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid>  & processGrid,
-					dealii::ScaLAPACKMatrix<double> & projHamPar)=0;
+					dealii::ScaLAPACKMatrix<double> & projHamPar,
+          GPUCCLWrapper & gpucclMpiCommDomain)=0;
 
 
 			/**
@@ -335,7 +340,8 @@ namespace dftfe{
 					const unsigned int Noc,
 					cublasHandle_t &handle,
 					const std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid>  & processGrid,
-					dealii::ScaLAPACKMatrix<double> & projHamPar)=0;
+					dealii::ScaLAPACKMatrix<double> & projHamPar,
+          GPUCCLWrapper & gpucclMpiCommDomain)=0;
 
 
 			virtual void XtHXOffDiagBlockSinglePrecOverlapComputeCommun(const double *  X,
@@ -347,7 +353,8 @@ namespace dftfe{
 					const unsigned int N,
 					cublasHandle_t &handle,
 					const std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid>  & processGrid,
-					dealii::ScaLAPACKMatrix<double> & projHamPar)=0;
+					dealii::ScaLAPACKMatrix<double> & projHamPar,
+          GPUCCLWrapper & gpucclMpiCommDomain)=0;
 
 			/**
 			 * @brief Compute projection of the operator into a subspace spanned by a given orthogonal basis

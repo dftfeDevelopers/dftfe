@@ -24,6 +24,8 @@ number of elements: 960
 number of degrees of freedom for the Kohn-Sham eigenvalue problem : 31257
 -------------------------------------------------
 
+Reading initial guess for electron-density.....
+
 Setting initial guess for wavefunctions....
 
 Reading initial guess for electron-density.....
@@ -35,12 +37,12 @@ SCF iterations converged to the specified tolerance after: 13 iterations.
 
 Energy computations (Hartree) 
 -------------------
-             Total energy:         -19.83273099
+             Total energy:         -19.83273016
 
 Absolute values of ion forces (Hartree/Bohr)
 --------------------------------------------------------------------------------------------
-AtomId    0:  0.244388,0.000000,0.000000
-AtomId    1:  0.244388,0.000000,0.000000
+AtomId    0:  0.245024,0.000000,0.000000
+AtomId    1:  0.245024,0.000000,0.000000
 --------------------------------------------------------------------------------------------
 
 Finite element mesh information
@@ -51,6 +53,8 @@ FE interpolating polynomial order for nodal electron density computation: 5
 number of elements: 960
 number of degrees of freedom for the Kohn-Sham eigenvalue problem : 31257
 -------------------------------------------------
+
+Reading initial guess for electron-density.....
 
 Pseudopotential initalization....
 
@@ -59,12 +63,12 @@ SCF iterations converged to the specified tolerance after: 9 iterations.
 
 Energy computations (Hartree) 
 -------------------
-             Total energy:         -19.88298082
+             Total energy:         -19.88287010
 
 Absolute values of ion forces (Hartree/Bohr)
 --------------------------------------------------------------------------------------------
-AtomId    0:  0.260361,0.000000,0.000000
-AtomId    1:  0.260360,0.000000,0.000000
+AtomId    0:  0.261596,0.000000,0.000000
+AtomId    1:  0.261596,0.000000,0.000000
 --------------------------------------------------------------------------------------------
 
 Finite element mesh information
@@ -75,6 +79,8 @@ FE interpolating polynomial order for nodal electron density computation: 5
 number of elements: 960
 number of degrees of freedom for the Kohn-Sham eigenvalue problem : 31257
 -------------------------------------------------
+
+Reading initial guess for electron-density.....
 
 Pseudopotential initalization....
 
@@ -83,58 +89,10 @@ SCF iterations converged to the specified tolerance after: 9 iterations.
 
 Energy computations (Hartree) 
 -------------------
-             Total energy:         -19.87433980
+             Total energy:         -19.87438377
 
 Absolute values of ion forces (Hartree/Bohr)
 --------------------------------------------------------------------------------------------
-AtomId    0:  0.077637,0.000000,0.000000
-AtomId    1:  0.077640,0.000000,0.000000
---------------------------------------------------------------------------------------------
-
-Finite element mesh information
--------------------------------------------------
-FE interpolating polynomial order for Kohn-Sham eigenvalue problem: 3
-FE interpolating polynomial order for electrostatics solve: 3
-FE interpolating polynomial order for nodal electron density computation: 5
-number of elements: 960
-number of degrees of freedom for the Kohn-Sham eigenvalue problem : 31257
--------------------------------------------------
-
-Pseudopotential initalization....
-
-Starting SCF iterations....
-SCF iterations converged to the specified tolerance after: 9 iterations.
-
-Energy computations (Hartree) 
--------------------
-             Total energy:         -19.88451885
-
-Absolute values of ion forces (Hartree/Bohr)
---------------------------------------------------------------------------------------------
-AtomId    0:  0.044027,0.000000,0.000000
-AtomId    1:  0.044026,0.000000,0.000000
---------------------------------------------------------------------------------------------
-
-Finite element mesh information
--------------------------------------------------
-FE interpolating polynomial order for Kohn-Sham eigenvalue problem: 3
-FE interpolating polynomial order for electrostatics solve: 3
-FE interpolating polynomial order for nodal electron density computation: 5
-number of elements: 960
-number of degrees of freedom for the Kohn-Sham eigenvalue problem : 31257
--------------------------------------------------
-
-Pseudopotential initalization....
-
-Starting SCF iterations....
-SCF iterations converged to the specified tolerance after: 8 iterations.
-
-Energy computations (Hartree) 
--------------------
-             Total energy:         -19.88177299
-
-Absolute values of ion forces (Hartree/Bohr)
---------------------------------------------------------------------------------------------
-AtomId    0:  0.004040,0.000000,0.000000
-AtomId    1:  0.004040,0.000000,0.000000
+AtomId    0:  0.078091,0.000000,0.000000
+AtomId    1:  0.078094,0.000000,0.000000
 --------------------------------------------------------------------------------------------

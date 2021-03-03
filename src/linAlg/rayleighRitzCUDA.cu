@@ -38,7 +38,8 @@ namespace dftfe
 				const unsigned int Noc,
 				const bool isElpaStep1,
 				const bool isElpaStep2,
-				const MPI_Comm &mpiComm,
+				const MPI_Comm &mpiCommDomain,
+        GPUCCLWrapper & gpucclMpiCommDomain,        
 				double* eigenValues,
 				cublasHandle_t & handle,
 				dealii::ScaLAPACKMatrix<double> & projHamPar,
@@ -47,7 +48,7 @@ namespace dftfe
 		{
 
 			int this_process;
-			MPI_Comm_rank(mpiComm, &this_process);
+			MPI_Comm_rank(mpiCommDomain, &this_process);
 
 			const unsigned int Nfr = N-Noc;
 
@@ -80,7 +81,8 @@ namespace dftfe
 								Noc,
 								handle,
 								processGrid,
-								projHamPar);
+								projHamPar,
+                gpucclMpiCommDomain);
 					else
 						operatorMatrix.XtHXMixedPrec(X,
 								Xb,
@@ -92,7 +94,8 @@ namespace dftfe
 								Noc,
 								handle,
 								processGrid,
-								projHamPar);
+								projHamPar,
+                gpucclMpiCommDomain);
 				}
 				else
 				{
@@ -105,7 +108,8 @@ namespace dftfe
 								N,
 								handle,
 								processGrid,
-								projHamPar);
+								projHamPar,
+                gpucclMpiCommDomain);
 					else
 						operatorMatrix.XtHX(X,
 								Xb,
@@ -115,7 +119,8 @@ namespace dftfe
 								N,
 								handle,
 								processGrid,
-								projHamPar);
+								projHamPar,
+                gpucclMpiCommDomain);
 				}
 
 				if (dftParameters::gpuFineGrainedTimings)
@@ -181,7 +186,8 @@ namespace dftfe
 					Nfr,
 					handle,
 					processGrid,
-					mpiComm,
+					mpiCommDomain,
+          gpucclMpiCommDomain,
 					projHamPar,
 					true);
 
@@ -207,7 +213,8 @@ namespace dftfe
 				const unsigned int N,
 				const bool isElpaStep1,
 				const bool isElpaStep2,
-				const MPI_Comm &mpiComm,
+				const MPI_Comm &mpiCommDomain,
+        GPUCCLWrapper & gpucclMpiCommDomain,
 				const MPI_Comm &interBandGroupComm,
 				double* eigenValues,
 				cublasHandle_t & handle,
@@ -217,7 +224,7 @@ namespace dftfe
 		{
 
 			int this_process;
-			MPI_Comm_rank(mpiComm, &this_process);
+			MPI_Comm_rank(mpiCommDomain, &this_process);
 
 			double gpu_time;
 
@@ -248,7 +255,8 @@ namespace dftfe
 								N-dftParameters::mixedPrecXtHXFracStates,
 								handle,
 								processGrid,
-								projHamPar);
+								projHamPar,
+                gpucclMpiCommDomain);
 					else
 						operatorMatrix.XtHXMixedPrec(X,
 								Xb,
@@ -260,7 +268,8 @@ namespace dftfe
 								N-dftParameters::mixedPrecXtHXFracStates,
 								handle,
 								processGrid,
-								projHamPar);
+								projHamPar,
+                gpucclMpiCommDomain);
 				}
 				else if (useMixedPrecOverall && dftParameters::useSinglePrecXtHXOffDiag)
 				{
@@ -274,7 +283,8 @@ namespace dftfe
 								N,
 								handle,
 								processGrid,
-								projHamPar);
+								projHamPar,
+                gpucclMpiCommDomain);
 					else
 						operatorMatrix.XtHXOffDiagBlockSinglePrec(X,
 								Xb,
@@ -285,7 +295,8 @@ namespace dftfe
 								N,
 								handle,
 								processGrid,
-								projHamPar);
+								projHamPar,
+                gpucclMpiCommDomain);
 				}
 				else
 				{
@@ -298,7 +309,8 @@ namespace dftfe
 								N,
 								handle,
 								processGrid,
-								projHamPar);
+								projHamPar,
+                gpucclMpiCommDomain);
 					else
 						operatorMatrix.XtHX(X,
 								Xb,
@@ -308,7 +320,8 @@ namespace dftfe
 								N,
 								handle,
 								processGrid,
-								projHamPar);
+								projHamPar,
+                gpucclMpiCommDomain);
 				}
 
 				if (dftParameters::gpuFineGrainedTimings)
@@ -374,7 +387,8 @@ namespace dftfe
 						N,
 						handle,
 						processGrid,
-						mpiComm,
+						mpiCommDomain,
+            gpucclMpiCommDomain,
 						interBandGroupComm,
 						projHamPar,
 						true);
@@ -384,7 +398,8 @@ namespace dftfe
 						N,
 						handle,
 						processGrid,
-						mpiComm,
+						mpiCommDomain,
+            gpucclMpiCommDomain,
 						interBandGroupComm,
 						projHamPar,
 						true);
@@ -414,7 +429,8 @@ namespace dftfe
 				const unsigned int N,
 				const bool isElpaStep1,
 				const bool isElpaStep2,
-				const MPI_Comm &mpiComm,
+				const MPI_Comm &mpiCommDomain,
+        GPUCCLWrapper & gpucclMpiCommDomain,
 				const MPI_Comm &interBandGroupComm,
 				double* eigenValues,
 				cublasHandle_t & handle,
@@ -423,7 +439,6 @@ namespace dftfe
 				const std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid> & processGrid,
 				const bool useMixedPrecOverall)
 		{
-
 			int this_process;
 			MPI_Comm_rank(MPI_COMM_WORLD, &this_process);
 
@@ -450,7 +465,8 @@ namespace dftfe
 							 M,
 							 N,
 							 handle,
-							 mpiComm,
+							 mpiCommDomain,
+               gpucclMpiCommDomain,
 							 interBandGroupComm,
 							 processGrid,
 							 overlapMatPar);
@@ -461,7 +477,8 @@ namespace dftfe
 							 M,
 							 N,
 							 handle,
-							 mpiComm,
+							 mpiCommDomain,
+               gpucclMpiCommDomain,
 							 interBandGroupComm,
 							 processGrid,
 							 overlapMatPar);
@@ -475,7 +492,8 @@ namespace dftfe
 							 M,
 							 N,
 							 handle,
-							 mpiComm,
+							 mpiCommDomain,
+               gpucclMpiCommDomain,
 							 interBandGroupComm,
 							 processGrid,
 							 overlapMatPar); 
@@ -486,7 +504,8 @@ namespace dftfe
 							 M,
 							 N,
 							 handle,
-							 mpiComm,
+							 mpiCommDomain,
+               gpucclMpiCommDomain,
 							 interBandGroupComm,
 							 processGrid,
 							 overlapMatPar); 
@@ -531,7 +550,8 @@ namespace dftfe
 								N-dftParameters::mixedPrecXtHXFracStates,
 								handle,
 								processGrid,
-								projHamPar);
+								projHamPar,
+                gpucclMpiCommDomain);
 					else
 						operatorMatrix.XtHXMixedPrec(X,
 								Xb,
@@ -543,7 +563,8 @@ namespace dftfe
 								N-dftParameters::mixedPrecXtHXFracStates,
 								handle,
 								processGrid,
-								projHamPar);
+								projHamPar,
+                gpucclMpiCommDomain);
 				}
 				else if (useMixedPrecOverall && dftParameters::useSinglePrecXtHXOffDiag)
 				{
@@ -557,7 +578,8 @@ namespace dftfe
 								N,
 								handle,
 								processGrid,
-								projHamPar);
+								projHamPar,
+                gpucclMpiCommDomain);
 					else
 						operatorMatrix.XtHXOffDiagBlockSinglePrec(X,
 								Xb,
@@ -568,7 +590,8 @@ namespace dftfe
 								N,
 								handle,
 								processGrid,
-								projHamPar);
+								projHamPar,
+                gpucclMpiCommDomain);
 				}
 				else
 				{
@@ -581,7 +604,8 @@ namespace dftfe
 								N,
 								handle,
 								processGrid,
-								projHamPar);
+								projHamPar,
+                gpucclMpiCommDomain);
 					else
 						operatorMatrix.XtHX(X,
 								Xb,
@@ -591,7 +615,8 @@ namespace dftfe
 								N,
 								handle,
 								processGrid,
-								projHamPar);
+								projHamPar,
+                gpucclMpiCommDomain);
 				}
 
 				if (dftParameters::gpuFineGrainedTimings)
@@ -748,7 +773,8 @@ namespace dftfe
 						N,
 						handle,
 						processGrid,
-						mpiComm,
+						mpiCommDomain,
+            gpucclMpiCommDomain,
 						interBandGroupComm,
 						projHamPar,
 						true);
@@ -758,7 +784,8 @@ namespace dftfe
 						N,
 						handle,
 						processGrid,
-						mpiComm,
+						mpiCommDomain,
+            gpucclMpiCommDomain,
 						interBandGroupComm,
 						projHamPar,
 						true);
@@ -789,7 +816,8 @@ namespace dftfe
 				const unsigned int Noc,
 				const bool isElpaStep1,
 				const bool isElpaStep2,
-				const MPI_Comm &mpiComm,
+				const MPI_Comm &mpiCommDomain,
+        GPUCCLWrapper & gpucclMpiCommDomain,
 				const MPI_Comm &interBandGroupComm,
 				double* eigenValues,
 				cublasHandle_t & handle,
@@ -798,7 +826,6 @@ namespace dftfe
 				const std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid> & processGrid,
 				const bool useMixedPrecOverall)
 		{
-
 			int this_process;
 			MPI_Comm_rank(MPI_COMM_WORLD, &this_process);
 
@@ -827,7 +854,8 @@ namespace dftfe
 							 M,
 							 N,
 							 handle,
-							 mpiComm,
+							 mpiCommDomain,
+               gpucclMpiCommDomain,
 							 interBandGroupComm,
 							 processGrid,
 							 overlapMatPar);
@@ -838,7 +866,8 @@ namespace dftfe
 							 M,
 							 N,
 							 handle,
-							 mpiComm,
+							 mpiCommDomain,
+               gpucclMpiCommDomain,
 							 interBandGroupComm,
 							 processGrid,
 							 overlapMatPar);
@@ -852,7 +881,8 @@ namespace dftfe
 							 M,
 							 N,
 							 handle,
-							 mpiComm,
+							 mpiCommDomain,
+               gpucclMpiCommDomain,
 							 interBandGroupComm,
 							 processGrid,
 							 overlapMatPar); 
@@ -863,7 +893,8 @@ namespace dftfe
 							 M,
 							 N,
 							 handle,
-							 mpiComm,
+							 mpiCommDomain,
+               gpucclMpiCommDomain,
 							 interBandGroupComm,
 							 processGrid,
 							 overlapMatPar); 
@@ -908,7 +939,8 @@ namespace dftfe
 								Noc,
 								handle,
 								processGrid,
-								projHamPar);
+								projHamPar,
+                gpucclMpiCommDomain);
 					else
 						operatorMatrix.XtHXMixedPrec(X,
 								Xb,
@@ -920,7 +952,8 @@ namespace dftfe
 								Noc,
 								handle,
 								processGrid,
-								projHamPar);
+								projHamPar,
+                gpucclMpiCommDomain);
 				}
 				else
 				{
@@ -933,7 +966,8 @@ namespace dftfe
 								N,
 								handle,
 								processGrid,
-								projHamPar);
+								projHamPar,
+                gpucclMpiCommDomain);
 					else
 						operatorMatrix.XtHX(X,
 								Xb,
@@ -943,7 +977,8 @@ namespace dftfe
 								N,
 								handle,
 								processGrid,
-								projHamPar);
+								projHamPar,
+                gpucclMpiCommDomain);
 				}
 
 				if (dftParameters::gpuFineGrainedTimings)
@@ -1097,7 +1132,8 @@ namespace dftfe
 					Nfr,
 					handle,
 					processGrid,
-					mpiComm,
+					mpiCommDomain,
+          gpucclMpiCommDomain,
 					projHamPar,
 					true);
 
@@ -1127,7 +1163,8 @@ namespace dftfe
 						N,
 						handle,
 						processGrid,
-						mpiComm,
+						mpiCommDomain,
+            gpucclMpiCommDomain,
 						interBandGroupComm,
 						LMatPar,
 						overlapMatPropertyPostCholesky==dealii::LAPACKSupport::Property::upper_triangular?true:false);
@@ -1137,7 +1174,8 @@ namespace dftfe
 						N,
 						handle,
 						processGrid,
-						mpiComm,
+						mpiCommDomain,
+            gpucclMpiCommDomain,
 						interBandGroupComm,
 						LMatPar,
 						overlapMatPropertyPostCholesky==dealii::LAPACKSupport::Property::upper_triangular?true:false,

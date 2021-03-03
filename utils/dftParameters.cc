@@ -85,7 +85,6 @@ namespace dftfe {
 		double mpiAllReduceMessageBlockSizeMB=2.0;
 		bool useMixedPrecPGS_SR=false;
 		bool useMixedPrecPGS_O=false;
-		bool useAsyncChebPGS_SR = false;
 		bool useMixedPrecXTHXSpectrumSplit=false;
 		bool useMixedPrecSubspaceRotSpectrumSplit=false;
 		bool useMixedPrecSubspaceRotRR=false;
@@ -120,16 +119,12 @@ namespace dftfe {
 		double diracDeltaKernelScalingConstant=0.1;
 		unsigned int kernelUpdateRankXLBOMD=0;
 		unsigned int kmaxXLBOMD=8;
-		double ratioOfMeshMovementToForceGaussianBOMD=1.0;
 		bool useAtomicRhoXLBOMD=true;
 		bool useMeshSizesFromAtomsFile=false;
 		bool chebyCommunAvoidanceAlgo=false;
 		double chebyshevFilterPolyDegreeFirstScfScalingFactor=1.34;
 		unsigned int numberPassesRRSkippedXLBOMD=0;
-		bool useSingleFullScfXLBOMD=false;
-		bool skipHarmonicOscillatorTermInitialStepsXLBOMD=false;
 		double xlbomdRestartChebyTol=1e-9;
-		bool xlbomdRRPassMixedPrec=false;
 		bool useDensityMatrixPerturbationRankUpdates=false;
 		double xlbomdKernelRankUpdateFDParameter=1e-2;
 		bool smearedNuclearCharges=false;
@@ -137,6 +132,13 @@ namespace dftfe {
     bool nonLinearCoreCorrection=false;
     unsigned int maxLineSearchIterCGPRP=5;
     std::string atomicMassesFile="";
+    bool useGPUDirectAllReduce=false;
+    double pspCutoffImageCharges=15.0;
+    bool reuseLanczosUpperBoundFromFirstCall=false;
+    bool allowMultipleFilteringPassesAfterFirstScf=true;
+    bool useELPAGPUKernel=false;
+    std::string xcFamilyType="";
+    bool gpuMemOptMode=false;
 
 		void declare_parameters(ParameterHandler &prm)
 		{
@@ -172,6 +174,18 @@ namespace dftfe {
 				prm.declare_entry("SUBSPACE ROT FULL CPU MEM", "true",
 						Patterns::Bool(),
 						"[Developer] Option to use full NxN memory on CPU in subspace rotation and when mixed precision optimization is not being used. This reduces the number of MPI_Allreduce communication calls. Default: true.");
+
+				prm.declare_entry("USE GPUDIRECT MPI ALL REDUCE", "false",
+						Patterns::Bool(),
+						"[Adavanced] Use GPUDIRECT MPI_Allreduce. This route will only work if DFT-FE is compiled with NVIDIA NCCL library. Also note that one MPI rank per GPU can be used when using this option. Default: false."); 
+
+				prm.declare_entry("USE ELPA GPU KERNEL", "false",
+						Patterns::Bool(),
+						"[Advanced] If DFT-FE is linked to ELPA eigensolver library configured to run on GPUs, this parameter toggles the use of ELPA GPU kernels for dense symmetric matrix diagonalization calls in DFT-FE. Default: false.");       
+
+			  prm.declare_entry("GPU MEM OPT MODE", "false",
+						Patterns::Bool(),
+						"[Adavanced] Uses algorithms which have lower peak memory on GPUs but with a marginal performance degradation. Recommended when using more than 100k degrees of freedom per GPU. Default: false.");                
 			}
 			prm.leave_subsection ();
 
@@ -525,8 +539,8 @@ namespace dftfe {
 						"[Standard] Pseudopotential file. This file contains the list of pseudopotential file names in UPF format corresponding to the atoms involved in the calculations. UPF version 2.0 or greater and norm-conserving pseudopotentials(ONCV and Troullier Martins) in UPF format are only accepted. File format (example for two atoms Mg(z=12), Al(z=13)): 12 filename1.upf(row1), 13 filename2.upf (row2). Important Note: ONCV pseudopotentials data base in UPF format can be downloaded from http://www.quantum-simulation.org/potentials/sg15_oncv.  Troullier-Martins pseudopotentials in UPF format can be downloaded from http://www.quantum-espresso.org/pseudopotentials/fhi-pp-from-abinit-web-site.");
 
 				prm.declare_entry("EXCHANGE CORRELATION TYPE", "1",
-						Patterns::Integer(1,4),
-						"[Standard] Parameter specifying the type of exchange-correlation to be used: 1(LDA: Perdew Zunger Ceperley Alder correlation with Slater Exchange[PRB. 23, 5048 (1981)]), 2(LDA: Perdew-Wang 92 functional with Slater Exchange [PRB. 45, 13244 (1992)]), 3(LDA: Vosko, Wilk \\& Nusair with Slater Exchange[Can. J. Phys. 58, 1200 (1980)]), 4(GGA: Perdew-Burke-Ernzerhof functional [PRL. 77, 3865 (1996)]).");
+						Patterns::Integer(1,5),
+						"[Standard] Parameter specifying the type of exchange-correlation to be used: 1(LDA: Perdew Zunger Ceperley Alder correlation with Slater Exchange[PRB. 23, 5048 (1981)]), 2(LDA: Perdew-Wang 92 functional with Slater Exchange [PRB. 45, 13244 (1992)]), 3(LDA: Vosko, Wilk \\& Nusair with Slater Exchange[Can. J. Phys. 58, 1200 (1980)]), 4(GGA: Perdew-Burke-Ernzerhof functional [PRL. 77, 3865 (1996)], 5(RPBE: B. Hammer, L. B. Hansen, and J. K. Nørskov, Phys. Rev. B 59, 7413 (1999)).");
 
 				prm.declare_entry("SPIN POLARIZATION", "0",
 						Patterns::Integer(0,1),
@@ -535,6 +549,10 @@ namespace dftfe {
 				prm.declare_entry("START MAGNETIZATION", "0.0",
 						Patterns::Double(-0.5,0.5),
 						"[Standard] Starting magnetization to be used for spin-polarized DFT calculations (must be between -0.5 and +0.5). Corresponding magnetization per simulation domain will be (2 x START MAGNETIZATION x Number of electrons) a.u. ");
+
+				prm.declare_entry("PSP CUTOFF IMAGE CHARGES", "15.0",
+						Patterns::Double(),
+						"[Standard] Distance from the domain till which periodic images will be considered for the local part of the pseudopotential. Units in a.u. ");        
 			}
 			prm.leave_subsection ();
 
@@ -645,9 +663,9 @@ namespace dftfe {
 							Patterns::Integer(0,300),
 							"[Advanced] Uses a processor grid of SCALAPACKPROCS times SCALAPACKPROCS for parallel distribution of the subspace projected matrix in the Rayleigh-Ritz step and the overlap matrix in the Pseudo-Gram-Schmidt step. Default value is 0 for which a thumb rule is used (see http://netlib.org/scalapack/slug/node106.html). If ELPA is used, twice the value obtained from the thumb rule is used as ELPA scales much better than ScaLAPACK.");
 
-					prm.declare_entry("SCALAPACK BLOCK SIZE", "50",
-							Patterns::Integer(1,300),
-							"[Advanced] ScaLAPACK process grid block size.");
+					prm.declare_entry("SCALAPACK BLOCK SIZE", "0",
+							Patterns::Integer(0,300),
+							"[Advanced] ScaLAPACK process grid block size. Also sets the block size for ELPA if linked to ELPA. Default value of zero sets a heuristic block size. Note that if ELPA GPU KERNEL is set to true and ELPA is configured to run on GPUs, the SCALAPACK BLOCK SIZE is set to a power of 2.");
 
 					prm.declare_entry("USE ELPA", "true",
 							Patterns::Bool(),
@@ -691,11 +709,6 @@ namespace dftfe {
 							Patterns::Bool(),
 							"[Advanced] Overlap communication and computation in Chebyshev filtering. This option can only be activated for USE GPU=true. Default setting is true.");
 
-
-					prm.declare_entry("OVERLAP CHEB PGS SR","false",
-							Patterns::Bool(),
-							"[Advanced] Overlap Chebyshev filtering and subspace rotation. This option can only be activated when RR step is skipped for certial problems. Default setting is false.");
-
 					prm.declare_entry("OVERLAP COMPUTE COMMUN ORTHO RR", "true",
 							Patterns::Bool(),
 							"[Advanced] Overlap communication and computation in orthogonalization and Rayleigh-Ritz. This option can only be activated for USE GPU=true. Default setting is true.");
@@ -712,6 +725,14 @@ namespace dftfe {
 					prm.declare_entry("ADAPTIVE FILTER STATES", "0",
 							Patterns::Integer(0),
 							"[Advanced] Number of lowest Kohn-Sham eigenstates which are filtered with Chebyshev polynomial degree linearly varying from 50 percent (starting from the lowest) to 80 percent of the value specified by CHEBYSHEV POLYNOMIAL DEGREE. This imposes a step function filtering polynomial order on the ADAPTIVE FILTER STATES as filtering is done with blocks of size WFC BLOCK SIZE. This setting is recommended for large systems (greater than 5000 electrons). Default value is 0 i.e., all states are filtered with the same Chebyshev polynomial degree.");
+
+					prm.declare_entry("REUSE LANCZOS UPPER BOUND", "false",
+							Patterns::Bool(),
+							"[Advanced] Reuse upper bound of unwanted spectrum computed in the first SCF iteration via Lanczos iterations. Default setting is false.");
+
+					prm.declare_entry("ALLOW MULTIPLE PASSES POST FIRST SCF", "true",
+							Patterns::Bool(),
+							"[Advanced] Allow multiple chebyshev filtering passes in the SCF iterations after the first one. Default setting is true.");          
 				}
 				prm.leave_subsection ();
 			}
@@ -794,28 +815,16 @@ namespace dftfe {
 						"[Standard] Maximum rank for low rank kernel update in XL BOMD.");
 
 				prm.declare_entry("NUMBER DISSIPATION TERMS XL BOMD", "8",
-						Patterns::Integer(6,8),
+						Patterns::Integer(1,8),
 						"[Standard] Number of dissipation terms in XL BOMD.");
 
 				prm.declare_entry("NUMBER PASSES RR SKIPPED XL BOMD", "0",
 						Patterns::Integer(0),
 						"[Standard] Number of starting chebsyev filtering passes without Rayleigh Ritz in XL BOMD.");
 
-				prm.declare_entry("RATIO MESH MOVEMENT TO FORCE GAUSSIAN", "1.0",
-						Patterns::Double(0.0),
-						"[Standard] Ratio of mesh movement to force Gaussian."); 
-
 				prm.declare_entry("USE ATOMIC RHO XL BOMD", "true",
 						Patterns::Bool(),
 						"[Standard] Use atomic rho xl bomd.");  
-
-				prm.declare_entry("STARTING SINGLE FULL SCF XL BOMD", "false",
-						Patterns::Bool(),
-						"[Standard] Only do first ground-state in full scf for XL BOMD.");
-
-				prm.declare_entry("XL BOMD RR PASS MIXED PREC", "false",
-						Patterns::Bool(),
-						"[Standard] Allow mixed precision for RR passes in XL BOMD.");
 
 				prm.declare_entry("DENSITY MATRIX PERTURBATION RANK UPDATES XL BOMD", "false",
 						Patterns::Bool(),
@@ -824,10 +833,6 @@ namespace dftfe {
 				prm.declare_entry("XL BOMD KERNEL RANK UPDATE FD PARAMETER", "1e-2",
 						Patterns::Double(0.0),
 						"[Standard] Finite difference perturbation parameter.");
-
-				prm.declare_entry("SKIP HARMONIC OSCILLATOR INITIAL STEPS XL BOMD", "false",
-						Patterns::Bool(),
-						"[Standard] Numerical strategy to remove oscillations in initial steps.");
 			}
 			prm.leave_subsection ();
 		}
@@ -844,6 +849,9 @@ namespace dftfe {
 				dftParameters::gpuFineGrainedTimings=prm.get_bool("FINE GRAINED GPU TIMINGS");
 				dftParameters::allowFullCPUMemSubspaceRot=prm.get_bool("SUBSPACE ROT FULL CPU MEM");
 				dftParameters::autoGPUBlockSizes=prm.get_bool("AUTO GPU BLOCK SIZES");
+        dftParameters::useGPUDirectAllReduce=prm.get_bool("USE GPUDIRECT MPI ALL REDUCE");
+        dftParameters::useELPAGPUKernel=prm.get_bool("USE ELPA GPU KERNEL");
+        dftParameters::gpuMemOptMode=prm.get_bool("GPU MEM OPT MODE");        
 			}
 			prm.leave_subsection ();
 
@@ -975,6 +983,7 @@ namespace dftfe {
 				dftParameters::xc_id                         = prm.get_integer("EXCHANGE CORRELATION TYPE");
 				dftParameters::spinPolarized                 = prm.get_integer("SPIN POLARIZATION");
 				dftParameters::start_magnetization           = prm.get_double("START MAGNETIZATION");
+        dftParameters::pspCutoffImageCharges         = prm.get_double("PSP CUTOFF IMAGE CHARGES");
 			}
 			prm.leave_subsection ();
 
@@ -1017,7 +1026,6 @@ namespace dftfe {
 					dftParameters::useMixedPrecSubspaceRotRR= prm.get_bool("USE MIXED PREC RR_SR");
 					dftParameters::useMixedPrecCheby= prm.get_bool("USE MIXED PREC CHEBY");
 					dftParameters::useMixedPrecChebyNonLocal= prm.get_bool("USE MIXED PREC CHEBY NON LOCAL");
-					dftParameters::useAsyncChebPGS_SR = prm.get_bool("OVERLAP CHEB PGS SR");
 					dftParameters::useSinglePrecXtHXOffDiag=prm.get_bool("USE SINGLE PREC XTHX OFF DIAGONAL");
 					dftParameters::overlapComputeCommunCheby= prm.get_bool("OVERLAP COMPUTE COMMUN CHEBY");
 					dftParameters::overlapComputeCommunOrthoRR= prm.get_bool("OVERLAP COMPUTE COMMUN ORTHO RR");
@@ -1025,6 +1033,8 @@ namespace dftfe {
 					dftParameters::algoType= prm.get("ALGO");
 					dftParameters::numAdaptiveFilterStates= prm.get_integer("ADAPTIVE FILTER STATES");
 					dftParameters::chebyshevFilterPolyDegreeFirstScfScalingFactor=prm.get_double("CHEBYSHEV POLYNOMIAL DEGREE SCALING FACTOR FIRST SCF");
+          dftParameters::reuseLanczosUpperBoundFromFirstCall=prm.get_bool("REUSE LANCZOS UPPER BOUND");;
+          dftParameters::allowMultipleFilteringPassesAfterFirstScf=prm.get_bool("ALLOW MULTIPLE PASSES POST FIRST SCF");          
 				}
 				prm.leave_subsection ();
 			}
@@ -1060,12 +1070,8 @@ namespace dftfe {
 				dftParameters::kernelUpdateRankXLBOMD        = prm.get_integer("KERNEL RANK XL BOMD");
 				dftParameters::kmaxXLBOMD        = prm.get_integer("NUMBER DISSIPATION TERMS XL BOMD");
 				dftParameters::numberPassesRRSkippedXLBOMD        = prm.get_integer("NUMBER PASSES RR SKIPPED XL BOMD");
-				dftParameters::ratioOfMeshMovementToForceGaussianBOMD       = prm.get_double("RATIO MESH MOVEMENT TO FORCE GAUSSIAN");    
 				dftParameters::useAtomicRhoXLBOMD     = prm.get_bool("USE ATOMIC RHO XL BOMD");   
-				dftParameters::useSingleFullScfXLBOMD = prm.get_bool("STARTING SINGLE FULL SCF XL BOMD");
-				dftParameters::skipHarmonicOscillatorTermInitialStepsXLBOMD= prm.get_bool("SKIP HARMONIC OSCILLATOR INITIAL STEPS XL BOMD"); 
 				dftParameters::xlbomdRestartChebyTol           = prm.get_double("CHEBY TOL XL BOMD RESTART");  
-				dftParameters::xlbomdRRPassMixedPrec           = prm.get_bool("XL BOMD RR PASS MIXED PREC");
 				dftParameters::useDensityMatrixPerturbationRankUpdates           = prm.get_bool("DENSITY MATRIX PERTURBATION RANK UPDATES XL BOMD");  
 				dftParameters::xlbomdKernelRankUpdateFDParameter=prm.get_double("XL BOMD KERNEL RANK UPDATE FD PARAMETER");
 			}
@@ -1101,15 +1107,12 @@ namespace dftfe {
 				dftParameters::rrGEP=false;
 			}
 
-#ifndef DFTFE_WITH_ELPA
-			dftParameters::useELPA=false;
-#endif
-
 			if (dftParameters::isCellStress)
 				dftParameters::electrostaticsHRefinement=false;
 			//
 			check_print_parameters(prm);
 			setHeuristicParameters();
+      setXCFamilyType();
 		}
 
 
@@ -1232,7 +1235,29 @@ namespace dftfe {
 			}
 #else
      dftParameters::useGPU=false;
+     dftParameters::useELPAGPUKernel=false;
 #endif
+
+#ifdef DFTFE_WITH_ELPA
+      if (dftParameters::scalapackBlockSize==0)
+      {
+        if (dftParameters::useELPAGPUKernel)
+          dftParameters::scalapackBlockSize=16;
+        else
+          dftParameters::scalapackBlockSize=32;
+      }
+#else
+      if (dftParameters::scalapackBlockSize==0)
+      {
+        dftParameters::scalapackBlockSize=50;
+      }
+			dftParameters::useELPA=false;
+#endif
+
+#ifndef DFTFE_WITH_NCCL
+			dftParameters::useGPUDirectAllReduce=false;
+#endif
+
 			if (dftParameters::useMixedPrecCheby)
 				AssertThrow(dftParameters::useELPA
 						,ExcMessage("DFT-FE Error: USE ELPA must be set to true for USE MIXED PREC CHEBY."));
@@ -1310,6 +1335,30 @@ namespace dftfe {
       //}
 
 		}
+
+		void setXCFamilyType()
+		{
+      if(dftParameters::xc_id == 1)
+      {
+        dftParameters::xcFamilyType="LDA";
+      }
+      else if(dftParameters::xc_id == 2)
+      {
+        dftParameters::xcFamilyType="LDA";        
+      }
+      else if(dftParameters::xc_id == 3)
+      {
+        dftParameters::xcFamilyType="LDA";        
+      }
+      else if(dftParameters::xc_id == 4)
+      {
+        dftParameters::xcFamilyType="GGA";        
+      }
+      else if(dftParameters::xc_id == 5)
+      {
+        dftParameters::xcFamilyType="GGA";          
+      }        
+    }
 
 	}
 

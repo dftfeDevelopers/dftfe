@@ -20,6 +20,7 @@
 #include<dftParameters.h>
 #include<vectorUtilities.h>
 #include <dftUtils.h>
+#include <cudaHelpers.h>
 #include <nvToolsExt.h>
 
 namespace dftfe
@@ -356,7 +357,7 @@ namespace dftfe
 					const double * onesVec,
 					const unsigned int numberVectors,
 					const unsigned int localSize,
-					const MPI_Comm & mpiComm,
+					const MPI_Comm & mpiCommDomain,
 					MPI_Request & request,
 					double * temparray,
 					double * dotarrayD,
@@ -399,7 +400,7 @@ namespace dftfe
 						2*numberVectors,
 						MPI_DOUBLE,
 						MPI_SUM,
-						mpiComm,
+						mpiCommDomain,
 						&request);
 
 			}
@@ -1442,14 +1443,15 @@ namespace dftfe
 				const unsigned int Nfr,
 				cublasHandle_t &handle,
 				const std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid>  & processGrid,
-				const MPI_Comm &mpiComm,
+				const MPI_Comm &mpiCommDomain,
+        GPUCCLWrapper & gpucclMpiCommDomain,
 				const dealii::ScaLAPACKMatrix<double> & rotationMatPar,
 				const bool rotationMatTranspose)
 		{
 #ifdef USE_COMPLEX
 			AssertThrow(false,dftUtils::ExcNotImplementedYet());
 #else
-			const unsigned int maxNumLocalDofs=dealii::Utilities::MPI::max(M,mpiComm);
+			const unsigned int maxNumLocalDofs=dealii::Utilities::MPI::max(M,mpiCommDomain);
 
 			std::map<unsigned int, unsigned int> globalToLocalColumnIdMap;
 			std::map<unsigned int, unsigned int> globalToLocalRowIdMap;
@@ -1467,20 +1469,38 @@ namespace dftfe
 
 			if (dftParameters::allowFullCPUMemSubspaceRot)
 			{
-				cudaMallocHost((void **)&rotationMatBlockHost,N*Nfr*sizeof(double));
+				CUDACHECK(cudaMallocHost((void **)&rotationMatBlockHost,N*Nfr*sizeof(double)));
 				std::memset(rotationMatBlockHost,0,N*Nfr*sizeof(double));
 			}
 			else
 			{
-				cudaMallocHost((void **)&rotationMatBlockHost,vectorsBlockSize*N*sizeof(double));
+				CUDACHECK(cudaMallocHost((void **)&rotationMatBlockHost,vectorsBlockSize*N*sizeof(double)));
 				std::memset(rotationMatBlockHost,0,vectorsBlockSize*N*sizeof(double));
 			}
 
+			cudaStream_t streamCompute,streamGPUCCL;
+			CUDACHECK(cudaStreamCreate(&streamCompute));      
+			CUDACHECK(cudaStreamCreate(&streamGPUCCL));
 
+			// attach cublas handle to compute stream
+			cublasSetStream(handle,streamCompute);        
+
+			// create array of compute and gpu direct commun events on GPUs
+			// for all the blocks. These are required for synchronization
+      const unsigned int numberBlocks=(N/vectorsBlockSize)*(maxNumLocalDofs/dofsBlockSize+1);      
+			cudaEvent_t computeEvents[numberBlocks];
+			cudaEvent_t communEvents[numberBlocks];      
+			for(int i = 0; i < numberBlocks; ++i)
+			{
+				CUDACHECK(cudaEventCreate(&computeEvents[i]));        
+				CUDACHECK(cudaEventCreate(&communEvents[i]));
+			}
 
 			thrust::device_vector<double> rotationMatBlock(vectorsBlockSize*N,0.0);
+      thrust::device_vector<double> rotationMatBlockNext(vectorsBlockSize*N,0.0);
 			thrust::device_vector<double> rotatedVectorsMatBlock(Nfr*dofsBlockSize,0.0);
 
+      unsigned int blockCount=0;
 			for (unsigned int idof = 0; idof < maxNumLocalDofs; idof += dofsBlockSize)
 			{
 				// Correct block dimensions if block "goes off edge of" the matrix
@@ -1589,37 +1609,92 @@ namespace dftfe
 
 					if (dftParameters::allowFullCPUMemSubspaceRot)
 					{
-						if (idof==0)
-							MPI_Allreduce(MPI_IN_PLACE,
-									rotationMatBlockHost+jvec*N,
-									BVec*N,
-									MPI_DOUBLE,
-									MPI_SUM,
-									mpiComm);
+            if (dftParameters::useGPUDirectAllReduce)
+            {
+              CUDACHECK(cudaMemcpyAsync(thrust::raw_pointer_cast(&rotationMatBlockNext[0]),
+                  rotationMatBlockHost+jvec*N,
+                  BVec*N*sizeof(double),
+                  cudaMemcpyHostToDevice,
+                  streamGPUCCL));
 
-						cudaMemcpy(thrust::raw_pointer_cast(&rotationMatBlock[0]),
-								rotationMatBlockHost+jvec*N,
-								BVec*N*sizeof(double),
-								cudaMemcpyHostToDevice);
+              if (idof==0)
+              {
+                gpucclMpiCommDomain.gpuDirectAllReduceWrapper(thrust::raw_pointer_cast(&rotationMatBlockNext[0]),
+                                     thrust::raw_pointer_cast(&rotationMatBlockNext[0]), 
+                                     BVec*N, 
+                                     streamGPUCCL);
+
+                CUDACHECK(cudaMemcpyAsync(rotationMatBlockHost+jvec*N,
+                    thrust::raw_pointer_cast(&rotationMatBlockNext[0]),
+                    BVec*N*sizeof(double),
+                    cudaMemcpyDeviceToHost,
+                    streamGPUCCL));
+              }
+            }
+            else
+            {
+              if (idof==0)
+                MPI_Allreduce(MPI_IN_PLACE,
+                    rotationMatBlockHost+jvec*N,
+                    BVec*N,
+                    MPI_DOUBLE,
+                    MPI_SUM,
+                    mpiCommDomain);
+
+              CUDACHECK(cudaMemcpy(thrust::raw_pointer_cast(&rotationMatBlock[0]),
+                  rotationMatBlockHost+jvec*N,
+                  BVec*N*sizeof(double),
+                  cudaMemcpyHostToDevice));
+            }
 					}
 					else
 					{
-						MPI_Allreduce(MPI_IN_PLACE,
-								rotationMatBlockHost,
-								BVec*N,
-								MPI_DOUBLE,
-								MPI_SUM,
-								mpiComm);
+            if (dftParameters::useGPUDirectAllReduce)
+            {
+              CUDACHECK(cudaMemcpyAsync(thrust::raw_pointer_cast(&rotationMatBlockNext[0]),
+                  rotationMatBlockHost,
+                  BVec*N*sizeof(double),
+                  cudaMemcpyHostToDevice,
+                  streamGPUCCL));   
 
-						cudaMemcpy(thrust::raw_pointer_cast(&rotationMatBlock[0]),
-								rotationMatBlockHost,
-								BVec*N*sizeof(double),
-								cudaMemcpyHostToDevice);
+              gpucclMpiCommDomain.gpuDirectAllReduceWrapper(thrust::raw_pointer_cast(&rotationMatBlockNext[0]),
+                                   thrust::raw_pointer_cast(&rotationMatBlockNext[0]), 
+                                   BVec*N, 
+                                   streamGPUCCL);
+            }
+            else
+            {
+              MPI_Allreduce(MPI_IN_PLACE,
+                  rotationMatBlockHost,
+                  BVec*N,
+                  MPI_DOUBLE,
+                  MPI_SUM,
+                  mpiCommDomain);
+
+              CUDACHECK(cudaMemcpy(thrust::raw_pointer_cast(&rotationMatBlock[0]),
+                  rotationMatBlockHost,
+                  BVec*N*sizeof(double),
+                  cudaMemcpyHostToDevice));              
+            }
 					}
+
+          if (dftParameters::useGPUDirectAllReduce)
+          {
+            //check for completion of compute of previous block in compute stream
+            //before proceeding to rewriting rotationMatBlock in communication stream
+            CUDACHECK(cudaEventRecord(computeEvents[blockCount],streamCompute));
+            CUDACHECK(cudaStreamWaitEvent(streamGPUCCL,computeEvents[blockCount],0));
+
+            //synchronize host to communication stream before doing swap
+            //this automatically also makes sure the compute stream has the correct rotationMatBlock
+            //for dgemm
+            CUDACHECK(cudaEventRecord(communEvents[blockCount],streamGPUCCL));
+            if(cudaEventSynchronize(communEvents[blockCount]) == cudaSuccess)   
+              rotationMatBlock.swap(rotationMatBlockNext);  
+          }
 
 					if (BDof!=0)
 					{
-
 						cublasDgemm(handle,
 								CUBLAS_OP_N,
 								CUBLAS_OP_N,
@@ -1637,20 +1712,34 @@ namespace dftfe
 
 					}
 
+          blockCount++;
 				}//block loop over vectors
 
 
 				if (BDof!=0)
 				{
-					cudaMemcpy(XFrac+idof*Nfr,
+					CUDACHECK(cudaMemcpyAsync(XFrac+idof*Nfr,
 							thrust::raw_pointer_cast(&rotatedVectorsMatBlock[0]),
 							Nfr*BDof*sizeof(double),
-							cudaMemcpyDeviceToDevice);
+							cudaMemcpyDeviceToDevice,
+              streamCompute));
 				}
 
 			}//block loop over dofs
 
-			cudaFreeHost(rotationMatBlockHost);
+			CUDACHECK(cudaFreeHost(rotationMatBlockHost));
+
+			// return cublas handle to default stream
+			cublasSetStream(handle,NULL);
+
+			for(int i = 0; i < numberBlocks; ++i)
+			{
+				CUDACHECK(cudaEventDestroy(computeEvents[i]));        
+				CUDACHECK(cudaEventDestroy(communEvents[i]));
+			}
+
+      CUDACHECK(cudaStreamDestroy(streamCompute));
+      CUDACHECK(cudaStreamDestroy(streamGPUCCL));
 #endif
 		}
 
@@ -1661,7 +1750,8 @@ namespace dftfe
 				const unsigned int N,
 				cublasHandle_t &handle,
 				const std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid>  & processGrid,
-				const MPI_Comm &mpiComm,
+				const MPI_Comm &mpiCommDomain,
+        GPUCCLWrapper & gpucclMpiCommDomain,
 				const MPI_Comm &interBandGroupComm,
 				const dealii::ScaLAPACKMatrix<double> & rotationMatPar,
 				const bool rotationMatTranspose,
@@ -1670,7 +1760,7 @@ namespace dftfe
 #ifdef USE_COMPLEX
 			AssertThrow(false,dftUtils::ExcNotImplementedYet());
 #else
-			const unsigned int maxNumLocalDofs=dealii::Utilities::MPI::max(M,mpiComm);
+			const unsigned int maxNumLocalDofs=dealii::Utilities::MPI::max(M,mpiCommDomain);
 
 			std::map<unsigned int, unsigned int> globalToLocalColumnIdMap;
 			std::map<unsigned int, unsigned int> globalToLocalRowIdMap;
@@ -1697,20 +1787,38 @@ namespace dftfe
 
 			if (dftParameters::allowFullCPUMemSubspaceRot)
 			{
-				cudaMallocHost((void **)&rotationMatBlockHost,N*N*sizeof(double));
+				CUDACHECK(cudaMallocHost((void **)&rotationMatBlockHost,N*N*sizeof(double)));
 				std::memset(rotationMatBlockHost,0,N*N*sizeof(double));
 			}
 			else
 			{
-				cudaMallocHost((void **)&rotationMatBlockHost,vectorsBlockSize*N*sizeof(double));
+				CUDACHECK(cudaMallocHost((void **)&rotationMatBlockHost,vectorsBlockSize*N*sizeof(double)));
 				std::memset(rotationMatBlockHost,0,vectorsBlockSize*N*sizeof(double));
 			}
 
+			cudaStream_t streamCompute,streamGPUCCL;
+			CUDACHECK(cudaStreamCreate(&streamCompute));      
+			CUDACHECK(cudaStreamCreate(&streamGPUCCL));
 
+			// attach cublas handle to compute stream
+			cublasSetStream(handle,streamCompute);        
+
+			// create array of compute and gpu direct commun events on GPUs
+			// for all the blocks. These are required for synchronization
+      const unsigned int numberBlocks=(N/vectorsBlockSize)*(maxNumLocalDofs/dofsBlockSize+1);      
+			cudaEvent_t computeEvents[numberBlocks];
+			cudaEvent_t communEvents[numberBlocks];      
+			for(int i = 0; i < numberBlocks; ++i)
+			{
+				CUDACHECK(cudaEventCreate(&computeEvents[i]));        
+				CUDACHECK(cudaEventCreate(&communEvents[i]));
+			}
 
 			thrust::device_vector<double> rotationMatBlock(vectorsBlockSize*N,0.0);
+      thrust::device_vector<double> rotationMatBlockTemp(vectorsBlockSize*N,0.0);
 			thrust::device_vector<double> rotatedVectorsMatBlock(N*dofsBlockSize,0.0);
 
+      unsigned int blockCount=0;
 			for (unsigned int idof = 0; idof < maxNumLocalDofs; idof += dofsBlockSize)
 			{
 				// Correct block dimensions if block "goes off edge of" the matrix
@@ -1826,37 +1934,91 @@ namespace dftfe
 
 						if (dftParameters::allowFullCPUMemSubspaceRot)
 						{
-							if (idof==0)
-								MPI_Allreduce(MPI_IN_PLACE,
-										rotationMatBlockHost+jvec*N,
-										BVec*D,
-										MPI_DOUBLE,
-										MPI_SUM,
-										mpiComm);
+              if (dftParameters::useGPUDirectAllReduce)
+              {
+                CUDACHECK(cudaMemcpyAsync(thrust::raw_pointer_cast(&rotationMatBlockTemp[0]),
+                    rotationMatBlockHost+jvec*N,
+                    BVec*D*sizeof(double),
+                    cudaMemcpyHostToDevice,
+                    streamGPUCCL));
 
-							cudaMemcpy(thrust::raw_pointer_cast(&rotationMatBlock[0]),
-									rotationMatBlockHost+jvec*N,
-									BVec*D*sizeof(double),
-									cudaMemcpyHostToDevice);
+                if (idof==0)
+                {
+                  gpucclMpiCommDomain.gpuDirectAllReduceWrapper(thrust::raw_pointer_cast(&rotationMatBlockTemp[0]),
+                                       thrust::raw_pointer_cast(&rotationMatBlockTemp[0]), 
+                                       BVec*D, 
+                                       streamGPUCCL);
+                  CUDACHECK(cudaMemcpyAsync(rotationMatBlockHost+jvec*N,
+                      thrust::raw_pointer_cast(&rotationMatBlockTemp[0]),
+                      BVec*D*sizeof(double),
+                      cudaMemcpyDeviceToHost,
+                      streamGPUCCL));
+                }
+              } 
+              else
+              {
+                if (idof==0)
+                  MPI_Allreduce(MPI_IN_PLACE,
+                      rotationMatBlockHost+jvec*N,
+                      BVec*D,
+                      MPI_DOUBLE,
+                      MPI_SUM,
+                      mpiCommDomain);
+
+                cudaMemcpy(thrust::raw_pointer_cast(&rotationMatBlock[0]),
+                    rotationMatBlockHost+jvec*N,
+                    BVec*D*sizeof(double),
+                    cudaMemcpyHostToDevice);
+              }
 						}
 						else
 						{
-							MPI_Allreduce(MPI_IN_PLACE,
-									rotationMatBlockHost,
-									BVec*D,
-									MPI_DOUBLE,
-									MPI_SUM,
-									mpiComm);
+              if (dftParameters::useGPUDirectAllReduce)
+              {
+                CUDACHECK(cudaMemcpyAsync(thrust::raw_pointer_cast(&rotationMatBlockTemp[0]),
+                    rotationMatBlockHost,
+                    BVec*D*sizeof(double),
+                    cudaMemcpyHostToDevice,
+                    streamGPUCCL));   
 
-							cudaMemcpy(thrust::raw_pointer_cast(&rotationMatBlock[0]),
-									rotationMatBlockHost,
-									BVec*D*sizeof(double),
-									cudaMemcpyHostToDevice);
+                gpucclMpiCommDomain.gpuDirectAllReduceWrapper(thrust::raw_pointer_cast(&rotationMatBlockTemp[0]),
+                                     thrust::raw_pointer_cast(&rotationMatBlockTemp[0]), 
+                                     BVec*D, 
+                                     streamGPUCCL);
+              }
+              else
+              {
+                MPI_Allreduce(MPI_IN_PLACE,
+                    rotationMatBlockHost,
+                    BVec*D,
+                    MPI_DOUBLE,
+                    MPI_SUM,
+                    mpiCommDomain);
+
+                CUDACHECK(cudaMemcpy(thrust::raw_pointer_cast(&rotationMatBlock[0]),
+                    rotationMatBlockHost,
+                    BVec*D*sizeof(double),
+                    cudaMemcpyHostToDevice));
+              }
 						}
+
+            if (dftParameters::useGPUDirectAllReduce)
+            {
+              //check for completion of compute of previous block in compute stream
+              //before proceeding to rewriting rotationMatBlock in communication stream
+              CUDACHECK(cudaEventRecord(computeEvents[blockCount],streamCompute));
+              CUDACHECK(cudaStreamWaitEvent(streamGPUCCL,computeEvents[blockCount],0));
+
+              //synchronize host to communication stream before doing swap
+              //this automatically also makes sure the compute stream has the correct rotationMatBlock
+              //for dgemm
+              CUDACHECK(cudaEventRecord(communEvents[blockCount],streamGPUCCL));
+              if(cudaEventSynchronize(communEvents[blockCount]) == cudaSuccess)   
+                rotationMatBlock.swap(rotationMatBlockTemp);  
+            }
 
 						if (BDof!=0)
 						{
-
 							cublasDgemm(handle,
 									CUBLAS_OP_N,
 									CUBLAS_OP_N,
@@ -1874,20 +2036,33 @@ namespace dftfe
 
 						}
 					}//band parallelization
+          blockCount++;
 				}//block loop over vectors
 
 
 				if (BDof!=0)
 				{
-					cudaMemcpy(X+idof*N,
+					CUDACHECK(cudaMemcpyAsync(X+idof*N,
 							thrust::raw_pointer_cast(&rotatedVectorsMatBlock[0]),
 							N*BDof*sizeof(double),
-							cudaMemcpyDeviceToDevice);
+							cudaMemcpyDeviceToDevice,
+              streamCompute));
 				}
 
 			}//block loop over dofs
 
 			cudaFreeHost(rotationMatBlockHost);
+			// return cublas handle to default stream
+			cublasSetStream(handle,NULL);
+
+			for(int i = 0; i < numberBlocks; ++i)
+			{
+				CUDACHECK(cudaEventDestroy(computeEvents[i]));        
+				CUDACHECK(cudaEventDestroy(communEvents[i]));
+			}
+
+      CUDACHECK(cudaStreamDestroy(streamCompute));
+      CUDACHECK(cudaStreamDestroy(streamGPUCCL));
 #endif
 		}
 
@@ -1896,7 +2071,8 @@ namespace dftfe
 				const unsigned int N,
 				cublasHandle_t &handle,
 				const std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid>  & processGrid,
-				const MPI_Comm &mpiComm,
+				const MPI_Comm &mpiCommDomain,
+        GPUCCLWrapper & gpucclMpiCommDomain,
 				const MPI_Comm &interBandGroupComm,
 				const dealii::ScaLAPACKMatrix<double> & rotationMatPar,
 				const bool rotationMatTranspose)
@@ -1904,7 +2080,7 @@ namespace dftfe
 #ifdef USE_COMPLEX
 			AssertThrow(false,dftUtils::ExcNotImplementedYet());
 #else
-			const unsigned int maxNumLocalDofs=dealii::Utilities::MPI::max(M,mpiComm);
+			const unsigned int maxNumLocalDofs=dealii::Utilities::MPI::max(M,mpiCommDomain);
 
 			std::map<unsigned int, unsigned int> globalToLocalColumnIdMap;
 			std::map<unsigned int, unsigned int> globalToLocalRowIdMap;
@@ -1936,17 +2112,35 @@ namespace dftfe
 					dftParameters::subspaceRotDofsBlockSize);
 
 			float * rotationMatBlockHostSP;
-			cudaMallocHost((void **)&rotationMatBlockHostSP,vectorsBlockSize*N*sizeof(float));
+			CUDACHECK(cudaMallocHost((void **)&rotationMatBlockHostSP,vectorsBlockSize*N*sizeof(float)));
 			std::memset(rotationMatBlockHostSP,0,vectorsBlockSize*N*sizeof(float));
 
 			std::vector<float> rotationMatDiagBandHostSP;
 
 			double * diagValuesHost;
-			cudaMallocHost((void **)&diagValuesHost,N*sizeof(double));
+			CUDACHECK(cudaMallocHost((void **)&diagValuesHost,N*sizeof(double)));
 			std::memset(diagValuesHost,0,N*sizeof(double));
 
+			cudaStream_t streamCompute,streamGPUCCL;
+			CUDACHECK(cudaStreamCreate(&streamCompute));      
+			CUDACHECK(cudaStreamCreate(&streamGPUCCL));
+
+			// attach cublas handle to compute stream
+			cublasSetStream(handle,streamCompute);        
+
+			// create array of compute and gpu direct commun events on GPUs
+			// for all the blocks. These are required for synchronization
+      const unsigned int numberBlocks=(N/vectorsBlockSize);      
+			cudaEvent_t computeEvents[numberBlocks];
+			cudaEvent_t communEvents[numberBlocks];      
+			for(int i = 0; i < numberBlocks; ++i)
+			{
+				CUDACHECK(cudaEventCreate(&computeEvents[i]));        
+				CUDACHECK(cudaEventCreate(&communEvents[i]));
+			}
 
 			thrust::device_vector<float> rotationMatBlockSP(vectorsBlockSize*N,0.0);
+			thrust::device_vector<float> rotationMatBlockSPTemp(vectorsBlockSize*N,0.0);      
 			thrust::device_vector<double> diagValues(N,0.0);
 			thrust::device_vector<float> rotatedVectorsMatBlockSP(vectorsBlockSize*dofsBlockSize,0.0);
 
@@ -1990,23 +2184,24 @@ namespace dftfe
 						}
 			}
 
-			MPI_Allreduce(MPI_IN_PLACE,
-					diagValuesHost,
-					N,
-					MPI_DOUBLE,
-					MPI_SUM,
-					mpiComm);
+      MPI_Allreduce(MPI_IN_PLACE,
+          diagValuesHost,
+          N,
+          MPI_DOUBLE,
+          MPI_SUM,
+          mpiCommDomain);
 
-			cudaMemcpy(thrust::raw_pointer_cast(&diagValues[0]),
-					diagValuesHost,
-					N*sizeof(double),
-					cudaMemcpyHostToDevice);
+      cudaMemcpy(thrust::raw_pointer_cast(&diagValues[0]),
+          diagValuesHost,
+          N*sizeof(double),
+          cudaMemcpyHostToDevice);
 
 			computeDiagQTimesXKernel<<<(M*N+255)/256,256>>>(thrust::raw_pointer_cast(&diagValues[0]),
 					X,
 					N,
 					M);
 
+      unsigned int blockCount=0;
 			for (unsigned int jvec = 0; jvec < N; jvec += vectorsBlockSize)
 			{
 				// Correct block dimensions if block "goes off edge of" the matrix
@@ -2084,18 +2279,48 @@ namespace dftfe
 								}
 					}
 
+          if (dftParameters::useGPUDirectAllReduce)
+          {
+            cudaMemcpyAsync(thrust::raw_pointer_cast(&rotationMatBlockSPTemp[0]),
+                rotationMatBlockHostSP,
+                BVec*D*sizeof(float),
+                cudaMemcpyHostToDevice,
+                streamGPUCCL);
 
-					MPI_Allreduce(MPI_IN_PLACE,
-							rotationMatBlockHostSP,
-							BVec*D,
-							MPI_FLOAT,
-							MPI_SUM,
-							mpiComm);
+            gpucclMpiCommDomain.gpuDirectAllReduceWrapper(thrust::raw_pointer_cast(&rotationMatBlockSPTemp[0]),
+                                 thrust::raw_pointer_cast(&rotationMatBlockSPTemp[0]), 
+                                 BVec*D, 
+                                 streamGPUCCL);
+          }
+          else
+          {
+            MPI_Allreduce(MPI_IN_PLACE,
+                rotationMatBlockHostSP,
+                BVec*D,
+                MPI_FLOAT,
+                MPI_SUM,
+                mpiCommDomain);
 
-					cudaMemcpy(thrust::raw_pointer_cast(&rotationMatBlockSP[0]),
-							rotationMatBlockHostSP,
-							BVec*D*sizeof(float),
-							cudaMemcpyHostToDevice);
+            cudaMemcpy(thrust::raw_pointer_cast(&rotationMatBlockSP[0]),
+                rotationMatBlockHostSP,
+                BVec*D*sizeof(float),
+                cudaMemcpyHostToDevice);
+          }
+
+          if (dftParameters::useGPUDirectAllReduce)
+          {
+            //check for completion of compute of previous block in compute stream
+            //before proceeding to rewriting rotationMatBlock in communication stream
+            CUDACHECK(cudaEventRecord(computeEvents[blockCount],streamCompute));
+            CUDACHECK(cudaStreamWaitEvent(streamGPUCCL,computeEvents[blockCount],0));
+
+            //synchronize host to communication stream before doing swap
+            //this automatically also makes sure the compute stream has the correct rotationMatBlock
+            //for dgemm
+            CUDACHECK(cudaEventRecord(communEvents[blockCount],streamGPUCCL));
+            if(cudaEventSynchronize(communEvents[blockCount]) == cudaSuccess)   
+              rotationMatBlockSP.swap(rotationMatBlockSPTemp);  
+          }
 
 					for (unsigned int idof = 0; idof < maxNumLocalDofs; idof += dofsBlockSize)
 					{
@@ -2122,7 +2347,7 @@ namespace dftfe
 									thrust::raw_pointer_cast(&rotatedVectorsMatBlockSP[0]),
 									BVec);
 
-							addSubspaceRotatedBlockToXKernel<<<(BVec*BDof+255)/256,256>>>(BDof,
+							addSubspaceRotatedBlockToXKernel<<<(BVec*BDof+255)/256,256,0,streamCompute>>>(BDof,
 									BVec,
 									thrust::raw_pointer_cast(&rotatedVectorsMatBlockSP[0]),
 									X,
@@ -2132,10 +2357,22 @@ namespace dftfe
 						}
 					}//block loop over dofs
 				}//band parallalelization loop
+        blockCount++;
 			}//block loop over vectors
 
-			cudaFreeHost(rotationMatBlockHostSP);
-			cudaFreeHost(diagValuesHost);
+			CUDACHECK(cudaFreeHost(rotationMatBlockHostSP));
+			CUDACHECK(cudaFreeHost(diagValuesHost));
+			// return cublas handle to default stream
+			cublasSetStream(handle,NULL);
+
+			for(int i = 0; i < numberBlocks; ++i)
+			{
+				CUDACHECK(cudaEventDestroy(computeEvents[i]));        
+				CUDACHECK(cudaEventDestroy(communEvents[i]));
+			}
+
+      CUDACHECK(cudaStreamDestroy(streamCompute));
+      CUDACHECK(cudaStreamDestroy(streamGPUCCL));
 #endif
 		}
 
@@ -2144,7 +2381,8 @@ namespace dftfe
 				const unsigned int N,
 				cublasHandle_t &handle,
 				const std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid>  & processGrid,
-				const MPI_Comm &mpiComm,
+				const MPI_Comm &mpiCommDomain,
+        GPUCCLWrapper & gpucclMpiCommDomain,
 				const MPI_Comm &interBandGroupComm,
 				const dealii::ScaLAPACKMatrix<double> & rotationMatPar,
 				const bool rotationMatTranspose)
@@ -2152,7 +2390,7 @@ namespace dftfe
 #ifdef USE_COMPLEX
 			AssertThrow(false,dftUtils::ExcNotImplementedYet());
 #else
-			const unsigned int maxNumLocalDofs=dealii::Utilities::MPI::max(M,mpiComm);
+			const unsigned int maxNumLocalDofs=dealii::Utilities::MPI::max(M,mpiCommDomain);
 
 			std::map<unsigned int, unsigned int> globalToLocalColumnIdMap;
 			std::map<unsigned int, unsigned int> globalToLocalRowIdMap;
@@ -2184,17 +2422,35 @@ namespace dftfe
 					dftParameters::subspaceRotDofsBlockSize);
 
 			float * rotationMatBlockHostSP;
-			cudaMallocHost((void **)&rotationMatBlockHostSP,vectorsBlockSize*N*sizeof(float));
+			CUDACHECK(cudaMallocHost((void **)&rotationMatBlockHostSP,vectorsBlockSize*N*sizeof(float)));
 			std::memset(rotationMatBlockHostSP,0,vectorsBlockSize*N*sizeof(float));
 
 			std::vector<float> rotationMatDiagBandHostSP;
 
 			double * diagValuesHost;
-			cudaMallocHost((void **)&diagValuesHost,N*sizeof(double));
+			CUDACHECK(cudaMallocHost((void **)&diagValuesHost,N*sizeof(double)));
 			std::memset(diagValuesHost,0,N*sizeof(double));
 
+			cudaStream_t streamCompute,streamGPUCCL;
+			CUDACHECK(cudaStreamCreate(&streamCompute));      
+			CUDACHECK(cudaStreamCreate(&streamGPUCCL));
+
+			// attach cublas handle to compute stream
+			cublasSetStream(handle,streamCompute);        
+
+			// create array of compute and gpu direct commun events on GPUs
+			// for all the blocks. These are required for synchronization
+      const unsigned int numberBlocks=(N/vectorsBlockSize);      
+			cudaEvent_t computeEvents[numberBlocks];
+			cudaEvent_t communEvents[numberBlocks];      
+			for(int i = 0; i < numberBlocks; ++i)
+			{
+				CUDACHECK(cudaEventCreate(&computeEvents[i]));        
+				CUDACHECK(cudaEventCreate(&communEvents[i]));
+			}
 
 			thrust::device_vector<float> rotationMatBlockSP(vectorsBlockSize*N,0.0);
+			thrust::device_vector<float> rotationMatBlockSPTemp(vectorsBlockSize*N,0.0);      
 			thrust::device_vector<double> diagValues(N,0.0);
 			thrust::device_vector<float> rotatedVectorsMatBlockSP(vectorsBlockSize*dofsBlockSize,0.0);
 
@@ -2243,7 +2499,7 @@ namespace dftfe
 					N,
 					MPI_DOUBLE,
 					MPI_SUM,
-					mpiComm);
+					mpiCommDomain);
 
 			cudaMemcpy(thrust::raw_pointer_cast(&diagValues[0]),
 					diagValuesHost,
@@ -2255,6 +2511,7 @@ namespace dftfe
 					N,
 					M);
 
+      unsigned int blockCount=0;
 			for (unsigned int jvec = 0; jvec < N; jvec += vectorsBlockSize)
 			{
 				// Correct block dimensions if block "goes off edge of" the matrix
@@ -2334,18 +2591,48 @@ namespace dftfe
 					}
 
 
-					MPI_Allreduce(MPI_IN_PLACE,
-							rotationMatBlockHostSP,
-							BVec*D,
-							MPI_FLOAT,
-							MPI_SUM,
-							mpiComm);
+          if (dftParameters::useGPUDirectAllReduce)
+          {
+            cudaMemcpyAsync(thrust::raw_pointer_cast(&rotationMatBlockSPTemp[0]),
+                rotationMatBlockHostSP,
+                BVec*D*sizeof(float),
+                cudaMemcpyHostToDevice,
+                streamGPUCCL);
 
-					cudaMemcpy(thrust::raw_pointer_cast(&rotationMatBlockSP[0]),
-							rotationMatBlockHostSP,
-							BVec*D*sizeof(float),
-							cudaMemcpyHostToDevice);
+            gpucclMpiCommDomain.gpuDirectAllReduceWrapper(thrust::raw_pointer_cast(&rotationMatBlockSPTemp[0]),
+                                 thrust::raw_pointer_cast(&rotationMatBlockSPTemp[0]), 
+                                 BVec*D, 
+                                 streamGPUCCL);
+          }
+          else
+          {
+            MPI_Allreduce(MPI_IN_PLACE,
+                rotationMatBlockHostSP,
+                BVec*D,
+                MPI_FLOAT,
+                MPI_SUM,
+                mpiCommDomain);
 
+            cudaMemcpy(thrust::raw_pointer_cast(&rotationMatBlockSP[0]),
+                rotationMatBlockHostSP,
+                BVec*D*sizeof(float),
+                cudaMemcpyHostToDevice);
+          }
+
+          if (dftParameters::useGPUDirectAllReduce)
+          {
+            //check for completion of compute of previous block in compute stream
+            //before proceeding to rewriting rotationMatBlock in communication stream
+            CUDACHECK(cudaEventRecord(computeEvents[blockCount],streamCompute));
+            CUDACHECK(cudaStreamWaitEvent(streamGPUCCL,computeEvents[blockCount],0));
+
+            //synchronize host to communication stream before doing swap
+            //this automatically also makes sure the compute stream has the correct rotationMatBlock
+            //for dgemm
+            CUDACHECK(cudaEventRecord(communEvents[blockCount],streamGPUCCL));
+            if(cudaEventSynchronize(communEvents[blockCount]) == cudaSuccess)   
+              rotationMatBlockSP.swap(rotationMatBlockSPTemp);  
+          }
 
 					for (unsigned int idof = 0; idof < maxNumLocalDofs; idof += dofsBlockSize)
 					{
@@ -2373,7 +2660,7 @@ namespace dftfe
 									BVec);
 
 
-							addSubspaceRotatedBlockToXKernel<<<(BVec*BDof+255)/256,256>>>(BDof,
+							addSubspaceRotatedBlockToXKernel<<<(BVec*BDof+255)/256,256,0,streamCompute>>>(BDof,
 									BVec,
 									thrust::raw_pointer_cast(&rotatedVectorsMatBlockSP[0]),
 									X,
@@ -2383,10 +2670,22 @@ namespace dftfe
 						}
 					}//block loop over dofs
 				}//band parallelization
+        blockCount++;
 			}//block loop over vectors
 
 			cudaFreeHost(rotationMatBlockHostSP);
 			cudaFreeHost(diagValuesHost);
+			// return cublas handle to default stream
+			cublasSetStream(handle,NULL);
+
+			for(int i = 0; i < numberBlocks; ++i)
+			{
+				CUDACHECK(cudaEventDestroy(computeEvents[i]));        
+				CUDACHECK(cudaEventDestroy(communEvents[i]));
+			}
+
+      CUDACHECK(cudaStreamDestroy(streamCompute));
+      CUDACHECK(cudaStreamDestroy(streamGPUCCL));
 #endif
 		}
 
@@ -2394,7 +2693,8 @@ namespace dftfe
 				const unsigned int M,
 				const unsigned int N,
 				cublasHandle_t &handle,
-				const MPI_Comm &mpiComm,
+				const MPI_Comm &mpiCommDomain,
+        GPUCCLWrapper & gpucclMpiCommDomain,
 				const MPI_Comm &interBandGroupComm,
 				const std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid>  & processGrid,
 				dealii::ScaLAPACKMatrix<double> & overlapMatPar)
@@ -2427,6 +2727,9 @@ namespace dftfe
 			cudaMallocHost((void **) &overlapMatrixBlockHost, N*vectorsBlockSize*sizeof(double));
 			std::memset(overlapMatrixBlockHost,0,vectorsBlockSize*N*sizeof(double));
 
+			cudaStream_t streamGPUCCL;
+			cudaStreamCreate(&streamGPUCCL);
+
 			const double scalarCoeffAlpha = 1.0,scalarCoeffBeta = 0.0;
 
 			for (unsigned int ivec = 0; ivec < N; ivec += vectorsBlockSize)
@@ -2458,18 +2761,28 @@ namespace dftfe
 							thrust::raw_pointer_cast(&overlapMatrixBlock[0]),
 							D);
 
+
+          if (dftParameters::useGPUDirectAllReduce)
+          {
+            gpucclMpiCommDomain.gpuDirectAllReduceWrapper(thrust::raw_pointer_cast(&overlapMatrixBlock[0]),
+                                 thrust::raw_pointer_cast(&overlapMatrixBlock[0]), 
+                                 D*B, 
+                                 streamGPUCCL);
+          }
+
 					cudaMemcpy(overlapMatrixBlockHost,
 							thrust::raw_pointer_cast(&overlapMatrixBlock[0]),
 							D*B*sizeof(double),
 							cudaMemcpyDeviceToHost);
 
 					// Sum local XTrunc^{T}*XcBlock across domain decomposition processors
-					MPI_Allreduce(MPI_IN_PLACE,
-							overlapMatrixBlockHost,
-							D*B,
-							MPI_DOUBLE,
-							MPI_SUM,
-							mpiComm);
+          if (!dftParameters::useGPUDirectAllReduce)
+            MPI_Allreduce(MPI_IN_PLACE,
+                overlapMatrixBlockHost,
+                D*B,
+                MPI_DOUBLE,
+                MPI_SUM,
+                mpiCommDomain);
 
 
 					//Copying only the lower triangular part to the ScaLAPACK overlap matrix
@@ -2496,6 +2809,8 @@ namespace dftfe
 			}//end block loop
 
 			cudaFreeHost(overlapMatrixBlockHost);
+
+      cudaStreamDestroy(streamGPUCCL);
 
 			if (numberBandGroups>1)
 				linearAlgebraOperationsCUDA::internal::sumAcrossInterCommScaLAPACKMat
@@ -2533,7 +2848,8 @@ namespace dftfe
 				const unsigned int M,
 				const unsigned int N,
 				cublasHandle_t &handle,
-				const MPI_Comm &mpiComm,
+				const MPI_Comm &mpiCommDomain,
+        GPUCCLWrapper & gpucclMpiCommDomain,
 				const MPI_Comm &interBandGroupComm,
 				const std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid>  & processGrid,
 				dealii::ScaLAPACKMatrix<double> & overlapMatPar)
@@ -2541,6 +2857,7 @@ namespace dftfe
 #ifdef USE_COMPLEX
 			AssertThrow(false,dftUtils::ExcNotImplementedYet());
 #else
+
 			//get global to local index maps for Scalapack matrix
 			std::map<unsigned int, unsigned int> globalToLocalColumnIdMap;
 			std::map<unsigned int, unsigned int> globalToLocalRowIdMap;
@@ -2561,10 +2878,10 @@ namespace dftfe
 			const unsigned int vectorsBlockSize=std::min(dftParameters::wfcBlockSize,N);
 			const unsigned int numberBlocks=N/vectorsBlockSize;
 
-			//create separate CUDA streams for GPU->CPU copy and computation
-			cudaStream_t streamCompute, streamCopy;
-			cudaStreamCreate(&streamCompute);
-			cudaStreamCreate(&streamCopy);
+			//create separate CUDA streams for data movement and computation
+			cudaStream_t streamCompute, streamDataMove;
+			CUDACHECK(cudaStreamCreate(&streamCompute));
+			CUDACHECK(cudaStreamCreate(&streamDataMove));
 
 			// attach cublas handle to compute stream
 			cublasSetStream(handle,streamCompute);  
@@ -2578,20 +2895,20 @@ namespace dftfe
 
 			for(int i = 0; i < numberBlocks; ++i)
 			{
-				cudaEventCreate(&computeEvents[i]);
-				cudaEventCreate(&copyEvents[i]);
+				CUDACHECK(cudaEventCreate(&computeEvents[i]));
+				CUDACHECK(cudaEventCreate(&copyEvents[i]));
 			}
 
 			//create pinned memory used later to copy from GPU->CPU
 			double * overlapMatrixBlockHost;
-			cudaMallocHost((void **) &overlapMatrixBlockHost, N*vectorsBlockSize*sizeof(double));
+			CUDACHECK(cudaMallocHost((void **) &overlapMatrixBlockHost, N*vectorsBlockSize*sizeof(double)));
 			std::memset(overlapMatrixBlockHost,0,vectorsBlockSize*N*sizeof(double));
 
 			//allocate device vectors to be used later
 			thrust::device_vector<double> overlapMatrixBlock(N*vectorsBlockSize,0.0);
 			thrust::device_vector<double> overlapMatrixBlockNext(N*vectorsBlockSize,0.0);
 
-			const double scalarCoeffAlpha = 1.0,scalarCoeffBeta = 0.0;
+      const double scalarCoeffAlpha = 1.0,scalarCoeffBeta = 0.0;
 
 			unsigned int blockCount = 0;
 			for (unsigned int ivec = 0; ivec < N; ivec += vectorsBlockSize)
@@ -2607,8 +2924,6 @@ namespace dftfe
 					// Compute local XTrunc^{T}*XcBlock.
 					if(ivec == bandGroupLowHighPlusOneIndices[2*bandGroupTaskId])
 					{
-
-						//thrust::fill(overlapMatrixBlock.begin(),overlapMatrixBlock.end(),0.0);
 
 						cublasDgemm(handle,
 								CUBLAS_OP_N,
@@ -2626,24 +2941,16 @@ namespace dftfe
 								D);
 
 						// record completion of compute for first block
-						cudaEventRecord(computeEvents[blockCount],streamCompute);
+						CUDACHECK(cudaEventRecord(computeEvents[blockCount],streamCompute));
 					}
 
-					// check for completion of compute on current block before proceeding
-					// to swapping memories and GPU->CPU copy on current block
-					cudaStreamWaitEvent(streamCopy,computeEvents[blockCount],0);
-
-					if(ivec > bandGroupLowHighPlusOneIndices[2*bandGroupTaskId])
+          // Before swap host thread needs to wait till compute on currentblock is over.
+          // Since swap occurs on the null stream, any future operations in the streamDataMove
+          // will only occur after both the compute on currentblock and swap is over.
+          // Note that at this point there is nothing queued in the streamDataMove
+          // as all previous operations in that stream are over.
+					if((cudaEventSynchronize(computeEvents[blockCount]) == cudaSuccess) && (ivec > bandGroupLowHighPlusOneIndices[2*bandGroupTaskId]))
 						overlapMatrixBlock.swap(overlapMatrixBlockNext);
-
-					cudaMemcpyAsync(overlapMatrixBlockHost,
-							thrust::raw_pointer_cast(&overlapMatrixBlock[0]),
-							D*B*sizeof(double),
-							cudaMemcpyDeviceToHost,
-							streamCopy);
-
-					// record completion of GPU->CPU copy for current block
-					cudaEventRecord(copyEvents[blockCount],streamCopy);
 
 					const unsigned int ivecNew = ivec + vectorsBlockSize;
 					const unsigned int DNew = N - ivecNew;
@@ -2672,21 +2979,40 @@ namespace dftfe
 								DNew);
 
 						//record completion of compute for next block
-						cudaEventRecord(computeEvents[blockCount+1],streamCompute);
+						CUDACHECK(cudaEventRecord(computeEvents[blockCount+1],streamCompute));
 
 					}
+
+          if (dftParameters::useGPUDirectAllReduce)
+          {
+						// Sum local XTrunc^{T}*XcBlock across domain decomposition processors
+            gpucclMpiCommDomain.gpuDirectAllReduceWrapper(thrust::raw_pointer_cast(&overlapMatrixBlock[0]),
+                                 thrust::raw_pointer_cast(&overlapMatrixBlock[0]), 
+                                 D*B, 
+                                 streamDataMove);
+          }
+
+          CUDACHECK(cudaMemcpyAsync(overlapMatrixBlockHost,
+              thrust::raw_pointer_cast(&overlapMatrixBlock[0]),
+              D*B*sizeof(double),
+              cudaMemcpyDeviceToHost,
+              streamDataMove));
+
+					// record completion of GPU->CPU copy for current block
+					CUDACHECK(cudaEventRecord(copyEvents[blockCount],streamDataMove));
 
 					// Check that GPU->CPU on the current block has been completed. If completed,
 					// perform blocking MPI commmunication on the current block and copy to ScaLAPACK matri
 					if(cudaEventSynchronize(copyEvents[blockCount]) == cudaSuccess)
 					{
 						// Sum local XTrunc^{T}*XcBlock across domain decomposition processors
-						MPI_Allreduce(MPI_IN_PLACE,
-								overlapMatrixBlockHost,
-								D*B,
-								MPI_DOUBLE,
-								MPI_SUM,
-								mpiComm);
+            if (!dftParameters::useGPUDirectAllReduce)
+              MPI_Allreduce(MPI_IN_PLACE,
+                  overlapMatrixBlockHost,
+                  D*B,
+                  MPI_DOUBLE,
+                  MPI_SUM,
+                  mpiCommDomain);
 
 
 						//Copying only the lower triangular part to the ScaLAPACK overlap matrix
@@ -2713,12 +3039,20 @@ namespace dftfe
 				}//band parallelization
 
 				blockCount+=1;
-
 			}//end block loop
 
-			cudaFreeHost(overlapMatrixBlockHost);
+			CUDACHECK(cudaFreeHost(overlapMatrixBlockHost));
 			// return cublas handle to default stream
 			cublasSetStream(handle,NULL);
+
+			for(int i = 0; i < numberBlocks; ++i)
+			{
+				CUDACHECK(cudaEventDestroy(computeEvents[i]));
+				CUDACHECK(cudaEventDestroy(copyEvents[i]));
+			}
+
+			CUDACHECK(cudaStreamDestroy(streamCompute));
+			CUDACHECK(cudaStreamDestroy(streamDataMove));
 
 			if (numberBandGroups>1)
 			{
@@ -2738,7 +3072,8 @@ namespace dftfe
 				const unsigned int M,
 				const unsigned int N,
 				cublasHandle_t &handle,
-				const MPI_Comm &mpiComm,
+				const MPI_Comm &mpiCommDomain,
+        GPUCCLWrapper & gpucclMpiCommDomain,
 				const MPI_Comm &interBandGroupComm,
 				const std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid>  & processGrid,
 				dealii::ScaLAPACKMatrix<double> & overlapMatPar)
@@ -2782,6 +3117,9 @@ namespace dftfe
 			float * overlapMatrixBlockHostSP;
 			cudaMallocHost((void **) &overlapMatrixBlockHostSP, N*vectorsBlockSize*sizeof(float));
 			std::memset(overlapMatrixBlockHostSP,0,N*vectorsBlockSize*sizeof(float));
+
+			cudaStream_t streamGPUCCL;
+			cudaStreamCreate(&streamGPUCCL);
 
 			const double scalarCoeffAlpha = 1.0,scalarCoeffBeta = 0.0;
 			const float  scalarCoeffAlphaSP=1.0,scalarCoeffBetaSP=0.0;
@@ -2833,6 +3171,16 @@ namespace dftfe
 								DRem);
 					}
 
+          if (dftParameters::useGPUDirectAllReduce)
+          {
+            gpucclMpiCommDomain.gpuDirectAllReduceMixedPrecGroupWrapper(thrust::raw_pointer_cast(&overlapMatrixBlockDP[0]),
+                                 thrust::raw_pointer_cast(&overlapMatrixBlockSP[0]),
+                                 thrust::raw_pointer_cast(&overlapMatrixBlockDP[0]), 
+                                 thrust::raw_pointer_cast(&overlapMatrixBlockSP[0]),
+                                 B*B, 
+                                 DRem*B,
+                                 streamGPUCCL);
+          }
 
 					cudaMemcpy(overlapMatrixBlockHostDP,
 							thrust::raw_pointer_cast(&overlapMatrixBlockDP[0]),
@@ -2844,21 +3192,24 @@ namespace dftfe
 							DRem*B*sizeof(float),
 							cudaMemcpyDeviceToHost);
 
-					// Sum local XTrunc^{T}*XcBlock for double precision across domain decomposition processors
-					MPI_Allreduce(MPI_IN_PLACE,
-							overlapMatrixBlockHostDP,
-							B*B,
-							MPI_DOUBLE,
-							MPI_SUM,
-							mpiComm);
+          if (!dftParameters::useGPUDirectAllReduce)
+          {
+            // Sum local XTrunc^{T}*XcBlock for double precision across domain decomposition processors
+            MPI_Allreduce(MPI_IN_PLACE,
+                overlapMatrixBlockHostDP,
+                B*B,
+                MPI_DOUBLE,
+                MPI_SUM,
+                mpiCommDomain);
 
-					// Sum local XTrunc^{T}*XcBlock for single precision across domain decomposition processors
-					MPI_Allreduce(MPI_IN_PLACE,
-							overlapMatrixBlockHostSP,
-							DRem*B,
-							MPI_FLOAT,
-							MPI_SUM,
-							mpiComm);
+            // Sum local XTrunc^{T}*XcBlock for single precision across domain decomposition processors
+            MPI_Allreduce(MPI_IN_PLACE,
+                overlapMatrixBlockHostSP,
+                DRem*B,
+                MPI_FLOAT,
+                MPI_SUM,
+                mpiCommDomain);
+          }
 
 					//Copying only the lower triangular part to the ScaLAPACK overlap matrix
 					if (processGrid->is_process_active())
@@ -2895,6 +3246,7 @@ namespace dftfe
 
 			cudaFreeHost(overlapMatrixBlockHostDP);
 			cudaFreeHost(overlapMatrixBlockHostSP);
+      cudaStreamDestroy(streamGPUCCL);
 
 			if (numberBandGroups>1)
 				linearAlgebraOperationsCUDA::internal::sumAcrossInterCommScaLAPACKMat
@@ -2933,7 +3285,8 @@ namespace dftfe
 				const unsigned int M,
 				const unsigned int N,
 				cublasHandle_t &handle,
-				const MPI_Comm &mpiComm,
+				const MPI_Comm &mpiCommDomain,
+        GPUCCLWrapper & gpucclMpiCommDomain,
 				const MPI_Comm &interBandGroupComm,
 				const std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid>  & processGrid,
 				dealii::ScaLAPACKMatrix<double> & overlapMatPar)
@@ -2962,9 +3315,9 @@ namespace dftfe
 			const unsigned int numberBlocks=N/vectorsBlockSize;
 
 			//create separate CUDA streams for GPU->CPU copy and computation
-			cudaStream_t streamCompute, streamCopy;
+			cudaStream_t streamCompute, streamDataMove;
 			cudaStreamCreate(&streamCompute);
-			cudaStreamCreate(&streamCopy);
+			cudaStreamCreate(&streamDataMove);
 
 			// attach cublas handle to compute stream
 			cublasSetStream(handle,streamCompute);  
@@ -3058,35 +3411,21 @@ namespace dftfe
 						}
 
 						// record completion of compute for first block
-						cudaEventRecord(computeEvents[blockCount],streamCompute);
+						CUDACHECK(cudaEventRecord(computeEvents[blockCount],streamCompute));
 					}
 
-					// check for completion of compute on current block before proceeding
-					// to swapping memories and GPU->CPU copy on current block
-					cudaStreamWaitEvent(streamCopy,computeEvents[blockCount],0);
-
-					if(ivec > bandGroupLowHighPlusOneIndices[2*bandGroupTaskId])
-					{
+          // Before swap host thread needs to wait till compute on currentblock is over.
+          // Since swap occurs on the null stream, any future operations in the streamDataMove
+          // will only occur after both the compute on currentblock and swap is over.
+          // Note that at this point there is nothing queued in the streamDataMove
+          // as all previous operations in that stream are over.
+					if((cudaEventSynchronize(computeEvents[blockCount]) == cudaSuccess) && (ivec > bandGroupLowHighPlusOneIndices[2*bandGroupTaskId]))
+          {
 						overlapMatrixBlockDP.swap(overlapMatrixBlockDPNext);
 						overlapMatrixBlockSP.swap(overlapMatrixBlockSPNext);
-					}
+          }
 
 					const unsigned int DRem=D-B;
-
-					cudaMemcpyAsync(overlapMatrixBlockHostDP,
-							thrust::raw_pointer_cast(&overlapMatrixBlockDP[0]),
-							B*B*sizeof(double),
-							cudaMemcpyDeviceToHost,
-							streamCopy);
-
-					cudaMemcpyAsync(overlapMatrixBlockHostSP,
-							thrust::raw_pointer_cast(&overlapMatrixBlockSP[0]),
-							DRem*B*sizeof(float),
-							cudaMemcpyDeviceToHost,
-							streamCopy);
-
-					// record completion of GPU->CPU copy for current block
-					cudaEventRecord(copyEvents[blockCount],streamCopy);
 
 					const unsigned int ivecNew = ivec + vectorsBlockSize;
 					const unsigned int DNew = N - ivecNew;
@@ -3136,8 +3475,34 @@ namespace dftfe
 						}
 
 						//record completion of compute for next block
-						cudaEventRecord(computeEvents[blockCount+1],streamCompute);
+						CUDACHECK(cudaEventRecord(computeEvents[blockCount+1],streamCompute));
 					}
+
+          if (dftParameters::useGPUDirectAllReduce)
+          {
+            gpucclMpiCommDomain.gpuDirectAllReduceMixedPrecGroupWrapper(thrust::raw_pointer_cast(&overlapMatrixBlockDP[0]),
+                                 thrust::raw_pointer_cast(&overlapMatrixBlockSP[0]),
+                                 thrust::raw_pointer_cast(&overlapMatrixBlockDP[0]), 
+                                 thrust::raw_pointer_cast(&overlapMatrixBlockSP[0]),
+                                 B*B, 
+                                 DRem*B,
+                                 streamDataMove);         
+          }
+
+					cudaMemcpyAsync(overlapMatrixBlockHostDP,
+							thrust::raw_pointer_cast(&overlapMatrixBlockDP[0]),
+							B*B*sizeof(double),
+							cudaMemcpyDeviceToHost,
+							streamDataMove);
+
+					cudaMemcpyAsync(overlapMatrixBlockHostSP,
+							thrust::raw_pointer_cast(&overlapMatrixBlockSP[0]),
+							DRem*B*sizeof(float),
+							cudaMemcpyDeviceToHost,
+							streamDataMove);
+
+					// record completion of GPU->CPU copy for current block
+					cudaEventRecord(copyEvents[blockCount],streamDataMove);
 
 					// Check that GPU->CPU on the current block has been completed. If completed,
 					// perform blocking MPI commmunication on the current block and copy to ScaLAPACK matri
@@ -3146,21 +3511,24 @@ namespace dftfe
 
 						const unsigned int DRem=D-B;
 
-						// Sum local XTrunc^{T}*XcBlock for double precision across domain decomposition processors
-						MPI_Allreduce(MPI_IN_PLACE,
-								overlapMatrixBlockHostDP,
-								B*B,
-								MPI_DOUBLE,
-								MPI_SUM,
-								mpiComm);
+            if (!dftParameters::useGPUDirectAllReduce)
+            {
+              // Sum local XTrunc^{T}*XcBlock for double precision across domain decomposition processors
+              MPI_Allreduce(MPI_IN_PLACE,
+                  overlapMatrixBlockHostDP,
+                  B*B,
+                  MPI_DOUBLE,
+                  MPI_SUM,
+                  mpiCommDomain);
 
-						// Sum local XTrunc^{T}*XcBlock for single precision across domain decomposition processors
-						MPI_Allreduce(MPI_IN_PLACE,
-								overlapMatrixBlockHostSP,
-								DRem*B,
-								MPI_FLOAT,
-								MPI_SUM,
-								mpiComm);
+              // Sum local XTrunc^{T}*XcBlock for single precision across domain decomposition processors
+              MPI_Allreduce(MPI_IN_PLACE,
+                  overlapMatrixBlockHostSP,
+                  DRem*B,
+                  MPI_FLOAT,
+                  MPI_SUM,
+                  mpiCommDomain);
+            }
 
 						//Copying only the lower triangular part to the ScaLAPACK overlap matrix
 						if (processGrid->is_process_active())
@@ -3204,6 +3572,15 @@ namespace dftfe
 			//return cublas handle to default stream
 			cublasSetStream(handle,NULL);
 
+			for(int i = 0; i < numberBlocks; ++i)
+			{
+				CUDACHECK(cudaEventDestroy(computeEvents[i]));
+				CUDACHECK(cudaEventDestroy(copyEvents[i]));
+			}
+
+			CUDACHECK(cudaStreamDestroy(streamCompute));
+			CUDACHECK(cudaStreamDestroy(streamDataMove));     
+
 			if (numberBandGroups>1)
 			{
 				MPI_Barrier(interBandGroupComm);
@@ -3226,7 +3603,7 @@ namespace dftfe
 				const unsigned int M,
 				const unsigned int N,
 				const std::vector<double>     & eigenValues,
-				const MPI_Comm &mpiComm,
+				const MPI_Comm &mpiCommDomain,
 				const MPI_Comm &interBandGroupComm,
 				cublasHandle_t & handle,
 				std::vector<double> & residualNorm,
@@ -3338,7 +3715,7 @@ namespace dftfe
 					N,
 					MPI_DOUBLE,
 					MPI_SUM,
-					mpiComm);
+					mpiCommDomain);
 
 			if (numberBandGroups>1 || !useBandParal)
 				MPI_Allreduce(MPI_IN_PLACE,

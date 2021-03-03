@@ -29,14 +29,15 @@ namespace dftfe
 				double * X,
 				const unsigned int M,
 				const unsigned int N,
-				const MPI_Comm &mpiComm,
+				const MPI_Comm &mpiCommDomain,
+        GPUCCLWrapper & gpucclMpiCommDomain,
 				const MPI_Comm &interBandGroupComm,
 				cublasHandle_t &handle,
 				const bool useMixedPrecOverall)
 		{
 
 			int this_process;
-			MPI_Comm_rank(mpiComm, &this_process);
+			MPI_Comm_rank(mpiCommDomain, &this_process);
 
 			double gpu_time;
 
@@ -49,7 +50,7 @@ namespace dftfe
 
 			const unsigned int rowsBlockSize=operatorMatrix.getScalapackBlockSize();
 			std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid>  processGrid;
-			linearAlgebraOperationsCUDA::internal::createProcessGridSquareMatrix(mpiComm,
+			linearAlgebraOperationsCUDA::internal::createProcessGridSquareMatrix(mpiCommDomain,
 					N,
 					processGrid);
 
@@ -83,7 +84,8 @@ namespace dftfe
 						 M,
 						 N,
 						 handle,
-						 mpiComm,
+						 mpiCommDomain,
+             gpucclMpiCommDomain,
 						 interBandGroupComm,
 						 processGrid,
 						 overlapMatPar);
@@ -94,7 +96,8 @@ namespace dftfe
 						 M,
 						 N,
 						 handle,
-						 mpiComm,
+						 mpiCommDomain,
+             gpucclMpiCommDomain,
 						 interBandGroupComm,
 						 processGrid,
 						 overlapMatPar);
@@ -108,7 +111,8 @@ namespace dftfe
 						 M,
 						 N,
 						 handle,
-						 mpiComm,
+						 mpiCommDomain,
+             gpucclMpiCommDomain,
 						 interBandGroupComm,
 						 processGrid,
 						 overlapMatPar); 
@@ -119,7 +123,8 @@ namespace dftfe
 						 M,
 						 N,
 						 handle,
-						 mpiComm,
+						 mpiCommDomain,
+             gpucclMpiCommDomain,
 						 interBandGroupComm,
 						 processGrid,
 						 overlapMatPar); 
@@ -210,7 +215,8 @@ namespace dftfe
 						N,
 						handle,
 						processGrid,
-						mpiComm,
+						mpiCommDomain,
+            gpucclMpiCommDomain,
 						interBandGroupComm,
 						LMatPar,
 						overlapMatPropertyPostCholesky==dealii::LAPACKSupport::Property::upper_triangular?true:false);
@@ -220,7 +226,8 @@ namespace dftfe
 						N,
 						handle,
 						processGrid,
-						mpiComm,
+						mpiCommDomain,
+            gpucclMpiCommDomain,
 						interBandGroupComm,
 						LMatPar,
 						overlapMatPropertyPostCholesky==dealii::LAPACKSupport::Property::upper_triangular?true:false,
