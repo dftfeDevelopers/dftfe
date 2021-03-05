@@ -100,6 +100,103 @@ void dftClass<FEOrder,FEOrderElectro>::interpolateRhoNodalDataToQuadratureDataGe
 
 }
 
+//
+//interpolate spin rho nodal data to quadrature values using FEEvaluation
+//
+	template <unsigned int FEOrder,unsigned int FEOrderElectro>
+void dftClass<FEOrder,FEOrderElectro>::interpolateRhoSpinNodalDataToQuadratureDataGeneral(dealii::MatrixFree<3,double> & matrixFreeData,
+		const unsigned int dofHandlerId,          
+		const unsigned int quadratureId,  
+		const distributedCPUVec<double> & nodalFieldSpin0,
+		const distributedCPUVec<double> & nodalFieldSpin1,        
+		std::map<dealii::CellId, std::vector<double> > & quadratureValueData,
+		std::map<dealii::CellId, std::vector<double> > & quadratureGradValueData,
+		std::map<dealii::CellId, std::vector<double> > & quadratureHessianValueData,
+		const bool isEvaluateGradData,
+		const bool isEvaluateHessianData)
+{
+	quadratureValueData.clear();
+	if(isEvaluateGradData)
+		quadratureGradValueData.clear();
+	if (isEvaluateHessianData)
+		quadratureHessianValueData.clear();
+
+	FEEvaluation<C_DIM,C_rhoNodalPolyOrder<FEOrder,FEOrderElectro>(),C_num1DQuad<C_rhoNodalPolyOrder<FEOrder,FEOrderElectro>()>(),1,double> feEvalObjSpin0(matrixFreeData,dofHandlerId,quadratureId);
+	FEEvaluation<C_DIM,C_rhoNodalPolyOrder<FEOrder,FEOrderElectro>(),C_num1DQuad<C_rhoNodalPolyOrder<FEOrder,FEOrderElectro>()>(),1,double> feEvalObjSpin1(matrixFreeData,dofHandlerId,quadratureId);  
+	const unsigned int numQuadPoints = feEvalObjSpin0.n_q_points; 
+
+  //AssertThrow(nodalField.partitioners_are_globally_compatible(*matrixFreeData.get_vector_partitioner(dofHandlerId)),
+  //        dealii::ExcMessage("DFT-FE Error: mismatch in partitioner/dofHandler."));
+
+  AssertThrow(matrixFreeData.get_quadrature(quadratureId).size() == numQuadPoints,
+          dealii::ExcMessage("DFT-FE Error: mismatch in quadrature rule usage in interpolateNodalDataToQuadratureData."));
+
+	DoFHandler<C_DIM>::active_cell_iterator subCellPtr;
+	for(unsigned int cell = 0; cell < matrixFreeData.n_macro_cells(); ++cell)
+	{
+		feEvalObjSpin0.reinit(cell);
+		feEvalObjSpin0.read_dof_values(nodalFieldSpin0);
+		feEvalObjSpin0.evaluate(true,isEvaluateGradData?true:false,isEvaluateHessianData?true:false);
+
+		feEvalObjSpin1.reinit(cell);
+		feEvalObjSpin1.read_dof_values(nodalFieldSpin1);
+		feEvalObjSpin1.evaluate(true,isEvaluateGradData?true:false,isEvaluateHessianData?true:false);    
+
+		for(unsigned int iSubCell = 0; iSubCell < matrixFreeData.n_components_filled(cell); ++iSubCell)
+		{
+			subCellPtr= matrixFreeData.get_cell_iterator(cell,iSubCell,dofHandlerId);
+			dealii::CellId subCellId=subCellPtr->id();
+			quadratureValueData[subCellId] = std::vector<double>(2*numQuadPoints);
+
+			std::vector<double> & tempVec = quadratureValueData.find(subCellId)->second;
+
+			for(unsigned int q_point = 0; q_point < numQuadPoints; ++q_point)
+			{
+				tempVec[2*q_point+0] = feEvalObjSpin0.get_value(q_point)[iSubCell];
+				tempVec[2*q_point+1] = feEvalObjSpin1.get_value(q_point)[iSubCell];        
+			}
+
+			if(isEvaluateGradData)
+			{ 
+				quadratureGradValueData[subCellId]=std::vector<double>(6*numQuadPoints);
+
+				std::vector<double> & tempVec2 = quadratureGradValueData.find(subCellId)->second;
+
+				for(unsigned int q_point = 0; q_point < numQuadPoints; ++q_point)
+				{
+					const Tensor< 1, 3, VectorizedArray< double> >  & gradValsSpin0=	feEvalObjSpin0.get_gradient(q_point);
+					const Tensor< 1, 3, VectorizedArray< double> >  & gradValsSpin1=	feEvalObjSpin1.get_gradient(q_point);          
+					tempVec2[6*q_point + 0] = gradValsSpin0[0][iSubCell];
+					tempVec2[6*q_point + 1] = gradValsSpin0[1][iSubCell];
+					tempVec2[6*q_point + 2] = gradValsSpin0[2][iSubCell];
+					tempVec2[6*q_point + 3] = gradValsSpin1[0][iSubCell];
+					tempVec2[6*q_point + 4] = gradValsSpin1[1][iSubCell];
+					tempVec2[6*q_point + 5] = gradValsSpin1[2][iSubCell];          
+				}
+			}
+
+			if(isEvaluateHessianData)
+			{ 
+				quadratureHessianValueData[subCellId]=std::vector<double>(18*numQuadPoints);
+
+				std::vector<double> & tempVec3 = quadratureHessianValueData[subCellId];
+
+				for(unsigned int q_point = 0; q_point < numQuadPoints; ++q_point)
+				{
+					const Tensor< 2, 3, VectorizedArray< double> >   & hessianValsSpin0=feEvalObjSpin0.get_hessian(q_point);
+					const Tensor< 2, 3, VectorizedArray< double> >   & hessianValsSpin1=feEvalObjSpin1.get_hessian(q_point);          
+					for (unsigned int i=0; i<3;i++)
+						for (unsigned int j=0; j<3;j++)
+            {
+							tempVec3[18*q_point + 3*i+j] = hessianValsSpin0[i][j][iSubCell];
+							tempVec3[18*q_point +9+ 3*i+j] = hessianValsSpin1[i][j][iSubCell];              
+            }
+				}
+			}
+		}
+	}
+
+}
 
 //
 //interpolate nodal data to quadrature values using FEEvaluation

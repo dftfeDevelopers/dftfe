@@ -245,7 +245,7 @@ namespace dftfe {
 			{
 				prm.declare_entry("CHK TYPE", "0",
 						Patterns::Integer(0,3),
-						"[Standard] Checkpoint type, 0 (do not create any checkpoint), 1 (create checkpoint for geometry optimization restart if either ION OPT or CELL OPT or BOMD is set to true. Currently, checkpointing and restart framework does not work if both ION OPT and CELL OPT are set to true simultaneously- the code will throw an error if attempted.), 2 (create checkpoint for scf restart. Currently, this option cannot be used if geometry optimization is being performed. The code will throw an error if this option is used in conjunction with geometry optimization.)");
+						"[Standard] Checkpoint type, 0 (do not create any checkpoint), 1 (create checkpoint for geometry optimization restart if either ION OPT or CELL OPT or BOMD is set to true. Currently, checkpointing and restart framework does not work if both ION OPT and CELL OPT are set to true simultaneously- the code will throw an error if attempted.), 2 (create checkpoint for scf restart using the electron-density field. Currently, this option cannot be used if geometry optimization is being performed. The code will throw an error if this option is used in conjunction with geometry optimization.)");
 
 				prm.declare_entry("RESTART FROM CHK", "false",
 						Patterns::Bool(),
@@ -253,7 +253,7 @@ namespace dftfe {
 
 				prm.declare_entry("RESTART MD FROM CHK", "false",
 						Patterns::Bool(),
-						"[Standard] Boolean parameter specifying if the current job reads from a checkpoint. The nature of the restart corresponds to the CHK TYPE parameter. Hence, the checkpoint being read must have been created using the CHK TYPE parameter before using this option. RESTART FROM CHK is always false for CHK TYPE 0.");
+						"[Developer] Boolean parameter specifying if the current job reads from a MD checkpoint (in development).");
 			}
 			prm.leave_subsection ();
 

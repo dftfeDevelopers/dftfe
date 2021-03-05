@@ -404,6 +404,21 @@ namespace dftfe {
 					const bool isEvaluateHessianData=false);
 
 			/**
+			 *@brief interpolate spin rho nodal data to quadrature data using FEEvaluation
+			 *
+			 */
+			void interpolateRhoSpinNodalDataToQuadratureDataGeneral(dealii::MatrixFree<3,double> & matrixFreeData,
+					const unsigned int dofHandlerId,          
+					const unsigned int quadratureId, 
+					const distributedCPUVec<double> & nodalFieldSpin0,
+					const distributedCPUVec<double> & nodalFieldSpin1,           
+					std::map<dealii::CellId, std::vector<double> > & quadratureValueData,
+					std::map<dealii::CellId, std::vector<double> > & quadratureGradValueData,
+					std::map<dealii::CellId, std::vector<double> > & quadratureHessianValueData,
+					const bool isEvaluateGradData=false,
+					const bool isEvaluateHessianData=false);      
+
+			/**
 			 *@brief interpolate nodal data to quadrature data using FEEvaluation
 			 *
 			 *@param[in] matrixFreeData matrix free data object
@@ -1015,6 +1030,12 @@ namespace dftfe {
 
 			distributedCPUVec<double> d_rhoInNodalValuesRead, d_rhoInNodalValues, d_rhoOutNodalValues, d_rhoOutNodalValuesSplit, d_preCondResidualVector, d_rhoNodalFieldRefined, d_rhoOutNodalValuesDistributed;
 			std::deque<distributedCPUVec<double>> d_rhoInNodalVals, d_rhoOutNodalVals;
+
+      distributedCPUVec<double> d_rhoInSpin0NodalValues;
+      distributedCPUVec<double> d_rhoInSpin1NodalValues;
+
+      distributedCPUVec<double> d_rhoInSpin0NodalValuesRead;
+      distributedCPUVec<double> d_rhoInSpin1NodalValuesRead;
 
       std::map<dealii::CellId, std::vector<double> > d_rhoOutValuesLpspQuad, d_rhoInValuesLpspQuad, d_gradRhoOutValuesLpspQuad, d_gradRhoInValuesLpspQuad;
 

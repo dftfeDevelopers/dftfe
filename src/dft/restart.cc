@@ -83,26 +83,8 @@ void dftClass<FEOrder,FEOrderElectro>::saveTriaInfoAndRhoData()
 	template<unsigned int FEOrder,unsigned int FEOrderElectro>
 void dftClass<FEOrder,FEOrderElectro>::saveTriaInfoAndRhoNodalData()
 {
-	pcout<< "Checkpointing tria info and rho data in progress..." << std::endl;
-
 	std::vector< const distributedCPUVec<double> * >  solutionVectors;
 
-
-	dealii::IndexSet   locally_relevant_dofs_;
-	dealii::DoFTools::extract_locally_relevant_dofs(d_dofHandlerRhoNodal, locally_relevant_dofs_);
-
-	const dealii::IndexSet & locally_owned_dofs_= d_dofHandlerRhoNodal.locally_owned_dofs();
-	dealii::IndexSet  ghost_indices_=locally_relevant_dofs_;
-	ghost_indices_.subtract_set(locally_owned_dofs_);
-
-	distributedCPUVec<double> tempVec= distributedCPUVec<double>(locally_owned_dofs_,
-			ghost_indices_,
-			mpi_communicator);
-
-	for (unsigned int i = 0; i < d_rhoOutNodalValues.local_size(); i++)
-		tempVec.local_element(i)=d_rhoOutNodalValues.local_element(i);
-
-	tempVec.update_ghost_values();
 
 	if (dftParameters::isBOMD && dftParameters::isXLBOMD)
 	{
@@ -111,10 +93,107 @@ void dftClass<FEOrder,FEOrderElectro>::saveTriaInfoAndRhoNodalData()
 	}
 	else
 	{
+    //
+    //compute nodal electron-density from quad data through l2 projection
+    //
+    distributedCPUVec<double>  rhoNodalField;
+    d_matrixFreeDataPRefined.initialize_dof_vector(rhoNodalField,d_densityDofHandlerIndexElectro);
+    rhoNodalField=0;
+    std::function<double(const typename dealii::DoFHandler<3>::active_cell_iterator & cell ,
+        const unsigned int q)> funcRho =
+      [&](const typename dealii::DoFHandler<3>::active_cell_iterator & cell ,
+          const unsigned int q)
+      {return (*rhoOutValues).find(cell->id())->second[q];};
+    dealii::VectorTools::project<3,distributedCPUVec<double>> (dealii::MappingQ1<3,3>(),
+        d_dofHandlerRhoNodal,
+        d_constraintsRhoNodal,
+        d_matrixFreeDataPRefined.get_quadrature(d_densityQuadratureIdElectro),
+        funcRho,
+        rhoNodalField);
+    rhoNodalField.update_ghost_values();
+
+    distributedCPUVec<double>  rhoNodalFieldSpin0;
+    distributedCPUVec<double>  rhoNodalFieldSpin1;
+    if (dftParameters::spinPolarized==1)
+    {
+      rhoNodalFieldSpin0.reinit(rhoNodalField);        
+      rhoNodalFieldSpin0=0;
+      std::function<double(const typename dealii::DoFHandler<3>::active_cell_iterator & cell ,
+          const unsigned int q)> funcRhoSpin0 =
+        [&](const typename dealii::DoFHandler<3>::active_cell_iterator & cell ,
+            const unsigned int q)
+        {return (*rhoOutValuesSpinPolarized).find(cell->id())->second[2*q];};
+      dealii::VectorTools::project<3,distributedCPUVec<double>> (dealii::MappingQ1<3,3>(),
+          d_dofHandlerRhoNodal,
+          d_constraintsRhoNodal,
+          d_matrixFreeDataPRefined.get_quadrature(d_densityQuadratureIdElectro),
+          funcRhoSpin0,
+          rhoNodalFieldSpin0);
+      rhoNodalFieldSpin0.update_ghost_values();
+
+
+      rhoNodalFieldSpin1.reinit(rhoNodalField);   
+      rhoNodalFieldSpin1=0;
+      std::function<double(const typename dealii::DoFHandler<3>::active_cell_iterator & cell ,
+          const unsigned int q)> funcRhoSpin1 =
+        [&](const typename dealii::DoFHandler<3>::active_cell_iterator & cell ,
+            const unsigned int q)
+        {return (*rhoOutValuesSpinPolarized).find(cell->id())->second[2*q+1];};
+      dealii::VectorTools::project<3,distributedCPUVec<double>> (dealii::MappingQ1<3,3>(),
+          d_dofHandlerRhoNodal,
+          d_constraintsRhoNodal,
+          d_matrixFreeDataPRefined.get_quadrature(d_densityQuadratureIdElectro),
+          funcRhoSpin1,
+          rhoNodalFieldSpin1);
+      rhoNodalFieldSpin1.update_ghost_values();
+    }
+
+
+    dealii::IndexSet   locally_relevant_dofs_;
+    dealii::DoFTools::extract_locally_relevant_dofs(d_dofHandlerRhoNodal, locally_relevant_dofs_);
+
+    const dealii::IndexSet & locally_owned_dofs_= d_dofHandlerRhoNodal.locally_owned_dofs();
+    dealii::IndexSet  ghost_indices_=locally_relevant_dofs_;
+    ghost_indices_.subtract_set(locally_owned_dofs_);
+
+    distributedCPUVec<double> tempVec= distributedCPUVec<double>(locally_owned_dofs_,
+        ghost_indices_,
+        mpi_communicator);
+
+    distributedCPUVec<double> tempVecSpin0,tempVecSpin1;
+
+    tempVec=0.0;
+    for (unsigned int i = 0; i < rhoNodalField.local_size(); i++)
+      tempVec.local_element(i)=rhoNodalField.local_element(i);
+
+    tempVec.update_ghost_values();
 		solutionVectors.push_back(&tempVec);
+
+    if (dftParameters::spinPolarized==1)
+    {
+      tempVecSpin0.reinit(tempVec);
+      tempVecSpin1.reinit(tempVec);
+
+      tempVecSpin0=0.0;
+      tempVecSpin1=0.0;
+
+      for (unsigned int i = 0; i < rhoNodalFieldSpin0.local_size(); i++)
+      {
+        tempVecSpin0.local_element(i)=rhoNodalFieldSpin0.local_element(i);
+        tempVecSpin1.local_element(i)=rhoNodalFieldSpin1.local_element(i);        
+      }
+
+      tempVecSpin0.update_ghost_values();
+      tempVecSpin1.update_ghost_values();      
+
+      solutionVectors.push_back(&tempVecSpin0);
+      solutionVectors.push_back(&tempVecSpin1);      
+    }
 	}
 
-	d_mesh.saveTriangulationsSolutionVectors(FEOrderElectro,
+	pcout<< "Checkpointing tria info and rho data in progress..." << std::endl;
+
+	d_mesh.saveTriangulationsSolutionVectors(C_rhoNodalPolyOrder<FEOrder,FEOrderElectro>(),
 			1,
 			solutionVectors,
 			interpoolcomm,
@@ -291,9 +370,15 @@ void dftClass<FEOrder,FEOrderElectro>::loadTriaInfoAndRhoNodalData()
 	else
 	{
 		solutionVectors.push_back(&d_rhoInNodalValuesRead);
+
+    if (dftParameters::spinPolarized==1)
+    {
+      solutionVectors.push_back(&d_rhoInSpin0NodalValuesRead);
+      solutionVectors.push_back(&d_rhoInSpin1NodalValuesRead);      
+    }    
 	}
 
-	d_mesh.loadTriangulationsSolutionVectors(FEOrderElectro,
+	d_mesh.loadTriangulationsSolutionVectors(C_rhoNodalPolyOrder<FEOrder,FEOrderElectro>(),
 			1,
 			solutionVectors);
 
