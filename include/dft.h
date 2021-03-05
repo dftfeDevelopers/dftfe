@@ -146,7 +146,8 @@ namespace dftfe {
 			/**
 			 * @brief Does KSDFT problem pre-processing steps but without remeshing.
 			 */
-			void initNoRemesh(const bool updateImagesAndKPoints = true,
+			void initNoRemesh(const bool updateImagesAndKPointsAndVselfBins = true,
+          const bool updateSmearedChargeWidths=true,
 					const bool useSingleAtomSolutionOverride = false ,
 					const bool useAtomicRhoSplitDensityUpdateForGeoOpt=true);
 
