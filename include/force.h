@@ -432,6 +432,19 @@ namespace dftfe {
 				const std::vector<Tensor<1,C_DIM,VectorizedArray<double> > > & derExcGradRho,
 				const std::map<unsigned int,std::map<dealii::CellId, std::vector<double> > > & hessianRhoCoreAtoms);
 
+		  void FNonlinearCoreCorrectionGammaAtomsElementalContributionSpinPolarized
+		   (std::map<unsigned int, std::vector<double> > & forceContributionFNonlinearCoreCorrectionGammaAtoms,
+				FEEvaluation<C_DIM,1,C_num1DQuad<C_rhoNodalPolyOrder<FEOrder,FEOrderElectro>()>(),C_DIM>  & forceEval,
+				const MatrixFree<3,double> & matrixFreeData,
+				const unsigned int cell,
+        const std::vector<VectorizedArray<double> > & vxcQuadsSpin0,
+        const std::vector<VectorizedArray<double> > & vxcQuadsSpin1,        
+				const std::vector<Tensor<1,C_DIM,VectorizedArray<double> > > & derExcGradRhoSpin0,
+				const std::vector<Tensor<1,C_DIM,VectorizedArray<double> > > & derExcGradRhoSpin1,     
+        const std::map<unsigned int,std::map<dealii::CellId, std::vector<double> > > & gradRhoCoreAtoms,
+				const std::map<unsigned int,std::map<dealii::CellId, std::vector<double> > > & hessianRhoCoreAtoms,
+        const bool isXCGGA=false);       
+
 			void distributeForceContributionFPSPLocalGammaAtoms
 				(const std::map<unsigned int,std::vector<double> > & forceContributionFPSPLocalGammaAtoms,
 				 const std::map<std::pair<unsigned int,unsigned int>, unsigned int> & atomsForceDofs,
@@ -584,7 +597,19 @@ namespace dftfe {
          const std::vector<VectorizedArray<double> > & vxcQuads,
          const std::vector<Tensor<1,C_DIM,VectorizedArray<double> > > & derExcGradRho,
          const std::map<unsigned int,std::map<dealii::CellId, std::vector<double> > > & gradRhoCoreAtoms,
-         const std::map<unsigned int,std::map<dealii::CellId, std::vector<double> > > & hessianRhoCoreAtoms);       
+         const std::map<unsigned int,std::map<dealii::CellId, std::vector<double> > > & hessianRhoCoreAtoms);
+
+			void addENonlinearCoreCorrectionStressContributionSpinPolarized
+				 (FEEvaluation<C_DIM,1,C_num1DQuad<C_rhoNodalPolyOrder<FEOrder,FEOrderElectro>()>(),C_DIM>  & forceEval,
+          const MatrixFree<3,double> & matrixFreeData,
+          const unsigned int cell,
+          const std::vector<VectorizedArray<double> > & vxcQuadsSpin0,
+          const std::vector<VectorizedArray<double> > & vxcQuadsSpin1,        
+          const std::vector<Tensor<1,C_DIM,VectorizedArray<double> > > & derExcGradRhoSpin0,
+          const std::vector<Tensor<1,C_DIM,VectorizedArray<double> > > & derExcGradRhoSpin1,     
+          const std::map<unsigned int,std::map<dealii::CellId, std::vector<double> > > & gradRhoCoreAtoms,
+          const std::map<unsigned int,std::map<dealii::CellId, std::vector<double> > > & hessianRhoCoreAtoms,
+          const bool isXCGGA=false);           
 
 			void addEPhiTotSmearedStressContribution
         (FEEvaluation<3,1,C_num1DQuadSmearedCharge()*C_numCopies1DQuadSmearedCharge(),3>  & forceEval,

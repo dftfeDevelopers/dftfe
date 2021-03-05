@@ -70,7 +70,7 @@ template<unsigned int FEOrder,unsigned int FEOrderElectro>
 
 	FEEvaluation<C_DIM,1,C_num1DQuad<C_rhoNodalPolyOrder<FEOrder,FEOrderElectro>()>(),C_DIM>  forceEval(matrixFreeData,
 			d_forceDofHandlerIndex,
-			0);
+			dftPtr->d_densityQuadratureId);
 	FEEvaluation<C_DIM,1,C_num1DQuadNLPSP<FEOrder>()*C_numCopies1DQuadNLPSP(),C_DIM>  forceEvalNLP(matrixFreeData,
 			d_forceDofHandlerIndex,
 			dftPtr->d_nlpspQuadratureId);
@@ -78,10 +78,10 @@ template<unsigned int FEOrder,unsigned int FEOrderElectro>
 #ifdef USE_COMPLEX
 	FEEvaluation<C_DIM,FEOrder,C_num1DQuad<C_rhoNodalPolyOrder<FEOrder,FEOrderElectro>()>(),2> psiEvalSpin0(matrixFreeData,
 			eigenDofHandlerIndex,
-			0);
+			dftPtr->d_densityQuadratureId);
 	FEEvaluation<C_DIM,FEOrder,C_num1DQuad<C_rhoNodalPolyOrder<FEOrder,FEOrderElectro>()>(),2> psiEvalSpin1(matrixFreeData,
 			eigenDofHandlerIndex,
-			0);
+			dftPtr->d_densityQuadratureId);
 	FEEvaluation<C_DIM,FEOrder,C_num1DQuadNLPSP<FEOrder>()*C_numCopies1DQuadNLPSP(),2> psiEvalSpin0NLP(matrixFreeData,
 			eigenDofHandlerIndex,
 			dftPtr->d_nlpspQuadratureId);
@@ -91,10 +91,10 @@ template<unsigned int FEOrder,unsigned int FEOrderElectro>
 #else
 	FEEvaluation<C_DIM,FEOrder,C_num1DQuad<C_rhoNodalPolyOrder<FEOrder,FEOrderElectro>()>(),1> psiEvalSpin0(matrixFreeData,
 			eigenDofHandlerIndex,
-			0);
+			dftPtr->d_densityQuadratureId);
 	FEEvaluation<C_DIM,FEOrder,C_num1DQuad<C_rhoNodalPolyOrder<FEOrder,FEOrderElectro>()>(),1> psiEvalSpin1(matrixFreeData,
 			eigenDofHandlerIndex,
-			0);
+			dftPtr->d_densityQuadratureId);
 	FEEvaluation<C_DIM,FEOrder,C_num1DQuadNLPSP<FEOrder>()*C_numCopies1DQuadNLPSP(),1> psiEvalSpin0NLP(matrixFreeData,
 			eigenDofHandlerIndex,
 			dftPtr->d_nlpspQuadratureId);
@@ -205,12 +205,12 @@ template<unsigned int FEOrder,unsigned int FEOrderElectro>
 		}
 	}
 
-	std::vector<VectorizedArray<double> > rhoQuads(numQuadPoints,make_vectorized_array(0.0));
-	std::vector<Tensor<1,C_DIM,VectorizedArray<double> > > gradRhoSpin0Quads(numQuadPoints,zeroTensor3);
-	std::vector<Tensor<1,C_DIM,VectorizedArray<double> > > gradRhoSpin1Quads(numQuadPoints,zeroTensor3);
+	std::vector<VectorizedArray<double> > rhoXCQuadsVect(numQuadPoints,make_vectorized_array(0.0));
+	std::vector<Tensor<1,C_DIM,VectorizedArray<double> > > gradRhoSpin0QuadsVect(numQuadPoints,zeroTensor3);
+	std::vector<Tensor<1,C_DIM,VectorizedArray<double> > > gradRhoSpin1QuadsVect(numQuadPoints,zeroTensor3);
 	std::vector<VectorizedArray<double> > excQuads(numQuadPoints,make_vectorized_array(0.0));
-	std::vector<VectorizedArray<double> > vEffRhoOutSpin0Quads(numQuadPoints,make_vectorized_array(0.0));
-	std::vector<VectorizedArray<double> > vEffRhoOutSpin1Quads(numQuadPoints,make_vectorized_array(0.0));
+	std::vector<VectorizedArray<double> > vxcRhoOutSpin0Quads(numQuadPoints,make_vectorized_array(0.0));
+	std::vector<VectorizedArray<double> > vxcRhoOutSpin1Quads(numQuadPoints,make_vectorized_array(0.0));
 	std::vector<Tensor<1,C_DIM,VectorizedArray<double> > > derExchCorrEnergyWithGradRhoOutSpin0Quads(numQuadPoints,zeroTensor3);
 	std::vector<Tensor<1,C_DIM,VectorizedArray<double> > > derExchCorrEnergyWithGradRhoOutSpin1Quads(numQuadPoints,zeroTensor3);
 
@@ -228,12 +228,12 @@ template<unsigned int FEOrder,unsigned int FEOrderElectro>
 		}
 
 
-		std::fill(rhoQuads.begin(),rhoQuads.end(),make_vectorized_array(0.0));
-		std::fill(gradRhoSpin0Quads.begin(),gradRhoSpin0Quads.end(),zeroTensor3);
-		std::fill(gradRhoSpin1Quads.begin(),gradRhoSpin1Quads.end(),zeroTensor3);
+		std::fill(rhoXCQuadsVect.begin(),rhoXCQuadsVect.end(),make_vectorized_array(0.0));
+		std::fill(gradRhoSpin0QuadsVect.begin(),gradRhoSpin0QuadsVect.end(),zeroTensor3);
+		std::fill(gradRhoSpin1QuadsVect.begin(),gradRhoSpin1QuadsVect.end(),zeroTensor3);
 		std::fill(excQuads.begin(),excQuads.end(),make_vectorized_array(0.0));
-		std::fill(vEffRhoOutSpin0Quads.begin(),vEffRhoOutSpin0Quads.end(),make_vectorized_array(0.0));
-		std::fill(vEffRhoOutSpin1Quads.begin(),vEffRhoOutSpin1Quads.end(),make_vectorized_array(0.0));
+		std::fill(vxcRhoOutSpin0Quads.begin(),vxcRhoOutSpin0Quads.end(),make_vectorized_array(0.0));
+		std::fill(vxcRhoOutSpin1Quads.begin(),vxcRhoOutSpin1Quads.end(),make_vectorized_array(0.0));
 		std::fill(derExchCorrEnergyWithGradRhoOutSpin0Quads.begin(),derExchCorrEnergyWithGradRhoOutSpin0Quads.end(),zeroTensor3);
 		std::fill(derExchCorrEnergyWithGradRhoOutSpin1Quads.begin(),derExchCorrEnergyWithGradRhoOutSpin1Quads.end(),zeroTensor3);
 
@@ -266,80 +266,114 @@ template<unsigned int FEOrder,unsigned int FEOrderElectro>
 		}
 
 		const unsigned int numSubCells=matrixFreeData.n_components_filled(cell);
-		//For LDA
-		std::vector<double> exchValRhoOut(numQuadPoints);
-		std::vector<double> corrValRhoOut(numQuadPoints);
-		std::vector<double> exchPotValRhoOut(2*numQuadPoints);
-		std::vector<double> corrPotValRhoOut(2*numQuadPoints);
-		//
-		//For GGA
-		std::vector<double> sigmaValRhoOut(3*numQuadPoints);
-		std::vector<double> derExchEnergyWithDensityValRhoOut(2*numQuadPoints), derCorrEnergyWithDensityValRhoOut(2*numQuadPoints), derExchEnergyWithSigmaRhoOut(3*numQuadPoints),derCorrEnergyWithSigmaRhoOut(3*numQuadPoints);
-		std::vector<Tensor<1,C_DIM,double > > gradRhoOutSpin0(numQuadPoints);
-		std::vector<Tensor<1,C_DIM,double > > gradRhoOutSpin1(numQuadPoints);
-		//
-		for (unsigned int iSubCell=0; iSubCell<numSubCells; ++iSubCell)
-		{
-			subCellPtr= matrixFreeData.get_cell_iterator(cell,iSubCell);
-			dealii::CellId subCellId=subCellPtr->id();
-			if(dftParameters::xcFamilyType=="GGA")
-			{
-				for (unsigned int q = 0; q < numQuadPoints; ++q)
-				{
-					for (unsigned int idim=0; idim<C_DIM; idim++)
-					{
-						gradRhoOutSpin0[q][idim] = ((*dftPtr->gradRhoOutValuesSpinPolarized)[subCellId][6*q + idim]);
-						gradRhoOutSpin1[q][idim] = ((*dftPtr->gradRhoOutValuesSpinPolarized)[subCellId][6*q +3+idim]);
-					}
-					sigmaValRhoOut[3*q+0] = scalar_product(gradRhoOutSpin0[q],gradRhoOutSpin0[q]);
-					sigmaValRhoOut[3*q+1] = scalar_product(gradRhoOutSpin0[q],gradRhoOutSpin1[q]);
-					sigmaValRhoOut[3*q+2] = scalar_product(gradRhoOutSpin1[q],gradRhoOutSpin1[q]);
-				}
-				xc_gga_exc_vxc(&(dftPtr->funcX),numQuadPoints,&((*dftPtr->rhoOutValuesSpinPolarized)[subCellId][0]),&sigmaValRhoOut[0],&exchValRhoOut[0],&derExchEnergyWithDensityValRhoOut[0],&derExchEnergyWithSigmaRhoOut[0]);
-				xc_gga_exc_vxc(&(dftPtr->funcC),numQuadPoints,&((*dftPtr->rhoOutValuesSpinPolarized)[subCellId][0]),&sigmaValRhoOut[0],&corrValRhoOut[0],&derCorrEnergyWithDensityValRhoOut[0],&derCorrEnergyWithSigmaRhoOut[0]);
-				for (unsigned int q=0; q<numQuadPoints; ++q)
-				{
-					excQuads[q][iSubCell]=exchValRhoOut[q]+corrValRhoOut[q];
-					vEffRhoOutSpin0Quads[q][iSubCell]+= derExchEnergyWithDensityValRhoOut[2*q]+derCorrEnergyWithDensityValRhoOut[2*q];
-					vEffRhoOutSpin1Quads[q][iSubCell]+= derExchEnergyWithDensityValRhoOut[2*q+1]+derCorrEnergyWithDensityValRhoOut[2*q+1];
-					for (unsigned int idim=0; idim<C_DIM; idim++)
-					{
-						derExchCorrEnergyWithGradRhoOutSpin0Quads[q][idim][iSubCell]=2.0*(derExchEnergyWithSigmaRhoOut[3*q+0]+derCorrEnergyWithSigmaRhoOut[3*q+0])*gradRhoOutSpin0[q][idim];
-						derExchCorrEnergyWithGradRhoOutSpin0Quads[q][idim][iSubCell]+=(derExchEnergyWithSigmaRhoOut[3*q+1]+derCorrEnergyWithSigmaRhoOut[3*q+1])*gradRhoOutSpin1[q][idim];
+    //For LDA
+    std::vector<double> exchValRhoOut(numQuadPoints);
+    std::vector<double> corrValRhoOut(numQuadPoints);
+    std::vector<double> exchPotValRhoOut(2*numQuadPoints);
+    std::vector<double> corrPotValRhoOut(2*numQuadPoints);
+    std::vector<double> rhoOutQuadsXC(2*numQuadPoints);
 
-						derExchCorrEnergyWithGradRhoOutSpin1Quads[q][idim][iSubCell]+=2.0*(derExchEnergyWithSigmaRhoOut[3*q+2]+derCorrEnergyWithSigmaRhoOut[3*q+2])*gradRhoOutSpin1[q][idim];
-						derExchCorrEnergyWithGradRhoOutSpin1Quads[q][idim][iSubCell]+=(derExchEnergyWithSigmaRhoOut[3*q+1]+derCorrEnergyWithSigmaRhoOut[3*q+1])*gradRhoOutSpin0[q][idim];
-					}
-				}
+    //
+    //For GGA
+    std::vector<double> sigmaValRhoOut(3*numQuadPoints);
+    std::vector<double> derExchEnergyWithDensityValRhoOut(2*numQuadPoints), derCorrEnergyWithDensityValRhoOut(2*numQuadPoints), derExchEnergyWithSigmaRhoOut(3*numQuadPoints),derCorrEnergyWithSigmaRhoOut(3*numQuadPoints);
+    std::vector<Tensor<1,C_DIM,double > > gradRhoOutQuadsXCSpin0(numQuadPoints);
+    std::vector<Tensor<1,C_DIM,double > > gradRhoOutQuadsXCSpin1(numQuadPoints);
 
-			}
-			else
-			{
-				xc_lda_exc(&(dftPtr->funcX),numQuadPoints,&((*dftPtr->rhoOutValuesSpinPolarized)[subCellId][0]),&exchValRhoOut[0]);
-				xc_lda_exc(&(dftPtr->funcC),numQuadPoints,&((*dftPtr->rhoOutValuesSpinPolarized)[subCellId][0]),&corrValRhoOut[0]);
-				xc_lda_vxc(&(dftPtr->funcX),numQuadPoints,&((*dftPtr->rhoOutValuesSpinPolarized)[subCellId][0]),&exchPotValRhoOut[0]);
-				xc_lda_vxc(&(dftPtr->funcC),numQuadPoints,&((*dftPtr->rhoOutValuesSpinPolarized)[subCellId][0]),&corrPotValRhoOut[0]);
-				for (unsigned int q=0; q<numQuadPoints; ++q)
-				{
-					excQuads[q][iSubCell]=exchValRhoOut[q]+corrValRhoOut[q];
-					vEffRhoOutSpin0Quads[q][iSubCell]+= exchPotValRhoOut[2*q]+corrPotValRhoOut[2*q];
-					vEffRhoOutSpin1Quads[q][iSubCell]+= exchPotValRhoOut[2*q+1]+corrPotValRhoOut[2*q+1];
+    //
+    for (unsigned int iSubCell=0; iSubCell<numSubCells; ++iSubCell)
+    {
+      subCellPtr= matrixFreeData.get_cell_iterator(cell,iSubCell);
+      dealii::CellId subCellId=subCellPtr->id();
 
-				}
-			}
+      const std::vector<double> & temp=(*dftPtr->rhoOutValues).find(subCellId)->second;
+      const std::vector<double> & temp1=(*dftPtr->rhoOutValuesSpinPolarized).find(subCellId)->second;
 
-			for (unsigned int q=0; q<numQuadPoints; ++q)
-			{
-				rhoQuads[q][iSubCell]=(*dftPtr->rhoOutValues)[subCellId][q];
+      rhoOutQuadsXC=temp1;
+      for (unsigned int q=0; q<numQuadPoints; ++q)
+      {
+        rhoXCQuadsVect[q][iSubCell]=temp[q];
+      }
 
-        if(dftParameters::xcFamilyType=="GGA")
+      if(dftParameters::nonLinearCoreCorrection)
+      {
+        const std::vector<double> & temp2=rhoCoreValues.find(subCellId)->second;
+        for (unsigned int q=0; q<numQuadPoints; ++q)
+        {
+          rhoOutQuadsXC[2*q+0]+=temp2[q]/2.0;
+          rhoOutQuadsXC[2*q+1]+=temp2[q]/2.0;
+          rhoXCQuadsVect[q][iSubCell]+=temp2[q];
+        }
+      }
+
+      if(dftParameters::xcFamilyType=="GGA")
+      {
+        const std::vector<double> & temp3=(*dftPtr->gradRhoOutValuesSpinPolarized).find(subCellId)->second;          
+        for (unsigned int q = 0; q < numQuadPoints; ++q)
           for (unsigned int idim=0; idim<C_DIM; idim++)
           {
-            gradRhoSpin0Quads[q][idim][iSubCell]=(*dftPtr->gradRhoOutValuesSpinPolarized)[subCellId][6*q+idim];
-            gradRhoSpin1Quads[q][idim][iSubCell]=(*dftPtr->gradRhoOutValuesSpinPolarized)[subCellId][6*q+3+idim];
-          }        
-			}
-		}
+            gradRhoOutQuadsXCSpin0[q][idim]= temp3[6*q + idim];
+            gradRhoOutQuadsXCSpin1[q][idim]= temp3[6*q + 3+idim];
+            gradRhoSpin0QuadsVect[q][idim][iSubCell]=temp3[6*q+idim];   
+            gradRhoSpin1QuadsVect[q][idim][iSubCell]=temp3[6*q+3+idim]; 
+          }
+
+        if(dftParameters::nonLinearCoreCorrection)
+        {
+          const std::vector<double> & temp4=gradRhoCoreValues.find(subCellId)->second;
+          for (unsigned int q = 0; q < numQuadPoints; ++q)
+            for (unsigned int idim=0; idim<C_DIM; idim++)
+            {
+              gradRhoOutQuadsXCSpin0[q][idim]+= temp4[3*q + idim]/2.0;
+              gradRhoOutQuadsXCSpin1[q][idim]+= temp4[3*q + idim]/2.0;
+            }        
+        }          
+      }
+
+      if(dftParameters::xcFamilyType=="GGA")
+      {
+        for (unsigned int q = 0; q < numQuadPoints; ++q)
+        {
+          sigmaValRhoOut[3*q+0] = scalar_product(gradRhoOutQuadsXCSpin0[q],gradRhoOutQuadsXCSpin0[q]);
+          sigmaValRhoOut[3*q+1] = scalar_product(gradRhoOutQuadsXCSpin0[q],gradRhoOutQuadsXCSpin1[q]);
+          sigmaValRhoOut[3*q+2] = scalar_product(gradRhoOutQuadsXCSpin1[q],gradRhoOutQuadsXCSpin1[q]);
+        }
+
+        xc_gga_exc_vxc(&(dftPtr->funcX),numQuadPoints,&(rhoOutQuadsXC[0]),&sigmaValRhoOut[0],&exchValRhoOut[0],&derExchEnergyWithDensityValRhoOut[0],&derExchEnergyWithSigmaRhoOut[0]);
+        xc_gga_exc_vxc(&(dftPtr->funcC),numQuadPoints,&(rhoOutQuadsXC[0]),&sigmaValRhoOut[0],&corrValRhoOut[0],&derCorrEnergyWithDensityValRhoOut[0],&derCorrEnergyWithSigmaRhoOut[0]);
+
+        for (unsigned int q=0; q<numQuadPoints; ++q)
+        {
+          excQuads[q][iSubCell]=exchValRhoOut[q]+corrValRhoOut[q];
+          vxcRhoOutSpin0Quads[q][iSubCell]+= derExchEnergyWithDensityValRhoOut[2*q]+derCorrEnergyWithDensityValRhoOut[2*q];
+          vxcRhoOutSpin1Quads[q][iSubCell]+= derExchEnergyWithDensityValRhoOut[2*q+1]+derCorrEnergyWithDensityValRhoOut[2*q+1];
+          for (unsigned int idim=0; idim<C_DIM; idim++)
+          {
+            derExchCorrEnergyWithGradRhoOutSpin0Quads[q][idim][iSubCell]=2.0*(derExchEnergyWithSigmaRhoOut[3*q+0]+derCorrEnergyWithSigmaRhoOut[3*q+0])*gradRhoOutQuadsXCSpin0[q][idim];
+            derExchCorrEnergyWithGradRhoOutSpin0Quads[q][idim][iSubCell]+=(derExchEnergyWithSigmaRhoOut[3*q+1]+derCorrEnergyWithSigmaRhoOut[3*q+1])*gradRhoOutQuadsXCSpin1[q][idim];
+
+            derExchCorrEnergyWithGradRhoOutSpin1Quads[q][idim][iSubCell]+=2.0*(derExchEnergyWithSigmaRhoOut[3*q+2]+derCorrEnergyWithSigmaRhoOut[3*q+2])*gradRhoOutQuadsXCSpin1[q][idim];
+            derExchCorrEnergyWithGradRhoOutSpin1Quads[q][idim][iSubCell]+=(derExchEnergyWithSigmaRhoOut[3*q+1]+derCorrEnergyWithSigmaRhoOut[3*q+1])*gradRhoOutQuadsXCSpin0[q][idim];
+          }
+        }
+
+      }
+      else
+      {
+        xc_lda_exc(&(dftPtr->funcX),numQuadPoints,&(rhoOutQuadsXC[0]),&exchValRhoOut[0]);
+        xc_lda_exc(&(dftPtr->funcC),numQuadPoints,&(rhoOutQuadsXC[0]),&corrValRhoOut[0]);
+        xc_lda_vxc(&(dftPtr->funcX),numQuadPoints,&(rhoOutQuadsXC[0]),&exchPotValRhoOut[0]);
+        xc_lda_vxc(&(dftPtr->funcC),numQuadPoints,&(rhoOutQuadsXC[0]),&corrPotValRhoOut[0]);
+        for (unsigned int q=0; q<numQuadPoints; ++q)
+        {
+          excQuads[q][iSubCell]=exchValRhoOut[q]+corrValRhoOut[q];
+          vxcRhoOutSpin0Quads[q][iSubCell]+= exchPotValRhoOut[2*q]+corrPotValRhoOut[2*q];
+          vxcRhoOutSpin1Quads[q][iSubCell]+= exchPotValRhoOut[2*q+1]+corrPotValRhoOut[2*q+1];
+
+        }
+      }
+    }//subcell loop
+
 
 #ifdef USE_COMPLEX  
 		std::vector<Tensor<1,2,VectorizedArray<double> > > psiSpin0Quads(numQuadPoints*numEigenVectors*numKPoints,zeroTensor1);
@@ -457,9 +491,9 @@ template<unsigned int FEOrder,unsigned int FEOrderElectro>
 			const VectorizedArray<double> phiExt_q =make_vectorized_array(0.0);
 
 			Tensor<2,C_DIM,VectorizedArray<double> > E=eshelbyTensorSP::getELocXcEshelbyTensor
-				(rhoQuads[q],
-				 gradRhoSpin0Quads[q],
-				 gradRhoSpin1Quads[q],
+				(rhoXCQuadsVect[q],
+				 gradRhoSpin0QuadsVect[q],
+				 gradRhoSpin1QuadsVect[q],
 				 excQuads[q],
 				 derExchCorrEnergyWithGradRhoOutSpin0Quads[q],
 				 derExchCorrEnergyWithGradRhoOutSpin1Quads[q]);
@@ -509,6 +543,7 @@ template<unsigned int FEOrder,unsigned int FEOrderElectro>
 		}//quad point loop
 
 		if (isPseudopotential)
+    {
 			for (unsigned int q=0; q<numQuadPointsNLP; ++q)
 			{
 #ifdef USE_COMPLEX              
@@ -540,6 +575,19 @@ template<unsigned int FEOrder,unsigned int FEOrderElectro>
 
 				EKPointsQuadSum+=Enl*forceEvalNLP.JxW(q);
 			}
+
+      if (dftParameters::nonLinearCoreCorrection)
+        addENonlinearCoreCorrectionStressContributionSpinPolarized(forceEval,
+            matrixFreeData,
+            cell,
+            vxcRhoOutSpin0Quads,
+            vxcRhoOutSpin1Quads,
+            derExchCorrEnergyWithGradRhoOutSpin0Quads,
+            derExchCorrEnergyWithGradRhoOutSpin1Quads,
+            gradRhoCoreAtoms,
+            hessianRhoCoreAtoms,
+            dftParameters::xcFamilyType=="GGA");      
+    }
 
 		for (unsigned int iSubCell=0; iSubCell<numSubCells; ++iSubCell)
 			for (unsigned int idim=0; idim<C_DIM; ++idim)

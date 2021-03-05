@@ -35,16 +35,16 @@ Reading initial guess for electron-density.....
 Pseudopotential initalization....
 
 Starting SCF iterations....
-SCF iterations converged to the specified tolerance after: 12 iterations.
+SCF iterations converged to the specified tolerance after: 10 iterations.
 
 Energy computations (Hartree) 
 -------------------
-             Total energy:         -19.76905965
+             Total energy:         -19.76905963
 
 Absolute values of ion forces (Hartree/Bohr)
 --------------------------------------------------------------------------------------------
-AtomId    0:  0.285800,0.000016,0.000020
-AtomId    1:  0.285293,0.000389,0.000406
+AtomId    0:  0.285793,0.000016,0.000020
+AtomId    1:  0.285292,0.000389,0.000406
 --------------------------------------------------------------------------------------------
 
 Finite element mesh information
@@ -65,12 +65,12 @@ SCF iterations converged to the specified tolerance after: 11 iterations.
 
 Energy computations (Hartree) 
 -------------------
-             Total energy:         -19.87568841
+             Total energy:         -19.87568779
 
 Absolute values of ion forces (Hartree/Bohr)
 --------------------------------------------------------------------------------------------
-AtomId    0:  0.105022,0.000012,0.000015
-AtomId    1:  0.105263,0.000274,0.000293
+AtomId    0:  0.105011,0.000012,0.000015
+AtomId    1:  0.105254,0.000274,0.000293
 --------------------------------------------------------------------------------------------
 
 Finite element mesh information
@@ -91,11 +91,11 @@ SCF iterations converged to the specified tolerance after: 9 iterations.
 
 Energy computations (Hartree) 
 -------------------
-             Total energy:         -19.85732762
+             Total energy:         -19.85732799
 
 Absolute values of ion forces (Hartree/Bohr)
 --------------------------------------------------------------------------------------------
-AtomId    0:  0.043177,0.000012,0.000015
-AtomId    1:  0.042926,0.000301,0.000320
+AtomId    0:  0.043176,0.000012,0.000015
+AtomId    1:  0.042923,0.000301,0.000320
 --------------------------------------------------------------------------------------------
 0.483750 0.000000 0.000000 0.516250 0.000000 0.000000 
