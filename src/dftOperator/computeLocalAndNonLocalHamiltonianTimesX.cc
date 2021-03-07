@@ -59,10 +59,6 @@ void kohnShamDFTOperatorClass<FEOrder,FEOrderElectro>::computeHamiltonianTimesX(
 	const double scalarCoeffAlpha1 = scalar,scalarCoeffBeta = 0.0,scalarCoeffAlpha = 1.0;
 	const unsigned int inc = 1;
 
-	//std::vector<double> cellWaveFunctionMatrix(d_numberNodesPerElement*numberWaveFunctions,0.0);
-        //cellWaveFunctionMatrix = d_cellWaveFunctionMatrix;
-	//std::vector<double> cellHamMatrixTimesWaveMatrix(d_numberNodesPerElement*numberWaveFunctions,0.0);
-
 	unsigned int iElem = 0;
         unsigned int indexTemp1 = d_numberNodesPerElement*numberWaveFunctions;
         std::vector<dealii::types::global_dof_index> cell_dof_indicesGlobal(d_numberNodesPerElement);
@@ -70,9 +66,6 @@ void kohnShamDFTOperatorClass<FEOrder,FEOrderElectro>::computeHamiltonianTimesX(
 	  {
 	    for(unsigned int iCell = 0; iCell < d_macroCellSubCellMap[iMacroCell]; ++iCell)
 	      {
-		if(!dftParameters::cellLevelMassMatrixScaling)
-		   dftPtr->matrix_free_data.get_cell_iterator(iMacroCell,iCell)->get_dof_indices(cell_dof_indicesGlobal);
-		
                 unsigned int indexTemp2 = indexTemp1*iElem;
 		for(unsigned int iNode = 0; iNode < d_numberNodesPerElement; ++iNode)
 		  {
@@ -84,35 +77,11 @@ void kohnShamDFTOperatorClass<FEOrder,FEOrderElectro>::computeHamiltonianTimesX(
 			dcopy_(&numberWaveFunctions,
 			       src.begin()+localNodeId,
 			       &inc,
-			       &cellSrcWaveFunctionMatrix[indexVal],//&cellSrcWaveFunctionMatrix[iElem][numberWaveFunctions*iNode],
+			       &cellSrcWaveFunctionMatrix[indexVal],
 			       &inc);
-                        /*for(unsigned int iWave = 0; iWave < numberWaveFunctions; ++iWave)
-                          {
-                            cellSrcWaveFunctionMatrix[indexVal+iWave] = src.local_element(localNodeId+iWave);
-                          }*/
-			/*for(unsigned int iWave = 0; iWave < numberWaveFunctions; ++iWave)
-			  {
-			    cellDstWaveFunctionMatrix[indexVal+iWave] = 0.0;
-			  }*/
 		      }
 
 		  }
-		
-
-		/*dgemm_(&transA,
-		       &transB,
-		       &numberWaveFunctions,
-		       &d_numberNodesPerElement,
-		       &d_numberNodesPerElement,
-		       &scalarCoeffAlpha1,
-		       &cellSrcWaveFunctionMatrix[indexTemp2],
-		       &numberWaveFunctions,
-		       &d_cellHamiltonianMatrix[kpointSpinIndex][iElem][0],
-		       &d_numberNodesPerElement,
-		       &scalarCoeffBeta,
-                       &cellDstWaveFunctionMatrix[indexTemp2],
-		       &numberWaveFunctions);*/
-
 		++iElem;
 	      }//subcell loop
 	  }//macrocell loop
@@ -330,6 +299,12 @@ void kohnShamDFTOperatorClass<FEOrder,FEOrderElectro>::computeHamiltonianTimesX(
 		      }
 		  }
 
+                if(!dftParameters::cellLevelMassMatrixScaling)
+                 {
+                   cell->get_dof_indices(cell_dof_indicesGlobal);
+                 }        
+
+
 		for(unsigned int iNode = 0; iNode < d_numberNodesPerElement; ++iNode)
 		  {
 
@@ -352,14 +327,14 @@ void kohnShamDFTOperatorClass<FEOrder,FEOrderElectro>::computeHamiltonianTimesX(
 			if(scaleFlag)
 			  {
 			    if(!dftParameters::cellLevelMassMatrixScaling)
-			      {
-				 std::vector<dealii::types::global_dof_index> cell_dof_indicesGlobal(d_numberNodesPerElement);
-				 dealii::types::global_dof_index localDoFId = dftPtr->matrix_free_data.get_vector_partitioner()->global_to_local(cell_dof_indicesGlobal[iNode]);
+                              {
+	     			 dealii::types::global_dof_index localDoFId = dftPtr->matrix_free_data.get_vector_partitioner()->global_to_local(cell_dof_indicesGlobal[iNode]);
 				 const double scalingCoeff = d_invSqrtMassVector.local_element(localDoFId);
+                                 const double invScalingCoeff = d_sqrtMassVector.local_element(localDoFId);
 				   
 				 for(unsigned int iWave = 0; iWave < numberWaveFunctions; ++iWave)
 				  {
-				    cellDstWaveFunctionMatrix[indexVal + iWave] = scalarB*cellDstWaveFunctionMatrix[indexVal + iWave]+scalarA*cellSrcWaveFunctionMatrix[indexVal+iWave] + scalingCoeff*cellHamMatrixTimesWaveMatrix[numberWaveFunctions*iNode + iWave];
+				    cellDstWaveFunctionMatrix[indexVal + iWave] = scalarB*cellDstWaveFunctionMatrix[indexVal + iWave]+scalarA*invScalingCoeff*cellSrcWaveFunctionMatrix[indexVal+iWave] + scalingCoeff*cellHamMatrixTimesWaveMatrix[numberWaveFunctions*iNode + iWave];
 				  }
 				   
 			      }
@@ -375,10 +350,24 @@ void kohnShamDFTOperatorClass<FEOrder,FEOrderElectro>::computeHamiltonianTimesX(
 			  }
 			else
 			  {
-			    for(unsigned int iWave = 0; iWave < numberWaveFunctions; ++iWave)
-			      {
-				cellDstWaveFunctionMatrix[indexVal + iWave] += cellHamMatrixTimesWaveMatrix[numberWaveFunctions*iNode + iWave];
-			      }
+                            if(!dftParameters::cellLevelMassMatrixScaling)
+                             {
+                               cell->get_dof_indices(cell_dof_indicesGlobal);
+                               dealii::types::global_dof_index localDoFId = dftPtr->matrix_free_data.get_vector_partitioner()->global_to_local(cell_dof_indicesGlobal[iNode]);
+                               const double scalingCoeff = d_invSqrtMassVector.local_element(localDoFId);
+
+                               for(unsigned int iWave = 0; iWave < numberWaveFunctions; ++iWave)
+                                {
+                                 cellDstWaveFunctionMatrix[indexVal + iWave] += scalingCoeff*cellHamMatrixTimesWaveMatrix[numberWaveFunctions*iNode + iWave];
+                                }
+                             }
+                            else
+                             {
+			       for(unsigned int iWave = 0; iWave < numberWaveFunctions; ++iWave)
+			        {
+				 cellDstWaveFunctionMatrix[indexVal + iWave] += cellHamMatrixTimesWaveMatrix[numberWaveFunctions*iNode + iWave];
+			        }
+                             }
 			  }
                       }
               
