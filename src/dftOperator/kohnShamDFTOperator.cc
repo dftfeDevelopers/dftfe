@@ -916,15 +916,15 @@ namespace dftfe {
 
 
 		       	
-			computeHamiltonianTimesX(src,
-						 cellSrcWaveFunctionMatrix,
-						 numberWaveFunctions,
-						 dst,
-						 cellDstWaveFunctionMatrix,
-						 scalar,
-                                                 scalarA,
-                                                 scalarB,
-                                                 scaleFlag);
+			computeHamiltonianTimesXInternal(src,
+							 cellSrcWaveFunctionMatrix,
+							 numberWaveFunctions,
+							 dst,
+							 cellDstWaveFunctionMatrix,
+							 scalar,
+							 scalarA,
+							 scalarB,
+							 scaleFlag);
 
 
 			//

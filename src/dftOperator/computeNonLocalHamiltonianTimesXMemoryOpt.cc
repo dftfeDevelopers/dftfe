@@ -20,9 +20,9 @@
 #ifdef USE_COMPLEX
 template<unsigned int FEOrder,unsigned int FEOrderElectro>
 void kohnShamDFTOperatorClass<FEOrder,FEOrderElectro>::computeNonLocalHamiltonianTimesX(const distributedCPUVec<std::complex<double> > & src,
-		const unsigned int numberWaveFunctions,
-		distributedCPUVec<std::complex<double> >       & dst,
-                const double scalar) const
+											const unsigned int numberWaveFunctions,
+											distributedCPUVec<std::complex<double> >       & dst,
+											const double scalar) const
 {
 
 	std::map<unsigned int, std::vector<std::complex<double> > > projectorKetTimesVector;

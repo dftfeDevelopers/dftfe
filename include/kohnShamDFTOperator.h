@@ -69,9 +69,29 @@ namespace dftfe{
 			distributedCPUVec<dataTypes::number> & dst);
 
 
+	        /**
+		 * @brief Compute discretized operator matrix times multi-vectors and add it to the existing dst vector
+		 * works for real and complex data types (Optimized matrix times multi-vectors using different datastructures for 
+                 * interior nodes and exterior nodes to reduce memory access costs during global to cell level vectors and vice versa) 
+		 * @param src Vector containing current values of source array with multi-vector array stored
+		 * in a flattened format with all the wavefunction value corresponding to a given node is stored
+		 * contiguously (non-const as we scale src and rescale src to avoid creation of temporary vectors)
+                 * @param cellSrcWaveFunctionMatrix containing current values of source array with multi-vector array stored
+		 * in a flattened format with all the wavefunction value corresponding to a given node is stored
+		 * contiguously for a given cell 
+		 * @param numberComponents Number of multi-fields(vectors)
+
+		 * @param scaleFlag which decides whether dst has to be scaled square root of diagonal mass matrix before evaluating
+		 * matrix times src vector
+		 * @param scalar which multiplies src before evaluating matrix times src vector
+                 * @param scalarA which is used for Chebyshev recursive iteration
+                 * @param scalarB which is used for Chebyshev recursive iteration
+		 * @param dst Vector containing sum of dst vector and operator times given multi-vectors product
+                 * @param cellDstWaveFunctionMatrix containing sum of cell level dst vector and operator times given multi-vectors product
+                 */
 	        void HX(distributedCPUVec<dataTypes::number> & src,
 		        std::vector<dataTypes::number> & cellSrcWaveFunctionMatrix,
-		        const unsigned int numberWaveFunctions,
+		        const unsigned int numberComponents,
 		        const bool scaleFlag,
 		        const double scalar,
                         const double scalarA,
@@ -319,38 +339,20 @@ namespace dftfe{
 						   const double scalar = 1.0);
 
 
-	  void computeHamiltonianTimesX(const distributedCPUVec<dataTypes::number> & src,
-					std::vector<dataTypes::number>  & cellSrcWaveFunctionMatrix,
-					const unsigned int numberWaveFunctions,
-					distributedCPUVec<dataTypes::number> & dst,
-					std::vector<dataTypes::number>  & cellDstWaveFunctionMatrix,
-					const double scalar=1.0,
-                                        const double scalarA=1.0,
-                                        const double scalarB=1.0,
-                                        bool scaleFlag=false);	     
+	        void computeHamiltonianTimesXInternal(const distributedCPUVec<dataTypes::number> & src,
+						      std::vector<dataTypes::number>  & cellSrcWaveFunctionMatrix,
+						      const unsigned int numberWaveFunctions,
+						      distributedCPUVec<dataTypes::number> & dst,
+						      std::vector<dataTypes::number>  & cellDstWaveFunctionMatrix,
+						      const double scalar=1.0,
+						      const double scalarA=1.0,
+						      const double scalarB=1.0,
+						      bool scaleFlag=false);	     
 					     
 	  
 
 
-#ifdef WITH_MKL
 
-		/**
-		 * @brief implementation of matrix-vector product using cell-level stiffness matrices.
-		 * works for both real and complex data type. blas gemm_batch routines are used.
-		 * @param src Vector containing current values of source array with multi-vector array stored
-		 * in a flattened format with all the wavefunction value corresponding to a given node is stored
-		 * contiguously.
-		 * @param numberWaveFunctions Number of wavefunctions at a given node.
-		 * @param dst Vector containing matrix times given multi-vectors product
-		 */
-		void computeLocalHamiltonianTimesXBatchGEMM
-			(const distributedCPUVec<dataTypes::number> & src,
-			 const unsigned int numberWaveFunctions,
-			 distributedCPUVec<dataTypes::number> & dst,
-			 const double scalar = 1.0) const;
-
-
-#endif
 		/**
 		 * @brief implementation of non-local Hamiltonian matrix-vector product
 		 * using non-local discretized projectors at cell-level.
@@ -364,31 +366,9 @@ namespace dftfe{
 		void computeNonLocalHamiltonianTimesX(const distributedCPUVec<dataTypes::number> & src,
 						      const unsigned int numberWaveFunctions,
 						      distributedCPUVec<dataTypes::number> & dst,
-						      const double scalar = 1.0) const;
+						      const double scalar = 1.0) const;	
+ 
 
-
-	
-
-	  
-
-#ifdef WITH_MKL
-		/**
-		 * @brief implementation of non-local Hamiltonian matrix-vector product using
-		 * non-local discretized projectors at cell-level. blas gemm_batch routines are used.
-		 * works for both complex and real data type
-		 * @param src Vector containing current values of source array with multi-vector array stored
-		 * in a flattened format with all the wavefunction value corresponding to a given node is stored
-		 * contiguously.
-		 * @param numberWaveFunctions Number of wavefunctions at a given node.
-		 * @param dst Vector containing matrix times given multi-vectors product
-		 */
-	  void computeNonLocalHamiltonianTimesXBatchGEMM(const distributedCPUVec<dataTypes::number> & src,
-							 const unsigned int numberWaveFunctions,
-							 distributedCPUVec<dataTypes::number> & dst,
-							 const double scalar=1.0) const;
-
-
-#endif
 
 		///pointer to dft class
 		dftClass<FEOrder,FEOrderElectro>* dftPtr;

@@ -24,15 +24,15 @@
 
 #ifdef USE_COMPLEX
 template<unsigned int FEOrder,unsigned int FEOrderElectro>
-void kohnShamDFTOperatorClass<FEOrder,FEOrderElectro>::computeHamiltonianTimesX(const distributedCPUVec<std::complex<double> > & src,
-								      std::vector<std::complex<double> >  & cellSrcWaveFunctionMatrix,
-								      const unsigned int numberWaveFunctions,
-								      distributedCPUVec<std::complex<double> > & dst,
-								      std::vector<std::complex<double> >  & cellDstWaveFunctionMatrix,
-								      const double scalar,
-                                                                      const double scalarA,
-                                                                      const double scalarB,
-                                                                      bool scaleFlag)
+void kohnShamDFTOperatorClass<FEOrder,FEOrderElectro>::computeHamiltonianTimesXInternal(const distributedCPUVec<std::complex<double> > & src,
+											std::vector<std::complex<double> >  & cellSrcWaveFunctionMatrix,
+											const unsigned int numberWaveFunctions,
+											distributedCPUVec<std::complex<double> > & dst,
+											std::vector<std::complex<double> >  & cellDstWaveFunctionMatrix,
+											const double scalar,
+											const double scalarA,
+											const double scalarB,
+											bool scaleFlag)
 {
 
   AssertThrow(false,dftUtils::ExcNotImplementedYet());
@@ -40,15 +40,15 @@ void kohnShamDFTOperatorClass<FEOrder,FEOrderElectro>::computeHamiltonianTimesX(
 }
 #else
 template<unsigned int FEOrder,unsigned int FEOrderElectro>
-void kohnShamDFTOperatorClass<FEOrder,FEOrderElectro>::computeHamiltonianTimesX(const distributedCPUVec<double> & src,
-										 std::vector<double>  & cellSrcWaveFunctionMatrix,
-										 const unsigned int numberWaveFunctions,
-										 distributedCPUVec<double> & dst,
-										 std::vector<double>  & cellDstWaveFunctionMatrix,
-										 const double scalar,
-                                                                                 const double scalarA,
-                                                                                 const double scalarB,
-                                                                                 bool scaleFlag)
+void kohnShamDFTOperatorClass<FEOrder,FEOrderElectro>::computeHamiltonianTimesXInternal(const distributedCPUVec<double> & src,
+											std::vector<double>  & cellSrcWaveFunctionMatrix,
+											const unsigned int numberWaveFunctions,
+											distributedCPUVec<double> & dst,
+											std::vector<double>  & cellDstWaveFunctionMatrix,
+											const double scalar,
+											const double scalarA,
+											const double scalarB,
+											bool scaleFlag)
 								       
 {
 	const unsigned int kpointSpinIndex=(1+dftParameters::spinPolarized)*d_kPointIndex+d_spinIndex;
