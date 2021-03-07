@@ -63,6 +63,7 @@ namespace dftfe {
 		bool meshAdaption = false;
 		bool pinnedNodeForPBC = true;
 	        bool cellLevelMassMatrixScaling = false;
+                bool HXOptimFlag = false;
 
 		std::string startingWFCType="";
 		bool useBatchGEMM=false;
@@ -128,17 +129,18 @@ namespace dftfe {
 		bool useDensityMatrixPerturbationRankUpdates=false;
 		double xlbomdKernelRankUpdateFDParameter=1e-2;
 		bool smearedNuclearCharges=false;
-    bool floatingNuclearCharges=false;
-    bool nonLinearCoreCorrection=false;
-    unsigned int maxLineSearchIterCGPRP=5;
-    std::string atomicMassesFile="";
-    bool useGPUDirectAllReduce=false;
-    double pspCutoffImageCharges=15.0;
-    bool reuseLanczosUpperBoundFromFirstCall=false;
-    bool allowMultipleFilteringPassesAfterFirstScf=true;
-    bool useELPAGPUKernel=false;
-    std::string xcFamilyType="";
-    bool gpuMemOptMode=false;
+                bool floatingNuclearCharges=false;
+                bool nonLinearCoreCorrection=false;
+                unsigned int maxLineSearchIterCGPRP=5;
+                std::string atomicMassesFile="";
+                bool useGPUDirectAllReduce=false;
+                double pspCutoffImageCharges=15.0;
+                bool reuseLanczosUpperBoundFromFirstCall=false;
+                bool allowMultipleFilteringPassesAfterFirstScf=true;
+                bool useELPAGPUKernel=false;
+                std::string xcFamilyType="";
+                bool gpuMemOptMode=false;
+             
 
 		void declare_parameters(ParameterHandler &prm)
 		{
@@ -634,6 +636,10 @@ namespace dftfe {
 							Patterns::Bool(),
 							"[Advanced] Boolean parameter specifying whether to use gemm batch blas routines to perform matrix-matrix multiplication operations with groups of matrices, processing a number of groups at once using threads instead of the standard serial route. CAUTION: gemm batch blas routines will only be activated if the CHEBY WFC BLOCK SIZE is less than 1000, and only if intel mkl blas library is linked with the dealii installation. Default option is true.");
 
+                                        prm.declare_entry("ENABLE HAMILTONIAN TIMES VECTOR OPTIM", "false",
+                                                         Patterns::Bool(),
+                                                        "[Advanced] Turns on optimization for hamiltonian times vector multiplication. Operations involving data movement from global vector to finite-element cell level and vice versa are done by employing different data structures for interior nodes and surfaces nodes of a given cell and this allows reduction of memory access costs");
+
 					prm.declare_entry("ORTHOGONALIZATION TYPE","Auto",
 							Patterns::Selection("GS|LW|PGS|Auto"),
 							"[Advanced] Parameter specifying the type of orthogonalization to be used: GS(Gram-Schmidt Orthogonalization using SLEPc library), LW(Lowden Orthogonalization implemented using LAPACK/BLAS routines, extension to use ScaLAPACK library not implemented yet), PGS(Pseudo-Gram-Schmidt Orthogonalization: if you are using the real executable, parallel ScaLAPACK functions are used, otherwise serial LAPACK functions are used.) Auto is the default option, which chooses GS for all-electron case and PGS for pseudopotential case. GS and LW options are only available if RR GEP is set to false.");
@@ -1010,6 +1016,7 @@ namespace dftfe {
 					dftParameters::chebyshevOrder                = prm.get_integer("CHEBYSHEV POLYNOMIAL DEGREE");
 					dftParameters::useELPA= prm.get_bool("USE ELPA");
 					dftParameters::useBatchGEMM= prm.get_bool("BATCH GEMM");
+                                        dftParameters::HXOptimFlag=prm.get_bool("ENABLE HAMILTONIAN TIMES VECTOR OPTIM");
 					dftParameters::orthogType        = prm.get("ORTHOGONALIZATION TYPE");
 					dftParameters::chebyshevTolerance = prm.get_double("CHEBYSHEV FILTER TOLERANCE");
 					dftParameters::wfcBlockSize= prm.get_integer("WFC BLOCK SIZE");

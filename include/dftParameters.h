@@ -129,6 +129,7 @@ namespace dftfe {
 		extern bool useDensityMatrixPerturbationRankUpdates;
 		extern double xlbomdKernelRankUpdateFDParameter;
 		extern bool smearedNuclearCharges;
+                extern bool HXOptimFlag;
     extern bool floatingNuclearCharges;
     extern bool nonLinearCoreCorrection;
     extern unsigned int maxLineSearchIterCGPRP;

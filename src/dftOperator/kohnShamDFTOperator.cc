@@ -639,40 +639,18 @@ namespace dftfe {
 			//
 			//Hloc*M^{-1/2}*X
 			//
-#ifdef WITH_MKL
-			if (dftParameters::useBatchGEMM && numberWaveFunctions<1000)
-				computeLocalHamiltonianTimesXBatchGEMM(src,
-						numberWaveFunctions,
-						dst);
-			else
-				computeLocalHamiltonianTimesX(src,
-						numberWaveFunctions,
-						dst);
-#else
 			computeLocalHamiltonianTimesX(src,
 					numberWaveFunctions,
 					dst);
-#endif
 
 			//
 			//required if its a pseudopotential calculation and number of nonlocal atoms are greater than zero
 			//H^{nloc}*M^{-1/2}*X
 			if(dftParameters::isPseudopotential && dftPtr->d_nonLocalAtomGlobalChargeIds.size() > 0)
 			{
-#ifdef WITH_MKL
-				if (dftParameters::useBatchGEMM && numberWaveFunctions<1000)
-					computeNonLocalHamiltonianTimesXBatchGEMM(src,
-							numberWaveFunctions,
-							dst);
-				else
-					computeNonLocalHamiltonianTimesX(src,
-							numberWaveFunctions,
-							dst);
-#else
 				computeNonLocalHamiltonianTimesX(src,
 						numberWaveFunctions,
 						dst);
-#endif
 			}
 
 
