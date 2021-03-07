@@ -255,6 +255,8 @@ namespace dftfe {
 				 const std::map<dealii::CellId, std::vector<double> > & rhoOutValuesSpinPolarized,
 				 const std::map<dealii::CellId, std::vector<double> > & gradRhoInValuesSpinPolarized,
 				 const std::map<dealii::CellId, std::vector<double> > & gradRhoOutValuesSpinPolarized,
+				 const std::map<dealii::CellId, std::vector<double> > & rhoCoreValues,
+         const std::map<dealii::CellId, std::vector<double> > & gradRhoCoreValues,         
 				 const std::map<dealii::CellId, std::vector<double> > & smearedbValues,
 				 const std::vector<std::vector<double> > & localVselfs,
 				 const std::map<dealii::CellId, std::vector<double> > & pseudoValuesElectronic,

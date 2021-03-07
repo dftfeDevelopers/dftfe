@@ -570,9 +570,9 @@ void dftClass<FEOrder,FEOrderElectro>::updateAtomPositionsAndMoveMesh(const std:
           init_time = MPI_Wtime(); 
 
           if (dftParameters::isBOMD)
-            initNoRemesh(false,(!dftParameters::reproducible_output && maxCurrentDispAtom>0.2) || useSingleAtomSolutionsOverride,useAtomicRhoSplitDensityUpdateForGeoOpt);
+            initNoRemesh(false,true,(!dftParameters::reproducible_output && maxCurrentDispAtom>0.2) || useSingleAtomSolutionsOverride,useAtomicRhoSplitDensityUpdateForGeoOpt);
           else
-            initNoRemesh(false,(!dftParameters::reproducible_output && maxCurrentDispAtom>0.2) || useSingleAtomSolutionsOverride,useAtomicRhoSplitDensityUpdateForGeoOpt);
+            initNoRemesh(false,true,(!dftParameters::reproducible_output && maxCurrentDispAtom>0.2) || useSingleAtomSolutionsOverride,useAtomicRhoSplitDensityUpdateForGeoOpt);
           if (!dftParameters::reproducible_output)
             pcout << "...Reinitialization end" << std::endl;
 
@@ -592,10 +592,12 @@ void dftClass<FEOrder,FEOrderElectro>::updateAtomPositionsAndMoveMesh(const std:
 
     if (dftParameters::isBOMD)
       initNoRemesh(atomsPeriodicWrapped==1,
+                   (maxFloatingDispComponentMag>0.2)?true:false,
                    useSingleAtomSolutionsOverride,
                    useAtomicRhoSplitDensityUpdateForGeoOpt);
     else
       initNoRemesh(atomsPeriodicWrapped==1,
+                   (maxFloatingDispComponentMag>0.2)?true:false,
                    useSingleAtomSolutionsOverride,
                    useAtomicRhoSplitDensityUpdateForGeoOpt);
     if (!dftParameters::reproducible_output)

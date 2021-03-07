@@ -88,7 +88,7 @@ namespace dftfe {
 		}
 		catch (...)
 		{
-			AssertThrow(false,dealii::ExcMessage("DFT-FE Error: Poisson solver did not converge as per set tolerances. consider increasing MAXIMUM ITERATIONS in Poisson problem parameters."));
+			AssertThrow(false,dealii::ExcMessage("DFT-FE Error: Poisson solver did not converge as per set tolerances. consider increasing MAXIMUM ITERATIONS in Poisson problem parameters. In rare cases for all-electron problems this can also occur due to a known parallel constraints issue in dealii library. Try using set CONSTRAINTS FROM SERIAL DOFHANDLER=true under the Boundary conditions subsection."));
 			pcout << "\nWarning: solver did not converge as per set tolerances. consider increasing maxLinearSolverIterations or decreasing relLinearSolverTolerance.\n";
 			pcout << "Current abs. residual: "<<solverControl.last_value()<<std::endl;
 		}

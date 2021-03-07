@@ -29,11 +29,11 @@ Setting initial guess for wavefunctions....
 Reading initial guess for electron-density.....
 
 Starting SCF iterations....
-SCF iterations converged to the specified tolerance after: 23 iterations.
+SCF iterations converged to the specified tolerance after: 19 iterations.
 
 Energy computations (Hartree) 
 -------------------
-             Total energy:        -148.96483965
+             Total energy:        -148.96483988
 
 Absolute values of ion forces (Hartree/Bohr)
 --------------------------------------------------------------------------------------------

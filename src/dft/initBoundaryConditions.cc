@@ -108,91 +108,12 @@ void dftClass<FEOrder,FEOrderElectro>::initBoundaryConditions(const bool meshOnl
   if (dftParameters::isCellStress)
     additional_data.mapping_update_flags = update_values|update_gradients|update_JxW_values|update_quadrature_points;
 
-	//double init_constraints;
-	//MPI_Barrier(MPI_COMM_WORLD);
-	//init_constraints = MPI_Wtime(); 
-	//
-	//Zero Dirichlet BC constraints on the boundary of the domain
-	//used for computing total electrostatic potential using Poisson problem
-	//with (rho+b) as the rhs
-	//
-	//d_constraintsForTotalPotential.clear();
-	//d_constraintsForTotalPotential.reinit(locally_relevant_dofs);
-
-	//if (dftParameters::pinnedNodeForPBC)
-	//	locatePeriodicPinnedNodes(dofHandler,constraintsNone,d_constraintsForTotalPotential);
-	//applyHomogeneousDirichletBC(dofHandler,d_constraintsForTotalPotential);
-	//d_constraintsForTotalPotential.close ();
-
-	//
-	//merge with constraintsNone so that d_constraintsForTotalPotential will also have periodic
-	//constraints as well for periodic problems
-	//d_constraintsForTotalPotential.merge(constraintsNone,dealii::AffineConstraints<double>::MergeConflictBehavior::right_object_wins);
-	//d_constraintsForTotalPotential.close();
-
 	//clear existing constraints matrix vector
 	d_constraintsVector.clear();
 
 	//push back into Constraint Matrices
 	d_constraintsVector.push_back(&constraintsNone);
 
-	//d_constraintsVector.push_back(&d_constraintsForTotalPotential);
-
-	//if (dftParameters::verbosity>=4)
-	//	dftUtils::printCurrentMemoryUsage(mpi_communicator,
-	//			"Created total potential constraint matrices");
-	//MPI_Barrier(MPI_COMM_WORLD);
-	//init_constraints = MPI_Wtime() - init_constraints;
-	//if (dftParameters::verbosity>=1)
-	//	pcout<<"updateAtomPositionsAndMoveMesh: initBoundaryConditions: Time taken for creating constraint matrices: "<<init_constraints<<std::endl;
-
-  /*
-	double init_bins;
-	MPI_Barrier(MPI_COMM_WORLD);
-	init_bins = MPI_Wtime(); 
-	//
-	//Dirichlet BC constraints on the boundary of fictitious ball
-	//used for computing self-potential (Vself) using Poisson problem
-	//with atoms belonging to a given bin
-	//
-	if (meshOnlyDeformed)
-	{
-		computing_timer.enter_section("Update atom bins bc");
-		d_vselfBinsManager.updateBinsBc(d_constraintsVector,
-				d_noConstraints,
-				dofHandler,
-				constraintsNone,
-				atomLocations,
-				d_imagePositionsTrunc,
-				d_imageIdsTrunc,
-				d_imageChargesTrunc);
-		computing_timer.exit_section("Update atom bins bc");
-	}
-	else
-	{
-		computing_timer.enter_section("Create atom bins");
-		d_vselfBinsManager.createAtomBins(d_constraintsVector,
-				d_noConstraints,
-				dofHandler,
-				constraintsNone,
-				atomLocations,
-				d_imagePositionsTrunc,
-				d_imageIdsTrunc,
-				d_imageChargesTrunc,
-				dftParameters::radiusAtomBall);
-
-    d_netFloatingDisp.clear();
-    d_netFloatingDisp.resize(atomLocations.size()*3,0.0);
-		computing_timer.exit_section("Create atom bins");
-	}
-
-	MPI_Barrier(MPI_COMM_WORLD);
-	init_bins = MPI_Wtime() - init_bins;
-	if (dftParameters::verbosity>=1)
-		pcout<<"updateAtomPositionsAndMoveMesh: initBoundaryConditions: Time taken for bins update: "<<init_bins<<std::endl;
-  */
-
-  /*
 	if (dftParameters::constraintsParallelCheck)
 	{
 		IndexSet locally_active_dofs_debug;
@@ -203,28 +124,13 @@ void dftClass<FEOrder,FEOrderElectro>::initBoundaryConditions(const bool meshOnl
 		AssertThrow(constraintsNone.is_consistent_in_parallel(locally_owned_dofs_debug,
 					locally_active_dofs_debug,
 					mpi_communicator),ExcMessage("DFT-FE Error: Constraints are not consistent in parallel."));
-
-		AssertThrow(d_constraintsForTotalPotential.is_consistent_in_parallel(locally_owned_dofs_debug,
-					locally_active_dofs_debug,
-					mpi_communicator),ExcMessage("DFT-FE Error: Constraints are not consistent in parallel."));
-
-		for (unsigned int i=2; i<d_constraintsVector.size();i++)
-			AssertThrow(d_constraintsVector[i]->is_consistent_in_parallel(locally_owned_dofs_debug,
-						locally_active_dofs_debug,
-						mpi_communicator),ExcMessage("DFT-FE Error: Constraints are not consistent in parallel."));
 	}
-  */
-
-	if (dftParameters::verbosity>=4)
-		dftUtils::printCurrentMemoryUsage(mpi_communicator,
-				"Created vself bins and constraint matrices");
 
 	//
 	//create matrix free structure
 	//
 	std::vector<const DoFHandler<3> *> dofHandlerVector;
 
-	//for(int i = 0; i < d_constraintsVector.size(); ++i)
 	dofHandlerVector.push_back(&dofHandler);
 
 	d_densityDofHandlerIndex=0;
@@ -234,19 +140,10 @@ void dftClass<FEOrder,FEOrderElectro>::initBoundaryConditions(const bool meshOnl
 	d_eigenDofHandlerIndex = dofHandlerVector.size() - 1; //For Eigen
 	d_constraintsVector.push_back(&constraintsNoneEigen); //For Eigen;
 
-	//
-	//push d_noConstraints into constraintsVector
-	//
-	//dofHandlerVector.push_back(&dofHandler);
-	//phiExtDofHandlerIndex = dofHandlerVector.size()-1;
-	//d_constraintsVector.push_back(&d_noConstraints);
-
 	std::vector<Quadrature<1> > quadratureVector;
 	quadratureVector.push_back(QGauss<1>(C_num1DQuad<C_rhoNodalPolyOrder<FEOrder,FEOrderElectro>()>()));
-	//quadratureVector.push_back(QGaussLobatto<1>(FEOrder+1));
 	quadratureVector.push_back(QIterated<1>(QGauss<1>(C_num1DQuadNLPSP<FEOrder>()),C_numCopies1DQuadNLPSP()));
   quadratureVector.push_back(QGaussLobatto<1>(C_rhoNodalPolyOrder<FEOrder,FEOrderElectro>()+1));
-  //quadratureVector.push_back(QIterated<1>(QGauss<1>(C_num1DQuadSmearedCharge()),C_numCopies1DQuadSmearedCharge()));
 	quadratureVector.push_back(QIterated<1>(QGauss<1>(C_num1DQuadLPSP<FEOrder>()),C_numCopies1DQuadLPSP()));
 
   d_densityQuadratureId=0;
@@ -294,12 +191,6 @@ void dftClass<FEOrder,FEOrderElectro>::initBoundaryConditions(const bool meshOnl
 	if (dftParameters::verbosity>=4)
 		dftUtils::printCurrentMemoryUsage(mpi_communicator,
 				"Called matrix free reinit");
-	//
-	//locate atom core nodes
-	//
-  //if (!dftParameters::floatingNuclearCharges)
-	//   locateAtomCoreNodes(dofHandler,d_atomNodeIdToChargeMap);
-
 
 	//compute volume of the domain
 	d_domainVolume=computeVolume(dofHandler);

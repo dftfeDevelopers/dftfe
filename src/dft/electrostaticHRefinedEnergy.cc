@@ -528,6 +528,8 @@ void dftClass<FEOrder,FEOrderElectro>::computeElectrostaticEnergyHRefined(
 							*rhoOutValuesSpinPolarized,
 							*gradRhoInValuesSpinPolarized,
 							*gradRhoOutValuesSpinPolarized,
+              d_rhoCore,
+              d_gradRhoCore,
 							d_bQuadValuesAllAtoms,
 							localVselfsHRefined,
 							d_pseudoVLoc,

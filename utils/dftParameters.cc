@@ -364,13 +364,13 @@ namespace dftfe {
 						Patterns::Bool(),
 						"[Developer] Flag to set point wise dirichlet constraints to eliminate null-space associated with the discretized Poisson operator subject to periodic BCs.");
 
-				prm.declare_entry("CONSTRAINTS PARALLEL CHECK", "true",
+				prm.declare_entry("CONSTRAINTS PARALLEL CHECK", "false",
 						Patterns::Bool(),
 						"[Developer] Check for consistency of constraints in parallel.");
 
 				prm.declare_entry("CONSTRAINTS FROM SERIAL DOFHANDLER", "false",
 						Patterns::Bool(),
-						"[Developer] Check constraints from serial dofHandler.");
+						"[Developer] Create constraints from serial dofHandler.");
 
 				prm.declare_entry("SMEARED NUCLEAR CHARGES", "true",
 						Patterns::Bool(),
@@ -740,7 +740,7 @@ namespace dftfe {
 
 			prm.enter_subsection ("Poisson problem parameters");
 			{
-				prm.declare_entry("MAXIMUM ITERATIONS", "10000",
+				prm.declare_entry("MAXIMUM ITERATIONS", "20000",
 						Patterns::Integer(0,20000),
 						"[Advanced] Maximum number of iterations to be allowed for Poisson problem convergence.");
 
@@ -1182,6 +1182,9 @@ namespace dftfe {
 
 			if (dftParameters::nonSelfConsistentForce)
 				AssertThrow(false,ExcMessage("DFT-FE Error: Implementation of this feature is not completed yet."));
+
+			if (dftParameters::spinPolarized==1 && dftParameters::mixingMethod=="ANDERSON_WITH_KERKER")
+				AssertThrow(false,ExcMessage("DFT-FE Error: Implementation of this feature is not completed yet."));        
 
 			AssertThrow(!dftParameters::coordinatesFile.empty()
 					,ExcMessage("DFT-FE Error: ATOMIC COORDINATES FILE not given."));

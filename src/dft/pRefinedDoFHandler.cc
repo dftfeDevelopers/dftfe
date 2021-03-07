@@ -106,6 +106,23 @@ void dftClass<FEOrder,FEOrderElectro>::createpRefinedDofHandler(dealii::parallel
 
 	d_constraintsRhoNodal.close();
 
+	if (dftParameters::createConstraintsFromSerialDofhandler)
+	{
+    vectorTools::createParallelConstraintMatrixFromSerial(d_mesh.getSerialMeshUnmoved(),
+        d_dofHandlerPRefined,
+        mpi_communicator,
+        d_domainBoundingVectors,
+        d_constraintsPRefined,
+        d_constraintsPRefinedOnlyHanging);
+
+    vectorTools::createParallelConstraintMatrixFromSerial(d_mesh.getSerialMeshUnmoved(),
+        d_dofHandlerRhoNodal,
+        mpi_communicator,
+        d_domainBoundingVectors,
+        d_constraintsRhoNodal,
+        d_constraintsRhoNodalOnlyHanging);
+	}  
+
 }
 
 
@@ -216,6 +233,17 @@ void dftClass<FEOrder,FEOrderElectro>::initpRefinedObjects(const bool meshOnlyDe
 	d_constraintsVectorElectro.push_back(&d_constraintsPRefinedOnlyHanging);
   d_phiExtDofHandlerIndexElectro=d_constraintsVectorElectro.size()-1;    
 
+	if (dftParameters::constraintsParallelCheck)
+	{
+		IndexSet locally_active_dofs_debug;
+		DoFTools::extract_locally_active_dofs(d_dofHandlerPRefined, locally_active_dofs_debug);
+
+		const std::vector<IndexSet>& locally_owned_dofs_debug= d_dofHandlerPRefined.locally_owned_dofs_per_processor();
+
+		AssertThrow(d_constraintsForTotalPotentialElectro.is_consistent_in_parallel(locally_owned_dofs_debug,
+					locally_active_dofs_debug,
+					mpi_communicator),ExcMessage("DFT-FE Error: Constraints are not consistent in parallel."));
+	}
 
 	//Fill dofHandler vector
   std::vector<const dealii::DoFHandler<3> *> matrixFreeDofHandlerVectorInput;

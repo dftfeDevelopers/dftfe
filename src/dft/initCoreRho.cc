@@ -81,7 +81,9 @@ void dftClass<FEOrder,FEOrderElectro>::initCoreRho()
 			alglib::ae_int_t natural_bound_type_L = 1;
 			alglib::ae_int_t natural_bound_type_R = 1;
 			//const double slopeL = (singleAtomCoreElectronDensity[*it][1][1]- singleAtomCoreElectronDensity[*it][0][1])/(singleAtomCoreElectronDensity[*it][1][0]-singleAtomCoreElectronDensity[*it][0][0]);
+      //const double slopeL = (yData[1]- yData[0])/(xData[1]-xData[0]);
 			spline1dbuildcubic(x, y, numRows, natural_bound_type_L, 0.0, natural_bound_type_R, 0.0, coreDenSpline[*it]);
+      //spline1dbuildcubic(x, y, numRows, natural_bound_type_L, slopeL, natural_bound_type_R, 0.0, coreDenSpline[*it]);
 			outerMostPointCoreDen[*it]= xData[maxRowId];
 
       if(outerMostPointCoreDen[*it]>maxCoreRhoTail)
@@ -188,235 +190,232 @@ void dftClass<FEOrder,FEOrderElectro>::initCoreRho()
       zeroTensor2[i][j]=0.0;  
 
 	//loop over elements
-	if(dftParameters::xcFamilyType=="GGA" || dftParameters::nonLinearCoreCorrection == true)
-	{
-		//
-		cell = dofHandler.begin_active();
-		for(; cell!=endc; ++cell)
-		{
-			if(cell->is_locally_owned())
-			{
-				fe_values.reinit(cell);
+  //
+  cell = dofHandler.begin_active();
+  for(; cell!=endc; ++cell)
+  {
+    if(cell->is_locally_owned())
+    {
+      fe_values.reinit(cell);
 
-				std::vector<double> & gradRhoCoreQuadValues = d_gradRhoCore[cell->id()];
-				gradRhoCoreQuadValues.resize(n_q_points*3,0.0);
+      std::vector<double> & gradRhoCoreQuadValues = d_gradRhoCore[cell->id()];
+      gradRhoCoreQuadValues.resize(n_q_points*3,0.0);
 
-				std::vector<double> & hessianRhoCoreQuadValues = d_hessianRhoCore[cell->id()];
-				if(dftParameters::xcFamilyType=="GGA")
-					hessianRhoCoreQuadValues.resize(n_q_points*9,0.0);
+      std::vector<double> & hessianRhoCoreQuadValues = d_hessianRhoCore[cell->id()];
+      if(dftParameters::xcFamilyType=="GGA")
+        hessianRhoCoreQuadValues.resize(n_q_points*9,0.0);
 
-				std::vector<Tensor<1,3,double> > gradRhoCoreAtom(n_q_points,zeroTensor1);
-				std::vector<Tensor<2,3,double> > hessianRhoCoreAtom(n_q_points,zeroTensor2);
+      std::vector<Tensor<1,3,double> > gradRhoCoreAtom(n_q_points,zeroTensor1);
+      std::vector<Tensor<2,3,double> > hessianRhoCoreAtom(n_q_points,zeroTensor2);
 
 
-				//loop over atoms
-				for(unsigned int iAtom = 0; iAtom < atomLocations.size(); ++iAtom)
-				{
-					Point<3> atom(atomLocations[iAtom][2],atomLocations[iAtom][3],atomLocations[iAtom][4]);
-					bool isCoreRhoDataInCell=false;
+      //loop over atoms
+      for(unsigned int iAtom = 0; iAtom < atomLocations.size(); ++iAtom)
+      {
+        Point<3> atom(atomLocations[iAtom][2],atomLocations[iAtom][3],atomLocations[iAtom][4]);
+        bool isCoreRhoDataInCell=false;
 
-          if (atomTypeNLCCFlagMap[atomLocations[iAtom][0]]==0)
-            continue;
+        if (atomTypeNLCCFlagMap[atomLocations[iAtom][0]]==0)
+          continue;
 
-					if (atom.distance(cell->center())>cellCenterCutOff)
-            continue;            
+        if (atom.distance(cell->center())>cellCenterCutOff)
+          continue;            
 
-					//loop over quad points
-					for(unsigned int q = 0; q < n_q_points; ++q)
-					{
-						Point<3> quadPoint = fe_values.quadrature_point(q);
-            Tensor<1,3,double> diff=quadPoint-atom; 
-						double distanceToAtom = quadPoint.distance(atom);
+        //loop over quad points
+        for(unsigned int q = 0; q < n_q_points; ++q)
+        {
+          Point<3> quadPoint = fe_values.quadrature_point(q);
+          Tensor<1,3,double> diff=quadPoint-atom; 
+          double distanceToAtom = quadPoint.distance(atom);
 
-            if (dftParameters::floatingNuclearCharges && distanceToAtom<1.0e-4)
+          if (dftParameters::floatingNuclearCharges && distanceToAtom<1.0e-4)
+          {
+            if(dftParameters::verbosity>=4)
+              std::cout<<"Atom close to quad point, iatom: "<<iAtom<<std::endl;
+
+            distanceToAtom=1.0e-4;
+            diff[0]=(1.0e-4)/std::sqrt(3.0);
+            diff[1]=(1.0e-4)/std::sqrt(3.0);
+            diff[2]=(1.0e-4)/std::sqrt(3.0);              
+          }
+
+          double value,radialDensityFirstDerivative,radialDensitySecondDerivative;
+          if(distanceToAtom <= outerMostPointCoreDen[atomLocations[iAtom][0]])
+          {
+
+            alglib::spline1ddiff(coreDenSpline[atomLocations[iAtom][0]],
+                distanceToAtom,
+                value,
+                radialDensityFirstDerivative,
+                radialDensitySecondDerivative);
+
+            isCoreRhoDataInCell = true;
+
+          }
+          else
+          {
+            radialDensityFirstDerivative = 0.0;
+            radialDensitySecondDerivative = 0.0;
+          }
+
+          gradRhoCoreAtom[q] = radialDensityFirstDerivative*diff/distanceToAtom;
+          gradRhoCoreQuadValues[3*q + 0] += gradRhoCoreAtom[q][0];
+          gradRhoCoreQuadValues[3*q + 1] += gradRhoCoreAtom[q][1];
+          gradRhoCoreQuadValues[3*q + 2] += gradRhoCoreAtom[q][2];
+
+          if(dftParameters::xcFamilyType=="GGA")
+          {
+            for(unsigned int iDim = 0; iDim < 3; ++iDim)
             {
-              if(dftParameters::verbosity>=4)
-                std::cout<<"Atom close to quad point, iatom: "<<iAtom<<std::endl;
+              for(unsigned int jDim = 0; jDim < 3; ++jDim)
+              {
+                double temp = (radialDensitySecondDerivative -radialDensityFirstDerivative/distanceToAtom)*(diff[iDim]/distanceToAtom)*(diff[jDim]/distanceToAtom);
+                if(iDim == jDim)
+                  temp += radialDensityFirstDerivative/distanceToAtom;
 
-              distanceToAtom=1.0e-4;
-              diff[0]=(1.0e-4)/std::sqrt(3.0);
-              diff[1]=(1.0e-4)/std::sqrt(3.0);
-              diff[2]=(1.0e-4)/std::sqrt(3.0);              
+                hessianRhoCoreAtom[q][iDim][jDim] = temp;
+                hessianRhoCoreQuadValues[9*q + 3*iDim + jDim] += temp;
+              }
+            }
+          }
+
+
+        }//end loop over quad points
+        if(isCoreRhoDataInCell)
+        {
+          std::vector<double> & gradRhoCoreAtomCell = d_gradRhoCoreAtoms[iAtom][cell->id()];
+          gradRhoCoreAtomCell.resize(n_q_points*3,0.0);
+
+          std::vector<double> & hessianRhoCoreAtomCell = d_hessianRhoCoreAtoms[iAtom][cell->id()];
+          if(dftParameters::xcFamilyType=="GGA")
+            hessianRhoCoreAtomCell.resize(n_q_points*9,0.0);
+
+          for(unsigned int q = 0; q < n_q_points; ++q)
+          {
+            gradRhoCoreAtomCell[3*q+0] = gradRhoCoreAtom[q][0];
+            gradRhoCoreAtomCell[3*q+1] = gradRhoCoreAtom[q][1];
+            gradRhoCoreAtomCell[3*q+2] = gradRhoCoreAtom[q][2];
+
+            if(dftParameters::xcFamilyType=="GGA")
+            {
+              for(unsigned int iDim = 0; iDim < 3; ++iDim)
+              {
+                for(unsigned int jDim = 0; jDim < 3; ++jDim)
+                {
+                  hessianRhoCoreAtomCell[9*q + 3*iDim + jDim] = hessianRhoCoreAtom[q][iDim][jDim];
+                }
+              }
+            }
+          }//q_point loop
+        }//if loop
+      }//loop over atoms
+
+      //loop over image charges
+      for(unsigned int iImageCharge = 0; iImageCharge < numberImageCharges; ++iImageCharge)
+      {
+        const int masterAtomId = d_imageIdsTrunc[iImageCharge];          
+        if (atomTypeNLCCFlagMap[atomLocations[masterAtomId][0]]==0)
+          continue;
+
+        Point<3> imageAtom(d_imagePositionsTrunc[iImageCharge][0],
+            d_imagePositionsTrunc[iImageCharge][1],
+            d_imagePositionsTrunc[iImageCharge][2]);
+
+        if (imageAtom.distance(cell->center())>cellCenterCutOff)
+          continue;  
+
+        bool isCoreRhoDataInCell = false;
+
+        // loop over quad points
+        for (unsigned int q = 0; q < n_q_points; ++q)
+        {
+          Point<3> quadPoint=fe_values.quadrature_point(q);
+          Tensor<1,3,double> diff=quadPoint-imageAtom; 
+          double distanceToAtom = quadPoint.distance(imageAtom);
+
+          if (dftParameters::floatingNuclearCharges && distanceToAtom<1.0e-4)
+          {
+            distanceToAtom=1.0e-4;
+            diff[0]=(1.0e-4)/std::sqrt(3.0);
+            diff[1]=(1.0e-4)/std::sqrt(3.0);
+            diff[2]=(1.0e-4)/std::sqrt(3.0);              
+          }
+
+          double value,radialDensityFirstDerivative,radialDensitySecondDerivative;
+          if(distanceToAtom <= outerMostPointCoreDen[atomLocations[masterAtomId][0]])
+          {
+
+            alglib::spline1ddiff(coreDenSpline[atomLocations[masterAtomId][0]],
+                distanceToAtom,
+                value,
+                radialDensityFirstDerivative,
+                radialDensitySecondDerivative);
+
+            isCoreRhoDataInCell = true;
+
+          }
+          else
+          {
+            radialDensityFirstDerivative = 0.0;
+            radialDensitySecondDerivative = 0.0;
+          }
+
+          gradRhoCoreAtom[q] = radialDensityFirstDerivative*diff/distanceToAtom;
+          gradRhoCoreQuadValues[3*q + 0] += gradRhoCoreAtom[q][0];
+          gradRhoCoreQuadValues[3*q + 1] += gradRhoCoreAtom[q][1];
+          gradRhoCoreQuadValues[3*q + 2] += gradRhoCoreAtom[q][2];
+
+          if(dftParameters::xcFamilyType=="GGA")
+          {
+            for(unsigned int iDim = 0; iDim < 3; ++iDim)
+            {
+              for(unsigned int jDim = 0; jDim < 3; ++jDim)
+              {
+                double temp = (radialDensitySecondDerivative -radialDensityFirstDerivative/distanceToAtom)*(diff[iDim]/distanceToAtom)*(diff[jDim]/distanceToAtom);
+                if(iDim == jDim)
+                  temp += radialDensityFirstDerivative/distanceToAtom;
+                hessianRhoCoreAtom[q][iDim][jDim] = temp;
+                hessianRhoCoreQuadValues[9*q + 3*iDim + jDim] += temp;
+              }
             }
 
-						double value,radialDensityFirstDerivative,radialDensitySecondDerivative;
-						if(distanceToAtom <= outerMostPointCoreDen[atomLocations[iAtom][0]])
-						{
+          }
 
-							alglib::spline1ddiff(coreDenSpline[atomLocations[iAtom][0]],
-									distanceToAtom,
-									value,
-									radialDensityFirstDerivative,
-									radialDensitySecondDerivative);
+        }//quad point loop
 
-							isCoreRhoDataInCell = true;
+        if(isCoreRhoDataInCell)
+        {
+          std::vector<double> & gradRhoCoreAtomCell = d_gradRhoCoreAtoms[numberGlobalCharges+iImageCharge][cell->id()];
+          gradRhoCoreAtomCell.resize(n_q_points*3);
 
-						}
-						else
-						{
-							radialDensityFirstDerivative = 0.0;
-							radialDensitySecondDerivative = 0.0;
-						}
+          std::vector<double> & hessianRhoCoreAtomCell = d_hessianRhoCoreAtoms[numberGlobalCharges+iImageCharge][cell->id()];
+          if(dftParameters::xcFamilyType=="GGA")
+            hessianRhoCoreAtomCell.resize(n_q_points*9);
 
-						gradRhoCoreAtom[q] = radialDensityFirstDerivative*diff/distanceToAtom;
-						gradRhoCoreQuadValues[3*q + 0] += gradRhoCoreAtom[q][0];
-						gradRhoCoreQuadValues[3*q + 1] += gradRhoCoreAtom[q][1];
-						gradRhoCoreQuadValues[3*q + 2] += gradRhoCoreAtom[q][2];
+          for(unsigned int q = 0; q < n_q_points; ++q)
+          {
+            gradRhoCoreAtomCell[3*q+0] = gradRhoCoreAtom[q][0];
+            gradRhoCoreAtomCell[3*q+1] = gradRhoCoreAtom[q][1];
+            gradRhoCoreAtomCell[3*q+2] = gradRhoCoreAtom[q][2];
 
-						if(dftParameters::xcFamilyType=="GGA")
-						{
-							for(unsigned int iDim = 0; iDim < 3; ++iDim)
-							{
-								for(unsigned int jDim = 0; jDim < 3; ++jDim)
-								{
-									double temp = (radialDensitySecondDerivative -radialDensityFirstDerivative/distanceToAtom)*diff[iDim]*diff[jDim]/(distanceToAtom*distanceToAtom);
-									if(iDim == jDim)
-										temp += radialDensityFirstDerivative/distanceToAtom;
-
-									hessianRhoCoreAtom[q][iDim][jDim] = temp;
-									hessianRhoCoreQuadValues[9*q + 3*iDim + jDim] += temp;
-								}
-							}
-						}
-
-
-					}//end loop over quad points
-					if(isCoreRhoDataInCell)
-					{
-						std::vector<double> & gradRhoCoreAtomCell = d_gradRhoCoreAtoms[iAtom][cell->id()];
-						gradRhoCoreAtomCell.resize(n_q_points*3,0.0);
-
-						std::vector<double> & hessianRhoCoreAtomCell = d_hessianRhoCoreAtoms[iAtom][cell->id()];
-						if(dftParameters::xcFamilyType=="GGA")
-							hessianRhoCoreAtomCell.resize(n_q_points*9,0.0);
-
-						for(unsigned int q = 0; q < n_q_points; ++q)
-						{
-							gradRhoCoreAtomCell[3*q+0] = gradRhoCoreAtom[q][0];
-							gradRhoCoreAtomCell[3*q+1] = gradRhoCoreAtom[q][1];
-							gradRhoCoreAtomCell[3*q+2] = gradRhoCoreAtom[q][2];
-
-							if(dftParameters::xcFamilyType=="GGA")
-							{
-								for(unsigned int iDim = 0; iDim < 3; ++iDim)
-								{
-									for(unsigned int jDim = 0; jDim < 3; ++jDim)
-									{
-										hessianRhoCoreAtomCell[9*q + 3*iDim + jDim] = hessianRhoCoreAtom[q][iDim][jDim];
-									}
-								}
-							}
-						}//q_point loop
-					}//if loop
-				}//loop over atoms
-
-				//loop over image charges
-				for(unsigned int iImageCharge = 0; iImageCharge < numberImageCharges; ++iImageCharge)
-				{
-					const int masterAtomId = d_imageIdsTrunc[iImageCharge];          
-          if (atomTypeNLCCFlagMap[atomLocations[masterAtomId][0]]==0)
-            continue;
-
-					Point<3> imageAtom(d_imagePositionsTrunc[iImageCharge][0],
-							d_imagePositionsTrunc[iImageCharge][1],
-							d_imagePositionsTrunc[iImageCharge][2]);
-
-					if (imageAtom.distance(cell->center())>cellCenterCutOff)
-            continue;  
-
-					bool isCoreRhoDataInCell = false;
-
-					// loop over quad points
-					for (unsigned int q = 0; q < n_q_points; ++q)
-					{
-						Point<3> quadPoint=fe_values.quadrature_point(q);
-            Tensor<1,3,double> diff=quadPoint-imageAtom; 
-						double distanceToAtom = quadPoint.distance(imageAtom);
-
-            if (dftParameters::floatingNuclearCharges && distanceToAtom<1.0e-4)
+            if(dftParameters::xcFamilyType=="GGA")
             {
-              distanceToAtom=1.0e-4;
-              diff[0]=(1.0e-4)/std::sqrt(3.0);
-              diff[1]=(1.0e-4)/std::sqrt(3.0);
-              diff[2]=(1.0e-4)/std::sqrt(3.0);              
+              for(unsigned int iDim = 0; iDim < 3; ++iDim)
+              {
+                for(unsigned int jDim = 0; jDim < 3; ++jDim)
+                {
+                  hessianRhoCoreAtomCell[9*q + 3*iDim + jDim] = hessianRhoCoreAtom[q][iDim][jDim];
+                }
+              }
             }
+          }//q_point loop
+        }//if loop
 
-						double value,radialDensityFirstDerivative,radialDensitySecondDerivative;
-						if(distanceToAtom <= outerMostPointCoreDen[atomLocations[masterAtomId][0]])
-						{
+      }//end of image charges
 
-							alglib::spline1ddiff(coreDenSpline[atomLocations[masterAtomId][0]],
-									distanceToAtom,
-									value,
-									radialDensityFirstDerivative,
-									radialDensitySecondDerivative);
+    }//cell locally owned check
 
-							isCoreRhoDataInCell = true;
-
-						}
-						else
-						{
-							radialDensityFirstDerivative = 0.0;
-							radialDensitySecondDerivative = 0.0;
-						}
-
-						gradRhoCoreAtom[q] = radialDensityFirstDerivative*diff/distanceToAtom;
-						gradRhoCoreQuadValues[3*q + 0] += gradRhoCoreAtom[q][0];
-						gradRhoCoreQuadValues[3*q + 1] += gradRhoCoreAtom[q][1];
-						gradRhoCoreQuadValues[3*q + 2] += gradRhoCoreAtom[q][2];
-
-						if(dftParameters::xcFamilyType=="GGA")
-						{
-							for(unsigned int iDim = 0; iDim < 3; ++iDim)
-							{
-								for(unsigned int jDim = 0; jDim < 3; ++jDim)
-								{
-									double temp = (radialDensitySecondDerivative -radialDensityFirstDerivative/distanceToAtom)*diff[iDim]*diff[jDim]/(distanceToAtom*distanceToAtom);
-									if(iDim == jDim)
-										temp += radialDensityFirstDerivative/distanceToAtom;
-									hessianRhoCoreAtom[q][iDim][jDim] = temp;
-									hessianRhoCoreQuadValues[9*q + 3*iDim + jDim] += temp;
-								}
-							}
-
-						}
-
-					}//quad point loop
-
-					if(isCoreRhoDataInCell)
-					{
-						std::vector<double> & gradRhoCoreAtomCell = d_gradRhoCoreAtoms[numberGlobalCharges+iImageCharge][cell->id()];
-						gradRhoCoreAtomCell.resize(n_q_points*3);
-
-						std::vector<double> & hessianRhoCoreAtomCell = d_hessianRhoCoreAtoms[numberGlobalCharges+iImageCharge][cell->id()];
-						if(dftParameters::xcFamilyType=="GGA")
-							hessianRhoCoreAtomCell.resize(n_q_points*9);
-
-						for(unsigned int q = 0; q < n_q_points; ++q)
-						{
-							gradRhoCoreAtomCell[3*q+0] = gradRhoCoreAtom[q][0];
-							gradRhoCoreAtomCell[3*q+1] = gradRhoCoreAtom[q][1];
-							gradRhoCoreAtomCell[3*q+2] = gradRhoCoreAtom[q][2];
-
-							if(dftParameters::xcFamilyType=="GGA")
-							{
-								for(unsigned int iDim = 0; iDim < 3; ++iDim)
-								{
-									for(unsigned int jDim = 0; jDim < 3; ++jDim)
-									{
-										hessianRhoCoreAtomCell[9*q + 3*iDim + jDim] = hessianRhoCoreAtom[q][iDim][jDim];
-									}
-								}
-							}
-						}//q_point loop
-					}//if loop
-
-				}//end of image charges
-
-			}//cell locally owned check
-
-		}//cell loop
-	}
+  }//cell loop
 }
 
 

@@ -598,6 +598,28 @@ namespace dftfe {
       return Fnl;
 		}
 
+    Tensor<1,C_DIM,VectorizedArray<double> >  getFNonlinearCoreCorrection(const VectorizedArray<double> & vxcSpin0,
+                                                                          const VectorizedArray<double> & vxcSpin1,
+                                                                          const Tensor<1,C_DIM,VectorizedArray<double> > & derExcGradRhoSpin0,
+                                                                          const Tensor<1,C_DIM,VectorizedArray<double> > & derExcGradRhoSpin1,
+                                                                          const Tensor<1,C_DIM,VectorizedArray<double> > & gradRhoCore,
+                                                                          const Tensor<2,C_DIM,VectorizedArray<double> > & hessianRhoCore,
+                                                                          const bool isXCGGA)
+    {
+        Tensor<1,3,VectorizedArray<double> > temp;   
+        for (unsigned int i=0; i<3;i++)
+            temp[i]=make_vectorized_array(0.0);  
+
+        if (isXCGGA)
+        {
+          for (unsigned int i=0; i<3;i++)
+            for (unsigned int j=0; j<3;j++)                 
+               temp[i]+=(derExcGradRhoSpin0[j]+derExcGradRhoSpin1[j])*hessianRhoCore[j][i];
+        }
+        
+        temp+=(vxcSpin0+vxcSpin1)*gradRhoCore;   
+        return temp;
+    }
 	}
 
 }

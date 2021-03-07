@@ -1557,7 +1557,18 @@ namespace dftfe {
 
           const std::vector<double> & temp=phiValues.find(cellPtr->id())->second;
           for (unsigned int q = 0; q < numberQuadraturePoints; ++q)
-            tempPhi[q][v]=temp[q];           
+            tempPhi[q][v]=temp[q]; 
+
+
+					if(dftParameters::nonLinearCoreCorrection)
+          {
+            const std::vector<double> & temp2= rhoCoreValues.find(cellPtr->id())->second;
+            for (unsigned int q = 0; q < numberQuadraturePoints; ++q)
+            {
+              tempRho[v][2*q]+=temp2[q]/2.0;
+              tempRho[v][2*q+1]+=temp2[q]/2.0;              
+            }
+          }            
 				}
 
 				for (unsigned int q = 0; q < numberQuadraturePoints; ++q)
@@ -1628,7 +1639,24 @@ namespace dftfe {
 
           const std::vector<double> & temp=phiValues.find(cellPtr->id())->second;
           for (unsigned int q = 0; q < numberQuadraturePoints; ++q)
-            tempPhi[q][v]=temp[q];          
+            tempPhi[q][v]=temp[q];         
+
+					if(dftParameters::nonLinearCoreCorrection)
+          {
+            const std::vector<double> & temp2= rhoCoreValues.find(cellPtr->id())->second;
+            const std::vector<double> & temp3= gradRhoCoreValues.find(cellPtr->id())->second;
+            for (unsigned int q = 0; q < numberQuadraturePoints; ++q)
+            {
+              tempRho[v][2*q]+=temp2[q]/2.0;
+              tempRho[v][2*q+1]+=temp2[q]/2.0;              
+              tempGradRho[v][6*q+0]+=temp3[3*q+0]/2.0;
+              tempGradRho[v][6*q+1]+=temp3[3*q+1]/2.0;
+              tempGradRho[v][6*q+2]+=temp3[3*q+2]/2.0;
+              tempGradRho[v][6*q+3]+=temp3[3*q+0]/2.0;
+              tempGradRho[v][6*q+4]+=temp3[3*q+1]/2.0;
+              tempGradRho[v][6*q+5]+=temp3[3*q+2]/2.0;              
+            }
+          }            
 				}
 
 				for (unsigned int q = 0; q < numberQuadraturePoints; ++q)

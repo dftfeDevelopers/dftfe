@@ -95,7 +95,7 @@ template<unsigned int FEOrder,unsigned int FEOrderElectro>
             }
           }
 
-          if (isXCGGA)
+          if (isXCGGA && !isCellOutsideRhoTail)
           {
             std::map<dealii::CellId, std::vector<double> >::const_iterator it2
                 =hessianRhoAtomsQuadsSeparate.find(iAtom)->second.find(subCellId);
@@ -202,7 +202,7 @@ template<unsigned int FEOrder,unsigned int FEOrderElectro>
             }
           }
 
-          if (isXCGGA)
+          if (isXCGGA && !isCellOutsideRhoCoreTail)
           {
             std::map<dealii::CellId, std::vector<double> >::const_iterator it2
                 =hessianRhoCoreAtoms.find(iAtom)->second.find(subCellId);

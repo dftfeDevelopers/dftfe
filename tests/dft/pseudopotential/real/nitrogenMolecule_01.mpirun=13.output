@@ -33,7 +33,7 @@ Reading initial guess for electron-density.....
 Pseudopotential initalization....
 
 Starting SCF iterations....
-SCF iterations converged to the specified tolerance after: 13 iterations.
+SCF iterations converged to the specified tolerance after: 10 iterations.
 
 Energy computations (Hartree) 
 -------------------
@@ -41,8 +41,8 @@ Energy computations (Hartree)
 
 Absolute values of ion forces (Hartree/Bohr)
 --------------------------------------------------------------------------------------------
-AtomId    0:  0.245024,0.000000,0.000000
-AtomId    1:  0.245024,0.000000,0.000000
+AtomId    0:  0.245023,0.000000,0.000000
+AtomId    1:  0.245021,0.000000,0.000000
 --------------------------------------------------------------------------------------------
 
 Finite element mesh information
@@ -63,12 +63,12 @@ SCF iterations converged to the specified tolerance after: 9 iterations.
 
 Energy computations (Hartree) 
 -------------------
-             Total energy:         -19.88287010
+             Total energy:         -19.88287037
 
 Absolute values of ion forces (Hartree/Bohr)
 --------------------------------------------------------------------------------------------
-AtomId    0:  0.261596,0.000000,0.000000
-AtomId    1:  0.261596,0.000000,0.000000
+AtomId    0:  0.261590,0.000000,0.000000
+AtomId    1:  0.261588,0.000000,0.000000
 --------------------------------------------------------------------------------------------
 
 Finite element mesh information
@@ -89,10 +89,10 @@ SCF iterations converged to the specified tolerance after: 9 iterations.
 
 Energy computations (Hartree) 
 -------------------
-             Total energy:         -19.87438377
+             Total energy:         -19.87438390
 
 Absolute values of ion forces (Hartree/Bohr)
 --------------------------------------------------------------------------------------------
-AtomId    0:  0.078091,0.000000,0.000000
-AtomId    1:  0.078094,0.000000,0.000000
+AtomId    0:  0.078092,0.000000,0.000000
+AtomId    1:  0.078095,0.000000,0.000000
 --------------------------------------------------------------------------------------------

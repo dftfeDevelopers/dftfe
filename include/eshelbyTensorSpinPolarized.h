@@ -179,7 +179,16 @@ namespace dftfe {
         std::vector<Tensor<1,C_DIM,VectorizedArray<double> > >::const_iterator  gradPsiSpin0Begin,
 				std::vector<Tensor<1,C_DIM,VectorizedArray<double> > >::const_iterator  gradPsiSpin1Begin,
 				const std::vector<unsigned int> & nonlocalAtomsCompactSupportList,
-				const unsigned int numBlockedEigenvectors);    
+				const unsigned int numBlockedEigenvectors);   
+
+     /// Nonlocal core correction pseudopotential force contribution
+     Tensor<1,C_DIM,VectorizedArray<double> >  getFNonlinearCoreCorrection(const VectorizedArray<double> & vxcSpin0,
+                                                                           const VectorizedArray<double> & vxcSpin1,
+                                                                           const Tensor<1,C_DIM,VectorizedArray<double> > & derExcGradRhoSpin0,
+                                                                           const Tensor<1,C_DIM,VectorizedArray<double> > & derExcGradRhoSpin1,
+                                                                           const Tensor<1,C_DIM,VectorizedArray<double> > & gradRhoCore,
+                                                                           const Tensor<2,C_DIM,VectorizedArray<double> > & hessianRhoCore,
+                                                                           const bool isXCGGA);       
 	};
 
 }
