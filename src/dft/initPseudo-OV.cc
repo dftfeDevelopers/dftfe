@@ -112,14 +112,17 @@ void dftClass<FEOrder,FEOrderElectro>::computeElementalOVProjectorKets()
 
 	//storage for precomputing index maps
 	std::vector<std::vector<dealii::types::global_dof_index> > flattenedArrayMacroCellLocalProcIndexIdMap, flattenedArrayCellLocalProcIndexIdMap;
-	
-	vectorTools::computeCellLocalIndexSetMap(tmpVector.get_partitioner(),
-						 matrix_free_data,
-                                                 d_densityDofHandlerIndex,
-						 1,
-						 flattenedArrayMacroCellLocalProcIndexIdMap,
-						 flattenedArrayCellLocalProcIndexIdMap);
 
+        if(dftParameters::cellLevelMassMatrixScaling)
+        { 
+          const unsigned int numberFields = 1;   	
+	  vectorTools::computeCellLocalIndexSetMap(tmpVector.get_partitioner(),
+						   matrix_free_data,
+                                                   d_densityDofHandlerIndex,
+						   numberFields,
+						   flattenedArrayMacroCellLocalProcIndexIdMap,
+						   flattenedArrayCellLocalProcIndexIdMap);
+        }
 
 	//
 	//preallocate element Matrices
