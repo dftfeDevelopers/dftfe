@@ -636,9 +636,11 @@ namespace dftfe
 			vectorTools::createDealiiVector(operatorMatrix.getMatrixFreeData()->get_vector_partitioner(),
 					blockSize,
 					cudaFlattenedArrayBlock);
-			vectorTools::createDealiiVector(operatorMatrix.getProjectorKetTimesVectorSingle().get_partitioner(),
-					blockSize,
-					projectorKetTimesVectorD);
+
+      if (isPsp)
+        vectorTools::createDealiiVector(operatorMatrix.getProjectorKetTimesVectorSingle().get_partitioner(),
+            blockSize,
+            projectorKetTimesVectorD);
 
 			cudaDeviceSynchronize();
 			MPI_Barrier(MPI_COMM_WORLD);

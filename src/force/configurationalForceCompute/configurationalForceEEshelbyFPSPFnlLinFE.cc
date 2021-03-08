@@ -322,29 +322,26 @@ template<unsigned int FEOrder,unsigned int FEOrderElectro>
 
 	if(isPseudopotential)
 	{
-		if(isPseudopotential)
-		{
-			ZetaDeltaVQuads.resize(numMacroCells*numQuadPointsNLP);
+    ZetaDeltaVQuads.resize(numMacroCells*numQuadPointsNLP);
 
-			for (unsigned int q=0; q<numQuadPointsNLP*numMacroCells; ++q)
-			{
-				ZetaDeltaVQuads[q].resize(dftPtr->d_nonLocalPSP_ZetalmDeltaVl.size());
+    for (unsigned int q=0; q<numQuadPointsNLP*numMacroCells; ++q)
+    {
+      ZetaDeltaVQuads[q].resize(dftPtr->d_nonLocalPSP_ZetalmDeltaVl.size());
 
-				for (unsigned int i=0; i < dftPtr->d_nonLocalPSP_ZetalmDeltaVl.size(); ++i)
-				{
-					const int numberPseudoWaveFunctions = dftPtr->d_nonLocalPSP_ZetalmDeltaVl[i].size();
+      for (unsigned int i=0; i < dftPtr->d_nonLocalPSP_ZetalmDeltaVl.size(); ++i)
+      {
+        const int numberPseudoWaveFunctions = dftPtr->d_nonLocalPSP_ZetalmDeltaVl[i].size();
 #ifdef USE_COMPLEX
-					ZetaDeltaVQuads[q][i].resize(numberPseudoWaveFunctions);
-					for (unsigned int iPseudoWave=0; iPseudoWave < numberPseudoWaveFunctions; ++iPseudoWave)
-					{
-						ZetaDeltaVQuads[q][i][iPseudoWave].resize(numKPoints,zeroTensor1);
-					}
+        ZetaDeltaVQuads[q][i].resize(numberPseudoWaveFunctions);
+        for (unsigned int iPseudoWave=0; iPseudoWave < numberPseudoWaveFunctions; ++iPseudoWave)
+        {
+          ZetaDeltaVQuads[q][i][iPseudoWave].resize(numKPoints,zeroTensor1);
+        }
 #else
-					ZetaDeltaVQuads[q][i].resize(numberPseudoWaveFunctions,make_vectorized_array(0.0));
+        ZetaDeltaVQuads[q][i].resize(numberPseudoWaveFunctions,make_vectorized_array(0.0));
 #endif
-				}
-			}
-		}
+      }
+    }
 
 		for (unsigned int cell=0; cell<matrixFreeData.n_macro_cells(); ++cell)
 		{
