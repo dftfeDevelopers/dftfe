@@ -161,11 +161,6 @@ void forceClass<FEOrder,FEOrderElectro>::computeStressEself(const DoFHandler<3> 
       const std::set<int> & atomImageIdsInBin=atomImageIdsBins.find(iBin)->second;
       for (unsigned int cell=0; cell<matrixFreeDataElectro.n_macro_cells(); ++cell)
       {
-        forceEvalSmearedCharge.reinit(cell);
-        vselfEvalSmearedCharge.reinit(cell);
-        vselfEvalSmearedCharge.read_dof_values_plain(vselfBinsManagerElectro.getVselfFieldBins()[iBin]);
-        vselfEvalSmearedCharge.evaluate(false,true);    
-
         std::fill(smearedbQuads.begin(),smearedbQuads.end(),make_vectorized_array(0.0));
         std::fill(gradVselfSmearedChargeQuads.begin(),gradVselfSmearedChargeQuads.end(),zeroTensor);        
 
@@ -192,6 +187,11 @@ void forceClass<FEOrder,FEOrderElectro>::computeStressEself(const DoFHandler<3> 
 
         if (!isCellNonTrivial)
           continue;
+
+        forceEvalSmearedCharge.reinit(cell);
+        vselfEvalSmearedCharge.reinit(cell);
+        vselfEvalSmearedCharge.read_dof_values_plain(vselfBinsManagerElectro.getVselfFieldBins()[iBin]);
+        vselfEvalSmearedCharge.evaluate(false,true); 
 
         for (unsigned int q=0; q<numQuadPointsSmearedb; ++q)
         {

@@ -133,11 +133,6 @@ template<unsigned int FEOrder,unsigned int FEOrderElectro>
 			dftPtr->d_nlpspQuadratureId);
 #endif
 
-  /*
-	FEEvaluation<C_DIM,FEOrder,C_num1DQuad<C_rhoNodalPolyOrder<FEOrder,FEOrderElectro>()>(),1> phiTotEval2(matrixFreeData,
-			phiTotDofHandlerIndex,
-			0);
-  */
 
 	std::map<unsigned int, std::vector<double> > forceContributionShadowLocalGammaAtoms;
 
