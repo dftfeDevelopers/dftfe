@@ -306,11 +306,6 @@ template<unsigned int FEOrder,unsigned int FEOrderElectro>
 #if defined(DFTFE_WITH_GPU) && !defined(USE_COMPLEX)
 	std::vector<double>  projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuadsFlattened(nonTrivialNonLocalIdsAllCells.size()*numQuadPointsNLP*3,0.0);
 	std::vector<double> elocWfcEshelbyTensorQuadValuesH(numPhysicalCells*numQuadPoints*6,0.0);
-	//std::vector<double> elocWfcEshelbyTensorQuadValuesH10(numPhysicalCells*numQuadPoints,0.0);
-	//std::vector<double> elocWfcEshelbyTensorQuadValuesH11(numPhysicalCells*numQuadPoints,0.0);
-	//std::vector<double> elocWfcEshelbyTensorQuadValuesH20(numPhysicalCells*numQuadPoints,0.0);
-	//std::vector<double> elocWfcEshelbyTensorQuadValuesH21(numPhysicalCells*numQuadPoints,0.0);
-	//std::vector<double> elocWfcEshelbyTensorQuadValuesH22(numPhysicalCells*numQuadPoints,0.0);
 #endif
 	std::vector<std::vector<std::vector<dataTypes::number> > > projectorKetTimesPsiTimesVTimesPartOcc(numKPoints);
 	std::vector<std::vector<Tensor<1,C_DIM,VectorizedArray<double> > > >  projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuads(numMacroCells*numQuadPointsNLP,std::vector<Tensor<1,C_DIM,VectorizedArray<double> > >(numPseudo,zeroTensor3));
@@ -372,6 +367,34 @@ template<unsigned int FEOrder,unsigned int FEOrderElectro>
 		}
 	}
 
+	std::vector<std::vector<double> > partialOccupancies(dftPtr->d_kPointWeights.size(),std::vector<double>((1+dftParameters::spinPolarized)*numEigenVectors,0.0));
+	for (unsigned int spinIndex=0; spinIndex<(1+dftParameters::spinPolarized);++spinIndex)
+      for(unsigned int kPoint = 0; kPoint < dftPtr->d_kPointWeights.size(); ++kPoint)
+        for (unsigned int iWave=0; iWave<numEigenVectors;++iWave)
+        {
+          const double eigenValue=dftPtr->eigenValues[kPoint][numEigenVectors*spinIndex+iWave];
+          partialOccupancies[kPoint][numEigenVectors*spinIndex+iWave]
+            =dftUtils::getPartialOccupancy(eigenValue,
+                dftPtr->fermiEnergy,
+                C_kb,
+                dftParameters::TVal);
+
+          if(dftParameters::constraintMagnetization)
+          {
+            partialOccupancies[kPoint][numEigenVectors*spinIndex+iWave] = 1.0;
+            if (spinIndex==0)
+            {
+              if (eigenValue> dftPtr->fermiEnergyUp)
+                partialOccupancies[kPoint][numEigenVectors*spinIndex+iWave] = 0.0 ;
+            }
+            else if (spinIndex==1)
+            {
+              if (eigenValue > dftPtr->fermiEnergyDown)
+                partialOccupancies[kPoint][numEigenVectors*spinIndex+iWave] = 0.0 ;
+            }
+          }
+        }
+
 	MPI_Barrier(MPI_COMM_WORLD); 
 	init_time=MPI_Wtime()-init_time;
 
@@ -388,14 +411,14 @@ template<unsigned int FEOrder,unsigned int FEOrderElectro>
 		forceCUDA::gpuPortedForceKernelsAllH(kohnShamDFTEigenOperator,
 				dftPtr->d_eigenVectorsFlattenedCUDA.begin(),
 				&eigenValuesVec[0],
-				dftPtr->fermiEnergy,
+				&partialOccupancies[0][0],
 				&nonTrivialIdToElemIdMap[0],
 				&projecterKetTimesFlattenedVectorLocalIds[0],
 				numEigenVectors,
 				numPhysicalCells,
 				numQuadPoints,
 				numQuadPointsNLP,
-				dftPtr->matrix_free_data.get_dofs_per_cell(),
+			  dftPtr->matrix_free_data.get_dofs_per_cell(dftPtr->d_densityDofHandlerIndex),
 				nonTrivialNonLocalIdsAllCells.size(),
 				&elocWfcEshelbyTensorQuadValuesH[0],
 				&projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuadsFlattened[0],
@@ -423,13 +446,13 @@ template<unsigned int FEOrder,unsigned int FEOrderElectro>
 						eigenVectors[kPoint][i].reinit(dftPtr->d_tempEigenVec);
 
 
-					vectorTools::createDealiiVector<dataTypes::number>(dftPtr->matrix_free_data.get_vector_partitioner(),
+					vectorTools::createDealiiVector<dataTypes::number>(dftPtr->matrix_free_data.get_vector_partitioner(dftPtr->d_densityDofHandlerIndex),
 							currentBlockSize,
 							eigenVectorsFlattenedBlock[kPoint]);
 					eigenVectorsFlattenedBlock[kPoint] = dataTypes::number(0.0);
 				}
 
-				dftPtr->constraintsNoneDataInfo.precomputeMaps(dftPtr->matrix_free_data.get_vector_partitioner(),
+				dftPtr->constraintsNoneDataInfo.precomputeMaps(dftPtr->matrix_free_data.get_vector_partitioner(dftPtr->d_densityDofHandlerIndex),
 						eigenVectorsFlattenedBlock[0].get_partitioner(),
 						currentBlockSize);
 			}

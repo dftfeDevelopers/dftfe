@@ -62,6 +62,8 @@ subsection SCF parameters
   
   subsection Eigen-solver parameters
      set NUMBER OF KOHN-SHAM WAVEFUNCTIONS = 30
+     set CHEBY WFC BLOCK SIZE=15
+     set WFC BLOCK SIZE=30
      set CHEBYSHEV POLYNOMIAL DEGREE = 15
      set CHEBYSHEV FILTER TOLERANCE=1e-4
      set RR GEP=true
