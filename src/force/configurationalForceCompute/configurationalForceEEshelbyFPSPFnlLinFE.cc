@@ -1335,14 +1335,15 @@ template<unsigned int FEOrder,unsigned int FEOrderElectro>
     std::set<unsigned int> nonTrivialSmearedChargeAtomIdsMacroCell;
 
 		const unsigned int numSubCells=matrixFreeDataElectro.n_components_filled(cell);
-    for (unsigned int iSubCell=0; iSubCell<numSubCells; ++iSubCell)
-    {
-      subCellPtr= matrixFreeDataElectro.get_cell_iterator(cell,iSubCell);
-      dealii::CellId subCellId=subCellPtr->id();
-      const std::vector<unsigned int> & temp=dftPtr->d_bCellNonTrivialAtomIds.find(subCellId)->second;
-      for (int i=0;i <temp.size(); i++)
-          nonTrivialSmearedChargeAtomIdsMacroCell.insert(temp[i]);
-    }
+    if (dftParameters::smearedNuclearCharges)
+      for (unsigned int iSubCell=0; iSubCell<numSubCells; ++iSubCell)
+      {
+        subCellPtr= matrixFreeDataElectro.get_cell_iterator(cell,iSubCell);
+        dealii::CellId subCellId=subCellPtr->id();
+        const std::vector<unsigned int> & temp=dftPtr->d_bCellNonTrivialAtomIds.find(subCellId)->second;
+        for (int i=0;i <temp.size(); i++)
+            nonTrivialSmearedChargeAtomIdsMacroCell.insert(temp[i]);
+      }
 
 		forceEvalElectro.reinit(cell);
     forceEvalElectroLpsp.reinit(cell);

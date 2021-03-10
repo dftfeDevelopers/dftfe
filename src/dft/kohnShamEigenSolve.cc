@@ -91,6 +91,8 @@ dataTypes::number dftClass<FEOrder,FEOrderElectro>::computeTraceXtHX(unsigned in
       d_bQuadAtomIdsAllAtoms,
       d_bCellNonTrivialAtomIds,
       d_bCellNonTrivialAtomIdsBins,
+      d_bCellNonTrivialAtomImageIds,
+      d_bCellNonTrivialAtomImageIdsBins,      
 			d_smearedChargeWidths,
       d_smearedChargeScaling,
       d_smearedChargeQuadratureIdElectro);

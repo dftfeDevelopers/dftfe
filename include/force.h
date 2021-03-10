@@ -616,6 +616,7 @@ namespace dftfe {
          const MatrixFree<3,double> & matrixFreeData,
          const unsigned int cell,
          const std::vector<Tensor<1,3,VectorizedArray<double> > > & gradPhiTotQuads,
+         const std::vector<unsigned int> & nonTrivialAtomImageIdsMacroCell,         
          const std::map<dealii::CellId, std::vector<int> > & bQuadAtomIdsAllAtomsImages,
          const std::vector< VectorizedArray<double> > & smearedbQuads);
 
@@ -624,7 +625,7 @@ namespace dftfe {
          const MatrixFree<3,double> & matrixFreeData,
          const unsigned int cell,
          const std::vector<Tensor<1,3,VectorizedArray<double> > > & gradVselfQuads,         
-         const std::set<int> & atomImageIdsInBin,
+         const std::vector<unsigned int> & nonTrivialAtomImageIdsMacroCell,
          const std::map<dealii::CellId, std::vector<int> > & bQuadAtomIdsAllAtomsImages,
          const std::vector< VectorizedArray<double> > & smearedbQuads);      
 

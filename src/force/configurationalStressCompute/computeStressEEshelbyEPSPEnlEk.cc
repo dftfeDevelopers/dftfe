@@ -765,6 +765,20 @@ template<unsigned int FEOrder,unsigned int FEOrderElectro>
 	std::vector<VectorizedArray<double> > pseudoVLocQuadsElectro(numQuadPointsLpsp,make_vectorized_array(0.0));
 	for (unsigned int cell=0; cell<matrixFreeDataElectro.n_macro_cells(); ++cell)
 	{
+    std::set<unsigned int> nonTrivialSmearedChargeAtomImageIdsMacroCell;
+
+		const unsigned int numSubCells=matrixFreeDataElectro.n_components_filled(cell);
+
+    if (dftParameters::smearedNuclearCharges)
+      for (unsigned int iSubCell=0; iSubCell<numSubCells; ++iSubCell)
+      {
+        subCellPtr= matrixFreeDataElectro.get_cell_iterator(cell,iSubCell);
+        dealii::CellId subCellId=subCellPtr->id();
+        const std::vector<unsigned int> & temp=dftPtr->d_bCellNonTrivialAtomImageIds.find(subCellId)->second;
+        for (int i=0;i <temp.size(); i++)
+            nonTrivialSmearedChargeAtomImageIdsMacroCell.insert(temp[i]);
+      }
+
 		forceEvalElectro.reinit(cell);
     forceEvalElectroLpsp.reinit(cell);
 
@@ -787,8 +801,6 @@ template<unsigned int FEOrder,unsigned int FEOrderElectro>
 		std::fill(pseudoVLocQuadsElectro.begin(),pseudoVLocQuadsElectro.end(),make_vectorized_array(0.0));
     std::fill(smearedbQuads.begin(),smearedbQuads.end(),make_vectorized_array(0.0));
     std::fill(gradPhiTotSmearedChargeQuads.begin(),gradPhiTotSmearedChargeQuads.end(),zeroTensor);    
-
-		const unsigned int numSubCells=matrixFreeDataElectro.n_components_filled(cell);
 
     double sum=0.0; 
 		for (unsigned int iSubCell=0; iSubCell<numSubCells; ++iSubCell)
@@ -878,6 +890,7 @@ template<unsigned int FEOrder,unsigned int FEOrderElectro>
 					matrixFreeDataElectro,
 					cell,
           gradPhiTotSmearedChargeQuads,
+          std::vector<unsigned int>(nonTrivialSmearedChargeAtomImageIdsMacroCell.begin(),nonTrivialSmearedChargeAtomImageIdsMacroCell.end()),
           dftPtr->d_bQuadAtomIdsAllAtomsImages,
 				  smearedbQuads);
     }
