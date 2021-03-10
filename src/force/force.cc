@@ -45,7 +45,6 @@ namespace  dftfe {
 #include "configurationalForceCompute/FSmearedChargesGammaAtomsElementalContribution.cc"
 #include "configurationalForceCompute/FShadowLocalGammaAtomsElementalContribution.cc"
 #include "configurationalForceCompute/FnlGammaAtomsElementalContribution.cc"
-#include "configurationalForceCompute/FnlGammaAtomsElementalContributionSpinPolarized.cc"
 #include "configurationalForceCompute/configurationalForceEselfLinFE.cc"
 #include "configurationalForceCompute/gaussianGeneratorConfForceOpt.cc"
 #include "configurationalForceCompute/computeFloatingAtomsForces.cc"
