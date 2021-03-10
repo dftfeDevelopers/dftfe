@@ -749,12 +749,12 @@ template<unsigned int FEOrder,unsigned int FEOrderElectro>
           Tensor<2,C_DIM,VectorizedArray<double> > E;
           const unsigned int physicalCellId=macroCellIdToNormalCellIdMap[cell];
           const unsigned int id=physicalCellId*numQuadPoints+q;
-          E[0][0]=make_vectorized_array(elocWfcEshelbyTensorQuadValuesH[id*6+0]);
-          E[1][0]=make_vectorized_array(elocWfcEshelbyTensorQuadValuesH[id*6+1]);
-          E[1][1]=make_vectorized_array(elocWfcEshelbyTensorQuadValuesH[id*6+2]);
-          E[2][0]=make_vectorized_array(elocWfcEshelbyTensorQuadValuesH[id*6+3]);
-          E[2][1]=make_vectorized_array(elocWfcEshelbyTensorQuadValuesH[id*6+4]);
-          E[2][2]=make_vectorized_array(elocWfcEshelbyTensorQuadValuesH[id*6+5]);
+          E[0][0]=spinPolarizedFactorVect*make_vectorized_array(elocWfcEshelbyTensorQuadValuesH[id*6+0]);
+          E[1][0]=spinPolarizedFactorVect*make_vectorized_array(elocWfcEshelbyTensorQuadValuesH[id*6+1]);
+          E[1][1]=spinPolarizedFactorVect*make_vectorized_array(elocWfcEshelbyTensorQuadValuesH[id*6+2]);
+          E[2][0]=spinPolarizedFactorVect*make_vectorized_array(elocWfcEshelbyTensorQuadValuesH[id*6+3]);
+          E[2][1]=spinPolarizedFactorVect*make_vectorized_array(elocWfcEshelbyTensorQuadValuesH[id*6+4]);
+          E[2][2]=spinPolarizedFactorVect*make_vectorized_array(elocWfcEshelbyTensorQuadValuesH[id*6+5]);
           E[0][1]=E[1][0];
           E[0][2]=E[2][0];
           E[1][2]=E[2][1];
