@@ -94,7 +94,7 @@ void dftClass<FEOrder,FEOrderElectro>::computeElementalOVProjectorKets()
 
 	if(dftParameters::cellLevelMassMatrixScaling)
 	  {
-	    matrix_free_data.initialize_dof_vector(invSqrtMassVector,0);
+	    matrix_free_data.initialize_dof_vector(invSqrtMassVector,d_densityDofHandlerIndex);
 	    sqrtMassVector.reinit(invSqrtMassVector);
 	    kohnShamDFTEigenOperator.computeMassVector(dofHandler,
 						       constraintsNone,
@@ -106,7 +106,7 @@ void dftClass<FEOrder,FEOrderElectro>::computeElementalOVProjectorKets()
 	  }
 	
 	distributedCPUVec<dataTypes::number> tmpVector;
-	vectorTools::createDealiiVector<dataTypes::number>(matrix_free_data.get_vector_partitioner(),
+	vectorTools::createDealiiVector<dataTypes::number>(matrix_free_data.get_vector_partitioner(d_densityDofHandlerIndex),
 							   1,
 							   tmpVector);
 

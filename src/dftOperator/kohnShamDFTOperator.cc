@@ -28,7 +28,6 @@
 namespace dftfe {
 
 #include "computeNonLocalHamiltonianTimesXMemoryOpt.cc"
-#include "computeNonLocalHamiltonianTimesXMemoryOptBatchGEMM.cc"
 #include "computeLocalAndNonLocalHamiltonianTimesX.cc"  
 #include "matrixVectorProductImplementations.cc"
 #include "shapeFunctionDataCalculator.cc"
@@ -67,7 +66,7 @@ namespace dftfe {
 			computing_timer.enter_section("kohnShamDFTOperatorClass setup");
 
 
-			dftPtr->matrix_free_data.initialize_dof_vector(d_invSqrtMassVector,0);
+			dftPtr->matrix_free_data.initialize_dof_vector(d_invSqrtMassVector,dftPtr->d_densityDofHandlerIndex);
 			d_sqrtMassVector.reinit(d_invSqrtMassVector);
 
 
