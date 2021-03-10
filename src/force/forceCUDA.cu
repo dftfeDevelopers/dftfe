@@ -599,7 +599,7 @@ namespace dftfe
 		void gpuPortedForceKernelsAllH(operatorDFTCUDAClass & operatorMatrix,
 				const double * X,
 				const double * eigenValuesH,
-				const double * partialOccupancies,
+				const double * partialOccupanciesH,
 				const unsigned int * nonTrivialIdToElemIdMapH,
 				const unsigned int * projecterKetTimesFlattenedVectorLocalIdsH, 
 				const unsigned int N,

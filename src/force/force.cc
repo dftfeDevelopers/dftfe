@@ -40,7 +40,6 @@
 namespace  dftfe {
 
 #include "configurationalForceCompute/configurationalForceEEshelbyFPSPFnlLinFE.cc"
-#include "configurationalForceCompute/configurationalForceSpinPolarizedEEshelbyFPSPFnlLinFE.cc"
 #include "configurationalForceCompute/FPSPLocalGammaAtomsElementalContribution.cc"
 #include "configurationalForceCompute/FNonlinearCoreCorrectionGammaAtomsElementalContribution.cc"
 #include "configurationalForceCompute/FSmearedChargesGammaAtomsElementalContribution.cc"
@@ -436,63 +435,36 @@ namespace  dftfe {
 					 matrixFreeDataElectro);
 
 			 //configurational force contribution from all terms except those from nuclear self energy
-			 if (dftParameters::spinPolarized)
-				 computeConfigurationalForceSpinPolarizedEEshelbyTensorFPSPFnlLinFE
-					 (matrixFreeData,
-					  eigenDofHandlerIndex,
-            smearedChargeQuadratureId,
-            lpspQuadratureIdElectro,
-					  matrixFreeDataElectro,
-					  phiTotDofHandlerIndexElectro,
-					  phiTotRhoOutElectro,
-           gradRhoOutValuesLpsp,
-					 rhoOutValuesElectro,
-           rhoOutValuesElectroLpsp,
-					 gradRhoOutValuesElectro,
-           gradRhoOutValuesElectroLpsp,
-				   rhoCoreValues,
-				   gradRhoCoreValues,
-				   hessianRhoCoreValues,
-				   gradRhoCoreAtoms,
-				   hessianRhoCoreAtoms,            
-					  pseudoVLocElectro,
-					  pseudoVLocAtomsElectro,
-					  vselfBinsManagerElectro,
-					  shadowKSRhoMinValues,
-					  shadowKSGradRhoMinValues,
-					  phiRhoMinusApproxRho,
-					  shadowPotentialForce);
-			 else
-				 computeConfigurationalForceEEshelbyTensorFPSPFnlLinFE
-					 (matrixFreeData,
+       computeConfigurationalForceEEshelbyTensorFPSPFnlLinFE
+         (matrixFreeData,
 #ifdef DFTFE_WITH_GPU
-					  kohnShamDFTEigenOperator,
+          kohnShamDFTEigenOperator,
 #endif
-					  eigenDofHandlerIndex,
-            smearedChargeQuadratureId,
-            lpspQuadratureIdElectro,
-					  matrixFreeDataElectro,
-					  phiTotDofHandlerIndexElectro,
-					  phiTotRhoOutElectro,
-					 rhoOutValues,
-					 gradRhoOutValues,
-           gradRhoOutValuesLpsp,
-					 rhoOutValuesElectro,
-           rhoOutValuesElectroLpsp,
-					 gradRhoOutValuesElectro,
-           gradRhoOutValuesElectroLpsp,
-				   rhoCoreValues,
-				   gradRhoCoreValues,
-				   hessianRhoCoreValues,
-				   gradRhoCoreAtoms,
-				   hessianRhoCoreAtoms,             
-					  pseudoVLocElectro,
-					  pseudoVLocAtomsElectro,
-					  vselfBinsManagerElectro,
-					  shadowKSRhoMinValues,
-					  shadowKSGradRhoMinValues,
-					  phiRhoMinusApproxRho,
-					  shadowPotentialForce);
+          eigenDofHandlerIndex,
+          smearedChargeQuadratureId,
+          lpspQuadratureIdElectro,
+          matrixFreeDataElectro,
+          phiTotDofHandlerIndexElectro,
+          phiTotRhoOutElectro,
+         rhoOutValues,
+         gradRhoOutValues,
+         gradRhoOutValuesLpsp,
+         rhoOutValuesElectro,
+         rhoOutValuesElectroLpsp,
+         gradRhoOutValuesElectro,
+         gradRhoOutValuesElectroLpsp,
+         rhoCoreValues,
+         gradRhoCoreValues,
+         hessianRhoCoreValues,
+         gradRhoCoreAtoms,
+         hessianRhoCoreAtoms,             
+          pseudoVLocElectro,
+          pseudoVLocAtomsElectro,
+          vselfBinsManagerElectro,
+          shadowKSRhoMinValues,
+          shadowKSGradRhoMinValues,
+          phiRhoMinusApproxRho,
+          shadowPotentialForce);
 
 			 //configurational force contribution from nuclear self energy. This is handled separately as it involves
 			 // a surface integral over the vself ball surface
