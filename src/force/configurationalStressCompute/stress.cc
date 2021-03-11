@@ -123,6 +123,7 @@ template<unsigned int FEOrder,unsigned int FEOrderElectro>
 	//Sum k point stress contribution over all processors
 	//and k point pools and add to total stress
 	d_stressKPoints=Utilities::MPI::sum(d_stressKPoints,mpi_communicator);
+	d_stressKPoints=Utilities::MPI::sum(d_stressKPoints,dftPtr->interBandGroupComm);  
 	d_stressKPoints=Utilities::MPI::sum(d_stressKPoints,dftPtr->interpoolcomm);
 	d_stress+=d_stressKPoints;
 

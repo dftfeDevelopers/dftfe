@@ -271,32 +271,6 @@ namespace dftfe {
 				 const distributedCPUVec<double> & phiRhoMinusApproxRho,
 				 const bool shadowPotentialForce=false);
 
-			void computeConfigurationalForceSpinPolarizedEEshelbyTensorFPSPFnlLinFE
-				(const MatrixFree<3,double> & matrixFreeData,
-				 const unsigned int eigenDofHandlerIndex,
-         const unsigned int smearedChargeQuadratureId,
-         const unsigned int lpspQuadratureIdElectro,         
-				 const MatrixFree<3,double> & matrixFreeDataElectro,
-				 const unsigned int phiTotDofHandlerIndexElectro,
-				 const distributedCPUVec<double> & phiTotRhoOutElectro,
-				 const std::map<dealii::CellId, std::vector<double> > & gradRhoOutValuesLpsp,         
-				 const std::map<dealii::CellId, std::vector<double> > & rhoOutValuesElectro,
-				 const std::map<dealii::CellId, std::vector<double> > & rhoOutValuesElectroLpsp,         
-				 const std::map<dealii::CellId, std::vector<double> > & gradRhoOutValuesElectro,
-				 const std::map<dealii::CellId, std::vector<double> > & gradRhoOutValuesElectroLpsp,
-				 const std::map<dealii::CellId, std::vector<double> > & rhoCoreValues,
-				 const std::map<dealii::CellId, std::vector<double> > & gradRhoCoreValues,
-				 const std::map<dealii::CellId, std::vector<double> > & hessianRhoCoreValues,
-				 const std::map<unsigned int,std::map<dealii::CellId, std::vector<double> > > & gradRhoCoreAtoms,
-				 const std::map<unsigned int,std::map<dealii::CellId, std::vector<double> > > & hessianRhoCoreAtoms,         
-				 const std::map<dealii::CellId, std::vector<double> > & pseudoVLocElectro,
-				 const std::map<unsigned int,std::map<dealii::CellId, std::vector<double> > > & pseudoVLocAtomsElectro,
-				 const vselfBinsManager<FEOrder,FEOrderElectro> & vselfBinsManagerElectro,
-				 const std::map<dealii::CellId, std::vector<double> > & shadowKSRhoMinValues,
-				 const std::map<dealii::CellId, std::vector<double> > & shadowKSGradRhoMinValues,
-				 const distributedCPUVec<double> & phiRhoMinusApproxRho,
-				 const bool shadowPotentialForce=false);
-
 			void computeConfigurationalForceEEshelbyEElectroPhiTot
 				(const MatrixFree<3,double> & matrixFreeDataElectro,
 				 const unsigned int phiTotDofHandlerIndexElectro,
@@ -467,37 +441,7 @@ namespace dftfe {
 				 const std::vector<Tensor<1,2,Tensor<1,C_DIM,VectorizedArray<double> > > > & gradPsiQuads,
 				 const std::vector< std::vector<double> > & eigenValues,
 				 const std::vector<unsigned int> & nonlocalAtomsCompactSupportList);
-
-			void FnlGammaAtomsElementalContributionSpinPolarized
-				(std::map<unsigned int, std::vector<double> > & forceContributionFnlGammaAtoms,
-				 FEEvaluation<C_DIM,1,C_num1DQuad<C_rhoNodalPolyOrder<FEOrder,FEOrderElectro>()>(),C_DIM>  & forceEval,
-				 FEEvaluation<C_DIM,1,C_num1DQuadNLPSP<FEOrder>()*C_numCopies1DQuadNLPSP(),C_DIM>  & forceEvalNLP,
-				 const unsigned int cell,
-				 const std::vector<std::vector<std::vector<std::vector<Tensor<1,2, VectorizedArray<double> > > > > > & zetaDeltaVQuads,
-				 const std::vector<std::vector<std::vector<std::complex<double> > > > & projectorKetTimesPsiSpin0TimesVTimesPartOcc,
-				 const std::vector<std::vector<std::vector<std::complex<double> > > > & projectorKetTimesPsiSpin1TimesVTimesPartOcc,
-				 const std::vector<Tensor<1,2,VectorizedArray<double> > > & psiSpin0Quads,
-				 const std::vector<Tensor<1,2,VectorizedArray<double> > > & psiSpin1Quads,
-				 const std::vector<Tensor<1,2,Tensor<1,C_DIM,VectorizedArray<double> > > > & gradPsiSpin0Quads,
-				 const std::vector<Tensor<1,2,Tensor<1,C_DIM,VectorizedArray<double> > > > & gradPsiSpin1Quads,         
-				 const std::vector< std::vector<double> > & eigenValues,
-				 const std::vector<unsigned int> & nonlocalAtomsCompactSupportList);
 #else
-
-			void FnlGammaAtomsElementalContributionSpinPolarized
-				(std::map<unsigned int, std::vector<double> > & forceContributionFnlGammaAtoms,
-				 FEEvaluation<C_DIM,1,C_num1DQuad<C_rhoNodalPolyOrder<FEOrder,FEOrderElectro>()>(),C_DIM>  & forceEval,
-				 FEEvaluation<C_DIM,1,C_num1DQuadNLPSP<FEOrder>()*C_numCopies1DQuadNLPSP(),C_DIM>  & forceEvalNLP,
-				 const unsigned int cell,
-				 const std::vector<std::vector<std::vector<VectorizedArray<double> > > > & zetaDeltaVQuads,
-				 const std::vector<std::vector<double> >  & projectorKetTimesPsiSpin0TimesVTimesPartOcc,
-				 const std::vector<std::vector<double> >  & projectorKetTimesPsiSpin1TimesVTimesPartOcc,
-				 const std::vector< VectorizedArray<double> > & psiSpin0Quads,
-				 const std::vector< VectorizedArray<double> > & psiSpin1Quads,
-				 const std::vector< Tensor<1,C_DIM,VectorizedArray<double> > > & gradPsiSpin0Quads,
-				 const std::vector< Tensor<1,C_DIM,VectorizedArray<double> > > & gradPsiSpin1Quads,         
-				 const std::vector<unsigned int> & nonlocalAtomsCompactSupportList);
-
 			void FnlGammaAtomsElementalContribution
 				(std::map<unsigned int, std::vector<double> > & forceContributionFnlGammaAtoms,
 				 FEEvaluation<C_DIM,1,C_num1DQuad<C_rhoNodalPolyOrder<FEOrder,FEOrderElectro>()>(),C_DIM>  & forceEval,
@@ -616,6 +560,7 @@ namespace dftfe {
          const MatrixFree<3,double> & matrixFreeData,
          const unsigned int cell,
          const std::vector<Tensor<1,3,VectorizedArray<double> > > & gradPhiTotQuads,
+         const std::vector<unsigned int> & nonTrivialAtomImageIdsMacroCell,         
          const std::map<dealii::CellId, std::vector<int> > & bQuadAtomIdsAllAtomsImages,
          const std::vector< VectorizedArray<double> > & smearedbQuads);
 
@@ -624,7 +569,7 @@ namespace dftfe {
          const MatrixFree<3,double> & matrixFreeData,
          const unsigned int cell,
          const std::vector<Tensor<1,3,VectorizedArray<double> > > & gradVselfQuads,         
-         const std::set<int> & atomImageIdsInBin,
+         const std::vector<unsigned int> & nonTrivialAtomImageIdsMacroCell,
          const std::map<dealii::CellId, std::vector<int> > & bQuadAtomIdsAllAtomsImages,
          const std::vector< VectorizedArray<double> > & smearedbQuads);      
 

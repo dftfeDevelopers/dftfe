@@ -599,7 +599,7 @@ namespace dftfe
 		void gpuPortedForceKernelsAllH(operatorDFTCUDAClass & operatorMatrix,
 				const double * X,
 				const double * eigenValuesH,
-				const double  fermiEnergy,
+				const double * partialOccupanciesH,
 				const unsigned int * nonTrivialIdToElemIdMapH,
 				const unsigned int * projecterKetTimesFlattenedVectorLocalIdsH, 
 				const unsigned int N,
@@ -636,9 +636,11 @@ namespace dftfe
 			vectorTools::createDealiiVector(operatorMatrix.getMatrixFreeData()->get_vector_partitioner(),
 					blockSize,
 					cudaFlattenedArrayBlock);
-			vectorTools::createDealiiVector(operatorMatrix.getProjectorKetTimesVectorSingle().get_partitioner(),
-					blockSize,
-					projectorKetTimesVectorD);
+
+      if (isPsp)
+        vectorTools::createDealiiVector(operatorMatrix.getProjectorKetTimesVectorSingle().get_partitioner(),
+            blockSize,
+            projectorKetTimesVectorD);
 
 			cudaDeviceSynchronize();
 			MPI_Barrier(MPI_COMM_WORLD);
@@ -699,15 +701,8 @@ namespace dftfe
 					for (unsigned int iWave=0; iWave<blockSize;++iWave)
 					{
 						blockedEigenValues[iWave]=eigenValuesH[ivec+iWave];
-						blockedPartialOccupancies[iWave]
-							=dftUtils::getPartialOccupancy(blockedEigenValues[iWave],
-									fermiEnergy,
-									C_kb,
-									dftParameters::TVal);
-
+						blockedPartialOccupancies[iWave]=partialOccupanciesH[ivec+iWave];
 					}
-
-
 
 					cudaMemcpy(thrust::raw_pointer_cast(&eigenValuesD[0]),
 							&blockedEigenValues[0],

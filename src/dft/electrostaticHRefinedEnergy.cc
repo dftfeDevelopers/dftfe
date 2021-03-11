@@ -415,6 +415,8 @@ void dftClass<FEOrder,FEOrderElectro>::computeElectrostaticEnergyHRefined(
       d_bQuadAtomIdsAllAtomsImages,
       d_bCellNonTrivialAtomIds,
       d_bCellNonTrivialAtomIdsBins,
+      d_bCellNonTrivialAtomImageIds,
+      d_bCellNonTrivialAtomImageIdsBins,      
 			d_smearedChargeWidths,
       d_smearedChargeScaling,
       1,

@@ -161,15 +161,23 @@ void forceClass<FEOrder,FEOrderElectro>::computeStressEself(const DoFHandler<3> 
       const std::set<int> & atomImageIdsInBin=atomImageIdsBins.find(iBin)->second;
       for (unsigned int cell=0; cell<matrixFreeDataElectro.n_macro_cells(); ++cell)
       {
-        forceEvalSmearedCharge.reinit(cell);
-        vselfEvalSmearedCharge.reinit(cell);
-        vselfEvalSmearedCharge.read_dof_values_plain(vselfBinsManagerElectro.getVselfFieldBins()[iBin]);
-        vselfEvalSmearedCharge.evaluate(false,true);    
+
+        std::set<unsigned int> nonTrivialSmearedChargeAtomImageIdsMacroCell;
+        const unsigned int numSubCells=matrixFreeDataElectro.n_components_filled(cell);
+        for (unsigned int iSubCell=0; iSubCell<numSubCells; ++iSubCell)
+        {
+          subCellPtr= matrixFreeDataElectro.get_cell_iterator(cell,iSubCell);
+          dealii::CellId subCellId=subCellPtr->id();
+          const std::vector<unsigned int> & temp=dftPtr->d_bCellNonTrivialAtomImageIdsBins[iBin].find(subCellId)->second;
+          for (int i=0;i <temp.size(); i++)
+              nonTrivialSmearedChargeAtomImageIdsMacroCell.insert(temp[i]);
+        }
+
+        if (nonTrivialSmearedChargeAtomImageIdsMacroCell.size()==0)
+          continue;
 
         std::fill(smearedbQuads.begin(),smearedbQuads.end(),make_vectorized_array(0.0));
         std::fill(gradVselfSmearedChargeQuads.begin(),gradVselfSmearedChargeQuads.end(),zeroTensor);        
-
-        const unsigned int numSubCells=matrixFreeDataElectro.n_components_filled(cell);
 
         bool isCellNonTrivial=false;
         for (unsigned int iSubCell=0; iSubCell<numSubCells; ++iSubCell)
@@ -193,6 +201,11 @@ void forceClass<FEOrder,FEOrderElectro>::computeStressEself(const DoFHandler<3> 
         if (!isCellNonTrivial)
           continue;
 
+        forceEvalSmearedCharge.reinit(cell);
+        vselfEvalSmearedCharge.reinit(cell);
+        vselfEvalSmearedCharge.read_dof_values_plain(vselfBinsManagerElectro.getVselfFieldBins()[iBin]);
+        vselfEvalSmearedCharge.evaluate(false,true); 
+
         for (unsigned int q=0; q<numQuadPointsSmearedb; ++q)
         {
           gradVselfSmearedChargeQuads[q]=vselfEvalSmearedCharge.get_gradient(q);
@@ -202,7 +215,7 @@ void forceClass<FEOrder,FEOrderElectro>::computeStressEself(const DoFHandler<3> 
             matrixFreeDataElectro,
             cell,
             gradVselfSmearedChargeQuads,
-            atomImageIdsInBin,
+            std::vector<unsigned int>(nonTrivialSmearedChargeAtomImageIdsMacroCell.begin(),nonTrivialSmearedChargeAtomImageIdsMacroCell.end()),
             dftPtr->d_bQuadAtomIdsAllAtomsImages,
             smearedbQuads);
       }//macrocell loop

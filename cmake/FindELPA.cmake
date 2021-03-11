@@ -18,7 +18,7 @@ find_package(PkgConfig)
 # elpa-2020.05.001.pc
 set(PKG_CONFIG_USE_CMAKE_PREFIX_PATH TRUE)
 foreach(pkg elpa_openmp elpa) # prioritize elpa_openmp
-    foreach(ver 2020.11.001.rc1)
+    foreach(ver 2020.05.001 2020.11.001.rc1 2020.11.001)
         pkg_search_module(PC_ELPA ${pkg}-${ver})
         if(PC_ELPA_FOUND)
             break()
@@ -30,7 +30,7 @@ foreach(pkg elpa_openmp elpa) # prioritize elpa_openmp
 endforeach()
 
 if(ELPA_FIND_REQUIRED AND NOT PC_ELPA_FOUND)
-    MESSAGE(FATAL_ERROR "Unable to find ELPA. Try adding dir containing lib/pkgconfig/elpa-2020.05.001.pc to -DCMAKE_PREFIX_PATH")
+    MESSAGE(FATAL_ERROR "Unable to find ELPA. Try adding dir containing lib/pkgconfig/elpa-2020.11.001.pc to -DCMAKE_PREFIX_PATH")
 endif()
 
 find_path(ELPA_INCLUDE_DIR

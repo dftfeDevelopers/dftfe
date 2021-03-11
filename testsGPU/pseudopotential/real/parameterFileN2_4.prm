@@ -42,7 +42,7 @@ subsection DFT functional parameters
   set PSEUDOPOTENTIAL CALCULATION = true
   set PSEUDOPOTENTIAL FILE NAMES LIST = pseudo.inp
   set SPIN POLARIZATION               = 1
-  set START MAGNETIZATION             = 0.5
+  set START MAGNETIZATION             = 0.05
 end
 
 subsection Parallelization
@@ -51,7 +51,7 @@ end
 
 subsection SCF parameters
   set MIXING HISTORY   = 70
-  set MIXING PARAMETER = 0.5
+  set MIXING PARAMETER = 0.2
   set MAXIMUM ITERATIONS               = 100
   set TEMPERATURE                      = 500
   set TOLERANCE                        = 1e-6

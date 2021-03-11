@@ -543,16 +543,21 @@ namespace dftfe
             vectorsBlockSize,
             *((distributedGPUVec<float> *)d_cudaFlattenedFloatArrayBlockPtr));
 
-
-        vectorTools::createDealiiVector(operatorMatrix.getProjectorKetTimesVectorSingle().get_partitioner(),
-            vectorsBlockSize,
-            *((distributedGPUVec<double> *)d_projectorKetTimesVectorPtr));
-
-
-        if (dftParameters::useMixedPrecChebyNonLocal)
+        if (dftParameters::isPseudopotential)
+        {
           vectorTools::createDealiiVector(operatorMatrix.getProjectorKetTimesVectorSingle().get_partitioner(),
               vectorsBlockSize,
-              *((distributedGPUVec<float> *)d_projectorKetTimesVectorFloatPtr));
+              *((distributedGPUVec<double> *)d_projectorKetTimesVectorPtr));
+
+
+          if (dftParameters::useMixedPrecChebyNonLocal)
+            vectorTools::createDealiiVector(operatorMatrix.getProjectorKetTimesVectorSingle().get_partitioner(),
+                vectorsBlockSize,
+                *((distributedGPUVec<float> *)d_projectorKetTimesVectorFloatPtr));
+
+          if (dftParameters::overlapComputeCommunCheby)
+            ((distributedGPUVec<double> *)d_projectorKetTimesVector2Ptr)->reinit(*((distributedGPUVec<double> *)d_projectorKetTimesVectorPtr));            
+        }
 
 
         if (dftParameters::overlapComputeCommunCheby)
@@ -562,9 +567,6 @@ namespace dftfe
         if (dftParameters::overlapComputeCommunCheby)
           ((distributedGPUVec<double> *)d_YArray2Ptr)->reinit(*((distributedGPUVec<double> *)d_cudaFlattenedArrayBlock2Ptr));
 
-
-        if (dftParameters::overlapComputeCommunCheby)
-          ((distributedGPUVec<double> *)d_projectorKetTimesVector2Ptr)->reinit(*((distributedGPUVec<double> *)d_projectorKetTimesVectorPtr));
 
         d_isTemporaryParallelVectorsCreated=true;  
       }
