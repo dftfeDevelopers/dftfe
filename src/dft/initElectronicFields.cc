@@ -99,11 +99,11 @@ void dftClass<FEOrder,FEOrderElectro>::initElectronicFields()
     dftUtils::printCurrentMemoryUsage(mpi_communicator,
         "Created flattened array eigenvectors");
 
-  if(!(dftParameters::chkType==2 && dftParameters::restartFromChk))
-  {
+  //if(!(dftParameters::chkType==2 && dftParameters::restartFromChk))
+  //{
     initRho();
     //d_rhoOutNodalValues.reinit(d_rhoInNodalValues);
-  }
+  //}
 
   if (dftParameters::verbosity>=4)
     dftUtils::printCurrentMemoryUsage(mpi_communicator,

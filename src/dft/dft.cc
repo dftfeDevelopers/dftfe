@@ -893,47 +893,45 @@ namespace dftfe {
 
 			if ((dftParameters::chkType==2 || dftParameters::chkType==3) && dftParameters::restartFromChk)
 			{
-				if (!d_isAtomsGaussianDisplacementsReadFromFile)
-				{
-          // Note: d_rhoInNodalValuesRead is not compatible with d_matrixFreeDataPRefined 
-					for (unsigned int i = 0; i < d_rhoInNodalValues.local_size(); i++)
-						d_rhoInNodalValues.local_element(i)=d_rhoInNodalValuesRead.local_element(i);
+        if (dftParameters::verbosity>=1)
+          pcout<<"Overwriting input density data to SCF solve with data read from restart file.."<<std::endl;
 
-					d_rhoInNodalValues.update_ghost_values();
-					interpolateRhoNodalDataToQuadratureDataGeneral(d_matrixFreeDataPRefined,
-              d_densityDofHandlerIndexElectro,
-              d_densityQuadratureIdElectro,
-							d_rhoInNodalValues,
-							*(rhoInValues),
-							*(gradRhoInValues),
-							*(gradRhoInValues),
-							dftParameters::xcFamilyType=="GGA");
+        // Note: d_rhoInNodalValuesRead is not compatible with d_matrixFreeDataPRefined 
+        for (unsigned int i = 0; i < d_rhoInNodalValues.local_size(); i++)
+          d_rhoInNodalValues.local_element(i)=d_rhoInNodalValuesRead.local_element(i);
 
-          if (dftParameters::spinPolarized==1)
+        d_rhoInNodalValues.update_ghost_values();
+        interpolateRhoNodalDataToQuadratureDataGeneral(d_matrixFreeDataPRefined,
+            d_densityDofHandlerIndexElectro,
+            d_densityQuadratureIdElectro,
+            d_rhoInNodalValues,
+            *(rhoInValues),
+            *(gradRhoInValues),
+            *(gradRhoInValues),
+            dftParameters::xcFamilyType=="GGA");
+
+        if (dftParameters::spinPolarized==1)
+        {
+          d_rhoInSpin0NodalValues=0;
+          d_rhoInSpin1NodalValues=0;
+          for (unsigned int i = 0; i < d_rhoInSpin0NodalValues.local_size(); i++)
           {
-            d_rhoInSpin0NodalValues=0;
-            d_rhoInSpin1NodalValues=0;
-            for (unsigned int i = 0; i < d_rhoInSpin0NodalValues.local_size(); i++)
-            {
-               d_rhoInSpin0NodalValues.local_element(i)= d_rhoInSpin0NodalValuesRead.local_element(i);
-               d_rhoInSpin1NodalValues.local_element(i)= d_rhoInSpin1NodalValuesRead.local_element(i);               
-            }
-
-            d_rhoInSpin0NodalValues.update_ghost_values();
-            d_rhoInSpin1NodalValues.update_ghost_values();            
-            interpolateRhoSpinNodalDataToQuadratureDataGeneral(d_matrixFreeDataPRefined,
-                d_densityDofHandlerIndexElectro,
-                d_densityQuadratureIdElectro,
-                d_rhoInSpin0NodalValues,
-                d_rhoInSpin1NodalValues,                
-                *rhoInValuesSpinPolarized,
-                *gradRhoInValuesSpinPolarized,
-                *gradRhoInValuesSpinPolarized,
-                dftParameters::xcFamilyType=="GGA");            
+             d_rhoInSpin0NodalValues.local_element(i)= d_rhoInSpin0NodalValuesRead.local_element(i);
+             d_rhoInSpin1NodalValues.local_element(i)= d_rhoInSpin1NodalValuesRead.local_element(i);               
           }
 
-					normalizeRhoInQuadValues();
-				}
+          d_rhoInSpin0NodalValues.update_ghost_values();
+          d_rhoInSpin1NodalValues.update_ghost_values();            
+          interpolateRhoSpinNodalDataToQuadratureDataGeneral(d_matrixFreeDataPRefined,
+              d_densityDofHandlerIndexElectro,
+              d_densityQuadratureIdElectro,
+              d_rhoInSpin0NodalValues,
+              d_rhoInSpin1NodalValues,                
+              *rhoInValuesSpinPolarized,
+              *gradRhoInValuesSpinPolarized,
+              *gradRhoInValuesSpinPolarized,
+              dftParameters::xcFamilyType=="GGA");            
+        }
 
 				d_isRestartGroundStateCalcFromChk=true;
 			}
