@@ -85,6 +85,18 @@ void dftClass<FEOrder,FEOrderElectro>::saveTriaInfoAndRhoNodalData()
 {
 	std::vector< const distributedCPUVec<double> * >  solutionVectors;
 
+  dealii::IndexSet   locally_relevant_dofs_;
+  dealii::DoFTools::extract_locally_relevant_dofs(d_dofHandlerRhoNodal, locally_relevant_dofs_);
+
+  const dealii::IndexSet & locally_owned_dofs_= d_dofHandlerRhoNodal.locally_owned_dofs();
+  dealii::IndexSet  ghost_indices_=locally_relevant_dofs_;
+  ghost_indices_.subtract_set(locally_owned_dofs_);
+
+  distributedCPUVec<double> tempVec= distributedCPUVec<double>(locally_owned_dofs_,
+      ghost_indices_,
+      mpi_communicator);
+
+  distributedCPUVec<double> tempVecSpin0,tempVecSpin1;
 
 	if (dftParameters::isBOMD && dftParameters::isXLBOMD)
 	{
@@ -148,19 +160,6 @@ void dftClass<FEOrder,FEOrderElectro>::saveTriaInfoAndRhoNodalData()
       rhoNodalFieldSpin1.update_ghost_values();
     }
 
-
-    dealii::IndexSet   locally_relevant_dofs_;
-    dealii::DoFTools::extract_locally_relevant_dofs(d_dofHandlerRhoNodal, locally_relevant_dofs_);
-
-    const dealii::IndexSet & locally_owned_dofs_= d_dofHandlerRhoNodal.locally_owned_dofs();
-    dealii::IndexSet  ghost_indices_=locally_relevant_dofs_;
-    ghost_indices_.subtract_set(locally_owned_dofs_);
-
-    distributedCPUVec<double> tempVec= distributedCPUVec<double>(locally_owned_dofs_,
-        ghost_indices_,
-        mpi_communicator);
-
-    distributedCPUVec<double> tempVecSpin0,tempVecSpin1;
 
     tempVec=0.0;
     for (unsigned int i = 0; i < rhoNodalField.local_size(); i++)
