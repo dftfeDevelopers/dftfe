@@ -181,11 +181,11 @@ namespace dftfe {
 
 				prm.declare_entry("USE ELPA GPU KERNEL", "false",
 						Patterns::Bool(),
-						"[Advanced] If DFT-FE is linked to ELPA eigensolver library configured to run on GPUs, this parameter toggles the use of ELPA GPU kernels for dense symmetric matrix diagonalization calls in DFT-FE. Default: false.");       
+						"[Advanced] If DFT-FE is linked to ELPA eigensolver library configured to run on GPUs, this parameter toggles the use of ELPA GPU kernels for dense symmetric matrix diagonalization calls in DFT-FE. ELPA version>=2020.11.001 is required for this feature. Default: false.");       
 
-			  prm.declare_entry("GPU MEM OPT MODE", "false",
+			  prm.declare_entry("GPU MEM OPT MODE", "true",
 						Patterns::Bool(),
-						"[Adavanced] Uses algorithms which have lower peak memory on GPUs but with a marginal performance degradation. Recommended when using more than 100k degrees of freedom per GPU. Default: false.");                
+						"[Adavanced] Uses algorithms which have lower peak memory on GPUs but with a marginal performance degradation. Recommended when using more than 100k degrees of freedom per GPU. Default: true.");                
 			}
 			prm.leave_subsection ();
 
