@@ -1084,21 +1084,9 @@ namespace dftfe {
           dftParameters::coordinatesGaussianDispFile="atomsGaussianDispCoord.chk";
 			}
 
-			if (dftParameters::algoType=="FAST")
-			{
-				dftParameters::useMixedPrecPGS_O=true;
-				dftParameters::useMixedPrecPGS_SR=true;
-				dftParameters::useMixedPrecXTHXSpectrumSplit=true;
-				dftParameters::useMixedPrecCheby=true;
-				dftParameters::computeEnergyEverySCF=false;
-			}
-#ifdef USE_COMPLEX
-			dftParameters::rrGEP=false;
-#endif
-
 			//
 			check_print_parameters(prm);
-			setHeuristicParameters();
+			setAutoParameters();
       setXCFamilyType();
 		}
 
@@ -1211,10 +1199,125 @@ namespace dftfe {
 			if (dftParameters::verbosity >=1 && Utilities::MPI::this_mpi_process(MPI_COMM_WORLD)== 0)
 				std::cout <<"Setting USE BATCH GEMM=false as intel mkl blas library is not being linked to."<<std::endl;
 #endif
+		}
 
-#ifndef USE_PETSC;
-			AssertThrow(dftParameters::rrGEP,ExcMessage("DFT-FE Error: Please link to dealii installed with petsc and slepc for all-electron calculations."));
+
+		void setAutoParameters()
+		{
+      //
+      //Automated choice of mesh related parameters
+      //
+			if (!dftParameters::isPseudopotential)
+      {
+        if (!dftParameters::reproducible_output)
+          dftParameters::smearedNuclearCharges=false;
+        dftParameters::floatingNuclearCharges=false;
+      }
+
+			if (dftParameters::meshSizeOuterDomain<1.0e-6)
+				if (dftParameters::periodicX ||dftParameters::periodicY ||dftParameters::periodicZ)
+					dftParameters::meshSizeOuterDomain=4.0;
+				else
+					dftParameters::meshSizeOuterDomain=13.0;
+
+			if (dftParameters::meshSizeInnerBall<1.0e-6)
+				if (dftParameters::isPseudopotential)
+					dftParameters::meshSizeInnerBall=10.0*dftParameters::meshSizeOuterBall;
+				else
+					dftParameters::meshSizeInnerBall=0.1*dftParameters::meshSizeOuterBall;
+
+			if (dftParameters::outerAtomBallRadius<1.0e-6)
+      {
+				if (dftParameters::isPseudopotential)
+        {
+          if (!dftParameters::floatingNuclearCharges)
+            dftParameters::outerAtomBallRadius=2.5;
+          else
+            dftParameters::outerAtomBallRadius=4.0;            
+        }
+				else
+					dftParameters::outerAtomBallRadius=2.0;  
+      }
+
+			if (!(dftParameters::periodicX ||dftParameters::periodicY ||dftParameters::periodicZ)
+					&&!dftParameters::reproducible_output)
+			{
+				dftParameters::constraintsParallelCheck=false;
+				dftParameters::createConstraintsFromSerialDofhandler=false;
+			}
+			else if (dftParameters::reproducible_output)
+				dftParameters::createConstraintsFromSerialDofhandler=true;
+
+			if (dftParameters::reproducible_output)
+			{
+				dftParameters::gaussianOrderMoveMeshToAtoms=4.0;
+			}
+
+      //
+      //Automated choice of eigensolver parameters
+      //
+			if (dftParameters::isPseudopotential && dftParameters::orthogType=="Auto")
+			{
+				if (dftParameters::verbosity >=1 && Utilities::MPI::this_mpi_process(MPI_COMM_WORLD)== 0)
+					std::cout <<"Setting ORTHOGONALIZATION TYPE=PGS for pseudopotential calculations "<<std::endl;
+				dftParameters::orthogType="PGS";
+			}
+			else if (!dftParameters::isPseudopotential && dftParameters::orthogType=="Auto" && !dftParameters::useGPU)
+			{
+#ifdef USE_PETSC;        
+				if (dftParameters::verbosity >=1 && Utilities::MPI::this_mpi_process(MPI_COMM_WORLD)== 0)
+					std::cout <<"Setting ORTHOGONALIZATION TYPE=GS for all-electron calculations as DFT-FE is linked to dealii with Petsc and Slepc"<<std::endl;
+
+				dftParameters::orthogType="GS";
+        dftParameters::rrGEP=false;
+#else
+				if (dftParameters::verbosity >=1 && Utilities::MPI::this_mpi_process(MPI_COMM_WORLD)== 0)
+					std::cout <<"Setting ORTHOGONALIZATION TYPE=PGS for all-electron calculations as DFT-FE is not linked to dealii with Petsc and Slepc "<<std::endl;
+				
+        dftParameters::orthogType="PGS";
+#endif        
+			}
+			else if ((dftParameters::orthogType=="GS" || dftParameters::orthogType=="LW")  && !dftParameters::useGPU)
+			{
+#ifdef USE_PETSC;        
+        dftParameters::rrGEP=false;
+#else
+			  AssertThrow(dftParameters::orthogType!="GS",ExcMessage("DFT-FE Error: Please use ORTHOGONALIZATION TYPE to be PGS/Auto as GS option is only available if DFT-FE is linked to dealii with Petsc and Slepc."));
+#endif        
+			}      
+      else if (!dftParameters::isPseudopotential && dftParameters::orthogType=="Auto" && dftParameters::useGPU)
+      {
+				if (dftParameters::verbosity >=1 && Utilities::MPI::this_mpi_process(MPI_COMM_WORLD)== 0)
+					std::cout <<"Setting ORTHOGONALIZATION TYPE=PGS and RR GEP=true for all-electron calculations on GPUs "<<std::endl;   
+				dftParameters::orthogType="PGS";
+        dftParameters::rrGEP=true;          
+      }
+      else if ((dftParameters::orthogType=="GS" || dftParameters::orthogType=="LW") && dftParameters::useGPU)
+      {
+        AssertThrow(dftParameters::rrGEP,ExcMessage("DFT-FE Error: GS and LW are not implemented on GPUs. Use Auto option."));  
+      }
+
+
+			if (dftParameters::algoType=="FAST")
+			{
+				dftParameters::useMixedPrecPGS_O=true;
+				dftParameters::useMixedPrecPGS_SR=true;
+				dftParameters::useMixedPrecXTHXSpectrumSplit=true;
+				dftParameters::useMixedPrecCheby=true;
+				dftParameters::computeEnergyEverySCF=false;
+			}
+#ifdef USE_COMPLEX
+			dftParameters::rrGEP=false;
 #endif
+
+
+#ifdef DFTFE_WITH_GPU
+			if (!dftParameters::isPseudopotential && dftParameters::useGPU)
+			{
+        dftParameters::overlapComputeCommunCheby=false;
+			}
+#endif
+
 
 #ifdef DFTFE_WITH_GPU
 			if (dftParameters::useGPU)
@@ -1251,92 +1354,6 @@ namespace dftfe {
 			if (dftParameters::useMixedPrecCheby)
 				AssertThrow(dftParameters::useELPA
 						,ExcMessage("DFT-FE Error: USE ELPA must be set to true for USE MIXED PREC CHEBY."));
-
-		}
-
-
-		//FIXME: move this to triangulation manager, and set data members there
-		//without changing the global dftParameters
-		void setHeuristicParameters()
-		{
-			if (!dftParameters::isPseudopotential)
-      {
-        if (!dftParameters::reproducible_output)
-          dftParameters::smearedNuclearCharges=false;
-        dftParameters::floatingNuclearCharges=false;
-      }
-
-			if (dftParameters::meshSizeOuterDomain<1.0e-6)
-				if (dftParameters::periodicX ||dftParameters::periodicY ||dftParameters::periodicZ)
-					dftParameters::meshSizeOuterDomain=4.0;
-				else
-					dftParameters::meshSizeOuterDomain=13.0;
-
-			if (dftParameters::meshSizeInnerBall<1.0e-6)
-				if (dftParameters::isPseudopotential)
-					dftParameters::meshSizeInnerBall=10.0*dftParameters::meshSizeOuterBall;
-				else
-					dftParameters::meshSizeInnerBall=0.1*dftParameters::meshSizeOuterBall;
-
-			if (dftParameters::outerAtomBallRadius<1.0e-6)
-      {
-				if (dftParameters::isPseudopotential)
-        {
-          if (!dftParameters::floatingNuclearCharges)
-            dftParameters::outerAtomBallRadius=2.5;
-          else
-            dftParameters::outerAtomBallRadius=4.0;            
-        }
-				else
-					dftParameters::outerAtomBallRadius=2.0;  
-      }
-
-			if (dftParameters::isPseudopotential && dftParameters::orthogType=="Auto")
-			{
-				if (dftParameters::verbosity >=1 && Utilities::MPI::this_mpi_process(MPI_COMM_WORLD)== 0)
-					std::cout <<"Setting ORTHOGONALIZATION TYPE=PGS for pseudopotential calculations "<<std::endl;
-				dftParameters::orthogType="PGS";
-			}
-			else if (!dftParameters::isPseudopotential && dftParameters::orthogType=="Auto" && !dftParameters::useGPU)
-			{
-				if (dftParameters::verbosity >=1 && Utilities::MPI::this_mpi_process(MPI_COMM_WORLD)== 0)
-					std::cout <<"Setting ORTHOGONALIZATION TYPE=GS for all-electron calculations "<<std::endl;
-
-				dftParameters::orthogType="GS";
-        dftParameters::rrGEP=false;
-			}
-      else if (!dftParameters::isPseudopotential && dftParameters::orthogType=="Auto" && dftParameters::useGPU)
-      {
-				if (dftParameters::verbosity >=1 && Utilities::MPI::this_mpi_process(MPI_COMM_WORLD)== 0)
-					std::cout <<"Setting ORTHOGONALIZATION TYPE=PGS and RR GEP=true for all-electron calculations on GPUs "<<std::endl;   
-				dftParameters::orthogType="PGS";
-        dftParameters::rrGEP=true;          
-      }
-      else if (!dftParameters::isPseudopotential && (dftParameters::orthogType=="GS" || dftParameters::orthogType=="LW") && dftParameters::useGPU)
-      {
-        AssertThrow(dftParameters::rrGEP,ExcMessage("DFT-FE Error: GS and LW are not implemented on GPUs. Use Auto option."));  
-      }
-
-			if (!(dftParameters::periodicX ||dftParameters::periodicY ||dftParameters::periodicZ)
-					&&!dftParameters::reproducible_output)
-			{
-				dftParameters::constraintsParallelCheck=false;
-				dftParameters::createConstraintsFromSerialDofhandler=false;
-			}
-			else if (dftParameters::reproducible_output)
-				dftParameters::createConstraintsFromSerialDofhandler=true;
-
-			if (dftParameters::reproducible_output)
-			{
-				dftParameters::gaussianOrderMoveMeshToAtoms=4.0;
-			}
-
-#ifdef DFTFE_WITH_GPU
-			if (!dftParameters::isPseudopotential && dftParameters::useGPU)
-			{
-        dftParameters::overlapComputeCommunCheby=false;
-			}
-#endif
 
 		}
 
