@@ -183,11 +183,11 @@ namespace dftfe {
 
 				prm.declare_entry("USE ELPA GPU KERNEL", "false",
 						Patterns::Bool(),
-						"[Advanced] If DFT-FE is linked to ELPA eigensolver library configured to run on GPUs, this parameter toggles the use of ELPA GPU kernels for dense symmetric matrix diagonalization calls in DFT-FE. Default: false.");       
+						"[Advanced] If DFT-FE is linked to ELPA eigensolver library configured to run on GPUs, this parameter toggles the use of ELPA GPU kernels for dense symmetric matrix diagonalization calls in DFT-FE. ELPA version>=2020.11.001 is required for this feature. Default: false.");       
 
-			  prm.declare_entry("GPU MEM OPT MODE", "false",
+			  prm.declare_entry("GPU MEM OPT MODE", "true",
 						Patterns::Bool(),
-						"[Adavanced] Uses algorithms which have lower peak memory on GPUs but with a marginal performance degradation. Recommended when using more than 100k degrees of freedom per GPU. Default: false.");                
+						"[Adavanced] Uses algorithms which have lower peak memory on GPUs but with a marginal performance degradation. Recommended when using more than 100k degrees of freedom per GPU. Default: true.");                
 			}
 			prm.leave_subsection ();
 
@@ -248,7 +248,7 @@ namespace dftfe {
 			{
 				prm.declare_entry("CHK TYPE", "0",
 						Patterns::Integer(0,3),
-						"[Standard] Checkpoint type, 0 (do not create any checkpoint), 1 (create checkpoint for geometry optimization restart if either ION OPT or CELL OPT or BOMD is set to true. Currently, checkpointing and restart framework does not work if both ION OPT and CELL OPT are set to true simultaneously- the code will throw an error if attempted.), 2 (create checkpoint for scf restart. Currently, this option cannot be used if geometry optimization is being performed. The code will throw an error if this option is used in conjunction with geometry optimization.)");
+						"[Standard] Checkpoint type, 0 (do not create any checkpoint), 1 (create checkpoint for geometry optimization restart if either ION OPT or CELL OPT or BOMD is set to true. Currently, checkpointing and restart framework does not work if both ION OPT and CELL OPT are set to true simultaneously- the code will throw an error if attempted.), 2 (create checkpoint for scf restart using the electron-density field. Currently, this option cannot be used if geometry optimization is being performed. The code will throw an error if this option is used in conjunction with geometry optimization.)");
 
 				prm.declare_entry("RESTART FROM CHK", "false",
 						Patterns::Bool(),
@@ -256,7 +256,7 @@ namespace dftfe {
 
 				prm.declare_entry("RESTART MD FROM CHK", "false",
 						Patterns::Bool(),
-						"[Standard] Boolean parameter specifying if the current job reads from a checkpoint. The nature of the restart corresponds to the CHK TYPE parameter. Hence, the checkpoint being read must have been created using the CHK TYPE parameter before using this option. RESTART FROM CHK is always false for CHK TYPE 0.");
+						"[Developer] Boolean parameter specifying if the current job reads from a MD checkpoint (in development).");
 			}
 			prm.leave_subsection ();
 
@@ -598,9 +598,9 @@ namespace dftfe {
 						Patterns::Selection("ATOMIC|RANDOM"),
 						"[Standard] Sets the type of the starting Kohn-Sham wavefunctions guess: Atomic(Superposition of single atom atomic orbitals. Atom types for which atomic orbitals are not available, random wavefunctions are taken. Currently, atomic orbitals data is not available for all atoms.), Random(The starting guess for all wavefunctions are taken to be random). Default: RANDOM.");
 
-				prm.declare_entry("COMPUTE ENERGY EACH ITER", "true",
+				prm.declare_entry("COMPUTE ENERGY EACH ITER", "false",
 						Patterns::Bool(),
-						"[Advanced] Boolean parameter specifying whether to compute the total energy at the end of every SCF. Setting it to false can lead to some computational time savings.");
+						"[Advanced] Boolean parameter specifying whether to compute the total energy at the end of every SCF. Setting it to false can lead to some computational time savings. Default value is false but is internally set to true if VERBOSITY==5");
 
 				prm.enter_subsection ("Eigen-solver parameters");
 				{
@@ -1109,10 +1109,9 @@ namespace dftfe {
 			dftParameters::rrGEP=false;
                         dftParameters::HXOptimFlag=false;                        
 #endif
-
 			//
 			check_print_parameters(prm);
-			setHeuristicParameters();
+			setAutoParameters();
       setXCFamilyType();
 		}
 
@@ -1220,6 +1219,7 @@ namespace dftfe {
 			if(dftParameters::nbandGrps>1)
 				AssertThrow(dftParameters::wfcBlockSize==dftParameters::chebyWfcBlockSize,ExcMessage("DFT-FE Error: WFC BLOCK SIZE and CHEBY WFC BLOCK SIZE must be same for band parallelization."));
 
+<<<<<<< HEAD
 
 #ifndef USE_PETSC;
 			AssertThrow(dftParameters::rrGEP,ExcMessage("DFT-FE Error: Please link to dealii installed with petsc and slepc for all-electron calculations."));
@@ -1261,13 +1261,21 @@ namespace dftfe {
 				AssertThrow(dftParameters::useELPA
 						,ExcMessage("DFT-FE Error: USE ELPA must be set to true for USE MIXED PREC CHEBY."));
 
+=======
+#ifndef WITH_MKL;
+			dftParameters::useBatchGEMM=false;
+			if (dftParameters::verbosity >=1 && Utilities::MPI::this_mpi_process(MPI_COMM_WORLD)== 0)
+				std::cout <<"Setting USE BATCH GEMM=false as intel mkl blas library is not being linked to."<<std::endl;
+#endif
+>>>>>>> 0c9a57061e93d08df6fda74a685d9c095de933ba
 		}
 
 
-		//FIXME: move this to triangulation manager, and set data members there
-		//without changing the global dftParameters
-		void setHeuristicParameters()
+		void setAutoParameters()
 		{
+      //
+      //Automated choice of mesh related parameters
+      //
 			if (!dftParameters::isPseudopotential)
       {
         if (!dftParameters::reproducible_output)
@@ -1300,32 +1308,6 @@ namespace dftfe {
 					dftParameters::outerAtomBallRadius=2.0;  
       }
 
-			if (dftParameters::isPseudopotential && dftParameters::orthogType=="Auto")
-			{
-				if (dftParameters::verbosity >=1 && Utilities::MPI::this_mpi_process(MPI_COMM_WORLD)== 0)
-					std::cout <<"Setting ORTHOGONALIZATION TYPE=PGS for pseudopotential calculations "<<std::endl;
-				dftParameters::orthogType="PGS";
-			}
-			else if (!dftParameters::isPseudopotential && dftParameters::orthogType=="Auto" && !dftParameters::useGPU)
-			{
-				if (dftParameters::verbosity >=1 && Utilities::MPI::this_mpi_process(MPI_COMM_WORLD)== 0)
-					std::cout <<"Setting ORTHOGONALIZATION TYPE=GS for all-electron calculations "<<std::endl;
-
-				dftParameters::orthogType="GS";
-        dftParameters::rrGEP=false;
-			}
-      else if (!dftParameters::isPseudopotential && dftParameters::orthogType=="Auto" && dftParameters::useGPU)
-      {
-				if (dftParameters::verbosity >=1 && Utilities::MPI::this_mpi_process(MPI_COMM_WORLD)== 0)
-					std::cout <<"Setting ORTHOGONALIZATION TYPE=PGS and RR GEP=true for all-electron calculations on GPUs "<<std::endl;   
-				dftParameters::orthogType="PGS";
-        dftParameters::rrGEP=true;          
-      }
-      else if (!dftParameters::isPseudopotential && (dftParameters::orthogType=="GS" || dftParameters::orthogType=="LW") && dftParameters::useGPU)
-      {
-        AssertThrow(dftParameters::rrGEP,ExcMessage("DFT-FE Error: GS and LW are not implemented on GPUs. Use Auto option."));  
-      }
-
 			if (!(dftParameters::periodicX ||dftParameters::periodicY ||dftParameters::periodicZ)
 					&&!dftParameters::reproducible_output)
 			{
@@ -1340,6 +1322,64 @@ namespace dftfe {
 				dftParameters::gaussianOrderMoveMeshToAtoms=4.0;
 			}
 
+      //
+      //Automated choice of eigensolver parameters
+      //
+			if (dftParameters::isPseudopotential && dftParameters::orthogType=="Auto")
+			{
+				if (dftParameters::verbosity >=1 && Utilities::MPI::this_mpi_process(MPI_COMM_WORLD)== 0)
+					std::cout <<"Setting ORTHOGONALIZATION TYPE=PGS for pseudopotential calculations "<<std::endl;
+				dftParameters::orthogType="PGS";
+			}
+			else if (!dftParameters::isPseudopotential && dftParameters::orthogType=="Auto" && !dftParameters::useGPU)
+			{
+#ifdef USE_PETSC;        
+				if (dftParameters::verbosity >=1 && Utilities::MPI::this_mpi_process(MPI_COMM_WORLD)== 0)
+					std::cout <<"Setting ORTHOGONALIZATION TYPE=GS for all-electron calculations as DFT-FE is linked to dealii with Petsc and Slepc"<<std::endl;
+
+				dftParameters::orthogType="GS";
+        dftParameters::rrGEP=false;
+#else
+				if (dftParameters::verbosity >=1 && Utilities::MPI::this_mpi_process(MPI_COMM_WORLD)== 0)
+					std::cout <<"Setting ORTHOGONALIZATION TYPE=PGS for all-electron calculations as DFT-FE is not linked to dealii with Petsc and Slepc "<<std::endl;
+				
+        dftParameters::orthogType="PGS";
+#endif        
+			}
+			else if ((dftParameters::orthogType=="GS" || dftParameters::orthogType=="LW")  && !dftParameters::useGPU)
+			{
+#ifdef USE_PETSC;        
+        dftParameters::rrGEP=false;
+#else
+			  AssertThrow(dftParameters::orthogType!="GS",ExcMessage("DFT-FE Error: Please use ORTHOGONALIZATION TYPE to be PGS/Auto as GS option is only available if DFT-FE is linked to dealii with Petsc and Slepc."));
+#endif        
+			}      
+      else if (!dftParameters::isPseudopotential && dftParameters::orthogType=="Auto" && dftParameters::useGPU)
+      {
+				if (dftParameters::verbosity >=1 && Utilities::MPI::this_mpi_process(MPI_COMM_WORLD)== 0)
+					std::cout <<"Setting ORTHOGONALIZATION TYPE=PGS and RR GEP=true for all-electron calculations on GPUs "<<std::endl;   
+				dftParameters::orthogType="PGS";
+        dftParameters::rrGEP=true;          
+      }
+      else if ((dftParameters::orthogType=="GS" || dftParameters::orthogType=="LW") && dftParameters::useGPU)
+      {
+        AssertThrow(dftParameters::rrGEP,ExcMessage("DFT-FE Error: GS and LW are not implemented on GPUs. Use Auto option."));  
+      }
+
+
+			if (dftParameters::algoType=="FAST")
+			{
+				dftParameters::useMixedPrecPGS_O=true;
+				dftParameters::useMixedPrecPGS_SR=true;
+				dftParameters::useMixedPrecXTHXSpectrumSplit=true;
+				dftParameters::useMixedPrecCheby=true;
+				dftParameters::computeEnergyEverySCF=false;
+			}
+#ifdef USE_COMPLEX
+			dftParameters::rrGEP=false;
+#endif
+
+
 #ifdef DFTFE_WITH_GPU
 			if (!dftParameters::isPseudopotential && dftParameters::useGPU)
 			{
@@ -1347,6 +1387,45 @@ namespace dftfe {
 			}
 #endif
 
+
+#ifdef DFTFE_WITH_GPU
+			if (dftParameters::useGPU)
+			{
+				if (dftParameters::nbandGrps>1)
+					AssertThrow(dftParameters::rrGEP
+							,ExcMessage("DFT-FE Error: if band parallelization is used, RR GEP must be set to true."));
+			}
+#else
+     dftParameters::useGPU=false;
+     dftParameters::useELPAGPUKernel=false;
+#endif
+
+#ifdef DFTFE_WITH_ELPA
+      if (dftParameters::scalapackBlockSize==0)
+      {
+        if (dftParameters::useELPAGPUKernel)
+          dftParameters::scalapackBlockSize=16;
+        else
+          dftParameters::scalapackBlockSize=32;
+      }
+#else
+      if (dftParameters::scalapackBlockSize==0)
+      {
+        dftParameters::scalapackBlockSize=50;
+      }
+			dftParameters::useELPA=false;
+#endif
+
+#ifndef DFTFE_WITH_NCCL
+			dftParameters::useGPUDirectAllReduce=false;
+#endif
+
+			if (dftParameters::useMixedPrecCheby)
+				AssertThrow(dftParameters::useELPA
+						,ExcMessage("DFT-FE Error: USE ELPA must be set to true for USE MIXED PREC CHEBY."));
+
+      if (dftParameters::verbosity>=5)
+        dftParameters::computeEnergyEverySCF=true;        
 		}
 
 		void setXCFamilyType()

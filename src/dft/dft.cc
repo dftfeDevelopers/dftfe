@@ -797,10 +797,7 @@ namespace dftfe {
 						d_domainBoundingVectors,
 						dftParameters::useSymm || dftParameters::createConstraintsFromSerialDofhandler);
 
-				if (dftParameters::chkType==2)
-					loadTriaInfoAndRhoData();
-				else if (dftParameters::chkType==3)
-					loadTriaInfoAndRhoNodalData(); 
+				loadTriaInfoAndRhoNodalData();
 			}
 			else
 			{
@@ -867,29 +864,6 @@ namespace dftfe {
 			//
 			initElectronicFields();
 
-			if (dftParameters::chkType==3 && dftParameters::restartFromChk)
-			{
-				if (!d_isAtomsGaussianDisplacementsReadFromFile)
-				{
-					for (unsigned int i = 0; i < d_rhoInNodalValues.local_size(); i++)
-						d_rhoInNodalValues.local_element(i)=d_rhoInNodalValuesRead.local_element(i);
-
-					d_rhoInNodalValues.update_ghost_values();
-					interpolateRhoNodalDataToQuadratureDataGeneral(d_matrixFreeDataPRefined,
-              d_densityDofHandlerIndexElectro,
-              d_densityQuadratureIdElectro,
-							d_rhoInNodalValues,
-							*(rhoInValues),
-							*(gradRhoInValues),
-							*(gradRhoInValues),
-							dftParameters::xcFamilyType=="GGA");
-
-					normalizeRhoInQuadValues();
-				}
-
-				d_isRestartGroundStateCalcFromChk=true;
-			}
-
 			if (dftParameters::verbosity>=4)
 				dftUtils::printCurrentMemoryUsage(mpi_communicator,
 						"initElectronicFields completed");
@@ -916,24 +890,51 @@ namespace dftfe {
 						true,
 						false);
 				d_isAtomsGaussianDisplacementsReadFromFile=false;
+			}
 
-				if (dftParameters::chkType==3 && dftParameters::restartFromChk)
-				{
-					for (unsigned int i = 0; i < d_rhoInNodalValues.local_size(); i++)
-						d_rhoInNodalValues.local_element(i)=d_rhoInNodalValuesRead.local_element(i);
+			if ((dftParameters::chkType==2 || dftParameters::chkType==3) && dftParameters::restartFromChk)
+			{
+        if (dftParameters::verbosity>=1)
+          pcout<<"Overwriting input density data to SCF solve with data read from restart file.."<<std::endl;
 
-					d_rhoInNodalValues.update_ghost_values();
-					interpolateRhoNodalDataToQuadratureDataGeneral(d_matrixFreeDataPRefined,
+        // Note: d_rhoInNodalValuesRead is not compatible with d_matrixFreeDataPRefined 
+        for (unsigned int i = 0; i < d_rhoInNodalValues.local_size(); i++)
+          d_rhoInNodalValues.local_element(i)=d_rhoInNodalValuesRead.local_element(i);
+
+        d_rhoInNodalValues.update_ghost_values();
+        interpolateRhoNodalDataToQuadratureDataGeneral(d_matrixFreeDataPRefined,
+            d_densityDofHandlerIndexElectro,
+            d_densityQuadratureIdElectro,
+            d_rhoInNodalValues,
+            *(rhoInValues),
+            *(gradRhoInValues),
+            *(gradRhoInValues),
+            dftParameters::xcFamilyType=="GGA");
+
+        if (dftParameters::spinPolarized==1)
+        {
+          d_rhoInSpin0NodalValues=0;
+          d_rhoInSpin1NodalValues=0;
+          for (unsigned int i = 0; i < d_rhoInSpin0NodalValues.local_size(); i++)
+          {
+             d_rhoInSpin0NodalValues.local_element(i)= d_rhoInSpin0NodalValuesRead.local_element(i);
+             d_rhoInSpin1NodalValues.local_element(i)= d_rhoInSpin1NodalValuesRead.local_element(i);               
+          }
+
+          d_rhoInSpin0NodalValues.update_ghost_values();
+          d_rhoInSpin1NodalValues.update_ghost_values();            
+          interpolateRhoSpinNodalDataToQuadratureDataGeneral(d_matrixFreeDataPRefined,
               d_densityDofHandlerIndexElectro,
               d_densityQuadratureIdElectro,
-							d_rhoInNodalValues,
-							*(rhoInValues),
-							*(gradRhoInValues),
-							*(gradRhoInValues),
-							dftParameters::xcFamilyType=="GGA");
+              d_rhoInSpin0NodalValues,
+              d_rhoInSpin1NodalValues,                
+              *rhoInValuesSpinPolarized,
+              *gradRhoInValuesSpinPolarized,
+              *gradRhoInValuesSpinPolarized,
+              dftParameters::xcFamilyType=="GGA");            
+        }
 
-					normalizeRhoInQuadValues();
-				}
+				d_isRestartGroundStateCalcFromChk=true;
 			}
 
       d_isFirstFilteringCall.clear();
@@ -1812,7 +1813,7 @@ namespace dftfe {
 				//Mixing scheme
 				//
 				computing_timer.enter_section("density mixing");
-				if(scfIter > 0 && !(isRestartGroundStateCalcFromChk && dftParameters::chkType==2))
+				if(scfIter > 0)
 				{
 					if (scfIter==1)
 					{
@@ -1858,31 +1859,6 @@ namespace dftfe {
 							pcout<<"Anderson mixing, L2 norm of electron-density difference: "<< norm<< std::endl;
 					}
 
-					if (dftParameters::computeEnergyEverySCF && d_numEigenValuesRR==d_numEigenValues)
-						d_phiTotRhoIn = d_phiTotRhoOut;
-				}
-				else if (isRestartGroundStateCalcFromChk && dftParameters::chkType==2)
-				{
-					if (dftParameters::spinPolarized==1)
-					{
-						if (dftParameters::mixingMethod=="ANDERSON")
-							norm = sqrt(mixing_anderson_spinPolarized());
-						else if (dftParameters::mixingMethod=="BROYDEN")
-							norm = sqrt(mixing_broyden_spinPolarized());
-						else if (dftParameters::mixingMethod=="ANDERSON_WITH_KERKER")
-							AssertThrow(false,ExcMessage("Kerker is not implemented for spin-polarized problems"));
-					}
-					else
-						if(dftParameters::mixingMethod.compare("ANDERSON_WITH_KERKER"))
-							norm = sqrt(nodalDensity_mixing_anderson(kerkerPreconditionedResidualSolverProblem,
-										dealiiCGSolver));
-						else if (dftParameters::mixingMethod=="ANDERSON")
-							norm = sqrt(mixing_anderson());
-						else if (dftParameters::mixingMethod=="BROYDEN")
-							norm = sqrt(mixing_broyden());
-
-					if (dftParameters::verbosity>=1)
-						pcout<<"Anderson Mixing, L2 norm of electron-density difference: "<< norm<< std::endl;
 					if (dftParameters::computeEnergyEverySCF && d_numEigenValuesRR==d_numEigenValues)
 						d_phiTotRhoIn = d_phiTotRhoOut;
 				}
@@ -2595,12 +2571,15 @@ namespace dftfe {
 				scfIter++;
 
 				if (dftParameters::chkType==2 && scfIter%10 == 0)
-					saveTriaInfoAndRhoData();
+					saveTriaInfoAndRhoNodalData();
 
 
 				if (dftParameters::isBOMD && dftParameters::isXLBOMD && solveLinearizedKS)
 					break;
 			}
+
+			if (dftParameters::chkType==2)
+				saveTriaInfoAndRhoNodalData();
 
 			if (!(dftParameters::isBOMD && dftParameters::isXLBOMD && solveLinearizedKS))
 			{

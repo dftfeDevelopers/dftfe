@@ -36,31 +36,6 @@ namespace dftfe {
 
 			d_serialTriangulationUnmoved.save(filename1.c_str());
 		}
-
-		if (d_parallelTriangulationUnmovedPrevious.n_global_active_cells()!=0)
-		{
-			const std::string filename2="parallelUmmovedPrevTria.chk";
-			if (std::ifstream(filename2) && this_mpi_process==0)
-			{
-				dftUtils::moveFile(filename2, filename2+".old");
-				dftUtils::moveFile(filename2+".info", filename2+".info.old");
-			}
-			MPI_Barrier(mpi_communicator);
-
-			d_parallelTriangulationUnmovedPrevious.save(filename2.c_str());
-		}
-
-		if (d_serialTriangulationUnmovedPrevious.n_global_active_cells()!=0 && this_mpi_process==0)
-		{
-			const std::string filename3="serialUnmovedPrevTria.chk";
-			if (std::ifstream(filename3) && this_mpi_process==0)
-			{
-				dftUtils::moveFile(filename3, filename3+".old");
-				dftUtils::moveFile(filename3+".info", filename3+".info.old");
-			}
-
-			d_serialTriangulationUnmovedPrevious.save(filename3.c_str());
-		}
 	}
 
 	//
@@ -77,34 +52,6 @@ namespace dftfe {
 			catch (...)
 			{
 				AssertThrow(false, ExcMessage("DFT-FE Error: Cannot open checkpoint file- serialUnmovedTria.chk or read the triangulation stored there."));
-			}
-		}
-
-		if (d_parallelTriangulationUnmovedPrevious.n_global_active_cells()!=0)
-		{
-			const std::string filename2="parallelUmmovedPrevTria.chk";
-			dftUtils::verifyCheckpointFileExists(filename2);
-			try
-			{
-				d_parallelTriangulationUnmovedPrevious.load(filename2.c_str());
-			}
-			catch (...)
-			{
-				AssertThrow(false, ExcMessage("DFT-FE Error: Cannot open checkpoint file- parallelUmmovedPrevTria.chk or read the triangulation stored there."));
-			}
-		}
-
-		if (d_serialTriangulationUnmovedPrevious.n_global_active_cells()!=0)
-		{
-			const std::string filename3="serialUnmovedPrevTria.chk";
-			dftUtils::verifyCheckpointFileExists(filename3);
-			try
-			{
-				d_serialTriangulationUnmovedPrevious.load(filename3.c_str(),false);
-			}
-			catch (...)
-			{
-				AssertThrow(false, ExcMessage("DFT-FE Error: Cannot open checkpoint file- serialUnmovedPrevTria.chk or read the triangulation stored there."));
 			}
 		}
 	}
@@ -144,7 +91,7 @@ namespace dftfe {
 
 				d_parallelTriangulationUnmoved.save(filename.c_str());
 
-				//saveSupportTriangulations();
+				saveSupportTriangulations();
 			}
 		}
 
@@ -156,7 +103,7 @@ namespace dftfe {
 		 const unsigned int nComponents,
 		 std::vector< distributedCPUVec<double> * > & solutionVectors)
 		{
-			//loadSupportTriangulations();
+		  loadSupportTriangulations();
 			const std::string filename="parallelUnmovedTriaSolData.chk";
 			dftUtils::verifyCheckpointFileExists(filename);
 			try
@@ -170,7 +117,7 @@ namespace dftfe {
 			}
 
 			dealii::FESystem<3> FE(dealii::FE_Q<3>(dealii::QGaussLobatto<1>(feOrder+1)), nComponents); //linear shape function
-			DoFHandler<3> dofHandler (d_parallelTriangulationMoved);
+			DoFHandler<3> dofHandler (d_parallelTriangulationUnmoved);
 			dofHandler.distribute_dofs(FE);
 			dealii::parallel::distributed::SolutionTransfer<3,typename dftfe::distributedCPUVec<double>> solTrans(dofHandler);
 
@@ -191,22 +138,6 @@ namespace dftfe {
 
 			//assumes solution vectors are not ghosted
 			solTrans.deserialize (solutionVectors);
-
-			//dummy de-serialization for d_parallelTriangulationUnmoved to avoid assert fail in call to save
-			/*
-			   dofHandler.initialize(d_parallelTriangulationUnmoved,FE);
-			   dofHandler.distribute_dofs(FE);
-			   dealii::parallel::distributed::SolutionTransfer<3,typename distributedCPUVec<double>> solTransDummy(dofHandler);
-
-			   std::vector< distributedCPUVec<double> * > dummySolutionVectors(solutionVectors.size());
-			   for (unsigned int i=0; i<dummySolutionVectors.size();++i)
-			   {
-			   dummySolutionVectors[i]->reinit(*solutionVectors[0]);
-			   dummySolutionVectors[i]->zero_out_ghosts();
-			   }
-
-			   solTransDummy.deserialize (dummySolutionVectors);
-			 */
 		}
 
 	//

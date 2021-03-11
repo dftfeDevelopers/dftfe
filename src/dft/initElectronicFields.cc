@@ -40,6 +40,8 @@ void dftClass<FEOrder,FEOrderElectro>::initElectronicFields()
 	d_matrixFreeDataPRefined.initialize_dof_vector(d_rhoInNodalValues,d_densityDofHandlerIndexElectro);
 	d_rhoOutNodalValues.reinit(d_rhoInNodalValues);
 	d_rhoOutNodalValuesSplit.reinit(d_rhoInNodalValues);
+	d_rhoInSpin0NodalValues.reinit(d_rhoInNodalValues);
+	d_rhoInSpin1NodalValues.reinit(d_rhoInNodalValues);  
 	//d_atomicRho.reinit(d_rhoInNodalValues);
 
 	if (dftParameters::isIonOpt || dftParameters::isCellOpt)
@@ -97,11 +99,11 @@ void dftClass<FEOrder,FEOrderElectro>::initElectronicFields()
     dftUtils::printCurrentMemoryUsage(mpi_communicator,
         "Created flattened array eigenvectors");
 
-  if(!(dftParameters::chkType==2 && dftParameters::restartFromChk))
-  {
+  //if(!(dftParameters::chkType==2 && dftParameters::restartFromChk))
+  //{
     initRho();
     //d_rhoOutNodalValues.reinit(d_rhoInNodalValues);
-  }
+  //}
 
   if (dftParameters::verbosity>=4)
     dftUtils::printCurrentMemoryUsage(mpi_communicator,

@@ -158,9 +158,9 @@ namespace dftfe {
 		void check_print_parameters(const dealii::ParameterHandler &prm);
 
 		/**
-		 * Set heuristic parameters
+		 * Set automated choices for parameters
 		 */
-		void setHeuristicParameters();
+		void setAutoParameters();
 
     /**
      * set family type exchange correlation functional
