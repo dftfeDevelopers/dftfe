@@ -636,7 +636,7 @@ namespace dftfe {
 							Patterns::Bool(),
 							"[Advanced] Boolean parameter specifying whether to use gemm batch blas routines to perform matrix-matrix multiplication operations with groups of matrices, processing a number of groups at once using threads instead of the standard serial route. CAUTION: gemm batch blas routines will only be activated if the CHEBY WFC BLOCK SIZE is less than 1000, and only if intel mkl blas library is linked with the dealii installation. Default option is true.");
 
-                                        prm.declare_entry("ENABLE HAMILTONIAN TIMES VECTOR OPTIM", "false",
+                                        prm.declare_entry("ENABLE HAMILTONIAN TIMES VECTOR OPTIM", "true",
                                                          Patterns::Bool(),
                                                         "[Advanced] Turns on optimization for hamiltonian times vector multiplication. Operations involving data movement from global vector to finite-element cell level and vice versa are done by employing different data structures for interior nodes and surfaces nodes of a given cell and this allows reduction of memory access costs");
 
@@ -1107,6 +1107,7 @@ namespace dftfe {
 			}
 #ifdef USE_COMPLEX
 			dftParameters::rrGEP=false;
+                        dftParameters::HXOptimFlag=false;                        
 #endif
 
 			if (!dftParameters::isPseudopotential)
@@ -1226,11 +1227,6 @@ namespace dftfe {
 			if(dftParameters::nbandGrps>1)
 				AssertThrow(dftParameters::wfcBlockSize==dftParameters::chebyWfcBlockSize,ExcMessage("DFT-FE Error: WFC BLOCK SIZE and CHEBY WFC BLOCK SIZE must be same for band parallelization."));
 
-#ifndef WITH_MKL;
-			dftParameters::useBatchGEMM=false;
-			if (dftParameters::verbosity >=1 && Utilities::MPI::this_mpi_process(MPI_COMM_WORLD)== 0)
-				std::cout <<"Setting USE BATCH GEMM=false as intel mkl blas library is not being linked to."<<std::endl;
-#endif
 
 #ifndef USE_PETSC;
 			AssertThrow(dftParameters::isPseudopotential,ExcMessage("DFT-FE Error: Please link to dealii installed with petsc and slepc for all-electron calculations."));
