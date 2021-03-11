@@ -986,16 +986,16 @@ namespace dftfe {
 
 				}
 
-				//
-				//STAGE1: This stage is only activated if combined periodic and hanging node constraints are
-				//not consistent in parallel.
-				//Call refinementAlgorithmA and consistentPeriodicBoundaryRefinement alternatively.
-				//In the call to refinementAlgorithmA there is no additional reduction of adaptivity performed
-				//on the periodic boundary. Multilevel refinement is performed until both refinementAlgorithmA
-				//and consistentPeriodicBoundaryRefinement do not set refinement flags on any cell.
-				//
-				if (!dftParameters::reproducible_output)
+				if (!dftParameters::reproducible_output && !dftParameters::createConstraintsFromSerialDofhandler)
 				{
+          //
+          //STAGE1: This stage is only activated if combined periodic and hanging node constraints are
+          //not consistent in parallel.
+          //Call refinementAlgorithmA and consistentPeriodicBoundaryRefinement alternatively.
+          //In the call to refinementAlgorithmA there is no additional reduction of adaptivity performed
+          //on the periodic boundary. Multilevel refinement is performed until both refinementAlgorithmA
+          //and consistentPeriodicBoundaryRefinement do not set refinement flags on any cell.
+          //          
 					if (!checkConstraintsConsistency(parallelTriangulation))
 					{
 						refineFlag=true;
@@ -1115,11 +1115,8 @@ namespace dftfe {
 
 						}
 					}
-				}
-
-				if (!dftParameters::reproducible_output)
-				{
-					//
+					
+          //
 					//STAGE2: This stage is only activated if combined periodic and hanging node constraints are
 					//still not consistent in parallel.
 					//Call refinementAlgorithmA and consistentPeriodicBoundaryRefinement alternatively.
@@ -1393,9 +1390,6 @@ namespace dftfe {
 					{
 						if (dftParameters::verbosity>=4)
 							pcout<< "Hanging node and periodic constraints parallel consistency achieved."<<std::endl;
-
-						dftParameters::createConstraintsFromSerialDofhandler=false;
-						dftParameters::constraintsParallelCheck=false;
 					}
 					else
 					{

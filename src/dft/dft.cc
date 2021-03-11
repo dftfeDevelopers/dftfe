@@ -1707,6 +1707,8 @@ namespace dftfe {
             d_bQuadAtomIdsAllAtomsImages,
             d_bCellNonTrivialAtomIds,
             d_bCellNonTrivialAtomIdsBins,
+            d_bCellNonTrivialAtomImageIds,
+            d_bCellNonTrivialAtomImageIdsBins,            
             d_smearedChargeWidths,
             d_smearedChargeScaling,
             d_smearedChargeQuadratureIdElectro,
@@ -1725,6 +1727,8 @@ namespace dftfe {
             d_bQuadAtomIdsAllAtomsImages,
             d_bCellNonTrivialAtomIds,
             d_bCellNonTrivialAtomIdsBins,
+            d_bCellNonTrivialAtomImageIds,
+            d_bCellNonTrivialAtomImageIdsBins,              
             d_smearedChargeWidths,
             d_smearedChargeScaling,
             d_smearedChargeQuadratureIdElectro,
@@ -1743,6 +1747,8 @@ namespace dftfe {
           d_bQuadAtomIdsAllAtomsImages,
           d_bCellNonTrivialAtomIds,
           d_bCellNonTrivialAtomIdsBins,
+          d_bCellNonTrivialAtomImageIds,
+          d_bCellNonTrivialAtomImageIdsBins,            
           d_smearedChargeWidths,
           d_smearedChargeScaling,
           d_smearedChargeQuadratureIdElectro,
@@ -2532,6 +2538,8 @@ namespace dftfe {
 											*rhoOutValuesSpinPolarized,
 											*gradRhoInValuesSpinPolarized,
 											*gradRhoOutValuesSpinPolarized,
+                      d_rhoCore,
+                      d_gradRhoCore,
 											d_bQuadValuesAllAtoms,
 											d_localVselfs,
 											d_pseudoVLoc,
@@ -2728,6 +2736,8 @@ namespace dftfe {
 										*rhoOutValuesSpinPolarized,
 										*gradRhoInValuesSpinPolarized,
 										*gradRhoOutValuesSpinPolarized,
+                    d_rhoCore,
+                    d_gradRhoCore,
 										d_bQuadValuesAllAtoms,
 										d_localVselfs,
 										d_pseudoVLoc,
@@ -2801,7 +2811,7 @@ namespace dftfe {
 			}
 
 #ifdef DFTFE_WITH_GPU
-			if (dftParameters::useGPU && (dftParameters::isCellStress || dftParameters::spinPolarized==1 || dftParameters::writeWfcSolutionFields || dftParameters::writeLdosFile || dftParameters::writePdosFile))
+			if (dftParameters::useGPU && (dftParameters::isCellStress || dftParameters::writeWfcSolutionFields || dftParameters::writeLdosFile || dftParameters::writePdosFile))
 				for(unsigned int kPoint = 0; kPoint < (1+dftParameters::spinPolarized)*d_kPointWeights.size(); ++kPoint)
 				{
 					vectorToolsCUDA::copyCUDAVecToHostVec(d_eigenVectorsFlattenedCUDA.begin()+kPoint*d_eigenVectorsFlattenedSTL[0].size(),
@@ -2826,57 +2836,6 @@ namespace dftfe {
 							MPI_SUM,
 							interBandGroupComm);
 #endif
-
-			if(dftParameters::isCellStress)
-			{
-				//
-				//Create the full dealii partitioned array
-				//
-				d_eigenVectorsFlattened.resize((1+dftParameters::spinPolarized)*d_kPointWeights.size());
-
-				for(unsigned int kPoint = 0; kPoint < (1+dftParameters::spinPolarized)*d_kPointWeights.size(); ++kPoint)
-				{
-					vectorTools::createDealiiVector<dataTypes::number>(matrix_free_data.get_vector_partitioner(),
-							d_numEigenValues,
-							d_eigenVectorsFlattened[kPoint]);
-
-
-					d_eigenVectorsFlattened[kPoint] = dataTypes::number(0.0);
-
-				}
-
-
-				Assert(d_eigenVectorsFlattened[0].local_size()==d_eigenVectorsFlattenedSTL[0].size(),
-						dealii::ExcMessage("Incorrect local sizes of STL and dealii arrays"));
-
-				constraintsNoneDataInfo.precomputeMaps(matrix_free_data.get_vector_partitioner(),
-						d_eigenVectorsFlattened[0].get_partitioner(),
-						d_numEigenValues);
-
-				for(unsigned int kPoint = 0; kPoint < (1+dftParameters::spinPolarized)*d_kPointWeights.size(); ++kPoint)
-				{
-					for(unsigned int iNode = 0; iNode < localVectorSize; ++iNode)
-					{
-						for(unsigned int iWave = 0; iWave < d_numEigenValues; ++iWave)
-						{
-							d_eigenVectorsFlattened[kPoint].local_element(iNode*d_numEigenValues+iWave)
-								= d_eigenVectorsFlattenedSTL[kPoint][iNode*d_numEigenValues+iWave];
-						}
-					}
-
-					constraintsNoneDataInfo.distribute(d_eigenVectorsFlattened[kPoint],
-							d_numEigenValues);
-
-				}
-
-				/*
-				   for(unsigned int kPoint = 0; kPoint < (1+dftParameters::spinPolarized)*d_kPointWeights.size(); ++kPoint)
-				   {
-				   d_eigenVectorsFlattenedSTL[kPoint].clear();
-				   std::vector<dataTypes::number>().swap(d_eigenVectorsFlattenedSTL[kPoint]);
-				   }
-				 */
-			}
 
 			if (dftParameters::isIonForce)
 			{

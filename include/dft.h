@@ -853,7 +853,13 @@ namespace dftfe {
 			std::map<dealii::CellId, std::vector<unsigned int> >  d_bCellNonTrivialAtomIds;  
 
 			/// map of cell and non-trivial global atom ids (no images) for smeared charge for each bin
-			std::vector<std::map<dealii::CellId, std::vector<unsigned int> > > d_bCellNonTrivialAtomIdsBins;        
+			std::vector<std::map<dealii::CellId, std::vector<unsigned int> > > d_bCellNonTrivialAtomIdsBins;    
+
+			/// map of cell and non-trivial global atom and image ids for smeared charges for each bin
+			std::map<dealii::CellId, std::vector<unsigned int> >  d_bCellNonTrivialAtomImageIds;  
+
+			/// map of cell and non-trivial global atom and image ids for smeared charge for each bin
+			std::vector<std::map<dealii::CellId, std::vector<unsigned int> > > d_bCellNonTrivialAtomImageIdsBins;        
 
 			/// minimum smeared charge width
 			const double d_smearedChargeWidthMin=0.4;

@@ -148,7 +148,7 @@ namespace dftfe {
 
 			prm.declare_entry("H REFINED ELECTROSTATICS", "false",
 					Patterns::Bool(),
-					"[Advanced] Compute electrostatic energy and forces on a h refined mesh after each ground-state solve. Default: false.");
+					"[Advanced] Compute electrostatic energy on a h refined mesh after each ground-state solve. Default: false.");
 
 
 			prm.declare_entry("VERBOSITY", "1",
@@ -363,13 +363,13 @@ namespace dftfe {
 						Patterns::Bool(),
 						"[Developer] Flag to set point wise dirichlet constraints to eliminate null-space associated with the discretized Poisson operator subject to periodic BCs.");
 
-				prm.declare_entry("CONSTRAINTS PARALLEL CHECK", "true",
+				prm.declare_entry("CONSTRAINTS PARALLEL CHECK", "false",
 						Patterns::Bool(),
 						"[Developer] Check for consistency of constraints in parallel.");
 
 				prm.declare_entry("CONSTRAINTS FROM SERIAL DOFHANDLER", "false",
 						Patterns::Bool(),
-						"[Developer] Check constraints from serial dofHandler.");
+						"[Developer] Create constraints from serial dofHandler.");
 
 				prm.declare_entry("SMEARED NUCLEAR CHARGES", "true",
 						Patterns::Bool(),
@@ -610,7 +610,7 @@ namespace dftfe {
 							"[Advanced] SCF iteration no beyond which spectrum splitting based can be used.");
 
 					prm.declare_entry("RR GEP", "true",
-							Patterns::Bool(),"[Advanced] Solve generalized eigenvalue problem instead of standard eignevalue problem in Rayleigh-Ritz step. This approach is not extended yet to complex executable. Default value is true for real executable and false for complex executable.");
+							Patterns::Bool(),"[Advanced] Solve generalized eigenvalue problem instead of standard eignevalue problem in Rayleigh-Ritz step. This approach is not extended yet to complex executable. Default value for RR GEP is true for real executable and false for complex executable.");
 
 					prm.declare_entry("CHEBYSHEV POLYNOMIAL DEGREE", "0",
 							Patterns::Integer(0,2000),
@@ -631,7 +631,7 @@ namespace dftfe {
 
 					prm.declare_entry("ORTHOGONALIZATION TYPE","Auto",
 							Patterns::Selection("GS|LW|PGS|Auto"),
-							"[Advanced] Parameter specifying the type of orthogonalization to be used: GS(Gram-Schmidt Orthogonalization using SLEPc library), LW(Lowden Orthogonalization implemented using LAPACK/BLAS routines, extension to use ScaLAPACK library not implemented yet), PGS(Pseudo-Gram-Schmidt Orthogonalization: if you are using the real executable, parallel ScaLAPACK functions are used, otherwise serial LAPACK functions are used.) Auto is the default option, which chooses GS for all-electron case and PGS for pseudopotential case. GS and LW options are only available if RR GEP is set to false.");
+							"[Advanced] Parameter specifying the type of orthogonalization to be used: GS(Gram-Schmidt Orthogonalization using SLEPc library), LW(Lowden Orthogonalization implemented using LAPACK/BLAS routines, extension to use ScaLAPACK library not implemented yet), PGS(Pseudo-Gram-Schmidt Orthogonalization: if you are using the real executable, parallel ScaLAPACK functions are used, otherwise serial LAPACK functions are used.) Auto is the default option, which chooses GS for all-electron case and PGS for pseudopotential case. To set GS and LW options set RR GEP to false. On GPUs PGS is the only route currently implemented.");
 
 					prm.declare_entry("ENABLE SWITCH TO GS", "true",
 							Patterns::Bool(),
@@ -735,7 +735,7 @@ namespace dftfe {
 
 			prm.enter_subsection ("Poisson problem parameters");
 			{
-				prm.declare_entry("MAXIMUM ITERATIONS", "10000",
+				prm.declare_entry("MAXIMUM ITERATIONS", "20000",
 						Patterns::Integer(0,20000),
 						"[Advanced] Maximum number of iterations to be allowed for Poisson problem convergence.");
 
@@ -1096,13 +1096,6 @@ namespace dftfe {
 			dftParameters::rrGEP=false;
 #endif
 
-			if (!dftParameters::isPseudopotential)
-			{
-				dftParameters::rrGEP=false;
-			}
-
-			if (dftParameters::isCellStress)
-				dftParameters::electrostaticsHRefinement=false;
 			//
 			check_print_parameters(prm);
 			setHeuristicParameters();
@@ -1177,6 +1170,9 @@ namespace dftfe {
 			if (dftParameters::nonSelfConsistentForce)
 				AssertThrow(false,ExcMessage("DFT-FE Error: Implementation of this feature is not completed yet."));
 
+			if (dftParameters::spinPolarized==1 && dftParameters::mixingMethod=="ANDERSON_WITH_KERKER")
+				AssertThrow(false,ExcMessage("DFT-FE Error: Implementation of this feature is not completed yet."));        
+
 			AssertThrow(!dftParameters::coordinatesFile.empty()
 					,ExcMessage("DFT-FE Error: ATOMIC COORDINATES FILE not given."));
 
@@ -1217,7 +1213,7 @@ namespace dftfe {
 #endif
 
 #ifndef USE_PETSC;
-			AssertThrow(dftParameters::isPseudopotential,ExcMessage("DFT-FE Error: Please link to dealii installed with petsc and slepc for all-electron calculations."));
+			AssertThrow(dftParameters::rrGEP,ExcMessage("DFT-FE Error: Please link to dealii installed with petsc and slepc for all-electron calculations."));
 #endif
 
 #ifdef DFTFE_WITH_GPU
@@ -1301,13 +1297,25 @@ namespace dftfe {
 					std::cout <<"Setting ORTHOGONALIZATION TYPE=PGS for pseudopotential calculations "<<std::endl;
 				dftParameters::orthogType="PGS";
 			}
-			else if (!dftParameters::isPseudopotential && dftParameters::orthogType=="Auto")
+			else if (!dftParameters::isPseudopotential && dftParameters::orthogType=="Auto" && !dftParameters::useGPU)
 			{
 				if (dftParameters::verbosity >=1 && Utilities::MPI::this_mpi_process(MPI_COMM_WORLD)== 0)
 					std::cout <<"Setting ORTHOGONALIZATION TYPE=GS for all-electron calculations "<<std::endl;
 
 				dftParameters::orthogType="GS";
+        dftParameters::rrGEP=false;
 			}
+      else if (!dftParameters::isPseudopotential && dftParameters::orthogType=="Auto" && dftParameters::useGPU)
+      {
+				if (dftParameters::verbosity >=1 && Utilities::MPI::this_mpi_process(MPI_COMM_WORLD)== 0)
+					std::cout <<"Setting ORTHOGONALIZATION TYPE=PGS and RR GEP=true for all-electron calculations on GPUs "<<std::endl;   
+				dftParameters::orthogType="PGS";
+        dftParameters::rrGEP=true;          
+      }
+      else if (!dftParameters::isPseudopotential && (dftParameters::orthogType=="GS" || dftParameters::orthogType=="LW") && dftParameters::useGPU)
+      {
+        AssertThrow(dftParameters::rrGEP,ExcMessage("DFT-FE Error: GS and LW are not implemented on GPUs. Use Auto option."));  
+      }
 
 			if (!(dftParameters::periodicX ||dftParameters::periodicY ||dftParameters::periodicZ)
 					&&!dftParameters::reproducible_output)
@@ -1323,10 +1331,12 @@ namespace dftfe {
 				dftParameters::gaussianOrderMoveMeshToAtoms=4.0;
 			}
 
-      //if (dftParameters::smearedNuclearCharges)
-      //{
-      //  dftParameters::gaussianOrderForce=3.0;
-      //}
+#ifdef DFTFE_WITH_GPU
+			if (!dftParameters::isPseudopotential && dftParameters::useGPU)
+			{
+        dftParameters::overlapComputeCommunCheby=false;
+			}
+#endif
 
 		}
 

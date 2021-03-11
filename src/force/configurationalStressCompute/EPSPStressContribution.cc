@@ -84,7 +84,7 @@ template<unsigned int FEOrder,unsigned int FEOrderElectro>
 			continue;
 
 
-
+    bool isTrivial=true;
 		for (unsigned int iSubCell=0; iSubCell<numSubCells; ++iSubCell)
 		{
 			subCellPtr= matrixFreeData.get_cell_iterator(cell,iSubCell,phiTotDofHandlerIndexElectro);
@@ -170,7 +170,15 @@ template<unsigned int FEOrder,unsigned int FEOrderElectro>
 					const double dist=dispAtom.norm();
 					pseudoVLocAtomsQuads[q][iSubCell]=-atomCharge/dist;
 				}
+
+      if (!isCellOutsideVselfBall || !isCellOutsidePspTail)
+      {
+        isTrivial=false;  
+      }
 		}//subCell loop
+
+    if (isTrivial)
+       continue;
 
 		Tensor<2,C_DIM,VectorizedArray<double> > EPSPStressContribution;
 		for (unsigned int idim=0; idim<C_DIM; idim++)

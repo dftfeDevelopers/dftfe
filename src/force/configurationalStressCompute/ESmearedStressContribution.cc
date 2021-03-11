@@ -23,6 +23,7 @@ template<unsigned int FEOrder,unsigned int FEOrderElectro>
          const MatrixFree<3,double> & matrixFreeData,
          const unsigned int cell,
          const std::vector<Tensor<1,3,VectorizedArray<double> > > & gradPhiTotQuads,
+         const std::vector<unsigned int> & nonTrivialAtomImageIdsMacroCell,
          const std::map<dealii::CellId, std::vector<int> > & bQuadAtomIdsAllAtomsImages,
          const std::vector< VectorizedArray<double> > & smearedbQuads)
 {
@@ -47,9 +48,9 @@ template<unsigned int FEOrder,unsigned int FEOrderElectro>
 
   std::vector< VectorizedArray<double> > smearedbQuadsiAtom(numQuadPoints,make_vectorized_array(0.0));
 
-  //FIXME: only loop over non-trivial atoms
-	for (int iAtom=0;iAtom <numberTotalAtoms; iAtom++)
+	for (int iAtomNonTrivial=0;iAtomNonTrivial <nonTrivialAtomImageIdsMacroCell.size(); iAtomNonTrivial++)
 	{
+    const int iAtom=nonTrivialAtomImageIdsMacroCell[iAtomNonTrivial];
 		Point<3,double> atomLocation;
     if(iAtom < numberGlobalAtoms)
 		{
@@ -104,7 +105,7 @@ template<unsigned int FEOrder,unsigned int FEOrderElectro>
          const MatrixFree<3,double> & matrixFreeData,
          const unsigned int cell,
          const std::vector<Tensor<1,3,VectorizedArray<double> > > & gradVselfQuads,         
-         const std::set<int> & atomImageIdsInBin,
+         const std::vector<unsigned int> & nonTrivialAtomImageIdsMacroCell,
          const std::map<dealii::CellId, std::vector<int> > & bQuadAtomIdsAllAtomsImages,
          const std::vector< VectorizedArray<double> > & smearedbQuads)
 {
@@ -124,15 +125,13 @@ template<unsigned int FEOrder,unsigned int FEOrderElectro>
 
 	DoFHandler<3>::active_cell_iterator subCellPtr;
 
-  std::vector<int> atomsInCurrentBin(atomImageIdsInBin.begin(),atomImageIdsInBin.end());
 	const unsigned int numberGlobalAtoms = dftPtr->atomLocations.size();
 
   std::vector< VectorizedArray<double> > smearedbQuadsiAtom(numQuadPoints,make_vectorized_array(0.0));
 
-  //FIXME: only loop over non-trivial atoms
-	for (int iAtom=0;iAtom <atomsInCurrentBin.size(); iAtom++)
+	for (int iAtomNonTrivial=0;iAtomNonTrivial <nonTrivialAtomImageIdsMacroCell.size(); iAtomNonTrivial++)
 	{
-    const int atomId=atomsInCurrentBin[iAtom];
+    const int atomId=nonTrivialAtomImageIdsMacroCell[iAtomNonTrivial];
 
 		Point<3,double> atomLocation;
     if(atomId < numberGlobalAtoms)

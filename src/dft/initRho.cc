@@ -321,7 +321,7 @@ void dftClass<FEOrder,FEOrderElectro>::initRho()
 							Point<3> atom(atomLocations[n][2],atomLocations[n][3],atomLocations[n][4]);
 							double distanceToAtom = quadPoint.distance(atom);
 
-              if (dftParameters::floatingNuclearCharges && distanceToAtom<1.0e-2)
+              if (dftParameters::floatingNuclearCharges && distanceToAtom<1.0e-3)
                 continue;
 
 							if(distanceToAtom <= outerMostPointDen[atomLocations[n][0]])
@@ -347,7 +347,7 @@ void dftClass<FEOrder,FEOrderElectro>::initRho()
 									d_imagePositionsTrunc[iImageCharge][2]);
 							double distanceToAtom = quadPoint.distance(imageAtom);
 
-              if (dftParameters::floatingNuclearCharges && distanceToAtom<1.0e-2)
+              if (dftParameters::floatingNuclearCharges && distanceToAtom<1.0e-3)
                 continue;
 
 							int masterAtomId = d_imageIdsTrunc[iImageCharge];
@@ -372,8 +372,8 @@ void dftClass<FEOrder,FEOrderElectro>::initRho()
 						   if (std::abs((*rhoInValues)[cell->id()][q] ) > 1.0E-7)
 						   signRho = (*rhoInValues)[cell->id()][q]>0.0?1:-1;
 						 */
-						if (std::abs((*rhoInValues)[cell->id()][q] ) > 1.0E-7)
-							int signRho = (*rhoInValues)[cell->id()][q]/std::abs((*rhoInValues)[cell->id()][q]);
+						if (std::abs((*rhoInValues)[cell->id()][q] ) > 1.0E-8)
+							signRho = (*rhoInValues)[cell->id()][q]/std::abs((*rhoInValues)[cell->id()][q]);
 
 						// KG: the fact that we are forcing gradRho to zero whenever rho is zero is valid. Because rho is always positive, so whenever it is zero, it must have a local minima.
 						//
@@ -382,12 +382,12 @@ void dftClass<FEOrder,FEOrderElectro>::initRho()
 						gradRhoInValuesPtr[3*q+2] = signRho*gradRhoZValueAtQuadPt;
 						if(dftParameters::spinPolarized==1)
 						{
-							gradRhoInValuesSpinPolarizedPtr[6*q+0] =( 0.5 + dftParameters::start_magnetization)*signRho*gradRhoXValueAtQuadPt;
-							gradRhoInValuesSpinPolarizedPtr[6*q+1] = ( 0.5 + dftParameters::start_magnetization)*signRho*gradRhoYValueAtQuadPt;
-							gradRhoInValuesSpinPolarizedPtr[6*q+2] =  ( 0.5 + dftParameters::start_magnetization)*signRho*gradRhoZValueAtQuadPt;
-							gradRhoInValuesSpinPolarizedPtr[6*q+3] =( 0.5 - dftParameters::start_magnetization)*signRho*gradRhoXValueAtQuadPt;
-							gradRhoInValuesSpinPolarizedPtr[6*q+4] = ( 0.5 - dftParameters::start_magnetization)*signRho*gradRhoYValueAtQuadPt;
-							gradRhoInValuesSpinPolarizedPtr[6*q+5] =  ( 0.5 - dftParameters::start_magnetization)*signRho*gradRhoZValueAtQuadPt;
+							gradRhoInValuesSpinPolarizedPtr[6*q+0] =( 0.5 - dftParameters::start_magnetization)*signRho*gradRhoXValueAtQuadPt;
+							gradRhoInValuesSpinPolarizedPtr[6*q+1] = ( 0.5 - dftParameters::start_magnetization)*signRho*gradRhoYValueAtQuadPt;
+							gradRhoInValuesSpinPolarizedPtr[6*q+2] =  ( 0.5 - dftParameters::start_magnetization)*signRho*gradRhoZValueAtQuadPt;
+							gradRhoInValuesSpinPolarizedPtr[6*q+3] =( 0.5 + dftParameters::start_magnetization)*signRho*gradRhoXValueAtQuadPt;
+							gradRhoInValuesSpinPolarizedPtr[6*q+4] = ( 0.5 + dftParameters::start_magnetization)*signRho*gradRhoYValueAtQuadPt;
+							gradRhoInValuesSpinPolarizedPtr[6*q+5] =  ( 0.5 + dftParameters::start_magnetization)*signRho*gradRhoZValueAtQuadPt;
 						}
 					}
 				}

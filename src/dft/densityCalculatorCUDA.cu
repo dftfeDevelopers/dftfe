@@ -262,6 +262,8 @@ namespace dftfe
                  {
                    if(eigenValues[0][jvec+iEigenVec] > fermiEnergyUp)
                      partialOccupVec[iEigenVec] = 0.0 ;
+                   else
+                     partialOccupVec[iEigenVec] = 1.0;                     
                  }
                }
                else
@@ -490,6 +492,8 @@ namespace dftfe
              {
                if(eigenValues[0][(totalNumWaveFunctions-Nfr)+jvec+iEigenVec] > fermiEnergyUp)
                  partialOccupVec[iEigenVec] = -1.0 ;
+               else
+                 partialOccupVec[iEigenVec] = 0.0 ; 
              }
            }
            else
@@ -725,6 +729,8 @@ namespace dftfe
                    {
                      if(eigenValues[0][jvec+iEigenVec+totalNumWaveFunctions] > fermiEnergyDown)
                        partialOccupVec[iEigenVec] = 0.0 ;
+                     else
+                       partialOccupVec[iEigenVec] = 1.0 ;                       
                    }
                  }
                  else
@@ -952,6 +958,8 @@ namespace dftfe
                    {
                      if(eigenValues[0][(totalNumWaveFunctions-Nfr)+jvec+iEigenVec+totalNumWaveFunctions] > fermiEnergyDown)
                        partialOccupVec[iEigenVec] = -1.0 ;
+                     else
+                       partialOccupVec[iEigenVec] = 0.0 ;                       
                    }
                  }
                  else
