@@ -591,9 +591,9 @@ namespace dftfe {
 						Patterns::Selection("ATOMIC|RANDOM"),
 						"[Standard] Sets the type of the starting Kohn-Sham wavefunctions guess: Atomic(Superposition of single atom atomic orbitals. Atom types for which atomic orbitals are not available, random wavefunctions are taken. Currently, atomic orbitals data is not available for all atoms.), Random(The starting guess for all wavefunctions are taken to be random). Default: RANDOM.");
 
-				prm.declare_entry("COMPUTE ENERGY EACH ITER", "true",
+				prm.declare_entry("COMPUTE ENERGY EACH ITER", "false",
 						Patterns::Bool(),
-						"[Advanced] Boolean parameter specifying whether to compute the total energy at the end of every SCF. Setting it to false can lead to some computational time savings.");
+						"[Advanced] Boolean parameter specifying whether to compute the total energy at the end of every SCF. Setting it to false can lead to some computational time savings. Default value is false but is internally set to true if VERBOSITY==5");
 
 				prm.enter_subsection ("Eigen-solver parameters");
 				{
@@ -1355,6 +1355,8 @@ namespace dftfe {
 				AssertThrow(dftParameters::useELPA
 						,ExcMessage("DFT-FE Error: USE ELPA must be set to true for USE MIXED PREC CHEBY."));
 
+      if (dftParameters::verbosity>=5)
+        dftParameters::computeEnergyEverySCF=true;        
 		}
 
 		void setXCFamilyType()
