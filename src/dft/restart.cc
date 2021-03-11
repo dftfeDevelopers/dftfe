@@ -353,17 +353,32 @@ void dftClass<FEOrder,FEOrderElectro>::loadTriaInfoAndRhoNodalData()
 
   solutionVectors.push_back(&d_rhoInNodalValuesRead);
 
-  if (dftParameters::spinPolarized==1)
+  if (dftParameters::spinPolarized==1 && !dftParameters::restartSpinFromNoSpin)
   {
     solutionVectors.push_back(&d_rhoInSpin0NodalValuesRead);
     solutionVectors.push_back(&d_rhoInSpin1NodalValuesRead);      
-  }    
+  }   
 
 	d_mesh.loadTriangulationsSolutionVectors(C_rhoNodalPolyOrder<FEOrder,FEOrderElectro>(),
 			1,
 			solutionVectors);
 
 	pcout<< "...Reading from checkpoint done." << std::endl;
+
+  if (dftParameters::spinPolarized==1 && dftParameters::restartSpinFromNoSpin)
+  {
+    d_rhoInSpin0NodalValuesRead.reinit(d_rhoInNodalValuesRead);
+    d_rhoInSpin1NodalValuesRead.reinit(d_rhoInNodalValuesRead);
+
+    d_rhoInSpin0NodalValuesRead=0;
+    d_rhoInSpin1NodalValuesRead=0;
+
+    for (unsigned int i = 0; i < d_rhoInNodalValuesRead.local_size(); i++)
+    {
+       d_rhoInSpin0NodalValuesRead.local_element(i)= ( 0.5 - dftParameters::start_magnetization)*d_rhoInNodalValuesRead.local_element(i);
+       d_rhoInSpin1NodalValuesRead.local_element(i)= ( 0.5 + dftParameters::start_magnetization)*d_rhoInNodalValuesRead.local_element(i);               
+    }    
+  }
 }
 
 	template<unsigned int FEOrder,unsigned int FEOrderElectro>

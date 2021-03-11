@@ -41,7 +41,7 @@ namespace dftfe {
 		extern double absLinearSolverTolerance,selfConsistentSolverTolerance,TVal, start_magnetization,absLinearSolverToleranceHelmholtz;
 
 		extern bool isPseudopotential, periodicX, periodicY, periodicZ, useSymm, timeReversal,pseudoTestsFlag, constraintMagnetization, writeDosFile, writeLdosFile,writeLocalizationLengths, pinnedNodeForPBC, writePdosFile;
-		extern std::string meshFileName,coordinatesFile,domainBoundingVectorsFile,kPointDataFile, ionRelaxFlagsFile, orthogType, algoType, pseudoPotentialFile;
+		extern std::string coordinatesFile,domainBoundingVectorsFile,kPointDataFile, ionRelaxFlagsFile, orthogType, algoType, pseudoPotentialFile;
 
 		extern std::string coordinatesGaussianDispFile;
 
@@ -58,6 +58,7 @@ namespace dftfe {
 		extern unsigned int cellConstraintType;
 
 		extern unsigned int verbosity, chkType;
+    extern bool restartSpinFromNoSpin;
 		extern bool restartFromChk;
 		extern bool restartMdFromChk;
 		extern bool electrostaticsHRefinement;

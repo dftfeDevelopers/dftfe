@@ -115,11 +115,8 @@ void dftClass<FEOrder,FEOrderElectro>::initUnmovedTriangulation(parallel::distri
 	//
 	constraintsNone.clear(); constraintsNoneEigen.clear();
 	constraintsNone.reinit(locally_relevant_dofs); constraintsNoneEigen.reinit(locally_relevant_dofsEigen);
-	if(dftParameters::meshFileName.empty())
-	{
-		DoFTools::make_hanging_node_constraints(dofHandler, constraintsNone);
-		DoFTools::make_hanging_node_constraints(dofHandlerEigen,constraintsNoneEigen);
-	}
+	DoFTools::make_hanging_node_constraints(dofHandler, constraintsNone);
+	DoFTools::make_hanging_node_constraints(dofHandlerEigen,constraintsNoneEigen);
 
 	//create unitVectorsXYZ
 	std::vector<std::vector<double> > unitVectorsXYZ;
@@ -179,17 +176,6 @@ void dftClass<FEOrder,FEOrderElectro>::initUnmovedTriangulation(parallel::distri
 	DoFTools::make_hanging_node_constraints(dofHandler, d_noConstraints);
 	DoFTools::make_hanging_node_constraints(dofHandlerEigen,noConstraintsEigen);
 	d_noConstraints.close();noConstraintsEigen.close();
-
-	if(!dftParameters::meshFileName.empty())
-	{
-		//
-		//merge hanging node constraint matrix with constrains None and constraints None eigen
-		//
-		constraintsNone.merge(d_noConstraints,dealii::AffineConstraints<double>::MergeConflictBehavior::right_object_wins);
-		constraintsNoneEigen.merge(noConstraintsEigen,dealii::AffineConstraints<double>::MergeConflictBehavior::right_object_wins);
-		constraintsNone.close();
-		constraintsNoneEigen.close();
-	}
 
 	if (dftParameters::createConstraintsFromSerialDofhandler)
 	{
