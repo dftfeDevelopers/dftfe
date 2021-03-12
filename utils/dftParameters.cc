@@ -38,7 +38,7 @@ namespace dftfe {
 		std::string ionOptSolver = "";
 
 		bool isPseudopotential=false,periodicX=false,periodicY=false,periodicZ=false, useSymm=false, timeReversal=false,pseudoTestsFlag=false, constraintMagnetization=false, writeDosFile=false, writeLdosFile=false, writePdosFile=false, writeLocalizationLengths=false;
-		std::string meshFileName="",coordinatesFile="",domainBoundingVectorsFile="",kPointDataFile="", ionRelaxFlagsFile="",orthogType="", algoType="", pseudoPotentialFile="";
+		std::string coordinatesFile="",domainBoundingVectorsFile="",kPointDataFile="", ionRelaxFlagsFile="",orthogType="", algoType="", pseudoPotentialFile="";
 
 		std::string coordinatesGaussianDispFile="";
 
@@ -56,6 +56,7 @@ namespace dftfe {
 		unsigned int cellConstraintType=12;// all cell components to be relaxed
 
 		unsigned int verbosity=0; unsigned int chkType=0;
+    bool restartSpinFromNoSpin=false;
 		bool restartFromChk=false;
 		bool restartMdFromChk=false;
 		bool reproducible_output=false;
@@ -82,7 +83,7 @@ namespace dftfe {
 		unsigned int numCoreWfcRR=0;
 		bool triMatPGSOpt=true;
 		bool reuseWfcGeoOpt=false;
-		bool reuseDensityGeoOpt=false;
+		unsigned int reuseDensityGeoOpt=0;
 		double mpiAllReduceMessageBlockSizeMB=2.0;
 		bool useMixedPrecPGS_SR=false;
 		bool useMixedPrecPGS_O=false;
@@ -248,11 +249,15 @@ namespace dftfe {
 			{
 				prm.declare_entry("CHK TYPE", "0",
 						Patterns::Integer(0,3),
-						"[Standard] Checkpoint type, 0 (do not create any checkpoint), 1 (create checkpoint for geometry optimization restart if either ION OPT or CELL OPT or BOMD is set to true. Currently, checkpointing and restart framework does not work if both ION OPT and CELL OPT are set to true simultaneously- the code will throw an error if attempted.), 2 (create checkpoint for scf restart using the electron-density field. Currently, this option cannot be used if geometry optimization is being performed. The code will throw an error if this option is used in conjunction with geometry optimization.)");
+						"[Standard] Checkpoint type, 0 (do not create any checkpoint), 1 (create checkpoint for geometry optimization restart if either ION OPT or CELL OPT is set to true. Currently, checkpointing and restart framework does not work if both ION OPT and CELL OPT are set to true simultaneously- the code will throw an error if attempted.), 2 (create checkpoint for scf restart using the electron-density field. Currently, this option cannot be used if geometry optimization is being performed. The code will throw an error if this option is used in conjunction with geometry optimization.)");
 
 				prm.declare_entry("RESTART FROM CHK", "false",
 						Patterns::Bool(),
-						"[Standard] Boolean parameter specifying if the current job reads from a checkpoint. The nature of the restart corresponds to the CHK TYPE parameter. Hence, the checkpoint being read must have been created using the CHK TYPE parameter before using this option. RESTART FROM CHK is always false for CHK TYPE 0.");
+						"[Standard] Boolean parameter specifying if the current job reads from a checkpoint. The nature of the restart corresponds to the CHK TYPE parameter. Hence, the checkpoint being read must have been created using the CHK TYPE parameter before using this option. Further, for CHK TYPE=2 same number of MPI tasks must be used as used to create the checkpoint files. RESTART FROM CHK is always false for CHK TYPE 0.");
+
+				prm.declare_entry("RESTART SP FROM NO SP", "false",
+						Patterns::Bool(),
+						"[Standard] Enables ground-state solve for SPIN POLARIZED case reading the SPIN UNPOLARIZED density from the checkpoint files, and use the START MAGNETIZATION to compute the spin up and spin down densities. This option is only valid for CHK TYPE=2 and RESTART FROM CHK=true. Default false..");        
 
 				prm.declare_entry("RESTART MD FROM CHK", "false",
 						Patterns::Bool(),
@@ -334,9 +339,9 @@ namespace dftfe {
 							Patterns::Bool(),
 							"[Standard] Reuse previous ground-state wavefunctions during geometry optimization. Default setting is false.");
 
-					prm.declare_entry("REUSE DENSITY", "false",
-							Patterns::Bool(),
-							"[Standard] Reuse previous ground-state density during geometry optimization. Default setting is false.");
+					prm.declare_entry("REUSE DENSITY", "0",
+							Patterns::Integer(0,2),
+							"[Standard] Parameter controlling the reuse of ground-state density during geometry optimization. The options are 0 (reinitialize density based on superposition of atomic densities), 1 (reuse ground-state density of previous relaxation step), and 2 (subtract superposition of atomic densities from the previous step's ground-state density and add superposition of atomic densities from the new atomic positions. Option 2 is not enabled for spin-polarized case. Default setting is 0.");
 
 				}
 				prm.leave_subsection ();
@@ -395,11 +400,7 @@ namespace dftfe {
 
 				prm.declare_entry("POLYNOMIAL ORDER ELECTROSTATICS", "0",
 						Patterns::Integer(0,24),
-						"[Standard] The degree of the finite-element interpolating polynomial for the electrostatics part of the Kohn-Sham Hamiltonian. Default value is set to POLYNOMIAL ORDER if POLYNOMIAL ORDER ELECTROSTATICS set to a non-zero value.");        
-
-				prm.declare_entry("MESH FILE", "",
-						Patterns::Anything(),
-						"[Developer] External mesh file path. If nothing is given auto mesh generation is performed. The option is only for testing purposes.");
+						"[Standard] The degree of the finite-element interpolating polynomial for the electrostatics part of the Kohn-Sham Hamiltonian. It is automatically set to POLYNOMIAL ORDER if POLYNOMIAL ORDER ELECTROSTATICS set to default value of zero.");        
 
 				prm.declare_entry("CELL LEVEL MASS MATRIX SCALING","false",
 							Patterns::Bool(),
@@ -642,16 +643,16 @@ namespace dftfe {
 
 					prm.declare_entry("ORTHOGONALIZATION TYPE","Auto",
 							Patterns::Selection("GS|LW|PGS|Auto"),
-							"[Advanced] Parameter specifying the type of orthogonalization to be used: GS(Gram-Schmidt Orthogonalization using SLEPc library), LW(Lowden Orthogonalization implemented using LAPACK/BLAS routines, extension to use ScaLAPACK library not implemented yet), PGS(Pseudo-Gram-Schmidt Orthogonalization: if you are using the real executable, parallel ScaLAPACK functions are used, otherwise serial LAPACK functions are used.) Auto is the default option, which chooses GS for all-electron case and PGS for pseudopotential case. To set GS and LW options set RR GEP to false. On GPUs PGS is the only route currently implemented.");
+							"[Advanced] Parameter specifying the type of orthogonalization to be used: GS(Gram-Schmidt Orthogonalization using SLEPc library), LW(Lowden Orthogonalization), PGS(Cholesky-Gram-Schmidt Orthogonalization) Auto is the default and recommended option, which chooses GS for all-electron case and PGS for pseudopotential case. To use GS and LW options set RR GEP to false. On GPUs PGS is the only route currently implemented.");
 
 					prm.declare_entry("ENABLE SWITCH TO GS", "true",
 							Patterns::Bool(),
-							"[Developer] Controls automatic switching to Gram-Schimdt orthogonalization if Lowden Orthogonalization or Pseudo-Gram-Schimdt orthogonalization are unstable. Default option is true.");
+							"[Developer] Controls automatic switching to Gram-Schimdt orthogonalization if Lowden Orthogonalization or Cholesky-Gram-Schimdt orthogonalization are unstable. Default option is true.");
 
 
 					prm.declare_entry("ENABLE SUBSPACE ROT PGS OPT", "true",
 							Patterns::Bool(),
-							"[Developer] Turns on subspace rotation optimization for Pseudo-Gram-Schimdt orthogonalization. Default option is true.");
+							"[Developer] Turns on subspace rotation optimization for Cholesky-Gram-Schimdt orthogonalization. Default option is true.");
 
 					prm.declare_entry("CHEBY WFC BLOCK SIZE", "400",
 							Patterns::Integer(1),
@@ -663,11 +664,11 @@ namespace dftfe {
 
 					prm.declare_entry("SUBSPACE ROT DOFS BLOCK SIZE", "10000",
 							Patterns::Integer(1),
-							"[Developer] This block size is used for memory optimization purposes in subspace rotation step in Pseudo-Gram-Schmidt orthogonalization and Rayleigh-Ritz steps. Default value is 10000.");
+							"[Developer] This block size is used for memory optimization purposes in subspace rotation step in Cholesky-Gram-Schmidt orthogonalization and Rayleigh-Ritz steps. Default value is 10000.");
 
 					prm.declare_entry("SCALAPACKPROCS", "0",
 							Patterns::Integer(0,300),
-							"[Advanced] Uses a processor grid of SCALAPACKPROCS times SCALAPACKPROCS for parallel distribution of the subspace projected matrix in the Rayleigh-Ritz step and the overlap matrix in the Pseudo-Gram-Schmidt step. Default value is 0 for which a thumb rule is used (see http://netlib.org/scalapack/slug/node106.html). If ELPA is used, twice the value obtained from the thumb rule is used as ELPA scales much better than ScaLAPACK.");
+							"[Advanced] Uses a processor grid of SCALAPACKPROCS times SCALAPACKPROCS for parallel distribution of the subspace projected matrix in the Rayleigh-Ritz step and the overlap matrix in the Cholesky-Gram-Schmidt step. Default value is 0 for which a thumb rule is used (see http://netlib.org/scalapack/slug/node106.html). If ELPA is used, twice the value obtained from the thumb rule is used as ELPA scales much better than ScaLAPACK.");
 
 					prm.declare_entry("SCALAPACK BLOCK SIZE", "0",
 							Patterns::Integer(0,300),
@@ -675,7 +676,7 @@ namespace dftfe {
 
 					prm.declare_entry("USE ELPA", "true",
 							Patterns::Bool(),
-							"[Standard] Use ELPA instead of ScaLAPACK for diagonalization of subspace projected Hamiltonian and Pseudo-Gram-Schmidt orthogonalization. Currently this setting is only available for real executable. Default setting is true.");
+							"[Standard] Use ELPA instead of ScaLAPACK for diagonalization of subspace projected Hamiltonian and Cholesky-Gram-Schmidt orthogonalization. Currently this setting is only available for real executable. Default setting is true.");
 
 					prm.declare_entry("USE MIXED PREC PGS SR", "false",
 							Patterns::Bool(),
@@ -886,6 +887,7 @@ namespace dftfe {
 			{
 				chkType=prm.get_integer("CHK TYPE");
 				restartFromChk=prm.get_bool("RESTART FROM CHK") && chkType!=0;
+				restartSpinFromNoSpin=prm.get_bool("RESTART SP FROM NO SP");        
 				restartMdFromChk=prm.get_bool("RESTART MD FROM CHK") && chkType!=0;
 			}
 			prm.leave_subsection ();
@@ -912,7 +914,7 @@ namespace dftfe {
 					dftParameters::stressRelaxTol                = prm.get_double("STRESS TOL");
 					dftParameters::cellConstraintType            = prm.get_integer("CELL CONSTRAINT TYPE");
 					dftParameters::reuseWfcGeoOpt                = prm.get_bool("REUSE WFC");
-					dftParameters::reuseDensityGeoOpt            = prm.get_bool("REUSE DENSITY");
+					dftParameters::reuseDensityGeoOpt            = prm.get_integer("REUSE DENSITY");
 				}
 				prm.leave_subsection ();
 			}
@@ -936,7 +938,6 @@ namespace dftfe {
 			{
 				dftParameters::finiteElementPolynomialOrder  = prm.get_integer("POLYNOMIAL ORDER");
 				dftParameters::finiteElementPolynomialOrderElectrostatics  = prm.get_integer("POLYNOMIAL ORDER ELECTROSTATICS")==0?prm.get_integer("POLYNOMIAL ORDER"):prm.get_integer("POLYNOMIAL ORDER ELECTROSTATICS");        
-				dftParameters::meshFileName                  = prm.get("MESH FILE");
 				prm.enter_subsection ("Auto mesh generation parameters");
 				{
 					dftParameters::outerAtomBallRadius           = prm.get_double("ATOM BALL RADIUS");

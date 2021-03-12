@@ -631,8 +631,7 @@ namespace dftfe {
 				//
 				dftPtr->updateAtomPositionsAndMoveMesh(displacements,
 						dftParameters::maxJacobianRatioFactorForMD,
-						(timeIndex ==startingTimeStep+1 && restartFlag==1)?true:false,
-						false);
+						(timeIndex ==startingTimeStep+1 && restartFlag==1)?true:false);
 
 
 				if(dftParameters::verbosity>=5)
@@ -900,8 +899,7 @@ namespace dftfe {
 
               dftPtr->updateAtomPositionsAndMoveMesh(displacements,
                   dftParameters::maxJacobianRatioFactorForMD,
-                  (timeIndex ==startingTimeStep+1 && restartFlag==1)?true:false,
-                  false);
+                  (timeIndex ==startingTimeStep+1 && restartFlag==1)?true:false);
 			
               dftPtr->initAtomicRho();
 
@@ -946,8 +944,7 @@ namespace dftfe {
 
               dftPtr->updateAtomPositionsAndMoveMesh(displacements,
                   dftParameters::maxJacobianRatioFactorForMD,
-                  (timeIndex ==startingTimeStep+1 && restartFlag==1)?true:false,
-                  false);
+                  (timeIndex ==startingTimeStep+1 && restartFlag==1)?true:false);
 
               dftPtr->initAtomicRho();
 
