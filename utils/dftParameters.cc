@@ -632,9 +632,9 @@ namespace dftfe {
 							Patterns::Double(1e-10),
 							"[Advanced] Parameter specifying the accuracy of the occupied eigenvectors close to the Fermi-energy computed using Chebyshev filtering subspace iteration procedure. Default value is sufficient for most purposes");
 
-					prm.declare_entry("BATCH GEMM", "true",
-							Patterns::Bool(),
-							"[Advanced] Boolean parameter specifying whether to use gemm batch blas routines to perform matrix-matrix multiplication operations with groups of matrices, processing a number of groups at once using threads instead of the standard serial route. CAUTION: gemm batch blas routines will only be activated if the CHEBY WFC BLOCK SIZE is less than 1000, and only if intel mkl blas library is linked with the dealii installation. Default option is true.");
+                                        prm.declare_entry("CELL LEVEL MASS MATRIX SCALING","false",
+                                                        Patterns::Bool(),
+                                                        "[Advanced] Scales the cell-level Hamiltonian matrix with inverse square root of the diagonal mass matrix at the cell-level Only valid when hanging nodes are not present. Default: false.");
 
                                         prm.declare_entry("ENABLE HAMILTONIAN TIMES VECTOR OPTIM", "true",
                                                          Patterns::Bool(),
@@ -937,7 +937,6 @@ namespace dftfe {
 				dftParameters::finiteElementPolynomialOrder  = prm.get_integer("POLYNOMIAL ORDER");
 				dftParameters::finiteElementPolynomialOrderElectrostatics  = prm.get_integer("POLYNOMIAL ORDER ELECTROSTATICS")==0?prm.get_integer("POLYNOMIAL ORDER"):prm.get_integer("POLYNOMIAL ORDER ELECTROSTATICS");        
 				dftParameters::meshFileName                  = prm.get("MESH FILE");
-				dftParameters::cellLevelMassMatrixScaling    = prm.get_bool("CELL LEVEL MASS MATRIX SCALING");
 				prm.enter_subsection ("Auto mesh generation parameters");
 				{
 					dftParameters::outerAtomBallRadius           = prm.get_double("ATOM BALL RADIUS");
@@ -1040,8 +1039,9 @@ namespace dftfe {
 					dftParameters::algoType= prm.get("ALGO");
 					dftParameters::numAdaptiveFilterStates= prm.get_integer("ADAPTIVE FILTER STATES");
 					dftParameters::chebyshevFilterPolyDegreeFirstScfScalingFactor=prm.get_double("CHEBYSHEV POLYNOMIAL DEGREE SCALING FACTOR FIRST SCF");
-          dftParameters::reuseLanczosUpperBoundFromFirstCall=prm.get_bool("REUSE LANCZOS UPPER BOUND");;
-          dftParameters::allowMultipleFilteringPassesAfterFirstScf=prm.get_bool("ALLOW MULTIPLE PASSES POST FIRST SCF");          
+                                        dftParameters::reuseLanczosUpperBoundFromFirstCall=prm.get_bool("REUSE LANCZOS UPPER BOUND");;
+                                        dftParameters::allowMultipleFilteringPassesAfterFirstScf=prm.get_bool("ALLOW MULTIPLE PASSES POST FIRST SCF");          
+                                        dftParameters::cellLevelMassMatrixScaling    = prm.get_bool("CELL LEVEL MASS MATRIX SCALING");
 				}
 				prm.leave_subsection ();
 			}
@@ -1219,7 +1219,6 @@ namespace dftfe {
 			if(dftParameters::nbandGrps>1)
 				AssertThrow(dftParameters::wfcBlockSize==dftParameters::chebyWfcBlockSize,ExcMessage("DFT-FE Error: WFC BLOCK SIZE and CHEBY WFC BLOCK SIZE must be same for band parallelization."));
 
-<<<<<<< HEAD
 
 #ifndef USE_PETSC;
 			AssertThrow(dftParameters::rrGEP,ExcMessage("DFT-FE Error: Please link to dealii installed with petsc and slepc for all-electron calculations."));
@@ -1260,14 +1259,6 @@ namespace dftfe {
 			if (dftParameters::useMixedPrecCheby)
 				AssertThrow(dftParameters::useELPA
 						,ExcMessage("DFT-FE Error: USE ELPA must be set to true for USE MIXED PREC CHEBY."));
-
-=======
-#ifndef WITH_MKL;
-			dftParameters::useBatchGEMM=false;
-			if (dftParameters::verbosity >=1 && Utilities::MPI::this_mpi_process(MPI_COMM_WORLD)== 0)
-				std::cout <<"Setting USE BATCH GEMM=false as intel mkl blas library is not being linked to."<<std::endl;
-#endif
->>>>>>> 0c9a57061e93d08df6fda74a685d9c095de933ba
 		}
 
 

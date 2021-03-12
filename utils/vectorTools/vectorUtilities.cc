@@ -899,13 +899,8 @@ namespace dftfe
                       
                       dealii::ConditionalOStream pcout (std::cout, (dealii::Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0));
                       const std::vector< dealii::Point<3> > & nodalCoordinatesRefCell = matrix_free_data.get_dof_handler(mfDofHandlerIndex).get_fe().get_unit_support_points();
-                      //pcout<<"Size of Support Points: "<<nodalCoordinatesRefCell.size()<<std::endl;
                       unsigned int numberNodesPerCell = nodalCoordinatesRefCell.size();
                       nodesPerCellClassificationMap.resize(numberNodesPerCell,0);
-                      /*for(unsigned int iNode = 0; iNode < numberNodesPerCell; ++iNode)
-                       {
-                          pcout<<"Inode: "<<iNode<<" "<<nodalCoordinatesRefCell[iNode][0]<<" "<<nodalCoordinatesRefCell[iNode][1]<<" "<<nodalCoordinatesRefCell[iNode][2]<<std::endl;
-                       }*/
 
                       double tol = 1e-05;
 
@@ -944,7 +939,7 @@ namespace dftfe
 	  {
 
 	    distributedCPUVec<double> dummyVector;
-	    matrix_free_data.initialize_dof_vector(dummyVector,0);
+	    matrix_free_data.initialize_dof_vector(dummyVector,mfDofHandlerIndex);
 
 	    typename dealii::DoFHandler<3>::active_cell_iterator cell = matrix_free_data.get_dof_handler(mfDofHandlerIndex).begin_active(), endc = matrix_free_data.get_dof_handler(mfDofHandlerIndex).end();
 

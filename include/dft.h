@@ -1219,9 +1219,6 @@ namespace dftfe {
 			std::vector<Point<3>> d_closestTriaVertexToAtomsLocation;
 			std::vector<Tensor<1,3,double> > d_dispClosestTriaVerticesToAtoms;
 
-		        /// create a data member of cell wavefunction matrix
-		        std::vector<double> d_cellWaveFunctionMatrix;
-
 			/// global k index of lower bound of the local k point set
 			unsigned int lowerBoundKindex=0;
 			/**

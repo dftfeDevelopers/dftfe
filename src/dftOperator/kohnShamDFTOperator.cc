@@ -219,7 +219,7 @@ namespace dftfe {
 
   template<unsigned int FEOrder,unsigned int FEOrderElectro>
   void kohnShamDFTOperatorClass<FEOrder,FEOrderElectro>::fillGlobalArrayFromCellWaveFunctionMatrix(const unsigned int numberWaveFunctions,
-										    std::vector<dataTypes::number>  & cellWaveFunctionMatrix,
+										    const std::vector<dataTypes::number>  & cellWaveFunctionMatrix,
 										    distributedCPUVec<dataTypes::number> & glbArray)
 									
   {
@@ -275,7 +275,7 @@ namespace dftfe {
   void kohnShamDFTOperatorClass<FEOrder,FEOrderElectro>::axpby(double scalarA,
 						double scalarB,
 					        const unsigned int numberWaveFunctions,
-					        std::vector<dataTypes::number>  & cellXWaveFunctionMatrix,
+					        const std::vector<dataTypes::number>  & cellXWaveFunctionMatrix,
 					        std::vector<dataTypes::number>  & cellYWaveFunctionMatrix)
   {
     
