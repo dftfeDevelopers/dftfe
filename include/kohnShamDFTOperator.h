@@ -255,7 +255,7 @@ namespace dftfe{
 
 
 	        void fillGlobalArrayFromCellWaveFunctionMatrix(const unsigned int wavefunBlockSize,
-							      std::vector<dataTypes::number> & cellWaveFunctionMatrix,
+							      const std::vector<dataTypes::number> & cellWaveFunctionMatrix,
 							      distributedCPUVec<dataTypes::number> & X);
 
 	        void initWithScalar(const unsigned int numberWaveFunctions,
@@ -266,7 +266,7 @@ namespace dftfe{
 	        void axpby(double scalarA,
 			   double scalarB,
 			   const unsigned int numberWaveFunctions,
-			   std::vector<dataTypes::number>  & cellXWaveFunctionMatrix,
+			   const std::vector<dataTypes::number>  & cellXWaveFunctionMatrix,
 			   std::vector<dataTypes::number>  & cellYWaveFunctionMatrix); 
 	  
 
