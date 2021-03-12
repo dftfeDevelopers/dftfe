@@ -886,8 +886,7 @@ namespace dftfe {
 			{
 				updateAtomPositionsAndMoveMesh(d_atomsDisplacementsGaussianRead,
 						1e+4,
-						true,
-						false);
+						true);
 				d_isAtomsGaussianDisplacementsReadFromFile=false;
 			}
 
@@ -945,8 +944,7 @@ namespace dftfe {
 	template<unsigned int FEOrder,unsigned int FEOrderElectro>
 		void dftClass<FEOrder,FEOrderElectro>::initNoRemesh(const bool updateImagesAndKPointsAndVselfBins,
         const bool updateSmearedChargeWidths,
-				const bool useSingleAtomSolutionOverride,
-				const bool useAtomicRhoSplitDensityUpdateForGeoOpt)
+				const bool useSingleAtomSolutionOverride)
 		{
 			computingTimerStandard.enter_section("KSDFT problem initialization");
 			if(updateImagesAndKPointsAndVselfBins)
@@ -996,14 +994,14 @@ namespace dftfe {
 				//if(dftParameters::mixingMethod != "ANDERSON_WITH_KERKER")
 				//   solveNoSCF();
 
+        if (!dftParameters::reuseWfcGeoOpt)
+          readPSI();
+
 				noRemeshRhoDataInit();
 
-        if (dftParameters::isIonOpt)
+        if (dftParameters::reuseDensityGeoOpt>=1)
         {
-          if (!dftParameters::reuseWfcGeoOpt)
-            readPSI();
-
-          if (dftParameters::reuseDensityGeoOpt && useAtomicRhoSplitDensityUpdateForGeoOpt && dftParameters::spinPolarized!=1)
+          if (dftParameters::reuseDensityGeoOpt==2 && dftParameters::spinPolarized!=1)
           {
             d_rhoOutNodalValuesSplit.add(-totalCharge(d_matrixFreeDataPRefined,
                 d_rhoOutNodalValuesSplit)/d_domainVolume);
@@ -1034,10 +1032,10 @@ namespace dftfe {
 
             d_rhoInNodalValues.update_ghost_values();
           }
-          else
-          {
-            initRho();
-          }
+        }
+        else
+        {
+          initRho();          
         }
 			}
 
@@ -1077,7 +1075,7 @@ namespace dftfe {
 
 			dftUtils::transformDomainBoundingVectors(d_domainBoundingVectors,deformationGradient);
 
-			initNoRemesh(true,true,false,false);
+			initNoRemesh(true,true,false);
 		}
 
 

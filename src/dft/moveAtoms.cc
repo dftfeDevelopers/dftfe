@@ -100,8 +100,7 @@ std::vector<double> wrapAtomsAcrossPeriodicBc(const Point<3> & cellCenteredCoord
 	template<unsigned int FEOrder,unsigned int FEOrderElectro>
 void dftClass<FEOrder,FEOrderElectro>::updateAtomPositionsAndMoveMesh(const std::vector<Tensor<1,3,double> > & globalAtomsDisplacements,
 		const double maxJacobianRatioFactor,
-		const bool useSingleAtomSolutionsOverride,
-		const bool useAtomicRhoSplitDensityUpdateForGeoOpt)
+		const bool useSingleAtomSolutionsOverride)
 {
 	bool isAutoRemeshSupressed=false;
 	const int numberGlobalAtoms = atomLocations.size();
@@ -570,9 +569,9 @@ void dftClass<FEOrder,FEOrderElectro>::updateAtomPositionsAndMoveMesh(const std:
           init_time = MPI_Wtime(); 
 
           if (dftParameters::isBOMD)
-            initNoRemesh(false,true,(!dftParameters::reproducible_output && maxCurrentDispAtom>0.2) || useSingleAtomSolutionsOverride,useAtomicRhoSplitDensityUpdateForGeoOpt);
+            initNoRemesh(false,true,(!dftParameters::reproducible_output && maxCurrentDispAtom>0.2) || useSingleAtomSolutionsOverride);
           else
-            initNoRemesh(false,true,(!dftParameters::reproducible_output && maxCurrentDispAtom>0.2) || useSingleAtomSolutionsOverride,useAtomicRhoSplitDensityUpdateForGeoOpt);
+            initNoRemesh(false,true,(!dftParameters::reproducible_output && maxCurrentDispAtom>0.2) || useSingleAtomSolutionsOverride);
           if (!dftParameters::reproducible_output)
             pcout << "...Reinitialization end" << std::endl;
 
@@ -593,13 +592,11 @@ void dftClass<FEOrder,FEOrderElectro>::updateAtomPositionsAndMoveMesh(const std:
     if (dftParameters::isBOMD)
       initNoRemesh(atomsPeriodicWrapped==1,
                    (maxFloatingDispComponentMag>0.2)?true:false,
-                   useSingleAtomSolutionsOverride,
-                   useAtomicRhoSplitDensityUpdateForGeoOpt);
+                   useSingleAtomSolutionsOverride);
     else
       initNoRemesh(atomsPeriodicWrapped==1,
                    (maxFloatingDispComponentMag>0.2)?true:false,
-                   useSingleAtomSolutionsOverride,
-                   useAtomicRhoSplitDensityUpdateForGeoOpt);
+                   useSingleAtomSolutionsOverride);
     if (!dftParameters::reproducible_output)
       pcout << "...Reinitialization end" << std::endl;
 

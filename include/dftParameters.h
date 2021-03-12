@@ -84,7 +84,7 @@ namespace dftfe {
 		extern unsigned int natomTypes;
 		extern bool triMatPGSOpt;
 		extern bool reuseWfcGeoOpt;
-		extern bool reuseDensityGeoOpt;
+		extern unsigned int reuseDensityGeoOpt;
 		extern double mpiAllReduceMessageBlockSizeMB;
 		extern bool useMixedPrecPGS_SR;
 		extern bool useMixedPrecPGS_O;

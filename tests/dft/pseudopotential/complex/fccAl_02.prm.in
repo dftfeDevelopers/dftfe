@@ -59,6 +59,8 @@ subsection Geometry
     set STRESS TOL            = 2e-5
     set CELL OPT              = true
     set CELL CONSTRAINT TYPE  = 1
+    set REUSE WFC=true
+    set REUSE DENSITY=1
   end 
 end
 

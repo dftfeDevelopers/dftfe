@@ -148,8 +148,7 @@ namespace dftfe {
 			 */
 			void initNoRemesh(const bool updateImagesAndKPointsAndVselfBins = true,
           const bool updateSmearedChargeWidths=true,
-					const bool useSingleAtomSolutionOverride = false ,
-					const bool useAtomicRhoSplitDensityUpdateForGeoOpt=true);
+					const bool useSingleAtomSolutionOverride = false);
 
 			/**
 			 * @brief Selects between only electronic field relaxation or combined electronic and geometry relaxation
@@ -268,8 +267,7 @@ namespace dftfe {
 			 */
 			void updateAtomPositionsAndMoveMesh(const std::vector<Tensor<1,3,double> > & globalAtomsDisplacements,
 					const double maxJacobianRatioFactor,
-					const bool useSingleAtomSolutionsOverride=false,
-					const bool useAtomicRhoSplitDensityUpdateForGeoOpt=true);
+					const bool useSingleAtomSolutionsOverride=false);
 
 
 			/**
