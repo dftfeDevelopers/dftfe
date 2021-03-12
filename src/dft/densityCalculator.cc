@@ -166,6 +166,34 @@ namespace dftfe
 			 std::vector<double> gradRhoTemp(3*numQuadPoints), gradRhoTempSpinPolarized(6*numQuadPoints),gradRho(3*numQuadPoints), gradRhoSpinPolarized(6*numQuadPoints);
 
 
+       std::vector<std::vector<double> > partialOccupancies(kPointWeights.size(),std::vector<double>((1+dftParameters::spinPolarized)*totalNumWaveFunctions,0.0));
+       for (unsigned int spinIndex=0; spinIndex<(1+dftParameters::spinPolarized);++spinIndex)
+          for(unsigned int kPoint = 0; kPoint < kPointWeights.size(); ++kPoint)
+            for (unsigned int iWave=0; iWave<totalNumWaveFunctions;++iWave)
+            {
+              const double eigenValue=eigenValues[kPoint][totalNumWaveFunctions*spinIndex+iWave];
+              partialOccupancies[kPoint][totalNumWaveFunctions*spinIndex+iWave]
+                =dftUtils::getPartialOccupancy(eigenValue,
+                    fermiEnergy,
+                    C_kb,
+                    dftParameters::TVal);
+
+              if(dftParameters::constraintMagnetization)
+              {
+                partialOccupancies[kPoint][totalNumWaveFunctions*spinIndex+iWave] = 1.0;
+                if (spinIndex==0)
+                {
+                  if (eigenValue> fermiEnergyUp)
+                    partialOccupancies[kPoint][totalNumWaveFunctions*spinIndex+iWave] = 0.0 ;
+                }
+                else if (spinIndex==1)
+                {
+                  if (eigenValue > fermiEnergyDown)
+                    partialOccupancies[kPoint][totalNumWaveFunctions*spinIndex+iWave] = 0.0 ;
+                }
+              }
+            }
+
 			 //band group parallelization data structures
 			 const unsigned int numberBandGroups=
 				 dealii::Utilities::MPI::n_mpi_processes(interBandGroupComm);
@@ -482,28 +510,8 @@ namespace dftfe
 								 for(unsigned int iEigenVec=0; iEigenVec<currentBlockSize; ++iEigenVec)
 								 {
 
-									 double partialOccupancy=dftUtils::getPartialOccupancy
-										 (eigenValues[kPoint][ivec+iEigenVec],
-										  fermiEnergy,
-										  C_kb,
-										  dftParameters::TVal);
-
-									 double partialOccupancy2=dftUtils::getPartialOccupancy
-										 (eigenValues[kPoint][ivec+iEigenVec
-										  +dftParameters::spinPolarized*numEigenVectorsTotal],
-										  fermiEnergy,
-										  C_kb,
-										  dftParameters::TVal);
-									 if(dftParameters::constraintMagnetization)
-									 {
-										 partialOccupancy = 1.0 , partialOccupancy2 = 1.0 ;
-										 if (eigenValues[kPoint][ivec+iEigenVec
-												 +dftParameters::spinPolarized*numEigenVectorsTotal] > fermiEnergyDown)
-											 partialOccupancy2 = 0.0 ;
-										 if (eigenValues[kPoint][ivec+iEigenVec] > fermiEnergyUp)
-											 partialOccupancy = 0.0 ;
-
-									 }
+									 double partialOccupancy=partialOccupancies[kPoint][ivec+iEigenVec];
+									 double partialOccupancy2=partialOccupancies[kPoint][dftParameters::spinPolarized*numEigenVectorsTotal+ivec+iEigenVec];
 
 									 for(unsigned int q=0; q<numQuadPoints; ++q)
 									 {
