@@ -212,8 +212,11 @@ namespace dftfe {
         ///
         unsigned int d_smearedChargeGradientComponentId;
 
-				/// mean constrained nodeid
+				/// mean value constraints: mean value constrained node
 				dealii::types::global_dof_index d_meanValueConstraintNodeId;
+
+				/// mean value constraints: constrained proc id containing the mean value constrained node
+				unsigned int d_meanValueConstraintProcId;        
 
 				const MPI_Comm mpi_communicator;
 				const unsigned int n_mpi_processes;
