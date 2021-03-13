@@ -64,10 +64,9 @@ namespace dftfe {
 		bool meshAdaption = false;
 		bool pinnedNodeForPBC = true;
 	        bool cellLevelMassMatrixScaling = false;
-                bool HXOptimFlag = false;
+	        bool HXOptimFlag = false;
 
 		std::string startingWFCType="";
-		bool useBatchGEMM=false;
 		bool writeWfcSolutionFields=false;
 		bool writeDensitySolutionFields=false;
 		unsigned int wfcBlockSize=400;
@@ -130,18 +129,17 @@ namespace dftfe {
 		bool useDensityMatrixPerturbationRankUpdates=false;
 		double xlbomdKernelRankUpdateFDParameter=1e-2;
 		bool smearedNuclearCharges=false;
-                bool floatingNuclearCharges=false;
-                bool nonLinearCoreCorrection=false;
-                unsigned int maxLineSearchIterCGPRP=5;
-                std::string atomicMassesFile="";
-                bool useGPUDirectAllReduce=false;
-                double pspCutoffImageCharges=15.0;
-                bool reuseLanczosUpperBoundFromFirstCall=false;
-                bool allowMultipleFilteringPassesAfterFirstScf=true;
-                bool useELPAGPUKernel=false;
-                std::string xcFamilyType="";
-                bool gpuMemOptMode=false;
-             
+    bool floatingNuclearCharges=false;
+    bool nonLinearCoreCorrection=false;
+    unsigned int maxLineSearchIterCGPRP=5;
+    std::string atomicMassesFile="";
+    bool useGPUDirectAllReduce=false;
+    double pspCutoffImageCharges=15.0;
+    bool reuseLanczosUpperBoundFromFirstCall=false;
+    bool allowMultipleFilteringPassesAfterFirstScf=true;
+    bool useELPAGPUKernel=false;
+    std::string xcFamilyType="";
+    bool gpuMemOptMode=false;
 
 		void declare_parameters(ParameterHandler &prm)
 		{
@@ -402,10 +400,6 @@ namespace dftfe {
 						Patterns::Integer(0,24),
 						"[Standard] The degree of the finite-element interpolating polynomial for the electrostatics part of the Kohn-Sham Hamiltonian. It is automatically set to POLYNOMIAL ORDER if POLYNOMIAL ORDER ELECTROSTATICS set to default value of zero.");        
 
-				prm.declare_entry("CELL LEVEL MASS MATRIX SCALING","false",
-							Patterns::Bool(),
-							"[Advanced] Scales the cell-level Hamiltonian matrix with inverse square root of the diagonal mass matrix at the cell-level Only valid when hanging nodes are not present. Default: false.");
-
 				prm.enter_subsection ("Auto mesh generation parameters");
 				{
 
@@ -633,7 +627,7 @@ namespace dftfe {
 							Patterns::Double(1e-10),
 							"[Advanced] Parameter specifying the accuracy of the occupied eigenvectors close to the Fermi-energy computed using Chebyshev filtering subspace iteration procedure. Default value is sufficient for most purposes");
 
-                                        prm.declare_entry("CELL LEVEL MASS MATRIX SCALING","false",
+					prm.declare_entry("CELL LEVEL MASS MATRIX SCALING","false",
                                                         Patterns::Bool(),
                                                         "[Advanced] Scales the cell-level Hamiltonian matrix with inverse square root of the diagonal mass matrix at the cell-level Only valid when hanging nodes are not present. Default: false.");
 
@@ -641,6 +635,7 @@ namespace dftfe {
                                                          Patterns::Bool(),
                                                         "[Advanced] Turns on optimization for hamiltonian times vector multiplication. Operations involving data movement from global vector to finite-element cell level and vice versa are done by employing different data structures for interior nodes and surfaces nodes of a given cell and this allows reduction of memory access costs");
 
+				
 					prm.declare_entry("ORTHOGONALIZATION TYPE","Auto",
 							Patterns::Selection("GS|LW|PGS|Auto"),
 							"[Advanced] Parameter specifying the type of orthogonalization to be used: GS(Gram-Schmidt Orthogonalization using SLEPc library), LW(Lowden Orthogonalization), PGS(Cholesky-Gram-Schmidt Orthogonalization) Auto is the default and recommended option, which chooses GS for all-electron case and PGS for pseudopotential case. To use GS and LW options set RR GEP to false. On GPUs PGS is the only route currently implemented.");
@@ -1039,9 +1034,9 @@ namespace dftfe {
 					dftParameters::algoType= prm.get("ALGO");
 					dftParameters::numAdaptiveFilterStates= prm.get_integer("ADAPTIVE FILTER STATES");
 					dftParameters::chebyshevFilterPolyDegreeFirstScfScalingFactor=prm.get_double("CHEBYSHEV POLYNOMIAL DEGREE SCALING FACTOR FIRST SCF");
-                                        dftParameters::reuseLanczosUpperBoundFromFirstCall=prm.get_bool("REUSE LANCZOS UPPER BOUND");;
-                                        dftParameters::allowMultipleFilteringPassesAfterFirstScf=prm.get_bool("ALLOW MULTIPLE PASSES POST FIRST SCF");          
                                         dftParameters::cellLevelMassMatrixScaling    = prm.get_bool("CELL LEVEL MASS MATRIX SCALING");
+          dftParameters::reuseLanczosUpperBoundFromFirstCall=prm.get_bool("REUSE LANCZOS UPPER BOUND");;
+          dftParameters::allowMultipleFilteringPassesAfterFirstScf=prm.get_bool("ALLOW MULTIPLE PASSES POST FIRST SCF");          
 				}
 				prm.leave_subsection ();
 			}
@@ -1097,18 +1092,6 @@ namespace dftfe {
           dftParameters::coordinatesGaussianDispFile="atomsGaussianDispCoord.chk";
 			}
 
-			if (dftParameters::algoType=="FAST")
-			{
-				dftParameters::useMixedPrecPGS_O=true;
-				dftParameters::useMixedPrecPGS_SR=true;
-				dftParameters::useMixedPrecXTHXSpectrumSplit=true;
-				dftParameters::useMixedPrecCheby=true;
-				dftParameters::computeEnergyEverySCF=false;
-			}
-#ifdef USE_COMPLEX
-			dftParameters::rrGEP=false;
-                        dftParameters::HXOptimFlag=false;                        
-#endif
 			//
 			check_print_parameters(prm);
 			setAutoParameters();
@@ -1220,45 +1203,6 @@ namespace dftfe {
 				AssertThrow(dftParameters::wfcBlockSize==dftParameters::chebyWfcBlockSize,ExcMessage("DFT-FE Error: WFC BLOCK SIZE and CHEBY WFC BLOCK SIZE must be same for band parallelization."));
 
 
-#ifndef USE_PETSC;
-			AssertThrow(dftParameters::rrGEP,ExcMessage("DFT-FE Error: Please link to dealii installed with petsc and slepc for all-electron calculations."));
-#endif
-
-#ifdef DFTFE_WITH_GPU
-			if (dftParameters::useGPU)
-			{
-				if (dftParameters::nbandGrps>1)
-					AssertThrow(dftParameters::rrGEP
-							,ExcMessage("DFT-FE Error: if band parallelization is used, RR GEP must be set to true."));
-			}
-#else
-     dftParameters::useGPU=false;
-     dftParameters::useELPAGPUKernel=false;
-#endif
-
-#ifdef DFTFE_WITH_ELPA
-      if (dftParameters::scalapackBlockSize==0)
-      {
-        if (dftParameters::useELPAGPUKernel)
-          dftParameters::scalapackBlockSize=16;
-        else
-          dftParameters::scalapackBlockSize=32;
-      }
-#else
-      if (dftParameters::scalapackBlockSize==0)
-      {
-        dftParameters::scalapackBlockSize=50;
-      }
-			dftParameters::useELPA=false;
-#endif
-
-#ifndef DFTFE_WITH_NCCL
-			dftParameters::useGPUDirectAllReduce=false;
-#endif
-
-			if (dftParameters::useMixedPrecCheby)
-				AssertThrow(dftParameters::useELPA
-						,ExcMessage("DFT-FE Error: USE ELPA must be set to true for USE MIXED PREC CHEBY."));
 		}
 
 
@@ -1368,6 +1312,7 @@ namespace dftfe {
 			}
 #ifdef USE_COMPLEX
 			dftParameters::rrGEP=false;
+                        dftParameters::HXOptimFlag=false;
 #endif
 
 

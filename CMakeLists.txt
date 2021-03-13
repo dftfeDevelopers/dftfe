@@ -187,13 +187,7 @@ IF (DEAL_II_WITH_PETSC AND DEAL_II_WITH_SLEPC)
    MESSAGE(STATUS "Using petsc and slepc")
 ENDIF()
 
-#
-#Set use intel mkl flag
-#
-IF (WITH_INTEL_MKL)
-   ADD_DEFINITIONS(-DWITH_MKL)
-   MESSAGE(STATUS "With intel mkl")
-ENDIF()
+
 
 #
 #Set GPU compilation flag
