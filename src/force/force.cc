@@ -52,7 +52,6 @@ namespace  dftfe {
 #include "configurationalStressCompute/stress.cc"
 #include "configurationalStressCompute/computeStressEself.cc"
 #include "configurationalStressCompute/computeStressEEshelbyEPSPEnlEk.cc"
-#include "configurationalStressCompute/computeStressSpinPolarizedEEshelbyEPSPEnlEk.cc"
 #include "configurationalStressCompute/EPSPStressContribution.cc"
 #include "configurationalStressCompute/ENonlinearCoreCorrectionContribution.cc"
 #include "configurationalStressCompute/ESmearedStressContribution.cc"
