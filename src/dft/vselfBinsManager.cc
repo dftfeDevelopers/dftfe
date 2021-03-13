@@ -1050,7 +1050,7 @@ namespace dftfe
             radiusAtomBallReduced-=0.5;
 
           if (!dftParameters::reproducible_output)
-             AssertThrow(radiusAtomBallReduced>=2.0,dealii::ExcMessage("DFT-FE error: Adaptively determined reduced ball radius is less than minimum value of 2.0. The starting SELF POTENTIAL RADIUS needs to be increased"));           
+             AssertThrow(radiusAtomBallReduced>=2.0,dealii::ExcMessage("DFT-FE error: Adaptively determined reduced ball radius is less than minimum value of 2.0. Reduce MESH SIZE AROUND ATOM."));           
         } 
     
         if (dftParameters::verbosity>=4 && !dftParameters::reproducible_output)
