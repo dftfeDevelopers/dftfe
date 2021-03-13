@@ -172,6 +172,83 @@ void forceClass<FEOrder,FEOrderElectro>::computeStressEEshelbyEPSPEnlEk(const Ma
 	const unsigned int numMacroCells=matrixFreeData.n_macro_cells();
 	const unsigned int numPhysicalCells=matrixFreeData.n_physical_cells();
 
+#if defined(DFTFE_WITH_GPU)
+	AssertThrow(numMacroCells==numPhysicalCells,ExcMessage("DFT-FE Error: dealii for GPU DFT-FE must be compiled without any vectorization enabled."));
+
+	//create map between macro cell id and normal cell id
+	std::vector<unsigned int> normalCellIdToMacroCellIdMap(numPhysicalCells);
+	std::vector<unsigned int> macroCellIdToNormalCellIdMap(numPhysicalCells);
+
+	typename dealii::DoFHandler<3>::active_cell_iterator cellPtr;
+	unsigned int iElemNormal = 0;
+	for(const auto &cell : matrixFreeData.get_dof_handler().active_cell_iterators())
+	{
+		if(cell->is_locally_owned())
+		{
+			bool isFound=false;
+			unsigned int iElemMacroCell = 0;
+			for(unsigned int iMacroCell = 0; iMacroCell < numMacroCells; ++iMacroCell)
+			{
+				const unsigned int n_sub_cells = matrixFreeData.n_components_filled(iMacroCell);
+				for(unsigned int iCell = 0; iCell < n_sub_cells; ++iCell)
+				{
+					cellPtr = matrixFreeData.get_cell_iterator(iMacroCell,iCell);
+					if (cell->id()==cellPtr->id())
+					{
+						normalCellIdToMacroCellIdMap[iElemNormal]=iElemMacroCell;
+						macroCellIdToNormalCellIdMap[iElemMacroCell]=iElemNormal;
+						isFound=true;
+						break;
+					}
+					iElemMacroCell++;
+				}
+
+				if (isFound)
+					break;
+			}
+			iElemNormal++;
+		}
+	}
+
+	std::vector<unsigned int> nonTrivialNonLocalIdsAllCells;
+	std::vector<unsigned int> nonTrivialIdToElemIdMap;
+	std::vector<unsigned int> nonTrivialIdToAllPseudoWfcIdMap;
+	std::vector<unsigned int> projecterKetTimesFlattenedVectorLocalIds; 
+	if (isPseudopotential)
+	{
+		for (unsigned int ielem=0; ielem<numPhysicalCells; ++ielem)
+		{
+			const unsigned int numNonLocalAtomsCurrentProc= dftPtr->d_nonLocalAtomIdsInCurrentProcess.size();
+
+			const unsigned int macroCellId= normalCellIdToMacroCellIdMap[ielem];
+			for (unsigned int iatom=0; iatom<numNonLocalAtomsCurrentProc; ++iatom)
+			{
+				bool isNonTrivial=false;
+				const unsigned int macroCellId= normalCellIdToMacroCellIdMap[ielem];
+				for (unsigned int i=0;i<macroIdToNonlocalAtomsSetMap[macroCellId].size();i++)
+					if (macroIdToNonlocalAtomsSetMap[macroCellId][i]==iatom)
+					{
+						isNonTrivial=true;
+						break;
+					}
+				if (isNonTrivial)
+				{
+					const int globalAtomId=dftPtr->d_nonLocalAtomIdsInCurrentProcess[iatom];
+					const unsigned int numberSingleAtomPseudoWaveFunctions=numPseudoWfcsAtom[iatom];
+					for (unsigned int ipsp=0; ipsp<numberSingleAtomPseudoWaveFunctions; ++ipsp)
+					{
+						nonTrivialNonLocalIdsAllCells.push_back(iatom);
+						nonTrivialIdToElemIdMap.push_back(ielem);
+						nonTrivialIdToAllPseudoWfcIdMap.push_back(nonlocalPseudoWfcsAccum[iatom]+ipsp);
+						//const unsigned int id=dftPtr->d_projectorKetTimesVectorPar[0].get_partitioner()->global_to_local(dftPtr->d_projectorIdsNumberingMapCurrentProcess[std::make_pair(globalAtomId,ipsp)]);
+						projecterKetTimesFlattenedVectorLocalIds.push_back(projectorKetTimesVectorLocalIds[iatom][ipsp]);
+					}
+				}
+			}
+		}
+	}
+#endif
+
   //allocate storage for vector of quadPoints, nonlocal atom id, pseudo wave, k point
   //FIXME: flatten nonlocal atomid id and pseudo wave and k point
 #ifdef USE_COMPLEX
@@ -278,287 +355,374 @@ void forceClass<FEOrder,FEOrderElectro>::computeStressEEshelbyEPSPEnlEk(const Ma
 
 	for (unsigned int spinIndex=0; spinIndex<(1+dftParameters::spinPolarized);++spinIndex)
   {
+#if defined(DFTFE_WITH_GPU) && !defined(USE_COMPLEX)
+    std::vector<double>  projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuadsFlattened(nonTrivialNonLocalIdsAllCells.size()*numQuadPointsNLP*3,0.0);
+    std::vector<double> elocWfcEshelbyTensorQuadValuesH(numPhysicalCells*numQuadPoints*6,0.0);
+#endif    
     std::vector<std::vector<Tensor<1,C_DIM,VectorizedArray<double> > > >  projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuads(numMacroCells*numQuadPointsNLP,std::vector<Tensor<1,C_DIM,VectorizedArray<double> > >(numPseudo,zeroTensor3));
 
-    for(unsigned int ivec = 0; ivec < numEigenVectors; ivec+=blockSize)
+    if (dftParameters::useGPU)
     {
-      const unsigned int currentBlockSize=std::min(blockSize,numEigenVectors-ivec);
+#if defined(DFTFE_WITH_GPU) && !defined(USE_COMPLEX)
+      MPI_Barrier(MPI_COMM_WORLD);
+      double gpu_time=MPI_Wtime();
 
-      if (currentBlockSize!=blockSize || ivec==0)
-      {
-        for(unsigned int kPoint = 0; kPoint < dftPtr->d_kPointWeights.size(); ++kPoint)
-        {
-          eigenVectors[kPoint].resize(currentBlockSize);
-          for(unsigned int i= 0; i < currentBlockSize; ++i)
-            eigenVectors[kPoint][i].reinit(dftPtr->d_tempEigenVec);
+      forceCUDA::gpuPortedForceKernelsAllH(kohnShamDFTEigenOperator,
+          dftPtr->d_eigenVectorsFlattenedCUDA.begin()+spinIndex*localVectorSize*numEigenVectors,
+          &dftPtr->eigenValues[0][spinIndex*numEigenVectors],
+          &partialOccupancies[0][spinIndex*numEigenVectors],
+          &nonTrivialIdToElemIdMap[0],
+          &projecterKetTimesFlattenedVectorLocalIds[0],
+          numEigenVectors,
+          numPhysicalCells,
+          numQuadPoints,
+          numQuadPointsNLP,
+          dftPtr->matrix_free_data.get_dofs_per_cell(dftPtr->d_densityDofHandlerIndex),
+          nonTrivialNonLocalIdsAllCells.size(),
+          &elocWfcEshelbyTensorQuadValuesH[0],
+          &projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuadsFlattened[0],
+          dftPtr->interBandGroupComm,
+          isPseudopotential);
 
+      MPI_Barrier(MPI_COMM_WORLD);
+      gpu_time=MPI_Wtime()-gpu_time;
 
-          vectorTools::createDealiiVector<dataTypes::number>(dftPtr->matrix_free_data.get_vector_partitioner(dftPtr->d_densityDofHandlerIndex),
-              currentBlockSize,
-              eigenVectorsFlattenedBlock[kPoint]);
-          eigenVectorsFlattenedBlock[kPoint] = dataTypes::number(0.0);
-        }
-
-        dftPtr->constraintsNoneDataInfo.precomputeMaps(dftPtr->matrix_free_data.get_vector_partitioner(dftPtr->d_densityDofHandlerIndex),
-            eigenVectorsFlattenedBlock[0].get_partitioner(),
-            currentBlockSize);
-      }
-
-      if((ivec+currentBlockSize)<=bandGroupLowHighPlusOneIndices[2*bandGroupTaskId+1] &&
-          (ivec+currentBlockSize)>bandGroupLowHighPlusOneIndices[2*bandGroupTaskId])
-      {
-        std::vector<std::vector<double>> blockedEigenValues(dftPtr->d_kPointWeights.size(),std::vector<double>(currentBlockSize,0.0));
-        std::vector<std::vector<double>> blockedPartialOccupancies(dftPtr->d_kPointWeights.size(),std::vector<double>(currentBlockSize,0.0));
-        for(unsigned int kPoint = 0; kPoint < dftPtr->d_kPointWeights.size(); ++kPoint)
-          for (unsigned int iWave=0; iWave<currentBlockSize;++iWave)
-          {
-            blockedEigenValues[kPoint][iWave]=dftPtr->eigenValues[kPoint][numEigenVectors*spinIndex+ivec+iWave];
-            blockedPartialOccupancies[kPoint][iWave]=partialOccupancies[kPoint][numEigenVectors*spinIndex+ivec+iWave];
-          }
-
-        for(unsigned int kPoint = 0; kPoint < dftPtr->d_kPointWeights.size(); ++kPoint)
-        {
-          for(unsigned int iNode = 0; iNode < localVectorSize; ++iNode)
-            for(unsigned int iWave = 0; iWave < currentBlockSize; ++iWave)
-              eigenVectorsFlattenedBlock[kPoint].local_element(iNode*currentBlockSize+iWave)
-                = dftPtr->d_eigenVectorsFlattenedSTL[(dftParameters::spinPolarized+1)*kPoint+spinIndex][iNode*numEigenVectors+ivec+iWave];
-
-          dftPtr->constraintsNoneDataInfo.distribute(eigenVectorsFlattenedBlock[kPoint],
-              currentBlockSize);
-          eigenVectorsFlattenedBlock[kPoint].update_ghost_values();
-
-#ifdef USE_COMPLEX
-          vectorTools::copyFlattenedDealiiVecToSingleCompVec
-            (eigenVectorsFlattenedBlock[kPoint],
-             currentBlockSize,
-             std::make_pair(0,currentBlockSize),
-             dftPtr->localProc_dof_indicesReal,
-             dftPtr->localProc_dof_indicesImag,
-             eigenVectors[kPoint],
-             false);
-
-          //FIXME: The underlying call to update_ghost_values
-          //is required because currently localProc_dof_indicesReal
-          //and localProc_dof_indicesImag are only available for
-          //locally owned nodes. Once they are also made available
-          //for ghost nodes- use true for the last argument in
-          //copyFlattenedDealiiVecToSingleCompVec(..) above and supress
-          //underlying call.
-          for(unsigned int i= 0; i < currentBlockSize; ++i)
-            eigenVectors[kPoint][i].update_ghost_values();
-#else
-          vectorTools::copyFlattenedDealiiVecToSingleCompVec
-            (eigenVectorsFlattenedBlock[kPoint],
-             currentBlockSize,
-             std::make_pair(0,currentBlockSize),
-             eigenVectors[kPoint],
-             true);
-
+      if (this_process==0 && dftParameters::verbosity>=4)
+        std::cout<<"Time for gpuPortedForceKernelsAllH: "<<gpu_time<<std::endl;
 #endif
-        }
+    }
+    else
+    {
+      for(unsigned int ivec = 0; ivec < numEigenVectors; ivec+=blockSize)
+      {
+        const unsigned int currentBlockSize=std::min(blockSize,numEigenVectors-ivec);
 
-        if (isPseudopotential)
-          for (unsigned int ikPoint=0; ikPoint<numKPoints; ++ikPoint)
+        if (currentBlockSize!=blockSize || ivec==0)
+        {
+          for(unsigned int kPoint = 0; kPoint < dftPtr->d_kPointWeights.size(); ++kPoint)
           {
-            computeNonLocalProjectorKetTimesPsiTimesVFlattened(eigenVectorsFlattenedBlock[ikPoint],
+            eigenVectors[kPoint].resize(currentBlockSize);
+            for(unsigned int i= 0; i < currentBlockSize; ++i)
+              eigenVectors[kPoint][i].reinit(dftPtr->d_tempEigenVec);
+
+
+            vectorTools::createDealiiVector<dataTypes::number>(dftPtr->matrix_free_data.get_vector_partitioner(dftPtr->d_densityDofHandlerIndex),
                 currentBlockSize,
-                projectorKetTimesPsiTimesVTimesPartOcc[ikPoint],
-                ikPoint,
-                blockedPartialOccupancies[ikPoint]
-#ifdef USE_COMPLEX
-                ,
-                true
-#endif                
-                );
+                eigenVectorsFlattenedBlock[kPoint]);
+            eigenVectorsFlattenedBlock[kPoint] = dataTypes::number(0.0);
           }
 
-        for (unsigned int cell=0; cell<matrixFreeData.n_macro_cells(); ++cell)
+          dftPtr->constraintsNoneDataInfo.precomputeMaps(dftPtr->matrix_free_data.get_vector_partitioner(dftPtr->d_densityDofHandlerIndex),
+              eigenVectorsFlattenedBlock[0].get_partitioner(),
+              currentBlockSize);
+        }
+
+        if((ivec+currentBlockSize)<=bandGroupLowHighPlusOneIndices[2*bandGroupTaskId+1] &&
+            (ivec+currentBlockSize)>bandGroupLowHighPlusOneIndices[2*bandGroupTaskId])
         {
-          forceEval.reinit(cell);
-#ifdef USE_COMPLEX
-          forceEvalKPoints.reinit(cell);
-#endif
-
-          psiEval.reinit(cell);
-
-          forceEvalNLP.reinit(cell);
-#ifdef USE_COMPLEX
-          forceEvalKPointsNLP.reinit(cell);
-#endif
-
-          psiEvalNLP.reinit(cell);
-
-          const unsigned int numSubCells=matrixFreeData.n_components_filled(cell);
-#ifdef USE_COMPLEX
-          std::vector<Tensor<1,2,VectorizedArray<double> > > psiQuads(numQuadPoints*currentBlockSize*numKPoints,zeroTensor1);
-          std::vector<Tensor<1,2,Tensor<1,C_DIM,VectorizedArray<double> > > > gradPsiQuads(numQuadPoints*currentBlockSize*numKPoints,zeroTensor2);
-#else
-          std::vector< VectorizedArray<double> > psiQuads(numQuadPoints*currentBlockSize,make_vectorized_array(0.0));
-          std::vector<Tensor<1,C_DIM,VectorizedArray<double> > > gradPsiQuads(numQuadPoints*currentBlockSize,zeroTensor3);
-#endif
-
-          for (unsigned int ikPoint=0; ikPoint<numKPoints; ++ikPoint)
-            for (unsigned int iEigenVec=0; iEigenVec<currentBlockSize; ++iEigenVec)
+          std::vector<std::vector<double>> blockedEigenValues(dftPtr->d_kPointWeights.size(),std::vector<double>(currentBlockSize,0.0));
+          std::vector<std::vector<double>> blockedPartialOccupancies(dftPtr->d_kPointWeights.size(),std::vector<double>(currentBlockSize,0.0));
+          for(unsigned int kPoint = 0; kPoint < dftPtr->d_kPointWeights.size(); ++kPoint)
+            for (unsigned int iWave=0; iWave<currentBlockSize;++iWave)
             {
-              psiEval.read_dof_values_plain(eigenVectors[ikPoint][iEigenVec]);
-              psiEval.evaluate(true,true);
+              blockedEigenValues[kPoint][iWave]=dftPtr->eigenValues[kPoint][numEigenVectors*spinIndex+ivec+iWave];
+              blockedPartialOccupancies[kPoint][iWave]=partialOccupancies[kPoint][numEigenVectors*spinIndex+ivec+iWave];
+            }
 
-              for (unsigned int q=0; q<numQuadPoints; ++q)
-              {
-                const unsigned int id=q*currentBlockSize*numKPoints+currentBlockSize*ikPoint+iEigenVec;
-                psiQuads[id]=psiEval.get_value(q);
-                gradPsiQuads[id]=psiEval.get_gradient(q);
-              }//quad point loop
-            } //eigenvector loop
+          for(unsigned int kPoint = 0; kPoint < dftPtr->d_kPointWeights.size(); ++kPoint)
+          {
+            for(unsigned int iNode = 0; iNode < localVectorSize; ++iNode)
+              for(unsigned int iWave = 0; iWave < currentBlockSize; ++iWave)
+                eigenVectorsFlattenedBlock[kPoint].local_element(iNode*currentBlockSize+iWave)
+                  = dftPtr->d_eigenVectorsFlattenedSTL[(dftParameters::spinPolarized+1)*kPoint+spinIndex][iNode*numEigenVectors+ivec+iWave];
+
+            dftPtr->constraintsNoneDataInfo.distribute(eigenVectorsFlattenedBlock[kPoint],
+                currentBlockSize);
+            eigenVectorsFlattenedBlock[kPoint].update_ghost_values();
 
 #ifdef USE_COMPLEX
-          std::vector<Tensor<1,2,VectorizedArray<double> > > psiQuadsNLP;
-          std::vector<Tensor<1,2,Tensor<1,C_DIM,VectorizedArray<double> > > > gradPsiQuadsNLP;
+            vectorTools::copyFlattenedDealiiVecToSingleCompVec
+              (eigenVectorsFlattenedBlock[kPoint],
+               currentBlockSize,
+               std::make_pair(0,currentBlockSize),
+               dftPtr->localProc_dof_indicesReal,
+               dftPtr->localProc_dof_indicesImag,
+               eigenVectors[kPoint],
+               false);
+
+            //FIXME: The underlying call to update_ghost_values
+            //is required because currently localProc_dof_indicesReal
+            //and localProc_dof_indicesImag are only available for
+            //locally owned nodes. Once they are also made available
+            //for ghost nodes- use true for the last argument in
+            //copyFlattenedDealiiVecToSingleCompVec(..) above and supress
+            //underlying call.
+            for(unsigned int i= 0; i < currentBlockSize; ++i)
+              eigenVectors[kPoint][i].update_ghost_values();
 #else
-          std::vector< VectorizedArray<double> > psiQuadsNLP;
-          std::vector<Tensor<1,C_DIM,VectorizedArray<double> > > gradPsiQuadsNLP;
+            vectorTools::copyFlattenedDealiiVecToSingleCompVec
+              (eigenVectorsFlattenedBlock[kPoint],
+               currentBlockSize,
+               std::make_pair(0,currentBlockSize),
+               eigenVectors[kPoint],
+               true);
+
 #endif
+          }
 
           if (isPseudopotential)
-          {
+            for (unsigned int ikPoint=0; ikPoint<numKPoints; ++ikPoint)
+            {
+              computeNonLocalProjectorKetTimesPsiTimesVFlattened(eigenVectorsFlattenedBlock[ikPoint],
+                  currentBlockSize,
+                  projectorKetTimesPsiTimesVTimesPartOcc[ikPoint],
+                  ikPoint,
+                  blockedPartialOccupancies[ikPoint]
 #ifdef USE_COMPLEX
-            psiQuadsNLP.resize(numQuadPointsNLP*currentBlockSize*numKPoints,zeroTensor1);
-            gradPsiQuadsNLP.resize(numQuadPointsNLP*currentBlockSize*numKPoints,zeroTensor2);
+                  ,
+                  true
+#endif                
+                  );
+            }
+
+          for (unsigned int cell=0; cell<matrixFreeData.n_macro_cells(); ++cell)
+          {
+            forceEval.reinit(cell);
+#ifdef USE_COMPLEX
+            forceEvalKPoints.reinit(cell);
+#endif
+
+            psiEval.reinit(cell);
+
+            forceEvalNLP.reinit(cell);
+#ifdef USE_COMPLEX
+            forceEvalKPointsNLP.reinit(cell);
+#endif
+
+            psiEvalNLP.reinit(cell);
+
+            const unsigned int numSubCells=matrixFreeData.n_components_filled(cell);
+#ifdef USE_COMPLEX
+            std::vector<Tensor<1,2,VectorizedArray<double> > > psiQuads(numQuadPoints*currentBlockSize*numKPoints,zeroTensor1);
+            std::vector<Tensor<1,2,Tensor<1,C_DIM,VectorizedArray<double> > > > gradPsiQuads(numQuadPoints*currentBlockSize*numKPoints,zeroTensor2);
 #else
-            psiQuadsNLP.resize(numQuadPointsNLP*currentBlockSize,make_vectorized_array(0.0));
-            gradPsiQuadsNLP.resize(numQuadPointsNLP*currentBlockSize*numKPoints,zeroTensor3);
+            std::vector< VectorizedArray<double> > psiQuads(numQuadPoints*currentBlockSize,make_vectorized_array(0.0));
+            std::vector<Tensor<1,C_DIM,VectorizedArray<double> > > gradPsiQuads(numQuadPoints*currentBlockSize,zeroTensor3);
 #endif
 
             for (unsigned int ikPoint=0; ikPoint<numKPoints; ++ikPoint)
               for (unsigned int iEigenVec=0; iEigenVec<currentBlockSize; ++iEigenVec)
               {
-                psiEvalNLP.read_dof_values_plain(eigenVectors[ikPoint][iEigenVec]);
-                psiEvalNLP.evaluate(true,true);
+                psiEval.read_dof_values_plain(eigenVectors[ikPoint][iEigenVec]);
+                psiEval.evaluate(true,true);
 
-                for (unsigned int q=0; q<numQuadPointsNLP; ++q)
+                for (unsigned int q=0; q<numQuadPoints; ++q)
                 {
                   const unsigned int id=q*currentBlockSize*numKPoints+currentBlockSize*ikPoint+iEigenVec;
-                  psiQuadsNLP[id]=psiEvalNLP.get_value(q);
-                  gradPsiQuadsNLP[id]=psiEvalNLP.get_gradient(q);
+                  psiQuads[id]=psiEval.get_value(q);
+                  gradPsiQuads[id]=psiEval.get_gradient(q);
                 }//quad point loop
               } //eigenvector loop
 
-          }
+#ifdef USE_COMPLEX
+            std::vector<Tensor<1,2,VectorizedArray<double> > > psiQuadsNLP;
+            std::vector<Tensor<1,2,Tensor<1,C_DIM,VectorizedArray<double> > > > gradPsiQuadsNLP;
+#else
+            std::vector< VectorizedArray<double> > psiQuadsNLP;
+            std::vector<Tensor<1,C_DIM,VectorizedArray<double> > > gradPsiQuadsNLP;
+#endif
+
+            if (isPseudopotential)
+            {
+#ifdef USE_COMPLEX
+              psiQuadsNLP.resize(numQuadPointsNLP*currentBlockSize*numKPoints,zeroTensor1);
+              gradPsiQuadsNLP.resize(numQuadPointsNLP*currentBlockSize*numKPoints,zeroTensor2);
+#else
+              psiQuadsNLP.resize(numQuadPointsNLP*currentBlockSize,make_vectorized_array(0.0));
+              gradPsiQuadsNLP.resize(numQuadPointsNLP*currentBlockSize*numKPoints,zeroTensor3);
+#endif
+
+              for (unsigned int ikPoint=0; ikPoint<numKPoints; ++ikPoint)
+                for (unsigned int iEigenVec=0; iEigenVec<currentBlockSize; ++iEigenVec)
+                {
+                  psiEvalNLP.read_dof_values_plain(eigenVectors[ikPoint][iEigenVec]);
+                  psiEvalNLP.evaluate(true,true);
+
+                  for (unsigned int q=0; q<numQuadPointsNLP; ++q)
+                  {
+                    const unsigned int id=q*currentBlockSize*numKPoints+currentBlockSize*ikPoint+iEigenVec;
+                    psiQuadsNLP[id]=psiEvalNLP.get_value(q);
+                    gradPsiQuadsNLP[id]=psiEvalNLP.get_gradient(q);
+                  }//quad point loop
+                } //eigenvector loop
+
+            }
 
 #ifndef USE_COMPLEX
-          const unsigned int numNonLocalAtomsCurrentProc=projectorKetTimesPsiTimesVTimesPartOcc[0].size();
-          std::vector<bool> isAtomInCell(numNonLocalAtomsCurrentProc,false);
-          if (isPseudopotential)
-          {
-            std::vector<unsigned int> nonTrivialNonLocalIds;
-            for (unsigned int iatom=0; iatom<numNonLocalAtomsCurrentProc; ++iatom)
+            const unsigned int numNonLocalAtomsCurrentProc=projectorKetTimesPsiTimesVTimesPartOcc[0].size();
+            std::vector<bool> isAtomInCell(numNonLocalAtomsCurrentProc,false);
+            if (isPseudopotential)
             {
-              for (unsigned int i=0;i<macroIdToNonlocalAtomsSetMap[cell].size();i++)
-                if (macroIdToNonlocalAtomsSetMap[cell][i]==iatom)
-                {
-                  isAtomInCell[iatom]=true;
-                  nonTrivialNonLocalIds.push_back(iatom);
-                  break;
-                }
-            }
-
-            for (unsigned int q=0; q<numQuadPointsNLP; ++q)
-            {
-              std::vector<Tensor<1,C_DIM,VectorizedArray<double> > > & tempContract= projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuads[cell*numQuadPointsNLP+q];
-              //std::fill(temp1.begin(),temp1.end(),make_vectorized_array(0.0));
-              for (unsigned int i=0; i<nonTrivialNonLocalIds.size(); ++i)
+              std::vector<unsigned int> nonTrivialNonLocalIds;
+              for (unsigned int iatom=0; iatom<numNonLocalAtomsCurrentProc; ++iatom)
               {
-                const unsigned int iatom=nonTrivialNonLocalIds[i];
-                const unsigned int numberSingleAtomPseudoWaveFunctions=numPseudoWfcsAtom[iatom];
-                const unsigned int startingId=nonlocalPseudoWfcsAccum[iatom];
-                const std::vector<double> & temp2=projectorKetTimesPsiTimesVTimesPartOcc[0][iatom];
-                for (unsigned int ipsp=0; ipsp<numberSingleAtomPseudoWaveFunctions; ++ipsp) 
-                  for (unsigned int iEigenVec=0; iEigenVec<currentBlockSize; ++iEigenVec)
+                for (unsigned int i=0;i<macroIdToNonlocalAtomsSetMap[cell].size();i++)
+                  if (macroIdToNonlocalAtomsSetMap[cell][i]==iatom)
                   {
-                    tempContract[startingId+ipsp]
-                      += gradPsiQuadsNLP[q*currentBlockSize+iEigenVec]
-                      *make_vectorized_array(temp2[ipsp*currentBlockSize+iEigenVec]);
+                    isAtomInCell[iatom]=true;
+                    nonTrivialNonLocalIds.push_back(iatom);
+                    break;
                   }
               }
+
+              for (unsigned int q=0; q<numQuadPointsNLP; ++q)
+              {
+                std::vector<Tensor<1,C_DIM,VectorizedArray<double> > > & tempContract= projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuads[cell*numQuadPointsNLP+q];
+                //std::fill(temp1.begin(),temp1.end(),make_vectorized_array(0.0));
+                for (unsigned int i=0; i<nonTrivialNonLocalIds.size(); ++i)
+                {
+                  const unsigned int iatom=nonTrivialNonLocalIds[i];
+                  const unsigned int numberSingleAtomPseudoWaveFunctions=numPseudoWfcsAtom[iatom];
+                  const unsigned int startingId=nonlocalPseudoWfcsAccum[iatom];
+                  const std::vector<double> & temp2=projectorKetTimesPsiTimesVTimesPartOcc[0][iatom];
+                  for (unsigned int ipsp=0; ipsp<numberSingleAtomPseudoWaveFunctions; ++ipsp) 
+                    for (unsigned int iEigenVec=0; iEigenVec<currentBlockSize; ++iEigenVec)
+                    {
+                      tempContract[startingId+ipsp]
+                        += gradPsiQuadsNLP[q*currentBlockSize+iEigenVec]
+                        *make_vectorized_array(temp2[ipsp*currentBlockSize+iEigenVec]);
+                    }
+                }
+              }
+
             }
 
-          }
-
 #endif
-          Tensor<2,C_DIM,VectorizedArray<double> > EKPointsQuadSum=zeroTensor4;
-          for (unsigned int q=0; q<numQuadPoints; ++q)
-          {
-#ifdef USE_COMPLEX
-            Tensor<2,C_DIM,VectorizedArray<double> > EKPoints=eshelbyTensor::getELocWfcEshelbyTensorPeriodicKPoints
-              (psiQuads.begin()+q*currentBlockSize*numKPoints,
-               gradPsiQuads.begin()+q*currentBlockSize*numKPoints,
-               dftPtr->d_kPointCoordinates,
-               dftPtr->d_kPointWeights,
-               blockedEigenValues,
-               dftPtr->fermiEnergy,
-               dftParameters::TVal);
-
-            EKPoints+=eshelbyTensor::getEKStress
-              (psiQuads.begin()+q*currentBlockSize*numKPoints,
-               gradPsiQuads.begin()+q*currentBlockSize*numKPoints,
-               dftPtr->d_kPointCoordinates,
-               dftPtr->d_kPointWeights,
-               blockedEigenValues,
-               dftPtr->fermiEnergy,
-               dftParameters::TVal);
-#else        
-            Tensor<2,C_DIM,VectorizedArray<double> > EKPoints=eshelbyTensor::getELocWfcEshelbyTensorNonPeriodic
-              (psiQuads.begin()+q*currentBlockSize*numKPoints,
-               gradPsiQuads.begin()+q*currentBlockSize*numKPoints,
-               blockedEigenValues[0],
-               blockedPartialOccupancies[0]);
-#endif
-
-            EKPointsQuadSum+=EKPoints*forceEval.JxW(q);
-          }//quad point loop
-
-          if (isPseudopotential)
-          {
-            for (unsigned int q=0; q<numQuadPointsNLP; ++q)
+            Tensor<2,C_DIM,VectorizedArray<double> > EKPointsQuadSum=zeroTensor4;
+            for (unsigned int q=0; q<numQuadPoints; ++q)
             {
+#ifdef USE_COMPLEX
+              Tensor<2,C_DIM,VectorizedArray<double> > EKPoints=eshelbyTensor::getELocWfcEshelbyTensorPeriodicKPoints
+                (psiQuads.begin()+q*currentBlockSize*numKPoints,
+                 gradPsiQuads.begin()+q*currentBlockSize*numKPoints,
+                 dftPtr->d_kPointCoordinates,
+                 dftPtr->d_kPointWeights,
+                 blockedEigenValues,
+                 dftPtr->fermiEnergy,
+                 dftParameters::TVal);
+
+              EKPoints+=eshelbyTensor::getEKStress
+                (psiQuads.begin()+q*currentBlockSize*numKPoints,
+                 gradPsiQuads.begin()+q*currentBlockSize*numKPoints,
+                 dftPtr->d_kPointCoordinates,
+                 dftPtr->d_kPointWeights,
+                 blockedEigenValues,
+                 dftPtr->fermiEnergy,
+                 dftParameters::TVal);
+#else        
+              Tensor<2,C_DIM,VectorizedArray<double> > EKPoints=eshelbyTensor::getELocWfcEshelbyTensorNonPeriodic
+                (psiQuads.begin()+q*currentBlockSize*numKPoints,
+                 gradPsiQuads.begin()+q*currentBlockSize*numKPoints,
+                 blockedEigenValues[0],
+                 blockedPartialOccupancies[0]);
+#endif
+
+              EKPointsQuadSum+=EKPoints*forceEval.JxW(q);
+            }//quad point loop
+
+            if (isPseudopotential)
+            {
+              for (unsigned int q=0; q<numQuadPointsNLP; ++q)
+              {
 #ifdef USE_COMPLEX        
-              Tensor<2,C_DIM,VectorizedArray<double> > Enl
-                =eshelbyTensor::getEnlStress(zetalmDeltaVlProductDistImageAtomsQuads[cell][q],
-                  projectorKetTimesPsiTimesVTimesPartOcc,
-                  psiQuadsNLP.begin()+q*currentBlockSize*numKPoints,
-                  gradPsiQuadsNLP.begin()+q*currentBlockSize*numKPoints,            
-                  dftPtr->d_kPointWeights,
-                  dftPtr->d_kPointCoordinates,            
-                  macroIdToNonlocalAtomsSetMap[cell],
-                  currentBlockSize);
+                Tensor<2,C_DIM,VectorizedArray<double> > Enl
+                  =eshelbyTensor::getEnlStress(zetalmDeltaVlProductDistImageAtomsQuads[cell][q],
+                    projectorKetTimesPsiTimesVTimesPartOcc,
+                    psiQuadsNLP.begin()+q*currentBlockSize*numKPoints,
+                    gradPsiQuadsNLP.begin()+q*currentBlockSize*numKPoints,            
+                    dftPtr->d_kPointWeights,
+                    dftPtr->d_kPointCoordinates,            
+                    macroIdToNonlocalAtomsSetMap[cell],
+                    currentBlockSize);
 #else
-                
-              Tensor<2,C_DIM,VectorizedArray<double> > Enl=zeroTensor4;
-              /*
-                =eshelbyTensor::getEnlStress(zetalmDeltaVlProductDistImageAtomsQuads[cell][q],
-                  projectorKetTimesPsiTimesVTimesPartOcc,
-                  psiQuadsNLP.begin()+q*currentBlockSize*numKPoints,
-                  gradPsiQuadsNLP.begin()+q*currentBlockSize*numKPoints,            
-                  macroIdToNonlocalAtomsSetMap[cell],
-                  currentBlockSize);
-                */
+                  
+                Tensor<2,C_DIM,VectorizedArray<double> > Enl=zeroTensor4;
+                /*
+                  =eshelbyTensor::getEnlStress(zetalmDeltaVlProductDistImageAtomsQuads[cell][q],
+                    projectorKetTimesPsiTimesVTimesPartOcc,
+                    psiQuadsNLP.begin()+q*currentBlockSize*numKPoints,
+                    gradPsiQuadsNLP.begin()+q*currentBlockSize*numKPoints,            
+                    macroIdToNonlocalAtomsSetMap[cell],
+                    currentBlockSize);
+                  */
 #endif          
 
 
-              EKPointsQuadSum+=Enl*forceEvalNLP.JxW(q);
+                EKPointsQuadSum+=Enl*forceEvalNLP.JxW(q);
+              }
             }
+
+            for (unsigned int iSubCell=0; iSubCell<numSubCells; ++iSubCell)
+              for (unsigned int idim=0; idim<C_DIM; ++idim)
+                for (unsigned int jdim=0; jdim<C_DIM; ++jdim)
+                {
+                  d_stressKPoints[idim][jdim]+=spinPolarizedFactor*EKPointsQuadSum[idim][jdim][iSubCell];
+                }
+
+          }//macro cell loop
+        }//band parallelization loop
+      }//wavefunction block loop
+    }
+
+#if defined(DFTFE_WITH_GPU) && !defined(USE_COMPLEX)
+    if (dftParameters::useGPU)
+    {
+      for (unsigned int cell=0; cell<matrixFreeData.n_macro_cells(); ++cell)
+      {
+        forceEval.reinit(cell);
+
+        Tensor<2,C_DIM,VectorizedArray<double> > EKPointsQuadSum=zeroTensor4;
+        for (unsigned int q=0; q<numQuadPoints; ++q)
+        {
+          Tensor<2,C_DIM,VectorizedArray<double> > E;
+          const unsigned int physicalCellId=macroCellIdToNormalCellIdMap[cell];
+          const unsigned int id=physicalCellId*numQuadPoints+q;
+          E[0][0]=make_vectorized_array(elocWfcEshelbyTensorQuadValuesH[id*6+0]);
+          E[1][0]=make_vectorized_array(elocWfcEshelbyTensorQuadValuesH[id*6+1]);
+          E[1][1]=make_vectorized_array(elocWfcEshelbyTensorQuadValuesH[id*6+2]);
+          E[2][0]=make_vectorized_array(elocWfcEshelbyTensorQuadValuesH[id*6+3]);
+          E[2][1]=make_vectorized_array(elocWfcEshelbyTensorQuadValuesH[id*6+4]);
+          E[2][2]=make_vectorized_array(elocWfcEshelbyTensorQuadValuesH[id*6+5]);
+          E[0][1]=E[1][0];
+          E[0][2]=E[2][0];
+          E[1][2]=E[2][1];
+
+          EKPointsQuadSum+=E*forceEval.JxW(q);
+        }//quad point loop
+
+        for (unsigned int iSubCell=0; iSubCell<numSubCells; ++iSubCell)
+          for (unsigned int idim=0; idim<C_DIM; ++idim)
+            for (unsigned int jdim=0; jdim<C_DIM; ++jdim)
+            {
+              d_stressKPoints[idim][jdim]+=spinPolarizedFactor*EKPointsQuadSum[idim][jdim][iSubCell];
+            }        
+      }
+
+      if (isPseudopotential)
+        for (unsigned int i=0; i<nonTrivialNonLocalIdsAllCells.size(); ++i)
+        {
+          const unsigned int cell=normalCellIdToMacroCellIdMap[nonTrivialIdToElemIdMap[i]];
+          const unsigned int id=nonTrivialIdToAllPseudoWfcIdMap[i];
+          for (unsigned int q=0; q<numQuadPointsNLP; ++q)
+          {
+              projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuads[cell*numQuadPointsNLP+q][id][0]=make_vectorized_array(projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuadsFlattened[i*numQuadPointsNLP*3+3*q+0]);
+              projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuads[cell*numQuadPointsNLP+q][id][1]=make_vectorized_array(projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuadsFlattened[i*numQuadPointsNLP*3+3*q+1]);
+              projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuads[cell*numQuadPointsNLP+q][id][2]=make_vectorized_array(projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuadsFlattened[i*numQuadPointsNLP*3+3*q+2]);            
           }
 
-          for (unsigned int iSubCell=0; iSubCell<numSubCells; ++iSubCell)
-            for (unsigned int idim=0; idim<C_DIM; ++idim)
-              for (unsigned int jdim=0; jdim<C_DIM; ++jdim)
-              {
-                d_stressKPoints[idim][jdim]+=spinPolarizedFactor*EKPointsQuadSum[idim][jdim][iSubCell];
-              }
-
-        }//macro cell loop
-      }//band parallelization loop
-    }//wavefunction block loop
+        }
+    }
+#endif
 
 #ifndef USE_COMPLEX
     if (isPseudopotential)
