@@ -1015,7 +1015,6 @@ namespace dftfe {
 					dftParameters::rrGEP= prm.get_bool("RR GEP");
 					dftParameters::chebyshevOrder                = prm.get_integer("CHEBYSHEV POLYNOMIAL DEGREE");
 					dftParameters::useELPA= prm.get_bool("USE ELPA");
-					dftParameters::useBatchGEMM= prm.get_bool("BATCH GEMM");
                                         dftParameters::HXOptimFlag=prm.get_bool("ENABLE HAMILTONIAN TIMES VECTOR OPTIM");
 					dftParameters::orthogType        = prm.get("ORTHOGONALIZATION TYPE");
 					dftParameters::chebyshevTolerance = prm.get_double("CHEBYSHEV FILTER TOLERANCE");
