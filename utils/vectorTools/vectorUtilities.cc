@@ -897,7 +897,6 @@ namespace dftfe
                                                        std::vector<unsigned int> &nodesPerCellClassificationMap)
                   {
                       
-                      dealii::ConditionalOStream pcout (std::cout, (dealii::Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0));
                       const std::vector< dealii::Point<3> > & nodalCoordinatesRefCell = matrix_free_data.get_dof_handler(mfDofHandlerIndex).get_fe().get_unit_support_points();
                       unsigned int numberNodesPerCell = nodalCoordinatesRefCell.size();
                       nodesPerCellClassificationMap.resize(numberNodesPerCell,0);
@@ -919,15 +918,6 @@ namespace dftfe
                              nodesPerCellClassificationMap[iNode] = 1;
                            }
                        }
-                    //unsigned int interiorNodes = 0;
-                    //for(unsigned int iNode = 0; iNode < numberNodesPerCell; ++iNode)
-                      // {
-                        //  if(nodesPerCellClassificationMap[iNode] == 0)
-                          //   interiorNodes += 1;                         
-                       //}
-
-                   //pcout<<"Number of interior Nodes: "<<interiorNodes<<std::endl;
-
                   }
 
 
