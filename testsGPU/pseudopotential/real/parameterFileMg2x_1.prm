@@ -45,6 +45,7 @@ subsection Geometry
   set DOMAIN VECTORS FILE = domainVectorsMg2x.inp
   subsection Optimization
     set ION FORCE                 = true
+    set CELL STRESS               = true
   end
 end
 
