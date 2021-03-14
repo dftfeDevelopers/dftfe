@@ -28,7 +28,7 @@ namespace dftfe {
 			mpi_communicator (mpi_comm),
 			n_mpi_processes (dealii::Utilities::MPI::n_mpi_processes(mpi_comm)),
 			this_mpi_process (dealii::Utilities::MPI::this_mpi_process(mpi_comm)),
-			pcout (std::cout, (dealii::Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0))
+			pcout (std::cout, (dealii::Utilities::MPI::this_mpi_process(mpi_comm) == 0))
 	{
 		d_isMeanValueConstraintComputed=false;
     d_isGradSmearedChargeRhs=false;
@@ -351,8 +351,7 @@ namespace dftfe {
 			// -\sum_{i \neq o} a_i * u_i computation which involves summation across MPI tasks
 			const double constrainedNodeValue=d_meanValueConstraintVec*vec;
 
-			// mean value constrained node is in the root task id 
-			if (dealii::Utilities::MPI::this_mpi_process(mpi_communicator) ==0)
+			if (dealii::Utilities::MPI::this_mpi_process(mpi_communicator) ==d_meanValueConstraintProcId)
 				vec[d_meanValueConstraintNodeId]=constrainedNodeValue;
 		}
 
@@ -362,14 +361,14 @@ namespace dftfe {
 		void poissonSolverProblem<FEOrder,FEOrderElectro>::meanValueConstraintDistributeSlaveToMaster(distributedCPUVec<double>& vec) const
 		{
 			double constrainedNodeValue=0;
-			if (dealii::Utilities::MPI::this_mpi_process(mpi_communicator) ==0)
+			if (dealii::Utilities::MPI::this_mpi_process(mpi_communicator) ==d_meanValueConstraintProcId)
 				constrainedNodeValue=vec[d_meanValueConstraintNodeId];
 
-			// broadcast value at mean value constraint dof in root task id to all other tasks ids
+			// broadcast value at mean value constraint to all other tasks ids
 			MPI_Bcast(&constrainedNodeValue,
 					1,
 					MPI_DOUBLE,
-					0,
+					d_meanValueConstraintProcId,
 					mpi_communicator);
 
 			vec.add(constrainedNodeValue,d_meanValueConstraintVec);
@@ -381,7 +380,7 @@ namespace dftfe {
 		void poissonSolverProblem<FEOrder,FEOrderElectro>::meanValueConstraintSetZero(distributedCPUVec<double>& vec) const
 		{
 			if (d_isMeanValueConstraintComputed)
-				if (dealii::Utilities::MPI::this_mpi_process(mpi_communicator) ==0)
+				if (dealii::Utilities::MPI::this_mpi_process(mpi_communicator) ==d_meanValueConstraintProcId)
 					vec[d_meanValueConstraintNodeId]=0;
 		}
 
@@ -432,7 +431,7 @@ namespace dftfe {
 			dealii::IndexSet locallyRelevantElements;
 			dealii::DoFTools::extract_locally_relevant_dofs(dofHandler, locallyRelevantElements);
 
-			//pick mean value constrained node in the zeroth processor such that it is not part
+			//pick mean value constrained node such that it is not part
 			//of periodic and hanging node constraint equations (both slave and master node).
 			//This is done for simplicity of implementation.
 			dealii::IndexSet allIndicesTouchedByConstraints(d_meanValueConstraintVec.size());
@@ -453,19 +452,47 @@ namespace dftfe {
 					allIndicesTouchedByConstraints.add_index(it->first);
 
 			locallyOwnedElements.subtract_set(allIndicesTouchedByConstraints);
-			d_meanValueConstraintNodeId=*locallyOwnedElements.begin();
-			AssertThrow(!d_constraintMatrixPtr->is_constrained(d_meanValueConstraintNodeId),dealii::ExcMessage("DFT-FE Error: Mean value constraint creation bug."));
 
+      
+      const unsigned int localSizeOfPotentialChoices=locallyOwnedElements.n_elements();
+      const unsigned int totalProcs=dealii::Utilities::MPI::n_mpi_processes(mpi_communicator);
+      const unsigned int this_mpi_process=dealii::Utilities::MPI::this_mpi_process(mpi_communicator);
+      std::vector<unsigned int> localSizesOfPotentialChoices(totalProcs,0);
+      MPI_Allgather(&localSizeOfPotentialChoices, 
+                    1,
+                    MPI_UNSIGNED,
+                    &localSizesOfPotentialChoices[0], 
+                    1,
+                    MPI_UNSIGNED,
+                    mpi_communicator);      
 
-			double valueAtConstraintNode=d_meanValueConstraintVec[d_meanValueConstraintNodeId];
+      d_meanValueConstraintProcId=0;
+      for (unsigned int iproc=0;iproc<totalProcs; iproc++)
+      {
+        if (localSizesOfPotentialChoices[iproc]>0)
+        {
+          d_meanValueConstraintProcId=iproc;
+          break;
+        }
+      }
+      
+			double valueAtConstraintNode=0;
+      if (this_mpi_process==d_meanValueConstraintProcId)
+      {
+        AssertThrow(locallyOwnedElements.size()!=0,dealii::ExcMessage("DFT-FE Error: please contact developers."));
+        d_meanValueConstraintNodeId=*locallyOwnedElements.begin();
+        AssertThrow(!d_constraintMatrixPtr->is_constrained(d_meanValueConstraintNodeId),dealii::ExcMessage("DFT-FE Error: Mean value constraint creation bug."));
+        valueAtConstraintNode=d_meanValueConstraintVec[d_meanValueConstraintNodeId];
+      }
+
 			MPI_Bcast(&valueAtConstraintNode,
 					1,
 					MPI_DOUBLE,
-					0,
+					d_meanValueConstraintProcId,
 					mpi_communicator);
 
 			d_meanValueConstraintVec/=-valueAtConstraintNode;
-			if (dealii::Utilities::MPI::this_mpi_process(mpi_communicator) ==0)
+			if (this_mpi_process ==d_meanValueConstraintProcId)
 				d_meanValueConstraintVec[d_meanValueConstraintNodeId]=0;
 		}
 
