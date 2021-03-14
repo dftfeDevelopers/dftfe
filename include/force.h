@@ -169,6 +169,9 @@ namespace dftfe {
 			 *  @return void.
 			 */
 			void computeStress(const MatrixFree<3,double> & matrixFreeData,
+#ifdef DFTFE_WITH_GPU
+				 kohnShamDFTOperatorCUDAClass<FEOrder,FEOrderElectro> & kohnShamDFTEigenOperator,
+#endif      
 					const unsigned int eigenDofHandlerIndex,
           const unsigned int smearedChargeQuadratureId,
           const unsigned int lpspQuadratureIdElectro,
@@ -466,6 +469,9 @@ namespace dftfe {
           const unsigned int smearedChargeQuadratureId);
 
 			void computeStressEEshelbyEPSPEnlEk(const MatrixFree<3,double> & matrixFreeData,
+#ifdef DFTFE_WITH_GPU
+				 kohnShamDFTOperatorCUDAClass<FEOrder,FEOrderElectro> & kohnShamDFTEigenOperator,
+#endif      
 					const unsigned int eigenDofHandlerIndex,
           const unsigned int smearedChargeQuadratureId,
             const unsigned int lpspQuadratureIdElectro,         

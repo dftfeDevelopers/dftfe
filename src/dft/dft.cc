@@ -2921,6 +2921,9 @@ namespace dftfe {
 				if (computeForces)
 				{
 					forcePtr->computeStress(matrix_free_data,
+#ifdef DFTFE_WITH_GPU
+							kohnShamDFTEigenOperatorCUDA,
+#endif          
 							d_eigenDofHandlerIndex,
               d_smearedChargeQuadratureIdElectro,
               d_lpspQuadratureIdElectro,

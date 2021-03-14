@@ -18,6 +18,9 @@
 //compute configurational stress contribution from all terms except the nuclear self energy
 	template<unsigned int FEOrder,unsigned int FEOrderElectro>
 void forceClass<FEOrder,FEOrderElectro>::computeStressEEshelbyEPSPEnlEk(const MatrixFree<3,double> & matrixFreeData,
+#ifdef DFTFE_WITH_GPU
+		kohnShamDFTOperatorCUDAClass<FEOrder,FEOrderElectro> & kohnShamDFTEigenOperator,
+#endif
 		const unsigned int eigenDofHandlerIndex,
     const unsigned int smearedChargeQuadratureId,
       const unsigned int lpspQuadratureIdElectro,          
@@ -700,6 +703,7 @@ void forceClass<FEOrder,FEOrderElectro>::computeStressEEshelbyEPSPEnlEk(const Ma
           EKPointsQuadSum+=E*forceEval.JxW(q);
         }//quad point loop
 
+        const unsigned int numSubCells=matrixFreeData.n_components_filled(cell);
         for (unsigned int iSubCell=0; iSubCell<numSubCells; ++iSubCell)
           for (unsigned int idim=0; idim<C_DIM; ++idim)
             for (unsigned int jdim=0; jdim<C_DIM; ++jdim)

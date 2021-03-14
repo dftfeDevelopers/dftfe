@@ -19,6 +19,9 @@
 template<unsigned int FEOrder,unsigned int FEOrderElectro>
 	void forceClass<FEOrder,FEOrderElectro>::computeStress
 (const MatrixFree<3,double> & matrixFreeData,
+#ifdef DFTFE_WITH_GPU
+ kohnShamDFTOperatorCUDAClass<FEOrder,FEOrderElectro> & kohnShamDFTEigenOperator,
+#endif
  const unsigned int eigenDofHandlerIndex,
  const unsigned int smearedChargeQuadratureId,
   const unsigned int lpspQuadratureIdElectro,         
@@ -66,6 +69,9 @@ template<unsigned int FEOrder,unsigned int FEOrderElectro>
 
 	//configurational stress contribution from all terms except those from nuclear self energy
   computeStressEEshelbyEPSPEnlEk(matrixFreeData,
+#ifdef DFTFE_WITH_GPU
+      kohnShamDFTEigenOperator,
+#endif  
       eigenDofHandlerIndex,
       smearedChargeQuadratureId,
       lpspQuadratureIdElectro,        
