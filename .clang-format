@@ -1,6 +1,8 @@
 #
 # The clang-format (Clang 6) style file used by deal.II.
 #
+## This file is adapted by Sambit Das for use with DFT-FE code
+## -------------------------------------------------------------------------------------
 
 AccessModifierOffset: -2
 

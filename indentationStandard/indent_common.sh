@@ -12,7 +12,8 @@
 ## The full text of the license can be found in the file LICENSE at
 ## the top level of the deal.II distribution.
 ##
-## ---------------------------------------------------------------------
+## This file is adapted by Sambit Das for use with DFT-FE code
+## -------------------------------------------------------------------------------------
 
 #
 # This file contains a number of common functions used all indent scripts

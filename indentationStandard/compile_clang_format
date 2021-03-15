@@ -12,7 +12,8 @@
 ## The full text of the license can be found in the file LICENSE.md at
 ## the top level directory of deal.II.
 ##
-## ---------------------------------------------------------------------
+## This file is adapted by Sambit Das for use with DFT-FE code
+## -------------------------------------------------------------------------------------
 
 #
 # This script downloads, compiles and installs the clang-format binary. The
