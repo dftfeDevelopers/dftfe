@@ -22,6 +22,8 @@ cd $SLURM_SUBMIT_DIR
 export OMP_NUM_THREADS=1
 
 srun ./dftfe parameterFileMg2x_1.prm > outputMg2x_1
+srun ./dftfe parameterFileMg2x_1_spincpu.prm > outputMg2x_1_spin_cpu
+srun ./dftfe parameterFileMg2x_1_spingpu.prm > outputMg2x_1_spin_gpu
 srun ./dftfe parameterFileMg2x_2.prm > outputMg2x_2
 srun ./dftfe parameterFileMg2x_3.prm > outputMg2x_3
 srun ./dftfe parameterFileMg2x_4.prm > outputMg2x_4
