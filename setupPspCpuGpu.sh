@@ -31,10 +31,6 @@ xmlLibDir="/usr/lib64"
 ELPA_PATH="/global/project/projectdirs/m1759/dsambit/softwaresDFTFE/elpa/installGcc8.3Elpa2020.11"
 NCCL_PATH="/global/project/projectdirs/m1759/dsambit/softwaresDFTFE/nccl/build"
 
-#If you have installed dealii by linking with intel mkl library set underlying flag to "ON",
-#otherwise set it to "OFF"
-withIntelMkl=OFF
-
 #Toggle GPU compilation
 withGPU=ON
 
@@ -77,7 +73,7 @@ function cmake_real() {
 	-DCMAKE_BUILD_TYPE=$build_type -DDEAL_II_DIR=$dealiiDir \
 	-DALGLIB_DIR=$alglibDir -DLIBXC_DIR=$libxcDir \
 	-DSPGLIB_DIR=$spglibDir -DXML_LIB_DIR=$xmlLibDir \
-	-DXML_INCLUDE_DIR=$xmlIncludeDir -DWITH_INTEL_MKL=$withIntelMkl \
+	-DXML_INCLUDE_DIR=$xmlIncludeDir\
 	-DWITH_ELPA=$withELPA -DWITH_NCCL=$withNCCL -DCMAKE_PREFIX_PATH="$ELPA_PATH;$NCCL_PATH"\
 	-DWITH_COMPLEX=OFF -DWITH_GPU=$withGPU \
 	-DWITH_TESTING=$testing -DMINIMAL_COMPILE=$minimal_compile\
@@ -92,7 +88,7 @@ function cmake_cplx() {
 	-DCMAKE_BUILD_TYPE=$build_type -DDEAL_II_DIR=$dealiiDir \
 	-DALGLIB_DIR=$alglibDir -DLIBXC_DIR=$libxcDir \
 	-DSPGLIB_DIR=$spglibDir -DXML_LIB_DIR=$xmlLibDir \
-	-DXML_INCLUDE_DIR=$xmlIncludeDir -DWITH_INTEL_MKL=$withIntelMkl \
+	-DXML_INCLUDE_DIR=$xmlIncludeDir\
 	-DWITH_COMPLEX=ON -DWITH_TESTING=$testing -DMINIMAL_COMPILE=$minimal_compile\
 	-DHIGHERQUAD_PSP=$withHigherQuadPSP $1
 }
@@ -113,8 +109,8 @@ echo -e "${Blu}Building Real executable in $build_type mode...${RCol}"
 cmake_real "$SRC" && make -j8
 cd ..
 
-#echo -e "${Blu}Building Complex executable in $build_type mode...${RCol}"
-#cmake_cplx "$SRC" && make -j8
-#cd ..
+echo -e "${Blu}Building Complex executable in $build_type mode...${RCol}"
+cmake_cplx "$SRC" && make -j8
+cd ..
 
 echo -e "${Blu}Build complete.${RCol}"
