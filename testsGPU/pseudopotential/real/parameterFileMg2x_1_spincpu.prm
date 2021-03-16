@@ -3,7 +3,7 @@ set REPRODUCIBLE OUTPUT=true
 set H REFINED ELECTROSTATICS = false
 
 subsection GPU
-  set USE GPU=true
+  set USE GPU=false
   set AUTO GPU BLOCK SIZES=false
 end
 
@@ -24,6 +24,8 @@ subsection DFT functional parameters
   set EXCHANGE CORRELATION TYPE   = 4
   set PSEUDOPOTENTIAL CALCULATION = true
   set PSEUDOPOTENTIAL FILE NAMES LIST = pseudoMg.inp
+  set SPIN POLARIZATION=1
+  set START MAGNETIZATION=0.1
 end
 
 

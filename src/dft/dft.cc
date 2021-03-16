@@ -2810,7 +2810,7 @@ namespace dftfe {
 			}
 
 #ifdef DFTFE_WITH_GPU
-			if (dftParameters::useGPU && (dftParameters::isCellStress || dftParameters::writeWfcSolutionFields || dftParameters::writeLdosFile || dftParameters::writePdosFile))
+			if (dftParameters::useGPU && (dftParameters::writeWfcSolutionFields || dftParameters::writeLdosFile || dftParameters::writePdosFile))
 				for(unsigned int kPoint = 0; kPoint < (1+dftParameters::spinPolarized)*d_kPointWeights.size(); ++kPoint)
 				{
 					vectorToolsCUDA::copyCUDAVecToHostVec(d_eigenVectorsFlattenedCUDA.begin()+kPoint*d_eigenVectorsFlattenedSTL[0].size(),
@@ -2922,6 +2922,9 @@ namespace dftfe {
 				if (computeForces)
 				{
 					forcePtr->computeStress(matrix_free_data,
+#ifdef DFTFE_WITH_GPU
+							kohnShamDFTEigenOperatorCUDA,
+#endif          
 							d_eigenDofHandlerIndex,
               d_smearedChargeQuadratureIdElectro,
               d_lpspQuadratureIdElectro,

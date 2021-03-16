@@ -19,6 +19,9 @@
 template<unsigned int FEOrder,unsigned int FEOrderElectro>
 	void forceClass<FEOrder,FEOrderElectro>::computeStress
 (const MatrixFree<3,double> & matrixFreeData,
+#ifdef DFTFE_WITH_GPU
+ kohnShamDFTOperatorCUDAClass<FEOrder,FEOrderElectro> & kohnShamDFTEigenOperator,
+#endif
  const unsigned int eigenDofHandlerIndex,
  const unsigned int smearedChargeQuadratureId,
   const unsigned int lpspQuadratureIdElectro,         
@@ -65,50 +68,31 @@ template<unsigned int FEOrder,unsigned int FEOrderElectro>
 	}
 
 	//configurational stress contribution from all terms except those from nuclear self energy
-	if (dftParameters::spinPolarized)
-		computeStressSpinPolarizedEEshelbyEPSPEnlEk(matrixFreeData,
-				eigenDofHandlerIndex,
-        smearedChargeQuadratureId,
-        lpspQuadratureIdElectro,        
-				matrixFreeDataElectro,
-				phiTotDofHandlerIndexElectro,
-				phiTotRhoOutElectro,
-        gradRhoOutValuesLpsp,         
-        rhoOutValuesElectro,
-        rhoOutValuesElectroLpsp,         
-        gradRhoOutValuesElectro,
-        gradRhoOutValuesElectroLpsp,
-				pseudoVLocElectro,
-				pseudoVLocAtomsElectro,
-        rhoCoreValues,
-	      gradRhoCoreValues,
-	      hessianRhoCoreValues,  
-	      gradRhoCoreAtoms,
-	      hessianRhoCoreAtoms,            
-				vselfBinsManagerElectro);
-	else
-		computeStressEEshelbyEPSPEnlEk(matrixFreeData,
-				eigenDofHandlerIndex,
-        smearedChargeQuadratureId,
-        lpspQuadratureIdElectro,        
-				matrixFreeDataElectro,
-				phiTotDofHandlerIndexElectro,
-				phiTotRhoOutElectro,
-        rhoOutValues,
-        gradRhoOutValues,
-        gradRhoOutValuesLpsp,         
-        rhoOutValuesElectro,
-        rhoOutValuesElectroLpsp,         
-        gradRhoOutValuesElectro,
-        gradRhoOutValuesElectroLpsp,
-        pseudoVLocElectro,
-				pseudoVLocAtomsElectro,
-        rhoCoreValues,
-	      gradRhoCoreValues,
-	      hessianRhoCoreValues,   
-	      gradRhoCoreAtoms,
-	      hessianRhoCoreAtoms,        
-				vselfBinsManagerElectro);
+  computeStressEEshelbyEPSPEnlEk(matrixFreeData,
+#ifdef DFTFE_WITH_GPU
+      kohnShamDFTEigenOperator,
+#endif  
+      eigenDofHandlerIndex,
+      smearedChargeQuadratureId,
+      lpspQuadratureIdElectro,        
+      matrixFreeDataElectro,
+      phiTotDofHandlerIndexElectro,
+      phiTotRhoOutElectro,
+      rhoOutValues,
+      gradRhoOutValues,
+      gradRhoOutValuesLpsp,         
+      rhoOutValuesElectro,
+      rhoOutValuesElectroLpsp,         
+      gradRhoOutValuesElectro,
+      gradRhoOutValuesElectroLpsp,
+      pseudoVLocElectro,
+      pseudoVLocAtomsElectro,
+      rhoCoreValues,
+      gradRhoCoreValues,
+      hessianRhoCoreValues,   
+      gradRhoCoreAtoms,
+      hessianRhoCoreAtoms,        
+      vselfBinsManagerElectro);
 
 	//configurational stress contribution from nuclear self energy. This is handled separately as it involves
 	// a surface integral over the vself ball surface

@@ -24,6 +24,8 @@ subsection DFT functional parameters
   set EXCHANGE CORRELATION TYPE   = 4
   set PSEUDOPOTENTIAL CALCULATION = true
   set PSEUDOPOTENTIAL FILE NAMES LIST = pseudoMg.inp
+  set SPIN POLARIZATION=1
+  set START MAGNETIZATION=0.1
 end
 
 

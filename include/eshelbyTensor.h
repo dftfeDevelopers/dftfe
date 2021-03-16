@@ -186,6 +186,12 @@ namespace dftfe {
 				const std::vector<unsigned int> & nonlocalAtomsCompactSupportList,
 				const unsigned int numBlockedEigenvectors);
 
+		/// Nonlocal pseudopotential Eshelby tensor (used only for stress computation) for Gamma point case
+		Tensor<2,C_DIM,VectorizedArray<double> >  getEnlStress(const std::vector<std::vector<Tensor<1,C_DIM,VectorizedArray<double> > > > & zetalmDeltaVlProductDistImageAtoms,
+				const std::vector<Tensor<1,C_DIM,VectorizedArray<double> > > & projectorKetTimesPsiTimesVTimesPartOccContractionGradPsi,
+				const std::vector<bool> & isAtomInCell,
+				const std::vector<unsigned int> & nonlocalPseudoWfcsAccum);
+
      /// Nonlocal core correction pseudopotential force contribution
      Tensor<1,C_DIM,VectorizedArray<double> >  getFNonlinearCoreCorrection(const VectorizedArray<double> & vxc,
                                                                            const Tensor<1,C_DIM,VectorizedArray<double> > & gradRhoCore);
