@@ -117,10 +117,6 @@ void kohnShamDFTOperatorClass<FEOrder,FEOrderElectro>::computeHamiltonianMatrix(
 	VectorizedArray<double> halfkSquare = make_vectorized_array(kSquareTimesHalf);
 #endif
 
-        //compute element local to global Id maps			
-        distributedCPUVec<dataTypes::number> tmpVector;
-        reinit(1,tmpVector,true);
-
 	//
 	//compute cell-level stiffness matrix by going over dealii macrocells
 	//which allows efficient integration of cell-level stiffness matrix integrals

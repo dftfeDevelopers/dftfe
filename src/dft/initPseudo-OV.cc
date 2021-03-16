@@ -105,10 +105,10 @@ void dftClass<FEOrder,FEOrderElectro>::computeElementalOVProjectorKets()
 	    invSqrtMassVector.update_ghost_values();
 	  }
 	
-	distributedCPUVec<dataTypes::number> tmpVector;
-	vectorTools::createDealiiVector<dataTypes::number>(matrix_free_data.get_vector_partitioner(d_densityDofHandlerIndex),
-							   1,
-							   tmpVector);
+	//distributedCPUVec<dataTypes::number> tmpVector;
+	//vectorTools::createDealiiVector<dataTypes::number>(matrix_free_data.get_vector_partitioner(d_densityDofHandlerIndex),
+	//						   1,
+	//						   tmpVector);
 
 	//storage for precomputing index maps
 	std::vector<std::vector<dealii::types::global_dof_index> > flattenedArrayMacroCellLocalProcIndexIdMap, flattenedArrayCellLocalProcIndexIdMap;
@@ -116,7 +116,7 @@ void dftClass<FEOrder,FEOrderElectro>::computeElementalOVProjectorKets()
         if(dftParameters::cellLevelMassMatrixScaling)
         { 
           const unsigned int numberFields = 1;   	
-	  vectorTools::computeCellLocalIndexSetMap(tmpVector.get_partitioner(),
+	  vectorTools::computeCellLocalIndexSetMap(matrix_free_data.get_vector_partitioner(d_densityDofHandlerIndex),
 						   matrix_free_data,
                                                    d_densityDofHandlerIndex,
 						   numberFields,
