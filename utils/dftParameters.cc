@@ -63,7 +63,6 @@ namespace dftfe {
 		bool electrostaticsHRefinement = false;
 		bool meshAdaption = false;
 		bool pinnedNodeForPBC = true;
-	        bool cellLevelMassMatrixScaling = false;
 	        bool HXOptimFlag = false;
 
 		std::string startingWFCType="";
@@ -1034,7 +1033,6 @@ namespace dftfe {
 					dftParameters::algoType= prm.get("ALGO");
 					dftParameters::numAdaptiveFilterStates= prm.get_integer("ADAPTIVE FILTER STATES");
 					dftParameters::chebyshevFilterPolyDegreeFirstScfScalingFactor=prm.get_double("CHEBYSHEV POLYNOMIAL DEGREE SCALING FACTOR FIRST SCF");
-                                        dftParameters::cellLevelMassMatrixScaling    = prm.get_bool("CELL LEVEL MASS MATRIX SCALING");
           dftParameters::reuseLanczosUpperBoundFromFirstCall=prm.get_bool("REUSE LANCZOS UPPER BOUND");;
           dftParameters::allowMultipleFilteringPassesAfterFirstScf=prm.get_bool("ALLOW MULTIPLE PASSES POST FIRST SCF");          
 				}

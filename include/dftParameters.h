@@ -46,7 +46,7 @@ namespace dftfe {
 		extern std::string coordinatesGaussianDispFile;
 
 		extern double outerAtomBallRadius, innerAtomBallRadius, meshSizeOuterDomain;
-	        extern bool autoAdaptBaseMeshSize,cellLevelMassMatrixScaling;
+	        extern bool autoAdaptBaseMeshSize;
 		extern double meshSizeInnerBall, meshSizeOuterBall;
 		extern double chebyshevTolerance, topfrac, kerkerParameter;
 		extern std::string mixingMethod,ionOptSolver;

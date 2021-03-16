@@ -88,11 +88,6 @@ namespace dftfe {
 					d_sqrtMassVector,
 					d_invSqrtMassVector);
 
-			if(dftParameters::cellLevelMassMatrixScaling)
-			  {
-			    dftPtr->constraintsNone.distribute(d_invSqrtMassVector);
-			    d_invSqrtMassVector.update_ghost_values();
-			  }
 
 			operatorDFTClass::setInvSqrtMassVector(d_invSqrtMassVector);
 
@@ -728,8 +723,6 @@ namespace dftfe {
 			//
 			//scale src vector with M^{-1/2}
 			//
-			if(!dftParameters::cellLevelMassMatrixScaling)
-			  {
 			    for(unsigned int i = 0; i < numberDofs; ++i)
 			      {
 				const double scalingCoeff = d_invSqrtMassVector.local_element(i);//*scalar;
@@ -751,7 +744,6 @@ namespace dftfe {
 					   &inc);
 				  }
 			      }
-			  }
 
 			//
 			//update slave nodes before doing element-level matrix-vec multiplication
@@ -794,8 +786,6 @@ namespace dftfe {
 			//
 			//M^{-1/2}*H*M^{-1/2}*X
 			//
-			if(!dftParameters::cellLevelMassMatrixScaling)
-			  {
 			    for(unsigned int i = 0; i < numberDofs; ++i)
 			      {
 				dscal_(&numberWaveFunctions,
@@ -817,12 +807,6 @@ namespace dftfe {
 			      }
 
                            
-			  }
-			else
-			  {
-			    dftPtr->constraintsNoneDataInfo.set_zero(src,
-                                                                     numberWaveFunctions);
-			  }
 
 		}
 
@@ -844,9 +828,6 @@ namespace dftfe {
 			const unsigned int inc = 1;
 
 
-
-			if(!dftParameters::cellLevelMassMatrixScaling)
-			  {
 			    for(unsigned int iDof = 0; iDof < numberDofs; ++iDof)
 			      {
 				if(d_globalArrayClassificationMap[iDof] == 1)
@@ -904,7 +885,6 @@ namespace dftfe {
 				  }
 			      }
 			    
-			  }
 			
 
 			//
@@ -936,8 +916,6 @@ namespace dftfe {
 			src.zero_out_ghosts();
 			dst.compress(VectorOperation::add);
 
-			if(!dftParameters::cellLevelMassMatrixScaling)
-			  {
 			    //unscale cell level src vector
 			    for(unsigned int iDof = 0; iDof < numberDofs; ++iDof)
 			      {
@@ -952,9 +930,7 @@ namespace dftfe {
 				  }
 			      }
 
-			    std::vector<dealii::types::global_dof_index> cell_dof_indicesGlobal(d_numberNodesPerElement);
-                            unsigned int iElem = 0;
-                            unsigned int productNumNodesWaveFunctions = d_numberNodesPerElement*numberWaveFunctions; 
+                            iElem = 0;
 			    for(unsigned int iMacroCell = 0; iMacroCell < d_numberMacroCells; ++iMacroCell)
 			      {
 				for(unsigned int iCell = 0; iCell < d_macroCellSubCellMap[iMacroCell]; ++iCell)
@@ -1000,13 +976,6 @@ namespace dftfe {
                                                                         numberWaveFunctions);
 
 			    
-			  }
-			else
-			  {
-			   
-			    dftPtr->constraintsNoneDataInfo.set_zero(src,
-								     numberWaveFunctions);
-			  }
 			  
 
 		}

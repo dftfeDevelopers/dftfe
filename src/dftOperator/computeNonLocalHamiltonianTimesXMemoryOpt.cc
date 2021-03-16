@@ -76,25 +76,6 @@ void kohnShamDFTOperatorClass<FEOrder,FEOrderElectro>::computeNonLocalHamiltonia
 				const unsigned int numberPseudoWaveFunctions = dftPtr->d_numberPseudoAtomicWaveFunctions[atomId];
 				const int nonZeroElementMatrixId = dftPtr->d_sparsityPattern[atomId][iElem];
 
-				if(dftParameters::cellLevelMassMatrixScaling)
-				  {
-				    zgemm_(&transA,
-					   &transB,
-					   &numberWaveFunctions,
-					   &numberPseudoWaveFunctions,
-					   &d_numberNodesPerElement,
-					   &alpha,
-					   &cellWaveFunctionMatrix[0],
-					   &numberWaveFunctions,
-					   &dftPtr->d_nonLocalProjectorElementMatricesConjugateCellMassMatrixScaled[atomId][nonZeroElementMatrixId][d_kPointIndex][0],
-					   &d_numberNodesPerElement,
-					   &beta,
-					   &projectorKetTimesVector[atomId][0],
-					   &numberWaveFunctions);
-				  }
-				else
-				  {
-
 				    zgemm_(&transA,
 					   &transB,
 					   &numberWaveFunctions,
@@ -108,8 +89,6 @@ void kohnShamDFTOperatorClass<FEOrder,FEOrderElectro>::computeNonLocalHamiltonia
 					   &beta,
 					   &projectorKetTimesVector[atomId][0],
 					   &numberWaveFunctions);
-
-				  }
 			}
 
 
@@ -189,24 +168,6 @@ void kohnShamDFTOperatorClass<FEOrder,FEOrderElectro>::computeNonLocalHamiltonia
 		for(unsigned int iElemComp = 0; iElemComp < dftPtr->d_elementIteratorsInAtomCompactSupport[atomId].size(); ++iElemComp)
 		{
 
-		  if(dftParameters::cellLevelMassMatrixScaling)
-		    {
-		      zgemm_(&transA1,
-			     &transB1,
-			     &numberWaveFunctions,
-			     &d_numberNodesPerElement,
-			     &numberPseudoWaveFunctions,
-			     &alpha1,
-			     &projectorKetTimesVector[atomId][0],
-			     &numberWaveFunctions,
-			     &dftPtr->d_nonLocalProjectorElementMatricesTransposeCellMassMatrixScaled[atomId][iElemComp][d_kPointIndex][0],
-			     &numberPseudoWaveFunctions,
-			     &beta1,
-			     &cellNonLocalHamTimesWaveMatrix[0],
-			     &numberWaveFunctions);
-		    }
-		  else
-		    {
 		      zgemm_(&transA1,
 			     &transB1,
 			     &numberWaveFunctions,
@@ -220,7 +181,6 @@ void kohnShamDFTOperatorClass<FEOrder,FEOrderElectro>::computeNonLocalHamiltonia
 			     &beta1,
 			     &cellNonLocalHamTimesWaveMatrix[0],
 			     &numberWaveFunctions);
-		    }
 
 			unsigned int elementId =  dftPtr->d_elementIdsInAtomCompactSupport[atomId][iElemComp];
 
@@ -300,24 +260,6 @@ void kohnShamDFTOperatorClass<FEOrder,FEOrderElectro>::computeNonLocalHamiltonia
 				const unsigned int numberPseudoWaveFunctions = dftPtr->d_numberPseudoAtomicWaveFunctions[atomId];
 				const int nonZeroElementMatrixId = dftPtr->d_sparsityPattern[atomId][iElem];
 
-				if(dftParameters::cellLevelMassMatrixScaling)
-				  {
-				    dgemm_(&transA,
-					   &transB,
-					   &numberWaveFunctions,
-					   &numberPseudoWaveFunctions,
-					   &d_numberNodesPerElement,
-					   &alpha,
-					   &cellWaveFunctionMatrix[0],
-					   &numberWaveFunctions,
-					   &dftPtr->d_nonLocalProjectorElementMatricesCellMassMatrixScaled[atomId][nonZeroElementMatrixId][0],
-					   &d_numberNodesPerElement,
-					   &beta,
-					   &projectorKetTimesVector[atomId][0],
-					   &numberWaveFunctions);
-				  }
-				else
-				  {
 				    dgemm_(&transA,
 					   &transB,
 					   &numberWaveFunctions,
@@ -331,7 +273,6 @@ void kohnShamDFTOperatorClass<FEOrder,FEOrderElectro>::computeNonLocalHamiltonia
 					   &beta,
 					   &projectorKetTimesVector[atomId][0],
 					   &numberWaveFunctions);
-				  }
 			}
 
 
@@ -411,24 +352,6 @@ void kohnShamDFTOperatorClass<FEOrder,FEOrderElectro>::computeNonLocalHamiltonia
 		for(unsigned int iElemComp = 0; iElemComp < dftPtr->d_elementIteratorsInAtomCompactSupport[atomId].size(); ++iElemComp)
 		{
 
-		  if(dftParameters::cellLevelMassMatrixScaling)
-		    {
-		      dgemm_(&transA1,
-			     &transB1,
-			     &numberWaveFunctions,
-			     &d_numberNodesPerElement,
-			     &numberPseudoWaveFunctions,
-			     &alpha2,
-			     &projectorKetTimesVector[atomId][0],
-			     &numberWaveFunctions,
-			     &dftPtr->d_nonLocalProjectorElementMatricesTransposeCellMassMatrixScaled[atomId][iElemComp][0],
-			     &numberPseudoWaveFunctions,
-			     &beta1,
-			     &cellNonLocalHamTimesWaveMatrix[0],
-			     &numberWaveFunctions);
-		    }
-		  else
-		    {
 		       dgemm_(&transA1,
 			     &transB1,
 			     &numberWaveFunctions,
@@ -442,7 +365,6 @@ void kohnShamDFTOperatorClass<FEOrder,FEOrderElectro>::computeNonLocalHamiltonia
 			     &beta1,
 			     &cellNonLocalHamTimesWaveMatrix[0],
 			     &numberWaveFunctions);
-		    }
 
 		  unsigned int elementId =  dftPtr->d_elementIdsInAtomCompactSupport[atomId][iElemComp];
 
