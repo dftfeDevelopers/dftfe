@@ -1,6 +1,7 @@
 // ---------------------------------------------------------------------
 //
-// Copyright (c) 2017-2018  The Regents of the University of Michigan and DFT-FE authors.
+// Copyright (c) 2017-2018  The Regents of the University of Michigan and DFT-FE
+// authors.
 //
 // This file is part of the DFT-FE code.
 //
@@ -14,24 +15,31 @@
 // ---------------------------------------------------------------------
 
 #if defined(DFTFE_WITH_GPU)
-#ifndef cudaHelpers_h
-#define cudaHelpers_h
+#  ifndef cudaHelpers_h
+#    define cudaHelpers_h
 
-#include <cuda_runtime.h>
+#    include <cuda_runtime.h>
 
 namespace dftfe
 {
-#define CUDACHECK(cmd) do {                         \
-    cudaError_t e = cmd;                              \
-    if( e != cudaSuccess ) {                          \
-      printf("Failed: Cuda error %s:%d '%s'\n",       \
-          __FILE__,__LINE__,cudaGetErrorString(e));   \
-      exit(EXIT_FAILURE);                             \
-    }                                                 \
-  } while(0)
+#    define CUDACHECK(cmd)                              \
+      do                                                \
+        {                                               \
+          cudaError_t e = cmd;                          \
+          if (e != cudaSuccess)                         \
+            {                                           \
+              printf("Failed: Cuda error %s:%d '%s'\n", \
+                     __FILE__,                          \
+                     __LINE__,                          \
+                     cudaGetErrorString(e));            \
+              exit(EXIT_FAILURE);                       \
+            }                                           \
+        }                                               \
+      while (0)
 
-  void setupGPU();  
-}
+  void
+  setupGPU();
+} // namespace dftfe
 
-#endif
+#  endif
 #endif

@@ -1,6 +1,7 @@
 // ---------------------------------------------------------------------
 //
-// Copyright (c) 2017-2018  The Regents of the University of Michigan and DFT-FE authors.
+// Copyright (c) 2017-2018  The Regents of the University of Michigan and DFT-FE
+// authors.
 //
 // This file is part of the DFT-FE code.
 //
@@ -22,99 +23,103 @@
 
 #include "headers.h"
 
-namespace dftfe {
-	//
-	// forward declarations
-	//
-	class nonlinearSolverProblem;
+namespace dftfe
+{
+  //
+  // forward declarations
+  //
+  class nonlinearSolverProblem;
 
-	/**
-	 * @brief Base class for non-linear algebraic solver.
-	 *
-	 * @author Sambit Das
-	 */
-	class nonLinearSolver {
+  /**
+   * @brief Base class for non-linear algebraic solver.
+   *
+   * @author Sambit Das
+   */
+  class nonLinearSolver
+  {
+    //
+    // types
+    //
+  public:
+    enum ReturnValueType
+    {
+      SUCCESS = 0,
+      FAILURE,
+      LINESEARCH_FAILED,
+      MAX_ITER_REACHED,
+      RESTART
+    };
 
-		//
-		// types
-		//
-		public:
-			enum ReturnValueType { SUCCESS = 0,
-				FAILURE,
-				LINESEARCH_FAILED,
-				MAX_ITER_REACHED,
-				RESTART};
+    //
+    // methods
+    //
+  public:
+    /**
+     * @brief Destructor.
+     */
+    virtual ~nonLinearSolver() = 0;
 
-			//
-			// methods
-			//
-		public:
-
-			/**
-			 * @brief Destructor.
-			 */
-			virtual ~nonLinearSolver() = 0;
-
-			/**
-			 * @brief Solve non-linear algebraic equation.
-			 *
-			 * @param problem[in] nonlinearSolverProblem object.
-			 * @param checkpointFileName[in] if string is non-empty, creates checkpoint file
-			 * named checkpointFileName for every nonlinear iteration.
-			 * @param restart[in] boolean specifying whether this is a restart solve.
-			 * @return Return value indicating success or failure.
-			 */
-			virtual ReturnValueType solve(nonlinearSolverProblem & problem,
-					const std::string checkpointFileName="",
-					const bool restart=false) = 0;
-
-
-		protected:
-
-			/**
-			 * @brief Constructor.
-			 *
-			 */
-			nonLinearSolver(const unsigned int debugLevel,
-					const unsigned int maxNumberIterations,
-					const double tolerance);
+    /**
+     * @brief Solve non-linear algebraic equation.
+     *
+     * @param problem[in] nonlinearSolverProblem object.
+     * @param checkpointFileName[in] if string is non-empty, creates checkpoint file
+     * named checkpointFileName for every nonlinear iteration.
+     * @param restart[in] boolean specifying whether this is a restart solve.
+     * @return Return value indicating success or failure.
+     */
+    virtual ReturnValueType
+    solve(nonlinearSolverProblem &problem,
+          const std::string       checkpointFileName = "",
+          const bool              restart            = false) = 0;
 
 
-		protected:
-
-			/**
-			 * @brief Get tolerance.
-			 *
-			 * @return Value of the tolerance.
-			 */
-			double getTolerance() const;
-
-			/**
-			 * @brief Get maximum number of iterations.
-			 *
-			 * @return Maximum number of iterations.
-			 */
-			unsigned int getMaximumNumberIterations() const;
-
-			/**
-			 * @brief Get debug level.
-			 *
-			 * @return Debug level.
-			 */
-			unsigned int getDebugLevel() const;
+  protected:
+    /**
+     * @brief Constructor.
+     *
+     */
+    nonLinearSolver(const unsigned int debugLevel,
+                    const unsigned int maxNumberIterations,
+                    const double       tolerance);
 
 
-			/// controls the verbosity of the printing
-			const unsigned int    d_debugLevel;
+  protected:
+    /**
+     * @brief Get tolerance.
+     *
+     * @return Value of the tolerance.
+     */
+    double
+    getTolerance() const;
 
-			/// maximum number of nonlinear solve iterations
-			const unsigned int    d_maxNumberIterations;
+    /**
+     * @brief Get maximum number of iterations.
+     *
+     * @return Maximum number of iterations.
+     */
+    unsigned int
+    getMaximumNumberIterations() const;
 
-			/// nonlinear solve stopping tolerance
-			const double d_tolerance;
+    /**
+     * @brief Get debug level.
+     *
+     * @return Debug level.
+     */
+    unsigned int
+    getDebugLevel() const;
 
-	};
 
-}
+    /// controls the verbosity of the printing
+    const unsigned int d_debugLevel;
+
+    /// maximum number of nonlinear solve iterations
+    const unsigned int d_maxNumberIterations;
+
+    /// nonlinear solve stopping tolerance
+    const double d_tolerance;
+  };
+
+} // namespace dftfe
 
 #endif // NonLinearSolver_h

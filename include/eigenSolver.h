@@ -1,6 +1,7 @@
 // ---------------------------------------------------------------------
 //
-// Copyright (c) 2017-2018 The Regents of the University of Michigan and DFT-FE authors.
+// Copyright (c) 2017-2018 The Regents of the University of Michigan and DFT-FE
+// authors.
 //
 // This file is part of the DFT-FE code.
 //
@@ -21,48 +22,49 @@
 #include "headers.h"
 #include "operator.h"
 
-namespace dftfe{
+namespace dftfe
+{
+  /**
+   * @brief Base class for non-linear algebraic solver.
+   *
+   * @author Phani Motamarri
+   */
 
-	/**
-	 * @brief Base class for non-linear algebraic solver.
-	 *
-	 * @author Phani Motamarri
-	 */
-
-	class eigenSolverClass {
-
-
-		public:
-			enum class ReturnValueType {SUCCESS = 0,FAILURE,MAX_ITER_REACHED};
-
-
-		public:
-
-			/**
-			 * @brief Destructor.
-			 */
-			virtual ~eigenSolverClass() = 0;
+  class eigenSolverClass
+  {
+  public:
+    enum class ReturnValueType
+    {
+      SUCCESS = 0,
+      FAILURE,
+      MAX_ITER_REACHED
+    };
 
 
-			/**
-			 * @brief Solve eigen problem.
-			 *
-			 * @return Return value indicating success or failure.
-			 */
-			virtual void solve(operatorDFTClass & operatorMatrix,
-					std::vector<distributedCPUVec<double>> & eigenVectors,
-					std::vector<double> & eigenValues,
-					std::vector<double> & residuals) = 0;
+  public:
+    /**
+     * @brief Destructor.
+     */
+    virtual ~eigenSolverClass() = 0;
 
-		protected:
 
-			/**
-			 * @brief Constructor.
-			 *
-			 */
-			eigenSolverClass();
+    /**
+     * @brief Solve eigen problem.
+     *
+     * @return Return value indicating success or failure.
+     */
+    virtual void
+    solve(operatorDFTClass &                      operatorMatrix,
+          std::vector<distributedCPUVec<double>> &eigenVectors,
+          std::vector<double> &                   eigenValues,
+          std::vector<double> &                   residuals) = 0;
 
-	};
-}
+  protected:
+    /**
+     * @brief Constructor.
+     *
+     */
+    eigenSolverClass();
+  };
+} // namespace dftfe
 #endif // dft_eigenSolver_h
-

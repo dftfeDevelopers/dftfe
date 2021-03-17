@@ -1,6 +1,7 @@
 // ---------------------------------------------------------------------
 //
-// Copyright (c) 2017-2020  The Regents of the University of Michigan and DFT-FE authors.
+// Copyright (c) 2017-2020  The Regents of the University of Michigan and DFT-FE
+// authors.
 //
 // This file is part of the DFT-FE code.
 //
@@ -15,71 +16,76 @@
 //
 
 #if defined(DFTFE_WITH_GPU)
-#ifndef linearSolverProblemCUDA_H_
-#define linearSolverProblemCUDA_H_
+#  ifndef linearSolverProblemCUDA_H_
+#    define linearSolverProblemCUDA_H_
 
-#include <headers.h>
-#include <thrust/device_vector.h>
-#include <thrust/host_vector.h>
+#    include <headers.h>
+#    include <thrust/device_vector.h>
+#    include <thrust/host_vector.h>
 
-namespace dftfe {
+namespace dftfe
+{
+  /**
+   * @brief Abstract class for linear solve problems to be used with the dealiiLinearSolver interface.
+   *
+   * @author Phani Motamarri, Sambit Das
+   */
+  class linearSolverProblemCUDA
+  {
+  public:
+    /**
+     * @brief Constructor.
+     */
+    linearSolverProblemCUDA();
 
-	/**
-	 * @brief Abstract class for linear solve problems to be used with the dealiiLinearSolver interface.
-	 *
-	 * @author Phani Motamarri, Sambit Das
-	 */
-	class linearSolverProblemCUDA {
+    /**
+     * @brief get the reference to x field
+     *
+     * @return reference to x field. Assumes x field data structure is already initialized
+     */
+    virtual distributedGPUVec<double> &
+    getX() = 0;
 
-		public:
-			/**
-			 * @brief Constructor.
-			 */
-			linearSolverProblemCUDA();
-
-			/**
-			 * @brief get the reference to x field
-			 *
-			 * @return reference to x field. Assumes x field data structure is already initialized
-			 */
-			virtual distributedGPUVec<double>  & getX() = 0;
-
-			/**
-			 * @brief Compute A matrix multipled by x.
-			 *
-			 */
-			virtual void computeAX(distributedGPUVec<double> &src,
-					distributedGPUVec<double> &dst)  = 0;
-
-
-			/**
-			 * @brief Compute right hand side vector for the problem Ax = rhs.
-			 *
-			 * @param rhs vector for the right hand side values
-			 */
-			virtual void computeRhs(distributedGPUVec<double> & rhs) = 0;
-
-			/**
-			 * @brief Jacobi preconditioning function.
-			 *
-			 */
-			virtual void precondition_Jacobi(const distributedGPUVec<double> & src,
-					distributedGPUVec<double> & dst)const = 0;
+    /**
+     * @brief Compute A matrix multipled by x.
+     *
+     */
+    virtual void
+    computeAX(distributedGPUVec<double> &src,
+              distributedGPUVec<double> &dst) = 0;
 
 
-			/**
-			 * @brief distribute x to the constrained nodes.
-			 *
-			 */
-			virtual void setX() = 0;
+    /**
+     * @brief Compute right hand side vector for the problem Ax = rhs.
+     *
+     * @param rhs vector for the right hand side values
+     */
+    virtual void
+    computeRhs(distributedGPUVec<double> &rhs) = 0;
+
+    /**
+     * @brief Jacobi preconditioning function.
+     *
+     */
+    virtual void
+    precondition_Jacobi(const distributedGPUVec<double> &src,
+                        distributedGPUVec<double> &      dst) const = 0;
 
 
-			//protected:
+    /**
+     * @brief distribute x to the constrained nodes.
+     *
+     */
+    virtual void
+    setX() = 0;
 
-			/// typedef declaration needed by dealii
-			typedef dealii::types::global_dof_index size_type;
-	};
 
-}
-#endif // linearSolverProblemCUDA_H_
+    // protected:
+
+    /// typedef declaration needed by dealii
+    typedef dealii::types::global_dof_index size_type;
+  };
+
+} // namespace dftfe
+#  endif // linearSolverProblemCUDA_H_
 #endif

@@ -1,6 +1,7 @@
 // ---------------------------------------------------------------------
 //
-// Copyright (c) 2017-2018 The Regents of the University of Michigan and DFT-FE authors.
+// Copyright (c) 2017-2018 The Regents of the University of Michigan and DFT-FE
+// authors.
 //
 // This file is part of the DFT-FE code.
 //
@@ -16,29 +17,33 @@
 // @author Sambit Das
 //
 
-template<unsigned int FEOrder,unsigned int FEOrderElectro>
-	void forceClass<FEOrder,FEOrderElectro>::accumulateForceContributionGammaAtomsFloating
-(const std::map<unsigned int,std::vector<double> > & forceContributionLocalGammaAtoms,
- std::vector<double> & accumForcesVector)
+template <unsigned int FEOrder, unsigned int FEOrderElectro>
+void
+forceClass<FEOrder, FEOrderElectro>::
+  accumulateForceContributionGammaAtomsFloating(
+    const std::map<unsigned int, std::vector<double>>
+      &                  forceContributionLocalGammaAtoms,
+    std::vector<double> &accumForcesVector)
 {
-	for (unsigned int iAtom=0;iAtom <dftPtr->atomLocations.size(); iAtom++)
-	{
+  for (unsigned int iAtom = 0; iAtom < dftPtr->atomLocations.size(); iAtom++)
+    {
+      std::vector<double> forceContributionLocalGammaiAtomGlobal(C_DIM);
+      std::vector<double> forceContributionLocalGammaiAtomLocal(C_DIM, 0.0);
 
-		std::vector<double> forceContributionLocalGammaiAtomGlobal(C_DIM);
-		std::vector<double> forceContributionLocalGammaiAtomLocal(C_DIM,0.0);
+      if (forceContributionLocalGammaAtoms.find(iAtom) !=
+          forceContributionLocalGammaAtoms.end())
+        forceContributionLocalGammaiAtomLocal =
+          forceContributionLocalGammaAtoms.find(iAtom)->second;
+      // accumulate value
+      MPI_Allreduce(&(forceContributionLocalGammaiAtomLocal[0]),
+                    &(forceContributionLocalGammaiAtomGlobal[0]),
+                    3,
+                    MPI_DOUBLE,
+                    MPI_SUM,
+                    mpi_communicator);
 
-		if (forceContributionLocalGammaAtoms.find(iAtom)!=forceContributionLocalGammaAtoms.end())
-			forceContributionLocalGammaiAtomLocal=forceContributionLocalGammaAtoms.find(iAtom)->second;
-		// accumulate value
-		MPI_Allreduce(&(forceContributionLocalGammaiAtomLocal[0]),
-				&(forceContributionLocalGammaiAtomGlobal[0]),
-				3,
-				MPI_DOUBLE,
-				MPI_SUM,
-				mpi_communicator);
-
-		for (unsigned int idim=0; idim < 3; idim++)
-			accumForcesVector[iAtom*3+idim]+=forceContributionLocalGammaiAtomGlobal[idim];
-
-	}
+      for (unsigned int idim = 0; idim < 3; idim++)
+        accumForcesVector[iAtom * 3 + idim] +=
+          forceContributionLocalGammaiAtomGlobal[idim];
+    }
 }

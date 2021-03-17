@@ -1,6 +1,7 @@
 // ---------------------------------------------------------------------
 //
-// Copyright (c) 2017-2018 The Regents of the University of Michigan and DFT-FE authors.
+// Copyright (c) 2017-2018 The Regents of the University of Michigan and DFT-FE
+// authors.
 //
 // This file is part of the DFT-FE code.
 //
@@ -17,11 +18,12 @@
 
 #include <linearSolverCUDA.h>
 
-namespace dftfe {
-	// Constructor.
-	linearSolverCUDA::linearSolverCUDA()
-	{
-		return;
-	}
+namespace dftfe
+{
+  // Constructor.
+  linearSolverCUDA::linearSolverCUDA()
+  {
+    return;
+  }
 
-}
+} // namespace dftfe

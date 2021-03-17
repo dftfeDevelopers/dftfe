@@ -1,6 +1,7 @@
 // ---------------------------------------------------------------------
 //
-// Copyright (c) 2017-2018 The Regents of the University of Michigan and DFT-FE authors.
+// Copyright (c) 2017-2018 The Regents of the University of Michigan and DFT-FE
+// authors.
 //
 // This file is part of the DFT-FE code.
 //
@@ -17,221 +18,229 @@
 //
 #include <fileReaders.h>
 #include <headers.h>
+
 #include <fstream>
 #include <iostream>
 #include <sstream>
 
-namespace dftfe {
+namespace dftfe
+{
+  namespace dftUtils
+  {
+    // Utility functions to read external files relevant to DFT
+    void
+    readFile(const unsigned int                numColumns,
+             std::vector<std::vector<double>> &data,
+             const std::string &               fileName)
+    {
+      std::vector<double> rowData(numColumns, 0.0);
+      std::ifstream       readFile(fileName.c_str());
+      if (readFile.fail())
+        {
+          std::cerr << "Error opening file: " << fileName.c_str() << std::endl;
+          exit(-1);
+        }
 
-	namespace dftUtils{
+      //
+      // String to store line and word
+      //
+      std::string readLine;
+      std::string word;
 
-		//Utility functions to read external files relevant to DFT
-		void readFile(const unsigned int numColumns,
-				std::vector<std::vector<double> > &data,
-				const std::string & fileName)
-		{
-			std::vector<double> rowData(numColumns, 0.0);
-			std::ifstream readFile(fileName.c_str());
-			if(readFile.fail())
-			{
-				std::cerr<< "Error opening file: " << fileName.c_str() << std::endl;
-				exit(-1);
-			}
+      //
+      // column index
+      //
+      int columnCount;
 
-			//
-			// String to store line and word
-			//
-			std::string readLine;
-			std::string word;
+      if (readFile.is_open())
+        {
+          while (std::getline(readFile, readLine))
+            {
+              std::istringstream iss(readLine);
 
-			//
-			// column index
-			//
-			int columnCount;
+              columnCount = 0;
 
-			if(readFile.is_open())
-			{
-				while (std::getline(readFile, readLine))
-				{
-					std::istringstream iss(readLine);
+              while (iss >> word && columnCount < numColumns)
+                rowData[columnCount++] = atof(word.c_str());
 
-					columnCount = 0;
+              data.push_back(rowData);
+            }
+        }
+      readFile.close();
+    }
 
-					while(iss >> word && columnCount < numColumns)
-						rowData[columnCount++] = atof(word.c_str());
+    int
+    readPsiFile(const unsigned int                numColumns,
+                std::vector<std::vector<double>> &data,
+                const std::string &               fileName)
+    {
+      std::vector<double> rowData(numColumns, 0.0);
+      std::ifstream       readFile(fileName.c_str());
 
-					data.push_back(rowData);
-				}
-			}
-			readFile.close();
-		}
+      if (readFile.fail())
+        {
+          // std::cerr<< "Warning: Psi file: " << fileName.c_str() << " not
+          // found "<<std::endl;
+          return 0;
+        }
 
-		int readPsiFile(const unsigned int numColumns,
-				std::vector<std::vector<double> > &data,
-				const std::string & fileName)
-		{
-			std::vector<double> rowData(numColumns, 0.0);
-			std::ifstream readFile(fileName.c_str());
+      //
+      // String to store line and word
+      //
+      std::string readLine;
+      std::string word;
 
-			if(readFile.fail())
-			{
-				//std::cerr<< "Warning: Psi file: " << fileName.c_str() << " not found "<<std::endl;
-				return 0;
-			}
+      //
+      // column index
+      //
+      int columnCount;
 
-			//
-			// String to store line and word
-			//
-			std::string readLine;
-			std::string word;
+      if (readFile.is_open())
+        {
+          while (std::getline(readFile, readLine))
+            {
+              std::istringstream iss(readLine);
 
-			//
-			// column index
-			//
-			int columnCount;
+              columnCount = 0;
 
-			if(readFile.is_open())
-			{
-				while (std::getline(readFile, readLine))
-				{
-					std::istringstream iss(readLine);
+              while (iss >> word && columnCount < numColumns)
+                rowData[columnCount++] = atof(word.c_str());
 
-					columnCount = 0;
+              data.push_back(rowData);
+            }
+        }
+      readFile.close();
+      return 1;
+    }
 
-					while(iss >> word && columnCount < numColumns)
-						rowData[columnCount++] = atof(word.c_str());
+    void
+    readRelaxationFlagsFile(const unsigned int                numColumns,
+                            std::vector<std::vector<int>> &   data,
+                            std::vector<std::vector<double>> &forceData,
+                            const std::string &               fileName)
+    {
+      std::vector<int>    rowData(3, 0);
+      std::vector<double> rowForceData(3, 0.0);
+      std::ifstream       readFile(fileName.c_str());
+      if (readFile.fail())
+        {
+          std::cerr << "Error opening file: " << fileName.c_str() << std::endl;
+          exit(-1);
+        }
 
-					data.push_back(rowData);
-				}
-			}
-			readFile.close();
-			return 1;
-		}
+      //
+      // String to store line and word
+      //
+      std::string readLine;
+      std::string word, item;
+      //
+      // column index
+      //
+      int columnCount;
 
-		void readRelaxationFlagsFile(const unsigned int numColumns,
-				std::vector<std::vector<int> > &data,
-				std::vector<std::vector<double> > &forceData,
-				const std::string & fileName)
-		{
-			std::vector<int> rowData(3, 0);
-			std::vector<double> rowForceData(3, 0.0);
-			std::ifstream readFile(fileName.c_str());
-			if(readFile.fail())
-			{
-				std::cerr<< "Error opening file: " << fileName.c_str() << std::endl;
-				exit(-1);
-			}
+      if (readFile.is_open())
+        {
+          while (std::getline(readFile, readLine))
+            {
+              std::istringstream iss(readLine);
 
-			//
-			// String to store line and word
-			//
-			std::string readLine;
-			std::string word, item;
-			//
-			// column index
-			//
-			int columnCount;
+              columnCount = 0;
 
-			if(readFile.is_open())
-			{
-				while (std::getline(readFile, readLine))
-				{
-					std::istringstream iss(readLine);
+              rowForceData.resize(3, 0.0);
 
-					columnCount = 0;
+              while (iss >> word && columnCount < numColumns)
+                {
+                  if (columnCount < 3)
+                    rowData[columnCount] = atoi(word.c_str());
+                  else
+                    rowForceData[columnCount - 3] = atof(word.c_str());
+                  //
+                  columnCount++;
+                }
+              data.push_back(rowData);
+              forceData.push_back(rowForceData);
+            }
+        }
+      readFile.close();
+      return;
+    }
 
-					rowForceData.resize(3,0.0) ;
+    // Move/rename a checkpoint file
+    void
+    moveFile(const std::string &old_name, const std::string &new_name)
+    {
+      int error = system(("mv " + old_name + " " + new_name).c_str());
 
-					while(iss >> word && columnCount < numColumns)
-					{
-						if (columnCount < 3)
-							rowData[columnCount] = atoi(word.c_str());
-						else
-							rowForceData[columnCount-3] = atof(word.c_str());
-						//
-						columnCount++ ;
-					}
-					data.push_back(rowData); forceData.push_back(rowForceData);
-				}
-			}
-			readFile.close();
-			return;
+      // If the above call failed, e.g. because there is no command-line
+      // available, try with internal functions.
+      if (error != 0)
+        {
+          std::ifstream ifile(new_name);
+          if (static_cast<bool>(ifile))
+            {
+              error = remove(new_name.c_str());
+              AssertThrow(error == 0,
+                          dealii::ExcMessage(std::string(
+                            "Unable to remove file: " + new_name +
+                            ", although it seems to exist. " +
+                            "The error code is " +
+                            dealii::Utilities::to_string(error) + ".")));
+            }
 
-		}
+          error = rename(old_name.c_str(), new_name.c_str());
+          AssertThrow(error == 0,
+                      dealii::ExcMessage(
+                        std::string("Unable to rename files: ") + old_name +
+                        " -> " + new_name + ". The error code is " +
+                        dealii::Utilities::to_string(error) + "."));
+        }
+    }
 
-		// Move/rename a checkpoint file
-		void moveFile(const std::string &old_name, const std::string &new_name)
-		{
-
-			int error = system (("mv " + old_name + " " + new_name).c_str());
-
-			// If the above call failed, e.g. because there is no command-line
-			// available, try with internal functions.
-			if (error != 0)
-			{
-				std::ifstream ifile(new_name);
-				if (static_cast<bool>(ifile))
-				{
-					error = remove(new_name.c_str());
-					AssertThrow (error == 0, dealii::ExcMessage(std::string ("Unable to remove file: "
-									+ new_name
-									+ ", although it seems to exist. "
-									+ "The error code is "
-									+ dealii::Utilities::to_string(error) + ".")));
-				}
-
-				error = rename(old_name.c_str(),new_name.c_str());
-				AssertThrow (error == 0, dealii::ExcMessage(std::string ("Unable to rename files: ")
-							+
-							old_name + " -> " + new_name
-							+ ". The error code is "
-							+ dealii::Utilities::to_string(error) + "."));
-			}
-		}
-
-		void verifyCheckpointFileExists(const std::string & filename)
-		{
-			std::ifstream in (filename);
-			if (!in)
-			{
-				AssertThrow (false,
-						dealii::ExcMessage (std::string("DFT-FE Error: You are trying to restart a previous computation, "
-								"but the restart file <")
-							+
-							filename
-							+
-							"> does not appear to exist!"));
-			}
-		}
+    void
+    verifyCheckpointFileExists(const std::string &filename)
+    {
+      std::ifstream in(filename);
+      if (!in)
+        {
+          AssertThrow(
+            false,
+            dealii::ExcMessage(
+              std::string(
+                "DFT-FE Error: You are trying to restart a previous computation, "
+                "but the restart file <") +
+              filename + "> does not appear to exist!"));
+        }
+    }
 
 
-		void writeDataIntoFile(const std::vector<std::vector<double> > &data,
-				const std::string & fileName)
-		{
-			if (dealii::Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0)
-			{
-				if (std::ifstream(fileName))    
-					moveFile(fileName, fileName+".old");
+    void
+    writeDataIntoFile(const std::vector<std::vector<double>> &data,
+                      const std::string &                     fileName)
+    {
+      if (dealii::Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0)
+        {
+          if (std::ifstream(fileName))
+            moveFile(fileName, fileName + ".old");
 
-				std::ofstream outFile(fileName);
-				if (outFile.is_open())
-				{
-					for (unsigned int irow=0; irow < data.size(); ++irow)
-					{
-						for (unsigned int icol=0; icol < data[irow].size(); ++icol)
-						{
-							outFile << std::setprecision(14)<< data[irow][icol];
-							if (icol< data[irow].size()-1)
-								outFile<<" ";
-						}
-						outFile<<"\n";
-					}
+          std::ofstream outFile(fileName);
+          if (outFile.is_open())
+            {
+              for (unsigned int irow = 0; irow < data.size(); ++irow)
+                {
+                  for (unsigned int icol = 0; icol < data[irow].size(); ++icol)
+                    {
+                      outFile << std::setprecision(14) << data[irow][icol];
+                      if (icol < data[irow].size() - 1)
+                        outFile << " ";
+                    }
+                  outFile << "\n";
+                }
 
-					outFile.close();
-				}
-			}
-		}
+              outFile.close();
+            }
+        }
+    }
 
-	}
+  } // namespace dftUtils
 
-}
+} // namespace dftfe

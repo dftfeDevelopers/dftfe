@@ -1,6 +1,7 @@
 // ---------------------------------------------------------------------
 //
-// Copyright (c) 2017-2018 The Regents of the University of Michigan and DFT-FE authors.
+// Copyright (c) 2017-2018 The Regents of the University of Michigan and DFT-FE
+// authors.
 //
 // This file is part of the DFT-FE code.
 //
@@ -17,11 +18,12 @@
 
 #include <linearSolver.h>
 
-namespace dftfe {
-	// Constructor.
-	linearSolver::linearSolver()
-	{
-		return;
-	}
+namespace dftfe
+{
+  // Constructor.
+  linearSolver::linearSolver()
+  {
+    return;
+  }
 
-}
+} // namespace dftfe

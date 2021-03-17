@@ -1,6 +1,7 @@
 // ---------------------------------------------------------------------
 //
-// Copyright (c) 2017-2018 The Regents of the University of Michigan and DFT-FE authors.
+// Copyright (c) 2017-2018 The Regents of the University of Michigan and DFT-FE
+// authors.
 //
 // This file is part of the DFT-FE code.
 //
@@ -17,47 +18,50 @@
 //
 
 
-	template<unsigned int FEOrder,unsigned int FEOrderElectro>
-void forceClass<FEOrder,FEOrderElectro>::computeFloatingAtomsForces()
+template <unsigned int FEOrder, unsigned int FEOrderElectro>
+void
+forceClass<FEOrder, FEOrderElectro>::computeFloatingAtomsForces()
 {
-	unsigned int vertices_per_cell=GeometryInfo<3>::vertices_per_cell;
-	const std::vector<std::vector<double> > & atomLocations=dftPtr->atomLocations;
-	const int numberGlobalAtoms = atomLocations.size();
+  unsigned int vertices_per_cell = GeometryInfo<3>::vertices_per_cell;
+  const std::vector<std::vector<double>> &atomLocations = dftPtr->atomLocations;
+  const int numberGlobalAtoms                           = atomLocations.size();
   d_globalAtomsForces.clear();
-	d_globalAtomsForces.resize(numberGlobalAtoms*3,0.0);
+  d_globalAtomsForces.resize(numberGlobalAtoms * 3, 0.0);
 
-	//Sum over band parallelization
-	MPI_Allreduce(MPI_IN_PLACE,
-			&(d_forceAtomsFloating[0]),
-			numberGlobalAtoms*3,
-			MPI_DOUBLE,
-			MPI_SUM,
-			dftPtr->interBandGroupComm);
+  // Sum over band parallelization
+  MPI_Allreduce(MPI_IN_PLACE,
+                &(d_forceAtomsFloating[0]),
+                numberGlobalAtoms * 3,
+                MPI_DOUBLE,
+                MPI_SUM,
+                dftPtr->interBandGroupComm);
 
 #ifdef USE_COMPLEX
-	//Sum over band parallelization and k point pools
-	MPI_Allreduce(MPI_IN_PLACE,
-			&(d_forceAtomsFloatingKPoints[0]),
-			numberGlobalAtoms*3,
-			MPI_DOUBLE,
-			MPI_SUM,
-			dftPtr->interBandGroupComm);
+  // Sum over band parallelization and k point pools
+  MPI_Allreduce(MPI_IN_PLACE,
+                &(d_forceAtomsFloatingKPoints[0]),
+                numberGlobalAtoms * 3,
+                MPI_DOUBLE,
+                MPI_SUM,
+                dftPtr->interBandGroupComm);
 
-	MPI_Allreduce(MPI_IN_PLACE,
-			&(d_forceAtomsFloatingKPoints[0]),
-			numberGlobalAtoms*3,
-			MPI_DOUBLE,
-			MPI_SUM,
-			dftPtr->interpoolcomm);
+  MPI_Allreduce(MPI_IN_PLACE,
+                &(d_forceAtomsFloatingKPoints[0]),
+                numberGlobalAtoms * 3,
+                MPI_DOUBLE,
+                MPI_SUM,
+                dftPtr->interpoolcomm);
 #endif
 
-	//add to total Gaussian force
-	for (unsigned int iAtom=0;iAtom <numberGlobalAtoms; iAtom++)
-		for (unsigned int idim=0; idim < 3 ; idim++)
-#ifdef USE_COMPLEX      
-			d_globalAtomsForces[iAtom*3+idim]=d_forceAtomsFloating[iAtom*3+idim]+d_forceAtomsFloatingKPoints[iAtom*3+idim];
+  // add to total Gaussian force
+  for (unsigned int iAtom = 0; iAtom < numberGlobalAtoms; iAtom++)
+    for (unsigned int idim = 0; idim < 3; idim++)
+#ifdef USE_COMPLEX
+      d_globalAtomsForces[iAtom * 3 + idim] =
+        d_forceAtomsFloating[iAtom * 3 + idim] +
+        d_forceAtomsFloatingKPoints[iAtom * 3 + idim];
 #else
-			d_globalAtomsForces[iAtom*3+idim]=d_forceAtomsFloating[iAtom*3+idim];      
+      d_globalAtomsForces[iAtom * 3 + idim] =
+        d_forceAtomsFloating[iAtom * 3 + idim];
 #endif
-
 }

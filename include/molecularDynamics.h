@@ -1,6 +1,7 @@
 // ---------------------------------------------------------------------
 //
-// Copyright (c) 2017-2018 The Regents of the University of Michigan and DFT-FE authors.
+// Copyright (c) 2017-2018 The Regents of the University of Michigan and DFT-FE
+// authors.
 //
 // This file is part of the DFT-FE code.
 //
@@ -18,41 +19,43 @@
 #include "constants.h"
 #include "headers.h"
 
-namespace dftfe {
+namespace dftfe
+{
+  using namespace dealii;
+  template <unsigned int FEOrder, unsigned int FEOrderElectro>
+  class dftClass;
 
-	using namespace dealii;
-	template <unsigned int FEOrder, unsigned int FEOrderElectro> class dftClass;
-
-	/** @file molecularDynamics.h
-	 *
-	 *  @author Sambit Das
-	 */
-	template <unsigned int FEOrder, unsigned int FEOrderElectro>
-		class molecularDynamics
-		{
-			public:
-
-				molecularDynamics(dftClass<FEOrder,FEOrderElectro>* _dftPtr,const  MPI_Comm &mpi_comm_replica);
-
-
-				void run();
-
-				void timingRun();
+  /** @file molecularDynamics.h
+   *
+   *  @author Sambit Das
+   */
+  template <unsigned int FEOrder, unsigned int FEOrderElectro>
+  class molecularDynamics
+  {
+  public:
+    molecularDynamics(dftClass<FEOrder, FEOrderElectro> *_dftPtr,
+                      const MPI_Comm &                   mpi_comm_replica);
 
 
-			private:
+    void
+    run();
 
-				/// pointer to dft class
-				dftClass<FEOrder,FEOrderElectro>* dftPtr;
+    void
+    timingRun();
 
-				/// parallel communication objects
-				const MPI_Comm mpi_communicator;
-				const unsigned int n_mpi_processes;
-				const unsigned int this_mpi_process;
 
-				/// conditional stream object
-				dealii::ConditionalOStream   pcout;
-		};
+  private:
+    /// pointer to dft class
+    dftClass<FEOrder, FEOrderElectro> *dftPtr;
 
-}
+    /// parallel communication objects
+    const MPI_Comm     mpi_communicator;
+    const unsigned int n_mpi_processes;
+    const unsigned int this_mpi_process;
+
+    /// conditional stream object
+    dealii::ConditionalOStream pcout;
+  };
+
+} // namespace dftfe
 #endif

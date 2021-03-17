@@ -1,6 +1,7 @@
 // ---------------------------------------------------------------------
 //
-// Copyright (c) 2017-2018 The Regents of the University of Michigan and DFT-FE authors.
+// Copyright (c) 2017-2018 The Regents of the University of Michigan and DFT-FE
+// authors.
 //
 // This file is part of the DFT-FE code.
 //
@@ -16,93 +17,88 @@
 // @author Sambit Das
 //
 
-#include <vectorUtilitiesCUDA.h>
 #include <cublas_v2.h>
+#include <vectorUtilitiesCUDA.h>
 
 namespace dftfe
 {
+  namespace vectorToolsCUDA
+  {
+    void
+    copyHostVecToCUDAVec(const double *     hostVec,
+                         double *           cudaVector,
+                         const unsigned int size)
+    {
+      cudaMemcpy(cudaVector,
+                 hostVec,
+                 size * sizeof(double),
+                 cudaMemcpyHostToDevice);
+    }
 
-	namespace vectorToolsCUDA
-	{
+    void
+    copyCUDAVecToHostVec(const double *     cudaVector,
+                         double *           hostVec,
+                         const unsigned int size)
+    {
+      cudaMemcpy(hostVec,
+                 cudaVector,
+                 size * sizeof(double),
+                 cudaMemcpyDeviceToHost);
+    }
 
-		void copyHostVecToCUDAVec(const double* hostVec,
-				double* cudaVector,
-				const unsigned int size)
-		{
-			cudaMemcpy(cudaVector,
-					hostVec,
-					size*sizeof(double),
-					cudaMemcpyHostToDevice);
+    cudaThrustVector::cudaThrustVector()
+    {}
 
-		}
+    void
+    cudaThrustVector::resize(const unsigned int size)
+    {
+      d_data.resize(size, 0.0);
+    }
 
-		void copyCUDAVecToHostVec(const double* cudaVector,
-				double* hostVec,
-				const unsigned int size)
-		{
-			cudaMemcpy(hostVec,
-					cudaVector,
-					size*sizeof(double),
-					cudaMemcpyDeviceToHost);
-
-		}
-
-		cudaThrustVector::cudaThrustVector()
-		{
-		}
-
-		void cudaThrustVector::resize(const unsigned int size)
-		{
-			d_data.resize(size,0.0);
-		}
-
-		double * cudaThrustVector::begin()
-		{
-			return thrust::raw_pointer_cast(&d_data[0]);
-		}
-
-
-		const double * cudaThrustVector::begin() const
-		{
-			return thrust::raw_pointer_cast(&d_data[0]);
-		}
+    double *
+    cudaThrustVector::begin()
+    {
+      return thrust::raw_pointer_cast(&d_data[0]);
+    }
 
 
-		unsigned int cudaThrustVector::size() const
-		{
-			return d_data.size();
-		}
-
-		double cudaThrustVector::l2_norm() const
-		{
-			cublasHandle_t handle;
-			cublasCreate(&handle);
-			double result;
-			cublasDnrm2(handle, 
-					size(),
-					begin(),
-					1, 
-					&result);
-			cublasDestroy(handle);
-			return result;
-		}
+    const double *
+    cudaThrustVector::begin() const
+    {
+      return thrust::raw_pointer_cast(&d_data[0]);
+    }
 
 
-		double cudaThrustVector::l1_norm() const
-		{
-			cublasHandle_t handle;
-			cublasCreate(&handle);
-			double result;
-			cublasDasum(handle,
-					size(),
-					begin(),
-					1,
-					&result);
-			cublasDestroy(handle);
-			return result;
-		}
+    unsigned int
+    cudaThrustVector::size() const
+    {
+      return d_data.size();
+    }
+
+    double
+    cudaThrustVector::l2_norm() const
+    {
+      cublasHandle_t handle;
+      cublasCreate(&handle);
+      double result;
+      cublasDnrm2(handle, size(), begin(), 1, &result);
+      cublasDestroy(handle);
+      return result;
+    }
 
 
-	}//end of namespace
+    double
+    cudaThrustVector::l1_norm() const
+    {
+      cublasHandle_t handle;
+      cublasCreate(&handle);
+      double result;
+      cublasDasum(handle, size(), begin(), 1, &result);
+      cublasDestroy(handle);
+      return result;
+    }
 
-}
+
+  } // namespace vectorToolsCUDA
+
+} // namespace dftfe

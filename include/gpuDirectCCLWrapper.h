@@ -1,6 +1,7 @@
 // ---------------------------------------------------------------------
 //
-// Copyright (c) 2017-2018  The Regents of the University of Michigan and DFT-FE authors.
+// Copyright (c) 2017-2018  The Regents of the University of Michigan and DFT-FE
+// authors.
 //
 // This file is part of the DFT-FE code.
 //
@@ -15,48 +16,62 @@
 // @author Sambit Das, David M. Rogers
 
 #if defined(DFTFE_WITH_GPU)
-#ifndef gpuDirectCCLWrapper_h
-#define gpuDirectCCLWrapper_h
+#  ifndef gpuDirectCCLWrapper_h
+#    define gpuDirectCCLWrapper_h
 
-#include <mpi.h>
+#    include <mpi.h>
 
 namespace dftfe
 {
- 
   /**
    *  @brief Wrapper class for GPU Direct collective communications library.
-   *  Adapted from https://code.ornl.gov/99R/olcf-cookbook/-/blob/develop/comms/nccl_allreduce.rst
+   *  Adapted from
+   * https://code.ornl.gov/99R/olcf-cookbook/-/blob/develop/comms/nccl_allreduce.rst
    *
    *  @author Sambit Das, David M. Rogers
    */
-  class GPUCCLWrapper 
+  class GPUCCLWrapper
   {
-      public:
+  public:
+    GPUCCLWrapper();
 
-        GPUCCLWrapper();
+    void
+    init(const MPI_Comm &mpiComm);
 
-        void init(const MPI_Comm & mpiComm);
+    ~GPUCCLWrapper();
 
-        ~GPUCCLWrapper();
+    int
+    gpuDirectAllReduceWrapper(const float * send,
+                              float *       recv,
+                              int           size,
+                              cudaStream_t &stream);
 
-        int gpuDirectAllReduceWrapper(const float *send, float *recv, int size, cudaStream_t & stream);
 
+    int
+    gpuDirectAllReduceWrapper(const double *send,
+                              double *      recv,
+                              int           size,
+                              cudaStream_t &stream);
 
-        int gpuDirectAllReduceWrapper(const double *send, double *recv, int size, cudaStream_t & stream);
+    int
+    gpuDirectAllReduceMixedPrecGroupWrapper(const double *send1,
+                                            const float * send2,
+                                            double *      recv1,
+                                            float *       recv2,
+                                            int           size1,
+                                            int           size2,
+                                            cudaStream_t &stream);
 
-        int gpuDirectAllReduceMixedPrecGroupWrapper(const double *send1, const float *send2, double *recv1, float *recv2, int size1, int size2, cudaStream_t & stream);        
-
-      private:
-
-        int myRank;
-        int totalRanks;
-        bool commCreated;
-#ifdef DFTFE_WITH_NCCL       
-        void * ncclIdPtr;
-        void * ncclCommPtr;
-#endif          
+  private:
+    int  myRank;
+    int  totalRanks;
+    bool commCreated;
+#    ifdef DFTFE_WITH_NCCL
+    void *ncclIdPtr;
+    void *ncclCommPtr;
+#    endif
   };
-}
+} // namespace dftfe
 
-#endif
+#  endif
 #endif

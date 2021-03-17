@@ -1,6 +1,7 @@
 // ---------------------------------------------------------------------
 //
-// Copyright (c) 2017-2018  The Regents of the University of Michigan and DFT-FE authors.
+// Copyright (c) 2017-2018  The Regents of the University of Michigan and DFT-FE
+// authors.
 //
 // This file is part of the DFT-FE code.
 //
@@ -24,55 +25,60 @@
 #include <string>
 #include <vector>
 
-namespace dftfe {
-	namespace dftUtils
-	{
+namespace dftfe
+{
+  namespace dftUtils
+  {
+    /**
+     * @brief Read from file containing only double data in columns.
+     *
+     * @param[in] numColumns number of data columsn in the file to be read
+     * @param[out] data output double data in [rows][columns] format
+     * @param[in] fileName
+     */
+    void
+    readFile(const unsigned int                numColumns,
+             std::vector<std::vector<double>> &data,
+             const std::string &               fileName);
+    /**
+     * @brief Read from file containing only double data in columns.
+     */
+    int
+    readPsiFile(const unsigned int                numColumns,
+                std::vector<std::vector<double>> &data,
+                const std::string &               fileName);
 
-		/**
-		 * @brief Read from file containing only double data in columns.
-		 *
-		 * @param[in] numColumns number of data columsn in the file to be read
-		 * @param[out] data output double data in [rows][columns] format
-		 * @param[in] fileName
-		 */
-		void readFile(const unsigned int numColumns,
-				std::vector<std::vector<double> > &data,
-				const std::string & fileName);
-		/**
-		 * @brief Read from file containing only double data in columns.
-		 */
-		int readPsiFile(const unsigned int numColumns,
-				std::vector<std::vector<double> > &data,
-				const std::string & fileName);
+    /**
+     * @brief Write data into file containing only double data in rows and columns.
+     *
+     * @param[in] data input double data in [rows][columns] format
+     * @param[in] fileName
+     */
+    void
+    writeDataIntoFile(const std::vector<std::vector<double>> &data,
+                      const std::string &                     fileName);
 
-		/**
-		 * @brief Write data into file containing only double data in rows and columns.
-		 *
-		 * @param[in] data input double data in [rows][columns] format
-		 * @param[in] fileName
-		 */
-		void writeDataIntoFile(const std::vector<std::vector<double> > &data,
-				const std::string & fileName);
+    /**
+     * @brief Read from file containing only integer data in columns.
+     */
+    void
+    readRelaxationFlagsFile(const unsigned int                numColumns,
+                            std::vector<std::vector<int>> &   data,
+                            std::vector<std::vector<double>> &forceData,
+                            const std::string &               fileName);
 
-		/**
-		 * @brief Read from file containing only integer data in columns.
-		 */
-		void readRelaxationFlagsFile(const unsigned int numColumns,
-				std::vector<std::vector<int> > &data,
-				std::vector<std::vector<double> > &forceData,
-				const std::string & fileName);
+    /**
+     * @brief Move/rename checkpoint file.
+     */
+    void
+    moveFile(const std::string &old_name, const std::string &new_name);
 
-		/**
-		 * @brief Move/rename checkpoint file.
-		 */
-		void moveFile(const std::string &old_name,
-				const std::string &new_name);
+    /**
+     * @brief Verify if checkpoint file exists.
+     */
+    void
+    verifyCheckpointFileExists(const std::string &filename);
+  }; // namespace dftUtils
 
-		/**
-		 * @brief Verify if checkpoint file exists.
-		 */
-		void verifyCheckpointFileExists(const std::string & filename);
-	};
-
-}
+} // namespace dftfe
 #endif

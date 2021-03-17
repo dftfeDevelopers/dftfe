@@ -1,6 +1,7 @@
 // ---------------------------------------------------------------------
 //
-// Copyright (c) 2017-2018 The Regents of the University of Michigan and DFT-FE authors.
+// Copyright (c) 2017-2018 The Regents of the University of Michigan and DFT-FE
+// authors.
 //
 // This file is part of the DFT-FE code.
 //
@@ -15,45 +16,45 @@
 //
 
 #if defined(DFTFE_WITH_GPU)
-#ifndef densityCalculatorCUDA_H_
-#define densityCalculatorCUDA_H_
+#  ifndef densityCalculatorCUDA_H_
+#    define densityCalculatorCUDA_H_
 
-#include <headers.h>
-#include <operatorCUDA.h>
-#include <vectorUtilitiesCUDA.h>
+#    include <headers.h>
+#    include <operatorCUDA.h>
+#    include <vectorUtilitiesCUDA.h>
 
 namespace dftfe
 {
-	namespace CUDA
-	{
-		void computeRhoFromPSI
-			(const double* X,
-			 const double* XFrac,
-			 const unsigned int totalNumWaveFunctions,
-			 const unsigned int Nfr,
-			 const unsigned int numLocalDofs,
-			 const std::vector<std::vector<double>> & eigenValues,
-			 const double fermiEnergy, 
-			 const double fermiEnergyUp,
-			 const double fermiEnergyDown,
-			 operatorDFTCUDAClass & operatorMatrix,
-       const unsigned int matrixFreeDofhandlerIndex,
-			 const dealii::DoFHandler<3> & dofHandler,
-			 const unsigned int totalLocallyOwnedCells,
-			 const unsigned int numberNodesPerElement,
-			 const unsigned int numQuadPoints,
-			 const std::vector<double> & kPointWeights,
-			 std::map<dealii::CellId, std::vector<double> > * rhoValues,
-			 std::map<dealii::CellId, std::vector<double> > * gradRhoValues,
-			 std::map<dealii::CellId, std::vector<double> > * rhoValuesSpinPolarized,
-			 std::map<dealii::CellId, std::vector<double> > * gradRhoValuesSpinPolarized,
-			 const bool isEvaluateGradRho,
-			 const MPI_Comm & interpoolcomm,
-			 const MPI_Comm & interBandGroupComm,
-			 const bool spectrumSplit,
-			 const bool use2pPlusOneGLQuad=false);
-
-	}
-}
-#endif
+  namespace CUDA
+  {
+    void
+    computeRhoFromPSI(
+      const double *                                 X,
+      const double *                                 XFrac,
+      const unsigned int                             totalNumWaveFunctions,
+      const unsigned int                             Nfr,
+      const unsigned int                             numLocalDofs,
+      const std::vector<std::vector<double>> &       eigenValues,
+      const double                                   fermiEnergy,
+      const double                                   fermiEnergyUp,
+      const double                                   fermiEnergyDown,
+      operatorDFTCUDAClass &                         operatorMatrix,
+      const unsigned int                             matrixFreeDofhandlerIndex,
+      const dealii::DoFHandler<3> &                  dofHandler,
+      const unsigned int                             totalLocallyOwnedCells,
+      const unsigned int                             numberNodesPerElement,
+      const unsigned int                             numQuadPoints,
+      const std::vector<double> &                    kPointWeights,
+      std::map<dealii::CellId, std::vector<double>> *rhoValues,
+      std::map<dealii::CellId, std::vector<double>> *gradRhoValues,
+      std::map<dealii::CellId, std::vector<double>> *rhoValuesSpinPolarized,
+      std::map<dealii::CellId, std::vector<double>> *gradRhoValuesSpinPolarized,
+      const bool                                     isEvaluateGradRho,
+      const MPI_Comm &                               interpoolcomm,
+      const MPI_Comm &                               interBandGroupComm,
+      const bool                                     spectrumSplit,
+      const bool use2pPlusOneGLQuad = false);
+  }
+} // namespace dftfe
+#  endif
 #endif

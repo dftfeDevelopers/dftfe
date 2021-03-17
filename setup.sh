@@ -28,10 +28,6 @@ xmlLibDir="/usr/lib64"
 ELPA_PATH="/home/vikramg/DFT-FE-softwares/elpa/elpa2020.05.001_intel18.0.5_noopenmp_install"
 
 
-#If you have installed dealii by linking with intel mkl library set underlying flag to "ON",
-#otherwise set it to "OFF"
-withIntelMkl=ON
-
 #Compiler options and flags
 c_compiler=mpicc
 cxx_compiler=mpicxx
@@ -69,7 +65,7 @@ function cmake_real() {
 	-DCMAKE_BUILD_TYPE=$build_type -DDEAL_II_DIR=$dealiiPetscRealDir \
 	-DALGLIB_DIR=$alglibDir -DLIBXC_DIR=$libxcDir \
 	-DSPGLIB_DIR=$spglibDir -DXML_LIB_DIR=$xmlLibDir \
-	-DXML_INCLUDE_DIR=$xmlIncludeDir -DWITH_INTEL_MKL=$withIntelMkl \
+	-DXML_INCLUDE_DIR=$xmlIncludeDir \
 	-DWITH_ELPA=$withELPA -DCMAKE_PREFIX_PATH="$ELPA_PATH" \
 	-DWITH_COMPLEX=OFF -DWITH_GPU=$withGPU \
 	-DWITH_TESTING=$testing -DMINIMAL_COMPILE=$minimal_compile \
@@ -85,7 +81,7 @@ function cmake_cplx() {
 	-DCMAKE_BUILD_TYPE=$build_type -DDEAL_II_DIR=$dealiiPetscComplexDir \
 	-DALGLIB_DIR=$alglibDir -DLIBXC_DIR=$libxcDir \
 	-DSPGLIB_DIR=$spglibDir -DXML_LIB_DIR=$xmlLibDir \
-	-DXML_INCLUDE_DIR=$xmlIncludeDir -DWITH_INTEL_MKL=$withIntelMkl \
+	-DXML_INCLUDE_DIR=$xmlIncludeDir \
 	-DWITH_COMPLEX=ON -DWITH_TESTING=$testing -DMINIMAL_COMPILE=$minimal_compile \
   -DHIGHERQUAD_PSP=$withHigherQuadPSP\
 	  $1
