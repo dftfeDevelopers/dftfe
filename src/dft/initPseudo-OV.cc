@@ -86,16 +86,6 @@ void dftClass<FEOrder,FEOrderElectro>::computeElementalOVProjectorKets()
 	//
 	const unsigned int maxkPoints = d_kPointWeights.size();
 
-	//
-	//reinit kohnShamDFTOperator for getting access to global to local element nodeIds
-	//
-	kohnShamDFTOperatorClass<FEOrder,FEOrderElectro> kohnShamDFTEigenOperator(this,mpi_communicator);
-	distributedCPUVec<double> sqrtMassVector,invSqrtMassVector;
-
-
-	//storage for precomputing index maps
-	std::vector<std::vector<dealii::types::global_dof_index> > flattenedArrayMacroCellLocalProcIndexIdMap, flattenedArrayCellLocalProcIndexIdMap;
-
 
 	//
 	//preallocate element Matrices
@@ -103,12 +93,9 @@ void dftClass<FEOrder,FEOrderElectro>::computeElementalOVProjectorKets()
 	d_nonLocalProjectorElementMatrices.clear();
 	d_nonLocalProjectorElementMatricesConjugate.clear();
 	d_nonLocalProjectorElementMatricesTranspose.clear();
-	d_nonLocalProjectorElementMatricesCellMassMatrixScaled.clear();
-        d_nonLocalProjectorElementMatricesConjugateCellMassMatrixScaled.clear();  
-	d_nonLocalProjectorElementMatricesTransposeCellMassMatrixScaled.clear();
 	d_nonLocalPSP_ZetalmDeltaVl.clear();
-	d_nonLocalPSP_zetalmDeltaVlProductDistImageAtoms_KPoint.clear();
-	d_cellIdToNonlocalAtomIdsLocalCompactSupportMap.clear();
+  d_nonLocalPSP_zetalmDeltaVlProductDistImageAtoms_KPoint.clear();
+  d_cellIdToNonlocalAtomIdsLocalCompactSupportMap.clear();
 
 	d_nonLocalProjectorElementMatrices.resize(numberNonLocalAtoms);
 	d_nonLocalProjectorElementMatricesConjugate.resize(numberNonLocalAtoms);
@@ -172,8 +159,7 @@ void dftClass<FEOrder,FEOrderElectro>::computeElementalOVProjectorKets()
 			d_nonLocalProjectorElementMatricesTranspose[iAtom].resize(numberElementsInAtomCompactSupport);
 
 			d_nonLocalPSP_ZetalmDeltaVl[count].resize(numberPseudoWaveFunctions);
-			d_nonLocalPSP_zetalmDeltaVlProductDistImageAtoms_KPoint[count].resize(numberPseudoWaveFunctions);
-
+			d_nonLocalPSP_zetalmDeltaVlProductDistImageAtoms_KPoint[count].resize(numberPseudoWaveFunctions);      
 		}
 
 		for(int iElemComp = 0; iElemComp < numberElementsInAtomCompactSupport; ++iElemComp)
@@ -183,8 +169,8 @@ void dftClass<FEOrder,FEOrderElectro>::computeElementalOVProjectorKets()
 
 			d_cellIdToNonlocalAtomIdsLocalCompactSupportMap[cell->id()].insert(count);      
 
-			const std::vector<double> & quadPoints=cellIteratorQuadPointsMap[cell];  
-			const std::vector<double> & jxwQuads=cellIteratorJxWQuadsMap[cell];    
+      const std::vector<double> & quadPoints=cellIteratorQuadPointsMap[cell];  
+      const std::vector<double> & jxwQuads=cellIteratorJxWQuadsMap[cell];    
 
 			//compute values for the current elements
 			//fe_values.reinit(cell);
@@ -197,8 +183,7 @@ void dftClass<FEOrder,FEOrderElectro>::computeElementalOVProjectorKets()
 			d_nonLocalProjectorElementMatricesTranspose[iAtom][iElemComp].resize(maxkPoints,
 					std::vector<std::complex<double> > (numberNodesPerElement*numberPseudoWaveFunctions,0.0));
 
-
-                        std::vector<std::vector<std::complex<double> > > & nonLocalProjectorElementMatricesAtomElem=d_nonLocalProjectorElementMatrices[iAtom][iElemComp];
+			std::vector<std::vector<std::complex<double> > > & nonLocalProjectorElementMatricesAtomElem=d_nonLocalProjectorElementMatrices[iAtom][iElemComp];
 
 			std::vector<std::vector<std::complex<double> > > & nonLocalProjectorElementMatricesConjugateAtomElem=d_nonLocalProjectorElementMatricesConjugate[iAtom][iElemComp];
 
@@ -467,6 +452,9 @@ void dftClass<FEOrder,FEOrderElectro>::computeElementalOVProjectorKets()
 
 	}//atom loop
 
+	//
+	//Add mpi accumulation
+	//
 
 }
 	template<unsigned int FEOrder,unsigned int FEOrderElectro>
