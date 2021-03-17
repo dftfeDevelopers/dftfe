@@ -2051,7 +2051,6 @@ namespace dftfe
       }
   }
 
-#  ifdef DEAL_II_WITH_SCALAPACK
   // XTHX
   template <unsigned int FEOrder, unsigned int FEOrderElectro>
   void
@@ -3981,7 +3980,6 @@ namespace dftfe
           processGrid, projHamPar, dftPtr->interBandGroupComm);
       }
   }
-#  endif
 
 #  include "computeNonLocalHamiltonianTimesXMemoryOptBatchGEMMCUDA.cu"
 #  include "hamiltonianMatrixCalculatorFlattenedCUDA.cu"
