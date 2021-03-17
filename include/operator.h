@@ -90,6 +90,29 @@ namespace dftfe{
 
 			virtual void reinit(const unsigned int wavefunBlockSize) = 0;
 
+
+                        virtual void initCellWaveFunctionMatrix(const unsigned int numberWaveFunctions,
+                                                                distributedCPUVec<dataTypes::number> & X,
+                                                                std::vector<dataTypes::number> & cellWaveFunctionMatrix) = 0;
+
+
+	                virtual void fillGlobalArrayFromCellWaveFunctionMatrix(const unsigned int wavefunBlockSize,
+									       const std::vector<dataTypes::number> & cellWaveFunctionMatrix,
+									       distributedCPUVec<dataTypes::number> & X) = 0;
+
+	                virtual void initWithScalar(const unsigned int numberWaveFunctions,
+						    double scalarValue,
+						    std::vector<dataTypes::number> & cellWaveFunctionMatrix) = 0;
+	        
+	                virtual void axpby(double scalarA,
+					   double scalarB,
+					   const unsigned int numberWaveFunctions,
+					   const std::vector<dataTypes::number> & cellXWaveFunctionMatrix,
+					   std::vector<dataTypes::number> & cellYWaveFunctionMatrix) = 0; 
+
+	                virtual void getInteriorSurfaceNodesMapFromGlobalArray(std::vector<unsigned int> & globalArrayClassificationMap) = 0; 
+	                
+
 			/**
 			 * @brief compute diagonal mass matrix
 			 *
@@ -120,6 +143,15 @@ namespace dftfe{
 					distributedCPUVec<dataTypes::number> & Y) = 0;
 
 
+	                virtual void HX(distributedCPUVec<dataTypes::number> & src,
+		              	        std::vector<dataTypes::number>  & cellSrcWaveFunctionMatrix,
+			                const unsigned int numberWaveFunctions,
+			                const bool scaleFlag,
+			                const double scalar,
+                                        const double scalarA,
+                                        const double scalarB,
+			                distributedCPUVec<dataTypes::number> & dst,
+			                std::vector<dataTypes::number>  & cellDstWaveFunctionMatrix) = 0;
 			/**
 			 * @brief Compute projection of the operator into a subspace spanned by a given orthogonal basis
 			 *

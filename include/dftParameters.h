@@ -46,7 +46,7 @@ namespace dftfe {
 		extern std::string coordinatesGaussianDispFile;
 
 		extern double outerAtomBallRadius, innerAtomBallRadius, meshSizeOuterDomain;
-		extern bool autoAdaptBaseMeshSize;
+	        extern bool autoAdaptBaseMeshSize;
 		extern double meshSizeInnerBall, meshSizeOuterBall;
 		extern double chebyshevTolerance, topfrac, kerkerParameter;
 		extern std::string mixingMethod,ionOptSolver;
@@ -71,7 +71,6 @@ namespace dftfe {
 
 		extern std::string startingWFCType;
 		extern unsigned int numCoreWfcRR;
-		extern bool useBatchGEMM;
 		extern unsigned int wfcBlockSize;
 		extern unsigned int chebyWfcBlockSize;
 		extern unsigned int subspaceRotDofsBlockSize;
@@ -130,6 +129,7 @@ namespace dftfe {
 		extern bool useDensityMatrixPerturbationRankUpdates;
 		extern double xlbomdKernelRankUpdateFDParameter;
 		extern bool smearedNuclearCharges;
+                extern bool HXOptimFlag;
     extern bool floatingNuclearCharges;
     extern bool nonLinearCoreCorrection;
     extern unsigned int maxLineSearchIterCGPRP;

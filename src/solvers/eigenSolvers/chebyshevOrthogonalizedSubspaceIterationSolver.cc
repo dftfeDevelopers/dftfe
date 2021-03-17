@@ -61,10 +61,10 @@ namespace dftfe{
 		(const MPI_Comm &mpi_comm,
 		 double lowerBoundWantedSpectrum,
 		 double lowerBoundUnWantedSpectrum,
-     double upperBoundUnWantedSpectrum):
+		 double upperBoundUnWantedSpectrum):
 			d_lowerBoundWantedSpectrum(lowerBoundWantedSpectrum),
 			d_lowerBoundUnWantedSpectrum(lowerBoundUnWantedSpectrum),
-      d_upperBoundUnWantedSpectrum(upperBoundUnWantedSpectrum),
+			d_upperBoundUnWantedSpectrum(upperBoundUnWantedSpectrum),
 			pcout(std::cout, (dealii::Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0)),
 			computing_timer(mpi_comm,
 					pcout,
@@ -221,8 +221,12 @@ namespace dftfe{
 			//
 			distributedCPUVec<dataTypes::number> eigenVectorsFlattenedArrayBlock;
 			operatorMatrix.reinit(vectorsBlockSize,
-					eigenVectorsFlattenedArrayBlock,
-					true);
+			       		      eigenVectorsFlattenedArrayBlock,
+					      true);
+
+			///storage for cell wavefunction matrix
+			std::vector<dataTypes::number>  cellWaveFunctionMatrix;
+
 			int startIndexBandParal=totalNumberWaveFunctions;
 			int numVectorsBandParal=0;
 			for (unsigned int jvec = 0; jvec < totalNumberWaveFunctions; jvec += vectorsBlockSize)
@@ -250,36 +254,88 @@ namespace dftfe{
 						for(unsigned int iWave = 0; iWave < BVec; ++iWave)
 							eigenVectorsFlattenedArrayBlock.local_element(iNode*BVec+iWave)
 								=eigenVectorsFlattened[iNode*totalNumberWaveFunctions+jvec+iWave];
-
 					computing_timer.exit_section("Copy from full to block flattened array");
+
+                                        if(dftParameters::HXOptimFlag)
+                                        {
+					  computing_timer.enter_section("Copy from global-vectors to cellwavefunction array");
+					  operatorMatrix.initCellWaveFunctionMatrix(BVec,
+					  					    eigenVectorsFlattenedArrayBlock,
+										    cellWaveFunctionMatrix);
+					  computing_timer.exit_section("Copy from global-vectors to cellwavefunction array");
+                                        }
+					
 
 					//
 					//call Chebyshev filtering function only for the current block to be filtered
 					//and does in-place filtering
-					computing_timer.enter_section("Chebyshev filtering opt");
-					if (jvec+BVec<dftParameters::numAdaptiveFilterStates)
+					computing_timer.enter_section("Chebyshev filtering");
+					if(jvec+BVec<dftParameters::numAdaptiveFilterStates)
 					{
 						const double chebyshevOrd=(double)chebyshevOrder;
 						const double adaptiveOrder=0.5*chebyshevOrd
 							+jvec*0.3*chebyshevOrd/dftParameters::numAdaptiveFilterStates;
-						linearAlgebraOperations::chebyshevFilter(operatorMatrix,
-								eigenVectorsFlattenedArrayBlock,
-								BVec,
-								std::ceil(adaptiveOrder),
-								d_lowerBoundUnWantedSpectrum,
-								d_upperBoundUnWantedSpectrum,
-								d_lowerBoundWantedSpectrum);
+                                                if(dftParameters::HXOptimFlag)
+                                                 {
+                                                    linearAlgebraOperations::chebyshevFilterOpt(operatorMatrix,
+                                                                                            eigenVectorsFlattenedArrayBlock,
+                                                                                            cellWaveFunctionMatrix,
+                                                                                            BVec,
+                                                                                            std::ceil(adaptiveOrder),
+                                                                                            d_lowerBoundUnWantedSpectrum,
+                                                                                            d_upperBoundUnWantedSpectrum,
+                                                                                            d_lowerBoundWantedSpectrum);                                                  
+                                                 }
+                                                else
+                                                 {
+						    linearAlgebraOperations::chebyshevFilter(operatorMatrix,
+								                         eigenVectorsFlattenedArrayBlock,
+								                         BVec,
+								                         std::ceil(adaptiveOrder),
+								                         d_lowerBoundUnWantedSpectrum,
+								                         d_upperBoundUnWantedSpectrum,
+								                         d_lowerBoundWantedSpectrum);
+                                                 }
+						
 					}
 					else
-						linearAlgebraOperations::chebyshevFilter(operatorMatrix,
-								eigenVectorsFlattenedArrayBlock,
-								BVec,
-								chebyshevOrder,
-								d_lowerBoundUnWantedSpectrum,
-								d_upperBoundUnWantedSpectrum,
-								d_lowerBoundWantedSpectrum);
-					computing_timer.exit_section("Chebyshev filtering opt");
+					  {
 
+                                             if(dftParameters::HXOptimFlag)
+                                               {
+                                                  linearAlgebraOperations::chebyshevFilterOpt(operatorMatrix,
+                                                                                     eigenVectorsFlattenedArrayBlock,
+                                                                                     cellWaveFunctionMatrix,
+                                                                                     BVec,
+                                                                                     chebyshevOrder,
+                                                                                     d_lowerBoundUnWantedSpectrum,
+                                                                                     d_upperBoundUnWantedSpectrum,
+                                                                                     d_lowerBoundWantedSpectrum);
+                                               }
+                                             else
+                                               {
+					          linearAlgebraOperations::chebyshevFilter(operatorMatrix,
+					                                             eigenVectorsFlattenedArrayBlock,
+					                                             BVec,
+					                                             chebyshevOrder,
+					                                             d_lowerBoundUnWantedSpectrum,
+					                                             d_upperBoundUnWantedSpectrum,
+					                                             d_lowerBoundWantedSpectrum);
+                                              }
+					    
+					  }
+					computing_timer.exit_section("Chebyshev filtering");
+
+
+                                        if(dftParameters::HXOptimFlag)
+                                          {
+                                           computing_timer.enter_section("Copy from cellwavefunction array to global array");
+					   operatorMatrix.fillGlobalArrayFromCellWaveFunctionMatrix(BVec,
+												    cellWaveFunctionMatrix,
+												    eigenVectorsFlattenedArrayBlock);
+                                           computing_timer.exit_section("Copy from cellwavefunction array to global array");
+                                          }
+												 
 					if (dftParameters::verbosity>=4)
 						dftUtils::printCurrentMemoryUsage(operatorMatrix.getMPICommunicator(),
 								"During blocked chebyshev filtering");

@@ -51,16 +51,16 @@ namespace dftfe{
 			std::vector<double> work(lwork);
 
 			dsyevd_(&jobz,
-					&uplo,
-					&dimensionMatrix,
-					matrix,
-					&dimensionMatrix,
-					eigenValues,
-					&work[0],
-					&lwork,
-					&iwork[0],
-					&liwork,
-					&info);
+				&uplo,
+				&dimensionMatrix,
+				matrix,
+				&dimensionMatrix,
+				eigenValues,
+				&work[0],
+				&lwork,
+				&iwork[0],
+				&liwork,
+				&info);
 
 			//
 			//free up memory associated with work
@@ -159,7 +159,6 @@ namespace dftfe{
 
 
 
-
 		void callevr(const unsigned int dimensionMatrix,
 				double *matrixInput,
 				double *eigenVectorMatrixOutput,
@@ -177,25 +176,25 @@ namespace dftfe{
 			int info;
 
 			dsyevr_(&jobz,
-					&range,
-					&uplo,
-					&dimensionMatrix,
-					matrixInput,
-					&dimensionMatrix,
-					&vl,
-					&vu,
-					&il,
-					&iu,
-					&abstol,
-					&dimensionMatrix,
-					eigenValues,
-					eigenVectorMatrixOutput,
-					&dimensionMatrix,
-					&isuppz[0],
-					&work[0],
-					&lwork,
-					&iwork[0],
-					&liwork,
+				&range,
+				&uplo,
+				&dimensionMatrix,
+				matrixInput,
+				&dimensionMatrix,
+				&vl,
+				&vu,
+				&il,
+				&iu,
+				&abstol,
+				&dimensionMatrix,
+				eigenValues,
+				eigenVectorMatrixOutput,
+				&dimensionMatrix,
+				&isuppz[0],
+				&work[0],
+				&lwork,
+				&iwork[0],
+				&liwork,
 					&info);
 
 			AssertThrow(info==0,dealii::ExcMessage("Error in dsyevr"));
@@ -217,18 +216,18 @@ namespace dftfe{
 			const char transA  = 'T', transB  = 'N';
 			const double alpha = 1.0, beta = 0.0;
 			dgemm_(&transA,
-					&transB,
-					&numberEigenValues,
-					&localVectorSize,
-					&numberEigenValues,
-					&alpha,
-					&eigenVectorSubspaceMatrix[0],
-					&numberEigenValues,
-					&X[0],
-					&numberEigenValues,
-					&beta,
-					&Y[0],
-					&numberEigenValues);
+			       &transB,
+			       &numberEigenValues,
+			       &localVectorSize,
+			       &numberEigenValues,
+			       &alpha,
+			       &eigenVectorSubspaceMatrix[0],
+			       &numberEigenValues,
+			       &X[0],
+			       &numberEigenValues,
+			       &beta,
+			       &Y[0],
+			       &numberEigenValues);
 
 		}
 
@@ -354,6 +353,202 @@ namespace dftfe{
 				XArray = YArray;
 
 			}
+
+
+	        	//
+		//chebyshev filtering of given subspace XArray
+		//
+		template<typename T>
+		void chebyshevFilterOpt(operatorDFTClass & operatorMatrix,
+					distributedCPUVec<T> & XArray,
+					std::vector<dataTypes::number>  & cellXWaveFunctionMatrix,	
+					const unsigned int numberWaveFunctions,
+					const unsigned int m,
+					const double a,
+					const double b,
+					const double a0)
+			{
+				double e, c, sigma, sigma1, sigma2, gamma;
+				e = (b-a)/2.0; c = (b+a)/2.0;
+				sigma = e/(a0-c); sigma1 = sigma; gamma = 2.0/sigma1;
+
+				distributedCPUVec<T> YArray;
+				std::vector<T>  cellYWaveFunctionMatrix;
+
+				//init cellYWaveFunctionMatrix to a given scalar
+				double scalarValue = 0.0;
+				operatorMatrix.initWithScalar(numberWaveFunctions,
+							      scalarValue,
+							      cellYWaveFunctionMatrix);
+
+
+				std::vector<unsigned int> globalArrayClassificationMap;
+				operatorMatrix.getInteriorSurfaceNodesMapFromGlobalArray(globalArrayClassificationMap);
+							      
+
+
+
+				//
+				//create YArray
+				//
+				YArray.reinit(XArray);
+
+
+				//
+				//initialize to zeros.
+				//x
+				const T zeroValue = 0.0;
+				YArray = zeroValue;
+
+
+				//
+				//call HX
+				//
+				bool scaleFlag = false;
+				double scalar = 1.0;
+				
+
+				operatorMatrix.HX(XArray,
+						  cellXWaveFunctionMatrix,
+						  numberWaveFunctions,
+						  scaleFlag,
+						  scalar,
+                                                  scalar,
+                                                  scalar,
+						  YArray,
+						  cellYWaveFunctionMatrix);
+
+
+				double alpha1 = sigma1/e, alpha2 = -c;
+
+				//
+				//YArray = YArray + alpha2*XArray and YArray = alpha1*YArray
+				//
+				//YArray.add(alpha2,XArray);
+				//YArray *= alpha1;
+
+
+				//
+				//Do surface nodes recursive iteration for dealii vectors
+				//
+				const unsigned int numberDofs = YArray.local_size()/numberWaveFunctions;
+				unsigned int countInterior = 0;
+				for(unsigned int iDof = 0; iDof < numberDofs; ++iDof)
+				  {
+				    if(globalArrayClassificationMap[iDof] == 1)
+				      {
+					for(unsigned int iWave = 0; iWave < numberWaveFunctions; ++iWave)
+					  {
+					    YArray.local_element(iDof*numberWaveFunctions+iWave) = alpha1*YArray.local_element(iDof*numberWaveFunctions+iWave)+alpha1*alpha2*XArray.local_element(iDof*numberWaveFunctions+iWave);
+					    //YArray.local_element(iDof*numberWaveFunctions+iWave) *= alpha1;
+					  }
+				      }
+                                    //else
+                                      //{
+                                        //countInterior+=1;         
+                                      //}
+
+				  }
+
+                                //std::cout<<"Interior Nodes: "<<countInterior<<std::endl;
+
+				//
+				//Do recursive iteration only for interior cell nodes using cell-level loop
+				// Y = a*X + Y
+				/*operatorMatrix.axpy(alpha2,
+						    numberWaveFunctions,
+						    cellXWaveFunctionMatrix,
+						    cellYWaveFunctionMatrix);
+
+				//scale a vector with a scalar
+				operatorMatrix.scale(alpha1,
+						     numberWaveFunctions,
+						     cellYWaveFunctionMatrix);*/
+
+				operatorMatrix.axpby(alpha1*alpha2,
+						     alpha1,
+                                                     numberWaveFunctions,
+						     cellXWaveFunctionMatrix,
+						     cellYWaveFunctionMatrix);
+						     
+			
+				//
+				for(unsigned int degree = 2; degree < m+1; ++degree)
+				{
+					sigma2 = 1.0/(gamma - sigma);
+					alpha1 = 2.0*sigma2/e, alpha2 = -(sigma*sigma2);
+
+					//
+					//multiply XArray with alpha2
+					//
+					//XArray *= alpha2;
+
+					//XArray = XArray - c*alpha1*YArray
+					//XArray.add(-c*alpha1,YArray);
+
+					//
+					//Do surface nodes recursive iteration for dealii vectors
+					//
+					for(unsigned int iDof = 0; iDof < numberDofs; ++iDof)
+					  {
+					    if(globalArrayClassificationMap[iDof] == 1)
+					      {
+						for(unsigned int iWave = 0; iWave < numberWaveFunctions; ++iWave)
+						  {
+						    
+						    //XArray.local_element(iDof*numberWaveFunctions+iWave) *= alpha2;
+						    XArray.local_element(iDof*numberWaveFunctions+iWave) = alpha2*XArray.local_element(iDof*numberWaveFunctions+iWave)-c*alpha1*YArray.local_element(iDof*numberWaveFunctions+iWave);
+						  }
+					      }
+
+					  }
+
+					//Do recursive iteration only for interior cell nodes using cell-level loop
+
+					// X = a*Y + X
+					/*operatorMatrix.axpby(-c*alpha1,
+							     alpha2,
+							     numberWaveFunctions,
+							     cellYWaveFunctionMatrix,
+							     cellXWaveFunctionMatrix);*/
+
+
+					//
+					//call HX
+					//
+					bool scaleFlag = true;
+                                        double scalarA = -c*alpha1;
+                                        double scalarB = alpha2;
+					operatorMatrix.HX(YArray,
+							  cellYWaveFunctionMatrix,
+							  numberWaveFunctions,
+							  scaleFlag,
+							  alpha1,
+                                                          scalarA,
+                                                          scalarB,
+							  XArray,
+							  cellXWaveFunctionMatrix);
+
+					//
+					//XArray = YArray (may have to optimize this, so that swap happens only for surface nodes for deallii vectors and interior nodes
+					//for cellwavefunction matrices
+					//
+					XArray.swap(YArray);
+					cellXWaveFunctionMatrix.swap(cellYWaveFunctionMatrix);
+
+					//
+					//YArray = YNewArray
+					//
+					sigma = sigma2;
+
+				}
+
+				//copy back YArray to XArray
+				XArray = YArray;
+				cellXWaveFunctionMatrix = cellYWaveFunctionMatrix;
+
+			}
+	  
 
 		template<typename T>
 			void gramSchmidtOrthogonalization(std::vector<T> & X,
@@ -2890,6 +3085,15 @@ namespace dftfe{
 				const double ,
 				const double ,
 				const double);
+
+                template void chebyshevFilterOpt(operatorDFTClass & operatorMatrix,
+                                                 distributedCPUVec<dataTypes::number> & X,
+                                                 std::vector<dataTypes::number> & cellWaveFunctionMatrix,
+                                                 const unsigned int numberComponents,
+                                                 const unsigned int m,
+                                                 const double a,
+                                                 const double b,
+                                                 const double a0);
 
 
 		template void gramSchmidtOrthogonalization(std::vector<dataTypes::number> &,

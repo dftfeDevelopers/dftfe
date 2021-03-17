@@ -345,10 +345,10 @@ namespace dftfe
 #endif
 
 		void computeCellLocalIndexSetMap(const std::shared_ptr< const dealii::Utilities::MPI::Partitioner > & partitioner,
-				const dealii::MatrixFree<3,double>                                 & matrix_free_data,
-        const unsigned int                                                   mfDofHandlerIndex,
-				const unsigned int                                                   blockSize,
-				std::vector<dealii::types::global_dof_index >         & flattenedArrayCellLocalProcIndexIdMap)
+				                 const dealii::MatrixFree<3,double>                                 & matrix_free_data,
+                                                 const unsigned int                                                   mfDofHandlerIndex,
+				                 const unsigned int                                                   blockSize,
+				                 std::vector<dealii::types::global_dof_index >         & flattenedArrayCellLocalProcIndexIdMap)
 
 		{
 			//
@@ -392,7 +392,7 @@ namespace dftfe
 
 		void computeCellLocalIndexSetMap(const std::shared_ptr< const dealii::Utilities::MPI::Partitioner > & partitioner,
 				const dealii::MatrixFree<3,double>                                 & matrix_free_data,
-        const unsigned int                                                   mfDofHandlerIndex,
+                                const unsigned int                                                   mfDofHandlerIndex,
 				const unsigned int                                                   blockSize,
 				std::vector<dealii::types::global_dof_index>                       & flattenedArrayMacroCellLocalProcIndexIdMap,
 				std::vector<unsigned int>                       & normalCellIdToMacroCellIdMap,
@@ -891,6 +891,76 @@ namespace dftfe
 
 			}
 #endif
+
+               void classifyInteriorSurfaceNodesInCell(const dealii::MatrixFree<3,double> & matrix_free_data,
+                                                       const unsigned int mfDofHandlerIndex,
+                                                       std::vector<unsigned int> &nodesPerCellClassificationMap)
+                  {
+                      
+                      const std::vector< dealii::Point<3> > & nodalCoordinatesRefCell = matrix_free_data.get_dof_handler(mfDofHandlerIndex).get_fe().get_unit_support_points();
+                      unsigned int numberNodesPerCell = nodalCoordinatesRefCell.size();
+                      nodesPerCellClassificationMap.resize(numberNodesPerCell,0);
+
+                      double tol = 1e-05;
+
+                      for(unsigned int iNode = 0; iNode < numberNodesPerCell; ++iNode)
+                       {
+                          if(std::abs(nodalCoordinatesRefCell[iNode][0] - 1.0) < tol || std::abs(nodalCoordinatesRefCell[iNode][0]) < tol)
+                           {
+                             nodesPerCellClassificationMap[iNode] = 1;  
+                           }
+			  else if(std::abs(nodalCoordinatesRefCell[iNode][1] - 1.0) < tol || std::abs(nodalCoordinatesRefCell[iNode][1]) < tol)
+                           {
+                             nodesPerCellClassificationMap[iNode] = 1;
+                           }
+                          else if(std::abs(nodalCoordinatesRefCell[iNode][2] - 1.0) < tol || std::abs(nodalCoordinatesRefCell[iNode][2]) < tol)
+                           {
+                             nodesPerCellClassificationMap[iNode] = 1;
+                           }
+                       }
+                  }
+
+
+	  void classifyInteriorSurfaceNodesInGlobalArray(const dealii::MatrixFree<3,double> & matrix_free_data,
+                                                         const unsigned int mfDofHandlerIndex,
+							 const dealii::ConstraintMatrix & constraintMatrix,
+							 std::vector<unsigned int> & nodesPerCellClassificationMap,
+							 std::vector<unsigned int> & globalArrayClassificationMap)
+	  {
+
+	    distributedCPUVec<double> dummyVector;
+	    matrix_free_data.initialize_dof_vector(dummyVector,mfDofHandlerIndex);
+
+	    typename dealii::DoFHandler<3>::active_cell_iterator cell = matrix_free_data.get_dof_handler(mfDofHandlerIndex).begin_active(), endc = matrix_free_data.get_dof_handler(mfDofHandlerIndex).end();
+
+            const unsigned int numberNodesPerElement = matrix_free_data.get_dofs_per_cell(mfDofHandlerIndex);
+	    std::vector<dealii::types::global_dof_index> cell_dof_indices(numberNodesPerElement);
+	    const unsigned int numberDoFs = dummyVector.local_size();
+	    globalArrayClassificationMap.resize(numberDoFs,0);
+
+	    //
+	    //create map
+	    //
+	    for(; cell!=endc; ++cell)
+	      {
+		if(cell->is_locally_owned())
+		  {
+		    cell->get_dof_indices(cell_dof_indices);
+		    for(unsigned int iNode = 0; iNode < numberNodesPerElement; ++iNode)
+		      {
+			dealii::types::global_dof_index globalIndex = cell_dof_indices[iNode];
+			dealii::types::global_dof_index localIndex = dummyVector.get_partitioner()->global_to_local(globalIndex);
+			if(nodesPerCellClassificationMap[iNode] == 1 && !constraintMatrix.is_constrained(globalIndex) && dummyVector.get_partitioner()->in_local_range(globalIndex))
+			  {
+			    globalArrayClassificationMap[localIndex] = 1;
+			  }
+		      }
+		  }
+	      }
+
+	  }
+
+
 
 		std::pair<dealii::Point<3>,dealii::Point<3>> createBoundingBoxTriaLocallyOwned
 			(const dealii::DoFHandler<3>  & dofHandler)

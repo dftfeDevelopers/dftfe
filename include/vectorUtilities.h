@@ -351,6 +351,19 @@ namespace dftfe{
 			(const dealii::DoFHandler<3>  & dofHandler);
 
 
+                void classifyInteriorSurfaceNodesInCell(const dealii::MatrixFree<3,double> & matrix_free_data,
+                                                        const unsigned int mfDofHandlerIndex,
+                                                        std::vector<unsigned int> & nodesPerCellClassificationMap);
+
+
+	  void classifyInteriorSurfaceNodesInGlobalArray(const dealii::MatrixFree<3,double> & matrix_free_data,
+                                                         const unsigned int mfDofHandlerIndex,
+							 const dealii::ConstraintMatrix & constraintMatrix,
+							 std::vector<unsigned int> & nodesPerCellClassificationMap,
+							 std::vector<unsigned int> & globalArrayClassificationMap);
+
+	        
+
 	}
 }
 #endif

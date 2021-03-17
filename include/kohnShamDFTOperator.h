@@ -63,10 +63,42 @@ namespace dftfe{
 		 * @param dst Vector containing sum of dst vector and operator times given multi-vectors product
 		 */
 		void HX(distributedCPUVec<dataTypes::number> & src,
-				const unsigned int numberComponents,
-				const bool scaleFlag,
-				const double scalar,
-				distributedCPUVec<dataTypes::number> & dst);
+			const unsigned int numberComponents,
+			const bool scaleFlag,
+			const double scalar,
+			distributedCPUVec<dataTypes::number> & dst);
+
+
+	        /**
+		 * @brief Compute discretized operator matrix times multi-vectors and add it to the existing dst vector
+		 * works for real and complex data types (Optimized matrix times multi-vectors using different datastructures for 
+                 * interior nodes and exterior nodes to reduce memory access costs during global to cell level vectors and vice versa) 
+		 * @param src Vector containing current values of source array with multi-vector array stored
+		 * in a flattened format with all the wavefunction value corresponding to a given node is stored
+		 * contiguously (non-const as we scale src and rescale src to avoid creation of temporary vectors)
+                 * @param cellSrcWaveFunctionMatrix containing current values of source array with multi-vector array stored
+		 * in a flattened format with all the wavefunction value corresponding to a given node is stored
+		 * contiguously for a given cell 
+		 * @param numberComponents Number of multi-fields(vectors)
+
+		 * @param scaleFlag which decides whether dst has to be scaled square root of diagonal mass matrix before evaluating
+		 * matrix times src vector
+		 * @param scalar which multiplies src before evaluating matrix times src vector
+                 * @param scalarA which is used for Chebyshev recursive iteration
+                 * @param scalarB which is used for Chebyshev recursive iteration
+		 * @param dst Vector containing sum of dst vector and operator times given multi-vectors product
+                 * @param cellDstWaveFunctionMatrix containing sum of cell level dst vector and operator times given multi-vectors product
+                 */
+	        void HX(distributedCPUVec<dataTypes::number> & src,
+		        std::vector<dataTypes::number> & cellSrcWaveFunctionMatrix,
+		        const unsigned int numberComponents,
+		        const bool scaleFlag,
+		        const double scalar,
+                        const double scalarA,
+                        const double scalarB,
+		        distributedCPUVec<dataTypes::number> & dst,
+		        std::vector<dataTypes::number>  & cellDstWaveFunctionMatrix);
+
 
 		/**
 		 * @brief Compute projection of the operator into orthogonal basis
@@ -128,8 +160,8 @@ namespace dftfe{
 		void computeVEff(const std::map<dealii::CellId,std::vector<double> >* rhoValues,
 				const std::map<dealii::CellId,std::vector<double> > & phiValues,
 				const std::map<dealii::CellId,std::vector<double> > & externalPotCorrValues,
-        const std::map<dealii::CellId,std::vector<double> > & rhoCoreValues,
-        const unsigned int externalPotCorrQuadratureId);
+                                const std::map<dealii::CellId,std::vector<double> > & rhoCoreValues,
+                                const unsigned int externalPotCorrQuadratureId);
 
 
 		/**
@@ -144,8 +176,8 @@ namespace dftfe{
 				const std::map<dealii::CellId,std::vector<double> > & phiValues,
 				unsigned int spinIndex,
 				const std::map<dealii::CellId,std::vector<double> > & externalPotCorrValues,
-        const std::map<dealii::CellId,std::vector<double> > & rhoCoreValues,
-        const unsigned int externalPotCorrQuadratureId);
+                                const std::map<dealii::CellId,std::vector<double> > & rhoCoreValues,
+                                const unsigned int externalPotCorrQuadratureId);
 
 		/**
 		 * @brief Computes effective potential involving gradient density type exchange-correlation functionals
@@ -159,9 +191,9 @@ namespace dftfe{
 				const std::map<dealii::CellId,std::vector<double> >* gradRhoValues,
 				const std::map<dealii::CellId,std::vector<double> > & phiValues,
 				const std::map<dealii::CellId,std::vector<double> > & externalPotCorrValues,
-        const std::map<dealii::CellId,std::vector<double> > & rhoCoreValues,
-        const std::map<dealii::CellId,std::vector<double> > & gradRhoCoreValues,
-        const unsigned int externalPotCorrQuadratureId);
+                                const std::map<dealii::CellId,std::vector<double> > & rhoCoreValues,
+                                const std::map<dealii::CellId,std::vector<double> > & gradRhoCoreValues,
+                                const unsigned int externalPotCorrQuadratureId);
 
 
 		/**
@@ -178,9 +210,9 @@ namespace dftfe{
 				const std::map<dealii::CellId,std::vector<double> > & phiValues,
 				const unsigned int spinIndex,
 				const std::map<dealii::CellId,std::vector<double> > & externalPotCorrValues,
-        const std::map<dealii::CellId,std::vector<double> > & rhoCoreValues,
-        const std::map<dealii::CellId,std::vector<double> > & gradRhoCoreValues,
-        const unsigned int externalPotCorrQuadratureId);
+                                const std::map<dealii::CellId,std::vector<double> > & rhoCoreValues,
+                                const std::map<dealii::CellId,std::vector<double> > & gradRhoCoreValues,
+                                 const unsigned int externalPotCorrQuadratureId);
 
 
 		/**
@@ -211,10 +243,35 @@ namespace dftfe{
 		 *
 		 */
 		void reinit(const unsigned int wavefunBlockSize,
-				distributedCPUVec<dataTypes::number> & X,
-				bool flag);
+			    distributedCPUVec<dataTypes::number> & X,
+			    bool flag);
 
 		void reinit(const unsigned int wavefunBlockSize);
+
+
+	        void initCellWaveFunctionMatrix(const unsigned int numberWaveFunctions,
+					        distributedCPUVec<dataTypes::number> & X,
+                                                std::vector<dataTypes::number> & cellWaveFunctionMatrix);
+
+
+	        void fillGlobalArrayFromCellWaveFunctionMatrix(const unsigned int wavefunBlockSize,
+							      const std::vector<dataTypes::number> & cellWaveFunctionMatrix,
+							      distributedCPUVec<dataTypes::number> & X);
+
+	        void initWithScalar(const unsigned int numberWaveFunctions,
+				    double scalarValue,
+				    std::vector<dataTypes::number> & cellWaveFunctionMatrix);
+
+	     	       
+	        void axpby(double scalarA,
+			   double scalarB,
+			   const unsigned int numberWaveFunctions,
+			   const std::vector<dataTypes::number>  & cellXWaveFunctionMatrix,
+			   std::vector<dataTypes::number>  & cellYWaveFunctionMatrix); 
+	  
+
+	       
+	       void getInteriorSurfaceNodesMapFromGlobalArray(std::vector<unsigned int> & globalArrayClassificationMap);
 
 
 
@@ -227,9 +284,9 @@ namespace dftfe{
 		 * @param invSqrtMassVec output the value of inverse square root of diagonal mass matrix
 		 */
 		void computeMassVector(const dealii::DoFHandler<3> & dofHandler,
-				const dealii::AffineConstraints<double> & constraintMatrix,
-				distributedCPUVec<double> & sqrtMassVec,
-				distributedCPUVec<double> & invSqrtMassVec);
+				       const dealii::AffineConstraints<double> & constraintMatrix,
+				       distributedCPUVec<double> & sqrtMassVec,
+				       distributedCPUVec<double> & invSqrtMassVec);
 
 		///precompute shapefunction gradient integral
 		void preComputeShapeFunctionGradientIntegrals(const unsigned int lpspQuadratureId);
@@ -257,7 +314,8 @@ namespace dftfe{
 		std::vector<std::vector<std::vector<dataTypes::number> > > d_cellHamiltonianMatrix;
 
 
-    std::vector<std::vector<double> > d_cellHamiltonianMatrixExternalPotCorr;
+		std::vector<std::vector<dataTypes::number> > d_cellMassMatrix;
+                std::vector<std::vector<double> > d_cellHamiltonianMatrixExternalPotCorr;
 
 		/**
 		 * @brief implementation of matrix-vector product using cell-level stiffness matrices.
@@ -269,28 +327,32 @@ namespace dftfe{
 		 * @param dst Vector containing matrix times given multi-vectors product
 		 */
 		void computeLocalHamiltonianTimesX(const distributedCPUVec<dataTypes::number> & src,
-				const unsigned int numberWaveFunctions,
-				distributedCPUVec<dataTypes::number> & dst) const;
+						   const unsigned int numberWaveFunctions,
+						   distributedCPUVec<dataTypes::number> & dst,
+						   const double scalar = 1.0);
+
+	        void computeLocalHamiltonianTimesX(const distributedCPUVec<dataTypes::number> & src,
+					           std::vector<dataTypes::number>  & cellSrcWaveFunctionMatrix,
+					           const unsigned int numberWaveFunctions,
+					           distributedCPUVec<dataTypes::number> & dst,
+						   std::vector<dataTypes::number>  & cellDstWaveFunctionMatrix,
+						   const double scalar = 1.0);
 
 
-#ifdef WITH_MKL
-
-		/**
-		 * @brief implementation of matrix-vector product using cell-level stiffness matrices.
-		 * works for both real and complex data type. blas gemm_batch routines are used.
-		 * @param src Vector containing current values of source array with multi-vector array stored
-		 * in a flattened format with all the wavefunction value corresponding to a given node is stored
-		 * contiguously.
-		 * @param numberWaveFunctions Number of wavefunctions at a given node.
-		 * @param dst Vector containing matrix times given multi-vectors product
-		 */
-		void computeLocalHamiltonianTimesXBatchGEMM
-			(const distributedCPUVec<dataTypes::number> & src,
-			 const unsigned int numberWaveFunctions,
-			 distributedCPUVec<dataTypes::number> & dst) const;
+	        void computeHamiltonianTimesXInternal(const distributedCPUVec<dataTypes::number> & src,
+						      std::vector<dataTypes::number>  & cellSrcWaveFunctionMatrix,
+						      const unsigned int numberWaveFunctions,
+						      distributedCPUVec<dataTypes::number> & dst,
+						      std::vector<dataTypes::number>  & cellDstWaveFunctionMatrix,
+						      const double scalar=1.0,
+						      const double scalarA=1.0,
+						      const double scalarB=1.0,
+						      bool scaleFlag=false);	     
+					     
+	  
 
 
-#endif
+
 		/**
 		 * @brief implementation of non-local Hamiltonian matrix-vector product
 		 * using non-local discretized projectors at cell-level.
@@ -302,26 +364,11 @@ namespace dftfe{
 		 * @param dst Vector containing matrix times given multi-vectors product
 		 */
 		void computeNonLocalHamiltonianTimesX(const distributedCPUVec<dataTypes::number> & src,
-				const unsigned int numberWaveFunctions,
-				distributedCPUVec<dataTypes::number> & dst) const;
+						      const unsigned int numberWaveFunctions,
+						      distributedCPUVec<dataTypes::number> & dst,
+						      const double scalar = 1.0) const;	
+ 
 
-#ifdef WITH_MKL
-		/**
-		 * @brief implementation of non-local Hamiltonian matrix-vector product using
-		 * non-local discretized projectors at cell-level. blas gemm_batch routines are used.
-		 * works for both complex and real data type
-		 * @param src Vector containing current values of source array with multi-vector array stored
-		 * in a flattened format with all the wavefunction value corresponding to a given node is stored
-		 * contiguously.
-		 * @param numberWaveFunctions Number of wavefunctions at a given node.
-		 * @param dst Vector containing matrix times given multi-vectors product
-		 */
-		void computeNonLocalHamiltonianTimesXBatchGEMM(const distributedCPUVec<dataTypes::number> & src,
-				const unsigned int numberWaveFunctions,
-				distributedCPUVec<dataTypes::number> & dst) const;
-
-
-#endif
 
 		///pointer to dft class
 		dftClass<FEOrder,FEOrderElectro>* dftPtr;
@@ -331,7 +378,7 @@ namespace dftfe{
 		distributedCPUVec<double> d_invSqrtMassVector,d_sqrtMassVector;
 
 		dealii::Table<2, dealii::VectorizedArray<double> > vEff;
-    dealii::Table<2, dealii::VectorizedArray<double> > d_vEffExternalPotCorr;
+	        dealii::Table<2, dealii::VectorizedArray<double> > d_vEffExternalPotCorr;
 		dealii::Table<2, dealii::Tensor<1,3,dealii::VectorizedArray<double> > > derExcWithSigmaTimesGradRho;
 
 
@@ -345,14 +392,16 @@ namespace dftfe{
 		///storage for shapefunctions
 		std::vector<double> d_shapeFunctionValue;
 
-    ///storage for shapefunctions
-    std::vector<double> d_shapeFunctionValueLpspQuad;
-
-
+                ///storage for shapefunctions
+                std::vector<double> d_shapeFunctionValueLpspQuad;
+ 
+                	        
 		///storage for  matrix-free cell data
 		const unsigned int d_numberNodesPerElement;
 		const unsigned int d_numberMacroCells;
 		std::vector<unsigned int> d_macroCellSubCellMap;
+                std::vector<unsigned int> d_nodesPerCellClassificationMap;
+                std::vector<unsigned int> d_globalArrayClassificationMap;
 
 		//parallel objects
 		const MPI_Comm mpi_communicator;
@@ -374,6 +423,11 @@ namespace dftfe{
 
 		//storage for precomputing index maps
 		std::vector<std::vector<dealii::types::global_dof_index> > d_flattenedArrayMacroCellLocalProcIndexIdMap, d_flattenedArrayCellLocalProcIndexIdMap;
+
+	        std::vector<dealii::types::global_dof_index> d_FullflattenedArrayMacroCellLocalProcIndexIdMap, d_FullflattenedArrayCellLocalProcIndexIdMap;
+
+                std::vector<unsigned int> d_normalCellIdToMacroCellIdMap;
+                std::vector<unsigned int> d_macroCellIdToNormalCellIdMap;
 
     /// flag for precomputing stiffness matrix contribution from sum{Vext}-sum{Vnuc}
     bool d_isStiffnessMatrixExternalPotCorrComputed;

@@ -63,9 +63,9 @@ namespace dftfe {
 		bool electrostaticsHRefinement = false;
 		bool meshAdaption = false;
 		bool pinnedNodeForPBC = true;
+	        bool HXOptimFlag = false;
 
 		std::string startingWFCType="";
-		bool useBatchGEMM=false;
 		bool writeWfcSolutionFields=false;
 		bool writeDensitySolutionFields=false;
 		unsigned int wfcBlockSize=400;
@@ -626,10 +626,11 @@ namespace dftfe {
 							Patterns::Double(1e-10),
 							"[Advanced] Parameter specifying the accuracy of the occupied eigenvectors close to the Fermi-energy computed using Chebyshev filtering subspace iteration procedure. Default value is sufficient for most purposes");
 
-					prm.declare_entry("BATCH GEMM", "true",
-							Patterns::Bool(),
-							"[Advanced] Boolean parameter specifying whether to use gemm batch blas routines to perform matrix-matrix multiplication operations with groups of matrices, processing a number of groups at once using threads instead of the standard serial route. CAUTION: gemm batch blas routines will only be activated if the CHEBY WFC BLOCK SIZE is less than 1000, and only if intel mkl blas library is linked with the dealii installation. Default option is true.");
+                                        prm.declare_entry("ENABLE HAMILTONIAN TIMES VECTOR OPTIM", "true",
+                                                         Patterns::Bool(),
+                                                        "[Advanced] Turns on optimization for hamiltonian times vector multiplication. Operations involving data movement from global vector to finite-element cell level and vice versa are done by employing different data structures for interior nodes and surfaces nodes of a given cell and this allows reduction of memory access costs");
 
+				
 					prm.declare_entry("ORTHOGONALIZATION TYPE","Auto",
 							Patterns::Selection("GS|LW|PGS|Auto"),
 							"[Advanced] Parameter specifying the type of orthogonalization to be used: GS(Gram-Schmidt Orthogonalization using SLEPc library), LW(Lowden Orthogonalization), PGS(Cholesky-Gram-Schmidt Orthogonalization) Auto is the default and recommended option, which chooses GS for all-electron case and PGS for pseudopotential case. To use GS and LW options set RR GEP to false. On GPUs PGS is the only route currently implemented.");
@@ -1004,7 +1005,7 @@ namespace dftfe {
 					dftParameters::rrGEP= prm.get_bool("RR GEP");
 					dftParameters::chebyshevOrder                = prm.get_integer("CHEBYSHEV POLYNOMIAL DEGREE");
 					dftParameters::useELPA= prm.get_bool("USE ELPA");
-					dftParameters::useBatchGEMM= prm.get_bool("BATCH GEMM");
+                                        dftParameters::HXOptimFlag=prm.get_bool("ENABLE HAMILTONIAN TIMES VECTOR OPTIM");
 					dftParameters::orthogType        = prm.get("ORTHOGONALIZATION TYPE");
 					dftParameters::chebyshevTolerance = prm.get_double("CHEBYSHEV FILTER TOLERANCE");
 					dftParameters::wfcBlockSize= prm.get_integer("WFC BLOCK SIZE");
@@ -1195,11 +1196,7 @@ namespace dftfe {
 			if(dftParameters::nbandGrps>1)
 				AssertThrow(dftParameters::wfcBlockSize==dftParameters::chebyWfcBlockSize,ExcMessage("DFT-FE Error: WFC BLOCK SIZE and CHEBY WFC BLOCK SIZE must be same for band parallelization."));
 
-#ifndef WITH_MKL;
-			dftParameters::useBatchGEMM=false;
-			if (dftParameters::verbosity >=1 && Utilities::MPI::this_mpi_process(MPI_COMM_WORLD)== 0)
-				std::cout <<"Setting USE BATCH GEMM=false as intel mkl blas library is not being linked to."<<std::endl;
-#endif
+
 		}
 
 
@@ -1309,6 +1306,7 @@ namespace dftfe {
 			}
 #ifdef USE_COMPLEX
 			dftParameters::rrGEP=false;
+                        dftParameters::HXOptimFlag=false;
 #endif
 
 

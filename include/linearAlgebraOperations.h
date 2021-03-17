@@ -127,6 +127,18 @@ namespace linearAlgebraOperations
 				const double a0);
 
 
+       template<typename T>
+		void chebyshevFilterOpt(operatorDFTClass & operatorMatrix,
+				distributedCPUVec<T> & X,
+				std::vector<dataTypes::number>  & cellWaveFunctionMatrix,		
+				const unsigned int numberComponents,
+				const unsigned int m,
+				const double a,
+				const double b,
+				const double a0);
+       
+  
+
 	/** @brief Orthogonalize given subspace using GramSchmidt orthogonalization
 	 *
 	 *  @param[in,out]  X Given subspace as flattened array of multi-vectors.

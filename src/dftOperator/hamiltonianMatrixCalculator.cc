@@ -229,32 +229,34 @@ void kohnShamDFTOperatorClass<FEOrder,FEOrderElectro>::computeHamiltonianMatrix(
 				}
 			}
 
-      if (dftParameters::isPseudopotential || dftParameters::smearedNuclearCharges)
-        for(unsigned int iNode = 0; iNode < numberDofsPerElement; ++iNode)
-          for(unsigned int jNode = iNode; jNode < numberDofsPerElement; ++jNode)
-          {
+			if (dftParameters::isPseudopotential || dftParameters::smearedNuclearCharges)
+			  for(unsigned int iNode = 0; iNode < numberDofsPerElement; ++iNode)
+			    for(unsigned int jNode = iNode; jNode < numberDofsPerElement; ++jNode)
+			      {
 #ifdef USE_COMPLEX
-            d_cellHamiltonianMatrix[kpointSpinIndex][iElem][numberDofsPerElement*iNode + jNode]+=dataTypes::number(d_cellHamiltonianMatrixExternalPotCorr[iElem][numberDofsPerElement*iNode + jNode],0.0);
+				d_cellHamiltonianMatrix[kpointSpinIndex][iElem][numberDofsPerElement*iNode + jNode]+=dataTypes::number(d_cellHamiltonianMatrixExternalPotCorr[iElem][numberDofsPerElement*iNode + jNode],0.0);
 #else
-            d_cellHamiltonianMatrix[kpointSpinIndex][iElem][numberDofsPerElement*iNode + jNode]
-              += d_cellHamiltonianMatrixExternalPotCorr[iElem][numberDofsPerElement*iNode + jNode];
+				d_cellHamiltonianMatrix[kpointSpinIndex][iElem][numberDofsPerElement*iNode + jNode]
+				  += d_cellHamiltonianMatrixExternalPotCorr[iElem][numberDofsPerElement*iNode + jNode];
 #endif
-          }
+			      }
 
 #ifdef USE_COMPLEX
-      for(unsigned int iNode = 0; iNode < numberDofsPerElement; ++iNode)
-        for(unsigned int jNode = 0; jNode < iNode; ++jNode)
-          d_cellHamiltonianMatrix[kpointSpinIndex][iElem][numberDofsPerElement*iNode + jNode]
-            = std::conj(d_cellHamiltonianMatrix[kpointSpinIndex][iElem][numberDofsPerElement*jNode + iNode]);
+			for(unsigned int iNode = 0; iNode < numberDofsPerElement; ++iNode)
+			  for(unsigned int jNode = 0; jNode < iNode; ++jNode)
+			    d_cellHamiltonianMatrix[kpointSpinIndex][iElem][numberDofsPerElement*iNode + jNode]
+			      = std::conj(d_cellHamiltonianMatrix[kpointSpinIndex][iElem][numberDofsPerElement*jNode + iNode]);
 #else
-      for(unsigned int iNode = 0; iNode < numberDofsPerElement; ++iNode)
-        for(unsigned int jNode = 0; jNode < iNode; ++jNode)
-          d_cellHamiltonianMatrix[kpointSpinIndex][iElem][numberDofsPerElement*iNode + jNode]
-            = d_cellHamiltonianMatrix[kpointSpinIndex][iElem][numberDofsPerElement*jNode + iNode];
+			for(unsigned int iNode = 0; iNode < numberDofsPerElement; ++iNode)
+			  for(unsigned int jNode = 0; jNode < iNode; ++jNode)
+			    d_cellHamiltonianMatrix[kpointSpinIndex][iElem][numberDofsPerElement*iNode + jNode]
+			      = d_cellHamiltonianMatrix[kpointSpinIndex][iElem][numberDofsPerElement*jNode + iNode];
 #endif            
 
 			iElem += 1;
 		}
+
+	
 
 	}//macrocell loop
 
