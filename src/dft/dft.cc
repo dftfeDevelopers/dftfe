@@ -2172,9 +2172,9 @@ namespace dftfe
                   }
 
                 if (dftParameters::verbosity >= 1)
-                  pcout
-                    << "Anderson mixing, L2 norm of electron-density difference: "
-                    << norm << std::endl;
+                  pcout << dftParameters::mixingMethod
+                        << " mixing, L2 norm of electron-density difference: "
+                        << norm << std::endl;
               }
 
             if (dftParameters::computeEnergyEverySCF &&
