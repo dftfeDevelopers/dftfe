@@ -59,6 +59,7 @@ dftClass<FEOrder, FEOrderElectro>::initRho()
                                  singleAtomElectronDensity;
   std::map<unsigned int, double> outerMostPointDen;
   const double                   truncationTol = 1e-10;
+  double                         maxRhoTail    = 0.0;
 
   // loop over atom types
   for (std::set<unsigned int>::iterator it = atomTypes.begin();
@@ -112,6 +113,9 @@ dftClass<FEOrder, FEOrderElectro>::initRho()
                          0.0,
                          denSpline[*it]);
       outerMostPointDen[*it] = xData[maxRowId];
+
+      if (outerMostPointDen[*it] > maxRhoTail)
+        maxRhoTail = outerMostPointDen[*it];
     }
 
 
@@ -182,32 +186,55 @@ dftClass<FEOrder, FEOrderElectro>::initRho()
                                            d_dofHandlerRhoNodal,
                                            supportPointsRhoNodal);
 
+      dealii::BoundingBox<3> boundingBoxTria(
+        vectorTools::createBoundingBoxTriaLocallyOwned(d_dofHandlerRhoNodal));
+      dealii::Tensor<1, 3, double> tempDisp;
+      tempDisp[0] = maxRhoTail;
+      tempDisp[1] = maxRhoTail;
+      tempDisp[2] = maxRhoTail;
+
       // d_matrixFreeDataPRefined.initialize_dof_vector(d_rhoInNodalValues);
-      std::vector<double> atomsImagesPositions(
-        (numberGlobalCharges + numberImageCharges) * 3);
-      std::vector<double> atomsImagesChargeIds(
-        (numberGlobalCharges + numberImageCharges));
+      std::vector<double> atomsImagesPositions;
+      std::vector<double> atomsImagesChargeIds;
       for (unsigned int iAtom = 0;
            iAtom < numberGlobalCharges + numberImageCharges;
            iAtom++)
         {
+          Point<3> atomCoord;    
+          int chargeId;
           if (iAtom < numberGlobalCharges)
             {
-              atomsImagesPositions[iAtom * 3 + 0] = atomLocations[iAtom][2];
-              atomsImagesPositions[iAtom * 3 + 1] = atomLocations[iAtom][3];
-              atomsImagesPositions[iAtom * 3 + 2] = atomLocations[iAtom][4];
-              atomsImagesChargeIds[iAtom]         = iAtom;
+              atomCoord[0] = atomLocations[iAtom][2];
+              atomCoord[1] = atomLocations[iAtom][3];
+              atomCoord[2] = atomLocations[iAtom][4];
+              chargeId         = iAtom;
             }
           else
             {
               const unsigned int iImageCharge = iAtom - numberGlobalCharges;
-              atomsImagesPositions[iAtom * 3 + 0] =
+              atomCoord[0] =
                 d_imagePositionsTrunc[iImageCharge][0];
-              atomsImagesPositions[iAtom * 3 + 1] =
+              atomCoord[1] =
                 d_imagePositionsTrunc[iImageCharge][1];
-              atomsImagesPositions[iAtom * 3 + 2] =
+              atomCoord[2] =
                 d_imagePositionsTrunc[iImageCharge][2];
-              atomsImagesChargeIds[iAtom] = d_imageIdsTrunc[iImageCharge];
+              chargeId = d_imageIdsTrunc[iImageCharge];
+            }
+
+            std::pair<dealii::Point<3, double>, dealii::Point<3, double>>
+              boundaryPoints;
+            boundaryPoints.first  = atomCoord - tempDisp;
+            boundaryPoints.second = atomCoord + tempDisp;
+            dealii::BoundingBox<3> boundingBoxAroundAtom(boundaryPoints);
+
+            if (boundingBoxTria.get_neighbor_type(boundingBoxAroundAtom) !=
+                NeighborType::not_neighbors)
+              ;
+            {
+              atomsImagesPositions.push_back(atomCoord[0]);
+              atomsImagesPositions.push_back(atomCoord[1]);
+              atomsImagesPositions.push_back(atomCoord[2]);
+              atomsImagesChargeIds.push_back(chargeId);              
             }
         }
 
@@ -228,7 +255,7 @@ dftClass<FEOrder, FEOrderElectro>::initRho()
               double diffz;
 
               for (unsigned int iAtom = 0;
-                   iAtom < (numberGlobalCharges + numberImageCharges);
+                   iAtom < atomsImagesChargeIds.size();
                    ++iAtom)
                 {
                   diffx = nodalCoor[0] - atomsImagesPositions[iAtom * 3 + 0];
