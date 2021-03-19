@@ -200,42 +200,39 @@ dftClass<FEOrder, FEOrderElectro>::initRho()
            iAtom < numberGlobalCharges + numberImageCharges;
            iAtom++)
         {
-          Point<3> atomCoord;    
-          int chargeId;
+          Point<3> atomCoord;
+          int      chargeId;
           if (iAtom < numberGlobalCharges)
             {
               atomCoord[0] = atomLocations[iAtom][2];
               atomCoord[1] = atomLocations[iAtom][3];
               atomCoord[2] = atomLocations[iAtom][4];
-              chargeId         = iAtom;
+              chargeId     = iAtom;
             }
           else
             {
               const unsigned int iImageCharge = iAtom - numberGlobalCharges;
-              atomCoord[0] =
-                d_imagePositionsTrunc[iImageCharge][0];
-              atomCoord[1] =
-                d_imagePositionsTrunc[iImageCharge][1];
-              atomCoord[2] =
-                d_imagePositionsTrunc[iImageCharge][2];
-              chargeId = d_imageIdsTrunc[iImageCharge];
+              atomCoord[0] = d_imagePositionsTrunc[iImageCharge][0];
+              atomCoord[1] = d_imagePositionsTrunc[iImageCharge][1];
+              atomCoord[2] = d_imagePositionsTrunc[iImageCharge][2];
+              chargeId     = d_imageIdsTrunc[iImageCharge];
             }
 
-            std::pair<dealii::Point<3, double>, dealii::Point<3, double>>
-              boundaryPoints;
-            boundaryPoints.first  = atomCoord - tempDisp;
-            boundaryPoints.second = atomCoord + tempDisp;
-            dealii::BoundingBox<3> boundingBoxAroundAtom(boundaryPoints);
+          std::pair<dealii::Point<3, double>, dealii::Point<3, double>>
+            boundaryPoints;
+          boundaryPoints.first  = atomCoord - tempDisp;
+          boundaryPoints.second = atomCoord + tempDisp;
+          dealii::BoundingBox<3> boundingBoxAroundAtom(boundaryPoints);
 
-            if (boundingBoxTria.get_neighbor_type(boundingBoxAroundAtom) !=
-                NeighborType::not_neighbors)
-              ;
-            {
-              atomsImagesPositions.push_back(atomCoord[0]);
-              atomsImagesPositions.push_back(atomCoord[1]);
-              atomsImagesPositions.push_back(atomCoord[2]);
-              atomsImagesChargeIds.push_back(chargeId);              
-            }
+          if (boundingBoxTria.get_neighbor_type(boundingBoxAroundAtom) !=
+              NeighborType::not_neighbors)
+            ;
+          {
+            atomsImagesPositions.push_back(atomCoord[0]);
+            atomsImagesPositions.push_back(atomCoord[1]);
+            atomsImagesPositions.push_back(atomCoord[2]);
+            atomsImagesChargeIds.push_back(chargeId);
+          }
         }
 
 
@@ -254,8 +251,7 @@ dftClass<FEOrder, FEOrderElectro>::initRho()
               double diffy;
               double diffz;
 
-              for (unsigned int iAtom = 0;
-                   iAtom < atomsImagesChargeIds.size();
+              for (unsigned int iAtom = 0; iAtom < atomsImagesChargeIds.size();
                    ++iAtom)
                 {
                   diffx = nodalCoor[0] - atomsImagesPositions[iAtom * 3 + 0];
