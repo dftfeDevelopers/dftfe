@@ -143,76 +143,6 @@ dftClass<FEOrder, FEOrderElectro>::initCoreRho()
   //
   typename DoFHandler<3>::active_cell_iterator cell = dofHandler.begin_active(),
                                                endc = dofHandler.end();
-  for (; cell != endc; ++cell)
-    {
-      if (cell->is_locally_owned())
-        {
-          fe_values.reinit(cell);
-
-          std::vector<double> &rhoCoreQuadValues = d_rhoCore[cell->id()];
-          rhoCoreQuadValues.resize(n_q_points, 0.0);
-
-          for (unsigned int q = 0; q < n_q_points; ++q)
-            {
-              const Point<3> &quadPoint        = fe_values.quadrature_point(q);
-              double          rhoValueAtQuadPt = 0.0;
-
-              // loop over atoms
-              for (unsigned int n = 0; n < atomLocations.size(); n++)
-                {
-                  if (atomTypeNLCCFlagMap[atomLocations[n][0]] == 0)
-                    continue;
-
-                  Point<3> atom(atomLocations[n][2],
-                                atomLocations[n][3],
-                                atomLocations[n][4]);
-                  double   distanceToAtom = quadPoint.distance(atom);
-                  if (distanceToAtom <=
-                      outerMostPointCoreDen[atomLocations[n][0]])
-                    {
-                      rhoValueAtQuadPt +=
-                        alglib::spline1dcalc(coreDenSpline[atomLocations[n][0]],
-                                             distanceToAtom);
-                    }
-                  else
-                    {
-                      rhoValueAtQuadPt += 0.0;
-                    }
-                }
-
-              // loop over image charges
-              for (int iImageCharge = 0; iImageCharge < numberImageCharges;
-                   ++iImageCharge)
-                {
-                  int masterAtomId = d_imageIdsTrunc[iImageCharge];
-
-                  if (atomTypeNLCCFlagMap[atomLocations[masterAtomId][0]] == 0)
-                    continue;
-
-                  Point<3> imageAtom(d_imagePositionsTrunc[iImageCharge][0],
-                                     d_imagePositionsTrunc[iImageCharge][1],
-                                     d_imagePositionsTrunc[iImageCharge][2]);
-
-                  double distanceToAtom = quadPoint.distance(imageAtom);
-
-                  if (distanceToAtom <=
-                      outerMostPointCoreDen[atomLocations[masterAtomId][0]])
-                    {
-                      rhoValueAtQuadPt += alglib::spline1dcalc(
-                        coreDenSpline[atomLocations[masterAtomId][0]],
-                        distanceToAtom);
-                    }
-                  else
-                    {
-                      rhoValueAtQuadPt += 0.0;
-                    }
-                }
-
-              rhoCoreQuadValues[q] = std::abs(rhoValueAtQuadPt);
-            }
-        }
-    }
-
   Tensor<1, 3, double> zeroTensor1;
   for (unsigned int i = 0; i < 3; i++)
     zeroTensor1[i] = 0.0;
@@ -231,6 +161,9 @@ dftClass<FEOrder, FEOrderElectro>::initCoreRho()
       if (cell->is_locally_owned())
         {
           fe_values.reinit(cell);
+
+          std::vector<double> &rhoCoreQuadValues = d_rhoCore[cell->id()];
+          rhoCoreQuadValues.resize(n_q_points, 0.0);
 
           std::vector<double> &gradRhoCoreQuadValues =
             d_gradRhoCore[cell->id()];
@@ -298,10 +231,12 @@ dftClass<FEOrder, FEOrderElectro>::initCoreRho()
                     }
                   else
                     {
+                      value                         = 0.0;
                       radialDensityFirstDerivative  = 0.0;
                       radialDensitySecondDerivative = 0.0;
                     }
 
+                  rhoCoreQuadValues[q] += value;
                   gradRhoCoreAtom[q] =
                     radialDensityFirstDerivative * diff / distanceToAtom;
                   gradRhoCoreQuadValues[3 * q + 0] += gradRhoCoreAtom[q][0];
@@ -414,10 +349,12 @@ dftClass<FEOrder, FEOrderElectro>::initCoreRho()
                     }
                   else
                     {
+                      value                         = 0.0;
                       radialDensityFirstDerivative  = 0.0;
                       radialDensitySecondDerivative = 0.0;
                     }
 
+                  rhoCoreQuadValues[q] += value;
                   gradRhoCoreAtom[q] =
                     radialDensityFirstDerivative * diff / distanceToAtom;
                   gradRhoCoreQuadValues[3 * q + 0] += gradRhoCoreAtom[q][0];

@@ -1125,11 +1125,28 @@ dftClass<FEOrder, FEOrderElectro>::computeSparseStructureNonLocalProjectors_OV()
   // triangulation.n_locally_owned_active_cells();
   typename DoFHandler<3>::active_cell_iterator cell = dofHandler.begin_active(),
                                                endc = dofHandler.end();
-  int iElemCount                                    = 0;
+
+  std::map<DoFHandler<3>::active_cell_iterator, std::vector<double>>
+    cellIteratorQuadPointsMap;
+
+  int iElemCount = 0;
   for (; cell != endc; ++cell)
     {
       if (cell->is_locally_owned())
-        iElemCount += 1;
+        {
+          fe_values.reinit(cell);
+          std::vector<double> &temp1 = cellIteratorQuadPointsMap[cell];
+          temp1.resize(numberQuadraturePoints * 3);
+          for (unsigned int q_point = 0; q_point < numberQuadraturePoints;
+               ++q_point)
+            {
+              temp1[3 * q_point + 0] = fe_values.quadrature_point(q_point)[0];
+              temp1[3 * q_point + 1] = fe_values.quadrature_point(q_point)[1];
+              temp1[3 * q_point + 2] = fe_values.quadrature_point(q_point)[2];
+            }
+
+          iElemCount += 1;
+        }
     }
 
   const unsigned int numberElements = iElemCount;
@@ -1171,154 +1188,126 @@ dftClass<FEOrder, FEOrderElectro>::computeSparseStructureNonLocalProjectors_OV()
           //
           // parallel loop over all elements
           //
-          typename DoFHandler<3>::active_cell_iterator cell = dofHandler
-                                                                .begin_active(),
-                                                       endc = dofHandler.end();
+          cell = dofHandler.begin_active();
+          endc = dofHandler.end();
           typename DoFHandler<3>::active_cell_iterator cellEigen =
             dofHandlerEigen.begin_active();
 
           int iElem = -1;
 
           for (; cell != endc; ++cell, ++cellEigen)
-            {
-              if (cell->is_locally_owned())
-                {
-                  iElem += 1;
-                  bool isSkipCell = true;
-                  for (int iImageAtomCount = 0;
-                       iImageAtomCount < imageIdsList.size();
-                       ++iImageAtomCount)
-                    {
-                      int chargeId = imageIdsList[iImageAtomCount];
+            if (cell->is_locally_owned())
+              {
+                const std::vector<double> &quadPoints =
+                  cellIteratorQuadPointsMap[cell];
 
-                      Point<3> chargePoint(0.0, 0.0, 0.0);
+                iElem += 1;
 
-                      if (chargeId < numberGlobalCharges)
-                        {
-                          chargePoint[0] = atomLocations[chargeId][2];
-                          chargePoint[1] = atomLocations[chargeId][3];
-                          chargePoint[2] = atomLocations[chargeId][4];
-                        }
-                      else
-                        {
-                          chargePoint[0] =
-                            d_imagePositionsTrunc[chargeId -
-                                                  numberGlobalCharges][0];
-                          chargePoint[1] =
-                            d_imagePositionsTrunc[chargeId -
-                                                  numberGlobalCharges][1];
-                          chargePoint[2] =
-                            d_imagePositionsTrunc[chargeId -
-                                                  numberGlobalCharges][2];
-                        }
+                int lTemp = 1000;
 
-                      if (chargePoint.distance(cell->center()) < d_nlPSPCutOff)
-                        {
-                          isSkipCell = false;
+                sparseFlag = 0;
+
+                for (int iImageAtomCount = 0;
+                     iImageAtomCount < imageIdsList.size();
+                     ++iImageAtomCount)
+                  {
+                    const int chargeId = imageIdsList[iImageAtomCount];
+                    std::vector<double> x(3, 0.0);
+                    Point<3>            chargePoint(0.0, 0.0, 0.0);
+
+                    if (chargeId < numberGlobalCharges)
+                      {
+                        chargePoint[0] = atomLocations[chargeId][2];
+                        chargePoint[1] = atomLocations[chargeId][3];
+                        chargePoint[2] = atomLocations[chargeId][4];
+                      }
+                    else
+                      {
+                        chargePoint[0] =
+                          d_imagePositionsTrunc[chargeId - numberGlobalCharges]
+                                               [0];
+                        chargePoint[1] =
+                          d_imagePositionsTrunc[chargeId - numberGlobalCharges]
+                                               [1];
+                        chargePoint[2] =
+                          d_imagePositionsTrunc[chargeId - numberGlobalCharges]
+                                               [2];
+                      }
+
+                    if (chargePoint.distance(cell->center()) > d_nlPSPCutOff)
+                      continue;
+
+                    for (int iPsp = 0; iPsp < numberPseudoWaveFunctions; ++iPsp)
+                      {
+                        waveFunctionId = iPsp + cumulativeSplineId;
+                        const int globalWaveSplineId =
+                          d_pseudoWaveFunctionIdToFunctionIdDetails
+                            [waveFunctionId][0];
+                        const int lQuantumNumber =
+                          d_pseudoWaveFunctionIdToFunctionIdDetails
+                            [waveFunctionId][1];
+                        //
+                        if (lQuantumNumber != lTemp)
+                          {
+                            lTemp = lQuantumNumber;
+
+
+                            double radialProjVal;
+                            for (int iQuadPoint = 0;
+                                 iQuadPoint < numberQuadraturePoints;
+                                 ++iQuadPoint)
+                              {
+                                x[0] =
+                                  quadPoints[3 * iQuadPoint] - chargePoint[0];
+                                x[1] = quadPoints[3 * iQuadPoint + 1] -
+                                       chargePoint[1];
+                                x[2] = quadPoints[3 * iQuadPoint + 2] -
+                                       chargePoint[2];
+
+
+                                const double r = std::sqrt(
+                                  x[0] * x[0] + x[1] * x[1] + x[2] * x[2]);
+                                if (r <= d_outerMostPointPseudoProjectorData
+                                           [globalWaveSplineId])
+                                  pseudoUtils::getRadialFunctionVal(
+                                    r,
+                                    radialProjVal,
+                                    &d_pseudoWaveFunctionSplines
+                                      [globalWaveSplineId]);
+                                else
+                                  radialProjVal = 0.0;
+
+                                if (fabs(radialProjVal) >= nlpTolerance)
+                                  {
+                                    sparseFlag = 1;
+                                    break;
+                                  }
+                              } // quadrature loop
+
+                          } // lQuantumNumber != lTem
+                        if (sparseFlag == 1)
                           break;
-                        }
-                    }
 
-                  if (isSkipCell)
-                    continue;
+                      } // iPsp loop ("l" loop)
 
-                  // compute the values for the current element
-                  fe_values.reinit(cell);
+                    if (sparseFlag == 1)
+                      break;
 
-                  int lTemp = 1000;
 
-                  for (int iPsp = 0; iPsp < numberPseudoWaveFunctions; ++iPsp)
-                    {
-                      sparseFlag     = 0;
-                      waveFunctionId = iPsp + cumulativeSplineId;
-                      const int globalWaveSplineId =
-                        d_pseudoWaveFunctionIdToFunctionIdDetails
-                          [waveFunctionId][0];
-                      const int lQuantumNumber =
-                        d_pseudoWaveFunctionIdToFunctionIdDetails
-                          [waveFunctionId][1];
-                      //
-                      if (lQuantumNumber != lTemp)
-                        {
-                          lTemp = lQuantumNumber;
-                          for (int iQuadPoint = 0;
-                               iQuadPoint < numberQuadraturePoints;
-                               ++iQuadPoint)
-                            {
-                              const Point<3> &quadPoint =
-                                fe_values.quadrature_point(iQuadPoint);
+                  } // image atom loop
 
-                              for (int iImageAtomCount = 0;
-                                   iImageAtomCount < imageIdsList.size();
-                                   ++iImageAtomCount)
-                                {
-                                  int chargeId = imageIdsList[iImageAtomCount];
-
-                                  Point<3> chargePoint(0.0, 0.0, 0.0);
-
-                                  if (chargeId < numberGlobalCharges)
-                                    {
-                                      chargePoint[0] =
-                                        atomLocations[chargeId][2];
-                                      chargePoint[1] =
-                                        atomLocations[chargeId][3];
-                                      chargePoint[2] =
-                                        atomLocations[chargeId][4];
-                                    }
-                                  else
-                                    {
-                                      chargePoint[0] = d_imagePositionsTrunc
-                                        [chargeId - numberGlobalCharges][0];
-                                      chargePoint[1] = d_imagePositionsTrunc
-                                        [chargeId - numberGlobalCharges][1];
-                                      chargePoint[2] = d_imagePositionsTrunc
-                                        [chargeId - numberGlobalCharges][2];
-                                    }
-
-                                  double r = quadPoint.distance(chargePoint);
-                                  double radialProjVal;
-
-                                  if (r <= d_outerMostPointPseudoProjectorData
-                                             [globalWaveSplineId])
-                                    pseudoUtils::getRadialFunctionVal(
-                                      r,
-                                      radialProjVal,
-                                      &d_pseudoWaveFunctionSplines
-                                        [globalWaveSplineId]);
-                                  else
-                                    radialProjVal = 0.0;
-
-                                  if (fabs(radialProjVal) >= nlpTolerance)
-                                    {
-                                      sparseFlag = 1;
-                                      break;
-                                    }
-                                } // imageAtomLoop
-
-                              if (sparseFlag == 1)
-                                break;
-
-                            } // quadrature loop
-                        }
-
-                      if (sparseFlag == 1)
-                        break;
-
-                    } // iPsp loop ("l" loop)
-
-                  if (sparseFlag == 1)
-                    {
-                      sparsityPattern[iElem] = matCount;
-                      d_elementIteratorsInAtomCompactSupport[iAtom].push_back(
-                        cellEigen);
-                      d_elementIdsInAtomCompactSupport[iAtom].push_back(iElem);
-                      d_elementOneFieldIteratorsInAtomCompactSupport[iAtom]
-                        .push_back(cell);
-                      matCount += 1;
-                      isAtomIdInProcessor = true;
-                    }
-                }
-            } // cell loop
+                if (sparseFlag == 1)
+                  {
+                    sparsityPattern[iElem] = matCount;
+                    d_elementIteratorsInAtomCompactSupport[iAtom].push_back(
+                      cellEigen);
+                    d_elementIdsInAtomCompactSupport[iAtom].push_back(iElem);
+                    d_elementOneFieldIteratorsInAtomCompactSupport[iAtom]
+                      .push_back(cell);
+                    matCount += 1;
+                    isAtomIdInProcessor = true;
+                  }
+              } // cell loop
         }
       cumulativeSplineId += numberPseudoWaveFunctions;
 #ifdef DEBUG
