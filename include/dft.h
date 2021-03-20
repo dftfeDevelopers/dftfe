@@ -178,55 +178,28 @@ namespace dftfe
      * @brief Kohn-Sham ground-state solve using SCF iteration
      */
     void
-    solve(const bool kohnShamDFTOperatorsInitialized = false,
-          const bool computeForces                   = true,
-          const bool solveLinearizedKS               = false,
-          const bool restartGroundStateCalcFromChk   = false);
+    solve(const bool computeForces                 = true,
+          const bool solveLinearizedKS             = false,
+          const bool restartGroundStateCalcFromChk = false);
 
 
     /**
      * @brief Kohn-Sham ground-state solve using SCF iteration
      */
     void
-    computeDensityPerturbation(
-      const bool kohnShamDFTOperatorsInitialized = false);
+    computeDensityPerturbation();
 
 
     void
-    initializeKohnShamDFTOperator(
-      kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>
-        &kohnShamDFTEigenOperator
-#ifdef DFTFE_WITH_GPU
-      ,
-      kohnShamDFTOperatorCUDAClass<FEOrder, FEOrderElectro>
-        &kohnShamDFTEigenOperatorCUDA
-#endif
-      ,
-      const bool initializeCUDAScala = true);
+    initializeKohnShamDFTOperator(const bool initializeCUDAScala = true);
 
 
     void
-    reInitializeKohnShamDFTOperator(
-      kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>
-        &kohnShamDFTEigenOperator
-#ifdef DFTFE_WITH_GPU
-      ,
-      kohnShamDFTOperatorCUDAClass<FEOrder, FEOrderElectro>
-        &kohnShamDFTEigenOperatorCUDA
-#endif
-    );
+    reInitializeKohnShamDFTOperator();
 
 
     void
-    finalizeKohnShamDFTOperator(
-      kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>
-        &kohnShamDFTEigenOperator
-#ifdef DFTFE_WITH_GPU
-      ,
-      kohnShamDFTOperatorCUDAClass<FEOrder, FEOrderElectro>
-        &kohnShamDFTEigenOperatorCUDA
-#endif
-    );
+    finalizeKohnShamDFTOperator();
 
     /**
      * @brief Number of Kohn-Sham eigen values to be computed
@@ -1126,6 +1099,15 @@ namespace dftfe
 
     elpaScalaManager d_elpaScala;
 
+    poissonSolverProblem<FEOrder, FEOrderElectro> d_phiTotalSolverProblem;
+
+    bool d_kohnShamDFTOperatorsInitialized;
+
+    kohnShamDFTOperatorClass<FEOrder, FEOrderElectro> *d_kohnShamDFTOperatorPtr;
+#ifdef DFTFE_WITH_GPU
+    kohnShamDFTOperatorCUDAClass<FEOrder, FEOrderElectro>
+      *d_kohnShamDFTOperatorCUDAPtr;
+#endif
 
     /**
      * chebyshev subspace iteration solver objects

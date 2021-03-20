@@ -408,7 +408,7 @@ namespace dftfe
       else if(d_maximumAtomForceToBeRelaxed >= 1e-05)
       dftParameters::selfConsistentSolverTolerance = 5e-06;*/
 
-    dftPtr->solve(false, computeForces);
+    dftPtr->solve(computeForces);
   }
 
   template <unsigned int FEOrder, unsigned int FEOrderElectro>

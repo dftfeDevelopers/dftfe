@@ -352,10 +352,7 @@ namespace dftfe
 
     if (restartFlag == 0)
       {
-        dftPtr->solve(true,
-                      true,
-                      false,
-                      dftPtr->d_isRestartGroundStateCalcFromChk);
+        dftPtr->solve(true, false, dftPtr->d_isRestartGroundStateCalcFromChk);
         dftPtr->d_isRestartGroundStateCalcFromChk = false;
         const std::vector<double> forceOnAtoms =
           dftPtr->forcePtr->getAtomsForces();
@@ -799,7 +796,7 @@ namespace dftfe
                     dftPtr->d_rhoInNodalValues.update_ghost_values();
                   }
 
-                dftPtr->solve(true);
+                dftPtr->solve();
 
                 shadowKSRhoMin = dftPtr->d_rhoOutNodalValues;
                 if (dftParameters::useAtomicRhoXLBOMD)
@@ -1041,7 +1038,7 @@ namespace dftfe
                       dftParameters::xlbomdRestartChebyTol;
                   }
 
-                dftPtr->solve(true, true, true, false);
+                dftPtr->solve(true, true, false);
 
                 // Finite difference check for shadow potential forces
                 if (false)
@@ -1092,7 +1089,7 @@ namespace dftfe
 
                     dftPtr->normalizeRhoInQuadValues();
 
-                    dftPtr->solve(true, true, true, false);
+                    dftPtr->solve(true, true, false);
 
                     for (int iCharge = 0; iCharge < numberGlobalCharges;
                          ++iCharge)
@@ -1140,7 +1137,7 @@ namespace dftfe
 
                     dftPtr->normalizeRhoInQuadValues();
 
-                    dftPtr->solve(true, true, true, false);
+                    dftPtr->solve(true, true, false);
                   }
 
 
@@ -1289,9 +1286,9 @@ namespace dftfe
 
                         if (dftParameters::
                               useDensityMatrixPerturbationRankUpdates)
-                          dftPtr->computeDensityPerturbation(true);
+                          dftPtr->computeDensityPerturbation();
                         else
-                          dftPtr->solve(true, false, true, false);
+                          dftPtr->solve(false, true, false);
 
                         if (dftParameters::verbosity >= 1)
                           pcout
@@ -1364,9 +1361,9 @@ namespace dftfe
 
                         if (dftParameters::
                               useDensityMatrixPerturbationRankUpdates)
-                          dftPtr->computeDensityPerturbation(true);
+                          dftPtr->computeDensityPerturbation();
                         else
-                          dftPtr->solve(true, false, true, false);
+                          dftPtr->solve(false, true, false);
 
                         if (dftParameters::verbosity >= 1)
                           pcout
@@ -1499,7 +1496,7 @@ namespace dftfe
             //
             // do an scf calculation
             //
-            dftPtr->solve(true);
+            dftPtr->solve();
 
             shadowKSRhoMin = dftPtr->d_rhoOutNodalValues;
             if (dftParameters::useAtomicRhoXLBOMD)
