@@ -1564,61 +1564,74 @@ namespace dftfe
         if (cell->is_locally_owned())
           {
             const dealii::CellId cellid = cell->id();
+
+            std::vector<double>  dummy(1);
+            std::vector<double> &tempRhoQuads = (*rhoValues)[cellid];
+            std::vector<double> &tempGradRhoQuads =
+              isEvaluateGradRho ? (*gradRhoValues)[cellid] : dummy;
+
+            std::vector<double> &tempRhoQuadsSP =
+              (dftParameters::spinPolarized == 1) ?
+                (*rhoValuesSpinPolarized)[cellid] :
+                dummy;
+            std::vector<double> &tempGradRhoQuadsSP =
+              ((dftParameters::spinPolarized == 1) && isEvaluateGradRho) ?
+                (*gradRhoValuesSpinPolarized)[cellid] :
+                dummy;
+
             for (unsigned int q = 0; q < numQuadPoints; ++q)
               {
                 if (dftParameters::spinPolarized == 1)
                   {
-                    (*rhoValuesSpinPolarized)[cellid][2 * q] =
-                      rhoHost[iElem * numQuadPoints + q];
-                    (*rhoValuesSpinPolarized)[cellid][2 * q + 1] =
+                    tempRhoQuadsSP[2 * q] = rhoHost[iElem * numQuadPoints + q];
+                    tempRhoQuadsSP[2 * q + 1] =
                       rhoSpinPolarizedHost[iElem * numQuadPoints + q];
 
                     if (isEvaluateGradRho)
                       {
-                        (*gradRhoValuesSpinPolarized)[cellid][6 * q] =
+                        tempGradRhoQuadsSP[6 * q] =
                           gradRhoHostX[iElem * numQuadPoints + q];
-                        (*gradRhoValuesSpinPolarized)[cellid][6 * q + 3] =
+                        tempGradRhoQuadsSP[6 * q + 3] =
                           gradRhoSpinPolarizedHostX[iElem * numQuadPoints + q];
-                        (*gradRhoValuesSpinPolarized)[cellid][6 * q + 1] =
+                        tempGradRhoQuadsSP[6 * q + 1] =
                           gradRhoHostY[iElem * numQuadPoints + q];
-                        (*gradRhoValuesSpinPolarized)[cellid][6 * q + 3 + 1] =
+                        tempGradRhoQuadsSP[6 * q + 3 + 1] =
                           gradRhoSpinPolarizedHostY[iElem * numQuadPoints + q];
-                        (*gradRhoValuesSpinPolarized)[cellid][6 * q + 2] =
+                        tempGradRhoQuadsSP[6 * q + 2] =
                           gradRhoHostZ[iElem * numQuadPoints + q];
-                        (*gradRhoValuesSpinPolarized)[cellid][6 * q + 3 + 2] =
+                        tempGradRhoQuadsSP[6 * q + 3 + 2] =
                           gradRhoSpinPolarizedHostZ[iElem * numQuadPoints + q];
                       }
 
-                    (*rhoValues)[cellid][q] =
+                    tempRhoQuads[q] =
                       rhoHost[iElem * numQuadPoints + q] +
                       rhoSpinPolarizedHost[iElem * numQuadPoints + q];
 
                     if (isEvaluateGradRho)
                       {
-                        (*gradRhoValues)[cellid][3 * q] =
+                        tempGradRhoQuads[3 * q] =
                           gradRhoHostX[iElem * numQuadPoints + q] +
                           gradRhoSpinPolarizedHostX[iElem * numQuadPoints + q];
-                        (*gradRhoValues)[cellid][3 * q + 1] =
+                        tempGradRhoQuads[3 * q + 1] =
                           gradRhoHostY[iElem * numQuadPoints + q] +
                           gradRhoSpinPolarizedHostY[iElem * numQuadPoints + q];
-                        (*gradRhoValues)[cellid][3 * q + 2] =
+                        tempGradRhoQuads[3 * q + 2] =
                           gradRhoHostZ[iElem * numQuadPoints + q] +
                           gradRhoSpinPolarizedHostZ[iElem * numQuadPoints + q];
                       }
                   }
                 else
                   {
-                    (*rhoValues)[cellid][q] =
-                      rhoHost[iElem * numQuadPoints + q];
+                    tempRhoQuads[q] = rhoHost[iElem * numQuadPoints + q];
 
 
                     if (isEvaluateGradRho)
                       {
-                        (*gradRhoValues)[cellid][3 * q] =
+                        tempGradRhoQuads[3 * q] =
                           gradRhoHostX[iElem * numQuadPoints + q];
-                        (*gradRhoValues)[cellid][3 * q + 1] =
+                        tempGradRhoQuads[3 * q + 1] =
                           gradRhoHostY[iElem * numQuadPoints + q];
-                        (*gradRhoValues)[cellid][3 * q + 2] =
+                        tempGradRhoQuads[3 * q + 2] =
                           gradRhoHostZ[iElem * numQuadPoints + q];
                       }
                   }
