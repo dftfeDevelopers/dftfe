@@ -1868,7 +1868,7 @@ namespace dftfe
 
     const unsigned int totalLocallyOwnedCells = dftPtr->matrix_free_data.n_physical_cells();
     FEValues<3> feValues(dftPtr->matrix_free_data.get_dof_handler().get_fe(), dftPtr->matrix_free_data.get_quadrature(externalPotCorrQuadratureId), update_JxW_values);
-    d_vEffExternalPotCorrJxW.resize(numberPhysicalCells*numberQuadraturePoints,0.0);
+    d_vEffExternalPotCorrJxW.resize(totalLocallyOwnedCells*numberQuadraturePoints,0.0);
 
     typename dealii::DoFHandler<3>::active_cell_iterator cellPtr;
     unsigned int iElem = 0;

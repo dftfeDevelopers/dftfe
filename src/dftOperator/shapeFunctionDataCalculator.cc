@@ -63,7 +63,7 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::
   d_shapeFunctionValueLpspQuad.resize(numberQuadraturePointsLpsp *
                                       numberDofsPerElement,
                                       0.0);
-  d_NiNjLpspQuad.reize(numberDofsPerElement*numberDofsPerElement*numberQuadraturePointsLpsp);
+  d_NiNjLpspQuad.resize(numberDofsPerElement*numberDofsPerElement*numberQuadraturePointsLpsp,0.0);
   std::vector<std::vector<std::vector<Tensor<1, 3, double>>>>
     tempShapeFuncGradData;
 
