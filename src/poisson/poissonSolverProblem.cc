@@ -45,6 +45,23 @@ namespace dftfe
 
   template <unsigned int FEOrder, unsigned int FEOrderElectro>
   void
+  poissonSolverProblem<FEOrder, FEOrderElectro>::clear()
+  {
+    d_diagonalA.reinit(0);
+    d_rhsSmearedCharge.reinit(0);
+    d_meanValueConstraintVec.reinit(0);
+    d_cellShapeFunctionGradientIntegralFlattened.clear();
+    d_isMeanValueConstraintComputed = false;
+    d_isGradSmearedChargeRhs        = false;
+    d_isStoreSmearedChargeRhs       = false;
+    d_isReuseSmearedChargeRhs       = false;
+    d_rhoValuesPtr                  = NULL;
+    d_atomsPtr                      = NULL;
+    d_smearedChargeValuesPtr        = NULL;
+  }
+
+  template <unsigned int FEOrder, unsigned int FEOrderElectro>
+  void
   poissonSolverProblem<FEOrder, FEOrderElectro>::reinit(
     const dealii::MatrixFree<3, double> &    matrixFreeData,
     distributedCPUVec<double> &              x,

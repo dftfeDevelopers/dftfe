@@ -554,10 +554,6 @@ dftClass<FEOrder, FEOrderElectro>::createMasterChargeIdToImageIdMaps(
       atomCoord[2] = imagePositions[iImage][2];
 
 
-      dealii::Tensor<1, 3, double> tempDisp;
-      tempDisp[0] = pspCutOff;
-      tempDisp[1] = pspCutOff;
-      tempDisp[2] = pspCutOff;
       std::pair<dealii::Point<3, double>, dealii::Point<3, double>>
         boundaryPoints;
       boundaryPoints.first  = atomCoord - tempDisp;

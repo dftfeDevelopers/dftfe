@@ -40,6 +40,15 @@ namespace dftfe
 
 
     /**
+     * @brief clears all datamembers and reset to original state.
+     *
+     *
+     */
+    void
+    clear();
+
+
+    /**
      * @brief reinitialize data structures for total electrostatic potential solve.
      *
      * For Hartree electrostatic potential solve give an empty map to the atoms

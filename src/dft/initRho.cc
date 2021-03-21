@@ -59,6 +59,7 @@ dftClass<FEOrder, FEOrderElectro>::initRho()
                                  singleAtomElectronDensity;
   std::map<unsigned int, double> outerMostPointDen;
   const double                   truncationTol = 1e-10;
+  double                         maxRhoTail    = 0.0;
 
   // loop over atom types
   for (std::set<unsigned int>::iterator it = atomTypes.begin();
@@ -112,6 +113,9 @@ dftClass<FEOrder, FEOrderElectro>::initRho()
                          0.0,
                          denSpline[*it]);
       outerMostPointDen[*it] = xData[maxRowId];
+
+      if (outerMostPointDen[*it] > maxRhoTail)
+        maxRhoTail = outerMostPointDen[*it];
     }
 
 
@@ -166,7 +170,8 @@ dftClass<FEOrder, FEOrderElectro>::initRho()
   //
   // get number of image charges used only for periodic
   //
-  const int numberImageCharges = d_imageIdsTrunc.size();
+  const int numberImageCharges  = d_imageIdsTrunc.size();
+  const int numberGlobalCharges = atomLocations.size();
 
   if (dftParameters::mixingMethod == "ANDERSON_WITH_KERKER")
     {
@@ -181,7 +186,55 @@ dftClass<FEOrder, FEOrderElectro>::initRho()
                                            d_dofHandlerRhoNodal,
                                            supportPointsRhoNodal);
 
+      dealii::BoundingBox<3> boundingBoxTria(
+        vectorTools::createBoundingBoxTriaLocallyOwned(d_dofHandlerRhoNodal));
+      dealii::Tensor<1, 3, double> tempDisp;
+      tempDisp[0] = maxRhoTail;
+      tempDisp[1] = maxRhoTail;
+      tempDisp[2] = maxRhoTail;
+
       // d_matrixFreeDataPRefined.initialize_dof_vector(d_rhoInNodalValues);
+      std::vector<double> atomsImagesPositions;
+      std::vector<double> atomsImagesChargeIds;
+      for (unsigned int iAtom = 0;
+           iAtom < numberGlobalCharges + numberImageCharges;
+           iAtom++)
+        {
+          Point<3> atomCoord;
+          int      chargeId;
+          if (iAtom < numberGlobalCharges)
+            {
+              atomCoord[0] = atomLocations[iAtom][2];
+              atomCoord[1] = atomLocations[iAtom][3];
+              atomCoord[2] = atomLocations[iAtom][4];
+              chargeId     = iAtom;
+            }
+          else
+            {
+              const unsigned int iImageCharge = iAtom - numberGlobalCharges;
+              atomCoord[0] = d_imagePositionsTrunc[iImageCharge][0];
+              atomCoord[1] = d_imagePositionsTrunc[iImageCharge][1];
+              atomCoord[2] = d_imagePositionsTrunc[iImageCharge][2];
+              chargeId     = d_imageIdsTrunc[iImageCharge];
+            }
+
+          std::pair<dealii::Point<3, double>, dealii::Point<3, double>>
+            boundaryPoints;
+          boundaryPoints.first  = atomCoord - tempDisp;
+          boundaryPoints.second = atomCoord + tempDisp;
+          dealii::BoundingBox<3> boundingBoxAroundAtom(boundaryPoints);
+
+          if (boundingBoxTria.get_neighbor_type(boundingBoxAroundAtom) !=
+              NeighborType::not_neighbors)
+            ;
+          {
+            atomsImagesPositions.push_back(atomCoord[0]);
+            atomsImagesPositions.push_back(atomCoord[1]);
+            atomsImagesPositions.push_back(atomCoord[2]);
+            atomsImagesChargeIds.push_back(chargeId);
+          }
+        }
+
 
       for (unsigned int dof = 0; dof < numberDofs; ++dof)
         {
@@ -192,35 +245,30 @@ dftClass<FEOrder, FEOrderElectro>::initRho()
               // loop over atoms and superimpose electron-density at a given dof
               // from all atoms
               double rhoNodalValue = 0.0;
-              for (unsigned int iAtom = 0; iAtom < atomLocations.size();
+              int    chargeId;
+              double distanceToAtom;
+              double diffx;
+              double diffy;
+              double diffz;
+
+              for (unsigned int iAtom = 0; iAtom < atomsImagesChargeIds.size();
                    ++iAtom)
                 {
-                  Point<3> atom(atomLocations[iAtom][2],
-                                atomLocations[iAtom][3],
-                                atomLocations[iAtom][4]);
-                  double   distanceToAtom = nodalCoor.distance(atom);
+                  diffx = nodalCoor[0] - atomsImagesPositions[iAtom * 3 + 0];
+                  diffy = nodalCoor[1] - atomsImagesPositions[iAtom * 3 + 1];
+                  diffz = nodalCoor[2] - atomsImagesPositions[iAtom * 3 + 2];
+
+                  distanceToAtom =
+                    std::sqrt(diffx * diffx + diffy * diffy + diffz * diffz);
+
+                  chargeId = atomsImagesChargeIds[iAtom];
+
                   if (distanceToAtom <=
-                      outerMostPointDen[atomLocations[iAtom][0]])
-                    rhoNodalValue +=
-                      alglib::spline1dcalc(denSpline[atomLocations[iAtom][0]],
-                                           distanceToAtom);
+                      outerMostPointDen[atomLocations[chargeId][0]])
+                    rhoNodalValue += alglib::spline1dcalc(
+                      denSpline[atomLocations[chargeId][0]], distanceToAtom);
                 }
 
-              // loop over image charges and do as above
-              for (int iImageCharge = 0; iImageCharge < numberImageCharges;
-                   ++iImageCharge)
-                {
-                  Point<3> imageAtom(d_imagePositionsTrunc[iImageCharge][0],
-                                     d_imagePositionsTrunc[iImageCharge][1],
-                                     d_imagePositionsTrunc[iImageCharge][2]);
-                  double   distanceToAtom = nodalCoor.distance(imageAtom);
-                  int      masterAtomId   = d_imageIdsTrunc[iImageCharge];
-                  if (distanceToAtom <=
-                      outerMostPointDen[atomLocations[masterAtomId][0]])
-                    rhoNodalValue += alglib::spline1dcalc(
-                      denSpline[atomLocations[masterAtomId][0]],
-                      distanceToAtom);
-                }
               d_rhoInNodalValues.local_element(dof) = std::abs(rhoNodalValue);
             }
         }

@@ -135,6 +135,7 @@ namespace dftfe
     , d_vselfBinsManager(mpi_comm_replica)
     , pcout(std::cout, (Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0))
     , d_elpaScala(mpi_comm_replica)
+    , d_kohnShamDFTOperatorsInitialized(false)
     , computing_timer(mpi_comm_replica,
                       pcout,
                       dftParameters::reproducible_output ||
@@ -153,6 +154,7 @@ namespace dftfe
 #ifdef DFTFE_WITH_GPU
     , d_subspaceIterationSolverCUDA(mpi_comm_replica, 0.0, 0.0, 0.0)
 #endif
+    , d_phiTotalSolverProblem(mpi_comm_replica)
   {
     forcePtr = new forceClass<FEOrder, FEOrderElectro>(this, mpi_comm_replica);
     symmetryPtr = new symmetryClass<FEOrder, FEOrderElectro>(this,
@@ -193,11 +195,13 @@ namespace dftfe
   template <unsigned int FEOrder, unsigned int FEOrderElectro>
   dftClass<FEOrder, FEOrderElectro>::~dftClass()
   {
+    finalizeKohnShamDFTOperator();
     delete symmetryPtr;
     matrix_free_data.clear();
     delete forcePtr;
     delete geoOptIonPtr;
     delete geoOptCellPtr;
+    delete d_mdPtr;
 
 #ifdef DFTFE_WITH_ELPA
     if (dftParameters::useELPA)
@@ -1127,6 +1131,8 @@ namespace dftfe
                                     d_kPointWeights.size(),
                                   true);
 
+    initializeKohnShamDFTOperator();
+
     computingTimerStandard.exit_section("KSDFT problem initialization");
   }
 
@@ -1265,6 +1271,8 @@ namespace dftfe
     d_isFirstFilteringCall.resize((dftParameters::spinPolarized + 1) *
                                     d_kPointWeights.size(),
                                   true);
+
+    initializeKohnShamDFTOperator();
 
     computingTimerStandard.exit_section("KSDFT problem initialization");
   }
@@ -1405,7 +1413,7 @@ namespace dftfe
         if (!(dftParameters::chkType == 1 && dftParameters::restartFromChk &&
               dftParameters::ionOptSolver == "CGPRP"))
           {
-            solve(false, true, false, d_isRestartGroundStateCalcFromChk);
+            solve(true, false, d_isRestartGroundStateCalcFromChk);
           }
 
         d_isRestartGroundStateCalcFromChk = false;
@@ -1468,15 +1476,33 @@ namespace dftfe
   template <unsigned int FEOrder, unsigned int FEOrderElectro>
   void
   dftClass<FEOrder, FEOrderElectro>::initializeKohnShamDFTOperator(
-    kohnShamDFTOperatorClass<FEOrder, FEOrderElectro> &kohnShamDFTEigenOperator
-#ifdef DFTFE_WITH_GPU
-    ,
-    kohnShamDFTOperatorCUDAClass<FEOrder, FEOrderElectro>
-      &kohnShamDFTEigenOperatorCUDA
-#endif
-    ,
     const bool initializeCUDAScala)
   {
+    TimerOutput::Scope scope(computing_timer, "kohnShamDFTOperator init");
+    double             init_ksoperator;
+    MPI_Barrier(MPI_COMM_WORLD);
+    init_ksoperator = MPI_Wtime();
+
+    if (d_kohnShamDFTOperatorsInitialized)
+      finalizeKohnShamDFTOperator();
+
+    d_kohnShamDFTOperatorPtr =
+      new kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>(this,
+                                                            mpi_communicator);
+
+#ifdef DFTFE_WITH_GPU
+    d_kohnShamDFTOperatorCUDAPtr =
+      new kohnShamDFTOperatorCUDAClass<FEOrder, FEOrderElectro>(
+        this, mpi_communicator);
+#endif
+
+    kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>
+      &kohnShamDFTEigenOperator = *d_kohnShamDFTOperatorPtr;
+#ifdef DFTFE_WITH_GPU
+    kohnShamDFTOperatorCUDAClass<FEOrder, FEOrderElectro>
+      &kohnShamDFTEigenOperatorCUDA = *d_kohnShamDFTOperatorCUDAPtr;
+#endif
+
     if (!dftParameters::useGPU)
       {
         kohnShamDFTEigenOperator.init();
@@ -1568,6 +1594,23 @@ namespace dftfe
           std::min(dftParameters::chebyWfcBlockSize, d_numEigenValues), true);
       }
 #endif
+
+    if (!dftParameters::useGPU)
+      kohnShamDFTEigenOperator.preComputeShapeFunctionGradientIntegrals(
+        d_lpspQuadratureId);
+#ifdef DFTFE_WITH_GPU
+    if (dftParameters::useGPU)
+      kohnShamDFTEigenOperatorCUDA.preComputeShapeFunctionGradientIntegrals(
+        d_lpspQuadratureId);
+#endif
+
+    d_kohnShamDFTOperatorsInitialized = true;
+
+    MPI_Barrier(MPI_COMM_WORLD);
+    init_ksoperator = MPI_Wtime() - init_ksoperator;
+    if (dftParameters::verbosity >= 1)
+      pcout << "init: Time taken for kohnShamDFTOperator class initialization: "
+            << init_ksoperator << std::endl;
   }
 
 
@@ -1576,26 +1619,19 @@ namespace dftfe
   //
   template <unsigned int FEOrder, unsigned int FEOrderElectro>
   void
-  dftClass<FEOrder, FEOrderElectro>::reInitializeKohnShamDFTOperator(
-    kohnShamDFTOperatorClass<FEOrder, FEOrderElectro> &kohnShamDFTEigenOperator
-#ifdef DFTFE_WITH_GPU
-    ,
-    kohnShamDFTOperatorCUDAClass<FEOrder, FEOrderElectro>
-      &kohnShamDFTEigenOperatorCUDA
-#endif
-  )
+  dftClass<FEOrder, FEOrderElectro>::reInitializeKohnShamDFTOperator()
   {
     if (!dftParameters::useGPU)
       {
-        kohnShamDFTEigenOperator.init();
+        d_kohnShamDFTOperatorPtr->init();
       }
 
 #ifdef DFTFE_WITH_GPU
     if (dftParameters::useGPU)
       {
-        kohnShamDFTEigenOperatorCUDA.init();
+        d_kohnShamDFTOperatorCUDAPtr->init();
 
-        kohnShamDFTEigenOperatorCUDA.reinitNoRemesh(
+        d_kohnShamDFTOperatorCUDAPtr->reinitNoRemesh(
           std::min(dftParameters::chebyWfcBlockSize, d_numEigenValues));
       }
 #endif
@@ -1606,25 +1642,26 @@ namespace dftfe
   //
   template <unsigned int FEOrder, unsigned int FEOrderElectro>
   void
-  dftClass<FEOrder, FEOrderElectro>::finalizeKohnShamDFTOperator(
-    kohnShamDFTOperatorClass<FEOrder, FEOrderElectro> &kohnShamDFTEigenOperator
-#ifdef DFTFE_WITH_GPU
-    ,
-    kohnShamDFTOperatorCUDAClass<FEOrder, FEOrderElectro>
-      &kohnShamDFTEigenOperatorCUDA
-#endif
-  )
+  dftClass<FEOrder, FEOrderElectro>::finalizeKohnShamDFTOperator()
   {
+    if (d_kohnShamDFTOperatorsInitialized)
+      {
 #ifdef DFTFE_WITH_GPU
-    if (dftParameters::useGPU)
-      kohnShamDFTEigenOperatorCUDA.destroyCublasHandle();
+        if (dftParameters::useGPU)
+          d_kohnShamDFTOperatorCUDAPtr->destroyCublasHandle();
 #endif
 
 #ifdef DFTFE_WITH_ELPA
-    if (dftParameters::useELPA && !dftParameters::useGPU)
-      kohnShamDFTEigenOperator.elpaDeallocateHandles(d_numEigenValues,
-                                                     d_numEigenValuesRR);
+        if (dftParameters::useELPA && !dftParameters::useGPU)
+          d_kohnShamDFTOperatorPtr->elpaDeallocateHandles(d_numEigenValues,
+                                                          d_numEigenValuesRR);
 #endif
+
+        delete d_kohnShamDFTOperatorPtr;
+#ifdef DFTFE_WITH_GPU
+        delete d_kohnShamDFTOperatorCUDAPtr;
+#endif
+      }
   }
 
   //
@@ -1632,25 +1669,17 @@ namespace dftfe
   //
   template <unsigned int FEOrder, unsigned int FEOrderElectro>
   void
-  dftClass<FEOrder, FEOrderElectro>::computeDensityPerturbation(
-    const bool kohnShamDFTOperatorsInitialized)
+  dftClass<FEOrder, FEOrderElectro>::computeDensityPerturbation()
   {
-    kohnShamDFTOperatorClass<FEOrder, FEOrderElectro> kohnShamDFTEigenOperator(
-      this, mpi_communicator);
+    kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>
+      &kohnShamDFTEigenOperator = *d_kohnShamDFTOperatorPtr;
 #ifdef DFTFE_WITH_GPU
     kohnShamDFTOperatorCUDAClass<FEOrder, FEOrderElectro>
-      kohnShamDFTEigenOperatorCUDA(this, mpi_communicator);
+      &kohnShamDFTEigenOperatorCUDA = *d_kohnShamDFTOperatorCUDAPtr;
 #endif
 
     const Quadrature<3> &quadrature =
       matrix_free_data.get_quadrature(d_densityQuadratureId);
-
-    // computingTimerStandard.enter_section("Total scf solve");
-    computingTimerStandard.enter_section("Kohn-sham dft operator init");
-    energyCalculator energyCalc(mpi_communicator,
-                                interpoolcomm,
-                                interBandGroupComm);
-
 
     std::vector<std::vector<dataTypes::number>> eigenVectorsFlattenedSTLTemp =
       d_eigenVectorsFlattenedSTL;
@@ -1658,57 +1687,12 @@ namespace dftfe
     // set up linear solver
     dealiiLinearSolver dealiiCGSolver(mpi_communicator, dealiiLinearSolver::CG);
 
-    // set up solver functions for Poisson
-    poissonSolverProblem<FEOrder, FEOrderElectro> phiTotalSolverProblem(
-      mpi_communicator);
-
-    if (!kohnShamDFTOperatorsInitialized || true)
-      initializeKohnShamDFTOperator(kohnShamDFTEigenOperator
-#ifdef DFTFE_WITH_GPU
-                                    ,
-                                    kohnShamDFTEigenOperatorCUDA
-#endif
-      );
-    else
-      reInitializeKohnShamDFTOperator(kohnShamDFTEigenOperator
-#ifdef DFTFE_WITH_GPU
-                                      ,
-                                      kohnShamDFTEigenOperatorCUDA
-#endif
-      );
-
-    //
-    // precompute shapeFunctions and shapeFunctionGradients and
-    // shapeFunctionGradientIntegrals
-    //
-    computing_timer.enter_section("shapefunction data");
-    if (!dftParameters::useGPU)
-      kohnShamDFTEigenOperator.preComputeShapeFunctionGradientIntegrals(
-        d_lpspQuadratureId);
-#ifdef DFTFE_WITH_GPU
-    if (dftParameters::useGPU)
-      kohnShamDFTEigenOperatorCUDA.preComputeShapeFunctionGradientIntegrals(
-        d_lpspQuadratureId);
-#endif
-    computing_timer.exit_section("shapefunction data");
-
-    if (dftParameters::verbosity >= 4)
-      dftUtils::printCurrentMemoryUsage(
-        mpi_communicator,
-        "Precompute shapefunction grad integrals, just before starting scf solve");
-
-    if (dftParameters::verbosity >= 4)
-      dftUtils::printCurrentMemoryUsage(mpi_communicator,
-                                        "Kohn-sham dft operator init called");
-
-    computingTimerStandard.exit_section("Kohn-sham dft operator init");
-
-
 
     computingTimerStandard.enter_section("Density perturbation computation");
     computing_timer.enter_section("Density perturbation computation");
 
-    phiTotalSolverProblem.reinit(
+    // Reuses smeared charge rhs integrals, diagonalA and mean value constraints
+    d_phiTotalSolverProblem.reinit(
       d_matrixFreeDataPRefined,
       d_phiTotRhoIn,
       *d_constraintsVectorElectro[d_phiTotDofHandlerIndexElectro],
@@ -1719,18 +1703,16 @@ namespace dftfe
       d_bQuadValuesAllAtoms,
       d_smearedChargeQuadratureIdElectro,
       *rhoInValues,
-      true,
-      dftParameters::periodicX && dftParameters::periodicY &&
-        dftParameters::periodicZ && !dftParameters::pinnedNodeForPBC,
+      false,
+      false,
       dftParameters::smearedNuclearCharges,
       true,
       false,
       0,
-      true,
-      false);
+      false,
+      true);
 
-
-    dealiiCGSolver.solve(phiTotalSolverProblem,
+    dealiiCGSolver.solve(d_phiTotalSolverProblem,
                          dftParameters::absLinearSolverTolerance,
                          dftParameters::maxLinearSolverIterations,
                          dftParameters::verbosity);
@@ -1877,14 +1859,6 @@ namespace dftfe
     computingTimerStandard.exit_section("Density perturbation computation");
 
     d_eigenVectorsFlattenedSTL = eigenVectorsFlattenedSTLTemp;
-
-    if (!kohnShamDFTOperatorsInitialized || true)
-      finalizeKohnShamDFTOperator(kohnShamDFTEigenOperator
-#ifdef DFTFE_WITH_GPU
-                                  ,
-                                  kohnShamDFTEigenOperatorCUDA
-#endif
-      );
   }
 
 
@@ -1894,23 +1868,21 @@ namespace dftfe
   template <unsigned int FEOrder, unsigned int FEOrderElectro>
   void
   dftClass<FEOrder, FEOrderElectro>::solve(
-    const bool kohnShamDFTOperatorsInitialized,
     const bool computeForces,
     const bool solveLinearizedKS,
     const bool isRestartGroundStateCalcFromChk)
   {
-    kohnShamDFTOperatorClass<FEOrder, FEOrderElectro> kohnShamDFTEigenOperator(
-      this, mpi_communicator);
+    kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>
+      &kohnShamDFTEigenOperator = *d_kohnShamDFTOperatorPtr;
 #ifdef DFTFE_WITH_GPU
     kohnShamDFTOperatorCUDAClass<FEOrder, FEOrderElectro>
-      kohnShamDFTEigenOperatorCUDA(this, mpi_communicator);
+      &kohnShamDFTEigenOperatorCUDA = *d_kohnShamDFTOperatorCUDAPtr;
 #endif
 
     const Quadrature<3> &quadrature =
       matrix_free_data.get_quadrature(d_densityQuadratureId);
 
     // computingTimerStandard.enter_section("Total scf solve");
-    computingTimerStandard.enter_section("Kohn-sham dft operator init");
     energyCalculator                           energyCalc(mpi_communicator,
                                 interpoolcomm,
                                 interBandGroupComm);
@@ -1920,10 +1892,6 @@ namespace dftfe
 
     // set up linear solver
     dealiiLinearSolver dealiiCGSolver(mpi_communicator, dealiiLinearSolver::CG);
-
-    // set up solver functions for Poisson
-    poissonSolverProblem<FEOrder, FEOrderElectro> phiTotalSolverProblem(
-      mpi_communicator);
 
     //
     // set up solver functions for Helmholtz to be used only when Kerker mixing
@@ -1940,47 +1908,8 @@ namespace dftfe
         d_helmholtzDofHandlerIndexElectro,
         d_densityQuadratureIdElectro);
 
-    if (!kohnShamDFTOperatorsInitialized || true)
-      initializeKohnShamDFTOperator(kohnShamDFTEigenOperator
-#ifdef DFTFE_WITH_GPU
-                                    ,
-                                    kohnShamDFTEigenOperatorCUDA
-#endif
-      );
-    else
-      reInitializeKohnShamDFTOperator(kohnShamDFTEigenOperator
-#ifdef DFTFE_WITH_GPU
-                                      ,
-                                      kohnShamDFTEigenOperatorCUDA
-#endif
-      );
-
-    //
-    // precompute shapeFunctions and shapeFunctionGradients and
-    // shapeFunctionGradientIntegrals
-    //
-    computing_timer.enter_section("shapefunction data");
-    if (!dftParameters::useGPU)
-      kohnShamDFTEigenOperator.preComputeShapeFunctionGradientIntegrals(
-        d_lpspQuadratureId);
-#ifdef DFTFE_WITH_GPU
-    if (dftParameters::useGPU)
-      kohnShamDFTEigenOperatorCUDA.preComputeShapeFunctionGradientIntegrals(
-        d_lpspQuadratureId);
-#endif
-    computing_timer.exit_section("shapefunction data");
-
-
-    if (dftParameters::verbosity >= 4)
-      dftUtils::printCurrentMemoryUsage(
-        mpi_communicator,
-        "Precompute shapefunction grad integrals, just before starting scf solve");
-
-    if (dftParameters::verbosity >= 4)
-      dftUtils::printCurrentMemoryUsage(mpi_communicator,
-                                        "Kohn-sham dft operator init called");
-
-    computingTimerStandard.exit_section("Kohn-sham dft operator init");
+    // FIXME: Check if this call can be removed
+    d_phiTotalSolverProblem.clear();
 
     //
     // solve vself in bins
@@ -2172,9 +2101,9 @@ namespace dftfe
                   }
 
                 if (dftParameters::verbosity >= 1)
-                  pcout
-                    << "Anderson mixing, L2 norm of electron-density difference: "
-                    << norm << std::endl;
+                  pcout << dftParameters::mixingMethod
+                        << " mixing, L2 norm of electron-density difference: "
+                        << norm << std::endl;
               }
 
             if (dftParameters::computeEnergyEverySCF &&
@@ -2195,7 +2124,7 @@ namespace dftfe
 
 
         if (scfIter > 0)
-          phiTotalSolverProblem.reinit(
+          d_phiTotalSolverProblem.reinit(
             d_matrixFreeDataPRefined,
             d_phiTotRhoIn,
             *d_constraintsVectorElectro[d_phiTotDofHandlerIndexElectro],
@@ -2215,7 +2144,7 @@ namespace dftfe
             false,
             true);
         else
-          phiTotalSolverProblem.reinit(
+          d_phiTotalSolverProblem.reinit(
             d_matrixFreeDataPRefined,
             d_phiTotRhoIn,
             *d_constraintsVectorElectro[d_phiTotDofHandlerIndexElectro],
@@ -2238,7 +2167,7 @@ namespace dftfe
 
         computing_timer.enter_section("phiTot solve");
 
-        dealiiCGSolver.solve(phiTotalSolverProblem,
+        dealiiCGSolver.solve(d_phiTotalSolverProblem,
                              dftParameters::absLinearSolverTolerance,
                              dftParameters::maxLinearSolverIterations,
                              dftParameters::verbosity);
@@ -2987,7 +2916,7 @@ namespace dftfe
 
             computing_timer.enter_section("phiTot solve");
 
-            phiTotalSolverProblem.reinit(
+            d_phiTotalSolverProblem.reinit(
               d_matrixFreeDataPRefined,
               d_phiTotRhoOut,
               *d_constraintsVectorElectro[d_phiTotDofHandlerIndexElectro],
@@ -3008,7 +2937,7 @@ namespace dftfe
               true);
 
 
-            dealiiCGSolver.solve(phiTotalSolverProblem,
+            dealiiCGSolver.solve(d_phiTotalSolverProblem,
                                  dftParameters::absLinearSolverTolerance,
                                  dftParameters::maxLinearSolverIterations,
                                  dftParameters::verbosity);
@@ -3174,7 +3103,7 @@ namespace dftfe
 
         computing_timer.enter_section("phiTot solve");
 
-        phiTotalSolverProblem.reinit(
+        d_phiTotalSolverProblem.reinit(
           d_matrixFreeDataPRefined,
           d_phiTotRhoOut,
           *d_constraintsVectorElectro[d_phiTotDofHandlerIndexElectro],
@@ -3195,7 +3124,7 @@ namespace dftfe
           true);
 
 
-        dealiiCGSolver.solve(phiTotalSolverProblem,
+        dealiiCGSolver.solve(d_phiTotalSolverProblem,
                              dftParameters::absLinearSolverTolerance,
                              dftParameters::maxLinearSolverIterations,
                              dftParameters::verbosity);
@@ -3237,7 +3166,7 @@ namespace dftfe
                 temp[q_point] = rhoOut[q_point] - rhoIn[q_point];
             }
 
-        phiTotalSolverProblem.reinit(
+        d_phiTotalSolverProblem.reinit(
           d_matrixFreeDataPRefined,
           phiRhoMinusApproxRho,
           *d_constraintsVectorElectro[d_phiTotDofHandlerIndexElectro],
@@ -3252,7 +3181,7 @@ namespace dftfe
           false);
 
         phiRhoMinusApproxRho = 0;
-        dealiiCGSolver.solve(phiTotalSolverProblem,
+        dealiiCGSolver.solve(d_phiTotalSolverProblem,
                              dftParameters::absLinearSolverTolerance,
                              dftParameters::maxLinearSolverIterations,
                              dftParameters::verbosity);
@@ -3594,20 +3523,12 @@ namespace dftfe
       {
         readkPointData();
         initnscf(kohnShamDFTEigenOperator,
-                 phiTotalSolverProblem,
+                 d_phiTotalSolverProblem,
                  dealiiCGSolver);
         nscf(kohnShamDFTEigenOperator, d_subspaceIterationSolver);
         writeBands();
       }
 #endif
-
-    if (!kohnShamDFTOperatorsInitialized || true)
-      finalizeKohnShamDFTOperator(kohnShamDFTEigenOperator
-#ifdef DFTFE_WITH_GPU
-                                  ,
-                                  kohnShamDFTEigenOperatorCUDA
-#endif
-      );
   }
 
   // Output wfc

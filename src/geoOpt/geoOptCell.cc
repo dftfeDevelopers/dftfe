@@ -453,7 +453,7 @@ namespace dftfe
     dftPtr->deformDomain(deformationGradient);
 
 
-    dftPtr->solve(false, computeForces);
+    dftPtr->solve(computeForces);
 
     // if ion optimization is on, then for every cell relaxation also relax the
     // atomic forces
