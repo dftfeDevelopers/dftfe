@@ -61,8 +61,9 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::
   d_shapeFunctionValue.resize(numberQuadraturePoints * numberDofsPerElement,
                               0.0);
   d_shapeFunctionValueLpspQuad.resize(numberQuadraturePointsLpsp *
-                                        numberDofsPerElement,
+                                      numberDofsPerElement,
                                       0.0);
+  d_NiNjLpspQuad.reize(numberDofsPerElement*numberDofsPerElement*numberQuadraturePointsLpsp);
   std::vector<std::vector<std::vector<Tensor<1, 3, double>>>>
     tempShapeFuncGradData;
 
@@ -133,6 +134,22 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::
                                                  iNode +
                                                q_point] =
                     fe_values_lpsp.shape_value(iNode, q_point);
+
+
+              for(unsigned int q_point = 0; q_point < numberQuadraturePointsLpsp; ++q_point)
+		{
+		  unsigned int count = 0;
+		  for(unsigned int iNode = 0; iNode < numberDofsPerElement; ++iNode)
+		    {
+                      for(unsigned int jNode = 0; jNode < numberDofsPerElement; ++jNode)
+			{
+                          d_NiNjLpspQuad[numberDofsPerElement*numberDofsPerElement*q_point + count] = fe_values_lpsp.shape_value(iNode,q_point)*fe_values_lpsp.shape_value(jNode,q_point);
+			  count+=1;
+
+			}
+		    }
+		}
+	      
             }
 
         } // icell loop

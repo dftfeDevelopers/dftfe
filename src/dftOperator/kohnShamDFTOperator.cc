@@ -1864,10 +1864,33 @@ namespace dftfe
   {
     d_externalPotCorrQuadratureId = externalPotCorrQuadratureId;
     const unsigned int n_cells    = dftPtr->matrix_free_data.n_macro_cells();
-    const int          numberQuadraturePoints =
-      dftPtr->matrix_free_data.get_quadrature(externalPotCorrQuadratureId)
-        .size();
-    d_vEffExternalPotCorr.reinit(n_cells, numberQuadraturePoints);
+    const int numberQuadraturePoints = dftPtr->matrix_free_data.get_quadrature(externalPotCorrQuadratureId).size();
+
+    const unsigned int totalLocallyOwnedCells = dftPtr->matrix_free_data.n_physical_cells();
+    FEValues<3> feValues(dftPtr->matrix_free_data.get_dof_handler().get_fe(), dftPtr->matrix_free_data.get_quadrature(externalPotCorrQuadratureId), update_JxW_values);
+    d_vEffExternalPotCorrJxW.resize(numberPhysicalCells*numberQuadraturePoints,0.0);
+
+    typename dealii::DoFHandler<3>::active_cell_iterator cellPtr;
+    unsigned int iElem = 0;
+    for(unsigned int cell = 0; cell < n_cells; ++cell)
+      {
+	const unsigned int n_sub_cells = dftPtr->matrix_free_data.n_components_filled(cell);
+	for(unsigned int v = 0; v < n_sub_cells; ++v)
+	  {
+	    cellPtr = dftPtr->matrix_free_data.get_cell_iterator(cell, v);
+	    feValues.reinit(cellPtr);
+	    const std::vector<double> & temp = externalPotCorrValues.find(cellPtr->id())->second;
+	    for(unsigned int q = 0; q < numberQuadraturePoints; ++q)
+	      {
+		d_vEffExternalPotCorrJxW[numberQuadraturePoints*iElem + q] = temp[q]*feValues.JxW(q);
+	      }
+	    iElem++;
+	  }
+      }
+
+    
+    
+    /*d_vEffExternalPotCorr.reinit(n_cells, numberQuadraturePoints);
     typename dealii::DoFHandler<3>::active_cell_iterator cellPtr;
 
     //
@@ -1892,7 +1915,7 @@ namespace dftfe
           {
             d_vEffExternalPotCorr(cell, q) = tempVec[q];
           }
-      }
+	  }*/
   }
 
 #include "inst.cc"

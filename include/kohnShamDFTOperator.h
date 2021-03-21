@@ -368,7 +368,8 @@ node is stored
 
 
     std::vector<std::vector<dataTypes::number>> d_cellMassMatrix;
-    std::vector<std::vector<double>> d_cellHamiltonianMatrixExternalPotCorr;
+    std::vector<double> d_cellHamiltonianMatrixExternalPotCorr;
+    //std::vector<std::vector<double>> d_cellHamiltonianMatrixExternalPotCorr;
 
     /**
      * @brief implementation of matrix-vector product using cell-level stiffness matrices.
@@ -439,6 +440,7 @@ node is stored
 
     dealii::Table<2, dealii::VectorizedArray<double>> vEff;
     dealii::Table<2, dealii::VectorizedArray<double>> d_vEffExternalPotCorr;
+    std::vector<double> d_vEffExternalPotCorrJxW;
     dealii::Table<2, dealii::Tensor<1, 3, dealii::VectorizedArray<double>>>
       derExcWithSigmaTimesGradRho;
 
@@ -457,6 +459,7 @@ node is stored
 
     /// storage for shapefunctions
     std::vector<double> d_shapeFunctionValueLpspQuad;
+    std::vector<double> d_NiNjLpspQuad;
 
 
     /// storage for  matrix-free cell data

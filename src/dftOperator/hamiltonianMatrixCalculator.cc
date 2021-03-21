@@ -46,6 +46,13 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::computeHamiltonianMatrix(
   const unsigned int kpointSpinIndex =
     (1 + dftParameters::spinPolarized) * kPointIndex + spinIndex;
 
+  //inputs to blas
+  const char transA = 'N',transB = 'N';
+  const double alpha = 1.0;
+  const double beta = 1.0;
+  const unsigned int inc = 1;
+  const unsigned int numberNodesPerElementSquare = d_numberNodesPerElement*d_numberNodesPerElement;
+
   if ((dftParameters::isPseudopotential ||
        dftParameters::smearedNuclearCharges) &&
       !d_isStiffnessMatrixExternalPotCorrComputed)
@@ -56,9 +63,10 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::computeHamiltonianMatrix(
           .get_fe()
           .dofs_per_cell;
       d_cellHamiltonianMatrixExternalPotCorr.clear();
-      d_cellHamiltonianMatrixExternalPotCorr.resize(
-        totalLocallyOwnedCells,
-        std::vector<double>(numberDofsPerElement * numberDofsPerElement, 0.0));
+      //d_cellHamiltonianMatrixExternalPotCorr.resize(
+      //totalLocallyOwnedCells,
+      //std::vector<double>(numberDofsPerElement * numberDofsPerElement, 0.0));
+      d_cellHamiltonianMatrixExternalPotCorr.resize(numberNodesPerElementSquare*totalLocallyOwnedCells);
 
       FEEvaluation<3,
                    FEOrder,
@@ -66,6 +74,7 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::computeHamiltonianMatrix(
                    1,
                    double>
                          fe_eval(dftPtr->matrix_free_data, 0, d_externalPotCorrQuadratureId);
+      
       const unsigned int numberQuadraturePoints = fe_eval.n_q_points;
       typename dealii::DoFHandler<3>::active_cell_iterator cellPtr;
 
@@ -75,7 +84,7 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::computeHamiltonianMatrix(
         dealii::ExcMessage(
           "DFT-FE Error: mismatch in quadrature rule usage in computeHamiltonianMatrix."));
 
-      unsigned int                         iElem = 0;
+      /*unsigned int                         iElem = 0;
       VectorizedArray<double>              temp;
       std::vector<VectorizedArray<double>> elementHamiltonianMatrix;
       elementHamiltonianMatrix.resize(numberDofsPerElement *
@@ -126,7 +135,24 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::computeHamiltonianMatrix(
               iElem += 1;
             }
 
-        } // macrocell loop
+        } // macrocell loop*/
+
+      dgemm_(&transA,
+	     &transB,
+	     &numberNodesPerElementSquare,//M
+	     &totalLocallyOwnedCells,//N
+	     &numberQuadraturePoints,//K
+	     &alpha,
+	     &d_NiNjLpspQuad[0],
+	     &numberNodesPerElementSquare,
+	     &d_vEffExternalPotCorrJxW[0],
+	     &numberQuadraturePoints,
+	     &beta,
+	     &d_cellHamiltonianMatrixExternalPotCorr[0],
+	     &numberNodesPerElementSquare);
+
+
+      
       d_isStiffnessMatrixExternalPotCorrComputed = true;
     }
 
@@ -350,19 +376,27 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::computeHamiltonianMatrix(
                    ++jNode)
                 {
 #ifdef USE_COMPLEX
-                  d_cellHamiltonianMatrix[kpointSpinIndex][iElem]
+                  /*d_cellHamiltonianMatrix[kpointSpinIndex][iElem]
                                          [numberDofsPerElement * iNode +
                                           jNode] +=
                     dataTypes::number(
                       d_cellHamiltonianMatrixExternalPotCorr
                         [iElem][numberDofsPerElement * iNode + jNode],
-                      0.0);
+			0.0);*/
+
+
+		  d_cellHamiltonianMatrix[kpointSpinIndex][iElem][numberDofsPerElement*iNode + jNode]+=dataTypes::number(d_cellHamiltonianMatrixExternalPotCorr[numberNodesPerElementSquare*iElem + d_numberNodesPerElement*iNode + jNode],0.0);
+		  
 #else
-                  d_cellHamiltonianMatrix[kpointSpinIndex][iElem]
+                  /*d_cellHamiltonianMatrix[kpointSpinIndex][iElem]
                                          [numberDofsPerElement * iNode +
                                           jNode] +=
                     d_cellHamiltonianMatrixExternalPotCorr
-                      [iElem][numberDofsPerElement * iNode + jNode];
+		    [iElem][numberDofsPerElement * iNode + jNode];*/
+
+                 d_cellHamiltonianMatrix[kpointSpinIndex][iElem][numberDofsPerElement*iNode + jNode] += d_cellHamiltonianMatrixExternalPotCorr[numberNodesPerElementSquare*iElem + d_numberNodesPerElement*iNode + jNode];
+		  
+		  
 #endif
                 }
 
