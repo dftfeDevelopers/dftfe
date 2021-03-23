@@ -370,41 +370,6 @@ namespace dftfe
 
 
 
-  /*template<unsigned int FEOrder,unsigned int FEOrderElectro>
-  void kohnShamDFTOperatorClass<FEOrder>::scale(double scalar,
-                  const unsigned int numberWaveFunctions,
-                  std::vector<std::vector<dataTypes::number> > &
-  cellWaveFunctionMatrix)
-
-  {
-
-    unsigned int iElem = 0;
-    for(unsigned int iMacroCell = 0; iMacroCell < d_numberMacroCells;
-  ++iMacroCell)
-      {
-  for(unsigned int iCell = 0; iCell < d_macroCellSubCellMap[iMacroCell];
-  ++iCell)
-    {
-      for(unsigned int iNode = 0; iNode < d_numberNodesPerElement; ++iNode)
-        {
-    if(d_nodesPerCellClassificationMap[iNode] == 0)
-      {
-        for(unsigned int iWave = 0; iWave < numberWaveFunctions; ++iWave)
-          {
-      cellWaveFunctionMatrix[iElem][numberWaveFunctions*iNode + iWave] *=
-  scalar;
-          }
-
-      }
-        }
-      ++iElem;
-    }
-      }
-
-
-  }*/
-
-
   //
   // compute mass Vector
   //
@@ -500,11 +465,69 @@ namespace dftfe
     const unsigned int externalPotCorrQuadratureId)
   {
     const unsigned int n_cells = dftPtr->matrix_free_data.n_macro_cells();
-    const unsigned int n_array_elements =
-      VectorizedArray<double>::n_array_elements;
-    const int numberQuadraturePoints =
-      dftPtr->matrix_free_data.get_quadrature(0).size();
-    vEff.reinit(n_cells, numberQuadraturePoints);
+    const unsigned int totalLocallyOwnedCells =
+      dftPtr->matrix_free_data.n_physical_cells();
+    const Quadrature<3> &quadrature_formula =
+      dftPtr->matrix_free_data.get_quadrature(dftPtr->d_densityQuadratureId);
+    FEValues<3> fe_values(dftPtr->FE, quadrature_formula, update_JxW_values);
+    const int numberQuadraturePoints = quadrature_formula.size();
+      
+
+    d_vEffJxW.resize(totalLocallyOwnedCells*numberQuadraturePoints,0.0);
+    typename dealii::DoFHandler<3>::active_cell_iterator cellPtr;
+
+    //allocate storage for exchange potential
+    std::vector<double> exchangePotentialVal(2 * numberQuadraturePoints);
+    std::vector<double> corrPotentialVal(2 * numberQuadraturePoints);
+    
+    //
+    // loop over cell block
+    //
+     unsigned int iElemCount = 0;
+    for (unsigned int cell = 0; cell < n_cells; ++cell)
+      {
+	const unsigned int n_sub_cells =
+          dftPtr->matrix_free_data.n_components_filled(cell);
+	for (unsigned int v = 0; v < n_sub_cells; ++v)
+          {
+            cellPtr    = dftPtr->matrix_free_data.get_cell_iterator(cell, v);
+	    fe_values.reinit(cellPtr);
+	    
+            std::vector<double> densityValue  = (*rhoValues).find(cellPtr->id())->second;
+
+            const std::vector<double> &tempPhi =
+              phiValues.find(cellPtr->id())->second;
+           
+
+            if (dftParameters::nonLinearCoreCorrection)
+              {
+                const std::vector<double> &temp2 =
+                  rhoCoreValues.find(cellPtr->id())->second;
+                for (unsigned int q = 0; q < numberQuadraturePoints; ++q)
+                  densityValue[q] += temp2[q];
+              }
+
+	    xc_lda_vxc(&(dftPtr->funcX),
+		       numberQuadraturePoints,
+		       &densityValue[0],
+		       &exchangePotentialVal[0]);
+	    
+	    xc_lda_vxc(&(dftPtr->funcC),
+		       numberQuadraturePoints,
+		       &densityValue[0],
+		       &corrPotentialVal[0]);
+       
+	    for (unsigned int q = 0; q < numberQuadraturePoints; ++q)
+	      {
+		d_vEffJxW[iElemCount*numberQuadraturePoints + q] = (tempPhi[q] + exchangePotentialVal[q] + corrPotentialVal[q])*fe_values.JxW(q);
+	      }
+	    
+	    iElemCount++;
+	  }
+
+      }`
+    
+    /*vEff.reinit(n_cells, numberQuadraturePoints);
     typename dealii::DoFHandler<3>::active_cell_iterator cellPtr;
 
     //
@@ -570,7 +593,7 @@ namespace dftfe
             //
             vEff(cell, q) = tempPhi[q] + exchangePotential + corrPotential;
           }
-      }
+	  }*/
 
     if ((dftParameters::isPseudopotential ||
          dftParameters::smearedNuclearCharges) &&
@@ -855,7 +878,7 @@ namespace dftfe
     for (unsigned int i = 0; i < numberDofs; ++i)
       {
         const double scalingCoeff =
-          d_invSqrtMassVector.local_element(i); //*scalar;
+          d_invSqrtMassVector.local_element(i); 
         dscal_(&numberWaveFunctions,
                &scalingCoeff,
                src.begin() + i * numberWaveFunctions,
@@ -924,7 +947,7 @@ namespace dftfe
     for (unsigned int i = 0; i < numberDofs; ++i)
       {
         double scalingCoeff =
-          d_sqrtMassVector.local_element(i); //*(1.0/scalar);
+          d_sqrtMassVector.local_element(i); 
         dscal_(&numberWaveFunctions,
                &scalingCoeff,
                src.begin() + i * numberWaveFunctions,
@@ -1608,11 +1631,74 @@ namespace dftfe
 
   {
     const unsigned int n_cells = dftPtr->matrix_free_data.n_macro_cells();
-    const unsigned int n_array_elements =
-      VectorizedArray<double>::n_array_elements;
-    const int numberQuadraturePoints =
-      dftPtr->matrix_free_data.get_quadrature(0).size();
-    vEff.reinit(n_cells, numberQuadraturePoints);
+    const unsigned int totalLocallyOwnedCells =
+      dftPtr->matrix_free_data.n_physical_cells();
+
+    const Quadrature<3> &quadrature_formula =
+      dftPtr->matrix_free_data.get_quadrature(dftPtr->d_densityQuadratureId);
+    FEValues<3> fe_values(dftPtr->FE, quadrature_formula, update_JxW_values);
+    const int numberQuadraturePoints = quadrature_formula.size();
+
+    d_vEffJxW.resize(totalLocallyOwnedCells * numberQuadraturePoints, 0.0);
+    typename dealii::DoFHandler<3>::active_cell_iterator cellPtr;
+
+    //allocate storage for exchange potential
+    std::vector<double> exchangePotentialVal(2 * numberQuadraturePoints);
+    std::vector<double> corrPotentialVal(2 * numberQuadraturePoints);
+
+    //
+    // loop over cell block
+    //
+    unsigned int iElemCount = 0;
+    for (unsigned int cell = 0; cell < n_cells; ++cell)
+      {
+	const unsigned int n_sub_cells =
+          dftPtr->matrix_free_data.n_components_filled(cell);
+	for (unsigned int v = 0; v < n_sub_cells; ++v)
+          {
+            cellPtr    = dftPtr->matrix_free_data.get_cell_iterator(cell, v);
+	    fe_values.reinit(cellPtr);
+	    
+	    std::vector<double> densityValue = (*rhoValues).find(cellPtr->id())->second;
+
+            const std::vector<double> &tempPhi =
+              phiValues.find(cellPtr->id())->second;
+           
+
+            if (dftParameters::nonLinearCoreCorrection)
+              {
+                const std::vector<double> &temp2 =
+                  rhoCoreValues.find(cellPtr->id())->second;
+                for (unsigned int q = 0; q < numberQuadraturePoints; ++q)
+                  {
+                    densityValue[2 * q] += temp2[q] / 2.0;
+                    densityValue[2 * q + 1] += temp2[q] / 2.0;
+                  }
+              }
+
+            xc_lda_vxc(&(dftPtr->funcX),
+		       numberQuadraturePoints,
+		       &densityValue[0],
+		       &exchangePotentialVal[0]);
+	    
+	    xc_lda_vxc(&(dftPtr->funcC),
+		       numberQuadraturePoints,
+		       &densityValue[0],
+		       &corrPotentialVal[0]);
+
+	    for (unsigned int q = 0; q < numberQuadraturePoints; ++q)
+	      {
+		d_vEffJxW[iElemCount*numberQuadraturePoints + q] = (tempPhi[q] + exchangePotentialVal[2*q + spinIndex] + corrPotentialVal[2*q + spinIndex])*fe_values.JxW(q);
+	      }
+
+	    iElemCount++;
+	    
+          }
+      }
+
+
+    
+    /*vEff.reinit(n_cells, numberQuadraturePoints);
     typename dealii::DoFHandler<3>::active_cell_iterator cellPtr;
 
     //
@@ -1684,7 +1770,7 @@ namespace dftfe
             //
             vEff(cell, q) = tempPhi[q] + exchangePotential + corrPotential;
           }
-      }
+      }*/
 
     if ((dftParameters::isPseudopotential ||
          dftParameters::smearedNuclearCharges) &&

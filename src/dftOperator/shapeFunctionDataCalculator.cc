@@ -56,7 +56,7 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::
   //
   // resize data members
   //
-  d_cellShapeFunctionGradientIntegral.resize(numberMacroCells);
+  d_cellShapeFunctionGradientIntegral.resize(numberPhysicalCells);
 
   d_shapeFunctionValue.resize(numberQuadraturePoints * numberDofsPerElement,
                               0.0);
@@ -64,8 +64,9 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::
                                       numberDofsPerElement,
                                       0.0);
   d_NiNjLpspQuad.resize(numberDofsPerElement*numberDofsPerElement*numberQuadraturePointsLpsp,0.0);
-  std::vector<std::vector<std::vector<Tensor<1, 3, double>>>>
-    tempShapeFuncGradData;
+  d_NiNj.resize(numberDofsPerElement*numberDofsPerElement*numberQuadraturePoint,0.0);
+  
+ 
 
   typename dealii::DoFHandler<3>::active_cell_iterator cellPtr;
 
@@ -73,22 +74,24 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::
   // compute cell-level shapefunctiongradientintegral generator by going over
   // dealii macrocells which allows efficient integration of cell-level matrix
   // integrals using dealii vectorized arrays
+  unsigned int iElemCount = 0;
   for (int iMacroCell = 0; iMacroCell < numberMacroCells; ++iMacroCell)
     {
-      std::vector<VectorizedArray<double>> &shapeFunctionGradients =
-        d_cellShapeFunctionGradientIntegral[iMacroCell];
-      shapeFunctionGradients.resize(numberDofsPerElement *
-                                    numberDofsPerElement);
 
       unsigned int n_sub_cells =
         dftPtr->matrix_free_data.n_components_filled(iMacroCell);
-      tempShapeFuncGradData.resize(n_sub_cells);
+     
 
       for (unsigned int iCell = 0; iCell < n_sub_cells; ++iCell)
         {
           cellPtr = dftPtr->matrix_free_data.get_cell_iterator(
             iMacroCell, iCell, dftPtr->d_densityDofHandlerIndex);
           fe_values_quadplusone.reinit(cellPtr);
+
+	  std::vector<double> &shapeFunctionGradients =
+	    d_cellShapeFunctionGradientIntegral[iElemCount];
+	  shapeFunctionGradients.resize(numberDofsPerElement *
+					numberDofsPerElement);
 
           for (unsigned int iNode = 0; iNode < numberDofsPerElement; ++iNode)
             {
@@ -105,7 +108,7 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::
                       fe_values_quadplusone.JxW(q_point);
 
                   shapeFunctionGradients[numberDofsPerElement * iNode + jNode]
-                                        [iCell] = shapeFunctionGradientValue;
+                                         = shapeFunctionGradientValue;
                 } // j node loop
 
             } // i node loop
@@ -144,6 +147,7 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::
                       for(unsigned int jNode = 0; jNode < numberDofsPerElement; ++jNode)
 			{
                           d_NiNjLpspQuad[numberDofsPerElement*numberDofsPerElement*q_point + count] = fe_values_lpsp.shape_value(iNode,q_point)*fe_values_lpsp.shape_value(jNode,q_point);
+			  d_NiNj[numberDofsPerElement*numberDofsPerElement*q_point + count] = fe_values.shape_value(iNode,q_point)*fe_values.shape_value(jNode,q_point);
 			  count+=1;
 
 			}

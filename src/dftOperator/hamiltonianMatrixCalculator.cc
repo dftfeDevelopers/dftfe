@@ -73,7 +73,7 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::computeHamiltonianMatrix(
                    C_num1DQuadLPSP<FEOrder>() * C_numCopies1DQuadLPSP(),
                    1,
                    double>
-                         fe_eval(dftPtr->matrix_free_data, 0, d_externalPotCorrQuadratureId);
+	           fe_eval(dftPtr->matrix_free_data, 0, d_externalPotCorrQuadratureId);
       
       const unsigned int numberQuadraturePoints = fe_eval.n_q_points;
       typename dealii::DoFHandler<3>::active_cell_iterator cellPtr;
@@ -151,11 +151,13 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::computeHamiltonianMatrix(
 	     &d_cellHamiltonianMatrixExternalPotCorr[0],
 	     &numberNodesPerElementSquare);
 
-
-      
       d_isStiffnessMatrixExternalPotCorrComputed = true;
+      
     }
 
+
+ 
+  
   //
   // Resize the cell-level hamiltonian  matrix
   //
@@ -167,22 +169,41 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::computeHamiltonianMatrix(
   //
   const Quadrature<3> &quadrature =
     dftPtr->matrix_free_data.get_quadrature(dftPtr->d_densityQuadratureId);
+  
   FEEvaluation<3,
                FEOrder,
                C_num1DQuad<C_rhoNodalPolyOrder<FEOrder, FEOrderElectro>()>(),
                1,
                double>
-                     fe_eval(dftPtr->matrix_free_data, 0, 0);
-  FEValues<3>        fe_values(dftPtr->matrix_free_data
-                          .get_dof_handler(dftPtr->d_densityDofHandlerIndex)
-                          .get_fe(),
+    fe_eval(dftPtr->matrix_free_data, 0, 0);
+  
+  FEValues<3> fe_values(dftPtr->matrix_free_data.get_dof_handler(dftPtr->d_densityDofHandlerIndex).get_fe(),
                         quadrature,
                         update_gradients);
+  
   const unsigned int numberDofsPerElement =
-    dftPtr->matrix_free_data.get_dof_handler(dftPtr->d_densityDofHandlerIndex)
-      .get_fe()
-      .dofs_per_cell;
+    dftPtr->matrix_free_data.get_dof_handler(dftPtr->d_densityDofHandlerIndex).get_fe().dofs_per_cell;
+  
   const unsigned int numberQuadraturePoints = quadrature.size();
+
+  //
+  //create temp storage for stiffness matrix across all cells
+  //
+  std::vector<dataTypes::number> cellHamiltonianMatrix(totalLocallyOwnedCells*numberNodesPerElementSquare,0.0);
+  dgemm_(&transA,
+	 &transB,
+	 &numberNodesPerElementSquare,//M
+	 &totalLocallyOwnedCells,//N
+	 &numberQuadraturePoints,//K
+	 &alpha,
+	 &d_NiNj[0],
+	 &numberNodesPerElementSquare,
+	 &d_vEffJxW[0],
+	 &numberQuadraturePoints,
+	 &beta,
+	 &cellHamiltonianMatrix[0],
+	 &numberNodesPerElementSquare);
+  
   typename dealii::DoFHandler<3>::active_cell_iterator cellPtr;
 
   //
@@ -219,7 +240,7 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::computeHamiltonianMatrix(
       const unsigned int n_sub_cells =
         dftPtr->matrix_free_data.n_components_filled(iMacroCell);
 
-      std::vector<Tensor<1, 3, VectorizedArray<double>>> nonCachedShapeGrad;
+      /*std::vector<Tensor<1, 3, VectorizedArray<double>>> nonCachedShapeGrad;
 
       nonCachedShapeGrad.resize(numberDofsPerElement * numberQuadraturePoints);
       for (unsigned int iCell = 0; iCell < n_sub_cells; ++iCell)
@@ -302,7 +323,7 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::computeHamiltonianMatrix(
 
             } // jNode loop
 
-        } // iNode loop
+        }*/   // iNode loop
 
 #ifdef USE_COMPLEX
       std::vector<VectorizedArray<double>> elementHamiltonianMatrixImag;
@@ -362,8 +383,8 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::computeHamiltonianMatrix(
                   d_cellHamiltonianMatrix
                     [kpointSpinIndex][iElem]
                     [numberDofsPerElement * iNode + jNode] =
-                      elementHamiltonianMatrix[numberDofsPerElement * iNode +
-                                               jNode][iSubCell];
+                      cellHamiltonianMatrix[numberNodesPerElementSquare * iElem +
+                                              d_numberNodesPerElement*iNode + jNode];
 
 #endif
                 }
