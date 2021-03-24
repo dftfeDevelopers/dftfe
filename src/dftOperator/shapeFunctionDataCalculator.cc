@@ -64,7 +64,7 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::
                                       numberDofsPerElement,
                                       0.0);
   d_NiNjLpspQuad.resize(numberDofsPerElement*numberDofsPerElement*numberQuadraturePointsLpsp,0.0);
-  d_NiNj.resize(numberDofsPerElement*numberDofsPerElement*numberQuadraturePoint,0.0);
+  d_NiNj.resize(numberDofsPerElement*numberDofsPerElement*numberQuadraturePoints,0.0);
   
  
 
@@ -147,12 +147,25 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::
                       for(unsigned int jNode = 0; jNode < numberDofsPerElement; ++jNode)
 			{
                           d_NiNjLpspQuad[numberDofsPerElement*numberDofsPerElement*q_point + count] = fe_values_lpsp.shape_value(iNode,q_point)*fe_values_lpsp.shape_value(jNode,q_point);
-			  d_NiNj[numberDofsPerElement*numberDofsPerElement*q_point + count] = fe_values.shape_value(iNode,q_point)*fe_values.shape_value(jNode,q_point);
 			  count+=1;
 
 			}
 		    }
 		}
+
+              for(unsigned int q_point = 0; q_point < numberQuadraturePoints; ++q_point)
+                { 
+                  unsigned int count = 0;
+                  for(unsigned int iNode = 0; iNode < numberDofsPerElement; ++iNode)
+                    { 
+                      for(unsigned int jNode = 0; jNode < numberDofsPerElement; ++jNode)
+                        { 
+                          d_NiNj[numberDofsPerElement*numberDofsPerElement*q_point + count] = fe_values.shape_value(iNode,q_point)*fe_values.shape_value(jNode,q_point);
+                          count+=1;
+
+                        }
+                    }
+                }
 	      
             }
 
