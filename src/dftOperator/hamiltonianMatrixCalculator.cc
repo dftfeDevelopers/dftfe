@@ -383,8 +383,8 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::computeHamiltonianMatrix(
                   d_cellHamiltonianMatrix
                     [kpointSpinIndex][iElem]
                     [numberDofsPerElement * iNode + jNode] =
-                      cellHamiltonianMatrix[numberNodesPerElementSquare * iElem +
-                                              d_numberNodesPerElement*iNode + jNode];
+                      cellHamiltonianMatrix[numberNodesPerElementSquare*iElem +
+                                              d_numberNodesPerElement*iNode + jNode]+d_cellShapeFunctionGradientIntegral[iElem][d_numberNodesPerElement*iNode + jNode];
 
 #endif
                 }
