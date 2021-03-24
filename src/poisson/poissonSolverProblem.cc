@@ -181,7 +181,6 @@ namespace dftfe
     tempvec.reinit(rhs);
     tempvec = 0.0;
     d_constraintsInfo.distribute(tempvec);
-    tempvec.update_ghost_values();
 
     if (d_constraintMatrixPtr->has_inhomogeneities() &&
         tempvec.linfty_norm() > 1e-10)
