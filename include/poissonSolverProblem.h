@@ -16,10 +16,11 @@
 //
 
 
-#include <dealiiLinearSolverProblem.h>
-
 #ifndef poissonSolverProblem_H_
-#  define poissonSolverProblem_H_
+#define poissonSolverProblem_H_
+
+#include <dealiiLinearSolverProblem.h>
+#include <constraintMatrixInfo.h>
 
 namespace dftfe
 {
@@ -74,7 +75,8 @@ namespace dftfe
       const bool         isGradSmearedChargeRhs           = false,
       const unsigned int smearedChargeGradientComponentId = 0,
       const bool         storeSmearedChargeRhs            = false,
-      const bool         reuseSmearedChargeRhs            = false);
+      const bool         reuseSmearedChargeRhs            = false,
+      const bool         reinitializeFastConstraints      = false);
 
 
     /**
@@ -256,6 +258,12 @@ namespace dftfe
     /// mean value constraints: constrained proc id containing the mean value
     /// constrained node
     unsigned int d_meanValueConstraintProcId;
+
+    /// duplicate constraints object with flattened maps for faster access
+    dftUtils::constraintMatrixInfo d_constraintsInfo;
+
+    ///
+    bool d_isFastConstraintsInitialized;
 
     const MPI_Comm             mpi_communicator;
     const unsigned int         n_mpi_processes;

@@ -1168,6 +1168,8 @@ namespace dftfe
 
     dealii::AffineConstraints<double> d_constraintsRhoNodalOnlyHanging;
 
+    dftUtils::constraintMatrixInfo d_constraintsRhoNodalInfo;
+
     /**
      * data storage for Kohn-Sham wavefunctions
      */

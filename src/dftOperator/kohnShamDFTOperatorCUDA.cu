@@ -19,14 +19,15 @@
 
 #ifndef USE_COMPLEX
 #  include <cudaHelpers.h>
-#  include <dft.h>
-#  include <dftParameters.h>
-#  include <dftUtils.h>
 #  include <kohnShamDFTOperatorCUDA.h>
 #  include <kohnShamDFTOperatorCUDAKernels.h>
 #  include <linearAlgebraOperations.h>
 #  include <linearAlgebraOperationsInternalCUDA.h>
 #  include <vectorUtilities.h>
+#  include <dft.h>
+#  include <dftParameters.h>
+#  include <dftUtils.h>
+
 
 namespace dftfe
 {

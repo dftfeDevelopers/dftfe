@@ -486,6 +486,7 @@ namespace dftfe
         double vselfinit_time;
         MPI_Barrier(MPI_COMM_WORLD);
         vselfinit_time = MPI_Wtime();
+
         //
         // call the poisson solver to compute vSelf in current bin
         //
@@ -504,7 +505,12 @@ namespace dftfe
             true,
             false,
             true,
-            false);
+            false,
+            false,
+            0,
+            false,
+            false,
+            true);
         else
           vselfSolverProblem.reinit(matrix_free_data,
                                     vselfBinScratch,
@@ -519,7 +525,12 @@ namespace dftfe
                                     true,
                                     false,
                                     false,
-                                    false);
+                                    false,
+                                    false,
+                                    0,
+                                    false,
+                                    false,
+                                    true);
 
         MPI_Barrier(MPI_COMM_WORLD);
         vselfinit_time = MPI_Wtime() - vselfinit_time;
@@ -556,7 +567,10 @@ namespace dftfe
                 true,
                 false,
                 true,
-                idim);
+                idim,
+                false,
+                false,
+                true);
 
 
               MPI_Barrier(MPI_COMM_WORLD);
@@ -1266,14 +1280,7 @@ namespace dftfe
           matrix_free_data.get_vector_partitioner(constraintMatrixId),
           d_vselfBinConstraintMatrices[4 * iBin]);
 
-
-        constraintsMatrixDataInfo.precomputeMaps(
-          matrix_free_data.get_vector_partitioner(constraintMatrixId),
-          matrix_free_data.get_vector_partitioner(constraintMatrixId),
-          1);
-
-        d_vselfFieldBins[iBin].update_ghost_values();
-        constraintsMatrixDataInfo.distribute(d_vselfFieldBins[iBin], 1);
+        constraintsMatrixDataInfo.distribute(d_vselfFieldBins[iBin]);
 
         if (useSmearedCharges)
           for (unsigned int idim = 0; idim < 3; idim++)
@@ -1292,15 +1299,8 @@ namespace dftfe
                 d_vselfBinConstraintMatrices[4 * iBin + idim + 1]);
 
 
-              constraintsMatrixDataInfo2.precomputeMaps(
-                matrix_free_data.get_vector_partitioner(constraintMatrixId2),
-                matrix_free_data.get_vector_partitioner(constraintMatrixId2),
-                1);
-
-
-              d_vselfFieldDerRBins[3 * iBin + idim].update_ghost_values();
               constraintsMatrixDataInfo2.distribute(
-                d_vselfFieldDerRBins[3 * iBin + idim], 1);
+                d_vselfFieldDerRBins[3 * iBin + idim]);
             }
 
         //

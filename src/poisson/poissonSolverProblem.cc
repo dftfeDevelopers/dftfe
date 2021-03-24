@@ -38,6 +38,7 @@ namespace dftfe
     d_isGradSmearedChargeRhs        = false;
     d_isStoreSmearedChargeRhs       = false;
     d_isReuseSmearedChargeRhs       = false;
+    d_isFastConstraintsInitialized  = false;
     d_rhoValuesPtr                  = NULL;
     d_atomsPtr                      = NULL;
     d_smearedChargeValuesPtr        = NULL;
@@ -55,6 +56,7 @@ namespace dftfe
     d_isGradSmearedChargeRhs        = false;
     d_isStoreSmearedChargeRhs       = false;
     d_isReuseSmearedChargeRhs       = false;
+    d_isFastConstraintsInitialized  = false;
     d_rhoValuesPtr                  = NULL;
     d_atomsPtr                      = NULL;
     d_smearedChargeValuesPtr        = NULL;
@@ -80,7 +82,8 @@ namespace dftfe
     const bool         isGradSmearedChargeRhs,
     const unsigned int smearedChargeGradientComponentId,
     const bool         storeSmearedChargeRhs,
-    const bool         reuseSmearedChargeRhs)
+    const bool         reuseSmearedChargeRhs,
+    const bool         reinitializeFastConstraints)
   {
     int this_process;
     MPI_Comm_rank(mpi_communicator, &this_process);
@@ -117,6 +120,15 @@ namespace dftfe
 
     if (isComputeDiagonalA)
       computeDiagonalA();
+
+    if (!d_isFastConstraintsInitialized || reinitializeFastConstraints)
+      {
+        d_constraintsInfo.initialize(matrixFreeData.get_vector_partitioner(
+                                       matrixFreeVectorComponent),
+                                     constraintMatrix);
+
+        d_isFastConstraintsInitialized = true;
+      }
   }
 
 
@@ -124,7 +136,7 @@ namespace dftfe
   void
   poissonSolverProblem<FEOrder, FEOrderElectro>::distributeX()
   {
-    d_constraintMatrixPtr->distribute(*d_xPtr);
+    d_constraintsInfo.distribute(*d_xPtr);
 
     if (d_isMeanValueConstraintComputed)
       meanValueConstraintDistribute(*d_xPtr);
@@ -168,56 +180,36 @@ namespace dftfe
     distributedCPUVec<double> tempvec;
     tempvec.reinit(rhs);
     tempvec = 0.0;
-    d_constraintMatrixPtr->distribute(tempvec);
-    tempvec.update_ghost_values();
+    d_constraintsInfo.distribute(tempvec);
 
-    dealii::FEEvaluation<3, FEOrderElectro, FEOrderElectro + 1> fe_eval(
-      *d_matrixFreeDataPtr,
-      d_matrixFreeVectorComponent,
-      d_matrixFreeQuadratureComponentAX);
-    dealii::VectorizedArray<double> quarter =
-      dealii::make_vectorized_array(1.0 / (4.0 * M_PI));
-    if (d_constraintMatrixPtr->has_inhomogeneities())
-      for (unsigned int macrocell = 0;
-           macrocell < d_matrixFreeDataPtr->n_macro_cells();
-           ++macrocell)
-        {
-          fe_eval.reinit(macrocell);
-          fe_eval.read_dof_values_plain(tempvec);
-          fe_eval.evaluate(false, true);
-          for (unsigned int q = 0; q < fe_eval.n_q_points; ++q)
-            {
-              fe_eval.submit_gradient(-quarter * fe_eval.get_gradient(q), q);
-            }
-          fe_eval.integrate(false, true);
-          fe_eval.distribute_local_to_global(rhs);
-        }
+    if (d_constraintMatrixPtr->has_inhomogeneities() &&
+        tempvec.linfty_norm() > 1e-10)
+      {
+        dealii::FEEvaluation<3, FEOrderElectro, FEOrderElectro + 1> fe_eval(
+          *d_matrixFreeDataPtr,
+          d_matrixFreeVectorComponent,
+          d_matrixFreeQuadratureComponentAX);
+        dealii::VectorizedArray<double> quarter =
+          dealii::make_vectorized_array(1.0 / (4.0 * M_PI));
+        for (unsigned int macrocell = 0;
+             macrocell < d_matrixFreeDataPtr->n_macro_cells();
+             ++macrocell)
+          {
+            fe_eval.reinit(macrocell);
+            fe_eval.read_dof_values_plain(tempvec);
+            fe_eval.evaluate(false, true);
+            for (unsigned int q = 0; q < fe_eval.n_q_points; ++q)
+              {
+                fe_eval.submit_gradient(-quarter * fe_eval.get_gradient(q), q);
+              }
+            fe_eval.integrate(false, true);
+            fe_eval.distribute_local_to_global(rhs);
+          }
+      }
 
     // rhs contribution from electronic charge
     if (d_rhoValuesPtr)
       {
-        /*
-        cell = dofHandler.begin_active();
-        for(; cell!=endc; ++cell)
-          if (cell->is_locally_owned())
-          {
-            fe_values.reinit (cell);
-            elementalRhs=0.0;
-
-            const std::vector<double>&
-        tempVec=d_rhoValuesPtr->find(cell->id())->second; for (unsigned int i=0;
-        i<dofs_per_cell; ++i) for (unsigned int q_point=0;
-        q_point<num_quad_points; ++q_point) elementalRhs(i) +=
-        fe_values.shape_value(i, q_point)*tempVec[q_point]*fe_values.JxW
-        (q_point);
-
-            //assemble to global data structures
-            cell->get_dof_indices (local_dof_indices);
-            d_constraintMatrixPtr->distribute_local_to_global(elementalRhs,
-        local_dof_indices, rhs);
-          }
-        */
-
         dealii::FEEvaluation<
           3,
           FEOrderElectro,

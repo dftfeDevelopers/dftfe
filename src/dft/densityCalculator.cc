@@ -1099,45 +1099,57 @@ namespace dftfe
                           }     // block eigenvectors per k point
                       }
 
+                    std::vector<double>  dummy(1);
+                    std::vector<double> &tempRhoQuadsCell =
+                      (*_rhoValues)[subCellId];
+                    std::vector<double> &tempGradRhoQuadsCell =
+                      isEvaluateGradRho ? (*_gradRhoValues)[subCellId] : dummy;
+
+                    std::vector<double> &tempRhoQuadsCellSP =
+                      (dftParameters::spinPolarized == 1) ?
+                        (*_rhoValuesSpinPolarized)[subCellId] :
+                        dummy;
+                    std::vector<double> &tempGradRhoQuadsCellSP =
+                      ((dftParameters::spinPolarized == 1) &&
+                       isEvaluateGradRho) ?
+                        (*_gradRhoValuesSpinPolarized)[subCellId] :
+                        dummy;
+
                     for (unsigned int q = 0; q < numQuadPoints; ++q)
                       {
                         if (dftParameters::spinPolarized == 1)
                           {
-                            (*_rhoValuesSpinPolarized)[subCellId][2 * q] +=
+                            tempRhoQuadsCellSP[2 * q] +=
                               rhoTempSpinPolarized[2 * q];
-                            (*_rhoValuesSpinPolarized)[subCellId][2 * q + 1] +=
+                            tempRhoQuadsCellSP[2 * q + 1] +=
                               rhoTempSpinPolarized[2 * q + 1];
 
                             if (isEvaluateGradRho)
                               for (unsigned int idim = 0; idim < 3; ++idim)
                                 {
-                                  (*_gradRhoValuesSpinPolarized)[subCellId]
-                                                                [6 * q +
-                                                                 idim] +=
+                                  tempGradRhoQuadsCellSP[6 * q + idim] +=
                                     gradRhoTempSpinPolarized[6 * q + idim];
-                                  (*_gradRhoValuesSpinPolarized)[subCellId]
-                                                                [6 * q + 3 +
-                                                                 idim] +=
+                                  tempGradRhoQuadsCellSP[6 * q + 3 + idim] +=
                                     gradRhoTempSpinPolarized[6 * q + 3 + idim];
                                 }
 
-                            (*_rhoValues)[subCellId][q] +=
+                            tempRhoQuadsCell[q] +=
                               rhoTempSpinPolarized[2 * q] +
                               rhoTempSpinPolarized[2 * q + 1];
 
                             if (isEvaluateGradRho)
                               for (unsigned int idim = 0; idim < 3; ++idim)
-                                (*_gradRhoValues)[subCellId][3 * q + idim] +=
+                                tempGradRhoQuadsCell[3 * q + idim] +=
                                   gradRhoTempSpinPolarized[6 * q + idim] +
                                   gradRhoTempSpinPolarized[6 * q + 3 + idim];
                           }
                         else
                           {
-                            (*_rhoValues)[subCellId][q] += rhoTemp[q];
+                            tempRhoQuadsCell[q] += rhoTemp[q];
 
                             if (isEvaluateGradRho)
                               for (unsigned int idim = 0; idim < 3; ++idim)
-                                (*_gradRhoValues)[subCellId][3 * q + idim] +=
+                                tempGradRhoQuadsCell[3 * q + idim] +=
                                   gradRhoTemp[3 * q + idim];
                           }
                       }
