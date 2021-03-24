@@ -236,7 +236,7 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::computeHamiltonianMatrix(
   elementHamiltonianMatrix.resize(numberDofsPerElement * numberDofsPerElement);
   for (unsigned int iMacroCell = 0; iMacroCell < numberMacroCells; ++iMacroCell)
     {
-      fe_eval.reinit(iMacroCell);
+      //fe_eval.reinit(iMacroCell);
       const unsigned int n_sub_cells =
         dftPtr->matrix_free_data.n_components_filled(iMacroCell);
 
