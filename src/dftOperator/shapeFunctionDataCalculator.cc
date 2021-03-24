@@ -169,6 +169,8 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::
 	      
             }
 
+          iElemCount++;
+
         } // icell loop
 
     } // macrocell loop
