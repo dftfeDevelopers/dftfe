@@ -323,6 +323,7 @@ namespace dftfe
       d_columnValues.clear();
       d_inhomogenities.clear();
       d_rowSizes.clear();
+      d_localIndexMapUnflattenedToFlattened.clear();
     }
 
 

@@ -38,6 +38,7 @@ namespace dftfe
     d_isGradSmearedChargeRhs        = false;
     d_isStoreSmearedChargeRhs       = false;
     d_isReuseSmearedChargeRhs       = false;
+    d_isFastConstraintsInitialized  = false;
     d_rhoValuesPtr                  = NULL;
     d_atomsPtr                      = NULL;
     d_smearedChargeValuesPtr        = NULL;
@@ -55,6 +56,7 @@ namespace dftfe
     d_isGradSmearedChargeRhs        = false;
     d_isStoreSmearedChargeRhs       = false;
     d_isReuseSmearedChargeRhs       = false;
+    d_isFastConstraintsInitialized  = false;
     d_rhoValuesPtr                  = NULL;
     d_atomsPtr                      = NULL;
     d_smearedChargeValuesPtr        = NULL;
@@ -117,6 +119,15 @@ namespace dftfe
 
     if (isComputeDiagonalA)
       computeDiagonalA();
+
+    if (!d_isFastConstraintsInitialized)
+      {
+        d_constraintsInfo.initialize(matrixFreeData.get_vector_partitioner(
+                                       matrixFreeVectorComponent),
+                                     constraintMatrix);
+
+        d_isFastConstraintsInitialized = true;
+      }
   }
 
 
@@ -124,7 +135,7 @@ namespace dftfe
   void
   poissonSolverProblem<FEOrder, FEOrderElectro>::distributeX()
   {
-    d_constraintMatrixPtr->distribute(*d_xPtr);
+    d_constraintsInfo.distribute(*d_xPtr);
 
     if (d_isMeanValueConstraintComputed)
       meanValueConstraintDistribute(*d_xPtr);

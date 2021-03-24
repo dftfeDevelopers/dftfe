@@ -1715,8 +1715,7 @@ namespace dftfe
     dealiiCGSolver.solve(d_phiTotalSolverProblem,
                          dftParameters::absLinearSolverTolerance,
                          dftParameters::maxLinearSolverIterations,
-                         dftParameters::verbosity,
-                         false);
+                         dftParameters::verbosity);
 
     // check integral phi equals 0
     /*
@@ -2171,8 +2170,7 @@ namespace dftfe
         dealiiCGSolver.solve(d_phiTotalSolverProblem,
                              dftParameters::absLinearSolverTolerance,
                              dftParameters::maxLinearSolverIterations,
-                             dftParameters::verbosity,
-                             false);
+                             dftParameters::verbosity);
 
         std::map<dealii::CellId, std::vector<double>> dummy;
         interpolateElectroNodalDataToQuadratureDataGeneral(

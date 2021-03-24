@@ -264,7 +264,6 @@ dftClass<FEOrder, FEOrderElectro>::compute_rhoOut(
   if (isGroundState)
     {
       d_rhoOutNodalValuesDistributed = d_rhoOutNodalValues;
-      d_rhoOutNodalValuesDistributed.update_ghost_values();
       d_constraintsRhoNodalInfo.distribute(d_rhoOutNodalValuesDistributed);
       interpolateRhoNodalDataToQuadratureDataLpsp(
         d_matrixFreeDataPRefined,
