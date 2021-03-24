@@ -556,8 +556,10 @@ namespace dftfe
 
     if (dftParameters::smearedNuclearCharges &&
         (d_storedAdaptiveBallRadius < 1e-6))
-      radiusAtomBallAdaptive =
-        (dftParameters::meshSizeOuterBall > 2.0) ? 4.0 : 4.0;
+      radiusAtomBallAdaptive = (dftParameters::meshSizeOuterBall > 1.5 &&
+                                dftParameters::outerAtomBallRadius < 6.0) ?
+                                 6.0 :
+                                 4.0;
 
     if (std::fabs(radiusAtomBall) < 1e-6)
       {

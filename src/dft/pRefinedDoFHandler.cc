@@ -350,4 +350,16 @@ dftClass<FEOrder, FEOrderElectro>::initpRefinedObjects(
   //
   if (!dftParameters::floatingNuclearCharges)
     locateAtomCoreNodes(d_dofHandlerPRefined, d_atomNodeIdToChargeMap);
+
+  d_constraintsRhoNodalInfo.initialize(
+    d_matrixFreeDataPRefined.get_vector_partitioner(
+      d_densityDofHandlerIndexElectro),
+    d_constraintsRhoNodal);
+
+  d_constraintsRhoNodalInfo.precomputeMaps(
+    d_matrixFreeDataPRefined.get_vector_partitioner(
+      d_densityDofHandlerIndexElectro),
+    d_matrixFreeDataPRefined.get_vector_partitioner(
+      d_densityDofHandlerIndexElectro),
+    1);
 }
