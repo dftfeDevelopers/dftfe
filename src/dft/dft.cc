@@ -498,7 +498,14 @@ namespace dftfe
       }
 
     if (dftParameters::algoType == "FAST")
-      dftParameters::numCoreWfcRR = 0.93 * numElectrons / 2.0;
+      {
+        if (dftParameters::TVal < 1000)
+          {
+            dftParameters::numCoreWfcRR = 0.8 * numElectrons / 2.0;
+            pcout << " Setting SPECTRUM SPLIT CORE EIGENSTATES to be "
+                  << dftParameters::numCoreWfcRR << std::endl;
+          }
+      }
 
 
 #ifdef DFTFE_WITH_GPU

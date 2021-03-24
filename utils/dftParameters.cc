@@ -1826,11 +1826,12 @@ namespace dftfe
 
       if (dftParameters::algoType == "FAST")
         {
-          dftParameters::useMixedPrecPGS_O             = true;
-          dftParameters::useMixedPrecPGS_SR            = true;
-          dftParameters::useMixedPrecXTHXSpectrumSplit = true;
-          dftParameters::useMixedPrecCheby             = true;
-          dftParameters::computeEnergyEverySCF         = false;
+          dftParameters::useMixedPrecPGS_O                         = true;
+          dftParameters::useMixedPrecPGS_SR                        = true;
+          dftParameters::useMixedPrecXTHXSpectrumSplit             = true;
+          dftParameters::useMixedPrecCheby                         = true;
+          dftParameters::allowMultipleFilteringPassesAfterFirstScf = false;
+          dftParameters::reuseLanczosUpperBoundFromFirstCall       = true;
         }
 #ifdef USE_COMPLEX
       dftParameters::rrGEP       = false;
