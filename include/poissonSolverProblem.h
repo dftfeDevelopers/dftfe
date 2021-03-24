@@ -75,7 +75,8 @@ namespace dftfe
       const bool         isGradSmearedChargeRhs           = false,
       const unsigned int smearedChargeGradientComponentId = 0,
       const bool         storeSmearedChargeRhs            = false,
-      const bool         reuseSmearedChargeRhs            = false);
+      const bool         reuseSmearedChargeRhs            = false,
+      const bool         reinitializeFastConstraints      = false);
 
 
     /**

@@ -487,7 +487,6 @@ namespace dftfe
         MPI_Barrier(MPI_COMM_WORLD);
         vselfinit_time = MPI_Wtime();
 
-        vselfSolverProblem.clear();
         //
         // call the poisson solver to compute vSelf in current bin
         //
@@ -506,7 +505,12 @@ namespace dftfe
             true,
             false,
             true,
-            false);
+            false,
+            false,
+            0,
+            false,
+            false,
+            true);
         else
           vselfSolverProblem.reinit(matrix_free_data,
                                     vselfBinScratch,
@@ -521,7 +525,12 @@ namespace dftfe
                                     true,
                                     false,
                                     false,
-                                    false);
+                                    false,
+                                    false,
+                                    0,
+                                    false,
+                                    false,
+                                    true);
 
         MPI_Barrier(MPI_COMM_WORLD);
         vselfinit_time = MPI_Wtime() - vselfinit_time;
@@ -558,7 +567,10 @@ namespace dftfe
                 true,
                 false,
                 true,
-                idim);
+                idim,
+                false,
+                false,
+                true);
 
 
               MPI_Barrier(MPI_COMM_WORLD);
