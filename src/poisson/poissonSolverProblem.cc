@@ -180,11 +180,11 @@ namespace dftfe
     distributedCPUVec<double> tempvec;
     tempvec.reinit(rhs);
     tempvec = 0.0;
-    d_constraintMatrixPtr->distribute(tempvec);
+    d_constraintsInfo.distribute(tempvec);
     tempvec.update_ghost_values();
 
     if (d_constraintMatrixPtr->has_inhomogeneities() &&
-        tempvec.l1_norm() > 1e-10)
+        tempvec.linfty_norm() > 1e-10)
       {
         dealii::FEEvaluation<3, FEOrderElectro, FEOrderElectro + 1> fe_eval(
           *d_matrixFreeDataPtr,
