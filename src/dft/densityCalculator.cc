@@ -110,6 +110,11 @@ namespace dftfe
     const bool                                     isConsiderSpectrumSplitting,
     const bool                                     lobattoNodesFlag)
   {
+    int this_process;
+    MPI_Comm_rank(MPI_COMM_WORLD, &this_process);
+    MPI_Barrier(MPI_COMM_WORLD);
+    double cpu_time = MPI_Wtime();
+
 #ifdef USE_COMPLEX
     dealii::FEEvaluation<
       3,
@@ -1174,6 +1179,12 @@ namespace dftfe
                _gradRhoValuesSpinPolarized,
                isEvaluateGradRho,
                interpoolcomm);
+
+    MPI_Barrier(MPI_COMM_WORLD);
+    cpu_time = MPI_Wtime() - cpu_time;
+
+    if (this_process == 0 && dftParameters::verbosity >= 2)
+      std::cout << "Time for compute rho on CPU: " << cpu_time << std::endl;
   }
 
 #include "densityCalculator.inst.cc"
