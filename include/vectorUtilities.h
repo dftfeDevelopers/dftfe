@@ -435,7 +435,7 @@ namespace dftfe
     classifyInteriorSurfaceNodesInGlobalArray(
       const dealii::MatrixFree<3, double> &matrix_free_data,
       const unsigned int                   mfDofHandlerIndex,
-      const dealii::ConstraintMatrix &     constraintMatrix,
+      const dealii::AffineConstraints<double> &     constraintMatrix,
       std::vector<unsigned int> &          nodesPerCellClassificationMap,
       std::vector<unsigned int> &          globalArrayClassificationMap);
 
