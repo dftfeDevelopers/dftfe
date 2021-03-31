@@ -52,6 +52,7 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::computeHamiltonianMatrix(
   const double beta = 1.0;
   const unsigned int inc = 1;
   const unsigned int numberNodesPerElementSquare = d_numberNodesPerElement*d_numberNodesPerElement;
+  const unsigned int sizeNiNj = d_numberNodesPerElement*(d_numberNodesPerElement + 1)/2.0;
 
   if ((dftParameters::isPseudopotential ||
        dftParameters::smearedNuclearCharges) &&
@@ -63,10 +64,7 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::computeHamiltonianMatrix(
           .get_fe()
           .dofs_per_cell;
       d_cellHamiltonianMatrixExternalPotCorr.clear();
-      //d_cellHamiltonianMatrixExternalPotCorr.resize(
-      //totalLocallyOwnedCells,
-      //std::vector<double>(numberDofsPerElement * numberDofsPerElement, 0.0));
-      d_cellHamiltonianMatrixExternalPotCorr.resize(numberNodesPerElementSquare*totalLocallyOwnedCells);
+      d_cellHamiltonianMatrixExternalPotCorr.resize(sizeNiNj*totalLocallyOwnedCells);
 
       FEEvaluation<3,
                    FEOrder,
@@ -139,17 +137,17 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::computeHamiltonianMatrix(
 
       dgemm_(&transA,
 	     &transB,
-	     &numberNodesPerElementSquare,//M
+	     &sizeNiNj,//M
 	     &totalLocallyOwnedCells,//N
 	     &numberQuadraturePoints,//K
 	     &alpha,
 	     &d_NiNjLpspQuad[0],
-	     &numberNodesPerElementSquare,
+	     &sizeNiNj,
 	     &d_vEffExternalPotCorrJxW[0],
 	     &numberQuadraturePoints,
 	     &beta,
 	     &d_cellHamiltonianMatrixExternalPotCorr[0],
-	     &numberNodesPerElementSquare);
+	     &sizeNiNj);
 
       d_isStiffnessMatrixExternalPotCorrComputed = true;
       
@@ -189,20 +187,20 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::computeHamiltonianMatrix(
   //
   //create temp storage for stiffness matrix across all cells
   //
-  std::vector<dataTypes::number> cellHamiltonianMatrix(totalLocallyOwnedCells*numberNodesPerElementSquare,0.0);
+  std::vector<dataTypes::number> cellHamiltonianMatrix(totalLocallyOwnedCells*sizeNiNj,0.0);
   dgemm_(&transA,
 	 &transB,
-	 &numberNodesPerElementSquare,//M
+	 &sizeNiNj,//M
 	 &totalLocallyOwnedCells,//N
 	 &numberQuadraturePoints,//K
 	 &alpha,
 	 &d_NiNj[0],
-	 &numberNodesPerElementSquare,
+	 &sizeNiNj,
 	 &d_vEffJxW[0],
 	 &numberQuadraturePoints,
 	 &beta,
 	 &cellHamiltonianMatrix[0],
-	 &numberNodesPerElementSquare);
+	 &sizeNiNj);
   
   typename dealii::DoFHandler<3>::active_cell_iterator cellPtr;
 
@@ -231,9 +229,9 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::computeHamiltonianMatrix(
   // compute cell-level stiffness matrix by going over dealii macrocells
   // which allows efficient integration of cell-level stiffness matrix integrals
   // using dealii vectorized arrays
-  unsigned int                         iElem = 0;
-  std::vector<VectorizedArray<double>> elementHamiltonianMatrix;
-  elementHamiltonianMatrix.resize(numberDofsPerElement * numberDofsPerElement);
+  unsigned int iElem = 0;
+  //std::vector<VectorizedArray<double>> elementHamiltonianMatrix;
+  //elementHamiltonianMatrix.resize(numberDofsPerElement * numberDofsPerElement);
   for (unsigned int iMacroCell = 0; iMacroCell < numberMacroCells; ++iMacroCell)
     {
       //fe_eval.reinit(iMacroCell);
@@ -359,7 +357,7 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::computeHamiltonianMatrix(
           // FIXME: Use functions like mkl_malloc for 64 byte memory alignment.
           d_cellHamiltonianMatrix[kpointSpinIndex][iElem].resize(
             numberDofsPerElement * numberDofsPerElement, 0.0);
-
+          unsigned int count = 0;
           for (unsigned int iNode = 0; iNode < numberDofsPerElement; ++iNode)
             {
               for (unsigned int jNode = iNode; jNode < numberDofsPerElement;
@@ -383,15 +381,18 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::computeHamiltonianMatrix(
                   d_cellHamiltonianMatrix
                     [kpointSpinIndex][iElem]
                     [numberDofsPerElement * iNode + jNode] =
-                      cellHamiltonianMatrix[numberNodesPerElementSquare*iElem +
-                                              d_numberNodesPerElement*iNode + jNode]+0.5*d_cellShapeFunctionGradientIntegral[iElem][d_numberNodesPerElement*iNode + jNode];
+                      cellHamiltonianMatrix[sizeNiNj*iElem +
+                                             count]+0.5*d_cellShapeFunctionGradientIntegral[sizeNiNj*iElem + count];
 
 #endif
+              count+=1;
                 }
             }
 
           if (dftParameters::isPseudopotential ||
               dftParameters::smearedNuclearCharges)
+{
+            unsigned int count = 0;
             for (unsigned int iNode = 0; iNode < numberDofsPerElement; ++iNode)
               for (unsigned int jNode = iNode; jNode < numberDofsPerElement;
                    ++jNode)
@@ -415,11 +416,13 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::computeHamiltonianMatrix(
                     d_cellHamiltonianMatrixExternalPotCorr
 		    [iElem][numberDofsPerElement * iNode + jNode];*/
 
-                 d_cellHamiltonianMatrix[kpointSpinIndex][iElem][numberDofsPerElement*iNode + jNode] += d_cellHamiltonianMatrixExternalPotCorr[numberNodesPerElementSquare*iElem + d_numberNodesPerElement*iNode + jNode];
+                 d_cellHamiltonianMatrix[kpointSpinIndex][iElem][numberDofsPerElement*iNode + jNode] += d_cellHamiltonianMatrixExternalPotCorr[sizeNiNj*iElem + count];
 		  
 		  
 #endif
+                 count += 1;
                 }
+}
 
 #ifdef USE_COMPLEX
           for (unsigned int iNode = 0; iNode < numberDofsPerElement; ++iNode)
@@ -510,8 +513,7 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::computeKineticMatrix()
           for (unsigned int jNode = 0; jNode < numberDofsPerElement; ++jNode)
             {
               elementHamiltonianMatrix[numberDofsPerElement * iNode + jNode] =
-                d_cellShapeFunctionGradientIntegral
-                  [iMacroCell][numberDofsPerElement * iNode + jNode];
+                d_cellShapeFunctionGradientIntegral[numberDofsPerElement*numberDofsPerElement*iElem + numberDofsPerElement*iNode + jNode];
 
             } // jNode loop
 

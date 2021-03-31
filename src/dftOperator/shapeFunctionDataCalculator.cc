@@ -56,15 +56,10 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::
   //
   // resize data members
   //
-  d_cellShapeFunctionGradientIntegral.resize(numberPhysicalCells);
-
-  d_shapeFunctionValue.resize(numberQuadraturePoints * numberDofsPerElement,
-                              0.0);
-  d_shapeFunctionValueLpspQuad.resize(numberQuadraturePointsLpsp *
-                                      numberDofsPerElement,
-                                      0.0);
-  d_NiNjLpspQuad.resize(numberDofsPerElement*numberDofsPerElement*numberQuadraturePointsLpsp,0.0);
-  d_NiNj.resize(numberDofsPerElement*numberDofsPerElement*numberQuadraturePoints,0.0);
+  unsigned int sizeNiNj = numberDofsPerElement*(numberDofsPerElement + 1)/2.0;
+  d_NiNjLpspQuad.resize(sizeNiNj*numberQuadraturePointsLpsp,0.0);
+  d_NiNj.resize(sizeNiNj*numberQuadraturePoints,0.0);
+  d_cellShapeFunctionGradientIntegral.resize(numberPhysicalCells*sizeNiNj);
   
  
 
@@ -88,14 +83,10 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::
             iMacroCell, iCell, dftPtr->d_densityDofHandlerIndex);
           fe_values_quadplusone.reinit(cellPtr);
 
-	  std::vector<double> &shapeFunctionGradients =
-	    d_cellShapeFunctionGradientIntegral[iElemCount];
-	  shapeFunctionGradients.resize(numberDofsPerElement *
-					numberDofsPerElement);
-
+          unsigned int count = 0;
           for (unsigned int iNode = 0; iNode < numberDofsPerElement; ++iNode)
             {
-              for (unsigned int jNode = 0; jNode < numberDofsPerElement;
+              for (unsigned int jNode = iNode; jNode < numberDofsPerElement;
                    ++jNode)
                 {
                   double shapeFunctionGradientValue = 0.0;
@@ -107,8 +98,10 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::
                        fe_values_quadplusone.shape_grad(jNode, q_point)) *
                       fe_values_quadplusone.JxW(q_point);
 
-                  shapeFunctionGradients[numberDofsPerElement * iNode + jNode]
+                  d_cellShapeFunctionGradientIntegral[sizeNiNj*iElemCount + count]
                                          = shapeFunctionGradientValue;
+          
+                  count += 1;
                 } // j node loop
 
             } // i node loop
@@ -120,7 +113,7 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::
               fe_values.reinit(cellPtr);
               fe_values_lpsp.reinit(cellPtr);
 
-              for (unsigned int iNode = 0; iNode < numberDofsPerElement;
+              /*for (unsigned int iNode = 0; iNode < numberDofsPerElement;
                    ++iNode)
                 for (unsigned int q_point = 0; q_point < numberQuadraturePoints;
                      ++q_point)
@@ -136,7 +129,7 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::
                   d_shapeFunctionValueLpspQuad[numberQuadraturePointsLpsp *
                                                  iNode +
                                                q_point] =
-                    fe_values_lpsp.shape_value(iNode, q_point);
+                    fe_values_lpsp.shape_value(iNode, q_point);*/
 
 
               for(unsigned int q_point = 0; q_point < numberQuadraturePointsLpsp; ++q_point)
@@ -144,9 +137,9 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::
 		  unsigned int count = 0;
 		  for(unsigned int iNode = 0; iNode < numberDofsPerElement; ++iNode)
 		    {
-                      for(unsigned int jNode = 0; jNode < numberDofsPerElement; ++jNode)
+                      for(unsigned int jNode = iNode; jNode < numberDofsPerElement; ++jNode)
 			{
-                          d_NiNjLpspQuad[numberDofsPerElement*numberDofsPerElement*q_point + count] = fe_values_lpsp.shape_value(iNode,q_point)*fe_values_lpsp.shape_value(jNode,q_point);
+                          d_NiNjLpspQuad[sizeNiNj*q_point + count] = fe_values_lpsp.shape_value(iNode,q_point)*fe_values_lpsp.shape_value(jNode,q_point);
 			  count+=1;
 
 			}
@@ -158,9 +151,9 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::
                   unsigned int count = 0;
                   for(unsigned int iNode = 0; iNode < numberDofsPerElement; ++iNode)
                     { 
-                      for(unsigned int jNode = 0; jNode < numberDofsPerElement; ++jNode)
+                      for(unsigned int jNode = iNode; jNode < numberDofsPerElement; ++jNode)
                         { 
-                          d_NiNj[numberDofsPerElement*numberDofsPerElement*q_point + count] = fe_values.shape_value(iNode,q_point)*fe_values.shape_value(jNode,q_point);
+                          d_NiNj[sizeNiNj*q_point + count] = fe_values.shape_value(iNode,q_point)*fe_values.shape_value(jNode,q_point);
                           count+=1;
 
                         }

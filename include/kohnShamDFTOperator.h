@@ -452,7 +452,7 @@ node is stored
      * and second dimension storing the matrix of size numberNodesPerElement x
      * numberNodesPerElement in a flattened 1D dealii Vectorized array
      */
-    std::vector<std::vector<double> >
+    std::vector<double>
       d_cellShapeFunctionGradientIntegral;
 
     /// storage for shapefunctions
