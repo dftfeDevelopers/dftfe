@@ -182,13 +182,17 @@ namespace dftfe
     tempvec = 0.0;
     d_constraintsInfo.distribute(tempvec);
 
-    if (d_constraintMatrixPtr->has_inhomogeneities() &&
-        tempvec.linfty_norm() > 1e-10)
+    dealii::FEEvaluation<3, FEOrderElectro, FEOrderElectro + 1> fe_eval(
+      *d_matrixFreeDataPtr,
+      d_matrixFreeVectorComponent,
+      d_matrixFreeQuadratureComponentAX);
+
+    int isPerformStaticCondensation = (tempvec.linfty_norm() > 1e-10) ? 1 : 0;
+
+    MPI_Bcast(&isPerformStaticCondensation, 1, MPI_INT, 0, mpi_communicator);
+
+    if (isPerformStaticCondensation == 1)
       {
-        dealii::FEEvaluation<3, FEOrderElectro, FEOrderElectro + 1> fe_eval(
-          *d_matrixFreeDataPtr,
-          d_matrixFreeVectorComponent,
-          d_matrixFreeQuadratureComponentAX);
         dealii::VectorizedArray<double> quarter =
           dealii::make_vectorized_array(1.0 / (4.0 * M_PI));
         for (unsigned int macrocell = 0;
