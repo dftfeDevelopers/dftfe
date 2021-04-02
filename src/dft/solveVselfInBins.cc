@@ -459,10 +459,6 @@ namespace dftfe
             }
 
 
-        vselfBinScratch.compress(dealii::VectorOperation::insert);
-        d_vselfBinConstraintMatrices[4 * iBin].distribute(vselfBinScratch);
-
-
         std::vector<distributedCPUVec<double>> vselfDerRBinScratch(3);
         std::vector<unsigned int>              constraintMatrixIdVselfDerR(3);
         if (useSmearedCharges)
@@ -472,8 +468,6 @@ namespace dftfe
               matrix_free_data.initialize_dof_vector(
                 vselfDerRBinScratch[idim], constraintMatrixIdVselfDerR[idim]);
               vselfDerRBinScratch[idim] = 0;
-              d_vselfBinConstraintMatrices[4 * iBin + idim + 1].distribute(
-                vselfDerRBinScratch[idim]);
             }
 
         MPI_Barrier(MPI_COMM_WORLD);
@@ -921,8 +915,13 @@ namespace dftfe
         rhs.reinit(tempvec);
         rhs = 0;
 
-        d_vselfBinConstraintMatrices[4 * iBin].distribute(tempvec);
-        tempvec.update_ghost_values();
+        dftUtils::constraintMatrixInfo constraintsMatrixDataInfo;
+        constraintsMatrixDataInfo.initialize(
+          matrix_free_data.get_vector_partitioner(4 * iBin + offset),
+          d_vselfBinConstraintMatrices[4 * iBin]);
+
+        // update_ghost_values is called inside distribute
+        constraintsMatrixDataInfo.distribute(tempvec);
 
         std::map<dealii::CellId, std::vector<double>> &bQuadValuesBin =
           bQuadValuesBins[iBin];
@@ -1040,9 +1039,14 @@ namespace dftfe
               rhs.reinit(tempvec);
               rhs = 0;
 
-              d_vselfBinConstraintMatrices[4 * iBin + idim + 1].distribute(
-                tempvec);
-              tempvec.update_ghost_values();
+              dftUtils::constraintMatrixInfo constraintsMatrixDataInfo2;
+              constraintsMatrixDataInfo2.initialize(
+                matrix_free_data.get_vector_partitioner(4 * iBin + idim + 1 +
+                                                        offset),
+                d_vselfBinConstraintMatrices[4 * iBin + idim + 1]);
+
+              // update_ghost_values is called inside distribute
+              constraintsMatrixDataInfo2.distribute(tempvec);
 
               dealii::FEEvaluation<3, FEOrderElectro, FEOrderElectro + 1>
                 fe_eval2(matrix_free_data,
