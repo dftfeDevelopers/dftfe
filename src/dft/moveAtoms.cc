@@ -196,19 +196,37 @@ dftClass<FEOrder, FEOrderElectro>::updateAtomPositionsAndMoveMesh(
   if (dftParameters::floatingNuclearCharges)
     for (unsigned int iAtom = 0; iAtom < numberGlobalAtoms; iAtom++)
       for (unsigned int idim = 0; idim < 3; idim++)
-        d_netFloatingDisp[3 * iAtom + idim] +=
-          globalAtomsDisplacements[iAtom][idim];
+        {
+          d_netFloatingDispSinceLastBinsUpdate[3 * iAtom + idim] +=
+            globalAtomsDisplacements[iAtom][idim];
+          d_netFloatingDispSinceLastCheckForSmearedChargeOverlaps[3 * iAtom +
+                                                                  idim] +=
+            globalAtomsDisplacements[iAtom][idim];
+        }
 
   double maxFloatingDispComponentMag = 0.0;
+  double maxFloatingDispComponentMagSinceLastCheckForSmearedChargeOverlaps =
+    0.0;
   if (dftParameters::floatingNuclearCharges)
     {
       for (unsigned int iAtom = 0; iAtom < atomLocations.size(); iAtom++)
         for (unsigned int idim = 0; idim < 3; idim++)
           {
-            const double temp = std::fabs(d_netFloatingDisp[iAtom * 3 + idim]);
+            const double temp =
+              std::fabs(d_netFloatingDispSinceLastBinsUpdate[iAtom * 3 + idim]);
 
             if (temp > maxFloatingDispComponentMag)
               maxFloatingDispComponentMag = temp;
+
+            const double temp2 =
+              std::fabs(d_netFloatingDispSinceLastCheckForSmearedChargeOverlaps
+                          [iAtom * 3 + idim]);
+
+            if (
+              temp2 >
+              maxFloatingDispComponentMagSinceLastCheckForSmearedChargeOverlaps)
+              maxFloatingDispComponentMagSinceLastCheckForSmearedChargeOverlaps =
+                temp2;
           }
     }
 
@@ -688,13 +706,23 @@ dftClass<FEOrder, FEOrderElectro>::updateAtomPositionsAndMoveMesh(
       init_time = MPI_Wtime();
 
       if (dftParameters::isBOMD)
-        initNoRemesh(atomsPeriodicWrapped == 1,
-                     (maxFloatingDispComponentMag > 0.2) ? true : false,
-                     useSingleAtomSolutionsOverride);
+        initNoRemesh(
+          atomsPeriodicWrapped == 1,
+          (maxFloatingDispComponentMagSinceLastCheckForSmearedChargeOverlaps >
+             0.2 &&
+           d_minDist < 3.0) ?
+            true :
+            false,
+          useSingleAtomSolutionsOverride);
       else
-        initNoRemesh(atomsPeriodicWrapped == 1,
-                     (maxFloatingDispComponentMag > 0.2) ? true : false,
-                     useSingleAtomSolutionsOverride);
+        initNoRemesh(
+          atomsPeriodicWrapped == 1,
+          (maxFloatingDispComponentMagSinceLastCheckForSmearedChargeOverlaps >
+             0.2 &&
+           d_minDist < 3.0) ?
+            true :
+            false,
+          useSingleAtomSolutionsOverride);
       if (!dftParameters::reproducible_output)
         pcout << "...Reinitialization end" << std::endl;
 

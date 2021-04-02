@@ -280,8 +280,9 @@ dftClass<FEOrder, FEOrderElectro>::initpRefinedObjects(
                                         d_imageChargesTrunc,
                                         dftParameters::radiusAtomBall);
 
-      d_netFloatingDisp.clear();
-      d_netFloatingDisp.resize(atomLocations.size() * 3, 0.0);
+      d_netFloatingDispSinceLastBinsUpdate.clear();
+      d_netFloatingDispSinceLastBinsUpdate.resize(atomLocations.size() * 3,
+                                                  0.0);
       computing_timer.exit_section("Create atom bins");
     }
 

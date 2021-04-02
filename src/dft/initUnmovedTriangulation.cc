@@ -36,7 +36,7 @@ void dftClass<FEOrder, FEOrderElectro>::initUnmovedTriangulation(
 
   // initialize affine transformation object (must be done on unmoved
   // triangulation)
-  if (dftParameters::isCellOpt)
+  if (dftParameters::isCellOpt || dftParameters::isCellStress)
     d_affineTransformMesh.init(triangulation,
                                d_mesh.getSerialMeshUnmoved(),
                                d_domainBoundingVectors);

@@ -1147,21 +1147,25 @@ namespace dftfe
   void
   dftClass<FEOrder, FEOrderElectro>::initNoRemesh(
     const bool updateImagesAndKPointsAndVselfBins,
-    const bool updateSmearedChargeWidths,
+    const bool checkSmearedChargeWidthsForOverlap,
     const bool useSingleAtomSolutionOverride)
   {
     computingTimerStandard.enter_section("KSDFT problem initialization");
     if (updateImagesAndKPointsAndVselfBins)
       {
         initImageChargesUpdateKPoints();
+      }
 
-        if (updateSmearedChargeWidths)
-          {
-            calculateNearestAtomDistances();
+    if (checkSmearedChargeWidthsForOverlap)
+      {
+        calculateNearestAtomDistances();
 
-            if (dftParameters::smearedNuclearCharges)
-              calculateSmearedChargeWidths();
-          }
+        if (dftParameters::smearedNuclearCharges)
+          calculateSmearedChargeWidths();
+
+        d_netFloatingDispSinceLastCheckForSmearedChargeOverlaps.clear();
+        d_netFloatingDispSinceLastCheckForSmearedChargeOverlaps.resize(
+          atomLocations.size() * 3, 0.0);
       }
 
     //
@@ -1290,7 +1294,8 @@ namespace dftfe
   template <unsigned int FEOrder, unsigned int FEOrderElectro>
   void
   dftClass<FEOrder, FEOrderElectro>::deformDomain(
-    const Tensor<2, 3, double> &deformationGradient)
+    const Tensor<2, 3, double> &deformationGradient,
+    const bool                  checkSmearedChargeWidthsForOverlap)
   {
     d_affineTransformMesh.initMoved(d_domainBoundingVectors);
     d_affineTransformMesh.transform(deformationGradient);
@@ -1298,7 +1303,120 @@ namespace dftfe
     dftUtils::transformDomainBoundingVectors(d_domainBoundingVectors,
                                              deformationGradient);
 
-    initNoRemesh(true, true, false);
+    pcout
+      << "-----------Simulation Domain bounding vectors (lattice vectors in fully periodic case)-------------"
+      << std::endl;
+    for (int i = 0; i < d_domainBoundingVectors.size(); ++i)
+      {
+        pcout << "v" << i + 1 << " : " << d_domainBoundingVectors[i][0] << " "
+              << d_domainBoundingVectors[i][1] << " "
+              << d_domainBoundingVectors[i][2] << std::endl;
+      }
+    pcout
+      << "-----------------------------------------------------------------------------------------"
+      << std::endl;
+
+#ifdef USE_COMPLEX
+    recomputeKPointCoordinates();
+#endif
+
+    // update atomic and image positions without any wrapping across periodic
+    // boundary
+    std::vector<Tensor<1, 3, double>> imageDisplacements(
+      d_imagePositions.size());
+    std::vector<Tensor<1, 3, double>> imageDisplacementsTrunc(
+      d_imagePositionsTrunc.size());
+
+    for (int iImage = 0; iImage < d_imagePositions.size(); ++iImage)
+      {
+        Point<3>           imageCoor;
+        const unsigned int imageChargeId = d_imageIds[iImage];
+        imageCoor[0]                     = d_imagePositions[iImage][0];
+        imageCoor[1]                     = d_imagePositions[iImage][1];
+        imageCoor[2]                     = d_imagePositions[iImage][2];
+
+        Point<3> atomCoor;
+        atomCoor[0] = atomLocations[imageChargeId][2];
+        atomCoor[1] = atomLocations[imageChargeId][3];
+        atomCoor[2] = atomLocations[imageChargeId][4];
+
+        imageDisplacements[iImage] = imageCoor - atomCoor;
+      }
+
+    for (int iImage = 0; iImage < d_imagePositionsTrunc.size(); ++iImage)
+      {
+        Point<3>           imageCoor;
+        const unsigned int imageChargeId = d_imageIdsTrunc[iImage];
+        imageCoor[0]                     = d_imagePositionsTrunc[iImage][0];
+        imageCoor[1]                     = d_imagePositionsTrunc[iImage][1];
+        imageCoor[2]                     = d_imagePositionsTrunc[iImage][2];
+
+        Point<3> atomCoor;
+        atomCoor[0] = atomLocations[imageChargeId][2];
+        atomCoor[1] = atomLocations[imageChargeId][3];
+        atomCoor[2] = atomLocations[imageChargeId][4];
+
+        imageDisplacementsTrunc[iImage] = imageCoor - atomCoor;
+      }
+
+    pcout << "-----Fractional coordinates of atoms------ " << std::endl;
+    for (unsigned int i = 0; i < atomLocations.size(); ++i)
+      {
+        atomLocations[i] = atomLocationsFractional[i];
+        pcout << "AtomId " << i << ":  " << atomLocationsFractional[i][2] << " "
+              << atomLocationsFractional[i][3] << " "
+              << atomLocationsFractional[i][4] << "\n";
+      }
+    pcout
+      << "-----------------------------------------------------------------------------------------"
+      << std::endl;
+
+    internaldft::convertToCellCenteredCartesianCoordinates(
+      atomLocations, d_domainBoundingVectors);
+
+
+    for (int iImage = 0; iImage < d_imagePositions.size(); ++iImage)
+      {
+        const unsigned int imageChargeId = d_imageIds[iImage];
+
+        Point<3> atomCoor;
+        atomCoor[0] = atomLocations[imageChargeId][2];
+        atomCoor[1] = atomLocations[imageChargeId][3];
+        atomCoor[2] = atomLocations[imageChargeId][4];
+
+        imageDisplacements[iImage] =
+          deformationGradient * imageDisplacements[iImage];
+
+        d_imagePositions[iImage][0] =
+          atomCoor[0] + imageDisplacements[iImage][0];
+        d_imagePositions[iImage][1] =
+          atomCoor[1] + imageDisplacements[iImage][1];
+        d_imagePositions[iImage][2] =
+          atomCoor[2] + imageDisplacements[iImage][2];
+      }
+
+    for (int iImage = 0; iImage < d_imagePositionsTrunc.size(); ++iImage)
+      {
+        const unsigned int imageChargeId = d_imageIdsTrunc[iImage];
+
+        Point<3> atomCoor;
+        atomCoor[0] = atomLocations[imageChargeId][2];
+        atomCoor[1] = atomLocations[imageChargeId][3];
+        atomCoor[2] = atomLocations[imageChargeId][4];
+
+        imageDisplacementsTrunc[iImage] =
+          deformationGradient * imageDisplacementsTrunc[iImage];
+
+        d_imagePositionsTrunc[iImage][0] =
+          atomCoor[0] + imageDisplacementsTrunc[iImage][0];
+        d_imagePositionsTrunc[iImage][1] =
+          atomCoor[1] + imageDisplacementsTrunc[iImage][1];
+        d_imagePositionsTrunc[iImage][2] =
+          atomCoor[2] + imageDisplacementsTrunc[iImage][2];
+      }
+
+
+    initNoRemesh(false, checkSmearedChargeWidthsForOverlap, false);
   }
 
 
