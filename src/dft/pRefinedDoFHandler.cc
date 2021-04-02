@@ -206,6 +206,7 @@ dftClass<FEOrder, FEOrderElectro>::initpRefinedObjects(
   d_constraintsForHelmholtzRhoNodal.reinit(d_locallyRelevantDofsRhoNodal);
 
   applyHomogeneousDirichletBC(d_dofHandlerRhoNodal,
+                              d_constraintsRhoNodalOnlyHanging,
                               d_constraintsForHelmholtzRhoNodal);
   d_constraintsForHelmholtzRhoNodal.close();
   d_constraintsForHelmholtzRhoNodal.merge(
@@ -231,6 +232,7 @@ dftClass<FEOrder, FEOrderElectro>::initpRefinedObjects(
                               d_constraintsPRefined,
                               d_constraintsForTotalPotentialElectro);
   applyHomogeneousDirichletBC(d_dofHandlerPRefined,
+                              d_constraintsPRefinedOnlyHanging,
                               d_constraintsForTotalPotentialElectro);
   d_constraintsForTotalPotentialElectro.close();
   d_constraintsForTotalPotentialElectro.merge(

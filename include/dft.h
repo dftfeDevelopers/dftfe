@@ -636,8 +636,9 @@ namespace dftfe
      */
     void
     applyHomogeneousDirichletBC(
-      const dealii::DoFHandler<3> &      _dofHandler,
-      dealii::AffineConstraints<double> &constraintMatrix);
+      const dealii::DoFHandler<3> &            _dofHandler,
+      const dealii::AffineConstraints<double> &onlyHangingNodeConstraints,
+      dealii::AffineConstraints<double> &      constraintMatrix);
 
     void
     computeElementalOVProjectorKets();
