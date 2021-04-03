@@ -1064,7 +1064,6 @@ namespace dftfe
     unsigned int          d_baseDofHandlerIndexElectro;
     unsigned int          d_forceDofHandlerIndexElectro;
     unsigned int          d_smearedChargeQuadratureIdElectro;
-    unsigned int          d_smearedChargeQuadratureIdCellStressFDElectro;
     unsigned int          d_nlpspQuadratureId;
     unsigned int          d_lpspQuadratureId;
     unsigned int          d_lpspQuadratureIdElectro;

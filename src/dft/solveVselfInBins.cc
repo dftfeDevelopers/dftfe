@@ -283,7 +283,8 @@ namespace dftfe
     const bool                 useSmearedCharges,
     const bool                 isVselfPerturbationSolve)
   {
-    d_binsImages = d_bins;
+    if (!isVselfPerturbationSolve)
+      d_binsImages = d_bins;
     smearedChargeScaling.clear();
     localVselfs.clear();
     if (!isVselfPerturbationSolve)
@@ -396,7 +397,9 @@ namespace dftfe
                   imageChargeIdsOfAtomsInCurrentBin.push_back(
                     imageIds[iImageAtom]);
                   imageIdToDomainAtomIdMapCurrentBin.push_back(index);
-                  atomsImagesInBinSet.insert(iImageAtom + numberGlobalCharges);
+                  if (!isVselfPerturbationSolve)
+                    atomsImagesInBinSet.insert(iImageAtom +
+                                               numberGlobalCharges);
                 }
           }
 
@@ -771,7 +774,8 @@ namespace dftfe
     const bool                 useSmearedCharges,
     const bool                 isVselfPerturbationSolve)
   {
-    d_binsImages = d_bins;
+    if (!isVselfPerturbationSolve)
+      d_binsImages = d_bins;
     smearedChargeScaling.clear();
     localVselfs.clear();
     if (!isVselfPerturbationSolve)
@@ -915,7 +919,9 @@ namespace dftfe
                   imageChargeIdsOfAtomsInCurrentBin.push_back(
                     imageIds[iImageAtom]);
                   imageIdToDomainAtomIdMapCurrentBin.push_back(index);
-                  atomsImagesInBinSet.insert(iImageAtom + numberGlobalCharges);
+                  if (!isVselfPerturbationSolve)
+                    atomsImagesInBinSet.insert(iImageAtom +
+                                               numberGlobalCharges);
                 }
           }
 

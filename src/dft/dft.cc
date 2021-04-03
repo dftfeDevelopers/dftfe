@@ -3750,7 +3750,7 @@ namespace dftfe
             d_imageIdsTrunc,
             d_imageChargesTrunc,
             d_smearedChargeWidths,
-            d_smearedChargeQuadratureIdCellStressFDElectro,
+            d_smearedChargeQuadratureIdElectro,
             dftParameters::smearedNuclearCharges);
 
           computing_timer.exit_section(
@@ -3795,7 +3795,7 @@ namespace dftfe
             d_imageIdsTrunc,
             d_imageChargesTrunc,
             d_smearedChargeWidths,
-            d_smearedChargeQuadratureIdCellStressFDElectro,
+            d_smearedChargeQuadratureIdElectro,
             dftParameters::smearedNuclearCharges);
 
           computing_timer.exit_section(
