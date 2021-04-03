@@ -1140,6 +1140,10 @@ namespace dftfe
 
     initializeKohnShamDFTOperator();
 
+    d_netFloatingDispSinceLastCheckForSmearedChargeOverlaps.clear();
+    d_netFloatingDispSinceLastCheckForSmearedChargeOverlaps.resize(
+      atomLocations.size() * 3, 0.0);
+
     computingTimerStandard.exit_section("KSDFT problem initialization");
   }
 
