@@ -282,6 +282,7 @@ namespace dftfe
     const unsigned int         smearedChargeQuadratureId,
     const bool                 useSmearedCharges)
   {
+    d_binsImages = d_bins;
     smearedChargeScaling.clear();
     localVselfs.clear();
     d_vselfFieldBins.clear();
@@ -733,6 +734,7 @@ namespace dftfe
     const unsigned int         smearedChargeQuadratureId,
     const bool                 useSmearedCharges)
   {
+    d_binsImages = d_bins;
     smearedChargeScaling.clear();
     localVselfs.clear();
     d_vselfFieldBins.clear();
