@@ -183,7 +183,7 @@ dftClass<FEOrder, FEOrderElectro>::initpRefinedObjects(
     dealii::MatrixFree<3>::AdditionalData::partition_partition;
   if (dftParameters::xcFamilyType == "GGA")
     additional_data.mapping_update_flags = update_values | update_gradients |
-                                           update_JxW_values | update_hessians |
+                                           update_JxW_values |
                                            update_quadrature_points;
   else
     additional_data.mapping_update_flags = update_values | update_gradients |
@@ -337,11 +337,15 @@ dftClass<FEOrder, FEOrderElectro>::initpRefinedObjects(
   quadratureVector.push_back(QIterated<1>(QGauss<1>(C_num1DQuadSmearedCharge()),
                                           C_numCopies1DQuadSmearedCharge()));
   quadratureVector.push_back(QGauss<1>(FEOrderElectro + 1));
+  quadratureVector.push_back(
+    QIterated<1>(QGauss<1>(C_num1DQuadSmearedChargeFD()),
+                 C_numCopies1DQuadSmearedChargeFD()));
 
-  d_densityQuadratureIdElectro       = 0;
-  d_lpspQuadratureIdElectro          = 1;
-  d_smearedChargeQuadratureIdElectro = 2;
-  d_phiTotAXQuadratureIdElectro      = 3;
+  d_densityQuadratureIdElectro                   = 0;
+  d_lpspQuadratureIdElectro                      = 1;
+  d_smearedChargeQuadratureIdElectro             = 2;
+  d_phiTotAXQuadratureIdElectro                  = 3;
+  d_smearedChargeQuadratureIdCellStressFDElectro = 4;
 
   d_matrixFreeDataPRefined.reinit(matrixFreeDofHandlerVectorInput,
                                   d_constraintsVectorElectro,

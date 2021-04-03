@@ -1148,7 +1148,8 @@ namespace dftfe
   dftClass<FEOrder, FEOrderElectro>::initNoRemesh(
     const bool updateImagesAndKPointsAndVselfBins,
     const bool checkSmearedChargeWidthsForOverlap,
-    const bool useSingleAtomSolutionOverride)
+    const bool useSingleAtomSolutionOverride,
+    const bool onlyUpdateDofHandlerBcs)
   {
     computingTimerStandard.enter_section("KSDFT problem initialization");
     if (updateImagesAndKPointsAndVselfBins)
@@ -1189,101 +1190,104 @@ namespace dftfe
         << "updateAtomPositionsAndMoveMesh: Time taken for initBoundaryConditions: "
         << init_bc << std::endl;
 
-    double init_rho;
-    MPI_Barrier(MPI_COMM_WORLD);
-    init_rho = MPI_Wtime();
-
-    if (useSingleAtomSolutionOverride)
+    if (!onlyUpdateDofHandlerBcs)
       {
-        readPSI();
-        initRho();
-      }
-    else
-      {
-        //
-        // rho init (use previous ground state electron density)
-        //
-        // if(dftParameters::mixingMethod != "ANDERSON_WITH_KERKER")
-        //   solveNoSCF();
+        double init_rho;
+        MPI_Barrier(MPI_COMM_WORLD);
+        init_rho = MPI_Wtime();
 
-        if (!dftParameters::reuseWfcGeoOpt)
-          readPSI();
-
-        noRemeshRhoDataInit();
-
-        if (dftParameters::reuseDensityGeoOpt >= 1)
+        if (useSingleAtomSolutionOverride)
           {
-            if (dftParameters::reuseDensityGeoOpt == 2 &&
-                dftParameters::spinPolarized != 1)
-              {
-                d_rhoOutNodalValuesSplit.add(
-                  -totalCharge(d_matrixFreeDataPRefined,
-                               d_rhoOutNodalValuesSplit) /
-                  d_domainVolume);
-
-                initAtomicRho();
-
-                interpolateRhoNodalDataToQuadratureDataGeneral(
-                  d_matrixFreeDataPRefined,
-                  d_densityDofHandlerIndexElectro,
-                  d_densityQuadratureIdElectro,
-                  d_rhoOutNodalValuesSplit,
-                  *(rhoInValues),
-                  *(gradRhoInValues),
-                  *(gradRhoInValues),
-                  dftParameters::xcFamilyType == "GGA");
-
-                addAtomicRhoQuadValuesGradients(*(rhoInValues),
-                                                *(gradRhoInValues),
-                                                dftParameters::xcFamilyType ==
-                                                  "GGA");
-
-                normalizeRhoInQuadValues();
-
-                l2ProjectionQuadToNodal(d_matrixFreeDataPRefined,
-                                        d_constraintsRhoNodal,
-                                        d_densityDofHandlerIndexElectro,
-                                        d_densityQuadratureIdElectro,
-                                        *rhoInValues,
-                                        d_rhoInNodalValues);
-
-                d_rhoInNodalValues.update_ghost_values();
-              }
+            readPSI();
+            initRho();
           }
         else
           {
-            initRho();
+            //
+            // rho init (use previous ground state electron density)
+            //
+            // if(dftParameters::mixingMethod != "ANDERSON_WITH_KERKER")
+            //   solveNoSCF();
+
+            if (!dftParameters::reuseWfcGeoOpt)
+              readPSI();
+
+            noRemeshRhoDataInit();
+
+            if (dftParameters::reuseDensityGeoOpt >= 1)
+              {
+                if (dftParameters::reuseDensityGeoOpt == 2 &&
+                    dftParameters::spinPolarized != 1)
+                  {
+                    d_rhoOutNodalValuesSplit.add(
+                      -totalCharge(d_matrixFreeDataPRefined,
+                                   d_rhoOutNodalValuesSplit) /
+                      d_domainVolume);
+
+                    initAtomicRho();
+
+                    interpolateRhoNodalDataToQuadratureDataGeneral(
+                      d_matrixFreeDataPRefined,
+                      d_densityDofHandlerIndexElectro,
+                      d_densityQuadratureIdElectro,
+                      d_rhoOutNodalValuesSplit,
+                      *(rhoInValues),
+                      *(gradRhoInValues),
+                      *(gradRhoInValues),
+                      dftParameters::xcFamilyType == "GGA");
+
+                    addAtomicRhoQuadValuesGradients(
+                      *(rhoInValues),
+                      *(gradRhoInValues),
+                      dftParameters::xcFamilyType == "GGA");
+
+                    normalizeRhoInQuadValues();
+
+                    l2ProjectionQuadToNodal(d_matrixFreeDataPRefined,
+                                            d_constraintsRhoNodal,
+                                            d_densityDofHandlerIndexElectro,
+                                            d_densityQuadratureIdElectro,
+                                            *rhoInValues,
+                                            d_rhoInNodalValues);
+
+                    d_rhoInNodalValues.update_ghost_values();
+                  }
+              }
+            else
+              {
+                initRho();
+              }
           }
+
+        MPI_Barrier(MPI_COMM_WORLD);
+        init_rho = MPI_Wtime() - init_rho;
+        if (dftParameters::verbosity >= 1)
+          pcout << "updateAtomPositionsAndMoveMesh: Time taken for initRho: "
+                << init_rho << std::endl;
+
+        //
+        // reinitialize pseudopotential related data structures
+        //
+        double init_pseudo;
+        MPI_Barrier(MPI_COMM_WORLD);
+        init_pseudo = MPI_Wtime();
+
+        initPseudoPotentialAll(dftParameters::floatingNuclearCharges ? true :
+                                                                       false);
+
+        MPI_Barrier(MPI_COMM_WORLD);
+        init_pseudo = MPI_Wtime() - init_pseudo;
+        if (dftParameters::verbosity >= 1)
+          pcout << "Time taken for initPseudoPotentialAll: " << init_pseudo
+                << std::endl;
+
+        d_isFirstFilteringCall.clear();
+        d_isFirstFilteringCall.resize((dftParameters::spinPolarized + 1) *
+                                        d_kPointWeights.size(),
+                                      true);
+
+        initializeKohnShamDFTOperator();
       }
-
-    MPI_Barrier(MPI_COMM_WORLD);
-    init_rho = MPI_Wtime() - init_rho;
-    if (dftParameters::verbosity >= 1)
-      pcout << "updateAtomPositionsAndMoveMesh: Time taken for initRho: "
-            << init_rho << std::endl;
-
-    //
-    // reinitialize pseudopotential related data structures
-    //
-    double init_pseudo;
-    MPI_Barrier(MPI_COMM_WORLD);
-    init_pseudo = MPI_Wtime();
-
-    initPseudoPotentialAll(dftParameters::floatingNuclearCharges ? true :
-                                                                   false);
-
-    MPI_Barrier(MPI_COMM_WORLD);
-    init_pseudo = MPI_Wtime() - init_pseudo;
-    if (dftParameters::verbosity >= 1)
-      pcout << "Time taken for initPseudoPotentialAll: " << init_pseudo
-            << std::endl;
-
-    d_isFirstFilteringCall.clear();
-    d_isFirstFilteringCall.resize((dftParameters::spinPolarized + 1) *
-                                    d_kPointWeights.size(),
-                                  true);
-
-    initializeKohnShamDFTOperator();
 
     computingTimerStandard.exit_section("KSDFT problem initialization");
   }
@@ -1295,7 +1299,8 @@ namespace dftfe
   void
   dftClass<FEOrder, FEOrderElectro>::deformDomain(
     const Tensor<2, 3, double> &deformationGradient,
-    const bool                  checkSmearedChargeWidthsForOverlap)
+    const bool                  checkSmearedChargeWidthsForOverlap,
+    const bool                  onlyUpdateDofHandlerBcs)
   {
     d_affineTransformMesh.initMoved(d_domainBoundingVectors);
     d_affineTransformMesh.transform(deformationGradient);
@@ -1416,7 +1421,10 @@ namespace dftfe
       }
 
 
-    initNoRemesh(false, checkSmearedChargeWidthsForOverlap, false);
+    initNoRemesh(false,
+                 checkSmearedChargeWidthsForOverlap,
+                 false,
+                 onlyUpdateDofHandlerBcs);
   }
 
 
@@ -3597,6 +3605,16 @@ namespace dftfe
         computingTimerStandard.enter_section("Cell stress computation");
         if (computeForces)
           {
+            if (dftParameters::isPseudopotential ||
+                dftParameters::smearedNuclearCharges)
+              {
+                computeVselfFieldGateauxDerFD(
+#ifdef DFTFE_WITH_GPU
+                  kohnShamDFTEigenOperatorCUDA
+#endif
+                );
+              }
+
             forcePtr->computeStress(matrix_free_data,
 #ifdef DFTFE_WITH_GPU
                                     kohnShamDFTEigenOperatorCUDA,
@@ -3654,6 +3672,150 @@ namespace dftfe
         writeBands();
       }
 #endif
+  }
+
+  template <unsigned int FEOrder, unsigned int FEOrderElectro>
+  void
+  dftClass<FEOrder, FEOrderElectro>::computeVselfFieldGateauxDerFD(
+#ifdef DFTFE_WITH_GPU
+    kohnShamDFTOperatorCUDAClass<FEOrder, FEOrderElectro>
+      &kohnShamDFTEigenOperatorCUDA
+#endif
+  )
+  {
+    d_vselfFieldGateauxDerStrainFDBins.clear();
+    d_vselfFieldGateauxDerStrainFDBins.resize(
+      (d_vselfBinsManager.getVselfFieldBins()).size() * 6);
+
+    Tensor<2, 3, double> identityTensor;
+    Tensor<2, 3, double> deformationGradientPerturb1;
+    Tensor<2, 3, double> deformationGradientPerturb2;
+
+    // initialize to indentity tensors
+    for (unsigned int idim = 0; idim < 3; idim++)
+      for (unsigned int jdim = 0; jdim < 3; jdim++)
+        {
+          if (idim == jdim)
+            {
+              identityTensor[idim][jdim]              = 1.0;
+              deformationGradientPerturb1[idim][jdim] = 1.0;
+              deformationGradientPerturb2[idim][jdim] = 1.0;
+            }
+          else
+            {
+              identityTensor[idim][jdim]              = 0.0;
+              deformationGradientPerturb1[idim][jdim] = 0.0;
+              deformationGradientPerturb2[idim][jdim] = 0.0;
+            }
+        }
+
+    const double fdparam          = 1e-5;
+    unsigned int flattenedIdCount = 0;
+    for (unsigned int idim = 0; idim < 3; ++idim)
+      for (unsigned int jdim = 0; jdim <= idim; jdim++)
+        {
+          deformationGradientPerturb1 = identityTensor;
+          if (idim == jdim)
+            {
+              deformationGradientPerturb1[idim][jdim] = 1.0 + fdparam;
+            }
+          else
+            {
+              deformationGradientPerturb1[idim][jdim] = fdparam;
+              deformationGradientPerturb1[jdim][idim] = fdparam;
+            }
+
+          deformDomain(deformationGradientPerturb1 *
+                         invert(deformationGradientPerturb2),
+                       false,
+                       true);
+
+          computing_timer.enter_section(
+            "Nuclear self-potential perturbation solve");
+
+          d_vselfBinsManager.solveVselfInBinsPerturbedDomain(
+            d_matrixFreeDataPRefined,
+            d_baseDofHandlerIndexElectro,
+            d_phiTotAXQuadratureIdElectro,
+            d_binsStartDofHandlerIndexElectro,
+#ifdef DFTFE_WITH_GPU
+            kohnShamDFTEigenOperatorCUDA,
+#endif
+            d_constraintsPRefined,
+            d_imagePositionsTrunc,
+            d_imageIdsTrunc,
+            d_imageChargesTrunc,
+            d_smearedChargeWidths,
+            d_smearedChargeQuadratureIdCellStressFDElectro,
+            dftParameters::smearedNuclearCharges);
+
+          computing_timer.exit_section(
+            "Nuclear self-potential perturbation solve");
+
+          for (unsigned int ibin = 0;
+               ibin < d_vselfBinsManager.getVselfFieldBins().size();
+               ibin++)
+            d_vselfFieldGateauxDerStrainFDBins[6 * ibin + flattenedIdCount] =
+              (d_vselfBinsManager.getPerturbedVselfFieldBins())[ibin];
+
+          deformationGradientPerturb2 = identityTensor;
+          if (idim == jdim)
+            {
+              deformationGradientPerturb2[idim][jdim] = 1.0 - fdparam;
+            }
+          else
+            {
+              deformationGradientPerturb2[idim][jdim] = -fdparam;
+              deformationGradientPerturb2[jdim][idim] = -fdparam;
+            }
+
+          deformDomain(deformationGradientPerturb2 *
+                         invert(deformationGradientPerturb1),
+                       false,
+                       true);
+
+
+          computing_timer.enter_section(
+            "Nuclear self-potential perturbation solve");
+
+          d_vselfBinsManager.solveVselfInBinsPerturbedDomain(
+            d_matrixFreeDataPRefined,
+            d_baseDofHandlerIndexElectro,
+            d_phiTotAXQuadratureIdElectro,
+            d_binsStartDofHandlerIndexElectro,
+#ifdef DFTFE_WITH_GPU
+            kohnShamDFTEigenOperatorCUDA,
+#endif
+            d_constraintsPRefined,
+            d_imagePositionsTrunc,
+            d_imageIdsTrunc,
+            d_imageChargesTrunc,
+            d_smearedChargeWidths,
+            d_smearedChargeQuadratureIdCellStressFDElectro,
+            dftParameters::smearedNuclearCharges);
+
+          computing_timer.exit_section(
+            "Nuclear self-potential perturbation solve");
+
+          for (unsigned int ibin = 0;
+               ibin < d_vselfBinsManager.getVselfFieldBins().size();
+               ibin++)
+            d_vselfFieldGateauxDerStrainFDBins[6 * ibin + flattenedIdCount] -=
+              (d_vselfBinsManager.getPerturbedVselfFieldBins())[ibin];
+
+          const double fac =
+            (idim == jdim) ? (1.0 / 2.0 / fdparam) : (1.0 / 4.0 / fdparam);
+          for (unsigned int ibin = 0;
+               ibin < d_vselfBinsManager.getVselfFieldBins().size();
+               ibin++)
+            d_vselfFieldGateauxDerStrainFDBins[6 * ibin + flattenedIdCount] *=
+              fac;
+
+          flattenedIdCount++;
+        }
+
+    // reset
+    deformDomain(invert(deformationGradientPerturb2), false, true);
   }
 
   // Output wfc

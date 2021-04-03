@@ -161,7 +161,8 @@ namespace dftfe
     void
     initNoRemesh(const bool updateImagesAndKPointsAndVselfBins = true,
                  const bool checkSmearedChargeWidthsForOverlap = true,
-                 const bool useSingleAtomSolutionOverride      = false);
+                 const bool useSingleAtomSolutionOverride      = false,
+                 const bool onlyUpdateDofHandlerBcs            = false);
 
     /**
      * @brief Selects between only electronic field relaxation or combined electronic and geometry relaxation
@@ -856,7 +857,8 @@ namespace dftfe
      */
     void
     deformDomain(const Tensor<2, 3, double> &deformationGradient,
-                 const bool checkSmearedChargeWidthsForOverlap = true);
+                 const bool checkSmearedChargeWidthsForOverlap = true,
+                 const bool onlyUpdateDofHandlerBcs            = false);
 
     /**
      *@brief Computes inner Product and Y = alpha*X + Y for complex vectors used during
@@ -1062,6 +1064,7 @@ namespace dftfe
     unsigned int          d_baseDofHandlerIndexElectro;
     unsigned int          d_forceDofHandlerIndexElectro;
     unsigned int          d_smearedChargeQuadratureIdElectro;
+    unsigned int          d_smearedChargeQuadratureIdCellStressFDElectro;
     unsigned int          d_nlpspQuadratureId;
     unsigned int          d_lpspQuadratureId;
     unsigned int          d_lpspQuadratureIdElectro;
@@ -1431,6 +1434,21 @@ namespace dftfe
 
     /// vselfBinsManager object
     vselfBinsManager<FEOrder, FEOrderElectro> d_vselfBinsManager;
+
+    /// Gateaux derivative of vself field with respect to affine strain tensor
+    /// components using central finite difference. This is used for cell stress
+    /// computation
+    std::vector<distributedCPUVec<double>> d_vselfFieldGateauxDerStrainFDBins;
+
+    /// Compute Gateaux derivative of vself field in bins with respect to affine
+    /// strain tensor components
+    void
+    computeVselfFieldGateauxDerFD(
+#ifdef DFTFE_WITH_GPU
+      kohnShamDFTOperatorCUDAClass<FEOrder, FEOrderElectro>
+        &kohnShamDFTEigenOperatorCUDA
+#endif
+    );
 
     /// kPoint cartesian coordinates
     std::vector<double> d_kPointCoordinates;

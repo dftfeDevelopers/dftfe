@@ -1721,6 +1721,13 @@ namespace dftfe
   }
 
   template <unsigned int FEOrder, unsigned int FEOrderElectro>
+  const std::vector<distributedCPUVec<double>> &
+  vselfBinsManager<FEOrder, FEOrderElectro>::getPerturbedVselfFieldBins() const
+  {
+    return d_vselfFieldPerturbedBins;
+  }
+
+  template <unsigned int FEOrder, unsigned int FEOrderElectro>
   const std::map<unsigned int, unsigned int> &
   vselfBinsManager<FEOrder, FEOrderElectro>::getAtomIdBinIdMapLocalAllImages()
     const

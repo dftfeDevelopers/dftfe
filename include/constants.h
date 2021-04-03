@@ -54,6 +54,22 @@ namespace dftfe
     return 2;
   }
 
+  /// 1d quad rule smeared nuclear charge for vself finite difference term in
+  /// stress
+  constexpr unsigned int
+  C_num1DQuadSmearedChargeFD()
+  {
+    return 10;
+  }
+
+  /// number of copies 1d quad rule smeared nuclear charge for vself finite
+  /// difference term in stress
+  constexpr unsigned int
+  C_numCopies1DQuadSmearedChargeFD()
+  {
+    return 4;
+  }
+
 #ifdef DFTFE_WITH_HIGHERQUAD_PSP
   /// rho nodal polynomial order
   template <unsigned int FEOrder, unsigned int FEOrderElectro>

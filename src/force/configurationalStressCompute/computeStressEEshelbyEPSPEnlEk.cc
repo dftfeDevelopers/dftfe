@@ -1801,6 +1801,14 @@ forceClass<FEOrder, FEOrderElectro>::computeStressEEshelbyEElectroPhiTot(
     matrixFreeDataElectro.get_quadrature(lpspQuadratureIdElectro),
     update_values | update_quadrature_points);
 
+  QIterated<C_DIM - 1> faceQuadrature(
+    QGauss<1>(C_num1DQuadLPSP<FEOrderElectro>()), C_numCopies1DQuadLPSP());
+  FEFaceValues<C_DIM> feFaceValuesElectro(dftPtr->d_dofHandlerRhoNodal.get_fe(),
+                                          faceQuadrature,
+                                          update_values | update_JxW_values |
+                                            update_normal_vectors |
+                                            update_quadrature_points);
+
   const unsigned int numQuadPoints         = forceEvalElectro.n_q_points;
   const unsigned int numQuadPointsSmearedb = forceEvalSmearedCharge.n_q_points;
   const unsigned int numQuadPointsLpsp     = forceEvalElectroLpsp.n_q_points;
@@ -1946,10 +1954,12 @@ forceClass<FEOrder, FEOrderElectro>::computeStressEEshelbyEElectroPhiTot(
         {
           addEPSPStressContribution(
             feVselfValuesElectro,
+            feFaceValuesElectro,
             forceEvalElectroLpsp,
             matrixFreeDataElectro,
             phiTotDofHandlerIndexElectro,
             cell,
+            rhoQuadsElectroLpsp,
             gradRhoQuadsElectroLpsp,
             pseudoVLocAtomsElectro,
             vselfBinsManagerElectro,
