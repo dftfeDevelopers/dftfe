@@ -728,8 +728,6 @@ namespace dftfe
     if (dftParameters::verbosity >= 2)
       pcout << "number bins: " << numberBins << std::endl;
 
-    d_binsImages = d_bins;
-
     computing_timer.exit_section("create bins: put in bins");
 
     computing_timer.enter_section("create bins: set boundary conditions");

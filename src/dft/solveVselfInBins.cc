@@ -283,6 +283,7 @@ namespace dftfe
     const bool                 useSmearedCharges,
     const bool                 isVselfPerturbationSolve)
   {
+    d_binsImages = d_bins;
     smearedChargeScaling.clear();
     localVselfs.clear();
     if (!isVselfPerturbationSolve)
@@ -770,6 +771,7 @@ namespace dftfe
     const bool                 useSmearedCharges,
     const bool                 isVselfPerturbationSolve)
   {
+    d_binsImages = d_bins;
     smearedChargeScaling.clear();
     localVselfs.clear();
     if (!isVselfPerturbationSolve)
