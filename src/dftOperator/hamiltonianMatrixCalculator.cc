@@ -52,7 +52,7 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::computeHamiltonianMatrix(
   const double beta = 1.0;
   const unsigned int inc = 1;
   const unsigned int numberNodesPerElementSquare = d_numberNodesPerElement*d_numberNodesPerElement;
-  const unsigned int sizeNiNj = d_numberNodesPerElement*(d_numberNodesPerElement + 1)/2.0;
+  const unsigned int sizeNiNj = d_numberNodesPerElement*(d_numberNodesPerElement + 1)/2;
 
   if ((dftParameters::isPseudopotential ||
        dftParameters::smearedNuclearCharges) &&
