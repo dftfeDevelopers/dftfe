@@ -464,6 +464,8 @@ node is stored
     std::vector<double> d_NiNjLpspQuad;
     
 
+    /// storage for shapefunction gradients
+    std::vector<double> d_gradNiNjPlusgradNjNi;
 
     /// storage for  matrix-free cell data
     const unsigned int        d_numberNodesPerElement;

@@ -60,7 +60,19 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::
   d_NiNjLpspQuad.resize(sizeNiNj*numberQuadraturePointsLpsp,0.0);
   d_NiNj.resize(sizeNiNj*numberQuadraturePoints,0.0);
   d_cellShapeFunctionGradientIntegral.resize(numberPhysicalCells*sizeNiNj);
-  
+
+  //
+  //some more data members, local variables
+  //
+  std::vector<double> shapeFunctionGradientValueRef;
+ 
+
+   if(dftParameters::xcFamilyType == "GGA")
+     {
+       d_gradNiNjPlusgradNjNi.resize(sizeNiNj*3*numberQuadraturePoints,0.0);
+       shapeFunctionGradientValueRef.resize(numberQuadraturePoints * numberDofsPerElement * 3, 0.0);
+     }
+      
  
 
   typename dealii::DoFHandler<3>::active_cell_iterator cellPtr;
@@ -113,24 +125,42 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::
               fe_values.reinit(cellPtr);
               fe_values_lpsp.reinit(cellPtr);
 
-              /*for (unsigned int iNode = 0; iNode < numberDofsPerElement;
-                   ++iNode)
-                for (unsigned int q_point = 0; q_point < numberQuadraturePoints;
-                     ++q_point)
-                  d_shapeFunctionValue[numberQuadraturePoints * iNode +
-                                       q_point] =
-                    fe_values.shape_value(iNode, q_point);
+	      
+              const std::vector<dealii::DerivativeForm<1, 3, 3>> &jacobians =
+              fe_values.get_jacobians();
+	      for(unsigned int iNode = 0; iNode < numberDofsPerElement; ++iNode)
+		{
+		  for(unsigned int q_point = 0; q_point < numberQuadraturePoints; ++q_point)
+ 		    {
+                      const dealii::Tensor<1, 3, double> &shape_grad_real = fe_values.shape_grad(iNode, q_point);
+		      const dealii::Tensor<1, 3, double> &shape_grad_reference =
+                        apply_transformation(jacobians[q_point].transpose(),
+                                             shape_grad_real);
 
-              for (unsigned int iNode = 0; iNode < numberDofsPerElement;
-                   ++iNode)
-                for (unsigned int q_point = 0;
-                     q_point < numberQuadraturePointsLpsp;
-                     ++q_point)
-                  d_shapeFunctionValueLpspQuad[numberQuadraturePointsLpsp *
-                                                 iNode +
-                                               q_point] =
-                    fe_values_lpsp.shape_value(iNode, q_point);*/
+		      shapeFunctionGradientValueRef[3*numberDofsPerElement*q_point + iNode] = shape_grad_reference[0];
+		      shapeFunctionGradientValueRef[3*numberDofsPerElement*q_point + numberDofsPerElement + iNode] = shape_grad_reference[1];
+		      shapeFunctionGradientValueRef[3*numberDofsPerElement*q_point + 2*numberDofsPerElement + iNode] = shape_grad_reference[2];
+		    }
+		}
+            
+              if(dftParameters::xcFamilyType == "GGA")
+		{
+		  for(unsigned int q_point = 0; q_point < numberQuadraturePoints; ++q_point)
+		    { 
+		      unsigned int count = 0;
+		      for(unsigned int iNode = 0; iNode < numberDofsPerElement; ++iNode)
+			{ 
+			  for(unsigned int jNode = iNode; jNode < numberDofsPerElement; ++jNode)
+			    { 
+			      d_gradNiNjPlusgradNjNi[3*sizeNiNj*q_point + count] = shapeFunctionGradientValueRef[3*numberDofsPerElement*q_point + iNode]*fe_values.shape_value(jNode,q_point) + fe_values.shape_value(iNode,q_point)*shapeFunctionGradientValueRef[3*numberDofsPerElement*q_point + jNode];
+			      d_gradNiNjPlusgradNjNi[3*sizeNiNj*q_point + sizeNiNj + count] = shapeFunctionGradientValueRef[3*numberDofsPerElement*q_point + numberDofsPerElement + iNode]*fe_values.shape_value(jNode,q_point) + fe_values.shape_value(iNode,q_point)*shapeFunctionGradientValueRef[3*numberDofsPerElement*q_point + numberDofsPerElement + jNode];
+			      d_gradNiNjPlusgradNjNi[3*sizeNiNj*q_point + 2*sizeNiNj + count] = shapeFunctionGradientValueRef[3*numberDofsPerElement*q_point + 2*numberDofsPerElement + iNode]*fe_values.shape_value(jNode,q_point) + fe_values.shape_value(iNode,q_point)*shapeFunctionGradientValueRef[3*numberDofsPerElement*q_point + 2*numberDofsPerElement + jNode];
+			      count+=1;
 
+			    }
+			}
+		    }
+		}
 
               for(unsigned int q_point = 0; q_point < numberQuadraturePointsLpsp; ++q_point)
 		{
