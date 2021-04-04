@@ -336,8 +336,8 @@ dftClass<FEOrder, FEOrderElectro>::initpRefinedObjects(
                                           C_numCopies1DQuadLPSP()));
   if (dftParameters::isCellStress)
     quadratureVector.push_back(
-      QIterated<1>(QGauss<1>(C_num1DQuadSmearedChargeFD()),
-                   C_numCopies1DQuadSmearedChargeFD()));
+      QIterated<1>(QGauss<1>(C_num1DQuadSmearedChargeStress()),
+                   C_numCopies1DQuadSmearedChargeStress()));
   else
     quadratureVector.push_back(
       QIterated<1>(QGauss<1>(C_num1DQuadSmearedCharge()),

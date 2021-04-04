@@ -620,13 +620,10 @@ namespace dftfe
                 MPI_Barrier(MPI_COMM_WORLD);
                 selfenergy_time = MPI_Wtime();
 
-                dealii::FEEvaluation<3,
-                                     FEOrderElectro,
-                                     C_num1DQuadSmearedCharge() *
-                                       C_numCopies1DQuadSmearedCharge()>
-                  fe_eval_sc(matrix_free_data,
-                             constraintMatrixIdVself,
-                             smearedChargeQuadratureId);
+                dealii::FEEvaluation<3, -1> fe_eval_sc(
+                  matrix_free_data,
+                  constraintMatrixIdVself,
+                  smearedChargeQuadratureId);
 
                 double vselfTimesSmearedChargesIntegralBin = 0.0;
 
@@ -1008,13 +1005,9 @@ namespace dftfe
         dealii::FEEvaluation<3, FEOrderElectro, FEOrderElectro + 1> fe_eval(
           matrix_free_data, constraintMatrixId, matrixFreeQuadratureIdAX);
 
-        dealii::FEEvaluation<3,
-                             FEOrderElectro,
-                             C_num1DQuadSmearedCharge() *
-                               C_numCopies1DQuadSmearedCharge()>
-          fe_eval_sc(matrix_free_data,
-                     constraintMatrixId,
-                     smearedChargeQuadratureId);
+        dealii::FEEvaluation<3, -1> fe_eval_sc(matrix_free_data,
+                                               constraintMatrixId,
+                                               smearedChargeQuadratureId);
 
         dealii::VectorizedArray<double> quarter =
           dealii::make_vectorized_array(1.0 / (4.0 * M_PI));
@@ -1132,13 +1125,10 @@ namespace dftfe
                          constraintMatrixId2,
                          matrixFreeQuadratureIdAX);
 
-              dealii::FEEvaluation<3,
-                                   FEOrderElectro,
-                                   C_num1DQuadSmearedCharge() *
-                                     C_numCopies1DQuadSmearedCharge()>
-                fe_eval_sc2(matrix_free_data,
-                            constraintMatrixId2,
-                            smearedChargeQuadratureId);
+              dealii::FEEvaluation<3, -1> fe_eval_sc2(
+                matrix_free_data,
+                constraintMatrixId2,
+                smearedChargeQuadratureId);
 
               for (unsigned int macrocell = 0;
                    macrocell < matrix_free_data.n_macro_cells();
@@ -1403,13 +1393,10 @@ namespace dftfe
                 MPI_Barrier(MPI_COMM_WORLD);
                 selfenergy_time = MPI_Wtime();
 
-                dealii::FEEvaluation<3,
-                                     FEOrderElectro,
-                                     C_num1DQuadSmearedCharge() *
-                                       C_numCopies1DQuadSmearedCharge()>
-                  fe_eval_sc(matrix_free_data,
-                             constraintMatrixId,
-                             smearedChargeQuadratureId);
+                dealii::FEEvaluation<3, -1> fe_eval_sc(
+                  matrix_free_data,
+                  constraintMatrixId,
+                  smearedChargeQuadratureId);
 
                 std::map<dealii::CellId, std::vector<double>> &bQuadValuesBin =
                   bQuadValuesBins[iBin];

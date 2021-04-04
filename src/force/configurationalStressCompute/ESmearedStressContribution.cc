@@ -20,10 +20,7 @@
 // compute ESmeared contribution stress
 template <unsigned int FEOrder, unsigned int FEOrderElectro>
 void forceClass<FEOrder, FEOrderElectro>::addEPhiTotSmearedStressContribution(
-  FEEvaluation<3,
-               1,
-               C_num1DQuadSmearedCharge() * C_numCopies1DQuadSmearedCharge(),
-               3> &                                         forceEval,
+  FEEvaluation<3, -1, 1, 3> &                               forceEval,
   const MatrixFree<3, double> &                             matrixFreeData,
   const unsigned int                                        cell,
   const std::vector<Tensor<1, 3, VectorizedArray<double>>> &gradPhiTotQuads,
@@ -113,10 +110,7 @@ void forceClass<FEOrder, FEOrderElectro>::addEPhiTotSmearedStressContribution(
 
 template <unsigned int FEOrder, unsigned int FEOrderElectro>
 void forceClass<FEOrder, FEOrderElectro>::addEVselfSmearedStressContribution(
-  FEEvaluation<3,
-               1,
-               C_num1DQuadSmearedCharge() * C_numCopies1DQuadSmearedCharge(),
-               3> &                                         forceEval,
+  FEEvaluation<3, -1, 1, 3> &                               forceEval,
   const MatrixFree<3, double> &                             matrixFreeData,
   const unsigned int                                        cell,
   const std::vector<Tensor<1, 3, VectorizedArray<double>>> &gradVselfQuads,

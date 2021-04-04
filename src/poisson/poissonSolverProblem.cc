@@ -278,13 +278,9 @@ namespace dftfe
         // const unsigned int   num_quad_points_sc =
         // d_matrixFreeDataPtr->get_quadrature(d_smearedChargeQuadratureId).size();
 
-        dealii::FEEvaluation<3,
-                             FEOrderElectro,
-                             C_num1DQuadSmearedCharge() *
-                               C_numCopies1DQuadSmearedCharge()>
-          fe_eval_sc(*d_matrixFreeDataPtr,
-                     d_matrixFreeVectorComponent,
-                     d_smearedChargeQuadratureId);
+        dealii::FEEvaluation<3, -1> fe_eval_sc(*d_matrixFreeDataPtr,
+                                               d_matrixFreeVectorComponent,
+                                               d_smearedChargeQuadratureId);
 
         const unsigned int numQuadPointsSmearedb = fe_eval_sc.n_q_points;
 
@@ -334,13 +330,9 @@ namespace dftfe
       }
     else if (d_smearedChargeValuesPtr != NULL && d_isGradSmearedChargeRhs)
       {
-        dealii::FEEvaluation<3,
-                             FEOrderElectro,
-                             C_num1DQuadSmearedCharge() *
-                               C_numCopies1DQuadSmearedCharge()>
-          fe_eval_sc2(*d_matrixFreeDataPtr,
-                      d_matrixFreeVectorComponent,
-                      d_smearedChargeQuadratureId);
+        dealii::FEEvaluation<3, -1> fe_eval_sc2(*d_matrixFreeDataPtr,
+                                                d_matrixFreeVectorComponent,
+                                                d_smearedChargeQuadratureId);
 
         const unsigned int numQuadPointsSmearedb = fe_eval_sc2.n_q_points;
 

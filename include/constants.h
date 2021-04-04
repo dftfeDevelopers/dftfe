@@ -54,18 +54,17 @@ namespace dftfe
     return 2;
   }
 
-  /// 1d quad rule smeared nuclear charge for vself finite difference term in
-  /// stress
+  /// 1d quad rule smeared nuclear charge if cell stress calculation is on
   constexpr unsigned int
-  C_num1DQuadSmearedChargeFD()
+  C_num1DQuadSmearedChargeStress()
   {
     return 10;
   }
 
-  /// number of copies 1d quad rule smeared nuclear charge for vself finite
-  /// difference term in stress
+  /// number of copies 1d quad rule smeared nuclear charge if cell stress
+  /// calculation is on
   constexpr unsigned int
-  C_numCopies1DQuadSmearedChargeFD()
+  C_numCopies1DQuadSmearedChargeStress()
   {
     return 4;
   }

@@ -2151,21 +2151,14 @@ forceClass<FEOrder, FEOrderElectro>::
                       phiTotDofHandlerIndexElectro,
                       dftPtr->d_densityQuadratureIdElectro);
 
-  FEEvaluation<C_DIM,
-               FEOrderElectro,
-               C_num1DQuadSmearedCharge() * C_numCopies1DQuadSmearedCharge(),
-               1>
-    phiTotEvalSmearedCharge(matrixFreeDataElectro,
-                            phiTotDofHandlerIndexElectro,
-                            smearedChargeQuadratureId);
+  FEEvaluation<C_DIM, -1> phiTotEvalSmearedCharge(matrixFreeDataElectro,
+                                                  phiTotDofHandlerIndexElectro,
+                                                  smearedChargeQuadratureId);
 
-  FEEvaluation<C_DIM,
-               1,
-               C_num1DQuadSmearedCharge() * C_numCopies1DQuadSmearedCharge(),
-               C_DIM>
-    forceEvalSmearedCharge(matrixFreeDataElectro,
-                           d_forceDofHandlerIndexElectro,
-                           smearedChargeQuadratureId);
+  FEEvaluation<3, -1, 1, 3> forceEvalSmearedCharge(
+    matrixFreeDataElectro,
+    d_forceDofHandlerIndexElectro,
+    smearedChargeQuadratureId);
 
   FEEvaluation<C_DIM,
                1,

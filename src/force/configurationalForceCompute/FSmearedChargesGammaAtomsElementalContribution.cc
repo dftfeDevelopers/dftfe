@@ -25,10 +25,7 @@ forceClass<FEOrder, FEOrderElectro>::
   FPhiTotSmearedChargesGammaAtomsElementalContribution(
     std::map<unsigned int, std::vector<double>>
       &                          forceContributionSmearedChargesGammaAtoms,
-    FEEvaluation<3,
-                 1,
-                 C_num1DQuadSmearedCharge() * C_numCopies1DQuadSmearedCharge(),
-                 3> &            forceEval,
+    FEEvaluation<3, -1, 1, 3> &  forceEval,
     const MatrixFree<3, double> &matrixFreeData,
     const unsigned int           cell,
     const std::vector<Tensor<1, 3, VectorizedArray<double>>> &gradPhiTotQuads,
@@ -95,10 +92,7 @@ forceClass<FEOrder, FEOrderElectro>::
   FVselfSmearedChargesGammaAtomsElementalContribution(
     std::map<unsigned int, std::vector<double>>
       &                          forceContributionSmearedChargesGammaAtoms,
-    FEEvaluation<3,
-                 1,
-                 C_num1DQuadSmearedCharge() * C_numCopies1DQuadSmearedCharge(),
-                 3> &            forceEval,
+    FEEvaluation<3, -1, 1, 3> &  forceEval,
     const MatrixFree<3, double> &matrixFreeData,
     const unsigned int           cell,
     const std::vector<Tensor<1, 3, VectorizedArray<double>>> &gradVselfBinQuads,

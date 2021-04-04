@@ -119,14 +119,10 @@ forceClass<FEOrder, FEOrderElectro>::computeConfigurationalForceEselfLinFE(
       const std::map<int, std::set<int>> &atomIdsBins =
         vselfBinsManagerElectro.getAtomIdsBins();
 
-      FEEvaluation<C_DIM,
-                   1,
-                   C_num1DQuadSmearedCharge() *
-                     C_numCopies1DQuadSmearedCharge(),
-                   C_DIM>
-        forceEvalSmearedCharge(matrixFreeDataElectro,
-                               d_forceDofHandlerIndexElectro,
-                               smearedChargeQuadratureId);
+      FEEvaluation<3, -1, 1, 3> forceEvalSmearedCharge(
+        matrixFreeDataElectro,
+        d_forceDofHandlerIndexElectro,
+        smearedChargeQuadratureId);
 
       DoFHandler<C_DIM>::active_cell_iterator subCellPtr;
       const unsigned int                      numQuadPointsSmearedb =
@@ -155,15 +151,10 @@ forceClass<FEOrder, FEOrderElectro>::computeConfigurationalForceEselfLinFE(
 
       for (unsigned int iBin = 0; iBin < numberBins; ++iBin)
         {
-          FEEvaluation<C_DIM,
-                       FEOrderElectro,
-                       C_num1DQuadSmearedCharge() *
-                         C_numCopies1DQuadSmearedCharge(),
-                       1>
-            vselfEvalSmearedCharge(matrixFreeDataElectro,
-                                   dftPtr->d_binsStartDofHandlerIndexElectro +
-                                     4 * iBin,
-                                   smearedChargeQuadratureId);
+          FEEvaluation<3, -1> vselfEvalSmearedCharge(
+            matrixFreeDataElectro,
+            dftPtr->d_binsStartDofHandlerIndexElectro + 4 * iBin,
+            smearedChargeQuadratureId);
 
           const std::set<int> &atomIdsInBin = atomIdsBins.find(iBin)->second;
           forceContributionSmearedChargesGammaAtoms.clear();
