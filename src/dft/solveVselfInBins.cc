@@ -58,12 +58,14 @@ namespace dftfe
         &                  bCellNonTrivialAtomImageIdsBin,
       std::vector<double> &smearedChargeScaling)
     {
-      dealii::FEValues<3> fe_values(dofHandlerOfField.get_fe(),
+      dealii::FESystem<3> FETemp(dealii::FE_Q<3>(dealii::QGaussLobatto<1>(2)),
+                                 1);
+      dealii::FEValues<3> fe_values(FETemp,
                                     quadrature_formula,
                                     dealii::update_quadrature_points |
                                       dealii::update_JxW_values);
-      const unsigned int  dofs_per_cell =
-        dofHandlerOfField.get_fe().dofs_per_cell;
+      const unsigned int  vertices_per_cell =
+        dealii::GeometryInfo<3>::vertices_per_cell;
       const unsigned int n_q_points = quadrature_formula.size();
 
       dealii::DoFHandler<3>::active_cell_iterator cell = dofHandlerOfField
@@ -75,7 +77,6 @@ namespace dftfe
       std::vector<double> smearedNuclearChargeIntegral(numberTotalAtomsInBin,
                                                        0.0);
 
-      const double cutoff = 10.0;
       std::map<dealii::CellId, std::vector<unsigned int>>
         cellNonTrivialIdsBinMap;
       for (; cell != endc; ++cell)
@@ -85,8 +86,48 @@ namespace dftfe
               cellNonTrivialIdsBinMap[cell->id()];
             const dealii::Point<3> &cellCenter = cell->center();
             for (unsigned int iatom = 0; iatom < numberTotalAtomsInBin; ++iatom)
-              if ((cellCenter - atomLocations[iatom]).norm() < cutoff)
-                nonTrivialIdsBin.push_back(iatom);
+              {
+                const unsigned int atomId =
+                  iatom < numberDomainAtomsInBin ?
+                    iatom :
+                    imageIdToDomainAtomIdMapCurrentBin[iatom -
+                                                       numberDomainAtomsInBin];
+                const double cutoff =
+                  rc[binAtomIdToGlobalAtomIdMapCurrentBin[atomId]] + 0.3;
+
+                bool                    isAtomTrivial = true;
+                const dealii::Point<3> &atomLocation  = atomLocations[iatom];
+                if ((cellCenter - atomLocation).norm() < cutoff)
+                  {
+                    nonTrivialIdsBin.push_back(iatom);
+                    isAtomTrivial = false;
+                  }
+
+                if (isAtomTrivial)
+                  {
+                    for (unsigned int ivertex = 0; ivertex < vertices_per_cell;
+                         ++ivertex)
+                      {
+                        const dealii::Point<3> &vertexCoord =
+                          cell->vertex(ivertex);
+                        if (atomLocation.distance(vertexCoord) < cutoff)
+                          {
+                            nonTrivialIdsBin.push_back(iatom);
+                            break;
+                          }
+                      }
+
+                    for (const auto &face : cell->face_iterators())
+                      {
+                        const auto faceCenter = face->center();
+                        if (atomLocation.distance(faceCenter) < cutoff)
+                          {
+                            nonTrivialIdsBin.push_back(iatom);
+                            break;
+                          }
+                      }
+                  }
+              }
           }
 
 
@@ -94,7 +135,6 @@ namespace dftfe
       for (; cell != endc; ++cell)
         if (cell->is_locally_owned())
           {
-            fe_values.reinit(cell);
             bool                       isCellTrivial = true;
             std::vector<unsigned int> &nonTrivialIdsBin =
               cellNonTrivialIdsBinMap[cell->id()];
@@ -107,64 +147,70 @@ namespace dftfe
             std::vector<unsigned int> &nonTrivialAtomImageIdsAllAtoms =
               bCellNonTrivialAtomImageIdsAllAtoms[cell->id()];
 
-            for (unsigned int q = 0; q < n_q_points; ++q)
+            if (nonTrivialIdsBin.size() != 0)
               {
-                const dealii::Point<3> &quadPoint =
-                  fe_values.quadrature_point(q);
-                const double jxw = fe_values.JxW(q);
-                for (unsigned int iatomNonTrivial = 0;
-                     iatomNonTrivial < nonTrivialIdsBin.size();
-                     ++iatomNonTrivial)
+                fe_values.reinit(cell);
+                for (unsigned int q = 0; q < n_q_points; ++q)
                   {
-                    const unsigned int iatom =
-                      nonTrivialIdsBin[iatomNonTrivial];
-                    const double r = (quadPoint - atomLocations[iatom]).norm();
-                    const unsigned int atomId =
-                      iatom < numberDomainAtomsInBin ?
-                        iatom :
-                        imageIdToDomainAtomIdMapCurrentBin
-                          [iatom - numberDomainAtomsInBin];
-                    if (r > rc[binAtomIdToGlobalAtomIdMapCurrentBin[atomId]])
-                      continue;
-                    const double chargeVal = dftUtils::smearedCharge(
-                      r, rc[binAtomIdToGlobalAtomIdMapCurrentBin[atomId]]);
-                    smearedNuclearChargeIntegral[atomId] += chargeVal * jxw;
-                    isCellTrivial = false;
-                    break;
+                    const dealii::Point<3> &quadPoint =
+                      fe_values.quadrature_point(q);
+                    const double jxw = fe_values.JxW(q);
+                    for (unsigned int iatomNonTrivial = 0;
+                         iatomNonTrivial < nonTrivialIdsBin.size();
+                         ++iatomNonTrivial)
+                      {
+                        const unsigned int iatom =
+                          nonTrivialIdsBin[iatomNonTrivial];
+                        const double r =
+                          (quadPoint - atomLocations[iatom]).norm();
+                        const unsigned int atomId =
+                          iatom < numberDomainAtomsInBin ?
+                            iatom :
+                            imageIdToDomainAtomIdMapCurrentBin
+                              [iatom - numberDomainAtomsInBin];
+                        if (r >
+                            rc[binAtomIdToGlobalAtomIdMapCurrentBin[atomId]])
+                          continue;
+                        const double chargeVal = dftUtils::smearedCharge(
+                          r, rc[binAtomIdToGlobalAtomIdMapCurrentBin[atomId]]);
+                        smearedNuclearChargeIntegral[atomId] += chargeVal * jxw;
+                        isCellTrivial = false;
+                        break;
+                      }
                   }
-              }
 
-            if (!isCellTrivial)
-              {
-                bQuadValues[cell->id()].resize(n_q_points, 0.0);
-                std::fill(bQuadValues[cell->id()].begin(),
-                          bQuadValues[cell->id()].end(),
-                          0.0);
-
-                for (unsigned int iatomNonTrivial = 0;
-                     iatomNonTrivial < nonTrivialIdsBin.size();
-                     ++iatomNonTrivial)
+                if (!isCellTrivial)
                   {
-                    const unsigned int iatom =
-                      nonTrivialIdsBin[iatomNonTrivial];
-                    const unsigned int atomId =
-                      iatom < numberDomainAtomsInBin ?
-                        iatom :
-                        imageIdToDomainAtomIdMapCurrentBin
-                          [iatom - numberDomainAtomsInBin];
-                    const unsigned int chargeId =
-                      binAtomIdToGlobalAtomIdMapCurrentBin[atomId];
-                    nonTrivialAtomIdsAllAtoms.push_back(chargeId);
-                    nonTrivialAtomIdsBin.push_back(chargeId);
-                    nonTrivialAtomImageIdsAllAtoms.push_back(
-                      binAtomIdToGlobalAtomIdMapCurrentBin[iatom]);
-                    nonTrivialAtomImageIdsBin.push_back(
-                      binAtomIdToGlobalAtomIdMapCurrentBin[iatom]);
+                    bQuadValues[cell->id()].resize(n_q_points, 0.0);
+                    std::fill(bQuadValues[cell->id()].begin(),
+                              bQuadValues[cell->id()].end(),
+                              0.0);
+
+                    for (unsigned int iatomNonTrivial = 0;
+                         iatomNonTrivial < nonTrivialIdsBin.size();
+                         ++iatomNonTrivial)
+                      {
+                        const unsigned int iatom =
+                          nonTrivialIdsBin[iatomNonTrivial];
+                        const unsigned int atomId =
+                          iatom < numberDomainAtomsInBin ?
+                            iatom :
+                            imageIdToDomainAtomIdMapCurrentBin
+                              [iatom - numberDomainAtomsInBin];
+                        const unsigned int chargeId =
+                          binAtomIdToGlobalAtomIdMapCurrentBin[atomId];
+                        nonTrivialAtomIdsAllAtoms.push_back(chargeId);
+                        nonTrivialAtomIdsBin.push_back(chargeId);
+                        nonTrivialAtomImageIdsAllAtoms.push_back(
+                          binAtomIdToGlobalAtomIdMapCurrentBin[iatom]);
+                        nonTrivialAtomImageIdsBin.push_back(
+                          binAtomIdToGlobalAtomIdMapCurrentBin[iatom]);
+                      }
                   }
-              }
-            else
-              {
-                nonTrivialIdsBin.resize(0);
+                else
+                  {
+                    nonTrivialIdsBin.resize(0);
+                  }
               }
           }
 
@@ -194,7 +240,6 @@ namespace dftfe
       for (; cell != endc; ++cell)
         if (cell->is_locally_owned())
           {
-            fe_values.reinit(cell);
             std::vector<double> &bQuadValuesCell = bQuadValues[cell->id()];
             std::vector<int> &   bQuadAtomIdsCell =
               bQuadAtomIdsAllAtoms[cell->id()];
@@ -203,40 +248,46 @@ namespace dftfe
             const std::vector<unsigned int> &nonTrivialIdsBin =
               cellNonTrivialIdsBinMap[cell->id()];
 
-            for (unsigned int q = 0; q < n_q_points; ++q)
+            if (nonTrivialIdsBin.size() != 0)
               {
-                const dealii::Point<3> &quadPoint =
-                  fe_values.quadrature_point(q);
-                const double jxw = fe_values.JxW(q);
-                for (unsigned int iatomNonTrivial = 0;
-                     iatomNonTrivial < nonTrivialIdsBin.size();
-                     ++iatomNonTrivial)
+                fe_values.reinit(cell);
+                for (unsigned int q = 0; q < n_q_points; ++q)
                   {
-                    const unsigned int iatom =
-                      nonTrivialIdsBin[iatomNonTrivial];
-                    const double r = (quadPoint - atomLocations[iatom]).norm();
-                    const unsigned int atomId =
-                      iatom < numberDomainAtomsInBin ?
-                        iatom :
-                        imageIdToDomainAtomIdMapCurrentBin
-                          [iatom - numberDomainAtomsInBin];
-                    if (r > rc[binAtomIdToGlobalAtomIdMapCurrentBin[atomId]])
-                      continue;
-                    const unsigned int atomChargeId =
-                      binAtomIdToGlobalAtomIdMapCurrentBin[atomId];
-                    const double chargeVal =
-                      dftUtils::smearedCharge(r, rc[atomChargeId]);
+                    const dealii::Point<3> &quadPoint =
+                      fe_values.quadrature_point(q);
+                    const double jxw = fe_values.JxW(q);
+                    for (unsigned int iatomNonTrivial = 0;
+                         iatomNonTrivial < nonTrivialIdsBin.size();
+                         ++iatomNonTrivial)
+                      {
+                        const unsigned int iatom =
+                          nonTrivialIdsBin[iatomNonTrivial];
+                        const double r =
+                          (quadPoint - atomLocations[iatom]).norm();
+                        const unsigned int atomId =
+                          iatom < numberDomainAtomsInBin ?
+                            iatom :
+                            imageIdToDomainAtomIdMapCurrentBin
+                              [iatom - numberDomainAtomsInBin];
+                        if (r >
+                            rc[binAtomIdToGlobalAtomIdMapCurrentBin[atomId]])
+                          continue;
+                        const unsigned int atomChargeId =
+                          binAtomIdToGlobalAtomIdMapCurrentBin[atomId];
+                        const double chargeVal =
+                          dftUtils::smearedCharge(r, rc[atomChargeId]);
 
-                    const double scalingFac =
-                      (-atomCharges[atomId]) /
-                      smearedNuclearChargeIntegral[atomId];
+                        const double scalingFac =
+                          (-atomCharges[atomId]) /
+                          smearedNuclearChargeIntegral[atomId];
 
-                    bQuadValuesCell[q] = chargeVal * scalingFac;
-                    // smearedNuclearChargeIntegralCheck[atomId]+=bQuadValuesCell[q]*jxw;
-                    bQuadAtomIdsCell[q] = atomChargeId;
-                    bQuadAtomImageIdsCell[q] =
-                      binAtomIdToGlobalAtomIdMapCurrentBin[iatom];
-                    break;
+                        bQuadValuesCell[q] = chargeVal * scalingFac;
+                        // smearedNuclearChargeIntegralCheck[atomId]+=bQuadValuesCell[q]*jxw;
+                        bQuadAtomIdsCell[q] = atomChargeId;
+                        bQuadAtomImageIdsCell[q] =
+                          binAtomIdToGlobalAtomIdMapCurrentBin[iatom];
+                        break;
+                      }
                   }
               }
           }
