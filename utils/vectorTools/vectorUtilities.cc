@@ -113,13 +113,11 @@ namespace dftfe
 
       dealii::AffineConstraints<double> constraintsHangingSer;
 
-      /*
       dealii::DoFTools::make_hanging_node_constraints_from_serial(
         dofHandlerSer,
         dofHandlerPar,
         cellIdToCellIterMapSer,
         constraintsHangingSer);
-      */
       if (dftParameters::verbosity >= 4)
         dftUtils::printCurrentMemoryUsage(
           mpi_comm, "Created hanging node constraints serial");
@@ -1186,11 +1184,11 @@ namespace dftfe
 
     void
     classifyInteriorSurfaceNodesInGlobalArray(
-      const dealii::MatrixFree<3, double> &matrix_free_data,
-      const unsigned int                   mfDofHandlerIndex,
-      const dealii::AffineConstraints<double> &     constraintMatrix,
-      std::vector<unsigned int> &          nodesPerCellClassificationMap,
-      std::vector<unsigned int> &          globalArrayClassificationMap)
+      const dealii::MatrixFree<3, double> &    matrix_free_data,
+      const unsigned int                       mfDofHandlerIndex,
+      const dealii::AffineConstraints<double> &constraintMatrix,
+      std::vector<unsigned int> &              nodesPerCellClassificationMap,
+      std::vector<unsigned int> &              globalArrayClassificationMap)
     {
       distributedCPUVec<double> dummyVector;
       matrix_free_data.initialize_dof_vector(dummyVector, mfDofHandlerIndex);

@@ -36,7 +36,7 @@ dftClass<FEOrder, FEOrderElectro>::initnscf(
   dealiiLinearSolver &                               dealiiCGSolver)
 {
   //
-  const IndexSet & locallyOwnedSet=dofHandler.locally_owned_dofs();
+  const IndexSet &locallyOwnedSet = dofHandler.locally_owned_dofs();
   std::vector<IndexSet::size_type> locallyOwnedDOFs;
   locallyOwnedSet.fill_index_vector(locallyOwnedDOFs);
   unsigned int numberDofs = locallyOwnedDOFs.size();

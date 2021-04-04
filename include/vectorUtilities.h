@@ -433,11 +433,11 @@ namespace dftfe
 
     void
     classifyInteriorSurfaceNodesInGlobalArray(
-      const dealii::MatrixFree<3, double> &matrix_free_data,
-      const unsigned int                   mfDofHandlerIndex,
-      const dealii::AffineConstraints<double> &     constraintMatrix,
-      std::vector<unsigned int> &          nodesPerCellClassificationMap,
-      std::vector<unsigned int> &          globalArrayClassificationMap);
+      const dealii::MatrixFree<3, double> &    matrix_free_data,
+      const unsigned int                       mfDofHandlerIndex,
+      const dealii::AffineConstraints<double> &constraintMatrix,
+      std::vector<unsigned int> &              nodesPerCellClassificationMap,
+      std::vector<unsigned int> &              globalArrayClassificationMap);
 
 
 
