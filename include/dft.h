@@ -160,7 +160,7 @@ namespace dftfe
      */
     void
     initNoRemesh(const bool updateImagesAndKPointsAndVselfBins = true,
-                 const bool updateSmearedChargeWidths          = true,
+                 const bool checkSmearedChargeWidthsForOverlap = true,
                  const bool useSingleAtomSolutionOverride      = false);
 
     /**
@@ -273,7 +273,10 @@ namespace dftfe
      * displacement input. Depending on the maximum displacement magnitude this
      * function decides wether to do auto remeshing or move mesh using Gaussian
      * functions. Additionaly this function also wraps the atom position across
-     * the periodic boundary if the atom moves across it.
+     * the periodic boundary if the atom moves across it beyond a certain
+     * magnitude. In case of floating atoms, only the atomic positions are
+     * updated keeping the mesh fixed. This function also calls initNoRemesh to
+     * reinitialize all the required FEM and KSDFT objects.
      *
      *  @param[in] globalAtomsDisplacements vector containing the displacements
      * (from current position) of all atoms (global).
@@ -282,8 +285,8 @@ namespace dftfe
     void
     updateAtomPositionsAndMoveMesh(
       const std::vector<Tensor<1, 3, double>> &globalAtomsDisplacements,
-      const double                             maxJacobianRatioFactor,
-      const bool useSingleAtomSolutionsOverride = false);
+      const double                             maxJacobianRatioFactor = 1.25,
+      const bool useSingleAtomSolutionsOverride                       = false);
 
 
     /**
@@ -636,8 +639,9 @@ namespace dftfe
      */
     void
     applyHomogeneousDirichletBC(
-      const dealii::DoFHandler<3> &      _dofHandler,
-      dealii::AffineConstraints<double> &constraintMatrix);
+      const dealii::DoFHandler<3> &            _dofHandler,
+      const dealii::AffineConstraints<double> &onlyHangingNodeConstraints,
+      dealii::AffineConstraints<double> &      constraintMatrix);
 
     void
     computeElementalOVProjectorKets();
@@ -851,7 +855,8 @@ namespace dftfe
      * dftClass datastructures.
      */
     void
-    deformDomain(const Tensor<2, 3, double> &deformationGradient);
+    deformDomain(const Tensor<2, 3, double> &deformationGradient,
+                 const bool checkSmearedChargeWidthsForOverlap = true);
 
     /**
      *@brief Computes inner Product and Y = alpha*X + Y for complex vectors used during
@@ -894,7 +899,10 @@ namespace dftfe
     std::vector<Tensor<1, 3, double>> d_atomsDisplacementsGaussianRead;
 
     ///
-    std::vector<double> d_netFloatingDisp;
+    std::vector<double> d_netFloatingDispSinceLastBinsUpdate;
+
+    ///
+    std::vector<double> d_netFloatingDispSinceLastCheckForSmearedChargeOverlaps;
 
     bool d_isAtomsGaussianDisplacementsReadFromFile = false;
 

@@ -206,6 +206,7 @@ dftClass<FEOrder, FEOrderElectro>::initpRefinedObjects(
   d_constraintsForHelmholtzRhoNodal.reinit(d_locallyRelevantDofsRhoNodal);
 
   applyHomogeneousDirichletBC(d_dofHandlerRhoNodal,
+                              d_constraintsRhoNodalOnlyHanging,
                               d_constraintsForHelmholtzRhoNodal);
   d_constraintsForHelmholtzRhoNodal.close();
   d_constraintsForHelmholtzRhoNodal.merge(
@@ -231,6 +232,7 @@ dftClass<FEOrder, FEOrderElectro>::initpRefinedObjects(
                               d_constraintsPRefined,
                               d_constraintsForTotalPotentialElectro);
   applyHomogeneousDirichletBC(d_dofHandlerPRefined,
+                              d_constraintsPRefinedOnlyHanging,
                               d_constraintsForTotalPotentialElectro);
   d_constraintsForTotalPotentialElectro.close();
   d_constraintsForTotalPotentialElectro.merge(
@@ -278,8 +280,9 @@ dftClass<FEOrder, FEOrderElectro>::initpRefinedObjects(
                                         d_imageChargesTrunc,
                                         dftParameters::radiusAtomBall);
 
-      d_netFloatingDisp.clear();
-      d_netFloatingDisp.resize(atomLocations.size() * 3, 0.0);
+      d_netFloatingDispSinceLastBinsUpdate.clear();
+      d_netFloatingDispSinceLastBinsUpdate.resize(atomLocations.size() * 3,
+                                                  0.0);
       computing_timer.exit_section("Create atom bins");
     }
 

@@ -369,7 +369,9 @@ dftClass<FEOrder, FEOrderElectro>::computeElectrostaticEnergyHRefined(
     locatePeriodicPinnedNodes(dofHandlerHRefined,
                               constraintsHRefined,
                               constraintsForTotalPotential);
-  applyHomogeneousDirichletBC(dofHandlerHRefined, constraintsForTotalPotential);
+  applyHomogeneousDirichletBC(dofHandlerHRefined,
+                              onlyHangingNodeConstraints,
+                              constraintsForTotalPotential);
   constraintsForTotalPotential.close();
 
   constraintsForTotalPotential.merge(

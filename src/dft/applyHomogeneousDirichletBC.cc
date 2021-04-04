@@ -20,19 +20,14 @@
 template <unsigned int FEOrder, unsigned int FEOrderElectro>
 void
 dftClass<FEOrder, FEOrderElectro>::applyHomogeneousDirichletBC(
-  const dealii::DoFHandler<3> &      _dofHandler,
-  dealii::AffineConstraints<double> &constraintMatrix)
+  const dealii::DoFHandler<3> &            _dofHandler,
+  const dealii::AffineConstraints<double> &onlyHangingNodeConstraints,
+  dealii::AffineConstraints<double> &      constraintMatrix)
 
 {
   dealii::IndexSet locallyRelevantDofs;
   dealii::DoFTools::extract_locally_relevant_dofs(_dofHandler,
                                                   locallyRelevantDofs);
-
-  dealii::AffineConstraints<double> onlyHangingNodeConstraints;
-  onlyHangingNodeConstraints.reinit(locallyRelevantDofs);
-  dealii::DoFTools::make_hanging_node_constraints(_dofHandler,
-                                                  onlyHangingNodeConstraints);
-  onlyHangingNodeConstraints.close();
 
   const unsigned int vertices_per_cell =
     dealii::GeometryInfo<3>::vertices_per_cell;
