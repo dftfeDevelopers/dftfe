@@ -5,7 +5,7 @@
 # Set the name of the project and target:
 SET(TARGET "dftfe")
 SET(TARGETLIB "dftfem")
-SET(TARGET_VERSION "0.7.0") # used in docs/Doxyfile.in
+SET(TARGET_VERSION "1.0-pre") # used in docs/Doxyfile.in
 
 # Declare all source files the target consists of:
 SET(TARGET_SRC
@@ -210,7 +210,7 @@ IF (WITH_GPU)
   set(CUDA_PROPAGATE_HOST_FLAGS ON)
   #CUDA_SELECT_NVCC_ARCH_FLAGS(ARCH_FLAGS Auto)
   #LIST(APPEND CUDA_NVCC_FLAGS ${ARCH_FLAGS})
-  LIST(APPEND CUDA_NVCC_FLAGS -arch=sm_70;-std=c++14; -expt-relaxed-constexpr)
+  LIST(APPEND CUDA_NVCC_FLAGS "${DEAL_II_CUDA_FLAGS}")
 ENDIF()
 
 ADD_LIBRARY(${TARGETLIB} SHARED ${TARGET_SRC})
