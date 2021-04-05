@@ -87,17 +87,23 @@ namespace dftfe
             const dealii::Point<3> &cellCenter = cell->center();
             for (unsigned int iatom = 0; iatom < numberTotalAtomsInBin; ++iatom)
               {
+                const dealii::Point<3> &atomLocation = atomLocations[iatom];
+                const double            distFromCellCenter =
+                  (cellCenter - atomLocation).norm();
+
+                if (distFromCellCenter > 10.0)
+                  continue;
+
                 const unsigned int atomId =
                   iatom < numberDomainAtomsInBin ?
                     iatom :
                     imageIdToDomainAtomIdMapCurrentBin[iatom -
                                                        numberDomainAtomsInBin];
                 const double cutoff =
-                  rc[binAtomIdToGlobalAtomIdMapCurrentBin[atomId]] + 0.3;
+                  rc[binAtomIdToGlobalAtomIdMapCurrentBin[atomId]] + 0.5;
 
-                bool                    isAtomTrivial = true;
-                const dealii::Point<3> &atomLocation  = atomLocations[iatom];
-                if ((cellCenter - atomLocation).norm() < cutoff)
+                bool isAtomTrivial = true;
+                if (distFromCellCenter < cutoff)
                   {
                     nonTrivialIdsBin.push_back(iatom);
                     isAtomTrivial = false;
@@ -113,10 +119,14 @@ namespace dftfe
                         if (atomLocation.distance(vertexCoord) < cutoff)
                           {
                             nonTrivialIdsBin.push_back(iatom);
+                            isAtomTrivial = false;
                             break;
                           }
                       }
+                  }
 
+                if (isAtomTrivial)
+                  {
                     for (const auto &face : cell->face_iterators())
                       {
                         const auto faceCenter = face->center();
@@ -130,7 +140,7 @@ namespace dftfe
               }
           }
 
-
+      std::map<dealii::CellId, std::vector<double>> cellNonTrivialQuadPoints;
       cell = dofHandlerOfField.begin_active();
       for (; cell != endc; ++cell)
         if (cell->is_locally_owned())
@@ -206,6 +216,19 @@ namespace dftfe
                         nonTrivialAtomImageIdsBin.push_back(
                           binAtomIdToGlobalAtomIdMapCurrentBin[iatom]);
                       }
+
+
+                    std::vector<double> &quadPointsVec =
+                      cellNonTrivialQuadPoints[cell->id()];
+                    quadPointsVec.resize(n_q_points * 3, 0.0);
+                    for (unsigned int q = 0; q < n_q_points; ++q)
+                      {
+                        const dealii::Point<3> &quadPoint =
+                          fe_values.quadrature_point(q);
+                        quadPointsVec[3 * q + 0] = quadPoint[0];
+                        quadPointsVec[3 * q + 1] = quadPoint[1];
+                        quadPointsVec[3 * q + 2] = quadPoint[2];
+                      }
                   }
                 else
                   {
@@ -227,12 +250,16 @@ namespace dftfe
             1.0 / smearedNuclearChargeIntegral[iatom];
         }
 
-      /*
-      if (dealii::Utilities::MPI::this_mpi_process(mpi_communicator) ==0)
-        for (unsigned int iatom=0; iatom< numberDomainAtomsInBin; ++iatom)
-          std::cout<<"Smeared charge integral before scaling (charge val=1):
-      "<<smearedNuclearChargeIntegral[iatom]<<std::endl;
-      */
+      if (dftParameters::verbosity >= 5)
+        {
+          if (dealii::Utilities::MPI::this_mpi_process(mpi_communicator) == 0)
+            for (unsigned int iatom = 0; iatom < numberDomainAtomsInBin;
+                 ++iatom)
+              std::cout
+                << "Smeared charge integral before scaling (charge val=1):"
+                << smearedNuclearChargeIntegral[iatom] << std::endl;
+        }
+
 
       std::vector<double> smearedNuclearChargeIntegralCheck(
         numberTotalAtomsInBin, 0.0);
@@ -250,12 +277,16 @@ namespace dftfe
 
             if (nonTrivialIdsBin.size() != 0)
               {
-                fe_values.reinit(cell);
+                // fe_values.reinit(cell);
+                const std::vector<double> &quadPointsVec =
+                  cellNonTrivialQuadPoints[cell->id()];
                 for (unsigned int q = 0; q < n_q_points; ++q)
                   {
-                    const dealii::Point<3> &quadPoint =
-                      fe_values.quadrature_point(q);
-                    const double jxw = fe_values.JxW(q);
+                    dealii::Point<3> quadPoint;
+                    quadPoint[0] = quadPointsVec[3 * q + 0];
+                    quadPoint[1] = quadPointsVec[3 * q + 1];
+                    quadPoint[2] = quadPointsVec[3 * q + 2];
+                    // const double jxw = fe_values.JxW(q);
                     for (unsigned int iatomNonTrivial = 0;
                          iatomNonTrivial < nonTrivialIdsBin.size();
                          ++iatomNonTrivial)
