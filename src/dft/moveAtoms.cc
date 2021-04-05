@@ -151,11 +151,11 @@ dftClass<FEOrder, FEOrderElectro>::updateAtomPositionsAndMoveMesh(
   periodicBc[1] = dftParameters::periodicY;
   periodicBc[2] = dftParameters::periodicZ;
 
-  std::vector<Point<C_DIM>>             controlPointLocationsInitialMove;
-  std::vector<Tensor<1, C_DIM, double>> controlPointDisplacementsInitialMove;
+  std::vector<Point<3>>             controlPointLocationsInitialMove;
+  std::vector<Tensor<1, 3, double>> controlPointDisplacementsInitialMove;
 
-  std::vector<Point<C_DIM>>             controlPointLocationsCurrentMove;
-  std::vector<Tensor<1, C_DIM, double>> controlPointDisplacementsCurrentMove;
+  std::vector<Point<3>>             controlPointLocationsCurrentMove;
+  std::vector<Tensor<1, 3, double>> controlPointDisplacementsCurrentMove;
 
   std::vector<double> gaussianConstantsInitialMove;
   std::vector<double> gaussianConstantsCurrentMove;
@@ -255,14 +255,14 @@ dftClass<FEOrder, FEOrderElectro>::updateAtomPositionsAndMoveMesh(
     {
       for (unsigned int iAtom = 0; iAtom < numberGlobalAtoms; iAtom++)
         {
-          Point<C_DIM> atomCoor;
-          int          atomId = iAtom;
-          atomCoor[0]         = atomLocations[iAtom][2];
-          atomCoor[1]         = atomLocations[iAtom][3];
-          atomCoor[2]         = atomLocations[iAtom][4];
+          Point<3> atomCoor;
+          int      atomId = iAtom;
+          atomCoor[0]     = atomLocations[iAtom][2];
+          atomCoor[1]     = atomLocations[iAtom][3];
+          atomCoor[2]     = atomLocations[iAtom][4];
 
-          Point<C_DIM> newCoord;
-          for (unsigned int idim = 0; idim < C_DIM; ++idim)
+          Point<3> newCoord;
+          for (unsigned int idim = 0; idim < 3; ++idim)
             newCoord[idim] =
               atomCoor[idim] + globalAtomsDisplacements[atomId][idim];
 
@@ -285,8 +285,8 @@ dftClass<FEOrder, FEOrderElectro>::updateAtomPositionsAndMoveMesh(
     {
       for (unsigned int iAtom = 0; iAtom < numberGlobalAtoms; iAtom++)
         {
-          Point<C_DIM> atomCoor;
-          int          atomId = iAtom;
+          Point<3> atomCoor;
+          int      atomId = iAtom;
 
           atomLocations[iAtom][2] += globalAtomsDisplacements[atomId][0];
           atomLocations[iAtom][3] += globalAtomsDisplacements[atomId][1];
@@ -299,8 +299,8 @@ dftClass<FEOrder, FEOrderElectro>::updateAtomPositionsAndMoveMesh(
           << std::endl;
       for (unsigned int iAtom = 0; iAtom < numberGlobalAtoms; ++iAtom)
         {
-          Point<C_DIM> atomCoor;
-          int          atomId = iAtom;
+          Point<3> atomCoor;
+          int      atomId = iAtom;
 
           atomCoor[0] = atomLocations[iAtom][2];
           atomCoor[1] = atomLocations[iAtom][3];
@@ -359,8 +359,8 @@ dftClass<FEOrder, FEOrderElectro>::updateAtomPositionsAndMoveMesh(
           << std::endl;
       for (unsigned int iAtom = 0; iAtom < numberGlobalAtoms; iAtom++)
         {
-          Point<C_DIM> atomCoor;
-          int          atomId = iAtom;
+          Point<3> atomCoor;
+          int      atomId = iAtom;
 
           atomLocations[iAtom][2] += globalAtomsDisplacements[atomId][0];
           atomLocations[iAtom][3] += globalAtomsDisplacements[atomId][1];
@@ -399,9 +399,9 @@ dftClass<FEOrder, FEOrderElectro>::updateAtomPositionsAndMoveMesh(
 
       for (unsigned int iAtom = 0; iAtom < totalNumberAtoms; ++iAtom)
         {
-          dealii::Point<C_DIM> temp;
-          int                  atomId;
-          Point<3>             atomCoor;
+          dealii::Point<3> temp;
+          int              atomId;
+          Point<3>         atomCoor;
           if (iAtom < numberGlobalAtoms)
             {
               atomId = iAtom;
@@ -623,14 +623,14 @@ dftClass<FEOrder, FEOrderElectro>::updateAtomPositionsAndMoveMesh(
                       for (unsigned int iAtom = 0; iAtom < numberGlobalAtoms;
                            iAtom++)
                         {
-                          Point<C_DIM> atomCoor;
-                          int          atomId = iAtom;
-                          atomCoor[0]         = atomLocations[iAtom][2];
-                          atomCoor[1]         = atomLocations[iAtom][3];
-                          atomCoor[2]         = atomLocations[iAtom][4];
+                          Point<3> atomCoor;
+                          int      atomId = iAtom;
+                          atomCoor[0]     = atomLocations[iAtom][2];
+                          atomCoor[1]     = atomLocations[iAtom][3];
+                          atomCoor[2]     = atomLocations[iAtom][4];
 
-                          Point<C_DIM> newCoord;
-                          for (unsigned int idim = 0; idim < C_DIM; ++idim)
+                          Point<3> newCoord;
+                          for (unsigned int idim = 0; idim < 3; ++idim)
                             newCoord[idim] =
                               atomCoor[idim] +
                               globalAtomsDisplacements[atomId][idim];

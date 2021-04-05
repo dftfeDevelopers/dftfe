@@ -49,7 +49,7 @@ namespace dftfe
      *  pair(bool for is negative jacobian, maximum jacobian ratio)
      */
     std::pair<bool, double>
-    moveMesh(const std::vector<Point<C_DIM>> &        controlPointLocations,
+    moveMesh(const std::vector<Point<3>> &            controlPointLocations,
              const std::vector<Tensor<1, 3, double>> &controlPointDisplacements,
              const std::vector<double> &              gaussianWidthParameter,
              const std::vector<double> &              flatTopWidthParameter,
@@ -59,8 +59,8 @@ namespace dftfe
 
     std::pair<bool, double>
     moveMeshTwoStep(
-      const std::vector<Point<C_DIM>> &        controlPointLocations1,
-      const std::vector<Point<C_DIM>> &        controlPointLocations2,
+      const std::vector<Point<3>> &            controlPointLocations1,
+      const std::vector<Point<3>> &            controlPointLocations2,
       const std::vector<Tensor<1, 3, double>> &controlPointDisplacements1,
       const std::vector<Tensor<1, 3, double>> &controlPointDisplacements2,
       const std::vector<double> &              controllingParameter1,
@@ -79,15 +79,15 @@ namespace dftfe
      */
     void
     computeIncrement(
-      const std::vector<Point<C_DIM>> &        controlPointLocations,
+      const std::vector<Point<3>> &            controlPointLocations,
       const std::vector<Tensor<1, 3, double>> &controlPointDisplacements,
       const std::vector<double> &              gaussianWidthParameter,
       const std::vector<double> &              flatTopWidthParameter);
 
     void
     computeIncrementTwoStep(
-      const std::vector<Point<C_DIM>> &        controlPointLocations1,
-      const std::vector<Point<C_DIM>> &        controlPointLocations2,
+      const std::vector<Point<3>> &            controlPointLocations1,
+      const std::vector<Point<3>> &            controlPointLocations2,
       const std::vector<Tensor<1, 3, double>> &controlPointDisplacements1,
       const std::vector<Tensor<1, 3, double>> &controlPointDisplacements2,
       const std::vector<double> &              gaussianWidthParameter1,

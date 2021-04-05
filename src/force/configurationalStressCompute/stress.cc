@@ -65,9 +65,9 @@ forceClass<FEOrder, FEOrderElectro>::computeStress(
                         d_cellFacesVselfBallSurfacesDofHandlerForceElectro);
 
   // reset to zero
-  for (unsigned int idim = 0; idim < C_DIM; idim++)
+  for (unsigned int idim = 0; idim < 3; idim++)
     {
-      for (unsigned int jdim = 0; jdim < C_DIM; jdim++)
+      for (unsigned int jdim = 0; jdim < 3; jdim++)
         {
           d_stress[idim][jdim]        = 0.0;
           d_stressKPoints[idim][jdim] = 0.0;

@@ -1041,7 +1041,7 @@ namespace dftfe
     meshMovementGaussianClass d_gaussianMovePar;
 
     std::vector<Tensor<1, 3, double>> d_gaussianMovementAtomsNetDisplacements;
-    std::vector<Point<C_DIM>>         d_controlPointLocationsCurrentMove;
+    std::vector<Point<3>>             d_controlPointLocationsCurrentMove;
 
     /// volume of the domain
     double d_domainVolume;

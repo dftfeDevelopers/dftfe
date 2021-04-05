@@ -126,11 +126,11 @@ dftClass<FEOrder, FEOrderElectro>::computeElementalOVProjectorKets()
                                              2,
                                            0.0);
   std::vector<double> zetalmDeltaVlProductDistImageAtoms_KPoint(
-    maxkPoints * numberQuadraturePoints * C_DIM * 2, 0.0);
+    maxkPoints * numberQuadraturePoints * 3 * 2, 0.0);
 #else
   std::vector<double> ZetalmDeltaVl(numberQuadraturePoints, 0.0);
   std::vector<double> zetalmDeltaVlProductDistImageAtoms_KPoint(
-    maxkPoints * numberQuadraturePoints * C_DIM, 0.0);
+    maxkPoints * numberQuadraturePoints * 3, 0.0);
   AssertThrow(maxkPoints == 1, ExcMessage("DFT-FE Error"));
 #endif
 
@@ -283,13 +283,13 @@ dftClass<FEOrder, FEOrderElectro>::computeElementalOVProjectorKets()
                 std::vector<double>(maxkPoints * numberQuadraturePoints * 2);
               d_nonLocalPSP_zetalmDeltaVlProductDistImageAtoms_KPoint
                 [count][iPseudoWave][cell->id()] = std::vector<double>(
-                  maxkPoints * numberQuadraturePoints * C_DIM * 2);
+                  maxkPoints * numberQuadraturePoints * 3 * 2);
 #else
               d_nonLocalPSP_ZetalmDeltaVl[count][iPseudoWave][cell->id()] =
                 std::vector<double>(numberQuadraturePoints);
               d_nonLocalPSP_zetalmDeltaVlProductDistImageAtoms_KPoint
-                [count][iPseudoWave][cell->id()] = std::vector<double>(
-                  maxkPoints * numberQuadraturePoints * C_DIM);
+                [count][iPseudoWave][cell->id()] =
+                  std::vector<double>(maxkPoints * numberQuadraturePoints * 3);
 #endif
 
               waveFunctionId = iPseudoWave + cumulativeWaveSplineId;
@@ -453,26 +453,24 @@ dftClass<FEOrder, FEOrderElectro>::computeElementalOVProjectorKets()
                                                      2 +
                                                    2 * iQuadPoint + 1] +=
                                 tempImag * projectorFunctionValue;
-                              for (unsigned int iDim = 0; iDim < C_DIM; ++iDim)
+                              for (unsigned int iDim = 0; iDim < 3; ++iDim)
                                 {
                                   zetalmDeltaVlProductDistImageAtoms_KPoint
-                                    [kPoint * numberQuadraturePoints * C_DIM *
-                                       2 +
-                                     iQuadPoint * C_DIM * 2 + iDim * 2 + 0] +=
+                                    [kPoint * numberQuadraturePoints * 3 * 2 +
+                                     iQuadPoint * 3 * 2 + iDim * 2 + 0] +=
                                     tempReal * projectorFunctionValue * x[iDim];
                                   zetalmDeltaVlProductDistImageAtoms_KPoint
-                                    [kPoint * numberQuadraturePoints * C_DIM *
-                                       2 +
-                                     iQuadPoint * C_DIM * 2 + iDim * 2 + 1] +=
+                                    [kPoint * numberQuadraturePoints * 3 * 2 +
+                                     iQuadPoint * 3 * 2 + iDim * 2 + 1] +=
                                     tempImag * projectorFunctionValue * x[iDim];
                                 }
                             }
 #else
 
                           ZetalmDeltaVl[iQuadPoint] += projectorFunctionValue;
-                          for (unsigned int iDim = 0; iDim < C_DIM; ++iDim)
+                          for (unsigned int iDim = 0; iDim < 3; ++iDim)
                             zetalmDeltaVlProductDistImageAtoms_KPoint
-                              [iQuadPoint * C_DIM + iDim] +=
+                              [iQuadPoint * 3 + iDim] +=
                               projectorFunctionValue * x[iDim];
 #endif
                         } // inside psp tail

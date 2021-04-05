@@ -100,8 +100,8 @@ void forceClass<FEOrder, FEOrderElectro>::addEPhiTotSmearedStressContribution(
           forceEval.JxW(q);
 
       for (unsigned int iSubCell = 0; iSubCell < numSubCells; ++iSubCell)
-        for (unsigned int idim = 0; idim < C_DIM; idim++)
-          for (unsigned int jdim = 0; jdim < C_DIM; jdim++)
+        for (unsigned int idim = 0; idim < 3; idim++)
+          for (unsigned int jdim = 0; jdim < 3; jdim++)
             d_stress[idim][jdim] +=
               EPSPStressContribution[idim][jdim][iSubCell];
     } // iAtom loop
@@ -189,8 +189,8 @@ void forceClass<FEOrder, FEOrderElectro>::addEVselfSmearedStressContribution(
           forceEval.JxW(q);
 
       for (unsigned int iSubCell = 0; iSubCell < numSubCells; ++iSubCell)
-        for (unsigned int idim = 0; idim < C_DIM; idim++)
-          for (unsigned int jdim = 0; jdim < C_DIM; jdim++)
+        for (unsigned int idim = 0; idim < 3; idim++)
+          for (unsigned int jdim = 0; jdim < 3; jdim++)
             d_stress[idim][jdim] +=
               EPSPStressContribution[idim][jdim][iSubCell];
     } // iAtom loop

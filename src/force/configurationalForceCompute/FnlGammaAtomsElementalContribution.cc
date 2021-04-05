@@ -23,22 +23,20 @@ template <unsigned int FEOrder, unsigned int FEOrderElectro>
 void
 forceClass<FEOrder, FEOrderElectro>::FnlGammaAtomsElementalContribution(
   std::map<unsigned int, std::vector<double>> &forceContributionFnlGammaAtoms,
-  FEEvaluation<C_DIM,
+  FEEvaluation<3,
                1,
                C_num1DQuad<C_rhoNodalPolyOrder<FEOrder, FEOrderElectro>()>(),
-               C_DIM> &                        forceEval,
-  FEEvaluation<C_DIM,
-               1,
-               C_num1DQuadNLPSP<FEOrder>() * C_numCopies1DQuadNLPSP(),
-               C_DIM> &                        forceEvalNLP,
-  const unsigned int                           cell,
+               3> &                            forceEval,
+  FEEvaluation<3, 1, C_num1DQuadNLPSP<FEOrder>() * C_numCopies1DQuadNLPSP(), 3>
+    &                forceEvalNLP,
+  const unsigned int cell,
   const std::vector<std::vector<
     std::vector<std::vector<Tensor<1, 2, VectorizedArray<double>>>>>>
     &zetaDeltaVQuads,
   const std::vector<std::vector<std::vector<std::complex<double>>>>
     &projectorKetTimesPsiTimesVTimesPartOcc,
   const std::vector<Tensor<1, 2, VectorizedArray<double>>> &psiQuads,
-  const std::vector<Tensor<1, 2, Tensor<1, C_DIM, VectorizedArray<double>>>>
+  const std::vector<Tensor<1, 2, Tensor<1, 3, VectorizedArray<double>>>>
     &                                     gradPsiQuads,
   const std::vector<std::vector<double>> &eigenValues,
   const std::vector<unsigned int> &       nonlocalAtomsCompactSupportList)
@@ -77,7 +75,7 @@ forceClass<FEOrder, FEOrderElectro>::FnlGammaAtomsElementalContribution(
       if (forceContributionFnlGammaAtoms.find(globalChargeIdNonLocalAtom) ==
           forceContributionFnlGammaAtoms.end())
         forceContributionFnlGammaAtoms[globalChargeIdNonLocalAtom] =
-          std::vector<double>(C_DIM, 0.0);
+          std::vector<double>(3, 0.0);
 
       bool isCellInCompactSupport = false;
       for (unsigned int i = 0; i < nonlocalAtomsCompactSupportList.size(); i++)
@@ -96,7 +94,7 @@ forceClass<FEOrder, FEOrderElectro>::FnlGammaAtomsElementalContribution(
                 temp1(1);
               temp1[0] = zetaDeltaVQuads[cell * numQuadPoints + q][iAtom];
 
-              const Tensor<1, C_DIM, VectorizedArray<double>> F =
+              const Tensor<1, 3, VectorizedArray<double>> F =
                 -eshelbyTensor::getFnlAtom(temp1,
                                            temp2,
                                            psiQuads.begin() +
@@ -112,12 +110,12 @@ forceClass<FEOrder, FEOrderElectro>::FnlGammaAtomsElementalContribution(
             }
 
 
-          const Tensor<1, C_DIM, VectorizedArray<double>>
+          const Tensor<1, 3, VectorizedArray<double>>
             forceContributionFnlGammaiAtomCells =
               forceEvalNLP.integrate_value();
 
           for (unsigned int iSubCell = 0; iSubCell < numSubCells; ++iSubCell)
-            for (unsigned int idim = 0; idim < C_DIM; idim++)
+            for (unsigned int idim = 0; idim < 3; idim++)
               forceContributionFnlGammaAtoms[globalChargeIdNonLocalAtom]
                                             [idim] +=
                 forceContributionFnlGammaiAtomCells[idim][iSubCell];
@@ -131,18 +129,16 @@ template <unsigned int FEOrder, unsigned int FEOrderElectro>
 void
 forceClass<FEOrder, FEOrderElectro>::FnlGammaAtomsElementalContribution(
   std::map<unsigned int, std::vector<double>> &forceContributionFnlGammaAtoms,
-  FEEvaluation<C_DIM,
+  FEEvaluation<3,
                1,
                C_num1DQuad<C_rhoNodalPolyOrder<FEOrder, FEOrderElectro>()>(),
-               C_DIM> &                        forceEval,
-  FEEvaluation<C_DIM,
-               1,
-               C_num1DQuadNLPSP<FEOrder>() * C_numCopies1DQuadNLPSP(),
-               C_DIM> &                        forceEvalNLP,
-  const unsigned int                           cell,
+               3> &                            forceEval,
+  FEEvaluation<3, 1, C_num1DQuadNLPSP<FEOrder>() * C_numCopies1DQuadNLPSP(), 3>
+    &                forceEvalNLP,
+  const unsigned int cell,
   const std::vector<std::vector<std::vector<VectorizedArray<double>>>>
     &zetaDeltaVQuads,
-  const std::vector<std::vector<Tensor<1, C_DIM, VectorizedArray<double>>>>
+  const std::vector<std::vector<Tensor<1, 3, VectorizedArray<double>>>>
     &projectorKetTimesPsiTimesVTimesPartOccContractionGradPsi,
   const std::vector<bool> &        isAtomInCell,
   const std::vector<unsigned int> &nonlocalPseudoWfcsAccum)
@@ -172,7 +168,7 @@ forceClass<FEOrder, FEOrderElectro>::FnlGammaAtomsElementalContribution(
       if (forceContributionFnlGammaAtoms.find(globalChargeIdNonLocalAtom) ==
           forceContributionFnlGammaAtoms.end())
         forceContributionFnlGammaAtoms[globalChargeIdNonLocalAtom] =
-          std::vector<double>(C_DIM, 0.0);
+          std::vector<double>(3, 0.0);
 
       if (isAtomInCell[iAtom])
         {
@@ -184,7 +180,7 @@ forceClass<FEOrder, FEOrderElectro>::FnlGammaAtomsElementalContribution(
               const std::vector<VectorizedArray<double>> &temp1 =
                 zetaDeltaVQuads[cell * numQuadPoints + q][iAtom];
 
-              const Tensor<1, C_DIM, VectorizedArray<double>> F =
+              const Tensor<1, 3, VectorizedArray<double>> F =
                 -eshelbyTensor::getFnlAtom(
                   temp1,
                   projectorKetTimesPsiTimesVTimesPartOccContractionGradPsi
@@ -196,12 +192,12 @@ forceClass<FEOrder, FEOrderElectro>::FnlGammaAtomsElementalContribution(
             }
 
 
-          const Tensor<1, C_DIM, VectorizedArray<double>>
+          const Tensor<1, 3, VectorizedArray<double>>
             forceContributionFnlGammaiAtomCells =
               forceEvalNLP.integrate_value();
 
           for (unsigned int iSubCell = 0; iSubCell < numSubCells; ++iSubCell)
-            for (unsigned int idim = 0; idim < C_DIM; idim++)
+            for (unsigned int idim = 0; idim < 3; idim++)
               forceContributionFnlGammaAtoms[globalChargeIdNonLocalAtom]
                                             [idim] +=
                 forceContributionFnlGammaiAtomCells[idim][iSubCell];
@@ -226,8 +222,8 @@ forceClass<FEOrder, FEOrderElectro>::distributeForceContributionFnlGammaAtoms(
           d_atomsForceDofs.end())
         doesAtomIdExistOnLocallyOwnedNode = true;
 
-      std::vector<double> forceContributionFnlGammaiAtomGlobal(C_DIM);
-      std::vector<double> forceContributionFnlGammaiAtomLocal(C_DIM, 0.0);
+      std::vector<double> forceContributionFnlGammaiAtomGlobal(3);
+      std::vector<double> forceContributionFnlGammaiAtomLocal(3, 0.0);
 
       if (forceContributionFnlGammaAtoms.find(iAtom) !=
           forceContributionFnlGammaAtoms.end())
@@ -243,8 +239,8 @@ forceClass<FEOrder, FEOrderElectro>::distributeForceContributionFnlGammaAtoms(
 
       if (doesAtomIdExistOnLocallyOwnedNode)
         {
-          std::vector<types::global_dof_index> forceLocalDofIndices(C_DIM);
-          for (unsigned int idim = 0; idim < C_DIM; idim++)
+          std::vector<types::global_dof_index> forceLocalDofIndices(3);
+          for (unsigned int idim = 0; idim < 3; idim++)
             forceLocalDofIndices[idim] =
               d_atomsForceDofs[std::pair<unsigned int, unsigned int>(iAtom,
                                                                      idim)];

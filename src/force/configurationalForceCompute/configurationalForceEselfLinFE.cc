@@ -34,14 +34,14 @@ forceClass<FEOrder, FEOrderElectro>::computeConfigurationalForceEselfLinFE(
   //
   // First add configurational force contribution from the volume integral
   //
-  QGauss<C_DIM> quadrature(
+  QGauss<3> quadrature(
     C_num1DQuad<C_rhoNodalPolyOrder<FEOrder, FEOrderElectro>()>());
-  FEValues<C_DIM>    feForceValues(FEForce,
-                                quadrature,
-                                update_gradients | update_JxW_values);
-  FEValues<C_DIM>    feVselfValues(dofHandlerElectro.get_fe(),
-                                quadrature,
-                                update_gradients);
+  FEValues<3>        feForceValues(FEForce,
+                            quadrature,
+                            update_gradients | update_JxW_values);
+  FEValues<3>        feVselfValues(dofHandlerElectro.get_fe(),
+                            quadrature,
+                            update_gradients);
   const unsigned int forceDofsPerCell = FEForce.dofs_per_cell;
   const unsigned int forceBaseIndicesPerCell =
     forceDofsPerCell / FEForce.components;
@@ -50,37 +50,35 @@ forceClass<FEOrder, FEOrderElectro>::computeConfigurationalForceEselfLinFE(
   std::vector<types::global_dof_index> forceLocalDofIndices(forceDofsPerCell);
   const unsigned int                   numberBins =
     vselfBinsManagerElectro.getAtomIdsBins().size();
-  std::vector<Tensor<1, C_DIM, double>> gradVselfQuad(numQuadPoints);
-  std::vector<unsigned int> baseIndexDofsVec(forceBaseIndicesPerCell * C_DIM);
-  Tensor<1, C_DIM, double>  baseIndexForceVec;
+  std::vector<Tensor<1, 3, double>> gradVselfQuad(numQuadPoints);
+  std::vector<unsigned int> baseIndexDofsVec(forceBaseIndicesPerCell * 3);
+  Tensor<1, 3, double>      baseIndexForceVec;
 
   for (unsigned int ibase = 0; ibase < forceBaseIndicesPerCell; ++ibase)
     {
-      for (unsigned int idim = 0; idim < C_DIM; idim++)
-        baseIndexDofsVec[C_DIM * ibase + idim] =
+      for (unsigned int idim = 0; idim < 3; idim++)
+        baseIndexDofsVec[3 * ibase + idim] =
           FEForce.component_to_system_index(idim, ibase);
     }
 
   for (unsigned int iBin = 0; iBin < numberBins; ++iBin)
     {
-      const std::vector<DoFHandler<C_DIM>::active_cell_iterator>
+      const std::vector<DoFHandler<3>::active_cell_iterator>
         &cellsVselfBallDofHandler = d_cellsVselfBallsDofHandlerElectro[iBin];
-      const std::vector<DoFHandler<C_DIM>::active_cell_iterator>
+      const std::vector<DoFHandler<3>::active_cell_iterator>
         &cellsVselfBallDofHandlerForce =
           d_cellsVselfBallsDofHandlerForceElectro[iBin];
       const distributedCPUVec<double> &iBinVselfField =
         vselfBinsManagerElectro.getVselfFieldBins()[iBin];
-      std::vector<DoFHandler<C_DIM>::active_cell_iterator>::const_iterator
-        iter1;
-      std::vector<DoFHandler<C_DIM>::active_cell_iterator>::const_iterator
-        iter2;
+      std::vector<DoFHandler<3>::active_cell_iterator>::const_iterator iter1;
+      std::vector<DoFHandler<3>::active_cell_iterator>::const_iterator iter2;
       iter2 = cellsVselfBallDofHandlerForce.begin();
       for (iter1 = cellsVselfBallDofHandler.begin();
            iter1 != cellsVselfBallDofHandler.end();
            ++iter1, ++iter2)
         {
-          DoFHandler<C_DIM>::active_cell_iterator cell      = *iter1;
-          DoFHandler<C_DIM>::active_cell_iterator cellForce = *iter2;
+          DoFHandler<3>::active_cell_iterator cell      = *iter1;
+          DoFHandler<3>::active_cell_iterator cellForce = *iter2;
           feVselfValues.reinit(cell);
           feVselfValues.get_function_gradients(iBinVselfField, gradVselfQuad);
 
@@ -95,12 +93,12 @@ forceClass<FEOrder, FEOrderElectro>::computeConfigurationalForceEselfLinFE(
                   baseIndexForceVec +=
                     eshelbyTensor::getVselfBallEshelbyTensor(
                       gradVselfQuad[qPoint]) *
-                    feForceValues.shape_grad(baseIndexDofsVec[C_DIM * ibase],
+                    feForceValues.shape_grad(baseIndexDofsVec[3 * ibase],
                                              qPoint) *
                     feForceValues.JxW(qPoint);
                 } // q point loop
-              for (unsigned int idim = 0; idim < C_DIM; idim++)
-                elementalForce[baseIndexDofsVec[C_DIM * ibase + idim]] =
+              for (unsigned int idim = 0; idim < 3; idim++)
+                elementalForce[baseIndexDofsVec[3 * ibase + idim]] =
                   baseIndexForceVec[idim];
             } // base index loop
 
@@ -124,26 +122,26 @@ forceClass<FEOrder, FEOrderElectro>::computeConfigurationalForceEselfLinFE(
         d_forceDofHandlerIndexElectro,
         smearedChargeQuadratureId);
 
-      DoFHandler<C_DIM>::active_cell_iterator subCellPtr;
-      const unsigned int                      numQuadPointsSmearedb =
+      DoFHandler<3>::active_cell_iterator subCellPtr;
+      const unsigned int                  numQuadPointsSmearedb =
         forceEvalSmearedCharge.n_q_points;
 
-      Tensor<1, C_DIM, VectorizedArray<double>> zeroTensor;
-      for (unsigned int idim = 0; idim < C_DIM; idim++)
+      Tensor<1, 3, VectorizedArray<double>> zeroTensor;
+      for (unsigned int idim = 0; idim < 3; idim++)
         {
           zeroTensor[idim] = make_vectorized_array(0.0);
         }
 
-      Tensor<2, C_DIM, VectorizedArray<double>> zeroTensor2;
-      for (unsigned int idim = 0; idim < C_DIM; idim++)
-        for (unsigned int jdim = 0; jdim < C_DIM; jdim++)
+      Tensor<2, 3, VectorizedArray<double>> zeroTensor2;
+      for (unsigned int idim = 0; idim < 3; idim++)
+        for (unsigned int jdim = 0; jdim < 3; jdim++)
           {
             zeroTensor2[idim][jdim] = make_vectorized_array(0.0);
           }
 
       std::vector<VectorizedArray<double>> smearedbQuads(
         numQuadPointsSmearedb, make_vectorized_array(0.0));
-      std::vector<Tensor<1, C_DIM, VectorizedArray<double>>>
+      std::vector<Tensor<1, 3, VectorizedArray<double>>>
         gradVselfSmearedChargeQuads(numQuadPointsSmearedb, zeroTensor);
 
       std::map<unsigned int, std::vector<double>>
@@ -227,7 +225,7 @@ forceClass<FEOrder, FEOrderElectro>::computeConfigurationalForceEselfLinFE(
                   gradVselfSmearedChargeQuads[q] =
                     vselfEvalSmearedCharge.get_gradient(q);
 
-                  Tensor<1, C_DIM, VectorizedArray<double>> F = zeroTensor;
+                  Tensor<1, 3, VectorizedArray<double>> F = zeroTensor;
                   F = gradVselfSmearedChargeQuads[q] * smearedbQuads[q];
 
                   forceEvalSmearedCharge.submit_value(F, q);
@@ -275,59 +273,59 @@ forceClass<FEOrder, FEOrderElectro>::computeConfigurationalForceEselfLinFE(
   // Hartree/Bohr)
   //
 
-  QGauss<C_DIM - 1> faceQuadrature(
+  QGauss<3 - 1> faceQuadrature(
     C_num1DQuad<C_rhoNodalPolyOrder<FEOrder, FEOrderElectro>()>());
-  FEFaceValues<C_DIM> feForceFaceValues(FEForce,
-                                        faceQuadrature,
-                                        update_values | update_JxW_values |
-                                          update_normal_vectors |
-                                          update_quadrature_points);
-  const unsigned int  faces_per_cell    = GeometryInfo<C_DIM>::faces_per_cell;
-  const unsigned int  numFaceQuadPoints = faceQuadrature.size();
-  const unsigned int  forceDofsPerFace  = FEForce.dofs_per_face;
-  const unsigned int  forceBaseIndicesPerFace =
+  FEFaceValues<3>    feForceFaceValues(FEForce,
+                                    faceQuadrature,
+                                    update_values | update_JxW_values |
+                                      update_normal_vectors |
+                                      update_quadrature_points);
+  const unsigned int faces_per_cell    = GeometryInfo<3>::faces_per_cell;
+  const unsigned int numFaceQuadPoints = faceQuadrature.size();
+  const unsigned int forceDofsPerFace  = FEForce.dofs_per_face;
+  const unsigned int forceBaseIndicesPerFace =
     forceDofsPerFace / FEForce.components;
   Vector<double>                       elementalFaceForce(forceDofsPerFace);
   std::vector<types::global_dof_index> forceFaceLocalDofIndices(
     forceDofsPerFace);
   std::vector<unsigned int> baseIndexFaceDofsForceVec(forceBaseIndicesPerFace *
-                                                      C_DIM);
-  Tensor<1, C_DIM, double>  baseIndexFaceForceVec;
+                                                      3);
+  Tensor<1, 3, double>      baseIndexFaceForceVec;
   const unsigned int        numberGlobalAtoms = atomLocations.size();
 
   for (unsigned int iFaceDof = 0; iFaceDof < forceDofsPerFace; ++iFaceDof)
     {
       std::pair<unsigned int, unsigned int> baseComponentIndexPair =
         FEForce.face_system_to_component_index(iFaceDof);
-      baseIndexFaceDofsForceVec[C_DIM * baseComponentIndexPair.second +
+      baseIndexFaceDofsForceVec[3 * baseComponentIndexPair.second +
                                 baseComponentIndexPair.first] = iFaceDof;
     }
   for (unsigned int iBin = 0; iBin < numberBins; ++iBin)
     {
-      const std::map<DoFHandler<C_DIM>::active_cell_iterator,
+      const std::map<DoFHandler<3>::active_cell_iterator,
                      std::vector<unsigned int>>
         &cellsVselfBallSurfacesDofHandler =
           d_cellFacesVselfBallSurfacesDofHandlerElectro[iBin];
-      const std::map<DoFHandler<C_DIM>::active_cell_iterator,
+      const std::map<DoFHandler<3>::active_cell_iterator,
                      std::vector<unsigned int>>
         &cellsVselfBallSurfacesDofHandlerForce =
           d_cellFacesVselfBallSurfacesDofHandlerForceElectro[iBin];
       const distributedCPUVec<double> &iBinVselfField =
         vselfBinsManagerElectro.getVselfFieldBins()[iBin];
-      std::map<DoFHandler<C_DIM>::active_cell_iterator,
+      std::map<DoFHandler<3>::active_cell_iterator,
                std::vector<unsigned int>>::const_iterator iter1;
-      std::map<DoFHandler<C_DIM>::active_cell_iterator,
+      std::map<DoFHandler<3>::active_cell_iterator,
                std::vector<unsigned int>>::const_iterator iter2;
       iter2 = cellsVselfBallSurfacesDofHandlerForce.begin();
       for (iter1 = cellsVselfBallSurfacesDofHandler.begin();
            iter1 != cellsVselfBallSurfacesDofHandler.end();
            ++iter1, ++iter2)
         {
-          DoFHandler<C_DIM>::active_cell_iterator cell = iter1->first;
-          const int                               closestAtomId =
+          DoFHandler<3>::active_cell_iterator cell = iter1->first;
+          const int                           closestAtomId =
             d_cellsVselfBallsClosestAtomIdDofHandlerElectro[iBin][cell->id()];
-          double       closestAtomCharge;
-          Point<C_DIM> closestAtomLocation;
+          double   closestAtomCharge;
+          Point<3> closestAtomLocation;
           if (closestAtomId < numberGlobalAtoms)
             {
               closestAtomLocation[0] = atomLocations[closestAtomId][2];
@@ -347,7 +345,7 @@ forceClass<FEOrder, FEOrderElectro>::computeConfigurationalForceEselfLinFE(
               closestAtomLocation[2] = imagePositionsTrunc[imageId][2];
             }
 
-          DoFHandler<C_DIM>::active_cell_iterator cellForce = iter2->first;
+          DoFHandler<3>::active_cell_iterator cellForce = iter2->first;
 
           const std::vector<unsigned int> &dirichletFaceIds = iter2->second;
           for (unsigned int index = 0; index < dirichletFaceIds.size(); index++)
@@ -366,12 +364,12 @@ forceClass<FEOrder, FEOrderElectro>::computeConfigurationalForceEselfLinFE(
                   for (unsigned int qPoint = 0; qPoint < numFaceQuadPoints;
                        ++qPoint)
                     {
-                      const Point<C_DIM> quadPoint =
+                      const Point<3> quadPoint =
                         feForceFaceValues.quadrature_point(qPoint);
-                      const Tensor<1, C_DIM, double> dispClosestAtom =
+                      const Tensor<1, 3, double> dispClosestAtom =
                         quadPoint - closestAtomLocation;
-                      const double dist = dispClosestAtom.norm();
-                      const Tensor<1, C_DIM, double> gradVselfFaceQuadExact =
+                      const double               dist = dispClosestAtom.norm();
+                      const Tensor<1, 3, double> gradVselfFaceQuadExact =
                         closestAtomCharge * dispClosestAtom / dist / dist /
                         dist;
 
@@ -382,7 +380,7 @@ forceClass<FEOrder, FEOrderElectro>::computeConfigurationalForceEselfLinFE(
                         feForceFaceValues.JxW(qPoint) *
                         feForceFaceValues.shape_value(
                           FEForce.face_to_cell_index(
-                            baseIndexFaceDofsForceVec[C_DIM * ibase],
+                            baseIndexFaceDofsForceVec[3 * ibase],
                             faceId,
                             cellForce->face_orientation(faceId),
                             cellForce->face_flip(faceId),
@@ -390,11 +388,11 @@ forceClass<FEOrder, FEOrderElectro>::computeConfigurationalForceEselfLinFE(
                           qPoint);
 
                     } // q point loop
-                  for (unsigned int idim = 0; idim < C_DIM; idim++)
+                  for (unsigned int idim = 0; idim < 3; idim++)
                     {
-                      elementalFaceForce
-                        [baseIndexFaceDofsForceVec[C_DIM * ibase + idim]] =
-                          baseIndexFaceForceVec[idim];
+                      elementalFaceForce[baseIndexFaceDofsForceVec[3 * ibase +
+                                                                   idim]] =
+                        baseIndexFaceForceVec[idim];
                     }
                 } // base index loop
               d_constraintsNoneForceElectro.distribute_local_to_global(
@@ -414,13 +412,13 @@ template <unsigned int FEOrder, unsigned int FEOrderElectro>
 void
 forceClass<FEOrder, FEOrderElectro>::computeConfigurationalForcePhiExtLinFE()
 {
-  FEEvaluation<C_DIM,
+  FEEvaluation<3,
                1,
                C_num1DQuad<C_rhoNodalPolyOrder<FEOrder, FEOrderElectro>()>(),
-               C_DIM>
+               3>
     forceEval(dftPtr->matrix_free_data, d_forceDofHandlerIndex, 0);
 
-  FEEvaluation<C_DIM,
+  FEEvaluation<3,
                FEOrderElectro,
                C_num1DQuad<C_rhoNodalPolyOrder<FEOrder, FEOrderElectro>()>(),
                1>
@@ -439,7 +437,7 @@ forceClass<FEOrder, FEOrderElectro>::computeConfigurationalForcePhiExtLinFE()
       for (unsigned int q = 0; q < forceEval.n_q_points; ++q)
         {
           VectorizedArray<double> phiExt_q = eshelbyEval.get_value(q);
-          Tensor<1, C_DIM, VectorizedArray<double>> gradPhiExt_q =
+          Tensor<1, 3, VectorizedArray<double>> gradPhiExt_q =
             eshelbyEval.get_gradient(q);
           forceEval.submit_gradient(
             eshelbyTensor::getPhiExtEshelbyTensor(phiExt_q, gradPhiExt_q), q);
@@ -455,13 +453,13 @@ void
 forceClass<FEOrder,
            FEOrderElectro>::computeConfigurationalForceEselfNoSurfaceLinFE()
 {
-  FEEvaluation<C_DIM,
+  FEEvaluation<3,
                1,
                C_num1DQuad<C_rhoNodalPolyOrder<FEOrder, FEOrderElectro>()>(),
-               C_DIM>
+               3>
     forceEval(dftPtr->matrix_free_data, d_forceDofHandlerIndex, 0);
 
-  FEEvaluation<C_DIM,
+  FEEvaluation<3,
                FEOrderElectro,
                C_num1DQuad<C_rhoNodalPolyOrder<FEOrder, FEOrderElectro>()>(),
                1>
@@ -484,7 +482,7 @@ forceClass<FEOrder,
           eshelbyEval.evaluate(false, true);
           for (unsigned int q = 0; q < forceEval.n_q_points; ++q)
             {
-              Tensor<1, C_DIM, VectorizedArray<double>> gradVself_q =
+              Tensor<1, 3, VectorizedArray<double>> gradVself_q =
                 eshelbyEval.get_gradient(q);
 
               forceEval.submit_gradient(

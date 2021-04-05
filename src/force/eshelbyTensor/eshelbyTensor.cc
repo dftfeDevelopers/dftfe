@@ -24,19 +24,19 @@ namespace dftfe
 {
   namespace eshelbyTensor
   {
-    Tensor<2, C_DIM, VectorizedArray<double>>
+    Tensor<2, 3, VectorizedArray<double>>
     getPhiExtEshelbyTensor(
-      const VectorizedArray<double> &                  phiExt,
-      const Tensor<1, C_DIM, VectorizedArray<double>> &gradPhiExt)
+      const VectorizedArray<double> &              phiExt,
+      const Tensor<1, 3, VectorizedArray<double>> &gradPhiExt)
     {
-      Tensor<2, C_DIM, VectorizedArray<double>> identityTensor;
+      Tensor<2, 3, VectorizedArray<double>> identityTensor;
       identityTensor[0][0] = make_vectorized_array(1.0);
       identityTensor[1][1] = make_vectorized_array(1.0);
       identityTensor[2][2] = make_vectorized_array(1.0);
 
 
 
-      Tensor<2, C_DIM, VectorizedArray<double>> eshelbyTensor =
+      Tensor<2, 3, VectorizedArray<double>> eshelbyTensor =
         make_vectorized_array(1.0 / (4.0 * M_PI)) *
           outer_product(gradPhiExt, gradPhiExt) -
         make_vectorized_array(1.0 / (8.0 * M_PI)) *
@@ -45,18 +45,18 @@ namespace dftfe
       return eshelbyTensor;
     }
 
-    Tensor<2, C_DIM, VectorizedArray<double>>
+    Tensor<2, 3, VectorizedArray<double>>
     getVselfBallEshelbyTensor(
-      const Tensor<1, C_DIM, VectorizedArray<double>> &gradVself)
+      const Tensor<1, 3, VectorizedArray<double>> &gradVself)
     {
-      Tensor<2, C_DIM, VectorizedArray<double>> identityTensor;
+      Tensor<2, 3, VectorizedArray<double>> identityTensor;
       identityTensor[0][0] = make_vectorized_array(1.0);
       identityTensor[1][1] = make_vectorized_array(1.0);
       identityTensor[2][2] = make_vectorized_array(1.0);
 
 
 
-      Tensor<2, C_DIM, VectorizedArray<double>> eshelbyTensor =
+      Tensor<2, 3, VectorizedArray<double>> eshelbyTensor =
         make_vectorized_array(1.0 / (8.0 * M_PI)) *
           scalar_product(gradVself, gradVself) * identityTensor -
         make_vectorized_array(1.0 / (4.0 * M_PI)) *
@@ -66,12 +66,12 @@ namespace dftfe
     }
 
 
-    Tensor<2, C_DIM, double>
-    getVselfBallEshelbyTensor(const Tensor<1, C_DIM, double> &gradVself)
+    Tensor<2, 3, double>
+    getVselfBallEshelbyTensor(const Tensor<1, 3, double> &gradVself)
     {
       double identityTensorFactor =
         1.0 / (8.0 * M_PI) * scalar_product(gradVself, gradVself);
-      Tensor<2, C_DIM, double> eshelbyTensor =
+      Tensor<2, 3, double> eshelbyTensor =
         -1.0 / (4.0 * M_PI) * outer_product(gradVself, gradVself);
 
       eshelbyTensor[0][0] += identityTensorFactor;
@@ -81,11 +81,11 @@ namespace dftfe
       return eshelbyTensor;
     }
 
-    Tensor<2, C_DIM, VectorizedArray<double>>
+    Tensor<2, 3, VectorizedArray<double>>
       getELocWfcEshelbyTensorPeriodicKPoints(
         std::vector<Tensor<1, 2, VectorizedArray<double>>>::const_iterator
           psiBegin,
-        std::vector<Tensor<1, 2, Tensor<1, C_DIM, VectorizedArray<double>>>>::
+        std::vector<Tensor<1, 2, Tensor<1, 3, VectorizedArray<double>>>>::
           const_iterator                        gradPsiBegin,
         const std::vector<double> &             kPointCoordinates,
         const std::vector<double> &             kPointWeights,
@@ -93,10 +93,10 @@ namespace dftfe
         const double                            fermiEnergy_,
         const double                            tVal)
     {
-      Tensor<2, C_DIM, VectorizedArray<double>> eshelbyTensor;
-      for (unsigned int idim = 0; idim < C_DIM; idim++)
+      Tensor<2, 3, VectorizedArray<double>> eshelbyTensor;
+      for (unsigned int idim = 0; idim < 3; idim++)
         {
-          for (unsigned int jdim = 0; jdim < C_DIM; jdim++)
+          for (unsigned int jdim = 0; jdim < 3; jdim++)
             {
               eshelbyTensor[idim][jdim] = make_vectorized_array(0.0);
             }
@@ -105,23 +105,20 @@ namespace dftfe
 
       std::vector<Tensor<1, 2, VectorizedArray<double>>>::const_iterator it1 =
         psiBegin;
-      std::vector<Tensor<1, 2, Tensor<1, C_DIM, VectorizedArray<double>>>>::
+      std::vector<Tensor<1, 2, Tensor<1, 3, VectorizedArray<double>>>>::
         const_iterator it2 = gradPsiBegin;
 
-      Tensor<1, C_DIM, VectorizedArray<double>> kPointCoord;
+      Tensor<1, 3, VectorizedArray<double>> kPointCoord;
       for (unsigned int ik = 0; ik < eigenValues_.size(); ++ik)
         {
-          kPointCoord[0] =
-            make_vectorized_array(kPointCoordinates[ik * C_DIM + 0]);
-          kPointCoord[1] =
-            make_vectorized_array(kPointCoordinates[ik * C_DIM + 1]);
-          kPointCoord[2] =
-            make_vectorized_array(kPointCoordinates[ik * C_DIM + 2]);
+          kPointCoord[0] = make_vectorized_array(kPointCoordinates[ik * 3 + 0]);
+          kPointCoord[1] = make_vectorized_array(kPointCoordinates[ik * 3 + 1]);
+          kPointCoord[2] = make_vectorized_array(kPointCoordinates[ik * 3 + 2]);
           for (unsigned int eigenIndex = 0; eigenIndex < eigenValues_[0].size();
                ++it1, ++it2, ++eigenIndex)
             {
               const Tensor<1, 2, VectorizedArray<double>> &psi = *it1;
-              const Tensor<1, 2, Tensor<1, C_DIM, VectorizedArray<double>>>
+              const Tensor<1, 2, Tensor<1, 3, VectorizedArray<double>>>
                 &          gradPsi = *it2;
               const double partOcc = dftUtils::getPartialOccupancy(
                 eigenValues_[ik][eigenIndex], fermiEnergy_, C_kb, tVal);
@@ -158,29 +155,29 @@ namespace dftfe
       return eshelbyTensor;
     }
 
-    Tensor<2, C_DIM, VectorizedArray<double>>
+    Tensor<2, 3, VectorizedArray<double>>
     getELocWfcEshelbyTensorNonPeriodic(
       std::vector<VectorizedArray<double>>::const_iterator psiBegin,
-      std::vector<Tensor<1, C_DIM, VectorizedArray<double>>>::const_iterator
+      std::vector<Tensor<1, 3, VectorizedArray<double>>>::const_iterator
                                  gradPsiBegin,
       const std::vector<double> &eigenValues_,
       const std::vector<double> &partialOccupancies_)
     {
-      Tensor<2, C_DIM, VectorizedArray<double>> eshelbyTensor;
-      for (unsigned int idim = 0; idim < C_DIM; idim++)
-        for (unsigned int jdim = 0; jdim < C_DIM; jdim++)
+      Tensor<2, 3, VectorizedArray<double>> eshelbyTensor;
+      for (unsigned int idim = 0; idim < 3; idim++)
+        for (unsigned int jdim = 0; jdim < 3; jdim++)
           eshelbyTensor[idim][jdim] = make_vectorized_array(0.0);
 
       VectorizedArray<double> identityTensorFactor = make_vectorized_array(0.0);
 
       std::vector<VectorizedArray<double>>::const_iterator it1 = psiBegin;
-      std::vector<Tensor<1, C_DIM, VectorizedArray<double>>>::const_iterator
-        it2 = gradPsiBegin;
+      std::vector<Tensor<1, 3, VectorizedArray<double>>>::const_iterator it2 =
+        gradPsiBegin;
       for (unsigned int eigenIndex = 0; eigenIndex < eigenValues_.size();
            ++it1, ++it2, ++eigenIndex)
         {
-          const VectorizedArray<double> &                  psi     = *it1;
-          const Tensor<1, C_DIM, VectorizedArray<double>> &gradPsi = *it2;
+          const VectorizedArray<double> &              psi     = *it1;
+          const Tensor<1, 3, VectorizedArray<double>> &gradPsi = *it2;
           identityTensorFactor +=
             make_vectorized_array(partialOccupancies_[eigenIndex]) *
               scalar_product(gradPsi, gradPsi) -
@@ -199,13 +196,13 @@ namespace dftfe
     }
 
 
-    Tensor<2, C_DIM, VectorizedArray<double>>
+    Tensor<2, 3, VectorizedArray<double>>
     getEElectroEshelbyTensor(
-      const VectorizedArray<double> &                  phiTot,
-      const Tensor<1, C_DIM, VectorizedArray<double>> &gradPhiTot,
-      const VectorizedArray<double> &                  rho)
+      const VectorizedArray<double> &              phiTot,
+      const Tensor<1, 3, VectorizedArray<double>> &gradPhiTot,
+      const VectorizedArray<double> &              rho)
     {
-      Tensor<2, C_DIM, VectorizedArray<double>> eshelbyTensor =
+      Tensor<2, 3, VectorizedArray<double>> eshelbyTensor =
         make_vectorized_array(1.0 / (4.0 * M_PI)) *
         outer_product(gradPhiTot, gradPhiTot);
       VectorizedArray<double> identityTensorFactor =
@@ -219,14 +216,14 @@ namespace dftfe
       return eshelbyTensor;
     }
 
-    Tensor<2, C_DIM, VectorizedArray<double>>
+    Tensor<2, 3, VectorizedArray<double>>
     getELocXcEshelbyTensor(
-      const VectorizedArray<double> &                  rho,
-      const Tensor<1, C_DIM, VectorizedArray<double>> &gradRho,
-      const VectorizedArray<double> &                  exc,
-      const Tensor<1, C_DIM, VectorizedArray<double>> &derExcGradRho)
+      const VectorizedArray<double> &              rho,
+      const Tensor<1, 3, VectorizedArray<double>> &gradRho,
+      const VectorizedArray<double> &              exc,
+      const Tensor<1, 3, VectorizedArray<double>> &derExcGradRho)
     {
-      Tensor<2, C_DIM, VectorizedArray<double>> eshelbyTensor =
+      Tensor<2, 3, VectorizedArray<double>> eshelbyTensor =
         -outer_product(gradRho, derExcGradRho);
       VectorizedArray<double> identityTensorFactor = exc * rho;
 
@@ -237,18 +234,18 @@ namespace dftfe
       return eshelbyTensor;
     }
 
-    Tensor<2, C_DIM, VectorizedArray<double>>
+    Tensor<2, 3, VectorizedArray<double>>
     getShadowPotentialForceRhoDiffXcEshelbyTensor(
       const VectorizedArray<double> &shadowKSRhoMinMinusRho,
-      const Tensor<1, C_DIM, VectorizedArray<double>>
+      const Tensor<1, 3, VectorizedArray<double>>
         &shadowKSGradRhoMinMinusGradRho,
-      const Tensor<1, C_DIM, VectorizedArray<double>> &gradRho,
-      const VectorizedArray<double> &                  vxc,
-      const Tensor<1, C_DIM, VectorizedArray<double>> &derVxcGradRho,
-      const Tensor<1, C_DIM, VectorizedArray<double>> &derExcGradRho,
-      const Tensor<2, C_DIM, VectorizedArray<double>> &der2ExcGradRho)
+      const Tensor<1, 3, VectorizedArray<double>> &gradRho,
+      const VectorizedArray<double> &              vxc,
+      const Tensor<1, 3, VectorizedArray<double>> &derVxcGradRho,
+      const Tensor<1, 3, VectorizedArray<double>> &derExcGradRho,
+      const Tensor<2, 3, VectorizedArray<double>> &der2ExcGradRho)
     {
-      Tensor<2, C_DIM, VectorizedArray<double>> eshelbyTensor =
+      Tensor<2, 3, VectorizedArray<double>> eshelbyTensor =
         -outer_product(derVxcGradRho, gradRho) * shadowKSRhoMinMinusRho -
         outer_product(shadowKSGradRhoMinMinusGradRho * der2ExcGradRho,
                       gradRho) -
@@ -264,13 +261,13 @@ namespace dftfe
       return eshelbyTensor;
     }
 
-    Tensor<2, C_DIM, VectorizedArray<double>>
+    Tensor<2, 3, VectorizedArray<double>>
     getELocPspEshelbyTensor(const VectorizedArray<double> &rho,
                             const VectorizedArray<double> &pseudoVLoc,
                             const VectorizedArray<double> &phiExt)
     {
-      Tensor<2, C_DIM, VectorizedArray<double>> eshelbyTensor;
-      VectorizedArray<double>                   identityTensorFactor =
+      Tensor<2, 3, VectorizedArray<double>> eshelbyTensor;
+      VectorizedArray<double>               identityTensorFactor =
         (pseudoVLoc - phiExt) * rho;
 
 
@@ -281,25 +278,24 @@ namespace dftfe
     }
 
 
-    Tensor<1, C_DIM, VectorizedArray<double>>
-    getFnl(
-      const std::vector<
-        std::vector<std::vector<Tensor<1, 2, VectorizedArray<double>>>>>
-        &zetaDeltaV,
-      const std::vector<std::vector<std::vector<std::complex<double>>>>
-        &projectorKetTimesPsiTimesVTimesPartOcc,
-      std::vector<Tensor<1, 2, Tensor<1, C_DIM, VectorizedArray<double>>>>::
-        const_iterator                 gradPsiBegin,
-      const std::vector<double> &      kPointWeights,
-      const unsigned int               numBlockedEigenvectors,
-      const std::vector<unsigned int> &nonlocalAtomsCompactSupportList)
+    Tensor<1, 3, VectorizedArray<double>>
+    getFnl(const std::vector<
+             std::vector<std::vector<Tensor<1, 2, VectorizedArray<double>>>>>
+             &zetaDeltaV,
+           const std::vector<std::vector<std::vector<std::complex<double>>>>
+             &projectorKetTimesPsiTimesVTimesPartOcc,
+           std::vector<Tensor<1, 2, Tensor<1, 3, VectorizedArray<double>>>>::
+             const_iterator                 gradPsiBegin,
+           const std::vector<double> &      kPointWeights,
+           const unsigned int               numBlockedEigenvectors,
+           const std::vector<unsigned int> &nonlocalAtomsCompactSupportList)
     {
-      Tensor<1, C_DIM, VectorizedArray<double>> zeroTensor;
-      for (unsigned int idim = 0; idim < C_DIM; idim++)
+      Tensor<1, 3, VectorizedArray<double>> zeroTensor;
+      for (unsigned int idim = 0; idim < 3; idim++)
         zeroTensor[idim] = make_vectorized_array(0.0);
 
-      Tensor<1, C_DIM, VectorizedArray<double>> Fnl = zeroTensor;
-      VectorizedArray<double> four = make_vectorized_array(4.0);
+      Tensor<1, 3, VectorizedArray<double>> Fnl  = zeroTensor;
+      VectorizedArray<double>               four = make_vectorized_array(4.0);
 
       for (unsigned int iAtomNonLocal = 0; iAtomNonLocal < zetaDeltaV.size();
            ++iAtomNonLocal)
@@ -320,18 +316,18 @@ namespace dftfe
             zetaDeltaV[iAtomNonLocal].size();
           const int numKPoints = kPointWeights.size();
 
-          std::vector<Tensor<1, 2, Tensor<1, C_DIM, VectorizedArray<double>>>>::
+          std::vector<Tensor<1, 2, Tensor<1, 3, VectorizedArray<double>>>>::
             const_iterator it1 = gradPsiBegin;
           for (unsigned int ik = 0; ik < numKPoints; ++ik)
             {
-              Tensor<1, C_DIM, VectorizedArray<double>> tempF = zeroTensor;
-              VectorizedArray<double>                   fnk =
+              Tensor<1, 3, VectorizedArray<double>> tempF = zeroTensor;
+              VectorizedArray<double>               fnk =
                 make_vectorized_array(kPointWeights[ik]);
               for (unsigned int eigenIndex = 0;
                    eigenIndex < numBlockedEigenvectors;
                    ++it1, ++eigenIndex)
                 {
-                  const Tensor<1, 2, Tensor<1, C_DIM, VectorizedArray<double>>>
+                  const Tensor<1, 2, Tensor<1, 3, VectorizedArray<double>>>
                     &gradPsi = *it1;
                   for (unsigned int iPseudoWave = 0;
                        iPseudoWave < numberPseudoWaveFunctions;
@@ -362,19 +358,19 @@ namespace dftfe
       return Fnl;
     }
 
-    Tensor<1, C_DIM, VectorizedArray<double>>
+    Tensor<1, 3, VectorizedArray<double>>
     getFnl(const std::vector<std::vector<VectorizedArray<double>>> &zetaDeltaV,
-           const std::vector<Tensor<1, C_DIM, VectorizedArray<double>>>
+           const std::vector<Tensor<1, 3, VectorizedArray<double>>>
              &projectorKetTimesPsiTimesVTimesPartOccContractionGradPsi,
            const std::vector<bool> &        isAtomInCell,
            const std::vector<unsigned int> &nonlocalPseudoWfcsAccum)
     {
-      Tensor<1, C_DIM, VectorizedArray<double>> zeroTensor;
-      for (unsigned int idim = 0; idim < C_DIM; idim++)
+      Tensor<1, 3, VectorizedArray<double>> zeroTensor;
+      for (unsigned int idim = 0; idim < 3; idim++)
         zeroTensor[idim] = make_vectorized_array(0.0);
 
-      Tensor<1, C_DIM, VectorizedArray<double>> Fnl = zeroTensor;
-      VectorizedArray<double> four = make_vectorized_array(4.0);
+      Tensor<1, 3, VectorizedArray<double>> Fnl  = zeroTensor;
+      VectorizedArray<double>               four = make_vectorized_array(4.0);
 
       for (unsigned int iAtomNonLocal = 0; iAtomNonLocal < zetaDeltaV.size();
            ++iAtomNonLocal)
@@ -387,7 +383,7 @@ namespace dftfe
           const std::vector<VectorizedArray<double>> &zetaDeltaVAtom =
             zetaDeltaV[iAtomNonLocal];
 
-          Tensor<1, C_DIM, VectorizedArray<double>> tempF = zeroTensor;
+          Tensor<1, 3, VectorizedArray<double>> tempF = zeroTensor;
           for (unsigned int iPseudoWave = 0;
                iPseudoWave < numberPseudoWaveFunctions;
                ++iPseudoWave)
@@ -399,18 +395,18 @@ namespace dftfe
       return Fnl;
     }
 
-    Tensor<1, C_DIM, VectorizedArray<double>>
+    Tensor<1, 3, VectorizedArray<double>>
     getFnlAtom(const std::vector<VectorizedArray<double>> &zetaDeltaV,
-               const std::vector<Tensor<1, C_DIM, VectorizedArray<double>>>
+               const std::vector<Tensor<1, 3, VectorizedArray<double>>>
                  &projectorKetTimesPsiTimesVTimesPartOccContractionGradPsi,
                const unsigned int startingId)
     {
-      Tensor<1, C_DIM, VectorizedArray<double>> zeroTensor;
-      for (unsigned int idim = 0; idim < C_DIM; idim++)
+      Tensor<1, 3, VectorizedArray<double>> zeroTensor;
+      for (unsigned int idim = 0; idim < 3; idim++)
         zeroTensor[idim] = make_vectorized_array(0.0);
 
-      Tensor<1, C_DIM, VectorizedArray<double>> F = zeroTensor;
-      VectorizedArray<double> four                = make_vectorized_array(4.0);
+      Tensor<1, 3, VectorizedArray<double>> F    = zeroTensor;
+      VectorizedArray<double>               four = make_vectorized_array(4.0);
 
 
       const unsigned int numberPseudoWaveFunctions = zetaDeltaV.size();
@@ -425,17 +421,16 @@ namespace dftfe
       return F;
     }
 
-    Tensor<1, C_DIM, VectorizedArray<double>>
-    getFPSPLocal(
-      const VectorizedArray<double>                    rho,
-      const Tensor<1, C_DIM, VectorizedArray<double>> &gradPseudoVLoc,
-      const Tensor<1, C_DIM, VectorizedArray<double>> &gradPhiExt)
+    Tensor<1, 3, VectorizedArray<double>>
+    getFPSPLocal(const VectorizedArray<double>                rho,
+                 const Tensor<1, 3, VectorizedArray<double>> &gradPseudoVLoc,
+                 const Tensor<1, 3, VectorizedArray<double>> &gradPhiExt)
 
     {
       return rho * (gradPseudoVLoc - gradPhiExt);
     }
 
-    Tensor<1, C_DIM, VectorizedArray<double>>
+    Tensor<1, 3, VectorizedArray<double>>
     getFnlAtom(
       const std::vector<
         std::vector<std::vector<Tensor<1, 2, VectorizedArray<double>>>>>
@@ -444,20 +439,20 @@ namespace dftfe
         &projectorKetTimesPsiTimesVTimesPartOcc,
       std::vector<Tensor<1, 2, VectorizedArray<double>>>::const_iterator
         psiBegin,
-      std::vector<Tensor<1, 2, Tensor<1, C_DIM, VectorizedArray<double>>>>::
+      std::vector<Tensor<1, 2, Tensor<1, 3, VectorizedArray<double>>>>::
         const_iterator           gradPsiBegin,
       const std::vector<double> &kPointWeights,
       const std::vector<double> &kPointCoordinates,
       const unsigned int         numBlockedEigenvectors)
     {
-      Tensor<1, C_DIM, VectorizedArray<double>>                          F;
+      Tensor<1, 3, VectorizedArray<double>>                              F;
       std::vector<Tensor<1, 2, VectorizedArray<double>>>::const_iterator it1 =
         psiBegin;
-      std::vector<Tensor<1, 2, Tensor<1, C_DIM, VectorizedArray<double>>>>::
-        const_iterator        it2        = gradPsiBegin;
-      VectorizedArray<double> four       = make_vectorized_array(4.0);
-      const int               numKPoints = kPointWeights.size();
-      Tensor<1, C_DIM, VectorizedArray<double>> kcoord;
+      std::vector<Tensor<1, 2, Tensor<1, 3, VectorizedArray<double>>>>::
+        const_iterator                      it2  = gradPsiBegin;
+      VectorizedArray<double>               four = make_vectorized_array(4.0);
+      const int                             numKPoints = kPointWeights.size();
+      Tensor<1, 3, VectorizedArray<double>> kcoord;
       for (unsigned int ik = 0; ik < numKPoints; ++ik)
         {
           kcoord[0] = make_vectorized_array(kPointCoordinates[ik * 3 + 0]);
@@ -467,7 +462,7 @@ namespace dftfe
                ++it1, ++it2, ++eigenIndex)
             {
               const Tensor<1, 2, VectorizedArray<double>> &psi = *it1;
-              const Tensor<1, 2, Tensor<1, C_DIM, VectorizedArray<double>>>
+              const Tensor<1, 2, Tensor<1, 3, VectorizedArray<double>>>
                 &                     gradPsi = *it2;
               VectorizedArray<double> fnk =
                 make_vectorized_array(kPointWeights[ik]);
@@ -509,16 +504,16 @@ namespace dftfe
       return F;
     }
 
-    Tensor<1, C_DIM, VectorizedArray<double>>
+    Tensor<1, 3, VectorizedArray<double>>
     getNonSelfConsistentForce(
-      const VectorizedArray<double> &                  vEffRhoIn,
-      const VectorizedArray<double> &                  vEffRhoOut,
-      const Tensor<1, C_DIM, VectorizedArray<double>> &gradRhoOut,
-      const Tensor<1, C_DIM, VectorizedArray<double>>
+      const VectorizedArray<double> &              vEffRhoIn,
+      const VectorizedArray<double> &              vEffRhoOut,
+      const Tensor<1, 3, VectorizedArray<double>> &gradRhoOut,
+      const Tensor<1, 3, VectorizedArray<double>>
         &derExchCorrEnergyWithGradRhoIn,
-      const Tensor<1, C_DIM, VectorizedArray<double>>
+      const Tensor<1, 3, VectorizedArray<double>>
         &derExchCorrEnergyWithGradRhoOut,
-      const Tensor<2, C_DIM, VectorizedArray<double>> &hessianRhoOut)
+      const Tensor<2, 3, VectorizedArray<double>> &hessianRhoOut)
     {
       return (vEffRhoOut - vEffRhoIn) * gradRhoOut +
              (derExchCorrEnergyWithGradRhoOut -
@@ -527,10 +522,10 @@ namespace dftfe
     }
 
 
-    Tensor<2, C_DIM, VectorizedArray<double>> getEKStress(
+    Tensor<2, 3, VectorizedArray<double>> getEKStress(
       std::vector<Tensor<1, 2, VectorizedArray<double>>>::const_iterator
         psiBegin,
-      std::vector<Tensor<1, 2, Tensor<1, C_DIM, VectorizedArray<double>>>>::
+      std::vector<Tensor<1, 2, Tensor<1, 3, VectorizedArray<double>>>>::
         const_iterator                        gradPsiBegin,
       const std::vector<double> &             kPointCoordinates,
       const std::vector<double> &             kPointWeights,
@@ -538,10 +533,10 @@ namespace dftfe
       const double                            fermiEnergy_,
       const double                            tVal)
     {
-      Tensor<2, C_DIM, VectorizedArray<double>> eshelbyTensor;
-      for (unsigned int idim = 0; idim < C_DIM; idim++)
+      Tensor<2, 3, VectorizedArray<double>> eshelbyTensor;
+      for (unsigned int idim = 0; idim < 3; idim++)
         {
-          for (unsigned int jdim = 0; jdim < C_DIM; jdim++)
+          for (unsigned int jdim = 0; jdim < 3; jdim++)
             {
               eshelbyTensor[idim][jdim] = make_vectorized_array(0.0);
             }
@@ -549,23 +544,20 @@ namespace dftfe
 
       std::vector<Tensor<1, 2, VectorizedArray<double>>>::const_iterator it1 =
         psiBegin;
-      std::vector<Tensor<1, 2, Tensor<1, C_DIM, VectorizedArray<double>>>>::
+      std::vector<Tensor<1, 2, Tensor<1, 3, VectorizedArray<double>>>>::
         const_iterator it2 = gradPsiBegin;
 
-      Tensor<1, C_DIM, VectorizedArray<double>> kPointCoord;
+      Tensor<1, 3, VectorizedArray<double>> kPointCoord;
       for (unsigned int ik = 0; ik < eigenValues_.size(); ++ik)
         {
-          kPointCoord[0] =
-            make_vectorized_array(kPointCoordinates[ik * C_DIM + 0]);
-          kPointCoord[1] =
-            make_vectorized_array(kPointCoordinates[ik * C_DIM + 1]);
-          kPointCoord[2] =
-            make_vectorized_array(kPointCoordinates[ik * C_DIM + 2]);
+          kPointCoord[0] = make_vectorized_array(kPointCoordinates[ik * 3 + 0]);
+          kPointCoord[1] = make_vectorized_array(kPointCoordinates[ik * 3 + 1]);
+          kPointCoord[2] = make_vectorized_array(kPointCoordinates[ik * 3 + 2]);
           for (unsigned int eigenIndex = 0; eigenIndex < eigenValues_[0].size();
                ++it1, ++it2, ++eigenIndex)
             {
               const Tensor<1, 2, VectorizedArray<double>> &psi = *it1;
-              const Tensor<1, 2, Tensor<1, C_DIM, VectorizedArray<double>>>
+              const Tensor<1, 2, Tensor<1, 3, VectorizedArray<double>>>
                 &          gradPsi = *it2;
               const double partOcc = dftUtils::getPartialOccupancy(
                 eigenValues_[ik][eigenIndex], fermiEnergy_, C_kb, tVal);
@@ -583,24 +575,24 @@ namespace dftfe
     }
 
     // for complex mode
-    Tensor<2, C_DIM, VectorizedArray<double>>
+    Tensor<2, 3, VectorizedArray<double>>
     getEnlStress(
       const std::vector<std::vector<
-        std::vector<Tensor<1, 2, Tensor<1, C_DIM, VectorizedArray<double>>>>>>
+        std::vector<Tensor<1, 2, Tensor<1, 3, VectorizedArray<double>>>>>>
         &zetalmDeltaVlProductDistImageAtoms,
       const std::vector<std::vector<std::vector<std::complex<double>>>>
         &projectorKetTimesPsiTimesVTimesPartOcc,
       std::vector<Tensor<1, 2, VectorizedArray<double>>>::const_iterator
         psiBegin,
-      std::vector<Tensor<1, 2, Tensor<1, C_DIM, VectorizedArray<double>>>>::
+      std::vector<Tensor<1, 2, Tensor<1, 3, VectorizedArray<double>>>>::
         const_iterator                 gradPsiBegin,
       const std::vector<double> &      kPointWeights,
       const std::vector<double> &      kPointCoordinates,
       const std::vector<unsigned int> &nonlocalAtomsCompactSupportList,
       const unsigned int               numBlockedEigenvectors)
     {
-      Tensor<2, C_DIM, VectorizedArray<double>> E;
-      VectorizedArray<double> four = make_vectorized_array(4.0);
+      Tensor<2, 3, VectorizedArray<double>> E;
+      VectorizedArray<double>               four = make_vectorized_array(4.0);
 
       for (unsigned int iAtomNonLocal = 0;
            iAtomNonLocal < zetalmDeltaVlProductDistImageAtoms.size();
@@ -624,17 +616,17 @@ namespace dftfe
 
           std::vector<Tensor<1, 2, VectorizedArray<double>>>::const_iterator
             it1 = psiBegin;
-          std::vector<Tensor<1, 2, Tensor<1, C_DIM, VectorizedArray<double>>>>::
-            const_iterator                          it2 = gradPsiBegin;
-          Tensor<1, C_DIM, VectorizedArray<double>> kPointCoord;
+          std::vector<Tensor<1, 2, Tensor<1, 3, VectorizedArray<double>>>>::
+            const_iterator                      it2 = gradPsiBegin;
+          Tensor<1, 3, VectorizedArray<double>> kPointCoord;
           for (unsigned int ik = 0; ik < numKPoints; ++ik)
             {
               kPointCoord[0] =
-                make_vectorized_array(kPointCoordinates[ik * C_DIM + 0]);
+                make_vectorized_array(kPointCoordinates[ik * 3 + 0]);
               kPointCoord[1] =
-                make_vectorized_array(kPointCoordinates[ik * C_DIM + 1]);
+                make_vectorized_array(kPointCoordinates[ik * 3 + 1]);
               kPointCoord[2] =
-                make_vectorized_array(kPointCoordinates[ik * C_DIM + 2]);
+                make_vectorized_array(kPointCoordinates[ik * 3 + 2]);
               VectorizedArray<double> fnk =
                 make_vectorized_array(kPointWeights[ik]);
               for (unsigned int eigenIndex = 0;
@@ -642,7 +634,7 @@ namespace dftfe
                    ++it1, ++it2, ++eigenIndex)
                 {
                   const Tensor<1, 2, VectorizedArray<double>> &psi = *it1;
-                  const Tensor<1, 2, Tensor<1, C_DIM, VectorizedArray<double>>>
+                  const Tensor<1, 2, Tensor<1, 3, VectorizedArray<double>>>
                     &gradPsi = *it2;
                   for (unsigned int iPseudoWave = 0;
                        iPseudoWave < numberPseudoWaveFunctions;
@@ -658,10 +650,10 @@ namespace dftfe
                           [ik][iAtomNonLocal]
                           [numberPseudoWaveFunctions * eigenIndex + iPseudoWave]
                             .imag());
-                      Tensor<1, C_DIM, VectorizedArray<double>> zdvR =
+                      Tensor<1, 3, VectorizedArray<double>> zdvR =
                         zetalmDeltaVlProductDistImageAtoms[iAtomNonLocal]
                                                           [iPseudoWave][ik][0];
-                      Tensor<1, C_DIM, VectorizedArray<double>> zdvI =
+                      Tensor<1, 3, VectorizedArray<double>> zdvI =
                         zetalmDeltaVlProductDistImageAtoms[iAtomNonLocal]
                                                           [iPseudoWave][ik][1];
                       E -= four * fnk *
@@ -683,20 +675,20 @@ namespace dftfe
     }
 
     // for real mode
-    Tensor<2, C_DIM, VectorizedArray<double>>
+    Tensor<2, 3, VectorizedArray<double>>
     getEnlStress(
-      const std::vector<std::vector<Tensor<1, C_DIM, VectorizedArray<double>>>>
+      const std::vector<std::vector<Tensor<1, 3, VectorizedArray<double>>>>
         &zetalmDeltaVlProductDistImageAtoms,
       const std::vector<std::vector<std::vector<double>>>
         &projectorKetTimesPsiTimesVTimesPartOcc,
       std::vector<VectorizedArray<double>>::const_iterator psiBegin,
-      std::vector<Tensor<1, C_DIM, VectorizedArray<double>>>::const_iterator
+      std::vector<Tensor<1, 3, VectorizedArray<double>>>::const_iterator
                                        gradPsiBegin,
       const std::vector<unsigned int> &nonlocalAtomsCompactSupportList,
       const unsigned int               numBlockedEigenvectors)
     {
-      Tensor<2, C_DIM, VectorizedArray<double>> E;
-      VectorizedArray<double> four = make_vectorized_array(4.0);
+      Tensor<2, 3, VectorizedArray<double>> E;
+      VectorizedArray<double>               four = make_vectorized_array(4.0);
 
       for (unsigned int iAtomNonLocal = 0;
            iAtomNonLocal < zetalmDeltaVlProductDistImageAtoms.size();
@@ -718,13 +710,13 @@ namespace dftfe
             zetalmDeltaVlProductDistImageAtoms[iAtomNonLocal].size();
 
           std::vector<VectorizedArray<double>>::const_iterator it1 = psiBegin;
-          std::vector<Tensor<1, C_DIM, VectorizedArray<double>>>::const_iterator
+          std::vector<Tensor<1, 3, VectorizedArray<double>>>::const_iterator
             it2 = gradPsiBegin;
           for (unsigned int eigenIndex = 0; eigenIndex < numBlockedEigenvectors;
                ++it1, ++it2, ++eigenIndex)
             {
-              const VectorizedArray<double> &                  psi     = *it1;
-              const Tensor<1, C_DIM, VectorizedArray<double>> &gradPsi = *it2;
+              const VectorizedArray<double> &              psi     = *it1;
+              const Tensor<1, 3, VectorizedArray<double>> &gradPsi = *it2;
               for (unsigned int iPseudoWave = 0;
                    iPseudoWave < numberPseudoWaveFunctions;
                    ++iPseudoWave)
@@ -733,7 +725,7 @@ namespace dftfe
                     projectorKetTimesPsiTimesVTimesPartOcc
                       [0][iAtomNonLocal]
                       [numberPseudoWaveFunctions * eigenIndex + iPseudoWave]);
-                  Tensor<1, C_DIM, VectorizedArray<double>> zdvR =
+                  Tensor<1, 3, VectorizedArray<double>> zdvR =
                     zetalmDeltaVlProductDistImageAtoms[iAtomNonLocal]
                                                       [iPseudoWave];
                   E -= four * outer_product(gradPsi, zdvR) * CReal;
@@ -744,23 +736,23 @@ namespace dftfe
     }
 
     // for real mode
-    Tensor<2, C_DIM, VectorizedArray<double>>
+    Tensor<2, 3, VectorizedArray<double>>
     getEnlStress(
-      const std::vector<std::vector<Tensor<1, C_DIM, VectorizedArray<double>>>>
+      const std::vector<std::vector<Tensor<1, 3, VectorizedArray<double>>>>
         &zetalmDeltaVlProductDistImageAtoms,
-      const std::vector<Tensor<1, C_DIM, VectorizedArray<double>>>
+      const std::vector<Tensor<1, 3, VectorizedArray<double>>>
         &projectorKetTimesPsiTimesVTimesPartOccContractionGradPsi,
       const std::vector<bool> &        isAtomInCell,
       const std::vector<unsigned int> &nonlocalPseudoWfcsAccum)
     {
-      Tensor<2, C_DIM, VectorizedArray<double>> zeroTensor;
-      VectorizedArray<double> four = make_vectorized_array(4.0);
+      Tensor<2, 3, VectorizedArray<double>> zeroTensor;
+      VectorizedArray<double>               four = make_vectorized_array(4.0);
 
-      for (unsigned int idim = 0; idim < C_DIM; idim++)
-        for (unsigned int jdim = 0; jdim < C_DIM; jdim++)
+      for (unsigned int idim = 0; idim < 3; idim++)
+        for (unsigned int jdim = 0; jdim < 3; jdim++)
           zeroTensor[idim][jdim] = make_vectorized_array(0.0);
 
-      Tensor<2, C_DIM, VectorizedArray<double>> E = zeroTensor;
+      Tensor<2, 3, VectorizedArray<double>> E = zeroTensor;
 
       for (unsigned int iAtomNonLocal = 0;
            iAtomNonLocal < zetalmDeltaVlProductDistImageAtoms.size();
@@ -771,11 +763,11 @@ namespace dftfe
 
           const int numberPseudoWaveFunctions =
             zetalmDeltaVlProductDistImageAtoms[iAtomNonLocal].size();
-          const std::vector<Tensor<1, C_DIM, VectorizedArray<double>>>
+          const std::vector<Tensor<1, 3, VectorizedArray<double>>>
             &zetalmDeltaVlProductDistAtom =
               zetalmDeltaVlProductDistImageAtoms[iAtomNonLocal];
 
-          Tensor<2, C_DIM, VectorizedArray<double>> tempE = zeroTensor;
+          Tensor<2, 3, VectorizedArray<double>> tempE = zeroTensor;
           for (unsigned int iPseudoWave = 0;
                iPseudoWave < numberPseudoWaveFunctions;
                ++iPseudoWave)
@@ -789,27 +781,27 @@ namespace dftfe
     }
 
 
-    Tensor<1, C_DIM, VectorizedArray<double>>
+    Tensor<1, 3, VectorizedArray<double>>
     getFNonlinearCoreCorrection(
-      const VectorizedArray<double> &                  vxc,
-      const Tensor<1, C_DIM, VectorizedArray<double>> &gradRhoCore)
+      const VectorizedArray<double> &              vxc,
+      const Tensor<1, 3, VectorizedArray<double>> &gradRhoCore)
 
     {
       return vxc * gradRhoCore;
     }
 
 
-    Tensor<1, C_DIM, VectorizedArray<double>>
+    Tensor<1, 3, VectorizedArray<double>>
     getFNonlinearCoreCorrection(
-      const Tensor<1, C_DIM, VectorizedArray<double>> &derExcGradRho,
-      const Tensor<2, C_DIM, VectorizedArray<double>> &hessianRhoCore)
+      const Tensor<1, 3, VectorizedArray<double>> &derExcGradRho,
+      const Tensor<2, 3, VectorizedArray<double>> &hessianRhoCore)
 
     {
-      Tensor<1, C_DIM, VectorizedArray<double>> temp;
-      for (unsigned int i = 0; i < C_DIM; i++)
+      Tensor<1, 3, VectorizedArray<double>> temp;
+      for (unsigned int i = 0; i < 3; i++)
         {
           temp[i] = make_vectorized_array(0.0);
-          for (unsigned int j = 0; j < C_DIM; j++)
+          for (unsigned int j = 0; j < 3; j++)
             temp[i] += derExcGradRho[j] * hessianRhoCore[j][i];
         }
 

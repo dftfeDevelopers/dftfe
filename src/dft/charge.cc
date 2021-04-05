@@ -141,7 +141,7 @@ dftClass<FEOrder, FEOrderElectro>::totalCharge(
   const dealii::MatrixFree<3, double> &matrixFreeDataObject,
   const distributedCPUVec<double> &    nodalField)
 {
-  FEEvaluation<C_DIM,
+  FEEvaluation<3,
                C_rhoNodalPolyOrder<FEOrder, FEOrderElectro>(),
                C_num1DQuad<C_rhoNodalPolyOrder<FEOrder, FEOrderElectro>()>(),
                1,
@@ -234,7 +234,7 @@ dftClass<FEOrder, FEOrderElectro>::rhofieldl2Norm(
   const unsigned int                   quadratureId)
 
 {
-  FEEvaluation<C_DIM,
+  FEEvaluation<3,
                C_rhoNodalPolyOrder<FEOrder, FEOrderElectro>(),
                C_num1DQuad<C_rhoNodalPolyOrder<FEOrder, FEOrderElectro>()>(),
                1,

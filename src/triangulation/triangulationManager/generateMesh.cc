@@ -853,8 +853,8 @@ namespace dftfe
           offsetVectors[periodicDirectionVector[i]]);
       }
 
-    DoFTools::make_periodicity_constraints<DoFHandler<C_DIM>>(
-      periodicity_vector, constraints);
+    DoFTools::make_periodicity_constraints<DoFHandler<3>>(periodicity_vector,
+                                                          constraints);
     constraints.close();
 
     IndexSet locally_active_dofs_debug;
