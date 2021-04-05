@@ -3762,7 +3762,8 @@ namespace dftfe
 #ifdef DFTFE_WITH_GPU
           if (dftParameters::useGPU)
             kohnShamDFTEigenOperatorCUDA
-              .preComputeShapeFunctionGradientIntegrals(d_lpspQuadratureId);
+              .preComputeShapeFunctionGradientIntegrals(d_lpspQuadratureId,
+                                                        true);
 #endif
 
           computing_timer.enter_section(
@@ -3812,7 +3813,8 @@ namespace dftfe
 #ifdef DFTFE_WITH_GPU
           if (dftParameters::useGPU)
             kohnShamDFTEigenOperatorCUDA
-              .preComputeShapeFunctionGradientIntegrals(d_lpspQuadratureId);
+              .preComputeShapeFunctionGradientIntegrals(d_lpspQuadratureId,
+                                                        true);
 #endif
 
           computing_timer.enter_section(
@@ -3862,7 +3864,7 @@ namespace dftfe
 #ifdef DFTFE_WITH_GPU
     if (dftParameters::useGPU)
       kohnShamDFTEigenOperatorCUDA.preComputeShapeFunctionGradientIntegrals(
-        d_lpspQuadratureId);
+        d_lpspQuadratureId, true);
 #endif
   }
 

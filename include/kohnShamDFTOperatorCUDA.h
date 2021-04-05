@@ -562,7 +562,8 @@ namespace dftfe
     /// precompute shapefunction gradient integral
     void
     preComputeShapeFunctionGradientIntegrals(
-      const unsigned int lpspQuadratureId);
+      const unsigned int lpspQuadratureId,
+      const bool         onlyUpdateGradNiNjIntegral = false);
 
 
     void
