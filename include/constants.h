@@ -66,7 +66,7 @@ namespace dftfe
   constexpr unsigned int
   C_numCopies1DQuadSmearedChargeStress()
   {
-    return 4;
+    return 5;
   }
 
 #ifdef DFTFE_WITH_HIGHERQUAD_PSP
