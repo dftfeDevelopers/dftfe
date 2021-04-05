@@ -954,7 +954,7 @@ namespace dftfe
     MPI_Barrier(MPI_COMM_WORLD);
     double time = MPI_Wtime();
 
-    if (!isVselfPerturbationSolve)
+    if (isVselfPerturbationSolve)
       {
         for (unsigned int iBin = 0; iBin < numberBins; ++iBin)
           {

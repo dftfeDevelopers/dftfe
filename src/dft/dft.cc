@@ -3759,6 +3759,12 @@ namespace dftfe
                        true,
                        dftParameters::verbosity >= 4 ? true : false);
 
+#ifdef DFTFE_WITH_GPU
+          if (dftParameters::useGPU)
+            kohnShamDFTEigenOperatorCUDA
+              .preComputeShapeFunctionGradientIntegrals(d_lpspQuadratureId);
+#endif
+
           computing_timer.enter_section(
             "Nuclear self-potential perturbation solve");
 
@@ -3803,6 +3809,11 @@ namespace dftfe
                        true,
                        dftParameters::verbosity >= 4 ? true : false);
 
+#ifdef DFTFE_WITH_GPU
+          if (dftParameters::useGPU)
+            kohnShamDFTEigenOperatorCUDA
+              .preComputeShapeFunctionGradientIntegrals(d_lpspQuadratureId);
+#endif
 
           computing_timer.enter_section(
             "Nuclear self-potential perturbation solve");
@@ -3847,6 +3858,12 @@ namespace dftfe
     deformDomain(invert(deformationGradientPerturb2),
                  true,
                  dftParameters::verbosity >= 4 ? true : false);
+
+#ifdef DFTFE_WITH_GPU
+    if (dftParameters::useGPU)
+      kohnShamDFTEigenOperatorCUDA.preComputeShapeFunctionGradientIntegrals(
+        d_lpspQuadratureId);
+#endif
   }
 
   // Output wfc
