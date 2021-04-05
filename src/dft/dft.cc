@@ -290,7 +290,7 @@ namespace dftfe
         }
 
     domainVolume = Utilities::MPI::sum(domainVolume, mpi_communicator);
-    if (dftParameters::verbosity >= 1)
+    if (dftParameters::verbosity >= 2)
       pcout << "Volume of the domain (Bohr^3): " << domainVolume << std::endl;
     return domainVolume;
   }
@@ -767,7 +767,7 @@ namespace dftfe
 
         MPI_Barrier(MPI_COMM_WORLD);
         init_core = MPI_Wtime() - init_core;
-        if (dftParameters::verbosity >= 1)
+        if (dftParameters::verbosity >= 2)
           pcout
             << "initPseudoPotentialAll: Time taken for initializing core density for non-linear core correction: "
             << init_core << std::endl;
@@ -783,7 +783,7 @@ namespace dftfe
 
             MPI_Barrier(MPI_COMM_WORLD);
             init_nonlocal1 = MPI_Wtime() - init_nonlocal1;
-            if (dftParameters::verbosity >= 1)
+            if (dftParameters::verbosity >= 2)
               pcout
                 << "initPseudoPotentialAll: Time taken for computeSparseStructureNonLocalProjectors_OV: "
                 << init_nonlocal1 << std::endl;
@@ -800,7 +800,7 @@ namespace dftfe
 
         MPI_Barrier(MPI_COMM_WORLD);
         init_nonlocal2 = MPI_Wtime() - init_nonlocal2;
-        if (dftParameters::verbosity >= 1)
+        if (dftParameters::verbosity >= 2)
           pcout << "initPseudoPotentialAll: Time taken for non local psp init: "
                 << init_nonlocal2 << std::endl;
       }
@@ -1152,8 +1152,7 @@ namespace dftfe
   dftClass<FEOrder, FEOrderElectro>::initNoRemesh(
     const bool updateImagesAndKPointsAndVselfBins,
     const bool checkSmearedChargeWidthsForOverlap,
-    const bool useSingleAtomSolutionOverride,
-    const bool onlyUpdateDofHandlerBcs)
+    const bool useSingleAtomSolutionOverride)
   {
     computingTimerStandard.enter_section("KSDFT problem initialization");
     if (updateImagesAndKPointsAndVselfBins)
@@ -1189,109 +1188,106 @@ namespace dftfe
 
     MPI_Barrier(MPI_COMM_WORLD);
     init_bc = MPI_Wtime() - init_bc;
-    if (dftParameters::verbosity >= 1)
+    if (dftParameters::verbosity >= 2)
       pcout
         << "updateAtomPositionsAndMoveMesh: Time taken for initBoundaryConditions: "
         << init_bc << std::endl;
 
-    if (!onlyUpdateDofHandlerBcs)
-      {
-        double init_rho;
-        MPI_Barrier(MPI_COMM_WORLD);
-        init_rho = MPI_Wtime();
+    double init_rho;
+    MPI_Barrier(MPI_COMM_WORLD);
+    init_rho = MPI_Wtime();
 
-        if (useSingleAtomSolutionOverride)
+    if (useSingleAtomSolutionOverride)
+      {
+        readPSI();
+        initRho();
+      }
+    else
+      {
+        //
+        // rho init (use previous ground state electron density)
+        //
+        // if(dftParameters::mixingMethod != "ANDERSON_WITH_KERKER")
+        //   solveNoSCF();
+
+        if (!dftParameters::reuseWfcGeoOpt)
+          readPSI();
+
+        noRemeshRhoDataInit();
+
+        if (dftParameters::reuseDensityGeoOpt >= 1)
           {
-            readPSI();
-            initRho();
+            if (dftParameters::reuseDensityGeoOpt == 2 &&
+                dftParameters::spinPolarized != 1)
+              {
+                d_rhoOutNodalValuesSplit.add(
+                  -totalCharge(d_matrixFreeDataPRefined,
+                               d_rhoOutNodalValuesSplit) /
+                  d_domainVolume);
+
+                initAtomicRho();
+
+                interpolateRhoNodalDataToQuadratureDataGeneral(
+                  d_matrixFreeDataPRefined,
+                  d_densityDofHandlerIndexElectro,
+                  d_densityQuadratureIdElectro,
+                  d_rhoOutNodalValuesSplit,
+                  *(rhoInValues),
+                  *(gradRhoInValues),
+                  *(gradRhoInValues),
+                  dftParameters::xcFamilyType == "GGA");
+
+                addAtomicRhoQuadValuesGradients(*(rhoInValues),
+                                                *(gradRhoInValues),
+                                                dftParameters::xcFamilyType ==
+                                                  "GGA");
+
+                normalizeRhoInQuadValues();
+
+                l2ProjectionQuadToNodal(d_matrixFreeDataPRefined,
+                                        d_constraintsRhoNodal,
+                                        d_densityDofHandlerIndexElectro,
+                                        d_densityQuadratureIdElectro,
+                                        *rhoInValues,
+                                        d_rhoInNodalValues);
+
+                d_rhoInNodalValues.update_ghost_values();
+              }
           }
         else
           {
-            //
-            // rho init (use previous ground state electron density)
-            //
-            // if(dftParameters::mixingMethod != "ANDERSON_WITH_KERKER")
-            //   solveNoSCF();
-
-            if (!dftParameters::reuseWfcGeoOpt)
-              readPSI();
-
-            noRemeshRhoDataInit();
-
-            if (dftParameters::reuseDensityGeoOpt >= 1)
-              {
-                if (dftParameters::reuseDensityGeoOpt == 2 &&
-                    dftParameters::spinPolarized != 1)
-                  {
-                    d_rhoOutNodalValuesSplit.add(
-                      -totalCharge(d_matrixFreeDataPRefined,
-                                   d_rhoOutNodalValuesSplit) /
-                      d_domainVolume);
-
-                    initAtomicRho();
-
-                    interpolateRhoNodalDataToQuadratureDataGeneral(
-                      d_matrixFreeDataPRefined,
-                      d_densityDofHandlerIndexElectro,
-                      d_densityQuadratureIdElectro,
-                      d_rhoOutNodalValuesSplit,
-                      *(rhoInValues),
-                      *(gradRhoInValues),
-                      *(gradRhoInValues),
-                      dftParameters::xcFamilyType == "GGA");
-
-                    addAtomicRhoQuadValuesGradients(
-                      *(rhoInValues),
-                      *(gradRhoInValues),
-                      dftParameters::xcFamilyType == "GGA");
-
-                    normalizeRhoInQuadValues();
-
-                    l2ProjectionQuadToNodal(d_matrixFreeDataPRefined,
-                                            d_constraintsRhoNodal,
-                                            d_densityDofHandlerIndexElectro,
-                                            d_densityQuadratureIdElectro,
-                                            *rhoInValues,
-                                            d_rhoInNodalValues);
-
-                    d_rhoInNodalValues.update_ghost_values();
-                  }
-              }
-            else
-              {
-                initRho();
-              }
+            initRho();
           }
-
-        MPI_Barrier(MPI_COMM_WORLD);
-        init_rho = MPI_Wtime() - init_rho;
-        if (dftParameters::verbosity >= 1)
-          pcout << "updateAtomPositionsAndMoveMesh: Time taken for initRho: "
-                << init_rho << std::endl;
-
-        //
-        // reinitialize pseudopotential related data structures
-        //
-        double init_pseudo;
-        MPI_Barrier(MPI_COMM_WORLD);
-        init_pseudo = MPI_Wtime();
-
-        initPseudoPotentialAll(dftParameters::floatingNuclearCharges ? true :
-                                                                       false);
-
-        MPI_Barrier(MPI_COMM_WORLD);
-        init_pseudo = MPI_Wtime() - init_pseudo;
-        if (dftParameters::verbosity >= 1)
-          pcout << "Time taken for initPseudoPotentialAll: " << init_pseudo
-                << std::endl;
-
-        d_isFirstFilteringCall.clear();
-        d_isFirstFilteringCall.resize((dftParameters::spinPolarized + 1) *
-                                        d_kPointWeights.size(),
-                                      true);
-
-        initializeKohnShamDFTOperator();
       }
+
+    MPI_Barrier(MPI_COMM_WORLD);
+    init_rho = MPI_Wtime() - init_rho;
+    if (dftParameters::verbosity >= 2)
+      pcout << "updateAtomPositionsAndMoveMesh: Time taken for initRho: "
+            << init_rho << std::endl;
+
+    //
+    // reinitialize pseudopotential related data structures
+    //
+    double init_pseudo;
+    MPI_Barrier(MPI_COMM_WORLD);
+    init_pseudo = MPI_Wtime();
+
+    initPseudoPotentialAll(dftParameters::floatingNuclearCharges ? true :
+                                                                   false);
+
+    MPI_Barrier(MPI_COMM_WORLD);
+    init_pseudo = MPI_Wtime() - init_pseudo;
+    if (dftParameters::verbosity >= 2)
+      pcout << "Time taken for initPseudoPotentialAll: " << init_pseudo
+            << std::endl;
+
+    d_isFirstFilteringCall.clear();
+    d_isFirstFilteringCall.resize((dftParameters::spinPolarized + 1) *
+                                    d_kPointWeights.size(),
+                                  true);
+
+    initializeKohnShamDFTOperator();
 
     computingTimerStandard.exit_section("KSDFT problem initialization");
   }
@@ -1303,8 +1299,8 @@ namespace dftfe
   void
   dftClass<FEOrder, FEOrderElectro>::deformDomain(
     const Tensor<2, 3, double> &deformationGradient,
-    const bool                  checkSmearedChargeWidthsForOverlap,
-    const bool                  onlyUpdateDofHandlerBcs)
+    const bool                  onlyUpdateDofHandlerBcs,
+    const bool                  print)
   {
     d_affineTransformMesh.initMoved(d_domainBoundingVectors);
     d_affineTransformMesh.transform(deformationGradient);
@@ -1312,21 +1308,25 @@ namespace dftfe
     dftUtils::transformDomainBoundingVectors(d_domainBoundingVectors,
                                              deformationGradient);
 
-    pcout
-      << "-----------Simulation Domain bounding vectors (lattice vectors in fully periodic case)-------------"
-      << std::endl;
-    for (int i = 0; i < d_domainBoundingVectors.size(); ++i)
+    if (print)
       {
-        pcout << "v" << i + 1 << " : " << d_domainBoundingVectors[i][0] << " "
-              << d_domainBoundingVectors[i][1] << " "
-              << d_domainBoundingVectors[i][2] << std::endl;
+        pcout
+          << "-----------Simulation Domain bounding vectors (lattice vectors in fully periodic case)-------------"
+          << std::endl;
+        for (int i = 0; i < d_domainBoundingVectors.size(); ++i)
+          {
+            pcout << "v" << i + 1 << " : " << d_domainBoundingVectors[i][0]
+                  << " " << d_domainBoundingVectors[i][1] << " "
+                  << d_domainBoundingVectors[i][2] << std::endl;
+          }
+        pcout
+          << "-----------------------------------------------------------------------------------------"
+          << std::endl;
       }
-    pcout
-      << "-----------------------------------------------------------------------------------------"
-      << std::endl;
 
 #ifdef USE_COMPLEX
-    recomputeKPointCoordinates();
+    if (!onlyUpdateDofHandlerBcs)
+      recomputeKPointCoordinates();
 #endif
 
     // update atomic and image positions without any wrapping across periodic
@@ -1368,17 +1368,22 @@ namespace dftfe
         imageDisplacementsTrunc[iImage] = imageCoor - atomCoor;
       }
 
-    pcout << "-----Fractional coordinates of atoms------ " << std::endl;
     for (unsigned int i = 0; i < atomLocations.size(); ++i)
+      atomLocations[i] = atomLocationsFractional[i];
+
+    if (print)
       {
-        atomLocations[i] = atomLocationsFractional[i];
-        pcout << "AtomId " << i << ":  " << atomLocationsFractional[i][2] << " "
-              << atomLocationsFractional[i][3] << " "
-              << atomLocationsFractional[i][4] << "\n";
+        pcout << "-----Fractional coordinates of atoms------ " << std::endl;
+        for (unsigned int i = 0; i < atomLocations.size(); ++i)
+          {
+            pcout << "AtomId " << i << ":  " << atomLocationsFractional[i][2]
+                  << " " << atomLocationsFractional[i][3] << " "
+                  << atomLocationsFractional[i][4] << "\n";
+          }
+        pcout
+          << "-----------------------------------------------------------------------------------------"
+          << std::endl;
       }
-    pcout
-      << "-----------------------------------------------------------------------------------------"
-      << std::endl;
 
     internaldft::convertToCellCenteredCartesianCoordinates(
       atomLocations, d_domainBoundingVectors);
@@ -1424,11 +1429,31 @@ namespace dftfe
           atomCoor[2] + imageDisplacementsTrunc[iImage][2];
       }
 
+    if (onlyUpdateDofHandlerBcs)
+      {
+        //
+        // reinitialize dirichlet BCs for total potential and vSelf poisson
+        // solutions
+        //
+        double init_bc;
+        MPI_Barrier(MPI_COMM_WORLD);
+        init_bc = MPI_Wtime();
 
-    initNoRemesh(false,
-                 checkSmearedChargeWidthsForOverlap,
-                 false,
-                 onlyUpdateDofHandlerBcs);
+
+        // true option only updates the boundary conditions
+        initBoundaryConditions(true);
+
+        MPI_Barrier(MPI_COMM_WORLD);
+        init_bc = MPI_Wtime() - init_bc;
+        if (dftParameters::verbosity >= 2)
+          pcout
+            << "updateAtomPositionsAndMoveMesh: Time taken for initBoundaryConditions: "
+            << init_bc << std::endl;
+      }
+    else
+      {
+        initNoRemesh(false, true, false);
+      }
   }
 
 
@@ -1745,7 +1770,7 @@ namespace dftfe
 
     MPI_Barrier(MPI_COMM_WORLD);
     init_ksoperator = MPI_Wtime() - init_ksoperator;
-    if (dftParameters::verbosity >= 1)
+    if (dftParameters::verbosity >= 2)
       pcout << "init: Time taken for kohnShamDFTOperator class initialization: "
             << init_ksoperator << std::endl;
   }
@@ -3731,8 +3756,8 @@ namespace dftfe
 
           deformDomain(deformationGradientPerturb1 *
                          invert(deformationGradientPerturb2),
-                       false,
-                       true);
+                       true,
+                       dftParameters::verbosity >= 4 ? true : false);
 
           computing_timer.enter_section(
             "Nuclear self-potential perturbation solve");
@@ -3775,8 +3800,8 @@ namespace dftfe
 
           deformDomain(deformationGradientPerturb2 *
                          invert(deformationGradientPerturb1),
-                       false,
-                       true);
+                       true,
+                       dftParameters::verbosity >= 4 ? true : false);
 
 
           computing_timer.enter_section(
@@ -3819,7 +3844,9 @@ namespace dftfe
         }
 
     // reset
-    deformDomain(invert(deformationGradientPerturb2), false, true);
+    deformDomain(invert(deformationGradientPerturb2),
+                 true,
+                 dftParameters::verbosity >= 4 ? true : false);
   }
 
   // Output wfc

@@ -37,19 +37,22 @@ dftClass<FEOrder, FEOrderElectro>::initBoundaryConditions(
   dofHandler.distribute_dofs(FE);
   dofHandlerEigen.distribute_dofs(FEEigen);
 
-  pcout << std::endl << "Finite element mesh information" << std::endl;
-  pcout << "-------------------------------------------------" << std::endl;
-  pcout
-    << "FE interpolating polynomial order for Kohn-Sham eigenvalue problem: "
-    << FEOrder << "\n"
-    << "FE interpolating polynomial order for electrostatics solve: "
-    << FEOrderElectro << "\n"
-    << "FE interpolating polynomial order for nodal electron density computation: "
-    << C_rhoNodalPolyOrder<FEOrder, FEOrderElectro>() << "\n"
-    << "number of elements: "
-    << dofHandler.get_triangulation().n_global_active_cells() << "\n"
-    << "number of degrees of freedom for the Kohn-Sham eigenvalue problem : "
-    << dofHandler.n_dofs() << std::endl;
+  if (!meshOnlyDeformed)
+    {
+      pcout << std::endl << "Finite element mesh information" << std::endl;
+      pcout << "-------------------------------------------------" << std::endl;
+      pcout
+        << "FE interpolating polynomial order for Kohn-Sham eigenvalue problem: "
+        << FEOrder << "\n"
+        << "FE interpolating polynomial order for electrostatics solve: "
+        << FEOrderElectro << "\n"
+        << "FE interpolating polynomial order for nodal electron density computation: "
+        << C_rhoNodalPolyOrder<FEOrder, FEOrderElectro>() << "\n"
+        << "number of elements: "
+        << dofHandler.get_triangulation().n_global_active_cells() << "\n"
+        << "number of degrees of freedom for the Kohn-Sham eigenvalue problem : "
+        << dofHandler.n_dofs() << std::endl;
+    }
 
   double minElemLength = 1e+6;
   for (const auto &cell :
@@ -60,11 +63,13 @@ dftClass<FEOrder, FEOrderElectro>::initBoundaryConditions(
 
   minElemLength = Utilities::MPI::min(minElemLength, mpi_communicator);
 
-  if (dftParameters::verbosity >= 1)
+  if (dftParameters::verbosity >= 2 || !meshOnlyDeformed)
     pcout << "Minimum mesh size: " << minElemLength << std::endl;
-  pcout << "-------------------------------------------------" << std::endl;
 
-  if (dftParameters::verbosity >= 1)
+  if (!meshOnlyDeformed)
+    pcout << "-------------------------------------------------" << std::endl;
+
+  if (dftParameters::verbosity >= 1 && !meshOnlyDeformed)
     {
       pcout
         << std::endl
@@ -112,7 +117,7 @@ dftClass<FEOrder, FEOrderElectro>::initBoundaryConditions(
         << std::endl;
     }
 
-  if (dofHandler.n_dofs() > 15000)
+  if (dofHandler.n_dofs() > 15000 && !meshOnlyDeformed)
     {
       if (dofHandler.n_dofs() / n_mpi_processes < 4000 &&
           dftParameters::verbosity >= 1)
@@ -138,7 +143,7 @@ dftClass<FEOrder, FEOrderElectro>::initBoundaryConditions(
 
   MPI_Barrier(MPI_COMM_WORLD);
   init_dofhandlerobjs = MPI_Wtime() - init_dofhandlerobjs;
-  if (dftParameters::verbosity >= 1)
+  if (dftParameters::verbosity >= 4)
     pcout
       << "initBoundaryConditions: Time taken for creating dofhandler related objects: "
       << init_dofhandlerobjs << std::endl;
@@ -232,7 +237,7 @@ dftClass<FEOrder, FEOrderElectro>::initBoundaryConditions(
 
   MPI_Barrier(MPI_COMM_WORLD);
   init_force = MPI_Wtime() - init_force;
-  if (dftParameters::verbosity >= 1)
+  if (dftParameters::verbosity >= 4)
     pcout << "initBoundaryConditions: Time taken for force init moved: "
           << init_force << std::endl;
 
@@ -248,7 +253,7 @@ dftClass<FEOrder, FEOrderElectro>::initBoundaryConditions(
 
   MPI_Barrier(MPI_COMM_WORLD);
   init_mf = MPI_Wtime() - init_mf;
-  if (dftParameters::verbosity >= 1)
+  if (dftParameters::verbosity >= 4)
     pcout << "initBoundaryConditions: Time taken for matrix free reinit: "
           << init_mf << std::endl;
 
@@ -271,7 +276,7 @@ dftClass<FEOrder, FEOrderElectro>::initBoundaryConditions(
 
   MPI_Barrier(MPI_COMM_WORLD);
   init_pref = MPI_Wtime() - init_pref;
-  if (dftParameters::verbosity >= 1)
+  if (dftParameters::verbosity >= 4)
     pcout << "initBoundaryConditions: Time taken for initpRefinedObjects: "
           << init_pref << std::endl;
 

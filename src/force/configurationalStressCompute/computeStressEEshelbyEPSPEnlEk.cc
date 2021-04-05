@@ -1868,7 +1868,8 @@ forceClass<FEOrder, FEOrderElectro>::computeStressEEshelbyEElectroPhiTot(
       phiTotEvalElectro.read_dof_values_plain(phiTotRhoOutElectro);
       phiTotEvalElectro.evaluate(true, true);
 
-      if (dftParameters::smearedNuclearCharges)
+      if (dftParameters::smearedNuclearCharges &&
+          nonTrivialSmearedChargeAtomImageIdsMacroCell.size() > 0)
         {
           forceEvalSmearedCharge.reinit(cell);
           phiTotEvalSmearedCharge.reinit(cell);
@@ -1898,7 +1899,6 @@ forceClass<FEOrder, FEOrderElectro>::computeStressEEshelbyEElectroPhiTot(
                 gradPhiTotSmearedChargeQuads.end(),
                 zeroTensor);
 
-      double sum = 0.0;
       for (unsigned int iSubCell = 0; iSubCell < numSubCells; ++iSubCell)
         {
           subCellPtr = matrixFreeDataElectro.get_cell_iterator(cell, iSubCell);
@@ -1930,14 +1930,14 @@ forceClass<FEOrder, FEOrderElectro>::computeStressEEshelbyEElectroPhiTot(
                 }
             }
 
-          if (dftParameters::smearedNuclearCharges)
+          if (dftParameters::smearedNuclearCharges &&
+              nonTrivialSmearedChargeAtomImageIdsMacroCell.size() > 0)
             {
               const std::vector<double> &bQuadValuesCell =
                 dftPtr->d_bQuadValuesAllAtoms.find(subCellId)->second;
               for (unsigned int q = 0; q < numQuadPointsSmearedb; ++q)
                 {
                   smearedbQuads[q][iSubCell] = bQuadValuesCell[q];
-                  sum += bQuadValuesCell[q];
                 }
             }
         }
@@ -1992,7 +1992,8 @@ forceClass<FEOrder, FEOrderElectro>::computeStressEEshelbyEElectroPhiTot(
           for (unsigned int jdim = 0; jdim < C_DIM; ++jdim)
             d_stress[idim][jdim] += EQuadSum[idim][jdim][iSubCell];
 
-      if (dftParameters::smearedNuclearCharges && std::abs(sum) > 1e-9)
+      if (dftParameters::smearedNuclearCharges &&
+          nonTrivialSmearedChargeAtomImageIdsMacroCell.size() > 0)
         {
           for (unsigned int q = 0; q < numQuadPointsSmearedb; ++q)
             {

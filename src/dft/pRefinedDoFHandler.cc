@@ -288,7 +288,7 @@ dftClass<FEOrder, FEOrderElectro>::initpRefinedObjects(
 
   MPI_Barrier(MPI_COMM_WORLD);
   init_bins = MPI_Wtime() - init_bins;
-  if (dftParameters::verbosity >= 1)
+  if (dftParameters::verbosity >= 4)
     pcout
       << "updateAtomPositionsAndMoveMesh: initBoundaryConditions: Time taken for bins update: "
       << init_bins << std::endl;

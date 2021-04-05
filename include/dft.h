@@ -161,8 +161,7 @@ namespace dftfe
     void
     initNoRemesh(const bool updateImagesAndKPointsAndVselfBins = true,
                  const bool checkSmearedChargeWidthsForOverlap = true,
-                 const bool useSingleAtomSolutionOverride      = false,
-                 const bool onlyUpdateDofHandlerBcs            = false);
+                 const bool useSingleAtomSolutionOverride      = false);
 
     /**
      * @brief Selects between only electronic field relaxation or combined electronic and geometry relaxation
@@ -857,8 +856,8 @@ namespace dftfe
      */
     void
     deformDomain(const Tensor<2, 3, double> &deformationGradient,
-                 const bool checkSmearedChargeWidthsForOverlap = true,
-                 const bool onlyUpdateDofHandlerBcs            = false);
+                 const bool                  onlyUpdateDofHandlerBcs = false,
+                 const bool                  print                   = true);
 
     /**
      *@brief Computes inner Product and Y = alpha*X + Y for complex vectors used during
