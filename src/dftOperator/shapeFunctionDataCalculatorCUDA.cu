@@ -295,7 +295,7 @@ kohnShamDFTOperatorCUDAClass<FEOrder, FEOrderElectro>::
           << gpu_time << std::endl;
     }
 
-  if (!onlyUpdateGradNiNjIntegralElectro)
+  if (!onlyUpdateGradNiNjIntegral)
     {
       //
       // get FE data
