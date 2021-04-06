@@ -63,7 +63,7 @@ dftClass<FEOrder, FEOrderElectro>::initBoundaryConditions(
 
   minElemLength = Utilities::MPI::min(minElemLength, mpi_communicator);
 
-  if (dftParameters::verbosity >= 2 || !meshOnlyDeformed)
+  if ((dftParameters::verbosity >= 1 && !meshOnlyDeformed) || (dftParameters::verbosity >= 2 && meshOnlyDeformed))
     pcout << "Minimum mesh size: " << minElemLength << std::endl;
 
   if (!meshOnlyDeformed)
