@@ -77,6 +77,37 @@ namespace dftfe
       std::vector<double> smearedNuclearChargeIntegral(numberTotalAtomsInBin,
                                                        0.0);
 
+      dealii::QGauss<3>   quadratureForSparsity(6);
+      dealii::FEValues<3> fe_values_sparsity(FETemp,
+                                             quadratureForSparsity,
+                                             dealii::update_quadrature_points);
+      const unsigned int  numberQuadraturePointsSparsity =
+        quadratureForSparsity.size();
+
+      std::map<dealii::CellId, std::vector<double>>
+        cellIteratorSparsityQuadPointsMap;
+
+      for (; cell != endc; ++cell)
+        if (cell->is_locally_owned())
+          {
+            fe_values_sparsity.reinit(cell);
+            std::vector<double> &temp1 =
+              cellIteratorSparsityQuadPointsMap[cell->id()];
+            temp1.resize(numberQuadraturePointsSparsity * 3);
+            for (unsigned int q_point = 0;
+                 q_point < numberQuadraturePointsSparsity;
+                 ++q_point)
+              {
+                temp1[3 * q_point + 0] =
+                  fe_values_sparsity.quadrature_point(q_point)[0];
+                temp1[3 * q_point + 1] =
+                  fe_values_sparsity.quadrature_point(q_point)[1];
+                temp1[3 * q_point + 2] =
+                  fe_values_sparsity.quadrature_point(q_point)[2];
+              }
+          }
+
+      cell = dofHandlerOfField.begin_active();
       std::map<dealii::CellId, std::vector<unsigned int>>
         cellNonTrivialIdsBinMap;
       for (; cell != endc; ++cell)
@@ -85,6 +116,7 @@ namespace dftfe
             std::vector<unsigned int> &nonTrivialIdsBin =
               cellNonTrivialIdsBinMap[cell->id()];
             const dealii::Point<3> &cellCenter = cell->center();
+            dealii::Point<3>        quadCoord;
             for (unsigned int iatom = 0; iatom < numberTotalAtomsInBin; ++iatom)
               {
                 const dealii::Point<3> &atomLocation = atomLocations[iatom];
@@ -100,7 +132,7 @@ namespace dftfe
                     imageIdToDomainAtomIdMapCurrentBin[iatom -
                                                        numberDomainAtomsInBin];
                 const double cutoff =
-                  rc[binAtomIdToGlobalAtomIdMapCurrentBin[atomId]] + 0.5;
+                  rc[binAtomIdToGlobalAtomIdMapCurrentBin[atomId]] + 0.2;
 
                 bool isAtomTrivial = true;
                 if (distFromCellCenter < cutoff)
@@ -111,28 +143,19 @@ namespace dftfe
 
                 if (isAtomTrivial)
                   {
-                    for (unsigned int ivertex = 0; ivertex < vertices_per_cell;
-                         ++ivertex)
+                    std::vector<double> &temp =
+                      cellIteratorSparsityQuadPointsMap[cell->id()];
+                    for (unsigned int q_point = 0;
+                         q_point < numberQuadraturePointsSparsity;
+                         ++q_point)
                       {
-                        const dealii::Point<3> &vertexCoord =
-                          cell->vertex(ivertex);
-                        if (atomLocation.distance(vertexCoord) < cutoff)
+                        quadCoord[0] = temp[3 * q_point + 0];
+                        quadCoord[1] = temp[3 * q_point + 1];
+                        quadCoord[2] = temp[3 * q_point + 2];
+                        if (atomLocation.distance(quadCoord) < cutoff)
                           {
                             nonTrivialIdsBin.push_back(iatom);
                             isAtomTrivial = false;
-                            break;
-                          }
-                      }
-                  }
-
-                if (isAtomTrivial)
-                  {
-                    for (const auto &face : cell->face_iterators())
-                      {
-                        const auto faceCenter = face->center();
-                        if (atomLocation.distance(faceCenter) < cutoff)
-                          {
-                            nonTrivialIdsBin.push_back(iatom);
                             break;
                           }
                       }
