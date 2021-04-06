@@ -51,19 +51,33 @@ namespace dftfe
     return 2;
   }
 
-  /// 1d quad rule smeared nuclear charge if cell stress calculation is on
-  /// or if a very coarse FE mesh is used (e.g. softer pseudopotentials)
+  /// 1d quad rule smeared nuclear charge
+  /// if a very coarse FE mesh is used (e.g. softer pseudopotentials)
   constexpr unsigned int
   C_num1DQuadSmearedChargeHigh()
   {
     return 10;
   }
 
-  /// number of copies 1d quad rule smeared nuclear charge if cell stress
-  /// calculation is on or if a very coarse FE mesh is used (e.g. softer
-  /// pseudpotentials)
+  /// number of copies 1d quad rule smeared nuclear charge
+  /// if a very coarse FE mesh is used (e.g. softer pseudpotentials)
   constexpr unsigned int
   C_numCopies1DQuadSmearedChargeHigh()
+  {
+    return 3;
+  }
+
+  /// 1d quad rule smeared nuclear charge if cell stress calculation is on
+  constexpr unsigned int
+  C_num1DQuadSmearedChargeStress()
+  {
+    return 10;
+  }
+
+  /// number of copies 1d quad rule smeared nuclear charge if cell stress
+  /// calculation is on
+  constexpr unsigned int
+  C_numCopies1DQuadSmearedChargeStress()
   {
     return 5;
   }
