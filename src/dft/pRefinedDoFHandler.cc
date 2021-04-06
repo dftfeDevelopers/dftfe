@@ -182,14 +182,13 @@ dftClass<FEOrder, FEOrderElectro>::initpRefinedObjects(
   typename dealii::MatrixFree<3>::AdditionalData additional_data;
   additional_data.tasks_parallel_scheme =
     dealii::MatrixFree<3>::AdditionalData::partition_partition;
-  if (dftParameters::xcFamilyType == "GGA")
+  if (dftParameters::isCellStress)
     additional_data.mapping_update_flags = update_values | update_gradients |
                                            update_JxW_values |
                                            update_quadrature_points;
   else
-    additional_data.mapping_update_flags = update_values | update_gradients |
-                                           update_JxW_values |
-                                           update_quadrature_points;
+    additional_data.mapping_update_flags =
+      update_values | update_gradients | update_JxW_values;
 
   // clear existing constraints matrix vector
   d_constraintsVectorElectro.clear();
