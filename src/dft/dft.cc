@@ -1299,7 +1299,7 @@ namespace dftfe
   void
   dftClass<FEOrder, FEOrderElectro>::deformDomain(
     const Tensor<2, 3, double> &deformationGradient,
-    const bool                  onlyUpdateDofHandlerBcs,
+    const bool                  vselfPerturbationUpdateForStress,
     const bool                  print)
   {
     d_affineTransformMesh.initMoved(d_domainBoundingVectors);
@@ -1325,7 +1325,7 @@ namespace dftfe
       }
 
 #ifdef USE_COMPLEX
-    if (!onlyUpdateDofHandlerBcs)
+    if (!vselfPerturbationUpdateForStress)
       recomputeKPointCoordinates();
 #endif
 
@@ -1429,7 +1429,7 @@ namespace dftfe
           atomCoor[2] + imageDisplacementsTrunc[iImage][2];
       }
 
-    if (onlyUpdateDofHandlerBcs)
+    if (vselfPerturbationUpdateForStress)
       {
         //
         // reinitialize dirichlet BCs for total potential and vSelf poisson
@@ -1440,8 +1440,9 @@ namespace dftfe
         init_bc = MPI_Wtime();
 
 
-        // true option only updates the boundary conditions
-        initBoundaryConditions(true);
+        // first true option only updates the boundary conditions
+        // second true option signals update is only for vself perturbation
+        initBoundaryConditions(true, true);
 
         MPI_Barrier(MPI_COMM_WORLD);
         init_bc = MPI_Wtime() - init_bc;

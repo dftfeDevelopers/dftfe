@@ -411,7 +411,8 @@ namespace dftfe
     void initUnmovedTriangulation(
       parallel::distributed::Triangulation<3> &triangulation);
     void
-    initBoundaryConditions(const bool meshOnlyDeformed = false);
+    initBoundaryConditions(const bool meshOnlyDeformed                 = false,
+                           const bool vselfPerturbationUpdateForStress = false);
     void
     initElectronicFields();
     void
@@ -425,7 +426,8 @@ namespace dftfe
     void createpRefinedDofHandler(
       parallel::distributed::Triangulation<3> &triangulation);
     void
-    initpRefinedObjects(const bool meshOnlyDeformed);
+    initpRefinedObjects(const bool meshOnlyDeformed,
+                        const bool vselfPerturbationUpdateForStress = false);
 
     /**
      *@brief interpolate nodal data to quadrature data using FEEvaluation
@@ -856,8 +858,8 @@ namespace dftfe
      */
     void
     deformDomain(const Tensor<2, 3, double> &deformationGradient,
-                 const bool                  onlyUpdateDofHandlerBcs = false,
-                 const bool                  print                   = true);
+                 const bool vselfPerturbationUpdateForStress = false,
+                 const bool print                            = true);
 
     /**
      *@brief Computes inner Product and Y = alpha*X + Y for complex vectors used during

@@ -24,7 +24,8 @@
 template <unsigned int FEOrder, unsigned int FEOrderElectro>
 void
 dftClass<FEOrder, FEOrderElectro>::initBoundaryConditions(
-  const bool meshOnlyDeformed)
+  const bool meshOnlyDeformed,
+  const bool vselfPerturbationUpdateForStress)
 {
   TimerOutput::Scope scope(computing_timer, "moved setup");
 
@@ -63,7 +64,8 @@ dftClass<FEOrder, FEOrderElectro>::initBoundaryConditions(
 
   minElemLength = Utilities::MPI::min(minElemLength, mpi_communicator);
 
-  if ((dftParameters::verbosity >= 1 && !meshOnlyDeformed) || (dftParameters::verbosity >= 2 && meshOnlyDeformed))
+  if ((dftParameters::verbosity >= 1 && !meshOnlyDeformed) ||
+      (dftParameters::verbosity >= 2 && meshOnlyDeformed))
     pcout << "Minimum mesh size: " << minElemLength << std::endl;
 
   if (!meshOnlyDeformed)
@@ -271,7 +273,7 @@ dftClass<FEOrder, FEOrderElectro>::initBoundaryConditions(
   // init 2p matrix-free objects using appropriate constraint matrix and
   // quadrature rule
   //
-  initpRefinedObjects(meshOnlyDeformed);
+  initpRefinedObjects(meshOnlyDeformed, vselfPerturbationUpdateForStress);
 
 
   MPI_Barrier(MPI_COMM_WORLD);

@@ -96,7 +96,8 @@ namespace dftfe
       const std::vector<std::vector<double>> & atomLocations,
       const std::vector<std::vector<double>> & imagePositions,
       const std::vector<int> &                 imageIds,
-      const std::vector<double> &              imageCharges);
+      const std::vector<double> &              imageCharges,
+      const bool vselfPerturbationUpdateForStress = false);
 
 
     /**

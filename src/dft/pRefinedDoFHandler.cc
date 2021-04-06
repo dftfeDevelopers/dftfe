@@ -167,7 +167,8 @@ void dftClass<FEOrder, FEOrderElectro>::createpRefinedDofHandler(
 template <unsigned int FEOrder, unsigned int FEOrderElectro>
 void
 dftClass<FEOrder, FEOrderElectro>::initpRefinedObjects(
-  const bool meshOnlyDeformed)
+  const bool meshOnlyDeformed,
+  const bool vselfPerturbationUpdateForStress)
 {
   d_dofHandlerPRefined.distribute_dofs(d_dofHandlerPRefined.get_fe());
   d_dofHandlerRhoNodal.distribute_dofs(d_dofHandlerRhoNodal.get_fe());
@@ -264,7 +265,8 @@ dftClass<FEOrder, FEOrderElectro>::initpRefinedObjects(
                                       atomLocations,
                                       d_imagePositionsTrunc,
                                       d_imageIdsTrunc,
-                                      d_imageChargesTrunc);
+                                      d_imageChargesTrunc,
+                                      vselfPerturbationUpdateForStress);
       computing_timer.exit_section("Update atom bins bc");
     }
   else
