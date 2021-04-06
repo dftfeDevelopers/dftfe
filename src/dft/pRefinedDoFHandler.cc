@@ -335,10 +335,10 @@ dftClass<FEOrder, FEOrderElectro>::initpRefinedObjects(
     QGauss<1>(C_num1DQuad<C_rhoNodalPolyOrder<FEOrder, FEOrderElectro>()>()));
   quadratureVector.push_back(QIterated<1>(QGauss<1>(C_num1DQuadLPSP<FEOrder>()),
                                           C_numCopies1DQuadLPSP()));
-  if (dftParameters::isCellStress)
+  if (dftParameters::isCellStress || (dftParameters::meshSizeOuterBall > 2.2))
     quadratureVector.push_back(
-      QIterated<1>(QGauss<1>(C_num1DQuadSmearedChargeStress()),
-                   C_numCopies1DQuadSmearedChargeStress()));
+      QIterated<1>(QGauss<1>(C_num1DQuadSmearedChargeHigh()),
+                   C_numCopies1DQuadSmearedChargeHigh()));
   else
     quadratureVector.push_back(
       QIterated<1>(QGauss<1>(C_num1DQuadSmearedCharge()),
