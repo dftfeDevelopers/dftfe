@@ -1116,7 +1116,7 @@ dftClass<FEOrder, FEOrderElectro>::computeSparseStructureNonLocalProjectors_OV()
   // get FE data structures
   //
   dealii::FESystem<3> FETemp(dealii::FE_Q<3>(dealii::QGaussLobatto<1>(2)), 1);
-  QGauss<3>           quadrature(5);
+  QGauss<3>           quadrature(8);
   //FEValues<3> fe_values(FE, quadrature, update_values | update_gradients | update_JxW_values);
   FEValues<3>        fe_values(FETemp, quadrature, update_quadrature_points);
   const unsigned int numberQuadraturePoints = quadrature.size();

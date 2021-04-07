@@ -38,7 +38,7 @@ dftClass<FEOrder, FEOrderElectro>::initBoundaryConditions(
   dofHandler.distribute_dofs(FE);
   dofHandlerEigen.distribute_dofs(FEEigen);
 
-  if (!meshOnlyDeformed)
+  if (!vselfPerturbationUpdateForStress)
     {
       pcout << std::endl << "Finite element mesh information" << std::endl;
       pcout << "-------------------------------------------------" << std::endl;
@@ -64,11 +64,10 @@ dftClass<FEOrder, FEOrderElectro>::initBoundaryConditions(
 
   minElemLength = Utilities::MPI::min(minElemLength, mpi_communicator);
 
-  if ((dftParameters::verbosity >= 1 && !meshOnlyDeformed) ||
-      (dftParameters::verbosity >= 2 && meshOnlyDeformed))
+  if (dftParameters::verbosity >= 1 && !vselfPerturbationUpdateForStress)
     pcout << "Minimum mesh size: " << minElemLength << std::endl;
 
-  if (!meshOnlyDeformed)
+  if (!vselfPerturbationUpdateForStress)
     pcout << "-------------------------------------------------" << std::endl;
 
   if (dftParameters::verbosity >= 1 && !meshOnlyDeformed)

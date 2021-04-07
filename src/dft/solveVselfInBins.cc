@@ -45,6 +45,8 @@ namespace dftfe
       const std::vector<int> &             binAtomIdToGlobalAtomIdMapCurrentBin,
       const MPI_Comm &                     mpi_communicator,
       const std::vector<double> &          rc,
+      const std::map<dealii::CellId, std::pair<dealii::Point<3>, double>>
+                                                     enclosingBallCells,
       std::map<dealii::CellId, std::vector<double>> &bQuadValues,
       std::map<dealii::CellId, std::vector<int>> &   bQuadAtomIdsAllAtoms,
       std::map<dealii::CellId, std::vector<int>> &   bQuadAtomIdsAllAtomsImages,
@@ -77,36 +79,6 @@ namespace dftfe
       std::vector<double> smearedNuclearChargeIntegral(numberTotalAtomsInBin,
                                                        0.0);
 
-      dealii::QGauss<3>   quadratureForSparsity(6);
-      dealii::FEValues<3> fe_values_sparsity(FETemp,
-                                             quadratureForSparsity,
-                                             dealii::update_quadrature_points);
-      const unsigned int  numberQuadraturePointsSparsity =
-        quadratureForSparsity.size();
-
-      std::map<dealii::CellId, std::vector<double>>
-        cellIteratorSparsityQuadPointsMap;
-
-      for (; cell != endc; ++cell)
-        if (cell->is_locally_owned())
-          {
-            fe_values_sparsity.reinit(cell);
-            std::vector<double> &temp1 =
-              cellIteratorSparsityQuadPointsMap[cell->id()];
-            temp1.resize(numberQuadraturePointsSparsity * 3);
-            for (unsigned int q_point = 0;
-                 q_point < numberQuadraturePointsSparsity;
-                 ++q_point)
-              {
-                temp1[3 * q_point + 0] =
-                  fe_values_sparsity.quadrature_point(q_point)[0];
-                temp1[3 * q_point + 1] =
-                  fe_values_sparsity.quadrature_point(q_point)[1];
-                temp1[3 * q_point + 2] =
-                  fe_values_sparsity.quadrature_point(q_point)[2];
-              }
-          }
-
       cell = dofHandlerOfField.begin_active();
       std::map<dealii::CellId, std::vector<unsigned int>>
         cellNonTrivialIdsBinMap;
@@ -115,13 +87,16 @@ namespace dftfe
           {
             std::vector<unsigned int> &nonTrivialIdsBin =
               cellNonTrivialIdsBinMap[cell->id()];
-            const dealii::Point<3> &cellCenter = cell->center();
-            dealii::Point<3>        quadCoord;
+            const std::pair<dealii::Point<3>, double> &enclosingBallCell =
+              enclosingBallCells.find(cell->id())->second;
+            const dealii::Point<3> &enclosingBallCellCenter =
+              enclosingBallCell.first;
+            const double enclosingBallCellRadius = enclosingBallCell.second;
             for (unsigned int iatom = 0; iatom < numberTotalAtomsInBin; ++iatom)
               {
                 const dealii::Point<3> &atomLocation = atomLocations[iatom];
                 const double            distFromCellCenter =
-                  (cellCenter - atomLocation).norm();
+                  (enclosingBallCellCenter - atomLocation).norm();
 
                 if (distFromCellCenter > 10.0)
                   continue;
@@ -132,34 +107,10 @@ namespace dftfe
                     imageIdToDomainAtomIdMapCurrentBin[iatom -
                                                        numberDomainAtomsInBin];
                 const double cutoff =
-                  rc[binAtomIdToGlobalAtomIdMapCurrentBin[atomId]] + 0.2;
+                  rc[binAtomIdToGlobalAtomIdMapCurrentBin[atomId]];
 
-                bool isAtomTrivial = true;
-                if (distFromCellCenter < cutoff)
-                  {
-                    nonTrivialIdsBin.push_back(iatom);
-                    isAtomTrivial = false;
-                  }
-
-                if (isAtomTrivial)
-                  {
-                    std::vector<double> &temp =
-                      cellIteratorSparsityQuadPointsMap[cell->id()];
-                    for (unsigned int q_point = 0;
-                         q_point < numberQuadraturePointsSparsity;
-                         ++q_point)
-                      {
-                        quadCoord[0] = temp[3 * q_point + 0];
-                        quadCoord[1] = temp[3 * q_point + 1];
-                        quadCoord[2] = temp[3 * q_point + 2];
-                        if (atomLocation.distance(quadCoord) < cutoff)
-                          {
-                            nonTrivialIdsBin.push_back(iatom);
-                            isAtomTrivial = false;
-                            break;
-                          }
-                      }
-                  }
+                if (distFromCellCenter < (enclosingBallCellRadius + cutoff))
+                  nonTrivialIdsBin.push_back(iatom);
               }
           }
 
@@ -434,6 +385,10 @@ namespace dftfe
     dealii::DoFHandler<3>::active_cell_iterator cell =
                                                   dofHandler.begin_active(),
                                                 endc = dofHandler.end();
+
+    std::map<dealii::CellId, std::pair<dealii::Point<3>, double>>
+      enclosingBallCells;
+
     if (useSmearedCharges)
       {
         for (; cell != endc; ++cell)
@@ -442,6 +397,7 @@ namespace dftfe
               bQuadValuesAllAtoms[cell->id()].resize(n_q_points_sc, 0.0);
               bQuadAtomIdsAllAtoms[cell->id()].resize(n_q_points_sc, -1);
               bQuadAtomIdsAllAtomsImages[cell->id()].resize(n_q_points_sc, -1);
+              enclosingBallCells[cell->id()] = cell->enclosing_ball();
             }
 
         localVselfs.resize(1, std::vector<double>(1));
@@ -550,6 +506,7 @@ namespace dftfe
                                 atomsInCurrentBin,
                                 mpi_communicator,
                                 smearingWidths,
+                                enclosingBallCells,
                                 bQuadValuesBin,
                                 bQuadAtomIdsAllAtoms,
                                 bQuadAtomIdsAllAtomsImages,
@@ -915,6 +872,9 @@ namespace dftfe
     dealii::DoFHandler<3>::active_cell_iterator cell =
                                                   dofHandler.begin_active(),
                                                 endc = dofHandler.end();
+
+    std::map<dealii::CellId, std::pair<dealii::Point<3>, double>>
+      enclosingBallCells;
     if (useSmearedCharges)
       {
         for (; cell != endc; ++cell)
@@ -923,6 +883,7 @@ namespace dftfe
               bQuadValuesAllAtoms[cell->id()].resize(n_q_points_sc, 0.0);
               bQuadAtomIdsAllAtoms[cell->id()].resize(n_q_points_sc, -1);
               bQuadAtomIdsAllAtomsImages[cell->id()].resize(n_q_points_sc, -1);
+              enclosingBallCells[cell->id()] = cell->enclosing_ball();
             }
 
         localVselfs.resize(1, std::vector<double>(1));
@@ -1068,6 +1029,7 @@ namespace dftfe
                                 atomsInCurrentBin,
                                 mpi_communicator,
                                 smearingWidths,
+                                enclosingBallCells,
                                 bQuadValuesBins[iBin],
                                 bQuadAtomIdsAllAtoms,
                                 bQuadAtomIdsAllAtomsImages,
