@@ -1333,16 +1333,19 @@ namespace dftfe
             ->local_to_global(i);
         for (unsigned int iBin = 0; iBin < numberBins; ++iBin)
           {
-            if (d_vselfBinConstraintMatrices[4 * iBin]
-                  .is_inhomogeneously_constrained(globalNodeId) &&
+            if (std::abs(
+                  d_vselfBinConstraintMatrices[4 * iBin].get_inhomogeneity(
+                    globalNodeId)) > 1e-10 &&
                 d_vselfBinConstraintMatrices[4 * iBin]
                     .get_constraint_entries(globalNodeId)
                     ->size() == 0)
-              inhomoIdsColoredVecFlattened[i * numberPoissonSolves +
+              {
+                inhomoIdsColoredVecFlattened[i * numberPoissonSolves +
+                                             binStride * iBin] = 0.0;
+                if (i < localSize && isVselfPerturbationSolve)
+                  vselfBinsFieldsFlattened[numberPoissonSolves * i +
                                            binStride * iBin] = 0.0;
-            // if(
-            // d_vselfBinConstraintMatrices[iBin].is_inhomogeneously_constrained(globalNodeId))
-            //    inhomoIdsColoredVecFlattened[i*numberBins+iBin]=0.0;
+              }
           }
       }
 
@@ -1356,8 +1359,8 @@ namespace dftfe
                 ->local_to_global(i);
             for (unsigned int iBin = 0; iBin < numberBins; ++iBin)
               {
-                if (d_vselfBinConstraintMatrices[4 * iBin + idim + 1]
-                      .is_inhomogeneously_constrained(globalNodeId) &&
+                if (std::abs(d_vselfBinConstraintMatrices[4 * iBin + idim + 1]
+                               .get_inhomogeneity(globalNodeId)) > 1e-10 &&
                     d_vselfBinConstraintMatrices[4 * iBin + idim + 1]
                         .get_constraint_entries(globalNodeId)
                         ->size() == 0)
