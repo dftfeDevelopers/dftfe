@@ -1,6 +1,6 @@
 #!/bin/bash
 #SBATCH --qos=regular
-#SBATCH --time=00:10:00
+#SBATCH --time=00:15:00
 #SBATCH --nodes=1
 #SBATCH --ntasks=6
 #SBATCH --cpus-per-task=10
