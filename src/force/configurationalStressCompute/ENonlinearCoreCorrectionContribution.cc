@@ -24,11 +24,12 @@ void forceClass<FEOrder, FEOrderElectro>::
     FEEvaluation<3,
                  1,
                  C_num1DQuad<C_rhoNodalPolyOrder<FEOrder, FEOrderElectro>()>(),
-                 3> &                                         forceEval,
-    const MatrixFree<3, double> &                             matrixFreeData,
-    const unsigned int                                        cell,
-    const dealii::AlignedVector<VectorizedArray<double>> &    vxcQuads,
-    const std::vector<Tensor<1, 3, VectorizedArray<double>>> &derExcGradRho,
+                 3> &                                     forceEval,
+    const MatrixFree<3, double> &                         matrixFreeData,
+    const unsigned int                                    cell,
+    const dealii::AlignedVector<VectorizedArray<double>> &vxcQuads,
+    const dealii::AlignedVector<Tensor<1, 3, VectorizedArray<double>>>
+      &derExcGradRho,
     const std::map<unsigned int, std::map<dealii::CellId, std::vector<double>>>
       &gradRhoCoreAtoms,
     const std::map<unsigned int, std::map<dealii::CellId, std::vector<double>>>
@@ -50,15 +51,15 @@ void forceClass<FEOrder, FEOrderElectro>::
   const unsigned int numQuadPoints = forceEval.n_q_points;
   DoFHandler<3>::active_cell_iterator subCellPtr;
 
-  std::vector<Tensor<1, 3, VectorizedArray<double>>> xMinusAtomLoc(
+  dealii::AlignedVector<Tensor<1, 3, VectorizedArray<double>>> xMinusAtomLoc(
     numQuadPoints, zeroTensor1);
 
 
   for (unsigned int iAtom = 0; iAtom < totalNumberAtoms; iAtom++)
     {
-      std::vector<Tensor<1, 3, VectorizedArray<double>>> gradRhoCoreAtomsQuads(
-        numQuadPoints, zeroTensor1);
-      std::vector<Tensor<2, 3, VectorizedArray<double>>>
+      dealii::AlignedVector<Tensor<1, 3, VectorizedArray<double>>>
+        gradRhoCoreAtomsQuads(numQuadPoints, zeroTensor1);
+      dealii::AlignedVector<Tensor<2, 3, VectorizedArray<double>>>
         hessianRhoCoreAtomsQuads(numQuadPoints, zeroTensor2);
 
       double       atomCharge;
@@ -183,9 +184,9 @@ void forceClass<FEOrder, FEOrderElectro>::
     const unsigned int                                    cell,
     const dealii::AlignedVector<VectorizedArray<double>> &vxcQuadsSpin0,
     const dealii::AlignedVector<VectorizedArray<double>> &vxcQuadsSpin1,
-    const std::vector<Tensor<1, 3, VectorizedArray<double>>>
+    const dealii::AlignedVector<Tensor<1, 3, VectorizedArray<double>>>
       &derExcGradRhoSpin0,
-    const std::vector<Tensor<1, 3, VectorizedArray<double>>>
+    const dealii::AlignedVector<Tensor<1, 3, VectorizedArray<double>>>
       &derExcGradRhoSpin1,
     const std::map<unsigned int, std::map<dealii::CellId, std::vector<double>>>
       &gradRhoCoreAtoms,
@@ -209,15 +210,15 @@ void forceClass<FEOrder, FEOrderElectro>::
   const unsigned int numQuadPoints = forceEval.n_q_points;
   DoFHandler<3>::active_cell_iterator subCellPtr;
 
-  std::vector<Tensor<1, 3, VectorizedArray<double>>> xMinusAtomLoc(
+  dealii::AlignedVector<Tensor<1, 3, VectorizedArray<double>>> xMinusAtomLoc(
     numQuadPoints, zeroTensor1);
 
 
   for (unsigned int iAtom = 0; iAtom < totalNumberAtoms; iAtom++)
     {
-      std::vector<Tensor<1, 3, VectorizedArray<double>>> gradRhoCoreAtomsQuads(
-        numQuadPoints, zeroTensor1);
-      std::vector<Tensor<2, 3, VectorizedArray<double>>>
+      dealii::AlignedVector<Tensor<1, 3, VectorizedArray<double>>>
+        gradRhoCoreAtomsQuads(numQuadPoints, zeroTensor1);
+      dealii::AlignedVector<Tensor<2, 3, VectorizedArray<double>>>
         hessianRhoCoreAtomsQuads(numQuadPoints, zeroTensor2);
 
       double       atomCharge;

@@ -35,13 +35,13 @@ forceClass<FEOrder, FEOrderElectro>::
       &derVxcWithRhoTimesRhoDiffQuads,
     const std::map<unsigned int, std::map<dealii::CellId, std::vector<double>>>
       &gradRhoAtomsQuadsSeparate,
-    const std::vector<Tensor<2, 3, VectorizedArray<double>>>
+    const dealii::AlignedVector<Tensor<2, 3, VectorizedArray<double>>>
       &der2ExcWithGradRhoQuads,
-    const std::vector<Tensor<1, 3, VectorizedArray<double>>>
+    const dealii::AlignedVector<Tensor<1, 3, VectorizedArray<double>>>
       &derVxcWithGradRhoQuads,
     const dealii::AlignedVector<VectorizedArray<double>>
       &shadowKSRhoMinMinusRhoQuads,
-    const std::vector<Tensor<1, 3, VectorizedArray<double>>>
+    const dealii::AlignedVector<Tensor<1, 3, VectorizedArray<double>>>
       &shadowKSGradRhoMinMinusGradRhoQuads,
     const std::map<unsigned int, std::map<dealii::CellId, std::vector<double>>>
       &hessianRhoAtomsQuadsSeparate,
@@ -72,10 +72,10 @@ forceClass<FEOrder, FEOrderElectro>::
   if (isAtomicRhoSplitting)
     for (unsigned int iAtom = 0; iAtom < totalNumberAtoms; iAtom++)
       {
-        std::vector<Tensor<1, 3, VectorizedArray<double>>> gradRhoAtomQuads(
-          numQuadPoints, zeroTensor1);
-        std::vector<Tensor<2, 3, VectorizedArray<double>>> hessianRhoAtomQuads(
-          numQuadPoints, zeroTensor2);
+        dealii::AlignedVector<Tensor<1, 3, VectorizedArray<double>>>
+          gradRhoAtomQuads(numQuadPoints, zeroTensor1);
+        dealii::AlignedVector<Tensor<2, 3, VectorizedArray<double>>>
+          hessianRhoAtomQuads(numQuadPoints, zeroTensor2);
 
         unsigned int atomId = iAtom;
         if (iAtom >= numberGlobalAtoms)
@@ -200,9 +200,9 @@ forceClass<FEOrder, FEOrderElectro>::
   if (isNLCC)
     for (unsigned int iAtom = 0; iAtom < totalNumberAtoms; iAtom++)
       {
-        std::vector<Tensor<1, 3, VectorizedArray<double>>> gradRhoCoreAtomQuads(
-          numQuadPoints, zeroTensor1);
-        std::vector<Tensor<2, 3, VectorizedArray<double>>>
+        dealii::AlignedVector<Tensor<1, 3, VectorizedArray<double>>>
+          gradRhoCoreAtomQuads(numQuadPoints, zeroTensor1);
+        dealii::AlignedVector<Tensor<2, 3, VectorizedArray<double>>>
           hessianRhoCoreAtomQuads(numQuadPoints, zeroTensor2);
 
         unsigned int atomId = iAtom;
@@ -335,7 +335,7 @@ forceClass<FEOrder, FEOrderElectro>::
                  3> &            forceEval,
     const MatrixFree<3, double> &matrixFreeData,
     const unsigned int           cell,
-    const std::vector<Tensor<1, 3, VectorizedArray<double>>>
+    const dealii::AlignedVector<Tensor<1, 3, VectorizedArray<double>>>
       &gradPhiRhoMinusApproxRhoElectroQuads,
     const std::map<unsigned int, std::map<dealii::CellId, std::vector<double>>>
       &rhoAtomsQuadsSeparate)

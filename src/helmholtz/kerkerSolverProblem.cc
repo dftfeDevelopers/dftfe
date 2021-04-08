@@ -101,7 +101,7 @@ namespace dftfe
       zeroTensor[idim] = make_vectorized_array(0.0);
 
 
-    std::vector<dealii::Tensor<1, 3, dealii::VectorizedArray<double>>>
+    dealii::AlignedVector<dealii::Tensor<1, 3, dealii::VectorizedArray<double>>>
       residualGradQuads(fe_eval.n_q_points, zeroTensor);
     for (unsigned int macrocell = 0;
          macrocell < d_matrixFreeDataPRefinedPtr->n_macro_cells();

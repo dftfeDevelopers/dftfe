@@ -141,7 +141,7 @@ forceClass<FEOrder, FEOrderElectro>::computeConfigurationalForceEselfLinFE(
 
       dealii::AlignedVector<VectorizedArray<double>> smearedbQuads(
         numQuadPointsSmearedb, make_vectorized_array(0.0));
-      std::vector<Tensor<1, 3, VectorizedArray<double>>>
+      dealii::AlignedVector<Tensor<1, 3, VectorizedArray<double>>>
         gradVselfSmearedChargeQuads(numQuadPointsSmearedb, zeroTensor);
 
       std::map<unsigned int, std::vector<double>>

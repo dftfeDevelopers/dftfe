@@ -31,8 +31,9 @@ forceClass<FEOrder, FEOrderElectro>::FPSPLocalGammaAtomsElementalContribution(
   const MatrixFree<3, double> &matrixFreeData,
   const unsigned int           phiTotDofHandlerIndexElectro,
   const unsigned int           cell,
-  const dealii::AlignedVector<VectorizedArray<double>> &    rhoQuads,
-  const std::vector<Tensor<1, 3, VectorizedArray<double>>> &gradRhoQuads,
+  const dealii::AlignedVector<VectorizedArray<double>> &rhoQuads,
+  const dealii::AlignedVector<Tensor<1, 3, VectorizedArray<double>>>
+    &gradRhoQuads,
   const std::map<unsigned int, std::map<dealii::CellId, std::vector<double>>>
     &                                              pseudoVLocAtoms,
   const vselfBinsManager<FEOrder, FEOrderElectro> &vselfBinsManager,
@@ -58,16 +59,17 @@ forceClass<FEOrder, FEOrderElectro>::FPSPLocalGammaAtomsElementalContribution(
   const unsigned int faces_per_cell    = GeometryInfo<3>::faces_per_cell;
   const unsigned int numFaceQuadPoints = feFaceValues.get_quadrature().size();
 
-  std::vector<Tensor<1, 3, double>> surfaceIntegralSubcells(numSubCells);
-  std::vector<double>               rhoFaceQuads(numFaceQuadPoints);
+  dealii::AlignedVector<Tensor<1, 3, double>> surfaceIntegralSubcells(
+    numSubCells);
+  std::vector<double> rhoFaceQuads(numFaceQuadPoints);
   dealii::AlignedVector<VectorizedArray<double>> vselfQuads(
     numQuadPoints, make_vectorized_array(0.0));
   dealii::AlignedVector<VectorizedArray<double>> pseudoVLocAtomsQuads(
     numQuadPoints, make_vectorized_array(0.0));
-  std::vector<Tensor<1, 3, VectorizedArray<double>>> vselfDerRQuads(
+  dealii::AlignedVector<Tensor<1, 3, VectorizedArray<double>>> vselfDerRQuads(
     numQuadPoints, zeroTensor1);
-  std::vector<Tensor<1, 3, VectorizedArray<double>>> totalContribution(
-    numQuadPoints, zeroTensor1);
+  dealii::AlignedVector<Tensor<1, 3, VectorizedArray<double>>>
+                                             totalContribution(numQuadPoints, zeroTensor1);
   std::vector<std::vector<dealii::Point<3>>> quadPointsSubCells(
     numSubCells, std::vector<dealii::Point<3>>(numQuadPoints));
 
