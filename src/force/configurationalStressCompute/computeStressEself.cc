@@ -197,7 +197,7 @@ forceClass<FEOrder, FEOrderElectro>::computeStressEself(
             zeroTensor2[idim][jdim] = make_vectorized_array(0.0);
           }
 
-      std::vector<VectorizedArray<double>> smearedbQuads(
+      dealii::AlignedVector<VectorizedArray<double>> smearedbQuads(
         numQuadPointsSmearedb, make_vectorized_array(0.0));
       std::vector<Tensor<1, 3, VectorizedArray<double>>>
         gradVselfSmearedChargeQuads(numQuadPointsSmearedb, zeroTensor);

@@ -31,14 +31,16 @@ forceClass<FEOrder, FEOrderElectro>::
                  3> &            forceEval,
     const MatrixFree<3, double> &matrixFreeData,
     const unsigned int           cell,
-    const std::vector<VectorizedArray<double>> &derVxcWithRhoTimesRhoDiffQuads,
+    const dealii::AlignedVector<VectorizedArray<double>>
+      &derVxcWithRhoTimesRhoDiffQuads,
     const std::map<unsigned int, std::map<dealii::CellId, std::vector<double>>>
       &gradRhoAtomsQuadsSeparate,
     const std::vector<Tensor<2, 3, VectorizedArray<double>>>
       &der2ExcWithGradRhoQuads,
     const std::vector<Tensor<1, 3, VectorizedArray<double>>>
-      &                                         derVxcWithGradRhoQuads,
-    const std::vector<VectorizedArray<double>> &shadowKSRhoMinMinusRhoQuads,
+      &derVxcWithGradRhoQuads,
+    const dealii::AlignedVector<VectorizedArray<double>>
+      &shadowKSRhoMinMinusRhoQuads,
     const std::vector<Tensor<1, 3, VectorizedArray<double>>>
       &shadowKSGradRhoMinMinusGradRhoQuads,
     const std::map<unsigned int, std::map<dealii::CellId, std::vector<double>>>
@@ -350,7 +352,7 @@ forceClass<FEOrder, FEOrderElectro>::
 
   for (unsigned int iAtom = 0; iAtom < totalNumberAtoms; iAtom++)
     {
-      std::vector<VectorizedArray<double>> rhoAtomQuads(
+      dealii::AlignedVector<VectorizedArray<double>> rhoAtomQuads(
         numQuadPoints, make_vectorized_array(0.0));
 
       unsigned int atomId = iAtom;

@@ -174,8 +174,10 @@ namespace dftfe
 
     Tensor<2, 3, VectorizedArray<double>>
     getELocWfcEshelbyTensorNonPeriodic(
-      std::vector<VectorizedArray<double>>::const_iterator psiSpin0Begin,
-      std::vector<VectorizedArray<double>>::const_iterator psiSpin1Begin,
+      dealii::AlignedVector<VectorizedArray<double>>::const_iterator
+        psiSpin0Begin,
+      dealii::AlignedVector<VectorizedArray<double>>::const_iterator
+        psiSpin1Begin,
       std::vector<Tensor<1, 3, VectorizedArray<double>>>::const_iterator
         gradPsiSpin0Begin,
       std::vector<Tensor<1, 3, VectorizedArray<double>>>::const_iterator
@@ -193,11 +195,11 @@ namespace dftfe
 
       VectorizedArray<double> identityTensorFactor = make_vectorized_array(0.0);
 
-      std::vector<VectorizedArray<double>>::const_iterator it1Spin0 =
+      dealii::AlignedVector<VectorizedArray<double>>::const_iterator it1Spin0 =
         psiSpin0Begin;
       std::vector<Tensor<1, 3, VectorizedArray<double>>>::const_iterator
-                                                           it2Spin0 = gradPsiSpin0Begin;
-      std::vector<VectorizedArray<double>>::const_iterator it1Spin1 =
+                                                                     it2Spin0 = gradPsiSpin0Begin;
+      dealii::AlignedVector<VectorizedArray<double>>::const_iterator it1Spin1 =
         psiSpin1Begin;
       std::vector<Tensor<1, 3, VectorizedArray<double>>>::const_iterator
                          it2Spin1       = gradPsiSpin1Begin;
@@ -254,13 +256,16 @@ namespace dftfe
 
     Tensor<1, 3, VectorizedArray<double>>
     getFnlAtom(
-      const std::vector<std::vector<VectorizedArray<double>>> &zetaDeltaV,
+      const std::vector<dealii::AlignedVector<VectorizedArray<double>>>
+        &zetaDeltaV,
       const std::vector<std::vector<double>>
         &projectorKetTimesPsiSpin0TimesVTimesPartOcc,
       const std::vector<std::vector<double>>
         &projectorKetTimesPsiSpin1TimesVTimesPartOcc,
-      std::vector<VectorizedArray<double>>::const_iterator psiSpin0Begin,
-      std::vector<VectorizedArray<double>>::const_iterator psiSpin1Begin,
+      dealii::AlignedVector<VectorizedArray<double>>::const_iterator
+        psiSpin0Begin,
+      dealii::AlignedVector<VectorizedArray<double>>::const_iterator
+        psiSpin1Begin,
       std::vector<Tensor<1, 3, VectorizedArray<double>>>::const_iterator
         gradPsiSpin0Begin,
       std::vector<Tensor<1, 3, VectorizedArray<double>>>::const_iterator
@@ -714,8 +719,10 @@ namespace dftfe
         &projectorKetTimesPsiSpin0TimesVTimesPartOcc,
       const std::vector<std::vector<std::vector<double>>>
         &projectorKetTimesPsiSpin1TimesVTimesPartOcc,
-      std::vector<VectorizedArray<double>>::const_iterator psiSpin0Begin,
-      std::vector<VectorizedArray<double>>::const_iterator psiSpin1Begin,
+      dealii::AlignedVector<VectorizedArray<double>>::const_iterator
+        psiSpin0Begin,
+      dealii::AlignedVector<VectorizedArray<double>>::const_iterator
+        psiSpin1Begin,
       std::vector<Tensor<1, 3, VectorizedArray<double>>>::const_iterator
         gradPsiSpin0Begin,
       std::vector<Tensor<1, 3, VectorizedArray<double>>>::const_iterator
@@ -745,10 +752,10 @@ namespace dftfe
           const int numberPseudoWaveFunctions =
             zetalmDeltaVlProductDistImageAtoms[iAtomNonLocal].size();
 
-          std::vector<VectorizedArray<double>>::const_iterator it1Spin0 =
-            psiSpin0Begin;
-          std::vector<VectorizedArray<double>>::const_iterator it1Spin1 =
-            psiSpin1Begin;
+          dealii::AlignedVector<VectorizedArray<double>>::const_iterator
+            it1Spin0 = psiSpin0Begin;
+          dealii::AlignedVector<VectorizedArray<double>>::const_iterator
+            it1Spin1 = psiSpin1Begin;
           std::vector<Tensor<1, 3, VectorizedArray<double>>>::const_iterator
             it2Spin0 = gradPsiSpin0Begin;
           std::vector<Tensor<1, 3, VectorizedArray<double>>>::const_iterator
@@ -909,7 +916,8 @@ namespace dftfe
     }
 
     Tensor<1, 3, VectorizedArray<double>>
-    getFnl(const std::vector<std::vector<VectorizedArray<double>>> &zetaDeltaV,
+    getFnl(const std::vector<dealii::AlignedVector<VectorizedArray<double>>>
+             &zetaDeltaV,
            const std::vector<std::vector<double>>
              &projectorKetTimesPsiSpin0TimesVTimesPartOcc,
            const std::vector<std::vector<double>>
@@ -951,7 +959,7 @@ namespace dftfe
           const std::vector<double>
             &projectorKetTimesPsiSpin1TimesVTimesPartOccAtom =
               projectorKetTimesPsiSpin1TimesVTimesPartOcc[iAtomNonLocal];
-          const std::vector<VectorizedArray<double>> &zetaDeltaVAtom =
+          const dealii::AlignedVector<VectorizedArray<double>> &zetaDeltaVAtom =
             zetaDeltaV[iAtomNonLocal];
           Tensor<1, 3, VectorizedArray<double>> tempF = zeroTensor;
 

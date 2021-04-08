@@ -691,8 +691,9 @@ namespace dftfe
 
                 const unsigned int numQuadPointsSmearedb =
                   fe_eval_sc.n_q_points;
-                std::vector<dealii::VectorizedArray<double>> smearedbQuads(
-                  numQuadPointsSmearedb, dealii::make_vectorized_array(0.0));
+                dealii::AlignedVector<dealii::VectorizedArray<double>>
+                  smearedbQuads(numQuadPointsSmearedb,
+                                dealii::make_vectorized_array(0.0));
                 for (unsigned int macrocell = 0;
                      macrocell < matrix_free_data.n_macro_cells();
                      ++macrocell)
@@ -1097,8 +1098,9 @@ namespace dftfe
         if (useSmearedCharges)
           {
             const unsigned int numQuadPointsSmearedb = fe_eval_sc.n_q_points;
-            std::vector<dealii::VectorizedArray<double>> smearedbQuads(
-              numQuadPointsSmearedb, dealii::make_vectorized_array(0.0));
+            dealii::AlignedVector<dealii::VectorizedArray<double>>
+              smearedbQuads(numQuadPointsSmearedb,
+                            dealii::make_vectorized_array(0.0));
             for (unsigned int macrocell = 0;
                  macrocell < matrix_free_data.n_macro_cells();
                  ++macrocell)
@@ -1475,8 +1477,9 @@ namespace dftfe
 
                 const unsigned int numQuadPointsSmearedb =
                   fe_eval_sc.n_q_points;
-                std::vector<dealii::VectorizedArray<double>> smearedbQuads(
-                  numQuadPointsSmearedb, dealii::make_vectorized_array(0.0));
+                dealii::AlignedVector<dealii::VectorizedArray<double>>
+                  smearedbQuads(numQuadPointsSmearedb,
+                                dealii::make_vectorized_array(0.0));
                 for (unsigned int macrocell = 0;
                      macrocell < matrix_free_data.n_macro_cells();
                      ++macrocell)

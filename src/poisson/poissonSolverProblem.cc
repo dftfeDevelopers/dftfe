@@ -222,7 +222,7 @@ namespace dftfe
                           d_matrixFreeVectorComponent,
                           d_matrixFreeQuadratureComponentRhsDensity);
 
-        std::vector<dealii::VectorizedArray<double>> rhoQuads(
+        dealii::AlignedVector<dealii::VectorizedArray<double>> rhoQuads(
           fe_eval_density.n_q_points, dealii::make_vectorized_array(0.0));
         for (unsigned int macrocell = 0;
              macrocell < d_matrixFreeDataPtr->n_macro_cells();
@@ -284,7 +284,7 @@ namespace dftfe
 
         const unsigned int numQuadPointsSmearedb = fe_eval_sc.n_q_points;
 
-        std::vector<dealii::VectorizedArray<double>> smearedbQuads(
+        dealii::AlignedVector<dealii::VectorizedArray<double>> smearedbQuads(
           numQuadPointsSmearedb, dealii::make_vectorized_array(0.0));
         for (unsigned int macrocell = 0;
              macrocell < d_matrixFreeDataPtr->n_macro_cells();

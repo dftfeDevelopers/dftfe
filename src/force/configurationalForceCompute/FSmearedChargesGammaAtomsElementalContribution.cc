@@ -30,8 +30,8 @@ forceClass<FEOrder, FEOrderElectro>::
     const unsigned int           cell,
     const std::vector<Tensor<1, 3, VectorizedArray<double>>> &gradPhiTotQuads,
     const std::vector<unsigned int> &nonTrivialAtomIdsMacroCell,
-    const std::map<dealii::CellId, std::vector<int>> &bQuadAtomIdsAllAtoms,
-    const std::vector<VectorizedArray<double>> &      smearedbQuads)
+    const std::map<dealii::CellId, std::vector<int>> &    bQuadAtomIdsAllAtoms,
+    const dealii::AlignedVector<VectorizedArray<double>> &smearedbQuads)
 {
   Tensor<1, 3, VectorizedArray<double>> zeroTensor1;
   for (unsigned int idim = 0; idim < 3; idim++)
@@ -47,7 +47,7 @@ forceClass<FEOrder, FEOrderElectro>::
        iAtomNonTrivial++)
     {
       const int iAtom = nonTrivialAtomIdsMacroCell[iAtomNonTrivial];
-      std::vector<VectorizedArray<double>> smearedbQuadsiAtom(
+      dealii::AlignedVector<VectorizedArray<double>> smearedbQuadsiAtom(
         numQuadPoints, make_vectorized_array(0.0));
 
       for (unsigned int iSubCell = 0; iSubCell < numSubCells; ++iSubCell)
@@ -97,8 +97,8 @@ forceClass<FEOrder, FEOrderElectro>::
     const unsigned int           cell,
     const std::vector<Tensor<1, 3, VectorizedArray<double>>> &gradVselfBinQuads,
     const std::vector<unsigned int> &nonTrivialAtomIdsMacroCell,
-    const std::map<dealii::CellId, std::vector<int>> &bQuadAtomIdsAllAtoms,
-    const std::vector<VectorizedArray<double>> &      smearedbQuads)
+    const std::map<dealii::CellId, std::vector<int>> &    bQuadAtomIdsAllAtoms,
+    const dealii::AlignedVector<VectorizedArray<double>> &smearedbQuads)
 {
   Tensor<1, 3, VectorizedArray<double>> zeroTensor1;
   for (unsigned int idim = 0; idim < 3; idim++)
@@ -114,7 +114,7 @@ forceClass<FEOrder, FEOrderElectro>::
     {
       const int atomId = nonTrivialAtomIdsMacroCell[iAtomNonTrivial];
 
-      std::vector<VectorizedArray<double>> smearedbQuadsiAtom(
+      dealii::AlignedVector<VectorizedArray<double>> smearedbQuadsiAtom(
         numQuadPoints, make_vectorized_array(0.0));
 
       for (unsigned int iSubCell = 0; iSubCell < numSubCells; ++iSubCell)

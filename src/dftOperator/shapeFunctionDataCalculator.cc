@@ -74,7 +74,7 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::
   // integrals using dealii vectorized arrays
   for (int iMacroCell = 0; iMacroCell < numberMacroCells; ++iMacroCell)
     {
-      std::vector<VectorizedArray<double>> &shapeFunctionGradients =
+      dealii::AlignedVector<VectorizedArray<double>> &shapeFunctionGradients =
         d_cellShapeFunctionGradientIntegral[iMacroCell];
       shapeFunctionGradients.resize(numberDofsPerElement *
                                     numberDofsPerElement);

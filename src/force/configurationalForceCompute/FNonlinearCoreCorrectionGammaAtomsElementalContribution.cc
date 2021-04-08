@@ -29,9 +29,9 @@ forceClass<FEOrder, FEOrderElectro>::
                  1,
                  C_num1DQuad<C_rhoNodalPolyOrder<FEOrder, FEOrderElectro>()>(),
                  3> &forceEval,
-    const MatrixFree<3, double> &               matrixFreeData,
-    const unsigned int                          cell,
-    const std::vector<VectorizedArray<double>> &vxcQuads,
+    const MatrixFree<3, double> &                         matrixFreeData,
+    const unsigned int                                    cell,
+    const dealii::AlignedVector<VectorizedArray<double>> &vxcQuads,
     const std::map<unsigned int, std::map<dealii::CellId, std::vector<double>>>
       &gradRhoCoreAtoms)
 {
@@ -239,10 +239,10 @@ forceClass<FEOrder, FEOrderElectro>::
                  1,
                  C_num1DQuad<C_rhoNodalPolyOrder<FEOrder, FEOrderElectro>()>(),
                  3> &forceEval,
-    const MatrixFree<3, double> &               matrixFreeData,
-    const unsigned int                          cell,
-    const std::vector<VectorizedArray<double>> &vxcQuadsSpin0,
-    const std::vector<VectorizedArray<double>> &vxcQuadsSpin1,
+    const MatrixFree<3, double> &                         matrixFreeData,
+    const unsigned int                                    cell,
+    const dealii::AlignedVector<VectorizedArray<double>> &vxcQuadsSpin0,
+    const dealii::AlignedVector<VectorizedArray<double>> &vxcQuadsSpin1,
     const std::vector<Tensor<1, 3, VectorizedArray<double>>>
       &derExcGradRhoSpin0,
     const std::vector<Tensor<1, 3, VectorizedArray<double>>>

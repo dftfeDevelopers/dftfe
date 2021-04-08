@@ -433,7 +433,7 @@ namespace dftfe
       const MatrixFree<3, double> &matrixFreeData,
       const unsigned int           phiTotDofHandlerIndexElectro,
       const unsigned int           cell,
-      const std::vector<VectorizedArray<double>> &              rhoQuads,
+      const dealii::AlignedVector<VectorizedArray<double>> &    rhoQuads,
       const std::vector<Tensor<1, 3, VectorizedArray<double>>> &gradRhoQuads,
       const std::map<unsigned int,
                      std::map<dealii::CellId, std::vector<double>>>
@@ -452,7 +452,7 @@ namespace dftfe
       const std::vector<Tensor<1, 3, VectorizedArray<double>>> &gradPhiTotQuads,
       const std::vector<unsigned int> &nonTrivialAtomIdsMacroCell,
       const std::map<dealii::CellId, std::vector<int>> &bQuadAtomIdsAllAtoms,
-      const std::vector<VectorizedArray<double>> &      smearedbQuads);
+      const dealii::AlignedVector<VectorizedArray<double>> &smearedbQuads);
 
     void
     FVselfSmearedChargesGammaAtomsElementalContribution(
@@ -465,7 +465,7 @@ namespace dftfe
         &                              gradVselfBinQuads,
       const std::vector<unsigned int> &nonTrivialAtomIdsMacroCell,
       const std::map<dealii::CellId, std::vector<int>> &bQuadAtomIdsAllAtoms,
-      const std::vector<VectorizedArray<double>> &      smearedbQuads);
+      const dealii::AlignedVector<VectorizedArray<double>> &smearedbQuads);
 
     void
     FShadowLocalGammaAtomsElementalContributionElectronic(
@@ -478,7 +478,7 @@ namespace dftfe
         3> &                       forceEval,
       const MatrixFree<3, double> &matrixFreeData,
       const unsigned int           cell,
-      const std::vector<VectorizedArray<double>>
+      const dealii::AlignedVector<VectorizedArray<double>>
         &derVxcWithRhoTimesRhoDiffQuads,
       const std::map<unsigned int,
                      std::map<dealii::CellId, std::vector<double>>>
@@ -487,7 +487,7 @@ namespace dftfe
         &der2ExcWithGradRhoOutQuads,
       const std::vector<Tensor<1, 3, VectorizedArray<double>>>
         &derVxcWithGradRhoOutQuads,
-      const std::vector<VectorizedArray<double>>
+      const dealii::AlignedVector<VectorizedArray<double>>
         &shadowKSRhoMinMinusGradRhoQuads,
       const std::vector<Tensor<1, 3, VectorizedArray<double>>>
         &shadowKSGradRhoMinMinusGradRhoQuads,
@@ -530,10 +530,10 @@ namespace dftfe
         3,
         1,
         C_num1DQuad<C_rhoNodalPolyOrder<FEOrder, FEOrderElectro>()>(),
-        3> &                                      forceEval,
-      const MatrixFree<3, double> &               matrixFreeData,
-      const unsigned int                          cell,
-      const std::vector<VectorizedArray<double>> &vxcQuads,
+        3> &                                                forceEval,
+      const MatrixFree<3, double> &                         matrixFreeData,
+      const unsigned int                                    cell,
+      const dealii::AlignedVector<VectorizedArray<double>> &vxcQuads,
       const std::map<unsigned int,
                      std::map<dealii::CellId, std::vector<double>>>
         &gradRhoCoreAtoms);
@@ -563,11 +563,11 @@ namespace dftfe
         3,
         1,
         C_num1DQuad<C_rhoNodalPolyOrder<FEOrder, FEOrderElectro>()>(),
-        3> &                                      forceEval,
-      const MatrixFree<3, double> &               matrixFreeData,
-      const unsigned int                          cell,
-      const std::vector<VectorizedArray<double>> &vxcQuadsSpin0,
-      const std::vector<VectorizedArray<double>> &vxcQuadsSpin1,
+        3> &                                                forceEval,
+      const MatrixFree<3, double> &                         matrixFreeData,
+      const unsigned int                                    cell,
+      const dealii::AlignedVector<VectorizedArray<double>> &vxcQuadsSpin0,
+      const dealii::AlignedVector<VectorizedArray<double>> &vxcQuadsSpin1,
       const std::vector<Tensor<1, 3, VectorizedArray<double>>>
         &derExcGradRhoSpin0,
       const std::vector<Tensor<1, 3, VectorizedArray<double>>>
@@ -635,7 +635,8 @@ namespace dftfe
                    C_num1DQuadNLPSP<FEOrder>() * C_numCopies1DQuadNLPSP(),
                    3> &  forceEvalNLP,
       const unsigned int cell,
-      const std::vector<std::vector<std::vector<VectorizedArray<double>>>>
+      const std::vector<
+        std::vector<dealii::AlignedVector<VectorizedArray<double>>>>
         &zetaDeltaVQuads,
       const std::vector<std::vector<Tensor<1, 3, VectorizedArray<double>>>>
         &projectorKetTimesPsiTimesVTimesPartOccContractionPsi,
@@ -754,16 +755,16 @@ namespace dftfe
       const vselfBinsManager<FEOrder, FEOrderElectro> &vselfBinsManagerElectro);
 
     void addEPSPStressContribution(
-      FEValues<3> &                               feValues,
-      FEFaceValues<3> &                           feFaceValues,
+      FEValues<3> &                feValues,
+      FEFaceValues<3> &            feFaceValues,
       FEEvaluation<3,
                    1,
                    C_num1DQuadLPSP<FEOrder>() * C_numCopies1DQuadLPSP(),
-                   3> &                           forceEval,
-      const MatrixFree<3, double> &               matrixFreeData,
-      const unsigned int                          phiTotDofHandlerIndexElectro,
-      const unsigned int                          cell,
-      const std::vector<VectorizedArray<double>> &rhoQuads,
+                   3> &            forceEval,
+      const MatrixFree<3, double> &matrixFreeData,
+      const unsigned int           phiTotDofHandlerIndexElectro,
+      const unsigned int           cell,
+      const dealii::AlignedVector<VectorizedArray<double>> &    rhoQuads,
       const std::vector<Tensor<1, 3, VectorizedArray<double>>> &gradRhoQuads,
       const std::map<unsigned int,
                      std::map<dealii::CellId, std::vector<double>>>
@@ -780,7 +781,7 @@ namespace dftfe
         3> &                                                    forceEval,
       const MatrixFree<3, double> &                             matrixFreeData,
       const unsigned int                                        cell,
-      const std::vector<VectorizedArray<double>> &              vxcQuads,
+      const dealii::AlignedVector<VectorizedArray<double>> &    vxcQuads,
       const std::vector<Tensor<1, 3, VectorizedArray<double>>> &derExcGradRho,
       const std::map<unsigned int,
                      std::map<dealii::CellId, std::vector<double>>>
@@ -794,11 +795,11 @@ namespace dftfe
         3,
         1,
         C_num1DQuad<C_rhoNodalPolyOrder<FEOrder, FEOrderElectro>()>(),
-        3> &                                      forceEval,
-      const MatrixFree<3, double> &               matrixFreeData,
-      const unsigned int                          cell,
-      const std::vector<VectorizedArray<double>> &vxcQuadsSpin0,
-      const std::vector<VectorizedArray<double>> &vxcQuadsSpin1,
+        3> &                                                forceEval,
+      const MatrixFree<3, double> &                         matrixFreeData,
+      const unsigned int                                    cell,
+      const dealii::AlignedVector<VectorizedArray<double>> &vxcQuadsSpin0,
+      const dealii::AlignedVector<VectorizedArray<double>> &vxcQuadsSpin1,
       const std::vector<Tensor<1, 3, VectorizedArray<double>>>
         &derExcGradRhoSpin0,
       const std::vector<Tensor<1, 3, VectorizedArray<double>>>
@@ -818,8 +819,8 @@ namespace dftfe
       const std::vector<Tensor<1, 3, VectorizedArray<double>>> &gradPhiTotQuads,
       const std::vector<unsigned int> &nonTrivialAtomImageIdsMacroCell,
       const std::map<dealii::CellId, std::vector<int>>
-        &                                         bQuadAtomIdsAllAtomsImages,
-      const std::vector<VectorizedArray<double>> &smearedbQuads);
+        &bQuadAtomIdsAllAtomsImages,
+      const dealii::AlignedVector<VectorizedArray<double>> &smearedbQuads);
 
     void addEVselfSmearedStressContribution(
       FEEvaluation<3, -1, 1, 3> &                               forceEval,
@@ -828,8 +829,8 @@ namespace dftfe
       const std::vector<Tensor<1, 3, VectorizedArray<double>>> &gradVselfQuads,
       const std::vector<unsigned int> &nonTrivialAtomImageIdsMacroCell,
       const std::map<dealii::CellId, std::vector<int>>
-        &                                         bQuadAtomIdsAllAtomsImages,
-      const std::vector<VectorizedArray<double>> &smearedbQuads);
+        &bQuadAtomIdsAllAtomsImages,
+      const dealii::AlignedVector<VectorizedArray<double>> &smearedbQuads);
 
     void
     computeElementalNonLocalPseudoOVDataForce();

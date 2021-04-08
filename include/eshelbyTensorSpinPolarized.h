@@ -77,8 +77,10 @@ namespace dftfe
     /// Local part of the Eshelby tensor for non-periodic case
     Tensor<2, 3, VectorizedArray<double>>
     getELocWfcEshelbyTensorNonPeriodic(
-      std::vector<VectorizedArray<double>>::const_iterator psiSpin0Begin,
-      std::vector<VectorizedArray<double>>::const_iterator psiSpin1Begin,
+      dealii::AlignedVector<VectorizedArray<double>>::const_iterator
+        psiSpin0Begin,
+      dealii::AlignedVector<VectorizedArray<double>>::const_iterator
+        psiSpin1Begin,
       std::vector<Tensor<1, 3, VectorizedArray<double>>>::const_iterator
         gradPsiSpin0Begin,
       std::vector<Tensor<1, 3, VectorizedArray<double>>>::const_iterator
@@ -103,13 +105,16 @@ namespace dftfe
     /// Nonlocal pseudopotential force contribution (for non periodic case)
     Tensor<1, 3, VectorizedArray<double>>
     getFnlAtom(
-      const std::vector<std::vector<VectorizedArray<double>>> &zetaDeltaV,
+      const std::vector<dealii::AlignedVector<VectorizedArray<double>>>
+        &zetaDeltaV,
       const std::vector<std::vector<double>>
         &projectorKetTimesPsiSpin0TimesVTimesPartOcc,
       const std::vector<std::vector<double>>
         &projectorKetTimesPsiSpin1TimesVTimesPartOcc,
-      std::vector<VectorizedArray<double>>::const_iterator psiSpin0Begin,
-      std::vector<VectorizedArray<double>>::const_iterator psiSpin1Begin,
+      dealii::AlignedVector<VectorizedArray<double>>::const_iterator
+        psiSpin0Begin,
+      dealii::AlignedVector<VectorizedArray<double>>::const_iterator
+        psiSpin1Begin,
       std::vector<Tensor<1, 3, VectorizedArray<double>>>::const_iterator
         gradPsiSpin0Begin,
       std::vector<Tensor<1, 3, VectorizedArray<double>>>::const_iterator
@@ -157,7 +162,8 @@ namespace dftfe
 
     /// Nonlocal pseudopotential force contribution (for non periodic case)
     Tensor<1, 3, VectorizedArray<double>>
-    getFnl(const std::vector<std::vector<VectorizedArray<double>>> &zetaDeltaV,
+    getFnl(const std::vector<dealii::AlignedVector<VectorizedArray<double>>>
+             &zetaDeltaV,
            const std::vector<std::vector<double>>
              &projectorKetTimesPsiSpin0TimesVTimesPartOcc,
            const std::vector<std::vector<double>>
@@ -243,8 +249,10 @@ namespace dftfe
         &projectorKetTimesPsiSpin0TimesVTimesPartOcc,
       const std::vector<std::vector<std::vector<double>>>
         &projectorKetTimesPsiSpin1TimesVTimesPartOcc,
-      std::vector<VectorizedArray<double>>::const_iterator psiSpin0Begin,
-      std::vector<VectorizedArray<double>>::const_iterator psiSpin1Begin,
+      dealii::AlignedVector<VectorizedArray<double>>::const_iterator
+        psiSpin0Begin,
+      dealii::AlignedVector<VectorizedArray<double>>::const_iterator
+        psiSpin1Begin,
       std::vector<Tensor<1, 3, VectorizedArray<double>>>::const_iterator
         gradPsiSpin0Begin,
       std::vector<Tensor<1, 3, VectorizedArray<double>>>::const_iterator

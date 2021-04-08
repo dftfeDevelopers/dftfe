@@ -23,11 +23,11 @@ void forceClass<FEOrder, FEOrderElectro>::addEPSPStressContribution(
   FEValues<3> &    feValues,
   FEFaceValues<3> &feFaceValues,
   FEEvaluation<3, 1, C_num1DQuadLPSP<FEOrder>() * C_numCopies1DQuadLPSP(), 3>
-    &                                         forceEval,
-  const MatrixFree<3, double> &               matrixFreeData,
-  const unsigned int                          phiTotDofHandlerIndexElectro,
-  const unsigned int                          cell,
-  const std::vector<VectorizedArray<double>> &rhoQuads,
+    &                          forceEval,
+  const MatrixFree<3, double> &matrixFreeData,
+  const unsigned int           phiTotDofHandlerIndexElectro,
+  const unsigned int           cell,
+  const dealii::AlignedVector<VectorizedArray<double>> &    rhoQuads,
   const std::vector<Tensor<1, 3, VectorizedArray<double>>> &gradRhoQuads,
   const std::map<unsigned int, std::map<dealii::CellId, std::vector<double>>>
     &                                              pseudoVLocAtoms,
@@ -60,11 +60,11 @@ void forceClass<FEOrder, FEOrderElectro>::addEPSPStressContribution(
   const unsigned int faces_per_cell    = GeometryInfo<3>::faces_per_cell;
   const unsigned int numFaceQuadPoints = feFaceValues.get_quadrature().size();
 
-  std::vector<Tensor<2, 3, double>>    surfaceIntegralSubcells(numSubCells);
-  std::vector<double>                  rhoFaceQuads(numFaceQuadPoints);
-  std::vector<VectorizedArray<double>> vselfQuads(numQuadPoints,
-                                                  make_vectorized_array(0.0));
-  std::vector<VectorizedArray<double>> pseudoVLocAtomsQuads(
+  std::vector<Tensor<2, 3, double>> surfaceIntegralSubcells(numSubCells);
+  std::vector<double>               rhoFaceQuads(numFaceQuadPoints);
+  dealii::AlignedVector<VectorizedArray<double>> vselfQuads(
+    numQuadPoints, make_vectorized_array(0.0));
+  dealii::AlignedVector<VectorizedArray<double>> pseudoVLocAtomsQuads(
     numQuadPoints, make_vectorized_array(0.0));
   std::vector<Tensor<1, 3, VectorizedArray<double>>> gradVselfQuads(
     numQuadPoints, zeroTensor1);

@@ -100,7 +100,7 @@ namespace dftfe
     /// Local part of the Eshelby tensor for non-periodic case
     Tensor<2, 3, VectorizedArray<double>>
     getELocWfcEshelbyTensorNonPeriodic(
-      std::vector<VectorizedArray<double>>::const_iterator psiBegin,
+      dealii::AlignedVector<VectorizedArray<double>>::const_iterator psiBegin,
       std::vector<Tensor<1, 3, VectorizedArray<double>>>::const_iterator
                                  gradPsiBegin,
       const std::vector<double> &eigenValues_,
@@ -163,7 +163,8 @@ namespace dftfe
 
     /// Nonlocal pseudopotential force contribution (for real case)
     Tensor<1, 3, VectorizedArray<double>>
-    getFnl(const std::vector<std::vector<VectorizedArray<double>>> &zetaDeltaV,
+    getFnl(const std::vector<dealii::AlignedVector<VectorizedArray<double>>>
+             &zetaDeltaV,
            const std::vector<Tensor<1, 3, VectorizedArray<double>>>
              &projectorKetTimesPsiTimesVTimesPartOccContractionGradPsi,
            const std::vector<bool> &        isAtomInCell,
@@ -171,7 +172,7 @@ namespace dftfe
 
     /// Nonlocal pseudopotential force contribution (for real case)
     Tensor<1, 3, VectorizedArray<double>>
-    getFnlAtom(const std::vector<VectorizedArray<double>> &zetaDeltaV,
+    getFnlAtom(const dealii::AlignedVector<VectorizedArray<double>> &zetaDeltaV,
                const std::vector<Tensor<1, 3, VectorizedArray<double>>>
                  &projectorKetTimesPsiTimesVTimesPartOccContractionGradPsi,
                const unsigned int startingId);
@@ -246,7 +247,7 @@ namespace dftfe
         &zetalmDeltaVlProductDistImageAtoms,
       const std::vector<std::vector<std::vector<double>>>
         &projectorKetTimesPsiTimesVTimesPartOcc,
-      std::vector<VectorizedArray<double>>::const_iterator psiBegin,
+      dealii::AlignedVector<VectorizedArray<double>>::const_iterator psiBegin,
       std::vector<Tensor<1, 3, VectorizedArray<double>>>::const_iterator
                                        gradPsiBegin,
       const std::vector<unsigned int> &nonlocalAtomsCompactSupportList,

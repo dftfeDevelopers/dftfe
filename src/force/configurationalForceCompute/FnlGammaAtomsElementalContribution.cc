@@ -136,7 +136,7 @@ forceClass<FEOrder, FEOrderElectro>::FnlGammaAtomsElementalContribution(
   FEEvaluation<3, 1, C_num1DQuadNLPSP<FEOrder>() * C_numCopies1DQuadNLPSP(), 3>
     &                forceEvalNLP,
   const unsigned int cell,
-  const std::vector<std::vector<std::vector<VectorizedArray<double>>>>
+  const std::vector<std::vector<dealii::AlignedVector<VectorizedArray<double>>>>
     &zetaDeltaVQuads,
   const std::vector<std::vector<Tensor<1, 3, VectorizedArray<double>>>>
     &projectorKetTimesPsiTimesVTimesPartOccContractionGradPsi,
@@ -177,7 +177,7 @@ forceClass<FEOrder, FEOrderElectro>::FnlGammaAtomsElementalContribution(
 
           for (unsigned int q = 0; q < numQuadPoints; ++q)
             {
-              const std::vector<VectorizedArray<double>> &temp1 =
+              const dealii::AlignedVector<VectorizedArray<double>> &temp1 =
                 zetaDeltaVQuads[cell * numQuadPoints + q][iAtom];
 
               const Tensor<1, 3, VectorizedArray<double>> F =

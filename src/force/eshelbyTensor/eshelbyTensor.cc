@@ -157,7 +157,7 @@ namespace dftfe
 
     Tensor<2, 3, VectorizedArray<double>>
     getELocWfcEshelbyTensorNonPeriodic(
-      std::vector<VectorizedArray<double>>::const_iterator psiBegin,
+      dealii::AlignedVector<VectorizedArray<double>>::const_iterator psiBegin,
       std::vector<Tensor<1, 3, VectorizedArray<double>>>::const_iterator
                                  gradPsiBegin,
       const std::vector<double> &eigenValues_,
@@ -170,7 +170,8 @@ namespace dftfe
 
       VectorizedArray<double> identityTensorFactor = make_vectorized_array(0.0);
 
-      std::vector<VectorizedArray<double>>::const_iterator it1 = psiBegin;
+      dealii::AlignedVector<VectorizedArray<double>>::const_iterator it1 =
+        psiBegin;
       std::vector<Tensor<1, 3, VectorizedArray<double>>>::const_iterator it2 =
         gradPsiBegin;
       for (unsigned int eigenIndex = 0; eigenIndex < eigenValues_.size();
@@ -359,7 +360,8 @@ namespace dftfe
     }
 
     Tensor<1, 3, VectorizedArray<double>>
-    getFnl(const std::vector<std::vector<VectorizedArray<double>>> &zetaDeltaV,
+    getFnl(const std::vector<dealii::AlignedVector<VectorizedArray<double>>>
+             &zetaDeltaV,
            const std::vector<Tensor<1, 3, VectorizedArray<double>>>
              &projectorKetTimesPsiTimesVTimesPartOccContractionGradPsi,
            const std::vector<bool> &        isAtomInCell,
@@ -380,7 +382,7 @@ namespace dftfe
 
           const int numberPseudoWaveFunctions =
             zetaDeltaV[iAtomNonLocal].size();
-          const std::vector<VectorizedArray<double>> &zetaDeltaVAtom =
+          const dealii::AlignedVector<VectorizedArray<double>> &zetaDeltaVAtom =
             zetaDeltaV[iAtomNonLocal];
 
           Tensor<1, 3, VectorizedArray<double>> tempF = zeroTensor;
@@ -396,7 +398,7 @@ namespace dftfe
     }
 
     Tensor<1, 3, VectorizedArray<double>>
-    getFnlAtom(const std::vector<VectorizedArray<double>> &zetaDeltaV,
+    getFnlAtom(const dealii::AlignedVector<VectorizedArray<double>> &zetaDeltaV,
                const std::vector<Tensor<1, 3, VectorizedArray<double>>>
                  &projectorKetTimesPsiTimesVTimesPartOccContractionGradPsi,
                const unsigned int startingId)
@@ -681,7 +683,7 @@ namespace dftfe
         &zetalmDeltaVlProductDistImageAtoms,
       const std::vector<std::vector<std::vector<double>>>
         &projectorKetTimesPsiTimesVTimesPartOcc,
-      std::vector<VectorizedArray<double>>::const_iterator psiBegin,
+      dealii::AlignedVector<VectorizedArray<double>>::const_iterator psiBegin,
       std::vector<Tensor<1, 3, VectorizedArray<double>>>::const_iterator
                                        gradPsiBegin,
       const std::vector<unsigned int> &nonlocalAtomsCompactSupportList,
@@ -709,7 +711,8 @@ namespace dftfe
           const int numberPseudoWaveFunctions =
             zetalmDeltaVlProductDistImageAtoms[iAtomNonLocal].size();
 
-          std::vector<VectorizedArray<double>>::const_iterator it1 = psiBegin;
+          dealii::AlignedVector<VectorizedArray<double>>::const_iterator it1 =
+            psiBegin;
           std::vector<Tensor<1, 3, VectorizedArray<double>>>::const_iterator
             it2 = gradPsiBegin;
           for (unsigned int eigenIndex = 0; eigenIndex < numBlockedEigenvectors;
