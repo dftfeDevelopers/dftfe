@@ -20,10 +20,11 @@
 // compute ESmeared contribution stress
 template <unsigned int FEOrder, unsigned int FEOrderElectro>
 void forceClass<FEOrder, FEOrderElectro>::addEPhiTotSmearedStressContribution(
-  FEEvaluation<3, -1, 1, 3> &                               forceEval,
-  const MatrixFree<3, double> &                             matrixFreeData,
-  const unsigned int                                        cell,
-  const std::vector<Tensor<1, 3, VectorizedArray<double>>> &gradPhiTotQuads,
+  FEEvaluation<3, -1, 1, 3> &  forceEval,
+  const MatrixFree<3, double> &matrixFreeData,
+  const unsigned int           cell,
+  const dealii::AlignedVector<Tensor<1, 3, VectorizedArray<double>>>
+    &                              gradPhiTotQuads,
   const std::vector<unsigned int> &nonTrivialAtomImageIdsMacroCell,
   const std::map<dealii::CellId, std::vector<int>> &bQuadAtomIdsAllAtomsImages,
   const dealii::AlignedVector<VectorizedArray<double>> &smearedbQuads)
@@ -110,10 +111,11 @@ void forceClass<FEOrder, FEOrderElectro>::addEPhiTotSmearedStressContribution(
 
 template <unsigned int FEOrder, unsigned int FEOrderElectro>
 void forceClass<FEOrder, FEOrderElectro>::addEVselfSmearedStressContribution(
-  FEEvaluation<3, -1, 1, 3> &                               forceEval,
-  const MatrixFree<3, double> &                             matrixFreeData,
-  const unsigned int                                        cell,
-  const std::vector<Tensor<1, 3, VectorizedArray<double>>> &gradVselfQuads,
+  FEEvaluation<3, -1, 1, 3> &  forceEval,
+  const MatrixFree<3, double> &matrixFreeData,
+  const unsigned int           cell,
+  const dealii::AlignedVector<Tensor<1, 3, VectorizedArray<double>>>
+    &                              gradVselfQuads,
   const std::vector<unsigned int> &nonTrivialAtomImageIdsMacroCell,
   const std::map<dealii::CellId, std::vector<int>> &bQuadAtomIdsAllAtomsImages,
   const dealii::AlignedVector<VectorizedArray<double>> &smearedbQuads)

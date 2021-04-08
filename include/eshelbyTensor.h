@@ -87,10 +87,11 @@ namespace dftfe
     /// which are summed over k points)
     Tensor<2, 3, VectorizedArray<double>>
       getELocWfcEshelbyTensorPeriodicKPoints(
-        std::vector<Tensor<1, 2, VectorizedArray<double>>>::const_iterator
-          psiBegin,
-        std::vector<Tensor<1, 2, Tensor<1, 3, VectorizedArray<double>>>>::
-          const_iterator                        gradPsiBegin,
+        dealii::AlignedVector<
+          Tensor<1, 2, VectorizedArray<double>>>::const_iterator psiBegin,
+        dealii::AlignedVector<
+          Tensor<1, 2, Tensor<1, 3, VectorizedArray<double>>>>::const_iterator
+                                                gradPsiBegin,
         const std::vector<double> &             kPointCoordinates,
         const std::vector<double> &             kPointWeights,
         const std::vector<std::vector<double>> &eigenValues_,
@@ -101,9 +102,9 @@ namespace dftfe
     Tensor<2, 3, VectorizedArray<double>>
     getELocWfcEshelbyTensorNonPeriodic(
       dealii::AlignedVector<VectorizedArray<double>>::const_iterator psiBegin,
-      std::vector<Tensor<1, 3, VectorizedArray<double>>>::const_iterator
-                                 gradPsiBegin,
-      const std::vector<double> &eigenValues_,
+      dealii::AlignedVector<
+        Tensor<1, 3, VectorizedArray<double>>>::const_iterator gradPsiBegin,
+      const std::vector<double> &                              eigenValues_,
       const std::vector<double> &partialOccupancies_);
 
     /// All-electron electrostatic part of the Eshelby tensor
@@ -150,45 +151,49 @@ namespace dftfe
 
     /// Nonlocal pseudopotential force contribution (for complex case)
     Tensor<1, 3, VectorizedArray<double>>
-    getFnl(const std::vector<
-             std::vector<std::vector<Tensor<1, 2, VectorizedArray<double>>>>>
-             &zetaDeltaV,
-           const std::vector<std::vector<std::vector<std::complex<double>>>>
-             &projectorKetTimesPsiTimesVTimesPartOcc,
-           std::vector<Tensor<1, 2, Tensor<1, 3, VectorizedArray<double>>>>::
-             const_iterator                 gradPsiBegin,
-           const std::vector<double> &      kPointWeights,
-           const unsigned int               numBlockedEigenvectors,
-           const std::vector<unsigned int> &nonlocalAtomsCompactSupportList);
+    getFnl(
+      const dealii::AlignedVector<dealii::AlignedVector<
+        dealii::AlignedVector<Tensor<1, 2, VectorizedArray<double>>>>>
+        &zetaDeltaV,
+      const std::vector<std::vector<std::vector<std::complex<double>>>>
+        &projectorKetTimesPsiTimesVTimesPartOcc,
+      dealii::AlignedVector<
+        Tensor<1, 2, Tensor<1, 3, VectorizedArray<double>>>>::const_iterator
+                                       gradPsiBegin,
+      const std::vector<double> &      kPointWeights,
+      const unsigned int               numBlockedEigenvectors,
+      const std::vector<unsigned int> &nonlocalAtomsCompactSupportList);
 
     /// Nonlocal pseudopotential force contribution (for real case)
     Tensor<1, 3, VectorizedArray<double>>
-    getFnl(const std::vector<dealii::AlignedVector<VectorizedArray<double>>>
-             &zetaDeltaV,
-           const std::vector<Tensor<1, 3, VectorizedArray<double>>>
+    getFnl(const dealii::AlignedVector<
+             dealii::AlignedVector<VectorizedArray<double>>> &zetaDeltaV,
+           const dealii::AlignedVector<Tensor<1, 3, VectorizedArray<double>>>
              &projectorKetTimesPsiTimesVTimesPartOccContractionGradPsi,
            const std::vector<bool> &        isAtomInCell,
            const std::vector<unsigned int> &nonlocalPseudoWfcsAccum);
 
     /// Nonlocal pseudopotential force contribution (for real case)
     Tensor<1, 3, VectorizedArray<double>>
-    getFnlAtom(const dealii::AlignedVector<VectorizedArray<double>> &zetaDeltaV,
-               const std::vector<Tensor<1, 3, VectorizedArray<double>>>
-                 &projectorKetTimesPsiTimesVTimesPartOccContractionGradPsi,
-               const unsigned int startingId);
+    getFnlAtom(
+      const dealii::AlignedVector<VectorizedArray<double>> &zetaDeltaV,
+      const dealii::AlignedVector<Tensor<1, 3, VectorizedArray<double>>>
+        &projectorKetTimesPsiTimesVTimesPartOccContractionGradPsi,
+      const unsigned int startingId);
 
     /// Nonlocal pseudopotential force contribution (for complex case)
     Tensor<1, 3, VectorizedArray<double>>
     getFnlAtom(
-      const std::vector<
-        std::vector<std::vector<Tensor<1, 2, VectorizedArray<double>>>>>
+      const dealii::AlignedVector<dealii::AlignedVector<
+        dealii::AlignedVector<Tensor<1, 2, VectorizedArray<double>>>>>
         &zetaDeltaV,
       const std::vector<std::vector<std::vector<std::complex<double>>>>
         &projectorKetTimesPsiTimesVTimesPartOcc,
-      std::vector<Tensor<1, 2, VectorizedArray<double>>>::const_iterator
-        psiBegin,
-      std::vector<Tensor<1, 2, Tensor<1, 3, VectorizedArray<double>>>>::
-        const_iterator           gradPsiBegin,
+      dealii::AlignedVector<
+        Tensor<1, 2, VectorizedArray<double>>>::const_iterator psiBegin,
+      dealii::AlignedVector<
+        Tensor<1, 2, Tensor<1, 3, VectorizedArray<double>>>>::const_iterator
+                                 gradPsiBegin,
       const std::vector<double> &kPointWeights,
       const std::vector<double> &kPointCoordinates,
       const unsigned int         numBlockedEigenvectors);
@@ -210,10 +215,11 @@ namespace dftfe
 
     /// EK Eshelby tensor (used only for stress computation)
     Tensor<2, 3, VectorizedArray<double>> getEKStress(
-      std::vector<Tensor<1, 2, VectorizedArray<double>>>::const_iterator
-        psiBegin,
-      std::vector<Tensor<1, 2, Tensor<1, 3, VectorizedArray<double>>>>::
-        const_iterator                        gradPsiBegin,
+      dealii::AlignedVector<
+        Tensor<1, 2, VectorizedArray<double>>>::const_iterator psiBegin,
+      dealii::AlignedVector<
+        Tensor<1, 2, Tensor<1, 3, VectorizedArray<double>>>>::const_iterator
+                                              gradPsiBegin,
       const std::vector<double> &             kPointCoordinates,
       const std::vector<double> &             kPointWeights,
       const std::vector<std::vector<double>> &eigenValues_,
@@ -224,15 +230,16 @@ namespace dftfe
     /// computation) multiple k point and complex case
     Tensor<2, 3, VectorizedArray<double>>
     getEnlStress(
-      const std::vector<std::vector<
-        std::vector<Tensor<1, 2, Tensor<1, 3, VectorizedArray<double>>>>>>
+      const dealii::AlignedVector<dealii::AlignedVector<dealii::AlignedVector<
+        Tensor<1, 2, Tensor<1, 3, VectorizedArray<double>>>>>>
         &zetalmDeltaVlProductDistImageAtoms,
       const std::vector<std::vector<std::vector<std::complex<double>>>>
         &projectorKetTimesPsiTimesVTimesPartOcc,
-      std::vector<Tensor<1, 2, VectorizedArray<double>>>::const_iterator
-        psiBegin,
-      std::vector<Tensor<1, 2, Tensor<1, 3, VectorizedArray<double>>>>::
-        const_iterator                 gradPsiBegin,
+      dealii::AlignedVector<
+        Tensor<1, 2, VectorizedArray<double>>>::const_iterator psiBegin,
+      dealii::AlignedVector<
+        Tensor<1, 2, Tensor<1, 3, VectorizedArray<double>>>>::const_iterator
+                                       gradPsiBegin,
       const std::vector<double> &      kPointWeights,
       const std::vector<double> &      kPointCoordinates,
       const std::vector<unsigned int> &nonlocalAtomsCompactSupportList,
@@ -243,13 +250,14 @@ namespace dftfe
     /// computation) for Gamma point case
     Tensor<2, 3, VectorizedArray<double>>
     getEnlStress(
-      const std::vector<std::vector<Tensor<1, 3, VectorizedArray<double>>>>
+      const dealii::AlignedVector<
+        dealii::AlignedVector<Tensor<1, 3, VectorizedArray<double>>>>
         &zetalmDeltaVlProductDistImageAtoms,
       const std::vector<std::vector<std::vector<double>>>
         &projectorKetTimesPsiTimesVTimesPartOcc,
       dealii::AlignedVector<VectorizedArray<double>>::const_iterator psiBegin,
-      std::vector<Tensor<1, 3, VectorizedArray<double>>>::const_iterator
-                                       gradPsiBegin,
+      dealii::AlignedVector<
+        Tensor<1, 3, VectorizedArray<double>>>::const_iterator gradPsiBegin,
       const std::vector<unsigned int> &nonlocalAtomsCompactSupportList,
       const unsigned int               numBlockedEigenvectors);
 
@@ -257,9 +265,10 @@ namespace dftfe
     /// computation) for Gamma point case
     Tensor<2, 3, VectorizedArray<double>>
     getEnlStress(
-      const std::vector<std::vector<Tensor<1, 3, VectorizedArray<double>>>>
+      const dealii::AlignedVector<
+        dealii::AlignedVector<Tensor<1, 3, VectorizedArray<double>>>>
         &zetalmDeltaVlProductDistImageAtoms,
-      const std::vector<Tensor<1, 3, VectorizedArray<double>>>
+      const dealii::AlignedVector<Tensor<1, 3, VectorizedArray<double>>>
         &projectorKetTimesPsiTimesVTimesPartOccContractionGradPsi,
       const std::vector<bool> &        isAtomInCell,
       const std::vector<unsigned int> &nonlocalPseudoWfcsAccum);

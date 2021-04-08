@@ -27,8 +27,9 @@ void forceClass<FEOrder, FEOrderElectro>::addEPSPStressContribution(
   const MatrixFree<3, double> &matrixFreeData,
   const unsigned int           phiTotDofHandlerIndexElectro,
   const unsigned int           cell,
-  const dealii::AlignedVector<VectorizedArray<double>> &    rhoQuads,
-  const std::vector<Tensor<1, 3, VectorizedArray<double>>> &gradRhoQuads,
+  const dealii::AlignedVector<VectorizedArray<double>> &rhoQuads,
+  const dealii::AlignedVector<Tensor<1, 3, VectorizedArray<double>>>
+    &gradRhoQuads,
   const std::map<unsigned int, std::map<dealii::CellId, std::vector<double>>>
     &                                              pseudoVLocAtoms,
   const vselfBinsManager<FEOrder, FEOrderElectro> &vselfBinsManager,
@@ -60,18 +61,19 @@ void forceClass<FEOrder, FEOrderElectro>::addEPSPStressContribution(
   const unsigned int faces_per_cell    = GeometryInfo<3>::faces_per_cell;
   const unsigned int numFaceQuadPoints = feFaceValues.get_quadrature().size();
 
-  std::vector<Tensor<2, 3, double>> surfaceIntegralSubcells(numSubCells);
-  std::vector<double>               rhoFaceQuads(numFaceQuadPoints);
+  dealii::AlignedVector<Tensor<2, 3, double>> surfaceIntegralSubcells(
+    numSubCells);
+  std::vector<double> rhoFaceQuads(numFaceQuadPoints);
   dealii::AlignedVector<VectorizedArray<double>> vselfQuads(
     numQuadPoints, make_vectorized_array(0.0));
   dealii::AlignedVector<VectorizedArray<double>> pseudoVLocAtomsQuads(
     numQuadPoints, make_vectorized_array(0.0));
-  std::vector<Tensor<1, 3, VectorizedArray<double>>> gradVselfQuads(
+  dealii::AlignedVector<Tensor<1, 3, VectorizedArray<double>>> gradVselfQuads(
     numQuadPoints, zeroTensor1);
-  std::vector<Tensor<2, 3, VectorizedArray<double>>> totalContribution(
-    numQuadPoints, zeroTensor2);
-  std::vector<Tensor<2, 3, VectorizedArray<double>>> vselfFDStrainQuads(
-    numQuadPoints, zeroTensor2);
+  dealii::AlignedVector<Tensor<2, 3, VectorizedArray<double>>>
+    totalContribution(numQuadPoints, zeroTensor2);
+  dealii::AlignedVector<Tensor<2, 3, VectorizedArray<double>>>
+                                             vselfFDStrainQuads(numQuadPoints, zeroTensor2);
   std::vector<std::vector<dealii::Point<3>>> quadPointsSubCells(
     numSubCells, std::vector<dealii::Point<3>>(numQuadPoints));
 

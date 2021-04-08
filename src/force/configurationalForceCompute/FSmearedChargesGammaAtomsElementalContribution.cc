@@ -28,7 +28,8 @@ forceClass<FEOrder, FEOrderElectro>::
     FEEvaluation<3, -1, 1, 3> &  forceEval,
     const MatrixFree<3, double> &matrixFreeData,
     const unsigned int           cell,
-    const std::vector<Tensor<1, 3, VectorizedArray<double>>> &gradPhiTotQuads,
+    const dealii::AlignedVector<Tensor<1, 3, VectorizedArray<double>>>
+      &                              gradPhiTotQuads,
     const std::vector<unsigned int> &nonTrivialAtomIdsMacroCell,
     const std::map<dealii::CellId, std::vector<int>> &    bQuadAtomIdsAllAtoms,
     const dealii::AlignedVector<VectorizedArray<double>> &smearedbQuads)
@@ -95,7 +96,8 @@ forceClass<FEOrder, FEOrderElectro>::
     FEEvaluation<3, -1, 1, 3> &  forceEval,
     const MatrixFree<3, double> &matrixFreeData,
     const unsigned int           cell,
-    const std::vector<Tensor<1, 3, VectorizedArray<double>>> &gradVselfBinQuads,
+    const dealii::AlignedVector<Tensor<1, 3, VectorizedArray<double>>>
+      &                              gradVselfBinQuads,
     const std::vector<unsigned int> &nonTrivialAtomIdsMacroCell,
     const std::map<dealii::CellId, std::vector<int>> &    bQuadAtomIdsAllAtoms,
     const dealii::AlignedVector<VectorizedArray<double>> &smearedbQuads)

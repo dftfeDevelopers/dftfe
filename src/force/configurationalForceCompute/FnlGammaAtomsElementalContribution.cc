@@ -30,16 +30,16 @@ forceClass<FEOrder, FEOrderElectro>::FnlGammaAtomsElementalContribution(
   FEEvaluation<3, 1, C_num1DQuadNLPSP<FEOrder>() * C_numCopies1DQuadNLPSP(), 3>
     &                forceEvalNLP,
   const unsigned int cell,
-  const std::vector<std::vector<
-    std::vector<std::vector<Tensor<1, 2, VectorizedArray<double>>>>>>
+  const dealii::AlignedVector<dealii::AlignedVector<dealii::AlignedVector<
+    dealii::AlignedVector<Tensor<1, 2, VectorizedArray<double>>>>>>
     &zetaDeltaVQuads,
   const std::vector<std::vector<std::vector<std::complex<double>>>>
     &projectorKetTimesPsiTimesVTimesPartOcc,
-  const std::vector<Tensor<1, 2, VectorizedArray<double>>> &psiQuads,
-  const std::vector<Tensor<1, 2, Tensor<1, 3, VectorizedArray<double>>>>
-    &                                     gradPsiQuads,
-  const std::vector<std::vector<double>> &eigenValues,
-  const std::vector<unsigned int> &       nonlocalAtomsCompactSupportList)
+  const dealii::AlignedVector<Tensor<1, 2, VectorizedArray<double>>> &psiQuads,
+  const dealii::AlignedVector<
+    Tensor<1, 2, Tensor<1, 3, VectorizedArray<double>>>> &gradPsiQuads,
+  const std::vector<std::vector<double>> &                eigenValues,
+  const std::vector<unsigned int> &nonlocalAtomsCompactSupportList)
 {
   const unsigned int numberGlobalAtoms = dftPtr->atomLocations.size();
   const unsigned int numKPoints        = dftPtr->d_kPointWeights.size();
@@ -89,8 +89,8 @@ forceClass<FEOrder, FEOrderElectro>::FnlGammaAtomsElementalContribution(
         {
           for (unsigned int q = 0; q < numQuadPoints; ++q)
             {
-              std::vector<
-                std::vector<std::vector<Tensor<1, 2, VectorizedArray<double>>>>>
+              dealii::AlignedVector<dealii::AlignedVector<
+                dealii::AlignedVector<Tensor<1, 2, VectorizedArray<double>>>>>
                 temp1(1);
               temp1[0] = zetaDeltaVQuads[cell * numQuadPoints + q][iAtom];
 
@@ -136,9 +136,11 @@ forceClass<FEOrder, FEOrderElectro>::FnlGammaAtomsElementalContribution(
   FEEvaluation<3, 1, C_num1DQuadNLPSP<FEOrder>() * C_numCopies1DQuadNLPSP(), 3>
     &                forceEvalNLP,
   const unsigned int cell,
-  const std::vector<std::vector<dealii::AlignedVector<VectorizedArray<double>>>>
+  const dealii::AlignedVector<
+    dealii::AlignedVector<dealii::AlignedVector<VectorizedArray<double>>>>
     &zetaDeltaVQuads,
-  const std::vector<std::vector<Tensor<1, 3, VectorizedArray<double>>>>
+  const dealii::AlignedVector<
+    dealii::AlignedVector<Tensor<1, 3, VectorizedArray<double>>>>
     &projectorKetTimesPsiTimesVTimesPartOccContractionGradPsi,
   const std::vector<bool> &        isAtomInCell,
   const std::vector<unsigned int> &nonlocalPseudoWfcsAccum)

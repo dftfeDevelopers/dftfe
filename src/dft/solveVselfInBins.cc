@@ -1222,7 +1222,8 @@ namespace dftfe
               for (unsigned int i = 0; i < 3; i++)
                 zeroTensor[i] = dealii::make_vectorized_array(0.0);
 
-              std::vector<dealii::Tensor<1, 3, dealii::VectorizedArray<double>>>
+              dealii::AlignedVector<
+                dealii::Tensor<1, 3, dealii::VectorizedArray<double>>>
                 smearedbQuads(numQuadPointsSmearedb, zeroTensor);
               for (unsigned int macrocell = 0;
                    macrocell < matrix_free_data.n_macro_cells();

@@ -193,7 +193,8 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::computeHamiltonianMatrix(
       const unsigned int n_sub_cells =
         dftPtr->matrix_free_data.n_components_filled(iMacroCell);
 
-      std::vector<Tensor<1, 3, VectorizedArray<double>>> nonCachedShapeGrad;
+      dealii::AlignedVector<Tensor<1, 3, VectorizedArray<double>>>
+        nonCachedShapeGrad;
 
       nonCachedShapeGrad.resize(numberDofsPerElement * numberQuadraturePoints);
       for (unsigned int iCell = 0; iCell < n_sub_cells; ++iCell)
