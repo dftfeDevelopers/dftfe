@@ -67,29 +67,29 @@ namespace dftfe
   {
     /// Eshelby tensor from sum of electrostatic potential from all nuclear
     /// charges (only used for testing purpose)
-    Tensor<2, C_DIM, VectorizedArray<double>>
+    Tensor<2, 3, VectorizedArray<double>>
     getPhiExtEshelbyTensor(
-      const VectorizedArray<double> &                  phiExt,
-      const Tensor<1, C_DIM, VectorizedArray<double>> &gradPhiExt);
+      const VectorizedArray<double> &              phiExt,
+      const Tensor<1, 3, VectorizedArray<double>> &gradPhiExt);
 
     /// Eshelby tensor corresponding to nuclear self energy (only used for
     /// testing purpose)
-    Tensor<2, C_DIM, VectorizedArray<double>>
+    Tensor<2, 3, VectorizedArray<double>>
     getVselfBallEshelbyTensor(
-      const Tensor<1, C_DIM, VectorizedArray<double>> &gradVself);
+      const Tensor<1, 3, VectorizedArray<double>> &gradVself);
 
     /// Eshelby tensor corresponding to nuclear self energy
-    Tensor<2, C_DIM, double>
-    getVselfBallEshelbyTensor(const Tensor<1, C_DIM, double> &gradVself);
+    Tensor<2, 3, double>
+    getVselfBallEshelbyTensor(const Tensor<1, 3, double> &gradVself);
 
 
     /// Local part of the Eshelby tensor for periodic case (only considers terms
     /// which are summed over k points)
-    Tensor<2, C_DIM, VectorizedArray<double>>
+    Tensor<2, 3, VectorizedArray<double>>
       getELocWfcEshelbyTensorPeriodicKPoints(
         std::vector<Tensor<1, 2, VectorizedArray<double>>>::const_iterator
           psiBegin,
-        std::vector<Tensor<1, 2, Tensor<1, C_DIM, VectorizedArray<double>>>>::
+        std::vector<Tensor<1, 2, Tensor<1, 3, VectorizedArray<double>>>>::
           const_iterator                        gradPsiBegin,
         const std::vector<double> &             kPointCoordinates,
         const std::vector<double> &             kPointWeights,
@@ -98,88 +98,87 @@ namespace dftfe
         const double                            tVal);
 
     /// Local part of the Eshelby tensor for non-periodic case
-    Tensor<2, C_DIM, VectorizedArray<double>>
+    Tensor<2, 3, VectorizedArray<double>>
     getELocWfcEshelbyTensorNonPeriodic(
-      std::vector<VectorizedArray<double>>::const_iterator psiBegin,
-      std::vector<Tensor<1, C_DIM, VectorizedArray<double>>>::const_iterator
+      dealii::AlignedVector<VectorizedArray<double>>::const_iterator psiBegin,
+      std::vector<Tensor<1, 3, VectorizedArray<double>>>::const_iterator
                                  gradPsiBegin,
       const std::vector<double> &eigenValues_,
       const std::vector<double> &partialOccupancies_);
 
     /// All-electron electrostatic part of the Eshelby tensor
-    Tensor<2, C_DIM, VectorizedArray<double>>
+    Tensor<2, 3, VectorizedArray<double>>
     getEElectroEshelbyTensor(
-      const VectorizedArray<double> &                  phiTot,
-      const Tensor<1, C_DIM, VectorizedArray<double>> &gradPhiTot,
-      const VectorizedArray<double> &                  rho);
+      const VectorizedArray<double> &              phiTot,
+      const Tensor<1, 3, VectorizedArray<double>> &gradPhiTot,
+      const VectorizedArray<double> &              rho);
 
     /// exchange-correlation part of the ELoc Eshelby tensor
-    Tensor<2, C_DIM, VectorizedArray<double>>
+    Tensor<2, 3, VectorizedArray<double>>
     getELocXcEshelbyTensor(
-      const VectorizedArray<double> &                  rho,
-      const Tensor<1, C_DIM, VectorizedArray<double>> &gradRho,
-      const VectorizedArray<double> &                  exc,
-      const Tensor<1, C_DIM, VectorizedArray<double>> &derExcGradRho);
+      const VectorizedArray<double> &              rho,
+      const Tensor<1, 3, VectorizedArray<double>> &gradRho,
+      const VectorizedArray<double> &              exc,
+      const Tensor<1, 3, VectorizedArray<double>> &derExcGradRho);
 
 
     /// exchange-correlation part of the shadow potential (XL-BOMD) Eshelby
     /// tensor
-    Tensor<2, C_DIM, VectorizedArray<double>>
+    Tensor<2, 3, VectorizedArray<double>>
     getShadowPotentialForceRhoDiffXcEshelbyTensor(
       const VectorizedArray<double> &shadowKSRhoMinMinusRho,
-      const Tensor<1, C_DIM, VectorizedArray<double>>
+      const Tensor<1, 3, VectorizedArray<double>>
         &shadowKSGradRhoMinMinusGradRho,
-      const Tensor<1, C_DIM, VectorizedArray<double>> &gradRho,
-      const VectorizedArray<double> &                  vxc,
-      const Tensor<1, C_DIM, VectorizedArray<double>> &derVxcGradRho,
-      const Tensor<1, C_DIM, VectorizedArray<double>> &derExcGradRho,
-      const Tensor<2, C_DIM, VectorizedArray<double>> &der2ExcGradRho);
+      const Tensor<1, 3, VectorizedArray<double>> &gradRho,
+      const VectorizedArray<double> &              vxc,
+      const Tensor<1, 3, VectorizedArray<double>> &derVxcGradRho,
+      const Tensor<1, 3, VectorizedArray<double>> &derExcGradRho,
+      const Tensor<2, 3, VectorizedArray<double>> &der2ExcGradRho);
 
     /// psp part of the ELoc Eshelby tensor
-    Tensor<2, C_DIM, VectorizedArray<double>>
+    Tensor<2, 3, VectorizedArray<double>>
     getELocPspEshelbyTensor(const VectorizedArray<double> &rho,
                             const VectorizedArray<double> &pseudoVLoc,
                             const VectorizedArray<double> &phiExt);
 
     /// Local pseudopotential force contribution
-    Tensor<1, C_DIM, VectorizedArray<double>>
-    getFPSPLocal(
-      const VectorizedArray<double>                    rho,
-      const Tensor<1, C_DIM, VectorizedArray<double>> &gradPseudoVLoc,
-      const Tensor<1, C_DIM, VectorizedArray<double>> &gradPhiExt);
+    Tensor<1, 3, VectorizedArray<double>>
+    getFPSPLocal(const VectorizedArray<double>                rho,
+                 const Tensor<1, 3, VectorizedArray<double>> &gradPseudoVLoc,
+                 const Tensor<1, 3, VectorizedArray<double>> &gradPhiExt);
 
 
     /// Nonlocal pseudopotential force contribution (for complex case)
-    Tensor<1, C_DIM, VectorizedArray<double>>
-    getFnl(
-      const std::vector<
-        std::vector<std::vector<Tensor<1, 2, VectorizedArray<double>>>>>
-        &zetaDeltaV,
-      const std::vector<std::vector<std::vector<std::complex<double>>>>
-        &projectorKetTimesPsiTimesVTimesPartOcc,
-      std::vector<Tensor<1, 2, Tensor<1, C_DIM, VectorizedArray<double>>>>::
-        const_iterator                 gradPsiBegin,
-      const std::vector<double> &      kPointWeights,
-      const unsigned int               numBlockedEigenvectors,
-      const std::vector<unsigned int> &nonlocalAtomsCompactSupportList);
+    Tensor<1, 3, VectorizedArray<double>>
+    getFnl(const std::vector<
+             std::vector<std::vector<Tensor<1, 2, VectorizedArray<double>>>>>
+             &zetaDeltaV,
+           const std::vector<std::vector<std::vector<std::complex<double>>>>
+             &projectorKetTimesPsiTimesVTimesPartOcc,
+           std::vector<Tensor<1, 2, Tensor<1, 3, VectorizedArray<double>>>>::
+             const_iterator                 gradPsiBegin,
+           const std::vector<double> &      kPointWeights,
+           const unsigned int               numBlockedEigenvectors,
+           const std::vector<unsigned int> &nonlocalAtomsCompactSupportList);
 
     /// Nonlocal pseudopotential force contribution (for real case)
-    Tensor<1, C_DIM, VectorizedArray<double>>
-    getFnl(const std::vector<std::vector<VectorizedArray<double>>> &zetaDeltaV,
-           const std::vector<Tensor<1, C_DIM, VectorizedArray<double>>>
+    Tensor<1, 3, VectorizedArray<double>>
+    getFnl(const std::vector<dealii::AlignedVector<VectorizedArray<double>>>
+             &zetaDeltaV,
+           const std::vector<Tensor<1, 3, VectorizedArray<double>>>
              &projectorKetTimesPsiTimesVTimesPartOccContractionGradPsi,
            const std::vector<bool> &        isAtomInCell,
            const std::vector<unsigned int> &nonlocalPseudoWfcsAccum);
 
     /// Nonlocal pseudopotential force contribution (for real case)
-    Tensor<1, C_DIM, VectorizedArray<double>>
-    getFnlAtom(const std::vector<VectorizedArray<double>> &zetaDeltaV,
-               const std::vector<Tensor<1, C_DIM, VectorizedArray<double>>>
+    Tensor<1, 3, VectorizedArray<double>>
+    getFnlAtom(const dealii::AlignedVector<VectorizedArray<double>> &zetaDeltaV,
+               const std::vector<Tensor<1, 3, VectorizedArray<double>>>
                  &projectorKetTimesPsiTimesVTimesPartOccContractionGradPsi,
                const unsigned int startingId);
 
     /// Nonlocal pseudopotential force contribution (for complex case)
-    Tensor<1, C_DIM, VectorizedArray<double>>
+    Tensor<1, 3, VectorizedArray<double>>
     getFnlAtom(
       const std::vector<
         std::vector<std::vector<Tensor<1, 2, VectorizedArray<double>>>>>
@@ -188,7 +187,7 @@ namespace dftfe
         &projectorKetTimesPsiTimesVTimesPartOcc,
       std::vector<Tensor<1, 2, VectorizedArray<double>>>::const_iterator
         psiBegin,
-      std::vector<Tensor<1, 2, Tensor<1, C_DIM, VectorizedArray<double>>>>::
+      std::vector<Tensor<1, 2, Tensor<1, 3, VectorizedArray<double>>>>::
         const_iterator           gradPsiBegin,
       const std::vector<double> &kPointWeights,
       const std::vector<double> &kPointCoordinates,
@@ -198,22 +197,22 @@ namespace dftfe
      * output electron density (rhoIn and rhoOut) of the final scf iteration.
      * vEff denotes the Kohn-Sham effective potential.
      */
-    Tensor<1, C_DIM, VectorizedArray<double>>
+    Tensor<1, 3, VectorizedArray<double>>
     getNonSelfConsistentForce(
-      const VectorizedArray<double> &                  vEffRhoIn,
-      const VectorizedArray<double> &                  vEffRhoOut,
-      const Tensor<1, C_DIM, VectorizedArray<double>> &gradRhoOut,
-      const Tensor<1, C_DIM, VectorizedArray<double>>
+      const VectorizedArray<double> &              vEffRhoIn,
+      const VectorizedArray<double> &              vEffRhoOut,
+      const Tensor<1, 3, VectorizedArray<double>> &gradRhoOut,
+      const Tensor<1, 3, VectorizedArray<double>>
         &derExchCorrEnergyWithGradRhoIn,
-      const Tensor<1, C_DIM, VectorizedArray<double>>
+      const Tensor<1, 3, VectorizedArray<double>>
         &derExchCorrEnergyWithGradRhoOut,
-      const Tensor<2, C_DIM, VectorizedArray<double>> &hessianRhoOut);
+      const Tensor<2, 3, VectorizedArray<double>> &hessianRhoOut);
 
     /// EK Eshelby tensor (used only for stress computation)
-    Tensor<2, C_DIM, VectorizedArray<double>> getEKStress(
+    Tensor<2, 3, VectorizedArray<double>> getEKStress(
       std::vector<Tensor<1, 2, VectorizedArray<double>>>::const_iterator
         psiBegin,
-      std::vector<Tensor<1, 2, Tensor<1, C_DIM, VectorizedArray<double>>>>::
+      std::vector<Tensor<1, 2, Tensor<1, 3, VectorizedArray<double>>>>::
         const_iterator                        gradPsiBegin,
       const std::vector<double> &             kPointCoordinates,
       const std::vector<double> &             kPointWeights,
@@ -223,16 +222,16 @@ namespace dftfe
 
     /// Nonlocal pseudopotential Eshelby tensor (used only for stress
     /// computation) multiple k point and complex case
-    Tensor<2, C_DIM, VectorizedArray<double>>
+    Tensor<2, 3, VectorizedArray<double>>
     getEnlStress(
       const std::vector<std::vector<
-        std::vector<Tensor<1, 2, Tensor<1, C_DIM, VectorizedArray<double>>>>>>
+        std::vector<Tensor<1, 2, Tensor<1, 3, VectorizedArray<double>>>>>>
         &zetalmDeltaVlProductDistImageAtoms,
       const std::vector<std::vector<std::vector<std::complex<double>>>>
         &projectorKetTimesPsiTimesVTimesPartOcc,
       std::vector<Tensor<1, 2, VectorizedArray<double>>>::const_iterator
         psiBegin,
-      std::vector<Tensor<1, 2, Tensor<1, C_DIM, VectorizedArray<double>>>>::
+      std::vector<Tensor<1, 2, Tensor<1, 3, VectorizedArray<double>>>>::
         const_iterator                 gradPsiBegin,
       const std::vector<double> &      kPointWeights,
       const std::vector<double> &      kPointCoordinates,
@@ -242,40 +241,40 @@ namespace dftfe
 
     /// Nonlocal pseudopotential Eshelby tensor (used only for stress
     /// computation) for Gamma point case
-    Tensor<2, C_DIM, VectorizedArray<double>>
+    Tensor<2, 3, VectorizedArray<double>>
     getEnlStress(
-      const std::vector<std::vector<Tensor<1, C_DIM, VectorizedArray<double>>>>
+      const std::vector<std::vector<Tensor<1, 3, VectorizedArray<double>>>>
         &zetalmDeltaVlProductDistImageAtoms,
       const std::vector<std::vector<std::vector<double>>>
         &projectorKetTimesPsiTimesVTimesPartOcc,
-      std::vector<VectorizedArray<double>>::const_iterator psiBegin,
-      std::vector<Tensor<1, C_DIM, VectorizedArray<double>>>::const_iterator
+      dealii::AlignedVector<VectorizedArray<double>>::const_iterator psiBegin,
+      std::vector<Tensor<1, 3, VectorizedArray<double>>>::const_iterator
                                        gradPsiBegin,
       const std::vector<unsigned int> &nonlocalAtomsCompactSupportList,
       const unsigned int               numBlockedEigenvectors);
 
     /// Nonlocal pseudopotential Eshelby tensor (used only for stress
     /// computation) for Gamma point case
-    Tensor<2, C_DIM, VectorizedArray<double>>
+    Tensor<2, 3, VectorizedArray<double>>
     getEnlStress(
-      const std::vector<std::vector<Tensor<1, C_DIM, VectorizedArray<double>>>>
+      const std::vector<std::vector<Tensor<1, 3, VectorizedArray<double>>>>
         &zetalmDeltaVlProductDistImageAtoms,
-      const std::vector<Tensor<1, C_DIM, VectorizedArray<double>>>
+      const std::vector<Tensor<1, 3, VectorizedArray<double>>>
         &projectorKetTimesPsiTimesVTimesPartOccContractionGradPsi,
       const std::vector<bool> &        isAtomInCell,
       const std::vector<unsigned int> &nonlocalPseudoWfcsAccum);
 
     /// Nonlocal core correction pseudopotential force contribution
-    Tensor<1, C_DIM, VectorizedArray<double>>
+    Tensor<1, 3, VectorizedArray<double>>
     getFNonlinearCoreCorrection(
-      const VectorizedArray<double> &                  vxc,
-      const Tensor<1, C_DIM, VectorizedArray<double>> &gradRhoCore);
+      const VectorizedArray<double> &              vxc,
+      const Tensor<1, 3, VectorizedArray<double>> &gradRhoCore);
 
     /// Nonlocal core correction pseudopotential force contribution
-    Tensor<1, C_DIM, VectorizedArray<double>>
+    Tensor<1, 3, VectorizedArray<double>>
     getFNonlinearCoreCorrection(
-      const Tensor<1, C_DIM, VectorizedArray<double>> &derExcGradRho,
-      const Tensor<2, C_DIM, VectorizedArray<double>> &hessianRhoCore);
+      const Tensor<1, 3, VectorizedArray<double>> &derExcGradRho,
+      const Tensor<2, 3, VectorizedArray<double>> &hessianRhoCore);
 
   }; // namespace eshelbyTensor
 

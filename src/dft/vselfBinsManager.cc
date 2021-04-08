@@ -556,8 +556,9 @@ namespace dftfe
 
     if (dftParameters::smearedNuclearCharges &&
         (d_storedAdaptiveBallRadius < 1e-6))
-      radiusAtomBallAdaptive = (dftParameters::meshSizeOuterBall > 1.5 &&
-                                dftParameters::outerAtomBallRadius < 6.0) ?
+      radiusAtomBallAdaptive = ((dftParameters::meshSizeOuterBall > 1.5 &&
+                                 dftParameters::outerAtomBallRadius < 6.0) ||
+                                (dftParameters::meshSizeOuterBall > 2.2)) ?
                                  6.0 :
                                  4.0;
 
@@ -1346,10 +1347,10 @@ namespace dftfe
     const std::vector<std::vector<double>> & atomLocations,
     const std::vector<std::vector<double>> & imagePositions,
     const std::vector<int> &                 imageIds,
-    const std::vector<double> &              imageCharges)
+    const std::vector<double> &              imageCharges,
+    const bool                               vselfPerturbationUpdateForStress)
 
   {
-    d_vselfBinConstraintMatrices.clear();
     d_dofClosestChargeLocationMap.clear();
 
     d_atomLocations = atomLocations;
@@ -1389,7 +1390,6 @@ namespace dftfe
       inhomogBoundaryVecVselfDerR[idim].reinit(inhomogBoundaryVec);
 
     const int numberBins = d_bins.size();
-    d_vselfBinConstraintMatrices.resize(4 * numberBins);
     d_dofClosestChargeLocationMap.resize(numberBins);
     //
     // set constraint matrices for each bin
@@ -1453,8 +1453,9 @@ namespace dftfe
                             closestAtomLocation[2] = imagePositions[imageId][2];
                           }
 
-                        dofClosestChargeLocationMap[globalNodeId] =
-                          closestAtomLocation;
+                        if (!vselfPerturbationUpdateForStress)
+                          dofClosestChargeLocationMap[globalNodeId] =
+                            closestAtomLocation;
 
                         if (boundaryId == -1 &&
                             !(std::abs(inhomogBoundaryVec[globalNodeId]) >
@@ -1465,17 +1466,22 @@ namespace dftfe
                                 closestAtomLocation);
                             const double newPotentialValue =
                               -closestAtomCharge / distance;
-                            d_vselfBinField[iBin][globalNodeId] =
-                              newPotentialValue;
                             inhomogBoundaryVec[globalNodeId] =
                               newPotentialValue;
 
-                            for (unsigned int idim = 0; idim < 3; idim++)
-                              inhomogBoundaryVecVselfDerR[idim][globalNodeId] =
-                                newPotentialValue / distance *
-                                (supportPoints[globalNodeId][idim] -
-                                 closestAtomLocation[idim]) /
-                                distance;
+                            if (!vselfPerturbationUpdateForStress)
+                              {
+                                d_vselfBinField[iBin][globalNodeId] =
+                                  newPotentialValue;
+
+                                for (unsigned int idim = 0; idim < 3; idim++)
+                                  inhomogBoundaryVecVselfDerR
+                                    [idim][globalNodeId] =
+                                      newPotentialValue / distance *
+                                      (supportPoints[globalNodeId][idim] -
+                                       closestAtomLocation[idim]) /
+                                      distance;
+                              }
                           } // check non hanging node and vself consraints not
                             // already set
                       }
@@ -1513,38 +1519,48 @@ namespace dftfe
         d_vselfBinConstraintMatrices[4 * iBin].close();
         constraintsVector.push_back(&(d_vselfBinConstraintMatrices[4 * iBin]));
 
-        for (unsigned int idim = 0; idim < 3; idim++)
-          d_vselfBinConstraintMatrices[4 * iBin + idim + 1].reinit(
-            locally_relevant_dofs);
-
-        for (unsigned int idim = 0; idim < 3; idim++)
+        if (!vselfPerturbationUpdateForStress)
           {
-            inhomogBoundaryVecVselfDerR[idim].update_ghost_values();
-            for (auto index : locally_relevant_dofs)
-              {
-                if (!onlyHangingNodeConstraints.is_constrained(index) &&
-                    std::abs(inhomogBoundaryVecVselfDerR[idim][index]) > 1e-10)
-                  {
-                    d_vselfBinConstraintMatrices[4 * iBin + idim + 1].add_line(
-                      index);
-                    d_vselfBinConstraintMatrices[4 * iBin + idim + 1]
-                      .set_inhomogeneity(
-                        index, inhomogBoundaryVecVselfDerR[idim][index]);
-                  }
-              }
+            for (unsigned int idim = 0; idim < 3; idim++)
+              d_vselfBinConstraintMatrices[4 * iBin + idim + 1].reinit(
+                locally_relevant_dofs);
 
-            d_vselfBinConstraintMatrices[4 * iBin + idim + 1].merge(
-              onlyHangingNodeConstraints,
-              dealii::AffineConstraints<
-                double>::MergeConflictBehavior::left_object_wins);
-            d_vselfBinConstraintMatrices[4 * iBin + idim + 1].close();
-            d_vselfBinConstraintMatrices[4 * iBin + idim + 1].merge(
-              constraintMatrix,
-              dealii::AffineConstraints<
-                double>::MergeConflictBehavior::left_object_wins);
-            d_vselfBinConstraintMatrices[4 * iBin + idim + 1].close();
-            constraintsVector.push_back(
-              &(d_vselfBinConstraintMatrices[4 * iBin + idim + 1]));
+            for (unsigned int idim = 0; idim < 3; idim++)
+              {
+                inhomogBoundaryVecVselfDerR[idim].update_ghost_values();
+                for (auto index : locally_relevant_dofs)
+                  {
+                    if (!onlyHangingNodeConstraints.is_constrained(index) &&
+                        std::abs(inhomogBoundaryVecVselfDerR[idim][index]) >
+                          1e-10)
+                      {
+                        d_vselfBinConstraintMatrices[4 * iBin + idim + 1]
+                          .add_line(index);
+                        d_vselfBinConstraintMatrices[4 * iBin + idim + 1]
+                          .set_inhomogeneity(
+                            index, inhomogBoundaryVecVselfDerR[idim][index]);
+                      }
+                  }
+
+                d_vselfBinConstraintMatrices[4 * iBin + idim + 1].merge(
+                  onlyHangingNodeConstraints,
+                  dealii::AffineConstraints<
+                    double>::MergeConflictBehavior::left_object_wins);
+                d_vselfBinConstraintMatrices[4 * iBin + idim + 1].close();
+                d_vselfBinConstraintMatrices[4 * iBin + idim + 1].merge(
+                  constraintMatrix,
+                  dealii::AffineConstraints<
+                    double>::MergeConflictBehavior::left_object_wins);
+                d_vselfBinConstraintMatrices[4 * iBin + idim + 1].close();
+                constraintsVector.push_back(
+                  &(d_vselfBinConstraintMatrices[4 * iBin + idim + 1]));
+              }
+          }
+        else
+          {
+            for (unsigned int idim = 0; idim < 3; idim++)
+              constraintsVector.push_back(
+                &(d_vselfBinConstraintMatrices[4 * iBin + idim + 1]));
           }
       } // bin loop
   }
@@ -1716,6 +1732,13 @@ namespace dftfe
   vselfBinsManager<FEOrder, FEOrderElectro>::getVselfFieldDerRBins() const
   {
     return d_vselfFieldDerRBins;
+  }
+
+  template <unsigned int FEOrder, unsigned int FEOrderElectro>
+  const std::vector<distributedCPUVec<double>> &
+  vselfBinsManager<FEOrder, FEOrderElectro>::getPerturbedVselfFieldBins() const
+  {
+    return d_vselfFieldPerturbedBins;
   }
 
   template <unsigned int FEOrder, unsigned int FEOrderElectro>

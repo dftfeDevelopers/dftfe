@@ -69,8 +69,8 @@ namespace dftfe
                 const Triangulation<3, 3> &             serialTriangulation,
                 const std::vector<std::vector<double>> &domainBoundingVectors,
                 const MPI_Comm &                        mpi_comm,
-                DoFHandler<C_DIM> &                     dofHandlerForce,
-                FESystem<C_DIM> &                       FEForce,
+                DoFHandler<3> &                         dofHandlerForce,
+                FESystem<3> &                           FEForce,
                 dealii::AffineConstraints<double> &     constraintsForce,
                 IndexSet &                              locally_owned_dofsForce,
                 IndexSet &locally_relevant_dofsForce)
@@ -114,7 +114,7 @@ namespace dftfe
         }
 
       std::vector<
-        GridTools::PeriodicFacePair<typename DoFHandler<C_DIM>::cell_iterator>>
+        GridTools::PeriodicFacePair<typename DoFHandler<3>::cell_iterator>>
         periodicity_vectorForce;
 
       const std::array<int, 3> periodic = {dftParameters::periodicX,
@@ -144,7 +144,7 @@ namespace dftfe
             offsetVectors[periodicDirectionVector[i]]);
         }
 
-      DoFTools::make_periodicity_constraints<DoFHandler<C_DIM>>(
+      DoFTools::make_periodicity_constraints<DoFHandler<3>>(
         periodicity_vectorForce, constraintsForce);
       constraintsForce.close();
 
@@ -584,7 +584,7 @@ namespace dftfe
   }
 
   template <unsigned int FEOrder, unsigned int FEOrderElectro>
-  Tensor<2, C_DIM, double>
+  Tensor<2, 3, double>
   forceClass<FEOrder, FEOrderElectro>::getStress()
   {
     return d_stress;

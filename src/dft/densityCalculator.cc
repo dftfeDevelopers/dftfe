@@ -504,10 +504,10 @@ namespace dftfe
                                      numKPoints,
                                    zeroTensor2);
 #else
-            std::vector<dealii::VectorizedArray<double>> psiQuads(
+            dealii::AlignedVector<dealii::VectorizedArray<double>> psiQuads(
               numQuadPoints * currentBlockSize,
               dealii::make_vectorized_array(0.0));
-            std::vector<dealii::VectorizedArray<double>> psiQuads2(
+            dealii::AlignedVector<dealii::VectorizedArray<double>> psiQuads2(
               numQuadPoints * currentBlockSize,
               dealii::make_vectorized_array(0.0));
             std::vector<dealii::Tensor<1, 3, dealii::VectorizedArray<double>>>
@@ -515,12 +515,12 @@ namespace dftfe
             std::vector<dealii::Tensor<1, 3, dealii::VectorizedArray<double>>>
               gradPsiQuads2(numQuadPoints * currentBlockSize, zeroTensor3);
 
-            std::vector<dealii::VectorizedArray<double>> psiRotFracQuads(
-              numQuadPoints * currentBlockSizeFrac,
-              dealii::make_vectorized_array(0.0));
-            std::vector<dealii::VectorizedArray<double>> psiRotFracQuads2(
-              numQuadPoints * currentBlockSizeFrac,
-              dealii::make_vectorized_array(0.0));
+            dealii::AlignedVector<dealii::VectorizedArray<double>>
+              psiRotFracQuads(numQuadPoints * currentBlockSizeFrac,
+                              dealii::make_vectorized_array(0.0));
+            dealii::AlignedVector<dealii::VectorizedArray<double>>
+              psiRotFracQuads2(numQuadPoints * currentBlockSizeFrac,
+                               dealii::make_vectorized_array(0.0));
             std::vector<dealii::Tensor<1, 3, dealii::VectorizedArray<double>>>
               gradPsiRotFracQuads(numQuadPoints * currentBlockSizeFrac,
                                   zeroTensor3);

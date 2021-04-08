@@ -21,26 +21,26 @@
 template <unsigned int FEOrder, unsigned int FEOrderElectro>
 void forceClass<FEOrder, FEOrderElectro>::
   addENonlinearCoreCorrectionStressContribution(
-    FEEvaluation<C_DIM,
+    FEEvaluation<3,
                  1,
                  C_num1DQuad<C_rhoNodalPolyOrder<FEOrder, FEOrderElectro>()>(),
-                 C_DIM> &                       forceEval,
-    const MatrixFree<3, double> &               matrixFreeData,
-    const unsigned int                          cell,
-    const std::vector<VectorizedArray<double>> &vxcQuads,
-    const std::vector<Tensor<1, C_DIM, VectorizedArray<double>>> &derExcGradRho,
+                 3> &                                         forceEval,
+    const MatrixFree<3, double> &                             matrixFreeData,
+    const unsigned int                                        cell,
+    const dealii::AlignedVector<VectorizedArray<double>> &    vxcQuads,
+    const std::vector<Tensor<1, 3, VectorizedArray<double>>> &derExcGradRho,
     const std::map<unsigned int, std::map<dealii::CellId, std::vector<double>>>
       &gradRhoCoreAtoms,
     const std::map<unsigned int, std::map<dealii::CellId, std::vector<double>>>
       &hessianRhoCoreAtoms)
 {
-  Tensor<1, C_DIM, VectorizedArray<double>> zeroTensor1;
-  for (unsigned int idim = 0; idim < C_DIM; idim++)
+  Tensor<1, 3, VectorizedArray<double>> zeroTensor1;
+  for (unsigned int idim = 0; idim < 3; idim++)
     zeroTensor1[idim] = make_vectorized_array(0.0);
 
-  Tensor<2, C_DIM, VectorizedArray<double>> zeroTensor2;
-  for (unsigned int idim = 0; idim < C_DIM; idim++)
-    for (unsigned int jdim = 0; jdim < C_DIM; jdim++)
+  Tensor<2, 3, VectorizedArray<double>> zeroTensor2;
+  for (unsigned int idim = 0; idim < 3; idim++)
+    for (unsigned int jdim = 0; jdim < 3; jdim++)
       zeroTensor2[idim][jdim] = make_vectorized_array(0.0);
 
   const unsigned int numberGlobalAtoms  = dftPtr->atomLocations.size();
@@ -48,22 +48,22 @@ void forceClass<FEOrder, FEOrderElectro>::
   const unsigned int totalNumberAtoms = numberGlobalAtoms + numberImageCharges;
   const unsigned int numSubCells   = matrixFreeData.n_components_filled(cell);
   const unsigned int numQuadPoints = forceEval.n_q_points;
-  DoFHandler<C_DIM>::active_cell_iterator subCellPtr;
+  DoFHandler<3>::active_cell_iterator subCellPtr;
 
-  std::vector<Tensor<1, C_DIM, VectorizedArray<double>>> xMinusAtomLoc(
+  std::vector<Tensor<1, 3, VectorizedArray<double>>> xMinusAtomLoc(
     numQuadPoints, zeroTensor1);
 
 
   for (unsigned int iAtom = 0; iAtom < totalNumberAtoms; iAtom++)
     {
-      std::vector<Tensor<1, C_DIM, VectorizedArray<double>>>
-        gradRhoCoreAtomsQuads(numQuadPoints, zeroTensor1);
-      std::vector<Tensor<2, C_DIM, VectorizedArray<double>>>
+      std::vector<Tensor<1, 3, VectorizedArray<double>>> gradRhoCoreAtomsQuads(
+        numQuadPoints, zeroTensor1);
+      std::vector<Tensor<2, 3, VectorizedArray<double>>>
         hessianRhoCoreAtomsQuads(numQuadPoints, zeroTensor2);
 
       double       atomCharge;
       unsigned int atomId = iAtom;
-      Point<C_DIM> atomLocation;
+      Point<3>     atomLocation;
       if (iAtom < numberGlobalAtoms)
         {
           atomLocation[0] = dftPtr->atomLocations[iAtom][2];
@@ -106,9 +106,9 @@ void forceClass<FEOrder, FEOrderElectro>::
               const std::vector<double> &temp = it->second;
               for (unsigned int q = 0; q < numQuadPoints; ++q)
                 {
-                  gradRhoCoreAtomsQuads[q][0][iSubCell] = temp[q * C_DIM];
-                  gradRhoCoreAtomsQuads[q][1][iSubCell] = temp[q * C_DIM + 1];
-                  gradRhoCoreAtomsQuads[q][2][iSubCell] = temp[q * C_DIM + 2];
+                  gradRhoCoreAtomsQuads[q][0][iSubCell] = temp[q * 3];
+                  gradRhoCoreAtomsQuads[q][1][iSubCell] = temp[q * 3 + 1];
+                  gradRhoCoreAtomsQuads[q][2][iSubCell] = temp[q * 3 + 2];
                 }
             }
 
@@ -125,7 +125,7 @@ void forceClass<FEOrder, FEOrderElectro>::
                       for (unsigned int iDim = 0; iDim < 3; ++iDim)
                         for (unsigned int jDim = 0; jDim < 3; ++jDim)
                           hessianRhoCoreAtomsQuads[q][iDim][jDim][iSubCell] =
-                            temp[q * C_DIM * C_DIM + C_DIM * iDim + jDim];
+                            temp[q * 3 * 3 + 3 * iDim + jDim];
                     }
                 }
             }
@@ -133,15 +133,14 @@ void forceClass<FEOrder, FEOrderElectro>::
           if (!isCellOutsideCoreRhoTail)
             for (unsigned int q = 0; q < numQuadPoints; ++q)
               {
-                const Point<C_DIM, VectorizedArray<double>>
-                  &quadPointVectorized = forceEval.quadrature_point(q);
-                Point<C_DIM> quadPoint;
+                const Point<3, VectorizedArray<double>> &quadPointVectorized =
+                  forceEval.quadrature_point(q);
+                Point<3> quadPoint;
                 quadPoint[0] = quadPointVectorized[0][iSubCell];
                 quadPoint[1] = quadPointVectorized[1][iSubCell];
                 quadPoint[2] = quadPointVectorized[2][iSubCell];
-                const Tensor<1, C_DIM, double> dispAtom =
-                  quadPoint - atomLocation;
-                for (unsigned int idim = 0; idim < C_DIM; idim++)
+                const Tensor<1, 3, double> dispAtom = quadPoint - atomLocation;
+                for (unsigned int idim = 0; idim < 3; idim++)
                   {
                     xMinusAtomLoc[q][idim][iSubCell] = dispAtom[idim];
                   }
@@ -152,8 +151,7 @@ void forceClass<FEOrder, FEOrderElectro>::
         continue;
 
 
-      Tensor<2, C_DIM, VectorizedArray<double>> stressContribution =
-        zeroTensor2;
+      Tensor<2, 3, VectorizedArray<double>> stressContribution = zeroTensor2;
 
       for (unsigned int q = 0; q < numQuadPoints; ++q)
         {
@@ -167,8 +165,8 @@ void forceClass<FEOrder, FEOrderElectro>::
         }
 
       for (unsigned int iSubCell = 0; iSubCell < numSubCells; ++iSubCell)
-        for (unsigned int idim = 0; idim < C_DIM; idim++)
-          for (unsigned int jdim = 0; jdim < C_DIM; jdim++)
+        for (unsigned int idim = 0; idim < 3; idim++)
+          for (unsigned int jdim = 0; jdim < 3; jdim++)
             d_stress[idim][jdim] += stressContribution[idim][jdim][iSubCell];
     } // iAtom loop
 }
@@ -177,17 +175,17 @@ void forceClass<FEOrder, FEOrderElectro>::
 template <unsigned int FEOrder, unsigned int FEOrderElectro>
 void forceClass<FEOrder, FEOrderElectro>::
   addENonlinearCoreCorrectionStressContributionSpinPolarized(
-    FEEvaluation<C_DIM,
+    FEEvaluation<3,
                  1,
                  C_num1DQuad<C_rhoNodalPolyOrder<FEOrder, FEOrderElectro>()>(),
-                 C_DIM> &                       forceEval,
-    const MatrixFree<3, double> &               matrixFreeData,
-    const unsigned int                          cell,
-    const std::vector<VectorizedArray<double>> &vxcQuadsSpin0,
-    const std::vector<VectorizedArray<double>> &vxcQuadsSpin1,
-    const std::vector<Tensor<1, C_DIM, VectorizedArray<double>>>
+                 3> &                                     forceEval,
+    const MatrixFree<3, double> &                         matrixFreeData,
+    const unsigned int                                    cell,
+    const dealii::AlignedVector<VectorizedArray<double>> &vxcQuadsSpin0,
+    const dealii::AlignedVector<VectorizedArray<double>> &vxcQuadsSpin1,
+    const std::vector<Tensor<1, 3, VectorizedArray<double>>>
       &derExcGradRhoSpin0,
-    const std::vector<Tensor<1, C_DIM, VectorizedArray<double>>>
+    const std::vector<Tensor<1, 3, VectorizedArray<double>>>
       &derExcGradRhoSpin1,
     const std::map<unsigned int, std::map<dealii::CellId, std::vector<double>>>
       &gradRhoCoreAtoms,
@@ -195,13 +193,13 @@ void forceClass<FEOrder, FEOrderElectro>::
       &        hessianRhoCoreAtoms,
     const bool isXCGGA)
 {
-  Tensor<1, C_DIM, VectorizedArray<double>> zeroTensor1;
-  for (unsigned int idim = 0; idim < C_DIM; idim++)
+  Tensor<1, 3, VectorizedArray<double>> zeroTensor1;
+  for (unsigned int idim = 0; idim < 3; idim++)
     zeroTensor1[idim] = make_vectorized_array(0.0);
 
-  Tensor<2, C_DIM, VectorizedArray<double>> zeroTensor2;
-  for (unsigned int idim = 0; idim < C_DIM; idim++)
-    for (unsigned int jdim = 0; jdim < C_DIM; jdim++)
+  Tensor<2, 3, VectorizedArray<double>> zeroTensor2;
+  for (unsigned int idim = 0; idim < 3; idim++)
+    for (unsigned int jdim = 0; jdim < 3; jdim++)
       zeroTensor2[idim][jdim] = make_vectorized_array(0.0);
 
   const unsigned int numberGlobalAtoms  = dftPtr->atomLocations.size();
@@ -209,22 +207,22 @@ void forceClass<FEOrder, FEOrderElectro>::
   const unsigned int totalNumberAtoms = numberGlobalAtoms + numberImageCharges;
   const unsigned int numSubCells   = matrixFreeData.n_components_filled(cell);
   const unsigned int numQuadPoints = forceEval.n_q_points;
-  DoFHandler<C_DIM>::active_cell_iterator subCellPtr;
+  DoFHandler<3>::active_cell_iterator subCellPtr;
 
-  std::vector<Tensor<1, C_DIM, VectorizedArray<double>>> xMinusAtomLoc(
+  std::vector<Tensor<1, 3, VectorizedArray<double>>> xMinusAtomLoc(
     numQuadPoints, zeroTensor1);
 
 
   for (unsigned int iAtom = 0; iAtom < totalNumberAtoms; iAtom++)
     {
-      std::vector<Tensor<1, C_DIM, VectorizedArray<double>>>
-        gradRhoCoreAtomsQuads(numQuadPoints, zeroTensor1);
-      std::vector<Tensor<2, C_DIM, VectorizedArray<double>>>
+      std::vector<Tensor<1, 3, VectorizedArray<double>>> gradRhoCoreAtomsQuads(
+        numQuadPoints, zeroTensor1);
+      std::vector<Tensor<2, 3, VectorizedArray<double>>>
         hessianRhoCoreAtomsQuads(numQuadPoints, zeroTensor2);
 
       double       atomCharge;
       unsigned int atomId = iAtom;
-      Point<C_DIM> atomLocation;
+      Point<3>     atomLocation;
       if (iAtom < numberGlobalAtoms)
         {
           atomLocation[0] = dftPtr->atomLocations[iAtom][2];
@@ -267,11 +265,9 @@ void forceClass<FEOrder, FEOrderElectro>::
               const std::vector<double> &temp = it->second;
               for (unsigned int q = 0; q < numQuadPoints; ++q)
                 {
-                  gradRhoCoreAtomsQuads[q][0][iSubCell] = temp[q * C_DIM] / 2.0;
-                  gradRhoCoreAtomsQuads[q][1][iSubCell] =
-                    temp[q * C_DIM + 1] / 2.0;
-                  gradRhoCoreAtomsQuads[q][2][iSubCell] =
-                    temp[q * C_DIM + 2] / 2.0;
+                  gradRhoCoreAtomsQuads[q][0][iSubCell] = temp[q * 3] / 2.0;
+                  gradRhoCoreAtomsQuads[q][1][iSubCell] = temp[q * 3 + 1] / 2.0;
+                  gradRhoCoreAtomsQuads[q][2][iSubCell] = temp[q * 3 + 2] / 2.0;
                 }
             }
 
@@ -288,8 +284,7 @@ void forceClass<FEOrder, FEOrderElectro>::
                       for (unsigned int iDim = 0; iDim < 3; ++iDim)
                         for (unsigned int jDim = 0; jDim < 3; ++jDim)
                           hessianRhoCoreAtomsQuads[q][iDim][jDim][iSubCell] =
-                            temp2[q * C_DIM * C_DIM + C_DIM * iDim + jDim] /
-                            2.0;
+                            temp2[q * 3 * 3 + 3 * iDim + jDim] / 2.0;
                     }
                 }
             }
@@ -297,15 +292,14 @@ void forceClass<FEOrder, FEOrderElectro>::
           if (!isCellOutsideCoreRhoTail)
             for (unsigned int q = 0; q < numQuadPoints; ++q)
               {
-                const Point<C_DIM, VectorizedArray<double>>
-                  &quadPointVectorized = forceEval.quadrature_point(q);
-                Point<C_DIM> quadPoint;
+                const Point<3, VectorizedArray<double>> &quadPointVectorized =
+                  forceEval.quadrature_point(q);
+                Point<3> quadPoint;
                 quadPoint[0] = quadPointVectorized[0][iSubCell];
                 quadPoint[1] = quadPointVectorized[1][iSubCell];
                 quadPoint[2] = quadPointVectorized[2][iSubCell];
-                const Tensor<1, C_DIM, double> dispAtom =
-                  quadPoint - atomLocation;
-                for (unsigned int idim = 0; idim < C_DIM; idim++)
+                const Tensor<1, 3, double> dispAtom = quadPoint - atomLocation;
+                for (unsigned int idim = 0; idim < 3; idim++)
                   {
                     xMinusAtomLoc[q][idim][iSubCell] = dispAtom[idim];
                   }
@@ -316,8 +310,7 @@ void forceClass<FEOrder, FEOrderElectro>::
         continue;
 
 
-      Tensor<2, C_DIM, VectorizedArray<double>> stressContribution =
-        zeroTensor2;
+      Tensor<2, 3, VectorizedArray<double>> stressContribution = zeroTensor2;
 
       for (unsigned int q = 0; q < numQuadPoints; ++q)
         stressContribution +=
@@ -333,8 +326,8 @@ void forceClass<FEOrder, FEOrderElectro>::
           forceEval.JxW(q);
 
       for (unsigned int iSubCell = 0; iSubCell < numSubCells; ++iSubCell)
-        for (unsigned int idim = 0; idim < C_DIM; idim++)
-          for (unsigned int jdim = 0; jdim < C_DIM; jdim++)
+        for (unsigned int idim = 0; idim < 3; idim++)
+          for (unsigned int jdim = 0; jdim < 3; jdim++)
             d_stress[idim][jdim] += stressContribution[idim][jdim][iSubCell];
     } // iAtom loop
 }

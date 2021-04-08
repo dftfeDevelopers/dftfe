@@ -112,15 +112,15 @@ namespace dftfe
     bool d_isParallelMesh;
 
     // dealii based FE data structres
-    FESystem<C_DIM>                          FEMoveMesh;
-    DoFHandler<C_DIM>                        d_dofHandlerMoveMesh;
+    FESystem<3>                              FEMoveMesh;
+    DoFHandler<3>                            d_dofHandlerMoveMesh;
     parallel::distributed::Triangulation<3> *d_triaPtr;
     Triangulation<3, 3> *                    d_triaPtrSerial;
     IndexSet                                 d_locally_owned_dofs;
     IndexSet                                 d_locally_relevant_dofs;
     dealii::AffineConstraints<double>        d_constraintsMoveMesh;
     std::vector<
-      GridTools::PeriodicFacePair<typename DoFHandler<C_DIM>::cell_iterator>>
+      GridTools::PeriodicFacePair<typename DoFHandler<3>::cell_iterator>>
                                      d_periodicity_vector;
     std::vector<std::vector<double>> d_domainBoundingVectors;
 

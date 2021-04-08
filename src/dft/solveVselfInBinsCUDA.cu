@@ -419,6 +419,10 @@ namespace dftfe
                                       blockSize,
                                       xD);
       xD = 0.0;
+      cudaMemcpy(xD.begin(),
+                 xH,
+                 localSize * numberBins * sizeof(double),
+                 cudaMemcpyHostToDevice);
 
       MPI_Barrier(MPI_COMM_WORLD);
       time = MPI_Wtime() - time;
@@ -443,6 +447,8 @@ namespace dftfe
         matrixFreeData.get_vector_partitioner(mfDofHandlerIndex),
         xD.get_partitioner(),
         blockSize);
+
+      constraintsMatrixDataInfoCUDA.set_zero(xD, blockSize);
 
       cudaDeviceSynchronize();
       MPI_Barrier(MPI_COMM_WORLD);

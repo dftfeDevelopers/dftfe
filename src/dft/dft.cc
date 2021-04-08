@@ -290,7 +290,7 @@ namespace dftfe
         }
 
     domainVolume = Utilities::MPI::sum(domainVolume, mpi_communicator);
-    if (dftParameters::verbosity >= 1)
+    if (dftParameters::verbosity >= 2)
       pcout << "Volume of the domain (Bohr^3): " << domainVolume << std::endl;
     return domainVolume;
   }
@@ -767,7 +767,7 @@ namespace dftfe
 
         MPI_Barrier(MPI_COMM_WORLD);
         init_core = MPI_Wtime() - init_core;
-        if (dftParameters::verbosity >= 1)
+        if (dftParameters::verbosity >= 2)
           pcout
             << "initPseudoPotentialAll: Time taken for initializing core density for non-linear core correction: "
             << init_core << std::endl;
@@ -783,7 +783,7 @@ namespace dftfe
 
             MPI_Barrier(MPI_COMM_WORLD);
             init_nonlocal1 = MPI_Wtime() - init_nonlocal1;
-            if (dftParameters::verbosity >= 1)
+            if (dftParameters::verbosity >= 2)
               pcout
                 << "initPseudoPotentialAll: Time taken for computeSparseStructureNonLocalProjectors_OV: "
                 << init_nonlocal1 << std::endl;
@@ -800,7 +800,7 @@ namespace dftfe
 
         MPI_Barrier(MPI_COMM_WORLD);
         init_nonlocal2 = MPI_Wtime() - init_nonlocal2;
-        if (dftParameters::verbosity >= 1)
+        if (dftParameters::verbosity >= 2)
           pcout << "initPseudoPotentialAll: Time taken for non local psp init: "
                 << init_nonlocal2 << std::endl;
       }
@@ -1188,7 +1188,7 @@ namespace dftfe
 
     MPI_Barrier(MPI_COMM_WORLD);
     init_bc = MPI_Wtime() - init_bc;
-    if (dftParameters::verbosity >= 1)
+    if (dftParameters::verbosity >= 2)
       pcout
         << "updateAtomPositionsAndMoveMesh: Time taken for initBoundaryConditions: "
         << init_bc << std::endl;
@@ -1262,7 +1262,7 @@ namespace dftfe
 
     MPI_Barrier(MPI_COMM_WORLD);
     init_rho = MPI_Wtime() - init_rho;
-    if (dftParameters::verbosity >= 1)
+    if (dftParameters::verbosity >= 2)
       pcout << "updateAtomPositionsAndMoveMesh: Time taken for initRho: "
             << init_rho << std::endl;
 
@@ -1278,7 +1278,7 @@ namespace dftfe
 
     MPI_Barrier(MPI_COMM_WORLD);
     init_pseudo = MPI_Wtime() - init_pseudo;
-    if (dftParameters::verbosity >= 1)
+    if (dftParameters::verbosity >= 2)
       pcout << "Time taken for initPseudoPotentialAll: " << init_pseudo
             << std::endl;
 
@@ -1299,7 +1299,8 @@ namespace dftfe
   void
   dftClass<FEOrder, FEOrderElectro>::deformDomain(
     const Tensor<2, 3, double> &deformationGradient,
-    const bool                  checkSmearedChargeWidthsForOverlap)
+    const bool                  vselfPerturbationUpdateForStress,
+    const bool                  print)
   {
     d_affineTransformMesh.initMoved(d_domainBoundingVectors);
     d_affineTransformMesh.transform(deformationGradient);
@@ -1307,21 +1308,25 @@ namespace dftfe
     dftUtils::transformDomainBoundingVectors(d_domainBoundingVectors,
                                              deformationGradient);
 
-    pcout
-      << "-----------Simulation Domain bounding vectors (lattice vectors in fully periodic case)-------------"
-      << std::endl;
-    for (int i = 0; i < d_domainBoundingVectors.size(); ++i)
+    if (print)
       {
-        pcout << "v" << i + 1 << " : " << d_domainBoundingVectors[i][0] << " "
-              << d_domainBoundingVectors[i][1] << " "
-              << d_domainBoundingVectors[i][2] << std::endl;
+        pcout
+          << "-----------Simulation Domain bounding vectors (lattice vectors in fully periodic case)-------------"
+          << std::endl;
+        for (int i = 0; i < d_domainBoundingVectors.size(); ++i)
+          {
+            pcout << "v" << i + 1 << " : " << d_domainBoundingVectors[i][0]
+                  << " " << d_domainBoundingVectors[i][1] << " "
+                  << d_domainBoundingVectors[i][2] << std::endl;
+          }
+        pcout
+          << "-----------------------------------------------------------------------------------------"
+          << std::endl;
       }
-    pcout
-      << "-----------------------------------------------------------------------------------------"
-      << std::endl;
 
 #ifdef USE_COMPLEX
-    recomputeKPointCoordinates();
+    if (!vselfPerturbationUpdateForStress)
+      recomputeKPointCoordinates();
 #endif
 
     // update atomic and image positions without any wrapping across periodic
@@ -1363,17 +1368,22 @@ namespace dftfe
         imageDisplacementsTrunc[iImage] = imageCoor - atomCoor;
       }
 
-    pcout << "-----Fractional coordinates of atoms------ " << std::endl;
     for (unsigned int i = 0; i < atomLocations.size(); ++i)
+      atomLocations[i] = atomLocationsFractional[i];
+
+    if (print)
       {
-        atomLocations[i] = atomLocationsFractional[i];
-        pcout << "AtomId " << i << ":  " << atomLocationsFractional[i][2] << " "
-              << atomLocationsFractional[i][3] << " "
-              << atomLocationsFractional[i][4] << "\n";
+        pcout << "-----Fractional coordinates of atoms------ " << std::endl;
+        for (unsigned int i = 0; i < atomLocations.size(); ++i)
+          {
+            pcout << "AtomId " << i << ":  " << atomLocationsFractional[i][2]
+                  << " " << atomLocationsFractional[i][3] << " "
+                  << atomLocationsFractional[i][4] << "\n";
+          }
+        pcout
+          << "-----------------------------------------------------------------------------------------"
+          << std::endl;
       }
-    pcout
-      << "-----------------------------------------------------------------------------------------"
-      << std::endl;
 
     internaldft::convertToCellCenteredCartesianCoordinates(
       atomLocations, d_domainBoundingVectors);
@@ -1419,8 +1429,32 @@ namespace dftfe
           atomCoor[2] + imageDisplacementsTrunc[iImage][2];
       }
 
+    if (vselfPerturbationUpdateForStress)
+      {
+        //
+        // reinitialize dirichlet BCs for total potential and vSelf poisson
+        // solutions
+        //
+        double init_bc;
+        MPI_Barrier(MPI_COMM_WORLD);
+        init_bc = MPI_Wtime();
 
-    initNoRemesh(false, checkSmearedChargeWidthsForOverlap, false);
+
+        // first true option only updates the boundary conditions
+        // second true option signals update is only for vself perturbation
+        initBoundaryConditions(true, true);
+
+        MPI_Barrier(MPI_COMM_WORLD);
+        init_bc = MPI_Wtime() - init_bc;
+        if (dftParameters::verbosity >= 2)
+          pcout
+            << "updateAtomPositionsAndMoveMesh: Time taken for initBoundaryConditions: "
+            << init_bc << std::endl;
+      }
+    else
+      {
+        initNoRemesh(false, true, false);
+      }
   }
 
 
@@ -1737,7 +1771,7 @@ namespace dftfe
 
     MPI_Barrier(MPI_COMM_WORLD);
     init_ksoperator = MPI_Wtime() - init_ksoperator;
-    if (dftParameters::verbosity >= 1)
+    if (dftParameters::verbosity >= 2)
       pcout << "init: Time taken for kohnShamDFTOperator class initialization: "
             << init_ksoperator << std::endl;
   }
@@ -3117,6 +3151,7 @@ namespace dftfe
                   d_rhoCore,
                   d_gradRhoCore,
                   d_bQuadValuesAllAtoms,
+                  d_bCellNonTrivialAtomIds,
                   d_localVselfs,
                   d_pseudoVLoc,
                   d_pseudoVLoc,
@@ -3158,6 +3193,7 @@ namespace dftfe
                   d_rhoCore,
                   d_gradRhoCore,
                   d_bQuadValuesAllAtoms,
+                  d_bCellNonTrivialAtomIds,
                   d_localVselfs,
                   d_pseudoVLoc,
                   d_pseudoVLoc,
@@ -3351,6 +3387,7 @@ namespace dftfe
                                      d_rhoCore,
                                      d_gradRhoCore,
                                      d_bQuadValuesAllAtoms,
+                                     d_bCellNonTrivialAtomIds,
                                      d_localVselfs,
                                      d_pseudoVLoc,
                                      d_pseudoVLoc,
@@ -3392,6 +3429,7 @@ namespace dftfe
               d_rhoCore,
               d_gradRhoCore,
               d_bQuadValuesAllAtoms,
+              d_bCellNonTrivialAtomIds,
               d_localVselfs,
               d_pseudoVLoc,
               d_pseudoVLoc,
@@ -3441,6 +3479,7 @@ namespace dftfe
             d_rhoCore,
             d_gradRhoCore,
             d_bQuadValuesAllAtoms,
+            d_bCellNonTrivialAtomIds,
             d_localVselfs,
             d_atomNodeIdToChargeMap,
             atomLocations.size(),
@@ -3601,6 +3640,16 @@ namespace dftfe
         computingTimerStandard.enter_section("Cell stress computation");
         if (computeForces)
           {
+            if (dftParameters::isPseudopotential ||
+                dftParameters::smearedNuclearCharges)
+              {
+                computeVselfFieldGateauxDerFD(
+#ifdef DFTFE_WITH_GPU
+                  kohnShamDFTEigenOperatorCUDA
+#endif
+                );
+              }
+
             forcePtr->computeStress(matrix_free_data,
 #ifdef DFTFE_WITH_GPU
                                     kohnShamDFTEigenOperatorCUDA,
@@ -3657,6 +3706,171 @@ namespace dftfe
         nscf(kohnShamDFTEigenOperator, d_subspaceIterationSolver);
         writeBands();
       }
+#endif
+  }
+
+  template <unsigned int FEOrder, unsigned int FEOrderElectro>
+  void
+  dftClass<FEOrder, FEOrderElectro>::computeVselfFieldGateauxDerFD(
+#ifdef DFTFE_WITH_GPU
+    kohnShamDFTOperatorCUDAClass<FEOrder, FEOrderElectro>
+      &kohnShamDFTEigenOperatorCUDA
+#endif
+  )
+  {
+    d_vselfFieldGateauxDerStrainFDBins.clear();
+    d_vselfFieldGateauxDerStrainFDBins.resize(
+      (d_vselfBinsManager.getVselfFieldBins()).size() * 6);
+
+    Tensor<2, 3, double> identityTensor;
+    Tensor<2, 3, double> deformationGradientPerturb1;
+    Tensor<2, 3, double> deformationGradientPerturb2;
+
+    // initialize to indentity tensors
+    for (unsigned int idim = 0; idim < 3; idim++)
+      for (unsigned int jdim = 0; jdim < 3; jdim++)
+        {
+          if (idim == jdim)
+            {
+              identityTensor[idim][jdim]              = 1.0;
+              deformationGradientPerturb1[idim][jdim] = 1.0;
+              deformationGradientPerturb2[idim][jdim] = 1.0;
+            }
+          else
+            {
+              identityTensor[idim][jdim]              = 0.0;
+              deformationGradientPerturb1[idim][jdim] = 0.0;
+              deformationGradientPerturb2[idim][jdim] = 0.0;
+            }
+        }
+
+    const double fdparam          = 1e-5;
+    unsigned int flattenedIdCount = 0;
+    for (unsigned int idim = 0; idim < 3; ++idim)
+      for (unsigned int jdim = 0; jdim <= idim; jdim++)
+        {
+          deformationGradientPerturb1 = identityTensor;
+          if (idim == jdim)
+            {
+              deformationGradientPerturb1[idim][jdim] = 1.0 + fdparam;
+            }
+          else
+            {
+              deformationGradientPerturb1[idim][jdim] = fdparam;
+              deformationGradientPerturb1[jdim][idim] = fdparam;
+            }
+
+          deformDomain(deformationGradientPerturb1 *
+                         invert(deformationGradientPerturb2),
+                       true,
+                       dftParameters::verbosity >= 4 ? true : false);
+
+#ifdef DFTFE_WITH_GPU
+          if (dftParameters::useGPU)
+            kohnShamDFTEigenOperatorCUDA
+              .preComputeShapeFunctionGradientIntegrals(d_lpspQuadratureId,
+                                                        true);
+#endif
+
+          computing_timer.enter_section(
+            "Nuclear self-potential perturbation solve");
+
+          d_vselfBinsManager.solveVselfInBinsPerturbedDomain(
+            d_matrixFreeDataPRefined,
+            d_baseDofHandlerIndexElectro,
+            d_phiTotAXQuadratureIdElectro,
+            d_binsStartDofHandlerIndexElectro,
+#ifdef DFTFE_WITH_GPU
+            kohnShamDFTEigenOperatorCUDA,
+#endif
+            d_constraintsPRefined,
+            d_imagePositionsTrunc,
+            d_imageIdsTrunc,
+            d_imageChargesTrunc,
+            d_smearedChargeWidths,
+            d_smearedChargeQuadratureIdElectro,
+            dftParameters::smearedNuclearCharges);
+
+          computing_timer.exit_section(
+            "Nuclear self-potential perturbation solve");
+
+          for (unsigned int ibin = 0;
+               ibin < d_vselfBinsManager.getVselfFieldBins().size();
+               ibin++)
+            d_vselfFieldGateauxDerStrainFDBins[6 * ibin + flattenedIdCount] =
+              (d_vselfBinsManager.getPerturbedVselfFieldBins())[ibin];
+
+          deformationGradientPerturb2 = identityTensor;
+          if (idim == jdim)
+            {
+              deformationGradientPerturb2[idim][jdim] = 1.0 - fdparam;
+            }
+          else
+            {
+              deformationGradientPerturb2[idim][jdim] = -fdparam;
+              deformationGradientPerturb2[jdim][idim] = -fdparam;
+            }
+
+          deformDomain(deformationGradientPerturb2 *
+                         invert(deformationGradientPerturb1),
+                       true,
+                       dftParameters::verbosity >= 4 ? true : false);
+
+#ifdef DFTFE_WITH_GPU
+          if (dftParameters::useGPU)
+            kohnShamDFTEigenOperatorCUDA
+              .preComputeShapeFunctionGradientIntegrals(d_lpspQuadratureId,
+                                                        true);
+#endif
+
+          computing_timer.enter_section(
+            "Nuclear self-potential perturbation solve");
+
+          d_vselfBinsManager.solveVselfInBinsPerturbedDomain(
+            d_matrixFreeDataPRefined,
+            d_baseDofHandlerIndexElectro,
+            d_phiTotAXQuadratureIdElectro,
+            d_binsStartDofHandlerIndexElectro,
+#ifdef DFTFE_WITH_GPU
+            kohnShamDFTEigenOperatorCUDA,
+#endif
+            d_constraintsPRefined,
+            d_imagePositionsTrunc,
+            d_imageIdsTrunc,
+            d_imageChargesTrunc,
+            d_smearedChargeWidths,
+            d_smearedChargeQuadratureIdElectro,
+            dftParameters::smearedNuclearCharges);
+
+          computing_timer.exit_section(
+            "Nuclear self-potential perturbation solve");
+
+          for (unsigned int ibin = 0;
+               ibin < d_vselfBinsManager.getVselfFieldBins().size();
+               ibin++)
+            d_vselfFieldGateauxDerStrainFDBins[6 * ibin + flattenedIdCount] -=
+              (d_vselfBinsManager.getPerturbedVselfFieldBins())[ibin];
+
+          const double fac =
+            (idim == jdim) ? (1.0 / 2.0 / fdparam) : (1.0 / 4.0 / fdparam);
+          for (unsigned int ibin = 0;
+               ibin < d_vselfBinsManager.getVselfFieldBins().size();
+               ibin++)
+            d_vselfFieldGateauxDerStrainFDBins[6 * ibin + flattenedIdCount] *=
+              fac;
+
+          flattenedIdCount++;
+        }
+
+    // reset
+    deformDomain(invert(deformationGradientPerturb2),
+                 true,
+                 dftParameters::verbosity >= 4 ? true : false);
+
+#ifdef DFTFE_WITH_GPU
+    if (dftParameters::useGPU)
+      kohnShamDFTEigenOperatorCUDA.preComputeShapeFunctionGradientIntegrals(
+        d_lpspQuadratureId, true);
 #endif
   }
 

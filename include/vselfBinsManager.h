@@ -96,7 +96,8 @@ namespace dftfe
       const std::vector<std::vector<double>> & atomLocations,
       const std::vector<std::vector<double>> & imagePositions,
       const std::vector<int> &                 imageIds,
-      const std::vector<double> &              imageCharges);
+      const std::vector<double> &              imageCharges,
+      const bool vselfPerturbationUpdateForStress = false);
 
 
     /**
@@ -138,7 +139,8 @@ namespace dftfe
       const std::vector<double> &smearingWidths,
       std::vector<double> &      smearedChargeScaling,
       const unsigned int         smearedChargeQuadratureId,
-      const bool                 useSmearedCharges = false);
+      const bool                 useSmearedCharges        = false,
+      const bool                 isVselfPerturbationSolve = false);
 
 #  ifdef DFTFE_WITH_GPU
     /**
@@ -182,10 +184,32 @@ namespace dftfe
       const std::vector<double> &smearingWidths,
       std::vector<double> &      smearedChargeScaling,
       const unsigned int         smearedChargeQuadratureId,
-      const bool                 useSmearedCharges = false);
+      const bool                 useSmearedCharges        = false,
+      const bool                 isVselfPerturbationSolve = false);
 
 
 #  endif
+
+    /**
+     * @brief Solve nuclear electrostatic self-potential of atoms in each bin in a perturbed domain (used for cell stress calculation)
+     *
+     */
+    void
+    solveVselfInBinsPerturbedDomain(
+      const dealii::MatrixFree<3, double> &matrix_free_data,
+      const unsigned int                   mfBaseDofHandlerIndex,
+      const unsigned int                   matrixFreeQuadratureIdAX,
+      const unsigned int                   offset,
+#  ifdef DFTFE_WITH_GPU
+      operatorDFTCUDAClass &operatorMatrix,
+#  endif
+      const dealii::AffineConstraints<double> &hangingPeriodicConstraintMatrix,
+      const std::vector<std::vector<double>> & imagePositions,
+      const std::vector<int> &                 imageIds,
+      const std::vector<double> &              imageCharges,
+      const std::vector<double> &              smearingWidths,
+      const unsigned int                       smearedChargeQuadratureId,
+      const bool                               useSmearedCharges = false);
 
     /// get const reference map of binIds and atomIds
     const std::map<int, std::set<int>> &
@@ -216,15 +240,19 @@ namespace dftfe
       std::map<dealii::types::global_dof_index, dealii::Point<3>>> &
     getClosestAtomLocationsBins() const;
 
-    /// get const reference to map of global dof index and vself field initial
-    /// value in each bin
+    /// get const reference to solved vself fields
     const std::vector<distributedCPUVec<double>> &
     getVselfFieldBins() const;
 
-    /// get const reference to map of global dof index and vself field initial
-    /// value in each bin
+    /// get const reference to del{vself}/del{R_i} fields
     const std::vector<distributedCPUVec<double>> &
     getVselfFieldDerRBins() const;
+
+    /// perturbation of vself solution field to be used to evaluate the
+    /// Gateaux derivative of vself field with respect to affine strain
+    /// components using central finite difference
+    const std::vector<distributedCPUVec<double>> &
+    getPerturbedVselfFieldBins() const;
 
     /// get const reference to d_atomIdBinIdMapLocalAllImages
     const std::map<unsigned int, unsigned int> &
@@ -293,8 +321,13 @@ namespace dftfe
     /// solved vself solution field for each bin
     std::vector<distributedCPUVec<double>> d_vselfFieldBins;
 
-    /// solved vself solution field for each bin
+    /// solved del{vself}/del{R_i} solution field for each bin
     std::vector<distributedCPUVec<double>> d_vselfFieldDerRBins;
+
+    /// perturbation of vself solution field to be used to evaluate the
+    /// Gateaux derivative of vself field with respect to affine strain
+    /// components using central finite difference
+    std::vector<distributedCPUVec<double>> d_vselfFieldPerturbedBins;
 
     // std::vector<double> d_inhomoIdsColoredVecFlattened;
 

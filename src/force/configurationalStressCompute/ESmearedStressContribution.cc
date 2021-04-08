@@ -20,16 +20,13 @@
 // compute ESmeared contribution stress
 template <unsigned int FEOrder, unsigned int FEOrderElectro>
 void forceClass<FEOrder, FEOrderElectro>::addEPhiTotSmearedStressContribution(
-  FEEvaluation<3,
-               1,
-               C_num1DQuadSmearedCharge() * C_numCopies1DQuadSmearedCharge(),
-               3> &                                         forceEval,
+  FEEvaluation<3, -1, 1, 3> &                               forceEval,
   const MatrixFree<3, double> &                             matrixFreeData,
   const unsigned int                                        cell,
   const std::vector<Tensor<1, 3, VectorizedArray<double>>> &gradPhiTotQuads,
   const std::vector<unsigned int> &nonTrivialAtomImageIdsMacroCell,
   const std::map<dealii::CellId, std::vector<int>> &bQuadAtomIdsAllAtomsImages,
-  const std::vector<VectorizedArray<double>> &      smearedbQuads)
+  const dealii::AlignedVector<VectorizedArray<double>> &smearedbQuads)
 {
   Tensor<1, 3, VectorizedArray<double>> zeroTensor1;
   for (unsigned int idim = 0; idim < 3; idim++)
@@ -50,7 +47,7 @@ void forceClass<FEOrder, FEOrderElectro>::addEPhiTotSmearedStressContribution(
 
   DoFHandler<3>::active_cell_iterator subCellPtr;
 
-  std::vector<VectorizedArray<double>> smearedbQuadsiAtom(
+  dealii::AlignedVector<VectorizedArray<double>> smearedbQuadsiAtom(
     numQuadPoints, make_vectorized_array(0.0));
 
   for (int iAtomNonTrivial = 0;
@@ -103,8 +100,8 @@ void forceClass<FEOrder, FEOrderElectro>::addEPhiTotSmearedStressContribution(
           forceEval.JxW(q);
 
       for (unsigned int iSubCell = 0; iSubCell < numSubCells; ++iSubCell)
-        for (unsigned int idim = 0; idim < C_DIM; idim++)
-          for (unsigned int jdim = 0; jdim < C_DIM; jdim++)
+        for (unsigned int idim = 0; idim < 3; idim++)
+          for (unsigned int jdim = 0; jdim < 3; jdim++)
             d_stress[idim][jdim] +=
               EPSPStressContribution[idim][jdim][iSubCell];
     } // iAtom loop
@@ -113,16 +110,13 @@ void forceClass<FEOrder, FEOrderElectro>::addEPhiTotSmearedStressContribution(
 
 template <unsigned int FEOrder, unsigned int FEOrderElectro>
 void forceClass<FEOrder, FEOrderElectro>::addEVselfSmearedStressContribution(
-  FEEvaluation<3,
-               1,
-               C_num1DQuadSmearedCharge() * C_numCopies1DQuadSmearedCharge(),
-               3> &                                         forceEval,
+  FEEvaluation<3, -1, 1, 3> &                               forceEval,
   const MatrixFree<3, double> &                             matrixFreeData,
   const unsigned int                                        cell,
   const std::vector<Tensor<1, 3, VectorizedArray<double>>> &gradVselfQuads,
   const std::vector<unsigned int> &nonTrivialAtomImageIdsMacroCell,
   const std::map<dealii::CellId, std::vector<int>> &bQuadAtomIdsAllAtomsImages,
-  const std::vector<VectorizedArray<double>> &      smearedbQuads)
+  const dealii::AlignedVector<VectorizedArray<double>> &smearedbQuads)
 {
   Tensor<1, 3, VectorizedArray<double>> zeroTensor1;
   for (unsigned int idim = 0; idim < 3; idim++)
@@ -142,7 +136,7 @@ void forceClass<FEOrder, FEOrderElectro>::addEVselfSmearedStressContribution(
 
   const unsigned int numberGlobalAtoms = dftPtr->atomLocations.size();
 
-  std::vector<VectorizedArray<double>> smearedbQuadsiAtom(
+  dealii::AlignedVector<VectorizedArray<double>> smearedbQuadsiAtom(
     numQuadPoints, make_vectorized_array(0.0));
 
   for (int iAtomNonTrivial = 0;
@@ -195,8 +189,8 @@ void forceClass<FEOrder, FEOrderElectro>::addEVselfSmearedStressContribution(
           forceEval.JxW(q);
 
       for (unsigned int iSubCell = 0; iSubCell < numSubCells; ++iSubCell)
-        for (unsigned int idim = 0; idim < C_DIM; idim++)
-          for (unsigned int jdim = 0; jdim < C_DIM; jdim++)
+        for (unsigned int idim = 0; idim < 3; idim++)
+          for (unsigned int jdim = 0; jdim < 3; jdim++)
             d_stress[idim][jdim] +=
               EPSPStressContribution[idim][jdim][iSubCell];
     } // iAtom loop

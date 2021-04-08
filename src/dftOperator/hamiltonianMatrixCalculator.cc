@@ -75,9 +75,9 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::computeHamiltonianMatrix(
         dealii::ExcMessage(
           "DFT-FE Error: mismatch in quadrature rule usage in computeHamiltonianMatrix."));
 
-      unsigned int                         iElem = 0;
-      VectorizedArray<double>              temp;
-      std::vector<VectorizedArray<double>> elementHamiltonianMatrix;
+      unsigned int                                   iElem = 0;
+      VectorizedArray<double>                        temp;
+      dealii::AlignedVector<VectorizedArray<double>> elementHamiltonianMatrix;
       elementHamiltonianMatrix.resize(numberDofsPerElement *
                                       numberDofsPerElement);
 
@@ -184,8 +184,8 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::computeHamiltonianMatrix(
   // compute cell-level stiffness matrix by going over dealii macrocells
   // which allows efficient integration of cell-level stiffness matrix integrals
   // using dealii vectorized arrays
-  unsigned int                         iElem = 0;
-  std::vector<VectorizedArray<double>> elementHamiltonianMatrix;
+  unsigned int                                   iElem = 0;
+  dealii::AlignedVector<VectorizedArray<double>> elementHamiltonianMatrix;
   elementHamiltonianMatrix.resize(numberDofsPerElement * numberDofsPerElement);
   for (unsigned int iMacroCell = 0; iMacroCell < numberMacroCells; ++iMacroCell)
     {
@@ -214,7 +214,7 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::computeHamiltonianMatrix(
               }
         }
 
-      std::vector<VectorizedArray<double>>
+      dealii::AlignedVector<VectorizedArray<double>>
         shapeGradDotDerExcWithSigmaTimesGradRho;
 
       if (dftParameters::xcFamilyType == "GGA")
@@ -279,7 +279,8 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::computeHamiltonianMatrix(
         } // iNode loop
 
 #ifdef USE_COMPLEX
-      std::vector<VectorizedArray<double>> elementHamiltonianMatrixImag;
+      dealii::AlignedVector<VectorizedArray<double>>
+        elementHamiltonianMatrixImag;
       elementHamiltonianMatrixImag.resize(numberDofsPerElement *
                                           numberDofsPerElement);
       //
@@ -443,7 +444,7 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::computeKineticMatrix()
   unsigned int iElem = 0;
   for (unsigned int iMacroCell = 0; iMacroCell < numberMacroCells; ++iMacroCell)
     {
-      std::vector<VectorizedArray<double>> elementHamiltonianMatrix;
+      dealii::AlignedVector<VectorizedArray<double>> elementHamiltonianMatrix;
       elementHamiltonianMatrix.resize(numberDofsPerElement *
                                       numberDofsPerElement);
       fe_eval.reinit(iMacroCell);

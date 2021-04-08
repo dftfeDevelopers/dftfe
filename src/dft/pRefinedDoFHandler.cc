@@ -167,7 +167,8 @@ void dftClass<FEOrder, FEOrderElectro>::createpRefinedDofHandler(
 template <unsigned int FEOrder, unsigned int FEOrderElectro>
 void
 dftClass<FEOrder, FEOrderElectro>::initpRefinedObjects(
-  const bool meshOnlyDeformed)
+  const bool meshOnlyDeformed,
+  const bool vselfPerturbationUpdateForStress)
 {
   d_dofHandlerPRefined.distribute_dofs(d_dofHandlerPRefined.get_fe());
   d_dofHandlerRhoNodal.distribute_dofs(d_dofHandlerRhoNodal.get_fe());
@@ -181,14 +182,13 @@ dftClass<FEOrder, FEOrderElectro>::initpRefinedObjects(
   typename dealii::MatrixFree<3>::AdditionalData additional_data;
   additional_data.tasks_parallel_scheme =
     dealii::MatrixFree<3>::AdditionalData::partition_partition;
-  if (dftParameters::xcFamilyType == "GGA")
-    additional_data.mapping_update_flags = update_values | update_gradients |
-                                           update_JxW_values | update_hessians |
-                                           update_quadrature_points;
-  else
+  if (dftParameters::isCellStress)
     additional_data.mapping_update_flags = update_values | update_gradients |
                                            update_JxW_values |
                                            update_quadrature_points;
+  else
+    additional_data.mapping_update_flags =
+      update_values | update_gradients | update_JxW_values;
 
   // clear existing constraints matrix vector
   d_constraintsVectorElectro.clear();
@@ -264,7 +264,8 @@ dftClass<FEOrder, FEOrderElectro>::initpRefinedObjects(
                                       atomLocations,
                                       d_imagePositionsTrunc,
                                       d_imageIdsTrunc,
-                                      d_imageChargesTrunc);
+                                      d_imageChargesTrunc,
+                                      vselfPerturbationUpdateForStress);
       computing_timer.exit_section("Update atom bins bc");
     }
   else
@@ -288,7 +289,7 @@ dftClass<FEOrder, FEOrderElectro>::initpRefinedObjects(
 
   MPI_Barrier(MPI_COMM_WORLD);
   init_bins = MPI_Wtime() - init_bins;
-  if (dftParameters::verbosity >= 1)
+  if (dftParameters::verbosity >= 4)
     pcout
       << "updateAtomPositionsAndMoveMesh: initBoundaryConditions: Time taken for bins update: "
       << init_bins << std::endl;
@@ -334,9 +335,20 @@ dftClass<FEOrder, FEOrderElectro>::initpRefinedObjects(
     QGauss<1>(C_num1DQuad<C_rhoNodalPolyOrder<FEOrder, FEOrderElectro>()>()));
   quadratureVector.push_back(QIterated<1>(QGauss<1>(C_num1DQuadLPSP<FEOrder>()),
                                           C_numCopies1DQuadLPSP()));
-  quadratureVector.push_back(QIterated<1>(QGauss<1>(C_num1DQuadSmearedCharge()),
-                                          C_numCopies1DQuadSmearedCharge()));
+  if (dftParameters::isCellStress)
+    quadratureVector.push_back(
+      QIterated<1>(QGauss<1>(C_num1DQuadSmearedChargeStress()),
+                   C_numCopies1DQuadSmearedChargeStress()));
+  else if (dftParameters::meshSizeOuterBall > 2.2)
+    quadratureVector.push_back(
+      QIterated<1>(QGauss<1>(C_num1DQuadSmearedChargeHigh()),
+                   C_numCopies1DQuadSmearedChargeHigh()));
+  else
+    quadratureVector.push_back(
+      QIterated<1>(QGauss<1>(C_num1DQuadSmearedCharge()),
+                   C_numCopies1DQuadSmearedCharge()));
   quadratureVector.push_back(QGauss<1>(FEOrderElectro + 1));
+
 
   d_densityQuadratureIdElectro       = 0;
   d_lpspQuadratureIdElectro          = 1;

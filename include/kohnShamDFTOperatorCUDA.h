@@ -562,7 +562,8 @@ namespace dftfe
     /// precompute shapefunction gradient integral
     void
     preComputeShapeFunctionGradientIntegrals(
-      const unsigned int lpspQuadratureId);
+      const unsigned int lpspQuadratureId,
+      const bool         onlyUpdateGradNiNjIntegral = false);
 
 
     void
@@ -735,7 +736,7 @@ namespace dftfe
      * and second dimension storing the matrix of size numberNodesPerElement x
      * numberNodesPerElement in a flattened 1D dealii Vectorized array
      */
-    std::vector<std::vector<dealii::VectorizedArray<double>>>
+    std::vector<dealii::AlignedVector<dealii::VectorizedArray<double>>>
       d_cellShapeFunctionGradientIntegral;
 
     std::vector<double> d_cellShapeFunctionGradientIntegralFlattened;

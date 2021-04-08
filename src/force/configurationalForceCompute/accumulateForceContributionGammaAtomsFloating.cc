@@ -27,8 +27,8 @@ forceClass<FEOrder, FEOrderElectro>::
 {
   for (unsigned int iAtom = 0; iAtom < dftPtr->atomLocations.size(); iAtom++)
     {
-      std::vector<double> forceContributionLocalGammaiAtomGlobal(C_DIM);
-      std::vector<double> forceContributionLocalGammaiAtomLocal(C_DIM, 0.0);
+      std::vector<double> forceContributionLocalGammaiAtomGlobal(3);
+      std::vector<double> forceContributionLocalGammaiAtomLocal(3, 0.0);
 
       if (forceContributionLocalGammaAtoms.find(iAtom) !=
           forceContributionLocalGammaAtoms.end())

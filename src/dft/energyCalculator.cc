@@ -240,6 +240,8 @@ namespace dftfe
       const distributedCPUVec<double> &                    phiTotRhoOut,
       const std::vector<std::vector<double>> &             localVselfs,
       const std::map<dealii::CellId, std::vector<double>> &smearedbValues,
+      const std::map<dealii::CellId, std::vector<unsigned int>>
+        &                          smearedbNonTrivialAtomIds,
       const dealii::DoFHandler<3> &dofHandlerElectrostatic,
       const dealii::Quadrature<3> &quadratureElectrostatic,
       const dealii::Quadrature<3> &quadratureSmearedCharge,
@@ -280,18 +282,23 @@ namespace dftfe
           for (; cell != endc; ++cell)
             if (cell->is_locally_owned())
               {
-                const std::vector<double> &bQuadValuesCell =
-                  smearedbValues.find(cell->id())->second;
-                fe_values.reinit(cell);
+                if ((smearedbNonTrivialAtomIds.find(cell->id())->second)
+                      .size() > 0)
+                  {
+                    const std::vector<double> &bQuadValuesCell =
+                      smearedbValues.find(cell->id())->second;
+                    fe_values.reinit(cell);
 
-                std::vector<double> tempPhiTot(n_q_points);
-                fe_values.get_function_values(phiTotRhoOut, tempPhiTot);
+                    std::vector<double> tempPhiTot(n_q_points);
+                    fe_values.get_function_values(phiTotRhoOut, tempPhiTot);
 
-                double temp = 0;
-                for (unsigned int q = 0; q < n_q_points; ++q)
-                  temp += tempPhiTot[q] * bQuadValuesCell[q] * fe_values.JxW(q);
+                    double temp = 0;
+                    for (unsigned int q = 0; q < n_q_points; ++q)
+                      temp +=
+                        tempPhiTot[q] * bQuadValuesCell[q] * fe_values.JxW(q);
 
-                phiContribution += temp;
+                    phiContribution += temp;
+                  }
               }
 
           vSelfContribution = localVselfs[0][0];
@@ -375,7 +382,9 @@ namespace dftfe
     const std::map<dealii::CellId, std::vector<double>> &rhoCoreValues,
     const std::map<dealii::CellId, std::vector<double>> &gradRhoCoreValues,
     const std::map<dealii::CellId, std::vector<double>> &smearedbValues,
-    const std::vector<std::vector<double>> &             localVselfs,
+    const std::map<dealii::CellId, std::vector<unsigned int>>
+      &                                     smearedbNonTrivialAtomIds,
+    const std::vector<std::vector<double>> &localVselfs,
     const std::map<dealii::CellId, std::vector<double>> &pseudoValuesElectronic,
     const std::map<dealii::CellId, std::vector<double>>
       &pseudoValuesElectrostatic,
@@ -821,6 +830,7 @@ namespace dftfe
         phiTotRhoOut,
         localVselfs,
         smearedbValues,
+        smearedbNonTrivialAtomIds,
         dofHandlerElectrostatic,
         quadratureElectrostatic,
         quadratureSmearedCharge,
@@ -913,7 +923,9 @@ namespace dftfe
     const std::map<dealii::CellId, std::vector<double>> &rhoCoreValues,
     const std::map<dealii::CellId, std::vector<double>> &gradRhoCoreValues,
     const std::map<dealii::CellId, std::vector<double>> &smearedbValues,
-    const std::vector<std::vector<double>> &             localVselfs,
+    const std::map<dealii::CellId, std::vector<unsigned int>>
+      &                                     smearedbNonTrivialAtomIds,
+    const std::vector<std::vector<double>> &localVselfs,
     const std::map<dealii::types::global_dof_index, double>
       &                atomElectrostaticNodeIdToChargeMap,
     const unsigned int numberGlobalAtoms,
@@ -1285,6 +1297,7 @@ namespace dftfe
         phiTotRhoIn,
         localVselfs,
         smearedbValues,
+        smearedbNonTrivialAtomIds,
         dofHandlerElectrostatic,
         quadratureDensity,
         quadratureSmearedCharge,
@@ -1367,7 +1380,9 @@ namespace dftfe
     const std::map<dealii::CellId, std::vector<double>> &rhoCoreValues,
     const std::map<dealii::CellId, std::vector<double>> &gradRhoCoreValues,
     const std::map<dealii::CellId, std::vector<double>> &smearedbValues,
-    const std::vector<std::vector<double>> &             localVselfs,
+    const std::map<dealii::CellId, std::vector<unsigned int>>
+      &                                     smearedbNonTrivialAtomIds,
+    const std::vector<std::vector<double>> &localVselfs,
     const std::map<dealii::CellId, std::vector<double>> &pseudoValuesElectronic,
     const std::map<dealii::CellId, std::vector<double>>
       &pseudoValuesElectrostatic,
@@ -1997,6 +2012,7 @@ namespace dftfe
         phiTotRhoOut,
         localVselfs,
         smearedbValues,
+        smearedbNonTrivialAtomIds,
         dofHandlerElectrostatic,
         quadratureElectrostatic,
         quadratureSmearedCharge,

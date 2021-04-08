@@ -180,7 +180,7 @@ namespace dftfe
           offsetVectors[periodicDirectionVector[i]]);
       }
 
-    DoFTools::make_periodicity_constraints<DoFHandler<C_DIM>>(
+    DoFTools::make_periodicity_constraints<DoFHandler<3>>(
       d_periodicity_vector, d_constraintsMoveMesh);
     d_constraintsMoveMesh.close();
 
@@ -251,7 +251,7 @@ namespace dftfe
         if (cell->is_locally_owned())
           {
             for (unsigned int vertex_no = 0;
-                 vertex_no < GeometryInfo<C_DIM>::vertices_per_cell;
+                 vertex_no < GeometryInfo<3>::vertices_per_cell;
                  ++vertex_no)
               {
                 const unsigned global_vertex_no = cell->vertex_index(vertex_no);
@@ -260,8 +260,8 @@ namespace dftfe
                     !locally_owned_vertices[global_vertex_no])
                   continue;
 
-                Point<C_DIM> vertexDisplacement;
-                for (unsigned int d = 0; d < C_DIM; ++d)
+                Point<3> vertexDisplacement;
+                for (unsigned int d = 0; d < 3; ++d)
                   {
                     const unsigned int globalDofIndex =
                       cell->vertex_dof_index(vertex_no, d);
@@ -440,7 +440,7 @@ namespace dftfe
   {
     closestTriaVertexToDestPointsLocation.clear();
     dispClosestTriaVerticesToDestPoints.clear();
-    unsigned int vertices_per_cell = GeometryInfo<C_DIM>::vertices_per_cell;
+    unsigned int        vertices_per_cell = GeometryInfo<3>::vertices_per_cell;
     std::vector<double> latticeVectorsFlattened(9, 0.0);
     for (unsigned int idim = 0; idim < 3; idim++)
       for (unsigned int jdim = 0; jdim < 3; jdim++)
@@ -546,7 +546,7 @@ namespace dftfe
                           continue;
                         }
 
-                      Point<C_DIM>      nodalCoor = cell->vertex(i);
+                      Point<3>          nodalCoor = cell->vertex(i);
                       std::vector<bool> isNodeOnPeriodicSurface(3, false);
 
                       bool isNodeConsidered = true;

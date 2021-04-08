@@ -21,8 +21,8 @@
 template <unsigned int FEOrder, unsigned int FEOrderElectro>
 void
 forceClass<FEOrder, FEOrderElectro>::locateAtomCoreNodesForce(
-  const DoFHandler<C_DIM> &dofHandlerForce,
-  const IndexSet &         locally_owned_dofsForce,
+  const DoFHandler<3> &dofHandlerForce,
+  const IndexSet &     locally_owned_dofsForce,
   std::map<std::pair<unsigned int, unsigned int>, unsigned int> &atomsForceDofs)
 {
   atomsForceDofs.clear();
@@ -55,7 +55,7 @@ forceClass<FEOrder, FEOrderElectro>::locateAtomCoreNodesForce(
                                  atomLocations[*it][4]);
               if (feNodeGlobalCoord.distance(atomCoord) < 1.0e-5)
                 {
-                  for (unsigned int idim = 0; idim < C_DIM; idim++)
+                  for (unsigned int idim = 0; idim < 3; idim++)
                     {
                       const unsigned int forceNodeId =
                         cell->vertex_dof_index(i, idim);

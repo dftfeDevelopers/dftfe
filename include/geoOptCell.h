@@ -131,7 +131,7 @@ namespace dftfe
     unsigned int d_totalUpdateCalls;
 
     /// current strain tensor applied on the domain
-    Tensor<2, C_DIM, double> d_strainEpsilon;
+    Tensor<2, 3, double> d_strainEpsilon;
 
     /// pointer to dft class
     dftClass<FEOrder, FEOrderElectro> *dftPtr;

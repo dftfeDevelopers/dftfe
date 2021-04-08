@@ -40,7 +40,7 @@ void dftClass<FEOrder, FEOrderElectro>::
   if (isEvaluateHessianData)
     quadratureHessianValueData.clear();
 
-  FEEvaluation<C_DIM,
+  FEEvaluation<3,
                C_rhoNodalPolyOrder<FEOrder, FEOrderElectro>(),
                C_num1DQuad<C_rhoNodalPolyOrder<FEOrder, FEOrderElectro>()>(),
                1,
@@ -57,7 +57,7 @@ void dftClass<FEOrder, FEOrderElectro>::
     dealii::ExcMessage(
       "DFT-FE Error: mismatch in quadrature rule usage in interpolateNodalDataToQuadratureData."));
 
-  DoFHandler<C_DIM>::active_cell_iterator subCellPtr;
+  DoFHandler<3>::active_cell_iterator subCellPtr;
   for (unsigned int cell = 0; cell < matrixFreeData.n_macro_cells(); ++cell)
     {
       feEvalObj.reinit(cell);
@@ -146,13 +146,13 @@ void dftClass<FEOrder, FEOrderElectro>::
   if (isEvaluateHessianData)
     quadratureHessianValueData.clear();
 
-  FEEvaluation<C_DIM,
+  FEEvaluation<3,
                C_rhoNodalPolyOrder<FEOrder, FEOrderElectro>(),
                C_num1DQuad<C_rhoNodalPolyOrder<FEOrder, FEOrderElectro>()>(),
                1,
                double>
     feEvalObjSpin0(matrixFreeData, dofHandlerId, quadratureId);
-  FEEvaluation<C_DIM,
+  FEEvaluation<3,
                C_rhoNodalPolyOrder<FEOrder, FEOrderElectro>(),
                C_num1DQuad<C_rhoNodalPolyOrder<FEOrder, FEOrderElectro>()>(),
                1,
@@ -169,7 +169,7 @@ void dftClass<FEOrder, FEOrderElectro>::
     dealii::ExcMessage(
       "DFT-FE Error: mismatch in quadrature rule usage in interpolateNodalDataToQuadratureData."));
 
-  DoFHandler<C_DIM>::active_cell_iterator subCellPtr;
+  DoFHandler<3>::active_cell_iterator subCellPtr;
   for (unsigned int cell = 0; cell < matrixFreeData.n_macro_cells(); ++cell)
     {
       feEvalObjSpin0.reinit(cell);
@@ -274,7 +274,7 @@ void dftClass<FEOrder, FEOrderElectro>::
   if (isEvaluateGradData)
     quadratureGradValueData.clear();
 
-  FEEvaluation<C_DIM,
+  FEEvaluation<3,
                FEOrderElectro,
                C_num1DQuad<C_rhoNodalPolyOrder<FEOrder, FEOrderElectro>()>(),
                1,
@@ -291,7 +291,7 @@ void dftClass<FEOrder, FEOrderElectro>::
     dealii::ExcMessage(
       "DFT-FE Error: mismatch in quadrature rule usage in interpolateNodalDataToQuadratureData."));
 
-  DoFHandler<C_DIM>::active_cell_iterator subCellPtr;
+  DoFHandler<3>::active_cell_iterator subCellPtr;
   for (unsigned int cell = 0; cell < matrixFreeData.n_macro_cells(); ++cell)
     {
       feEvalObj.reinit(cell);
@@ -350,7 +350,7 @@ void dftClass<FEOrder, FEOrderElectro>::
 {
   quadratureValueData.clear();
   quadratureGradValueData.clear();
-  FEEvaluation<C_DIM,
+  FEEvaluation<3,
                C_rhoNodalPolyOrder<FEOrder, FEOrderElectro>(),
                C_num1DQuadLPSP<FEOrder>() * C_numCopies1DQuadLPSP(),
                1,
@@ -367,7 +367,7 @@ void dftClass<FEOrder, FEOrderElectro>::
     dealii::ExcMessage(
       "DFT-FE Error: mismatch in quadrature rule usage in interpolateNodalDataToQuadratureData."));
 
-  DoFHandler<C_DIM>::active_cell_iterator subCellPtr;
+  DoFHandler<3>::active_cell_iterator subCellPtr;
   for (unsigned int cell = 0; cell < matrixFreeData.n_macro_cells(); ++cell)
     {
       feEvalObj.reinit(cell);
@@ -453,7 +453,7 @@ dftClass<FEOrder, FEOrderElectro>::fieldGradl2Norm(
   const distributedCPUVec<double> &    nodalField)
 
 {
-  FEEvaluation<C_DIM,
+  FEEvaluation<3,
                C_rhoNodalPolyOrder<FEOrder, FEOrderElectro>(),
                C_num1DQuad<C_rhoNodalPolyOrder<FEOrder, FEOrderElectro>()>(),
                1,

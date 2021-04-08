@@ -512,7 +512,7 @@ namespace dftfe
     //
     for (unsigned int cell = 0; cell < n_cells; ++cell)
       {
-        std::vector<dealii::VectorizedArray<double>> tempPhi(
+        dealii::AlignedVector<dealii::VectorizedArray<double>> tempPhi(
           numberQuadraturePoints, dealii::make_vectorized_array(0.0));
         const unsigned int n_sub_cells =
           dftPtr->matrix_free_data.n_components_filled(cell);
@@ -605,7 +605,7 @@ namespace dftfe
     //
     for (unsigned int cell = 0; cell < n_cells; ++cell)
       {
-        std::vector<dealii::VectorizedArray<double>> tempPhi(
+        dealii::AlignedVector<dealii::VectorizedArray<double>> tempPhi(
           numberQuadraturePoints, dealii::make_vectorized_array(0.0));
         const unsigned int n_sub_cells =
           dftPtr->matrix_free_data.n_components_filled(cell);
@@ -1620,7 +1620,7 @@ namespace dftfe
     //
     for (unsigned int cell = 0; cell < n_cells; ++cell)
       {
-        std::vector<dealii::VectorizedArray<double>> tempPhi(
+        dealii::AlignedVector<dealii::VectorizedArray<double>> tempPhi(
           numberQuadraturePoints, dealii::make_vectorized_array(0.0));
         const unsigned int n_sub_cells =
           dftPtr->matrix_free_data.n_components_filled(cell);
@@ -1720,7 +1720,7 @@ namespace dftfe
     //
     for (unsigned int cell = 0; cell < n_cells; ++cell)
       {
-        std::vector<dealii::VectorizedArray<double>> tempPhi(
+        dealii::AlignedVector<dealii::VectorizedArray<double>> tempPhi(
           numberQuadraturePoints, dealii::make_vectorized_array(0.0));
         const unsigned int n_sub_cells =
           dftPtr->matrix_free_data.n_components_filled(cell);
@@ -1877,7 +1877,7 @@ namespace dftfe
       {
         const unsigned int n_sub_cells =
           dftPtr->matrix_free_data.n_components_filled(cell);
-        std::vector<VectorizedArray<double>> tempVec(
+        dealii::AlignedVector<VectorizedArray<double>> tempVec(
           numberQuadraturePoints, make_vectorized_array(0.0));
         for (unsigned int v = 0; v < n_sub_cells; ++v)
           {

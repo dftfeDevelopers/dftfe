@@ -39,30 +39,29 @@ forceClass<FEOrder, FEOrderElectro>::computeStressEself(
   //
   // First add configurational stress contribution from the volume integral
   //
-  QGauss<C_DIM> quadrature(
+  QGauss<3> quadrature(
     C_num1DQuad<C_rhoNodalPolyOrder<FEOrder, FEOrderElectro>()>());
-  FEValues<C_DIM>    feVselfValues(dofHandlerElectro.get_fe(),
-                                quadrature,
-                                update_gradients | update_JxW_values);
+  FEValues<3>        feVselfValues(dofHandlerElectro.get_fe(),
+                            quadrature,
+                            update_gradients | update_JxW_values);
   const unsigned int numQuadPoints = quadrature.size();
   const unsigned int numberBins =
     vselfBinsManagerElectro.getAtomIdsBins().size();
 
-  std::vector<Tensor<1, C_DIM, double>> gradVselfQuad(numQuadPoints);
+  std::vector<Tensor<1, 3, double>> gradVselfQuad(numQuadPoints);
 
   for (unsigned int iBin = 0; iBin < numberBins; ++iBin)
     {
-      const std::vector<DoFHandler<C_DIM>::active_cell_iterator>
+      const std::vector<DoFHandler<3>::active_cell_iterator>
         &cellsVselfBallDofHandler = d_cellsVselfBallsDofHandlerElectro[iBin];
       const distributedCPUVec<double> &iBinVselfField =
         vselfBinsManagerElectro.getVselfFieldBins()[iBin];
-      std::vector<DoFHandler<C_DIM>::active_cell_iterator>::const_iterator
-        iter1;
+      std::vector<DoFHandler<3>::active_cell_iterator>::const_iterator iter1;
       for (iter1 = cellsVselfBallDofHandler.begin();
            iter1 != cellsVselfBallDofHandler.end();
            ++iter1)
         {
-          DoFHandler<C_DIM>::active_cell_iterator cell = *iter1;
+          DoFHandler<3>::active_cell_iterator cell = *iter1;
           feVselfValues.reinit(cell);
           feVselfValues.get_function_gradients(iBinVselfField, gradVselfQuad);
 
@@ -79,36 +78,36 @@ forceClass<FEOrder, FEOrderElectro>::computeStressEself(
   //
   // second add configurational stress contribution from the surface integral
   //
-  QGauss<C_DIM - 1> faceQuadrature(
+  QGauss<3 - 1> faceQuadrature(
     C_num1DQuad<C_rhoNodalPolyOrder<FEOrder, FEOrderElectro>()>());
-  FEFaceValues<C_DIM> feVselfFaceValues(dofHandlerElectro.get_fe(),
-                                        faceQuadrature,
-                                        update_gradients | update_JxW_values |
-                                          update_normal_vectors |
-                                          update_quadrature_points);
-  const unsigned int  faces_per_cell    = GeometryInfo<C_DIM>::faces_per_cell;
-  const unsigned int  numFaceQuadPoints = faceQuadrature.size();
+  FEFaceValues<3>    feVselfFaceValues(dofHandlerElectro.get_fe(),
+                                    faceQuadrature,
+                                    update_gradients | update_JxW_values |
+                                      update_normal_vectors |
+                                      update_quadrature_points);
+  const unsigned int faces_per_cell    = GeometryInfo<3>::faces_per_cell;
+  const unsigned int numFaceQuadPoints = faceQuadrature.size();
 
 
   for (unsigned int iBin = 0; iBin < numberBins; ++iBin)
     {
-      const std::map<DoFHandler<C_DIM>::active_cell_iterator,
+      const std::map<DoFHandler<3>::active_cell_iterator,
                      std::vector<unsigned int>>
         &cellsVselfBallSurfacesDofHandler =
           d_cellFacesVselfBallSurfacesDofHandlerElectro[iBin];
       const distributedCPUVec<double> &iBinVselfField =
         vselfBinsManagerElectro.getVselfFieldBins()[iBin];
-      std::map<DoFHandler<C_DIM>::active_cell_iterator,
+      std::map<DoFHandler<3>::active_cell_iterator,
                std::vector<unsigned int>>::const_iterator iter1;
       for (iter1 = cellsVselfBallSurfacesDofHandler.begin();
            iter1 != cellsVselfBallSurfacesDofHandler.end();
            ++iter1)
         {
-          DoFHandler<C_DIM>::active_cell_iterator cell = iter1->first;
-          const int                               closestAtomId =
+          DoFHandler<3>::active_cell_iterator cell = iter1->first;
+          const int                           closestAtomId =
             d_cellsVselfBallsClosestAtomIdDofHandlerElectro[iBin][cell->id()];
-          double       closestAtomCharge;
-          Point<C_DIM> closestAtomLocation;
+          double   closestAtomCharge;
+          Point<3> closestAtomLocation;
           if (closestAtomId < numberGlobalAtoms)
             {
               closestAtomLocation[0] = atomLocations[closestAtomId][2];
@@ -137,12 +136,12 @@ forceClass<FEOrder, FEOrderElectro>::computeStressEself(
               for (unsigned int qPoint = 0; qPoint < numFaceQuadPoints;
                    ++qPoint)
                 {
-                  const Point<C_DIM> quadPoint =
+                  const Point<3> quadPoint =
                     feVselfFaceValues.quadrature_point(qPoint);
-                  const Tensor<1, C_DIM, double> dispClosestAtom =
+                  const Tensor<1, 3, double> dispClosestAtom =
                     quadPoint - closestAtomLocation;
-                  const double                   dist = dispClosestAtom.norm();
-                  const Tensor<1, C_DIM, double> gradVselfFaceQuadExact =
+                  const double               dist = dispClosestAtom.norm();
+                  const Tensor<1, 3, double> gradVselfFaceQuadExact =
                     closestAtomCharge * dispClosestAtom / dist / dist / dist;
                   d_stress -=
                     outer_product(dispClosestAtom,
@@ -176,48 +175,39 @@ forceClass<FEOrder, FEOrderElectro>::computeStressEself(
       const std::map<int, std::set<int>> &atomImageIdsBins =
         vselfBinsManagerElectro.getAtomImageIdsBins();
 
-      FEEvaluation<C_DIM,
-                   1,
-                   C_num1DQuadSmearedCharge() *
-                     C_numCopies1DQuadSmearedCharge(),
-                   C_DIM>
-        forceEvalSmearedCharge(matrixFreeDataElectro,
-                               d_forceDofHandlerIndexElectro,
-                               smearedChargeQuadratureId);
+      FEEvaluation<3, -1, 1, 3> forceEvalSmearedCharge(
+        matrixFreeDataElectro,
+        d_forceDofHandlerIndexElectro,
+        smearedChargeQuadratureId);
 
-      DoFHandler<C_DIM>::active_cell_iterator subCellPtr;
-      const unsigned int                      numQuadPointsSmearedb =
+      DoFHandler<3>::active_cell_iterator subCellPtr;
+      const unsigned int                  numQuadPointsSmearedb =
         forceEvalSmearedCharge.n_q_points;
 
-      Tensor<1, C_DIM, VectorizedArray<double>> zeroTensor;
-      for (unsigned int idim = 0; idim < C_DIM; idim++)
+      Tensor<1, 3, VectorizedArray<double>> zeroTensor;
+      for (unsigned int idim = 0; idim < 3; idim++)
         {
           zeroTensor[idim] = make_vectorized_array(0.0);
         }
 
-      Tensor<2, C_DIM, VectorizedArray<double>> zeroTensor2;
-      for (unsigned int idim = 0; idim < C_DIM; idim++)
-        for (unsigned int jdim = 0; jdim < C_DIM; jdim++)
+      Tensor<2, 3, VectorizedArray<double>> zeroTensor2;
+      for (unsigned int idim = 0; idim < 3; idim++)
+        for (unsigned int jdim = 0; jdim < 3; jdim++)
           {
             zeroTensor2[idim][jdim] = make_vectorized_array(0.0);
           }
 
-      std::vector<VectorizedArray<double>> smearedbQuads(
+      dealii::AlignedVector<VectorizedArray<double>> smearedbQuads(
         numQuadPointsSmearedb, make_vectorized_array(0.0));
-      std::vector<Tensor<1, C_DIM, VectorizedArray<double>>>
+      std::vector<Tensor<1, 3, VectorizedArray<double>>>
         gradVselfSmearedChargeQuads(numQuadPointsSmearedb, zeroTensor);
 
       for (unsigned int iBin = 0; iBin < numberBins; ++iBin)
         {
-          FEEvaluation<C_DIM,
-                       FEOrderElectro,
-                       C_num1DQuadSmearedCharge() *
-                         C_numCopies1DQuadSmearedCharge(),
-                       1>
-            vselfEvalSmearedCharge(matrixFreeDataElectro,
-                                   dftPtr->d_binsStartDofHandlerIndexElectro +
-                                     4 * iBin,
-                                   smearedChargeQuadratureId);
+          FEEvaluation<3, -1> vselfEvalSmearedCharge(
+            matrixFreeDataElectro,
+            dftPtr->d_binsStartDofHandlerIndexElectro + 4 * iBin,
+            smearedChargeQuadratureId);
 
           const std::set<int> &atomImageIdsInBin =
             atomImageIdsBins.find(iBin)->second;

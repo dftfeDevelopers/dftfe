@@ -411,7 +411,8 @@ namespace dftfe
     void initUnmovedTriangulation(
       parallel::distributed::Triangulation<3> &triangulation);
     void
-    initBoundaryConditions(const bool meshOnlyDeformed = false);
+    initBoundaryConditions(const bool meshOnlyDeformed                 = false,
+                           const bool vselfPerturbationUpdateForStress = false);
     void
     initElectronicFields();
     void
@@ -425,7 +426,8 @@ namespace dftfe
     void createpRefinedDofHandler(
       parallel::distributed::Triangulation<3> &triangulation);
     void
-    initpRefinedObjects(const bool meshOnlyDeformed);
+    initpRefinedObjects(const bool meshOnlyDeformed,
+                        const bool vselfPerturbationUpdateForStress = false);
 
     /**
      *@brief interpolate nodal data to quadrature data using FEEvaluation
@@ -856,7 +858,8 @@ namespace dftfe
      */
     void
     deformDomain(const Tensor<2, 3, double> &deformationGradient,
-                 const bool checkSmearedChargeWidthsForOverlap = true);
+                 const bool vselfPerturbationUpdateForStress = false,
+                 const bool print                            = true);
 
     /**
      *@brief Computes inner Product and Y = alpha*X + Y for complex vectors used during
@@ -1040,7 +1043,7 @@ namespace dftfe
     meshMovementGaussianClass d_gaussianMovePar;
 
     std::vector<Tensor<1, 3, double>> d_gaussianMovementAtomsNetDisplacements;
-    std::vector<Point<C_DIM>>         d_controlPointLocationsCurrentMove;
+    std::vector<Point<3>>             d_controlPointLocationsCurrentMove;
 
     /// volume of the domain
     double d_domainVolume;
@@ -1431,6 +1434,21 @@ namespace dftfe
 
     /// vselfBinsManager object
     vselfBinsManager<FEOrder, FEOrderElectro> d_vselfBinsManager;
+
+    /// Gateaux derivative of vself field with respect to affine strain tensor
+    /// components using central finite difference. This is used for cell stress
+    /// computation
+    std::vector<distributedCPUVec<double>> d_vselfFieldGateauxDerStrainFDBins;
+
+    /// Compute Gateaux derivative of vself field in bins with respect to affine
+    /// strain tensor components
+    void
+    computeVselfFieldGateauxDerFD(
+#ifdef DFTFE_WITH_GPU
+      kohnShamDFTOperatorCUDAClass<FEOrder, FEOrderElectro>
+        &kohnShamDFTEigenOperatorCUDA
+#endif
+    );
 
     /// kPoint cartesian coordinates
     std::vector<double> d_kPointCoordinates;

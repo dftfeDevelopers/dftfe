@@ -388,7 +388,7 @@ void
 forceClass<FEOrder, FEOrderElectro>::computeAtomsForcesGaussianGenerator(
   bool allowGaussianOverlapOnAtoms)
 {
-  unsigned int vertices_per_cell = GeometryInfo<C_DIM>::vertices_per_cell;
+  unsigned int vertices_per_cell = GeometryInfo<3>::vertices_per_cell;
   const std::vector<std::vector<double>> &atomLocations = dftPtr->atomLocations;
   const std::vector<std::vector<double>> &imagePositions =
     dftPtr->d_imagePositionsTrunc;
@@ -396,11 +396,10 @@ forceClass<FEOrder, FEOrderElectro>::computeAtomsForcesGaussianGenerator(
   const int               numberGlobalAtoms  = atomLocations.size();
   const int               numberImageCharges = imageIds.size();
   const int           totalNumberAtoms = numberGlobalAtoms + numberImageCharges;
-  std::vector<double> globalAtomsGaussianForcesLocalPart(numberGlobalAtoms *
-                                                           C_DIM,
+  std::vector<double> globalAtomsGaussianForcesLocalPart(numberGlobalAtoms * 3,
                                                          0);
   d_globalAtomsForces.clear();
-  d_globalAtomsForces.resize(numberGlobalAtoms * C_DIM, 0.0);
+  d_globalAtomsForces.resize(numberGlobalAtoms * 3, 0.0);
 
   dealii::BoundingBox<3> boundingBoxTria(
     vectorTools::createBoundingBoxTriaLocallyOwned(d_dofHandlerForce));
@@ -415,8 +414,8 @@ forceClass<FEOrder, FEOrderElectro>::computeAtomsForcesGaussianGenerator(
   std::vector<unsigned int>     nontrivialAtomChargeIds;
   for (unsigned int iAtom = 0; iAtom < totalNumberAtoms; iAtom++)
     {
-      Point<C_DIM> atomCoor;
-      int          atomId = iAtom;
+      Point<3> atomCoor;
+      int      atomId = iAtom;
       if (iAtom < numberGlobalAtoms)
         {
           atomCoor[0] = atomLocations[iAtom][2];
@@ -448,9 +447,8 @@ forceClass<FEOrder, FEOrderElectro>::computeAtomsForcesGaussianGenerator(
 
 #ifdef USE_COMPLEX
   std::vector<double> globalAtomsGaussianForcesKPointsLocalPart(
-    numberGlobalAtoms * C_DIM, 0);
-  std::vector<double> globalAtomsGaussianForcesKPoints(numberGlobalAtoms *
-                                                         C_DIM,
+    numberGlobalAtoms * 3, 0);
+  std::vector<double> globalAtomsGaussianForcesKPoints(numberGlobalAtoms * 3,
                                                        0.0);
 #endif
   std::vector<bool> vertex_touched(
@@ -468,14 +466,14 @@ forceClass<FEOrder, FEOrderElectro>::computeAtomsForcesGaussianGenerator(
               if (vertex_touched[global_vertex_no])
                 continue;
               vertex_touched[global_vertex_no] = true;
-              Point<C_DIM> nodalCoor           = cell->vertex(i);
+              Point<3> nodalCoor               = cell->vertex(i);
 
               int overlappedAtomId = -1;
               for (unsigned int jAtom = 0; jAtom < nontrivialAtomCoords.size();
                    jAtom++)
                 {
-                  const Point<C_DIM> &jAtomCoor = nontrivialAtomCoords[jAtom];
-                  const double        distance = (nodalCoor - jAtomCoor).norm();
+                  const Point<3> &jAtomCoor = nontrivialAtomCoords[jAtom];
+                  const double    distance  = (nodalCoor - jAtomCoor).norm();
                   if (distance < 1e-5)
                     {
                       overlappedAtomId = jAtom;
@@ -489,9 +487,9 @@ forceClass<FEOrder, FEOrderElectro>::computeAtomsForcesGaussianGenerator(
                   if (overlappedAtomId != iAtom && overlappedAtomId != -1 &&
                       !allowGaussianOverlapOnAtoms)
                     continue;
-                  const Point<C_DIM> &atomCoor = nontrivialAtomCoords[iAtom];
-                  const int           atomId   = nontrivialAtomIds[iAtom];
-                  const int atomChargeId       = nontrivialAtomChargeIds[iAtom];
+                  const Point<3> &atomCoor     = nontrivialAtomCoords[iAtom];
+                  const int       atomId       = nontrivialAtomIds[iAtom];
+                  const int       atomChargeId = nontrivialAtomChargeIds[iAtom];
 
                   const double r = (nodalCoor - atomCoor).norm();
 
@@ -506,7 +504,7 @@ forceClass<FEOrder, FEOrderElectro>::computeAtomsForcesGaussianGenerator(
                         dftPtr->d_gaussianConstantsForce[atomChargeId],
                         dftParameters::gaussianOrderForce);
 
-                  for (unsigned int idim = 0; idim < C_DIM; idim++)
+                  for (unsigned int idim = 0; idim < 3; idim++)
                     {
                       const unsigned int globalDofIndex =
                         cell->vertex_dof_index(i, idim);
@@ -514,14 +512,13 @@ forceClass<FEOrder, FEOrderElectro>::computeAtomsForcesGaussianGenerator(
                             globalDofIndex) &&
                           d_locally_owned_dofsForce.is_element(globalDofIndex))
                         {
-                          globalAtomsGaussianForcesLocalPart[C_DIM *
-                                                               atomChargeId +
+                          globalAtomsGaussianForcesLocalPart[3 * atomChargeId +
                                                              idim] +=
                             gaussianWeight *
                             (d_configForceVectorLinFE[globalDofIndex]);
 #ifdef USE_COMPLEX
                           globalAtomsGaussianForcesKPointsLocalPart
-                            [C_DIM * atomChargeId + idim] +=
+                            [3 * atomChargeId + idim] +=
                             gaussianWeight *
                             (d_configForceVectorLinFEKPoints[globalDofIndex]);
 #endif
@@ -548,14 +545,14 @@ forceClass<FEOrder, FEOrderElectro>::computeAtomsForcesGaussianGenerator(
             if (vertex_touched[global_vertex_no])
               continue;
             vertex_touched[global_vertex_no] = true;
-            Point<C_DIM> nodalCoor           = cell->vertex(i);
+            Point<3> nodalCoor               = cell->vertex(i);
 
             int overlappedAtomId = -1;
             for (unsigned int jAtom = 0; jAtom < nontrivialAtomCoords.size();
                  jAtom++)
               {
-                const Point<C_DIM> &jAtomCoor = nontrivialAtomCoords[jAtom];
-                const double        distance  = (nodalCoor - jAtomCoor).norm();
+                const Point<3> &jAtomCoor = nontrivialAtomCoords[jAtom];
+                const double    distance  = (nodalCoor - jAtomCoor).norm();
                 if (distance < 1e-5)
                   {
                     overlappedAtomId = jAtom;
@@ -570,9 +567,9 @@ forceClass<FEOrder, FEOrderElectro>::computeAtomsForcesGaussianGenerator(
                     !allowGaussianOverlapOnAtoms)
                   continue;
 
-                const Point<C_DIM> &atomCoor = nontrivialAtomCoords[iAtom];
-                const int           atomId   = nontrivialAtomIds[iAtom];
-                const int atomChargeId       = nontrivialAtomChargeIds[iAtom];
+                const Point<3> &atomCoor     = nontrivialAtomCoords[iAtom];
+                const int       atomId       = nontrivialAtomIds[iAtom];
+                const int       atomChargeId = nontrivialAtomChargeIds[iAtom];
 
                 const double r = (nodalCoor - atomCoor).norm();
                 double       gaussianWeight =
@@ -584,7 +581,7 @@ forceClass<FEOrder, FEOrderElectro>::computeAtomsForcesGaussianGenerator(
                       r,
                       dftPtr->d_gaussianConstantsForce[atomChargeId],
                       dftParameters::gaussianOrderForce);
-                for (unsigned int idim = 0; idim < C_DIM; idim++)
+                for (unsigned int idim = 0; idim < 3; idim++)
                   {
                     const unsigned int globalDofIndex =
                       cell->vertex_dof_index(i, idim);
@@ -594,8 +591,7 @@ forceClass<FEOrder, FEOrderElectro>::computeAtomsForcesGaussianGenerator(
                         d_locally_owned_dofsForceElectro.is_element(
                           globalDofIndex))
                       {
-                        globalAtomsGaussianForcesLocalPart[C_DIM *
-                                                             atomChargeId +
+                        globalAtomsGaussianForcesLocalPart[3 * atomChargeId +
                                                            idim] +=
                           gaussianWeight *
                           (d_configForceVectorLinFEElectro[globalDofIndex]);
@@ -608,7 +604,7 @@ forceClass<FEOrder, FEOrderElectro>::computeAtomsForcesGaussianGenerator(
   // Sum all processor contributions and distribute to all processors
   MPI_Allreduce(&(globalAtomsGaussianForcesLocalPart[0]),
                 &(d_globalAtomsForces[0]),
-                numberGlobalAtoms * C_DIM,
+                numberGlobalAtoms * 3,
                 MPI_DOUBLE,
                 MPI_SUM,
                 mpi_communicator);
@@ -616,7 +612,7 @@ forceClass<FEOrder, FEOrderElectro>::computeAtomsForcesGaussianGenerator(
   // Sum over band parallelization
   MPI_Allreduce(MPI_IN_PLACE,
                 &(d_globalAtomsForces[0]),
-                numberGlobalAtoms * C_DIM,
+                numberGlobalAtoms * 3,
                 MPI_DOUBLE,
                 MPI_SUM,
                 dftPtr->interBandGroupComm);
@@ -625,21 +621,21 @@ forceClass<FEOrder, FEOrderElectro>::computeAtomsForcesGaussianGenerator(
   // Sum all processor contributions and distribute to all processors
   MPI_Allreduce(&(globalAtomsGaussianForcesKPointsLocalPart[0]),
                 &(globalAtomsGaussianForcesKPoints[0]),
-                numberGlobalAtoms * C_DIM,
+                numberGlobalAtoms * 3,
                 MPI_DOUBLE,
                 MPI_SUM,
                 mpi_communicator);
   // Sum over band parallelization and k point pools
   MPI_Allreduce(MPI_IN_PLACE,
                 &(globalAtomsGaussianForcesKPoints[0]),
-                numberGlobalAtoms * C_DIM,
+                numberGlobalAtoms * 3,
                 MPI_DOUBLE,
                 MPI_SUM,
                 dftPtr->interBandGroupComm);
 
   MPI_Allreduce(MPI_IN_PLACE,
                 &(globalAtomsGaussianForcesKPoints[0]),
-                numberGlobalAtoms * C_DIM,
+                numberGlobalAtoms * 3,
                 MPI_DOUBLE,
                 MPI_SUM,
                 dftPtr->interpoolcomm);
@@ -647,10 +643,10 @@ forceClass<FEOrder, FEOrderElectro>::computeAtomsForcesGaussianGenerator(
   // add to total Gaussian force
   for (unsigned int iAtom = 0; iAtom < numberGlobalAtoms; iAtom++)
     {
-      for (unsigned int idim = 0; idim < C_DIM; idim++)
+      for (unsigned int idim = 0; idim < 3; idim++)
         {
-          d_globalAtomsForces[iAtom * C_DIM + idim] +=
-            globalAtomsGaussianForcesKPoints[iAtom * C_DIM + idim];
+          d_globalAtomsForces[iAtom * 3 + idim] +=
+            globalAtomsGaussianForcesKPoints[iAtom * 3 + idim];
         }
     }
 #endif
@@ -689,8 +685,8 @@ forceClass<FEOrder, FEOrderElectro>::printAtomsForces()
               << -d_globalAtomsForces[3 * i + 2] << std::endl;
       else
         {
-          std::vector<double> truncatedForce(C_DIM);
-          for (unsigned int idim = 0; idim < C_DIM; idim++)
+          std::vector<double> truncatedForce(3);
+          for (unsigned int idim = 0; idim < 3; idim++)
             truncatedForce[idim] = std::fabs(
               std::floor(10000000 * (-d_globalAtomsForces[3 * i + idim])) /
               10000000.0);
@@ -705,7 +701,7 @@ forceClass<FEOrder, FEOrderElectro>::printAtomsForces()
       forceData[i][2] = -d_globalAtomsForces[3 * i + 2];
 
       double absForce = 0.0;
-      for (unsigned int idim = 0; idim < C_DIM; idim++)
+      for (unsigned int idim = 0; idim < 3; idim++)
         {
           absForce += d_globalAtomsForces[3 * i + idim] *
                       d_globalAtomsForces[3 * i + idim];

@@ -29,9 +29,6 @@ namespace dftfe
   /// Boltzmann constant
   const double C_kb = 3.166811429e-06;
 
-  /// problem space dimensions
-  const int C_DIM = 3;
-
   /// 1d quadrature rule order
   template <unsigned int FEOrder>
   constexpr unsigned int
@@ -52,6 +49,37 @@ namespace dftfe
   C_numCopies1DQuadSmearedCharge()
   {
     return 2;
+  }
+
+  /// 1d quad rule smeared nuclear charge
+  /// if a very coarse FE mesh is used (e.g. softer pseudopotentials)
+  constexpr unsigned int
+  C_num1DQuadSmearedChargeHigh()
+  {
+    return 10;
+  }
+
+  /// number of copies 1d quad rule smeared nuclear charge
+  /// if a very coarse FE mesh is used (e.g. softer pseudpotentials)
+  constexpr unsigned int
+  C_numCopies1DQuadSmearedChargeHigh()
+  {
+    return 3;
+  }
+
+  /// 1d quad rule smeared nuclear charge if cell stress calculation is on
+  constexpr unsigned int
+  C_num1DQuadSmearedChargeStress()
+  {
+    return 10;
+  }
+
+  /// number of copies 1d quad rule smeared nuclear charge if cell stress
+  /// calculation is on
+  constexpr unsigned int
+  C_numCopies1DQuadSmearedChargeStress()
+  {
+    return 5;
   }
 
 #ifdef DFTFE_WITH_HIGHERQUAD_PSP
