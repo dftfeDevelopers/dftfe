@@ -475,11 +475,7 @@ dftClass<FEOrder, FEOrderElectro>::updateAtomPositionsAndMoveMesh(
 
           // Re-generate serial and parallel meshes from saved refinement flags
           // to get back the unmoved meshes as Gaussian movement can only be
-          // done starting from the unmoved meshes. While parallel meshes are
-          // always generated, serial meshes are only generated for following
-          // three cases: symmetrization is on, ionic optimization is on as well
-          // as reuse wfcs and density from previous ionic step is on, or if
-          // serial constraints generation is on.
+          // done starting from the unmoved meshes.
           double resetmesh_time;
           MPI_Barrier(MPI_COMM_WORLD);
           resetmesh_time = MPI_Wtime();
@@ -504,6 +500,20 @@ dftClass<FEOrder, FEOrderElectro>::updateAtomPositionsAndMoveMesh(
               dofHandler.distribute_dofs(FE);
               dofHandlerEigen.distribute_dofs(FEEigen);
 
+              d_dofHandlerPRefined.clear();
+              d_dofHandlerPRefined.initialize(
+                d_mesh.getParallelMeshMoved(),
+                dealii::FE_Q<3>(dealii::QGaussLobatto<1>(FEOrderElectro + 1)));
+              d_dofHandlerPRefined.distribute_dofs(
+                d_dofHandlerPRefined.get_fe());
+
+              d_dofHandlerRhoNodal.clear();
+              d_dofHandlerRhoNodal.initialize(
+                d_mesh.getParallelMeshMoved(),
+                dealii::FE_Q<3>(dealii::QGaussLobatto<1>(
+                  C_rhoNodalPolyOrder<FEOrder, FEOrderElectro>() + 1)));
+              d_dofHandlerRhoNodal.distribute_dofs(
+                d_dofHandlerRhoNodal.get_fe());
 
               forcePtr->initUnmoved(d_mesh.getParallelMeshMoved(),
                                     d_mesh.getSerialMeshUnmoved(),
