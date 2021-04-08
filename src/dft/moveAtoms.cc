@@ -485,18 +485,12 @@ dftClass<FEOrder, FEOrderElectro>::updateAtomPositionsAndMoveMesh(
           resetmesh_time = MPI_Wtime();
 
           if (dftParameters::useSymm ||
-              (dftParameters::isIonOpt &&
-               (dftParameters::reuseWfcGeoOpt ||
-                dftParameters::reuseDensityGeoOpt)) ||
               dftParameters::createConstraintsFromSerialDofhandler ||
               dftParameters::electrostaticsHRefinement)
             {
               d_mesh.generateResetMeshes(
                 d_domainBoundingVectors,
                 dftParameters::useSymm ||
-                  (dftParameters::isIonOpt &&
-                   (dftParameters::reuseWfcGeoOpt ||
-                    dftParameters::reuseDensityGeoOpt)) ||
                   dftParameters::createConstraintsFromSerialDofhandler,
                 dftParameters::electrostaticsHRefinement);
 
