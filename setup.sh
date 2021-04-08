@@ -19,14 +19,13 @@ SRC=`dirname $0` # location of source directory
 
 #Paths for external libraries
 dealiiPetscRealDir="/home/vikramg/DFT-FE-softwares/dealiiDevCustomized/install_gcc8.2.0_openmpi3.1.4_real_cpu"
-#dealiiPetscRealDir="/home/vikramg/DFT-FE-softwares/dealiiDevCustomized/install_gcc8.2.0_openmpi4.0.4"
 dealiiPetscComplexDir="/home/vikramg/DFT-FE-softwares/dealiiDevCustomized/install_gcc8.2.0_openmpi3.1.4_complex_cpu"
 alglibDir="/home/vikramg/DFT-FE-softwares/alglibGCC/cpp/src"
 libxcDir="/home/vikramg/DFT-FE-softwares/libxc/gcc8.2.0_libxc_4.3.4"
 spglibDir="/home/vikramg/DFT-FE-softwares/spglibGCC"
 xmlIncludeDir="/usr/include/libxml2"
 xmlLibDir="/usr/lib64"
-ELPA_PATH="/home/vikramg/DFT-FE-softwares/elpa/elpa2020.05.001_intel18.0.5_noopenmp_install"
+ELPA_PATH="/home/vikramg/DFT-FE-softwares/elpa/elpa2020.05.001_gcc8.2.0_openmpi3.1.4_install"
 
 
 #Compiler options and flags
@@ -34,7 +33,7 @@ cxx_compiler=mpicxx
 cxx_flagsRelease="-O2 -fPIC -fopenmp"
 
 #Option to link to ELPA
-withELPA=OFF
+withELPA=ON
 
 #Option to compile with default or higher order quadrature for storing pseudopotential data
 #ON is recommended for MD simulations with hard pseudopotentials
