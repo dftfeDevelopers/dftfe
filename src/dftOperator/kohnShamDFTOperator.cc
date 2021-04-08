@@ -724,9 +724,9 @@ namespace dftfe
 		  derExchEnergyWithSigmaVal[q] + derCorrEnergyWithSigmaVal[q];
 		
 
-		d_invJacderExcWithSigmaTimesGradRhoJxW[iElemCount*numberQuadraturePoints*3 + 3*q] = (inverseJacobians[q][0][0]*gradRhoX + inverseJacobians[q][0][1]*gradRhoY + inverseJacobians[q][0][2]*gradRhoZ)*term*jxw;
-		d_invJacderExcWithSigmaTimesGradRhoJxW[iElemCount*numberQuadraturePoints*3 + 3*q + 1] = (inverseJacobians[q][1][0]*gradRhoX + inverseJacobians[q][1][1]*gradRhoY + inverseJacobians[q][1][2]*gradRhoZ)*term*jxw;
-		d_invJacderExcWithSigmaTimesGradRhoJxW[iElemCount*numberQuadraturePoints*3 + 3*q + 2] = (inverseJacobians[q][2][0]*gradRhoX + inverseJacobians[q][2][1]*gradRhoY + inverseJacobians[q][2][2]*gradRhoZ)*term*jxw;
+		d_invJacderExcWithSigmaTimesGradRhoJxW[iElemCount*numberQuadraturePoints*3 + 3*q] = 2.0*(inverseJacobians[q][0][0]*gradRhoX + inverseJacobians[q][0][1]*gradRhoY + inverseJacobians[q][0][2]*gradRhoZ)*term*jxw;
+		d_invJacderExcWithSigmaTimesGradRhoJxW[iElemCount*numberQuadraturePoints*3 + 3*q + 1] = 2.0*(inverseJacobians[q][1][0]*gradRhoX + inverseJacobians[q][1][1]*gradRhoY + inverseJacobians[q][1][2]*gradRhoZ)*term*jxw;
+		d_invJacderExcWithSigmaTimesGradRhoJxW[iElemCount*numberQuadraturePoints*3 + 3*q + 2] = 2.0*(inverseJacobians[q][2][0]*gradRhoX + inverseJacobians[q][2][1]*gradRhoY + inverseJacobians[q][2][2]*gradRhoZ)*term*jxw;
 		
 	      }
 
