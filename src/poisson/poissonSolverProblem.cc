@@ -704,17 +704,25 @@ namespace dftfe
         distributedCPUVec<double> tempVec = x;
         meanValueConstraintDistribute(tempVec);
 
-        d_matrixFreeDataPtr->cell_loop(
-          &poissonSolverProblem<FEOrder, FEOrderElectro>::AX,
-          this,
-          Ax,
-          tempVec);
+        tempVec.update_ghost_values();
+        AX(*d_matrixFreeDataPtr,
+           Ax,
+           tempVec,
+           std::make_pair(0, d_matrixFreeDataPtr->n_macro_cells()));
+        Ax.compress(dealii::VectorOperation::add);
+
 
         meanValueConstraintDistributeSlaveToMaster(Ax);
       }
     else
-      d_matrixFreeDataPtr->cell_loop(
-        &poissonSolverProblem<FEOrder, FEOrderElectro>::AX, this, Ax, x);
+      {
+        x.update_ghost_values();
+        AX(*d_matrixFreeDataPtr,
+           Ax,
+           x,
+           std::make_pair(0, d_matrixFreeDataPtr->n_macro_cells()));
+        Ax.compress(dealii::VectorOperation::add);
+      }
   }
 
 #include "poissonSolverProblem.inst.cc"
