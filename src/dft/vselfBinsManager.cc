@@ -1243,7 +1243,7 @@ namespace dftfe
               AssertThrow(
                 radiusAtomBallReduced >= 2.0,
                 dealii::ExcMessage(
-                  "DFT-FE error: Adaptively determined reduced ball radius is less than minimum value of 2.0. Reduce MESH SIZE AROUND ATOM."));
+                  "DFT-FE error: Adaptively determined reduced ball radius is less than minimum value of 2.0. Reduce MESH SIZE AROUND ATOM and/or increase ATOM BALL RADIUS."));
           }
 
         if (dftParameters::verbosity >= 4 &&
