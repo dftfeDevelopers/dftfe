@@ -25,7 +25,7 @@ libxcDir="/home/vikramg/DFT-FE-softwares/libxc/gcc8.2.0_libxc_4.3.4"
 spglibDir="/home/vikramg/DFT-FE-softwares/spglibGCC"
 xmlIncludeDir="/usr/include/libxml2"
 xmlLibDir="/usr/lib64"
-ELPA_PATH="/home/vikramg/DFT-FE-softwares/elpa/elpa2020.05.001_gcc8.2.0_openmpi3.1.4_install"
+ELPA_PATH="/home/vikramg/DFT-FE-softwares/elpa/elpa2020.05.001_gcc8.2.0_openmpi3.1.4_install_noopenmp"
 
 
 #Compiler options and flags
