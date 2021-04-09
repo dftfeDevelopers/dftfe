@@ -407,8 +407,12 @@ namespace dftfe
     const distributedCPUVec<double> &src,
     const double                     omega) const
   {
-    dst = src;
-    dst.scale(d_diagonalA);
+    // dst = src;
+    // dst.scale(d_diagonalA);
+
+    for (unsigned int i = 0; i < dst.local_size(); i++)
+      dst.local_element(i) =
+        d_diagonalA.local_element(i) * src.local_element(i);
   }
 
   // Compute and fill value at mean value constrained dof
@@ -679,6 +683,7 @@ namespace dftfe
     for (unsigned int cell = cell_range.first; cell < cell_range.second; ++cell)
       {
         fe_eval.reinit(cell);
+        // fe_eval.gather_evaluate(src,dealii::EvaluationFlags::gradients);
         fe_eval.read_dof_values(src);
         fe_eval.evaluate(false, true, false);
         for (unsigned int q = 0; q < fe_eval.n_q_points; ++q)
@@ -687,6 +692,7 @@ namespace dftfe
           }
         fe_eval.integrate(false, true);
         fe_eval.distribute_local_to_global(dst);
+        // fe_eval.integrate_scatter(dealii::EvaluationFlags::gradients,dst);
       }
   }
 
@@ -694,20 +700,19 @@ namespace dftfe
   template <unsigned int FEOrder, unsigned int FEOrderElectro>
   void
   poissonSolverProblem<FEOrder, FEOrderElectro>::vmult(
-    distributedCPUVec<double> &      Ax,
-    const distributedCPUVec<double> &x) const
+    distributedCPUVec<double> &Ax,
+    distributedCPUVec<double> &x)
   {
     Ax = 0.0;
 
     if (d_isMeanValueConstraintComputed)
       {
-        distributedCPUVec<double> tempVec = x;
-        meanValueConstraintDistribute(tempVec);
+        meanValueConstraintDistribute(x);
 
-        tempVec.update_ghost_values();
+        x.update_ghost_values();
         AX(*d_matrixFreeDataPtr,
            Ax,
-           tempVec,
+           x,
            std::make_pair(0, d_matrixFreeDataPtr->n_macro_cells()));
         Ax.compress(dealii::VectorOperation::add);
 

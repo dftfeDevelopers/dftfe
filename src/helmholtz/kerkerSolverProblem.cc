@@ -238,6 +238,7 @@ namespace dftfe
     for (unsigned int cell = cell_range.first; cell < cell_range.second; ++cell)
       {
         fe_eval.reinit(cell);
+        // fe_eval.gather_evaluate(src,dealii::EvaluationFlags::values|dealii::EvaluationFlags::gradients);
         fe_eval.read_dof_values(src);
         fe_eval.evaluate(true, true, false);
         for (unsigned int q = 0; q < fe_eval.n_q_points; ++q)
@@ -245,6 +246,7 @@ namespace dftfe
             fe_eval.submit_gradient(fe_eval.get_gradient(q), q);
             fe_eval.submit_value(fe_eval.get_value(q) * kerkerConst, q);
           }
+        // fe_eval.integrate_scatter(dealii::EvaluationFlags::values|dealii::EvaluationFlags::gradients,dst);
         fe_eval.integrate(true, true);
         fe_eval.distribute_local_to_global(dst);
       }
@@ -253,13 +255,18 @@ namespace dftfe
 
   template <unsigned int FEOrderElectro>
   void
-  kerkerSolverProblem<FEOrderElectro>::vmult(
-    distributedCPUVec<double> &      Ax,
-    const distributedCPUVec<double> &x) const
+  kerkerSolverProblem<FEOrderElectro>::vmult(distributedCPUVec<double> &Ax,
+                                             distributedCPUVec<double> &x)
   {
     Ax = 0.0;
-    d_matrixFreeDataPRefinedPtr->cell_loop(
-      &kerkerSolverProblem<FEOrderElectro>::AX, this, Ax, x);
+    x.update_ghost_values();
+    AX(*d_matrixFreeDataPRefinedPtr,
+       Ax,
+       x,
+       std::make_pair(0, d_matrixFreeDataPRefinedPtr->n_macro_cells()));
+    Ax.compress(dealii::VectorOperation::add);
+    // d_matrixFreeDataPRefinedPtr->cell_loop(
+    //  &kerkerSolverProblem<FEOrderElectro>::AX, this, Ax, x);
   }
 
 

@@ -48,8 +48,7 @@ namespace dftfe
      *
      */
     virtual void
-    vmult(distributedCPUVec<double> &      Ax,
-          const distributedCPUVec<double> &x) const = 0;
+    vmult(distributedCPUVec<double> &Ax, distributedCPUVec<double> &x) = 0;
 
     /**
      * @brief Compute right hand side vector for the problem Ax = rhs.

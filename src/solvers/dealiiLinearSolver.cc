@@ -73,9 +73,13 @@ namespace dftfe
           {
             // resize the vectors, but do not set the values since they'd be
             // overwritten soon anyway.
-            g.reinit(x, true);
-            d.reinit(x, true);
-            h.reinit(x, true);
+            gvec.reinit(x, true);
+            dvec.reinit(x, true);
+            hvec.reinit(x, true);
+
+            gvec.zero_out_ghosts();
+            dvec.zero_out_ghosts();
+            hvec.zero_out_ghosts();
 
             double gh        = 0.0;
             double beta      = 0.0;
@@ -87,13 +91,17 @@ namespace dftfe
             // computation
             if (!x.all_zero())
               {
-                problem.vmult(g, x);
-                g.add(-1., rhs);
+                problem.vmult(gvec, x);
+                gvec.add(-1., rhs);
               }
             else
-              g.equ(-1., rhs);
+              {
+                // gvec.equ(-1., rhs);
+                for (unsigned int i = 0; i < gvec.local_size(); i++)
+                  gvec.local_element(i) = -rhs.local_element(i);
+              }
 
-            res         = g.l2_norm();
+            res         = gvec.l2_norm();
             initial_res = res;
             if (res < absTolerance)
               conv = true;
@@ -107,29 +115,32 @@ namespace dftfe
 
                 if (it > 1)
                   {
-                    problem.precondition_Jacobi(h, g, omega);
+                    problem.precondition_Jacobi(hvec, gvec, omega);
                     beta = gh;
                     AssertThrow(std::abs(beta) != 0.,
                                 dealii::ExcMessage("Division by zero\n"));
-                    gh   = g * h;
+                    gh   = gvec * hvec;
                     beta = gh / beta;
-                    d.sadd(beta, -1., h);
+                    dvec.sadd(beta, -1., hvec);
                   }
                 else
                   {
-                    problem.precondition_Jacobi(h, g, omega);
-                    d.equ(-1., h);
-                    gh = g * h;
+                    problem.precondition_Jacobi(hvec, gvec, omega);
+                    dvec.equ(-1., hvec);
+                    gh = gvec * hvec;
                   }
 
-                problem.vmult(h, d);
-                alpha = d * h;
+                problem.vmult(hvec, dvec);
+                alpha = dvec * hvec;
                 AssertThrow(std::abs(alpha) != 0.,
                             dealii::ExcMessage("Division by zero\n"));
                 alpha = gh / alpha;
 
-                x.add(alpha, d);
-                res = std::sqrt(std::abs(g.add_and_dot(alpha, h, g)));
+                for (unsigned int i = 0; i < x.local_size(); i++)
+                  x.local_element(i) += alpha * dvec.local_element(i);
+                // x.add(alpha, dvec);
+
+                res = std::sqrt(std::abs(gvec.add_and_dot(alpha, hvec, gvec)));
 
                 if (res < absTolerance)
                   conv = true;
