@@ -1664,7 +1664,7 @@ namespace dftfe
             AssertThrow(
               dftParameters::createConstraintsFromSerialDofhandler,
               ExcMessage(
-                "DFT-FE error: this is due to a known issue related to hanging node constraints in dealii. Please set CONSTRAINTS FROM SERIAL DOFHANDLER = true in the input parameters file to circumvent this issue."));
+                "DFT-FE error: this is due to a known issue related to hanging node constraints in dealii. Please set CONSTRAINTS FROM SERIAL DOFHANDLER = true under the Boundary conditions subsection in the input parameters file to circumvent this issue."));
           }
       }
 

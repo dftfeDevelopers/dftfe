@@ -376,7 +376,7 @@ dftClass<FEOrder, FEOrderElectro>::computeElectrostaticEnergyHRefined(
 
   constraintsForTotalPotential.merge(
     constraintsHRefined,
-    ConstraintMatrix::MergeConflictBehavior::right_object_wins);
+    AffineConstraints<double>::MergeConflictBehavior::right_object_wins);
   constraintsForTotalPotential.close();
 
   // clear existing constraints matrix vector

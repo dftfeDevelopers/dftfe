@@ -175,9 +175,8 @@ dftClass<FEOrder, FEOrderElectro>::initRho()
 
   if (dftParameters::mixingMethod == "ANDERSON_WITH_KERKER")
     {
-      IndexSet locallyOwnedSet;
-      DoFTools::extract_locally_owned_dofs(d_dofHandlerRhoNodal,
-                                           locallyOwnedSet);
+      const IndexSet &locallyOwnedSet =
+        d_dofHandlerRhoNodal.locally_owned_dofs();
       std::vector<IndexSet::size_type> locallyOwnedDOFs;
       locallyOwnedSet.fill_index_vector(locallyOwnedDOFs);
       unsigned int numberDofs = locallyOwnedDOFs.size();

@@ -58,30 +58,93 @@ namespace dftfe
     if (dftParameters::verbosity >= 4)
       pcout << "Time for compute rhs: " << time - start_time << std::endl;
 
-
-    // create dealii solver control object
-    dealii::SolverControl solverControl(maxNumberIterations, absTolerance);
-
-
-    // initialize preconditioner
-    dealii::PreconditionJacobi<dealiiLinearSolverProblem> preconditioner;
-    preconditioner.initialize(problem, 0.3);
+    bool conv = false; // false : converged; true : converged
 
     distributedCPUVec<double> &x = problem.getX();
+
+    double res = 0.0, initial_res = 0.0;
+    int    it = 0;
+
     try
       {
         x.update_ghost_values();
 
         if (d_type == CG)
           {
-            dealii::SolverCG<distributedCPUVec<double>> solver(solverControl);
-            solver.solve(problem, x, rhs, preconditioner);
+            // resize the vectors, but do not set the values since they'd be
+            // overwritten soon anyway.
+            g.reinit(x, true);
+            d.reinit(x, true);
+            h.reinit(x, true);
+
+            double gh        = 0.0;
+            double beta      = 0.0;
+            double alpha     = 0.0;
+            double old_alpha = 0.0;
+            double omega     = 0.3;
+
+            // compute residual. if vector is zero, then short-circuit the full
+            // computation
+            if (!x.all_zero())
+              {
+                problem.vmult(g, x);
+                g.add(-1., rhs);
+              }
+            else
+              g.equ(-1., rhs);
+
+            res         = g.l2_norm();
+            initial_res = res;
+            if (res < absTolerance)
+              conv = true;
+            if (conv)
+              return;
+
+            while ((!conv) && (it < maxNumberIterations))
+              {
+                it++;
+                old_alpha = alpha;
+
+                if (it > 1)
+                  {
+                    problem.precondition_Jacobi(h, g, omega);
+                    beta = gh;
+                    AssertThrow(std::abs(beta) != 0.,
+                                dealii::ExcMessage("Division by zero\n"));
+                    gh   = g * h;
+                    beta = gh / beta;
+                    d.sadd(beta, -1., h);
+                  }
+                else
+                  {
+                    problem.precondition_Jacobi(h, g, omega);
+                    d.equ(-1., h);
+                    gh = g * h;
+                  }
+
+                problem.vmult(h, d);
+                alpha = d * h;
+                AssertThrow(std::abs(alpha) != 0.,
+                            dealii::ExcMessage("Division by zero\n"));
+                alpha = gh / alpha;
+
+                x.add(alpha, d);
+                res = std::sqrt(std::abs(g.add_and_dot(alpha, h, g)));
+
+                if (res < absTolerance)
+                  conv = true;
+              }
+            if (!conv)
+              {
+                AssertThrow(false,
+                            dealii::ExcMessage(
+                              "DFT-FE Error: Solver did not converge\n"));
+              }
           }
         else if (d_type == GMRES)
           {
-            dealii::SolverGMRES<distributedCPUVec<double>> solver(
-              solverControl);
-            solver.solve(problem, x, rhs, preconditioner);
+            AssertThrow(false,
+                        dealii::ExcMessage("DFT-FE Error: Not implemented"));
           }
 
         if (distributeFlag)
@@ -97,29 +160,22 @@ namespace dftfe
             "DFT-FE Error: Poisson solver did not converge as per set tolerances. consider increasing MAXIMUM ITERATIONS in Poisson problem parameters. In rare cases for all-electron problems this can also occur due to a known parallel constraints issue in dealii library. Try using set CONSTRAINTS FROM SERIAL DOFHANDLER=true under the Boundary conditions subsection."));
         pcout
           << "\nWarning: solver did not converge as per set tolerances. consider increasing maxLinearSolverIterations or decreasing relLinearSolverTolerance.\n";
-        pcout << "Current abs. residual: " << solverControl.last_value()
-              << std::endl;
+        pcout << "Current abs. residual: " << res << std::endl;
       }
 
     if (debugLevel >= 2)
       {
         pcout << std::endl;
-        char buffer[200];
-        sprintf(
-          buffer,
-          "initial abs. residual: %12.6e, current abs. residual: %12.6e, nsteps: %u, abs. tolerance criterion: %12.6e\n\n",
-          solverControl.initial_value(),
-          solverControl.last_value(),
-          solverControl.last_step(),
-          solverControl.tolerance());
-        pcout << buffer;
+        pcout << "initial abs. residual: " << initial_res
+              << " , current abs. residual: " << res << " , nsteps: " << it
+              << " , abs. tolerance criterion:  " << absTolerance << "\n\n";
       }
 
     MPI_Barrier(mpi_communicator);
     time = MPI_Wtime() - time;
 
     if (dftParameters::verbosity >= 4)
-      pcout << "Time for Poisson/Helmholtz problem CG/GMRES iterations: "
-            << time << std::endl;
+      pcout << "Time for Poisson/Helmholtz problem CG iterations: " << time
+            << std::endl;
   }
 } // namespace dftfe

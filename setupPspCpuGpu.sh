@@ -22,7 +22,7 @@ SRC=`dirname $0` # location of source directory
 # and optimization flag
 
 #Paths for external libraries
-dealiiDir="/global/project/projectdirs/m1759/dsambit/softwaresDFTFE/dealii/installGcc8.3CUDA11"
+dealiiDir="/global/project/projectdirs/m1759/dsambit/softwaresDFTFE/dealiiDevCustomized/installGcc8.3CUDA11.1.1"
 alglibDir="/global/project/projectdirs/m1759/dsambit/softwaresDFTFE/alglib/cpp/src"
 libxcDir="/global/project/projectdirs/m1759/dsambit/softwaresDFTFE/libxc/installGcc8.3.0"
 spglibDir="/global/project/projectdirs/m1759/dsambit/softwaresDFTFE/spglib/installGcc8.3.0"
@@ -38,10 +38,8 @@ withGPU=ON
 withNCCL=ON
 
 #Compiler options and flags
-c_compiler=mpicc
 cxx_compiler=mpic++
-c_flagsRelease="-O2 -fopenmp -fPIC"
-cxx_flagsRelease="-O2 -fopenmp -fPIC"
+cxx_flagsRelease="-O2 -fPIC"
 
 #Option to link to ELPA
 withELPA=ON
@@ -67,9 +65,8 @@ out=`echo "$build_type" | tr '[:upper:]' '[:lower:]'`
 
 function cmake_real() {
   mkdir -p real && cd real
-  cmake -DCMAKE_C_COMPILER=$c_compiler -DCMAKE_CXX_COMPILER=$cxx_compiler \
+  cmake -DCMAKE_CXX_COMPILER=$cxx_compiler \
 	-DCMAKE_CXX_FLAGS_RELEASE="$cxx_flagsRelease" \
-	-DCMAKE_C_FLAGS_RELEASE="$c_flagsRelease" \
 	-DCMAKE_BUILD_TYPE=$build_type -DDEAL_II_DIR=$dealiiDir \
 	-DALGLIB_DIR=$alglibDir -DLIBXC_DIR=$libxcDir \
 	-DSPGLIB_DIR=$spglibDir -DXML_LIB_DIR=$xmlLibDir \
@@ -82,9 +79,8 @@ function cmake_real() {
 
 function cmake_cplx() {
   mkdir -p complex && cd complex
-  cmake -DCMAKE_C_COMPILER=$c_compiler -DCMAKE_CXX_COMPILER=$cxx_compiler \
+  cmake -DCMAKE_CXX_COMPILER=$cxx_compiler \
 	-DCMAKE_CXX_FLAGS_RELEASE="$cxx_flagsRelease" \
-	-DCMAKE_C_FLAGS_RELEASE="$c_flagsRelease" \
 	-DCMAKE_BUILD_TYPE=$build_type -DDEAL_II_DIR=$dealiiDir \
 	-DALGLIB_DIR=$alglibDir -DLIBXC_DIR=$libxcDir \
 	-DSPGLIB_DIR=$spglibDir -DXML_LIB_DIR=$xmlLibDir \

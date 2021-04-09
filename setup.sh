@@ -18,20 +18,18 @@ SRC=`dirname $0` # location of source directory
 # and optimization flag
 
 #Paths for external libraries
-dealiiPetscRealDir="/home/vikramg/DFT-FE-softwares/dealiinew/intel18.0.5_dealiicustom_real"
-dealiiPetscComplexDir="/home/vikramg/DFT-FE-softwares/dealiinew/intel18.0.5_dealiicustom_complex"
-alglibDir="/home/vikramg/DFT-FE-softwares/alglib/cpp/src"
-libxcDir="/home/vikramg/DFT-FE-softwares/libxc/intel2018_libxc_4.3.4"
-spglibDir="/home/vikramg/DFT-FE-softwares/spglib"
+dealiiPetscRealDir="/home/vikramg/DFT-FE-softwares/dealiiDevCustomized/install_gcc8.2.0_openmpi3.1.4_real_cpu"
+dealiiPetscComplexDir="/home/vikramg/DFT-FE-softwares/dealiiDevCustomized/install_gcc8.2.0_openmpi3.1.4_complex_cpu"
+alglibDir="/home/vikramg/DFT-FE-softwares/alglibGCC/cpp/src"
+libxcDir="/home/vikramg/DFT-FE-softwares/libxc/gcc8.2.0_libxc_4.3.4"
+spglibDir="/home/vikramg/DFT-FE-softwares/spglibGCC"
 xmlIncludeDir="/usr/include/libxml2"
 xmlLibDir="/usr/lib64"
-ELPA_PATH="/home/vikramg/DFT-FE-softwares/elpa/elpa2020.05.001_intel18.0.5_noopenmp_install"
+ELPA_PATH="/home/vikramg/DFT-FE-softwares/elpa/elpa2020.05.001_gcc8.2.0_openmpi3.1.4_install"
 
 
 #Compiler options and flags
-c_compiler=mpicc
 cxx_compiler=mpicxx
-c_flagsRelease="-O2 -fPIC -fopenmp"
 cxx_flagsRelease="-O2 -fPIC -fopenmp"
 
 #Option to link to ELPA
@@ -59,9 +57,8 @@ out=`echo "$build_type" | tr '[:upper:]' '[:lower:]'`
 
 function cmake_real() {
   mkdir -p real && cd real
-  cmake -DCMAKE_C_COMPILER=$c_compiler -DCMAKE_CXX_COMPILER=$cxx_compiler \
+  cmake -DCMAKE_CXX_COMPILER=$cxx_compiler \
 	-DCMAKE_CXX_FLAGS_RELEASE="$cxx_flagsRelease" \
-	-DCMAKE_C_FLAGS_RELEASE="$c_flagsRelease" \
 	-DCMAKE_BUILD_TYPE=$build_type -DDEAL_II_DIR=$dealiiPetscRealDir \
 	-DALGLIB_DIR=$alglibDir -DLIBXC_DIR=$libxcDir \
 	-DSPGLIB_DIR=$spglibDir -DXML_LIB_DIR=$xmlLibDir \
@@ -75,9 +72,8 @@ function cmake_real() {
 
 function cmake_cplx() {
   mkdir -p complex && cd complex
-  cmake -DCMAKE_C_COMPILER=$c_compiler -DCMAKE_CXX_COMPILER=$cxx_compiler \
+  cmake -DCMAKE_CXX_COMPILER=$cxx_compiler \
 	-DCMAKE_CXX_FLAGS_RELEASE="$cxx_flagsRelease" \
-	-DCMAKE_C_FLAGS_RELEASE="$c_flagsRelease" \
 	-DCMAKE_BUILD_TYPE=$build_type -DDEAL_II_DIR=$dealiiPetscComplexDir \
 	-DALGLIB_DIR=$alglibDir -DLIBXC_DIR=$libxcDir \
 	-DSPGLIB_DIR=$spglibDir -DXML_LIB_DIR=$xmlLibDir \
