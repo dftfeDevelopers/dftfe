@@ -495,7 +495,7 @@ namespace dftfe
           "SMEARED NUCLEAR CHARGES",
           "true",
           Patterns::Bool(),
-          "[Developer] Nuclear charges are smeared for solving electrostatic fields.");
+          "[Developer] Nuclear charges are smeared for solving electrostatic fields. Default is true for pseudopotential calculations and false for all-electron calculations.");
 
         prm.declare_entry(
           "FLOATING NUCLEAR CHARGES",
@@ -545,19 +545,19 @@ namespace dftfe
             "MESH SIZE AROUND ATOM",
             "1.0",
             Patterns::Double(0.0001, 10),
-            "[Standard] Mesh size in a ball of radius ATOM BALL RADIUS around every atom. For pseudopotential calculations, the value ranges between 0.5 to 2.5 depending on the cutoff energy for the pseudopotential. For all-electron calculations, a value between 0.1 to 0.3 would be a good starting choice. In most cases, MESH SIZE AROUND ATOM is the only parameter to be tuned to achieve the desired accuracy in energy and forces with respect to the mesh refinement. Units: a.u.");
+            "[Standard] Mesh size in a ball of radius ATOM BALL RADIUS around every atom. For pseudopotential calculations, the value ranges between 0.8 to 2.5 depending on the cutoff energy for the pseudopotential. For all-electron calculations, a value of around 0.5 would be a good starting choice. In most cases, MESH SIZE AROUND ATOM is the only parameter to be tuned to achieve the desired accuracy in energy and forces with respect to the mesh refinement. Units: a.u.");
 
           prm.declare_entry(
             "MESH SIZE AT ATOM",
             "0.0",
             Patterns::Double(0.0, 10),
-            "[Advanced] Mesh size of the finite elements in the immediate vicinity of the atom. For the default value of 0.0, a heuristically determined MESH SIZE AT ATOM is used, which is good enough for most cases. Standard users do not need to tune this parameter. Units: a.u.");
+            "[Advanced] Mesh size of the finite elements in the immediate vicinity of the atom. For the default value of 0.0, a heuristically determined MESH SIZE AT ATOM is used for all-electron calculations. For pseudopotential calculations, the default value of 0.0, sets the MESH SIZE AT ATOM to be the same value as MESH SIZE AROUND ATOM. Standard users do not need to tune this parameter. Units: a.u.");
 
           prm.declare_entry(
             "MESH ADAPTION",
             "false",
             Patterns::Bool(),
-            "[Standard] Generates adaptive mesh based on a-posteriori mesh adaption strategy using single atom wavefunctions before computing the ground-state. Default: false.");
+            "[Developer] Generates adaptive mesh based on a-posteriori mesh adaption strategy using single atom wavefunctions before computing the ground-state. Default: false.");
 
           prm.declare_entry(
             "AUTO ADAPT BASE MESH SIZE",
@@ -831,7 +831,7 @@ namespace dftfe
             "CHEBYSHEV POLYNOMIAL DEGREE SCALING FACTOR FIRST SCF",
             "1.34",
             Patterns::Double(0, 2000),
-            "[Advanced] Chebyshev polynomial degree first scf scaling factor.");
+            "[Advanced] Chebyshev polynomial degree first scf scaling factor. Only activated for pseudopotential calculations.");
 
 
           prm.declare_entry(
