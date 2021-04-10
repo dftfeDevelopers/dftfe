@@ -643,10 +643,10 @@ namespace dftfe
         std::string message;
         if (check == 1)
           message =
-            "DFT-FE Error: Atom and its own image is interacting decrease radius";
+            "DFT-FE Error: Atom and its own image is interacting. Decrease SELF POTENTIAL RADIUS.";
         else if (check == 2)
           message =
-            "DFT-FE Error: Two Image Atoms corresponding to same parent Atoms are interacting decrease radius";
+            "DFT-FE Error: Two Image Atoms corresponding to same parent Atoms are interacting. Decrease SELF POTENTIAL RADIUS.";
 
         AssertThrow(check == 0, dealii::ExcMessage(message));
       }
@@ -1243,7 +1243,7 @@ namespace dftfe
               AssertThrow(
                 radiusAtomBallReduced >= 2.0,
                 dealii::ExcMessage(
-                  "DFT-FE error: Adaptively determined reduced ball radius for applying correct Dirichlet boundary condtions taking hanging nodes into account is less than minimum value of 2.0. Try increasing SELF POTENTIAL RADIUS to > 6.0. If that is not possible due to domain sizes along periodic directions, reduce MESH SIZE AROUND ATOM and/or increase ATOM BALL RADIUS to greater than 2.0."));
+                  "DFT-FE error: Adaptively determined reduced ball radius for applying correct Dirichlet boundary condtions taking hanging nodes into account is less than minimum value of 2.0. Try increasing SELF POTENTIAL RADIUS to > 6.0. If that is not possible due to small domain sizes along the periodic directions, reduce MESH SIZE AROUND ATOM and/or increase ATOM BALL RADIUS to greater than 2.0."));
           }
 
         if (dftParameters::verbosity >= 4 &&
