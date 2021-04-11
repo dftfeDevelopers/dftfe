@@ -442,6 +442,7 @@ node is stored
     dealii::Table<2, dealii::VectorizedArray<double>> d_vEffExternalPotCorr;
     std::vector<double> d_vEffExternalPotCorrJxW;
     std::vector<double> d_vEffJxW;
+    std::vector<double> d_invJacderExcWithSigmaTimesGradRhoJxW;
     dealii::Table<2, dealii::Tensor<1, 3, dealii::VectorizedArray<double>>>
       derExcWithSigmaTimesGradRho;
 

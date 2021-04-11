@@ -375,12 +375,6 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::computeHamiltonianMatrix(
 		  d_cellHamiltonianMatrix[kpointSpinIndex][iElem][numberDofsPerElement*iNode + jNode]+=dataTypes::number(d_cellHamiltonianMatrixExternalPotCorr[numberNodesPerElementSquare*iElem + d_numberNodesPerElement*iNode + jNode],0.0);
 		  
 #else
-                  /*d_cellHamiltonianMatrix[kpointSpinIndex][iElem]
-                                         [numberDofsPerElement * iNode +
-                                          jNode] +=
-                    d_cellHamiltonianMatrixExternalPotCorr
-		    [iElem][numberDofsPerElement * iNode + jNode];*/
-
                  d_cellHamiltonianMatrix[kpointSpinIndex][iElem][numberDofsPerElement*iNode + jNode] += d_cellHamiltonianMatrixExternalPotCorr[sizeNiNj*iElem + count];
 		  
 		  

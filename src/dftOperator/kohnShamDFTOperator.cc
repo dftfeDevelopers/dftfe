@@ -681,7 +681,7 @@ namespace dftfe
                   }
               }
 
-	    for(unsigned int q = 0; q < numberQuadraturePoints; +=q)
+	    for(unsigned int q = 0; q < numberQuadraturePoints; ++q)
 	      {
                 const double gradRhoX = gradDensityValue[3 * q + 0];
 		const double gradRhoY = gradDensityValue[3 * q + 1];

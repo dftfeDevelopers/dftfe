@@ -34,7 +34,7 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::
     dftPtr->matrix_free_data.get_quadrature(dftPtr->d_densityQuadratureId);
   FEValues<3> fe_values(dftPtr->matrix_free_data.get_dof_handler().get_fe(),
                         quadrature,
-                        update_values | update_jacobians);
+                        update_values | update_gradients| update_jacobians);
   const unsigned int numberDofsPerElement =
     dftPtr->matrix_free_data.get_dof_handler().get_fe().dofs_per_cell;
   const unsigned int numberQuadraturePoints = quadrature.size();
