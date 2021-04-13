@@ -58,7 +58,8 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::
   //
   unsigned int sizeNiNj = numberDofsPerElement*(numberDofsPerElement + 1)/2;
   d_NiNjLpspQuad.resize(sizeNiNj*numberQuadraturePointsLpsp,0.0);
-  d_NiNj.resize(sizeNiNj*numberQuadraturePoints,0.0);
+  //d_NiNj.resize(sizeNiNj*numberQuadraturePoints,0.0);
+  d_shapeFunctionData(numberDofsPerElement*numberQuadraturePoints,0.0);
   d_cellShapeFunctionGradientIntegral.resize(numberPhysicalCells*sizeNiNj);
 
   //
@@ -176,7 +177,7 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::
 		    }
 		}
 
-              for(unsigned int q_point = 0; q_point < numberQuadraturePoints; ++q_point)
+              /*for(unsigned int q_point = 0; q_point < numberQuadraturePoints; ++q_point)
                 { 
                   unsigned int count = 0;
                   for(unsigned int iNode = 0; iNode < numberDofsPerElement; ++iNode)
@@ -188,7 +189,40 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::
 
                         }
                     }
-                }
+		    }*/
+
+	      for(unsigned int q_point = 0; q_point < numberQuadraturePoints; ++q_point)
+                { 
+		  for(unsigned int iNode = 0; iNode < numberDofsPerElement; ++iNode)
+                    { 
+		      d_shapeFunctionData[numberDofsPerElement*q_point + iNode] = fe_values.shape_value(iNode,q_point);
+                    }
+		}
+
+	      unsigned int numBlocks = FEOrder + 1;
+	      unsigned int numberEntriesEachBlock = sizeNiNj/numBlocks;
+	      unsigned int count = 0;
+	      unsigned int blockCount = 0;
+	      unsigned int indexCount = 0;
+	      d_blockiNodeIndex.resize(sizeNiNj);
+	      d_blockjNodeIndex.resize(sizeNiNj);
+
+	      for(unsigned int iNode = 0; iNode < numberDofsPerElement; ++iNode)
+		{
+		  for(unsigned int jNode = iNode; jNode < numberDofsPerElement; ++jNode)
+		    {
+		      d_blockiNodeIndex[numberEntriesEachBlock*blockCount+indexCount] = iNode;
+		      d_blockjNodeIndex[numberEntriesEachBlock*blockCount+indexCount] = jNode;
+		      count += 1;
+		      indexCount += 1;
+		      if(count%numberEntriesEachBlock == 0)
+			{
+			  blockCount += 1;
+			  indexCount = 0;
+			}
+			
+		    }
+		}
 	      
             }
 

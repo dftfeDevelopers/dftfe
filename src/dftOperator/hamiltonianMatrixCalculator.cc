@@ -48,6 +48,7 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::computeHamiltonianMatrix(
 
   //inputs to blas
   const char transA = 'N',transB = 'N';
+  const char transA1 = 'T',transB1 = 'T';
   const double alpha = 1.0;
   const double beta = 1.0;
   const unsigned int inc = 1;
@@ -134,20 +135,77 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::computeHamiltonianMatrix(
   //
   //create temp storage for stiffness matrix across all cells
   //
+  unsigned int numberBlocks = (FEOrder + 1);
   std::vector<dataTypes::number> cellHamiltonianMatrix(totalLocallyOwnedCells*sizeNiNj,0.0);
-  dgemm_(&transA,
-	 &transB,
-	 &sizeNiNj,//M
-	 &totalLocallyOwnedCells,//N
-	 &numberQuadraturePoints,//K
-	 &alpha,
-	 &d_NiNj[0],
-	 &sizeNiNj,
-	 &d_vEffJxW[0],
-	 &numberQuadraturePoints,
-	 &beta,
-	 &cellHamiltonianMatrix[0],
-	 &sizeNiNj);
+  unsigned int numBlocks = FEOrder + 1;
+  unsigned int numberEntriesEachBlock = sizeNiNj/numBlocks;
+  unsigned int count = 0;
+  unsigned int blockCount = 0;
+  unsigned int indexCount = 0;
+  unsigned int flag = 0;
+  
+  for(unsigned int q_point = 0; q_point < numberQuadraturePoints; ++q_point)
+    {
+      count = 0;
+      flag = 0;
+      for(unsigned int iNode = d_blockiNodeIndex[numberEntriesEachBlock*blockCount]; iNode < numberDofsPerElement; ++iNode)
+	{
+	  double shapeI = d_shapeFunctionData[numberDofsPerElement*q_point + iNode];
+	  for(unsigned int jNode = d_blockjNodeIndex[numberEntriesEachBlock*blockCount]; jNode < numberDofsPerElement; ++jNode)
+	    {
+	      double shapeJ = d_shapeFunctionData[numberDofsPerElement*q_point + jNode];
+	      NiNj_currentBlock[numberEntriesEachBlock*q_point + indexCount] = shapeI*shapeJ;
+	      count += 1;
+	      indexCount += 1;
+	      if(count%numberEntriesEachBlock == 0)
+		{
+		  flag = 1;
+		  indexCount = 0;
+		  break;
+		}
+	    }//jNode
+	  if(flag == 1)
+	    {
+	      if(q_point == (numberQuadraturePoints - 1))
+		{
+		  //gemm
+		  /*dgemm_(&transA,
+			 &transB,
+			 &numberEntriesEachBlock,//M
+			 &totalLocallyOwnedCells,//N
+			 &numberQuadraturePoints,//K
+			 &alpha,
+			 &NiNj_currentBlock[0],
+			 &numberEntriesEachBlock,
+			 &d_vEffJxW[0],
+			 &numberQuadraturePoints,
+			 &beta,
+			 &cellHamiltonianMatrix[0],//this has to change
+			 &sizeNiNj);*/
+
+		  dgemm_(&transA1,
+			 &transB1,
+			 &totalLocallyOwnedCells,//M
+			 &numberEntriesEachBlock,//N
+			 &numberQuadraturePoints,//K
+			 &alpha,
+			 &d_vEffJxW[0],
+			 &numberQuadraturePoints,
+			 &NiNj_currentBlock[0],
+			 &totalLocallyOwnedCells,
+			 &beta,
+			 &cellHamiltonianMatrix[totalLocallyOwnedCells*numberEntriesEachBlock*blockCount],
+			 &totalLocallyOwnedCells);
+		      
+		  blockCount += 1;
+		}
+	      break;
+	    }
+	}//iNode
+    }
+
+     
+    
 
 
   if(dftParameters::xcFamilyType == "GGA")
@@ -345,9 +403,12 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::computeHamiltonianMatrix(
 #else
                   d_cellHamiltonianMatrix
                     [kpointSpinIndex][iElem]
-                    [numberDofsPerElement * iNode + jNode] =
-		    cellHamiltonianMatrix[sizeNiNj*iElem +
-					  count]+0.5*d_cellShapeFunctionGradientIntegral[sizeNiNj*iElem + count];
+                    [numberDofsPerElement * iNode + jNode] =cellHamiltonianMatrix[totalLocallyOwnedCells*count +
+		    iElem]+0.5*d_cellShapeFunctionGradientIntegral[sizeNiNj*iElem + count];
+		  
+		    //cellHamiltonianMatrix[sizeNiNj*iElem +
+		    //count]+0.5*d_cellShapeFunctionGradientIntegral[sizeNiNj*iElem + count];
+		    
 
 #endif
 		  count+=1;
