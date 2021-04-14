@@ -59,6 +59,11 @@ namespace dftfe
             rowProcs;
 #endif
 
+        if (!dftParameters::reproducible_output)
+          rowProcs =
+            std::min(rowProcs,
+                     (unsigned int)std::ceil((double)size / (double)(100)));
+
         if (dftParameters::verbosity >= 4)
           {
             dealii::ConditionalOStream pcout(
