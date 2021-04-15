@@ -59,7 +59,7 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::
   unsigned int sizeNiNj = numberDofsPerElement*(numberDofsPerElement + 1)/2;
   d_NiNjLpspQuad.resize(sizeNiNj*numberQuadraturePointsLpsp,0.0);
   //d_NiNj.resize(sizeNiNj*numberQuadraturePoints,0.0);
-  d_shapeFunctionData(numberDofsPerElement*numberQuadraturePoints,0.0);
+  d_shapeFunctionData.resize(numberDofsPerElement*numberQuadraturePoints,0.0);
   d_cellShapeFunctionGradientIntegral.resize(numberPhysicalCells*sizeNiNj);
 
   //
@@ -125,27 +125,26 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::
             {
               fe_values.reinit(cellPtr);
               fe_values_lpsp.reinit(cellPtr);
-
 	      
-              const std::vector<dealii::DerivativeForm<1, 3, 3>> &jacobians =
-              fe_values.get_jacobians();
-	      for(unsigned int iNode = 0; iNode < numberDofsPerElement; ++iNode)
+              if(dftParameters::xcFamilyType == "GGA")
 		{
-		  for(unsigned int q_point = 0; q_point < numberQuadraturePoints; ++q_point)
- 		    {
-                      const dealii::Tensor<1, 3, double> &shape_grad_real = fe_values.shape_grad(iNode, q_point);
-		      const dealii::Tensor<1, 3, double> &shape_grad_reference =
+                  const std::vector<dealii::DerivativeForm<1, 3, 3>> &jacobians =
+                  fe_values.get_jacobians();
+                  for(unsigned int iNode = 0; iNode < numberDofsPerElement; ++iNode)
+                  {
+                    for(unsigned int q_point = 0; q_point < numberQuadraturePoints; ++q_point)
+                      {
+                        const dealii::Tensor<1, 3, double> &shape_grad_real = fe_values.shape_grad(iNode, q_point);
+                        const dealii::Tensor<1, 3, double> &shape_grad_reference =
                         apply_transformation(jacobians[q_point].transpose(),
                                              shape_grad_real);
 
-		      shapeFunctionGradientValueRef[3*numberDofsPerElement*q_point + iNode] = shape_grad_reference[0];
-		      shapeFunctionGradientValueRef[3*numberDofsPerElement*q_point + numberDofsPerElement + iNode] = shape_grad_reference[1];
-		      shapeFunctionGradientValueRef[3*numberDofsPerElement*q_point + 2*numberDofsPerElement + iNode] = shape_grad_reference[2];
-		    }
-		}
-            
-              if(dftParameters::xcFamilyType == "GGA")
-		{
+                        shapeFunctionGradientValueRef[3*numberDofsPerElement*q_point + iNode] = shape_grad_reference[0];
+                        shapeFunctionGradientValueRef[3*numberDofsPerElement*q_point + numberDofsPerElement + iNode] = shape_grad_reference[1];
+                        shapeFunctionGradientValueRef[3*numberDofsPerElement*q_point + 2*numberDofsPerElement + iNode] = shape_grad_reference[2];
+                      }
+                  }
+
 		  for(unsigned int q_point = 0; q_point < numberQuadraturePoints; ++q_point)
 		    { 
 		      unsigned int count = 0;
@@ -218,7 +217,7 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::
 		      if(count%numberEntriesEachBlock == 0)
 			{
 			  blockCount += 1;
-			  indexCount = 0;
+                          indexCount = 0;
 			}
 			
 		    }
