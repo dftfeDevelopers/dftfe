@@ -146,6 +146,9 @@ namespace dftfe
     virtual thrust::device_vector<dataTypes::number> &
     getCellWaveFunctionMatrix() = 0;
 
+    virtual distributedGPUVec<double> &
+    getParallelChebyBlockVectorDevice() = 0;
+
     virtual thrust::device_vector<unsigned int> &
     getLocallyOwnedProcBoundaryNodesVectorDevice() = 0;
 
@@ -604,6 +607,9 @@ namespace dftfe
       d_flattenedArrayCellLocalProcIndexIdMapDevice;
 
     thrust::device_vector<dataTypes::number> d_cellWaveFunctionMatrix;
+
+    distributedGPUVec<double> d_parallelChebyBlockVectorDevice;
+
     //
     // mpi communicator
     //

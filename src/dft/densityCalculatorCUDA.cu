@@ -269,12 +269,8 @@ namespace dftfe
       // distributedGPUVec<double> & cudaFlattenedArrayBlock =
       // operatorMatrix.getBlockCUDADealiiVector();
 
-      distributedGPUVec<double> cudaFlattenedArrayBlock;
-      vectorTools::createDealiiVector(
-        operatorMatrix.getMatrixFreeData()->get_vector_partitioner(
-          matrixFreeDofhandlerIndex),
-        BVec,
-        cudaFlattenedArrayBlock);
+      distributedGPUVec<double> &cudaFlattenedArrayBlock =
+        operatorMatrix.getParallelChebyBlockVectorDevice();
 
       const unsigned int numGhosts =
         cudaFlattenedArrayBlock.get_partitioner()->n_ghost_indices();

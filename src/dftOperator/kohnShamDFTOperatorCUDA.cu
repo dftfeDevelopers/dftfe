@@ -435,6 +435,15 @@ namespace dftfe
   }
 
   template <unsigned int FEOrder, unsigned int FEOrderElectro>
+  distributedGPUVec<double> &
+  kohnShamDFTOperatorCUDAClass<FEOrder, FEOrderElectro>::
+    getParallelChebyBlockVectorDevice()
+  {
+    return d_parallelChebyBlockVectorDevice;
+  }
+
+
+  template <unsigned int FEOrder, unsigned int FEOrderElectro>
   thrust::device_vector<unsigned int> &
   kohnShamDFTOperatorCUDAClass<FEOrder, FEOrderElectro>::
     getLocallyOwnedProcBoundaryNodesVectorDevice()
@@ -513,7 +522,8 @@ namespace dftfe
     distributedCPUVec<dataTypes::number> flattenedArray;
     if (flag)
       vectorTools::createDealiiVector<dataTypes::number>(
-        dftPtr->matrix_free_data.get_vector_partitioner(),
+        dftPtr->matrix_free_data.get_vector_partitioner(
+          dftPtr->d_densityDofHandlerIndex),
         numberWaveFunctions,
         flattenedArray);
 
@@ -524,17 +534,31 @@ namespace dftfe
       pcout << "starting free mem: " << free_t << ", total mem: " << total_t
             << std::endl;
 
+    const unsigned int BVec =
+      std::min(dftParameters::chebyWfcBlockSize, numberWaveFunctions);
+    vectorTools::createDealiiVector<double>(
+      dftPtr->matrix_free_data.get_vector_partitioner(
+        dftPtr->d_densityDofHandlerIndex),
+      BVec,
+      d_parallelChebyBlockVectorDevice);
+
     const unsigned int n_ghosts =
-      dftPtr->matrix_free_data.get_vector_partitioner()->n_ghost_indices();
+      dftPtr->matrix_free_data
+        .get_vector_partitioner(dftPtr->d_densityDofHandlerIndex)
+        ->n_ghost_indices();
     const unsigned int localSize =
-      dftPtr->matrix_free_data.get_vector_partitioner()->local_size();
+      dftPtr->matrix_free_data
+        .get_vector_partitioner(dftPtr->d_densityDofHandlerIndex)
+        ->local_size();
 
     thrust::host_vector<unsigned int> locallyOwnedProcBoundaryNodesVector(
       localSize, 0);
 
     const std::vector<std::pair<unsigned int, unsigned int>>
       &locallyOwnedProcBoundaryNodes =
-        dftPtr->matrix_free_data.get_vector_partitioner()->import_indices();
+        dftPtr->matrix_free_data
+          .get_vector_partitioner(dftPtr->d_densityDofHandlerIndex)
+          ->import_indices();
 
     for (unsigned int iset = 0; iset < locallyOwnedProcBoundaryNodes.size();
          ++iset)
@@ -576,7 +600,8 @@ namespace dftfe
 
 
     getOverloadedConstraintMatrix()->precomputeMaps(
-      dftPtr->matrix_free_data.get_vector_partitioner(),
+      dftPtr->matrix_free_data.get_vector_partitioner(
+        dftPtr->d_densityDofHandlerIndex),
       flattenedArray.get_partitioner(),
       numberWaveFunctions);
 
@@ -1620,9 +1645,13 @@ namespace dftfe
     const bool                 singlePrecCommun)
   {
     const unsigned int n_ghosts =
-      dftPtr->matrix_free_data.get_vector_partitioner()->n_ghost_indices();
+      dftPtr->matrix_free_data
+        .get_vector_partitioner(dftPtr->d_densityDofHandlerIndex)
+        ->n_ghost_indices();
     const unsigned int localSize =
-      dftPtr->matrix_free_data.get_vector_partitioner()->local_size();
+      dftPtr->matrix_free_data
+        .get_vector_partitioner(dftPtr->d_densityDofHandlerIndex)
+        ->local_size();
     const unsigned int totalSize = localSize + n_ghosts;
     //
     // scale src vector with M^{-1/2}
@@ -1752,9 +1781,13 @@ namespace dftfe
     const bool                 doUnscalingSrc)
   {
     const unsigned int n_ghosts =
-      dftPtr->matrix_free_data.get_vector_partitioner()->n_ghost_indices();
+      dftPtr->matrix_free_data
+        .get_vector_partitioner(dftPtr->d_densityDofHandlerIndex)
+        ->n_ghost_indices();
     const unsigned int localSize =
-      dftPtr->matrix_free_data.get_vector_partitioner()->local_size();
+      dftPtr->matrix_free_data
+        .get_vector_partitioner(dftPtr->d_densityDofHandlerIndex)
+        ->local_size();
     const unsigned int totalSize = localSize + n_ghosts;
     //
     // scale src vector with M^{-1/2}
@@ -1854,9 +1887,13 @@ namespace dftfe
     bool                       computePart2)
   {
     const unsigned int n_ghosts =
-      dftPtr->matrix_free_data.get_vector_partitioner()->n_ghost_indices();
+      dftPtr->matrix_free_data
+        .get_vector_partitioner(dftPtr->d_densityDofHandlerIndex)
+        ->n_ghost_indices();
     const unsigned int localSize =
-      dftPtr->matrix_free_data.get_vector_partitioner()->local_size();
+      dftPtr->matrix_free_data
+        .get_vector_partitioner(dftPtr->d_densityDofHandlerIndex)
+        ->local_size();
     const unsigned int totalSize = localSize + n_ghosts;
 
     if (!(computePart1 || computePart2))
