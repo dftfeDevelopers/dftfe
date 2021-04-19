@@ -138,6 +138,9 @@ namespace dftfe
     thrust::device_vector<dataTypes::number> &
     getCellWaveFunctionMatrix();
 
+    distributedGPUVec<double> &
+    getParallelChebyBlockVectorDevice();
+
     thrust::device_vector<unsigned int> &
     getLocallyOwnedProcBoundaryNodesVectorDevice();
 

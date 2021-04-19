@@ -748,9 +748,9 @@ namespace dftfe
 
         prm.declare_entry(
           "TOLERANCE",
-          "5e-05",
+          "1e-05",
           Patterns::Double(1e-12, 1.0),
-          "[Standard] SCF iterations stopping tolerance in terms of $L_2$ norm of the electron-density difference between two successive iterations. CAUTION: A tolerance close to 1e-7 or lower can deteriorate the SCF convergence due to the round-off error accumulation.");
+          "[Standard] SCF iterations stopping tolerance in terms of $L_2$ norm of the electron-density difference between two successive iterations. The default tolerance of is set to a tight value of 1e-5 for accurate ionic forces and cell stresses keeping structural optimization and molecular dynamics in mind. A tolerance of 1e-4 would be accurate enough for calculations without structural optimization and dynamics. CAUTION: A tolerance close to 1e-7 or lower can deteriorate the SCF convergence due to the round-off error accumulation.");
 
         prm.declare_entry(
           "MIXING HISTORY",
@@ -1704,6 +1704,10 @@ namespace dftfe
       //
       // Automated choice of mesh related parameters
       //
+
+      if (dftParameters::isBOMD)
+        dftParameters::isIonForce = true;
+
       if (!dftParameters::isPseudopotential)
         {
           if (!dftParameters::reproducible_output)
