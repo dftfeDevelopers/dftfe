@@ -121,10 +121,21 @@ forceClass<FEOrder, FEOrderElectro>::createBinObjectsForce(
                                 nodeId);
                           for (unsigned int j = 0; j < rowData->size(); ++j)
                             {
-                              Assert(boundaryNodeMap.find(
-                                       (*rowData)[j].first) !=
-                                       boundaryNodeMap.end(),
-                                     ExcMessage("BUG"));
+                              if (dftParameters::
+                                    createConstraintsFromSerialDofhandler)
+                                {
+                                  if (boundaryNodeMap.find(
+                                        (*rowData)[j].first) ==
+                                      boundaryNodeMap.end())
+                                    continue;
+                                }
+                              else
+                                {
+                                  Assert(boundaryNodeMap.find(
+                                           (*rowData)[j].first) !=
+                                           boundaryNodeMap.end(),
+                                         ExcMessage("BUG"));
+                                }
 
                               if (boundaryNodeMap.find((*rowData)[j].first)
                                     ->second != -1)

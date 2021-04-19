@@ -1194,10 +1194,35 @@ namespace dftfe
                                 constraintMatrix.get_constraint_entries(nodeId);
                               for (unsigned int j = 0; j < rowData->size(); ++j)
                                 {
-                                  Assert(boundaryNodeMap.find(
-                                           (*rowData)[j].first) !=
-                                           boundaryNodeMap.end(),
-                                         dealii::ExcMessage("BUG"));
+                                  if (dftParameters::
+                                        createConstraintsFromSerialDofhandler)
+                                    {
+                                      //
+                                      // FIXME: When constraints are obtained
+                                      // using serial dof handler to account for
+                                      // a known parallel constraints issue in
+                                      // dealii, this can cause the relevant
+                                      // dofs to not have all dofs to which the
+                                      // local constraints expand to
+                                      //
+                                      if (boundaryNodeMap.find(
+                                            (*rowData)[j].first) ==
+                                          boundaryNodeMap.end())
+                                        {
+                                          if (dftParameters::verbosity >= 4)
+                                            std::cout
+                                              << "DFT-FE Warning: relevant dofs do not have all dofs to which the local constraints expand to. This is due to a known parallel constraints issue in dealii combined with our temporary serial dof handler fix."
+                                              << std::endl;
+                                          continue;
+                                        }
+                                    }
+                                  else
+                                    {
+                                      Assert(boundaryNodeMap.find(
+                                               (*rowData)[j].first) !=
+                                               boundaryNodeMap.end(),
+                                             ExcMessage("BUG"));
+                                    }
 
                                   if (boundaryNodeMap.find((*rowData)[j].first)
                                         ->second != -1)
