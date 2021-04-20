@@ -821,8 +821,8 @@ namespace dftfe
 
 
           CUDACHECK(cudaMallocHost(
-            (void **)
-              projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuadsFlattenedHPinnedTemp,
+            (void *
+               *)&projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuadsFlattenedHPinnedTemp,
             innerBlockSizeEnlp * numQuadsNLP * 3 * sizeof(double)));
 
           std::fill(
