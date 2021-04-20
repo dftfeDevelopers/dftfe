@@ -519,7 +519,8 @@ namespace dftfe
        
 	    for (unsigned int q = 0; q < numberQuadraturePoints; ++q)
 	      {
-		d_vEffJxW[iElemCount*numberQuadraturePoints + q] = (tempPhi[q] + exchangePotentialVal[q] + corrPotentialVal[q])*fe_values.JxW(q);
+		//d_vEffJxW[iElemCount*numberQuadraturePoints + q] = (tempPhi[q] + exchangePotentialVal[q] + corrPotentialVal[q])*fe_values.JxW(q);
+		d_vEffJxW[totalLocallyOwnedCells*q + iElemCount] = (tempPhi[q] + exchangePotentialVal[q] + corrPotentialVal[q])*fe_values.JxW(q);
 	      }
 	    
 	    iElemCount++;

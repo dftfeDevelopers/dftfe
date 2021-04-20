@@ -48,7 +48,7 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::computeHamiltonianMatrix(
 
   //inputs to blas
   const char transA = 'N',transB = 'N';
-  const char transA1 = 'T',transB1 = 'T';
+  const char transA1 = 'N',transB1 = 'T';
   const double alpha = 1.0;
   const double beta = 1.0;
   const unsigned int inc = 1;
@@ -169,22 +169,6 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::computeHamiltonianMatrix(
 	    {
 	      if(q_point == (numberQuadraturePoints - 1))
 		{
-		  //gemm
-		  /*dgemm_(&transA,
-			 &transB,
-			 &numberEntriesEachBlock,//M
-			 &totalLocallyOwnedCells,//N
-			 &numberQuadraturePoints,//K
-			 &alpha,
-			 &NiNj_currentBlock[0],
-			 &numberEntriesEachBlock,
-			 &d_vEffJxW[0],
-			 &numberQuadraturePoints,
-			 &beta,
-			 &cellHamiltonianMatrix[0],//this has to change
-			 &sizeNiNj);*/
-                  //std::cout <<"Block Id Number: "<<blockCount <<std::endl;
-
 		  dgemm_(&transA1,
 			 &transB1,
 			 &totalLocallyOwnedCells,//M
@@ -192,7 +176,7 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::computeHamiltonianMatrix(
 			 &numberQuadraturePoints,//K
 			 &alpha,
 			 &d_vEffJxW[0],
-			 &numberQuadraturePoints,
+			 &totalLocallyOwnedCells,
 			 &NiNj_currentBlock[0],
 			 &numberEntriesEachBlock,
 			 &beta,
