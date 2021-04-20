@@ -558,11 +558,11 @@ namespace dftfe
                 thrust::raw_pointer_cast(
                   &projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuadsFlattenedDBlock
                     [0]),
-                currentBlockSizeNlpnumQuadsNLP * numQuadsNLP * 3 *
-                  sizeof(double),
+                currentBlockSizeNlp * numQuadsNLP * 3 * sizeof(double),
                 cudaMemcpyDeviceToHost);
 
-              for (unsigned int i = 0; i < currentBlockSizeNlpnumQuadsNLP * 3;
+              for (unsigned int i = 0;
+                   i < currentBlockSizeNlp * numQuadsNLP * 3;
                    i++)
                 projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuadsFlattenedH
                   [startingIdNlp * numQuadsNLP * 3 + i] +=
