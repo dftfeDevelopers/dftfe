@@ -70,8 +70,8 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::
 
    if(dftParameters::xcFamilyType == "GGA")
      {
-       d_gradNiNjPlusgradNjNi.resize(sizeNiNj*3*numberQuadraturePoints,0.0);
-       shapeFunctionGradientValueRef.resize(numberQuadraturePoints * numberDofsPerElement * 3, 0.0);
+       //d_gradNiNjPlusgradNjNi.resize(sizeNiNj*3*numberQuadraturePoints,0.0);
+       d_shapeFunctionGradientValueRef.resize(numberQuadraturePoints * numberDofsPerElement * 3, 0.0);
      }
       
  
@@ -139,13 +139,13 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::
                         apply_transformation(jacobians[q_point].transpose(),
                                              shape_grad_real);
 
-                        shapeFunctionGradientValueRef[3*numberDofsPerElement*q_point + iNode] = shape_grad_reference[0];
-                        shapeFunctionGradientValueRef[3*numberDofsPerElement*q_point + numberDofsPerElement + iNode] = shape_grad_reference[1];
-                        shapeFunctionGradientValueRef[3*numberDofsPerElement*q_point + 2*numberDofsPerElement + iNode] = shape_grad_reference[2];
+                        d_shapeFunctionGradientValueRef[3*numberDofsPerElement*q_point + iNode] = shape_grad_reference[0];
+                        d_shapeFunctionGradientValueRef[3*numberDofsPerElement*q_point + numberDofsPerElement + iNode] = shape_grad_reference[1];
+                        d_shapeFunctionGradientValueRef[3*numberDofsPerElement*q_point + 2*numberDofsPerElement + iNode] = shape_grad_reference[2];
                       }
                   }
 
-		  for(unsigned int q_point = 0; q_point < numberQuadraturePoints; ++q_point)
+		  /*for(unsigned int q_point = 0; q_point < numberQuadraturePoints; ++q_point)
 		    { 
 		      unsigned int count = 0;
 		      for(unsigned int iNode = 0; iNode < numberDofsPerElement; ++iNode)
@@ -159,7 +159,7 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::
 
 			    }
 			}
-		    }
+		    }*/
 		}
 
               for(unsigned int q_point = 0; q_point < numberQuadraturePointsLpsp; ++q_point)

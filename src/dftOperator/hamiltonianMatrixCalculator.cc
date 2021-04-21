@@ -190,14 +190,14 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::computeHamiltonianMatrix(
 	    }
 	}//iNode
     }
-}
+ }
      
     
 
 
   if(dftParameters::xcFamilyType == "GGA")
     {
-      dgemm_(&transA,
+      /*dgemm_(&transA,
 	     &transB,
 	     &sizeNiNj,//M
 	     &totalLocallyOwnedCells,//N
@@ -209,7 +209,61 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::computeHamiltonianMatrix(
 	     &numberQuadraturePointsTimesThree,
 	     &beta,
 	     &cellHamiltonianMatrix[0],
-	     &sizeNiNj);
+	     &sizeNiNj);*/
+
+      gradNiNjPlusgradNjNi_currentBlock.resize(numberEntriesEachBlock*3*numberQuadraturePoints,0.0);
+      blockCount = 0;
+      while(blockCount < numBlocks)
+	{
+	   for(unsigned int q_point = 0; q_point < numberQuadraturePoints; ++q_point)
+	     {
+	       flag = 0;
+	       for(unsigned int iNode = d_blockiNodeIndex[numberEntriesEachBlock*blockCount]; iNode < numberDofsPerElement; ++iNode)
+		 {
+		   double shapeGradXRefINode = d_shapeFunctionGradientValueRef[3*numberDofsPerElement*q_point + iNode];
+		   double shapeGradYRefINode =  d_shapeFunctionGradientValueRef[3*numberDofsPerElement*q_point + numberDofsPerElement + iNode];
+		   double shareGradZRefINode = d_shapeFunctionGradientValueRef[3*numberDofsPerElement*q_point + 2*numberDofsPerElement + iNode];
+		   double shapeI = d_shapeFunctionData[numberDofsPerElement*q_point + iNode];
+		    for(unsigned int jNode = d_blockjNodeIndex[numberEntriesEachBlock*blockCount+indexCount]; jNode < numberDofsPerElement; ++jNode)
+		      {
+			double shapeJ = d_shapeFunctionData[numberDofsPerElement*q_point + jNode];
+			gradNiNjPlusgradNjNi_currentBlock[3*numberEntriesEachBlock*q_point + indexCount] = shapeGradXRefINode*shapeJ + shapeI*d_shapeFunctionGradientValueRef[3*numberDofsPerElement*q_point + jNode];
+			gradNiNjPlusgradNjNi_currentBlock[3*numberEntriesEachBlock*q_point + numberEntriesEachBlock + indexCount] = shapeGradYRefINode*shapeJ + shapeI*d_shapeFunctionGradientValueRef[3*numberDofsPerElement*q_point + numberDofsPerElement + jNode];
+			gradNiNjPlusgradNjNi_currentBlock[3*numberEntriesEachBlock*q_point + 2*numberEntriesEachBlock + indexCount] = shapeGradZRefINode*shapeJ + shapeI*d_shapeFunctionGradientValueRef[3*numberDofsPerElement*q_point + 2*numberDofsPerElement + jNode];
+			indexCount += 1;
+			if(indexCount%numberEntriesEachBlock == 0)
+			  {
+			    flag = 1;
+			    indexCount = 0;
+			    break;
+			  }
+		      }//jnode
+		    if(flag == 1)
+		      {
+			if(q_point == (numberQuadraturePoints - 1))
+			  {
+			    dgemm_(&transA1,
+				   &transB1,
+				   &totalLocallyOwnedCells,//M
+				   &numberEntriesEachBlock,//N
+				   &numberQuadraturePointsTimesThree,//K
+				   &alpha,
+				   &d_invJacderExcWithSigmaTimesGradRhoJxW[0],
+				   &totalLocallyOwnedCells,
+				   &gradNiNjPlusgradNjNi_currentBlock[0],
+				   &numberEntriesEachBlock,
+				   &beta,
+				   &cellHamiltonianMatrix[totalLocallyOwnedCells*numberEntriesEachBlock*blockCount],
+				   &totalLocallyOwnedCells);
+			    
+			    blockCount += 1;
+			  }
+			break;
+		      }
+		 }//iNode
+	     }
+	}
+      
     }
   
   typename dealii::DoFHandler<3>::active_cell_iterator cellPtr;
