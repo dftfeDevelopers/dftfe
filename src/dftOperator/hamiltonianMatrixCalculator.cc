@@ -211,6 +211,7 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::computeHamiltonianMatrix(
 	     &cellHamiltonianMatrix[0],
 	     &sizeNiNj);*/
 
+      std::vector<double> gradNiNjPlusgradNjNi_currentBlock(numberEntriesEachBlock*numberQuadraturePoints,0.0);
       gradNiNjPlusgradNjNi_currentBlock.resize(numberEntriesEachBlock*3*numberQuadraturePoints,0.0);
       blockCount = 0;
       while(blockCount < numBlocks)
@@ -222,7 +223,7 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::computeHamiltonianMatrix(
 		 {
 		   double shapeGradXRefINode = d_shapeFunctionGradientValueRef[3*numberDofsPerElement*q_point + iNode];
 		   double shapeGradYRefINode =  d_shapeFunctionGradientValueRef[3*numberDofsPerElement*q_point + numberDofsPerElement + iNode];
-		   double shareGradZRefINode = d_shapeFunctionGradientValueRef[3*numberDofsPerElement*q_point + 2*numberDofsPerElement + iNode];
+		   double shapeGradZRefINode = d_shapeFunctionGradientValueRef[3*numberDofsPerElement*q_point + 2*numberDofsPerElement + iNode];
 		   double shapeI = d_shapeFunctionData[numberDofsPerElement*q_point + iNode];
 		    for(unsigned int jNode = d_blockjNodeIndex[numberEntriesEachBlock*blockCount+indexCount]; jNode < numberDofsPerElement; ++jNode)
 		      {
