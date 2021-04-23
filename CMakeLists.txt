@@ -37,6 +37,8 @@ SET(TARGET_SRC
   ./src/linAlg/linearAlgebraOperationsOpt.cc
   ./src/linAlg/linearAlgebraOperationsInternal.cc
   ./src/linAlg/elpaScalaManager.cc
+  ./src/linAlg/scalapackWrapper.cc
+  ./src/linAlg/process_grid.cc
   ./src/solvers/dealiiLinearSolver.cc
   ./src/solvers/dealiiLinearSolverProblem.cc
   ./src/md/molecularDynamics.cc
