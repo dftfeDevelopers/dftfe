@@ -214,6 +214,7 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::computeHamiltonianMatrix(
       std::vector<double> gradNiNjPlusgradNjNi_currentBlock(numberEntriesEachBlock*numberQuadraturePoints,0.0);
       gradNiNjPlusgradNjNi_currentBlock.resize(numberEntriesEachBlock*3*numberQuadraturePoints,0.0);
       blockCount = 0;
+      indexCount = 0;
       while(blockCount < numBlocks)
 	{
 	   for(unsigned int q_point = 0; q_point < numberQuadraturePoints; ++q_point)

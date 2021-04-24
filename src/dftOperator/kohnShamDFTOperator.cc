@@ -708,7 +708,7 @@ namespace dftfe
 	    
 	    for (unsigned int q = 0; q < numberQuadraturePoints; ++q)
 	      {
-		d_vEffJxW[iElemCount * numberQuadraturePoints + q] =
+		d_vEffJxW[totalLocallyOwnedCells*q + iElemCount] =
 		  (tempPhi[q] + derExchEnergyWithDensityVal[q] +
 		   derCorrEnergyWithDensityVal[q])*fe_values.JxW(q);
 	      }
