@@ -137,11 +137,10 @@ node is stored
      * also avoids creation of another full X memory.
      */
     void
-    XtHX(const std::vector<dataTypes::number> &X,
-         const unsigned int                    numberComponents,
-         const std::shared_ptr<const dealii::Utilities::MPI::ProcessGrid>
-           &                                         processGrid,
-         dealii::ScaLAPACKMatrix<dataTypes::number> &projHamPar);
+    XtHX(const std::vector<dataTypes::number> &           X,
+         const unsigned int                               numberComponents,
+         const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
+         dftfe::ScaLAPACKMatrix<dataTypes::number> &      projHamPar);
 
 
     /**
@@ -158,13 +157,11 @@ node is stored
      * of the operation into the given subspace
      */
     virtual void
-    XtHXMixedPrec(
-      const std::vector<dataTypes::number> &X,
-      const unsigned int                    N,
-      const unsigned int                    Ncore,
-      const std::shared_ptr<const dealii::Utilities::MPI::ProcessGrid>
-        &                                         processGrid,
-      dealii::ScaLAPACKMatrix<dataTypes::number> &projHamPar);
+    XtHXMixedPrec(const std::vector<dataTypes::number> &           X,
+                  const unsigned int                               N,
+                  const unsigned int                               Ncore,
+                  const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
+                  dftfe::ScaLAPACKMatrix<dataTypes::number> &      projHamPar);
 
 
     /**

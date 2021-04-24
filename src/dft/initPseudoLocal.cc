@@ -23,15 +23,15 @@
 template <unsigned int FEOrder, unsigned int FEOrderElectro>
 void
 dftClass<FEOrder, FEOrderElectro>::initLocalPseudoPotential(
-  const DoFHandler<3> &                              _dofHandler,
-  const unsigned int                                 lpspQuadratureId,
-  const dealii::MatrixFree<3, double> &              _matrix_free_data,
-  const unsigned int                                 _phiExtDofHandlerIndex,
-  const dealii::AffineConstraints<double> &          _phiExtConstraintMatrix,
-  const std::map<types::global_dof_index, Point<3>> &_supportPoints,
-  const vselfBinsManager<FEOrder, FEOrderElectro> &  vselfBinManager,
-  distributedCPUVec<double> &                        phiExt,
-  std::map<dealii::CellId, std::vector<double>> &    _pseudoValues,
+  const DoFHandler<3> &                    _dofHandler,
+  const unsigned int                       lpspQuadratureId,
+  const dealii::MatrixFree<3, double> &    _matrix_free_data,
+  const unsigned int                       _phiExtDofHandlerIndex,
+  const dealii::AffineConstraints<double> &_phiExtConstraintMatrix,
+  const std::map<dealii::types::global_dof_index, Point<3>> &_supportPoints,
+  const vselfBinsManager<FEOrder, FEOrderElectro> &          vselfBinManager,
+  distributedCPUVec<double> &                                phiExt,
+  std::map<dealii::CellId, std::vector<double>> &            _pseudoValues,
   std::map<unsigned int, std::map<dealii::CellId, std::vector<double>>>
     &_pseudoValuesAtoms)
 {

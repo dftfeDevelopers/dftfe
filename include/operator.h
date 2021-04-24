@@ -22,6 +22,8 @@
 
 #include <constraintMatrixInfo.h>
 #include <headers.h>
+#include "process_grid.h"
+#include "scalapackWrapper.h"
 
 #include <vector>
 #ifdef DFTFE_WITH_ELPA
@@ -192,11 +194,10 @@ namespace dftfe
      * of the operation into the given subspace
      */
     virtual void
-    XtHX(const std::vector<dataTypes::number> &X,
-         const unsigned int                    numberComponents,
-         const std::shared_ptr<const dealii::Utilities::MPI::ProcessGrid>
-           &                                         processGrid,
-         dealii::ScaLAPACKMatrix<dataTypes::number> &projHamPar) = 0;
+    XtHX(const std::vector<dataTypes::number> &           X,
+         const unsigned int                               numberComponents,
+         const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
+         dftfe::ScaLAPACKMatrix<dataTypes::number> &      projHamPar) = 0;
 
 
     /**
@@ -213,13 +214,11 @@ namespace dftfe
      * of the operation into the given subspace
      */
     virtual void
-    XtHXMixedPrec(
-      const std::vector<dataTypes::number> &X,
-      const unsigned int                    totalNumberComponents,
-      const unsigned int                    singlePrecComponents,
-      const std::shared_ptr<const dealii::Utilities::MPI::ProcessGrid>
-        &                                         processGrid,
-      dealii::ScaLAPACKMatrix<dataTypes::number> &projHamPar) = 0;
+    XtHXMixedPrec(const std::vector<dataTypes::number> &X,
+                  const unsigned int                    totalNumberComponents,
+                  const unsigned int                    singlePrecComponents,
+                  const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
+                  dftfe::ScaLAPACKMatrix<dataTypes::number> &projHamPar) = 0;
 
 
     void

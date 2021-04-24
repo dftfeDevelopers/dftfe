@@ -633,19 +633,19 @@ dftClass<FEOrder, FEOrderElectro>::kohnShamEigenSpaceCompute(
                                        spinType]);
 
   const unsigned int rowsBlockSize = elpaScala.getScalapackBlockSize();
-  std::shared_ptr<const dealii::Utilities::MPI::ProcessGrid> processGrid;
+  std::shared_ptr<const dftfe::ProcessGrid> processGrid;
 
   linearAlgebraOperations::internal::createProcessGridSquareMatrix(
     elpaScala.getMPICommunicator(), d_numEigenValues, processGrid, false);
 
-  dealii::ScaLAPACKMatrix<double> projHamPar(d_numEigenValues,
-                                             processGrid,
-                                             rowsBlockSize);
+  dftfe::ScaLAPACKMatrix<double> projHamPar(d_numEigenValues,
+                                            processGrid,
+                                            rowsBlockSize);
 
 
-  dealii::ScaLAPACKMatrix<double> overlapMatPar(d_numEigenValues,
-                                                processGrid,
-                                                rowsBlockSize);
+  dftfe::ScaLAPACKMatrix<double> overlapMatPar(d_numEigenValues,
+                                               processGrid,
+                                               rowsBlockSize);
 
 
   if (numberRayleighRitzAvoidanceXLBOMDPasses > 0)
@@ -947,19 +947,19 @@ dftClass<FEOrder, FEOrderElectro>::kohnShamEigenSpaceOnlyRRCompute(
 
 
   const unsigned int rowsBlockSize = elpaScala.getScalapackBlockSize();
-  std::shared_ptr<const dealii::Utilities::MPI::ProcessGrid> processGrid;
+  std::shared_ptr<const dftfe::ProcessGrid> processGrid;
 
   linearAlgebraOperations::internal::createProcessGridSquareMatrix(
     elpaScala.getMPICommunicator(), d_numEigenValues, processGrid, false);
 
-  dealii::ScaLAPACKMatrix<double> projHamPar(d_numEigenValues,
-                                             processGrid,
-                                             rowsBlockSize);
+  dftfe::ScaLAPACKMatrix<double> projHamPar(d_numEigenValues,
+                                            processGrid,
+                                            rowsBlockSize);
 
 
-  dealii::ScaLAPACKMatrix<double> overlapMatPar(d_numEigenValues,
-                                                processGrid,
-                                                rowsBlockSize);
+  dftfe::ScaLAPACKMatrix<double> overlapMatPar(d_numEigenValues,
+                                               processGrid,
+                                               rowsBlockSize);
 
 
 #  ifdef DFTFE_WITH_ELPA

@@ -417,7 +417,7 @@ forceClass<FEOrder, FEOrderElectro>::
 
       if (doesAtomIdExistOnLocallyOwnedNode)
         {
-          std::vector<types::global_dof_index> forceLocalDofIndices(3);
+          std::vector<dealii::types::global_dof_index> forceLocalDofIndices(3);
           for (unsigned int idim = 0; idim < 3; idim++)
             forceLocalDofIndices[idim] =
               atomsForceDofs

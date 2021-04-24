@@ -83,13 +83,13 @@ forceClass<FEOrder, FEOrderElectro>::createBinObjectsForce(
                   int  dirichletDofCount         = 0;
                   bool isSolvedDofPresent        = false;
                   int  nonHangingNodeIdCountFace = 0;
-                  std::vector<types::global_dof_index> iFaceGlobalDofIndices(
-                    dofs_per_face);
+                  std::vector<dealii::types::global_dof_index>
+                    iFaceGlobalDofIndices(dofs_per_face);
                   cell->face(iFace)->get_dof_indices(iFaceGlobalDofIndices);
                   for (unsigned int iFaceDof = 0; iFaceDof < dofs_per_face;
                        ++iFaceDof)
                     {
-                      const types::global_dof_index nodeId =
+                      const dealii::types::global_dof_index nodeId =
                         iFaceGlobalDofIndices[iFaceDof];
                       if (!hangingPlusPBCConstraints.is_constrained(nodeId))
                         {

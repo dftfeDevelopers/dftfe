@@ -156,6 +156,16 @@ extern "C"
           const int *iproc,
           const int *isproc,
           const int *nprocs);
+  /**
+   * Compute complex conjugate
+   */
+  void
+  pzlacgv_(const int *           N,
+           std::complex<double> *A,
+           const int *           IA,
+           const int *           JA,
+           const int *           DESCA,
+           const int *           INCX);
 
   /**
    * Compute the Cholesky factorization of an N-by-N real
@@ -940,6 +950,20 @@ extern "C"
            const int *  IC,
            const int *  JC,
            const int *  DESCC);
+  void
+  pzgeadd_(const char *                transa,
+           const int *                 m,
+           const int *                 n,
+           const std::complex<double> *alpha,
+           const std::complex<double> *A,
+           const int *                 IA,
+           const int *                 JA,
+           const int *                 DESCA,
+           const std::complex<double> *beta,
+           std::complex<double> *      C,
+           const int *                 IC,
+           const int *                 JC,
+           const int *                 DESCC);
 
   /**
    * Routine to transpose a matrix:
@@ -1112,6 +1136,25 @@ Cgesd2d(int context, int M, int N, float *A, int lda, int rdest, int cdest)
   Csgesd2d(context, M, N, A, lda, rdest, cdest);
 }
 
+inline void
+pplacgv(const int *N,
+        double *   A,
+        const int *IA,
+        const int *JA,
+        const int *DESCA,
+        const int *INCX)
+{}
+
+inline void
+pplacgv(const int *           N,
+        std::complex<double> *A,
+        const int *           IA,
+        const int *           JA,
+        const int *           DESCA,
+        const int *           INCX)
+{
+  pzlacgv_(N, A, IA, JA, DESCA, INCX);
+}
 
 template <typename number>
 inline void
@@ -2375,6 +2418,23 @@ pgeadd(const char * transa,
   psgeadd_(transa, m, n, alpha, A, IA, JA, DESCA, beta, C, IC, JC, DESCC);
 }
 
+inline void
+pgeadd(const char *                transa,
+       const int *                 m,
+       const int *                 n,
+       const std::complex<double> *alpha,
+       const std::complex<double> *A,
+       const int *                 IA,
+       const int *                 JA,
+       const int *                 DESCA,
+       const std::complex<double> *beta,
+       std::complex<double> *      C,
+       const int *                 IC,
+       const int *                 JC,
+       const int *                 DESCC)
+{
+  pzgeadd_(transa, m, n, alpha, A, IA, JA, DESCA, beta, C, IC, JC, DESCC);
+}
 
 template <typename number>
 inline void
@@ -2663,18 +2723,18 @@ psyevr(const char *          jobz,
 inline int
 lworkFromWork(std::vector<double> &work)
 {
-  static_cast<int>(work[0]);
+  return static_cast<int>(work[0]);
 }
 
 inline int
 lworkFromWork(std::vector<float> &work)
 {
-  static_cast<int>(work[0]);
+  return static_cast<int>(work[0]);
 }
 
 inline int
 lworkFromWork(std::vector<std::complex<double>> &work)
 {
-  static_cast<int>(work[0].real());
+  return static_cast<int>(work[0].real());
 }
 #endif // dftfe_scalapack_templates_h

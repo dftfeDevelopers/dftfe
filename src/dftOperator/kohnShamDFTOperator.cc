@@ -427,7 +427,8 @@ namespace dftfe
     const unsigned int dofs_per_cell   = (dofHandler.get_fe()).dofs_per_cell;
     const unsigned int num_quad_points = quadrature.size();
     Vector<double>     massVectorLocal(dofs_per_cell);
-    std::vector<types::global_dof_index> local_dof_indices(dofs_per_cell);
+    std::vector<dealii::types::global_dof_index> local_dof_indices(
+      dofs_per_cell);
 
 
     //
@@ -457,7 +458,7 @@ namespace dftfe
     invSqrtMassVec.compress(VectorOperation::add);
 
 
-    for (types::global_dof_index i = 0; i < invSqrtMassVec.size(); ++i)
+    for (dealii::types::global_dof_index i = 0; i < invSqrtMassVec.size(); ++i)
       if (invSqrtMassVec.in_local_range(i) &&
           !constraintMatrix.is_constrained(i))
         {
@@ -1208,11 +1209,10 @@ namespace dftfe
   template <unsigned int FEOrder, unsigned int FEOrderElectro>
   void
   kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::XtHX(
-    const std::vector<dataTypes::number> &X,
-    const unsigned int                    numberWaveFunctions,
-    const std::shared_ptr<const dealii::Utilities::MPI::ProcessGrid>
-      &                                         processGrid,
-    dealii::ScaLAPACKMatrix<dataTypes::number> &projHamPar)
+    const std::vector<dataTypes::number> &           X,
+    const unsigned int                               numberWaveFunctions,
+    const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
+    dftfe::ScaLAPACKMatrix<dataTypes::number> &      projHamPar)
   {
 #ifdef USE_COMPLEX
     AssertThrow(false, dftUtils::ExcNotImplementedYet());
@@ -1373,12 +1373,11 @@ namespace dftfe
   template <unsigned int FEOrder, unsigned int FEOrderElectro>
   void
   kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::XtHXMixedPrec(
-    const std::vector<dataTypes::number> &X,
-    const unsigned int                    N,
-    const unsigned int                    Ncore,
-    const std::shared_ptr<const dealii::Utilities::MPI::ProcessGrid>
-      &                                         processGrid,
-    dealii::ScaLAPACKMatrix<dataTypes::number> &projHamPar)
+    const std::vector<dataTypes::number> &           X,
+    const unsigned int                               N,
+    const unsigned int                               Ncore,
+    const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
+    dftfe::ScaLAPACKMatrix<dataTypes::number> &      projHamPar)
   {
 #ifdef USE_COMPLEX
     AssertThrow(false, dftUtils::ExcNotImplementedYet());

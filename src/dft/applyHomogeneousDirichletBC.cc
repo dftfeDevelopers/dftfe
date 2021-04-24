@@ -35,8 +35,10 @@ dftClass<FEOrder, FEOrderElectro>::applyHomogeneousDirichletBC(
   const unsigned int faces_per_cell = dealii::GeometryInfo<3>::faces_per_cell;
   const unsigned int dofs_per_face  = _dofHandler.get_fe().dofs_per_face;
 
-  std::vector<types::global_dof_index> cellGlobalDofIndices(dofs_per_cell);
-  std::vector<types::global_dof_index> iFaceGlobalDofIndices(dofs_per_face);
+  std::vector<dealii::types::global_dof_index> cellGlobalDofIndices(
+    dofs_per_cell);
+  std::vector<dealii::types::global_dof_index> iFaceGlobalDofIndices(
+    dofs_per_face);
 
   std::vector<bool> dofs_touched(_dofHandler.n_dofs(), false);
   dealii::DoFHandler<3>::active_cell_iterator cell = _dofHandler.begin_active(),

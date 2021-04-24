@@ -52,14 +52,14 @@ namespace dftfe
 
 
       const unsigned int rowsBlockSize = operatorMatrix.getScalapackBlockSize();
-      std::shared_ptr<const dealii::Utilities::MPI::ProcessGrid> processGrid;
+      std::shared_ptr<const dftfe::ProcessGrid> processGrid;
       internal::createProcessGridSquareMatrix(mpiComm,
                                               numberVectors,
                                               processGrid);
 
-      dealii::ScaLAPACKMatrix<T> overlapMatPar(numberVectors,
-                                               processGrid,
-                                               rowsBlockSize);
+      dftfe::ScaLAPACKMatrix<T> overlapMatPar(numberVectors,
+                                              processGrid,
+                                              rowsBlockSize);
 
       if (processGrid->is_process_active())
         std::fill(&overlapMatPar.local_el(0, 0),
@@ -104,13 +104,13 @@ namespace dftfe
         "PGS cholesky, copy, and triangular matrix invert");
 #  endif
 #  if (defined DFTFE_WITH_ELPA)
-      dealii::LAPACKSupport::Property overlapMatPropertyPostCholesky;
+      dftfe::LAPACKSupport::Property overlapMatPropertyPostCholesky;
       if (dftParameters::useELPA)
         {
           // For ELPA cholesky only the upper triangular part is enough
-          dealii::ScaLAPACKMatrix<T> overlapMatParTrans(numberVectors,
-                                                        processGrid,
-                                                        rowsBlockSize);
+          dftfe::ScaLAPACKMatrix<T> overlapMatParTrans(numberVectors,
+                                                       processGrid,
+                                                       rowsBlockSize);
 
           if (processGrid->is_process_active())
             std::fill(&overlapMatParTrans.local_el(0, 0),
@@ -133,7 +133,7 @@ namespace dftfe
             }
           overlapMatParTrans.copy_to(overlapMatPar);
           overlapMatPropertyPostCholesky =
-            dealii::LAPACKSupport::Property::upper_triangular;
+            dftfe::LAPACKSupport::Property::upper_triangular;
         }
       else
         {
@@ -144,21 +144,21 @@ namespace dftfe
 #  else
       overlapMatPar.compute_cholesky_factorization();
 
-      dealii::LAPACKSupport::Property overlapMatPropertyPostCholesky =
+      dftfe::LAPACKSupport::Property overlapMatPropertyPostCholesky =
         overlapMatPar.get_property();
 #  endif
       AssertThrow(
         overlapMatPropertyPostCholesky ==
-            dealii::LAPACKSupport::Property::lower_triangular ||
+            dftfe::LAPACKSupport::Property::lower_triangular ||
           overlapMatPropertyPostCholesky ==
-            dealii::LAPACKSupport::Property::upper_triangular,
+            dftfe::LAPACKSupport::Property::upper_triangular,
         dealii::ExcMessage(
           "DFT-FE Error: overlap matrix property after cholesky factorization incorrect"));
 
-      dealii::ScaLAPACKMatrix<T> LMatPar(numberVectors,
-                                         processGrid,
-                                         rowsBlockSize,
-                                         overlapMatPropertyPostCholesky);
+      dftfe::ScaLAPACKMatrix<T> LMatPar(numberVectors,
+                                        processGrid,
+                                        rowsBlockSize,
+                                        overlapMatPropertyPostCholesky);
       // copy triangular part of projHamPar into LMatPar
       if (processGrid->is_process_active())
         for (unsigned int i = 0; i < overlapMatPar.local_n(); ++i)
@@ -168,7 +168,7 @@ namespace dftfe
               {
                 const unsigned int glob_j = overlapMatPar.global_row(j);
                 if (overlapMatPropertyPostCholesky ==
-                    dealii::LAPACKSupport::Property::lower_triangular)
+                    dftfe::LAPACKSupport::Property::lower_triangular)
                   {
                     if (glob_i <= glob_j)
                       LMatPar.local_el(j, i) = overlapMatPar.local_el(j, i);
@@ -253,7 +253,7 @@ namespace dftfe
             mpiComm,
             LMatPar,
             overlapMatPropertyPostCholesky ==
-                dealii::LAPACKSupport::Property::upper_triangular ?
+                dftfe::LAPACKSupport::Property::upper_triangular ?
               true :
               false,
             dftParameters::triMatPGSOpt ? true : false);
@@ -271,7 +271,7 @@ namespace dftfe
             mpiComm,
             LMatPar,
             overlapMatPropertyPostCholesky ==
-                dealii::LAPACKSupport::Property::upper_triangular ?
+                dftfe::LAPACKSupport::Property::upper_triangular ?
               true :
               false);
           computing_timer.exit_section("Subspace rotation mixed prec PGS");

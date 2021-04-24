@@ -19,6 +19,8 @@
 
 #include <headers.h>
 #include <operator.h>
+#include "process_grid.h"
+#include "scalapackWrapper.h"
 
 #ifdef DFTFE_WITH_ELPA
 extern "C"
@@ -46,48 +48,45 @@ namespace dftfe
       setupELPAHandle(
         const MPI_Comm &mpi_communicator,
         MPI_Comm &      processGridCommunicatorActive,
-        const std::shared_ptr<const dealii::Utilities::MPI::ProcessGrid>
-          &                processGrid,
-        const unsigned int na,
-        const unsigned int nev,
-        const unsigned int blockSize,
-        elpa_t &           elpaHandle);
+        const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
+        const unsigned int                               na,
+        const unsigned int                               nev,
+        const unsigned int                               blockSize,
+        elpa_t &                                         elpaHandle);
 #endif
 
       /** @brief Wrapper function to create a two dimensional processor grid for a square matrix in
-       * dealii::ScaLAPACKMatrix storage format.
+       * dftfe::ScaLAPACKMatrix storage format.
        *
        */
       void
       createProcessGridSquareMatrix(
-        const MPI_Comm &mpi_communicator,
-        const unsigned  size,
-        std::shared_ptr<const dealii::Utilities::MPI::ProcessGrid> &processGrid,
-        const bool useOnlyThumbRule = false);
+        const MPI_Comm &                           mpi_communicator,
+        const unsigned                             size,
+        std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
+        const bool                                 useOnlyThumbRule = false);
 
       /** @brief Wrapper function to create a two dimensional processor grid for a rectangular matrix in
-       * dealii::ScaLAPACKMatrix storage format.
+       * dftfe::ScaLAPACKMatrix storage format.
        *
        */
       void
       createProcessGridRectangularMatrix(
-        const MPI_Comm &mpi_communicator,
-        const unsigned  sizeRows,
-        const unsigned  sizeColumns,
-        std::shared_ptr<const dealii::Utilities::MPI::ProcessGrid>
-          &processGrid);
+        const MPI_Comm &                           mpi_communicator,
+        const unsigned                             sizeRows,
+        const unsigned                             sizeColumns,
+        std::shared_ptr<const dftfe::ProcessGrid> &processGrid);
 
 
-      /** @brief Creates global row/column id to local row/column ids for dealii::ScaLAPACKMatrix
+      /** @brief Creates global row/column id to local row/column ids for dftfe::ScaLAPACKMatrix
        *
        */
       template <typename T>
       void
       createGlobalToLocalIdMapsScaLAPACKMat(
-        const std::shared_ptr<const dealii::Utilities::MPI::ProcessGrid>
-          &                                   processGrid,
-        const dealii::ScaLAPACKMatrix<T> &    mat,
-        std::map<unsigned int, unsigned int> &globalToLocalRowIdMap,
+        const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
+        const dftfe::ScaLAPACKMatrix<T> &                mat,
+        std::map<unsigned int, unsigned int> &           globalToLocalRowIdMap,
         std::map<unsigned int, unsigned int> &globalToLocalColumnIdMap);
 
 
@@ -98,10 +97,9 @@ namespace dftfe
       template <typename T>
       void
       sumAcrossInterCommScaLAPACKMat(
-        const std::shared_ptr<const dealii::Utilities::MPI::ProcessGrid>
-          &                         processGrid,
-        dealii::ScaLAPACKMatrix<T> &mat,
-        const MPI_Comm &            interComm);
+        const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
+        dftfe::ScaLAPACKMatrix<T> &                      mat,
+        const MPI_Comm &                                 interComm);
 
 
 
@@ -112,10 +110,9 @@ namespace dftfe
       template <typename T>
       void
       scaleScaLAPACKMat(
-        const std::shared_ptr<const dealii::Utilities::MPI::ProcessGrid>
-          &                         processGrid,
-        dealii::ScaLAPACKMatrix<T> &mat,
-        const T                     scalar);
+        const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
+        dftfe::ScaLAPACKMatrix<T> &                      mat,
+        const T                                          scalar);
 
 
       /** @brief MPI_Bcast of ScaLAPACKMat across a given inter communicator from a given broadcast root.
@@ -125,11 +122,10 @@ namespace dftfe
       template <typename T>
       void
       broadcastAcrossInterCommScaLAPACKMat(
-        const std::shared_ptr<const dealii::Utilities::MPI::ProcessGrid>
-          &                         processGrid,
-        dealii::ScaLAPACKMatrix<T> &mat,
-        const MPI_Comm &            interComm,
-        const unsigned int          broadcastRoot);
+        const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
+        dftfe::ScaLAPACKMatrix<T> &                      mat,
+        const MPI_Comm &                                 interComm,
+        const unsigned int                               broadcastRoot);
 
       /** @brief Computes Sc=X^{T}*Xc and stores in a parallel ScaLAPACK matrix.
        * X^{T} is the subspaceVectorsArray stored in the column major format (N
@@ -143,14 +139,13 @@ namespace dftfe
       template <typename T>
       void
       fillParallelOverlapMatrix(
-        const T *          X,
-        const unsigned int XLocalSize,
-        const unsigned int numberVectors,
-        const std::shared_ptr<const dealii::Utilities::MPI::ProcessGrid>
-          &                         processGrid,
-        const MPI_Comm &            interBandGroupComm,
-        const MPI_Comm &            mpiComm,
-        dealii::ScaLAPACKMatrix<T> &overlapMatPar);
+        const T *                                        X,
+        const unsigned int                               XLocalSize,
+        const unsigned int                               numberVectors,
+        const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
+        const MPI_Comm &                                 interBandGroupComm,
+        const MPI_Comm &                                 mpiComm,
+        dftfe::ScaLAPACKMatrix<T> &                      overlapMatPar);
 
 
       /** @brief Computes Sc=X^{T}*Xc and stores in a parallel ScaLAPACK matrix.
@@ -164,14 +159,13 @@ namespace dftfe
        */
       void
       fillParallelOverlapMatrixMixedPrec(
-        const dataTypes::number *X,
-        const unsigned int       XLocalSize,
-        const unsigned int       numberVectors,
-        const std::shared_ptr<const dealii::Utilities::MPI::ProcessGrid>
-          &                                         processGrid,
-        const MPI_Comm &                            interBandGroupComm,
-        const MPI_Comm &                            mpiComm,
-        dealii::ScaLAPACKMatrix<dataTypes::number> &overlapMatPar);
+        const dataTypes::number *                        X,
+        const unsigned int                               XLocalSize,
+        const unsigned int                               numberVectors,
+        const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
+        const MPI_Comm &                                 interBandGroupComm,
+        const MPI_Comm &                                 mpiComm,
+        dftfe::ScaLAPACKMatrix<dataTypes::number> &      overlapMatPar);
 
 
       /** @brief Computes overlap matrix with finite-element mass matrix (Mass) evaluated exactly and Sc=X^{T}*Mass*Xc and stores in a parallel ScaLAPACK matrix.
@@ -185,15 +179,14 @@ namespace dftfe
        */
       void
       fillParallelXtMXMixedPrec(
-        operatorDFTClass &       operatorMatrix,
-        const dataTypes::number *X,
-        const unsigned int       XLocalSize,
-        const unsigned int       numberVectors,
-        const std::shared_ptr<const dealii::Utilities::MPI::ProcessGrid>
-          &                                         processGrid,
-        const MPI_Comm &                            interBandGroupComm,
-        const MPI_Comm &                            mpiComm,
-        dealii::ScaLAPACKMatrix<dataTypes::number> &overlapMatPar);
+        operatorDFTClass &                               operatorMatrix,
+        const dataTypes::number *                        X,
+        const unsigned int                               XLocalSize,
+        const unsigned int                               numberVectors,
+        const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
+        const MPI_Comm &                                 interBandGroupComm,
+        const MPI_Comm &                                 mpiComm,
+        dftfe::ScaLAPACKMatrix<dataTypes::number> &      overlapMatPar);
 
 
 
@@ -212,14 +205,13 @@ namespace dftfe
         T *                subspaceVectorsArray,
         const unsigned int subspaceVectorsArrayLocalSize,
         const unsigned int N,
-        const std::shared_ptr<const dealii::Utilities::MPI::ProcessGrid>
-          &                               processGrid,
-        const MPI_Comm &                  interBandGroupComm,
-        const MPI_Comm &                  mpiComm,
-        const dealii::ScaLAPACKMatrix<T> &rotationMatPar,
-        const bool                        rotationMatTranspose   = false,
-        const bool                        isRotationMatLowerTria = false,
-        const bool                        doCommAfterBandParal   = true);
+        const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
+        const MPI_Comm &                                 interBandGroupComm,
+        const MPI_Comm &                                 mpiComm,
+        const dftfe::ScaLAPACKMatrix<T> &                rotationMatPar,
+        const bool rotationMatTranspose   = false,
+        const bool isRotationMatLowerTria = false,
+        const bool doCommAfterBandParal   = true);
 
       /** @brief Computes X^{T}=Q*X^{T} inplace. X^{T} is the subspaceVectorsArray
        * stored in the column major format (N x M). Q is rotationMatPar (N x N).
@@ -235,11 +227,10 @@ namespace dftfe
         dataTypes::number *subspaceVectorsArray,
         const unsigned int subspaceVectorsArrayLocalSize,
         const unsigned int N,
-        const std::shared_ptr<const dealii::Utilities::MPI::ProcessGrid>
-          &                                               processGrid,
-        const MPI_Comm &                                  interBandGroupComm,
-        const MPI_Comm &                                  mpiComm,
-        const dealii::ScaLAPACKMatrix<dataTypes::number> &rotationMatPar,
+        const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
+        const MPI_Comm &                                 interBandGroupComm,
+        const MPI_Comm &                                 mpiComm,
+        const dftfe::ScaLAPACKMatrix<dataTypes::number> &rotationMatPar,
         const bool rotationMatTranspose = false,
         const bool doCommAfterBandParal = true);
 
@@ -265,13 +256,12 @@ namespace dftfe
         T *                Y,
         const unsigned int subspaceVectorsArrayLocalSize,
         const unsigned int N,
-        const std::shared_ptr<const dealii::Utilities::MPI::ProcessGrid>
-          &                               processGrid,
-        const unsigned int                numberTopVectors,
-        const MPI_Comm &                  interBandGroupComm,
-        const MPI_Comm &                  mpiComm,
-        const dealii::ScaLAPACKMatrix<T> &QMat,
-        const bool                        QMatTranspose = false);
+        const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
+        const unsigned int                               numberTopVectors,
+        const MPI_Comm &                                 interBandGroupComm,
+        const MPI_Comm &                                 mpiComm,
+        const dftfe::ScaLAPACKMatrix<T> &                QMat,
+        const bool                                       QMatTranspose = false);
 
       /** @brief Computes Y^{T}=Q*X^{T}.
        *
@@ -293,13 +283,12 @@ namespace dftfe
         dataTypes::number *      Y,
         const unsigned int       subspaceVectorsArrayLocalSize,
         const unsigned int       N,
-        const std::shared_ptr<const dealii::Utilities::MPI::ProcessGrid>
-          &                                               processGrid,
-        const unsigned int                                numberTopVectors,
-        const MPI_Comm &                                  interBandGroupComm,
-        const MPI_Comm &                                  mpiComm,
-        const dealii::ScaLAPACKMatrix<dataTypes::number> &QMat,
-        const bool QMatTranspose = false);
+        const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
+        const unsigned int                               numberTopVectors,
+        const MPI_Comm &                                 interBandGroupComm,
+        const MPI_Comm &                                 mpiComm,
+        const dftfe::ScaLAPACKMatrix<dataTypes::number> &QMat,
+        const bool                                       QMatTranspose = false);
 
 
       /** @brief Computes X^{T}=Q*X^{T} inplace. X^{T} is the subspaceVectorsArray
@@ -316,11 +305,10 @@ namespace dftfe
         dataTypes::number *subspaceVectorsArray,
         const unsigned int subspaceVectorsArrayLocalSize,
         const unsigned int N,
-        const std::shared_ptr<const dealii::Utilities::MPI::ProcessGrid>
-          &                                               processGrid,
-        const MPI_Comm &                                  interBandGroupComm,
-        const MPI_Comm &                                  mpiComm,
-        const dealii::ScaLAPACKMatrix<dataTypes::number> &rotationMatPar,
+        const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
+        const MPI_Comm &                                 interBandGroupComm,
+        const MPI_Comm &                                 mpiComm,
+        const dftfe::ScaLAPACKMatrix<dataTypes::number> &rotationMatPar,
         const bool rotationMatTranspose = false,
         const bool doCommAfterBandParal = true);
     } // namespace internal

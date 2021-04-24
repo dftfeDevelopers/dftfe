@@ -27,7 +27,6 @@
 #  include <deal.II/base/logstream.h>
 #  include <deal.II/base/parameter_handler.h>
 #  include <deal.II/base/point.h>
-#  include <deal.II/base/process_grid.h>
 #  include <deal.II/base/quadrature.h>
 #  include <deal.II/base/quadrature_point_data.h>
 #  include <deal.II/base/table.h>
@@ -64,7 +63,6 @@
 #  include <deal.II/lac/la_parallel_vector.h>
 #  include <deal.II/lac/lapack_full_matrix.h>
 #  include <deal.II/lac/precondition.h>
-#  include <deal.II/lac/scalapack.h>
 #  include <deal.II/lac/solver_cg.h>
 #  include <deal.II/lac/solver_gmres.h>
 #  include <deal.II/lac/vector.h>
@@ -87,6 +85,7 @@
 // Include generic C++ headers
 #  include <fstream>
 #  include <iostream>
+#  include <fenv.h>
 
 #endif /* DOXYGEN_SHOULD_SKIP_THIS */
 // commonly used  typedefs used in dftfe go here

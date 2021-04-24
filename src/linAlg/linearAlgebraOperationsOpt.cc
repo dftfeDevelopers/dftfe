@@ -679,7 +679,7 @@ namespace dftfe
                                           dealii::TimerOutput::wall_times);
 
       const unsigned int rowsBlockSize = operatorMatrix.getScalapackBlockSize();
-      std::shared_ptr<const dealii::Utilities::MPI::ProcessGrid> processGrid;
+      std::shared_ptr<const dftfe::ProcessGrid> processGrid;
       internal::createProcessGridSquareMatrix(mpi_communicator,
                                               numberWaveFunctions,
                                               processGrid);
@@ -687,9 +687,9 @@ namespace dftfe
       //
       // compute overlap matrix
       //
-      dealii::ScaLAPACKMatrix<T> overlapMatPar(numberWaveFunctions,
-                                               processGrid,
-                                               rowsBlockSize);
+      dftfe::ScaLAPACKMatrix<T> overlapMatPar(numberWaveFunctions,
+                                              processGrid,
+                                              rowsBlockSize);
 
       if (processGrid->is_process_active())
         std::fill(&overlapMatPar.local_el(0, 0),
@@ -731,13 +731,13 @@ namespace dftfe
       computing_timer.enter_section("Cholesky and triangular matrix invert");
 #  endif
 #  if (defined DFTFE_WITH_ELPA)
-      dealii::LAPACKSupport::Property overlapMatPropertyPostCholesky;
+      dftfe::LAPACKSupport::Property overlapMatPropertyPostCholesky;
       if (dftParameters::useELPA)
         {
           // For ELPA cholesky only the upper triangular part is enough
-          dealii::ScaLAPACKMatrix<T> overlapMatParTrans(numberWaveFunctions,
-                                                        processGrid,
-                                                        rowsBlockSize);
+          dftfe::ScaLAPACKMatrix<T> overlapMatParTrans(numberWaveFunctions,
+                                                       processGrid,
+                                                       rowsBlockSize);
 
           if (processGrid->is_process_active())
             std::fill(&overlapMatParTrans.local_el(0, 0),
@@ -760,7 +760,7 @@ namespace dftfe
             }
           overlapMatParTrans.copy_to(overlapMatPar);
           overlapMatPropertyPostCholesky =
-            dealii::LAPACKSupport::Property::upper_triangular;
+            dftfe::LAPACKSupport::Property::upper_triangular;
         }
       else
         {
@@ -771,21 +771,21 @@ namespace dftfe
 #  else
       overlapMatPar.compute_cholesky_factorization();
 
-      dealii::LAPACKSupport::Property overlapMatPropertyPostCholesky =
+      dftfe::LAPACKSupport::Property overlapMatPropertyPostCholesky =
         overlapMatPar.get_property();
 #  endif
       AssertThrow(
         overlapMatPropertyPostCholesky ==
-            dealii::LAPACKSupport::Property::lower_triangular ||
+            dftfe::LAPACKSupport::Property::lower_triangular ||
           overlapMatPropertyPostCholesky ==
-            dealii::LAPACKSupport::Property::upper_triangular,
+            dftfe::LAPACKSupport::Property::upper_triangular,
         dealii::ExcMessage(
           "DFT-FE Error: overlap matrix property after cholesky factorization incorrect"));
 
-      dealii::ScaLAPACKMatrix<T> LMatPar(numberWaveFunctions,
-                                         processGrid,
-                                         rowsBlockSize,
-                                         overlapMatPropertyPostCholesky);
+      dftfe::ScaLAPACKMatrix<T> LMatPar(numberWaveFunctions,
+                                        processGrid,
+                                        rowsBlockSize,
+                                        overlapMatPropertyPostCholesky);
 
       // copy triangular part of projHamPar into LMatPar
       if (processGrid->is_process_active())
@@ -796,7 +796,7 @@ namespace dftfe
               {
                 const unsigned int glob_j = overlapMatPar.global_row(j);
                 if (overlapMatPropertyPostCholesky ==
-                    dealii::LAPACKSupport::Property::lower_triangular)
+                    dftfe::LAPACKSupport::Property::lower_triangular)
                   {
                     if (glob_i <= glob_j)
                       LMatPar.local_el(j, i) = overlapMatPar.local_el(j, i);
@@ -845,9 +845,9 @@ namespace dftfe
       //
       // compute projected Hamiltonian
       //
-      dealii::ScaLAPACKMatrix<T> projHamPar(numberWaveFunctions,
-                                            processGrid,
-                                            rowsBlockSize);
+      dftfe::ScaLAPACKMatrix<T> projHamPar(numberWaveFunctions,
+                                           processGrid,
+                                           rowsBlockSize);
       if (processGrid->is_process_active())
         std::fill(&projHamPar.local_el(0, 0),
                   &projHamPar.local_el(0, 0) +
@@ -860,9 +860,9 @@ namespace dftfe
 
       // For ELPA eigendecomposition the full matrix is required unlike
       // ScaLAPACK which can work with only the lower triangular part
-      dealii::ScaLAPACKMatrix<T> projHamParTrans(numberWaveFunctions,
-                                                 processGrid,
-                                                 rowsBlockSize);
+      dftfe::ScaLAPACKMatrix<T> projHamParTrans(numberWaveFunctions,
+                                                processGrid,
+                                                rowsBlockSize);
 
       if (processGrid->is_process_active())
         std::fill(&projHamParTrans.local_el(0, 0),
@@ -886,12 +886,12 @@ namespace dftfe
               }
           }
 
-      dealii::ScaLAPACKMatrix<T> projHamParCopy(numberWaveFunctions,
-                                                processGrid,
-                                                rowsBlockSize);
+      dftfe::ScaLAPACKMatrix<T> projHamParCopy(numberWaveFunctions,
+                                               processGrid,
+                                               rowsBlockSize);
 
       if (overlapMatPropertyPostCholesky ==
-          dealii::LAPACKSupport::Property::lower_triangular)
+          dftfe::LAPACKSupport::Property::lower_triangular)
         {
           LMatPar.mmult(projHamParCopy, projHamPar);
           projHamParCopy.mTmult(projHamPar, LMatPar);
@@ -911,9 +911,9 @@ namespace dftfe
       if (dftParameters::useELPA)
         {
           computing_timer.enter_section("ELPA eigen decomp, RR step");
-          dealii::ScaLAPACKMatrix<T> eigenVectors(numberWaveFunctions,
-                                                  processGrid,
-                                                  rowsBlockSize);
+          dftfe::ScaLAPACKMatrix<T> eigenVectors(numberWaveFunctions,
+                                                 processGrid,
+                                                 rowsBlockSize);
 
           if (processGrid->is_process_active())
             std::fill(&eigenVectors.local_el(0, 0),
@@ -949,13 +949,13 @@ namespace dftfe
       else
         {
           computing_timer.enter_section("ScaLAPACK eigen decomp, RR step");
-          eigenValues = projHamPar.eigenpairs_symmetric_by_index_MRRR(
+          eigenValues = projHamPar.eigenpairs_hermitian_by_index_MRRR(
             std::make_pair(0, numberWaveFunctions - 1), true);
           computing_timer.exit_section("ScaLAPACK eigen decomp, RR step");
         }
 #  else
       computing_timer.enter_section("ScaLAPACK eigen decomp, RR step");
-      eigenValues = projHamPar.eigenpairs_symmetric_by_index_MRRR(
+      eigenValues = projHamPar.eigenpairs_hermitian_by_index_MRRR(
         std::make_pair(0, numberWaveFunctions - 1), true);
       computing_timer.exit_section("ScaLAPACK eigen decomp, RR step");
 #  endif
@@ -988,7 +988,7 @@ namespace dftfe
 
       projHamPar.copy_to(projHamParCopy);
       if (overlapMatPropertyPostCholesky ==
-          dealii::LAPACKSupport::Property::lower_triangular)
+          dftfe::LAPACKSupport::Property::lower_triangular)
         LMatPar.Tmmult(projHamPar, projHamParCopy);
       else
         LMatPar.mmult(projHamPar, projHamParCopy);
@@ -1066,14 +1066,14 @@ namespace dftfe
       // compute projected Hamiltonian
       //
       const unsigned int rowsBlockSize = operatorMatrix.getScalapackBlockSize();
-      std::shared_ptr<const dealii::Utilities::MPI::ProcessGrid> processGrid;
+      std::shared_ptr<const dftfe::ProcessGrid> processGrid;
       internal::createProcessGridSquareMatrix(mpi_communicator,
                                               numberWaveFunctions,
                                               processGrid);
 
-      dealii::ScaLAPACKMatrix<T> projHamPar(numberWaveFunctions,
-                                            processGrid,
-                                            rowsBlockSize);
+      dftfe::ScaLAPACKMatrix<T> projHamPar(numberWaveFunctions,
+                                           processGrid,
+                                           rowsBlockSize);
       if (processGrid->is_process_active())
         std::fill(&projHamPar.local_el(0, 0),
                   &projHamPar.local_el(0, 0) +
@@ -1093,9 +1093,9 @@ namespace dftfe
       if (dftParameters::useELPA)
         {
           computing_timer.enter_section("ELPA eigen decomp, RR step");
-          dealii::ScaLAPACKMatrix<T> eigenVectors(numberWaveFunctions,
-                                                  processGrid,
-                                                  rowsBlockSize);
+          dftfe::ScaLAPACKMatrix<T> eigenVectors(numberWaveFunctions,
+                                                 processGrid,
+                                                 rowsBlockSize);
 
           if (processGrid->is_process_active())
             std::fill(&eigenVectors.local_el(0, 0),
@@ -1105,9 +1105,9 @@ namespace dftfe
 
           // For ELPA eigendecomposition the full matrix is required unlike
           // ScaLAPACK which can work with only the lower triangular part
-          dealii::ScaLAPACKMatrix<T> projHamParTrans(numberWaveFunctions,
-                                                     processGrid,
-                                                     rowsBlockSize);
+          dftfe::ScaLAPACKMatrix<T> projHamParTrans(numberWaveFunctions,
+                                                    processGrid,
+                                                    rowsBlockSize);
 
           if (processGrid->is_process_active())
             std::fill(&projHamParTrans.local_el(0, 0),
@@ -1159,13 +1159,13 @@ namespace dftfe
       else
         {
           computing_timer.enter_section("ScaLAPACK eigen decomp, RR step");
-          eigenValues = projHamPar.eigenpairs_symmetric_by_index_MRRR(
+          eigenValues = projHamPar.eigenpairs_hermitian_by_index_MRRR(
             std::make_pair(0, numberWaveFunctions - 1), true);
           computing_timer.exit_section("ScaLAPACK eigen decomp, RR step");
         }
 #  else
       computing_timer.enter_section("ScaLAPACK eigen decomp, RR step");
-      eigenValues = projHamPar.eigenpairs_symmetric_by_index_MRRR(
+      eigenValues = projHamPar.eigenpairs_hermitian_by_index_MRRR(
         std::make_pair(0, numberWaveFunctions - 1), true);
       computing_timer.exit_section("ScaLAPACK eigen decomp, RR step");
 #  endif
@@ -1309,7 +1309,7 @@ namespace dftfe
                                           dealii::TimerOutput::wall_times);
 
       const unsigned int rowsBlockSize = operatorMatrix.getScalapackBlockSize();
-      std::shared_ptr<const dealii::Utilities::MPI::ProcessGrid> processGrid;
+      std::shared_ptr<const dftfe::ProcessGrid> processGrid;
       internal::createProcessGridSquareMatrix(mpiComm,
                                               numberWaveFunctions,
                                               processGrid);
@@ -1317,9 +1317,9 @@ namespace dftfe
       //
       // compute overlap matrix
       //
-      dealii::ScaLAPACKMatrix<T> overlapMatPar(numberWaveFunctions,
-                                               processGrid,
-                                               rowsBlockSize);
+      dftfe::ScaLAPACKMatrix<T> overlapMatPar(numberWaveFunctions,
+                                              processGrid,
+                                              rowsBlockSize);
 
       if (processGrid->is_process_active())
         std::fill(&overlapMatPar.local_el(0, 0),
@@ -1361,13 +1361,13 @@ namespace dftfe
       computing_timer.enter_section("Cholesky and triangular matrix invert");
 #  endif
 #  if (defined DFTFE_WITH_ELPA)
-      dealii::LAPACKSupport::Property overlapMatPropertyPostCholesky;
+      dftfe::LAPACKSupport::Property overlapMatPropertyPostCholesky;
       if (dftParameters::useELPA)
         {
           // For ELPA cholesky only the upper triangular part is enough
-          dealii::ScaLAPACKMatrix<T> overlapMatParTrans(numberWaveFunctions,
-                                                        processGrid,
-                                                        rowsBlockSize);
+          dftfe::ScaLAPACKMatrix<T> overlapMatParTrans(numberWaveFunctions,
+                                                       processGrid,
+                                                       rowsBlockSize);
 
           if (processGrid->is_process_active())
             std::fill(&overlapMatParTrans.local_el(0, 0),
@@ -1390,7 +1390,7 @@ namespace dftfe
             }
           overlapMatParTrans.copy_to(overlapMatPar);
           overlapMatPropertyPostCholesky =
-            dealii::LAPACKSupport::Property::upper_triangular;
+            dftfe::LAPACKSupport::Property::upper_triangular;
         }
       else
         {
@@ -1401,21 +1401,21 @@ namespace dftfe
 #  else
       overlapMatPar.compute_cholesky_factorization();
 
-      dealii::LAPACKSupport::Property overlapMatPropertyPostCholesky =
+      dftfe::LAPACKSupport::Property overlapMatPropertyPostCholesky =
         overlapMatPar.get_property();
 #  endif
       AssertThrow(
         overlapMatPropertyPostCholesky ==
-            dealii::LAPACKSupport::Property::lower_triangular ||
+            dftfe::LAPACKSupport::Property::lower_triangular ||
           overlapMatPropertyPostCholesky ==
-            dealii::LAPACKSupport::Property::upper_triangular,
+            dftfe::LAPACKSupport::Property::upper_triangular,
         dealii::ExcMessage(
           "DFT-FE Error: overlap matrix property after cholesky factorization incorrect"));
 
-      dealii::ScaLAPACKMatrix<T> LMatPar(numberWaveFunctions,
-                                         processGrid,
-                                         rowsBlockSize,
-                                         overlapMatPropertyPostCholesky);
+      dftfe::ScaLAPACKMatrix<T> LMatPar(numberWaveFunctions,
+                                        processGrid,
+                                        rowsBlockSize,
+                                        overlapMatPropertyPostCholesky);
 
       // copy triangular part of projHamPar into LMatPar
       if (processGrid->is_process_active())
@@ -1426,7 +1426,7 @@ namespace dftfe
               {
                 const unsigned int glob_j = overlapMatPar.global_row(j);
                 if (overlapMatPropertyPostCholesky ==
-                    dealii::LAPACKSupport::Property::lower_triangular)
+                    dftfe::LAPACKSupport::Property::lower_triangular)
                   {
                     if (glob_i <= glob_j)
                       LMatPar.local_el(j, i) = overlapMatPar.local_el(j, i);
@@ -1475,9 +1475,9 @@ namespace dftfe
       //
       // compute projected Hamiltonian
       //
-      dealii::ScaLAPACKMatrix<T> projHamPar(numberWaveFunctions,
-                                            processGrid,
-                                            rowsBlockSize);
+      dftfe::ScaLAPACKMatrix<T> projHamPar(numberWaveFunctions,
+                                           processGrid,
+                                           rowsBlockSize);
       if (processGrid->is_process_active())
         std::fill(&projHamPar.local_el(0, 0),
                   &projHamPar.local_el(0, 0) +
@@ -1500,9 +1500,9 @@ namespace dftfe
 
       // For ELPA eigendecomposition the full matrix is required unlike
       // ScaLAPACK which can work with only the lower triangular part
-      dealii::ScaLAPACKMatrix<T> projHamParTrans(numberWaveFunctions,
-                                                 processGrid,
-                                                 rowsBlockSize);
+      dftfe::ScaLAPACKMatrix<T> projHamParTrans(numberWaveFunctions,
+                                                processGrid,
+                                                rowsBlockSize);
 
       if (processGrid->is_process_active())
         std::fill(&projHamParTrans.local_el(0, 0),
@@ -1533,12 +1533,12 @@ namespace dftfe
               }
           }
 
-      dealii::ScaLAPACKMatrix<T> projHamParCopy(numberWaveFunctions,
-                                                processGrid,
-                                                rowsBlockSize);
+      dftfe::ScaLAPACKMatrix<T> projHamParCopy(numberWaveFunctions,
+                                               processGrid,
+                                               rowsBlockSize);
 
       if (overlapMatPropertyPostCholesky ==
-          dealii::LAPACKSupport::Property::lower_triangular)
+          dftfe::LAPACKSupport::Property::lower_triangular)
         {
           LMatPar.mmult(projHamParCopy, projHamPar);
           projHamParCopy.mTmult(projHamPar, LMatPar);
@@ -1559,10 +1559,10 @@ namespace dftfe
       if (dftParameters::useELPA)
         {
           computing_timer.enter_section("ELPA eigen decomp, RR step");
-          std::vector<double>        allEigenValues(numberWaveFunctions, 0.0);
-          dealii::ScaLAPACKMatrix<T> eigenVectors(numberWaveFunctions,
-                                                  processGrid,
-                                                  rowsBlockSize);
+          std::vector<double>       allEigenValues(numberWaveFunctions, 0.0);
+          dftfe::ScaLAPACKMatrix<T> eigenVectors(numberWaveFunctions,
+                                                 processGrid,
+                                                 rowsBlockSize);
 
           if (processGrid->is_process_active())
             std::fill(&eigenVectors.local_el(0, 0),
@@ -1591,9 +1591,9 @@ namespace dftfe
             &eigenValues[0], eigenValues.size(), MPI_DOUBLE, 0, mpiComm);
 
 
-          dealii::ScaLAPACKMatrix<T> permutedIdentityMat(numberWaveFunctions,
-                                                         processGrid,
-                                                         rowsBlockSize);
+          dftfe::ScaLAPACKMatrix<T> permutedIdentityMat(numberWaveFunctions,
+                                                        processGrid,
+                                                        rowsBlockSize);
           if (processGrid->is_process_active())
             std::fill(&permutedIdentityMat.local_el(0, 0),
                       &permutedIdentityMat.local_el(0, 0) +
@@ -1632,13 +1632,13 @@ namespace dftfe
       else
         {
           computing_timer.enter_section("ScaLAPACK eigen decomp, RR step");
-          eigenValues = projHamPar.eigenpairs_symmetric_by_index_MRRR(
+          eigenValues = projHamPar.eigenpairs_hermitian_by_index_MRRR(
             std::make_pair(numberCoreStates, numberWaveFunctions - 1), true);
           computing_timer.exit_section("ScaLAPACK eigen decomp, RR step");
         }
 #  else
       computing_timer.enter_section("ScaLAPACK eigen decomp, RR step");
-      eigenValues = projHamPar.eigenpairs_symmetric_by_index_MRRR(
+      eigenValues = projHamPar.eigenpairs_hermitian_by_index_MRRR(
         std::make_pair(numberCoreStates, numberWaveFunctions - 1), true);
       computing_timer.exit_section("ScaLAPACK eigen decomp, RR step");
 #  endif
@@ -1665,7 +1665,7 @@ namespace dftfe
       //
       projHamPar.copy_to(projHamParCopy);
       if (overlapMatPropertyPostCholesky ==
-          dealii::LAPACKSupport::Property::lower_triangular)
+          dftfe::LAPACKSupport::Property::lower_triangular)
         LMatPar.Tmmult(projHamPar, projHamParCopy);
       else
         LMatPar.mmult(projHamPar, projHamParCopy);
@@ -1724,7 +1724,7 @@ namespace dftfe
             mpiComm,
             LMatPar,
             overlapMatPropertyPostCholesky ==
-                dealii::LAPACKSupport::Property::upper_triangular ?
+                dftfe::LAPACKSupport::Property::upper_triangular ?
               true :
               false,
             dftParameters::triMatPGSOpt ? true : false,
@@ -1743,7 +1743,7 @@ namespace dftfe
             mpiComm,
             LMatPar,
             overlapMatPropertyPostCholesky ==
-                dealii::LAPACKSupport::Property::upper_triangular ?
+                dftfe::LAPACKSupport::Property::upper_triangular ?
               true :
               false,
             false);
@@ -1798,15 +1798,15 @@ namespace dftfe
       // compute projected Hamiltonian
       //
       const unsigned int rowsBlockSize = operatorMatrix.getScalapackBlockSize();
-      std::shared_ptr<const dealii::Utilities::MPI::ProcessGrid> processGrid;
+      std::shared_ptr<const dftfe::ProcessGrid> processGrid;
       internal::createProcessGridSquareMatrix(mpi_communicator,
                                               numberWaveFunctions,
                                               processGrid);
 
 
-      dealii::ScaLAPACKMatrix<T> projHamPar(numberWaveFunctions,
-                                            processGrid,
-                                            rowsBlockSize);
+      dftfe::ScaLAPACKMatrix<T> projHamPar(numberWaveFunctions,
+                                           processGrid,
+                                           rowsBlockSize);
       if (processGrid->is_process_active())
         std::fill(&projHamPar.local_el(0, 0),
                   &projHamPar.local_el(0, 0) +
@@ -1836,10 +1836,10 @@ namespace dftfe
       if (dftParameters::useELPA)
         {
           computing_timer.enter_section("ELPA eigen decomp, RR step");
-          std::vector<double>        allEigenValues(numberWaveFunctions, 0.0);
-          dealii::ScaLAPACKMatrix<T> eigenVectors(numberWaveFunctions,
-                                                  processGrid,
-                                                  rowsBlockSize);
+          std::vector<double>       allEigenValues(numberWaveFunctions, 0.0);
+          dftfe::ScaLAPACKMatrix<T> eigenVectors(numberWaveFunctions,
+                                                 processGrid,
+                                                 rowsBlockSize);
 
           if (processGrid->is_process_active())
             std::fill(&eigenVectors.local_el(0, 0),
@@ -1849,9 +1849,9 @@ namespace dftfe
 
           // For ELPA eigendecomposition the full matrix is required unlike
           // ScaLAPACK which can work with only the lower triangular part
-          dealii::ScaLAPACKMatrix<T> projHamParTrans(numberWaveFunctions,
-                                                     processGrid,
-                                                     rowsBlockSize);
+          dftfe::ScaLAPACKMatrix<T> projHamParTrans(numberWaveFunctions,
+                                                    processGrid,
+                                                    rowsBlockSize);
           if (processGrid->is_process_active())
             std::fill(&projHamParTrans.local_el(0, 0),
                       &projHamParTrans.local_el(0, 0) +
@@ -1897,9 +1897,9 @@ namespace dftfe
                     mpi_communicator);
 
 
-          dealii::ScaLAPACKMatrix<T> permutedIdentityMat(numberWaveFunctions,
-                                                         processGrid,
-                                                         rowsBlockSize);
+          dftfe::ScaLAPACKMatrix<T> permutedIdentityMat(numberWaveFunctions,
+                                                        processGrid,
+                                                        rowsBlockSize);
           if (processGrid->is_process_active())
             std::fill(&permutedIdentityMat.local_el(0, 0),
                       &permutedIdentityMat.local_el(0, 0) +
@@ -1938,13 +1938,13 @@ namespace dftfe
       else
         {
           computing_timer.enter_section("ScaLAPACK eigen decomp, RR step");
-          eigenValues = projHamPar.eigenpairs_symmetric_by_index_MRRR(
+          eigenValues = projHamPar.eigenpairs_hermitian_by_index_MRRR(
             std::make_pair(numberCoreStates, numberWaveFunctions - 1), true);
           computing_timer.exit_section("ScaLAPACK eigen decomp, RR step");
         }
 #  else
       computing_timer.enter_section("ScaLAPACK eigen decomp, RR step");
-      eigenValues = projHamPar.eigenpairs_symmetric_by_index_MRRR(
+      eigenValues = projHamPar.eigenpairs_hermitian_by_index_MRRR(
         std::make_pair(numberCoreStates, numberWaveFunctions - 1), true);
       computing_timer.exit_section("ScaLAPACK eigen decomp, RR step");
 #  endif
@@ -2030,19 +2030,18 @@ namespace dftfe
 #ifdef DFTFE_WITH_ELPA
     void
     elpaDiagonalization(
-      elpaScalaManager &               elpaScala,
-      const unsigned int               numberWaveFunctions,
-      const MPI_Comm &                 mpiComm,
-      std::vector<double> &            eigenValues,
-      dealii::ScaLAPACKMatrix<double> &projHamPar,
-      const std::shared_ptr<const dealii::Utilities::MPI::ProcessGrid>
-        &processGrid)
+      elpaScalaManager &                               elpaScala,
+      const unsigned int                               numberWaveFunctions,
+      const MPI_Comm &                                 mpiComm,
+      std::vector<double> &                            eigenValues,
+      dftfe::ScaLAPACKMatrix<double> &                 projHamPar,
+      const std::shared_ptr<const dftfe::ProcessGrid> &processGrid)
     {
       const unsigned int rowsBlockSize = elpaScala.getScalapackBlockSize();
 
-      dealii::ScaLAPACKMatrix<double> eigenVectors(numberWaveFunctions,
-                                                   processGrid,
-                                                   rowsBlockSize);
+      dftfe::ScaLAPACKMatrix<double> eigenVectors(numberWaveFunctions,
+                                                  processGrid,
+                                                  rowsBlockSize);
 
       if (processGrid->is_process_active())
         std::fill(&eigenVectors.local_el(0, 0),
@@ -2052,9 +2051,9 @@ namespace dftfe
 
       // For ELPA eigendecomposition the full matrix is required unlike
       // ScaLAPACK which can work with only the lower triangular part
-      dealii::ScaLAPACKMatrix<double> projHamParTrans(numberWaveFunctions,
-                                                      processGrid,
-                                                      rowsBlockSize);
+      dftfe::ScaLAPACKMatrix<double> projHamParTrans(numberWaveFunctions,
+                                                     processGrid,
+                                                     rowsBlockSize);
 
       if (processGrid->is_process_active())
         std::fill(&projHamParTrans.local_el(0, 0),
@@ -2101,23 +2100,22 @@ namespace dftfe
 
     void
     elpaDiagonalizationGEP(
-      elpaScalaManager &               elpaScala,
-      const unsigned int               numberWaveFunctions,
-      const MPI_Comm &                 mpiComm,
-      std::vector<double> &            eigenValues,
-      dealii::ScaLAPACKMatrix<double> &projHamPar,
-      dealii::ScaLAPACKMatrix<double> &overlapMatPar,
-      const std::shared_ptr<const dealii::Utilities::MPI::ProcessGrid>
-        &processGrid)
+      elpaScalaManager &                               elpaScala,
+      const unsigned int                               numberWaveFunctions,
+      const MPI_Comm &                                 mpiComm,
+      std::vector<double> &                            eigenValues,
+      dftfe::ScaLAPACKMatrix<double> &                 projHamPar,
+      dftfe::ScaLAPACKMatrix<double> &                 overlapMatPar,
+      const std::shared_ptr<const dftfe::ProcessGrid> &processGrid)
     {
       const unsigned int rowsBlockSize = elpaScala.getScalapackBlockSize();
 
-      dealii::LAPACKSupport::Property overlapMatPropertyPostCholesky;
+      dftfe::LAPACKSupport::Property overlapMatPropertyPostCholesky;
 
       // For ELPA cholesky only the upper triangular part is enough
-      dealii::ScaLAPACKMatrix<double> overlapMatParTrans(numberWaveFunctions,
-                                                         processGrid,
-                                                         rowsBlockSize);
+      dftfe::ScaLAPACKMatrix<double> overlapMatParTrans(numberWaveFunctions,
+                                                        processGrid,
+                                                        rowsBlockSize);
 
       if (processGrid->is_process_active())
         std::fill(&overlapMatParTrans.local_el(0, 0),
@@ -2139,20 +2137,20 @@ namespace dftfe
         }
       overlapMatParTrans.copy_to(overlapMatPar);
       overlapMatPropertyPostCholesky =
-        dealii::LAPACKSupport::Property::upper_triangular;
+        dftfe::LAPACKSupport::Property::upper_triangular;
 
       AssertThrow(
         overlapMatPropertyPostCholesky ==
-            dealii::LAPACKSupport::Property::lower_triangular ||
+            dftfe::LAPACKSupport::Property::lower_triangular ||
           overlapMatPropertyPostCholesky ==
-            dealii::LAPACKSupport::Property::upper_triangular,
+            dftfe::LAPACKSupport::Property::upper_triangular,
         dealii::ExcMessage(
           "DFT-FE Error: overlap matrix property after cholesky factorization incorrect"));
 
-      dealii::ScaLAPACKMatrix<double> LMatPar(numberWaveFunctions,
-                                              processGrid,
-                                              rowsBlockSize,
-                                              overlapMatPropertyPostCholesky);
+      dftfe::ScaLAPACKMatrix<double> LMatPar(numberWaveFunctions,
+                                             processGrid,
+                                             rowsBlockSize,
+                                             overlapMatPropertyPostCholesky);
 
       // copy triangular part of overlapMatPar into LMatPar
       if (processGrid->is_process_active())
@@ -2163,7 +2161,7 @@ namespace dftfe
               {
                 const unsigned int glob_j = overlapMatPar.global_row(j);
                 if (overlapMatPropertyPostCholesky ==
-                    dealii::LAPACKSupport::Property::lower_triangular)
+                    dftfe::LAPACKSupport::Property::lower_triangular)
                   {
                     if (glob_i <= glob_j)
                       LMatPar.local_el(j, i) = overlapMatPar.local_el(j, i);
@@ -2195,9 +2193,9 @@ namespace dftfe
 
       // For ELPA eigendecomposition the full matrix is required unlike
       // ScaLAPACK which can work with only the lower triangular part
-      dealii::ScaLAPACKMatrix<double> projHamParTrans(numberWaveFunctions,
-                                                      processGrid,
-                                                      rowsBlockSize);
+      dftfe::ScaLAPACKMatrix<double> projHamParTrans(numberWaveFunctions,
+                                                     processGrid,
+                                                     rowsBlockSize);
 
       if (processGrid->is_process_active())
         std::fill(&projHamParTrans.local_el(0, 0),
@@ -2221,12 +2219,12 @@ namespace dftfe
               }
           }
 
-      dealii::ScaLAPACKMatrix<double> projHamParCopy(numberWaveFunctions,
-                                                     processGrid,
-                                                     rowsBlockSize);
+      dftfe::ScaLAPACKMatrix<double> projHamParCopy(numberWaveFunctions,
+                                                    processGrid,
+                                                    rowsBlockSize);
 
       if (overlapMatPropertyPostCholesky ==
-          dealii::LAPACKSupport::Property::lower_triangular)
+          dftfe::LAPACKSupport::Property::lower_triangular)
         {
           LMatPar.mmult(projHamParCopy, projHamPar);
           projHamParCopy.mTmult(projHamPar, LMatPar);
@@ -2243,9 +2241,9 @@ namespace dftfe
       const unsigned int numberEigenValues = numberWaveFunctions;
       eigenValues.resize(numberEigenValues);
 
-      dealii::ScaLAPACKMatrix<double> eigenVectors(numberWaveFunctions,
-                                                   processGrid,
-                                                   rowsBlockSize);
+      dftfe::ScaLAPACKMatrix<double> eigenVectors(numberWaveFunctions,
+                                                  processGrid,
+                                                  rowsBlockSize);
 
       if (processGrid->is_process_active())
         std::fill(&eigenVectors.local_el(0, 0),
@@ -2274,7 +2272,7 @@ namespace dftfe
 
       projHamPar.copy_to(projHamParCopy);
       if (overlapMatPropertyPostCholesky ==
-          dealii::LAPACKSupport::Property::lower_triangular)
+          dftfe::LAPACKSupport::Property::lower_triangular)
         LMatPar.Tmmult(projHamPar, projHamParCopy);
       else
         LMatPar.mmult(projHamPar, projHamParCopy);
@@ -2283,14 +2281,13 @@ namespace dftfe
 
     void
     elpaPartialDiagonalization(
-      elpaScalaManager &               elpaScala,
-      const unsigned int               N,
-      const unsigned int               Noc,
-      const MPI_Comm &                 mpiComm,
-      std::vector<double> &            eigenValues,
-      dealii::ScaLAPACKMatrix<double> &projHamPar,
-      const std::shared_ptr<const dealii::Utilities::MPI::ProcessGrid>
-        &processGrid)
+      elpaScalaManager &                               elpaScala,
+      const unsigned int                               N,
+      const unsigned int                               Noc,
+      const MPI_Comm &                                 mpiComm,
+      std::vector<double> &                            eigenValues,
+      dftfe::ScaLAPACKMatrix<double> &                 projHamPar,
+      const std::shared_ptr<const dftfe::ProcessGrid> &processGrid)
     {
       //
       // compute projected Hamiltonian
@@ -2299,10 +2296,10 @@ namespace dftfe
 
       const unsigned int numValenceStates = N - Noc;
       eigenValues.resize(numValenceStates);
-      std::vector<double>             allEigenValues(N, 0.0);
-      dealii::ScaLAPACKMatrix<double> eigenVectors(N,
-                                                   processGrid,
-                                                   rowsBlockSize);
+      std::vector<double>            allEigenValues(N, 0.0);
+      dftfe::ScaLAPACKMatrix<double> eigenVectors(N,
+                                                  processGrid,
+                                                  rowsBlockSize);
 
       if (processGrid->is_process_active())
         std::fill(&eigenVectors.local_el(0, 0),
@@ -2312,9 +2309,9 @@ namespace dftfe
 
       // For ELPA eigendecomposition the full matrix is required unlike
       // ScaLAPACK which can work with only the lower triangular part
-      dealii::ScaLAPACKMatrix<double> projHamParTrans(N,
-                                                      processGrid,
-                                                      rowsBlockSize);
+      dftfe::ScaLAPACKMatrix<double> projHamParTrans(N,
+                                                     processGrid,
+                                                     rowsBlockSize);
       if (processGrid->is_process_active())
         std::fill(&projHamParTrans.local_el(0, 0),
                   &projHamParTrans.local_el(0, 0) +
@@ -2362,9 +2359,9 @@ namespace dftfe
                 elpaScala.getMPICommunicator());
 
 
-      dealii::ScaLAPACKMatrix<double> permutedIdentityMat(N,
-                                                          processGrid,
-                                                          rowsBlockSize);
+      dftfe::ScaLAPACKMatrix<double> permutedIdentityMat(N,
+                                                         processGrid,
+                                                         rowsBlockSize);
       if (processGrid->is_process_active())
         std::fill(&permutedIdentityMat.local_el(0, 0),
                   &permutedIdentityMat.local_el(0, 0) +
@@ -2399,24 +2396,23 @@ namespace dftfe
 
     void
     elpaPartialDiagonalizationGEP(
-      elpaScalaManager &               elpaScala,
-      const unsigned int               N,
-      const unsigned int               Noc,
-      const MPI_Comm &                 mpiComm,
-      std::vector<double> &            eigenValues,
-      dealii::ScaLAPACKMatrix<double> &projHamPar,
-      dealii::ScaLAPACKMatrix<double> &overlapMatPar,
-      const std::shared_ptr<const dealii::Utilities::MPI::ProcessGrid>
-        &processGrid)
+      elpaScalaManager &                               elpaScala,
+      const unsigned int                               N,
+      const unsigned int                               Noc,
+      const MPI_Comm &                                 mpiComm,
+      std::vector<double> &                            eigenValues,
+      dftfe::ScaLAPACKMatrix<double> &                 projHamPar,
+      dftfe::ScaLAPACKMatrix<double> &                 overlapMatPar,
+      const std::shared_ptr<const dftfe::ProcessGrid> &processGrid)
     {
       const unsigned int rowsBlockSize = elpaScala.getScalapackBlockSize();
 
-      dealii::LAPACKSupport::Property overlapMatPropertyPostCholesky;
+      dftfe::LAPACKSupport::Property overlapMatPropertyPostCholesky;
 
       // For ELPA cholesky only the upper triangular part is enough
-      dealii::ScaLAPACKMatrix<double> overlapMatParTrans(N,
-                                                         processGrid,
-                                                         rowsBlockSize);
+      dftfe::ScaLAPACKMatrix<double> overlapMatParTrans(N,
+                                                        processGrid,
+                                                        rowsBlockSize);
 
       if (processGrid->is_process_active())
         std::fill(&overlapMatParTrans.local_el(0, 0),
@@ -2438,20 +2434,20 @@ namespace dftfe
         }
       overlapMatParTrans.copy_to(overlapMatPar);
       overlapMatPropertyPostCholesky =
-        dealii::LAPACKSupport::Property::upper_triangular;
+        dftfe::LAPACKSupport::Property::upper_triangular;
 
       AssertThrow(
         overlapMatPropertyPostCholesky ==
-            dealii::LAPACKSupport::Property::lower_triangular ||
+            dftfe::LAPACKSupport::Property::lower_triangular ||
           overlapMatPropertyPostCholesky ==
-            dealii::LAPACKSupport::Property::upper_triangular,
+            dftfe::LAPACKSupport::Property::upper_triangular,
         dealii::ExcMessage(
           "DFT-FE Error: overlap matrix property after cholesky factorization incorrect"));
 
-      dealii::ScaLAPACKMatrix<double> LMatPar(N,
-                                              processGrid,
-                                              rowsBlockSize,
-                                              overlapMatPropertyPostCholesky);
+      dftfe::ScaLAPACKMatrix<double> LMatPar(N,
+                                             processGrid,
+                                             rowsBlockSize,
+                                             overlapMatPropertyPostCholesky);
 
 
       // copy triangular part of overlapMatPar into LMatPar
@@ -2463,7 +2459,7 @@ namespace dftfe
               {
                 const unsigned int glob_j = overlapMatPar.global_row(j);
                 if (overlapMatPropertyPostCholesky ==
-                    dealii::LAPACKSupport::Property::lower_triangular)
+                    dftfe::LAPACKSupport::Property::lower_triangular)
                   {
                     if (glob_i <= glob_j)
                       LMatPar.local_el(j, i) = overlapMatPar.local_el(j, i);
@@ -2494,9 +2490,9 @@ namespace dftfe
 
       // For ELPA eigendecomposition the full matrix is required unlike
       // ScaLAPACK which can work with only the lower triangular part
-      dealii::ScaLAPACKMatrix<double> projHamParTrans(N,
-                                                      processGrid,
-                                                      rowsBlockSize);
+      dftfe::ScaLAPACKMatrix<double> projHamParTrans(N,
+                                                     processGrid,
+                                                     rowsBlockSize);
       if (processGrid->is_process_active())
         std::fill(&projHamParTrans.local_el(0, 0),
                   &projHamParTrans.local_el(0, 0) +
@@ -2518,12 +2514,12 @@ namespace dftfe
               }
           }
 
-      dealii::ScaLAPACKMatrix<double> projHamParCopy(N,
-                                                     processGrid,
-                                                     rowsBlockSize);
+      dftfe::ScaLAPACKMatrix<double> projHamParCopy(N,
+                                                    processGrid,
+                                                    rowsBlockSize);
 
       if (overlapMatPropertyPostCholesky ==
-          dealii::LAPACKSupport::Property::lower_triangular)
+          dftfe::LAPACKSupport::Property::lower_triangular)
         {
           LMatPar.mmult(projHamParCopy, projHamPar);
           projHamParCopy.mTmult(projHamPar, LMatPar);
@@ -2536,10 +2532,10 @@ namespace dftfe
 
       const unsigned int Nfr = N - Noc;
       eigenValues.resize(Nfr);
-      std::vector<double>             allEigenValues(N, 0.0);
-      dealii::ScaLAPACKMatrix<double> eigenVectors(N,
-                                                   processGrid,
-                                                   rowsBlockSize);
+      std::vector<double>            allEigenValues(N, 0.0);
+      dftfe::ScaLAPACKMatrix<double> eigenVectors(N,
+                                                  processGrid,
+                                                  rowsBlockSize);
 
       if (processGrid->is_process_active())
         std::fill(&eigenVectors.local_el(0, 0),
@@ -2573,9 +2569,9 @@ namespace dftfe
                 elpaScala.getMPICommunicator());
 
 
-      dealii::ScaLAPACKMatrix<double> permutedIdentityMat(N,
-                                                          processGrid,
-                                                          rowsBlockSize);
+      dftfe::ScaLAPACKMatrix<double> permutedIdentityMat(N,
+                                                         processGrid,
+                                                         rowsBlockSize);
       if (processGrid->is_process_active())
         std::fill(&permutedIdentityMat.local_el(0, 0),
                   &permutedIdentityMat.local_el(0, 0) +
@@ -2608,7 +2604,7 @@ namespace dftfe
 
       projHamPar.copy_to(projHamParCopy);
       if (overlapMatPropertyPostCholesky ==
-          dealii::LAPACKSupport::Property::lower_triangular)
+          dftfe::LAPACKSupport::Property::lower_triangular)
         LMatPar.Tmmult(projHamPar, projHamParCopy);
       else
         LMatPar.mmult(projHamPar, projHamParCopy);

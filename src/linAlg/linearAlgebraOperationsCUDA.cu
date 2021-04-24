@@ -1588,18 +1588,17 @@ namespace dftfe
 
     void
     subspaceRotationSpectrumSplitScalapack(
-      const double *     X,
-      double *           XFrac,
-      const unsigned int M,
-      const unsigned int N,
-      const unsigned int Nfr,
-      cublasHandle_t &   handle,
-      const std::shared_ptr<const dealii::Utilities::MPI::ProcessGrid>
-        &                                    processGrid,
-      const MPI_Comm &                       mpiCommDomain,
-      GPUCCLWrapper &                        gpucclMpiCommDomain,
-      const dealii::ScaLAPACKMatrix<double> &rotationMatPar,
-      const bool                             rotationMatTranspose)
+      const double *                                   X,
+      double *                                         XFrac,
+      const unsigned int                               M,
+      const unsigned int                               N,
+      const unsigned int                               Nfr,
+      cublasHandle_t &                                 handle,
+      const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
+      const MPI_Comm &                                 mpiCommDomain,
+      GPUCCLWrapper &                                  gpucclMpiCommDomain,
+      const dftfe::ScaLAPACKMatrix<double> &           rotationMatPar,
+      const bool                                       rotationMatTranspose)
     {
 #ifdef USE_COMPLEX
       AssertThrow(false, dftUtils::ExcNotImplementedYet());
@@ -1934,18 +1933,17 @@ namespace dftfe
 
     void
     subspaceRotationScalapack(
-      double *           X,
-      const unsigned int M,
-      const unsigned int N,
-      cublasHandle_t &   handle,
-      const std::shared_ptr<const dealii::Utilities::MPI::ProcessGrid>
-        &                                    processGrid,
-      const MPI_Comm &                       mpiCommDomain,
-      GPUCCLWrapper &                        gpucclMpiCommDomain,
-      const MPI_Comm &                       interBandGroupComm,
-      const dealii::ScaLAPACKMatrix<double> &rotationMatPar,
-      const bool                             rotationMatTranspose,
-      const bool                             isRotationMatLowerTria)
+      double *                                         X,
+      const unsigned int                               M,
+      const unsigned int                               N,
+      cublasHandle_t &                                 handle,
+      const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
+      const MPI_Comm &                                 mpiCommDomain,
+      GPUCCLWrapper &                                  gpucclMpiCommDomain,
+      const MPI_Comm &                                 interBandGroupComm,
+      const dftfe::ScaLAPACKMatrix<double> &           rotationMatPar,
+      const bool                                       rotationMatTranspose,
+      const bool                                       isRotationMatLowerTria)
     {
 #ifdef USE_COMPLEX
       AssertThrow(false, dftUtils::ExcNotImplementedYet());
@@ -2299,17 +2297,16 @@ namespace dftfe
 
     void
     subspaceRotationPGSMixedPrecScalapack(
-      double *           X,
-      const unsigned int M,
-      const unsigned int N,
-      cublasHandle_t &   handle,
-      const std::shared_ptr<const dealii::Utilities::MPI::ProcessGrid>
-        &                                    processGrid,
-      const MPI_Comm &                       mpiCommDomain,
-      GPUCCLWrapper &                        gpucclMpiCommDomain,
-      const MPI_Comm &                       interBandGroupComm,
-      const dealii::ScaLAPACKMatrix<double> &rotationMatPar,
-      const bool                             rotationMatTranspose)
+      double *                                         X,
+      const unsigned int                               M,
+      const unsigned int                               N,
+      cublasHandle_t &                                 handle,
+      const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
+      const MPI_Comm &                                 mpiCommDomain,
+      GPUCCLWrapper &                                  gpucclMpiCommDomain,
+      const MPI_Comm &                                 interBandGroupComm,
+      const dftfe::ScaLAPACKMatrix<double> &           rotationMatPar,
+      const bool                                       rotationMatTranspose)
     {
 #ifdef USE_COMPLEX
       AssertThrow(false, dftUtils::ExcNotImplementedYet());
@@ -2635,17 +2632,16 @@ namespace dftfe
 
     void
     subspaceRotationRRMixedPrecScalapack(
-      double *           X,
-      const unsigned int M,
-      const unsigned int N,
-      cublasHandle_t &   handle,
-      const std::shared_ptr<const dealii::Utilities::MPI::ProcessGrid>
-        &                                    processGrid,
-      const MPI_Comm &                       mpiCommDomain,
-      GPUCCLWrapper &                        gpucclMpiCommDomain,
-      const MPI_Comm &                       interBandGroupComm,
-      const dealii::ScaLAPACKMatrix<double> &rotationMatPar,
-      const bool                             rotationMatTranspose)
+      double *                                         X,
+      const unsigned int                               M,
+      const unsigned int                               N,
+      cublasHandle_t &                                 handle,
+      const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
+      const MPI_Comm &                                 mpiCommDomain,
+      GPUCCLWrapper &                                  gpucclMpiCommDomain,
+      const MPI_Comm &                                 interBandGroupComm,
+      const dftfe::ScaLAPACKMatrix<double> &           rotationMatPar,
+      const bool                                       rotationMatTranspose)
     {
 #ifdef USE_COMPLEX
       AssertThrow(false, dftUtils::ExcNotImplementedYet());
@@ -2973,16 +2969,15 @@ namespace dftfe
 
     void
     fillParallelOverlapMatScalapack(
-      const double *     X,
-      const unsigned int M,
-      const unsigned int N,
-      cublasHandle_t &   handle,
-      const MPI_Comm &   mpiCommDomain,
-      GPUCCLWrapper &    gpucclMpiCommDomain,
-      const MPI_Comm &   interBandGroupComm,
-      const std::shared_ptr<const dealii::Utilities::MPI::ProcessGrid>
-        &                              processGrid,
-      dealii::ScaLAPACKMatrix<double> &overlapMatPar)
+      const double *                                   X,
+      const unsigned int                               M,
+      const unsigned int                               N,
+      cublasHandle_t &                                 handle,
+      const MPI_Comm &                                 mpiCommDomain,
+      GPUCCLWrapper &                                  gpucclMpiCommDomain,
+      const MPI_Comm &                                 interBandGroupComm,
+      const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
+      dftfe::ScaLAPACKMatrix<double> &                 overlapMatPar)
     {
 #ifdef USE_COMPLEX
       AssertThrow(false, dftUtils::ExcNotImplementedYet());
@@ -3142,16 +3137,15 @@ namespace dftfe
 
     void
     fillParallelOverlapMatScalapackAsyncComputeCommun(
-      const double *     X,
-      const unsigned int M,
-      const unsigned int N,
-      cublasHandle_t &   handle,
-      const MPI_Comm &   mpiCommDomain,
-      GPUCCLWrapper &    gpucclMpiCommDomain,
-      const MPI_Comm &   interBandGroupComm,
-      const std::shared_ptr<const dealii::Utilities::MPI::ProcessGrid>
-        &                              processGrid,
-      dealii::ScaLAPACKMatrix<double> &overlapMatPar)
+      const double *                                   X,
+      const unsigned int                               M,
+      const unsigned int                               N,
+      cublasHandle_t &                                 handle,
+      const MPI_Comm &                                 mpiCommDomain,
+      GPUCCLWrapper &                                  gpucclMpiCommDomain,
+      const MPI_Comm &                                 interBandGroupComm,
+      const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
+      dftfe::ScaLAPACKMatrix<double> &                 overlapMatPar)
     {
 #ifdef USE_COMPLEX
       AssertThrow(false, dftUtils::ExcNotImplementedYet());
@@ -3383,16 +3377,15 @@ namespace dftfe
 
     void
     fillParallelOverlapMatMixedPrecScalapack(
-      const double *     X,
-      const unsigned int M,
-      const unsigned int N,
-      cublasHandle_t &   handle,
-      const MPI_Comm &   mpiCommDomain,
-      GPUCCLWrapper &    gpucclMpiCommDomain,
-      const MPI_Comm &   interBandGroupComm,
-      const std::shared_ptr<const dealii::Utilities::MPI::ProcessGrid>
-        &                              processGrid,
-      dealii::ScaLAPACKMatrix<double> &overlapMatPar)
+      const double *                                   X,
+      const unsigned int                               M,
+      const unsigned int                               N,
+      cublasHandle_t &                                 handle,
+      const MPI_Comm &                                 mpiCommDomain,
+      GPUCCLWrapper &                                  gpucclMpiCommDomain,
+      const MPI_Comm &                                 interBandGroupComm,
+      const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
+      dftfe::ScaLAPACKMatrix<double> &                 overlapMatPar)
     {
 #ifdef USE_COMPLEX
       AssertThrow(false, dftUtils::ExcNotImplementedYet());
@@ -3614,16 +3607,15 @@ namespace dftfe
 
     void
     fillParallelOverlapMatMixedPrecScalapackAsyncComputeCommun(
-      const double *     X,
-      const unsigned int M,
-      const unsigned int N,
-      cublasHandle_t &   handle,
-      const MPI_Comm &   mpiCommDomain,
-      GPUCCLWrapper &    gpucclMpiCommDomain,
-      const MPI_Comm &   interBandGroupComm,
-      const std::shared_ptr<const dealii::Utilities::MPI::ProcessGrid>
-        &                              processGrid,
-      dealii::ScaLAPACKMatrix<double> &overlapMatPar)
+      const double *                                   X,
+      const unsigned int                               M,
+      const unsigned int                               N,
+      cublasHandle_t &                                 handle,
+      const MPI_Comm &                                 mpiCommDomain,
+      GPUCCLWrapper &                                  gpucclMpiCommDomain,
+      const MPI_Comm &                                 interBandGroupComm,
+      const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
+      dftfe::ScaLAPACKMatrix<double> &                 overlapMatPar)
     {
 #ifdef USE_COMPLEX
       AssertThrow(false, dftUtils::ExcNotImplementedYet());

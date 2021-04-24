@@ -67,7 +67,7 @@ namespace dftfe
   elpaScalaManager::processGridOptionalELPASetup(const unsigned int na,
                                                  const unsigned int nev)
   {
-    std::shared_ptr<const dealii::Utilities::MPI::ProcessGrid> processGrid;
+    std::shared_ptr<const dftfe::ProcessGrid> processGrid;
     linearAlgebraOperations::internal::createProcessGridSquareMatrix(
       getMPICommunicator(), na, processGrid);
 

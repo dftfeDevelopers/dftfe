@@ -37,12 +37,11 @@ namespace dftfe
       setupELPAHandle(
         const MPI_Comm &mpi_communicator,
         MPI_Comm &      processGridCommunicatorActive,
-        const std::shared_ptr<const dealii::Utilities::MPI::ProcessGrid>
-          &                processGrid,
-        const unsigned int na,
-        const unsigned int nev,
-        const unsigned int blockSize,
-        elpa_t &           elpaHandle)
+        const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
+        const unsigned int                               na,
+        const unsigned int                               nev,
+        const unsigned int                               blockSize,
+        elpa_t &                                         elpaHandle)
       {
         int error;
 
@@ -83,7 +82,7 @@ namespace dftfe
         AssertThrowMPI(ierr);
 
 
-        dealii::ScaLAPACKMatrix<double> tempMat(na, processGrid, blockSize);
+        dftfe::ScaLAPACKMatrix<double> tempMat(na, processGrid, blockSize);
         if (processGrid->is_process_active())
           {
             /* Set parameters the matrix and it's MPI distribution */
@@ -185,10 +184,10 @@ namespace dftfe
 #endif
       void
       createProcessGridSquareMatrix(
-        const MPI_Comm &mpi_communicator,
-        const unsigned  size,
-        std::shared_ptr<const dealii::Utilities::MPI::ProcessGrid> &processGrid,
-        const bool useOnlyThumbRule)
+        const MPI_Comm &                           mpi_communicator,
+        const unsigned                             size,
+        std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
+        const bool                                 useOnlyThumbRule)
       {
         const unsigned int numberProcs =
           dealii::Utilities::MPI::n_mpi_processes(mpi_communicator);
@@ -225,17 +224,18 @@ namespace dftfe
           }
 
         processGrid =
-          std::make_shared<const dealii::Utilities::MPI::ProcessGrid>(
-            mpi_communicator, rowProcs, rowProcs);
+          std::make_shared<const dftfe::ProcessGrid>(mpi_communicator,
+                                                     rowProcs,
+                                                     rowProcs);
       }
 
 
       void
       createProcessGridRectangularMatrix(
-        const MPI_Comm &mpi_communicator,
-        const unsigned  sizeRows,
-        const unsigned  sizeColumns,
-        std::shared_ptr<const dealii::Utilities::MPI::ProcessGrid> &processGrid)
+        const MPI_Comm &                           mpi_communicator,
+        const unsigned                             sizeRows,
+        const unsigned                             sizeColumns,
+        std::shared_ptr<const dftfe::ProcessGrid> &processGrid)
       {
         const unsigned int numberProcs =
           dealii::Utilities::MPI::n_mpi_processes(mpi_communicator);
@@ -259,18 +259,18 @@ namespace dftfe
           }
 
         processGrid =
-          std::make_shared<const dealii::Utilities::MPI::ProcessGrid>(
-            mpi_communicator, rowProcs, columnProcs);
+          std::make_shared<const dftfe::ProcessGrid>(mpi_communicator,
+                                                     rowProcs,
+                                                     columnProcs);
       }
 
 
       template <typename T>
       void
       createGlobalToLocalIdMapsScaLAPACKMat(
-        const std::shared_ptr<const dealii::Utilities::MPI::ProcessGrid>
-          &                                   processGrid,
-        const dealii::ScaLAPACKMatrix<T> &    mat,
-        std::map<unsigned int, unsigned int> &globalToLocalRowIdMap,
+        const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
+        const dftfe::ScaLAPACKMatrix<T> &                mat,
+        std::map<unsigned int, unsigned int> &           globalToLocalRowIdMap,
         std::map<unsigned int, unsigned int> &globalToLocalColumnIdMap)
       {
 #ifdef USE_COMPLEX
@@ -293,10 +293,9 @@ namespace dftfe
       template <typename T>
       void
       sumAcrossInterCommScaLAPACKMat(
-        const std::shared_ptr<const dealii::Utilities::MPI::ProcessGrid>
-          &                         processGrid,
-        dealii::ScaLAPACKMatrix<T> &mat,
-        const MPI_Comm &            interComm)
+        const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
+        dftfe::ScaLAPACKMatrix<T> &                      mat,
+        const MPI_Comm &                                 interComm)
       {
 #ifdef USE_COMPLEX
         AssertThrow(false, dftUtils::ExcNotImplementedYet());
@@ -318,10 +317,9 @@ namespace dftfe
       template <typename T>
       void
       scaleScaLAPACKMat(
-        const std::shared_ptr<const dealii::Utilities::MPI::ProcessGrid>
-          &                         processGrid,
-        dealii::ScaLAPACKMatrix<T> &mat,
-        const T                     scalar)
+        const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
+        dftfe::ScaLAPACKMatrix<T> &                      mat,
+        const T                                          scalar)
       {
 #ifdef USE_COMPLEX
         AssertThrow(false, dftUtils::ExcNotImplementedYet());
@@ -341,11 +339,10 @@ namespace dftfe
       template <typename T>
       void
       broadcastAcrossInterCommScaLAPACKMat(
-        const std::shared_ptr<const dealii::Utilities::MPI::ProcessGrid>
-          &                         processGrid,
-        dealii::ScaLAPACKMatrix<T> &mat,
-        const MPI_Comm &            interComm,
-        const unsigned int          broadcastRoot)
+        const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
+        dftfe::ScaLAPACKMatrix<T> &                      mat,
+        const MPI_Comm &                                 interComm,
+        const unsigned int                               broadcastRoot)
       {
 #ifdef USE_COMPLEX
         AssertThrow(false, dftUtils::ExcNotImplementedYet());
@@ -368,11 +365,10 @@ namespace dftfe
         const dataTypes::number *subspaceVectorsArray,
         const unsigned int       subspaceVectorsArrayLocalSize,
         const unsigned int       N,
-        const std::shared_ptr<const dealii::Utilities::MPI::ProcessGrid>
-          &                                         processGrid,
-        const MPI_Comm &                            interBandGroupComm,
-        const MPI_Comm &                            mpiComm,
-        dealii::ScaLAPACKMatrix<dataTypes::number> &overlapMatPar)
+        const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
+        const MPI_Comm &                                 interBandGroupComm,
+        const MPI_Comm &                                 mpiComm,
+        dftfe::ScaLAPACKMatrix<dataTypes::number> &      overlapMatPar)
       {
 #ifdef USE_COMPLEX
         AssertThrow(false, dftUtils::ExcNotImplementedYet());
@@ -561,11 +557,10 @@ namespace dftfe
         const T *          subspaceVectorsArray,
         const unsigned int subspaceVectorsArrayLocalSize,
         const unsigned int N,
-        const std::shared_ptr<const dealii::Utilities::MPI::ProcessGrid>
-          &                         processGrid,
-        const MPI_Comm &            interBandGroupComm,
-        const MPI_Comm &            mpiComm,
-        dealii::ScaLAPACKMatrix<T> &overlapMatPar)
+        const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
+        const MPI_Comm &                                 interBandGroupComm,
+        const MPI_Comm &                                 mpiComm,
+        dftfe::ScaLAPACKMatrix<T> &                      overlapMatPar)
       {
 #ifdef USE_COMPLEX
         AssertThrow(false, dftUtils::ExcNotImplementedYet());
@@ -700,14 +695,13 @@ namespace dftfe
         T *                subspaceVectorsArray,
         const unsigned int subspaceVectorsArrayLocalSize,
         const unsigned int N,
-        const std::shared_ptr<const dealii::Utilities::MPI::ProcessGrid>
-          &                               processGrid,
-        const MPI_Comm &                  interBandGroupComm,
-        const MPI_Comm &                  mpiComm,
-        const dealii::ScaLAPACKMatrix<T> &rotationMatPar,
-        const bool                        rotationMatTranspose,
-        const bool                        isRotationMatLowerTria,
-        const bool                        doCommAfterBandParal)
+        const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
+        const MPI_Comm &                                 interBandGroupComm,
+        const MPI_Comm &                                 mpiComm,
+        const dftfe::ScaLAPACKMatrix<T> &                rotationMatPar,
+        const bool                                       rotationMatTranspose,
+        const bool                                       isRotationMatLowerTria,
+        const bool                                       doCommAfterBandParal)
       {
 #ifdef USE_COMPLEX
         AssertThrow(false, dftUtils::ExcNotImplementedYet());
@@ -1041,13 +1035,12 @@ namespace dftfe
         T *                Y,
         const unsigned int subspaceVectorsArrayLocalSize,
         const unsigned int N,
-        const std::shared_ptr<const dealii::Utilities::MPI::ProcessGrid>
-          &                               processGrid,
-        const unsigned int                numberTopVectors,
-        const MPI_Comm &                  interBandGroupComm,
-        const MPI_Comm &                  mpiComm,
-        const dealii::ScaLAPACKMatrix<T> &QMat,
-        const bool                        QMatTranspose)
+        const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
+        const unsigned int                               numberTopVectors,
+        const MPI_Comm &                                 interBandGroupComm,
+        const MPI_Comm &                                 mpiComm,
+        const dftfe::ScaLAPACKMatrix<T> &                QMat,
+        const bool                                       QMatTranspose)
       {
 #ifdef USE_COMPLEX
         AssertThrow(false, dftUtils::ExcNotImplementedYet());
@@ -1232,13 +1225,12 @@ namespace dftfe
         dataTypes::number *      Y,
         const unsigned int       subspaceVectorsArrayLocalSize,
         const unsigned int       N,
-        const std::shared_ptr<const dealii::Utilities::MPI::ProcessGrid>
-          &                                               processGrid,
-        const unsigned int                                numberTopVectors,
-        const MPI_Comm &                                  interBandGroupComm,
-        const MPI_Comm &                                  mpiComm,
-        const dealii::ScaLAPACKMatrix<dataTypes::number> &QMat,
-        const bool                                        QMatTranspose)
+        const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
+        const unsigned int                               numberTopVectors,
+        const MPI_Comm &                                 interBandGroupComm,
+        const MPI_Comm &                                 mpiComm,
+        const dftfe::ScaLAPACKMatrix<dataTypes::number> &QMat,
+        const bool                                       QMatTranspose)
       {
 #ifdef USE_COMPLEX
         AssertThrow(false, dftUtils::ExcNotImplementedYet());
@@ -1488,13 +1480,12 @@ namespace dftfe
         dataTypes::number *subspaceVectorsArray,
         const unsigned int subspaceVectorsArrayLocalSize,
         const unsigned int N,
-        const std::shared_ptr<const dealii::Utilities::MPI::ProcessGrid>
-          &                                               processGrid,
-        const MPI_Comm &                                  interBandGroupComm,
-        const MPI_Comm &                                  mpiComm,
-        const dealii::ScaLAPACKMatrix<dataTypes::number> &rotationMatPar,
-        const bool                                        rotationMatTranspose,
-        const bool                                        doCommAfterBandParal)
+        const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
+        const MPI_Comm &                                 interBandGroupComm,
+        const MPI_Comm &                                 mpiComm,
+        const dftfe::ScaLAPACKMatrix<dataTypes::number> &rotationMatPar,
+        const bool                                       rotationMatTranspose,
+        const bool                                       doCommAfterBandParal)
       {
 #ifdef USE_COMPLEX
         AssertThrow(false, dftUtils::ExcNotImplementedYet());
@@ -1828,13 +1819,12 @@ namespace dftfe
         dataTypes::number *subspaceVectorsArray,
         const unsigned int subspaceVectorsArrayLocalSize,
         const unsigned int N,
-        const std::shared_ptr<const dealii::Utilities::MPI::ProcessGrid>
-          &                                               processGrid,
-        const MPI_Comm &                                  interBandGroupComm,
-        const MPI_Comm &                                  mpiComm,
-        const dealii::ScaLAPACKMatrix<dataTypes::number> &rotationMatPar,
-        const bool                                        rotationMatTranspose,
-        const bool                                        doCommAfterBandParal)
+        const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
+        const MPI_Comm &                                 interBandGroupComm,
+        const MPI_Comm &                                 mpiComm,
+        const dftfe::ScaLAPACKMatrix<dataTypes::number> &rotationMatPar,
+        const bool                                       rotationMatTranspose,
+        const bool                                       doCommAfterBandParal)
       {
 #ifdef USE_COMPLEX
         AssertThrow(false, dftUtils::ExcNotImplementedYet());
@@ -2165,51 +2155,46 @@ namespace dftfe
 
       template void
       createGlobalToLocalIdMapsScaLAPACKMat(
-        const std::shared_ptr<const dealii::Utilities::MPI::ProcessGrid>
-          &                                               processGrid,
-        const dealii::ScaLAPACKMatrix<dataTypes::number> &mat,
-        std::map<unsigned int, unsigned int> &            globalToLocalRowIdMap,
+        const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
+        const dftfe::ScaLAPACKMatrix<dataTypes::number> &mat,
+        std::map<unsigned int, unsigned int> &           globalToLocalRowIdMap,
         std::map<unsigned int, unsigned int> &globalToLocalColumnIdMap);
 
       template void
       fillParallelOverlapMatrix(
-        const dataTypes::number *X,
-        const unsigned int       XLocalSize,
-        const unsigned int       numberVectors,
-        const std::shared_ptr<const dealii::Utilities::MPI::ProcessGrid>
-          &                                         processGrid,
-        const MPI_Comm &                            interBandGroupComm,
-        const MPI_Comm &                            mpiComm,
-        dealii::ScaLAPACKMatrix<dataTypes::number> &overlapMatPar);
+        const dataTypes::number *                        X,
+        const unsigned int                               XLocalSize,
+        const unsigned int                               numberVectors,
+        const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
+        const MPI_Comm &                                 interBandGroupComm,
+        const MPI_Comm &                                 mpiComm,
+        dftfe::ScaLAPACKMatrix<dataTypes::number> &      overlapMatPar);
 
       template void
       subspaceRotation(
         dataTypes::number *subspaceVectorsArray,
         const unsigned int subspaceVectorsArrayLocalSize,
         const unsigned int N,
-        const std::shared_ptr<const dealii::Utilities::MPI::ProcessGrid>
-          &                                               processGrid,
-        const MPI_Comm &                                  interBandGroupComm,
-        const MPI_Comm &                                  mpiComm,
-        const dealii::ScaLAPACKMatrix<dataTypes::number> &rotationMatPar,
-        const bool                                        rotationMatTranpose,
-        const bool isRotationMatLowerTria,
-        const bool doCommAfterBandParal);
+        const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
+        const MPI_Comm &                                 interBandGroupComm,
+        const MPI_Comm &                                 mpiComm,
+        const dftfe::ScaLAPACKMatrix<dataTypes::number> &rotationMatPar,
+        const bool                                       rotationMatTranpose,
+        const bool                                       isRotationMatLowerTria,
+        const bool                                       doCommAfterBandParal);
 
 
       template void
       scaleScaLAPACKMat(
-        const std::shared_ptr<const dealii::Utilities::MPI::ProcessGrid>
-          &                                         processGrid,
-        dealii::ScaLAPACKMatrix<dataTypes::number> &mat,
-        const dataTypes::number                     scalar);
+        const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
+        dftfe::ScaLAPACKMatrix<dataTypes::number> &      mat,
+        const dataTypes::number                          scalar);
 
       template void
       sumAcrossInterCommScaLAPACKMat(
-        const std::shared_ptr<const dealii::Utilities::MPI::ProcessGrid>
-          &                                         processGrid,
-        dealii::ScaLAPACKMatrix<dataTypes::number> &mat,
-        const MPI_Comm &                            interComm);
+        const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
+        dftfe::ScaLAPACKMatrix<dataTypes::number> &      mat,
+        const MPI_Comm &                                 interComm);
 
       template void
       subspaceRotationSpectrumSplit(
@@ -2217,22 +2202,20 @@ namespace dftfe
         dataTypes::number *      Y,
         const unsigned int       subspaceVectorsArrayLocalSize,
         const unsigned int       N,
-        const std::shared_ptr<const dealii::Utilities::MPI::ProcessGrid>
-          &                                               processGrid,
-        const unsigned int                                numberTopVectors,
-        const MPI_Comm &                                  interBandGroupComm,
-        const MPI_Comm &                                  mpiComm,
-        const dealii::ScaLAPACKMatrix<dataTypes::number> &QMat,
-        const bool                                        QMatTranspose);
+        const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
+        const unsigned int                               numberTopVectors,
+        const MPI_Comm &                                 interBandGroupComm,
+        const MPI_Comm &                                 mpiComm,
+        const dftfe::ScaLAPACKMatrix<dataTypes::number> &QMat,
+        const bool                                       QMatTranspose);
 
 
       template void
       broadcastAcrossInterCommScaLAPACKMat(
-        const std::shared_ptr<const dealii::Utilities::MPI::ProcessGrid>
-          &                                         processGrid,
-        dealii::ScaLAPACKMatrix<dataTypes::number> &mat,
-        const MPI_Comm &                            interComm,
-        const unsigned int                          broadcastRoot);
+        const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
+        dftfe::ScaLAPACKMatrix<dataTypes::number> &      mat,
+        const MPI_Comm &                                 interComm,
+        const unsigned int                               broadcastRoot);
     } // namespace internal
   }   // namespace linearAlgebraOperations
 } // namespace dftfe

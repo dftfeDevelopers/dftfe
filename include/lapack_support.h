@@ -162,6 +162,10 @@ namespace dftfe
      */
     static const char T = 'T';
     /**
+     * Character constant for conjugate transpose.
+     */
+    static const char C = 'C';
+    /**
      * Character constant.
      */
     static const char U = 'U';

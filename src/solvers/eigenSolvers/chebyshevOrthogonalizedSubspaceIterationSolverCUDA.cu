@@ -275,22 +275,21 @@ namespace dftfe
   //
   void
   chebyshevOrthogonalizedSubspaceIterationSolverCUDA::onlyRR(
-    operatorDFTCUDAClass &           operatorMatrix,
-    double *                         eigenVectorsFlattenedCUDA,
-    double *                         eigenVectorsRotFracDensityFlattenedCUDA,
-    const unsigned int               flattenedSize,
-    distributedCPUVec<double> &      tempEigenVec,
-    const unsigned int               totalNumberWaveFunctions,
-    std::vector<double> &            eigenValues,
-    GPUCCLWrapper &                  gpucclMpiCommDomain,
-    const MPI_Comm &                 interBandGroupComm,
-    dealii::ScaLAPACKMatrix<double> &projHamPar,
-    dealii::ScaLAPACKMatrix<double> &overlapMatPar,
-    const std::shared_ptr<const dealii::Utilities::MPI::ProcessGrid>
-      &        processGrid,
-    const bool useMixedPrecOverall,
-    const bool isElpaStep1,
-    const bool isElpaStep2)
+    operatorDFTCUDAClass &          operatorMatrix,
+    double *                        eigenVectorsFlattenedCUDA,
+    double *                        eigenVectorsRotFracDensityFlattenedCUDA,
+    const unsigned int              flattenedSize,
+    distributedCPUVec<double> &     tempEigenVec,
+    const unsigned int              totalNumberWaveFunctions,
+    std::vector<double> &           eigenValues,
+    GPUCCLWrapper &                 gpucclMpiCommDomain,
+    const MPI_Comm &                interBandGroupComm,
+    dftfe::ScaLAPACKMatrix<double> &projHamPar,
+    dftfe::ScaLAPACKMatrix<double> &overlapMatPar,
+    const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
+    const bool                                       useMixedPrecOverall,
+    const bool                                       isElpaStep1,
+    const bool                                       isElpaStep2)
   {
 #ifdef USE_COMPLEX
     AssertThrow(false, dftUtils::ExcNotImplementedYet());
@@ -495,26 +494,25 @@ namespace dftfe
   //
   double
   chebyshevOrthogonalizedSubspaceIterationSolverCUDA::solve(
-    operatorDFTCUDAClass &           operatorMatrix,
-    double *                         eigenVectorsFlattenedCUDA,
-    double *                         eigenVectorsRotFracDensityFlattenedCUDA,
-    const unsigned int               flattenedSize,
-    distributedCPUVec<double> &      tempEigenVec,
-    const unsigned int               totalNumberWaveFunctions,
-    std::vector<double> &            eigenValues,
-    std::vector<double> &            residualNorms,
-    GPUCCLWrapper &                  gpucclMpiCommDomain,
-    const MPI_Comm &                 interBandGroupComm,
-    dealii::ScaLAPACKMatrix<double> &projHamPar,
-    dealii::ScaLAPACKMatrix<double> &overlapMatPar,
-    const std::shared_ptr<const dealii::Utilities::MPI::ProcessGrid>
-      &        processGrid,
-    const bool isFirstFilteringCall,
-    const bool computeResidual,
-    const bool useMixedPrecOverall,
-    const bool isFirstScf,
-    const bool isElpaStep1,
-    const bool isElpaStep2)
+    operatorDFTCUDAClass &          operatorMatrix,
+    double *                        eigenVectorsFlattenedCUDA,
+    double *                        eigenVectorsRotFracDensityFlattenedCUDA,
+    const unsigned int              flattenedSize,
+    distributedCPUVec<double> &     tempEigenVec,
+    const unsigned int              totalNumberWaveFunctions,
+    std::vector<double> &           eigenValues,
+    std::vector<double> &           residualNorms,
+    GPUCCLWrapper &                 gpucclMpiCommDomain,
+    const MPI_Comm &                interBandGroupComm,
+    dftfe::ScaLAPACKMatrix<double> &projHamPar,
+    dftfe::ScaLAPACKMatrix<double> &overlapMatPar,
+    const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
+    const bool                                       isFirstFilteringCall,
+    const bool                                       computeResidual,
+    const bool                                       useMixedPrecOverall,
+    const bool                                       isFirstScf,
+    const bool                                       isElpaStep1,
+    const bool                                       isElpaStep2)
   {
 #ifdef USE_COMPLEX
     AssertThrow(false, dftUtils::ExcNotImplementedYet());
@@ -1285,20 +1283,19 @@ namespace dftfe
   //
   void
   chebyshevOrthogonalizedSubspaceIterationSolverCUDA::solveNoRR(
-    operatorDFTCUDAClass &           operatorMatrix,
-    double *                         eigenVectorsFlattenedCUDA,
-    const unsigned int               flattenedSize,
-    distributedCPUVec<double> &      tempEigenVec,
-    const unsigned int               totalNumberWaveFunctions,
-    std::vector<double> &            eigenValues,
-    GPUCCLWrapper &                  gpucclMpiCommDomain,
-    const MPI_Comm &                 interBandGroupComm,
-    dealii::ScaLAPACKMatrix<double> &projHamPar,
-    dealii::ScaLAPACKMatrix<double> &overlapMatPar,
-    const std::shared_ptr<const dealii::Utilities::MPI::ProcessGrid>
-      &                processGrid,
-    const unsigned int numberPasses,
-    const bool         useMixedPrecOverall)
+    operatorDFTCUDAClass &                           operatorMatrix,
+    double *                                         eigenVectorsFlattenedCUDA,
+    const unsigned int                               flattenedSize,
+    distributedCPUVec<double> &                      tempEigenVec,
+    const unsigned int                               totalNumberWaveFunctions,
+    std::vector<double> &                            eigenValues,
+    GPUCCLWrapper &                                  gpucclMpiCommDomain,
+    const MPI_Comm &                                 interBandGroupComm,
+    dftfe::ScaLAPACKMatrix<double> &                 projHamPar,
+    dftfe::ScaLAPACKMatrix<double> &                 overlapMatPar,
+    const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
+    const unsigned int                               numberPasses,
+    const bool                                       useMixedPrecOverall)
   {
 #ifdef USE_COMPLEX
     AssertThrow(false, dftUtils::ExcNotImplementedYet());
