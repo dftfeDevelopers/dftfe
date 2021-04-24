@@ -530,6 +530,7 @@ namespace dftfe
     // node). This is done for simplicity of implementation.
     dealii::IndexSet allIndicesTouchedByConstraints(
       d_meanValueConstraintVec.size());
+    std::vector<dealii::types::global_dof_index> tempSet;
     for (dealii::IndexSet::ElementIterator it = locallyRelevantElements.begin();
          it < locallyRelevantElements.end();
          it++)
@@ -538,9 +539,9 @@ namespace dftfe
           const dealii::types::global_dof_index lineDof = *it;
           const std::vector<std::pair<dealii::types::global_dof_index, double>>
             *rowData = d_constraintMatrixPtr->get_constraint_entries(lineDof);
-          allIndicesTouchedByConstraints.add_index(lineDof);
+          tempSet.push_back(lineDof);
           for (unsigned int j = 0; j < rowData->size(); ++j)
-            allIndicesTouchedByConstraints.add_index((*rowData)[j].first);
+            tempSet.push_back((*rowData)[j].first);
         }
 
     if (d_atomsPtr)
@@ -548,8 +549,9 @@ namespace dftfe
              it = (*d_atomsPtr).begin();
            it != (*d_atomsPtr).end();
            ++it)
-        allIndicesTouchedByConstraints.add_index(it->first);
+        tempSet.push_back(it->first);
 
+    allIndicesTouchedByConstraints.add_indices(tempSet.begin(), tempSet.end());
     locallyOwnedElements.subtract_set(allIndicesTouchedByConstraints);
 
 
