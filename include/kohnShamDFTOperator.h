@@ -156,7 +156,7 @@ node is stored
      * @param projHamPar parallel ScaLAPACKMatrix which stores the computed projection
      * of the operation into the given subspace
      */
-    virtual void
+    void
     XtHXMixedPrec(const std::vector<dataTypes::number> &           X,
                   const unsigned int                               N,
                   const unsigned int                               Ncore,

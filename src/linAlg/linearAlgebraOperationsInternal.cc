@@ -273,9 +273,6 @@ namespace dftfe
         std::map<unsigned int, unsigned int> &           globalToLocalRowIdMap,
         std::map<unsigned int, unsigned int> &globalToLocalColumnIdMap)
       {
-#ifdef USE_COMPLEX
-        AssertThrow(false, dftUtils::ExcNotImplementedYet());
-#else
         globalToLocalRowIdMap.clear();
         globalToLocalColumnIdMap.clear();
         if (processGrid->is_process_active())
@@ -286,7 +283,6 @@ namespace dftfe
             for (unsigned int j = 0; j < mat.local_n(); ++j)
               globalToLocalColumnIdMap[mat.global_column(j)] = j;
           }
-#endif
       }
 
 
@@ -297,9 +293,6 @@ namespace dftfe
         dftfe::ScaLAPACKMatrix<T> &                      mat,
         const MPI_Comm &                                 interComm)
       {
-#ifdef USE_COMPLEX
-        AssertThrow(false, dftUtils::ExcNotImplementedYet());
-#else
         // sum across all inter communicator groups
         if (processGrid->is_process_active() &&
             dealii::Utilities::MPI::n_mpi_processes(interComm) > 1)
@@ -307,11 +300,10 @@ namespace dftfe
             MPI_Allreduce(MPI_IN_PLACE,
                           &mat.local_el(0, 0),
                           mat.local_m() * mat.local_n(),
-                          MPI_DOUBLE,
+                          dataTypes::mpi_type_id(&mat.local_el(0, 0)),
                           MPI_SUM,
                           interComm);
           }
-#endif
       }
 
       template <typename T>
@@ -321,17 +313,12 @@ namespace dftfe
         dftfe::ScaLAPACKMatrix<T> &                      mat,
         const T                                          scalar)
       {
-#ifdef USE_COMPLEX
-        AssertThrow(false, dftUtils::ExcNotImplementedYet());
-#else
         if (processGrid->is_process_active())
           {
             const unsigned int numberComponents = mat.local_m() * mat.local_n();
             const unsigned int inc              = 1;
-            dscal_(&numberComponents, &scalar, &mat.local_el(0, 0), &inc);
+            xscal(&numberComponents, &scalar, &mat.local_el(0, 0), &inc);
           }
-
-#endif
       }
 
 
@@ -344,35 +331,29 @@ namespace dftfe
         const MPI_Comm &                                 interComm,
         const unsigned int                               broadcastRoot)
       {
-#ifdef USE_COMPLEX
-        AssertThrow(false, dftUtils::ExcNotImplementedYet());
-#else
         // sum across all inter communicator groups
         if (processGrid->is_process_active() &&
             dealii::Utilities::MPI::n_mpi_processes(interComm) > 1)
           {
             MPI_Bcast(&mat.local_el(0, 0),
                       mat.local_m() * mat.local_n(),
-                      MPI_DOUBLE,
+                      dataTypes::mpi_type_id(&mat.local_el(0, 0)),
                       broadcastRoot,
                       interComm);
           }
-#endif
       }
 
+      template <typename T, typename TLowPrec>
       void
       fillParallelOverlapMatrixMixedPrec(
-        const dataTypes::number *subspaceVectorsArray,
-        const unsigned int       subspaceVectorsArrayLocalSize,
-        const unsigned int       N,
+        const T *          subspaceVectorsArray,
+        const unsigned int subspaceVectorsArrayLocalSize,
+        const unsigned int N,
         const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
         const MPI_Comm &                                 interBandGroupComm,
         const MPI_Comm &                                 mpiComm,
-        dftfe::ScaLAPACKMatrix<dataTypes::number> &      overlapMatPar)
+        dftfe::ScaLAPACKMatrix<T> &                      overlapMatPar)
       {
-#ifdef USE_COMPLEX
-        AssertThrow(false, dftUtils::ExcNotImplementedYet());
-#else
         const unsigned int numLocalDofs = subspaceVectorsArrayLocalSize / N;
 
         // band group parallelization data structures
@@ -416,14 +397,14 @@ namespace dftfe
           std::min(dftParameters::wfcBlockSize,
                    bandGroupLowHighPlusOneIndices[1]);
 
-        std::vector<dataTypes::number> overlapMatrixBlock(N * vectorsBlockSize,
-                                                          0.0);
-        std::vector<dataTypes::numberLowPrec> overlapMatrixBlockLowPrec(
-          N * vectorsBlockSize, 0.0);
-        std::vector<dataTypes::number> overlapMatrixBlockDoublePrec(
-          vectorsBlockSize * vectorsBlockSize, 0.0);
+        std::vector<T>        overlapMatrixBlock(N * vectorsBlockSize, T(0.0));
+        std::vector<TLowPrec> overlapMatrixBlockLowPrec(N * vectorsBlockSize,
+                                                        TLowPrec(0.0));
+        std::vector<T>        overlapMatrixBlockDoublePrec(vectorsBlockSize *
+                                                      vectorsBlockSize,
+                                                    T(0.0));
 
-        std::vector<dataTypes::numberLowPrec> subspaceVectorsArrayLowPrec(
+        std::vector<TLowPrec> subspaceVectorsArrayLowPrec(
           subspaceVectorsArray,
           subspaceVectorsArray + subspaceVectorsArrayLocalSize);
         for (unsigned int ivec = 0; ivec < N; ivec += vectorsBlockSize)
@@ -440,11 +421,14 @@ namespace dftfe
                 (ivec + B) >
                   bandGroupLowHighPlusOneIndices[2 * bandGroupTaskId])
               {
-                const char              transA = 'N', transB = 'T';
-                const dataTypes::number scalarCoeffAlpha               = 1.0,
-                                        scalarCoeffBeta                = 0.0;
-                const dataTypes::numberLowPrec scalarCoeffAlphaLowPrec = 1.0,
-                                               scalarCoeffBetaLowPrec  = 0.0;
+                const char transA = 'N',
+                           transB =
+                             std::is_same<T, std::complex<double>>::value ?
+                               'C' :
+                               'T';
+                const T        scalarCoeffAlpha = 1.0, scalarCoeffBeta = 0.0;
+                const TLowPrec scalarCoeffAlphaLowPrec = 1.0,
+                               scalarCoeffBetaLowPrec  = 0.0;
 
                 std::fill(overlapMatrixBlock.begin(),
                           overlapMatrixBlock.end(),
@@ -455,36 +439,36 @@ namespace dftfe
 
                 const unsigned int D = N - ivec;
 
-                dgemm_(&transA,
-                       &transB,
-                       &B,
-                       &B,
-                       &numLocalDofs,
-                       &scalarCoeffAlpha,
-                       subspaceVectorsArray + ivec,
-                       &N,
-                       subspaceVectorsArray + ivec,
-                       &N,
-                       &scalarCoeffBeta,
-                       &overlapMatrixBlockDoublePrec[0],
-                       &B);
+                xgemm(&transA,
+                      &transB,
+                      &B,
+                      &B,
+                      &numLocalDofs,
+                      &scalarCoeffAlpha,
+                      subspaceVectorsArray + ivec,
+                      &N,
+                      subspaceVectorsArray + ivec,
+                      &N,
+                      &scalarCoeffBeta,
+                      &overlapMatrixBlockDoublePrec[0],
+                      &B);
 
                 const unsigned int DRem = D - B;
                 if (DRem != 0)
                   {
-                    sgemm_(&transA,
-                           &transB,
-                           &DRem,
-                           &B,
-                           &numLocalDofs,
-                           &scalarCoeffAlphaLowPrec,
-                           &subspaceVectorsArrayLowPrec[0] + ivec + B,
-                           &N,
-                           &subspaceVectorsArrayLowPrec[0] + ivec,
-                           &N,
-                           &scalarCoeffBetaLowPrec,
-                           &overlapMatrixBlockLowPrec[0],
-                           &DRem);
+                    xgemm(&transA,
+                          &transB,
+                          &DRem,
+                          &B,
+                          &numLocalDofs,
+                          &scalarCoeffAlphaLowPrec,
+                          &subspaceVectorsArrayLowPrec[0] + ivec + B,
+                          &N,
+                          &subspaceVectorsArrayLowPrec[0] + ivec,
+                          &N,
+                          &scalarCoeffBetaLowPrec,
+                          &overlapMatrixBlockLowPrec[0],
+                          &DRem);
                   }
 
                 MPI_Barrier(mpiComm);
@@ -546,8 +530,6 @@ namespace dftfe
         // accumulate contribution from all band parallelization groups
         linearAlgebraOperations::internal::sumAcrossInterCommScaLAPACKMat(
           processGrid, overlapMatPar, interBandGroupComm);
-
-#endif
       }
 
 
@@ -562,9 +544,6 @@ namespace dftfe
         const MPI_Comm &                                 mpiComm,
         dftfe::ScaLAPACKMatrix<T> &                      overlapMatPar)
       {
-#ifdef USE_COMPLEX
-        AssertThrow(false, dftUtils::ExcNotImplementedYet());
-#else
         const unsigned int numLocalDofs = subspaceVectorsArrayLocalSize / N;
 
         // band group parallelization data structures
@@ -624,8 +603,12 @@ namespace dftfe
                 (ivec + B) >
                   bandGroupLowHighPlusOneIndices[2 * bandGroupTaskId])
               {
-                const char transA = 'N', transB = 'T';
-                const T    scalarCoeffAlpha = 1.0, scalarCoeffBeta = 0.0;
+                const char transA = 'N',
+                           transB =
+                             std::is_same<T, std::complex<double>>::value ?
+                               'C' :
+                               'T';
+                const T scalarCoeffAlpha = 1.0, scalarCoeffBeta = 0.0;
 
                 std::fill(overlapMatrixBlock.begin(),
                           overlapMatrixBlock.end(),
@@ -634,19 +617,19 @@ namespace dftfe
                 const unsigned int D = N - ivec;
 
                 // Comptute local XTrunc^{T}*XcBlock.
-                dgemm_(&transA,
-                       &transB,
-                       &D,
-                       &B,
-                       &numLocalDofs,
-                       &scalarCoeffAlpha,
-                       subspaceVectorsArray + ivec,
-                       &N,
-                       subspaceVectorsArray + ivec,
-                       &N,
-                       &scalarCoeffBeta,
-                       &overlapMatrixBlock[0],
-                       &D);
+                xgemm(&transA,
+                      &transB,
+                      &D,
+                      &B,
+                      &numLocalDofs,
+                      &scalarCoeffAlpha,
+                      subspaceVectorsArray + ivec,
+                      &N,
+                      subspaceVectorsArray + ivec,
+                      &N,
+                      &scalarCoeffBeta,
+                      &overlapMatrixBlock[0],
+                      &D);
 
                 MPI_Barrier(mpiComm);
                 // Sum local XTrunc^{T}*XcBlock across domain decomposition
@@ -684,8 +667,6 @@ namespace dftfe
         // accumulate contribution from all band parallelization groups
         linearAlgebraOperations::internal::sumAcrossInterCommScaLAPACKMat(
           processGrid, overlapMatPar, interBandGroupComm);
-
-#endif
       }
 
 
@@ -703,9 +684,6 @@ namespace dftfe
         const bool                                       isRotationMatLowerTria,
         const bool                                       doCommAfterBandParal)
       {
-#ifdef USE_COMPLEX
-        AssertThrow(false, dftUtils::ExcNotImplementedYet());
-#else
         const unsigned int numLocalDofs = subspaceVectorsArrayLocalSize / N;
 
         const unsigned int maxNumLocalDofs =
@@ -801,7 +779,7 @@ namespace dftfe
                     numVectorsBandParal = jvec + BVec - startIndexBandParal;
 
                     const char transA = 'N', transB = 'N';
-                    const T    scalarCoeffAlpha = 1.0, scalarCoeffBeta = 0.0;
+                    const T scalarCoeffAlpha = T(1.0), scalarCoeffBeta = T(0.0);
 
                     std::fill(rotationMatBlock.begin(),
                               rotationMatBlock.end(),
@@ -863,19 +841,19 @@ namespace dftfe
 
                     if (BDof != 0)
                       {
-                        dgemm_(&transA,
-                               &transB,
-                               &BVec,
-                               &BDof,
-                               &D,
-                               &scalarCoeffAlpha,
-                               &rotationMatBlock[0],
-                               &BVec,
-                               subspaceVectorsArray + idof * N,
-                               &N,
-                               &scalarCoeffBeta,
-                               &rotatedVectorsMatBlock[0] + jvec,
-                               &N);
+                        xgemm(&transA,
+                              &transB,
+                              &BVec,
+                              &BDof,
+                              &D,
+                              &scalarCoeffAlpha,
+                              &rotationMatBlock[0],
+                              &BVec,
+                              subspaceVectorsArray + idof * N,
+                              &N,
+                              &scalarCoeffBeta,
+                              &rotatedVectorsMatBlock[0] + jvec,
+                              &N);
                       }
 
                   } // band parallelization
@@ -916,10 +894,11 @@ namespace dftfe
               {
                 MPI_Barrier(interBandGroupComm);
 
-                std::vector<dataTypes::number> eigenVectorsBandGroup(
-                  numVectorsBandParal * numLocalDofs, 0);
-                std::vector<dataTypes::number> eigenVectorsBandGroupTransposed(
-                  numVectorsBandParal * numLocalDofs, 0);
+                std::vector<T> eigenVectorsBandGroup(numVectorsBandParal *
+                                                       numLocalDofs,
+                                                     T(0));
+                std::vector<T> eigenVectorsBandGroupTransposed(
+                  numVectorsBandParal * numLocalDofs, T(0));
                 for (unsigned int iNode = 0; iNode < numLocalDofs; ++iNode)
                   for (unsigned int iWave = 0; iWave < numVectorsBandParal;
                        ++iWave)
@@ -927,32 +906,6 @@ namespace dftfe
                       subspaceVectorsArray[iNode * N + startIndexBandParal +
                                            iWave];
 
-                /*
-                   const char ordering = 'C';
-                   const char trans = 'T';
-  #ifdef USE_COMPLEX
-  mkl_zomatcopy_(ordering,
-  trans,
-  localVectorSize,
-  numVectorsBandParal,
-  std::complex<double>(1.0),
-  &eigenVectorsBandGroup[0],
-  numVectorsBandParal,
-  &eigenVectorsBandGroupTransposed[0],
-  localVectorSize);
-  #else
-
-  mkl_domatcopy_(ordering,
-  trans,
-  numVectorsBandParal,
-  localVectorSize,
-  1.0,
-  &eigenVectorsBandGroup[0],
-  numVectorsBandParal,
-  &eigenVectorsBandGroupTransposed[0],
-  localVectorSize);
-  #endif
-                 */
                 for (unsigned int iNode = 0; iNode < numLocalDofs; ++iNode)
                   for (unsigned int iWave = 0; iWave < numVectorsBandParal;
                        ++iWave)
@@ -982,8 +935,7 @@ namespace dftfe
                               MPI_INT,
                               interBandGroupComm);
 
-                std::vector<dataTypes::number> eigenVectorsTransposed(
-                  N * numLocalDofs, 0);
+                std::vector<T> eigenVectorsTransposed(N * numLocalDofs, 0);
                 MPI_Allgatherv(
                   &eigenVectorsBandGroupTransposed[0],
                   numVectorsBandParal * numLocalDofs,
@@ -993,37 +945,13 @@ namespace dftfe
                   &displs[0],
                   dataTypes::mpi_type_id(&eigenVectorsTransposed[0]),
                   interBandGroupComm);
-                /*
-  #ifdef USE_COMPLEX
-  mkl_zomatcopy_(ordering,
-  trans,
-  totalNumberWaveFunctions,
-  localVectorSize,
-  std::complex<double>(1.0),
-  &eigenVectorsTransposed[0],
-  localVectorSize,
-  &eigenVectorsFlattened[0],
-  totalNumberWaveFunctions);
-  #else
 
-  mkl_domatcopy_(ordering,
-  trans,
-  totalNumberWaveFunctions,
-  localVectorSize,
-  1.0,
-  &eigenVectorsTransposed[0],
-  localVectorSize,
-  &eigenVectorsFlattened[0],
-  totalNumberWaveFunctions);
-  #endif
-                 */
                 for (unsigned int iNode = 0; iNode < numLocalDofs; ++iNode)
                   for (unsigned int iWave = 0; iWave < N; ++iWave)
                     subspaceVectorsArray[iNode * N + iWave] =
                       eigenVectorsTransposed[iWave * numLocalDofs + iNode];
               }
           }
-#endif
       }
 
 
@@ -1042,9 +970,6 @@ namespace dftfe
         const dftfe::ScaLAPACKMatrix<T> &                QMat,
         const bool                                       QMatTranspose)
       {
-#ifdef USE_COMPLEX
-        AssertThrow(false, dftUtils::ExcNotImplementedYet());
-#else
         const unsigned int numLocalDofs = subspaceVectorsArrayLocalSize / N;
 
         const unsigned int maxNumLocalDofs =
@@ -1071,9 +996,9 @@ namespace dftfe
         const unsigned int dofsBlockSize =
           std::min(maxNumLocalDofs, dftParameters::subspaceRotDofsBlockSize);
 
-        std::vector<T> rotationMatBlock(vectorsBlockSize * N, 0.0);
+        std::vector<T> rotationMatBlock(vectorsBlockSize * N, T(0.0));
         std::vector<T> rotatedVectorsMatBlock(numberTopVectors * dofsBlockSize,
-                                              0.0);
+                                              T(0.0));
 
         if (dftParameters::verbosity >= 4)
           dftUtils::printCurrentMemoryUsage(mpiComm,
@@ -1108,11 +1033,11 @@ namespace dftfe
                       bandGroupLowHighPlusOneIndices[2 * bandGroupTaskId])
                   {
                     const char transA = 'N', transB = 'N';
-                    const T    scalarCoeffAlpha = 1.0, scalarCoeffBeta = 0.0;
+                    const T scalarCoeffAlpha = T(1.0), scalarCoeffBeta = T(0.0);
 
                     std::fill(rotationMatBlock.begin(),
                               rotationMatBlock.end(),
-                              0.);
+                              T(0.));
 
                     // Extract QBVec from parallel ScaLAPACK matrix Q
                     if (QMatTranspose)
@@ -1168,19 +1093,19 @@ namespace dftfe
 
                     if (BDof != 0)
                       {
-                        dgemm_(&transA,
-                               &transB,
-                               &BVec,
-                               &BDof,
-                               &N,
-                               &scalarCoeffAlpha,
-                               &rotationMatBlock[0],
-                               &BVec,
-                               X + idof * N,
-                               &N,
-                               &scalarCoeffBeta,
-                               &rotatedVectorsMatBlock[0] + jvec,
-                               &numberTopVectors);
+                        xgemm(&transA,
+                              &transB,
+                              &BVec,
+                              &BDof,
+                              &N,
+                              &scalarCoeffAlpha,
+                              &rotationMatBlock[0],
+                              &BVec,
+                              X + idof * N,
+                              &N,
+                              &scalarCoeffBeta,
+                              &rotatedVectorsMatBlock[0] + jvec,
+                              &numberTopVectors);
                       }
 
                   } // band parallelization
@@ -1215,26 +1140,22 @@ namespace dftfe
                               interBandGroupComm);
               }
           }
-#endif
       }
 
-
+      template <typename T, typename TLowPrec>
       void
       subspaceRotationSpectrumSplitMixedPrec(
-        const dataTypes::number *X,
-        dataTypes::number *      Y,
-        const unsigned int       subspaceVectorsArrayLocalSize,
-        const unsigned int       N,
+        const T *          X,
+        T *                Y,
+        const unsigned int subspaceVectorsArrayLocalSize,
+        const unsigned int N,
         const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
         const unsigned int                               numberTopVectors,
         const MPI_Comm &                                 interBandGroupComm,
         const MPI_Comm &                                 mpiComm,
-        const dftfe::ScaLAPACKMatrix<dataTypes::number> &QMat,
+        const dftfe::ScaLAPACKMatrix<T> &                QMat,
         const bool                                       QMatTranspose)
       {
-#ifdef USE_COMPLEX
-        AssertThrow(false, dftUtils::ExcNotImplementedYet());
-#else
         const unsigned int numLocalDofs = subspaceVectorsArrayLocalSize / N;
 
         const unsigned int maxNumLocalDofs =
@@ -1261,21 +1182,19 @@ namespace dftfe
         const unsigned int dofsBlockSize =
           std::min(maxNumLocalDofs, dftParameters::subspaceRotDofsBlockSize);
 
-        const unsigned int             Ncore = N - numberTopVectors;
-        std::vector<dataTypes::number> rotationMatTopCompBlock(
-          vectorsBlockSize * numberTopVectors, 0.0);
-        std::vector<dataTypes::number> rotatedVectorsMatBlock(numberTopVectors *
-                                                                dofsBlockSize,
-                                                              0.0);
+        const unsigned int Ncore = N - numberTopVectors;
+        std::vector<T>     rotationMatTopCompBlock(vectorsBlockSize *
+                                                 numberTopVectors,
+                                               T(0.0));
+        std::vector<T> rotatedVectorsMatBlock(numberTopVectors * dofsBlockSize,
+                                              T(0.0));
 
-        std::vector<dataTypes::numberLowPrec> rotationMatCoreCompBlock(
-          vectorsBlockSize * Ncore, 0.0);
-        std::vector<dataTypes::numberLowPrec>
-          rotatedVectorsMatCoreContrBlockTemp(vectorsBlockSize * dofsBlockSize,
-                                              0.0);
+        std::vector<TLowPrec> rotationMatCoreCompBlock(vectorsBlockSize * Ncore,
+                                                       TLowPrec(0.0));
+        std::vector<TLowPrec> rotatedVectorsMatCoreContrBlockTemp(
+          vectorsBlockSize * dofsBlockSize, TLowPrec(0.0));
 
-        std::vector<dataTypes::numberLowPrec> XSinglePrec(
-          X, X + subspaceVectorsArrayLocalSize);
+        std::vector<TLowPrec> XSinglePrec(X, X + subspaceVectorsArrayLocalSize);
         if (dftParameters::verbosity >= 4)
           dftUtils::printCurrentMemoryUsage(mpiComm,
                                             "Inside Blocked susbpace rotation");
@@ -1290,7 +1209,7 @@ namespace dftfe
 
             std::fill(rotatedVectorsMatBlock.begin(),
                       rotatedVectorsMatBlock.end(),
-                      0.);
+                      T(0.));
             for (unsigned int jvec = 0; jvec < numberTopVectors;
                  jvec += vectorsBlockSize)
               {
@@ -1308,20 +1227,17 @@ namespace dftfe
                     (jvec + BVec) >
                       bandGroupLowHighPlusOneIndices[2 * bandGroupTaskId])
                   {
-                    const char              transA = 'N', transB = 'N';
-                    const dataTypes::number scalarCoeffAlpha = 1.0,
-                                            scalarCoeffBeta  = 0.0;
-                    const dataTypes::numberLowPrec scalarCoeffAlphaSinglePrec =
-                                                     1.0,
-                                                   scalarCoeffBetaSinglePrec =
-                                                     0.0;
+                    const char transA = 'N', transB = 'N';
+                    const T scalarCoeffAlpha = T(1.0), scalarCoeffBeta = T(0.0);
+                    const TLowPrec scalarCoeffAlphaSinglePrec = TLowPrec(1.0),
+                                   scalarCoeffBetaSinglePrec  = TLowPrec(0.0);
 
                     std::fill(rotationMatCoreCompBlock.begin(),
                               rotationMatCoreCompBlock.end(),
-                              0.);
+                              TLowPrec(0.));
                     std::fill(rotationMatTopCompBlock.begin(),
                               rotationMatTopCompBlock.end(),
-                              0.);
+                              T(0.));
 
                     // Extract QBVec from parallel ScaLAPACK matrix Q
                     if (QMatTranspose)
@@ -1341,7 +1257,7 @@ namespace dftfe
                                       globalToLocalColumnIdMap.find(j + jvec);
                                     if (it != globalToLocalColumnIdMap.end())
                                       {
-                                        const dataTypes::number val =
+                                        const T val =
                                           QMat.local_el(localRowId, it->second);
                                         if (i < Ncore)
                                           rotationMatCoreCompBlock[i * BVec +
@@ -1370,7 +1286,7 @@ namespace dftfe
                                       globalToLocalRowIdMap.find(j + jvec);
                                     if (it != globalToLocalRowIdMap.end())
                                       {
-                                        const dataTypes::number val =
+                                        const T val =
                                           QMat.local_el(it->second,
                                                         localColumnId);
                                         if (i < Ncore)
@@ -1404,33 +1320,35 @@ namespace dftfe
 
                     if (BDof != 0)
                       {
-                        sgemm_(&transA,
-                               &transB,
-                               &BVec,
-                               &BDof,
-                               &Ncore,
-                               &scalarCoeffAlphaSinglePrec,
-                               &rotationMatCoreCompBlock[0],
-                               &BVec,
-                               &XSinglePrec[0] + idof * N,
-                               &N,
-                               &scalarCoeffBetaSinglePrec,
-                               &rotatedVectorsMatCoreContrBlockTemp[0],
-                               &BVec);
+                        // single precision
+                        xgemm(&transA,
+                              &transB,
+                              &BVec,
+                              &BDof,
+                              &Ncore,
+                              &scalarCoeffAlphaSinglePrec,
+                              &rotationMatCoreCompBlock[0],
+                              &BVec,
+                              &XSinglePrec[0] + idof * N,
+                              &N,
+                              &scalarCoeffBetaSinglePrec,
+                              &rotatedVectorsMatCoreContrBlockTemp[0],
+                              &BVec);
 
-                        dgemm_(&transA,
-                               &transB,
-                               &BVec,
-                               &BDof,
-                               &numberTopVectors,
-                               &scalarCoeffAlpha,
-                               &rotationMatTopCompBlock[0],
-                               &BVec,
-                               X + idof * N + Ncore,
-                               &N,
-                               &scalarCoeffBeta,
-                               &rotatedVectorsMatBlock[0] + jvec,
-                               &numberTopVectors);
+                        // double precision
+                        xgemm(&transA,
+                              &transB,
+                              &BVec,
+                              &BDof,
+                              &numberTopVectors,
+                              &scalarCoeffAlpha,
+                              &rotationMatTopCompBlock[0],
+                              &BVec,
+                              X + idof * N + Ncore,
+                              &N,
+                              &scalarCoeffBeta,
+                              &rotatedVectorsMatBlock[0] + jvec,
+                              &numberTopVectors);
 
                         for (unsigned int i = 0; i < BDof; ++i)
                           for (unsigned int j = 0; j < BVec; ++j)
@@ -1455,8 +1373,7 @@ namespace dftfe
         if (numberBandGroups > 1)
           {
             const unsigned int blockSize =
-              dftParameters::mpiAllReduceMessageBlockSizeMB * 1e+6 /
-              sizeof(dataTypes::number);
+              dftParameters::mpiAllReduceMessageBlockSizeMB * 1e+6 / sizeof(T);
             MPI_Barrier(interBandGroupComm);
             for (unsigned int i = 0; i < numberTopVectors * numLocalDofs;
                  i += blockSize)
@@ -1472,24 +1389,21 @@ namespace dftfe
                               interBandGroupComm);
               }
           }
-#endif
       }
 
+      template <typename T, typename TLowPrec>
       void
       subspaceRotationMixedPrec(
-        dataTypes::number *subspaceVectorsArray,
+        T *                subspaceVectorsArray,
         const unsigned int subspaceVectorsArrayLocalSize,
         const unsigned int N,
         const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
         const MPI_Comm &                                 interBandGroupComm,
         const MPI_Comm &                                 mpiComm,
-        const dftfe::ScaLAPACKMatrix<dataTypes::number> &rotationMatPar,
+        const dftfe::ScaLAPACKMatrix<T> &                rotationMatPar,
         const bool                                       rotationMatTranspose,
         const bool                                       doCommAfterBandParal)
       {
-#ifdef USE_COMPLEX
-        AssertThrow(false, dftUtils::ExcNotImplementedYet());
-#else
         const unsigned int numLocalDofs = subspaceVectorsArrayLocalSize / N;
 
         const unsigned int maxNumLocalDofs =
@@ -1542,15 +1456,16 @@ namespace dftfe
         const unsigned int dofsBlockSize =
           std::min(maxNumLocalDofs, dftParameters::subspaceRotDofsBlockSize);
 
-        std::vector<dataTypes::numberLowPrec> rotationMatBlock(
-          vectorsBlockSize * N, 0.0);
-        std::vector<dataTypes::numberLowPrec> rotatedVectorsMatBlockTemp(
-          vectorsBlockSize * dofsBlockSize, 0.0);
+        std::vector<TLowPrec> rotationMatBlock(vectorsBlockSize * N,
+                                               TLowPrec(0.0));
+        std::vector<TLowPrec> rotatedVectorsMatBlockTemp(vectorsBlockSize *
+                                                           dofsBlockSize,
+                                                         TLowPrec(0.0));
 
-        std::vector<dataTypes::numberLowPrec> subspaceVectorsArraySinglePrec(
+        std::vector<TLowPrec> subspaceVectorsArraySinglePrec(
           subspaceVectorsArray,
           subspaceVectorsArray + subspaceVectorsArrayLocalSize);
-        std::vector<dataTypes::number> diagValuesBlock(vectorsBlockSize, 0.0);
+        std::vector<T> diagValuesBlock(vectorsBlockSize, T(0.0));
         if (dftParameters::verbosity >= 4)
           dftUtils::printCurrentMemoryUsage(mpiComm,
                                             "Inside Blocked susbpace rotation");
@@ -1586,16 +1501,16 @@ namespace dftfe
                       startIndexBandParal = jvec;
                     numVectorsBandParal = jvec + BVec - startIndexBandParal;
 
-                    const char                     transA = 'N', transB = 'N';
-                    const dataTypes::numberLowPrec scalarCoeffAlpha = 1.0,
-                                                   scalarCoeffBeta  = 0.0;
+                    const char     transA = 'N', transB = 'N';
+                    const TLowPrec scalarCoeffAlpha = TLowPrec(1.0),
+                                   scalarCoeffBeta  = TLowPrec(0.0);
 
                     std::fill(rotationMatBlock.begin(),
                               rotationMatBlock.end(),
-                              0.);
+                              TLowPrec(0.));
                     std::fill(diagValuesBlock.begin(),
                               diagValuesBlock.end(),
-                              0.);
+                              T(0.));
                     // Extract QBVec from parallel ScaLAPACK matrix Q
                     if (rotationMatTranspose)
                       {
@@ -1627,7 +1542,7 @@ namespace dftfe
                                     if (it != globalToLocalColumnIdMap.end())
                                       {
                                         rotationMatBlock[i * BVec + i - jvec] =
-                                          0.0;
+                                          TLowPrec(0.0);
                                         diagValuesBlock[i - jvec] =
                                           rotationMatPar.local_el(localRowId,
                                                                   it->second);
@@ -1666,7 +1581,7 @@ namespace dftfe
                                         globalToLocalRowIdMap.end())
                                       {
                                         rotationMatBlock[i * BVec + i - jvec] =
-                                          0.0;
+                                          TLowPrec(0.0);
                                         diagValuesBlock[i - jvec] =
                                           rotationMatPar.local_el(
                                             it->second, localColumnId);
@@ -1692,27 +1607,28 @@ namespace dftfe
 
                     if (BDof != 0)
                       {
-                        sgemm_(&transA,
-                               &transB,
-                               &BVec,
-                               &BDof,
-                               &D,
-                               &scalarCoeffAlpha,
-                               &rotationMatBlock[0],
-                               &BVec,
-                               &subspaceVectorsArraySinglePrec[0] + idof * N,
-                               &N,
-                               &scalarCoeffBeta,
-                               &rotatedVectorsMatBlockTemp[0],
-                               &BVec);
+                        xgemm(&transA,
+                              &transB,
+                              &BVec,
+                              &BDof,
+                              &D,
+                              &scalarCoeffAlpha,
+                              &rotationMatBlock[0],
+                              &BVec,
+                              &subspaceVectorsArraySinglePrec[0] + idof * N,
+                              &N,
+                              &scalarCoeffBeta,
+                              &rotatedVectorsMatBlockTemp[0],
+                              &BVec);
 
                         for (unsigned int i = 0; i < BDof; ++i)
                           for (unsigned int j = 0; j < BVec; ++j)
                             *(subspaceVectorsArray + N * (idof + i) + j +
-                              jvec) = *(subspaceVectorsArray + N * (idof + i) +
-                                        j + jvec) *
-                                        diagValuesBlock[j] +
-                                      rotatedVectorsMatBlockTemp[i * BVec + j];
+                              jvec) =
+                              *(subspaceVectorsArray + N * (idof + i) + j +
+                                jvec) *
+                                diagValuesBlock[j] +
+                              T(rotatedVectorsMatBlockTemp[i * BVec + j]);
                       }
 
                   } // band parallelization
@@ -1721,7 +1637,7 @@ namespace dftfe
                     for (unsigned int i = 0; i < BDof; ++i)
                       for (unsigned int j = 0; j < BVec; ++j)
                         *(subspaceVectorsArray + N * (idof + i) + j + jvec) =
-                          0.0;
+                          T(0.0);
                   }
               } // block loop over vectors
           }     // block loop over dofs
@@ -1733,7 +1649,7 @@ namespace dftfe
                 MPI_Barrier(interBandGroupComm);
                 const unsigned int blockSize =
                   dftParameters::mpiAllReduceMessageBlockSizeMB * 1e+6 /
-                  sizeof(double);
+                  sizeof(T);
 
                 for (unsigned int i = 0; i < N * numLocalDofs; i += blockSize)
                   {
@@ -1752,10 +1668,11 @@ namespace dftfe
               {
                 MPI_Barrier(interBandGroupComm);
 
-                std::vector<dataTypes::number> eigenVectorsBandGroup(
-                  numVectorsBandParal * numLocalDofs, 0);
-                std::vector<dataTypes::number> eigenVectorsBandGroupTransposed(
-                  numVectorsBandParal * numLocalDofs, 0);
+                std::vector<T> eigenVectorsBandGroup(numVectorsBandParal *
+                                                       numLocalDofs,
+                                                     T(0));
+                std::vector<T> eigenVectorsBandGroupTransposed(
+                  numVectorsBandParal * numLocalDofs, T(0));
                 for (unsigned int iNode = 0; iNode < numLocalDofs; ++iNode)
                   for (unsigned int iWave = 0; iWave < numVectorsBandParal;
                        ++iWave)
@@ -1793,8 +1710,7 @@ namespace dftfe
                               MPI_INT,
                               interBandGroupComm);
 
-                std::vector<dataTypes::number> eigenVectorsTransposed(
-                  N * numLocalDofs, 0);
+                std::vector<T> eigenVectorsTransposed(N * numLocalDofs, 0);
                 MPI_Allgatherv(
                   &eigenVectorsBandGroupTransposed[0],
                   numVectorsBandParal * numLocalDofs,
@@ -1811,24 +1727,21 @@ namespace dftfe
                       eigenVectorsTransposed[iWave * numLocalDofs + iNode];
               }
           }
-#endif
       }
 
+      template <typename T, typename TLowPrec>
       void
       subspaceRotationPGSMixedPrec(
-        dataTypes::number *subspaceVectorsArray,
+        T *                subspaceVectorsArray,
         const unsigned int subspaceVectorsArrayLocalSize,
         const unsigned int N,
         const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
         const MPI_Comm &                                 interBandGroupComm,
         const MPI_Comm &                                 mpiComm,
-        const dftfe::ScaLAPACKMatrix<dataTypes::number> &rotationMatPar,
+        const dftfe::ScaLAPACKMatrix<T> &                rotationMatPar,
         const bool                                       rotationMatTranspose,
         const bool                                       doCommAfterBandParal)
       {
-#ifdef USE_COMPLEX
-        AssertThrow(false, dftUtils::ExcNotImplementedYet());
-#else
         const unsigned int numLocalDofs = subspaceVectorsArrayLocalSize / N;
 
         const unsigned int maxNumLocalDofs =
@@ -1881,15 +1794,16 @@ namespace dftfe
         const unsigned int dofsBlockSize =
           std::min(maxNumLocalDofs, dftParameters::subspaceRotDofsBlockSize);
 
-        std::vector<dataTypes::numberLowPrec> rotationMatBlock(
-          vectorsBlockSize * N, 0.0);
-        std::vector<dataTypes::numberLowPrec> rotatedVectorsMatBlockTemp(
-          vectorsBlockSize * dofsBlockSize, 0.0);
+        std::vector<TLowPrec> rotationMatBlock(vectorsBlockSize * N,
+                                               TLowPrec(0.0));
+        std::vector<TLowPrec> rotatedVectorsMatBlockTemp(vectorsBlockSize *
+                                                           dofsBlockSize,
+                                                         TLowPrec(0.0));
 
-        std::vector<dataTypes::numberLowPrec> subspaceVectorsArraySinglePrec(
+        std::vector<TLowPrec> subspaceVectorsArraySinglePrec(
           subspaceVectorsArray,
           subspaceVectorsArray + subspaceVectorsArrayLocalSize);
-        std::vector<dataTypes::number> diagValuesBlock(vectorsBlockSize, 0.0);
+        std::vector<T> diagValuesBlock(vectorsBlockSize, T(0.0));
         if (dftParameters::verbosity >= 4)
           dftUtils::printCurrentMemoryUsage(mpiComm,
                                             "Inside Blocked susbpace rotation");
@@ -1925,16 +1839,16 @@ namespace dftfe
                       startIndexBandParal = jvec;
                     numVectorsBandParal = jvec + BVec - startIndexBandParal;
 
-                    const char                     transA = 'N', transB = 'N';
-                    const dataTypes::numberLowPrec scalarCoeffAlpha = 1.0,
-                                                   scalarCoeffBeta  = 0.0;
+                    const char     transA = 'N', transB = 'N';
+                    const TLowPrec scalarCoeffAlpha = TLowPrec(1.0),
+                                   scalarCoeffBeta  = TLowPrec(0.0);
 
                     std::fill(rotationMatBlock.begin(),
                               rotationMatBlock.end(),
-                              0.);
+                              TLowPrec(0.));
                     std::fill(diagValuesBlock.begin(),
                               diagValuesBlock.end(),
-                              0.);
+                              T(0.));
                     // Extract QBVec from parallel ScaLAPACK matrix Q
                     if (rotationMatTranspose)
                       {
@@ -1966,7 +1880,7 @@ namespace dftfe
                                     if (it != globalToLocalColumnIdMap.end())
                                       {
                                         rotationMatBlock[i * BVec + i - jvec] =
-                                          0.0;
+                                          TLowPrec(0.0);
                                         diagValuesBlock[i - jvec] =
                                           rotationMatPar.local_el(localRowId,
                                                                   it->second);
@@ -2005,7 +1919,7 @@ namespace dftfe
                                         globalToLocalRowIdMap.end())
                                       {
                                         rotationMatBlock[i * BVec + i - jvec] =
-                                          0.0;
+                                          TLowPrec(0.0);
                                         diagValuesBlock[i - jvec] =
                                           rotationMatPar.local_el(
                                             it->second, localColumnId);
@@ -2031,27 +1945,28 @@ namespace dftfe
 
                     if (BDof != 0)
                       {
-                        sgemm_(&transA,
-                               &transB,
-                               &BVec,
-                               &BDof,
-                               &D,
-                               &scalarCoeffAlpha,
-                               &rotationMatBlock[0],
-                               &BVec,
-                               &subspaceVectorsArraySinglePrec[0] + idof * N,
-                               &N,
-                               &scalarCoeffBeta,
-                               &rotatedVectorsMatBlockTemp[0],
-                               &BVec);
+                        xgemm(&transA,
+                              &transB,
+                              &BVec,
+                              &BDof,
+                              &D,
+                              &scalarCoeffAlpha,
+                              &rotationMatBlock[0],
+                              &BVec,
+                              &subspaceVectorsArraySinglePrec[0] + idof * N,
+                              &N,
+                              &scalarCoeffBeta,
+                              &rotatedVectorsMatBlockTemp[0],
+                              &BVec);
 
                         for (unsigned int i = 0; i < BDof; ++i)
                           for (unsigned int j = 0; j < BVec; ++j)
                             *(subspaceVectorsArray + N * (idof + i) + j +
-                              jvec) = *(subspaceVectorsArray + N * (idof + i) +
-                                        j + jvec) *
-                                        diagValuesBlock[j] +
-                                      rotatedVectorsMatBlockTemp[i * BVec + j];
+                              jvec) =
+                              *(subspaceVectorsArray + N * (idof + i) + j +
+                                jvec) *
+                                diagValuesBlock[j] +
+                              T(rotatedVectorsMatBlockTemp[i * BVec + j]);
                       }
 
                   } // band parallelization
@@ -2060,7 +1975,7 @@ namespace dftfe
                     for (unsigned int i = 0; i < BDof; ++i)
                       for (unsigned int j = 0; j < BVec; ++j)
                         *(subspaceVectorsArray + N * (idof + i) + j + jvec) =
-                          0.0;
+                          T(0.0);
                   }
               } // block loop over vectors
           }     // block loop over dofs
@@ -2072,7 +1987,7 @@ namespace dftfe
                 MPI_Barrier(interBandGroupComm);
                 const unsigned int blockSize =
                   dftParameters::mpiAllReduceMessageBlockSizeMB * 1e+6 /
-                  sizeof(double);
+                  sizeof(T);
 
                 for (unsigned int i = 0; i < N * numLocalDofs; i += blockSize)
                   {
@@ -2091,10 +2006,11 @@ namespace dftfe
               {
                 MPI_Barrier(interBandGroupComm);
 
-                std::vector<dataTypes::number> eigenVectorsBandGroup(
-                  numVectorsBandParal * numLocalDofs, 0);
-                std::vector<dataTypes::number> eigenVectorsBandGroupTransposed(
-                  numVectorsBandParal * numLocalDofs, 0);
+                std::vector<T> eigenVectorsBandGroup(numVectorsBandParal *
+                                                       numLocalDofs,
+                                                     T(0));
+                std::vector<T> eigenVectorsBandGroupTransposed(
+                  numVectorsBandParal * numLocalDofs, T(0));
                 for (unsigned int iNode = 0; iNode < numLocalDofs; ++iNode)
                   for (unsigned int iWave = 0; iWave < numVectorsBandParal;
                        ++iWave)
@@ -2132,8 +2048,7 @@ namespace dftfe
                               MPI_INT,
                               interBandGroupComm);
 
-                std::vector<dataTypes::number> eigenVectorsTransposed(
-                  N * numLocalDofs, 0);
+                std::vector<T> eigenVectorsTransposed(N * numLocalDofs, 0);
                 MPI_Allgatherv(
                   &eigenVectorsBandGroupTransposed[0],
                   numVectorsBandParal * numLocalDofs,
@@ -2150,70 +2065,228 @@ namespace dftfe
                       eigenVectorsTransposed[iWave * numLocalDofs + iNode];
               }
           }
-#endif
       }
 
       template void
       createGlobalToLocalIdMapsScaLAPACKMat(
         const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
-        const dftfe::ScaLAPACKMatrix<dataTypes::number> &mat,
+        const dftfe::ScaLAPACKMatrix<double> &           mat,
         std::map<unsigned int, unsigned int> &           globalToLocalRowIdMap,
         std::map<unsigned int, unsigned int> &globalToLocalColumnIdMap);
 
       template void
+      createGlobalToLocalIdMapsScaLAPACKMat(
+        const std::shared_ptr<const dftfe::ProcessGrid> &   processGrid,
+        const dftfe::ScaLAPACKMatrix<std::complex<double>> &mat,
+        std::map<unsigned int, unsigned int> &globalToLocalRowIdMap,
+        std::map<unsigned int, unsigned int> &globalToLocalColumnIdMap);
+
+      template void
       fillParallelOverlapMatrix(
-        const dataTypes::number *                        X,
+        const double *                                   X,
         const unsigned int                               XLocalSize,
         const unsigned int                               numberVectors,
         const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
         const MPI_Comm &                                 interBandGroupComm,
         const MPI_Comm &                                 mpiComm,
-        dftfe::ScaLAPACKMatrix<dataTypes::number> &      overlapMatPar);
+        dftfe::ScaLAPACKMatrix<double> &                 overlapMatPar);
+
+      template void
+      fillParallelOverlapMatrix(
+        const std::complex<double> *                     X,
+        const unsigned int                               XLocalSize,
+        const unsigned int                               numberVectors,
+        const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
+        const MPI_Comm &                                 interBandGroupComm,
+        const MPI_Comm &                                 mpiComm,
+        dftfe::ScaLAPACKMatrix<std::complex<double>> &   overlapMatPar);
+
+
+      template void
+      fillParallelOverlapMatrixMixedPrec<double, float>(
+        const double *                                   X,
+        const unsigned int                               XLocalSize,
+        const unsigned int                               numberVectors,
+        const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
+        const MPI_Comm &                                 interBandGroupComm,
+        const MPI_Comm &                                 mpiComm,
+        dftfe::ScaLAPACKMatrix<double> &                 overlapMatPar);
+
+      template void
+      fillParallelOverlapMatrixMixedPrec<std::complex<double>,
+                                         std::complex<float>>(
+        const std::complex<double> *                     X,
+        const unsigned int                               XLocalSize,
+        const unsigned int                               numberVectors,
+        const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
+        const MPI_Comm &                                 interBandGroupComm,
+        const MPI_Comm &                                 mpiComm,
+        dftfe::ScaLAPACKMatrix<std::complex<double>> &   overlapMatPar);
 
       template void
       subspaceRotation(
-        dataTypes::number *subspaceVectorsArray,
+        double *           subspaceVectorsArray,
         const unsigned int subspaceVectorsArrayLocalSize,
         const unsigned int N,
         const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
         const MPI_Comm &                                 interBandGroupComm,
         const MPI_Comm &                                 mpiComm,
-        const dftfe::ScaLAPACKMatrix<dataTypes::number> &rotationMatPar,
+        const dftfe::ScaLAPACKMatrix<double> &           rotationMatPar,
         const bool                                       rotationMatTranpose,
         const bool                                       isRotationMatLowerTria,
         const bool                                       doCommAfterBandParal);
+
+      template void
+      subspaceRotation(
+        std::complex<double> *subspaceVectorsArray,
+        const unsigned int    subspaceVectorsArrayLocalSize,
+        const unsigned int    N,
+        const std::shared_ptr<const dftfe::ProcessGrid> &   processGrid,
+        const MPI_Comm &                                    interBandGroupComm,
+        const MPI_Comm &                                    mpiComm,
+        const dftfe::ScaLAPACKMatrix<std::complex<double>> &rotationMatPar,
+        const bool                                          rotationMatTranpose,
+        const bool isRotationMatLowerTria,
+        const bool doCommAfterBandParal);
 
 
       template void
       scaleScaLAPACKMat(
         const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
-        dftfe::ScaLAPACKMatrix<dataTypes::number> &      mat,
-        const dataTypes::number                          scalar);
+        dftfe::ScaLAPACKMatrix<double> &                 mat,
+        const double                                     scalar);
+
+      template void
+      scaleScaLAPACKMat(
+        const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
+        dftfe::ScaLAPACKMatrix<std::complex<double>> &   mat,
+        const std::complex<double>                       scalar);
 
       template void
       sumAcrossInterCommScaLAPACKMat(
         const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
-        dftfe::ScaLAPACKMatrix<dataTypes::number> &      mat,
+        dftfe::ScaLAPACKMatrix<double> &                 mat,
+        const MPI_Comm &                                 interComm);
+
+      template void
+      sumAcrossInterCommScaLAPACKMat(
+        const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
+        dftfe::ScaLAPACKMatrix<std::complex<double>> &   mat,
         const MPI_Comm &                                 interComm);
 
       template void
       subspaceRotationSpectrumSplit(
-        const dataTypes::number *X,
-        dataTypes::number *      Y,
-        const unsigned int       subspaceVectorsArrayLocalSize,
-        const unsigned int       N,
+        const double *     X,
+        double *           Y,
+        const unsigned int subspaceVectorsArrayLocalSize,
+        const unsigned int N,
         const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
         const unsigned int                               numberTopVectors,
         const MPI_Comm &                                 interBandGroupComm,
         const MPI_Comm &                                 mpiComm,
-        const dftfe::ScaLAPACKMatrix<dataTypes::number> &QMat,
+        const dftfe::ScaLAPACKMatrix<double> &           QMat,
         const bool                                       QMatTranspose);
 
+      template void
+      subspaceRotationSpectrumSplit(
+        const std::complex<double> *X,
+        std::complex<double> *      Y,
+        const unsigned int          subspaceVectorsArrayLocalSize,
+        const unsigned int          N,
+        const std::shared_ptr<const dftfe::ProcessGrid> &   processGrid,
+        const unsigned int                                  numberTopVectors,
+        const MPI_Comm &                                    interBandGroupComm,
+        const MPI_Comm &                                    mpiComm,
+        const dftfe::ScaLAPACKMatrix<std::complex<double>> &QMat,
+        const bool                                          QMatTranspose);
+
+
+      template void
+      subspaceRotationSpectrumSplitMixedPrec<double, float>(
+        const double *     X,
+        double *           Y,
+        const unsigned int subspaceVectorsArrayLocalSize,
+        const unsigned int N,
+        const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
+        const unsigned int                               numberTopVectors,
+        const MPI_Comm &                                 interBandGroupComm,
+        const MPI_Comm &                                 mpiComm,
+        const dftfe::ScaLAPACKMatrix<double> &           QMat,
+        const bool                                       QMatTranspose);
+
+      template void
+      subspaceRotationSpectrumSplitMixedPrec<std::complex<double>,
+                                             std::complex<float>>(
+        const std::complex<double> *X,
+        std::complex<double> *      Y,
+        const unsigned int          subspaceVectorsArrayLocalSize,
+        const unsigned int          N,
+        const std::shared_ptr<const dftfe::ProcessGrid> &   processGrid,
+        const unsigned int                                  numberTopVectors,
+        const MPI_Comm &                                    interBandGroupComm,
+        const MPI_Comm &                                    mpiComm,
+        const dftfe::ScaLAPACKMatrix<std::complex<double>> &QMat,
+        const bool                                          QMatTranspose);
+
+      template void
+      subspaceRotationMixedPrec<double, float>(
+        double *           subspaceVectorsArray,
+        const unsigned int subspaceVectorsArrayLocalSize,
+        const unsigned int N,
+        const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
+        const MPI_Comm &                                 interBandGroupComm,
+        const MPI_Comm &                                 mpiComm,
+        const dftfe::ScaLAPACKMatrix<double> &           rotationMatPar,
+        const bool                                       rotationMatTranspose,
+        const bool                                       doCommAfterBandParal);
+
+      template void
+      subspaceRotationMixedPrec<std::complex<double>, std::complex<float>>(
+        std::complex<double> *subspaceVectorsArray,
+        const unsigned int    subspaceVectorsArrayLocalSize,
+        const unsigned int    N,
+        const std::shared_ptr<const dftfe::ProcessGrid> &   processGrid,
+        const MPI_Comm &                                    interBandGroupComm,
+        const MPI_Comm &                                    mpiComm,
+        const dftfe::ScaLAPACKMatrix<std::complex<double>> &rotationMatPar,
+        const bool rotationMatTranspose,
+        const bool doCommAfterBandParal);
+
+      template void
+      subspaceRotationPGSMixedPrec<double, float>(
+        double *           subspaceVectorsArray,
+        const unsigned int subspaceVectorsArrayLocalSize,
+        const unsigned int N,
+        const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
+        const MPI_Comm &                                 interBandGroupComm,
+        const MPI_Comm &                                 mpiComm,
+        const dftfe::ScaLAPACKMatrix<double> &           rotationMatPar,
+        const bool                                       rotationMatTranspose,
+        const bool                                       doCommAfterBandParal);
+
+      template void
+      subspaceRotationPGSMixedPrec<std::complex<double>, std::complex<float>>(
+        std::complex<double> *subspaceVectorsArray,
+        const unsigned int    subspaceVectorsArrayLocalSize,
+        const unsigned int    N,
+        const std::shared_ptr<const dftfe::ProcessGrid> &   processGrid,
+        const MPI_Comm &                                    interBandGroupComm,
+        const MPI_Comm &                                    mpiComm,
+        const dftfe::ScaLAPACKMatrix<std::complex<double>> &rotationMatPar,
+        const bool rotationMatTranspose,
+        const bool doCommAfterBandParal);
 
       template void
       broadcastAcrossInterCommScaLAPACKMat(
         const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
-        dftfe::ScaLAPACKMatrix<dataTypes::number> &      mat,
+        dftfe::ScaLAPACKMatrix<double> &                 mat,
+        const MPI_Comm &                                 interComm,
+        const unsigned int                               broadcastRoot);
+
+      template void
+      broadcastAcrossInterCommScaLAPACKMat(
+        const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
+        dftfe::ScaLAPACKMatrix<std::complex<double>> &   mat,
         const MPI_Comm &                                 interComm,
         const unsigned int                               broadcastRoot);
     } // namespace internal

@@ -714,13 +714,14 @@ namespace dftfe
       else
         {
           computing_timer.enter_section("Fill overlap matrix mixed prec");
-          internal::fillParallelOverlapMatrixMixedPrec(&X[0],
-                                                       X.size(),
-                                                       numberWaveFunctions,
-                                                       processGrid,
-                                                       interBandGroupComm,
-                                                       mpi_communicator,
-                                                       overlapMatPar);
+          internal::fillParallelOverlapMatrixMixedPrec<double, float>(
+            &X[0],
+            X.size(),
+            numberWaveFunctions,
+            processGrid,
+            interBandGroupComm,
+            mpi_communicator,
+            overlapMatPar);
           computing_timer.exit_section("Fill overlap matrix mixed prec");
         }
 
@@ -1005,15 +1006,15 @@ namespace dftfe
                                    false,
                                    false);
       else
-        internal::subspaceRotationMixedPrec(&X[0],
-                                            X.size(),
-                                            numberWaveFunctions,
-                                            processGrid,
-                                            interBandGroupComm,
-                                            mpi_communicator,
-                                            projHamPar,
-                                            true,
-                                            false);
+        internal::subspaceRotationMixedPrec<double, float>(&X[0],
+                                                           X.size(),
+                                                           numberWaveFunctions,
+                                                           processGrid,
+                                                           interBandGroupComm,
+                                                           mpi_communicator,
+                                                           projHamPar,
+                                                           true,
+                                                           false);
 
       if (!(dftParameters::useMixedPrecSubspaceRotRR && useMixedPrec))
         computing_timer.exit_section("X = X*L_{inv}^{T}*Q, RR step");
@@ -1344,13 +1345,14 @@ namespace dftfe
       else
         {
           computing_timer.enter_section("Fill overlap matrix mixed prec");
-          internal::fillParallelOverlapMatrixMixedPrec(&X[0],
-                                                       X.size(),
-                                                       numberWaveFunctions,
-                                                       processGrid,
-                                                       interBandGroupComm,
-                                                       mpiComm,
-                                                       overlapMatPar);
+          internal::fillParallelOverlapMatrixMixedPrec<double, float>(
+            &X[0],
+            X.size(),
+            numberWaveFunctions,
+            processGrid,
+            interBandGroupComm,
+            mpiComm,
+            overlapMatPar);
           computing_timer.exit_section("Fill overlap matrix mixed prec");
         }
 
@@ -1675,17 +1677,17 @@ namespace dftfe
           computing_timer.enter_section(
             "X_{fr}=X*(L^{-1}^{T}*Q_{fr}) mixed prec, RR step");
 
-          internal::subspaceRotationSpectrumSplitMixedPrec(&X[0],
-                                                           &Y[0],
-                                                           X.size(),
-                                                           numberWaveFunctions,
-                                                           processGrid,
-                                                           numberWaveFunctions -
-                                                             numberCoreStates,
-                                                           interBandGroupComm,
-                                                           mpiComm,
-                                                           projHamPar,
-                                                           true);
+          internal::subspaceRotationSpectrumSplitMixedPrec<double, float>(
+            &X[0],
+            &Y[0],
+            X.size(),
+            numberWaveFunctions,
+            processGrid,
+            numberWaveFunctions - numberCoreStates,
+            interBandGroupComm,
+            mpiComm,
+            projHamPar,
+            true);
 
           computing_timer.exit_section(
             "X_{fr}=X*(L^{-1}^{T}*Q_{fr}) mixed prec, RR step");
@@ -1734,7 +1736,7 @@ namespace dftfe
       else
         {
           computing_timer.enter_section("X=X*L^{-1}^{T} mixed prec, RR step");
-          internal::subspaceRotationPGSMixedPrec(
+          internal::subspaceRotationPGSMixedPrec<double, float>(
             &X[0],
             X.size(),
             numberWaveFunctions,
@@ -1975,17 +1977,17 @@ namespace dftfe
           computing_timer.enter_section(
             "Blocked subspace rotation mixed prec, RR step");
 
-          internal::subspaceRotationSpectrumSplitMixedPrec(&X[0],
-                                                           &Y[0],
-                                                           X.size(),
-                                                           numberWaveFunctions,
-                                                           processGrid,
-                                                           numberWaveFunctions -
-                                                             numberCoreStates,
-                                                           interBandGroupComm,
-                                                           mpi_communicator,
-                                                           projHamPar,
-                                                           true);
+          internal::subspaceRotationSpectrumSplitMixedPrec<double, float>(
+            &X[0],
+            &Y[0],
+            X.size(),
+            numberWaveFunctions,
+            processGrid,
+            numberWaveFunctions - numberCoreStates,
+            interBandGroupComm,
+            mpi_communicator,
+            projHamPar,
+            true);
 
           computing_timer.exit_section(
             "Blocked subspace rotation mixed prec, RR step");

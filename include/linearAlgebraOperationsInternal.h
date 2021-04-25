@@ -157,37 +157,16 @@ namespace dftfe
        * and also avoids creation of another full X memory.
        *
        */
+      template <typename T, typename TLowPrec>
       void
       fillParallelOverlapMatrixMixedPrec(
-        const dataTypes::number *                        X,
+        const T *                                        X,
         const unsigned int                               XLocalSize,
         const unsigned int                               numberVectors,
         const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
         const MPI_Comm &                                 interBandGroupComm,
         const MPI_Comm &                                 mpiComm,
-        dftfe::ScaLAPACKMatrix<dataTypes::number> &      overlapMatPar);
-
-
-      /** @brief Computes overlap matrix with finite-element mass matrix (Mass) evaluated exactly and Sc=X^{T}*Mass*Xc and stores in a parallel ScaLAPACK matrix.
-       * X^{T} is the subspaceVectorsArray stored in the column major format (N
-       * x M). Sc is the overlapMatPar.
-       *
-       * The overlap matrix computation and filling is done in a blocked
-       * approach which avoids creation of full serial overlap matrix memory,
-       * and also avoids creation of another full X memory.
-       *
-       */
-      void
-      fillParallelXtMXMixedPrec(
-        operatorDFTClass &                               operatorMatrix,
-        const dataTypes::number *                        X,
-        const unsigned int                               XLocalSize,
-        const unsigned int                               numberVectors,
-        const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
-        const MPI_Comm &                                 interBandGroupComm,
-        const MPI_Comm &                                 mpiComm,
-        dftfe::ScaLAPACKMatrix<dataTypes::number> &      overlapMatPar);
-
+        dftfe::ScaLAPACKMatrix<T> &                      overlapMatPar);
 
 
       /** @brief Computes X^{T}=Q*X^{T} inplace. X^{T} is the subspaceVectorsArray
@@ -222,15 +201,16 @@ namespace dftfe
        * subspaceVectorsArrayLocalSize=N*M
        *
        */
+      template <typename T, typename TLowPrec>
       void
       subspaceRotationMixedPrec(
-        dataTypes::number *subspaceVectorsArray,
+        T *                subspaceVectorsArray,
         const unsigned int subspaceVectorsArrayLocalSize,
         const unsigned int N,
         const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
         const MPI_Comm &                                 interBandGroupComm,
         const MPI_Comm &                                 mpiComm,
-        const dftfe::ScaLAPACKMatrix<dataTypes::number> &rotationMatPar,
+        const dftfe::ScaLAPACKMatrix<T> &                rotationMatPar,
         const bool rotationMatTranspose = false,
         const bool doCommAfterBandParal = true);
 
@@ -277,17 +257,18 @@ namespace dftfe
        * full X memory. subspaceVectorsArrayLocalSize=N*M
        *
        */
+      template <typename T, typename TLowPrec>
       void
       subspaceRotationSpectrumSplitMixedPrec(
-        const dataTypes::number *X,
-        dataTypes::number *      Y,
-        const unsigned int       subspaceVectorsArrayLocalSize,
-        const unsigned int       N,
+        const T *          X,
+        T *                Y,
+        const unsigned int subspaceVectorsArrayLocalSize,
+        const unsigned int N,
         const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
         const unsigned int                               numberTopVectors,
         const MPI_Comm &                                 interBandGroupComm,
         const MPI_Comm &                                 mpiComm,
-        const dftfe::ScaLAPACKMatrix<dataTypes::number> &QMat,
+        const dftfe::ScaLAPACKMatrix<T> &                QMat,
         const bool                                       QMatTranspose = false);
 
 
@@ -300,15 +281,16 @@ namespace dftfe
        * subspaceVectorsArrayLocalSize=N*M
        *
        */
+      template <typename T, typename TLowPrec>
       void
       subspaceRotationPGSMixedPrec(
-        dataTypes::number *subspaceVectorsArray,
+        T *                subspaceVectorsArray,
         const unsigned int subspaceVectorsArrayLocalSize,
         const unsigned int N,
         const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
         const MPI_Comm &                                 interBandGroupComm,
         const MPI_Comm &                                 mpiComm,
-        const dftfe::ScaLAPACKMatrix<dataTypes::number> &rotationMatPar,
+        const dftfe::ScaLAPACKMatrix<T> &                rotationMatPar,
         const bool rotationMatTranspose = false,
         const bool doCommAfterBandParal = true);
     } // namespace internal

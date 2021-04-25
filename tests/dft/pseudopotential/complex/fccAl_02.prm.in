@@ -86,6 +86,7 @@ subsection SCF parameters
      set CHEBYSHEV FILTER TOLERANCE=5e-4
      set ORTHOGONALIZATION TYPE=PGS
      set CHEBYSHEV POLYNOMIAL DEGREE=15
+     set RR GEP=false
   end
 end
 set H REFINED ELECTROSTATICS=false

@@ -64,10 +64,10 @@ namespace dftfe
            float *             x,
            const unsigned int *inc);
     void
-    zscal_(const unsigned int *  n,
-           std::complex<double> *alpha,
-           std::complex<double> *x,
-           const unsigned int *  inc);
+    zscal_(const unsigned int *        n,
+           const std::complex<double> *alpha,
+           std::complex<double> *      x,
+           const unsigned int *        inc);
     void
     zdscal_(const unsigned int *  n,
             const double *        alpha,
@@ -108,59 +108,6 @@ namespace dftfe
            const float *       beta,
            float *             C,
            const unsigned int *ldc);
-#  ifdef WITH_MKL
-    void
-    dgemm_batch_(const char *        transa_array,
-                 const char *        transb_array,
-                 const unsigned int *m_array,
-                 const unsigned int *n_array,
-                 const unsigned int *k_array,
-                 const double *      alpha_array,
-                 double **           a_array,
-                 const unsigned int *lda_array,
-                 const double **     b_array,
-                 const unsigned int *ldb_array,
-                 const double *      beta_array,
-                 double **           c_array,
-                 const unsigned int *ldc_array,
-                 const unsigned int *group_count,
-                 const unsigned int *group_size);
-    void
-    sgemm_batch_(const char *        transa_array,
-                 const char *        transb_array,
-                 const unsigned int *m_array,
-                 const unsigned int *n_array,
-                 const unsigned int *k_array,
-                 const float *       alpha_array,
-                 float **            a_array,
-                 const unsigned int *lda_array,
-                 const float **      b_array,
-                 const unsigned int *ldb_array,
-                 const float *       beta_array,
-                 float **            c_array,
-                 const unsigned int *ldc_array,
-                 const unsigned int *group_count,
-                 const unsigned int *group_size);
-    void
-    mkl_dimatcopy_(const char   ordering,
-                   const char   trans,
-                   unsigned int rows,
-                   unsigned int cols,
-                   const double alpha,
-                   double *     AB,
-                   unsigned int lda,
-                   unsigned int ldb);
-    void
-    mkl_domatcopy_(char          ordering,
-                   char          trans,
-                   unsigned int  rows,
-                   unsigned int  cols,
-                   const double  alpha,
-                   const double *A,
-                   unsigned int  lda,
-                   double *      B,
-                   unsigned int  ldb);
-#  endif
     void
     dsyevd_(const char *        jobz,
             const char *        uplo,
@@ -246,59 +193,6 @@ namespace dftfe
            const std::complex<float> *beta,
            std::complex<float> *      C,
            const unsigned int *       ldc);
-#  ifdef WITH_MKL
-    void
-    zgemm_batch_(const char *                 transa_array,
-                 const char *                 transb_array,
-                 const unsigned int *         m_array,
-                 const unsigned int *         n_array,
-                 const unsigned int *         k_array,
-                 const std::complex<double> * alpha_array,
-                 std::complex<double> **      a_array,
-                 const unsigned int *         lda_array,
-                 const std::complex<double> **b_array,
-                 const unsigned int *         ldb_array,
-                 const std::complex<double> * beta_array,
-                 std::complex<double> **      c_array,
-                 const unsigned int *         ldc_array,
-                 const unsigned int *         group_count,
-                 const unsigned int *         group_size);
-    void
-    cgemm_batch_(const char *                transa_array,
-                 const char *                transb_array,
-                 const unsigned int *        m_array,
-                 const unsigned int *        n_array,
-                 const unsigned int *        k_array,
-                 const std::complex<float> * alpha_array,
-                 std::complex<float> **      a_array,
-                 const unsigned int *        lda_array,
-                 const std::complex<float> **b_array,
-                 const unsigned int *        ldb_array,
-                 const std::complex<float> * beta_array,
-                 std::complex<float> **      c_array,
-                 const unsigned int *        ldc_array,
-                 const unsigned int *        group_count,
-                 const unsigned int *        group_size);
-    void
-    mkl_zimatcopy_(const char                 ordering,
-                   const char                 trans,
-                   unsigned int               rows,
-                   unsigned int               cols,
-                   const std::complex<double> alpha,
-                   std::complex<double> *     AB,
-                   unsigned int               lda,
-                   unsigned int               ldb);
-    void
-    mkl_zomatcopy_(char                        ordering,
-                   char                        trans,
-                   unsigned int                rows,
-                   unsigned int                cols,
-                   const std::complex<double>  alpha,
-                   const std::complex<double> *A,
-                   unsigned int                lda,
-                   std::complex<double> *      B,
-                   unsigned int                ldb);
-#  endif
     void
     zheevd_(const char *          jobz,
             const char *          uplo,
@@ -396,6 +290,98 @@ namespace dftfe
             int *                 info);
   }
 #endif
+
+  inline void
+  xgemm(const char *        transA,
+        const char *        transB,
+        const unsigned int *m,
+        const unsigned int *n,
+        const unsigned int *k,
+        const double *      alpha,
+        const double *      A,
+        const unsigned int *lda,
+        const double *      B,
+        const unsigned int *ldb,
+        const double *      beta,
+        double *            C,
+        const unsigned int *ldc)
+  {
+    dgemm_(transA, transB, m, n, k, alpha, A, lda, B, ldb, beta, C, ldc);
+  }
+
+  inline void
+  xgemm(const char *        transA,
+        const char *        transB,
+        const unsigned int *m,
+        const unsigned int *n,
+        const unsigned int *k,
+        const float *       alpha,
+        const float *       A,
+        const unsigned int *lda,
+        const float *       B,
+        const unsigned int *ldb,
+        const float *       beta,
+        float *             C,
+        const unsigned int *ldc)
+  {
+    sgemm_(transA, transB, m, n, k, alpha, A, lda, B, ldb, beta, C, ldc);
+  }
+
+  inline void
+  xgemm(const char *                transA,
+        const char *                transB,
+        const unsigned int *        m,
+        const unsigned int *        n,
+        const unsigned int *        k,
+        const std::complex<double> *alpha,
+        const std::complex<double> *A,
+        const unsigned int *        lda,
+        const std::complex<double> *B,
+        const unsigned int *        ldb,
+        const std::complex<double> *beta,
+        std::complex<double> *      C,
+        const unsigned int *        ldc)
+  {
+    zgemm_(transA, transB, m, n, k, alpha, A, lda, B, ldb, beta, C, ldc);
+  }
+
+  inline void
+  xgemm(const char *               transA,
+        const char *               transB,
+        const unsigned int *       m,
+        const unsigned int *       n,
+        const unsigned int *       k,
+        const std::complex<float> *alpha,
+        const std::complex<float> *A,
+        const unsigned int *       lda,
+        const std::complex<float> *B,
+        const unsigned int *       ldb,
+        const std::complex<float> *beta,
+        std::complex<float> *      C,
+        const unsigned int *       ldc)
+  {
+    cgemm_(transA, transB, m, n, k, alpha, A, lda, B, ldb, beta, C, ldc);
+  }
+
+
+  inline void
+  xscal(const unsigned int *n,
+        const double *      alpha,
+        double *            x,
+        const unsigned int *inc)
+  {
+    dscal_(n, alpha, x, inc);
+  }
+
+  inline void
+  xscal(const unsigned int *        n,
+        const std::complex<double> *alpha,
+        std::complex<double> *      x,
+        const unsigned int *        inc)
+  {
+    zscal_(n, alpha, x, inc);
+  }
+
   /**
    *  @brief Contains linear algebra functions used in the implementation of an eigen solver
    *

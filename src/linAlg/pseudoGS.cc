@@ -84,13 +84,14 @@ namespace dftfe
       else
         {
           computing_timer.enter_section("Fill overlap matrix mixed prec PGS");
-          internal::fillParallelOverlapMatrixMixedPrec(&X[0],
-                                                       X.size(),
-                                                       numberVectors,
-                                                       processGrid,
-                                                       interBandGroupComm,
-                                                       mpiComm,
-                                                       overlapMatPar);
+          internal::fillParallelOverlapMatrixMixedPrec<double, float>(
+            &X[0],
+            X.size(),
+            numberVectors,
+            processGrid,
+            interBandGroupComm,
+            mpiComm,
+            overlapMatPar);
           computing_timer.exit_section("Fill overlap matrix mixed prec PGS");
         }
 
@@ -262,7 +263,7 @@ namespace dftfe
       else
         {
           computing_timer.enter_section("Subspace rotation mixed prec PGS");
-          internal::subspaceRotationPGSMixedPrec(
+          internal::subspaceRotationPGSMixedPrec<double, float>(
             &X[0],
             X.size(),
             numberVectors,

@@ -1214,9 +1214,6 @@ namespace dftfe
     const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
     dftfe::ScaLAPACKMatrix<dataTypes::number> &      projHamPar)
   {
-#ifdef USE_COMPLEX
-    AssertThrow(false, dftUtils::ExcNotImplementedYet());
-#else
     //
     // Get access to number of locally owned nodes on the current processor
     //
@@ -1263,7 +1260,7 @@ namespace dftfe
 
     std::vector<dataTypes::number> projHamBlock(numberWaveFunctions *
                                                   vectorsBlockSize,
-                                                0.0);
+                                                dataTypes::number(0.0));
 
     if (dftParameters::verbosity >= 4)
       dftUtils::printCurrentMemoryUsage(
@@ -1286,7 +1283,7 @@ namespace dftfe
               bandGroupLowHighPlusOneIndices[2 * bandGroupTaskId + 1] &&
             (jvec + B) > bandGroupLowHighPlusOneIndices[2 * bandGroupTaskId])
           {
-            XBlock = 0;
+            XBlock = dataTypes::number(0);
             // fill XBlock^{T} from X:
             for (unsigned int iNode = 0; iNode < numberDofs; ++iNode)
               for (unsigned int iWave = 0; iWave < B; ++iWave)
@@ -1296,36 +1293,41 @@ namespace dftfe
 
             MPI_Barrier(getMPICommunicator());
             // evaluate H times XBlock^{T} and store in HXBlock^{T}
-            HXBlock = 0;
-            const bool scaleFlag = false;
-            const dataTypes::number scalar = 1.0;
+            HXBlock                           = dataTypes::number(0);
+            const bool              scaleFlag = false;
+            const double scalar    = 1.0;
 
             HX(XBlock, B, scaleFlag, scalar, HXBlock);
 
             MPI_Barrier(getMPICommunicator());
 
             const char transA = 'N';
-            const char transB = 'T';
+            const char transB =
+              std::is_same<dataTypes::number, std::complex<double>>::value ?
+                'C' :
+                'T';
 
-            const dataTypes::number alpha = 1.0, beta = 0.0;
-            std::fill(projHamBlock.begin(), projHamBlock.end(), 0.);
+            const dataTypes::number alpha = dataTypes::number(1.0), beta = dataTypes::number(0.0);
+            std::fill(projHamBlock.begin(),
+                      projHamBlock.end(),
+                      dataTypes::number(0.));
 
             const unsigned int D = numberWaveFunctions - jvec;
 
             // Comptute local XTrunc^{T}*HXcBlock.
-            dgemm_(&transA,
-                   &transB,
-                   &D,
-                   &B,
-                   &numberDofs,
-                   &alpha,
-                   &X[0] + jvec,
-                   &numberWaveFunctions,
-                   HXBlock.begin(),
-                   &B,
-                   &beta,
-                   &projHamBlock[0],
-                   &D);
+            xgemm(&transA,
+                  &transB,
+                  &D,
+                  &B,
+                  &numberDofs,
+                  &alpha,
+                  &X[0] + jvec,
+                  &numberWaveFunctions,
+                  HXBlock.begin(),
+                  &B,
+                  &beta,
+                  &projHamBlock[0],
+                  &D);
 
             MPI_Barrier(getMPICommunicator());
             // Sum local XTrunc^{T}*HXcBlock across domain decomposition
@@ -1367,7 +1369,6 @@ namespace dftfe
         linearAlgebraOperations::internal::sumAcrossInterCommScaLAPACKMat(
           processGrid, projHamPar, dftPtr->interBandGroupComm);
       }
-#endif
   }
 
   template <unsigned int FEOrder, unsigned int FEOrderElectro>
@@ -1379,9 +1380,6 @@ namespace dftfe
     const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
     dftfe::ScaLAPACKMatrix<dataTypes::number> &      projHamPar)
   {
-#ifdef USE_COMPLEX
-    AssertThrow(false, dftUtils::ExcNotImplementedYet());
-#else
     //
     // Get access to number of locally owned nodes on the current processor
     //
@@ -1453,7 +1451,7 @@ namespace dftfe
               bandGroupLowHighPlusOneIndices[2 * bandGroupTaskId + 1] &&
             (jvec + B) > bandGroupLowHighPlusOneIndices[2 * bandGroupTaskId])
           {
-            XBlock = 0;
+            XBlock = dataTypes::number(0);
             // fill XBlock^{T} from X:
             for (unsigned int iNode = 0; iNode < numberDofs; ++iNode)
               for (unsigned int iWave = 0; iWave < B; ++iWave)
@@ -1463,29 +1461,31 @@ namespace dftfe
 
             MPI_Barrier(getMPICommunicator());
             // evaluate H times XBlock^{T} and store in HXBlock^{T}
-            HXBlock = 0;
-            const bool scaleFlag = false;
-            const dataTypes::number scalar = 1.0;
+            HXBlock                           = dataTypes::number(0);
+            const bool              scaleFlag = false;
+            const double scalar    = 1.0;
 
             HX(XBlock, B, scaleFlag, scalar, HXBlock);
 
             MPI_Barrier(getMPICommunicator());
 
             const char transA = 'N';
-#  ifdef USE_COMPLEX
-            const char transB = 'C';
-#  else
-            const char transB = 'T';
-#  endif
-            const dataTypes::number alpha = 1.0, beta = 0.0;
-            std::fill(projHamBlock.begin(), projHamBlock.end(), 0.);
+            const char transB =
+              std::is_same<dataTypes::number, std::complex<double>>::value ?
+                'C' :
+                'T';
+            const dataTypes::number alpha = dataTypes::number(1.0),
+                                    beta  = dataTypes::number(0.0);
+            std::fill(projHamBlock.begin(),
+                      projHamBlock.end(),
+                      dataTypes::number(0.));
 
             if (jvec + B > Ncore)
               {
                 const unsigned int D = N - jvec;
 
                 // Comptute local XTrunc^{T}*HXcBlock.
-                dgemm_(&transA,
+                xgemm(&transA,
                        &transB,
                        &D,
                        &B,
@@ -1531,27 +1531,30 @@ namespace dftfe
               }
             else
               {
-                const dataTypes::numberLowPrec alphaSinglePrec = 1.0,
-                                               betaSinglePrec = 0.0;
+                const dataTypes::numberLowPrec alphaSinglePrec =
+                                                 dataTypes::numberLowPrec(1.0),
+                                               betaSinglePrec =
+                                                 dataTypes::numberLowPrec(0.0);
 
                 for (unsigned int i = 0; i < numberDofs * B; ++i)
                   HXBlockSinglePrec[i] = HXBlock.local_element(i);
 
                 const unsigned int D = N - jvec;
 
-                sgemm_(&transA,
-                       &transB,
-                       &D,
-                       &B,
-                       &numberDofs,
-                       &alphaSinglePrec,
-                       &XSinglePrec[0] + jvec,
-                       &N,
-                       &HXBlockSinglePrec[0],
-                       &B,
-                       &betaSinglePrec,
-                       &projHamBlockSinglePrec[0],
-                       &D);
+                // single prec gemm
+                xgemm(&transA,
+                      &transB,
+                      &D,
+                      &B,
+                      &numberDofs,
+                      &alphaSinglePrec,
+                      &XSinglePrec[0] + jvec,
+                      &N,
+                      &HXBlockSinglePrec[0],
+                      &B,
+                      &betaSinglePrec,
+                      &projHamBlockSinglePrec[0],
+                      &D);
 
                 MPI_Barrier(getMPICommunicator());
                 MPI_Allreduce(MPI_IN_PLACE,
@@ -1592,7 +1595,6 @@ namespace dftfe
         linearAlgebraOperations::internal::sumAcrossInterCommScaLAPACKMat(
           processGrid, projHamPar, dftPtr->interBandGroupComm);
       }
-#endif
   }
 
   template <unsigned int FEOrder, unsigned int FEOrderElectro>
