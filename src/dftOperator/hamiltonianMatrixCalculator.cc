@@ -197,20 +197,6 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::computeHamiltonianMatrix(
 
   if(dftParameters::xcFamilyType == "GGA")
     {
-      /*dgemm_(&transA,
-	     &transB,
-	     &sizeNiNj,//M
-	     &totalLocallyOwnedCells,//N
-	     &numberQuadraturePointsTimesThree,//K
-	     &alpha,
-	     &d_gradNiNjPlusgradNjNi[0],
-	     &sizeNiNj,
-	     &d_invJacderExcWithSigmaTimesGradRhoJxW[0],
-	     &numberQuadraturePointsTimesThree,
-	     &beta,
-	     &cellHamiltonianMatrix[0],
-	     &sizeNiNj);*/
-
       std::vector<double> gradNiNjPlusgradNjNi_currentBlock(numberEntriesEachBlock*numberQuadraturePoints,0.0);
       gradNiNjPlusgradNjNi_currentBlock.resize(numberEntriesEachBlock*3*numberQuadraturePoints,0.0);
       blockCount = 0;
