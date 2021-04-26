@@ -1293,8 +1293,8 @@ namespace dftfe
 
             MPI_Barrier(getMPICommunicator());
             // evaluate H times XBlock^{T} and store in HXBlock^{T}
-            HXBlock                           = dataTypes::number(0);
-            const bool              scaleFlag = false;
+            HXBlock                = dataTypes::number(0);
+            const bool   scaleFlag = false;
             const double scalar    = 1.0;
 
             HX(XBlock, B, scaleFlag, scalar, HXBlock);
@@ -1307,7 +1307,8 @@ namespace dftfe
                 'C' :
                 'T';
 
-            const dataTypes::number alpha = dataTypes::number(1.0), beta = dataTypes::number(0.0);
+            const dataTypes::number alpha = dataTypes::number(1.0),
+                                    beta  = dataTypes::number(0.0);
             std::fill(projHamBlock.begin(),
                       projHamBlock.end(),
                       dataTypes::number(0.));
@@ -1461,8 +1462,8 @@ namespace dftfe
 
             MPI_Barrier(getMPICommunicator());
             // evaluate H times XBlock^{T} and store in HXBlock^{T}
-            HXBlock                           = dataTypes::number(0);
-            const bool              scaleFlag = false;
+            HXBlock                = dataTypes::number(0);
+            const bool   scaleFlag = false;
             const double scalar    = 1.0;
 
             HX(XBlock, B, scaleFlag, scalar, HXBlock);
@@ -1486,18 +1487,18 @@ namespace dftfe
 
                 // Comptute local XTrunc^{T}*HXcBlock.
                 xgemm(&transA,
-                       &transB,
-                       &D,
-                       &B,
-                       &numberDofs,
-                       &alpha,
-                       &X[0] + jvec,
-                       &N,
-                       HXBlock.begin(),
-                       &B,
-                       &beta,
-                       &projHamBlock[0],
-                       &D);
+                      &transB,
+                      &D,
+                      &B,
+                      &numberDofs,
+                      &alpha,
+                      &X[0] + jvec,
+                      &N,
+                      HXBlock.begin(),
+                      &B,
+                      &beta,
+                      &projHamBlock[0],
+                      &D);
 
                 MPI_Barrier(getMPICommunicator());
                 // Sum local XTrunc^{T}*HXcBlock across domain decomposition

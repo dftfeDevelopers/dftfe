@@ -18,14 +18,14 @@ SRC=`dirname $0` # location of source directory
 # and optimization flag
 
 #Paths for external libraries
-dealiiPetscRealDir="/home/vikramg/DFT-FE-softwares/dealiiDevCustomized/install_gcc8.2.0_openmpi3.1.4_real_cpu"
-dealiiPetscComplexDir="/home/vikramg/DFT-FE-softwares/dealiiDevCustomized/install_gcc8.2.0_openmpi3.1.4_complex_cpu"
+dealiiPetscRealDir="/home/vikramg/DFT-FE-softwares/dealiiDevCustomized/install_gcc8.2.0_openmpi3.1.4_real_cpu2"
+dealiiPetscComplexDir="/home/vikramg/DFT-FE-softwares/dealiiDevCustomized/install_gcc8.2.0_openmpi3.1.4_complex_cpu2"
 alglibDir="/home/vikramg/DFT-FE-softwares/alglibGCC/cpp/src"
 libxcDir="/home/vikramg/DFT-FE-softwares/libxc/gcc8.2.0_libxc_4.3.4"
 spglibDir="/home/vikramg/DFT-FE-softwares/spglibGCC"
 xmlIncludeDir="/usr/include/libxml2"
 xmlLibDir="/usr/lib64"
-ELPA_PATH="/home/vikramg/DFT-FE-softwares/elpa/elpa2020.05.001_gcc8.2.0_openmpi3.1.4_install_noopenmp"
+ELPA_PATH="/home/vikramg/DFT-FE-softwares/elpa/elpa2020.05.001_gcc8.2.0_openmpi3.1.4_install_noopenmp2"
 
 
 #Compiler options and flags
@@ -78,7 +78,9 @@ function cmake_cplx() {
 	-DALGLIB_DIR=$alglibDir -DLIBXC_DIR=$libxcDir \
 	-DSPGLIB_DIR=$spglibDir -DXML_LIB_DIR=$xmlLibDir \
 	-DXML_INCLUDE_DIR=$xmlIncludeDir \
-	-DWITH_COMPLEX=ON -DWITH_TESTING=$testing -DMINIMAL_COMPILE=$minimal_compile \
+	-DWITH_ELPA=$withELPA -DCMAKE_PREFIX_PATH="$ELPA_PATH" \
+	-DWITH_COMPLEX=ON \
+	-DWITH_TESTING=$testing -DMINIMAL_COMPILE=$minimal_compile \
   -DHIGHERQUAD_PSP=$withHigherQuadPSP\
 	  $1
 }

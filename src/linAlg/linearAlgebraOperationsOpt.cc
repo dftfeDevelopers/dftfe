@@ -27,12 +27,7 @@
 #include <dftUtils.h>
 #include <linearAlgebraOperations.h>
 #include <linearAlgebraOperationsInternal.h>
-#ifdef DFTFE_WITH_ELPA
-extern "C"
-{
-#  include <elpa.hh>
-}
-#endif
+#include "elpaScalaManager.h"
 #include "pseudoGS.cc"
 
 namespace dftfe

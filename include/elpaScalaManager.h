@@ -32,6 +32,20 @@ extern "C"
 
 namespace dftfe
 {
+#ifdef DFTFE_WITH_ELPA
+  inline void
+  elpaCholesky(elpa_t &handle, double *a, int *error)
+  {
+    elpa_cholesky_d(handle, a, error);
+  }
+
+  inline void
+  elpaCholesky(elpa_t &handle, std::complex<double> *a, int *error)
+  {
+    elpa_cholesky_dc(handle, reinterpret_cast<_Complex double *>(a), error);
+  }
+#endif
+
   /**
    * @brief Manager class for ELPA and ScaLAPACK
    *
