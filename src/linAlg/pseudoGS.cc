@@ -66,7 +66,7 @@ namespace dftfe
                     overlapMatPar.local_m() * overlapMatPar.local_n(),
                   T(0.0));
 
-      // Sc=X^{T}*Xc with X^{T} stored in the column
+      // SConj=X^{T}*XConj with X^{T} stored in the column
       // major format
       if (!(dftParameters::useMixedPrecPGS_O && useMixedPrec))
         {
@@ -106,7 +106,7 @@ namespace dftfe
         }
 
 
-        // Sc=Lc*L^{T}
+        // SConj=LConj*L^{T}
 #if (defined DFTFE_WITH_ELPA)
       computing_timer.enter_section(
         "ELPA PGS cholesky, copy, and triangular matrix invert");
@@ -166,7 +166,7 @@ namespace dftfe
           "DFT-FE Error: overlap matrix property after cholesky factorization incorrect"));
 
 
-      // extract Lc
+      // extract LConj
       dftfe::ScaLAPACKMatrix<T> LMatPar(
         numberVectors,
         processGrid,
@@ -211,7 +211,7 @@ namespace dftfe
       if (dftParameters::enableSwitchToGS && flag == 1)
         return flag;
 
-      // compute Lc^{-1}
+      // compute LConj^{-1}
       LMatPar.invert();
 
 #if (defined DFTFE_WITH_ELPA)
@@ -222,7 +222,7 @@ namespace dftfe
         "PGS cholesky, copy, and triangular matrix invert");
 #endif
 
-      // X^{T}=Lc^{-1}*X^{T} with X^{T} stored in
+      // X^{T}=LConj^{-1}*X^{T} with X^{T} stored in
       // the column major format
       if (!(dftParameters::useMixedPrecPGS_SR && useMixedPrec))
         {

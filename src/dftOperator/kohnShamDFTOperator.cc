@@ -1237,8 +1237,8 @@ namespace dftfe
                                                bandGroupLowHighPlusOneIndices);
 
     /*
-     * X^{T}*H*Xc is done in a blocked approach for memory optimization:
-     * Sum_{blocks} X^{T}*H*XcBlock. The result of each X^{T}*H*XcBlock
+     * X^{T}*Hc*Xc is done in a blocked approach for memory optimization:
+     * Sum_{blocks} X^{T}*Hc*XcBlock. The result of each X^{T}*Hc*XcBlock
      * has a much smaller memory compared to X^{T}*H*Xc.
      * X^{T} (denoted by X in the code with column major format storage)
      * is a matrix with size (N x MLoc).
@@ -1247,12 +1247,13 @@ namespace dftfe
      * Xc denotes complex conjugate of X.
      * XcBlock is a matrix of size (MLoc x B). B is the block size.
      * A further optimization is done to reduce floating point operations:
-     * As X^{T}*H*Xc is a Hermitian matrix, it suffices to compute only the
-     * lower triangular part. To exploit this, we do X^{T}*H*Xc=Sum_{blocks}
+     * As X^{T}*Hc*Xc is a Hermitian matrix, it suffices to compute only the
+     * lower triangular part. To exploit this, we do X^{T}*Hc*Xc=Sum_{blocks}
      * XTrunc^{T}*H*XcBlock where XTrunc^{T} is a (D x MLoc) sub matrix of X^{T}
      * with the row indices ranging from the lowest global index of XcBlock
      * (denoted by jvec in the code) to N. D=N-jvec. The parallel ScaLapack
-     * matrix projHamPar is directly filled from the XTrunc^{T}*H*XcBlock result
+     * matrix projHamPar is directly filled from the XTrunc^{T}*Hc*XcBlock
+     * result
      */
 
     const unsigned int vectorsBlockSize =
@@ -1292,7 +1293,7 @@ namespace dftfe
 
 
             MPI_Barrier(getMPICommunicator());
-            // evaluate H times XBlock^{T} and store in HXBlock^{T}
+            // evaluate H times XBlock and store in HXBlock^{T}
             HXBlock                = dataTypes::number(0);
             const bool   scaleFlag = false;
             const double scalar    = 1.0;
@@ -1405,20 +1406,21 @@ namespace dftfe
 
     /*
      * X^{T}*H*Xc is done in a blocked approach for memory optimization:
-     * Sum_{blocks} X^{T}*H*XcBlock. The result of each X^{T}*H*XcBlock
-     * has a much smaller memory compared to X^{T}*H*Xc.
+     * Sum_{blocks} X^{T}*Hc*XcBlock. The result of each X^{T}*Hc*XcBlock
+     * has a much smaller memory compared to X^{T}*Hc*Xc.
      * X^{T} (denoted by X in the code with column major format storage)
      * is a matrix with size (N x MLoc).
      * MLoc, which is number of local dofs is denoted by numberDofs in the code.
      * Xc denotes complex conjugate of X.
      * XcBlock is a matrix of size (MLoc x B). B is the block size.
      * A further optimization is done to reduce floating point operations:
-     * As X^{T}*H*Xc is a Hermitian matrix, it suffices to compute only the
-     * lower triangular part. To exploit this, we do X^{T}*H*Xc=Sum_{blocks}
-     * XTrunc^{T}*H*XcBlock where XTrunc^{T} is a (D x MLoc) sub matrix of X^{T}
-     * with the row indices ranging from the lowest global index of XcBlock
-     * (denoted by jvec in the code) to N. D=N-jvec. The parallel ScaLapack
-     * matrix projHamPar is directly filled from the XTrunc^{T}*H*XcBlock result
+     * As X^{T}*Hc*Xc is a Hermitian matrix, it suffices to compute only the
+     * lower triangular part. To exploit this, we do X^{T}*Hc*Xc=Sum_{blocks}
+     * XTrunc^{T}*Hc*XcBlock where XTrunc^{T} is a (D x MLoc) sub matrix of
+     * X^{T} with the row indices ranging from the lowest global index of
+     * XcBlock (denoted by jvec in the code) to N. D=N-jvec. The parallel
+     * ScaLapack matrix projHamPar is directly filled from the
+     * XTrunc^{T}*Hc*XcBlock result
      */
 
     const unsigned int vectorsBlockSize =
@@ -1461,7 +1463,7 @@ namespace dftfe
 
 
             MPI_Barrier(getMPICommunicator());
-            // evaluate H times XBlock^{T} and store in HXBlock^{T}
+            // evaluate H times XBlock and store in HXBlock^{T}
             HXBlock                = dataTypes::number(0);
             const bool   scaleFlag = false;
             const double scalar    = 1.0;

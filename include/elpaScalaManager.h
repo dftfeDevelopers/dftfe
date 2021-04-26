@@ -44,6 +44,27 @@ namespace dftfe
   {
     elpa_cholesky_dc(handle, reinterpret_cast<_Complex double *>(a), error);
   }
+
+  inline void
+  elpaEigenvectors(elpa_t &handle, double *a, double *ev, double *q, int *error)
+  {
+    elpa_eigenvectors_d(handle, a, ev, q, error);
+  }
+
+  inline void
+  elpaEigenvectors(elpa_t &              handle,
+                   std::complex<double> *a,
+                   double *              ev,
+                   std::complex<double> *q,
+                   int *                 error)
+  {
+    elpa_eigenvectors_dc(handle,
+                         reinterpret_cast<_Complex double *>(a),
+                         ev,
+                         reinterpret_cast<_Complex double *>(q),
+                         error);
+  }
+
 #endif
 
   /**

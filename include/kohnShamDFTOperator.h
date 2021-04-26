@@ -124,7 +124,7 @@ node is stored
          std::vector<dataTypes::number> &      ProjHam);
 
     /**
-     * @brief Compute projection of the operator into a subspace spanned by a given orthogonal basis
+     * @brief Compute projection of the operator into a subspace spanned by a given orthogonal basis HConj=X^{T}*HConj*XConj
      *
      * @param X Vector of Vectors containing multi-wavefunction fields
      * @param numberComponents number of wavefunctions associated with a given node
@@ -144,7 +144,7 @@ node is stored
 
 
     /**
-     * @brief Compute projection of the operator into a subspace spanned by a given orthogonal basis
+     * @brief Compute projection of the operator into a subspace spanned by a given orthogonal basis HConj=X^{T}*HConj*XConj
      *
      * @param X Vector of Vectors containing multi-wavefunction fields
      * @param N total number of wavefunctions components

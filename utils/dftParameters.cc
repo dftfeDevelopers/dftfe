@@ -1838,7 +1838,6 @@ namespace dftfe
           dftParameters::reuseLanczosUpperBoundFromFirstCall       = true;
         }
 #ifdef USE_COMPLEX
-      dftParameters::rrGEP       = false;
       dftParameters::HXOptimFlag = false;
 #endif
 

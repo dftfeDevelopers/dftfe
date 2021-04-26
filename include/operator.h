@@ -173,7 +173,7 @@ namespace dftfe
        distributedCPUVec<dataTypes::number> &dst,
        std::vector<dataTypes::number> &      cellDstWaveFunctionMatrix) = 0;
     /**
-     * @brief Compute projection of the operator into a subspace spanned by a given orthogonal basis
+     * @brief Compute projection of the operator into a subspace spanned by a given orthogonal basis HConj=X^{T}*HConj*XConj
      *
      * @param X Vector of Vectors containing multi-wavefunction fields
      * @param numberComponents number of wavefunctions associated with a given node
@@ -185,7 +185,7 @@ namespace dftfe
          std::vector<dataTypes::number> &      ProjHam) = 0;
 
     /**
-     * @brief Compute projection of the operator into a subspace spanned by a given orthogonal basis
+     * @brief Compute projection of the operator into a subspace spanned by a given orthogonal basis HConj=X^{T}*HConj*XConj
      *
      * @param X Vector of Vectors containing multi-wavefunction fields
      * @param numberComponents number of wavefunctions associated with a given node
