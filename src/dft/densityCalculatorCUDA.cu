@@ -191,7 +191,8 @@ namespace dftfe
 #ifdef USE_COMPLEX
       AssertThrow(false, dftUtils::ExcNotImplementedYet());
 #else
-      AssertThrow(use2pPlusOneGLQuad && !isEvaluateGradRho,
+      if (use2pPlusOneGLQuad)
+        AssertThrow(!isEvaluateGradRho,
                   dftUtils::ExcNotImplementedYet());
 
       int this_process;
