@@ -115,16 +115,13 @@ namespace dftfe
     getShapeFunctionGradientValuesZ();
 
     thrust::device_vector<double> &
-    getShapeFunctionGradientValuesXInverted(
-      const bool use2pPlusOneGLQuad = false);
+    getShapeFunctionGradientValuesXInverted();
 
     thrust::device_vector<double> &
-    getShapeFunctionGradientValuesYInverted(
-      const bool use2pPlusOneGLQuad = false);
+    getShapeFunctionGradientValuesYInverted();
 
     thrust::device_vector<double> &
-    getShapeFunctionGradientValuesZInverted(
-      const bool use2pPlusOneGLQuad = false);
+    getShapeFunctionGradientValuesZInverted();
 
     thrust::device_vector<double> &
     getShapeFunctionGradientValuesNLPInverted();
