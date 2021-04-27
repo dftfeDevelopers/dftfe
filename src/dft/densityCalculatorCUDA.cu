@@ -192,8 +192,7 @@ namespace dftfe
       AssertThrow(false, dftUtils::ExcNotImplementedYet());
 #else
       if (use2pPlusOneGLQuad)
-        AssertThrow(!isEvaluateGradRho,
-                  dftUtils::ExcNotImplementedYet());
+        AssertThrow(!isEvaluateGradRho, dftUtils::ExcNotImplementedYet());
 
       int this_process;
       MPI_Comm_rank(MPI_COMM_WORLD, &this_process);
