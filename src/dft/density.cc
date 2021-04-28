@@ -84,6 +84,8 @@ dftClass<FEOrder, FEOrderElectro>::compute_rhoOut(
   kohnShamDFTOperatorCUDAClass<FEOrder, FEOrderElectro>
     &kohnShamDFTEigenOperator,
 #endif
+  kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>
+    &        kohnShamDFTEigenOperatorCPU,
   const bool isConsiderSpectrumSplitting,
   const bool isGroundState)
 {
@@ -91,9 +93,11 @@ dftClass<FEOrder, FEOrderElectro>::compute_rhoOut(
     {
 #ifdef DFTFE_WITH_GPU
       computeRhoNodalFromPSI(kohnShamDFTEigenOperator,
+                             kohnShamDFTEigenOperatorCPU,
                              isConsiderSpectrumSplitting);
 #else
-      computeRhoNodalFromPSI(isConsiderSpectrumSplitting);
+      computeRhoNodalFromPSI(kohnShamDFTEigenOperatorCPU,
+                             isConsiderSpectrumSplitting);
 #endif
       d_rhoOutNodalValues.update_ghost_values();
 
@@ -148,8 +152,6 @@ dftClass<FEOrder, FEOrderElectro>::compute_rhoOut(
               &(gradRhoOutValsSpinPolarized.back());
         }
 
-      DensityCalculator<FEOrder, FEOrderElectro> densityCalculator;
-
 #ifdef DFTFE_WITH_GPU
       if (dftParameters::useGPU)
         CUDA::computeRhoFromPSI(
@@ -166,7 +168,7 @@ dftClass<FEOrder, FEOrderElectro>::compute_rhoOut(
           d_eigenDofHandlerIndex,
           dofHandler,
           matrix_free_data.n_physical_cells(),
-          matrix_free_data.get_dofs_per_cell(),
+          matrix_free_data.get_dofs_per_cell(d_densityDofHandlerIndex),
           matrix_free_data.get_quadrature(d_densityQuadratureId).size(),
           d_kPointWeights,
           rhoOutValues,
@@ -180,22 +182,21 @@ dftClass<FEOrder, FEOrderElectro>::compute_rhoOut(
             d_numEigenValues != d_numEigenValuesRR);
 
       else
-        densityCalculator.computeRhoFromPSI(
+        computeRhoFromPSICPU(
           d_eigenVectorsFlattenedSTL,
           d_eigenVectorsRotFracDensityFlattenedSTL,
           d_numEigenValues,
           d_numEigenValuesRR,
+          d_eigenVectorsFlattenedSTL[0].size() / d_numEigenValues,
           eigenValues,
           fermiEnergy,
           fermiEnergyUp,
           fermiEnergyDown,
+          kohnShamDFTEigenOperatorCPU,
           dofHandler,
-          constraintsNone,
-          matrix_free_data,
-          d_eigenDofHandlerIndex,
-          d_densityQuadratureId,
-          localProc_dof_indicesReal,
-          localProc_dof_indicesImag,
+          matrix_free_data.n_physical_cells(),
+          matrix_free_data.get_dofs_per_cell(d_densityDofHandlerIndex),
+          matrix_free_data.get_quadrature(d_densityQuadratureId).size(),
           d_kPointWeights,
           rhoOutValues,
           gradRhoOutValues,
@@ -204,25 +205,24 @@ dftClass<FEOrder, FEOrderElectro>::compute_rhoOut(
           dftParameters::xcFamilyType == "GGA",
           interpoolcomm,
           interBandGroupComm,
-          isConsiderSpectrumSplitting,
+          isConsiderSpectrumSplitting && d_numEigenValues != d_numEigenValuesRR,
           false);
 #else
-      densityCalculator.computeRhoFromPSI(
+      computeRhoFromPSICPU(
         d_eigenVectorsFlattenedSTL,
         d_eigenVectorsRotFracDensityFlattenedSTL,
         d_numEigenValues,
         d_numEigenValuesRR,
+        d_eigenVectorsFlattenedSTL[0].size() / d_numEigenValues,
         eigenValues,
         fermiEnergy,
         fermiEnergyUp,
         fermiEnergyDown,
+        kohnShamDFTEigenOperatorCPU,
         dofHandler,
-        constraintsNone,
-        matrix_free_data,
-        d_eigenDofHandlerIndex,
-        d_densityQuadratureId,
-        localProc_dof_indicesReal,
-        localProc_dof_indicesImag,
+        matrix_free_data.n_physical_cells(),
+        matrix_free_data.get_dofs_per_cell(d_densityDofHandlerIndex),
+        matrix_free_data.get_quadrature(d_densityQuadratureId).size(),
         d_kPointWeights,
         rhoOutValues,
         gradRhoOutValues,
@@ -231,7 +231,7 @@ dftClass<FEOrder, FEOrderElectro>::compute_rhoOut(
         dftParameters::xcFamilyType == "GGA",
         interpoolcomm,
         interBandGroupComm,
-        isConsiderSpectrumSplitting,
+        isConsiderSpectrumSplitting && d_numEigenValues != d_numEigenValuesRR,
         false);
 #endif
       // normalizeRhoOutQuadValues();
@@ -243,9 +243,11 @@ dftClass<FEOrder, FEOrderElectro>::compute_rhoOut(
 
 #ifdef DFTFE_WITH_GPU
           computeRhoNodalFromPSI(kohnShamDFTEigenOperator,
+                                 kohnShamDFTEigenOperatorCPU,
                                  isConsiderSpectrumSplitting);
 #else
-          computeRhoNodalFromPSI(isConsiderSpectrumSplitting);
+          computeRhoNodalFromPSI(kohnShamDFTEigenOperatorCPU,
+                                 isConsiderSpectrumSplitting);
 #endif
           d_rhoOutNodalValues.update_ghost_values();
 
@@ -490,6 +492,8 @@ dftClass<FEOrder, FEOrderElectro>::computeRhoNodalFromPSI(
   kohnShamDFTOperatorCUDAClass<FEOrder, FEOrderElectro>
     &kohnShamDFTEigenOperator,
 #endif
+  kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>
+    &  kohnShamDFTEigenOperatorCPU,
   bool isConsiderSpectrumSplitting)
 {
   std::map<dealii::CellId, std::vector<double>> rhoPRefinedNodalData;
@@ -568,57 +572,26 @@ dftClass<FEOrder, FEOrderElectro>::computeRhoNodalFromPSI(
       }
 
 
-  DensityCalculator<FEOrder, FEOrderElectro> densityCalculator;
-
-  // compute rho from wavefunctions at nodal locations of 2p DoFHandler nodes in
-  // each cell
+      // compute rho from wavefunctions at nodal locations of 2p DoFHandler
+      // nodes in each cell
 #ifdef DFTFE_WITH_GPU
   if (dftParameters::useGPU)
-    CUDA::computeRhoFromPSI(d_eigenVectorsFlattenedCUDA.begin(),
-                            d_eigenVectorsRotFracFlattenedCUDA.begin(),
-                            d_numEigenValues,
-                            d_numEigenValuesRR,
-                            d_eigenVectorsFlattenedSTL[0].size() /
-                              d_numEigenValues,
-                            eigenValues,
-                            fermiEnergy,
-                            fermiEnergyUp,
-                            fermiEnergyDown,
-                            kohnShamDFTEigenOperator,
-                            d_eigenDofHandlerIndex,
-                            dofHandler,
-                            matrix_free_data.n_physical_cells(),
-                            matrix_free_data.get_dofs_per_cell(),
-                            quadrature_formula.size(),
-                            d_kPointWeights,
-                            &rhoPRefinedNodalData,
-                            &_gradRhoValues,
-                            &_rhoValuesSpinPolarized,
-                            &_gradRhoValuesSpinPolarized,
-                            false,
-                            interpoolcomm,
-                            interBandGroupComm,
-                            isConsiderSpectrumSplitting &&
-                              d_numEigenValues != d_numEigenValuesRR,
-                            true);
-
-  else
-    densityCalculator.computeRhoFromPSI(
-      d_eigenVectorsFlattenedSTL,
-      d_eigenVectorsRotFracDensityFlattenedSTL,
+    CUDA::computeRhoFromPSI(
+      d_eigenVectorsFlattenedCUDA.begin(),
+      d_eigenVectorsRotFracFlattenedCUDA.begin(),
       d_numEigenValues,
       d_numEigenValuesRR,
+      d_eigenVectorsFlattenedSTL[0].size() / d_numEigenValues,
       eigenValues,
       fermiEnergy,
       fermiEnergyUp,
       fermiEnergyDown,
-      dofHandler,
-      constraintsNone,
-      matrix_free_data,
+      kohnShamDFTEigenOperator,
       d_eigenDofHandlerIndex,
-      d_gllQuadratureId,
-      localProc_dof_indicesReal,
-      localProc_dof_indicesImag,
+      dofHandler,
+      matrix_free_data.n_physical_cells(),
+      matrix_free_data.get_dofs_per_cell(d_densityDofHandlerIndex),
+      quadrature_formula.size(),
       d_kPointWeights,
       &rhoPRefinedNodalData,
       &_gradRhoValues,
@@ -627,34 +600,61 @@ dftClass<FEOrder, FEOrderElectro>::computeRhoNodalFromPSI(
       false,
       interpoolcomm,
       interBandGroupComm,
-      isConsiderSpectrumSplitting,
+      isConsiderSpectrumSplitting && d_numEigenValues != d_numEigenValuesRR,
+      true);
+
+  else
+    computeRhoFromPSICPU(
+      d_eigenVectorsFlattenedSTL,
+      d_eigenVectorsRotFracDensityFlattenedSTL,
+      d_numEigenValues,
+      d_numEigenValuesRR,
+      d_eigenVectorsFlattenedSTL[0].size() / d_numEigenValues,
+      eigenValues,
+      fermiEnergy,
+      fermiEnergyUp,
+      fermiEnergyDown,
+      kohnShamDFTEigenOperatorCPU,
+      dofHandler,
+      matrix_free_data.n_physical_cells(),
+      matrix_free_data.get_dofs_per_cell(d_densityDofHandlerIndex),
+      quadrature_formula.size(),
+      d_kPointWeights,
+      &rhoPRefinedNodalData,
+      &_gradRhoValues,
+      &_rhoValuesSpinPolarized,
+      &_gradRhoValuesSpinPolarized,
+      false,
+      interpoolcomm,
+      interBandGroupComm,
+      isConsiderSpectrumSplitting && d_numEigenValues != d_numEigenValuesRR,
       true);
 #else
-  densityCalculator.computeRhoFromPSI(d_eigenVectorsFlattenedSTL,
-                                      d_eigenVectorsRotFracDensityFlattenedSTL,
-                                      d_numEigenValues,
-                                      d_numEigenValuesRR,
-                                      eigenValues,
-                                      fermiEnergy,
-                                      fermiEnergyUp,
-                                      fermiEnergyDown,
-                                      dofHandler,
-                                      constraintsNone,
-                                      matrix_free_data,
-                                      d_eigenDofHandlerIndex,
-                                      d_gllQuadratureId,
-                                      localProc_dof_indicesReal,
-                                      localProc_dof_indicesImag,
-                                      d_kPointWeights,
-                                      &rhoPRefinedNodalData,
-                                      &_gradRhoValues,
-                                      &_rhoValuesSpinPolarized,
-                                      &_gradRhoValuesSpinPolarized,
-                                      false,
-                                      interpoolcomm,
-                                      interBandGroupComm,
-                                      isConsiderSpectrumSplitting,
-                                      true);
+  computeRhoFromPSICPU(
+    d_eigenVectorsFlattenedSTL,
+    d_eigenVectorsRotFracDensityFlattenedSTL,
+    d_numEigenValues,
+    d_numEigenValuesRR,
+    d_eigenVectorsFlattenedSTL[0].size() / d_numEigenValues,
+    eigenValues,
+    fermiEnergy,
+    fermiEnergyUp,
+    fermiEnergyDown,
+    kohnShamDFTEigenOperatorCPU,
+    dofHandler,
+    matrix_free_data.n_physical_cells(),
+    matrix_free_data.get_dofs_per_cell(d_densityDofHandlerIndex),
+    quadrature_formula.size(),
+    d_kPointWeights,
+    &rhoPRefinedNodalData,
+    &_gradRhoValues,
+    &_rhoValuesSpinPolarized,
+    &_gradRhoValuesSpinPolarized,
+    false,
+    interpoolcomm,
+    interBandGroupComm,
+    isConsiderSpectrumSplitting && d_numEigenValues != d_numEigenValuesRR,
+    true);
 #endif
 
   // copy Lobatto quadrature data to fill in 2p DoFHandler nodal data

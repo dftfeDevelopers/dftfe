@@ -125,16 +125,13 @@ namespace dftfe
     getShapeFunctionGradientValuesZ() = 0;
 
     virtual thrust::device_vector<double> &
-    getShapeFunctionGradientValuesXInverted(
-      const bool use2pPlusOneGLQuad = false) = 0;
+    getShapeFunctionGradientValuesXInverted() = 0;
 
     virtual thrust::device_vector<double> &
-    getShapeFunctionGradientValuesYInverted(
-      const bool use2pPlusOneGLQuad = false) = 0;
+    getShapeFunctionGradientValuesYInverted() = 0;
 
     virtual thrust::device_vector<double> &
-    getShapeFunctionGradientValuesZInverted(
-      const bool use2pPlusOneGLQuad = false) = 0;
+    getShapeFunctionGradientValuesZInverted() = 0;
 
     virtual thrust::device_vector<double> &
     getShapeFunctionGradientValuesNLPInverted() = 0;
@@ -587,12 +584,6 @@ namespace dftfe
     /// 2p+1 Gauss Lobotta quadrature shape function values and shape function
     /// gradients
     thrust::device_vector<double> d_glShapeFunctionValueInvertedDevice;
-
-    thrust::device_vector<double> d_glShapeFunctionGradientValueXInvertedDevice;
-
-    thrust::device_vector<double> d_glShapeFunctionGradientValueYInvertedDevice;
-
-    thrust::device_vector<double> d_glShapeFunctionGradientValueZInvertedDevice;
 
     thrust::device_vector<unsigned int> d_boundaryIdToLocalIdMapDevice;
 

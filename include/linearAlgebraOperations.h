@@ -382,6 +382,26 @@ namespace dftfe
     zscal_(n, alpha, x, inc);
   }
 
+  inline void
+  xcopy(const unsigned int *n,
+        const double *      x,
+        const unsigned int *incx,
+        double *            y,
+        const unsigned int *incy)
+  {
+    dcopy_(n, x, incx, y, incy);
+  }
+
+  inline void
+  xcopy(const unsigned int *        n,
+        const std::complex<double> *x,
+        const unsigned int *        incx,
+        std::complex<double> *      y,
+        const unsigned int *        incy)
+  {
+    zcopy_(n, x, incx, y, incy);
+  }
+
   /**
    *  @brief Contains linear algebra functions used in the implementation of an eigen solver
    *

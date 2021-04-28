@@ -21,6 +21,7 @@
 #include <chebyshevOrthogonalizedSubspaceIterationSolver.h>
 #include <dealiiLinearSolver.h>
 #include <densityCalculator.h>
+#include <densityCalculatorCPU.h>
 #include <dft.h>
 #include <dftParameters.h>
 #include <dftUtils.h>
@@ -2011,9 +2012,12 @@ namespace dftfe
 
 
 #ifdef DFTFE_WITH_GPU
-    compute_rhoOut(kohnShamDFTEigenOperatorCUDA, true, true);
+    compute_rhoOut(kohnShamDFTEigenOperatorCUDA,
+                   kohnShamDFTEigenOperator,
+                   true,
+                   true);
 #else
-    compute_rhoOut(true, true);
+    compute_rhoOut(kohnShamDFTEigenOperator, true, true);
 #endif
     computing_timer.exit_section("compute rho");
 
@@ -3019,7 +3023,8 @@ namespace dftfe
               true);
           }
         else
-          compute_rhoOut((scfIter <
+          compute_rhoOut(kohnShamDFTEigenOperator,
+                         (scfIter <
                             dftParameters::spectrumSplitStartingScfIter ||
                           scfConverged) ?
                            false :
@@ -3031,6 +3036,7 @@ namespace dftfe
 
 #  ifdef DFTFE_WITH_GPU
         compute_rhoOut(kohnShamDFTEigenOperatorCUDA,
+                       kohnShamDFTEigenOperator,
                        (scfIter < dftParameters::spectrumSplitStartingScfIter ||
                         scfConverged) ?
                          false :
@@ -3039,7 +3045,8 @@ namespace dftfe
                          (scfIter == (dftParameters::numSCFIterations - 1)) ||
                          solveLinearizedKS);
 #  else
-        compute_rhoOut((scfIter < dftParameters::spectrumSplitStartingScfIter ||
+        compute_rhoOut(kohnShamDFTEigenOperator,
+                       (scfIter < dftParameters::spectrumSplitStartingScfIter ||
                         scfConverged) ?
                          false :
                          true,

@@ -254,6 +254,26 @@ namespace dftfe
     getMPICommunicator() const;
 
 
+    /**
+     * @brief Get index map of flattened array to cell based numbering
+     *
+     * @return pointer to constraint matrix eigen
+     */
+    virtual const std::vector<dealii::types::global_dof_index> &
+    getFlattenedArrayCellLocalProcIndexIdMap() const = 0;
+
+
+    virtual const std::vector<double> &
+    getShapeFunctionValuesDensityGaussQuad() const = 0;
+
+    virtual const std::vector<double> &
+    getShapeFunctionGradValuesDensityGaussQuad(
+      const unsigned int idim) const = 0;
+
+    virtual const std::vector<double> &
+    getShapeFunctionValuesDensityGaussLobattoQuad() const = 0;
+
+
   protected:
     /**
      * @brief default Constructor.
@@ -283,6 +303,19 @@ namespace dftfe
     // inv sqrt mass vector
     //
     distributedCPUVec<double> d_invSqrtMassVector;
+
+    /// index map
+    std::vector<dealii::types::global_dof_index>
+      d_FullflattenedArrayCellLocalProcIndexIdMap;
+
+    /// density quad rule shape function data for FEOrder mesh with node index
+    /// being the fastest index
+    std::vector<double> d_densityGaussQuadShapeFunctionValues;
+
+    std::vector<double> d_densityGaussQuadShapeFunctionGradientValues;
+    /// FEOrderRhoNodal+1 Gauss Lobotto quadrature shape function data for
+    /// FEOrder mesh with node index being the fastest index
+    std::vector<double> d_densityGlQuadShapeFunctionValues;
 
     //
     // mpi communicator

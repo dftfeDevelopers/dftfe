@@ -34,7 +34,7 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::
     dftPtr->matrix_free_data.get_quadrature(dftPtr->d_densityQuadratureId);
   FEValues<3> fe_values(dftPtr->matrix_free_data.get_dof_handler().get_fe(),
                         quadrature,
-                        update_values);
+                        update_values | update_gradients);
   const unsigned int numberDofsPerElement =
     dftPtr->matrix_free_data.get_dof_handler().get_fe().dofs_per_cell;
   const unsigned int numberQuadraturePoints = quadrature.size();
@@ -138,4 +138,117 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::
         } // icell loop
 
     } // macrocell loop
+
+  //
+  // Fill FE datastructures required for density computation from wavefunctions
+  //
+  d_densityGaussQuadShapeFunctionValues.clear();
+  d_densityGaussQuadShapeFunctionGradientValues.clear();
+
+  d_densityGaussQuadShapeFunctionValues.resize(numberQuadraturePoints *
+                                                 numberDofsPerElement,
+                                               0.0);
+  d_densityGaussQuadShapeFunctionGradientValues.resize(
+    numberPhysicalCells * numberQuadraturePoints * 3 * numberDofsPerElement,
+    0.0);
+
+  cellPtr =
+    dftPtr->matrix_free_data.get_dof_handler(dftPtr->d_densityDofHandlerIndex)
+      .begin_active();
+  typename dealii::DoFHandler<3>::active_cell_iterator endcPtr =
+    dftPtr->matrix_free_data.get_dof_handler(dftPtr->d_densityDofHandlerIndex)
+      .end();
+
+  unsigned int iElem = 0;
+  for (; cellPtr != endcPtr; ++cellPtr)
+    if (cellPtr->is_locally_owned())
+      {
+        fe_values.reinit(cellPtr);
+
+        for (unsigned int q_point = 0; q_point < numberQuadraturePoints;
+             ++q_point)
+          for (unsigned int iNode = 0; iNode < numberDofsPerElement; ++iNode)
+            {
+              const dealii::Tensor<1, 3, double> &shape_grad =
+                fe_values.shape_grad(iNode, q_point);
+
+              d_densityGaussQuadShapeFunctionGradientValues
+                [iElem * numberQuadraturePoints * 3 * numberDofsPerElement +
+                 q_point * 3 * numberDofsPerElement + iNode] = shape_grad[0];
+            }
+
+        for (unsigned int q_point = 0; q_point < numberQuadraturePoints;
+             ++q_point)
+          for (unsigned int iNode = 0; iNode < numberDofsPerElement; ++iNode)
+            {
+              const dealii::Tensor<1, 3, double> &shape_grad =
+                fe_values.shape_grad(iNode, q_point);
+
+              d_densityGaussQuadShapeFunctionGradientValues
+                [iElem * numberQuadraturePoints * 3 * numberDofsPerElement +
+                 q_point * 3 * numberDofsPerElement + numberDofsPerElement +
+                 iNode] = shape_grad[1];
+            }
+
+        for (unsigned int q_point = 0; q_point < numberQuadraturePoints;
+             ++q_point)
+          for (unsigned int iNode = 0; iNode < numberDofsPerElement; ++iNode)
+            {
+              const dealii::Tensor<1, 3, double> &shape_grad =
+                fe_values.shape_grad(iNode, q_point);
+
+              d_densityGaussQuadShapeFunctionGradientValues
+                [iElem * numberQuadraturePoints * 3 * numberDofsPerElement +
+                 q_point * 3 * numberDofsPerElement + 2 * numberDofsPerElement +
+                 iNode] = shape_grad[2];
+            }
+
+
+        if (iElem == 0)
+          {
+            for (unsigned int iNode = 0; iNode < numberDofsPerElement; ++iNode)
+              for (unsigned int q_point = 0; q_point < numberQuadraturePoints;
+                   ++q_point)
+                {
+                  const double val = fe_values.shape_value(iNode, q_point);
+                  d_densityGaussQuadShapeFunctionValues[q_point *
+                                                          numberDofsPerElement +
+                                                        iNode] = val;
+                }
+          }
+
+        iElem++;
+      }
+
+
+  QGaussLobatto<3> quadratureGl(C_rhoNodalPolyOrder<FEOrder, FEOrderElectro>() +
+                                1);
+  FEValues<3>      fe_valuesGl(dftPtr->matrix_free_data
+                            .get_dof_handler(dftPtr->d_densityDofHandlerIndex)
+                            .get_fe(),
+                          quadratureGl,
+                          update_values);
+  const unsigned int numberQuadraturePointsGl = quadratureGl.size();
+
+  //
+  // resize data members
+  //
+  d_densityGlQuadShapeFunctionValues.clear();
+  d_densityGlQuadShapeFunctionValues.resize(numberQuadraturePointsGl *
+                                              numberDofsPerElement,
+                                            0.0);
+
+  cellPtr =
+    dftPtr->matrix_free_data.get_dof_handler(dftPtr->d_densityDofHandlerIndex)
+      .begin_active();
+  fe_valuesGl.reinit(cellPtr);
+
+  for (unsigned int iNode = 0; iNode < numberDofsPerElement; ++iNode)
+    for (unsigned int q_point = 0; q_point < numberQuadraturePointsGl;
+         ++q_point)
+      {
+        const double val = fe_valuesGl.shape_value(iNode, q_point);
+        d_densityGlQuadShapeFunctionValues[q_point * numberDofsPerElement +
+                                           iNode] = val;
+      }
 }

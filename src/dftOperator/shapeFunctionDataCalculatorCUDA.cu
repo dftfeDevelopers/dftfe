@@ -493,145 +493,37 @@ kohnShamDFTOperatorCUDAClass<FEOrder, FEOrderElectro>::
       // d_cellShapeFunctionGradientIntegralFlattenedDevice=d_cellShapeFunctionGradientIntegralFlattened;
       d_cellJxWValuesDevice = d_cellJxWValues;
 
-      if (dftParameters::mixingMethod == "ANDERSON_WITH_KERKER")
-        {
-          QGaussLobatto<3> quadratureGl(
-            C_rhoNodalPolyOrder<FEOrder, FEOrderElectro>() + 1);
-          FEValues<3>        fe_valuesGl(dftPtr->matrix_free_data
-                                    .get_dof_handler(
-                                      dftPtr->d_densityDofHandlerIndex)
-                                    .get_fe(),
-                                  quadratureGl,
-                                  update_values);
-          const unsigned int numberQuadraturePointsGl = quadratureGl.size();
+      QGaussLobatto<3> quadratureGl(
+        C_rhoNodalPolyOrder<FEOrder, FEOrderElectro>() + 1);
+      FEValues<3>        fe_valuesGl(dftPtr->matrix_free_data
+                                .get_dof_handler(
+                                  dftPtr->d_densityDofHandlerIndex)
+                                .get_fe(),
+                              quadratureGl,
+                              update_values);
+      const unsigned int numberQuadraturePointsGl = quadratureGl.size();
 
-          //
-          // resize data members
-          //
-          std::vector<double> glShapeFunctionValueInverted(
-            numberQuadraturePointsGl * numberDofsPerElement, 0.0);
+      //
+      // resize data members
+      //
+      std::vector<double> glShapeFunctionValueInverted(
+        numberQuadraturePointsGl * numberDofsPerElement, 0.0);
 
-          cellPtr = dftPtr->matrix_free_data
-                      .get_dof_handler(dftPtr->d_densityDofHandlerIndex)
-                      .begin_active();
-          fe_valuesGl.reinit(cellPtr);
+      cellPtr = dftPtr->matrix_free_data
+                  .get_dof_handler(dftPtr->d_densityDofHandlerIndex)
+                  .begin_active();
+      fe_valuesGl.reinit(cellPtr);
 
-          for (unsigned int iNode = 0; iNode < numberDofsPerElement; ++iNode)
-            for (unsigned int q_point = 0; q_point < numberQuadraturePointsGl;
-                 ++q_point)
-              {
-                const double val = fe_valuesGl.shape_value(iNode, q_point);
-                glShapeFunctionValueInverted[q_point * numberDofsPerElement +
-                                             iNode] = val;
-              }
+      for (unsigned int iNode = 0; iNode < numberDofsPerElement; ++iNode)
+        for (unsigned int q_point = 0; q_point < numberQuadraturePointsGl;
+             ++q_point)
+          {
+            const double val = fe_valuesGl.shape_value(iNode, q_point);
+            glShapeFunctionValueInverted[q_point * numberDofsPerElement +
+                                         iNode] = val;
+          }
 
-          d_glShapeFunctionValueInvertedDevice = glShapeFunctionValueInverted;
-        }
-      else
-        {
-          QGaussLobatto<3> quadratureGl(
-            C_rhoNodalPolyOrder<FEOrder, FEOrderElectro>() + 1);
-          FEValues<3>        fe_valuesGl(dftPtr->matrix_free_data
-                                    .get_dof_handler(
-                                      dftPtr->d_densityDofHandlerIndex)
-                                    .get_fe(),
-                                  quadratureGl,
-                                  update_values | update_gradients);
-          const unsigned int numberQuadraturePointsGl = quadratureGl.size();
-
-          //
-          // resize data members
-          //
-          std::vector<double> glShapeFunctionValueInverted(
-            numberQuadraturePointsGl * numberDofsPerElement, 0.0);
-
-          std::vector<double> glShapeFunctionGradientValueXInverted(
-            numberPhysicalCells * numberQuadraturePointsGl *
-              numberDofsPerElement,
-            0.0);
-
-          std::vector<double> glShapeFunctionGradientValueYInverted(
-            numberPhysicalCells * numberQuadraturePointsGl *
-              numberDofsPerElement,
-            0.0);
-
-          std::vector<double> glShapeFunctionGradientValueZInverted(
-            numberPhysicalCells * numberQuadraturePointsGl *
-              numberDofsPerElement,
-            0.0);
-
-
-          cellPtr = dftPtr->matrix_free_data
-                      .get_dof_handler(dftPtr->d_densityDofHandlerIndex)
-                      .begin_active();
-          endcPtr = dftPtr->matrix_free_data
-                      .get_dof_handler(dftPtr->d_densityDofHandlerIndex)
-                      .end();
-
-          iElem = 0;
-          for (; cellPtr != endcPtr; ++cellPtr)
-            if (cellPtr->is_locally_owned())
-              {
-                fe_valuesGl.reinit(cellPtr);
-
-
-                for (unsigned int iNode = 0; iNode < numberDofsPerElement;
-                     ++iNode)
-                  for (unsigned int q_point = 0;
-                       q_point < numberQuadraturePointsGl;
-                       ++q_point)
-                    {
-                      const dealii::Tensor<1, 3, double> &shape_grad =
-                        fe_values.shape_grad(iNode, q_point);
-
-                      glShapeFunctionGradientValueXInverted
-                        [iElem * numberQuadraturePointsGl *
-                           numberDofsPerElement +
-                         q_point * numberDofsPerElement + iNode] =
-                          shape_grad[0];
-
-                      glShapeFunctionGradientValueYInverted
-                        [iElem * numberQuadraturePointsGl *
-                           numberDofsPerElement +
-                         q_point * numberDofsPerElement + iNode] =
-                          shape_grad[1];
-
-                      glShapeFunctionGradientValueZInverted
-                        [iElem * numberQuadraturePointsGl *
-                           numberDofsPerElement +
-                         q_point * numberDofsPerElement + iNode] =
-                          shape_grad[2];
-                    }
-
-                if (iElem == 0)
-                  for (unsigned int iNode = 0; iNode < numberDofsPerElement;
-                       ++iNode)
-                    for (unsigned int q_point = 0;
-                         q_point < numberQuadraturePointsGl;
-                         ++q_point)
-                      {
-                        const double val =
-                          fe_valuesGl.shape_value(iNode, q_point);
-                        glShapeFunctionValueInverted[q_point *
-                                                       numberDofsPerElement +
-                                                     iNode] = val;
-                      }
-
-
-                iElem++;
-              }
-
-          d_glShapeFunctionValueInvertedDevice = glShapeFunctionValueInverted;
-
-          d_glShapeFunctionGradientValueXInvertedDevice =
-            glShapeFunctionGradientValueXInverted;
-
-          d_glShapeFunctionGradientValueYInvertedDevice =
-            glShapeFunctionGradientValueYInverted;
-
-          d_glShapeFunctionGradientValueZInvertedDevice =
-            glShapeFunctionGradientValueZInverted;
-        }
+      d_glShapeFunctionValueInvertedDevice = glShapeFunctionValueInverted;
 
       // QGauss<3>  quadratureNLP(C_num1DQuadNLPSP<FEOrder>());
       QIterated<3>       quadratureNLP(QGauss<1>(C_num1DQuadNLPSP<FEOrder>()),
