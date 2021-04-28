@@ -20,18 +20,13 @@
 #ifndef operatorDFTClass_h
 #define operatorDFTClass_h
 
-#include <constraintMatrixInfo.h>
-#include <headers.h>
+#include "constraintMatrixInfo.h"
+#include "headers.h"
 #include "process_grid.h"
 #include "scalapackWrapper.h"
+#include "elpaScalaManager.h"
 
 #include <vector>
-#ifdef DFTFE_WITH_ELPA
-extern "C"
-{
-#  include <elpa.hh>
-}
-#endif
 
 namespace dftfe
 {
@@ -50,28 +45,6 @@ namespace dftfe
      * @brief Destructor.
      */
     virtual ~operatorDFTClass() = 0;
-
-    unsigned int
-    getScalapackBlockSize() const;
-
-    void
-    processGridOptionalELPASetup(const unsigned int na, const unsigned int nev);
-
-#ifdef DFTFE_WITH_ELPA
-    void
-    elpaDeallocateHandles(const unsigned int na, const unsigned int nev);
-
-    elpa_t &
-    getElpaHandle();
-
-    elpa_t &
-    getElpaHandlePartialEigenVec();
-
-
-    elpa_autotune_t &
-    getElpaAutoTuneHandle();
-#endif
-
 
     /**
      * @brief initialize operatorClass
@@ -173,7 +146,7 @@ namespace dftfe
        distributedCPUVec<dataTypes::number> &dst,
        std::vector<dataTypes::number> &      cellDstWaveFunctionMatrix) = 0;
     /**
-     * @brief Compute projection of the operator into a subspace spanned by a given orthogonal basis HConj=X^{T}*HConj*XConj
+     * @brief Compute projection of the operator into a subspace spanned by a given orthogonal basis HProjConj=X^{T}*HConj*XConj
      *
      * @param X Vector of Vectors containing multi-wavefunction fields
      * @param numberComponents number of wavefunctions associated with a given node
@@ -185,7 +158,7 @@ namespace dftfe
          std::vector<dataTypes::number> &      ProjHam) = 0;
 
     /**
-     * @brief Compute projection of the operator into a subspace spanned by a given orthogonal basis HConj=X^{T}*HConj*XConj
+     * @brief Compute projection of the operator into a subspace spanned by a given orthogonal basis HProjConj=X^{T}*HConj*XConj
      *
      * @param X Vector of Vectors containing multi-wavefunction fields
      * @param numberComponents number of wavefunctions associated with a given node
@@ -201,7 +174,7 @@ namespace dftfe
 
 
     /**
-     * @brief Compute projection of the operator into a subspace spanned by a given orthogonal basis
+     * @brief Compute projection of the operator into a subspace spanned by a given orthogonal basis HProjConj=X^{T}*HConj*XConj
      *
      * @param X Vector of Vectors containing multi-wavefunction fields
      * @param totalNumberComponents number of wavefunctions associated with a given node
@@ -321,58 +294,6 @@ namespace dftfe
     // mpi communicator
     //
     MPI_Comm d_mpi_communicator;
-
-#ifdef DFTFE_WITH_ELPA
-    /// ELPA handle
-    elpa_t d_elpaHandle;
-
-    /// ELPA handle for partial eigenvectors of full proj ham
-    elpa_t d_elpaHandlePartialEigenVec;
-
-    /// ELPA autotune handle
-    elpa_autotune_t d_elpaAutoTuneHandle;
-
-    /// processGrid mpi communicator
-    MPI_Comm d_processGridCommunicatorActive;
-
-    MPI_Comm d_processGridCommunicatorActivePartial;
-
-#endif
-
-    /// ScaLAPACK distributed format block size
-    unsigned int d_scalapackBlockSize;
   };
-
-  /*--------------------- Inline functions --------------------------------*/
-
-#ifndef DOXYGEN
-  inline unsigned int
-  operatorDFTClass::getScalapackBlockSize() const
-  {
-    return d_scalapackBlockSize;
-  }
-
-#  ifdef DFTFE_WITH_ELPA
-  inline elpa_t &
-  operatorDFTClass::getElpaHandle()
-  {
-    return d_elpaHandle;
-  }
-
-  inline elpa_t &
-  operatorDFTClass::getElpaHandlePartialEigenVec()
-  {
-    return d_elpaHandlePartialEigenVec;
-  }
-
-
-  inline elpa_autotune_t &
-  operatorDFTClass::getElpaAutoTuneHandle()
-  {
-    return d_elpaAutoTuneHandle;
-  }
-#  endif
-#endif // ifndef DOXYGEN
-
 } // namespace dftfe
 #endif

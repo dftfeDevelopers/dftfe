@@ -500,7 +500,7 @@ namespace dftfe
      */
     template <typename T>
     unsigned int
-    pseudoGramSchmidtOrthogonalization(operatorDFTClass & operatorMatrix,
+    pseudoGramSchmidtOrthogonalization(elpaScalaManager & elpaScala,
                                        std::vector<T> &   X,
                                        const unsigned int numberComponents,
                                        const MPI_Comm &   interBandGroupComm,
@@ -523,6 +523,7 @@ namespace dftfe
     template <typename T>
     void
     rayleighRitzGEP(operatorDFTClass &   operatorMatrix,
+                    elpaScalaManager &   elpaScala,
                     std::vector<T> &     X,
                     const unsigned int   numberComponents,
                     const MPI_Comm &     interBandGroupComm,
@@ -546,6 +547,7 @@ namespace dftfe
     template <typename T>
     void
     rayleighRitz(operatorDFTClass &   operatorMatrix,
+                 elpaScalaManager &   elpaScala,
                  std::vector<T> &     X,
                  const unsigned int   numberComponents,
                  const MPI_Comm &     interBandGroupComm,
@@ -570,6 +572,7 @@ namespace dftfe
     template <typename T>
     void
     rayleighRitzGEPSpectrumSplitDirect(operatorDFTClass &   operatorMatrix,
+                                       elpaScalaManager &   elpaScala,
                                        std::vector<T> &     X,
                                        std::vector<T> &     Y,
                                        const unsigned int   numberComponents,
@@ -597,6 +600,7 @@ namespace dftfe
     template <typename T>
     void
     rayleighRitzSpectrumSplitDirect(operatorDFTClass &    operatorMatrix,
+                                    elpaScalaManager &    elpaScala,
                                     const std::vector<T> &X,
                                     std::vector<T> &      Y,
                                     const unsigned int    numberComponents,

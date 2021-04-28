@@ -20,7 +20,8 @@
 #ifndef elpaScalaManager_h
 #define elpaScalaManager_h
 
-#include <headers.h>
+#include "headers.h"
+#include "process_grid.h"
 
 #include <vector>
 #ifdef DFTFE_WITH_ELPA
@@ -80,6 +81,9 @@ namespace dftfe
   public:
     unsigned int
     getScalapackBlockSize() const;
+
+    std::shared_ptr<const dftfe::ProcessGrid>
+    getProcessGridDftfeScalaWrapper() const;
 
     void
     processGridOptionalELPASetup(const unsigned int na, const unsigned int nev);
@@ -142,6 +146,8 @@ namespace dftfe
 
     /// ScaLAPACK distributed format block size
     unsigned int d_scalapackBlockSize;
+
+    std::shared_ptr<const dftfe::ProcessGrid> d_processGridDftfeWrapper;
   };
 
   /*--------------------- Inline functions --------------------------------*/
@@ -152,6 +158,13 @@ namespace dftfe
   {
     return d_scalapackBlockSize;
   }
+
+  inline std::shared_ptr<const dftfe::ProcessGrid>
+  elpaScalaManager::getProcessGridDftfeScalaWrapper() const
+  {
+    return d_processGridDftfeWrapper;
+  }
+
 #  ifdef DFTFE_WITH_ELPA
   inline elpa_t &
   elpaScalaManager::getElpaHandle()

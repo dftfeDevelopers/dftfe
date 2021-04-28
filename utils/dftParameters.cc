@@ -819,7 +819,7 @@ namespace dftfe
             "RR GEP",
             "true",
             Patterns::Bool(),
-            "[Advanced] Solve generalized eigenvalue problem instead of standard eignevalue problem in Rayleigh-Ritz step. This approach is not extended yet to complex executable. Default value for RR GEP is true for real executable and false for complex executable.");
+            "[Advanced] Solve generalized eigenvalue problem instead of standard eignevalue problem in Rayleigh-Ritz step. This approach is not extended yet to complex executable. Default value true.");
 
           prm.declare_entry(
             "CHEBYSHEV POLYNOMIAL DEGREE",
@@ -900,38 +900,38 @@ namespace dftfe
             "USE ELPA",
             "true",
             Patterns::Bool(),
-            "[Standard] Use ELPA instead of ScaLAPACK for diagonalization of subspace projected Hamiltonian and Cholesky-Gram-Schmidt orthogonalization. Currently this setting is only available for real executable. Default setting is true.");
+            "[Standard] Use ELPA instead of ScaLAPACK for diagonalization of subspace projected Hamiltonian and Cholesky-Gram-Schmidt orthogonalization.  Default setting is true.");
 
           prm.declare_entry(
             "USE MIXED PREC PGS SR",
             "false",
             Patterns::Bool(),
-            "[Advanced] Use mixed precision arithmetic in subspace rotation step of PGS orthogonalization, if ORTHOGONALIZATION TYPE is set to PGS. Currently this optimization is only enabled for the real executable. Default setting is false.");
+            "[Advanced] Use mixed precision arithmetic in subspace rotation step of PGS orthogonalization, if ORTHOGONALIZATION TYPE is set to PGS. Default setting is false.");
 
           prm.declare_entry(
             "USE MIXED PREC PGS O",
             "false",
             Patterns::Bool(),
-            "[Advanced] Use mixed precision arithmetic in overlap matrix computation step of PGS orthogonalization, if ORTHOGONALIZATION TYPE is set to PGS. Currently this optimization is only enabled for the real executable. Default setting is false.");
+            "[Advanced] Use mixed precision arithmetic in overlap matrix computation step of PGS orthogonalization, if ORTHOGONALIZATION TYPE is set to PGS. Default setting is false.");
 
 
           prm.declare_entry(
             "USE MIXED PREC XTHX SPECTRUM SPLIT",
             "false",
             Patterns::Bool(),
-            "[Advanced] Use mixed precision arithmetic in computing subspace projected Kohn-Sham Hamiltonian when SPECTRUM SPLIT CORE EIGENSTATES>0. Currently this optimization is only enabled for the real executable. Default setting is false.");
+            "[Advanced] Use mixed precision arithmetic in computing subspace projected Kohn-Sham Hamiltonian when SPECTRUM SPLIT CORE EIGENSTATES>0.  Default setting is false.");
 
           prm.declare_entry(
             "USE MIXED PREC RR_SR SPECTRUM SPLIT",
             "false",
             Patterns::Bool(),
-            "[Advanced] Use mixed precision arithmetic in Rayleigh-Ritz subspace rotation step when SPECTRUM SPLIT CORE EIGENSTATES>0. Currently this optimization is only enabled for the real executable. Default setting is false.");
+            "[Advanced] Use mixed precision arithmetic in Rayleigh-Ritz subspace rotation step when SPECTRUM SPLIT CORE EIGENSTATES>0. Default setting is false.");
 
           prm.declare_entry(
             "USE MIXED PREC RR_SR",
             "false",
             Patterns::Bool(),
-            "[Advanced] Use mixed precision arithmetic in Rayleigh-Ritz subspace rotation step. Currently this optimization is only enabled for the real executable. Default setting is false.");
+            "[Advanced] Use mixed precision arithmetic in Rayleigh-Ritz subspace rotation step. Default setting is false.");
 
           prm.declare_entry(
             "USE MIXED PREC CHEBY",
@@ -974,7 +974,7 @@ namespace dftfe
             "ALGO",
             "NORMAL",
             Patterns::Selection("NORMAL|FAST"),
-            "[Standard] In the FAST mode, spectrum splitting technique is used in Rayleigh-Ritz step, and mixed precision arithmetic algorithms are used in Rayleigh-Ritz and Cholesky factorization based orthogonalization step. For spectrum splitting, 85 percent of the total number of wavefunctions are taken to be core states, which holds good for most systems including metallic systems assuming NUMBER OF KOHN-SHAM WAVEFUNCTIONS to be around 10 percent more than N/2. FAST setting is strongly recommended for large-scale (> 10k electrons) system sizes. Both NORMAL and FAST setting use Chebyshev filtered subspace iteration technique. Currently, FAST setting is only enabled for the real executable. If manual options for mixed precision and spectum splitting are being used, please use NORMAL setting for ALGO. Default setting is NORMAL.");
+            "[Standard] In the FAST mode, spectrum splitting technique is used in Rayleigh-Ritz step, and mixed precision arithmetic algorithms are used in Rayleigh-Ritz and Cholesky factorization based orthogonalization step. For spectrum splitting, 85 percent of the total number of wavefunctions are taken to be core states, which holds good for most systems including metallic systems assuming NUMBER OF KOHN-SHAM WAVEFUNCTIONS to be around 10 percent more than N/2. FAST setting is strongly recommended for large-scale (> 10k electrons) system sizes. Both NORMAL and FAST setting use Chebyshev filtered subspace iteration technique. If manual options for mixed precision and spectum splitting are being used, please use NORMAL setting for ALGO. Default setting is NORMAL.");
 
 
           prm.declare_entry(
@@ -1598,13 +1598,6 @@ namespace dftfe
           !dftParameters::useSymm,
           ExcMessage(
             "DFT-FE Error: USE GROUP SYMMETRY must be set to false if either ION FORCE or CELL STRESS is set to true. This functionality will be added in a future release"));
-
-
-      if (dftParameters::numCoreWfcRR > 0)
-        AssertThrow(
-          false,
-          ExcMessage(
-            "DFT-FE Error: SPECTRUM SPLIT CORE EIGENSTATES cannot be set to a non-zero value when using complex executable. This optimization will be added in a future release"));
 #else
       AssertThrow(
         dftParameters::nkx == 1 && dftParameters::nky == 1 &&

@@ -112,6 +112,7 @@ namespace dftfe
   void
   chebyshevOrthogonalizedSubspaceIterationSolver::onlyRR(
     operatorDFTClass &              operatorMatrix,
+    elpaScalaManager &              elpaScala,
     std::vector<dataTypes::number> &eigenVectorsFlattened,
     std::vector<dataTypes::number> &eigenVectorsRotFracDensityFlattened,
     distributedCPUVec<double> &     tempEigenVec,
@@ -125,6 +126,7 @@ namespace dftfe
       {
         linearAlgebraOperations::rayleighRitzSpectrumSplitDirect(
           operatorMatrix,
+          elpaScala,
           eigenVectorsFlattened,
           eigenVectorsRotFracDensityFlattened,
           totalNumberWaveFunctions,
@@ -138,6 +140,7 @@ namespace dftfe
       {
         linearAlgebraOperations::rayleighRitz(
           operatorMatrix,
+          elpaScala,
           eigenVectorsFlattened,
           totalNumberWaveFunctions,
           interBandGroupComm,
@@ -154,6 +157,7 @@ namespace dftfe
   void
   chebyshevOrthogonalizedSubspaceIterationSolver::solve(
     operatorDFTClass &              operatorMatrix,
+    elpaScalaManager &              elpaScala,
     std::vector<dataTypes::number> &eigenVectorsFlattened,
     std::vector<dataTypes::number> &eigenVectorsRotFracDensityFlattened,
     distributedCPUVec<double> &     tempEigenVec,
@@ -512,6 +516,7 @@ namespace dftfe
           {
             linearAlgebraOperations::rayleighRitzGEPSpectrumSplitDirect(
               operatorMatrix,
+              elpaScala,
               eigenVectorsFlattened,
               eigenVectorsRotFracDensityFlattened,
               totalNumberWaveFunctions,
@@ -525,6 +530,7 @@ namespace dftfe
           {
             linearAlgebraOperations::rayleighRitzGEP(
               operatorMatrix,
+              elpaScala,
               eigenVectorsFlattened,
               totalNumberWaveFunctions,
               interBandGroupComm,
@@ -589,7 +595,7 @@ namespace dftfe
             computing_timer.enter_section("Pseudo-Gram-Schmidt");
             const unsigned int flag =
               linearAlgebraOperations::pseudoGramSchmidtOrthogonalization(
-                operatorMatrix,
+                elpaScala,
                 eigenVectorsFlattened,
                 totalNumberWaveFunctions,
                 interBandGroupComm,
@@ -631,6 +637,7 @@ namespace dftfe
           {
             linearAlgebraOperations::rayleighRitzSpectrumSplitDirect(
               operatorMatrix,
+              elpaScala,
               eigenVectorsFlattened,
               eigenVectorsRotFracDensityFlattened,
               totalNumberWaveFunctions,
@@ -644,6 +651,7 @@ namespace dftfe
           {
             linearAlgebraOperations::rayleighRitz(
               operatorMatrix,
+              elpaScala,
               eigenVectorsFlattened,
               totalNumberWaveFunctions,
               interBandGroupComm,

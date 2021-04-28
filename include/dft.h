@@ -191,7 +191,7 @@ namespace dftfe
 
 
     void
-    initializeKohnShamDFTOperator(const bool initializeCUDAScala = true);
+    initializeKohnShamDFTOperator(const bool initializeCublas = true);
 
 
     void

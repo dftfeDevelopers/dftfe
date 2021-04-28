@@ -301,9 +301,6 @@ dftClass<FEOrder, FEOrderElectro>::solveNoSCF()
     this, mpi_communicator);
   kohnShamDFTEigenOperator.init();
 
-  kohnShamDFTEigenOperator.processGridOptionalELPASetup(d_numEigenValues,
-                                                        d_numEigenValuesRR);
-
   for (unsigned int spinType = 0; spinType < (1 + dftParameters::spinPolarized);
        ++spinType)
     {
@@ -336,7 +333,7 @@ dftClass<FEOrder, FEOrderElectro>::solveNoSCF()
         {
           const unsigned int flag =
             linearAlgebraOperations::pseudoGramSchmidtOrthogonalization(
-              kohnShamDFTEigenOperator,
+              d_elpaScala,
               d_eigenVectorsFlattenedSTL[(1 + dftParameters::spinPolarized) *
                                            kPointIndex +
                                          spinType],
@@ -488,6 +485,7 @@ dftClass<FEOrder, FEOrderElectro>::kohnShamEigenSpaceCompute(
 
   subspaceIterationSolver.solve(
     kohnShamDFTEigenOperator,
+    elpaScala,
     d_eigenVectorsFlattenedSTL[(1 + dftParameters::spinPolarized) *
                                  kPointIndex +
                                spinType],
@@ -633,10 +631,8 @@ dftClass<FEOrder, FEOrderElectro>::kohnShamEigenSpaceCompute(
                                        spinType]);
 
   const unsigned int rowsBlockSize = elpaScala.getScalapackBlockSize();
-  std::shared_ptr<const dftfe::ProcessGrid> processGrid;
-
-  linearAlgebraOperations::internal::createProcessGridSquareMatrix(
-    elpaScala.getMPICommunicator(), d_numEigenValues, processGrid, false);
+  std::shared_ptr<const dftfe::ProcessGrid> processGrid =
+    elpaScala.getProcessGridDftfeScalaWrapper();
 
   dftfe::ScaLAPACKMatrix<double> projHamPar(d_numEigenValues,
                                             processGrid,
@@ -947,10 +943,8 @@ dftClass<FEOrder, FEOrderElectro>::kohnShamEigenSpaceOnlyRRCompute(
 
 
   const unsigned int rowsBlockSize = elpaScala.getScalapackBlockSize();
-  std::shared_ptr<const dftfe::ProcessGrid> processGrid;
-
-  linearAlgebraOperations::internal::createProcessGridSquareMatrix(
-    elpaScala.getMPICommunicator(), d_numEigenValues, processGrid, false);
+  std::shared_ptr<const dftfe::ProcessGrid> processGrid =
+    elpaScala.getProcessGridDftfeScalaWrapper();
 
   dftfe::ScaLAPACKMatrix<double> projHamPar(d_numEigenValues,
                                             processGrid,
@@ -1171,6 +1165,7 @@ dftClass<FEOrder, FEOrderElectro>::kohnShamEigenSpaceOnlyRRCompute(
 
   subspaceIterationSolver.onlyRR(
     kohnShamDFTEigenOperator,
+    elpaScala,
     d_eigenVectorsFlattenedSTL[(1 + dftParameters::spinPolarized) *
                                  kPointIndex +
                                spinType],
@@ -1330,6 +1325,7 @@ dftClass<FEOrder, FEOrderElectro>::kohnShamEigenSpaceComputeNSCF(
 
   subspaceIterationSolver.solve(
     kohnShamDFTEigenOperator,
+    d_elpaScala,
     d_eigenVectorsFlattenedSTL[(1 + dftParameters::spinPolarized) *
                                  kPointIndex +
                                spinType],

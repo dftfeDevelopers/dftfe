@@ -67,21 +67,20 @@ namespace dftfe
   elpaScalaManager::processGridOptionalELPASetup(const unsigned int na,
                                                  const unsigned int nev)
   {
-    std::shared_ptr<const dftfe::ProcessGrid> processGrid;
     linearAlgebraOperations::internal::createProcessGridSquareMatrix(
-      getMPICommunicator(), na, processGrid);
+      getMPICommunicator(), na, d_processGridDftfeWrapper);
 
 
     d_scalapackBlockSize =
       std::min(dftParameters::scalapackBlockSize,
-               (na + processGrid->get_process_grid_rows() - 1) /
-                 processGrid->get_process_grid_rows());
+               (na + d_processGridDftfeWrapper->get_process_grid_rows() - 1) /
+                 d_processGridDftfeWrapper->get_process_grid_rows());
 #ifdef DFTFE_WITH_ELPA
     if (dftParameters::useELPA)
       linearAlgebraOperations::internal::setupELPAHandle(
         getMPICommunicator(),
         d_processGridCommunicatorActive,
-        processGrid,
+        d_processGridDftfeWrapper,
         na,
         na,
         d_scalapackBlockSize,
@@ -95,7 +94,7 @@ namespace dftfe
           linearAlgebraOperations::internal::setupELPAHandle(
             getMPICommunicator(),
             d_processGridCommunicatorActivePartial,
-            processGrid,
+            d_processGridDftfeWrapper,
             na,
             nev,
             d_scalapackBlockSize,

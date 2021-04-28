@@ -653,6 +653,7 @@ namespace dftfe
     template <typename T>
     void
     rayleighRitzGEP(operatorDFTClass &   operatorMatrix,
+                    elpaScalaManager &   elpaScala,
                     std::vector<T> &     X,
                     const unsigned int   numberWaveFunctions,
                     const MPI_Comm &     interBandGroupComm,
@@ -672,11 +673,9 @@ namespace dftfe
                                             dealii::TimerOutput::summary,
                                           dealii::TimerOutput::wall_times);
 
-      const unsigned int rowsBlockSize = operatorMatrix.getScalapackBlockSize();
-      std::shared_ptr<const dftfe::ProcessGrid> processGrid;
-      internal::createProcessGridSquareMatrix(mpi_communicator,
-                                              numberWaveFunctions,
-                                              processGrid);
+      const unsigned int rowsBlockSize = elpaScala.getScalapackBlockSize();
+      std::shared_ptr<const dftfe::ProcessGrid> processGrid =
+        elpaScala.getProcessGridDftfeScalaWrapper();
 
       //
       // compute overlap matrix
@@ -758,7 +757,7 @@ namespace dftfe
           if (processGrid->is_process_active())
             {
               int error;
-              elpaCholesky(operatorMatrix.getElpaHandle(),
+              elpaCholesky(elpaScala.getElpaHandle(),
                            &overlapMatParConjTrans.local_el(0, 0),
                            &error);
               AssertThrow(error == ELPA_OK,
@@ -896,7 +895,7 @@ namespace dftfe
           if (processGrid->is_process_active())
             {
               int error;
-              elpaEigenvectors(operatorMatrix.getElpaHandle(),
+              elpaEigenvectors(elpaScala.getElpaHandle(),
                                &projHamPar.local_el(0, 0),
                                &eigenValues[0],
                                &eigenVectors.local_el(0, 0),
@@ -1009,6 +1008,7 @@ namespace dftfe
     template <typename T>
     void
     rayleighRitz(operatorDFTClass &   operatorMatrix,
+                 elpaScalaManager &   elpaScala,
                  std::vector<T> &     X,
                  const unsigned int   numberWaveFunctions,
                  const MPI_Comm &     interBandGroupComm,
@@ -1031,11 +1031,9 @@ namespace dftfe
       //
       // compute projected Hamiltonian conjugate HConjProj= X^{T}*HConj*XConj
       //
-      const unsigned int rowsBlockSize = operatorMatrix.getScalapackBlockSize();
-      std::shared_ptr<const dftfe::ProcessGrid> processGrid;
-      internal::createProcessGridSquareMatrix(mpi_communicator,
-                                              numberWaveFunctions,
-                                              processGrid);
+      const unsigned int rowsBlockSize = elpaScala.getScalapackBlockSize();
+      std::shared_ptr<const dftfe::ProcessGrid> processGrid =
+        elpaScala.getProcessGridDftfeScalaWrapper();
 
       dftfe::ScaLAPACKMatrix<T> projHamPar(numberWaveFunctions,
                                            processGrid,
@@ -1102,7 +1100,7 @@ namespace dftfe
           if (processGrid->is_process_active())
             {
               int error;
-              elpaEigenvectors(operatorMatrix.getElpaHandle(),
+              elpaEigenvectors(elpaScala.getElpaHandle(),
                                &projHamPar.local_el(0, 0),
                                &eigenValues[0],
                                &eigenVectors.local_el(0, 0),
@@ -1177,71 +1175,10 @@ namespace dftfe
       computing_timer.exit_section("Blocked subspace rotation, RR step");
     }
 
-    /*
-    template <typename T>
-    void
-    rayleighRitz(operatorDFTClass &operatorMatrix,
-                 std::vector<T> &X,
-                 const unsigned int numberWaveFunctions,
-                 const MPI_Comm &interBandGroupComm,
-                 const MPI_Comm &mpi_communicator,
-                 std::vector<double> &eigenValues,
-                 const bool doCommAfterBandParal)
-    {
-      dealii::ConditionalOStream pcout(
-        std::cout,
-        (dealii::Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0));
-
-      dealii::TimerOutput computing_timer(mpi_communicator,
-                                          pcout,
-                                          dftParameters::reproducible_output ||
-                                              dftParameters::verbosity < 4 ?
-                                            dealii::TimerOutput::never :
-                                            dealii::TimerOutput::summary,
-                                          dealii::TimerOutput::wall_times);
-      //
-      // compute projected Hamiltonian
-      //
-      std::vector<T> ProjHam;
-      const unsigned int numberEigenValues = numberWaveFunctions;
-      eigenValues.resize(numberEigenValues);
-
-      computing_timer.enter_section("XtHX");
-      operatorMatrix.XtHX(X, numberEigenValues, ProjHam);
-      computing_timer.exit_section("XtHX");
-
-      //
-      // compute eigendecomposition of ProjHam
-      //
-      computing_timer.enter_section("eigen decomp in RR");
-      callevd(numberEigenValues, &ProjHam[0], &eigenValues[0]);
-
-      MPI_Bcast(&ProjHam[0],
-                numberEigenValues * numberEigenValues,
-                MPI_C_DOUBLE_COMPLEX,
-                0,
-                mpi_communicator);
-
-      computing_timer.exit_section("eigen decomp in RR");
-
-
-      //
-      // rotate the basis in the subspace X = X*Q
-      //
-      const unsigned int localVectorSize = X.size() / numberEigenValues;
-      std::vector<T> rotatedBasis(X.size());
-
-      computing_timer.enter_section("subspace rotation in RR");
-      callgemm(numberEigenValues, localVectorSize, ProjHam, X, rotatedBasis);
-      computing_timer.exit_section("subspace rotation in RR");
-
-      X = rotatedBasis;
-    }
-*/
-
     template <typename T>
     void
     rayleighRitzGEPSpectrumSplitDirect(operatorDFTClass &   operatorMatrix,
+                                       elpaScalaManager &   elpaScala,
                                        std::vector<T> &     X,
                                        std::vector<T> &     Y,
                                        const unsigned int   numberWaveFunctions,
@@ -1263,11 +1200,9 @@ namespace dftfe
                                             dealii::TimerOutput::summary,
                                           dealii::TimerOutput::wall_times);
 
-      const unsigned int rowsBlockSize = operatorMatrix.getScalapackBlockSize();
-      std::shared_ptr<const dftfe::ProcessGrid> processGrid;
-      internal::createProcessGridSquareMatrix(mpiComm,
-                                              numberWaveFunctions,
-                                              processGrid);
+      const unsigned int rowsBlockSize = elpaScala.getScalapackBlockSize();
+      std::shared_ptr<const dftfe::ProcessGrid> processGrid =
+        elpaScala.getProcessGridDftfeScalaWrapper();
 
       //
       // compute overlap matrix
@@ -1350,7 +1285,7 @@ namespace dftfe
           if (processGrid->is_process_active())
             {
               int error;
-              elpaCholesky(operatorMatrix.getElpaHandle(),
+              elpaCholesky(elpaScala.getElpaHandle(),
                            &overlapMatParConjTrans.local_el(0, 0),
                            &error);
               AssertThrow(error == ELPA_OK,
@@ -1511,7 +1446,7 @@ namespace dftfe
           if (processGrid->is_process_active())
             {
               int error;
-              elpaEigenvectors(operatorMatrix.getElpaHandlePartialEigenVec(),
+              elpaEigenvectors(elpaScala.getElpaHandlePartialEigenVec(),
                                &projHamPar.local_el(0, 0),
                                &allEigenValues[0],
                                &eigenVectors.local_el(0, 0),
@@ -1712,6 +1647,7 @@ namespace dftfe
     template <typename T>
     void
     rayleighRitzSpectrumSplitDirect(operatorDFTClass &    operatorMatrix,
+                                    elpaScalaManager &    elpaScala,
                                     const std::vector<T> &X,
                                     std::vector<T> &      Y,
                                     const unsigned int    numberWaveFunctions,
@@ -1736,11 +1672,9 @@ namespace dftfe
       //
       // compute projected Hamiltonian HConj= X^{T}*HConj*XConj
       //
-      const unsigned int rowsBlockSize = operatorMatrix.getScalapackBlockSize();
-      std::shared_ptr<const dftfe::ProcessGrid> processGrid;
-      internal::createProcessGridSquareMatrix(mpi_communicator,
-                                              numberWaveFunctions,
-                                              processGrid);
+      const unsigned int rowsBlockSize = elpaScala.getScalapackBlockSize();
+      std::shared_ptr<const dftfe::ProcessGrid> processGrid =
+        elpaScala.getProcessGridDftfeScalaWrapper();
 
 
       dftfe::ScaLAPACKMatrix<T> projHamPar(numberWaveFunctions,
@@ -1816,7 +1750,7 @@ namespace dftfe
           if (processGrid->is_process_active())
             {
               int error;
-              elpaEigenvectors(operatorMatrix.getElpaHandlePartialEigenVec(),
+              elpaEigenvectors(elpaScala.getElpaHandlePartialEigenVec(),
                                &projHamPar.local_el(0, 0),
                                &allEigenValues[0],
                                &eigenVectors.local_el(0, 0),
@@ -3220,7 +3154,7 @@ namespace dftfe
                                  const MPI_Comm &);
 
     template unsigned int
-    pseudoGramSchmidtOrthogonalization(operatorDFTClass &operatorMatrix,
+    pseudoGramSchmidtOrthogonalization(elpaScalaManager &elpaScala,
                                        std::vector<dataTypes::number> &,
                                        const unsigned int,
                                        const MPI_Comm &,
@@ -3229,6 +3163,7 @@ namespace dftfe
 
     template void
     rayleighRitz(operatorDFTClass &operatorMatrix,
+                 elpaScalaManager &elpaScala,
                  std::vector<dataTypes::number> &,
                  const unsigned int numberWaveFunctions,
                  const MPI_Comm &,
@@ -3238,6 +3173,7 @@ namespace dftfe
 
     template void
     rayleighRitzGEP(operatorDFTClass &operatorMatrix,
+                    elpaScalaManager &elpaScala,
                     std::vector<dataTypes::number> &,
                     const unsigned int numberWaveFunctions,
                     const MPI_Comm &,
@@ -3248,6 +3184,7 @@ namespace dftfe
 
     template void
     rayleighRitzSpectrumSplitDirect(operatorDFTClass &operatorMatrix,
+                                    elpaScalaManager &elpaScala,
                                     const std::vector<dataTypes::number> &,
                                     std::vector<dataTypes::number> &,
                                     const unsigned int numberWaveFunctions,
@@ -3259,6 +3196,7 @@ namespace dftfe
 
     template void
     rayleighRitzGEPSpectrumSplitDirect(operatorDFTClass &operatorMatrix,
+                                       elpaScalaManager &elpaScala,
                                        std::vector<dataTypes::number> &X,
                                        std::vector<dataTypes::number> &Y,
                                        const unsigned int   numberWaveFunctions,

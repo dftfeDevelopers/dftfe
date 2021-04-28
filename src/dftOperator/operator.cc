@@ -19,7 +19,6 @@
 // @author Phani Motamarri
 //
 #include <dftParameters.h>
-#include <linearAlgebraOperationsInternal.h>
 #include <operator.h>
 
 //
@@ -32,13 +31,7 @@ namespace dftfe
     const dealii::MatrixFree<3, double> &matrix_free_data,
     dftUtils::constraintMatrixInfo &     constraintMatrixNone)
     : d_mpi_communicator(mpi_comm_replica)
-    ,
-#ifdef DFTFE_WITH_ELPA
-    d_processGridCommunicatorActive(MPI_COMM_NULL)
-    , d_processGridCommunicatorActivePartial(MPI_COMM_NULL)
-    ,
-#endif
-    d_matrix_free_data(&matrix_free_data)
+    , d_matrix_free_data(&matrix_free_data)
     , d_constraintMatrixData(&constraintMatrixNone)
   {}
 
@@ -47,13 +40,6 @@ namespace dftfe
   //
   operatorDFTClass::~operatorDFTClass()
   {
-#ifdef DFTFE_WITH_ELPA
-    if (d_processGridCommunicatorActive != MPI_COMM_NULL)
-      MPI_Comm_free(&d_processGridCommunicatorActive);
-
-    if (d_processGridCommunicatorActivePartial != MPI_COMM_NULL)
-      MPI_Comm_free(&d_processGridCommunicatorActivePartial);
-#endif
     //
     //
     //
@@ -102,69 +88,4 @@ namespace dftfe
   {
     return d_mpi_communicator;
   }
-
-
-  void
-  operatorDFTClass::processGridOptionalELPASetup(const unsigned int na,
-                                                 const unsigned int nev)
-  {
-    std::shared_ptr<const dftfe::ProcessGrid> processGrid;
-    linearAlgebraOperations::internal::createProcessGridSquareMatrix(
-      getMPICommunicator(), na, processGrid);
-
-
-    d_scalapackBlockSize =
-      std::min(dftParameters::scalapackBlockSize,
-               (na + processGrid->get_process_grid_rows() - 1) /
-                 processGrid->get_process_grid_rows());
-#ifdef DFTFE_WITH_ELPA
-    if (dftParameters::useELPA)
-      linearAlgebraOperations::internal::setupELPAHandle(
-        getMPICommunicator(),
-        d_processGridCommunicatorActive,
-        processGrid,
-        na,
-        na,
-        d_scalapackBlockSize,
-        d_elpaHandle);
-#endif
-
-    if (nev != na)
-      {
-#ifdef DFTFE_WITH_ELPA
-        if (dftParameters::useELPA)
-          linearAlgebraOperations::internal::setupELPAHandle(
-            getMPICommunicator(),
-            d_processGridCommunicatorActivePartial,
-            processGrid,
-            na,
-            nev,
-            d_scalapackBlockSize,
-            d_elpaHandlePartialEigenVec);
-#endif
-        // std::cout<<"nblkvalence: "<<d_scalapackBlockSizeValence<<std::endl;
-      }
-
-    // std::cout<<"nblk: "<<d_scalapackBlockSize<<std::endl;
-  }
-
-#ifdef DFTFE_WITH_ELPA
-  void
-  operatorDFTClass::elpaDeallocateHandles(const unsigned int na,
-                                          const unsigned int nev)
-  {
-    int error;
-    elpa_deallocate(d_elpaHandle, &error);
-    AssertThrow(error == ELPA_OK,
-                dealii::ExcMessage("DFT-FE Error: elpa error."));
-
-    if (na != nev)
-      {
-        elpa_deallocate(d_elpaHandlePartialEigenVec, &error);
-        AssertThrow(error == ELPA_OK,
-                    dealii::ExcMessage("DFT-FE Error: elpa error."));
-      }
-  }
-#endif
-
 } // namespace dftfe

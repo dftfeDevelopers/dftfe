@@ -28,7 +28,7 @@ namespace dftfe
   {
     template <typename T>
     unsigned int
-    pseudoGramSchmidtOrthogonalization(operatorDFTClass & operatorMatrix,
+    pseudoGramSchmidtOrthogonalization(elpaScalaManager & elpaScala,
                                        std::vector<T> &   X,
                                        const unsigned int numberVectors,
                                        const MPI_Comm &   interBandGroupComm,
@@ -50,7 +50,7 @@ namespace dftfe
                                           dealii::TimerOutput::wall_times);
 
 
-      const unsigned int rowsBlockSize = operatorMatrix.getScalapackBlockSize();
+      const unsigned int rowsBlockSize = elpaScala.getScalapackBlockSize();
       std::shared_ptr<const dftfe::ProcessGrid> processGrid;
       internal::createProcessGridSquareMatrix(mpiComm,
                                               numberVectors,
@@ -136,7 +136,7 @@ namespace dftfe
           if (processGrid->is_process_active())
             {
               int error;
-              elpaCholesky(operatorMatrix.getElpaHandle(),
+              elpaCholesky(elpaScala.getElpaHandle(),
                            &overlapMatParConjTrans.local_el(0, 0),
                            &error);
               AssertThrow(error == ELPA_OK,
