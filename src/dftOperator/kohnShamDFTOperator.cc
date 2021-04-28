@@ -368,6 +368,39 @@ namespace dftfe
     globalArrayClassificationMap = d_globalArrayClassificationMap;
   }
 
+  template <unsigned int FEOrder, unsigned int FEOrderElectro>
+  const std::vector<dealii::types::global_dof_index> &
+  kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::
+    getFlattenedArrayCellLocalProcIndexIdMap() const
+  {
+    return d_FullflattenedArrayCellLocalProcIndexIdMap;
+  }
+
+  template <unsigned int FEOrder, unsigned int FEOrderElectro>
+  const std::vector<double> &
+  kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::
+    getShapeFunctionValuesDensityGaussQuad() const
+  {
+    return d_densityGaussQuadShapeFunctionValues;
+  }
+
+
+  template <unsigned int FEOrder, unsigned int FEOrderElectro>
+  const std::vector<double> &
+  kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::
+    getShapeFunctionGradValuesDensityGaussQuad(const unsigned int idim) const
+  {
+    return d_densityGaussQuadShapeFunctionGradientValues;
+  }
+
+
+  template <unsigned int FEOrder, unsigned int FEOrderElectro>
+  const std::vector<double> &
+  kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::
+    getShapeFunctionValuesDensityGaussLobattoQuad() const
+  {
+    return d_densityGlQuadShapeFunctionValues;
+  }
 
 
   /*template<unsigned int FEOrder,unsigned int FEOrderElectro>
