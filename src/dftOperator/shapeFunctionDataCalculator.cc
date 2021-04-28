@@ -167,28 +167,42 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::
 
         for (unsigned int q_point = 0; q_point < numberQuadraturePoints;
              ++q_point)
-
           for (unsigned int iNode = 0; iNode < numberDofsPerElement; ++iNode)
-            for (unsigned int q_point = 0; q_point < numberQuadraturePoints;
-                 ++q_point)
-              {
-                const dealii::Tensor<1, 3, double> &shape_grad =
-                  fe_values.shape_grad(iNode, q_point);
+            {
+              const dealii::Tensor<1, 3, double> &shape_grad =
+                fe_values.shape_grad(iNode, q_point);
 
-                d_densityGaussQuadShapeFunctionGradientValues
-                  [iElem * numberQuadraturePoints * 3 * numberDofsPerElement +
-                   q_point * 3 * numberDofsPerElement + iNode] = shape_grad[0];
+              d_densityGaussQuadShapeFunctionGradientValues
+                [iElem * numberQuadraturePoints * 3 * numberDofsPerElement +
+                 q_point * 3 * numberDofsPerElement + iNode] = shape_grad[0];
+            }
 
-                d_densityGaussQuadShapeFunctionGradientValues
-                  [iElem * numberQuadraturePoints * 3 * numberDofsPerElement +
-                   q_point * 3 * numberDofsPerElement + numberDofsPerElement +
-                   iNode] = shape_grad[1];
+        for (unsigned int q_point = 0; q_point < numberQuadraturePoints;
+             ++q_point)
+          for (unsigned int iNode = 0; iNode < numberDofsPerElement; ++iNode)
+            {
+              const dealii::Tensor<1, 3, double> &shape_grad =
+                fe_values.shape_grad(iNode, q_point);
 
-                d_densityGaussQuadShapeFunctionGradientValues
-                  [iElem * numberQuadraturePoints * 3 * numberDofsPerElement +
-                   q_point * 3 * numberDofsPerElement +
-                   2 * numberDofsPerElement + iNode] = shape_grad[2];
-              }
+              d_densityGaussQuadShapeFunctionGradientValues
+                [iElem * numberQuadraturePoints * 3 * numberDofsPerElement +
+                 q_point * 3 * numberDofsPerElement + numberDofsPerElement +
+                 iNode] = shape_grad[1];
+            }
+
+        for (unsigned int q_point = 0; q_point < numberQuadraturePoints;
+             ++q_point)
+          for (unsigned int iNode = 0; iNode < numberDofsPerElement; ++iNode)
+            {
+              const dealii::Tensor<1, 3, double> &shape_grad =
+                fe_values.shape_grad(iNode, q_point);
+
+              d_densityGaussQuadShapeFunctionGradientValues
+                [iElem * numberQuadraturePoints * 3 * numberDofsPerElement +
+                 q_point * 3 * numberDofsPerElement + 2 * numberDofsPerElement +
+                 iNode] = shape_grad[2];
+            }
+
 
         if (iElem == 0)
           {
