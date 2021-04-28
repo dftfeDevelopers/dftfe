@@ -586,6 +586,8 @@ namespace dftfe
       kohnShamDFTOperatorCUDAClass<FEOrder, FEOrderElectro>
         &kohnShamDFTEigenOperator,
 #endif
+      kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>
+        &  kohnShamDFTEigenOperatorCPU,
       bool isConsiderSpectrumSplitting);
 
 
@@ -741,6 +743,8 @@ namespace dftfe
       kohnShamDFTOperatorCUDAClass<FEOrder, FEOrderElectro>
         &kohnShamDFTEigenOperator,
 #endif
+      kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>
+        &        kohnShamDFTEigenOperatorCPU,
       const bool isConsiderSpectrumSplitting,
       const bool isGroundState = false);
 

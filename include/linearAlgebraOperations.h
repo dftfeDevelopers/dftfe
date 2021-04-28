@@ -62,10 +62,10 @@ namespace dftfe
            float *             x,
            const unsigned int *inc);
     void
-    zscal_(const unsigned int *  n,
-           std::complex<double> *alpha,
-           std::complex<double> *x,
-           const unsigned int *  inc);
+    zscal_(const unsigned int *        n,
+           const std::complex<double> *alpha,
+           std::complex<double> *      x,
+           const unsigned int *        inc);
     void
     zdscal_(const unsigned int *  n,
             const double *        alpha,
@@ -394,6 +394,118 @@ namespace dftfe
             int *                 info);
   }
 #endif
+
+  inline void
+  xgemm(const char *        transA,
+        const char *        transB,
+        const unsigned int *m,
+        const unsigned int *n,
+        const unsigned int *k,
+        const double *      alpha,
+        const double *      A,
+        const unsigned int *lda,
+        const double *      B,
+        const unsigned int *ldb,
+        const double *      beta,
+        double *            C,
+        const unsigned int *ldc)
+  {
+    dgemm_(transA, transB, m, n, k, alpha, A, lda, B, ldb, beta, C, ldc);
+  }
+
+  inline void
+  xgemm(const char *        transA,
+        const char *        transB,
+        const unsigned int *m,
+        const unsigned int *n,
+        const unsigned int *k,
+        const float *       alpha,
+        const float *       A,
+        const unsigned int *lda,
+        const float *       B,
+        const unsigned int *ldb,
+        const float *       beta,
+        float *             C,
+        const unsigned int *ldc)
+  {
+    sgemm_(transA, transB, m, n, k, alpha, A, lda, B, ldb, beta, C, ldc);
+  }
+
+  inline void
+  xgemm(const char *                transA,
+        const char *                transB,
+        const unsigned int *        m,
+        const unsigned int *        n,
+        const unsigned int *        k,
+        const std::complex<double> *alpha,
+        const std::complex<double> *A,
+        const unsigned int *        lda,
+        const std::complex<double> *B,
+        const unsigned int *        ldb,
+        const std::complex<double> *beta,
+        std::complex<double> *      C,
+        const unsigned int *        ldc)
+  {
+    zgemm_(transA, transB, m, n, k, alpha, A, lda, B, ldb, beta, C, ldc);
+  }
+
+  inline void
+  xgemm(const char *               transA,
+        const char *               transB,
+        const unsigned int *       m,
+        const unsigned int *       n,
+        const unsigned int *       k,
+        const std::complex<float> *alpha,
+        const std::complex<float> *A,
+        const unsigned int *       lda,
+        const std::complex<float> *B,
+        const unsigned int *       ldb,
+        const std::complex<float> *beta,
+        std::complex<float> *      C,
+        const unsigned int *       ldc)
+  {
+    cgemm_(transA, transB, m, n, k, alpha, A, lda, B, ldb, beta, C, ldc);
+  }
+
+
+  inline void
+  xscal(const unsigned int *n,
+        const double *      alpha,
+        double *            x,
+        const unsigned int *inc)
+  {
+    dscal_(n, alpha, x, inc);
+  }
+
+  inline void
+  xscal(const unsigned int *        n,
+        const std::complex<double> *alpha,
+        std::complex<double> *      x,
+        const unsigned int *        inc)
+  {
+    zscal_(n, alpha, x, inc);
+  }
+
+  inline void
+  xcopy(const unsigned int *n,
+        const double *      x,
+        const unsigned int *incx,
+        double *            y,
+        const unsigned int *incy)
+  {
+    dcopy_(n, x, incx, y, incy);
+  }
+
+  inline void
+  xcopy(const unsigned int *        n,
+        const std::complex<double> *x,
+        const unsigned int *        incx,
+        std::complex<double> *      y,
+        const unsigned int *        incy)
+  {
+    zcopy_(n, x, incx, y, incy);
+  }
+
   /**
    *  @brief Contains linear algebra functions used in the implementation of an eigen solver
    *

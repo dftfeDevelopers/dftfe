@@ -316,6 +316,17 @@ node is stored
     getInteriorSurfaceNodesMapFromGlobalArray(
       std::vector<unsigned int> &globalArrayClassificationMap);
 
+    const std::vector<dealii::types::global_dof_index> &
+    getFlattenedArrayCellLocalProcIndexIdMap() const;
+
+    const std::vector<double> &
+    getShapeFunctionValuesDensityGaussQuad() const;
+
+    const std::vector<double> &
+    getShapeFunctionGradValuesDensityGaussQuad(const unsigned int idim) const;
+
+    const std::vector<double> &
+    getShapeFunctionValuesDensityGaussLobattoQuad() const;
 
 
     /**
@@ -490,8 +501,7 @@ node is stored
       d_flattenedArrayCellLocalProcIndexIdMap;
 
     std::vector<dealii::types::global_dof_index>
-      d_FullflattenedArrayMacroCellLocalProcIndexIdMap,
-      d_FullflattenedArrayCellLocalProcIndexIdMap;
+      d_FullflattenedArrayMacroCellLocalProcIndexIdMap;
 
     std::vector<unsigned int> d_normalCellIdToMacroCellIdMap;
     std::vector<unsigned int> d_macroCellIdToNormalCellIdMap;
