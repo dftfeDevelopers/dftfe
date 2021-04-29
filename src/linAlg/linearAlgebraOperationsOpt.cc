@@ -834,8 +834,7 @@ namespace dftfe
       operatorMatrix.XtHX(X, numberWaveFunctions, processGrid, projHamPar);
       computing_timer.exit_section("Compute ProjHam, RR step");
 
-      // For ELPA eigendecomposition the full matrix is required unlike
-      // ScaLAPACK which can work with only the lower triangular part
+      // Construct the full HConjProj matrix
       dftfe::ScaLAPACKMatrix<T> projHamParConjTrans(numberWaveFunctions,
                                                     processGrid,
                                                     rowsBlockSize);
@@ -867,15 +866,15 @@ namespace dftfe
                                                processGrid,
                                                rowsBlockSize);
 
-      // compute HSConj= Lconj^{-1}*HConjProj*(Lconj^{-1})^C  (C denotes
+      // compute HSConjProj= Lconj^{-1}*HConjProj*(Lconj^{-1})^C  (C denotes
       // conjugate transpose LAPACK notation)
       LMatPar.mmult(projHamParCopy, projHamPar);
       projHamParCopy.zmCmult(projHamPar, LMatPar);
 
 
       //
-      // compute standard eigendecomposition HSConj: {QConjPrime,D}
-      // HSConj=QConjPrime*D*QConjPrime^{C} QConj={Lc^{-1}}^{C}*QConjPrime
+      // compute standard eigendecomposition HSConjProj: {QConjPrime,D}
+      // HSConjProj=QConjPrime*D*QConjPrime^{C} QConj={Lc^{-1}}^{C}*QConjPrime
       const unsigned int numberEigenValues = numberWaveFunctions;
       eigenValues.resize(numberEigenValues);
 #if (defined DFTFE_WITH_ELPA)
@@ -1371,27 +1370,27 @@ namespace dftfe
           computing_timer.exit_section("Blocked XtHX, RR step");
         }
 
-      // For ELPA eigendecomposition the full matrix is required unlike
-      // ScaLAPACK which can work with only the lower triangular part
-      dftfe::ScaLAPACKMatrix<T> projHamParTrans(numberWaveFunctions,
-                                                processGrid,
-                                                rowsBlockSize);
+      // Construct the full HConjProj matrix
+      dftfe::ScaLAPACKMatrix<T> projHamParConjTrans(numberWaveFunctions,
+                                                    processGrid,
+                                                    rowsBlockSize);
 
       if (processGrid->is_process_active())
-        std::fill(&projHamParTrans.local_el(0, 0),
-                  &projHamParTrans.local_el(0, 0) +
-                    projHamParTrans.local_m() * projHamParTrans.local_n(),
+        std::fill(&projHamParConjTrans.local_el(0, 0),
+                  &projHamParConjTrans.local_el(0, 0) +
+                    projHamParConjTrans.local_m() *
+                      projHamParConjTrans.local_n(),
                   T(0.0));
 
 
-      projHamParTrans.copy_transposed(projHamPar);
+      projHamParConjTrans.copy_conjugate_transposed(projHamPar);
 #if (defined DFTFE_WITH_ELPA)
       if (dftParameters::useELPA)
-        projHamPar.add(projHamParTrans, T(-1.0), T(-1.0));
+        projHamPar.add(projHamParConjTrans, T(-1.0), T(-1.0));
       else
-        projHamPar.add(projHamParTrans, T(1.0), T(1.0));
+        projHamPar.add(projHamParConjTrans, T(1.0), T(1.0));
 #else
-      projHamPar.add(projHamParTrans, T(1.0), T(1.0));
+      projHamPar.add(projHamParConjTrans, T(1.0), T(1.0));
 #endif
 
       if (processGrid->is_process_active())
@@ -1410,20 +1409,15 @@ namespace dftfe
                                                processGrid,
                                                rowsBlockSize);
 
-      if (overlapMatPropertyPostCholesky ==
-          dftfe::LAPACKSupport::Property::lower_triangular)
-        {
-          LMatPar.mmult(projHamParCopy, projHamPar);
-          projHamParCopy.mTmult(projHamPar, LMatPar);
-        }
-      else
-        {
-          LMatPar.Tmmult(projHamParCopy, projHamPar);
-          projHamParCopy.mmult(projHamPar, LMatPar);
-        }
+      // compute HSConjProj= Lconj^{-1}*HConjProj*(Lconj^{-1})^C  (C denotes
+      // conjugate transpose LAPACK notation)
+      LMatPar.mmult(projHamParCopy, projHamPar);
+      projHamParCopy.zmCmult(projHamPar, LMatPar);
+
 
       //
-      // compute eigendecomposition of ProjHam
+      // compute standard eigendecomposition HSConjProj: {QConjPrime,D}
+      // HSConjProj=QConjPrime*D*QConjPrime^{C} QConj={Lc^{-1}}^{C}*QConjPrime
       //
       const unsigned int numValenceStates =
         numberWaveFunctions - numberCoreStates;
@@ -1596,7 +1590,7 @@ namespace dftfe
             "Xfr^{T}={QfrConjPrime}^{C}*LConj^{-1}*X^{T}, RR step");
         }
 
-      // X^{T}=Lconj^{-1}*X^{T}
+      // X^{T}=LConj^{-1}*X^{T}
       if (!(dftParameters::useMixedPrecPGS_SR && useMixedPrec))
         {
           computing_timer.enter_section("X^{T}=Lconj^{-1}*X^{T}, RR step");
@@ -1670,7 +1664,7 @@ namespace dftfe
                                             dealii::TimerOutput::summary,
                                           dealii::TimerOutput::wall_times);
       //
-      // compute projected Hamiltonian HConj= X^{T}*HConj*XConj
+      // compute projected Hamiltonian HConjProj= X^{T}*HConj*XConj
       //
       const unsigned int rowsBlockSize = elpaScala.getScalapackBlockSize();
       std::shared_ptr<const dftfe::ProcessGrid> processGrid =
@@ -1704,7 +1698,7 @@ namespace dftfe
       const unsigned int numValenceStates =
         numberWaveFunctions - numberCoreStates;
       eigenValues.resize(numValenceStates);
-      // compute eigendecomposition of ProjHam HConj= Qc*D*Qc^{C}
+      // compute eigendecomposition of ProjHam HConjProj= Qc*D*Qc^{C}
 #if (defined DFTFE_WITH_ELPA)
       if (dftParameters::useELPA)
         {
@@ -1720,8 +1714,8 @@ namespace dftfe
                         eigenVectors.local_m() * eigenVectors.local_n(),
                       T(0.0));
 
-          // For ELPA eigendecomposition the full matrix is required unlike
-          // ScaLAPACK which can work with only the lower triangular part
+          // For ELPA eigendecomposition the full HConjProj matrix is required
+          // unlike ScaLAPACK which can work with only the lower triangular part
           dftfe::ScaLAPACKMatrix<T> projHamParConjTrans(numberWaveFunctions,
                                                         processGrid,
                                                         rowsBlockSize);

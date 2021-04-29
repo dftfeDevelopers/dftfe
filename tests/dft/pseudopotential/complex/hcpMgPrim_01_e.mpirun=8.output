@@ -1,28 +1,29 @@
-number of atoms: 1
+number of atoms: 2
 number of atoms types: 1
 Z:13
 =============================================================================================================================
-number of electrons: 11
-number of eigen values: 20
+number of electrons: 22
+number of eigen values: 16
 =============================================================================================================================
 Total number of k-points 2
 -----------Simulation Domain bounding vectors (lattice vectors in fully periodic case)-------------
-v1 : 7.599999999999999645e+00 0.000000000000000000e+00 0.000000000000000000e+00
-v2 : 0.000000000000000000e+00 7.599999999999999645e+00 0.000000000000000000e+00
-v3 : 0.000000000000000000e+00 0.000000000000000000e+00 7.599999999999999645e+00
+v1 : 5.882191053999999752e+00 0.000000000000000000e+00 0.000000000000000000e+00
+v2 : -2.941095526999999876e+00 5.094126882677563195e+00 0.000000000000000000e+00
+v3 : 0.000000000000000000e+00 0.000000000000000000e+00 9.585777736000000715e+00
 -----------------------------------------------------------------------------------------
 -----Fractional coordinates of atoms------ 
-AtomId 0:  5.000000000000000000e-01 5.000000000000000000e-01 5.000000000000000000e-01
+AtomId 0:  0.000000000000000000e+00 0.000000000000000000e+00 0.000000000000000000e+00
+AtomId 1:  6.666666666666666297e-01 3.333333333333333148e-01 5.000000000000000000e-01
 -----------------------------------------------------------------------------------------
-Number Image Charges  460
+Number Image Charges  1263
 
 Finite element mesh information
 -------------------------------------------------
 FE interpolating polynomial order for Kohn-Sham eigenvalue problem: 2
 FE interpolating polynomial order for electrostatics solve: 2
 FE interpolating polynomial order for nodal electron density computation: 4
-number of elements: 736
-number of degrees of freedom for the Kohn-Sham eigenvalue problem : 7377
+number of elements: 976
+number of degrees of freedom for the Kohn-Sham eigenvalue problem : 10699
 -------------------------------------------------
 
 Setting initial guess for wavefunctions....
@@ -32,20 +33,14 @@ Reading initial guess for electron-density.....
 Pseudopotential initalization....
 
 Starting SCF iterations....
-SCF iterations converged to the specified tolerance after: 10 iterations.
+SCF iterations converged to the specified tolerance after: 15 iterations.
 
 Energy computations (Hartree) 
 -------------------
-             Total energy:         -68.90532013
+             Total energy:        -137.95841240
 
 Absolute values of ion forces (Hartree/Bohr)
 --------------------------------------------------------------------------------------------
-AtomId    0:  0.000021,0.000024,0.000111
+AtomId    0:  0.009877,0.002731,0.002687
+AtomId    1:  0.015952,0.006528,0.002791
 --------------------------------------------------------------------------------------------
-
-Absolute value of cell stress (Hartree/Bohr^3)
-------------------------------------------------------------------------
-0.000323  0.000011  0.000011
-0.000011  0.000324  0.000011
-0.000011  0.000011  0.000070
-------------------------------------------------------------------------
