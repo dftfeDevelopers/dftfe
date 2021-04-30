@@ -30,7 +30,7 @@ ELPA_PATH="/home/vikramg/DFT-FE-softwares/elpa/elpa2020.05.001_gcc8.2.0_openmpi3
 
 #Compiler options and flags
 cxx_compiler=mpicxx
-cxx_flagsRelease="-O0 -g -fPIC -fopenmp"
+cxx_flagsRelease="-O2 -fPIC -fopenmp"
 
 #Option to link to ELPA
 withELPA=ON
