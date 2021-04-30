@@ -34,7 +34,7 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::
     dftPtr->matrix_free_data.get_quadrature(dftPtr->d_densityQuadratureId);
   FEValues<3> fe_values(dftPtr->matrix_free_data.get_dof_handler().get_fe(),
                         quadrature,
-                        update_values | update_gradients| update_jacobians);
+                        update_values | update_gradients| update_jacobians | update_JxW_values | update_inverse_jacobians);
   const unsigned int numberDofsPerElement =
     dftPtr->matrix_free_data.get_dof_handler().get_fe().dofs_per_cell;
   const unsigned int numberQuadraturePoints = quadrature.size();
@@ -62,6 +62,10 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::
   d_shapeFunctionData.resize(numberDofsPerElement*numberQuadraturePoints,0.0);
   d_cellShapeFunctionGradientIntegral.resize(numberPhysicalCells*sizeNiNj);
 
+#ifdef USE_COMPLEX
+  d_NiNjIntegral.resize(numberPhysicalCells*sizeNiNj);
+#endif
+
   //
   //some more data members, local variables
   //
@@ -83,43 +87,76 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::
   // dealii macrocells which allows efficient integration of cell-level matrix
   // integrals using dealii vectorized arrays
   unsigned int iElemCount = 0;
-  for (int iMacroCell = 0; iMacroCell < numberMacroCells; ++iMacroCell)
+  for(int iMacroCell = 0; iMacroCell < numberMacroCells; ++iMacroCell)
     {
 
       unsigned int n_sub_cells =
         dftPtr->matrix_free_data.n_components_filled(iMacroCell);
      
 
-      for (unsigned int iCell = 0; iCell < n_sub_cells; ++iCell)
+      for(unsigned int iCell = 0; iCell < n_sub_cells; ++iCell)
         {
           cellPtr = dftPtr->matrix_free_data.get_cell_iterator(
             iMacroCell, iCell, dftPtr->d_densityDofHandlerIndex);
           fe_values_quadplusone.reinit(cellPtr);
+	  fe_values.reinit(cellPtr);
 
           unsigned int count = 0;
-          for (unsigned int iNode = 0; iNode < numberDofsPerElement; ++iNode)
+          for(unsigned int iNode = 0; iNode < numberDofsPerElement; ++iNode)
             {
-              for (unsigned int jNode = iNode; jNode < numberDofsPerElement;
+              for(unsigned int jNode = iNode; jNode < numberDofsPerElement;
                    ++jNode)
                 {
                   double shapeFunctionGradientValue = 0.0;
-                  for (unsigned int q_point = 0;
+
+                  for(unsigned int q_point = 0;
                        q_point < numberQuadraturePointsPlusOne;
                        ++q_point)
-                    shapeFunctionGradientValue +=
-                      (fe_values_quadplusone.shape_grad(iNode, q_point) *
-                       fe_values_quadplusone.shape_grad(jNode, q_point)) *
-                      fe_values_quadplusone.JxW(q_point);
-
+		    {
+		      shapeFunctionGradientValue +=
+			(fe_values_quadplusone.shape_grad(iNode, q_point) *
+			 fe_values_quadplusone.shape_grad(jNode, q_point)) *
+			fe_values_quadplusone.JxW(q_point);
+		    }
+	
                   d_cellShapeFunctionGradientIntegral[sizeNiNj*iElemCount + count]
                                          = shapeFunctionGradientValue;
-          
+#ifdef USE_COMPLEX
+		  double shapeFunctionValue = 0.0;
+		  for(unsigned int q_point = 0;
+		      q_point < numberQuadraturePoints;
+		      ++q_point)
+		    {
+		      shapeFunctionValue += (fe_values.shape_value(iNode, q_point) * fe_values.shape_value(jNode,q_point))*fe_values.JxW(q_point);
+		    }
+		  
+		  d_NiNjIntegral[sizeNiNj*iElemCount + count] = shapeFunctionValue; 
+#endif
+		  
                   count += 1;
                 } // j node loop
 
             } // i node loop
 
 
+#ifdef USE_COMPLEX	  
+	  for(unsigned int q = 0; q < numberQuadraturePoints; ++q)
+	    {
+	      unsigned int count = 0;
+	      for(unsigned int iDim = 0; iDim < 3; ++iDim)
+		{
+		  for(unsigned int jDim = 0; jDim < 3; ++jDim)
+		    {
+		      d_invJacJxW[totalLocallyOwnedCells*(9*q+count) + iElemCount] = inverseJacobians[q][iDim][jDim]*fe_values.JxW(q);
+		      count += 1;
+		    }
+		   
+		}
+	      
+	    }
+#endif      
+
+	  
 
           if (iMacroCell == 0 && iCell == 0)
             {
@@ -145,21 +182,7 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::
                       }
                   }
 
-		  /*for(unsigned int q_point = 0; q_point < numberQuadraturePoints; ++q_point)
-		    { 
-		      unsigned int count = 0;
-		      for(unsigned int iNode = 0; iNode < numberDofsPerElement; ++iNode)
-			{ 
-			  for(unsigned int jNode = iNode; jNode < numberDofsPerElement; ++jNode)
-			    { 
-			      d_gradNiNjPlusgradNjNi[3*sizeNiNj*q_point + count] = shapeFunctionGradientValueRef[3*numberDofsPerElement*q_point + iNode]*fe_values.shape_value(jNode,q_point) + fe_values.shape_value(iNode,q_point)*shapeFunctionGradientValueRef[3*numberDofsPerElement*q_point + jNode];
-			      d_gradNiNjPlusgradNjNi[3*sizeNiNj*q_point + sizeNiNj + count] = shapeFunctionGradientValueRef[3*numberDofsPerElement*q_point + numberDofsPerElement + iNode]*fe_values.shape_value(jNode,q_point) + fe_values.shape_value(iNode,q_point)*shapeFunctionGradientValueRef[3*numberDofsPerElement*q_point + numberDofsPerElement + jNode];
-			      d_gradNiNjPlusgradNjNi[3*sizeNiNj*q_point + 2*sizeNiNj + count] = shapeFunctionGradientValueRef[3*numberDofsPerElement*q_point + 2*numberDofsPerElement + iNode]*fe_values.shape_value(jNode,q_point) + fe_values.shape_value(iNode,q_point)*shapeFunctionGradientValueRef[3*numberDofsPerElement*q_point + 2*numberDofsPerElement + jNode];
-			      count+=1;
-
-			    }
-			}
-		    }*/
+		
 		}
 
               for(unsigned int q_point = 0; q_point < numberQuadraturePointsLpsp; ++q_point)
@@ -176,19 +199,7 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::
 		    }
 		}
 
-              /*for(unsigned int q_point = 0; q_point < numberQuadraturePoints; ++q_point)
-                { 
-                  unsigned int count = 0;
-                  for(unsigned int iNode = 0; iNode < numberDofsPerElement; ++iNode)
-                    { 
-                      for(unsigned int jNode = iNode; jNode < numberDofsPerElement; ++jNode)
-                        { 
-                          d_NiNj[sizeNiNj*q_point + count] = fe_values.shape_value(iNode,q_point)*fe_values.shape_value(jNode,q_point);
-                          count+=1;
-
-                        }
-                    }
-		    }*/
+             
 
 	      for(unsigned int q_point = 0; q_point < numberQuadraturePoints; ++q_point)
                 { 
@@ -223,6 +234,30 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::
 		    }
 		}
 	      
+#ifdef USE_COMPLEX
+	      unsigned int fullSizeNiNj = numberDofsPerElement*numberDofsPerElement;
+	      unsigned int numberEntriesEachBlockComplex = fullSizeNiNj/numBlocks;
+	      count = 0;
+	      blockCount = 0;
+	      indexCount = 0;
+              d_blockiNodeIndexComplex.resize(fullSizeNiNj);
+	      d_blockjNodeIndexComplex.resize(fullSizeNiNj);
+	      for(unsigned int iNode = 0; iNode < numberDofsPerElement; ++iNode)
+		{
+		  for(unsigned int jNode = 0; jNode < numberDofsPerElement; ++jNode)
+		    {
+		      d_blockiNodeIndexComplex[numberEntriesEachBlockComplex*blockCount+indexCount] = iNode;
+		      d_blockjNodeIndexComplex[numberEntriesEachBlockComplex*blockCount+indexCount] = jNode;
+		      count += 1;
+		      indexCount += 1;
+		      if(count%numberEntriesEachBlockComplex == 0)
+			{
+			  blockCount += 1;
+                          indexCount = 0;
+			}
+		    }
+		}
+#endif	      
             }
 
           iElemCount++;
