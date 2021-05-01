@@ -45,10 +45,11 @@ forceClass<FEOrder, FEOrderElectro>::computeConfigurationalForceEselfLinFE(
   const unsigned int forceDofsPerCell = FEForce.dofs_per_cell;
   const unsigned int forceBaseIndicesPerCell =
     forceDofsPerCell / FEForce.components;
-  Vector<double>                       elementalForce(forceDofsPerCell);
-  const unsigned int                   numQuadPoints = quadrature.size();
-  std::vector<types::global_dof_index> forceLocalDofIndices(forceDofsPerCell);
-  const unsigned int                   numberBins =
+  Vector<double>     elementalForce(forceDofsPerCell);
+  const unsigned int numQuadPoints = quadrature.size();
+  std::vector<dealii::types::global_dof_index> forceLocalDofIndices(
+    forceDofsPerCell);
+  const unsigned int numberBins =
     vselfBinsManagerElectro.getAtomIdsBins().size();
   std::vector<Tensor<1, 3, double>> gradVselfQuad(numQuadPoints);
   std::vector<unsigned int> baseIndexDofsVec(forceBaseIndicesPerCell * 3);
@@ -285,8 +286,8 @@ forceClass<FEOrder, FEOrderElectro>::computeConfigurationalForceEselfLinFE(
   const unsigned int forceDofsPerFace  = FEForce.dofs_per_face;
   const unsigned int forceBaseIndicesPerFace =
     forceDofsPerFace / FEForce.components;
-  Vector<double>                       elementalFaceForce(forceDofsPerFace);
-  std::vector<types::global_dof_index> forceFaceLocalDofIndices(
+  Vector<double> elementalFaceForce(forceDofsPerFace);
+  std::vector<dealii::types::global_dof_index> forceFaceLocalDofIndices(
     forceDofsPerFace);
   std::vector<unsigned int> baseIndexFaceDofsForceVec(forceBaseIndicesPerFace *
                                                       3);

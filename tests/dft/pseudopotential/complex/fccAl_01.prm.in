@@ -76,6 +76,7 @@ subsection SCF parameters
      set CHEBYSHEV FILTER TOLERANCE=1e-3
      set ORTHOGONALIZATION TYPE=PGS
      set ENABLE SWITCH TO GS=false
+     set USE ELPA=true
   end
 end
 set H REFINED ELECTROSTATICS=false

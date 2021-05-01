@@ -460,7 +460,8 @@ namespace dftfe
     const unsigned int dofs_per_cell   = (dofHandler.get_fe()).dofs_per_cell;
     const unsigned int num_quad_points = quadrature.size();
     Vector<double>     massVectorLocal(dofs_per_cell);
-    std::vector<types::global_dof_index> local_dof_indices(dofs_per_cell);
+    std::vector<dealii::types::global_dof_index> local_dof_indices(
+      dofs_per_cell);
 
 
     //
@@ -490,7 +491,7 @@ namespace dftfe
     invSqrtMassVec.compress(VectorOperation::add);
 
 
-    for (types::global_dof_index i = 0; i < invSqrtMassVec.size(); ++i)
+    for (dealii::types::global_dof_index i = 0; i < invSqrtMassVec.size(); ++i)
       if (invSqrtMassVec.in_local_range(i) &&
           !constraintMatrix.is_constrained(i))
         {
@@ -1241,15 +1242,11 @@ namespace dftfe
   template <unsigned int FEOrder, unsigned int FEOrderElectro>
   void
   kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::XtHX(
-    const std::vector<dataTypes::number> &X,
-    const unsigned int                    numberWaveFunctions,
-    const std::shared_ptr<const dealii::Utilities::MPI::ProcessGrid>
-      &                                         processGrid,
-    dealii::ScaLAPACKMatrix<dataTypes::number> &projHamPar)
+    const std::vector<dataTypes::number> &           X,
+    const unsigned int                               numberWaveFunctions,
+    const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
+    dftfe::ScaLAPACKMatrix<dataTypes::number> &      projHamPar)
   {
-#ifdef USE_COMPLEX
-    AssertThrow(false, dftUtils::ExcNotImplementedYet());
-#else
     //
     // Get access to number of locally owned nodes on the current processor
     //
@@ -1273,8 +1270,8 @@ namespace dftfe
                                                bandGroupLowHighPlusOneIndices);
 
     /*
-     * X^{T}*H*Xc is done in a blocked approach for memory optimization:
-     * Sum_{blocks} X^{T}*H*XcBlock. The result of each X^{T}*H*XcBlock
+     * X^{T}*Hc*Xc is done in a blocked approach for memory optimization:
+     * Sum_{blocks} X^{T}*Hc*XcBlock. The result of each X^{T}*Hc*XcBlock
      * has a much smaller memory compared to X^{T}*H*Xc.
      * X^{T} (denoted by X in the code with column major format storage)
      * is a matrix with size (N x MLoc).
@@ -1283,12 +1280,13 @@ namespace dftfe
      * Xc denotes complex conjugate of X.
      * XcBlock is a matrix of size (MLoc x B). B is the block size.
      * A further optimization is done to reduce floating point operations:
-     * As X^{T}*H*Xc is a Hermitian matrix, it suffices to compute only the
-     * lower triangular part. To exploit this, we do X^{T}*H*Xc=Sum_{blocks}
+     * As X^{T}*Hc*Xc is a Hermitian matrix, it suffices to compute only the
+     * lower triangular part. To exploit this, we do X^{T}*Hc*Xc=Sum_{blocks}
      * XTrunc^{T}*H*XcBlock where XTrunc^{T} is a (D x MLoc) sub matrix of X^{T}
      * with the row indices ranging from the lowest global index of XcBlock
      * (denoted by jvec in the code) to N. D=N-jvec. The parallel ScaLapack
-     * matrix projHamPar is directly filled from the XTrunc^{T}*H*XcBlock result
+     * matrix projHamPar is directly filled from the XTrunc^{T}*Hc*XcBlock
+     * result
      */
 
     const unsigned int vectorsBlockSize =
@@ -1296,7 +1294,7 @@ namespace dftfe
 
     std::vector<dataTypes::number> projHamBlock(numberWaveFunctions *
                                                   vectorsBlockSize,
-                                                0.0);
+                                                dataTypes::number(0.0));
 
     if (dftParameters::verbosity >= 4)
       dftUtils::printCurrentMemoryUsage(
@@ -1319,7 +1317,7 @@ namespace dftfe
               bandGroupLowHighPlusOneIndices[2 * bandGroupTaskId + 1] &&
             (jvec + B) > bandGroupLowHighPlusOneIndices[2 * bandGroupTaskId])
           {
-            XBlock = 0;
+            XBlock = dataTypes::number(0);
             // fill XBlock^{T} from X:
             for (unsigned int iNode = 0; iNode < numberDofs; ++iNode)
               for (unsigned int iWave = 0; iWave < B; ++iWave)
@@ -1328,37 +1326,43 @@ namespace dftfe
 
 
             MPI_Barrier(getMPICommunicator());
-            // evaluate H times XBlock^{T} and store in HXBlock^{T}
-            HXBlock = 0;
-            const bool scaleFlag = false;
-            const dataTypes::number scalar = 1.0;
+            // evaluate H times XBlock and store in HXBlock^{T}
+            HXBlock                = dataTypes::number(0);
+            const bool   scaleFlag = false;
+            const double scalar    = 1.0;
 
             HX(XBlock, B, scaleFlag, scalar, HXBlock);
 
             MPI_Barrier(getMPICommunicator());
 
             const char transA = 'N';
-            const char transB = 'T';
+            const char transB =
+              std::is_same<dataTypes::number, std::complex<double>>::value ?
+                'C' :
+                'T';
 
-            const dataTypes::number alpha = 1.0, beta = 0.0;
-            std::fill(projHamBlock.begin(), projHamBlock.end(), 0.);
+            const dataTypes::number alpha = dataTypes::number(1.0),
+                                    beta  = dataTypes::number(0.0);
+            std::fill(projHamBlock.begin(),
+                      projHamBlock.end(),
+                      dataTypes::number(0.));
 
             const unsigned int D = numberWaveFunctions - jvec;
 
             // Comptute local XTrunc^{T}*HXcBlock.
-            dgemm_(&transA,
-                   &transB,
-                   &D,
-                   &B,
-                   &numberDofs,
-                   &alpha,
-                   &X[0] + jvec,
-                   &numberWaveFunctions,
-                   HXBlock.begin(),
-                   &B,
-                   &beta,
-                   &projHamBlock[0],
-                   &D);
+            xgemm(&transA,
+                  &transB,
+                  &D,
+                  &B,
+                  &numberDofs,
+                  &alpha,
+                  &X[0] + jvec,
+                  &numberWaveFunctions,
+                  HXBlock.begin(),
+                  &B,
+                  &beta,
+                  &projHamBlock[0],
+                  &D);
 
             MPI_Barrier(getMPICommunicator());
             // Sum local XTrunc^{T}*HXcBlock across domain decomposition
@@ -1400,22 +1404,17 @@ namespace dftfe
         linearAlgebraOperations::internal::sumAcrossInterCommScaLAPACKMat(
           processGrid, projHamPar, dftPtr->interBandGroupComm);
       }
-#endif
   }
 
   template <unsigned int FEOrder, unsigned int FEOrderElectro>
   void
   kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::XtHXMixedPrec(
-    const std::vector<dataTypes::number> &X,
-    const unsigned int                    N,
-    const unsigned int                    Ncore,
-    const std::shared_ptr<const dealii::Utilities::MPI::ProcessGrid>
-      &                                         processGrid,
-    dealii::ScaLAPACKMatrix<dataTypes::number> &projHamPar)
+    const std::vector<dataTypes::number> &           X,
+    const unsigned int                               N,
+    const unsigned int                               Ncore,
+    const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
+    dftfe::ScaLAPACKMatrix<dataTypes::number> &      projHamPar)
   {
-#ifdef USE_COMPLEX
-    AssertThrow(false, dftUtils::ExcNotImplementedYet());
-#else
     //
     // Get access to number of locally owned nodes on the current processor
     //
@@ -1440,20 +1439,21 @@ namespace dftfe
 
     /*
      * X^{T}*H*Xc is done in a blocked approach for memory optimization:
-     * Sum_{blocks} X^{T}*H*XcBlock. The result of each X^{T}*H*XcBlock
-     * has a much smaller memory compared to X^{T}*H*Xc.
+     * Sum_{blocks} X^{T}*Hc*XcBlock. The result of each X^{T}*Hc*XcBlock
+     * has a much smaller memory compared to X^{T}*Hc*Xc.
      * X^{T} (denoted by X in the code with column major format storage)
      * is a matrix with size (N x MLoc).
      * MLoc, which is number of local dofs is denoted by numberDofs in the code.
      * Xc denotes complex conjugate of X.
      * XcBlock is a matrix of size (MLoc x B). B is the block size.
      * A further optimization is done to reduce floating point operations:
-     * As X^{T}*H*Xc is a Hermitian matrix, it suffices to compute only the
-     * lower triangular part. To exploit this, we do X^{T}*H*Xc=Sum_{blocks}
-     * XTrunc^{T}*H*XcBlock where XTrunc^{T} is a (D x MLoc) sub matrix of X^{T}
-     * with the row indices ranging from the lowest global index of XcBlock
-     * (denoted by jvec in the code) to N. D=N-jvec. The parallel ScaLapack
-     * matrix projHamPar is directly filled from the XTrunc^{T}*H*XcBlock result
+     * As X^{T}*Hc*Xc is a Hermitian matrix, it suffices to compute only the
+     * lower triangular part. To exploit this, we do X^{T}*Hc*Xc=Sum_{blocks}
+     * XTrunc^{T}*Hc*XcBlock where XTrunc^{T} is a (D x MLoc) sub matrix of
+     * X^{T} with the row indices ranging from the lowest global index of
+     * XcBlock (denoted by jvec in the code) to N. D=N-jvec. The parallel
+     * ScaLapack matrix projHamPar is directly filled from the
+     * XTrunc^{T}*Hc*XcBlock result
      */
 
     const unsigned int vectorsBlockSize =
@@ -1487,7 +1487,7 @@ namespace dftfe
               bandGroupLowHighPlusOneIndices[2 * bandGroupTaskId + 1] &&
             (jvec + B) > bandGroupLowHighPlusOneIndices[2 * bandGroupTaskId])
           {
-            XBlock = 0;
+            XBlock = dataTypes::number(0);
             // fill XBlock^{T} from X:
             for (unsigned int iNode = 0; iNode < numberDofs; ++iNode)
               for (unsigned int iWave = 0; iWave < B; ++iWave)
@@ -1496,42 +1496,44 @@ namespace dftfe
 
 
             MPI_Barrier(getMPICommunicator());
-            // evaluate H times XBlock^{T} and store in HXBlock^{T}
-            HXBlock = 0;
-            const bool scaleFlag = false;
-            const dataTypes::number scalar = 1.0;
+            // evaluate H times XBlock and store in HXBlock^{T}
+            HXBlock                = dataTypes::number(0);
+            const bool   scaleFlag = false;
+            const double scalar    = 1.0;
 
             HX(XBlock, B, scaleFlag, scalar, HXBlock);
 
             MPI_Barrier(getMPICommunicator());
 
             const char transA = 'N';
-#  ifdef USE_COMPLEX
-            const char transB = 'C';
-#  else
-            const char transB = 'T';
-#  endif
-            const dataTypes::number alpha = 1.0, beta = 0.0;
-            std::fill(projHamBlock.begin(), projHamBlock.end(), 0.);
+            const char transB =
+              std::is_same<dataTypes::number, std::complex<double>>::value ?
+                'C' :
+                'T';
+            const dataTypes::number alpha = dataTypes::number(1.0),
+                                    beta  = dataTypes::number(0.0);
+            std::fill(projHamBlock.begin(),
+                      projHamBlock.end(),
+                      dataTypes::number(0.));
 
             if (jvec + B > Ncore)
               {
                 const unsigned int D = N - jvec;
 
                 // Comptute local XTrunc^{T}*HXcBlock.
-                dgemm_(&transA,
-                       &transB,
-                       &D,
-                       &B,
-                       &numberDofs,
-                       &alpha,
-                       &X[0] + jvec,
-                       &N,
-                       HXBlock.begin(),
-                       &B,
-                       &beta,
-                       &projHamBlock[0],
-                       &D);
+                xgemm(&transA,
+                      &transB,
+                      &D,
+                      &B,
+                      &numberDofs,
+                      &alpha,
+                      &X[0] + jvec,
+                      &N,
+                      HXBlock.begin(),
+                      &B,
+                      &beta,
+                      &projHamBlock[0],
+                      &D);
 
                 MPI_Barrier(getMPICommunicator());
                 // Sum local XTrunc^{T}*HXcBlock across domain decomposition
@@ -1565,27 +1567,30 @@ namespace dftfe
               }
             else
               {
-                const dataTypes::numberLowPrec alphaSinglePrec = 1.0,
-                                               betaSinglePrec = 0.0;
+                const dataTypes::numberLowPrec alphaSinglePrec =
+                                                 dataTypes::numberLowPrec(1.0),
+                                               betaSinglePrec =
+                                                 dataTypes::numberLowPrec(0.0);
 
                 for (unsigned int i = 0; i < numberDofs * B; ++i)
                   HXBlockSinglePrec[i] = HXBlock.local_element(i);
 
                 const unsigned int D = N - jvec;
 
-                sgemm_(&transA,
-                       &transB,
-                       &D,
-                       &B,
-                       &numberDofs,
-                       &alphaSinglePrec,
-                       &XSinglePrec[0] + jvec,
-                       &N,
-                       &HXBlockSinglePrec[0],
-                       &B,
-                       &betaSinglePrec,
-                       &projHamBlockSinglePrec[0],
-                       &D);
+                // single prec gemm
+                xgemm(&transA,
+                      &transB,
+                      &D,
+                      &B,
+                      &numberDofs,
+                      &alphaSinglePrec,
+                      &XSinglePrec[0] + jvec,
+                      &N,
+                      &HXBlockSinglePrec[0],
+                      &B,
+                      &betaSinglePrec,
+                      &projHamBlockSinglePrec[0],
+                      &D);
 
                 MPI_Barrier(getMPICommunicator());
                 MPI_Allreduce(MPI_IN_PLACE,
@@ -1626,7 +1631,6 @@ namespace dftfe
         linearAlgebraOperations::internal::sumAcrossInterCommScaLAPACKMat(
           processGrid, projHamPar, dftPtr->interBandGroupComm);
       }
-#endif
   }
 
   template <unsigned int FEOrder, unsigned int FEOrderElectro>

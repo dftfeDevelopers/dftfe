@@ -1,6 +1,10 @@
 set VERBOSITY= 0
 set REPRODUCIBLE OUTPUT=true
 
+subsection Parallelization
+  set NPBAND=2
+end
+
 subsection Geometry
   set NATOMS=2
   set NATOM TYPES=1
@@ -9,7 +13,7 @@ subsection Geometry
   
   subsection Optimization
     set ION FORCE=true
-    set CELL STRESS=true
+    set CELL STRESS=false
   end 
  
 end
@@ -32,6 +36,7 @@ subsection Finite element mesh parameters
   
   subsection Auto mesh generation parameters
     set AUTO ADAPT BASE MESH SIZE=false
+
     set BASE MESH SIZE = 1.0 
     set ATOM BALL RADIUS = 2.0
     set MESH SIZE AROUND ATOM = 0.5
@@ -44,23 +49,20 @@ end
 subsection Brillouin zone k point sampling options
 
   subsection Monkhorst-Pack (MP) grid generation
-    set SAMPLING POINTS 1 = 1
+    set SAMPLING POINTS 1 = 2
     set SAMPLING POINTS 2 = 1
-    set SAMPLING POINTS 3 = 2
+    set SAMPLING POINTS 3 = 1
     set SAMPLING SHIFT 1 = 0
     set SAMPLING SHIFT 2 = 0
-    set SAMPLING SHIFT 3 = 1
+    set SAMPLING SHIFT 3 = 0
   end
-
-  set USE GROUP SYMMETRY =false
-  set USE TIME REVERSAL SYMMETRY =true
 end
 
 
 
 subsection DFT functional parameters
   set PSEUDOPOTENTIAL CALCULATION =true
-  set PSEUDOPOTENTIAL FILE NAMES LIST = @SOURCE_DIR@/pseudoAlONCV.inp 
+  set PSEUDOPOTENTIAL FILE NAMES LIST = @SOURCE_DIR@/pseudoAlONCV.inp
   set PSEUDO TESTS FLAG = true
   set EXCHANGE CORRELATION TYPE = 4
   set SPIN POLARIZATION=1
@@ -72,17 +74,26 @@ subsection SCF parameters
    set COMPUTE ENERGY EACH ITER=false
 
   set MAXIMUM ITERATIONS = 40 
-  set TOLERANCE          = 3e-6
+  set TOLERANCE          = 1e-6
   set MIXING PARAMETER   = 0.5
   set MIXING HISTORY     = 70
   set TEMPERATURE                        = 500
-  set STARTING WFC=ATOMIC
+  set STARTING WFC= ATOMIC
   
   subsection Eigen-solver parameters
-      set NUMBER OF KOHN-SHAM WAVEFUNCTIONS = 16
-      set CHEBYSHEV POLYNOMIAL DEGREE = 8
-      set CHEBYSHEV FILTER TOLERANCE=1e-4
-      set ORTHOGONALIZATION TYPE=PGS
+     set NUMBER OF KOHN-SHAM WAVEFUNCTIONS = 16
+     set SPECTRUM SPLIT CORE EIGENSTATES=7
+     set SPECTRUM SPLIT STARTING SCF ITER=1
+     set USE MIXED PREC XTHX SPECTRUM SPLIT=true
+     set CHEBYSHEV POLYNOMIAL DEGREE = 8
+     set CHEBYSHEV FILTER TOLERANCE=1e-4
+     set ORTHOGONALIZATION TYPE=PGS
+     set WFC BLOCK SIZE=2
+     set CHEBY WFC BLOCK SIZE=2
+     set ENABLE SUBSPACE ROT PGS OPT=true
+     set SUBSPACE ROT DOFS BLOCK SIZE=10000
+     set SCALAPACKPROCS=2
+     set RR GEP=true
   end
 end
 

@@ -23,6 +23,8 @@
 #    include <operatorCUDA.h>
 #    include <thrust/device_vector.h>
 #    include <thrust/host_vector.h>
+#    include "process_grid.h"
+#    include "scalapackWrapper.h"
 
 #    include "gpuDirectCCLWrapper.h"
 
@@ -57,16 +59,15 @@ namespace dftfe
      */
     void
     fillParallelOverlapMatScalapack(
-      const double *     X,
-      const unsigned int M,
-      const unsigned int N,
-      cublasHandle_t &   handle,
-      const MPI_Comm &   mpiCommDomain,
-      GPUCCLWrapper &    gpucclMpiCommDomain,
-      const MPI_Comm &   interBandGroupComm,
-      const std::shared_ptr<const dealii::Utilities::MPI::ProcessGrid>
-        &                              processGrid,
-      dealii::ScaLAPACKMatrix<double> &overlapMatPar);
+      const double *                                   X,
+      const unsigned int                               M,
+      const unsigned int                               N,
+      cublasHandle_t &                                 handle,
+      const MPI_Comm &                                 mpiCommDomain,
+      GPUCCLWrapper &                                  gpucclMpiCommDomain,
+      const MPI_Comm &                                 interBandGroupComm,
+      const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
+      dftfe::ScaLAPACKMatrix<double> &                 overlapMatPar);
 
 
 
@@ -76,16 +77,15 @@ namespace dftfe
      */
     void
     fillParallelOverlapMatScalapackAsyncComputeCommun(
-      const double *     X,
-      const unsigned int M,
-      const unsigned int N,
-      cublasHandle_t &   handle,
-      const MPI_Comm &   mpiCommDomain,
-      GPUCCLWrapper &    gpucclMpiCommDomain,
-      const MPI_Comm &   interBandGroupComm,
-      const std::shared_ptr<const dealii::Utilities::MPI::ProcessGrid>
-        &                              processGrid,
-      dealii::ScaLAPACKMatrix<double> &overlapMatPar);
+      const double *                                   X,
+      const unsigned int                               M,
+      const unsigned int                               N,
+      cublasHandle_t &                                 handle,
+      const MPI_Comm &                                 mpiCommDomain,
+      GPUCCLWrapper &                                  gpucclMpiCommDomain,
+      const MPI_Comm &                                 interBandGroupComm,
+      const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
+      dftfe::ScaLAPACKMatrix<double> &                 overlapMatPar);
 
 
 
@@ -95,16 +95,15 @@ namespace dftfe
      */
     void
     fillParallelOverlapMatMixedPrecScalapackAsyncComputeCommun(
-      const double *     X,
-      const unsigned int M,
-      const unsigned int N,
-      cublasHandle_t &   handle,
-      const MPI_Comm &   mpiCommDomain,
-      GPUCCLWrapper &    gpucclMpiCommDomain,
-      const MPI_Comm &   interBandGroupComm,
-      const std::shared_ptr<const dealii::Utilities::MPI::ProcessGrid>
-        &                              processGrid,
-      dealii::ScaLAPACKMatrix<double> &overlapMatPar);
+      const double *                                   X,
+      const unsigned int                               M,
+      const unsigned int                               N,
+      cublasHandle_t &                                 handle,
+      const MPI_Comm &                                 mpiCommDomain,
+      GPUCCLWrapper &                                  gpucclMpiCommDomain,
+      const MPI_Comm &                                 interBandGroupComm,
+      const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
+      dftfe::ScaLAPACKMatrix<double> &                 overlapMatPar);
 
 
 
@@ -114,16 +113,15 @@ namespace dftfe
      */
     void
     fillParallelOverlapMatMixedPrecScalapack(
-      const double *     X,
-      const unsigned int M,
-      const unsigned int N,
-      cublasHandle_t &   handle,
-      const MPI_Comm &   mpiCommDomain,
-      GPUCCLWrapper &    gpucclMpiCommDomain,
-      const MPI_Comm &   interBandGroupComm,
-      const std::shared_ptr<const dealii::Utilities::MPI::ProcessGrid>
-        &                              processGrid,
-      dealii::ScaLAPACKMatrix<double> &overlapMatPar);
+      const double *                                   X,
+      const unsigned int                               M,
+      const unsigned int                               N,
+      cublasHandle_t &                                 handle,
+      const MPI_Comm &                                 mpiCommDomain,
+      GPUCCLWrapper &                                  gpucclMpiCommDomain,
+      const MPI_Comm &                                 interBandGroupComm,
+      const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
+      dftfe::ScaLAPACKMatrix<double> &                 overlapMatPar);
 
 
 
@@ -142,157 +140,148 @@ namespace dftfe
 
     void
     subspaceRotationScalapack(
-      double *           X,
-      const unsigned int M,
-      const unsigned int N,
-      cublasHandle_t &   handle,
-      const std::shared_ptr<const dealii::Utilities::MPI::ProcessGrid>
-        &                                    processGrid,
-      const MPI_Comm &                       mpiCommDomain,
-      GPUCCLWrapper &                        gpucclMpiCommDomain,
-      const MPI_Comm &                       interBandGroupComm,
-      const dealii::ScaLAPACKMatrix<double> &rotationMatPar,
-      const bool                             rotationMatTranspose   = false,
-      const bool                             isRotationMatLowerTria = false);
+      double *                                         X,
+      const unsigned int                               M,
+      const unsigned int                               N,
+      cublasHandle_t &                                 handle,
+      const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
+      const MPI_Comm &                                 mpiCommDomain,
+      GPUCCLWrapper &                                  gpucclMpiCommDomain,
+      const MPI_Comm &                                 interBandGroupComm,
+      const dftfe::ScaLAPACKMatrix<double> &           rotationMatPar,
+      const bool rotationMatTranspose   = false,
+      const bool isRotationMatLowerTria = false);
 
 
     void
     subspaceRotationSpectrumSplitScalapack(
-      const double *     X,
-      double *           XFrac,
-      const unsigned int M,
-      const unsigned int N,
-      const unsigned int Nfr,
-      cublasHandle_t &   handle,
-      const std::shared_ptr<const dealii::Utilities::MPI::ProcessGrid>
-        &                                    processGrid,
-      const MPI_Comm &                       mpiCommDomain,
-      GPUCCLWrapper &                        gpucclMpiCommDomain,
-      const dealii::ScaLAPACKMatrix<double> &rotationMatPar,
-      const bool                             rotationMatTranspose = false);
+      const double *                                   X,
+      double *                                         XFrac,
+      const unsigned int                               M,
+      const unsigned int                               N,
+      const unsigned int                               Nfr,
+      cublasHandle_t &                                 handle,
+      const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
+      const MPI_Comm &                                 mpiCommDomain,
+      GPUCCLWrapper &                                  gpucclMpiCommDomain,
+      const dftfe::ScaLAPACKMatrix<double> &           rotationMatPar,
+      const bool rotationMatTranspose = false);
 
     void
     subspaceRotationPGSMixedPrecScalapack(
-      double *           X,
-      const unsigned int M,
-      const unsigned int N,
-      cublasHandle_t &   handle,
-      const std::shared_ptr<const dealii::Utilities::MPI::ProcessGrid>
-        &                                    processGrid,
-      const MPI_Comm &                       mpiCommDomain,
-      GPUCCLWrapper &                        gpucclMpiCommDomain,
-      const MPI_Comm &                       interBandGroupComm,
-      const dealii::ScaLAPACKMatrix<double> &rotationMatPar,
-      const bool                             rotationMatTranspose = false);
+      double *                                         X,
+      const unsigned int                               M,
+      const unsigned int                               N,
+      cublasHandle_t &                                 handle,
+      const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
+      const MPI_Comm &                                 mpiCommDomain,
+      GPUCCLWrapper &                                  gpucclMpiCommDomain,
+      const MPI_Comm &                                 interBandGroupComm,
+      const dftfe::ScaLAPACKMatrix<double> &           rotationMatPar,
+      const bool rotationMatTranspose = false);
 
 
     void
     subspaceRotationRRMixedPrecScalapack(
-      double *           X,
-      const unsigned int M,
-      const unsigned int N,
-      cublasHandle_t &   handle,
-      const std::shared_ptr<const dealii::Utilities::MPI::ProcessGrid>
-        &                                    processGrid,
-      const MPI_Comm &                       mpiCommDomain,
-      GPUCCLWrapper &                        gpucclMpiCommDomain,
-      const MPI_Comm &                       interBandGroupComm,
-      const dealii::ScaLAPACKMatrix<double> &rotationMatPar,
-      const bool                             rotationMatTranspose = false);
+      double *                                         X,
+      const unsigned int                               M,
+      const unsigned int                               N,
+      cublasHandle_t &                                 handle,
+      const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
+      const MPI_Comm &                                 mpiCommDomain,
+      GPUCCLWrapper &                                  gpucclMpiCommDomain,
+      const MPI_Comm &                                 interBandGroupComm,
+      const dftfe::ScaLAPACKMatrix<double> &           rotationMatPar,
+      const bool rotationMatTranspose = false);
 
     void
     rayleighRitzSpectrumSplitDirect(
-      operatorDFTCUDAClass &           operatorMatrix,
-      const double *                   X,
-      double *                         XFrac,
-      distributedGPUVec<double> &      Xb,
-      distributedGPUVec<float> &       floatXb,
-      distributedGPUVec<double> &      HXb,
-      distributedGPUVec<double> &      projectorKetTimesVector,
-      const unsigned int               M,
-      const unsigned int               N,
-      const unsigned int               Noc,
-      const bool                       isElpaStep1,
-      const bool                       isElpaStep2,
-      const MPI_Comm &                 mpiCommDomain,
-      GPUCCLWrapper &                  gpucclMpiCommDomain,
-      double *                         eigenValues,
-      cublasHandle_t &                 handle,
-      dealii::ScaLAPACKMatrix<double> &projHamPar,
-      const std::shared_ptr<const dealii::Utilities::MPI::ProcessGrid>
-        &        processGrid,
+      operatorDFTCUDAClass &                           operatorMatrix,
+      const double *                                   X,
+      double *                                         XFrac,
+      distributedGPUVec<double> &                      Xb,
+      distributedGPUVec<float> &                       floatXb,
+      distributedGPUVec<double> &                      HXb,
+      distributedGPUVec<double> &                      projectorKetTimesVector,
+      const unsigned int                               M,
+      const unsigned int                               N,
+      const unsigned int                               Noc,
+      const bool                                       isElpaStep1,
+      const bool                                       isElpaStep2,
+      const MPI_Comm &                                 mpiCommDomain,
+      GPUCCLWrapper &                                  gpucclMpiCommDomain,
+      double *                                         eigenValues,
+      cublasHandle_t &                                 handle,
+      dftfe::ScaLAPACKMatrix<double> &                 projHamPar,
+      const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
       const bool useMixedPrecOverall = false);
 
 
     void
-    rayleighRitz(
-      operatorDFTCUDAClass &           operatorMatrix,
-      double *                         X,
-      distributedGPUVec<double> &      Xb,
-      distributedGPUVec<float> &       floatXb,
-      distributedGPUVec<double> &      HXb,
-      distributedGPUVec<double> &      projectorKetTimesVector,
-      const unsigned int               M,
-      const unsigned int               N,
-      const bool                       isElpaStep1,
-      const bool                       isElpaStep2,
-      const MPI_Comm &                 mpiCommDomain,
-      GPUCCLWrapper &                  gpucclMpiCommDomain,
-      const MPI_Comm &                 interBandGroupComm,
-      double *                         eigenValues,
-      cublasHandle_t &                 handle,
-      dealii::ScaLAPACKMatrix<double> &projHamPar,
-      const std::shared_ptr<const dealii::Utilities::MPI::ProcessGrid>
-        &        processGrid,
-      const bool useMixedPrecOverall = false);
+    rayleighRitz(operatorDFTCUDAClass &          operatorMatrix,
+                 double *                        X,
+                 distributedGPUVec<double> &     Xb,
+                 distributedGPUVec<float> &      floatXb,
+                 distributedGPUVec<double> &     HXb,
+                 distributedGPUVec<double> &     projectorKetTimesVector,
+                 const unsigned int              M,
+                 const unsigned int              N,
+                 const bool                      isElpaStep1,
+                 const bool                      isElpaStep2,
+                 const MPI_Comm &                mpiCommDomain,
+                 GPUCCLWrapper &                 gpucclMpiCommDomain,
+                 const MPI_Comm &                interBandGroupComm,
+                 double *                        eigenValues,
+                 cublasHandle_t &                handle,
+                 dftfe::ScaLAPACKMatrix<double> &projHamPar,
+                 const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
+                 const bool useMixedPrecOverall = false);
 
 
     void
     rayleighRitzGEP(
-      operatorDFTCUDAClass &           operatorMatrix,
-      double *                         X,
-      distributedGPUVec<double> &      Xb,
-      distributedGPUVec<float> &       floatXb,
-      distributedGPUVec<double> &      HXb,
-      distributedGPUVec<double> &      projectorKetTimesVector,
-      const unsigned int               M,
-      const unsigned int               N,
-      const bool                       isElpaStep1,
-      const bool                       isElpaStep2,
-      const MPI_Comm &                 mpiCommDomain,
-      GPUCCLWrapper &                  gpucclMpiCommDomain,
-      const MPI_Comm &                 interBandGroupComm,
-      double *                         eigenValues,
-      cublasHandle_t &                 handle,
-      dealii::ScaLAPACKMatrix<double> &projHamPar,
-      dealii::ScaLAPACKMatrix<double> &overlapMatPar,
-      const std::shared_ptr<const dealii::Utilities::MPI::ProcessGrid>
-        &        processGrid,
+      operatorDFTCUDAClass &                           operatorMatrix,
+      double *                                         X,
+      distributedGPUVec<double> &                      Xb,
+      distributedGPUVec<float> &                       floatXb,
+      distributedGPUVec<double> &                      HXb,
+      distributedGPUVec<double> &                      projectorKetTimesVector,
+      const unsigned int                               M,
+      const unsigned int                               N,
+      const bool                                       isElpaStep1,
+      const bool                                       isElpaStep2,
+      const MPI_Comm &                                 mpiCommDomain,
+      GPUCCLWrapper &                                  gpucclMpiCommDomain,
+      const MPI_Comm &                                 interBandGroupComm,
+      double *                                         eigenValues,
+      cublasHandle_t &                                 handle,
+      dftfe::ScaLAPACKMatrix<double> &                 projHamPar,
+      dftfe::ScaLAPACKMatrix<double> &                 overlapMatPar,
+      const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
       const bool useMixedPrecOverall = false);
 
     void
     rayleighRitzGEPSpectrumSplitDirect(
-      operatorDFTCUDAClass &           operatorMatrix,
-      double *                         X,
-      double *                         XFrac,
-      distributedGPUVec<double> &      Xb,
-      distributedGPUVec<float> &       floatXb,
-      distributedGPUVec<double> &      HXb,
-      distributedGPUVec<double> &      projectorKetTimesVector,
-      const unsigned int               M,
-      const unsigned int               N,
-      const unsigned int               Noc,
-      const bool                       isElpaStep1,
-      const bool                       isElpaStep2,
-      const MPI_Comm &                 mpiCommDomain,
-      GPUCCLWrapper &                  gpucclMpiCommDomain,
-      const MPI_Comm &                 interBandGroupComm,
-      double *                         eigenValues,
-      cublasHandle_t &                 handle,
-      dealii::ScaLAPACKMatrix<double> &projHamPar,
-      dealii::ScaLAPACKMatrix<double> &overlapMatPar,
-      const std::shared_ptr<const dealii::Utilities::MPI::ProcessGrid>
-        &        processGrid,
+      operatorDFTCUDAClass &                           operatorMatrix,
+      double *                                         X,
+      double *                                         XFrac,
+      distributedGPUVec<double> &                      Xb,
+      distributedGPUVec<float> &                       floatXb,
+      distributedGPUVec<double> &                      HXb,
+      distributedGPUVec<double> &                      projectorKetTimesVector,
+      const unsigned int                               M,
+      const unsigned int                               N,
+      const unsigned int                               Noc,
+      const bool                                       isElpaStep1,
+      const bool                                       isElpaStep2,
+      const MPI_Comm &                                 mpiCommDomain,
+      GPUCCLWrapper &                                  gpucclMpiCommDomain,
+      const MPI_Comm &                                 interBandGroupComm,
+      double *                                         eigenValues,
+      cublasHandle_t &                                 handle,
+      dftfe::ScaLAPACKMatrix<double> &                 projHamPar,
+      dftfe::ScaLAPACKMatrix<double> &                 overlapMatPar,
+      const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
       const bool useMixedPrecOverall = false);
 
 

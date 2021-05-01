@@ -1640,7 +1640,7 @@ namespace dftfe
   template <unsigned int FEOrder, unsigned int FEOrderElectro>
   void
   dftClass<FEOrder, FEOrderElectro>::initializeKohnShamDFTOperator(
-    const bool initializeCUDAScala)
+    const bool initializeCublas)
   {
     TimerOutput::Scope scope(computing_timer, "kohnShamDFTOperator init");
     double             init_ksoperator;
@@ -1670,9 +1670,6 @@ namespace dftfe
     if (!dftParameters::useGPU)
       {
         kohnShamDFTEigenOperator.init();
-
-        kohnShamDFTEigenOperator.processGridOptionalELPASetup(
-          d_numEigenValues, d_numEigenValuesRR);
       }
 
 #ifdef DFTFE_WITH_GPU
@@ -1680,7 +1677,7 @@ namespace dftfe
       {
         kohnShamDFTEigenOperatorCUDA.init();
 
-        if (initializeCUDAScala)
+        if (initializeCublas)
           {
             kohnShamDFTEigenOperatorCUDA.createCublasHandle();
 
@@ -1813,12 +1810,6 @@ namespace dftfe
 #ifdef DFTFE_WITH_GPU
         if (dftParameters::useGPU)
           d_kohnShamDFTOperatorCUDAPtr->destroyCublasHandle();
-#endif
-
-#ifdef DFTFE_WITH_ELPA
-        if (dftParameters::useELPA && !dftParameters::useGPU)
-          d_kohnShamDFTOperatorPtr->elpaDeallocateHandles(d_numEigenValues,
-                                                          d_numEigenValuesRR);
 #endif
 
         delete d_kohnShamDFTOperatorPtr;

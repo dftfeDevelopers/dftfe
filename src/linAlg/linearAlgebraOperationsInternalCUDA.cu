@@ -33,10 +33,10 @@ namespace dftfe
     {
       void
       createProcessGridSquareMatrix(
-        const MPI_Comm &mpi_communicator,
-        const unsigned  size,
-        std::shared_ptr<const dealii::Utilities::MPI::ProcessGrid> &processGrid,
-        const bool useOnlyThumbRule)
+        const MPI_Comm &                           mpi_communicator,
+        const unsigned                             size,
+        std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
+        const bool                                 useOnlyThumbRule)
       {
         const unsigned int numberProcs =
           dealii::Utilities::MPI::n_mpi_processes(mpi_communicator);
@@ -74,17 +74,18 @@ namespace dftfe
           }
 
         processGrid =
-          std::make_shared<const dealii::Utilities::MPI::ProcessGrid>(
-            mpi_communicator, rowProcs, rowProcs);
+          std::make_shared<const dftfe::ProcessGrid>(mpi_communicator,
+                                                     rowProcs,
+                                                     rowProcs);
       }
 
 
       void
       createProcessGridRectangularMatrix(
-        const MPI_Comm &mpi_communicator,
-        const unsigned  sizeRows,
-        const unsigned  sizeColumns,
-        std::shared_ptr<const dealii::Utilities::MPI::ProcessGrid> &processGrid)
+        const MPI_Comm &                           mpi_communicator,
+        const unsigned                             sizeRows,
+        const unsigned                             sizeColumns,
+        std::shared_ptr<const dftfe::ProcessGrid> &processGrid)
       {
         const unsigned int numberProcs =
           dealii::Utilities::MPI::n_mpi_processes(mpi_communicator);
@@ -108,18 +109,18 @@ namespace dftfe
           }
 
         processGrid =
-          std::make_shared<const dealii::Utilities::MPI::ProcessGrid>(
-            mpi_communicator, rowProcs, columnProcs);
+          std::make_shared<const dftfe::ProcessGrid>(mpi_communicator,
+                                                     rowProcs,
+                                                     columnProcs);
       }
 
 
       template <typename T>
       void
       createGlobalToLocalIdMapsScaLAPACKMat(
-        const std::shared_ptr<const dealii::Utilities::MPI::ProcessGrid>
-          &                                   processGrid,
-        const dealii::ScaLAPACKMatrix<T> &    mat,
-        std::map<unsigned int, unsigned int> &globalToLocalRowIdMap,
+        const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
+        const dftfe::ScaLAPACKMatrix<T> &                mat,
+        std::map<unsigned int, unsigned int> &           globalToLocalRowIdMap,
         std::map<unsigned int, unsigned int> &globalToLocalColumnIdMap)
       {
 #ifdef USE_COMPLEX
@@ -142,10 +143,9 @@ namespace dftfe
       template <typename T>
       void
       sumAcrossInterCommScaLAPACKMat(
-        const std::shared_ptr<const dealii::Utilities::MPI::ProcessGrid>
-          &                         processGrid,
-        dealii::ScaLAPACKMatrix<T> &mat,
-        const MPI_Comm &            interComm)
+        const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
+        dftfe::ScaLAPACKMatrix<T> &                      mat,
+        const MPI_Comm &                                 interComm)
       {
 #ifdef USE_COMPLEX
         AssertThrow(false, dftUtils::ExcNotImplementedYet());
@@ -169,11 +169,10 @@ namespace dftfe
       template <typename T>
       void
       broadcastAcrossInterCommScaLAPACKMat(
-        const std::shared_ptr<const dealii::Utilities::MPI::ProcessGrid>
-          &                         processGrid,
-        dealii::ScaLAPACKMatrix<T> &mat,
-        const MPI_Comm &            interComm,
-        const unsigned int          broadcastRoot)
+        const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
+        dftfe::ScaLAPACKMatrix<T> &                      mat,
+        const MPI_Comm &                                 interComm,
+        const unsigned int                               broadcastRoot)
       {
 #ifdef USE_COMPLEX
         AssertThrow(false, dftUtils::ExcNotImplementedYet());
@@ -195,26 +194,23 @@ namespace dftfe
 
       template void
       createGlobalToLocalIdMapsScaLAPACKMat(
-        const std::shared_ptr<const dealii::Utilities::MPI::ProcessGrid>
-          &                                               processGrid,
-        const dealii::ScaLAPACKMatrix<dataTypes::number> &mat,
-        std::map<unsigned int, unsigned int> &            globalToLocalRowIdMap,
+        const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
+        const dftfe::ScaLAPACKMatrix<dataTypes::number> &mat,
+        std::map<unsigned int, unsigned int> &           globalToLocalRowIdMap,
         std::map<unsigned int, unsigned int> &globalToLocalColumnIdMap);
 
       template void
       sumAcrossInterCommScaLAPACKMat(
-        const std::shared_ptr<const dealii::Utilities::MPI::ProcessGrid>
-          &                                         processGrid,
-        dealii::ScaLAPACKMatrix<dataTypes::number> &mat,
-        const MPI_Comm &                            interComm);
+        const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
+        dftfe::ScaLAPACKMatrix<dataTypes::number> &      mat,
+        const MPI_Comm &                                 interComm);
 
       template void
       broadcastAcrossInterCommScaLAPACKMat(
-        const std::shared_ptr<const dealii::Utilities::MPI::ProcessGrid>
-          &                                         processGrid,
-        dealii::ScaLAPACKMatrix<dataTypes::number> &mat,
-        const MPI_Comm &                            interComm,
-        const unsigned int                          broadcastRoot);
+        const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
+        dftfe::ScaLAPACKMatrix<dataTypes::number> &      mat,
+        const MPI_Comm &                                 interComm,
+        const unsigned int                               broadcastRoot);
     } // namespace internal
   }   // namespace linearAlgebraOperationsCUDA
 } // namespace dftfe

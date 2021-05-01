@@ -191,7 +191,7 @@ namespace dftfe
 
 
     void
-    initializeKohnShamDFTOperator(const bool initializeCUDAScala = true);
+    initializeKohnShamDFTOperator(const bool initializeCublas = true);
 
 
     void
@@ -616,15 +616,15 @@ namespace dftfe
                  unsigned int &flag);
     void
     initLocalPseudoPotential(
-      const DoFHandler<3> &                              _dofHandler,
-      const unsigned int                                 lpspQuadratureId,
-      const dealii::MatrixFree<3, double> &              _matrix_free_data,
-      const unsigned int                                 _phiExtDofHandlerIndex,
-      const dealii::AffineConstraints<double> &          phiExtConstraintMatrix,
-      const std::map<types::global_dof_index, Point<3>> &supportPoints,
-      const vselfBinsManager<FEOrder, FEOrderElectro> &  vselfBinManager,
-      distributedCPUVec<double> &                        phiExt,
-      std::map<dealii::CellId, std::vector<double>> &    _pseudoValues,
+      const DoFHandler<3> &                    _dofHandler,
+      const unsigned int                       lpspQuadratureId,
+      const dealii::MatrixFree<3, double> &    _matrix_free_data,
+      const unsigned int                       _phiExtDofHandlerIndex,
+      const dealii::AffineConstraints<double> &phiExtConstraintMatrix,
+      const std::map<dealii::types::global_dof_index, Point<3>> &supportPoints,
+      const vselfBinsManager<FEOrder, FEOrderElectro> &vselfBinManager,
+      distributedCPUVec<double> &                      phiExt,
+      std::map<dealii::CellId, std::vector<double>> &  _pseudoValues,
       std::map<unsigned int, std::map<dealii::CellId, std::vector<double>>>
         &_pseudoValuesAtoms);
     void
@@ -1080,7 +1080,7 @@ namespace dftfe
     unsigned int          d_densityQuadratureId;
     unsigned int          d_densityQuadratureIdElectro;
     MatrixFree<3, double> matrix_free_data, d_matrixFreeDataPRefined;
-    std::map<types::global_dof_index, Point<3>> d_supportPoints,
+    std::map<dealii::types::global_dof_index, Point<3>> d_supportPoints,
       d_supportPointsPRefined, d_supportPointsEigen;
     std::vector<const dealii::AffineConstraints<double> *> d_constraintsVector;
     std::vector<const dealii::AffineConstraints<double> *>

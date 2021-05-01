@@ -41,8 +41,6 @@ withNCCL=ON
 cxx_compiler=mpic++
 cxx_flagsRelease="-O2 -fPIC"
 
-#Option to link to ELPA
-withELPA=ON
 
 #Option to compile with default or higher order quadrature for storing pseudopotential data
 #ON is recommended for MD simulations with hard pseudopotentials
@@ -71,7 +69,7 @@ function cmake_real() {
 	-DALGLIB_DIR=$alglibDir -DLIBXC_DIR=$libxcDir \
 	-DSPGLIB_DIR=$spglibDir -DXML_LIB_DIR=$xmlLibDir \
 	-DXML_INCLUDE_DIR=$xmlIncludeDir\
-	-DWITH_ELPA=$withELPA -DWITH_NCCL=$withNCCL -DCMAKE_PREFIX_PATH="$ELPA_PATH;$NCCL_PATH"\
+	-DWITH_NCCL=$withNCCL -DCMAKE_PREFIX_PATH="$ELPA_PATH;$NCCL_PATH"\
 	-DWITH_COMPLEX=OFF -DWITH_GPU=$withGPU \
 	-DWITH_TESTING=$testing -DMINIMAL_COMPILE=$minimal_compile\
 	-DHIGHERQUAD_PSP=$withHigherQuadPSP $1
@@ -84,9 +82,12 @@ function cmake_cplx() {
 	-DCMAKE_BUILD_TYPE=$build_type -DDEAL_II_DIR=$dealiiDir \
 	-DALGLIB_DIR=$alglibDir -DLIBXC_DIR=$libxcDir \
 	-DSPGLIB_DIR=$spglibDir -DXML_LIB_DIR=$xmlLibDir \
-	-DXML_INCLUDE_DIR=$xmlIncludeDir\
-	-DWITH_COMPLEX=ON -DWITH_TESTING=$testing -DMINIMAL_COMPILE=$minimal_compile\
-	-DHIGHERQUAD_PSP=$withHigherQuadPSP $1
+	-DXML_INCLUDE_DIR=$xmlIncludeDir \
+	-DCMAKE_PREFIX_PATH="$ELPA_PATH" \
+	-DWITH_COMPLEX=ON \
+	-DWITH_TESTING=$testing -DMINIMAL_COMPILE=$minimal_compile \
+  -DHIGHERQUAD_PSP=$withHigherQuadPSP\
+	  $1
 }
 
 RCol='\e[0m'

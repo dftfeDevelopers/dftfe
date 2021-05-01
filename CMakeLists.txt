@@ -38,6 +38,8 @@ SET(TARGET_SRC
   ./src/linAlg/linearAlgebraOperationsOpt.cc
   ./src/linAlg/linearAlgebraOperationsInternal.cc
   ./src/linAlg/elpaScalaManager.cc
+  ./src/linAlg/scalapackWrapper.cc
+  ./src/linAlg/process_grid.cc
   ./src/solvers/dealiiLinearSolver.cc
   ./src/solvers/dealiiLinearSolverProblem.cc
   ./src/md/molecularDynamics.cc
@@ -326,13 +328,11 @@ ENDIF (DEFINED SPGLIB_DIR)
 #
 # ELPA. Pass path to -DCMAKE_PREFIX_PATH
 #
-IF (WITH_ELPA)
-   ADD_DEFINITIONS(-DDFTFE_WITH_ELPA)
-   find_package(ELPA 2020 REQUIRED)
-   MESSAGE(STATUS "Will Link With ELPA")
-   target_link_libraries(${TARGETLIB} ELPA::ELPA)
-   target_include_directories(${TARGETLIB} PUBLIC ELPA::ELPA)
-ENDIF()
+ADD_DEFINITIONS(-DDFTFE_WITH_ELPA)
+find_package(ELPA 2020 REQUIRED)
+MESSAGE(STATUS "Will Link With ELPA")
+target_link_libraries(${TARGETLIB} ELPA::ELPA)
+target_include_directories(${TARGETLIB} PUBLIC ELPA::ELPA)
 
 #
 # NCCL. Pass path to -DCMAKE_PREFIX_PATH 
