@@ -99,7 +99,12 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::
           cellPtr = dftPtr->matrix_free_data.get_cell_iterator(
             iMacroCell, iCell, dftPtr->d_densityDofHandlerIndex);
           fe_values_quadplusone.reinit(cellPtr);
+
+#ifdef USE_COMPLEX
 	  fe_values.reinit(cellPtr);
+           const std::vector<DerivativeForm<1, 3, 3>> &inverseJacobians =
+              fe_values.get_inverse_jacobians();
+#endif
 
           unsigned int count = 0;
           for(unsigned int iNode = 0; iNode < numberDofsPerElement; ++iNode)
@@ -147,7 +152,7 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::
 		{
 		  for(unsigned int jDim = 0; jDim < 3; ++jDim)
 		    {
-		      d_invJacJxW[totalLocallyOwnedCells*(9*q+count) + iElemCount] = inverseJacobians[q][iDim][jDim]*fe_values.JxW(q);
+		      d_invJacJxW[numberPhysicalCells*(9*q+count) + iElemCount] = inverseJacobians[q][iDim][jDim]*fe_values.JxW(q);
 		      count += 1;
 		    }
 		   

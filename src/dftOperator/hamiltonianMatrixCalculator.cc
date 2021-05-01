@@ -283,6 +283,8 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::computeHamiltonianMatrix(
   kPointCoors[1] = dftPtr->d_kPointCoordinates[3*kPointIndex + 1];
   kPointCoors[2] = dftPtr->d_kPointCoordinates[3*kPointIndex + 2];
 
+  double kSquareTimesHalf = 0.5*(kPointCoors[0]*kPointCoors[0] + kPointCoors[1]*kPointCoors[1] + kPointCoors[2]*kPointCoors[2]);
+
   std::vector<double> kPointTimesGradNiNj_currentBlock(numberEntriesEachBlock*9*numberQuadraturePoints,0.0);
   std::vector<double> shapeGradRefINode(3,0.0);
   std::vector<double> elementHamiltonianMatrixImag(totalLocallyOwnedCells*sizeNiNj,0.0);
@@ -507,7 +509,7 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::computeHamiltonianMatrix(
 
 		   d_cellHamiltonianMatrix[kpointSpinIndex][iElem]
 		    [numberDofsPerElement * iNode + jNode]
-		     .imag(elementHamiltonianMatrixImag[totalLocallyOwnedCells*count + iElem];
+		     .imag(elementHamiltonianMatrixImag[totalLocallyOwnedCells*count + iElem]);
 
 #else
                   d_cellHamiltonianMatrix
