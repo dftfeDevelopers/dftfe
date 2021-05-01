@@ -108,7 +108,6 @@ namespace dftfe
     bool         useMixedPrecSubspaceRotSpectrumSplit           = false;
     bool         useMixedPrecSubspaceRotRR                      = false;
     bool         useSinglePrecXtHXOffDiag                       = false;
-    unsigned int numAdaptiveFilterStates                        = 0;
     unsigned int spectrumSplitStartingScfIter                   = 1;
     bool         useELPA                                        = false;
     bool         constraintsParallelCheck                       = true;
@@ -978,12 +977,6 @@ namespace dftfe
 
 
           prm.declare_entry(
-            "ADAPTIVE FILTER STATES",
-            "0",
-            Patterns::Integer(0),
-            "[Advanced] Number of lowest Kohn-Sham eigenstates which are filtered with Chebyshev polynomial degree linearly varying from 50 percent (starting from the lowest) to 80 percent of the value specified by CHEBYSHEV POLYNOMIAL DEGREE. This imposes a step function filtering polynomial order on the ADAPTIVE FILTER STATES as filtering is done with blocks of size WFC BLOCK SIZE. This setting is recommended for large systems (greater than 5000 electrons). Default value is 0 i.e., all states are filtered with the same Chebyshev polynomial degree.");
-
-          prm.declare_entry(
             "REUSE LANCZOS UPPER BOUND",
             "false",
             Patterns::Bool(),
@@ -1398,8 +1391,6 @@ namespace dftfe
           dftParameters::mixedPrecXtHXFracStates =
             prm.get_integer("MIXED PREC XTHX FRAC STATES");
           dftParameters::algoType = prm.get("ALGO");
-          dftParameters::numAdaptiveFilterStates =
-            prm.get_integer("ADAPTIVE FILTER STATES");
           dftParameters::chebyshevFilterPolyDegreeFirstScfScalingFactor =
             prm.get_double(
               "CHEBYSHEV POLYNOMIAL DEGREE SCALING FACTOR FIRST SCF");
@@ -1834,7 +1825,6 @@ namespace dftfe
           dftParameters::useMixedPrecPGS_SR                        = true;
           dftParameters::useMixedPrecXTHXSpectrumSplit             = true;
           dftParameters::useMixedPrecCheby                         = true;
-          dftParameters::allowMultipleFilteringPassesAfterFirstScf = false;
           dftParameters::reuseLanczosUpperBoundFromFirstCall       = true;
         }
 #ifdef USE_COMPLEX

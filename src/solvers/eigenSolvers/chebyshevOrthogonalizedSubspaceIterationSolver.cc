@@ -309,61 +309,29 @@ namespace dftfe
             // call Chebyshev filtering function only for the current block to
             // be filtered and does in-place filtering
             computing_timer.enter_section("Chebyshev filtering");
-            if (jvec + BVec < dftParameters::numAdaptiveFilterStates)
+
+            if (dftParameters::HXOptimFlag)
               {
-                const double chebyshevOrd = (double)chebyshevOrder;
-                const double adaptiveOrder =
-                  0.5 * chebyshevOrd + jvec * 0.3 * chebyshevOrd /
-                                         dftParameters::numAdaptiveFilterStates;
-                if (dftParameters::HXOptimFlag)
-                  {
-                    linearAlgebraOperations::chebyshevFilterOpt(
-                      operatorMatrix,
-                      eigenVectorsFlattenedArrayBlock,
-                      cellWaveFunctionMatrix,
-                      BVec,
-                      std::ceil(adaptiveOrder),
-                      d_lowerBoundUnWantedSpectrum,
-                      d_upperBoundUnWantedSpectrum,
-                      d_lowerBoundWantedSpectrum);
-                  }
-                else
-                  {
-                    linearAlgebraOperations::chebyshevFilter(
-                      operatorMatrix,
-                      eigenVectorsFlattenedArrayBlock,
-                      BVec,
-                      std::ceil(adaptiveOrder),
-                      d_lowerBoundUnWantedSpectrum,
-                      d_upperBoundUnWantedSpectrum,
-                      d_lowerBoundWantedSpectrum);
-                  }
+                linearAlgebraOperations::chebyshevFilterOpt(
+                  operatorMatrix,
+                  eigenVectorsFlattenedArrayBlock,
+                  cellWaveFunctionMatrix,
+                  BVec,
+                  chebyshevOrder,
+                  d_lowerBoundUnWantedSpectrum,
+                  d_upperBoundUnWantedSpectrum,
+                  d_lowerBoundWantedSpectrum);
               }
             else
               {
-                if (dftParameters::HXOptimFlag)
-                  {
-                    linearAlgebraOperations::chebyshevFilterOpt(
-                      operatorMatrix,
-                      eigenVectorsFlattenedArrayBlock,
-                      cellWaveFunctionMatrix,
-                      BVec,
-                      chebyshevOrder,
-                      d_lowerBoundUnWantedSpectrum,
-                      d_upperBoundUnWantedSpectrum,
-                      d_lowerBoundWantedSpectrum);
-                  }
-                else
-                  {
-                    linearAlgebraOperations::chebyshevFilter(
-                      operatorMatrix,
-                      eigenVectorsFlattenedArrayBlock,
-                      BVec,
-                      chebyshevOrder,
-                      d_lowerBoundUnWantedSpectrum,
-                      d_upperBoundUnWantedSpectrum,
-                      d_lowerBoundWantedSpectrum);
-                  }
+                linearAlgebraOperations::chebyshevFilter(
+                  operatorMatrix,
+                  eigenVectorsFlattenedArrayBlock,
+                  BVec,
+                  chebyshevOrder,
+                  d_lowerBoundUnWantedSpectrum,
+                  d_upperBoundUnWantedSpectrum,
+                  d_lowerBoundWantedSpectrum);
               }
             computing_timer.exit_section("Chebyshev filtering");
 
