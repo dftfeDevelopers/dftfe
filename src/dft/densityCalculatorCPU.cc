@@ -246,7 +246,7 @@ namespace dftfe
                 const unsigned int currentBlockSize =
                   std::min(BVec, totalNumWaveFunctions - jvec);
 
-                if (currentBlockSize != totalNumWaveFunctions || jvec == 0)
+                if (currentBlockSize != BVec || jvec == 0)
                   operatorMatrix.reinit(currentBlockSize,
                                         flattenedArrayBlock,
                                         true);
