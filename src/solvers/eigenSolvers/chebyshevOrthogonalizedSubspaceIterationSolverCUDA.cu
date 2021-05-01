@@ -675,8 +675,14 @@ namespace dftfe
         // set Chebyshev order
         //
         if (chebyshevOrder == 0)
-          chebyshevOrder =
-            internal::setChebyshevOrder(d_upperBoundUnWantedSpectrum);
+          {
+            chebyshevOrder =
+              internal::setChebyshevOrder(d_upperBoundUnWantedSpectrum);
+
+            if (dftParameters::orthogType.compare("PGS") == 0 &&
+                !dftParameters::isPseudopotential)
+              chebyshevOrder *= 0.5;
+          }
 
         chebyshevOrder =
           (isFirstScf && dftParameters::isPseudopotential) ?
@@ -1032,14 +1038,7 @@ namespace dftfe
 
         if (dftParameters::rrGEP == false)
           {
-            if (dftParameters::orthogType.compare("LW") == 0)
-              {
-                AssertThrow(
-                  false,
-                  dealii::ExcMessage(
-                    "Lowden Gram-Schmidt Orthonormalization Not implemented in CUDA:"));
-              }
-            else if (dftParameters::orthogType.compare("PGS") == 0)
+            if (dftParameters::orthogType.compare("PGS") == 0)
               {
                 // gpu_time = MPI_Wtime();
                 linearAlgebraOperationsCUDA::pseudoGramSchmidtOrthogonalization(

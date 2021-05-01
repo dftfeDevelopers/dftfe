@@ -101,7 +101,6 @@ namespace dftfe
     extern bool         useMixedPrecPGS_SR;
     extern bool         useMixedPrecPGS_O;
     extern bool         useMixedPrecXTHXSpectrumSplit;
-    extern bool         useMixedPrecSubspaceRotSpectrumSplit;
     extern bool         useMixedPrecSubspaceRotRR;
     extern bool         useSinglePrecXtHXOffDiag;
     extern unsigned int spectrumSplitStartingScfIter;

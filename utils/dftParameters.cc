@@ -105,7 +105,6 @@ namespace dftfe
     bool         useMixedPrecPGS_SR                             = false;
     bool         useMixedPrecPGS_O                              = false;
     bool         useMixedPrecXTHXSpectrumSplit                  = false;
-    bool         useMixedPrecSubspaceRotSpectrumSplit           = false;
     bool         useMixedPrecSubspaceRotRR                      = false;
     bool         useSinglePrecXtHXOffDiag                       = false;
     unsigned int spectrumSplitStartingScfIter                   = 1;
@@ -849,14 +848,14 @@ namespace dftfe
           prm.declare_entry(
             "ORTHOGONALIZATION TYPE",
             "Auto",
-            Patterns::Selection("GS|LW|PGS|Auto"),
-            "[Advanced] Parameter specifying the type of orthogonalization to be used: GS(Gram-Schmidt Orthogonalization using SLEPc library), LW(Lowden Orthogonalization), PGS(Cholesky-Gram-Schmidt Orthogonalization) Auto is the default and recommended option, which chooses GS for all-electron case and PGS for pseudopotential case. To use GS and LW options set RR GEP to false. On GPUs PGS is the only route currently implemented.");
+            Patterns::Selection("GS|PGS|Auto"),
+            "[Advanced] Parameter specifying the type of orthogonalization to be used: GS(Gram-Schmidt Orthogonalization using SLEPc library) and PGS(Cholesky-Gram-Schmidt Orthogonalization). Auto is the default and recommended option, which chooses GS for all-electron case and PGS for pseudopotential case. To use GS set RR GEP to false. On GPUs PGS is the only route currently implemented.");
 
           prm.declare_entry(
             "ENABLE SWITCH TO GS",
             "true",
             Patterns::Bool(),
-            "[Developer] Controls automatic switching to Gram-Schimdt orthogonalization if Lowden Orthogonalization or Cholesky-Gram-Schimdt orthogonalization are unstable. Default option is true.");
+            "[Developer] Controls automatic switching to Gram-Schimdt orthogonalization if Cholesky-Gram-Schimdt orthogonalization is unstable. Default option is true.");
 
 
           prm.declare_entry(
@@ -919,12 +918,6 @@ namespace dftfe
             "false",
             Patterns::Bool(),
             "[Advanced] Use mixed precision arithmetic in computing subspace projected Kohn-Sham Hamiltonian when SPECTRUM SPLIT CORE EIGENSTATES>0.  Default setting is false.");
-
-          prm.declare_entry(
-            "USE MIXED PREC RR_SR SPECTRUM SPLIT",
-            "false",
-            Patterns::Bool(),
-            "[Advanced] Use mixed precision arithmetic in Rayleigh-Ritz subspace rotation step when SPECTRUM SPLIT CORE EIGENSTATES>0. Default setting is false.");
 
           prm.declare_entry(
             "USE MIXED PREC RR_SR",
@@ -1374,8 +1367,6 @@ namespace dftfe
             prm.get_bool("USE MIXED PREC PGS O");
           dftParameters::useMixedPrecXTHXSpectrumSplit =
             prm.get_bool("USE MIXED PREC XTHX SPECTRUM SPLIT");
-          dftParameters::useMixedPrecSubspaceRotSpectrumSplit =
-            prm.get_bool("USE MIXED PREC RR_SR SPECTRUM SPLIT");
           dftParameters::useMixedPrecSubspaceRotRR =
             prm.get_bool("USE MIXED PREC RR_SR");
           dftParameters::useMixedPrecCheby =
@@ -1721,7 +1712,13 @@ namespace dftfe
               if (!dftParameters::floatingNuclearCharges)
                 dftParameters::outerAtomBallRadius = 2.5;
               else
-                dftParameters::outerAtomBallRadius = 4.0;
+                {
+                  if (!(dftParameters::periodicX || dftParameters::periodicY ||
+                        dftParameters::periodicZ))
+                    dftParameters::outerAtomBallRadius = 6.0;
+                  else
+                    dftParameters::outerAtomBallRadius = 10.0;
+                }
             }
           else
             dftParameters::outerAtomBallRadius = 2.0;
@@ -1777,9 +1774,7 @@ namespace dftfe
           dftParameters::orthogType = "PGS";
 #endif
         }
-      else if ((dftParameters::orthogType == "GS" ||
-                dftParameters::orthogType == "LW") &&
-               !dftParameters::useGPU)
+      else if (dftParameters::orthogType == "GS" && !dftParameters::useGPU)
         {
 #ifdef USE_PETSC;
           dftParameters::rrGEP = false;
@@ -1801,24 +1796,22 @@ namespace dftfe
           dftParameters::orthogType = "PGS";
           dftParameters::rrGEP      = true;
         }
-      else if ((dftParameters::orthogType == "GS" ||
-                dftParameters::orthogType == "LW") &&
-               dftParameters::useGPU)
+      else if (dftParameters::orthogType == "GS" && dftParameters::useGPU)
         {
           AssertThrow(
             dftParameters::rrGEP,
             ExcMessage(
-              "DFT-FE Error: GS and LW are not implemented on GPUs. Use Auto option."));
+              "DFT-FE Error: GS is not implemented on GPUs. Use Auto option."));
         }
 
 
       if (dftParameters::algoType == "FAST")
         {
-          dftParameters::useMixedPrecPGS_O                         = true;
-          dftParameters::useMixedPrecPGS_SR                        = true;
-          dftParameters::useMixedPrecXTHXSpectrumSplit             = true;
-          dftParameters::useMixedPrecCheby                         = true;
-          dftParameters::reuseLanczosUpperBoundFromFirstCall       = true;
+          dftParameters::useMixedPrecPGS_O                   = true;
+          dftParameters::useMixedPrecPGS_SR                  = true;
+          dftParameters::useMixedPrecXTHXSpectrumSplit       = true;
+          dftParameters::useMixedPrecCheby                   = true;
+          dftParameters::reuseLanczosUpperBoundFromFirstCall = true;
         }
 #ifdef USE_COMPLEX
       dftParameters::HXOptimFlag = false;

@@ -1534,61 +1534,23 @@ namespace dftfe
       projHamParCopy.copy_conjugate_transposed(projHamPar);
       projHamParCopy.mmult(projHamPar, LMatPar);
 
+      computing_timer.enter_section(
+        "Xfr^{T}={QfrConjPrime}^{C}*LConj^{-1}*X^{T}, RR step");
 
-      if (useMixedPrec && dftParameters::useMixedPrecSubspaceRotSpectrumSplit)
-        {
-          computing_timer.enter_section(
-            "Xfr^{T}={QfrConjPrime}^{C}*LConj^{-1}*X^{T} mixed prec, RR step");
+      internal::subspaceRotationSpectrumSplit(&X[0],
+                                              &Y[0],
+                                              X.size(),
+                                              numberWaveFunctions,
+                                              processGrid,
+                                              numberWaveFunctions -
+                                                numberCoreStates,
+                                              interBandGroupComm,
+                                              mpiComm,
+                                              projHamPar,
+                                              false);
 
-          if (std::is_same<T, std::complex<double>>::value)
-            internal::subspaceRotationSpectrumSplitMixedPrec<
-              T,
-              std::complex<float>>(&X[0],
-                                   &Y[0],
-                                   X.size(),
-                                   numberWaveFunctions,
-                                   processGrid,
-                                   numberWaveFunctions - numberCoreStates,
-                                   interBandGroupComm,
-                                   mpiComm,
-                                   projHamPar,
-                                   false);
-          else
-            internal::subspaceRotationSpectrumSplitMixedPrec<T, float>(
-              &X[0],
-              &Y[0],
-              X.size(),
-              numberWaveFunctions,
-              processGrid,
-              numberWaveFunctions - numberCoreStates,
-              interBandGroupComm,
-              mpiComm,
-              projHamPar,
-              false);
-
-          computing_timer.exit_section(
-            "Xfr^{T}={QfrConjPrime}^{C}*LConj^{-1}*X^{T} mixed prec, RR step");
-        }
-      else
-        {
-          computing_timer.enter_section(
-            "Xfr^{T}={QfrConjPrime}^{C}*LConj^{-1}*X^{T}, RR step");
-
-          internal::subspaceRotationSpectrumSplit(&X[0],
-                                                  &Y[0],
-                                                  X.size(),
-                                                  numberWaveFunctions,
-                                                  processGrid,
-                                                  numberWaveFunctions -
-                                                    numberCoreStates,
-                                                  interBandGroupComm,
-                                                  mpiComm,
-                                                  projHamPar,
-                                                  false);
-
-          computing_timer.exit_section(
-            "Xfr^{T}={QfrConjPrime}^{C}*LConj^{-1}*X^{T}, RR step");
-        }
+      computing_timer.exit_section(
+        "Xfr^{T}={QfrConjPrime}^{C}*LConj^{-1}*X^{T}, RR step");
 
       // X^{T}=LConj^{-1}*X^{T}
       if (!(dftParameters::useMixedPrecPGS_SR && useMixedPrec))
@@ -1841,56 +1803,22 @@ namespace dftfe
                                                processGrid,
                                                rowsBlockSize);
       projHamParCopy.copy_conjugate_transposed(projHamPar);
-      if (useMixedPrec && dftParameters::useMixedPrecSubspaceRotSpectrumSplit)
-        {
-          computing_timer.enter_section(
-            "Blocked subspace rotation mixed prec, RR step");
-          if (std::is_same<T, std::complex<double>>::value)
-            internal::subspaceRotationSpectrumSplitMixedPrec<
-              T,
-              std::complex<float>>(&X[0],
-                                   &Y[0],
-                                   X.size(),
-                                   numberWaveFunctions,
-                                   processGrid,
-                                   numberWaveFunctions - numberCoreStates,
-                                   interBandGroupComm,
-                                   mpi_communicator,
-                                   projHamParCopy,
-                                   false);
-          else
-            internal::subspaceRotationSpectrumSplitMixedPrec<T, float>(
-              &X[0],
-              &Y[0],
-              X.size(),
-              numberWaveFunctions,
-              processGrid,
-              numberWaveFunctions - numberCoreStates,
-              interBandGroupComm,
-              mpi_communicator,
-              projHamParCopy,
-              false);
-          computing_timer.exit_section(
-            "Blocked subspace rotation mixed prec, RR step");
-        }
-      else
-        {
-          computing_timer.enter_section("Blocked subspace rotation, RR step");
 
-          internal::subspaceRotationSpectrumSplit(&X[0],
-                                                  &Y[0],
-                                                  X.size(),
-                                                  numberWaveFunctions,
-                                                  processGrid,
-                                                  numberWaveFunctions -
-                                                    numberCoreStates,
-                                                  interBandGroupComm,
-                                                  mpi_communicator,
-                                                  projHamParCopy,
-                                                  false);
+      computing_timer.enter_section("Blocked subspace rotation, RR step");
 
-          computing_timer.exit_section("Blocked subspace rotation, RR step");
-        }
+      internal::subspaceRotationSpectrumSplit(&X[0],
+                                              &Y[0],
+                                              X.size(),
+                                              numberWaveFunctions,
+                                              processGrid,
+                                              numberWaveFunctions -
+                                                numberCoreStates,
+                                              interBandGroupComm,
+                                              mpi_communicator,
+                                              projHamParCopy,
+                                              false);
+
+      computing_timer.exit_section("Blocked subspace rotation, RR step");
     }
 
 #ifdef DFTFE_WITH_ELPA

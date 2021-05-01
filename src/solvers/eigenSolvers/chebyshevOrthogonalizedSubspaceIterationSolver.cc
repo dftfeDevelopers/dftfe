@@ -182,8 +182,14 @@ namespace dftfe
     // set Chebyshev order
     //
     if (chebyshevOrder == 0)
-      chebyshevOrder =
-        internal::setChebyshevOrder(d_upperBoundUnWantedSpectrum);
+      {
+        chebyshevOrder =
+          internal::setChebyshevOrder(d_upperBoundUnWantedSpectrum);
+
+        if (dftParameters::orthogType.compare("PGS") == 0 &&
+            !dftParameters::isPseudopotential)
+          chebyshevOrder *= 0.5;
+      }
 
     chebyshevOrder =
       (isFirstScf && dftParameters::isPseudopotential) ?
@@ -533,32 +539,7 @@ namespace dftfe
       }
     else
       {
-        if (dftParameters::orthogType.compare("LW") == 0)
-          {
-            computing_timer.enter_section("Lowden Orthogn Opt");
-            const unsigned int flag =
-              linearAlgebraOperations::lowdenOrthogonalization(
-                eigenVectorsFlattened,
-                totalNumberWaveFunctions,
-                operatorMatrix.getMPICommunicator());
-
-            if (flag == 1)
-              {
-                if (dftParameters::verbosity >= 1)
-                  pcout
-                    << "Switching to Gram-Schimdt orthogonalization as Lowden orthogonalization was not successful"
-                    << std::endl;
-
-                computing_timer.enter_section("Gram-Schmidt Orthogn Opt");
-                linearAlgebraOperations::gramSchmidtOrthogonalization(
-                  eigenVectorsFlattened,
-                  totalNumberWaveFunctions,
-                  operatorMatrix.getMPICommunicator());
-                computing_timer.exit_section("Gram-Schmidt Orthogn Opt");
-              }
-            computing_timer.exit_section("Lowden Orthogn Opt");
-          }
-        else if (dftParameters::orthogType.compare("PGS") == 0)
+        if (dftParameters::orthogType.compare("PGS") == 0)
           {
             computing_timer.enter_section("Pseudo-Gram-Schmidt");
             const unsigned int flag =
