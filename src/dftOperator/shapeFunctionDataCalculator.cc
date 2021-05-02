@@ -64,6 +64,7 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::
 
 #ifdef USE_COMPLEX
   d_NiNjIntegral.resize(numberPhysicalCells*sizeNiNj);
+  d_invJacJxW.resize(numberPhysicalCells*9*numberQuadraturePoints);
 #endif
 
   //
@@ -77,6 +78,11 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::
        //d_gradNiNjPlusgradNjNi.resize(sizeNiNj*3*numberQuadraturePoints,0.0);
        d_shapeFunctionGradientValueRef.resize(numberQuadraturePoints * numberDofsPerElement * 3, 0.0);
      }
+
+#ifdef USE_COMPLEX
+  if(dftParameters::xcFamilyType != "GGA")
+    d_shapeFunctionGradientValueRef.resize(numberQuadraturePoints * numberDofsPerElement * 3, 0.0);
+#endif
       
  
 
@@ -186,9 +192,29 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::
                         d_shapeFunctionGradientValueRef[3*numberDofsPerElement*q_point + 2*numberDofsPerElement + iNode] = shape_grad_reference[2];
                       }
                   }
-
-		
 		}
+
+#ifdef USE_COMPLEX 
+            if(dftParameters::xcFamilyType != "GGA")
+                { 
+                  const std::vector<dealii::DerivativeForm<1, 3, 3>> &jacobians =
+                  fe_values.get_jacobians();
+                  for(unsigned int iNode = 0; iNode < numberDofsPerElement; ++iNode)
+                  { 
+                    for(unsigned int q_point = 0; q_point < numberQuadraturePoints; ++q_point)
+                      { 
+                        const dealii::Tensor<1, 3, double> &shape_grad_real = fe_values.shape_grad(iNode, q_point);
+                        const dealii::Tensor<1, 3, double> &shape_grad_reference =
+                        apply_transformation(jacobians[q_point].transpose(),
+                                             shape_grad_real);
+                        
+                        d_shapeFunctionGradientValueRef[3*numberDofsPerElement*q_point + iNode] = shape_grad_reference[0];
+                        d_shapeFunctionGradientValueRef[3*numberDofsPerElement*q_point + numberDofsPerElement + iNode] = shape_grad_reference[1];                    
+                        d_shapeFunctionGradientValueRef[3*numberDofsPerElement*q_point + 2*numberDofsPerElement + iNode] = shape_grad_reference[2];                
+                      }
+                  }
+                } 
+#endif
 
               for(unsigned int q_point = 0; q_point < numberQuadraturePointsLpsp; ++q_point)
 		{
