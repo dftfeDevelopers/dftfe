@@ -58,7 +58,6 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::
   //
   unsigned int sizeNiNj = numberDofsPerElement*(numberDofsPerElement + 1)/2;
   d_NiNjLpspQuad.resize(sizeNiNj*numberQuadraturePointsLpsp,0.0);
-  //d_NiNj.resize(sizeNiNj*numberQuadraturePoints,0.0);
   d_shapeFunctionData.resize(numberDofsPerElement*numberQuadraturePoints,0.0);
   d_cellShapeFunctionGradientIntegral.resize(numberPhysicalCells*sizeNiNj);
 
