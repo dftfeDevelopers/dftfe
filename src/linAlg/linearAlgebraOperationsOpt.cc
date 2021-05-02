@@ -1564,7 +1564,7 @@ namespace dftfe
                                      mpiComm,
                                      LMatPar,
                                      false,
-                                     dftParameters::triMatPGSOpt ? true : false,
+                                     true,
                                      false);
           computing_timer.exit_section("X^{T}=Lconj^{-1}*X^{T}, RR step");
         }

@@ -235,8 +235,7 @@ namespace dftfe
                                      mpiComm,
                                      LMatPar,
                                      false,
-                                     dftParameters::triMatPGSOpt ? true :
-                                                                   false);
+                                     true);
           computing_timer.exit_section("Subspace rotation PGS");
         }
       else

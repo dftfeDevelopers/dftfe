@@ -98,7 +98,6 @@ namespace dftfe
     unsigned int natoms                                         = 0;
     unsigned int natomTypes                                     = 0;
     unsigned int numCoreWfcRR                                   = 0;
-    bool         triMatPGSOpt                                   = true;
     bool         reuseWfcGeoOpt                                 = false;
     unsigned int reuseDensityGeoOpt                             = 0;
     double       mpiAllReduceMessageBlockSizeMB                 = 2.0;
@@ -857,13 +856,6 @@ namespace dftfe
             Patterns::Bool(),
             "[Developer] Controls automatic switching to Gram-Schimdt orthogonalization if Cholesky-Gram-Schimdt orthogonalization is unstable. Default option is true.");
 
-
-          prm.declare_entry(
-            "ENABLE SUBSPACE ROT PGS OPT",
-            "true",
-            Patterns::Bool(),
-            "[Developer] Turns on subspace rotation optimization for Cholesky-Gram-Schimdt orthogonalization. Default option is true.");
-
           prm.declare_entry(
             "CHEBY WFC BLOCK SIZE",
             "400",
@@ -1355,8 +1347,6 @@ namespace dftfe
           dftParameters::subspaceRotDofsBlockSize =
             prm.get_integer("SUBSPACE ROT DOFS BLOCK SIZE");
           dftParameters::enableSwitchToGS = prm.get_bool("ENABLE SWITCH TO GS");
-          dftParameters::triMatPGSOpt =
-            prm.get_bool("ENABLE SUBSPACE ROT PGS OPT");
           dftParameters::scalapackParalProcs =
             prm.get_integer("SCALAPACKPROCS");
           dftParameters::scalapackBlockSize =

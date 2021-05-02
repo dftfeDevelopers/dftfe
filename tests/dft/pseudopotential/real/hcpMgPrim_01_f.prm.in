@@ -87,7 +87,6 @@ subsection SCF parameters
      set ORTHOGONALIZATION TYPE=PGS
      set WFC BLOCK SIZE=5
      set CHEBY WFC BLOCK SIZE=5
-     set ENABLE SUBSPACE ROT PGS OPT=true
      set SUBSPACE ROT DOFS BLOCK SIZE=10000
      set RR GEP=false
   end

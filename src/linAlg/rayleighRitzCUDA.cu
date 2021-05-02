@@ -1263,7 +1263,7 @@ namespace dftfe
               dftfe::LAPACKSupport::Property::upper_triangular ?
             true :
             false,
-          dftParameters::triMatPGSOpt ? true : false);
+          true);
 
       if (dftParameters::gpuFineGrainedTimings)
         {
