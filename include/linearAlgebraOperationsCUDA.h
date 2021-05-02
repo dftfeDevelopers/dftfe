@@ -335,7 +335,6 @@ namespace dftfe
                     distributedGPUVec<double> &Y1,
                     distributedGPUVec<float> & Z,
                     distributedGPUVec<double> &projectorKetTimesVector1,
-                    distributedGPUVec<float> & projectorKetTimesVectorFloat,
                     distributedGPUVec<double> &X2,
                     distributedGPUVec<double> &Y2,
                     distributedGPUVec<double> &projectorKetTimesVector2,

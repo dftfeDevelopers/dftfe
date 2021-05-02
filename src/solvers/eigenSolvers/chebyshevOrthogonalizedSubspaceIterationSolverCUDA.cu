@@ -230,7 +230,6 @@ namespace dftfe
     d_YArrayPtr                       = (void *)(new distributedGPUVec<double>);
     d_cudaFlattenedFloatArrayBlockPtr = (void *)(new distributedGPUVec<float>);
     d_projectorKetTimesVectorPtr      = (void *)(new distributedGPUVec<double>);
-    d_projectorKetTimesVectorFloatPtr = (void *)(new distributedGPUVec<float>);
     d_cudaFlattenedArrayBlock2Ptr     = (void *)(new distributedGPUVec<double>);
     d_YArray2Ptr                      = (void *)(new distributedGPUVec<double>);
     d_projectorKetTimesVector2Ptr     = (void *)(new distributedGPUVec<double>);
@@ -246,7 +245,6 @@ namespace dftfe
     delete (distributedGPUVec<double> *)d_YArrayPtr;
     delete (distributedGPUVec<float> *)d_cudaFlattenedFloatArrayBlockPtr;
     delete (distributedGPUVec<double> *)d_projectorKetTimesVectorPtr;
-    delete (distributedGPUVec<float> *)d_projectorKetTimesVectorFloatPtr;
     delete (distributedGPUVec<double> *)d_cudaFlattenedArrayBlock2Ptr;
     delete (distributedGPUVec<double> *)d_YArray2Ptr;
     delete (distributedGPUVec<double> *)d_projectorKetTimesVector2Ptr;
@@ -578,14 +576,6 @@ namespace dftfe
               *((distributedGPUVec<double> *)d_projectorKetTimesVectorPtr));
 
 
-            if (dftParameters::useMixedPrecChebyNonLocal)
-              vectorTools::createDealiiVector(
-                operatorMatrix.getProjectorKetTimesVectorSingle()
-                  .get_partitioner(),
-                vectorsBlockSize,
-                *((distributedGPUVec<float> *)
-                    d_projectorKetTimesVectorFloatPtr));
-
             if (dftParameters::overlapComputeCommunCheby)
               ((distributedGPUVec<double> *)d_projectorKetTimesVector2Ptr)
                 ->reinit(
@@ -811,8 +801,6 @@ namespace dftfe
                           d_cudaFlattenedFloatArrayBlockPtr),
                       *((distributedGPUVec<double> *)
                           d_projectorKetTimesVectorPtr),
-                      *((distributedGPUVec<float> *)
-                          d_projectorKetTimesVectorFloatPtr),
                       *((distributedGPUVec<double> *)
                           d_cudaFlattenedArrayBlock2Ptr),
                       *((distributedGPUVec<double> *)d_YArray2Ptr),
@@ -1360,13 +1348,6 @@ namespace dftfe
           *((distributedGPUVec<double> *)d_projectorKetTimesVectorPtr));
 
 
-        if (dftParameters::useMixedPrecChebyNonLocal)
-          vectorTools::createDealiiVector(
-            operatorMatrix.getProjectorKetTimesVectorSingle().get_partitioner(),
-            chebyBlockSize,
-            *((distributedGPUVec<float> *)d_projectorKetTimesVectorFloatPtr));
-
-
         if (dftParameters::overlapComputeCommunCheby)
           ((distributedGPUVec<double> *)d_cudaFlattenedArrayBlock2Ptr)
             ->reinit(
@@ -1550,8 +1531,6 @@ namespace dftfe
                               d_cudaFlattenedFloatArrayBlockPtr),
                           *((distributedGPUVec<double> *)
                               d_projectorKetTimesVectorPtr),
-                          *((distributedGPUVec<float> *)
-                              d_projectorKetTimesVectorFloatPtr),
                           *((distributedGPUVec<double> *)
                               d_cudaFlattenedArrayBlock2Ptr),
                           *((distributedGPUVec<double> *)d_YArray2Ptr),

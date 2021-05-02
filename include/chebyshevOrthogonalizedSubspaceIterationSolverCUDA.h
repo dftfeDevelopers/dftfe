@@ -157,9 +157,6 @@ namespace dftfe
     // distributedGPUVec<double>
     void *d_projectorKetTimesVectorPtr;
 
-    // distributedGPUVec<float>
-    void *d_projectorKetTimesVectorFloatPtr;
-
     // distributedGPUVec<double>
     void *d_cudaFlattenedArrayBlock2Ptr;
 

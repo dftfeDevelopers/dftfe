@@ -1712,16 +1712,6 @@ namespace dftfe
             ExcMessage(
               "DFT-FE Error: total number RR wavefunctions must be exactly divisible by wfc block size for GPU run."));
 
-        AssertThrow(
-          (dftParameters::mixedPrecXtHXFracStates %
-               dftParameters::wfcBlockSize ==
-             0 ||
-           dftParameters::mixedPrecXtHXFracStates /
-               dftParameters::wfcBlockSize ==
-             0),
-          ExcMessage(
-            "DFT-FE Error: MIXED PREC XTHX FRAC STATES must be exactly divisible by WFC BLOCK SIZE for GPU run."));
-
         // band group parallelization data structures
         const unsigned int numberBandGroups =
           dealii::Utilities::MPI::n_mpi_processes(interBandGroupComm);

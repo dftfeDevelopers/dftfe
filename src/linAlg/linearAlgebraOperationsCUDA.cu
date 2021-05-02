@@ -853,7 +853,6 @@ namespace dftfe
                     distributedGPUVec<double> &YArray1,
                     distributedGPUVec<float> & tempFloatArray,
                     distributedGPUVec<double> &projectorKetTimesVector1,
-                    distributedGPUVec<float> & projectorKetTimesVectorFloat,
                     distributedGPUVec<double> &XArray2,
                     distributedGPUVec<double> &YArray2,
                     distributedGPUVec<double> &projectorKetTimesVector2,
