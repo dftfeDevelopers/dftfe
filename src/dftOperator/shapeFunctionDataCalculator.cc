@@ -75,13 +75,18 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::
 
    if(dftParameters::xcFamilyType == "GGA")
      {
-       //d_gradNiNjPlusgradNjNi.resize(sizeNiNj*3*numberQuadraturePoints,0.0);
-       d_shapeFunctionGradientValueRef.resize(numberQuadraturePoints * numberDofsPerElement * 3, 0.0);
+       d_shapeFunctionGradientValueRefX.resize(numberQuadraturePoints * numberDofsPerElement, 0.0);
+       d_shapeFunctionGradientValueRefY.resize(numberQuadraturePoints * numberDofsPerElement, 0.0);
+       d_shapeFunctionGradientValueRefZ.resize(numberQuadraturePoints * numberDofsPerElement, 0.0);
      }
 
 #ifdef USE_COMPLEX
   if(dftParameters::xcFamilyType != "GGA")
-    d_shapeFunctionGradientValueRef.resize(numberQuadraturePoints * numberDofsPerElement * 3, 0.0);
+    {
+      d_shapeFunctionGradientValueRefX.resize(numberQuadraturePoints * numberDofsPerElement, 0.0);
+      d_shapeFunctionGradientValueRefY.resize(numberQuadraturePoints * numberDofsPerElement, 0.0);
+      d_shapeFunctionGradientValueRefZ.resize(numberQuadraturePoints * numberDofsPerElement, 0.0);
+    }
 #endif
       
  
@@ -177,21 +182,25 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::
               if(dftParameters::xcFamilyType == "GGA")
 		{
                   const std::vector<dealii::DerivativeForm<1, 3, 3>> &jacobians =
-                  fe_values.get_jacobians();
-                  for(unsigned int iNode = 0; iNode < numberDofsPerElement; ++iNode)
-                  {
-                    for(unsigned int q_point = 0; q_point < numberQuadraturePoints; ++q_point)
-                      {
-                        const dealii::Tensor<1, 3, double> &shape_grad_real = fe_values.shape_grad(iNode, q_point);
-                        const dealii::Tensor<1, 3, double> &shape_grad_reference =
-                        apply_transformation(jacobians[q_point].transpose(),
-                                             shape_grad_real);
+		    fe_values.get_jacobians();
+        
 
-                        d_shapeFunctionGradientValueRef[3*numberDofsPerElement*q_point + iNode] = shape_grad_reference[0];
-                        d_shapeFunctionGradientValueRef[3*numberDofsPerElement*q_point + numberDofsPerElement + iNode] = shape_grad_reference[1];
-                        d_shapeFunctionGradientValueRef[3*numberDofsPerElement*q_point + 2*numberDofsPerElement + iNode] = shape_grad_reference[2];
-                      }
-                  }
+		  for(unsigned int q_point = 0; q_point < numberQuadraturePoints; ++q_point)
+		    {
+		      for(unsigned int iNode = 0; iNode < numberDofsPerElement; ++iNode)
+			{
+			  const dealii::Tensor<1, 3, double> &shape_grad_real = fe_values.shape_grad(iNode, q_point);
+			  const dealii::Tensor<1, 3, double> &shape_grad_reference =
+			    apply_transformation(jacobians[q_point].transpose(),
+						 shape_grad_real);
+
+			  d_shapeFunctionGradientValueRefX[numberDofsPerElement*q_point + iNode] = shape_grad_reference[0];
+			  d_shapeFunctionGradientValueRefY[numberDofsPerElement*q_point + iNode] = shape_grad_reference[1];
+			  d_shapeFunctionGradientValueRefZ[numberDofsPerElement*q_point + iNode] = shape_grad_reference[2];
+
+			}
+		    }
+
 		}
 
 #ifdef USE_COMPLEX 
@@ -199,18 +208,18 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::
                 { 
                   const std::vector<dealii::DerivativeForm<1, 3, 3>> &jacobians =
                   fe_values.get_jacobians();
-                  for(unsigned int iNode = 0; iNode < numberDofsPerElement; ++iNode)
+                  for(unsigned int q_point = 0; q_point < numberQuadraturePoints; ++q_point)
                   { 
-                    for(unsigned int q_point = 0; q_point < numberQuadraturePoints; ++q_point)
+                    for(unsigned int iNode = 0; iNode < numberDofsPerElement; ++iNode)
                       { 
                         const dealii::Tensor<1, 3, double> &shape_grad_real = fe_values.shape_grad(iNode, q_point);
                         const dealii::Tensor<1, 3, double> &shape_grad_reference =
                         apply_transformation(jacobians[q_point].transpose(),
                                              shape_grad_real);
                         
-                        d_shapeFunctionGradientValueRef[3*numberDofsPerElement*q_point + iNode] = shape_grad_reference[0];
-                        d_shapeFunctionGradientValueRef[3*numberDofsPerElement*q_point + numberDofsPerElement + iNode] = shape_grad_reference[1];                    
-                        d_shapeFunctionGradientValueRef[3*numberDofsPerElement*q_point + 2*numberDofsPerElement + iNode] = shape_grad_reference[2];                
+                        d_shapeFunctionGradientValueRefX[numberDofsPerElement*q_point + iNode] = shape_grad_reference[0];
+                        d_shapeFunctionGradientValueRefY[numberDofsPerElement*q_point + iNode] = shape_grad_reference[1];                    
+                        d_shapeFunctionGradientValueRefZ[numberDofsPerElement*q_point + iNode] = shape_grad_reference[2];                
                       }
                   }
                 } 
@@ -265,30 +274,7 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::
 		    }
 		}
 	      
-#ifdef USE_COMPLEX
-	      unsigned int fullSizeNiNj = numberDofsPerElement*numberDofsPerElement;
-	      unsigned int numberEntriesEachBlockComplex = fullSizeNiNj/numBlocks;
-	      count = 0;
-	      blockCount = 0;
-	      indexCount = 0;
-              d_blockiNodeIndexComplex.resize(fullSizeNiNj);
-	      d_blockjNodeIndexComplex.resize(fullSizeNiNj);
-	      for(unsigned int iNode = 0; iNode < numberDofsPerElement; ++iNode)
-		{
-		  for(unsigned int jNode = 0; jNode < numberDofsPerElement; ++jNode)
-		    {
-		      d_blockiNodeIndexComplex[numberEntriesEachBlockComplex*blockCount+indexCount] = iNode;
-		      d_blockjNodeIndexComplex[numberEntriesEachBlockComplex*blockCount+indexCount] = jNode;
-		      count += 1;
-		      indexCount += 1;
-		      if(count%numberEntriesEachBlockComplex == 0)
-			{
-			  blockCount += 1;
-                          indexCount = 0;
-			}
-		    }
-		}
-#endif	      
+
             }
 
           iElemCount++;

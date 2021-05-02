@@ -464,7 +464,9 @@ node is stored
     std::vector<double> d_blockiNodeIndexComplex;
     std::vector<double> d_blockjNodeIndexComplex;
     std::vector<double> d_shapeFunctionData;
-    std::vector<double> d_shapeFunctionGradientValueRef;
+    std::vector<double> d_shapeFunctionGradientValueRefX;
+    std::vector<double> d_shapeFunctionGradientValueRefY;
+    std::vector<double> d_shapeFunctionGradientValueRefZ;
 
     /// storage for shapefunctions
     std::vector<double> d_shapeFunctionValueLpspQuad;

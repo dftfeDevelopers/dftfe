@@ -210,9 +210,9 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::computeHamiltonianMatrix(
 	       flag = 0;
 	       for(unsigned int iNode = d_blockiNodeIndex[numberEntriesEachBlock*blockCount]; iNode < numberDofsPerElement; ++iNode)
 		 {
-		   double shapeGradXRefINode = d_shapeFunctionGradientValueRef[3*numberDofsPerElement*q_point + iNode];
-		   double shapeGradYRefINode =  d_shapeFunctionGradientValueRef[3*numberDofsPerElement*q_point + numberDofsPerElement + iNode];
-		   double shapeGradZRefINode = d_shapeFunctionGradientValueRef[3*numberDofsPerElement*q_point + 2*numberDofsPerElement + iNode];
+		   double shapeGradXRefINode = d_shapeFunctionGradientValueRefX[numberDofsPerElement*q_point + iNode];
+		   double shapeGradYRefINode = d_shapeFunctionGradientValueRefY[numberDofsPerElement*q_point + iNode];
+		   double shapeGradZRefINode = d_shapeFunctionGradientValueRefZ[numberDofsPerElement*q_point + iNode];
 		   double shapeI = d_shapeFunctionData[numberDofsPerElement*q_point + iNode];
 		    for(unsigned int jNode = d_blockjNodeIndex[numberEntriesEachBlock*blockCount+indexCount]; jNode < numberDofsPerElement; ++jNode)
 		      {
@@ -301,9 +301,9 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::computeHamiltonianMatrix(
           flag = 0;
 	  for(unsigned int iNode = d_blockiNodeIndex[numberEntriesEachBlock*blockCount]; iNode < numberDofsPerElement; ++iNode)
 	    {
-	      shapeGradRefINode[0] = d_shapeFunctionGradientValueRef[3*numberDofsPerElement*q_point + iNode];
-	      shapeGradRefINode[1] = d_shapeFunctionGradientValueRef[3*numberDofsPerElement*q_point + numberDofsPerElement + iNode];
-	      shapeGradRefINode[2] = d_shapeFunctionGradientValueRef[3*numberDofsPerElement*q_point + 2*numberDofsPerElement + iNode];
+	      shapeGradRefINode[0] = d_shapeFunctionGradientValueRefX[numberDofsPerElement*q_point + iNode];
+	      shapeGradRefINode[1] = d_shapeFunctionGradientValueRefY[numberDofsPerElement*q_point + iNode];
+	      shapeGradRefINode[2] = d_shapeFunctionGradientValueRefZ[numberDofsPerElement*q_point + iNode];
 	      
 	      for(unsigned int jNode = d_blockjNodeIndex[numberEntriesEachBlock*blockCount+indexCount]; jNode < numberDofsPerElement; ++jNode)
 		{
