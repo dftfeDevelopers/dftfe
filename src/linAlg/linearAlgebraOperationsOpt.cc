@@ -691,7 +691,7 @@ namespace dftfe
                   T(0.0));
 
       // SConj=XConj*X^{T}.
-      if (!(dftParameters::useMixedPrecPGS_O && useMixedPrec))
+      if (!(dftParameters::useMixedPrecCGS_O && useMixedPrec))
         {
           computing_timer.enter_section("Compute overlap matrix");
           internal::fillParallelOverlapMatrix(&X[0],
@@ -1217,7 +1217,7 @@ namespace dftfe
                   T(0.0));
 
       // SConj=XConj*X^{T}
-      if (!(dftParameters::useMixedPrecPGS_O && useMixedPrec))
+      if (!(dftParameters::useMixedPrecCGS_O && useMixedPrec))
         {
           computing_timer.enter_section("Fill overlap matrix");
           internal::fillParallelOverlapMatrix(&X[0],
@@ -1553,7 +1553,7 @@ namespace dftfe
         "Xfr^{T}={QfrConjPrime}^{C}*LConj^{-1}*X^{T}, RR step");
 
       // X^{T}=LConj^{-1}*X^{T}
-      if (!(dftParameters::useMixedPrecPGS_SR && useMixedPrec))
+      if (!(dftParameters::useMixedPrecCGS_SR && useMixedPrec))
         {
           computing_timer.enter_section("X^{T}=Lconj^{-1}*X^{T}, RR step");
           internal::subspaceRotation(&X[0],
@@ -1573,7 +1573,7 @@ namespace dftfe
           computing_timer.enter_section(
             "X^{T}=Lconj^{-1}*X^{T} mixed prec, RR step");
           if (std::is_same<T, std::complex<double>>::value)
-            internal::subspaceRotationPGSMixedPrec<T, std::complex<float>>(
+            internal::subspaceRotationCGSMixedPrec<T, std::complex<float>>(
               &X[0],
               X.size(),
               numberWaveFunctions,
@@ -1584,7 +1584,7 @@ namespace dftfe
               false,
               false);
           else
-            internal::subspaceRotationPGSMixedPrec<T, float>(
+            internal::subspaceRotationCGSMixedPrec<T, float>(
               &X[0],
               X.size(),
               numberWaveFunctions,

@@ -2186,7 +2186,7 @@ namespace dftfe
     }
 
     void
-    subspaceRotationPGSMixedPrecScalapack(
+    subspaceRotationCGSMixedPrecScalapack(
       double *                                         X,
       const unsigned int                               M,
       const unsigned int                               N,

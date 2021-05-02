@@ -12,7 +12,6 @@ SET(TARGET_SRC
   ./src/dft/dft.cc
   ./src/dft/vselfBinsManager.cc
   ./src/dft/energyCalculator.cc
-  ./src/dft/densityCalculator.cc
   ./src/dft/densityCalculatorCPU.cc
   ./src/poisson/poissonSolverProblem.cc
   ./src/helmholtz/kerkerSolverProblem.cc

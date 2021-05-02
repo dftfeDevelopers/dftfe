@@ -186,7 +186,7 @@ namespace dftfe
         chebyshevOrder =
           internal::setChebyshevOrder(d_upperBoundUnWantedSpectrum);
 
-        if (dftParameters::orthogType.compare("PGS") == 0 &&
+        if (dftParameters::orthogType.compare("CGS") == 0 &&
             !dftParameters::isPseudopotential)
           chebyshevOrder *= 0.5;
       }
@@ -483,7 +483,7 @@ namespace dftfe
     if (dftParameters::verbosity >= 4)
       pcout << "ChebyShev Filtering Done: " << std::endl;
 
-    if (dftParameters::rrGEP)
+    if (dftParameters::orthogType.compare("CGS") == 0)
       {
         computing_timer.enter_section("Rayleigh-Ritz GEP");
         if (eigenValues.size() != totalNumberWaveFunctions)
@@ -537,45 +537,14 @@ namespace dftfe
           }
         computing_timer.exit_section("eigen vectors residuals opt");
       }
-    else
+    else if (dftParameters::orthogType.compare("GS") == 0)
       {
-        if (dftParameters::orthogType.compare("PGS") == 0)
-          {
-            computing_timer.enter_section("Pseudo-Gram-Schmidt");
-            const unsigned int flag =
-              linearAlgebraOperations::pseudoGramSchmidtOrthogonalization(
-                elpaScala,
-                eigenVectorsFlattened,
-                totalNumberWaveFunctions,
-                interBandGroupComm,
-                operatorMatrix.getMPICommunicator(),
-                useMixedPrec);
-
-            if (flag == 1)
-              {
-                if (dftParameters::verbosity >= 1)
-                  pcout
-                    << "Switching to Gram-Schimdt orthogonalization as Pseudo-Gram-Schimdt orthogonalization was not successful"
-                    << std::endl;
-
-                computing_timer.enter_section("Gram-Schmidt Orthogn Opt");
-                linearAlgebraOperations::gramSchmidtOrthogonalization(
-                  eigenVectorsFlattened,
-                  totalNumberWaveFunctions,
-                  operatorMatrix.getMPICommunicator());
-                computing_timer.exit_section("Gram-Schmidt Orthogn Opt");
-              }
-            computing_timer.exit_section("Pseudo-Gram-Schmidt");
-          }
-        else if (dftParameters::orthogType.compare("GS") == 0)
-          {
-            computing_timer.enter_section("Gram-Schmidt Orthogn Opt");
-            linearAlgebraOperations::gramSchmidtOrthogonalization(
-              eigenVectorsFlattened,
-              totalNumberWaveFunctions,
-              operatorMatrix.getMPICommunicator());
-            computing_timer.exit_section("Gram-Schmidt Orthogn Opt");
-          }
+        computing_timer.enter_section("Gram-Schmidt Orthogn Opt");
+        linearAlgebraOperations::gramSchmidtOrthogonalization(
+          eigenVectorsFlattened,
+          totalNumberWaveFunctions,
+          operatorMatrix.getMPICommunicator());
+        computing_timer.exit_section("Gram-Schmidt Orthogn Opt");
 
         if (dftParameters::verbosity >= 4)
           pcout << "Orthogonalization Done: " << std::endl;

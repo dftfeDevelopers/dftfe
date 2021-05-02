@@ -361,33 +361,31 @@ dftClass<FEOrder, FEOrderElectro>::solveNoSCF()
         }
     }
 
-  DensityCalculator<FEOrder, FEOrderElectro> densityCalc;
-
-  densityCalc.computeRhoFromPSI(d_eigenVectorsFlattenedSTL,
-                                d_eigenVectorsRotFracDensityFlattenedSTL,
-                                d_numEigenValues,
-                                d_numEigenValuesRR,
-                                eigenValues,
-                                fermiEnergy,
-                                fermiEnergyUp,
-                                fermiEnergyDown,
-                                dofHandler,
-                                constraintsNone,
-                                matrix_free_data,
-                                d_eigenDofHandlerIndex,
-                                0,
-                                localProc_dof_indicesReal,
-                                localProc_dof_indicesImag,
-                                d_kPointWeights,
-                                rhoOutValues,
-                                gradRhoOutValues,
-                                rhoOutValuesSpinPolarized,
-                                gradRhoOutValuesSpinPolarized,
-                                dftParameters::xcFamilyType == "GGA",
-                                interpoolcomm,
-                                interBandGroupComm,
-                                false,
-                                false);
+  computeRhoFromPSICPU(
+    d_eigenVectorsFlattenedSTL,
+    d_eigenVectorsRotFracDensityFlattenedSTL,
+    d_numEigenValues,
+    d_numEigenValuesRR,
+    d_eigenVectorsFlattenedSTL[0].size() / d_numEigenValues,
+    eigenValues,
+    fermiEnergy,
+    fermiEnergyUp,
+    fermiEnergyDown,
+    kohnShamDFTEigenOperator,
+    dofHandler,
+    matrix_free_data.n_physical_cells(),
+    matrix_free_data.get_dofs_per_cell(d_densityDofHandlerIndex),
+    matrix_free_data.get_quadrature(d_densityQuadratureId).size(),
+    d_kPointWeights,
+    rhoOutValues,
+    gradRhoOutValues,
+    rhoOutValuesSpinPolarized,
+    gradRhoOutValuesSpinPolarized,
+    dftParameters::xcFamilyType == "GGA",
+    interpoolcomm,
+    interBandGroupComm,
+    false,
+    false);
 }
 
 // chebyshev solver
@@ -703,45 +701,26 @@ dftClass<FEOrder, FEOrderElectro>::kohnShamEigenSpaceCompute(
 
           if (isSpectrumSplit && d_numEigenValuesRR != d_numEigenValues)
             {
-              if (dftParameters::rrGEP == false)
-                linearAlgebraOperations::elpaPartialDiagonalization(
-                  elpaScala,
-                  d_numEigenValues,
-                  d_numEigenValues - d_numEigenValuesRR,
-                  elpaScala.getMPICommunicator(),
-                  eigenValuesTemp,
-                  projHamPar,
-                  processGrid);
-              else
-                linearAlgebraOperations::elpaPartialDiagonalizationGEP(
-                  elpaScala,
-                  d_numEigenValues,
-                  d_numEigenValues - d_numEigenValuesRR,
-                  elpaScala.getMPICommunicator(),
-                  eigenValuesTemp,
-                  projHamPar,
-                  overlapMatPar,
-                  processGrid);
+              linearAlgebraOperations::elpaPartialDiagonalizationGEP(
+                elpaScala,
+                d_numEigenValues,
+                d_numEigenValues - d_numEigenValuesRR,
+                elpaScala.getMPICommunicator(),
+                eigenValuesTemp,
+                projHamPar,
+                overlapMatPar,
+                processGrid);
             }
           else
             {
-              if (dftParameters::rrGEP == false)
-                linearAlgebraOperations::elpaDiagonalization(
-                  elpaScala,
-                  d_numEigenValues,
-                  elpaScala.getMPICommunicator(),
-                  eigenValuesTemp,
-                  projHamPar,
-                  processGrid);
-              else
-                linearAlgebraOperations::elpaDiagonalizationGEP(
-                  elpaScala,
-                  d_numEigenValues,
-                  elpaScala.getMPICommunicator(),
-                  eigenValuesTemp,
-                  projHamPar,
-                  overlapMatPar,
-                  processGrid);
+              linearAlgebraOperations::elpaDiagonalizationGEP(
+                elpaScala,
+                d_numEigenValues,
+                elpaScala.getMPICommunicator(),
+                eigenValuesTemp,
+                projHamPar,
+                overlapMatPar,
+                processGrid);
             }
 
           MPI_Barrier(MPI_COMM_WORLD);

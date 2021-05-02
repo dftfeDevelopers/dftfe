@@ -20,7 +20,6 @@
 // Include header files
 #include <chebyshevOrthogonalizedSubspaceIterationSolver.h>
 #include <dealiiLinearSolver.h>
-#include <densityCalculator.h>
 #include <densityCalculatorCPU.h>
 #include <dft.h>
 #include <dftParameters.h>
@@ -2031,12 +2030,9 @@ namespace dftfe
       matrix_free_data.get_quadrature(d_densityQuadratureId);
 
     // computingTimerStandard.enter_section("Total scf solve");
-    energyCalculator                           energyCalc(mpi_communicator,
+    energyCalculator energyCalc(mpi_communicator,
                                 interpoolcomm,
                                 interBandGroupComm);
-    DensityCalculator<FEOrder, FEOrderElectro> densityCalc;
-
-
 
     // set up linear solver
     dealiiLinearSolver dealiiCGSolver(mpi_communicator, dealiiLinearSolver::CG);

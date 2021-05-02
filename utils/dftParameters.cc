@@ -101,8 +101,8 @@ namespace dftfe
     bool         reuseWfcGeoOpt                                 = false;
     unsigned int reuseDensityGeoOpt                             = 0;
     double       mpiAllReduceMessageBlockSizeMB                 = 2.0;
-    bool         useMixedPrecPGS_SR                             = false;
-    bool         useMixedPrecPGS_O                              = false;
+    bool         useMixedPrecCGS_SR                             = false;
+    bool         useMixedPrecCGS_O                              = false;
     bool         useMixedPrecXTHXSpectrumSplit                  = false;
     bool         useMixedPrecSubspaceRotRR                      = false;
     unsigned int spectrumSplitStartingScfIter                   = 1;
@@ -110,7 +110,6 @@ namespace dftfe
     bool         constraintsParallelCheck                       = true;
     bool         createConstraintsFromSerialDofhandler          = true;
     bool         bandParalOpt                                   = true;
-    bool         rrGEP                                          = false;
     bool         autoAdaptBaseMeshSize                          = true;
     bool         readWfcForPdosPspFile                          = false;
     bool         useGPU                                         = false;
@@ -801,19 +800,13 @@ namespace dftfe
             "SPECTRUM SPLIT CORE EIGENSTATES",
             "0",
             Patterns::Integer(0),
-            "[Advanced] Number of lowest Kohn-Sham eigenstates which should not be included in the Rayleigh-Ritz diagonalization.  In other words, only the eigenvalues and eigenvectors corresponding to the higher eigenstates (Number of Kohn-Sham wavefunctions minus the specified core eigenstates) are computed in the diagonalization of the projected Hamiltonian. This value is usually chosen to be the sum of the number of core eigenstates for each atom type multiplied by number of atoms of that type. This setting is recommended for large systems (greater than 5000 electrons). Default value is 0 i.e., no core eigenstates are excluded from the Rayleigh-Ritz projection step. Currently this optimization is not implemented for the complex executable.");
+            "[Advanced] Number of lowest Kohn-Sham eigenstates which should not be included in the Rayleigh-Ritz diagonalization.  In other words, only the eigenvalues and eigenvectors corresponding to the higher eigenstates (Number of Kohn-Sham wavefunctions minus the specified core eigenstates) are computed in the diagonalization of the projected Hamiltonian. This value is usually chosen to be the sum of the number of core eigenstates for each atom type multiplied by number of atoms of that type. This setting is recommended for large systems (greater than 5000 electrons). Default value is 0 i.e., no core eigenstates are excluded from the Rayleigh-Ritz projection step.");
 
           prm.declare_entry(
             "SPECTRUM SPLIT STARTING SCF ITER",
             "0",
             Patterns::Integer(0),
             "[Advanced] SCF iteration no beyond which spectrum splitting based can be used.");
-
-          prm.declare_entry(
-            "RR GEP",
-            "true",
-            Patterns::Bool(),
-            "[Advanced] Solve generalized eigenvalue problem instead of standard eignevalue problem in Rayleigh-Ritz step. This approach is not extended yet to complex executable. Default value true.");
 
           prm.declare_entry(
             "CHEBYSHEV POLYNOMIAL DEGREE",
@@ -844,8 +837,8 @@ namespace dftfe
           prm.declare_entry(
             "ORTHOGONALIZATION TYPE",
             "Auto",
-            Patterns::Selection("GS|PGS|Auto"),
-            "[Advanced] Parameter specifying the type of orthogonalization to be used: GS(Gram-Schmidt Orthogonalization using SLEPc library) and PGS(Cholesky-Gram-Schmidt Orthogonalization). Auto is the default and recommended option, which chooses GS for all-electron case and PGS for pseudopotential case. To use GS set RR GEP to false. On GPUs PGS is the only route currently implemented.");
+            Patterns::Selection("GS|CGS|Auto"),
+            "[Advanced] Parameter specifying the type of orthogonalization to be used: GS(Gram-Schmidt Orthogonalization using SLEPc library) and CGS(Cholesky-Gram-Schmidt Orthogonalization). Auto is the default and recommended option, which chooses GS for all-electron case and CGS for pseudopotential case. On GPUs CGS is the only route currently implemented.");
 
           prm.declare_entry(
             "ENABLE SWITCH TO GS",
@@ -890,16 +883,16 @@ namespace dftfe
             "[Standard] Use ELPA instead of ScaLAPACK for diagonalization of subspace projected Hamiltonian and Cholesky-Gram-Schmidt orthogonalization.  Default setting is true.");
 
           prm.declare_entry(
-            "USE MIXED PREC PGS SR",
+            "USE MIXED PREC CGS SR",
             "false",
             Patterns::Bool(),
-            "[Advanced] Use mixed precision arithmetic in subspace rotation step of PGS orthogonalization, if ORTHOGONALIZATION TYPE is set to PGS. Default setting is false.");
+            "[Advanced] Use mixed precision arithmetic in subspace rotation step of CGS orthogonalization, if ORTHOGONALIZATION TYPE is set to CGS. Default setting is false.");
 
           prm.declare_entry(
-            "USE MIXED PREC PGS O",
+            "USE MIXED PREC CGS O",
             "false",
             Patterns::Bool(),
-            "[Advanced] Use mixed precision arithmetic in overlap matrix computation step of PGS orthogonalization, if ORTHOGONALIZATION TYPE is set to PGS. Default setting is false.");
+            "[Advanced] Use mixed precision arithmetic in overlap matrix computation step of CGS orthogonalization, if ORTHOGONALIZATION TYPE is set to CGS. Default setting is false.");
 
 
           prm.declare_entry(
@@ -1310,7 +1303,6 @@ namespace dftfe
             prm.get_integer("SPECTRUM SPLIT CORE EIGENSTATES");
           dftParameters::spectrumSplitStartingScfIter =
             prm.get_integer("SPECTRUM SPLIT STARTING SCF ITER");
-          dftParameters::rrGEP = prm.get_bool("RR GEP");
           dftParameters::chebyshevOrder =
             prm.get_integer("CHEBYSHEV POLYNOMIAL DEGREE");
           dftParameters::useELPA = prm.get_bool("USE ELPA");
@@ -1329,10 +1321,10 @@ namespace dftfe
             prm.get_integer("SCALAPACKPROCS");
           dftParameters::scalapackBlockSize =
             prm.get_integer("SCALAPACK BLOCK SIZE");
-          dftParameters::useMixedPrecPGS_SR =
-            prm.get_bool("USE MIXED PREC PGS SR");
-          dftParameters::useMixedPrecPGS_O =
-            prm.get_bool("USE MIXED PREC PGS O");
+          dftParameters::useMixedPrecCGS_SR =
+            prm.get_bool("USE MIXED PREC CGS SR");
+          dftParameters::useMixedPrecCGS_O =
+            prm.get_bool("USE MIXED PREC CGS O");
           dftParameters::useMixedPrecXTHXSpectrumSplit =
             prm.get_bool("USE MIXED PREC XTHX SPECTRUM SPLIT");
           dftParameters::useMixedPrecSubspaceRotRR =
@@ -1710,9 +1702,9 @@ namespace dftfe
           if (dftParameters::verbosity >= 1 &&
               Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0)
             std::cout
-              << "Setting ORTHOGONALIZATION TYPE=PGS for pseudopotential calculations "
+              << "Setting ORTHOGONALIZATION TYPE=CGS for pseudopotential calculations "
               << std::endl;
-          dftParameters::orthogType = "PGS";
+          dftParameters::orthogType = "CGS";
         }
       else if (!dftParameters::isPseudopotential &&
                dftParameters::orthogType == "Auto" && !dftParameters::useGPU)
@@ -1725,26 +1717,23 @@ namespace dftfe
               << std::endl;
 
           dftParameters::orthogType = "GS";
-          dftParameters::rrGEP      = false;
 #else
           if (dftParameters::verbosity >= 1 &&
               Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0)
             std::cout
-              << "Setting ORTHOGONALIZATION TYPE=PGS for all-electron calculations as DFT-FE is not linked to dealii with Petsc and Slepc "
+              << "Setting ORTHOGONALIZATION TYPE=CGS for all-electron calculations as DFT-FE is not linked to dealii with Petsc and Slepc "
               << std::endl;
 
-          dftParameters::orthogType = "PGS";
+          dftParameters::orthogType = "CGS";
 #endif
         }
       else if (dftParameters::orthogType == "GS" && !dftParameters::useGPU)
         {
-#ifdef USE_PETSC;
-          dftParameters::rrGEP = false;
-#else
+#ifndef USE_PETSC;
           AssertThrow(
             dftParameters::orthogType != "GS",
             ExcMessage(
-              "DFT-FE Error: Please use ORTHOGONALIZATION TYPE to be PGS/Auto as GS option is only available if DFT-FE is linked to dealii with Petsc and Slepc."));
+              "DFT-FE Error: Please use ORTHOGONALIZATION TYPE to be CGS/Auto as GS option is only available if DFT-FE is linked to dealii with Petsc and Slepc."));
 #endif
         }
       else if (!dftParameters::isPseudopotential &&
@@ -1753,15 +1742,14 @@ namespace dftfe
           if (dftParameters::verbosity >= 1 &&
               Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0)
             std::cout
-              << "Setting ORTHOGONALIZATION TYPE=PGS and RR GEP=true for all-electron calculations on GPUs "
+              << "Setting ORTHOGONALIZATION TYPE=CGS for all-electron calculations on GPUs "
               << std::endl;
-          dftParameters::orthogType = "PGS";
-          dftParameters::rrGEP      = true;
+          dftParameters::orthogType = "CGS";
         }
       else if (dftParameters::orthogType == "GS" && dftParameters::useGPU)
         {
           AssertThrow(
-            dftParameters::rrGEP,
+            false,
             ExcMessage(
               "DFT-FE Error: GS is not implemented on GPUs. Use Auto option."));
         }
@@ -1769,8 +1757,8 @@ namespace dftfe
 
       if (dftParameters::algoType == "FAST")
         {
-          dftParameters::useMixedPrecPGS_O                   = true;
-          dftParameters::useMixedPrecPGS_SR                  = true;
+          dftParameters::useMixedPrecCGS_O                   = true;
+          dftParameters::useMixedPrecCGS_SR                  = true;
           dftParameters::useMixedPrecXTHXSpectrumSplit       = true;
           dftParameters::useMixedPrecCheby                   = true;
           dftParameters::reuseLanczosUpperBoundFromFirstCall = true;
@@ -1788,16 +1776,7 @@ namespace dftfe
 #endif
 
 
-#ifdef DFTFE_WITH_GPU
-      if (dftParameters::useGPU)
-        {
-          if (dftParameters::nbandGrps > 1)
-            AssertThrow(
-              dftParameters::rrGEP,
-              ExcMessage(
-                "DFT-FE Error: if band parallelization is used, RR GEP must be set to true."));
-        }
-#else
+#ifndef DFTFE_WITH_GPU
       dftParameters::useGPU           = false;
       dftParameters::useELPAGPUKernel = false;
 #endif

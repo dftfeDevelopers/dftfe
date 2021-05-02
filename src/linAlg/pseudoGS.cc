@@ -68,9 +68,9 @@ namespace dftfe
 
       // SConj=X^{T}*XConj with X^{T} stored in the column
       // major format
-      if (!(dftParameters::useMixedPrecPGS_O && useMixedPrec))
+      if (!(dftParameters::useMixedPrecCGS_O && useMixedPrec))
         {
-          computing_timer.enter_section("Fill overlap matrix PGS");
+          computing_timer.enter_section("Fill overlap matrix CGS");
           internal::fillParallelOverlapMatrix(&X[0],
                                               X.size(),
                                               numberVectors,
@@ -78,11 +78,11 @@ namespace dftfe
                                               interBandGroupComm,
                                               mpiComm,
                                               overlapMatPar);
-          computing_timer.exit_section("Fill overlap matrix PGS");
+          computing_timer.exit_section("Fill overlap matrix CGS");
         }
       else
         {
-          computing_timer.enter_section("Fill overlap matrix mixed prec PGS");
+          computing_timer.enter_section("Fill overlap matrix mixed prec CGS");
           if (std::is_same<T, std::complex<double>>::value)
             internal::fillParallelOverlapMatrixMixedPrec<T,
                                                          std::complex<float>>(
@@ -102,17 +102,17 @@ namespace dftfe
               interBandGroupComm,
               mpiComm,
               overlapMatPar);
-          computing_timer.exit_section("Fill overlap matrix mixed prec PGS");
+          computing_timer.exit_section("Fill overlap matrix mixed prec CGS");
         }
 
 
         // SConj=LConj*L^{T}
 #if (defined DFTFE_WITH_ELPA)
       computing_timer.enter_section(
-        "ELPA PGS cholesky, copy, and triangular matrix invert");
+        "ELPA CGS cholesky, copy, and triangular matrix invert");
 #else
       computing_timer.enter_section(
-        "PGS cholesky, copy, and triangular matrix invert");
+        "CGS cholesky, copy, and triangular matrix invert");
 #endif
 #if (defined DFTFE_WITH_ELPA)
       dftfe::LAPACKSupport::Property overlapMatPropertyPostCholesky;
@@ -188,7 +188,7 @@ namespace dftfe
           }
 
       // Check if any of the diagonal entries of LMat are close to zero. If yes
-      // break off PGS and return flag=1
+      // break off CGS and return flag=1
       unsigned int flag = 0;
       if (processGrid->is_process_active())
         for (unsigned int i = 0; i < LMatPar.local_n(); ++i)
@@ -216,17 +216,17 @@ namespace dftfe
 
 #if (defined DFTFE_WITH_ELPA)
       computing_timer.exit_section(
-        "ELPA PGS cholesky, copy, and triangular matrix invert");
+        "ELPA CGS cholesky, copy, and triangular matrix invert");
 #else
       computing_timer.exit_section(
-        "PGS cholesky, copy, and triangular matrix invert");
+        "CGS cholesky, copy, and triangular matrix invert");
 #endif
 
       // X^{T}=LConj^{-1}*X^{T} with X^{T} stored in
       // the column major format
-      if (!(dftParameters::useMixedPrecPGS_SR && useMixedPrec))
+      if (!(dftParameters::useMixedPrecCGS_SR && useMixedPrec))
         {
-          computing_timer.enter_section("Subspace rotation PGS");
+          computing_timer.enter_section("Subspace rotation CGS");
           internal::subspaceRotation(&X[0],
                                      X.size(),
                                      numberVectors,
@@ -236,13 +236,13 @@ namespace dftfe
                                      LMatPar,
                                      false,
                                      true);
-          computing_timer.exit_section("Subspace rotation PGS");
+          computing_timer.exit_section("Subspace rotation CGS");
         }
       else
         {
-          computing_timer.enter_section("Subspace rotation mixed prec PGS");
+          computing_timer.enter_section("Subspace rotation mixed prec CGS");
           if (std::is_same<T, std::complex<double>>::value)
-            internal::subspaceRotationPGSMixedPrec<T, std::complex<float>>(
+            internal::subspaceRotationCGSMixedPrec<T, std::complex<float>>(
               &X[0],
               X.size(),
               numberVectors,
@@ -252,7 +252,7 @@ namespace dftfe
               LMatPar,
               false);
           else
-            internal::subspaceRotationPGSMixedPrec<T, float>(&X[0],
+            internal::subspaceRotationCGSMixedPrec<T, float>(&X[0],
                                                              X.size(),
                                                              numberVectors,
                                                              processGrid,
@@ -260,7 +260,7 @@ namespace dftfe
                                                              mpiComm,
                                                              LMatPar,
                                                              false);
-          computing_timer.exit_section("Subspace rotation mixed prec PGS");
+          computing_timer.exit_section("Subspace rotation mixed prec CGS");
         }
 
 

@@ -125,7 +125,7 @@ namespace dftfe
 
 
 
-    /** @brief PGS orthogonalization
+    /** @brief CGS orthogonalization
      */
     void
     pseudoGramSchmidtOrthogonalization(operatorDFTCUDAClass &operatorMatrix,
@@ -168,7 +168,7 @@ namespace dftfe
       const bool rotationMatTranspose = false);
 
     void
-    subspaceRotationPGSMixedPrecScalapack(
+    subspaceRotationCGSMixedPrecScalapack(
       double *                                         X,
       const unsigned int                               M,
       const unsigned int                               N,

@@ -97,8 +97,8 @@ namespace dftfe
     extern bool         reuseWfcGeoOpt;
     extern unsigned int reuseDensityGeoOpt;
     extern double       mpiAllReduceMessageBlockSizeMB;
-    extern bool         useMixedPrecPGS_SR;
-    extern bool         useMixedPrecPGS_O;
+    extern bool         useMixedPrecCGS_SR;
+    extern bool         useMixedPrecCGS_O;
     extern bool         useMixedPrecXTHXSpectrumSplit;
     extern bool         useMixedPrecSubspaceRotRR;
     extern unsigned int spectrumSplitStartingScfIter;
@@ -106,7 +106,6 @@ namespace dftfe
     extern bool         constraintsParallelCheck;
     extern bool         createConstraintsFromSerialDofhandler;
     extern bool         bandParalOpt;
-    extern bool         rrGEP;
     extern bool         useGPU;
     extern bool         gpuFineGrainedTimings;
     extern bool         allowFullCPUMemSubspaceRot;

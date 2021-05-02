@@ -422,7 +422,7 @@ namespace dftfe
 
           // S=X*X^{T}. Implemented as S=X^{T}*X with X^{T} stored in the column
           // major format
-          if (dftParameters::useMixedPrecPGS_O && useMixedPrecOverall)
+          if (dftParameters::useMixedPrecCGS_O && useMixedPrecOverall)
             {
               if (dftParameters::overlapComputeCommunOrthoRR)
                 linearAlgebraOperationsCUDA::
@@ -482,7 +482,7 @@ namespace dftfe
               gpu_time = MPI_Wtime() - gpu_time;
               if (this_process == 0)
                 {
-                  if (dftParameters::useMixedPrecPGS_O && useMixedPrecOverall)
+                  if (dftParameters::useMixedPrecCGS_O && useMixedPrecOverall)
                     std::cout
                       << "Time for X^{T}X Mixed Prec, RR GEP step: " << gpu_time
                       << std::endl;
@@ -773,7 +773,7 @@ namespace dftfe
 
           // S=X*X^{T}. Implemented as S=X^{T}*X with X^{T} stored in the column
           // major format
-          if (dftParameters::useMixedPrecPGS_O && useMixedPrecOverall)
+          if (dftParameters::useMixedPrecCGS_O && useMixedPrecOverall)
             {
               if (dftParameters::overlapComputeCommunOrthoRR)
                 linearAlgebraOperationsCUDA::
@@ -833,7 +833,7 @@ namespace dftfe
               gpu_time = MPI_Wtime() - gpu_time;
               if (this_process == 0)
                 {
-                  if (dftParameters::useMixedPrecPGS_O && useMixedPrecOverall)
+                  if (dftParameters::useMixedPrecCGS_O && useMixedPrecOverall)
                     std::cout
                       << "Time for X^{T}X Mixed Prec, RR GEP step: " << gpu_time
                       << std::endl;
@@ -1103,8 +1103,8 @@ namespace dftfe
           gpu_time = MPI_Wtime();
         }
 
-      if (useMixedPrecOverall && dftParameters::useMixedPrecPGS_SR)
-        subspaceRotationPGSMixedPrecScalapack(
+      if (useMixedPrecOverall && dftParameters::useMixedPrecCGS_SR)
+        subspaceRotationCGSMixedPrecScalapack(
           X,
           M,
           N,
@@ -1141,7 +1141,7 @@ namespace dftfe
           gpu_time = MPI_Wtime() - gpu_time;
 
           if (this_process == 0)
-            if (useMixedPrecOverall && dftParameters::useMixedPrecPGS_SR)
+            if (useMixedPrecOverall && dftParameters::useMixedPrecCGS_SR)
               std::cout << "Time for X=X*L^{-1}^{T} mixed prec, RR GEP step: "
                         << gpu_time << std::endl;
             else

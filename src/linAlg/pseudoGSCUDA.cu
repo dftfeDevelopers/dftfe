@@ -75,7 +75,7 @@ namespace dftfe
 
       // S=X*X^{T}. Implemented as S=X^{T}*X with X^{T} stored in the column
       // major format
-      if (dftParameters::useMixedPrecPGS_O && useMixedPrecOverall)
+      if (dftParameters::useMixedPrecCGS_O && useMixedPrecOverall)
         {
           if (dftParameters::overlapComputeCommunOrthoRR)
             linearAlgebraOperationsCUDA::
@@ -135,12 +135,12 @@ namespace dftfe
           gpu_time = MPI_Wtime() - gpu_time;
           if (this_process == 0)
             {
-              if (dftParameters::useMixedPrecPGS_O && useMixedPrecOverall)
+              if (dftParameters::useMixedPrecCGS_O && useMixedPrecOverall)
                 std::cout
-                  << "Time for PGS Fill overlap matrix GPU mixed prec (option 0): "
+                  << "Time for CGS Fill overlap matrix GPU mixed prec (option 0): "
                   << gpu_time << std::endl;
               else
-                std::cout << "Time for PGS Fill overlap matrix (option 0): "
+                std::cout << "Time for CGS Fill overlap matrix (option 0): "
                           << gpu_time << std::endl;
             }
         }
@@ -206,7 +206,7 @@ namespace dftfe
           gpu_time = MPI_Wtime() - gpu_time;
           if (this_process == 0)
             std::cout
-              << "Time for PGS Cholesky Triangular Mat inverse ScaLAPACK (option 0): "
+              << "Time for CGS Cholesky Triangular Mat inverse ScaLAPACK (option 0): "
               << gpu_time << std::endl;
         }
 
@@ -219,8 +219,8 @@ namespace dftfe
           gpu_time = MPI_Wtime();
         }
 
-      if (dftParameters::useMixedPrecPGS_SR && useMixedPrecOverall)
-        subspaceRotationPGSMixedPrecScalapack(
+      if (dftParameters::useMixedPrecCGS_SR && useMixedPrecOverall)
+        subspaceRotationCGSMixedPrecScalapack(
           X,
           M,
           N,
@@ -258,12 +258,12 @@ namespace dftfe
           gpu_time = MPI_Wtime() - gpu_time;
           if (this_process == 0)
             {
-              if (dftParameters::useMixedPrecPGS_SR && useMixedPrecOverall)
+              if (dftParameters::useMixedPrecCGS_SR && useMixedPrecOverall)
                 std::cout
-                  << "Time for PGS subspace rotation GPU mixed prec (option 0): "
+                  << "Time for CGS subspace rotation GPU mixed prec (option 0): "
                   << gpu_time << std::endl;
               else
-                std::cout << "Time for PGS subspace rotation GPU (option 0): "
+                std::cout << "Time for CGS subspace rotation GPU (option 0): "
                           << gpu_time << std::endl;
             }
         }

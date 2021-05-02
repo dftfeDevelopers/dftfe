@@ -19,7 +19,6 @@
 
 // source file for electron density related computations
 
-#include <densityCalculator.h>
 #include <dftParameters.h>
 #include <dftUtils.h>
 #include <vectorUtilities.h>

@@ -719,7 +719,7 @@ namespace dftfe
          * (BVec x N). BVec is the vectors block size. XBdof is a matrix of size
          * (N x BDof). BDof is the block size of dofs. A further optimization is
          * done to reduce floating point operations when Q is a lower triangular
-         * matrix in the subspace rotation step of PGS: Then it suffices to
+         * matrix in the subspace rotation step of CGS: Then it suffices to
          * compute only the multiplication of lower triangular part of Q with
          * X^{T}. To exploit this, we do Sum_{dof_blocks} Sum_{vector_blocks}
          * QBvecTrunc*XBdofTrunc^{T}. where QBvecTrunc is a (BVec x D) sub
@@ -1439,7 +1439,7 @@ namespace dftfe
          * (BVec x N). BVec is the vectors block size. XBdof is a matrix of size
          * (N x BDof). BDof is the block size of dofs. A further optimization is
          * done to reduce floating point operations when Q is a lower triangular
-         * matrix in the subspace rotation step of PGS: Then it suffices to
+         * matrix in the subspace rotation step of CGS: Then it suffices to
          * compute only the multiplication of lower triangular part of Q with
          * X^{T}. To exploit this, we do Sum_{dof_blocks} Sum_{vector_blocks}
          * QBvecTrunc*XBdofTrunc^{T}. where QBvecTrunc is a (BVec x D) sub
@@ -1731,7 +1731,7 @@ namespace dftfe
 
       template <typename T, typename TLowPrec>
       void
-      subspaceRotationPGSMixedPrec(
+      subspaceRotationCGSMixedPrec(
         T *                subspaceVectorsArray,
         const unsigned int subspaceVectorsArrayLocalSize,
         const unsigned int N,
@@ -1777,7 +1777,7 @@ namespace dftfe
          * (BVec x N). BVec is the vectors block size. XBdof is a matrix of size
          * (N x BDof). BDof is the block size of dofs. A further optimization is
          * done to reduce floating point operations when Q is a lower triangular
-         * matrix in the subspace rotation step of PGS: Then it suffices to
+         * matrix in the subspace rotation step of CGS: Then it suffices to
          * compute only the multiplication of lower triangular part of Q with
          * X^{T}. To exploit this, we do Sum_{dof_blocks} Sum_{vector_blocks}
          * QBvecTrunc*XBdofTrunc^{T}. where QBvecTrunc is a (BVec x D) sub
@@ -2253,7 +2253,7 @@ namespace dftfe
         const bool doCommAfterBandParal);
 
       template void
-      subspaceRotationPGSMixedPrec<double, float>(
+      subspaceRotationCGSMixedPrec<double, float>(
         double *           subspaceVectorsArray,
         const unsigned int subspaceVectorsArrayLocalSize,
         const unsigned int N,
@@ -2265,7 +2265,7 @@ namespace dftfe
         const bool                                       doCommAfterBandParal);
 
       template void
-      subspaceRotationPGSMixedPrec<std::complex<double>, std::complex<float>>(
+      subspaceRotationCGSMixedPrec<std::complex<double>, std::complex<float>>(
         std::complex<double> *subspaceVectorsArray,
         const unsigned int    subspaceVectorsArrayLocalSize,
         const unsigned int    N,

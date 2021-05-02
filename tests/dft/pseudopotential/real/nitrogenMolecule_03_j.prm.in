@@ -58,7 +58,7 @@ subsection SCF parameters
   set STARTING WFC=ATOMIC
   subsection Eigen-solver parameters
       set NUMBER OF KOHN-SHAM WAVEFUNCTIONS = 10
-      set ORTHOGONALIZATION TYPE=PGS
+      set ORTHOGONALIZATION TYPE=CGS
       set CHEBYSHEV POLYNOMIAL DEGREE = 20
       set CHEBYSHEV FILTER TOLERANCE=1e-4
       set WFC BLOCK SIZE=3
@@ -69,7 +69,6 @@ subsection SCF parameters
       set SPECTRUM SPLIT CORE EIGENSTATES=3
       set SPECTRUM SPLIT STARTING SCF ITER=2
       set USE MIXED PREC XTHX SPECTRUM SPLIT=true
-      set RR GEP=false
   end
 end
 set H REFINED ELECTROSTATICS=false

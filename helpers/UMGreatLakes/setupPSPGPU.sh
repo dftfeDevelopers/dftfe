@@ -23,6 +23,7 @@ libxcDir="/home/vikramg/DFT-FE-softwares/libxc/gcc8.2.0_libxc_4.3.4"
 spglibDir="/home/vikramg/DFT-FE-softwares/spglibGCC"
 xmlIncludeDir="/usr/include/libxml2"
 xmlLibDir="/usr/lib64"
+ELPA_PATH="/home/vikramg/DFT-FE-softwares/elpa/elpa2020.05.001_gcc8.2.0_openmpi3.1.4_install_noopenmp2"
 
 
 #Toggle GPU compilation
@@ -31,9 +32,6 @@ withGPU=ON
 #Compiler options and flags
 cxx_compiler=mpicxx
 cxx_flagsRelease="-O2 -fPIC -fopenmp"
-
-#Option to link to ELPA
-withELPA=OFF
 
 #Option to compile with default or higher order quadrature for storing pseudopotential data
 #ON is recommended for MD simulations with hard pseudopotentials
@@ -62,9 +60,10 @@ function cmake_real() {
 	-DALGLIB_DIR=$alglibDir -DLIBXC_DIR=$libxcDir \
 	-DSPGLIB_DIR=$spglibDir -DXML_LIB_DIR=$xmlLibDir \
 	-DXML_INCLUDE_DIR=$xmlIncludeDir\
-	-DWITH_ELPA=$withELPA -DCMAKE_PREFIX_PATH="$PREFIX_PATH" \
+	-DCMAKE_PREFIX_PATH="$ELPA_PATH" \
 	-DWITH_COMPLEX=OFF -DWITH_GPU=$withGPU \
 	-DWITH_TESTING=$testing -DMINIMAL_COMPILE=$minimal_compile\
+  -DCMAKE_PREFIX_PATH="$ELPA_PATH" \
   -DHIGHERQUAD_PSP=$withHigherQuadPSP $1
 }
 
@@ -77,6 +76,7 @@ function cmake_cplx() {
 	-DSPGLIB_DIR=$spglibDir -DXML_LIB_DIR=$xmlLibDir \
 	-DXML_INCLUDE_DIR=$xmlIncludeDir \
 	-DWITH_COMPLEX=ON -DWITH_TESTING=$testing -DMINIMAL_COMPILE=$minimal_compile\
+  -DCMAKE_PREFIX_PATH="$ELPA_PATH" \
   -DHIGHERQUAD_PSP=$withHigherQuadPSP $1
 }
 

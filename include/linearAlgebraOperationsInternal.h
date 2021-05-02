@@ -283,7 +283,7 @@ namespace dftfe
        */
       template <typename T, typename TLowPrec>
       void
-      subspaceRotationPGSMixedPrec(
+      subspaceRotationCGSMixedPrec(
         T *                subspaceVectorsArray,
         const unsigned int subspaceVectorsArrayLocalSize,
         const unsigned int N,

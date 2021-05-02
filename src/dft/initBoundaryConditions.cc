@@ -86,8 +86,8 @@ dftClass<FEOrder, FEOrderElectro>::initBoundaryConditions(
         0.5 * Utilities::MPI::n_mpi_processes(mpi_communicator);
 #else
       const double totalMem =
-        (dftParameters::useMixedPrecPGS_O == true ||
-         dftParameters::useMixedPrecPGS_SR == true ||
+        (dftParameters::useMixedPrecCGS_O == true ||
+         dftParameters::useMixedPrecCGS_SR == true ||
          dftParameters::useMixedPrecXTHXSpectrumSplit == true) ?
           dofHandler.n_dofs() * (dftParameters::spinPolarized + 1) *
               d_numEigenValues *

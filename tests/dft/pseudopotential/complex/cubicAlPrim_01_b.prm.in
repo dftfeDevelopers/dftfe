@@ -81,9 +81,8 @@ subsection SCF parameters
       set NUMBER OF KOHN-SHAM WAVEFUNCTIONS = 20
       set CHEBYSHEV POLYNOMIAL DEGREE = 10
       set CHEBYSHEV FILTER TOLERANCE=1e-4
-      set ORTHOGONALIZATION TYPE=PGS
+      set ORTHOGONALIZATION TYPE=CGS
       set SCALAPACKPROCS=2
-      set RR GEP=true
   end
 end
 
