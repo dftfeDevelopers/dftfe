@@ -101,7 +101,6 @@ namespace dftfe
     extern bool         useMixedPrecPGS_O;
     extern bool         useMixedPrecXTHXSpectrumSplit;
     extern bool         useMixedPrecSubspaceRotRR;
-    extern bool         useSinglePrecXtHXOffDiag;
     extern unsigned int spectrumSplitStartingScfIter;
     extern bool         useELPA;
     extern bool         constraintsParallelCheck;
@@ -112,8 +111,6 @@ namespace dftfe
     extern bool         gpuFineGrainedTimings;
     extern bool         allowFullCPUMemSubspaceRot;
     extern bool         useMixedPrecCheby;
-    extern bool         useMixedPrecChebyNonLocal;
-    extern unsigned int mixedPrecXtHXFracStates;
     extern bool         overlapComputeCommunCheby;
     extern bool         overlapComputeCommunOrthoRR;
     extern bool         autoGPUBlockSizes;

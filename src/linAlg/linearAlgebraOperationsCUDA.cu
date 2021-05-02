@@ -1159,21 +1159,8 @@ namespace dftfe
               // iteration did not use the overlap algorithm
               if (overlap)
                 {
-                  if (mixedPrecOverall &&
-                      dftParameters::useMixedPrecChebyNonLocal)
-                    {
-                      if (totalSizeNLP > 0)
-                        convDoubleArrToFloatArr<<<
-                          (numberVectors + 255) / 256 * totalSizeNLP,
-                          256>>>(numberVectors * totalSizeNLP,
-                                 projectorKetTimesVector2.begin(),
-                                 projectorKetTimesVectorFloat.begin());
-                      projectorKetTimesVectorFloat.compress_start(
-                        dealii::VectorOperation::add);
-                    }
-                  else
-                    projectorKetTimesVector2.compress_start(
-                      dealii::VectorOperation::add);
+                  projectorKetTimesVector2.compress_start(
+                    dealii::VectorOperation::add);
                 }
 
               combinedCUDAKernel<<<min((totalVectorSize + 255) / 256, 30000),
@@ -1191,53 +1178,10 @@ namespace dftfe
 
               if (overlap)
                 {
-                  if (mixedPrecOverall &&
-                      dftParameters::useMixedPrecChebyNonLocal)
-                    {
-                      projectorKetTimesVectorFloat.compress_finish(
-                        dealii::VectorOperation::add);
+                  projectorKetTimesVector2.compress_finish(
+                    dealii::VectorOperation::add);
 
-                      if (localSizeNLP > 0)
-                        copyFloatArrToDoubleArrLocallyOwned<<<
-                          (numberVectors + 255) / 256 * localSizeNLP,
-                          256>>>(
-                          numberVectors,
-                          localSizeNLP,
-                          projectorKetTimesVectorFloat.begin(),
-                          thrust::raw_pointer_cast(
-                            &operatorMatrix
-                               .getLocallyOwnedProcProjectorKetBoundaryNodesVectorDevice()
-                                 [0]),
-                          projectorKetTimesVector2.begin());
-
-                      projectorKetTimesVector2.zero_out_ghosts();
-                    }
-                  else
-                    projectorKetTimesVector2.compress_finish(
-                      dealii::VectorOperation::add);
-
-                  if (mixedPrecOverall &&
-                      dftParameters::useMixedPrecChebyNonLocal)
-                    {
-                      if (localSizeNLP > 0)
-                        convDoubleArrToFloatArr<<<
-                          (numberVectors + 255) / 256 * localSizeNLP,
-                          256>>>(numberVectors * localSizeNLP,
-                                 projectorKetTimesVector2.begin(),
-                                 projectorKetTimesVectorFloat.begin());
-                      projectorKetTimesVectorFloat.update_ghost_values();
-
-                      if (n_ghosts_nlp > 0)
-                        convFloatArrToDoubleArr<<<
-                          (numberVectors + 255) / 256 * n_ghosts,
-                          256>>>(numberVectors * n_ghosts_nlp,
-                                 projectorKetTimesVectorFloat.begin() +
-                                   localSizeNLP * numberVectors,
-                                 projectorKetTimesVector2.begin() +
-                                   localSizeNLP * numberVectors);
-                    }
-                  else
-                    projectorKetTimesVector2.update_ghost_values();
+                  projectorKetTimesVector2.update_ghost_values();
                 }
 
               // unsigned int id2=nvtxRangeStartA("ghost1");
@@ -1343,20 +1287,8 @@ namespace dftfe
                 }
               // nvtxRangeEnd(id1);
 
-              if (mixedPrecOverall && dftParameters::useMixedPrecChebyNonLocal)
-                {
-                  if (totalSizeNLP > 0)
-                    convDoubleArrToFloatArr<<<
-                      (numberVectors + 255) / 256 * totalSizeNLP,
-                      256>>>(numberVectors * totalSizeNLP,
-                             projectorKetTimesVector1.begin(),
-                             projectorKetTimesVectorFloat.begin());
-                  projectorKetTimesVectorFloat.compress_start(
-                    dealii::VectorOperation::add);
-                }
-              else
-                projectorKetTimesVector1.compress_start(
-                  dealii::VectorOperation::add);
+              projectorKetTimesVector1.compress_start(
+                dealii::VectorOperation::add);
 
               combinedCUDAKernel<<<min((totalVectorSize + 255) / 256, 30000),
                                    256>>>(numberVectors,
@@ -1370,51 +1302,10 @@ namespace dftfe
                                           operatorMatrix.getInvSqrtMassVec(),
                                           operatorMatrix.getSqrtMassVec());
 
-              if (mixedPrecOverall && dftParameters::useMixedPrecChebyNonLocal)
-                {
-                  projectorKetTimesVectorFloat.compress_finish(
-                    dealii::VectorOperation::add);
+              projectorKetTimesVector1.compress_finish(
+                dealii::VectorOperation::add);
 
-                  if (localSizeNLP > 0)
-                    copyFloatArrToDoubleArrLocallyOwned<<<
-                      (numberVectors + 255) / 256 * localSizeNLP,
-                      256>>>(
-                      numberVectors,
-                      localSizeNLP,
-                      projectorKetTimesVectorFloat.begin(),
-                      thrust::raw_pointer_cast(
-                        &operatorMatrix
-                           .getLocallyOwnedProcProjectorKetBoundaryNodesVectorDevice()
-                             [0]),
-                      projectorKetTimesVector1.begin());
-
-                  projectorKetTimesVector1.zero_out_ghosts();
-                }
-              else
-                projectorKetTimesVector1.compress_finish(
-                  dealii::VectorOperation::add);
-
-              if (mixedPrecOverall && dftParameters::useMixedPrecChebyNonLocal)
-                {
-                  if (localSizeNLP > 0)
-                    convDoubleArrToFloatArr<<<
-                      (numberVectors + 255) / 256 * localSizeNLP,
-                      256>>>(numberVectors * localSizeNLP,
-                             projectorKetTimesVector1.begin(),
-                             projectorKetTimesVectorFloat.begin());
-                  projectorKetTimesVectorFloat.update_ghost_values();
-
-                  if (n_ghosts_nlp > 0)
-                    convFloatArrToDoubleArr<<<
-                      (numberVectors + 255) / 256 * n_ghosts,
-                      256>>>(numberVectors * n_ghosts_nlp,
-                             projectorKetTimesVectorFloat.begin() +
-                               localSizeNLP * numberVectors,
-                             projectorKetTimesVector1.begin() +
-                               localSizeNLP * numberVectors);
-                }
-              else
-                projectorKetTimesVector1.update_ghost_values();
+              projectorKetTimesVector1.update_ghost_values();
 
               // unsigned int id3=nvtxRangeStartA("ghost2");
               if (mixedPrecOverall && dftParameters::useMixedPrecCheby)

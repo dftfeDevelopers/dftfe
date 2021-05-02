@@ -105,7 +105,6 @@ namespace dftfe
     bool         useMixedPrecPGS_O                              = false;
     bool         useMixedPrecXTHXSpectrumSplit                  = false;
     bool         useMixedPrecSubspaceRotRR                      = false;
-    bool         useSinglePrecXtHXOffDiag                       = false;
     unsigned int spectrumSplitStartingScfIter                   = 1;
     bool         useELPA                                        = false;
     bool         constraintsParallelCheck                       = true;
@@ -118,8 +117,6 @@ namespace dftfe
     bool         gpuFineGrainedTimings                          = false;
     bool         allowFullCPUMemSubspaceRot                     = true;
     bool         useMixedPrecCheby                              = false;
-    bool         useMixedPrecChebyNonLocal                      = false;
-    unsigned int mixedPrecXtHXFracStates                        = 0;
     bool         overlapComputeCommunCheby                      = false;
     bool         overlapComputeCommunOrthoRR                    = false;
     bool         autoGPUBlockSizes                              = true;
@@ -924,19 +921,6 @@ namespace dftfe
             "[Advanced] Use mixed precision arithmetic in Chebyshev filtering. Currently this option is only available for real executable and USE ELPA=true for which DFT-FE also has to be linked to ELPA library. Default setting is false.");
 
           prm.declare_entry(
-            "USE SINGLE PREC XTHX OFF DIAGONAL",
-            "false",
-            Patterns::Bool(),
-            "[Advanced] Use single precision arithmetic in the computation of XtHX in Rayleigh Ritz projection step for off-diagonal block entries");
-
-          prm.declare_entry(
-            "USE MIXED PREC CHEBY NON LOCAL",
-            "false",
-            Patterns::Bool(),
-            "[Advanced] Use mixed precision arithmetic in non-local HX of Chebyshev filtering. Currently this option is only available for real executable and USE ELPA=true for which DFT-FE also has to be linked to ELPA library. Default setting is false.");
-
-
-          prm.declare_entry(
             "OVERLAP COMPUTE COMMUN CHEBY",
             "true",
             Patterns::Bool(),
@@ -947,12 +931,6 @@ namespace dftfe
             "true",
             Patterns::Bool(),
             "[Advanced] Overlap communication and computation in orthogonalization and Rayleigh-Ritz. This option can only be activated for USE GPU=true. Default setting is true.");
-
-          prm.declare_entry(
-            "MIXED PREC XTHX FRAC STATES",
-            "0",
-            Patterns::Integer(0),
-            "[Advanced] XTHX Mixed Precision. Temporary paramater- remove once spectrum splitting with RR GEP and mixed precision is implemented. Default value is 0.");
 
           prm.declare_entry(
             "ALGO",
@@ -1361,16 +1339,10 @@ namespace dftfe
             prm.get_bool("USE MIXED PREC RR_SR");
           dftParameters::useMixedPrecCheby =
             prm.get_bool("USE MIXED PREC CHEBY");
-          dftParameters::useMixedPrecChebyNonLocal =
-            prm.get_bool("USE MIXED PREC CHEBY NON LOCAL");
-          dftParameters::useSinglePrecXtHXOffDiag =
-            prm.get_bool("USE SINGLE PREC XTHX OFF DIAGONAL");
           dftParameters::overlapComputeCommunCheby =
             prm.get_bool("OVERLAP COMPUTE COMMUN CHEBY");
           dftParameters::overlapComputeCommunOrthoRR =
             prm.get_bool("OVERLAP COMPUTE COMMUN ORTHO RR");
-          dftParameters::mixedPrecXtHXFracStates =
-            prm.get_integer("MIXED PREC XTHX FRAC STATES");
           dftParameters::algoType = prm.get("ALGO");
           dftParameters::chebyshevFilterPolyDegreeFirstScfScalingFactor =
             prm.get_double(
