@@ -217,9 +217,9 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::computeHamiltonianMatrix(
 		    for(unsigned int jNode = d_blockjNodeIndex[numberEntriesEachBlock*blockCount+indexCount]; jNode < numberDofsPerElement; ++jNode)
 		      {
 			double shapeJ = d_shapeFunctionData[numberDofsPerElement*q_point + jNode];
-			gradNiNjPlusgradNjNi_currentBlock[3*numberEntriesEachBlock*q_point + indexCount] = shapeGradXRefINode*shapeJ + shapeI*d_shapeFunctionGradientValueRef[3*numberDofsPerElement*q_point + jNode];
-			gradNiNjPlusgradNjNi_currentBlock[3*numberEntriesEachBlock*q_point + numberEntriesEachBlock + indexCount] = shapeGradYRefINode*shapeJ + shapeI*d_shapeFunctionGradientValueRef[3*numberDofsPerElement*q_point + numberDofsPerElement + jNode];
-			gradNiNjPlusgradNjNi_currentBlock[3*numberEntriesEachBlock*q_point + 2*numberEntriesEachBlock + indexCount] = shapeGradZRefINode*shapeJ + shapeI*d_shapeFunctionGradientValueRef[3*numberDofsPerElement*q_point + 2*numberDofsPerElement + jNode];
+			gradNiNjPlusgradNjNi_currentBlock[3*numberEntriesEachBlock*q_point + indexCount] = shapeGradXRefINode*shapeJ + shapeI*d_shapeFunctionGradientValueRefX[numberDofsPerElement*q_point + jNode];
+			gradNiNjPlusgradNjNi_currentBlock[3*numberEntriesEachBlock*q_point + numberEntriesEachBlock + indexCount] = shapeGradYRefINode*shapeJ + shapeI*d_shapeFunctionGradientValueRefY[numberDofsPerElement*q_point + jNode];
+			gradNiNjPlusgradNjNi_currentBlock[3*numberEntriesEachBlock*q_point + 2*numberEntriesEachBlock + indexCount] = shapeGradZRefINode*shapeJ + shapeI*d_shapeFunctionGradientValueRefZ[numberDofsPerElement*q_point + jNode];
 			indexCount += 1;
 			if(indexCount%numberEntriesEachBlock == 0)
 			  {
