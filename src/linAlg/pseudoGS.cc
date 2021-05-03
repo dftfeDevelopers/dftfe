@@ -208,7 +208,7 @@ namespace dftfe
           }
 
       flag = dealii::Utilities::MPI::max(flag, mpiComm);
-      if (dftParameters::enableSwitchToGS && flag == 1)
+      if (flag == 1)
         return flag;
 
       // compute LConj^{-1}

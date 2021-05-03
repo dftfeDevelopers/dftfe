@@ -82,7 +82,6 @@ subsection SCF parameters
       set CHEBYSHEV POLYNOMIAL DEGREE = 20
       set CHEBYSHEV FILTER TOLERANCE=1e-3
       set ORTHOGONALIZATION TYPE=CGS
-      set ENABLE SWITCH TO GS=false
       set WFC BLOCK SIZE=3
       set CHEBY WFC BLOCK SIZE=3
   end

@@ -90,7 +90,6 @@ namespace dftfe
     unsigned int wfcBlockSize                                   = 400;
     unsigned int chebyWfcBlockSize                              = 400;
     unsigned int subspaceRotDofsBlockSize                       = 2000;
-    bool         enableSwitchToGS                               = true;
     unsigned int nbandGrps                                      = 1;
     bool         computeEnergyEverySCF                          = true;
     unsigned int scalapackParalProcs                            = 0;
@@ -841,12 +840,6 @@ namespace dftfe
             "[Advanced] Parameter specifying the type of orthogonalization to be used: GS(Gram-Schmidt Orthogonalization using SLEPc library) and CGS(Cholesky-Gram-Schmidt Orthogonalization). Auto is the default and recommended option, which chooses GS for all-electron case and CGS for pseudopotential case. On GPUs CGS is the only route currently implemented.");
 
           prm.declare_entry(
-            "ENABLE SWITCH TO GS",
-            "true",
-            Patterns::Bool(),
-            "[Developer] Controls automatic switching to Gram-Schimdt orthogonalization if Cholesky-Gram-Schimdt orthogonalization is unstable. Default option is true.");
-
-          prm.declare_entry(
             "CHEBY WFC BLOCK SIZE",
             "400",
             Patterns::Integer(1),
@@ -1316,7 +1309,6 @@ namespace dftfe
             prm.get_integer("CHEBY WFC BLOCK SIZE");
           dftParameters::subspaceRotDofsBlockSize =
             prm.get_integer("SUBSPACE ROT DOFS BLOCK SIZE");
-          dftParameters::enableSwitchToGS = prm.get_bool("ENABLE SWITCH TO GS");
           dftParameters::scalapackParalProcs =
             prm.get_integer("SCALAPACKPROCS");
           dftParameters::scalapackBlockSize =
