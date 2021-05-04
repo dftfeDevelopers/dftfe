@@ -1437,7 +1437,7 @@ namespace dftfe
             << "=========================================================================================================="
             << std::endl;
           std::cout
-            << "			Welcome to the Open Source program DFT-FE development version			        "
+            << "			Welcome to the Open Source program DFT-FE version	1.0		        "
             << std::endl;
           std::cout
             << "This is a C++ code for materials modeling from first principles using Kohn-Sham density functional theory."
@@ -1480,7 +1480,7 @@ namespace dftfe
             << "=========================================================================================================="
             << std::endl;
           std::cout
-            << " 	     Copyright (c) 2017-2019 The Regents of the University of Michigan and DFT-FE authors         "
+            << " 	     Copyright (c) 2017-2021 The Regents of the University of Michigan and DFT-FE authors         "
             << std::endl;
           std::cout
             << " 			DFT-FE is published under [LGPL v2.1 or newer] 				"
