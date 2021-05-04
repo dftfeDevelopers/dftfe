@@ -1654,6 +1654,7 @@ namespace dftfe
 
      FEValues<3> fe_values(dftPtr->FE, quadrature_formula, update_JxW_values|update_inverse_jacobians|update_jacobians);
      const unsigned int numberQuadraturePoints = quadrature_formula.size();
+     
      d_vEffJxW.resize(totalLocallyOwnedCells * numberQuadraturePoints, 0.0);
      d_invJacderExcWithSigmaTimesGradRhoJxW.resize(totalLocallyOwnedCells*numberQuadraturePoints*3,0.0);
 
@@ -1774,11 +1775,11 @@ namespace dftfe
 		 const double termOff = derExchEnergyWithSigma[3 * q + 1] +
 		   derCorrEnergyWithSigma[3 * q + 1];
 
-		 d_invJacderExcWithSigmaTimesGradRhoJxW[totalLocallyOwnedCells*3*q + iElemCount] = inverseJacobians[q][0][0]*(term * gradRhoX + 0.5 * termOff * gradRhoOtherX) + inverseJacobians[q][0][1]*(term * gradRhoY + 0.5 * termOff * gradRhoOtherY) + inverseJacobians[q][0][2]*(term * gradRhoZ + 0.5 * termOff * gradRhoOtherZ)*jxw;
+		 d_invJacderExcWithSigmaTimesGradRhoJxW[totalLocallyOwnedCells*3*q + iElemCount] = (inverseJacobians[q][0][0]*(term * gradRhoX + 0.5 * termOff * gradRhoOtherX) + inverseJacobians[q][0][1]*(term * gradRhoY + 0.5 * termOff * gradRhoOtherY) + inverseJacobians[q][0][2]*(term * gradRhoZ + 0.5 * termOff * gradRhoOtherZ))*jxw;
 
-		 d_invJacderExcWithSigmaTimesGradRhoJxW[totalLocallyOwnedCells*(3*q + 1) + iElemCount] = inverseJacobians[q][1][0]*(term * gradRhoX + 0.5 * termOff * gradRhoOtherX) + inverseJacobians[q][1][1]*(term * gradRhoY + 0.5 * termOff * gradRhoOtherY) + inverseJacobians[q][1][2]*(term * gradRhoZ + 0.5 * termOff * gradRhoOtherZ)*jxw;
+		 d_invJacderExcWithSigmaTimesGradRhoJxW[totalLocallyOwnedCells*(3*q + 1) + iElemCount] = (inverseJacobians[q][1][0]*(term * gradRhoX + 0.5 * termOff * gradRhoOtherX) + inverseJacobians[q][1][1]*(term * gradRhoY + 0.5 * termOff * gradRhoOtherY) + inverseJacobians[q][1][2]*(term * gradRhoZ + 0.5 * termOff * gradRhoOtherZ))*jxw;
 
-		 d_invJacderExcWithSigmaTimesGradRhoJxW[totalLocallyOwnedCells*(3*q + 2) + iElemCount] = inverseJacobians[q][2][0]*(term * gradRhoX + 0.5 * termOff * gradRhoOtherX) + inverseJacobians[q][2][1]*(term * gradRhoY + 0.5 * termOff * gradRhoOtherY) + inverseJacobians[q][2][2]*(term * gradRhoZ + 0.5 * termOff * gradRhoOtherZ)*jxw;
+		 d_invJacderExcWithSigmaTimesGradRhoJxW[totalLocallyOwnedCells*(3*q + 2) + iElemCount] = (inverseJacobians[q][2][0]*(term * gradRhoX + 0.5 * termOff * gradRhoOtherX) + inverseJacobians[q][2][1]*(term * gradRhoY + 0.5 * termOff * gradRhoOtherY) + inverseJacobians[q][2][2]*(term * gradRhoZ + 0.5 * termOff * gradRhoOtherZ))*jxw;
 	       }
 	     iElemCount++;
           }//subcell loop
