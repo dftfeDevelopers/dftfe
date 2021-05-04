@@ -1493,7 +1493,7 @@ namespace dftfe
             << std::endl;
         }
 
-      const bool printParametersToFile = true;
+      const bool printParametersToFile = false;
       if (printParametersToFile &&
           Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0)
         {
