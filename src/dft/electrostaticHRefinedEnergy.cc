@@ -369,12 +369,14 @@ dftClass<FEOrder, FEOrderElectro>::computeElectrostaticEnergyHRefined(
     locatePeriodicPinnedNodes(dofHandlerHRefined,
                               constraintsHRefined,
                               constraintsForTotalPotential);
-  applyHomogeneousDirichletBC(dofHandlerHRefined, constraintsForTotalPotential);
+  applyHomogeneousDirichletBC(dofHandlerHRefined,
+                              onlyHangingNodeConstraints,
+                              constraintsForTotalPotential);
   constraintsForTotalPotential.close();
 
   constraintsForTotalPotential.merge(
     constraintsHRefined,
-    ConstraintMatrix::MergeConflictBehavior::right_object_wins);
+    AffineConstraints<double>::MergeConflictBehavior::right_object_wins);
   constraintsForTotalPotential.close();
 
   // clear existing constraints matrix vector
@@ -543,7 +545,7 @@ dftClass<FEOrder, FEOrderElectro>::computeElectrostaticEnergyHRefined(
   std::map<unsigned int, std::map<dealii::CellId, std::vector<double>>>
     pseudoVLocAtomsHRefined;
 
-  std::map<types::global_dof_index, Point<3>> supportPointsHRef;
+  std::map<dealii::types::global_dof_index, Point<3>> supportPointsHRef;
   DoFTools::map_dofs_to_support_points(MappingQ1<3, 3>(),
                                        dofHandlerHRefined,
                                        supportPointsHRef);
@@ -588,6 +590,7 @@ dftClass<FEOrder, FEOrderElectro>::computeElectrostaticEnergyHRefined(
                                        d_rhoCore,
                                        d_gradRhoCore,
                                        d_bQuadValuesAllAtoms,
+                                       d_bCellNonTrivialAtomIds,
                                        localVselfsHRefined,
                                        d_pseudoVLoc,
                                        pseudoVLocHRefined,
@@ -627,6 +630,7 @@ dftClass<FEOrder, FEOrderElectro>::computeElectrostaticEnergyHRefined(
         d_rhoCore,
         d_gradRhoCore,
         d_bQuadValuesAllAtoms,
+        d_bCellNonTrivialAtomIds,
         localVselfsHRefined,
         d_pseudoVLoc,
         pseudoVLocHRefined,

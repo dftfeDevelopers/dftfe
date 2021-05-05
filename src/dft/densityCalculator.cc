@@ -19,7 +19,6 @@
 
 // source file for electron density related computations
 
-#include <densityCalculator.h>
 #include <dftParameters.h>
 #include <dftUtils.h>
 #include <vectorUtilities.h>
@@ -110,6 +109,11 @@ namespace dftfe
     const bool                                     isConsiderSpectrumSplitting,
     const bool                                     lobattoNodesFlag)
   {
+    int this_process;
+    MPI_Comm_rank(MPI_COMM_WORLD, &this_process);
+    MPI_Barrier(MPI_COMM_WORLD);
+    double cpu_time = MPI_Wtime();
+
 #ifdef USE_COMPLEX
     dealii::FEEvaluation<
       3,
@@ -458,40 +462,44 @@ namespace dftfe
               }
 
 #ifdef USE_COMPLEX
-            std::vector<dealii::Tensor<1, 2, dealii::VectorizedArray<double>>>
+            dealii::AlignedVector<
+              dealii::Tensor<1, 2, dealii::VectorizedArray<double>>>
               psiQuads(numQuadPoints * currentBlockSize * numKPoints,
                        zeroTensor1);
-            std::vector<dealii::Tensor<1, 2, dealii::VectorizedArray<double>>>
+            dealii::AlignedVector<
+              dealii::Tensor<1, 2, dealii::VectorizedArray<double>>>
               psiQuads2(numQuadPoints * currentBlockSize * numKPoints,
                         zeroTensor1);
-            std::vector<dealii::Tensor<
+            dealii::AlignedVector<dealii::Tensor<
               1,
               2,
               dealii::Tensor<1, 3, dealii::VectorizedArray<double>>>>
               gradPsiQuads(numQuadPoints * currentBlockSize * numKPoints,
                            zeroTensor2);
-            std::vector<dealii::Tensor<
+            dealii::AlignedVector<dealii::Tensor<
               1,
               2,
               dealii::Tensor<1, 3, dealii::VectorizedArray<double>>>>
               gradPsiQuads2(numQuadPoints * currentBlockSize * numKPoints,
                             zeroTensor2);
 
-            std::vector<dealii::Tensor<1, 2, dealii::VectorizedArray<double>>>
+            dealii::AlignedVector<
+              dealii::Tensor<1, 2, dealii::VectorizedArray<double>>>
               psiRotFracQuads(numQuadPoints * currentBlockSizeFrac * numKPoints,
                               zeroTensor1);
-            std::vector<dealii::Tensor<1, 2, dealii::VectorizedArray<double>>>
+            dealii::AlignedVector<
+              dealii::Tensor<1, 2, dealii::VectorizedArray<double>>>
               psiRotFracQuads2(numQuadPoints * currentBlockSizeFrac *
                                  numKPoints,
                                zeroTensor1);
-            std::vector<dealii::Tensor<
+            dealii::AlignedVector<dealii::Tensor<
               1,
               2,
               dealii::Tensor<1, 3, dealii::VectorizedArray<double>>>>
               gradPsiRotFracQuads(numQuadPoints * currentBlockSizeFrac *
                                     numKPoints,
                                   zeroTensor2);
-            std::vector<dealii::Tensor<
+            dealii::AlignedVector<dealii::Tensor<
               1,
               2,
               dealii::Tensor<1, 3, dealii::VectorizedArray<double>>>>
@@ -499,27 +507,31 @@ namespace dftfe
                                      numKPoints,
                                    zeroTensor2);
 #else
-            std::vector<dealii::VectorizedArray<double>> psiQuads(
+            dealii::AlignedVector<dealii::VectorizedArray<double>> psiQuads(
               numQuadPoints * currentBlockSize,
               dealii::make_vectorized_array(0.0));
-            std::vector<dealii::VectorizedArray<double>> psiQuads2(
+            dealii::AlignedVector<dealii::VectorizedArray<double>> psiQuads2(
               numQuadPoints * currentBlockSize,
               dealii::make_vectorized_array(0.0));
-            std::vector<dealii::Tensor<1, 3, dealii::VectorizedArray<double>>>
+            dealii::AlignedVector<
+              dealii::Tensor<1, 3, dealii::VectorizedArray<double>>>
               gradPsiQuads(numQuadPoints * currentBlockSize, zeroTensor3);
-            std::vector<dealii::Tensor<1, 3, dealii::VectorizedArray<double>>>
+            dealii::AlignedVector<
+              dealii::Tensor<1, 3, dealii::VectorizedArray<double>>>
               gradPsiQuads2(numQuadPoints * currentBlockSize, zeroTensor3);
 
-            std::vector<dealii::VectorizedArray<double>> psiRotFracQuads(
-              numQuadPoints * currentBlockSizeFrac,
-              dealii::make_vectorized_array(0.0));
-            std::vector<dealii::VectorizedArray<double>> psiRotFracQuads2(
-              numQuadPoints * currentBlockSizeFrac,
-              dealii::make_vectorized_array(0.0));
-            std::vector<dealii::Tensor<1, 3, dealii::VectorizedArray<double>>>
+            dealii::AlignedVector<dealii::VectorizedArray<double>>
+              psiRotFracQuads(numQuadPoints * currentBlockSizeFrac,
+                              dealii::make_vectorized_array(0.0));
+            dealii::AlignedVector<dealii::VectorizedArray<double>>
+              psiRotFracQuads2(numQuadPoints * currentBlockSizeFrac,
+                               dealii::make_vectorized_array(0.0));
+            dealii::AlignedVector<
+              dealii::Tensor<1, 3, dealii::VectorizedArray<double>>>
               gradPsiRotFracQuads(numQuadPoints * currentBlockSizeFrac,
                                   zeroTensor3);
-            std::vector<dealii::Tensor<1, 3, dealii::VectorizedArray<double>>>
+            dealii::AlignedVector<
+              dealii::Tensor<1, 3, dealii::VectorizedArray<double>>>
               gradPsiRotFracQuads2(numQuadPoints * currentBlockSizeFrac,
                                    zeroTensor3);
 #endif
@@ -1174,6 +1186,12 @@ namespace dftfe
                _gradRhoValuesSpinPolarized,
                isEvaluateGradRho,
                interpoolcomm);
+
+    MPI_Barrier(MPI_COMM_WORLD);
+    cpu_time = MPI_Wtime() - cpu_time;
+
+    if (this_process == 0 && dftParameters::verbosity >= 2)
+      std::cout << "Time for compute rho on CPU: " << cpu_time << std::endl;
   }
 
 #include "densityCalculator.inst.cc"

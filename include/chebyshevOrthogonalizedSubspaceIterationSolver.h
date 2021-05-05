@@ -22,6 +22,7 @@
 #include "dftParameters.h"
 #include "eigenSolver.h"
 #include "operator.h"
+#include "elpaScalaManager.h"
 
 
 namespace dftfe
@@ -29,7 +30,7 @@ namespace dftfe
   /**
    * @brief Concrete class implementing Chebyshev filtered orthogonalized subspace
    * iteration solver.
-   * @author Phani Motamarri
+   * @author Phani Motamarri, Sambit Das
    */
 
   class chebyshevOrthogonalizedSubspaceIterationSolver : public eigenSolverClass
@@ -60,6 +61,7 @@ namespace dftfe
      */
     void
     solve(operatorDFTClass &              operatorMatrix,
+          elpaScalaManager &              elpaScala,
           std::vector<dataTypes::number> &eigenVectorsFlattened,
           std::vector<dataTypes::number> &eigenVectorsRotFracDensityFlattened,
           distributedCPUVec<double> &     tempEigenVec,
@@ -76,6 +78,7 @@ namespace dftfe
      */
     void
     onlyRR(operatorDFTClass &              operatorMatrix,
+           elpaScalaManager &              elpaScala,
            std::vector<dataTypes::number> &eigenVectorsFlattened,
            std::vector<dataTypes::number> &eigenVectorsRotFracDensityFlattened,
            distributedCPUVec<double> &     tempEigenVec,

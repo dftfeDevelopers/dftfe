@@ -20,16 +20,13 @@
 #ifndef operatorDFTClass_h
 #define operatorDFTClass_h
 
-#include <constraintMatrixInfo.h>
-#include <headers.h>
+#include "constraintMatrixInfo.h"
+#include "headers.h"
+#include "process_grid.h"
+#include "scalapackWrapper.h"
+#include "elpaScalaManager.h"
 
 #include <vector>
-#ifdef DFTFE_WITH_ELPA
-extern "C"
-{
-#  include <elpa.hh>
-}
-#endif
 
 namespace dftfe
 {
@@ -48,28 +45,6 @@ namespace dftfe
      * @brief Destructor.
      */
     virtual ~operatorDFTClass() = 0;
-
-    unsigned int
-    getScalapackBlockSize() const;
-
-    void
-    processGridOptionalELPASetup(const unsigned int na, const unsigned int nev);
-
-#ifdef DFTFE_WITH_ELPA
-    void
-    elpaDeallocateHandles(const unsigned int na, const unsigned int nev);
-
-    elpa_t &
-    getElpaHandle();
-
-    elpa_t &
-    getElpaHandlePartialEigenVec();
-
-
-    elpa_autotune_t &
-    getElpaAutoTuneHandle();
-#endif
-
 
     /**
      * @brief initialize operatorClass
@@ -171,7 +146,7 @@ namespace dftfe
        distributedCPUVec<dataTypes::number> &dst,
        std::vector<dataTypes::number> &      cellDstWaveFunctionMatrix) = 0;
     /**
-     * @brief Compute projection of the operator into a subspace spanned by a given orthogonal basis
+     * @brief Compute projection of the operator into a subspace spanned by a given orthogonal basis HProjConj=X^{T}*HConj*XConj
      *
      * @param X Vector of Vectors containing multi-wavefunction fields
      * @param numberComponents number of wavefunctions associated with a given node
@@ -183,7 +158,7 @@ namespace dftfe
          std::vector<dataTypes::number> &      ProjHam) = 0;
 
     /**
-     * @brief Compute projection of the operator into a subspace spanned by a given orthogonal basis
+     * @brief Compute projection of the operator into a subspace spanned by a given orthogonal basis HProjConj=X^{T}*HConj*XConj
      *
      * @param X Vector of Vectors containing multi-wavefunction fields
      * @param numberComponents number of wavefunctions associated with a given node
@@ -192,15 +167,14 @@ namespace dftfe
      * of the operation into the given subspace
      */
     virtual void
-    XtHX(const std::vector<dataTypes::number> &X,
-         const unsigned int                    numberComponents,
-         const std::shared_ptr<const dealii::Utilities::MPI::ProcessGrid>
-           &                                         processGrid,
-         dealii::ScaLAPACKMatrix<dataTypes::number> &projHamPar) = 0;
+    XtHX(const std::vector<dataTypes::number> &           X,
+         const unsigned int                               numberComponents,
+         const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
+         dftfe::ScaLAPACKMatrix<dataTypes::number> &      projHamPar) = 0;
 
 
     /**
-     * @brief Compute projection of the operator into a subspace spanned by a given orthogonal basis
+     * @brief Compute projection of the operator into a subspace spanned by a given orthogonal basis HProjConj=X^{T}*HConj*XConj
      *
      * @param X Vector of Vectors containing multi-wavefunction fields
      * @param totalNumberComponents number of wavefunctions associated with a given node
@@ -213,13 +187,11 @@ namespace dftfe
      * of the operation into the given subspace
      */
     virtual void
-    XtHXMixedPrec(
-      const std::vector<dataTypes::number> &X,
-      const unsigned int                    totalNumberComponents,
-      const unsigned int                    singlePrecComponents,
-      const std::shared_ptr<const dealii::Utilities::MPI::ProcessGrid>
-        &                                         processGrid,
-      dealii::ScaLAPACKMatrix<dataTypes::number> &projHamPar) = 0;
+    XtHXMixedPrec(const std::vector<dataTypes::number> &X,
+                  const unsigned int                    totalNumberComponents,
+                  const unsigned int                    singlePrecComponents,
+                  const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
+                  dftfe::ScaLAPACKMatrix<dataTypes::number> &projHamPar) = 0;
 
 
     void
@@ -255,6 +227,26 @@ namespace dftfe
     getMPICommunicator() const;
 
 
+    /**
+     * @brief Get index map of flattened array to cell based numbering
+     *
+     * @return pointer to constraint matrix eigen
+     */
+    virtual const std::vector<dealii::types::global_dof_index> &
+    getFlattenedArrayCellLocalProcIndexIdMap() const = 0;
+
+
+    virtual const std::vector<double> &
+    getShapeFunctionValuesDensityGaussQuad() const = 0;
+
+    virtual const std::vector<double> &
+    getShapeFunctionGradValuesDensityGaussQuad(
+      const unsigned int idim) const = 0;
+
+    virtual const std::vector<double> &
+    getShapeFunctionValuesDensityGaussLobattoQuad() const = 0;
+
+
   protected:
     /**
      * @brief default Constructor.
@@ -285,62 +277,23 @@ namespace dftfe
     //
     distributedCPUVec<double> d_invSqrtMassVector;
 
+    /// index map
+    std::vector<dealii::types::global_dof_index>
+      d_FullflattenedArrayCellLocalProcIndexIdMap;
+
+    /// density quad rule shape function data for FEOrder mesh with node index
+    /// being the fastest index
+    std::vector<double> d_densityGaussQuadShapeFunctionValues;
+
+    std::vector<double> d_densityGaussQuadShapeFunctionGradientValues;
+    /// FEOrderRhoNodal+1 Gauss Lobotto quadrature shape function data for
+    /// FEOrder mesh with node index being the fastest index
+    std::vector<double> d_densityGlQuadShapeFunctionValues;
+
     //
     // mpi communicator
     //
     MPI_Comm d_mpi_communicator;
-
-#ifdef DFTFE_WITH_ELPA
-    /// ELPA handle
-    elpa_t d_elpaHandle;
-
-    /// ELPA handle for partial eigenvectors of full proj ham
-    elpa_t d_elpaHandlePartialEigenVec;
-
-    /// ELPA autotune handle
-    elpa_autotune_t d_elpaAutoTuneHandle;
-
-    /// processGrid mpi communicator
-    MPI_Comm d_processGridCommunicatorActive;
-
-    MPI_Comm d_processGridCommunicatorActivePartial;
-
-#endif
-
-    /// ScaLAPACK distributed format block size
-    unsigned int d_scalapackBlockSize;
   };
-
-  /*--------------------- Inline functions --------------------------------*/
-
-#ifndef DOXYGEN
-  inline unsigned int
-  operatorDFTClass::getScalapackBlockSize() const
-  {
-    return d_scalapackBlockSize;
-  }
-
-#  ifdef DFTFE_WITH_ELPA
-  inline elpa_t &
-  operatorDFTClass::getElpaHandle()
-  {
-    return d_elpaHandle;
-  }
-
-  inline elpa_t &
-  operatorDFTClass::getElpaHandlePartialEigenVec()
-  {
-    return d_elpaHandlePartialEigenVec;
-  }
-
-
-  inline elpa_autotune_t &
-  operatorDFTClass::getElpaAutoTuneHandle()
-  {
-    return d_elpaAutoTuneHandle;
-  }
-#  endif
-#endif // ifndef DOXYGEN
-
 } // namespace dftfe
 #endif

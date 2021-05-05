@@ -5,14 +5,14 @@
 # Set the name of the project and target:
 SET(TARGET "dftfe")
 SET(TARGETLIB "dftfem")
-SET(TARGET_VERSION "0.7.0") # used in docs/Doxyfile.in
+SET(TARGET_VERSION "1.0-pre") # used in docs/Doxyfile.in
 
 # Declare all source files the target consists of:
 SET(TARGET_SRC
   ./src/dft/dft.cc
   ./src/dft/vselfBinsManager.cc
   ./src/dft/energyCalculator.cc
-  ./src/dft/densityCalculator.cc
+  ./src/dft/densityCalculatorCPU.cc
   ./src/poisson/poissonSolverProblem.cc
   ./src/helmholtz/kerkerSolverProblem.cc
   ./src/dftOperator/kohnShamDFTOperator.cc
@@ -37,6 +37,8 @@ SET(TARGET_SRC
   ./src/linAlg/linearAlgebraOperationsOpt.cc
   ./src/linAlg/linearAlgebraOperationsInternal.cc
   ./src/linAlg/elpaScalaManager.cc
+  ./src/linAlg/scalapackWrapper.cc
+  ./src/linAlg/process_grid.cc
   ./src/solvers/dealiiLinearSolver.cc
   ./src/solvers/dealiiLinearSolverProblem.cc
   ./src/md/molecularDynamics.cc
@@ -210,7 +212,7 @@ IF (WITH_GPU)
   set(CUDA_PROPAGATE_HOST_FLAGS ON)
   #CUDA_SELECT_NVCC_ARCH_FLAGS(ARCH_FLAGS Auto)
   #LIST(APPEND CUDA_NVCC_FLAGS ${ARCH_FLAGS})
-  LIST(APPEND CUDA_NVCC_FLAGS -arch=sm_70;-std=c++14; -expt-relaxed-constexpr)
+  LIST(APPEND CUDA_NVCC_FLAGS "${DEAL_II_CUDA_FLAGS}")
 ENDIF()
 
 ADD_LIBRARY(${TARGETLIB} SHARED ${TARGET_SRC})
@@ -325,13 +327,11 @@ ENDIF (DEFINED SPGLIB_DIR)
 #
 # ELPA. Pass path to -DCMAKE_PREFIX_PATH
 #
-IF (WITH_ELPA)
-   ADD_DEFINITIONS(-DDFTFE_WITH_ELPA)
-   find_package(ELPA 2020 REQUIRED)
-   MESSAGE(STATUS "Will Link With ELPA")
-   target_link_libraries(${TARGETLIB} ELPA::ELPA)
-   target_include_directories(${TARGETLIB} PUBLIC ELPA::ELPA)
-ENDIF()
+ADD_DEFINITIONS(-DDFTFE_WITH_ELPA)
+find_package(ELPA 2020 REQUIRED)
+MESSAGE(STATUS "Will Link With ELPA")
+target_link_libraries(${TARGETLIB} ELPA::ELPA)
+target_include_directories(${TARGETLIB} PUBLIC ELPA::ELPA)
 
 #
 # NCCL. Pass path to -DCMAKE_PREFIX_PATH 

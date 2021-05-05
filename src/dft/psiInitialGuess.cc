@@ -335,8 +335,7 @@ template <unsigned int FEOrder, unsigned int FEOrderElectro>
 void
 dftClass<FEOrder, FEOrderElectro>::readPSIRadialValues()
 {
-  IndexSet locallyOwnedSet;
-  DoFTools::extract_locally_owned_dofs(dofHandler, locallyOwnedSet);
+  const IndexSet &locallyOwnedSet = dofHandler.locally_owned_dofs();
   std::vector<IndexSet::size_type> locallyOwnedDOFs;
   locallyOwnedSet.fill_index_vector(locallyOwnedDOFs);
   unsigned int numberDofs = locallyOwnedDOFs.size();

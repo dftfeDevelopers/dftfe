@@ -81,7 +81,6 @@ subsection SCF parameters
       set WFC BLOCK SIZE=7
       set CHEBY WFC BLOCK SIZE=5
       set ORTHOGONALIZATION TYPE=GS
-      set RR GEP=false
   end
 end
 

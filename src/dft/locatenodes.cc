@@ -163,7 +163,7 @@ dftClass<FEOrder, FEOrderElectro>::locatePeriodicPinnedNodes(
   double                          maxDistance = -1.0;
   dealii::types::global_dof_index maxNode, minNode;
 
-  std::map<types::global_dof_index, Point<3>>::iterator iterMap;
+  std::map<dealii::types::global_dof_index, Point<3>>::iterator iterMap;
   for (iterMap = supportPoints.begin(); iterMap != supportPoints.end();
        ++iterMap)
     if (locallyOwnedDofs.is_element(iterMap->first) &&
@@ -277,7 +277,7 @@ dftClass<FEOrder, FEOrderElectro>::locatePeriodicPinnedNodes(
   for (unsigned int i = 0; i < numberNodes; i++)
     nodesTolocate.insert(i);
 
-  std::vector<types::global_dof_index> cell_dof_indices(dofs_per_cell);
+  std::vector<dealii::types::global_dof_index> cell_dof_indices(dofs_per_cell);
   for (; cell != endc; ++cell)
     if (cell->is_locally_owned())
       {

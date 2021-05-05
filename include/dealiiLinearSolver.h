@@ -67,6 +67,9 @@ namespace dftfe
     /// enum denoting the choice of the dealii solver
     const solverType d_type;
 
+    /// define some temporary vectors
+    distributedCPUVec<double> gvec, dvec, hvec;
+
     const MPI_Comm             mpi_communicator;
     const unsigned int         n_mpi_processes;
     const unsigned int         this_mpi_process;

@@ -90,7 +90,6 @@ namespace dftfe
     unsigned int wfcBlockSize                                   = 400;
     unsigned int chebyWfcBlockSize                              = 400;
     unsigned int subspaceRotDofsBlockSize                       = 2000;
-    bool         enableSwitchToGS                               = true;
     unsigned int nbandGrps                                      = 1;
     bool         computeEnergyEverySCF                          = true;
     unsigned int scalapackParalProcs                            = 0;
@@ -98,31 +97,24 @@ namespace dftfe
     unsigned int natoms                                         = 0;
     unsigned int natomTypes                                     = 0;
     unsigned int numCoreWfcRR                                   = 0;
-    bool         triMatPGSOpt                                   = true;
     bool         reuseWfcGeoOpt                                 = false;
     unsigned int reuseDensityGeoOpt                             = 0;
     double       mpiAllReduceMessageBlockSizeMB                 = 2.0;
-    bool         useMixedPrecPGS_SR                             = false;
-    bool         useMixedPrecPGS_O                              = false;
+    bool         useMixedPrecCGS_SR                             = false;
+    bool         useMixedPrecCGS_O                              = false;
     bool         useMixedPrecXTHXSpectrumSplit                  = false;
-    bool         useMixedPrecSubspaceRotSpectrumSplit           = false;
     bool         useMixedPrecSubspaceRotRR                      = false;
-    bool         useSinglePrecXtHXOffDiag                       = false;
-    unsigned int numAdaptiveFilterStates                        = 0;
     unsigned int spectrumSplitStartingScfIter                   = 1;
     bool         useELPA                                        = false;
     bool         constraintsParallelCheck                       = true;
     bool         createConstraintsFromSerialDofhandler          = true;
     bool         bandParalOpt                                   = true;
-    bool         rrGEP                                          = false;
     bool         autoAdaptBaseMeshSize                          = true;
     bool         readWfcForPdosPspFile                          = false;
     bool         useGPU                                         = false;
     bool         gpuFineGrainedTimings                          = false;
     bool         allowFullCPUMemSubspaceRot                     = true;
     bool         useMixedPrecCheby                              = false;
-    bool         useMixedPrecChebyNonLocal                      = false;
-    unsigned int mixedPrecXtHXFracStates                        = 0;
     bool         overlapComputeCommunCheby                      = false;
     bool         overlapComputeCommunOrthoRR                    = false;
     bool         autoGPUBlockSizes                              = true;
@@ -206,13 +198,13 @@ namespace dftfe
           "SUBSPACE ROT FULL CPU MEM",
           "true",
           Patterns::Bool(),
-          "[Developer] Option to use full NxN memory on CPU in subspace rotation and when mixed precision optimization is not being used. This reduces the number of MPI_Allreduce communication calls. Default: true.");
+          "[Developer] Option to use full NxN memory on CPU in subspace rotation and when mixed precision optimization is not being used. This reduces the number of MPI\_Allreduce communication calls. Default: true.");
 
         prm.declare_entry(
           "USE GPUDIRECT MPI ALL REDUCE",
           "false",
           Patterns::Bool(),
-          "[Adavanced] Use GPUDIRECT MPI_Allreduce. This route will only work if DFT-FE is compiled with NVIDIA NCCL library. Also note that one MPI rank per GPU can be used when using this option. Default: false.");
+          "[Adavanced] Use GPUDIRECT MPI\_Allreduce. This route will only work if DFT-FE is compiled with NVIDIA NCCL library. Also note that one MPI rank per GPU can be used when using this option. Default: false.");
 
         prm.declare_entry(
           "USE ELPA GPU KERNEL",
@@ -234,13 +226,13 @@ namespace dftfe
           "WRITE WFC",
           "false",
           Patterns::Bool(),
-          "[Standard] Writes DFT ground state wavefunction solution fields (FEM mesh nodal values) to wfcOutput.vtu file for visualization purposes. The wavefunction solution fields in wfcOutput.vtu are named wfc_s_k_i in case of spin-polarized calculations and wfc_k_i otherwise, where s denotes the spin index (0 or 1), k denotes the k point index starting from 0, and i denotes the Kohn-Sham wavefunction index starting from 0. In the case of geometry optimization, the wavefunctions corresponding to the last ground-state solve are written.  Default: false.");
+          "[Standard] Writes DFT ground state wavefunction solution fields (FEM mesh nodal values) to wfcOutput.vtu file for visualization purposes. The wavefunction solution fields in wfcOutput.vtu are named wfc\_s\_k\_i in case of spin-polarized calculations and wfc\_k\_i otherwise, where s denotes the spin index (0 or 1), k denotes the k point index starting from 0, and i denotes the Kohn-Sham wavefunction index starting from 0. In the case of geometry optimization, the wavefunctions corresponding to the last ground-state solve are written.  Default: false.");
 
         prm.declare_entry(
           "WRITE DENSITY",
           "false",
           Patterns::Bool(),
-          "[Standard] Writes DFT ground state electron-density solution fields (FEM mesh nodal values) to densityOutput.vtu file for visualization purposes. The electron-density solution field in densityOutput.vtu is named density. In case of spin-polarized calculation, two additional solution fields- density_0 and density_1 are also written where 0 and 1 denote the spin indices. In the case of geometry optimization, the electron-density corresponding to the last ground-state solve is written. Default: false.");
+          "[Standard] Writes DFT ground state electron-density solution fields (FEM mesh nodal values) to densityOutput.vtu file for visualization purposes. The electron-density solution field in densityOutput.vtu is named density. In case of spin-polarized calculation, two additional solution fields- density\_0 and density\_1 are also written where 0 and 1 denote the spin indices. In the case of geometry optimization, the electron-density corresponding to the last ground-state solve is written. Default: false.");
 
         prm.declare_entry(
           "WRITE DENSITY OF STATES",
@@ -258,7 +250,7 @@ namespace dftfe
           "WRITE PROJECTED DENSITY OF STATES",
           "false",
           Patterns::Bool(),
-          "[Standard] Computes projected density of states on each atom using Lorentzians. Uses specified Temperature for SCF as the broadening parameter. Outputs a file name 'pdosData_x' with x denoting atomID. This file contains columns with first column indicating the energy in eV and all other columns indicating projected density of states corresponding to single atom wavefunctions.");
+          "[Standard] Computes projected density of states on each atom using Lorentzians. Uses specified Temperature for SCF as the broadening parameter. Outputs a file name 'pdosData\_x' with x denoting atomID. This file contains columns with first column indicating the energy in eV and all other columns indicating projected density of states corresponding to single atom wavefunctions.");
 
         prm.declare_entry(
           "READ ATOMIC WFC PDOS FROM PSP FILE",
@@ -292,7 +284,7 @@ namespace dftfe
           "MPI ALLREDUCE BLOCK SIZE",
           "100.0",
           Patterns::Double(0),
-          "[Advanced] Block message size in MB used to break a single MPI_Allreduce call on wavefunction vectors data into multiple MPI_Allreduce calls. This is useful on certain architectures which take advantage of High Bandwidth Memory to improve efficiency of MPI operations. This variable is relevant only if NPBAND>1. Default value is 100.0 MB.");
+          "[Advanced] Block message size in MB used to break a single MPI\_Allreduce call on wavefunction vectors data into multiple MPI\_Allreduce calls. This is useful on certain architectures which take advantage of High Bandwidth Memory to improve efficiency of MPI operations. This variable is relevant only if NPBAND>1. Default value is 100.0 MB.");
 
         prm.declare_entry(
           "BAND PARAL OPT",
@@ -433,15 +425,15 @@ namespace dftfe
 
           prm.declare_entry(
             "REUSE WFC",
-            "false",
+            "true",
             Patterns::Bool(),
-            "[Standard] Reuse previous ground-state wavefunctions during geometry optimization. Default setting is false.");
+            "[Standard] Reuse previous ground-state wavefunctions during geometry optimization. Default setting is true.");
 
           prm.declare_entry(
             "REUSE DENSITY",
-            "0",
+            "2",
             Patterns::Integer(0, 2),
-            "[Standard] Parameter controlling the reuse of ground-state density during geometry optimization. The options are 0 (reinitialize density based on superposition of atomic densities), 1 (reuse ground-state density of previous relaxation step), and 2 (subtract superposition of atomic densities from the previous step's ground-state density and add superposition of atomic densities from the new atomic positions. Option 2 is not enabled for spin-polarized case. Default setting is 0.");
+            "[Standard] Parameter controlling the reuse of ground-state density during geometry optimization. The options are 0 (reinitialize density based on superposition of atomic densities), 1 (reuse ground-state density of previous relaxation step), and 2 (subtract superposition of atomic densities from the previous step's ground-state density and add superposition of atomic densities from the new atomic positions. Option 2 is not enabled for spin-polarized case. Default setting is 2 for spin-unpolarized and 1 for spin-polarized cases.");
         }
         prm.leave_subsection();
       }
@@ -495,7 +487,7 @@ namespace dftfe
           "SMEARED NUCLEAR CHARGES",
           "true",
           Patterns::Bool(),
-          "[Developer] Nuclear charges are smeared for solving electrostatic fields.");
+          "[Developer] Nuclear charges are smeared for solving electrostatic fields. Default is true for pseudopotential calculations and false for all-electron calculations.");
 
         prm.declare_entry(
           "FLOATING NUCLEAR CHARGES",
@@ -545,19 +537,19 @@ namespace dftfe
             "MESH SIZE AROUND ATOM",
             "1.0",
             Patterns::Double(0.0001, 10),
-            "[Standard] Mesh size in a ball of radius ATOM BALL RADIUS around every atom. For pseudopotential calculations, the value ranges between 0.5 to 2.5 depending on the cutoff energy for the pseudopotential. For all-electron calculations, a value between 0.1 to 0.3 would be a good starting choice. In most cases, MESH SIZE AROUND ATOM is the only parameter to be tuned to achieve the desired accuracy in energy and forces with respect to the mesh refinement. Units: a.u.");
+            "[Standard] Mesh size in a ball of radius ATOM BALL RADIUS around every atom. For pseudopotential calculations, the value ranges between 0.8 to 2.5 depending on the cutoff energy for the pseudopotential. For all-electron calculations, a value of around 0.5 would be a good starting choice. In most cases, MESH SIZE AROUND ATOM is the only parameter to be tuned to achieve the desired accuracy in energy and forces with respect to the mesh refinement. Units: a.u.");
 
           prm.declare_entry(
             "MESH SIZE AT ATOM",
             "0.0",
             Patterns::Double(0.0, 10),
-            "[Advanced] Mesh size of the finite elements in the immediate vicinity of the atom. For the default value of 0.0, a heuristically determined MESH SIZE AT ATOM is used, which is good enough for most cases. Standard users do not need to tune this parameter. Units: a.u.");
+            "[Advanced] Mesh size of the finite elements in the immediate vicinity of the atom. For the default value of 0.0, a heuristically determined MESH SIZE AT ATOM is used for all-electron calculations. For pseudopotential calculations, the default value of 0.0, sets the MESH SIZE AT ATOM to be the same value as MESH SIZE AROUND ATOM. Standard users do not need to tune this parameter. Units: a.u.");
 
           prm.declare_entry(
             "MESH ADAPTION",
             "false",
             Patterns::Bool(),
-            "[Standard] Generates adaptive mesh based on a-posteriori mesh adaption strategy using single atom wavefunctions before computing the ground-state. Default: false.");
+            "[Developer] Generates adaptive mesh based on a-posteriori mesh adaption strategy using single atom wavefunctions before computing the ground-state. Default: false.");
 
           prm.declare_entry(
             "AUTO ADAPT BASE MESH SIZE",
@@ -593,19 +585,19 @@ namespace dftfe
             "GAUSSIAN CONSTANT FORCE GENERATOR",
             "0.75",
             Patterns::Double(0.0),
-            "[Developer] Force computation generator gaussian constant. Also used for mesh movement. Gamma(r)= exp(-(r/gaussianConstant)^(gaussianOrder)).");
+            "[Developer] Force computation generator gaussian constant. Also used for mesh movement. Gamma(r)= exp(-(r/gaussianConstant);(gaussianOrder)).");
 
           prm.declare_entry(
             "GAUSSIAN ORDER FORCE GENERATOR",
             "4.0",
             Patterns::Double(0.0),
-            "[Developer] Force computation generator gaussian order. Also used for mesh movement. Gamma(r)= exp(-(r/gaussianConstant)^(gaussianOrder)).");
+            "[Developer] Force computation generator gaussian order. Also used for mesh movement. Gamma(r)= exp(-(r/gaussianConstant);(gaussianOrder)).");
 
           prm.declare_entry(
             "GAUSSIAN ORDER MOVE MESH TO ATOMS",
             "4.0",
             Patterns::Double(0.0),
-            "[Developer] Move mesh to atoms gaussian order. Gamma(r)= exp(-(r/gaussianConstant)^(gaussianOrder)).");
+            "[Developer] Move mesh to atoms gaussian order. Gamma(r)= exp(-(r/gaussianConstant);(gaussianOrder)).");
 
           prm.declare_entry(
             "USE FLAT TOP GENERATOR",
@@ -703,7 +695,7 @@ namespace dftfe
           "PSEUDOPOTENTIAL FILE NAMES LIST",
           "",
           Patterns::Anything(),
-          "[Standard] Pseudopotential file. This file contains the list of pseudopotential file names in UPF format corresponding to the atoms involved in the calculations. UPF version 2.0 or greater and norm-conserving pseudopotentials(ONCV and Troullier Martins) in UPF format are only accepted. File format (example for two atoms Mg(z=12), Al(z=13)): 12 filename1.upf(row1), 13 filename2.upf (row2). Important Note: ONCV pseudopotentials data base in UPF format can be downloaded from http://www.quantum-simulation.org/potentials/sg15_oncv.  Troullier-Martins pseudopotentials in UPF format can be downloaded from http://www.quantum-espresso.org/pseudopotentials/fhi-pp-from-abinit-web-site.");
+          "[Standard] Pseudopotential file. This file contains the list of pseudopotential file names in UPF format corresponding to the atoms involved in the calculations. UPF version 2.0 or greater and norm-conserving pseudopotentials(ONCV and Troullier Martins) in UPF format are only accepted. File format (example for two atoms Mg(z=12), Al(z=13)): 12 filename1.upf(row1), 13 filename2.upf (row2). Important Note: ONCV pseudopotentials data base in UPF format can be downloaded from http://www.quantum-simulation.org/potentials/sg15\_oncv.  Troullier-Martins pseudopotentials in UPF format can be downloaded from http://www.quantum-espresso.org/pseudopotentials/fhi-pp-from-abinit-web-site.");
 
         prm.declare_entry(
           "EXCHANGE CORRELATION TYPE",
@@ -748,9 +740,9 @@ namespace dftfe
 
         prm.declare_entry(
           "TOLERANCE",
-          "5e-05",
+          "1e-05",
           Patterns::Double(1e-12, 1.0),
-          "[Standard] SCF iterations stopping tolerance in terms of $L_2$ norm of the electron-density difference between two successive iterations. CAUTION: A tolerance close to 1e-7 or lower can deteriorate the SCF convergence due to the round-off error accumulation.");
+          "[Standard] SCF iterations stopping tolerance in terms of $L_2$ norm of the electron-density difference between two successive iterations. The default tolerance of is set to a tight value of 1e-5 for accurate ionic forces and cell stresses keeping structural optimization and molecular dynamics in mind. A tolerance of 1e-4 would be accurate enough for calculations without structural optimization and dynamics. CAUTION: A tolerance close to 1e-7 or lower can deteriorate the SCF convergence due to the round-off error accumulation.");
 
         prm.declare_entry(
           "MIXING HISTORY",
@@ -768,7 +760,7 @@ namespace dftfe
           "KERKER MIXING PARAMETER",
           "0.05",
           Patterns::Double(0.0, 1000.0),
-          "[Standard] Mixing parameter to be used in Kerker mixing scheme which usually represents Thomas Fermi wavevector (k_{TF}**2).");
+          "[Standard] Mixing parameter to be used in Kerker mixing scheme which usually represents Thomas Fermi wavevector (k\_{TF}**2).");
 
         prm.declare_entry(
           "MIXING METHOD",
@@ -807,19 +799,13 @@ namespace dftfe
             "SPECTRUM SPLIT CORE EIGENSTATES",
             "0",
             Patterns::Integer(0),
-            "[Advanced] Number of lowest Kohn-Sham eigenstates which should not be included in the Rayleigh-Ritz diagonalization.  In other words, only the eigenvalues and eigenvectors corresponding to the higher eigenstates (Number of Kohn-Sham wavefunctions minus the specified core eigenstates) are computed in the diagonalization of the projected Hamiltonian. This value is usually chosen to be the sum of the number of core eigenstates for each atom type multiplied by number of atoms of that type. This setting is recommended for large systems (greater than 5000 electrons). Default value is 0 i.e., no core eigenstates are excluded from the Rayleigh-Ritz projection step. Currently this optimization is not implemented for the complex executable.");
+            "[Advanced] Number of lowest Kohn-Sham eigenstates which should not be included in the Rayleigh-Ritz diagonalization.  In other words, only the eigenvalues and eigenvectors corresponding to the higher eigenstates (Number of Kohn-Sham wavefunctions minus the specified core eigenstates) are computed in the diagonalization of the projected Hamiltonian. This value is usually chosen to be the sum of the number of core eigenstates for each atom type multiplied by number of atoms of that type. This setting is recommended for large systems (greater than 5000 electrons). Default value is 0 i.e., no core eigenstates are excluded from the Rayleigh-Ritz projection step.");
 
           prm.declare_entry(
             "SPECTRUM SPLIT STARTING SCF ITER",
             "0",
             Patterns::Integer(0),
             "[Advanced] SCF iteration no beyond which spectrum splitting based can be used.");
-
-          prm.declare_entry(
-            "RR GEP",
-            "true",
-            Patterns::Bool(),
-            "[Advanced] Solve generalized eigenvalue problem instead of standard eignevalue problem in Rayleigh-Ritz step. This approach is not extended yet to complex executable. Default value for RR GEP is true for real executable and false for complex executable.");
 
           prm.declare_entry(
             "CHEBYSHEV POLYNOMIAL DEGREE",
@@ -831,7 +817,7 @@ namespace dftfe
             "CHEBYSHEV POLYNOMIAL DEGREE SCALING FACTOR FIRST SCF",
             "1.34",
             Patterns::Double(0, 2000),
-            "[Advanced] Chebyshev polynomial degree first scf scaling factor.");
+            "[Advanced] Chebyshev polynomial degree first scf scaling factor. Only activated for pseudopotential calculations.");
 
 
           prm.declare_entry(
@@ -850,21 +836,8 @@ namespace dftfe
           prm.declare_entry(
             "ORTHOGONALIZATION TYPE",
             "Auto",
-            Patterns::Selection("GS|LW|PGS|Auto"),
-            "[Advanced] Parameter specifying the type of orthogonalization to be used: GS(Gram-Schmidt Orthogonalization using SLEPc library), LW(Lowden Orthogonalization), PGS(Cholesky-Gram-Schmidt Orthogonalization) Auto is the default and recommended option, which chooses GS for all-electron case and PGS for pseudopotential case. To use GS and LW options set RR GEP to false. On GPUs PGS is the only route currently implemented.");
-
-          prm.declare_entry(
-            "ENABLE SWITCH TO GS",
-            "true",
-            Patterns::Bool(),
-            "[Developer] Controls automatic switching to Gram-Schimdt orthogonalization if Lowden Orthogonalization or Cholesky-Gram-Schimdt orthogonalization are unstable. Default option is true.");
-
-
-          prm.declare_entry(
-            "ENABLE SUBSPACE ROT PGS OPT",
-            "true",
-            Patterns::Bool(),
-            "[Developer] Turns on subspace rotation optimization for Cholesky-Gram-Schimdt orthogonalization. Default option is true.");
+            Patterns::Selection("GS|CGS|Auto"),
+            "[Advanced] Parameter specifying the type of orthogonalization to be used: GS(Gram-Schmidt Orthogonalization using SLEPc library) and CGS(Cholesky-Gram-Schmidt Orthogonalization). Auto is the default and recommended option, which chooses GS for all-electron case and CGS for pseudopotential case. On GPUs CGS is the only route currently implemented.");
 
           prm.declare_entry(
             "CHEBY WFC BLOCK SIZE",
@@ -900,57 +873,38 @@ namespace dftfe
             "USE ELPA",
             "true",
             Patterns::Bool(),
-            "[Standard] Use ELPA instead of ScaLAPACK for diagonalization of subspace projected Hamiltonian and Cholesky-Gram-Schmidt orthogonalization. Currently this setting is only available for real executable. Default setting is true.");
+            "[Standard] Use ELPA instead of ScaLAPACK for diagonalization of subspace projected Hamiltonian and Cholesky-Gram-Schmidt orthogonalization.  Default setting is true.");
 
           prm.declare_entry(
-            "USE MIXED PREC PGS SR",
+            "USE MIXED PREC CGS SR",
             "false",
             Patterns::Bool(),
-            "[Advanced] Use mixed precision arithmetic in subspace rotation step of PGS orthogonalization, if ORTHOGONALIZATION TYPE is set to PGS. Currently this optimization is only enabled for the real executable. Default setting is false.");
+            "[Advanced] Use mixed precision arithmetic in subspace rotation step of CGS orthogonalization, if ORTHOGONALIZATION TYPE is set to CGS. Default setting is false.");
 
           prm.declare_entry(
-            "USE MIXED PREC PGS O",
+            "USE MIXED PREC CGS O",
             "false",
             Patterns::Bool(),
-            "[Advanced] Use mixed precision arithmetic in overlap matrix computation step of PGS orthogonalization, if ORTHOGONALIZATION TYPE is set to PGS. Currently this optimization is only enabled for the real executable. Default setting is false.");
+            "[Advanced] Use mixed precision arithmetic in overlap matrix computation step of CGS orthogonalization, if ORTHOGONALIZATION TYPE is set to CGS. Default setting is false.");
 
 
           prm.declare_entry(
             "USE MIXED PREC XTHX SPECTRUM SPLIT",
             "false",
             Patterns::Bool(),
-            "[Advanced] Use mixed precision arithmetic in computing subspace projected Kohn-Sham Hamiltonian when SPECTRUM SPLIT CORE EIGENSTATES>0. Currently this optimization is only enabled for the real executable. Default setting is false.");
-
-          prm.declare_entry(
-            "USE MIXED PREC RR_SR SPECTRUM SPLIT",
-            "false",
-            Patterns::Bool(),
-            "[Advanced] Use mixed precision arithmetic in Rayleigh-Ritz subspace rotation step when SPECTRUM SPLIT CORE EIGENSTATES>0. Currently this optimization is only enabled for the real executable. Default setting is false.");
+            "[Advanced] Use mixed precision arithmetic in computing subspace projected Kohn-Sham Hamiltonian when SPECTRUM SPLIT CORE EIGENSTATES>0.  Default setting is false.");
 
           prm.declare_entry(
             "USE MIXED PREC RR_SR",
             "false",
             Patterns::Bool(),
-            "[Advanced] Use mixed precision arithmetic in Rayleigh-Ritz subspace rotation step. Currently this optimization is only enabled for the real executable. Default setting is false.");
+            "[Advanced] Use mixed precision arithmetic in Rayleigh-Ritz subspace rotation step. Default setting is false.");
 
           prm.declare_entry(
             "USE MIXED PREC CHEBY",
             "false",
             Patterns::Bool(),
             "[Advanced] Use mixed precision arithmetic in Chebyshev filtering. Currently this option is only available for real executable and USE ELPA=true for which DFT-FE also has to be linked to ELPA library. Default setting is false.");
-
-          prm.declare_entry(
-            "USE SINGLE PREC XTHX OFF DIAGONAL",
-            "false",
-            Patterns::Bool(),
-            "[Advanced] Use single precision arithmetic in the computation of XtHX in Rayleigh Ritz projection step for off-diagonal block entries");
-
-          prm.declare_entry(
-            "USE MIXED PREC CHEBY NON LOCAL",
-            "false",
-            Patterns::Bool(),
-            "[Advanced] Use mixed precision arithmetic in non-local HX of Chebyshev filtering. Currently this option is only available for real executable and USE ELPA=true for which DFT-FE also has to be linked to ELPA library. Default setting is false.");
-
 
           prm.declare_entry(
             "OVERLAP COMPUTE COMMUN CHEBY",
@@ -965,23 +919,11 @@ namespace dftfe
             "[Advanced] Overlap communication and computation in orthogonalization and Rayleigh-Ritz. This option can only be activated for USE GPU=true. Default setting is true.");
 
           prm.declare_entry(
-            "MIXED PREC XTHX FRAC STATES",
-            "0",
-            Patterns::Integer(0),
-            "[Advanced] XTHX Mixed Precision. Temporary paramater- remove once spectrum splitting with RR GEP and mixed precision is implemented. Default value is 0.");
-
-          prm.declare_entry(
             "ALGO",
             "NORMAL",
             Patterns::Selection("NORMAL|FAST"),
-            "[Standard] In the FAST mode, spectrum splitting technique is used in Rayleigh-Ritz step, and mixed precision arithmetic algorithms are used in Rayleigh-Ritz and Cholesky factorization based orthogonalization step. For spectrum splitting, 85 percent of the total number of wavefunctions are taken to be core states, which holds good for most systems including metallic systems assuming NUMBER OF KOHN-SHAM WAVEFUNCTIONS to be around 10 percent more than N/2. FAST setting is strongly recommended for large-scale (> 10k electrons) system sizes. Both NORMAL and FAST setting use Chebyshev filtered subspace iteration technique. Currently, FAST setting is only enabled for the real executable. If manual options for mixed precision and spectum splitting are being used, please use NORMAL setting for ALGO. Default setting is NORMAL.");
+            "[Standard] In the FAST mode, spectrum splitting technique is used in Rayleigh-Ritz step, and mixed precision arithmetic algorithms are used in Rayleigh-Ritz and Cholesky factorization based orthogonalization step. For spectrum splitting, 85 percent of the total number of wavefunctions are taken to be core states, which holds good for most systems including metallic systems assuming NUMBER OF KOHN-SHAM WAVEFUNCTIONS to be around 10 percent more than N/2. FAST setting is strongly recommended for large-scale (> 10k electrons) system sizes. Both NORMAL and FAST setting use Chebyshev filtered subspace iteration technique. If manual options for mixed precision and spectum splitting are being used, please use NORMAL setting for ALGO. Default setting is NORMAL.");
 
-
-          prm.declare_entry(
-            "ADAPTIVE FILTER STATES",
-            "0",
-            Patterns::Integer(0),
-            "[Advanced] Number of lowest Kohn-Sham eigenstates which are filtered with Chebyshev polynomial degree linearly varying from 50 percent (starting from the lowest) to 80 percent of the value specified by CHEBYSHEV POLYNOMIAL DEGREE. This imposes a step function filtering polynomial order on the ADAPTIVE FILTER STATES as filtering is done with blocks of size WFC BLOCK SIZE. This setting is recommended for large systems (greater than 5000 electrons). Default value is 0 i.e., all states are filtered with the same Chebyshev polynomial degree.");
 
           prm.declare_entry(
             "REUSE LANCZOS UPPER BOUND",
@@ -1354,7 +1296,6 @@ namespace dftfe
             prm.get_integer("SPECTRUM SPLIT CORE EIGENSTATES");
           dftParameters::spectrumSplitStartingScfIter =
             prm.get_integer("SPECTRUM SPLIT STARTING SCF ITER");
-          dftParameters::rrGEP = prm.get_bool("RR GEP");
           dftParameters::chebyshevOrder =
             prm.get_integer("CHEBYSHEV POLYNOMIAL DEGREE");
           dftParameters::useELPA = prm.get_bool("USE ELPA");
@@ -1368,38 +1309,25 @@ namespace dftfe
             prm.get_integer("CHEBY WFC BLOCK SIZE");
           dftParameters::subspaceRotDofsBlockSize =
             prm.get_integer("SUBSPACE ROT DOFS BLOCK SIZE");
-          dftParameters::enableSwitchToGS = prm.get_bool("ENABLE SWITCH TO GS");
-          dftParameters::triMatPGSOpt =
-            prm.get_bool("ENABLE SUBSPACE ROT PGS OPT");
           dftParameters::scalapackParalProcs =
             prm.get_integer("SCALAPACKPROCS");
           dftParameters::scalapackBlockSize =
             prm.get_integer("SCALAPACK BLOCK SIZE");
-          dftParameters::useMixedPrecPGS_SR =
-            prm.get_bool("USE MIXED PREC PGS SR");
-          dftParameters::useMixedPrecPGS_O =
-            prm.get_bool("USE MIXED PREC PGS O");
+          dftParameters::useMixedPrecCGS_SR =
+            prm.get_bool("USE MIXED PREC CGS SR");
+          dftParameters::useMixedPrecCGS_O =
+            prm.get_bool("USE MIXED PREC CGS O");
           dftParameters::useMixedPrecXTHXSpectrumSplit =
             prm.get_bool("USE MIXED PREC XTHX SPECTRUM SPLIT");
-          dftParameters::useMixedPrecSubspaceRotSpectrumSplit =
-            prm.get_bool("USE MIXED PREC RR_SR SPECTRUM SPLIT");
           dftParameters::useMixedPrecSubspaceRotRR =
             prm.get_bool("USE MIXED PREC RR_SR");
           dftParameters::useMixedPrecCheby =
             prm.get_bool("USE MIXED PREC CHEBY");
-          dftParameters::useMixedPrecChebyNonLocal =
-            prm.get_bool("USE MIXED PREC CHEBY NON LOCAL");
-          dftParameters::useSinglePrecXtHXOffDiag =
-            prm.get_bool("USE SINGLE PREC XTHX OFF DIAGONAL");
           dftParameters::overlapComputeCommunCheby =
             prm.get_bool("OVERLAP COMPUTE COMMUN CHEBY");
           dftParameters::overlapComputeCommunOrthoRR =
             prm.get_bool("OVERLAP COMPUTE COMMUN ORTHO RR");
-          dftParameters::mixedPrecXtHXFracStates =
-            prm.get_integer("MIXED PREC XTHX FRAC STATES");
           dftParameters::algoType = prm.get("ALGO");
-          dftParameters::numAdaptiveFilterStates =
-            prm.get_integer("ADAPTIVE FILTER STATES");
           dftParameters::chebyshevFilterPolyDegreeFirstScfScalingFactor =
             prm.get_double(
               "CHEBYSHEV POLYNOMIAL DEGREE SCALING FACTOR FIRST SCF");
@@ -1509,7 +1437,7 @@ namespace dftfe
             << "=========================================================================================================="
             << std::endl;
           std::cout
-            << "			Welcome to the Open Source program DFT-FE development version			        "
+            << "			Welcome to the Open Source program DFT-FE version	1.0		        "
             << std::endl;
           std::cout
             << "This is a C++ code for materials modeling from first principles using Kohn-Sham density functional theory."
@@ -1552,7 +1480,7 @@ namespace dftfe
             << "=========================================================================================================="
             << std::endl;
           std::cout
-            << " 	     Copyright (c) 2017-2019 The Regents of the University of Michigan and DFT-FE authors         "
+            << " 	     Copyright (c) 2017-2021 The Regents of the University of Michigan and DFT-FE authors         "
             << std::endl;
           std::cout
             << " 			DFT-FE is published under [LGPL v2.1 or newer] 				"
@@ -1598,13 +1526,6 @@ namespace dftfe
           !dftParameters::useSymm,
           ExcMessage(
             "DFT-FE Error: USE GROUP SYMMETRY must be set to false if either ION FORCE or CELL STRESS is set to true. This functionality will be added in a future release"));
-
-
-      if (dftParameters::numCoreWfcRR > 0)
-        AssertThrow(
-          false,
-          ExcMessage(
-            "DFT-FE Error: SPECTRUM SPLIT CORE EIGENSTATES cannot be set to a non-zero value when using complex executable. This optimization will be added in a future release"));
 #else
       AssertThrow(
         dftParameters::nkx == 1 && dftParameters::nky == 1 &&
@@ -1704,6 +1625,10 @@ namespace dftfe
       //
       // Automated choice of mesh related parameters
       //
+
+      if (dftParameters::isBOMD)
+        dftParameters::isIonForce = true;
+
       if (!dftParameters::isPseudopotential)
         {
           if (!dftParameters::reproducible_output)
@@ -1733,7 +1658,13 @@ namespace dftfe
               if (!dftParameters::floatingNuclearCharges)
                 dftParameters::outerAtomBallRadius = 2.5;
               else
-                dftParameters::outerAtomBallRadius = 4.0;
+                {
+                  if (!(dftParameters::periodicX || dftParameters::periodicY ||
+                        dftParameters::periodicZ))
+                    dftParameters::outerAtomBallRadius = 6.0;
+                  else
+                    dftParameters::outerAtomBallRadius = 10.0;
+                }
             }
           else
             dftParameters::outerAtomBallRadius = 2.0;
@@ -1763,9 +1694,9 @@ namespace dftfe
           if (dftParameters::verbosity >= 1 &&
               Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0)
             std::cout
-              << "Setting ORTHOGONALIZATION TYPE=PGS for pseudopotential calculations "
+              << "Setting ORTHOGONALIZATION TYPE=CGS for pseudopotential calculations "
               << std::endl;
-          dftParameters::orthogType = "PGS";
+          dftParameters::orthogType = "CGS";
         }
       else if (!dftParameters::isPseudopotential &&
                dftParameters::orthogType == "Auto" && !dftParameters::useGPU)
@@ -1778,28 +1709,23 @@ namespace dftfe
               << std::endl;
 
           dftParameters::orthogType = "GS";
-          dftParameters::rrGEP      = false;
 #else
           if (dftParameters::verbosity >= 1 &&
               Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0)
             std::cout
-              << "Setting ORTHOGONALIZATION TYPE=PGS for all-electron calculations as DFT-FE is not linked to dealii with Petsc and Slepc "
+              << "Setting ORTHOGONALIZATION TYPE=CGS for all-electron calculations as DFT-FE is not linked to dealii with Petsc and Slepc "
               << std::endl;
 
-          dftParameters::orthogType = "PGS";
+          dftParameters::orthogType = "CGS";
 #endif
         }
-      else if ((dftParameters::orthogType == "GS" ||
-                dftParameters::orthogType == "LW") &&
-               !dftParameters::useGPU)
+      else if (dftParameters::orthogType == "GS" && !dftParameters::useGPU)
         {
-#ifdef USE_PETSC;
-          dftParameters::rrGEP = false;
-#else
+#ifndef USE_PETSC;
           AssertThrow(
             dftParameters::orthogType != "GS",
             ExcMessage(
-              "DFT-FE Error: Please use ORTHOGONALIZATION TYPE to be PGS/Auto as GS option is only available if DFT-FE is linked to dealii with Petsc and Slepc."));
+              "DFT-FE Error: Please use ORTHOGONALIZATION TYPE to be CGS/Auto as GS option is only available if DFT-FE is linked to dealii with Petsc and Slepc."));
 #endif
         }
       else if (!dftParameters::isPseudopotential &&
@@ -1808,32 +1734,28 @@ namespace dftfe
           if (dftParameters::verbosity >= 1 &&
               Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0)
             std::cout
-              << "Setting ORTHOGONALIZATION TYPE=PGS and RR GEP=true for all-electron calculations on GPUs "
+              << "Setting ORTHOGONALIZATION TYPE=CGS for all-electron calculations on GPUs "
               << std::endl;
-          dftParameters::orthogType = "PGS";
-          dftParameters::rrGEP      = true;
+          dftParameters::orthogType = "CGS";
         }
-      else if ((dftParameters::orthogType == "GS" ||
-                dftParameters::orthogType == "LW") &&
-               dftParameters::useGPU)
+      else if (dftParameters::orthogType == "GS" && dftParameters::useGPU)
         {
           AssertThrow(
-            dftParameters::rrGEP,
+            false,
             ExcMessage(
-              "DFT-FE Error: GS and LW are not implemented on GPUs. Use Auto option."));
+              "DFT-FE Error: GS is not implemented on GPUs. Use Auto option."));
         }
 
 
       if (dftParameters::algoType == "FAST")
         {
-          dftParameters::useMixedPrecPGS_O             = true;
-          dftParameters::useMixedPrecPGS_SR            = true;
-          dftParameters::useMixedPrecXTHXSpectrumSplit = true;
-          dftParameters::useMixedPrecCheby             = true;
-          dftParameters::computeEnergyEverySCF         = false;
+          dftParameters::useMixedPrecCGS_O                   = true;
+          dftParameters::useMixedPrecCGS_SR                  = true;
+          dftParameters::useMixedPrecXTHXSpectrumSplit       = true;
+          dftParameters::useMixedPrecCheby                   = true;
+          dftParameters::reuseLanczosUpperBoundFromFirstCall = true;
         }
 #ifdef USE_COMPLEX
-      dftParameters::rrGEP       = false;
       dftParameters::HXOptimFlag = false;
 #endif
 
@@ -1846,16 +1768,7 @@ namespace dftfe
 #endif
 
 
-#ifdef DFTFE_WITH_GPU
-      if (dftParameters::useGPU)
-        {
-          if (dftParameters::nbandGrps > 1)
-            AssertThrow(
-              dftParameters::rrGEP,
-              ExcMessage(
-                "DFT-FE Error: if band parallelization is used, RR GEP must be set to true."));
-        }
-#else
+#ifndef DFTFE_WITH_GPU
       dftParameters::useGPU           = false;
       dftParameters::useELPAGPUKernel = false;
 #endif

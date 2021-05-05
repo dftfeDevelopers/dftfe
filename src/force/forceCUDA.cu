@@ -24,6 +24,7 @@
 #include <dftUtils.h>
 #include <forceCUDA.h>
 #include <vectorUtilities.h>
+#include <cudaHelpers.h>
 
 namespace dftfe
 {
@@ -499,14 +500,18 @@ namespace dftfe
       const unsigned int             innerBlockSizeEnlp,
       thrust::device_vector<double> &nlpContractionContributionD,
       thrust::device_vector<double> &
-        projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuadsFlattenedD)
+        projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuadsFlattenedDBlock,
+      double *
+        projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuadsFlattenedH,
+      double *
+        projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuadsFlattenedHPinnedTemp)
     {
       const int blockSizeNlp    = innerBlockSizeEnlp;
       const int numberBlocksNlp = totalNonTrivialPseudoWfcs / blockSizeNlp;
       const int remBlockSizeNlp =
         totalNonTrivialPseudoWfcs - numberBlocksNlp * blockSizeNlp;
 
-      double scalarCoeffAlphaNlp = 1.0, scalarCoeffBetaNlp = 1.0;
+      double scalarCoeffAlphaNlp = 1.0, scalarCoeffBetaNlp = 0.0;
 
       for (int iblocknlp = 0; iblocknlp < (numberBlocksNlp + 1); iblocknlp++)
         {
@@ -544,9 +549,25 @@ namespace dftfe
                 numPsi,
                 &scalarCoeffBetaNlp,
                 thrust::raw_pointer_cast(
-                  &projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuadsFlattenedD
-                    [startingIdNlp * numQuadsNLP * 3]),
+                  &projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuadsFlattenedDBlock
+                    [0]),
                 1);
+
+              cudaMemcpy(
+                projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuadsFlattenedHPinnedTemp,
+                thrust::raw_pointer_cast(
+                  &projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuadsFlattenedDBlock
+                    [0]),
+                currentBlockSizeNlp * numQuadsNLP * 3 * sizeof(double),
+                cudaMemcpyDeviceToHost);
+
+              for (unsigned int i = 0;
+                   i < currentBlockSizeNlp * numQuadsNLP * 3;
+                   i++)
+                projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuadsFlattenedH
+                  [startingIdNlp * numQuadsNLP * 3 + i] +=
+                  projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuadsFlattenedHPinnedTemp
+                    [i];
             }
         }
     }
@@ -581,7 +602,11 @@ namespace dftfe
       thrust::device_vector<double> &eshelbyTensorQuadValuesD,
       thrust::device_vector<double> &nlpContractionContributionD,
       thrust::device_vector<double> &
-                         projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuadsFlattenedD,
+        projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuadsFlattenedDBlock,
+      double *
+        projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuadsFlattenedH,
+      double *
+                         projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuadsFlattenedHPinnedTemp,
       const unsigned int cellsBlockSize,
       const unsigned int innerBlockSizeEnlp,
       const bool         isPsp)
@@ -670,7 +695,9 @@ namespace dftfe
                 totalNonTrivialPseudoWfcs,
                 innerBlockSizeEnlp,
                 nlpContractionContributionD,
-                projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuadsFlattenedD);
+                projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuadsFlattenedDBlock,
+                projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuadsFlattenedH,
+                projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuadsFlattenedHPinnedTemp);
             }
 
           // cudaDeviceSynchronize();
@@ -778,17 +805,31 @@ namespace dftfe
       thrust::device_vector<double> nlpContractionContributionD(
         innerBlockSizeEnlp * numQuadsNLP * 3 * blockSize, 0.0);
       thrust::device_vector<double>
-        projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuadsFlattenedD;
+        projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuadsFlattenedDBlock;
       thrust::device_vector<unsigned int>
                                           projecterKetTimesFlattenedVectorLocalIdsD;
       thrust::device_vector<unsigned int> nonTrivialIdToElemIdMapD;
+      double *
+        projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuadsFlattenedHPinnedTemp;
       if (totalNonTrivialPseudoWfcs > 0)
         {
-          projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuadsFlattenedD
-            .resize(totalNonTrivialPseudoWfcs * numQuadsNLP * 3, 0.0);
+          projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuadsFlattenedDBlock
+            .resize(innerBlockSizeEnlp * numQuadsNLP * 3, 0.0);
           projecterKetTimesFlattenedVectorLocalIdsD.resize(
             totalNonTrivialPseudoWfcs, 0.0);
           nonTrivialIdToElemIdMapD.resize(totalNonTrivialPseudoWfcs, 0.0);
+
+
+          CUDACHECK(cudaMallocHost(
+            (void *
+               *)&projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuadsFlattenedHPinnedTemp,
+            innerBlockSizeEnlp * numQuadsNLP * 3 * sizeof(double)));
+
+          std::fill(
+            projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuadsFlattenedH,
+            projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuadsFlattenedH +
+              totalNonTrivialPseudoWfcs * numQuadsNLP * 3,
+            0.0);
 
           cudaMemcpy(thrust::raw_pointer_cast(&nonTrivialIdToElemIdMapD[0]),
                      nonTrivialIdToElemIdMapH,
@@ -860,7 +901,9 @@ namespace dftfe
                 eshelbyTensorContributionsD,
                 elocWfcEshelbyTensorQuadValuesD,
                 nlpContractionContributionD,
-                projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuadsFlattenedD,
+                projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuadsFlattenedDBlock,
+                projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuadsFlattenedH,
+                projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuadsFlattenedHPinnedTemp,
                 cellsBlockSize,
                 innerBlockSizeEnlp,
                 isPsp);
@@ -880,17 +923,10 @@ namespace dftfe
                  numCells * numQuads * 6 * sizeof(double),
                  cudaMemcpyDeviceToHost);
 
-
       if (totalNonTrivialPseudoWfcs > 0)
-        {
-          cudaMemcpy(
-            projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuadsFlattenedH,
-            thrust::raw_pointer_cast(
-              &projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuadsFlattenedD
-                [0]),
-            totalNonTrivialPseudoWfcs * numQuadsNLP * 3 * sizeof(double),
-            cudaMemcpyDeviceToHost);
-        }
+        CUDACHECK(cudaFreeHost(
+          projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuadsFlattenedHPinnedTemp));
+
       cudaDeviceSynchronize();
       MPI_Barrier(MPI_COMM_WORLD);
       gpu_time = MPI_Wtime() - gpu_time;

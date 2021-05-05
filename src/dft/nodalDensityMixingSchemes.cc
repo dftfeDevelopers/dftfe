@@ -44,16 +44,16 @@ dftClass<FEOrder, FEOrderElectro>::nodalDensity_mixing_simple(
                              d_densityQuadratureIdElectro);
 
   // create FEEval object to be used subsequently
-  FEEvaluation<C_DIM,
+  FEEvaluation<3,
                C_rhoNodalPolyOrder<FEOrder, FEOrderElectro>(),
                C_num1DQuad<C_rhoNodalPolyOrder<FEOrder, FEOrderElectro>()>(),
                1,
                double>
-               fe_evalHelm(d_matrixFreeDataPRefined,
+                                      fe_evalHelm(d_matrixFreeDataPRefined,
                 d_densityDofHandlerIndexElectro,
                 d_densityQuadratureIdElectro);
-  unsigned int numQuadPoints = fe_evalHelm.n_q_points;
-  DoFHandler<C_DIM>::active_cell_iterator subCellPtr;
+  unsigned int                        numQuadPoints = fe_evalHelm.n_q_points;
+  DoFHandler<3>::active_cell_iterator subCellPtr;
 
   //
   // compute preconditioned residual by solving Helmholtz solve
@@ -119,7 +119,7 @@ dftClass<FEOrder, FEOrderElectro>::nodalDensity_mixing_simple(
   d_rhoInNodalVals.push_back(d_rhoInNodalValues);
 
 
-  /*FEEvaluation<C_DIM,C_num1DKerkerPoly<FEOrder>(),C_num1DQuad<FEOrder>(),1,double>
+  /*FEEvaluation<3,C_num1DKerkerPoly<FEOrder>(),C_num1DQuad<FEOrder>(),1,double>
   fe_evalRho(d_matrixFreeDataPRefined,0,1); numQuadPoints =
   fe_evalRho.n_q_points;
   //compute rho and grad rho for computing Veff using the rhoIn computed above
@@ -307,16 +307,16 @@ dftClass<FEOrder, FEOrderElectro>::nodalDensity_mixing_anderson(
   diffRhoBar.update_ghost_values();
 
   // create FEEval object to be used subsequently
-  FEEvaluation<C_DIM,
+  FEEvaluation<3,
                C_rhoNodalPolyOrder<FEOrder, FEOrderElectro>(),
                C_num1DQuad<C_rhoNodalPolyOrder<FEOrder, FEOrderElectro>()>(),
                1,
                double>
-               fe_evalHelm(d_matrixFreeDataPRefined,
+                                      fe_evalHelm(d_matrixFreeDataPRefined,
                 d_densityDofHandlerIndexElectro,
                 d_densityQuadratureIdElectro);
-  unsigned int numQuadPoints = fe_evalHelm.n_q_points;
-  DoFHandler<C_DIM>::active_cell_iterator subCellPtr;
+  unsigned int                        numQuadPoints = fe_evalHelm.n_q_points;
+  DoFHandler<3>::active_cell_iterator subCellPtr;
 
   // preparation for rhs of Helmholtz solve by computing gradients of (rhoInBar
   // - rhoOutBar)
@@ -386,7 +386,7 @@ dftClass<FEOrder, FEOrderElectro>::nodalDensity_mixing_anderson(
   // interpolate nodal values to quadrature data
 
 
-  /*FEEvaluation<C_DIM,C_num1DKerkerPoly<FEOrder>(),C_num1DQuad<FEOrder>(),1,double>
+  /*FEEvaluation<3,C_num1DKerkerPoly<FEOrder>(),C_num1DQuad<FEOrder>(),1,double>
     fe_evalRho(d_matrixFreeDataPRefined,0,1); numQuadPoints =
     fe_evalRho.n_q_points; for(unsigned int cell = 0; cell <
     d_matrixFreeDataPRefined.n_macro_cells(); ++cell)

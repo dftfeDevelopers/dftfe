@@ -377,28 +377,25 @@ namespace dftfe
   template <unsigned int FEOrder, unsigned int FEOrderElectro>
   thrust::device_vector<double> &
   kohnShamDFTOperatorCUDAClass<FEOrder, FEOrderElectro>::
-    getShapeFunctionGradientValuesXInverted(const bool use2pPlusOneGLQuad)
+    getShapeFunctionGradientValuesXInverted()
   {
-    return use2pPlusOneGLQuad ? d_glShapeFunctionGradientValueXInvertedDevice :
-                                d_shapeFunctionGradientValueXInvertedDevice;
+    return d_shapeFunctionGradientValueXInvertedDevice;
   }
 
   template <unsigned int FEOrder, unsigned int FEOrderElectro>
   thrust::device_vector<double> &
   kohnShamDFTOperatorCUDAClass<FEOrder, FEOrderElectro>::
-    getShapeFunctionGradientValuesYInverted(const bool use2pPlusOneGLQuad)
+    getShapeFunctionGradientValuesYInverted()
   {
-    return use2pPlusOneGLQuad ? d_glShapeFunctionGradientValueYInvertedDevice :
-                                d_shapeFunctionGradientValueYInvertedDevice;
+    return d_shapeFunctionGradientValueYInvertedDevice;
   }
 
   template <unsigned int FEOrder, unsigned int FEOrderElectro>
   thrust::device_vector<double> &
   kohnShamDFTOperatorCUDAClass<FEOrder, FEOrderElectro>::
-    getShapeFunctionGradientValuesZInverted(const bool use2pPlusOneGLQuad)
+    getShapeFunctionGradientValuesZInverted()
   {
-    return use2pPlusOneGLQuad ? d_glShapeFunctionGradientValueZInvertedDevice :
-                                d_shapeFunctionGradientValueZInvertedDevice;
+    return d_shapeFunctionGradientValueZInvertedDevice;
   }
 
   template <unsigned int FEOrder, unsigned int FEOrderElectro>
@@ -433,6 +430,15 @@ namespace dftfe
   {
     return d_cellWaveFunctionMatrix;
   }
+
+  template <unsigned int FEOrder, unsigned int FEOrderElectro>
+  distributedGPUVec<double> &
+  kohnShamDFTOperatorCUDAClass<FEOrder, FEOrderElectro>::
+    getParallelChebyBlockVectorDevice()
+  {
+    return d_parallelChebyBlockVectorDevice;
+  }
+
 
   template <unsigned int FEOrder, unsigned int FEOrderElectro>
   thrust::device_vector<unsigned int> &
@@ -513,7 +519,8 @@ namespace dftfe
     distributedCPUVec<dataTypes::number> flattenedArray;
     if (flag)
       vectorTools::createDealiiVector<dataTypes::number>(
-        dftPtr->matrix_free_data.get_vector_partitioner(),
+        dftPtr->matrix_free_data.get_vector_partitioner(
+          dftPtr->d_densityDofHandlerIndex),
         numberWaveFunctions,
         flattenedArray);
 
@@ -524,17 +531,31 @@ namespace dftfe
       pcout << "starting free mem: " << free_t << ", total mem: " << total_t
             << std::endl;
 
+    const unsigned int BVec =
+      std::min(dftParameters::chebyWfcBlockSize, numberWaveFunctions);
+    vectorTools::createDealiiVector<double>(
+      dftPtr->matrix_free_data.get_vector_partitioner(
+        dftPtr->d_densityDofHandlerIndex),
+      BVec,
+      d_parallelChebyBlockVectorDevice);
+
     const unsigned int n_ghosts =
-      dftPtr->matrix_free_data.get_vector_partitioner()->n_ghost_indices();
+      dftPtr->matrix_free_data
+        .get_vector_partitioner(dftPtr->d_densityDofHandlerIndex)
+        ->n_ghost_indices();
     const unsigned int localSize =
-      dftPtr->matrix_free_data.get_vector_partitioner()->local_size();
+      dftPtr->matrix_free_data
+        .get_vector_partitioner(dftPtr->d_densityDofHandlerIndex)
+        ->local_size();
 
     thrust::host_vector<unsigned int> locallyOwnedProcBoundaryNodesVector(
       localSize, 0);
 
     const std::vector<std::pair<unsigned int, unsigned int>>
       &locallyOwnedProcBoundaryNodes =
-        dftPtr->matrix_free_data.get_vector_partitioner()->import_indices();
+        dftPtr->matrix_free_data
+          .get_vector_partitioner(dftPtr->d_densityDofHandlerIndex)
+          ->import_indices();
 
     for (unsigned int iset = 0; iset < locallyOwnedProcBoundaryNodes.size();
          ++iset)
@@ -576,7 +597,8 @@ namespace dftfe
 
 
     getOverloadedConstraintMatrix()->precomputeMaps(
-      dftPtr->matrix_free_data.get_vector_partitioner(),
+      dftPtr->matrix_free_data.get_vector_partitioner(
+        dftPtr->d_densityDofHandlerIndex),
       flattenedArray.get_partitioner(),
       numberWaveFunctions);
 
@@ -1016,7 +1038,8 @@ namespace dftfe
     const unsigned int dofs_per_cell   = (dofHandler.get_fe()).dofs_per_cell;
     const unsigned int num_quad_points = quadrature.size();
     Vector<double>     massVectorLocal(dofs_per_cell);
-    std::vector<types::global_dof_index> local_dof_indices(dofs_per_cell);
+    std::vector<dealii::types::global_dof_index> local_dof_indices(
+      dofs_per_cell);
 
 
     //
@@ -1046,7 +1069,7 @@ namespace dftfe
     invSqrtMassVec.compress(VectorOperation::add);
 
 
-    for (types::global_dof_index i = 0; i < invSqrtMassVec.size(); ++i)
+    for (dealii::types::global_dof_index i = 0; i < invSqrtMassVec.size(); ++i)
       if (invSqrtMassVec.in_local_range(i) &&
           !constraintMatrix.is_constrained(i))
         {
@@ -1620,9 +1643,13 @@ namespace dftfe
     const bool                 singlePrecCommun)
   {
     const unsigned int n_ghosts =
-      dftPtr->matrix_free_data.get_vector_partitioner()->n_ghost_indices();
+      dftPtr->matrix_free_data
+        .get_vector_partitioner(dftPtr->d_densityDofHandlerIndex)
+        ->n_ghost_indices();
     const unsigned int localSize =
-      dftPtr->matrix_free_data.get_vector_partitioner()->local_size();
+      dftPtr->matrix_free_data
+        .get_vector_partitioner(dftPtr->d_densityDofHandlerIndex)
+        ->local_size();
     const unsigned int totalSize = localSize + n_ghosts;
     //
     // scale src vector with M^{-1/2}
@@ -1752,9 +1779,13 @@ namespace dftfe
     const bool                 doUnscalingSrc)
   {
     const unsigned int n_ghosts =
-      dftPtr->matrix_free_data.get_vector_partitioner()->n_ghost_indices();
+      dftPtr->matrix_free_data
+        .get_vector_partitioner(dftPtr->d_densityDofHandlerIndex)
+        ->n_ghost_indices();
     const unsigned int localSize =
-      dftPtr->matrix_free_data.get_vector_partitioner()->local_size();
+      dftPtr->matrix_free_data
+        .get_vector_partitioner(dftPtr->d_densityDofHandlerIndex)
+        ->local_size();
     const unsigned int totalSize = localSize + n_ghosts;
     //
     // scale src vector with M^{-1/2}
@@ -1854,9 +1885,13 @@ namespace dftfe
     bool                       computePart2)
   {
     const unsigned int n_ghosts =
-      dftPtr->matrix_free_data.get_vector_partitioner()->n_ghost_indices();
+      dftPtr->matrix_free_data
+        .get_vector_partitioner(dftPtr->d_densityDofHandlerIndex)
+        ->n_ghost_indices();
     const unsigned int localSize =
-      dftPtr->matrix_free_data.get_vector_partitioner()->local_size();
+      dftPtr->matrix_free_data
+        .get_vector_partitioner(dftPtr->d_densityDofHandlerIndex)
+        ->local_size();
     const unsigned int totalSize = localSize + n_ghosts;
 
     if (!(computePart1 || computePart2))
@@ -2056,17 +2091,16 @@ namespace dftfe
   template <unsigned int FEOrder, unsigned int FEOrderElectro>
   void
   kohnShamDFTOperatorCUDAClass<FEOrder, FEOrderElectro>::XtHX(
-    const double *             X,
-    distributedGPUVec<double> &XBlock,
-    distributedGPUVec<double> &HXBlock,
-    distributedGPUVec<double> &projectorKetTimesVector,
-    const unsigned int         M,
-    const unsigned int         N,
-    cublasHandle_t &           handle,
-    const std::shared_ptr<const dealii::Utilities::MPI::ProcessGrid>
-      &                              processGrid,
-    dealii::ScaLAPACKMatrix<double> &projHamPar,
-    GPUCCLWrapper &                  gpucclMpiCommDomain)
+    const double *                                   X,
+    distributedGPUVec<double> &                      XBlock,
+    distributedGPUVec<double> &                      HXBlock,
+    distributedGPUVec<double> &                      projectorKetTimesVector,
+    const unsigned int                               M,
+    const unsigned int                               N,
+    cublasHandle_t &                                 handle,
+    const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
+    dftfe::ScaLAPACKMatrix<double> &                 projHamPar,
+    GPUCCLWrapper &                                  gpucclMpiCommDomain)
   {
     std::map<unsigned int, unsigned int> globalToLocalColumnIdMap;
     std::map<unsigned int, unsigned int> globalToLocalRowIdMap;
@@ -2210,17 +2244,16 @@ namespace dftfe
   void
   kohnShamDFTOperatorCUDAClass<FEOrder, FEOrderElectro>::
     XtHXOverlapComputeCommun(
-      const double *             X,
-      distributedGPUVec<double> &XBlock,
-      distributedGPUVec<double> &HXBlock,
-      distributedGPUVec<double> &projectorKetTimesVector,
-      const unsigned int         M,
-      const unsigned int         N,
-      cublasHandle_t &           handle,
-      const std::shared_ptr<const dealii::Utilities::MPI::ProcessGrid>
-        &                              processGrid,
-      dealii::ScaLAPACKMatrix<double> &projHamPar,
-      GPUCCLWrapper &                  gpucclMpiCommDomain)
+      const double *                                   X,
+      distributedGPUVec<double> &                      XBlock,
+      distributedGPUVec<double> &                      HXBlock,
+      distributedGPUVec<double> &                      projectorKetTimesVector,
+      const unsigned int                               M,
+      const unsigned int                               N,
+      cublasHandle_t &                                 handle,
+      const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
+      dftfe::ScaLAPACKMatrix<double> &                 projHamPar,
+      GPUCCLWrapper &                                  gpucclMpiCommDomain)
   {
     /////////////PSEUDO CODE for the implementation below for Overlapping
     /// compute and communication/////////////////
@@ -2531,19 +2564,18 @@ namespace dftfe
   template <unsigned int FEOrder, unsigned int FEOrderElectro>
   void
   kohnShamDFTOperatorCUDAClass<FEOrder, FEOrderElectro>::XtHXMixedPrec(
-    const double *             X,
-    distributedGPUVec<double> &XBlock,
-    distributedGPUVec<float> & tempFloatBlock,
-    distributedGPUVec<double> &HXBlock,
-    distributedGPUVec<double> &projectorKetTimesVector,
-    const unsigned int         M,
-    const unsigned int         N,
-    const unsigned int         Noc,
-    cublasHandle_t &           handle,
-    const std::shared_ptr<const dealii::Utilities::MPI::ProcessGrid>
-      &                              processGrid,
-    dealii::ScaLAPACKMatrix<double> &projHamPar,
-    GPUCCLWrapper &                  gpucclMpiCommDomain)
+    const double *                                   X,
+    distributedGPUVec<double> &                      XBlock,
+    distributedGPUVec<float> &                       tempFloatBlock,
+    distributedGPUVec<double> &                      HXBlock,
+    distributedGPUVec<double> &                      projectorKetTimesVector,
+    const unsigned int                               M,
+    const unsigned int                               N,
+    const unsigned int                               Noc,
+    cublasHandle_t &                                 handle,
+    const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
+    dftfe::ScaLAPACKMatrix<double> &                 projHamPar,
+    GPUCCLWrapper &                                  gpucclMpiCommDomain)
   {
     pcout << "XtHX Mixed Prec: " << std::endl;
 
@@ -2848,18 +2880,17 @@ namespace dftfe
   void
   kohnShamDFTOperatorCUDAClass<FEOrder, FEOrderElectro>::
     XtHXOffDiagBlockSinglePrec(
-      const double *             X,
-      distributedGPUVec<double> &XBlock,
-      distributedGPUVec<float> & tempFloatBlock,
-      distributedGPUVec<double> &HXBlock,
-      distributedGPUVec<double> &projectorKetTimesVector,
-      const unsigned int         M,
-      const unsigned int         N,
-      cublasHandle_t &           handle,
-      const std::shared_ptr<const dealii::Utilities::MPI::ProcessGrid>
-        &                              processGrid,
-      dealii::ScaLAPACKMatrix<double> &projHamPar,
-      GPUCCLWrapper &                  gpucclMpiCommDomain)
+      const double *                                   X,
+      distributedGPUVec<double> &                      XBlock,
+      distributedGPUVec<float> &                       tempFloatBlock,
+      distributedGPUVec<double> &                      HXBlock,
+      distributedGPUVec<double> &                      projectorKetTimesVector,
+      const unsigned int                               M,
+      const unsigned int                               N,
+      cublasHandle_t &                                 handle,
+      const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
+      dftfe::ScaLAPACKMatrix<double> &                 projHamPar,
+      GPUCCLWrapper &                                  gpucclMpiCommDomain)
   {
     pcout << "XtHX Single Prec off diag: " << std::endl;
 
@@ -3104,19 +3135,18 @@ namespace dftfe
   void
   kohnShamDFTOperatorCUDAClass<FEOrder, FEOrderElectro>::
     XtHXMixedPrecOverlapComputeCommun(
-      const double *             X,
-      distributedGPUVec<double> &XBlock,
-      distributedGPUVec<float> & tempFloatBlock,
-      distributedGPUVec<double> &HXBlock,
-      distributedGPUVec<double> &projectorKetTimesVector,
-      const unsigned int         M,
-      const unsigned int         N,
-      const unsigned int         Noc,
-      cublasHandle_t &           handle,
-      const std::shared_ptr<const dealii::Utilities::MPI::ProcessGrid>
-        &                              processGrid,
-      dealii::ScaLAPACKMatrix<double> &projHamPar,
-      GPUCCLWrapper &                  gpucclMpiCommDomain)
+      const double *                                   X,
+      distributedGPUVec<double> &                      XBlock,
+      distributedGPUVec<float> &                       tempFloatBlock,
+      distributedGPUVec<double> &                      HXBlock,
+      distributedGPUVec<double> &                      projectorKetTimesVector,
+      const unsigned int                               M,
+      const unsigned int                               N,
+      const unsigned int                               Noc,
+      cublasHandle_t &                                 handle,
+      const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
+      dftfe::ScaLAPACKMatrix<double> &                 projHamPar,
+      GPUCCLWrapper &                                  gpucclMpiCommDomain)
   {
     std::map<unsigned int, unsigned int> globalToLocalColumnIdMap;
     std::map<unsigned int, unsigned int> globalToLocalRowIdMap;
@@ -3575,18 +3605,17 @@ namespace dftfe
   void
   kohnShamDFTOperatorCUDAClass<FEOrder, FEOrderElectro>::
     XtHXOffDiagBlockSinglePrecOverlapComputeCommun(
-      const double *             X,
-      distributedGPUVec<double> &XBlock,
-      distributedGPUVec<float> & tempFloatBlock,
-      distributedGPUVec<double> &HXBlock,
-      distributedGPUVec<double> &projectorKetTimesVector,
-      const unsigned int         M,
-      const unsigned int         N,
-      cublasHandle_t &           handle,
-      const std::shared_ptr<const dealii::Utilities::MPI::ProcessGrid>
-        &                              processGrid,
-      dealii::ScaLAPACKMatrix<double> &projHamPar,
-      GPUCCLWrapper &                  gpucclMpiCommDomain)
+      const double *                                   X,
+      distributedGPUVec<double> &                      XBlock,
+      distributedGPUVec<float> &                       tempFloatBlock,
+      distributedGPUVec<double> &                      HXBlock,
+      distributedGPUVec<double> &                      projectorKetTimesVector,
+      const unsigned int                               M,
+      const unsigned int                               N,
+      cublasHandle_t &                                 handle,
+      const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
+      dftfe::ScaLAPACKMatrix<double> &                 projHamPar,
+      GPUCCLWrapper &                                  gpucclMpiCommDomain)
   {
     pcout << "XtHX OffDiag Single Prec Asyn Compute Commn: " << std::endl;
 

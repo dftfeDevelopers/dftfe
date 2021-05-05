@@ -95,7 +95,7 @@ namespace dftfe
           SolutionTransfer<3, distributedCPUVec<double>>
             solTrans(dofHandler);
         // assumes solution vectors are ghosted
-        solTrans.prepare_serialization(solutionVectors);
+        solTrans.prepare_for_serialization(solutionVectors);
 
         const std::string filename = "parallelUnmovedTriaSolData.chk";
         if (std::ifstream(filename) && this_mpi_process == 0)

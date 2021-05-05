@@ -113,7 +113,9 @@ namespace dftfe
       const std::map<dealii::CellId, std::vector<double>> &rhoCoreValues,
       const std::map<dealii::CellId, std::vector<double>> &gradRhoCoreValues,
       const std::map<dealii::CellId, std::vector<double>> &smearedbValues,
-      const std::vector<std::vector<double>> &             localVselfs,
+      const std::map<dealii::CellId, std::vector<unsigned int>>
+        &                                     smearedbNonTrivialAtomIds,
+      const std::vector<std::vector<double>> &localVselfs,
       const std::map<dealii::CellId, std::vector<double>>
         &pseudoValuesElectronic,
       const std::map<dealii::CellId, std::vector<double>>
@@ -189,7 +191,9 @@ namespace dftfe
       const std::map<dealii::CellId, std::vector<double>> &rhoCoreValues,
       const std::map<dealii::CellId, std::vector<double>> &gradRhoCoreValues,
       const std::map<dealii::CellId, std::vector<double>> &smearedbValues,
-      const std::vector<std::vector<double>> &             localVselfs,
+      const std::map<dealii::CellId, std::vector<unsigned int>>
+        &                                     smearedbNonTrivialAtomIds,
+      const std::vector<std::vector<double>> &localVselfs,
       const std::map<dealii::types::global_dof_index, double>
         &                atomElectrostaticNodeIdToChargeMap,
       const unsigned int numberGlobalAtoms,
@@ -291,7 +295,9 @@ namespace dftfe
       const std::map<dealii::CellId, std::vector<double>> &rhoCoreValues,
       const std::map<dealii::CellId, std::vector<double>> &gradRhoCoreValues,
       const std::map<dealii::CellId, std::vector<double>> &smearedbValues,
-      const std::vector<std::vector<double>> &             localVselfs,
+      const std::map<dealii::CellId, std::vector<unsigned int>>
+        &                                     smearedbNonTrivialAtomIds,
+      const std::vector<std::vector<double>> &localVselfs,
       const std::map<dealii::CellId, std::vector<double>>
         &pseudoValuesElectronic,
       const std::map<dealii::CellId, std::vector<double>>

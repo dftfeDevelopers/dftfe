@@ -182,13 +182,17 @@ namespace dftfe
     tempvec = 0.0;
     d_constraintsInfo.distribute(tempvec);
 
-    if (d_constraintMatrixPtr->has_inhomogeneities() &&
-        tempvec.linfty_norm() > 1e-10)
+    dealii::FEEvaluation<3, FEOrderElectro, FEOrderElectro + 1> fe_eval(
+      *d_matrixFreeDataPtr,
+      d_matrixFreeVectorComponent,
+      d_matrixFreeQuadratureComponentAX);
+
+    int isPerformStaticCondensation = (tempvec.linfty_norm() > 1e-10) ? 1 : 0;
+
+    MPI_Bcast(&isPerformStaticCondensation, 1, MPI_INT, 0, mpi_communicator);
+
+    if (isPerformStaticCondensation == 1)
       {
-        dealii::FEEvaluation<3, FEOrderElectro, FEOrderElectro + 1> fe_eval(
-          *d_matrixFreeDataPtr,
-          d_matrixFreeVectorComponent,
-          d_matrixFreeQuadratureComponentAX);
         dealii::VectorizedArray<double> quarter =
           dealii::make_vectorized_array(1.0 / (4.0 * M_PI));
         for (unsigned int macrocell = 0;
@@ -218,7 +222,7 @@ namespace dftfe
                           d_matrixFreeVectorComponent,
                           d_matrixFreeQuadratureComponentRhsDensity);
 
-        std::vector<dealii::VectorizedArray<double>> rhoQuads(
+        dealii::AlignedVector<dealii::VectorizedArray<double>> rhoQuads(
           fe_eval_density.n_q_points, dealii::make_vectorized_array(0.0));
         for (unsigned int macrocell = 0;
              macrocell < d_matrixFreeDataPtr->n_macro_cells();
@@ -274,17 +278,13 @@ namespace dftfe
         // const unsigned int   num_quad_points_sc =
         // d_matrixFreeDataPtr->get_quadrature(d_smearedChargeQuadratureId).size();
 
-        dealii::FEEvaluation<3,
-                             FEOrderElectro,
-                             C_num1DQuadSmearedCharge() *
-                               C_numCopies1DQuadSmearedCharge()>
-          fe_eval_sc(*d_matrixFreeDataPtr,
-                     d_matrixFreeVectorComponent,
-                     d_smearedChargeQuadratureId);
+        dealii::FEEvaluation<3, -1> fe_eval_sc(*d_matrixFreeDataPtr,
+                                               d_matrixFreeVectorComponent,
+                                               d_smearedChargeQuadratureId);
 
         const unsigned int numQuadPointsSmearedb = fe_eval_sc.n_q_points;
 
-        std::vector<dealii::VectorizedArray<double>> smearedbQuads(
+        dealii::AlignedVector<dealii::VectorizedArray<double>> smearedbQuads(
           numQuadPointsSmearedb, dealii::make_vectorized_array(0.0));
         for (unsigned int macrocell = 0;
              macrocell < d_matrixFreeDataPtr->n_macro_cells();
@@ -330,13 +330,9 @@ namespace dftfe
       }
     else if (d_smearedChargeValuesPtr != NULL && d_isGradSmearedChargeRhs)
       {
-        dealii::FEEvaluation<3,
-                             FEOrderElectro,
-                             C_num1DQuadSmearedCharge() *
-                               C_numCopies1DQuadSmearedCharge()>
-          fe_eval_sc2(*d_matrixFreeDataPtr,
-                      d_matrixFreeVectorComponent,
-                      d_smearedChargeQuadratureId);
+        dealii::FEEvaluation<3, -1> fe_eval_sc2(*d_matrixFreeDataPtr,
+                                                d_matrixFreeVectorComponent,
+                                                d_smearedChargeQuadratureId);
 
         const unsigned int numQuadPointsSmearedb = fe_eval_sc2.n_q_points;
 
@@ -344,7 +340,8 @@ namespace dftfe
         for (unsigned int i = 0; i < 3; i++)
           zeroTensor[i] = dealii::make_vectorized_array(0.0);
 
-        std::vector<dealii::Tensor<1, 3, dealii::VectorizedArray<double>>>
+        dealii::AlignedVector<
+          dealii::Tensor<1, 3, dealii::VectorizedArray<double>>>
           smearedbQuads(numQuadPointsSmearedb, zeroTensor);
         for (unsigned int macrocell = 0;
              macrocell < d_matrixFreeDataPtr->n_macro_cells();
@@ -410,8 +407,12 @@ namespace dftfe
     const distributedCPUVec<double> &src,
     const double                     omega) const
   {
-    dst = src;
-    dst.scale(d_diagonalA);
+    // dst = src;
+    // dst.scale(d_diagonalA);
+
+    for (unsigned int i = 0; i < dst.local_size(); i++)
+      dst.local_element(i) =
+        d_diagonalA.local_element(i) * src.local_element(i);
   }
 
   // Compute and fill value at mean value constrained dof
@@ -529,6 +530,7 @@ namespace dftfe
     // node). This is done for simplicity of implementation.
     dealii::IndexSet allIndicesTouchedByConstraints(
       d_meanValueConstraintVec.size());
+    std::vector<dealii::types::global_dof_index> tempSet;
     for (dealii::IndexSet::ElementIterator it = locallyRelevantElements.begin();
          it < locallyRelevantElements.end();
          it++)
@@ -537,9 +539,9 @@ namespace dftfe
           const dealii::types::global_dof_index lineDof = *it;
           const std::vector<std::pair<dealii::types::global_dof_index, double>>
             *rowData = d_constraintMatrixPtr->get_constraint_entries(lineDof);
-          allIndicesTouchedByConstraints.add_index(lineDof);
+          tempSet.push_back(lineDof);
           for (unsigned int j = 0; j < rowData->size(); ++j)
-            allIndicesTouchedByConstraints.add_index((*rowData)[j].first);
+            tempSet.push_back((*rowData)[j].first);
         }
 
     if (d_atomsPtr)
@@ -547,8 +549,9 @@ namespace dftfe
              it = (*d_atomsPtr).begin();
            it != (*d_atomsPtr).end();
            ++it)
-        allIndicesTouchedByConstraints.add_index(it->first);
+        tempSet.push_back(it->first);
 
+    allIndicesTouchedByConstraints.add_indices(tempSet.begin(), tempSet.end());
     locallyOwnedElements.subtract_set(allIndicesTouchedByConstraints);
 
 
@@ -682,6 +685,7 @@ namespace dftfe
     for (unsigned int cell = cell_range.first; cell < cell_range.second; ++cell)
       {
         fe_eval.reinit(cell);
+        // fe_eval.gather_evaluate(src,dealii::EvaluationFlags::gradients);
         fe_eval.read_dof_values(src);
         fe_eval.evaluate(false, true, false);
         for (unsigned int q = 0; q < fe_eval.n_q_points; ++q)
@@ -690,6 +694,7 @@ namespace dftfe
           }
         fe_eval.integrate(false, true);
         fe_eval.distribute_local_to_global(dst);
+        // fe_eval.integrate_scatter(dealii::EvaluationFlags::gradients,dst);
       }
   }
 
@@ -697,27 +702,34 @@ namespace dftfe
   template <unsigned int FEOrder, unsigned int FEOrderElectro>
   void
   poissonSolverProblem<FEOrder, FEOrderElectro>::vmult(
-    distributedCPUVec<double> &      Ax,
-    const distributedCPUVec<double> &x) const
+    distributedCPUVec<double> &Ax,
+    distributedCPUVec<double> &x)
   {
     Ax = 0.0;
 
     if (d_isMeanValueConstraintComputed)
       {
-        distributedCPUVec<double> tempVec = x;
-        meanValueConstraintDistribute(tempVec);
+        meanValueConstraintDistribute(x);
 
-        d_matrixFreeDataPtr->cell_loop(
-          &poissonSolverProblem<FEOrder, FEOrderElectro>::AX,
-          this,
-          Ax,
-          tempVec);
+        x.update_ghost_values();
+        AX(*d_matrixFreeDataPtr,
+           Ax,
+           x,
+           std::make_pair(0, d_matrixFreeDataPtr->n_macro_cells()));
+        Ax.compress(dealii::VectorOperation::add);
+
 
         meanValueConstraintDistributeSlaveToMaster(Ax);
       }
     else
-      d_matrixFreeDataPtr->cell_loop(
-        &poissonSolverProblem<FEOrder, FEOrderElectro>::AX, this, Ax, x);
+      {
+        x.update_ghost_values();
+        AX(*d_matrixFreeDataPtr,
+           Ax,
+           x,
+           std::make_pair(0, d_matrixFreeDataPtr->n_macro_cells()));
+        Ax.compress(dealii::VectorOperation::add);
+      }
   }
 
 #include "poissonSolverProblem.inst.cc"

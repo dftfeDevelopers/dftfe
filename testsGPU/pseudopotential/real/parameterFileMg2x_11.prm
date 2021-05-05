@@ -65,8 +65,7 @@ subsection SCF parameters
        set CHEBY WFC BLOCK SIZE=90
        set WFC BLOCK SIZE=90
        set CHEBYSHEV FILTER TOLERANCE=1e-5
-       set RR GEP=true
        set OVERLAP COMPUTE COMMUN ORTHO RR=true
-       set USE MIXED PREC PGS O=true
+       set USE MIXED PREC CGS O=true
   end
 end

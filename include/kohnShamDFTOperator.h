@@ -124,7 +124,7 @@ node is stored
          std::vector<dataTypes::number> &      ProjHam);
 
     /**
-     * @brief Compute projection of the operator into a subspace spanned by a given orthogonal basis
+     * @brief Compute projection of the operator into a subspace spanned by a given orthogonal basis HConj=X^{T}*HConj*XConj
      *
      * @param X Vector of Vectors containing multi-wavefunction fields
      * @param numberComponents number of wavefunctions associated with a given node
@@ -137,15 +137,14 @@ node is stored
      * also avoids creation of another full X memory.
      */
     void
-    XtHX(const std::vector<dataTypes::number> &X,
-         const unsigned int                    numberComponents,
-         const std::shared_ptr<const dealii::Utilities::MPI::ProcessGrid>
-           &                                         processGrid,
-         dealii::ScaLAPACKMatrix<dataTypes::number> &projHamPar);
+    XtHX(const std::vector<dataTypes::number> &           X,
+         const unsigned int                               numberComponents,
+         const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
+         dftfe::ScaLAPACKMatrix<dataTypes::number> &      projHamPar);
 
 
     /**
-     * @brief Compute projection of the operator into a subspace spanned by a given orthogonal basis
+     * @brief Compute projection of the operator into a subspace spanned by a given orthogonal basis HConj=X^{T}*HConj*XConj
      *
      * @param X Vector of Vectors containing multi-wavefunction fields
      * @param N total number of wavefunctions components
@@ -157,14 +156,12 @@ node is stored
      * @param projHamPar parallel ScaLAPACKMatrix which stores the computed projection
      * of the operation into the given subspace
      */
-    virtual void
-    XtHXMixedPrec(
-      const std::vector<dataTypes::number> &X,
-      const unsigned int                    N,
-      const unsigned int                    Ncore,
-      const std::shared_ptr<const dealii::Utilities::MPI::ProcessGrid>
-        &                                         processGrid,
-      dealii::ScaLAPACKMatrix<dataTypes::number> &projHamPar);
+    void
+    XtHXMixedPrec(const std::vector<dataTypes::number> &           X,
+                  const unsigned int                               N,
+                  const unsigned int                               Ncore,
+                  const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
+                  dftfe::ScaLAPACKMatrix<dataTypes::number> &      projHamPar);
 
 
     /**
@@ -316,6 +313,17 @@ node is stored
     getInteriorSurfaceNodesMapFromGlobalArray(
       std::vector<unsigned int> &globalArrayClassificationMap);
 
+    const std::vector<dealii::types::global_dof_index> &
+    getFlattenedArrayCellLocalProcIndexIdMap() const;
+
+    const std::vector<double> &
+    getShapeFunctionValuesDensityGaussQuad() const;
+
+    const std::vector<double> &
+    getShapeFunctionGradValuesDensityGaussQuad(const unsigned int idim) const;
+
+    const std::vector<double> &
+    getShapeFunctionValuesDensityGaussLobattoQuad() const;
 
 
     /**
@@ -454,15 +462,12 @@ node is stored
      * and second dimension storing the matrix of size numberNodesPerElement x
      * numberNodesPerElement in a flattened 1D dealii Vectorized array
      */
-    std::vector<double>
-      d_cellShapeFunctionGradientIntegral;
+    std::vector<double> d_cellShapeFunctionGradientIntegral;
 
     /// storage for shapefunctions
     std::vector<double> d_shapeFunctionValue;
     std::vector<double> d_blockiNodeIndex;
     std::vector<double> d_blockjNodeIndex;
-    std::vector<double> d_blockiNodeIndexComplex;
-    std::vector<double> d_blockjNodeIndexComplex;
     std::vector<double> d_shapeFunctionData;
     std::vector<double> d_shapeFunctionGradientValueRefX;
     std::vector<double> d_shapeFunctionGradientValueRefY;
@@ -505,8 +510,7 @@ node is stored
       d_flattenedArrayCellLocalProcIndexIdMap;
 
     std::vector<dealii::types::global_dof_index>
-      d_FullflattenedArrayMacroCellLocalProcIndexIdMap,
-      d_FullflattenedArrayCellLocalProcIndexIdMap;
+      d_FullflattenedArrayMacroCellLocalProcIndexIdMap;
 
     std::vector<unsigned int> d_normalCellIdToMacroCellIdMap;
     std::vector<unsigned int> d_macroCellIdToNormalCellIdMap;

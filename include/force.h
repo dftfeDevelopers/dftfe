@@ -248,9 +248,9 @@ namespace dftfe
      *
      *  computeStress must be call prior to this function call.
      *
-     *  @return Tensor<2,C_DIM,double>  second order stress Tensor in Hartree/Bohr^3
+     *  @return Tensor<2,3,double>  second order stress Tensor in Hartree/Bohr^3
      */
-    Tensor<2, C_DIM, double>
+    Tensor<2, 3, double>
     getStress();
 
     /** @brief get the value of Gaussian generator parameter (d_gaussianConstant).
@@ -266,10 +266,10 @@ namespace dftfe
      *  @return void.
      */
     void
-    locateAtomCoreNodesForce(const DoFHandler<C_DIM> &dofHandlerForce,
-                             const IndexSet &         locally_owned_dofsForce,
+    locateAtomCoreNodesForce(const DoFHandler<3> &   dofHandlerForce,
+                             const IndexSet &        locally_owned_dofsForce,
                              std::map<std::pair<unsigned int, unsigned int>,
-                                      unsigned int> & atomsForceDofs);
+                                      unsigned int> &atomsForceDofs);
 
     void
     createBinObjectsForce(
@@ -277,17 +277,17 @@ namespace dftfe
       const DoFHandler<3> &                    dofHandlerForce,
       const dealii::AffineConstraints<double> &hangingPlusPBCConstraints,
       const vselfBinsManager<FEOrder, FEOrderElectro> &vselfBinsManager,
-      std::vector<std::vector<DoFHandler<C_DIM>::active_cell_iterator>>
+      std::vector<std::vector<DoFHandler<3>::active_cell_iterator>>
         &cellsVselfBallsDofHandler,
-      std::vector<std::vector<DoFHandler<C_DIM>::active_cell_iterator>>
+      std::vector<std::vector<DoFHandler<3>::active_cell_iterator>>
         &cellsVselfBallsDofHandlerForce,
       std::vector<std::map<dealii::CellId, unsigned int>>
         &cellsVselfBallsClosestAtomIdDofHandler,
       std::map<unsigned int, unsigned int> &AtomIdBinIdLocalDofHandler,
-      std::vector<std::map<DoFHandler<C_DIM>::active_cell_iterator,
+      std::vector<std::map<DoFHandler<3>::active_cell_iterator,
                            std::vector<unsigned int>>>
         &cellFacesVselfBallSurfacesDofHandler,
-      std::vector<std::map<DoFHandler<C_DIM>::active_cell_iterator,
+      std::vector<std::map<DoFHandler<3>::active_cell_iterator,
                            std::vector<unsigned int>>>
         &cellFacesVselfBallSurfacesDofHandlerForce);
 
@@ -424,17 +424,17 @@ namespace dftfe
     FPSPLocalGammaAtomsElementalContribution(
       std::map<unsigned int, std::vector<double>>
         &                          forceContributionFPSPLocalGammaAtoms,
-      FEValues<C_DIM> &            feValues,
-      FEFaceValues<C_DIM> &        feFaceValues,
-      FEEvaluation<C_DIM,
+      FEValues<3> &                feValues,
+      FEFaceValues<3> &            feFaceValues,
+      FEEvaluation<3,
                    1,
                    C_num1DQuadLPSP<FEOrder>() * C_numCopies1DQuadLPSP(),
-                   C_DIM> &        forceEval,
+                   3> &            forceEval,
       const MatrixFree<3, double> &matrixFreeData,
       const unsigned int           phiTotDofHandlerIndexElectro,
       const unsigned int           cell,
-      const std::vector<VectorizedArray<double>> &rhoQuads,
-      const std::vector<Tensor<1, C_DIM, VectorizedArray<double>>>
+      const dealii::AlignedVector<VectorizedArray<double>> &rhoQuads,
+      const dealii::AlignedVector<Tensor<1, 3, VectorizedArray<double>>>
         &gradRhoQuads,
       const std::map<unsigned int,
                      std::map<dealii::CellId, std::vector<double>>>
@@ -447,59 +447,51 @@ namespace dftfe
     FPhiTotSmearedChargesGammaAtomsElementalContribution(
       std::map<unsigned int, std::vector<double>>
         &                          forceContributionSmearedChargesGammaAtoms,
-      FEEvaluation<3,
-                   1,
-                   C_num1DQuadSmearedCharge() *
-                     C_numCopies1DQuadSmearedCharge(),
-                   3> &            forceEval,
+      FEEvaluation<3, -1, 1, 3> &  forceEval,
       const MatrixFree<3, double> &matrixFreeData,
       const unsigned int           cell,
-      const std::vector<Tensor<1, C_DIM, VectorizedArray<double>>>
+      const dealii::AlignedVector<Tensor<1, 3, VectorizedArray<double>>>
         &                              gradPhiTotQuads,
       const std::vector<unsigned int> &nonTrivialAtomIdsMacroCell,
       const std::map<dealii::CellId, std::vector<int>> &bQuadAtomIdsAllAtoms,
-      const std::vector<VectorizedArray<double>> &      smearedbQuads);
+      const dealii::AlignedVector<VectorizedArray<double>> &smearedbQuads);
 
     void
     FVselfSmearedChargesGammaAtomsElementalContribution(
       std::map<unsigned int, std::vector<double>>
         &                          forceContributionSmearedChargesGammaAtoms,
-      FEEvaluation<3,
-                   1,
-                   C_num1DQuadSmearedCharge() *
-                     C_numCopies1DQuadSmearedCharge(),
-                   3> &            forceEval,
+      FEEvaluation<3, -1, 1, 3> &  forceEval,
       const MatrixFree<3, double> &matrixFreeData,
       const unsigned int           cell,
-      const std::vector<Tensor<1, C_DIM, VectorizedArray<double>>>
+      const dealii::AlignedVector<Tensor<1, 3, VectorizedArray<double>>>
         &                              gradVselfBinQuads,
       const std::vector<unsigned int> &nonTrivialAtomIdsMacroCell,
       const std::map<dealii::CellId, std::vector<int>> &bQuadAtomIdsAllAtoms,
-      const std::vector<VectorizedArray<double>> &      smearedbQuads);
+      const dealii::AlignedVector<VectorizedArray<double>> &smearedbQuads);
 
     void
     FShadowLocalGammaAtomsElementalContributionElectronic(
       std::map<unsigned int, std::vector<double>>
         &forceContributionLocalGammaAtoms,
       FEEvaluation<
-        C_DIM,
+        3,
         1,
         C_num1DQuad<C_rhoNodalPolyOrder<FEOrder, FEOrderElectro>()>(),
-        C_DIM> &                   forceEval,
+        3> &                       forceEval,
       const MatrixFree<3, double> &matrixFreeData,
       const unsigned int           cell,
-      const std::vector<VectorizedArray<double>>
+      const dealii::AlignedVector<VectorizedArray<double>>
         &derVxcWithRhoTimesRhoDiffQuads,
       const std::map<unsigned int,
                      std::map<dealii::CellId, std::vector<double>>>
         &gradRhoAtomsQuadsSeparate,
-      const std::vector<Tensor<2, C_DIM, VectorizedArray<double>>>
+      const dealii::AlignedVector<Tensor<2, 3, VectorizedArray<double>>>
         &der2ExcWithGradRhoOutQuads,
-      const std::vector<Tensor<1, C_DIM, VectorizedArray<double>>>
+      const dealii::AlignedVector<Tensor<1, 3, VectorizedArray<double>>>
         &derVxcWithGradRhoOutQuads,
-      const std::vector<VectorizedArray<double>>
+      const dealii::AlignedVector<VectorizedArray<double>>
         &shadowKSRhoMinMinusGradRhoQuads,
-      const std::vector<Tensor<1, C_DIM, VectorizedArray<double>>>
+      const dealii::AlignedVector<Tensor<1, 3, VectorizedArray<double>>>
         &shadowKSGradRhoMinMinusGradRhoQuads,
       const std::map<unsigned int,
                      std::map<dealii::CellId, std::vector<double>>>
@@ -519,13 +511,13 @@ namespace dftfe
       std::map<unsigned int, std::vector<double>>
         &forceContributionLocalGammaAtoms,
       FEEvaluation<
-        C_DIM,
+        3,
         1,
         C_num1DQuad<C_rhoNodalPolyOrder<FEOrder, FEOrderElectro>()>(),
-        C_DIM> &                   forceEval,
+        3> &                       forceEval,
       const MatrixFree<3, double> &matrixFreeData,
       const unsigned int           cell,
-      const std::vector<Tensor<1, C_DIM, VectorizedArray<double>>>
+      const dealii::AlignedVector<Tensor<1, 3, VectorizedArray<double>>>
         &gradPhiRhoMinusApproxRhoElectroQuads,
       const std::map<unsigned int,
                      std::map<dealii::CellId, std::vector<double>>>
@@ -537,13 +529,13 @@ namespace dftfe
       std::map<unsigned int, std::vector<double>>
         &forceContributionFNonlinearCoreCorrectionGammaAtoms,
       FEEvaluation<
-        C_DIM,
+        3,
         1,
         C_num1DQuad<C_rhoNodalPolyOrder<FEOrder, FEOrderElectro>()>(),
-        C_DIM> &                                  forceEval,
-      const MatrixFree<3, double> &               matrixFreeData,
-      const unsigned int                          cell,
-      const std::vector<VectorizedArray<double>> &vxcQuads,
+        3> &                                                forceEval,
+      const MatrixFree<3, double> &                         matrixFreeData,
+      const unsigned int                                    cell,
+      const dealii::AlignedVector<VectorizedArray<double>> &vxcQuads,
       const std::map<unsigned int,
                      std::map<dealii::CellId, std::vector<double>>>
         &gradRhoCoreAtoms);
@@ -554,13 +546,13 @@ namespace dftfe
       std::map<unsigned int, std::vector<double>>
         &forceContributionFNonlinearCoreCorrectionGammaAtoms,
       FEEvaluation<
-        C_DIM,
+        3,
         1,
         C_num1DQuad<C_rhoNodalPolyOrder<FEOrder, FEOrderElectro>()>(),
-        C_DIM> &                   forceEval,
+        3> &                       forceEval,
       const MatrixFree<3, double> &matrixFreeData,
       const unsigned int           cell,
-      const std::vector<Tensor<1, C_DIM, VectorizedArray<double>>>
+      const dealii::AlignedVector<Tensor<1, 3, VectorizedArray<double>>>
         &derExcGradRho,
       const std::map<unsigned int,
                      std::map<dealii::CellId, std::vector<double>>>
@@ -571,17 +563,17 @@ namespace dftfe
       std::map<unsigned int, std::vector<double>>
         &forceContributionFNonlinearCoreCorrectionGammaAtoms,
       FEEvaluation<
-        C_DIM,
+        3,
         1,
         C_num1DQuad<C_rhoNodalPolyOrder<FEOrder, FEOrderElectro>()>(),
-        C_DIM> &                                  forceEval,
-      const MatrixFree<3, double> &               matrixFreeData,
-      const unsigned int                          cell,
-      const std::vector<VectorizedArray<double>> &vxcQuadsSpin0,
-      const std::vector<VectorizedArray<double>> &vxcQuadsSpin1,
-      const std::vector<Tensor<1, C_DIM, VectorizedArray<double>>>
+        3> &                                                forceEval,
+      const MatrixFree<3, double> &                         matrixFreeData,
+      const unsigned int                                    cell,
+      const dealii::AlignedVector<VectorizedArray<double>> &vxcQuadsSpin0,
+      const dealii::AlignedVector<VectorizedArray<double>> &vxcQuadsSpin1,
+      const dealii::AlignedVector<Tensor<1, 3, VectorizedArray<double>>>
         &derExcGradRhoSpin0,
-      const std::vector<Tensor<1, C_DIM, VectorizedArray<double>>>
+      const dealii::AlignedVector<Tensor<1, 3, VectorizedArray<double>>>
         &derExcGradRhoSpin1,
       const std::map<unsigned int,
                      std::map<dealii::CellId, std::vector<double>>>
@@ -612,43 +604,46 @@ namespace dftfe
       std::map<unsigned int, std::vector<double>>
         &forceContributionFnlGammaAtoms,
       FEEvaluation<
-        C_DIM,
+        3,
         1,
         C_num1DQuad<C_rhoNodalPolyOrder<FEOrder, FEOrderElectro>()>(),
-        C_DIM> &           forceEval,
-      FEEvaluation<C_DIM,
+        3> &             forceEval,
+      FEEvaluation<3,
                    1,
                    C_num1DQuadNLPSP<FEOrder>() * C_numCopies1DQuadNLPSP(),
-                   C_DIM> &forceEvalNLP,
-      const unsigned int   cell,
-      const std::vector<std::vector<
-        std::vector<std::vector<Tensor<1, 2, VectorizedArray<double>>>>>>
+                   3> &  forceEvalNLP,
+      const unsigned int cell,
+      const dealii::AlignedVector<dealii::AlignedVector<dealii::AlignedVector<
+        dealii::AlignedVector<Tensor<1, 2, VectorizedArray<double>>>>>>
         &zetaDeltaVQuads,
       const std::vector<std::vector<std::vector<std::complex<double>>>>
         &projectorKetTimesPsiTimesVTimesPartOcc,
-      const std::vector<Tensor<1, 2, VectorizedArray<double>>> &psiQuads,
-      const std::vector<Tensor<1, 2, Tensor<1, C_DIM, VectorizedArray<double>>>>
-        &                                     gradPsiQuads,
-      const std::vector<std::vector<double>> &eigenValues,
-      const std::vector<unsigned int> &       nonlocalAtomsCompactSupportList);
+      const dealii::AlignedVector<Tensor<1, 2, VectorizedArray<double>>>
+        &psiQuads,
+      const dealii::AlignedVector<
+        Tensor<1, 2, Tensor<1, 3, VectorizedArray<double>>>> &gradPsiQuads,
+      const std::vector<std::vector<double>> &                eigenValues,
+      const std::vector<unsigned int> &nonlocalAtomsCompactSupportList);
 #else
     void
     FnlGammaAtomsElementalContribution(
       std::map<unsigned int, std::vector<double>>
         &forceContributionFnlGammaAtoms,
       FEEvaluation<
-        C_DIM,
+        3,
         1,
         C_num1DQuad<C_rhoNodalPolyOrder<FEOrder, FEOrderElectro>()>(),
-        C_DIM> &           forceEval,
-      FEEvaluation<C_DIM,
+        3> &             forceEval,
+      FEEvaluation<3,
                    1,
                    C_num1DQuadNLPSP<FEOrder>() * C_numCopies1DQuadNLPSP(),
-                   C_DIM> &forceEvalNLP,
-      const unsigned int   cell,
-      const std::vector<std::vector<std::vector<VectorizedArray<double>>>>
+                   3> &  forceEvalNLP,
+      const unsigned int cell,
+      const dealii::AlignedVector<
+        dealii::AlignedVector<dealii::AlignedVector<VectorizedArray<double>>>>
         &zetaDeltaVQuads,
-      const std::vector<std::vector<Tensor<1, C_DIM, VectorizedArray<double>>>>
+      const dealii::AlignedVector<
+        dealii::AlignedVector<Tensor<1, 3, VectorizedArray<double>>>>
         &projectorKetTimesPsiTimesVTimesPartOccContractionPsi,
       const std::vector<bool> &        isAtomInCell,
       const std::vector<unsigned int> &nonlocalPseudoWfcsAccum);
@@ -764,17 +759,19 @@ namespace dftfe
         &                                              hessianRhoCoreAtoms,
       const vselfBinsManager<FEOrder, FEOrderElectro> &vselfBinsManagerElectro);
 
-    void
-    addEPSPStressContribution(
-      FEValues<C_DIM> &            feValues,
-      FEEvaluation<C_DIM,
+    void addEPSPStressContribution(
+      FEValues<3> &                feValues,
+      FEFaceValues<3> &            feFaceValues,
+      FEEvaluation<3,
                    1,
                    C_num1DQuadLPSP<FEOrder>() * C_numCopies1DQuadLPSP(),
-                   C_DIM> &        forceEval,
+                   3> &            forceEval,
       const MatrixFree<3, double> &matrixFreeData,
       const unsigned int           phiTotDofHandlerIndexElectro,
       const unsigned int           cell,
-      const std::vector<Tensor<1, 3, VectorizedArray<double>>> &gradRhoQuads,
+      const dealii::AlignedVector<VectorizedArray<double>> &rhoQuads,
+      const dealii::AlignedVector<Tensor<1, 3, VectorizedArray<double>>>
+        &gradRhoQuads,
       const std::map<unsigned int,
                      std::map<dealii::CellId, std::vector<double>>>
         &                                              pseudoVLocAtoms,
@@ -784,14 +781,14 @@ namespace dftfe
 
     void addENonlinearCoreCorrectionStressContribution(
       FEEvaluation<
-        C_DIM,
+        3,
         1,
         C_num1DQuad<C_rhoNodalPolyOrder<FEOrder, FEOrderElectro>()>(),
-        C_DIM> &                                  forceEval,
-      const MatrixFree<3, double> &               matrixFreeData,
-      const unsigned int                          cell,
-      const std::vector<VectorizedArray<double>> &vxcQuads,
-      const std::vector<Tensor<1, C_DIM, VectorizedArray<double>>>
+        3> &                                                forceEval,
+      const MatrixFree<3, double> &                         matrixFreeData,
+      const unsigned int                                    cell,
+      const dealii::AlignedVector<VectorizedArray<double>> &vxcQuads,
+      const dealii::AlignedVector<Tensor<1, 3, VectorizedArray<double>>>
         &derExcGradRho,
       const std::map<unsigned int,
                      std::map<dealii::CellId, std::vector<double>>>
@@ -802,17 +799,17 @@ namespace dftfe
 
     void addENonlinearCoreCorrectionStressContributionSpinPolarized(
       FEEvaluation<
-        C_DIM,
+        3,
         1,
         C_num1DQuad<C_rhoNodalPolyOrder<FEOrder, FEOrderElectro>()>(),
-        C_DIM> &                                  forceEval,
-      const MatrixFree<3, double> &               matrixFreeData,
-      const unsigned int                          cell,
-      const std::vector<VectorizedArray<double>> &vxcQuadsSpin0,
-      const std::vector<VectorizedArray<double>> &vxcQuadsSpin1,
-      const std::vector<Tensor<1, C_DIM, VectorizedArray<double>>>
+        3> &                                                forceEval,
+      const MatrixFree<3, double> &                         matrixFreeData,
+      const unsigned int                                    cell,
+      const dealii::AlignedVector<VectorizedArray<double>> &vxcQuadsSpin0,
+      const dealii::AlignedVector<VectorizedArray<double>> &vxcQuadsSpin1,
+      const dealii::AlignedVector<Tensor<1, 3, VectorizedArray<double>>>
         &derExcGradRhoSpin0,
-      const std::vector<Tensor<1, C_DIM, VectorizedArray<double>>>
+      const dealii::AlignedVector<Tensor<1, 3, VectorizedArray<double>>>
         &derExcGradRhoSpin1,
       const std::map<unsigned int,
                      std::map<dealii::CellId, std::vector<double>>>
@@ -823,32 +820,26 @@ namespace dftfe
       const bool isXCGGA = false);
 
     void addEPhiTotSmearedStressContribution(
-      FEEvaluation<3,
-                   1,
-                   C_num1DQuadSmearedCharge() *
-                     C_numCopies1DQuadSmearedCharge(),
-                   3> &                                         forceEval,
-      const MatrixFree<3, double> &                             matrixFreeData,
-      const unsigned int                                        cell,
-      const std::vector<Tensor<1, 3, VectorizedArray<double>>> &gradPhiTotQuads,
+      FEEvaluation<3, -1, 1, 3> &  forceEval,
+      const MatrixFree<3, double> &matrixFreeData,
+      const unsigned int           cell,
+      const dealii::AlignedVector<Tensor<1, 3, VectorizedArray<double>>>
+        &                              gradPhiTotQuads,
       const std::vector<unsigned int> &nonTrivialAtomImageIdsMacroCell,
       const std::map<dealii::CellId, std::vector<int>>
-        &                                         bQuadAtomIdsAllAtomsImages,
-      const std::vector<VectorizedArray<double>> &smearedbQuads);
+        &bQuadAtomIdsAllAtomsImages,
+      const dealii::AlignedVector<VectorizedArray<double>> &smearedbQuads);
 
     void addEVselfSmearedStressContribution(
-      FEEvaluation<3,
-                   1,
-                   C_num1DQuadSmearedCharge() *
-                     C_numCopies1DQuadSmearedCharge(),
-                   3> &                                         forceEval,
-      const MatrixFree<3, double> &                             matrixFreeData,
-      const unsigned int                                        cell,
-      const std::vector<Tensor<1, 3, VectorizedArray<double>>> &gradVselfQuads,
+      FEEvaluation<3, -1, 1, 3> &  forceEval,
+      const MatrixFree<3, double> &matrixFreeData,
+      const unsigned int           cell,
+      const dealii::AlignedVector<Tensor<1, 3, VectorizedArray<double>>>
+        &                              gradVselfQuads,
       const std::vector<unsigned int> &nonTrivialAtomImageIdsMacroCell,
       const std::map<dealii::CellId, std::vector<int>>
-        &                                         bQuadAtomIdsAllAtomsImages,
-      const std::vector<VectorizedArray<double>> &smearedbQuads);
+        &bQuadAtomIdsAllAtomsImages,
+      const dealii::AlignedVector<VectorizedArray<double>> &smearedbQuads);
 
     void
     computeElementalNonLocalPseudoOVDataForce();
@@ -912,13 +903,13 @@ namespace dftfe
     std::vector<double> d_globalAtomsForces;
 
     /// Storage for configurational stress tensor
-    Tensor<2, C_DIM, double> d_stress;
+    Tensor<2, 3, double> d_stress;
 
     /* Part of the stress tensor which is summed over k points.
      * It is a temporary data structure required for stress evaluation
      * (d_stress) when parallization over k points is on.
      */
-    Tensor<2, C_DIM, double> d_stressKPoints;
+    Tensor<2, 3, double> d_stressKPoints;
 
     /* Dont use true except for debugging forces only without mesh movement, as
      * gaussian ovelap on atoms for move mesh is by default set to false
@@ -930,7 +921,7 @@ namespace dftfe
 
     /// Finite element object for configurational force computation. Linear
     /// finite elements with three force field components are used.
-    FESystem<C_DIM> FEForce;
+    FESystem<3> FEForce;
 
     /* DofHandler on which we define the configurational force field. Each
      * geometric fem node has three dofs corresponding the the three force
@@ -938,7 +929,7 @@ namespace dftfe
      * is the linear shape function attached to it. This DofHandler is based on
      * the same triangulation on which we solve the dft problem.
      */
-    DoFHandler<C_DIM> d_dofHandlerForce;
+    DoFHandler<3> d_dofHandlerForce;
 
     /* DofHandler on which we define the configurational force field from
      * electrostatic part (without psp). Each geometric fem node has three dofs
@@ -947,7 +938,7 @@ namespace dftfe
      * attached to it. This DofHandler is based on the same triangulation on
      * which we solve the dft problem.
      */
-    DoFHandler<C_DIM> d_dofHandlerForceElectro;
+    DoFHandler<3> d_dofHandlerForceElectro;
 
     /// Index of the d_dofHandlerForce in the MatrixFree object stored in
     /// dftClass. This is required to correctly use FEEvaluation class.
@@ -994,12 +985,12 @@ namespace dftfe
     /// Internal data: stores cell iterators of all cells in
     /// dftPtr->d_dofHandler which are part of the vself ball. Outer vector is
     /// over vself bins.
-    std::vector<std::vector<DoFHandler<C_DIM>::active_cell_iterator>>
+    std::vector<std::vector<DoFHandler<3>::active_cell_iterator>>
       d_cellsVselfBallsDofHandler;
 
     /// Internal data: stores cell iterators of all cells in d_dofHandlerForce
     /// which are part of the vself ball. Outer vector is over vself bins.
-    std::vector<std::vector<DoFHandler<C_DIM>::active_cell_iterator>>
+    std::vector<std::vector<DoFHandler<3>::active_cell_iterator>>
       d_cellsVselfBallsDofHandlerForce;
 
     /// Internal data: stores map of vself ball cell Id  to the closest atom Id
@@ -1017,8 +1008,8 @@ namespace dftfe
      * bins. Inner map is between the cell iterator and the vector of face ids
      * to integrate on for that cell iterator.
      */
-    std::vector<std::map<DoFHandler<C_DIM>::active_cell_iterator,
-                         std::vector<unsigned int>>>
+    std::vector<
+      std::map<DoFHandler<3>::active_cell_iterator, std::vector<unsigned int>>>
       d_cellFacesVselfBallSurfacesDofHandler;
 
     /* Internal data: stores the face ids of d_dofHandlerForce (three component
@@ -1027,19 +1018,19 @@ namespace dftfe
      * Inner map is between the cell iterator and the vector of face ids to
      * integrate on for that cell iterator.
      */
-    std::vector<std::map<DoFHandler<C_DIM>::active_cell_iterator,
-                         std::vector<unsigned int>>>
+    std::vector<
+      std::map<DoFHandler<3>::active_cell_iterator, std::vector<unsigned int>>>
       d_cellFacesVselfBallSurfacesDofHandlerForce;
 
     /// Internal data: stores cell iterators of all cells in
     /// dftPtr->d_dofHandler which are part of the vself ball. Outer vector is
     /// over vself bins.
-    std::vector<std::vector<DoFHandler<C_DIM>::active_cell_iterator>>
+    std::vector<std::vector<DoFHandler<3>::active_cell_iterator>>
       d_cellsVselfBallsDofHandlerElectro;
 
     /// Internal data: stores cell iterators of all cells in d_dofHandlerForce
     /// which are part of the vself ball. Outer vector is over vself bins.
-    std::vector<std::vector<DoFHandler<C_DIM>::active_cell_iterator>>
+    std::vector<std::vector<DoFHandler<3>::active_cell_iterator>>
       d_cellsVselfBallsDofHandlerForceElectro;
 
     /// Internal data: stores map of vself ball cell Id  to the closest atom Id
@@ -1057,8 +1048,8 @@ namespace dftfe
      * bins. Inner map is between the cell iterator and the vector of face ids
      * to integrate on for that cell iterator.
      */
-    std::vector<std::map<DoFHandler<C_DIM>::active_cell_iterator,
-                         std::vector<unsigned int>>>
+    std::vector<
+      std::map<DoFHandler<3>::active_cell_iterator, std::vector<unsigned int>>>
       d_cellFacesVselfBallSurfacesDofHandlerElectro;
 
     /* Internal data: stores the face ids of d_dofHandlerForce (three component
@@ -1067,8 +1058,8 @@ namespace dftfe
      * Inner map is between the cell iterator and the vector of face ids to
      * integrate on for that cell iterator.
      */
-    std::vector<std::map<DoFHandler<C_DIM>::active_cell_iterator,
-                         std::vector<unsigned int>>>
+    std::vector<
+      std::map<DoFHandler<3>::active_cell_iterator, std::vector<unsigned int>>>
       d_cellFacesVselfBallSurfacesDofHandlerForceElectro;
 
     std::map<dealii::CellId, DoFHandler<3>::active_cell_iterator>

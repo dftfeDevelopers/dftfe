@@ -115,16 +115,13 @@ namespace dftfe
     getShapeFunctionGradientValuesZ();
 
     thrust::device_vector<double> &
-    getShapeFunctionGradientValuesXInverted(
-      const bool use2pPlusOneGLQuad = false);
+    getShapeFunctionGradientValuesXInverted();
 
     thrust::device_vector<double> &
-    getShapeFunctionGradientValuesYInverted(
-      const bool use2pPlusOneGLQuad = false);
+    getShapeFunctionGradientValuesYInverted();
 
     thrust::device_vector<double> &
-    getShapeFunctionGradientValuesZInverted(
-      const bool use2pPlusOneGLQuad = false);
+    getShapeFunctionGradientValuesZInverted();
 
     thrust::device_vector<double> &
     getShapeFunctionGradientValuesNLPInverted();
@@ -137,6 +134,9 @@ namespace dftfe
 
     thrust::device_vector<dataTypes::number> &
     getCellWaveFunctionMatrix();
+
+    distributedGPUVec<double> &
+    getParallelChebyBlockVectorDevice();
 
     thrust::device_vector<unsigned int> &
     getLocallyOwnedProcBoundaryNodesVectorDevice();
@@ -236,10 +236,9 @@ namespace dftfe
          const unsigned int         M,
          const unsigned int         N,
          cublasHandle_t &           handle,
-         const std::shared_ptr<const dealii::Utilities::MPI::ProcessGrid>
-           &                              processGrid,
-         dealii::ScaLAPACKMatrix<double> &projHamPar,
-         GPUCCLWrapper &                  gpucclMpiCommDomain);
+         const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
+         dftfe::ScaLAPACKMatrix<double> &                 projHamPar,
+         GPUCCLWrapper &                                  gpucclMpiCommDomain);
 
     /**
      * @brief Compute projection of the operator into a subspace spanned by a given basis.
@@ -260,17 +259,16 @@ namespace dftfe
      */
     void
     XtHXOverlapComputeCommun(
-      const double *             X,
-      distributedGPUVec<double> &Xb,
-      distributedGPUVec<double> &HXb,
-      distributedGPUVec<double> &projectorKetTimesVector,
-      const unsigned int         M,
-      const unsigned int         N,
-      cublasHandle_t &           handle,
-      const std::shared_ptr<const dealii::Utilities::MPI::ProcessGrid>
-        &                              processGrid,
-      dealii::ScaLAPACKMatrix<double> &projHamPar,
-      GPUCCLWrapper &                  gpucclMpiCommDomain);
+      const double *                                   X,
+      distributedGPUVec<double> &                      Xb,
+      distributedGPUVec<double> &                      HXb,
+      distributedGPUVec<double> &                      projectorKetTimesVector,
+      const unsigned int                               M,
+      const unsigned int                               N,
+      cublasHandle_t &                                 handle,
+      const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
+      dftfe::ScaLAPACKMatrix<double> &                 projHamPar,
+      GPUCCLWrapper &                                  gpucclMpiCommDomain);
 
 
     /**
@@ -295,20 +293,18 @@ namespace dftfe
      * of the operation into the given subspace
      */
     void
-    XtHXMixedPrec(
-      const double *             X,
-      distributedGPUVec<double> &Xb,
-      distributedGPUVec<float> & floatXb,
-      distributedGPUVec<double> &HXb,
-      distributedGPUVec<double> &projectorKetTimesVector,
-      const unsigned int         M,
-      const unsigned int         N,
-      const unsigned int         Noc,
-      cublasHandle_t &           handle,
-      const std::shared_ptr<const dealii::Utilities::MPI::ProcessGrid>
-        &                              processGrid,
-      dealii::ScaLAPACKMatrix<double> &projHamPar,
-      GPUCCLWrapper &                  gpucclMpiCommDomain);
+    XtHXMixedPrec(const double *             X,
+                  distributedGPUVec<double> &Xb,
+                  distributedGPUVec<float> & floatXb,
+                  distributedGPUVec<double> &HXb,
+                  distributedGPUVec<double> &projectorKetTimesVector,
+                  const unsigned int         M,
+                  const unsigned int         N,
+                  const unsigned int         Noc,
+                  cublasHandle_t &           handle,
+                  const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
+                  dftfe::ScaLAPACKMatrix<double> &                 projHamPar,
+                  GPUCCLWrapper &gpucclMpiCommDomain);
 
 
     /**
@@ -333,18 +329,17 @@ namespace dftfe
      */
     void
     XtHXOffDiagBlockSinglePrec(
-      const double *             X,
-      distributedGPUVec<double> &Xb,
-      distributedGPUVec<float> & floatXb,
-      distributedGPUVec<double> &HXb,
-      distributedGPUVec<double> &projectorKetTimesVector,
-      const unsigned int         M,
-      const unsigned int         N,
-      cublasHandle_t &           handle,
-      const std::shared_ptr<const dealii::Utilities::MPI::ProcessGrid>
-        &                              processGrid,
-      dealii::ScaLAPACKMatrix<double> &projHamPar,
-      GPUCCLWrapper &                  gpucclMpiCommDomain);
+      const double *                                   X,
+      distributedGPUVec<double> &                      Xb,
+      distributedGPUVec<float> &                       floatXb,
+      distributedGPUVec<double> &                      HXb,
+      distributedGPUVec<double> &                      projectorKetTimesVector,
+      const unsigned int                               M,
+      const unsigned int                               N,
+      cublasHandle_t &                                 handle,
+      const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
+      dftfe::ScaLAPACKMatrix<double> &                 projHamPar,
+      GPUCCLWrapper &                                  gpucclMpiCommDomain);
 
 
     /**
@@ -371,19 +366,18 @@ namespace dftfe
      */
     void
     XtHXMixedPrecOverlapComputeCommun(
-      const double *             X,
-      distributedGPUVec<double> &Xb,
-      distributedGPUVec<float> & floatXb,
-      distributedGPUVec<double> &HXb,
-      distributedGPUVec<double> &projectorKetTimesVector,
-      const unsigned int         M,
-      const unsigned int         N,
-      const unsigned int         Noc,
-      cublasHandle_t &           handle,
-      const std::shared_ptr<const dealii::Utilities::MPI::ProcessGrid>
-        &                              processGrid,
-      dealii::ScaLAPACKMatrix<double> &projHamPar,
-      GPUCCLWrapper &                  gpucclMpiCommDomain);
+      const double *                                   X,
+      distributedGPUVec<double> &                      Xb,
+      distributedGPUVec<float> &                       floatXb,
+      distributedGPUVec<double> &                      HXb,
+      distributedGPUVec<double> &                      projectorKetTimesVector,
+      const unsigned int                               M,
+      const unsigned int                               N,
+      const unsigned int                               Noc,
+      cublasHandle_t &                                 handle,
+      const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
+      dftfe::ScaLAPACKMatrix<double> &                 projHamPar,
+      GPUCCLWrapper &                                  gpucclMpiCommDomain);
 
 
     /**
@@ -409,18 +403,17 @@ namespace dftfe
      */
     void
     XtHXOffDiagBlockSinglePrecOverlapComputeCommun(
-      const double *             X,
-      distributedGPUVec<double> &Xb,
-      distributedGPUVec<float> & floatXb,
-      distributedGPUVec<double> &HXb,
-      distributedGPUVec<double> &projectorKetTimesVector,
-      const unsigned int         M,
-      const unsigned int         N,
-      cublasHandle_t &           handle,
-      const std::shared_ptr<const dealii::Utilities::MPI::ProcessGrid>
-        &                              processGrid,
-      dealii::ScaLAPACKMatrix<double> &projHamPar,
-      GPUCCLWrapper &                  gpucclMpiCommDomain);
+      const double *                                   X,
+      distributedGPUVec<double> &                      Xb,
+      distributedGPUVec<float> &                       floatXb,
+      distributedGPUVec<double> &                      HXb,
+      distributedGPUVec<double> &                      projectorKetTimesVector,
+      const unsigned int                               M,
+      const unsigned int                               N,
+      cublasHandle_t &                                 handle,
+      const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
+      dftfe::ScaLAPACKMatrix<double> &                 projHamPar,
+      GPUCCLWrapper &                                  gpucclMpiCommDomain);
 
 
 #  endif
@@ -562,7 +555,8 @@ namespace dftfe
     /// precompute shapefunction gradient integral
     void
     preComputeShapeFunctionGradientIntegrals(
-      const unsigned int lpspQuadratureId);
+      const unsigned int lpspQuadratureId,
+      const bool         onlyUpdateGradNiNjIntegral = false);
 
 
     void
@@ -735,7 +729,7 @@ namespace dftfe
      * and second dimension storing the matrix of size numberNodesPerElement x
      * numberNodesPerElement in a flattened 1D dealii Vectorized array
      */
-    std::vector<std::vector<dealii::VectorizedArray<double>>>
+    std::vector<dealii::AlignedVector<dealii::VectorizedArray<double>>>
       d_cellShapeFunctionGradientIntegral;
 
     std::vector<double> d_cellShapeFunctionGradientIntegralFlattened;

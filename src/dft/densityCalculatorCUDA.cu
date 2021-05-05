@@ -191,6 +191,9 @@ namespace dftfe
 #ifdef USE_COMPLEX
       AssertThrow(false, dftUtils::ExcNotImplementedYet());
 #else
+      if (use2pPlusOneGLQuad)
+        AssertThrow(!isEvaluateGradRho, dftUtils::ExcNotImplementedYet());
+
       int this_process;
       MPI_Comm_rank(MPI_COMM_WORLD, &this_process);
       cudaDeviceSynchronize();
@@ -269,12 +272,8 @@ namespace dftfe
       // distributedGPUVec<double> & cudaFlattenedArrayBlock =
       // operatorMatrix.getBlockCUDADealiiVector();
 
-      distributedGPUVec<double> cudaFlattenedArrayBlock;
-      vectorTools::createDealiiVector(
-        operatorMatrix.getMatrixFreeData()->get_vector_partitioner(
-          matrixFreeDofhandlerIndex),
-        BVec,
-        cudaFlattenedArrayBlock);
+      distributedGPUVec<double> &cudaFlattenedArrayBlock =
+        operatorMatrix.getParallelChebyBlockVectorDevice();
 
       const unsigned int numGhosts =
         cudaFlattenedArrayBlock.get_partitioner()->n_ghost_indices();
@@ -409,10 +408,9 @@ namespace dftfe
                             strideA,
                             thrust::raw_pointer_cast(
                               &(operatorMatrix
-                                  .getShapeFunctionGradientValuesXInverted(
-                                    use2pPlusOneGLQuad)[startingCellId *
-                                                        numNodesPerElement *
-                                                        numQuadPoints])),
+                                  .getShapeFunctionGradientValuesXInverted()
+                                    [startingCellId * numNodesPerElement *
+                                     numQuadPoints])),
                             numNodesPerElement,
                             strideB,
                             &scalarCoeffBeta,
@@ -437,10 +435,9 @@ namespace dftfe
                             strideA,
                             thrust::raw_pointer_cast(
                               &(operatorMatrix
-                                  .getShapeFunctionGradientValuesYInverted(
-                                    use2pPlusOneGLQuad)[startingCellId *
-                                                        numNodesPerElement *
-                                                        numQuadPoints])),
+                                  .getShapeFunctionGradientValuesYInverted()
+                                    [startingCellId * numNodesPerElement *
+                                     numQuadPoints])),
                             numNodesPerElement,
                             strideB,
                             &scalarCoeffBeta,
@@ -464,10 +461,9 @@ namespace dftfe
                             strideA,
                             thrust::raw_pointer_cast(
                               &(operatorMatrix
-                                  .getShapeFunctionGradientValuesZInverted(
-                                    use2pPlusOneGLQuad)[startingCellId *
-                                                        numNodesPerElement *
-                                                        numQuadPoints])),
+                                  .getShapeFunctionGradientValuesZInverted()
+                                    [startingCellId * numNodesPerElement *
+                                     numQuadPoints])),
                             numNodesPerElement,
                             strideB,
                             &scalarCoeffBeta,
@@ -697,10 +693,9 @@ namespace dftfe
                             strideA,
                             thrust::raw_pointer_cast(
                               &(operatorMatrix
-                                  .getShapeFunctionGradientValuesXInverted(
-                                    use2pPlusOneGLQuad)[startingCellId *
-                                                        numNodesPerElement *
-                                                        numQuadPoints])),
+                                  .getShapeFunctionGradientValuesXInverted()
+                                    [startingCellId * numNodesPerElement *
+                                     numQuadPoints])),
                             numNodesPerElement,
                             strideB,
                             &scalarCoeffBeta,
@@ -725,10 +720,9 @@ namespace dftfe
                             strideA,
                             thrust::raw_pointer_cast(
                               &(operatorMatrix
-                                  .getShapeFunctionGradientValuesYInverted(
-                                    use2pPlusOneGLQuad)[startingCellId *
-                                                        numNodesPerElement *
-                                                        numQuadPoints])),
+                                  .getShapeFunctionGradientValuesYInverted()
+                                    [startingCellId * numNodesPerElement *
+                                     numQuadPoints])),
                             numNodesPerElement,
                             strideB,
                             &scalarCoeffBeta,
@@ -752,10 +746,9 @@ namespace dftfe
                             strideA,
                             thrust::raw_pointer_cast(
                               &(operatorMatrix
-                                  .getShapeFunctionGradientValuesZInverted(
-                                    use2pPlusOneGLQuad)[startingCellId *
-                                                        numNodesPerElement *
-                                                        numQuadPoints])),
+                                  .getShapeFunctionGradientValuesZInverted()
+                                    [startingCellId * numNodesPerElement *
+                                     numQuadPoints])),
                             numNodesPerElement,
                             strideB,
                             &scalarCoeffBeta,
@@ -1000,10 +993,9 @@ namespace dftfe
                                 strideA,
                                 thrust::raw_pointer_cast(
                                   &(operatorMatrix
-                                      .getShapeFunctionGradientValuesXInverted(
-                                        use2pPlusOneGLQuad)[startingCellId *
-                                                            numNodesPerElement *
-                                                            numQuadPoints])),
+                                      .getShapeFunctionGradientValuesXInverted()
+                                        [startingCellId * numNodesPerElement *
+                                         numQuadPoints])),
                                 numNodesPerElement,
                                 strideB,
                                 &scalarCoeffBeta,
@@ -1028,10 +1020,9 @@ namespace dftfe
                                 strideA,
                                 thrust::raw_pointer_cast(
                                   &(operatorMatrix
-                                      .getShapeFunctionGradientValuesYInverted(
-                                        use2pPlusOneGLQuad)[startingCellId *
-                                                            numNodesPerElement *
-                                                            numQuadPoints])),
+                                      .getShapeFunctionGradientValuesYInverted()
+                                        [startingCellId * numNodesPerElement *
+                                         numQuadPoints])),
                                 numNodesPerElement,
                                 strideB,
                                 &scalarCoeffBeta,
@@ -1055,10 +1046,9 @@ namespace dftfe
                                 strideA,
                                 thrust::raw_pointer_cast(
                                   &(operatorMatrix
-                                      .getShapeFunctionGradientValuesZInverted(
-                                        use2pPlusOneGLQuad)[startingCellId *
-                                                            numNodesPerElement *
-                                                            numQuadPoints])),
+                                      .getShapeFunctionGradientValuesZInverted()
+                                        [startingCellId * numNodesPerElement *
+                                         numQuadPoints])),
                                 numNodesPerElement,
                                 strideB,
                                 &scalarCoeffBeta,
@@ -1303,10 +1293,9 @@ namespace dftfe
                                 strideA,
                                 thrust::raw_pointer_cast(
                                   &(operatorMatrix
-                                      .getShapeFunctionGradientValuesXInverted(
-                                        use2pPlusOneGLQuad)[startingCellId *
-                                                            numNodesPerElement *
-                                                            numQuadPoints])),
+                                      .getShapeFunctionGradientValuesXInverted()
+                                        [startingCellId * numNodesPerElement *
+                                         numQuadPoints])),
                                 numNodesPerElement,
                                 strideB,
                                 &scalarCoeffBeta,
@@ -1331,10 +1320,9 @@ namespace dftfe
                                 strideA,
                                 thrust::raw_pointer_cast(
                                   &(operatorMatrix
-                                      .getShapeFunctionGradientValuesYInverted(
-                                        use2pPlusOneGLQuad)[startingCellId *
-                                                            numNodesPerElement *
-                                                            numQuadPoints])),
+                                      .getShapeFunctionGradientValuesYInverted()
+                                        [startingCellId * numNodesPerElement *
+                                         numQuadPoints])),
                                 numNodesPerElement,
                                 strideB,
                                 &scalarCoeffBeta,
@@ -1358,10 +1346,9 @@ namespace dftfe
                                 strideA,
                                 thrust::raw_pointer_cast(
                                   &(operatorMatrix
-                                      .getShapeFunctionGradientValuesZInverted(
-                                        use2pPlusOneGLQuad)[startingCellId *
-                                                            numNodesPerElement *
-                                                            numQuadPoints])),
+                                      .getShapeFunctionGradientValuesZInverted()
+                                        [startingCellId * numNodesPerElement *
+                                         numQuadPoints])),
                                 numNodesPerElement,
                                 strideB,
                                 &scalarCoeffBeta,

@@ -112,6 +112,7 @@ namespace dftfe
   void
   chebyshevOrthogonalizedSubspaceIterationSolver::onlyRR(
     operatorDFTClass &              operatorMatrix,
+    elpaScalaManager &              elpaScala,
     std::vector<dataTypes::number> &eigenVectorsFlattened,
     std::vector<dataTypes::number> &eigenVectorsRotFracDensityFlattened,
     distributedCPUVec<double> &     tempEigenVec,
@@ -125,6 +126,7 @@ namespace dftfe
       {
         linearAlgebraOperations::rayleighRitzSpectrumSplitDirect(
           operatorMatrix,
+          elpaScala,
           eigenVectorsFlattened,
           eigenVectorsRotFracDensityFlattened,
           totalNumberWaveFunctions,
@@ -138,6 +140,7 @@ namespace dftfe
       {
         linearAlgebraOperations::rayleighRitz(
           operatorMatrix,
+          elpaScala,
           eigenVectorsFlattened,
           totalNumberWaveFunctions,
           interBandGroupComm,
@@ -154,6 +157,7 @@ namespace dftfe
   void
   chebyshevOrthogonalizedSubspaceIterationSolver::solve(
     operatorDFTClass &              operatorMatrix,
+    elpaScalaManager &              elpaScala,
     std::vector<dataTypes::number> &eigenVectorsFlattened,
     std::vector<dataTypes::number> &eigenVectorsRotFracDensityFlattened,
     distributedCPUVec<double> &     tempEigenVec,
@@ -178,8 +182,14 @@ namespace dftfe
     // set Chebyshev order
     //
     if (chebyshevOrder == 0)
-      chebyshevOrder =
-        internal::setChebyshevOrder(d_upperBoundUnWantedSpectrum);
+      {
+        chebyshevOrder =
+          internal::setChebyshevOrder(d_upperBoundUnWantedSpectrum);
+
+        if (dftParameters::orthogType.compare("CGS") == 0 &&
+            !dftParameters::isPseudopotential)
+          chebyshevOrder *= 0.5;
+      }
 
     chebyshevOrder =
       (isFirstScf && dftParameters::isPseudopotential) ?
@@ -309,61 +319,29 @@ namespace dftfe
             // call Chebyshev filtering function only for the current block to
             // be filtered and does in-place filtering
             computing_timer.enter_section("Chebyshev filtering");
-            if (jvec + BVec < dftParameters::numAdaptiveFilterStates)
+
+            if (dftParameters::HXOptimFlag)
               {
-                const double chebyshevOrd = (double)chebyshevOrder;
-                const double adaptiveOrder =
-                  0.5 * chebyshevOrd + jvec * 0.3 * chebyshevOrd /
-                                         dftParameters::numAdaptiveFilterStates;
-                if (dftParameters::HXOptimFlag)
-                  {
-                    linearAlgebraOperations::chebyshevFilterOpt(
-                      operatorMatrix,
-                      eigenVectorsFlattenedArrayBlock,
-                      cellWaveFunctionMatrix,
-                      BVec,
-                      std::ceil(adaptiveOrder),
-                      d_lowerBoundUnWantedSpectrum,
-                      d_upperBoundUnWantedSpectrum,
-                      d_lowerBoundWantedSpectrum);
-                  }
-                else
-                  {
-                    linearAlgebraOperations::chebyshevFilter(
-                      operatorMatrix,
-                      eigenVectorsFlattenedArrayBlock,
-                      BVec,
-                      std::ceil(adaptiveOrder),
-                      d_lowerBoundUnWantedSpectrum,
-                      d_upperBoundUnWantedSpectrum,
-                      d_lowerBoundWantedSpectrum);
-                  }
+                linearAlgebraOperations::chebyshevFilterOpt(
+                  operatorMatrix,
+                  eigenVectorsFlattenedArrayBlock,
+                  cellWaveFunctionMatrix,
+                  BVec,
+                  chebyshevOrder,
+                  d_lowerBoundUnWantedSpectrum,
+                  d_upperBoundUnWantedSpectrum,
+                  d_lowerBoundWantedSpectrum);
               }
             else
               {
-                if (dftParameters::HXOptimFlag)
-                  {
-                    linearAlgebraOperations::chebyshevFilterOpt(
-                      operatorMatrix,
-                      eigenVectorsFlattenedArrayBlock,
-                      cellWaveFunctionMatrix,
-                      BVec,
-                      chebyshevOrder,
-                      d_lowerBoundUnWantedSpectrum,
-                      d_upperBoundUnWantedSpectrum,
-                      d_lowerBoundWantedSpectrum);
-                  }
-                else
-                  {
-                    linearAlgebraOperations::chebyshevFilter(
-                      operatorMatrix,
-                      eigenVectorsFlattenedArrayBlock,
-                      BVec,
-                      chebyshevOrder,
-                      d_lowerBoundUnWantedSpectrum,
-                      d_upperBoundUnWantedSpectrum,
-                      d_lowerBoundWantedSpectrum);
-                  }
+                linearAlgebraOperations::chebyshevFilter(
+                  operatorMatrix,
+                  eigenVectorsFlattenedArrayBlock,
+                  BVec,
+                  chebyshevOrder,
+                  d_lowerBoundUnWantedSpectrum,
+                  d_upperBoundUnWantedSpectrum,
+                  d_lowerBoundWantedSpectrum);
               }
             computing_timer.exit_section("Chebyshev filtering");
 
@@ -505,13 +483,14 @@ namespace dftfe
     if (dftParameters::verbosity >= 4)
       pcout << "ChebyShev Filtering Done: " << std::endl;
 
-    if (dftParameters::rrGEP)
+    if (dftParameters::orthogType.compare("CGS") == 0)
       {
         computing_timer.enter_section("Rayleigh-Ritz GEP");
         if (eigenValues.size() != totalNumberWaveFunctions)
           {
             linearAlgebraOperations::rayleighRitzGEPSpectrumSplitDirect(
               operatorMatrix,
+              elpaScala,
               eigenVectorsFlattened,
               eigenVectorsRotFracDensityFlattened,
               totalNumberWaveFunctions,
@@ -525,6 +504,7 @@ namespace dftfe
           {
             linearAlgebraOperations::rayleighRitzGEP(
               operatorMatrix,
+              elpaScala,
               eigenVectorsFlattened,
               totalNumberWaveFunctions,
               interBandGroupComm,
@@ -557,70 +537,14 @@ namespace dftfe
           }
         computing_timer.exit_section("eigen vectors residuals opt");
       }
-    else
+    else if (dftParameters::orthogType.compare("GS") == 0)
       {
-        if (dftParameters::orthogType.compare("LW") == 0)
-          {
-            computing_timer.enter_section("Lowden Orthogn Opt");
-            const unsigned int flag =
-              linearAlgebraOperations::lowdenOrthogonalization(
-                eigenVectorsFlattened,
-                totalNumberWaveFunctions,
-                operatorMatrix.getMPICommunicator());
-
-            if (flag == 1)
-              {
-                if (dftParameters::verbosity >= 1)
-                  pcout
-                    << "Switching to Gram-Schimdt orthogonalization as Lowden orthogonalization was not successful"
-                    << std::endl;
-
-                computing_timer.enter_section("Gram-Schmidt Orthogn Opt");
-                linearAlgebraOperations::gramSchmidtOrthogonalization(
-                  eigenVectorsFlattened,
-                  totalNumberWaveFunctions,
-                  operatorMatrix.getMPICommunicator());
-                computing_timer.exit_section("Gram-Schmidt Orthogn Opt");
-              }
-            computing_timer.exit_section("Lowden Orthogn Opt");
-          }
-        else if (dftParameters::orthogType.compare("PGS") == 0)
-          {
-            computing_timer.enter_section("Pseudo-Gram-Schmidt");
-            const unsigned int flag =
-              linearAlgebraOperations::pseudoGramSchmidtOrthogonalization(
-                operatorMatrix,
-                eigenVectorsFlattened,
-                totalNumberWaveFunctions,
-                interBandGroupComm,
-                operatorMatrix.getMPICommunicator(),
-                useMixedPrec);
-
-            if (flag == 1)
-              {
-                if (dftParameters::verbosity >= 1)
-                  pcout
-                    << "Switching to Gram-Schimdt orthogonalization as Pseudo-Gram-Schimdt orthogonalization was not successful"
-                    << std::endl;
-
-                computing_timer.enter_section("Gram-Schmidt Orthogn Opt");
-                linearAlgebraOperations::gramSchmidtOrthogonalization(
-                  eigenVectorsFlattened,
-                  totalNumberWaveFunctions,
-                  operatorMatrix.getMPICommunicator());
-                computing_timer.exit_section("Gram-Schmidt Orthogn Opt");
-              }
-            computing_timer.exit_section("Pseudo-Gram-Schmidt");
-          }
-        else if (dftParameters::orthogType.compare("GS") == 0)
-          {
-            computing_timer.enter_section("Gram-Schmidt Orthogn Opt");
-            linearAlgebraOperations::gramSchmidtOrthogonalization(
-              eigenVectorsFlattened,
-              totalNumberWaveFunctions,
-              operatorMatrix.getMPICommunicator());
-            computing_timer.exit_section("Gram-Schmidt Orthogn Opt");
-          }
+        computing_timer.enter_section("Gram-Schmidt Orthogn Opt");
+        linearAlgebraOperations::gramSchmidtOrthogonalization(
+          eigenVectorsFlattened,
+          totalNumberWaveFunctions,
+          operatorMatrix.getMPICommunicator());
+        computing_timer.exit_section("Gram-Schmidt Orthogn Opt");
 
         if (dftParameters::verbosity >= 4)
           pcout << "Orthogonalization Done: " << std::endl;
@@ -631,6 +555,7 @@ namespace dftfe
           {
             linearAlgebraOperations::rayleighRitzSpectrumSplitDirect(
               operatorMatrix,
+              elpaScala,
               eigenVectorsFlattened,
               eigenVectorsRotFracDensityFlattened,
               totalNumberWaveFunctions,
@@ -644,6 +569,7 @@ namespace dftfe
           {
             linearAlgebraOperations::rayleighRitz(
               operatorMatrix,
+              elpaScala,
               eigenVectorsFlattened,
               totalNumberWaveFunctions,
               interBandGroupComm,

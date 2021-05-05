@@ -68,7 +68,11 @@ namespace dftfe
       const unsigned int             innerBlockSizeEnlp,
       thrust::device_vector<double> &nlpContractionContributionD,
       thrust::device_vector<double> &
-        projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuadsFlattenedD);
+        projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuadsFlattenedDBlock,
+      double *
+        projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuadsFlattenedH,
+      double *
+        projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuadsFlattenedHPinnedTemp);
 
     void
     gpuPortedForceKernelsAllD(
@@ -99,7 +103,11 @@ namespace dftfe
       thrust::device_vector<double> &eshelbyTensorQuadValuesD,
       thrust::device_vector<double> &nlpContractionContributionD,
       thrust::device_vector<double> &
-                         projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuadsFlattenedD,
+        projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuadsFlattenedDBlock,
+      double *
+        projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuadsFlattenedH,
+      double *
+                         projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuadsFlattenedHPinnedTemp,
       const unsigned int cellsBlockSize,
       const unsigned int innerBlockSizeEnlp,
       const bool         isPsp);

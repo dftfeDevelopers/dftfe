@@ -84,7 +84,6 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::computeHamiltonianMatrix(
         dealii::ExcMessage(
           "DFT-FE Error: mismatch in quadrature rule usage in computeHamiltonianMatrix."));
 
- 
       dgemm_(&transA,
 	     &transB,
 	     &sizeNiNj,//M
@@ -347,7 +346,6 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::computeHamiltonianMatrix(
       const unsigned int n_sub_cells =
         dftPtr->matrix_free_data.n_components_filled(iMacroCell);
 
-
       for (unsigned int iSubCell = 0; iSubCell < n_sub_cells; ++iSubCell)
         {
           // FIXME: Use functions like mkl_malloc for 64 byte memory alignment.
@@ -475,7 +473,7 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::computeKineticMatrix()
   unsigned int iElem = 0;
   for (unsigned int iMacroCell = 0; iMacroCell < numberMacroCells; ++iMacroCell)
     {
-      std::vector<VectorizedArray<double>> elementHamiltonianMatrix;
+      dealii::AlignedVector<VectorizedArray<double>> elementHamiltonianMatrix;
       elementHamiltonianMatrix.resize(numberDofsPerElement *
                                       numberDofsPerElement);
       fe_eval.reinit(iMacroCell);

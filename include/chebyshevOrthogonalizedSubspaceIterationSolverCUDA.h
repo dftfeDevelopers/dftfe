@@ -69,12 +69,11 @@ namespace dftfe
           std::vector<double> &      residuals,
           GPUCCLWrapper &            gpucclMpiCommDomain,
           const MPI_Comm &           interBandGroupComm,
-          dealii::ScaLAPACKMatrix<double> &projHamPar,
-          dealii::ScaLAPACKMatrix<double> &overlapMatPar,
-          const std::shared_ptr<const dealii::Utilities::MPI::ProcessGrid>
-            &        processGrid,
-          const bool isFirstFilteringCall,
-          const bool computeResidual,
+          dftfe::ScaLAPACKMatrix<double> &                 projHamPar,
+          dftfe::ScaLAPACKMatrix<double> &                 overlapMatPar,
+          const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
+          const bool                                       isFirstFilteringCall,
+          const bool                                       computeResidual,
           const bool useMixedPrecOverall = false,
           const bool isFirstScf          = false,
           const bool isElpaStep1         = false,
@@ -93,10 +92,9 @@ namespace dftfe
            std::vector<double> &      eigenValues,
            GPUCCLWrapper &            gpucclMpiCommDomain,
            const MPI_Comm &           interBandGroupComm,
-           dealii::ScaLAPACKMatrix<double> &projHamPar,
-           dealii::ScaLAPACKMatrix<double> &overlapMatPar,
-           const std::shared_ptr<const dealii::Utilities::MPI::ProcessGrid>
-             &        processGrid,
+           dftfe::ScaLAPACKMatrix<double> &                 projHamPar,
+           dftfe::ScaLAPACKMatrix<double> &                 overlapMatPar,
+           const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
            const bool useMixedPrecOverall = false,
            const bool isElpaStep1         = false,
            const bool isElpaStep2         = false);
@@ -105,20 +103,19 @@ namespace dftfe
      * @brief Used for XL-BOMD.
      */
     void
-    solveNoRR(operatorDFTCUDAClass &           operatorMatrix,
-              double *                         eigenVectorsFlattenedCUDA,
-              const unsigned int               flattenedSize,
-              distributedCPUVec<double> &      tempEigenVec,
-              const unsigned int               totalNumberWaveFunctions,
-              std::vector<double> &            eigenValues,
-              GPUCCLWrapper &                  gpucclMpiCommDomain,
-              const MPI_Comm &                 interBandGroupComm,
-              dealii::ScaLAPACKMatrix<double> &projHamPar,
-              dealii::ScaLAPACKMatrix<double> &overlapMatPar,
-              const std::shared_ptr<const dealii::Utilities::MPI::ProcessGrid>
-                &                processGrid,
-              const unsigned int numberPasses,
-              const bool         useMixedPrecOverall);
+    solveNoRR(operatorDFTCUDAClass &          operatorMatrix,
+              double *                        eigenVectorsFlattenedCUDA,
+              const unsigned int              flattenedSize,
+              distributedCPUVec<double> &     tempEigenVec,
+              const unsigned int              totalNumberWaveFunctions,
+              std::vector<double> &           eigenValues,
+              GPUCCLWrapper &                 gpucclMpiCommDomain,
+              const MPI_Comm &                interBandGroupComm,
+              dftfe::ScaLAPACKMatrix<double> &projHamPar,
+              dftfe::ScaLAPACKMatrix<double> &overlapMatPar,
+              const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
+              const unsigned int                               numberPasses,
+              const bool useMixedPrecOverall);
 
 
     /**
@@ -159,9 +156,6 @@ namespace dftfe
 
     // distributedGPUVec<double>
     void *d_projectorKetTimesVectorPtr;
-
-    // distributedGPUVec<float>
-    void *d_projectorKetTimesVectorFloatPtr;
 
     // distributedGPUVec<double>
     void *d_cudaFlattenedArrayBlock2Ptr;

@@ -20,7 +20,7 @@
 // Include header files
 #include <chebyshevOrthogonalizedSubspaceIterationSolver.h>
 #include <dealiiLinearSolver.h>
-#include <densityCalculator.h>
+#include <densityCalculatorCPU.h>
 #include <dft.h>
 #include <dftParameters.h>
 #include <dftUtils.h>
@@ -290,7 +290,7 @@ namespace dftfe
         }
 
     domainVolume = Utilities::MPI::sum(domainVolume, mpi_communicator);
-    if (dftParameters::verbosity >= 1)
+    if (dftParameters::verbosity >= 2)
       pcout << "Volume of the domain (Bohr^3): " << domainVolume << std::endl;
     return domainVolume;
   }
@@ -498,7 +498,14 @@ namespace dftfe
       }
 
     if (dftParameters::algoType == "FAST")
-      dftParameters::numCoreWfcRR = 0.93 * numElectrons / 2.0;
+      {
+        if (dftParameters::TVal < 1000)
+          {
+            dftParameters::numCoreWfcRR = 0.8 * numElectrons / 2.0;
+            pcout << " Setting SPECTRUM SPLIT CORE EIGENSTATES to be "
+                  << dftParameters::numCoreWfcRR << std::endl;
+          }
+      }
 
 
 #ifdef DFTFE_WITH_GPU
@@ -760,7 +767,7 @@ namespace dftfe
 
         MPI_Barrier(MPI_COMM_WORLD);
         init_core = MPI_Wtime() - init_core;
-        if (dftParameters::verbosity >= 1)
+        if (dftParameters::verbosity >= 2)
           pcout
             << "initPseudoPotentialAll: Time taken for initializing core density for non-linear core correction: "
             << init_core << std::endl;
@@ -776,7 +783,7 @@ namespace dftfe
 
             MPI_Barrier(MPI_COMM_WORLD);
             init_nonlocal1 = MPI_Wtime() - init_nonlocal1;
-            if (dftParameters::verbosity >= 1)
+            if (dftParameters::verbosity >= 2)
               pcout
                 << "initPseudoPotentialAll: Time taken for computeSparseStructureNonLocalProjectors_OV: "
                 << init_nonlocal1 << std::endl;
@@ -793,7 +800,7 @@ namespace dftfe
 
         MPI_Barrier(MPI_COMM_WORLD);
         init_nonlocal2 = MPI_Wtime() - init_nonlocal2;
-        if (dftParameters::verbosity >= 1)
+        if (dftParameters::verbosity >= 2)
           pcout << "initPseudoPotentialAll: Time taken for non local psp init: "
                 << init_nonlocal2 << std::endl;
       }
@@ -1133,6 +1140,10 @@ namespace dftfe
 
     initializeKohnShamDFTOperator();
 
+    d_netFloatingDispSinceLastCheckForSmearedChargeOverlaps.clear();
+    d_netFloatingDispSinceLastCheckForSmearedChargeOverlaps.resize(
+      atomLocations.size() * 3, 0.0);
+
     computingTimerStandard.exit_section("KSDFT problem initialization");
   }
 
@@ -1140,21 +1151,25 @@ namespace dftfe
   void
   dftClass<FEOrder, FEOrderElectro>::initNoRemesh(
     const bool updateImagesAndKPointsAndVselfBins,
-    const bool updateSmearedChargeWidths,
+    const bool checkSmearedChargeWidthsForOverlap,
     const bool useSingleAtomSolutionOverride)
   {
     computingTimerStandard.enter_section("KSDFT problem initialization");
     if (updateImagesAndKPointsAndVselfBins)
       {
         initImageChargesUpdateKPoints();
+      }
 
-        if (updateSmearedChargeWidths)
-          {
-            calculateNearestAtomDistances();
+    if (checkSmearedChargeWidthsForOverlap)
+      {
+        calculateNearestAtomDistances();
 
-            if (dftParameters::smearedNuclearCharges)
-              calculateSmearedChargeWidths();
-          }
+        if (dftParameters::smearedNuclearCharges)
+          calculateSmearedChargeWidths();
+
+        d_netFloatingDispSinceLastCheckForSmearedChargeOverlaps.clear();
+        d_netFloatingDispSinceLastCheckForSmearedChargeOverlaps.resize(
+          atomLocations.size() * 3, 0.0);
       }
 
     //
@@ -1173,7 +1188,7 @@ namespace dftfe
 
     MPI_Barrier(MPI_COMM_WORLD);
     init_bc = MPI_Wtime() - init_bc;
-    if (dftParameters::verbosity >= 1)
+    if (dftParameters::verbosity >= 2)
       pcout
         << "updateAtomPositionsAndMoveMesh: Time taken for initBoundaryConditions: "
         << init_bc << std::endl;
@@ -1247,7 +1262,7 @@ namespace dftfe
 
     MPI_Barrier(MPI_COMM_WORLD);
     init_rho = MPI_Wtime() - init_rho;
-    if (dftParameters::verbosity >= 1)
+    if (dftParameters::verbosity >= 2)
       pcout << "updateAtomPositionsAndMoveMesh: Time taken for initRho: "
             << init_rho << std::endl;
 
@@ -1263,7 +1278,7 @@ namespace dftfe
 
     MPI_Barrier(MPI_COMM_WORLD);
     init_pseudo = MPI_Wtime() - init_pseudo;
-    if (dftParameters::verbosity >= 1)
+    if (dftParameters::verbosity >= 2)
       pcout << "Time taken for initPseudoPotentialAll: " << init_pseudo
             << std::endl;
 
@@ -1283,7 +1298,9 @@ namespace dftfe
   template <unsigned int FEOrder, unsigned int FEOrderElectro>
   void
   dftClass<FEOrder, FEOrderElectro>::deformDomain(
-    const Tensor<2, 3, double> &deformationGradient)
+    const Tensor<2, 3, double> &deformationGradient,
+    const bool                  vselfPerturbationUpdateForStress,
+    const bool                  print)
   {
     d_affineTransformMesh.initMoved(d_domainBoundingVectors);
     d_affineTransformMesh.transform(deformationGradient);
@@ -1291,7 +1308,153 @@ namespace dftfe
     dftUtils::transformDomainBoundingVectors(d_domainBoundingVectors,
                                              deformationGradient);
 
-    initNoRemesh(true, true, false);
+    if (print)
+      {
+        pcout
+          << "-----------Simulation Domain bounding vectors (lattice vectors in fully periodic case)-------------"
+          << std::endl;
+        for (int i = 0; i < d_domainBoundingVectors.size(); ++i)
+          {
+            pcout << "v" << i + 1 << " : " << d_domainBoundingVectors[i][0]
+                  << " " << d_domainBoundingVectors[i][1] << " "
+                  << d_domainBoundingVectors[i][2] << std::endl;
+          }
+        pcout
+          << "-----------------------------------------------------------------------------------------"
+          << std::endl;
+      }
+
+#ifdef USE_COMPLEX
+    if (!vselfPerturbationUpdateForStress)
+      recomputeKPointCoordinates();
+#endif
+
+    // update atomic and image positions without any wrapping across periodic
+    // boundary
+    std::vector<Tensor<1, 3, double>> imageDisplacements(
+      d_imagePositions.size());
+    std::vector<Tensor<1, 3, double>> imageDisplacementsTrunc(
+      d_imagePositionsTrunc.size());
+
+    for (int iImage = 0; iImage < d_imagePositions.size(); ++iImage)
+      {
+        Point<3>           imageCoor;
+        const unsigned int imageChargeId = d_imageIds[iImage];
+        imageCoor[0]                     = d_imagePositions[iImage][0];
+        imageCoor[1]                     = d_imagePositions[iImage][1];
+        imageCoor[2]                     = d_imagePositions[iImage][2];
+
+        Point<3> atomCoor;
+        atomCoor[0] = atomLocations[imageChargeId][2];
+        atomCoor[1] = atomLocations[imageChargeId][3];
+        atomCoor[2] = atomLocations[imageChargeId][4];
+
+        imageDisplacements[iImage] = imageCoor - atomCoor;
+      }
+
+    for (int iImage = 0; iImage < d_imagePositionsTrunc.size(); ++iImage)
+      {
+        Point<3>           imageCoor;
+        const unsigned int imageChargeId = d_imageIdsTrunc[iImage];
+        imageCoor[0]                     = d_imagePositionsTrunc[iImage][0];
+        imageCoor[1]                     = d_imagePositionsTrunc[iImage][1];
+        imageCoor[2]                     = d_imagePositionsTrunc[iImage][2];
+
+        Point<3> atomCoor;
+        atomCoor[0] = atomLocations[imageChargeId][2];
+        atomCoor[1] = atomLocations[imageChargeId][3];
+        atomCoor[2] = atomLocations[imageChargeId][4];
+
+        imageDisplacementsTrunc[iImage] = imageCoor - atomCoor;
+      }
+
+    for (unsigned int i = 0; i < atomLocations.size(); ++i)
+      atomLocations[i] = atomLocationsFractional[i];
+
+    if (print)
+      {
+        pcout << "-----Fractional coordinates of atoms------ " << std::endl;
+        for (unsigned int i = 0; i < atomLocations.size(); ++i)
+          {
+            pcout << "AtomId " << i << ":  " << atomLocationsFractional[i][2]
+                  << " " << atomLocationsFractional[i][3] << " "
+                  << atomLocationsFractional[i][4] << "\n";
+          }
+        pcout
+          << "-----------------------------------------------------------------------------------------"
+          << std::endl;
+      }
+
+    internaldft::convertToCellCenteredCartesianCoordinates(
+      atomLocations, d_domainBoundingVectors);
+
+
+    for (int iImage = 0; iImage < d_imagePositions.size(); ++iImage)
+      {
+        const unsigned int imageChargeId = d_imageIds[iImage];
+
+        Point<3> atomCoor;
+        atomCoor[0] = atomLocations[imageChargeId][2];
+        atomCoor[1] = atomLocations[imageChargeId][3];
+        atomCoor[2] = atomLocations[imageChargeId][4];
+
+        imageDisplacements[iImage] =
+          deformationGradient * imageDisplacements[iImage];
+
+        d_imagePositions[iImage][0] =
+          atomCoor[0] + imageDisplacements[iImage][0];
+        d_imagePositions[iImage][1] =
+          atomCoor[1] + imageDisplacements[iImage][1];
+        d_imagePositions[iImage][2] =
+          atomCoor[2] + imageDisplacements[iImage][2];
+      }
+
+    for (int iImage = 0; iImage < d_imagePositionsTrunc.size(); ++iImage)
+      {
+        const unsigned int imageChargeId = d_imageIdsTrunc[iImage];
+
+        Point<3> atomCoor;
+        atomCoor[0] = atomLocations[imageChargeId][2];
+        atomCoor[1] = atomLocations[imageChargeId][3];
+        atomCoor[2] = atomLocations[imageChargeId][4];
+
+        imageDisplacementsTrunc[iImage] =
+          deformationGradient * imageDisplacementsTrunc[iImage];
+
+        d_imagePositionsTrunc[iImage][0] =
+          atomCoor[0] + imageDisplacementsTrunc[iImage][0];
+        d_imagePositionsTrunc[iImage][1] =
+          atomCoor[1] + imageDisplacementsTrunc[iImage][1];
+        d_imagePositionsTrunc[iImage][2] =
+          atomCoor[2] + imageDisplacementsTrunc[iImage][2];
+      }
+
+    if (vselfPerturbationUpdateForStress)
+      {
+        //
+        // reinitialize dirichlet BCs for total potential and vSelf poisson
+        // solutions
+        //
+        double init_bc;
+        MPI_Barrier(MPI_COMM_WORLD);
+        init_bc = MPI_Wtime();
+
+
+        // first true option only updates the boundary conditions
+        // second true option signals update is only for vself perturbation
+        initBoundaryConditions(true, true);
+
+        MPI_Barrier(MPI_COMM_WORLD);
+        init_bc = MPI_Wtime() - init_bc;
+        if (dftParameters::verbosity >= 2)
+          pcout
+            << "updateAtomPositionsAndMoveMesh: Time taken for initBoundaryConditions: "
+            << init_bc << std::endl;
+      }
+    else
+      {
+        initNoRemesh(false, true, false);
+      }
   }
 
 
@@ -1476,7 +1639,7 @@ namespace dftfe
   template <unsigned int FEOrder, unsigned int FEOrderElectro>
   void
   dftClass<FEOrder, FEOrderElectro>::initializeKohnShamDFTOperator(
-    const bool initializeCUDAScala)
+    const bool initializeCublas)
   {
     TimerOutput::Scope scope(computing_timer, "kohnShamDFTOperator init");
     double             init_ksoperator;
@@ -1506,9 +1669,6 @@ namespace dftfe
     if (!dftParameters::useGPU)
       {
         kohnShamDFTEigenOperator.init();
-
-        kohnShamDFTEigenOperator.processGridOptionalELPASetup(
-          d_numEigenValues, d_numEigenValuesRR);
       }
 
 #ifdef DFTFE_WITH_GPU
@@ -1516,7 +1676,7 @@ namespace dftfe
       {
         kohnShamDFTEigenOperatorCUDA.init();
 
-        if (initializeCUDAScala)
+        if (initializeCublas)
           {
             kohnShamDFTEigenOperatorCUDA.createCublasHandle();
 
@@ -1550,16 +1710,6 @@ namespace dftfe
              d_numEigenValuesRR / dftParameters::wfcBlockSize == 0),
             ExcMessage(
               "DFT-FE Error: total number RR wavefunctions must be exactly divisible by wfc block size for GPU run."));
-
-        AssertThrow(
-          (dftParameters::mixedPrecXtHXFracStates %
-               dftParameters::wfcBlockSize ==
-             0 ||
-           dftParameters::mixedPrecXtHXFracStates /
-               dftParameters::wfcBlockSize ==
-             0),
-          ExcMessage(
-            "DFT-FE Error: MIXED PREC XTHX FRAC STATES must be exactly divisible by WFC BLOCK SIZE for GPU run."));
 
         // band group parallelization data structures
         const unsigned int numberBandGroups =
@@ -1608,7 +1758,7 @@ namespace dftfe
 
     MPI_Barrier(MPI_COMM_WORLD);
     init_ksoperator = MPI_Wtime() - init_ksoperator;
-    if (dftParameters::verbosity >= 1)
+    if (dftParameters::verbosity >= 2)
       pcout << "init: Time taken for kohnShamDFTOperator class initialization: "
             << init_ksoperator << std::endl;
   }
@@ -1649,12 +1799,6 @@ namespace dftfe
 #ifdef DFTFE_WITH_GPU
         if (dftParameters::useGPU)
           d_kohnShamDFTOperatorCUDAPtr->destroyCublasHandle();
-#endif
-
-#ifdef DFTFE_WITH_ELPA
-        if (dftParameters::useELPA && !dftParameters::useGPU)
-          d_kohnShamDFTOperatorPtr->elpaDeallocateHandles(d_numEigenValues,
-                                                          d_numEigenValuesRR);
 #endif
 
         delete d_kohnShamDFTOperatorPtr;
@@ -1848,9 +1992,12 @@ namespace dftfe
 
 
 #ifdef DFTFE_WITH_GPU
-    compute_rhoOut(kohnShamDFTEigenOperatorCUDA, true, true);
+    compute_rhoOut(kohnShamDFTEigenOperatorCUDA,
+                   kohnShamDFTEigenOperator,
+                   true,
+                   true);
 #else
-    compute_rhoOut(true, true);
+    compute_rhoOut(kohnShamDFTEigenOperator, true, true);
 #endif
     computing_timer.exit_section("compute rho");
 
@@ -1883,12 +2030,9 @@ namespace dftfe
       matrix_free_data.get_quadrature(d_densityQuadratureId);
 
     // computingTimerStandard.enter_section("Total scf solve");
-    energyCalculator                           energyCalc(mpi_communicator,
+    energyCalculator energyCalc(mpi_communicator,
                                 interpoolcomm,
                                 interBandGroupComm);
-    DensityCalculator<FEOrder, FEOrderElectro> densityCalc;
-
-
 
     // set up linear solver
     dealiiLinearSolver dealiiCGSolver(mpi_communicator, dealiiLinearSolver::CG);
@@ -2856,7 +3000,8 @@ namespace dftfe
               true);
           }
         else
-          compute_rhoOut((scfIter <
+          compute_rhoOut(kohnShamDFTEigenOperator,
+                         (scfIter <
                             dftParameters::spectrumSplitStartingScfIter ||
                           scfConverged) ?
                            false :
@@ -2868,6 +3013,7 @@ namespace dftfe
 
 #  ifdef DFTFE_WITH_GPU
         compute_rhoOut(kohnShamDFTEigenOperatorCUDA,
+                       kohnShamDFTEigenOperator,
                        (scfIter < dftParameters::spectrumSplitStartingScfIter ||
                         scfConverged) ?
                          false :
@@ -2876,7 +3022,8 @@ namespace dftfe
                          (scfIter == (dftParameters::numSCFIterations - 1)) ||
                          solveLinearizedKS);
 #  else
-        compute_rhoOut((scfIter < dftParameters::spectrumSplitStartingScfIter ||
+        compute_rhoOut(kohnShamDFTEigenOperator,
+                       (scfIter < dftParameters::spectrumSplitStartingScfIter ||
                         scfConverged) ?
                          false :
                          true,
@@ -2988,6 +3135,7 @@ namespace dftfe
                   d_rhoCore,
                   d_gradRhoCore,
                   d_bQuadValuesAllAtoms,
+                  d_bCellNonTrivialAtomIds,
                   d_localVselfs,
                   d_pseudoVLoc,
                   d_pseudoVLoc,
@@ -3029,6 +3177,7 @@ namespace dftfe
                   d_rhoCore,
                   d_gradRhoCore,
                   d_bQuadValuesAllAtoms,
+                  d_bCellNonTrivialAtomIds,
                   d_localVselfs,
                   d_pseudoVLoc,
                   d_pseudoVLoc,
@@ -3222,6 +3371,7 @@ namespace dftfe
                                      d_rhoCore,
                                      d_gradRhoCore,
                                      d_bQuadValuesAllAtoms,
+                                     d_bCellNonTrivialAtomIds,
                                      d_localVselfs,
                                      d_pseudoVLoc,
                                      d_pseudoVLoc,
@@ -3263,6 +3413,7 @@ namespace dftfe
               d_rhoCore,
               d_gradRhoCore,
               d_bQuadValuesAllAtoms,
+              d_bCellNonTrivialAtomIds,
               d_localVselfs,
               d_pseudoVLoc,
               d_pseudoVLoc,
@@ -3312,6 +3463,7 @@ namespace dftfe
             d_rhoCore,
             d_gradRhoCore,
             d_bQuadValuesAllAtoms,
+            d_bCellNonTrivialAtomIds,
             d_localVselfs,
             d_atomNodeIdToChargeMap,
             atomLocations.size(),
@@ -3472,6 +3624,16 @@ namespace dftfe
         computingTimerStandard.enter_section("Cell stress computation");
         if (computeForces)
           {
+            if (dftParameters::isPseudopotential ||
+                dftParameters::smearedNuclearCharges)
+              {
+                computeVselfFieldGateauxDerFD(
+#ifdef DFTFE_WITH_GPU
+                  kohnShamDFTEigenOperatorCUDA
+#endif
+                );
+              }
+
             forcePtr->computeStress(matrix_free_data,
 #ifdef DFTFE_WITH_GPU
                                     kohnShamDFTEigenOperatorCUDA,
@@ -3528,6 +3690,171 @@ namespace dftfe
         nscf(kohnShamDFTEigenOperator, d_subspaceIterationSolver);
         writeBands();
       }
+#endif
+  }
+
+  template <unsigned int FEOrder, unsigned int FEOrderElectro>
+  void
+  dftClass<FEOrder, FEOrderElectro>::computeVselfFieldGateauxDerFD(
+#ifdef DFTFE_WITH_GPU
+    kohnShamDFTOperatorCUDAClass<FEOrder, FEOrderElectro>
+      &kohnShamDFTEigenOperatorCUDA
+#endif
+  )
+  {
+    d_vselfFieldGateauxDerStrainFDBins.clear();
+    d_vselfFieldGateauxDerStrainFDBins.resize(
+      (d_vselfBinsManager.getVselfFieldBins()).size() * 6);
+
+    Tensor<2, 3, double> identityTensor;
+    Tensor<2, 3, double> deformationGradientPerturb1;
+    Tensor<2, 3, double> deformationGradientPerturb2;
+
+    // initialize to indentity tensors
+    for (unsigned int idim = 0; idim < 3; idim++)
+      for (unsigned int jdim = 0; jdim < 3; jdim++)
+        {
+          if (idim == jdim)
+            {
+              identityTensor[idim][jdim]              = 1.0;
+              deformationGradientPerturb1[idim][jdim] = 1.0;
+              deformationGradientPerturb2[idim][jdim] = 1.0;
+            }
+          else
+            {
+              identityTensor[idim][jdim]              = 0.0;
+              deformationGradientPerturb1[idim][jdim] = 0.0;
+              deformationGradientPerturb2[idim][jdim] = 0.0;
+            }
+        }
+
+    const double fdparam          = 1e-5;
+    unsigned int flattenedIdCount = 0;
+    for (unsigned int idim = 0; idim < 3; ++idim)
+      for (unsigned int jdim = 0; jdim <= idim; jdim++)
+        {
+          deformationGradientPerturb1 = identityTensor;
+          if (idim == jdim)
+            {
+              deformationGradientPerturb1[idim][jdim] = 1.0 + fdparam;
+            }
+          else
+            {
+              deformationGradientPerturb1[idim][jdim] = fdparam;
+              deformationGradientPerturb1[jdim][idim] = fdparam;
+            }
+
+          deformDomain(deformationGradientPerturb1 *
+                         invert(deformationGradientPerturb2),
+                       true,
+                       dftParameters::verbosity >= 4 ? true : false);
+
+#ifdef DFTFE_WITH_GPU
+          if (dftParameters::useGPU)
+            kohnShamDFTEigenOperatorCUDA
+              .preComputeShapeFunctionGradientIntegrals(d_lpspQuadratureId,
+                                                        true);
+#endif
+
+          computing_timer.enter_section(
+            "Nuclear self-potential perturbation solve");
+
+          d_vselfBinsManager.solveVselfInBinsPerturbedDomain(
+            d_matrixFreeDataPRefined,
+            d_baseDofHandlerIndexElectro,
+            d_phiTotAXQuadratureIdElectro,
+            d_binsStartDofHandlerIndexElectro,
+#ifdef DFTFE_WITH_GPU
+            kohnShamDFTEigenOperatorCUDA,
+#endif
+            d_constraintsPRefined,
+            d_imagePositionsTrunc,
+            d_imageIdsTrunc,
+            d_imageChargesTrunc,
+            d_smearedChargeWidths,
+            d_smearedChargeQuadratureIdElectro,
+            dftParameters::smearedNuclearCharges);
+
+          computing_timer.exit_section(
+            "Nuclear self-potential perturbation solve");
+
+          for (unsigned int ibin = 0;
+               ibin < d_vselfBinsManager.getVselfFieldBins().size();
+               ibin++)
+            d_vselfFieldGateauxDerStrainFDBins[6 * ibin + flattenedIdCount] =
+              (d_vselfBinsManager.getPerturbedVselfFieldBins())[ibin];
+
+          deformationGradientPerturb2 = identityTensor;
+          if (idim == jdim)
+            {
+              deformationGradientPerturb2[idim][jdim] = 1.0 - fdparam;
+            }
+          else
+            {
+              deformationGradientPerturb2[idim][jdim] = -fdparam;
+              deformationGradientPerturb2[jdim][idim] = -fdparam;
+            }
+
+          deformDomain(deformationGradientPerturb2 *
+                         invert(deformationGradientPerturb1),
+                       true,
+                       dftParameters::verbosity >= 4 ? true : false);
+
+#ifdef DFTFE_WITH_GPU
+          if (dftParameters::useGPU)
+            kohnShamDFTEigenOperatorCUDA
+              .preComputeShapeFunctionGradientIntegrals(d_lpspQuadratureId,
+                                                        true);
+#endif
+
+          computing_timer.enter_section(
+            "Nuclear self-potential perturbation solve");
+
+          d_vselfBinsManager.solveVselfInBinsPerturbedDomain(
+            d_matrixFreeDataPRefined,
+            d_baseDofHandlerIndexElectro,
+            d_phiTotAXQuadratureIdElectro,
+            d_binsStartDofHandlerIndexElectro,
+#ifdef DFTFE_WITH_GPU
+            kohnShamDFTEigenOperatorCUDA,
+#endif
+            d_constraintsPRefined,
+            d_imagePositionsTrunc,
+            d_imageIdsTrunc,
+            d_imageChargesTrunc,
+            d_smearedChargeWidths,
+            d_smearedChargeQuadratureIdElectro,
+            dftParameters::smearedNuclearCharges);
+
+          computing_timer.exit_section(
+            "Nuclear self-potential perturbation solve");
+
+          for (unsigned int ibin = 0;
+               ibin < d_vselfBinsManager.getVselfFieldBins().size();
+               ibin++)
+            d_vselfFieldGateauxDerStrainFDBins[6 * ibin + flattenedIdCount] -=
+              (d_vselfBinsManager.getPerturbedVselfFieldBins())[ibin];
+
+          const double fac =
+            (idim == jdim) ? (1.0 / 2.0 / fdparam) : (1.0 / 4.0 / fdparam);
+          for (unsigned int ibin = 0;
+               ibin < d_vselfBinsManager.getVselfFieldBins().size();
+               ibin++)
+            d_vselfFieldGateauxDerStrainFDBins[6 * ibin + flattenedIdCount] *=
+              fac;
+
+          flattenedIdCount++;
+        }
+
+    // reset
+    deformDomain(invert(deformationGradientPerturb2),
+                 true,
+                 dftParameters::verbosity >= 4 ? true : false);
+
+#ifdef DFTFE_WITH_GPU
+    if (dftParameters::useGPU)
+      kohnShamDFTEigenOperatorCUDA.preComputeShapeFunctionGradientIntegrals(
+        d_lpspQuadratureId, true);
 #endif
   }
 

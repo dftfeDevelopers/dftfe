@@ -160,7 +160,7 @@ namespace dftfe
      */
     void
     initNoRemesh(const bool updateImagesAndKPointsAndVselfBins = true,
-                 const bool updateSmearedChargeWidths          = true,
+                 const bool checkSmearedChargeWidthsForOverlap = true,
                  const bool useSingleAtomSolutionOverride      = false);
 
     /**
@@ -191,7 +191,7 @@ namespace dftfe
 
 
     void
-    initializeKohnShamDFTOperator(const bool initializeCUDAScala = true);
+    initializeKohnShamDFTOperator(const bool initializeCublas = true);
 
 
     void
@@ -273,7 +273,10 @@ namespace dftfe
      * displacement input. Depending on the maximum displacement magnitude this
      * function decides wether to do auto remeshing or move mesh using Gaussian
      * functions. Additionaly this function also wraps the atom position across
-     * the periodic boundary if the atom moves across it.
+     * the periodic boundary if the atom moves across it beyond a certain
+     * magnitude. In case of floating atoms, only the atomic positions are
+     * updated keeping the mesh fixed. This function also calls initNoRemesh to
+     * reinitialize all the required FEM and KSDFT objects.
      *
      *  @param[in] globalAtomsDisplacements vector containing the displacements
      * (from current position) of all atoms (global).
@@ -282,8 +285,8 @@ namespace dftfe
     void
     updateAtomPositionsAndMoveMesh(
       const std::vector<Tensor<1, 3, double>> &globalAtomsDisplacements,
-      const double                             maxJacobianRatioFactor,
-      const bool useSingleAtomSolutionsOverride = false);
+      const double                             maxJacobianRatioFactor = 1.25,
+      const bool useSingleAtomSolutionsOverride                       = false);
 
 
     /**
@@ -408,7 +411,8 @@ namespace dftfe
     void initUnmovedTriangulation(
       parallel::distributed::Triangulation<3> &triangulation);
     void
-    initBoundaryConditions(const bool meshOnlyDeformed = false);
+    initBoundaryConditions(const bool meshOnlyDeformed                 = false,
+                           const bool vselfPerturbationUpdateForStress = false);
     void
     initElectronicFields();
     void
@@ -422,7 +426,8 @@ namespace dftfe
     void createpRefinedDofHandler(
       parallel::distributed::Triangulation<3> &triangulation);
     void
-    initpRefinedObjects(const bool meshOnlyDeformed);
+    initpRefinedObjects(const bool meshOnlyDeformed,
+                        const bool vselfPerturbationUpdateForStress = false);
 
     /**
      *@brief interpolate nodal data to quadrature data using FEEvaluation
@@ -581,6 +586,8 @@ namespace dftfe
       kohnShamDFTOperatorCUDAClass<FEOrder, FEOrderElectro>
         &kohnShamDFTEigenOperator,
 #endif
+      kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>
+        &  kohnShamDFTEigenOperatorCPU,
       bool isConsiderSpectrumSplitting);
 
 
@@ -609,15 +616,15 @@ namespace dftfe
                  unsigned int &flag);
     void
     initLocalPseudoPotential(
-      const DoFHandler<3> &                              _dofHandler,
-      const unsigned int                                 lpspQuadratureId,
-      const dealii::MatrixFree<3, double> &              _matrix_free_data,
-      const unsigned int                                 _phiExtDofHandlerIndex,
-      const dealii::AffineConstraints<double> &          phiExtConstraintMatrix,
-      const std::map<types::global_dof_index, Point<3>> &supportPoints,
-      const vselfBinsManager<FEOrder, FEOrderElectro> &  vselfBinManager,
-      distributedCPUVec<double> &                        phiExt,
-      std::map<dealii::CellId, std::vector<double>> &    _pseudoValues,
+      const DoFHandler<3> &                    _dofHandler,
+      const unsigned int                       lpspQuadratureId,
+      const dealii::MatrixFree<3, double> &    _matrix_free_data,
+      const unsigned int                       _phiExtDofHandlerIndex,
+      const dealii::AffineConstraints<double> &phiExtConstraintMatrix,
+      const std::map<dealii::types::global_dof_index, Point<3>> &supportPoints,
+      const vselfBinsManager<FEOrder, FEOrderElectro> &vselfBinManager,
+      distributedCPUVec<double> &                      phiExt,
+      std::map<dealii::CellId, std::vector<double>> &  _pseudoValues,
       std::map<unsigned int, std::map<dealii::CellId, std::vector<double>>>
         &_pseudoValuesAtoms);
     void
@@ -636,8 +643,9 @@ namespace dftfe
      */
     void
     applyHomogeneousDirichletBC(
-      const dealii::DoFHandler<3> &      _dofHandler,
-      dealii::AffineConstraints<double> &constraintMatrix);
+      const dealii::DoFHandler<3> &            _dofHandler,
+      const dealii::AffineConstraints<double> &onlyHangingNodeConstraints,
+      dealii::AffineConstraints<double> &      constraintMatrix);
 
     void
     computeElementalOVProjectorKets();
@@ -735,6 +743,8 @@ namespace dftfe
       kohnShamDFTOperatorCUDAClass<FEOrder, FEOrderElectro>
         &kohnShamDFTEigenOperator,
 #endif
+      kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>
+        &        kohnShamDFTEigenOperatorCPU,
       const bool isConsiderSpectrumSplitting,
       const bool isGroundState = false);
 
@@ -851,7 +861,9 @@ namespace dftfe
      * dftClass datastructures.
      */
     void
-    deformDomain(const Tensor<2, 3, double> &deformationGradient);
+    deformDomain(const Tensor<2, 3, double> &deformationGradient,
+                 const bool vselfPerturbationUpdateForStress = false,
+                 const bool print                            = true);
 
     /**
      *@brief Computes inner Product and Y = alpha*X + Y for complex vectors used during
@@ -894,7 +906,10 @@ namespace dftfe
     std::vector<Tensor<1, 3, double>> d_atomsDisplacementsGaussianRead;
 
     ///
-    std::vector<double> d_netFloatingDisp;
+    std::vector<double> d_netFloatingDispSinceLastBinsUpdate;
+
+    ///
+    std::vector<double> d_netFloatingDispSinceLastCheckForSmearedChargeOverlaps;
 
     bool d_isAtomsGaussianDisplacementsReadFromFile = false;
 
@@ -1032,7 +1047,7 @@ namespace dftfe
     meshMovementGaussianClass d_gaussianMovePar;
 
     std::vector<Tensor<1, 3, double>> d_gaussianMovementAtomsNetDisplacements;
-    std::vector<Point<C_DIM>>         d_controlPointLocationsCurrentMove;
+    std::vector<Point<3>>             d_controlPointLocationsCurrentMove;
 
     /// volume of the domain
     double d_domainVolume;
@@ -1065,7 +1080,7 @@ namespace dftfe
     unsigned int          d_densityQuadratureId;
     unsigned int          d_densityQuadratureIdElectro;
     MatrixFree<3, double> matrix_free_data, d_matrixFreeDataPRefined;
-    std::map<types::global_dof_index, Point<3>> d_supportPoints,
+    std::map<dealii::types::global_dof_index, Point<3>> d_supportPoints,
       d_supportPointsPRefined, d_supportPointsEigen;
     std::vector<const dealii::AffineConstraints<double> *> d_constraintsVector;
     std::vector<const dealii::AffineConstraints<double> *>
@@ -1423,6 +1438,21 @@ namespace dftfe
 
     /// vselfBinsManager object
     vselfBinsManager<FEOrder, FEOrderElectro> d_vselfBinsManager;
+
+    /// Gateaux derivative of vself field with respect to affine strain tensor
+    /// components using central finite difference. This is used for cell stress
+    /// computation
+    std::vector<distributedCPUVec<double>> d_vselfFieldGateauxDerStrainFDBins;
+
+    /// Compute Gateaux derivative of vself field in bins with respect to affine
+    /// strain tensor components
+    void
+    computeVselfFieldGateauxDerFD(
+#ifdef DFTFE_WITH_GPU
+      kohnShamDFTOperatorCUDAClass<FEOrder, FEOrderElectro>
+        &kohnShamDFTEigenOperatorCUDA
+#endif
+    );
 
     /// kPoint cartesian coordinates
     std::vector<double> d_kPointCoordinates;

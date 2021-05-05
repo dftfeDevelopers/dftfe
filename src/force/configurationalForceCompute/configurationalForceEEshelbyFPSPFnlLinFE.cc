@@ -19,41 +19,41 @@
 namespace internalforce
 {
   // for real valued eigenvectors
-  Tensor<1, C_DIM, VectorizedArray<double>>
+  Tensor<1, 3, VectorizedArray<double>>
   computeGradRhoContribution(
-    const VectorizedArray<double> &                  psi,
-    const Tensor<1, C_DIM, VectorizedArray<double>> &gradPsi)
+    const VectorizedArray<double> &              psi,
+    const Tensor<1, 3, VectorizedArray<double>> &gradPsi)
   {
     return make_vectorized_array(2.0) * (gradPsi * psi);
   }
 
   // for complex valued eigenvectors
-  Tensor<1, C_DIM, VectorizedArray<double>>
+  Tensor<1, 3, VectorizedArray<double>>
   computeGradRhoContribution(
-    const Tensor<1, 2, VectorizedArray<double>> &                  psi,
-    const Tensor<1, 2, Tensor<1, C_DIM, VectorizedArray<double>>> &gradPsi)
+    const Tensor<1, 2, VectorizedArray<double>> &              psi,
+    const Tensor<1, 2, Tensor<1, 3, VectorizedArray<double>>> &gradPsi)
   {
     return make_vectorized_array(2.0) *
            (gradPsi[0] * psi[0] + gradPsi[1] * psi[1]);
   }
 
   // for real valued eigenvectors
-  Tensor<2, C_DIM, VectorizedArray<double>>
+  Tensor<2, 3, VectorizedArray<double>>
   computeHessianRhoContribution(
-    const VectorizedArray<double>                    psi,
-    const Tensor<1, C_DIM, VectorizedArray<double>> &gradPsi,
-    const Tensor<2, C_DIM, VectorizedArray<double>> &hessianPsi)
+    const VectorizedArray<double>                psi,
+    const Tensor<1, 3, VectorizedArray<double>> &gradPsi,
+    const Tensor<2, 3, VectorizedArray<double>> &hessianPsi)
   {
     return make_vectorized_array(2.0) *
            (hessianPsi * psi + outer_product(gradPsi, gradPsi));
   }
 
   // for complex valued eigenvectors
-  Tensor<2, C_DIM, VectorizedArray<double>>
+  Tensor<2, 3, VectorizedArray<double>>
   computeHessianRhoContribution(
-    const Tensor<1, 2, VectorizedArray<double>> &                  psi,
-    const Tensor<1, 2, Tensor<1, C_DIM, VectorizedArray<double>>> &gradPsi,
-    const Tensor<1, 2, Tensor<2, C_DIM, VectorizedArray<double>>> &hessianPsi)
+    const Tensor<1, 2, VectorizedArray<double>> &              psi,
+    const Tensor<1, 2, Tensor<1, 3, VectorizedArray<double>>> &gradPsi,
+    const Tensor<1, 2, Tensor<2, 3, VectorizedArray<double>>> &hessianPsi)
   {
     return make_vectorized_array(2.0) *
            (hessianPsi[0] * psi[0] + hessianPsi[1] * psi[1] +
@@ -120,32 +120,26 @@ forceClass<FEOrder, FEOrderElectro>::
 
   const bool isPseudopotential = dftParameters::isPseudopotential;
 
-  FEEvaluation<C_DIM,
+  FEEvaluation<3,
                1,
                C_num1DQuad<C_rhoNodalPolyOrder<FEOrder, FEOrderElectro>()>(),
-               C_DIM>
+               3>
     forceEval(matrixFreeData,
               d_forceDofHandlerIndex,
               dftPtr->d_densityQuadratureId);
-  FEEvaluation<C_DIM,
-               1,
-               C_num1DQuadNLPSP<FEOrder>() * C_numCopies1DQuadNLPSP(),
-               C_DIM>
+  FEEvaluation<3, 1, C_num1DQuadNLPSP<FEOrder>() * C_numCopies1DQuadNLPSP(), 3>
     forceEvalNLP(matrixFreeData,
                  d_forceDofHandlerIndex,
                  dftPtr->d_nlpspQuadratureId);
 #ifdef USE_COMPLEX
-  FEEvaluation<C_DIM,
+  FEEvaluation<3,
                1,
                C_num1DQuad<C_rhoNodalPolyOrder<FEOrder, FEOrderElectro>()>(),
-               C_DIM>
+               3>
     forceEvalKPoints(matrixFreeData,
                      d_forceDofHandlerIndex,
                      dftPtr->d_densityQuadratureId);
-  FEEvaluation<C_DIM,
-               1,
-               C_num1DQuadNLPSP<FEOrder>() * C_numCopies1DQuadNLPSP(),
-               C_DIM>
+  FEEvaluation<3, 1, C_num1DQuadNLPSP<FEOrder>() * C_numCopies1DQuadNLPSP(), 3>
     forceEvalKPointsNLP(matrixFreeData,
                         d_forceDofHandlerIndex,
                         dftPtr->d_nlpspQuadratureId);
@@ -153,7 +147,7 @@ forceClass<FEOrder, FEOrderElectro>::
 
 
 #ifdef USE_COMPLEX
-  FEEvaluation<C_DIM,
+  FEEvaluation<3,
                FEOrder,
                C_num1DQuad<C_rhoNodalPolyOrder<FEOrder, FEOrderElectro>()>(),
                2>
@@ -161,7 +155,7 @@ forceClass<FEOrder, FEOrderElectro>::
             eigenDofHandlerIndex,
             dftPtr->d_densityQuadratureId);
 
-  FEEvaluation<C_DIM,
+  FEEvaluation<3,
                FEOrder,
                C_num1DQuadNLPSP<FEOrder>() * C_numCopies1DQuadNLPSP(),
                2>
@@ -169,7 +163,7 @@ forceClass<FEOrder, FEOrderElectro>::
                eigenDofHandlerIndex,
                dftPtr->d_nlpspQuadratureId);
 #else
-  FEEvaluation<C_DIM,
+  FEEvaluation<3,
                FEOrder,
                C_num1DQuad<C_rhoNodalPolyOrder<FEOrder, FEOrderElectro>()>(),
                1>
@@ -177,7 +171,7 @@ forceClass<FEOrder, FEOrderElectro>::
             eigenDofHandlerIndex,
             dftPtr->d_densityQuadratureId);
 
-  FEEvaluation<C_DIM,
+  FEEvaluation<3,
                FEOrder,
                C_num1DQuadNLPSP<FEOrder>() * C_numCopies1DQuadNLPSP(),
                1>
@@ -195,22 +189,22 @@ forceClass<FEOrder, FEOrderElectro>::
 
   const unsigned int numEigenVectors = dftPtr->d_numEigenValues;
   const unsigned int numKPoints      = dftPtr->d_kPointWeights.size();
-  DoFHandler<C_DIM>::active_cell_iterator subCellPtr;
-  Tensor<1, 2, VectorizedArray<double>>   zeroTensor1;
+  DoFHandler<3>::active_cell_iterator   subCellPtr;
+  Tensor<1, 2, VectorizedArray<double>> zeroTensor1;
   zeroTensor1[0] = make_vectorized_array(0.0);
   zeroTensor1[1] = make_vectorized_array(0.0);
-  Tensor<1, 2, Tensor<1, C_DIM, VectorizedArray<double>>> zeroTensor2;
-  Tensor<1, C_DIM, VectorizedArray<double>>               zeroTensor3;
-  Tensor<2, C_DIM, VectorizedArray<double>>               zeroTensor4;
-  for (unsigned int idim = 0; idim < C_DIM; idim++)
+  Tensor<1, 2, Tensor<1, 3, VectorizedArray<double>>> zeroTensor2;
+  Tensor<1, 3, VectorizedArray<double>>               zeroTensor3;
+  Tensor<2, 3, VectorizedArray<double>>               zeroTensor4;
+  for (unsigned int idim = 0; idim < 3; idim++)
     {
       zeroTensor2[0][idim] = make_vectorized_array(0.0);
       zeroTensor2[1][idim] = make_vectorized_array(0.0);
       zeroTensor3[idim]    = make_vectorized_array(0.0);
     }
-  for (unsigned int idim = 0; idim < C_DIM; idim++)
+  for (unsigned int idim = 0; idim < 3; idim++)
     {
-      for (unsigned int jdim = 0; jdim < C_DIM; jdim++)
+      for (unsigned int jdim = 0; jdim < 3; jdim++)
         {
           zeroTensor4[idim][jdim] = make_vectorized_array(0.0);
         }
@@ -403,13 +397,14 @@ forceClass<FEOrder, FEOrderElectro>::
   // vector of quadPoints times macrocells, nonlocal atom id, pseudo wave, k
   // point
   // FIXME: flatten nonlocal atomid id and pseudo wave and k point
-  std::vector<std::vector<
-    std::vector<std::vector<Tensor<1, 2, VectorizedArray<double>>>>>>
+  dealii::AlignedVector<dealii::AlignedVector<dealii::AlignedVector<
+    dealii::AlignedVector<Tensor<1, 2, VectorizedArray<double>>>>>>
     ZetaDeltaVQuads;
 #else
   // FIXME: flatten nonlocal atom id and pseudo wave
   // vector of quadPoints times macrocells, nonlocal atom id, pseudo wave
-  std::vector<std::vector<std::vector<VectorizedArray<double>>>>
+  dealii::AlignedVector<
+    dealii::AlignedVector<dealii::AlignedVector<VectorizedArray<double>>>>
     ZetaDeltaVQuads;
 #endif
 
@@ -562,11 +557,12 @@ forceClass<FEOrder, FEOrderElectro>::
 #endif
       std::vector<std::vector<std::vector<dataTypes::number>>>
         projectorKetTimesPsiTimesVTimesPartOcc(numKPoints);
-      std::vector<std::vector<Tensor<1, C_DIM, VectorizedArray<double>>>>
+      dealii::AlignedVector<
+        dealii::AlignedVector<Tensor<1, 3, VectorizedArray<double>>>>
         projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuads(
           numMacroCells * numQuadPointsNLP,
-          std::vector<Tensor<1, C_DIM, VectorizedArray<double>>>(numPseudo,
-                                                                 zeroTensor3));
+          dealii::AlignedVector<Tensor<1, 3, VectorizedArray<double>>>(
+            numPseudo, zeroTensor3));
 
       if (dftParameters::useGPU)
         {
@@ -751,20 +747,22 @@ forceClass<FEOrder, FEOrderElectro>::
                       const unsigned int numSubCells =
                         matrixFreeData.n_components_filled(cell);
 #ifdef USE_COMPLEX
-                      std::vector<Tensor<1, 2, VectorizedArray<double>>>
+                      dealii::AlignedVector<
+                        Tensor<1, 2, VectorizedArray<double>>>
                         psiQuads(numQuadPoints * currentBlockSize * numKPoints,
                                  zeroTensor1);
-                      std::vector<
-                        Tensor<1, 2, Tensor<1, C_DIM, VectorizedArray<double>>>>
+                      dealii::AlignedVector<
+                        Tensor<1, 2, Tensor<1, 3, VectorizedArray<double>>>>
                         gradPsiQuads(numQuadPoints * currentBlockSize *
                                        numKPoints,
                                      zeroTensor2);
 #else
-                      std::vector<VectorizedArray<double>> psiQuads(
+                      dealii::AlignedVector<VectorizedArray<double>> psiQuads(
                         numQuadPoints * currentBlockSize,
                         make_vectorized_array(0.0));
-                      std::vector<Tensor<1, C_DIM, VectorizedArray<double>>>
-                                                           gradPsiQuads(numQuadPoints * currentBlockSize,
+                      dealii::AlignedVector<
+                        Tensor<1, 3, VectorizedArray<double>>>
+                        gradPsiQuads(numQuadPoints * currentBlockSize,
                                      zeroTensor3);
 #endif
 
@@ -789,14 +787,17 @@ forceClass<FEOrder, FEOrderElectro>::
                           }     // eigenvector loop
 
 #ifdef USE_COMPLEX
-                      std::vector<Tensor<1, 2, VectorizedArray<double>>>
+                      dealii::AlignedVector<
+                        Tensor<1, 2, VectorizedArray<double>>>
                         psiQuadsNLP;
-                      std::vector<
-                        Tensor<1, 2, Tensor<1, C_DIM, VectorizedArray<double>>>>
+                      dealii::AlignedVector<
+                        Tensor<1, 2, Tensor<1, 3, VectorizedArray<double>>>>
                         gradPsiQuadsNLP;
 #else
-                      std::vector<VectorizedArray<double>> psiQuadsNLP;
-                      std::vector<Tensor<1, C_DIM, VectorizedArray<double>>>
+                      dealii::AlignedVector<VectorizedArray<double>>
+                        psiQuadsNLP;
+                      dealii::AlignedVector<
+                        Tensor<1, 3, VectorizedArray<double>>>
                         gradPsiQuadsNLP;
 #endif
 
@@ -870,9 +871,9 @@ forceClass<FEOrder, FEOrderElectro>::
 
                           for (unsigned int q = 0; q < numQuadPointsNLP; ++q)
                             {
-                              std::vector<
+                              dealii::AlignedVector<
                                 Tensor<1,
-                                       C_DIM,
+                                       3,
                                        VectorizedArray<double>>> &tempContract =
                                 projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuads
                                   [cell * numQuadPointsNLP + q];
@@ -935,11 +936,10 @@ forceClass<FEOrder, FEOrderElectro>::
 
                       for (unsigned int q = 0; q < numQuadPoints; ++q)
                         {
-                          Tensor<2, C_DIM, VectorizedArray<double>> E =
-                            zeroTensor4;
+                          Tensor<2, 3, VectorizedArray<double>> E = zeroTensor4;
 
 #ifdef USE_COMPLEX
-                          Tensor<2, C_DIM, VectorizedArray<double>> EKPoints =
+                          Tensor<2, 3, VectorizedArray<double>> EKPoints =
                             spinPolarizedFactorVect *
                             eshelbyTensor::
                               getELocWfcEshelbyTensorPeriodicKPoints(
@@ -971,7 +971,7 @@ forceClass<FEOrder, FEOrderElectro>::
                         for (unsigned int q = 0; q < numQuadPointsNLP; ++q)
                           {
 #ifdef USE_COMPLEX
-                            Tensor<1, C_DIM, VectorizedArray<double>> FKPoints =
+                            Tensor<1, 3, VectorizedArray<double>> FKPoints =
                               spinPolarizedFactorVect *
                               eshelbyTensor::getFnl(
                                 ZetaDeltaVQuads[cell * numQuadPointsNLP + q],
@@ -1034,8 +1034,8 @@ forceClass<FEOrder, FEOrderElectro>::
 
               for (unsigned int q = 0; q < numQuadPoints; ++q)
                 {
-                  Tensor<2, C_DIM, VectorizedArray<double>> E;
-                  const unsigned int                        physicalCellId =
+                  Tensor<2, 3, VectorizedArray<double>> E;
+                  const unsigned int                    physicalCellId =
                     macroCellIdToNormalCellIdMap[cell];
                   const unsigned int id = physicalCellId * numQuadPoints + q;
                   E[0][0]               = make_vectorized_array(
@@ -1128,11 +1128,11 @@ forceClass<FEOrder, FEOrderElectro>::
 
 
 
-            Tensor<1, C_DIM, VectorizedArray<double>> F;
+            Tensor<1, 3, VectorizedArray<double>> F;
 
             for (unsigned int q = 0; q < numQuadPointsNLP; ++q)
               {
-                Tensor<1, C_DIM, VectorizedArray<double>> F =
+                Tensor<1, 3, VectorizedArray<double>> F =
                   spinPolarizedFactorVect *
                   eshelbyTensor::getFnl(
                     ZetaDeltaVQuads[cell * numQuadPointsNLP + q],
@@ -1189,33 +1189,33 @@ forceClass<FEOrder, FEOrderElectro>::
     {
       if (dftParameters::spinPolarized == 1)
         {
-          std::vector<VectorizedArray<double>> rhoXCQuadsVect(
+          dealii::AlignedVector<VectorizedArray<double>> rhoXCQuadsVect(
             numQuadPoints, make_vectorized_array(0.0));
-          std::vector<VectorizedArray<double>> phiTotRhoOutQuads(
+          dealii::AlignedVector<VectorizedArray<double>> phiTotRhoOutQuads(
             numQuadPoints, make_vectorized_array(0.0));
-          std::vector<Tensor<1, C_DIM, VectorizedArray<double>>>
+          dealii::AlignedVector<Tensor<1, 3, VectorizedArray<double>>>
             gradRhoSpin0QuadsVect(numQuadPoints, zeroTensor3);
-          std::vector<Tensor<1, C_DIM, VectorizedArray<double>>>
+          dealii::AlignedVector<Tensor<1, 3, VectorizedArray<double>>>
             gradRhoSpin1QuadsVect(numQuadPoints, zeroTensor3);
-          std::vector<Tensor<2, C_DIM, VectorizedArray<double>>>
+          dealii::AlignedVector<Tensor<2, 3, VectorizedArray<double>>>
             hessianRhoSpin0Quads(numQuadPoints, zeroTensor4);
-          std::vector<Tensor<2, C_DIM, VectorizedArray<double>>>
-                                               hessianRhoSpin1Quads(numQuadPoints, zeroTensor4);
-          std::vector<VectorizedArray<double>> excQuads(
+          dealii::AlignedVector<Tensor<2, 3, VectorizedArray<double>>>
+                                                         hessianRhoSpin1Quads(numQuadPoints, zeroTensor4);
+          dealii::AlignedVector<VectorizedArray<double>> excQuads(
             numQuadPoints, make_vectorized_array(0.0));
-          std::vector<VectorizedArray<double>> vxcRhoOutSpin0Quads(
+          dealii::AlignedVector<VectorizedArray<double>> vxcRhoOutSpin0Quads(
             numQuadPoints, make_vectorized_array(0.0));
-          std::vector<VectorizedArray<double>> vxcRhoOutSpin1Quads(
+          dealii::AlignedVector<VectorizedArray<double>> vxcRhoOutSpin1Quads(
             numQuadPoints, make_vectorized_array(0.0));
-          std::vector<Tensor<1, C_DIM, VectorizedArray<double>>>
+          dealii::AlignedVector<Tensor<1, 3, VectorizedArray<double>>>
             derExchCorrEnergyWithGradRhoOutSpin0Quads(numQuadPoints,
                                                       zeroTensor3);
-          std::vector<Tensor<1, C_DIM, VectorizedArray<double>>>
+          dealii::AlignedVector<Tensor<1, 3, VectorizedArray<double>>>
             derExchCorrEnergyWithGradRhoOutSpin1Quads(numQuadPoints,
                                                       zeroTensor3);
-          std::vector<Tensor<1, C_DIM, VectorizedArray<double>>>
+          dealii::AlignedVector<Tensor<1, 3, VectorizedArray<double>>>
             gradRhoCoreQuads(numQuadPoints, zeroTensor3);
-          std::vector<Tensor<2, C_DIM, VectorizedArray<double>>>
+          dealii::AlignedVector<Tensor<2, 3, VectorizedArray<double>>>
             hessianRhoCoreQuads(numQuadPoints, zeroTensor4);
           std::map<unsigned int, std::vector<double>>
             forceContributionNonlinearCoreCorrectionGammaAtoms;
@@ -1282,9 +1282,9 @@ forceClass<FEOrder, FEOrderElectro>::
                 derCorrEnergyWithDensityValRhoOut(2 * numQuadPoints),
                 derExchEnergyWithSigmaRhoOut(3 * numQuadPoints),
                 derCorrEnergyWithSigmaRhoOut(3 * numQuadPoints);
-              std::vector<Tensor<1, C_DIM, double>> gradRhoOutQuadsXCSpin0(
+              std::vector<Tensor<1, 3, double>> gradRhoOutQuadsXCSpin0(
                 numQuadPoints);
-              std::vector<Tensor<1, C_DIM, double>> gradRhoOutQuadsXCSpin1(
+              std::vector<Tensor<1, 3, double>> gradRhoOutQuadsXCSpin1(
                 numQuadPoints);
 
               //
@@ -1326,7 +1326,7 @@ forceClass<FEOrder, FEOrderElectro>::
                           .find(subCellId)
                           ->second;
                       for (unsigned int q = 0; q < numQuadPoints; ++q)
-                        for (unsigned int idim = 0; idim < C_DIM; idim++)
+                        for (unsigned int idim = 0; idim < 3; idim++)
                           {
                             gradRhoOutQuadsXCSpin0[q][idim] =
                               temp3[6 * q + idim];
@@ -1343,7 +1343,7 @@ forceClass<FEOrder, FEOrderElectro>::
                           const std::vector<double> &temp4 =
                             gradRhoCoreValues.find(subCellId)->second;
                           for (unsigned int q = 0; q < numQuadPoints; ++q)
-                            for (unsigned int idim = 0; idim < C_DIM; idim++)
+                            for (unsigned int idim = 0; idim < 3; idim++)
                               {
                                 gradRhoOutQuadsXCSpin0[q][idim] +=
                                   temp4[3 * q + idim] / 2.0;
@@ -1393,7 +1393,7 @@ forceClass<FEOrder, FEOrderElectro>::
                           vxcRhoOutSpin1Quads[q][iSubCell] =
                             derExchEnergyWithDensityValRhoOut[2 * q + 1] +
                             derCorrEnergyWithDensityValRhoOut[2 * q + 1];
-                          for (unsigned int idim = 0; idim < C_DIM; idim++)
+                          for (unsigned int idim = 0; idim < 3; idim++)
                             {
                               derExchCorrEnergyWithGradRhoOutSpin0Quads
                                 [q][idim][iSubCell] =
@@ -1458,7 +1458,7 @@ forceClass<FEOrder, FEOrderElectro>::
                           const std::vector<double> &temp1 =
                             gradRhoCoreValues.find(subCellId)->second;
                           for (unsigned int q = 0; q < numQuadPoints; ++q)
-                            for (unsigned int idim = 0; idim < C_DIM; idim++)
+                            for (unsigned int idim = 0; idim < 3; idim++)
                               gradRhoCoreQuads[q][idim][iSubCell] =
                                 temp1[3 * q + idim] / 2.0;
 
@@ -1467,10 +1467,8 @@ forceClass<FEOrder, FEOrderElectro>::
                               const std::vector<double> &temp2 =
                                 hessianRhoCoreValues.find(subCellId)->second;
                               for (unsigned int q = 0; q < numQuadPoints; ++q)
-                                for (unsigned int idim = 0; idim < C_DIM;
-                                     ++idim)
-                                  for (unsigned int jdim = 0; jdim < C_DIM;
-                                       ++jdim)
+                                for (unsigned int idim = 0; idim < 3; ++idim)
+                                  for (unsigned int jdim = 0; jdim < 3; ++jdim)
                                     hessianRhoCoreQuads
                                       [q][idim][jdim][iSubCell] =
                                         temp2[9 * q + 3 * idim + jdim] / 2.0;
@@ -1500,7 +1498,7 @@ forceClass<FEOrder, FEOrderElectro>::
                 {
                   const VectorizedArray<double> phiTot_q = phiTotRhoOutQuads[q];
 
-                  Tensor<2, C_DIM, VectorizedArray<double>> E =
+                  Tensor<2, 3, VectorizedArray<double>> E =
                     eshelbyTensorSP::getELocXcEshelbyTensor(
                       rhoXCQuadsVect[q],
                       gradRhoSpin0QuadsVect[q],
@@ -1509,7 +1507,7 @@ forceClass<FEOrder, FEOrderElectro>::
                       derExchCorrEnergyWithGradRhoOutSpin0Quads[q],
                       derExchCorrEnergyWithGradRhoOutSpin1Quads[q]);
 
-                  Tensor<1, C_DIM, VectorizedArray<double>> F = zeroTensor3;
+                  Tensor<1, 3, VectorizedArray<double>> F = zeroTensor3;
 
                   if (dftParameters::nonLinearCoreCorrection)
                     F += eshelbyTensorSP::getFNonlinearCoreCorrection(
@@ -1546,41 +1544,43 @@ forceClass<FEOrder, FEOrderElectro>::
         }
       else
         {
-          std::vector<VectorizedArray<double>> rhoQuads(
+          dealii::AlignedVector<VectorizedArray<double>> rhoQuads(
             numQuadPoints, make_vectorized_array(0.0));
-          std::vector<VectorizedArray<double>> rhoXCQuads(
+          dealii::AlignedVector<VectorizedArray<double>> rhoXCQuads(
             numQuadPoints, make_vectorized_array(0.0));
-          std::vector<VectorizedArray<double>> phiTotRhoOutQuads(
+          dealii::AlignedVector<VectorizedArray<double>> phiTotRhoOutQuads(
             numQuadPoints, make_vectorized_array(0.0));
-          std::vector<VectorizedArray<double>> derVxcWithRhoTimesRhoDiffQuads(
-            numQuadPoints, make_vectorized_array(0.0));
-          std::vector<VectorizedArray<double>> shadowKSRhoMinMinusRhoQuads(
-            numQuadPoints, make_vectorized_array(0.0));
-          std::vector<Tensor<1, C_DIM, VectorizedArray<double>>>
-                                                                 shadowKSGradRhoMinMinusGradRhoQuads(numQuadPoints, zeroTensor3);
-          std::vector<Tensor<1, C_DIM, VectorizedArray<double>>> gradRhoQuads(
-            numQuadPoints, zeroTensor3);
-          // std::vector<Tensor<1,C_DIM,VectorizedArray<double> > >
+          dealii::AlignedVector<VectorizedArray<double>>
+            derVxcWithRhoTimesRhoDiffQuads(numQuadPoints,
+                                           make_vectorized_array(0.0));
+          dealii::AlignedVector<VectorizedArray<double>>
+            shadowKSRhoMinMinusRhoQuads(numQuadPoints,
+                                        make_vectorized_array(0.0));
+          dealii::AlignedVector<Tensor<1, 3, VectorizedArray<double>>>
+            shadowKSGradRhoMinMinusGradRhoQuads(numQuadPoints, zeroTensor3);
+          dealii::AlignedVector<Tensor<1, 3, VectorizedArray<double>>>
+            gradRhoQuads(numQuadPoints, zeroTensor3);
+          // dealii::AlignedVector<Tensor<1,3,VectorizedArray<double> > >
           // gradRhoAtomsQuads(numQuadPoints,zeroTensor3);
-          std::vector<Tensor<2, C_DIM, VectorizedArray<double>>>
+          dealii::AlignedVector<Tensor<2, 3, VectorizedArray<double>>>
             hessianRhoQuads(numQuadPoints, zeroTensor4);
-          // std::vector<Tensor<2,C_DIM,VectorizedArray<double> > >
+          // dealii::AlignedVector<Tensor<2,3,VectorizedArray<double> > >
           // hessianRhoAtomsQuads(numQuadPoints,zeroTensor4);
-          std::vector<Tensor<1, C_DIM, VectorizedArray<double>>>
+          dealii::AlignedVector<Tensor<1, 3, VectorizedArray<double>>>
             gradRhoCoreQuads(numQuadPoints, zeroTensor3);
-          std::vector<Tensor<2, C_DIM, VectorizedArray<double>>>
-                                               hessianRhoCoreQuads(numQuadPoints, zeroTensor4);
-          std::vector<VectorizedArray<double>> excQuads(
+          dealii::AlignedVector<Tensor<2, 3, VectorizedArray<double>>>
+                                                         hessianRhoCoreQuads(numQuadPoints, zeroTensor4);
+          dealii::AlignedVector<VectorizedArray<double>> excQuads(
             numQuadPoints, make_vectorized_array(0.0));
-          std::vector<VectorizedArray<double>> vxcRhoOutQuads(
+          dealii::AlignedVector<VectorizedArray<double>> vxcRhoOutQuads(
             numQuadPoints, make_vectorized_array(0.0));
-          std::vector<Tensor<1, C_DIM, VectorizedArray<double>>>
+          dealii::AlignedVector<Tensor<1, 3, VectorizedArray<double>>>
             derExchCorrEnergyWithGradRhoOutQuads(numQuadPoints, zeroTensor3);
-          std::vector<Tensor<1, C_DIM, VectorizedArray<double>>>
-                                               derVxcWithGradRhoQuads(numQuadPoints, zeroTensor3);
-          std::vector<VectorizedArray<double>> derVxcWithRhoQuads(
+          dealii::AlignedVector<Tensor<1, 3, VectorizedArray<double>>>
+                                                         derVxcWithGradRhoQuads(numQuadPoints, zeroTensor3);
+          dealii::AlignedVector<VectorizedArray<double>> derVxcWithRhoQuads(
             numQuadPoints, make_vectorized_array(0.0));
-          std::vector<Tensor<2, C_DIM, VectorizedArray<double>>>
+          dealii::AlignedVector<Tensor<2, 3, VectorizedArray<double>>>
             der2ExcWithGradRhoQuads(numQuadPoints, zeroTensor4);
           std::map<unsigned int, std::vector<double>>
             forceContributionGradRhoNonlinearCoreCorrectionGammaAtoms;
@@ -1658,7 +1658,7 @@ forceClass<FEOrder, FEOrderElectro>::
                 derCorrEnergyWithDensityValRhoOut(numQuadPoints),
                 derExchEnergyWithSigmaRhoOut(numQuadPoints),
                 derCorrEnergyWithSigmaRhoOut(numQuadPoints);
-              std::vector<Tensor<1, C_DIM, double>> gradRhoOutQuadsXC(
+              std::vector<Tensor<1, 3, double>> gradRhoOutQuadsXC(
                 numQuadPoints);
               std::vector<double> derVxWithSigmaRhoOut(numQuadPoints);
               std::vector<double> derVcWithSigmaRhoOut(numQuadPoints);
@@ -1699,7 +1699,7 @@ forceClass<FEOrder, FEOrderElectro>::
                       const std::vector<double> &temp3 =
                         gradRhoOutValues.find(subCellId)->second;
                       for (unsigned int q = 0; q < numQuadPoints; ++q)
-                        for (unsigned int idim = 0; idim < C_DIM; idim++)
+                        for (unsigned int idim = 0; idim < 3; idim++)
                           {
                             gradRhoOutQuadsXC[q][idim] = temp3[3 * q + idim];
                             gradRhoQuads[q][idim][iSubCell] =
@@ -1768,7 +1768,7 @@ forceClass<FEOrder, FEOrderElectro>::
                             derVxcWithRhoQuads[q][iSubCell] =
                               derVxWithRhoOut[q] + derVcWithRhoOut[q];
 
-                          for (unsigned int idim = 0; idim < C_DIM; idim++)
+                          for (unsigned int idim = 0; idim < 3; idim++)
                             {
                               derExchCorrEnergyWithGradRhoOutQuads
                                 [q][idim][iSubCell] =
@@ -1785,8 +1785,7 @@ forceClass<FEOrder, FEOrderElectro>::
                                      derVcWithSigmaRhoOut[q]) *
                                     gradRhoOutQuadsXC[q][idim];
 
-                                  for (unsigned int jdim = 0; jdim < C_DIM;
-                                       jdim++)
+                                  for (unsigned int jdim = 0; jdim < 3; jdim++)
                                     {
                                       if (idim == jdim)
                                         der2ExcWithGradRhoQuads
@@ -1864,7 +1863,7 @@ forceClass<FEOrder, FEOrderElectro>::
                           const std::vector<double> &temp1 =
                             gradRhoCoreValues.find(subCellId)->second;
                           for (unsigned int q = 0; q < numQuadPoints; ++q)
-                            for (unsigned int idim = 0; idim < C_DIM; idim++)
+                            for (unsigned int idim = 0; idim < 3; idim++)
                               gradRhoCoreQuads[q][idim][iSubCell] =
                                 temp1[3 * q + idim];
 
@@ -1873,10 +1872,8 @@ forceClass<FEOrder, FEOrderElectro>::
                               const std::vector<double> &temp2 =
                                 hessianRhoCoreValues.find(subCellId)->second;
                               for (unsigned int q = 0; q < numQuadPoints; ++q)
-                                for (unsigned int idim = 0; idim < C_DIM;
-                                     ++idim)
-                                  for (unsigned int jdim = 0; jdim < C_DIM;
-                                       ++jdim)
+                                for (unsigned int idim = 0; idim < 3; ++idim)
+                                  for (unsigned int jdim = 0; jdim < 3; ++jdim)
                                     hessianRhoCoreQuads[q][idim][jdim]
                                                        [iSubCell] =
                                                          temp2[9 * q +
@@ -1890,17 +1887,17 @@ forceClass<FEOrder, FEOrderElectro>::
                             shadowKSRhoMinValues.find(subCellId)->second[q] -
                             rhoQuads[q][iSubCell];
 
-                          // for (unsigned int idim=0; idim<C_DIM; idim++)
+                          // for (unsigned int idim=0; idim<3; idim++)
                           //	gradRhoAtomsQuads[q][idim][iSubCell]=dftPtr->d_gradRhoAtomsValues.find(subCellId)->second[3*q+idim];
 
                           if (dftParameters::xcFamilyType == "GGA")
                             {
                               /*
-                              for (unsigned int idim=0; idim<C_DIM; idim++)
-                                for (unsigned int jdim=0; jdim<C_DIM; jdim++)
+                              for (unsigned int idim=0; idim<3; idim++)
+                                for (unsigned int jdim=0; jdim<3; jdim++)
                                   hessianRhoAtomsQuads[q][idim][jdim][iSubCell]=dftPtr->d_hessianRhoAtomsValues.find(subCellId)->second[9*q+3*idim+jdim];
                               */
-                              for (unsigned int idim = 0; idim < C_DIM; idim++)
+                              for (unsigned int idim = 0; idim < 3; idim++)
                                 shadowKSGradRhoMinMinusGradRhoQuads
                                   [q][idim][iSubCell] =
                                     shadowKSGradRhoMinValues.find(subCellId)
@@ -1946,7 +1943,7 @@ forceClass<FEOrder, FEOrderElectro>::
                     }
 
 
-                  Tensor<2, C_DIM, VectorizedArray<double>> E =
+                  Tensor<2, 3, VectorizedArray<double>> E =
                     eshelbyTensor::getELocXcEshelbyTensor(
                       rhoXCQuads[q],
                       gradRhoQuads[q],
@@ -1965,7 +1962,7 @@ forceClass<FEOrder, FEOrderElectro>::
                        der2ExcWithGradRhoOutQuads[q]);
                   */
 
-                  Tensor<1, C_DIM, VectorizedArray<double>> F = zeroTensor3;
+                  Tensor<1, 3, VectorizedArray<double>> F = zeroTensor3;
 
                   if (shadowPotentialForce && dftParameters::useAtomicRhoXLBOMD)
                     {
@@ -2135,15 +2132,15 @@ forceClass<FEOrder, FEOrderElectro>::
     const distributedCPUVec<double> &phiRhoMinusApproxRhoElectro,
     const bool                       shadowPotentialForce)
 {
-  FEEvaluation<C_DIM,
+  FEEvaluation<3,
                1,
                C_num1DQuad<C_rhoNodalPolyOrder<FEOrder, FEOrderElectro>()>(),
-               C_DIM>
+               3>
     forceEvalElectro(matrixFreeDataElectro,
                      d_forceDofHandlerIndexElectro,
                      dftPtr->d_densityQuadratureIdElectro);
 
-  FEEvaluation<C_DIM,
+  FEEvaluation<3,
                FEOrderElectro,
                C_num1DQuad<C_rhoNodalPolyOrder<FEOrder, FEOrderElectro>()>(),
                1>
@@ -2151,26 +2148,19 @@ forceClass<FEOrder, FEOrderElectro>::
                       phiTotDofHandlerIndexElectro,
                       dftPtr->d_densityQuadratureIdElectro);
 
-  FEEvaluation<C_DIM,
-               FEOrderElectro,
-               C_num1DQuadSmearedCharge() * C_numCopies1DQuadSmearedCharge(),
-               1>
-    phiTotEvalSmearedCharge(matrixFreeDataElectro,
-                            phiTotDofHandlerIndexElectro,
-                            smearedChargeQuadratureId);
+  FEEvaluation<3, -1> phiTotEvalSmearedCharge(matrixFreeDataElectro,
+                                              phiTotDofHandlerIndexElectro,
+                                              smearedChargeQuadratureId);
 
-  FEEvaluation<C_DIM,
-               1,
-               C_num1DQuadSmearedCharge() * C_numCopies1DQuadSmearedCharge(),
-               C_DIM>
-    forceEvalSmearedCharge(matrixFreeDataElectro,
-                           d_forceDofHandlerIndexElectro,
-                           smearedChargeQuadratureId);
+  FEEvaluation<3, -1, 1, 3> forceEvalSmearedCharge(
+    matrixFreeDataElectro,
+    d_forceDofHandlerIndexElectro,
+    smearedChargeQuadratureId);
 
-  FEEvaluation<C_DIM,
+  FEEvaluation<3,
                1,
                C_num1DQuadLPSP<FEOrderElectro>() * C_numCopies1DQuadLPSP(),
-               C_DIM>
+               3>
     forceEvalElectroLpsp(matrixFreeDataElectro,
                          d_forceDofHandlerIndexElectro,
                          lpspQuadratureIdElectro);
@@ -2205,31 +2195,31 @@ forceClass<FEOrder, FEOrderElectro>::
       dealii::ExcMessage(
         "DFT-FE Error: mismatch in quadrature rule usage in force computation."));
 
-  DoFHandler<C_DIM>::active_cell_iterator subCellPtr;
+  DoFHandler<3>::active_cell_iterator subCellPtr;
 
-  FEValues<C_DIM> feVselfValuesElectro(
+  FEValues<3> feVselfValuesElectro(
     matrixFreeDataElectro.get_dof_handler(phiTotDofHandlerIndexElectro)
       .get_fe(),
     matrixFreeDataElectro.get_quadrature(lpspQuadratureIdElectro),
     update_values | update_gradients | update_quadrature_points);
 
-  QIterated<C_DIM - 1> faceQuadrature(
-    QGauss<1>(C_num1DQuadLPSP<FEOrderElectro>()), C_numCopies1DQuadLPSP());
-  FEFaceValues<C_DIM> feFaceValuesElectro(dftPtr->d_dofHandlerRhoNodal.get_fe(),
-                                          faceQuadrature,
-                                          update_values | update_JxW_values |
-                                            update_normal_vectors |
-                                            update_quadrature_points);
+  QIterated<3 - 1> faceQuadrature(QGauss<1>(C_num1DQuadLPSP<FEOrderElectro>()),
+                                  C_numCopies1DQuadLPSP());
+  FEFaceValues<3>  feFaceValuesElectro(dftPtr->d_dofHandlerRhoNodal.get_fe(),
+                                      faceQuadrature,
+                                      update_values | update_JxW_values |
+                                        update_normal_vectors |
+                                        update_quadrature_points);
 
-  Tensor<1, C_DIM, VectorizedArray<double>> zeroTensor;
-  for (unsigned int idim = 0; idim < C_DIM; idim++)
+  Tensor<1, 3, VectorizedArray<double>> zeroTensor;
+  for (unsigned int idim = 0; idim < 3; idim++)
     {
       zeroTensor[idim] = make_vectorized_array(0.0);
     }
 
-  Tensor<2, C_DIM, VectorizedArray<double>> zeroTensor2;
-  for (unsigned int idim = 0; idim < C_DIM; idim++)
-    for (unsigned int jdim = 0; jdim < C_DIM; jdim++)
+  Tensor<2, 3, VectorizedArray<double>> zeroTensor2;
+  for (unsigned int idim = 0; idim < 3; idim++)
+    for (unsigned int jdim = 0; jdim < 3; jdim++)
       {
         zeroTensor2[idim][jdim] = make_vectorized_array(0.0);
       }
@@ -2239,28 +2229,28 @@ forceClass<FEOrder, FEOrderElectro>::
   // correction term where the rhoQuads is the variationally optimized one
   // (rhOut)
 
-  std::vector<VectorizedArray<double>> rhoQuadsElectro(
+  dealii::AlignedVector<VectorizedArray<double>> rhoQuadsElectro(
     numQuadPoints, make_vectorized_array(0.0));
-  std::vector<VectorizedArray<double>> rhoQuadsElectroLpsp(
+  dealii::AlignedVector<VectorizedArray<double>> rhoQuadsElectroLpsp(
     numQuadPointsLpsp, make_vectorized_array(0.0));
-  std::vector<VectorizedArray<double>> smearedbQuads(
+  dealii::AlignedVector<VectorizedArray<double>> smearedbQuads(
     numQuadPointsSmearedb, make_vectorized_array(0.0));
-  std::vector<Tensor<1, C_DIM, VectorizedArray<double>>>
+  dealii::AlignedVector<Tensor<1, 3, VectorizedArray<double>>>
     gradPhiTotSmearedChargeQuads(numQuadPointsSmearedb, zeroTensor);
-  std::vector<Tensor<1, C_DIM, VectorizedArray<double>>>
-                                       gradPhiTotPlusPhiRhoMinusApproxRhoSmearedChargeQuads(numQuadPointsSmearedb,
+  dealii::AlignedVector<Tensor<1, 3, VectorizedArray<double>>>
+                                                 gradPhiTotPlusPhiRhoMinusApproxRhoSmearedChargeQuads(numQuadPointsSmearedb,
                                                          zeroTensor);
-  std::vector<VectorizedArray<double>> shadowKSRhoMinQuadsElectro(
+  dealii::AlignedVector<VectorizedArray<double>> shadowKSRhoMinQuadsElectro(
     numQuadPoints, make_vectorized_array(0.0));
-  std::vector<Tensor<1, C_DIM, VectorizedArray<double>>>
-                                                         gradPhiRhoMinusApproxRhoQuadsElectro(numQuadPoints, zeroTensor);
-  std::vector<Tensor<1, C_DIM, VectorizedArray<double>>> gradRhoQuadsElectro(
-    numQuadPoints, zeroTensor);
-  std::vector<Tensor<1, C_DIM, VectorizedArray<double>>>
+  dealii::AlignedVector<Tensor<1, 3, VectorizedArray<double>>>
+    gradPhiRhoMinusApproxRhoQuadsElectro(numQuadPoints, zeroTensor);
+  dealii::AlignedVector<Tensor<1, 3, VectorizedArray<double>>>
+    gradRhoQuadsElectro(numQuadPoints, zeroTensor);
+  dealii::AlignedVector<Tensor<1, 3, VectorizedArray<double>>>
     gradRhoQuadsElectroLpsp(numQuadPointsLpsp, zeroTensor);
-  // std::vector<Tensor<1,C_DIM,VectorizedArray<double> > >
+  // dealii::AlignedVector<Tensor<1,3,VectorizedArray<double> > >
   // gradRhoAtomsQuadsElectro(numQuadPoints,zeroTensor);
-  std::vector<VectorizedArray<double>> pseudoVLocQuadsElectro(
+  dealii::AlignedVector<VectorizedArray<double>> pseudoVLocQuadsElectro(
     numQuadPointsLpsp, make_vectorized_array(0.0));
 
   for (unsigned int cell = 0; cell < matrixFreeDataElectro.n_macro_cells();
@@ -2346,9 +2336,9 @@ forceClass<FEOrder, FEOrderElectro>::
 
                   // shadowKSRhoMinMinusRhoQuadsElectro[q][iSubCell]=shadowKSRhoMinQuadsElectro[q][iSubCell]-rhoQuadsElectro[q][iSubCell];
 
-                  // gradRhoAtomsQuadsElectro[q][0][iSubCell]=dftPtr->d_gradRhoAtomsValues.find(subCellId)->second[C_DIM*q+0];
-                  // gradRhoAtomsQuadsElectro[q][1][iSubCell]=dftPtr->d_gradRhoAtomsValues.find(subCellId)->second[C_DIM*q+1];
-                  // gradRhoAtomsQuadsElectro[q][2][iSubCell]=dftPtr->d_gradRhoAtomsValues.find(subCellId)->second[C_DIM*q+2];
+                  // gradRhoAtomsQuadsElectro[q][0][iSubCell]=dftPtr->d_gradRhoAtomsValues.find(subCellId)->second[3*q+0];
+                  // gradRhoAtomsQuadsElectro[q][1][iSubCell]=dftPtr->d_gradRhoAtomsValues.find(subCellId)->second[3*q+1];
+                  // gradRhoAtomsQuadsElectro[q][2][iSubCell]=dftPtr->d_gradRhoAtomsValues.find(subCellId)->second[3*q+2];
                 }
             }
 
@@ -2409,10 +2399,10 @@ forceClass<FEOrder, FEOrderElectro>::
           VectorizedArray<double> phiTotElectro_q =
             phiTotEvalElectro.get_value(q);
           VectorizedArray<double> phiExtElectro_q = make_vectorized_array(0.0);
-          Tensor<1, C_DIM, VectorizedArray<double>> gradPhiTotElectro_q =
+          Tensor<1, 3, VectorizedArray<double>> gradPhiTotElectro_q =
             phiTotEvalElectro.get_gradient(q);
 
-          Tensor<2, C_DIM, VectorizedArray<double>> E =
+          Tensor<2, 3, VectorizedArray<double>> E =
             eshelbyTensor::getEElectroEshelbyTensor(phiTotElectro_q,
                                                     gradPhiTotElectro_q,
                                                     rhoQuadsElectro[q]);
@@ -2428,14 +2418,14 @@ forceClass<FEOrder, FEOrderElectro>::
               */
             }
 
-          Tensor<1, C_DIM, VectorizedArray<double>> F = zeroTensor;
+          Tensor<1, 3, VectorizedArray<double>> F = zeroTensor;
 
           if (shadowPotentialForce)
             {
               /*
               VectorizedArray<double> phiRhoMinusApproxRho_q
               =phiTotEvalElectro2.get_value(q);
-              Tensor<1,C_DIM,VectorizedArray<double> >
+              Tensor<1,3,VectorizedArray<double> >
               gradPhiRhoMinusApproxRho_q =phiTotEvalElectro2.get_gradient(q);
               VectorizedArray<double>
               identityTensorFactor=make_vectorized_array(-1.0/(4.0*M_PI))*scalar_product(gradPhiRhoMinusApproxRho_q,gradPhiTotElectro_q)+phiRhoMinusApproxRho_q*rhoQuadsElectro[q];
@@ -2458,7 +2448,7 @@ forceClass<FEOrder, FEOrderElectro>::
             VectorizedArray<double> phiExtElectro_q =
               make_vectorized_array(0.0);
 
-            Tensor<2, C_DIM, VectorizedArray<double>> E = zeroTensor2;
+            Tensor<2, 3, VectorizedArray<double>> E = zeroTensor2;
 
             // FIXME: quadrature mismatch
             /*
@@ -2469,8 +2459,8 @@ forceClass<FEOrder, FEOrderElectro>::
                  phiExtElectro_q);
             */
 
-            Tensor<1, C_DIM, VectorizedArray<double>> F            = zeroTensor;
-            Tensor<1, C_DIM, VectorizedArray<double>> gradPhiExt_q = zeroTensor;
+            Tensor<1, 3, VectorizedArray<double>> F            = zeroTensor;
+            Tensor<1, 3, VectorizedArray<double>> gradPhiExt_q = zeroTensor;
             F -= gradRhoQuadsElectroLpsp[q] * pseudoVLocQuadsElectro[q];
 
             // FIXME: quadrature mismatch
@@ -2509,7 +2499,7 @@ forceClass<FEOrder, FEOrderElectro>::
               gradPhiTotSmearedChargeQuads[q] =
                 phiTotEvalSmearedCharge.get_gradient(q);
 
-              Tensor<1, C_DIM, VectorizedArray<double>> F = zeroTensor;
+              Tensor<1, 3, VectorizedArray<double>> F = zeroTensor;
               F = -gradPhiTotSmearedChargeQuads[q] * smearedbQuads[q];
 
               forceEvalSmearedCharge.submit_value(F, q);

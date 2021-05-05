@@ -48,13 +48,13 @@ namespace dftfe
         }
 
       const unsigned int rowsBlockSize = operatorMatrix.getScalapackBlockSize();
-      std::shared_ptr<const dealii::Utilities::MPI::ProcessGrid> processGrid;
+      std::shared_ptr<const dftfe::ProcessGrid> processGrid;
       linearAlgebraOperationsCUDA::internal::createProcessGridSquareMatrix(
         mpiCommDomain, N, processGrid);
 
-      dealii::ScaLAPACKMatrix<double> overlapMatPar(N,
-                                                    processGrid,
-                                                    rowsBlockSize);
+      dftfe::ScaLAPACKMatrix<double> overlapMatPar(N,
+                                                   processGrid,
+                                                   rowsBlockSize);
 
       if (dftParameters::gpuFineGrainedTimings)
         {
@@ -75,7 +75,7 @@ namespace dftfe
 
       // S=X*X^{T}. Implemented as S=X^{T}*X with X^{T} stored in the column
       // major format
-      if (dftParameters::useMixedPrecPGS_O && useMixedPrecOverall)
+      if (dftParameters::useMixedPrecCGS_O && useMixedPrecOverall)
         {
           if (dftParameters::overlapComputeCommunOrthoRR)
             linearAlgebraOperationsCUDA::
@@ -135,12 +135,12 @@ namespace dftfe
           gpu_time = MPI_Wtime() - gpu_time;
           if (this_process == 0)
             {
-              if (dftParameters::useMixedPrecPGS_O && useMixedPrecOverall)
+              if (dftParameters::useMixedPrecCGS_O && useMixedPrecOverall)
                 std::cout
-                  << "Time for PGS Fill overlap matrix GPU mixed prec (option 0): "
+                  << "Time for CGS Fill overlap matrix GPU mixed prec (option 0): "
                   << gpu_time << std::endl;
               else
-                std::cout << "Time for PGS Fill overlap matrix (option 0): "
+                std::cout << "Time for CGS Fill overlap matrix (option 0): "
                           << gpu_time << std::endl;
             }
         }
@@ -154,21 +154,21 @@ namespace dftfe
 
       overlapMatPar.compute_cholesky_factorization();
 
-      dealii::LAPACKSupport::Property overlapMatPropertyPostCholesky =
+      dftfe::LAPACKSupport::Property overlapMatPropertyPostCholesky =
         overlapMatPar.get_property();
 
       AssertThrow(
         overlapMatPropertyPostCholesky ==
-            dealii::LAPACKSupport::Property::lower_triangular ||
+            dftfe::LAPACKSupport::Property::lower_triangular ||
           overlapMatPropertyPostCholesky ==
-            dealii::LAPACKSupport::Property::upper_triangular,
+            dftfe::LAPACKSupport::Property::upper_triangular,
         dealii::ExcMessage(
           "DFT-FE Error: overlap matrix property after cholesky factorization incorrect"));
 
-      dealii::ScaLAPACKMatrix<double> LMatPar(N,
-                                              processGrid,
-                                              rowsBlockSize,
-                                              overlapMatPropertyPostCholesky);
+      dftfe::ScaLAPACKMatrix<double> LMatPar(N,
+                                             processGrid,
+                                             rowsBlockSize,
+                                             overlapMatPropertyPostCholesky);
 
       // copy triangular part of projHamPar into LMatPar
       if (processGrid->is_process_active())
@@ -179,7 +179,7 @@ namespace dftfe
               {
                 const unsigned int glob_j = overlapMatPar.global_row(j);
                 if (overlapMatPropertyPostCholesky ==
-                    dealii::LAPACKSupport::Property::lower_triangular)
+                    dftfe::LAPACKSupport::Property::lower_triangular)
                   {
                     if (glob_i <= glob_j)
                       LMatPar.local_el(j, i) = overlapMatPar.local_el(j, i);
@@ -206,7 +206,7 @@ namespace dftfe
           gpu_time = MPI_Wtime() - gpu_time;
           if (this_process == 0)
             std::cout
-              << "Time for PGS Cholesky Triangular Mat inverse ScaLAPACK (option 0): "
+              << "Time for CGS Cholesky Triangular Mat inverse ScaLAPACK (option 0): "
               << gpu_time << std::endl;
         }
 
@@ -219,8 +219,8 @@ namespace dftfe
           gpu_time = MPI_Wtime();
         }
 
-      if (dftParameters::useMixedPrecPGS_SR && useMixedPrecOverall)
-        subspaceRotationPGSMixedPrecScalapack(
+      if (dftParameters::useMixedPrecCGS_SR && useMixedPrecOverall)
+        subspaceRotationCGSMixedPrecScalapack(
           X,
           M,
           N,
@@ -231,7 +231,7 @@ namespace dftfe
           interBandGroupComm,
           LMatPar,
           overlapMatPropertyPostCholesky ==
-              dealii::LAPACKSupport::Property::upper_triangular ?
+              dftfe::LAPACKSupport::Property::upper_triangular ?
             true :
             false);
       else
@@ -246,10 +246,10 @@ namespace dftfe
           interBandGroupComm,
           LMatPar,
           overlapMatPropertyPostCholesky ==
-              dealii::LAPACKSupport::Property::upper_triangular ?
+              dftfe::LAPACKSupport::Property::upper_triangular ?
             true :
             false,
-          dftParameters::triMatPGSOpt ? true : false);
+          true);
 
       if (dftParameters::gpuFineGrainedTimings)
         {
@@ -258,12 +258,12 @@ namespace dftfe
           gpu_time = MPI_Wtime() - gpu_time;
           if (this_process == 0)
             {
-              if (dftParameters::useMixedPrecPGS_SR && useMixedPrecOverall)
+              if (dftParameters::useMixedPrecCGS_SR && useMixedPrecOverall)
                 std::cout
-                  << "Time for PGS subspace rotation GPU mixed prec (option 0): "
+                  << "Time for CGS subspace rotation GPU mixed prec (option 0): "
                   << gpu_time << std::endl;
               else
-                std::cout << "Time for PGS subspace rotation GPU (option 0): "
+                std::cout << "Time for CGS subspace rotation GPU (option 0): "
                           << gpu_time << std::endl;
             }
         }

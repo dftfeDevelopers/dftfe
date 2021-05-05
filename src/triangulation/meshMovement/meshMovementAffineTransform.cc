@@ -53,10 +53,10 @@ namespace dftfe
 
   std::pair<bool, double>
   meshMovementAffineTransform::moveMesh(
-    const std::vector<Point<C_DIM>> &            controlPointLocations,
-    const std::vector<Tensor<1, C_DIM, double>> &controlPointDisplacements,
-    const double                                 controllingParameter,
-    const bool                                   moveSubdivided)
+    const std::vector<Point<3>> &            controlPointLocations,
+    const std::vector<Tensor<1, 3, double>> &controlPointDisplacements,
+    const double                             controllingParameter,
+    const bool                               moveSubdivided)
   {
     AssertThrow(false, dftUtils::ExcNotImplementedYet());
   }
@@ -66,9 +66,8 @@ namespace dftfe
   void
   meshMovementAffineTransform::computeIncrement()
   {
-    const unsigned int vertices_per_cell =
-      GeometryInfo<C_DIM>::vertices_per_cell;
-    std::vector<bool> vertex_touched(
+    const unsigned int vertices_per_cell = GeometryInfo<3>::vertices_per_cell;
+    std::vector<bool>  vertex_touched(
       d_dofHandlerMoveMesh.get_triangulation().n_vertices(), false);
     DoFHandler<3>::active_cell_iterator cell =
                                           d_dofHandlerMoveMesh.begin_active(),
@@ -82,11 +81,11 @@ namespace dftfe
             if (vertex_touched[global_vertex_no])
               continue;
             vertex_touched[global_vertex_no]     = true;
-            const Point<C_DIM>         nodalCoor = cell->vertex(i);
+            const Point<3>             nodalCoor = cell->vertex(i);
             const Tensor<1, 3, double> increment =
               d_deformationGradient * nodalCoor - nodalCoor;
 
-            for (unsigned int idim = 0; idim < C_DIM; idim++)
+            for (unsigned int idim = 0; idim < 3; idim++)
               {
                 const unsigned int globalDofIndex =
                   cell->vertex_dof_index(i, idim);

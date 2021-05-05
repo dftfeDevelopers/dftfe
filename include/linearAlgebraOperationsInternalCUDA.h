@@ -18,6 +18,8 @@
 #define linearAlgebraOperationsInternalCUDA_h
 
 #include <headers.h>
+#include "process_grid.h"
+#include "scalapackWrapper.h"
 namespace dftfe
 {
   namespace linearAlgebraOperationsCUDA
@@ -30,39 +32,37 @@ namespace dftfe
     namespace internal
     {
       /** @brief Wrapper function to create a two dimensional processor grid for a square matrix in
-       * dealii::ScaLAPACKMatrix storage format.
+       * dftfe::ScaLAPACKMatrix storage format.
        *
        */
       void
       createProcessGridSquareMatrix(
-        const MPI_Comm &mpi_communicator,
-        const unsigned  size,
-        std::shared_ptr<const dealii::Utilities::MPI::ProcessGrid> &processGrid,
-        const bool useOnlyThumbRule = false);
+        const MPI_Comm &                           mpi_communicator,
+        const unsigned                             size,
+        std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
+        const bool                                 useOnlyThumbRule = false);
 
       /** @brief Wrapper function to create a two dimensional processor grid for a rectangular matrix in
-       * dealii::ScaLAPACKMatrix storage format.
+       * dftfe::ScaLAPACKMatrix storage format.
        *
        */
       void
       createProcessGridRectangularMatrix(
-        const MPI_Comm &mpi_communicator,
-        const unsigned  sizeRows,
-        const unsigned  sizeColumns,
-        std::shared_ptr<const dealii::Utilities::MPI::ProcessGrid>
-          &processGrid);
+        const MPI_Comm &                           mpi_communicator,
+        const unsigned                             sizeRows,
+        const unsigned                             sizeColumns,
+        std::shared_ptr<const dftfe::ProcessGrid> &processGrid);
 
 
-      /** @brief Creates global row/column id to local row/column ids for dealii::ScaLAPACKMatrix
+      /** @brief Creates global row/column id to local row/column ids for dftfe::ScaLAPACKMatrix
        *
        */
       template <typename T>
       void
       createGlobalToLocalIdMapsScaLAPACKMat(
-        const std::shared_ptr<const dealii::Utilities::MPI::ProcessGrid>
-          &                                   processGrid,
-        const dealii::ScaLAPACKMatrix<T> &    mat,
-        std::map<unsigned int, unsigned int> &globalToLocalRowIdMap,
+        const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
+        const dftfe::ScaLAPACKMatrix<T> &                mat,
+        std::map<unsigned int, unsigned int> &           globalToLocalRowIdMap,
         std::map<unsigned int, unsigned int> &globalToLocalColumnIdMap);
 
 
@@ -73,10 +73,9 @@ namespace dftfe
       template <typename T>
       void
       sumAcrossInterCommScaLAPACKMat(
-        const std::shared_ptr<const dealii::Utilities::MPI::ProcessGrid>
-          &                         processGrid,
-        dealii::ScaLAPACKMatrix<T> &mat,
-        const MPI_Comm &            interComm);
+        const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
+        dftfe::ScaLAPACKMatrix<T> &                      mat,
+        const MPI_Comm &                                 interComm);
 
 
 
@@ -87,11 +86,10 @@ namespace dftfe
       template <typename T>
       void
       broadcastAcrossInterCommScaLAPACKMat(
-        const std::shared_ptr<const dealii::Utilities::MPI::ProcessGrid>
-          &                         processGrid,
-        dealii::ScaLAPACKMatrix<T> &mat,
-        const MPI_Comm &            interComm,
-        const unsigned int          broadcastRoot);
+        const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
+        dftfe::ScaLAPACKMatrix<T> &                      mat,
+        const MPI_Comm &                                 interComm,
+        const unsigned int                               broadcastRoot);
     } // namespace internal
   }   // namespace linearAlgebraOperationsCUDA
 } // namespace dftfe

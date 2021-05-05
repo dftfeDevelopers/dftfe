@@ -27,26 +27,25 @@ namespace dftfe
   {
     void
     rayleighRitzSpectrumSplitDirect(
-      operatorDFTCUDAClass &           operatorMatrix,
-      const double *                   X,
-      double *                         XFrac,
-      distributedGPUVec<double> &      Xb,
-      distributedGPUVec<float> &       floatXb,
-      distributedGPUVec<double> &      HXb,
-      distributedGPUVec<double> &      projectorKetTimesVector,
-      const unsigned int               M,
-      const unsigned int               N,
-      const unsigned int               Noc,
-      const bool                       isElpaStep1,
-      const bool                       isElpaStep2,
-      const MPI_Comm &                 mpiCommDomain,
-      GPUCCLWrapper &                  gpucclMpiCommDomain,
-      double *                         eigenValues,
-      cublasHandle_t &                 handle,
-      dealii::ScaLAPACKMatrix<double> &projHamPar,
-      const std::shared_ptr<const dealii::Utilities::MPI::ProcessGrid>
-        &        processGrid,
-      const bool useMixedPrecOverall)
+      operatorDFTCUDAClass &                           operatorMatrix,
+      const double *                                   X,
+      double *                                         XFrac,
+      distributedGPUVec<double> &                      Xb,
+      distributedGPUVec<float> &                       floatXb,
+      distributedGPUVec<double> &                      HXb,
+      distributedGPUVec<double> &                      projectorKetTimesVector,
+      const unsigned int                               M,
+      const unsigned int                               N,
+      const unsigned int                               Noc,
+      const bool                                       isElpaStep1,
+      const bool                                       isElpaStep2,
+      const MPI_Comm &                                 mpiCommDomain,
+      GPUCCLWrapper &                                  gpucclMpiCommDomain,
+      double *                                         eigenValues,
+      cublasHandle_t &                                 handle,
+      dftfe::ScaLAPACKMatrix<double> &                 projHamPar,
+      const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
+      const bool                                       useMixedPrecOverall)
     {
       int this_process;
       MPI_Comm_rank(mpiCommDomain, &this_process);
@@ -162,7 +161,7 @@ namespace dftfe
               gpu_time = MPI_Wtime();
             }
 
-          eigenValuesStdVec = projHamPar.eigenpairs_symmetric_by_index_MRRR(
+          eigenValuesStdVec = projHamPar.eigenpairs_hermitian_by_index_MRRR(
             std::make_pair(Noc, N - 1), true);
           std::copy(eigenValuesStdVec.begin(),
                     eigenValuesStdVec.end(),
@@ -216,26 +215,24 @@ namespace dftfe
 
 
     void
-    rayleighRitz(
-      operatorDFTCUDAClass &           operatorMatrix,
-      double *                         X,
-      distributedGPUVec<double> &      Xb,
-      distributedGPUVec<float> &       floatXb,
-      distributedGPUVec<double> &      HXb,
-      distributedGPUVec<double> &      projectorKetTimesVector,
-      const unsigned int               M,
-      const unsigned int               N,
-      const bool                       isElpaStep1,
-      const bool                       isElpaStep2,
-      const MPI_Comm &                 mpiCommDomain,
-      GPUCCLWrapper &                  gpucclMpiCommDomain,
-      const MPI_Comm &                 interBandGroupComm,
-      double *                         eigenValues,
-      cublasHandle_t &                 handle,
-      dealii::ScaLAPACKMatrix<double> &projHamPar,
-      const std::shared_ptr<const dealii::Utilities::MPI::ProcessGrid>
-        &        processGrid,
-      const bool useMixedPrecOverall)
+    rayleighRitz(operatorDFTCUDAClass &          operatorMatrix,
+                 double *                        X,
+                 distributedGPUVec<double> &     Xb,
+                 distributedGPUVec<float> &      floatXb,
+                 distributedGPUVec<double> &     HXb,
+                 distributedGPUVec<double> &     projectorKetTimesVector,
+                 const unsigned int              M,
+                 const unsigned int              N,
+                 const bool                      isElpaStep1,
+                 const bool                      isElpaStep2,
+                 const MPI_Comm &                mpiCommDomain,
+                 GPUCCLWrapper &                 gpucclMpiCommDomain,
+                 const MPI_Comm &                interBandGroupComm,
+                 double *                        eigenValues,
+                 cublasHandle_t &                handle,
+                 dftfe::ScaLAPACKMatrix<double> &projHamPar,
+                 const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
+                 const bool useMixedPrecOverall)
     {
       int this_process;
       MPI_Comm_rank(mpiCommDomain, &this_process);
@@ -257,94 +254,29 @@ namespace dftfe
                         projHamPar.local_m() * projHamPar.local_n(),
                       0.0);
 
-          if (useMixedPrecOverall &&
-              dftParameters::useMixedPrecXTHXSpectrumSplit &&
-              dftParameters::mixedPrecXtHXFracStates != 0)
-            {
-              if (dftParameters::overlapComputeCommunOrthoRR)
-                operatorMatrix.XtHXMixedPrecOverlapComputeCommun(
-                  X,
-                  Xb,
-                  floatXb,
-                  HXb,
-                  projectorKetTimesVector,
-                  M,
-                  N,
-                  N - dftParameters::mixedPrecXtHXFracStates,
-                  handle,
-                  processGrid,
-                  projHamPar,
-                  gpucclMpiCommDomain);
-              else
-                operatorMatrix.XtHXMixedPrec(
-                  X,
-                  Xb,
-                  floatXb,
-                  HXb,
-                  projectorKetTimesVector,
-                  M,
-                  N,
-                  N - dftParameters::mixedPrecXtHXFracStates,
-                  handle,
-                  processGrid,
-                  projHamPar,
-                  gpucclMpiCommDomain);
-            }
-          else if (useMixedPrecOverall &&
-                   dftParameters::useSinglePrecXtHXOffDiag)
-            {
-              if (dftParameters::overlapComputeCommunOrthoRR)
-                operatorMatrix.XtHXOffDiagBlockSinglePrecOverlapComputeCommun(
-                  X,
-                  Xb,
-                  floatXb,
-                  HXb,
-                  projectorKetTimesVector,
-                  M,
-                  N,
-                  handle,
-                  processGrid,
-                  projHamPar,
-                  gpucclMpiCommDomain);
-              else
-                operatorMatrix.XtHXOffDiagBlockSinglePrec(
-                  X,
-                  Xb,
-                  floatXb,
-                  HXb,
-                  projectorKetTimesVector,
-                  M,
-                  N,
-                  handle,
-                  processGrid,
-                  projHamPar,
-                  gpucclMpiCommDomain);
-            }
+
+          if (dftParameters::overlapComputeCommunOrthoRR)
+            operatorMatrix.XtHXOverlapComputeCommun(X,
+                                                    Xb,
+                                                    HXb,
+                                                    projectorKetTimesVector,
+                                                    M,
+                                                    N,
+                                                    handle,
+                                                    processGrid,
+                                                    projHamPar,
+                                                    gpucclMpiCommDomain);
           else
-            {
-              if (dftParameters::overlapComputeCommunOrthoRR)
-                operatorMatrix.XtHXOverlapComputeCommun(X,
-                                                        Xb,
-                                                        HXb,
-                                                        projectorKetTimesVector,
-                                                        M,
-                                                        N,
-                                                        handle,
-                                                        processGrid,
-                                                        projHamPar,
-                                                        gpucclMpiCommDomain);
-              else
-                operatorMatrix.XtHX(X,
-                                    Xb,
-                                    HXb,
-                                    projectorKetTimesVector,
-                                    M,
-                                    N,
-                                    handle,
-                                    processGrid,
-                                    projHamPar,
-                                    gpucclMpiCommDomain);
-            }
+            operatorMatrix.XtHX(X,
+                                Xb,
+                                HXb,
+                                projectorKetTimesVector,
+                                M,
+                                N,
+                                handle,
+                                processGrid,
+                                projHamPar,
+                                gpucclMpiCommDomain);
 
           if (dftParameters::gpuFineGrainedTimings)
             {
@@ -382,7 +314,7 @@ namespace dftfe
               gpu_time = MPI_Wtime();
             }
 
-          eigenValuesStdVec = projHamPar.eigenpairs_symmetric_by_index_MRRR(
+          eigenValuesStdVec = projHamPar.eigenpairs_hermitian_by_index_MRRR(
             std::make_pair(0, numberEigenValues - 1), true);
           std::copy(eigenValuesStdVec.begin(),
                     eigenValuesStdVec.end(),
@@ -452,26 +384,25 @@ namespace dftfe
 
     void
     rayleighRitzGEP(
-      operatorDFTCUDAClass &           operatorMatrix,
-      double *                         X,
-      distributedGPUVec<double> &      Xb,
-      distributedGPUVec<float> &       floatXb,
-      distributedGPUVec<double> &      HXb,
-      distributedGPUVec<double> &      projectorKetTimesVector,
-      const unsigned int               M,
-      const unsigned int               N,
-      const bool                       isElpaStep1,
-      const bool                       isElpaStep2,
-      const MPI_Comm &                 mpiCommDomain,
-      GPUCCLWrapper &                  gpucclMpiCommDomain,
-      const MPI_Comm &                 interBandGroupComm,
-      double *                         eigenValues,
-      cublasHandle_t &                 handle,
-      dealii::ScaLAPACKMatrix<double> &projHamPar,
-      dealii::ScaLAPACKMatrix<double> &overlapMatPar,
-      const std::shared_ptr<const dealii::Utilities::MPI::ProcessGrid>
-        &        processGrid,
-      const bool useMixedPrecOverall)
+      operatorDFTCUDAClass &                           operatorMatrix,
+      double *                                         X,
+      distributedGPUVec<double> &                      Xb,
+      distributedGPUVec<float> &                       floatXb,
+      distributedGPUVec<double> &                      HXb,
+      distributedGPUVec<double> &                      projectorKetTimesVector,
+      const unsigned int                               M,
+      const unsigned int                               N,
+      const bool                                       isElpaStep1,
+      const bool                                       isElpaStep2,
+      const MPI_Comm &                                 mpiCommDomain,
+      GPUCCLWrapper &                                  gpucclMpiCommDomain,
+      const MPI_Comm &                                 interBandGroupComm,
+      double *                                         eigenValues,
+      cublasHandle_t &                                 handle,
+      dftfe::ScaLAPACKMatrix<double> &                 projHamPar,
+      dftfe::ScaLAPACKMatrix<double> &                 overlapMatPar,
+      const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
+      const bool                                       useMixedPrecOverall)
     {
       int this_process;
       MPI_Comm_rank(MPI_COMM_WORLD, &this_process);
@@ -491,7 +422,7 @@ namespace dftfe
 
           // S=X*X^{T}. Implemented as S=X^{T}*X with X^{T} stored in the column
           // major format
-          if (dftParameters::useMixedPrecPGS_O && useMixedPrecOverall)
+          if (dftParameters::useMixedPrecCGS_O && useMixedPrecOverall)
             {
               if (dftParameters::overlapComputeCommunOrthoRR)
                 linearAlgebraOperationsCUDA::
@@ -551,7 +482,7 @@ namespace dftfe
               gpu_time = MPI_Wtime() - gpu_time;
               if (this_process == 0)
                 {
-                  if (dftParameters::useMixedPrecPGS_O && useMixedPrecOverall)
+                  if (dftParameters::useMixedPrecCGS_O && useMixedPrecOverall)
                     std::cout
                       << "Time for X^{T}X Mixed Prec, RR GEP step: " << gpu_time
                       << std::endl;
@@ -574,94 +505,29 @@ namespace dftfe
                         projHamPar.local_m() * projHamPar.local_n(),
                       0.0);
 
-          if (useMixedPrecOverall &&
-              dftParameters::useMixedPrecXTHXSpectrumSplit &&
-              dftParameters::mixedPrecXtHXFracStates != 0)
-            {
-              if (dftParameters::overlapComputeCommunOrthoRR)
-                operatorMatrix.XtHXMixedPrecOverlapComputeCommun(
-                  X,
-                  Xb,
-                  floatXb,
-                  HXb,
-                  projectorKetTimesVector,
-                  M,
-                  N,
-                  N - dftParameters::mixedPrecXtHXFracStates,
-                  handle,
-                  processGrid,
-                  projHamPar,
-                  gpucclMpiCommDomain);
-              else
-                operatorMatrix.XtHXMixedPrec(
-                  X,
-                  Xb,
-                  floatXb,
-                  HXb,
-                  projectorKetTimesVector,
-                  M,
-                  N,
-                  N - dftParameters::mixedPrecXtHXFracStates,
-                  handle,
-                  processGrid,
-                  projHamPar,
-                  gpucclMpiCommDomain);
-            }
-          else if (useMixedPrecOverall &&
-                   dftParameters::useSinglePrecXtHXOffDiag)
-            {
-              if (dftParameters::overlapComputeCommunOrthoRR)
-                operatorMatrix.XtHXOffDiagBlockSinglePrecOverlapComputeCommun(
-                  X,
-                  Xb,
-                  floatXb,
-                  HXb,
-                  projectorKetTimesVector,
-                  M,
-                  N,
-                  handle,
-                  processGrid,
-                  projHamPar,
-                  gpucclMpiCommDomain);
-              else
-                operatorMatrix.XtHXOffDiagBlockSinglePrec(
-                  X,
-                  Xb,
-                  floatXb,
-                  HXb,
-                  projectorKetTimesVector,
-                  M,
-                  N,
-                  handle,
-                  processGrid,
-                  projHamPar,
-                  gpucclMpiCommDomain);
-            }
+
+          if (dftParameters::overlapComputeCommunOrthoRR)
+            operatorMatrix.XtHXOverlapComputeCommun(X,
+                                                    Xb,
+                                                    HXb,
+                                                    projectorKetTimesVector,
+                                                    M,
+                                                    N,
+                                                    handle,
+                                                    processGrid,
+                                                    projHamPar,
+                                                    gpucclMpiCommDomain);
           else
-            {
-              if (dftParameters::overlapComputeCommunOrthoRR)
-                operatorMatrix.XtHXOverlapComputeCommun(X,
-                                                        Xb,
-                                                        HXb,
-                                                        projectorKetTimesVector,
-                                                        M,
-                                                        N,
-                                                        handle,
-                                                        processGrid,
-                                                        projHamPar,
-                                                        gpucclMpiCommDomain);
-              else
-                operatorMatrix.XtHX(X,
-                                    Xb,
-                                    HXb,
-                                    projectorKetTimesVector,
-                                    M,
-                                    N,
-                                    handle,
-                                    processGrid,
-                                    projHamPar,
-                                    gpucclMpiCommDomain);
-            }
+            operatorMatrix.XtHX(X,
+                                Xb,
+                                HXb,
+                                projectorKetTimesVector,
+                                M,
+                                N,
+                                handle,
+                                processGrid,
+                                projHamPar,
+                                gpucclMpiCommDomain);
 
           if (dftParameters::gpuFineGrainedTimings)
             {
@@ -695,17 +561,17 @@ namespace dftfe
             }
 
           overlapMatPar.compute_cholesky_factorization();
-          dealii::LAPACKSupport::Property overlapMatPropertyPostCholesky =
+          dftfe::LAPACKSupport::Property overlapMatPropertyPostCholesky =
             overlapMatPar.get_property();
 
           AssertThrow(
             overlapMatPropertyPostCholesky ==
-                dealii::LAPACKSupport::Property::lower_triangular ||
+                dftfe::LAPACKSupport::Property::lower_triangular ||
               overlapMatPropertyPostCholesky ==
-                dealii::LAPACKSupport::Property::upper_triangular,
+                dftfe::LAPACKSupport::Property::upper_triangular,
             dealii::ExcMessage(
               "DFT-FE Error: overlap matrix property after cholesky factorization incorrect"));
-          dealii::ScaLAPACKMatrix<double> LMatPar(
+          dftfe::ScaLAPACKMatrix<double> LMatPar(
             N, processGrid, rowsBlockSize, overlapMatPropertyPostCholesky);
 
           // copy triangular part of projHamPar into LMatPar
@@ -717,7 +583,7 @@ namespace dftfe
                   {
                     const unsigned int glob_j = overlapMatPar.global_row(j);
                     if (overlapMatPropertyPostCholesky ==
-                        dealii::LAPACKSupport::Property::lower_triangular)
+                        dftfe::LAPACKSupport::Property::lower_triangular)
                       {
                         if (glob_i <= glob_j)
                           LMatPar.local_el(j, i) = overlapMatPar.local_el(j, i);
@@ -740,9 +606,9 @@ namespace dftfe
           //
           // compute projected Hamiltonian
           //
-          dealii::ScaLAPACKMatrix<double> projHamParTrans(N,
-                                                          processGrid,
-                                                          rowsBlockSize);
+          dftfe::ScaLAPACKMatrix<double> projHamParTrans(N,
+                                                         processGrid,
+                                                         rowsBlockSize);
 
           if (processGrid->is_process_active())
             std::fill(&projHamParTrans.local_el(0, 0),
@@ -766,12 +632,12 @@ namespace dftfe
                   }
               }
 
-          dealii::ScaLAPACKMatrix<double> projHamParCopy(N,
-                                                         processGrid,
-                                                         rowsBlockSize);
+          dftfe::ScaLAPACKMatrix<double> projHamParCopy(N,
+                                                        processGrid,
+                                                        rowsBlockSize);
 
           if (overlapMatPropertyPostCholesky ==
-              dealii::LAPACKSupport::Property::lower_triangular)
+              dftfe::LAPACKSupport::Property::lower_triangular)
             {
               LMatPar.mmult(projHamParCopy, projHamPar);
               projHamParCopy.mTmult(projHamPar, LMatPar);
@@ -788,7 +654,7 @@ namespace dftfe
           const unsigned int  numberEigenValues = N;
           std::vector<double> eigenValuesStdVec(numberEigenValues, 0.0);
 
-          eigenValuesStdVec = projHamPar.eigenpairs_symmetric_by_index_MRRR(
+          eigenValuesStdVec = projHamPar.eigenpairs_hermitian_by_index_MRRR(
             std::make_pair(0, numberEigenValues - 1), true);
           std::copy(eigenValuesStdVec.begin(),
                     eigenValuesStdVec.end(),
@@ -796,7 +662,7 @@ namespace dftfe
 
           projHamPar.copy_to(projHamParCopy);
           if (overlapMatPropertyPostCholesky ==
-              dealii::LAPACKSupport::Property::lower_triangular)
+              dftfe::LAPACKSupport::Property::lower_triangular)
             LMatPar.Tmmult(projHamPar, projHamParCopy);
           else
             LMatPar.mmult(projHamPar, projHamParCopy);
@@ -865,28 +731,27 @@ namespace dftfe
 
     void
     rayleighRitzGEPSpectrumSplitDirect(
-      operatorDFTCUDAClass &           operatorMatrix,
-      double *                         X,
-      double *                         XFrac,
-      distributedGPUVec<double> &      Xb,
-      distributedGPUVec<float> &       floatXb,
-      distributedGPUVec<double> &      HXb,
-      distributedGPUVec<double> &      projectorKetTimesVector,
-      const unsigned int               M,
-      const unsigned int               N,
-      const unsigned int               Noc,
-      const bool                       isElpaStep1,
-      const bool                       isElpaStep2,
-      const MPI_Comm &                 mpiCommDomain,
-      GPUCCLWrapper &                  gpucclMpiCommDomain,
-      const MPI_Comm &                 interBandGroupComm,
-      double *                         eigenValues,
-      cublasHandle_t &                 handle,
-      dealii::ScaLAPACKMatrix<double> &projHamPar,
-      dealii::ScaLAPACKMatrix<double> &overlapMatPar,
-      const std::shared_ptr<const dealii::Utilities::MPI::ProcessGrid>
-        &        processGrid,
-      const bool useMixedPrecOverall)
+      operatorDFTCUDAClass &                           operatorMatrix,
+      double *                                         X,
+      double *                                         XFrac,
+      distributedGPUVec<double> &                      Xb,
+      distributedGPUVec<float> &                       floatXb,
+      distributedGPUVec<double> &                      HXb,
+      distributedGPUVec<double> &                      projectorKetTimesVector,
+      const unsigned int                               M,
+      const unsigned int                               N,
+      const unsigned int                               Noc,
+      const bool                                       isElpaStep1,
+      const bool                                       isElpaStep2,
+      const MPI_Comm &                                 mpiCommDomain,
+      GPUCCLWrapper &                                  gpucclMpiCommDomain,
+      const MPI_Comm &                                 interBandGroupComm,
+      double *                                         eigenValues,
+      cublasHandle_t &                                 handle,
+      dftfe::ScaLAPACKMatrix<double> &                 projHamPar,
+      dftfe::ScaLAPACKMatrix<double> &                 overlapMatPar,
+      const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
+      const bool                                       useMixedPrecOverall)
     {
       int this_process;
       MPI_Comm_rank(MPI_COMM_WORLD, &this_process);
@@ -908,7 +773,7 @@ namespace dftfe
 
           // S=X*X^{T}. Implemented as S=X^{T}*X with X^{T} stored in the column
           // major format
-          if (dftParameters::useMixedPrecPGS_O && useMixedPrecOverall)
+          if (dftParameters::useMixedPrecCGS_O && useMixedPrecOverall)
             {
               if (dftParameters::overlapComputeCommunOrthoRR)
                 linearAlgebraOperationsCUDA::
@@ -968,7 +833,7 @@ namespace dftfe
               gpu_time = MPI_Wtime() - gpu_time;
               if (this_process == 0)
                 {
-                  if (dftParameters::useMixedPrecPGS_O && useMixedPrecOverall)
+                  if (dftParameters::useMixedPrecCGS_O && useMixedPrecOverall)
                     std::cout
                       << "Time for X^{T}X Mixed Prec, RR GEP step: " << gpu_time
                       << std::endl;
@@ -1070,9 +935,9 @@ namespace dftfe
         return;
 
 
-      dealii::ScaLAPACKMatrix<double> LMatPar(N, processGrid, rowsBlockSize);
+      dftfe::ScaLAPACKMatrix<double> LMatPar(N, processGrid, rowsBlockSize);
       overlapMatPar.copy_to(LMatPar);
-      dealii::LAPACKSupport::Property overlapMatPropertyPostCholesky =
+      dftfe::LAPACKSupport::Property overlapMatPropertyPostCholesky =
         overlapMatPar.get_property();
       if (!isElpaStep2)
         {
@@ -1091,9 +956,9 @@ namespace dftfe
 
           AssertThrow(
             overlapMatPropertyPostCholesky ==
-                dealii::LAPACKSupport::Property::lower_triangular ||
+                dftfe::LAPACKSupport::Property::lower_triangular ||
               overlapMatPropertyPostCholesky ==
-                dealii::LAPACKSupport::Property::upper_triangular,
+                dftfe::LAPACKSupport::Property::upper_triangular,
             dealii::ExcMessage(
               "DFT-FE Error: overlap matrix property after cholesky factorization incorrect"));
           LMatPar.set_property(overlapMatPropertyPostCholesky);
@@ -1107,7 +972,7 @@ namespace dftfe
                   {
                     const unsigned int glob_j = overlapMatPar.global_row(j);
                     if (overlapMatPropertyPostCholesky ==
-                        dealii::LAPACKSupport::Property::lower_triangular)
+                        dftfe::LAPACKSupport::Property::lower_triangular)
                       {
                         if (glob_i <= glob_j)
                           LMatPar.local_el(j, i) = overlapMatPar.local_el(j, i);
@@ -1125,9 +990,9 @@ namespace dftfe
               }
           LMatPar.invert();
 
-          dealii::ScaLAPACKMatrix<double> projHamParTrans(N,
-                                                          processGrid,
-                                                          rowsBlockSize);
+          dftfe::ScaLAPACKMatrix<double> projHamParTrans(N,
+                                                         processGrid,
+                                                         rowsBlockSize);
 
           if (processGrid->is_process_active())
             std::fill(&projHamParTrans.local_el(0, 0),
@@ -1151,12 +1016,12 @@ namespace dftfe
                   }
               }
 
-          dealii::ScaLAPACKMatrix<double> projHamParCopy(N,
-                                                         processGrid,
-                                                         rowsBlockSize);
+          dftfe::ScaLAPACKMatrix<double> projHamParCopy(N,
+                                                        processGrid,
+                                                        rowsBlockSize);
 
           if (overlapMatPropertyPostCholesky ==
-              dealii::LAPACKSupport::Property::lower_triangular)
+              dftfe::LAPACKSupport::Property::lower_triangular)
             {
               LMatPar.mmult(projHamParCopy, projHamPar);
               projHamParCopy.mTmult(projHamPar, LMatPar);
@@ -1169,7 +1034,7 @@ namespace dftfe
 
           std::vector<double> eigenValuesStdVec(Nfr, 0.0);
 
-          eigenValuesStdVec = projHamPar.eigenpairs_symmetric_by_index_MRRR(
+          eigenValuesStdVec = projHamPar.eigenpairs_hermitian_by_index_MRRR(
             std::make_pair(Noc, N - 1), true);
           std::copy(eigenValuesStdVec.begin(),
                     eigenValuesStdVec.end(),
@@ -1177,7 +1042,7 @@ namespace dftfe
 
           projHamPar.copy_to(projHamParCopy);
           if (overlapMatPropertyPostCholesky ==
-              dealii::LAPACKSupport::Property::lower_triangular)
+              dftfe::LAPACKSupport::Property::lower_triangular)
             LMatPar.Tmmult(projHamPar, projHamParCopy);
           else
             LMatPar.mmult(projHamPar, projHamParCopy);
@@ -1238,8 +1103,8 @@ namespace dftfe
           gpu_time = MPI_Wtime();
         }
 
-      if (useMixedPrecOverall && dftParameters::useMixedPrecPGS_SR)
-        subspaceRotationPGSMixedPrecScalapack(
+      if (useMixedPrecOverall && dftParameters::useMixedPrecCGS_SR)
+        subspaceRotationCGSMixedPrecScalapack(
           X,
           M,
           N,
@@ -1250,7 +1115,7 @@ namespace dftfe
           interBandGroupComm,
           LMatPar,
           overlapMatPropertyPostCholesky ==
-              dealii::LAPACKSupport::Property::upper_triangular ?
+              dftfe::LAPACKSupport::Property::upper_triangular ?
             true :
             false);
       else
@@ -1265,10 +1130,10 @@ namespace dftfe
           interBandGroupComm,
           LMatPar,
           overlapMatPropertyPostCholesky ==
-              dealii::LAPACKSupport::Property::upper_triangular ?
+              dftfe::LAPACKSupport::Property::upper_triangular ?
             true :
             false,
-          dftParameters::triMatPGSOpt ? true : false);
+          true);
 
       if (dftParameters::gpuFineGrainedTimings)
         {
@@ -1276,7 +1141,7 @@ namespace dftfe
           gpu_time = MPI_Wtime() - gpu_time;
 
           if (this_process == 0)
-            if (useMixedPrecOverall && dftParameters::useMixedPrecPGS_SR)
+            if (useMixedPrecOverall && dftParameters::useMixedPrecCGS_SR)
               std::cout << "Time for X=X*L^{-1}^{T} mixed prec, RR GEP step: "
                         << gpu_time << std::endl;
             else

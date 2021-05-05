@@ -60,6 +60,5 @@ subsection SCF parameters
       set CHEBYSHEV FILTER TOLERANCE=1e-3
       set USE ELPA=true
       set SCALAPACKPROCS=2
-      set RR GEP=true
   end
 end

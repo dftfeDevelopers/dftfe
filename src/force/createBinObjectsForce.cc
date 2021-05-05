@@ -25,21 +25,21 @@ forceClass<FEOrder, FEOrderElectro>::createBinObjectsForce(
   const DoFHandler<3> &                            dofHandlerForce,
   const dealii::AffineConstraints<double> &        hangingPlusPBCConstraints,
   const vselfBinsManager<FEOrder, FEOrderElectro> &vselfBinsManager,
-  std::vector<std::vector<DoFHandler<C_DIM>::active_cell_iterator>>
+  std::vector<std::vector<DoFHandler<3>::active_cell_iterator>>
     &cellsVselfBallsDofHandler,
-  std::vector<std::vector<DoFHandler<C_DIM>::active_cell_iterator>>
+  std::vector<std::vector<DoFHandler<3>::active_cell_iterator>>
     &cellsVselfBallsDofHandlerForce,
   std::vector<std::map<dealii::CellId, unsigned int>>
     &                                   cellsVselfBallsClosestAtomIdDofHandler,
   std::map<unsigned int, unsigned int> &AtomIdBinIdLocalDofHandler,
-  std::vector<std::map<DoFHandler<C_DIM>::active_cell_iterator,
-                       std::vector<unsigned int>>>
+  std::vector<
+    std::map<DoFHandler<3>::active_cell_iterator, std::vector<unsigned int>>>
     &cellFacesVselfBallSurfacesDofHandler,
-  std::vector<std::map<DoFHandler<C_DIM>::active_cell_iterator,
-                       std::vector<unsigned int>>>
+  std::vector<
+    std::map<DoFHandler<3>::active_cell_iterator, std::vector<unsigned int>>>
     &cellFacesVselfBallSurfacesDofHandlerForce)
 {
-  const unsigned int faces_per_cell = GeometryInfo<C_DIM>::faces_per_cell;
+  const unsigned int faces_per_cell = GeometryInfo<3>::faces_per_cell;
   const unsigned int dofs_per_cell  = dofHandler.get_fe().dofs_per_cell;
   const unsigned int dofs_per_face  = dofHandler.get_fe().dofs_per_face;
   const unsigned int numberBins     = vselfBinsManager.getAtomIdsBins().size();
@@ -63,9 +63,9 @@ forceClass<FEOrder, FEOrderElectro>::createBinObjectsForce(
         vselfBinsManager.getBoundaryFlagsBins()[iBin];
       const std::map<dealii::types::global_dof_index, int> &closestAtomBinMap =
         vselfBinsManager.getClosestAtomIdsBins()[iBin];
-      DoFHandler<C_DIM>::active_cell_iterator cell = dofHandler.begin_active();
-      DoFHandler<C_DIM>::active_cell_iterator endc = dofHandler.end();
-      DoFHandler<C_DIM>::active_cell_iterator cellForce =
+      DoFHandler<3>::active_cell_iterator cell = dofHandler.begin_active();
+      DoFHandler<3>::active_cell_iterator endc = dofHandler.end();
+      DoFHandler<3>::active_cell_iterator cellForce =
         dofHandlerForce.begin_active();
       for (; cell != endc; ++cell, ++cellForce)
         {
@@ -83,13 +83,13 @@ forceClass<FEOrder, FEOrderElectro>::createBinObjectsForce(
                   int  dirichletDofCount         = 0;
                   bool isSolvedDofPresent        = false;
                   int  nonHangingNodeIdCountFace = 0;
-                  std::vector<types::global_dof_index> iFaceGlobalDofIndices(
-                    dofs_per_face);
+                  std::vector<dealii::types::global_dof_index>
+                    iFaceGlobalDofIndices(dofs_per_face);
                   cell->face(iFace)->get_dof_indices(iFaceGlobalDofIndices);
                   for (unsigned int iFaceDof = 0; iFaceDof < dofs_per_face;
                        ++iFaceDof)
                     {
-                      const types::global_dof_index nodeId =
+                      const dealii::types::global_dof_index nodeId =
                         iFaceGlobalDofIndices[iFaceDof];
                       if (!hangingPlusPBCConstraints.is_constrained(nodeId))
                         {
@@ -121,10 +121,21 @@ forceClass<FEOrder, FEOrderElectro>::createBinObjectsForce(
                                 nodeId);
                           for (unsigned int j = 0; j < rowData->size(); ++j)
                             {
-                              Assert(boundaryNodeMap.find(
-                                       (*rowData)[j].first) !=
-                                       boundaryNodeMap.end(),
-                                     ExcMessage("BUG"));
+                              if (dftParameters::
+                                    createConstraintsFromSerialDofhandler)
+                                {
+                                  if (boundaryNodeMap.find(
+                                        (*rowData)[j].first) ==
+                                      boundaryNodeMap.end())
+                                    continue;
+                                }
+                              else
+                                {
+                                  Assert(boundaryNodeMap.find(
+                                           (*rowData)[j].first) !=
+                                           boundaryNodeMap.end(),
+                                         ExcMessage("BUG"));
+                                }
 
                               if (boundaryNodeMap.find((*rowData)[j].first)
                                     ->second != -1)
@@ -186,10 +197,9 @@ forceClass<FEOrder, FEOrderElectro>::createBinObjectsForce(
     }         // Bin loop
 
   d_cellIdToActiveCellIteratorMapDofHandlerRhoNodalElectro.clear();
-  DoFHandler<C_DIM>::active_cell_iterator cell =
+  DoFHandler<3>::active_cell_iterator cell =
     dftPtr->d_dofHandlerRhoNodal.begin_active();
-  DoFHandler<C_DIM>::active_cell_iterator endc =
-    dftPtr->d_dofHandlerRhoNodal.end();
+  DoFHandler<3>::active_cell_iterator endc = dftPtr->d_dofHandlerRhoNodal.end();
   for (; cell != endc; ++cell)
     if (cell->is_locally_owned())
       d_cellIdToActiveCellIteratorMapDofHandlerRhoNodalElectro[cell->id()] =

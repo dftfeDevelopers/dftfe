@@ -230,7 +230,6 @@ namespace dftfe
     d_YArrayPtr                       = (void *)(new distributedGPUVec<double>);
     d_cudaFlattenedFloatArrayBlockPtr = (void *)(new distributedGPUVec<float>);
     d_projectorKetTimesVectorPtr      = (void *)(new distributedGPUVec<double>);
-    d_projectorKetTimesVectorFloatPtr = (void *)(new distributedGPUVec<float>);
     d_cudaFlattenedArrayBlock2Ptr     = (void *)(new distributedGPUVec<double>);
     d_YArray2Ptr                      = (void *)(new distributedGPUVec<double>);
     d_projectorKetTimesVector2Ptr     = (void *)(new distributedGPUVec<double>);
@@ -246,7 +245,6 @@ namespace dftfe
     delete (distributedGPUVec<double> *)d_YArrayPtr;
     delete (distributedGPUVec<float> *)d_cudaFlattenedFloatArrayBlockPtr;
     delete (distributedGPUVec<double> *)d_projectorKetTimesVectorPtr;
-    delete (distributedGPUVec<float> *)d_projectorKetTimesVectorFloatPtr;
     delete (distributedGPUVec<double> *)d_cudaFlattenedArrayBlock2Ptr;
     delete (distributedGPUVec<double> *)d_YArray2Ptr;
     delete (distributedGPUVec<double> *)d_projectorKetTimesVector2Ptr;
@@ -275,22 +273,21 @@ namespace dftfe
   //
   void
   chebyshevOrthogonalizedSubspaceIterationSolverCUDA::onlyRR(
-    operatorDFTCUDAClass &           operatorMatrix,
-    double *                         eigenVectorsFlattenedCUDA,
-    double *                         eigenVectorsRotFracDensityFlattenedCUDA,
-    const unsigned int               flattenedSize,
-    distributedCPUVec<double> &      tempEigenVec,
-    const unsigned int               totalNumberWaveFunctions,
-    std::vector<double> &            eigenValues,
-    GPUCCLWrapper &                  gpucclMpiCommDomain,
-    const MPI_Comm &                 interBandGroupComm,
-    dealii::ScaLAPACKMatrix<double> &projHamPar,
-    dealii::ScaLAPACKMatrix<double> &overlapMatPar,
-    const std::shared_ptr<const dealii::Utilities::MPI::ProcessGrid>
-      &        processGrid,
-    const bool useMixedPrecOverall,
-    const bool isElpaStep1,
-    const bool isElpaStep2)
+    operatorDFTCUDAClass &          operatorMatrix,
+    double *                        eigenVectorsFlattenedCUDA,
+    double *                        eigenVectorsRotFracDensityFlattenedCUDA,
+    const unsigned int              flattenedSize,
+    distributedCPUVec<double> &     tempEigenVec,
+    const unsigned int              totalNumberWaveFunctions,
+    std::vector<double> &           eigenValues,
+    GPUCCLWrapper &                 gpucclMpiCommDomain,
+    const MPI_Comm &                interBandGroupComm,
+    dftfe::ScaLAPACKMatrix<double> &projHamPar,
+    dftfe::ScaLAPACKMatrix<double> &overlapMatPar,
+    const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
+    const bool                                       useMixedPrecOverall,
+    const bool                                       isElpaStep1,
+    const bool                                       isElpaStep2)
   {
 #ifdef USE_COMPLEX
     AssertThrow(false, dftUtils::ExcNotImplementedYet());
@@ -495,26 +492,25 @@ namespace dftfe
   //
   double
   chebyshevOrthogonalizedSubspaceIterationSolverCUDA::solve(
-    operatorDFTCUDAClass &           operatorMatrix,
-    double *                         eigenVectorsFlattenedCUDA,
-    double *                         eigenVectorsRotFracDensityFlattenedCUDA,
-    const unsigned int               flattenedSize,
-    distributedCPUVec<double> &      tempEigenVec,
-    const unsigned int               totalNumberWaveFunctions,
-    std::vector<double> &            eigenValues,
-    std::vector<double> &            residualNorms,
-    GPUCCLWrapper &                  gpucclMpiCommDomain,
-    const MPI_Comm &                 interBandGroupComm,
-    dealii::ScaLAPACKMatrix<double> &projHamPar,
-    dealii::ScaLAPACKMatrix<double> &overlapMatPar,
-    const std::shared_ptr<const dealii::Utilities::MPI::ProcessGrid>
-      &        processGrid,
-    const bool isFirstFilteringCall,
-    const bool computeResidual,
-    const bool useMixedPrecOverall,
-    const bool isFirstScf,
-    const bool isElpaStep1,
-    const bool isElpaStep2)
+    operatorDFTCUDAClass &          operatorMatrix,
+    double *                        eigenVectorsFlattenedCUDA,
+    double *                        eigenVectorsRotFracDensityFlattenedCUDA,
+    const unsigned int              flattenedSize,
+    distributedCPUVec<double> &     tempEigenVec,
+    const unsigned int              totalNumberWaveFunctions,
+    std::vector<double> &           eigenValues,
+    std::vector<double> &           residualNorms,
+    GPUCCLWrapper &                 gpucclMpiCommDomain,
+    const MPI_Comm &                interBandGroupComm,
+    dftfe::ScaLAPACKMatrix<double> &projHamPar,
+    dftfe::ScaLAPACKMatrix<double> &overlapMatPar,
+    const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
+    const bool                                       isFirstFilteringCall,
+    const bool                                       computeResidual,
+    const bool                                       useMixedPrecOverall,
+    const bool                                       isFirstScf,
+    const bool                                       isElpaStep1,
+    const bool                                       isElpaStep2)
   {
 #ifdef USE_COMPLEX
     AssertThrow(false, dftUtils::ExcNotImplementedYet());
@@ -579,14 +575,6 @@ namespace dftfe
               vectorsBlockSize,
               *((distributedGPUVec<double> *)d_projectorKetTimesVectorPtr));
 
-
-            if (dftParameters::useMixedPrecChebyNonLocal)
-              vectorTools::createDealiiVector(
-                operatorMatrix.getProjectorKetTimesVectorSingle()
-                  .get_partitioner(),
-                vectorsBlockSize,
-                *((distributedGPUVec<float> *)
-                    d_projectorKetTimesVectorFloatPtr));
 
             if (dftParameters::overlapComputeCommunCheby)
               ((distributedGPUVec<double> *)d_projectorKetTimesVector2Ptr)
@@ -677,8 +665,14 @@ namespace dftfe
         // set Chebyshev order
         //
         if (chebyshevOrder == 0)
-          chebyshevOrder =
-            internal::setChebyshevOrder(d_upperBoundUnWantedSpectrum);
+          {
+            chebyshevOrder =
+              internal::setChebyshevOrder(d_upperBoundUnWantedSpectrum);
+
+            if (dftParameters::orthogType.compare("CGS") == 0 &&
+                !dftParameters::isPseudopotential)
+              chebyshevOrder *= 0.5;
+          }
 
         chebyshevOrder =
           (isFirstScf && dftParameters::isPseudopotential) ?
@@ -807,8 +801,6 @@ namespace dftfe
                           d_cudaFlattenedFloatArrayBlockPtr),
                       *((distributedGPUVec<double> *)
                           d_projectorKetTimesVectorPtr),
-                      *((distributedGPUVec<float> *)
-                          d_projectorKetTimesVectorFloatPtr),
                       *((distributedGPUVec<double> *)
                           d_cudaFlattenedArrayBlock2Ptr),
                       *((distributedGPUVec<double> *)d_YArray2Ptr),
@@ -1032,43 +1024,12 @@ namespace dftfe
            "<<std::sqrt(result)<<std::endl;
          */
 
-        if (dftParameters::rrGEP == false)
+        if (dftParameters::orthogType.compare("GS") == 0)
           {
-            if (dftParameters::orthogType.compare("LW") == 0)
-              {
-                AssertThrow(
-                  false,
-                  dealii::ExcMessage(
-                    "Lowden Gram-Schmidt Orthonormalization Not implemented in CUDA:"));
-              }
-            else if (dftParameters::orthogType.compare("PGS") == 0)
-              {
-                // gpu_time = MPI_Wtime();
-                linearAlgebraOperationsCUDA::pseudoGramSchmidtOrthogonalization(
-                  operatorMatrix,
-                  eigenVectorsFlattenedCUDA,
-                  localVectorSize,
-                  totalNumberWaveFunctions,
-                  operatorMatrix.getMPICommunicator(),
-                  gpucclMpiCommDomain,
-                  interBandGroupComm,
-                  cublasHandle,
-                  useMixedPrecOverall);
-
-                // gpu_time = MPI_Wtime() - gpu_time;
-                // if (this_process==0)
-                //    std::cout<<"Time for PGS on GPU: "<<gpu_time<<std::endl;
-              }
-            else if (dftParameters::orthogType.compare("GS") == 0)
-              {
-                AssertThrow(
-                  false,
-                  dealii::ExcMessage(
-                    "Classical Gram-Schmidt Orthonormalization not implemented in CUDA:"));
-              }
-
-            if (dftParameters::verbosity >= 4)
-              pcout << "Orthogonalization Done: " << std::endl;
+            AssertThrow(
+              false,
+              dealii::ExcMessage(
+                "Classical Gram-Schmidt Orthonormalization not implemented in CUDA:"));
           }
 
         // gpu_time = MPI_Wtime();
@@ -1078,50 +1039,28 @@ namespace dftfe
 
     if (eigenValues.size() != totalNumberWaveFunctions)
       {
-        if (dftParameters::rrGEP == false)
-          linearAlgebraOperationsCUDA::rayleighRitzSpectrumSplitDirect(
-            operatorMatrix,
-            eigenVectorsFlattenedCUDA,
-            eigenVectorsRotFracDensityFlattenedCUDA,
-            *((distributedGPUVec<double> *)d_cudaFlattenedArrayBlockPtr),
-            *((distributedGPUVec<float> *)d_cudaFlattenedFloatArrayBlockPtr),
-            *((distributedGPUVec<double> *)d_YArrayPtr),
-            *((distributedGPUVec<double> *)d_projectorKetTimesVectorPtr),
-            localVectorSize,
-            totalNumberWaveFunctions,
-            totalNumberWaveFunctions - eigenValues.size(),
-            isElpaStep1,
-            isElpaStep2,
-            operatorMatrix.getMPICommunicator(),
-            gpucclMpiCommDomain,
-            &eigenValues[0],
-            cublasHandle,
-            projHamPar,
-            processGrid,
-            useMixedPrecOverall);
-        else
-          linearAlgebraOperationsCUDA::rayleighRitzGEPSpectrumSplitDirect(
-            operatorMatrix,
-            eigenVectorsFlattenedCUDA,
-            eigenVectorsRotFracDensityFlattenedCUDA,
-            *((distributedGPUVec<double> *)d_cudaFlattenedArrayBlockPtr),
-            *((distributedGPUVec<float> *)d_cudaFlattenedFloatArrayBlockPtr),
-            *((distributedGPUVec<double> *)d_YArrayPtr),
-            *((distributedGPUVec<double> *)d_projectorKetTimesVectorPtr),
-            localVectorSize,
-            totalNumberWaveFunctions,
-            totalNumberWaveFunctions - eigenValues.size(),
-            isElpaStep1,
-            isElpaStep2,
-            operatorMatrix.getMPICommunicator(),
-            gpucclMpiCommDomain,
-            interBandGroupComm,
-            &eigenValues[0],
-            cublasHandle,
-            projHamPar,
-            overlapMatPar,
-            processGrid,
-            useMixedPrecOverall);
+        linearAlgebraOperationsCUDA::rayleighRitzGEPSpectrumSplitDirect(
+          operatorMatrix,
+          eigenVectorsFlattenedCUDA,
+          eigenVectorsRotFracDensityFlattenedCUDA,
+          *((distributedGPUVec<double> *)d_cudaFlattenedArrayBlockPtr),
+          *((distributedGPUVec<float> *)d_cudaFlattenedFloatArrayBlockPtr),
+          *((distributedGPUVec<double> *)d_YArrayPtr),
+          *((distributedGPUVec<double> *)d_projectorKetTimesVectorPtr),
+          localVectorSize,
+          totalNumberWaveFunctions,
+          totalNumberWaveFunctions - eigenValues.size(),
+          isElpaStep1,
+          isElpaStep2,
+          operatorMatrix.getMPICommunicator(),
+          gpucclMpiCommDomain,
+          interBandGroupComm,
+          &eigenValues[0],
+          cublasHandle,
+          projHamPar,
+          overlapMatPar,
+          processGrid,
+          useMixedPrecOverall);
 
         if (isElpaStep1)
           {
@@ -1137,47 +1076,26 @@ namespace dftfe
       }
     else
       {
-        if (dftParameters::rrGEP == false)
-          linearAlgebraOperationsCUDA::rayleighRitz(
-            operatorMatrix,
-            eigenVectorsFlattenedCUDA,
-            *((distributedGPUVec<double> *)d_cudaFlattenedArrayBlockPtr),
-            *((distributedGPUVec<float> *)d_cudaFlattenedFloatArrayBlockPtr),
-            *((distributedGPUVec<double> *)d_YArrayPtr),
-            *((distributedGPUVec<double> *)d_projectorKetTimesVectorPtr),
-            localVectorSize,
-            totalNumberWaveFunctions,
-            isElpaStep1,
-            isElpaStep2,
-            operatorMatrix.getMPICommunicator(),
-            gpucclMpiCommDomain,
-            interBandGroupComm,
-            &eigenValues[0],
-            cublasHandle,
-            projHamPar,
-            processGrid,
-            useMixedPrecOverall);
-        else
-          linearAlgebraOperationsCUDA::rayleighRitzGEP(
-            operatorMatrix,
-            eigenVectorsFlattenedCUDA,
-            *((distributedGPUVec<double> *)d_cudaFlattenedArrayBlockPtr),
-            *((distributedGPUVec<float> *)d_cudaFlattenedFloatArrayBlockPtr),
-            *((distributedGPUVec<double> *)d_YArrayPtr),
-            *((distributedGPUVec<double> *)d_projectorKetTimesVectorPtr),
-            localVectorSize,
-            totalNumberWaveFunctions,
-            isElpaStep1,
-            isElpaStep2,
-            operatorMatrix.getMPICommunicator(),
-            gpucclMpiCommDomain,
-            interBandGroupComm,
-            &eigenValues[0],
-            cublasHandle,
-            projHamPar,
-            overlapMatPar,
-            processGrid,
-            useMixedPrecOverall);
+        linearAlgebraOperationsCUDA::rayleighRitzGEP(
+          operatorMatrix,
+          eigenVectorsFlattenedCUDA,
+          *((distributedGPUVec<double> *)d_cudaFlattenedArrayBlockPtr),
+          *((distributedGPUVec<float> *)d_cudaFlattenedFloatArrayBlockPtr),
+          *((distributedGPUVec<double> *)d_YArrayPtr),
+          *((distributedGPUVec<double> *)d_projectorKetTimesVectorPtr),
+          localVectorSize,
+          totalNumberWaveFunctions,
+          isElpaStep1,
+          isElpaStep2,
+          operatorMatrix.getMPICommunicator(),
+          gpucclMpiCommDomain,
+          interBandGroupComm,
+          &eigenValues[0],
+          cublasHandle,
+          projHamPar,
+          overlapMatPar,
+          processGrid,
+          useMixedPrecOverall);
 
 
         if (isElpaStep1)
@@ -1285,20 +1203,19 @@ namespace dftfe
   //
   void
   chebyshevOrthogonalizedSubspaceIterationSolverCUDA::solveNoRR(
-    operatorDFTCUDAClass &           operatorMatrix,
-    double *                         eigenVectorsFlattenedCUDA,
-    const unsigned int               flattenedSize,
-    distributedCPUVec<double> &      tempEigenVec,
-    const unsigned int               totalNumberWaveFunctions,
-    std::vector<double> &            eigenValues,
-    GPUCCLWrapper &                  gpucclMpiCommDomain,
-    const MPI_Comm &                 interBandGroupComm,
-    dealii::ScaLAPACKMatrix<double> &projHamPar,
-    dealii::ScaLAPACKMatrix<double> &overlapMatPar,
-    const std::shared_ptr<const dealii::Utilities::MPI::ProcessGrid>
-      &                processGrid,
-    const unsigned int numberPasses,
-    const bool         useMixedPrecOverall)
+    operatorDFTCUDAClass &                           operatorMatrix,
+    double *                                         eigenVectorsFlattenedCUDA,
+    const unsigned int                               flattenedSize,
+    distributedCPUVec<double> &                      tempEigenVec,
+    const unsigned int                               totalNumberWaveFunctions,
+    std::vector<double> &                            eigenValues,
+    GPUCCLWrapper &                                  gpucclMpiCommDomain,
+    const MPI_Comm &                                 interBandGroupComm,
+    dftfe::ScaLAPACKMatrix<double> &                 projHamPar,
+    dftfe::ScaLAPACKMatrix<double> &                 overlapMatPar,
+    const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
+    const unsigned int                               numberPasses,
+    const bool                                       useMixedPrecOverall)
   {
 #ifdef USE_COMPLEX
     AssertThrow(false, dftUtils::ExcNotImplementedYet());
@@ -1362,13 +1279,6 @@ namespace dftfe
           operatorMatrix.getProjectorKetTimesVectorSingle().get_partitioner(),
           chebyBlockSize,
           *((distributedGPUVec<double> *)d_projectorKetTimesVectorPtr));
-
-
-        if (dftParameters::useMixedPrecChebyNonLocal)
-          vectorTools::createDealiiVector(
-            operatorMatrix.getProjectorKetTimesVectorSingle().get_partitioner(),
-            chebyBlockSize,
-            *((distributedGPUVec<float> *)d_projectorKetTimesVectorFloatPtr));
 
 
         if (dftParameters::overlapComputeCommunCheby)
@@ -1554,8 +1464,6 @@ namespace dftfe
                               d_cudaFlattenedFloatArrayBlockPtr),
                           *((distributedGPUVec<double> *)
                               d_projectorKetTimesVectorPtr),
-                          *((distributedGPUVec<float> *)
-                              d_projectorKetTimesVectorFloatPtr),
                           *((distributedGPUVec<double> *)
                               d_cudaFlattenedArrayBlock2Ptr),
                           *((distributedGPUVec<double> *)d_YArray2Ptr),

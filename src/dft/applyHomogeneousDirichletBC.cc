@@ -20,19 +20,14 @@
 template <unsigned int FEOrder, unsigned int FEOrderElectro>
 void
 dftClass<FEOrder, FEOrderElectro>::applyHomogeneousDirichletBC(
-  const dealii::DoFHandler<3> &      _dofHandler,
-  dealii::AffineConstraints<double> &constraintMatrix)
+  const dealii::DoFHandler<3> &            _dofHandler,
+  const dealii::AffineConstraints<double> &onlyHangingNodeConstraints,
+  dealii::AffineConstraints<double> &      constraintMatrix)
 
 {
   dealii::IndexSet locallyRelevantDofs;
   dealii::DoFTools::extract_locally_relevant_dofs(_dofHandler,
                                                   locallyRelevantDofs);
-
-  dealii::AffineConstraints<double> onlyHangingNodeConstraints;
-  onlyHangingNodeConstraints.reinit(locallyRelevantDofs);
-  dealii::DoFTools::make_hanging_node_constraints(_dofHandler,
-                                                  onlyHangingNodeConstraints);
-  onlyHangingNodeConstraints.close();
 
   const unsigned int vertices_per_cell =
     dealii::GeometryInfo<3>::vertices_per_cell;
@@ -40,8 +35,10 @@ dftClass<FEOrder, FEOrderElectro>::applyHomogeneousDirichletBC(
   const unsigned int faces_per_cell = dealii::GeometryInfo<3>::faces_per_cell;
   const unsigned int dofs_per_face  = _dofHandler.get_fe().dofs_per_face;
 
-  std::vector<types::global_dof_index> cellGlobalDofIndices(dofs_per_cell);
-  std::vector<types::global_dof_index> iFaceGlobalDofIndices(dofs_per_face);
+  std::vector<dealii::types::global_dof_index> cellGlobalDofIndices(
+    dofs_per_cell);
+  std::vector<dealii::types::global_dof_index> iFaceGlobalDofIndices(
+    dofs_per_face);
 
   std::vector<bool> dofs_touched(_dofHandler.n_dofs(), false);
   dealii::DoFHandler<3>::active_cell_iterator cell = _dofHandler.begin_active(),

@@ -467,11 +467,11 @@ dftClass<FEOrder, FEOrderElectro>::writeDomainAndAtomCoordinates()
         {
           for (unsigned int iAtom = 0; iAtom < numberGlobalAtoms; iAtom++)
             {
-              Point<C_DIM> atomCoor;
-              int          atomId = iAtom;
-              atomCoor[0]         = d_atomLocationsAutoMesh[iAtom][0];
-              atomCoor[1]         = d_atomLocationsAutoMesh[iAtom][1];
-              atomCoor[2]         = d_atomLocationsAutoMesh[iAtom][2];
+              Point<3> atomCoor;
+              int      atomId = iAtom;
+              atomCoor[0]     = d_atomLocationsAutoMesh[iAtom][0];
+              atomCoor[1]     = d_atomLocationsAutoMesh[iAtom][1];
+              atomCoor[2]     = d_atomLocationsAutoMesh[iAtom][2];
 
               std::vector<double> newFracCoord =
                 internal::wrapAtomsAcrossPeriodicBc(atomCoor,
@@ -490,11 +490,11 @@ dftClass<FEOrder, FEOrderElectro>::writeDomainAndAtomCoordinates()
         {
           for (unsigned int iAtom = 0; iAtom < numberGlobalAtoms; iAtom++)
             {
-              Point<C_DIM> atomCoor;
-              int          atomId = iAtom;
-              atomCoor[0]         = atomLocations[iAtom][2];
-              atomCoor[1]         = atomLocations[iAtom][3];
-              atomCoor[2]         = atomLocations[iAtom][4];
+              Point<3> atomCoor;
+              int      atomId = iAtom;
+              atomCoor[0]     = atomLocations[iAtom][2];
+              atomCoor[1]     = atomLocations[iAtom][3];
+              atomCoor[2]     = atomLocations[iAtom][4];
 
               std::vector<double> newFracCoord =
                 internal::wrapAtomsAcrossPeriodicBc(atomCoor,

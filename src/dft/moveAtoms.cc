@@ -151,11 +151,11 @@ dftClass<FEOrder, FEOrderElectro>::updateAtomPositionsAndMoveMesh(
   periodicBc[1] = dftParameters::periodicY;
   periodicBc[2] = dftParameters::periodicZ;
 
-  std::vector<Point<C_DIM>>             controlPointLocationsInitialMove;
-  std::vector<Tensor<1, C_DIM, double>> controlPointDisplacementsInitialMove;
+  std::vector<Point<3>>             controlPointLocationsInitialMove;
+  std::vector<Tensor<1, 3, double>> controlPointDisplacementsInitialMove;
 
-  std::vector<Point<C_DIM>>             controlPointLocationsCurrentMove;
-  std::vector<Tensor<1, C_DIM, double>> controlPointDisplacementsCurrentMove;
+  std::vector<Point<3>>             controlPointLocationsCurrentMove;
+  std::vector<Tensor<1, 3, double>> controlPointDisplacementsCurrentMove;
 
   std::vector<double> gaussianConstantsInitialMove;
   std::vector<double> gaussianConstantsCurrentMove;
@@ -196,19 +196,37 @@ dftClass<FEOrder, FEOrderElectro>::updateAtomPositionsAndMoveMesh(
   if (dftParameters::floatingNuclearCharges)
     for (unsigned int iAtom = 0; iAtom < numberGlobalAtoms; iAtom++)
       for (unsigned int idim = 0; idim < 3; idim++)
-        d_netFloatingDisp[3 * iAtom + idim] +=
-          globalAtomsDisplacements[iAtom][idim];
+        {
+          d_netFloatingDispSinceLastBinsUpdate[3 * iAtom + idim] +=
+            globalAtomsDisplacements[iAtom][idim];
+          d_netFloatingDispSinceLastCheckForSmearedChargeOverlaps[3 * iAtom +
+                                                                  idim] +=
+            globalAtomsDisplacements[iAtom][idim];
+        }
 
   double maxFloatingDispComponentMag = 0.0;
+  double maxFloatingDispComponentMagSinceLastCheckForSmearedChargeOverlaps =
+    0.0;
   if (dftParameters::floatingNuclearCharges)
     {
       for (unsigned int iAtom = 0; iAtom < atomLocations.size(); iAtom++)
         for (unsigned int idim = 0; idim < 3; idim++)
           {
-            const double temp = std::fabs(d_netFloatingDisp[iAtom * 3 + idim]);
+            const double temp =
+              std::fabs(d_netFloatingDispSinceLastBinsUpdate[iAtom * 3 + idim]);
 
             if (temp > maxFloatingDispComponentMag)
               maxFloatingDispComponentMag = temp;
+
+            const double temp2 =
+              std::fabs(d_netFloatingDispSinceLastCheckForSmearedChargeOverlaps
+                          [iAtom * 3 + idim]);
+
+            if (
+              temp2 >
+              maxFloatingDispComponentMagSinceLastCheckForSmearedChargeOverlaps)
+              maxFloatingDispComponentMagSinceLastCheckForSmearedChargeOverlaps =
+                temp2;
           }
     }
 
@@ -237,14 +255,14 @@ dftClass<FEOrder, FEOrderElectro>::updateAtomPositionsAndMoveMesh(
     {
       for (unsigned int iAtom = 0; iAtom < numberGlobalAtoms; iAtom++)
         {
-          Point<C_DIM> atomCoor;
-          int          atomId = iAtom;
-          atomCoor[0]         = atomLocations[iAtom][2];
-          atomCoor[1]         = atomLocations[iAtom][3];
-          atomCoor[2]         = atomLocations[iAtom][4];
+          Point<3> atomCoor;
+          int      atomId = iAtom;
+          atomCoor[0]     = atomLocations[iAtom][2];
+          atomCoor[1]     = atomLocations[iAtom][3];
+          atomCoor[2]     = atomLocations[iAtom][4];
 
-          Point<C_DIM> newCoord;
-          for (unsigned int idim = 0; idim < C_DIM; ++idim)
+          Point<3> newCoord;
+          for (unsigned int idim = 0; idim < 3; ++idim)
             newCoord[idim] =
               atomCoor[idim] + globalAtomsDisplacements[atomId][idim];
 
@@ -267,8 +285,8 @@ dftClass<FEOrder, FEOrderElectro>::updateAtomPositionsAndMoveMesh(
     {
       for (unsigned int iAtom = 0; iAtom < numberGlobalAtoms; iAtom++)
         {
-          Point<C_DIM> atomCoor;
-          int          atomId = iAtom;
+          Point<3> atomCoor;
+          int      atomId = iAtom;
 
           atomLocations[iAtom][2] += globalAtomsDisplacements[atomId][0];
           atomLocations[iAtom][3] += globalAtomsDisplacements[atomId][1];
@@ -281,8 +299,8 @@ dftClass<FEOrder, FEOrderElectro>::updateAtomPositionsAndMoveMesh(
           << std::endl;
       for (unsigned int iAtom = 0; iAtom < numberGlobalAtoms; ++iAtom)
         {
-          Point<C_DIM> atomCoor;
-          int          atomId = iAtom;
+          Point<3> atomCoor;
+          int      atomId = iAtom;
 
           atomCoor[0] = atomLocations[iAtom][2];
           atomCoor[1] = atomLocations[iAtom][3];
@@ -341,8 +359,8 @@ dftClass<FEOrder, FEOrderElectro>::updateAtomPositionsAndMoveMesh(
           << std::endl;
       for (unsigned int iAtom = 0; iAtom < numberGlobalAtoms; iAtom++)
         {
-          Point<C_DIM> atomCoor;
-          int          atomId = iAtom;
+          Point<3> atomCoor;
+          int      atomId = iAtom;
 
           atomLocations[iAtom][2] += globalAtomsDisplacements[atomId][0];
           atomLocations[iAtom][3] += globalAtomsDisplacements[atomId][1];
@@ -381,9 +399,9 @@ dftClass<FEOrder, FEOrderElectro>::updateAtomPositionsAndMoveMesh(
 
       for (unsigned int iAtom = 0; iAtom < totalNumberAtoms; ++iAtom)
         {
-          dealii::Point<C_DIM> temp;
-          int                  atomId;
-          Point<3>             atomCoor;
+          dealii::Point<3> temp;
+          int              atomId;
+          Point<3>         atomCoor;
           if (iAtom < numberGlobalAtoms)
             {
               atomId = iAtom;
@@ -457,28 +475,18 @@ dftClass<FEOrder, FEOrderElectro>::updateAtomPositionsAndMoveMesh(
 
           // Re-generate serial and parallel meshes from saved refinement flags
           // to get back the unmoved meshes as Gaussian movement can only be
-          // done starting from the unmoved meshes. While parallel meshes are
-          // always generated, serial meshes are only generated for following
-          // three cases: symmetrization is on, ionic optimization is on as well
-          // as reuse wfcs and density from previous ionic step is on, or if
-          // serial constraints generation is on.
+          // done starting from the unmoved meshes.
           double resetmesh_time;
           MPI_Barrier(MPI_COMM_WORLD);
           resetmesh_time = MPI_Wtime();
 
           if (dftParameters::useSymm ||
-              (dftParameters::isIonOpt &&
-               (dftParameters::reuseWfcGeoOpt ||
-                dftParameters::reuseDensityGeoOpt)) ||
               dftParameters::createConstraintsFromSerialDofhandler ||
               dftParameters::electrostaticsHRefinement)
             {
               d_mesh.generateResetMeshes(
                 d_domainBoundingVectors,
                 dftParameters::useSymm ||
-                  (dftParameters::isIonOpt &&
-                   (dftParameters::reuseWfcGeoOpt ||
-                    dftParameters::reuseDensityGeoOpt)) ||
                   dftParameters::createConstraintsFromSerialDofhandler,
                 dftParameters::electrostaticsHRefinement);
 
@@ -492,6 +500,20 @@ dftClass<FEOrder, FEOrderElectro>::updateAtomPositionsAndMoveMesh(
               dofHandler.distribute_dofs(FE);
               dofHandlerEigen.distribute_dofs(FEEigen);
 
+              d_dofHandlerPRefined.clear();
+              d_dofHandlerPRefined.initialize(
+                d_mesh.getParallelMeshMoved(),
+                dealii::FE_Q<3>(dealii::QGaussLobatto<1>(FEOrderElectro + 1)));
+              d_dofHandlerPRefined.distribute_dofs(
+                d_dofHandlerPRefined.get_fe());
+
+              d_dofHandlerRhoNodal.clear();
+              d_dofHandlerRhoNodal.initialize(
+                d_mesh.getParallelMeshMoved(),
+                dealii::FE_Q<3>(dealii::QGaussLobatto<1>(
+                  C_rhoNodalPolyOrder<FEOrder, FEOrderElectro>() + 1)));
+              d_dofHandlerRhoNodal.distribute_dofs(
+                d_dofHandlerRhoNodal.get_fe());
 
               forcePtr->initUnmoved(d_mesh.getParallelMeshMoved(),
                                     d_mesh.getSerialMeshUnmoved(),
@@ -605,14 +627,14 @@ dftClass<FEOrder, FEOrderElectro>::updateAtomPositionsAndMoveMesh(
                       for (unsigned int iAtom = 0; iAtom < numberGlobalAtoms;
                            iAtom++)
                         {
-                          Point<C_DIM> atomCoor;
-                          int          atomId = iAtom;
-                          atomCoor[0]         = atomLocations[iAtom][2];
-                          atomCoor[1]         = atomLocations[iAtom][3];
-                          atomCoor[2]         = atomLocations[iAtom][4];
+                          Point<3> atomCoor;
+                          int      atomId = iAtom;
+                          atomCoor[0]     = atomLocations[iAtom][2];
+                          atomCoor[1]     = atomLocations[iAtom][3];
+                          atomCoor[2]     = atomLocations[iAtom][4];
 
-                          Point<C_DIM> newCoord;
-                          for (unsigned int idim = 0; idim < C_DIM; ++idim)
+                          Point<3> newCoord;
+                          for (unsigned int idim = 0; idim < 3; ++idim)
                             newCoord[idim] =
                               atomCoor[idim] +
                               globalAtomsDisplacements[atomId][idim];
@@ -688,13 +710,23 @@ dftClass<FEOrder, FEOrderElectro>::updateAtomPositionsAndMoveMesh(
       init_time = MPI_Wtime();
 
       if (dftParameters::isBOMD)
-        initNoRemesh(atomsPeriodicWrapped == 1,
-                     (maxFloatingDispComponentMag > 0.2) ? true : false,
-                     useSingleAtomSolutionsOverride);
+        initNoRemesh(
+          atomsPeriodicWrapped == 1,
+          (maxFloatingDispComponentMagSinceLastCheckForSmearedChargeOverlaps >
+             0.2 &&
+           d_minDist < 3.0) ?
+            true :
+            false,
+          useSingleAtomSolutionsOverride);
       else
-        initNoRemesh(atomsPeriodicWrapped == 1,
-                     (maxFloatingDispComponentMag > 0.2) ? true : false,
-                     useSingleAtomSolutionsOverride);
+        initNoRemesh(
+          atomsPeriodicWrapped == 1,
+          (maxFloatingDispComponentMagSinceLastCheckForSmearedChargeOverlaps >
+             0.2 &&
+           d_minDist < 3.0) ?
+            true :
+            false,
+          useSingleAtomSolutionsOverride);
       if (!dftParameters::reproducible_output)
         pcout << "...Reinitialization end" << std::endl;
 

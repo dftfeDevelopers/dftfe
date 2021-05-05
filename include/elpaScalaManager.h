@@ -20,7 +20,8 @@
 #ifndef elpaScalaManager_h
 #define elpaScalaManager_h
 
-#include <headers.h>
+#include "headers.h"
+#include "process_grid.h"
 
 #include <vector>
 #ifdef DFTFE_WITH_ELPA
@@ -32,6 +33,41 @@ extern "C"
 
 namespace dftfe
 {
+#ifdef DFTFE_WITH_ELPA
+  inline void
+  elpaCholesky(elpa_t &handle, double *a, int *error)
+  {
+    elpa_cholesky_d(handle, a, error);
+  }
+
+  inline void
+  elpaCholesky(elpa_t &handle, std::complex<double> *a, int *error)
+  {
+    elpa_cholesky_dc(handle, reinterpret_cast<_Complex double *>(a), error);
+  }
+
+  inline void
+  elpaEigenvectors(elpa_t &handle, double *a, double *ev, double *q, int *error)
+  {
+    elpa_eigenvectors_d(handle, a, ev, q, error);
+  }
+
+  inline void
+  elpaEigenvectors(elpa_t &              handle,
+                   std::complex<double> *a,
+                   double *              ev,
+                   std::complex<double> *q,
+                   int *                 error)
+  {
+    elpa_eigenvectors_dc(handle,
+                         reinterpret_cast<_Complex double *>(a),
+                         ev,
+                         reinterpret_cast<_Complex double *>(q),
+                         error);
+  }
+
+#endif
+
   /**
    * @brief Manager class for ELPA and ScaLAPACK
    *
@@ -45,6 +81,9 @@ namespace dftfe
   public:
     unsigned int
     getScalapackBlockSize() const;
+
+    std::shared_ptr<const dftfe::ProcessGrid>
+    getProcessGridDftfeScalaWrapper() const;
 
     void
     processGridOptionalELPASetup(const unsigned int na, const unsigned int nev);
@@ -107,6 +146,8 @@ namespace dftfe
 
     /// ScaLAPACK distributed format block size
     unsigned int d_scalapackBlockSize;
+
+    std::shared_ptr<const dftfe::ProcessGrid> d_processGridDftfeWrapper;
   };
 
   /*--------------------- Inline functions --------------------------------*/
@@ -117,6 +158,13 @@ namespace dftfe
   {
     return d_scalapackBlockSize;
   }
+
+  inline std::shared_ptr<const dftfe::ProcessGrid>
+  elpaScalaManager::getProcessGridDftfeScalaWrapper() const
+  {
+    return d_processGridDftfeWrapper;
+  }
+
 #  ifdef DFTFE_WITH_ELPA
   inline elpa_t &
   elpaScalaManager::getElpaHandle()
