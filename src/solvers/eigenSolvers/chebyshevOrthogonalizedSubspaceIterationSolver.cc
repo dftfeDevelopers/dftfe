@@ -172,7 +172,7 @@ namespace dftfe
     dealii::TimerOutput computingTimerStandard(
       operatorMatrix.getMPICommunicator(),
       pcout,
-      dftParameters::reproducible_output || dftParameters::verbosity < 1 ?
+      dftParameters::reproducible_output || dftParameters::verbosity < 2 ?
         dealii::TimerOutput::never :
         dealii::TimerOutput::every_call,
       dealii::TimerOutput::wall_times);
