@@ -1,6 +1,7 @@
 // ---------------------------------------------------------------------
 //
-// Copyright (c) 2017-2018  The Regents of the University of Michigan and DFT-FE authors.
+// Copyright (c) 2017-2018  The Regents of the University of Michigan and DFT-FE
+// authors.
 //
 // This file is part of the DFT-FE code.
 //
@@ -15,112 +16,125 @@
 
 #ifndef geoOptIon_H_
 #define geoOptIon_H_
-#include "nonlinearSolverProblem.h"
 #include "constants.h"
+#include "nonlinearSolverProblem.h"
 
-namespace dftfe {
+namespace dftfe
+{
+  using namespace dealii;
+  template <unsigned int FEOrder, unsigned int FEOrderElectro>
+  class dftClass;
 
-	using namespace dealii;
-	template <unsigned int FEOrder> class dftClass;
+  /**
+   * @brief problem class for atomic force relaxation solver.
+   *
+   * @author Sambit Das
+   */
+  template <unsigned int FEOrder, unsigned int FEOrderElectro>
+  class geoOptIon : public nonlinearSolverProblem
+  {
+  public:
+    /** @brief Constructor.
+     *
+     *  @param _dftPtr pointer to dftClass
+     *  @param mpi_comm_replica mpi_communicator of the current pool
+     */
+    geoOptIon(dftClass<FEOrder, FEOrderElectro> *_dftPtr,
+              const MPI_Comm &                   mpi_comm_replica);
 
-	/**
-	 * @brief problem class for atomic force relaxation solver.
-	 *
-	 * @author Sambit Das
-	 */
-	template <unsigned int FEOrder>
-		class geoOptIon : public nonlinearSolverProblem
-	{
-		public:
-			/** @brief Constructor.
-			 *
-			 *  @param _dftPtr pointer to dftClass
-			 *  @param mpi_comm_replica mpi_communicator of the current pool
-			 */
-			geoOptIon(dftClass<FEOrder>* _dftPtr,const  MPI_Comm &mpi_comm_replica);
+    /**
+     * @brief initializes the data member d_relaxationFlags.
+     *
+     */
+    void
+    init();
 
-			/**
-			 * @brief initializes the data member d_relaxationFlags.
-			 *
-			 */
-			void init();
+    /**
+     * @brief calls the atomic force relaxation solver.
+     *
+     * Currently we have option of one solver: Polak–Ribière nonlinear CG solver
+     * with secant based line search. In future releases, we will have more
+     * options like BFGS solver.
+     *
+     */
+    void
+    run();
 
-			/**
-			 * @brief calls the atomic force relaxation solver.
-			 *
-			 * Currently we have option of one solver: Polak–Ribière nonlinear CG solver
-			 * with secant based line search. In future releases, we will have more options like BFGS solver.
-			 *
-			 */
-			void run();
+    /**
+     * @brief Obtain number of unknowns (total number of force components to be relaxed).
+     *
+     * @return int Number of unknowns.
+     */
+    unsigned int
+    getNumberUnknowns() const;
 
-			/**
-			 * @brief Obtain number of unknowns (total number of force components to be relaxed).
-			 *
-			 * @return int Number of unknowns.
-			 */
-			unsigned int getNumberUnknowns() const ;
+    /**
+     * @brief Compute function gradient (aka forces).
+     *
+     * @param gradient STL vector for gradient values.
+     */
+    void
+    gradient(std::vector<double> &gradient);
 
-			/**
-			 * @brief Compute function gradient (aka forces).
-			 *
-			 * @param gradient STL vector for gradient values.
-			 */
-			void gradient(std::vector<double> & gradient);
+    /**
+     * @brief Update atomic positions.
+     *
+     * @param solution displacement of the atoms with respect to their current position.
+     * The size of the solution vector is equal to the number of unknowns.
+     */
+    void
+    update(const std::vector<double> &solution,
+           const bool                 computeForces      = true,
+           const bool useSingleAtomSolutionsInitialGuess = false);
 
-			/**
-			 * @brief Update atomic positions.
-			 *
-			 * @param solution displacement of the atoms with respect to their current position.
-			 * The size of the solution vector is equal to the number of unknowns.
-			 */
-			void update(const std::vector<double> & solution,
-					const bool computeForces=true);
+    /**
+     * @brief create checkpoint file for current domain bounding vectors and atomic coordinates.
+     *
+     */
+    void
+    save();
 
-			/**
-			 * @brief create checkpoint file for current domain bounding vectors and atomic coordinates.
-			 *
-			 */
-			void save();
+    /// not implemented
+    void
+    value(std::vector<double> &functionValue);
 
-			/// not implemented
-			void value(std::vector<double> & functionValue);
+    /// not implemented
+    void
+    precondition(std::vector<double> &      s,
+                 const std::vector<double> &gradient) const;
 
-			/// not implemented
-			void precondition(std::vector<double>       & s,
-					const std::vector<double> & gradient) const;
+    /// not implemented
+    void
+    solution(std::vector<double> &solution);
 
-			/// not implemented
-			void solution(std::vector<double> & solution);
+    /// not implemented
+    std::vector<unsigned int>
+    getUnknownCountFlag() const;
 
-			/// not implemented
-			std::vector<unsigned int> getUnknownCountFlag() const;
+  private:
+    /// storage for relaxation flags and external force components for each
+    /// global atom. each atom has three flags corresponding to three components
+    /// (0- no relax, 1- relax) and three external force components
+    std::vector<unsigned int> d_relaxationFlags;
+    std::vector<double>       d_externalForceOnAtom;
 
-		private:
+    /// maximum force component to be relaxed
+    double d_maximumAtomForceToBeRelaxed;
 
-			/// storage for relaxation flags and external force components for each global atom.
-			/// each atom has three flags corresponding to three components (0- no relax, 1- relax)
-			/// and three external force components 
-			std::vector<unsigned int> d_relaxationFlags;
-			std::vector<double> d_externalForceOnAtom;
+    /// total number of calls to update()
+    unsigned int d_totalUpdateCalls;
 
-			/// maximum force component to be relaxed
-			double d_maximumAtomForceToBeRelaxed;
+    /// pointer to dft class
+    dftClass<FEOrder, FEOrderElectro> *dftPtr;
 
-			/// total number of calls to update()
-			unsigned int d_totalUpdateCalls;
+    /// parallel communication objects
+    const MPI_Comm     mpi_communicator;
+    const unsigned int n_mpi_processes;
+    const unsigned int this_mpi_process;
 
-			/// pointer to dft class
-			dftClass<FEOrder>* dftPtr;
+    /// conditional stream object
+    dealii::ConditionalOStream pcout;
+  };
 
-			/// parallel communication objects
-			const MPI_Comm mpi_communicator;
-			const unsigned int n_mpi_processes;
-			const unsigned int this_mpi_process;
-
-			/// conditional stream object
-			dealii::ConditionalOStream   pcout;
-	};
-
-}
+} // namespace dftfe
 #endif

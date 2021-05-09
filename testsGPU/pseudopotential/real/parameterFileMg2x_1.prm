@@ -8,8 +8,10 @@ subsection GPU
 end
 
 subsection Boundary conditions
-  set CONSTRAINTS FROM SERIAL DOFHANDLER = true
-  set CONSTRAINTS PARALLEL CHECK         = true
+  set SMEARED NUCLEAR CHARGES=false
+  set FLOATING NUCLEAR CHARGES=false
+  set CONSTRAINTS FROM SERIAL DOFHANDLER = false
+  set CONSTRAINTS PARALLEL CHECK         = false
   set PERIODIC1                       = true
   set PERIODIC2                       = true
   set PERIODIC3                       = true
@@ -28,6 +30,7 @@ end
 subsection Finite element mesh parameters
   set POLYNOMIAL ORDER = 3
   subsection Auto mesh generation parameters
+    set AUTO ADAPT BASE MESH SIZE=false
     set ATOM BALL RADIUS      = 2.0
     set BASE MESH SIZE        = 4.0
     set MESH SIZE AROUND ATOM = 1.0
@@ -42,6 +45,7 @@ subsection Geometry
   set DOMAIN VECTORS FILE = domainVectorsMg2x.inp
   subsection Optimization
     set ION FORCE                 = true
+    set CELL STRESS               = true
   end
 end
 
@@ -51,16 +55,15 @@ end
 
 subsection SCF parameters
   set COMPUTE ENERGY EACH ITER = false
-  set HIGHER QUAD NLP          = false
   set MAXIMUM ITERATIONS               = 100
   set TEMPERATURE                      = 500
-  set TOLERANCE                        = 1e-5
+  set TOLERANCE                        = 1e-6
   set STARTING WFC=ATOMIC
   subsection Eigen-solver parameters
        set CHEBYSHEV POLYNOMIAL DEGREE       = 20
        set NUMBER OF KOHN-SHAM WAVEFUNCTIONS = 180
        set CHEBY WFC BLOCK SIZE=45
        set WFC BLOCK SIZE=45
-       set CHEBYSHEV FILTER TOLERANCE=1e-3
+       set CHEBYSHEV FILTER TOLERANCE=1e-5
   end
 end

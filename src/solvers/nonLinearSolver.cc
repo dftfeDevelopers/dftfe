@@ -6,7 +6,8 @@
 //
 // ---------------------------------------------------------------------
 //
-// Copyright (c) 2017 The Regents of the University of Michigan and DFT-FE authors.
+// Copyright (c) 2017 The Regents of the University of Michigan and DFT-FE
+// authors.
 //
 // This file is part of the DFT-FE code.
 //
@@ -23,73 +24,65 @@
 //
 #include "../../include/nonLinearSolver.h"
 
-namespace dftfe {
-	//
-	// Constructor.
-	//
-	nonLinearSolver::nonLinearSolver(const unsigned int debugLevel,
-			const unsigned int maxNumberIterations,
-			const double tolerance):
-		d_debugLevel(debugLevel),
-		d_maxNumberIterations(maxNumberIterations),
-		d_tolerance(tolerance)
-	{
-	}
+namespace dftfe
+{
+  //
+  // Constructor.
+  //
+  nonLinearSolver::nonLinearSolver(const unsigned int debugLevel,
+                                   const unsigned int maxNumberIterations,
+                                   const double       tolerance)
+    : d_debugLevel(debugLevel)
+    , d_maxNumberIterations(maxNumberIterations)
+    , d_tolerance(tolerance)
+  {}
 
-	//
-	// Destructor.
-	//
-	nonLinearSolver::~nonLinearSolver()
-	{
+  //
+  // Destructor.
+  //
+  nonLinearSolver::~nonLinearSolver()
+  {
+    //
+    //
+    //
+    return;
+  }
 
-		//
-		//
-		//
-		return;
+  //
+  // Get tolerance.
+  //
+  double
+  nonLinearSolver::getTolerance() const
+  {
+    //
+    //
+    //
+    return d_tolerance;
+  }
 
-	}
-
-	//
-	// Get tolerance.
-	//
-	double
-		nonLinearSolver::getTolerance() const
-		{
-
-			//
-			//
-			//
-			return d_tolerance;
-
-		}
-
-	//
-	// Get maximum number of iterations.
-	//
-	unsigned int
-		nonLinearSolver::getMaximumNumberIterations() const
-		{
-
-			//
-			//
-			//
-			return d_maxNumberIterations;
-
-		}
+  //
+  // Get maximum number of iterations.
+  //
+  unsigned int
+  nonLinearSolver::getMaximumNumberIterations() const
+  {
+    //
+    //
+    //
+    return d_maxNumberIterations;
+  }
 
 
-	//
-	// Get debug level.
-	//
-	unsigned int
-		nonLinearSolver::getDebugLevel() const
-		{
+  //
+  // Get debug level.
+  //
+  unsigned int
+  nonLinearSolver::getDebugLevel() const
+  {
+    //
+    //
+    //
+    return d_debugLevel;
+  }
 
-			//
-			//
-			//
-			return d_debugLevel;
-
-		}
-
-}
+} // namespace dftfe

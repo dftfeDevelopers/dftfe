@@ -1,10 +1,10 @@
 set VERBOSITY=0
 set REPRODUCIBLE OUTPUT=true
-set H REFINED ELECTROSTATICS = true
 
 subsection GPU
   set USE GPU = true
   set AUTO GPU BLOCK SIZES=false
+  set GPU MEM OPT MODE=true
 end
 subsection Geometry
   set NATOMS=2
@@ -17,6 +17,8 @@ subsection Geometry
 end
 
 subsection Boundary conditions
+  set SMEARED NUCLEAR CHARGES=false
+  set FLOATING NUCLEAR CHARGES=false
   set PERIODIC1                       = false
   set PERIODIC2                       = false
   set PERIODIC3                       = false
@@ -28,8 +30,10 @@ end
 subsection Finite element mesh parameters
   set POLYNOMIAL ORDER=2
   subsection Auto mesh generation parameters
-    set AUTO USER MESH PARAMS = true
-    set MESH SIZE AROUND ATOM = 0.6
+    set AUTO ADAPT BASE MESH SIZE=false
+    set MESH SIZE AROUND ATOM = 0.7
+    set ATOM BALL RADIUS=2.0
+    set BASE MESH SIZE        = 10.0
   end
 end
 
@@ -38,7 +42,7 @@ subsection DFT functional parameters
   set PSEUDOPOTENTIAL CALCULATION = true
   set PSEUDOPOTENTIAL FILE NAMES LIST = pseudo.inp
   set SPIN POLARIZATION               = 1
-  set START MAGNETIZATION             = 0.5
+  set START MAGNETIZATION             = 0.05
 end
 
 subsection Parallelization
@@ -47,23 +51,21 @@ end
 
 subsection SCF parameters
   set MIXING HISTORY   = 70
-  set MIXING PARAMETER = 0.5
+  set MIXING PARAMETER = 0.2
   set MAXIMUM ITERATIONS               = 100
   set TEMPERATURE                      = 500
   set TOLERANCE                        = 1e-6
   set STARTING WFC                     = RANDOM
   subsection Eigen-solver parameters
-      set CHEBYSHEV POLYNOMIAL DEGREE=10
+      set CHEBYSHEV POLYNOMIAL DEGREE=15
       set NUMBER OF KOHN-SHAM WAVEFUNCTIONS = 12
       set SPECTRUM SPLIT CORE EIGENSTATES=4
       set SUBSPACE ROT DOFS BLOCK SIZE        = 2000
       set WFC BLOCK SIZE=2
       set CHEBY WFC BLOCK SIZE=2
-      set CHEBYSHEV FILTER TOLERANCE=1e-4
+      set CHEBYSHEV FILTER TOLERANCE=1e-5
       set USE ELPA=true
       set SCALAPACKPROCS=2
-      set RR GEP=true
-      set RR GEP FULL MASS MATRIX=false
       set OVERLAP COMPUTE COMMUN ORTHO RR=false
       set OVERLAP COMPUTE COMMUN CHEBY=false
       set CHEBYSHEV POLYNOMIAL DEGREE SCALING FACTOR FIRST SCF = 1.0

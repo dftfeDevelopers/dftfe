@@ -1,6 +1,7 @@
 // ---------------------------------------------------------------------
 //
-// Copyright (c) 2017-2018 The Regents of the University of Michigan and DFT-FE authors.
+// Copyright (c) 2017-2018 The Regents of the University of Michigan and DFT-FE
+// authors.
 //
 // This file is part of the DFT-FE code.
 //
@@ -13,49 +14,56 @@
 //
 // ---------------------------------------------------------------------
 //
-// @author Phani Motamarri 
+// @author Phani Motamarri
 //
 
 
-template<unsigned int FEOrder>
-const std::vector<dealii::types::global_dof_index> & dftClass<FEOrder>::getLocalDofIndicesReal() const
+template <unsigned int FEOrder, unsigned int FEOrderElectro>
+const std::vector<dealii::types::global_dof_index> &
+dftClass<FEOrder, FEOrderElectro>::getLocalDofIndicesReal() const
 {
-	return  local_dof_indicesReal;
+  return local_dof_indicesReal;
 }
 
-template<unsigned int FEOrder>
-const std::vector<dealii::types::global_dof_index> & dftClass<FEOrder>::getLocalDofIndicesImag() const
+template <unsigned int FEOrder, unsigned int FEOrderElectro>
+const std::vector<dealii::types::global_dof_index> &
+dftClass<FEOrder, FEOrderElectro>::getLocalDofIndicesImag() const
 {
-	return  local_dof_indicesImag;
+  return local_dof_indicesImag;
 }
 
-template<unsigned int FEOrder>
-const std::vector<dealii::types::global_dof_index> & dftClass<FEOrder>::getLocalProcDofIndicesReal() const
+template <unsigned int FEOrder, unsigned int FEOrderElectro>
+const std::vector<dealii::types::global_dof_index> &
+dftClass<FEOrder, FEOrderElectro>::getLocalProcDofIndicesReal() const
 {
-	return  localProc_dof_indicesReal;
+  return localProc_dof_indicesReal;
 }
 
-template<unsigned int FEOrder>
-const std::vector<dealii::types::global_dof_index> & dftClass<FEOrder>::getLocalProcDofIndicesImag() const
+template <unsigned int FEOrder, unsigned int FEOrderElectro>
+const std::vector<dealii::types::global_dof_index> &
+dftClass<FEOrder, FEOrderElectro>::getLocalProcDofIndicesImag() const
 {
-	return  localProc_dof_indicesImag;
+  return localProc_dof_indicesImag;
 }
 
-template<unsigned int FEOrder>
-const ConstraintMatrix & dftClass<FEOrder>::getConstraintMatrixEigen() const
+template <unsigned int FEOrder, unsigned int FEOrderElectro>
+const dealii::AffineConstraints<double> &
+dftClass<FEOrder, FEOrderElectro>::getConstraintMatrixEigen() const
 {
-	return  constraintsNoneEigen;
+  return constraintsNoneEigen;
 }
 
-template<unsigned int FEOrder>
-const dftUtils::constraintMatrixInfo & dftClass<FEOrder>::getConstraintMatrixEigenDataInfo() const
+template <unsigned int FEOrder, unsigned int FEOrderElectro>
+const dftUtils::constraintMatrixInfo &
+dftClass<FEOrder, FEOrderElectro>::getConstraintMatrixEigenDataInfo() const
 {
-	return constraintsNoneEigenDataInfo;
+  return constraintsNoneEigenDataInfo;
 }
 
 
-template<unsigned int FEOrder>
-const MatrixFree<3,double> & dftClass<FEOrder>::getMatrixFreeData() const
+template <unsigned int FEOrder, unsigned int FEOrderElectro>
+const MatrixFree<3, double> &
+dftClass<FEOrder, FEOrderElectro>::getMatrixFreeData() const
 {
-	return matrix_free_data;
+  return matrix_free_data;
 }

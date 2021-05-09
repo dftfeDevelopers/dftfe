@@ -1,0 +1,96 @@
+set VERBOSITY= 0
+set REPRODUCIBLE OUTPUT=true
+
+subsection Parallelization
+  set NPKPT=2
+end
+
+subsection Geometry
+  set NATOMS=8
+  set NATOM TYPES=1
+  set ATOMIC COORDINATES FILE = @SOURCE_DIR@/silicon_coordinates.inp
+  set DOMAIN VECTORS FILE = @SOURCE_DIR@/silicon_domainBoundingVectors.inp
+ 
+  subsection Optimization
+    set ION FORCE=true
+    set CELL STRESS=true
+  end 
+ 
+end
+
+
+subsection Boundary conditions
+  set SMEARED NUCLEAR CHARGES=false
+  set FLOATING NUCLEAR CHARGES=false
+  set SELF POTENTIAL RADIUS = 1.6
+  set PERIODIC1 = true
+  set PERIODIC2 = true
+  set PERIODIC3 = true
+set POINT WISE DIRICHLET CONSTRAINT=true
+  set CONSTRAINTS PARALLEL CHECK=true
+  set CONSTRAINTS FROM SERIAL DOFHANDLER=true
+end
+
+
+subsection Finite element mesh parameters
+  set POLYNOMIAL ORDER = 3
+  
+  subsection Auto mesh generation parameters
+    set AUTO ADAPT BASE MESH SIZE=false
+    set BASE MESH SIZE = 4.0 
+    set ATOM BALL RADIUS = 2.0
+    set MESH SIZE AROUND ATOM = 1.0
+    set MESH SIZE AT ATOM = 0.5 
+  end
+
+end
+
+
+subsection Brillouin zone k point sampling options
+
+  subsection Monkhorst-Pack (MP) grid generation
+    set SAMPLING POINTS 1 = 1
+    set SAMPLING POINTS 2 = 1
+    set SAMPLING POINTS 3 = 2
+    set SAMPLING SHIFT 1 = 0
+    set SAMPLING SHIFT 2 = 0
+    set SAMPLING SHIFT 3 = 1
+  end
+
+  set USE GROUP SYMMETRY =false
+  set USE TIME REVERSAL SYMMETRY =false
+end
+
+
+
+subsection DFT functional parameters
+  set PSEUDOPOTENTIAL CALCULATION =false
+  set EXCHANGE CORRELATION TYPE = 1
+  set SPIN POLARIZATION=0
+  set START MAGNETIZATION=0.0
+end
+
+
+subsection SCF parameters
+   set COMPUTE ENERGY EACH ITER=false
+
+  set MAXIMUM ITERATIONS = 100 
+  set TOLERANCE          = 1e-6
+  set MIXING PARAMETER   = 0.5
+  set MIXING HISTORY     = 70
+  set TEMPERATURE                        = 500
+  set STARTING WFC=RANDOM
+  subsection Eigen-solver parameters
+      set NUMBER OF KOHN-SHAM WAVEFUNCTIONS = 80
+      set CHEBYSHEV POLYNOMIAL DEGREE = 10
+      set CHEBYSHEV FILTER TOLERANCE=1e-4
+      set ORTHOGONALIZATION TYPE=CGS
+  end
+end
+
+
+subsection Poisson problem parameters
+  set MAXIMUM ITERATIONS = 10000
+  set TOLERANCE          = 1e-10
+end
+set H REFINED ELECTROSTATICS=false

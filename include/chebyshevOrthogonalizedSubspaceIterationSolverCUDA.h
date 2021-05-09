@@ -1,6 +1,7 @@
 // ---------------------------------------------------------------------
 //
-// Copyright (c) 2017-2018 The Regents of the University of Michigan and DFT-FE authors.
+// Copyright (c) 2017-2018 The Regents of the University of Michigan and DFT-FE
+// authors.
 //
 // This file is part of the DFT-FE code.
 //
@@ -15,137 +16,164 @@
 //
 
 #if defined(DFTFE_WITH_GPU)
-#ifndef chebyshevOrthogonalizedSubspaceIterationSolverCUDA_h
-#define chebyshevOrthogonalizedSubspaceIterationSolverCUDA_h
+#  ifndef chebyshevOrthogonalizedSubspaceIterationSolverCUDA_h
+#    define chebyshevOrthogonalizedSubspaceIterationSolverCUDA_h
 
 
-#include "headers.h"
-#include "operatorCUDA.h"
-#include "dftParameters.h"
-
+#    include "dftParameters.h"
+#    include "gpuDirectCCLWrapper.h"
+#    include "headers.h"
+#    include "operatorCUDA.h"
 
 namespace dftfe
 {
-
-	/**
-	 * @brief Concrete class implementing Chebyshev filtered orthogonalized subspace
-	 * iteration solver.
-	 * @author Phani Motamarri
-	 */
-	class chebyshevOrthogonalizedSubspaceIterationSolverCUDA
-	{
-
-		public:
-			/**
-			 * @brief Constructor.
-			 *
-			 * @param mpi_comm domain decomposition mpi communicator
-			 * @param lowerBoundWantedSpectrum Lower Bound of the Wanted Spectrum.
-			 * @param lowerBoundUnWantedSpectrum Lower Bound of the UnWanted Spectrum.
-			 */
-			chebyshevOrthogonalizedSubspaceIterationSolverCUDA
-				(const MPI_Comm &mpi_comm,
-				 double lowerBoundWantedSpectrum,
-				 double lowerBoundUnWantedSpectrum);
-
-
-			/**
-			 * @brief Destructor.
-			 */
-			~chebyshevOrthogonalizedSubspaceIterationSolverCUDA();
+  /**
+   * @brief Concrete class implementing Chebyshev filtered orthogonalized subspace
+   * iteration solver.
+   * @author Phani Motamarri
+   */
+  class chebyshevOrthogonalizedSubspaceIterationSolverCUDA
+  {
+  public:
+    /**
+     * @brief Constructor.
+     *
+     * @param mpi_comm domain decomposition mpi communicator
+     * @param lowerBoundWantedSpectrum Lower Bound of the Wanted Spectrum.
+     * @param lowerBoundUnWantedSpectrum Lower Bound of the UnWanted Spectrum.
+     */
+    chebyshevOrthogonalizedSubspaceIterationSolverCUDA(
+      const MPI_Comm &mpi_comm_domain,
+      double          lowerBoundWantedSpectrum,
+      double          lowerBoundUnWantedSpectrum,
+      double          upperBoundUnWantedSpectrum);
 
 
-			/**
-			 * @brief Solve a generalized eigen problem.
-			 */
-			void solve(operatorDFTCUDAClass & operatorMatrix,
-					double* eigenVectorsFlattenedCUDA,
-					double* eigenVectorsRotFracDensityFlattenedCUDA,
-					const unsigned int flattenedSize,
-					distributedCPUVec<double> & tempEigenVec,
-					const unsigned int totalNumberWaveFunctions,
-					std::vector<double> & eigenValues,
-					std::vector<double> & residuals,
-					const MPI_Comm &interBandGroupComm,
-					dealii::ScaLAPACKMatrix<double> & projHamPar,
-					dealii::ScaLAPACKMatrix<double> & overlapMatPar,
-					const std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid> & processGrid,
-					const bool isXlBOMDLinearizedSolve,
-					const bool useMixedPrecOverall=false,
-					const bool isFirstScf=false,
-					const bool useFullMassMatrixGEP=false,
-					const bool isElpaStep1=false,
-					const bool isElpaStep2=false);
+    /**
+     * @brief Destructor.
+     */
+    ~chebyshevOrthogonalizedSubspaceIterationSolverCUDA();
 
 
-			void onlyRR(operatorDFTCUDAClass & operatorMatrix,
-					double* eigenVectorsFlattenedCUDA,
-					double* eigenVectorsRotFracDensityFlattenedCUDA,
-					const unsigned int flattenedSize,
-					distributedCPUVec<double> & tempEigenVec,
-					const unsigned int totalNumberWaveFunctions,
-					std::vector<double> & eigenValues,
-					const MPI_Comm &interBandGroupComm,
-					dealii::ScaLAPACKMatrix<double> & projHamPar,
-					dealii::ScaLAPACKMatrix<double> & overlapMatPar,
-					const std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid> & processGrid,
-					const bool useMixedPrecOverall=false,
-					const bool isElpaStep1=false,
-					const bool isElpaStep2=false);
+    /**
+     * @brief Solve a generalized eigen problem.
+     */
+    double
+    solve(operatorDFTCUDAClass &     operatorMatrix,
+          double *                   eigenVectorsFlattenedCUDA,
+          double *                   eigenVectorsRotFracDensityFlattenedCUDA,
+          const unsigned int         flattenedSize,
+          distributedCPUVec<double> &tempEigenVec,
+          const unsigned int         totalNumberWaveFunctions,
+          std::vector<double> &      eigenValues,
+          std::vector<double> &      residuals,
+          GPUCCLWrapper &            gpucclMpiCommDomain,
+          const MPI_Comm &           interBandGroupComm,
+          dftfe::ScaLAPACKMatrix<double> &                 projHamPar,
+          dftfe::ScaLAPACKMatrix<double> &                 overlapMatPar,
+          const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
+          const bool                                       isFirstFilteringCall,
+          const bool                                       computeResidual,
+          const bool useMixedPrecOverall = false,
+          const bool isFirstScf          = false,
+          const bool isElpaStep1         = false,
+          const bool isElpaStep2         = false);
 
-			/**
-			 * @brief Solve a generalized eigen problem.
-			 */
-			void solveNoRR(operatorDFTCUDAClass & operatorMatrix,
-					double* eigenVectorsFlattenedCUDA,
-					const unsigned int flattenedSize,
-					distributedCPUVec<double> & tempEigenVec,
-					const unsigned int totalNumberWaveFunctions,
-					std::vector<double> & eigenValues,
-					const MPI_Comm &interBandGroupComm,
-					dealii::ScaLAPACKMatrix<double> & projHamPar,
-					dealii::ScaLAPACKMatrix<double> & overlapMatPar,
-					const std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid> & processGrid,
-					const bool isXlBOMDLinearizedSolve,
-					const unsigned int numberPasses,
-					const bool useMixedPrecOverall);
+    /**
+     * @brief Used for XL-BOMD.
+     */
+    void
+    onlyRR(operatorDFTCUDAClass &     operatorMatrix,
+           double *                   eigenVectorsFlattenedCUDA,
+           double *                   eigenVectorsRotFracDensityFlattenedCUDA,
+           const unsigned int         flattenedSize,
+           distributedCPUVec<double> &tempEigenVec,
+           const unsigned int         totalNumberWaveFunctions,
+           std::vector<double> &      eigenValues,
+           GPUCCLWrapper &            gpucclMpiCommDomain,
+           const MPI_Comm &           interBandGroupComm,
+           dftfe::ScaLAPACKMatrix<double> &                 projHamPar,
+           dftfe::ScaLAPACKMatrix<double> &                 overlapMatPar,
+           const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
+           const bool useMixedPrecOverall = false,
+           const bool isElpaStep1         = false,
+           const bool isElpaStep2         = false);
+
+    /**
+     * @brief Used for XL-BOMD.
+     */
+    void
+    solveNoRR(operatorDFTCUDAClass &          operatorMatrix,
+              double *                        eigenVectorsFlattenedCUDA,
+              const unsigned int              flattenedSize,
+              distributedCPUVec<double> &     tempEigenVec,
+              const unsigned int              totalNumberWaveFunctions,
+              std::vector<double> &           eigenValues,
+              GPUCCLWrapper &                 gpucclMpiCommDomain,
+              const MPI_Comm &                interBandGroupComm,
+              dftfe::ScaLAPACKMatrix<double> &projHamPar,
+              dftfe::ScaLAPACKMatrix<double> &overlapMatPar,
+              const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
+              const unsigned int                               numberPasses,
+              const bool useMixedPrecOverall);
 
 
-			void solveNoRRMixedPrec(operatorDFTCUDAClass & operatorMatrix,
-					double* eigenVectorsFlattenedCUDA,
-					const unsigned int flattenedSize,
-					distributedCPUVec<double> & tempEigenVec,
-					const unsigned int totalNumberWaveFunctions,
-					std::vector<double> & eigenValues,
-					const MPI_Comm &interBandGroupComm,
-					const bool isXlBOMDLinearizedSolve,
-					const unsigned int numberPasses,
-					const bool useMixedPrecOverall);
+    /**
+     * @brief reinit spectrum bounds
+     */
+    void
+    reinitSpectrumBounds(double lowerBoundWantedSpectrum,
+                         double lowerBoundUnWantedSpectrum,
+                         double upperBoundUnWantedSpectrum);
 
+  private:
+    //
+    // stores lower bound of wanted spectrum
+    //
+    double d_lowerBoundWantedSpectrum;
 
-			/**
-			 * @brief reinit spectrum bounds
-			 */
-			void reinitSpectrumBounds(double lowerBoundWantedSpectrum,
-					double lowerBoundUnWantedSpectrum);
+    //
+    // stores lower bound of unwanted spectrum
+    //
+    double d_lowerBoundUnWantedSpectrum;
 
-		private:
-			//
-			//stores lower bound of wanted spectrum
-			//
-			double d_lowerBoundWantedSpectrum;
+    //
+    // stores upper bound of unwanted spectrum
+    //
+    double d_upperBoundUnWantedSpectrum;
 
-			//
-			//stores lower bound of unwanted spectrum
-			//
-			double d_lowerBoundUnWantedSpectrum;
+    //
+    // temporary parallel vectors needed for Chebyshev filtering
+    //
+    // distributedGPUVec<double>
+    void *d_cudaFlattenedArrayBlockPtr;
 
-			//
-			//variables for printing out and timing
-			//
-			dealii::ConditionalOStream   pcout;
-			dealii::TimerOutput computing_timer;
-	};
-}
-#endif
+    // distributedGPUVec<double>
+    void *d_YArrayPtr;
+
+    // distributedGPUVec<float>
+    void *d_cudaFlattenedFloatArrayBlockPtr;
+
+    // distributedGPUVec<double>
+    void *d_projectorKetTimesVectorPtr;
+
+    // distributedGPUVec<double>
+    void *d_cudaFlattenedArrayBlock2Ptr;
+
+    // distributedGPUVec<double>
+    void *d_YArray2Ptr;
+
+    // distributedGPUVec<double>
+    void *d_projectorKetTimesVector2Ptr;
+
+    bool d_isTemporaryParallelVectorsCreated;
+
+    //
+    // variables for printing out and timing
+    //
+    dealii::ConditionalOStream pcout;
+    dealii::TimerOutput        computing_timer;
+  };
+} // namespace dftfe
+#  endif
 #endif

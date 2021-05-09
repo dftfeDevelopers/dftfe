@@ -2,6 +2,8 @@ set VERBOSITY = 0
 set REPRODUCIBLE OUTPUT=true
 
 subsection Boundary conditions
+  set SMEARED NUCLEAR CHARGES=false
+  set FLOATING NUCLEAR CHARGES=false
   set PERIODIC1                       = true
   set PERIODIC2                       = true
   set PERIODIC3                       = true
@@ -39,6 +41,7 @@ end
 subsection Finite element mesh parameters
   set POLYNOMIAL ORDER = 2
   subsection Auto mesh generation parameters
+    set AUTO ADAPT BASE MESH SIZE=false
     set ATOM BALL RADIUS      = 2.0
     set BASE MESH SIZE        = 4.0
     set MESH SIZE AT ATOM     = 0.6
@@ -53,9 +56,11 @@ subsection Geometry
   set ATOMIC COORDINATES FILE      = @SOURCE_DIR@/fccAl_coordinates.inp
   set DOMAIN VECTORS FILE = @SOURCE_DIR@/fccAl_domainBoundingVectors.inp
   subsection Optimization
-    set STRESS TOL            = 1e-5
+    set STRESS TOL            = 2e-5
     set CELL OPT              = true
     set CELL CONSTRAINT TYPE  = 1
+    set REUSE WFC=true
+    set REUSE DENSITY=1
   end 
 end
 
@@ -67,18 +72,21 @@ end
 
 
 subsection SCF parameters
+   set COMPUTE ENERGY EACH ITER=false
+
   set MIXING HISTORY   = 70
   set MIXING PARAMETER = 0.5
   set MAXIMUM ITERATIONS               = 50
   set TEMPERATURE                      = 500 
   set TOLERANCE                        = 1e-6
   set STARTING WFC=ATOMIC
-  set HIGHER QUAD NLP  = false
+  
   subsection Eigen-solver parameters
      set NUMBER OF KOHN-SHAM WAVEFUNCTIONS = 20
-     set CHEBYSHEV FILTER TOLERANCE=1e-3
-     set ORTHOGONALIZATION TYPE=LW
-     set CHEBYSHEV POLYNOMIAL DEGREE=30
+     set CHEBYSHEV FILTER TOLERANCE=1e-4
+     set ORTHOGONALIZATION TYPE=CGS
+     set CHEBYSHEV POLYNOMIAL DEGREE=10
+     set USE ELPA=true
   end
 end
 set H REFINED ELECTROSTATICS=false

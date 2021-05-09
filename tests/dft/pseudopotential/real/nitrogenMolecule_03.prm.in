@@ -9,6 +9,8 @@ subsection Geometry
 end
 
 subsection Boundary conditions
+  set SMEARED NUCLEAR CHARGES=false
+  set FLOATING NUCLEAR CHARGES=false
   set PERIODIC1                       = false
   set PERIODIC2                       = false
   set PERIODIC3                       = false
@@ -19,6 +21,8 @@ end
 subsection Finite element mesh parameters
   set POLYNOMIAL ORDER=3
   subsection Auto mesh generation parameters
+    set AUTO ADAPT BASE MESH SIZE=false
+
     set MESH SIZE AROUND ATOM  = 0.7
     set BASE MESH SIZE = 10.0
     set ATOM BALL RADIUS = 2.0
@@ -34,21 +38,22 @@ subsection DFT functional parameters
 end
 
 subsection SCF parameters
+   set COMPUTE ENERGY EACH ITER=false
+
   set MIXING HISTORY   = 70
   set MIXING PARAMETER = 0.5
   set MAXIMUM ITERATIONS               = 40
   set TEMPERATURE                      = 500
   set TOLERANCE                        = 1e-5
-  set HIGHER QUAD NLP  = true
+  
   set STARTING WFC=ATOMIC
   subsection Eigen-solver parameters
       set NUMBER OF KOHN-SHAM WAVEFUNCTIONS = 10
-      set ORTHOGONALIZATION TYPE=PGS
+      set ORTHOGONALIZATION TYPE=CGS
       set CHEBYSHEV POLYNOMIAL DEGREE = 20
       set CHEBYSHEV FILTER TOLERANCE=1e-4
-      set USE MIXED PREC PGS SR=true
-      set USE MIXED PREC PGS O=true
-      set RR GEP=false
+      set USE MIXED PREC CGS SR=true
+      set USE MIXED PREC CGS O=true
   end
 end
 set H REFINED ELECTROSTATICS=false

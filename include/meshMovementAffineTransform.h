@@ -1,6 +1,7 @@
 // ---------------------------------------------------------------------
 //
-// Copyright (c) 2017-2018  The Regents of the University of Michigan and DFT-FE authors.
+// Copyright (c) 2017-2018  The Regents of the University of Michigan and DFT-FE
+// authors.
 //
 // This file is part of the DFT-FE code.
 //
@@ -18,49 +19,50 @@
 #define meshMovementAffineTransform_H_
 #include "meshMovement.h"
 
-namespace dftfe {
+namespace dftfe
+{
+  /**
+   *  @brief Class to update triangulation under affine transformation
+   *
+   *  @author Sambit Das
+   */
+  class meshMovementAffineTransform : public meshMovementClass
+  {
+  public:
+    /** @brief Constructor
+     *
+     *  @param mpi_comm_replica mpi communicator in the current pool
+     */
+    meshMovementAffineTransform(const MPI_Comm &mpi_comm_replica);
 
-	/**
-	 *  @brief Class to update triangulation under affine transformation
-	 *
-	 *  @author Sambit Das
-	 */
-	class meshMovementAffineTransform : public meshMovementClass
-	{
+    /** @brief Performs affine transformation of the triangulation
+     *
+     *  @param  deformationGradient
+     *  @return std::pair<bool,double> mesh quality metrics
+     *  pair(bool for is negative jacobian, maximum jacobian ratio)
+     */
+    std::pair<bool, double>
+    transform(const Tensor<2, 3, double> &deformationGradient);
 
-		public:
+    /// Not implemented, just present to override the pure virtual from base
+    /// class
+    std::pair<bool, double>
+    moveMesh(const std::vector<Point<3>> &            controlPointLocations,
+             const std::vector<Tensor<1, 3, double>> &controlPointDisplacements,
+             const double                             controllingParameter,
+             const bool                               moveSubdivided = false);
 
-			/** @brief Constructor
-			 *
-			 *  @param mpi_comm_replica mpi communicator in the current pool
-			 */
-			meshMovementAffineTransform(const MPI_Comm &mpi_comm_replica);
+  private:
+    /** @brief internal function which computes the nodal increment field in the local processor
+     *
+     */
+    void
+    computeIncrement();
 
-			/** @brief Performs affine transformation of the triangulation
-			 *
-			 *  @param  deformationGradient
-			 *  @return std::pair<bool,double> mesh quality metrics
-			 *  pair(bool for is negative jacobian, maximum jacobian ratio)
-			 */
-			std::pair<bool,double> transform(const Tensor<2,3,double> & deformationGradient);
+    /// storage for the deformation gradient to be applied to the triangulation
+    Tensor<2, 3, double> d_deformationGradient;
+  };
 
-			/// Not implemented, just present to override the pure virtual from base class
-			std::pair<bool,double> moveMesh(const std::vector<Point<C_DIM> > & controlPointLocations,
-					const std::vector<Tensor<1,3,double> > & controlPointDisplacements,
-					const double controllingParameter,
-					const bool moveSubdivided=false);
-
-		private:
-
-			/** @brief internal function which computes the nodal increment field in the local processor
-			 *
-			 */
-			void computeIncrement();
-
-			/// storage for the deformation gradient to be applied to the triangulation
-			Tensor<2,3,double> d_deformationGradient;
-	};
-
-}
+} // namespace dftfe
 
 #endif

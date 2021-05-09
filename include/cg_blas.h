@@ -43,44 +43,67 @@
 
 #ifdef BLAS_UNDERSCORE
 
-#define CG_DGEMV dgemv_
-#define CG_DTRSV dtrsv_
-#define CG_DAXPY daxpy_
-#define CG_DDOT ddot_
-#define CG_DSCAL dscal_
-#define CG_DCOPY dcopy_
-#define CG_IDAMAX idamax_
+#  define CG_DGEMV dgemv_
+#  define CG_DTRSV dtrsv_
+#  define CG_DAXPY daxpy_
+#  define CG_DDOT ddot_
+#  define CG_DSCAL dscal_
+#  define CG_DCOPY dcopy_
+#  define CG_IDAMAX idamax_
 
 #else
 
-#define CG_DGEMV dgemv
-#define CG_DTRSV dtrsv
-#define CG_DAXPY daxpy
-#define CG_DDOT ddot
-#define CG_DSCAL dscal
-#define CG_DCOPY dcopy
-#define CG_IDAMAX idamax
+#  define CG_DGEMV dgemv
+#  define CG_DTRSV dtrsv
+#  define CG_DAXPY daxpy
+#  define CG_DDOT ddot
+#  define CG_DSCAL dscal
+#  define CG_DCOPY dcopy
+#  define CG_IDAMAX idamax
 
 #endif
 
-void CG_DGEMV (char *trans, BLAS_INT *m, BLAS_INT *n, double *alpha, double *A,
-		BLAS_INT *lda, double *X, BLAS_INT *incx,
-		double *beta, double *Y, BLAS_INT *incy) ;
+void
+CG_DGEMV(char *    trans,
+         BLAS_INT *m,
+         BLAS_INT *n,
+         double *  alpha,
+         double *  A,
+         BLAS_INT *lda,
+         double *  X,
+         BLAS_INT *incx,
+         double *  beta,
+         double *  Y,
+         BLAS_INT *incy);
 
-void CG_DTRSV (char *uplo, char *trans, char *diag, BLAS_INT *n, double *A,
-		BLAS_INT *lda, double *X, BLAS_INT *incx) ;
+void
+CG_DTRSV(char *    uplo,
+         char *    trans,
+         char *    diag,
+         BLAS_INT *n,
+         double *  A,
+         BLAS_INT *lda,
+         double *  X,
+         BLAS_INT *incx);
 
-void CG_DAXPY (BLAS_INT *n, double *DA, double *DX, BLAS_INT *incx, double *DY,
-		BLAS_INT *incy) ;
+void
+CG_DAXPY(BLAS_INT *n,
+         double *  DA,
+         double *  DX,
+         BLAS_INT *incx,
+         double *  DY,
+         BLAS_INT *incy);
 
-double CG_DDOT (BLAS_INT *n, double *DX, BLAS_INT *incx, double *DY,
-		BLAS_INT *incy) ;
+double
+CG_DDOT(BLAS_INT *n, double *DX, BLAS_INT *incx, double *DY, BLAS_INT *incy);
 
-void CG_DSCAL (BLAS_INT *n, double *DA, double *DX, BLAS_INT *incx) ;
+void
+CG_DSCAL(BLAS_INT *n, double *DA, double *DX, BLAS_INT *incx);
 
-void CG_DCOPY (BLAS_INT *n, double *DX, BLAS_INT *incx, double *DY,
-		BLAS_INT *incy) ;
+void
+CG_DCOPY(BLAS_INT *n, double *DX, BLAS_INT *incx, double *DY, BLAS_INT *incy);
 
-BLAS_INT CG_IDAMAX (BLAS_INT *n, double *DX, BLAS_INT *incx) ;
+BLAS_INT
+CG_IDAMAX(BLAS_INT *n, double *DX, BLAS_INT *incx);
 
 #endif

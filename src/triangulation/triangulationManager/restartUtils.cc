@@ -1,6 +1,7 @@
 // ---------------------------------------------------------------------
 //
-// Copyright (c) 2017-2018 The Regents of the University of Michigan and DFT-FE authors.
+// Copyright (c) 2017-2018 The Regents of the University of Michigan and DFT-FE
+// authors.
 //
 // This file is part of the DFT-FE code.
 //
@@ -19,370 +20,347 @@
  */
 
 #include <deal.II/distributed/solution_transfer.h>
+
 #include <deal.II/numerics/solution_transfer.h>
 
-namespace dftfe {
-	//
-	void triangulationManager::saveSupportTriangulations()
-	{
-		if (d_serialTriangulationUnmoved.n_global_active_cells()!=0 && this_mpi_process==0)
-		{
-			const std::string filename1="serialUnmovedTria.chk";
-			if (std::ifstream(filename1))
-			{
-				dftUtils::moveFile(filename1, filename1+".old");
-				dftUtils::moveFile(filename1+".info", filename1+".info.old");
-			}
+namespace dftfe
+{
+  //
+  void
+  triangulationManager::saveSupportTriangulations()
+  {
+    if (d_serialTriangulationUnmoved.n_global_active_cells() != 0 &&
+        this_mpi_process == 0)
+      {
+        const std::string filename1 = "serialUnmovedTria.chk";
+        if (std::ifstream(filename1))
+          {
+            dftUtils::moveFile(filename1, filename1 + ".old");
+            dftUtils::moveFile(filename1 + ".info", filename1 + ".info.old");
+          }
 
-			d_serialTriangulationUnmoved.save(filename1.c_str());
-		}
+        d_serialTriangulationUnmoved.save(filename1.c_str());
+      }
+  }
 
-		if (d_parallelTriangulationUnmovedPrevious.n_global_active_cells()!=0)
-		{
-			const std::string filename2="parallelUmmovedPrevTria.chk";
-			if (std::ifstream(filename2) && this_mpi_process==0)
-			{
-				dftUtils::moveFile(filename2, filename2+".old");
-				dftUtils::moveFile(filename2+".info", filename2+".info.old");
-			}
-			MPI_Barrier(mpi_communicator);
+  //
+  void
+  triangulationManager::loadSupportTriangulations()
+  {
+    if (d_serialTriangulationUnmoved.n_global_active_cells() != 0)
+      {
+        const std::string filename1 = "serialUnmovedTria.chk";
+        dftUtils::verifyCheckpointFileExists(filename1);
+        try
+          {
+            d_serialTriangulationUnmoved.load(filename1.c_str(), false);
+          }
+        catch (...)
+          {
+            AssertThrow(
+              false,
+              ExcMessage(
+                "DFT-FE Error: Cannot open checkpoint file- serialUnmovedTria.chk or read the triangulation stored there."));
+          }
+      }
+  }
 
-			d_parallelTriangulationUnmovedPrevious.save(filename2.c_str());
-		}
+  //
+  void
+  triangulationManager::saveTriangulationsSolutionVectors(
+    const unsigned int                                    feOrder,
+    const unsigned int                                    nComponents,
+    const std::vector<const distributedCPUVec<double> *> &solutionVectors,
+    const MPI_Comm &                                      interpoolComm,
+    const MPI_Comm &                                      interBandGroupComm)
+  {
+    const unsigned int poolId =
+      dealii::Utilities::MPI::this_mpi_process(interpoolComm);
+    const unsigned int bandGroupId =
+      dealii::Utilities::MPI::this_mpi_process(interBandGroupComm);
+    const unsigned int minPoolId =
+      dealii::Utilities::MPI::min(poolId, interpoolComm);
+    const unsigned int minBandGroupId =
+      dealii::Utilities::MPI::min(bandGroupId, interBandGroupComm);
 
-		if (d_serialTriangulationUnmovedPrevious.n_global_active_cells()!=0 && this_mpi_process==0)
-		{
-			const std::string filename3="serialUnmovedPrevTria.chk";
-			if (std::ifstream(filename3) && this_mpi_process==0)
-			{
-				dftUtils::moveFile(filename3, filename3+".old");
-				dftUtils::moveFile(filename3+".info", filename3+".info.old");
-			}
+    if (poolId == minPoolId && bandGroupId == minBandGroupId)
+      {
+        dealii::FESystem<3> FE(dealii::FE_Q<3>(
+                                 dealii::QGaussLobatto<1>(feOrder + 1)),
+                               nComponents); // linear shape function
+        DoFHandler<3>       dofHandler(d_parallelTriangulationUnmoved);
+        dofHandler.distribute_dofs(FE);
 
-			d_serialTriangulationUnmovedPrevious.save(filename3.c_str());
-		}
-	}
+        dealii::parallel::distributed::
+          SolutionTransfer<3, distributedCPUVec<double>>
+            solTrans(dofHandler);
+        // assumes solution vectors are ghosted
+        solTrans.prepare_for_serialization(solutionVectors);
 
-	//
-	void triangulationManager::loadSupportTriangulations()
-	{
-		if (d_serialTriangulationUnmoved.n_global_active_cells()!=0)
-		{
-			const std::string filename1="serialUnmovedTria.chk";
-			dftUtils::verifyCheckpointFileExists(filename1);
-			try
-			{
-				d_serialTriangulationUnmoved.load(filename1.c_str(),false);
-			}
-			catch (...)
-			{
-				AssertThrow(false, ExcMessage("DFT-FE Error: Cannot open checkpoint file- serialUnmovedTria.chk or read the triangulation stored there."));
-			}
-		}
+        const std::string filename = "parallelUnmovedTriaSolData.chk";
+        if (std::ifstream(filename) && this_mpi_process == 0)
+          {
+            dftUtils::moveFile(filename, filename + ".old");
+            dftUtils::moveFile(filename + ".info", filename + ".info.old");
+          }
+        MPI_Barrier(mpi_communicator);
 
-		if (d_parallelTriangulationUnmovedPrevious.n_global_active_cells()!=0)
-		{
-			const std::string filename2="parallelUmmovedPrevTria.chk";
-			dftUtils::verifyCheckpointFileExists(filename2);
-			try
-			{
-				d_parallelTriangulationUnmovedPrevious.load(filename2.c_str());
-			}
-			catch (...)
-			{
-				AssertThrow(false, ExcMessage("DFT-FE Error: Cannot open checkpoint file- parallelUmmovedPrevTria.chk or read the triangulation stored there."));
-			}
-		}
+        d_parallelTriangulationUnmoved.save(filename.c_str());
 
-		if (d_serialTriangulationUnmovedPrevious.n_global_active_cells()!=0)
-		{
-			const std::string filename3="serialUnmovedPrevTria.chk";
-			dftUtils::verifyCheckpointFileExists(filename3);
-			try
-			{
-				d_serialTriangulationUnmovedPrevious.load(filename3.c_str(),false);
-			}
-			catch (...)
-			{
-				AssertThrow(false, ExcMessage("DFT-FE Error: Cannot open checkpoint file- serialUnmovedPrevTria.chk or read the triangulation stored there."));
-			}
-		}
-	}
+        saveSupportTriangulations();
+      }
+  }
 
-	//
-	void
-		triangulationManager::saveTriangulationsSolutionVectors
-		(const unsigned int feOrder,
-		 const unsigned int nComponents,
-		 const std::vector< const distributedCPUVec<double> * > & solutionVectors,
-		 const MPI_Comm & interpoolComm,
-		 const MPI_Comm &interBandGroupComm)
-		{
+  //
+  //
+  void
+  triangulationManager::loadTriangulationsSolutionVectors(
+    const unsigned int                        feOrder,
+    const unsigned int                        nComponents,
+    std::vector<distributedCPUVec<double> *> &solutionVectors)
+  {
+    loadSupportTriangulations();
+    const std::string filename = "parallelUnmovedTriaSolData.chk";
+    dftUtils::verifyCheckpointFileExists(filename);
+    try
+      {
+        d_parallelTriangulationMoved.load(filename.c_str(), false);
+        d_parallelTriangulationUnmoved.load(filename.c_str(), false);
+      }
+    catch (...)
+      {
+        AssertThrow(
+          false,
+          ExcMessage(
+            "DFT-FE Error: Cannot open checkpoint file- parallelUnmovedTriaSolData.chk or read the triangulation stored there."));
+      }
 
-			const unsigned int poolId=dealii::Utilities::MPI::this_mpi_process(interpoolComm);
-			const unsigned int bandGroupId=dealii::Utilities::MPI::this_mpi_process(interBandGroupComm);
-			const unsigned int minPoolId=dealii::Utilities::MPI::min(poolId,interpoolComm);
-			const unsigned int minBandGroupId=dealii::Utilities::MPI::min(bandGroupId,interBandGroupComm);
+    dealii::FESystem<3> FE(dealii::FE_Q<3>(
+                             dealii::QGaussLobatto<1>(feOrder + 1)),
+                           nComponents); // linear shape function
+    DoFHandler<3>       dofHandler(d_parallelTriangulationUnmoved);
+    dofHandler.distribute_dofs(FE);
+    dealii::parallel::distributed::
+      SolutionTransfer<3, typename dftfe::distributedCPUVec<double>>
+        solTrans(dofHandler);
 
-			if (poolId==minPoolId && bandGroupId==minBandGroupId)
-			{
-				dealii::FESystem<3> FE(dealii::FE_Q<3>(dealii::QGaussLobatto<1>(feOrder+1)), nComponents); //linear shape function
-				DoFHandler<3> dofHandler (d_parallelTriangulationUnmoved);
-				dofHandler.distribute_dofs(FE);
+    dealii::IndexSet locally_relevant_dofs;
+    dealii::DoFTools::extract_locally_relevant_dofs(dofHandler,
+                                                    locally_relevant_dofs);
 
-				dealii::parallel::distributed::SolutionTransfer<3,distributedCPUVec<double> > solTrans(dofHandler);
-				//assumes solution vectors are ghosted
-				solTrans.prepare_serialization(solutionVectors);
+    const dealii::IndexSet &locally_owned_dofs =
+      dofHandler.locally_owned_dofs();
+    dealii::IndexSet ghost_indices = locally_relevant_dofs;
+    ghost_indices.subtract_set(locally_owned_dofs);
 
-				const std::string filename="parallelUnmovedTriaSolData.chk";
-				if (std::ifstream(filename) && this_mpi_process==0)
-				{
-					dftUtils::moveFile(filename, filename+".old");
-					dftUtils::moveFile(filename+".info", filename+".info.old");
-				}
-				MPI_Barrier(mpi_communicator);
+    for (unsigned int i = 0; i < solutionVectors.size(); ++i)
+      {
+        solutionVectors[i]->reinit(locally_owned_dofs,
+                                   ghost_indices,
+                                   mpi_communicator);
+        solutionVectors[i]->zero_out_ghosts();
+      }
 
-				d_parallelTriangulationUnmoved.save(filename.c_str());
+    // assumes solution vectors are not ghosted
+    solTrans.deserialize(solutionVectors);
+  }
 
-				//saveSupportTriangulations();
-			}
-		}
+  //
+  //
+  //
+  void
+  triangulationManager::saveTriangulationsCellQuadData(
+    const std::vector<const std::map<dealii::CellId, std::vector<double>> *>
+      &             cellQuadDataContainerIn,
+    const MPI_Comm &interpoolComm,
+    const MPI_Comm &interBandGroupComm)
+  {
+    /*
+       const unsigned int
+  poolId=dealii::Utilities::MPI::this_mpi_process(interpoolComm); const unsigned
+  int bandGroupId=dealii::Utilities::MPI::this_mpi_process(interBandGroupComm);
+       const unsigned int
+  minPoolId=dealii::Utilities::MPI::min(poolId,interpoolComm); const unsigned
+  int
+  minBandGroupId=dealii::Utilities::MPI::min(bandGroupId,interBandGroupComm);
 
-	//
-	//
-	void
-		triangulationManager::loadTriangulationsSolutionVectors
-		(const unsigned int feOrder,
-		 const unsigned int nComponents,
-		 std::vector< distributedCPUVec<double> * > & solutionVectors)
-		{
-			//loadSupportTriangulations();
-			const std::string filename="parallelUnmovedTriaSolData.chk";
-			dftUtils::verifyCheckpointFileExists(filename);
-			try
-			{
-				d_parallelTriangulationMoved.load(filename.c_str(),false);
-				d_parallelTriangulationUnmoved.load(filename.c_str(),false);
-			}
-			catch (...)
-			{
-				AssertThrow(false, ExcMessage("DFT-FE Error: Cannot open checkpoint file- parallelUnmovedTriaSolData.chk or read the triangulation stored there."));
-			}
+       if (poolId==minPoolId && bandGroupId==minBandGroupId)
+       {
+       const unsigned int containerSize=cellQuadDataContainerIn.size();
+       AssertThrow(containerSize!=0,ExcInternalError());
 
-			dealii::FESystem<3> FE(dealii::FE_Q<3>(dealii::QGaussLobatto<1>(feOrder+1)), nComponents); //linear shape function
-			DoFHandler<3> dofHandler (d_parallelTriangulationMoved);
-			dofHandler.distribute_dofs(FE);
-			dealii::parallel::distributed::SolutionTransfer<3,typename dftfe::distributedCPUVec<double>> solTrans(dofHandler);
+       unsigned int totalQuadVectorSize=0;
+       for (unsigned int i=0; i<containerSize;++i)
+       {
+       const unsigned int
+  quadVectorSize=(*cellQuadDataContainerIn[i]).begin()->second.size();
+       Assert(quadVectorSize!=0,ExcInternalError());
+       totalQuadVectorSize+=quadVectorSize;
+       }
 
-			dealii::IndexSet   locally_relevant_dofs;
-			dealii::DoFTools::extract_locally_relevant_dofs(dofHandler, locally_relevant_dofs);
+       const unsigned int dataSizeInBytes=sizeof(double)*totalQuadVectorSize;
+       std::function<void(const typename
+  dealii::parallel::distributed::Triangulation<3>::cell_iterator &cell, const
+  typename dealii::parallel::distributed::Triangulation<3>::CellStatus status,
+       void * data)> funcSave =
+       [&](const typename
+  dealii::parallel::distributed::Triangulation<3>::cell_iterator &cell, const
+  typename dealii::parallel::distributed::Triangulation<3>::CellStatus status,
+       void * data)
+       {
+       if (cell->active() && cell->is_locally_owned())
+       {
+       Assert((*cellQuadDataContainerIn[0]).find(cell->id())!=(*cellQuadDataContainerIn[0]).end(),ExcInternalError());
 
-			const dealii::IndexSet & locally_owned_dofs= dofHandler.locally_owned_dofs();
-			dealii::IndexSet  ghost_indices=locally_relevant_dofs;
-			ghost_indices.subtract_set(locally_owned_dofs);
+       double* dataStore = reinterpret_cast<double*>(data);
 
-			for (unsigned int i=0; i< solutionVectors.size();++i)
-			{
-				solutionVectors[i]->reinit(locally_owned_dofs,
-						ghost_indices,
-						mpi_communicator);
-				solutionVectors[i]->zero_out_ghosts();
-			}
+       double tempArray[totalQuadVectorSize];
+       unsigned int count=0;
+       for (unsigned int i=0; i<containerSize;++i)
+       {
+       const unsigned int quadVectorSize=
+       (*cellQuadDataContainerIn[i]).begin()->second.size();
 
-			//assumes solution vectors are not ghosted
-			solTrans.deserialize (solutionVectors);
+       for (unsigned int j=0; j<quadVectorSize;++j)
+       {
+       tempArray[count]=(*cellQuadDataContainerIn[i]).find(cell->id())->second[j];
+       count++;
+       }
+       }
 
-			//dummy de-serialization for d_parallelTriangulationUnmoved to avoid assert fail in call to save
-			/*
-			   dofHandler.initialize(d_parallelTriangulationUnmoved,FE);
-			   dofHandler.distribute_dofs(FE);
-			   dealii::parallel::distributed::SolutionTransfer<3,typename distributedCPUVec<double>> solTransDummy(dofHandler);
-
-			   std::vector< distributedCPUVec<double> * > dummySolutionVectors(solutionVectors.size());
-			   for (unsigned int i=0; i<dummySolutionVectors.size();++i)
-			   {
-			   dummySolutionVectors[i]->reinit(*solutionVectors[0]);
-			   dummySolutionVectors[i]->zero_out_ghosts();
-			   }
-
-			   solTransDummy.deserialize (dummySolutionVectors);
-			 */
-		}
-
-	//
-	//
-	//
-	void
-		triangulationManager::saveTriangulationsCellQuadData
-		(const std::vector<const std::map<dealii::CellId, std::vector<double> > *> & cellQuadDataContainerIn,
-		 const MPI_Comm & interpoolComm,
-		 const MPI_Comm &interBandGroupComm)
-		{
-			/*
-			   const unsigned int poolId=dealii::Utilities::MPI::this_mpi_process(interpoolComm);
-			   const unsigned int bandGroupId=dealii::Utilities::MPI::this_mpi_process(interBandGroupComm);
-			   const unsigned int minPoolId=dealii::Utilities::MPI::min(poolId,interpoolComm);
-			   const unsigned int minBandGroupId=dealii::Utilities::MPI::min(bandGroupId,interBandGroupComm);
-
-			   if (poolId==minPoolId && bandGroupId==minBandGroupId)
-			   {
-			   const unsigned int containerSize=cellQuadDataContainerIn.size();
-			   AssertThrow(containerSize!=0,ExcInternalError());
-
-			   unsigned int totalQuadVectorSize=0;
-			   for (unsigned int i=0; i<containerSize;++i)
-			   {
-			   const unsigned int quadVectorSize=(*cellQuadDataContainerIn[i]).begin()->second.size();
-			   Assert(quadVectorSize!=0,ExcInternalError());
-			   totalQuadVectorSize+=quadVectorSize;
-			   }
-
-			   const unsigned int dataSizeInBytes=sizeof(double)*totalQuadVectorSize;
-			   std::function<void(const typename dealii::parallel::distributed::Triangulation<3>::cell_iterator &cell,
-			   const typename dealii::parallel::distributed::Triangulation<3>::CellStatus status,
-			   void * data)> funcSave =
-			   [&](const typename dealii::parallel::distributed::Triangulation<3>::cell_iterator &cell,
-			   const typename dealii::parallel::distributed::Triangulation<3>::CellStatus status,
-			   void * data)
-			   {
-			   if (cell->active() && cell->is_locally_owned())
-			   {
-			   Assert((*cellQuadDataContainerIn[0]).find(cell->id())!=(*cellQuadDataContainerIn[0]).end(),ExcInternalError());
-
-			   double* dataStore = reinterpret_cast<double*>(data);
-
-			   double tempArray[totalQuadVectorSize];
-			   unsigned int count=0;
-			   for (unsigned int i=0; i<containerSize;++i)
-			   {
-			   const unsigned int quadVectorSize=
-			   (*cellQuadDataContainerIn[i]).begin()->second.size();
-
-			   for (unsigned int j=0; j<quadVectorSize;++j)
-			   {
-			   tempArray[count]=(*cellQuadDataContainerIn[i]).find(cell->id())->second[j];
-			   count++;
-			   }
-			   }
-
-			   std::memcpy(dataStore,
-			   &tempArray[0],
-			   dataSizeInBytes);
-			   }
-			   else
-			   {
-			   double* dataStore = reinterpret_cast<double*>(data);
-			   double tempArray[totalQuadVectorSize];
-			   std::memcpy(dataStore,
-			   &tempArray[0],
-			   dataSizeInBytes);
-			   }
-			   };
+       std::memcpy(dataStore,
+       &tempArray[0],
+       dataSizeInBytes);
+       }
+       else
+       {
+       double* dataStore = reinterpret_cast<double*>(data);
+       double tempArray[totalQuadVectorSize];
+       std::memcpy(dataStore,
+       &tempArray[0],
+       dataSizeInBytes);
+       }
+       };
 
 
-			   const unsigned int offset = d_parallelTriangulationUnmoved.register_data_attach(dataSizeInBytes,
-			   funcSave);
+       const unsigned int offset =
+  d_parallelTriangulationUnmoved.register_data_attach(dataSizeInBytes,
+       funcSave);
 
-			   const std::string filename="parallelUnmovedTriaSolData.chk";
-			   if (std::ifstream(filename) && this_mpi_process==0)
-			   {
-			   dftUtils::moveFile(filename, filename+".old");
-			   dftUtils::moveFile(filename+".info", filename+".info.old");
-			   }
-			MPI_Barrier(mpi_communicator);
-			d_parallelTriangulationUnmoved.save(filename.c_str());
+       const std::string filename="parallelUnmovedTriaSolData.chk";
+       if (std::ifstream(filename) && this_mpi_process==0)
+       {
+       dftUtils::moveFile(filename, filename+".old");
+       dftUtils::moveFile(filename+".info", filename+".info.old");
+       }
+    MPI_Barrier(mpi_communicator);
+    d_parallelTriangulationUnmoved.save(filename.c_str());
 
-			saveSupportTriangulations();
-		}//poolId==minPoolId check
-		*/
-		}
+    saveSupportTriangulations();
+  }//poolId==minPoolId check
+  */
+  }
 
-	//
-	//
-	void
-		triangulationManager::loadTriangulationsCellQuadData
-		(std::vector<std::map<dealii::CellId, std::vector<double> > > & cellQuadDataContainerOut,
-		 const std::vector<unsigned int>  & cellDataSizeContainer)
-		{
-			/*
-			   loadSupportTriangulations();
-			   const std::string filename="parallelUnmovedTriaSolData.chk";
-			   dftUtils::verifyCheckpointFileExists(filename);
-			   try
-			   {
-			   d_parallelTriangulationMoved.load(filename.c_str());
-			   d_parallelTriangulationUnmoved.load(filename.c_str());
-			   }
-			   catch (...)
-			   {
-			   AssertThrow(false, ExcMessage("DFT-FE Error: Cannot open checkpoint file- parallelUnmovedTriaSolData.chk or read the triangulation stored there."));
-			   }
+  //
+  //
+  void
+  triangulationManager::loadTriangulationsCellQuadData(
+    std::vector<std::map<dealii::CellId, std::vector<double>>>
+      &                              cellQuadDataContainerOut,
+    const std::vector<unsigned int> &cellDataSizeContainer)
+  {
+    /*
+       loadSupportTriangulations();
+       const std::string filename="parallelUnmovedTriaSolData.chk";
+       dftUtils::verifyCheckpointFileExists(filename);
+       try
+       {
+       d_parallelTriangulationMoved.load(filename.c_str());
+       d_parallelTriangulationUnmoved.load(filename.c_str());
+       }
+       catch (...)
+       {
+       AssertThrow(false, ExcMessage("DFT-FE Error: Cannot open checkpoint file-
+    parallelUnmovedTriaSolData.chk or read the triangulation stored there."));
+       }
 
-			   AssertThrow(cellQuadDataContainerOut.size()!=0,ExcInternalError());
-			   AssertThrow(cellQuadDataContainerOut.size()==cellDataSizeContainer.size(),ExcInternalError());
+       AssertThrow(cellQuadDataContainerOut.size()!=0,ExcInternalError());
+       AssertThrow(cellQuadDataContainerOut.size()==cellDataSizeContainer.size(),ExcInternalError());
 
-			   const unsigned int totalQuadVectorSize=std::accumulate(cellDataSizeContainer.begin(), cellDataSizeContainer.end(), 0);
+       const unsigned int
+    totalQuadVectorSize=std::accumulate(cellDataSizeContainer.begin(),
+    cellDataSizeContainer.end(), 0);
 
-			//FIXME: The underlying function calls to register_data_attach to notify_ready_to_unpack
-			//will need to re-evaluated after the dealii github issue #6223 is fixed
-			std::function<void(const typename dealii::parallel::distributed::Triangulation<3>::cell_iterator &cell,
-			const typename dealii::parallel::distributed::Triangulation<3>::CellStatus status,
-			void * data)> dummyFunc1 =
-			[&](const typename dealii::parallel::distributed::Triangulation<3>::cell_iterator &cell,
-			const typename dealii::parallel::distributed::Triangulation<3>::CellStatus status,
-			void * data)
-			{};
-			const  unsigned int offset1 = d_parallelTriangulationMoved.register_data_attach(totalQuadVectorSize*sizeof(double),
-			dummyFunc1);
+    //FIXME: The underlying function calls to register_data_attach to
+    notify_ready_to_unpack
+    //will need to re-evaluated after the dealii github issue #6223 is fixed
+    std::function<void(const typename
+    dealii::parallel::distributed::Triangulation<3>::cell_iterator &cell, const
+    typename dealii::parallel::distributed::Triangulation<3>::CellStatus status,
+    void * data)> dummyFunc1 =
+    [&](const typename
+    dealii::parallel::distributed::Triangulation<3>::cell_iterator &cell, const
+    typename dealii::parallel::distributed::Triangulation<3>::CellStatus status,
+    void * data)
+    {};
+    const  unsigned int offset1 =
+    d_parallelTriangulationMoved.register_data_attach(totalQuadVectorSize*sizeof(double),
+    dummyFunc1);
 
 
-			const std::function<void(const typename dealii::parallel::distributed::Triangulation<3>::cell_iterator &cell,
-			const typename dealii::parallel::distributed::Triangulation<3>::CellStatus status,
-			const void * data)> funcLoad =
-			[&](const typename dealii::parallel::distributed::Triangulation<3>::cell_iterator &cell,
-			const typename dealii::parallel::distributed::Triangulation<3>::CellStatus status,
-			const void * data)
-			{
-			if (cell->active() && cell->is_locally_owned())
-			{
-			const double* dataStore = reinterpret_cast<const double*>(data);
+    const std::function<void(const typename
+    dealii::parallel::distributed::Triangulation<3>::cell_iterator &cell, const
+    typename dealii::parallel::distributed::Triangulation<3>::CellStatus status,
+    const void * data)> funcLoad =
+    [&](const typename
+    dealii::parallel::distributed::Triangulation<3>::cell_iterator &cell, const
+    typename dealii::parallel::distributed::Triangulation<3>::CellStatus status,
+    const void * data)
+    {
+    if (cell->active() && cell->is_locally_owned())
+    {
+    const double* dataStore = reinterpret_cast<const double*>(data);
 
-			double tempArray[totalQuadVectorSize];
+    double tempArray[totalQuadVectorSize];
 
-			std::memcpy(&tempArray[0],
-			dataStore,
-			totalQuadVectorSize*sizeof(double));
+    std::memcpy(&tempArray[0],
+    dataStore,
+    totalQuadVectorSize*sizeof(double));
 
-			unsigned int count=0;
-			for (unsigned int i=0; i<cellQuadDataContainerOut.size();++i)
-			{
-			Assert(cellDataSizeContainer[i]!=0,ExcInternalError());
-			cellQuadDataContainerOut[i][cell->id()]=std::vector<double>(cellDataSizeContainer[i]);
-			for (unsigned int j=0; j<cellDataSizeContainer[i];++j)
-			{
-			cellQuadDataContainerOut[i][cell->id()][j]=tempArray[count];
-			count++;
-			}
-			}//container loop
-			}
-			};
+    unsigned int count=0;
+    for (unsigned int i=0; i<cellQuadDataContainerOut.size();++i)
+    {
+    Assert(cellDataSizeContainer[i]!=0,ExcInternalError());
+    cellQuadDataContainerOut[i][cell->id()]=std::vector<double>(cellDataSizeContainer[i]);
+    for (unsigned int j=0; j<cellDataSizeContainer[i];++j)
+    {
+    cellQuadDataContainerOut[i][cell->id()][j]=tempArray[count];
+    count++;
+    }
+    }//container loop
+    }
+    };
 
-			d_parallelTriangulationMoved.notify_ready_to_unpack(offset1,
-			funcLoad);
+    d_parallelTriangulationMoved.notify_ready_to_unpack(offset1,
+    funcLoad);
 
-			//dummy de-serialization for d_parallelTriangulationUnmoved to avoid assert fail in call to save
-			//FIXME: This also needs to be re-evaluated after the dealii github issue #6223 is fixed
-			const  unsigned int offset2 = d_parallelTriangulationUnmoved.register_data_attach(totalQuadVectorSize*sizeof(double),
-			dummyFunc1);
-			const std::function<void(const typename dealii::parallel::distributed::Triangulation<3>::cell_iterator &cell,
-			const typename dealii::parallel::distributed::Triangulation<3>::CellStatus status,
-			const void * data)> dummyFunc2 =
-				[&](const typename dealii::parallel::distributed::Triangulation<3>::cell_iterator &cell,
-						const typename dealii::parallel::distributed::Triangulation<3>::CellStatus status,
-						const void * data)
-				{};
-			d_parallelTriangulationUnmoved.notify_ready_to_unpack(offset2,
-					dummyFunc2);
-			*/
-		}
-}
+    //dummy de-serialization for d_parallelTriangulationUnmoved to avoid assert
+    fail in call to save
+    //FIXME: This also needs to be re-evaluated after the dealii github issue
+    #6223 is fixed const  unsigned int offset2 =
+    d_parallelTriangulationUnmoved.register_data_attach(totalQuadVectorSize*sizeof(double),
+    dummyFunc1);
+    const std::function<void(const typename
+    dealii::parallel::distributed::Triangulation<3>::cell_iterator &cell, const
+    typename dealii::parallel::distributed::Triangulation<3>::CellStatus status,
+    const void * data)> dummyFunc2 =
+      [&](const typename
+    dealii::parallel::distributed::Triangulation<3>::cell_iterator &cell, const
+    typename dealii::parallel::distributed::Triangulation<3>::CellStatus status,
+          const void * data)
+      {};
+    d_parallelTriangulationUnmoved.notify_ready_to_unpack(offset2,
+        dummyFunc2);
+    */
+  }
+} // namespace dftfe

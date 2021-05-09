@@ -1,6 +1,7 @@
 // ---------------------------------------------------------------------
 //
-// Copyright (c) 2017-2018  The Regents of the University of Michigan and DFT-FE authors.
+// Copyright (c) 2017-2018  The Regents of the University of Michigan and DFT-FE
+// authors.
 //
 // This file is part of the DFT-FE code.
 //
@@ -18,75 +19,81 @@
 #define meshMovementGaussian_H_
 #include "meshMovement.h"
 
-namespace dftfe {
+namespace dftfe
+{
+  /**
+   * @brief Class to move triangulation nodes using Gaussian functions attached to control points
+   *
+   * @author Sambit Das
+   */
+  class meshMovementGaussianClass : public meshMovementClass
+  {
+  public:
+    /** @brief Constructor
+     *
+     *  @param mpi_comm_replica mpi communicator for domain decomposition
+     */
+    meshMovementGaussianClass(const MPI_Comm &mpi_comm_replica);
 
-	/**
-	 * @brief Class to move triangulation nodes using Gaussian functions attached to control points
-	 *
-	 * @author Sambit Das
-	 */
-	class meshMovementGaussianClass : public meshMovementClass
-	{
-
-		public:
-			/** @brief Constructor
-			 *
-			 *  @param mpi_comm_replica mpi communicator for domain decomposition
-			 */
-			meshMovementGaussianClass(const MPI_Comm &mpi_comm_replica);
-
-			/** @brief Moves the triangulation corresponding to Gaussians attached to control points
-			 *
-			 *  This functions takes into account the hanging node and periodic constraints when
-			 *  computing the nodal increment field.
-			 *
-			 *  @param controlPointLocations  vector of coordinates of control points
-			 *  @param controlPointDisplacements vector of displacements of control points
-			 *  @ controllingParameter constant in the Gaussian function: exp(-controllingParameter*r^2)
-			 *  @return std::pair<bool,double> mesh quality metrics
-			 *  pair(bool for is negative jacobian, maximum jacobian ratio)
-			 */
-			std::pair<bool,double> moveMesh(const std::vector<Point<C_DIM> > & controlPointLocations,
-					const std::vector<Tensor<1,3,double> > & controlPointDisplacements,
-					const double controllingParameter,
-					const bool moveSubdivided = false);
-
-
-
-			std::pair<bool,double> moveMeshTwoStep(const std::vector<Point<C_DIM> > & controlPointLocations1,
-					const std::vector<Point<C_DIM> > & controlPointLocations2,
-					const std::vector<Tensor<1,3,double> > & controlPointDisplacements1,
-					const std::vector<Tensor<1,3,double> > & controlPointDisplacements2,
-					const double controllingParameter1,
-					const double controllingParameter2,
-					const bool moveSubdivided = false);
+    /** @brief Moves the triangulation corresponding to Gaussians attached to control points
+     *
+     *  This functions takes into account the hanging node and periodic
+     * constraints when computing the nodal increment field.
+     *
+     *  @param controlPointLocations  vector of coordinates of control points
+     *  @param controlPointDisplacements vector of displacements of control points
+     *  @ controllingParameter constant in the Gaussian function:
+     * exp(-(r/controllingParameter)^pow) where pow is controlled via the input
+     * file parameter (.prm)
+     *  @return std::pair<bool,double> mesh quality metrics
+     *  pair(bool for is negative jacobian, maximum jacobian ratio)
+     */
+    std::pair<bool, double>
+    moveMesh(const std::vector<Point<3>> &            controlPointLocations,
+             const std::vector<Tensor<1, 3, double>> &controlPointDisplacements,
+             const std::vector<double> &              gaussianWidthParameter,
+             const std::vector<double> &              flatTopWidthParameter,
+             const bool                               moveSubdivided = false);
 
 
-			void moveMeshTwoLevelElectro();
+
+    std::pair<bool, double>
+    moveMeshTwoStep(
+      const std::vector<Point<3>> &            controlPointLocations1,
+      const std::vector<Point<3>> &            controlPointLocations2,
+      const std::vector<Tensor<1, 3, double>> &controlPointDisplacements1,
+      const std::vector<Tensor<1, 3, double>> &controlPointDisplacements2,
+      const std::vector<double> &              controllingParameter1,
+      const std::vector<double> &              controllingParameter2,
+      const std::vector<double> &              flatTopWidthParameter,
+      const bool                               moveSubdivided = false);
 
 
-		private:
-			/** @brief internal function which computes the nodal increment field in the local processor
-			 *
-			 */
-			void computeIncrement();
+    void
+    moveMeshTwoLevelElectro();
 
-			void computeIncrementTwoStep(const std::vector<Point<C_DIM> > & controlPointLocations1,
-					const std::vector<Point<C_DIM> > & controlPointLocations2,
-					const std::vector<Tensor<1,3,double> > & controlPointDisplacements1,
-					const std::vector<Tensor<1,3,double> > & controlPointDisplacements2,
-					const double controllingParameter1,
-					const double controllingParameter2);
 
-			/// internal: storage for coordinates of the control points to which the Gaussians are attached
-			std::vector<Point<C_DIM> > d_controlPointLocations;
+  private:
+    /** @brief internal function which computes the nodal increment field in the local processor
+     *
+     */
+    void
+    computeIncrement(
+      const std::vector<Point<3>> &            controlPointLocations,
+      const std::vector<Tensor<1, 3, double>> &controlPointDisplacements,
+      const std::vector<double> &              gaussianWidthParameter,
+      const std::vector<double> &              flatTopWidthParameter);
 
-			/// internal: storage for the displacements of each control point
-			std::vector<Tensor<1,C_DIM,double> > d_controlPointDisplacements;
+    void
+    computeIncrementTwoStep(
+      const std::vector<Point<3>> &            controlPointLocations1,
+      const std::vector<Point<3>> &            controlPointLocations2,
+      const std::vector<Tensor<1, 3, double>> &controlPointDisplacements1,
+      const std::vector<Tensor<1, 3, double>> &controlPointDisplacements2,
+      const std::vector<double> &              gaussianWidthParameter1,
+      const std::vector<double> &              gaussianWidthParameter2,
+      const std::vector<double> &              flatTopWidthParameter);
+  };
 
-			/// internal: storage for the constant in the Gaussian function: exp(-d_controllingParameter*r^2)
-			double d_controllingParameter;
-	};
-
-}
+} // namespace dftfe
 #endif

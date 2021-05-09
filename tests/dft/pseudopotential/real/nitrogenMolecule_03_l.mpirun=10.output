@@ -17,8 +17,11 @@ AtomId 1:  1.199999999999999956e+00 0.000000000000000000e+00 0.00000000000000000
 
 Finite element mesh information
 -------------------------------------------------
+FE interpolating polynomial order for Kohn-Sham eigenvalue problem: 3
+FE interpolating polynomial order for electrostatics solve: 3
+FE interpolating polynomial order for nodal electron density computation: 5
 number of elements: 960
-number of degrees of freedom: 31257
+number of degrees of freedom for the Kohn-Sham eigenvalue problem : 31257
 -------------------------------------------------
 
 Setting initial guess for wavefunctions....
@@ -29,8 +32,11 @@ Pseudopotential initalization....
 
 Finite element mesh information
 -------------------------------------------------
+FE interpolating polynomial order for Kohn-Sham eigenvalue problem: 3
+FE interpolating polynomial order for electrostatics solve: 3
+FE interpolating polynomial order for nodal electron density computation: 5
 number of elements: 960
-number of degrees of freedom: 31257
+number of degrees of freedom for the Kohn-Sham eigenvalue problem : 31257
 -------------------------------------------------
 
 Reading initial guess for electron-density.....
@@ -38,8 +44,8 @@ Reading initial guess for electron-density.....
 Pseudopotential initalization....
 
 Starting SCF iterations....
-SCF iterations converged to the specified tolerance after: 12 iterations.
+SCF iterations converged to the specified tolerance after: 9 iterations.
 
 Energy computations (Hartree) 
 -------------------
-             Total energy:           -19.829200
+             Total energy:           -19.827366

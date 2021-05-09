@@ -1,7 +1,8 @@
 //
 // -------------------------------------------------------------------------------------
 //
-// Copyright (c) 2017-2018 The Regents of the University of Michigan and DFT-FE authors.
+// Copyright (c) 2017-2018 The Regents of the University of Michigan and DFT-FE
+// authors.
 //
 // This file is part of the DFT-FE code.
 //
@@ -19,121 +20,172 @@
 #ifndef elpaScalaManager_h
 #define elpaScalaManager_h
 
-#include <vector>
+#include "headers.h"
+#include "process_grid.h"
 
-#include <headers.h>
+#include <vector>
 #ifdef DFTFE_WITH_ELPA
 extern "C"
 {
-#include <elpa.hh>
+#  include <elpa.hh>
 }
 #endif
 
-namespace dftfe{
-
-	/**
-	 * @brief Manager class for ELPA and ScaLAPACK
-	 *
-	 * @author Sambit Das
-	 */
-	class elpaScalaManager {
-
-		//
-		// methods
-		//
-		public:
-
-			unsigned int getScalapackBlockSize() const;
-
-			void processGridOptionalELPASetup(const unsigned int na,
-					const unsigned int nev);
-
+namespace dftfe
+{
 #ifdef DFTFE_WITH_ELPA
-			void elpaDeallocateHandles(const unsigned int na,
-					const unsigned int nev);
+  inline void
+  elpaCholesky(elpa_t &handle, double *a, int *error)
+  {
+    elpa_cholesky_d(handle, a, error);
+  }
 
-			elpa_t & getElpaHandle();
+  inline void
+  elpaCholesky(elpa_t &handle, std::complex<double> *a, int *error)
+  {
+    elpa_cholesky_dc(handle, reinterpret_cast<_Complex double *>(a), error);
+  }
 
-			elpa_t & getElpaHandlePartialEigenVec();
+  inline void
+  elpaEigenvectors(elpa_t &handle, double *a, double *ev, double *q, int *error)
+  {
+    elpa_eigenvectors_d(handle, a, ev, q, error);
+  }
 
-			elpa_autotune_t & getElpaAutoTuneHandle();
-#endif
-
-
-			/**
-			 * @brief Get relevant mpi communicator
-			 *
-			 * @return mpi communicator
-			 */
-			const MPI_Comm & getMPICommunicator() const;
-
-
-			/**
-			 * @brief Constructor.
-			 */
-			elpaScalaManager(const MPI_Comm & mpi_comm_replica);
-
-			/**
-			 * @brief Destructor.
-			 */
-			~elpaScalaManager();
-
-			//
-			//mpi communicator
-			//
-			MPI_Comm d_mpi_communicator;
-
-#ifdef DFTFE_WITH_ELPA
-			/// ELPA handle
-			elpa_t d_elpaHandle;
-
-			/// ELPA handle for partial eigenvectors of full proj ham
-			elpa_t d_elpaHandlePartialEigenVec;
-
-			/// ELPA autotune handle
-			elpa_autotune_t d_elpaAutoTuneHandle;
-
-			/// processGrid mpi communicator
-			MPI_Comm d_processGridCommunicatorActive;
-
-			MPI_Comm d_processGridCommunicatorActivePartial;
+  inline void
+  elpaEigenvectors(elpa_t &              handle,
+                   std::complex<double> *a,
+                   double *              ev,
+                   std::complex<double> *q,
+                   int *                 error)
+  {
+    elpa_eigenvectors_dc(handle,
+                         reinterpret_cast<_Complex double *>(a),
+                         ev,
+                         reinterpret_cast<_Complex double *>(q),
+                         error);
+  }
 
 #endif
 
-			/// ScaLAPACK distributed format block size
-			unsigned int d_scalapackBlockSize;
+  /**
+   * @brief Manager class for ELPA and ScaLAPACK
+   *
+   * @author Sambit Das
+   */
+  class elpaScalaManager
+  {
+    //
+    // methods
+    //
+  public:
+    unsigned int
+    getScalapackBlockSize() const;
 
-	};
+    std::shared_ptr<const dftfe::ProcessGrid>
+    getProcessGridDftfeScalaWrapper() const;
 
-	/*--------------------- Inline functions --------------------------------*/
+    void
+    processGridOptionalELPASetup(const unsigned int na, const unsigned int nev);
 
-#  ifndef DOXYGEN
-	inline unsigned int
-		elpaScalaManager::getScalapackBlockSize() const
-		{
-			return d_scalapackBlockSize;
-		}
 #ifdef DFTFE_WITH_ELPA
-	inline
-		elpa_t & elpaScalaManager::getElpaHandle()
-		{
-			return d_elpaHandle;
-		}
+    void
+    elpaDeallocateHandles(const unsigned int na, const unsigned int nev);
 
-	inline
-		elpa_t & elpaScalaManager::getElpaHandlePartialEigenVec()
-		{
-			return d_elpaHandlePartialEigenVec;
-		}
+    elpa_t &
+    getElpaHandle();
 
+    elpa_t &
+    getElpaHandlePartialEigenVec();
 
-	inline
-		elpa_autotune_t & elpaScalaManager::getElpaAutoTuneHandle()
-		{
-			return d_elpaAutoTuneHandle;
-		}
+    elpa_autotune_t &
+    getElpaAutoTuneHandle();
 #endif
-#  endif // ifndef DOXYGEN
 
-}
+
+    /**
+     * @brief Get relevant mpi communicator
+     *
+     * @return mpi communicator
+     */
+    const MPI_Comm &
+    getMPICommunicator() const;
+
+
+    /**
+     * @brief Constructor.
+     */
+    elpaScalaManager(const MPI_Comm &mpi_comm_replica);
+
+    /**
+     * @brief Destructor.
+     */
+    ~elpaScalaManager();
+
+    //
+    // mpi communicator
+    //
+    MPI_Comm d_mpi_communicator;
+
+#ifdef DFTFE_WITH_ELPA
+    /// ELPA handle
+    elpa_t d_elpaHandle;
+
+    /// ELPA handle for partial eigenvectors of full proj ham
+    elpa_t d_elpaHandlePartialEigenVec;
+
+    /// ELPA autotune handle
+    elpa_autotune_t d_elpaAutoTuneHandle;
+
+    /// processGrid mpi communicator
+    MPI_Comm d_processGridCommunicatorActive;
+
+    MPI_Comm d_processGridCommunicatorActivePartial;
+
+#endif
+
+    /// ScaLAPACK distributed format block size
+    unsigned int d_scalapackBlockSize;
+
+    std::shared_ptr<const dftfe::ProcessGrid> d_processGridDftfeWrapper;
+  };
+
+  /*--------------------- Inline functions --------------------------------*/
+
+#ifndef DOXYGEN
+  inline unsigned int
+  elpaScalaManager::getScalapackBlockSize() const
+  {
+    return d_scalapackBlockSize;
+  }
+
+  inline std::shared_ptr<const dftfe::ProcessGrid>
+  elpaScalaManager::getProcessGridDftfeScalaWrapper() const
+  {
+    return d_processGridDftfeWrapper;
+  }
+
+#  ifdef DFTFE_WITH_ELPA
+  inline elpa_t &
+  elpaScalaManager::getElpaHandle()
+  {
+    return d_elpaHandle;
+  }
+
+  inline elpa_t &
+  elpaScalaManager::getElpaHandlePartialEigenVec()
+  {
+    return d_elpaHandlePartialEigenVec;
+  }
+
+
+  inline elpa_autotune_t &
+  elpaScalaManager::getElpaAutoTuneHandle()
+  {
+    return d_elpaAutoTuneHandle;
+  }
+#  endif
+#endif // ifndef DOXYGEN
+
+} // namespace dftfe
 #endif

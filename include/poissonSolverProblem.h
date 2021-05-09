@@ -1,6 +1,7 @@
 // ---------------------------------------------------------------------
 //
-// Copyright (c) 2017-2018  The Regents of the University of Michigan and DFT-FE authors.
+// Copyright (c) 2017-2018  The Regents of the University of Michigan and DFT-FE
+// authors.
 //
 // This file is part of the DFT-FE code.
 //
@@ -15,192 +16,259 @@
 //
 
 
-#include <dealiiLinearSolverProblem.h>
-
 #ifndef poissonSolverProblem_H_
 #define poissonSolverProblem_H_
 
-namespace dftfe {
+#include <dealiiLinearSolverProblem.h>
+#include <constraintMatrixInfo.h>
 
-	/**
-	 * @brief poisson solver problem class template. template parameter FEOrder
-	 * is the finite element polynomial order
-	 *
-	 * @author Shiva Rudraraju, Phani Motamarri, Sambit Das
-	 */
-	template<unsigned int FEOrder>
-		class poissonSolverProblem: public dealiiLinearSolverProblem {
-
-			public:
-
-				/// Constructor
-				poissonSolverProblem(const  MPI_Comm &mpi_comm);
-
-
-				/**
-				 * @brief reinitialize data structures for total electrostatic potential solve.
-				 *
-				 * For Hartree electrostatic potential solve give an empty map to the atoms parameter.
-				 *
-				 */
-				void reinit(const dealii::MatrixFree<3,double> & matrixFreeData,
-						distributedCPUVec<double> & x,
-						const dealii::ConstraintMatrix & constraintMatrix,
-						const unsigned int matrixFreeVectorComponent,
-						const std::map<dealii::types::global_dof_index, double> & atoms,
-						const std::map<dealii::CellId,std::vector<double> > & rhoValues,
-						const bool isComputeDiagonalA=true,
-						const bool isComputeMeanValueConstraints=false);
-
-				/**
-				 * @brief reinitialize data structures for nuclear electrostatic potential solve
-				 *
-				 */
-				void reinit(const dealii::MatrixFree<3,double> & matrixFreeData,
-						distributedCPUVec<double> & x,
-						const dealii::ConstraintMatrix & constraintMatrix,
-						const unsigned int matrixFreeVectorComponent,
-						const std::map<dealii::types::global_dof_index, double> & atoms,
-						const bool isComputeDiagonalA=true,
-						const bool isPrecomputeShapeGradIntegral=false);
-
-				/**
-				 * @brief get the reference to x field
-				 *
-				 * @return reference to x field. Assumes x field data structure is already initialized
-				 */
-				distributedCPUVec<double> & getX();
-
-				/**
-				 * @brief Compute A matrix multipled by x.
-				 *
-				 */
-				void vmult(distributedCPUVec<double> &Ax,
-						const distributedCPUVec<double> &x) const;
-
-				/**
-				 * @brief Compute right hand side vector for the problem Ax = rhs.
-				 *
-				 * @param rhs vector for the right hand side values
-				 */
-				void computeRhs(distributedCPUVec<double> & rhs);
-
-				/**
-				 * @brief Jacobi preconditioning.
-				 *
-				 */
-				void precondition_Jacobi(distributedCPUVec<double>& dst,
-						const distributedCPUVec<double>& src,
-						const double omega) const;
-
-				/**
-				 * @brief distribute x to the constrained nodes.
-				 *
-				 */
-				void distributeX();
-
-				/// function needed by dealii to mimic SparseMatrix for Jacobi preconditioning
-				void subscribe (std::atomic< bool > *const validity, const std::string &identifier="") const{};
-
-				/// function needed by dealii to mimic SparseMatrix for Jacobi preconditioning
-				void unsubscribe (std::atomic< bool > *const validity, const std::string &identifier="") const{};
-
-				/// function needed by dealii to mimic SparseMatrix
-				bool operator!= (double val) const {return true;};
-
-			private:
-
-				/**
-				 * @brief required for the cell_loop operation in dealii's MatrixFree class
-				 *
-				 */
-				void AX (const dealii::MatrixFree<3,double>  &matrixFreeData,
-						distributedCPUVec<double> &dst,
-						const distributedCPUVec<double> &src,
-						const std::pair<unsigned int,unsigned int> &cell_range) const;
+namespace dftfe
+{
+  /**
+   * @brief poisson solver problem class template. template parameter FEOrderElectro
+   * is the finite element polynomial order. FEOrder template parameter is used
+   * in conjunction with FEOrderElectro to determine the order of the Gauss
+   * quadrature rule
+   *
+   * @author Shiva Rudraraju, Phani Motamarri, Sambit Das
+   */
+  template <unsigned int FEOrder, unsigned int FEOrderElectro>
+  class poissonSolverProblem : public dealiiLinearSolverProblem
+  {
+  public:
+    /// Constructor
+    poissonSolverProblem(const MPI_Comm &mpi_comm);
 
 
-				/**
-				 * @brief Compute the diagonal of A.
-				 *
-				 */
-				void computeDiagonalA();
-
-				/**
-				 * @brief Compute mean value constraint which is required in case of fully periodic
-				 * boundary conditions.
-				 *
-				 */
-				void computeMeanValueConstraint();
+    /**
+     * @brief clears all datamembers and reset to original state.
+     *
+     *
+     */
+    void
+    clear();
 
 
-				/**
-				 * @brief Mean value constraint distibute
-				 *
-				 */
-				void meanValueConstraintDistribute(distributedCPUVec<double>& vec) const;
+    /**
+     * @brief reinitialize data structures for total electrostatic potential solve.
+     *
+     * For Hartree electrostatic potential solve give an empty map to the atoms
+     * parameter.
+     *
+     */
+    void
+    reinit(
+      const dealii::MatrixFree<3, double> &    matrixFreeData,
+      distributedCPUVec<double> &              x,
+      const dealii::AffineConstraints<double> &constraintMatrix,
+      const unsigned int                       matrixFreeVectorComponent,
+      const unsigned int matrixFreeQuadratureComponentRhsDensity,
+      const unsigned int matrixFreeQuadratureComponentAX,
+      const std::map<dealii::types::global_dof_index, double> &atoms,
+      const std::map<dealii::CellId, std::vector<double>> &smearedChargeValues,
+      const unsigned int smearedChargeQuadratureId,
+      const std::map<dealii::CellId, std::vector<double>> &rhoValues,
+      const bool         isComputeDiagonalA               = true,
+      const bool         isComputeMeanValueConstraints    = false,
+      const bool         smearedNuclearCharges            = false,
+      const bool         isRhoValues                      = true,
+      const bool         isGradSmearedChargeRhs           = false,
+      const unsigned int smearedChargeGradientComponentId = 0,
+      const bool         storeSmearedChargeRhs            = false,
+      const bool         reuseSmearedChargeRhs            = false,
+      const bool         reinitializeFastConstraints      = false);
 
-				/**
-				 * @brief Mean value constraint distibute slave to master
-				 *
-				 */
-				void meanValueConstraintDistributeSlaveToMaster(distributedCPUVec<double>& vec) const;
+
+    /**
+     * @brief get the reference to x field
+     *
+     * @return reference to x field. Assumes x field data structure is already initialized
+     */
+    distributedCPUVec<double> &
+    getX();
+
+    /**
+     * @brief Compute A matrix multipled by x.
+     *
+     */
+    void
+    vmult(distributedCPUVec<double> &Ax, distributedCPUVec<double> &x);
+
+    /**
+     * @brief Compute right hand side vector for the problem Ax = rhs.
+     *
+     * @param rhs vector for the right hand side values
+     */
+    void
+    computeRhs(distributedCPUVec<double> &rhs);
+
+    /**
+     * @brief Jacobi preconditioning.
+     *
+     */
+    void
+    precondition_Jacobi(distributedCPUVec<double> &      dst,
+                        const distributedCPUVec<double> &src,
+                        const double                     omega) const;
+
+    /**
+     * @brief distribute x to the constrained nodes.
+     *
+     */
+    void
+    distributeX();
+
+    /// function needed by dealii to mimic SparseMatrix for Jacobi
+    /// preconditioning
+    void
+    subscribe(std::atomic<bool> *const validity,
+              const std::string &      identifier = "") const {};
+
+    /// function needed by dealii to mimic SparseMatrix for Jacobi
+    /// preconditioning
+    void
+    unsubscribe(std::atomic<bool> *const validity,
+                const std::string &      identifier = "") const {};
+
+    /// function needed by dealii to mimic SparseMatrix
+    bool
+    operator!=(double val) const
+    {
+      return true;
+    };
+
+  private:
+    /**
+     * @brief required for the cell_loop operation in dealii's MatrixFree class
+     *
+     */
+    void
+    AX(const dealii::MatrixFree<3, double> &        matrixFreeData,
+       distributedCPUVec<double> &                  dst,
+       const distributedCPUVec<double> &            src,
+       const std::pair<unsigned int, unsigned int> &cell_range) const;
 
 
-				/**
-				 * @brief Mean value constraint set zero
-				 *
-				 */
-				void meanValueConstraintSetZero(distributedCPUVec<double>& vec) const;
+    /**
+     * @brief Compute the diagonal of A.
+     *
+     */
+    void
+    computeDiagonalA();
 
-				/**
-				 * @brief precompute shape function gradient integral.
-				 *
-				 */
-				void precomputeShapeFunctionGradientIntegral();
+    /**
+     * @brief Compute mean value constraint which is required in case of fully periodic
+     * boundary conditions.
+     *
+     */
+    void
+    computeMeanValueConstraint();
 
 
-				/// storage for diagonal of the A matrix
-				distributedCPUVec<double> d_diagonalA;
+    /**
+     * @brief Mean value constraint distibute
+     *
+     */
+    void
+    meanValueConstraintDistribute(distributedCPUVec<double> &vec) const;
 
-				/// pointer to dealii MatrixFree object
-				const dealii::MatrixFree<3,double>  * d_matrixFreeDataPtr;
+    /**
+     * @brief Mean value constraint distibute slave to master
+     *
+     */
+    void
+    meanValueConstraintDistributeSlaveToMaster(
+      distributedCPUVec<double> &vec) const;
 
-				/// pointer to the x vector being solved for
-				distributedCPUVec<double> * d_xPtr;
 
-				/// pointer to dealii ConstraintMatrix object
-				const dealii::ConstraintMatrix * d_constraintMatrixPtr;
+    /**
+     * @brief Mean value constraint set zero
+     *
+     */
+    void
+    meanValueConstraintSetZero(distributedCPUVec<double> &vec) const;
 
-				/// matrix free index required to access the DofHandler and ConstraintMatrix objects corresponding to the
-				/// problem
-				unsigned int d_matrixFreeVectorComponent;
 
-				/// pointer to electron density cell quadrature data
-				const std::map<dealii::CellId,std::vector<double> >* d_rhoValuesPtr;
+    /// storage for diagonal of the A matrix
+    distributedCPUVec<double> d_diagonalA;
 
-				/// pointer to map between global dof index in current processor and the atomic charge on that dof
-				const std::map<dealii::types::global_dof_index, double> * d_atomsPtr;
+    /// storage for smeared charge rhs in case of total potential solve (doesn't
+    /// change every scf)
+    distributedCPUVec<double> d_rhsSmearedCharge;
 
-				/// shape function gradient integral storage
-				std::vector<double> d_cellShapeFunctionGradientIntegralFlattened;
+    /// pointer to dealii MatrixFree object
+    const dealii::MatrixFree<3, double> *d_matrixFreeDataPtr;
 
-				bool d_isShapeGradIntegralPrecomputed;
+    /// pointer to the x vector being solved for
+    distributedCPUVec<double> *d_xPtr;
 
-				/// storage for mean value constraint vector
-				distributedCPUVec<double> d_meanValueConstraintVec;
+    /// pointer to dealii dealii::AffineConstraints<double> object
+    const dealii::AffineConstraints<double> *d_constraintMatrixPtr;
 
-				/// boolean flag to query if mean value constraint datastructures are precomputed
-				bool d_isMeanValueConstraintComputed;
+    /// matrix free index required to access the DofHandler and
+    /// dealii::AffineConstraints<double> objects corresponding to the problem
+    unsigned int d_matrixFreeVectorComponent;
 
-				/// mean constrained nodeid
-				dealii::types::global_dof_index d_meanValueConstraintNodeId;
+    /// matrix free quadrature index
+    unsigned int d_matrixFreeQuadratureComponentRhsDensity;
 
-				const MPI_Comm mpi_communicator;
-				const unsigned int n_mpi_processes;
-				const unsigned int this_mpi_process;
-				dealii::ConditionalOStream   pcout;
-		};
+    /// matrix free quadrature index
+    unsigned int d_matrixFreeQuadratureComponentAX;
 
-}
+    /// pointer to electron density cell quadrature data
+    const std::map<dealii::CellId, std::vector<double>> *d_rhoValuesPtr;
+
+    /// pointer to smeared charge cell quadrature data
+    const std::map<dealii::CellId, std::vector<double>>
+      *d_smearedChargeValuesPtr;
+
+    ///
+    unsigned int d_smearedChargeQuadratureId;
+
+    /// pointer to map between global dof index in current processor and the
+    /// atomic charge on that dof
+    const std::map<dealii::types::global_dof_index, double> *d_atomsPtr;
+
+    /// shape function gradient integral storage
+    std::vector<double> d_cellShapeFunctionGradientIntegralFlattened;
+
+    /// storage for mean value constraint vector
+    distributedCPUVec<double> d_meanValueConstraintVec;
+
+    /// boolean flag to query if mean value constraint datastructures are
+    /// precomputed
+    bool d_isMeanValueConstraintComputed;
+
+    ///
+    bool d_isGradSmearedChargeRhs;
+
+    ///
+    bool d_isStoreSmearedChargeRhs;
+
+    ///
+    bool d_isReuseSmearedChargeRhs;
+
+    ///
+    unsigned int d_smearedChargeGradientComponentId;
+
+    /// mean value constraints: mean value constrained node
+    dealii::types::global_dof_index d_meanValueConstraintNodeId;
+
+    /// mean value constraints: constrained proc id containing the mean value
+    /// constrained node
+    unsigned int d_meanValueConstraintProcId;
+
+    /// duplicate constraints object with flattened maps for faster access
+    dftUtils::constraintMatrixInfo d_constraintsInfo;
+
+    ///
+    bool d_isFastConstraintsInitialized;
+
+    const MPI_Comm             mpi_communicator;
+    const unsigned int         n_mpi_processes;
+    const unsigned int         this_mpi_process;
+    dealii::ConditionalOStream pcout;
+  };
+
+} // namespace dftfe
 #endif // poissonSolverProblem_H_

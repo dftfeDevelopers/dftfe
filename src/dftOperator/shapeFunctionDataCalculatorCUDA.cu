@@ -1,6 +1,7 @@
 // ---------------------------------------------------------------------
 //
-// Copyright (c) 2017-2020 The Regents of the University of Michigan and DFT-FE authors.
+// Copyright (c) 2017-2020 The Regents of the University of Michigan and DFT-FE
+// authors.
 //
 // This file is part of the DFT-FE code.
 //
@@ -18,333 +19,607 @@
 
 namespace shapeFuncCUDA
 {
-	__global__
-		void computeShapeGradNINJIntegralContribution(const unsigned int numQuads,
-				const unsigned int numNodesPerElem,
-				const unsigned int numElems,
-				const double * gradNQuadValuesXI,
-				const double * gradNQuadValuesYI,
-				const double * gradNQuadValuesZI,
-				const double * gradNQuadValuesXJ,
-				const double * gradNQuadValuesYJ,
-				const double * gradNQuadValuesZJ,
-				const double * jxwQuadValues,
-				double * shapeGradNINJIntegralContribution)
-		{
+  __global__ void
+  computeShapeGradNINJIntegralContribution(
+    const unsigned int numQuadsBlock,
+    const unsigned int numQuadsTotal,
+    const unsigned int startingQuadId,
+    const unsigned int numNodesPerElem,
+    const unsigned int numElems,
+    const double *     gradNQuadValuesXI,
+    const double *     gradNQuadValuesYI,
+    const double *     gradNQuadValuesZI,
+    const double *     gradNQuadValuesXJ,
+    const double *     gradNQuadValuesYJ,
+    const double *     gradNQuadValuesZJ,
+    const double *     jxwQuadValues,
+    double *           shapeGradNINJIntegralContribution)
+  {
+    const unsigned int globalThreadId = blockIdx.x * blockDim.x + threadIdx.x;
+    const unsigned int numberEntries =
+      numElems * numNodesPerElem * numNodesPerElem * numQuadsBlock;
 
-			const unsigned int globalThreadId = blockIdx.x*blockDim.x + threadIdx.x;
-			const unsigned int numberEntries = numElems*numNodesPerElem*numNodesPerElem*numQuads;
-
-			for(unsigned int index = globalThreadId; index < numberEntries; index+= blockDim.x*gridDim.x)
-			{
-				const unsigned int blockIndex1 = index/numQuads;
-				const unsigned int quadIndex=index-blockIndex1*numQuads;
-				const unsigned int blockIndex2=blockIndex1/numNodesPerElem;
-				const unsigned int cellId=blockIndex2/numNodesPerElem;
-				const unsigned int idJ=cellId*numNodesPerElem*numQuads+(blockIndex1-blockIndex2*numNodesPerElem)*numQuads+quadIndex;
-				const unsigned int idI=cellId*numNodesPerElem*numQuads+(blockIndex2-cellId*numNodesPerElem)*numQuads+quadIndex;
-
-
-				shapeGradNINJIntegralContribution[index]=(gradNQuadValuesXI[idI]*gradNQuadValuesXJ[idJ]+gradNQuadValuesYI[idI]*gradNQuadValuesYJ[idJ]+gradNQuadValuesZI[idI]*gradNQuadValuesZJ[idJ])*jxwQuadValues[cellId*numQuads+quadIndex];
-			}
-
-		}
-
-	void computeShapeGradNINJIntegral(cublasHandle_t &handle,
-			const unsigned int numQuads,
-			const unsigned int numNodesPerElem,
-			const unsigned int numElems,
-			const thrust::device_vector<double> & gradNQuadValuesXD,
-			const thrust::device_vector<double> & gradNQuadValuesYD,
-			const thrust::device_vector<double> & gradNQuadValuesZD,
-			const thrust::device_vector<double> & jxwQuadValuesD,
-			thrust::device_vector<double> & shapeGradNINJIntegralD)
-	{
-		shapeGradNINJIntegralD.clear();
-		shapeGradNINJIntegralD.resize(numElems*numNodesPerElem*numNodesPerElem,0.0);
-		//thrust::device_vector<double> gradPsiQuadValuesXDJ=gradPsiQuadValuesXD;
-		//thrust::device_vector<double> gradPsiQuadValuesYDJ=gradPsiQuadValuesYD;
-		//thrust::device_vector<double> gradPsiQuadValuesZDJ=gradPsiQuadValuesZD;
-
-		const int blockSize=10;
-		const int numberBlocks=numElems/blockSize;
-		const int remBlockSize=numElems-numberBlocks*blockSize;
-
-		thrust::device_vector<double> shapeGradNINJIntegralContributionD(blockSize*numNodesPerElem*numNodesPerElem*numQuads,0.0);
-		thrust::device_vector<double> onesVecD(numQuads,1.0); 
-		for (int iblock=0; iblock<(numberBlocks+1); iblock++)
-		{
-			const int currentBlockSize= (iblock==numberBlocks)?remBlockSize:blockSize;
-			if (currentBlockSize>0)
-			{
-				const int startingId=iblock*blockSize;
-
-				computeShapeGradNINJIntegralContribution<<<(numQuads+255)/256*numNodesPerElem*numNodesPerElem*currentBlockSize,256>>>
-					(numQuads,
-					 numNodesPerElem,
-					 currentBlockSize,
-					 thrust::raw_pointer_cast(&gradNQuadValuesXD[startingId*numNodesPerElem*numQuads]),
-					 thrust::raw_pointer_cast(&gradNQuadValuesYD[startingId*numNodesPerElem*numQuads]),
-					 thrust::raw_pointer_cast(&gradNQuadValuesZD[startingId*numNodesPerElem*numQuads]),
-					 thrust::raw_pointer_cast(&gradNQuadValuesXD[startingId*numNodesPerElem*numQuads]),
-					 thrust::raw_pointer_cast(&gradNQuadValuesYD[startingId*numNodesPerElem*numQuads]),
-					 thrust::raw_pointer_cast(&gradNQuadValuesZD[startingId*numNodesPerElem*numQuads]),
-					 thrust::raw_pointer_cast(&jxwQuadValuesD[startingId*numQuads]),
-					 thrust::raw_pointer_cast(&shapeGradNINJIntegralContributionD[0]));
-
-				const double scalarCoeffAlpha = 1.0;
-				const double scalarCoeffBeta = 0.0;
+    for (unsigned int index = globalThreadId; index < numberEntries;
+         index += blockDim.x * gridDim.x)
+      {
+        const unsigned int blockIndex1 = index / numQuadsBlock;
+        const unsigned int quadIndex   = index - blockIndex1 * numQuadsBlock;
+        const unsigned int blockIndex2 = blockIndex1 / numNodesPerElem;
+        const unsigned int cellId      = blockIndex2 / numNodesPerElem;
+        const unsigned int idJ =
+          cellId * numNodesPerElem * numQuadsTotal +
+          (blockIndex1 - blockIndex2 * numNodesPerElem) * numQuadsTotal +
+          quadIndex + startingQuadId;
+        const unsigned int idI =
+          cellId * numNodesPerElem * numQuadsTotal +
+          (blockIndex2 - cellId * numNodesPerElem) * numQuadsTotal + quadIndex +
+          startingQuadId;
 
 
+        shapeGradNINJIntegralContribution[index] =
+          (gradNQuadValuesXI[idI] * gradNQuadValuesXJ[idJ] +
+           gradNQuadValuesYI[idI] * gradNQuadValuesYJ[idJ] +
+           gradNQuadValuesZI[idI] * gradNQuadValuesZJ[idJ]) *
+          jxwQuadValues[cellId * numQuadsTotal + quadIndex + startingQuadId];
+      }
+  }
 
-				cublasDgemm(handle,
-						CUBLAS_OP_N,
-						CUBLAS_OP_N,
-						1,
-						currentBlockSize*numNodesPerElem*numNodesPerElem,
-						numQuads,
-						&scalarCoeffAlpha,
-						thrust::raw_pointer_cast(&onesVecD[0]),
-						1,
-						thrust::raw_pointer_cast(&shapeGradNINJIntegralContributionD[0]),
-						numQuads,
-						&scalarCoeffBeta,
-						thrust::raw_pointer_cast(&shapeGradNINJIntegralD[startingId*numNodesPerElem*numNodesPerElem]),
-						1);
-			}
-		}
-	} 
-}
+  void
+  computeShapeGradNINJIntegral(
+    cublasHandle_t &               handle,
+    FEValues<3> &                  fe_values,
+    const dealii::DoFHandler<3> &  dofHandler,
+    const unsigned int             numElems,
+    thrust::device_vector<double> &shapeGradNINJIntegralD)
+  {
+    const unsigned int numQuads        = fe_values.get_quadrature().size();
+    const unsigned int numNodesPerElem = fe_values.get_fe().dofs_per_cell;
 
-	template<unsigned int FEOrder>
-void kohnShamDFTOperatorCUDAClass<FEOrder>::preComputeShapeFunctionGradientIntegrals()
+    shapeGradNINJIntegralD.clear();
+    shapeGradNINJIntegralD.resize(numElems * numNodesPerElem * numNodesPerElem,
+                                  0.0);
+
+    const int blockSizeElems    = 1;
+    const int blockSizeQuads    = 100;
+    const int numberElemBlocks  = numElems / blockSizeElems;
+    const int remBlockSizeElems = numElems - numberElemBlocks * blockSizeElems;
+
+    const int numberQuadsBlocks = numQuads / blockSizeQuads;
+    const int remBlockSizeQuads = numQuads - numberQuadsBlocks * blockSizeQuads;
+
+    thrust::device_vector<double> shapeGradNINJIntegralContributionD(
+      blockSizeElems * numNodesPerElem * numNodesPerElem * blockSizeQuads, 0.0);
+    thrust::device_vector<double> onesVecD(blockSizeQuads, 1.0);
+
+    std::vector<double> cellJxWValues(blockSizeElems * numQuads);
+    std::vector<double> shapeFunctionGradientValuesX(blockSizeElems * numQuads *
+                                                       numNodesPerElem,
+                                                     0.0);
+    std::vector<double> shapeFunctionGradientValuesY(blockSizeElems * numQuads *
+                                                       numNodesPerElem,
+                                                     0.0);
+    std::vector<double> shapeFunctionGradientValuesZ(blockSizeElems * numQuads *
+                                                       numNodesPerElem,
+                                                     0.0);
+
+    thrust::device_vector<double> jxwQuadValuesD;
+    thrust::device_vector<double> gradNQuadValuesXD;
+    thrust::device_vector<double> gradNQuadValuesYD;
+    thrust::device_vector<double> gradNQuadValuesZD;
+
+    for (int iblock = 0; iblock < (numberElemBlocks + 1); iblock++)
+      {
+        const int currentElemsBlockSize =
+          (iblock == numberElemBlocks) ? remBlockSizeElems : blockSizeElems;
+        if (currentElemsBlockSize > 0)
+          {
+            const int startingElemId = iblock * blockSizeElems;
+
+            typename dealii::DoFHandler<3>::active_cell_iterator cellPtr =
+              dofHandler.begin_active();
+            typename dealii::DoFHandler<3>::active_cell_iterator endcPtr =
+              dofHandler.end();
+
+            unsigned int iElem = 0;
+            for (; cellPtr != endcPtr; ++cellPtr)
+              if (cellPtr->is_locally_owned())
+                {
+                  if (iElem >= startingElemId &&
+                      iElem < (startingElemId + currentElemsBlockSize))
+                    {
+                      const unsigned int intraBlockElemId =
+                        iElem - startingElemId;
+                      fe_values.reinit(cellPtr);
+
+                      for (unsigned int q_point = 0; q_point < numQuads;
+                           ++q_point)
+                        cellJxWValues[intraBlockElemId * numQuads + q_point] =
+                          fe_values.JxW(q_point);
+
+                      for (unsigned int iNode = 0; iNode < numNodesPerElem;
+                           ++iNode)
+                        for (unsigned int q_point = 0; q_point < numQuads;
+                             ++q_point)
+                          {
+                            const dealii::Tensor<1, 3, double> &shape_grad =
+                              fe_values.shape_grad(iNode, q_point);
+
+                            shapeFunctionGradientValuesX
+                              [intraBlockElemId * numNodesPerElem * numQuads +
+                               iNode * numQuads + q_point] = shape_grad[0];
+
+                            shapeFunctionGradientValuesY
+                              [intraBlockElemId * numNodesPerElem * numQuads +
+                               iNode * numQuads + q_point] = shape_grad[1];
+
+                            shapeFunctionGradientValuesZ
+                              [intraBlockElemId * numNodesPerElem * numQuads +
+                               iNode * numQuads + q_point] = shape_grad[2];
+                          }
+                    }
+
+                  iElem++;
+                }
+
+            jxwQuadValuesD    = cellJxWValues;
+            gradNQuadValuesXD = shapeFunctionGradientValuesX;
+            gradNQuadValuesYD = shapeFunctionGradientValuesY;
+            gradNQuadValuesZD = shapeFunctionGradientValuesZ;
+
+            for (int jblock = 0; jblock < (numberQuadsBlocks + 1); jblock++)
+              {
+                const int currentQuadsBlockSize =
+                  (jblock == numberQuadsBlocks) ? remBlockSizeQuads :
+                                                  blockSizeQuads;
+                const int startingQuadId = jblock * blockSizeQuads;
+                if (currentQuadsBlockSize > 0)
+                  {
+                    computeShapeGradNINJIntegralContribution<<<
+                      (currentQuadsBlockSize + 255) / 256 * numNodesPerElem *
+                        numNodesPerElem * currentElemsBlockSize,
+                      256>>>(currentQuadsBlockSize,
+                             numQuads,
+                             startingQuadId,
+                             numNodesPerElem,
+                             currentElemsBlockSize,
+                             thrust::raw_pointer_cast(&gradNQuadValuesXD[0]),
+                             thrust::raw_pointer_cast(&gradNQuadValuesYD[0]),
+                             thrust::raw_pointer_cast(&gradNQuadValuesZD[0]),
+                             thrust::raw_pointer_cast(&gradNQuadValuesXD[0]),
+                             thrust::raw_pointer_cast(&gradNQuadValuesYD[0]),
+                             thrust::raw_pointer_cast(&gradNQuadValuesZD[0]),
+                             thrust::raw_pointer_cast(&jxwQuadValuesD[0]),
+                             thrust::raw_pointer_cast(
+                               &shapeGradNINJIntegralContributionD[0]));
+
+                    const double scalarCoeffAlpha = 1.0;
+                    const double scalarCoeffBeta  = 1.0;
+
+
+
+                    cublasDgemm(handle,
+                                CUBLAS_OP_N,
+                                CUBLAS_OP_N,
+                                1,
+                                currentElemsBlockSize * numNodesPerElem *
+                                  numNodesPerElem,
+                                currentQuadsBlockSize,
+                                &scalarCoeffAlpha,
+                                thrust::raw_pointer_cast(&onesVecD[0]),
+                                1,
+                                thrust::raw_pointer_cast(
+                                  &shapeGradNINJIntegralContributionD[0]),
+                                currentQuadsBlockSize,
+                                &scalarCoeffBeta,
+                                thrust::raw_pointer_cast(
+                                  &shapeGradNINJIntegralD[startingElemId *
+                                                          numNodesPerElem *
+                                                          numNodesPerElem]),
+                                1);
+                  }
+              } // block loop over nodes per elem
+          }
+      } // block loop over elems
+  }
+} // namespace shapeFuncCUDA
+
+template <unsigned int FEOrder, unsigned int FEOrderElectro>
+void
+kohnShamDFTOperatorCUDAClass<FEOrder, FEOrderElectro>::
+  preComputeShapeFunctionGradientIntegrals(
+    const unsigned int lpspQuadratureId,
+    const bool         onlyUpdateGradNiNjIntegral)
 {
+  const unsigned int numberPhysicalCells =
+    dftPtr->matrix_free_data.n_physical_cells();
 
-	//
-	//get FE data
-	//
-	const unsigned int numberPhysicalCells = dftPtr->matrix_free_data.n_physical_cells();
-	QGauss<3>  quadrature(C_num1DQuad<FEOrder>());
-	FEValues<3> fe_values(dftPtr->matrix_free_data.get_dof_handler().get_fe(), quadrature, update_values | update_gradients | update_JxW_values);
-	const unsigned int numberDofsPerElement = dftPtr->matrix_free_data.get_dof_handler().get_fe().dofs_per_cell;
-	const unsigned int numberQuadraturePoints = quadrature.size();
+  cudaDeviceSynchronize();
+  MPI_Barrier(MPI_COMM_WORLD);
+  double gpu_time = MPI_Wtime();
 
-	//
-	//resize data members
-	//
-	//d_cellShapeFunctionGradientIntegralFlattened.clear();
-	//d_cellShapeFunctionGradientIntegralFlattened.resize(numberPhysicalCells*numberDofsPerElement*numberDofsPerElement);
-
-	d_cellJxWValues.clear();
-	d_cellJxWValues.resize(numberPhysicalCells*numberQuadraturePoints);
-
-	d_shapeFunctionValue.resize(numberQuadraturePoints*numberDofsPerElement,0.0);
-	d_shapeFunctionValueInverted.resize(numberQuadraturePoints*numberDofsPerElement,0.0);
-
-	d_shapeFunctionGradientValueX.resize(numberPhysicalCells*numberQuadraturePoints*numberDofsPerElement,0.0);
-	d_shapeFunctionGradientValueXInverted.resize(numberPhysicalCells*numberQuadraturePoints*numberDofsPerElement,0.0);
-
-	d_shapeFunctionGradientValueY.resize(numberPhysicalCells*numberQuadraturePoints*numberDofsPerElement,0.0);
-	d_shapeFunctionGradientValueYInverted.resize(numberPhysicalCells*numberQuadraturePoints*numberDofsPerElement,0.0);
-
-	d_shapeFunctionGradientValueZ.resize(numberPhysicalCells*numberQuadraturePoints*numberDofsPerElement,0.0);
-	d_shapeFunctionGradientValueZInverted.resize(numberPhysicalCells*numberQuadraturePoints*numberDofsPerElement,0.0);
+  QGauss<3>    quadraturePlusOne(FEOrder + 1);
+  unsigned int numberQuadraturePointsPlusOne = quadraturePlusOne.size();
+  FEValues<3>  fe_values_plusone(
+    dftPtr->matrix_free_data.get_dof_handler(dftPtr->d_densityDofHandlerIndex)
+      .get_fe(),
+    quadraturePlusOne,
+    update_gradients | update_JxW_values);
 
 
-	typename dealii::DoFHandler<3>::active_cell_iterator cellPtr=dftPtr->matrix_free_data.get_dof_handler().begin_active();
-	typename dealii::DoFHandler<3>::active_cell_iterator endcPtr = dftPtr->matrix_free_data.get_dof_handler().end();
+  shapeFuncCUDA::computeShapeGradNINJIntegral(
+    d_cublasHandle,
+    fe_values_plusone,
+    dftPtr->matrix_free_data.get_dof_handler(dftPtr->d_densityDofHandlerIndex),
+    numberPhysicalCells,
+    d_cellShapeFunctionGradientIntegralFlattenedDevice);
 
-	unsigned int iElem=0;
-	for(; cellPtr!=endcPtr; ++cellPtr)
-		if(cellPtr->is_locally_owned())
-		{
-			fe_values.reinit (cellPtr);
+  cudaDeviceSynchronize();
+  MPI_Barrier(MPI_COMM_WORLD);
+  gpu_time = MPI_Wtime() - gpu_time;
 
-			for(unsigned int q_point = 0; q_point < numberQuadraturePoints; ++q_point)
-				d_cellJxWValues[iElem*numberQuadraturePoints+q_point]=fe_values.JxW(q_point); 
+  if (this_mpi_process == 0 && dftParameters::verbosity >= 2)
+    std::cout
+      << "Time for shapeFuncCUDA::computeShapeGradNINJIntegral for FEOrder: "
+      << gpu_time << std::endl;
 
-			for(unsigned int iNode = 0; iNode < numberDofsPerElement; ++iNode)
-			{
-				/*
-				   for(unsigned int jNode = 0; jNode < numberDofsPerElement; ++jNode)
-				   {
-				   double shapeFunctionGradientIntegralValue = 0.0;
-				   for(unsigned int q_point = 0; q_point < numberQuadraturePoints; ++q_point)
-				   {
-				   shapeFunctionGradientIntegralValue += (fe_values.shape_grad(iNode,q_point)*fe_values.shape_grad(jNode,q_point))
-				 *fe_values.JxW(q_point);
-				 }
-				 d_cellShapeFunctionGradientIntegralFlattened[iElem*numberDofsPerElement*numberDofsPerElement
-				 +iNode*numberDofsPerElement+jNode]=shapeFunctionGradientIntegralValue;
-				 }
-				 */
+  if (FEOrderElectro != FEOrder)
+    {
+      cudaDeviceSynchronize();
+      MPI_Barrier(MPI_COMM_WORLD);
+      gpu_time = MPI_Wtime();
 
-				for(unsigned int q_point = 0; q_point < numberQuadraturePoints; ++q_point)
-				{
-					const dealii::Tensor<1,3,double> & shape_grad=fe_values.shape_grad(iNode,q_point);
+      QGauss<3> quadratureElectroPlusOne(FEOrderElectro + 1);
+      numberQuadraturePointsPlusOne = quadratureElectroPlusOne.size();
+      FEValues<3> fe_values_electro_plusone(
+        dftPtr->d_matrixFreeDataPRefined
+          .get_dof_handler(dftPtr->d_baseDofHandlerIndexElectro)
+          .get_fe(),
+        quadratureElectroPlusOne,
+        update_gradients | update_JxW_values);
 
-					d_shapeFunctionGradientValueX[iElem*numberDofsPerElement*numberQuadraturePoints
-						+iNode*numberQuadraturePoints+q_point]=shape_grad[0];
-					d_shapeFunctionGradientValueXInverted[iElem*numberQuadraturePoints*numberDofsPerElement
-						+q_point*numberDofsPerElement+iNode]=shape_grad[0];
+      shapeFuncCUDA::computeShapeGradNINJIntegral(
+        d_cublasHandle,
+        fe_values_electro_plusone,
+        dftPtr->d_matrixFreeDataPRefined.get_dof_handler(
+          dftPtr->d_baseDofHandlerIndexElectro),
+        numberPhysicalCells,
+        d_cellShapeFunctionGradientIntegralFlattenedDeviceElectro);
 
-					d_shapeFunctionGradientValueY[iElem*numberDofsPerElement*numberQuadraturePoints
-						+iNode*numberQuadraturePoints+q_point]=shape_grad[1];
-					d_shapeFunctionGradientValueYInverted[iElem*numberQuadraturePoints*numberDofsPerElement
-						+q_point*numberDofsPerElement+iNode]=shape_grad[1];
+      cudaDeviceSynchronize();
+      MPI_Barrier(MPI_COMM_WORLD);
+      gpu_time = MPI_Wtime() - gpu_time;
 
-					d_shapeFunctionGradientValueZ[iElem*numberDofsPerElement*numberQuadraturePoints
-						+iNode*numberQuadraturePoints+q_point]=shape_grad[2];
-					d_shapeFunctionGradientValueZInverted[iElem*numberQuadraturePoints*numberDofsPerElement
-						+q_point*numberDofsPerElement+iNode]=shape_grad[2];
+      if (this_mpi_process == 0 && dftParameters::verbosity >= 2)
+        std::cout
+          << "Time for shapeFuncCUDA::computeShapeGradNINJIntegral for FEOrderElectro: "
+          << gpu_time << std::endl;
+    }
 
-				}
-			}
+  if (!onlyUpdateGradNiNjIntegral)
+    {
+      //
+      // get FE data
+      //
+      const Quadrature<3> &quadrature =
+        dftPtr->matrix_free_data.get_quadrature(dftPtr->d_densityQuadratureId);
+      FEValues<3>        fe_values(dftPtr->matrix_free_data
+                              .get_dof_handler(dftPtr->d_densityDofHandlerIndex)
+                              .get_fe(),
+                            quadrature,
+                            update_values | update_gradients |
+                              update_JxW_values);
+      const unsigned int numberDofsPerElement =
+        dftPtr->matrix_free_data
+          .get_dof_handler(dftPtr->d_densityDofHandlerIndex)
+          .get_fe()
+          .dofs_per_cell;
+      const unsigned int numberDofsPerElementElectro =
+        dftPtr->d_matrixFreeDataPRefined
+          .get_dof_handler(dftPtr->d_baseDofHandlerIndexElectro)
+          .get_fe()
+          .dofs_per_cell;
+      const unsigned int numberQuadraturePoints = quadrature.size();
 
-			if(iElem == 0)
-				for(unsigned int iNode = 0; iNode < numberDofsPerElement; ++iNode)
-					for(unsigned int q_point = 0; q_point < numberQuadraturePoints; ++q_point)
-					{
-						const double val=fe_values.shape_value(iNode,q_point);
-						d_shapeFunctionValue[numberQuadraturePoints*iNode + q_point] = val;
-						d_shapeFunctionValueInverted[q_point*numberDofsPerElement+iNode] = val;
-					}
+      FEValues<3> fe_values_lpsp(
+        dftPtr->matrix_free_data
+          .get_dof_handler(dftPtr->d_densityDofHandlerIndex)
+          .get_fe(),
+        dftPtr->matrix_free_data.get_quadrature(lpspQuadratureId),
+        update_values);
+      const unsigned int numberQuadraturePointsLpsp =
+        dftPtr->matrix_free_data.get_quadrature(lpspQuadratureId).size();
+      d_numQuadPointsLpsp = numberQuadraturePointsLpsp;
 
+      //
+      // resize data members
+      //
+      // d_cellShapeFunctionGradientIntegralFlattened.clear();
+      // d_cellShapeFunctionGradientIntegralFlattened.resize(numberPhysicalCells*numberDofsPerElement*numberDofsPerElement);
 
-			iElem++;
-		}
+      d_cellJxWValues.clear();
+      d_cellJxWValues.resize(numberPhysicalCells * numberQuadraturePoints);
 
-	d_shapeFunctionValueDevice=d_shapeFunctionValue;
-	d_shapeFunctionValueInvertedDevice=d_shapeFunctionValueInverted;
+      d_shapeFunctionValue.resize(numberQuadraturePoints * numberDofsPerElement,
+                                  0.0);
+      d_shapeFunctionValueInverted.resize(numberQuadraturePoints *
+                                            numberDofsPerElement,
+                                          0.0);
 
-	d_shapeFunctionGradientValueXDevice=d_shapeFunctionGradientValueX;
-	d_shapeFunctionGradientValueXInvertedDevice=d_shapeFunctionGradientValueXInverted;
+      d_shapeFunctionGradientValueX.resize(numberPhysicalCells *
+                                             numberQuadraturePoints *
+                                             numberDofsPerElement,
+                                           0.0);
+      d_shapeFunctionGradientValueXInverted.resize(numberPhysicalCells *
+                                                     numberQuadraturePoints *
+                                                     numberDofsPerElement,
+                                                   0.0);
 
-	d_shapeFunctionGradientValueYDevice=d_shapeFunctionGradientValueY;
-	d_shapeFunctionGradientValueYInvertedDevice=d_shapeFunctionGradientValueYInverted;
+      d_shapeFunctionGradientValueY.resize(numberPhysicalCells *
+                                             numberQuadraturePoints *
+                                             numberDofsPerElement,
+                                           0.0);
+      d_shapeFunctionGradientValueYInverted.resize(numberPhysicalCells *
+                                                     numberQuadraturePoints *
+                                                     numberDofsPerElement,
+                                                   0.0);
 
-	d_shapeFunctionGradientValueZDevice=d_shapeFunctionGradientValueZ;
-	d_shapeFunctionGradientValueZInvertedDevice=d_shapeFunctionGradientValueZInverted;
+      d_shapeFunctionGradientValueZ.resize(numberPhysicalCells *
+                                             numberQuadraturePoints *
+                                             numberDofsPerElement,
+                                           0.0);
+      d_shapeFunctionGradientValueZInverted.resize(numberPhysicalCells *
+                                                     numberQuadraturePoints *
+                                                     numberDofsPerElement,
+                                                   0.0);
 
-	//d_cellShapeFunctionGradientIntegralFlattenedDevice=d_cellShapeFunctionGradientIntegralFlattened;
-	d_cellJxWValuesDevice=d_cellJxWValues;
-
-	cudaDeviceSynchronize();
-	MPI_Barrier(MPI_COMM_WORLD);
-	double gpu_time=MPI_Wtime();
-
-	shapeFuncCUDA::computeShapeGradNINJIntegral(d_cublasHandle,
-			numberQuadraturePoints,
-			numberDofsPerElement,
-			numberPhysicalCells,
-			d_shapeFunctionGradientValueXDevice,
-			d_shapeFunctionGradientValueYDevice,
-			d_shapeFunctionGradientValueZDevice,
-			d_cellJxWValuesDevice,
-			d_cellShapeFunctionGradientIntegralFlattenedDevice);
-
-	cudaDeviceSynchronize();
-	MPI_Barrier(MPI_COMM_WORLD);
-	gpu_time = MPI_Wtime() - gpu_time;
-
-	if (this_mpi_process==0 && dftParameters::verbosity>=2)
-		std::cout<<"Time for shapeFuncCUDA::computeShapeGradNINJIntegral: "<<gpu_time<<std::endl;
-
-	if (true)
-	{
-		QGaussLobatto<3>  quadratureGl(C_num1DQuad<C_num1DKerkerPoly<FEOrder>()>());
-		FEValues<3> fe_valuesGl(dftPtr->matrix_free_data.get_dof_handler().get_fe(), quadratureGl, update_values | update_gradients);
-		const unsigned int numberQuadraturePointsGl = quadratureGl.size();
-
-		//
-		//resize data members
-		//
-		std::vector<double> glShapeFunctionValueInverted(numberQuadraturePointsGl*numberDofsPerElement,0.0);
-
-		std::vector<double> glShapeFunctionGradientValueXInverted(numberPhysicalCells*numberQuadraturePointsGl*numberDofsPerElement,0.0);
-
-		std::vector<double> glShapeFunctionGradientValueYInverted(numberPhysicalCells*numberQuadraturePointsGl*numberDofsPerElement,0.0);
-
-		std::vector<double> glShapeFunctionGradientValueZInverted(numberPhysicalCells*numberQuadraturePointsGl*numberDofsPerElement,0.0);
-
-
-		typename dealii::DoFHandler<3>::active_cell_iterator cellPtr=dftPtr->matrix_free_data.get_dof_handler().begin_active();
-		typename dealii::DoFHandler<3>::active_cell_iterator endcPtr = dftPtr->matrix_free_data.get_dof_handler().end();
-
-		unsigned int iElem=0;
-		for(; cellPtr!=endcPtr; ++cellPtr)
-			if(cellPtr->is_locally_owned())
-			{
-				fe_valuesGl.reinit (cellPtr);
-
-
-				for(unsigned int iNode = 0; iNode < numberDofsPerElement; ++iNode)
-					for(unsigned int q_point = 0; q_point < numberQuadraturePointsGl; ++q_point)
-					{
-						const dealii::Tensor<1,3,double> & shape_grad=fe_values.shape_grad(iNode,q_point);
-
-						glShapeFunctionGradientValueXInverted[iElem*numberQuadraturePointsGl*numberDofsPerElement
-							+q_point*numberDofsPerElement+iNode]=shape_grad[0];
-
-						glShapeFunctionGradientValueYInverted[iElem*numberQuadraturePointsGl*numberDofsPerElement
-							+q_point*numberDofsPerElement+iNode]=shape_grad[1];
-
-						glShapeFunctionGradientValueZInverted[iElem*numberQuadraturePointsGl*numberDofsPerElement
-							+q_point*numberDofsPerElement+iNode]=shape_grad[2];
-
-					}
-
-				if(iElem == 0)
-					for(unsigned int iNode = 0; iNode < numberDofsPerElement; ++iNode)
-						for(unsigned int q_point = 0; q_point < numberQuadraturePointsGl; ++q_point)
-						{
-							const double val=fe_valuesGl.shape_value(iNode,q_point);
-							glShapeFunctionValueInverted[q_point*numberDofsPerElement+iNode] = val;
-						}
+      std::vector<double> shapeFunctionValueLpsp(numberQuadraturePointsLpsp *
+                                                   numberDofsPerElement,
+                                                 0.0);
+      std::vector<double> shapeFunctionValueInvertedLpsp(
+        numberQuadraturePointsLpsp * numberDofsPerElement, 0.0);
 
 
-				iElem++;
-			}
 
-		d_glShapeFunctionValueInvertedDevice=glShapeFunctionValueInverted;
+      typename dealii::DoFHandler<3>::active_cell_iterator cellPtr =
+        dftPtr->matrix_free_data
+          .get_dof_handler(dftPtr->d_densityDofHandlerIndex)
+          .begin_active();
+      typename dealii::DoFHandler<3>::active_cell_iterator endcPtr =
+        dftPtr->matrix_free_data
+          .get_dof_handler(dftPtr->d_densityDofHandlerIndex)
+          .end();
 
-		d_glShapeFunctionGradientValueXInvertedDevice=glShapeFunctionGradientValueXInverted;
+      unsigned int iElem = 0;
+      for (; cellPtr != endcPtr; ++cellPtr)
+        if (cellPtr->is_locally_owned())
+          {
+            fe_values.reinit(cellPtr);
 
-		d_glShapeFunctionGradientValueYInvertedDevice=glShapeFunctionGradientValueYInverted;
+            for (unsigned int q_point = 0; q_point < numberQuadraturePoints;
+                 ++q_point)
+              d_cellJxWValues[iElem * numberQuadraturePoints + q_point] =
+                fe_values.JxW(q_point);
 
-		d_glShapeFunctionGradientValueZInvertedDevice=glShapeFunctionGradientValueZInverted;
-	}
+            for (unsigned int iNode = 0; iNode < numberDofsPerElement; ++iNode)
+              for (unsigned int q_point = 0; q_point < numberQuadraturePoints;
+                   ++q_point)
+                {
+                  const dealii::Tensor<1, 3, double> &shape_grad =
+                    fe_values.shape_grad(iNode, q_point);
 
-	if (dftParameters::useHigherQuadNLP)
-	{
-		QGauss<3>  quadratureNLP(C_num1DQuadPSP<FEOrder>());
-		FEValues<3> fe_valuesNLP(dftPtr->matrix_free_data.get_dof_handler().get_fe(), quadratureNLP, update_values);
-		const unsigned int numberQuadraturePointsNLP = quadratureNLP.size();
+                  d_shapeFunctionGradientValueX[iElem * numberDofsPerElement *
+                                                  numberQuadraturePoints +
+                                                iNode * numberQuadraturePoints +
+                                                q_point] = shape_grad[0];
+                  d_shapeFunctionGradientValueXInverted
+                    [iElem * numberQuadraturePoints * numberDofsPerElement +
+                     q_point * numberDofsPerElement + iNode] = shape_grad[0];
 
-		//
-		//resize data members
-		//
-		std::vector<double> nlpShapeFunctionValueInverted(numberQuadraturePointsNLP*numberDofsPerElement,0.0);
+                  d_shapeFunctionGradientValueY[iElem * numberDofsPerElement *
+                                                  numberQuadraturePoints +
+                                                iNode * numberQuadraturePoints +
+                                                q_point] = shape_grad[1];
+                  d_shapeFunctionGradientValueYInverted
+                    [iElem * numberQuadraturePoints * numberDofsPerElement +
+                     q_point * numberDofsPerElement + iNode] = shape_grad[1];
 
-		typename dealii::DoFHandler<3>::active_cell_iterator cellPtr=dftPtr->matrix_free_data.get_dof_handler().begin_active();
-		typename dealii::DoFHandler<3>::active_cell_iterator endcPtr = dftPtr->matrix_free_data.get_dof_handler().end();
+                  d_shapeFunctionGradientValueZ[iElem * numberDofsPerElement *
+                                                  numberQuadraturePoints +
+                                                iNode * numberQuadraturePoints +
+                                                q_point] = shape_grad[2];
+                  d_shapeFunctionGradientValueZInverted
+                    [iElem * numberQuadraturePoints * numberDofsPerElement +
+                     q_point * numberDofsPerElement + iNode] = shape_grad[2];
+                }
+
+            if (iElem == 0)
+              {
+                fe_values_lpsp.reinit(cellPtr);
+
+                for (unsigned int iNode = 0; iNode < numberDofsPerElement;
+                     ++iNode)
+                  for (unsigned int q_point = 0;
+                       q_point < numberQuadraturePoints;
+                       ++q_point)
+                    {
+                      const double val = fe_values.shape_value(iNode, q_point);
+                      d_shapeFunctionValue[numberQuadraturePoints * iNode +
+                                           q_point]       = val;
+                      d_shapeFunctionValueInverted[q_point *
+                                                     numberDofsPerElement +
+                                                   iNode] = val;
+                    }
+
+                for (unsigned int iNode = 0; iNode < numberDofsPerElement;
+                     ++iNode)
+                  for (unsigned int q_point = 0;
+                       q_point < numberQuadraturePointsLpsp;
+                       ++q_point)
+                    {
+                      const double val =
+                        fe_values_lpsp.shape_value(iNode, q_point);
+                      shapeFunctionValueLpsp[numberQuadraturePointsLpsp *
+                                               iNode +
+                                             q_point]       = val;
+                      shapeFunctionValueInvertedLpsp[q_point *
+                                                       numberDofsPerElement +
+                                                     iNode] = val;
+                    }
+              }
+
+            iElem++;
+          }
+
+      d_shapeFunctionValueDevice         = d_shapeFunctionValue;
+      d_shapeFunctionValueInvertedDevice = d_shapeFunctionValueInverted;
+
+      d_shapeFunctionGradientValueXInvertedDevice =
+        d_shapeFunctionGradientValueXInverted;
+      d_shapeFunctionGradientValueYInvertedDevice =
+        d_shapeFunctionGradientValueYInverted;
+      d_shapeFunctionGradientValueZInvertedDevice =
+        d_shapeFunctionGradientValueZInverted;
+
+      if (!dftParameters::gpuMemOptMode)
+        {
+          d_shapeFunctionGradientValueXDevice = d_shapeFunctionGradientValueX;
+          d_shapeFunctionGradientValueYDevice = d_shapeFunctionGradientValueY;
+          d_shapeFunctionGradientValueZDevice = d_shapeFunctionGradientValueZ;
+        }
+
+      d_shapeFunctionValueLpspDevice         = shapeFunctionValueLpsp;
+      d_shapeFunctionValueInvertedLpspDevice = shapeFunctionValueInvertedLpsp;
+
+      // d_cellShapeFunctionGradientIntegralFlattenedDevice=d_cellShapeFunctionGradientIntegralFlattened;
+      d_cellJxWValuesDevice = d_cellJxWValues;
+
+      QGaussLobatto<3> quadratureGl(
+        C_rhoNodalPolyOrder<FEOrder, FEOrderElectro>() + 1);
+      FEValues<3>        fe_valuesGl(dftPtr->matrix_free_data
+                                .get_dof_handler(
+                                  dftPtr->d_densityDofHandlerIndex)
+                                .get_fe(),
+                              quadratureGl,
+                              update_values);
+      const unsigned int numberQuadraturePointsGl = quadratureGl.size();
+
+      //
+      // resize data members
+      //
+      std::vector<double> glShapeFunctionValueInverted(
+        numberQuadraturePointsGl * numberDofsPerElement, 0.0);
+
+      cellPtr = dftPtr->matrix_free_data
+                  .get_dof_handler(dftPtr->d_densityDofHandlerIndex)
+                  .begin_active();
+      fe_valuesGl.reinit(cellPtr);
+
+      for (unsigned int iNode = 0; iNode < numberDofsPerElement; ++iNode)
+        for (unsigned int q_point = 0; q_point < numberQuadraturePointsGl;
+             ++q_point)
+          {
+            const double val = fe_valuesGl.shape_value(iNode, q_point);
+            glShapeFunctionValueInverted[q_point * numberDofsPerElement +
+                                         iNode] = val;
+          }
+
+      d_glShapeFunctionValueInvertedDevice = glShapeFunctionValueInverted;
+
+      // QGauss<3>  quadratureNLP(C_num1DQuadNLPSP<FEOrder>());
+      QIterated<3>       quadratureNLP(QGauss<1>(C_num1DQuadNLPSP<FEOrder>()),
+                                 C_numCopies1DQuadNLPSP());
+      FEValues<3>        fe_valuesNLP(dftPtr->matrix_free_data
+                                 .get_dof_handler(
+                                   dftPtr->d_densityDofHandlerIndex)
+                                 .get_fe(),
+                               quadratureNLP,
+                               update_values | update_gradients |
+                                 update_jacobians | update_inverse_jacobians);
+      const unsigned int numberQuadraturePointsNLP = quadratureNLP.size();
+
+      //
+      // resize data members
+      //
+      std::vector<double> nlpShapeFunctionValueInverted(
+        numberQuadraturePointsNLP * numberDofsPerElement, 0.0);
+      std::vector<double> inverseJacobiansNLP(
+        numberPhysicalCells * numberQuadraturePointsNLP * 3 * 3, 0.0);
+      std::vector<double> shapeFunctionGradientValueNLPInverted(
+        numberQuadraturePointsNLP * numberDofsPerElement * 3, 0.0);
+
+      cellPtr = dftPtr->matrix_free_data
+                  .get_dof_handler(dftPtr->d_densityDofHandlerIndex)
+                  .begin_active();
+      endcPtr = dftPtr->matrix_free_data
+                  .get_dof_handler(dftPtr->d_densityDofHandlerIndex)
+                  .end();
 
 
-		for(; cellPtr!=endcPtr; ++cellPtr)
-			if(cellPtr->is_locally_owned())
-			{ 
-				fe_valuesNLP.reinit (cellPtr);
-				break;
-			}
+      iElem = 0;
+      for (; cellPtr != endcPtr; ++cellPtr)
+        if (cellPtr->is_locally_owned())
+          {
+            fe_valuesNLP.reinit(cellPtr);
+
+            const std::vector<DerivativeForm<1, 3, 3>> &inverseJacobians =
+              fe_valuesNLP.get_inverse_jacobians();
+
+            // dealii returns inverse jacobian tensor in transposed format
+            // J^{-T}
+            for (unsigned int q_point = 0; q_point < numberQuadraturePointsNLP;
+                 ++q_point)
+              for (unsigned int i = 0; i < 3; ++i)
+                for (unsigned int j = 0; j < 3; ++j)
+                  inverseJacobiansNLP[iElem * numberQuadraturePointsNLP * 3 *
+                                        3 +
+                                      q_point * 3 * 3 + j * 3 + i] =
+                    inverseJacobians[q_point][i][j];
 
 
-		for(unsigned int iNode = 0; iNode < numberDofsPerElement; ++iNode)
-			for(unsigned int q_point = 0; q_point < numberQuadraturePointsNLP; ++q_point)
-			{
-				const double val=fe_valuesNLP.shape_value(iNode,q_point);
-				nlpShapeFunctionValueInverted[q_point*numberDofsPerElement+iNode] = val;
-			}
+            if (iElem == 0)
+              {
+                const std::vector<DerivativeForm<1, 3, 3>> &jacobians =
+                  fe_valuesNLP.get_jacobians();
+                for (unsigned int iNode = 0; iNode < numberDofsPerElement;
+                     ++iNode)
+                  for (unsigned int q_point = 0;
+                       q_point < numberQuadraturePointsNLP;
+                       ++q_point)
+                    {
+                      const double val =
+                        fe_valuesNLP.shape_value(iNode, q_point);
+                      nlpShapeFunctionValueInverted[q_point *
+                                                      numberDofsPerElement +
+                                                    iNode] = val;
 
-		d_shapeFunctionValueNLPInvertedDevice=nlpShapeFunctionValueInverted;
-	}
+                      const dealii::Tensor<1, 3, double> &shape_grad_real =
+                        fe_valuesNLP.shape_grad(iNode, q_point);
+
+                      // J^{T}*grad(u_h)
+                      const dealii::Tensor<1, 3, double> &shape_grad_reference =
+                        apply_transformation(jacobians[q_point].transpose(),
+                                             shape_grad_real);
+
+                      shapeFunctionGradientValueNLPInverted
+                        [q_point * numberDofsPerElement * 3 + iNode] =
+                          shape_grad_reference[0];
+                      shapeFunctionGradientValueNLPInverted
+                        [q_point * numberDofsPerElement * 3 +
+                         numberDofsPerElement + iNode] =
+                          shape_grad_reference[1];
+                      shapeFunctionGradientValueNLPInverted
+                        [q_point * numberDofsPerElement * 3 +
+                         numberDofsPerElement * 2 + iNode] =
+                          shape_grad_reference[2];
+                    }
+              }
+
+            iElem++;
+          }
+
+      d_shapeFunctionValueNLPInvertedDevice = nlpShapeFunctionValueInverted;
+      d_shapeFunctionGradientValueNLPInvertedDevice =
+        shapeFunctionGradientValueNLPInverted;
+      d_inverseJacobiansNLPDevice = inverseJacobiansNLP;
+    }
 }

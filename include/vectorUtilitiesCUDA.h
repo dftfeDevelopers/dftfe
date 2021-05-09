@@ -1,6 +1,7 @@
 // ---------------------------------------------------------------------
 //
-// Copyright (c) 2017-2018  The Regents of the University of Michigan and DFT-FE authors.
+// Copyright (c) 2017-2018  The Regents of the University of Michigan and DFT-FE
+// authors.
 //
 // This file is part of the DFT-FE code.
 //
@@ -14,53 +15,59 @@
 // ---------------------------------------------------------------------
 
 #if defined(DFTFE_WITH_GPU)
-#ifndef vectorUtilitiesCUDA_h
-#define vectorUtilitiesCUDA_h
+#  ifndef vectorUtilitiesCUDA_h
+#    define vectorUtilitiesCUDA_h
 
-#include <headers.h>
-#include <thrust/device_vector.h>
+#    include <headers.h>
+#    include <thrust/device_vector.h>
 
 
-namespace dftfe{
+namespace dftfe
+{
+  /**
+   *  @brief Contains generic utils functions
+   *
+   *  @author Sambit Das
+   */
+  namespace vectorToolsCUDA
+  {
+    class cudaThrustVector
+    {
+    public:
+      cudaThrustVector();
 
-	/**
-	 *  @brief Contains generic utils functions
-	 *
-	 *  @author Sambit Das
-	 */
-	namespace vectorToolsCUDA
-	{
-		class cudaThrustVector
-		{
+      void
+      resize(const unsigned int size);
 
-			public:
-				cudaThrustVector();
+      double *
+      begin();
 
-				void resize(const unsigned int size);
+      const double *
+      begin() const;
 
-				double * begin();
+      unsigned int
+      size() const;
 
-				const double * begin() const;
+      double
+      l2_norm() const;
 
-				unsigned int size() const;
+      double
+      l1_norm() const;
 
-				double l2_norm() const;
+    private:
+      thrust::device_vector<double> d_data;
+    };
 
-				double l1_norm() const;
+    void
+    copyHostVecToCUDAVec(const double *     hostVec,
+                         double *           cudaVector,
+                         const unsigned int size);
 
-			private:
-				thrust::device_vector<double> d_data; 
-
-		};
-
-		void copyHostVecToCUDAVec(const double* hostVec,
-				double* cudaVector,
-				const unsigned int size);
-
-		void copyCUDAVecToHostVec(const double* cudaVector,
-				double* hostVec,
-				const unsigned int size);
-	}
-}
-#endif
+    void
+    copyCUDAVecToHostVec(const double *     cudaVector,
+                         double *           hostVec,
+                         const unsigned int size);
+  } // namespace vectorToolsCUDA
+} // namespace dftfe
+#  endif
 #endif

@@ -1,6 +1,7 @@
 // ---------------------------------------------------------------------
 //
-// Copyright (c) 2017-2018  The Regents of the University of Michigan and DFT-FE authors.
+// Copyright (c) 2017-2018  The Regents of the University of Michigan and DFT-FE
+// authors.
 //
 // This file is part of the DFT-FE code.
 //
@@ -15,89 +16,92 @@
 //
 
 
-#include <vector>
-#include <string>
-#include <string.h>
-#include <stdio.h>
-#include <iostream>
-#include <cstring>
-#include <sstream>
-#include <fstream>
-#include <tuple>
-#include <stack>
 #include <libxml/parser.h>
 #include <libxml/tree.h>
+#include <stdio.h>
+#include <string.h>
+
+#include <cstring>
 #include <fstream>
+#include <iostream>
+#include <sstream>
+#include <stack>
+#include <string>
+#include <tuple>
+#include <vector>
 
 #ifndef xmlTodftfeParser_h
-#define xmlTodftfeParser_h
+#  define xmlTodftfeParser_h
 
-namespace dftfe{
-	//
-	//Declare pseudoUtils function
-	//
+namespace dftfe
+{
+  //
+  // Declare pseudoUtils function
+  //
 
 
-	namespace pseudoUtils
-	{
+  namespace pseudoUtils
+  {
+    /**
+     *  @brief converts pseudopotential file from xml format to dftfe format
+     *
+     *  This class parses the xmlfile and identifies appropriate tags and
+     * converts into file formats which can be read by dftfe code
+     *
+     *  @author Shukan Parekh, Phani Motamarri
+     */
+    class xmlTodftfeParser
+    {
+    private:
+      xmlDoc *                 doc;
+      xmlNode *                root;
+      double                   mesh_spacing;
+      std::vector<std::string> local_potential;
+      std::vector<std::string> density;
+      std::vector<std::string> coreDensity;
+      std::vector<std::string> mesh;
+      std::vector<std::tuple<size_t, size_t, std::vector<std::string>>>
+                                                              projectors;
+      std::vector<std::tuple<size_t, size_t, size_t, double>> d_ij;
 
-		/** 
-		 *  @brief converts pseudopotential file from xml format to dftfe format
-		 *
-		 *  This class parses the xmlfile and identifies appropriate tags and converts
-		 *  into file formats which can be read by dftfe code
-		 *
-		 *  @author Shukan Parekh, Phani Motamarri
-		 */
-		class xmlTodftfeParser{
+      std::ofstream loc_pot;
+      std::ofstream dense;
+      std::ofstream denom;
+      std::ofstream l1;
+      std::ofstream l2;
+      std::ofstream l3;
+      std::ofstream ad_file;
+      std::ofstream pseudo;
 
-			private:
-				xmlDoc *doc;
-				xmlNode *root;
-				double mesh_spacing;
-				std::vector<std::string> local_potential;
-				std::vector<std::string> density;
-				std::vector<std::string> mesh;
-				std::vector<std::tuple<size_t, size_t, std::vector<std::string>>> projectors;
-				std::vector<std::tuple<size_t, size_t, size_t, double>> d_ij;
+    public:
+      /**
+       * class constructor
+       */
+      xmlTodftfeParser();
 
-				std::ofstream loc_pot;
-				std::ofstream dense;
-				std::ofstream denom;
-				std::ofstream l1;
-				std::ofstream l2;
-				std::ofstream l3;
-				std::ofstream ad_file;
-				std::ofstream pseudo;
+      /**
+       * class destructor
+       */
+      ~xmlTodftfeParser();
 
-			public:
-				/**
-				 * class constructor
-				 */
-				xmlTodftfeParser();
+      /**
+       * @brief parse a given xml pseudopotential file
+       *
+       * @param filePath location of the xml file
+       */
+      bool
+      parseFile(const std::string &filePath);
 
-				/**
-				 * class destructor
-				 */
-				~xmlTodftfeParser();
+      /**
+       * @brief output the parsed xml pseudopotential file into dat files required by dftfe code
+       *
+       * @param filePath location to write the data
+       */
+      bool
+      outputData(const std::string &filePath);
+    };
 
-				/**
-				 * @brief parse a given xml pseudopotential file 
-				 * 
-				 * @param filePath location of the xml file
-				 */
-				bool parseFile(const std::string & filePath);
+  } // namespace pseudoUtils
 
-				/**
-				 * @brief output the parsed xml pseudopotential file into dat files required by dftfe code
-				 * 
-				 * @param filePath location to write the data
-				 */
-				bool outputData(const std::string & filePath);
-
-		};
-
-	}
-
-}
+} // namespace dftfe
 #endif /* parser_h */

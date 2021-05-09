@@ -6,7 +6,8 @@
 //
 // -------------------------------------------------------------------------------------
 //
-// Copyright (c) 2017 The Regents of the University of Michigan and DFT-FE authors.
+// Copyright (c) 2017 The Regents of the University of Michigan and DFT-FE
+// authors.
 //
 // This file is part of the DFT-FE code.
 //
@@ -26,25 +27,19 @@
 //
 // Constructor.
 //
-namespace dftfe{
-	eigenSolverClass::eigenSolverClass()
-	{
+namespace dftfe
+{
+  eigenSolverClass::eigenSolverClass()
+  {}
 
-	}
-
-	//
-	// Destructor.
-	//
-	eigenSolverClass::~eigenSolverClass()
-	{
-
-		//
-		//
-		//
-		return;
-
-	}
-}
-
-
-
+  //
+  // Destructor.
+  //
+  eigenSolverClass::~eigenSolverClass()
+  {
+    //
+    //
+    //
+    return;
+  }
+} // namespace dftfe

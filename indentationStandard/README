@@ -1,0 +1,3 @@
+Follow follow steps to auto indent entire repository. From the top directory run:
+1) ./indentationStandard/download_clang_format
+2) ./indentationStandard/indent-all
