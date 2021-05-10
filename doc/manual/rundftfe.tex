@@ -1,8 +1,4 @@
-After compiling \dftfe{} as described in Section~\ref{sec:installation}, we have now two executables --- \verb|/build/release/real/dftfe| and \verb|/build/release/complex/dftfe|. The \verb|/build/release/real/dftfe| executable, which uses real data-structures is sufficient for fully non-periodic problems. The executable can also be used for periodic and semi-periodic problems involving a Gamma point calculation. On the other hand the \verb|/build/release/complex/dftfe| executable, which uses complex data-structures is required for periodic and semi-periodic problems with multiple k point sampling for Brillouin zone integration. These executables are to be used as follows-- for a serial run use
-\begin{verbatim}
-  ./dftfe parameterFile.prm
-\end{verbatim}
-or, for a parallel run use
+After compiling \dftfe{} as described in Section~\ref{sec:installation}, we have now two executables --- \verb|$dftfe_build_dir/release/real/dftfe| and \verb|$dftfe_build_dir/release/complex/dftfe|. The \verb|$dftfe_build_dir/release/real/dftfe| executable, which uses real data-structures is sufficient for fully non-periodic problems. The executable can also be used for periodic and semi-periodic problems involving a Gamma point calculation. On the other hand the \verb|$dftfe_build_dir/release/complex/dftfe| executable, which uses complex data-structures is required for periodic and semi-periodic problems with multiple k point sampling for Brillouin zone integration. These executables are to be used for a parallel run as follows:
 \begin{verbatim}
   mpirun -n N ./dftfe parameterFile.prm
 \end{verbatim}
