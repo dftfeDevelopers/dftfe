@@ -79,7 +79,7 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::computeHamiltonianMatrix(
                    C_num1DQuadLPSP<FEOrder>() * C_numCopies1DQuadLPSP(),
                    1,
                    double>
-	           fe_eval(dftPtr->matrix_free_data, 0, d_externalPotCorrQuadratureId);1
+	           fe_eval(dftPtr->matrix_free_data, 0, d_externalPotCorrQuadratureId);
       
       const unsigned int numberQuadraturePoints = fe_eval.n_q_points;
       
@@ -119,10 +119,10 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::computeHamiltonianMatrix(
 	      flag = 0;
 	      for(unsigned int iNode = d_blockiNodeIndex[numberEntriesEachBlock*blockCount]; iNode < numberDofsPerElement; ++iNode)
 		{
-                  double shapeI = d_shapeFunctionDataLpspQuadData[numberDofsPerElement*q_point + iNode];
+                  double shapeI = d_shapeFunctionLpspQuadData[numberDofsPerElement*q_point + iNode];
 		  for(unsigned int jNode = d_blockjNodeIndex[numberEntriesEachBlock*blockCount+indexCount]; jNode < numberDofsPerElement; ++jNode)
 		    {
-		      double shapeJ = d_shapeFunctionDataLpspQuadData[numberDofsPerElement*q_point + jNode];
+		      double shapeJ = d_shapeFunctionLpspQuadData[numberDofsPerElement*q_point + jNode];
 		      NiNjLpspQuad_currentBlock[numberEntriesEachBlock*q_point + indexCount]= shapeI*shapeJ;
 		      indexCount += 1;
 		      if(indexCount%numberEntriesEachBlock == 0)
