@@ -62,7 +62,6 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::computeHamiltonianMatrix(
   unsigned int indexCount = 0;
   unsigned int flag = 0;
 
-  std::vector<double> cellHamiltonianMatrixExternalPotCorr(totalLocallyOwnedCells*sizeNiNj,0.0);
   if ((dftParameters::isPseudopotential ||
        dftParameters::smearedNuclearCharges) &&
       !d_isStiffnessMatrixExternalPotCorrComputed)
@@ -83,8 +82,8 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::computeHamiltonianMatrix(
       
       const unsigned int numberQuadraturePoints = fe_eval.n_q_points;
       
-      //d_cellHamiltonianMatrixExternalPotCorr.clear();
-      //d_cellHamiltonianMatrixExternalPotCorr.resize(sizeNiNj*totalLocallyOwnedCells);
+      d_cellHamiltonianMatrixExternalPotCorr.clear();
+      d_cellHamiltonianMatrixExternalPotCorr.resize(sizeNiNj*totalLocallyOwnedCells,0.0);
 
     
       std::vector<double> NiNjLpspQuad_currentBlock(numberEntriesEachBlock*numberQuadraturePoints,0.0);
@@ -148,7 +147,7 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::computeHamiltonianMatrix(
 				 &NiNjLpspQuad_currentBlock[0],
 				 &numberEntriesEachBlock,
 				 &beta,
-				 &cellHamiltonianMatrixExternalPotCorr[totalLocallyOwnedCells*numberEntriesEachBlock*blockCount],
+				 &d_cellHamiltonianMatrixExternalPotCorr[totalLocallyOwnedCells*numberEntriesEachBlock*blockCount],
 				 &totalLocallyOwnedCells);
 		      
 			  blockCount += 1;
@@ -448,10 +447,10 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::computeHamiltonianMatrix(
 		     ++jNode)
 		  {
 #ifdef USE_COMPLEX
-		    d_cellHamiltonianMatrix[kpointSpinIndex][iElem][numberDofsPerElement*iNode + jNode] += dataTypes::number(cellHamiltonianMatrixExternalPotCorr[totalLocallyOwnedCells*count + iElem],0.0);
+		    d_cellHamiltonianMatrix[kpointSpinIndex][iElem][numberDofsPerElement*iNode + jNode] += dataTypes::number(d_cellHamiltonianMatrixExternalPotCorr[totalLocallyOwnedCells*count + iElem],0.0);
 		  
 #else
-		    d_cellHamiltonianMatrix[kpointSpinIndex][iElem][numberDofsPerElement*iNode + jNode] += cellHamiltonianMatrixExternalPotCorr[totalLocallyOwnedCells*count + iElem];
+		    d_cellHamiltonianMatrix[kpointSpinIndex][iElem][numberDofsPerElement*iNode + jNode] += d_cellHamiltonianMatrixExternalPotCorr[totalLocallyOwnedCells*count + iElem];
 		  
 		  
 #endif

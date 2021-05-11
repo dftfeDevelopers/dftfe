@@ -377,7 +377,7 @@ node is stored
 
     std::vector<std::vector<dataTypes::number>> d_cellMassMatrix;
     std::vector<double> d_cellHamiltonianMatrixExternalPotCorr;
-    //std::vector<std::vector<double>> d_cellHamiltonianMatrixExternalPotCorr;
+    std::vector<std::vector<double>> d_cellHamiltonianMatrixExternalPotCorr;
 
     /**
      * @brief implementation of matrix-vector product using cell-level stiffness matrices.
