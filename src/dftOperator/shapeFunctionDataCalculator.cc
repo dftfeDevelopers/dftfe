@@ -58,7 +58,7 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::
   // resize data members
   //
   unsigned int sizeNiNj = numberDofsPerElement*(numberDofsPerElement + 1)/2;
-  d_NiNjLpspQuad.resize(sizeNiNj*numberQuadraturePointsLpsp,0.0);
+  //d_NiNjLpspQuad.resize(sizeNiNj*numberQuadraturePointsLpsp,0.0);
   d_shapeFunctionData.resize(numberDofsPerElement*numberQuadraturePoints,0.0);
   d_cellShapeFunctionGradientIntegral.resize(numberPhysicalCells*sizeNiNj);
 
@@ -227,15 +227,9 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::
 
               for(unsigned int q_point = 0; q_point < numberQuadraturePointsLpsp; ++q_point)
 		{
-		  unsigned int count = 0;
 		  for(unsigned int iNode = 0; iNode < numberDofsPerElement; ++iNode)
 		    {
-                      for(unsigned int jNode = iNode; jNode < numberDofsPerElement; ++jNode)
-			{
-                          d_NiNjLpspQuad[sizeNiNj*q_point + count] = fe_values_lpsp.shape_value(iNode,q_point)*fe_values_lpsp.shape_value(jNode,q_point);
-			  count+=1;
-
-			}
+		      d_shapeFunctionLpspQuadData[numberDofsPerElement*q_point + iNode] = fe_values_lpsp.shape_value(iNode,q_point);
 		    }
 		}
 

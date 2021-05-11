@@ -55,6 +55,12 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::computeHamiltonianMatrix(
   const unsigned int numberNodesPerElementSquare = d_numberNodesPerElement*d_numberNodesPerElement;
   const unsigned int sizeNiNj = d_numberNodesPerElement*(d_numberNodesPerElement + 1)/2;
   const unsigned int fullSizeNiNj = d_numberNodesPerElement*d_numberNodesPerElement;
+  unsigned int numBlocks = FEOrder + 1;
+  unsigned int numberEntriesEachBlock = sizeNiNj/numBlocks;
+  unsigned int count = 0;
+  unsigned int blockCount = 0;
+  unsigned int indexCount = 0;
+  unsigned int flag = 0;
 
   if ((dftParameters::isPseudopotential ||
        dftParameters::smearedNuclearCharges) &&
@@ -65,18 +71,23 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::computeHamiltonianMatrix(
           .get_dof_handler(dftPtr->d_densityDofHandlerIndex)
           .get_fe()
           .dofs_per_cell;
-      d_cellHamiltonianMatrixExternalPotCorr.clear();
-      d_cellHamiltonianMatrixExternalPotCorr.resize(sizeNiNj*totalLocallyOwnedCells);
 
-      FEEvaluation<3,
+
+       FEEvaluation<3,
                    FEOrder,
                    C_num1DQuadLPSP<FEOrder>() * C_numCopies1DQuadLPSP(),
                    1,
                    double>
-	           fe_eval(dftPtr->matrix_free_data, 0, d_externalPotCorrQuadratureId);
+	           fe_eval(dftPtr->matrix_free_data, 0, d_externalPotCorrQuadratureId);1
       
       const unsigned int numberQuadraturePoints = fe_eval.n_q_points;
-      typename dealii::DoFHandler<3>::active_cell_iterator cellPtr;
+      
+      //d_cellHamiltonianMatrixExternalPotCorr.clear();
+      //d_cellHamiltonianMatrixExternalPotCorr.resize(sizeNiNj*totalLocallyOwnedCells);
+
+      std::vector<double> cellHamiltonianMatrixExternalPotCorr(totalLocallyOwnedCells*sizeNiNj,0.0);
+      std::vector<double> NiNjLpspQuad_currentBlock(numberEntriesEachBlock*numberQuadraturePoints,0.0);
+        
 
       AssertThrow(
         dftPtr->matrix_free_data.get_quadrature(d_externalPotCorrQuadratureId)
@@ -84,7 +95,7 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::computeHamiltonianMatrix(
         dealii::ExcMessage(
           "DFT-FE Error: mismatch in quadrature rule usage in computeHamiltonianMatrix."));
 
-      dgemm_(&transA,
+      /*dgemm_(&transA,
 	     &transB,
 	     &sizeNiNj,//M
 	     &totalLocallyOwnedCells,//N
@@ -96,7 +107,60 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::computeHamiltonianMatrix(
 	     &numberQuadraturePoints,
 	     &beta,
 	     &d_cellHamiltonianMatrixExternalPotCorr[0],
-	     &sizeNiNj);
+	     &sizeNiNj);*/
+
+      
+      
+      while(blockCount < numBlocks)
+	{
+	  for(unsigned int q_point = 0; q_point < numberQuadraturePoints; ++q_point)
+	    {
+	      flag = 0;
+	      for(unsigned int iNode = d_blockiNodeIndex[numberEntriesEachBlock*blockCount]; iNode < numberDofsPerElement; ++iNode)
+		{
+                  double shapeI = d_shapeFunctionDataLpspQuadData[numberDofsPerElement*q_point + iNode];
+		  for(unsigned int jNode = d_blockjNodeIndex[numberEntriesEachBlock*blockCount+indexCount]; jNode < numberDofsPerElement; ++jNode)
+		    {
+		      double shapeJ = d_shapeFunctionDataLpspQuadData[numberDofsPerElement*q_point + jNode];
+		      NiNjLpspQuad_currentBlock[numberEntriesEachBlock*q_point + indexCount]= shapeI*shapeJ;
+		      indexCount += 1;
+		      if(indexCount%numberEntriesEachBlock == 0)
+			{
+			  flag = 1;
+			  indexCount = 0;
+			  break;
+			}
+		    }//jNode
+
+		  if(flag == 1)
+		    {
+		      if(q_point == (numberQuadraturePoints - 1))
+			{
+			  dgemm_(&transA1,
+				 &transB1,
+				 &totalLocallyOwnedCells,//M
+				 &numberEntriesEachBlock,//N
+				 &numberQuadraturePoints,//K
+				 &alpha,
+				 &d_vEffExternalPotCorrJxW[0],
+				 &totalLocallyOwnedCells,
+				 &NiNjLpspQuad_currentBlock[0],
+				 &numberEntriesEachBlock,
+				 &beta,
+				 &cellHamiltonianMatrixExternalPotCorr[totalLocallyOwnedCells*numberEntriesEachBlock*blockCount],
+				 &totalLocallyOwnedCells);
+		      
+			  blockCount += 1;
+
+			}
+		      break;
+		    }
+
+		}
+	      
+
+	    }
+      	}
 
       d_isStiffnessMatrixExternalPotCorrComputed = true;
       
@@ -136,12 +200,10 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::computeHamiltonianMatrix(
   //
   //create temp storage for stiffness matrix across all cells
   //
-  unsigned int numBlocks = FEOrder + 1;
-  unsigned int numberEntriesEachBlock = sizeNiNj/numBlocks;
-  unsigned int count = 0;
-  unsigned int blockCount = 0;
-  unsigned int indexCount = 0;
-  unsigned int flag = 0;
+  count = 0;
+  blockCount = 0;
+  indexCount = 0;
+  flag = 0;
   
   std::vector<double> cellHamiltonianMatrix(totalLocallyOwnedCells*sizeNiNj,0.0);
   std::vector<double> NiNj_currentBlock(numberEntriesEachBlock*numberQuadraturePoints,0.0);
@@ -378,23 +440,23 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::computeHamiltonianMatrix(
 
           if (dftParameters::isPseudopotential ||
               dftParameters::smearedNuclearCharges)
-{
-            unsigned int count = 0;
-            for (unsigned int iNode = 0; iNode < numberDofsPerElement; ++iNode)
-              for (unsigned int jNode = iNode; jNode < numberDofsPerElement;
-                   ++jNode)
-                {
+	    {
+	      unsigned int count = 0;
+	      for (unsigned int iNode = 0; iNode < numberDofsPerElement; ++iNode)
+		for (unsigned int jNode = iNode; jNode < numberDofsPerElement;
+		     ++jNode)
+		  {
 #ifdef USE_COMPLEX
-		  d_cellHamiltonianMatrix[kpointSpinIndex][iElem][numberDofsPerElement*iNode + jNode]+=dataTypes::number(d_cellHamiltonianMatrixExternalPotCorr[sizeNiNj*iElem + count],0.0);
+		    d_cellHamiltonianMatrix[kpointSpinIndex][iElem][numberDofsPerElement*iNode + jNode] += dataTypes::number(cellHamiltonianMatrixExternalPotCorr[totalLocallyOwnedCells*count + iElem],0.0);
 		  
 #else
-                 d_cellHamiltonianMatrix[kpointSpinIndex][iElem][numberDofsPerElement*iNode + jNode] += d_cellHamiltonianMatrixExternalPotCorr[sizeNiNj*iElem + count];
+		    d_cellHamiltonianMatrix[kpointSpinIndex][iElem][numberDofsPerElement*iNode + jNode] += cellHamiltonianMatrixExternalPotCorr[totalLocallyOwnedCells*count + iElem];
 		  
 		  
 #endif
-                 count += 1;
-                }
-}
+		    count += 1;
+		  }
+	    }
 
 #ifdef USE_COMPLEX
           for (unsigned int iNode = 0; iNode < numberDofsPerElement; ++iNode)

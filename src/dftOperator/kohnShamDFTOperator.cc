@@ -1854,40 +1854,12 @@ namespace dftfe
 	    const std::vector<double> & temp = externalPotCorrValues.find(cellPtr->id())->second;
 	    for(unsigned int q = 0; q < numberQuadraturePoints; ++q)
 	      {
-		d_vEffExternalPotCorrJxW[numberQuadraturePoints*iElem + q] = temp[q]*feValues.JxW(q);
+		d_vEffExternalPotCorrJxW[totalLocallyOwnedCells*q + iElem] = temp[q]*feValues.JxW(q);
 	      }
 	    iElem++;
 	  }
       }
-
-    
-    
-    /*d_vEffExternalPotCorr.reinit(n_cells, numberQuadraturePoints);
-    typename dealii::DoFHandler<3>::active_cell_iterator cellPtr;
-
-    //
-    // loop over cell block
-    //
-    for (unsigned int cell = 0; cell < n_cells; ++cell)
-      {
-        const unsigned int n_sub_cells =
-          dftPtr->matrix_free_data.n_components_filled(cell);
-        dealii::AlignedVector<VectorizedArray<double>> tempVec(
-          numberQuadraturePoints, make_vectorized_array(0.0));
-        for (unsigned int v = 0; v < n_sub_cells; ++v)
-          {
-            cellPtr = dftPtr->matrix_free_data.get_cell_iterator(cell, v);
-            const std::vector<double> &temp =
-              externalPotCorrValues.find(cellPtr->id())->second;
-            for (unsigned int q = 0; q < numberQuadraturePoints; ++q)
-              tempVec[q][v] = temp[q];
-          }
-
-        for (unsigned int q = 0; q < numberQuadraturePoints; ++q)
-          {
-            d_vEffExternalPotCorr(cell, q) = tempVec[q];
-          }
-	  }*/
+  
   }
 
 #include "inst.cc"
