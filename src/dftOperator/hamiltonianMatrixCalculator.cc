@@ -62,6 +62,7 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::computeHamiltonianMatrix(
   unsigned int indexCount = 0;
   unsigned int flag = 0;
 
+  std::vector<double> cellHamiltonianMatrixExternalPotCorr(totalLocallyOwnedCells*sizeNiNj,0.0);
   if ((dftParameters::isPseudopotential ||
        dftParameters::smearedNuclearCharges) &&
       !d_isStiffnessMatrixExternalPotCorrComputed)
@@ -85,7 +86,7 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::computeHamiltonianMatrix(
       //d_cellHamiltonianMatrixExternalPotCorr.clear();
       //d_cellHamiltonianMatrixExternalPotCorr.resize(sizeNiNj*totalLocallyOwnedCells);
 
-      std::vector<double> cellHamiltonianMatrixExternalPotCorr(totalLocallyOwnedCells*sizeNiNj,0.0);
+    
       std::vector<double> NiNjLpspQuad_currentBlock(numberEntriesEachBlock*numberQuadraturePoints,0.0);
         
 

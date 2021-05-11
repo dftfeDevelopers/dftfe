@@ -469,13 +469,13 @@ node is stored
     std::vector<double> d_blockiNodeIndex;
     std::vector<double> d_blockjNodeIndex;
     std::vector<double> d_shapeFunctionData;
+    std::vector<double> d_shapeFunctionLpspQuadData;
     std::vector<double> d_shapeFunctionGradientValueRefX;
     std::vector<double> d_shapeFunctionGradientValueRefY;
     std::vector<double> d_shapeFunctionGradientValueRefZ;
 
     /// storage for shapefunctions
     std::vector<double> d_shapeFunctionValueLpspQuad;
-    std::vector<double> d_NiNjLpspQuad;
     std::vector<double> d_NiNjIntegral;
     
 
