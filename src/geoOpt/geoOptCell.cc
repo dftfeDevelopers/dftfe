@@ -77,35 +77,35 @@ namespace dftfe
         d_relaxationFlags[0] = 1; // epsilon_11
       }
     else if (dftParameters::cellConstraintType ==
-             4) // (relax only cell component v2_x)
+             4) // (relax only cell component v2_y)
       {
         d_relaxationFlags[3] = 1; // epsilon_22
       }
     else if (dftParameters::cellConstraintType ==
-             5) // (relax only cell component v3_x)
+             5) // (relax only cell component v3_z)
       {
         d_relaxationFlags[5] = 1; // epsilon_33
       }
     else if (dftParameters::cellConstraintType ==
-             6) // (relax only cell components v2_x and v3_x)
+             6) // (relax only cell components v2_y and v3_z)
       {
         d_relaxationFlags[3] = 1; // epsilon_22
         d_relaxationFlags[5] = 1; // epsilon_33
       }
     else if (dftParameters::cellConstraintType ==
-             7) // (relax only cell components v1_x and v3_x)
+             7) // (relax only cell components v1_x and v3_z)
       {
         d_relaxationFlags[0] = 1; // epsilon_11
         d_relaxationFlags[5] = 1; // epsilon_33
       }
     else if (dftParameters::cellConstraintType ==
-             8) // (relax only cell components v1x and v2_x)
+             8) // (relax only cell components v1_x and v2_y)
       {
         d_relaxationFlags[0] = 1; // epsilon_11
         d_relaxationFlags[3] = 1; // epsilon_22
       }
     else if (dftParameters::cellConstraintType ==
-             9) //(only volume optimization relax v1_x, v2_x and v3_x)
+             9) //(relax v1_x, v2_y and v3_z)
       {
         d_relaxationFlags[0] = 1; // epsilon_11
         d_relaxationFlags[3] = 1; // epsilon_22
