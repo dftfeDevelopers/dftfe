@@ -95,21 +95,6 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::computeHamiltonianMatrix(
         dealii::ExcMessage(
           "DFT-FE Error: mismatch in quadrature rule usage in computeHamiltonianMatrix."));
 
-      /*dgemm_(&transA,
-	     &transB,
-	     &sizeNiNj,//M
-	     &totalLocallyOwnedCells,//N
-	     &numberQuadraturePoints,//K
-	     &alpha,
-	     &d_NiNjLpspQuad[0],
-	     &sizeNiNj,
-	     &d_vEffExternalPotCorrJxW[0],
-	     &numberQuadraturePoints,
-	     &beta,
-	     &d_cellHamiltonianMatrixExternalPotCorr[0],
-	     &sizeNiNj);*/
-
-      
       
       while(blockCount < numBlocks)
 	{
@@ -163,7 +148,8 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::computeHamiltonianMatrix(
       	}
 
       d_isStiffnessMatrixExternalPotCorrComputed = true;
-      
+      NiNjLpspQuad_currentBlock.clear();
+      std::vector<double>().swap(NiNjLpspQuad_currentBlock); 
     }
 
   
@@ -179,22 +165,10 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::computeHamiltonianMatrix(
   const Quadrature<3> &quadrature =
     dftPtr->matrix_free_data.get_quadrature(dftPtr->d_densityQuadratureId);
   
-  FEEvaluation<3,
-               FEOrder,
-               C_num1DQuad<C_rhoNodalPolyOrder<FEOrder, FEOrderElectro>()>(),
-               1,
-               double>
-    fe_eval(dftPtr->matrix_free_data, 0, 0);
-  
-  FEValues<3> fe_values(dftPtr->matrix_free_data.get_dof_handler(dftPtr->d_densityDofHandlerIndex).get_fe(),
-                        quadrature,
-                        update_gradients);
-  
   const unsigned int numberDofsPerElement =
     dftPtr->matrix_free_data.get_dof_handler(dftPtr->d_densityDofHandlerIndex).get_fe().dofs_per_cell;
   
   const unsigned int numberQuadraturePoints = quadrature.size();
-  const unsigned int numberQuadraturePointsTimesThree = 3*numberQuadraturePoints;
   const unsigned int numberQuadraturePointsTimesNine = 9*numberQuadraturePoints;
 
   //
@@ -255,7 +229,8 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::computeHamiltonianMatrix(
     }
  }
      
-
+ NiNj_currentBlock.clear();
+ std::vector<double>().swap(NiNj_currentBlock);
  
 
 
@@ -314,7 +289,10 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::computeHamiltonianMatrix(
 		 }//iNode
 	     }
 	}
-      
+  
+    gradNiNjPlusgradNjNi_currentBlock.clear();
+    std::vector<double>().swap(gradNiNjPlusgradNjNi_currentBlock);
+    
     }
   
   typename dealii::DoFHandler<3>::active_cell_iterator cellPtr;
@@ -395,6 +373,8 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::computeHamiltonianMatrix(
 	    }//iNode
 	}
     }
+  kPointTimesGradNiNj_currentBlock.clear();
+  std::vector<double>().swap(kPointTimesGradNiNj_currentBlock);
 #endif
 
   //
@@ -404,7 +384,6 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::computeHamiltonianMatrix(
   unsigned int iElem = 0;
   for (unsigned int iMacroCell = 0; iMacroCell < numberMacroCells; ++iMacroCell)
     {
-      //fe_eval.reinit(iMacroCell);
       const unsigned int n_sub_cells =
         dftPtr->matrix_free_data.n_components_filled(iMacroCell);
 
