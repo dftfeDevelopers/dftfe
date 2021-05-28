@@ -155,7 +155,11 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::
             } // i node loop
 
 
-#ifdef USE_COMPLEX	  
+#ifdef USE_COMPLEX
+          //
+          //compute J^{-1} times det J times weights. Note J^{-1} obtained from dealii is actually J^{-T}
+          //so accordingly loop indices are changes
+          //
 	  for(unsigned int q = 0; q < numberQuadraturePoints; ++q)
 	    {
 	      unsigned int count = 0;
@@ -163,7 +167,7 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::
 		{
 		  for(unsigned int jDim = 0; jDim < 3; ++jDim)
 		    {
-		      d_invJacJxW[numberPhysicalCells*(9*q+count) + iElemCount] = inverseJacobians[q][iDim][jDim]*fe_values.JxW(q);
+		      d_invJacJxW[numberPhysicalCells*(9*q+count) + iElemCount] = inverseJacobians[q][jDim][iDim]*fe_values.JxW(q);
 		      count += 1;
 		    }
 		   
