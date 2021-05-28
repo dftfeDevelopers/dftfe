@@ -170,7 +170,7 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::computeHamiltonianMatrix(
   
   const unsigned int numberQuadraturePoints = quadrature.size();
   const unsigned int numberQuadraturePointsTimesNine = 9*numberQuadraturePoints;
-
+  const unsigned int numberQuadraturePointsTimesThree = 3*numberQuadraturePoints;
   //
   //create temp storage for stiffness matrix across all cells
   //
