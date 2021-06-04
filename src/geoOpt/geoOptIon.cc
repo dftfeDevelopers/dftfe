@@ -239,7 +239,8 @@ namespace dftfe
                   pcout << (unsigned int)dftPtr->atomLocationsFractional[i][0]
                         << " "
                         << (unsigned int)dftPtr->atomLocationsFractional[i][1]
-                        << " " << dftPtr->atomLocationsFractional[i][3] << " "
+                        << " " << dftPtr->atomLocationsFractional[i][2] << " "
+                        << dftPtr->atomLocationsFractional[i][3] << " "
                         << dftPtr->atomLocationsFractional[i][4] << "\n";
                 pcout
                   << "-----------------------------------------------------------------------------------------"
