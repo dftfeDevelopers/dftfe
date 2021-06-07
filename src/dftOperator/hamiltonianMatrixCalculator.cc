@@ -317,7 +317,7 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::computeHamiltonianMatrix(
   blockCount = 0;
   indexCount = 0;
   unsigned int dimCount = 0;
-  while(blockCount < numBlocks)
+  /*while(blockCount < numBlocks)
     {
       for(unsigned int q_point = 0; q_point < numberQuadraturePoints; ++q_point)
 	{
@@ -372,7 +372,59 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::computeHamiltonianMatrix(
 		}
 	    }//iNode
 	}
-    }
+    }*/
+  while(blockCount < numBlocks)
+    {
+      //for(unsigned int q_point = 0; q_point < numberQuadraturePoints; ++q_point)
+      //{
+      flag = 0;
+      for(unsigned int iNode = d_blockiNodeIndex[numberEntriesEachBlock*blockCount]; iNode < numberDofsPerElement; ++iNode)
+	{
+	  for(unsigned int jNode = d_blockjNodeIndex[numberEntriesEachBlock*blockCount+indexCount]; jNode < numberDofsPerElement; ++jNode)
+	    {
+	      dimCount = 0;
+	      for(unsigned int q_point = 0; q_point < numberQuadraturePoints; ++q_point)
+		{
+                   shapeGradRefINode[0] = d_shapeFunctionGradientValueRefX[numberDofsPerElement*q_point + iNode];
+		   shapeGradRefINode[1] = d_shapeFunctionGradientValueRefY[numberDofsPerElement*q_point + iNode];
+		   shapeGradRefINode[2] = d_shapeFunctionGradientValueRefZ[numberDofsPerElement*q_point + iNode];
+		   double shapeJ = d_shapeFunctionData[numberDofsPerElement*q_point + jNode];
+		  
+		  for(unsigned int iDim = 0; iDim < 3; ++iDim)
+		    {
+		      for(unsigned int jDim = 0; jDim < 3; ++jDim)
+			{
+			  kPointTimesGradNiNj_currentBlock[9*numberQuadraturePoints*indexCount + dimCount] = -kPointCoors[iDim]*shapeGradRefINode[jDim]*shapeJ;
+			  dimCount += 1;
+			}
+		    }
+		}
+              indexCount += 1;
+	      if(indexCount%numberEntriesEachBlock == 0)
+		{
+		  	
+		  //dgemm
+		  dgemm_(&transA1,
+			 &transB,
+			 &totalLocallyOwnedCells,//M
+			 &numberEntriesEachBlock,//N
+			 &numberQuadraturePointsTimesNine,//K
+			 &alpha,
+			 &d_invJacJxW[0],
+			 &totalLocallyOwnedCells,
+			 &kPointTimesGradNiNj_currentBlock[0],
+			 &numberQuadraturePointsTimesNine,
+			 &beta,
+			 &elementHamiltonianMatrixImag[totalLocallyOwnedCells*numberEntriesEachBlock*blockCount],
+			 &totalLocallyOwnedCells);
+
+		  indexCount = 0;
+		  
+		  blockCount += 1;                    
+			  
+		}
+	    }//jNode
+	}//iNode
   kPointTimesGradNiNj_currentBlock.clear();
   std::vector<double>().swap(kPointTimesGradNiNj_currentBlock);
 #endif
