@@ -55,7 +55,7 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::computeHamiltonianMatrix(
   const unsigned int numberNodesPerElementSquare = d_numberNodesPerElement*d_numberNodesPerElement;
   const unsigned int sizeNiNj = d_numberNodesPerElement*(d_numberNodesPerElement + 1)/2;
   const unsigned int fullSizeNiNj = d_numberNodesPerElement*d_numberNodesPerElement;
-  unsigned int numBlocks = FEOrder + 1;
+  unsigned int numBlocks = (FEOrder+1)*(FEOrder+1);
   unsigned int numberEntriesEachBlock = sizeNiNj/numBlocks;
   unsigned int count = 0;
   unsigned int blockCount = 0;
@@ -375,8 +375,6 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::computeHamiltonianMatrix(
     }*/
   while(blockCount < numBlocks)
     {
-      //for(unsigned int q_point = 0; q_point < numberQuadraturePoints; ++q_point)
-      //{
       flag = 0;
       for(unsigned int iNode = d_blockiNodeIndex[numberEntriesEachBlock*blockCount]; iNode < numberDofsPerElement; ++iNode)
 	{
@@ -385,19 +383,33 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::computeHamiltonianMatrix(
 	      dimCount = 0;
 	      for(unsigned int q_point = 0; q_point < numberQuadraturePoints; ++q_point)
 		{
-                   shapeGradRefINode[0] = d_shapeFunctionGradientValueRefX[numberDofsPerElement*q_point + iNode];
-		   shapeGradRefINode[1] = d_shapeFunctionGradientValueRefY[numberDofsPerElement*q_point + iNode];
-		   shapeGradRefINode[2] = d_shapeFunctionGradientValueRefZ[numberDofsPerElement*q_point + iNode];
+                   shapeGradRefINode[0] = d_shapeFunctionGradientValueRefTransX[numberQuadraturePoints*iNode + q_point];
+		   shapeGradRefINode[1] = d_shapeFunctionGradientValueRefTransY[numberQuadraturePoints*iNode + q_point];
+		   shapeGradRefINode[2] = d_shapeFunctionGradientValueRefTransZ[numberQuadraturePoints*iNode + q_point];
 		   double shapeJ = d_shapeFunctionData[numberDofsPerElement*q_point + jNode];
 		  
-		  for(unsigned int iDim = 0; iDim < 3; ++iDim)
+		  /*for(unsigned int iDim = 0; iDim < 3; ++iDim)
 		    {
 		      for(unsigned int jDim = 0; jDim < 3; ++jDim)
 			{
 			  kPointTimesGradNiNj_currentBlock[9*numberQuadraturePoints*indexCount + dimCount] = -kPointCoors[iDim]*shapeGradRefINode[jDim]*shapeJ;
 			  dimCount += 1;
 			}
-		    }
+		    }*/
+
+
+                   kPointTimesGradNiNj_currentBlock[9*numberQuadraturePoints*indexCount + 9*q_point + 0] = -kPointCoors[0]*shapeGradRefINode[0]*shapeJ;
+                   kPointTimesGradNiNj_currentBlock[9*numberQuadraturePoints*indexCount + 9*q_point + 1] = -kPointCoors[0]*shapeGradRefINode[1]*shapeJ;
+                   kPointTimesGradNiNj_currentBlock[9*numberQuadraturePoints*indexCount + 9*q_point + 2] = -kPointCoors[0]*shapeGradRefINode[2]*shapeJ;
+                   kPointTimesGradNiNj_currentBlock[9*numberQuadraturePoints*indexCount + 9*q_point + 3] = -kPointCoors[1]*shapeGradRefINode[0]*shapeJ;
+                   kPointTimesGradNiNj_currentBlock[9*numberQuadraturePoints*indexCount + 9*q_point + 4] = -kPointCoors[1]*shapeGradRefINode[1]*shapeJ; 
+                   kPointTimesGradNiNj_currentBlock[9*numberQuadraturePoints*indexCount + 9*q_point + 5] = -kPointCoors[1]*shapeGradRefINode[2]*shapeJ;
+                   kPointTimesGradNiNj_currentBlock[9*numberQuadraturePoints*indexCount + 9*q_point + 6] = -kPointCoors[2]*shapeGradRefINode[0]*shapeJ;
+                   kPointTimesGradNiNj_currentBlock[9*numberQuadraturePoints*indexCount + 9*q_point + 7] = -kPointCoors[2]*shapeGradRefINode[1]*shapeJ;
+                   kPointTimesGradNiNj_currentBlock[9*numberQuadraturePoints*indexCount + 9*q_point + 8] = -kPointCoors[2]*shapeGradRefINode[2]*shapeJ; 
+   
+
+
 		}
               indexCount += 1;
 	      if(indexCount%numberEntriesEachBlock == 0)
@@ -425,6 +437,7 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::computeHamiltonianMatrix(
 		}
 	    }//jNode
 	}//iNode
+     }
   kPointTimesGradNiNj_currentBlock.clear();
   std::vector<double>().swap(kPointTimesGradNiNj_currentBlock);
 #endif

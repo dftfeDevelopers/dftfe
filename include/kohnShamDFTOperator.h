@@ -472,6 +472,9 @@ node is stored
     std::vector<double> d_shapeFunctionGradientValueRefX;
     std::vector<double> d_shapeFunctionGradientValueRefY;
     std::vector<double> d_shapeFunctionGradientValueRefZ;
+    std::vector<double> d_shapeFunctionGradientValueRefTransX;
+    std::vector<double> d_shapeFunctionGradientValueRefTransY;
+    std::vector<double> d_shapeFunctionGradientValueRefTransZ;
 
     /// storage for shapefunctions
     std::vector<double> d_shapeFunctionValueLpspQuad;
