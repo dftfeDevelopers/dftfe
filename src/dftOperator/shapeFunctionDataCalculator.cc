@@ -64,7 +64,10 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::
 
 #ifdef USE_COMPLEX
   d_NiNjIntegral.resize(numberPhysicalCells*sizeNiNj);
-  d_invJacJxW.resize(numberPhysicalCells*9*numberQuadraturePoints);
+  d_invJacKPointTimesJxW.resize(d_kPointWeights.size());
+  for(unsigned int kPointIndex = 0; kPointIndex < dftPtr->d_kPointWeights.size();++kPointIndex)
+    d_invJacKPointTimesJxW[kPointIndex].resize(numberPhysicalCells*3*numberQuadraturePoints);
+  std::vector<double> kPointCoors(3,0.0);
 #endif
 
   //
@@ -157,7 +160,7 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::
           //compute J^{-1} times det J times weights. Note J^{-1} obtained from dealii is actually J^{-T}
           //so accordingly loop indices are changes
           //
-	  for(unsigned int q = 0; q < numberQuadraturePoints; ++q)
+	  /*for(unsigned int q = 0; q < numberQuadraturePoints; ++q)
 	    {
 	      unsigned int count = 0;
 	      for(unsigned int iDim = 0; iDim < 3; ++iDim)
@@ -170,7 +173,21 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::
 		   
 		}
 	      
+		}*/
+
+          for(unsigned int kPointIndex = 0; kPointIndex < dftPtr->d_kPointWeights.size();++kPointIndex)
+	    {
+	      kPointCoors[0] = dftPtr->d_kPointCoordinates[3*kPointIndex + 0];
+	      kPointCoors[1] = dftPtr->d_kPointCoordinates[3*kPointIndex + 1];
+	      kPointCoors[2] = dftPtr->d_kPointCoordinates[3*kPointIndex + 2];
+	      for(unsigned int q = 0; q < numberQuadraturePoints; ++q)
+		{
+		  d_invJacKPointTimesJxW[kPointIndex][totalLocallyOwnedCells*3*q + iElemCount] = (inverseJacobians[q][0][0]*kPointCoors[0] + inverseJacobians[q][0][1]*kPointCoors[1] + inverseJacobians[q][0][2]*kPointCoors[2])*fe_values.JxW(q);
+		  d_invJacKPointTimesJxW[kPointIndex][totalLocallyOwnedCells*(3*q + 1) + iElemCount] = (inverseJacobians[q][1][0]*kPointCoors[0] + inverseJacobians[q][1][1]*kPointCoors[1] + inverseJacobians[q][1][2]*kPointCoors[2])*fe_values.JxW(q);
+		  d_invJacKPointTimesJxW[kPointIndex][totalLocallyOwnedCells*(3*q + 2) + iElemCount] = (inverseJacobians[q][2][0]*kPointCoors[0] + inverseJacobians[q][2][1]*kPointCoors[1] + inverseJacobians[q][2][2]*kPointCoors[2])*fe_values.JxW(q);
+		}
 	    }
+	  
 #endif      
 
 	  
