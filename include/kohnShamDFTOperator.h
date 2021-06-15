@@ -447,10 +447,10 @@ node is stored
 
     dealii::Table<2, dealii::VectorizedArray<double>> vEff;
     dealii::Table<2, dealii::VectorizedArray<double>> d_vEffExternalPotCorr;
-    std::vector<double> d_vEffExternalPotCorrJxW;
-    std::vector<double> d_vEffJxW;
-    std::vector<double> d_invJacderExcWithSigmaTimesGradRhoJxW;
-    std::vector<std::vector<double> > d_invJacKPointTimesJxW;
+    std::vector<double>                               d_vEffExternalPotCorrJxW;
+    std::vector<double>                               d_vEffJxW;
+    std::vector<double>              d_invJacderExcWithSigmaTimesGradRhoJxW;
+    std::vector<std::vector<double>> d_invJacKPointTimesJxW;
     dealii::Table<2, dealii::Tensor<1, 3, dealii::VectorizedArray<double>>>
       derExcWithSigmaTimesGradRho;
 
@@ -476,7 +476,7 @@ node is stored
     /// storage for shapefunctions
     std::vector<double> d_shapeFunctionValueLpspQuad;
     std::vector<double> d_NiNjIntegral;
-    
+
 
     /// storage for  matrix-free cell data
     const unsigned int        d_numberNodesPerElement;

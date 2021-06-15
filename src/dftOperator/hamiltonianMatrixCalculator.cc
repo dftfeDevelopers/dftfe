@@ -46,21 +46,24 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::computeHamiltonianMatrix(
   const unsigned int kpointSpinIndex =
     (1 + dftParameters::spinPolarized) * kPointIndex + spinIndex;
 
-  //inputs to blas
-  const char transA = 'N',transB = 'N';
-  const char transA1 = 'N',transB1 = 'T';
-  const double alpha = 1.0;
-  const double beta = 1.0;
-  const unsigned int inc = 1;
-  const unsigned int numberNodesPerElementSquare = d_numberNodesPerElement*d_numberNodesPerElement;
-  const unsigned int sizeNiNj = d_numberNodesPerElement*(d_numberNodesPerElement + 1)/2;
-  const unsigned int fullSizeNiNj = d_numberNodesPerElement*d_numberNodesPerElement;
-  unsigned int numBlocks = (FEOrder+1);
-  unsigned int numberEntriesEachBlock = sizeNiNj/numBlocks;
-  unsigned int count = 0;
-  unsigned int blockCount = 0;
-  unsigned int indexCount = 0;
-  unsigned int flag = 0;
+  // inputs to blas
+  const char         transA = 'N', transB = 'N';
+  const char         transA1 = 'N', transB1 = 'T';
+  const double       alpha = 1.0;
+  const double       beta  = 1.0;
+  const unsigned int inc   = 1;
+  const unsigned int numberNodesPerElementSquare =
+    d_numberNodesPerElement * d_numberNodesPerElement;
+  const unsigned int sizeNiNj =
+    d_numberNodesPerElement * (d_numberNodesPerElement + 1) / 2;
+  const unsigned int fullSizeNiNj =
+    d_numberNodesPerElement * d_numberNodesPerElement;
+  unsigned int numBlocks              = (FEOrder + 1);
+  unsigned int numberEntriesEachBlock = sizeNiNj / numBlocks;
+  unsigned int count                  = 0;
+  unsigned int blockCount             = 0;
+  unsigned int indexCount             = 0;
+  unsigned int flag                   = 0;
 
   if ((dftParameters::isPseudopotential ||
        dftParameters::smearedNuclearCharges) &&
@@ -73,21 +76,25 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::computeHamiltonianMatrix(
           .dofs_per_cell;
 
 
-       FEEvaluation<3,
+      FEEvaluation<3,
                    FEOrder,
                    C_num1DQuadLPSP<FEOrder>() * C_numCopies1DQuadLPSP(),
                    1,
                    double>
-	           fe_eval(dftPtr->matrix_free_data, 0, d_externalPotCorrQuadratureId);
-      
-      const unsigned int numberQuadraturePoints = fe_eval.n_q_points;
-      
-      d_cellHamiltonianMatrixExternalPotCorr.clear();
-      d_cellHamiltonianMatrixExternalPotCorr.resize(sizeNiNj*totalLocallyOwnedCells,0.0);
+        fe_eval(dftPtr->matrix_free_data, 0, d_externalPotCorrQuadratureId);
 
-    
-      std::vector<double> NiNjLpspQuad_currentBlock(numberEntriesEachBlock*numberQuadraturePoints,0.0);
-        
+      const unsigned int numberQuadraturePoints = fe_eval.n_q_points;
+
+      d_cellHamiltonianMatrixExternalPotCorr.clear();
+      d_cellHamiltonianMatrixExternalPotCorr.resize(sizeNiNj *
+                                                      totalLocallyOwnedCells,
+                                                    0.0);
+
+
+      std::vector<double> NiNjLpspQuad_currentBlock(numberEntriesEachBlock *
+                                                      numberQuadraturePoints,
+                                                    0.0);
+
 
       AssertThrow(
         dftPtr->matrix_free_data.get_quadrature(d_externalPotCorrQuadratureId)
@@ -95,64 +102,77 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::computeHamiltonianMatrix(
         dealii::ExcMessage(
           "DFT-FE Error: mismatch in quadrature rule usage in computeHamiltonianMatrix."));
 
-      
-      while(blockCount < numBlocks)
-	{
-	  for(unsigned int q_point = 0; q_point < numberQuadraturePoints; ++q_point)
-	    {
-	      flag = 0;
-	      for(unsigned int iNode = d_blockiNodeIndex[numberEntriesEachBlock*blockCount]; iNode < numberDofsPerElement; ++iNode)
-		{
-                  double shapeI = d_shapeFunctionLpspQuadData[numberDofsPerElement*q_point + iNode];
-		  for(unsigned int jNode = d_blockjNodeIndex[numberEntriesEachBlock*blockCount+indexCount]; jNode < numberDofsPerElement; ++jNode)
-		    {
-		      double shapeJ = d_shapeFunctionLpspQuadData[numberDofsPerElement*q_point + jNode];
-		      NiNjLpspQuad_currentBlock[numberEntriesEachBlock*q_point + indexCount]= shapeI*shapeJ;
-		      indexCount += 1;
-		      if(indexCount%numberEntriesEachBlock == 0)
-			{
-			  flag = 1;
-			  indexCount = 0;
-			  break;
-			}
-		    }//jNode
 
-		  if(flag == 1)
-		    {
-		      if(q_point == (numberQuadraturePoints - 1))
-			{
-			  dgemm_(&transA1,
-				 &transB1,
-				 &totalLocallyOwnedCells,//M
-				 &numberEntriesEachBlock,//N
-				 &numberQuadraturePoints,//K
-				 &alpha,
-				 &d_vEffExternalPotCorrJxW[0],
-				 &totalLocallyOwnedCells,
-				 &NiNjLpspQuad_currentBlock[0],
-				 &numberEntriesEachBlock,
-				 &beta,
-				 &d_cellHamiltonianMatrixExternalPotCorr[totalLocallyOwnedCells*numberEntriesEachBlock*blockCount],
-				 &totalLocallyOwnedCells);
-		      
-			  blockCount += 1;
+      while (blockCount < numBlocks)
+        {
+          for (unsigned int q_point = 0; q_point < numberQuadraturePoints;
+               ++q_point)
+            {
+              flag = 0;
+              for (unsigned int iNode =
+                     d_blockiNodeIndex[numberEntriesEachBlock * blockCount];
+                   iNode < numberDofsPerElement;
+                   ++iNode)
+                {
+                  double shapeI =
+                    d_shapeFunctionLpspQuadData[numberDofsPerElement * q_point +
+                                                iNode];
+                  for (unsigned int jNode =
+                         d_blockjNodeIndex[numberEntriesEachBlock * blockCount +
+                                           indexCount];
+                       jNode < numberDofsPerElement;
+                       ++jNode)
+                    {
+                      double shapeJ =
+                        d_shapeFunctionLpspQuadData[numberDofsPerElement *
+                                                      q_point +
+                                                    jNode];
+                      NiNjLpspQuad_currentBlock[numberEntriesEachBlock *
+                                                  q_point +
+                                                indexCount] = shapeI * shapeJ;
+                      indexCount += 1;
+                      if (indexCount % numberEntriesEachBlock == 0)
+                        {
+                          flag       = 1;
+                          indexCount = 0;
+                          break;
+                        }
+                    } // jNode
 
-			}
-		      break;
-		    }
+                  if (flag == 1)
+                    {
+                      if (q_point == (numberQuadraturePoints - 1))
+                        {
+                          dgemm_(&transA1,
+                                 &transB1,
+                                 &totalLocallyOwnedCells, // M
+                                 &numberEntriesEachBlock, // N
+                                 &numberQuadraturePoints, // K
+                                 &alpha,
+                                 &d_vEffExternalPotCorrJxW[0],
+                                 &totalLocallyOwnedCells,
+                                 &NiNjLpspQuad_currentBlock[0],
+                                 &numberEntriesEachBlock,
+                                 &beta,
+                                 &d_cellHamiltonianMatrixExternalPotCorr
+                                   [totalLocallyOwnedCells *
+                                    numberEntriesEachBlock * blockCount],
+                                 &totalLocallyOwnedCells);
 
-		}
-	      
-
-	    }
-      	}
+                          blockCount += 1;
+                        }
+                      break;
+                    }
+                }
+            }
+        }
 
       d_isStiffnessMatrixExternalPotCorrComputed = true;
       NiNjLpspQuad_currentBlock.clear();
-      std::vector<double>().swap(NiNjLpspQuad_currentBlock); 
+      std::vector<double>().swap(NiNjLpspQuad_currentBlock);
     }
 
-  
+
   //
   // Resize the cell-level hamiltonian  matrix
   //
@@ -164,210 +184,300 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::computeHamiltonianMatrix(
   //
   const Quadrature<3> &quadrature =
     dftPtr->matrix_free_data.get_quadrature(dftPtr->d_densityQuadratureId);
-  
+
   const unsigned int numberDofsPerElement =
-    dftPtr->matrix_free_data.get_dof_handler(dftPtr->d_densityDofHandlerIndex).get_fe().dofs_per_cell;
-  
+    dftPtr->matrix_free_data.get_dof_handler(dftPtr->d_densityDofHandlerIndex)
+      .get_fe()
+      .dofs_per_cell;
+
   const unsigned int numberQuadraturePoints = quadrature.size();
-  const unsigned int numberQuadraturePointsTimesNine = 9*numberQuadraturePoints;
-  const unsigned int numberQuadraturePointsTimesThree = 3*numberQuadraturePoints;
+  const unsigned int numberQuadraturePointsTimesNine =
+    9 * numberQuadraturePoints;
+  const unsigned int numberQuadraturePointsTimesThree =
+    3 * numberQuadraturePoints;
   //
-  //create temp storage for stiffness matrix across all cells
+  // create temp storage for stiffness matrix across all cells
   //
-  count = 0;
+  count      = 0;
   blockCount = 0;
   indexCount = 0;
-  flag = 0;
-  
-  std::vector<double> cellHamiltonianMatrix(totalLocallyOwnedCells*sizeNiNj,0.0);
-  std::vector<double> NiNj_currentBlock(numberEntriesEachBlock*numberQuadraturePoints,0.0);
- 
- while(blockCount < numBlocks)
-{ 
-  for(unsigned int q_point = 0; q_point < numberQuadraturePoints; ++q_point)
-    {
-      flag = 0;
-      for(unsigned int iNode = d_blockiNodeIndex[numberEntriesEachBlock*blockCount]; iNode < numberDofsPerElement; ++iNode)
-	{
-	  double shapeI = d_shapeFunctionData[numberDofsPerElement*q_point + iNode];
-	  for(unsigned int jNode = d_blockjNodeIndex[numberEntriesEachBlock*blockCount+indexCount]; jNode < numberDofsPerElement; ++jNode)
-	    {
-	      double shapeJ = d_shapeFunctionData[numberDofsPerElement*q_point + jNode];
-	      NiNj_currentBlock[numberEntriesEachBlock*q_point + indexCount] = shapeI*shapeJ;
-	      indexCount += 1;
-	      if(indexCount%numberEntriesEachBlock == 0)
-		{
-		  flag = 1;
-		  indexCount = 0;
-		  break;
-		}
-	    }//jNode
-	  if(flag == 1)
-	    {
-	      if(q_point == (numberQuadraturePoints - 1))
-		{
-		  dgemm_(&transA1,
-			 &transB1,
-			 &totalLocallyOwnedCells,//M
-			 &numberEntriesEachBlock,//N
-			 &numberQuadraturePoints,//K
-			 &alpha,
-			 &d_vEffJxW[0],
-			 &totalLocallyOwnedCells,
-			 &NiNj_currentBlock[0],
-			 &numberEntriesEachBlock,
-			 &beta,
-			 &cellHamiltonianMatrix[totalLocallyOwnedCells*numberEntriesEachBlock*blockCount],
-			 &totalLocallyOwnedCells);
-		      
-		  blockCount += 1;
+  flag       = 0;
 
-		}
-	      break;
-	    }
-	}//iNode
+  std::vector<double> cellHamiltonianMatrix(totalLocallyOwnedCells * sizeNiNj,
+                                            0.0);
+  std::vector<double> NiNj_currentBlock(numberEntriesEachBlock *
+                                          numberQuadraturePoints,
+                                        0.0);
+
+  while (blockCount < numBlocks)
+    {
+      for (unsigned int q_point = 0; q_point < numberQuadraturePoints;
+           ++q_point)
+        {
+          flag = 0;
+          for (unsigned int iNode =
+                 d_blockiNodeIndex[numberEntriesEachBlock * blockCount];
+               iNode < numberDofsPerElement;
+               ++iNode)
+            {
+              double shapeI =
+                d_shapeFunctionData[numberDofsPerElement * q_point + iNode];
+              for (unsigned int jNode =
+                     d_blockjNodeIndex[numberEntriesEachBlock * blockCount +
+                                       indexCount];
+                   jNode < numberDofsPerElement;
+                   ++jNode)
+                {
+                  double shapeJ =
+                    d_shapeFunctionData[numberDofsPerElement * q_point + jNode];
+                  NiNj_currentBlock[numberEntriesEachBlock * q_point +
+                                    indexCount] = shapeI * shapeJ;
+                  indexCount += 1;
+                  if (indexCount % numberEntriesEachBlock == 0)
+                    {
+                      flag       = 1;
+                      indexCount = 0;
+                      break;
+                    }
+                } // jNode
+              if (flag == 1)
+                {
+                  if (q_point == (numberQuadraturePoints - 1))
+                    {
+                      dgemm_(&transA1,
+                             &transB1,
+                             &totalLocallyOwnedCells, // M
+                             &numberEntriesEachBlock, // N
+                             &numberQuadraturePoints, // K
+                             &alpha,
+                             &d_vEffJxW[0],
+                             &totalLocallyOwnedCells,
+                             &NiNj_currentBlock[0],
+                             &numberEntriesEachBlock,
+                             &beta,
+                             &cellHamiltonianMatrix[totalLocallyOwnedCells *
+                                                    numberEntriesEachBlock *
+                                                    blockCount],
+                             &totalLocallyOwnedCells);
+
+                      blockCount += 1;
+                    }
+                  break;
+                }
+            } // iNode
+        }
     }
- }
-     
- NiNj_currentBlock.clear();
- std::vector<double>().swap(NiNj_currentBlock);
- 
+
+  NiNj_currentBlock.clear();
+  std::vector<double>().swap(NiNj_currentBlock);
 
 
-  if(dftParameters::xcFamilyType == "GGA")
+
+  if (dftParameters::xcFamilyType == "GGA")
     {
-      std::vector<double> gradNiNjPlusgradNjNi_currentBlock(numberEntriesEachBlock*3*numberQuadraturePoints,0.0);
+      std::vector<double> gradNiNjPlusgradNjNi_currentBlock(
+        numberEntriesEachBlock * 3 * numberQuadraturePoints, 0.0);
       blockCount = 0;
       indexCount = 0;
-      while(blockCount < numBlocks)
-	{
-	   for(unsigned int q_point = 0; q_point < numberQuadraturePoints; ++q_point)
-	     {
-	       flag = 0;
-	       for(unsigned int iNode = d_blockiNodeIndex[numberEntriesEachBlock*blockCount]; iNode < numberDofsPerElement; ++iNode)
-		 {
-		   double shapeGradXRefINode = d_shapeFunctionGradientValueRefX[numberDofsPerElement*q_point + iNode];
-		   double shapeGradYRefINode = d_shapeFunctionGradientValueRefY[numberDofsPerElement*q_point + iNode];
-		   double shapeGradZRefINode = d_shapeFunctionGradientValueRefZ[numberDofsPerElement*q_point + iNode];
-		   double shapeI = d_shapeFunctionData[numberDofsPerElement*q_point + iNode];
-		    for(unsigned int jNode = d_blockjNodeIndex[numberEntriesEachBlock*blockCount+indexCount]; jNode < numberDofsPerElement; ++jNode)
-		      {
-			double shapeJ = d_shapeFunctionData[numberDofsPerElement*q_point + jNode];
-			gradNiNjPlusgradNjNi_currentBlock[3*numberEntriesEachBlock*q_point + indexCount] = shapeGradXRefINode*shapeJ + shapeI*d_shapeFunctionGradientValueRefX[numberDofsPerElement*q_point + jNode];
-			gradNiNjPlusgradNjNi_currentBlock[3*numberEntriesEachBlock*q_point + numberEntriesEachBlock + indexCount] = shapeGradYRefINode*shapeJ + shapeI*d_shapeFunctionGradientValueRefY[numberDofsPerElement*q_point + jNode];
-			gradNiNjPlusgradNjNi_currentBlock[3*numberEntriesEachBlock*q_point + 2*numberEntriesEachBlock + indexCount] = shapeGradZRefINode*shapeJ + shapeI*d_shapeFunctionGradientValueRefZ[numberDofsPerElement*q_point + jNode];
-			indexCount += 1;
-			if(indexCount%numberEntriesEachBlock == 0)
-			  {
-			    flag = 1;
-			    indexCount = 0;
-			    break;
-			  }
-		      }//jnode
-		    if(flag == 1)
-		      {
-			if(q_point == (numberQuadraturePoints - 1))
-			  {
-			    dgemm_(&transA1,
-				   &transB1,
-				   &totalLocallyOwnedCells,//M
-				   &numberEntriesEachBlock,//N
-				   &numberQuadraturePointsTimesThree,//K
-				   &alpha,
-				   &d_invJacderExcWithSigmaTimesGradRhoJxW[0],
-				   &totalLocallyOwnedCells,
-				   &gradNiNjPlusgradNjNi_currentBlock[0],
-				   &numberEntriesEachBlock,
-				   &beta,
-				   &cellHamiltonianMatrix[totalLocallyOwnedCells*numberEntriesEachBlock*blockCount],
-				   &totalLocallyOwnedCells);
-			    
-			    blockCount += 1;
-			  }
-			break;
-		      }
-		 }//iNode
-	     }
-	}
-  
-    gradNiNjPlusgradNjNi_currentBlock.clear();
-    std::vector<double>().swap(gradNiNjPlusgradNjNi_currentBlock);
-    
+      while (blockCount < numBlocks)
+        {
+          for (unsigned int q_point = 0; q_point < numberQuadraturePoints;
+               ++q_point)
+            {
+              flag = 0;
+              for (unsigned int iNode =
+                     d_blockiNodeIndex[numberEntriesEachBlock * blockCount];
+                   iNode < numberDofsPerElement;
+                   ++iNode)
+                {
+                  double shapeGradXRefINode =
+                    d_shapeFunctionGradientValueRefX[numberDofsPerElement *
+                                                       q_point +
+                                                     iNode];
+                  double shapeGradYRefINode =
+                    d_shapeFunctionGradientValueRefY[numberDofsPerElement *
+                                                       q_point +
+                                                     iNode];
+                  double shapeGradZRefINode =
+                    d_shapeFunctionGradientValueRefZ[numberDofsPerElement *
+                                                       q_point +
+                                                     iNode];
+                  double shapeI =
+                    d_shapeFunctionData[numberDofsPerElement * q_point + iNode];
+                  for (unsigned int jNode =
+                         d_blockjNodeIndex[numberEntriesEachBlock * blockCount +
+                                           indexCount];
+                       jNode < numberDofsPerElement;
+                       ++jNode)
+                    {
+                      double shapeJ =
+                        d_shapeFunctionData[numberDofsPerElement * q_point +
+                                            jNode];
+                      gradNiNjPlusgradNjNi_currentBlock
+                        [3 * numberEntriesEachBlock * q_point + indexCount] =
+                          shapeGradXRefINode * shapeJ +
+                          shapeI * d_shapeFunctionGradientValueRefX
+                                     [numberDofsPerElement * q_point + jNode];
+                      gradNiNjPlusgradNjNi_currentBlock
+                        [3 * numberEntriesEachBlock * q_point +
+                         numberEntriesEachBlock + indexCount] =
+                          shapeGradYRefINode * shapeJ +
+                          shapeI * d_shapeFunctionGradientValueRefY
+                                     [numberDofsPerElement * q_point + jNode];
+                      gradNiNjPlusgradNjNi_currentBlock
+                        [3 * numberEntriesEachBlock * q_point +
+                         2 * numberEntriesEachBlock + indexCount] =
+                          shapeGradZRefINode * shapeJ +
+                          shapeI * d_shapeFunctionGradientValueRefZ
+                                     [numberDofsPerElement * q_point + jNode];
+                      indexCount += 1;
+                      if (indexCount % numberEntriesEachBlock == 0)
+                        {
+                          flag       = 1;
+                          indexCount = 0;
+                          break;
+                        }
+                    } // jnode
+                  if (flag == 1)
+                    {
+                      if (q_point == (numberQuadraturePoints - 1))
+                        {
+                          dgemm_(&transA1,
+                                 &transB1,
+                                 &totalLocallyOwnedCells,           // M
+                                 &numberEntriesEachBlock,           // N
+                                 &numberQuadraturePointsTimesThree, // K
+                                 &alpha,
+                                 &d_invJacderExcWithSigmaTimesGradRhoJxW[0],
+                                 &totalLocallyOwnedCells,
+                                 &gradNiNjPlusgradNjNi_currentBlock[0],
+                                 &numberEntriesEachBlock,
+                                 &beta,
+                                 &cellHamiltonianMatrix[totalLocallyOwnedCells *
+                                                        numberEntriesEachBlock *
+                                                        blockCount],
+                                 &totalLocallyOwnedCells);
+
+                          blockCount += 1;
+                        }
+                      break;
+                    }
+                } // iNode
+            }
+        }
+
+      gradNiNjPlusgradNjNi_currentBlock.clear();
+      std::vector<double>().swap(gradNiNjPlusgradNjNi_currentBlock);
     }
-  
+
   typename dealii::DoFHandler<3>::active_cell_iterator cellPtr;
 
   //
   // access the kPoint coordinates
   //
 #ifdef USE_COMPLEX
-   std::vector<double> kPointCoors(3,0.0);
-  kPointCoors[0] = dftPtr->d_kPointCoordinates[3*kPointIndex + 0];
-  kPointCoors[1] = dftPtr->d_kPointCoordinates[3*kPointIndex + 1];
-  kPointCoors[2] = dftPtr->d_kPointCoordinates[3*kPointIndex + 2];
+  std::vector<double> kPointCoors(3, 0.0);
+  kPointCoors[0] = dftPtr->d_kPointCoordinates[3 * kPointIndex + 0];
+  kPointCoors[1] = dftPtr->d_kPointCoordinates[3 * kPointIndex + 1];
+  kPointCoors[2] = dftPtr->d_kPointCoordinates[3 * kPointIndex + 2];
 
-  double kSquareTimesHalf = 0.5*(kPointCoors[0]*kPointCoors[0] + kPointCoors[1]*kPointCoors[1] + kPointCoors[2]*kPointCoors[2]);
-  std::vector<double> elementHamiltonianMatrixImag(totalLocallyOwnedCells*sizeNiNj,0.0);
-  unsigned int numberEntriesEachBlockComplex = fullSizeNiNj/numBlocks;
- 
-  
-  blockCount = 0;
-  indexCount = 0;
-  unsigned int dimCount = 0;
-  std::vector<double> gradNiNj_currentBlock(numberEntriesEachBlock*3*numberQuadraturePoints,0.0);
+  double kSquareTimesHalf =
+    0.5 * (kPointCoors[0] * kPointCoors[0] + kPointCoors[1] * kPointCoors[1] +
+           kPointCoors[2] * kPointCoors[2]);
+  std::vector<double> elementHamiltonianMatrixImag(totalLocallyOwnedCells *
+                                                     sizeNiNj,
+                                                   0.0);
+  unsigned int        numberEntriesEachBlockComplex = fullSizeNiNj / numBlocks;
 
-  while(blockCount < numBlocks)
+
+  blockCount                   = 0;
+  indexCount                   = 0;
+  unsigned int        dimCount = 0;
+  std::vector<double> gradNiNj_currentBlock(numberEntriesEachBlock * 3 *
+                                              numberQuadraturePoints,
+                                            0.0);
+
+  while (blockCount < numBlocks)
     {
-      for(unsigned int q_point = 0; q_point < numberQuadraturePoints; ++q_point)
-	{
-	  flag = 0;
-	  for(unsigned int iNode = d_blockiNodeIndex[numberEntriesEachBlock*blockCount]; iNode < numberDofsPerElement; ++iNode)
-	    {
-	      double shapeGradXRefINode = d_shapeFunctionGradientValueRefX[numberDofsPerElement*q_point + iNode];
-	      double shapeGradYRefINode = d_shapeFunctionGradientValueRefY[numberDofsPerElement*q_point + iNode];
-	      double shapeGradZRefINode = d_shapeFunctionGradientValueRefZ[numberDofsPerElement*q_point + iNode];
-	      double shapeI = d_shapeFunctionData[numberDofsPerElement*q_point + iNode];
-	      for(unsigned int jNode = d_blockjNodeIndex[numberEntriesEachBlock*blockCount+indexCount]; jNode < numberDofsPerElement; ++jNode)
-		{
-		  double shapeJ = d_shapeFunctionData[numberDofsPerElement*q_point + jNode];
-		  gradNiNj_currentBlock[3*numberEntriesEachBlock*q_point + indexCount] = shapeGradXRefINode*shapeJ;
-		  gradNiNj_currentBlock[3*numberEntriesEachBlock*q_point + numberEntriesEachBlock + indexCount] = shapeGradYRefINode*shapeJ;
-		  gradNiNj_currentBlock[3*numberEntriesEachBlock*q_point + 2*numberEntriesEachBlock + indexCount] = shapeGradZRefINode*shapeJ;
-		  indexCount += 1;
-		  if(indexCount%numberEntriesEachBlock == 0)
-		    {
-		      flag = 1;
-		      indexCount = 0;
-		      break;
-		    }
-		}//jnode
-	      if(flag == 1)
-		{
-		  if(q_point == (numberQuadraturePoints - 1))
-		    {
-		      dgemm_(&transA1,
-			     &transB1,
-			     &totalLocallyOwnedCells,//M
-			     &numberEntriesEachBlock,//N
-			     &numberQuadraturePointsTimesThree,//K
-			     &alpha,
-			     &d_invJacKPointTimesJxW[kPointIndex][0],
-			     &totalLocallyOwnedCells,
-			     &gradNiNj_currentBlock[0],
-			     &numberEntriesEachBlock,
-			     &beta,
-			     &elementHamiltonianMatrixImag[totalLocallyOwnedCells*numberEntriesEachBlock*blockCount],
-			     &totalLocallyOwnedCells);
-			    
-		      blockCount += 1;
-		    }
-		  break;
-		}
-	    }//iNode
-	}
+      for (unsigned int q_point = 0; q_point < numberQuadraturePoints;
+           ++q_point)
+        {
+          flag = 0;
+          for (unsigned int iNode =
+                 d_blockiNodeIndex[numberEntriesEachBlock * blockCount];
+               iNode < numberDofsPerElement;
+               ++iNode)
+            {
+              double shapeGradXRefINode =
+                d_shapeFunctionGradientValueRefX[numberDofsPerElement *
+                                                   q_point +
+                                                 iNode];
+              double shapeGradYRefINode =
+                d_shapeFunctionGradientValueRefY[numberDofsPerElement *
+                                                   q_point +
+                                                 iNode];
+              double shapeGradZRefINode =
+                d_shapeFunctionGradientValueRefZ[numberDofsPerElement *
+                                                   q_point +
+                                                 iNode];
+              double shapeI =
+                d_shapeFunctionData[numberDofsPerElement * q_point + iNode];
+              for (unsigned int jNode =
+                     d_blockjNodeIndex[numberEntriesEachBlock * blockCount +
+                                       indexCount];
+                   jNode < numberDofsPerElement;
+                   ++jNode)
+                {
+                  double shapeJ =
+                    d_shapeFunctionData[numberDofsPerElement * q_point + jNode];
+                  gradNiNj_currentBlock[3 * numberEntriesEachBlock * q_point +
+                                        indexCount] =
+                    shapeGradXRefINode * shapeJ;
+                  gradNiNj_currentBlock[3 * numberEntriesEachBlock * q_point +
+                                        numberEntriesEachBlock + indexCount] =
+                    shapeGradYRefINode * shapeJ;
+                  gradNiNj_currentBlock[3 * numberEntriesEachBlock * q_point +
+                                        2 * numberEntriesEachBlock +
+                                        indexCount] =
+                    shapeGradZRefINode * shapeJ;
+                  indexCount += 1;
+                  if (indexCount % numberEntriesEachBlock == 0)
+                    {
+                      flag       = 1;
+                      indexCount = 0;
+                      break;
+                    }
+                } // jnode
+              if (flag == 1)
+                {
+                  if (q_point == (numberQuadraturePoints - 1))
+                    {
+                      dgemm_(
+                        &transA1,
+                        &transB1,
+                        &totalLocallyOwnedCells,           // M
+                        &numberEntriesEachBlock,           // N
+                        &numberQuadraturePointsTimesThree, // K
+                        &alpha,
+                        &d_invJacKPointTimesJxW[kPointIndex][0],
+                        &totalLocallyOwnedCells,
+                        &gradNiNj_currentBlock[0],
+                        &numberEntriesEachBlock,
+                        &beta,
+                        &elementHamiltonianMatrixImag[totalLocallyOwnedCells *
+                                                      numberEntriesEachBlock *
+                                                      blockCount],
+                        &totalLocallyOwnedCells);
+
+                      blockCount += 1;
+                    }
+                  break;
+                }
+            } // iNode
+        }
     }
-   gradNiNj_currentBlock.clear();
-   std::vector<double>().swap(gradNiNj_currentBlock);
+  gradNiNj_currentBlock.clear();
+  std::vector<double>().swap(gradNiNj_currentBlock);
 #endif
 
   //
@@ -384,7 +494,7 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::computeHamiltonianMatrix(
         {
           // FIXME: Use functions like mkl_malloc for 64 byte memory alignment.
           d_cellHamiltonianMatrix[kpointSpinIndex][iElem].resize(
-								 numberDofsPerElement * numberDofsPerElement, 0.0);
+            numberDofsPerElement * numberDofsPerElement, 0.0);
           unsigned int count = 0;
           for (unsigned int iNode = 0; iNode < numberDofsPerElement; ++iNode)
             {
@@ -392,43 +502,70 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::computeHamiltonianMatrix(
                    ++jNode)
                 {
 #ifdef USE_COMPLEX
- 		  d_cellHamiltonianMatrix[kpointSpinIndex][iElem][numberDofsPerElement*iNode + jNode].real(cellHamiltonianMatrix[totalLocallyOwnedCells*count +
-																 iElem]+0.5*d_cellShapeFunctionGradientIntegral[sizeNiNj*iElem + count]+kSquareTimesHalf*d_NiNjIntegral[sizeNiNj*iElem + count]);
+                  d_cellHamiltonianMatrix
+                    [kpointSpinIndex][iElem]
+                    [numberDofsPerElement * iNode + jNode]
+                      .real(
+                        cellHamiltonianMatrix[totalLocallyOwnedCells * count +
+                                              iElem] +
+                        0.5 *
+                          d_cellShapeFunctionGradientIntegral[sizeNiNj * iElem +
+                                                              count] +
+                        kSquareTimesHalf *
+                          d_NiNjIntegral[sizeNiNj * iElem + count]);
 
-		   d_cellHamiltonianMatrix[kpointSpinIndex][iElem]
-		    [numberDofsPerElement * iNode + jNode]
-		     .imag(elementHamiltonianMatrixImag[totalLocallyOwnedCells*count + iElem]);
+                  d_cellHamiltonianMatrix[kpointSpinIndex][iElem]
+                                         [numberDofsPerElement * iNode + jNode]
+                                           .imag(
+                                             elementHamiltonianMatrixImag
+                                               [totalLocallyOwnedCells * count +
+                                                iElem]);
 
 #else
                   d_cellHamiltonianMatrix
                     [kpointSpinIndex][iElem]
-                    [numberDofsPerElement * iNode + jNode] =cellHamiltonianMatrix[totalLocallyOwnedCells*count +
-		    iElem]+0.5*d_cellShapeFunctionGradientIntegral[sizeNiNj*iElem + count];
-		
+                    [numberDofsPerElement * iNode + jNode] =
+                      cellHamiltonianMatrix[totalLocallyOwnedCells * count +
+                                            iElem] +
+                      0.5 *
+                        d_cellShapeFunctionGradientIntegral[sizeNiNj * iElem +
+                                                            count];
+
 #endif
-		  count+=1;
+                  count += 1;
                 }
             }
 
           if (dftParameters::isPseudopotential ||
               dftParameters::smearedNuclearCharges)
-	    {
-	      unsigned int count = 0;
-	      for (unsigned int iNode = 0; iNode < numberDofsPerElement; ++iNode)
-		for (unsigned int jNode = iNode; jNode < numberDofsPerElement;
-		     ++jNode)
-		  {
+            {
+              unsigned int count = 0;
+              for (unsigned int iNode = 0; iNode < numberDofsPerElement;
+                   ++iNode)
+                for (unsigned int jNode = iNode; jNode < numberDofsPerElement;
+                     ++jNode)
+                  {
 #ifdef USE_COMPLEX
-		    d_cellHamiltonianMatrix[kpointSpinIndex][iElem][numberDofsPerElement*iNode + jNode] += dataTypes::number(d_cellHamiltonianMatrixExternalPotCorr[totalLocallyOwnedCells*count + iElem],0.0);
-		  
+                    d_cellHamiltonianMatrix[kpointSpinIndex][iElem]
+                                           [numberDofsPerElement * iNode +
+                                            jNode] +=
+                      dataTypes::number(
+                        d_cellHamiltonianMatrixExternalPotCorr
+                          [totalLocallyOwnedCells * count + iElem],
+                        0.0);
+
 #else
-		    d_cellHamiltonianMatrix[kpointSpinIndex][iElem][numberDofsPerElement*iNode + jNode] += d_cellHamiltonianMatrixExternalPotCorr[totalLocallyOwnedCells*count + iElem];
-		  
-		  
+                    d_cellHamiltonianMatrix[kpointSpinIndex][iElem]
+                                           [numberDofsPerElement * iNode +
+                                            jNode] +=
+                      d_cellHamiltonianMatrixExternalPotCorr
+                        [totalLocallyOwnedCells * count + iElem];
+
+
 #endif
-		    count += 1;
-		  }
-	    }
+                    count += 1;
+                  }
+            }
 
 #ifdef USE_COMPLEX
           for (unsigned int iNode = 0; iNode < numberDofsPerElement; ++iNode)
@@ -519,7 +656,9 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::computeKineticMatrix()
           for (unsigned int jNode = 0; jNode < numberDofsPerElement; ++jNode)
             {
               elementHamiltonianMatrix[numberDofsPerElement * iNode + jNode] =
-                d_cellShapeFunctionGradientIntegral[numberDofsPerElement*numberDofsPerElement*iElem + numberDofsPerElement*iNode + jNode];
+                d_cellShapeFunctionGradientIntegral
+                  [numberDofsPerElement * numberDofsPerElement * iElem +
+                   numberDofsPerElement * iNode + jNode];
 
             } // jNode loop
 
