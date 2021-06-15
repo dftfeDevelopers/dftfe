@@ -365,57 +365,6 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::computeHamiltonianMatrix(
 		}
 	    }//iNode
 	}
-      /*flag = 0;
-      for(unsigned int iNode = d_blockiNodeIndex[numberEntriesEachBlock*blockCount]; iNode < numberDofsPerElement; ++iNode)
-	{
-	  for(unsigned int jNode = d_blockjNodeIndex[numberEntriesEachBlock*blockCount+indexCount]; jNode < numberDofsPerElement; ++jNode)
-	    {
-	      dimCount = 0;
-	      for(unsigned int q_point = 0; q_point < numberQuadraturePoints; ++q_point)
-		{
-                   shapeGradRefINode[0] = d_shapeFunctionGradientValueRefTransX[numberQuadraturePoints*iNode + q_point];
-		   shapeGradRefINode[1] = d_shapeFunctionGradientValueRefTransY[numberQuadraturePoints*iNode + q_point];
-		   shapeGradRefINode[2] = d_shapeFunctionGradientValueRefTransZ[numberQuadraturePoints*iNode + q_point];
-		   double shapeJ = d_shapeFunctionData[numberDofsPerElement*q_point + jNode];
-	
-
-                   kPointTimesGradNiNj_currentBlock[9*numberQuadraturePoints*indexCount + 9*q_point + 0] = -kPointCoors[0]*shapeGradRefINode[0]*shapeJ;
-                   kPointTimesGradNiNj_currentBlock[9*numberQuadraturePoints*indexCount + 9*q_point + 1] = -kPointCoors[0]*shapeGradRefINode[1]*shapeJ;
-                   kPointTimesGradNiNj_currentBlock[9*numberQuadraturePoints*indexCount + 9*q_point + 2] = -kPointCoors[0]*shapeGradRefINode[2]*shapeJ;
-                   kPointTimesGradNiNj_currentBlock[9*numberQuadraturePoints*indexCount + 9*q_point + 3] = -kPointCoors[1]*shapeGradRefINode[0]*shapeJ;
-                   kPointTimesGradNiNj_currentBlock[9*numberQuadraturePoints*indexCount + 9*q_point + 4] = -kPointCoors[1]*shapeGradRefINode[1]*shapeJ; 
-                   kPointTimesGradNiNj_currentBlock[9*numberQuadraturePoints*indexCount + 9*q_point + 5] = -kPointCoors[1]*shapeGradRefINode[2]*shapeJ;
-                   kPointTimesGradNiNj_currentBlock[9*numberQuadraturePoints*indexCount + 9*q_point + 6] = -kPointCoors[2]*shapeGradRefINode[0]*shapeJ;
-                   kPointTimesGradNiNj_currentBlock[9*numberQuadraturePoints*indexCount + 9*q_point + 7] = -kPointCoors[2]*shapeGradRefINode[1]*shapeJ;
-                   kPointTimesGradNiNj_currentBlock[9*numberQuadraturePoints*indexCount + 9*q_point + 8] = -kPointCoors[2]*shapeGradRefINode[2]*shapeJ; 
-
-		}
-              indexCount += 1;
-	      if(indexCount%numberEntriesEachBlock == 0)
-		{
-		  	
-		  //dgemm
-		  dgemm_(&transA1,
-			 &transB,
-			 &totalLocallyOwnedCells,//M
-			 &numberEntriesEachBlock,//N
-			 &numberQuadraturePointsTimesNine,//K
-			 &alpha,
-			 &d_invJacJxW[0],
-			 &totalLocallyOwnedCells,
-			 &kPointTimesGradNiNj_currentBlock[0],
-			 &numberQuadraturePointsTimesNine,
-			 &beta,
-			 &elementHamiltonianMatrixImag[totalLocallyOwnedCells*numberEntriesEachBlock*blockCount],
-			 &totalLocallyOwnedCells);
-
-		  indexCount = 0;
-		  
-		  blockCount += 1;                    
-			  
-		}
-	    }//jNode
-	    }//iNode*/
     }
    gradNiNj_currentBlock.clear();
    std::vector<double>().swap(gradNiNj_currentBlock);
