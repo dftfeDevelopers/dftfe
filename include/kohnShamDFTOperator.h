@@ -376,7 +376,7 @@ node is stored
 
 
     std::vector<std::vector<dataTypes::number>> d_cellMassMatrix;
-    std::vector<std::vector<double>> d_cellHamiltonianMatrixExternalPotCorr;
+    std::vector<double> d_cellHamiltonianMatrixExternalPotCorr;
 
     /**
      * @brief implementation of matrix-vector product using cell-level stiffness matrices.
@@ -447,6 +447,10 @@ node is stored
 
     dealii::Table<2, dealii::VectorizedArray<double>> vEff;
     dealii::Table<2, dealii::VectorizedArray<double>> d_vEffExternalPotCorr;
+    std::vector<double>                               d_vEffExternalPotCorrJxW;
+    std::vector<double>                               d_vEffJxW;
+    std::vector<double>              d_invJacderExcWithSigmaTimesGradRhoJxW;
+    std::vector<std::vector<double>> d_invJacKPointTimesJxW;
     dealii::Table<2, dealii::Tensor<1, 3, dealii::VectorizedArray<double>>>
       derExcWithSigmaTimesGradRho;
 
@@ -457,14 +461,21 @@ node is stored
      * and second dimension storing the matrix of size numberNodesPerElement x
      * numberNodesPerElement in a flattened 1D dealii Vectorized array
      */
-    std::vector<dealii::AlignedVector<dealii::VectorizedArray<double>>>
-      d_cellShapeFunctionGradientIntegral;
+    std::vector<double> d_cellShapeFunctionGradientIntegral;
 
     /// storage for shapefunctions
     std::vector<double> d_shapeFunctionValue;
+    std::vector<double> d_blockiNodeIndex;
+    std::vector<double> d_blockjNodeIndex;
+    std::vector<double> d_shapeFunctionData;
+    std::vector<double> d_shapeFunctionLpspQuadData;
+    std::vector<double> d_shapeFunctionGradientValueRefX;
+    std::vector<double> d_shapeFunctionGradientValueRefY;
+    std::vector<double> d_shapeFunctionGradientValueRefZ;
 
     /// storage for shapefunctions
     std::vector<double> d_shapeFunctionValueLpspQuad;
+    std::vector<double> d_NiNjIntegral;
 
 
     /// storage for  matrix-free cell data
