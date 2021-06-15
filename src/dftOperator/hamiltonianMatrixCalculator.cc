@@ -55,7 +55,7 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::computeHamiltonianMatrix(
   const unsigned int numberNodesPerElementSquare = d_numberNodesPerElement*d_numberNodesPerElement;
   const unsigned int sizeNiNj = d_numberNodesPerElement*(d_numberNodesPerElement + 1)/2;
   const unsigned int fullSizeNiNj = d_numberNodesPerElement*d_numberNodesPerElement;
-  unsigned int numBlocks = (FEOrder+1)*(FEOrder+1);
+  unsigned int numBlocks = (FEOrder+1);
   unsigned int numberEntriesEachBlock = sizeNiNj/numBlocks;
   unsigned int count = 0;
   unsigned int blockCount = 0;
@@ -417,8 +417,8 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::computeHamiltonianMatrix(
 	    }//jNode
 	    }//iNode*/
     }
-  kPointTimesGradNiNj_currentBlock.clear();
-  std::vector<double>().swap(kPointTimesGradNiNj_currentBlock);
+   gradNiNj_currentBlock.clear();
+   std::vector<double>().swap(gradNiNj_currentBlock);
 #endif
 
   //
