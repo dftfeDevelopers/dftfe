@@ -23,7 +23,7 @@ libxcDir="/global/project/projectdirs/m1759/dsambit/softwaresDFTFE/libxc/install
 spglibDir="/global/project/projectdirs/m1759/dsambit/softwaresDFTFE/spglib/installGcc8.3.0"
 xmlIncludeDir="/usr/include/libxml2"
 xmlLibDir="/usr/lib64"
-ELPA_PATH="/global/project/projectdirs/m1759/dsambit/softwaresDFTFE/elpa/installGcc8.3Elpa2020.11"
+ELPA_PATH="/global/project/projectdirs/m1759/dsambit/softwaresDFTFE/elpa/installElpa2020.11.001"
 NCCL_PATH="/global/project/projectdirs/m1759/dsambit/softwaresDFTFE/nccl/build"
 
 #Toggle GPU compilation
