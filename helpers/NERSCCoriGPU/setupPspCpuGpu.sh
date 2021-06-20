@@ -12,11 +12,6 @@ fi
 # Path to project source
 SRC=`dirname $0` # location of source directory
 
-#PROJ=/ccs/proj/eng110
-
-#. $PROJ/setup-env.sh
-#. $PROJ/venvs/summit/bin/activate # for building docs
-
 ########################################################################
 #Provide paths below for external libraries, compiler options and flags,
 # and optimization flag
@@ -28,13 +23,13 @@ libxcDir="/global/project/projectdirs/m1759/dsambit/softwaresDFTFE/libxc/install
 spglibDir="/global/project/projectdirs/m1759/dsambit/softwaresDFTFE/spglib/installGcc8.3.0"
 xmlIncludeDir="/usr/include/libxml2"
 xmlLibDir="/usr/lib64"
-ELPA_PATH="/global/project/projectdirs/m1759/dsambit/softwaresDFTFE/elpa/installGcc8.3Elpa2020.11"
+ELPA_PATH="/global/project/projectdirs/m1759/dsambit/softwaresDFTFE/elpa/installElpa2020.11.001"
 NCCL_PATH="/global/project/projectdirs/m1759/dsambit/softwaresDFTFE/nccl/build"
 
 #Toggle GPU compilation
 withGPU=ON
 
-#Option to link to NCCL library
+#Option to link to NCCL library (Only for GPU compilation)
 withNCCL=ON
 
 #Compiler options and flags
@@ -49,7 +44,7 @@ withHigherQuadPSP=OFF
 # build type: "Release" or "Debug"
 build_type=Release
 testing=OFF
-minimal_compile=ON
+minimal_compile=OFF
 ###########################################################################
 #Usually, no changes are needed below this line
 #
