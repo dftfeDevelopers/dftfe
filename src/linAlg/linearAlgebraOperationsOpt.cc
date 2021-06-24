@@ -690,7 +690,7 @@ namespace dftfe
                     overlapMatPar.local_m() * overlapMatPar.local_n(),
                   T(0.0));
 
-      // SConj=XConj*X^{T}.
+      // SConj=X^{T}*XConj.
       if (!(dftParameters::useMixedPrecCGS_O && useMixedPrec))
         {
           computing_timer.enter_section("Compute overlap matrix");
@@ -1216,7 +1216,7 @@ namespace dftfe
                     overlapMatPar.local_m() * overlapMatPar.local_n(),
                   T(0.0));
 
-      // SConj=XConj*X^{T}
+      // SConj=X^{T}*XConj
       if (!(dftParameters::useMixedPrecCGS_O && useMixedPrec))
         {
           computing_timer.enter_section("Fill overlap matrix");
