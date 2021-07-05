@@ -1,4 +1,3 @@
-set H REFINED ELECTROSTATICS=true
 subsection Geometry
   set NATOMS=2
   set NATOM TYPES=1
@@ -15,13 +14,6 @@ subsection Boundary conditions
   set PERIODIC3                       = false
 end
 
-subsection Finite element mesh parameters
-  set POLYNOMIAL ORDER=4
-  subsection Auto mesh generation parameters
-    set AUTO USER MESH PARAMS = true
-    set MESH SIZE AROUND ATOM  = 0.5
-  end
-end
 
 subsection DFT functional parameters
   set EXCHANGE CORRELATION TYPE   = 4
@@ -30,10 +22,20 @@ subsection DFT functional parameters
 end
 
 subsection SCF parameters
+  set MIXING PARAMETER                 = 0.5
+  set MAXIMUM ITERATIONS               = 40
   set TEMPERATURE                      = 500
   set TOLERANCE                        = 5e-5
-  set STARTING WFC                     = ATOMIC
   subsection Eigen-solver parameters
-      set NUMBER OF KOHN-SHAM WAVEFUNCTIONS = 20
+      set NUMBER OF KOHN-SHAM WAVEFUNCTIONS = 15
   end
 end
+
+subsection Finite element mesh parameters
+  set POLYNOMIAL ORDER=6
+  subsection Auto mesh generation parameters
+    set ATOM BALL RADIUS = 3
+    set MESH SIZE AROUND ATOM  = 1.0
+  end
+end
+
