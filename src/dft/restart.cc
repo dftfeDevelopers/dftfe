@@ -436,7 +436,7 @@ void
 dftClass<FEOrder, FEOrderElectro>::writeDomainAndAtomCoordinates()
 {
   dftUtils::writeDataIntoFile(d_domainBoundingVectors,
-                              "domainBoundingVectors.chk");
+                              "domainBoundingVectorsCurrent.chk");
 
   std::vector<std::vector<double>> atomLocationsFractionalCurrent;
   if (dftParameters::periodicX || dftParameters::periodicY ||
