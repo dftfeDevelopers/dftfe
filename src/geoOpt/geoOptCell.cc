@@ -310,6 +310,8 @@ namespace dftfe
             pcout
               << "-----------------------------------------------------------------------------------"
               << std::endl;
+
+            dftPtr->writeDomainAndAtomCoordinates();
           }
         else if (cgReturn == nonLinearSolver::MAX_ITER_REACHED)
           {
