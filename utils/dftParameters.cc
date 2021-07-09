@@ -1409,7 +1409,7 @@ namespace dftfe
                 "atomsCartCoordAutomesh.chk";
 
           dftParameters::domainBoundingVectorsFile =
-            "domainBoundingVectors.chk";
+            "domainBoundingVectorsCurrent.chk";
 
           if (!dftParameters::floatingNuclearCharges)
             dftParameters::coordinatesGaussianDispFile =
