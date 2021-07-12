@@ -1598,9 +1598,6 @@ namespace dftfe
           }
         else if (dftParameters::isIonOpt && dftParameters::isCellOpt)
           {
-            d_atomLocationsInitial = atomLocations;
-            d_freeEnergyInitial    = d_freeEnergy;
-
             // staggered ion and cell relaxation
 
             int ionGeoUpdates  = 100;
@@ -1614,12 +1611,18 @@ namespace dftfe
                     << "----------Staggered ionic and cell relaxation cycle no: "
                     << cycle << " start---------" << std::endl;
 
+                initBoundaryConditions(true);
+                noRemeshRhoDataInit();
                 solve(true, false);
 
                 // relax ion positions
+                d_atomLocationsInitial = atomLocations;
+                d_freeEnergyInitial    = d_freeEnergy;
                 geoOptIonPtr->init();
                 ionGeoUpdates = geoOptIonPtr->run();
 
+                initBoundaryConditions(true);
+                noRemeshRhoDataInit();
                 solve(false, true);
 
                 // relax cell
