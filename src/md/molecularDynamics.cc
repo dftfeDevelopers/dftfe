@@ -352,7 +352,10 @@ namespace dftfe
 
     if (restartFlag == 0)
       {
-        dftPtr->solve(true, false, dftPtr->d_isRestartGroundStateCalcFromChk);
+        dftPtr->solve(true,
+                      false,
+                      false,
+                      dftPtr->d_isRestartGroundStateCalcFromChk);
         dftPtr->d_isRestartGroundStateCalcFromChk = false;
         const std::vector<double> forceOnAtoms =
           dftPtr->forcePtr->getAtomsForces();
@@ -1038,7 +1041,7 @@ namespace dftfe
                       dftParameters::xlbomdRestartChebyTol;
                   }
 
-                dftPtr->solve(true, true, false);
+                dftPtr->solve(true, false, true, false);
 
                 // Finite difference check for shadow potential forces
                 if (false)
@@ -1089,7 +1092,7 @@ namespace dftfe
 
                     dftPtr->normalizeRhoInQuadValues();
 
-                    dftPtr->solve(true, true, false);
+                    dftPtr->solve(true, false, true, false);
 
                     for (int iCharge = 0; iCharge < numberGlobalCharges;
                          ++iCharge)
@@ -1137,7 +1140,7 @@ namespace dftfe
 
                     dftPtr->normalizeRhoInQuadValues();
 
-                    dftPtr->solve(true, true, false);
+                    dftPtr->solve(true, false, true, false);
                   }
 
 
@@ -1288,7 +1291,7 @@ namespace dftfe
                               useDensityMatrixPerturbationRankUpdates)
                           dftPtr->computeDensityPerturbation();
                         else
-                          dftPtr->solve(false, true, false);
+                          dftPtr->solve(false, false, true, false);
 
                         if (dftParameters::verbosity >= 1)
                           pcout
@@ -1363,7 +1366,7 @@ namespace dftfe
                               useDensityMatrixPerturbationRankUpdates)
                           dftPtr->computeDensityPerturbation();
                         else
-                          dftPtr->solve(false, true, false);
+                          dftPtr->solve(false, false, true, false);
 
                         if (dftParameters::verbosity >= 1)
                           pcout

@@ -55,8 +55,9 @@ namespace dftfe
      * The Polak–Ribière nonlinear CG solver with secant based line search
      * is used for the stress relaxation.
      *
+     * @return int total geometry update calls
      */
-    void
+    int
     run();
 
     /**
@@ -93,7 +94,7 @@ namespace dftfe
      */
     void
     update(const std::vector<double> &solution,
-           const bool                 computeForces      = true,
+           const bool                 computeStress      = true,
            const bool useSingleAtomSolutionsInitialGuess = false);
 
     /**

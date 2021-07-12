@@ -110,7 +110,7 @@ namespace dftfe
   }
 
   template <unsigned int FEOrder, unsigned int FEOrderElectro>
-  void
+  int
   geoOptIon<FEOrder, FEOrderElectro>::run()
   {
     const double tol = dftParameters::forceRelaxTol; //(units: Hatree/Bohr)
@@ -281,6 +281,8 @@ namespace dftfe
             pcout << " ...Maximum iterations reached " << std::endl;
           }
       }
+
+    return d_totalUpdateCalls;
   }
 
 
@@ -409,7 +411,7 @@ namespace dftfe
       else if(d_maximumAtomForceToBeRelaxed >= 1e-05)
       dftParameters::selfConsistentSolverTolerance = 5e-06;*/
 
-    dftPtr->solve(computeForces);
+    dftPtr->solve(computeForces, false);
   }
 
   template <unsigned int FEOrder, unsigned int FEOrderElectro>

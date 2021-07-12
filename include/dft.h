@@ -179,6 +179,7 @@ namespace dftfe
      */
     void
     solve(const bool computeForces                 = true,
+          const bool computeStress                 = true,
           const bool solveLinearizedKS             = false,
           const bool restartGroundStateCalcFromChk = false);
 

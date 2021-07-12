@@ -56,8 +56,9 @@ namespace dftfe
      * with secant based line search. In future releases, we will have more
      * options like BFGS solver.
      *
+     * @return int total geometry update calls
      */
-    void
+    int
     run();
 
     /**

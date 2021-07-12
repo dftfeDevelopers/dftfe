@@ -189,7 +189,7 @@ namespace dftfe
   }
 
   template <unsigned int FEOrder, unsigned int FEOrderElectro>
-  void
+  int
   geoOptCell<FEOrder, FEOrderElectro>::run()
   {
     const double tol = dftParameters::stressRelaxTol * dftPtr->d_domainVolume;
@@ -322,6 +322,8 @@ namespace dftfe
             pcout << " ...Cell stress relaxation failed " << std::endl;
           }
       }
+
+    return d_totalUpdateCalls;
   }
 
 
@@ -386,7 +388,7 @@ namespace dftfe
   void
   geoOptCell<FEOrder, FEOrderElectro>::update(
     const std::vector<double> &solution,
-    const bool                 computeForces,
+    const bool                 computeStress,
     const bool                 useSingleAtomSolutionsInitialGuess)
   {
     std::vector<double> bcastSolution(solution.size());
@@ -455,15 +457,7 @@ namespace dftfe
     dftPtr->deformDomain(deformationGradient);
 
 
-    dftPtr->solve(computeForces);
-
-    // if ion optimization is on, then for every cell relaxation also relax the
-    // atomic forces
-    if (dftParameters::isIonOpt)
-      {
-        dftPtr->geoOptIonPtr->init();
-        dftPtr->geoOptIonPtr->run();
-      }
+    dftPtr->solve(false, computeStress);
   }
 
   template <unsigned int FEOrder, unsigned int FEOrderElectro>

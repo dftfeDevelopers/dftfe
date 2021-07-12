@@ -1576,7 +1576,7 @@ namespace dftfe
         if (!(dftParameters::chkType == 1 && dftParameters::restartFromChk &&
               dftParameters::ionOptSolver == "CGPRP"))
           {
-            solve(true, false, d_isRestartGroundStateCalcFromChk);
+            solve(true, true, false, d_isRestartGroundStateCalcFromChk);
           }
 
         d_isRestartGroundStateCalcFromChk = false;
@@ -1601,14 +1601,45 @@ namespace dftfe
             d_atomLocationsInitial = atomLocations;
             d_freeEnergyInitial    = d_freeEnergy;
 
-            // first relax ion positions in the starting cell configuration
-            geoOptIonPtr->init();
-            geoOptIonPtr->run();
+            // staggered ion and cell relaxation
 
-            // start cell relaxation, where for each cell relaxation update the
-            // ion positions are again relaxed
-            geoOptCellPtr->init();
-            geoOptCellPtr->run();
+            int ionGeoUpdates  = 100;
+            int cellGeoUpdates = 100;
+            int cycle          = 0;
+            while (ionGeoUpdates > 0 && cellGeoUpdates > 0)
+              {
+                if (dftParameters::verbosity >= 1)
+                  pcout
+                    << std::endl
+                    << "----------Staggered ionic and cell relaxation cycle no: "
+                    << cycle << " start---------" << std::endl;
+
+                solve(true, false);
+
+                // relax ion positions
+                geoOptIonPtr->init();
+                ionGeoUpdates = geoOptIonPtr->run();
+
+                solve(false, true);
+
+                // relax cell
+                geoOptCellPtr->init();
+                cellGeoUpdates = geoOptCellPtr->run();
+
+                if (dftParameters::verbosity >= 1)
+                  pcout
+                    << std::endl
+                    << "----------Staggered ionic and cell relaxation cycle no: "
+                    << cycle << " end-----------" << std::endl;
+
+                cycle++;
+              }
+
+            if (dftParameters::verbosity >= 1)
+              pcout
+                << std::endl
+                << "--------- Staggered ionic and cell relaxation cycle completed in "
+                << cycle << " cycles-------" << std::endl;
           }
       }
 
@@ -2016,6 +2047,7 @@ namespace dftfe
   void
   dftClass<FEOrder, FEOrderElectro>::solve(
     const bool computeForces,
+    const bool computeStress,
     const bool solveLinearizedKS,
     const bool isRestartGroundStateCalcFromChk)
   {
@@ -3622,7 +3654,7 @@ namespace dftfe
 
         computing_timer.enter_section("Cell stress computation");
         computingTimerStandard.enter_section("Cell stress computation");
-        if (computeForces)
+        if (computeStress)
           {
             if (dftParameters::isPseudopotential ||
                 dftParameters::smearedNuclearCharges)
