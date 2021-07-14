@@ -1611,17 +1611,14 @@ namespace dftfe
                     << "----------Staggered ionic and cell relaxation cycle no: "
                     << cycle << " start---------" << std::endl;
 
-                initBoundaryConditions(true);
-                noRemeshRhoDataInit();
-                solve(true, false);
-
                 // relax ion positions
                 d_atomLocationsInitial = atomLocations;
                 d_freeEnergyInitial    = d_freeEnergy;
                 geoOptIonPtr->init();
                 ionGeoUpdates = geoOptIonPtr->run();
 
-                initBoundaryConditions(true);
+                // redo trivial solve to compute current stress
+                initBoundaryConditions(false);
                 noRemeshRhoDataInit();
                 solve(false, true);
 
@@ -3574,10 +3571,10 @@ namespace dftfe
             << dftParameters::selfConsistentSolverTolerance
             << ", recommended to use TOLERANCE below 1e-4." << std::endl;
 
-        computing_timer.enter_section("Ion force computation");
-        computingTimerStandard.enter_section("Ion force computation");
         if (computeForces)
           {
+            computing_timer.enter_section("Ion force computation");
+            computingTimerStandard.enter_section("Ion force computation");
             if (dftParameters::isBOMD && dftParameters::isXLBOMD &&
                 solveLinearizedKS)
               forcePtr->computeAtomsForces(matrix_free_data,
@@ -3641,9 +3638,9 @@ namespace dftfe
                                            *gradRhoOutValues,
                                            d_phiTotRhoIn);
             forcePtr->printAtomsForces();
+            computingTimerStandard.exit_section("Ion force computation");
+            computing_timer.exit_section("Ion force computation");
           }
-        computingTimerStandard.exit_section("Ion force computation");
-        computing_timer.exit_section("Ion force computation");
       }
 
     if (dftParameters::isCellStress)
@@ -3655,10 +3652,11 @@ namespace dftfe
             << dftParameters::selfConsistentSolverTolerance
             << ", recommended to use TOLERANCE below 1e-4." << std::endl;
 
-        computing_timer.enter_section("Cell stress computation");
-        computingTimerStandard.enter_section("Cell stress computation");
         if (computeStress)
           {
+            computing_timer.enter_section("Cell stress computation");
+            computingTimerStandard.enter_section("Cell stress computation");
+
             if (dftParameters::isPseudopotential ||
                 dftParameters::smearedNuclearCharges)
               {
@@ -3696,9 +3694,9 @@ namespace dftfe
                                     d_constraintsPRefined,
                                     d_vselfBinsManager);
             forcePtr->printStress();
+            computingTimerStandard.exit_section("Cell stress computation");
+            computing_timer.exit_section("Cell stress computation");
           }
-        computingTimerStandard.exit_section("Cell stress computation");
-        computing_timer.exit_section("Cell stress computation");
       }
 
     if (dftParameters::electrostaticsHRefinement)

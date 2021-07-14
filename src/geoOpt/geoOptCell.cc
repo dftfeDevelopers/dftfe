@@ -457,7 +457,7 @@ namespace dftfe
     dftPtr->deformDomain(deformationGradient);
 
 
-    dftPtr->solve(false, computeStress);
+    dftPtr->solve(true, computeStress);
   }
 
   template <unsigned int FEOrder, unsigned int FEOrderElectro>
