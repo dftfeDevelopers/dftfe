@@ -1611,18 +1611,21 @@ namespace dftfe
                     << "----------Staggered ionic and cell relaxation cycle no: "
                     << cycle << " start---------" << std::endl;
 
-                // relax ion positions
+                // relax ionic forces. Current forces are assumed
+                // to be already computed
                 d_atomLocationsInitial = atomLocations;
                 d_freeEnergyInitial    = d_freeEnergy;
                 geoOptIonPtr->init();
                 ionGeoUpdates = geoOptIonPtr->run();
 
                 // redo trivial solve to compute current stress
+                // as stress is not computed during ionic relaxation
+                // for efficiency gains
                 initBoundaryConditions(false);
                 noRemeshRhoDataInit();
                 solve(false, true);
 
-                // relax cell
+                // relax cell stress
                 geoOptCellPtr->init();
                 cellGeoUpdates = geoOptCellPtr->run();
 
