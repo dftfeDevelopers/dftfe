@@ -100,8 +100,8 @@ namespace internal
             else if (fracCoord[i] > 1.0 + tol)
               fracCoord[i] -= 1.0;
 
-            if (Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0)
-              std::cout << fracCoord[i] << " ";
+            //if (Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0)
+            //  std::cout << fracCoord[i] << " ";
 
             AssertThrow(
               fracCoord[i] > -2.0 * tol && fracCoord[i] < 1.0 + 2.0 * tol,
