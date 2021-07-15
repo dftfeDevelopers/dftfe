@@ -1219,7 +1219,7 @@ namespace dftfe
       // SConj=X^{T}*XConj
       if (!(dftParameters::useMixedPrecCGS_O && useMixedPrec))
         {
-          computing_timer.enter_section("Fill overlap matrix");
+          computing_timer.enter_section("Compute overlap matrix");
           internal::fillParallelOverlapMatrix(&X[0],
                                               X.size(),
                                               numberWaveFunctions,
@@ -1227,11 +1227,10 @@ namespace dftfe
                                               interBandGroupComm,
                                               mpiComm,
                                               overlapMatPar);
-          computing_timer.exit_section("Fill overlap matrix");
+          computing_timer.exit_section("Compute overlap matrix");
         }
       else
         {
-          computing_timer.enter_section("Fill overlap matrix mixed prec");
           computing_timer.enter_section("Compute overlap matrix mixed prec");
           if (std::is_same<T, std::complex<double>>::value)
             internal::fillParallelOverlapMatrixMixedPrec<T,
@@ -1253,7 +1252,6 @@ namespace dftfe
               mpiComm,
               overlapMatPar);
           computing_timer.exit_section("Compute overlap matrix mixed prec");
-          computing_timer.exit_section("Fill overlap matrix mixed prec");
         }
 
         // Sc=Lc*L^{T}
