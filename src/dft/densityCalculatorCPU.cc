@@ -312,8 +312,6 @@ namespace dftfe
                                          iWave];
 
 
-                    flattenedArrayBlock.update_ghost_values();
-
                     (operatorMatrix.getOverloadedConstraintMatrix())
                       ->distribute(flattenedArrayBlock, currentBlockSize);
 
@@ -517,8 +515,6 @@ namespace dftfe
                           flattenedArrayBlock.local_element(
                             iNode * currentBlockSize + iWave) =
                             XFracCurrentKPoint[iNode * Nfr + jvec + iWave];
-
-                      flattenedArrayBlock.update_ghost_values();
 
                       (operatorMatrix.getOverloadedConstraintMatrix())
                         ->distribute(flattenedArrayBlock, currentBlockSize);
