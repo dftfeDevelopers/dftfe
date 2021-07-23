@@ -192,12 +192,12 @@ namespace dftfe
   int
   geoOptCell<FEOrder, FEOrderElectro>::run()
   {
-    const double tol = dftParameters::stressRelaxTol * dftPtr->d_domainVolume;
+    const double tol = dftParameters::stressRelaxTol;
     const unsigned int maxIter = 100;
     const double       lineSearchTol =
       tol * 2.0; // Dummy parameter for CGPRP, the actual stopping criteria are
                  // the Wolfe conditions and maxLineSearchIter
-    const double       lineSearchDampingParameter = 0.1;
+    const double       lineSearchDampingParameter = 0.5;
     const unsigned int maxLineSearchIter =
       dftParameters::maxLineSearchIterCGPRP;
     const unsigned int debugLevel =
@@ -342,7 +342,7 @@ namespace dftfe
   {
     // AssertThrow(false,dftUtils::ExcNotImplementedYet());
     functionValue.clear();
-    functionValue.push_back(dftPtr->d_freeEnergy);
+    functionValue.push_back(dftPtr->d_freeEnergy/dftPtr->d_domainVolume);
   }
 
   template <unsigned int FEOrder, unsigned int FEOrderElectro>
@@ -351,7 +351,7 @@ namespace dftfe
   {
     gradient.clear();
     const Tensor<2, 3, double> tempGradient =
-      dftPtr->forcePtr->getStress() * dftPtr->d_domainVolume;
+      dftPtr->forcePtr->getStress();
 
     if (d_relaxationFlags[0] == 1)
       gradient.push_back(tempGradient[0][0]);
