@@ -3079,12 +3079,13 @@ namespace dftfe
           {
             pcout << std::endl
                   << "number of electrons: " << integralRhoValue << std::endl;
-            if (dftParameters::spinPolarized == 1)
-              pcout << std::endl
-                    << "net magnetization: "
-                    << totalMagnetization(rhoOutValuesSpinPolarized)
-                    << std::endl;
           }
+
+        if (dftParameters::verbosity >= 1 && dftParameters::spinPolarized == 1)
+          pcout << std::endl
+                << "net magnetization: "
+                << totalMagnetization(rhoOutValuesSpinPolarized) << std::endl;
+
         //
         // phiTot with rhoOut
         //
