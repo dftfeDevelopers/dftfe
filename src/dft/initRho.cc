@@ -314,256 +314,259 @@ dftClass<FEOrder, FEOrderElectro>::initRho()
         dftParameters::xcFamilyType == "GGA");
       normalizeRhoInQuadValues();
     }
-  // else
-  {
-    // loop over elements
-    typename DoFHandler<3>::active_cell_iterator cell =
-                                                   dofHandler.begin_active(),
-                                                 endc = dofHandler.end();
-    for (; cell != endc; ++cell)
-      {
-        if (cell->is_locally_owned())
-          {
-            fe_values.reinit(cell);
-            (*rhoInValues)[cell->id()] = std::vector<double>(n_q_points);
-            double *rhoInValuesPtr     = &((*rhoInValues)[cell->id()][0]);
+  else
+    {
+      // loop over elements
+      typename DoFHandler<3>::active_cell_iterator cell =
+                                                     dofHandler.begin_active(),
+                                                   endc = dofHandler.end();
+      for (; cell != endc; ++cell)
+        {
+          if (cell->is_locally_owned())
+            {
+              fe_values.reinit(cell);
+              (*rhoInValues)[cell->id()] = std::vector<double>(n_q_points);
+              double *rhoInValuesPtr     = &((*rhoInValues)[cell->id()][0]);
 
-            double *rhoInValuesSpinPolarizedPtr;
-            if (dftParameters::spinPolarized == 1)
-              {
-                (*rhoInValuesSpinPolarized)[cell->id()] =
-                  std::vector<double>(2 * n_q_points);
-                rhoInValuesSpinPolarizedPtr =
-                  &((*rhoInValuesSpinPolarized)[cell->id()][0]);
-              }
-            for (unsigned int q = 0; q < n_q_points; ++q)
-              {
-                const Point<3> &quadPoint = fe_values.quadrature_point(q);
-                double          rhoValueAtQuadPt = 0.0;
+              double *rhoInValuesSpinPolarizedPtr;
+              if (dftParameters::spinPolarized == 1)
+                {
+                  (*rhoInValuesSpinPolarized)[cell->id()] =
+                    std::vector<double>(2 * n_q_points);
+                  rhoInValuesSpinPolarizedPtr =
+                    &((*rhoInValuesSpinPolarized)[cell->id()][0]);
+                }
+              for (unsigned int q = 0; q < n_q_points; ++q)
+                {
+                  const Point<3> &quadPoint = fe_values.quadrature_point(q);
+                  double          rhoValueAtQuadPt = 0.0;
 
-                // loop over atoms
-                for (unsigned int n = 0; n < atomLocations.size(); n++)
-                  {
-                    Point<3> atom(atomLocations[n][2],
-                                  atomLocations[n][3],
-                                  atomLocations[n][4]);
-                    double   distanceToAtom = quadPoint.distance(atom);
-                    if (distanceToAtom <=
-                        outerMostPointDen[atomLocations[n][0]])
-                      {
-                        rhoValueAtQuadPt +=
-                          alglib::spline1dcalc(denSpline[atomLocations[n][0]],
-                                               distanceToAtom);
-                      }
-                    else
-                      {
-                        rhoValueAtQuadPt += 0.0;
-                      }
-                  }
+                  // loop over atoms
+                  for (unsigned int n = 0; n < atomLocations.size(); n++)
+                    {
+                      Point<3> atom(atomLocations[n][2],
+                                    atomLocations[n][3],
+                                    atomLocations[n][4]);
+                      double   distanceToAtom = quadPoint.distance(atom);
+                      if (distanceToAtom <=
+                          outerMostPointDen[atomLocations[n][0]])
+                        {
+                          rhoValueAtQuadPt +=
+                            alglib::spline1dcalc(denSpline[atomLocations[n][0]],
+                                                 distanceToAtom);
+                        }
+                      else
+                        {
+                          rhoValueAtQuadPt += 0.0;
+                        }
+                    }
 
-                // loop over image charges
-                for (int iImageCharge = 0; iImageCharge < numberImageCharges;
-                     ++iImageCharge)
-                  {
-                    Point<3> imageAtom(d_imagePositionsTrunc[iImageCharge][0],
-                                       d_imagePositionsTrunc[iImageCharge][1],
-                                       d_imagePositionsTrunc[iImageCharge][2]);
-                    double   distanceToAtom = quadPoint.distance(imageAtom);
-                    int      masterAtomId   = d_imageIdsTrunc[iImageCharge];
-                    if (
-                      distanceToAtom <=
-                      outerMostPointDen
-                        [atomLocations
-                           [masterAtomId]
-                           [0]]) // outerMostPointPseudo[atomLocations[masterAtomId][0]])
-                      {
-                        rhoValueAtQuadPt += alglib::spline1dcalc(
-                          denSpline[atomLocations[masterAtomId][0]],
-                          distanceToAtom);
-                      }
-                  }
+                  // loop over image charges
+                  for (int iImageCharge = 0; iImageCharge < numberImageCharges;
+                       ++iImageCharge)
+                    {
+                      Point<3> imageAtom(
+                        d_imagePositionsTrunc[iImageCharge][0],
+                        d_imagePositionsTrunc[iImageCharge][1],
+                        d_imagePositionsTrunc[iImageCharge][2]);
+                      double distanceToAtom = quadPoint.distance(imageAtom);
+                      int    masterAtomId   = d_imageIdsTrunc[iImageCharge];
+                      if (
+                        distanceToAtom <=
+                        outerMostPointDen
+                          [atomLocations
+                             [masterAtomId]
+                             [0]]) // outerMostPointPseudo[atomLocations[masterAtomId][0]])
+                        {
+                          rhoValueAtQuadPt += alglib::spline1dcalc(
+                            denSpline[atomLocations[masterAtomId][0]],
+                            distanceToAtom);
+                        }
+                    }
 
-                rhoInValuesPtr[q] = std::abs(rhoValueAtQuadPt);
-                if (dftParameters::spinPolarized == 1)
-                  {
-                    rhoInValuesSpinPolarizedPtr[2 * q + 1] =
-                      (0.5 + dftParameters::start_magnetization) *
-                      (std::abs(rhoValueAtQuadPt));
-                    rhoInValuesSpinPolarizedPtr[2 * q] =
-                      (0.5 - dftParameters::start_magnetization) *
-                      (std::abs(rhoValueAtQuadPt));
-                  }
-              }
-          }
-      }
+                  rhoInValuesPtr[q] = std::abs(rhoValueAtQuadPt);
+                  if (dftParameters::spinPolarized == 1)
+                    {
+                      rhoInValuesSpinPolarizedPtr[2 * q + 1] =
+                        (0.5 + dftParameters::start_magnetization) *
+                        (std::abs(rhoValueAtQuadPt));
+                      rhoInValuesSpinPolarizedPtr[2 * q] =
+                        (0.5 - dftParameters::start_magnetization) *
+                        (std::abs(rhoValueAtQuadPt));
+                    }
+                }
+            }
+        }
 
 
-    // loop over elements
-    if (dftParameters::xcFamilyType == "GGA")
-      {
-        //
-        cell = dofHandler.begin_active();
-        for (; cell != endc; ++cell)
-          {
-            if (cell->is_locally_owned())
-              {
-                fe_values.reinit(cell);
+      // loop over elements
+      if (dftParameters::xcFamilyType == "GGA")
+        {
+          //
+          cell = dofHandler.begin_active();
+          for (; cell != endc; ++cell)
+            {
+              if (cell->is_locally_owned())
+                {
+                  fe_values.reinit(cell);
 
-                (*gradRhoInValues)[cell->id()] =
-                  std::vector<double>(3 * n_q_points, 0.0);
-                double *gradRhoInValuesPtr =
-                  &((*gradRhoInValues)[cell->id()][0]);
+                  (*gradRhoInValues)[cell->id()] =
+                    std::vector<double>(3 * n_q_points, 0.0);
+                  double *gradRhoInValuesPtr =
+                    &((*gradRhoInValues)[cell->id()][0]);
 
-                double *gradRhoInValuesSpinPolarizedPtr;
-                if (dftParameters::spinPolarized == 1)
-                  {
-                    (*gradRhoInValuesSpinPolarized)[cell->id()] =
-                      std::vector<double>(6 * n_q_points, 0.0);
-                    gradRhoInValuesSpinPolarizedPtr =
-                      &((*gradRhoInValuesSpinPolarized)[cell->id()][0]);
-                  }
-                for (unsigned int q = 0; q < n_q_points; ++q)
-                  {
-                    const Point<3> &quadPoint = fe_values.quadrature_point(q);
-                    double          gradRhoXValueAtQuadPt = 0.0;
-                    double          gradRhoYValueAtQuadPt = 0.0;
-                    double          gradRhoZValueAtQuadPt = 0.0;
-                    // loop over atoms
-                    for (unsigned int n = 0; n < atomLocations.size(); n++)
-                      {
-                        Point<3> atom(atomLocations[n][2],
-                                      atomLocations[n][3],
-                                      atomLocations[n][4]);
-                        double   distanceToAtom = quadPoint.distance(atom);
+                  double *gradRhoInValuesSpinPolarizedPtr;
+                  if (dftParameters::spinPolarized == 1)
+                    {
+                      (*gradRhoInValuesSpinPolarized)[cell->id()] =
+                        std::vector<double>(6 * n_q_points, 0.0);
+                      gradRhoInValuesSpinPolarizedPtr =
+                        &((*gradRhoInValuesSpinPolarized)[cell->id()][0]);
+                    }
+                  for (unsigned int q = 0; q < n_q_points; ++q)
+                    {
+                      const Point<3> &quadPoint = fe_values.quadrature_point(q);
+                      double          gradRhoXValueAtQuadPt = 0.0;
+                      double          gradRhoYValueAtQuadPt = 0.0;
+                      double          gradRhoZValueAtQuadPt = 0.0;
+                      // loop over atoms
+                      for (unsigned int n = 0; n < atomLocations.size(); n++)
+                        {
+                          Point<3> atom(atomLocations[n][2],
+                                        atomLocations[n][3],
+                                        atomLocations[n][4]);
+                          double   distanceToAtom = quadPoint.distance(atom);
 
-                        if (dftParameters::floatingNuclearCharges &&
-                            distanceToAtom < 1.0e-3)
-                          continue;
+                          if (dftParameters::floatingNuclearCharges &&
+                              distanceToAtom < 1.0e-3)
+                            continue;
 
-                        if (distanceToAtom <=
-                            outerMostPointDen[atomLocations[n][0]])
-                          {
-                            // rhoValueAtQuadPt+=alglib::spline1dcalc(denSpline[atomLocations[n][0]],
-                            // distanceToAtom);
-                            double value, radialDensityFirstDerivative,
-                              radialDensitySecondDerivative;
-                            alglib::spline1ddiff(denSpline[atomLocations[n][0]],
-                                                 distanceToAtom,
-                                                 value,
-                                                 radialDensityFirstDerivative,
-                                                 radialDensitySecondDerivative);
+                          if (distanceToAtom <=
+                              outerMostPointDen[atomLocations[n][0]])
+                            {
+                              // rhoValueAtQuadPt+=alglib::spline1dcalc(denSpline[atomLocations[n][0]],
+                              // distanceToAtom);
+                              double value, radialDensityFirstDerivative,
+                                radialDensitySecondDerivative;
+                              alglib::spline1ddiff(
+                                denSpline[atomLocations[n][0]],
+                                distanceToAtom,
+                                value,
+                                radialDensityFirstDerivative,
+                                radialDensitySecondDerivative);
 
-                            gradRhoXValueAtQuadPt +=
-                              radialDensityFirstDerivative *
-                              ((quadPoint[0] - atomLocations[n][2]) /
-                               distanceToAtom);
-                            gradRhoYValueAtQuadPt +=
-                              radialDensityFirstDerivative *
-                              ((quadPoint[1] - atomLocations[n][3]) /
-                               distanceToAtom);
-                            gradRhoZValueAtQuadPt +=
-                              radialDensityFirstDerivative *
-                              ((quadPoint[2] - atomLocations[n][4]) /
-                               distanceToAtom);
-                          }
-                      }
+                              gradRhoXValueAtQuadPt +=
+                                radialDensityFirstDerivative *
+                                ((quadPoint[0] - atomLocations[n][2]) /
+                                 distanceToAtom);
+                              gradRhoYValueAtQuadPt +=
+                                radialDensityFirstDerivative *
+                                ((quadPoint[1] - atomLocations[n][3]) /
+                                 distanceToAtom);
+                              gradRhoZValueAtQuadPt +=
+                                radialDensityFirstDerivative *
+                                ((quadPoint[2] - atomLocations[n][4]) /
+                                 distanceToAtom);
+                            }
+                        }
 
-                    for (int iImageCharge = 0;
-                         iImageCharge < numberImageCharges;
-                         ++iImageCharge)
-                      {
-                        Point<3> imageAtom(
-                          d_imagePositionsTrunc[iImageCharge][0],
-                          d_imagePositionsTrunc[iImageCharge][1],
-                          d_imagePositionsTrunc[iImageCharge][2]);
-                        double distanceToAtom = quadPoint.distance(imageAtom);
+                      for (int iImageCharge = 0;
+                           iImageCharge < numberImageCharges;
+                           ++iImageCharge)
+                        {
+                          Point<3> imageAtom(
+                            d_imagePositionsTrunc[iImageCharge][0],
+                            d_imagePositionsTrunc[iImageCharge][1],
+                            d_imagePositionsTrunc[iImageCharge][2]);
+                          double distanceToAtom = quadPoint.distance(imageAtom);
 
-                        if (dftParameters::floatingNuclearCharges &&
-                            distanceToAtom < 1.0e-3)
-                          continue;
+                          if (dftParameters::floatingNuclearCharges &&
+                              distanceToAtom < 1.0e-3)
+                            continue;
 
-                        int masterAtomId = d_imageIdsTrunc[iImageCharge];
-                        if (
-                          distanceToAtom <=
-                          outerMostPointDen
-                            [atomLocations
-                               [masterAtomId]
-                               [0]]) // outerMostPointPseudo[atomLocations[masterAtomId][0]])
-                          {
-                            double value, radialDensityFirstDerivative,
-                              radialDensitySecondDerivative;
-                            alglib::spline1ddiff(
-                              denSpline[atomLocations[masterAtomId][0]],
-                              distanceToAtom,
-                              value,
-                              radialDensityFirstDerivative,
-                              radialDensitySecondDerivative);
+                          int masterAtomId = d_imageIdsTrunc[iImageCharge];
+                          if (
+                            distanceToAtom <=
+                            outerMostPointDen
+                              [atomLocations
+                                 [masterAtomId]
+                                 [0]]) // outerMostPointPseudo[atomLocations[masterAtomId][0]])
+                            {
+                              double value, radialDensityFirstDerivative,
+                                radialDensitySecondDerivative;
+                              alglib::spline1ddiff(
+                                denSpline[atomLocations[masterAtomId][0]],
+                                distanceToAtom,
+                                value,
+                                radialDensityFirstDerivative,
+                                radialDensitySecondDerivative);
 
-                            gradRhoXValueAtQuadPt +=
-                              radialDensityFirstDerivative *
-                              ((quadPoint[0] -
-                                d_imagePositionsTrunc[iImageCharge][0]) /
-                               distanceToAtom);
-                            gradRhoYValueAtQuadPt +=
-                              radialDensityFirstDerivative *
-                              ((quadPoint[1] -
-                                d_imagePositionsTrunc[iImageCharge][1]) /
-                               distanceToAtom);
-                            gradRhoZValueAtQuadPt +=
-                              radialDensityFirstDerivative *
-                              ((quadPoint[2] -
-                                d_imagePositionsTrunc[iImageCharge][2]) /
-                               distanceToAtom);
-                          }
-                      }
+                              gradRhoXValueAtQuadPt +=
+                                radialDensityFirstDerivative *
+                                ((quadPoint[0] -
+                                  d_imagePositionsTrunc[iImageCharge][0]) /
+                                 distanceToAtom);
+                              gradRhoYValueAtQuadPt +=
+                                radialDensityFirstDerivative *
+                                ((quadPoint[1] -
+                                  d_imagePositionsTrunc[iImageCharge][1]) /
+                                 distanceToAtom);
+                              gradRhoZValueAtQuadPt +=
+                                radialDensityFirstDerivative *
+                                ((quadPoint[2] -
+                                  d_imagePositionsTrunc[iImageCharge][2]) /
+                                 distanceToAtom);
+                            }
+                        }
 
-                    int signRho = 0;
-                    /*
-                       if (std::abs((*rhoInValues)[cell->id()][q] ) > 1.0E-7)
-                       signRho = (*rhoInValues)[cell->id()][q]>0.0?1:-1;
-                     */
-                    if (std::abs((*rhoInValues)[cell->id()][q]) > 1.0E-8)
-                      signRho = (*rhoInValues)[cell->id()][q] /
-                                std::abs((*rhoInValues)[cell->id()][q]);
+                      int signRho = 0;
+                      /*
+                         if (std::abs((*rhoInValues)[cell->id()][q] ) > 1.0E-7)
+                         signRho = (*rhoInValues)[cell->id()][q]>0.0?1:-1;
+                       */
+                      if (std::abs((*rhoInValues)[cell->id()][q]) > 1.0E-8)
+                        signRho = (*rhoInValues)[cell->id()][q] /
+                                  std::abs((*rhoInValues)[cell->id()][q]);
 
-                    // KG: the fact that we are forcing gradRho to zero whenever
-                    // rho is zero is valid. Because rho is always positive, so
-                    // whenever it is zero, it must have a local minima.
-                    //
-                    gradRhoInValuesPtr[3 * q + 0] =
-                      signRho * gradRhoXValueAtQuadPt;
-                    gradRhoInValuesPtr[3 * q + 1] =
-                      signRho * gradRhoYValueAtQuadPt;
-                    gradRhoInValuesPtr[3 * q + 2] =
-                      signRho * gradRhoZValueAtQuadPt;
-                    if (dftParameters::spinPolarized == 1)
-                      {
-                        gradRhoInValuesSpinPolarizedPtr[6 * q + 0] =
-                          (0.5 - dftParameters::start_magnetization) * signRho *
-                          gradRhoXValueAtQuadPt;
-                        gradRhoInValuesSpinPolarizedPtr[6 * q + 1] =
-                          (0.5 - dftParameters::start_magnetization) * signRho *
-                          gradRhoYValueAtQuadPt;
-                        gradRhoInValuesSpinPolarizedPtr[6 * q + 2] =
-                          (0.5 - dftParameters::start_magnetization) * signRho *
-                          gradRhoZValueAtQuadPt;
-                        gradRhoInValuesSpinPolarizedPtr[6 * q + 3] =
-                          (0.5 + dftParameters::start_magnetization) * signRho *
-                          gradRhoXValueAtQuadPt;
-                        gradRhoInValuesSpinPolarizedPtr[6 * q + 4] =
-                          (0.5 + dftParameters::start_magnetization) * signRho *
-                          gradRhoYValueAtQuadPt;
-                        gradRhoInValuesSpinPolarizedPtr[6 * q + 5] =
-                          (0.5 + dftParameters::start_magnetization) * signRho *
-                          gradRhoZValueAtQuadPt;
-                      }
-                  }
-              }
-          }
-      }
+                      // KG: the fact that we are forcing gradRho to zero
+                      // whenever rho is zero is valid. Because rho is always
+                      // positive, so whenever it is zero, it must have a local
+                      // minima.
+                      //
+                      gradRhoInValuesPtr[3 * q + 0] =
+                        signRho * gradRhoXValueAtQuadPt;
+                      gradRhoInValuesPtr[3 * q + 1] =
+                        signRho * gradRhoYValueAtQuadPt;
+                      gradRhoInValuesPtr[3 * q + 2] =
+                        signRho * gradRhoZValueAtQuadPt;
+                      if (dftParameters::spinPolarized == 1)
+                        {
+                          gradRhoInValuesSpinPolarizedPtr[6 * q + 0] =
+                            (0.5 - dftParameters::start_magnetization) *
+                            signRho * gradRhoXValueAtQuadPt;
+                          gradRhoInValuesSpinPolarizedPtr[6 * q + 1] =
+                            (0.5 - dftParameters::start_magnetization) *
+                            signRho * gradRhoYValueAtQuadPt;
+                          gradRhoInValuesSpinPolarizedPtr[6 * q + 2] =
+                            (0.5 - dftParameters::start_magnetization) *
+                            signRho * gradRhoZValueAtQuadPt;
+                          gradRhoInValuesSpinPolarizedPtr[6 * q + 3] =
+                            (0.5 + dftParameters::start_magnetization) *
+                            signRho * gradRhoXValueAtQuadPt;
+                          gradRhoInValuesSpinPolarizedPtr[6 * q + 4] =
+                            (0.5 + dftParameters::start_magnetization) *
+                            signRho * gradRhoYValueAtQuadPt;
+                          gradRhoInValuesSpinPolarizedPtr[6 * q + 5] =
+                            (0.5 + dftParameters::start_magnetization) *
+                            signRho * gradRhoZValueAtQuadPt;
+                        }
+                    }
+                }
+            }
+        }
 
-    normalizeRhoInQuadValues();
-  }
+      normalizeRhoInQuadValues();
+    }
   //
   computing_timer.exit_section("initialize density");
 }
