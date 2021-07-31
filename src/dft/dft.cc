@@ -2712,9 +2712,8 @@ namespace dftfe
                       pcout
                         << "Maximum residual norm of the state closest to and below Fermi level: "
                         << maxRes << std::endl;
+                    count++;
                   }
-
-                count++;
               }
 
             if (dftParameters::verbosity >= 1)
