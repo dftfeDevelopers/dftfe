@@ -296,13 +296,6 @@ dftClass<FEOrder, FEOrderElectro>::initRho()
                 << std::endl;
         }
 
-      if (dftParameters::xcFamilyType == "GGA")
-        {
-          gradRhoInVals.push_back(
-            std::map<dealii::CellId, std::vector<double>>());
-          gradRhoInValues = &(gradRhoInVals.back());
-        }
-
       interpolateRhoNodalDataToQuadratureDataGeneral(
         d_matrixFreeDataPRefined,
         d_densityDofHandlerIndexElectro,
