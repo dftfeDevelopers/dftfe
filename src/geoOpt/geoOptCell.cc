@@ -193,7 +193,7 @@ namespace dftfe
   geoOptCell<FEOrder, FEOrderElectro>::run()
   {
     const double       tol     = dftParameters::stressRelaxTol;
-    const unsigned int maxIter = 100;
+    const unsigned int maxIter = 300;
     const double       lineSearchTol =
       tol * 2.0; // Dummy parameter for CGPRP, the actual stopping criteria are
                  // the Wolfe conditions and maxLineSearchIter

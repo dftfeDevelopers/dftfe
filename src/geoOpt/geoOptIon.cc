@@ -114,7 +114,7 @@ namespace dftfe
   geoOptIon<FEOrder, FEOrderElectro>::run()
   {
     const double tol = dftParameters::forceRelaxTol; //(units: Hatree/Bohr)
-    const unsigned int maxIter = 100;
+    const unsigned int maxIter = 300;
     const double       lineSearchTol =
       1e-4; // Dummy parameter for CGPRP, the actual stopping criteria are the
             // Wolfe conditions and maxLineSearchIter
