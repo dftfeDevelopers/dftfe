@@ -241,9 +241,10 @@ namespace dftfe
   void
   ScaLAPACKMatrix<NumberType>::copy_to(ScaLAPACKMatrix<NumberType> &dest) const
   {
-    Assert(n_rows == dest.n_rows, ExcDimensionMismatch(n_rows, dest.n_rows));
+    Assert(n_rows == dest.n_rows,
+           dealii::ExcDimensionMismatch(n_rows, dest.n_rows));
     Assert(n_columns == dest.n_columns,
-           ExcDimensionMismatch(n_columns, dest.n_columns));
+           dealii::ExcDimensionMismatch(n_columns, dest.n_columns));
 
     if (this->grid->mpi_process_is_active)
       AssertThrow(
@@ -378,23 +379,27 @@ namespace dftfe
     if (transpose_B)
       {
         Assert(n_rows == B.n_columns,
-               ExcDimensionMismatch(n_rows, B.n_columns));
+               dealii::ExcDimensionMismatch(n_rows, B.n_columns));
         Assert(n_columns == B.n_rows,
-               ExcDimensionMismatch(n_columns, B.n_rows));
+               dealii::ExcDimensionMismatch(n_columns, B.n_rows));
         Assert(column_block_size == B.row_block_size,
-               ExcDimensionMismatch(column_block_size, B.row_block_size));
+               dealii::ExcDimensionMismatch(column_block_size,
+                                            B.row_block_size));
         Assert(row_block_size == B.column_block_size,
-               ExcDimensionMismatch(row_block_size, B.column_block_size));
+               dealii::ExcDimensionMismatch(row_block_size,
+                                            B.column_block_size));
       }
     else
       {
-        Assert(n_rows == B.n_rows, ExcDimensionMismatch(n_rows, B.n_rows));
+        Assert(n_rows == B.n_rows,
+               dealii::ExcDimensionMismatch(n_rows, B.n_rows));
         Assert(n_columns == B.n_columns,
-               ExcDimensionMismatch(n_columns, B.n_columns));
+               dealii::ExcDimensionMismatch(n_columns, B.n_columns));
         Assert(column_block_size == B.column_block_size,
-               ExcDimensionMismatch(column_block_size, B.column_block_size));
+               dealii::ExcDimensionMismatch(column_block_size,
+                                            B.column_block_size));
         Assert(row_block_size == B.row_block_size,
-               ExcDimensionMismatch(row_block_size, B.row_block_size));
+               dealii::ExcDimensionMismatch(row_block_size, B.row_block_size));
       }
     Assert(this->grid == B.grid,
            dealii::ExcMessage(
@@ -435,23 +440,27 @@ namespace dftfe
     if (conjugate_transpose_B)
       {
         Assert(n_rows == B.n_columns,
-               ExcDimensionMismatch(n_rows, B.n_columns));
+               dealii::ExcDimensionMismatch(n_rows, B.n_columns));
         Assert(n_columns == B.n_rows,
-               ExcDimensionMismatch(n_columns, B.n_rows));
+               dealii::ExcDimensionMismatch(n_columns, B.n_rows));
         Assert(column_block_size == B.row_block_size,
-               ExcDimensionMismatch(column_block_size, B.row_block_size));
+               dealii::ExcDimensionMismatch(column_block_size,
+                                            B.row_block_size));
         Assert(row_block_size == B.column_block_size,
-               ExcDimensionMismatch(row_block_size, B.column_block_size));
+               dealii::ExcDimensionMismatch(row_block_size,
+                                            B.column_block_size));
       }
     else
       {
-        Assert(n_rows == B.n_rows, ExcDimensionMismatch(n_rows, B.n_rows));
+        Assert(n_rows == B.n_rows,
+               dealii::ExcDimensionMismatch(n_rows, B.n_rows));
         Assert(n_columns == B.n_columns,
-               ExcDimensionMismatch(n_columns, B.n_columns));
+               dealii::ExcDimensionMismatch(n_columns, B.n_columns));
         Assert(column_block_size == B.column_block_size,
-               ExcDimensionMismatch(column_block_size, B.column_block_size));
+               dealii::ExcDimensionMismatch(column_block_size,
+                                            B.column_block_size));
         Assert(row_block_size == B.row_block_size,
-               ExcDimensionMismatch(row_block_size, B.row_block_size));
+               dealii::ExcDimensionMismatch(row_block_size, B.row_block_size));
       }
     Assert(this->grid == B.grid,
            dealii::ExcMessage(
@@ -523,63 +532,74 @@ namespace dftfe
     if (!transpose_A && !transpose_B)
       {
         Assert(this->n_columns == B.n_rows,
-               ExcDimensionMismatch(this->n_columns, B.n_rows));
+               dealii::ExcDimensionMismatch(this->n_columns, B.n_rows));
         Assert(this->n_rows == C.n_rows,
-               ExcDimensionMismatch(this->n_rows, C.n_rows));
+               dealii::ExcDimensionMismatch(this->n_rows, C.n_rows));
         Assert(B.n_columns == C.n_columns,
-               ExcDimensionMismatch(B.n_columns, C.n_columns));
+               dealii::ExcDimensionMismatch(B.n_columns, C.n_columns));
         Assert(this->row_block_size == C.row_block_size,
-               ExcDimensionMismatch(this->row_block_size, C.row_block_size));
+               dealii::ExcDimensionMismatch(this->row_block_size,
+                                            C.row_block_size));
         Assert(this->column_block_size == B.row_block_size,
-               ExcDimensionMismatch(this->column_block_size, B.row_block_size));
+               dealii::ExcDimensionMismatch(this->column_block_size,
+                                            B.row_block_size));
         Assert(B.column_block_size == C.column_block_size,
-               ExcDimensionMismatch(B.column_block_size, C.column_block_size));
+               dealii::ExcDimensionMismatch(B.column_block_size,
+                                            C.column_block_size));
       }
     else if (transpose_A && !transpose_B)
       {
         Assert(this->n_rows == B.n_rows,
-               ExcDimensionMismatch(this->n_rows, B.n_rows));
+               dealii::ExcDimensionMismatch(this->n_rows, B.n_rows));
         Assert(this->n_columns == C.n_rows,
-               ExcDimensionMismatch(this->n_columns, C.n_rows));
+               dealii::ExcDimensionMismatch(this->n_columns, C.n_rows));
         Assert(B.n_columns == C.n_columns,
-               ExcDimensionMismatch(B.n_columns, C.n_columns));
+               dealii::ExcDimensionMismatch(B.n_columns, C.n_columns));
         Assert(this->column_block_size == C.row_block_size,
-               ExcDimensionMismatch(this->column_block_size, C.row_block_size));
+               dealii::ExcDimensionMismatch(this->column_block_size,
+                                            C.row_block_size));
         Assert(this->row_block_size == B.row_block_size,
-               ExcDimensionMismatch(this->row_block_size, B.row_block_size));
+               dealii::ExcDimensionMismatch(this->row_block_size,
+                                            B.row_block_size));
         Assert(B.column_block_size == C.column_block_size,
-               ExcDimensionMismatch(B.column_block_size, C.column_block_size));
+               dealii::ExcDimensionMismatch(B.column_block_size,
+                                            C.column_block_size));
       }
     else if (!transpose_A && transpose_B)
       {
         Assert(this->n_columns == B.n_columns,
-               ExcDimensionMismatch(this->n_columns, B.n_columns));
+               dealii::ExcDimensionMismatch(this->n_columns, B.n_columns));
         Assert(this->n_rows == C.n_rows,
-               ExcDimensionMismatch(this->n_rows, C.n_rows));
+               dealii::ExcDimensionMismatch(this->n_rows, C.n_rows));
         Assert(B.n_rows == C.n_columns,
-               ExcDimensionMismatch(B.n_rows, C.n_columns));
+               dealii::ExcDimensionMismatch(B.n_rows, C.n_columns));
         Assert(this->row_block_size == C.row_block_size,
-               ExcDimensionMismatch(this->row_block_size, C.row_block_size));
+               dealii::ExcDimensionMismatch(this->row_block_size,
+                                            C.row_block_size));
         Assert(this->column_block_size == B.column_block_size,
-               ExcDimensionMismatch(this->column_block_size,
-                                    B.column_block_size));
+               dealii::ExcDimensionMismatch(this->column_block_size,
+                                            B.column_block_size));
         Assert(B.row_block_size == C.column_block_size,
-               ExcDimensionMismatch(B.row_block_size, C.column_block_size));
+               dealii::ExcDimensionMismatch(B.row_block_size,
+                                            C.column_block_size));
       }
     else // if (transpose_A && transpose_B)
       {
         Assert(this->n_rows == B.n_columns,
-               ExcDimensionMismatch(this->n_rows, B.n_columns));
+               dealii::ExcDimensionMismatch(this->n_rows, B.n_columns));
         Assert(this->n_columns == C.n_rows,
-               ExcDimensionMismatch(this->n_columns, C.n_rows));
+               dealii::ExcDimensionMismatch(this->n_columns, C.n_rows));
         Assert(B.n_rows == C.n_columns,
-               ExcDimensionMismatch(B.n_rows, C.n_columns));
+               dealii::ExcDimensionMismatch(B.n_rows, C.n_columns));
         Assert(this->column_block_size == C.row_block_size,
-               ExcDimensionMismatch(this->row_block_size, C.row_block_size));
+               dealii::ExcDimensionMismatch(this->row_block_size,
+                                            C.row_block_size));
         Assert(this->row_block_size == B.column_block_size,
-               ExcDimensionMismatch(this->column_block_size, B.row_block_size));
+               dealii::ExcDimensionMismatch(this->column_block_size,
+                                            B.row_block_size));
         Assert(B.row_block_size == C.column_block_size,
-               ExcDimensionMismatch(B.column_block_size, C.column_block_size));
+               dealii::ExcDimensionMismatch(B.column_block_size,
+                                            C.column_block_size));
       }
 
     if (this->grid->mpi_process_is_active)
@@ -640,63 +660,74 @@ namespace dftfe
     if (!conjugate_transpose_A && !conjugate_transpose_B)
       {
         Assert(this->n_columns == B.n_rows,
-               ExcDimensionMismatch(this->n_columns, B.n_rows));
+               dealii::ExcDimensionMismatch(this->n_columns, B.n_rows));
         Assert(this->n_rows == C.n_rows,
-               ExcDimensionMismatch(this->n_rows, C.n_rows));
+               dealii::ExcDimensionMismatch(this->n_rows, C.n_rows));
         Assert(B.n_columns == C.n_columns,
-               ExcDimensionMismatch(B.n_columns, C.n_columns));
+               dealii::ExcDimensionMismatch(B.n_columns, C.n_columns));
         Assert(this->row_block_size == C.row_block_size,
-               ExcDimensionMismatch(this->row_block_size, C.row_block_size));
+               dealii::ExcDimensionMismatch(this->row_block_size,
+                                            C.row_block_size));
         Assert(this->column_block_size == B.row_block_size,
-               ExcDimensionMismatch(this->column_block_size, B.row_block_size));
+               dealii::ExcDimensionMismatch(this->column_block_size,
+                                            B.row_block_size));
         Assert(B.column_block_size == C.column_block_size,
-               ExcDimensionMismatch(B.column_block_size, C.column_block_size));
+               dealii::ExcDimensionMismatch(B.column_block_size,
+                                            C.column_block_size));
       }
     else if (conjugate_transpose_A && !conjugate_transpose_B)
       {
         Assert(this->n_rows == B.n_rows,
-               ExcDimensionMismatch(this->n_rows, B.n_rows));
+               dealii::ExcDimensionMismatch(this->n_rows, B.n_rows));
         Assert(this->n_columns == C.n_rows,
-               ExcDimensionMismatch(this->n_columns, C.n_rows));
+               dealii::ExcDimensionMismatch(this->n_columns, C.n_rows));
         Assert(B.n_columns == C.n_columns,
-               ExcDimensionMismatch(B.n_columns, C.n_columns));
+               dealii::ExcDimensionMismatch(B.n_columns, C.n_columns));
         Assert(this->column_block_size == C.row_block_size,
-               ExcDimensionMismatch(this->column_block_size, C.row_block_size));
+               dealii::ExcDimensionMismatch(this->column_block_size,
+                                            C.row_block_size));
         Assert(this->row_block_size == B.row_block_size,
-               ExcDimensionMismatch(this->row_block_size, B.row_block_size));
+               dealii::ExcDimensionMismatch(this->row_block_size,
+                                            B.row_block_size));
         Assert(B.column_block_size == C.column_block_size,
-               ExcDimensionMismatch(B.column_block_size, C.column_block_size));
+               dealii::ExcDimensionMismatch(B.column_block_size,
+                                            C.column_block_size));
       }
     else if (!conjugate_transpose_A && conjugate_transpose_B)
       {
         Assert(this->n_columns == B.n_columns,
-               ExcDimensionMismatch(this->n_columns, B.n_columns));
+               dealii::ExcDimensionMismatch(this->n_columns, B.n_columns));
         Assert(this->n_rows == C.n_rows,
-               ExcDimensionMismatch(this->n_rows, C.n_rows));
+               dealii::ExcDimensionMismatch(this->n_rows, C.n_rows));
         Assert(B.n_rows == C.n_columns,
-               ExcDimensionMismatch(B.n_rows, C.n_columns));
+               dealii::ExcDimensionMismatch(B.n_rows, C.n_columns));
         Assert(this->row_block_size == C.row_block_size,
-               ExcDimensionMismatch(this->row_block_size, C.row_block_size));
+               dealii::ExcDimensionMismatch(this->row_block_size,
+                                            C.row_block_size));
         Assert(this->column_block_size == B.column_block_size,
-               ExcDimensionMismatch(this->column_block_size,
-                                    B.column_block_size));
+               dealii::ExcDimensionMismatch(this->column_block_size,
+                                            B.column_block_size));
         Assert(B.row_block_size == C.column_block_size,
-               ExcDimensionMismatch(B.row_block_size, C.column_block_size));
+               dealii::ExcDimensionMismatch(B.row_block_size,
+                                            C.column_block_size));
       }
     else // if (transpose_A && transpose_B)
       {
         Assert(this->n_rows == B.n_columns,
-               ExcDimensionMismatch(this->n_rows, B.n_columns));
+               dealii::ExcDimensionMismatch(this->n_rows, B.n_columns));
         Assert(this->n_columns == C.n_rows,
-               ExcDimensionMismatch(this->n_columns, C.n_rows));
+               dealii::ExcDimensionMismatch(this->n_columns, C.n_rows));
         Assert(B.n_rows == C.n_columns,
-               ExcDimensionMismatch(B.n_rows, C.n_columns));
+               dealii::ExcDimensionMismatch(B.n_rows, C.n_columns));
         Assert(this->column_block_size == C.row_block_size,
-               ExcDimensionMismatch(this->row_block_size, C.row_block_size));
+               dealii::ExcDimensionMismatch(this->row_block_size,
+                                            C.row_block_size));
         Assert(this->row_block_size == B.column_block_size,
-               ExcDimensionMismatch(this->column_block_size, B.row_block_size));
+               dealii::ExcDimensionMismatch(this->column_block_size,
+                                            B.row_block_size));
         Assert(B.row_block_size == C.column_block_size,
-               ExcDimensionMismatch(B.column_block_size, C.column_block_size));
+               dealii::ExcDimensionMismatch(B.column_block_size,
+                                            C.column_block_size));
       }
 
     if (this->grid->mpi_process_is_active)

@@ -35,7 +35,7 @@ cxx_flagsRelease="-O2 -fPIC -fopenmp"
 #ON is recommended for MD simulations with hard pseudopotentials
 withHigherQuadPSP=OFF
 
-#Optmization flag: 1 for optimized mode and 0 for debug mode compilation
+#Optmization flag: Release for optimized mode and Debug for debug mode compilation
 build_type=Release
 
 testing=OFF

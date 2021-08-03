@@ -1221,7 +1221,7 @@ namespace dftfe
                                       Assert(boundaryNodeMap.find(
                                                (*rowData)[j].first) !=
                                                boundaryNodeMap.end(),
-                                             ExcMessage("BUG"));
+                                             dealii::ExcMessage("BUG"));
                                     }
 
                                   if (boundaryNodeMap.find((*rowData)[j].first)

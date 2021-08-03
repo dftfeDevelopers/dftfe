@@ -60,9 +60,10 @@ namespace dftfe
         &                  bCellNonTrivialAtomImageIdsBin,
       std::vector<double> &smearedChargeScaling)
     {
-      dealii::FESystem<3> FETemp(dealii::FE_Q<3>(dealii::QGaussLobatto<1>(2)),
-                                 1);
-      dealii::FEValues<3> fe_values(FETemp,
+      // dealii::FESystem<3>
+      // FETemp(dealii::FE_Q<3>(dealii::QGaussLobatto<1>(2)),
+      //                           1);
+      dealii::FEValues<3> fe_values(dofHandlerOfField.get_fe(),
                                     quadrature_formula,
                                     dealii::update_quadrature_points |
                                       dealii::update_JxW_values);

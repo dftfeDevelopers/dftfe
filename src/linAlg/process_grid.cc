@@ -80,7 +80,7 @@ namespace dftfe
 
       Assert(n_process_columns >= 1 && n_process_rows >= 1 &&
                n_processes >= n_process_rows * n_process_columns,
-             ExcMessage(
+             dealii::ExcMessage(
                "error in process grid: " + std::to_string(n_process_rows) +
                "x" + std::to_string(n_process_columns) + "=" +
                std::to_string(n_process_rows * n_process_columns) + " out of " +
@@ -108,13 +108,15 @@ namespace dftfe
     , n_process_columns(grid_dimensions.second)
   {
     Assert(grid_dimensions.first > 0,
-           ExcMessage("Number of process grid rows has to be positive."));
+           dealii::ExcMessage(
+             "Number of process grid rows has to be positive."));
     Assert(grid_dimensions.second > 0,
-           ExcMessage("Number of process grid columns has to be positive."));
+           dealii::ExcMessage(
+             "Number of process grid columns has to be positive."));
 
     Assert(
       grid_dimensions.first * grid_dimensions.second <= n_mpi_processes,
-      ExcMessage(
+      dealii::ExcMessage(
         "Size of process grid is larger than number of available MPI processes."));
 
     // processor grid order.
@@ -152,7 +154,7 @@ namespace dftfe
     const unsigned int n_active_mpi_processes =
       n_process_rows * n_process_columns;
     Assert(mpi_process_is_active || this_mpi_process >= n_active_mpi_processes,
-           ExcInternalError());
+           dealii::ExcInternalError());
 
     std::vector<int> inactive_with_root_ranks;
     inactive_with_root_ranks.push_back(0);
@@ -198,7 +200,7 @@ namespace dftfe
     if (mpi_communicator_inactive_with_root != MPI_COMM_NULL &&
         dealii::Utilities::MPI::this_mpi_process(
           mpi_communicator_inactive_with_root) == 0)
-      Assert(mpi_process_is_active, ExcInternalError());
+      Assert(mpi_process_is_active, dealii::ExcInternalError());
 #endif
   }
 
@@ -242,7 +244,7 @@ namespace dftfe
   void
   ProcessGrid::send_to_inactive(NumberType *value, const int count) const
   {
-    Assert(count > 0, ExcInternalError());
+    Assert(count > 0, dealii::ExcInternalError());
     if (mpi_communicator_inactive_with_root != MPI_COMM_NULL)
       {
         const int ierr =

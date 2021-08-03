@@ -141,7 +141,7 @@ namespace dftfe
             return "Hessenberg";
         }
 
-      Assert(false, ExcNotImplemented());
+      Assert(false, dealii::ExcNotImplemented());
       return "invalid";
     }
 
