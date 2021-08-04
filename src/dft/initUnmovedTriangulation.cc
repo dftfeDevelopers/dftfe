@@ -32,7 +32,7 @@ template <unsigned int FEOrder, unsigned int FEOrderElectro>
 void dftClass<FEOrder, FEOrderElectro>::initUnmovedTriangulation(
   parallel::distributed::Triangulation<3> &triangulation)
 {
-  computing_timer.enter_section("unmoved setup");
+  computing_timer.enter_subsection("unmoved setup");
 
   // initialize affine transformation object (must be done on unmoved
   // triangulation)
@@ -333,5 +333,5 @@ void dftClass<FEOrder, FEOrderElectro>::initUnmovedTriangulation(
     }
 
 
-  computing_timer.exit_section("unmoved setup");
+  computing_timer.leave_subsection("unmoved setup");
 }

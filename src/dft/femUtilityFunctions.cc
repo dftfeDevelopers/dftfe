@@ -471,7 +471,7 @@ dftClass<FEOrder, FEOrderElectro>::fieldGradl2Norm(
       "DFT-FE Error: mismatch in quadrature rule usage in interpolateNodalDataToQuadratureData."));
 
   VectorizedArray<double> valueVectorized = make_vectorized_array(0.0);
-
+  double                  value           = 0.0;
   for (unsigned int cell = 0; cell < matrixFreeDataObject.n_macro_cells();
        ++cell)
     {
@@ -487,14 +487,10 @@ dftClass<FEOrder, FEOrderElectro>::fieldGradl2Norm(
         }
 
       valueVectorized += fe_evalField.integrate_value();
-    }
-
-  double value = 0.0;
-  for (unsigned int iSubCell = 0;
-       iSubCell < VectorizedArray<double>::n_array_elements;
-       ++iSubCell)
-    {
-      value += valueVectorized[iSubCell];
+      for (unsigned int iSubCell = 0;
+           iSubCell < matrixFreeDataObject.n_components_filled(cell);
+           ++iSubCell)
+        value += valueVectorized[iSubCell];
     }
 
   return Utilities::MPI::sum(value, mpi_communicator);

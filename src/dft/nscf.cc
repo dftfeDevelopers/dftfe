@@ -100,7 +100,7 @@ dftClass<FEOrder, FEOrderElectro>::initnscf(
   if (dftParameters::verbosity == 2)
     pcout << std::endl
           << "Poisson solve for total electrostatic potential (rhoIn+b): ";
-  computing_timer.enter_section("nscf: phiTot solve");
+  computing_timer.enter_subsection("nscf: phiTot solve");
   //
   std::map<dealii::CellId, std::vector<double>> dummy;
   phiTotalSolverProblem.reinit(
@@ -132,18 +132,18 @@ dftClass<FEOrder, FEOrderElectro>::initnscf(
                                                  dummy2,
                                                  dummy2);
 
-  computing_timer.exit_section("nscf: phiTot solve");
+  computing_timer.leave_subsection("nscf: phiTot solve");
   //
   if (dftParameters::xcFamilyType == "LDA")
     {
-      computing_timer.enter_section("nscf: VEff Computation");
+      computing_timer.enter_subsection("nscf: VEff Computation");
       kohnShamDFTEigenOperator.computeVEff(
         rhoInValues, phiInValues, d_pseudoVLoc, d_rhoCore, d_lpspQuadratureId);
-      computing_timer.exit_section("nscf: VEff Computation");
+      computing_timer.leave_subsection("nscf: VEff Computation");
     }
   else if (dftParameters::xcFamilyType == "GGA")
     {
-      computing_timer.enter_section("nscf: VEff Computation");
+      computing_timer.enter_subsection("nscf: VEff Computation");
       kohnShamDFTEigenOperator.computeVEff(rhoInValues,
                                            gradRhoInValues,
                                            phiInValues,
@@ -151,7 +151,7 @@ dftClass<FEOrder, FEOrderElectro>::initnscf(
                                            d_rhoCore,
                                            d_gradRhoCore,
                                            d_lpspQuadratureId);
-      computing_timer.exit_section("nscf: VEff Computation");
+      computing_timer.leave_subsection("nscf: VEff Computation");
     }
 }
 
@@ -175,12 +175,12 @@ dftClass<FEOrder, FEOrderElectro>::nscf(
       double       adaptiveChebysevFilterPassesTol = 1.0E-3;
       //
       kohnShamDFTEigenOperator.reinitkPointSpinIndex(kPoint, 0);
-      computing_timer.enter_section("nscf: Hamiltonian Matrix Computation");
+      computing_timer.enter_subsection("nscf: Hamiltonian Matrix Computation");
       kohnShamDFTEigenOperator.computeHamiltonianMatrix(kPoint, 0);
-      computing_timer.exit_section("nscf: Hamiltonian Matrix Computation");
+      computing_timer.leave_subsection("nscf: Hamiltonian Matrix Computation");
       // MPI_Barrier(MPI_COMM_WORLD);
       //
-      computing_timer.enter_section("nscf: kohnShamEigenSpaceCompute");
+      computing_timer.enter_subsection("nscf: kohnShamEigenSpaceCompute");
       while (maxRes > adaptiveChebysevFilterPassesTol)
         {
           if (dftParameters::verbosity >= 2)
@@ -202,7 +202,7 @@ dftClass<FEOrder, FEOrderElectro>::nscf(
               << maxRes << std::endl;
           count++;
         }
-      computing_timer.exit_section("nscf: kohnShamEigenSpaceCompute");
+      computing_timer.leave_subsection("nscf: kohnShamEigenSpaceCompute");
     }
 
   // writeBands() ;

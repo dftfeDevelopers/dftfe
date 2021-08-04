@@ -76,7 +76,7 @@ namespace dftfe
       // steps///
       ///////////////////////////////////////////////////////////////////////////////
 
-      computing_timer.enter_section("interpolate:step1");
+      computing_timer.enter_subsection("interpolate:step1");
       dealii::DoFHandler<3> dofHandlerUnmovedParPrev(triangulationParPrev);
       dofHandlerUnmovedParPrev.distribute_dofs(FEPrev);
 
@@ -167,13 +167,13 @@ namespace dftfe
                                                    dofHandlerUnmovedCurrent,
                                                    supportPointsUnmovedCurrent);
 
-      computing_timer.exit_section("interpolate:step1");
+      computing_timer.leave_subsection("interpolate:step1");
 
       ///////////////////////////////////////////////////////////
       // Step2: collect sending information from each processor///
       ///////////////////////////////////////////////////////////
 
-      computing_timer.enter_section("interpolate:step2");
+      computing_timer.enter_subsection("interpolate:step2");
       const dealii::MappingQ1<3> mapping;
 
       //
@@ -370,13 +370,13 @@ namespace dftfe
         }     // cell_loop
       //
       MPI_Barrier(mpi_communicator);
-      computing_timer.exit_section("interpolate:step2");
+      computing_timer.leave_subsection("interpolate:step2");
 
       ////////////////////////////////////////////////////
       // Step3: Gather mapped points from all processors///
       ////////////////////////////////////////////////////
 
-      computing_timer.enter_section("interpolate:step3");
+      computing_timer.enter_subsection("interpolate:step3");
       /// <sending processor<data size in d_recvData0 from sending processor> >
       std::vector<int> recv_size0(n_mpi_processes, 0);
 
@@ -528,13 +528,13 @@ namespace dftfe
       mappedGroupSend0.clear();
       mappedGroupSend1.clear();
       mappedGroupSend2.clear();
-      computing_timer.exit_section("interpolate:step3");
+      computing_timer.leave_subsection("interpolate:step3");
 
       ///////////////////////////////////////////////////////////
       // Step4: Interpolate previous fields to all mapped points//
       ///////////////////////////////////////////////////////////
 
-      computing_timer.enter_section("interpolate:step4");
+      computing_timer.enter_subsection("interpolate:step4");
       AssertThrow(
         fieldsPreviousMesh.size() == fieldsCurrentMesh.size(),
         dealii::ExcMessage(
@@ -622,13 +622,13 @@ namespace dftfe
             } // loop on group
           numGroupsDone += recv_size0[proc];
         } // loop on proc
-      computing_timer.exit_section("interpolate:step4");
+      computing_timer.leave_subsection("interpolate:step4");
 
       ///////////////////////////////////////////////////////////////
       // Step5: scatter interpolated data back to sending processors//
       ///////////////////////////////////////////////////////////////
 
-      computing_timer.enter_section("interpolate:step5");
+      computing_timer.enter_subsection("interpolate:step5");
 
       std::vector<std::vector<std::vector<double>>> fieldsValuesRecvData(
         numLocallyOwnedCellsCurrent,
@@ -694,14 +694,14 @@ namespace dftfe
                 iLocalCellCurrent++;
               } // locally owned cell loop
         }       // loop on proc
-      computing_timer.exit_section("interpolate:step5");
+      computing_timer.leave_subsection("interpolate:step5");
 
       ////////////////////////////////////////////////////////////////////////////////////////////
       // Step6: set values on fieldsCurrentMesh using interpolated data received
       // after scattering//
       ////////////////////////////////////////////////////////////////////////////////////////////
 
-      computing_timer.enter_section("interpolate:step6");
+      computing_timer.enter_subsection("interpolate:step6");
       const std::shared_ptr<const dealii::Utilities::MPI::Partitioner>
         &partitioner = fieldsCurrentMesh[0]->get_partitioner();
 
@@ -748,7 +748,7 @@ namespace dftfe
         for (unsigned int ifield = 0; ifield < fieldsBlockSize; ++ifield)
           constraintsCurrentPtr->distribute(*(fieldsCurrentMesh[ifield]));
 
-      computing_timer.exit_section("interpolate:step6");
+      computing_timer.leave_subsection("interpolate:step6");
     }
 
   } // namespace vectorTools

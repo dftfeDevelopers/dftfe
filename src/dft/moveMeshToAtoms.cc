@@ -115,7 +115,7 @@ void dftClass<FEOrder, FEOrderElectro>::moveMeshToAtoms(
   std::vector<Point<3>>             closestTriaVertexToAtomsLocation;
   std::vector<Tensor<1, 3, double>> dispClosestTriaVerticesToAtoms;
 
-  timer_movemesh.enter_section("move mesh to atoms: find closest vertices");
+  timer_movemesh.enter_subsection("move mesh to atoms: find closest vertices");
   if (reuseClosestTriaVertices)
     {
       closestTriaVertexToAtomsLocation = d_closestTriaVertexToAtomsLocation;
@@ -128,10 +128,10 @@ void dftClass<FEOrder, FEOrderElectro>::moveMeshToAtoms(
         closestTriaVertexToAtomsLocation,
         dispClosestTriaVerticesToAtoms);
     }
-  timer_movemesh.exit_section("move mesh to atoms: find closest vertices");
+  timer_movemesh.leave_subsection("move mesh to atoms: find closest vertices");
 
 
-  timer_movemesh.enter_section("move mesh to atoms: move mesh");
+  timer_movemesh.enter_subsection("move mesh to atoms: move mesh");
   // add control point locations and displacements corresponding to images
   if (!reuseClosestTriaVertices)
     for (unsigned int iImage = 0; iImage < numberImageAtoms; iImage++)
@@ -222,7 +222,7 @@ void dftClass<FEOrder, FEOrderElectro>::moveMeshToAtoms(
                           flatTopWidths,
                           moveSubdivided);
 
-  timer_movemesh.exit_section("move mesh to atoms: move mesh");
+  timer_movemesh.leave_subsection("move mesh to atoms: move mesh");
 
   AssertThrow(
     !meshQualityMetrics.first,

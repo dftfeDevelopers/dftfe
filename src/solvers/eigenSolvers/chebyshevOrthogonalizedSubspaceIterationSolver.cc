@@ -121,7 +121,7 @@ namespace dftfe
     const MPI_Comm &                interBandGroupComm,
     const bool                      useMixedPrec)
   {
-    computing_timer.enter_section("Rayleigh-Ritz proj Opt");
+    computing_timer.enter_subsection("Rayleigh-Ritz proj Opt");
     if (eigenValues.size() != totalNumberWaveFunctions)
       {
         linearAlgebraOperations::rayleighRitzSpectrumSplitDirect(
@@ -148,7 +148,7 @@ namespace dftfe
           eigenValues,
           false);
       }
-    computing_timer.exit_section("Rayleigh-Ritz proj Opt");
+    computing_timer.leave_subsection("Rayleigh-Ritz proj Opt");
   }
 
   //
@@ -221,7 +221,7 @@ namespace dftfe
         pcout << buffer;
       }
 
-    computingTimerStandard.enter_section("Chebyshev filtering on CPU");
+    computingTimerStandard.enter_subsection("Chebyshev filtering on CPU");
 
     //
     // Set the constraints to zero
@@ -291,7 +291,7 @@ namespace dftfe
 
             // fill the eigenVectorsFlattenedArrayBlock from
             // eigenVectorsFlattenedArray
-            computing_timer.enter_section(
+            computing_timer.enter_subsection(
               "Copy from full to block flattened array");
             for (unsigned int iNode = 0; iNode < localVectorSize; ++iNode)
               for (unsigned int iWave = 0; iWave < BVec; ++iWave)
@@ -299,18 +299,18 @@ namespace dftfe
                                                               iWave) =
                   eigenVectorsFlattened[iNode * totalNumberWaveFunctions +
                                         jvec + iWave];
-            computing_timer.exit_section(
+            computing_timer.leave_subsection(
               "Copy from full to block flattened array");
 
             if (dftParameters::HXOptimFlag)
               {
-                computing_timer.enter_section(
+                computing_timer.enter_subsection(
                   "Copy from global-vectors to cellwavefunction array");
                 operatorMatrix.initCellWaveFunctionMatrix(
                   BVec,
                   eigenVectorsFlattenedArrayBlock,
                   cellWaveFunctionMatrix);
-                computing_timer.exit_section(
+                computing_timer.leave_subsection(
                   "Copy from global-vectors to cellwavefunction array");
               }
 
@@ -318,7 +318,7 @@ namespace dftfe
             //
             // call Chebyshev filtering function only for the current block to
             // be filtered and does in-place filtering
-            computing_timer.enter_section("Chebyshev filtering");
+            computing_timer.enter_subsection("Chebyshev filtering");
 
             if (dftParameters::HXOptimFlag)
               {
@@ -343,18 +343,18 @@ namespace dftfe
                   d_upperBoundUnWantedSpectrum,
                   d_lowerBoundWantedSpectrum);
               }
-            computing_timer.exit_section("Chebyshev filtering");
+            computing_timer.leave_subsection("Chebyshev filtering");
 
 
             if (dftParameters::HXOptimFlag)
               {
-                computing_timer.enter_section(
+                computing_timer.enter_subsection(
                   "Copy from cellwavefunction array to global array");
                 operatorMatrix.fillGlobalArrayFromCellWaveFunctionMatrix(
                   BVec,
                   cellWaveFunctionMatrix,
                   eigenVectorsFlattenedArrayBlock);
-                computing_timer.exit_section(
+                computing_timer.leave_subsection(
                   "Copy from cellwavefunction array to global array");
               }
 
@@ -365,7 +365,7 @@ namespace dftfe
 
             // copy the eigenVectorsFlattenedArrayBlock into
             // eigenVectorsFlattenedArray after filtering
-            computing_timer.enter_section(
+            computing_timer.enter_subsection(
               "Copy from block to full flattened array");
             for (unsigned int iNode = 0; iNode < localVectorSize; ++iNode)
               for (unsigned int iWave = 0; iWave < BVec; ++iWave)
@@ -374,7 +374,7 @@ namespace dftfe
                   eigenVectorsFlattenedArrayBlock.local_element(iNode * BVec +
                                                                 iWave);
 
-            computing_timer.exit_section(
+            computing_timer.leave_subsection(
               "Copy from block to full flattened array");
           }
         else
@@ -394,7 +394,7 @@ namespace dftfe
       {
         if (!dftParameters::bandParalOpt)
           {
-            computing_timer.enter_section(
+            computing_timer.enter_subsection(
               "MPI All Reduce wavefunctions across all band groups");
             MPI_Barrier(interBandGroupComm);
             const unsigned int blockSize =
@@ -414,12 +414,13 @@ namespace dftfe
                               MPI_SUM,
                               interBandGroupComm);
               }
-            computing_timer.exit_section(
+            computing_timer.leave_subsection(
               "MPI All Reduce wavefunctions across all band groups");
           }
         else
           {
-            computing_timer.enter_section("MPI_Allgatherv across band groups");
+            computing_timer.enter_subsection(
+              "MPI_Allgatherv across band groups");
             MPI_Barrier(interBandGroupComm);
             std::vector<dataTypes::number> eigenVectorsBandGroup(
               numVectorsBandParal * localVectorSize, 0);
@@ -475,17 +476,18 @@ namespace dftfe
                                       iWave] =
                   eigenVectorsTransposed[iWave * localVectorSize + iNode];
             MPI_Barrier(interBandGroupComm);
-            computing_timer.exit_section("MPI_Allgatherv across band groups");
+            computing_timer.leave_subsection(
+              "MPI_Allgatherv across band groups");
           }
       }
 
-    computingTimerStandard.exit_section("Chebyshev filtering on CPU");
+    computingTimerStandard.leave_subsection("Chebyshev filtering on CPU");
     if (dftParameters::verbosity >= 4)
       pcout << "ChebyShev Filtering Done: " << std::endl;
 
     if (dftParameters::orthogType.compare("CGS") == 0)
       {
-        computing_timer.enter_section("Rayleigh-Ritz GEP");
+        computing_timer.enter_subsection("Rayleigh-Ritz GEP");
         if (eigenValues.size() != totalNumberWaveFunctions)
           {
             linearAlgebraOperations::rayleighRitzGEPSpectrumSplitDirect(
@@ -512,9 +514,9 @@ namespace dftfe
               eigenValues,
               useMixedPrec);
           }
-        computing_timer.exit_section("Rayleigh-Ritz GEP");
+        computing_timer.leave_subsection("Rayleigh-Ritz GEP");
 
-        computing_timer.enter_section("eigen vectors residuals opt");
+        computing_timer.enter_subsection("eigen vectors residuals opt");
         if (eigenValues.size() != totalNumberWaveFunctions)
           {
             linearAlgebraOperations::computeEigenResidualNorm(
@@ -535,21 +537,21 @@ namespace dftfe
               interBandGroupComm,
               residualNorms);
           }
-        computing_timer.exit_section("eigen vectors residuals opt");
+        computing_timer.leave_subsection("eigen vectors residuals opt");
       }
     else if (dftParameters::orthogType.compare("GS") == 0)
       {
-        computing_timer.enter_section("Gram-Schmidt Orthogn Opt");
+        computing_timer.enter_subsection("Gram-Schmidt Orthogn Opt");
         linearAlgebraOperations::gramSchmidtOrthogonalization(
           eigenVectorsFlattened,
           totalNumberWaveFunctions,
           operatorMatrix.getMPICommunicator());
-        computing_timer.exit_section("Gram-Schmidt Orthogn Opt");
+        computing_timer.leave_subsection("Gram-Schmidt Orthogn Opt");
 
         if (dftParameters::verbosity >= 4)
           pcout << "Orthogonalization Done: " << std::endl;
 
-        computing_timer.enter_section("Rayleigh-Ritz proj Opt");
+        computing_timer.enter_subsection("Rayleigh-Ritz proj Opt");
 
         if (eigenValues.size() != totalNumberWaveFunctions)
           {
@@ -579,7 +581,7 @@ namespace dftfe
           }
 
 
-        computing_timer.exit_section("Rayleigh-Ritz proj Opt");
+        computing_timer.leave_subsection("Rayleigh-Ritz proj Opt");
 
         if (dftParameters::verbosity >= 4)
           {
@@ -589,7 +591,7 @@ namespace dftfe
 
         if (computeResidual)
           {
-            computing_timer.enter_section("eigen vectors residuals opt");
+            computing_timer.enter_subsection("eigen vectors residuals opt");
 
             if (eigenValues.size() != totalNumberWaveFunctions)
               {
@@ -609,7 +611,7 @@ namespace dftfe
                 operatorMatrix.getMPICommunicator(),
                 interBandGroupComm,
                 residualNorms);
-            computing_timer.exit_section("eigen vectors residuals opt");
+            computing_timer.leave_subsection("eigen vectors residuals opt");
           }
       }
 
