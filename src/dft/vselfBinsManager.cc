@@ -1266,9 +1266,9 @@ namespace dftfe
 
             if (!dftParameters::reproducible_output)
               AssertThrow(
-                radiusAtomBallReduced >= 2.0,
+                radiusAtomBallReduced >= 1.5,
                 dealii::ExcMessage(
-                  "DFT-FE error: Adaptively determined reduced ball radius for applying correct Dirichlet boundary condtions taking hanging nodes into account is less than minimum value of 2.0. Try increasing SELF POTENTIAL RADIUS to > 6.0. If that is not possible due to small domain sizes along the periodic directions, reduce MESH SIZE AROUND ATOM and/or increase ATOM BALL RADIUS."));
+                  "DFT-FE error: Adaptively determined reduced ball radius for applying correct Dirichlet boundary condtions taking hanging nodes into account is less than minimum value of 1.5. Try increasing SELF POTENTIAL RADIUS to > 6.0. If that is not possible due to small domain sizes along the periodic directions, reduce MESH SIZE AROUND ATOM and/or increase ATOM BALL RADIUS."));
           }
 
         if (dftParameters::verbosity >= 4 &&
