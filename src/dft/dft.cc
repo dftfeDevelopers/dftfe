@@ -3926,6 +3926,10 @@ namespace dftfe
     //
     // create a range of wavefunctions to output the wavefunction files
     //
+    int startingRange = 0;
+    int endingRange   = d_numEigenValues;
+
+    /*
     int startingRange = indexFermiEnergy - 4;
     int endingRange   = indexFermiEnergy + 4;
 
@@ -3952,7 +3956,7 @@ namespace dftfe
 
     if (startingRangeSpin < startingRange)
       startingRange = startingRangeSpin;
-
+    */
     int numStatesOutput = (endingRange - startingRange) + 1;
 
 

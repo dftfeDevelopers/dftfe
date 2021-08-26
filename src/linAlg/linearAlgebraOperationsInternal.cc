@@ -153,13 +153,13 @@ namespace dftfe
 
             if (dftParameters::useELPAGPUKernel)
               {
-                elpa_set_integer(elpaHandle, "gpu", 1, &error);
+                elpa_set_integer(elpaHandle, "nvidia-gpu", 1, &error);
                 AssertThrow(error == ELPA_OK,
                             dealii::ExcMessage("DFT-FE Error: ELPA Error."));
 
                 elpa_set_integer(elpaHandle,
                                  "real_kernel",
-                                 ELPA_2STAGE_REAL_GPU,
+                                 ELPA_2STAGE_REAL_NVIDIA_GPU,
                                  &error);
                 AssertThrow(error == ELPA_OK,
                             dealii::ExcMessage("DFT-FE Error: ELPA Error."));
@@ -213,6 +213,12 @@ namespace dftfe
           rowProcs =
             std::min(rowProcs,
                      (unsigned int)std::ceil((double)size / (double)(100)));
+
+        else
+          rowProcs =
+            std::min(rowProcs,
+                     (unsigned int)std::ceil((double)size / (double)(10)));
+
 
         if (dftParameters::verbosity >= 4)
           {
