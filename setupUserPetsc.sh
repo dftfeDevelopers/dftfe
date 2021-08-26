@@ -18,8 +18,8 @@ SRC=`dirname $0` # location of source directory
 # and optimization flag
 
 #Paths for external libraries
-dealiiPetscRealDir="/home/vikramg/DFT-FE-softwares/dealiiDevCustomized/install_gcc8.2.0_openmpi4.0.6_real_cpu"
-dealiiPetscComplexDir="/home/vikramg/DFT-FE-softwares/dealiiDevCustomized/install_gcc8.2.0_openmpi4.0.6_complex_cpu"
+dealiiPetscRealDir="/home/vikramg/DFT-FE-softwares/dealiiDevCustomized/install_gcc8.2.0_openmpi4.0.6_real_cpu_dealii10.0-pre"
+dealiiPetscComplexDir="/home/vikramg/DFT-FE-softwares/dealiiDevCustomized/install_gcc8.2.0_openmpi4.0.6_complex_cpu_dealii10.0-pre"
 alglibDir="/home/vikramg/DFT-FE-softwares/alglibGCC/cpp/src"
 libxcDir="/home/vikramg/DFT-FE-softwares/libxc/install_libxc5.1.5"
 spglibDir="/home/vikramg/DFT-FE-softwares/spglibGCC"
