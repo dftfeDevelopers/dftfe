@@ -750,7 +750,7 @@ namespace dftfe
       double gpu_time = MPI_Wtime();
 
       distributedGPUVec<double> &cudaFlattenedArrayBlock =
-        operatorMatrix.getParallelChebyBlockVectorDevice();      
+        operatorMatrix.getParallelChebyBlockVectorDevice();
 
       distributedGPUVec<double> &projectorKetTimesVectorD =
         operatorMatrix.getParallelProjectorKetTimesBlockVectorDevice();

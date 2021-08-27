@@ -323,10 +323,10 @@ namespace dftfe
       std::min(dftParameters::chebyWfcBlockSize, totalNumberWaveFunctions);
 
     distributedGPUVec<double> &cudaFlattenedArrayBlock =
-        operatorMatrix.getParallelChebyBlockVectorDevice();
+      operatorMatrix.getParallelChebyBlockVectorDevice();
 
     distributedGPUVec<double> &projectorKetTimesVector =
-        operatorMatrix.getParallelProjectorKetTimesBlockVectorDevice();
+      operatorMatrix.getParallelProjectorKetTimesBlockVectorDevice();
 
 
     if (!d_isTemporaryParallelVectorsCreated)
@@ -540,10 +540,10 @@ namespace dftfe
       std::min(dftParameters::chebyWfcBlockSize, totalNumberWaveFunctions);
 
     distributedGPUVec<double> &cudaFlattenedArrayBlock =
-        operatorMatrix.getParallelChebyBlockVectorDevice();
+      operatorMatrix.getParallelChebyBlockVectorDevice();
 
     distributedGPUVec<double> &projectorKetTimesVector =
-        operatorMatrix.getParallelProjectorKetTimesBlockVectorDevice();
+      operatorMatrix.getParallelProjectorKetTimesBlockVectorDevice();
 
 
     if (isFirstFilteringCall || !d_isTemporaryParallelVectorsCreated)
@@ -553,7 +553,8 @@ namespace dftfe
 
         vectorTools::createDealiiVector(
           operatorMatrix.getMatrixFreeData()->get_vector_partitioner(),
-          vectorsBlockSize,*((distributedGPUVec<double> *)d_cudaFlattenedFloatArrayBlockPtr));
+          vectorsBlockSize,
+          *((distributedGPUVec<double> *)d_cudaFlattenedFloatArrayBlockPtr));
 
         if (dftParameters::isPseudopotential)
           {
@@ -810,15 +811,14 @@ namespace dftfe
 
                 // copy current wavefunction vectors block to vector containing
                 // all wavefunction vectors
-                stridedCopyFromBlockKernel<<<(BVec + 255) / 256 *
-                                               localVectorSize,
-                                             256>>>(
-                  BVec,
-                  localVectorSize,
-                  cudaFlattenedArrayBlock.begin(),
-                  totalNumberWaveFunctions,
-                  eigenVectorsFlattenedCUDA,
-                  jvec);
+                stridedCopyFromBlockKernel<<<
+                  (BVec + 255) / 256 * localVectorSize,
+                  256>>>(BVec,
+                         localVectorSize,
+                         cudaFlattenedArrayBlock.begin(),
+                         totalNumberWaveFunctions,
+                         eigenVectorsFlattenedCUDA,
+                         jvec);
 
                 if (dftParameters::overlapComputeCommunCheby &&
                     numSimultaneousBlocksCurrent == 2)
@@ -1231,10 +1231,10 @@ namespace dftfe
       std::min(dftParameters::chebyWfcBlockSize, totalNumberWaveFunctions);
 
     distributedGPUVec<double> &cudaFlattenedArrayBlock =
-        operatorMatrix.getParallelChebyBlockVectorDevice();
+      operatorMatrix.getParallelChebyBlockVectorDevice();
 
     distributedGPUVec<double> &projectorKetTimesVector =
-        operatorMatrix.getParallelProjectorKetTimesBlockVectorDevice();
+      operatorMatrix.getParallelProjectorKetTimesBlockVectorDevice();
 
 
     if (!d_isTemporaryParallelVectorsCreated)
