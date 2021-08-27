@@ -439,6 +439,13 @@ namespace dftfe
     return d_parallelChebyBlockVectorDevice;
   }
 
+  template <unsigned int FEOrder, unsigned int FEOrderElectro>
+  distributedGPUVec<double> &
+  kohnShamDFTOperatorCUDAClass<FEOrder, FEOrderElectro>::
+    getParallelProjectorKetTimesBlockVectorDevice()
+  {
+    return d_parallelProjectorKetTimesBlockVectorDevice;
+  }
 
   template <unsigned int FEOrder, unsigned int FEOrderElectro>
   thrust::device_vector<unsigned int> &
@@ -635,6 +642,11 @@ namespace dftfe
           dftPtr->d_projectorKetTimesVectorPar[0].get_partitioner(),
           numberWaveFunctions,
           dftPtr->d_projectorKetTimesVectorParFlattened);
+
+        vectorTools::createDealiiVector(
+          dftPtr->d_projectorKetTimesVectorPar[0].get_partitioner(),
+          BVec,
+          d_parallelProjectorKetTimesBlockVectorDevice);
 
 
         thrust::host_vector<unsigned int>
