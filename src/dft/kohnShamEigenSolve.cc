@@ -403,7 +403,7 @@ dftClass<FEOrder, FEOrderElectro>::kohnShamEigenSpaceCompute(
   const bool                                         useMixedPrec,
   const bool                                         isFirstScf)
 {
-  computing_timer.enter_section("Chebyshev solve");
+  computing_timer.enter_subsection("Chebyshev solve");
 
   if (dftParameters::verbosity >= 2)
     {
@@ -435,7 +435,7 @@ dftClass<FEOrder, FEOrderElectro>::kohnShamEigenSpaceCompute(
       distributedCPUVec<dataTypes::number> vecForLanczos;
       kohnShamDFTEigenOperator.reinit(1, vecForLanczos, true);
 
-      computing_timer.enter_section("Lanczos k-step Upper Bound");
+      computing_timer.enter_subsection("Lanczos k-step Upper Bound");
       std::pair<double, double> bounds =
         linearAlgebraOperations::lanczosLowerUpperBoundEigenSpectrum(
           kohnShamDFTEigenOperator, vecForLanczos);
@@ -443,7 +443,7 @@ dftClass<FEOrder, FEOrderElectro>::kohnShamEigenSpaceCompute(
       const double lowerBoundWantedSpectrum   = bounds.first;
       a0[(1 + dftParameters::spinPolarized) * kPointIndex + spinType] =
         lowerBoundWantedSpectrum;
-      computing_timer.exit_section("Lanczos k-step Upper Bound");
+      computing_timer.leave_subsection("Lanczos k-step Upper Bound");
 
       d_upperBoundUnwantedSpectrumValues[(1 + dftParameters::spinPolarized) *
                                            kPointIndex +
@@ -461,7 +461,7 @@ dftClass<FEOrder, FEOrderElectro>::kohnShamEigenSpaceCompute(
     {
       if (!dftParameters::reuseLanczosUpperBoundFromFirstCall)
         {
-          computing_timer.enter_section("Lanczos k-step Upper Bound");
+          computing_timer.enter_subsection("Lanczos k-step Upper Bound");
           distributedCPUVec<dataTypes::number> vecForLanczos;
           kohnShamDFTEigenOperator.reinit(1, vecForLanczos, true);
           std::pair<double, double> bounds =
@@ -470,7 +470,7 @@ dftClass<FEOrder, FEOrderElectro>::kohnShamEigenSpaceCompute(
           d_upperBoundUnwantedSpectrumValues
             [(1 + dftParameters::spinPolarized) * kPointIndex + spinType] =
               bounds.second;
-          computing_timer.exit_section("Lanczos k-step Upper Bound");
+          computing_timer.leave_subsection("Lanczos k-step Upper Bound");
         }
 
       subspaceIterationSolver.reinitSpectrumBounds(
@@ -583,7 +583,7 @@ dftClass<FEOrder, FEOrderElectro>::kohnShamEigenSpaceCompute(
         eigenValuesTemp[0];
     }
 
-  computing_timer.exit_section("Chebyshev solve");
+  computing_timer.leave_subsection("Chebyshev solve");
 }
 
 #ifdef DFTFE_WITH_GPU
@@ -605,7 +605,7 @@ dftClass<FEOrder, FEOrderElectro>::kohnShamEigenSpaceCompute(
   const bool           useMixedPrec,
   const bool           isFirstScf)
 {
-  computing_timer.enter_section("Chebyshev solve CUDA");
+  computing_timer.enter_subsection("Chebyshev solve CUDA");
 
   if (dftParameters::verbosity >= 2)
     {
@@ -886,7 +886,7 @@ dftClass<FEOrder, FEOrderElectro>::kohnShamEigenSpaceCompute(
             eigenValuesTemp[0];
         }
     }
-  computing_timer.exit_section("Chebyshev solve CUDA");
+  computing_timer.leave_subsection("Chebyshev solve CUDA");
 }
 #endif
 
@@ -1236,7 +1236,7 @@ dftClass<FEOrder, FEOrderElectro>::kohnShamEigenSpaceComputeNSCF(
   std::vector<double> &                              residualNormWaveFunctions,
   unsigned int                                       ipass)
 {
-  computing_timer.enter_section("Chebyshev solve");
+  computing_timer.enter_subsection("Chebyshev solve");
 
   if (dftParameters::verbosity == 2)
     {
@@ -1266,7 +1266,7 @@ dftClass<FEOrder, FEOrderElectro>::kohnShamEigenSpaceComputeNSCF(
       distributedCPUVec<dataTypes::number> vecForLanczos;
       kohnShamDFTEigenOperator.reinit(1, vecForLanczos, true);
 
-      computing_timer.enter_section("Lanczos k-step Upper Bound");
+      computing_timer.enter_subsection("Lanczos k-step Upper Bound");
       std::pair<double, double> bounds =
         linearAlgebraOperations::lanczosLowerUpperBoundEigenSpectrum(
           kohnShamDFTEigenOperator, vecForLanczos);
@@ -1274,7 +1274,7 @@ dftClass<FEOrder, FEOrderElectro>::kohnShamEigenSpaceComputeNSCF(
       const double lowerBoundWantedSpectrum   = bounds.first;
       a0[(1 + dftParameters::spinPolarized) * kPointIndex + spinType] =
         lowerBoundWantedSpectrum;
-      computing_timer.exit_section("Lanczos k-step Upper Bound");
+      computing_timer.leave_subsection("Lanczos k-step Upper Bound");
 
       subspaceIterationSolver.reinitSpectrumBounds(
         lowerBoundWantedSpectrum,
@@ -1286,14 +1286,14 @@ dftClass<FEOrder, FEOrderElectro>::kohnShamEigenSpaceComputeNSCF(
     }
   else
     {
-      computing_timer.enter_section("Lanczos k-step Upper Bound");
+      computing_timer.enter_subsection("Lanczos k-step Upper Bound");
       distributedCPUVec<dataTypes::number> vecForLanczos;
       kohnShamDFTEigenOperator.reinit(1, vecForLanczos, true);
       std::pair<double, double> bounds =
         linearAlgebraOperations::lanczosLowerUpperBoundEigenSpectrum(
           kohnShamDFTEigenOperator, vecForLanczos);
       const double upperBoundUnwantedSpectrum = bounds.second;
-      computing_timer.exit_section("Lanczos k-step Upper Bound");
+      computing_timer.leave_subsection("Lanczos k-step Upper Bound");
 
       subspaceIterationSolver.reinitSpectrumBounds(
         a0[(1 + dftParameters::spinPolarized) * kPointIndex + spinType],
@@ -1365,7 +1365,7 @@ dftClass<FEOrder, FEOrderElectro>::kohnShamEigenSpaceComputeNSCF(
   //
 
 
-  computing_timer.exit_section("Chebyshev solve");
+  computing_timer.leave_subsection("Chebyshev solve");
 }
 
 

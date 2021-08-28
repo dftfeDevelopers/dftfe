@@ -256,7 +256,7 @@ dftClass<FEOrder, FEOrderElectro>::initpRefinedObjects(
   //
   if (meshOnlyDeformed)
     {
-      computing_timer.enter_section("Update atom bins bc");
+      computing_timer.enter_subsection("Update atom bins bc");
       d_vselfBinsManager.updateBinsBc(d_constraintsVectorElectro,
                                       d_constraintsPRefinedOnlyHanging,
                                       d_dofHandlerPRefined,
@@ -266,11 +266,11 @@ dftClass<FEOrder, FEOrderElectro>::initpRefinedObjects(
                                       d_imageIdsTrunc,
                                       d_imageChargesTrunc,
                                       vselfPerturbationUpdateForStress);
-      computing_timer.exit_section("Update atom bins bc");
+      computing_timer.leave_subsection("Update atom bins bc");
     }
   else
     {
-      computing_timer.enter_section("Create atom bins");
+      computing_timer.enter_subsection("Create atom bins");
       d_vselfBinsManager.createAtomBins(d_constraintsVectorElectro,
                                         d_constraintsPRefinedOnlyHanging,
                                         d_dofHandlerPRefined,
@@ -284,7 +284,7 @@ dftClass<FEOrder, FEOrderElectro>::initpRefinedObjects(
       d_netFloatingDispSinceLastBinsUpdate.clear();
       d_netFloatingDispSinceLastBinsUpdate.resize(atomLocations.size() * 3,
                                                   0.0);
-      computing_timer.exit_section("Create atom bins");
+      computing_timer.leave_subsection("Create atom bins");
     }
 
   MPI_Barrier(MPI_COMM_WORLD);
@@ -304,7 +304,8 @@ dftClass<FEOrder, FEOrderElectro>::initpRefinedObjects(
                                             locally_active_dofs_debug);
 
       const std::vector<IndexSet> &locally_owned_dofs_debug =
-        d_dofHandlerPRefined.locally_owned_dofs_per_processor();
+        Utilities::MPI::all_gather(mpi_communicator,
+                                   d_dofHandlerPRefined.locally_owned_dofs());
 
       AssertThrow(
         d_constraintsForTotalPotentialElectro.is_consistent_in_parallel(

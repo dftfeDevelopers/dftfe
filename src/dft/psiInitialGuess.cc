@@ -575,7 +575,7 @@ template <unsigned int FEOrder, unsigned int FEOrderElectro>
 void
 dftClass<FEOrder, FEOrderElectro>::readPSI()
 {
-  computing_timer.enter_section("initialize wave functions");
+  computing_timer.enter_subsection("initialize wave functions");
   readPSIRadialValues();
-  computing_timer.exit_section("initialize wave functions");
+  computing_timer.leave_subsection("initialize wave functions");
 }
