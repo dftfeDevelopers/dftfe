@@ -350,7 +350,7 @@ namespace dftfe
   //
   // Update solution x -> x + \alpha direction.
   //
-  bool
+  void
   cgPRPNonLinearSolver::updateSolution(const double               alpha,
                                        const std::vector<double> &direction,
                                        nonlinearSolverProblem &   problem)
@@ -367,24 +367,15 @@ namespace dftfe
     for (std::vector<double>::size_type i = 0; i < solutionSize; ++i)
       incrementVector[i] = alpha * direction[i];
 
-    unsigned int isMaxIncrementExceeded = 0;
 
     for (std::vector<double>::size_type i = 0; i < solutionSize; ++i)
       {
-        if (std::abs(incrementVector[i]) > d_maxSolutionIncrementLinf)
-          {
-            isMaxIncrementExceeded = 1;
-            break;
-          }
+        AssertThrow(
+          std::abs(incrementVector[i]) < d_maxSolutionIncrementLinf,
+          dealii::ExcMessage(std::string(
+            "DFT-FE Error: stopping CG iterations as maximum increment criteria exceeded. Please restart CGPRP solver from scratch after rechecking your starting geometry. Such situtations can also happen if the SCF iterations for the current ground-state did not converge.")));
       }
 
-    MPI_Bcast(&(isMaxIncrementExceeded), 1, MPI_INT, 0, MPI_COMM_WORLD);
-
-    if (isMaxIncrementExceeded == 1)
-      {
-        d_isCGRestartDueToLargeIncrement = true;
-        return true;
-      }
 
     //
     // call solver problem update
@@ -392,11 +383,6 @@ namespace dftfe
     problem.update(incrementVector, true, d_useSingleAtomSolutionsInitialGuess);
 
     d_useSingleAtomSolutionsInitialGuess = false;
-
-    //
-    //
-    //
-    return false;
   }
 
   //
@@ -485,22 +471,12 @@ namespace dftfe
             problem.save();
           }
 
-        bool isRestartCG;
         //
         // update unknowns removing earlier update
         //
-        isRestartCG = updateSolution(d_lineSearchDampingParameter,
-                                     d_conjugateDirection,
-                                     problem);
-
-        if (isRestartCG)
-          {
-            if (debugLevel >= 2)
-              pcout
-                << "Stopping line search and restarting CG as max increment criteria exceeded"
-                << std::endl;
-            return SUCCESS;
-          }
+        updateSolution(d_lineSearchDampingParameter,
+                       d_conjugateDirection,
+                       problem);
       }
 
     //
@@ -610,29 +586,15 @@ namespace dftfe
         //
         // update unknowns
         //
-        bool isRestartCG;
         if (iter == 0)
           {
-            isRestartCG =
-              updateSolution(alphaNew - d_lineSearchDampingParameter,
-                             d_conjugateDirection,
-                             problem);
+            updateSolution(alphaNew - d_lineSearchDampingParameter,
+                           d_conjugateDirection,
+                           problem);
           }
         else
           {
-            isRestartCG =
-              updateSolution(alphaNew, d_conjugateDirection, problem);
-          }
-
-
-
-        if (isRestartCG)
-          {
-            if (debugLevel >= 2)
-              pcout
-                << "Stopping line search and restarting CG as max increment criteria exceeded"
-                << std::endl;
-            return SUCCESS;
+            updateSolution(alphaNew, d_conjugateDirection, problem);
           }
 
         //

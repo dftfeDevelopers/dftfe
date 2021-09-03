@@ -33,7 +33,7 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::computeHamiltonianMatrix(
       dealii::TimerOutput::every_call,
     dealii::TimerOutput::wall_times);
 
-  computingTimerStandard.enter_section(
+  computingTimerStandard.enter_subsection(
     "Elemental Hamiltonian matrix computation on CPU");
 
   //
@@ -614,7 +614,7 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::computeHamiltonianMatrix(
 
         } // macrocell loop
     }
-  computingTimerStandard.exit_section(
+  computingTimerStandard.leave_subsection(
     "Elemental Hamiltonian matrix computation on CPU");
 }
 

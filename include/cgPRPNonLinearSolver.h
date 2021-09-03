@@ -160,10 +160,8 @@ namespace dftfe
      * @param direction Direction vector.
      * @param problem nonlinearSolverProblem object.
      *
-     * @return flag to break out of line search and restart CG
-     * if increment in solution exceeds the max increment criteria
      */
-    bool
+    void
     updateSolution(const double               alpha,
                    const std::vector<double> &direction,
                    nonlinearSolverProblem &   problem);

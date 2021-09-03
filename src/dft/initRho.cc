@@ -46,7 +46,7 @@ template <unsigned int FEOrder, unsigned int FEOrderElectro>
 void
 dftClass<FEOrder, FEOrderElectro>::initRho()
 {
-  computing_timer.enter_section("initialize density");
+  computing_timer.enter_subsection("initialize density");
 
   // clear existing data
   clearRhoData();
@@ -561,7 +561,7 @@ dftClass<FEOrder, FEOrderElectro>::initRho()
       normalizeRhoInQuadValues();
     }
   //
-  computing_timer.exit_section("initialize density");
+  computing_timer.leave_subsection("initialize density");
 }
 
 //
@@ -573,7 +573,7 @@ dftClass<FEOrder, FEOrderElectro>::computeRhoInitialGuessFromPSI(
   std::vector<std::vector<distributedCPUVec<double>>> eigenVectors)
 
 {
-  computing_timer.enter_section("initialize density");
+  computing_timer.enter_subsection("initialize density");
 
   // clear existing data
   clearRhoData();
@@ -1046,7 +1046,7 @@ dftClass<FEOrder, FEOrderElectro>::computeRhoInitialGuessFromPSI(
 
   normalizeRhoInQuadValues();
   //
-  computing_timer.exit_section("initialize density");
+  computing_timer.leave_subsection("initialize density");
 }
 
 template <unsigned int FEOrder, unsigned int FEOrderElectro>

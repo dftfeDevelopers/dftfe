@@ -7,13 +7,13 @@ $ module load mkl/2018.0.4
 $ module load cuda/11.0.2 (if installing for GPUs)
 \end{verbatim}
 %In the above mpilibrary denotes the MPI library you are using in your system(for eg: openmpi, mpich or intel-mpi). 
-We strongly recommend using the latest stable version of compilers-(C, C++ and Fortran), CUDA, MPI and math libraries available on your high-performance computer. DFT-FE's installation requires also the following minimum versions of the above compilers and libraries:
+Note the above are shown only as an example. We strongly recommend using the latest stable version of compilers-(C, C++ and Fortran), CUDA, MPI and math libraries available on your high-performance computer. DFT-FE's installation requires also the following minimum versions of the above compilers and libraries:
 \begin{itemize}
     \item CMake 3.17.0
     \item GCC 8.2.0
     \item CUDA 11.0.2 (if installing for GPUs)
 \end{itemize}
-\textcolor{red}{\bf We currently do not support Intel compilers due to a compilation issue of the deal.II library. Please use GNU compilers only.} 
+\textcolor{red}{\bf We currently do not support Intel compilers due to a compilation issue of the deal.II library. Please use GNU compilers only.} Further, if version of CMake greater than 3.17.0 is not available on your machine please install latest version from here \href{http://www.cmake.org/}{CMake} or use pre-installed binaries most appropriate for your machine.
 
 \subsection{Compiling and installing external libraries}
 \dftfe{} is primarily based on the open source finite element library \href{http://www.dealii.org/}{deal.II}, through which external dependencies
@@ -42,55 +42,66 @@ Do not forget to replace \verb|libxc_install_dir_path| by some appropriate path 
 $ git clone https://github.com/atztogo/spglib.git	
 \end{verbatim}	
 and next follow the ``Compiling using cmake'' installation procedure described in \url{https://atztogo.github.io/spglib/install.html}.   	
+We recommend using the ccmake gui interface for the installation and also use appropriate compiler for \verb|CMAKE_C_COMPILER|.
 
 \item {\bf Libxml2}: Libxml2 is used by \dftfe{} to read \verb|.xml| files. Most likely, Libxml2 might be already installed in the high-performance computer you are working with. It is usually installed in the default locations like \verb|/usr/lib64| (library path which contains \verb|.so| file for Libxml2, something like \verb|libxml2.so.2|) and \verb|/usr/include/libxml2| (include path). 
 
 Libxml2 can also be installed by doing (Do not use these instructions if you have already have Libxml2 on your system)
 \begin{verbatim}
-$ git clone git://git.gnome.org/libxml2
+$ git clone https://gitlab.gnome.org/GNOME/libxml2.git
 $ ./autogen.sh --prefix=Libxml_install_dir_path
 $ make
 $ make install 
 \end{verbatim}
 There might be errors complaining that it can not create regular file libxml2.py in /usr/lib/python2.7/site-packages, but that should not matter.
 
-\item {\bf ScaLAPACK}: ScaLAPACK library is used by DFT-FE via deal.II for its parallel linear algebra routines involving dense matrices, as well being a dependency for ELPA. Currently, the installation process only supports Netlib ScaLAPACK \url{http://www.netlib.org/scalapack/}. Download the current release version (2.1.0) from \url{http://www.netlib.org/scalapack/#\_software}, and build a shared library (use \verb|BUILD_SHARED_LIBS=ON| and \verb|BUILD_STATIC_LIBS=OFF|  during the cmake configuration) installation of ScaLAPACK using cmake. Use \verb|-fPIC| flag for \verb|CMAKE_C_FLAGS| and \verb|CMAKE_Fortran_FLAGS|. For best performance, ScaLAPACK must be linked to optimized BLAS-LAPACK libraries by using\\ \verb|USE_OPTIMIZED_LAPACK_BLAS=ON|, and providing external paths to BLAS-LAPACK during the cmake configuration. We recommend using the ccmake gui interface for the installation. Alternatively one can also use the python based installer~\url{http://www.netlib.org/scalapack/scalapack_installer.tgz} for Linux. 
+\item {\bf ScaLAPACK}: ScaLAPACK library is used by DFT-FE via deal.II for its parallel linear algebra routines involving dense matrices, as well being a dependency for ELPA. \textcolor{red}{\bf If Intel MKL math library is available, please skip this step, as the ScaLAPACK libraries therein can be used directly.} If Intel MKL math library is not available, Netlib ScaLAPACK \url{http://www.netlib.org/scalapack/} needs to be installed using the instructions below. Download the current release version (2.1.0) from \url{http://www.netlib.org/scalapack/#\_software}, and build a shared library (use \verb|BUILD_SHARED_LIBS=ON|, \verb|BUILD_STATIC_LIBS=OFF| and \verb|BUILD_TESTING=OFF|) installation of ScaLAPACK using cmake. We recommend using the ccmake gui interface for the installation.  Further, use the appropriate compilers for \verb|CMAKE_C_COMPILER| and \verb|CMAKE_FORTRAN_COMPILER|, and also use \verb|-fPIC| flag for \verb|CMAKE_C_FLAGS| and \verb|CMAKE_Fortran_FLAGS|. For best performance, ScaLAPACK must be linked to optimized BLAS-LAPACK libraries by using\\ \verb|USE_OPTIMIZED_LAPACK_BLAS=ON|, and providing external paths to BLAS-LAPACK libraries (MKL, OpenBlas, ESSL etc.) during the cmake configuration. 
+%Alternatively one can also use the python based installer~\url{http://www.netlib.org/scalapack/scalapack_installer.tgz} for Linux.
 
-\item {\bf ELPA}: ELPA library is used by DFT-FE for its parallel linear algebra routines involving dense matrices. ELPA requires the ScaLAPACK library (see above) as a dependency. Download the latest version (minimum version elpa-2020.11.001) from \url{https://elpa.mpcdf.mpg.de/elpa-tar-archive} and follow the installation instructions in there. Example of ELPA installation on UMICH Greatlakes supercomputer with GNU compiler, Open MPI library, and Intel MKL math library:
+\item {\bf ELPA}: ELPA library is used by DFT-FE for its parallel linear algebra routines involving dense matrices. ELPA requires the ScaLAPACK library (see above) as a dependency. Download version elpa-2020.05.002 (this version has been thoroughly tested) from \url{https://elpa.mpcdf.mpg.de/software/} and follow the installation instructions in there. Example of ELPA installation on UMICH Greatlakes supercomputer with GNU compiler, Open MPI library, and Intel MKL math library:
 \begin{verbatim}
 $ cd elpaDir
 $ mkdir build
 $ cd build
-$ ../configure --enable-openmp FC=mpif90 CC=mpicc FCFLAGS="-fopenmp -O2 -march=native" 
-CFLAGS="-fopenmp -O2 -march=native" --prefix=elpa_install_path
-SCALAPACK_LDFLAGS="-L$MKLROOT/lib/intel64 -lmkl_gf_lp64
--lmkl_gnu_thread -lmkl_core -lgomp -lpthread -lm -ldl
--L$netlib_scalapack_installation_path/lib -lscalapack"
-SCALAPACK_FCFLAGS="-L$MKLROOT/lib/intel64 -lmkl_gf_lp64 
--lmkl_gnu_thread -lmkl_core -lgomp -lpthread -lm -ldl
--I$MKLROOT/include/intel64/lp64 -L$netlib_scalapack_installation_path/lib -lscalapack"
+$ ../configure --enable-openmp FC=mpif90 CC=mpicc CXX=mpicxx 
+FCFLAGS="-fopenmp -O2 -march=native" CFLAGS="-fopenmp -O2 -march=native" 
+CXXFLAGS="-fopenmp -O2 -march=native" --prefix=elpa_install_path
+SCALAPACK_LDFLAGS=" -L${MKLROOT}/lib/intel64 -lmkl_scalapack_lp64
+-Wl,--no-as-needed -lmkl_intel_lp64
+-lmkl_gnu_thread -lmkl_core -lmkl_blacs_openmpi_lp64 -lgomp -lpthread -lm -ldl" 
+SCALAPACK_FCFLAGS="-L${MKLROOT}/lib/intel64 -lmkl_scalapack_lp64
+-Wl,--no-as-needed -lmkl_gf_lp64 -lmkl_gnu_thread -lmkl_core
+-lmkl_blacs_openmpi_lp64 -lgomp -lpthread -lm -ldl"
 $ make -j 4
 $ make install
 \end{verbatim}
-The MKL paths and linker flags were obtained with the help of \href{https://software.intel.com/en-us/articles/intel-mkl-link-line-advisor}{Intel MKL Link Line Advisor} for GNU Fortran compiler.\\ 
+The MKL paths and linker flags were obtained with the help of \href{https://software.intel.com/en-us/articles/intel-mkl-link-line-advisor}{Intel MKL Link Line Advisor} for GNU Fortran compiler (Note the usage of \verb|-lmkl_gf_lp64| flag above).\\ 
 
 If the machine of interest has NVIDIA GPUs and CUDA library, ELPA can take advantage of GPUs. For example on OLCF Summit GPU nodes, we use the following configure line
 \begin{verbatim}
-../configure FC=mpif90 CC=mpicc FCFLAGS="-O3 -fPIC -mcpu=power9 -mvsx -maltivec"
-CFLAGS="-O3 -fPIC -mcpu=power9 -mvsx -maltivec" --enable-gpu
---with-GPU-compute-capability="sm_70" --with-cuda-path="$OLCF_CUDA_ROOT"
---with-cuda-sdk-path="$OLCF_CUDA_ROOT" --prefix=elpa_install_path
-SCALAPACK_LDFLAGS="-L$netlib_scalapack_installation_path/lib -lscalapack
--L/$OLCF_ESSL_ROOT/lib64 -lessl -L/$OLCF_NETLIB_LAPACK_ROOT/lib64 -llapack
+../configure FC=mpif90 CC=mpicc FCFLAGS="-O2
+-fPIC -mcpu=power9 -mvsx -maltivec" CFLAGS="-O2
+-fPIC -mcpu=power9 -mvsx -maltivec"
+--enable-nvidia-gpu
+--with-GPU-compute-capability="sm_70"
+--with-cuda-path="$OLCF_CUDA_ROOT"
+--with-cuda-sdk-path="$OLCF_CUDA_ROOT"
+--prefix=elpa_install_path
+LDFLAGS="-L$netlib_scalapack_installation_path/lib -lscalapack  
+-L/$OLCF_ESSL_ROOT/lib64 -lessl
+-L/$OLCF_NETLIB_LAPACK_ROOT/lib64 -llapack
 -L/$OLCF_OPENBLAS_ROOT/lib -lopenblas"
-SCALAPACK_FCFLAGS="-L$netlib_scalapack_installation_path/lib -lscalapack 
--L/$OLCF_ESSL_ROOT/lib64 -lessl -L/$OLCF_NETLIB_LAPACK_ROOT/lib64 -llapack
--L/$OLCF_OPENBLAS_ROOT/lib -lopenblas" 
---disable-sse --disable-sse-assembly --disable-avx --disable-avx2 --disable-avx512
+--disable-sse --disable-sse-assembly
+--disable-avx --disable-avx2 --disable-avx512
+--enable-c-tests=no
 \end{verbatim}
+Note the use of LDFLAGS instead of SCALAPACK\_LDFLAGS and SCALAPACK\_FCFLAGS, since we are using netlib ScaLAPACK instead of Intel MKL ScaLAPACK in the above. Also note use of
+\begin{verbatim}
+    --disable-sse --disable-sse-assembly --disable-avx --disable-avx2 --disable-avx512
+\end{verbatim} 
+above. \textcolor{red}{\bf Some or all of these options may be required for systems without Intel CPUs such as IBM Power and AMD Epyc processors depending on what they support.}
 
-
-\item   {\bf p4est}: This library is used by deal.II to create and distribute finite-element meshes across multiple processors. Download the current release tarball of p4est from \url{http://www.p4est.org/}. Next download the script from \url{https://dealii.org/developer/external-libs/p4est.html}. Use the script to automatically compile and install a debug and optimized version of p4est by doing
+\item   {\bf p4est}: This library is used by deal.II to create and distribute finite-element meshes across multiple processors. Download the v2.2 tarball of p4est from \url{http://www.p4est.org/}. Next download the \verb|p4est-setup.sh| script from \url{https://dealii.org/developer/external-libs/p4est.html}. Use the script to automatically compile and install a debug and optimized version of p4est by doing
 \begin{verbatim}
 $ chmod u+x p4est-setup.sh
 $ ./p4est-setup.sh p4est-x-y-z.tar.gz p4est_install_dir_path
@@ -138,9 +149,10 @@ $ make install
 -DDEAL_II_WITH_P4EST=ON -DP4EST_DIR=p4est_install_dir_path
 -DDEAL_II_WITH_LAPACK=ON
 -DLAPACK_DIR=lapack_dir_path 
--DLAPACK_LIBRARIES=lapack_lib_path
 -DLAPACK_FOUND=true
--DSCALAPACK_DIR=scalapack_dir_path
+-DLAPACK_LIBRARIES=lapack_lib_path
+-DDEAL_II_WITH_SCALAPACK=ON
+-DSCALAPACK_DIR=scalapack_dir_path (only required if linking to netlib ScaLAPACK)
 -DSCALAPACK_LIBRARIES=scalapack_lib_path
 -DDEAL_II_WITH_TBB=OFF
 -DDEAL_II_WITH_TASKFLOW=OFF
@@ -175,21 +187,27 @@ $ cmake -DCMAKE_C_COMPILER=gcc
 -DDEAL_II_WITH_TASKFLOW=OFF 
 -DDEAL_II_WITH_P4EST=ON 
 -DP4EST_DIR=p4est_install_path 
--DDEAL_II_WITH_LAPACK=ON -DLAPACK_DIR="${MKLROOT}/lib/intel64" -DLAPACK_FOUND=true
--DLAPACK_LIBRARIES="${MKLROOT}/lib/intel64/libmkl_intel_lp64.so;
-${MKLROOT}/lib/intel64/libmkl_core.so;${MKLROOT}/lib/intel64/libmkl_gnu_thread.so"
--DLAPACK_LINKER_FLAGS="-lmkl_core -lgomp -lpthread -lm -ldl"
--DDEAL_II_WITH_SCALAPACK=ON -DSCALAPACK_DIR="$netlib_scalapack_install_path/lib"
--DSCALAPACK_LIBRARIES="$netlib_scalapack_install_path/lib/libscalapack.so"
+-DDEAL_II_WITH_LAPACK=ON -DLAPACK_DIR="${MKLROOT}/lib/intel64"
+-DLAPACK_FOUND=true
+-DLAPACK_LIBRARIES="-L${MKLROOT}/lib/intel64
+-Wl,--no-as-needed -lmkl_intel_lp64
+-lmkl_gnu_thread -lmkl_core -lgomp -lpthread -lm
+-ldl" -DLAPACK_INCLUDE_DIRS="-I${MKLROOT}/include" 
+-DDEAL_II_WITH_SCALAPACK=ON
+-DSCALAPACK_LIBRARIES="-L${MKLROOT}/lib/intel64
+-lmkl_scalapack_lp64 -Wl,--no-as-needed
+-lmkl_intel_lp64 -lmkl_gnu_thread -lmkl_core
+-lmkl_blacs_openmpi_lp64 -lgomp -lpthread -lm
+-ldl"
 -DCMAKE_INSTALL_PREFIX=dealii_install_path ../dealii
 $ make -j 8
 $ make install
 \end{verbatim}
 The values for \verb|-DLAPACK_DIR|,\verb|-DLAPACK_LIBRARIES| and \verb|-DLAPACK_LINKER_FLAGS| were obtained with the help of \href{https://software.intel.com/en-us/articles/intel-mkl-link-line-advisor}{Intel MKL Link Line Advisor} for GNU C++ compiler (cf. Fig.~\ref{fig:intelmkl}).\\ 
-\begin{figure}[htpb]
+\begin{figure}[htp]
     \centering
-\includegraphics[scale=0.4]{intelmklLineAdvisorExample.png}
-    \caption{Example usage of Intel MKL line advisor}
+\includegraphics[scale=0.4]{intelmklLineAdvisorExampleNew.png}
+    \caption{Example usage of Intel MKL line advisor. Use the options in the ``link line'' generated by the line advisor tool. Please note to change ``intelmpi'' in ``-lmkl\_blacs\_intelmpi\_lp64'' to ``openmpi'' if using openmpi MPI library.}
     \label{fig:intelmkl}
 \end{figure}
 
@@ -210,7 +228,6 @@ deal.II compilation will automatically try to pick the available vector instruct
 ``Success'', means deal.II was able to use the corresponding vector instructions, and ``Failed'' would mean otherwise. If deal.II is not able to pick an available vector instruction on your high-performance computer, please contact the deal.II developers at \href{https://groups.google.com/d/forum/dealii}{deal.II mailing lists} and/or contact your high-performance computer support for guidance on how to use the correct compiler flags for AVX or AVX-512. 
 
 Ensure that deal.II picks up AVX-512, which is strongly recommended for obtaining maximum performance on the new Intel Xeon Phi (KNL) and Skylake processors, both of which support Intel AVX-512 instructions.
-
 
 
 \subsection{Obtaining and Compiling \dftfe{}}\label{sec:dftfeinstall}
@@ -254,9 +271,9 @@ withNCCL=OFF
 For GPU compilation, \verb|withGPU| must be set to ON.
 \item To compile \dftfe{}, first create a build directory anywhere on your machine. Next from inside the build directory do
 \begin{verbatim}
-$ bash $dftfe_source/setupUser.h
+$ bash $dftfe_source/setupUser.sh
 \end{verbatim} 
-Please use the full directory path for \verb|$dftfe_source| above.
+Please use the full directory path for \verb|$dftfe_source| above. Also note that sometimes compilation on login node can crash due to insufficient memory. In those cases, we recommend using an interactive job if available on your computing cluster.
 
 \item If compilation is successful, the following executables will be created:
 \begin{verbatim}
@@ -358,9 +375,9 @@ $ make install
 -DDEAL_II_WITH_SLEPC=ON -DSLEPC_DIR=slepcReal_install_dir_path
 -DDEAL_II_WITH_LAPACK=ON
 -DLAPACK_DIR=lapack_dir_path 
+-DLAPACK_FOUND=true 
 -DLAPACK_LIBRARIES=lapack_lib_path
--DLAPACK_FOUND=true
--DSCALAPACK_DIR=scalapack_dir_path
+-DSCALAPACK_DIR=scalapack_dir_path (only required if linking to Netlib ScaLAPACK)
 -DSCALAPACK_LIBRARIES=scalapack_lib_path
 -DDEAL_II_WITH_TBB=OFF
 -DDEAL_II_WITH_TASKFLOW=OFF

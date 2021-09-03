@@ -47,7 +47,7 @@ namespace dftfe
                                             dealii::TimerOutput::summary,
                                           dealii::TimerOutput::wall_times);
 
-      computing_timer.enter_section(
+      computing_timer.enter_subsection(
         "Create constraints from serial dofHandler");
 
       const dealii::IndexSet &locally_owned_dofs_par =
@@ -203,7 +203,8 @@ namespace dftfe
       periodicHangingConstraints.close();
       onlyHangingConstraints.close();
 
-      computing_timer.exit_section("Create constraints from serial dofHandler");
+      computing_timer.leave_subsection(
+        "Create constraints from serial dofHandler");
     }
 
     template <typename T>

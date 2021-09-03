@@ -191,7 +191,7 @@ namespace dftfe
       const MPI_Comm &                        mpi_communicator,
       dealii::TimerOutput &                   computing_timer)
     {
-      computing_timer.enter_section(
+      computing_timer.enter_subsection(
         "create bins: find nodes inside atom balls");
       interactionMap.clear();
       const unsigned int numberImageCharges = imageIds.size();
@@ -323,7 +323,8 @@ namespace dftfe
 
         } // atom loop
 
-      computing_timer.exit_section("create bins: find nodes inside atom balls");
+      computing_timer.leave_subsection(
+        "create bins: find nodes inside atom balls");
       //
       // exchange atomToGlobalNodeIdMap across all processors
       //
@@ -332,7 +333,7 @@ namespace dftfe
       //					   n_mpi_processes,
       //					   mpi_communicator);
 
-      computing_timer.enter_section("create bins: local interaction maps");
+      computing_timer.enter_subsection("create bins: local interaction maps");
       unsigned int ilegalInteraction = 0;
 
       for (unsigned int iAtom = 0; iAtom < totalNumberAtoms; ++iAtom)
@@ -454,17 +455,18 @@ namespace dftfe
             break;
 
         } // end of iAtom loop
-      computing_timer.exit_section("create bins: local interaction maps");
+      computing_timer.leave_subsection("create bins: local interaction maps");
       if (dealii::Utilities::MPI::sum(ilegalInteraction, mpi_communicator) > 0)
         return 1;
 
       /*
-      computing_timer.enter_section("create bins: exchange interaction maps");
-      internal::exchangeInteractionMaps(totalNumberAtoms,
+      computing_timer.enter_subsection("create bins: exchange interaction
+      maps"); internal::exchangeInteractionMaps(totalNumberAtoms,
           interactionMap,
           n_mpi_processes,
           mpi_communicator);
-      computing_timer.exit_section("create bins: exchange interaction maps");
+      computing_timer.leave_subsection("create bins: exchange interaction
+      maps");
       */
       return 0;
     }
@@ -507,7 +509,7 @@ namespace dftfe
                                           dealii::TimerOutput::summary,
                                         dealii::TimerOutput::wall_times);
 
-    computing_timer.enter_section("create bins: initial overheads");
+    computing_timer.enter_subsection("create bins: initial overheads");
 
     d_bins.clear();
     d_binsImages.clear();
@@ -543,7 +545,7 @@ namespace dftfe
     dealii::DoFTools::extract_locally_relevant_dofs(dofHandler,
                                                     locally_relevant_dofs);
 
-    computing_timer.exit_section("create bins: initial overheads");
+    computing_timer.leave_subsection("create bins: initial overheads");
 
     // create interaction maps by finding the intersection of global NodeIds of
     // each atom
@@ -651,7 +653,7 @@ namespace dftfe
         AssertThrow(check == 0, dealii::ExcMessage(message));
       }
 
-    computing_timer.enter_section("create bins: put in bins");
+    computing_timer.enter_subsection("create bins: put in bins");
     std::map<int, std::set<int>>::iterator iter;
 
     //
@@ -729,9 +731,9 @@ namespace dftfe
     if (dftParameters::verbosity >= 2)
       pcout << "number bins: " << numberBins << std::endl;
 
-    computing_timer.exit_section("create bins: put in bins");
+    computing_timer.leave_subsection("create bins: put in bins");
 
-    computing_timer.enter_section("create bins: set boundary conditions");
+    computing_timer.enter_subsection("create bins: set boundary conditions");
     const unsigned int faces_per_cell = dealii::GeometryInfo<3>::faces_per_cell;
     const unsigned int dofs_per_face  = dofHandler.get_fe().dofs_per_face;
 
@@ -1349,11 +1351,11 @@ namespace dftfe
          */
       } // bin loop
 
-    computing_timer.exit_section("create bins: set boundary conditions");
+    computing_timer.leave_subsection("create bins: set boundary conditions");
 
-    computing_timer.enter_section("create bins: sanity check");
+    computing_timer.enter_subsection("create bins: sanity check");
     createAtomBinsSanityCheck(dofHandler, onlyHangingNodeConstraints);
-    computing_timer.exit_section("create bins: sanity check");
+    computing_timer.leave_subsection("create bins: sanity check");
 
     if (!dftParameters::floatingNuclearCharges)
       locateAtomsInBins(dofHandler);

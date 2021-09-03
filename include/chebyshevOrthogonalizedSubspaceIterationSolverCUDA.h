@@ -146,16 +146,10 @@ namespace dftfe
     // temporary parallel vectors needed for Chebyshev filtering
     //
     // distributedGPUVec<double>
-    void *d_cudaFlattenedArrayBlockPtr;
-
-    // distributedGPUVec<double>
     void *d_YArrayPtr;
 
     // distributedGPUVec<float>
     void *d_cudaFlattenedFloatArrayBlockPtr;
-
-    // distributedGPUVec<double>
-    void *d_projectorKetTimesVectorPtr;
 
     // distributedGPUVec<double>
     void *d_cudaFlattenedArrayBlock2Ptr;
