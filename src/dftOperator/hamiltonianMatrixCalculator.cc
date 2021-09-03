@@ -104,70 +104,72 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::computeHamiltonianMatrix(
               "DFT-FE Error: mismatch in quadrature rule usage in computeHamiltonianMatrix."));
 
 
+	  unsigned int iNode, jNode;
           while (blockCount < numBlocks)
             {
-              for (unsigned int q_point = 0; q_point < numberQuadraturePoints;
+	      
+              for(unsigned int q_point = 0; q_point < numberQuadraturePoints;
                    ++q_point)
                 {
-                  flag = 0;
-                  for (unsigned int iNode =
-                         d_blockiNodeIndex[numberEntriesEachBlock * blockCount];
-                       iNode < numberDofsPerElement;
+		  indexCount = 0;
+		  iNode = d_blockiNodeIndex[numberEntriesEachBlock * blockCount];
+		  jNode = d_blockjNodeIndex[numberEntriesEachBlock * blockCount];
+		  NiNjLpspQuad_currentBlock[numberEntriesEachBlock*q_point] =  d_shapeFunctionLpspQuadData[numberDofsPerElement * q_point + iNode]*d_shapeFunctionLpspQuadData[numberDofsPerElement * q_point + jNode];
+		  indexCount += 1;
+       		  
+                  for (iNode =
+                         d_blockiNodeIndex[numberEntriesEachBlock * blockCount + 1];
+                       iNode < d_blockiNodeIndex[numberEntriesEachBlock*(blockCount+1) - 1];
                        ++iNode)
                     {
                       double shapeI =
                         d_shapeFunctionLpspQuadData[numberDofsPerElement *
-                                                      q_point +
+						    q_point +
                                                     iNode];
-                      for (unsigned int jNode = d_blockjNodeIndex
-                             [numberEntriesEachBlock * blockCount + indexCount];
-                           jNode < numberDofsPerElement;
+                      for (jNode = d_blockjNodeIndex
+                             [numberEntriesEachBlock * blockCount + 1];
+                           jNode < d_numberNodesPerElement;
                            ++jNode)
                         {
                           double shapeJ =
                             d_shapeFunctionLpspQuadData[numberDofsPerElement *
-                                                          q_point +
+							q_point +
                                                         jNode];
                           NiNjLpspQuad_currentBlock[numberEntriesEachBlock *
-                                                      q_point +
+						    q_point +
                                                     indexCount] =
                             shapeI * shapeJ;
                           indexCount += 1;
-                          if (indexCount % numberEntriesEachBlock == 0)
-                            {
-                              flag       = 1;
-                              indexCount = 0;
-                              break;
-                            }
+                        
                         } // jNode
+		    }//iNode
 
-                      if (flag == 1)
-                        {
-                          if (q_point == (numberQuadraturePoints - 1))
-                            {
-                              dgemm_(&transA1,
-                                     &transB1,
-                                     &totalLocallyOwnedCells, // M
-                                     &numberEntriesEachBlock, // N
-                                     &numberQuadraturePoints, // K
-                                     &alpha,
-                                     &d_vEffExternalPotCorrJxW[0],
-                                     &totalLocallyOwnedCells,
-                                     &NiNjLpspQuad_currentBlock[0],
-                                     &numberEntriesEachBlock,
-                                     &beta,
-                                     &d_cellHamiltonianMatrixExternalPotCorr
-                                       [totalLocallyOwnedCells *
-                                        numberEntriesEachBlock * blockCount],
-                                     &totalLocallyOwnedCells);
+                  iNode = d_blockiNodeIndex[numberEntriesEachBlock*(blockCount+1) - 1];
+		  jNode = d_blockjNodeIndex[numberEntriesEachBlock*(blockCount+1) - 1];
+		  NiNjLpspQuad_currentBlock[numberEntriesEachBlock*q_point+indexCount] =  d_shapeFunctionLpspQuadData[numberDofsPerElement * q_point + iNode]*d_shapeFunctionLpspQuadData[numberDofsPerElement * q_point + jNode];
+		  indexCount += 1;
+		}//quadPoint loop
 
-                              blockCount += 1;
-                            }
-                          break;
-                        }
-                    }
-                }
-            }
+	      
+	      dgemm_(&transA1,
+		     &transB1,
+		     &totalLocallyOwnedCells, // M
+		     &numberEntriesEachBlock, // N
+		     &numberQuadraturePoints, // K
+		     &alpha,
+		     &d_vEffExternalPotCorrJxW[0],
+		     &totalLocallyOwnedCells,
+		     &NiNjLpspQuad_currentBlock[0],
+		     &numberEntriesEachBlock,
+		     &beta,
+		     &d_cellHamiltonianMatrixExternalPotCorr
+		     [totalLocallyOwnedCells *
+		      numberEntriesEachBlock * blockCount],
+		     &totalLocallyOwnedCells);
+
+	      blockCount += 1;
+		    
+	    }
 
           d_isStiffnessMatrixExternalPotCorrComputed = true;
           NiNjLpspQuad_currentBlock.clear();
