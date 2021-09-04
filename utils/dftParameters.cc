@@ -150,6 +150,10 @@ namespace dftfe
     bool         useELPAGPUKernel                               = false;
     std::string  xcFamilyType                                   = "";
     bool         gpuMemOptMode                                  = false;
+    //New Paramters for moleculardyynamics class
+    double startingTempBOMD                                     = 300;
+    double thermostatTimeConstantBOMD                            = 100;
+    std::string  tempControllerTypeBOMD                         ="";
 
     void
     declare_parameters(ParameterHandler &prm)
@@ -1024,6 +1028,32 @@ namespace dftfe
           "300.0",
           Patterns::Double(0.0),
           "[Developer] Starting temperature in K for NVE simulation.");
+        
+        prm.declare_entry(
+          "STARTING TEMPERATURE",
+          "300.0",
+          Patterns::Double(0.0),
+          "[Developer] Starting temperature in K for MD simulation.");
+
+        prm.declare_entry(
+          "THERMOSTAT TIME CONSTANT",
+          "100",
+          Patterns::Double(0.0),
+          "[Developer] Time constant of thermostat wrt MD timestep. ");  
+
+          
+
+          
+
+        prm.declare_entry(
+          "TEMP CONTROLLER TYPE",
+          "NO_CONTROL",
+          Patterns::Selection("NO_CONTROL|RESCALE|NOSE_HOVER_CHAINS"),
+          "[Standard] Method of controlling temperature in the MD run. NO_CONTROL is the default option.");
+  
+
+   
+
 
         prm.declare_entry("TIME STEP",
                           "0.5",
@@ -1374,6 +1404,15 @@ namespace dftfe
         dftParameters::numberStepsBOMD = prm.get_integer("NUMBER OF STEPS");
         dftParameters::startingTempBOMDNVE =
           prm.get_double("STARTING TEMP NVE");
+        
+        dftParameters::startingTempBOMD =
+          prm.get_double("STARTING TEMPERATURE");
+        dftParameters::thermostatTimeConstantBOMD =
+          prm.get_double("THERMOSTAT TIME CONSTANT");
+        dftParameters::tempControllerTypeBOMD =
+          prm.get("TEMP CONTROLLER TYPE");  
+
+
         dftParameters::diracDeltaKernelScalingConstant =
           prm.get_double("DIRAC DELTA KERNEL SCALING CONSTANT XL BOMD");
         dftParameters::kernelUpdateRankXLBOMD =

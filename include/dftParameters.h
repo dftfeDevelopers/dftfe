@@ -119,7 +119,7 @@ namespace dftfe
     extern double       chebyshevFilterPolyDegreeFirstScfScalingFactor;
     extern double       timeStepBOMD;
     extern unsigned int numberStepsBOMD;
-    extern double       startingTempBOMDNVE;
+    //extern double       startingTempBOMDNVE;
     extern double       gaussianConstantForce;
     extern double       gaussianOrderForce;
     extern double       gaussianOrderMoveMeshToAtoms;
@@ -146,6 +146,10 @@ namespace dftfe
     extern bool         useELPAGPUKernel;
     extern std::string  xcFamilyType;
     extern bool         gpuMemOptMode;
+    //New Paramters for moleculardyynamics class
+    extern double startingTempBOMD;
+    extern double thermostatTimeConstantBOMD;
+    extern std::string  tempControllerTypeBOMD;    
 
     /**
      * Declare parameters.

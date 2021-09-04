@@ -36,7 +36,8 @@
 #include <linearAlgebraOperationsInternal.h>
 #include <meshMovementAffineTransform.h>
 #include <meshMovementGaussian.h>
-#include <molecularDynamics.h>
+//#include <molecularDynamics.h>
+#include "molecularDynamicsClass.h"
 #include <poissonSolverProblem.h>
 #include <pseudoConverter.h>
 #include <pseudoUtils.h>
@@ -165,8 +166,11 @@ namespace dftfe
 
     geoOptCellPtr =
       new geoOptCell<FEOrder, FEOrderElectro>(this, mpi_comm_replica);
-    d_mdPtr =
-      new molecularDynamics<FEOrder, FEOrderElectro>(this, mpi_comm_replica);
+    //d_mdPtr =
+     // new molecularDynamics<FEOrder, FEOrderElectro>(this, mpi_comm_replica);
+    d_mdClassPtr = 
+     new molecularDynamicsClass<FEOrder, FEOrderElectro>(this, mpi_comm_replica);
+
 
     d_isRestartGroundStateCalcFromChk = false;
 #ifdef DFTFE_WITH_ELPA
@@ -201,8 +205,9 @@ namespace dftfe
     delete forcePtr;
     delete geoOptIonPtr;
     delete geoOptCellPtr;
-    delete d_mdPtr;
-
+    //delete d_mdPtr;
+    delete d_mdClassPtr;
+    
 #ifdef DFTFE_WITH_ELPA
     if (dftParameters::useELPA)
       d_elpaScala.elpaDeallocateHandles(d_numEigenValues, d_numEigenValuesRR);
@@ -1569,7 +1574,8 @@ namespace dftfe
 
     if (dftParameters::isBOMD)
       {
-        d_mdPtr->run();
+       // d_mdPtr->run();
+        d_mdClassPtr->runMD();  
       }
     else
       {
