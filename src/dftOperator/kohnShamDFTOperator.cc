@@ -69,7 +69,7 @@ namespace dftfe
   void
   kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::init()
   {
-    computing_timer.enter_section("kohnShamDFTOperatorClass setup");
+    computing_timer.enter_subsection("kohnShamDFTOperatorClass setup");
 
 
     dftPtr->matrix_free_data.initialize_dof_vector(
@@ -117,7 +117,7 @@ namespace dftfe
       d_nodesPerCellClassificationMap,
       d_globalArrayClassificationMap);
 
-    computing_timer.exit_section("kohnShamDFTOperatorClass setup");
+    computing_timer.leave_subsection("kohnShamDFTOperatorClass setup");
   }
 
   template <unsigned int FEOrder, unsigned int FEOrderElectro>
@@ -402,7 +402,7 @@ namespace dftfe
     distributedCPUVec<double> &              sqrtMassVec,
     distributedCPUVec<double> &              invSqrtMassVec)
   {
-    computing_timer.enter_section("kohnShamDFTOperatorClass Mass assembly");
+    computing_timer.enter_subsection("kohnShamDFTOperatorClass Mass assembly");
     invSqrtMassVec = 0.0;
     sqrtMassVec    = 0.0;
 
@@ -461,7 +461,7 @@ namespace dftfe
 
     invSqrtMassVec.compress(VectorOperation::insert);
     sqrtMassVec.compress(VectorOperation::insert);
-    computing_timer.exit_section("kohnShamDFTOperatorClass Mass assembly");
+    computing_timer.leave_subsection("kohnShamDFTOperatorClass Mass assembly");
   }
 
 

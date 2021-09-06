@@ -138,7 +138,7 @@ dftClass<FEOrder, FEOrderElectro>::compute_tdos(
   const std::vector<std::vector<double>> &eigenValuesInput,
   const std::string &                     dosFileName)
 {
-  computing_timer.enter_section("DOS computation");
+  computing_timer.enter_subsection("DOS computation");
   std::vector<double> eigenValuesAllkPoints;
   for (int kPoint = 0; kPoint < d_kPointWeights.size(); ++kPoint)
     {
@@ -244,7 +244,7 @@ dftClass<FEOrder, FEOrderElectro>::compute_tdos(
             }
         }
     }
-  computing_timer.exit_section("DOS computation");
+  computing_timer.leave_subsection("DOS computation");
 }
 
 
@@ -255,7 +255,7 @@ dftClass<FEOrder, FEOrderElectro>::compute_ldos(
   const std::vector<std::vector<double>> &eigenValuesInput,
   const std::string &                     ldosFileName)
 {
-  computing_timer.enter_section("LDOS computation");
+  computing_timer.enter_subsection("LDOS computation");
   //
   // create a map of cellId and atomId
   //
@@ -635,7 +635,7 @@ dftClass<FEOrder, FEOrderElectro>::compute_ldos(
   if (dftParameters::verbosity >= 4)
     pcout << "Absolute sum of all ldos values: " << checkSum << std::endl;
 
-  computing_timer.exit_section("LDOS computation");
+  computing_timer.leave_subsection("LDOS computation");
 }
 
 template <unsigned int FEOrder, unsigned int FEOrderElectro>
@@ -644,7 +644,7 @@ dftClass<FEOrder, FEOrderElectro>::compute_pdos(
   const std::vector<std::vector<double>> &eigenValuesInput,
   const std::string &                     pdosFileName)
 {
-  computing_timer.enter_section("PDOS computation");
+  computing_timer.enter_subsection("PDOS computation");
 
   //
   // create a stencil following orbital filling order
@@ -1177,5 +1177,5 @@ dftClass<FEOrder, FEOrderElectro>::compute_pdos(
             }
         }
     }
-  computing_timer.exit_section("PDOS computation");
+  computing_timer.leave_subsection("PDOS computation");
 }

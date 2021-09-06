@@ -120,11 +120,14 @@ namespace dftfe
               pcout << bufferEnergy;
             }
 
-          sprintf(bufferEnergy, "%-52s:%25.16e\n", "Total energy", totalEnergy);
+          sprintf(bufferEnergy,
+                  "%-52s:%25.16e\n",
+                  "Total internal energy",
+                  totalEnergy);
           pcout << bufferEnergy;
           sprintf(bufferEnergy,
                   "%-52s:%25.16e\n",
-                  "Total energy per atom",
+                  "Total internal energy per atom",
                   totalEnergy / numberAtoms);
           pcout << bufferEnergy;
           pcout

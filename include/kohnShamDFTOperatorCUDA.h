@@ -138,6 +138,9 @@ namespace dftfe
     distributedGPUVec<double> &
     getParallelChebyBlockVectorDevice();
 
+    distributedGPUVec<double> &
+    getParallelProjectorKetTimesBlockVectorDevice();
+
     thrust::device_vector<unsigned int> &
     getLocallyOwnedProcBoundaryNodesVectorDevice();
 

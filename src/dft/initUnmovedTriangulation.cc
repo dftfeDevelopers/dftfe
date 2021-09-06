@@ -32,7 +32,7 @@ template <unsigned int FEOrder, unsigned int FEOrderElectro>
 void dftClass<FEOrder, FEOrderElectro>::initUnmovedTriangulation(
   parallel::distributed::Triangulation<3> &triangulation)
 {
-  computing_timer.enter_section("unmoved setup");
+  computing_timer.enter_subsection("unmoved setup");
 
   // initialize affine transformation object (must be done on unmoved
   // triangulation)
@@ -87,12 +87,9 @@ void dftClass<FEOrder, FEOrderElectro>::initUnmovedTriangulation(
   //
 #ifdef USE_COMPLEX
   FEValuesExtractors::Scalar real(0); // For Eigen
-  ComponentMask     componentMaskForRealDOF = FEEigen.component_mask(real);
-  std::vector<bool> selectedDofsReal(locally_owned_dofsEigen.n_elements(),
-                                     false);
-  DoFTools::extract_dofs(dofHandlerEigen,
-                         componentMaskForRealDOF,
-                         selectedDofsReal);
+  ComponentMask    componentMaskForRealDOF = FEEigen.component_mask(real);
+  dealii::IndexSet selectedDofsReal =
+    DoFTools::extract_dofs(dofHandlerEigen, componentMaskForRealDOF);
   std::vector<IndexSet::size_type> local_dof_indices(
     locally_owned_dofsEigen.n_elements());
   locally_owned_dofsEigen.fill_index_vector(local_dof_indices);
@@ -102,7 +99,8 @@ void dftClass<FEOrder, FEOrderElectro>::initUnmovedTriangulation(
   localProc_dof_indicesImag.clear();
   for (unsigned int i = 0; i < locally_owned_dofsEigen.n_elements(); i++)
     {
-      if (selectedDofsReal[i])
+      if (selectedDofsReal.is_element(
+            locally_owned_dofsEigen.nth_index_in_set(i)))
         {
           local_dof_indicesReal.push_back(local_dof_indices[i]);
           localProc_dof_indicesReal.push_back(i);
@@ -333,5 +331,5 @@ void dftClass<FEOrder, FEOrderElectro>::initUnmovedTriangulation(
     }
 
 
-  computing_timer.exit_section("unmoved setup");
+  computing_timer.leave_subsection("unmoved setup");
 }

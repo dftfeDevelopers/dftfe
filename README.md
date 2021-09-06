@@ -43,14 +43,14 @@ More information
  - DFT-FE is primarily based on the [deal.II library](http://www.dealii.org/). If you have particular questions about deal.II, use the [deal.II discussion forum](https://www.dealii.org/mail.html).
  
  - If you have specific questions about DFT-FE that are not suitable for the public and archived mailing lists, you can contact the following:
-    - Phani Motamarri: phanim@umich.edu
+    - Phani Motamarri: phanim@iisc.ac.in
     - Sambit Das: dsambit@umich.edu
     - Vikram Gavini: vikramg@umich.edu 
 
- - The following people have significantly contributed either in the past or current and advanced DFT-FE's goals: (All the underlying lists are in alphabetical order)
+ - The following people have significantly contributed either in the past or current and advanced DFT-FE's goals: (All the underlying lists are in alphabetical order based on last name)
    - Principal developers  
        - Dr. Sambit Das (University of Michigan Ann Arbor, USA)
-       - Dr. Phani Motamarri (University of Michigan Ann Arbor, USA)
+       - Prof. Phani Motamarri (Indian Institute of Science, India)
     
    - Principal developers emeriti
        - Dr. Krishnendu Ghosh (University of Michigan Ann Arbor, USA)

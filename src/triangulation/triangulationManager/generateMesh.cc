@@ -862,7 +862,8 @@ namespace dftfe
                                           locally_active_dofs_debug);
 
     const std::vector<IndexSet> &locally_owned_dofs_debug =
-      dofHandler.locally_owned_dofs_per_processor();
+      Utilities::MPI::all_gather(mpi_communicator,
+                                 dofHandler.locally_owned_dofs());
 
     return constraints.is_consistent_in_parallel(
       locally_owned_dofs_debug,

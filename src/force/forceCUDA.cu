@@ -749,18 +749,11 @@ namespace dftfe
       MPI_Barrier(MPI_COMM_WORLD);
       double gpu_time = MPI_Wtime();
 
-      distributedGPUVec<double> cudaFlattenedArrayBlock;
-      distributedGPUVec<double> projectorKetTimesVectorD;
-      vectorTools::createDealiiVector(
-        operatorMatrix.getMatrixFreeData()->get_vector_partitioner(),
-        blockSize,
-        cudaFlattenedArrayBlock);
+      distributedGPUVec<double> &cudaFlattenedArrayBlock =
+        operatorMatrix.getParallelChebyBlockVectorDevice();
 
-      if (isPsp)
-        vectorTools::createDealiiVector(
-          operatorMatrix.getProjectorKetTimesVectorSingle().get_partitioner(),
-          blockSize,
-          projectorKetTimesVectorD);
+      distributedGPUVec<double> &projectorKetTimesVectorD =
+        operatorMatrix.getParallelProjectorKetTimesBlockVectorDevice();
 
       cudaDeviceSynchronize();
       MPI_Barrier(MPI_COMM_WORLD);

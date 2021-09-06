@@ -27,8 +27,8 @@ dftClass<FEOrder, FEOrderElectro>::computeElectrostaticEnergyHRefined(
 #endif
 )
 {
-  computing_timer.enter_section("h refinement electrostatics");
-  computingTimerStandard.enter_section("h refinement electrostatics");
+  computing_timer.enter_subsection("h refinement electrostatics");
+  computingTimerStandard.enter_subsection("h refinement electrostatics");
   if (dftParameters::verbosity >= 1)
     pcout
       << std::endl
@@ -411,7 +411,8 @@ dftClass<FEOrder, FEOrderElectro>::computeElectrostaticEnergyHRefined(
                                             locally_active_dofs_debug);
 
       const std::vector<IndexSet> &locally_owned_dofs_debug =
-        dofHandlerHRefined.locally_owned_dofs_per_processor();
+        Utilities::MPI::all_gather(mpi_communicator,
+                                   dofHandlerHRefined.locally_owned_dofs());
 
       AssertThrow(
         constraintsHRefined.is_consistent_in_parallel(locally_owned_dofs_debug,
@@ -646,6 +647,6 @@ dftClass<FEOrder, FEOrderElectro>::computeElectrostaticEnergyHRefined(
     pcout << "Entropic energy: " << d_entropicEnergy << std::endl;
 
 
-  computing_timer.exit_section("h refinement electrostatics");
-  computingTimerStandard.exit_section("h refinement electrostatics");
+  computing_timer.leave_subsection("h refinement electrostatics");
+  computingTimerStandard.leave_subsection("h refinement electrostatics");
 }

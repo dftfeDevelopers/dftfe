@@ -148,6 +148,9 @@ namespace dftfe
     virtual distributedGPUVec<double> &
     getParallelChebyBlockVectorDevice() = 0;
 
+    virtual distributedGPUVec<double> &
+    getParallelProjectorKetTimesBlockVectorDevice() = 0;
+
     virtual thrust::device_vector<unsigned int> &
     getLocallyOwnedProcBoundaryNodesVectorDevice() = 0;
 
@@ -595,6 +598,8 @@ namespace dftfe
     thrust::device_vector<dataTypes::number> d_cellWaveFunctionMatrix;
 
     distributedGPUVec<double> d_parallelChebyBlockVectorDevice;
+
+    distributedGPUVec<double> d_parallelProjectorKetTimesBlockVectorDevice;
 
     //
     // mpi communicator

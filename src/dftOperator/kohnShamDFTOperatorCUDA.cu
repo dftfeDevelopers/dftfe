@@ -439,6 +439,13 @@ namespace dftfe
     return d_parallelChebyBlockVectorDevice;
   }
 
+  template <unsigned int FEOrder, unsigned int FEOrderElectro>
+  distributedGPUVec<double> &
+  kohnShamDFTOperatorCUDAClass<FEOrder, FEOrderElectro>::
+    getParallelProjectorKetTimesBlockVectorDevice()
+  {
+    return d_parallelProjectorKetTimesBlockVectorDevice;
+  }
 
   template <unsigned int FEOrder, unsigned int FEOrderElectro>
   thrust::device_vector<unsigned int> &
@@ -471,7 +478,7 @@ namespace dftfe
   void
   kohnShamDFTOperatorCUDAClass<FEOrder, FEOrderElectro>::init()
   {
-    computing_timer.enter_section("kohnShamDFTOperatorCUDAClass setup");
+    computing_timer.enter_subsection("kohnShamDFTOperatorCUDAClass setup");
 
 
     dftPtr->matrix_free_data.initialize_dof_vector(
@@ -488,7 +495,7 @@ namespace dftfe
                       d_sqrtMassVector,
                       d_invSqrtMassVector);
 
-    computing_timer.exit_section("kohnShamDFTOperatorCUDAClass setup");
+    computing_timer.leave_subsection("kohnShamDFTOperatorCUDAClass setup");
   }
 
 
@@ -635,6 +642,11 @@ namespace dftfe
           dftPtr->d_projectorKetTimesVectorPar[0].get_partitioner(),
           numberWaveFunctions,
           dftPtr->d_projectorKetTimesVectorParFlattened);
+
+        vectorTools::createDealiiVector(
+          dftPtr->d_projectorKetTimesVectorPar[0].get_partitioner(),
+          BVec,
+          d_parallelProjectorKetTimesBlockVectorDevice);
 
 
         thrust::host_vector<unsigned int>
@@ -1027,7 +1039,8 @@ namespace dftfe
     distributedCPUVec<double> &              sqrtMassVec,
     distributedCPUVec<double> &              invSqrtMassVec)
   {
-    computing_timer.enter_section("kohnShamDFTOperatorCUDAClass Mass assembly");
+    computing_timer.enter_subsection(
+      "kohnShamDFTOperatorCUDAClass Mass assembly");
     invSqrtMassVec = 0.0;
     sqrtMassVec    = 0.0;
 
@@ -1108,7 +1121,8 @@ namespace dftfe
                (numberLocalDofs + numberGhostDofs) * sizeof(double),
                cudaMemcpyHostToDevice);
 
-    computing_timer.exit_section("kohnShamDFTOperatorCUDAClass Mass assembly");
+    computing_timer.leave_subsection(
+      "kohnShamDFTOperatorCUDAClass Mass assembly");
   }
 
 
