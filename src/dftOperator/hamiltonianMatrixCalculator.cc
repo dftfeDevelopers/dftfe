@@ -107,16 +107,16 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::computeHamiltonianMatrix(
 	  unsigned int iNode, jNode;
           while (blockCount < numBlocks)
             {
-	      
               for(unsigned int q_point = 0; q_point < numberQuadraturePoints;
                    ++q_point)
                 {
-		  indexCount = 0;
+                  indexCount = 0;
 		  iNode = d_blockiNodeIndex[numberEntriesEachBlock * blockCount];
 		  jNode = d_blockjNodeIndex[numberEntriesEachBlock * blockCount];
 		  NiNjLpspQuad_currentBlock[numberEntriesEachBlock*q_point] =  d_shapeFunctionLpspQuadData[numberDofsPerElement * q_point + iNode]*d_shapeFunctionLpspQuadData[numberDofsPerElement * q_point + jNode];
+
 		  indexCount += 1;
-       		  
+ 
                   for (iNode =
                          d_blockiNodeIndex[numberEntriesEachBlock * blockCount + 1];
                        iNode < d_blockiNodeIndex[numberEntriesEachBlock*(blockCount+1) - 1];
@@ -126,28 +126,32 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::computeHamiltonianMatrix(
                         d_shapeFunctionLpspQuadData[numberDofsPerElement *
 						    q_point +
                                                     iNode];
-                      for (jNode = d_blockjNodeIndex
-                             [numberEntriesEachBlock * blockCount + 1];
-                           jNode < d_numberNodesPerElement;
+                      for (jNode = d_blockjNodeIndex[numberEntriesEachBlock * blockCount + indexCount];
+                           jNode < numberDofsPerElement;
                            ++jNode)
                         {
                           double shapeJ =
                             d_shapeFunctionLpspQuadData[numberDofsPerElement *
 							q_point +
                                                         jNode];
+
                           NiNjLpspQuad_currentBlock[numberEntriesEachBlock *
 						    q_point +
-                                                    indexCount] =
-                            shapeI * shapeJ;
+                                                    indexCount] = shapeI * shapeJ;
+                           
                           indexCount += 1;
-                        
+                         
                         } // jNode
 		    }//iNode
-
+                   
                   iNode = d_blockiNodeIndex[numberEntriesEachBlock*(blockCount+1) - 1];
-		  jNode = d_blockjNodeIndex[numberEntriesEachBlock*(blockCount+1) - 1];
-		  NiNjLpspQuad_currentBlock[numberEntriesEachBlock*q_point+indexCount] =  d_shapeFunctionLpspQuadData[numberDofsPerElement * q_point + iNode]*d_shapeFunctionLpspQuadData[numberDofsPerElement * q_point + jNode];
-		  indexCount += 1;
+                  for(jNode = d_blockjNodeIndex[numberEntriesEachBlock*blockCount + indexCount];jNode <= d_blockjNodeIndex[numberEntriesEachBlock*(blockCount+1) - 1];++jNode)
+                   {
+		        NiNjLpspQuad_currentBlock[numberEntriesEachBlock*q_point+indexCount] =  d_shapeFunctionLpspQuadData[numberDofsPerElement * q_point + iNode]*d_shapeFunctionLpspQuadData[numberDofsPerElement * q_point + jNode];
+
+                       indexCount += 1;
+                   }
+  
 		}//quadPoint loop
 
 	      

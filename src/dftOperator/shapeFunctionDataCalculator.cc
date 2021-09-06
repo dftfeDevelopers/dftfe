@@ -346,6 +346,20 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::
                         }
                     }
                 }
+
+             /*for(unsigned int blockIndex = 0; blockIndex < numBlocks; ++blockIndex)
+             {
+                std::cout<<"Block Count: "<<blockIndex<<std::endl;
+                for(unsigned int iCount = 0; iCount < numberEntriesEachBlock; ++iCount)
+                 {
+                    std::cout<<"iNode, jNode Pair for each row: "<<d_blockiNodeIndex[numberEntriesEachBlock * blockIndex +
+                                       iCount]<<" "<<d_blockjNodeIndex[numberEntriesEachBlock * blockIndex +
+                                        iCount]<<" "<<iCount<<std::endl; 
+                 }
+
+             }*/
+             
+
             }
 
           iElemCount++;
