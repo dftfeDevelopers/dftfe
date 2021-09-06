@@ -99,9 +99,6 @@ namespace dftfe
 //--------------------Starting Initialization ----------------------------------------------//
         double KineticEnergy=0.0 , TemperatureFromVelocities = 0.0;
         double Px=0.0, Py=0.0 , Pz = 0.0;
-        double avgVx=0.0, avgVy = 0.0, avgVz = 0.0;
-
-
         //Initialise Velocity
         if (this_mpi_process == 0)
           { 
@@ -147,14 +144,12 @@ namespace dftfe
             Pz += massAtoms[iCharge]*velocity[3*iCharge+2];          
           }
         //Correcting for COM velocity to be 0  
-        avgVx = Px/totMass;
-        avgVy = Py/totMass;
-        avgVz = Pz/totMass;
+
         for (int iCharge = 0; iCharge < numberGlobalCharges; ++iCharge)
           {
-            velocity[3*iCharge+0] -= avgVx;    
-            velocity[3*iCharge+1] -= avgVy;
-            velocity[3*iCharge+2] -= avgVz;
+            velocity[3*iCharge+0] = (massAtoms[iCharge]*velocity[3*iCharge+0] - Px/numberGlobalCharges)/ massAtoms[iCharge];   
+            velocity[3*iCharge+1] = (massAtoms[iCharge]*velocity[3*iCharge+1] - Py/numberGlobalCharges)/ massAtoms[iCharge];
+            velocity[3*iCharge+2] = (massAtoms[iCharge]*velocity[3*iCharge+2] - Pz/numberGlobalCharges)/ massAtoms[iCharge];
 
 
             KineticEnergy +=
@@ -197,15 +192,28 @@ namespace dftfe
         TotalEnergyVector[0]    = KineticEnergyVector[0] +
                                InternalEnergyVector[0] -
                                EntropicEnergyVector[0];
-        
+        if (dftParameters::verbosity >= 1)
+          {
+            pcout << "Velocity of atoms " << std::endl;
+            for (int iCharge = 0; iCharge < numberGlobalCharges; ++iCharge)
+              {
+                pcout << "Charge Id: " << iCharge << " "
+                      << velocity[3*iCharge+0] << " "
+                      << velocity[3*iCharge+1] << " "
+                      << velocity[3*iCharge+2] << std::endl;
+              }         
+          
+          }            
+       
+       
         pcout << "---------------MD 0th STEP------------------ " <<  std::endl; 
-        pcout << " Kinetic Energy in Ha at TimeIndex 0 "
+        pcout << " Kinetic Energy in Ha at timeIndex 0 "
               << KineticEnergyVector[0] << std::endl;
-        pcout << " Internal Energy in Ha at TimeIndex 0 "
+        pcout << " Internal Energy in Ha at timeIndex 0 "
               << InternalEnergyVector[0] << std::endl;
-        pcout << " Entropic Energy in Ha at TimeIndex 0 "
+        pcout << " Entropic Energy in Ha at timeIndex 0 "
               << EntropicEnergyVector[0] << std::endl;
-        pcout << " Total Energy in Ha at TimeIndex 0 "
+        pcout << " Total Energy in Ha at timeIndex 0 "
               << TotalEnergyVector[0]  << std::endl;
         pcout << " Temperature from Velocities"
               << TemperatureFromVelocities  << std::endl;              
@@ -243,7 +251,7 @@ namespace dftfe
                                                             std::vector<double> &force, 
                                                             std::vector<double> atomMass  )
     {
-
+      pcout << "---------------MDNVE() called ------------------ " <<  std::endl;
 
         
       
@@ -441,6 +449,7 @@ namespace dftfe
         
         int i;
         double totalKE;
+        KE = 0.0;
         double dt = timeStep;
         double dt_2 = dt/2;
         forceOnAtoms =dftPtr->forcePtr->getAtomsForces();        
@@ -490,7 +499,8 @@ namespace dftfe
                       << dftPtr->atomLocations[iCharge][2] << " "
                       << dftPtr->atomLocations[iCharge][3] << " "
                       << dftPtr->atomLocations[iCharge][4] << std::endl;
-              }
+              }         
+          
           }          
 
         MPI_Barrier(MPI_COMM_WORLD);
@@ -512,6 +522,20 @@ namespace dftfe
                 totalKE += 0.5*atomMass[i]*(v[3*i+0]*v[3*i+0]+v[3*i+1]*v[3*i+1] + v[3*i+2]*v[3*i+2]);
             }
         //Save KE
+        if (dftParameters::verbosity >= 1)
+          {
+            pcout << "Velocity of atoms " << std::endl;
+            for (int iCharge = 0; iCharge < numberGlobalCharges; ++iCharge)
+              {
+                pcout << "Charge Id: " << iCharge << " "
+                      << v[3*iCharge+0] << " "
+                      << v[3*iCharge+1] << " "
+                      << v[3*iCharge+2] << std::endl;
+              }         
+          
+          }      
+      
+      
         KE = totalKE;
 
     }  
