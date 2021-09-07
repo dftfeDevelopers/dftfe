@@ -375,6 +375,8 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::computeHamiltonianMatrix(
                                 d_shapeFunctionGradientValueRefZ[numberDofsPerElement *
                                                                     q_point + iNode]*d_shapeFunctionData[numberDofsPerElement * q_point + jNode] + d_shapeFunctionData[numberDofsPerElement * q_point + iNode]*d_shapeFunctionGradientValueRefZ
                                   [numberDofsPerElement * q_point + jNode];
+
+			  indexCount += 1;
 		     }
 
 		}//quadPoint loop
