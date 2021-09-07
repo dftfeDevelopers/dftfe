@@ -111,14 +111,14 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::computeHamiltonianMatrix(
                    ++q_point)
                 {
                   indexCount = 0;
-		  iNode = d_blockiNodeIndex[numberEntriesEachBlock * blockCount];
-		  jNode = d_blockjNodeIndex[numberEntriesEachBlock * blockCount];
-		  NiNjLpspQuad_currentBlock[numberEntriesEachBlock*q_point] =  d_shapeFunctionLpspQuadData[numberDofsPerElement * q_point + iNode]*d_shapeFunctionLpspQuadData[numberDofsPerElement * q_point + jNode];
+		  //iNode = d_blockiNodeIndex[numberEntriesEachBlock * blockCount];
+		  //jNode = d_blockjNodeIndex[numberEntriesEachBlock * blockCount];
+		  //NiNjLpspQuad_currentBlock[numberEntriesEachBlock*q_point] =  d_shapeFunctionLpspQuadData[numberDofsPerElement * q_point + iNode]*d_shapeFunctionLpspQuadData[numberDofsPerElement * q_point + jNode];
 
-		  indexCount += 1;
+		  //indexCount += 1;
  
                   for (iNode =
-                         d_blockiNodeIndex[numberEntriesEachBlock * blockCount + 1];
+                         d_blockiNodeIndex[numberEntriesEachBlock * blockCount];
                        iNode < d_blockiNodeIndex[numberEntriesEachBlock*(blockCount+1) - 1];
                        ++iNode)
                     {
