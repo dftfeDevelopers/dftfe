@@ -63,7 +63,11 @@ namespace dftfe
         //
         std::vector<std::vector<double>> atomTypesMasses;
         dftUtils::readFile(2, atomTypesMasses, dftParameters::atomicMassesFile);
-        AssertThrow(dftPtr->atomTypes.size() == atomTypesMasses.size(),
+        std::vector<std::vector<double>> atomLocations;
+        atomLocations = dftPtr->getAtomLocationsfromdftptr(); 
+        std::set<unsigned int>   atomTypes;
+        atomTypes = dftPtr->getAtomTypesfromdftptr();     
+        AssertThrow(atomTypes.size() == atomTypesMasses.size(),
                 ExcMessage("DFT-FE Error: check ATOM MASSES FILE"));
 
         for (int iCharge = 0; iCharge < numberGlobalCharges; ++iCharge)
@@ -71,7 +75,7 @@ namespace dftfe
           bool isFound = false;
             for (int jatomtype = 0; jatomtype < atomTypesMasses.size(); ++jatomtype)
               {
-                const double charge = dftPtr->atomLocations[iCharge][0];
+                const double charge = atomLocations[iCharge][0];
                 if (std::fabs(charge - atomTypesMasses[jatomtype][0]) < 1e-8)
                   {
                     massAtoms[iCharge] = atomTypesMasses[jatomtype][1];
@@ -113,10 +117,11 @@ namespace dftfe
                     boost::normal_distribution<> gaussianDist(0.0, velocityDistribution);
                     boost::variate_generator<boost::mt19937 &, boost::normal_distribution<>>
                             generator(rng, gaussianDist);
+            
                 for (int iCharge = 0; iCharge < numberGlobalCharges; ++iCharge)
                   { 
 
-                    if (std::fabs(dftPtr->atomLocations[iCharge][0] - atomTypesMasses[jatomtype][0]) < 1e-8)
+                    if (std::fabs(atomLocations[iCharge][0] - atomTypesMasses[jatomtype][0]) < 1e-8)
                     {
                       velocity[3 * iCharge + 0] = generator();
                       velocity[3 * iCharge + 1] = generator();
@@ -184,11 +189,11 @@ namespace dftfe
           }                   
           TemperatureFromVelocities = 2.0/3.0/double(numberGlobalCharges-1)*KineticEnergy/(kB);  
  
-
+          
         dftPtr->solve(true, false, false, false);
         KineticEnergyVector[0]  = KineticEnergy / haToeV;
-        InternalEnergyVector[0] = dftPtr->d_groundStateEnergy;
-        EntropicEnergyVector[0] = dftPtr->d_entropicEnergy;
+        InternalEnergyVector[0] = dftPtr->GroundStateEnergyvalue;
+        EntropicEnergyVector[0] = dftPtr->EntropicEnergyvalue;
         TotalEnergyVector[0]    = KineticEnergyVector[0] +
                                InternalEnergyVector[0] -
                                EntropicEnergyVector[0];
@@ -263,12 +268,12 @@ namespace dftfe
             MPI_Barrier(MPI_COMM_WORLD);
             step_time = MPI_Wtime();   
 
-            velocityVerlet(velocity, displacements,atomMass,KineticEnergy, force);
+            velocityVerlet(velocity, displacements,atomMass,KineticEnergy, force );
             MPI_Barrier(MPI_COMM_WORLD);
    
             KineticEnergyVector[TimeIndex]  = KineticEnergy / haToeV;
-            InternalEnergyVector[TimeIndex] = dftPtr->d_groundStateEnergy;
-            EntropicEnergyVector[TimeIndex] = dftPtr->d_entropicEnergy;
+            InternalEnergyVector[TimeIndex] = dftPtr->GroundStateEnergyvalue;
+            EntropicEnergyVector[TimeIndex] = dftPtr->EntropicEnergyvalue;
             TotalEnergyVector[TimeIndex]    = KineticEnergyVector[TimeIndex] +
                                InternalEnergyVector[TimeIndex] -
                                EntropicEnergyVector[TimeIndex]; 
@@ -312,7 +317,7 @@ namespace dftfe
                                                             std::vector<double> atomMass  )
     {
       
-      
+      pcout << "---------------mdNVTrescaleThermostat() called ------------------ " <<  std::endl;
         double KineticEnergy;
         double TemperatureFromVelocities;
         for(TimeIndex=1; TimeIndex< numberofSteps;TimeIndex++)
@@ -331,8 +336,8 @@ namespace dftfe
 
             MPI_Barrier(MPI_COMM_WORLD);   
             KineticEnergyVector[TimeIndex]  = KineticEnergy / haToeV;
-            InternalEnergyVector[TimeIndex] = dftPtr->d_groundStateEnergy;
-            EntropicEnergyVector[TimeIndex] = dftPtr->d_entropicEnergy;
+            InternalEnergyVector[TimeIndex] = dftPtr->GroundStateEnergyvalue;
+            EntropicEnergyVector[TimeIndex] = dftPtr->EntropicEnergyvalue;
             TotalEnergyVector[TimeIndex]    = KineticEnergyVector[TimeIndex] +
                                InternalEnergyVector[TimeIndex] -
                                EntropicEnergyVector[TimeIndex]; 
@@ -376,17 +381,20 @@ namespace dftfe
     {
 
 
-        
+      pcout << "--------------mdNVTnosehoverchainsThermostat() called ------------------ " <<  std::endl;  
       
         double KineticEnergy;
         double TemperatureFromVelocities;
+        double nhctimeconstant;
         TemperatureFromVelocities = 2.0/3.0/double(numberGlobalCharges-1)*KineticEnergyVector[0]/(kB); 
         std::vector<double> ThermostatMass(2,0.0);
         std::vector<double> Thermostatvelocity(2,0.0);
         std::vector<double> Thermostatposition(2,0.0);      
-        thermostatTimeConstant*=timeStep;  
-        ThermostatMass.at(0) = 3*(numberGlobalCharges-1)*kB*startingTemperature*(thermostatTimeConstant*thermostatTimeConstant);
-        ThermostatMass.at(1) = kB*startingTemperature*(thermostatTimeConstant*thermostatTimeConstant);
+        nhctimeconstant = thermostatTimeConstant*timeStep;  
+        ThermostatMass[0] = 3*(numberGlobalCharges-1)*kB*startingTemperature*(nhctimeconstant*nhctimeconstant);
+        ThermostatMass[1] = kB*startingTemperature*(nhctimeconstant*nhctimeconstant);
+        pcout << "Time Step " <<timeStep<<" Q2: "<<ThermostatMass[1]<<"Time Constant"<<nhctimeconstant<<"no. of atoms"<< numberGlobalCharges<<"Starting Temp: "<<
+                startingTemperature<<"---"<<3*(numberGlobalCharges-1)*kB*startingTemperature*(thermostatTimeConstant*thermostatTimeConstant)<<std::endl;
         for(TimeIndex=1; TimeIndex< numberofSteps;TimeIndex++)
         {       
             double step_time;
@@ -407,8 +415,8 @@ namespace dftfe
 
             MPI_Barrier(MPI_COMM_WORLD);   
             KineticEnergyVector[TimeIndex]  = KineticEnergy / haToeV;
-            InternalEnergyVector[TimeIndex] = dftPtr->d_groundStateEnergy;
-            EntropicEnergyVector[TimeIndex] = dftPtr->d_entropicEnergy;
+            InternalEnergyVector[TimeIndex] = dftPtr->GroundStateEnergyvalue;
+            EntropicEnergyVector[TimeIndex] = dftPtr->EntropicEnergyvalue;
             TotalEnergyVector[TimeIndex]    = KineticEnergyVector[TimeIndex] +
                                InternalEnergyVector[TimeIndex] -
                                EntropicEnergyVector[TimeIndex]; 
@@ -444,7 +452,8 @@ namespace dftfe
     template <unsigned int FEOrder, unsigned int FEOrderElectro>
     void    
     molecularDynamicsClass<FEOrder, FEOrderElectro>::velocityVerlet(std::vector<double> &v , std::vector<dealii::Tensor<1, 3, double>> &r, 
-                                                                    std::vector<double> atomMass, double &KE, std::vector<double> &forceOnAtoms  )
+                                                                    std::vector<double> atomMass, double &KE, std::vector<double> &forceOnAtoms
+                                                                     )
     {    
         
         int i;
@@ -452,7 +461,7 @@ namespace dftfe
         KE = 0.0;
         double dt = timeStep;
         double dt_2 = dt/2;
-        forceOnAtoms =dftPtr->forcePtr->getAtomsForces();        
+              
         for(i=0; i < numberGlobalCharges; i++)
             {   
                 /*Computing New position as taylor expansion about r(t) O(dt^3) */
@@ -491,14 +500,15 @@ namespace dftfe
               }
           }
         if (dftParameters::verbosity >= 1)
-          {
+          { std::vector<std::vector<double>> atomLocations;
+            atomLocations = dftPtr->getAtomLocationsfromdftptr();  
             pcout << "Displacement of atoms from previous time step " << std::endl;
             for (int iCharge = 0; iCharge < numberGlobalCharges; ++iCharge)
               {
                 pcout << "Charge Id: " << iCharge << " "
-                      << dftPtr->atomLocations[iCharge][2] << " "
-                      << dftPtr->atomLocations[iCharge][3] << " "
-                      << dftPtr->atomLocations[iCharge][4] << std::endl;
+                      << atomLocations[iCharge][2] << " "
+                      << atomLocations[iCharge][3] << " "
+                      << atomLocations[iCharge][4] << std::endl;
               }         
           
           }          
@@ -510,7 +520,8 @@ namespace dftfe
           pcout << "Time taken for updateAtomPositionsAndMoveMesh: "
                 << update_time << std::endl;
         dftPtr->solve(true, false, false, false); 
-        forceOnAtoms =dftPtr->forcePtr->getAtomsForces();
+        forceOnAtoms = dftPtr->getForceonAtomsfromdftptr();
+         
         //Call Force
         totalKE = 0.0;
         /* Second half of velocty verlet */
@@ -545,7 +556,8 @@ namespace dftfe
                                                                         std::vector<double> M, double Temperature)
     {
       pcout << "Rescale Thermostat: Before rescaling temperature= "<<Temperature<<" K" <<  std::endl;
-      assert(Temperature==0);// Determine Exit sequence ..
+      AssertThrow(std::fabs(Temperature - 0.0) > 0.00001,
+           ExcMessage("DFT-FE Error: cTemperature reached O K"));      // Determine Exit sequence ..
       KE = 0.0;
       for(int iCharge=0; iCharge < numberGlobalCharges; iCharge++)
         {
@@ -575,7 +587,7 @@ namespace dftfe
       e[0] = e[0] + v_e[0]*timeStep/2;
       e[1] = e[1] + v_e[1]*timeStep/2;
       s = std::exp(-v_e[0]*timeStep/2);
-
+      pcout << "G2"<<G2<<" v_e1"<<v_e[1]<<"Temp"<<Temperature<<"Q[1]"<<Q[1]<<"v_e[0]"<<v_e[0]<<"G1"<<G1<<  std::endl;
       for(int iCharge = 0; iCharge < numberGlobalCharges; iCharge++)
         {
         v[3*iCharge+0] = s*v[3*iCharge+0];
@@ -590,6 +602,7 @@ namespace dftfe
       G2 = (Q[0]*v_e[0]*v_e[0] - kB*Temperature)/Q[1]; 
       v_e[1]=v_e[1]+G2*timeStep/4;
       /* End Chain 1*/
+      
     }
 
   

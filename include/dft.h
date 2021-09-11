@@ -57,6 +57,9 @@
 #  include <slepceps.h>
 #endif
 
+
+
+
 namespace dftfe
 {
   //
@@ -121,7 +124,7 @@ namespace dftfe
 
     friend class molecularDynamics<FEOrder, FEOrderElectro>;
 
-    friend class molecularDynamicsClass<FEOrder, FEOrderElectro>;
+   // friend class molecularDynamicsClass<FEOrder, FEOrderElectro>;
 
   public:
     /**
@@ -168,6 +171,8 @@ namespace dftfe
                  const bool checkSmearedChargeWidthsForOverlap = true,
                  const bool useSingleAtomSolutionOverride      = false);
 
+
+
     /**
      * @brief Selects between only electronic field relaxation or combined electronic and geometry relaxation
      */
@@ -182,11 +187,13 @@ namespace dftfe
     /**
      * @brief Kohn-Sham ground-state solve using SCF iteration
      */
+    double GroundStateEnergyvalue, EntropicEnergyvalue;
     void
     solve(const bool computeForces                 = true,
           const bool computeStress                 = true,
           const bool solveLinearizedKS             = false,
-          const bool restartGroundStateCalcFromChk = false);
+          const bool restartGroundStateCalcFromChk = false
+          );
 
 
     /**
@@ -301,7 +308,15 @@ namespace dftfe
      */
     void
     writeDomainAndAtomCoordinates();
+    
+    std::vector<std::vector<double>>
+    getAtomLocationsfromdftptr();
 
+    std::set<unsigned int>           
+    getAtomTypesfromdftptr();
+
+    std::vector<double>           
+    getForceonAtomsfromdftptr();   
 
   private:
     /**

@@ -2058,7 +2058,8 @@ namespace dftfe
     const bool computeForces,
     const bool computeStress,
     const bool solveLinearizedKS,
-    const bool isRestartGroundStateCalcFromChk)
+    const bool isRestartGroundStateCalcFromChk
+  )   
   {
     kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>
       &kohnShamDFTEigenOperator = *d_kohnShamDFTOperatorPtr;
@@ -3737,6 +3738,12 @@ namespace dftfe
         writeBands();
       }
 #endif
+      GroundStateEnergyvalue = d_groundStateEnergy;
+      EntropicEnergyvalue    = d_entropicEnergy;
+      
+
+
+
   }
 
   template <unsigned int FEOrder, unsigned int FEOrderElectro>
@@ -4219,6 +4226,27 @@ namespace dftfe
     MPI_Barrier(MPI_COMM_WORLD);
     //
   }
+
+template <unsigned int FEOrder, unsigned int FEOrderElectro>
+std::vector<std::vector<double>>
+dftClass<FEOrder, FEOrderElectro>::getAtomLocationsfromdftptr()
+{
+  return(atomLocations);
+} 
+
+template <unsigned int FEOrder, unsigned int FEOrderElectro>
+std::set<unsigned int> 
+dftClass<FEOrder, FEOrderElectro>::getAtomTypesfromdftptr()
+{
+  return(atomTypes);
+} 
+
+template <unsigned int FEOrder, unsigned int FEOrderElectro>
+std::vector<double>
+dftClass<FEOrder, FEOrderElectro>::getForceonAtomsfromdftptr()
+{
+  return(forcePtr->getAtomsForces());
+} 
 
 #include "dft.inst.cc"
 } // namespace dftfe
