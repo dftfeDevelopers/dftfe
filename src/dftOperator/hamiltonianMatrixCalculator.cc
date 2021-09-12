@@ -264,6 +264,9 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::computeHamiltonianMatrix(
                 {
                   double shapeI =
                     d_shapeFunctionData[numberDofsPerElement * q_point + iNode];
+
+		  tempValue = (numberDofsPerElement*iNode) - (0.5*iNode*iNode + 0.5*iNode) - tempValue1;
+		  
                   for (jNode = iNode;
                        jNode < numberDofsPerElement;
                        ++jNode)
