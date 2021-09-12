@@ -103,16 +103,31 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::computeHamiltonianMatrix(
               "DFT-FE Error: mismatch in quadrature rule usage in computeHamiltonianMatrix."));
 
 
-	  unsigned int iNode, jNode;
+	  unsigned int iNode, jNode, tempValue, tempValue1, startIndexINode;
           while (blockCount < numBlocks)
             {
+              tempValue1 = numberEntriesEachBlock*blockCount;
               for(unsigned int q_point = 0; q_point < numberQuadraturePoints;
                    ++q_point)
                 {
-                  indexCount = 0;
+                  iNode = d_blockiNodeIndex[numberEntriesEachBlock * blockCount];
+                  tempValue = (numberDofsPerElement*iNode) - (0.5*iNode*iNode + 0.5*iNode) - tempValue1;
+                  
+                  for(jNode = d_blockjNodeIndex[numberEntriesEachBlock * blockCount]; jNode < numberDofsPerElement
+; ++jNode)
+                  {
+                    //indexCount = tempValue + jNode;
+                    NiNjLpspQuad_currentBlock[numberEntriesEachBlock*q_point+tempValue+jNode] = d_shapeFunctionLpspQuadData[numberDofsPerElement * q_point + iNode]*d_shapeFunctionLpspQuadData[numberDofsPerElement * q_point + jNode];
+                    //if(q_point == 998 || q_point == 999)
+                     //std::cout<<" Value of iNode, jNode, indexCount, NiNjLpspQuad initial: "<<iNode<<" "<<jNode<<"
+ //"<<indexCount<<" "<<NiNjLpspQuad_currentBlock[numberEntriesEachBlock*q_point+indexCount]<<std::endl;
+
+                  }
+
+                  startIndexINode = iNode + 1;
 	 
                   for (iNode =
-                         d_blockiNodeIndex[numberEntriesEachBlock * blockCount];
+                        startIndexINode;
                        iNode < d_blockiNodeIndex[numberEntriesEachBlock*(blockCount+1) - 1];
                        ++iNode)
                     {
@@ -120,7 +135,9 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::computeHamiltonianMatrix(
                         d_shapeFunctionLpspQuadData[numberDofsPerElement *
 						    q_point +
                                                     iNode];
-                      for (jNode = d_blockjNodeIndex[numberEntriesEachBlock * blockCount + indexCount];
+
+                      tempValue = (numberDofsPerElement*iNode) - (0.5*iNode*iNode + 0.5*iNode) - tempValue1; 
+                      for (jNode = iNode;
                            jNode < numberDofsPerElement;
                            ++jNode)
                         {
@@ -129,21 +146,32 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::computeHamiltonianMatrix(
 							q_point +
                                                         jNode];
 
+                          //indexCount = tempValue + jNode;
+
                           NiNjLpspQuad_currentBlock[numberEntriesEachBlock *
 						    q_point +
-                                                    indexCount] = shapeI * shapeJ;
+                                                    tempValue + jNode] = shapeI * shapeJ;
                            
-                          indexCount += 1;
                          
-                        } // jNode
+                           //if(q_point == 998 || q_point == 999)
+                             // std::cout<<" Value of iNode, jNode, indexCount, NiNjLpspQuad middle: "<<iNode<<" "<<
+//jNode<<" "<<indexCount<<" "<<NiNjLpspQuad_currentBlock[numberEntriesEachBlock*
+//q_point+indexCount]<<std::endl;                        
+                      } // jNode
 		    }//iNode
                    
                   iNode = d_blockiNodeIndex[numberEntriesEachBlock*(blockCount+1) - 1];
-                  for(jNode = d_blockjNodeIndex[numberEntriesEachBlock*blockCount + indexCount];jNode <= d_blockjNodeIndex[numberEntriesEachBlock*(blockCount+1) - 1];++jNode)
+                  tempValue = (numberDofsPerElement*iNode) - (0.5*iNode*iNode + 0.5*iNode) - tempValue1;
+                  for(jNode = iNode;jNode <= d_blockjNodeIndex[numberEntriesEachBlock*(blockCount+1) - 1];++jNode)
                    {
-		        NiNjLpspQuad_currentBlock[numberEntriesEachBlock*q_point+indexCount] =  d_shapeFunctionLpspQuadData[numberDofsPerElement * q_point + iNode]*d_shapeFunctionLpspQuadData[numberDofsPerElement * q_point + jNode];
+                        //indexCount = tempValue + jNode;
+		        NiNjLpspQuad_currentBlock[numberEntriesEachBlock*q_point+tempValue+jNode] =  d_shapeFunctionLpspQuadData[numberDofsPerElement * q_point + iNode]*d_shapeFunctionLpspQuadData[numberDofsPerElement * q_point + jNode];
 
-                       indexCount += 1;
+                      // if(q_point == 998 || q_point == 999)
+                       //std::cout<<" Value of iNode, jNode, indexCount, NiNjLpspQuad end: "<<iNode<<" "<<jNode<<" "
+//<<indexCount<<" "<<NiNjLpspQuad_currentBlock[numberEntriesEachBlock*
+//q_point+indexCount]<<std::endl;
+
                    }
   
 		}//quadPoint loop
