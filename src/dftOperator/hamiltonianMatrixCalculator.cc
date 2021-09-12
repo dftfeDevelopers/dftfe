@@ -240,7 +240,7 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::computeHamiltonianMatrix(
       std::vector<double> NiNj_currentBlock(numberEntriesEachBlock *
                                               numberQuadraturePoints,
                                             0.0);
-      unsigned int iNode, jNode;
+      unsigned int iNode, jNode, tempValue, tempValue1, startIndexINode;
       while (blockCount < numBlocks)
         {
 	  tempValue1 = numberEntriesEachBlock*blockCount;
