@@ -492,12 +492,10 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::computeHamiltonianMatrix(
 
 
       blockCount                   = 0;
-      indexCount                   = 0;
-      unsigned int        dimCount = 0;
       std::vector<double> gradNiNj_currentBlock(numberEntriesEachBlock * 3 *
                                                   numberQuadraturePoints,
                                                 0.0);
-      unsigned int iNode, jNode, tempValue, tempValue1, startIndexINode;
+      //unsigned int iNode, jNode, tempValue, tempValue1, startIndexINode;
 
       while (blockCount < numBlocks)
         {
