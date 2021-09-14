@@ -3555,20 +3555,6 @@ namespace dftfe
       d_eigenVectorsFlattenedSTL[0].size() / d_numEigenValues;
 
 
-#ifndef USE_COMPLEX
-    if (numberBandGroups > 1)
-      for (unsigned int kPoint = 0;
-           kPoint < (1 + dftParameters::spinPolarized) * d_kPointWeights.size();
-           ++kPoint)
-        MPI_Allreduce(MPI_IN_PLACE,
-                      &d_eigenVectorsFlattenedSTL[kPoint][0],
-                      localVectorSize * d_numEigenValues,
-                      dataTypes::mpi_type_id(
-                        &d_eigenVectorsFlattenedSTL[kPoint][0]),
-                      MPI_SUM,
-                      interBandGroupComm);
-#endif
-
     if (dftParameters::isIonForce)
       {
         if (dftParameters::selfConsistentSolverTolerance > 1e-4 &&
