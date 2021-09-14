@@ -1300,7 +1300,7 @@ namespace dftfe
     createDealiiVector(
       const std::shared_ptr<const dealii::Utilities::MPI::Partitioner> &,
       const unsigned int,
-      distributedCPUVec<dataTypes::numberLowPrec> &);
+      distributedCPUVec<dataTypes::numberFP32> &);
 
 #if defined(DFTFE_WITH_GPU) && !defined(USE_COMPLEX)
     template void
@@ -1313,7 +1313,7 @@ namespace dftfe
     createDealiiVector(
       const std::shared_ptr<const dealii::Utilities::MPI::Partitioner> &,
       const unsigned int,
-      distributedGPUVec<dataTypes::numberLowPrec> &);
+      distributedGPUVec<dataTypes::numberFP32> &);
 #endif
 
 
