@@ -508,6 +508,7 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::computeHamiltonianMatrix(
 
              iNode = d_blockiNodeIndex[numberEntriesEachBlock * blockCount];
 	     tempValue = (numberDofsPerElement*iNode) - (0.5*iNode*iNode + 0.5*iNode) - tempValue1;
+	     #pragma omp parallel for
 	     for(jNode = d_blockjNodeIndex[numberEntriesEachBlock * blockCount]; jNode < numberDofsPerElement
 		   ; ++jNode)
 	       {
@@ -537,7 +538,7 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::computeHamiltonianMatrix(
 
 	     startIndexINode = iNode + 1;
 	      
-	      
+	      #pragma omp parallel for
               for (iNode =
                      startIndexINode;
                    iNode < d_blockiNodeIndex[numberEntriesEachBlock*(blockCount+1) - 1];
@@ -585,6 +586,7 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::computeHamiltonianMatrix(
 
                 iNode = d_blockiNodeIndex[numberEntriesEachBlock*(blockCount+1) - 1];
 		tempValue = (numberDofsPerElement*iNode) - (0.5*iNode*iNode + 0.5*iNode) - tempValue1;
+		#pragma omp parallel for
 		for(jNode = iNode;jNode <= d_blockjNodeIndex[numberEntriesEachBlock*(blockCount+1) - 1];++jNode)
 		  {
 		    gradNiNj_currentBlock[3 * numberEntriesEachBlock *
