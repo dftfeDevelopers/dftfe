@@ -116,12 +116,7 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::computeHamiltonianMatrix(
                   for(jNode = d_blockjNodeIndex[numberEntriesEachBlock * blockCount]; jNode < numberDofsPerElement
 ; ++jNode)
                   {
-                    //indexCount = tempValue + jNode;
                     NiNjLpspQuad_currentBlock[numberEntriesEachBlock*q_point+tempValue+jNode] = d_shapeFunctionLpspQuadData[numberDofsPerElement * q_point + iNode]*d_shapeFunctionLpspQuadData[numberDofsPerElement * q_point + jNode];
-                    //if(q_point == 998 || q_point == 999)
-                     //std::cout<<" Value of iNode, jNode, indexCount, NiNjLpspQuad initial: "<<iNode<<" "<<jNode<<"
- //"<<indexCount<<" "<<NiNjLpspQuad_currentBlock[numberEntriesEachBlock*q_point+indexCount]<<std::endl;
-
                   }
 
                   startIndexINode = iNode + 1;
@@ -146,17 +141,10 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::computeHamiltonianMatrix(
 							q_point +
                                                         jNode];
 
-                          //indexCount = tempValue + jNode;
-
                           NiNjLpspQuad_currentBlock[numberEntriesEachBlock *
 						    q_point +
                                                     tempValue + jNode] = shapeI * shapeJ;
-                           
                          
-                           //if(q_point == 998 || q_point == 999)
-                             // std::cout<<" Value of iNode, jNode, indexCount, NiNjLpspQuad middle: "<<iNode<<" "<<
-//jNode<<" "<<indexCount<<" "<<NiNjLpspQuad_currentBlock[numberEntriesEachBlock*
-//q_point+indexCount]<<std::endl;                        
                       } // jNode
 		    }//iNode
                    
@@ -164,14 +152,7 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::computeHamiltonianMatrix(
                   tempValue = (numberDofsPerElement*iNode) - (0.5*iNode*iNode + 0.5*iNode) - tempValue1;
                   for(jNode = iNode;jNode <= d_blockjNodeIndex[numberEntriesEachBlock*(blockCount+1) - 1];++jNode)
                    {
-                        //indexCount = tempValue + jNode;
 		        NiNjLpspQuad_currentBlock[numberEntriesEachBlock*q_point+tempValue+jNode] =  d_shapeFunctionLpspQuadData[numberDofsPerElement * q_point + iNode]*d_shapeFunctionLpspQuadData[numberDofsPerElement * q_point + jNode];
-
-                      // if(q_point == 998 || q_point == 999)
-                       //std::cout<<" Value of iNode, jNode, indexCount, NiNjLpspQuad end: "<<iNode<<" "<<jNode<<" "
-//<<indexCount<<" "<<NiNjLpspQuad_currentBlock[numberEntriesEachBlock*
-//q_point+indexCount]<<std::endl;
-
                    }
   
 		}//quadPoint loop
@@ -329,13 +310,15 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::computeHamiltonianMatrix(
               for (unsigned int q_point = 0; q_point < numberQuadraturePoints;
                    ++q_point)
                 {
+
 		  iNode = d_blockiNodeIndex[numberEntriesEachBlock * blockCount];
 		  tempValue = (numberDofsPerElement*iNode) - (0.5*iNode*iNode + 0.5*iNode) - tempValue1;
+                  #pragma omp parallel for
                    for(jNode = d_blockjNodeIndex[numberEntriesEachBlock * blockCount]; jNode < numberDofsPerElement
 ; ++jNode)
                   {
 		    
-		    gradNiNjPlusgradNjNi_currentBlock
+		   gradNiNjPlusgradNjNi_currentBlock
                             [3 * numberEntriesEachBlock * q_point +
                              tempValue + jNode] = d_shapeFunctionGradientValueRefX[numberDofsPerElement *
                                                            q_point +
@@ -368,7 +351,8 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::computeHamiltonianMatrix(
 
 		  startIndexINode = iNode + 1; 
 
-		  
+	
+                  #pragma omp parallel for	  
 		  for (iNode =
                          startIndexINode;
                        iNode < d_blockiNodeIndex[numberEntriesEachBlock*(blockCount+1) - 1];
@@ -428,6 +412,7 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::computeHamiltonianMatrix(
 
 		  iNode = d_blockiNodeIndex[numberEntriesEachBlock*(blockCount+1) - 1];
 		  tempValue = (numberDofsPerElement*iNode) - (0.5*iNode*iNode + 0.5*iNode) - tempValue1;
+                  #pragma omp parallel for
 		   for(jNode = iNode;jNode <= d_blockjNodeIndex[numberEntriesEachBlock*(blockCount+1) - 1];++jNode)
 		     {
 		       gradNiNjPlusgradNjNi_currentBlock
