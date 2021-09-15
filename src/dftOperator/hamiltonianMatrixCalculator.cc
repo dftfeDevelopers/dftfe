@@ -61,10 +61,9 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::computeHamiltonianMatrix(
         d_numberNodesPerElement * d_numberNodesPerElement;
       unsigned int numBlocks              = (FEOrder + 1);
       unsigned int numberEntriesEachBlock = sizeNiNj / numBlocks;
-      unsigned int count                  = 0;
       unsigned int blockCount             = 0;
-      unsigned int indexCount             = 0;
-      unsigned int flag                   = 0;
+      
+      
 
       if ((dftParameters::isPseudopotential ||
            dftParameters::smearedNuclearCharges) &&
@@ -210,11 +209,8 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::computeHamiltonianMatrix(
       //
       // create temp storage for stiffness matrix across all cells
       //
-      count      = 0;
       blockCount = 0;
-      indexCount = 0;
-      flag       = 0;
-
+      
       std::vector<double> cellHamiltonianMatrix(totalLocallyOwnedCells *
                                                   sizeNiNj,
                                                 0.0);
@@ -302,8 +298,7 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::computeHamiltonianMatrix(
           std::vector<double> gradNiNjPlusgradNjNi_currentBlock(
             numberEntriesEachBlock * 3 * numberQuadraturePoints, 0.0);
           blockCount = 0;
-          indexCount = 0;
-	  unsigned int iNode, jNode, tempValue, tempValue1, startIndexINode;
+          unsigned int iNode, jNode, tempValue, tempValue1, startIndexINode;
           while (blockCount < numBlocks)
             {
 	      tempValue1 = numberEntriesEachBlock*blockCount;
@@ -488,9 +483,7 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::computeHamiltonianMatrix(
       std::vector<double> elementHamiltonianMatrixImag(totalLocallyOwnedCells *
                                                          sizeNiNj,
                                                        0.0);
-      unsigned int numberEntriesEachBlockComplex = fullSizeNiNj / numBlocks;
-
-
+    
       blockCount                   = 0;
       std::vector<double> gradNiNj_currentBlock(numberEntriesEachBlock * 3 *
                                                   numberQuadraturePoints,
@@ -554,8 +547,7 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::computeHamiltonianMatrix(
                     d_shapeFunctionGradientValueRefZ[numberDofsPerElement *
                                                        q_point +
                                                      iNode];
-                  double shapeI =
-                    d_shapeFunctionData[numberDofsPerElement * q_point + iNode];
+              
 
 		  tempValue = (numberDofsPerElement*iNode) - (0.5*iNode*iNode + 0.5*iNode) - tempValue1;
                   for (jNode = iNode;
@@ -596,6 +588,7 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::computeHamiltonianMatrix(
 
 		    gradNiNj_currentBlock[3 * numberEntriesEachBlock *
 					  q_point +
+					  numberEntriesEachBlock + 
 					  tempValue + jNode] = d_shapeFunctionGradientValueRefY[numberDofsPerElement *
 												q_point +
 												iNode] * d_shapeFunctionData[numberDofsPerElement * q_point +
@@ -608,6 +601,7 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::computeHamiltonianMatrix(
 												q_point +
 												iNode] * d_shapeFunctionData[numberDofsPerElement * q_point +
 															     jNode];
+		    
 		  }
 	    }//quadpoint loop
 
