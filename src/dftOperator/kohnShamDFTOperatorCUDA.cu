@@ -787,6 +787,12 @@ namespace dftfe
       flattenedArray.get_partitioner(),
       numberWaveFunctions);
 
+    getOverloadedConstraintMatrixHost()->precomputeMaps(
+      dftPtr->matrix_free_data.get_vector_partitioner(),
+      dftPtr->matrix_free_data.get_vector_partitioner(),
+      1);
+
+
     const unsigned int totalLocallyOwnedCells =
       dftPtr->matrix_free_data.n_physical_cells();
 
