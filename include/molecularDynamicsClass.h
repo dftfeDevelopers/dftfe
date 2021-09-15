@@ -217,6 +217,11 @@ namespace dftfe
                         std::vector<double> , double & , std::vector<double> & );
 
 
+       // void writeRestartFile(std::vector<double> , std::vector<dealii::Tensor<1, 3, double>> ,
+       //                         std::vector<double> , std::vector<double> ,
+        //                       std::vector<double> , std::vector<double> );                
+
+
 
     };
 }

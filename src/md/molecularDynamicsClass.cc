@@ -9,6 +9,7 @@
 #include <fileReaders.h>
 #include <force.h>
 #include <vector>
+#include <cmath>
 #include <molecularDynamicsClass.h>
 
 #ifdef DFTFE_WITH_GPU
@@ -394,16 +395,16 @@ namespace dftfe
         ThermostatMass[0] = 3*(numberGlobalCharges-1)*kB*startingTemperature*(nhctimeconstant*nhctimeconstant);
         ThermostatMass[1] = kB*startingTemperature*(nhctimeconstant*nhctimeconstant);
         pcout << "Time Step " <<timeStep<<" Q2: "<<ThermostatMass[1]<<"Time Constant"<<nhctimeconstant<<"no. of atoms"<< numberGlobalCharges<<"Starting Temp: "<<
-                startingTemperature<<"---"<<3*(numberGlobalCharges-1)*kB*startingTemperature*(thermostatTimeConstant*thermostatTimeConstant)<<std::endl;
+                startingTemperature<<"---"<<3*(numberGlobalCharges-1)*kB*startingTemperature*(nhctimeconstant*nhctimeconstant)<<std::endl;
         for(TimeIndex=1; TimeIndex< numberofSteps;TimeIndex++)
         {       
             double step_time;
             MPI_Barrier(MPI_COMM_WORLD);
             step_time = MPI_Wtime();   
-            NoseHoverChains(velocity, Thermostatvelocity,Thermostatposition, ThermostatMass,KineticEnergyVector[TimeIndex-1]*haToeV,TemperatureFromVelocities );
+            NoseHoverChains(velocity, Thermostatvelocity,Thermostatposition, ThermostatMass,KineticEnergyVector[TimeIndex-1]*haToeV,startingTemperature);
             velocityVerlet(velocity, displacements,atomMass,KineticEnergy, force);
-            TemperatureFromVelocities = 2.0/3.0/double(numberGlobalCharges-1)*KineticEnergy/(kB); 
-            NoseHoverChains(velocity, Thermostatvelocity,Thermostatposition, ThermostatMass,KineticEnergy,TemperatureFromVelocities );          
+          //  TemperatureFromVelocities = 2.0/3.0/double(numberGlobalCharges-1)*KineticEnergy/(kB); 
+            NoseHoverChains(velocity, Thermostatvelocity,Thermostatposition, ThermostatMass,KineticEnergy,startingTemperature);          
             KineticEnergy = 0.0;
             for(int iCharge=0; iCharge < numberGlobalCharges; iCharge++)
               {
@@ -576,18 +577,23 @@ namespace dftfe
                                                                       double KE, double  Temperature)
     {
       double G1, G2, s;
-      double L = 3*numberGlobalCharges;
+      double L = 3*(numberGlobalCharges-1);
       /* Start Chain 1*/
       G2 = (Q[0]*v_e[0]*v_e[0] - kB*Temperature)/Q[1]; 
+      pcout << "v_e[0]:"<<v_e[0]<<std::endl;
       v_e[1]=v_e[1]+G2*timeStep/4;
+      pcout << "v_e[1]:"<<v_e[1]<<std::endl;
       v_e[0]=v_e[0]*std::exp(-v_e[1]*timeStep/8);
+      pcout << "v_e[0]*std::exp(-v_e[1]*timeStep/8):"<<v_e[0]<<std::endl;
       G1 = (2*KE-L*kB*Temperature)/Q[0];
       v_e[0] = v_e[0]+G1*timeStep/4;
-      v_e[0]=v_e[0]*std::exp(-v_e[1]*timeStep/8);
+      pcout << "v_e[0]+G1*timeStep/4:"<<v_e[0]<<std::endl;
+      v_e[0]= v_e[0]*std::exp(-v_e[1]*timeStep/8);
+      pcout << "v_e[0]*std::exp(-v_e[1]*timeStep/8):"<<v_e[0]<<std::endl;
       e[0] = e[0] + v_e[0]*timeStep/2;
       e[1] = e[1] + v_e[1]*timeStep/2;
       s = std::exp(-v_e[0]*timeStep/2);
-      pcout << "G2"<<G2<<" v_e1"<<v_e[1]<<"Temp"<<Temperature<<"Q[1]"<<Q[1]<<"v_e[0]"<<v_e[0]<<"G1"<<G1<<  std::endl;
+      pcout << "G2"<<G2<<" v_e1"<<v_e[1]<<"Temp"<<Temperature<<"Q[1] "<<Q[1]<<"v_e[0] "<<v_e[0]<<"G1 "<<G1<< "Exponent: "<<std::exp(1)<< std::endl;
       for(int iCharge = 0; iCharge < numberGlobalCharges; iCharge++)
         {
         v[3*iCharge+0] = s*v[3*iCharge+0];
@@ -597,16 +603,21 @@ namespace dftfe
       KE = KE*s*s;
       v_e[0]=v_e[0]*std::exp(-v_e[1]*timeStep/8);
       G1 = (2*KE-L*kB*Temperature)/Q[0];
-      v_e[0] = v_e[0]+G1*Temperature/4;
-      v_e[0]=v_e[0]*std::exp(-v_e[1]*Temperature/8);
+      v_e[0] = v_e[0]+G1*timeStep/4;
+      v_e[0]=v_e[0]*std::exp(-v_e[1]*timeStep/8);
       G2 = (Q[0]*v_e[0]*v_e[0] - kB*Temperature)/Q[1]; 
       v_e[1]=v_e[1]+G2*timeStep/4;
       /* End Chain 1*/
       
     }
-
+/* 
+    template <unsigned int FEOrder, unsigned int FEOrderElectro>
+    void
+    molecularDynamicsClass<FEOrder, FEOrderElectro>::writeRestartFile(std::vector<double> &v, std::vector<double> &v_e, 
+                                                                    std::vector<double> &e, std::vector<double> Q, 
+                                                                      double KE, double  Temperature)  
   
-    
+*/    
     
 #include "mdClass.inst.cc"
 }//nsmespace dftfe
