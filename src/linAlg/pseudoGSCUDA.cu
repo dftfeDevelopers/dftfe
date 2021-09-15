@@ -18,7 +18,7 @@
 
 #include <dftParameters.h>
 #include <linearAlgebraOperationsCUDA.h>
-#include <linearAlgebraOperationsInternalCUDA.h>
+#include <linearAlgebraOperationsInternal.h>
 
 namespace dftfe
 {
@@ -49,7 +49,7 @@ namespace dftfe
 
       const unsigned int rowsBlockSize = operatorMatrix.getScalapackBlockSize();
       std::shared_ptr<const dftfe::ProcessGrid> processGrid;
-      linearAlgebraOperationsCUDA::internal::createProcessGridSquareMatrix(
+      linearAlgebraOperations::internal::createProcessGridSquareMatrix(
         mpiCommDomain, N, processGrid);
 
       dftfe::ScaLAPACKMatrix<double> overlapMatPar(N,

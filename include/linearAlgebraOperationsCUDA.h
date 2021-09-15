@@ -46,6 +46,236 @@ namespace dftfe
             int *               info);
   }
 
+  inline cublasStatus_t
+  cublasXgemm(cublasHandle_t    handle,
+              cublasOperation_t transa,
+              cublasOperation_t transb,
+              int               m,
+              int               n,
+              int               k,
+              const double *    alpha,
+              const double *    A,
+              int               lda,
+              const double *    B,
+              int               ldb,
+              const double *    beta,
+              double *          C,
+              int               ldc)
+  {
+    return cublasDgemm(
+      handle, transa, transb, m, n, k, alpha, A, lda, B, ldb, beta, C, ldc);
+  }
+
+  inline cublasStatus_t
+  cublasXgemm(cublasHandle_t    handle,
+              cublasOperation_t transa,
+              cublasOperation_t transb,
+              int               m,
+              int               n,
+              int               k,
+              const float *     alpha,
+              const float *     A,
+              int               lda,
+              const float *     B,
+              int               ldb,
+              const float *     beta,
+              float *           C,
+              int               ldc)
+  {
+    return cublasSgemm(
+      handle, transa, transb, m, n, k, alpha, A, lda, B, ldb, beta, C, ldc);
+  }
+
+  inline cublasStatus_t
+  cublasXgemm(cublasHandle_t         handle,
+              cublasOperation_t      transa,
+              cublasOperation_t      transb,
+              int                    m,
+              int                    n,
+              int                    k,
+              const cuDoubleComplex *alpha,
+              const cuDoubleComplex *A,
+              int                    lda,
+              const cuDoubleComplex *B,
+              int                    ldb,
+              const cuDoubleComplex *beta,
+              cuDoubleComplex *      C,
+              int                    ldc)
+  {
+    return cublasZgemm(
+      handle, transa, transb, m, n, k, alpha, A, lda, B, ldb, beta, C, ldc);
+  }
+
+  inline cublasStatus_t
+  cublasXgemm(cublasHandle_t    handle,
+              cublasOperation_t transa,
+              cublasOperation_t transb,
+              int               m,
+              int               n,
+              int               k,
+              const cuComplex * alpha,
+              const cuComplex * A,
+              int               lda,
+              const cuComplex * B,
+              int               ldb,
+              const cuComplex * beta,
+              cuComplex *       C,
+              int               ldc)
+  {
+    return cublasCgemm(
+      handle, transa, transb, m, n, k, alpha, A, lda, B, ldb, beta, C, ldc);
+  }
+
+  inline cublasStatus_t
+  cublasXgemmBatched(cublasHandle_t    handle,
+                     cublasOperation_t transa,
+                     cublasOperation_t transb,
+                     int               m,
+                     int               n,
+                     int               k,
+                     const double *    alpha,
+                     const double *    Aarray[],
+                     int               lda,
+                     const double *    Barray[],
+                     int               ldb,
+                     const double *    beta,
+                     double *          Carray[],
+                     int               ldc,
+                     int               batchCount)
+  {
+    return cublasDgemmBatched(handle,
+                              transa,
+                              transb,
+                              m,
+                              n,
+                              k,
+                              alpha,
+                              Aarray,
+                              lda,
+                              Barray,
+                              ldb,
+                              beta,
+                              Carray,
+                              ldc,
+                              batchCount);
+  }
+
+
+  inline cublasStatus_t
+  cublasXgemmBatched(cublasHandle_t         handle,
+                     cublasOperation_t      transa,
+                     cublasOperation_t      transb,
+                     int                    m,
+                     int                    n,
+                     int                    k,
+                     const cuDoubleComplex *alpha,
+                     const cuDoubleComplex *Aarray[],
+                     int                    lda,
+                     const cuDoubleComplex *Barray[],
+                     int                    ldb,
+                     const cuDoubleComplex *beta,
+                     cuDoubleComplex *      Carray[],
+                     int                    ldc,
+                     int                    batchCount)
+  {
+    return cublasZgemmBatched(handle,
+                              transa,
+                              transb,
+                              m,
+                              n,
+                              k,
+                              alpha,
+                              Aarray,
+                              lda,
+                              Barray,
+                              ldb,
+                              beta,
+                              Carray,
+                              ldc,
+                              batchCount);
+  }
+
+  inline cublasStatus_t
+  cublasXgemmStridedBatched(cublasHandle_t    handle,
+                            cublasOperation_t transa,
+                            cublasOperation_t transb,
+                            int               m,
+                            int               n,
+                            int               k,
+                            const double *    alpha,
+                            const double *    A,
+                            int               lda,
+                            long long int     strideA,
+                            const double *    B,
+                            int               ldb,
+                            long long int     strideB,
+                            const double *    beta,
+                            double *          C,
+                            int               ldc,
+                            long long int     strideC,
+                            int               batchCount)
+  {
+    return cublasDgemmStridedBatched(handle,
+                                     transa,
+                                     transb,
+                                     m,
+                                     n,
+                                     k,
+                                     alpha,
+                                     A,
+                                     lda,
+                                     strideA,
+                                     B,
+                                     ldb,
+                                     strideB,
+                                     beta,
+                                     C,
+                                     ldc,
+                                     strideC,
+                                     batchCount);
+  }
+
+  inline cublasStatus_t
+  cublasXgemmStridedBatched(cublasHandle_t         handle,
+                            cublasOperation_t      transa,
+                            cublasOperation_t      transb,
+                            int                    m,
+                            int                    n,
+                            int                    k,
+                            const cuDoubleComplex *alpha,
+                            const cuDoubleComplex *A,
+                            int                    lda,
+                            long long int          strideA,
+                            const cuDoubleComplex *B,
+                            int                    ldb,
+                            long long int          strideB,
+                            const cuDoubleComplex *beta,
+                            cuDoubleComplex *      C,
+                            int                    ldc,
+                            long long int          strideC,
+                            int                    batchCount)
+  {
+    return cublasZgemmStridedBatched(handle,
+                                     transa,
+                                     transb,
+                                     m,
+                                     n,
+                                     k,
+                                     alpha,
+                                     A,
+                                     lda,
+                                     strideA,
+                                     B,
+                                     ldb,
+                                     strideB,
+                                     beta,
+                                     C,
+                                     ldc,
+                                     strideC,
+                                     batchCount);
+  }
+
+
   /**
    *  @brief Contains functions for linear algebra operations on GPU
    *

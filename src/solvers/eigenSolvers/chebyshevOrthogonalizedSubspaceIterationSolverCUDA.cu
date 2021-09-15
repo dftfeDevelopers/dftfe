@@ -21,7 +21,6 @@
 #include <dftUtils.h>
 #include <linearAlgebraOperations.h>
 #include <linearAlgebraOperationsCUDA.h>
-#include <linearAlgebraOperationsInternalCUDA.h>
 #include <vectorUtilities.h>
 
 static const unsigned int order_lookup[][2] = {

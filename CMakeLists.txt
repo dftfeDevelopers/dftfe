@@ -65,10 +65,8 @@ SET(CUDA_SRC
   ./src/dft/densityCalculatorCUDA.cu
   ./src/dftOperator/operatorCUDA.cu
   ./src/dftOperator/kohnShamDFTOperatorCUDA.cu
-  ./src/dftOperator/kohnShamDFTOperatorCUDAKernels.cu
   ./src/dft/solveVselfInBinsCUDA.cu
   ./src/solvers/eigenSolvers/chebyshevOrthogonalizedSubspaceIterationSolverCUDA.cu
-  ./src/linAlg/linearAlgebraOperationsInternalCUDA.cu
   ./src/linAlg/linearAlgebraOperationsCUDA.cu
   ./src/linAlg/pseudoGSCUDA.cu
   ./src/linAlg/rayleighRitzCUDA.cu

@@ -22,6 +22,7 @@
 #    define operatorDFTCUDAClass_h
 
 #    include <constraintMatrixInfoCUDA.h>
+#    include <constraintMatrixInfo.h>
 #    include <cublas_v2.h>
 #    include <headers.h>
 #    include <thrust/device_vector.h>
@@ -88,18 +89,6 @@ namespace dftfe
     virtual distributedCPUVec<dataTypes::number> &
     getProjectorKetTimesVectorSingle() = 0;
 
-    // virtual distributedGPUVec<double> & getBlockCUDADealiiVector() = 0;
-
-    // virtual distributedGPUVec<double> & getBlockCUDADealiiVector2() = 0;
-
-    // virtual distributedGPUVec<double> & getBlockCUDADealiiVector3() = 0;
-
-    // virtual thrust::device_vector<dataTypes::number> &
-    // getBlockCUDADealiiVector() = 0;
-
-    // virtual thrust::device_vector<dataTypes::number> &
-    // getBlockCUDADealiiVector2() = 0;
-
     virtual thrust::device_vector<double> &
     getShapeFunctionGradientIntegral() = 0;
 
@@ -142,13 +131,13 @@ namespace dftfe
     virtual thrust::device_vector<dealii::types::global_dof_index> &
     getFlattenedArrayCellLocalProcIndexIdMap() = 0;
 
-    virtual thrust::device_vector<dataTypes::number> &
+    virtual thrust::device_vector<dataTypes::numberThrustGPU> &
     getCellWaveFunctionMatrix() = 0;
 
-    virtual distributedGPUVec<double> &
+    virtual distributedGPUVec<dataTypes::numberGPU> &
     getParallelChebyBlockVectorDevice() = 0;
 
-    virtual distributedGPUVec<double> &
+    virtual distributedGPUVec<dataTypes::numberGPU> &
     getParallelProjectorKetTimesBlockVectorDevice() = 0;
 
     virtual thrust::device_vector<unsigned int> &
@@ -197,26 +186,26 @@ namespace dftfe
      * @param Y Vector containing multi-component fields after operator times vectors product
      */
     virtual void
-    HX(distributedGPUVec<double> &X,
-       distributedGPUVec<double> &projectorKetTimesVector,
-       const unsigned int         localVectorSize,
-       const unsigned int         numberComponents,
-       const bool                 scaleFlag,
-       const double               scalar,
-       distributedGPUVec<double> &Y,
-       const bool                 doUnscalingX = true) = 0;
+    HX(distributedGPUVec<dataTypes::numberGPU> &X,
+       distributedGPUVec<dataTypes::numberGPU> &projectorKetTimesVector,
+       const unsigned int                       localVectorSize,
+       const unsigned int                       numberComponents,
+       const bool                               scaleFlag,
+       const double                             scalar,
+       distributedGPUVec<dataTypes::numberGPU> &Y,
+       const bool                               doUnscalingX = true) = 0;
 
 
     virtual void
-    HXCheby(distributedGPUVec<double> &X,
-            distributedGPUVec<float> & XTemp,
-            distributedGPUVec<double> &projectorKetTimesVector,
-            const unsigned int         localVectorSize,
-            const unsigned int         numberComponents,
-            distributedGPUVec<double> &Y,
-            bool                       mixPrecFlag          = false,
-            bool returnBeforeCompressSkipUpdateSkipNonLocal = false,
-            bool returnBeforeCompressSkipUpdateSkipLocal    = false) = 0;
+    HXCheby(distributedGPUVec<dataTypes::numberGPU> &    X,
+            distributedGPUVec<dataTypes::numberFP32GPU> &XTemp,
+            distributedGPUVec<dataTypes::numberGPU> &projectorKetTimesVector,
+            const unsigned int                       localVectorSize,
+            const unsigned int                       numberComponents,
+            distributedGPUVec<dataTypes::numberGPU> &Y,
+            bool                                     mixPrecFlag = false,
+            bool returnBeforeCompressSkipUpdateSkipNonLocal      = false,
+            bool returnBeforeCompressSkipUpdateSkipLocal         = false) = 0;
 
     /**
      * @brief implementation of non-local projector kets times psi product
@@ -229,26 +218,9 @@ namespace dftfe
      */
     virtual void
     computeNonLocalProjectorKetTimesXTimesV(
-      const double *             src,
-      distributedGPUVec<double> &projectorKetTimesVector,
-      const unsigned int         numberWaveFunctions) = 0;
-
-    /**
-     * @brief Compute projection of the operator into orthogonal basis
-     *
-     * @param X given orthogonal basis vectors
-     * @return ProjMatrix projected small matrix
-     */
-    virtual void
-    XtHX(const double *             X,
-         distributedGPUVec<double> &Xb,
-         distributedGPUVec<double> &HXb,
-         distributedGPUVec<double> &projectorKetTimesVector,
-         const unsigned int         M,
-         const unsigned int         N,
-         cublasHandle_t &           handle,
-         double *                   projHam,
-         const bool                 isProjHamOnDevice = true) = 0;
+      const dataTypes::numberGPU *             src,
+      distributedGPUVec<dataTypes::numberGPU> &projectorKetTimesVector,
+      const unsigned int                       numberWaveFunctions) = 0;
 
     /**
      * @brief Compute projection of the operator into a subspace spanned by a given basis
@@ -267,15 +239,15 @@ namespace dftfe
      * of the operation into the given subspace
      */
     virtual void
-    XtHX(const double *             X,
-         distributedGPUVec<double> &Xb,
-         distributedGPUVec<double> &HXb,
-         distributedGPUVec<double> &projectorKetTimesVector,
-         const unsigned int         M,
-         const unsigned int         N,
-         cublasHandle_t &           handle,
+    XtHX(const dataTypes::numberGPU *             X,
+         distributedGPUVec<dataTypes::numberGPU> &Xb,
+         distributedGPUVec<dataTypes::numberGPU> &HXb,
+         distributedGPUVec<dataTypes::numberGPU> &projectorKetTimesVector,
+         const unsigned int                       M,
+         const unsigned int                       N,
+         cublasHandle_t &                         handle,
          const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
-         dftfe::ScaLAPACKMatrix<double> &                 projHamPar,
+         dftfe::ScaLAPACKMatrix<dataTypes::number> &      projHamPar,
          GPUCCLWrapper &gpucclMpiCommDomain) = 0;
 
     /**
@@ -297,67 +269,16 @@ namespace dftfe
      */
     virtual void
     XtHXOverlapComputeCommun(
-      const double *                                   X,
-      distributedGPUVec<double> &                      Xb,
-      distributedGPUVec<double> &                      HXb,
-      distributedGPUVec<double> &                      projectorKetTimesVector,
+      const dataTypes::numberGPU *                     X,
+      distributedGPUVec<dataTypes::numberGPU> &        Xb,
+      distributedGPUVec<dataTypes::numberGPU> &        HXb,
+      distributedGPUVec<dataTypes::numberGPU> &        projectorKetTimesVector,
       const unsigned int                               M,
       const unsigned int                               N,
       cublasHandle_t &                                 handle,
       const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
-      dftfe::ScaLAPACKMatrix<double> &                 projHamPar,
+      dftfe::ScaLAPACKMatrix<dataTypes::number> &      projHamPar,
       GPUCCLWrapper &                                  gpucclMpiCommDomain) = 0;
-
-    /**
-     * @brief Compute projection of the operator into a subspace spanned by a given basis.
-     * This routine uses a mixed precision algorithm
-     * (https://doi.org/10.1016/j.cpc.2019.07.016).
-     *
-     * @param X Vector of Vectors containing all wavefunction vectors
-     * @param Xb parallel distributed vector datastructure for handling block of wavefunction vectors
-     * @param floatXb parallel distributed vector datastructure for handling block of wavefunction
-     * vectors in single precision
-     * @param HXb parallel distributed vector datastructure for handling H multiplied by block of
-     * wavefunction vectors
-     * @param projectorKetTimesVector parallel distributed vector datastructure for handling nonlocal
-     * projector kets times block wavefunction vectors
-     * @param M number of local dofs
-     * @param N total number of wavefunction vectors
-     * @param Noc number of fully occupied wavefunction vectors considered in the mixed precision algorithm
-     * @param handle cublasHandle
-     * @param processGrid two-dimensional processor grid corresponding to the parallel projHamPar
-     * @param projHamPar parallel ScaLAPACKMatrix which stores the computed projection
-     * of the operation into the given subspace
-     */
-    virtual void
-    XtHXMixedPrec(const double *             X,
-                  distributedGPUVec<double> &Xb,
-                  distributedGPUVec<float> & floatXb,
-                  distributedGPUVec<double> &HXb,
-                  distributedGPUVec<double> &projectorKetTimesVector,
-                  const unsigned int         M,
-                  const unsigned int         N,
-                  const unsigned int         Noc,
-                  cublasHandle_t &           handle,
-                  const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
-                  dftfe::ScaLAPACKMatrix<double> &                 projHamPar,
-                  GPUCCLWrapper &gpucclMpiCommDomain) = 0;
-
-
-    virtual void
-    XtHXOffDiagBlockSinglePrec(
-      const double *                                   X,
-      distributedGPUVec<double> &                      Xb,
-      distributedGPUVec<float> &                       floatXb,
-      distributedGPUVec<double> &                      HXb,
-      distributedGPUVec<double> &                      projectorKetTimesVector,
-      const unsigned int                               M,
-      const unsigned int                               N,
-      cublasHandle_t &                                 handle,
-      const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
-      dftfe::ScaLAPACKMatrix<double> &                 projHamPar,
-      GPUCCLWrapper &                                  gpucclMpiCommDomain) = 0;
-
 
     /**
      * @brief Compute projection of the operator into a subspace spanned by a given basis.
@@ -383,85 +304,27 @@ namespace dftfe
      */
     virtual void
     XtHXMixedPrecOverlapComputeCommun(
-      const double *                                   X,
-      distributedGPUVec<double> &                      Xb,
-      distributedGPUVec<float> &                       floatXb,
-      distributedGPUVec<double> &                      HXb,
-      distributedGPUVec<double> &                      projectorKetTimesVector,
+      const dataTypes::numberGPU *                     X,
+      distributedGPUVec<dataTypes::numberGPU> &        Xb,
+      distributedGPUVec<dataTypes::numberFP32GPU> &    floatXb,
+      distributedGPUVec<dataTypes::numberGPU> &        HXb,
+      distributedGPUVec<dataTypes::numberGPU> &        projectorKetTimesVector,
       const unsigned int                               M,
       const unsigned int                               N,
       const unsigned int                               Noc,
       cublasHandle_t &                                 handle,
       const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
-      dftfe::ScaLAPACKMatrix<double> &                 projHamPar,
+      dftfe::ScaLAPACKMatrix<dataTypes::number> &      projHamPar,
       GPUCCLWrapper &                                  gpucclMpiCommDomain) = 0;
 
-
-    virtual void
-    XtHXOffDiagBlockSinglePrecOverlapComputeCommun(
-      const double *                                   X,
-      distributedGPUVec<double> &                      Xb,
-      distributedGPUVec<float> &                       floatXb,
-      distributedGPUVec<double> &                      HXb,
-      distributedGPUVec<double> &                      projectorKetTimesVector,
-      const unsigned int                               M,
-      const unsigned int                               N,
-      cublasHandle_t &                                 handle,
-      const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
-      dftfe::ScaLAPACKMatrix<double> &                 projHamPar,
-      GPUCCLWrapper &                                  gpucclMpiCommDomain) = 0;
-
-    /**
-     * @brief Compute projection of the operator into a subspace spanned by a given orthogonal basis
-     *
-     * @param  X Vector of Vectors containing the basis vectors spanning the subspace
-     * @return ProjMatrix projected small matrix
-     */
-    /*virtual void XtHX(std::vector<distributedCPUVec<double>> & X,
-      std::vector<dataTypes::number> & ProjHam) = 0;*/
-
-
-
-    /**
-     * @brief Get local dof indices real
-     *
-     * @return pointer to local dof indices real
-     */
-    const std::vector<dealii::types::global_dof_index> *
-    getLocalDofIndicesReal() const;
-
-    /**
-     * @brief Get local dof indices imag
-     *
-     * @return pointer to local dof indices real
-     */
-    const std::vector<dealii::types::global_dof_index> *
-    getLocalDofIndicesImag() const;
-
-    /**
-     * @brief Get local proc dof indices real
-     *
-     * @return pointer to local proc dof indices real
-     */
-    const std::vector<dealii::types::global_dof_index> *
-    getLocalProcDofIndicesReal() const;
-
-
-    /**
-     * @brief Get local proc dof indices imag
-     *
-     * @return pointer to local proc dof indices imag
-     */
-    const std::vector<dealii::types::global_dof_index> *
-    getLocalProcDofIndicesImag() const;
 
     /**
      * @brief Get constraint matrix eigen
      *
      * @return pointer to constraint matrix eigen
      */
-    const dealii::AffineConstraints<double> *
-    getConstraintMatrixEigen() const;
+    dftUtils::constraintMatrixInfo *
+    getOverloadedConstraintMatrixHost() const;
 
 
     /**
@@ -502,55 +365,23 @@ namespace dftfe
      * @brief Constructor.
      */
     operatorDFTCUDAClass(
-      const MPI_Comm &                                    mpi_comm_replica,
-      const dealii::MatrixFree<3, double> &               matrix_free_data,
-      const std::vector<dealii::types::global_dof_index> &localDofIndicesReal,
-      const std::vector<dealii::types::global_dof_index> &localDofIndicesImag,
-      const std::vector<dealii::types::global_dof_index>
-        &localProcDofIndicesReal,
-      const std::vector<dealii::types::global_dof_index>
-        &                                      localProcDofIndicesImag,
-      const dealii::AffineConstraints<double> &constraintMatrixEigen,
-      dftUtils::constraintMatrixInfoCUDA &     constraintMatrixNone);
+      const MPI_Comm &                     mpi_comm_replica,
+      const dealii::MatrixFree<3, double> &matrix_free_data,
+      dftUtils::constraintMatrixInfo &     constraintMatrixNone,
+      dftUtils::constraintMatrixInfoCUDA & constraintMatrixNoneCUDA);
 
   protected:
     //
-    // global indices of degrees of freedom in the current processor which
-    // correspond to component-1 of 2-component dealii array
+    // Get overloaded constraint matrix object constructed using 1-component FE
+    // object
     //
-    const std::vector<dealii::types::global_dof_index> *d_localDofIndicesReal;
-
-    //
-    // global indices of degrees of freedom in the current processor which
-    // correspond to component-2 of 2-component dealii array
-    //
-    const std::vector<dealii::types::global_dof_index> *d_localDofIndicesImag;
-
-    //
-    // local indices degrees of freedom in the current processor  which
-    // correspond to component-1 of 2-component dealii array
-    //
-    const std::vector<dealii::types::global_dof_index>
-      *d_localProcDofIndicesReal;
-
-    //
-    // local indices degrees of freedom in the current processor  which
-    // correspond to component-2 of 2-component dealii array
-    //
-    const std::vector<dealii::types::global_dof_index>
-      *d_localProcDofIndicesImag;
-
-    //
-    // constraint matrix used for the eigen problem (2-component FE Object for
-    // Periodic, 1-component FE object for non-periodic)
-    //
-    const dealii::AffineConstraints<double> *d_constraintMatrixEigen;
+    dftUtils::constraintMatrixInfo *d_constraintMatrixData;
 
     //
     // Get overloaded constraint matrix object constructed using 1-component FE
     // object
     //
-    dftUtils::constraintMatrixInfoCUDA *d_constraintMatrixData;
+    dftUtils::constraintMatrixInfoCUDA *d_constraintMatrixDataCUDA;
     //
     // matrix-free data
     //
@@ -595,11 +426,12 @@ namespace dftfe
     thrust::device_vector<dealii::types::global_dof_index>
       d_flattenedArrayCellLocalProcIndexIdMapDevice;
 
-    thrust::device_vector<dataTypes::number> d_cellWaveFunctionMatrix;
+    thrust::device_vector<dataTypes::numberThrustGPU> d_cellWaveFunctionMatrix;
 
-    distributedGPUVec<double> d_parallelChebyBlockVectorDevice;
+    distributedGPUVec<dataTypes::numberGPU> d_parallelChebyBlockVectorDevice;
 
-    distributedGPUVec<double> d_parallelProjectorKetTimesBlockVectorDevice;
+    distributedGPUVec<dataTypes::numberGPU>
+      d_parallelProjectorKetTimesBlockVectorDevice;
 
     //
     // mpi communicator

@@ -20,7 +20,7 @@
 #include <dftParameters.h>
 #include <dftUtils.h>
 #include <linearAlgebraOperationsCUDA.h>
-#include <linearAlgebraOperationsInternalCUDA.h>
+#include <linearAlgebraOperationsInternal.h>
 #include <nvToolsExt.h>
 #include <vectorUtilities.h>
 
@@ -523,7 +523,8 @@ namespace dftfe
       for (unsigned int i = 0; i < local_size; i++)
         vVector.local_element(i) = ((double)std::rand()) / ((double)RAND_MAX);
 
-      operatorMatrix.getConstraintMatrixEigen()->set_zero(vVector);
+      // operatorMatrix.getConstraintMatrixEigen()->set_zero(vVector);
+      operatorMatrix.getOverloadedConstraintMatrixHost()->set_zero(vVector, 1);
       vVector.update_ghost_values();
 
       //
@@ -562,7 +563,8 @@ namespace dftfe
                    local_size,
                    cudaMemcpyDeviceToHost);
 
-      operatorMatrix.getConstraintMatrixEigen()->set_zero(v[0]);
+      // operatorMatrix.getConstraintMatrixEigen()->set_zero(v[0]);
+      operatorMatrix.getOverloadedConstraintMatrixHost()->set_zero(v[0], 1);
       fVector = f[0];
 
       alpha = fVector * vVector;
@@ -603,7 +605,8 @@ namespace dftfe
                        local_size,
                        cudaMemcpyDeviceToHost);
 
-          operatorMatrix.getConstraintMatrixEigen()->set_zero(v[0]);
+          // operatorMatrix.getConstraintMatrixEigen()->set_zero(v[0]);
+          operatorMatrix.getOverloadedConstraintMatrixHost()->set_zero(v[0], 1);
           fVector = f[0];
           fVector.add(-1.0 * beta, v0Vector); // beta is real
           alpha = fVector * vVector;
@@ -1498,11 +1501,11 @@ namespace dftfe
 
       std::map<unsigned int, unsigned int> globalToLocalColumnIdMap;
       std::map<unsigned int, unsigned int> globalToLocalRowIdMap;
-      linearAlgebraOperationsCUDA::internal::
-        createGlobalToLocalIdMapsScaLAPACKMat(processGrid,
-                                              rotationMatPar,
-                                              globalToLocalRowIdMap,
-                                              globalToLocalColumnIdMap);
+      linearAlgebraOperations::internal::createGlobalToLocalIdMapsScaLAPACKMat(
+        processGrid,
+        rotationMatPar,
+        globalToLocalRowIdMap,
+        globalToLocalColumnIdMap);
 
       const unsigned int vectorsBlockSize =
         std::min(dftParameters::wfcBlockSize, Nfr);
@@ -1843,11 +1846,11 @@ namespace dftfe
 
       std::map<unsigned int, unsigned int> globalToLocalColumnIdMap;
       std::map<unsigned int, unsigned int> globalToLocalRowIdMap;
-      linearAlgebraOperationsCUDA::internal::
-        createGlobalToLocalIdMapsScaLAPACKMat(processGrid,
-                                              rotationMatPar,
-                                              globalToLocalRowIdMap,
-                                              globalToLocalColumnIdMap);
+      linearAlgebraOperations::internal::createGlobalToLocalIdMapsScaLAPACKMat(
+        processGrid,
+        rotationMatPar,
+        globalToLocalRowIdMap,
+        globalToLocalColumnIdMap);
 
       // band group parallelization data structures
       const unsigned int numberBandGroups =
@@ -2206,11 +2209,11 @@ namespace dftfe
 
       std::map<unsigned int, unsigned int> globalToLocalColumnIdMap;
       std::map<unsigned int, unsigned int> globalToLocalRowIdMap;
-      linearAlgebraOperationsCUDA::internal::
-        createGlobalToLocalIdMapsScaLAPACKMat(processGrid,
-                                              rotationMatPar,
-                                              globalToLocalRowIdMap,
-                                              globalToLocalColumnIdMap);
+      linearAlgebraOperations::internal::createGlobalToLocalIdMapsScaLAPACKMat(
+        processGrid,
+        rotationMatPar,
+        globalToLocalRowIdMap,
+        globalToLocalColumnIdMap);
 
       // band group parallelization data structures
       const unsigned int numberBandGroups =
@@ -2541,11 +2544,11 @@ namespace dftfe
 
       std::map<unsigned int, unsigned int> globalToLocalColumnIdMap;
       std::map<unsigned int, unsigned int> globalToLocalRowIdMap;
-      linearAlgebraOperationsCUDA::internal::
-        createGlobalToLocalIdMapsScaLAPACKMat(processGrid,
-                                              rotationMatPar,
-                                              globalToLocalRowIdMap,
-                                              globalToLocalColumnIdMap);
+      linearAlgebraOperations::internal::createGlobalToLocalIdMapsScaLAPACKMat(
+        processGrid,
+        rotationMatPar,
+        globalToLocalRowIdMap,
+        globalToLocalColumnIdMap);
 
       const unsigned int MPadded = std::ceil(M * 1.0 / 8.0) * 8.0 + 0.5;
       thrust::device_vector<float> XSP(MPadded * N, 0.0);
@@ -2875,11 +2878,11 @@ namespace dftfe
       // get global to local index maps for Scalapack matrix
       std::map<unsigned int, unsigned int> globalToLocalColumnIdMap;
       std::map<unsigned int, unsigned int> globalToLocalRowIdMap;
-      linearAlgebraOperationsCUDA::internal::
-        createGlobalToLocalIdMapsScaLAPACKMat(processGrid,
-                                              overlapMatPar,
-                                              globalToLocalRowIdMap,
-                                              globalToLocalColumnIdMap);
+      linearAlgebraOperations::internal::createGlobalToLocalIdMapsScaLAPACKMat(
+        processGrid,
+        overlapMatPar,
+        globalToLocalRowIdMap,
+        globalToLocalColumnIdMap);
 
       // band group parallelization data structures
       const unsigned int numberBandGroups =
@@ -2990,7 +2993,7 @@ namespace dftfe
       cudaStreamDestroy(streamGPUCCL);
 
       if (numberBandGroups > 1)
-        linearAlgebraOperationsCUDA::internal::sumAcrossInterCommScaLAPACKMat(
+        linearAlgebraOperations::internal::sumAcrossInterCommScaLAPACKMat(
           processGrid, overlapMatPar, interBandGroupComm);
 #endif
     }
@@ -3044,11 +3047,11 @@ namespace dftfe
       // get global to local index maps for Scalapack matrix
       std::map<unsigned int, unsigned int> globalToLocalColumnIdMap;
       std::map<unsigned int, unsigned int> globalToLocalRowIdMap;
-      linearAlgebraOperationsCUDA::internal::
-        createGlobalToLocalIdMapsScaLAPACKMat(processGrid,
-                                              overlapMatPar,
-                                              globalToLocalRowIdMap,
-                                              globalToLocalColumnIdMap);
+      linearAlgebraOperations::internal::createGlobalToLocalIdMapsScaLAPACKMat(
+        processGrid,
+        overlapMatPar,
+        globalToLocalRowIdMap,
+        globalToLocalColumnIdMap);
 
       // band group parallelization data structures
       const unsigned int numberBandGroups =
@@ -3258,7 +3261,7 @@ namespace dftfe
         {
           MPI_Barrier(interBandGroupComm);
 
-          linearAlgebraOperationsCUDA::internal::sumAcrossInterCommScaLAPACKMat(
+          linearAlgebraOperations::internal::sumAcrossInterCommScaLAPACKMat(
             processGrid, overlapMatPar, interBandGroupComm);
         }
 #endif
@@ -3283,11 +3286,11 @@ namespace dftfe
       // get global to local index maps for Scalapack matrix
       std::map<unsigned int, unsigned int> globalToLocalColumnIdMap;
       std::map<unsigned int, unsigned int> globalToLocalRowIdMap;
-      linearAlgebraOperationsCUDA::internal::
-        createGlobalToLocalIdMapsScaLAPACKMat(processGrid,
-                                              overlapMatPar,
-                                              globalToLocalRowIdMap,
-                                              globalToLocalColumnIdMap);
+      linearAlgebraOperations::internal::createGlobalToLocalIdMapsScaLAPACKMat(
+        processGrid,
+        overlapMatPar,
+        globalToLocalRowIdMap,
+        globalToLocalColumnIdMap);
 
       // band group parallelization data structures
       const unsigned int numberBandGroups =
@@ -3459,7 +3462,7 @@ namespace dftfe
       cudaStreamDestroy(streamGPUCCL);
 
       if (numberBandGroups > 1)
-        linearAlgebraOperationsCUDA::internal::sumAcrossInterCommScaLAPACKMat(
+        linearAlgebraOperations::internal::sumAcrossInterCommScaLAPACKMat(
           processGrid, overlapMatPar, interBandGroupComm);
 #endif
     }
@@ -3513,11 +3516,11 @@ namespace dftfe
       // get global to local index maps for Scalapack matrix
       std::map<unsigned int, unsigned int> globalToLocalColumnIdMap;
       std::map<unsigned int, unsigned int> globalToLocalRowIdMap;
-      linearAlgebraOperationsCUDA::internal::
-        createGlobalToLocalIdMapsScaLAPACKMat(processGrid,
-                                              overlapMatPar,
-                                              globalToLocalRowIdMap,
-                                              globalToLocalColumnIdMap);
+      linearAlgebraOperations::internal::createGlobalToLocalIdMapsScaLAPACKMat(
+        processGrid,
+        overlapMatPar,
+        globalToLocalRowIdMap,
+        globalToLocalColumnIdMap);
 
       // band group parallelization data structures
       const unsigned int numberBandGroups =
@@ -3829,7 +3832,7 @@ namespace dftfe
         {
           MPI_Barrier(interBandGroupComm);
 
-          linearAlgebraOperationsCUDA::internal::sumAcrossInterCommScaLAPACKMat(
+          linearAlgebraOperations::internal::sumAcrossInterCommScaLAPACKMat(
             processGrid, overlapMatPar, interBandGroupComm);
         }
 #endif

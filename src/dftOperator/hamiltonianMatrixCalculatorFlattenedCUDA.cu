@@ -57,6 +57,7 @@ namespace
       }
   }
 
+  template <typename numberType>
   __global__ void
   hamMatrixKernelLDA(
     const unsigned int numCells,
@@ -67,7 +68,7 @@ namespace
     const double *     cellShapeFunctionGradientIntegral,
     const double *     vEffJxW,
     const double *     cellHamiltonianMatrixExternalPotCorrFlattened,
-    double *           cellHamiltonianMatrixFlattened,
+    numberType *       cellHamiltonianMatrixFlattened,
     const bool         externalPotCorr)
   {
     const unsigned int globalThreadId = blockIdx.x * blockDim.x + threadIdx.x;
@@ -95,14 +96,14 @@ namespace
           }
 
         cellHamiltonianMatrixFlattened[index] =
-          0.5 * cellShapeFunctionGradientIntegral[index] + val;
+          numberType(0.5 * cellShapeFunctionGradientIntegral[index] + val);
         if (externalPotCorr)
           cellHamiltonianMatrixFlattened[index] +=
-            cellHamiltonianMatrixExternalPotCorrFlattened[index];
+            numberType(cellHamiltonianMatrixExternalPotCorrFlattened[index]);
       }
   }
 
-
+  template <typename numberType>
   __global__ void
   hamMatrixKernelGGA(
     const unsigned int numCells,
@@ -120,7 +121,7 @@ namespace
     const double *     vEffJxW,
     const double *     derExcWithSigmaTimesGradRhoJxW,
     const double *     cellHamiltonianMatrixExternalPotCorrFlattened,
-    double *           cellHamiltonianMatrixFlattened,
+    numberType *       cellHamiltonianMatrixFlattened,
     const bool         externalPotCorr)
   {
     const unsigned int globalThreadId = blockIdx.x * blockDim.x + threadIdx.x;
@@ -191,13 +192,14 @@ namespace
           }
 
         cellHamiltonianMatrixFlattened[index] =
-          0.5 * cellShapeFunctionGradientIntegral[index] + val;
+          numberType(0.5 * cellShapeFunctionGradientIntegral[index] + val);
         if (externalPotCorr)
           cellHamiltonianMatrixFlattened[index] +=
-            cellHamiltonianMatrixExternalPotCorrFlattened[index];
+            numberType(cellHamiltonianMatrixExternalPotCorrFlattened[index]);
       }
   }
 
+  template <typename numberType>
   __global__ void
   hamMatrixKernelGGAMemOpt(
     const unsigned int numCells,
@@ -212,7 +214,7 @@ namespace
     const double *     vEffJxW,
     const double *     derExcWithSigmaTimesGradRhoJxW,
     const double *     cellHamiltonianMatrixExternalPotCorrFlattened,
-    double *           cellHamiltonianMatrixFlattened,
+    numberType *       cellHamiltonianMatrixFlattened,
     const bool         externalPotCorr)
   {
     const unsigned int globalThreadId = blockIdx.x * blockDim.x + threadIdx.x;
@@ -286,10 +288,10 @@ namespace
           }
 
         cellHamiltonianMatrixFlattened[index] =
-          0.5 * cellShapeFunctionGradientIntegral[index] + val;
+          numberType(0.5 * cellShapeFunctionGradientIntegral[index] + val);
         if (externalPotCorr)
           cellHamiltonianMatrixFlattened[index] +=
-            cellHamiltonianMatrixExternalPotCorrFlattened[index];
+            numberType(cellHamiltonianMatrixExternalPotCorrFlattened[index]);
       }
   }
 } // namespace
@@ -332,92 +334,96 @@ kohnShamDFTOperatorCUDAClass<FEOrder, FEOrderElectro>::computeHamiltonianMatrix(
   if (dftParameters::xcFamilyType == "GGA")
     {
       if (dftParameters::gpuMemOptMode)
-        hamMatrixKernelGGAMemOpt<<<(d_numLocallyOwnedCells *
-                                      d_numberNodesPerElement *
-                                      d_numberNodesPerElement +
-                                    255) /
-                                     256,
-                                   256>>>(
-          d_numLocallyOwnedCells,
-          d_numberNodesPerElement,
-          d_numQuadPoints,
-          thrust::raw_pointer_cast(&d_shapeFunctionValueDevice[0]),
-          thrust::raw_pointer_cast(&d_shapeFunctionValueInvertedDevice[0]),
-          thrust::raw_pointer_cast(
-            &d_shapeFunctionGradientValueXInvertedDevice[0]),
-          thrust::raw_pointer_cast(
-            &d_shapeFunctionGradientValueYInvertedDevice[0]),
-          thrust::raw_pointer_cast(
-            &d_shapeFunctionGradientValueZInvertedDevice[0]),
-          thrust::raw_pointer_cast(
-            &d_cellShapeFunctionGradientIntegralFlattenedDevice[0]),
-          thrust::raw_pointer_cast(&d_vEffJxWDevice[0]),
-          thrust::raw_pointer_cast(&d_derExcWithSigmaTimesGradRhoJxWDevice[0]),
-          thrust::raw_pointer_cast(
-            &d_cellHamiltonianMatrixExternalPotCorrFlattenedDevice[0]),
-          thrust::raw_pointer_cast(
-            &d_cellHamiltonianMatrixFlattenedDevice[kpointSpinIndex *
-                                                    d_numLocallyOwnedCells *
-                                                    d_numberNodesPerElement *
-                                                    d_numberNodesPerElement]),
-          dftParameters::isPseudopotential ||
-            dftParameters::smearedNuclearCharges);
+        hamMatrixKernelGGAMemOpt<dataTypes::numberGPU>
+          <<<(d_numLocallyOwnedCells * d_numberNodesPerElement *
+                d_numberNodesPerElement +
+              255) /
+               256,
+             256>>>(
+            d_numLocallyOwnedCells,
+            d_numberNodesPerElement,
+            d_numQuadPoints,
+            thrust::raw_pointer_cast(&d_shapeFunctionValueDevice[0]),
+            thrust::raw_pointer_cast(&d_shapeFunctionValueInvertedDevice[0]),
+            thrust::raw_pointer_cast(
+              &d_shapeFunctionGradientValueXInvertedDevice[0]),
+            thrust::raw_pointer_cast(
+              &d_shapeFunctionGradientValueYInvertedDevice[0]),
+            thrust::raw_pointer_cast(
+              &d_shapeFunctionGradientValueZInvertedDevice[0]),
+            thrust::raw_pointer_cast(
+              &d_cellShapeFunctionGradientIntegralFlattenedDevice[0]),
+            thrust::raw_pointer_cast(&d_vEffJxWDevice[0]),
+            thrust::raw_pointer_cast(
+              &d_derExcWithSigmaTimesGradRhoJxWDevice[0]),
+            thrust::raw_pointer_cast(
+              &d_cellHamiltonianMatrixExternalPotCorrFlattenedDevice[0]),
+            thrust::raw_pointer_cast(
+              &d_cellHamiltonianMatrixFlattenedDevice[kpointSpinIndex *
+                                                      d_numLocallyOwnedCells *
+                                                      d_numberNodesPerElement *
+                                                      d_numberNodesPerElement]),
+            dftParameters::isPseudopotential ||
+              dftParameters::smearedNuclearCharges);
       else
-        hamMatrixKernelGGA<<<(d_numLocallyOwnedCells * d_numberNodesPerElement *
-                                d_numberNodesPerElement +
-                              255) /
-                               256,
-                             256>>>(
-          d_numLocallyOwnedCells,
-          d_numberNodesPerElement,
-          d_numQuadPoints,
-          thrust::raw_pointer_cast(&d_shapeFunctionValueDevice[0]),
-          thrust::raw_pointer_cast(&d_shapeFunctionValueInvertedDevice[0]),
-          thrust::raw_pointer_cast(&d_shapeFunctionGradientValueXDevice[0]),
-          thrust::raw_pointer_cast(&d_shapeFunctionGradientValueYDevice[0]),
-          thrust::raw_pointer_cast(&d_shapeFunctionGradientValueZDevice[0]),
-          thrust::raw_pointer_cast(
-            &d_shapeFunctionGradientValueXInvertedDevice[0]),
-          thrust::raw_pointer_cast(
-            &d_shapeFunctionGradientValueYInvertedDevice[0]),
-          thrust::raw_pointer_cast(
-            &d_shapeFunctionGradientValueZInvertedDevice[0]),
-          thrust::raw_pointer_cast(
-            &d_cellShapeFunctionGradientIntegralFlattenedDevice[0]),
-          thrust::raw_pointer_cast(&d_vEffJxWDevice[0]),
-          thrust::raw_pointer_cast(&d_derExcWithSigmaTimesGradRhoJxWDevice[0]),
-          thrust::raw_pointer_cast(
-            &d_cellHamiltonianMatrixExternalPotCorrFlattenedDevice[0]),
-          thrust::raw_pointer_cast(
-            &d_cellHamiltonianMatrixFlattenedDevice[kpointSpinIndex *
-                                                    d_numLocallyOwnedCells *
-                                                    d_numberNodesPerElement *
-                                                    d_numberNodesPerElement]),
-          dftParameters::isPseudopotential ||
-            dftParameters::smearedNuclearCharges);
+        hamMatrixKernelGGA<dataTypes::numberGPU>
+          <<<(d_numLocallyOwnedCells * d_numberNodesPerElement *
+                d_numberNodesPerElement +
+              255) /
+               256,
+             256>>>(
+            d_numLocallyOwnedCells,
+            d_numberNodesPerElement,
+            d_numQuadPoints,
+            thrust::raw_pointer_cast(&d_shapeFunctionValueDevice[0]),
+            thrust::raw_pointer_cast(&d_shapeFunctionValueInvertedDevice[0]),
+            thrust::raw_pointer_cast(&d_shapeFunctionGradientValueXDevice[0]),
+            thrust::raw_pointer_cast(&d_shapeFunctionGradientValueYDevice[0]),
+            thrust::raw_pointer_cast(&d_shapeFunctionGradientValueZDevice[0]),
+            thrust::raw_pointer_cast(
+              &d_shapeFunctionGradientValueXInvertedDevice[0]),
+            thrust::raw_pointer_cast(
+              &d_shapeFunctionGradientValueYInvertedDevice[0]),
+            thrust::raw_pointer_cast(
+              &d_shapeFunctionGradientValueZInvertedDevice[0]),
+            thrust::raw_pointer_cast(
+              &d_cellShapeFunctionGradientIntegralFlattenedDevice[0]),
+            thrust::raw_pointer_cast(&d_vEffJxWDevice[0]),
+            thrust::raw_pointer_cast(
+              &d_derExcWithSigmaTimesGradRhoJxWDevice[0]),
+            thrust::raw_pointer_cast(
+              &d_cellHamiltonianMatrixExternalPotCorrFlattenedDevice[0]),
+            thrust::raw_pointer_cast(
+              &d_cellHamiltonianMatrixFlattenedDevice[kpointSpinIndex *
+                                                      d_numLocallyOwnedCells *
+                                                      d_numberNodesPerElement *
+                                                      d_numberNodesPerElement]),
+            dftParameters::isPseudopotential ||
+              dftParameters::smearedNuclearCharges);
     }
   else
-    hamMatrixKernelLDA<<<(d_numLocallyOwnedCells * d_numberNodesPerElement *
-                            d_numberNodesPerElement +
-                          255) /
-                           256,
-                         256>>>(
-      d_numLocallyOwnedCells,
-      d_numberNodesPerElement,
-      d_numQuadPoints,
-      thrust::raw_pointer_cast(&d_shapeFunctionValueDevice[0]),
-      thrust::raw_pointer_cast(&d_shapeFunctionValueInvertedDevice[0]),
-      thrust::raw_pointer_cast(
-        &d_cellShapeFunctionGradientIntegralFlattenedDevice[0]),
-      thrust::raw_pointer_cast(&d_vEffJxWDevice[0]),
-      thrust::raw_pointer_cast(
-        &d_cellHamiltonianMatrixExternalPotCorrFlattenedDevice[0]),
-      thrust::raw_pointer_cast(
-        &d_cellHamiltonianMatrixFlattenedDevice[kpointSpinIndex *
-                                                d_numLocallyOwnedCells *
-                                                d_numberNodesPerElement *
-                                                d_numberNodesPerElement]),
-      dftParameters::isPseudopotential || dftParameters::smearedNuclearCharges);
+    hamMatrixKernelLDA<dataTypes::numberGPU>
+      <<<(d_numLocallyOwnedCells * d_numberNodesPerElement *
+            d_numberNodesPerElement +
+          255) /
+           256,
+         256>>>(d_numLocallyOwnedCells,
+                d_numberNodesPerElement,
+                d_numQuadPoints,
+                thrust::raw_pointer_cast(&d_shapeFunctionValueDevice[0]),
+                thrust::raw_pointer_cast(
+                  &d_shapeFunctionValueInvertedDevice[0]),
+                thrust::raw_pointer_cast(
+                  &d_cellShapeFunctionGradientIntegralFlattenedDevice[0]),
+                thrust::raw_pointer_cast(&d_vEffJxWDevice[0]),
+                thrust::raw_pointer_cast(
+                  &d_cellHamiltonianMatrixExternalPotCorrFlattenedDevice[0]),
+                thrust::raw_pointer_cast(
+                  &d_cellHamiltonianMatrixFlattenedDevice
+                    [kpointSpinIndex * d_numLocallyOwnedCells *
+                     d_numberNodesPerElement * d_numberNodesPerElement]),
+                dftParameters::isPseudopotential ||
+                  dftParameters::smearedNuclearCharges);
 
   cudaDeviceSynchronize();
   MPI_Barrier(MPI_COMM_WORLD);

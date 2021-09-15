@@ -19,7 +19,6 @@
 #include <dftParameters.h>
 #include <dftUtils.h>
 #include <linearAlgebraOperationsCUDA.h>
-#include <linearAlgebraOperationsInternalCUDA.h>
 
 namespace dftfe
 {
@@ -72,33 +71,19 @@ namespace dftfe
           if (useMixedPrecOverall &&
               dftParameters::useMixedPrecXTHXSpectrumSplit)
             {
-              if (dftParameters::overlapComputeCommunOrthoRR)
-                operatorMatrix.XtHXMixedPrecOverlapComputeCommun(
-                  X,
-                  Xb,
-                  floatXb,
-                  HXb,
-                  projectorKetTimesVector,
-                  M,
-                  N,
-                  Noc,
-                  handle,
-                  processGrid,
-                  projHamPar,
-                  gpucclMpiCommDomain);
-              else
-                operatorMatrix.XtHXMixedPrec(X,
-                                             Xb,
-                                             floatXb,
-                                             HXb,
-                                             projectorKetTimesVector,
-                                             M,
-                                             N,
-                                             Noc,
-                                             handle,
-                                             processGrid,
-                                             projHamPar,
-                                             gpucclMpiCommDomain);
+              operatorMatrix.XtHXMixedPrecOverlapComputeCommun(
+                X,
+                Xb,
+                floatXb,
+                HXb,
+                projectorKetTimesVector,
+                M,
+                N,
+                Noc,
+                handle,
+                processGrid,
+                projHamPar,
+                gpucclMpiCommDomain);
             }
           else
             {
@@ -859,33 +844,19 @@ namespace dftfe
           if (useMixedPrecOverall &&
               dftParameters::useMixedPrecXTHXSpectrumSplit)
             {
-              if (dftParameters::overlapComputeCommunOrthoRR)
-                operatorMatrix.XtHXMixedPrecOverlapComputeCommun(
-                  X,
-                  Xb,
-                  floatXb,
-                  HXb,
-                  projectorKetTimesVector,
-                  M,
-                  N,
-                  Noc,
-                  handle,
-                  processGrid,
-                  projHamPar,
-                  gpucclMpiCommDomain);
-              else
-                operatorMatrix.XtHXMixedPrec(X,
-                                             Xb,
-                                             floatXb,
-                                             HXb,
-                                             projectorKetTimesVector,
-                                             M,
-                                             N,
-                                             Noc,
-                                             handle,
-                                             processGrid,
-                                             projHamPar,
-                                             gpucclMpiCommDomain);
+              operatorMatrix.XtHXMixedPrecOverlapComputeCommun(
+                X,
+                Xb,
+                floatXb,
+                HXb,
+                projectorKetTimesVector,
+                M,
+                N,
+                Noc,
+                handle,
+                processGrid,
+                projHamPar,
+                gpucclMpiCommDomain);
             }
           else
             {
