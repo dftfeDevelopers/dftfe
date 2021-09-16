@@ -374,6 +374,8 @@ node is stored
     std::vector<std::vector<std::vector<dataTypes::number>>>
       d_cellHamiltonianMatrix;
 
+    std::vector<double> d_elementHamiltonianMatrixImag;
+
 
     std::vector<std::vector<dataTypes::number>> d_cellMassMatrix;
     std::vector<double> d_cellHamiltonianMatrixExternalPotCorr;
