@@ -100,8 +100,8 @@ namespace dftfe
         double velocityDistribution;            
         restartFlag = ((dftParameters::chkType == 1 || dftParameters::chkType == 3) &&
        dftParameters::restartMdFromChk) ?        1 :        0; // 1; //0;//1;
-
-//--------------------Starting Initialization ----------------------------------------------//
+      if (restartFlag == 0)
+      {  //--------------------Starting Initialization ----------------------------------------------//
         double KineticEnergy=0.0 , TemperatureFromVelocities = 0.0;
         double Px=0.0, Py=0.0 , Pz = 0.0;
         //Initialise Velocity
@@ -213,6 +213,8 @@ namespace dftfe
        
        
         pcout << "---------------MD 0th STEP------------------ " <<  std::endl; 
+        pcout << " Temperature from Velocities"
+              << TemperatureFromVelocities  << std::endl;
         pcout << " Kinetic Energy in Ha at timeIndex 0 "
               << KineticEnergyVector[0] << std::endl;
         pcout << " Internal Energy in Ha at timeIndex 0 "
@@ -221,11 +223,38 @@ namespace dftfe
               << EntropicEnergyVector[0] << std::endl;
         pcout << " Total Energy in Ha at timeIndex 0 "
               << TotalEnergyVector[0]  << std::endl;
-        pcout << " Temperature from Velocities"
-              << TemperatureFromVelocities  << std::endl;              
+              
 
         MPI_Barrier(MPI_COMM_WORLD);
-//--------------------Completed Initialization ----------------------------------------------//
+        //--------------------Completed Initialization ----------------------------------------------//
+      }
+
+      else if(restartFlag == 1)
+      {
+       std::vector<std::vector<double>> t1,t2;
+        int time1, time2;
+
+        dftUtils::readFile(1, t1, "time.chk");
+        dftUtils::readFile(1, t2, "time.chk.old");
+        time1 = t1[0][0];
+        time2 = t2[0][0];        
+        if(time1 == time2)
+        {
+          pcout<<"---Reading Inputs from Restart File---" <<std::endl;
+          InitialiseFromRestartFile(velocity, force);
+        }
+        else if(time1 != time2 && dftParameters::UserRestart == 1)
+        {
+          pcout<<"---Reading Inputs from Restart File Specified by user---" <<std::endl;
+          InitialiseFromRestartFile(velocity, force);
+        }
+        else if(time1 != time2 && dftParameters::UserRestart == 0)
+        {
+          pcout<<"---Kindly specify the restart files in the input parameter file --- "<<std::endl;
+          AssertThrow(time1 == time2,
+           ExcMessage("DFT-FE Error: Restart Files are corrupted"));           
+        }
+      }  
 
 //--------------------Choosing Ensemble ----------------------------------------------//
         if( thermostatType =="NO_CONTROL")
@@ -263,7 +292,7 @@ namespace dftfe
       
         double KineticEnergy;
         double TemperatureFromVelocities;
-        for(TimeIndex=1; TimeIndex< numberofSteps;TimeIndex++)
+        for(TimeIndex=startingTimeStep+1; TimeIndex< startingTimeStep+numberofSteps;TimeIndex++)
         {       
             double step_time;
             MPI_Barrier(MPI_COMM_WORLD);
@@ -299,6 +328,7 @@ namespace dftfe
               << std::endl;
               pcout << " Total Energy in Ha at timeIndex " << TimeIndex << " "
               << TotalEnergyVector[TimeIndex] << std::endl;
+              writeRestartFile(velocity,force,KineticEnergyVector,InternalEnergyVector,TotalEnergyVector,TimeIndex);
             }
 
 
@@ -321,7 +351,7 @@ namespace dftfe
       pcout << "---------------mdNVTrescaleThermostat() called ------------------ " <<  std::endl;
         double KineticEnergy;
         double TemperatureFromVelocities;
-        for(TimeIndex=1; TimeIndex< numberofSteps;TimeIndex++)
+        for(TimeIndex=startingTimeStep+1; TimeIndex< startingTimeStep+numberofSteps;TimeIndex++)
         {       
             double step_time;
             MPI_Barrier(MPI_COMM_WORLD);
@@ -363,6 +393,7 @@ namespace dftfe
               << std::endl;
               pcout << " Total Energy in Ha at timeIndex " << TimeIndex << " "
               << TotalEnergyVector[TimeIndex] << std::endl;
+              writeRestartFile(velocity,force,KineticEnergyVector,InternalEnergyVector,TotalEnergyVector,TimeIndex);
             }
 
 
@@ -396,7 +427,7 @@ namespace dftfe
         ThermostatMass[1] = kB*startingTemperature*(nhctimeconstant*nhctimeconstant);
         pcout << "Time Step " <<timeStep<<" Q2: "<<ThermostatMass[1]<<"Time Constant"<<nhctimeconstant<<"no. of atoms"<< numberGlobalCharges<<"Starting Temp: "<<
                 startingTemperature<<"---"<<3*(numberGlobalCharges-1)*kB*startingTemperature*(nhctimeconstant*nhctimeconstant)<<std::endl;
-        for(TimeIndex=1; TimeIndex< numberofSteps;TimeIndex++)
+        for(TimeIndex=startingTimeStep+1; TimeIndex< startingTimeStep+numberofSteps;TimeIndex++)
         {       
             double step_time;
             MPI_Barrier(MPI_COMM_WORLD);
@@ -442,6 +473,7 @@ namespace dftfe
               << std::endl;
               pcout << " Total Energy in Ha at timeIndex " << TimeIndex << " "
               << TotalEnergyVector[TimeIndex] << std::endl;
+              writeRestartFile(velocity,force,KineticEnergyVector,InternalEnergyVector,TotalEnergyVector,TimeIndex);
             }
 
 
@@ -558,7 +590,7 @@ namespace dftfe
     {
       pcout << "Rescale Thermostat: Before rescaling temperature= "<<Temperature<<" K" <<  std::endl;
       AssertThrow(std::fabs(Temperature - 0.0) > 0.00001,
-           ExcMessage("DFT-FE Error: cTemperature reached O K"));      // Determine Exit sequence ..
+           ExcMessage("DFT-FE Error: Temperature reached O K"));      // Determine Exit sequence ..
       KE = 0.0;
       for(int iCharge=0; iCharge < numberGlobalCharges; iCharge++)
         {
@@ -610,15 +642,96 @@ namespace dftfe
       /* End Chain 1*/
       
     }
-/* 
+
+    
+    
     template <unsigned int FEOrder, unsigned int FEOrderElectro>
     void
-    molecularDynamicsClass<FEOrder, FEOrderElectro>::writeRestartFile(std::vector<double> &v, std::vector<double> &v_e, 
-                                                                    std::vector<double> &e, std::vector<double> Q, 
-                                                                      double KE, double  Temperature)  
-  
-*/    
+    molecularDynamicsClass<FEOrder, FEOrderElectro>::writeRestartFile(std::vector<double> velocity , std::vector<double> force , std::vector<double> KineticEnergyVector ,
+                                                                      std::vector<double> PotentialEnergyVector , std::vector<double> TotalEnergyVector, double time )
+
+   {
+     //Writes the restart files for velocities and positions
+    std::vector<std::vector<double>> fileForceData(numberGlobalCharges,
+                                                  std::vector<double>(3,0.0));
+
+    std::vector<std::vector<double>> fileVelocityData(numberGlobalCharges,
+                                                  std::vector<double>(3,0.0)); 
+    std::vector<std::vector<double>> timeIndexData(1, std::vector<double>(1, 0.0));     
     
+    timeIndexData[0][0] = time;  
+    dftUtils::writeDataIntoFile(timeIndexData, "time.chk");                                            
+
+    for (int iCharge = 0; iCharge < numberGlobalCharges; ++iCharge)
+      {
+        fileForceData[iCharge][0] = force[3 * iCharge + 0];
+        fileForceData[iCharge][1] = force[3 * iCharge + 1];
+        fileForceData[iCharge][2] = force[3 * iCharge + 2];
+      }  
+    for (int iCharge = 0; iCharge < numberGlobalCharges; ++iCharge)
+      {
+        fileVelocityData[iCharge][0] = velocity[3 * iCharge + 0];
+        fileVelocityData[iCharge][1] = velocity[3 * iCharge + 1];
+        fileVelocityData[iCharge][2] = velocity[3 * iCharge + 2];
+      }      
+
+    dftPtr->writeDomainAndAtomCoordinates(); 
+    if(time > 1)
+    pcout << "#RESTART NOTE: Positions:-" << " Positions of TimeStep:"<<time<<" present in file atomsFracCoordCurrent.chk"<< std::endl
+          <<" Positions of TimeStep: "<<time-1<<"present in file atomsFracCoordCurrent.chk.old #"<< std::endl;
+    dftUtils::writeDataIntoFile(fileVelocityData, "velocity.chk");
+    if(time > 1)
+    pcout << "#RESTART NOTE: Velocity:-" << " Velocity of TimeStep:"<<time<<" present in file velocity.chk"<< std::endl
+          <<" Velocity of TimeStep: "<<time-1<<"present in file velocity.chk.old #"<< std::endl;    
+    dftUtils::writeDataIntoFile(fileForceData, "force.chk"); 
+    if(time > 1)
+    pcout << "#RESTART NOTE: Force:-" << " Force of TimeStep:"<<time<<" present in file force.chk"<< std::endl
+          <<" Velocity of TimeStep: "<<time-1<<"present in file force.chk.old #"<< std::endl;     
+    MPI_Barrier(MPI_COMM_WORLD);
+    dftUtils::writeDataIntoFile(timeIndexData, "time.chk"); //old time == new time then restart files were successfully saved
+    pcout << "#RESTART NOTE: restart files for TimeStep: "<<time<<" successfully created #"<< std::endl;     
+
+
+   }                                                                    
+  
+    
+    template <unsigned int FEOrder, unsigned int FEOrderElectro>
+    void
+    molecularDynamicsClass<FEOrder, FEOrderElectro>::InitialiseFromRestartFile(std::vector<double> &velocity ,
+                                                            std::vector<double> &force  )
+    {
+        //Initialise Position
+
+        std::vector<std::vector<double>> t1;
+        std::string s1 = dftParameters::PositionRestartFile;
+        AssertThrow(s1.compare("atomsFracCoordCurrent.chk")==0 ,
+           ExcMessage("DFT-FE Error: Position Restart file not atomsFracCoordCurrent.chk"));
+        dftUtils::readFile(1, t1, "time.chk");        
+        startingTimeStep = t1[0][0];
+        std::string fileName1 = dftParameters::VelocityRestartFile; 
+        std::vector<std::vector<double>> fileVelData;
+        dftUtils::readFile(3, fileVelData, fileName1);
+        for (int iCharge = 0; iCharge < numberGlobalCharges; ++iCharge)
+          {
+            velocity[3 * iCharge + 0] = fileVelData[iCharge][0];
+            velocity[3 * iCharge + 1] = fileVelData[iCharge][1];
+            velocity[3 * iCharge + 2] = fileVelData[iCharge][2];
+          }   
+        std::string fileName2 = dftParameters::ForceRestartFile; 
+        std::vector<std::vector<double>> fileForceData;
+        dftUtils::readFile(3, fileForceData, fileName2);
+        for (int iCharge = 0; iCharge < numberGlobalCharges; ++iCharge)
+          {
+            force[3 * iCharge + 0] = fileForceData[iCharge][0];
+            force[3 * iCharge + 1] = fileForceData[iCharge][1];
+            force[3 * iCharge + 2] = fileForceData[iCharge][2];
+          }                
+
+
+
+    }                                                        
+
+
 #include "mdClass.inst.cc"
 }//nsmespace dftfe
  

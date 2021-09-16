@@ -119,6 +119,10 @@ namespace dftfe
     extern double       chebyshevFilterPolyDegreeFirstScfScalingFactor;
     extern double       timeStepBOMD;
     extern unsigned int numberStepsBOMD;
+    extern bool         UserRestart;
+    extern std::string  PositionRestartFile;
+    extern std::string  VelocityRestartFile;
+    extern std::string  ForceRestartFile; 
     //extern double       startingTempBOMDNVE;
     extern double       gaussianConstantForce;
     extern double       gaussianOrderForce;

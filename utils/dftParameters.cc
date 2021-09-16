@@ -154,6 +154,11 @@ namespace dftfe
     double startingTempBOMD                                     = 300;
     double thermostatTimeConstantBOMD                            = 100;
     std::string  tempControllerTypeBOMD                         ="";
+    bool         UserRestart                                    = false;
+    std::string  PositionRestartFile                             =" ";
+    std::string  VelocityRestartFile                              = " ";
+    std::string  ForceRestartFile                                   = " "; 
+
 
     void
     declare_parameters(ParameterHandler &prm)
@@ -1050,6 +1055,31 @@ namespace dftfe
           "NO_CONTROL",
           Patterns::Selection("NO_CONTROL|RESCALE|NOSE_HOVER_CHAINS"),
           "[Standard] Method of controlling temperature in the MD run. NO_CONTROL is the default option.");
+
+        prm.declare_entry(
+          "POSITION RESTART FILE",
+          "atomsFracCoordCurrent.chk",
+          Patterns::Anything(),
+          "[Standard] Specify the Cordinates of Atoms for Restart from TimeStep");   
+
+        prm.declare_entry(
+          "VELOCITY RESTART FILE",
+          "velocity.chk",
+          Patterns::Anything(),
+          "[Standard] Specify the Velocity of Atoms for Restart from TimeStep"); 
+
+        prm.declare_entry(
+          "FORCE RESTART FILE",
+          "force.chk",
+          Patterns::Anything(),
+          "[Standard] Specify the (-ve)Forces on Atoms for Restart from TimeStep");           
+
+        prm.declare_entry(
+          "User Restart",
+          "false",
+          Patterns::Bool(),
+          "[Standard] If True the restart files are given by user else the default restart file are used for MD");
+
   
 
    
@@ -1410,7 +1440,19 @@ namespace dftfe
         dftParameters::thermostatTimeConstantBOMD =
           prm.get_double("THERMOSTAT TIME CONSTANT");
         dftParameters::tempControllerTypeBOMD =
-          prm.get("TEMP CONTROLLER TYPE");  
+          prm.get("TEMP CONTROLLER TYPE"); 
+
+        dftParameters::UserRestart =
+          prm.get_bool("User Restart");
+
+        dftParameters::PositionRestartFile =
+          prm.get("POSITION RESTART FILE");  
+
+        dftParameters::VelocityRestartFile =
+          prm.get("VELOCITY RESTART FILE"); 
+
+        dftParameters::ForceRestartFile =
+          prm.get("FORCE RESTART FILE"); 
 
 
         dftParameters::diracDeltaKernelScalingConstant =
