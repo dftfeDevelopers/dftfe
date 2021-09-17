@@ -346,7 +346,6 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::
                         }
                     }
                 }
-            
             }
 
           iElemCount++;
@@ -354,7 +353,6 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::
         } // icell loop
 
     } // macrocell loop
-
 
 
 
