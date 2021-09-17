@@ -468,7 +468,8 @@ namespace dftfe
           numElectrons += Z;
       }
 
-    if (dftParameters::numberEigenValues <= numElectrons / 2.0)
+    if (dftParameters::numberEigenValues <= numElectrons / 2.0 ||
+        dftParameters::numberEigenValues == 0)
       {
         if (dftParameters::verbosity >= 1)
           {

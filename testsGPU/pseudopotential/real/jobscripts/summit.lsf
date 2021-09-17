@@ -1,7 +1,7 @@
 #!/bin/bash
 # Begin LSF Directives
-#BSUB -P ENG110
-#BSUB -W 0:20
+#BSUB -P MAT239
+#BSUB -W 0:30
 #BSUB -nnodes 1
 #BSUB -alloc_flags gpumps
 #BSUB -J rundftfe
@@ -11,18 +11,23 @@
 date
 export OMP_NUM_THREADS=1
 
-jsrun --smpiargs "-gpu" -n 6 -a 1 -c 7 -g 1 -r 6 -d cyclic -b packed:7 ./dftfe parameterFileN2_1.prm > outputN2_1
-jsrun --smpiargs "-gpu" -n 6 -a 1 -c 7 -g 1 -r 6 -d cyclic -b packed:7 ./dftfe parameterFileN2_2.prm > outputN2_2
-jsrun --smpiargs "-gpu" -n 6 -a 1 -c 7 -g 1 -r 6 -d cyclic -b packed:7 ./dftfe parameterFileN2_3.prm > outputN2_3
-jsrun --smpiargs "-gpu" -n 6 -a 1 -c 7 -g 1 -r 6 -d cyclic -b packed:7 ./dftfe parameterFileN2_4.prm > outputN2_4
-jsrun --smpiargs "-gpu" -n 6 -a 1 -c 7 -g 1 -r 6 -d cyclic -b packed:7 ./dftfe parameterFileN2CPU.prm > outputN2_CPU
-jsrun --smpiargs "-gpu" -n 6 -a 3 -c 7 -g 1 -r 6 -d cyclic -b packed:2 ./dftfe parameterFileMg2x_1.prm > outputMg2x_1
-jsrun --smpiargs "-gpu" -n 6 -a 3 -c 7 -g 1 -r 6 -d cyclic -b packed:2 ./dftfe parameterFileMg2x_2.prm > outputMg2x_2
-jsrun --smpiargs "-gpu" -n 6 -a 3 -c 7 -g 1 -r 6 -d cyclic -b packed:2 ./dftfe parameterFileMg2x_3.prm > outputMg2x_3
-jsrun --smpiargs "-gpu" -n 6 -a 3 -c 7 -g 1 -r 6 -d cyclic -b packed:2 ./dftfe parameterFileMg2x_4.prm > outputMg2x_4
-jsrun --smpiargs "-gpu" -n 6 -a 3 -c 7 -g 1 -r 6 -d cyclic -b packed:2 ./dftfe parameterFileMg2x_5.prm > outputMg2x_5
-jsrun --smpiargs "-gpu" -n 6 -a 3 -c 7 -g 1 -r 6 -d cyclic -b packed:2 ./dftfe parameterFileMg2x_6.prm > outputMg2x_6
-jsrun --smpiargs "-gpu" -n 6 -a 3 -c 7 -g 1 -r 6 -d cyclic -b packed:2 ./dftfe parameterFileMg2x_7.prm > outputMg2x_7
-jsrun --smpiargs "-gpu" -n 6 -a 1 -c 7 -g 1 -r 6 -d cyclic -b packed:7 ./dftfe parameterFileMg2x_8.prm > outputMg2x_8
-jsrun --smpiargs "-gpu" -n 6 -a 1 -c 7 -g 1 -r 6 -d cyclic -b packed:7 ./dftfe parameterFileMg2x_9.prm > outputMg2x_9
-jsrun --smpiargs "-gpu" -n 6 -a 1 -c 7 -g 1 -r 6 -d cyclic -b packed:7 ./dftfe parameterFileMg2x_10.prm > outputMg2x_10
+jsrun --smpiargs "-gpu" -n 6 -a 1 -c 7 -g 1 -r 6 -d packed -b packed:7 ./dftfe parameterFileN2_1.prm > outputN2_1
+jsrun --smpiargs "-gpu" -n 6 -a 1 -c 7 -g 1 -r 6 -d packed -b packed:7 ./dftfe parameterFileN2_2.prm > outputN2_2
+jsrun --smpiargs "-gpu" -n 6 -a 1 -c 7 -g 1 -r 6 -d packed -b packed:7 ./dftfe parameterFileN2_3.prm > outputN2_3
+jsrun --smpiargs "-gpu" -n 6 -a 1 -c 7 -g 1 -r 6 -d packed -b packed:7 ./dftfe parameterFileN2_4.prm > outputN2_4
+jsrun --smpiargs "-gpu" -n 6 -a 1 -c 7 -g 1 -r 6 -d packed -b packed:7 ./dftfe parameterFileN2CPU.prm > outputN2_CPU
+jsrun --smpiargs "-gpu" -n 6 -a 1 -c 7 -g 1 -r 6 -d packed -b packed:7 ./dftfe parameterFileMg2x_8.prm > outputMg2x_8
+jsrun --smpiargs "-gpu" -n 6 -a 1 -c 7 -g 1 -r 6 -d packed -b packed:7 ./dftfe parameterFileMg2x_9.prm > outputMg2x_9
+jsrun --smpiargs "-gpu" -n 6 -a 1 -c 7 -g 1 -r 6 -d packed -b packed:7 ./dftfe parameterFileMg2x_10.prm > outputMg2x_10
+jsrun --smpiargs "-gpu" -n 6 -a 1 -c 7 -g 1 -r 6 -d packed -b packed:7 ./dftfe parameterFileMg2x_11.prm > outputMg2x_11
+
+jsrun --smpiargs "-gpu" -n 6 -a 3 -c 7 -g 1 -r 6 -d packed -b packed:2 ./dftfe parameterFileMg2x_1.prm > outputMg2x_1
+jsrun --smpiargs "-gpu" -n 6 -a 3 -c 7 -g 1 -r 6 -d packed -b packed:2 ./dftfe parameterFileMg2x_1_spincpu.prm > outputMg2x_1_spin_cpu
+jsrun --smpiargs "-gpu" -n 6 -a 3 -c 7 -g 1 -r 6 -d packed -b packed:2 ./dftfe parameterFileMg2x_1_spingpu.prm > outputMg2x_1_spin_gpu
+jsrun --smpiargs "-gpu" -n 6 -a 3 -c 7 -g 1 -r 6 -d packed -b packed:2 ./dftfe parameterFileMg2x_2.prm > outputMg2x_2
+jsrun --smpiargs "-gpu" -n 6 -a 3 -c 7 -g 1 -r 6 -d packed -b packed:2 ./dftfe parameterFileMg2x_3.prm > outputMg2x_3
+jsrun --smpiargs "-gpu" -n 6 -a 3 -c 7 -g 1 -r 6 -d packed -b packed:2 ./dftfe parameterFileMg2x_4.prm > outputMg2x_4
+jsrun --smpiargs "-gpu" -n 6 -a 3 -c 7 -g 1 -r 6 -d packed -b packed:2 ./dftfe parameterFileMg2x_5.prm > outputMg2x_5
+jsrun --smpiargs "-gpu" -n 6 -a 3 -c 7 -g 1 -r 6 -d packed -b packed:2 ./dftfe parameterFileMg2x_6.prm > outputMg2x_6
+jsrun --smpiargs "-gpu" -n 6 -a 3 -c 7 -g 1 -r 6 -d packed -b packed:2 ./dftfe parameterFileMg2x_7.prm > outputMg2x_7
+jsrun --smpiargs "-gpu" -n 6 -a 3 -c 7 -g 1 -r 6 -d packed -b packed:2 ./dftfe parameterFileMg2x_12.prm > outputMg2x_12
