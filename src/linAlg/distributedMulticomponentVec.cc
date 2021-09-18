@@ -19,7 +19,7 @@
 
 #include "distributedMulticomponentVec.h"
 #include "dftUtils.h"
-
+#include <deal.II/lac/la_parallel_vector.h>
 
 #if defined(DFTFE_WITH_GPU)
 #  include "cudaHelpers.h"
@@ -38,7 +38,8 @@ namespace dftfe
       const std::shared_ptr<const dealii::Utilities::MPI::Partitioner>
         &                              partitioner,
       const dataTypes::local_size_type numberComponents,
-      distributedCPUVec<T> &           flattenedArray)
+      dealii::LinearAlgebra::distributed::Vector<T, dealii::MemorySpace::Host>
+        &flattenedArray)
     {
       const MPI_Comm &mpi_communicator = partitioner->get_mpi_communicator();
       //
@@ -159,7 +160,8 @@ namespace dftfe
       const std::shared_ptr<const dealii::Utilities::MPI::Partitioner>
         &                              partitioner,
       const dataTypes::local_size_type numberComponents,
-      distributedGPUVec<T> &           flattenedArray)
+      dealii::LinearAlgebra::distributed::Vector<T, dealii::MemorySpace::CUDA>
+        &flattenedArray)
     {
       const MPI_Comm &mpi_communicator = partitioner->get_mpi_communicator();
       //
@@ -1455,6 +1457,54 @@ namespace dftfe
     d_locallyOwnedDofsSize  = 0;
     d_globalSize            = 0;
     d_numberComponents      = 0;
+  }
+
+  template <typename NumberType, typename MemorySpace>
+  const std::shared_ptr<const dealii::Utilities::MPI::Partitioner>
+  DistributedMulticomponentVec<NumberType, MemorySpace>::getDealiiPartitioner()
+    const
+  {
+    if (std::is_same<NumberType, double>::value ||
+        std::is_same<NumberType, float>::value ||
+        std::is_same<NumberType, std::complex<double>>::value ||
+        std::is_same<NumberType, std::complex<float>>::value)
+      {
+        if (std::is_same<MemorySpace, dftfe::MemorySpace::Host>::value)
+          return ((dealii::LinearAlgebra::distributed::
+                     Vector<NumberType, dealii::MemorySpace::Host> *)
+                    d_dealiiVecData)
+            ->get_partitioner();
+        else
+          {
+#if defined(DFTFE_WITH_GPU)
+            return ((dealii::LinearAlgebra::distributed::
+                       Vector<NumberType, dealii::MemorySpace::CUDA> *)
+                      d_dealiiVecData)
+              ->get_partitioner();
+#endif
+          }
+      }
+    else if (std::is_same<MemorySpace, dftfe::MemorySpace::GPU>::value &&
+             (std::is_same<NumberType, cuDoubleComplex>::value ||
+              std::is_same<NumberType, cuFloatComplex>::value))
+      {
+#if defined(DFTFE_WITH_GPU)
+        if (std::is_same<NumberType, cuDoubleComplex>::value)
+          {
+            return ((dealii::LinearAlgebra::distributed::
+                       Vector<double, dealii::MemorySpace::CUDA> *)
+                      d_dealiiVecTempDataReal)
+              ->get_partitioner();
+          }
+        else if (std::is_same<NumberType, cuFloatComplex>::value)
+          {
+            return ((dealii::LinearAlgebra::distributed::
+                       Vector<float, dealii::MemorySpace::CUDA> *)
+                      d_dealiiVecTempDataReal)
+              ->get_partitioner();
+          }
+#endif
+      }
   }
 
   template class DistributedMulticomponentVec<double, dftfe::MemorySpace::Host>;

@@ -258,7 +258,7 @@ namespace dftfe
         operatorMatrix.getParallelChebyBlockVectorDevice();
 
       const unsigned int numGhosts =
-        cudaFlattenedArrayBlock.get_partitioner()->n_ghost_indices();
+        cudaFlattenedArrayBlock.ghostFlattenedSize();
 
       thrust::device_vector<double> &cellWaveFunctionMatrix =
         operatorMatrix.getCellWaveFunctionMatrix();
@@ -377,7 +377,7 @@ namespace dftfe
                     jvec);
 
 
-                  cudaFlattenedArrayBlock.update_ghost_values();
+                  cudaFlattenedArrayBlock.updateGhostValues();
 
                   (operatorMatrix.getOverloadedConstraintMatrix())
                     ->distribute(cudaFlattenedArrayBlock, BVec);
@@ -677,7 +677,7 @@ namespace dftfe
                     jvec);
 
 
-                  cudaFlattenedArrayBlock.update_ghost_values();
+                  cudaFlattenedArrayBlock.updateGhostValues();
 
                   (operatorMatrix.getOverloadedConstraintMatrix())
                     ->distribute(cudaFlattenedArrayBlock, BVec);

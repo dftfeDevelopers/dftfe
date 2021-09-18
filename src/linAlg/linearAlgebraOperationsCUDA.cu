@@ -549,7 +549,7 @@ namespace dftfe
                    local_size,
                    cudaMemcpyHostToDevice);
 
-      Yb = 0.0;
+      Yb.setZero();
       operatorMatrix.HX(
         Xb, projectorKetTimesVector, local_size, blockSize, false, 1.0, Yb);
 
@@ -590,7 +590,7 @@ namespace dftfe
                        local_size,
                        cudaMemcpyHostToDevice);
 
-          Yb = 0.0;
+          Yb.setZero();
           operatorMatrix.HX(
             Xb, projectorKetTimesVector, local_size, blockSize, false, 1.0, Yb);
 
@@ -687,7 +687,7 @@ namespace dftfe
       const unsigned int totalVectorSize = localVectorSize * numberVectors;
       int                inc             = 1;
 
-      YArray = 0.0;
+      YArray.setZero();
       //
       // call HX
       //
@@ -876,17 +876,17 @@ namespace dftfe
       const unsigned int totalVectorSize = localVectorSize * numberVectors;
       int                inc             = 1;
 
-      YArray1 = 0.0;
-      YArray2 = 0.0;
+      YArray1.setZero();
+      YArray2.setZero();
 
       const unsigned int n_ghosts =
-        YArray1.get_partitioner()->n_ghost_indices() / numberVectors;
+        YArray1.ghostFlattenedSize() / numberVectors;
       const unsigned int totalSize = localVectorSize + n_ghosts;
 
       const unsigned int localSizeNLP =
-        projectorKetTimesVector1.local_size() / numberVectors;
+        projectorKetTimesVector1.locallyOwnedFlattenedSize() / numberVectors;
       const unsigned int n_ghosts_nlp =
-        projectorKetTimesVector1.get_partitioner()->n_ghost_indices() /
+        projectorKetTimesVector1.ghostFlattenedSize()  /
         numberVectors;
       const unsigned int totalSizeNLP = localSizeNLP + n_ghosts_nlp;
 
@@ -1158,8 +1158,7 @@ namespace dftfe
               // iteration did not use the overlap algorithm
               if (overlap)
                 {
-                  projectorKetTimesVector2.compress_start(
-                    dealii::VectorOperation::add);
+                  projectorKetTimesVector2.compressAddStart();
                 }
 
               combinedCUDAKernel<<<min((totalVectorSize + 255) / 256, 30000),
@@ -1177,10 +1176,9 @@ namespace dftfe
 
               if (overlap)
                 {
-                  projectorKetTimesVector2.compress_finish(
-                    dealii::VectorOperation::add);
+                  projectorKetTimesVector2.compressAddFinish();
 
-                  projectorKetTimesVector2.update_ghost_values();
+                  projectorKetTimesVector2.updateGhostValues();
                 }
 
               // unsigned int id2=nvtxRangeStartA("ghost1");
@@ -1192,10 +1190,10 @@ namespace dftfe
                                                      localVectorSize,
                                                    YArray1.begin(),
                                                    tempFloatArray.begin());
-                  tempFloatArray.update_ghost_values_start();
+                  tempFloatArray.updateGhostValuesStart();
                 }
               else
-                YArray1.update_ghost_values_start();
+                YArray1.updateGhostValuesStart();
 
               // call compute part 2 of block 2
               if (overlap)
@@ -1212,7 +1210,7 @@ namespace dftfe
 
               if (mixedPrecOverall && dftParameters::useMixedPrecCheby)
                 {
-                  tempFloatArray.update_ghost_values_finish();
+                  tempFloatArray.updateGhostValuesFinish();
                   if (n_ghosts != 0)
                     convFloatArrToDoubleArr<<<(numberVectors + 255) / 256 *
                                                 n_ghosts,
@@ -1222,13 +1220,13 @@ namespace dftfe
                       YArray1.begin() + localVectorSize * numberVectors);
                 }
               else
-                YArray1.update_ghost_values_finish();
+                YArray1.updateGhostValuesFinish();
 
               if (overlap)
-                YArray2.zero_out_ghosts();
+                YArray2.zeroOutGhosts();
               // nvtxRangeEnd(id2);
 
-              projectorKetTimesVector1 = 0.0;
+              projectorKetTimesVector1.setZero();
               // unsigned int id1=nvtxRangeStartA("compress2");
               if (overlap)
                 {
@@ -1240,11 +1238,10 @@ namespace dftfe
                                                          totalSize,
                                                        XArray2.begin(),
                                                        tempFloatArray.begin());
-                      tempFloatArray.compress_start(
-                        dealii::VectorOperation::add);
+                      tempFloatArray.compressAddStart();
                     }
                   else
-                    XArray2.compress_start(dealii::VectorOperation::add);
+                    XArray2.compressAddStart();
                 }
 
               // call compute part 1 of block 1
@@ -1263,8 +1260,7 @@ namespace dftfe
                 {
                   if (mixedPrecOverall && dftParameters::useMixedPrecCheby)
                     {
-                      tempFloatArray.compress_finish(
-                        dealii::VectorOperation::add);
+                      tempFloatArray.compressAddFinish();
 
                       copyFloatArrToDoubleArrLocallyOwned<<<
                         (numberVectors + 255) / 256 * localVectorSize,
@@ -1278,16 +1274,15 @@ namespace dftfe
                                [0]),
                         XArray2.begin());
 
-                      XArray2.zero_out_ghosts();
+                      XArray2.zeroOutGhosts();
                     }
                   else
-                    XArray2.compress_finish(dealii::VectorOperation::add);
+                    XArray2.compressAddFinish();
                   XArray2.swap(YArray2);
                 }
               // nvtxRangeEnd(id1);
 
-              projectorKetTimesVector1.compress_start(
-                dealii::VectorOperation::add);
+              projectorKetTimesVector1.compressAddStart();
 
               combinedCUDAKernel<<<min((totalVectorSize + 255) / 256, 30000),
                                    256>>>(numberVectors,
@@ -1301,10 +1296,9 @@ namespace dftfe
                                           operatorMatrix.getInvSqrtMassVec(),
                                           operatorMatrix.getSqrtMassVec());
 
-              projectorKetTimesVector1.compress_finish(
-                dealii::VectorOperation::add);
+              projectorKetTimesVector1.compressAddFinish();
 
-              projectorKetTimesVector1.update_ghost_values();
+              projectorKetTimesVector1.updateGhostValues();
 
               // unsigned int id3=nvtxRangeStartA("ghost2");
               if (mixedPrecOverall && dftParameters::useMixedPrecCheby)
@@ -1315,10 +1309,10 @@ namespace dftfe
                                                      localVectorSize,
                                                    YArray2.begin(),
                                                    tempFloatArray.begin());
-                  tempFloatArray.update_ghost_values_start();
+                  tempFloatArray.updateGhostValuesStart();
                 }
               else
-                YArray2.update_ghost_values_start();
+                YArray2.updateGhostValuesStart();
 
               // call compute part 2 of block 1
               operatorMatrix.HXCheby(YArray1,
@@ -1334,7 +1328,7 @@ namespace dftfe
 
               if (mixedPrecOverall && dftParameters::useMixedPrecCheby)
                 {
-                  tempFloatArray.update_ghost_values_finish();
+                  tempFloatArray.updateGhostValuesFinish();
                   if (n_ghosts != 0)
                     convFloatArrToDoubleArr<<<(numberVectors + 255) / 256 *
                                                 n_ghosts,
@@ -1344,12 +1338,12 @@ namespace dftfe
                       YArray2.begin() + localVectorSize * numberVectors);
                 }
               else
-                YArray2.update_ghost_values_finish();
-              YArray1.zero_out_ghosts();
+                YArray2.updateGhostValuesFinish();
+              YArray1.zeroOutGhosts();
               // nvtxRangeEnd(id3);
 
 
-              projectorKetTimesVector2 = 0.0;
+              projectorKetTimesVector2.setZero();
 
               // unsigned int id4=nvtxRangeStartA("compress1");
               if (mixedPrecOverall && dftParameters::useMixedPrecCheby)
@@ -1359,10 +1353,10 @@ namespace dftfe
                                             256>>>(numberVectors * totalSize,
                                                    XArray1.begin(),
                                                    tempFloatArray.begin());
-                  tempFloatArray.compress_start(dealii::VectorOperation::add);
+                  tempFloatArray.compressAddStart();
                 }
               else
-                XArray1.compress_start(dealii::VectorOperation::add);
+                XArray1.compressAddStart();
 
               // call compute part 1 of block 2
               operatorMatrix.HXCheby(YArray2,
@@ -1378,7 +1372,7 @@ namespace dftfe
 
               if (mixedPrecOverall && dftParameters::useMixedPrecCheby)
                 {
-                  tempFloatArray.compress_finish(dealii::VectorOperation::add);
+                  tempFloatArray.compressAddFinish();
 
                   copyFloatArrToDoubleArrLocallyOwned<<<(numberVectors + 255) /
                                                           256 * localVectorSize,
@@ -1391,10 +1385,10 @@ namespace dftfe
                          .getLocallyOwnedProcBoundaryNodesVectorDevice()[0]),
                     XArray1.begin());
 
-                  XArray1.zero_out_ghosts();
+                  XArray1.zeroOutGhosts();
                 }
               else
-                XArray1.compress_finish(dealii::VectorOperation::add);
+                XArray1.compressAddFinish();
               // nvtxRangeEnd(id4);
 
               // Handle edge case for the second to last Chebyshev filter
@@ -1402,9 +1396,8 @@ namespace dftfe
               // iteration.
               if (degree == (m - 1))
                 {
-                  projectorKetTimesVector2.compress(
-                    dealii::VectorOperation::add);
-                  projectorKetTimesVector2.update_ghost_values();
+                  projectorKetTimesVector2.compressAdd();
+                  projectorKetTimesVector2.updateGhostValues();
 
                   operatorMatrix.HXCheby(YArray2,
                                          tempFloatArray,
@@ -1416,7 +1409,7 @@ namespace dftfe
                                            dftParameters::useMixedPrecCheby,
                                          false,
                                          true);
-                  YArray2.zero_out_ghosts();
+                  YArray2.zeroOutGhosts();
                   if (mixedPrecOverall && dftParameters::useMixedPrecCheby)
                     {
                       convDoubleArrToFloatArr<<<(numberVectors + 255) / 256 *
@@ -1425,7 +1418,7 @@ namespace dftfe
                                                          totalSize,
                                                        XArray2.begin(),
                                                        tempFloatArray.begin());
-                      tempFloatArray.compress(dealii::VectorOperation::add);
+                      tempFloatArray.compressAdd();
 
                       copyFloatArrToDoubleArrLocallyOwned<<<
                         (numberVectors + 255) / 256 * localVectorSize,
@@ -1439,10 +1432,10 @@ namespace dftfe
                                [0]),
                         XArray2.begin());
 
-                      XArray2.zero_out_ghosts();
+                      XArray2.zeroOutGhosts();
                     }
                   else
-                    XArray2.compress(dealii::VectorOperation::add);
+                    XArray2.compressAdd();
                   overlap = false;
                 }
               else
@@ -3904,7 +3897,7 @@ namespace dftfe
                     chebyBlockSize, M, X, N, XBlock.begin(), k);
 
                   // evaluate H times XBlock^{T} and store in HXBlock^{T}
-                  HXBlock = 0.0;
+                  HXBlock.setZero();
                   operatorMatrix.HX(XBlock,
                                     projectorKetTimesVector,
                                     M,

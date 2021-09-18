@@ -683,24 +683,6 @@ namespace dftfe
     const unsigned int numberWaveFunctions,
     bool               flag)
   {
-    if (flag)
-      {
-        /*
-           vectorTools::createDealiiVector(dftPtr->matrix_free_data.get_vector_partitioner(),
-           numberWaveFunctions,
-           d_cudaFlattenedArrayBlock);
-
-           d_cudaFlattenedArrayBlock2.reinit(d_cudaFlattenedArrayBlock);
-           d_cudaFlattenedArrayBlock3.reinit(d_cudaFlattenedArrayBlock);
-         */
-
-        /*
-           vectorTools::createDealiiVector(dftPtr->matrix_free_data.get_vector_partitioner(),
-           numberWaveFunctions,
-           d_cudaFlattenedArrayBlock2);
-         */
-      }
-
     distributedCPUVec<dataTypes::number> flattenedArray;
     if (flag)
       vectorTools::createDealiiVector<dataTypes::number>(
@@ -718,11 +700,10 @@ namespace dftfe
 
     const unsigned int BVec =
       std::min(dftParameters::chebyWfcBlockSize, numberWaveFunctions);
-    vectorTools::createDealiiVector<dataTypes::numberGPU>(
+    d_parallelChebyBlockVectorDevice.reinit(
       dftPtr->matrix_free_data.get_vector_partitioner(
         dftPtr->d_densityDofHandlerIndex),
-      BVec,
-      d_parallelChebyBlockVectorDevice);
+      BVec);
 
     const unsigned int n_ghosts =
       dftPtr->matrix_free_data
@@ -822,15 +803,14 @@ namespace dftfe
 
     if (dftParameters::isPseudopotential)
       {
+        // FIXME: remove this call
         vectorTools::createDealiiVector<dataTypes::number>(
           dftPtr->d_projectorKetTimesVectorPar[0].get_partitioner(),
           numberWaveFunctions,
           dftPtr->d_projectorKetTimesVectorParFlattened);
 
-        vectorTools::createDealiiVector(
-          dftPtr->d_projectorKetTimesVectorPar[0].get_partitioner(),
-          BVec,
-          d_parallelProjectorKetTimesBlockVectorDevice);
+        d_parallelProjectorKetTimesBlockVectorDevice.reinit(
+          dftPtr->d_projectorKetTimesVectorPar[0].get_partitioner(), BVec);
 
 
         thrust::host_vector<unsigned int>
@@ -867,11 +847,6 @@ namespace dftfe
         d_locallyOwnedProcProjectorKetBoundaryNodesVectorDevice =
           locallyOwnedProcProjectorKetBoundaryNodesVector;
 
-        /*
-           vectorTools::createDealiiVector(dftPtr->d_projectorKetTimesVectorPar[0].get_partitioner(),
-           numberWaveFunctions,
-           d_projectorKetTimesVectorDealiiParFlattenedDevice);
-         */
 
         d_totalPseudoWfcNonLocal = 0;
         d_totalNonlocalElems     = 0;
@@ -1885,7 +1860,7 @@ namespace dftfe
             numberWaveFunctions * localSize,
             src.begin(),
             tempFloatArray.begin());
-        tempFloatArray.update_ghost_values();
+        tempFloatArray.updateGhostValues();
 
         if (n_ghosts != 0)
           convFloatArrToDoubleArr<dataTypes::numberGPU,
@@ -1897,7 +1872,7 @@ namespace dftfe
       }
     else
       {
-        src.update_ghost_values();
+        src.updateGhostValues();
       }
     getOverloadedConstraintMatrix()->distribute(src, numberWaveFunctions);
 
@@ -1919,7 +1894,7 @@ namespace dftfe
       dst, numberWaveFunctions);
 
 
-    src.zero_out_ghosts();
+    src.zeroOutGhosts();
     if (singlePrecCommun)
       {
         convDoubleArrToFloatArr<dataTypes::numberGPU, dataTypes::numberFP32GPU>
@@ -1927,7 +1902,7 @@ namespace dftfe
             numberWaveFunctions * totalSize,
             dst.begin(),
             tempFloatArray.begin());
-        tempFloatArray.compress(VectorOperation::add);
+        tempFloatArray.compressAdd();
 
         // copy locally owned processor boundary nodes only to dst vector
         copyFloatArrToDoubleArrLocallyOwned<dataTypes::numberGPU,
@@ -1940,11 +1915,11 @@ namespace dftfe
               &d_locallyOwnedProcBoundaryNodesVectorDevice[0]),
             dst.begin());
 
-        dst.zero_out_ghosts();
+        dst.zeroOutGhosts();
       }
     else
       {
-        dst.compress(VectorOperation::add);
+        dst.compressAdd();
       }
 
     //
@@ -2018,7 +1993,7 @@ namespace dftfe
       }
 
 
-    src.update_ghost_values();
+    src.updateGhostValues();
     getOverloadedConstraintMatrix()->distribute(src, numberWaveFunctions);
 
     computeLocalHamiltonianTimesX(src.begin(),
@@ -2039,8 +2014,8 @@ namespace dftfe
       dst, numberWaveFunctions);
 
 
-    src.zero_out_ghosts();
-    dst.compress(VectorOperation::add);
+    src.zeroOutGhosts();
+    dst.compressAdd();
 
     //
     // M^{-1/2}*H*M^{-1/2}*X
@@ -2112,7 +2087,7 @@ namespace dftfe
                 numberWaveFunctions * localSize,
                 src.begin(),
                 tempFloatArray.begin());
-            tempFloatArray.update_ghost_values();
+            tempFloatArray.updateGhostValues();
 
             if (n_ghosts != 0)
               convFloatArrToDoubleArr<dataTypes::numberGPU,
@@ -2124,7 +2099,7 @@ namespace dftfe
           }
         else
           {
-            src.update_ghost_values();
+            src.updateGhostValues();
           }
       }
 
@@ -2160,7 +2135,7 @@ namespace dftfe
     if (computePart2)
       return;
 
-    src.zero_out_ghosts();
+    src.zeroOutGhosts();
 
     if (chebMixedPrec)
       {
@@ -2169,7 +2144,7 @@ namespace dftfe
             numberWaveFunctions * totalSize,
             dst.begin(),
             tempFloatArray.begin());
-        tempFloatArray.compress(VectorOperation::add);
+        tempFloatArray.compressAdd();
 
         // copy locally owned processor boundary nodes only to dst vector
         copyFloatArrToDoubleArrLocallyOwned<dataTypes::numberGPU,
@@ -2182,11 +2157,11 @@ namespace dftfe
               &d_locallyOwnedProcBoundaryNodesVectorDevice[0]),
             dst.begin());
 
-        dst.zero_out_ghosts();
+        dst.zeroOutGhosts();
       }
     else
       {
-        dst.compress(VectorOperation::add);
+        dst.compressAdd();
       }
   }
 
@@ -2257,7 +2232,7 @@ namespace dftfe
                     chebyBlockSize, M, X, N, XBlock.begin(), k);
 
                 // evaluate H times XBlock^{T} and store in HXBlock^{T}
-                HXBlock = dataTypes::numberGPU(0.0);
+                HXBlock.setZero();
                 // thrust::fill(HXBlock.begin(),HXBlock.end(),0.0);
                 const bool   scaleFlag = false;
                 const double scalar    = 1.0;
@@ -2485,7 +2460,7 @@ namespace dftfe
                         chebyBlockSize, M, X, N, XBlock.begin(), k);
 
                     // evaluate H times XBlock^{T} and store in HXBlock^{T}
-                    HXBlock                = dataTypes::numberGPU(0.0);
+                    HXBlock.setZero();
                     const bool   scaleFlag = false;
                     const double scalar    = 1.0;
                     HX(XBlock,
@@ -2561,7 +2536,7 @@ namespace dftfe
                         chebyBlockSize, M, X, N, XBlock.begin(), k);
 
                     // evaluate H times XBlock^{T} and store in HXBlock^{T}
-                    HXBlock                = dataTypes::numberGPU(0.0);
+                    HXBlock.setZero();
                     const bool   scaleFlag = false;
                     const double scalar    = 1.0;
                     HX(XBlock,
@@ -2848,7 +2823,7 @@ namespace dftfe
                         chebyBlockSize, M, X, N, XBlock.begin(), k);
 
                     // evaluate H times XBlock^{T} and store in HXBlock^{T}
-                    HXBlock                = dataTypes::numberGPU(0.0);
+                    HXBlock.setZero();
                     const bool   scaleFlag = false;
                     const double scalar    = 1.0;
                     if (jvec + B > Noc)
@@ -2980,7 +2955,7 @@ namespace dftfe
                         chebyBlockSize, M, X, N, XBlock.begin(), k);
 
                     // evaluate H times XBlock^{T} and store in HXBlock^{T}
-                    HXBlock                = dataTypes::numberGPU(0.0);
+                    HXBlock.setZero();
                     const bool   scaleFlag = false;
                     const double scalar    = 1.0;
                     if (jvecNew + B > Noc)

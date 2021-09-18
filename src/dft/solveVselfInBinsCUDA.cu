@@ -236,7 +236,7 @@ namespace dftfe
       {
         // const unsigned int numberVectors = 1;
         // thrust::fill(dst.begin(),dst.end(),0.0);
-        dst = 0.0;
+        dst.setZero();
 
         // distributedGPUVec<double> temp;
         // temp.reinit(src);
@@ -248,7 +248,7 @@ namespace dftfe
 
         // src.update_ghost_values();
         // constraintsMatrixDataInfoCUDA.distribute(src,numberVectors);
-        temp.update_ghost_values();
+        temp.updateGhostValues();
         constraintsMatrixDataInfoCUDA.distribute(temp, numberVectors);
 
         if ((localSize + ghostSize) > 0)
@@ -327,7 +327,7 @@ namespace dftfe
         constraintsMatrixDataInfoCUDA.distribute_slave_to_master(dst,
                                                                  numberVectors);
 
-        dst.compress(dealii::VectorOperation::add);
+        dst.compressAdd();
 
         if (localSize > 0)
           scaleKernel<<<(numberVectors + 255) / 256 * localSize, 256>>>(
@@ -414,11 +414,9 @@ namespace dftfe
       MPI_Barrier(MPI_COMM_WORLD);
       double time = MPI_Wtime();
 
-      vectorTools::createDealiiVector(matrixFreeData.get_vector_partitioner(
-                                        mfDofHandlerIndex),
-                                      blockSize,
-                                      xD);
-      xD = 0.0;
+      xD.reinit(matrixFreeData.get_vector_partitioner(mfDofHandlerIndex),
+                blockSize);
+      xD.setZero();
       cudaMemcpy(xD.begin(),
                  xH,
                  localSize * numberBins * sizeof(double),
@@ -431,7 +429,7 @@ namespace dftfe
                   << time << std::endl;
 
       std::vector<dealii::types::global_dof_index> cellLocalProcIndexIdMapH;
-      vectorTools::computeCellLocalIndexSetMap(xD.get_partitioner(),
+      vectorTools::computeCellLocalIndexSetMap(xD.getDealiiPartitioner(),
                                                matrixFreeData,
                                                mfDofHandlerIndex,
                                                blockSize,
@@ -445,7 +443,7 @@ namespace dftfe
 
       constraintsMatrixDataInfoCUDA.precomputeMaps(
         matrixFreeData.get_vector_partitioner(mfDofHandlerIndex),
-        xD.get_partitioner(),
+        xD.getDealiiPartitioner(),
         blockSize);
 
       constraintsMatrixDataInfoCUDA.set_zero(xD, blockSize);
@@ -1077,7 +1075,7 @@ namespace dftfe
 
 
       // problem.setX();
-      x.update_ghost_values();
+      x.updateGhostValues();
       constraintsMatrixDataInfoCUDA.distribute(x, numberBins);
       cudaDeviceSynchronize();
       MPI_Barrier(MPI_COMM_WORLD);

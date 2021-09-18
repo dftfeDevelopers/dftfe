@@ -17,8 +17,9 @@
 #ifndef DistributedMulticomponentVec_h
 #define DistributedMulticomponentVec_h
 
-#include "headers.h"
+#include "dftfeDataTypes.h"
 #include "memorySpace.h"
+#include <deal.II/base/partitioner.h>
 
 namespace dftfe
 {
@@ -98,6 +99,10 @@ namespace dftfe
 
     void
     clear();
+
+    const std::shared_ptr<const dealii::Utilities::MPI::Partitioner>
+    getDealiiPartitioner() const;
+
 
   private:
     const void *

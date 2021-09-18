@@ -33,6 +33,7 @@
 #    include <vector>
 
 #    include "gpuDirectCCLWrapper.h"
+#    include "distributedMulticomponentVec.h"
 
 namespace dftfe
 {

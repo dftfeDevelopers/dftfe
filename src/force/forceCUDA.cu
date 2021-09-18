@@ -194,17 +194,15 @@ namespace dftfe
       double *              projectorKetTimesPsiTimesVH)
     {
       distributedGPUVec<double> cudaFlattenedArrayBlock;
-      vectorTools::createDealiiVector(
+      cudaFlattenedArrayBlock.reinit(
         operatorMatrix.getMatrixFreeData()->get_vector_partitioner(),
-        BVec,
-        cudaFlattenedArrayBlock);
+        BVec);
 
 
       distributedGPUVec<double> projectorKetTimesVector;
-      vectorTools::createDealiiVector(
+      projectorKetTimesVector.reinit(
         operatorMatrix.getProjectorKetTimesVectorSingle().get_partitioner(),
-        BVec,
-        projectorKetTimesVector);
+        BVec);
 
 
       const unsigned int M = operatorMatrix.getMatrixFreeData()
@@ -212,7 +210,7 @@ namespace dftfe
                                ->local_size();
       stridedCopyToBlockKernel<<<(BVec + 255) / 256 * M, 256>>>(
         BVec, X, M, N, cudaFlattenedArrayBlock.begin(), startingVecId);
-      cudaFlattenedArrayBlock.update_ghost_values();
+      cudaFlattenedArrayBlock.updateGhostValues();
 
       (operatorMatrix.getOverloadedConstraintMatrix())
         ->distribute(cudaFlattenedArrayBlock, BVec);
@@ -222,8 +220,8 @@ namespace dftfe
 
 
       const unsigned int totalSize =
-        projectorKetTimesVector.get_partitioner()->n_ghost_indices() +
-        projectorKetTimesVector.local_size();
+        projectorKetTimesVector.ghostFlattenedSize() +
+        projectorKetTimesVector.locallyOwnedFlattenedSize();
 
       cudaMemcpy(projectorKetTimesPsiTimesVH,
                  projectorKetTimesVector.begin(),
@@ -619,7 +617,7 @@ namespace dftfe
                                ->local_size();
       stridedCopyToBlockKernel<<<(numPsi + 255) / 256 * M, 256>>>(
         numPsi, X, M, N, cudaFlattenedArrayBlock.begin(), startingVecId);
-      cudaFlattenedArrayBlock.update_ghost_values();
+      cudaFlattenedArrayBlock.updateGhostValues();
 
       (operatorMatrix.getOverloadedConstraintMatrix())
         ->distribute(cudaFlattenedArrayBlock, numPsi);

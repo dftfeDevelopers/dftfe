@@ -88,7 +88,7 @@ kohnShamDFTOperatorCUDAClass<FEOrder, FEOrderElectro>::
   // called separately inside chebyshevFilter. So skip this if either skip1 or
   // skip2 are set to true
   if (!skip1 && !skip2)
-    projectorKetTimesVector = 0.0;
+    projectorKetTimesVector.setZero();
 
 
   if (d_totalNonlocalElems > 0 && !skip1)
@@ -108,8 +108,8 @@ kohnShamDFTOperatorCUDAClass<FEOrder, FEOrderElectro>::
 
   if (!skip1)
     {
-      projectorKetTimesVector.compress(VectorOperation::add);
-      projectorKetTimesVector.update_ghost_values();
+      projectorKetTimesVector.compressAdd();
+      projectorKetTimesVector.updateGhostValues();
     }
 
   //
@@ -278,7 +278,7 @@ kohnShamDFTOperatorCUDAClass<FEOrder, FEOrderElectro>::
         numberWaveFunctions);
     }
 
-  projectorKetTimesVector = 0.0;
+  projectorKetTimesVector.setZero();
 
 
   if (d_totalNonlocalElems > 0)
@@ -291,8 +291,8 @@ kohnShamDFTOperatorCUDAClass<FEOrder, FEOrderElectro>::
         projectorKetTimesVector.begin(),
         thrust::raw_pointer_cast(&d_projectorIdsParallelNumberingMapDevice[0]));
 
-  projectorKetTimesVector.compress(VectorOperation::add);
-  projectorKetTimesVector.update_ghost_values();
+  projectorKetTimesVector.compressAdd();
+  projectorKetTimesVector.updateGhostValues();
 
   //
   // compute V*C^{\dagger}*X

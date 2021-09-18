@@ -49,11 +49,6 @@ namespace dftfe
       double          upperBoundUnWantedSpectrum);
 
 
-    /**
-     * @brief Destructor.
-     */
-    ~chebyshevOrthogonalizedSubspaceIterationSolverCUDA();
-
 
     /**
      * @brief Solve a generalized eigen problem.
@@ -145,20 +140,15 @@ namespace dftfe
     //
     // temporary parallel vectors needed for Chebyshev filtering
     //
-    // distributedGPUVec<double>
-    void *d_YArrayPtr;
+    distributedGPUVec<double> d_YArray;
 
-    // distributedGPUVec<float>
-    void *d_cudaFlattenedFloatArrayBlockPtr;
+    distributedGPUVec<float> d_cudaFlattenedFloatArrayBlock;
 
-    // distributedGPUVec<double>
-    void *d_cudaFlattenedArrayBlock2Ptr;
+    distributedGPUVec<double> d_cudaFlattenedArrayBlock2;
 
-    // distributedGPUVec<double>
-    void *d_YArray2Ptr;
+    distributedGPUVec<double> d_YArray2;
 
-    // distributedGPUVec<double>
-    void *d_projectorKetTimesVector2Ptr;
+    distributedGPUVec<double> d_projectorKetTimesVector2;
 
     bool d_isTemporaryParallelVectorsCreated;
 
