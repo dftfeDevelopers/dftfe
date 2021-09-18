@@ -803,12 +803,6 @@ namespace dftfe
 
     if (dftParameters::isPseudopotential)
       {
-        // FIXME: remove this call
-        vectorTools::createDealiiVector<dataTypes::number>(
-          dftPtr->d_projectorKetTimesVectorPar[0].get_partitioner(),
-          numberWaveFunctions,
-          dftPtr->d_projectorKetTimesVectorParFlattened);
-
         d_parallelProjectorKetTimesBlockVectorDevice.reinit(
           dftPtr->d_projectorKetTimesVectorPar[0].get_partitioner(), BVec);
 
