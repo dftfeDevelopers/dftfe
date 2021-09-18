@@ -354,6 +354,8 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::
 
     } // macrocell loop
 
+
+
   //
   // Fill FE datastructures required for density computation from wavefunctions
   //

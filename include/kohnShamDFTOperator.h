@@ -374,6 +374,8 @@ node is stored
     std::vector<std::vector<std::vector<dataTypes::number>>>
       d_cellHamiltonianMatrix;
 
+    std::vector<double> d_elementHamiltonianMatrixImag;
+
 
     std::vector<std::vector<dataTypes::number>> d_cellMassMatrix;
     std::vector<double> d_cellHamiltonianMatrixExternalPotCorr;
@@ -464,14 +466,14 @@ node is stored
     std::vector<double> d_cellShapeFunctionGradientIntegral;
 
     /// storage for shapefunctions
-    std::vector<double> d_shapeFunctionValue;
-    std::vector<double> d_blockiNodeIndex;
-    std::vector<double> d_blockjNodeIndex;
-    std::vector<double> d_shapeFunctionData;
-    std::vector<double> d_shapeFunctionLpspQuadData;
-    std::vector<double> d_shapeFunctionGradientValueRefX;
-    std::vector<double> d_shapeFunctionGradientValueRefY;
-    std::vector<double> d_shapeFunctionGradientValueRefZ;
+    std::vector<double>       d_shapeFunctionValue;
+    std::vector<unsigned int> d_blockiNodeIndex;
+    std::vector<unsigned int> d_blockjNodeIndex;
+    std::vector<double>       d_shapeFunctionData;
+    std::vector<double>       d_shapeFunctionLpspQuadData;
+    std::vector<double>       d_shapeFunctionGradientValueRefX;
+    std::vector<double>       d_shapeFunctionGradientValueRefY;
+    std::vector<double>       d_shapeFunctionGradientValueRefZ;
 
     /// storage for shapefunctions
     std::vector<double> d_shapeFunctionValueLpspQuad;
