@@ -110,6 +110,8 @@ namespace dftfe
 
   namespace dataTypes
   {
+    typedef dealii::types::global_dof_index global_size_type;
+    typedef unsigned int                    local_size_type;
 #ifdef USE_COMPLEX
     typedef std::complex<double> number;
     typedef std::complex<float>  numberFP32;

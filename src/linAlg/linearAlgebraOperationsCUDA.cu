@@ -523,7 +523,7 @@ namespace dftfe
       for (unsigned int i = 0; i < local_size; i++)
         vVector.local_element(i) = ((double)std::rand()) / ((double)RAND_MAX);
 
-      operatorMatrix.getOverloadedConstraintMatrixHost()->set_zero(vVector,1);
+      operatorMatrix.getOverloadedConstraintMatrixHost()->set_zero(vVector, 1);
       vVector.update_ghost_values();
 
       //
@@ -562,7 +562,7 @@ namespace dftfe
                    local_size,
                    cudaMemcpyDeviceToHost);
 
-      operatorMatrix.getOverloadedConstraintMatrixHost()->set_zero(v[0],1);
+      operatorMatrix.getOverloadedConstraintMatrixHost()->set_zero(v[0], 1);
       fVector = f[0];
 
       alpha = fVector * vVector;
@@ -603,7 +603,7 @@ namespace dftfe
                        local_size,
                        cudaMemcpyDeviceToHost);
 
-          operatorMatrix.getOverloadedConstraintMatrixHost()->set_zero(v[0],1);
+          operatorMatrix.getOverloadedConstraintMatrixHost()->set_zero(v[0], 1);
           fVector = f[0];
           fVector.add(-1.0 * beta, v0Vector); // beta is real
           alpha = fVector * vVector;

@@ -23,6 +23,45 @@
 
 namespace dftfe
 {
+  namespace
+  {
+    template <typename NumberTypeComplex, typename NumberTypeReal>
+    __global__ void
+    copyComplexArrToRealArrsCUDAKernel(const dataTypes::local_size_type size,
+                                       const NumberTypeComplex *complexArr,
+                                       NumberTypeReal *         realArr,
+                                       NumberTypeReal *         imagArr)
+    {
+      const dataTypes::local_size_type globalThreadId =
+        blockIdx.x * blockDim.x + threadIdx.x;
+
+      for (dataTypes::local_size_type index = globalThreadId; index < size;
+           index += blockDim.x * gridDim.x)
+        {
+          realArr[index] = complexArr[index].x;
+          imagArr[index] = complexArr[index].y;
+        }
+    }
+
+    template <typename NumberTypeComplex, typename NumberTypeReal>
+    __global__ void
+    copyRealArrsToComplexArrCUDAKernel(const dataTypes::local_size_type size,
+                                       const NumberTypeReal *           realArr,
+                                       const NumberTypeReal *           imagArr,
+                                       NumberTypeComplex *complexArr)
+    {
+      const dataTypes::local_size_type globalThreadId =
+        blockIdx.x * blockDim.x + threadIdx.x;
+
+      for (dataTypes::local_size_type index = globalThreadId; index < size;
+           index += blockDim.x * gridDim.x)
+        {
+          complexArr[index].x = realArr[index];
+          complexArr[index].y = imagArr[index];
+        }
+    }
+  } // namespace
+
   void
   setupGPU()
   {
@@ -40,4 +79,70 @@ namespace dftfe
     // "<<dealii::Utilities::MPI::this_mpi_process(MPI_COMM_WORLD)<<std::endl;
     cudaDeviceReset();
   }
+
+
+
+  template <typename NumberTypeComplex, typename NumberTypeReal>
+  void
+  copyComplexArrToRealArrsGPU(const dataTypes::local_size_type size,
+                              const NumberTypeComplex *        complexArr,
+                              NumberTypeReal *                 realArr,
+                              NumberTypeReal *                 imagArr)
+  {
+    copyComplexArrToRealArrsCUDAKernel<NumberTypeComplex, NumberTypeReal>
+      <<<size / cudaConstants::blockSize + 1, cudaConstants::blockSize>>>(
+        size, complexArr, realArr, imagArr);
+  }
+
+
+  template <typename NumberTypeComplex, typename NumberTypeReal>
+  void
+  copyRealArrsToComplexArrGPU(const dataTypes::local_size_type size,
+                              const NumberTypeReal *           realArr,
+                              const NumberTypeReal *           imagArr,
+                              NumberTypeComplex *              complexArr)
+  {
+    copyRealArrsToComplexArrCUDAKernel<NumberTypeComplex, NumberTypeReal>
+      <<<size / cudaConstants::blockSize + 1, cudaConstants::blockSize>>>(
+        size, realArr, imagArr, complexArr);
+  }
+
+  template void
+  copyComplexArrToRealArrsGPU(const dataTypes::local_size_type size,
+                              const cuDoubleComplex *          complexArr,
+                              double *                         realArr,
+                              double *                         imagArr);
+
+  template void
+  copyComplexArrToRealArrsGPU(const dataTypes::local_size_type size,
+                              const cuFloatComplex *           complexArr,
+                              float *                          realArr,
+                              float *                          imagArr);
+
+  template void
+  copyRealArrsToComplexArrGPU(const dataTypes::local_size_type size,
+                              const double *                   realArr,
+                              const double *                   imagArr,
+                              cuDoubleComplex *                complexArr);
+
+  template void
+  copyRealArrsToComplexArrGPU(const dataTypes::local_size_type size,
+                              const float *                    realArr,
+                              const float *                    imagArr,
+                              cuFloatComplex *                 complexArr);
+
+  template <typename NumberTypeComplex, typename NumberTypeReal>
+  void
+  copyComplexArrToRealArrsGPU(const dataTypes::local_size_type size,
+                              const NumberTypeComplex *        complexArr,
+                              NumberTypeReal *                 realArr,
+                              NumberTypeReal *                 imagArr);
+
+
+  template <typename NumberTypeComplex, typename NumberTypeReal>
+  void
+  copyRealArrsToComplexArrGPU(const dataTypes::local_size_type size,
+                              const NumberTypeReal *           realArr,
+                              const NumberTypeReal *           imagArr,
+                              NumberTypeComplex *              complexArr);
 } // namespace dftfe
