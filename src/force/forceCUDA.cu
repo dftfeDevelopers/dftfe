@@ -195,8 +195,7 @@ namespace dftfe
     {
       distributedGPUVec<double> cudaFlattenedArrayBlock;
       cudaFlattenedArrayBlock.reinit(
-        operatorMatrix.getMatrixFreeData()->get_vector_partitioner(),
-        BVec);
+        operatorMatrix.getMatrixFreeData()->get_vector_partitioner(), BVec);
 
 
       distributedGPUVec<double> projectorKetTimesVector;

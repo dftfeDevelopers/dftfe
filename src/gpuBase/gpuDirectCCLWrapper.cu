@@ -22,6 +22,7 @@
 #  include <iostream>
 
 #  include "gpuDirectCCLWrapper.h"
+#  include "cudaHelpers.h"
 
 #  if defined(DFTFE_WITH_NCCL)
 #    include <nccl.h>
@@ -130,6 +131,72 @@ namespace dftfe
     return 0;
   }
 
+
+  int
+  GPUCCLWrapper::gpuDirectAllReduceWrapper(const cuDoubleComplex *send,
+                                           cuDoubleComplex *      recv,
+                                           int                    size,
+                                           double *               tempReal,
+                                           double *               tempImag,
+                                           cudaStream_t &         stream)
+  {
+    copyComplexArrToRealArrsGPU(size, send, tempReal, tempImag);
+#  ifdef DFTFE_WITH_NCCL
+    ncclGroupStart();
+    NCCLCHECK(ncclAllReduce((const void *)tempReal,
+                            (void *)tempReal,
+                            size,
+                            ncclDouble,
+                            ncclSum,
+                            *((ncclComm_t *)ncclCommPtr),
+                            stream));
+    NCCLCHECK(ncclAllReduce((const void *)tempImag,
+                            (void *)tempImag,
+                            size,
+                            ncclDouble,
+                            ncclSum,
+                            *((ncclComm_t *)ncclCommPtr),
+                            stream));
+    ncclGroupEnd();
+#  endif
+
+    copyRealArrsToComplexArrGPU(size, tempReal, tempImag, recv);
+    return 0;
+  }
+
+  int
+  GPUCCLWrapper::gpuDirectAllReduceWrapper(const cuFloatComplex *send,
+                                           cuFloatComplex *      recv,
+                                           int                   size,
+                                           float *               tempReal,
+                                           float *               tempImag,
+                                           cudaStream_t &        stream)
+  {
+    copyComplexArrToRealArrsGPU(size, send, tempReal, tempImag);
+#  ifdef DFTFE_WITH_NCCL
+    ncclGroupStart();
+    NCCLCHECK(ncclAllReduce((const void *)tempReal,
+                            (void *)tempReal,
+                            size,
+                            ncclFloat,
+                            ncclSum,
+                            *((ncclComm_t *)ncclCommPtr),
+                            stream));
+    NCCLCHECK(ncclAllReduce((const void *)tempImag,
+                            (void *)tempImag,
+                            size,
+                            ncclFloat,
+                            ncclSum,
+                            *((ncclComm_t *)ncclCommPtr),
+                            stream));
+    ncclGroupEnd();
+#  endif
+
+    copyRealArrsToComplexArrGPU(size, tempReal, tempImag, recv);
+    return 0;
+  }
+
+
   int
   GPUCCLWrapper::gpuDirectAllReduceMixedPrecGroupWrapper(const double *send1,
                                                          const float * send2,
@@ -159,5 +226,64 @@ namespace dftfe
 #  endif
     return 0;
   }
+
+  int
+  GPUCCLWrapper::gpuDirectAllReduceMixedPrecGroupWrapper(
+    const cuDoubleComplex *send1,
+    const cuFloatComplex * send2,
+    cuDoubleComplex *      recv1,
+    cuFloatComplex *       recv2,
+    int                    size1,
+    int                    size2,
+    double *               tempReal1,
+    float *                tempReal2,
+    double *               tempImag1,
+    float *                tempImag2,
+    cudaStream_t &         stream)
+  {
+    copyComplexArrToRealArrsGPU(size1, send1, tempReal1, tempImag1);
+
+    copyComplexArrToRealArrsGPU(size2, send2, tempReal2, tempImag2);
+
+#  ifdef DFTFE_WITH_NCCL
+    ncclGroupStart();
+    NCCLCHECK(ncclAllReduce((const void *)tempReal1,
+                            (void *)tempReal1,
+                            size1,
+                            ncclDouble,
+                            ncclSum,
+                            *((ncclComm_t *)ncclCommPtr),
+                            stream));
+    NCCLCHECK(ncclAllReduce((const void *)tempImag1,
+                            (void *)tempImag1,
+                            size1,
+                            ncclDouble,
+                            ncclSum,
+                            *((ncclComm_t *)ncclCommPtr),
+                            stream));
+    NCCLCHECK(ncclAllReduce((const void *)tempReal2,
+                            (void *)tempReal2,
+                            size2,
+                            ncclFloat,
+                            ncclSum,
+                            *((ncclComm_t *)ncclCommPtr),
+                            stream));
+    NCCLCHECK(ncclAllReduce((const void *)tempImag2,
+                            (void *)tempImag2,
+                            size2,
+                            ncclFloat,
+                            ncclSum,
+                            *((ncclComm_t *)ncclCommPtr),
+                            stream));
+    ncclGroupEnd();
+#  endif
+
+    copyRealArrsToComplexArrGPU(size1, tempReal1, tempImag1, recv1);
+
+    copyRealArrsToComplexArrGPU(size2, tempReal2, tempImag2, recv2);
+
+    return 0;
+  }
+
 } // namespace dftfe
 #endif

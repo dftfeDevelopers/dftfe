@@ -886,8 +886,7 @@ namespace dftfe
       const unsigned int localSizeNLP =
         projectorKetTimesVector1.locallyOwnedFlattenedSize() / numberVectors;
       const unsigned int n_ghosts_nlp =
-        projectorKetTimesVector1.ghostFlattenedSize()  /
-        numberVectors;
+        projectorKetTimesVector1.ghostFlattenedSize() / numberVectors;
       const unsigned int totalSizeNLP = localSizeNLP + n_ghosts_nlp;
 
       //
