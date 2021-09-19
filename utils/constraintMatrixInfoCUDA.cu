@@ -17,7 +17,8 @@
 // @author  Sambit Das, Phani Motamarri
 //
 
-#include <constraintMatrixInfoCUDA.h>
+#include "constraintMatrixInfoCUDA.h"
+#include "cudaHelpers.h"
 
 namespace dftfe
 {
@@ -102,6 +103,157 @@ namespace dftfe
 
 
       __global__ void
+      distributeKernel(
+        const unsigned int  contiguousBlockSize,
+        float *            xVec,
+        const unsigned int *constraintLocalRowIdsUnflattened,
+        const unsigned int  numConstraints,
+        const unsigned int *constraintRowSizes,
+        const unsigned int *constraintRowSizesAccumulated,
+        const unsigned int *constraintLocalColumnIdsAllRowsUnflattened,
+        const double *      constraintColumnValuesAllRowsUnflattened,
+        const double *      inhomogenities,
+        const dealii::types::global_dof_index
+          *localIndexMapUnflattenedToFlattened)
+      {
+        const dealii::types::global_dof_index globalThreadId =
+          blockIdx.x * blockDim.x + threadIdx.x;
+        const dealii::types::global_dof_index numberEntries =
+          numConstraints * contiguousBlockSize;
+
+        for (dealii::types::global_dof_index index = globalThreadId;
+             index < numberEntries;
+             index += blockDim.x * gridDim.x)
+          {
+            const unsigned int blockIndex      = index / contiguousBlockSize;
+            const unsigned int intraBlockIndex = index % contiguousBlockSize;
+            const unsigned int constrainedRowId =
+              constraintLocalRowIdsUnflattened[blockIndex];
+            const unsigned int numberColumns = constraintRowSizes[blockIndex];
+            const unsigned int startingColumnNumber =
+              constraintRowSizesAccumulated[blockIndex];
+            const dealii::types::global_dof_index xVecStartingIdRow =
+              localIndexMapUnflattenedToFlattened[constrainedRowId];
+            xVec[xVecStartingIdRow + intraBlockIndex] =
+              inhomogenities[blockIndex];
+            for (unsigned int i = 0; i < numberColumns; ++i)
+              {
+                const unsigned int constrainedColumnId =
+                  constraintLocalColumnIdsAllRowsUnflattened
+                    [startingColumnNumber + i];
+                const dealii::types::global_dof_index xVecStartingIdColumn =
+                  localIndexMapUnflattenedToFlattened[constrainedColumnId];
+                xVec[xVecStartingIdRow + intraBlockIndex] +=
+                  constraintColumnValuesAllRowsUnflattened
+                    [startingColumnNumber + i] *
+                  xVec[xVecStartingIdColumn + intraBlockIndex];
+              }
+          }
+      }
+
+
+      __global__ void
+      distributeKernel(
+        const unsigned int  contiguousBlockSize,
+        cuDoubleComplex *   xVec,
+        const unsigned int *constraintLocalRowIdsUnflattened,
+        const unsigned int  numConstraints,
+        const unsigned int *constraintRowSizes,
+        const unsigned int *constraintRowSizesAccumulated,
+        const unsigned int *constraintLocalColumnIdsAllRowsUnflattened,
+        const double *      constraintColumnValuesAllRowsUnflattened,
+        const double *      inhomogenities,
+        const dealii::types::global_dof_index
+          *localIndexMapUnflattenedToFlattened)
+      {
+        const dealii::types::global_dof_index globalThreadId =
+          blockIdx.x * blockDim.x + threadIdx.x;
+        const dealii::types::global_dof_index numberEntries =
+          numConstraints * contiguousBlockSize;
+
+        for (dealii::types::global_dof_index index = globalThreadId;
+             index < numberEntries;
+             index += blockDim.x * gridDim.x)
+          {
+            const unsigned int blockIndex      = index / contiguousBlockSize;
+            const unsigned int intraBlockIndex = index % contiguousBlockSize;
+            const unsigned int constrainedRowId =
+              constraintLocalRowIdsUnflattened[blockIndex];
+            const unsigned int numberColumns = constraintRowSizes[blockIndex];
+            const unsigned int startingColumnNumber =
+              constraintRowSizesAccumulated[blockIndex];
+            const dealii::types::global_dof_index xVecStartingIdRow =
+              localIndexMapUnflattenedToFlattened[constrainedRowId];
+            xVec[xVecStartingIdRow + intraBlockIndex] =
+              make_cuDoubleComplex(inhomogenities[blockIndex], 0.0);
+            for (unsigned int i = 0; i < numberColumns; ++i)
+              {
+                const unsigned int constrainedColumnId =
+                  constraintLocalColumnIdsAllRowsUnflattened
+                    [startingColumnNumber + i];
+                const dealii::types::global_dof_index xVecStartingIdColumn =
+                  localIndexMapUnflattenedToFlattened[constrainedColumnId];
+                xVec[xVecStartingIdRow + intraBlockIndex] =cuCadd(xVec[xVecStartingIdRow + intraBlockIndex],
+                  make_cuDoubleComplex(xVec[xVecStartingIdColumn + intraBlockIndex].x*constraintColumnValuesAllRowsUnflattened
+                                         [startingColumnNumber + i],
+                                       xVec[xVecStartingIdColumn + intraBlockIndex].y*constraintColumnValuesAllRowsUnflattened
+                                         [startingColumnNumber + i]));
+              }
+          }
+      }
+
+
+      __global__ void
+      distributeKernel(
+        const unsigned int  contiguousBlockSize,
+        cuFloatComplex *   xVec,
+        const unsigned int *constraintLocalRowIdsUnflattened,
+        const unsigned int  numConstraints,
+        const unsigned int *constraintRowSizes,
+        const unsigned int *constraintRowSizesAccumulated,
+        const unsigned int *constraintLocalColumnIdsAllRowsUnflattened,
+        const double *      constraintColumnValuesAllRowsUnflattened,
+        const double *      inhomogenities,
+        const dealii::types::global_dof_index
+          *localIndexMapUnflattenedToFlattened)
+      {
+        const dealii::types::global_dof_index globalThreadId =
+          blockIdx.x * blockDim.x + threadIdx.x;
+        const dealii::types::global_dof_index numberEntries =
+          numConstraints * contiguousBlockSize;
+
+        for (dealii::types::global_dof_index index = globalThreadId;
+             index < numberEntries;
+             index += blockDim.x * gridDim.x)
+          {
+            const unsigned int blockIndex      = index / contiguousBlockSize;
+            const unsigned int intraBlockIndex = index % contiguousBlockSize;
+            const unsigned int constrainedRowId =
+              constraintLocalRowIdsUnflattened[blockIndex];
+            const unsigned int numberColumns = constraintRowSizes[blockIndex];
+            const unsigned int startingColumnNumber =
+              constraintRowSizesAccumulated[blockIndex];
+            const dealii::types::global_dof_index xVecStartingIdRow =
+              localIndexMapUnflattenedToFlattened[constrainedRowId];
+            xVec[xVecStartingIdRow + intraBlockIndex] =
+              make_cuFloatComplex(inhomogenities[blockIndex], 0.0);
+            for (unsigned int i = 0; i < numberColumns; ++i)
+              {
+                const unsigned int constrainedColumnId =
+                  constraintLocalColumnIdsAllRowsUnflattened
+                    [startingColumnNumber + i];
+                const dealii::types::global_dof_index xVecStartingIdColumn =
+                  localIndexMapUnflattenedToFlattened[constrainedColumnId];
+                xVec[xVecStartingIdRow + intraBlockIndex] =cuCaddf(xVec[xVecStartingIdRow + intraBlockIndex],
+                  make_cuFloatComplex(xVec[xVecStartingIdColumn + intraBlockIndex].x*constraintColumnValuesAllRowsUnflattened
+                                         [startingColumnNumber + i],
+                                       xVec[xVecStartingIdColumn + intraBlockIndex].y*constraintColumnValuesAllRowsUnflattened
+                                         [startingColumnNumber + i]));
+              }
+          }
+      }
+
+      __global__ void
       distributeSlaveToMasterKernelAtomicAdd(
         const unsigned int  contiguousBlockSize,
         double *            xVec,
@@ -149,10 +301,59 @@ namespace dftfe
       }
 
 
-      template <typename T>
+      __global__ void
+      distributeSlaveToMasterKernelAtomicAdd(
+        const unsigned int  contiguousBlockSize,
+        float *            xVec,
+        const unsigned int *constraintLocalRowIdsUnflattened,
+        const unsigned int  numConstraints,
+        const unsigned int *constraintRowSizes,
+        const unsigned int *constraintRowSizesAccumulated,
+        const unsigned int *constraintLocalColumnIdsAllRowsUnflattened,
+        const double *      constraintColumnValuesAllRowsUnflattened,
+        const dealii::types::global_dof_index
+          *localIndexMapUnflattenedToFlattened)
+      {
+        const dealii::types::global_dof_index globalThreadId =
+          blockIdx.x * blockDim.x + threadIdx.x;
+        const dealii::types::global_dof_index numberEntries =
+          numConstraints * contiguousBlockSize;
+
+        for (dealii::types::global_dof_index index = globalThreadId;
+             index < numberEntries;
+             index += blockDim.x * gridDim.x)
+          {
+            const unsigned int blockIndex      = index / contiguousBlockSize;
+            const unsigned int intraBlockIndex = index % contiguousBlockSize;
+            const unsigned int constrainedRowId =
+              constraintLocalRowIdsUnflattened[blockIndex];
+            const unsigned int numberColumns = constraintRowSizes[blockIndex];
+            const unsigned int startingColumnNumber =
+              constraintRowSizesAccumulated[blockIndex];
+            const dealii::types::global_dof_index xVecStartingIdRow =
+              localIndexMapUnflattenedToFlattened[constrainedRowId];
+            for (unsigned int i = 0; i < numberColumns; ++i)
+              {
+                const unsigned int constrainedColumnId =
+                  constraintLocalColumnIdsAllRowsUnflattened
+                    [startingColumnNumber + i];
+                const dealii::types::global_dof_index xVecStartingIdColumn =
+                  localIndexMapUnflattenedToFlattened[constrainedColumnId];
+                  /*
+                atomicAdd(&(xVec[xVecStartingIdColumn + intraBlockIndex]),
+                          (float)(constraintColumnValuesAllRowsUnflattened
+                              [startingColumnNumber + i] *
+                            xVec[xVecStartingIdRow + intraBlockIndex]));
+                */
+              }
+            xVec[xVecStartingIdRow + intraBlockIndex] = 0.0;
+          }
+      }
+
+
       __global__ void
       setzeroKernel(const unsigned int  contiguousBlockSize,
-                    T *                 xVec,
+                    double *            xVec,
                     const unsigned int *constraintLocalRowIdsUnflattened,
                     const unsigned int  numConstraints,
                     const dealii::types::global_dof_index
@@ -175,6 +376,81 @@ namespace dftfe
           }
       }
 
+      __global__ void
+      setzeroKernel(const unsigned int  contiguousBlockSize,
+                    float *            xVec,
+                    const unsigned int *constraintLocalRowIdsUnflattened,
+                    const unsigned int  numConstraints,
+                    const dealii::types::global_dof_index
+                      *localIndexMapUnflattenedToFlattened)
+      {
+        const dealii::types::global_dof_index globalThreadId =
+          blockIdx.x * blockDim.x + threadIdx.x;
+        const dealii::types::global_dof_index numberEntries =
+          numConstraints * contiguousBlockSize;
+
+        for (dealii::types::global_dof_index index = globalThreadId;
+             index < numberEntries;
+             index += blockDim.x * gridDim.x)
+          {
+            const unsigned int blockIndex      = index / contiguousBlockSize;
+            const unsigned int intraBlockIndex = index % contiguousBlockSize;
+            xVec[localIndexMapUnflattenedToFlattened
+                   [constraintLocalRowIdsUnflattened[blockIndex]] +
+                 intraBlockIndex]              = 0;
+          }
+      }
+
+      __global__ void
+      setzeroKernel(const unsigned int  contiguousBlockSize,
+                    cuDoubleComplex *   xVec,
+                    const unsigned int *constraintLocalRowIdsUnflattened,
+                    const unsigned int  numConstraints,
+                    const dealii::types::global_dof_index
+                      *localIndexMapUnflattenedToFlattened)
+      {
+        const dealii::types::global_dof_index globalThreadId =
+          blockIdx.x * blockDim.x + threadIdx.x;
+        const dealii::types::global_dof_index numberEntries =
+          numConstraints * contiguousBlockSize;
+
+        for (dealii::types::global_dof_index index = globalThreadId;
+             index < numberEntries;
+             index += blockDim.x * gridDim.x)
+          {
+            const unsigned int blockIndex      = index / contiguousBlockSize;
+            const unsigned int intraBlockIndex = index % contiguousBlockSize;
+            xVec[localIndexMapUnflattenedToFlattened
+                   [constraintLocalRowIdsUnflattened[blockIndex]] +
+                 intraBlockIndex]              = make_cuDoubleComplex(0.0, 0.0);
+          }
+      }
+
+
+      __global__ void
+      setzeroKernel(const unsigned int  contiguousBlockSize,
+                    cuFloatComplex *   xVec,
+                    const unsigned int *constraintLocalRowIdsUnflattened,
+                    const unsigned int  numConstraints,
+                    const dealii::types::global_dof_index
+                      *localIndexMapUnflattenedToFlattened)
+      {
+        const dealii::types::global_dof_index globalThreadId =
+          blockIdx.x * blockDim.x + threadIdx.x;
+        const dealii::types::global_dof_index numberEntries =
+          numConstraints * contiguousBlockSize;
+
+        for (dealii::types::global_dof_index index = globalThreadId;
+             index < numberEntries;
+             index += blockDim.x * gridDim.x)
+          {
+            const unsigned int blockIndex      = index / contiguousBlockSize;
+            const unsigned int intraBlockIndex = index % contiguousBlockSize;
+            xVec[localIndexMapUnflattenedToFlattened
+                   [constraintLocalRowIdsUnflattened[blockIndex]] +
+                 intraBlockIndex]              = make_cuFloatComplex(0.0, 0.0);
+          }
+      }
     } // namespace
 
     // constructor
@@ -312,10 +588,11 @@ namespace dftfe
     }
 
 
-
+    template <typename NumberType>
     void
-    constraintMatrixInfoCUDA::distribute(distributedGPUVec<double> &fieldVector,
-                                         const unsigned int blockSize) const
+    constraintMatrixInfoCUDA::distribute(
+      distributedGPUVec<NumberType> &fieldVector,
+      const unsigned int             blockSize) const
     {
       if (d_numConstrainedDofs == 0)
         return;
@@ -342,7 +619,6 @@ namespace dftfe
     // set the constrained degrees of freedom to values so that constraints
     // are satisfied for flattened array
     //
-
     void
     constraintMatrixInfoCUDA::distribute_slave_to_master(
       distributedGPUVec<double> &fieldVector,
@@ -364,22 +640,133 @@ namespace dftfe
                  &d_localIndexMapUnflattenedToFlattenedDevice[0]));
     }
 
+    //
+    // set the constrained degrees of freedom to values so that constraints
+    // are satisfied for flattened array
+    //
     void
-    constraintMatrixInfoCUDA::set_zero(distributedGPUVec<double> &fieldVector,
-                                       const unsigned int blockSize) const
+    constraintMatrixInfoCUDA::distribute_slave_to_master(
+      distributedGPUVec<cuDoubleComplex> &fieldVector,
+      double *                            tempReal,
+      double *                            tempImag,
+      const unsigned int                  blockSize) const
+    {
+      if (d_numConstrainedDofs == 0)
+        return;
+
+      copyComplexArrToRealArrsGPU((fieldVector.locallyOwnedFlattenedSize() +
+                                   fieldVector.ghostFlattenedSize()),
+                                  fieldVector.begin(),
+                                  tempReal,
+                                  tempImag);
+
+
+      distributeSlaveToMasterKernelAtomicAdd<<<
+        min((blockSize + 255) / 256 * d_numConstrainedDofs, 30000),
+        256>>>(blockSize,
+               tempReal,
+               thrust::raw_pointer_cast(&d_rowIdsLocalDevice[0]),
+               d_numConstrainedDofs,
+               thrust::raw_pointer_cast(&d_rowSizesDevice[0]),
+               thrust::raw_pointer_cast(&d_rowSizesAccumulatedDevice[0]),
+               thrust::raw_pointer_cast(&d_columnIdsLocalDevice[0]),
+               thrust::raw_pointer_cast(&d_columnValuesDevice[0]),
+               thrust::raw_pointer_cast(
+                 &d_localIndexMapUnflattenedToFlattenedDevice[0]));
+
+      distributeSlaveToMasterKernelAtomicAdd<<<
+        min((blockSize + 255) / 256 * d_numConstrainedDofs, 30000),
+        256>>>(blockSize,
+               tempImag,
+               thrust::raw_pointer_cast(&d_rowIdsLocalDevice[0]),
+               d_numConstrainedDofs,
+               thrust::raw_pointer_cast(&d_rowSizesDevice[0]),
+               thrust::raw_pointer_cast(&d_rowSizesAccumulatedDevice[0]),
+               thrust::raw_pointer_cast(&d_columnIdsLocalDevice[0]),
+               thrust::raw_pointer_cast(&d_columnValuesDevice[0]),
+               thrust::raw_pointer_cast(
+                 &d_localIndexMapUnflattenedToFlattenedDevice[0]));
+
+      copyRealArrsToComplexArrGPU((fieldVector.locallyOwnedFlattenedSize() +
+                                   fieldVector.ghostFlattenedSize()),
+                                  tempReal,
+                                  tempImag,
+                                  fieldVector.begin());
+    }
+
+    //
+    // set the constrained degrees of freedom to values so that constraints
+    // are satisfied for flattened array
+    //
+    void
+    constraintMatrixInfoCUDA::distribute_slave_to_master(
+      distributedGPUVec<cuFloatComplex> &fieldVector,
+      float *                            tempReal,
+      float *                            tempImag,
+      const unsigned int                  blockSize) const
+    {
+      if (d_numConstrainedDofs == 0)
+        return;
+
+      copyComplexArrToRealArrsGPU((fieldVector.locallyOwnedFlattenedSize() +
+                                   fieldVector.ghostFlattenedSize()),
+                                  fieldVector.begin(),
+                                  tempReal,
+                                  tempImag);
+
+
+      distributeSlaveToMasterKernelAtomicAdd<<<
+        min((blockSize + 255) / 256 * d_numConstrainedDofs, 30000),
+        256>>>(blockSize,
+               tempReal,
+               thrust::raw_pointer_cast(&d_rowIdsLocalDevice[0]),
+               d_numConstrainedDofs,
+               thrust::raw_pointer_cast(&d_rowSizesDevice[0]),
+               thrust::raw_pointer_cast(&d_rowSizesAccumulatedDevice[0]),
+               thrust::raw_pointer_cast(&d_columnIdsLocalDevice[0]),
+               thrust::raw_pointer_cast(&d_columnValuesDevice[0]),
+               thrust::raw_pointer_cast(
+                 &d_localIndexMapUnflattenedToFlattenedDevice[0]));
+
+      distributeSlaveToMasterKernelAtomicAdd<<<
+        min((blockSize + 255) / 256 * d_numConstrainedDofs, 30000),
+        256>>>(blockSize,
+               tempImag,
+               thrust::raw_pointer_cast(&d_rowIdsLocalDevice[0]),
+               d_numConstrainedDofs,
+               thrust::raw_pointer_cast(&d_rowSizesDevice[0]),
+               thrust::raw_pointer_cast(&d_rowSizesAccumulatedDevice[0]),
+               thrust::raw_pointer_cast(&d_columnIdsLocalDevice[0]),
+               thrust::raw_pointer_cast(&d_columnValuesDevice[0]),
+               thrust::raw_pointer_cast(
+                 &d_localIndexMapUnflattenedToFlattenedDevice[0]));
+
+      copyRealArrsToComplexArrGPU((fieldVector.locallyOwnedFlattenedSize() +
+                                   fieldVector.ghostFlattenedSize()),
+                                  tempReal,
+                                  tempImag,
+                                  fieldVector.begin());
+    }
+
+
+    template <typename NumberType>
+    void
+    constraintMatrixInfoCUDA::set_zero(
+      distributedGPUVec<NumberType> &fieldVector,
+      const unsigned int             blockSize) const
     {
       if (d_numConstrainedDofs == 0)
         return;
 
       const unsigned int numConstrainedDofs = d_rowIdsLocal.size();
-      setzeroKernel<double>
-        <<<min((blockSize + 255) / 256 * numConstrainedDofs, 30000), 256>>>(
-          blockSize,
-          fieldVector.begin(),
-          thrust::raw_pointer_cast(&d_rowIdsLocalDevice[0]),
-          numConstrainedDofs,
-          thrust::raw_pointer_cast(
-            &d_localIndexMapUnflattenedToFlattenedDevice[0]));
+      setzeroKernel<<<min((blockSize + 255) / 256 * numConstrainedDofs, 30000),
+                      256>>>(
+        blockSize,
+        fieldVector.begin(),
+        thrust::raw_pointer_cast(&d_rowIdsLocalDevice[0]),
+        numConstrainedDofs,
+        thrust::raw_pointer_cast(
+          &d_localIndexMapUnflattenedToFlattenedDevice[0]));
     }
 
     //
@@ -411,5 +798,55 @@ namespace dftfe
       d_columnIdsLocalBinsDevice.clear();
       d_columnValuesBinsDevice.clear();
     }
+
+    template
+    void
+    constraintMatrixInfoCUDA::distribute(
+      distributedGPUVec<double> &fieldVector,
+      const unsigned int         blockSize) const;
+
+    template
+    void
+    constraintMatrixInfoCUDA::distribute(
+      distributedGPUVec<cuDoubleComplex> &fieldVector,
+      const unsigned int                  blockSize) const;
+
+    template
+    void
+    constraintMatrixInfoCUDA::distribute(
+      distributedGPUVec<float> &fieldVector,
+      const unsigned int         blockSize) const;
+
+    template
+    void
+    constraintMatrixInfoCUDA::distribute(
+      distributedGPUVec<cuFloatComplex> &fieldVector,
+      const unsigned int                  blockSize) const;
+
+    template
+    void
+    constraintMatrixInfoCUDA::set_zero(
+      distributedGPUVec<double> &fieldVector,
+      const unsigned int         blockSize) const;
+
+    template
+    void
+    constraintMatrixInfoCUDA::set_zero(
+      distributedGPUVec<cuDoubleComplex> &fieldVector,
+      const unsigned int                  blockSize) const;
+
+    template
+    void
+    constraintMatrixInfoCUDA::set_zero(
+      distributedGPUVec<float> &fieldVector,
+      const unsigned int         blockSize) const;
+
+    template
+    void
+    constraintMatrixInfoCUDA::set_zero(
+      distributedGPUVec<cuFloatComplex> &fieldVector,
+      const unsigned int                  blockSize) const;
+
+
   } // namespace dftUtils
 } // namespace dftfe

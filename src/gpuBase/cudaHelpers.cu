@@ -130,19 +130,4 @@ namespace dftfe
                               const float *                    realArr,
                               const float *                    imagArr,
                               cuFloatComplex *                 complexArr);
-
-  template <typename NumberTypeComplex, typename NumberTypeReal>
-  void
-  copyComplexArrToRealArrsGPU(const dataTypes::local_size_type size,
-                              const NumberTypeComplex *        complexArr,
-                              NumberTypeReal *                 realArr,
-                              NumberTypeReal *                 imagArr);
-
-
-  template <typename NumberTypeComplex, typename NumberTypeReal>
-  void
-  copyRealArrsToComplexArrGPU(const dataTypes::local_size_type size,
-                              const NumberTypeReal *           realArr,
-                              const NumberTypeReal *           imagArr,
-                              NumberTypeComplex *              complexArr);
 } // namespace dftfe

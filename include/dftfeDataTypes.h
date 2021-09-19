@@ -44,6 +44,8 @@ namespace dftfe
 #ifdef USE_COMPLEX
     typedef std::complex<double> number;
     typedef std::complex<float>  numberFP32;
+    typedef double               numberValueType;
+    typedef float                numberFP32ValueType;
 #  if defined(DFTFE_WITH_GPU)
     typedef cuDoubleComplex         numberGPU;
     typedef cuFloatComplex          numberFP32GPU;
@@ -53,6 +55,8 @@ namespace dftfe
 #else
     typedef double number;
     typedef float  numberFP32;
+    typedef double numberValueType;
+    typedef float  numberFP32ValueType;
 #  if defined(DFTFE_WITH_GPU)
     typedef double numberGPU;
     typedef float  numberFP32GPU;

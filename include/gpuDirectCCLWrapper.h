@@ -95,6 +95,39 @@ namespace dftfe
                                             cudaStream_t &         stream);
 
 
+
+    inline void
+    gpuDirectAllReduceWrapper(const double *send,
+                              double *      recv,
+                              int           size,
+                              double *      tempReal,
+                              double *      tempImag,
+                              cudaStream_t &stream)
+    {}
+
+    inline void
+    gpuDirectAllReduceWrapper(const float * send,
+                              float *       recv,
+                              int           size,
+                              float *       tempReal,
+                              float *       tempImag,
+                              cudaStream_t &stream)
+    {}
+
+    inline void
+    gpuDirectAllReduceMixedPrecGroupWrapper(const double *send1,
+                                            const float * send2,
+                                            double *      recv1,
+                                            float *       recv2,
+                                            int           size1,
+                                            int           size2,
+                                            double *      tempReal1,
+                                            float *       tempReal2,
+                                            double *      tempImag1,
+                                            float *       tempImag2,
+                                            cudaStream_t &stream)
+    {}
+
   private:
     int  myRank;
     int  totalRanks;
