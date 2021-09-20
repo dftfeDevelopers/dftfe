@@ -132,7 +132,7 @@ namespace dftfe
 
     template <typename numberType, typename numberTypeFP32>
     __global__ void
-    stridedCopyFromBlockKernelSP(const unsigned int BVec,
+    stridedCopyFromBlockKernelFP32(const unsigned int BVec,
                                  const unsigned int M,
                                  const numberType * xVec,
                                  const unsigned int N,
@@ -2779,14 +2779,14 @@ namespace dftfe
         CUDACHECK(cudaEventCreate(&copyEvents[i]));
       }
 
-    thrust::device_vector<dataTypes::numberFP32ThrustGPU> XSP(
+    thrust::device_vector<dataTypes::numberFP32ThrustGPU> XFP32(
       M * N, dataTypes::numberFP32ThrustGPU(0.0));
     convDoubleArrToFloatArr<dataTypes::numberGPU, dataTypes::numberFP32GPU>
       <<<(N + 255) / 256 * M, 256>>>(
         N * M,
         X,
         reinterpret_cast<dataTypes::numberFP32GPU *>(
-          thrust::raw_pointer_cast(&XSP[0])));
+          thrust::raw_pointer_cast(&XFP32[0])));
 
     dataTypes::number *projHamBlockHost;
     CUDACHECK(cudaMallocHost((void **)&projHamBlockHost,
@@ -2795,25 +2795,25 @@ namespace dftfe
                 0,
                 vectorsBlockSize * N * sizeof(dataTypes::number));
 
-    dataTypes::numberFP32 *projHamBlockHostSP;
+    dataTypes::numberFP32 *projHamBlockHostFP32;
     CUDACHECK(
-      cudaMallocHost((void **)&projHamBlockHostSP,
+      cudaMallocHost((void **)&projHamBlockHostFP32,
                      vectorsBlockSize * N * sizeof(dataTypes::numberFP32)));
-    std::memset(projHamBlockHostSP,
+    std::memset(projHamBlockHostFP32,
                 0,
                 vectorsBlockSize * N * sizeof(dataTypes::numberFP32));
 
     thrust::device_vector<dataTypes::numberThrustGPU> HXBlockFull(
       vectorsBlockSize * M, dataTypes::numberThrustGPU(0.0));
-    thrust::device_vector<dataTypes::numberFP32ThrustGPU> HXBlockFullSP(
+    thrust::device_vector<dataTypes::numberFP32ThrustGPU> HXBlockFullFP32(
       vectorsBlockSize * M, dataTypes::numberFP32ThrustGPU(0.0));
     thrust::device_vector<dataTypes::numberThrustGPU> projHamBlock(
       vectorsBlockSize * N, dataTypes::numberThrustGPU(0.0));
-    thrust::device_vector<dataTypes::numberFP32ThrustGPU> projHamBlockSP(
+    thrust::device_vector<dataTypes::numberFP32ThrustGPU> projHamBlockFP32(
       vectorsBlockSize * N, dataTypes::numberFP32ThrustGPU(0.0));
     thrust::device_vector<dataTypes::numberThrustGPU> projHamBlockNext(
       vectorsBlockSize * N, dataTypes::numberThrustGPU(0.0));
-    thrust::device_vector<dataTypes::numberFP32ThrustGPU> projHamBlockSPNext(
+    thrust::device_vector<dataTypes::numberFP32ThrustGPU> projHamBlockFP32Next(
       vectorsBlockSize * N, dataTypes::numberFP32ThrustGPU(0.0));
 
     unsigned int blockCount = 0;
@@ -2831,15 +2831,15 @@ namespace dftfe
 
             const dataTypes::number alpha       = dataTypes::number(1.0),
                                     beta        = dataTypes::number(0.0);
-            const dataTypes::numberFP32 alphaSP = dataTypes::numberFP32(1.0),
-                                        betaSP  = dataTypes::numberFP32(0.0);
+            const dataTypes::numberFP32 alphaFP32 = dataTypes::numberFP32(1.0),
+                                        betaFP32  = dataTypes::numberFP32(0.0);
             const unsigned int D                = N - jvec;
 
             // handle edge case for the first block or the first block in the
             // band group in case of band parallelization
             if (jvec == bandGroupLowHighPlusOneIndices[2 * bandGroupTaskId])
               {
-                // compute HXBlockFull or HXBlockFullSP in an inner loop over
+                // compute HXBlockFull or HXBlockFullFP32 in an inner loop over
                 // blocks of B wavefunction vectors
                 for (unsigned int k = jvec; k < jvec + B; k += chebyBlockSize)
                   {
@@ -2883,7 +2883,7 @@ namespace dftfe
                             thrust::raw_pointer_cast(&HXBlockFull[0])),
                           k - jvec);
                     else
-                      stridedCopyFromBlockKernelSP<dataTypes::numberGPU,
+                      stridedCopyFromBlockKernelFP32<dataTypes::numberGPU,
                                                    dataTypes::numberFP32GPU>
                         <<<(chebyBlockSize + 255) / 256 * M, 256>>>(
                           chebyBlockSize,
@@ -2891,12 +2891,12 @@ namespace dftfe
                           HXBlock.begin(),
                           B,
                           reinterpret_cast<dataTypes::numberFP32GPU *>(
-                            thrust::raw_pointer_cast(&HXBlockFullSP[0])),
+                            thrust::raw_pointer_cast(&HXBlockFullFP32[0])),
                           k - jvec);
                   }
 
-                // evaluate X^{T} times HXBlockFullConj or XSP^{T} times
-                // HXBlockFullSPConj
+                // evaluate X^{T} times HXBlockFullConj or XFP32^{T} times
+                // HXBlockFullFP32Conj
                 if (jvec + B > Noc)
                   cublasXgemm(
                     handle,
@@ -2930,17 +2930,17 @@ namespace dftfe
                     B,
                     M,
                     reinterpret_cast<const dataTypes::numberFP32GPU *>(
-                      &alphaSP),
+                      &alphaFP32),
                     reinterpret_cast<const dataTypes::numberFP32GPU *>(
-                      thrust::raw_pointer_cast(&XSP[0])) +
+                      thrust::raw_pointer_cast(&XFP32[0])) +
                       jvec,
                     N,
                     reinterpret_cast<const dataTypes::numberFP32GPU *>(
-                      thrust::raw_pointer_cast(&HXBlockFullSP[0])),
+                      thrust::raw_pointer_cast(&HXBlockFullFP32[0])),
                     B,
-                    reinterpret_cast<const dataTypes::numberFP32GPU *>(&betaSP),
+                    reinterpret_cast<const dataTypes::numberFP32GPU *>(&betaFP32),
                     reinterpret_cast<dataTypes::numberFP32GPU *>(
-                      thrust::raw_pointer_cast(&projHamBlockSP[0])),
+                      thrust::raw_pointer_cast(&projHamBlockFP32[0])),
                     D);
 
                 // record completion of compute for next block
@@ -2961,7 +2961,7 @@ namespace dftfe
                 if (jvec + B > Noc)
                   projHamBlock.swap(projHamBlockNext);
                 else
-                  projHamBlockSP.swap(projHamBlockSPNext);
+                  projHamBlockFP32.swap(projHamBlockFP32Next);
               }
 
             const unsigned int jvecNew = jvec + vectorsBlockSize;
@@ -2970,7 +2970,7 @@ namespace dftfe
             if (jvecNew <
                 bandGroupLowHighPlusOneIndices[2 * bandGroupTaskId + 1])
               {
-                // compute HXBlockFull or HXBlockFullSP in an inner loop over
+                // compute HXBlockFull or HXBlockFullFP32 in an inner loop over
                 // blocks of B wavefunction vectors
                 for (unsigned int k = jvecNew; k < jvecNew + B;
                      k += chebyBlockSize)
@@ -3015,7 +3015,7 @@ namespace dftfe
                             thrust::raw_pointer_cast(&HXBlockFull[0])),
                           k - jvecNew);
                     else
-                      stridedCopyFromBlockKernelSP<dataTypes::numberGPU,
+                      stridedCopyFromBlockKernelFP32<dataTypes::numberGPU,
                                                    dataTypes::numberFP32GPU>
                         <<<(chebyBlockSize + 255) / 256 * M, 256>>>(
                           chebyBlockSize,
@@ -3023,12 +3023,12 @@ namespace dftfe
                           HXBlock.begin(),
                           B,
                           reinterpret_cast<dataTypes::numberFP32GPU *>(
-                            thrust::raw_pointer_cast(&HXBlockFullSP[0])),
+                            thrust::raw_pointer_cast(&HXBlockFullFP32[0])),
                           k - jvecNew);
                   }
 
-                // evaluate X^{T} times HXBlockFullConj or XSP^{T} times
-                // HXBlockFullSPConj
+                // evaluate X^{T} times HXBlockFullConj or XFP32^{T} times
+                // HXBlockFullFP32Conj
                 if (jvecNew + B > Noc)
                   cublasXgemm(
                     handle,
@@ -3062,17 +3062,17 @@ namespace dftfe
                     B,
                     M,
                     reinterpret_cast<const dataTypes::numberFP32GPU *>(
-                      &alphaSP),
+                      &alphaFP32),
                     reinterpret_cast<const dataTypes::numberFP32GPU *>(
-                      thrust::raw_pointer_cast(&XSP[0])) +
+                      thrust::raw_pointer_cast(&XFP32[0])) +
                       jvecNew,
                     N,
                     reinterpret_cast<const dataTypes::numberFP32GPU *>(
-                      thrust::raw_pointer_cast(&HXBlockFullSP[0])),
+                      thrust::raw_pointer_cast(&HXBlockFullFP32[0])),
                     B,
-                    reinterpret_cast<const dataTypes::numberFP32GPU *>(&betaSP),
+                    reinterpret_cast<const dataTypes::numberFP32GPU *>(&betaFP32),
                     reinterpret_cast<dataTypes::numberFP32GPU *>(
-                      thrust::raw_pointer_cast(&projHamBlockSPNext[0])),
+                      thrust::raw_pointer_cast(&projHamBlockFP32Next[0])),
                     DNew);
 
                 // record completion of compute for next block
@@ -3096,9 +3096,9 @@ namespace dftfe
                   {
                     gpucclMpiCommDomain.gpuDirectAllReduceWrapper(
                       reinterpret_cast<dataTypes::numberFP32GPU *>(
-                        thrust::raw_pointer_cast(&projHamBlockSP[0])),
+                        thrust::raw_pointer_cast(&projHamBlockFP32[0])),
                       reinterpret_cast<dataTypes::numberFP32GPU *>(
-                        thrust::raw_pointer_cast(&projHamBlockSP[0])),
+                        thrust::raw_pointer_cast(&projHamBlockFP32[0])),
                       D * B,
                       streamDataMove);
                   }
@@ -3112,9 +3112,9 @@ namespace dftfe
                               cudaMemcpyDeviceToHost,
                               streamDataMove);
             else
-              cudaMemcpyAsync(projHamBlockHostSP,
+              cudaMemcpyAsync(projHamBlockHostFP32,
                               reinterpret_cast<dataTypes::numberFP32GPU *>(
-                                thrust::raw_pointer_cast(&projHamBlockSP[0])),
+                                thrust::raw_pointer_cast(&projHamBlockFP32[0])),
                               D * B * sizeof(dataTypes::numberFP32),
                               cudaMemcpyDeviceToHost,
                               streamDataMove);
@@ -3165,9 +3165,9 @@ namespace dftfe
                     // processors
                     if (!dftParameters::useGPUDirectAllReduce)
                       MPI_Allreduce(MPI_IN_PLACE,
-                                    projHamBlockHostSP,
+                                    projHamBlockHostFP32,
                                     D * B,
-                                    dataTypes::mpi_type_id(projHamBlockHostSP),
+                                    dataTypes::mpi_type_id(projHamBlockHostFP32),
                                     MPI_SUM,
                                     mpi_communicator);
 
@@ -3187,7 +3187,7 @@ namespace dftfe
                                 if (it != globalToLocalRowIdMap.end())
                                   projHamPar.local_el(it->second,
                                                       localColumnId) =
-                                    projHamBlockHostSP[j * D + i - jvec];
+                                    projHamBlockHostFP32[j * D + i - jvec];
                               }
                           }
                   }
@@ -3197,7 +3197,7 @@ namespace dftfe
       }
 
     CUDACHECK(cudaFreeHost(projHamBlockHost));
-    CUDACHECK(cudaFreeHost(projHamBlockHostSP));
+    CUDACHECK(cudaFreeHost(projHamBlockHostFP32));
 
     // return cublas handle to default stream
     cublasSetStream(handle, NULL);
