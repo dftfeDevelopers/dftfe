@@ -673,7 +673,7 @@ namespace dftfe
 #if defined(DFTFE_WITH_GPU)
         if (std::is_same<NumberType, cuDoubleComplex>::value)
           {
-            copyComplexArrToRealArrsGPU(
+            cudaUtils::copyComplexArrToRealArrsGPU(
               d_locallyOwnedSize,
               d_vecData,
               ((dealii::LinearAlgebra::distributed::
@@ -697,7 +697,7 @@ namespace dftfe
               ->update_ghost_values();
 
 
-            copyRealArrsToComplexArrGPU(
+            cudaUtils::copyRealArrsToComplexArrGPU(
               d_ghostSize,
               ((dealii::LinearAlgebra::distributed::
                   Vector<double, dealii::MemorySpace::CUDA> *)
@@ -713,7 +713,7 @@ namespace dftfe
           }
         else if (std::is_same<NumberType, cuFloatComplex>::value)
           {
-            copyComplexArrToRealArrsGPU(
+            cudaUtils::copyComplexArrToRealArrsGPU(
               d_locallyOwnedSize,
               d_vecData,
               ((dealii::LinearAlgebra::distributed::
@@ -736,7 +736,7 @@ namespace dftfe
               ->update_ghost_values();
 
 
-            copyRealArrsToComplexArrGPU(
+            cudaUtils::copyRealArrsToComplexArrGPU(
               d_ghostSize,
               ((dealii::LinearAlgebra::distributed::
                   Vector<float, dealii::MemorySpace::CUDA> *)
@@ -788,7 +788,7 @@ namespace dftfe
 #if defined(DFTFE_WITH_GPU)
         if (std::is_same<NumberType, cuDoubleComplex>::value)
           {
-            copyComplexArrToRealArrsGPU(
+            cudaUtils::copyComplexArrToRealArrsGPU(
               d_locallyOwnedSize,
               d_vecData,
               ((dealii::LinearAlgebra::distributed::
@@ -812,7 +812,7 @@ namespace dftfe
           }
         else if (std::is_same<NumberType, cuFloatComplex>::value)
           {
-            copyComplexArrToRealArrsGPU(
+            cudaUtils::copyComplexArrToRealArrsGPU(
               d_locallyOwnedSize,
               d_vecData,
               ((dealii::LinearAlgebra::distributed::
@@ -883,7 +883,7 @@ namespace dftfe
                d_dealiiVecTempDataImag)
               ->update_ghost_values_finish();
 
-            copyRealArrsToComplexArrGPU(
+            cudaUtils::copyRealArrsToComplexArrGPU(
               d_ghostSize,
               ((dealii::LinearAlgebra::distributed::
                   Vector<double, dealii::MemorySpace::CUDA> *)
@@ -909,7 +909,7 @@ namespace dftfe
                d_dealiiVecTempDataImag)
               ->update_ghost_values_finish();
 
-            copyRealArrsToComplexArrGPU(
+            cudaUtils::copyRealArrsToComplexArrGPU(
               d_ghostSize,
               ((dealii::LinearAlgebra::distributed::
                   Vector<float, dealii::MemorySpace::CUDA> *)
@@ -961,7 +961,7 @@ namespace dftfe
 #if defined(DFTFE_WITH_GPU)
         if (std::is_same<NumberType, cuDoubleComplex>::value)
           {
-            copyComplexArrToRealArrsGPU(
+            cudaUtils::copyComplexArrToRealArrsGPU(
               (d_locallyOwnedSize + d_ghostSize),
               d_vecData,
               ((dealii::LinearAlgebra::distributed::
@@ -983,7 +983,7 @@ namespace dftfe
                d_dealiiVecTempDataImag)
               ->compress(dealii::VectorOperation::add);
 
-            copyRealArrsToComplexArrGPU(
+            cudaUtils::copyRealArrsToComplexArrGPU(
               d_locallyOwnedSize,
               ((dealii::LinearAlgebra::distributed::
                   Vector<double, dealii::MemorySpace::CUDA> *)
@@ -997,7 +997,7 @@ namespace dftfe
           }
         else if (std::is_same<NumberType, cuFloatComplex>::value)
           {
-            copyComplexArrToRealArrsGPU(
+            cudaUtils::copyComplexArrToRealArrsGPU(
               (d_locallyOwnedSize + d_ghostSize),
               d_vecData,
               ((dealii::LinearAlgebra::distributed::
@@ -1019,7 +1019,7 @@ namespace dftfe
                d_dealiiVecTempDataImag)
               ->compress(dealii::VectorOperation::add);
 
-            copyRealArrsToComplexArrGPU(
+            cudaUtils::copyRealArrsToComplexArrGPU(
               d_locallyOwnedSize,
               ((dealii::LinearAlgebra::distributed::
                   Vector<float, dealii::MemorySpace::CUDA> *)
@@ -1068,7 +1068,7 @@ namespace dftfe
 #if defined(DFTFE_WITH_GPU)
         if (std::is_same<NumberType, cuDoubleComplex>::value)
           {
-            copyComplexArrToRealArrsGPU(
+            cudaUtils::copyComplexArrToRealArrsGPU(
               (d_locallyOwnedSize + d_ghostSize),
               d_vecData,
               ((dealii::LinearAlgebra::distributed::
@@ -1092,7 +1092,7 @@ namespace dftfe
           }
         else if (std::is_same<NumberType, cuFloatComplex>::value)
           {
-            copyComplexArrToRealArrsGPU(
+            cudaUtils::copyComplexArrToRealArrsGPU(
               (d_locallyOwnedSize + d_ghostSize),
               d_vecData,
               ((dealii::LinearAlgebra::distributed::
@@ -1161,7 +1161,7 @@ namespace dftfe
                d_dealiiVecTempDataImag)
               ->compress_finish(dealii::VectorOperation::add);
 
-            copyRealArrsToComplexArrGPU(
+            cudaUtils::copyRealArrsToComplexArrGPU(
               d_locallyOwnedSize,
               ((dealii::LinearAlgebra::distributed::
                   Vector<double, dealii::MemorySpace::CUDA> *)
@@ -1185,7 +1185,7 @@ namespace dftfe
                d_dealiiVecTempDataImag)
               ->compress_finish(dealii::VectorOperation::add);
 
-            copyRealArrsToComplexArrGPU(
+            cudaUtils::copyRealArrsToComplexArrGPU(
               d_locallyOwnedSize,
               ((dealii::LinearAlgebra::distributed::
                   Vector<float, dealii::MemorySpace::CUDA> *)

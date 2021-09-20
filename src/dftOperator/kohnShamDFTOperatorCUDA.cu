@@ -59,12 +59,11 @@ namespace dftfe
 #  endif
 
 
-    template <typename numberType>
     __global__ void
     scaleCUDAKernel(const unsigned int contiguousBlockSize,
                     const unsigned int numContiguousBlocks,
                     const double       scalar,
-                    numberType *       srcArray,
+                    double *           srcArray,
                     const double *     scalingVector)
     {
       const unsigned int globalThreadId = blockIdx.x * blockDim.x + threadIdx.x;
@@ -79,7 +78,32 @@ namespace dftfe
         {
           *(srcArray + (localThreadId + gangBlockId * contiguousBlockSize)) =
             *(srcArray + (localThreadId + gangBlockId * contiguousBlockSize)) *
-            (*(scalingVector + gangBlockId) * numberType(scalar));
+            (*(scalingVector + gangBlockId) * scalar);
+        }
+    }
+
+    __global__ void
+    scaleCUDAKernel(const unsigned int contiguousBlockSize,
+                    const unsigned int numContiguousBlocks,
+                    const double       scalar,
+                    cuDoubleComplex *  srcArray,
+                    const double *     scalingVector)
+    {
+      const unsigned int globalThreadId = blockIdx.x * blockDim.x + threadIdx.x;
+      const unsigned int numGangsPerContiguousBlock =
+        (contiguousBlockSize + (blockDim.x - 1)) / blockDim.x;
+      const unsigned int gangBlockId = blockIdx.x / numGangsPerContiguousBlock;
+      const unsigned int localThreadId =
+        globalThreadId - gangBlockId * numGangsPerContiguousBlock * blockDim.x;
+      if (globalThreadId <
+            numContiguousBlocks * numGangsPerContiguousBlock * blockDim.x &&
+          localThreadId < contiguousBlockSize)
+        {
+          *(srcArray + (localThreadId + gangBlockId * contiguousBlockSize)) =
+            cuCmul(
+              *(srcArray + (localThreadId + gangBlockId * contiguousBlockSize)),
+              make_cuDoubleComplex((*(scalingVector + gangBlockId) * scalar),
+                                   0.0));
         }
     }
 
@@ -130,14 +154,13 @@ namespace dftfe
         }
     }
 
-    template <typename numberType, typename numberTypeFP32>
     __global__ void
     stridedCopyFromBlockKernelFP32(const unsigned int BVec,
-                                 const unsigned int M,
-                                 const numberType * xVec,
-                                 const unsigned int N,
-                                 numberTypeFP32 *   yVec,
-                                 const unsigned int startingXVecId)
+                                   const unsigned int M,
+                                   const double *     xVec,
+                                   const unsigned int N,
+                                   float *            yVec,
+                                   const unsigned int startingXVecId)
     {
       const unsigned int globalThreadId = blockIdx.x * blockDim.x + threadIdx.x;
       const unsigned int numGangsPerBVec = (BVec + blockDim.x - 1) / blockDim.x;
@@ -153,11 +176,34 @@ namespace dftfe
         }
     }
 
-    template <typename numberType, typename numberTypeFP32>
+    __global__ void
+    stridedCopyFromBlockKernelFP32(const unsigned int     BVec,
+                                   const unsigned int     M,
+                                   const cuDoubleComplex *xVec,
+                                   const unsigned int     N,
+                                   cuFloatComplex *       yVec,
+                                   const unsigned int     startingXVecId)
+    {
+      const unsigned int globalThreadId = blockIdx.x * blockDim.x + threadIdx.x;
+      const unsigned int numGangsPerBVec = (BVec + blockDim.x - 1) / blockDim.x;
+      const unsigned int gangBlockId     = blockIdx.x / numGangsPerBVec;
+      const unsigned int localThreadId =
+        globalThreadId - gangBlockId * numGangsPerBVec * blockDim.x;
+
+      if (globalThreadId < M * numGangsPerBVec * blockDim.x &&
+          localThreadId < BVec)
+        {
+          *(yVec + gangBlockId * N + startingXVecId + localThreadId) =
+            cuComplexDoubleToFloat(
+              *(xVec + gangBlockId * BVec + localThreadId));
+        }
+    }
+
+
     __global__ void
     convDoubleArrToFloatArr(const unsigned int size,
-                            const numberType * doubleArr,
-                            numberTypeFP32 *   floatArr)
+                            const double *     doubleArr,
+                            float *            floatArr)
     {
       const unsigned int globalThreadId = blockIdx.x * blockDim.x + threadIdx.x;
 
@@ -166,12 +212,23 @@ namespace dftfe
         floatArr[index] = doubleArr[index];
     }
 
-
-    template <typename numberType, typename numberTypeFP32>
     __global__ void
-    convFloatArrToDoubleArr(const unsigned int    size,
-                            const numberTypeFP32 *floatArr,
-                            numberType *          doubleArr)
+    convDoubleArrToFloatArr(const unsigned int     size,
+                            const cuDoubleComplex *doubleArr,
+                            cuFloatComplex *       floatArr)
+    {
+      const unsigned int globalThreadId = blockIdx.x * blockDim.x + threadIdx.x;
+
+      for (unsigned int index = globalThreadId; index < size;
+           index += blockDim.x * gridDim.x)
+        floatArr[index] = cuComplexDoubleToFloat(doubleArr[index]);
+    }
+
+
+    __global__ void
+    convFloatArrToDoubleArr(const unsigned int size,
+                            const float *      floatArr,
+                            double *           doubleArr)
     {
       const unsigned int globalThreadId = blockIdx.x * blockDim.x + threadIdx.x;
 
@@ -181,13 +238,25 @@ namespace dftfe
     }
 
 
-    template <typename numberType, typename numberTypeFP32>
     __global__ void
-    copyFloatArrToDoubleArrLocallyOwned(const unsigned int contiguousBlockSize,
-                                        const unsigned int numContiguousBlocks,
-                                        const numberTypeFP32 *floatArr,
+    convFloatArrToDoubleArr(const unsigned int    size,
+                            const cuFloatComplex *floatArr,
+                            cuDoubleComplex *     doubleArr)
+    {
+      const unsigned int globalThreadId = blockIdx.x * blockDim.x + threadIdx.x;
+
+      for (unsigned int index = globalThreadId; index < size;
+           index += blockDim.x * gridDim.x)
+        doubleArr[index] = cuComplexFloatToDouble(floatArr[index]);
+    }
+
+
+    __global__ void
+    copyFloatArrToDoubleArrLocallyOwned(const unsigned int  contiguousBlockSize,
+                                        const unsigned int  numContiguousBlocks,
+                                        const float *       floatArr,
                                         const unsigned int *locallyOwnedFlagArr,
-                                        numberType *        doubleArr)
+                                        double *            doubleArr)
     {
       const unsigned int globalThreadId = blockIdx.x * blockDim.x + threadIdx.x;
       const unsigned int numberEntries =
@@ -199,6 +268,26 @@ namespace dftfe
           unsigned int blockIndex = index / contiguousBlockSize;
           if (locallyOwnedFlagArr[blockIndex] == 1)
             doubleArr[index] = floatArr[index];
+        }
+    }
+
+    __global__ void
+    copyFloatArrToDoubleArrLocallyOwned(const unsigned int contiguousBlockSize,
+                                        const unsigned int numContiguousBlocks,
+                                        const cuFloatComplex *floatArr,
+                                        const unsigned int *locallyOwnedFlagArr,
+                                        cuDoubleComplex *   doubleArr)
+    {
+      const unsigned int globalThreadId = blockIdx.x * blockDim.x + threadIdx.x;
+      const unsigned int numberEntries =
+        numContiguousBlocks * contiguousBlockSize;
+
+      for (unsigned int index = globalThreadId; index < numberEntries;
+           index += blockDim.x * gridDim.x)
+        {
+          unsigned int blockIndex = index / contiguousBlockSize;
+          if (locallyOwnedFlagArr[blockIndex] == 1)
+            doubleArr[index] = cuComplexFloatToDouble(floatArr[index]);
         }
     }
 
@@ -226,13 +315,12 @@ namespace dftfe
         }
     }
 
-    template <typename numberType>
     __global__ void
     daxpyAtomicAddKernel(
       const unsigned int                     contiguousBlockSize,
       const unsigned int                     numContiguousBlocks,
-      const numberType *                     addFromVec,
-      numberType *                           addToVec,
+      const double *                         addFromVec,
+      double *                               addToVec,
       const dealii::types::global_dof_index *addToVecStartingContiguousBlockIds)
     {
       const unsigned int globalThreadId = blockIdx.x * blockDim.x + threadIdx.x;
@@ -247,6 +335,65 @@ namespace dftfe
           atomicAdd(&addToVec[addToVecStartingContiguousBlockIds[blockIndex] +
                               intraBlockIndex],
                     addFromVec[index]);
+        }
+    }
+
+
+    __global__ void
+    daxpyAtomicAddKernel(
+      const unsigned int                     contiguousBlockSize,
+      const unsigned int                     numContiguousBlocks,
+      const double *                         addFromVec,
+      double *                               addToVecReal,
+      double *                               addToVecImag,
+      const dealii::types::global_dof_index *addToVecStartingContiguousBlockIds)
+    {
+      const unsigned int globalThreadId = blockIdx.x * blockDim.x + threadIdx.x;
+      const unsigned int numberEntries =
+        numContiguousBlocks * contiguousBlockSize;
+
+      for (unsigned int index = globalThreadId; index < numberEntries;
+           index += blockDim.x * gridDim.x)
+        {
+          unsigned int blockIndex      = index / contiguousBlockSize;
+          unsigned int intraBlockIndex = index % contiguousBlockSize;
+          atomicAdd(
+            &addToVecReal[addToVecStartingContiguousBlockIds[blockIndex] +
+                          intraBlockIndex],
+            addFromVec[index]);
+          atomicAdd(
+            &addToVecImag[addToVecStartingContiguousBlockIds[blockIndex] +
+                          intraBlockIndex],
+            addFromVec[index]);
+        }
+    }
+
+    __global__ void
+    daxpyAtomicAddKernel(
+      const unsigned int                     contiguousBlockSize,
+      const unsigned int                     numContiguousBlocks,
+      const cuDoubleComplex *                addFromVec,
+      double *                               addToVecReal,
+      double *                               addToVecImag,
+      const dealii::types::global_dof_index *addToVecStartingContiguousBlockIds)
+    {
+      const unsigned int globalThreadId = blockIdx.x * blockDim.x + threadIdx.x;
+      const unsigned int numberEntries =
+        numContiguousBlocks * contiguousBlockSize;
+
+      for (unsigned int index = globalThreadId; index < numberEntries;
+           index += blockDim.x * gridDim.x)
+        {
+          unsigned int blockIndex      = index / contiguousBlockSize;
+          unsigned int intraBlockIndex = index % contiguousBlockSize;
+          atomicAdd(
+            &addToVecReal[addToVecStartingContiguousBlockIds[blockIndex] +
+                          intraBlockIndex],
+            addFromVec[index].x);
+          atomicAdd(
+            &addToVecImag[addToVecStartingContiguousBlockIds[blockIndex] +
+                          intraBlockIndex],
+            addFromVec[index].y);
         }
     }
 
@@ -356,13 +503,12 @@ namespace dftfe
         }
     }
 
-    template <typename numberType>
     __global__ void
     addNonLocalContributionCUDAKernel(
       const dealii::types::global_dof_index contiguousBlockSize,
       const dealii::types::global_dof_index numContiguousBlocks,
-      const numberType *                    xVec,
-      numberType *                          yVec,
+      const double *                        xVec,
+      double *                              yVec,
       const unsigned int *                  xVecToyVecBlockIdMap)
     {
       const dealii::types::global_dof_index globalThreadId =
@@ -382,7 +528,33 @@ namespace dftfe
         }
     }
 
+    __global__ void
+    addNonLocalContributionCUDAKernel(
+      const dealii::types::global_dof_index contiguousBlockSize,
+      const dealii::types::global_dof_index numContiguousBlocks,
+      const cuDoubleComplex *               xVec,
+      cuDoubleComplex *                     yVec,
+      const unsigned int *                  xVecToyVecBlockIdMap)
+    {
+      const dealii::types::global_dof_index globalThreadId =
+        blockIdx.x * blockDim.x + threadIdx.x;
+      const dealii::types::global_dof_index numberEntries =
+        numContiguousBlocks * contiguousBlockSize;
 
+      for (unsigned int index = globalThreadId; index < numberEntries;
+           index += blockDim.x * gridDim.x)
+        {
+          dealii::types::global_dof_index blockIndex =
+            index / contiguousBlockSize;
+          dealii::types::global_dof_index intraBlockIndex =
+            index % contiguousBlockSize;
+          yVec[xVecToyVecBlockIdMap[blockIndex] * contiguousBlockSize +
+               intraBlockIndex] =
+            cuCadd(yVec[xVecToyVecBlockIdMap[blockIndex] * contiguousBlockSize +
+                        intraBlockIndex],
+                   xVec[index]);
+        }
+    }
   } // namespace
 
   //
@@ -1827,42 +1999,40 @@ namespace dftfe
     //
     // scale src vector with M^{-1/2}
     //
-    scaleCUDAKernel<dataTypes::numberGPU>
-      <<<(numberWaveFunctions + 255) / 256 * localVectorSize, 256>>>(
-        numberWaveFunctions,
-        localVectorSize,
-        scalar,
-        src.begin(),
-        thrust::raw_pointer_cast(&d_invSqrtMassVectorDevice[0]));
+    scaleCUDAKernel<<<(numberWaveFunctions + 255) / 256 * localVectorSize,
+                      256>>>(numberWaveFunctions,
+                             localVectorSize,
+                             scalar,
+                             src.begin(),
+                             thrust::raw_pointer_cast(
+                               &d_invSqrtMassVectorDevice[0]));
 
     if (scaleFlag)
       {
-        scaleCUDAKernel<dataTypes::numberGPU>
-          <<<(numberWaveFunctions + 255) / 256 * localVectorSize, 256>>>(
-            numberWaveFunctions,
-            localVectorSize,
-            1.0,
-            dst.begin(),
-            thrust::raw_pointer_cast(&d_sqrtMassVectorDevice[0]));
+        scaleCUDAKernel<<<(numberWaveFunctions + 255) / 256 * localVectorSize,
+                          256>>>(numberWaveFunctions,
+                                 localVectorSize,
+                                 1.0,
+                                 dst.begin(),
+                                 thrust::raw_pointer_cast(
+                                   &d_sqrtMassVectorDevice[0]));
       }
 
 
     if (singlePrecCommun)
       {
-        convDoubleArrToFloatArr<dataTypes::numberGPU, dataTypes::numberFP32GPU>
-          <<<(numberWaveFunctions + 255) / 256 * localSize, 256>>>(
-            numberWaveFunctions * localSize,
-            src.begin(),
-            tempFloatArray.begin());
+        convDoubleArrToFloatArr<<<(numberWaveFunctions + 255) / 256 * localSize,
+                                  256>>>(numberWaveFunctions * localSize,
+                                         src.begin(),
+                                         tempFloatArray.begin());
         tempFloatArray.updateGhostValues();
 
         if (n_ghosts != 0)
-          convFloatArrToDoubleArr<dataTypes::numberGPU,
-                                  dataTypes::numberFP32GPU>
-            <<<(numberWaveFunctions + 255) / 256 * n_ghosts, 256>>>(
-              numberWaveFunctions * n_ghosts,
-              tempFloatArray.begin() + localSize * numberWaveFunctions,
-              src.begin() + localSize * numberWaveFunctions);
+          convFloatArrToDoubleArr<<<
+            (numberWaveFunctions + 255) / 256 * n_ghosts,
+            256>>>(numberWaveFunctions * n_ghosts,
+                   tempFloatArray.begin() + localSize * numberWaveFunctions,
+                   src.begin() + localSize * numberWaveFunctions);
       }
     else
       {
@@ -1884,30 +2054,35 @@ namespace dftfe
                                          dst.begin());
       }
 
-    getOverloadedConstraintMatrix()->distribute_slave_to_master(
-      dst, numberWaveFunctions);
+    if (std::is_same<dataTypes::number, std::complex<double>>::value)
+      getOverloadedConstraintMatrix()->distribute_slave_to_master(
+        dst,
+        thrust::raw_pointer_cast(&d_tempRealVec[0]),
+        thrust::raw_pointer_cast(&d_tempImagVec[0]),
+        numberWaveFunctions);
+    else
+      getOverloadedConstraintMatrix()->distribute_slave_to_master(
+        dst, numberWaveFunctions);
 
 
     src.zeroOutGhosts();
     if (singlePrecCommun)
       {
-        convDoubleArrToFloatArr<dataTypes::numberGPU, dataTypes::numberFP32GPU>
-          <<<(numberWaveFunctions + 255) / 256 * totalSize, 256>>>(
-            numberWaveFunctions * totalSize,
-            dst.begin(),
-            tempFloatArray.begin());
+        convDoubleArrToFloatArr<<<(numberWaveFunctions + 255) / 256 * totalSize,
+                                  256>>>(numberWaveFunctions * totalSize,
+                                         dst.begin(),
+                                         tempFloatArray.begin());
         tempFloatArray.compressAdd();
 
         // copy locally owned processor boundary nodes only to dst vector
-        copyFloatArrToDoubleArrLocallyOwned<dataTypes::numberGPU,
-                                            dataTypes::numberFP32GPU>
-          <<<(numberWaveFunctions + 255) / 256 * localSize, 256>>>(
-            numberWaveFunctions,
-            localSize,
-            tempFloatArray.begin(),
-            thrust::raw_pointer_cast(
-              &d_locallyOwnedProcBoundaryNodesVectorDevice[0]),
-            dst.begin());
+        copyFloatArrToDoubleArrLocallyOwned<<<
+          (numberWaveFunctions + 255) / 256 * localSize,
+          256>>>(numberWaveFunctions,
+                 localSize,
+                 tempFloatArray.begin(),
+                 thrust::raw_pointer_cast(
+                   &d_locallyOwnedProcBoundaryNodesVectorDevice[0]),
+                 dst.begin());
 
         dst.zeroOutGhosts();
       }
@@ -1919,26 +2094,26 @@ namespace dftfe
     //
     // M^{-1/2}*H*M^{-1/2}*X
     //
-    scaleCUDAKernel<dataTypes::numberGPU>
-      <<<(numberWaveFunctions + 255) / 256 * localVectorSize, 256>>>(
-        numberWaveFunctions,
-        localVectorSize,
-        1.0,
-        dst.begin(),
-        thrust::raw_pointer_cast(&d_invSqrtMassVectorDevice[0]));
+    scaleCUDAKernel<<<(numberWaveFunctions + 255) / 256 * localVectorSize,
+                      256>>>(numberWaveFunctions,
+                             localVectorSize,
+                             1.0,
+                             dst.begin(),
+                             thrust::raw_pointer_cast(
+                               &d_invSqrtMassVectorDevice[0]));
 
 
     //
     // unscale src M^{1/2}*X
     //
     if (doUnscalingSrc)
-      scaleCUDAKernel<dataTypes::numberGPU>
-        <<<(numberWaveFunctions + 255) / 256 * localVectorSize, 256>>>(
-          numberWaveFunctions,
-          localVectorSize,
-          1.0 / scalar,
-          src.begin(),
-          thrust::raw_pointer_cast(&d_sqrtMassVectorDevice[0]));
+      scaleCUDAKernel<<<(numberWaveFunctions + 255) / 256 * localVectorSize,
+                        256>>>(numberWaveFunctions,
+                               localVectorSize,
+                               1.0 / scalar,
+                               src.begin(),
+                               thrust::raw_pointer_cast(
+                                 &d_sqrtMassVectorDevice[0]));
   }
 
 
@@ -1967,23 +2142,23 @@ namespace dftfe
     //
     // scale src vector with M^{-1/2}
     //
-    scaleCUDAKernel<dataTypes::numberGPU>
-      <<<(numberWaveFunctions + 255) / 256 * localVectorSize, 256>>>(
-        numberWaveFunctions,
-        localVectorSize,
-        scalar,
-        src.begin(),
-        thrust::raw_pointer_cast(&d_invSqrtMassVectorDevice[0]));
+    scaleCUDAKernel<<<(numberWaveFunctions + 255) / 256 * localVectorSize,
+                      256>>>(numberWaveFunctions,
+                             localVectorSize,
+                             scalar,
+                             src.begin(),
+                             thrust::raw_pointer_cast(
+                               &d_invSqrtMassVectorDevice[0]));
 
     if (scaleFlag)
       {
-        scaleCUDAKernel<dataTypes::numberGPU>
-          <<<(numberWaveFunctions + 255) / 256 * localVectorSize, 256>>>(
-            numberWaveFunctions,
-            localVectorSize,
-            1.0,
-            dst.begin(),
-            thrust::raw_pointer_cast(&d_sqrtMassVectorDevice[0]));
+        scaleCUDAKernel<<<(numberWaveFunctions + 255) / 256 * localVectorSize,
+                          256>>>(numberWaveFunctions,
+                                 localVectorSize,
+                                 1.0,
+                                 dst.begin(),
+                                 thrust::raw_pointer_cast(
+                                   &d_sqrtMassVectorDevice[0]));
       }
 
 
@@ -2004,8 +2179,15 @@ namespace dftfe
                                          dst.begin());
       }
 
-    getOverloadedConstraintMatrix()->distribute_slave_to_master(
-      dst, numberWaveFunctions);
+    if (std::is_same<dataTypes::number, std::complex<double>>::value)
+      getOverloadedConstraintMatrix()->distribute_slave_to_master(
+        dst,
+        thrust::raw_pointer_cast(&d_tempRealVec[0]),
+        thrust::raw_pointer_cast(&d_tempImagVec[0]),
+        numberWaveFunctions);
+    else
+      getOverloadedConstraintMatrix()->distribute_slave_to_master(
+        dst, numberWaveFunctions);
 
 
     src.zeroOutGhosts();
@@ -2014,26 +2196,26 @@ namespace dftfe
     //
     // M^{-1/2}*H*M^{-1/2}*X
     //
-    scaleCUDAKernel<dataTypes::numberGPU>
-      <<<(numberWaveFunctions + 255) / 256 * localVectorSize, 256>>>(
-        numberWaveFunctions,
-        localVectorSize,
-        1.0,
-        dst.begin(),
-        thrust::raw_pointer_cast(&d_invSqrtMassVectorDevice[0]));
+    scaleCUDAKernel<<<(numberWaveFunctions + 255) / 256 * localVectorSize,
+                      256>>>(numberWaveFunctions,
+                             localVectorSize,
+                             1.0,
+                             dst.begin(),
+                             thrust::raw_pointer_cast(
+                               &d_invSqrtMassVectorDevice[0]));
 
 
     //
     // unscale src M^{1/2}*X
     //
     if (doUnscalingSrc)
-      scaleCUDAKernel<dataTypes::numberGPU>
-        <<<(numberWaveFunctions + 255) / 256 * localVectorSize, 256>>>(
-          numberWaveFunctions,
-          localVectorSize,
-          1.0 / scalar,
-          src.begin(),
-          thrust::raw_pointer_cast(&d_sqrtMassVectorDevice[0]));
+      scaleCUDAKernel<<<(numberWaveFunctions + 255) / 256 * localVectorSize,
+                        256>>>(numberWaveFunctions,
+                               localVectorSize,
+                               1.0 / scalar,
+                               src.begin(),
+                               thrust::raw_pointer_cast(
+                                 &d_sqrtMassVectorDevice[0]));
   }
 
 
@@ -2075,21 +2257,19 @@ namespace dftfe
       {
         if (chebMixedPrec)
           {
-            convDoubleArrToFloatArr<dataTypes::numberGPU,
-                                    dataTypes::numberFP32GPU>
-              <<<(numberWaveFunctions + 255) / 256 * localSize, 256>>>(
-                numberWaveFunctions * localSize,
-                src.begin(),
-                tempFloatArray.begin());
+            convDoubleArrToFloatArr<<<(numberWaveFunctions + 255) / 256 *
+                                        localSize,
+                                      256>>>(numberWaveFunctions * localSize,
+                                             src.begin(),
+                                             tempFloatArray.begin());
             tempFloatArray.updateGhostValues();
 
             if (n_ghosts != 0)
-              convFloatArrToDoubleArr<dataTypes::numberGPU,
-                                      dataTypes::numberFP32GPU>
-                <<<(numberWaveFunctions + 255) / 256 * n_ghosts, 256>>>(
-                  numberWaveFunctions * n_ghosts,
-                  tempFloatArray.begin() + localSize * numberWaveFunctions,
-                  src.begin() + localSize * numberWaveFunctions);
+              convFloatArrToDoubleArr<<<
+                (numberWaveFunctions + 255) / 256 * n_ghosts,
+                256>>>(numberWaveFunctions * n_ghosts,
+                       tempFloatArray.begin() + localSize * numberWaveFunctions,
+                       src.begin() + localSize * numberWaveFunctions);
           }
         else
           {
@@ -2123,8 +2303,15 @@ namespace dftfe
       return;
 
 
-    getOverloadedConstraintMatrix()->distribute_slave_to_master(
-      dst, numberWaveFunctions);
+    if (std::is_same<dataTypes::number, std::complex<double>>::value)
+      getOverloadedConstraintMatrix()->distribute_slave_to_master(
+        dst,
+        thrust::raw_pointer_cast(&d_tempRealVec[0]),
+        thrust::raw_pointer_cast(&d_tempImagVec[0]),
+        numberWaveFunctions);
+    else
+      getOverloadedConstraintMatrix()->distribute_slave_to_master(
+        dst, numberWaveFunctions);
 
     if (computePart2)
       return;
@@ -2133,23 +2320,21 @@ namespace dftfe
 
     if (chebMixedPrec)
       {
-        convDoubleArrToFloatArr<dataTypes::numberGPU, dataTypes::numberFP32GPU>
-          <<<(numberWaveFunctions + 255) / 256 * totalSize, 256>>>(
-            numberWaveFunctions * totalSize,
-            dst.begin(),
-            tempFloatArray.begin());
+        convDoubleArrToFloatArr<<<(numberWaveFunctions + 255) / 256 * totalSize,
+                                  256>>>(numberWaveFunctions * totalSize,
+                                         dst.begin(),
+                                         tempFloatArray.begin());
         tempFloatArray.compressAdd();
 
         // copy locally owned processor boundary nodes only to dst vector
-        copyFloatArrToDoubleArrLocallyOwned<dataTypes::numberGPU,
-                                            dataTypes::numberFP32GPU>
-          <<<(numberWaveFunctions + 255) / 256 * localSize, 256>>>(
-            numberWaveFunctions,
-            localSize,
-            tempFloatArray.begin(),
-            thrust::raw_pointer_cast(
-              &d_locallyOwnedProcBoundaryNodesVectorDevice[0]),
-            dst.begin());
+        copyFloatArrToDoubleArrLocallyOwned<<<
+          (numberWaveFunctions + 255) / 256 * localSize,
+          256>>>(numberWaveFunctions,
+                 localSize,
+                 tempFloatArray.begin(),
+                 thrust::raw_pointer_cast(
+                   &d_locallyOwnedProcBoundaryNodesVectorDevice[0]),
+                 dst.begin());
 
         dst.zeroOutGhosts();
       }
@@ -2221,9 +2406,9 @@ namespace dftfe
 
             for (unsigned int k = jvec; k < jvec + B; k += chebyBlockSize)
               {
-                stridedCopyToBlockKernel<dataTypes::numberGPU>
-                  <<<(chebyBlockSize + 255) / 256 * M, 256>>>(
-                    chebyBlockSize, M, X, N, XBlock.begin(), k);
+                stridedCopyToBlockKernel<<<(chebyBlockSize + 255) / 256 * M,
+                                           256>>>(
+                  chebyBlockSize, M, X, N, XBlock.begin(), k);
 
                 // evaluate H times XBlock^{T} and store in HXBlock^{T}
                 HXBlock.setZero();
@@ -2239,15 +2424,15 @@ namespace dftfe
                    HXBlock,
                    false);
 
-                stridedCopyFromBlockKernel<dataTypes::numberGPU>
-                  <<<(chebyBlockSize + 255) / 256 * M, 256>>>(
-                    chebyBlockSize,
-                    M,
-                    HXBlock.begin(),
-                    B,
-                    reinterpret_cast<dataTypes::numberGPU *>(
-                      thrust::raw_pointer_cast(&HXBlockFull[0])),
-                    k - jvec);
+                stridedCopyFromBlockKernel<<<(chebyBlockSize + 255) / 256 * M,
+                                             256>>>(
+                  chebyBlockSize,
+                  M,
+                  HXBlock.begin(),
+                  B,
+                  reinterpret_cast<dataTypes::numberGPU *>(
+                    thrust::raw_pointer_cast(&HXBlockFull[0])),
+                  k - jvec);
               }
 
             // Comptute local XTrunc^{T}*HXcBlock.
@@ -2461,9 +2646,9 @@ namespace dftfe
                 // wavefunction vectors
                 for (unsigned int k = jvec; k < jvec + B; k += chebyBlockSize)
                   {
-                    stridedCopyToBlockKernel<dataTypes::numberGPU>
-                      <<<(chebyBlockSize + 255) / 256 * M, 256>>>(
-                        chebyBlockSize, M, X, N, XBlock.begin(), k);
+                    stridedCopyToBlockKernel<<<(chebyBlockSize + 255) / 256 * M,
+                                               256>>>(
+                      chebyBlockSize, M, X, N, XBlock.begin(), k);
 
                     // evaluate H times XBlock^{T} and store in HXBlock^{T}
                     HXBlock.setZero();
@@ -2478,15 +2663,15 @@ namespace dftfe
                        HXBlock,
                        false);
 
-                    stridedCopyFromBlockKernel<dataTypes::numberGPU>
-                      <<<(chebyBlockSize + 255) / 256 * M, 256>>>(
-                        chebyBlockSize,
-                        M,
-                        HXBlock.begin(),
-                        B,
-                        reinterpret_cast<dataTypes::numberGPU *>(
-                          thrust::raw_pointer_cast(&HXBlockFull[0])),
-                        k - jvec);
+                    stridedCopyFromBlockKernel<<<
+                      (chebyBlockSize + 255) / 256 * M,
+                      256>>>(chebyBlockSize,
+                             M,
+                             HXBlock.begin(),
+                             B,
+                             reinterpret_cast<dataTypes::numberGPU *>(
+                               thrust::raw_pointer_cast(&HXBlockFull[0])),
+                             k - jvec);
                   }
 
                 // evalute X^{T} times HXBlock
@@ -2537,9 +2722,9 @@ namespace dftfe
                 for (unsigned int k = jvecNew; k < jvecNew + B;
                      k += chebyBlockSize)
                   {
-                    stridedCopyToBlockKernel<dataTypes::numberGPU>
-                      <<<(chebyBlockSize + 255) / 256 * M, 256>>>(
-                        chebyBlockSize, M, X, N, XBlock.begin(), k);
+                    stridedCopyToBlockKernel<<<(chebyBlockSize + 255) / 256 * M,
+                                               256>>>(
+                      chebyBlockSize, M, X, N, XBlock.begin(), k);
 
                     // evaluate H times XBlock^{T} and store in HXBlock^{T}
                     HXBlock.setZero();
@@ -2554,15 +2739,15 @@ namespace dftfe
                        HXBlock,
                        false);
 
-                    stridedCopyFromBlockKernel<dataTypes::numberGPU>
-                      <<<(chebyBlockSize + 255) / 256 * M, 256>>>(
-                        chebyBlockSize,
-                        M,
-                        HXBlock.begin(),
-                        B,
-                        reinterpret_cast<dataTypes::numberGPU *>(
-                          thrust::raw_pointer_cast(&HXBlockFull[0])),
-                        k - jvecNew);
+                    stridedCopyFromBlockKernel<<<
+                      (chebyBlockSize + 255) / 256 * M,
+                      256>>>(chebyBlockSize,
+                             M,
+                             HXBlock.begin(),
+                             B,
+                             reinterpret_cast<dataTypes::numberGPU *>(
+                               thrust::raw_pointer_cast(&HXBlockFull[0])),
+                             k - jvecNew);
                   }
 
                 // evalute X^{T} times HXBlock
@@ -2781,12 +2966,11 @@ namespace dftfe
 
     thrust::device_vector<dataTypes::numberFP32ThrustGPU> XFP32(
       M * N, dataTypes::numberFP32ThrustGPU(0.0));
-    convDoubleArrToFloatArr<dataTypes::numberGPU, dataTypes::numberFP32GPU>
-      <<<(N + 255) / 256 * M, 256>>>(
-        N * M,
-        X,
-        reinterpret_cast<dataTypes::numberFP32GPU *>(
-          thrust::raw_pointer_cast(&XFP32[0])));
+    convDoubleArrToFloatArr<<<(N + 255) / 256 * M, 256>>>(
+      N * M,
+      X,
+      reinterpret_cast<dataTypes::numberFP32GPU *>(
+        thrust::raw_pointer_cast(&XFP32[0])));
 
     dataTypes::number *projHamBlockHost;
     CUDACHECK(cudaMallocHost((void **)&projHamBlockHost,
@@ -2829,11 +3013,11 @@ namespace dftfe
             const unsigned int chebyBlockSize =
               std::min(dftParameters::chebyWfcBlockSize, N);
 
-            const dataTypes::number alpha       = dataTypes::number(1.0),
-                                    beta        = dataTypes::number(0.0);
+            const dataTypes::number alpha         = dataTypes::number(1.0),
+                                    beta          = dataTypes::number(0.0);
             const dataTypes::numberFP32 alphaFP32 = dataTypes::numberFP32(1.0),
                                         betaFP32  = dataTypes::numberFP32(0.0);
-            const unsigned int D                = N - jvec;
+            const unsigned int D                  = N - jvec;
 
             // handle edge case for the first block or the first block in the
             // band group in case of band parallelization
@@ -2883,16 +3067,15 @@ namespace dftfe
                             thrust::raw_pointer_cast(&HXBlockFull[0])),
                           k - jvec);
                     else
-                      stridedCopyFromBlockKernelFP32<dataTypes::numberGPU,
-                                                   dataTypes::numberFP32GPU>
-                        <<<(chebyBlockSize + 255) / 256 * M, 256>>>(
-                          chebyBlockSize,
-                          M,
-                          HXBlock.begin(),
-                          B,
-                          reinterpret_cast<dataTypes::numberFP32GPU *>(
-                            thrust::raw_pointer_cast(&HXBlockFullFP32[0])),
-                          k - jvec);
+                      stridedCopyFromBlockKernelFP32<<<
+                        (chebyBlockSize + 255) / 256 * M,
+                        256>>>(chebyBlockSize,
+                               M,
+                               HXBlock.begin(),
+                               B,
+                               reinterpret_cast<dataTypes::numberFP32GPU *>(
+                                 thrust::raw_pointer_cast(&HXBlockFullFP32[0])),
+                               k - jvec);
                   }
 
                 // evaluate X^{T} times HXBlockFullConj or XFP32^{T} times
@@ -2938,7 +3121,8 @@ namespace dftfe
                     reinterpret_cast<const dataTypes::numberFP32GPU *>(
                       thrust::raw_pointer_cast(&HXBlockFullFP32[0])),
                     B,
-                    reinterpret_cast<const dataTypes::numberFP32GPU *>(&betaFP32),
+                    reinterpret_cast<const dataTypes::numberFP32GPU *>(
+                      &betaFP32),
                     reinterpret_cast<dataTypes::numberFP32GPU *>(
                       thrust::raw_pointer_cast(&projHamBlockFP32[0])),
                     D);
@@ -3005,26 +3189,25 @@ namespace dftfe
                          true);
 
                     if (jvecNew + B > Noc)
-                      stridedCopyFromBlockKernel<dataTypes::numberGPU>
-                        <<<(chebyBlockSize + 255) / 256 * M, 256>>>(
-                          chebyBlockSize,
-                          M,
-                          HXBlock.begin(),
-                          B,
-                          reinterpret_cast<dataTypes::numberGPU *>(
-                            thrust::raw_pointer_cast(&HXBlockFull[0])),
-                          k - jvecNew);
+                      stridedCopyFromBlockKernel<<<
+                        (chebyBlockSize + 255) / 256 * M,
+                        256>>>(chebyBlockSize,
+                               M,
+                               HXBlock.begin(),
+                               B,
+                               reinterpret_cast<dataTypes::numberGPU *>(
+                                 thrust::raw_pointer_cast(&HXBlockFull[0])),
+                               k - jvecNew);
                     else
-                      stridedCopyFromBlockKernelFP32<dataTypes::numberGPU,
-                                                   dataTypes::numberFP32GPU>
-                        <<<(chebyBlockSize + 255) / 256 * M, 256>>>(
-                          chebyBlockSize,
-                          M,
-                          HXBlock.begin(),
-                          B,
-                          reinterpret_cast<dataTypes::numberFP32GPU *>(
-                            thrust::raw_pointer_cast(&HXBlockFullFP32[0])),
-                          k - jvecNew);
+                      stridedCopyFromBlockKernelFP32<<<
+                        (chebyBlockSize + 255) / 256 * M,
+                        256>>>(chebyBlockSize,
+                               M,
+                               HXBlock.begin(),
+                               B,
+                               reinterpret_cast<dataTypes::numberFP32GPU *>(
+                                 thrust::raw_pointer_cast(&HXBlockFullFP32[0])),
+                               k - jvecNew);
                   }
 
                 // evaluate X^{T} times HXBlockFullConj or XFP32^{T} times
@@ -3070,7 +3253,8 @@ namespace dftfe
                     reinterpret_cast<const dataTypes::numberFP32GPU *>(
                       thrust::raw_pointer_cast(&HXBlockFullFP32[0])),
                     B,
-                    reinterpret_cast<const dataTypes::numberFP32GPU *>(&betaFP32),
+                    reinterpret_cast<const dataTypes::numberFP32GPU *>(
+                      &betaFP32),
                     reinterpret_cast<dataTypes::numberFP32GPU *>(
                       thrust::raw_pointer_cast(&projHamBlockFP32Next[0])),
                     DNew);
@@ -3167,7 +3351,8 @@ namespace dftfe
                       MPI_Allreduce(MPI_IN_PLACE,
                                     projHamBlockHostFP32,
                                     D * B,
-                                    dataTypes::mpi_type_id(projHamBlockHostFP32),
+                                    dataTypes::mpi_type_id(
+                                      projHamBlockHostFP32),
                                     MPI_SUM,
                                     mpi_communicator);
 

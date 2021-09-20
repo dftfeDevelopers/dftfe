@@ -649,6 +649,11 @@ namespace dftfe
 
     /// external potential correction quadrature id
     unsigned int d_externalPotCorrQuadratureId;
+
+    /// Temporary storage for real and imaginary portions of the complex
+    /// wavefunction vectors
+    thrust::device_vector<double> d_tempRealVec;
+    thrust::device_vector<double> d_tempImagVec;
   };
 } // namespace dftfe
 #endif

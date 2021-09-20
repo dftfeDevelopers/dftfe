@@ -97,6 +97,32 @@ namespace dftfe
 
 
     inline void
+    gpuDirectAllReduceWrapper(const cuFloatComplex *send,
+                              cuFloatComplex *      recv,
+                              int                   size,
+                              cudaStream_t &        stream)
+    {}
+
+
+    inline void
+    gpuDirectAllReduceWrapper(const cuDoubleComplex *send,
+                              cuDoubleComplex *      recv,
+                              int                    size,
+                              cudaStream_t &         stream)
+    {}
+
+    inline void
+    gpuDirectAllReduceMixedPrecGroupWrapper(const cuDoubleComplex *send1,
+                                            const cuFloatComplex * send2,
+                                            cuDoubleComplex *      recv1,
+                                            cuFloatComplex *       recv2,
+                                            int                    size1,
+                                            int                    size2,
+                                            cudaStream_t &         stream)
+    {}
+
+
+    inline void
     gpuDirectAllReduceWrapper(const double *send,
                               double *      recv,
                               int           size,

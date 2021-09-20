@@ -38,28 +38,31 @@ namespace dftfe
         }                                               \
       while (0)
 
-  void
-  setupGPU();
-
   namespace cudaConstants
   {
     static const unsigned int blockSize = 256;
   }
 
-  template <typename NumberTypeComplex, typename NumberTypeReal>
-  void
-  copyComplexArrToRealArrsGPU(const dataTypes::local_size_type size,
-                              const NumberTypeComplex *        complexArr,
-                              NumberTypeReal *                 realArr,
-                              NumberTypeReal *                 imagArr);
+  namespace cudaUtils
+  {
+    void
+    setupGPU();
+
+    template <typename NumberTypeComplex, typename NumberTypeReal>
+    void
+    copyComplexArrToRealArrsGPU(const dataTypes::local_size_type size,
+                                const NumberTypeComplex *        complexArr,
+                                NumberTypeReal *                 realArr,
+                                NumberTypeReal *                 imagArr);
 
 
-  template <typename NumberTypeComplex, typename NumberTypeReal>
-  void
-  copyRealArrsToComplexArrGPU(const dataTypes::local_size_type size,
-                              const NumberTypeReal *           realArr,
-                              const NumberTypeReal *           imagArr,
-                              NumberTypeComplex *              complexArr);
+    template <typename NumberTypeComplex, typename NumberTypeReal>
+    void
+    copyRealArrsToComplexArrGPU(const dataTypes::local_size_type size,
+                                const NumberTypeReal *           realArr,
+                                const NumberTypeReal *           imagArr,
+                                NumberTypeComplex *              complexArr);
+  } // namespace cudaUtils
 
 } // namespace dftfe
 

@@ -140,7 +140,7 @@ namespace dftfe
                                            double *               tempImag,
                                            cudaStream_t &         stream)
   {
-    copyComplexArrToRealArrsGPU(size, send, tempReal, tempImag);
+    cudaUtils::copyComplexArrToRealArrsGPU(size, send, tempReal, tempImag);
 #  ifdef DFTFE_WITH_NCCL
     ncclGroupStart();
     NCCLCHECK(ncclAllReduce((const void *)tempReal,
@@ -160,7 +160,7 @@ namespace dftfe
     ncclGroupEnd();
 #  endif
 
-    copyRealArrsToComplexArrGPU(size, tempReal, tempImag, recv);
+    cudaUtils::copyRealArrsToComplexArrGPU(size, tempReal, tempImag, recv);
     return 0;
   }
 
@@ -172,7 +172,7 @@ namespace dftfe
                                            float *               tempImag,
                                            cudaStream_t &        stream)
   {
-    copyComplexArrToRealArrsGPU(size, send, tempReal, tempImag);
+    cudaUtils::copyComplexArrToRealArrsGPU(size, send, tempReal, tempImag);
 #  ifdef DFTFE_WITH_NCCL
     ncclGroupStart();
     NCCLCHECK(ncclAllReduce((const void *)tempReal,
@@ -192,7 +192,7 @@ namespace dftfe
     ncclGroupEnd();
 #  endif
 
-    copyRealArrsToComplexArrGPU(size, tempReal, tempImag, recv);
+    cudaUtils::copyRealArrsToComplexArrGPU(size, tempReal, tempImag, recv);
     return 0;
   }
 
@@ -241,9 +241,9 @@ namespace dftfe
     float *                tempImag2,
     cudaStream_t &         stream)
   {
-    copyComplexArrToRealArrsGPU(size1, send1, tempReal1, tempImag1);
+    cudaUtils::copyComplexArrToRealArrsGPU(size1, send1, tempReal1, tempImag1);
 
-    copyComplexArrToRealArrsGPU(size2, send2, tempReal2, tempImag2);
+    cudaUtils::copyComplexArrToRealArrsGPU(size2, send2, tempReal2, tempImag2);
 
 #  ifdef DFTFE_WITH_NCCL
     ncclGroupStart();
@@ -278,9 +278,9 @@ namespace dftfe
     ncclGroupEnd();
 #  endif
 
-    copyRealArrsToComplexArrGPU(size1, tempReal1, tempImag1, recv1);
+    cudaUtils::copyRealArrsToComplexArrGPU(size1, tempReal1, tempImag1, recv1);
 
-    copyRealArrsToComplexArrGPU(size2, tempReal2, tempImag2, recv2);
+    cudaUtils::copyRealArrsToComplexArrGPU(size2, tempReal2, tempImag2, recv2);
 
     return 0;
   }

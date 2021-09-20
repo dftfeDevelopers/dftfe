@@ -103,6 +103,11 @@ namespace dftfe
       distribute_slave_to_master(distributedGPUVec<double> &fieldVector,
                                  const unsigned int         blockSize) const;
 
+      inline void
+      distribute_slave_to_master(
+        distributedGPUVec<cuDoubleComplex> &fieldVector,
+        const unsigned int                  blockSize) const
+      {}
 
       /**
        * @brief transfers the contributions of slave nodes to master nodes using the constraint equation
@@ -121,6 +126,13 @@ namespace dftfe
         double *                            tempImag,
         const unsigned int                  blockSize) const;
 
+      inline void
+      distribute_slave_to_master(distributedGPUVec<double> &fieldVector,
+                                 double *                   tempReal,
+                                 double *                   tempImag,
+                                 const unsigned int         blockSize) const
+      {}
+
 
       /**
        * @brief transfers the contributions of slave nodes to master nodes using the constraint equation
@@ -133,11 +145,10 @@ namespace dftfe
        * @param blockSize number of components for a given node
        */
       void
-      distribute_slave_to_master(
-        distributedGPUVec<cuFloatComplex> &fieldVector,
-        float *                            tempReal,
-        float *                            tempImag,
-        const unsigned int                  blockSize) const;
+      distribute_slave_to_master(distributedGPUVec<cuFloatComplex> &fieldVector,
+                                 float *                            tempReal,
+                                 float *                            tempImag,
+                                 const unsigned int blockSize) const;
 
 
       /**
@@ -149,7 +160,7 @@ namespace dftfe
       template <typename NumberType>
       void
       set_zero(distributedGPUVec<NumberType> &fieldVector,
-               const unsigned int         blockSize) const;
+               const unsigned int             blockSize) const;
 
       /**
        * clear data members

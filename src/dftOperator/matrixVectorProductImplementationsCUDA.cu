@@ -36,16 +36,16 @@ kohnShamDFTOperatorCUDAClass<FEOrder, FEOrderElectro>::
   const unsigned int totalLocallyOwnedCells =
     dftPtr->matrix_free_data.n_physical_cells();
 
-  copyCUDAKernel<dataTypes::numberGPU>
-    <<<(numberWaveFunctions + 255) / 256 * totalLocallyOwnedCells *
-         d_numberNodesPerElement,
-       256>>>(numberWaveFunctions,
-              totalLocallyOwnedCells * d_numberNodesPerElement,
-              src,
-              reinterpret_cast<dataTypes::numberGPU *>(
-                thrust::raw_pointer_cast(&d_cellWaveFunctionMatrix[0])),
-              thrust::raw_pointer_cast(
-                &d_flattenedArrayCellLocalProcIndexIdMapDevice[0]));
+  copyCUDAKernel<<<(numberWaveFunctions + 255) / 256 * totalLocallyOwnedCells *
+                     d_numberNodesPerElement,
+                   256>>>(numberWaveFunctions,
+                          totalLocallyOwnedCells * d_numberNodesPerElement,
+                          src,
+                          reinterpret_cast<dataTypes::numberGPU *>(
+                            thrust::raw_pointer_cast(
+                              &d_cellWaveFunctionMatrix[0])),
+                          thrust::raw_pointer_cast(
+                            &d_flattenedArrayCellLocalProcIndexIdMapDevice[0]));
 
 
   const dataTypes::number scalarCoeffAlpha = dataTypes::number(1.0),
@@ -86,16 +86,49 @@ kohnShamDFTOperatorCUDAClass<FEOrder, FEOrderElectro>::
   if (!(dftParameters::isPseudopotential &&
         dftPtr->d_nonLocalAtomGlobalChargeIds.size() > 0))
     {
-      daxpyAtomicAddKernel<dataTypes::numberGPU>
-        <<<(numberWaveFunctions + 255) / 256 * d_numLocallyOwnedCells *
-             d_numberNodesPerElement,
-           256>>>(numberWaveFunctions,
-                  d_numLocallyOwnedCells * d_numberNodesPerElement,
-                  reinterpret_cast<const dataTypes::numberGPU *>(
-                    thrust::raw_pointer_cast(
-                      &d_cellHamMatrixTimesWaveMatrix[0])),
-                  dst,
-                  thrust::raw_pointer_cast(
-                    &d_flattenedArrayCellLocalProcIndexIdMapDevice[0]));
+      if (std::is_same<dataTypes::number, std::complex<double>>::value)
+        {
+          cudaUtils::copyComplexArrToRealArrsGPU(
+            (d_parallelProjectorKetTimesBlockVectorDevice
+               .locallyOwnedFlattenedSize() +
+             d_parallelProjectorKetTimesBlockVectorDevice.ghostFlattenedSize()),
+            dst,
+            thrust::raw_pointer_cast(&d_tempRealVec[0]),
+            thrust::raw_pointer_cast(&d_tempImagVec[0]));
+
+
+          daxpyAtomicAddKernel<<<(numberWaveFunctions + 255) / 256 *
+                                   d_numLocallyOwnedCells *
+                                   d_numberNodesPerElement,
+                                 256>>>(
+            numberWaveFunctions,
+            d_numLocallyOwnedCells * d_numberNodesPerElement,
+            reinterpret_cast<const dataTypes::numberGPU *>(
+              thrust::raw_pointer_cast(&d_cellHamMatrixTimesWaveMatrix[0])),
+            thrust::raw_pointer_cast(&d_tempRealVec[0]),
+            thrust::raw_pointer_cast(&d_tempImagVec[1]),
+            thrust::raw_pointer_cast(
+              &d_flattenedArrayCellLocalProcIndexIdMapDevice[0]));
+
+          cudaUtils::copyRealArrsToComplexArrGPU(
+            (d_parallelProjectorKetTimesBlockVectorDevice
+               .locallyOwnedFlattenedSize() +
+             d_parallelProjectorKetTimesBlockVectorDevice.ghostFlattenedSize()),
+            thrust::raw_pointer_cast(&d_tempRealVec[0]),
+            thrust::raw_pointer_cast(&d_tempImagVec[0]),
+            dst);
+        }
+      else
+        daxpyAtomicAddKernel<<<(numberWaveFunctions + 255) / 256 *
+                                 d_numLocallyOwnedCells *
+                                 d_numberNodesPerElement,
+                               256>>>(
+          numberWaveFunctions,
+          d_numLocallyOwnedCells * d_numberNodesPerElement,
+          reinterpret_cast<const dataTypes::numberGPU *>(
+            thrust::raw_pointer_cast(&d_cellHamMatrixTimesWaveMatrix[0])),
+          dst,
+          thrust::raw_pointer_cast(
+            &d_flattenedArrayCellLocalProcIndexIdMapDevice[0]));
     }
 }
