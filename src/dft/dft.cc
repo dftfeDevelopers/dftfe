@@ -3002,9 +3002,9 @@ namespace dftfe
               }
           }
         computing_timer.enter_subsection("compute rho");
-#ifdef USE_COMPLEX
         if (dftParameters::useSymm)
           {
+#ifdef USE_COMPLEX
             symmetryPtr->computeLocalrhoOut();
             symmetryPtr->computeAndSymmetrize_rhoOut();
 
@@ -3035,40 +3035,33 @@ namespace dftfe
               d_rhoOutValuesLpspQuad,
               d_gradRhoOutValuesLpspQuad,
               true);
+#endif
           }
         else
-          compute_rhoOut(kohnShamDFTEigenOperator,
-                         (scfIter <
-                            dftParameters::spectrumSplitStartingScfIter ||
-                          scfConverged) ?
-                           false :
-                           true,
-                         scfConverged ||
-                           (scfIter == (dftParameters::numSCFIterations - 1)) ||
-                           solveLinearizedKS);
+          {
+#ifdef DFTFE_WITH_GPU
+            compute_rhoOut(
+              kohnShamDFTEigenOperatorCUDA,
+              kohnShamDFTEigenOperator,
+              (scfIter < dftParameters::spectrumSplitStartingScfIter ||
+               scfConverged) ?
+                false :
+                true,
+              scfConverged ||
+                (scfIter == (dftParameters::numSCFIterations - 1)) ||
+                solveLinearizedKS);
 #else
-
-#  ifdef DFTFE_WITH_GPU
-        compute_rhoOut(kohnShamDFTEigenOperatorCUDA,
-                       kohnShamDFTEigenOperator,
-                       (scfIter < dftParameters::spectrumSplitStartingScfIter ||
-                        scfConverged) ?
-                         false :
-                         true,
-                       scfConverged ||
-                         (scfIter == (dftParameters::numSCFIterations - 1)) ||
-                         solveLinearizedKS);
-#  else
-        compute_rhoOut(kohnShamDFTEigenOperator,
-                       (scfIter < dftParameters::spectrumSplitStartingScfIter ||
-                        scfConverged) ?
-                         false :
-                         true,
-                       scfConverged ||
-                         (scfIter == (dftParameters::numSCFIterations - 1)) ||
-                         solveLinearizedKS);
-#  endif
+            compute_rhoOut(
+              kohnShamDFTEigenOperator,
+              (scfIter < dftParameters::spectrumSplitStartingScfIter ||
+               scfConverged) ?
+                false :
+                true,
+              scfConverged ||
+                (scfIter == (dftParameters::numSCFIterations - 1)) ||
+                solveLinearizedKS);
 #endif
+          }
         computing_timer.leave_subsection("compute rho");
 
         //
@@ -3541,10 +3534,11 @@ namespace dftfe
            kPoint < (1 + dftParameters::spinPolarized) * d_kPointWeights.size();
            ++kPoint)
         {
-          vectorToolsCUDA::copyCUDAVecToHostVec(
+          cudaUtils::copyCUDAVecToHostVec(
             d_eigenVectorsFlattenedCUDA.begin() +
               kPoint * d_eigenVectorsFlattenedSTL[0].size(),
-            &d_eigenVectorsFlattenedSTL[kPoint][0],
+            reinterpret_cast<dataTypes::numberGPU *>(
+              &d_eigenVectorsFlattenedSTL[kPoint][0]),
             d_eigenVectorsFlattenedSTL[kPoint].size());
         }
 #endif

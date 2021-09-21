@@ -632,14 +632,14 @@ dftClass<FEOrder, FEOrderElectro>::kohnShamEigenSpaceCompute(
   std::shared_ptr<const dftfe::ProcessGrid> processGrid =
     elpaScala.getProcessGridDftfeScalaWrapper();
 
-  dftfe::ScaLAPACKMatrix<double> projHamPar(d_numEigenValues,
-                                            processGrid,
-                                            rowsBlockSize);
+  dftfe::ScaLAPACKMatrix<dataTypes::number> projHamPar(d_numEigenValues,
+                                                       processGrid,
+                                                       rowsBlockSize);
 
 
-  dftfe::ScaLAPACKMatrix<double> overlapMatPar(d_numEigenValues,
-                                               processGrid,
-                                               rowsBlockSize);
+  dftfe::ScaLAPACKMatrix<dataTypes::number> overlapMatPar(d_numEigenValues,
+                                                          processGrid,
+                                                          rowsBlockSize);
 
 
   if (numberRayleighRitzAvoidanceXLBOMDPasses > 0)
@@ -925,14 +925,14 @@ dftClass<FEOrder, FEOrderElectro>::kohnShamEigenSpaceOnlyRRCompute(
   std::shared_ptr<const dftfe::ProcessGrid> processGrid =
     elpaScala.getProcessGridDftfeScalaWrapper();
 
-  dftfe::ScaLAPACKMatrix<double> projHamPar(d_numEigenValues,
-                                            processGrid,
-                                            rowsBlockSize);
+  dftfe::ScaLAPACKMatrix<dataTypes::number> projHamPar(d_numEigenValues,
+                                                       processGrid,
+                                                       rowsBlockSize);
 
 
-  dftfe::ScaLAPACKMatrix<double> overlapMatPar(d_numEigenValues,
-                                               processGrid,
-                                               rowsBlockSize);
+  dftfe::ScaLAPACKMatrix<dataTypes::number> overlapMatPar(d_numEigenValues,
+                                                          processGrid,
+                                                          rowsBlockSize);
 
 
 #  ifdef DFTFE_WITH_ELPA

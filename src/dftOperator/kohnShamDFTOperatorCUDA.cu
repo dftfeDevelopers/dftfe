@@ -17,23 +17,22 @@
 // @author Phani Motamarri, Sambit Das
 //
 
-#ifndef USE_COMPLEX
-#  include <cudaHelpers.h>
-#  include <kohnShamDFTOperatorCUDA.h>
-#  include <linearAlgebraOperations.h>
-#  include <linearAlgebraOperationsInternal.h>
-#  include <linearAlgebraOperationsCUDA.h>
-#  include <vectorUtilities.h>
-#  include <dft.h>
-#  include <dftParameters.h>
-#  include <dftUtils.h>
+#include <cudaHelpers.h>
+#include <kohnShamDFTOperatorCUDA.h>
+#include <linearAlgebraOperations.h>
+#include <linearAlgebraOperationsInternal.h>
+#include <linearAlgebraOperationsCUDA.h>
+#include <vectorUtilities.h>
+#include <dft.h>
+#include <dftParameters.h>
+#include <dftUtils.h>
 
 
 namespace dftfe
 {
   namespace
   {
-#  if __CUDA_ARCH__ < 600
+#if __CUDA_ARCH__ < 600
     __device__ double
     atomicAdd(double *address, double val)
     {
@@ -56,7 +55,7 @@ namespace dftfe
 
       return __longlong_as_double(old);
     }
-#  endif
+#endif
 
 
     __global__ void
@@ -876,6 +875,18 @@ namespace dftfe
       dftPtr->matrix_free_data.get_vector_partitioner(
         dftPtr->d_densityDofHandlerIndex),
       BVec);
+
+    if (std::is_same<dataTypes::number, std::complex<double>>::value)
+      {
+        d_tempRealVec.resize(
+          (d_parallelChebyBlockVectorDevice.locallyOwnedFlattenedSize() +
+           d_parallelChebyBlockVectorDevice.ghostFlattenedSize()),
+          0.0);
+        d_tempImagVec.resize(
+          (d_parallelChebyBlockVectorDevice.locallyOwnedFlattenedSize() +
+           d_parallelChebyBlockVectorDevice.ghostFlattenedSize()),
+          0.0);
+      }
 
     const unsigned int n_ghosts =
       dftPtr->matrix_free_data
@@ -3404,10 +3415,9 @@ namespace dftfe
       }
   }
 
-#  include "computeNonLocalHamiltonianTimesXMemoryOptBatchGEMMCUDA.cu"
-#  include "hamiltonianMatrixCalculatorFlattenedCUDA.cu"
-#  include "inst.cu"
-#  include "matrixVectorProductImplementationsCUDA.cu"
-#  include "shapeFunctionDataCalculatorCUDA.cu"
+#include "computeNonLocalHamiltonianTimesXMemoryOptBatchGEMMCUDA.cu"
+#include "hamiltonianMatrixCalculatorFlattenedCUDA.cu"
+#include "inst.cu"
+#include "matrixVectorProductImplementationsCUDA.cu"
+#include "shapeFunctionDataCalculatorCUDA.cu"
 } // namespace dftfe
-#endif

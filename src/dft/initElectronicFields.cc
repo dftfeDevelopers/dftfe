@@ -141,8 +141,9 @@ dftClass<FEOrder, FEOrderElectro>::initElectronicFields()
            kPoint < (1 + dftParameters::spinPolarized) * d_kPointWeights.size();
            ++kPoint)
         {
-          vectorToolsCUDA::copyHostVecToCUDAVec(
-            &d_eigenVectorsFlattenedSTL[kPoint][0],
+          cudaUtils::copyHostVecToCUDAVec(
+            reinterpret_cast<dataTypes::numberGPU *>(
+              &d_eigenVectorsFlattenedSTL[kPoint][0]),
             d_eigenVectorsFlattenedCUDA.begin() +
               kPoint * d_eigenVectorsFlattenedSTL[0].size(),
             d_eigenVectorsFlattenedSTL[0].size());

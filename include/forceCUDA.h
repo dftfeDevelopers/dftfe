@@ -21,7 +21,6 @@
 
 #    include <headers.h>
 #    include <operatorCUDA.h>
-#    include <vectorUtilitiesCUDA.h>
 
 namespace dftfe
 {

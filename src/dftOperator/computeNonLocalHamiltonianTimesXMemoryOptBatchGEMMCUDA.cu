@@ -199,9 +199,8 @@ kohnShamDFTOperatorCUDAClass<FEOrder, FEOrderElectro>::
   if (std::is_same<dataTypes::number, std::complex<double>>::value)
     {
       cudaUtils::copyComplexArrToRealArrsGPU(
-        (d_parallelProjectorKetTimesBlockVectorDevice
-           .locallyOwnedFlattenedSize() +
-         d_parallelProjectorKetTimesBlockVectorDevice.ghostFlattenedSize()),
+        (d_parallelChebyBlockVectorDevice.locallyOwnedFlattenedSize() +
+         d_parallelChebyBlockVectorDevice.ghostFlattenedSize()),
         dst,
         thrust::raw_pointer_cast(&d_tempRealVec[0]),
         thrust::raw_pointer_cast(&d_tempImagVec[0]));
@@ -220,9 +219,8 @@ kohnShamDFTOperatorCUDAClass<FEOrder, FEOrderElectro>::
           &d_flattenedArrayCellLocalProcIndexIdMapDevice[0]));
 
       cudaUtils::copyRealArrsToComplexArrGPU(
-        (d_parallelProjectorKetTimesBlockVectorDevice
-           .locallyOwnedFlattenedSize() +
-         d_parallelProjectorKetTimesBlockVectorDevice.ghostFlattenedSize()),
+        (d_parallelChebyBlockVectorDevice.locallyOwnedFlattenedSize() +
+         d_parallelChebyBlockVectorDevice.ghostFlattenedSize()),
         thrust::raw_pointer_cast(&d_tempRealVec[0]),
         thrust::raw_pointer_cast(&d_tempImagVec[0]),
         dst);

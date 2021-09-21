@@ -72,7 +72,6 @@ SET(CUDA_SRC
   ./src/linAlg/rayleighRitzCUDA.cu
   ./src/force/forceCUDA.cu
   ./utils/constraintMatrixInfoCUDA.cu
-  ./utils/vectorTools/vectorUtilitiesCUDA.cu
   )
 
 IF (WITH_GPU)

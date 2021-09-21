@@ -29,11 +29,6 @@
 #include <force.h>
 #include <molecularDynamics.h>
 
-#ifdef DFTFE_WITH_GPU
-#  include <vectorUtilitiesCUDA.h>
-#endif
-
-
 namespace dftfe
 {
   namespace internalmd

@@ -33,7 +33,7 @@
 #  include <chebyshevOrthogonalizedSubspaceIterationSolverCUDA.h>
 #  include <constraintMatrixInfoCUDA.h>
 #  include <kohnShamDFTOperatorCUDA.h>
-#  include <vectorUtilitiesCUDA.h>
+#  include "cudaHelpers.h"
 
 #  include "gpuDirectCCLWrapper.h"
 #endif
@@ -1200,8 +1200,10 @@ namespace dftfe
 
     /// cuda eigenvectors
 #ifdef DFTFE_WITH_GPU
-    vectorToolsCUDA::cudaThrustVector d_eigenVectorsFlattenedCUDA;
-    vectorToolsCUDA::cudaThrustVector d_eigenVectorsRotFracFlattenedCUDA;
+    cudaUtils::Vector<dataTypes::numberGPU, dftfe::MemorySpace::GPU>
+      d_eigenVectorsFlattenedCUDA;
+    cudaUtils::Vector<dataTypes::numberGPU, dftfe::MemorySpace::GPU>
+      d_eigenVectorsRotFracFlattenedCUDA;
 #endif
 
     /// parallel message stream

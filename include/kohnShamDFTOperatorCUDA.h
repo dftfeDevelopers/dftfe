@@ -18,17 +18,16 @@
 
 #ifndef kohnShamDFTOperatorCUDAClass_H_
 #define kohnShamDFTOperatorCUDAClass_H_
-#ifndef USE_COMPLEX
-#  include <constants.h>
-#  include <headers.h>
-#  include <operatorCUDA.h>
+#include <constants.h>
+#include <headers.h>
+#include <operatorCUDA.h>
 
 namespace dftfe
 {
-#  ifndef DOXYGEN_SHOULD_SKIP_THIS
+#ifndef DOXYGEN_SHOULD_SKIP_THIS
   template <unsigned int T1, unsigned int T2>
   class dftClass;
-#  endif
+#endif
 
   /**
    * @brief Implementation class for building the Kohn-Sham DFT discrete operator and the action of the discrete operator on a single vector or multiple vectors
@@ -179,7 +178,7 @@ namespace dftfe
             bool                                     computePart2  = false);
 
 
-#  ifdef DEAL_II_WITH_SCALAPACK
+#ifdef DEAL_II_WITH_SCALAPACK
     /**
      * @brief Compute projection of the operator into a subspace spanned by a given basis
      *
@@ -275,7 +274,7 @@ namespace dftfe
       const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
       dftfe::ScaLAPACKMatrix<dataTypes::number> &      projHamPar,
       GPUCCLWrapper &                                  gpucclMpiCommDomain);
-#  endif
+#endif
 
 
 
@@ -656,5 +655,4 @@ namespace dftfe
     thrust::device_vector<double> d_tempImagVec;
   };
 } // namespace dftfe
-#endif
 #endif

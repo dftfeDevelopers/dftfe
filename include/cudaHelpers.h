@@ -19,7 +19,8 @@
 #    define cudaHelpers_h
 
 #    include <cuda_runtime.h>
-#    include "headers.h"
+#    include "dftfeDataTypes.h"
+#    include "memorySpace.h"
 
 namespace dftfe
 {
@@ -40,7 +41,7 @@ namespace dftfe
 
   namespace cudaConstants
   {
-    static const unsigned int blockSize = 256;
+    static const dataTypes::local_size_type blockSize = 256;
   }
 
   namespace cudaUtils
@@ -62,6 +63,113 @@ namespace dftfe
                                 const NumberTypeReal *           realArr,
                                 const NumberTypeReal *           imagArr,
                                 NumberTypeComplex *              complexArr);
+
+    template <typename NumberType>
+    void
+    copyHostVecToCUDAVec(const NumberType *               hostVec,
+                         NumberType *                     cudaVector,
+                         const dataTypes::local_size_type size);
+
+    template <typename NumberType>
+    void
+    copyCUDAVecToHostVec(const NumberType *               cudaVector,
+                         NumberType *                     hostVec,
+                         const dataTypes::local_size_type size);
+
+
+    template <typename NumberType, typename MemorySpace>
+    class Vector
+    {
+    public:
+      Vector();
+
+      Vector(const dataTypes::local_size_type size, const NumberType s);
+
+      ~Vector();
+
+      void
+      resize(const dataTypes::local_size_type size);
+
+      void
+      resize(const dataTypes::local_size_type size, const NumberType s);
+
+      void
+      set(const NumberType s);
+
+      NumberType *
+      begin();
+
+      const NumberType *
+      begin() const;
+
+      dataTypes::local_size_type
+      size() const;
+
+      void
+      clear();
+
+    private:
+      NumberType *               d_data;
+      dataTypes::local_size_type d_size;
+    };
+
+
+    template <typename NumberType>
+    NumberType
+    makeNumberFromReal(const double s);
+
+    template <>
+    inline double
+    makeNumberFromReal(const double s)
+    {
+      return s;
+    }
+
+    template <>
+    inline cuDoubleComplex
+    makeNumberFromReal(const double s)
+    {
+      return make_cuDoubleComplex(s, 0.0);
+    }
+
+    template <>
+    inline float
+    makeNumberFromReal(const double s)
+    {
+      return s;
+    }
+
+    template <>
+    inline cuFloatComplex
+    makeNumberFromReal(const double s)
+    {
+      return make_cuFloatComplex((float)s, 0.0);
+    }
+
+    inline const double
+    makeRealFromNumber(const double s)
+    {
+      return s;
+    }
+
+    inline const float
+    makeRealFromNumber(const float s)
+    {
+      return s;
+    }
+
+    inline const double
+    makeRealFromNumber(const cuDoubleComplex number)
+    {
+      return number.x;
+    }
+
+    inline const float
+    makeRealFromNumber(const cuFloatComplex number)
+    {
+      return number.x;
+    }
+
   } // namespace cudaUtils
 
 } // namespace dftfe
