@@ -53,14 +53,6 @@ namespace dftfe
      */
     virtual ~operatorDFTCUDAClass() = 0;
 
-    unsigned int
-    getScalapackBlockSize() const;
-
-    void
-    processGridSetup(const unsigned int na, const unsigned int nev);
-
-
-
     /**
      * @brief initialize operatorClass
      *
@@ -106,15 +98,6 @@ namespace dftfe
     getShapeFunctionValuesNLPInverted() = 0;
 
     virtual thrust::device_vector<double> &
-    getShapeFunctionGradientValuesX() = 0;
-
-    virtual thrust::device_vector<double> &
-    getShapeFunctionGradientValuesY() = 0;
-
-    virtual thrust::device_vector<double> &
-    getShapeFunctionGradientValuesZ() = 0;
-
-    virtual thrust::device_vector<double> &
     getShapeFunctionGradientValuesXInverted() = 0;
 
     virtual thrust::device_vector<double> &
@@ -134,6 +117,9 @@ namespace dftfe
 
     virtual thrust::device_vector<dataTypes::numberThrustGPU> &
     getCellWaveFunctionMatrix() = 0;
+
+    virtual distributedCPUVec<dataTypes::number> &
+    getParallelVecSingleComponent() = 0;
 
     virtual distributedGPUVec<dataTypes::numberGPU> &
     getParallelChebyBlockVectorDevice() = 0;
@@ -400,15 +386,9 @@ namespace dftfe
 
     thrust::device_vector<double> d_shapeFunctionValueNLPInvertedDevice;
 
-    thrust::device_vector<double> d_shapeFunctionGradientValueXDevice;
-
     thrust::device_vector<double> d_shapeFunctionGradientValueXInvertedDevice;
 
-    thrust::device_vector<double> d_shapeFunctionGradientValueYDevice;
-
     thrust::device_vector<double> d_shapeFunctionGradientValueYInvertedDevice;
-
-    thrust::device_vector<double> d_shapeFunctionGradientValueZDevice;
 
     thrust::device_vector<double> d_shapeFunctionGradientValueZInvertedDevice;
 
@@ -434,23 +414,13 @@ namespace dftfe
     distributedGPUVec<dataTypes::numberGPU>
       d_parallelProjectorKetTimesBlockVectorDevice;
 
+    distributedCPUVec<dataTypes::number> d_parallelVecSingleComponent;
+
     //
     // mpi communicator
     //
     MPI_Comm d_mpi_communicator;
-
-    /// ScaLAPACK distributed format block size
-    unsigned int d_scalapackBlockSize;
   };
-
-  /*--------------------- Inline functions --------------------------------*/
-#    ifndef DOXYGEN
-  inline unsigned int
-  operatorDFTCUDAClass::getScalapackBlockSize() const
-  {
-    return d_scalapackBlockSize;
-  }
-#    endif // ifndef DOXYGEN
 
 } // namespace dftfe
 #  endif

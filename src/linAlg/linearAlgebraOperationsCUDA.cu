@@ -486,21 +486,15 @@ namespace dftfe
     //
     std::pair<double, double>
     lanczosLowerUpperBoundEigenSpectrum(
-      operatorDFTCUDAClass &           operatorMatrix,
-      const distributedCPUVec<double> &vect,
-      distributedGPUVec<double> &      Xb,
-      distributedGPUVec<double> &      Yb,
-      distributedGPUVec<double> &      projectorKetTimesVector,
-      const unsigned int               blockSize)
+      operatorDFTCUDAClass &                   operatorMatrix,
+      distributedGPUVec<dataTypes::numberGPU> &Xb,
+      distributedGPUVec<dataTypes::numberGPU> &Yb,
+      distributedGPUVec<dataTypes::numberGPU> &projectorKetTimesVector,
+      const unsigned int                       blockSize)
     {
-#ifdef USE_COMPLEX
-      AssertThrow(false, dftUtils::ExcNotImplementedYet());
-#else
       const unsigned int this_mpi_process =
         dealii::Utilities::MPI::this_mpi_process(
           operatorMatrix.getMPICommunicator());
-
-
 
       const unsigned int lanczosIterations =
         dftParameters::reproducible_output ? 40 : 20;
@@ -512,11 +506,11 @@ namespace dftfe
       //
       // generate random vector v
       //
-      distributedCPUVec<double> vVector, fVector, v0Vector;
-      vVector.reinit(vect);
-      fVector.reinit(vect);
+      distributedCPUVec<dataTypes::number> vVector, fVector, v0Vector;
+      vVector.reinit(operatorMatrix.getParallelVecSingleComponent());
+      fVector.reinit(operatorMatrix.getParallelVecSingleComponent());
 
-      vVector = 0.0, fVector = 0.0;
+      vVector = dataTypes::number(0.0), fVector = dataTypes::number(0.0);
       // std::srand(this_mpi_process);
       const unsigned int local_size = vVector.local_size();
 
@@ -535,11 +529,11 @@ namespace dftfe
       //
       // call matrix times X
       //
-      std::vector<distributedCPUVec<double>> v(1), f(1);
+      std::vector<distributedCPUVec<dataTypes::number>> v(1), f(1);
       v[0] = vVector;
       f[0] = fVector;
 
-      distributedCPUVec<double> &vvec = v[0];
+      distributedCPUVec<dataTypes::number> &vvec = v[0];
 
       cudaMemcpy2D(Xb.begin(),
                    blockSize * sizeof(double),
@@ -553,7 +547,7 @@ namespace dftfe
       operatorMatrix.HX(
         Xb, projectorKetTimesVector, local_size, blockSize, false, 1.0, Yb);
 
-      distributedCPUVec<double> &fvec = f[0];
+      distributedCPUVec<dataTypes::number> &fvec = f[0];
       cudaMemcpy2D(fvec.begin(),
                    1 * sizeof(double),
                    Yb.begin(),
@@ -567,9 +561,11 @@ namespace dftfe
 
       alpha = fVector * vVector;
       fVector.add(-1.0 * alpha, vVector);
-      std::vector<double> T(lanczosIterations * lanczosIterations, 0.0);
+      std::vector<dataTypes::number> Tlanczos(lanczosIterations *
+                                                lanczosIterations,
+                                              0.0);
 
-      T[0]           = alpha;
+      Tlanczos[0]    = alpha;
       unsigned index = 0;
 
       // filling only lower triangular part
@@ -581,12 +577,12 @@ namespace dftfe
           v[0] = vVector, f[0] = fVector;
           // operatorMatrix.HX(v,f);
 
-          distributedCPUVec<double> &vvec = v[0];
+          distributedCPUVec<dataTypes::number> &vvec = v[0];
           cudaMemcpy2D(Xb.begin(),
-                       blockSize * sizeof(double),
+                       blockSize * sizeof(dataTypes::number),
                        vvec.begin(),
-                       1 * sizeof(double),
-                       1 * sizeof(double),
+                       1 * sizeof(dataTypes::number),
+                       1 * sizeof(dataTypes::number),
                        local_size,
                        cudaMemcpyHostToDevice);
 
@@ -594,12 +590,12 @@ namespace dftfe
           operatorMatrix.HX(
             Xb, projectorKetTimesVector, local_size, blockSize, false, 1.0, Yb);
 
-          distributedCPUVec<double> &fvec = f[0];
+          distributedCPUVec<dataTypes::number> &fvec = f[0];
           cudaMemcpy2D(fvec.begin(),
-                       1 * sizeof(double),
+                       1 * sizeof(dataTypes::number),
                        Yb.begin(),
-                       blockSize * sizeof(double),
-                       1 * sizeof(double),
+                       blockSize * sizeof(dataTypes::number),
+                       1 * sizeof(dataTypes::number),
                        local_size,
                        cudaMemcpyDeviceToHost);
 
@@ -609,9 +605,9 @@ namespace dftfe
           alpha = fVector * vVector;
           fVector.add(-1.0 * alpha, vVector);
           index += 1;
-          T[index] = beta;
+          Tlanczos[index] = beta;
           index += lanczosIterations;
-          T[index] = alpha;
+          Tlanczos[index] = alpha;
         }
 
       // eigen decomposition to find max eigen value of T matrix
@@ -622,11 +618,29 @@ namespace dftfe
       const unsigned int  lwork = 1 + 6 * n + 2 * n * n, liwork = 3 + 5 * n;
       std::vector<int>    iwork(liwork, 0);
 
+#ifdef USE_COMPLEX
+      const unsigned int                lrwork = 1 + 5 * n + 2 * n * n;
+      std::vector<double>               rwork(lrwork, 0.0);
+      std::vector<std::complex<double>> work(lwork);
+      zheevd_(&jobz,
+              &uplo,
+              &n,
+              &Tlanczos[0],
+              &lda,
+              &eigenValuesT[0],
+              &work[0],
+              &lwork,
+              &rwork[0],
+              &lrwork,
+              &iwork[0],
+              &liwork,
+              &info);
+#else
       std::vector<double> work(lwork, 0.0);
       dsyevd_(&jobz,
               &uplo,
               &n,
-              &T[0],
+              &Tlanczos[0],
               &lda,
               &eigenValuesT[0],
               &work[0],
@@ -634,6 +648,7 @@ namespace dftfe
               &iwork[0],
               &liwork,
               &info);
+#endif
 
 
       for (unsigned int i = 0; i < eigenValuesT.size(); i++)
@@ -656,7 +671,6 @@ namespace dftfe
                   (dftParameters::reproducible_output ? fvectorNorm :
                                                         fvectorNorm / 10.0));
       return (std::make_pair(lowerBound, upperBound));
-#endif
     }
 
 
@@ -675,9 +689,6 @@ namespace dftfe
                     const double               a0,
                     const bool                 mixedPrecOverall)
     {
-#ifdef USE_COMPLEX
-      AssertThrow(false, dftUtils::ExcNotImplementedYet());
-#else
       double e, c, sigma, sigma1, sigma2, gamma, gpu_time;
       e                                  = (b - a) / 2.0;
       c                                  = (b + a) / 2.0;
@@ -839,7 +850,6 @@ namespace dftfe
                  YArray.begin(),
                  totalVectorSize * sizeof(double),
                  cudaMemcpyDeviceToDevice);
-#endif
     }
 
 
@@ -864,9 +874,6 @@ namespace dftfe
                     const double               a0,
                     const bool                 mixedPrecOverall)
     {
-#ifdef USE_COMPLEX
-      AssertThrow(false, dftUtils::ExcNotImplementedYet());
-#else
       double e, c, sigma, sigma1, sigma2, gamma, gpu_time;
       e                                  = (b - a) / 2.0;
       c                                  = (b + a) / 2.0;
@@ -1464,7 +1471,6 @@ namespace dftfe
                  YArray2.begin(),
                  totalVectorSize * sizeof(double),
                  cudaMemcpyDeviceToDevice);
-#endif
     }
 
 
@@ -1482,9 +1488,6 @@ namespace dftfe
       const dftfe::ScaLAPACKMatrix<double> &           rotationMatPar,
       const bool                                       rotationMatTranspose)
     {
-#ifdef USE_COMPLEX
-      AssertThrow(false, dftUtils::ExcNotImplementedYet());
-#else
       const unsigned int maxNumLocalDofs =
         dealii::Utilities::MPI::max(M, mpiCommDomain);
 
@@ -1808,7 +1811,6 @@ namespace dftfe
 
       CUDACHECK(cudaStreamDestroy(streamCompute));
       CUDACHECK(cudaStreamDestroy(streamGPUCCL));
-#endif
     }
 
 
@@ -1827,9 +1829,6 @@ namespace dftfe
       const bool                                       rotationMatTranspose,
       const bool                                       isRotationMatLowerTria)
     {
-#ifdef USE_COMPLEX
-      AssertThrow(false, dftUtils::ExcNotImplementedYet());
-#else
       const unsigned int maxNumLocalDofs =
         dealii::Utilities::MPI::max(M, mpiCommDomain);
 
@@ -2174,7 +2173,6 @@ namespace dftfe
 
       CUDACHECK(cudaStreamDestroy(streamCompute));
       CUDACHECK(cudaStreamDestroy(streamGPUCCL));
-#endif
     }
 
     void
@@ -2190,9 +2188,6 @@ namespace dftfe
       const dftfe::ScaLAPACKMatrix<double> &           rotationMatPar,
       const bool                                       rotationMatTranspose)
     {
-#ifdef USE_COMPLEX
-      AssertThrow(false, dftUtils::ExcNotImplementedYet());
-#else
       const unsigned int maxNumLocalDofs =
         dealii::Utilities::MPI::max(M, mpiCommDomain);
 
@@ -2509,7 +2504,6 @@ namespace dftfe
 
       CUDACHECK(cudaStreamDestroy(streamCompute));
       CUDACHECK(cudaStreamDestroy(streamGPUCCL));
-#endif
     }
 
     void
@@ -2525,9 +2519,6 @@ namespace dftfe
       const dftfe::ScaLAPACKMatrix<double> &           rotationMatPar,
       const bool                                       rotationMatTranspose)
     {
-#ifdef USE_COMPLEX
-      AssertThrow(false, dftUtils::ExcNotImplementedYet());
-#else
       const unsigned int maxNumLocalDofs =
         dealii::Utilities::MPI::max(M, mpiCommDomain);
 
@@ -2846,7 +2837,6 @@ namespace dftfe
 
       CUDACHECK(cudaStreamDestroy(streamCompute));
       CUDACHECK(cudaStreamDestroy(streamGPUCCL));
-#endif
     }
 
     void
@@ -2861,9 +2851,6 @@ namespace dftfe
       const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
       dftfe::ScaLAPACKMatrix<double> &                 overlapMatPar)
     {
-#ifdef USE_COMPLEX
-      AssertThrow(false, dftUtils::ExcNotImplementedYet());
-#else
       // get global to local index maps for Scalapack matrix
       std::map<unsigned int, unsigned int> globalToLocalColumnIdMap;
       std::map<unsigned int, unsigned int> globalToLocalRowIdMap;
@@ -2984,7 +2971,6 @@ namespace dftfe
       if (numberBandGroups > 1)
         linearAlgebraOperations::internal::sumAcrossInterCommScaLAPACKMat(
           processGrid, overlapMatPar, interBandGroupComm);
-#endif
     }
 
     /////////////PSEUDO CODE for the implementation below for Overlapping
@@ -3029,10 +3015,6 @@ namespace dftfe
       const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
       dftfe::ScaLAPACKMatrix<double> &                 overlapMatPar)
     {
-#ifdef USE_COMPLEX
-      AssertThrow(false, dftUtils::ExcNotImplementedYet());
-#else
-
       // get global to local index maps for Scalapack matrix
       std::map<unsigned int, unsigned int> globalToLocalColumnIdMap;
       std::map<unsigned int, unsigned int> globalToLocalRowIdMap;
@@ -3253,7 +3235,6 @@ namespace dftfe
           linearAlgebraOperations::internal::sumAcrossInterCommScaLAPACKMat(
             processGrid, overlapMatPar, interBandGroupComm);
         }
-#endif
     }
 
 
@@ -3269,9 +3250,6 @@ namespace dftfe
       const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
       dftfe::ScaLAPACKMatrix<double> &                 overlapMatPar)
     {
-#ifdef USE_COMPLEX
-      AssertThrow(false, dftUtils::ExcNotImplementedYet());
-#else
       // get global to local index maps for Scalapack matrix
       std::map<unsigned int, unsigned int> globalToLocalColumnIdMap;
       std::map<unsigned int, unsigned int> globalToLocalRowIdMap;
@@ -3453,7 +3431,6 @@ namespace dftfe
       if (numberBandGroups > 1)
         linearAlgebraOperations::internal::sumAcrossInterCommScaLAPACKMat(
           processGrid, overlapMatPar, interBandGroupComm);
-#endif
     }
 
 
@@ -3499,9 +3476,6 @@ namespace dftfe
       const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
       dftfe::ScaLAPACKMatrix<double> &                 overlapMatPar)
     {
-#ifdef USE_COMPLEX
-      AssertThrow(false, dftUtils::ExcNotImplementedYet());
-#else
       // get global to local index maps for Scalapack matrix
       std::map<unsigned int, unsigned int> globalToLocalColumnIdMap;
       std::map<unsigned int, unsigned int> globalToLocalRowIdMap;
@@ -3824,7 +3798,6 @@ namespace dftfe
           linearAlgebraOperations::internal::sumAcrossInterCommScaLAPACKMat(
             processGrid, overlapMatPar, interBandGroupComm);
         }
-#endif
     }
 
 
@@ -3844,9 +3817,6 @@ namespace dftfe
                              std::vector<double> &      residualNorm,
                              const bool                 useBandParal)
     {
-#ifdef USE_COMPLEX
-      AssertThrow(false, dftUtils::ExcNotImplementedYet());
-#else
       // band group parallelization data structures
       const unsigned int numberBandGroups =
         dealii::Utilities::MPI::n_mpi_processes(interBandGroupComm);
@@ -3963,7 +3933,6 @@ namespace dftfe
 
       for (unsigned int iWave = 0; iWave < N; ++iWave)
         residualNorm[iWave] = std::sqrt(residualNorm[iWave]);
-#endif
     }
   } // namespace linearAlgebraOperationsCUDA
 } // namespace dftfe

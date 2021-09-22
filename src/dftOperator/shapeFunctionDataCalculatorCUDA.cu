@@ -480,13 +480,6 @@ kohnShamDFTOperatorCUDAClass<FEOrder, FEOrderElectro>::
       d_shapeFunctionGradientValueZInvertedDevice =
         d_shapeFunctionGradientValueZInverted;
 
-      if (!dftParameters::gpuMemOptMode)
-        {
-          d_shapeFunctionGradientValueXDevice = d_shapeFunctionGradientValueX;
-          d_shapeFunctionGradientValueYDevice = d_shapeFunctionGradientValueY;
-          d_shapeFunctionGradientValueZDevice = d_shapeFunctionGradientValueZ;
-        }
-
       d_shapeFunctionValueLpspDevice         = shapeFunctionValueLpsp;
       d_shapeFunctionValueInvertedLpspDevice = shapeFunctionValueInvertedLpsp;
 

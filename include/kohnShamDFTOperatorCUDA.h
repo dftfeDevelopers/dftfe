@@ -87,15 +87,6 @@ namespace dftfe
     getShapeFunctionValuesNLPInverted();
 
     thrust::device_vector<double> &
-    getShapeFunctionGradientValuesX();
-
-    thrust::device_vector<double> &
-    getShapeFunctionGradientValuesY();
-
-    thrust::device_vector<double> &
-    getShapeFunctionGradientValuesZ();
-
-    thrust::device_vector<double> &
     getShapeFunctionGradientValuesXInverted();
 
     thrust::device_vector<double> &
@@ -115,6 +106,9 @@ namespace dftfe
 
     thrust::device_vector<dataTypes::numberThrustGPU> &
     getCellWaveFunctionMatrix();
+
+    distributedCPUVec<dataTypes::number> &
+    getParallelVecSingleComponent();
 
     distributedGPUVec<dataTypes::numberGPU> &
     getParallelChebyBlockVectorDevice();
@@ -519,8 +513,9 @@ namespace dftfe
     thrust::device_vector<unsigned int>
       d_locallyOwnedProcProjectorKetBoundaryNodesVectorDevice;
 
-    bool     d_isMallocCalled = false;
-    double **d_A, **d_B, **d_C, **h_d_A, **h_d_B, **h_d_C;
+    bool                   d_isMallocCalled = false;
+    dataTypes::numberGPU **d_A, **d_B, **d_C;
+    dataTypes::number **   h_d_A, **h_d_B, **h_d_C;
 
     /**
      * @brief implementation of matrix-vector product using cell-level stiffness matrices.

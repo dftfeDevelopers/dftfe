@@ -66,12 +66,10 @@
 #  include <linearAlgebraOperationsCUDA.h>
 #endif
 
-#ifdef DFTFE_WITH_ELPA
 extern "C"
 {
-#  include <elpa.hh>
+#include <elpa.hh>
 }
-#endif
 
 
 namespace dftfe
@@ -169,7 +167,6 @@ namespace dftfe
       new molecularDynamics<FEOrder, FEOrderElectro>(this, mpi_comm_replica);
 
     d_isRestartGroundStateCalcFromChk = false;
-#ifdef DFTFE_WITH_ELPA
     int error;
 
     if (elpa_init(ELPA_API_VERSION) != ELPA_OK)
@@ -179,7 +176,6 @@ namespace dftfe
           "Error: ELPA API version not supported. Use API version 20181113.");
         exit(1);
       }
-#endif
 
 #if defined(DFTFE_WITH_GPU)
     d_gpucclMpiCommDomainPtr = new GPUCCLWrapper;
@@ -203,7 +199,6 @@ namespace dftfe
     delete geoOptCellPtr;
     delete d_mdPtr;
 
-#ifdef DFTFE_WITH_ELPA
     if (dftParameters::useELPA)
       d_elpaScala.elpaDeallocateHandles(d_numEigenValues, d_numEigenValuesRR);
 
@@ -211,7 +206,6 @@ namespace dftfe
     elpa_uninit(&error);
     AssertThrow(error == ELPA_OK,
                 dealii::ExcMessage("DFT-FE Error: elpa error."));
-#endif
 
 #if defined(DFTFE_WITH_GPU)
     delete d_gpucclMpiCommDomainPtr;
@@ -1714,9 +1708,6 @@ namespace dftfe
         if (initializeCublas)
           {
             kohnShamDFTEigenOperatorCUDA.createCublasHandle();
-
-            kohnShamDFTEigenOperatorCUDA.processGridSetup(d_numEigenValues,
-                                                          d_numEigenValuesRR);
           }
 
         AssertThrow(
@@ -1981,32 +1972,34 @@ namespace dftfe
           if (dftParameters::verbosity >= 4)
             dftUtils::printCurrentMemoryUsage(mpi_communicator,
                                               "Hamiltonian Matrix computed");
-#ifdef DFTFE_WITH_GPU
-          if (dftParameters::useGPU)
-            kohnShamEigenSpaceOnlyRRCompute(0,
-                                            kPoint,
-                                            kohnShamDFTEigenOperatorCUDA,
-                                            d_elpaScala,
-                                            d_subspaceIterationSolverCUDA,
-                                            true,
-                                            true);
-          else
-            kohnShamEigenSpaceOnlyRRCompute(0,
-                                            kPoint,
-                                            kohnShamDFTEigenOperator,
-                                            d_elpaScala,
-                                            d_subspaceIterationSolver,
-                                            true,
-                                            true);
-#else
-          kohnShamEigenSpaceOnlyRRCompute(0,
-                                          kPoint,
-                                          kohnShamDFTEigenOperator,
-                                          d_elpaScala,
-                                          d_subspaceIterationSolver,
-                                          true,
-                                          true);
-#endif
+          /*
+         #ifdef DFTFE_WITH_GPU
+                   if (dftParameters::useGPU)
+                     kohnShamEigenSpaceOnlyRRCompute(0,
+                                                     kPoint,
+                                                     kohnShamDFTEigenOperatorCUDA,
+                                                     d_elpaScala,
+                                                     d_subspaceIterationSolverCUDA,
+                                                     true,
+                                                     true);
+                   else
+                     kohnShamEigenSpaceOnlyRRCompute(0,
+                                                     kPoint,
+                                                     kohnShamDFTEigenOperator,
+                                                     d_elpaScala,
+                                                     d_subspaceIterationSolver,
+                                                     true,
+                                                     true);
+         #else
+                   kohnShamEigenSpaceOnlyRRCompute(0,
+                                                   kPoint,
+                                                   kohnShamDFTEigenOperator,
+                                                   d_elpaScala,
+                                                   d_subspaceIterationSolver,
+                                                   true,
+                                                   true);
+         #endif
+         */
         }
 
       //

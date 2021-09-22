@@ -86,21 +86,4 @@ namespace dftfe
   {
     return d_mpi_communicator;
   }
-
-
-  void
-  operatorDFTCUDAClass::processGridSetup(const unsigned int na,
-                                         const unsigned int nev)
-  {
-    std::shared_ptr<const dftfe::ProcessGrid> processGrid;
-    linearAlgebraOperations::internal::createProcessGridSquareMatrix(
-      getMPICommunicator(), na, processGrid);
-
-
-    d_scalapackBlockSize =
-      std::min(dftParameters::scalapackBlockSize,
-               (na + processGrid->get_process_grid_rows() - 1) /
-                 processGrid->get_process_grid_rows());
-  }
-
 } // namespace dftfe

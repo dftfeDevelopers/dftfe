@@ -146,25 +146,25 @@ namespace dftfe
       return make_cuFloatComplex((float)s, 0.0);
     }
 
-    inline const double
+    inline double
     makeRealFromNumber(const double s)
     {
       return s;
     }
 
-    inline const float
+    inline float
     makeRealFromNumber(const float s)
     {
       return s;
     }
 
-    inline const double
+    inline double
     makeRealFromNumber(const cuDoubleComplex number)
     {
       return number.x;
     }
 
-    inline const float
+    inline float
     makeRealFromNumber(const cuFloatComplex number)
     {
       return number.x;

@@ -438,7 +438,6 @@ namespace dftfe
             d_dealiiVecData =
               (void *)(new dealii::LinearAlgebra::distributed::
                          Vector<NumberType, dealii::MemorySpace::Host>);
-
             ((dealii::LinearAlgebra::distributed::
                 Vector<NumberType, dealii::MemorySpace::Host> *)d_dealiiVecData)
               ->reinit(*((const dealii::LinearAlgebra::distributed::

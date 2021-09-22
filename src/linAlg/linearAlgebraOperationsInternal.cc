@@ -32,7 +32,6 @@ namespace dftfe
   {
     namespace internal
     {
-#ifdef DFTFE_WITH_ELPA
       void
       setupELPAHandle(
         const MPI_Comm &mpi_communicator,
@@ -170,18 +169,18 @@ namespace dftfe
               // AssertThrow(error==ELPA_OK,
               //   dealii::ExcMessage("DFT-FE Error: ELPA Error."));
 
-#  ifdef DEBUG
+#ifdef DEBUG
             elpa_set_integer(elpaHandle, "debug", 1, &error);
             AssertThrow(error == ELPA_OK,
                         dealii::ExcMessage("DFT-FE Error: ELPA Error."));
-#  endif
+#endif
           }
 
         // d_elpaAutoTuneHandle = elpa_autotune_setup(d_elpaHandle,
         // ELPA_AUTOTUNE_FAST, ELPA_AUTOTUNE_DOMAIN_REAL, &error);   // create
         // autotune object
       }
-#endif
+
       void
       createProcessGridSquareMatrix(
         const MPI_Comm &                           mpi_communicator,
@@ -201,14 +200,12 @@ namespace dftfe
             std::min((unsigned int)std::floor(std::sqrt(numberProcs)),
                      dftParameters::scalapackParalProcs);
 
-#ifdef DFTFE_WITH_ELPA
         rowProcs =
           ((dftParameters::scalapackParalProcs == 0 || useOnlyThumbRule) &&
            dftParameters::useELPA) ?
             std::min((unsigned int)std::floor(std::sqrt(numberProcs)),
                      (unsigned int)std::floor(rowProcs * 3.0)) :
             rowProcs;
-#endif
         if (!dftParameters::reproducible_output)
           rowProcs =
             std::min(rowProcs,

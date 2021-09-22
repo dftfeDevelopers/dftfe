@@ -702,30 +702,6 @@ namespace dftfe
   template <unsigned int FEOrder, unsigned int FEOrderElectro>
   thrust::device_vector<double> &
   kohnShamDFTOperatorCUDAClass<FEOrder, FEOrderElectro>::
-    getShapeFunctionGradientValuesX()
-  {
-    return d_shapeFunctionGradientValueXDevice;
-  }
-
-  template <unsigned int FEOrder, unsigned int FEOrderElectro>
-  thrust::device_vector<double> &
-  kohnShamDFTOperatorCUDAClass<FEOrder, FEOrderElectro>::
-    getShapeFunctionGradientValuesY()
-  {
-    return d_shapeFunctionGradientValueYDevice;
-  }
-
-  template <unsigned int FEOrder, unsigned int FEOrderElectro>
-  thrust::device_vector<double> &
-  kohnShamDFTOperatorCUDAClass<FEOrder, FEOrderElectro>::
-    getShapeFunctionGradientValuesZ()
-  {
-    return d_shapeFunctionGradientValueZDevice;
-  }
-
-  template <unsigned int FEOrder, unsigned int FEOrderElectro>
-  thrust::device_vector<double> &
-  kohnShamDFTOperatorCUDAClass<FEOrder, FEOrderElectro>::
     getShapeFunctionGradientValuesXInverted()
   {
     return d_shapeFunctionGradientValueXInvertedDevice;
@@ -778,6 +754,14 @@ namespace dftfe
                                FEOrderElectro>::getCellWaveFunctionMatrix()
   {
     return d_cellWaveFunctionMatrix;
+  }
+
+  template <unsigned int FEOrder, unsigned int FEOrderElectro>
+  distributedCPUVec<dataTypes::number> &
+  kohnShamDFTOperatorCUDAClass<FEOrder,
+                               FEOrderElectro>::getParallelVecSingleComponent()
+  {
+    return d_parallelVecSingleComponent;
   }
 
   template <unsigned int FEOrder, unsigned int FEOrderElectro>
@@ -861,6 +845,12 @@ namespace dftfe
           dftPtr->d_densityDofHandlerIndex),
         numberWaveFunctions,
         flattenedArray);
+
+    vectorTools::createDealiiVector<dataTypes::number>(
+      dftPtr->matrix_free_data.get_vector_partitioner(
+        dftPtr->d_densityDofHandlerIndex),
+      1,
+      d_parallelVecSingleComponent);
 
     size_t free_t, total_t;
 

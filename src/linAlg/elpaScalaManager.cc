@@ -29,10 +29,8 @@ namespace dftfe
 {
   elpaScalaManager::elpaScalaManager(const MPI_Comm &mpi_comm_replica)
     : d_mpi_communicator(mpi_comm_replica)
-#ifdef DFTFE_WITH_ELPA
     , d_processGridCommunicatorActive(MPI_COMM_NULL)
     , d_processGridCommunicatorActivePartial(MPI_COMM_NULL)
-#endif
   {}
 
 
@@ -41,13 +39,11 @@ namespace dftfe
   //
   elpaScalaManager::~elpaScalaManager()
   {
-#ifdef DFTFE_WITH_ELPA
     if (d_processGridCommunicatorActive != MPI_COMM_NULL)
       MPI_Comm_free(&d_processGridCommunicatorActive);
 
     if (d_processGridCommunicatorActivePartial != MPI_COMM_NULL)
       MPI_Comm_free(&d_processGridCommunicatorActivePartial);
-#endif
     //
     //
     //
@@ -75,7 +71,6 @@ namespace dftfe
       std::min(dftParameters::scalapackBlockSize,
                (na + d_processGridDftfeWrapper->get_process_grid_rows() - 1) /
                  d_processGridDftfeWrapper->get_process_grid_rows());
-#ifdef DFTFE_WITH_ELPA
     if (dftParameters::useELPA)
       linearAlgebraOperations::internal::setupELPAHandle(
         getMPICommunicator(),
@@ -85,11 +80,9 @@ namespace dftfe
         na,
         d_scalapackBlockSize,
         d_elpaHandle);
-#endif
 
     if (nev != na)
       {
-#ifdef DFTFE_WITH_ELPA
         if (dftParameters::useELPA)
           linearAlgebraOperations::internal::setupELPAHandle(
             getMPICommunicator(),
@@ -99,13 +92,11 @@ namespace dftfe
             nev,
             d_scalapackBlockSize,
             d_elpaHandlePartialEigenVec);
-#endif
       }
 
     // std::cout<<"nblk: "<<d_scalapackBlockSize<<std::endl;
   }
 
-#ifdef DFTFE_WITH_ELPA
   void
   elpaScalaManager::elpaDeallocateHandles(const unsigned int na,
                                           const unsigned int nev)
@@ -124,6 +115,4 @@ namespace dftfe
                     dealii::ExcMessage("DFT-FE Error: elpa error."));
       }
   }
-#endif
-
 } // namespace dftfe

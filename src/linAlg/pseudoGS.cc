@@ -108,15 +108,9 @@ namespace dftfe
         }
 
 
-        // SConj=LConj*L^{T}
-#if (defined DFTFE_WITH_ELPA)
+      // SConj=LConj*L^{T}
       computing_timer.enter_subsection(
         "ELPA CGS cholesky, copy, and triangular matrix invert");
-#else
-      computing_timer.enter_subsection(
-        "CGS cholesky, copy, and triangular matrix invert");
-#endif
-#if (defined DFTFE_WITH_ELPA)
       dftfe::LAPACKSupport::Property overlapMatPropertyPostCholesky;
       if (dftParameters::useELPA)
         {
@@ -155,12 +149,6 @@ namespace dftfe
 
           overlapMatPropertyPostCholesky = overlapMatPar.get_property();
         }
-#else
-      overlapMatPar.compute_cholesky_factorization();
-
-      dftfe::LAPACKSupport::Property overlapMatPropertyPostCholesky =
-        overlapMatPar.get_property();
-#endif
       AssertThrow(
         overlapMatPropertyPostCholesky ==
           dftfe::LAPACKSupport::Property::lower_triangular,
@@ -216,13 +204,8 @@ namespace dftfe
       // compute LConj^{-1}
       LMatPar.invert();
 
-#if (defined DFTFE_WITH_ELPA)
       computing_timer.leave_subsection(
         "ELPA CGS cholesky, copy, and triangular matrix invert");
-#else
-      computing_timer.leave_subsection(
-        "CGS cholesky, copy, and triangular matrix invert");
-#endif
 
       // X^{T}=LConj^{-1}*X^{T} with X^{T} stored in
       // the column major format
