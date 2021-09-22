@@ -218,9 +218,15 @@ namespace dftfe
 
        
        void writeRestartFile(std::vector<double> , std::vector<double> , std::vector<double> ,
-                              std::vector<double> , std::vector<double>, double  );   
+                              std::vector<double> , std::vector<double>, int );   
 
-        void InitialiseFromRestartFile( std::vector<double> &, std::vector<double> & );                                   
+        void InitialiseFromRestartFile( std::vector<double> &, std::vector<double> & , std::vector<double> & , std::vector<double> & , std::vector<double> &  );   
+
+       void writeRestartNHCfile(std::vector<double> , std::vector<double> , std::vector<double> );   
+
+        void InitialiseFromRestartNHCFile( std::vector<double> &, std::vector<double> & , std::vector<double> &   );  
+
+        void writeTotalDisplacementFile(std::vector<dealii::Tensor<1, 3, double>>) ;                                      
         
 
 

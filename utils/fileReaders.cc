@@ -229,7 +229,7 @@ namespace dftfe
                 {
                   for (unsigned int icol = 0; icol < data[irow].size(); ++icol)
                     {
-                      outFile << std::setprecision(14) << data[irow][icol];
+                      outFile << std::setprecision(20) << data[irow][icol];
                       if (icol < data[irow].size() - 1)
                         outFile << " ";
                     }
