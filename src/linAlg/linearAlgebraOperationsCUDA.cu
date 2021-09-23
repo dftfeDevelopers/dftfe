@@ -57,6 +57,36 @@ namespace dftfe
           }
       }
 
+
+      __global__ void
+      scaleCUDAKernel(const unsigned int contiguousBlockSize,
+                      const unsigned int numContiguousBlocks,
+                      const double       scalar,
+                      cuDoubleComplex *  srcArray,
+                      const double *     scalingVector)
+      {
+        const unsigned int globalThreadId =
+          blockIdx.x * blockDim.x + threadIdx.x;
+        const unsigned int numGangsPerContiguousBlock =
+          (contiguousBlockSize + (blockDim.x - 1)) / blockDim.x;
+        const unsigned int gangBlockId =
+          blockIdx.x / numGangsPerContiguousBlock;
+        const unsigned int localThreadId =
+          globalThreadId -
+          gangBlockId * numGangsPerContiguousBlock * blockDim.x;
+        if (globalThreadId <
+              numContiguousBlocks * numGangsPerContiguousBlock * blockDim.x &&
+            localThreadId < contiguousBlockSize)
+          {
+            *(srcArray + (localThreadId + gangBlockId * contiguousBlockSize)) =
+              cuCmul(*(srcArray +
+                       (localThreadId + gangBlockId * contiguousBlockSize)),
+                     make_cuDoubleComplex(
+                       (*(scalingVector + gangBlockId) * scalar), 0.0));
+          }
+      }
+
+
       __global__ void
       convDoubleArrToFloatArr(const unsigned int size,
                               const double *     doubleArr,
@@ -67,14 +97,63 @@ namespace dftfe
 
         for (unsigned int index = globalThreadId; index < size;
              index += blockDim.x * gridDim.x)
-          {
-            floatArr[index] =
-              doubleArr[index]; //__double2float_rd(doubleArr[index]);
-          }
+          floatArr[index] = doubleArr[index];
+      }
+
+      __global__ void
+      convDoubleArrToFloatArr(const unsigned int     size,
+                              const cuDoubleComplex *doubleArr,
+                              cuFloatComplex *       floatArr)
+      {
+        const unsigned int globalThreadId =
+          blockIdx.x * blockDim.x + threadIdx.x;
+
+        for (unsigned int index = globalThreadId; index < size;
+             index += blockDim.x * gridDim.x)
+          floatArr[index] = cuComplexDoubleToFloat(doubleArr[index]);
+      }
+
+      // y=a*y, with inc=1
+      __global__ void
+      dscalCUDAKernel(const int n, double *y, const double a)
+      {
+        for (int i = blockIdx.x * blockDim.x + threadIdx.x; i < n;
+             i += blockDim.x * gridDim.x)
+          y[i] = a * y[i];
+      }
+
+      // y=a*y, with inc=1
+      __global__ void
+      dscalCUDAKernel(const int n, cuDoubleComplex *Y, const double a)
+      {
+        for (int i = blockIdx.x * blockDim.x + threadIdx.x; i < n;
+             i += blockDim.x * gridDim.x)
+          Y[i] = make_cuDoubleComplex(a * Y[i].x, a * Y[i].y);
       }
 
       // y=a*x+b*y, with inc=1
+      __global__ void
+      daxpyCUDAKernel(const int n, const double *x, double *y, const double a)
+      {
+        for (int i = blockIdx.x * blockDim.x + threadIdx.x; i < n;
+             i += blockDim.x * gridDim.x)
+          y[i] = a * x[i] + y[i];
+      }
 
+      // y=a*x+b*y, with inc=1
+      __global__ void
+      daxpyCUDAKernel(const int              n,
+                      const cuDoubleComplex *X,
+                      cuDoubleComplex *      Y,
+                      const double           a)
+      {
+        for (int i = blockIdx.x * blockDim.x + threadIdx.x; i < n;
+             i += blockDim.x * gridDim.x)
+          Y[i] = make_cuDoubleComplex(a * X[i].x + Y[i].x, a * X[i].y + Y[i].y);
+      }
+
+
+      // y=a*x+b*y, with inc=1
       __global__ void
       daxpbyCUDAKernel(const int     n,
                        const double *x,
@@ -84,9 +163,21 @@ namespace dftfe
       {
         for (int i = blockIdx.x * blockDim.x + threadIdx.x; i < n;
              i += blockDim.x * gridDim.x)
-          {
-            y[i] = a * x[i] + b * y[i];
-          }
+          y[i] = a * x[i] + b * y[i];
+      }
+
+      // y=a*x+b*y, with inc=1
+      __global__ void
+      daxpbyCUDAKernel(const int              n,
+                       const cuDoubleComplex *X,
+                       cuDoubleComplex *      Y,
+                       const double           a,
+                       const double           b)
+      {
+        for (int i = blockIdx.x * blockDim.x + threadIdx.x; i < n;
+             i += blockDim.x * gridDim.x)
+          Y[i] = make_cuDoubleComplex(a * X[i].x + b * Y[i].x,
+                                      a * X[i].y + b * Y[i].y);
       }
 
       __global__ void
@@ -115,6 +206,45 @@ namespace dftfe
             y[index] = a * x[index] + b * y[index];
             *(x + index) *= (*(invSqrtMassVec + blockIndex) * scalar);
             *(y + index) *= (*(sqrtMassVec + blockIndex));
+          }
+      }
+
+
+      __global__ void
+      combinedCUDAKernel(const unsigned int contiguousBlockSize,
+                         const unsigned int numContiguousBlocks,
+                         cuDoubleComplex *  X,
+                         cuDoubleComplex *  Y,
+                         const double       a,
+                         const double       b,
+                         const double       scalar,
+                         const double       scalarOld,
+                         const double *     invSqrtMassVec,
+                         const double *     sqrtMassVec)
+      {
+        const unsigned int globalThreadId =
+          blockIdx.x * blockDim.x + threadIdx.x;
+        const unsigned int numberEntries =
+          numContiguousBlocks * contiguousBlockSize;
+
+        for (unsigned int index = globalThreadId; index < numberEntries;
+             index += blockDim.x * gridDim.x)
+          {
+            unsigned int blockIndex = index / contiguousBlockSize;
+            *(Y + index)            = make_cuDoubleComplex(
+              (Y + index)->x * (*(sqrtMassVec + blockIndex) * 1.0 / scalarOld),
+              (Y + index)->y * (*(sqrtMassVec + blockIndex) * 1.0 / scalarOld));
+            *(X + index) = make_cuDoubleComplex(
+              (X + index)->x * (*(invSqrtMassVec + blockIndex)),
+              (X + index)->y * (*(invSqrtMassVec + blockIndex)));
+            Y[index]     = make_cuDoubleComplex(a * X[index].x + b * Y[index].x,
+                                            a * X[index].y + b * Y[index].y);
+            *(X + index) = make_cuDoubleComplex(
+              (X + index)->x * (*(invSqrtMassVec + blockIndex) * scalar),
+              (X + index)->y * (*(invSqrtMassVec + blockIndex) * scalar));
+            *(Y + index) = make_cuDoubleComplex(
+              (Y + index)->x * (*(sqrtMassVec + blockIndex)),
+              (Y + index)->y * (*(sqrtMassVec + blockIndex)));
           }
       }
 
@@ -180,28 +310,6 @@ namespace dftfe
       }
 
       __global__ void
-      copySubspaceRotatedBlockToXKernel(const unsigned int BDof,
-                                        const float *      rotatedXBlockSP,
-                                        const double *     diagValues,
-                                        double *           X,
-                                        const unsigned int startingDofId,
-                                        const unsigned int N)
-      {
-        const unsigned int numEntries = N * BDof;
-        for (int i = blockIdx.x * blockDim.x + threadIdx.x; i < numEntries;
-             i += blockDim.x * gridDim.x)
-          {
-            const unsigned int ibdof = i / N;
-            const unsigned int ivec  = i % N;
-
-            *(X + N * (startingDofId + ibdof) + ivec) =
-              *(X + N * (startingDofId + ibdof) + ivec) * diagValues[ivec] +
-              rotatedXBlockSP[ibdof * N + ivec];
-          }
-      }
-
-
-      __global__ void
       addSubspaceRotatedBlockToXKernel(const unsigned int BDof,
                                        const unsigned int BVec,
                                        const float *      rotatedXBlockSP,
@@ -219,6 +327,29 @@ namespace dftfe
 
             *(X + N * (startingDofId + ibdof) + startingVecId + ivec) +=
               rotatedXBlockSP[ibdof * BVec + ivec];
+          }
+      }
+
+      __global__ void
+      addSubspaceRotatedBlockToXKernel(const unsigned int    BDof,
+                                       const unsigned int    BVec,
+                                       const cuFloatComplex *rotatedXBlockSP,
+                                       cuDoubleComplex *     X,
+                                       const unsigned int    startingDofId,
+                                       const unsigned int    startingVecId,
+                                       const unsigned int    N)
+      {
+        const unsigned int numEntries = BVec * BDof;
+        for (int i = blockIdx.x * blockDim.x + threadIdx.x; i < numEntries;
+             i += blockDim.x * gridDim.x)
+          {
+            const unsigned int ibdof = i / BVec;
+            const unsigned int ivec  = i % BVec;
+
+            *(X + N * (startingDofId + ibdof) + startingVecId + ivec) =
+              cuCadd(*(X + N * (startingDofId + ibdof) + startingVecId + ivec),
+                     cuComplexFloatToDouble(
+                       rotatedXBlockSP[ibdof * BVec + ivec]));
           }
       }
 
@@ -240,12 +371,32 @@ namespace dftfe
           }
       }
 
+
+      __global__ void
+      computeDiagQTimesXKernel(const cuDoubleComplex *diagValues,
+                               cuDoubleComplex *      X,
+                               const unsigned int     N,
+                               const unsigned int     M)
+      {
+        const unsigned int numEntries = N * M;
+        for (int i = blockIdx.x * blockDim.x + threadIdx.x; i < numEntries;
+             i += blockDim.x * gridDim.x)
+          {
+            const unsigned int idof = i / N;
+            const unsigned int ivec = i % N;
+
+            *(X + N * idof + ivec) =
+              cuCmul(*(X + N * idof + ivec), diagValues[ivec]);
+          }
+      }
+
+      template <typename numberType>
       __global__ void
       stridedCopyToBlockKernel(const unsigned int BVec,
                                const unsigned int M,
-                               const double *     xVec,
+                               const numberType * xVec,
                                const unsigned int N,
-                               double *           yVec,
+                               numberType *       yVec,
                                const unsigned int startingXVecId)
       {
         const unsigned int globalThreadId =
@@ -265,12 +416,13 @@ namespace dftfe
       }
 
 
+      template <typename numberType>
       __global__ void
       stridedCopyFromBlockKernel(const unsigned int BVec,
                                  const unsigned int M,
-                                 const double *     xVec,
+                                 const numberType * xVec,
                                  const unsigned int N,
-                                 double *           yVec,
+                                 numberType *       yVec,
                                  const unsigned int startingXVecId)
       {
         const unsigned int globalThreadId =
@@ -289,7 +441,7 @@ namespace dftfe
           }
       }
 
-      // R=Y-X*Gamma
+      // R^2=||Y-X*Gamma||^2
       __global__ void
       computeResidualCUDAKernel(const unsigned int numVectors,
                                 const unsigned int numDofs,
@@ -312,6 +464,32 @@ namespace dftfe
           }
       }
 
+      // R^2=||Y-X*Gamma||^2
+      __global__ void
+      computeResidualCUDAKernel(const unsigned int     numVectors,
+                                const unsigned int     numDofs,
+                                const unsigned int     N,
+                                const unsigned int     startingVecId,
+                                const double *         eigenValues,
+                                const cuDoubleComplex *X,
+                                const cuDoubleComplex *Y,
+                                double *               r)
+      {
+        for (int i = blockIdx.x * blockDim.x + threadIdx.x;
+             i < numVectors * numDofs;
+             i += blockDim.x * gridDim.x)
+          {
+            const unsigned int    dofIndex  = i / numVectors;
+            const unsigned int    waveIndex = i % numVectors;
+            const cuDoubleComplex diff      = make_cuDoubleComplex(
+              Y[i].x - X[dofIndex * N + startingVecId + waveIndex].x *
+                         eigenValues[startingVecId + waveIndex],
+              Y[i].y - X[dofIndex * N + startingVecId + waveIndex].y *
+                         eigenValues[startingVecId + waveIndex]);
+            r[i] = diff.x * diff.x + diff.y * diff.y;
+          }
+      }
+
       __global__ void
       convFloatArrToDoubleArr(const unsigned int size,
                               const float *      floatArr,
@@ -323,6 +501,19 @@ namespace dftfe
         for (unsigned int index = globalThreadId; index < size;
              index += blockDim.x * gridDim.x)
           doubleArr[index] = floatArr[index];
+      }
+
+      __global__ void
+      convFloatArrToDoubleArr(const unsigned int    size,
+                              const cuFloatComplex *floatArr,
+                              cuDoubleComplex *     doubleArr)
+      {
+        const unsigned int globalThreadId =
+          blockIdx.x * blockDim.x + threadIdx.x;
+
+        for (unsigned int index = globalThreadId; index < size;
+             index += blockDim.x * gridDim.x)
+          doubleArr[index] = cuComplexFloatToDouble(floatArr[index]);
       }
 
       __global__ void
@@ -676,18 +867,19 @@ namespace dftfe
 
 
     void
-    chebyshevFilter(operatorDFTCUDAClass &     operatorMatrix,
-                    distributedGPUVec<double> &XArray,
-                    distributedGPUVec<double> &YArray,
-                    distributedGPUVec<float> & tempFloatArray,
-                    distributedGPUVec<double> &projectorKetTimesVector,
-                    const unsigned int         localVectorSize,
-                    const unsigned int         numberVectors,
-                    const unsigned int         m,
-                    const double               a,
-                    const double               b,
-                    const double               a0,
-                    const bool                 mixedPrecOverall)
+    chebyshevFilter(
+      operatorDFTCUDAClass &                       operatorMatrix,
+      distributedGPUVec<dataTypes::numberGPU> &    XArray,
+      distributedGPUVec<dataTypes::numberGPU> &    YArray,
+      distributedGPUVec<dataTypes::numberFP32GPU> &tempFloatArray,
+      distributedGPUVec<dataTypes::numberGPU> &    projectorKetTimesVector,
+      const unsigned int                           localVectorSize,
+      const unsigned int                           numberVectors,
+      const unsigned int                           m,
+      const double                                 a,
+      const double                                 b,
+      const double                                 a0,
+      const bool                                   mixedPrecOverall)
     {
       double e, c, sigma, sigma1, sigma2, gamma, gpu_time;
       e                                  = (b - a) / 2.0;
@@ -719,6 +911,7 @@ namespace dftfe
       //
       // YArray = YArray + alpha2*XArray and YArray = alpha1*YArray
       //
+      /*
       cublasDaxpy(operatorMatrix.getCublasHandle(),
                   totalVectorSize,
                   &alpha2,
@@ -726,13 +919,21 @@ namespace dftfe
                   inc,
                   YArray.begin(),
                   inc);
+      */
 
+      daxpyCUDAKernel<<<min((totalVectorSize + 255) / 256, 30000), 256>>>(
+        totalVectorSize, XArray.begin(), YArray.begin(), alpha2);
+
+      /*
       cublasDscal(operatorMatrix.getCublasHandle(),
                   totalVectorSize,
                   &alpha1,
                   YArray.begin(),
                   inc);
+      */
 
+      dscalCUDAKernel<<<min((totalVectorSize + 255) / 256, 30000), 256>>>(
+        totalVectorSize, YArray.begin(), alpha1);
 
       //
       // polynomial loop
@@ -848,7 +1049,7 @@ namespace dftfe
       // copy back YArray to XArray
       cudaMemcpy(XArray.begin(),
                  YArray.begin(),
-                 totalVectorSize * sizeof(double),
+                 totalVectorSize * sizeof(dataTypes::numberGPU),
                  cudaMemcpyDeviceToDevice);
     }
 
@@ -858,21 +1059,22 @@ namespace dftfe
     // chebyshev filtering.
     //
     void
-    chebyshevFilter(operatorDFTCUDAClass &     operatorMatrix,
-                    distributedGPUVec<double> &XArray1,
-                    distributedGPUVec<double> &YArray1,
-                    distributedGPUVec<float> & tempFloatArray,
-                    distributedGPUVec<double> &projectorKetTimesVector1,
-                    distributedGPUVec<double> &XArray2,
-                    distributedGPUVec<double> &YArray2,
-                    distributedGPUVec<double> &projectorKetTimesVector2,
-                    const unsigned int         localVectorSize,
-                    const unsigned int         numberVectors,
-                    const unsigned int         m,
-                    const double               a,
-                    const double               b,
-                    const double               a0,
-                    const bool                 mixedPrecOverall)
+    chebyshevFilter(
+      operatorDFTCUDAClass &                       operatorMatrix,
+      distributedGPUVec<dataTypes::numberGPU> &    XArray1,
+      distributedGPUVec<dataTypes::numberGPU> &    YArray1,
+      distributedGPUVec<dataTypes::numberFP32GPU> &tempFloatArray,
+      distributedGPUVec<dataTypes::numberGPU> &    projectorKetTimesVector1,
+      distributedGPUVec<dataTypes::numberGPU> &    XArray2,
+      distributedGPUVec<dataTypes::numberGPU> &    YArray2,
+      distributedGPUVec<dataTypes::numberGPU> &    projectorKetTimesVector2,
+      const unsigned int                           localVectorSize,
+      const unsigned int                           numberVectors,
+      const unsigned int                           m,
+      const double                                 a,
+      const double                                 b,
+      const double                                 a0,
+      const bool                                   mixedPrecOverall)
     {
       double e, c, sigma, sigma1, sigma2, gamma, gpu_time;
       e                                  = (b - a) / 2.0;
@@ -924,6 +1126,7 @@ namespace dftfe
       //
       // YArray = YArray + alpha2*XArray and YArray = alpha1*YArray
       //
+      /*
       cublasDaxpy(operatorMatrix.getCublasHandle(),
                   totalVectorSize,
                   &alpha2,
@@ -952,6 +1155,19 @@ namespace dftfe
                   &alpha1,
                   YArray2.begin(),
                   inc);
+      */
+
+      daxpyCUDAKernel<<<min((totalVectorSize + 255) / 256, 30000), 256>>>(
+        totalVectorSize, XArray1.begin(), YArray1.begin(), alpha2);
+
+      dscalCUDAKernel<<<min((totalVectorSize + 255) / 256, 30000), 256>>>(
+        totalVectorSize, YArray1.begin(), alpha1);
+
+      daxpyCUDAKernel<<<min((totalVectorSize + 255) / 256, 30000), 256>>>(
+        totalVectorSize, XArray2.begin(), YArray2.begin(), alpha2);
+
+      dscalCUDAKernel<<<min((totalVectorSize + 255) / 256, 30000), 256>>>(
+        totalVectorSize, YArray2.begin(), alpha1);
 
       bool overlap = false;
       //
@@ -1464,12 +1680,12 @@ namespace dftfe
       // copy back YArray to XArray
       cudaMemcpy(XArray1.begin(),
                  YArray1.begin(),
-                 totalVectorSize * sizeof(double),
+                 totalVectorSize * sizeof(dataTypes::numberGPU),
                  cudaMemcpyDeviceToDevice);
 
       cudaMemcpy(XArray2.begin(),
                  YArray2.begin(),
-                 totalVectorSize * sizeof(double),
+                 totalVectorSize * sizeof(dataTypes::numberGPU),
                  cudaMemcpyDeviceToDevice);
     }
 
@@ -3803,19 +4019,20 @@ namespace dftfe
 
 
     void
-    computeEigenResidualNorm(operatorDFTCUDAClass &     operatorMatrix,
-                             double *                   X,
-                             distributedGPUVec<double> &XBlock,
-                             distributedGPUVec<double> &HXBlock,
-                             distributedGPUVec<double> &projectorKetTimesVector,
-                             const unsigned int         M,
-                             const unsigned int         N,
-                             const std::vector<double> &eigenValues,
-                             const MPI_Comm &           mpiCommDomain,
-                             const MPI_Comm &           interBandGroupComm,
-                             cublasHandle_t &           handle,
-                             std::vector<double> &      residualNorm,
-                             const bool                 useBandParal)
+    computeEigenResidualNorm(
+      operatorDFTCUDAClass &                   operatorMatrix,
+      dataTypes::numberGPU *                   X,
+      distributedGPUVec<dataTypes::numberGPU> &XBlock,
+      distributedGPUVec<dataTypes::numberGPU> &HXBlock,
+      distributedGPUVec<dataTypes::numberGPU> &projectorKetTimesVector,
+      const unsigned int                       M,
+      const unsigned int                       N,
+      const std::vector<double> &              eigenValues,
+      const MPI_Comm &                         mpiCommDomain,
+      const MPI_Comm &                         interBandGroupComm,
+      cublasHandle_t &                         handle,
+      std::vector<double> &                    residualNorm,
+      const bool                               useBandParal)
     {
       // band group parallelization data structures
       const unsigned int numberBandGroups =
@@ -3829,7 +4046,8 @@ namespace dftfe
 
       const unsigned int vectorsBlockSize = dftParameters::wfcBlockSize;
       thrust::device_vector<double> residualNormSquareDevice(N, 0.0);
-      thrust::device_vector<double> HXBlockFull(vectorsBlockSize * M, 0.0);
+      thrust::device_vector<dataTypes::numberThrustGPU> HXBlockFull(
+        vectorsBlockSize * M, dataTypes::numberThrustGPU(0.0));
       thrust::device_vector<double> residualSqDevice(vectorsBlockSize * M, 0.0);
       thrust::device_vector<double> onesVecDevice(M, 1.0);
 
@@ -3876,13 +4094,14 @@ namespace dftfe
                                     HXBlock);
 
                   stridedCopyFromBlockKernel<<<(chebyBlockSize + 255) / 256 * M,
-                                               256>>>(chebyBlockSize,
-                                                      M,
-                                                      HXBlock.begin(),
-                                                      B,
-                                                      thrust::raw_pointer_cast(
-                                                        &HXBlockFull[0]),
-                                                      k - jvec);
+                                               256>>>(
+                    chebyBlockSize,
+                    M,
+                    HXBlock.begin(),
+                    B,
+                    reinterpret_cast<dataTypes::numberGPU *>(
+                      thrust::raw_pointer_cast(&HXBlockFull[0])),
+                    k - jvec);
                 }
 
               computeResidualCUDAKernel<<<(B + 255) / 256 * M, 256>>>(
