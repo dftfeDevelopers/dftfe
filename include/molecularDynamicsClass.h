@@ -3,6 +3,7 @@
 #include "constants.h"
 #include "headers.h"
 #include <vector>
+#include "dft.h"
 
 namespace dftfe
 {

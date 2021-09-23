@@ -51,6 +51,7 @@
 #include <triangulationManager.h>
 #include <vselfBinsManager.h>
 #include <xc.h>
+#include "molecularDynamicsClass.h"
 #ifdef USE_PETSC
 #  include <petsc.h>
 
@@ -93,8 +94,8 @@ namespace dftfe
   template <unsigned int T1, unsigned int T2>
   class molecularDynamics;
 
-  template <unsigned int T1, unsigned int T2>
-  class molecularDynamicsClass;  
+  //template <unsigned int T1, unsigned int T2>
+  //class molecularDynamicsClass;  
 
 #endif /* DOXYGEN_SHOULD_SKIP_THIS */
 
@@ -1132,7 +1133,7 @@ namespace dftfe
     geoOptIon<FEOrder, FEOrderElectro> *        geoOptIonPtr;
     geoOptCell<FEOrder, FEOrderElectro> *       geoOptCellPtr;
     molecularDynamics<FEOrder, FEOrderElectro> *d_mdPtr;
-    molecularDynamicsClass<FEOrder, FEOrderElectro> *d_mdClassPtr;
+    //molecularDynamicsClass<FEOrder, FEOrderElectro> *d_mdClassPtr;
 
     elpaScalaManager d_elpaScala;
 

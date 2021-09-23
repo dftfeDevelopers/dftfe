@@ -159,6 +159,10 @@ namespace dftfe
     std::string  VelocityRestartFile                              = " ";
     std::string  ForceRestartFile                                   = " "; 
 
+    //New paramter for selecting mode and NEB parameters
+    unsigned int TotalImages                                    = 1;
+    unsigned int  solvermode                                     =0;
+
 
     void
     declare_parameters(ParameterHandler &prm)
@@ -718,6 +722,19 @@ namespace dftfe
           Patterns::Integer(0, 1),
           "[Standard] Spin polarization: 0 for no spin polarization and 1 for collinear spin polarization calculation. Default option is 0.");
 
+        prm.declare_entry(
+          "NUMBER OF IMAGES",
+          "1",
+          Patterns::Integer(1, 50),
+          "[Standard] NUMBER OF IMAGES:Default option is 1. When NEB is triggered this controls the total number of images along the MEP including the end points");          
+
+        prm.declare_entry(
+          "DFT-FE SOLVER MODE",
+          "0",
+          Patterns::Integer(0,2),
+          "[Standard] DFT-FE SOLVER MODE: If 2: nebClass is triggered. If 1: thenn MD Class is triggered. If 0: DFT");         
+        
+        
         prm.declare_entry(
           "START MAGNETIZATION",
           "0.0",
@@ -1327,6 +1344,9 @@ namespace dftfe
           prm.get_double("START MAGNETIZATION");
         dftParameters::pspCutoffImageCharges =
           prm.get_double("PSP CUTOFF IMAGE CHARGES");
+        dftParameters::TotalImages= prm.get_integer("NUMBER OF IMAGES");
+        dftParameters::solvermode = prm.get_integer("DFT-FE SOLVER MODE");
+
       }
       prm.leave_subsection();
 

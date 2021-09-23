@@ -168,8 +168,8 @@ namespace dftfe
       new geoOptCell<FEOrder, FEOrderElectro>(this, mpi_comm_replica);
     //d_mdPtr =
      // new molecularDynamics<FEOrder, FEOrderElectro>(this, mpi_comm_replica);
-    d_mdClassPtr = 
-     new molecularDynamicsClass<FEOrder, FEOrderElectro>(this, mpi_comm_replica);
+   // d_mdClassPtr = 
+    // new molecularDynamicsClass<FEOrder, FEOrderElectro>(this, mpi_comm_replica);
 
 
     d_isRestartGroundStateCalcFromChk = false;
@@ -206,7 +206,7 @@ namespace dftfe
     delete geoOptIonPtr;
     delete geoOptCellPtr;
     //delete d_mdPtr;
-    delete d_mdClassPtr;
+    //delete d_mdClassPtr;
     
 #ifdef DFTFE_WITH_ELPA
     if (dftParameters::useELPA)
@@ -1572,11 +1572,11 @@ namespace dftfe
     if (dftParameters::meshAdaption)
       aposterioriMeshGenerate();
 
-    if (dftParameters::isBOMD)
+    /*if (dftParameters::isBOMD)
       {
        // d_mdPtr->run();
         d_mdClassPtr->runMD();  
-      }
+      }*/
     else
       {
         if (!(dftParameters::chkType == 1 && dftParameters::restartFromChk &&

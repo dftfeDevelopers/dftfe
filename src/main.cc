@@ -31,6 +31,8 @@
 
 #include "constants.h"
 #include "dft.h"
+#include "molecularDynamicsClass.h"
+
 
 
 //
@@ -50,13 +52,38 @@ run_problem(const MPI_Comm &    mpi_comm_replica,
             const MPI_Comm &    interBandGroupComm,
             const unsigned int &numberEigenValues)
 {
-  dftfe::dftClass<n1, n2> problemFE(mpi_comm_replica,
+ 
+  switch(dftfe::dftParameters::solvermode)
+  {
+    case 1:
+             { dftfe::dftClass<n1, n2> problemFE(mpi_comm_replica,
                                     interpoolcomm,
                                     interBandGroupComm);
-  problemFE.d_numEigenValues = numberEigenValues;
-  problemFE.set();
-  problemFE.init();
-  problemFE.run();
+              problemFE.d_numEigenValues = numberEigenValues;
+              problemFE.set();
+              problemFE.init(); 
+              dftfe::molecularDynamicsClass<n1,n2> *d_mdClassPtr;             
+              d_mdClassPtr = 
+              new dftfe::molecularDynamicsClass<n1,n2>(&problemFE, mpi_comm_replica);
+              d_mdClassPtr->runMD();}
+    break;
+    case 2:
+              {dftfe::dftClass<n1, n2> problemFE(mpi_comm_replica,
+                                    interpoolcomm,
+                                    interBandGroupComm);
+              problemFE.d_numEigenValues = numberEigenValues;}
+    break;
+    default:
+            { dftfe::dftClass<n1, n2> problemFE(mpi_comm_replica,
+                                    interpoolcomm,
+                                    interBandGroupComm);
+              problemFE.d_numEigenValues = numberEigenValues;                  
+              problemFE.set();
+              problemFE.init();
+              problemFE.run();}
+  }
+ 
+
 }
 
 // Dynamically access dftClass<n> objects by order.
