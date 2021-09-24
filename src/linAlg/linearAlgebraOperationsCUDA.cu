@@ -1692,8 +1692,8 @@ namespace dftfe
 
     void
     subspaceRotationSpectrumSplitScalapack(
-      const double *                                   X,
-      double *                                         XFrac,
+      const dataTypes::numberGPU *                     X,
+      dataTypes::numberGPU *                           XFrac,
       const unsigned int                               M,
       const unsigned int                               N,
       const unsigned int                               Nfr,
@@ -1701,7 +1701,7 @@ namespace dftfe
       const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
       const MPI_Comm &                                 mpiCommDomain,
       GPUCCLWrapper &                                  gpucclMpiCommDomain,
-      const dftfe::ScaLAPACKMatrix<double> &           rotationMatPar,
+      const dftfe::ScaLAPACKMatrix<dataTypes::number> &rotationMatPar,
       const bool                                       rotationMatTranspose)
     {
       const unsigned int maxNumLocalDofs =
@@ -1720,21 +1720,24 @@ namespace dftfe
       const unsigned int dofsBlockSize =
         std::min(maxNumLocalDofs, dftParameters::subspaceRotDofsBlockSize);
 
-      double *rotationMatBlockHost;
+      dataTypes::number *rotationMatBlockHost;
 
       if (dftParameters::allowFullCPUMemSubspaceRot)
         {
           CUDACHECK(cudaMallocHost((void **)&rotationMatBlockHost,
-                                   N * Nfr * sizeof(double)));
-          std::memset(rotationMatBlockHost, 0, N * Nfr * sizeof(double));
+                                   N * Nfr * sizeof(dataTypes::number)));
+          std::memset(rotationMatBlockHost,
+                      0,
+                      N * Nfr * sizeof(dataTypes::number));
         }
       else
         {
-          CUDACHECK(cudaMallocHost((void **)&rotationMatBlockHost,
-                                   vectorsBlockSize * N * sizeof(double)));
+          CUDACHECK(
+            cudaMallocHost((void **)&rotationMatBlockHost,
+                           vectorsBlockSize * N * sizeof(dataTypes::number)));
           std::memset(rotationMatBlockHost,
                       0,
-                      vectorsBlockSize * N * sizeof(double));
+                      vectorsBlockSize * N * sizeof(dataTypes::number));
         }
 
       cudaStream_t streamCompute, streamGPUCCL;
@@ -1756,11 +1759,24 @@ namespace dftfe
           CUDACHECK(cudaEventCreate(&communEvents[i]));
         }
 
-      thrust::device_vector<double> rotationMatBlock(vectorsBlockSize * N, 0.0);
-      thrust::device_vector<double> rotationMatBlockNext(vectorsBlockSize * N,
-                                                         0.0);
-      thrust::device_vector<double> rotatedVectorsMatBlock(Nfr * dofsBlockSize,
-                                                           0.0);
+      thrust::device_vector<dataTypes::numberThrustGPU> rotationMatBlock(
+        vectorsBlockSize * N, dataTypes::numberThrustGPU(0.0));
+      thrust::device_vector<dataTypes::numberThrustGPU> rotationMatBlockNext(
+        vectorsBlockSize * N, dataTypes::numberThrustGPU(0.0));
+      thrust::device_vector<dataTypes::numberThrustGPU> rotatedVectorsMatBlock(
+        Nfr * dofsBlockSize, dataTypes::numberThrustGPU(0.0));
+
+      dataTypes::numberValueType *tempReal;
+      dataTypes::numberValueType *tempImag;
+      if (std::is_same<dataTypes::number, std::complex<double>>::value)
+        {
+          CUDACHECK(cudaMalloc((void **)&tempReal,
+                               vectorsBlockSize * N *
+                                 sizeof(dataTypes::numberValueType)));
+          CUDACHECK(cudaMalloc((void **)&tempImag,
+                               vectorsBlockSize * N *
+                                 sizeof(dataTypes::numberValueType)));
+        }
 
       unsigned int blockCount = 0;
       for (unsigned int idof = 0; idof < maxNumLocalDofs; idof += dofsBlockSize)
@@ -1776,7 +1792,8 @@ namespace dftfe
               // Correct block dimensions if block "goes off edge of" the matrix
               const unsigned int BVec = std::min(vectorsBlockSize, Nfr - jvec);
 
-              const double scalarCoeffAlpha = 1.0, scalarCoeffBeta = 0.0;
+              const dataTypes::number scalarCoeffAlpha = dataTypes::number(1.0);
+              const dataTypes::number scalarCoeffBeta  = dataTypes::number(0.0);
 
               if (dftParameters::allowFullCPUMemSubspaceRot)
                 {
@@ -1833,7 +1850,7 @@ namespace dftfe
                 {
                   std::memset(rotationMatBlockHost,
                               0,
-                              BVec * N * sizeof(double));
+                              BVec * N * sizeof(dataTypes::numberGPU));
 
                   // Extract QBVec from parallel ScaLAPACK matrix Q
                   if (rotationMatTranspose)
@@ -1884,25 +1901,46 @@ namespace dftfe
                 {
                   if (dftParameters::useGPUDirectAllReduce)
                     {
-                      CUDACHECK(cudaMemcpyAsync(thrust::raw_pointer_cast(
-                                                  &rotationMatBlockNext[0]),
-                                                rotationMatBlockHost + jvec * N,
-                                                BVec * N * sizeof(double),
-                                                cudaMemcpyHostToDevice,
-                                                streamGPUCCL));
+                      CUDACHECK(cudaMemcpyAsync(
+                        reinterpret_cast<dataTypes::numberGPU *>(
+                          thrust::raw_pointer_cast(&rotationMatBlockNext[0])),
+                        rotationMatBlockHost + jvec * N,
+                        BVec * N * sizeof(dataTypes::numberGPU),
+                        cudaMemcpyHostToDevice,
+                        streamGPUCCL));
 
                       if (idof == 0)
                         {
-                          gpucclMpiCommDomain.gpuDirectAllReduceWrapper(
-                            thrust::raw_pointer_cast(&rotationMatBlockNext[0]),
-                            thrust::raw_pointer_cast(&rotationMatBlockNext[0]),
-                            BVec * N,
-                            streamGPUCCL);
+                          if (std::is_same<dataTypes::number,
+                                           std::complex<double>>::value)
+                            gpucclMpiCommDomain.gpuDirectAllReduceWrapper(
+                              reinterpret_cast<dataTypes::numberGPU *>(
+                                thrust::raw_pointer_cast(
+                                  &rotationMatBlockNext[0])),
+                              reinterpret_cast<dataTypes::numberGPU *>(
+                                thrust::raw_pointer_cast(
+                                  &rotationMatBlockNext[0])),
+                              BVec * N,
+                              tempReal,
+                              tempImag,
+                              streamGPUCCL);
+                          else
+                            gpucclMpiCommDomain.gpuDirectAllReduceWrapper(
+                              reinterpret_cast<dataTypes::numberGPU *>(
+                                thrust::raw_pointer_cast(
+                                  &rotationMatBlockNext[0])),
+                              reinterpret_cast<dataTypes::numberGPU *>(
+                                thrust::raw_pointer_cast(
+                                  &rotationMatBlockNext[0])),
+                              BVec * N,
+                              streamGPUCCL);
 
                           CUDACHECK(cudaMemcpyAsync(
                             rotationMatBlockHost + jvec * N,
-                            thrust::raw_pointer_cast(&rotationMatBlockNext[0]),
-                            BVec * N * sizeof(double),
+                            reinterpret_cast<const dataTypes::numberGPU *>(
+                              thrust::raw_pointer_cast(
+                                &rotationMatBlockNext[0])),
+                            BVec * N * sizeof(dataTypes::numberGPU),
                             cudaMemcpyDeviceToHost,
                             streamGPUCCL));
                         }
@@ -1911,50 +1949,74 @@ namespace dftfe
                     {
                       if (idof == 0)
                         MPI_Allreduce(MPI_IN_PLACE,
-                                      rotationMatBlockHost + jvec * N,
+                                      reinterpret_cast<dataTypes::number *>(
+                                        rotationMatBlockHost + jvec * N),
                                       BVec * N,
-                                      MPI_DOUBLE,
+                                      dataTypes::mpi_type_id(
+                                        reinterpret_cast<dataTypes::number *>(
+                                          rotationMatBlockHost)),
                                       MPI_SUM,
                                       mpiCommDomain);
 
-                      CUDACHECK(cudaMemcpy(thrust::raw_pointer_cast(
-                                             &rotationMatBlock[0]),
-                                           rotationMatBlockHost + jvec * N,
-                                           BVec * N * sizeof(double),
-                                           cudaMemcpyHostToDevice));
+                      CUDACHECK(cudaMemcpy(
+                        reinterpret_cast<dataTypes::numberGPU *>(
+                          thrust::raw_pointer_cast(&rotationMatBlock[0])),
+                        reinterpret_cast<dataTypes::numberGPU *>(
+                          rotationMatBlockHost + jvec * N),
+                        BVec * N * sizeof(dataTypes::numberGPU),
+                        cudaMemcpyHostToDevice));
                     }
                 }
               else
                 {
                   if (dftParameters::useGPUDirectAllReduce)
                     {
-                      CUDACHECK(cudaMemcpyAsync(thrust::raw_pointer_cast(
-                                                  &rotationMatBlockNext[0]),
-                                                rotationMatBlockHost,
-                                                BVec * N * sizeof(double),
-                                                cudaMemcpyHostToDevice,
-                                                streamGPUCCL));
+                      CUDACHECK(cudaMemcpyAsync(
+                        reinterpret_cast<dataTypes::numberGPU *>(
+                          thrust::raw_pointer_cast(&rotationMatBlockNext[0])),
+                        reinterpret_cast<dataTypes::numberGPU *>(
+                          rotationMatBlockHost),
+                        BVec * N * sizeof(dataTypes::numberGPU),
+                        cudaMemcpyHostToDevice,
+                        streamGPUCCL));
 
-                      gpucclMpiCommDomain.gpuDirectAllReduceWrapper(
-                        thrust::raw_pointer_cast(&rotationMatBlockNext[0]),
-                        thrust::raw_pointer_cast(&rotationMatBlockNext[0]),
-                        BVec * N,
-                        streamGPUCCL);
+                      if (std::is_same<dataTypes::number,
+                                       std::complex<double>>::value)
+                        gpucclMpiCommDomain.gpuDirectAllReduceWrapper(
+                          reinterpret_cast<dataTypes::numberGPU *>(
+                            thrust::raw_pointer_cast(&rotationMatBlockNext[0])),
+                          reinterpret_cast<dataTypes::numberGPU *>(
+                            thrust::raw_pointer_cast(&rotationMatBlockNext[0])),
+                          BVec * N,
+                          tempReal,
+                          tempImag,
+                          streamGPUCCL);
+                      else
+                        gpucclMpiCommDomain.gpuDirectAllReduceWrapper(
+                          reinterpret_cast<dataTypes::numberGPU *>(
+                            thrust::raw_pointer_cast(&rotationMatBlockNext[0])),
+                          reinterpret_cast<dataTypes::numberGPU *>(
+                            thrust::raw_pointer_cast(&rotationMatBlockNext[0])),
+                          BVec * N,
+                          streamGPUCCL);
                     }
                   else
                     {
                       MPI_Allreduce(MPI_IN_PLACE,
                                     rotationMatBlockHost,
                                     BVec * N,
-                                    MPI_DOUBLE,
+                                    dataTypes::mpi_type_id(
+                                      rotationMatBlockHost),
                                     MPI_SUM,
                                     mpiCommDomain);
 
-                      CUDACHECK(cudaMemcpy(thrust::raw_pointer_cast(
-                                             &rotationMatBlock[0]),
-                                           rotationMatBlockHost,
-                                           BVec * N * sizeof(double),
-                                           cudaMemcpyHostToDevice));
+                      CUDACHECK(cudaMemcpy(
+                        reinterpret_cast<dataTypes::numberGPU *>(
+                          thrust::raw_pointer_cast(&rotationMatBlock[0])),
+                        reinterpret_cast<const dataTypes::numberGPU *>(
+                          rotationMatBlockHost),
+                        BVec * N * sizeof(dataTypes::numberGPU),
+                        cudaMemcpyHostToDevice));
                     }
                 }
 
@@ -1981,21 +2043,26 @@ namespace dftfe
 
               if (BDof != 0)
                 {
-                  cublasDgemm(
-                    handle,
-                    CUBLAS_OP_N,
-                    CUBLAS_OP_N,
-                    BVec,
-                    BDof,
-                    N,
-                    &scalarCoeffAlpha,
-                    thrust::raw_pointer_cast(&rotationMatBlock[0]),
-                    BVec,
-                    X + idof * N,
-                    N,
-                    &scalarCoeffBeta,
-                    thrust::raw_pointer_cast(&rotatedVectorsMatBlock[0]) + jvec,
-                    Nfr);
+                  cublasXgemm(handle,
+                              CUBLAS_OP_N,
+                              CUBLAS_OP_N,
+                              BVec,
+                              BDof,
+                              N,
+                              reinterpret_cast<const dataTypes::numberGPU *>(
+                                &scalarCoeffAlpha),
+                              reinterpret_cast<const dataTypes::numberGPU *>(
+                                thrust::raw_pointer_cast(&rotationMatBlock[0])),
+                              BVec,
+                              X + idof * N,
+                              N,
+                              reinterpret_cast<const dataTypes::numberGPU *>(
+                                &scalarCoeffBeta),
+                              reinterpret_cast<dataTypes::numberGPU *>(
+                                thrust::raw_pointer_cast(
+                                  &rotatedVectorsMatBlock[0]) +
+                                jvec),
+                              Nfr);
                 }
 
               blockCount++;
@@ -2004,17 +2071,23 @@ namespace dftfe
 
           if (BDof != 0)
             {
-              CUDACHECK(cudaMemcpyAsync(XFrac + idof * Nfr,
-                                        thrust::raw_pointer_cast(
-                                          &rotatedVectorsMatBlock[0]),
-                                        Nfr * BDof * sizeof(double),
-                                        cudaMemcpyDeviceToDevice,
-                                        streamCompute));
+              CUDACHECK(cudaMemcpyAsync(
+                XFrac + idof * Nfr,
+                reinterpret_cast<const dataTypes::numberGPU *>(
+                  thrust::raw_pointer_cast(&rotatedVectorsMatBlock[0])),
+                Nfr * BDof * sizeof(dataTypes::numberGPU),
+                cudaMemcpyDeviceToDevice,
+                streamCompute));
             }
 
         } // block loop over dofs
 
       CUDACHECK(cudaFreeHost(rotationMatBlockHost));
+      if (std::is_same<dataTypes::number, std::complex<double>>::value)
+        {
+          CUDACHECK(cudaFree(tempReal));
+          CUDACHECK(cudaFree(tempImag));
+        }
 
       // return cublas handle to default stream
       cublasSetStream(handle, NULL);
@@ -2033,7 +2106,7 @@ namespace dftfe
 
     void
     subspaceRotationScalapack(
-      double *                                         X,
+      dataTypes::numberGPU *                           X,
       const unsigned int                               M,
       const unsigned int                               N,
       cublasHandle_t &                                 handle,
@@ -2041,7 +2114,7 @@ namespace dftfe
       const MPI_Comm &                                 mpiCommDomain,
       GPUCCLWrapper &                                  gpucclMpiCommDomain,
       const MPI_Comm &                                 interBandGroupComm,
-      const dftfe::ScaLAPACKMatrix<double> &           rotationMatPar,
+      const dftfe::ScaLAPACKMatrix<dataTypes::number> &rotationMatPar,
       const bool                                       rotationMatTranspose,
       const bool                                       isRotationMatLowerTria)
     {
@@ -2070,21 +2143,24 @@ namespace dftfe
       const unsigned int dofsBlockSize =
         std::min(maxNumLocalDofs, dftParameters::subspaceRotDofsBlockSize);
 
-      double *rotationMatBlockHost;
+      dataTypes::number *rotationMatBlockHost;
 
       if (dftParameters::allowFullCPUMemSubspaceRot)
         {
           CUDACHECK(cudaMallocHost((void **)&rotationMatBlockHost,
-                                   N * N * sizeof(double)));
-          std::memset(rotationMatBlockHost, 0, N * N * sizeof(double));
+                                   N * N * sizeof(dataTypes::number)));
+          std::memset(rotationMatBlockHost,
+                      0,
+                      N * N * sizeof(dataTypes::number));
         }
       else
         {
-          CUDACHECK(cudaMallocHost((void **)&rotationMatBlockHost,
-                                   vectorsBlockSize * N * sizeof(double)));
+          CUDACHECK(
+            cudaMallocHost((void **)&rotationMatBlockHost,
+                           vectorsBlockSize * N * sizeof(dataTypes::number)));
           std::memset(rotationMatBlockHost,
                       0,
-                      vectorsBlockSize * N * sizeof(double));
+                      vectorsBlockSize * N * sizeof(dataTypes::number));
         }
 
       cudaStream_t streamCompute, streamGPUCCL;
@@ -2106,11 +2182,24 @@ namespace dftfe
           CUDACHECK(cudaEventCreate(&communEvents[i]));
         }
 
-      thrust::device_vector<double> rotationMatBlock(vectorsBlockSize * N, 0.0);
-      thrust::device_vector<double> rotationMatBlockTemp(vectorsBlockSize * N,
-                                                         0.0);
-      thrust::device_vector<double> rotatedVectorsMatBlock(N * dofsBlockSize,
-                                                           0.0);
+      thrust::device_vector<dataTypes::numberThrustGPU> rotationMatBlock(
+        vectorsBlockSize * N, dataTypes::numberThrustGPU(0.0));
+      thrust::device_vector<dataTypes::numberThrustGPU> rotationMatBlockTemp(
+        vectorsBlockSize * N, dataTypes::numberThrustGPU(0.0));
+      thrust::device_vector<dataTypes::numberThrustGPU> rotatedVectorsMatBlock(
+        N * dofsBlockSize, dataTypes::numberThrustGPU(0.0));
+
+      dataTypes::numberValueType *tempReal;
+      dataTypes::numberValueType *tempImag;
+      if (std::is_same<dataTypes::number, std::complex<double>>::value)
+        {
+          CUDACHECK(cudaMalloc((void **)&tempReal,
+                               vectorsBlockSize * N *
+                                 sizeof(dataTypes::numberValueType)));
+          CUDACHECK(cudaMalloc((void **)&tempImag,
+                               vectorsBlockSize * N *
+                                 sizeof(dataTypes::numberValueType)));
+        }
 
       unsigned int blockCount = 0;
       for (unsigned int idof = 0; idof < maxNumLocalDofs; idof += dofsBlockSize)
@@ -2133,7 +2222,10 @@ namespace dftfe
                   (jvec + BVec) >
                     bandGroupLowHighPlusOneIndices[2 * bandGroupTaskId])
                 {
-                  const double scalarCoeffAlpha = 1.0, scalarCoeffBeta = 0.0;
+                  const dataTypes::number scalarCoeffAlpha =
+                    dataTypes::number(1.0);
+                  const dataTypes::number scalarCoeffBeta =
+                    dataTypes::number(0.0);
 
                   if (dftParameters::allowFullCPUMemSubspaceRot)
                     {
@@ -2193,7 +2285,7 @@ namespace dftfe
                     {
                       std::memset(rotationMatBlockHost,
                                   0,
-                                  BVec * N * sizeof(double));
+                                  BVec * N * sizeof(dataTypes::number));
 
                       // Extract QBVec from parallel ScaLAPACK matrix Q
                       if (rotationMatTranspose)
@@ -2245,28 +2337,50 @@ namespace dftfe
                       if (dftParameters::useGPUDirectAllReduce)
                         {
                           CUDACHECK(cudaMemcpyAsync(
-                            thrust::raw_pointer_cast(&rotationMatBlockTemp[0]),
-                            rotationMatBlockHost + jvec * N,
-                            BVec * D * sizeof(double),
+                            reinterpret_cast<dataTypes::numberGPU *>(
+                              thrust::raw_pointer_cast(
+                                &rotationMatBlockTemp[0])),
+                            reinterpret_cast<const dataTypes::numberGPU *>(
+                              rotationMatBlockHost + jvec * N),
+                            BVec * D * sizeof(dataTypes::numberGPU),
                             cudaMemcpyHostToDevice,
                             streamGPUCCL));
 
                           if (idof == 0)
                             {
-                              gpucclMpiCommDomain.gpuDirectAllReduceWrapper(
-                                thrust::raw_pointer_cast(
-                                  &rotationMatBlockTemp[0]),
-                                thrust::raw_pointer_cast(
-                                  &rotationMatBlockTemp[0]),
-                                BVec * D,
-                                streamGPUCCL);
-                              CUDACHECK(
-                                cudaMemcpyAsync(rotationMatBlockHost + jvec * N,
-                                                thrust::raw_pointer_cast(
-                                                  &rotationMatBlockTemp[0]),
-                                                BVec * D * sizeof(double),
-                                                cudaMemcpyDeviceToHost,
-                                                streamGPUCCL));
+                              if (std::is_same<dataTypes::number,
+                                               std::complex<double>>::value)
+                                gpucclMpiCommDomain.gpuDirectAllReduceWrapper(
+                                  reinterpret_cast<dataTypes::numberGPU *>(
+                                    thrust::raw_pointer_cast(
+                                      &rotationMatBlockTemp[0])),
+                                  reinterpret_cast<dataTypes::numberGPU *>(
+                                    thrust::raw_pointer_cast(
+                                      &rotationMatBlockTemp[0])),
+                                  BVec * D,
+                                  tempReal,
+                                  tempImag,
+                                  streamGPUCCL);
+                              else
+                                gpucclMpiCommDomain.gpuDirectAllReduceWrapper(
+                                  reinterpret_cast<dataTypes::numberGPU *>(
+                                    thrust::raw_pointer_cast(
+                                      &rotationMatBlockTemp[0])),
+                                  reinterpret_cast<dataTypes::numberGPU *>(
+                                    thrust::raw_pointer_cast(
+                                      &rotationMatBlockTemp[0])),
+                                  BVec * D,
+                                  streamGPUCCL);
+
+                              CUDACHECK(cudaMemcpyAsync(
+                                reinterpret_cast<dataTypes::numberGPU *>(
+                                  rotationMatBlockHost + jvec * N),
+                                reinterpret_cast<const dataTypes::numberGPU *>(
+                                  thrust::raw_pointer_cast(
+                                    &rotationMatBlockTemp[0])),
+                                BVec * D * sizeof(dataTypes::numberGPU),
+                                cudaMemcpyDeviceToHost,
+                                streamGPUCCL));
                             }
                         }
                       else
@@ -2275,48 +2389,75 @@ namespace dftfe
                             MPI_Allreduce(MPI_IN_PLACE,
                                           rotationMatBlockHost + jvec * N,
                                           BVec * D,
-                                          MPI_DOUBLE,
+                                          dataTypes::mpi_type_id(
+                                            rotationMatBlockHost),
                                           MPI_SUM,
                                           mpiCommDomain);
 
-                          cudaMemcpy(thrust::raw_pointer_cast(
-                                       &rotationMatBlock[0]),
-                                     rotationMatBlockHost + jvec * N,
-                                     BVec * D * sizeof(double),
-                                     cudaMemcpyHostToDevice);
+                          cudaMemcpy(
+                            reinterpret_cast<dataTypes::numberGPU *>(
+                              thrust::raw_pointer_cast(&rotationMatBlock[0])),
+                            reinterpret_cast<const dataTypes::numberGPU *>(
+                              rotationMatBlockHost + jvec * N),
+                            BVec * D * sizeof(dataTypes::numberGPU),
+                            cudaMemcpyHostToDevice);
                         }
                     }
                   else
                     {
                       if (dftParameters::useGPUDirectAllReduce)
                         {
-                          CUDACHECK(cudaMemcpyAsync(thrust::raw_pointer_cast(
-                                                      &rotationMatBlockTemp[0]),
-                                                    rotationMatBlockHost,
-                                                    BVec * D * sizeof(double),
-                                                    cudaMemcpyHostToDevice,
-                                                    streamGPUCCL));
+                          CUDACHECK(cudaMemcpyAsync(
+                            reinterpret_cast<dataTypes::numberGPU *>(
+                              thrust::raw_pointer_cast(
+                                &rotationMatBlockTemp[0])),
+                            reinterpret_cast<const dataTypes::numberGPU *>(
+                              rotationMatBlockHost),
+                            BVec * D * sizeof(dataTypes::numberGPU),
+                            cudaMemcpyHostToDevice,
+                            streamGPUCCL));
 
-                          gpucclMpiCommDomain.gpuDirectAllReduceWrapper(
-                            thrust::raw_pointer_cast(&rotationMatBlockTemp[0]),
-                            thrust::raw_pointer_cast(&rotationMatBlockTemp[0]),
-                            BVec * D,
-                            streamGPUCCL);
+                          if (std::is_same<dataTypes::number,
+                                           std::complex<double>>::value)
+                            gpucclMpiCommDomain.gpuDirectAllReduceWrapper(
+                              reinterpret_cast<dataTypes::numberGPU *>(
+                                thrust::raw_pointer_cast(
+                                  &rotationMatBlockTemp[0])),
+                              reinterpret_cast<dataTypes::numberGPU *>(
+                                thrust::raw_pointer_cast(
+                                  &rotationMatBlockTemp[0])),
+                              BVec * D,
+                              tempReal,
+                              tempImag,
+                              streamGPUCCL);
+                          else
+                            gpucclMpiCommDomain.gpuDirectAllReduceWrapper(
+                              reinterpret_cast<dataTypes::numberGPU *>(
+                                thrust::raw_pointer_cast(
+                                  &rotationMatBlockTemp[0])),
+                              reinterpret_cast<dataTypes::numberGPU *>(
+                                thrust::raw_pointer_cast(
+                                  &rotationMatBlockTemp[0])),
+                              BVec * D,
+                              streamGPUCCL);
                         }
                       else
                         {
                           MPI_Allreduce(MPI_IN_PLACE,
                                         rotationMatBlockHost,
                                         BVec * D,
-                                        MPI_DOUBLE,
+                                        dataTypes::mpi_type_id(
+                                          rotationMatBlockHost),
                                         MPI_SUM,
                                         mpiCommDomain);
 
-                          CUDACHECK(cudaMemcpy(thrust::raw_pointer_cast(
-                                                 &rotationMatBlock[0]),
-                                               rotationMatBlockHost,
-                                               BVec * D * sizeof(double),
-                                               cudaMemcpyHostToDevice));
+                          CUDACHECK(cudaMemcpy(
+                            reinterpret_cast<dataTypes::numberGPU *>(
+                              thrust::raw_pointer_cast(&rotationMatBlock[0])),
+                            reinterpret_cast<const dataTypes::numberGPU *>(
+                              rotationMatBlockHost),
+                            BVec * D * sizeof(dataTypes::numberGPU),
+                            cudaMemcpyHostToDevice));
                         }
                     }
 
@@ -2343,21 +2484,25 @@ namespace dftfe
 
                   if (BDof != 0)
                     {
-                      cublasDgemm(
+                      cublasXgemm(
                         handle,
                         CUBLAS_OP_N,
                         CUBLAS_OP_N,
                         BVec,
                         BDof,
                         D,
-                        &scalarCoeffAlpha,
-                        thrust::raw_pointer_cast(&rotationMatBlock[0]),
+                        reinterpret_cast<const dataTypes::numberGPU *>(
+                          &scalarCoeffAlpha),
+                        reinterpret_cast<const dataTypes::numberGPU *>(
+                          thrust::raw_pointer_cast(&rotationMatBlock[0])),
                         BVec,
                         X + idof * N,
                         N,
-                        &scalarCoeffBeta,
-                        thrust::raw_pointer_cast(&rotatedVectorsMatBlock[0]) +
-                          jvec,
+                        reinterpret_cast<const dataTypes::numberGPU *>(
+                          &scalarCoeffBeta),
+                        reinterpret_cast<dataTypes::numberGPU *>(
+                          thrust::raw_pointer_cast(&rotatedVectorsMatBlock[0]) +
+                          jvec),
                         N);
                     }
                 } // band parallelization
@@ -2367,17 +2512,25 @@ namespace dftfe
 
           if (BDof != 0)
             {
-              CUDACHECK(cudaMemcpyAsync(X + idof * N,
-                                        thrust::raw_pointer_cast(
-                                          &rotatedVectorsMatBlock[0]),
-                                        N * BDof * sizeof(double),
-                                        cudaMemcpyDeviceToDevice,
-                                        streamCompute));
+              CUDACHECK(cudaMemcpyAsync(
+                X + idof * N,
+                reinterpret_cast<const dataTypes::numberGPU *>(
+                  thrust::raw_pointer_cast(&rotatedVectorsMatBlock[0])),
+                N * BDof * sizeof(dataTypes::numberGPU),
+                cudaMemcpyDeviceToDevice,
+                streamCompute));
             }
 
         } // block loop over dofs
 
       cudaFreeHost(rotationMatBlockHost);
+
+      if (std::is_same<dataTypes::number, std::complex<double>>::value)
+        {
+          CUDACHECK(cudaFree(tempReal));
+          CUDACHECK(cudaFree(tempImag));
+        }
+
       // return cublas handle to default stream
       cublasSetStream(handle, NULL);
 
@@ -2393,7 +2546,7 @@ namespace dftfe
 
     void
     subspaceRotationCGSMixedPrecScalapack(
-      double *                                         X,
+      dataTypes::numberGPU *                           X,
       const unsigned int                               M,
       const unsigned int                               N,
       cublasHandle_t &                                 handle,
@@ -2401,7 +2554,7 @@ namespace dftfe
       const MPI_Comm &                                 mpiCommDomain,
       GPUCCLWrapper &                                  gpucclMpiCommDomain,
       const MPI_Comm &                                 interBandGroupComm,
-      const dftfe::ScaLAPACKMatrix<double> &           rotationMatPar,
+      const dftfe::ScaLAPACKMatrix<dataTypes::number> &rotationMatPar,
       const bool                                       rotationMatTranspose)
     {
       const unsigned int maxNumLocalDofs =
@@ -2425,10 +2578,14 @@ namespace dftfe
         interBandGroupComm, N, bandGroupLowHighPlusOneIndices);
 
       const unsigned int MPadded = std::ceil(M * 1.0 / 8.0) * 8.0 + 0.5;
-      thrust::device_vector<float> XSP(MPadded * N, 0.0);
+      thrust::device_vector<dataTypes::numberFP32ThrustGPU> XSP(
+        MPadded * N, dataTypes::numberFP32ThrustGPU(0.0));
 
       convDoubleArrToFloatArr<<<(N + 255) / 256 * M, 256>>>(
-        N * M, X, thrust::raw_pointer_cast(&XSP[0]));
+        N * M,
+        X,
+        reinterpret_cast<dataTypes::numberFP32ThrustGPU *>(
+          thrust::raw_pointer_cast(&XSP[0])));
 
 
       const unsigned int vectorsBlockSize =
@@ -2436,18 +2593,19 @@ namespace dftfe
       const unsigned int dofsBlockSize =
         std::min(maxNumLocalDofs, dftParameters::subspaceRotDofsBlockSize);
 
-      float *rotationMatBlockHostSP;
-      CUDACHECK(cudaMallocHost((void **)&rotationMatBlockHostSP,
-                               vectorsBlockSize * N * sizeof(float)));
+      dataTypes::numberFP32 *rotationMatBlockHostSP;
+      CUDACHECK(
+        cudaMallocHost((void **)&rotationMatBlockHostSP,
+                       vectorsBlockSize * N * sizeof(dataTypes::numberFP32)));
       std::memset(rotationMatBlockHostSP,
                   0,
-                  vectorsBlockSize * N * sizeof(float));
+                  vectorsBlockSize * N * sizeof(dataTypes::numberFP32));
 
-      std::vector<float> rotationMatDiagBandHostSP;
 
-      double *diagValuesHost;
-      CUDACHECK(cudaMallocHost((void **)&diagValuesHost, N * sizeof(double)));
-      std::memset(diagValuesHost, 0, N * sizeof(double));
+      dataTypes::number *diagValuesHost;
+      CUDACHECK(cudaMallocHost((void **)&diagValuesHost,
+                               N * sizeof(dataTypes::number)));
+      std::memset(diagValuesHost, 0, N * sizeof(dataTypes::number));
 
       cudaStream_t streamCompute, streamGPUCCL;
       CUDACHECK(cudaStreamCreate(&streamCompute));
@@ -2467,16 +2625,21 @@ namespace dftfe
           CUDACHECK(cudaEventCreate(&communEvents[i]));
         }
 
-      thrust::device_vector<float>  rotationMatBlockSP(vectorsBlockSize * N,
-                                                      0.0);
-      thrust::device_vector<float>  rotationMatBlockSPTemp(vectorsBlockSize * N,
-                                                          0.0);
-      thrust::device_vector<double> diagValues(N, 0.0);
-      thrust::device_vector<float>  rotatedVectorsMatBlockSP(vectorsBlockSize *
-                                                              dofsBlockSize,
-                                                            0.0);
+      thrust::device_vector<dataTypes::numberFP32ThrustGPU> rotationMatBlockSP(
+        vectorsBlockSize * N, dataTypes::numberFP32ThrustGPU(0.0));
+      thrust::device_vector<dataTypes::numberFP32ThrustGPU>
+                                                        rotationMatBlockSPTemp(vectorsBlockSize * N,
+                               dataTypes::numberFP32ThrustGPU(0.0));
+      thrust::device_vector<dataTypes::numberThrustGPU> diagValues(
+        N, dataTypes::numberThrustGPU(0.0));
+      thrust::device_vector<dataTypes::numberFP32ThrustGPU>
+        rotatedVectorsMatBlockSP(vectorsBlockSize * dofsBlockSize,
+                                 dataTypes::numberFP32ThrustGPU(0.0));
 
-      const float scalarCoeffAlphaSP = 1.0, scalarCoeffBetaSP = 0.0;
+      const dataTypes::numberFP32 scalarCoeffAlphaSP =
+        dataTypes::numberFP32(1.0);
+      const dataTypes::numberFP32 scalarCoeffBetaSP =
+        dataTypes::numberFP32(0.0);
 
 
       // Extract DiagQ from parallel ScaLAPACK matrix Q
@@ -2516,16 +2679,37 @@ namespace dftfe
                 }
         }
 
-      MPI_Allreduce(
-        MPI_IN_PLACE, diagValuesHost, N, MPI_DOUBLE, MPI_SUM, mpiCommDomain);
+      MPI_Allreduce(MPI_IN_PLACE,
+                    diagValuesHost,
+                    N,
+                    dataTypes::mpi_type_id(diagValuesHost),
+                    MPI_SUM,
+                    mpiCommDomain);
 
-      cudaMemcpy(thrust::raw_pointer_cast(&diagValues[0]),
-                 diagValuesHost,
-                 N * sizeof(double),
+      cudaMemcpy(reinterpret_cast<dataTypes::numberGPU *>(
+                   thrust::raw_pointer_cast(&diagValues[0])),
+                 reinterpret_cast<const dataTypes::numberGPU *>(diagValuesHost),
+                 N * sizeof(dataTypes::numberGPU),
                  cudaMemcpyHostToDevice);
 
       computeDiagQTimesXKernel<<<(M * N + 255) / 256, 256>>>(
-        thrust::raw_pointer_cast(&diagValues[0]), X, N, M);
+        reinterpret_cast<const dataTypes::numberGPU *>(
+          thrust::raw_pointer_cast(&diagValues[0])),
+        X,
+        N,
+        M);
+
+      dataTypes::numberFP32ValueType *tempRealFP32;
+      dataTypes::numberFP32ValueType *tempImagFP32;
+      if (std::is_same<dataTypes::number, std::complex<double>>::value)
+        {
+          CUDACHECK(cudaMalloc((void **)&tempRealFP32,
+                               vectorsBlockSize * N *
+                                 sizeof(dataTypes::numberFP32ValueType)));
+          CUDACHECK(cudaMalloc((void **)&tempImagFP32,
+                               vectorsBlockSize * N *
+                                 sizeof(dataTypes::numberFP32ValueType)));
+        }
 
       unsigned int blockCount = 0;
       for (unsigned int jvec = 0; jvec < N; jvec += vectorsBlockSize)
@@ -2535,7 +2719,9 @@ namespace dftfe
 
           const unsigned int D = jvec + BVec;
 
-          std::memset(rotationMatBlockHostSP, 0, BVec * N * sizeof(float));
+          std::memset(rotationMatBlockHostSP,
+                      0,
+                      BVec * N * sizeof(dataTypes::numberFP32));
 
           if ((jvec + BVec) <=
                 bandGroupLowHighPlusOneIndices[2 * bandGroupTaskId + 1] &&
@@ -2571,7 +2757,7 @@ namespace dftfe
                               if (it != globalToLocalColumnIdMap.end())
                                 {
                                   rotationMatBlockHostSP[i * BVec + i - jvec] =
-                                    0.0;
+                                    dataTypes::numberFP32(0.0);
                                 }
                             }
                         }
@@ -2605,7 +2791,7 @@ namespace dftfe
                                   globalToLocalRowIdMap.end())
                                 {
                                   rotationMatBlockHostSP[i * BVec + i - jvec] =
-                                    0.0;
+                                    dataTypes::numberFP32(0.0);
                                 }
                             }
                         }
@@ -2613,31 +2799,50 @@ namespace dftfe
 
               if (dftParameters::useGPUDirectAllReduce)
                 {
-                  cudaMemcpyAsync(thrust::raw_pointer_cast(
-                                    &rotationMatBlockSPTemp[0]),
-                                  rotationMatBlockHostSP,
-                                  BVec * D * sizeof(float),
-                                  cudaMemcpyHostToDevice,
-                                  streamGPUCCL);
-
-                  gpucclMpiCommDomain.gpuDirectAllReduceWrapper(
-                    thrust::raw_pointer_cast(&rotationMatBlockSPTemp[0]),
-                    thrust::raw_pointer_cast(&rotationMatBlockSPTemp[0]),
-                    BVec * D,
+                  cudaMemcpyAsync(
+                    reinterpret_cast<dataTypes::numberFP32GPU *>(
+                      thrust::raw_pointer_cast(&rotationMatBlockSPTemp[0])),
+                    reinterpret_cast<const dataTypes::numberFP32GPU *>(
+                      rotationMatBlockHostSP),
+                    BVec * D * sizeof(dataTypes::numberFP32GPU),
+                    cudaMemcpyHostToDevice,
                     streamGPUCCL);
+
+                  if (std::is_same<dataTypes::number,
+                                   std::complex<double>>::value)
+                    gpucclMpiCommDomain.gpuDirectAllReduceWrapper(
+                      reinterpret_cast<dataTypes::numberFP32GPU *>(
+                        thrust::raw_pointer_cast(&rotationMatBlockSPTemp[0])),
+                      reinterpret_cast<dataTypes::numberFP32GPU *>(
+                        thrust::raw_pointer_cast(&rotationMatBlockSPTemp[0])),
+                      BVec * D,
+                      tempRealFP32,
+                      tempImagFP32,
+                      streamGPUCCL);
+                  else
+                    gpucclMpiCommDomain.gpuDirectAllReduceWrapper(
+                      reinterpret_cast<dataTypes::numberFP32GPU *>(
+                        thrust::raw_pointer_cast(&rotationMatBlockSPTemp[0])),
+                      reinterpret_cast<dataTypes::numberFP32GPU *>(
+                        thrust::raw_pointer_cast(&rotationMatBlockSPTemp[0])),
+                      BVec * D,
+                      streamGPUCCL);
                 }
               else
                 {
                   MPI_Allreduce(MPI_IN_PLACE,
                                 rotationMatBlockHostSP,
                                 BVec * D,
-                                MPI_FLOAT,
+                                dataTypes::mpi_type_id(rotationMatBlockHostSP),
                                 MPI_SUM,
                                 mpiCommDomain);
 
-                  cudaMemcpy(thrust::raw_pointer_cast(&rotationMatBlockSP[0]),
-                             rotationMatBlockHostSP,
-                             BVec * D * sizeof(float),
+                  cudaMemcpy(reinterpret_cast<dataTypes::numberFP32GPU *>(
+                               thrust::raw_pointer_cast(
+                                 &rotationMatBlockSP[0])),
+                             reinterpret_cast<const dataTypes::numberFP32GPU *>(
+                               rotationMatBlockHostSP),
+                             BVec * D * sizeof(dataTypes::numberFP32GPU),
                              cudaMemcpyHostToDevice);
                 }
 
@@ -2673,20 +2878,26 @@ namespace dftfe
 
                   if (BDof != 0)
                     {
-                      cublasSgemm(
+                      cublasXgemm(
                         handle,
                         CUBLAS_OP_N,
                         CUBLAS_OP_N,
                         BVec,
                         BDof,
                         D,
-                        &scalarCoeffAlphaSP,
-                        thrust::raw_pointer_cast(&rotationMatBlockSP[0]),
+                        reinterpret_cast<const dataTypes::numberFP32GPU *>(
+                          &scalarCoeffAlphaSP),
+                        reinterpret_cast<const dataTypes::numberFP32GPU *>(
+                          thrust::raw_pointer_cast(&rotationMatBlockSP[0])),
                         BVec,
-                        thrust::raw_pointer_cast(&XSP[0]) + idof * N,
+                        reinterpret_cast<const dataTypes::numberFP32GPU *>(
+                          thrust::raw_pointer_cast(&XSP[0]) + idof * N),
                         N,
-                        &scalarCoeffBetaSP,
-                        thrust::raw_pointer_cast(&rotatedVectorsMatBlockSP[0]),
+                        reinterpret_cast<const dataTypes::numberFP32GPU *>(
+                          &scalarCoeffBetaSP),
+                        reinterpret_cast<dataTypes::numberFP32GPU *>(
+                          thrust::raw_pointer_cast(
+                            &rotatedVectorsMatBlockSP[0])),
                         BVec);
 
                       addSubspaceRotatedBlockToXKernel<<<(BVec * BDof + 255) /
@@ -2696,7 +2907,9 @@ namespace dftfe
                                                          streamCompute>>>(
                         BDof,
                         BVec,
-                        thrust::raw_pointer_cast(&rotatedVectorsMatBlockSP[0]),
+                        reinterpret_cast<const dataTypes::numberFP32GPU *>(
+                          thrust::raw_pointer_cast(
+                            &rotatedVectorsMatBlockSP[0])),
                         X,
                         idof,
                         jvec,
@@ -2709,6 +2922,13 @@ namespace dftfe
 
       CUDACHECK(cudaFreeHost(rotationMatBlockHostSP));
       CUDACHECK(cudaFreeHost(diagValuesHost));
+
+      if (std::is_same<dataTypes::number, std::complex<double>>::value)
+        {
+          CUDACHECK(cudaFree(tempRealFP32));
+          CUDACHECK(cudaFree(tempImagFP32));
+        }
+
       // return cublas handle to default stream
       cublasSetStream(handle, NULL);
 
@@ -2724,7 +2944,7 @@ namespace dftfe
 
     void
     subspaceRotationRRMixedPrecScalapack(
-      double *                                         X,
+      dataTypes::numberGPU *                           X,
       const unsigned int                               M,
       const unsigned int                               N,
       cublasHandle_t &                                 handle,
@@ -2732,7 +2952,7 @@ namespace dftfe
       const MPI_Comm &                                 mpiCommDomain,
       GPUCCLWrapper &                                  gpucclMpiCommDomain,
       const MPI_Comm &                                 interBandGroupComm,
-      const dftfe::ScaLAPACKMatrix<double> &           rotationMatPar,
+      const dftfe::ScaLAPACKMatrix<dataTypes::number> &rotationMatPar,
       const bool                                       rotationMatTranspose)
     {
       const unsigned int maxNumLocalDofs =
@@ -2747,10 +2967,14 @@ namespace dftfe
         globalToLocalColumnIdMap);
 
       const unsigned int MPadded = std::ceil(M * 1.0 / 8.0) * 8.0 + 0.5;
-      thrust::device_vector<float> XSP(MPadded * N, 0.0);
+      thrust::device_vector<dataTypes::numberFP32ThrustGPU> XSP(
+        MPadded * N, dataTypes::numberFP32ThrustGPU(0.0));
 
       convDoubleArrToFloatArr<<<(N + 255) / 256 * M, 256>>>(
-        N * M, X, thrust::raw_pointer_cast(&XSP[0]));
+        N * M,
+        X,
+        reinterpret_cast<dataTypes::numberFP32ThrustGPU *>(
+          thrust::raw_pointer_cast(&XSP[0])));
 
 
       // band group parallelization data structures
@@ -2767,18 +2991,19 @@ namespace dftfe
       const unsigned int dofsBlockSize =
         std::min(maxNumLocalDofs, dftParameters::subspaceRotDofsBlockSize);
 
-      float *rotationMatBlockHostSP;
-      CUDACHECK(cudaMallocHost((void **)&rotationMatBlockHostSP,
-                               vectorsBlockSize * N * sizeof(float)));
+      dataTypes::numberFP32 *rotationMatBlockHostSP;
+      CUDACHECK(
+        cudaMallocHost((void **)&rotationMatBlockHostSP,
+                       vectorsBlockSize * N * sizeof(dataTypes::numberFP32)));
       std::memset(rotationMatBlockHostSP,
                   0,
-                  vectorsBlockSize * N * sizeof(float));
+                  vectorsBlockSize * N * sizeof(dataTypes::numberFP32));
 
-      std::vector<float> rotationMatDiagBandHostSP;
 
-      double *diagValuesHost;
-      CUDACHECK(cudaMallocHost((void **)&diagValuesHost, N * sizeof(double)));
-      std::memset(diagValuesHost, 0, N * sizeof(double));
+      dataTypes::number *diagValuesHost;
+      CUDACHECK(cudaMallocHost((void **)&diagValuesHost,
+                               N * sizeof(dataTypes::number)));
+      std::memset(diagValuesHost, 0, N * sizeof(dataTypes::number));
 
       cudaStream_t streamCompute, streamGPUCCL;
       CUDACHECK(cudaStreamCreate(&streamCompute));
@@ -2798,16 +3023,21 @@ namespace dftfe
           CUDACHECK(cudaEventCreate(&communEvents[i]));
         }
 
-      thrust::device_vector<float>  rotationMatBlockSP(vectorsBlockSize * N,
-                                                      0.0);
-      thrust::device_vector<float>  rotationMatBlockSPTemp(vectorsBlockSize * N,
-                                                          0.0);
-      thrust::device_vector<double> diagValues(N, 0.0);
-      thrust::device_vector<float>  rotatedVectorsMatBlockSP(vectorsBlockSize *
-                                                              dofsBlockSize,
-                                                            0.0);
+      thrust::device_vector<dataTypes::numberFP32ThrustGPU> rotationMatBlockSP(
+        vectorsBlockSize * N, dataTypes::numberFP32ThrustGPU(0.0));
+      thrust::device_vector<dataTypes::numberFP32ThrustGPU>
+                                                        rotationMatBlockSPTemp(vectorsBlockSize * N,
+                               dataTypes::numberFP32ThrustGPU(0.0));
+      thrust::device_vector<dataTypes::numberThrustGPU> diagValues(
+        N, dataTypes::numberThrustGPU(0.0));
+      thrust::device_vector<dataTypes::numberFP32ThrustGPU>
+        rotatedVectorsMatBlockSP(vectorsBlockSize * dofsBlockSize,
+                                 dataTypes::numberFP32ThrustGPU(0.0));
 
-      const float scalarCoeffAlphaSP = 1.0, scalarCoeffBetaSP = 0.0;
+      const dataTypes::numberFP32 scalarCoeffAlphaSP =
+        dataTypes::numberFP32(1.0);
+      const dataTypes::numberFP32 scalarCoeffBetaSP =
+        dataTypes::numberFP32(0.0);
 
 
       // Extract DiagQ from parallel ScaLAPACK matrix Q
@@ -2847,16 +3077,37 @@ namespace dftfe
                 }
         }
 
-      MPI_Allreduce(
-        MPI_IN_PLACE, diagValuesHost, N, MPI_DOUBLE, MPI_SUM, mpiCommDomain);
+      MPI_Allreduce(MPI_IN_PLACE,
+                    diagValuesHost,
+                    N,
+                    dataTypes::mpi_type_id(diagValuesHost),
+                    MPI_SUM,
+                    mpiCommDomain);
 
-      cudaMemcpy(thrust::raw_pointer_cast(&diagValues[0]),
-                 diagValuesHost,
-                 N * sizeof(double),
+      cudaMemcpy(reinterpret_cast<dataTypes::numberGPU *>(
+                   thrust::raw_pointer_cast(&diagValues[0])),
+                 reinterpret_cast<const dataTypes::numberGPU *>(diagValuesHost),
+                 N * sizeof(dataTypes::numberGPU),
                  cudaMemcpyHostToDevice);
 
       computeDiagQTimesXKernel<<<(M * N + 255) / 256, 256>>>(
-        thrust::raw_pointer_cast(&diagValues[0]), X, N, M);
+        reinterpret_cast<const dataTypes::numberGPU *>(
+          thrust::raw_pointer_cast(&diagValues[0])),
+        X,
+        N,
+        M);
+
+      dataTypes::numberFP32ValueType *tempRealFP32;
+      dataTypes::numberFP32ValueType *tempImagFP32;
+      if (std::is_same<dataTypes::number, std::complex<double>>::value)
+        {
+          CUDACHECK(cudaMalloc((void **)&tempRealFP32,
+                               vectorsBlockSize * N *
+                                 sizeof(dataTypes::numberFP32ValueType)));
+          CUDACHECK(cudaMalloc((void **)&tempImagFP32,
+                               vectorsBlockSize * N *
+                                 sizeof(dataTypes::numberFP32ValueType)));
+        }
 
       unsigned int blockCount = 0;
       for (unsigned int jvec = 0; jvec < N; jvec += vectorsBlockSize)
@@ -2871,7 +3122,9 @@ namespace dftfe
               (jvec + BVec) >
                 bandGroupLowHighPlusOneIndices[2 * bandGroupTaskId])
             {
-              std::memset(rotationMatBlockHostSP, 0, BVec * N * sizeof(float));
+              std::memset(rotationMatBlockHostSP,
+                          0,
+                          BVec * N * sizeof(dataTypes::numberFP32));
 
               // Extract QBVec from parallel ScaLAPACK matrix Q
               if (rotationMatTranspose)
@@ -2902,7 +3155,7 @@ namespace dftfe
                               if (it != globalToLocalColumnIdMap.end())
                                 {
                                   rotationMatBlockHostSP[i * BVec + i - jvec] =
-                                    0.0;
+                                    dataTypes::numberFP32(0.0);
                                 }
                             }
                         }
@@ -2936,7 +3189,7 @@ namespace dftfe
                                   globalToLocalRowIdMap.end())
                                 {
                                   rotationMatBlockHostSP[i * BVec + i - jvec] =
-                                    0.0;
+                                    dataTypes::numberFP32(0.0);
                                 }
                             }
                         }
@@ -2945,31 +3198,50 @@ namespace dftfe
 
               if (dftParameters::useGPUDirectAllReduce)
                 {
-                  cudaMemcpyAsync(thrust::raw_pointer_cast(
-                                    &rotationMatBlockSPTemp[0]),
-                                  rotationMatBlockHostSP,
-                                  BVec * D * sizeof(float),
-                                  cudaMemcpyHostToDevice,
-                                  streamGPUCCL);
-
-                  gpucclMpiCommDomain.gpuDirectAllReduceWrapper(
-                    thrust::raw_pointer_cast(&rotationMatBlockSPTemp[0]),
-                    thrust::raw_pointer_cast(&rotationMatBlockSPTemp[0]),
-                    BVec * D,
+                  cudaMemcpyAsync(
+                    reinterpret_cast<dataTypes::numberFP32GPU *>(
+                      thrust::raw_pointer_cast(&rotationMatBlockSPTemp[0])),
+                    reinterpret_cast<const dataTypes::numberFP32GPU *>(
+                      rotationMatBlockHostSP),
+                    BVec * D * sizeof(dataTypes::numberFP32GPU),
+                    cudaMemcpyHostToDevice,
                     streamGPUCCL);
+
+                  if (std::is_same<dataTypes::number,
+                                   std::complex<double>>::value)
+                    gpucclMpiCommDomain.gpuDirectAllReduceWrapper(
+                      reinterpret_cast<dataTypes::numberFP32GPU *>(
+                        thrust::raw_pointer_cast(&rotationMatBlockSPTemp[0])),
+                      reinterpret_cast<dataTypes::numberFP32GPU *>(
+                        thrust::raw_pointer_cast(&rotationMatBlockSPTemp[0])),
+                      BVec * D,
+                      tempRealFP32,
+                      tempImagFP32,
+                      streamGPUCCL);
+                  else
+                    gpucclMpiCommDomain.gpuDirectAllReduceWrapper(
+                      reinterpret_cast<dataTypes::numberFP32GPU *>(
+                        thrust::raw_pointer_cast(&rotationMatBlockSPTemp[0])),
+                      reinterpret_cast<dataTypes::numberFP32GPU *>(
+                        thrust::raw_pointer_cast(&rotationMatBlockSPTemp[0])),
+                      BVec * D,
+                      streamGPUCCL);
                 }
               else
                 {
                   MPI_Allreduce(MPI_IN_PLACE,
                                 rotationMatBlockHostSP,
                                 BVec * D,
-                                MPI_FLOAT,
+                                dataTypes::mpi_type_id(rotationMatBlockHostSP),
                                 MPI_SUM,
                                 mpiCommDomain);
 
-                  cudaMemcpy(thrust::raw_pointer_cast(&rotationMatBlockSP[0]),
-                             rotationMatBlockHostSP,
-                             BVec * D * sizeof(float),
+                  cudaMemcpy(reinterpret_cast<dataTypes::numberFP32GPU *>(
+                               thrust::raw_pointer_cast(
+                                 &rotationMatBlockSP[0])),
+                             reinterpret_cast<const dataTypes::numberFP32GPU *>(
+                               rotationMatBlockHostSP),
+                             BVec * D * sizeof(dataTypes::numberFP32GPU),
                              cudaMemcpyHostToDevice);
                 }
 
@@ -3005,20 +3277,26 @@ namespace dftfe
 
                   if (BDof != 0)
                     {
-                      cublasSgemm(
+                      cublasXgemm(
                         handle,
                         CUBLAS_OP_N,
                         CUBLAS_OP_N,
                         BVec,
                         BDof,
                         D,
-                        &scalarCoeffAlphaSP,
-                        thrust::raw_pointer_cast(&rotationMatBlockSP[0]),
+                        reinterpret_cast<const dataTypes::numberFP32GPU *>(
+                          &scalarCoeffAlphaSP),
+                        reinterpret_cast<const dataTypes::numberFP32GPU *>(
+                          thrust::raw_pointer_cast(&rotationMatBlockSP[0])),
                         BVec,
-                        thrust::raw_pointer_cast(&XSP[0]) + idof * N,
+                        reinterpret_cast<const dataTypes::numberFP32GPU *>(
+                          thrust::raw_pointer_cast(&XSP[0]) + idof * N),
                         N,
-                        &scalarCoeffBetaSP,
-                        thrust::raw_pointer_cast(&rotatedVectorsMatBlockSP[0]),
+                        reinterpret_cast<const dataTypes::numberFP32GPU *>(
+                          &scalarCoeffBetaSP),
+                        reinterpret_cast<dataTypes::numberFP32GPU *>(
+                          thrust::raw_pointer_cast(
+                            &rotatedVectorsMatBlockSP[0])),
                         BVec);
 
 
@@ -3029,7 +3307,9 @@ namespace dftfe
                                                          streamCompute>>>(
                         BDof,
                         BVec,
-                        thrust::raw_pointer_cast(&rotatedVectorsMatBlockSP[0]),
+                        reinterpret_cast<const dataTypes::numberFP32GPU *>(
+                          thrust::raw_pointer_cast(
+                            &rotatedVectorsMatBlockSP[0])),
                         X,
                         idof,
                         jvec,
@@ -3042,6 +3322,13 @@ namespace dftfe
 
       cudaFreeHost(rotationMatBlockHostSP);
       cudaFreeHost(diagValuesHost);
+
+      if (std::is_same<dataTypes::number, std::complex<double>>::value)
+        {
+          CUDACHECK(cudaFree(tempRealFP32));
+          CUDACHECK(cudaFree(tempImagFP32));
+        }
+
       // return cublas handle to default stream
       cublasSetStream(handle, NULL);
 
@@ -3057,7 +3344,7 @@ namespace dftfe
 
     void
     fillParallelOverlapMatScalapack(
-      const double *                                   X,
+      const dataTypes::numberGPU *                     X,
       const unsigned int                               M,
       const unsigned int                               N,
       cublasHandle_t &                                 handle,
@@ -3065,7 +3352,7 @@ namespace dftfe
       GPUCCLWrapper &                                  gpucclMpiCommDomain,
       const MPI_Comm &                                 interBandGroupComm,
       const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
-      dftfe::ScaLAPACKMatrix<double> &                 overlapMatPar)
+      dftfe::ScaLAPACKMatrix<dataTypes::number> &      overlapMatPar)
     {
       // get global to local index maps for Scalapack matrix
       std::map<unsigned int, unsigned int> globalToLocalColumnIdMap;
@@ -3088,20 +3375,33 @@ namespace dftfe
       const unsigned int vectorsBlockSize =
         std::min(dftParameters::wfcBlockSize, N);
 
-      thrust::device_vector<double> overlapMatrixBlock(N * vectorsBlockSize,
-                                                       0.0);
+      thrust::device_vector<dataTypes::numberThrustGPU> overlapMatrixBlock(
+        N * vectorsBlockSize, dataTypes::numberThrustGPU(0.0));
 
-      double *overlapMatrixBlockHost;
+      dataTypes::number *overlapMatrixBlockHost;
       cudaMallocHost((void **)&overlapMatrixBlockHost,
-                     N * vectorsBlockSize * sizeof(double));
+                     N * vectorsBlockSize * sizeof(dataTypes::number));
       std::memset(overlapMatrixBlockHost,
                   0,
-                  vectorsBlockSize * N * sizeof(double));
+                  vectorsBlockSize * N * sizeof(dataTypes::number));
 
       cudaStream_t streamGPUCCL;
       cudaStreamCreate(&streamGPUCCL);
 
-      const double scalarCoeffAlpha = 1.0, scalarCoeffBeta = 0.0;
+      const dataTypes::number scalarCoeffAlpha = dataTypes::number(1.0);
+      const dataTypes::number scalarCoeffBeta  = dataTypes::number(0.0);
+
+      dataTypes::numberValueType *tempReal;
+      dataTypes::numberValueType *tempImag;
+      if (std::is_same<dataTypes::number, std::complex<double>>::value)
+        {
+          CUDACHECK(cudaMalloc((void **)&tempReal,
+                               vectorsBlockSize * N *
+                                 sizeof(dataTypes::numberValueType)));
+          CUDACHECK(cudaMalloc((void **)&tempImag,
+                               vectorsBlockSize * N *
+                                 sizeof(dataTypes::numberValueType)));
+        }
 
       for (unsigned int ivec = 0; ivec < N; ivec += vectorsBlockSize)
         {
@@ -3117,34 +3417,56 @@ namespace dftfe
               (ivec + B) > bandGroupLowHighPlusOneIndices[2 * bandGroupTaskId])
             {
               // Comptute local XTrunc^{T}*XcBlock.
-              cublasDgemm(handle,
-                          CUBLAS_OP_N,
-                          CUBLAS_OP_T,
-                          D,
-                          B,
-                          M,
-                          &scalarCoeffAlpha,
-                          X + ivec,
-                          N,
-                          X + ivec,
-                          N,
-                          &scalarCoeffBeta,
-                          thrust::raw_pointer_cast(&overlapMatrixBlock[0]),
-                          D);
+              cublasXgemm(
+                handle,
+                CUBLAS_OP_N,
+                std::is_same<dataTypes::number, std::complex<double>>::value ?
+                  CUBLAS_OP_C :
+                  CUBLAS_OP_T,
+                D,
+                B,
+                M,
+                reinterpret_cast<const dataTypes::numberGPU *>(
+                  &scalarCoeffAlpha),
+                X + ivec,
+                N,
+                X + ivec,
+                N,
+                reinterpret_cast<const dataTypes::numberGPU *>(
+                  &scalarCoeffBeta),
+                reinterpret_cast<dataTypes::numberGPU *>(
+                  thrust::raw_pointer_cast(&overlapMatrixBlock[0])),
+                D);
 
 
               if (dftParameters::useGPUDirectAllReduce)
                 {
-                  gpucclMpiCommDomain.gpuDirectAllReduceWrapper(
-                    thrust::raw_pointer_cast(&overlapMatrixBlock[0]),
-                    thrust::raw_pointer_cast(&overlapMatrixBlock[0]),
-                    D * B,
-                    streamGPUCCL);
+                  if (std::is_same<dataTypes::number,
+                                   std::complex<double>>::value)
+                    gpucclMpiCommDomain.gpuDirectAllReduceWrapper(
+                      reinterpret_cast<dataTypes::numberGPU *>(
+                        thrust::raw_pointer_cast(&overlapMatrixBlock[0])),
+                      reinterpret_cast<dataTypes::numberGPU *>(
+                        thrust::raw_pointer_cast(&overlapMatrixBlock[0])),
+                      D * B,
+                      tempReal,
+                      tempImag,
+                      streamGPUCCL);
+                  else
+                    gpucclMpiCommDomain.gpuDirectAllReduceWrapper(
+                      reinterpret_cast<dataTypes::numberGPU *>(
+                        thrust::raw_pointer_cast(&overlapMatrixBlock[0])),
+                      reinterpret_cast<dataTypes::numberGPU *>(
+                        thrust::raw_pointer_cast(&overlapMatrixBlock[0])),
+                      D * B,
+                      streamGPUCCL);
                 }
 
-              cudaMemcpy(overlapMatrixBlockHost,
-                         thrust::raw_pointer_cast(&overlapMatrixBlock[0]),
-                         D * B * sizeof(double),
+              cudaMemcpy(reinterpret_cast<dataTypes::numberGPU *>(
+                           overlapMatrixBlockHost),
+                         reinterpret_cast<dataTypes::numberGPU *>(
+                           thrust::raw_pointer_cast(&overlapMatrixBlock[0])),
+                         D * B * sizeof(dataTypes::numberGPU),
                          cudaMemcpyDeviceToHost);
 
               // Sum local XTrunc^{T}*XcBlock across domain decomposition
@@ -3153,7 +3475,7 @@ namespace dftfe
                 MPI_Allreduce(MPI_IN_PLACE,
                               overlapMatrixBlockHost,
                               D * B,
-                              MPI_DOUBLE,
+                              dataTypes::mpi_type_id(overlapMatrixBlockHost),
                               MPI_SUM,
                               mpiCommDomain);
 
@@ -3181,6 +3503,11 @@ namespace dftfe
         }     // end block loop
 
       cudaFreeHost(overlapMatrixBlockHost);
+      if (std::is_same<dataTypes::number, std::complex<double>>::value)
+        {
+          CUDACHECK(cudaFree(tempReal));
+          CUDACHECK(cudaFree(tempImag));
+        }
 
       cudaStreamDestroy(streamGPUCCL);
 
@@ -3221,7 +3548,7 @@ namespace dftfe
 
     void
     fillParallelOverlapMatScalapackAsyncComputeCommun(
-      const double *                                   X,
+      const dataTypes::numberGPU *                     X,
       const unsigned int                               M,
       const unsigned int                               N,
       cublasHandle_t &                                 handle,
@@ -3229,7 +3556,7 @@ namespace dftfe
       GPUCCLWrapper &                                  gpucclMpiCommDomain,
       const MPI_Comm &                                 interBandGroupComm,
       const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
-      dftfe::ScaLAPACKMatrix<double> &                 overlapMatPar)
+      dftfe::ScaLAPACKMatrix<dataTypes::number> &      overlapMatPar)
     {
       // get global to local index maps for Scalapack matrix
       std::map<unsigned int, unsigned int> globalToLocalColumnIdMap;
@@ -3275,20 +3602,34 @@ namespace dftfe
         }
 
       // create pinned memory used later to copy from GPU->CPU
-      double *overlapMatrixBlockHost;
-      CUDACHECK(cudaMallocHost((void **)&overlapMatrixBlockHost,
-                               N * vectorsBlockSize * sizeof(double)));
+      dataTypes::number *overlapMatrixBlockHost;
+      CUDACHECK(
+        cudaMallocHost((void **)&overlapMatrixBlockHost,
+                       N * vectorsBlockSize * sizeof(dataTypes::number)));
       std::memset(overlapMatrixBlockHost,
                   0,
-                  vectorsBlockSize * N * sizeof(double));
+                  vectorsBlockSize * N * sizeof(dataTypes::number));
 
       // allocate device vectors to be used later
-      thrust::device_vector<double> overlapMatrixBlock(N * vectorsBlockSize,
-                                                       0.0);
-      thrust::device_vector<double> overlapMatrixBlockNext(N * vectorsBlockSize,
-                                                           0.0);
+      thrust::device_vector<dataTypes::numberThrustGPU> overlapMatrixBlock(
+        N * vectorsBlockSize, dataTypes::numberThrustGPU(0.0));
+      thrust::device_vector<dataTypes::numberThrustGPU> overlapMatrixBlockNext(
+        N * vectorsBlockSize, dataTypes::numberThrustGPU(0.0));
 
-      const double scalarCoeffAlpha = 1.0, scalarCoeffBeta = 0.0;
+      const dataTypes::number scalarCoeffAlpha = dataTypes::number(1.0);
+      const dataTypes::number scalarCoeffBeta  = dataTypes::number(0.0);
+
+      dataTypes::numberValueType *tempReal;
+      dataTypes::numberValueType *tempImag;
+      if (std::is_same<dataTypes::number, std::complex<double>>::value)
+        {
+          CUDACHECK(cudaMalloc((void **)&tempReal,
+                               vectorsBlockSize * N *
+                                 sizeof(dataTypes::numberValueType)));
+          CUDACHECK(cudaMalloc((void **)&tempImag,
+                               vectorsBlockSize * N *
+                                 sizeof(dataTypes::numberValueType)));
+        }
 
       unsigned int blockCount = 0;
       for (unsigned int ivec = 0; ivec < N; ivec += vectorsBlockSize)
@@ -3304,19 +3645,26 @@ namespace dftfe
               // Compute local XTrunc^{T}*XcBlock.
               if (ivec == bandGroupLowHighPlusOneIndices[2 * bandGroupTaskId])
                 {
-                  cublasDgemm(handle,
+                  cublasXgemm(handle,
                               CUBLAS_OP_N,
-                              CUBLAS_OP_T,
+                              std::is_same<dataTypes::number,
+                                           std::complex<double>>::value ?
+                                CUBLAS_OP_C :
+                                CUBLAS_OP_T,
                               D,
                               B,
                               M,
-                              &scalarCoeffAlpha,
+                              reinterpret_cast<const dataTypes::numberGPU *>(
+                                &scalarCoeffAlpha),
                               X + ivec,
                               N,
                               X + ivec,
                               N,
-                              &scalarCoeffBeta,
-                              thrust::raw_pointer_cast(&overlapMatrixBlock[0]),
+                              reinterpret_cast<const dataTypes::numberGPU *>(
+                                &scalarCoeffBeta),
+                              reinterpret_cast<dataTypes::numberGPU *>(
+                                thrust::raw_pointer_cast(
+                                  &overlapMatrixBlock[0])),
                               D);
 
                   // record completion of compute for first block
@@ -3347,20 +3695,26 @@ namespace dftfe
                   // thrust::fill(overlapMatrixBlockNext.begin(),overlapMatrixBlockNext.end(),0.);
 
                   // evaluate X^{T} times XBlock
-                  cublasDgemm(handle,
+                  cublasXgemm(handle,
                               CUBLAS_OP_N,
-                              CUBLAS_OP_T,
+                              std::is_same<dataTypes::number,
+                                           std::complex<double>>::value ?
+                                CUBLAS_OP_C :
+                                CUBLAS_OP_T,
                               DNew,
                               BNew,
                               M,
-                              &scalarCoeffAlpha,
+                              reinterpret_cast<const dataTypes::numberGPU *>(
+                                &scalarCoeffAlpha),
                               X + ivecNew,
                               N,
                               X + ivecNew,
                               N,
-                              &scalarCoeffBeta,
-                              thrust::raw_pointer_cast(
-                                &overlapMatrixBlockNext[0]),
+                              reinterpret_cast<const dataTypes::numberGPU *>(
+                                &scalarCoeffBeta),
+                              reinterpret_cast<dataTypes::numberGPU *>(
+                                thrust::raw_pointer_cast(
+                                  &overlapMatrixBlockNext[0])),
                               DNew);
 
                   // record completion of compute for next block
@@ -3372,19 +3726,35 @@ namespace dftfe
                 {
                   // Sum local XTrunc^{T}*XcBlock across domain decomposition
                   // processors
-                  gpucclMpiCommDomain.gpuDirectAllReduceWrapper(
-                    thrust::raw_pointer_cast(&overlapMatrixBlock[0]),
-                    thrust::raw_pointer_cast(&overlapMatrixBlock[0]),
-                    D * B,
-                    streamDataMove);
+                  if (std::is_same<dataTypes::number,
+                                   std::complex<double>>::value)
+                    gpucclMpiCommDomain.gpuDirectAllReduceWrapper(
+                      reinterpret_cast<dataTypes::numberGPU *>(
+                        thrust::raw_pointer_cast(&overlapMatrixBlock[0])),
+                      reinterpret_cast<dataTypes::numberGPU *>(
+                        thrust::raw_pointer_cast(&overlapMatrixBlock[0])),
+                      D * B,
+                      tempReal,
+                      tempImag,
+                      streamDataMove);
+                  else
+                    gpucclMpiCommDomain.gpuDirectAllReduceWrapper(
+                      reinterpret_cast<dataTypes::numberGPU *>(
+                        thrust::raw_pointer_cast(&overlapMatrixBlock[0])),
+                      reinterpret_cast<dataTypes::numberGPU *>(
+                        thrust::raw_pointer_cast(&overlapMatrixBlock[0])),
+                      D * B,
+                      streamDataMove);
                 }
 
-              CUDACHECK(cudaMemcpyAsync(overlapMatrixBlockHost,
-                                        thrust::raw_pointer_cast(
-                                          &overlapMatrixBlock[0]),
-                                        D * B * sizeof(double),
-                                        cudaMemcpyDeviceToHost,
-                                        streamDataMove));
+              CUDACHECK(cudaMemcpyAsync(
+                reinterpret_cast<dataTypes::numberGPU *>(
+                  overlapMatrixBlockHost),
+                reinterpret_cast<const dataTypes::numberGPU *>(
+                  thrust::raw_pointer_cast(&overlapMatrixBlock[0])),
+                D * B * sizeof(dataTypes::numberGPU),
+                cudaMemcpyDeviceToHost,
+                streamDataMove));
 
               // record completion of GPU->CPU copy for current block
               CUDACHECK(
@@ -3401,7 +3771,8 @@ namespace dftfe
                     MPI_Allreduce(MPI_IN_PLACE,
                                   overlapMatrixBlockHost,
                                   D * B,
-                                  MPI_DOUBLE,
+                                  dataTypes::mpi_type_id(
+                                    overlapMatrixBlockHost),
                                   MPI_SUM,
                                   mpiCommDomain);
 
@@ -3432,6 +3803,12 @@ namespace dftfe
         } // end block loop
 
       CUDACHECK(cudaFreeHost(overlapMatrixBlockHost));
+      if (std::is_same<dataTypes::number, std::complex<double>>::value)
+        {
+          CUDACHECK(cudaFree(tempReal));
+          CUDACHECK(cudaFree(tempImag));
+        }
+
       // return cublas handle to default stream
       cublasSetStream(handle, NULL);
 
@@ -3456,7 +3833,7 @@ namespace dftfe
 
     void
     fillParallelOverlapMatMixedPrecScalapack(
-      const double *                                   X,
+      const dataTypes::numberGPU *                     X,
       const unsigned int                               M,
       const unsigned int                               N,
       cublasHandle_t &                                 handle,
@@ -3464,7 +3841,7 @@ namespace dftfe
       GPUCCLWrapper &                                  gpucclMpiCommDomain,
       const MPI_Comm &                                 interBandGroupComm,
       const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
-      dftfe::ScaLAPACKMatrix<double> &                 overlapMatPar)
+      dftfe::ScaLAPACKMatrix<dataTypes::number> &      overlapMatPar)
     {
       // get global to local index maps for Scalapack matrix
       std::map<unsigned int, unsigned int> globalToLocalColumnIdMap;
@@ -3488,36 +3865,66 @@ namespace dftfe
         std::min(dftParameters::wfcBlockSize, N);
 
 
-      thrust::device_vector<float>  overlapMatrixBlockSP(N * vectorsBlockSize,
-                                                        0.0);
-      thrust::device_vector<double> overlapMatrixBlockDP(vectorsBlockSize *
-                                                           vectorsBlockSize,
-                                                         0.0);
+      thrust::device_vector<dataTypes::numberFP32ThrustGPU>
+                                                        overlapMatrixBlockSP(N * vectorsBlockSize,
+                             dataTypes::numberFP32ThrustGPU(0.0));
+      thrust::device_vector<dataTypes::numberThrustGPU> overlapMatrixBlockDP(
+        vectorsBlockSize * vectorsBlockSize, dataTypes::numberThrustGPU(0.0));
 
       const unsigned int MPadded = std::ceil(M * 1.0 / 8.0) * 8.0 + 0.5;
-      thrust::device_vector<float> XSP(MPadded * N, 0.0);
+      thrust::device_vector<dataTypes::numberFP32ThrustGPU> XSP(
+        MPadded * N, dataTypes::numberFP32ThrustGPU(0.0));
 
       convDoubleArrToFloatArr<<<(N + 255) / 256 * M, 256>>>(
-        N * M, X, thrust::raw_pointer_cast(&XSP[0]));
-      double *overlapMatrixBlockHostDP;
+        N * M,
+        X,
+        reinterpret_cast<dataTypes::numberFP32GPU *>(
+          thrust::raw_pointer_cast(&XSP[0])));
+      dataTypes::number *overlapMatrixBlockHostDP;
       cudaMallocHost((void **)&overlapMatrixBlockHostDP,
-                     vectorsBlockSize * vectorsBlockSize * sizeof(double));
+                     vectorsBlockSize * vectorsBlockSize *
+                       sizeof(dataTypes::number));
       std::memset(overlapMatrixBlockHostDP,
                   0,
-                  vectorsBlockSize * vectorsBlockSize * sizeof(double));
+                  vectorsBlockSize * vectorsBlockSize *
+                    sizeof(dataTypes::number));
 
-      float *overlapMatrixBlockHostSP;
+      dataTypes::numberFP32 *overlapMatrixBlockHostSP;
       cudaMallocHost((void **)&overlapMatrixBlockHostSP,
-                     N * vectorsBlockSize * sizeof(float));
+                     N * vectorsBlockSize * sizeof(dataTypes::numberFP32));
       std::memset(overlapMatrixBlockHostSP,
                   0,
-                  N * vectorsBlockSize * sizeof(float));
+                  N * vectorsBlockSize * sizeof(dataTypes::numberFP32));
 
       cudaStream_t streamGPUCCL;
       cudaStreamCreate(&streamGPUCCL);
 
-      const double scalarCoeffAlpha = 1.0, scalarCoeffBeta = 0.0;
-      const float  scalarCoeffAlphaSP = 1.0, scalarCoeffBetaSP = 0.0;
+      const dataTypes::number     scalarCoeffAlpha = dataTypes::number(1.0);
+      const dataTypes::number     scalarCoeffBeta  = dataTypes::number(0.0);
+      const dataTypes::numberFP32 scalarCoeffAlphaSP =
+        dataTypes::numberFP32(1.0);
+      const dataTypes::numberFP32 scalarCoeffBetaSP =
+        dataTypes::numberFP32(0.0);
+
+      dataTypes::numberValueType *    tempReal;
+      dataTypes::numberValueType *    tempImag;
+      dataTypes::numberFP32ValueType *tempRealFP32;
+      dataTypes::numberFP32ValueType *tempImagFP32;
+      if (std::is_same<dataTypes::number, std::complex<double>>::value)
+        {
+          CUDACHECK(cudaMalloc((void **)&tempReal,
+                               vectorsBlockSize * N *
+                                 sizeof(dataTypes::numberValueType)));
+          CUDACHECK(cudaMalloc((void **)&tempImag,
+                               vectorsBlockSize * N *
+                                 sizeof(dataTypes::numberValueType)));
+          CUDACHECK(cudaMalloc((void **)&tempRealFP32,
+                               vectorsBlockSize * N *
+                                 sizeof(dataTypes::numberFP32ValueType)));
+          CUDACHECK(cudaMalloc((void **)&tempImagFP32,
+                               vectorsBlockSize * N *
+                                 sizeof(dataTypes::numberFP32ValueType)));
+        }
 
       for (unsigned int ivec = 0; ivec < N; ivec += vectorsBlockSize)
         {
@@ -3531,62 +3938,103 @@ namespace dftfe
                 bandGroupLowHighPlusOneIndices[2 * bandGroupTaskId + 1] &&
               (ivec + B) > bandGroupLowHighPlusOneIndices[2 * bandGroupTaskId])
             {
-              cublasDgemm(handle,
-                          CUBLAS_OP_N,
-                          CUBLAS_OP_T,
-                          B,
-                          B,
-                          M,
-                          &scalarCoeffAlpha,
-                          X + ivec,
-                          N,
-                          X + ivec,
-                          N,
-                          &scalarCoeffBeta,
-                          thrust::raw_pointer_cast(&overlapMatrixBlockDP[0]),
-                          B);
+              cublasXgemm(
+                handle,
+                CUBLAS_OP_N,
+                std::is_same<dataTypes::number, std::complex<double>>::value ?
+                  CUBLAS_OP_C :
+                  CUBLAS_OP_T,
+                B,
+                B,
+                M,
+                reinterpret_cast<const dataTypes::numberGPU *>(
+                  &scalarCoeffAlpha),
+                X + ivec,
+                N,
+                X + ivec,
+                N,
+                reinterpret_cast<const dataTypes::numberGPU *>(
+                  &scalarCoeffBeta),
+                reinterpret_cast<dataTypes::numberGPU *>(
+                  thrust::raw_pointer_cast(&overlapMatrixBlockDP[0])),
+                B);
 
               const unsigned int DRem = D - B;
 
               if (DRem != 0)
                 {
-                  cublasSgemm(handle,
-                              CUBLAS_OP_N,
-                              CUBLAS_OP_T,
-                              DRem,
-                              B,
-                              M,
-                              &scalarCoeffAlphaSP,
-                              thrust::raw_pointer_cast(&XSP[0]) + ivec + B,
-                              N,
-                              thrust::raw_pointer_cast(&XSP[0]) + ivec,
-                              N,
-                              &scalarCoeffBetaSP,
-                              thrust::raw_pointer_cast(
-                                &overlapMatrixBlockSP[0]),
-                              DRem);
+                  cublasXgemm(
+                    handle,
+                    CUBLAS_OP_N,
+                    std::is_same<dataTypes::number,
+                                 std::complex<double>>::value ?
+                      CUBLAS_OP_C :
+                      CUBLAS_OP_T,
+                    DRem,
+                    B,
+                    M,
+                    reinterpret_cast<const dataTypes::numberFP32GPU *>(
+                      &scalarCoeffAlphaSP),
+                    reinterpret_cast<const dataTypes::numberFP32GPU *>(
+                      thrust::raw_pointer_cast(&XSP[0]) + ivec + B),
+                    N,
+                    reinterpret_cast<const dataTypes::numberFP32GPU *>(
+                      thrust::raw_pointer_cast(&XSP[0]) + ivec),
+                    N,
+                    reinterpret_cast<const dataTypes::numberFP32GPU *>(
+                      &scalarCoeffBetaSP),
+                    reinterpret_cast<dataTypes::numberFP32GPU *>(
+                      thrust::raw_pointer_cast(&overlapMatrixBlockSP[0])),
+                    DRem);
                 }
 
               if (dftParameters::useGPUDirectAllReduce)
                 {
-                  gpucclMpiCommDomain.gpuDirectAllReduceMixedPrecGroupWrapper(
-                    thrust::raw_pointer_cast(&overlapMatrixBlockDP[0]),
-                    thrust::raw_pointer_cast(&overlapMatrixBlockSP[0]),
-                    thrust::raw_pointer_cast(&overlapMatrixBlockDP[0]),
-                    thrust::raw_pointer_cast(&overlapMatrixBlockSP[0]),
-                    B * B,
-                    DRem * B,
-                    streamGPUCCL);
+                  if (std::is_same<dataTypes::number,
+                                   std::complex<double>>::value)
+                    gpucclMpiCommDomain.gpuDirectAllReduceMixedPrecGroupWrapper(
+                      reinterpret_cast<dataTypes::numberGPU *>(
+                        thrust::raw_pointer_cast(&overlapMatrixBlockDP[0])),
+                      reinterpret_cast<dataTypes::numberFP32GPU *>(
+                        thrust::raw_pointer_cast(&overlapMatrixBlockSP[0])),
+                      reinterpret_cast<dataTypes::numberGPU *>(
+                        thrust::raw_pointer_cast(&overlapMatrixBlockDP[0])),
+                      reinterpret_cast<dataTypes::numberFP32GPU *>(
+                        thrust::raw_pointer_cast(&overlapMatrixBlockSP[0])),
+                      B * B,
+                      DRem * B,
+                      tempReal,
+                      tempRealFP32,
+                      tempImag,
+                      tempImagFP32,
+                      streamGPUCCL);
+                  else
+                    gpucclMpiCommDomain.gpuDirectAllReduceMixedPrecGroupWrapper(
+                      reinterpret_cast<dataTypes::numberGPU *>(
+                        thrust::raw_pointer_cast(&overlapMatrixBlockDP[0])),
+                      reinterpret_cast<dataTypes::numberFP32GPU *>(
+                        thrust::raw_pointer_cast(&overlapMatrixBlockSP[0])),
+                      reinterpret_cast<dataTypes::numberGPU *>(
+                        thrust::raw_pointer_cast(&overlapMatrixBlockDP[0])),
+                      reinterpret_cast<dataTypes::numberFP32GPU *>(
+                        thrust::raw_pointer_cast(&overlapMatrixBlockSP[0])),
+                      B * B,
+                      DRem * B,
+                      streamGPUCCL);
                 }
 
-              cudaMemcpy(overlapMatrixBlockHostDP,
-                         thrust::raw_pointer_cast(&overlapMatrixBlockDP[0]),
-                         B * B * sizeof(double),
+              cudaMemcpy(reinterpret_cast<dataTypes::numberGPU *>(
+                           overlapMatrixBlockHostDP),
+                         reinterpret_cast<const dataTypes::numberGPU *>(
+                           thrust::raw_pointer_cast(&overlapMatrixBlockDP[0])),
+                         B * B * sizeof(dataTypes::numberGPU),
                          cudaMemcpyDeviceToHost);
 
-              cudaMemcpy(overlapMatrixBlockHostSP,
-                         thrust::raw_pointer_cast(&overlapMatrixBlockSP[0]),
-                         DRem * B * sizeof(float),
+              cudaMemcpy(reinterpret_cast<dataTypes::numberFP32GPU *>(
+                           overlapMatrixBlockHostSP),
+                         reinterpret_cast<const dataTypes::numberFP32GPU *>(
+                           thrust::raw_pointer_cast(&overlapMatrixBlockSP[0])),
+                         DRem * B * sizeof(dataTypes::numberFP32GPU),
                          cudaMemcpyDeviceToHost);
 
               if (!dftParameters::useGPUDirectAllReduce)
@@ -3596,7 +4044,8 @@ namespace dftfe
                   MPI_Allreduce(MPI_IN_PLACE,
                                 overlapMatrixBlockHostDP,
                                 B * B,
-                                MPI_DOUBLE,
+                                dataTypes::mpi_type_id(
+                                  overlapMatrixBlockHostDP),
                                 MPI_SUM,
                                 mpiCommDomain);
 
@@ -3605,7 +4054,8 @@ namespace dftfe
                   MPI_Allreduce(MPI_IN_PLACE,
                                 overlapMatrixBlockHostSP,
                                 DRem * B,
-                                MPI_FLOAT,
+                                dataTypes::mpi_type_id(
+                                  overlapMatrixBlockHostSP),
                                 MPI_SUM,
                                 mpiCommDomain);
                 }
@@ -3642,6 +4092,15 @@ namespace dftfe
 
       cudaFreeHost(overlapMatrixBlockHostDP);
       cudaFreeHost(overlapMatrixBlockHostSP);
+
+      if (std::is_same<dataTypes::number, std::complex<double>>::value)
+        {
+          CUDACHECK(cudaFree(tempReal));
+          CUDACHECK(cudaFree(tempImag));
+          CUDACHECK(cudaFree(tempRealFP32));
+          CUDACHECK(cudaFree(tempImagFP32));
+        }
+
       cudaStreamDestroy(streamGPUCCL);
 
       if (numberBandGroups > 1)
@@ -3682,7 +4141,7 @@ namespace dftfe
 
     void
     fillParallelOverlapMatMixedPrecScalapackAsyncComputeCommun(
-      const double *                                   X,
+      const dataTypes::numberGPU *                     X,
       const unsigned int                               M,
       const unsigned int                               N,
       cublasHandle_t &                                 handle,
@@ -3690,7 +4149,7 @@ namespace dftfe
       GPUCCLWrapper &                                  gpucclMpiCommDomain,
       const MPI_Comm &                                 interBandGroupComm,
       const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
-      dftfe::ScaLAPACKMatrix<double> &                 overlapMatPar)
+      dftfe::ScaLAPACKMatrix<dataTypes::number> &      overlapMatPar)
     {
       // get global to local index maps for Scalapack matrix
       std::map<unsigned int, unsigned int> globalToLocalColumnIdMap;
@@ -3735,39 +4194,69 @@ namespace dftfe
           cudaEventCreate(&copyEvents[i]);
         }
 
-      thrust::device_vector<float>  overlapMatrixBlockSP(N * vectorsBlockSize,
-                                                        0.0);
-      thrust::device_vector<double> overlapMatrixBlockDP(vectorsBlockSize *
-                                                           vectorsBlockSize,
-                                                         0.0);
-      thrust::device_vector<float>  overlapMatrixBlockSPNext(N *
-                                                              vectorsBlockSize,
-                                                            0.0);
-      thrust::device_vector<double> overlapMatrixBlockDPNext(vectorsBlockSize *
-                                                               vectorsBlockSize,
-                                                             0.0);
+      thrust::device_vector<dataTypes::numberFP32ThrustGPU>
+                                                        overlapMatrixBlockSP(N * vectorsBlockSize,
+                             dataTypes::numberFP32ThrustGPU(0.0));
+      thrust::device_vector<dataTypes::numberThrustGPU> overlapMatrixBlockDP(
+        vectorsBlockSize * vectorsBlockSize, dataTypes::numberThrustGPU(0.0));
+      thrust::device_vector<dataTypes::numberFP32ThrustGPU>
+        overlapMatrixBlockSPNext(N * vectorsBlockSize,
+                                 dataTypes::numberFP32ThrustGPU(0.0));
+      thrust::device_vector<dataTypes::numberThrustGPU>
+        overlapMatrixBlockDPNext(vectorsBlockSize * vectorsBlockSize,
+                                 dataTypes::numberThrustGPU(0.0));
 
       const unsigned int MPadded = std::ceil(M * 1.0 / 8.0) * 8.0 + 0.5;
-      thrust::device_vector<float> XSP(MPadded * N, 0.0);
+      thrust::device_vector<dataTypes::numberFP32ThrustGPU> XSP(
+        MPadded * N, dataTypes::numberFP32ThrustGPU(0.0));
 
       convDoubleArrToFloatArr<<<(N + 255) / 256 * M, 256>>>(
-        N * M, X, thrust::raw_pointer_cast(&XSP[0]));
-      double *overlapMatrixBlockHostDP;
+        N * M,
+        X,
+        reinterpret_cast<dataTypes::numberFP32GPU *>(
+          thrust::raw_pointer_cast(&XSP[0])));
+      dataTypes::number *overlapMatrixBlockHostDP;
       cudaMallocHost((void **)&overlapMatrixBlockHostDP,
-                     vectorsBlockSize * vectorsBlockSize * sizeof(double));
+                     vectorsBlockSize * vectorsBlockSize *
+                       sizeof(dataTypes::number));
       std::memset(overlapMatrixBlockHostDP,
                   0,
-                  vectorsBlockSize * vectorsBlockSize * sizeof(double));
+                  vectorsBlockSize * vectorsBlockSize *
+                    sizeof(dataTypes::number));
 
-      float *overlapMatrixBlockHostSP;
+      dataTypes::numberFP32 *overlapMatrixBlockHostSP;
       cudaMallocHost((void **)&overlapMatrixBlockHostSP,
-                     N * vectorsBlockSize * sizeof(float));
+                     N * vectorsBlockSize * sizeof(dataTypes::numberFP32));
       std::memset(overlapMatrixBlockHostSP,
                   0,
-                  N * vectorsBlockSize * sizeof(float));
+                  N * vectorsBlockSize * sizeof(dataTypes::numberFP32));
 
-      const double scalarCoeffAlpha = 1.0, scalarCoeffBeta = 0.0;
-      const float  scalarCoeffAlphaSP = 1.0, scalarCoeffBetaSP = 0.0;
+      const dataTypes::number     scalarCoeffAlpha = dataTypes::number(1.0);
+      const dataTypes::number     scalarCoeffBeta  = dataTypes::number(0.0);
+      const dataTypes::numberFP32 scalarCoeffAlphaSP =
+        dataTypes::numberFP32(1.0);
+      const dataTypes::numberFP32 scalarCoeffBetaSP =
+        dataTypes::numberFP32(0.0);
+
+      dataTypes::numberValueType *    tempReal;
+      dataTypes::numberValueType *    tempImag;
+      dataTypes::numberFP32ValueType *tempRealFP32;
+      dataTypes::numberFP32ValueType *tempImagFP32;
+      if (std::is_same<dataTypes::number, std::complex<double>>::value)
+        {
+          CUDACHECK(cudaMalloc((void **)&tempReal,
+                               vectorsBlockSize * N *
+                                 sizeof(dataTypes::numberValueType)));
+          CUDACHECK(cudaMalloc((void **)&tempImag,
+                               vectorsBlockSize * N *
+                                 sizeof(dataTypes::numberValueType)));
+          CUDACHECK(cudaMalloc((void **)&tempRealFP32,
+                               vectorsBlockSize * N *
+                                 sizeof(dataTypes::numberFP32ValueType)));
+          CUDACHECK(cudaMalloc((void **)&tempImagFP32,
+                               vectorsBlockSize * N *
+                                 sizeof(dataTypes::numberFP32ValueType)));
+        }
 
       unsigned int blockCount = 0;
       for (unsigned int ivec = 0; ivec < N; ivec += vectorsBlockSize)
@@ -3785,20 +4274,26 @@ namespace dftfe
                 {
                   // thrust::fill(overlapMatrixBlockDP.begin(),overlapMatrixBlockDP.end(),0.0);
 
-                  cublasDgemm(handle,
+                  cublasXgemm(handle,
                               CUBLAS_OP_N,
-                              CUBLAS_OP_T,
+                              std::is_same<dataTypes::number,
+                                           std::complex<double>>::value ?
+                                CUBLAS_OP_C :
+                                CUBLAS_OP_T,
                               B,
                               B,
                               M,
-                              &scalarCoeffAlpha,
+                              reinterpret_cast<const dataTypes::numberGPU *>(
+                                &scalarCoeffAlpha),
                               X + ivec,
                               N,
                               X + ivec,
                               N,
-                              &scalarCoeffBeta,
-                              thrust::raw_pointer_cast(
-                                &overlapMatrixBlockDP[0]),
+                              reinterpret_cast<const dataTypes::numberGPU *>(
+                                &scalarCoeffBeta),
+                              reinterpret_cast<dataTypes::numberGPU *>(
+                                thrust::raw_pointer_cast(
+                                  &overlapMatrixBlockDP[0])),
                               B);
 
                   const unsigned int DRem = D - B;
@@ -3807,21 +4302,29 @@ namespace dftfe
                     {
                       // thrust::fill(overlapMatrixBlockSP.begin(),overlapMatrixBlockSP.end(),0.0);
 
-                      cublasSgemm(handle,
-                                  CUBLAS_OP_N,
-                                  CUBLAS_OP_T,
-                                  DRem,
-                                  B,
-                                  M,
-                                  &scalarCoeffAlphaSP,
-                                  thrust::raw_pointer_cast(&XSP[0]) + ivec + B,
-                                  N,
-                                  thrust::raw_pointer_cast(&XSP[0]) + ivec,
-                                  N,
-                                  &scalarCoeffBetaSP,
-                                  thrust::raw_pointer_cast(
-                                    &overlapMatrixBlockSP[0]),
-                                  DRem);
+                      cublasXgemm(
+                        handle,
+                        CUBLAS_OP_N,
+                        std::is_same<dataTypes::number,
+                                     std::complex<double>>::value ?
+                          CUBLAS_OP_C :
+                          CUBLAS_OP_T,
+                        DRem,
+                        B,
+                        M,
+                        reinterpret_cast<const dataTypes::numberFP32GPU *>(
+                          &scalarCoeffAlphaSP),
+                        reinterpret_cast<const dataTypes::numberFP32GPU *>(
+                          thrust::raw_pointer_cast(&XSP[0]) + ivec + B),
+                        N,
+                        reinterpret_cast<const dataTypes::numberFP32GPU *>(
+                          thrust::raw_pointer_cast(&XSP[0]) + ivec),
+                        N,
+                        reinterpret_cast<const dataTypes::numberFP32GPU *>(
+                          &scalarCoeffBetaSP),
+                        reinterpret_cast<dataTypes::numberFP32GPU *>(
+                          thrust::raw_pointer_cast(&overlapMatrixBlockSP[0])),
+                        DRem);
                     }
 
                   // record completion of compute for first block
@@ -3855,20 +4358,26 @@ namespace dftfe
                   // thrust::fill(overlapMatrixBlockDPNext.begin(),overlapMatrixBlockDPNext.end(),0.0);
 
                   // evaluate X^{T} times XBlock
-                  cublasDgemm(handle,
+                  cublasXgemm(handle,
                               CUBLAS_OP_N,
-                              CUBLAS_OP_T,
+                              std::is_same<dataTypes::number,
+                                           std::complex<double>>::value ?
+                                CUBLAS_OP_C :
+                                CUBLAS_OP_T,
                               BNew,
                               BNew,
                               M,
-                              &scalarCoeffAlpha,
+                              reinterpret_cast<const dataTypes::numberGPU *>(
+                                &scalarCoeffAlpha),
                               X + ivecNew,
                               N,
                               X + ivecNew,
                               N,
-                              &scalarCoeffBeta,
-                              thrust::raw_pointer_cast(
-                                &overlapMatrixBlockDPNext[0]),
+                              reinterpret_cast<const dataTypes::numberGPU *>(
+                                &scalarCoeffBeta),
+                              reinterpret_cast<dataTypes::numberGPU *>(
+                                thrust::raw_pointer_cast(
+                                  &overlapMatrixBlockDPNext[0])),
                               BNew);
 
                   const unsigned int DRemNew = DNew - BNew;
@@ -3877,20 +4386,29 @@ namespace dftfe
                     {
                       // thrust::fill(overlapMatrixBlockSPNext.begin(),overlapMatrixBlockSPNext.end(),0.0);
 
-                      cublasSgemm(
+                      cublasXgemm(
                         handle,
                         CUBLAS_OP_N,
-                        CUBLAS_OP_T,
+                        std::is_same<dataTypes::number,
+                                     std::complex<double>>::value ?
+                          CUBLAS_OP_C :
+                          CUBLAS_OP_T,
                         DRemNew,
                         BNew,
                         M,
-                        &scalarCoeffAlphaSP,
-                        thrust::raw_pointer_cast(&XSP[0]) + ivecNew + BNew,
+                        reinterpret_cast<const dataTypes::numberFP32GPU *>(
+                          &scalarCoeffAlphaSP),
+                        reinterpret_cast<const dataTypes::numberFP32GPU *>(
+                          thrust::raw_pointer_cast(&XSP[0]) + ivecNew + BNew),
                         N,
-                        thrust::raw_pointer_cast(&XSP[0]) + ivecNew,
+                        reinterpret_cast<const dataTypes::numberFP32GPU *>(
+                          thrust::raw_pointer_cast(&XSP[0]) + ivecNew),
                         N,
-                        &scalarCoeffBetaSP,
-                        thrust::raw_pointer_cast(&overlapMatrixBlockSPNext[0]),
+                        reinterpret_cast<const dataTypes::numberFP32GPU *>(
+                          &scalarCoeffBetaSP),
+                        reinterpret_cast<dataTypes::numberFP32GPU *>(
+                          thrust::raw_pointer_cast(
+                            &overlapMatrixBlockSPNext[0])),
                         DRemNew);
                     }
 
@@ -3901,29 +4419,56 @@ namespace dftfe
 
               if (dftParameters::useGPUDirectAllReduce)
                 {
-                  gpucclMpiCommDomain.gpuDirectAllReduceMixedPrecGroupWrapper(
-                    thrust::raw_pointer_cast(&overlapMatrixBlockDP[0]),
-                    thrust::raw_pointer_cast(&overlapMatrixBlockSP[0]),
-                    thrust::raw_pointer_cast(&overlapMatrixBlockDP[0]),
-                    thrust::raw_pointer_cast(&overlapMatrixBlockSP[0]),
-                    B * B,
-                    DRem * B,
-                    streamDataMove);
+                  if (std::is_same<dataTypes::number,
+                                   std::complex<double>>::value)
+                    gpucclMpiCommDomain.gpuDirectAllReduceMixedPrecGroupWrapper(
+                      reinterpret_cast<dataTypes::numberGPU *>(
+                        thrust::raw_pointer_cast(&overlapMatrixBlockDP[0])),
+                      reinterpret_cast<dataTypes::numberFP32GPU *>(
+                        thrust::raw_pointer_cast(&overlapMatrixBlockSP[0])),
+                      reinterpret_cast<dataTypes::numberGPU *>(
+                        thrust::raw_pointer_cast(&overlapMatrixBlockDP[0])),
+                      reinterpret_cast<dataTypes::numberFP32GPU *>(
+                        thrust::raw_pointer_cast(&overlapMatrixBlockSP[0])),
+                      B * B,
+                      DRem * B,
+                      tempReal,
+                      tempRealFP32,
+                      tempImag,
+                      tempImagFP32,
+                      streamDataMove);
+                  else
+                    gpucclMpiCommDomain.gpuDirectAllReduceMixedPrecGroupWrapper(
+                      reinterpret_cast<dataTypes::numberGPU *>(
+                        thrust::raw_pointer_cast(&overlapMatrixBlockDP[0])),
+                      reinterpret_cast<dataTypes::numberFP32GPU *>(
+                        thrust::raw_pointer_cast(&overlapMatrixBlockSP[0])),
+                      reinterpret_cast<dataTypes::numberGPU *>(
+                        thrust::raw_pointer_cast(&overlapMatrixBlockDP[0])),
+                      reinterpret_cast<dataTypes::numberFP32GPU *>(
+                        thrust::raw_pointer_cast(&overlapMatrixBlockSP[0])),
+                      B * B,
+                      DRem * B,
+                      streamDataMove);
                 }
 
-              cudaMemcpyAsync(overlapMatrixBlockHostDP,
-                              thrust::raw_pointer_cast(
-                                &overlapMatrixBlockDP[0]),
-                              B * B * sizeof(double),
+              cudaMemcpyAsync(reinterpret_cast<dataTypes::numberGPU *>(
+                                overlapMatrixBlockHostDP),
+                              reinterpret_cast<const dataTypes::numberGPU *>(
+                                thrust::raw_pointer_cast(
+                                  &overlapMatrixBlockDP[0])),
+                              B * B * sizeof(dataTypes::numberGPU),
                               cudaMemcpyDeviceToHost,
                               streamDataMove);
 
-              cudaMemcpyAsync(overlapMatrixBlockHostSP,
-                              thrust::raw_pointer_cast(
-                                &overlapMatrixBlockSP[0]),
-                              DRem * B * sizeof(float),
-                              cudaMemcpyDeviceToHost,
-                              streamDataMove);
+              cudaMemcpyAsync(
+                reinterpret_cast<dataTypes::numberFP32GPU *>(
+                  overlapMatrixBlockHostSP),
+                reinterpret_cast<const dataTypes::numberFP32GPU *>(
+                  thrust::raw_pointer_cast(&overlapMatrixBlockSP[0])),
+                DRem * B * sizeof(dataTypes::numberFP32GPU),
+                cudaMemcpyDeviceToHost,
+                streamDataMove);
 
               // record completion of GPU->CPU copy for current block
               cudaEventRecord(copyEvents[blockCount], streamDataMove);
@@ -3942,7 +4487,8 @@ namespace dftfe
                       MPI_Allreduce(MPI_IN_PLACE,
                                     overlapMatrixBlockHostDP,
                                     B * B,
-                                    MPI_DOUBLE,
+                                    dataTypes::mpi_type_id(
+                                      overlapMatrixBlockHostDP),
                                     MPI_SUM,
                                     mpiCommDomain);
 
@@ -3951,7 +4497,8 @@ namespace dftfe
                       MPI_Allreduce(MPI_IN_PLACE,
                                     overlapMatrixBlockHostSP,
                                     DRem * B,
-                                    MPI_FLOAT,
+                                    dataTypes::mpi_type_id(
+                                      overlapMatrixBlockHostSP),
                                     MPI_SUM,
                                     mpiCommDomain);
                     }
@@ -3995,6 +4542,15 @@ namespace dftfe
 
       cudaFreeHost(overlapMatrixBlockHostDP);
       cudaFreeHost(overlapMatrixBlockHostSP);
+
+      if (std::is_same<dataTypes::number, std::complex<double>>::value)
+        {
+          CUDACHECK(cudaFree(tempReal));
+          CUDACHECK(cudaFree(tempImag));
+          CUDACHECK(cudaFree(tempRealFP32));
+          CUDACHECK(cudaFree(tempImagFP32));
+        }
+
       // return cublas handle to default stream
       cublasSetStream(handle, NULL);
 

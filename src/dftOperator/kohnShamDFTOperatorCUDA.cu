@@ -2804,7 +2804,7 @@ namespace dftfe
               }
 
             cudaMemcpyAsync(projHamBlockHost,
-                            reinterpret_cast<dataTypes::numberGPU *>(
+                            reinterpret_cast<const dataTypes::numberGPU *>(
                               thrust::raw_pointer_cast(&projHamBlock[0])),
                             D * B * sizeof(dataTypes::numberGPU),
                             cudaMemcpyDeviceToHost,
@@ -3000,6 +3000,26 @@ namespace dftfe
       vectorsBlockSize * N, dataTypes::numberThrustGPU(0.0));
     thrust::device_vector<dataTypes::numberFP32ThrustGPU> projHamBlockFP32Next(
       vectorsBlockSize * N, dataTypes::numberFP32ThrustGPU(0.0));
+
+    dataTypes::numberValueType *    tempReal;
+    dataTypes::numberValueType *    tempImag;
+    dataTypes::numberFP32ValueType *tempRealFP32;
+    dataTypes::numberFP32ValueType *tempImagFP32;
+    if (std::is_same<dataTypes::number, std::complex<double>>::value)
+      {
+        CUDACHECK(cudaMalloc((void **)&tempReal,
+                             vectorsBlockSize * N *
+                               sizeof(dataTypes::numberValueType)));
+        CUDACHECK(cudaMalloc((void **)&tempImag,
+                             vectorsBlockSize * N *
+                               sizeof(dataTypes::numberValueType)));
+        CUDACHECK(cudaMalloc((void **)&tempRealFP32,
+                             vectorsBlockSize * N *
+                               sizeof(dataTypes::numberFP32ValueType)));
+        CUDACHECK(cudaMalloc((void **)&tempImagFP32,
+                             vectorsBlockSize * N *
+                               sizeof(dataTypes::numberFP32ValueType)));
+      }
 
     unsigned int blockCount = 0;
     for (unsigned int jvec = 0; jvec < N; jvec += vectorsBlockSize)
@@ -3269,40 +3289,65 @@ namespace dftfe
               {
                 if (jvec + B > Noc)
                   {
-                    gpucclMpiCommDomain.gpuDirectAllReduceWrapper(
-                      reinterpret_cast<dataTypes::numberGPU *>(
-                        thrust::raw_pointer_cast(&projHamBlock[0])),
-                      reinterpret_cast<dataTypes::numberGPU *>(
-                        thrust::raw_pointer_cast(&projHamBlock[0])),
-                      D * B,
-                      streamDataMove);
+                    if (std::is_same<dataTypes::number,
+                                     std::complex<double>>::value)
+                      gpucclMpiCommDomain.gpuDirectAllReduceWrapper(
+                        reinterpret_cast<dataTypes::numberGPU *>(
+                          thrust::raw_pointer_cast(&projHamBlock[0])),
+                        reinterpret_cast<dataTypes::numberGPU *>(
+                          thrust::raw_pointer_cast(&projHamBlock[0])),
+                        D * B,
+                        tempReal,
+                        tempImag,
+                        streamDataMove);
+                    else
+                      gpucclMpiCommDomain.gpuDirectAllReduceWrapper(
+                        reinterpret_cast<dataTypes::numberGPU *>(
+                          thrust::raw_pointer_cast(&projHamBlock[0])),
+                        reinterpret_cast<dataTypes::numberGPU *>(
+                          thrust::raw_pointer_cast(&projHamBlock[0])),
+                        D * B,
+                        streamDataMove);
                   }
                 else
                   {
-                    gpucclMpiCommDomain.gpuDirectAllReduceWrapper(
-                      reinterpret_cast<dataTypes::numberFP32GPU *>(
-                        thrust::raw_pointer_cast(&projHamBlockFP32[0])),
-                      reinterpret_cast<dataTypes::numberFP32GPU *>(
-                        thrust::raw_pointer_cast(&projHamBlockFP32[0])),
-                      D * B,
-                      streamDataMove);
+                    if (std::is_same<dataTypes::number,
+                                     std::complex<double>>::value)
+                      gpucclMpiCommDomain.gpuDirectAllReduceWrapper(
+                        reinterpret_cast<dataTypes::numberFP32GPU *>(
+                          thrust::raw_pointer_cast(&projHamBlockFP32[0])),
+                        reinterpret_cast<dataTypes::numberFP32GPU *>(
+                          thrust::raw_pointer_cast(&projHamBlockFP32[0])),
+                        D * B,
+                        tempRealFP32,
+                        tempImagFP32,
+                        streamDataMove);
+                    else
+                      gpucclMpiCommDomain.gpuDirectAllReduceWrapper(
+                        reinterpret_cast<dataTypes::numberFP32GPU *>(
+                          thrust::raw_pointer_cast(&projHamBlockFP32[0])),
+                        reinterpret_cast<dataTypes::numberFP32GPU *>(
+                          thrust::raw_pointer_cast(&projHamBlockFP32[0])),
+                        D * B,
+                        streamDataMove);
                   }
               }
 
             if (jvec + B > Noc)
               cudaMemcpyAsync(projHamBlockHost,
-                              reinterpret_cast<dataTypes::numberGPU *>(
+                              reinterpret_cast<const dataTypes::numberGPU *>(
                                 thrust::raw_pointer_cast(&projHamBlock[0])),
                               D * B * sizeof(dataTypes::number),
                               cudaMemcpyDeviceToHost,
                               streamDataMove);
             else
-              cudaMemcpyAsync(projHamBlockHostFP32,
-                              reinterpret_cast<dataTypes::numberFP32GPU *>(
-                                thrust::raw_pointer_cast(&projHamBlockFP32[0])),
-                              D * B * sizeof(dataTypes::numberFP32),
-                              cudaMemcpyDeviceToHost,
-                              streamDataMove);
+              cudaMemcpyAsync(
+                projHamBlockHostFP32,
+                reinterpret_cast<const dataTypes::numberFP32GPU *>(
+                  thrust::raw_pointer_cast(&projHamBlockFP32[0])),
+                D * B * sizeof(dataTypes::numberFP32),
+                cudaMemcpyDeviceToHost,
+                streamDataMove);
 
             // record completion of GPU->CPU copy for current block
             CUDACHECK(cudaEventRecord(copyEvents[blockCount], streamDataMove));
@@ -3384,7 +3429,13 @@ namespace dftfe
 
     CUDACHECK(cudaFreeHost(projHamBlockHost));
     CUDACHECK(cudaFreeHost(projHamBlockHostFP32));
-
+    if (std::is_same<dataTypes::number, std::complex<double>>::value)
+      {
+        CUDACHECK(cudaFree(tempReal));
+        CUDACHECK(cudaFree(tempImag));
+        CUDACHECK(cudaFree(tempRealFP32));
+        CUDACHECK(cudaFree(tempImagFP32));
+      }
     // return cublas handle to default stream
     cublasSetStream(handle, NULL);
 
