@@ -926,7 +926,7 @@ namespace dftfe
                                 cellWaveFunctionMatrix,
                                 BVec,
                                 strideA,
-                                shapeFunctionGradientValuesYInvertedDevice,
+                                shapeFunctionGradientValuesXInvertedDevice,
                                 numNodesPerElement,
                                 strideB,
                                 &scalarCoeffBeta,
