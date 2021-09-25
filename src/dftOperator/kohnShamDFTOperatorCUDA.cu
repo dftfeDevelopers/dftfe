@@ -1180,7 +1180,6 @@ namespace dftfe
                          iPseudoWave < numberPseudoWaveFunctions;
                          ++iPseudoWave)
                       {
-                        /*
                         d_cellHamiltonianMatrixNonLocalFlattened
                           [countElem * d_maxSingleAtomPseudoWfc *
                              d_numberNodesPerElement +
@@ -1195,7 +1194,6 @@ namespace dftfe
                             dftPtr->d_nonLocalProjectorElementMatricesTranspose
                               [atomId][iElemComp]
                               [numberPseudoWaveFunctions * iNode + iPseudoWave];
-                        */
                       }
                   }
 
@@ -1346,7 +1344,6 @@ namespace dftfe
                          iPseudoWave < numberPseudoWaveFunctions;
                          ++iPseudoWave)
                       {
-                        /*
                         d_cellHamiltonianMatrixNonLocalFlattened
                           [countElem * d_maxSingleAtomPseudoWfc *
                              d_numberNodesPerElement +
@@ -1361,7 +1358,6 @@ namespace dftfe
                             dftPtr->d_nonLocalProjectorElementMatricesTranspose
                               [atomId][iElemComp]
                               [numberPseudoWaveFunctions * iNode + iPseudoWave];
-                        */
                       }
                   }
 
