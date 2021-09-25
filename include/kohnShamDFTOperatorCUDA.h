@@ -475,10 +475,9 @@ namespace dftfe
     thrust::device_vector<dataTypes::numberThrustGPU>
       d_projectorKetTimesVectorAllCellsDevice;
     thrust::device_vector<dataTypes::numberThrustGPU>
-                                   d_projectorKetTimesVectorDevice;
-    std::vector<dataTypes::number> d_nonLocalPseudoPotentialConstants;
-    thrust::device_vector<dataTypes::numberThrustGPU>
-      d_nonLocalPseudoPotentialConstantsDevice;
+                                  d_projectorKetTimesVectorDevice;
+    std::vector<double>           d_nonLocalPseudoPotentialConstants;
+    thrust::device_vector<double> d_nonLocalPseudoPotentialConstantsDevice;
 
     std::vector<dataTypes::number> d_projectorKetTimesVectorAllCellsReduction;
     thrust::device_vector<dataTypes::numberThrustGPU>
@@ -515,7 +514,7 @@ namespace dftfe
 
     bool                   d_isMallocCalled = false;
     dataTypes::numberGPU **d_A, **d_B, **d_C;
-    dataTypes::number **   h_d_A, **h_d_B, **h_d_C;
+    dataTypes::numberGPU **h_d_A, **h_d_B, **h_d_C;
 
     /**
      * @brief implementation of matrix-vector product using cell-level stiffness matrices.
@@ -546,7 +545,7 @@ namespace dftfe
       const dataTypes::numberGPU *             src,
       distributedGPUVec<dataTypes::numberGPU> &projectorKetTimesVector,
       const unsigned int                       numberWaveFunctions,
-      double *                                 dst,
+      dataTypes::numberGPU *                   dst,
       const bool                               skip1 = false,
       const bool                               skip2 = false);
 

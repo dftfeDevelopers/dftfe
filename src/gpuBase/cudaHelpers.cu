@@ -178,17 +178,20 @@ namespace dftfe
       const dataTypes::local_size_type size)
     {
       this->clear();
-      if (std::is_same<MemorySpace, dftfe::MemorySpace::Host>::value)
+      if (size > 0)
         {
-          d_data = (NumberType *)malloc(size * sizeof(NumberType));
-          std::memset(d_data, 0, size * sizeof(NumberType));
+          if (std::is_same<MemorySpace, dftfe::MemorySpace::Host>::value)
+            {
+              d_data = (NumberType *)malloc(size * sizeof(NumberType));
+              std::memset(d_data, 0, size * sizeof(NumberType));
+            }
+          else
+            {
+              cudaMalloc((void **)&d_data, size * sizeof(NumberType));
+              cudaMemset(d_data, 0, size * sizeof(NumberType));
+            }
+          d_size = size;
         }
-      else
-        {
-          cudaMalloc((void **)&d_data, size * sizeof(NumberType));
-          cudaMemset(d_data, 0, size * sizeof(NumberType));
-        }
-      d_size = size;
     }
 
     template <typename NumberType, typename MemorySpace>

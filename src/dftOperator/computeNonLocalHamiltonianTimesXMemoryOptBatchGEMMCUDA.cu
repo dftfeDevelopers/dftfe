@@ -28,12 +28,12 @@ template <unsigned int FEOrder, unsigned int FEOrderElectro>
 void
 kohnShamDFTOperatorCUDAClass<FEOrder, FEOrderElectro>::
   computeNonLocalHamiltonianTimesX(
-    const dataTypes::numberGPU *src,
-    distributedGPUVec<double> & projectorKetTimesVector,
-    const unsigned int          numberWaveFunctions,
-    dataTypes::numberGPU *      dst,
-    const bool                  skip1,
-    const bool                  skip2)
+    const dataTypes::numberGPU *             src,
+    distributedGPUVec<dataTypes::numberGPU> &projectorKetTimesVector,
+    const unsigned int                       numberWaveFunctions,
+    dataTypes::numberGPU *                   dst,
+    const bool                               skip1,
+    const bool                               skip2)
 {
   const dataTypes::number scalarCoeffAlpha = dataTypes::number(1.0),
                           scalarCoeffBeta  = dataTypes::number(0.0);
@@ -279,9 +279,9 @@ kohnShamDFTOperatorCUDAClass<FEOrder, FEOrderElectro>::
         d_maxSingleAtomPseudoWfc,
         d_numberNodesPerElement,
         reinterpret_cast<const dataTypes::numberGPU *>(&scalarCoeffAlpha),
-        (const double **)d_A,
+        (const dataTypes::numberGPU **)d_A,
         numberWaveFunctions,
-        (const double **)d_B,
+        (const dataTypes::numberGPU **)d_B,
         d_numberNodesPerElement,
         reinterpret_cast<const dataTypes::numberGPU *>(&scalarCoeffBeta),
         d_C,

@@ -538,6 +538,28 @@ namespace dftfe
           }
       }
 
+
+      __global__ void
+      copyFloatArrToDoubleArrLocallyOwned(
+        const unsigned int    contiguousBlockSize,
+        const unsigned int    numContiguousBlocks,
+        const cuFloatComplex *floatArr,
+        const unsigned int *  locallyOwnedFlagArr,
+        cuDoubleComplex *     doubleArr)
+      {
+        const unsigned int globalThreadId =
+          blockIdx.x * blockDim.x + threadIdx.x;
+        const unsigned int numberEntries =
+          numContiguousBlocks * contiguousBlockSize;
+
+        for (unsigned int index = globalThreadId; index < numberEntries;
+             index += blockDim.x * gridDim.x)
+          {
+            unsigned int blockIndex = index / contiguousBlockSize;
+            if (locallyOwnedFlagArr[blockIndex] == 1)
+              doubleArr[index] = cuComplexFloatToDouble(floatArr[index]);
+          }
+      }
       __global__ void
       dotProductContributionBlockedKernelMassVector(
         const unsigned int contiguousBlockSize,
@@ -2584,7 +2606,7 @@ namespace dftfe
       convDoubleArrToFloatArr<<<(N + 255) / 256 * M, 256>>>(
         N * M,
         X,
-        reinterpret_cast<dataTypes::numberFP32ThrustGPU *>(
+        reinterpret_cast<dataTypes::numberFP32GPU *>(
           thrust::raw_pointer_cast(&XSP[0])));
 
 
@@ -2973,7 +2995,7 @@ namespace dftfe
       convDoubleArrToFloatArr<<<(N + 255) / 256 * M, 256>>>(
         N * M,
         X,
-        reinterpret_cast<dataTypes::numberFP32ThrustGPU *>(
+        reinterpret_cast<dataTypes::numberFP32GPU *>(
           thrust::raw_pointer_cast(&XSP[0])));
 
 
@@ -4667,7 +4689,8 @@ namespace dftfe
                 jvec,
                 thrust::raw_pointer_cast(&eigenValuesDevice[0]),
                 X,
-                thrust::raw_pointer_cast(&HXBlockFull[0]),
+                reinterpret_cast<const dataTypes::numberGPU *>(
+                  thrust::raw_pointer_cast(&HXBlockFull[0])),
                 thrust::raw_pointer_cast(&residualSqDevice[0]));
 
               cublasDgemm(handle,

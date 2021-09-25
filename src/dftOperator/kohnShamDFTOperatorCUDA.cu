@@ -33,6 +33,7 @@ namespace dftfe
   namespace
   {
 #if __CUDA_ARCH__ < 600
+    /*
     __device__ double
     atomicAdd(double *address, double val)
     {
@@ -55,6 +56,7 @@ namespace dftfe
 
       return __longlong_as_double(old);
     }
+    */
 #endif
 
 
@@ -336,6 +338,16 @@ namespace dftfe
                     addFromVec[index]);
         }
     }
+
+
+    __global__ void
+    daxpyAtomicAddKernel(
+      const unsigned int                     contiguousBlockSize,
+      const unsigned int                     numContiguousBlocks,
+      const cuDoubleComplex *                addFromVec,
+      cuDoubleComplex *                      addToVec,
+      const dealii::types::global_dof_index *addToVecStartingContiguousBlockIds)
+    {}
 
 
     __global__ void
@@ -1168,6 +1180,7 @@ namespace dftfe
                          iPseudoWave < numberPseudoWaveFunctions;
                          ++iPseudoWave)
                       {
+                        /*
                         d_cellHamiltonianMatrixNonLocalFlattened
                           [countElem * d_maxSingleAtomPseudoWfc *
                              d_numberNodesPerElement +
@@ -1182,6 +1195,7 @@ namespace dftfe
                             dftPtr->d_nonLocalProjectorElementMatricesTranspose
                               [atomId][iElemComp]
                               [numberPseudoWaveFunctions * iNode + iPseudoWave];
+                        */
                       }
                   }
 
@@ -1222,25 +1236,28 @@ namespace dftfe
         d_cellNodeIdMapNonLocalToLocalDevice = d_cellNodeIdMapNonLocalToLocal;
 
 
-        h_d_A = (dataTypes::number **)malloc(d_totalNonlocalElems *
-                                             sizeof(dataTypes::numberGPU *));
-        h_d_B = (dataTypes::number **)malloc(d_totalNonlocalElems *
-                                             sizeof(dataTypes::numberGPU *));
-        h_d_C = (dataTypes::number **)malloc(d_totalNonlocalElems *
-                                             sizeof(dataTypes::numberGPU *));
+        h_d_A = (dataTypes::numberGPU **)malloc(d_totalNonlocalElems *
+                                                sizeof(dataTypes::numberGPU *));
+        h_d_B = (dataTypes::numberGPU **)malloc(d_totalNonlocalElems *
+                                                sizeof(dataTypes::numberGPU *));
+        h_d_C = (dataTypes::numberGPU **)malloc(d_totalNonlocalElems *
+                                                sizeof(dataTypes::numberGPU *));
 
         for (unsigned int i = 0; i < d_totalNonlocalElems; i++)
           {
-            h_d_A[i] = thrust::raw_pointer_cast(
-              &d_cellWaveFunctionMatrix[d_nonlocalElemIdToLocalElemIdMap[i] *
-                                        numberWaveFunctions *
-                                        d_numberNodesPerElement]);
-            h_d_B[i] = thrust::raw_pointer_cast(
-              &d_cellHamiltonianMatrixNonLocalFlattenedDevice
-                [i * d_numberNodesPerElement * d_maxSingleAtomPseudoWfc]);
-            h_d_C[i] = thrust::raw_pointer_cast(
-              &d_projectorKetTimesVectorAllCellsDevice
-                [i * numberWaveFunctions * d_maxSingleAtomPseudoWfc]);
+            h_d_A[i] =
+              reinterpret_cast<dataTypes::numberGPU *>(thrust::raw_pointer_cast(
+                &d_cellWaveFunctionMatrix[d_nonlocalElemIdToLocalElemIdMap[i] *
+                                          numberWaveFunctions *
+                                          d_numberNodesPerElement]));
+            h_d_B[i] =
+              reinterpret_cast<dataTypes::numberGPU *>(thrust::raw_pointer_cast(
+                &d_cellHamiltonianMatrixNonLocalFlattenedDevice
+                  [i * d_numberNodesPerElement * d_maxSingleAtomPseudoWfc]));
+            h_d_C[i] =
+              reinterpret_cast<dataTypes::numberGPU *>(thrust::raw_pointer_cast(
+                &d_projectorKetTimesVectorAllCellsDevice
+                  [i * numberWaveFunctions * d_maxSingleAtomPseudoWfc]));
           }
 
         cudaMalloc((void **)&d_A,
@@ -1329,6 +1346,7 @@ namespace dftfe
                          iPseudoWave < numberPseudoWaveFunctions;
                          ++iPseudoWave)
                       {
+                        /*
                         d_cellHamiltonianMatrixNonLocalFlattened
                           [countElem * d_maxSingleAtomPseudoWfc *
                              d_numberNodesPerElement +
@@ -1343,6 +1361,7 @@ namespace dftfe
                             dftPtr->d_nonLocalProjectorElementMatricesTranspose
                               [atomId][iElemComp]
                               [numberPseudoWaveFunctions * iNode + iPseudoWave];
+                        */
                       }
                   }
 
@@ -2389,9 +2408,9 @@ namespace dftfe
                 vectorsBlockSize * N * sizeof(dataTypes::number));
 
     thrust::device_vector<dataTypes::numberThrustGPU> HXBlockFull(
-      vectorsBlockSize * M, dataTypes::numberGPU(0.0));
+      vectorsBlockSize * M, dataTypes::numberThrustGPU(0.0));
     thrust::device_vector<dataTypes::numberThrustGPU> projHamBlock(
-      vectorsBlockSize * N, dataTypes::numberGPU(0.0));
+      vectorsBlockSize * N, dataTypes::numberThrustGPU(0.0));
 
     for (unsigned int jvec = 0; jvec < N; jvec += vectorsBlockSize)
       {

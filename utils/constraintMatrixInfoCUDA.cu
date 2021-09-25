@@ -28,6 +28,7 @@ namespace dftfe
     namespace
     {
 #if __CUDA_ARCH__ < 600
+      /*
       __device__ double
       atomicAdd(double *address, double val)
       {
@@ -50,6 +51,7 @@ namespace dftfe
 
         return __longlong_as_double(old);
       }
+      */
 #endif
 
       __global__ void
@@ -347,12 +349,12 @@ namespace dftfe
                     [startingColumnNumber + i];
                 const dealii::types::global_dof_index xVecStartingIdColumn =
                   localIndexMapUnflattenedToFlattened[constrainedColumnId];
-                /*
-              atomicAdd(&(xVec[xVecStartingIdColumn + intraBlockIndex]),
-                        (float)(constraintColumnValuesAllRowsUnflattened
-                            [startingColumnNumber + i] *
-                          xVec[xVecStartingIdRow + intraBlockIndex]));
-              */
+                const float tempfloatval =
+                  constraintColumnValuesAllRowsUnflattened
+                    [startingColumnNumber + i] *
+                  xVec[xVecStartingIdRow + intraBlockIndex];
+                atomicAdd(&(xVec[xVecStartingIdColumn + intraBlockIndex]),
+                          tempfloatval);
               }
             xVec[xVecStartingIdRow + intraBlockIndex] = 0.0;
           }

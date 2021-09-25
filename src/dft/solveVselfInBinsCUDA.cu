@@ -141,6 +141,7 @@ namespace dftfe
       }
 
 #  if __CUDA_ARCH__ < 600
+      /*
       __device__ double
       atomicAdd(double *address, double val)
       {
@@ -163,6 +164,7 @@ namespace dftfe
 
         return __longlong_as_double(old);
       }
+      */
 #  endif
 
 

@@ -18,13 +18,13 @@
 //
 
 // source file for force related computations
-
-#include <constants.h>
-#include <dftParameters.h>
-#include <dftUtils.h>
-#include <forceCUDA.h>
-#include <vectorUtilities.h>
-#include <cudaHelpers.h>
+#ifndef USE_COMPLEX
+#  include <constants.h>
+#  include <dftParameters.h>
+#  include <dftUtils.h>
+#  include <forceCUDA.h>
+#  include <vectorUtilities.h>
+#  include <cudaHelpers.h>
 
 namespace dftfe
 {
@@ -928,3 +928,4 @@ namespace dftfe
 
   } // namespace forceCUDA
 } // namespace dftfe
+#endif
