@@ -32,32 +32,33 @@ namespace dftfe
 {
   namespace
   {
-#if __CUDA_ARCH__ < 600
     /*
-    __device__ double
-    atomicAdd(double *address, double val)
-    {
-      unsigned long long int *address_as_ull =
-        (unsigned long long int *)address;
-      unsigned long long int old = *address_as_ull, assumed;
-
-      do
+    #if __CUDA_ARCH__ < 600
+        __device__ double
+        atomicAdd(double *address, double val)
         {
-          assumed = old;
-          old     = atomicCAS(address_as_ull,
-                          assumed,
-                          __double_as_longlong(val +
-                                               __longlong_as_double(assumed)));
+          unsigned long long int *address_as_ull =
+            (unsigned long long int *)address;
+          unsigned long long int old = *address_as_ull, assumed;
 
-          // Note: uses integer comparison to avoid hang in case of NaN (since
-          // NaN != NaN)
+          do
+            {
+              assumed = old;
+              old     = atomicCAS(address_as_ull,
+                              assumed,
+                              __double_as_longlong(val +
+                                                   __longlong_as_double(assumed)));
+
+              // Note: uses integer comparison to avoid hang in case of NaN
+    (since
+              // NaN != NaN)
+            }
+          while (assumed != old);
+
+          return __longlong_as_double(old);
         }
-      while (assumed != old);
-
-      return __longlong_as_double(old);
-    }
+    #endif
     */
-#endif
 
 
     __global__ void
@@ -1184,7 +1185,7 @@ namespace dftfe
                           [countElem * d_maxSingleAtomPseudoWfc *
                              d_numberNodesPerElement +
                            d_numberNodesPerElement * iPseudoWave + iNode] =
-                            dftPtr->d_nonLocalProjectorElementMatrices
+                            dftPtr->d_nonLocalProjectorElementMatricesConjugate
                               [atomId][iElemComp]
                               [d_numberNodesPerElement * iPseudoWave + iNode];
                         d_cellHamiltonianMatrixNonLocalFlattenedTranspose
@@ -1348,7 +1349,7 @@ namespace dftfe
                           [countElem * d_maxSingleAtomPseudoWfc *
                              d_numberNodesPerElement +
                            d_numberNodesPerElement * iPseudoWave + iNode] =
-                            dftPtr->d_nonLocalProjectorElementMatrices
+                            dftPtr->d_nonLocalProjectorElementMatricesConjugate
                               [atomId][iElemComp]
                               [d_numberNodesPerElement * iPseudoWave + iNode];
                         d_cellHamiltonianMatrixNonLocalFlattenedTranspose

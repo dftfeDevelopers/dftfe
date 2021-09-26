@@ -127,7 +127,7 @@ forceClass<FEOrder, FEOrderElectro>::
               const dataTypes::number alpha = dataTypes::number(1.0);
               const dataTypes::number beta  = dataTypes::number(1.0);
 #ifdef USE_COMPLEX
-              const char transA = 'C';
+              const char transA = 'T';
               const char transB = 'T';
               zgemm_(&transA,
                      &transB,
@@ -135,8 +135,10 @@ forceClass<FEOrder, FEOrderElectro>::
                      &numberWaveFunctions,
                      &numberNodesPerElement,
                      &alpha,
-                     &dftPtr->d_nonLocalProjectorElementMatrices
-                        [atomId][nonZeroElementMatrixId][kPointIndex][0],
+                     &dftPtr->d_nonLocalProjectorElementMatricesConjugate
+                        [atomId][nonZeroElementMatrixId]
+                        [kPointIndex * numberNodesPerElement *
+                         numberPseudoWaveFunctions],
                      &numberNodesPerElement,
                      &cellWaveFunctionMatrix[0],
                      &numberWaveFunctions,
@@ -152,7 +154,7 @@ forceClass<FEOrder, FEOrderElectro>::
                      &numberWaveFunctions,
                      &numberNodesPerElement,
                      &alpha,
-                     &dftPtr->d_nonLocalProjectorElementMatrices
+                     &dftPtr->d_nonLocalProjectorElementMatricesConjugate
                         [atomId][nonZeroElementMatrixId][0],
                      &numberNodesPerElement,
                      &cellWaveFunctionMatrix[0],

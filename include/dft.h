@@ -1326,8 +1326,7 @@ namespace dftfe
     std::map<std::pair<unsigned int, unsigned int>, unsigned int>
       d_projectorIdsNumberingMapCurrentProcess;
 #ifdef USE_COMPLEX
-    std::vector<std::vector<std::vector<std::vector<std::complex<double>>>>>
-      d_nonLocalProjectorElementMatrices,
+    std::vector<std::vector<std::vector<std::complex<double>>>>
       d_nonLocalProjectorElementMatricesConjugate,
       d_nonLocalProjectorElementMatricesTranspose;
 
@@ -1343,7 +1342,6 @@ namespace dftfe
       d_projectorKetTimesVectorParFlattened;
 #else
     std::vector<std::vector<std::vector<double>>>
-      d_nonLocalProjectorElementMatrices,
       d_nonLocalProjectorElementMatricesConjugate,
       d_nonLocalProjectorElementMatricesTranspose;
 

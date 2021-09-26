@@ -104,7 +104,9 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::
                      &cellWaveFunctionMatrix[0],
                      &numberWaveFunctions,
                      &dftPtr->d_nonLocalProjectorElementMatricesConjugate
-                        [atomId][nonZeroElementMatrixId][d_kPointIndex][0],
+                        [atomId][nonZeroElementMatrixId]
+                        [d_kPointIndex * d_numberNodesPerElement *
+                         numberPseudoWaveFunctions],
                      &d_numberNodesPerElement,
                      &beta,
                      &projectorKetTimesVector[atomId][0],
@@ -219,20 +221,22 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::
            dftPtr->d_elementIteratorsInAtomCompactSupport[atomId].size();
            ++iElemComp)
         {
-          zgemm_(&transA1,
-                 &transB1,
-                 &numberWaveFunctions,
-                 &d_numberNodesPerElement,
-                 &numberPseudoWaveFunctions,
-                 &alpha1,
-                 &projectorKetTimesVector[atomId][0],
-                 &numberWaveFunctions,
-                 &dftPtr->d_nonLocalProjectorElementMatricesTranspose
-                    [atomId][iElemComp][d_kPointIndex][0],
-                 &numberPseudoWaveFunctions,
-                 &beta1,
-                 &cellNonLocalHamTimesWaveMatrix[0],
-                 &numberWaveFunctions);
+          zgemm_(
+            &transA1,
+            &transB1,
+            &numberWaveFunctions,
+            &d_numberNodesPerElement,
+            &numberPseudoWaveFunctions,
+            &alpha1,
+            &projectorKetTimesVector[atomId][0],
+            &numberWaveFunctions,
+            &dftPtr->d_nonLocalProjectorElementMatricesTranspose
+               [atomId][iElemComp][d_kPointIndex * d_numberNodesPerElement *
+                                   numberPseudoWaveFunctions],
+            &numberPseudoWaveFunctions,
+            &beta1,
+            &cellNonLocalHamTimesWaveMatrix[0],
+            &numberWaveFunctions);
 
           unsigned int elementId =
             dftPtr->d_elementIdsInAtomCompactSupport[atomId][iElemComp];
@@ -337,7 +341,7 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::
                      &alpha,
                      &cellWaveFunctionMatrix[0],
                      &numberWaveFunctions,
-                     &dftPtr->d_nonLocalProjectorElementMatrices
+                     &dftPtr->d_nonLocalProjectorElementMatricesConjugate
                         [atomId][nonZeroElementMatrixId][0],
                      &d_numberNodesPerElement,
                      &beta,
