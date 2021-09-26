@@ -438,30 +438,343 @@ namespace dftfe
            spinIndex < (1 + dftParameters::spinPolarized);
            ++spinIndex)
         {
-          rhoDevice.set(zero);
-          rhoWfcContributionsDevice.set(zero);
-          gradRhoDeviceX.set(zero);
-          gradRhoDeviceY.set(zero);
-          gradRhoDeviceZ.set(zero);
-          gradRhoWfcContributionsDeviceX.set(zero);
-          gradRhoWfcContributionsDeviceY.set(zero);
-          gradRhoWfcContributionsDeviceZ.set(zero);
-
-          for (unsigned int jvec = 0; jvec < totalNumWaveFunctions;
-               jvec += BVec)
+          for (unsigned int kPoint = 0; kPoint < kPointWeights.size(); ++kPoint)
             {
-              if ((jvec + BVec) <=
-                    bandGroupLowHighPlusOneIndices[2 * bandGroupTaskId + 1] &&
-                  (jvec + BVec) >
-                    bandGroupLowHighPlusOneIndices[2 * bandGroupTaskId])
+              rhoDevice.set(zero);
+              rhoWfcContributionsDevice.set(zero);
+              gradRhoDeviceX.set(zero);
+              gradRhoDeviceY.set(zero);
+              gradRhoDeviceZ.set(zero);
+              gradRhoWfcContributionsDeviceX.set(zero);
+              gradRhoWfcContributionsDeviceY.set(zero);
+              gradRhoWfcContributionsDeviceZ.set(zero);
+
+              for (unsigned int jvec = 0; jvec < totalNumWaveFunctions;
+                   jvec += BVec)
                 {
-                  if (spectrumSplit)
+                  if ((jvec + BVec) <=
+                        bandGroupLowHighPlusOneIndices[2 * bandGroupTaskId +
+                                                       1] &&
+                      (jvec + BVec) >
+                        bandGroupLowHighPlusOneIndices[2 * bandGroupTaskId])
                     {
-                      partialOccupVecDevice.set(
-                        cudaUtils::makeNumberFromReal<NumberType>(
-                          spinPolarizedFactor));
-                    }
-                  else
+                      if (spectrumSplit)
+                        {
+                          partialOccupVecDevice.set(
+                            cudaUtils::makeNumberFromReal<NumberType>(
+                              kPointWeights[kPoint]*spinPolarizedFactor));
+                        }
+                      else
+                        {
+                          if (dftParameters::constraintMagnetization)
+                            {
+                              const double fermiEnergyConstraintMag =
+                                spinIndex == 0 ? fermiEnergyUp :
+                                                 fermiEnergyDown;
+                              for (unsigned int iEigenVec = 0; iEigenVec < BVec;
+                                   ++iEigenVec)
+                                {
+                                  if (eigenValues[kPoint][totalNumWaveFunctions *
+                                                       spinIndex +
+                                                     jvec + iEigenVec] >
+                                      fermiEnergyConstraintMag)
+                                    *(partialOccupVec.begin() + iEigenVec) =
+                                      cudaUtils::makeNumberFromReal<NumberType>(
+                                        0.0);
+                                  else
+                                    *(partialOccupVec.begin() + iEigenVec) =
+                                      cudaUtils::makeNumberFromReal<NumberType>(
+                                        kPointWeights[kPoint] *spinPolarizedFactor);
+                                }
+                            }
+                          else
+                            {
+                              for (unsigned int iEigenVec = 0; iEigenVec < BVec;
+                                   ++iEigenVec)
+                                {
+                                  *(partialOccupVec.begin() + iEigenVec) =
+                                    cudaUtils::makeNumberFromReal<NumberType>(
+                                      dftUtils::getPartialOccupancy(
+                                        eigenValues[kPoint][totalNumWaveFunctions *
+                                                         spinIndex +
+                                                       jvec + iEigenVec],
+                                        fermiEnergy,
+                                        C_kb,
+                                        dftParameters::TVal) *
+                                      kPointWeights[kPoint] *spinPolarizedFactor);
+                                }
+                            }
+
+                          // partialOccupVecDevice = partialOccupVec;
+
+                          cudaUtils::copyHostVecToCUDAVec(
+                            partialOccupVec.begin(),
+                            partialOccupVecDevice.begin(),
+                            partialOccupVecDevice.size());
+                        }
+
+                      stridedCopyToBlockKernel<<<(BVec + 255) / 256 *
+                                                   numLocalDofs,
+                                                 256>>>(
+                        BVec,
+                        X + numLocalDofs * totalNumWaveFunctions * spinIndex,
+                        numLocalDofs,
+                        totalNumWaveFunctions,
+                        cudaFlattenedArrayBlock.begin(),
+                        jvec);
+
+
+                      cudaFlattenedArrayBlock.updateGhostValues();
+
+                      (operatorMatrix.getOverloadedConstraintMatrix())
+                        ->distribute(cudaFlattenedArrayBlock, BVec);
+
+                      for (int iblock = 0; iblock < (numCellBlocks + 1);
+                           iblock++)
+                        {
+                          const unsigned int currentCellsBlockSize =
+                            (iblock == numCellBlocks) ? remCellBlockSize :
+                                                        cellsBlockSize;
+                          if (currentCellsBlockSize > 0)
+                            {
+                              const unsigned int startingCellId =
+                                iblock * cellsBlockSize;
+
+                              copyGlobalToCellCUDAKernel<<<
+                                (BVec + 255) / 256 * currentCellsBlockSize *
+                                  numNodesPerElement,
+                                256>>>(
+                                BVec,
+                                currentCellsBlockSize * numNodesPerElement,
+                                cudaFlattenedArrayBlock.begin(),
+                                cellWaveFunctionMatrix,
+                                thrust::raw_pointer_cast(&(
+                                  operatorMatrix
+                                    .getFlattenedArrayCellLocalProcIndexIdMap()
+                                      [startingCellId * numNodesPerElement])));
+
+                              NumberType scalarCoeffAlpha =
+                                cudaUtils::makeNumberFromReal<NumberType>(1.0);
+                              NumberType scalarCoeffBeta =
+                                cudaUtils::makeNumberFromReal<NumberType>(0.0);
+                              int strideA = BVec * numNodesPerElement;
+                              int strideB = 0;
+                              int strideC = BVec * numQuadPoints;
+
+                              cublasXgemmStridedBatched(
+                                operatorMatrix.getCublasHandle(),
+                                CUBLAS_OP_N,
+                                CUBLAS_OP_N,
+                                BVec,
+                                numQuadPoints,
+                                numNodesPerElement,
+                                &scalarCoeffAlpha,
+                                cellWaveFunctionMatrix,
+                                BVec,
+                                strideA,
+                                shapeFunctionValuesInvertedDevice,
+                                numNodesPerElement,
+                                strideB,
+                                &scalarCoeffBeta,
+                                rhoWfcContributionsDevice.begin(),
+                                BVec,
+                                strideC,
+                                currentCellsBlockSize);
+
+
+                              if (isEvaluateGradRho)
+                                {
+                                  strideB = numNodesPerElement * numQuadPoints;
+
+                                  copyDoubleToNumber(
+                                    thrust::raw_pointer_cast(&(
+                                      operatorMatrix
+                                        .getShapeFunctionGradientValuesXInverted()
+                                          [startingCellId * numNodesPerElement *
+                                           numQuadPoints])),
+                                    currentCellsBlockSize * numNodesPerElement *
+                                      numQuadPoints,
+                                    shapeFunctionGradientValuesXInvertedDevice);
+
+                                  copyDoubleToNumber(
+                                    thrust::raw_pointer_cast(&(
+                                      operatorMatrix
+                                        .getShapeFunctionGradientValuesYInverted()
+                                          [startingCellId * numNodesPerElement *
+                                           numQuadPoints])),
+                                    currentCellsBlockSize * numNodesPerElement *
+                                      numQuadPoints,
+                                    shapeFunctionGradientValuesYInvertedDevice);
+
+                                  copyDoubleToNumber(
+                                    thrust::raw_pointer_cast(&(
+                                      operatorMatrix
+                                        .getShapeFunctionGradientValuesZInverted()
+                                          [startingCellId * numNodesPerElement *
+                                           numQuadPoints])),
+                                    currentCellsBlockSize * numNodesPerElement *
+                                      numQuadPoints,
+                                    shapeFunctionGradientValuesZInvertedDevice);
+
+                                  cublasXgemmStridedBatched(
+                                    operatorMatrix.getCublasHandle(),
+                                    CUBLAS_OP_N,
+                                    CUBLAS_OP_N,
+                                    BVec,
+                                    numQuadPoints,
+                                    numNodesPerElement,
+                                    &scalarCoeffAlpha,
+                                    cellWaveFunctionMatrix,
+                                    BVec,
+                                    strideA,
+                                    shapeFunctionGradientValuesXInvertedDevice,
+                                    numNodesPerElement,
+                                    strideB,
+                                    &scalarCoeffBeta,
+                                    gradRhoWfcContributionsDeviceX.begin(),
+                                    BVec,
+                                    strideC,
+                                    currentCellsBlockSize);
+
+
+                                  cublasXgemmStridedBatched(
+                                    operatorMatrix.getCublasHandle(),
+                                    CUBLAS_OP_N,
+                                    CUBLAS_OP_N,
+                                    BVec,
+                                    numQuadPoints,
+                                    numNodesPerElement,
+                                    &scalarCoeffAlpha,
+                                    cellWaveFunctionMatrix,
+                                    BVec,
+                                    strideA,
+                                    shapeFunctionGradientValuesYInvertedDevice,
+                                    numNodesPerElement,
+                                    strideB,
+                                    &scalarCoeffBeta,
+                                    gradRhoWfcContributionsDeviceY.begin(),
+                                    BVec,
+                                    strideC,
+                                    currentCellsBlockSize);
+
+                                  cublasXgemmStridedBatched(
+                                    operatorMatrix.getCublasHandle(),
+                                    CUBLAS_OP_N,
+                                    CUBLAS_OP_N,
+                                    BVec,
+                                    numQuadPoints,
+                                    numNodesPerElement,
+                                    &scalarCoeffAlpha,
+                                    cellWaveFunctionMatrix,
+                                    BVec,
+                                    strideA,
+                                    shapeFunctionGradientValuesZInvertedDevice,
+                                    numNodesPerElement,
+                                    strideB,
+                                    &scalarCoeffBeta,
+                                    gradRhoWfcContributionsDeviceZ.begin(),
+                                    BVec,
+                                    strideC,
+                                    currentCellsBlockSize);
+                                }
+
+
+
+                              computeRhoGradRhoFromInterpolatedValues<<<
+                                (BVec + 255) / 256 * numQuadPoints *
+                                  currentCellsBlockSize,
+                                256>>>(currentCellsBlockSize * numQuadPoints *
+                                         BVec,
+                                       rhoWfcContributionsDevice.begin(),
+                                       gradRhoWfcContributionsDeviceX.begin(),
+                                       gradRhoWfcContributionsDeviceY.begin(),
+                                       gradRhoWfcContributionsDeviceZ.begin(),
+                                       isEvaluateGradRho);
+
+
+                              cublasXgemm(operatorMatrix.getCublasHandle(),
+                                          CUBLAS_OP_N,
+                                          CUBLAS_OP_N,
+                                          1,
+                                          currentCellsBlockSize * numQuadPoints,
+                                          BVec,
+                                          &scalarCoeffAlphaRho,
+                                          partialOccupVecDevice.begin(),
+                                          1,
+                                          rhoWfcContributionsDevice.begin(),
+                                          BVec,
+                                          &scalarCoeffBetaRho,
+                                          rhoDevice.begin() +
+                                            startingCellId * numQuadPoints,
+                                          1);
+
+
+                              if (isEvaluateGradRho)
+                                {
+                                  cublasXgemm(
+                                    operatorMatrix.getCublasHandle(),
+                                    CUBLAS_OP_N,
+                                    CUBLAS_OP_N,
+                                    1,
+                                    currentCellsBlockSize * numQuadPoints,
+                                    BVec,
+                                    &scalarCoeffAlphaGradRho,
+                                    partialOccupVecDevice.begin(),
+                                    1,
+                                    gradRhoWfcContributionsDeviceX.begin(),
+                                    BVec,
+                                    &scalarCoeffBetaGradRho,
+                                    gradRhoDeviceX.begin() +
+                                      startingCellId * numQuadPoints,
+                                    1);
+
+
+                                  cublasXgemm(
+                                    operatorMatrix.getCublasHandle(),
+                                    CUBLAS_OP_N,
+                                    CUBLAS_OP_N,
+                                    1,
+                                    currentCellsBlockSize * numQuadPoints,
+                                    BVec,
+                                    &scalarCoeffAlphaGradRho,
+                                    partialOccupVecDevice.begin(),
+                                    1,
+                                    gradRhoWfcContributionsDeviceY.begin(),
+                                    BVec,
+                                    &scalarCoeffBetaGradRho,
+                                    gradRhoDeviceY.begin() +
+                                      startingCellId * numQuadPoints,
+                                    1);
+
+                                  cublasXgemm(
+                                    operatorMatrix.getCublasHandle(),
+                                    CUBLAS_OP_N,
+                                    CUBLAS_OP_N,
+                                    1,
+                                    currentCellsBlockSize * numQuadPoints,
+                                    BVec,
+                                    &scalarCoeffAlphaGradRho,
+                                    partialOccupVecDevice.begin(),
+                                    1,
+                                    gradRhoWfcContributionsDeviceZ.begin(),
+                                    BVec,
+                                    &scalarCoeffBetaGradRho,
+                                    gradRhoDeviceZ.begin() +
+                                      startingCellId * numQuadPoints,
+                                    1);
+                                }
+                            } // non-trivial cell block check
+                        }     // cells block loop
+                    }         // band parallelizatoin check
+                }             // wave function block loop
+
+              if (spectrumSplit)
+                for (unsigned int jvec = 0; jvec < Nfr; jvec += BVec)
+                  if ((jvec + totalNumWaveFunctions - Nfr + BVec) <=
+                        bandGroupLowHighPlusOneIndices[2 * bandGroupTaskId +
+                                                       1] &&
+                      (jvec + totalNumWaveFunctions - Nfr + BVec) >
+                        bandGroupLowHighPlusOneIndices[2 * bandGroupTaskId])
                     {
                       if (dftParameters::constraintMagnetization)
                         {
@@ -470,17 +783,18 @@ namespace dftfe
                           for (unsigned int iEigenVec = 0; iEigenVec < BVec;
                                ++iEigenVec)
                             {
-                              if (eigenValues[0][totalNumWaveFunctions *
+                              if (eigenValues[kPoint][totalNumWaveFunctions *
                                                    spinIndex +
+                                                 (totalNumWaveFunctions - Nfr) +
                                                  jvec + iEigenVec] >
                                   fermiEnergyConstraintMag)
                                 *(partialOccupVec.begin() + iEigenVec) =
                                   cudaUtils::makeNumberFromReal<NumberType>(
-                                    0.0);
+                                    kPointWeights[kPoint] *spinPolarizedFactor);
                               else
                                 *(partialOccupVec.begin() + iEigenVec) =
                                   cudaUtils::makeNumberFromReal<NumberType>(
-                                    spinPolarizedFactor);
+                                    0.0);
                             }
                         }
                       else
@@ -490,145 +804,71 @@ namespace dftfe
                             {
                               *(partialOccupVec.begin() + iEigenVec) =
                                 cudaUtils::makeNumberFromReal<NumberType>(
-                                  dftUtils::getPartialOccupancy(
-                                    eigenValues[0][totalNumWaveFunctions *
-                                                     spinIndex +
-                                                   jvec + iEigenVec],
-                                    fermiEnergy,
-                                    C_kb,
-                                    dftParameters::TVal) *
-                                  spinPolarizedFactor);
+                                  (dftUtils::getPartialOccupancy(
+                                     eigenValues
+                                       [kPoint][totalNumWaveFunctions * spinIndex +
+                                           (totalNumWaveFunctions - Nfr) +
+                                           jvec + iEigenVec],
+                                     fermiEnergy,
+                                     C_kb,
+                                     dftParameters::TVal) -
+                                   1.0) *
+                                  kPointWeights[kPoint] *spinPolarizedFactor);
                             }
                         }
 
                       // partialOccupVecDevice = partialOccupVec;
-
                       cudaUtils::copyHostVecToCUDAVec(
                         partialOccupVec.begin(),
                         partialOccupVecDevice.begin(),
                         partialOccupVecDevice.size());
-                    }
 
-                  stridedCopyToBlockKernel<<<(BVec + 255) / 256 * numLocalDofs,
-                                             256>>>(
-                    BVec,
-                    X + numLocalDofs * totalNumWaveFunctions * spinIndex,
-                    numLocalDofs,
-                    totalNumWaveFunctions,
-                    cudaFlattenedArrayBlock.begin(),
-                    jvec);
+                      stridedCopyToBlockKernel<<<
+                        (BVec + 255) / 256 * numLocalDofs,
+                        256>>>(BVec,
+                               XFrac + numLocalDofs * Nfr * spinIndex,
+                               numLocalDofs,
+                               Nfr,
+                               cudaFlattenedArrayBlock.begin(),
+                               jvec);
 
 
-                  cudaFlattenedArrayBlock.updateGhostValues();
+                      cudaFlattenedArrayBlock.updateGhostValues();
 
-                  (operatorMatrix.getOverloadedConstraintMatrix())
-                    ->distribute(cudaFlattenedArrayBlock, BVec);
+                      (operatorMatrix.getOverloadedConstraintMatrix())
+                        ->distribute(cudaFlattenedArrayBlock, BVec);
 
-                  for (int iblock = 0; iblock < (numCellBlocks + 1); iblock++)
-                    {
-                      const unsigned int currentCellsBlockSize =
-                        (iblock == numCellBlocks) ? remCellBlockSize :
-                                                    cellsBlockSize;
-                      if (currentCellsBlockSize > 0)
+                      for (int iblock = 0; iblock < (numCellBlocks + 1);
+                           iblock++)
                         {
-                          const unsigned int startingCellId =
-                            iblock * cellsBlockSize;
-
-                          copyGlobalToCellCUDAKernel<<<(BVec + 255) / 256 *
-                                                         currentCellsBlockSize *
-                                                         numNodesPerElement,
-                                                       256>>>(
-                            BVec,
-                            currentCellsBlockSize * numNodesPerElement,
-                            cudaFlattenedArrayBlock.begin(),
-                            cellWaveFunctionMatrix,
-                            thrust::raw_pointer_cast(
-                              &(operatorMatrix
-                                  .getFlattenedArrayCellLocalProcIndexIdMap()
-                                    [startingCellId * numNodesPerElement])));
-
-                          NumberType scalarCoeffAlpha =
-                            cudaUtils::makeNumberFromReal<NumberType>(1.0);
-                          NumberType scalarCoeffBeta =
-                            cudaUtils::makeNumberFromReal<NumberType>(0.0);
-                          int strideA = BVec * numNodesPerElement;
-                          int strideB = 0;
-                          int strideC = BVec * numQuadPoints;
-
-                          cublasXgemmStridedBatched(
-                            operatorMatrix.getCublasHandle(),
-                            CUBLAS_OP_N,
-                            CUBLAS_OP_N,
-                            BVec,
-                            numQuadPoints,
-                            numNodesPerElement,
-                            &scalarCoeffAlpha,
-                            cellWaveFunctionMatrix,
-                            BVec,
-                            strideA,
-                            shapeFunctionValuesInvertedDevice,
-                            numNodesPerElement,
-                            strideB,
-                            &scalarCoeffBeta,
-                            rhoWfcContributionsDevice.begin(),
-                            BVec,
-                            strideC,
-                            currentCellsBlockSize);
-
-
-                          if (isEvaluateGradRho)
+                          const unsigned int currentCellsBlockSize =
+                            (iblock == numCellBlocks) ? remCellBlockSize :
+                                                        cellsBlockSize;
+                          if (currentCellsBlockSize > 0)
                             {
-                              strideB = numNodesPerElement * numQuadPoints;
+                              const unsigned int startingCellId =
+                                iblock * cellsBlockSize;
 
-                              copyDoubleToNumber(
-                                thrust::raw_pointer_cast(
-                                  &(operatorMatrix
-                                      .getShapeFunctionGradientValuesXInverted()
-                                        [startingCellId * numNodesPerElement *
-                                         numQuadPoints])),
-                                currentCellsBlockSize * numNodesPerElement *
-                                  numQuadPoints,
-                                shapeFunctionGradientValuesXInvertedDevice);
-
-                              copyDoubleToNumber(
-                                thrust::raw_pointer_cast(
-                                  &(operatorMatrix
-                                      .getShapeFunctionGradientValuesYInverted()
-                                        [startingCellId * numNodesPerElement *
-                                         numQuadPoints])),
-                                currentCellsBlockSize * numNodesPerElement *
-                                  numQuadPoints,
-                                shapeFunctionGradientValuesYInvertedDevice);
-
-                              copyDoubleToNumber(
-                                thrust::raw_pointer_cast(
-                                  &(operatorMatrix
-                                      .getShapeFunctionGradientValuesZInverted()
-                                        [startingCellId * numNodesPerElement *
-                                         numQuadPoints])),
-                                currentCellsBlockSize * numNodesPerElement *
-                                  numQuadPoints,
-                                shapeFunctionGradientValuesZInvertedDevice);
-
-                              cublasXgemmStridedBatched(
-                                operatorMatrix.getCublasHandle(),
-                                CUBLAS_OP_N,
-                                CUBLAS_OP_N,
+                              copyGlobalToCellCUDAKernel<<<
+                                (BVec + 255) / 256 * currentCellsBlockSize *
+                                  numNodesPerElement,
+                                256>>>(
                                 BVec,
-                                numQuadPoints,
-                                numNodesPerElement,
-                                &scalarCoeffAlpha,
+                                currentCellsBlockSize * numNodesPerElement,
+                                cudaFlattenedArrayBlock.begin(),
                                 cellWaveFunctionMatrix,
-                                BVec,
-                                strideA,
-                                shapeFunctionGradientValuesXInvertedDevice,
-                                numNodesPerElement,
-                                strideB,
-                                &scalarCoeffBeta,
-                                gradRhoWfcContributionsDeviceX.begin(),
-                                BVec,
-                                strideC,
-                                currentCellsBlockSize);
+                                thrust::raw_pointer_cast(&(
+                                  operatorMatrix
+                                    .getFlattenedArrayCellLocalProcIndexIdMap()
+                                      [startingCellId * numNodesPerElement])));
+
+                              NumberType scalarCoeffAlpha =
+                                cudaUtils::makeNumberFromReal<NumberType>(1.0);
+                              NumberType scalarCoeffBeta =
+                                cudaUtils::makeNumberFromReal<NumberType>(0.0);
+                              int strideA = BVec * numNodesPerElement;
+                              int strideB = 0;
+                              int strideC = BVec * numQuadPoints;
 
 
                               cublasXgemmStridedBatched(
@@ -642,530 +882,314 @@ namespace dftfe
                                 cellWaveFunctionMatrix,
                                 BVec,
                                 strideA,
-                                shapeFunctionGradientValuesYInvertedDevice,
+                                shapeFunctionValuesInvertedDevice,
                                 numNodesPerElement,
                                 strideB,
                                 &scalarCoeffBeta,
-                                gradRhoWfcContributionsDeviceY.begin(),
+                                rhoWfcContributionsDevice.begin(),
                                 BVec,
                                 strideC,
                                 currentCellsBlockSize);
 
-                              cublasXgemmStridedBatched(
-                                operatorMatrix.getCublasHandle(),
-                                CUBLAS_OP_N,
-                                CUBLAS_OP_N,
-                                BVec,
-                                numQuadPoints,
-                                numNodesPerElement,
-                                &scalarCoeffAlpha,
-                                cellWaveFunctionMatrix,
-                                BVec,
-                                strideA,
-                                shapeFunctionGradientValuesZInvertedDevice,
-                                numNodesPerElement,
-                                strideB,
-                                &scalarCoeffBeta,
-                                gradRhoWfcContributionsDeviceZ.begin(),
-                                BVec,
-                                strideC,
-                                currentCellsBlockSize);
-                            }
+
+
+                              if (isEvaluateGradRho)
+                                {
+                                  strideB = numNodesPerElement * numQuadPoints;
+
+                                  copyDoubleToNumber(
+                                    thrust::raw_pointer_cast(&(
+                                      operatorMatrix
+                                        .getShapeFunctionGradientValuesXInverted()
+                                          [startingCellId * numNodesPerElement *
+                                           numQuadPoints])),
+                                    currentCellsBlockSize * numNodesPerElement *
+                                      numQuadPoints,
+                                    shapeFunctionGradientValuesXInvertedDevice);
+
+                                  copyDoubleToNumber(
+                                    thrust::raw_pointer_cast(&(
+                                      operatorMatrix
+                                        .getShapeFunctionGradientValuesYInverted()
+                                          [startingCellId * numNodesPerElement *
+                                           numQuadPoints])),
+                                    currentCellsBlockSize * numNodesPerElement *
+                                      numQuadPoints,
+                                    shapeFunctionGradientValuesYInvertedDevice);
+
+                                  copyDoubleToNumber(
+                                    thrust::raw_pointer_cast(&(
+                                      operatorMatrix
+                                        .getShapeFunctionGradientValuesZInverted()
+                                          [startingCellId * numNodesPerElement *
+                                           numQuadPoints])),
+                                    currentCellsBlockSize * numNodesPerElement *
+                                      numQuadPoints,
+                                    shapeFunctionGradientValuesZInvertedDevice);
+
+                                  cublasXgemmStridedBatched(
+                                    operatorMatrix.getCublasHandle(),
+                                    CUBLAS_OP_N,
+                                    CUBLAS_OP_N,
+                                    BVec,
+                                    numQuadPoints,
+                                    numNodesPerElement,
+                                    &scalarCoeffAlpha,
+                                    cellWaveFunctionMatrix,
+                                    BVec,
+                                    strideA,
+                                    shapeFunctionGradientValuesXInvertedDevice,
+                                    numNodesPerElement,
+                                    strideB,
+                                    &scalarCoeffBeta,
+                                    gradRhoWfcContributionsDeviceX.begin(),
+                                    BVec,
+                                    strideC,
+                                    currentCellsBlockSize);
+
+
+                                  cublasXgemmStridedBatched(
+                                    operatorMatrix.getCublasHandle(),
+                                    CUBLAS_OP_N,
+                                    CUBLAS_OP_N,
+                                    BVec,
+                                    numQuadPoints,
+                                    numNodesPerElement,
+                                    &scalarCoeffAlpha,
+                                    cellWaveFunctionMatrix,
+                                    BVec,
+                                    strideA,
+                                    shapeFunctionGradientValuesYInvertedDevice,
+                                    numNodesPerElement,
+                                    strideB,
+                                    &scalarCoeffBeta,
+                                    gradRhoWfcContributionsDeviceY.begin(),
+                                    BVec,
+                                    strideC,
+                                    currentCellsBlockSize);
+
+                                  cublasXgemmStridedBatched(
+                                    operatorMatrix.getCublasHandle(),
+                                    CUBLAS_OP_N,
+                                    CUBLAS_OP_N,
+                                    BVec,
+                                    numQuadPoints,
+                                    numNodesPerElement,
+                                    &scalarCoeffAlpha,
+                                    cellWaveFunctionMatrix,
+                                    BVec,
+                                    strideA,
+                                    shapeFunctionGradientValuesZInvertedDevice,
+                                    numNodesPerElement,
+                                    strideB,
+                                    &scalarCoeffBeta,
+                                    gradRhoWfcContributionsDeviceZ.begin(),
+                                    BVec,
+                                    strideC,
+                                    currentCellsBlockSize);
+                                }
 
 
 
-                          computeRhoGradRhoFromInterpolatedValues<<<
-                            (BVec + 255) / 256 * numQuadPoints *
-                              currentCellsBlockSize,
-                            256>>>(currentCellsBlockSize * numQuadPoints * BVec,
-                                   rhoWfcContributionsDevice.begin(),
-                                   gradRhoWfcContributionsDeviceX.begin(),
-                                   gradRhoWfcContributionsDeviceY.begin(),
-                                   gradRhoWfcContributionsDeviceZ.begin(),
-                                   isEvaluateGradRho);
+                              computeRhoGradRhoFromInterpolatedValues<<<
+                                (BVec + 255) / 256 * numQuadPoints *
+                                  currentCellsBlockSize,
+                                256>>>(currentCellsBlockSize * numQuadPoints *
+                                         BVec,
+                                       rhoWfcContributionsDevice.begin(),
+                                       gradRhoWfcContributionsDeviceX.begin(),
+                                       gradRhoWfcContributionsDeviceY.begin(),
+                                       gradRhoWfcContributionsDeviceZ.begin(),
+                                       isEvaluateGradRho);
 
 
-                          cublasXgemm(operatorMatrix.getCublasHandle(),
-                                      CUBLAS_OP_N,
-                                      CUBLAS_OP_N,
-                                      1,
-                                      currentCellsBlockSize * numQuadPoints,
-                                      BVec,
-                                      &scalarCoeffAlphaRho,
-                                      partialOccupVecDevice.begin(),
-                                      1,
-                                      rhoWfcContributionsDevice.begin(),
-                                      BVec,
-                                      &scalarCoeffBetaRho,
-                                      rhoDevice.begin() +
-                                        startingCellId * numQuadPoints,
-                                      1);
+                              cublasXgemm(operatorMatrix.getCublasHandle(),
+                                          CUBLAS_OP_N,
+                                          CUBLAS_OP_N,
+                                          1,
+                                          currentCellsBlockSize * numQuadPoints,
+                                          BVec,
+                                          &scalarCoeffAlphaRho,
+                                          partialOccupVecDevice.begin(),
+                                          1,
+                                          rhoWfcContributionsDevice.begin(),
+                                          BVec,
+                                          &scalarCoeffBetaRho,
+                                          rhoDevice.begin() +
+                                            startingCellId * numQuadPoints,
+                                          1);
 
 
-                          if (isEvaluateGradRho)
-                            {
-                              cublasXgemm(
-                                operatorMatrix.getCublasHandle(),
-                                CUBLAS_OP_N,
-                                CUBLAS_OP_N,
-                                1,
-                                currentCellsBlockSize * numQuadPoints,
-                                BVec,
-                                &scalarCoeffAlphaGradRho,
-                                partialOccupVecDevice.begin(),
-                                1,
-                                gradRhoWfcContributionsDeviceX.begin(),
-                                BVec,
-                                &scalarCoeffBetaGradRho,
-                                gradRhoDeviceX.begin() +
-                                  startingCellId * numQuadPoints,
-                                1);
+                              if (isEvaluateGradRho)
+                                {
+                                  cublasXgemm(
+                                    operatorMatrix.getCublasHandle(),
+                                    CUBLAS_OP_N,
+                                    CUBLAS_OP_N,
+                                    1,
+                                    currentCellsBlockSize * numQuadPoints,
+                                    BVec,
+                                    &scalarCoeffAlphaGradRho,
+                                    partialOccupVecDevice.begin(),
+                                    1,
+                                    gradRhoWfcContributionsDeviceX.begin(),
+                                    BVec,
+                                    &scalarCoeffBetaGradRho,
+                                    gradRhoDeviceX.begin() +
+                                      startingCellId * numQuadPoints,
+                                    1);
 
 
-                              cublasXgemm(
-                                operatorMatrix.getCublasHandle(),
-                                CUBLAS_OP_N,
-                                CUBLAS_OP_N,
-                                1,
-                                currentCellsBlockSize * numQuadPoints,
-                                BVec,
-                                &scalarCoeffAlphaGradRho,
-                                partialOccupVecDevice.begin(),
-                                1,
-                                gradRhoWfcContributionsDeviceY.begin(),
-                                BVec,
-                                &scalarCoeffBetaGradRho,
-                                gradRhoDeviceY.begin() +
-                                  startingCellId * numQuadPoints,
-                                1);
+                                  cublasXgemm(
+                                    operatorMatrix.getCublasHandle(),
+                                    CUBLAS_OP_N,
+                                    CUBLAS_OP_N,
+                                    1,
+                                    currentCellsBlockSize * numQuadPoints,
+                                    BVec,
+                                    &scalarCoeffAlphaGradRho,
+                                    partialOccupVecDevice.begin(),
+                                    1,
+                                    gradRhoWfcContributionsDeviceY.begin(),
+                                    BVec,
+                                    &scalarCoeffBetaGradRho,
+                                    gradRhoDeviceY.begin() +
+                                      startingCellId * numQuadPoints,
+                                    1);
 
-                              cublasXgemm(
-                                operatorMatrix.getCublasHandle(),
-                                CUBLAS_OP_N,
-                                CUBLAS_OP_N,
-                                1,
-                                currentCellsBlockSize * numQuadPoints,
-                                BVec,
-                                &scalarCoeffAlphaGradRho,
-                                partialOccupVecDevice.begin(),
-                                1,
-                                gradRhoWfcContributionsDeviceZ.begin(),
-                                BVec,
-                                &scalarCoeffBetaGradRho,
-                                gradRhoDeviceZ.begin() +
-                                  startingCellId * numQuadPoints,
-                                1);
-                            }
-                        } // non-trivial cell block check
-                    }     // cells block loop
-                }         // band parallelizatoin check
-            }             // wave function block loop
+                                  cublasXgemm(
+                                    operatorMatrix.getCublasHandle(),
+                                    CUBLAS_OP_N,
+                                    CUBLAS_OP_N,
+                                    1,
+                                    currentCellsBlockSize * numQuadPoints,
+                                    BVec,
+                                    &scalarCoeffAlphaGradRho,
+                                    partialOccupVecDevice.begin(),
+                                    1,
+                                    gradRhoWfcContributionsDeviceZ.begin(),
+                                    BVec,
+                                    &scalarCoeffBetaGradRho,
+                                    gradRhoDeviceZ.begin() +
+                                      startingCellId * numQuadPoints,
+                                    1);
+                                }
+                            } // non-tivial cells block
+                        }     // cells block loop
+                    }         // spectrum split block
 
-          if (spectrumSplit)
-            for (unsigned int jvec = 0; jvec < Nfr; jvec += BVec)
-              if ((jvec + totalNumWaveFunctions - Nfr + BVec) <=
-                    bandGroupLowHighPlusOneIndices[2 * bandGroupTaskId + 1] &&
-                  (jvec + totalNumWaveFunctions - Nfr + BVec) >
-                    bandGroupLowHighPlusOneIndices[2 * bandGroupTaskId])
+
+              // do cuda memcopy to host
+              cudaUtils::Vector<NumberType, dftfe::MemorySpace::Host> rhoHost;
+              cudaUtils::Vector<NumberType, dftfe::MemorySpace::Host>
+                gradRhoHostX;
+              cudaUtils::Vector<NumberType, dftfe::MemorySpace::Host>
+                gradRhoHostY;
+              cudaUtils::Vector<NumberType, dftfe::MemorySpace::Host>
+                gradRhoHostZ;
+
+              rhoHost.resize(totalLocallyOwnedCells * numQuadPoints, zero);
+              cudaUtils::copyCUDAVecToHostVec(rhoDevice.begin(),
+                                              rhoHost.begin(),
+                                              totalLocallyOwnedCells *
+                                                numQuadPoints);
+
+              if (isEvaluateGradRho)
                 {
-                  if (dftParameters::constraintMagnetization)
-                    {
-                      const double fermiEnergyConstraintMag =
-                        spinIndex == 0 ? fermiEnergyUp : fermiEnergyDown;
-                      for (unsigned int iEigenVec = 0; iEigenVec < BVec;
-                           ++iEigenVec)
-                        {
-                          if (eigenValues[0][totalNumWaveFunctions * spinIndex +
-                                             (totalNumWaveFunctions - Nfr) +
-                                             jvec + iEigenVec] >
-                              fermiEnergyConstraintMag)
-                            *(partialOccupVec.begin() + iEigenVec) =
-                              cudaUtils::makeNumberFromReal<NumberType>(
-                                spinPolarizedFactor);
-                          else
-                            *(partialOccupVec.begin() + iEigenVec) =
-                              cudaUtils::makeNumberFromReal<NumberType>(0.0);
-                        }
-                    }
-                  else
-                    {
-                      for (unsigned int iEigenVec = 0; iEigenVec < BVec;
-                           ++iEigenVec)
-                        {
-                          *(partialOccupVec.begin() + iEigenVec) =
-                            cudaUtils::makeNumberFromReal<NumberType>(
-                              (dftUtils::getPartialOccupancy(
-                                 eigenValues[0]
-                                            [totalNumWaveFunctions * spinIndex +
-                                             (totalNumWaveFunctions - Nfr) +
-                                             jvec + iEigenVec],
-                                 fermiEnergy,
-                                 C_kb,
-                                 dftParameters::TVal) -
-                               1.0) *
-                              spinPolarizedFactor);
-                        }
-                    }
+                  gradRhoHostX.resize(totalLocallyOwnedCells * numQuadPoints,
+                                      zero);
+                  cudaUtils::copyCUDAVecToHostVec(gradRhoDeviceX.begin(),
+                                                  gradRhoHostX.begin(),
+                                                  totalLocallyOwnedCells *
+                                                    numQuadPoints);
 
-                  // partialOccupVecDevice = partialOccupVec;
-                  cudaUtils::copyHostVecToCUDAVec(partialOccupVec.begin(),
-                                                  partialOccupVecDevice.begin(),
-                                                  partialOccupVecDevice.size());
+                  gradRhoHostY.resize(totalLocallyOwnedCells * numQuadPoints,
+                                      zero);
+                  cudaUtils::copyCUDAVecToHostVec(gradRhoDeviceY.begin(),
+                                                  gradRhoHostY.begin(),
+                                                  totalLocallyOwnedCells *
+                                                    numQuadPoints);
 
-                  stridedCopyToBlockKernel<<<(BVec + 255) / 256 * numLocalDofs,
-                                             256>>>(
-                    BVec,
-                    XFrac + numLocalDofs * Nfr * spinIndex,
-                    numLocalDofs,
-                    Nfr,
-                    cudaFlattenedArrayBlock.begin(),
-                    jvec);
+                  gradRhoHostZ.resize(totalLocallyOwnedCells * numQuadPoints,
+                                      zero);
+                  cudaUtils::copyCUDAVecToHostVec(gradRhoDeviceZ.begin(),
+                                                  gradRhoHostZ.begin(),
+                                                  totalLocallyOwnedCells *
+                                                    numQuadPoints);
+                }
 
-
-                  cudaFlattenedArrayBlock.updateGhostValues();
-
-                  (operatorMatrix.getOverloadedConstraintMatrix())
-                    ->distribute(cudaFlattenedArrayBlock, BVec);
-
-                  for (int iblock = 0; iblock < (numCellBlocks + 1); iblock++)
-                    {
-                      const unsigned int currentCellsBlockSize =
-                        (iblock == numCellBlocks) ? remCellBlockSize :
-                                                    cellsBlockSize;
-                      if (currentCellsBlockSize > 0)
-                        {
-                          const unsigned int startingCellId =
-                            iblock * cellsBlockSize;
-
-                          copyGlobalToCellCUDAKernel<<<(BVec + 255) / 256 *
-                                                         currentCellsBlockSize *
-                                                         numNodesPerElement,
-                                                       256>>>(
-                            BVec,
-                            currentCellsBlockSize * numNodesPerElement,
-                            cudaFlattenedArrayBlock.begin(),
-                            cellWaveFunctionMatrix,
-                            thrust::raw_pointer_cast(
-                              &(operatorMatrix
-                                  .getFlattenedArrayCellLocalProcIndexIdMap()
-                                    [startingCellId * numNodesPerElement])));
-
-                          NumberType scalarCoeffAlpha =
-                            cudaUtils::makeNumberFromReal<NumberType>(1.0);
-                          NumberType scalarCoeffBeta =
-                            cudaUtils::makeNumberFromReal<NumberType>(0.0);
-                          int strideA = BVec * numNodesPerElement;
-                          int strideB = 0;
-                          int strideC = BVec * numQuadPoints;
-
-
-                          cublasXgemmStridedBatched(
-                            operatorMatrix.getCublasHandle(),
-                            CUBLAS_OP_N,
-                            CUBLAS_OP_N,
-                            BVec,
-                            numQuadPoints,
-                            numNodesPerElement,
-                            &scalarCoeffAlpha,
-                            cellWaveFunctionMatrix,
-                            BVec,
-                            strideA,
-                            shapeFunctionValuesInvertedDevice,
-                            numNodesPerElement,
-                            strideB,
-                            &scalarCoeffBeta,
-                            rhoWfcContributionsDevice.begin(),
-                            BVec,
-                            strideC,
-                            currentCellsBlockSize);
-
-
-
-                          if (isEvaluateGradRho)
-                            {
-                              strideB = numNodesPerElement * numQuadPoints;
-
-                              copyDoubleToNumber(
-                                thrust::raw_pointer_cast(
-                                  &(operatorMatrix
-                                      .getShapeFunctionGradientValuesXInverted()
-                                        [startingCellId * numNodesPerElement *
-                                         numQuadPoints])),
-                                currentCellsBlockSize * numNodesPerElement *
-                                  numQuadPoints,
-                                shapeFunctionGradientValuesXInvertedDevice);
-
-                              copyDoubleToNumber(
-                                thrust::raw_pointer_cast(
-                                  &(operatorMatrix
-                                      .getShapeFunctionGradientValuesYInverted()
-                                        [startingCellId * numNodesPerElement *
-                                         numQuadPoints])),
-                                currentCellsBlockSize * numNodesPerElement *
-                                  numQuadPoints,
-                                shapeFunctionGradientValuesYInvertedDevice);
-
-                              copyDoubleToNumber(
-                                thrust::raw_pointer_cast(
-                                  &(operatorMatrix
-                                      .getShapeFunctionGradientValuesZInverted()
-                                        [startingCellId * numNodesPerElement *
-                                         numQuadPoints])),
-                                currentCellsBlockSize * numNodesPerElement *
-                                  numQuadPoints,
-                                shapeFunctionGradientValuesZInvertedDevice);
-
-                              cublasXgemmStridedBatched(
-                                operatorMatrix.getCublasHandle(),
-                                CUBLAS_OP_N,
-                                CUBLAS_OP_N,
-                                BVec,
-                                numQuadPoints,
-                                numNodesPerElement,
-                                &scalarCoeffAlpha,
-                                cellWaveFunctionMatrix,
-                                BVec,
-                                strideA,
-                                shapeFunctionGradientValuesXInvertedDevice,
-                                numNodesPerElement,
-                                strideB,
-                                &scalarCoeffBeta,
-                                gradRhoWfcContributionsDeviceX.begin(),
-                                BVec,
-                                strideC,
-                                currentCellsBlockSize);
-
-
-                              cublasXgemmStridedBatched(
-                                operatorMatrix.getCublasHandle(),
-                                CUBLAS_OP_N,
-                                CUBLAS_OP_N,
-                                BVec,
-                                numQuadPoints,
-                                numNodesPerElement,
-                                &scalarCoeffAlpha,
-                                cellWaveFunctionMatrix,
-                                BVec,
-                                strideA,
-                                shapeFunctionGradientValuesYInvertedDevice,
-                                numNodesPerElement,
-                                strideB,
-                                &scalarCoeffBeta,
-                                gradRhoWfcContributionsDeviceY.begin(),
-                                BVec,
-                                strideC,
-                                currentCellsBlockSize);
-
-                              cublasXgemmStridedBatched(
-                                operatorMatrix.getCublasHandle(),
-                                CUBLAS_OP_N,
-                                CUBLAS_OP_N,
-                                BVec,
-                                numQuadPoints,
-                                numNodesPerElement,
-                                &scalarCoeffAlpha,
-                                cellWaveFunctionMatrix,
-                                BVec,
-                                strideA,
-                                shapeFunctionGradientValuesZInvertedDevice,
-                                numNodesPerElement,
-                                strideB,
-                                &scalarCoeffBeta,
-                                gradRhoWfcContributionsDeviceZ.begin(),
-                                BVec,
-                                strideC,
-                                currentCellsBlockSize);
-                            }
-
-
-
-                          computeRhoGradRhoFromInterpolatedValues<<<
-                            (BVec + 255) / 256 * numQuadPoints *
-                              currentCellsBlockSize,
-                            256>>>(currentCellsBlockSize * numQuadPoints * BVec,
-                                   rhoWfcContributionsDevice.begin(),
-                                   gradRhoWfcContributionsDeviceX.begin(),
-                                   gradRhoWfcContributionsDeviceY.begin(),
-                                   gradRhoWfcContributionsDeviceZ.begin(),
-                                   isEvaluateGradRho);
-
-
-                          cublasXgemm(operatorMatrix.getCublasHandle(),
-                                      CUBLAS_OP_N,
-                                      CUBLAS_OP_N,
-                                      1,
-                                      currentCellsBlockSize * numQuadPoints,
-                                      BVec,
-                                      &scalarCoeffAlphaRho,
-                                      partialOccupVecDevice.begin(),
-                                      1,
-                                      rhoWfcContributionsDevice.begin(),
-                                      BVec,
-                                      &scalarCoeffBetaRho,
-                                      rhoDevice.begin() +
-                                        startingCellId * numQuadPoints,
-                                      1);
-
-
-                          if (isEvaluateGradRho)
-                            {
-                              cublasXgemm(
-                                operatorMatrix.getCublasHandle(),
-                                CUBLAS_OP_N,
-                                CUBLAS_OP_N,
-                                1,
-                                currentCellsBlockSize * numQuadPoints,
-                                BVec,
-                                &scalarCoeffAlphaGradRho,
-                                partialOccupVecDevice.begin(),
-                                1,
-                                gradRhoWfcContributionsDeviceX.begin(),
-                                BVec,
-                                &scalarCoeffBetaGradRho,
-                                gradRhoDeviceX.begin() +
-                                  startingCellId * numQuadPoints,
-                                1);
-
-
-                              cublasXgemm(
-                                operatorMatrix.getCublasHandle(),
-                                CUBLAS_OP_N,
-                                CUBLAS_OP_N,
-                                1,
-                                currentCellsBlockSize * numQuadPoints,
-                                BVec,
-                                &scalarCoeffAlphaGradRho,
-                                partialOccupVecDevice.begin(),
-                                1,
-                                gradRhoWfcContributionsDeviceY.begin(),
-                                BVec,
-                                &scalarCoeffBetaGradRho,
-                                gradRhoDeviceY.begin() +
-                                  startingCellId * numQuadPoints,
-                                1);
-
-                              cublasXgemm(
-                                operatorMatrix.getCublasHandle(),
-                                CUBLAS_OP_N,
-                                CUBLAS_OP_N,
-                                1,
-                                currentCellsBlockSize * numQuadPoints,
-                                BVec,
-                                &scalarCoeffAlphaGradRho,
-                                partialOccupVecDevice.begin(),
-                                1,
-                                gradRhoWfcContributionsDeviceZ.begin(),
-                                BVec,
-                                &scalarCoeffBetaGradRho,
-                                gradRhoDeviceZ.begin() +
-                                  startingCellId * numQuadPoints,
-                                1);
-                            }
-                        } // non-tivial cells block
-                    }     // cells block loop
-                }         // spectrum split block
-
-
-          // do cuda memcopy to host
-          cudaUtils::Vector<NumberType, dftfe::MemorySpace::Host> rhoHost;
-          cudaUtils::Vector<NumberType, dftfe::MemorySpace::Host> gradRhoHostX;
-          cudaUtils::Vector<NumberType, dftfe::MemorySpace::Host> gradRhoHostY;
-          cudaUtils::Vector<NumberType, dftfe::MemorySpace::Host> gradRhoHostZ;
-
-          rhoHost.resize(totalLocallyOwnedCells * numQuadPoints, zero);
-          cudaUtils::copyCUDAVecToHostVec(rhoDevice.begin(),
-                                          rhoHost.begin(),
-                                          totalLocallyOwnedCells *
-                                            numQuadPoints);
-
-          if (isEvaluateGradRho)
-            {
-              gradRhoHostX.resize(totalLocallyOwnedCells * numQuadPoints, zero);
-              cudaUtils::copyCUDAVecToHostVec(gradRhoDeviceX.begin(),
-                                              gradRhoHostX.begin(),
-                                              totalLocallyOwnedCells *
-                                                numQuadPoints);
-
-              gradRhoHostY.resize(totalLocallyOwnedCells * numQuadPoints, zero);
-              cudaUtils::copyCUDAVecToHostVec(gradRhoDeviceY.begin(),
-                                              gradRhoHostY.begin(),
-                                              totalLocallyOwnedCells *
-                                                numQuadPoints);
-
-              gradRhoHostZ.resize(totalLocallyOwnedCells * numQuadPoints, zero);
-              cudaUtils::copyCUDAVecToHostVec(gradRhoDeviceZ.begin(),
-                                              gradRhoHostZ.begin(),
-                                              totalLocallyOwnedCells *
-                                                numQuadPoints);
-            }
-
-          unsigned int iElem = 0;
-          cell               = dofHandler.begin_active();
-          endc               = dofHandler.end();
-          for (; cell != endc; ++cell)
-            if (cell->is_locally_owned())
-              {
-                const dealii::CellId cellid = cell->id();
-
-                std::vector<double>  dummy(1);
-                std::vector<double> &tempRhoQuads = (*rhoValues)[cellid];
-                std::vector<double> &tempGradRhoQuads =
-                  isEvaluateGradRho ? (*gradRhoValues)[cellid] : dummy;
-
-                std::vector<double> &tempRhoQuadsSP =
-                  (dftParameters::spinPolarized == 1) ?
-                    (*rhoValuesSpinPolarized)[cellid] :
-                    dummy;
-                std::vector<double> &tempGradRhoQuadsSP =
-                  ((dftParameters::spinPolarized == 1) && isEvaluateGradRho) ?
-                    (*gradRhoValuesSpinPolarized)[cellid] :
-                    dummy;
-
-                for (unsigned int q = 0; q < numQuadPoints; ++q)
+              unsigned int iElem = 0;
+              cell               = dofHandler.begin_active();
+              endc               = dofHandler.end();
+              for (; cell != endc; ++cell)
+                if (cell->is_locally_owned())
                   {
-                    if (dftParameters::spinPolarized == 1)
+                    const dealii::CellId cellid = cell->id();
+
+                    std::vector<double>  dummy(1);
+                    std::vector<double> &tempRhoQuads = (*rhoValues)[cellid];
+                    std::vector<double> &tempGradRhoQuads =
+                      isEvaluateGradRho ? (*gradRhoValues)[cellid] : dummy;
+
+                    std::vector<double> &tempRhoQuadsSP =
+                      (dftParameters::spinPolarized == 1) ?
+                        (*rhoValuesSpinPolarized)[cellid] :
+                        dummy;
+                    std::vector<double> &tempGradRhoQuadsSP =
+                      ((dftParameters::spinPolarized == 1) &&
+                       isEvaluateGradRho) ?
+                        (*gradRhoValuesSpinPolarized)[cellid] :
+                        dummy;
+
+                    for (unsigned int q = 0; q < numQuadPoints; ++q)
                       {
-                        tempRhoQuadsSP[2 * q + spinIndex] +=
-                          cudaUtils::makeRealFromNumber(
-                            *(rhoHost.begin() + iElem * numQuadPoints + q));
+                        if (dftParameters::spinPolarized == 1)
+                          {
+                            tempRhoQuadsSP[2 * q + spinIndex] +=
+                              cudaUtils::makeRealFromNumber(
+                                *(rhoHost.begin() + iElem * numQuadPoints + q));
+
+                            if (isEvaluateGradRho)
+                              {
+                                tempGradRhoQuadsSP[6 * q + spinIndex * 3] +=
+                                  cudaUtils::makeRealFromNumber(
+                                    *(gradRhoHostX.begin() +
+                                      iElem * numQuadPoints + q));
+                                tempGradRhoQuadsSP[6 * q + 1 + spinIndex * 3] +=
+                                  cudaUtils::makeRealFromNumber(
+                                    *(gradRhoHostY.begin() +
+                                      iElem * numQuadPoints + q));
+                                tempGradRhoQuadsSP[6 * q + 2 + spinIndex * 3] +=
+                                  cudaUtils::makeRealFromNumber(
+                                    *(gradRhoHostZ.begin() +
+                                      iElem * numQuadPoints + q));
+                              }
+                          }
+
+                        tempRhoQuads[q] += cudaUtils::makeRealFromNumber(
+                          *(rhoHost.begin() + iElem * numQuadPoints + q));
+
 
                         if (isEvaluateGradRho)
                           {
-                            tempGradRhoQuadsSP[6 * q + spinIndex * 3] +=
+                            tempGradRhoQuads[3 * q] +=
                               cudaUtils::makeRealFromNumber(
                                 *(gradRhoHostX.begin() + iElem * numQuadPoints +
                                   q));
-                            tempGradRhoQuadsSP[6 * q + 1 + spinIndex * 3] +=
+                            tempGradRhoQuads[3 * q + 1] +=
                               cudaUtils::makeRealFromNumber(
                                 *(gradRhoHostY.begin() + iElem * numQuadPoints +
                                   q));
-                            tempGradRhoQuadsSP[6 * q + 2 + spinIndex * 3] +=
+                            tempGradRhoQuads[3 * q + 2] +=
                               cudaUtils::makeRealFromNumber(
                                 *(gradRhoHostZ.begin() + iElem * numQuadPoints +
                                   q));
                           }
                       }
-
-                    tempRhoQuads[q] += cudaUtils::makeRealFromNumber(
-                      *(rhoHost.begin() + iElem * numQuadPoints + q));
-
-
-                    if (isEvaluateGradRho)
-                      {
-                        tempGradRhoQuads[3 * q] +=
-                          cudaUtils::makeRealFromNumber(*(
-                            gradRhoHostX.begin() + iElem * numQuadPoints + q));
-                        tempGradRhoQuads[3 * q + 1] +=
-                          cudaUtils::makeRealFromNumber(*(
-                            gradRhoHostY.begin() + iElem * numQuadPoints + q));
-                        tempGradRhoQuads[3 * q + 2] +=
-                          cudaUtils::makeRealFromNumber(*(
-                            gradRhoHostZ.begin() + iElem * numQuadPoints + q));
-                      }
+                    iElem++;
                   }
-                iElem++;
-              }
-        } // spin index
+            } // kpoint loop
+        }     // spin index
 
 
 
