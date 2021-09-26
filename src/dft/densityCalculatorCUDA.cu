@@ -790,7 +790,7 @@ namespace dftfe
                                   fermiEnergyConstraintMag)
                                 *(partialOccupVec.begin() + iEigenVec) =
                                   cudaUtils::makeNumberFromReal<NumberType>(
-                                    kPointWeights[kPoint] *spinPolarizedFactor);
+                                    -kPointWeights[kPoint] *spinPolarizedFactor);
                               else
                                 *(partialOccupVec.begin() + iEigenVec) =
                                   cudaUtils::makeNumberFromReal<NumberType>(
