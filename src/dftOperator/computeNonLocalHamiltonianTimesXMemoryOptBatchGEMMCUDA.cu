@@ -164,7 +164,9 @@ kohnShamDFTOperatorCUDAClass<FEOrder, FEOrderElectro>::
         numberWaveFunctions,
         strideA,
         reinterpret_cast<dataTypes::numberGPU *>(thrust::raw_pointer_cast(
-          &d_cellHamiltonianMatrixNonLocalFlattenedTransposeDevice[0])),
+          &d_cellHamiltonianMatrixNonLocalFlattenedTransposeDevice
+            [d_kPointIndex * d_totalNonlocalElems * d_maxSingleAtomPseudoWfc *
+             d_numberNodesPerElement])),
         d_maxSingleAtomPseudoWfc,
         strideB,
         reinterpret_cast<const dataTypes::numberGPU *>(&scalarCoeffBeta),

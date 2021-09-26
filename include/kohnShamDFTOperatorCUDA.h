@@ -461,9 +461,10 @@ namespace dftfe
 
     /// for non local
 
-    std::vector<dataTypes::number> d_cellHamiltonianMatrixNonLocalFlattened;
+    std::vector<dataTypes::number>
+      d_cellHamiltonianMatrixNonLocalFlattenedConjugate;
     thrust::device_vector<dataTypes::numberThrustGPU>
-      d_cellHamiltonianMatrixNonLocalFlattenedDevice;
+      d_cellHamiltonianMatrixNonLocalFlattenedConjugateDevice;
     std::vector<dataTypes::number>
       d_cellHamiltonianMatrixNonLocalFlattenedTranspose;
     thrust::device_vector<dataTypes::numberThrustGPU>

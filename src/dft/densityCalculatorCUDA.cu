@@ -462,7 +462,7 @@ namespace dftfe
                         {
                           partialOccupVecDevice.set(
                             cudaUtils::makeNumberFromReal<NumberType>(
-                              kPointWeights[kPoint]*spinPolarizedFactor));
+                              kPointWeights[kPoint] * spinPolarizedFactor));
                         }
                       else
                         {
@@ -474,9 +474,10 @@ namespace dftfe
                               for (unsigned int iEigenVec = 0; iEigenVec < BVec;
                                    ++iEigenVec)
                                 {
-                                  if (eigenValues[kPoint][totalNumWaveFunctions *
-                                                       spinIndex +
-                                                     jvec + iEigenVec] >
+                                  if (eigenValues[kPoint]
+                                                 [totalNumWaveFunctions *
+                                                    spinIndex +
+                                                  jvec + iEigenVec] >
                                       fermiEnergyConstraintMag)
                                     *(partialOccupVec.begin() + iEigenVec) =
                                       cudaUtils::makeNumberFromReal<NumberType>(
@@ -484,7 +485,8 @@ namespace dftfe
                                   else
                                     *(partialOccupVec.begin() + iEigenVec) =
                                       cudaUtils::makeNumberFromReal<NumberType>(
-                                        kPointWeights[kPoint] *spinPolarizedFactor);
+                                        kPointWeights[kPoint] *
+                                        spinPolarizedFactor);
                                 }
                             }
                           else
@@ -495,13 +497,15 @@ namespace dftfe
                                   *(partialOccupVec.begin() + iEigenVec) =
                                     cudaUtils::makeNumberFromReal<NumberType>(
                                       dftUtils::getPartialOccupancy(
-                                        eigenValues[kPoint][totalNumWaveFunctions *
-                                                         spinIndex +
-                                                       jvec + iEigenVec],
+                                        eigenValues[kPoint]
+                                                   [totalNumWaveFunctions *
+                                                      spinIndex +
+                                                    jvec + iEigenVec],
                                         fermiEnergy,
                                         C_kb,
                                         dftParameters::TVal) *
-                                      kPointWeights[kPoint] *spinPolarizedFactor);
+                                      kPointWeights[kPoint] *
+                                      spinPolarizedFactor);
                                 }
                             }
 
@@ -517,7 +521,9 @@ namespace dftfe
                                                    numLocalDofs,
                                                  256>>>(
                         BVec,
-                        X + numLocalDofs * totalNumWaveFunctions * spinIndex,
+                        X + numLocalDofs * totalNumWaveFunctions *
+                              ((dftParameters::spinPolarized + 1) * kPoint +
+                               spinIndex),
                         numLocalDofs,
                         totalNumWaveFunctions,
                         cudaFlattenedArrayBlock.begin(),
@@ -783,14 +789,16 @@ namespace dftfe
                           for (unsigned int iEigenVec = 0; iEigenVec < BVec;
                                ++iEigenVec)
                             {
-                              if (eigenValues[kPoint][totalNumWaveFunctions *
-                                                   spinIndex +
-                                                 (totalNumWaveFunctions - Nfr) +
-                                                 jvec + iEigenVec] >
+                              if (eigenValues[kPoint]
+                                             [totalNumWaveFunctions *
+                                                spinIndex +
+                                              (totalNumWaveFunctions - Nfr) +
+                                              jvec + iEigenVec] >
                                   fermiEnergyConstraintMag)
                                 *(partialOccupVec.begin() + iEigenVec) =
                                   cudaUtils::makeNumberFromReal<NumberType>(
-                                    -kPointWeights[kPoint] *spinPolarizedFactor);
+                                    -kPointWeights[kPoint] *
+                                    spinPolarizedFactor);
                               else
                                 *(partialOccupVec.begin() + iEigenVec) =
                                   cudaUtils::makeNumberFromReal<NumberType>(
@@ -805,15 +813,16 @@ namespace dftfe
                               *(partialOccupVec.begin() + iEigenVec) =
                                 cudaUtils::makeNumberFromReal<NumberType>(
                                   (dftUtils::getPartialOccupancy(
-                                     eigenValues
-                                       [kPoint][totalNumWaveFunctions * spinIndex +
-                                           (totalNumWaveFunctions - Nfr) +
-                                           jvec + iEigenVec],
+                                     eigenValues[kPoint]
+                                                [totalNumWaveFunctions *
+                                                   spinIndex +
+                                                 (totalNumWaveFunctions - Nfr) +
+                                                 jvec + iEigenVec],
                                      fermiEnergy,
                                      C_kb,
                                      dftParameters::TVal) -
                                    1.0) *
-                                  kPointWeights[kPoint] *spinPolarizedFactor);
+                                  kPointWeights[kPoint] * spinPolarizedFactor);
                             }
                         }
 
@@ -823,14 +832,17 @@ namespace dftfe
                         partialOccupVecDevice.begin(),
                         partialOccupVecDevice.size());
 
-                      stridedCopyToBlockKernel<<<
-                        (BVec + 255) / 256 * numLocalDofs,
-                        256>>>(BVec,
-                               XFrac + numLocalDofs * Nfr * spinIndex,
-                               numLocalDofs,
-                               Nfr,
-                               cudaFlattenedArrayBlock.begin(),
-                               jvec);
+                      stridedCopyToBlockKernel<<<(BVec + 255) / 256 *
+                                                   numLocalDofs,
+                                                 256>>>(
+                        BVec,
+                        XFrac + numLocalDofs * Nfr *
+                                  ((dftParameters::spinPolarized + 1) * kPoint +
+                                   spinIndex),
+                        numLocalDofs,
+                        Nfr,
+                        cudaFlattenedArrayBlock.begin(),
+                        jvec);
 
 
                       cudaFlattenedArrayBlock.updateGhostValues();
