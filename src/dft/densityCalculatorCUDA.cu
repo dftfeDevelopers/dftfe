@@ -641,7 +641,7 @@ namespace dftfe
                                              (totalNumWaveFunctions - Nfr) +
                                              jvec + iEigenVec] >
                               fermiEnergyConstraintMag)
-                            partialOccupVec[iEigenVec] = spinPolarizedFactor;
+                            partialOccupVec[iEigenVec] = -spinPolarizedFactor;
                           else
                             partialOccupVec[iEigenVec] = 0.0;
                         }
