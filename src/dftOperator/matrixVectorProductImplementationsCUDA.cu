@@ -59,7 +59,8 @@ kohnShamDFTOperatorCUDAClass<FEOrder, FEOrderElectro>::
   cublasXgemmStridedBatched(
     d_cublasHandle,
     CUBLAS_OP_N,
-    CUBLAS_OP_N,
+    std::is_same<dataTypes::number, std::complex<double>>::value ? CUBLAS_OP_T :
+                                                                   CUBLAS_OP_N,
     numberWaveFunctions,
     d_numberNodesPerElement,
     d_numberNodesPerElement,
@@ -105,7 +106,7 @@ kohnShamDFTOperatorCUDAClass<FEOrder, FEOrderElectro>::
             reinterpret_cast<const dataTypes::numberGPU *>(
               thrust::raw_pointer_cast(&d_cellHamMatrixTimesWaveMatrix[0])),
             thrust::raw_pointer_cast(&d_tempRealVec[0]),
-            thrust::raw_pointer_cast(&d_tempImagVec[1]),
+            thrust::raw_pointer_cast(&d_tempImagVec[0]),
             thrust::raw_pointer_cast(
               &d_flattenedArrayCellLocalProcIndexIdMapDevice[0]));
 

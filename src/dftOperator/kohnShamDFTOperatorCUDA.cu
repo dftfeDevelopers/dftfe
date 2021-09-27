@@ -612,9 +612,9 @@ namespace dftfe
         free(h_d_A);
         free(h_d_B);
         free(h_d_C);
-        cudaFree(d_A);
-        cudaFree(d_B);
-        cudaFree(d_C);
+        CUDACHECK(cudaFree(d_A));
+        CUDACHECK(cudaFree(d_B));
+        CUDACHECK(cudaFree(d_C));
       }
   }
 
@@ -1069,7 +1069,7 @@ namespace dftfe
           d_totalNonlocalElems * d_numberNodesPerElement, 0);
         d_projectorKetTimesVectorAllCellsDevice.resize(
           d_totalNonlocalElems * numberWaveFunctions * d_maxSingleAtomPseudoWfc,
-          0.0);
+          dataTypes::numberThrustGPU(0.0));
 
         d_projectorIdsParallelNumberingMap.resize(d_totalPseudoWfcNonLocal, 0);
         d_projectorKetTimesVectorParFlattenedDevice.resize(
@@ -1086,7 +1086,7 @@ namespace dftfe
         d_projectorKetTimesVectorAllCellsReduction.resize(
           d_totalNonlocalElems * d_maxSingleAtomPseudoWfc *
             d_totalPseudoWfcNonLocal,
-          0.0);
+          dataTypes::number(0.0));
 
         d_cellNodeIdMapNonLocalToLocal.clear();
         d_cellNodeIdMapNonLocalToLocal.resize(d_totalNonlocalElems *
@@ -1225,7 +1225,7 @@ namespace dftfe
                       countElem * d_maxSingleAtomPseudoWfc + iPseudoWave;
                     d_projectorKetTimesVectorAllCellsReduction[columnStartId +
                                                                columnRowId] =
-                      1.0;
+                      dataTypes::number(1.0);
                   }
 
                 countElem++;
@@ -2405,7 +2405,7 @@ namespace dftfe
   }
 
 
-  // X^{T}HXc (Xc denotes complex conjugate)
+  // X^{T}*HConj*XConj
   template <unsigned int FEOrder, unsigned int FEOrderElectro>
   void
   kohnShamDFTOperatorCUDAClass<FEOrder, FEOrderElectro>::XtHX(
@@ -2470,7 +2470,7 @@ namespace dftfe
                                            256>>>(
                   chebyBlockSize, M, X, N, XBlock.begin(), k);
 
-                // evaluate H times XBlock^{T} and store in HXBlock^{T}
+                // evaluate XBlock^{T} times H^{T} and store in HXBlock
                 HXBlock.setZero();
                 // thrust::fill(HXBlock.begin(),HXBlock.end(),0.0);
                 const bool   scaleFlag = false;
@@ -2495,7 +2495,7 @@ namespace dftfe
                   k - jvec);
               }
 
-            // Comptute local XTrunc^{T}*HXcBlock.
+            // Comptute local XTrunc^{T}*HConj*XConj.
             const dataTypes::number alpha = dataTypes::number(1.0),
                                     beta  = dataTypes::number(0.0);
             const unsigned int D          = N - jvec;
@@ -2556,7 +2556,7 @@ namespace dftfe
           } // band parallelization
       }
 
-    cudaFreeHost(projHamBlockHost);
+    CUDACHECK(cudaFreeHost(projHamBlockHost));
 
     if (numberBandGroups > 1)
       {
@@ -2566,7 +2566,7 @@ namespace dftfe
       }
   }
 
-  // X^{T}HXc (Xc denotes complex conjugate) with overlap of computation and
+  // X^{T}*HConj*XConj  with overlap of computation and
   // communication
   template <unsigned int FEOrder, unsigned int FEOrderElectro>
   void
@@ -2937,7 +2937,7 @@ namespace dftfe
   }
 
 
-  // X^{T}HXc (Xc denotes complex conjugate)
+  // X^{T}*HConj*XConj  (Xc denotes complex conjugate)
   /////////////PSEUDO CODE for the implementation below for Overlapping compute
   /// and communication/////////////////
   //

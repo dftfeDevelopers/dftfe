@@ -354,7 +354,7 @@ namespace dftfe
           d_lowerBoundWantedSpectrum +
           (d_upperBoundUnWantedSpectrum - d_lowerBoundWantedSpectrum) *
             totalNumberWaveFunctions /
-            operatorMatrix.getParallelVecSingleComponent().size() * 10.0;
+            operatorMatrix.getParallelVecSingleComponent().size() * (dftParameters::reproducible_output ? 10.0 : 200.0);
       }
     else if (!dftParameters::reuseLanczosUpperBoundFromFirstCall)
       {

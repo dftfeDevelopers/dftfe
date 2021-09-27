@@ -187,8 +187,9 @@ namespace dftfe
             }
           else
             {
-              cudaMalloc((void **)&d_data, size * sizeof(NumberType));
-              cudaMemset(d_data, 0, size * sizeof(NumberType));
+              CUDACHECK(
+                cudaMalloc((void **)&d_data, size * sizeof(NumberType)));
+              CUDACHECK(cudaMemset(d_data, 0, size * sizeof(NumberType)));
             }
           d_size = size;
         }
@@ -248,7 +249,7 @@ namespace dftfe
           if (std::is_same<MemorySpace, dftfe::MemorySpace::Host>::value)
             free(d_data);
           else
-            cudaFree(d_data);
+            CUDACHECK(cudaFree(d_data));
           d_size = 0;
         }
     }

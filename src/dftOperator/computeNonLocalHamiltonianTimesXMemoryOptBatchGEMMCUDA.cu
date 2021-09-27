@@ -216,7 +216,7 @@ kohnShamDFTOperatorCUDAClass<FEOrder, FEOrderElectro>::
         reinterpret_cast<const dataTypes::numberGPU *>(
           thrust::raw_pointer_cast(&d_cellHamMatrixTimesWaveMatrix[0])),
         thrust::raw_pointer_cast(&d_tempRealVec[0]),
-        thrust::raw_pointer_cast(&d_tempImagVec[1]),
+        thrust::raw_pointer_cast(&d_tempImagVec[0]),
         thrust::raw_pointer_cast(
           &d_flattenedArrayCellLocalProcIndexIdMapDevice[0]));
 

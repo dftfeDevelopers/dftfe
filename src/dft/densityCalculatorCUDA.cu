@@ -345,11 +345,13 @@ namespace dftfe
 
       NumberType *shapeFunctionValuesInvertedDevice;
 
-      cudaMalloc((void **)&shapeFunctionValuesInvertedDevice,
-                 numNodesPerElement * numQuadPoints * sizeof(NumberType));
-      cudaMemset(shapeFunctionValuesInvertedDevice,
-                 0,
-                 numNodesPerElement * numQuadPoints * sizeof(NumberType));
+      CUDACHECK(
+        cudaMalloc((void **)&shapeFunctionValuesInvertedDevice,
+                   numNodesPerElement * numQuadPoints * sizeof(NumberType)));
+      CUDACHECK(
+        cudaMemset(shapeFunctionValuesInvertedDevice,
+                   0,
+                   numNodesPerElement * numQuadPoints * sizeof(NumberType)));
 
       copyDoubleToNumber(thrust::raw_pointer_cast(
                            &(operatorMatrix.getShapeFunctionValuesInverted(
@@ -364,29 +366,32 @@ namespace dftfe
 
       if (isEvaluateGradRho)
         {
-          cudaMalloc((void **)&shapeFunctionGradientValuesXInvertedDevice,
-                     cellsBlockSize * numNodesPerElement * numQuadPoints *
-                       sizeof(NumberType));
-          cudaMemset(shapeFunctionGradientValuesXInvertedDevice,
-                     0,
-                     cellsBlockSize * numNodesPerElement * numQuadPoints *
-                       sizeof(NumberType));
+          CUDACHECK(
+            cudaMalloc((void **)&shapeFunctionGradientValuesXInvertedDevice,
+                       cellsBlockSize * numNodesPerElement * numQuadPoints *
+                         sizeof(NumberType)));
+          CUDACHECK(cudaMemset(shapeFunctionGradientValuesXInvertedDevice,
+                               0,
+                               cellsBlockSize * numNodesPerElement *
+                                 numQuadPoints * sizeof(NumberType)));
 
-          cudaMalloc((void **)&shapeFunctionGradientValuesYInvertedDevice,
-                     cellsBlockSize * numNodesPerElement * numQuadPoints *
-                       sizeof(NumberType));
-          cudaMemset(shapeFunctionGradientValuesYInvertedDevice,
-                     0,
-                     cellsBlockSize * numNodesPerElement * numQuadPoints *
-                       sizeof(NumberType));
+          CUDACHECK(
+            cudaMalloc((void **)&shapeFunctionGradientValuesYInvertedDevice,
+                       cellsBlockSize * numNodesPerElement * numQuadPoints *
+                         sizeof(NumberType)));
+          CUDACHECK(cudaMemset(shapeFunctionGradientValuesYInvertedDevice,
+                               0,
+                               cellsBlockSize * numNodesPerElement *
+                                 numQuadPoints * sizeof(NumberType)));
 
-          cudaMalloc((void **)&shapeFunctionGradientValuesZInvertedDevice,
-                     cellsBlockSize * numNodesPerElement * numQuadPoints *
-                       sizeof(NumberType));
-          cudaMemset(shapeFunctionGradientValuesZInvertedDevice,
-                     0,
-                     cellsBlockSize * numNodesPerElement * numQuadPoints *
-                       sizeof(NumberType));
+          CUDACHECK(
+            cudaMalloc((void **)&shapeFunctionGradientValuesZInvertedDevice,
+                       cellsBlockSize * numNodesPerElement * numQuadPoints *
+                         sizeof(NumberType)));
+          CUDACHECK(cudaMemset(shapeFunctionGradientValuesZInvertedDevice,
+                               0,
+                               cellsBlockSize * numNodesPerElement *
+                                 numQuadPoints * sizeof(NumberType)));
         }
 
       cudaUtils::Vector<NumberType, dftfe::MemorySpace::Host> partialOccupVec(
@@ -1222,13 +1227,13 @@ namespace dftfe
                  isEvaluateGradRho,
                  interpoolcomm);
 
-      cudaFree(shapeFunctionValuesInvertedDevice);
+      CUDACHECK(cudaFree(shapeFunctionValuesInvertedDevice));
 
       if (isEvaluateGradRho)
         {
-          cudaFree(shapeFunctionGradientValuesXInvertedDevice);
-          cudaFree(shapeFunctionGradientValuesYInvertedDevice);
-          cudaFree(shapeFunctionGradientValuesZInvertedDevice);
+          CUDACHECK(cudaFree(shapeFunctionGradientValuesXInvertedDevice));
+          CUDACHECK(cudaFree(shapeFunctionGradientValuesYInvertedDevice));
+          CUDACHECK(cudaFree(shapeFunctionGradientValuesZInvertedDevice));
         }
 
       cudaDeviceSynchronize();

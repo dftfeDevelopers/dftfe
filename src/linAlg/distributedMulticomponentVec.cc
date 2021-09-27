@@ -353,11 +353,13 @@ namespace dftfe
              (std::is_same<NumberType, cuDoubleComplex>::value ||
               std::is_same<NumberType, cuFloatComplex>::value))
       {
-        cudaMalloc((void **)&d_vecData,
-                   (d_locallyOwnedSize + d_ghostSize) * sizeof(NumberType));
-        cudaMemset(d_vecData,
-                   0,
-                   (d_locallyOwnedSize + d_ghostSize) * sizeof(NumberType));
+        CUDACHECK(
+          cudaMalloc((void **)&d_vecData,
+                     (d_locallyOwnedSize + d_ghostSize) * sizeof(NumberType)));
+        CUDACHECK(
+          cudaMemset(d_vecData,
+                     0,
+                     (d_locallyOwnedSize + d_ghostSize) * sizeof(NumberType)));
 
         if (std::is_same<NumberType, cuDoubleComplex>::value)
           {
@@ -465,11 +467,13 @@ namespace dftfe
              (std::is_same<NumberType, cuDoubleComplex>::value ||
               std::is_same<NumberType, cuFloatComplex>::value))
       {
-        cudaMalloc((void **)&d_vecData,
-                   (d_locallyOwnedSize + d_ghostSize) * sizeof(NumberType));
-        cudaMemset(d_vecData,
-                   0,
-                   (d_locallyOwnedSize + d_ghostSize) * sizeof(NumberType));
+        CUDACHECK(
+          cudaMalloc((void **)&d_vecData,
+                     (d_locallyOwnedSize + d_ghostSize) * sizeof(NumberType)));
+        CUDACHECK(
+          cudaMemset(d_vecData,
+                     0,
+                     (d_locallyOwnedSize + d_ghostSize) * sizeof(NumberType)));
 
         if (std::is_same<NumberType, cuDoubleComplex>::value)
           {
@@ -542,7 +546,9 @@ namespace dftfe
     else if (std::is_same<MemorySpace, dftfe::MemorySpace::GPU>::value)
       {
 #if defined(DFTFE_WITH_GPU)
-        cudaMemset(this->begin(), 0, d_locallyOwnedSize * sizeof(NumberType));
+        CUDACHECK(cudaMemset(this->begin(),
+                             0,
+                             d_locallyOwnedSize * sizeof(NumberType)));
 #endif
       }
     this->zeroOutGhosts();
@@ -1234,9 +1240,9 @@ namespace dftfe
              (std::is_same<NumberType, cuDoubleComplex>::value ||
               std::is_same<NumberType, cuFloatComplex>::value))
       {
-        cudaMemset(this->begin() + d_locallyOwnedSize,
-                   0,
-                   d_ghostSize * sizeof(NumberType));
+        CUDACHECK(cudaMemset(this->begin() + d_locallyOwnedSize,
+                             0,
+                             d_ghostSize * sizeof(NumberType)));
 
         if (std::is_same<NumberType, cuDoubleComplex>::value)
           {
@@ -1399,7 +1405,7 @@ namespace dftfe
         else if (std::is_same<MemorySpace, dftfe::MemorySpace::GPU>::value)
           {
 #if defined(DFTFE_WITH_GPU)
-            cudaFree(&d_vecData);
+            CUDACHECK(cudaFree(d_vecData));
 #endif
           }
       }

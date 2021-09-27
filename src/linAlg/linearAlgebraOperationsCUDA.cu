@@ -748,26 +748,26 @@ namespace dftfe
 
       distributedCPUVec<dataTypes::number> &vvec = v[0];
 
-      cudaMemcpy2D(Xb.begin(),
-                   blockSize * sizeof(double),
+      CUDACHECK(cudaMemcpy2D(Xb.begin(),
+                   blockSize * sizeof(dataTypes::number),
                    vvec.begin(),
-                   1 * sizeof(double),
-                   1 * sizeof(double),
+                   1 * sizeof(dataTypes::number),
+                   1 * sizeof(dataTypes::number),
                    local_size,
-                   cudaMemcpyHostToDevice);
+                   cudaMemcpyHostToDevice));
 
       Yb.setZero();
       operatorMatrix.HX(
         Xb, projectorKetTimesVector, local_size, blockSize, false, 1.0, Yb);
 
       distributedCPUVec<dataTypes::number> &fvec = f[0];
-      cudaMemcpy2D(fvec.begin(),
-                   1 * sizeof(double),
+      CUDACHECK(cudaMemcpy2D(fvec.begin(),
+                   1 * sizeof(dataTypes::number),
                    Yb.begin(),
-                   blockSize * sizeof(double),
-                   1 * sizeof(double),
+                   blockSize * sizeof(dataTypes::number),
+                   1 * sizeof(dataTypes::number),
                    local_size,
-                   cudaMemcpyDeviceToHost);
+                   cudaMemcpyDeviceToHost));
 
       operatorMatrix.getOverloadedConstraintMatrixHost()->set_zero(v[0], 1);
       fVector = f[0];
@@ -791,26 +791,26 @@ namespace dftfe
           // operatorMatrix.HX(v,f);
 
           distributedCPUVec<dataTypes::number> &vvec = v[0];
-          cudaMemcpy2D(Xb.begin(),
+          CUDACHECK(cudaMemcpy2D(Xb.begin(),
                        blockSize * sizeof(dataTypes::number),
                        vvec.begin(),
                        1 * sizeof(dataTypes::number),
                        1 * sizeof(dataTypes::number),
                        local_size,
-                       cudaMemcpyHostToDevice);
+                       cudaMemcpyHostToDevice));
 
           Yb.setZero();
           operatorMatrix.HX(
             Xb, projectorKetTimesVector, local_size, blockSize, false, 1.0, Yb);
 
           distributedCPUVec<dataTypes::number> &fvec = f[0];
-          cudaMemcpy2D(fvec.begin(),
+          CUDACHECK(cudaMemcpy2D(fvec.begin(),
                        1 * sizeof(dataTypes::number),
                        Yb.begin(),
                        blockSize * sizeof(dataTypes::number),
                        1 * sizeof(dataTypes::number),
                        local_size,
-                       cudaMemcpyDeviceToHost);
+                       cudaMemcpyDeviceToHost));
 
           operatorMatrix.getOverloadedConstraintMatrixHost()->set_zero(v[0], 1);
           fVector = f[0];
@@ -2545,7 +2545,7 @@ namespace dftfe
 
         } // block loop over dofs
 
-      cudaFreeHost(rotationMatBlockHost);
+      CUDACHECK(cudaFreeHost(rotationMatBlockHost));
 
       if (std::is_same<dataTypes::number, std::complex<double>>::value)
         {
@@ -3342,8 +3342,8 @@ namespace dftfe
           blockCount++;
         } // block loop over vectors
 
-      cudaFreeHost(rotationMatBlockHostSP);
-      cudaFreeHost(diagValuesHost);
+      CUDACHECK(cudaFreeHost(rotationMatBlockHostSP));
+      CUDACHECK(cudaFreeHost(diagValuesHost));
 
       if (std::is_same<dataTypes::number, std::complex<double>>::value)
         {
@@ -3401,8 +3401,9 @@ namespace dftfe
         N * vectorsBlockSize, dataTypes::numberThrustGPU(0.0));
 
       dataTypes::number *overlapMatrixBlockHost;
-      cudaMallocHost((void **)&overlapMatrixBlockHost,
-                     N * vectorsBlockSize * sizeof(dataTypes::number));
+      CUDACHECK(
+        cudaMallocHost((void **)&overlapMatrixBlockHost,
+                       N * vectorsBlockSize * sizeof(dataTypes::number)));
       std::memset(overlapMatrixBlockHost,
                   0,
                   vectorsBlockSize * N * sizeof(dataTypes::number));
@@ -3524,7 +3525,7 @@ namespace dftfe
             } // band parallelization
         }     // end block loop
 
-      cudaFreeHost(overlapMatrixBlockHost);
+      CUDACHECK(cudaFreeHost(overlapMatrixBlockHost));
       if (std::is_same<dataTypes::number, std::complex<double>>::value)
         {
           CUDACHECK(cudaFree(tempReal));
@@ -3903,17 +3904,18 @@ namespace dftfe
         reinterpret_cast<dataTypes::numberFP32GPU *>(
           thrust::raw_pointer_cast(&XSP[0])));
       dataTypes::number *overlapMatrixBlockHostDP;
-      cudaMallocHost((void **)&overlapMatrixBlockHostDP,
-                     vectorsBlockSize * vectorsBlockSize *
-                       sizeof(dataTypes::number));
+      CUDACHECK(cudaMallocHost((void **)&overlapMatrixBlockHostDP,
+                               vectorsBlockSize * vectorsBlockSize *
+                                 sizeof(dataTypes::number)));
       std::memset(overlapMatrixBlockHostDP,
                   0,
                   vectorsBlockSize * vectorsBlockSize *
                     sizeof(dataTypes::number));
 
       dataTypes::numberFP32 *overlapMatrixBlockHostSP;
-      cudaMallocHost((void **)&overlapMatrixBlockHostSP,
-                     N * vectorsBlockSize * sizeof(dataTypes::numberFP32));
+      CUDACHECK(
+        cudaMallocHost((void **)&overlapMatrixBlockHostSP,
+                       N * vectorsBlockSize * sizeof(dataTypes::numberFP32)));
       std::memset(overlapMatrixBlockHostSP,
                   0,
                   N * vectorsBlockSize * sizeof(dataTypes::numberFP32));
@@ -4112,8 +4114,8 @@ namespace dftfe
             } // band parallelization
         }     // end block loop
 
-      cudaFreeHost(overlapMatrixBlockHostDP);
-      cudaFreeHost(overlapMatrixBlockHostSP);
+      CUDACHECK(cudaFreeHost(overlapMatrixBlockHostDP));
+      CUDACHECK(cudaFreeHost(overlapMatrixBlockHostSP));
 
       if (std::is_same<dataTypes::number, std::complex<double>>::value)
         {
@@ -4238,17 +4240,18 @@ namespace dftfe
         reinterpret_cast<dataTypes::numberFP32GPU *>(
           thrust::raw_pointer_cast(&XSP[0])));
       dataTypes::number *overlapMatrixBlockHostDP;
-      cudaMallocHost((void **)&overlapMatrixBlockHostDP,
-                     vectorsBlockSize * vectorsBlockSize *
-                       sizeof(dataTypes::number));
+      CUDACHECK(cudaMallocHost((void **)&overlapMatrixBlockHostDP,
+                               vectorsBlockSize * vectorsBlockSize *
+                                 sizeof(dataTypes::number)));
       std::memset(overlapMatrixBlockHostDP,
                   0,
                   vectorsBlockSize * vectorsBlockSize *
                     sizeof(dataTypes::number));
 
       dataTypes::numberFP32 *overlapMatrixBlockHostSP;
-      cudaMallocHost((void **)&overlapMatrixBlockHostSP,
-                     N * vectorsBlockSize * sizeof(dataTypes::numberFP32));
+      CUDACHECK(
+        cudaMallocHost((void **)&overlapMatrixBlockHostSP,
+                       N * vectorsBlockSize * sizeof(dataTypes::numberFP32)));
       std::memset(overlapMatrixBlockHostSP,
                   0,
                   N * vectorsBlockSize * sizeof(dataTypes::numberFP32));
@@ -4562,8 +4565,8 @@ namespace dftfe
 
         } // end block loop
 
-      cudaFreeHost(overlapMatrixBlockHostDP);
-      cudaFreeHost(overlapMatrixBlockHostSP);
+      CUDACHECK(cudaFreeHost(overlapMatrixBlockHostDP));
+      CUDACHECK(cudaFreeHost(overlapMatrixBlockHostSP));
 
       if (std::is_same<dataTypes::number, std::complex<double>>::value)
         {
