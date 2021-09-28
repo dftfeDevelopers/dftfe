@@ -231,17 +231,17 @@ namespace dftfe
                 const cuDoubleComplex gradPsiX =
                   gradRhoCellsWfcContributionsX[index];
                 gradRhoCellsWfcContributionsX[index] = make_cuDoubleComplex(
-                  2.0 * (psi.x * gradPsiX.x - psi.y * gradPsiX.y), 0.0);
+                  2.0 * (psi.x * gradPsiX.x + psi.y * gradPsiX.y), 0.0);
 
                 const cuDoubleComplex gradPsiY =
                   gradRhoCellsWfcContributionsY[index];
                 gradRhoCellsWfcContributionsY[index] = make_cuDoubleComplex(
-                  2.0 * (psi.x * gradPsiY.x - psi.y * gradPsiY.y), 0.0);
+                  2.0 * (psi.x * gradPsiY.x + psi.y * gradPsiY.y), 0.0);
 
                 const cuDoubleComplex gradPsiZ =
                   gradRhoCellsWfcContributionsZ[index];
                 gradRhoCellsWfcContributionsZ[index] = make_cuDoubleComplex(
-                  2.0 * (psi.x * gradPsiZ.x - psi.y * gradPsiZ.y), 0.0);
+                  2.0 * (psi.x * gradPsiZ.x + psi.y * gradPsiZ.y), 0.0);
               }
           }
       }
