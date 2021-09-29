@@ -279,7 +279,7 @@ dftClass<FEOrder, FEOrderElectro>::locatePeriodicPinnedNodes(
 
   std::vector<dealii::types::global_dof_index> cell_dof_indices(dofs_per_cell);
   for (; cell != endc; ++cell)
-    if (cell->is_locally_owned())
+    if (cell->is_locally_owned() || cell->is_ghost())
       {
         cell->get_dof_indices(cell_dof_indices);
 
