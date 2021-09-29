@@ -44,7 +44,7 @@ withHigherQuadPSP=OFF
 # build type: "Release" or "Debug"
 build_type=Release
 testing=OFF
-minimal_compile=OFF
+minimal_compile=ON
 ###########################################################################
 #Usually, no changes are needed below this line
 #
