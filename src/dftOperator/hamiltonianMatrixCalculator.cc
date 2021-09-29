@@ -753,11 +753,11 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::computeHamiltonianMatrix(
                                 kSquareTimesHalf *
                                   d_NiNjIntegral[sizeNiNj * iElem + count]);
 
-                      d_cellHamiltonianMatrix
-                        [kpointSpinIndex][iElem]
-                        [numberDofsPerElement * iNode + jNode]
-                          .imag(elementHamiltonianMatrixImag
-                                  [totalLocallyOwnedCells * count + iElem]);
+                      //d_cellHamiltonianMatrix
+		      //[kpointSpinIndex][iElem]
+		      //[numberDofsPerElement * iNode + jNode]
+		      //  .imag(elementHamiltonianMatrixImag
+		      //          [totalLocallyOwnedCells * count + iElem]);
 
 #else
                       d_cellHamiltonianMatrix
@@ -812,10 +812,26 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::computeHamiltonianMatrix(
                 for (unsigned int jNode = 0; jNode < iNode; ++jNode)
                   d_cellHamiltonianMatrix
                     [kpointSpinIndex][iElem]
-                    [numberDofsPerElement * iNode + jNode] = std::conj(
-                      d_cellHamiltonianMatrix[kpointSpinIndex][iElem]
-                                             [numberDofsPerElement * jNode +
-                                              iNode]);
+                    [numberDofsPerElement * iNode + jNode] = d_cellHamiltonianMatrix[kpointSpinIndex][iElem][numberDofsPerElement * jNode + iNode];
+
+	      //std::conj(
+	      //d_cellHamiltonianMatrix[kpointSpinIndex][iElem]
+	      //                       [numberDofsPerElement * jNode +
+	      //                        iNode]);
+
+	      count = 0;
+	      for (unsigned int iNode = 0; iNode < numberDofsPerElement;
+                   ++iNode)
+		{
+		  for (unsigned int jNode = 0; jNode < numberDofsPerElement; ++jNode)
+		    {
+		      d_cellHamiltonianMatrix
+			[kpointSpinIndex][iElem]
+			[numberDofsPerElement * iNode + jNode].imag(elementHamiltonianMatrixImag[totalLocallyOwnedCells * count + iElem]);
+		      count += 1;
+		       
+		    }
+		}
 #else
               for (unsigned int iNode = 0; iNode < numberDofsPerElement;
                    ++iNode)
