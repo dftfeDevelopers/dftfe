@@ -347,7 +347,6 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::
                     }
                 }
 #ifdef USE_COMPLEX
-	      unsigned int numBlocks = (FEOrder + 1);
 	      unsigned int sizeNiNjNoSym = numberDofsPerElement * numberDofsPerElement;
               unsigned int numberEntriesEachBlockNoSym = sizeNiNjNoSym / numBlocks;
               count                  = 0;
@@ -368,7 +367,7 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::
                                         indexCount] = jNode;
                       count += 1;
                       indexCount += 1;
-                      if (count % numberEntriesEachBlockNoSym== 0)
+                      if (count % numberEntriesEachBlockNoSym == 0)
                         {
                           blockCount += 1;
                           indexCount = 0;
