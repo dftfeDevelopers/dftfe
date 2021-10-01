@@ -61,8 +61,8 @@ Reading initial guess for electron-density.....
 Pseudopotential initalization....
 
 Starting SCF iterations....
-SCF iterations converged to the specified tolerance after: 26 iterations.
+SCF iterations converged to the specified tolerance after: 23 iterations.
 
 Energy computations (Hartree) 
 -------------------
-             Total energy:         -1661.143750
+             Total energy:         -1666.902182
