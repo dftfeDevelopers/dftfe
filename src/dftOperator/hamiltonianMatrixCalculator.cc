@@ -642,7 +642,7 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::computeHamiltonianMatrix(
                         shapeGradXRefINode * shapeJ;
                       gradNiNj_currentBlock[3 * numberEntriesEachBlockNoSym *
                                               q_point +
-                                            numberEntriesEachBlock + tempValue +
+                                            numberEntriesEachBlockNoSym + tempValue +
                                             jNode] =
                         shapeGradYRefINode * shapeJ;
                       gradNiNj_currentBlock[3 * numberEntriesEachBlockNoSym *
