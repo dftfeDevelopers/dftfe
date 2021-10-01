@@ -16,53 +16,8 @@
 //
 // @author Sambit Das
 //
-namespace internalforce
-{
-  // for real valued eigenvectors
-  Tensor<1, 3, VectorizedArray<double>>
-  computeGradRhoContribution(
-    const VectorizedArray<double> &              psi,
-    const Tensor<1, 3, VectorizedArray<double>> &gradPsi)
-  {
-    return make_vectorized_array(2.0) * (gradPsi * psi);
-  }
 
-  // for complex valued eigenvectors
-  Tensor<1, 3, VectorizedArray<double>>
-  computeGradRhoContribution(
-    const Tensor<1, 2, VectorizedArray<double>> &              psi,
-    const Tensor<1, 2, Tensor<1, 3, VectorizedArray<double>>> &gradPsi)
-  {
-    return make_vectorized_array(2.0) *
-           (gradPsi[0] * psi[0] + gradPsi[1] * psi[1]);
-  }
-
-  // for real valued eigenvectors
-  Tensor<2, 3, VectorizedArray<double>>
-  computeHessianRhoContribution(
-    const VectorizedArray<double>                psi,
-    const Tensor<1, 3, VectorizedArray<double>> &gradPsi,
-    const Tensor<2, 3, VectorizedArray<double>> &hessianPsi)
-  {
-    return make_vectorized_array(2.0) *
-           (hessianPsi * psi + outer_product(gradPsi, gradPsi));
-  }
-
-  // for complex valued eigenvectors
-  Tensor<2, 3, VectorizedArray<double>>
-  computeHessianRhoContribution(
-    const Tensor<1, 2, VectorizedArray<double>> &              psi,
-    const Tensor<1, 2, Tensor<1, 3, VectorizedArray<double>>> &gradPsi,
-    const Tensor<1, 2, Tensor<2, 3, VectorizedArray<double>>> &hessianPsi)
-  {
-    return make_vectorized_array(2.0) *
-           (hessianPsi[0] * psi[0] + hessianPsi[1] * psi[1] +
-            outer_product(gradPsi[0], gradPsi[0]) +
-            outer_product(gradPsi[1], gradPsi[1]));
-  }
-
-} // namespace internalforce
-
+//
 // compute configurational force contribution from all terms except the nuclear
 // self energy
 template <unsigned int FEOrder, unsigned int FEOrderElectro>
