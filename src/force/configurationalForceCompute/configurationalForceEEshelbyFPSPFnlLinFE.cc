@@ -250,7 +250,7 @@ forceClass<FEOrder, FEOrderElectro>::
   const unsigned int numPhysicalCells = matrixFreeData.n_physical_cells();
 
 
-#if defined(DFTFE_WITH_GPU)
+#if defined(DFTFE_WITH_GPU) && !defined(USE_COMPLEX)
   AssertThrow(
     numMacroCells == numPhysicalCells,
     ExcMessage(
@@ -519,9 +519,9 @@ forceClass<FEOrder, FEOrderElectro>::
           dealii::AlignedVector<Tensor<1, 3, VectorizedArray<double>>>(
             numPseudo, zeroTensor3));
 
+#if defined(DFTFE_WITH_GPU) && !defined(USE_COMPLEX)
       if (dftParameters::useGPU)
         {
-#if defined(DFTFE_WITH_GPU) && !defined(USE_COMPLEX)
           MPI_Barrier(MPI_COMM_WORLD);
           double gpu_time = MPI_Wtime();
 
@@ -552,9 +552,9 @@ forceClass<FEOrder, FEOrderElectro>::
           if (this_process == 0 && dftParameters::verbosity >= 4)
             std::cout << "Time for gpuPortedForceKernelsAllH: " << gpu_time
                       << std::endl;
-#endif
         }
       else
+#endif
         {
           for (unsigned int ivec = 0; ivec < numEigenVectors; ivec += blockSize)
             {
@@ -654,12 +654,12 @@ forceClass<FEOrder, FEOrderElectro>::
                       for (unsigned int i = 0; i < currentBlockSize; ++i)
                         eigenVectors[kPoint][i].update_ghost_values();
 #else
-                      vectorTools::copyFlattenedDealiiVecToSingleCompVec(
-                        eigenVectorsFlattenedBlock[kPoint],
-                        currentBlockSize,
-                        std::make_pair(0, currentBlockSize),
-                        eigenVectors[kPoint],
-                        true);
+                    vectorTools::copyFlattenedDealiiVecToSingleCompVec(
+                      eigenVectorsFlattenedBlock[kPoint],
+                      currentBlockSize,
+                      std::make_pair(0, currentBlockSize),
+                      eigenVectors[kPoint],
+                      true);
 
 #endif
                     }
@@ -712,13 +712,12 @@ forceClass<FEOrder, FEOrderElectro>::
                                        numKPoints,
                                      zeroTensor2);
 #else
-                      dealii::AlignedVector<VectorizedArray<double>> psiQuads(
-                        numQuadPoints * currentBlockSize,
-                        make_vectorized_array(0.0));
-                      dealii::AlignedVector<
-                        Tensor<1, 3, VectorizedArray<double>>>
-                        gradPsiQuads(numQuadPoints * currentBlockSize,
-                                     zeroTensor3);
+                    dealii::AlignedVector<VectorizedArray<double>> psiQuads(
+                      numQuadPoints * currentBlockSize,
+                      make_vectorized_array(0.0));
+                    dealii::AlignedVector<Tensor<1, 3, VectorizedArray<double>>>
+                                                                   gradPsiQuads(numQuadPoints * currentBlockSize,
+                                   zeroTensor3);
 #endif
 
                       for (unsigned int ikPoint = 0; ikPoint < numKPoints;
@@ -749,11 +748,9 @@ forceClass<FEOrder, FEOrderElectro>::
                         Tensor<1, 2, Tensor<1, 3, VectorizedArray<double>>>>
                         gradPsiQuadsNLP;
 #else
-                      dealii::AlignedVector<VectorizedArray<double>>
-                        psiQuadsNLP;
-                      dealii::AlignedVector<
-                        Tensor<1, 3, VectorizedArray<double>>>
-                        gradPsiQuadsNLP;
+                    dealii::AlignedVector<VectorizedArray<double>> psiQuadsNLP;
+                    dealii::AlignedVector<Tensor<1, 3, VectorizedArray<double>>>
+                      gradPsiQuadsNLP;
 #endif
 
                       if (isPseudopotential)
@@ -767,13 +764,11 @@ forceClass<FEOrder, FEOrderElectro>::
                                                    numKPoints,
                                                  zeroTensor2);
 #else
-                          psiQuadsNLP.resize(numQuadPointsNLP *
-                                               currentBlockSize,
-                                             make_vectorized_array(0.0));
-                          gradPsiQuadsNLP.resize(numQuadPointsNLP *
-                                                   currentBlockSize *
-                                                   numKPoints,
-                                                 zeroTensor3);
+                        psiQuadsNLP.resize(numQuadPointsNLP * currentBlockSize,
+                                           make_vectorized_array(0.0));
+                        gradPsiQuadsNLP.resize(numQuadPointsNLP *
+                                                 currentBlockSize * numKPoints,
+                                               zeroTensor3);
 #endif
 
                           for (unsigned int ikPoint = 0; ikPoint < numKPoints;
@@ -908,13 +903,12 @@ forceClass<FEOrder, FEOrderElectro>::
                                 dftPtr->fermiEnergy,
                                 dftParameters::TVal);
 #else
-                          E +=
-                            spinPolarizedFactorVect *
-                            eshelbyTensor::getELocWfcEshelbyTensorNonPeriodic(
-                              psiQuads.begin() + q * currentBlockSize,
-                              gradPsiQuads.begin() + q * currentBlockSize,
-                              blockedEigenValues[0],
-                              blockedPartialOccupancies[0]);
+                        E += spinPolarizedFactorVect *
+                             eshelbyTensor::getELocWfcEshelbyTensorNonPeriodic(
+                               psiQuads.begin() + q * currentBlockSize,
+                               gradPsiQuads.begin() + q * currentBlockSize,
+                               blockedEigenValues[0],
+                               blockedPartialOccupancies[0]);
 #endif
                           forceEval.submit_gradient(E, q);
 #ifdef USE_COMPLEX

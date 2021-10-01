@@ -749,12 +749,12 @@ namespace dftfe
       distributedCPUVec<dataTypes::number> &vvec = v[0];
 
       CUDACHECK(cudaMemcpy2D(Xb.begin(),
-                   blockSize * sizeof(dataTypes::number),
-                   vvec.begin(),
-                   1 * sizeof(dataTypes::number),
-                   1 * sizeof(dataTypes::number),
-                   local_size,
-                   cudaMemcpyHostToDevice));
+                             blockSize * sizeof(dataTypes::number),
+                             vvec.begin(),
+                             1 * sizeof(dataTypes::number),
+                             1 * sizeof(dataTypes::number),
+                             local_size,
+                             cudaMemcpyHostToDevice));
 
       Yb.setZero();
       operatorMatrix.HX(
@@ -762,12 +762,12 @@ namespace dftfe
 
       distributedCPUVec<dataTypes::number> &fvec = f[0];
       CUDACHECK(cudaMemcpy2D(fvec.begin(),
-                   1 * sizeof(dataTypes::number),
-                   Yb.begin(),
-                   blockSize * sizeof(dataTypes::number),
-                   1 * sizeof(dataTypes::number),
-                   local_size,
-                   cudaMemcpyDeviceToHost));
+                             1 * sizeof(dataTypes::number),
+                             Yb.begin(),
+                             blockSize * sizeof(dataTypes::number),
+                             1 * sizeof(dataTypes::number),
+                             local_size,
+                             cudaMemcpyDeviceToHost));
 
       operatorMatrix.getOverloadedConstraintMatrixHost()->set_zero(v[0], 1);
       fVector = f[0];
@@ -792,12 +792,12 @@ namespace dftfe
 
           distributedCPUVec<dataTypes::number> &vvec = v[0];
           CUDACHECK(cudaMemcpy2D(Xb.begin(),
-                       blockSize * sizeof(dataTypes::number),
-                       vvec.begin(),
-                       1 * sizeof(dataTypes::number),
-                       1 * sizeof(dataTypes::number),
-                       local_size,
-                       cudaMemcpyHostToDevice));
+                                 blockSize * sizeof(dataTypes::number),
+                                 vvec.begin(),
+                                 1 * sizeof(dataTypes::number),
+                                 1 * sizeof(dataTypes::number),
+                                 local_size,
+                                 cudaMemcpyHostToDevice));
 
           Yb.setZero();
           operatorMatrix.HX(
@@ -805,12 +805,12 @@ namespace dftfe
 
           distributedCPUVec<dataTypes::number> &fvec = f[0];
           CUDACHECK(cudaMemcpy2D(fvec.begin(),
-                       1 * sizeof(dataTypes::number),
-                       Yb.begin(),
-                       blockSize * sizeof(dataTypes::number),
-                       1 * sizeof(dataTypes::number),
-                       local_size,
-                       cudaMemcpyDeviceToHost));
+                                 1 * sizeof(dataTypes::number),
+                                 Yb.begin(),
+                                 blockSize * sizeof(dataTypes::number),
+                                 1 * sizeof(dataTypes::number),
+                                 local_size,
+                                 cudaMemcpyDeviceToHost));
 
           operatorMatrix.getOverloadedConstraintMatrixHost()->set_zero(v[0], 1);
           fVector = f[0];

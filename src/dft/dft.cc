@@ -3522,7 +3522,8 @@ namespace dftfe
 #ifdef DFTFE_WITH_GPU
     if (dftParameters::useGPU &&
         (dftParameters::writeWfcSolutionFields ||
-         dftParameters::writeLdosFile || dftParameters::writePdosFile))
+         dftParameters::writeLdosFile || dftParameters::writePdosFile ||
+         std::is_same<dataTypes::number, std::complex<double>>::value))
       for (unsigned int kPoint = 0;
            kPoint < (1 + dftParameters::spinPolarized) * d_kPointWeights.size();
            ++kPoint)
