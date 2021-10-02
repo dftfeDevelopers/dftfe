@@ -411,7 +411,20 @@ kohnShamDFTOperatorCUDAClass<FEOrder, FEOrderElectro>::computeHamiltonianMatrix(
   const unsigned int kPointIndex,
   const unsigned int spinIndex)
 {
-  cudaDeviceSynchronize();
+  dealii::TimerOutput computingTimerStandard(
+      this->getMPICommunicator(),
+      pcout,
+      dftParameters::reproducible_output || dftParameters::verbosity < 2 ?
+        dealii::TimerOutput::never :
+        dealii::TimerOutput::every_call,
+      dealii::TimerOutput::wall_times);
+
+  if (dftParameters::gpuFineGrainedTimings)
+  {
+        cudaDeviceSynchronize();
+        computingTimerStandard.enter_subsection("Hamiltonian construction on GPU");
+  }  
+
   const unsigned int kpointSpinIndex =
     (1 + dftParameters::spinPolarized) * kPointIndex + spinIndex;
 
@@ -513,5 +526,9 @@ kohnShamDFTOperatorCUDAClass<FEOrder, FEOrderElectro>::computeHamiltonianMatrix(
       kSquareTimesHalf,
       dftParameters::isPseudopotential || dftParameters::smearedNuclearCharges);
 
-  cudaDeviceSynchronize();
+      if (dftParameters::gpuFineGrainedTimings)
+      {
+        cudaDeviceSynchronize();
+        computingTimerStandard.leave_subsection("Hamiltonian construction on GPU");
+      }
 }
