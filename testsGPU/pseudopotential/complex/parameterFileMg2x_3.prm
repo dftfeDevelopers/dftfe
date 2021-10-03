@@ -5,6 +5,8 @@ set H REFINED ELECTROSTATICS = false
 subsection GPU
   set USE GPU=true
   set AUTO GPU BLOCK SIZES=false
+  set USE GPUDIRECT MPI ALL REDUCE = true
+  set USE ELPA GPU KERNEL=true
 end
 
 subsection Boundary conditions
@@ -45,7 +47,6 @@ subsection Geometry
   set DOMAIN VECTORS FILE = domainVectorsMg2x.inp
   subsection Optimization
     set ION FORCE                 = true
-    set CELL STRESS               = true
   end
 end
 
