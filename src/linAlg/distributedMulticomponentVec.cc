@@ -1019,7 +1019,7 @@ namespace dftfe
             ((dealii::LinearAlgebra::distributed::
                 Vector<float, dealii::MemorySpace::CUDA> *)
                d_dealiiVecTempDataReal)
-              ->compress_finish(dealii::VectorOperation::add);
+              ->compress(dealii::VectorOperation::add);
 
             ((dealii::LinearAlgebra::distributed::
                 Vector<float, dealii::MemorySpace::CUDA> *)
