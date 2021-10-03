@@ -25,7 +25,6 @@ srun ./dftfe parameterFileN2_1.prm > outputN2_1
 srun ./dftfe parameterFileN2_2.prm > outputN2_2
 srun ./dftfe parameterFileN2_3.prm > outputN2_3
 srun ./dftfe parameterFileN2_4.prm > outputN2_4
-srun ./dftfe parameterFileN2CPU.prm > outputN2_CPU
 srun ./dftfe parameterFileMg2x_8.prm > outputMg2x_8
 srun ./dftfe parameterFileMg2x_9.prm > outputMg2x_9
 srun ./dftfe parameterFileMg2x_10.prm > outputMg2x_10
