@@ -22,3 +22,5 @@ cd $SLURM_SUBMIT_DIR
 export OMP_NUM_THREADS=1
 
 srun ./dftfe parameterFileMg2x_1.prm > outputMg2x_1
+
+srun ./dftfe parameterFileMg2x_2.prm > outputMg2x_2
