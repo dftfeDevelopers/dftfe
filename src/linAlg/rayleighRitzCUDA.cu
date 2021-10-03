@@ -182,15 +182,8 @@ namespace dftfe
           computing_timer.leave_subsection("ScaLAPACK eigen decomp, RR step");
         }
 
-      cudaDeviceSynchronize();
-      computing_timer.enter_subsection(
-        "Broadcast eigvec and eigenvalues across band groups, RR step");
       linearAlgebraOperations::internal::broadcastAcrossInterCommScaLAPACKMat(
         processGrid, projHamPar, interBandGroupComm, 0);
-
-      cudaDeviceSynchronize();
-      computing_timer.leave_subsection(
-        "Broadcast eigvec and eigenvalues across band groups, RR step");
 
       //
       // rotate the basis in the subspace X = X*Q, implemented as
@@ -576,9 +569,6 @@ namespace dftfe
             computing_timer.leave_subsection("ScaLAPACK eigen decomp, RR step");
         }
 
-      if (dftParameters::gpuFineGrainedTimings)
-        computing_timer.enter_subsection(
-          "Broadcast eigvec and eigenvalues across band groups, RR step");
       linearAlgebraOperations::internal::broadcastAcrossInterCommScaLAPACKMat(
         processGrid, projHamPar, interBandGroupComm, 0);
 
@@ -589,9 +579,6 @@ namespace dftfe
          0,
          interBandGroupComm);
        */
-      if (dftParameters::gpuFineGrainedTimings)
-        computing_timer.leave_subsection(
-          "Broadcast eigvec and eigenvalues across band groups, RR step");
       //
       // rotate the basis in the subspace
       // X^{T}={QConjPrime}^{C}*LConj^{-1}*X^{T}, stored in the column major
@@ -1064,9 +1051,6 @@ namespace dftfe
             computing_timer.leave_subsection("ScaLAPACK eigen decomp, RR step");
         }
 
-      if (dftParameters::gpuFineGrainedTimings)
-        computing_timer.enter_subsection(
-          "Broadcast eigvec and eigenvalues across band groups, RR step");
       linearAlgebraOperations::internal::broadcastAcrossInterCommScaLAPACKMat(
         processGrid, projHamPar, interBandGroupComm, 0);
 
@@ -1077,9 +1061,6 @@ namespace dftfe
          0,
          interBandGroupComm);
        */
-      if (dftParameters::gpuFineGrainedTimings)
-        computing_timer.leave_subsection(
-          "Broadcast eigvec and eigenvalues across band groups, RR step");
 
       //
       // rotate the basis in the subspace

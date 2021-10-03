@@ -1,7 +1,7 @@
 #!/bin/bash
 # Begin LSF Directives
 #BSUB -P MAT239
-#BSUB -W 0:30
+#BSUB -W 0:10
 #BSUB -nnodes 1
 #BSUB -alloc_flags gpumps
 #BSUB -J rundftfe
