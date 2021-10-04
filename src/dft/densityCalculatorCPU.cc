@@ -664,8 +664,9 @@ namespace dftfe
                 for (int icell = 0; icell < totalLocallyOwnedCells; icell++)
                   for (unsigned int iquad = 0; iquad < numQuadPoints; ++iquad)
                     {
-                      rhoValuesSpinPolarizedFlattened[icell * numQuadPoints * 2 + iquad * 2 +
-                                         spinIndex] +=
+                      rhoValuesSpinPolarizedFlattened[icell * numQuadPoints *
+                                                        2 +
+                                                      iquad * 2 + spinIndex] +=
                         rhoContribution[icell * numQuadPoints + iquad];
                     }
 
@@ -673,14 +674,17 @@ namespace dftfe
                   for (int icell = 0; icell < totalLocallyOwnedCells; icell++)
                     for (unsigned int iquad = 0; iquad < numQuadPoints; ++iquad)
                       {
-                        gradRhoValuesSpinPolarizedFlattened[icell * numQuadPoints * 6 +
-                                               iquad * 6 + spinIndex * 3] +=
+                        gradRhoValuesSpinPolarizedFlattened
+                          [icell * numQuadPoints * 6 + iquad * 6 +
+                           spinIndex * 3] +=
                           gradRhoXContribution[icell * numQuadPoints + iquad];
-                        gradRhoValuesSpinPolarizedFlattened[icell * numQuadPoints * 6 +
-                                               iquad * 6 + spinIndex * 3 + 1] +=
+                        gradRhoValuesSpinPolarizedFlattened
+                          [icell * numQuadPoints * 6 + iquad * 6 +
+                           spinIndex * 3 + 1] +=
                           gradRhoYContribution[icell * numQuadPoints + iquad];
-                        gradRhoValuesSpinPolarizedFlattened[icell * numQuadPoints * 6 +
-                                               iquad * 6 + spinIndex * 3 + 2] +=
+                        gradRhoValuesSpinPolarizedFlattened
+                          [icell * numQuadPoints * 6 + iquad * 6 +
+                           spinIndex * 3 + 2] +=
                           gradRhoZContribution[icell * numQuadPoints + iquad];
                       }
               }
