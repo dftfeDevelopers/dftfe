@@ -60,5 +60,3 @@ Absolute value of cell stress (Hartree/Bohr^3)
 0.000000  0.034000  0.000000
 0.000000  0.000000  0.034611
 ------------------------------------------------------------------------
-[1633116956.940301] [gl3200:165718:0]          mpool.c:43   UCX  WARN  object 0x1152440 was not returned to mpool ucp_requests
-[1633116956.942970] [gl3200:165726:0]          mpool.c:43   UCX  WARN  object 0x22df7c0 was not returned to mpool ucp_requests
