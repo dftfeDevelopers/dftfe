@@ -26,3 +26,5 @@ srun ./dftfe parameterFileMg2x_1.prm > outputMg2x_1
 srun ./dftfe parameterFileMg2x_2.prm > outputMg2x_2
 
 srun ./dftfe parameterFileMg2x_3.prm > outputMg2x_3
+
+srun ./dftfe parameterFileMg2x_4.prm > outputMg2x_4
