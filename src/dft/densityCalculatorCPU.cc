@@ -29,50 +29,6 @@ namespace dftfe
 {
   namespace
   {
-    void
-    sumRhoData(
-      const dealii::DoFHandler<3> &                  dofHandler,
-      std::map<dealii::CellId, std::vector<double>> *rhoValues,
-      std::map<dealii::CellId, std::vector<double>> *gradRhoValues,
-      std::map<dealii::CellId, std::vector<double>> *rhoValuesSpinPolarized,
-      std::map<dealii::CellId, std::vector<double>> *gradRhoValuesSpinPolarized,
-      const bool                                     isGradRhoDataPresent,
-      const MPI_Comm &                               interComm)
-    {
-      typename dealii::DoFHandler<3>::active_cell_iterator
-        cell = dofHandler.begin_active(),
-        endc = dofHandler.end();
-
-      // gather density from inter communicator
-      if (dealii::Utilities::MPI::n_mpi_processes(interComm) > 1)
-        for (; cell != endc; ++cell)
-          if (cell->is_locally_owned())
-            {
-              const dealii::CellId cellId = cell->id();
-
-              dealii::Utilities::MPI::sum((*rhoValues)[cellId],
-                                          interComm,
-                                          (*rhoValues)[cellId]);
-              if (isGradRhoDataPresent)
-                dealii::Utilities::MPI::sum((*gradRhoValues)[cellId],
-                                            interComm,
-                                            (*gradRhoValues)[cellId]);
-
-              if (dftParameters::spinPolarized == 1)
-                {
-                  dealii::Utilities::MPI::sum(
-                    (*rhoValuesSpinPolarized)[cellId],
-                    interComm,
-                    (*rhoValuesSpinPolarized)[cellId]);
-                  if (isGradRhoDataPresent)
-                    dealii::Utilities::MPI::sum(
-                      (*gradRhoValuesSpinPolarized)[cellId],
-                      interComm,
-                      (*gradRhoValuesSpinPolarized)[cellId]);
-                }
-            }
-    }
-
     double
     realPart(const double x)
     {
@@ -213,6 +169,18 @@ namespace dftfe
                           0.0);
             }
         }
+
+    std::vector<double> rhoValuesFlattened(totalLocallyOwnedCells *
+                                             numQuadPoints,
+                                           0.0);
+    std::vector<double> gradRhoValuesFlattened(totalLocallyOwnedCells *
+                                                 numQuadPoints * 3,
+                                               0.0);
+    std::vector<double> rhoValuesSpinPolarizedFlattened(totalLocallyOwnedCells *
+                                                          numQuadPoints * 2,
+                                                        0.0);
+    std::vector<double> gradRhoValuesSpinPolarizedFlattened(
+      totalLocallyOwnedCells * numQuadPoints * 6, 0.0);
 
 
     for (unsigned int spinIndex = 0;
@@ -670,83 +638,187 @@ namespace dftfe
                     }
                 }
 
-            unsigned int iElem = 0;
-            cell               = dofHandler.begin_active();
-            endc               = dofHandler.end();
-            for (; cell != endc; ++cell)
-              if (cell->is_locally_owned())
+            for (int icell = 0; icell < totalLocallyOwnedCells; icell++)
+              for (unsigned int iquad = 0; iquad < numQuadPoints; ++iquad)
                 {
-                  const dealii::CellId cellid = cell->id();
-
-                  std::vector<double>  dummy(1);
-                  std::vector<double> &tempRhoQuads = (*rhoValues)[cellid];
-                  std::vector<double> &tempGradRhoQuads =
-                    isEvaluateGradRho ? (*gradRhoValues)[cellid] : dummy;
-
-                  std::vector<double> &tempRhoQuadsSP =
-                    (dftParameters::spinPolarized == 1) ?
-                      (*rhoValuesSpinPolarized)[cellid] :
-                      dummy;
-                  std::vector<double> &tempGradRhoQuadsSP =
-                    ((dftParameters::spinPolarized == 1) && isEvaluateGradRho) ?
-                      (*gradRhoValuesSpinPolarized)[cellid] :
-                      dummy;
-
-                  for (unsigned int q = 0; q < numQuadPoints; ++q)
-                    {
-                      if (dftParameters::spinPolarized == 1)
-                        {
-                          tempRhoQuadsSP[2 * q + spinIndex] +=
-                            rhoContribution[iElem * numQuadPoints + q];
-
-                          if (isEvaluateGradRho)
-                            {
-                              tempGradRhoQuadsSP[6 * q + spinIndex * 3] +=
-                                gradRhoXContribution[iElem * numQuadPoints + q];
-                              tempGradRhoQuadsSP[6 * q + 1 + spinIndex * 3] +=
-                                gradRhoYContribution[iElem * numQuadPoints + q];
-                              tempGradRhoQuadsSP[6 * q + 2 + spinIndex * 3] +=
-                                gradRhoZContribution[iElem * numQuadPoints + q];
-                            }
-                        }
-
-                      tempRhoQuads[q] +=
-                        rhoContribution[iElem * numQuadPoints + q];
-
-
-                      if (isEvaluateGradRho)
-                        {
-                          tempGradRhoQuads[3 * q] +=
-                            gradRhoXContribution[iElem * numQuadPoints + q];
-                          tempGradRhoQuads[3 * q + 1] +=
-                            gradRhoYContribution[iElem * numQuadPoints + q];
-                          tempGradRhoQuads[3 * q + 2] +=
-                            gradRhoZContribution[iElem * numQuadPoints + q];
-                        }
-                    }
-                  iElem++;
+                  rhoValuesFlattened[icell * numQuadPoints + iquad] +=
+                    rhoContribution[icell * numQuadPoints + iquad];
                 }
+
+            if (isEvaluateGradRho)
+              for (int icell = 0; icell < totalLocallyOwnedCells; icell++)
+                for (unsigned int iquad = 0; iquad < numQuadPoints; ++iquad)
+                  {
+                    gradRhoValuesFlattened[icell * numQuadPoints * 3 +
+                                           3 * iquad + 0] +=
+                      gradRhoXContribution[icell * numQuadPoints + iquad];
+                    gradRhoValuesFlattened[icell * numQuadPoints * 3 +
+                                           3 * iquad + 1] +=
+                      gradRhoYContribution[icell * numQuadPoints + iquad];
+                    gradRhoValuesFlattened[icell * numQuadPoints * 3 +
+                                           3 * iquad + 2] +=
+                      gradRhoZContribution[icell * numQuadPoints + iquad];
+                  }
+            if (dftParameters::spinPolarized == 1)
+              {
+                for (int icell = 0; icell < totalLocallyOwnedCells; icell++)
+                  for (unsigned int iquad = 0; iquad < numQuadPoints; ++iquad)
+                    {
+                      rhoValuesSpinPolarizedFlattened[icell * numQuadPoints *
+                                                        2 +
+                                                      iquad * 2 + spinIndex] +=
+                        rhoContribution[icell * numQuadPoints + iquad];
+                    }
+
+                if (isEvaluateGradRho)
+                  for (int icell = 0; icell < totalLocallyOwnedCells; icell++)
+                    for (unsigned int iquad = 0; iquad < numQuadPoints; ++iquad)
+                      {
+                        gradRhoValuesSpinPolarizedFlattened
+                          [icell * numQuadPoints * 6 + iquad * 6 +
+                           spinIndex * 3] +=
+                          gradRhoXContribution[icell * numQuadPoints + iquad];
+                        gradRhoValuesSpinPolarizedFlattened
+                          [icell * numQuadPoints * 6 + iquad * 6 +
+                           spinIndex * 3 + 1] +=
+                          gradRhoYContribution[icell * numQuadPoints + iquad];
+                        gradRhoValuesSpinPolarizedFlattened
+                          [icell * numQuadPoints * 6 + iquad * 6 +
+                           spinIndex * 3 + 2] +=
+                          gradRhoZContribution[icell * numQuadPoints + iquad];
+                      }
+              }
 
           } // kpoint loop
       }     // spin index loop
 
 
     // gather density from all inter communicators
-    sumRhoData(dofHandler,
-               rhoValues,
-               gradRhoValues,
-               rhoValuesSpinPolarized,
-               gradRhoValuesSpinPolarized,
-               isEvaluateGradRho,
-               interBandGroupComm);
 
-    sumRhoData(dofHandler,
-               rhoValues,
-               gradRhoValues,
-               rhoValuesSpinPolarized,
-               gradRhoValuesSpinPolarized,
-               isEvaluateGradRho,
-               interpoolcomm);
+    dealii::Utilities::MPI::sum(rhoValuesFlattened,
+                                interpoolcomm,
+                                rhoValuesFlattened);
+
+    dealii::Utilities::MPI::sum(rhoValuesFlattened,
+                                interBandGroupComm,
+                                rhoValuesFlattened);
+
+    if (isEvaluateGradRho)
+      {
+        dealii::Utilities::MPI::sum(gradRhoValuesFlattened,
+                                    interpoolcomm,
+                                    gradRhoValuesFlattened);
+
+        dealii::Utilities::MPI::sum(gradRhoValuesFlattened,
+                                    interBandGroupComm,
+                                    gradRhoValuesFlattened);
+      }
+
+
+    if (dftParameters::spinPolarized == 1)
+      {
+        dealii::Utilities::MPI::sum(rhoValuesSpinPolarizedFlattened,
+                                    interpoolcomm,
+                                    rhoValuesSpinPolarizedFlattened);
+
+        dealii::Utilities::MPI::sum(rhoValuesSpinPolarizedFlattened,
+                                    interBandGroupComm,
+                                    rhoValuesSpinPolarizedFlattened);
+
+        if (isEvaluateGradRho)
+          {
+            dealii::Utilities::MPI::sum(gradRhoValuesSpinPolarizedFlattened,
+                                        interpoolcomm,
+                                        gradRhoValuesSpinPolarizedFlattened);
+
+            dealii::Utilities::MPI::sum(gradRhoValuesSpinPolarizedFlattened,
+                                        interBandGroupComm,
+                                        gradRhoValuesSpinPolarizedFlattened);
+          }
+      }
+
+
+    unsigned int iElem = 0;
+    cell               = dofHandler.begin_active();
+    endc               = dofHandler.end();
+    for (; cell != endc; ++cell)
+      if (cell->is_locally_owned())
+        {
+          const dealii::CellId cellid = cell->id();
+
+          std::vector<double>  dummy(1);
+          std::vector<double> &tempRhoQuads = (*rhoValues)[cellid];
+          std::vector<double> &tempGradRhoQuads =
+            isEvaluateGradRho ? (*gradRhoValues)[cellid] : dummy;
+
+          std::vector<double> &tempRhoQuadsSP =
+            (dftParameters::spinPolarized == 1) ?
+              (*rhoValuesSpinPolarized)[cellid] :
+              dummy;
+          std::vector<double> &tempGradRhoQuadsSP =
+            ((dftParameters::spinPolarized == 1) && isEvaluateGradRho) ?
+              (*gradRhoValuesSpinPolarized)[cellid] :
+              dummy;
+
+          if (dftParameters::spinPolarized == 1)
+            {
+              for (unsigned int q = 0; q < numQuadPoints; ++q)
+                {
+                  tempRhoQuadsSP[2 * q + 0] =
+                    rhoValuesSpinPolarizedFlattened[iElem * numQuadPoints * 2 +
+                                                    q * 2 + 0];
+
+                  tempRhoQuadsSP[2 * q + 1] =
+                    rhoValuesSpinPolarizedFlattened[iElem * numQuadPoints * 2 +
+                                                    q * 2 + 1];
+                }
+
+              if (isEvaluateGradRho)
+                for (unsigned int q = 0; q < numQuadPoints; ++q)
+                  {
+                    tempGradRhoQuadsSP[6 * q + 0] =
+                      gradRhoValuesSpinPolarizedFlattened[iElem *
+                                                            numQuadPoints * 6 +
+                                                          6 * q];
+                    tempGradRhoQuadsSP[6 * q + 1] =
+                      gradRhoValuesSpinPolarizedFlattened[iElem *
+                                                            numQuadPoints * 6 +
+                                                          6 * q + 1];
+                    tempGradRhoQuadsSP[6 * q + 2] =
+                      gradRhoValuesSpinPolarizedFlattened[iElem *
+                                                            numQuadPoints * 6 +
+                                                          6 * q + 2];
+                    tempGradRhoQuadsSP[6 * q + 3] =
+                      gradRhoValuesSpinPolarizedFlattened[iElem *
+                                                            numQuadPoints * 6 +
+                                                          6 * q + 3];
+                    tempGradRhoQuadsSP[6 * q + 4] =
+                      gradRhoValuesSpinPolarizedFlattened[iElem *
+                                                            numQuadPoints * 6 +
+                                                          6 * q + 4];
+                    tempGradRhoQuadsSP[6 * q + 5] =
+                      gradRhoValuesSpinPolarizedFlattened[iElem *
+                                                            numQuadPoints * 6 +
+                                                          6 * q + 5];
+                  }
+            }
+
+          for (unsigned int q = 0; q < numQuadPoints; ++q)
+            tempRhoQuads[q] = rhoValuesFlattened[iElem * numQuadPoints + q];
+
+
+          if (isEvaluateGradRho)
+            for (unsigned int q = 0; q < numQuadPoints; ++q)
+              {
+                tempGradRhoQuads[3 * q] =
+                  gradRhoValuesFlattened[iElem * numQuadPoints * 3 + q * 3];
+                tempGradRhoQuads[3 * q + 1] =
+                  gradRhoValuesFlattened[iElem * numQuadPoints * 3 + q * 3 + 1];
+                tempGradRhoQuads[3 * q + 2] =
+                  gradRhoValuesFlattened[iElem * numQuadPoints * 3 + q * 3 + 2];
+              }
+          iElem++;
+        }
 
     MPI_Barrier(MPI_COMM_WORLD);
     cpu_time = MPI_Wtime() - cpu_time;
