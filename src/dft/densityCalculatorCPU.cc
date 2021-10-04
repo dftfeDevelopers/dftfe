@@ -694,46 +694,54 @@ namespace dftfe
 
 
     // gather density from all inter communicators
-
-    dealii::Utilities::MPI::sum(rhoValuesFlattened,
-                                interpoolcomm,
-                                rhoValuesFlattened);
-
-    dealii::Utilities::MPI::sum(rhoValuesFlattened,
-                                interBandGroupComm,
-                                rhoValuesFlattened);
-
-    if (isEvaluateGradRho)
+    if (dealii::Utilities::MPI::n_mpi_processes(interpoolcomm) > 1)
       {
-        dealii::Utilities::MPI::sum(gradRhoValuesFlattened,
+        dealii::Utilities::MPI::sum(rhoValuesFlattened,
                                     interpoolcomm,
-                                    gradRhoValuesFlattened);
-
-        dealii::Utilities::MPI::sum(gradRhoValuesFlattened,
-                                    interBandGroupComm,
-                                    gradRhoValuesFlattened);
-      }
-
-
-    if (dftParameters::spinPolarized == 1)
-      {
-        dealii::Utilities::MPI::sum(rhoValuesSpinPolarizedFlattened,
-                                    interpoolcomm,
-                                    rhoValuesSpinPolarizedFlattened);
-
-        dealii::Utilities::MPI::sum(rhoValuesSpinPolarizedFlattened,
-                                    interBandGroupComm,
-                                    rhoValuesSpinPolarizedFlattened);
+                                    rhoValuesFlattened);
 
         if (isEvaluateGradRho)
-          {
-            dealii::Utilities::MPI::sum(gradRhoValuesSpinPolarizedFlattened,
-                                        interpoolcomm,
-                                        gradRhoValuesSpinPolarizedFlattened);
+          dealii::Utilities::MPI::sum(gradRhoValuesFlattened,
+                                      interpoolcomm,
+                                      gradRhoValuesFlattened);
 
-            dealii::Utilities::MPI::sum(gradRhoValuesSpinPolarizedFlattened,
+
+
+        if (dftParameters::spinPolarized == 1)
+          {
+            dealii::Utilities::MPI::sum(rhoValuesSpinPolarizedFlattened,
+                                        interpoolcomm,
+                                        rhoValuesSpinPolarizedFlattened);
+
+            if (isEvaluateGradRho)
+              dealii::Utilities::MPI::sum(gradRhoValuesSpinPolarizedFlattened,
+                                          interpoolcomm,
+                                          gradRhoValuesSpinPolarizedFlattened);
+          }
+      }
+
+    if (dealii::Utilities::MPI::n_mpi_processes(interBandGroupComm) > 1)
+      {
+        dealii::Utilities::MPI::sum(rhoValuesFlattened,
+                                    interBandGroupComm,
+                                    rhoValuesFlattened);
+
+        if (isEvaluateGradRho)
+          dealii::Utilities::MPI::sum(gradRhoValuesFlattened,
+                                      interBandGroupComm,
+                                      gradRhoValuesFlattened);
+
+
+        if (dftParameters::spinPolarized == 1)
+          {
+            dealii::Utilities::MPI::sum(rhoValuesSpinPolarizedFlattened,
                                         interBandGroupComm,
-                                        gradRhoValuesSpinPolarizedFlattened);
+                                        rhoValuesSpinPolarizedFlattened);
+
+            if (isEvaluateGradRho)
+              dealii::Utilities::MPI::sum(gradRhoValuesSpinPolarizedFlattened,
+                                          interBandGroupComm,
+                                          gradRhoValuesSpinPolarizedFlattened);
           }
       }
 

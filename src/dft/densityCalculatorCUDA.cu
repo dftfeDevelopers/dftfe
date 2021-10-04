@@ -1105,7 +1105,8 @@ namespace dftfe
                 for (unsigned int iquad = 0; iquad < numQuadPoints; ++iquad)
                   {
                     rhoValuesFlattened[icell * numQuadPoints + iquad] +=
-                      cudaUtils::makeRealFromNumber(*(rhoHost.begin()+icell * numQuadPoints + iquad));
+                      cudaUtils::makeRealFromNumber(
+                        *(rhoHost.begin() + icell * numQuadPoints + iquad));
                   }
 
               if (isEvaluateGradRho)
@@ -1114,13 +1115,19 @@ namespace dftfe
                     {
                       gradRhoValuesFlattened[icell * numQuadPoints * 3 +
                                              3 * iquad + 0] +=
-                        cudaUtils::makeRealFromNumber(*(gradRhoHostX.begin()+icell * numQuadPoints + iquad));
+                        cudaUtils::makeRealFromNumber(*(gradRhoHostX.begin() +
+                                                        icell * numQuadPoints +
+                                                        iquad));
                       gradRhoValuesFlattened[icell * numQuadPoints * 3 +
                                              3 * iquad + 1] +=
-                        cudaUtils::makeRealFromNumber(*(gradRhoHostY.begin()+icell * numQuadPoints + iquad));
+                        cudaUtils::makeRealFromNumber(*(gradRhoHostY.begin() +
+                                                        icell * numQuadPoints +
+                                                        iquad));
                       gradRhoValuesFlattened[icell * numQuadPoints * 3 +
                                              3 * iquad + 2] +=
-                        cudaUtils::makeRealFromNumber(*(gradRhoHostZ.begin()+icell * numQuadPoints + iquad));
+                        cudaUtils::makeRealFromNumber(*(gradRhoHostZ.begin() +
+                                                        icell * numQuadPoints +
+                                                        iquad));
                     }
               if (dftParameters::spinPolarized == 1)
                 {
@@ -1129,7 +1136,8 @@ namespace dftfe
                       {
                         rhoValuesSpinPolarizedFlattened
                           [icell * numQuadPoints * 2 + iquad * 2 + spinIndex] +=
-                          cudaUtils::makeRealFromNumber(*(rhoHost.begin()+icell * numQuadPoints + iquad));
+                          cudaUtils::makeRealFromNumber(
+                            *(rhoHost.begin() + icell * numQuadPoints + iquad));
                       }
 
                   if (isEvaluateGradRho)
@@ -1140,15 +1148,21 @@ namespace dftfe
                           gradRhoValuesSpinPolarizedFlattened
                             [icell * numQuadPoints * 6 + iquad * 6 +
                              spinIndex * 3] +=
-                            cudaUtils::makeRealFromNumber(*(gradRhoHostX.begin()+icell * numQuadPoints + iquad));
+                            cudaUtils::makeRealFromNumber(
+                              *(gradRhoHostX.begin() + icell * numQuadPoints +
+                                iquad));
                           gradRhoValuesSpinPolarizedFlattened
                             [icell * numQuadPoints * 6 + iquad * 6 +
                              spinIndex * 3 + 1] +=
-                            cudaUtils::makeRealFromNumber(*(gradRhoHostY.begin()+icell * numQuadPoints + iquad));
+                            cudaUtils::makeRealFromNumber(
+                              *(gradRhoHostY.begin() + icell * numQuadPoints +
+                                iquad));
                           gradRhoValuesSpinPolarizedFlattened
                             [icell * numQuadPoints * 6 + iquad * 6 +
                              spinIndex * 3 + 2] +=
-                            cudaUtils::makeRealFromNumber(*(gradRhoHostZ.begin()+icell * numQuadPoints + iquad));
+                            cudaUtils::makeRealFromNumber(
+                              *(gradRhoHostZ.begin() + icell * numQuadPoints +
+                                iquad));
                         }
                 }
             } // kpoint loop
@@ -1156,46 +1170,56 @@ namespace dftfe
 
 
       // gather density from all inter communicators
-
-      dealii::Utilities::MPI::sum(rhoValuesFlattened,
-                                  interpoolcomm,
-                                  rhoValuesFlattened);
-
-      dealii::Utilities::MPI::sum(rhoValuesFlattened,
-                                  interBandGroupComm,
-                                  rhoValuesFlattened);
-
-      if (isEvaluateGradRho)
+      if (dealii::Utilities::MPI::n_mpi_processes(interpoolcomm) > 1)
         {
-          dealii::Utilities::MPI::sum(gradRhoValuesFlattened,
+          dealii::Utilities::MPI::sum(rhoValuesFlattened,
                                       interpoolcomm,
-                                      gradRhoValuesFlattened);
-
-          dealii::Utilities::MPI::sum(gradRhoValuesFlattened,
-                                      interBandGroupComm,
-                                      gradRhoValuesFlattened);
-        }
-
-
-      if (dftParameters::spinPolarized == 1)
-        {
-          dealii::Utilities::MPI::sum(rhoValuesSpinPolarizedFlattened,
-                                      interpoolcomm,
-                                      rhoValuesSpinPolarizedFlattened);
-
-          dealii::Utilities::MPI::sum(rhoValuesSpinPolarizedFlattened,
-                                      interBandGroupComm,
-                                      rhoValuesSpinPolarizedFlattened);
+                                      rhoValuesFlattened);
 
           if (isEvaluateGradRho)
-            {
-              dealii::Utilities::MPI::sum(gradRhoValuesSpinPolarizedFlattened,
-                                          interpoolcomm,
-                                          gradRhoValuesSpinPolarizedFlattened);
+            dealii::Utilities::MPI::sum(gradRhoValuesFlattened,
+                                        interpoolcomm,
+                                        gradRhoValuesFlattened);
 
-              dealii::Utilities::MPI::sum(gradRhoValuesSpinPolarizedFlattened,
+
+
+          if (dftParameters::spinPolarized == 1)
+            {
+              dealii::Utilities::MPI::sum(rhoValuesSpinPolarizedFlattened,
+                                          interpoolcomm,
+                                          rhoValuesSpinPolarizedFlattened);
+
+              if (isEvaluateGradRho)
+                dealii::Utilities::MPI::sum(
+                  gradRhoValuesSpinPolarizedFlattened,
+                  interpoolcomm,
+                  gradRhoValuesSpinPolarizedFlattened);
+            }
+        }
+
+      if (dealii::Utilities::MPI::n_mpi_processes(interBandGroupComm) > 1)
+        {
+          dealii::Utilities::MPI::sum(rhoValuesFlattened,
+                                      interBandGroupComm,
+                                      rhoValuesFlattened);
+
+          if (isEvaluateGradRho)
+            dealii::Utilities::MPI::sum(gradRhoValuesFlattened,
+                                        interBandGroupComm,
+                                        gradRhoValuesFlattened);
+
+
+          if (dftParameters::spinPolarized == 1)
+            {
+              dealii::Utilities::MPI::sum(rhoValuesSpinPolarizedFlattened,
                                           interBandGroupComm,
-                                          gradRhoValuesSpinPolarizedFlattened);
+                                          rhoValuesSpinPolarizedFlattened);
+
+              if (isEvaluateGradRho)
+                dealii::Utilities::MPI::sum(
+                  gradRhoValuesSpinPolarizedFlattened,
+                  interBandGroupComm,
+                  gradRhoValuesSpinPolarizedFlattened);
             }
         }
 
