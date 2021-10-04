@@ -60,8 +60,10 @@ namespace dftfe
 
 
   void
-  elpaScalaManager::processGridOptionalELPASetup(const unsigned int na,
-                                                 const unsigned int nev)
+  elpaScalaManager::processGridELPASetup(const unsigned int na,
+                                                 const unsigned int nev,
+						 const MPI_Comm &mpi_comm_interband,
+						 const MPI_Comm &mpi_comm_interpool)
   {
     linearAlgebraOperations::internal::createProcessGridSquareMatrix(
       getMPICommunicator(), na, d_processGridDftfeWrapper);
@@ -74,6 +76,8 @@ namespace dftfe
     if (dftParameters::useELPA)
       linearAlgebraOperations::internal::setupELPAHandle(
         getMPICommunicator(),
+	mpi_comm_interband,
+	mpi_comm_interpool,
         d_processGridCommunicatorActive,
         d_processGridDftfeWrapper,
         na,
@@ -86,6 +90,8 @@ namespace dftfe
         if (dftParameters::useELPA)
           linearAlgebraOperations::internal::setupELPAHandle(
             getMPICommunicator(),
+            mpi_comm_interband,
+            mpi_comm_interpool,	    
             d_processGridCommunicatorActivePartial,
             d_processGridDftfeWrapper,
             na,

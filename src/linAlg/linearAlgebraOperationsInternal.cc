@@ -35,6 +35,8 @@ namespace dftfe
       void
       setupELPAHandle(
         const MPI_Comm &mpi_communicator,
+	const MPI_Comm &mpi_communicator_interband,
+	const MPI_Comm &mpi_communicator_interpool,
         MPI_Comm &      processGridCommunicatorActive,
         const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
         const unsigned int                               na,
@@ -72,7 +74,7 @@ namespace dftfe
         // processGridCommunicatorActive will be MPI_COMM_NULL.
         // MPI_Comm processGridCommunicatorActive;
         ierr = dealii::Utilities::MPI::create_group(
-          mpi_communicator, active_group, 50, &processGridCommunicatorActive);
+          mpi_communicator, active_group, 50+dealii::Utilities::MPI::this_mpi_process(mpi_communicator_interband)+dealii::Utilities::MPI::this_mpi_process(mpi_communicator_interpool), &processGridCommunicatorActive);
         AssertThrowMPI(ierr);
 
         ierr = MPI_Group_free(&all_group);
