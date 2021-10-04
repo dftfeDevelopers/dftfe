@@ -1105,7 +1105,7 @@ namespace dftfe
                 for (unsigned int iquad = 0; iquad < numQuadPoints; ++iquad)
                   {
                     rhoValuesFlattened[icell * numQuadPoints + iquad] +=
-                      *(rhoHost.begin()+icell * numQuadPoints + iquad);
+                      cudaUtils::makeRealFromNumber(*(rhoHost.begin()+icell * numQuadPoints + iquad));
                   }
 
               if (isEvaluateGradRho)
@@ -1114,13 +1114,13 @@ namespace dftfe
                     {
                       gradRhoValuesFlattened[icell * numQuadPoints * 3 +
                                              3 * iquad + 0] +=
-                        *(gradRhoHostX.begin()+icell * numQuadPoints + iquad);
+                        cudaUtils::makeRealFromNumber(*(gradRhoHostX.begin()+icell * numQuadPoints + iquad));
                       gradRhoValuesFlattened[icell * numQuadPoints * 3 +
                                              3 * iquad + 1] +=
-                        *(gradRhoHostY.begin()+icell * numQuadPoints + iquad);
+                        cudaUtils::makeRealFromNumber(*(gradRhoHostY.begin()+icell * numQuadPoints + iquad));
                       gradRhoValuesFlattened[icell * numQuadPoints * 3 +
                                              3 * iquad + 2] +=
-                        *(gradRhoHostZ.begin()+icell * numQuadPoints + iquad);
+                        cudaUtils::makeRealFromNumber(*(gradRhoHostZ.begin()+icell * numQuadPoints + iquad));
                     }
               if (dftParameters::spinPolarized == 1)
                 {
@@ -1129,7 +1129,7 @@ namespace dftfe
                       {
                         rhoValuesSpinPolarizedFlattened
                           [icell * numQuadPoints * 2 + iquad * 2 + spinIndex] +=
-                          *(rhoHost.begin()+icell * numQuadPoints + iquad);
+                          cudaUtils::makeRealFromNumber(*(rhoHost.begin()+icell * numQuadPoints + iquad));
                       }
 
                   if (isEvaluateGradRho)
@@ -1140,15 +1140,15 @@ namespace dftfe
                           gradRhoValuesSpinPolarizedFlattened
                             [icell * numQuadPoints * 6 + iquad * 6 +
                              spinIndex * 3] +=
-                            *(gradRhoHostX.begin()+icell * numQuadPoints + iquad);
+                            cudaUtils::makeRealFromNumber(*(gradRhoHostX.begin()+icell * numQuadPoints + iquad));
                           gradRhoValuesSpinPolarizedFlattened
                             [icell * numQuadPoints * 6 + iquad * 6 +
                              spinIndex * 3 + 1] +=
-                            *(gradRhoHostY.begin()+icell * numQuadPoints + iquad);
+                            cudaUtils::makeRealFromNumber(*(gradRhoHostY.begin()+icell * numQuadPoints + iquad));
                           gradRhoValuesSpinPolarizedFlattened
                             [icell * numQuadPoints * 6 + iquad * 6 +
                              spinIndex * 3 + 2] +=
-                            *(gradRhoHostZ.begin()+icell * numQuadPoints + iquad);
+                            cudaUtils::makeRealFromNumber(*(gradRhoHostZ.begin()+icell * numQuadPoints + iquad));
                         }
                 }
             } // kpoint loop
