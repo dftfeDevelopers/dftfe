@@ -273,8 +273,10 @@ dftClass<FEOrder, FEOrderElectro>::compute_fermienergy_constraintMagnetization(
   std::sort(eigenValuesAllkPointsUp.begin(), eigenValuesAllkPointsUp.end());
   std::sort(eigenValuesAllkPointsDown.begin(), eigenValuesAllkPointsDown.end());
 
-  double fermiEnergyUpLocal   = eigenValuesAllkPointsUp[countUp - 1];
-  double fermiEnergyDownLocal = eigenValuesAllkPointsDown[countDown - 1];
+  double fermiEnergyUpLocal =
+    countUp > 0 ? eigenValuesAllkPointsUp[countUp - 1] : -1.0e+15;
+  double fermiEnergyDownLocal =
+    countDown > 0 ? eigenValuesAllkPointsDown[countDown - 1] : -1.0e+15;
   //
   fermiEnergyUp   = Utilities::MPI::max(fermiEnergyUpLocal, interpoolcomm);
   fermiEnergyDown = Utilities::MPI::max(fermiEnergyDownLocal, interpoolcomm);
