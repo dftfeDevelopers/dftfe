@@ -346,6 +346,39 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::
                         }
                     }
                 }
+#ifdef USE_COMPLEX
+              unsigned int sizeNiNjNoSym =
+                numberDofsPerElement * numberDofsPerElement;
+              unsigned int numberEntriesEachBlockNoSym =
+                sizeNiNjNoSym / numBlocks;
+              count      = 0;
+              blockCount = 0;
+              indexCount = 0;
+              d_blockiNodeIndexNoSym.resize(sizeNiNjNoSym);
+              d_blockjNodeIndexNoSym.resize(sizeNiNjNoSym);
+
+              for (unsigned int iNode = 0; iNode < numberDofsPerElement;
+                   ++iNode)
+                {
+                  for (unsigned int jNode = 0; jNode < numberDofsPerElement;
+                       ++jNode)
+                    {
+                      d_blockiNodeIndexNoSym[numberEntriesEachBlockNoSym *
+                                               blockCount +
+                                             indexCount] = iNode;
+                      d_blockjNodeIndexNoSym[numberEntriesEachBlockNoSym *
+                                               blockCount +
+                                             indexCount] = jNode;
+                      count += 1;
+                      indexCount += 1;
+                      if (count % numberEntriesEachBlockNoSym == 0)
+                        {
+                          blockCount += 1;
+                          indexCount = 0;
+                        }
+                    }
+                }
+#endif
             }
 
           iElemCount++;

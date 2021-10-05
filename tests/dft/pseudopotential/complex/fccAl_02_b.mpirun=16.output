@@ -41,18 +41,18 @@ SCF iterations converged to the specified tolerance after: 11 iterations.
 
 Energy computations (Hartree) 
 -------------------
-             Total energy:          -8.36888702
+             Total energy:          -8.36799907
 
 Absolute value of cell stress (Hartree/Bohr^3)
 ------------------------------------------------------------------------
-0.000036  0.000000  0.000000
-0.000000  0.000036  0.000000
-0.000000  0.000000  0.000036
+0.000033  0.000000  0.000000
+0.000000  0.000033  0.000000
+0.000000  0.000000  0.000033
 ------------------------------------------------------------------------
 -----------Simulation Domain bounding vectors (lattice vectors in fully periodic case)-------------
-v1 : 7.599863 0.000000 0.000000
-v2 : 0.000000 7.599863 0.000000
-v3 : 0.000000 0.000000 7.599863
+v1 : 7.599876 0.000000 0.000000
+v2 : 0.000000 7.599876 0.000000
+v3 : 0.000000 0.000000 7.599876
 -----------------------------------------------------------------------------------------
 -----Fractional coordinates of atoms------ 
 AtomId 0:  0.000000 0.000000 0.000000
@@ -73,22 +73,22 @@ number of degrees of freedom for the Kohn-Sham eigenvalue problem : 15849
 Pseudopotential initalization....
 
 Starting SCF iterations....
-SCF iterations converged to the specified tolerance after: 11 iterations.
+SCF iterations converged to the specified tolerance after: 10 iterations.
 
 Energy computations (Hartree) 
 -------------------
-             Total energy:          -8.36888799
+             Total energy:          -8.36799992
 
 Absolute value of cell stress (Hartree/Bohr^3)
 ------------------------------------------------------------------------
-0.000036  0.000000  0.000000
-0.000000  0.000036  0.000000
-0.000000  0.000000  0.000036
+0.000032  0.000000  0.000000
+0.000000  0.000032  0.000000
+0.000000  0.000000  0.000032
 ------------------------------------------------------------------------
 -----------Simulation Domain bounding vectors (lattice vectors in fully periodic case)-------------
-v1 : 7.568385 0.000000 0.000000
-v2 : 0.000000 7.568385 0.000000
-v3 : 0.000000 0.000000 7.568385
+v1 : 7.567082 0.000000 0.000000
+v2 : 0.000000 7.567082 0.000000
+v3 : 0.000000 0.000000 7.567082
 -----------------------------------------------------------------------------------------
 -----Fractional coordinates of atoms------ 
 AtomId 0:  0.000000 0.000000 0.000000
@@ -109,15 +109,15 @@ number of degrees of freedom for the Kohn-Sham eigenvalue problem : 15849
 Pseudopotential initalization....
 
 Starting SCF iterations....
-SCF iterations converged to the specified tolerance after: 11 iterations.
+SCF iterations converged to the specified tolerance after: 10 iterations.
 
 Energy computations (Hartree) 
 -------------------
-             Total energy:          -8.36902135
+             Total energy:          -8.36812602
 
 Absolute value of cell stress (Hartree/Bohr^3)
 ------------------------------------------------------------------------
-0.000003  0.000000  0.000000
-0.000000  0.000003  0.000000
-0.000000  0.000000  0.000003
+0.000002  0.000000  0.000000
+0.000000  0.000002  0.000000
+0.000000  0.000000  0.000002
 ------------------------------------------------------------------------
