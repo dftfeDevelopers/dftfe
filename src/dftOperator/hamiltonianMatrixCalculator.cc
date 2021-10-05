@@ -550,51 +550,61 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::computeHamiltonianMatrix(
       kPointCoors[1] = dftPtr->d_kPointCoordinates[3 * kPointIndex + 1];
       kPointCoors[2] = dftPtr->d_kPointCoordinates[3 * kPointIndex + 2];
 
+
+
       double kSquareTimesHalf = 0.5 * (kPointCoors[0] * kPointCoors[0] +
                                        kPointCoors[1] * kPointCoors[1] +
                                        kPointCoors[2] * kPointCoors[2]);
+
+      unsigned int sizeNiNjNoSym = numberDofsPerElement * numberDofsPerElement;
+      unsigned int numberEntriesEachBlockNoSym = sizeNiNjNoSym / numBlocks;
+
+
       std::vector<double> elementHamiltonianMatrixImag(totalLocallyOwnedCells *
-                                                         sizeNiNj,
+                                                         sizeNiNjNoSym,
                                                        0.0);
 
       blockCount = 0;
-      std::vector<double> gradNiNj_currentBlock(numberEntriesEachBlock * 3 *
-                                                  numberQuadraturePoints,
+      std::vector<double> gradNiNj_currentBlock(numberEntriesEachBlockNoSym *
+                                                  3 * numberQuadraturePoints,
                                                 0.0);
 
       while (blockCount < numBlocks)
         {
-          tempValue1 = numberEntriesEachBlock * blockCount;
+          tempValue1 = numberEntriesEachBlockNoSym * blockCount;
           for (unsigned int q_point = 0; q_point < numberQuadraturePoints;
                ++q_point)
             {
-              iNode = d_blockiNodeIndex[numberEntriesEachBlock * blockCount];
-              tempValue = (numberDofsPerElement * iNode) -
-                          (0.5 * iNode * iNode + 0.5 * iNode) - tempValue1;
+              iNode     = d_blockiNodeIndexNoSym[numberEntriesEachBlockNoSym *
+                                             blockCount];
+              tempValue = (numberDofsPerElement * iNode) - tempValue1;
 #  pragma omp parallel for
-              for (jNode =
-                     d_blockjNodeIndex[numberEntriesEachBlock * blockCount];
+              for (jNode = d_blockjNodeIndexNoSym[numberEntriesEachBlockNoSym *
+                                                  blockCount];
                    jNode < numberDofsPerElement;
                    ++jNode)
                 {
-                  gradNiNj_currentBlock[3 * numberEntriesEachBlock * q_point +
+                  gradNiNj_currentBlock[3 * numberEntriesEachBlockNoSym *
+                                          q_point +
                                         tempValue + jNode] =
                     d_shapeFunctionGradientValueRefX[numberDofsPerElement *
                                                        q_point +
                                                      iNode] *
                     d_shapeFunctionData[numberDofsPerElement * q_point + jNode];
 
-                  gradNiNj_currentBlock[3 * numberEntriesEachBlock * q_point +
-                                        numberEntriesEachBlock + tempValue +
-                                        jNode] =
+                  gradNiNj_currentBlock[3 * numberEntriesEachBlockNoSym *
+                                          q_point +
+                                        numberEntriesEachBlockNoSym +
+                                        tempValue + jNode] =
                     d_shapeFunctionGradientValueRefY[numberDofsPerElement *
                                                        q_point +
                                                      iNode] *
                     d_shapeFunctionData[numberDofsPerElement * q_point + jNode];
 
-                  gradNiNj_currentBlock[3 * numberEntriesEachBlock * q_point +
-                                        2 * numberEntriesEachBlock + tempValue +
-                                        jNode] =
+                  gradNiNj_currentBlock[3 * numberEntriesEachBlockNoSym *
+                                          q_point +
+                                        2 * numberEntriesEachBlockNoSym +
+                                        tempValue + jNode] =
                     d_shapeFunctionGradientValueRefZ[numberDofsPerElement *
                                                        q_point +
                                                      iNode] *
@@ -605,9 +615,9 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::computeHamiltonianMatrix(
 
 #  pragma omp parallel for
               for (iNode = startIndexINode;
-                   iNode <
-                   d_blockiNodeIndex[numberEntriesEachBlock * (blockCount + 1) -
-                                     1];
+                   iNode < d_blockiNodeIndexNoSym[numberEntriesEachBlockNoSym *
+                                                    (blockCount + 1) -
+                                                  1];
                    ++iNode)
                 {
                   double shapeGradXRefINode =
@@ -624,60 +634,61 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::computeHamiltonianMatrix(
                                                      iNode];
 
 
-                  tempValue = (numberDofsPerElement * iNode) -
-                              (0.5 * iNode * iNode + 0.5 * iNode) - tempValue1;
-                  for (jNode = iNode; jNode < numberDofsPerElement; ++jNode)
+                  tempValue = (numberDofsPerElement * iNode) - tempValue1;
+                  for (jNode = 0; jNode < numberDofsPerElement; ++jNode)
                     {
                       double shapeJ =
                         d_shapeFunctionData[numberDofsPerElement * q_point +
                                             jNode];
-                      gradNiNj_currentBlock[3 * numberEntriesEachBlock *
+                      gradNiNj_currentBlock[3 * numberEntriesEachBlockNoSym *
                                               q_point +
                                             tempValue + jNode] =
                         shapeGradXRefINode * shapeJ;
-                      gradNiNj_currentBlock[3 * numberEntriesEachBlock *
+                      gradNiNj_currentBlock[3 * numberEntriesEachBlockNoSym *
                                               q_point +
-                                            numberEntriesEachBlock + tempValue +
-                                            jNode] =
+                                            numberEntriesEachBlockNoSym +
+                                            tempValue + jNode] =
                         shapeGradYRefINode * shapeJ;
-                      gradNiNj_currentBlock[3 * numberEntriesEachBlock *
+                      gradNiNj_currentBlock[3 * numberEntriesEachBlockNoSym *
                                               q_point +
-                                            2 * numberEntriesEachBlock +
+                                            2 * numberEntriesEachBlockNoSym +
                                             tempValue + jNode] =
                         shapeGradZRefINode * shapeJ;
                     } // jnode
                 }     // iNode
 
-              iNode =
-                d_blockiNodeIndex[numberEntriesEachBlock * (blockCount + 1) -
-                                  1];
-              tempValue = (numberDofsPerElement * iNode) -
-                          (0.5 * iNode * iNode + 0.5 * iNode) - tempValue1;
+              iNode     = d_blockiNodeIndexNoSym[numberEntriesEachBlockNoSym *
+                                               (blockCount + 1) -
+                                             1];
+              tempValue = (numberDofsPerElement * iNode) - tempValue1;
 #  pragma omp parallel for
-              for (jNode = iNode;
-                   jNode <=
-                   d_blockjNodeIndex[numberEntriesEachBlock * (blockCount + 1) -
-                                     1];
+              for (jNode = 0;
+                   jNode <= d_blockjNodeIndexNoSym[numberEntriesEachBlockNoSym *
+                                                     (blockCount + 1) -
+                                                   1];
                    ++jNode)
                 {
-                  gradNiNj_currentBlock[3 * numberEntriesEachBlock * q_point +
+                  gradNiNj_currentBlock[3 * numberEntriesEachBlockNoSym *
+                                          q_point +
                                         tempValue + jNode] =
                     d_shapeFunctionGradientValueRefX[numberDofsPerElement *
                                                        q_point +
                                                      iNode] *
                     d_shapeFunctionData[numberDofsPerElement * q_point + jNode];
 
-                  gradNiNj_currentBlock[3 * numberEntriesEachBlock * q_point +
-                                        numberEntriesEachBlock + tempValue +
-                                        jNode] =
+                  gradNiNj_currentBlock[3 * numberEntriesEachBlockNoSym *
+                                          q_point +
+                                        numberEntriesEachBlockNoSym +
+                                        tempValue + jNode] =
                     d_shapeFunctionGradientValueRefY[numberDofsPerElement *
                                                        q_point +
                                                      iNode] *
                     d_shapeFunctionData[numberDofsPerElement * q_point + jNode];
 
-                  gradNiNj_currentBlock[3 * numberEntriesEachBlock * q_point +
-                                        2 * numberEntriesEachBlock + tempValue +
-                                        jNode] =
+                  gradNiNj_currentBlock[3 * numberEntriesEachBlockNoSym *
+                                          q_point +
+                                        2 * numberEntriesEachBlockNoSym +
+                                        tempValue + jNode] =
                     d_shapeFunctionGradientValueRefZ[numberDofsPerElement *
                                                        q_point +
                                                      iNode] *
@@ -687,21 +698,21 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::computeHamiltonianMatrix(
 
 
 
-          dgemm_(
-            &transA1,
-            &transB1,
-            &totalLocallyOwnedCells,           // M
-            &numberEntriesEachBlock,           // N
-            &numberQuadraturePointsTimesThree, // K
-            &alpha,
-            &d_invJacKPointTimesJxW[kPointIndex][0],
-            &totalLocallyOwnedCells,
-            &gradNiNj_currentBlock[0],
-            &numberEntriesEachBlock,
-            &beta,
-            &elementHamiltonianMatrixImag[totalLocallyOwnedCells *
-                                          numberEntriesEachBlock * blockCount],
-            &totalLocallyOwnedCells);
+          dgemm_(&transA1,
+                 &transB1,
+                 &totalLocallyOwnedCells,           // M
+                 &numberEntriesEachBlockNoSym,      // N
+                 &numberQuadraturePointsTimesThree, // K
+                 &alpha,
+                 &d_invJacKPointTimesJxW[kPointIndex][0],
+                 &totalLocallyOwnedCells,
+                 &gradNiNj_currentBlock[0],
+                 &numberEntriesEachBlockNoSym,
+                 &beta,
+                 &elementHamiltonianMatrixImag[totalLocallyOwnedCells *
+                                               numberEntriesEachBlockNoSym *
+                                               blockCount],
+                 &totalLocallyOwnedCells);
 
           blockCount += 1;
         }
@@ -746,11 +757,11 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::computeHamiltonianMatrix(
                                 kSquareTimesHalf *
                                   d_NiNjIntegral[sizeNiNj * iElem + count]);
 
-                      d_cellHamiltonianMatrix
-                        [kpointSpinIndex][iElem]
-                        [numberDofsPerElement * iNode + jNode]
-                          .imag(elementHamiltonianMatrixImag
-                                  [totalLocallyOwnedCells * count + iElem]);
+                      // d_cellHamiltonianMatrix
+                      //[kpointSpinIndex][iElem]
+                      //[numberDofsPerElement * iNode + jNode]
+                      //  .imag(elementHamiltonianMatrixImag
+                      //          [totalLocallyOwnedCells * count + iElem]);
 
 #else
                       d_cellHamiltonianMatrix
@@ -805,10 +816,31 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::computeHamiltonianMatrix(
                 for (unsigned int jNode = 0; jNode < iNode; ++jNode)
                   d_cellHamiltonianMatrix
                     [kpointSpinIndex][iElem]
-                    [numberDofsPerElement * iNode + jNode] = std::conj(
+                    [numberDofsPerElement * iNode + jNode] =
                       d_cellHamiltonianMatrix[kpointSpinIndex][iElem]
                                              [numberDofsPerElement * jNode +
-                                              iNode]);
+                                              iNode];
+
+              // std::conj(
+              // d_cellHamiltonianMatrix[kpointSpinIndex][iElem]
+              //                       [numberDofsPerElement * jNode +
+              //                        iNode]);
+
+              count = 0;
+              for (unsigned int iNode = 0; iNode < numberDofsPerElement;
+                   ++iNode)
+                {
+                  for (unsigned int jNode = 0; jNode < numberDofsPerElement;
+                       ++jNode)
+                    {
+                      d_cellHamiltonianMatrix
+                        [kpointSpinIndex][iElem]
+                        [numberDofsPerElement * iNode + jNode]
+                          .imag(elementHamiltonianMatrixImag
+                                  [totalLocallyOwnedCells * count + iElem]);
+                      count += 1;
+                    }
+                }
 #else
               for (unsigned int iNode = 0; iNode < numberDofsPerElement;
                    ++iNode)
