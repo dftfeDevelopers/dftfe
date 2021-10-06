@@ -17,13 +17,13 @@ SRC=`dirname $0` # location of source directory
 # and optimization flag
 
 #Paths for external libraries
-dealiiDir="/home/vikramg/DFT-FE-softwares/dealiiDevCustomized/install_gcc8.2.0_openmpi3.1.4_gpu"
+dealiiDir="/home/vikramg/DFT-FE-softwares/dealiiDevCustomized/install_gcc8.2.0_openmpi4.0.6_cuda11.4.0_gpu_10.0-pre"
 alglibDir="/home/vikramg/DFT-FE-softwares/alglibGCC/cpp/src"
-libxcDir="/home/vikramg/DFT-FE-softwares/libxc/gcc8.2.0_libxc_4.3.4"
+libxcDir="/home/vikramg/DFT-FE-softwares/libxc/install_libxc5.1.5"
 spglibDir="/home/vikramg/DFT-FE-softwares/spglibGCC"
 xmlIncludeDir="/usr/include/libxml2"
 xmlLibDir="/usr/lib64"
-ELPA_PATH="/home/vikramg/DFT-FE-softwares/elpa/elpa2020.05.001_gcc8.2.0_openmpi3.1.4_install_noopenmp2"
+ELPA_PATH="/home/vikramg/DFT-FE-softwares/elpa/elpa2021.05.002_gcc8.2.0_openmpi4.0.6_install"
 
 
 #Toggle GPU compilation
@@ -31,7 +31,7 @@ withGPU=ON
 
 #Compiler options and flags
 cxx_compiler=mpicxx
-cxx_flagsRelease="-O2 -fPIC -fopenmp"
+cxx_flagsRelease="-O2 -fPIC"
 
 #Option to compile with default or higher order quadrature for storing pseudopotential data
 #ON is recommended for MD simulations with hard pseudopotentials
@@ -40,7 +40,7 @@ withHigherQuadPSP=OFF
 # build type: "Release" or "Debug"
 build_type=Release
 testing=OFF
-minimal_compile=OFF
+minimal_compile=ON
 ###########################################################################
 #Usually, no changes are needed below this line
 #
@@ -61,11 +61,12 @@ function cmake_real() {
 	-DSPGLIB_DIR=$spglibDir -DXML_LIB_DIR=$xmlLibDir \
 	-DXML_INCLUDE_DIR=$xmlIncludeDir\
 	-DCMAKE_PREFIX_PATH="$ELPA_PATH" \
-	-DWITH_COMPLEX=OFF -DWITH_GPU=$withGPU \
+	-DWITH_COMPLEX=OFF -DWITH_GPU=$withGPU -DCMAKE_CUDA_FLAGS="-arch=sm_70"\
 	-DWITH_TESTING=$testing -DMINIMAL_COMPILE=$minimal_compile\
   -DCMAKE_PREFIX_PATH="$ELPA_PATH" \
   -DHIGHERQUAD_PSP=$withHigherQuadPSP $1
 }
+
 
 function cmake_cplx() {
   mkdir -p complex && cd complex
@@ -75,7 +76,8 @@ function cmake_cplx() {
 	-DALGLIB_DIR=$alglibDir -DLIBXC_DIR=$libxcDir \
 	-DSPGLIB_DIR=$spglibDir -DXML_LIB_DIR=$xmlLibDir \
 	-DXML_INCLUDE_DIR=$xmlIncludeDir \
-	-DWITH_COMPLEX=ON -DWITH_TESTING=$testing -DMINIMAL_COMPILE=$minimal_compile\
+  -DWITH_COMPLEX=ON -DWITH_GPU=$withGPU -DCMAKE_CUDA_FLAGS="-arch=sm_70"\
+  -DWITH_TESTING=$testing -DMINIMAL_COMPILE=$minimal_compile\
   -DCMAKE_PREFIX_PATH="$ELPA_PATH" \
   -DHIGHERQUAD_PSP=$withHigherQuadPSP $1
 }

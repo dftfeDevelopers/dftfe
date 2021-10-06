@@ -28,17 +28,18 @@ template <unsigned int FEOrder, unsigned int FEOrderElectro>
 void
 kohnShamDFTOperatorCUDAClass<FEOrder, FEOrderElectro>::
   computeNonLocalHamiltonianTimesX(
-    const double *             src,
-    distributedGPUVec<double> &projectorKetTimesVector,
-    const unsigned int         numberWaveFunctions,
-    double *                   dst,
-    const bool                 skip1,
-    const bool                 skip2)
+    const dataTypes::numberGPU *             src,
+    distributedGPUVec<dataTypes::numberGPU> &projectorKetTimesVector,
+    const unsigned int                       numberWaveFunctions,
+    dataTypes::numberGPU *                   dst,
+    const bool                               skip1,
+    const bool                               skip2)
 {
-  const double scalarCoeffAlpha = 1.0, scalarCoeffBeta = 0.0;
+  const dataTypes::number scalarCoeffAlpha = dataTypes::number(1.0),
+                          scalarCoeffBeta  = dataTypes::number(0.0);
 
   //
-  // compute C^{T}*X
+  // compute C^{\dagger}*X
   //
   unsigned int strideA = numberWaveFunctions * d_numberNodesPerElement;
   unsigned int strideB = d_numberNodesPerElement * d_maxSingleAtomPseudoWfc;
@@ -46,46 +47,48 @@ kohnShamDFTOperatorCUDAClass<FEOrder, FEOrderElectro>::
 
   if (d_totalNonlocalElems > 0 && !skip1)
     {
-      cublasDgemmBatched(d_cublasHandle,
-                         CUBLAS_OP_N,
-                         CUBLAS_OP_N,
-                         numberWaveFunctions,
-                         d_maxSingleAtomPseudoWfc,
-                         d_numberNodesPerElement,
-                         &scalarCoeffAlpha,
-                         (const double **)d_A,
-                         numberWaveFunctions,
-                         (const double **)d_B,
-                         d_numberNodesPerElement,
-                         &scalarCoeffBeta,
-                         d_C,
-                         numberWaveFunctions,
-                         d_totalNonlocalElems);
+      cublasXgemmBatched(
+        d_cublasHandle,
+        CUBLAS_OP_N,
+        CUBLAS_OP_N,
+        numberWaveFunctions,
+        d_maxSingleAtomPseudoWfc,
+        d_numberNodesPerElement,
+        reinterpret_cast<const dataTypes::numberGPU *>(&scalarCoeffAlpha),
+        (const dataTypes::numberGPU **)d_A,
+        numberWaveFunctions,
+        (const dataTypes::numberGPU **)d_B,
+        d_numberNodesPerElement,
+        reinterpret_cast<const dataTypes::numberGPU *>(&scalarCoeffBeta),
+        d_C,
+        numberWaveFunctions,
+        d_totalNonlocalElems);
 
-      cublasDgemm(d_cublasHandle,
-                  CUBLAS_OP_N,
-                  CUBLAS_OP_N,
-                  numberWaveFunctions,
-                  d_totalPseudoWfcNonLocal,
-                  d_totalNonlocalElems * d_maxSingleAtomPseudoWfc,
-                  &scalarCoeffAlpha,
-                  thrust::raw_pointer_cast(
-                    &d_projectorKetTimesVectorAllCellsDevice[0]),
-                  numberWaveFunctions,
-                  thrust::raw_pointer_cast(
-                    &d_projectorKetTimesVectorAllCellsReductionDevice[0]),
-                  d_totalNonlocalElems * d_maxSingleAtomPseudoWfc,
-                  &scalarCoeffBeta,
-                  thrust::raw_pointer_cast(
-                    &d_projectorKetTimesVectorParFlattenedDevice[0]),
-                  numberWaveFunctions);
+      cublasXgemm(
+        d_cublasHandle,
+        CUBLAS_OP_N,
+        CUBLAS_OP_N,
+        numberWaveFunctions,
+        d_totalPseudoWfcNonLocal,
+        d_totalNonlocalElems * d_maxSingleAtomPseudoWfc,
+        reinterpret_cast<const dataTypes::numberGPU *>(&scalarCoeffAlpha),
+        reinterpret_cast<const dataTypes::numberGPU *>(thrust::raw_pointer_cast(
+          &d_projectorKetTimesVectorAllCellsDevice[0])),
+        numberWaveFunctions,
+        reinterpret_cast<const dataTypes::numberGPU *>(thrust::raw_pointer_cast(
+          &d_projectorKetTimesVectorAllCellsReductionDevice[0])),
+        d_totalNonlocalElems * d_maxSingleAtomPseudoWfc,
+        reinterpret_cast<const dataTypes::numberGPU *>(&scalarCoeffBeta),
+        reinterpret_cast<dataTypes::numberGPU *>(thrust::raw_pointer_cast(
+          &d_projectorKetTimesVectorParFlattenedDevice[0])),
+        numberWaveFunctions);
     }
 
   // this routine was interfering with overlapping communication and compute. So
   // called separately inside chebyshevFilter. So skip this if either skip1 or
   // skip2 are set to true
   if (!skip1 && !skip2)
-    projectorKetTimesVector = 0.0;
+    projectorKetTimesVector.setZero();
 
 
   if (d_totalNonlocalElems > 0 && !skip1)
@@ -94,7 +97,8 @@ kohnShamDFTOperatorCUDAClass<FEOrder, FEOrderElectro>::
                                       256>>>(
       numberWaveFunctions,
       d_totalPseudoWfcNonLocal,
-      thrust::raw_pointer_cast(&d_projectorKetTimesVectorParFlattenedDevice[0]),
+      reinterpret_cast<dataTypes::numberGPU *>(thrust::raw_pointer_cast(
+        &d_projectorKetTimesVectorParFlattenedDevice[0])),
       projectorKetTimesVector.begin(),
       thrust::raw_pointer_cast(&d_projectorIdsParallelNumberingMapDevice[0]));
 
@@ -105,17 +109,18 @@ kohnShamDFTOperatorCUDAClass<FEOrder, FEOrderElectro>::
 
   if (!skip1)
     {
-      projectorKetTimesVector.compress(VectorOperation::add);
-      projectorKetTimesVector.update_ghost_values();
+      projectorKetTimesVector.compressAdd();
+      projectorKetTimesVector.updateGhostValues();
     }
 
   //
-  // Start operations related to skip1 (V*C^{T}*X, C*V*C^{T}*X and assembly)
+  // Start operations related to skip1 (V*C^{\dagger}*X, C*V*C^{\dagger}*X and
+  // assembly)
   //
   if (d_totalNonlocalElems > 0)
     {
       //
-      // compute V*C^{T}*X
+      // compute V*C^{\dagger}*X
       //
       scaleCUDAKernel<<<(numberWaveFunctions + 255) / 256 *
                           d_totalPseudoWfcNonLocal,
@@ -134,35 +139,39 @@ kohnShamDFTOperatorCUDAClass<FEOrder, FEOrderElectro>::
         d_totalNonlocalElems,
         d_maxSingleAtomPseudoWfc,
         projectorKetTimesVector.begin(),
-        thrust::raw_pointer_cast(&d_projectorKetTimesVectorAllCellsDevice[0]),
+        reinterpret_cast<dataTypes::numberGPU *>(thrust::raw_pointer_cast(
+          &d_projectorKetTimesVectorAllCellsDevice[0])),
         thrust::raw_pointer_cast(
           &d_indexMapFromPaddedNonLocalVecToParallelNonLocalVecDevice[0]));
 
       //
-      // compute C*V*C^{T}*x
+      // compute C*V*C^{\dagger}*x
       //
 
       strideA = numberWaveFunctions * d_maxSingleAtomPseudoWfc;
       strideB = d_maxSingleAtomPseudoWfc * d_numberNodesPerElement;
       strideC = numberWaveFunctions * d_numberNodesPerElement;
-      cublasDgemmStridedBatched(
+      cublasXgemmStridedBatched(
         d_cublasHandle,
         CUBLAS_OP_N,
         CUBLAS_OP_N,
         numberWaveFunctions,
         d_numberNodesPerElement,
         d_maxSingleAtomPseudoWfc,
-        &scalarCoeffAlpha,
-        thrust::raw_pointer_cast(&d_projectorKetTimesVectorAllCellsDevice[0]),
+        reinterpret_cast<const dataTypes::numberGPU *>(&scalarCoeffAlpha),
+        reinterpret_cast<const dataTypes::numberGPU *>(thrust::raw_pointer_cast(
+          &d_projectorKetTimesVectorAllCellsDevice[0])),
         numberWaveFunctions,
         strideA,
-        thrust::raw_pointer_cast(
-          &d_cellHamiltonianMatrixNonLocalFlattenedTransposeDevice[0]),
+        reinterpret_cast<dataTypes::numberGPU *>(thrust::raw_pointer_cast(
+          &d_cellHamiltonianMatrixNonLocalFlattenedTransposeDevice
+            [d_kPointIndex * d_totalNonlocalElems * d_maxSingleAtomPseudoWfc *
+             d_numberNodesPerElement])),
         d_maxSingleAtomPseudoWfc,
         strideB,
-        &scalarCoeffBeta,
-        thrust::raw_pointer_cast(
-          &d_cellHamMatrixTimesWaveMatrixNonLocalDevice[0]),
+        reinterpret_cast<const dataTypes::numberGPU *>(&scalarCoeffBeta),
+        reinterpret_cast<dataTypes::numberGPU *>(thrust::raw_pointer_cast(
+          &d_cellHamMatrixTimesWaveMatrixNonLocalDevice[0])),
         numberWaveFunctions,
         strideC,
         d_totalNonlocalElems);
@@ -175,27 +184,60 @@ kohnShamDFTOperatorCUDAClass<FEOrder, FEOrderElectro>::
           addNonLocalContributionCUDAKernel<<<
             (numberWaveFunctions + 255) / 256 *
               d_numberCellsNonLocalAtoms[iAtom] * d_numberNodesPerElement,
-            256>>>(numberWaveFunctions,
-                   d_numberCellsNonLocalAtoms[iAtom] * d_numberNodesPerElement,
-                   thrust::raw_pointer_cast(
-                     &d_cellHamMatrixTimesWaveMatrixNonLocalDevice[0]) +
-                     accum * d_numberNodesPerElement * numberWaveFunctions,
-                   thrust::raw_pointer_cast(&d_cellHamMatrixTimesWaveMatrix[0]),
-                   thrust::raw_pointer_cast(
-                     &d_cellNodeIdMapNonLocalToLocalDevice[0]) +
-                     accum * d_numberNodesPerElement);
+            256>>>(
+            numberWaveFunctions,
+            d_numberCellsNonLocalAtoms[iAtom] * d_numberNodesPerElement,
+            reinterpret_cast<const dataTypes::numberGPU *>(
+              thrust::raw_pointer_cast(
+                &d_cellHamMatrixTimesWaveMatrixNonLocalDevice[0])) +
+              accum * d_numberNodesPerElement * numberWaveFunctions,
+            reinterpret_cast<dataTypes::numberGPU *>(
+              thrust::raw_pointer_cast(&d_cellHamMatrixTimesWaveMatrix[0])),
+            thrust::raw_pointer_cast(&d_cellNodeIdMapNonLocalToLocalDevice[0]) +
+              accum * d_numberNodesPerElement);
         }
     }
 
-  daxpyAtomicAddKernel<<<(numberWaveFunctions + 255) / 256 *
-                           d_numLocallyOwnedCells * d_numberNodesPerElement,
-                         256>>>(
-    numberWaveFunctions,
-    d_numLocallyOwnedCells * d_numberNodesPerElement,
-    thrust::raw_pointer_cast(&d_cellHamMatrixTimesWaveMatrix[0]),
-    dst,
-    thrust::raw_pointer_cast(
-      &d_flattenedArrayCellLocalProcIndexIdMapDevice[0]));
+  if (std::is_same<dataTypes::number, std::complex<double>>::value)
+    {
+      cudaUtils::copyComplexArrToRealArrsGPU(
+        (d_parallelChebyBlockVectorDevice.locallyOwnedFlattenedSize() +
+         d_parallelChebyBlockVectorDevice.ghostFlattenedSize()),
+        dst,
+        thrust::raw_pointer_cast(&d_tempRealVec[0]),
+        thrust::raw_pointer_cast(&d_tempImagVec[0]));
+
+
+      daxpyAtomicAddKernel<<<(numberWaveFunctions + 255) / 256 *
+                               d_numLocallyOwnedCells * d_numberNodesPerElement,
+                             256>>>(
+        numberWaveFunctions,
+        d_numLocallyOwnedCells * d_numberNodesPerElement,
+        reinterpret_cast<const dataTypes::numberGPU *>(
+          thrust::raw_pointer_cast(&d_cellHamMatrixTimesWaveMatrix[0])),
+        thrust::raw_pointer_cast(&d_tempRealVec[0]),
+        thrust::raw_pointer_cast(&d_tempImagVec[0]),
+        thrust::raw_pointer_cast(
+          &d_flattenedArrayCellLocalProcIndexIdMapDevice[0]));
+
+      cudaUtils::copyRealArrsToComplexArrGPU(
+        (d_parallelChebyBlockVectorDevice.locallyOwnedFlattenedSize() +
+         d_parallelChebyBlockVectorDevice.ghostFlattenedSize()),
+        thrust::raw_pointer_cast(&d_tempRealVec[0]),
+        thrust::raw_pointer_cast(&d_tempImagVec[0]),
+        dst);
+    }
+  else
+    daxpyAtomicAddKernel<<<(numberWaveFunctions + 255) / 256 *
+                             d_numLocallyOwnedCells * d_numberNodesPerElement,
+                           256>>>(
+      numberWaveFunctions,
+      d_numLocallyOwnedCells * d_numberNodesPerElement,
+      reinterpret_cast<const dataTypes::numberGPU *>(
+        thrust::raw_pointer_cast(&d_cellHamMatrixTimesWaveMatrix[0])),
+      dst,
+      thrust::raw_pointer_cast(
+        &d_flattenedArrayCellLocalProcIndexIdMapDevice[0]));
 }
 
 
@@ -203,20 +245,18 @@ template <unsigned int FEOrder, unsigned int FEOrderElectro>
 void
 kohnShamDFTOperatorCUDAClass<FEOrder, FEOrderElectro>::
   computeNonLocalProjectorKetTimesXTimesV(
-    const double *             src,
-    distributedGPUVec<double> &projectorKetTimesVector,
-    const unsigned int         numberWaveFunctions)
+    const dataTypes::numberGPU *             src,
+    distributedGPUVec<dataTypes::numberGPU> &projectorKetTimesVector,
+    const unsigned int                       numberWaveFunctions)
 {
   const unsigned int totalLocallyOwnedCells =
     dftPtr->matrix_free_data.n_physical_cells();
-  const double scalarCoeffAlpha = 1.0, scalarCoeffBeta = 0.0;
+  const dataTypes::number scalarCoeffAlpha = dataTypes::number(1.0),
+                          scalarCoeffBeta  = dataTypes::number(0.0);
 
   //
-  // compute C^{T}*X
+  // compute C^{\dagger}*X
   //
-  unsigned int strideA = numberWaveFunctions * d_numberNodesPerElement;
-  unsigned int strideB = d_numberNodesPerElement * d_maxSingleAtomPseudoWfc;
-  unsigned int strideC = numberWaveFunctions * d_maxSingleAtomPseudoWfc;
 
   if (d_totalNonlocalElems > 0)
     {
@@ -226,48 +266,51 @@ kohnShamDFTOperatorCUDAClass<FEOrder, FEOrderElectro>::
         numberWaveFunctions,
         totalLocallyOwnedCells * d_numberNodesPerElement,
         src,
-        thrust::raw_pointer_cast(&d_cellWaveFunctionMatrix[0]),
+        reinterpret_cast<dataTypes::numberGPU *>(
+          thrust::raw_pointer_cast(&d_cellWaveFunctionMatrix[0])),
         thrust::raw_pointer_cast(
           &d_flattenedArrayCellLocalProcIndexIdMapDevice[0]));
 
 
 
-      cublasDgemmBatched(d_cublasHandle,
-                         CUBLAS_OP_N,
-                         CUBLAS_OP_N,
-                         numberWaveFunctions,
-                         d_maxSingleAtomPseudoWfc,
-                         d_numberNodesPerElement,
-                         &scalarCoeffAlpha,
-                         (const double **)d_A,
-                         numberWaveFunctions,
-                         (const double **)d_B,
-                         d_numberNodesPerElement,
-                         &scalarCoeffBeta,
-                         d_C,
-                         numberWaveFunctions,
-                         d_totalNonlocalElems);
+      cublasXgemmBatched(
+        d_cublasHandle,
+        CUBLAS_OP_N,
+        CUBLAS_OP_N,
+        numberWaveFunctions,
+        d_maxSingleAtomPseudoWfc,
+        d_numberNodesPerElement,
+        reinterpret_cast<const dataTypes::numberGPU *>(&scalarCoeffAlpha),
+        (const dataTypes::numberGPU **)d_A,
+        numberWaveFunctions,
+        (const dataTypes::numberGPU **)d_B,
+        d_numberNodesPerElement,
+        reinterpret_cast<const dataTypes::numberGPU *>(&scalarCoeffBeta),
+        d_C,
+        numberWaveFunctions,
+        d_totalNonlocalElems);
 
-      cublasDgemm(d_cublasHandle,
-                  CUBLAS_OP_N,
-                  CUBLAS_OP_N,
-                  numberWaveFunctions,
-                  d_totalPseudoWfcNonLocal,
-                  d_totalNonlocalElems * d_maxSingleAtomPseudoWfc,
-                  &scalarCoeffAlpha,
-                  thrust::raw_pointer_cast(
-                    &d_projectorKetTimesVectorAllCellsDevice[0]),
-                  numberWaveFunctions,
-                  thrust::raw_pointer_cast(
-                    &d_projectorKetTimesVectorAllCellsReductionDevice[0]),
-                  d_totalNonlocalElems * d_maxSingleAtomPseudoWfc,
-                  &scalarCoeffBeta,
-                  thrust::raw_pointer_cast(
-                    &d_projectorKetTimesVectorParFlattenedDevice[0]),
-                  numberWaveFunctions);
+      cublasXgemm(
+        d_cublasHandle,
+        CUBLAS_OP_N,
+        CUBLAS_OP_N,
+        numberWaveFunctions,
+        d_totalPseudoWfcNonLocal,
+        d_totalNonlocalElems * d_maxSingleAtomPseudoWfc,
+        reinterpret_cast<const dataTypes::numberGPU *>(&scalarCoeffAlpha),
+        reinterpret_cast<const dataTypes::numberGPU *>(thrust::raw_pointer_cast(
+          &d_projectorKetTimesVectorAllCellsDevice[0])),
+        numberWaveFunctions,
+        reinterpret_cast<const dataTypes::numberGPU *>(thrust::raw_pointer_cast(
+          &d_projectorKetTimesVectorAllCellsReductionDevice[0])),
+        d_totalNonlocalElems * d_maxSingleAtomPseudoWfc,
+        reinterpret_cast<const dataTypes::numberGPU *>(&scalarCoeffBeta),
+        reinterpret_cast<dataTypes::numberGPU *>(thrust::raw_pointer_cast(
+          &d_projectorKetTimesVectorParFlattenedDevice[0])),
+        numberWaveFunctions);
     }
 
-  projectorKetTimesVector = 0.0;
+  projectorKetTimesVector.setZero();
 
 
   if (d_totalNonlocalElems > 0)
@@ -276,15 +319,16 @@ kohnShamDFTOperatorCUDAClass<FEOrder, FEOrderElectro>::
                                       256>>>(
       numberWaveFunctions,
       d_totalPseudoWfcNonLocal,
-      thrust::raw_pointer_cast(&d_projectorKetTimesVectorParFlattenedDevice[0]),
+      reinterpret_cast<dataTypes::numberGPU *>(thrust::raw_pointer_cast(
+        &d_projectorKetTimesVectorParFlattenedDevice[0])),
       projectorKetTimesVector.begin(),
       thrust::raw_pointer_cast(&d_projectorIdsParallelNumberingMapDevice[0]));
 
-  projectorKetTimesVector.compress(VectorOperation::add);
-  projectorKetTimesVector.update_ghost_values();
+  projectorKetTimesVector.compressAdd();
+  projectorKetTimesVector.updateGhostValues();
 
   //
-  // compute V*C^{T}*X
+  // compute V*C^{\dagger}*X
   //
   if (d_totalNonlocalElems > 0)
     scaleCUDAKernel<<<(numberWaveFunctions + 255) / 256 *

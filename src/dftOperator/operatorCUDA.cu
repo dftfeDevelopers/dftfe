@@ -19,8 +19,8 @@
 // @author Phani Motamarri, Sambit Das
 //
 #include <dftParameters.h>
-#include <linearAlgebraOperationsInternalCUDA.h>
 #include <operatorCUDA.h>
+#include <linearAlgebraOperationsInternal.h>
 
 //
 // Constructor.
@@ -28,22 +28,14 @@
 namespace dftfe
 {
   operatorDFTCUDAClass::operatorDFTCUDAClass(
-    const MPI_Comm &                                    mpi_comm_replica,
-    const dealii::MatrixFree<3, double> &               matrix_free_data,
-    const std::vector<dealii::types::global_dof_index> &localDofIndicesReal,
-    const std::vector<dealii::types::global_dof_index> &localDofIndicesImag,
-    const std::vector<dealii::types::global_dof_index> &localProcDofIndicesReal,
-    const std::vector<dealii::types::global_dof_index> &localProcDofIndicesImag,
-    const dealii::AffineConstraints<double> &           constraintMatrixEigen,
-    dftUtils::constraintMatrixInfoCUDA &                constraintMatrixNone)
+    const MPI_Comm &                     mpi_comm_replica,
+    const dealii::MatrixFree<3, double> &matrix_free_data,
+    dftUtils::constraintMatrixInfo &     constraintMatrixNone,
+    dftUtils::constraintMatrixInfoCUDA & constraintMatrixNoneCUDA)
     : d_mpi_communicator(mpi_comm_replica)
     , d_matrix_free_data(&matrix_free_data)
-    , d_localDofIndicesReal(&localDofIndicesReal)
-    , d_localDofIndicesImag(&localDofIndicesImag)
-    , d_localProcDofIndicesReal(&localProcDofIndicesReal)
-    , d_localProcDofIndicesImag(&localProcDofIndicesImag)
-    , d_constraintMatrixEigen(&constraintMatrixEigen)
     , d_constraintMatrixData(&constraintMatrixNone)
+    , d_constraintMatrixDataCUDA(&constraintMatrixNoneCUDA)
   {}
 
   //
@@ -58,50 +50,13 @@ namespace dftfe
   }
 
   //
-  // Get local dof indices real
+  // Get overloaded constraint matrix object constructed using 1-component FE
+  // object
   //
-  const std::vector<dealii::types::global_dof_index> *
-  operatorDFTCUDAClass::getLocalDofIndicesReal() const
+  dftUtils::constraintMatrixInfo *
+  operatorDFTCUDAClass::getOverloadedConstraintMatrixHost() const
   {
-    return d_localDofIndicesReal;
-  }
-
-  //
-  // Get local dof indices imag
-  //
-  const std::vector<dealii::types::global_dof_index> *
-  operatorDFTCUDAClass::getLocalDofIndicesImag() const
-  {
-    return d_localDofIndicesImag;
-  }
-
-  //
-  // Get local proc dof indices real
-  //
-  const std::vector<dealii::types::global_dof_index> *
-  operatorDFTCUDAClass::getLocalProcDofIndicesReal() const
-  {
-    return d_localProcDofIndicesReal;
-  }
-
-
-  //
-  // Get local proc dof indices imag
-  //
-  const std::vector<dealii::types::global_dof_index> *
-  operatorDFTCUDAClass::getLocalProcDofIndicesImag() const
-  {
-    return d_localProcDofIndicesImag;
-  }
-
-  //
-  // Get dealii constraint matrix used for the eigen problem (2-component FE
-  // Object for Periodic, 1-component FE object for non-periodic)
-  //
-  const dealii::AffineConstraints<double> *
-  operatorDFTCUDAClass::getConstraintMatrixEigen() const
-  {
-    return d_constraintMatrixEigen;
+    return d_constraintMatrixData;
   }
 
   //
@@ -111,7 +66,7 @@ namespace dftfe
   dftUtils::constraintMatrixInfoCUDA *
   operatorDFTCUDAClass::getOverloadedConstraintMatrix() const
   {
-    return d_constraintMatrixData;
+    return d_constraintMatrixDataCUDA;
   }
 
   //
@@ -131,21 +86,4 @@ namespace dftfe
   {
     return d_mpi_communicator;
   }
-
-
-  void
-  operatorDFTCUDAClass::processGridSetup(const unsigned int na,
-                                         const unsigned int nev)
-  {
-    std::shared_ptr<const dftfe::ProcessGrid> processGrid;
-    linearAlgebraOperationsCUDA::internal::createProcessGridSquareMatrix(
-      getMPICommunicator(), na, processGrid);
-
-
-    d_scalapackBlockSize =
-      std::min(dftParameters::scalapackBlockSize,
-               (na + processGrid->get_process_grid_rows() - 1) /
-                 processGrid->get_process_grid_rows());
-  }
-
 } // namespace dftfe

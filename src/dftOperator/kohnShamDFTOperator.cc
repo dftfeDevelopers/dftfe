@@ -1427,13 +1427,13 @@ namespace dftfe
     const unsigned int vectorsBlockSize =
       std::min(dftParameters::wfcBlockSize, bandGroupLowHighPlusOneIndices[1]);
 
-    std::vector<dataTypes::numberLowPrec> projHamBlockSinglePrec(
+    std::vector<dataTypes::numberFP32> projHamBlockSinglePrec(
       N * vectorsBlockSize, 0.0);
     std::vector<dataTypes::number> projHamBlock(N * vectorsBlockSize, 0.0);
 
-    std::vector<dataTypes::numberLowPrec> HXBlockSinglePrec;
+    std::vector<dataTypes::numberFP32> HXBlockSinglePrec;
 
-    std::vector<dataTypes::numberLowPrec> XSinglePrec(&X[0], &X[0] + X.size());
+    std::vector<dataTypes::numberFP32> XSinglePrec(&X[0], &X[0] + X.size());
 
     if (dftParameters::verbosity >= 4)
       dftUtils::printCurrentMemoryUsage(
@@ -1535,10 +1535,10 @@ namespace dftfe
               }
             else
               {
-                const dataTypes::numberLowPrec alphaSinglePrec =
-                                                 dataTypes::numberLowPrec(1.0),
-                                               betaSinglePrec =
-                                                 dataTypes::numberLowPrec(0.0);
+                const dataTypes::numberFP32 alphaSinglePrec =
+                                              dataTypes::numberFP32(1.0),
+                                            betaSinglePrec =
+                                              dataTypes::numberFP32(0.0);
 
                 for (unsigned int i = 0; i < numberDofs * B; ++i)
                   HXBlockSinglePrec[i] = HXBlock.local_element(i);

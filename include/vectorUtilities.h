@@ -69,24 +69,6 @@ namespace dftfe
 
 
 
-#ifdef DFTFE_WITH_GPU
-    /** @brief Creates a custom partitioned flattened dealii vector on GPU device.
-     *  stores multiple components asociated with a node sequentially.
-     *
-     *  @param partitioner associated with single component vector
-     *  @param blockSize number of components associated with each node
-     *
-     *  @return flattenedArray custom partitioned dealii vector
-     */
-    template <typename T>
-    void
-    createDealiiVector(
-      const std::shared_ptr<const dealii::Utilities::MPI::Partitioner>
-        &                   partitioner,
-      const unsigned int    blockSize,
-      distributedGPUVec<T> &flattenedArray);
-#endif
-
     /** @brief Creates a cell local index set map for flattened array
      *
      *  @param partitioner associated with the flattened array

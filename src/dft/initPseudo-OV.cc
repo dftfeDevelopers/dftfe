@@ -103,14 +103,12 @@ dftClass<FEOrder, FEOrderElectro>::computeElementalOVProjectorKets()
   //
   // preallocate element Matrices
   //
-  d_nonLocalProjectorElementMatrices.clear();
   d_nonLocalProjectorElementMatricesConjugate.clear();
   d_nonLocalProjectorElementMatricesTranspose.clear();
   d_nonLocalPSP_ZetalmDeltaVl.clear();
   d_nonLocalPSP_zetalmDeltaVlProductDistImageAtoms_KPoint.clear();
   d_cellIdToNonlocalAtomIdsLocalCompactSupportMap.clear();
 
-  d_nonLocalProjectorElementMatrices.resize(numberNonLocalAtoms);
   d_nonLocalProjectorElementMatricesConjugate.resize(numberNonLocalAtoms);
   d_nonLocalProjectorElementMatricesTranspose.resize(numberNonLocalAtoms);
 
@@ -185,8 +183,6 @@ dftClass<FEOrder, FEOrderElectro>::computeElementalOVProjectorKets()
       //
       if (numberElementsInAtomCompactSupport > 0)
         {
-          d_nonLocalProjectorElementMatrices[iAtom].resize(
-            numberElementsInAtomCompactSupport);
           d_nonLocalProjectorElementMatricesConjugate[iAtom].resize(
             numberElementsInAtomCompactSupport);
           d_nonLocalProjectorElementMatricesTranspose[iAtom].resize(
@@ -214,42 +210,30 @@ dftClass<FEOrder, FEOrderElectro>::computeElementalOVProjectorKets()
           // fe_values.reinit(cell);
 
 #ifdef USE_COMPLEX
-          d_nonLocalProjectorElementMatrices[iAtom][iElemComp].resize(
-            maxkPoints,
-            std::vector<std::complex<double>>(numberNodesPerElement *
-                                                numberPseudoWaveFunctions,
-                                              0.0));
           d_nonLocalProjectorElementMatricesConjugate[iAtom][iElemComp].resize(
-            maxkPoints,
-            std::vector<std::complex<double>>(numberNodesPerElement *
-                                                numberPseudoWaveFunctions,
-                                              0.0));
+            maxkPoints * numberNodesPerElement * numberPseudoWaveFunctions,
+            std::complex<double>(0.0));
           d_nonLocalProjectorElementMatricesTranspose[iAtom][iElemComp].resize(
-            maxkPoints,
-            std::vector<std::complex<double>>(numberNodesPerElement *
-                                                numberPseudoWaveFunctions,
-                                              0.0));
+            maxkPoints * numberNodesPerElement * numberPseudoWaveFunctions,
+            std::complex<double>(0.0));
 
-          std::vector<std::vector<std::complex<double>>>
-            &nonLocalProjectorElementMatricesAtomElem =
-              d_nonLocalProjectorElementMatrices[iAtom][iElemComp];
-
-          std::vector<std::vector<std::complex<double>>>
+          std::vector<std::complex<double>>
             &nonLocalProjectorElementMatricesConjugateAtomElem =
               d_nonLocalProjectorElementMatricesConjugate[iAtom][iElemComp];
 
-          std::vector<std::vector<std::complex<double>>>
+          std::vector<std::complex<double>>
             &nonLocalProjectorElementMatricesTransposeAtomElem =
               d_nonLocalProjectorElementMatricesTranspose[iAtom][iElemComp];
 
 #else
-          d_nonLocalProjectorElementMatrices[iAtom][iElemComp].resize(
+          d_nonLocalProjectorElementMatricesConjugate[iAtom][iElemComp].resize(
             numberNodesPerElement * numberPseudoWaveFunctions, 0.0);
           d_nonLocalProjectorElementMatricesTranspose[iAtom][iElemComp].resize(
             numberNodesPerElement * numberPseudoWaveFunctions, 0.0);
 
-          std::vector<double> &nonLocalProjectorElementMatricesAtomElem =
-            d_nonLocalProjectorElementMatrices[iAtom][iElemComp];
+          std::vector<double>
+            &nonLocalProjectorElementMatricesConjugateAtomElem =
+              d_nonLocalProjectorElementMatricesConjugate[iAtom][iElemComp];
 
 
           std::vector<double>
@@ -595,28 +579,29 @@ dftClass<FEOrder, FEOrderElectro>::computeElementalOVProjectorKets()
                       projectorMatrixImag[iPseudoWave * numberNodesPerElement +
                                           iNode];
 #ifdef USE_COMPLEX
-                    nonLocalProjectorElementMatricesAtomElem
-                      [kPoint][numberNodesPerElement * iPseudoWave + iNode]
-                        .real(tempReal);
-                    nonLocalProjectorElementMatricesAtomElem
-                      [kPoint][numberNodesPerElement * iPseudoWave + iNode]
-                        .imag(tempImag);
-
                     nonLocalProjectorElementMatricesConjugateAtomElem
-                      [kPoint][numberNodesPerElement * iPseudoWave + iNode]
+                      [kPoint * numberNodesPerElement *
+                         numberPseudoWaveFunctions +
+                       numberNodesPerElement * iPseudoWave + iNode]
                         .real(tempReal);
                     nonLocalProjectorElementMatricesConjugateAtomElem
-                      [kPoint][numberNodesPerElement * iPseudoWave + iNode]
+                      [kPoint * numberNodesPerElement *
+                         numberPseudoWaveFunctions +
+                       numberNodesPerElement * iPseudoWave + iNode]
                         .imag(-tempImag);
 
                     nonLocalProjectorElementMatricesTransposeAtomElem
-                      [kPoint][numberPseudoWaveFunctions * iNode + iPseudoWave]
+                      [kPoint * numberNodesPerElement *
+                         numberPseudoWaveFunctions +
+                       numberPseudoWaveFunctions * iNode + iPseudoWave]
                         .real(tempReal);
                     nonLocalProjectorElementMatricesTransposeAtomElem
-                      [kPoint][numberPseudoWaveFunctions * iNode + iPseudoWave]
+                      [kPoint * numberNodesPerElement *
+                         numberPseudoWaveFunctions +
+                       numberPseudoWaveFunctions * iNode + iPseudoWave]
                         .imag(tempImag);
 #else
-                    nonLocalProjectorElementMatricesAtomElem
+                    nonLocalProjectorElementMatricesConjugateAtomElem
                       [numberNodesPerElement * iPseudoWave + iNode] = tempReal;
 
                     nonLocalProjectorElementMatricesTransposeAtomElem

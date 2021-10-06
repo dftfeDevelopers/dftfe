@@ -22,12 +22,10 @@
 #include "process_grid.h"
 #include "scalapackWrapper.h"
 
-#ifdef DFTFE_WITH_ELPA
 extern "C"
 {
-#  include <elpa.hh>
+#include <elpa.hh>
 }
-#endif
 
 namespace dftfe
 {
@@ -40,20 +38,20 @@ namespace dftfe
      */
     namespace internal
     {
-#ifdef DFTFE_WITH_ELPA
       /** @brief setup ELPA handle.
        *
        */
       void
       setupELPAHandle(
         const MPI_Comm &mpi_communicator,
+	const MPI_Comm &mpi_comm_interband,
+	const MPI_Comm &mpi_comm_interpool,
         MPI_Comm &      processGridCommunicatorActive,
         const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
         const unsigned int                               na,
         const unsigned int                               nev,
         const unsigned int                               blockSize,
         elpa_t &                                         elpaHandle);
-#endif
 
       /** @brief Wrapper function to create a two dimensional processor grid for a square matrix in
        * dftfe::ScaLAPACKMatrix storage format.

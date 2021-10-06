@@ -24,16 +24,13 @@
 #include "process_grid.h"
 
 #include <vector>
-#ifdef DFTFE_WITH_ELPA
 extern "C"
 {
-#  include <elpa.hh>
+#include <elpa.hh>
 }
-#endif
 
 namespace dftfe
 {
-#ifdef DFTFE_WITH_ELPA
   inline void
   elpaCholesky(elpa_t &handle, double *a, int *error)
   {
@@ -66,7 +63,6 @@ namespace dftfe
                          error);
   }
 
-#endif
 
   /**
    * @brief Manager class for ELPA and ScaLAPACK
@@ -86,9 +82,8 @@ namespace dftfe
     getProcessGridDftfeScalaWrapper() const;
 
     void
-    processGridOptionalELPASetup(const unsigned int na, const unsigned int nev);
+    processGridELPASetup(const unsigned int na, const unsigned int nev, const MPI_Comm &mpi_comm_interband, const MPI_Comm &mpi_comm_interpool);
 
-#ifdef DFTFE_WITH_ELPA
     void
     elpaDeallocateHandles(const unsigned int na, const unsigned int nev);
 
@@ -100,7 +95,6 @@ namespace dftfe
 
     elpa_autotune_t &
     getElpaAutoTuneHandle();
-#endif
 
 
     /**
@@ -127,7 +121,6 @@ namespace dftfe
     //
     MPI_Comm d_mpi_communicator;
 
-#ifdef DFTFE_WITH_ELPA
     /// ELPA handle
     elpa_t d_elpaHandle;
 
@@ -142,7 +135,6 @@ namespace dftfe
 
     MPI_Comm d_processGridCommunicatorActivePartial;
 
-#endif
 
     /// ScaLAPACK distributed format block size
     unsigned int d_scalapackBlockSize;
@@ -165,7 +157,6 @@ namespace dftfe
     return d_processGridDftfeWrapper;
   }
 
-#  ifdef DFTFE_WITH_ELPA
   inline elpa_t &
   elpaScalaManager::getElpaHandle()
   {
@@ -184,7 +175,6 @@ namespace dftfe
   {
     return d_elpaAutoTuneHandle;
   }
-#  endif
 #endif // ifndef DOXYGEN
 
 } // namespace dftfe

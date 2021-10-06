@@ -156,7 +156,7 @@ main(int argc, char *argv[])
 #ifdef DFTFE_WITH_GPU
   if (dftfe::dftParameters::useGPU)
     {
-      dftfe::setupGPU();
+      dftfe::cudaUtils::setupGPU();
     }
 #endif
 

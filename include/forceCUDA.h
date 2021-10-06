@@ -15,13 +15,13 @@
 // ---------------------------------------------------------------------
 //
 
-#if defined(DFTFE_WITH_GPU)
-#  ifndef forceCUDA_H_
-#    define forceCUDA_H_
+#ifndef USE_COMPLEX
+#  if defined(DFTFE_WITH_GPU)
+#    ifndef forceCUDA_H_
+#      define forceCUDA_H_
 
-#    include <headers.h>
-#    include <operatorCUDA.h>
-#    include <vectorUtilitiesCUDA.h>
+#      include <headers.h>
+#      include <operatorCUDA.h>
 
 namespace dftfe
 {
@@ -133,5 +133,6 @@ namespace dftfe
       const bool      isPsp);
   } // namespace forceCUDA
 } // namespace dftfe
+#    endif
 #  endif
 #endif

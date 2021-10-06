@@ -1,0 +1,20 @@
+#!/bin/bash
+# Begin LSF Directives
+#BSUB -P MAT239
+#BSUB -W 0:30
+#BSUB -nnodes 1
+#BSUB -alloc_flags gpumps
+#BSUB -J rundftfe
+#BSUB -o rundftfe.%J
+#BSUB -e rundftfe.%J
+	 
+date
+export OMP_NUM_THREADS=1
+
+jsrun --smpiargs "-gpu" -n 6 -a 1 -c 7 -g 1 -r 6 -d packed -b packed:7 ./dftfe parameterFileMg2x_1.prm > outputMg2x_1
+
+jsrun --smpiargs "-gpu" -n 6 -a 1 -c 7 -g 1 -r 6 -d packed -b packed:7 ./dftfe parameterFileMg2x_2.prm > outputMg2x_2
+
+jsrun --smpiargs "-gpu" -n 6 -a 1 -c 7 -g 1 -r 6 -d packed -b packed:7 ./dftfe parameterFileMg2x_3.prm > outputMg2x_3
+
+jsrun --smpiargs "-gpu" -n 6 -a 1 -c 7 -g 1 -r 6 -d packed -b packed:7 ./dftfe parameterFileMg2x_4.prm > outputMg2x_4
