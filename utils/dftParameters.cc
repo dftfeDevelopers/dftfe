@@ -1459,16 +1459,16 @@ namespace dftfe
             << std::endl;
           std::cout << "														" << std::endl;
           std::cout
-            << " Sambit Das               - University of Michigan, Ann Arbor"
+            << " Sambit Das               - University of Michigan, USA"
             << std::endl;
           std::cout
-            << " Vikram Gavini (Mentor)   - University of Michigan, Ann Arbor"
+            << " Vikram Gavini (Mentor)   - University of Michigan, USA"
             << std::endl;
           std::cout
-            << " Krishnendu Ghosh         - University of Michigan, Ann Arbor"
+            << " Krishnendu Ghosh         - Intel Corporation, USA"
             << std::endl;
           std::cout
-            << " Phani Motamarri          - University of Michigan, Ann Arbor"
+            << " Phani Motamarri          - Indian Institute of Science, India"
             << std::endl;
           std::cout
             << " Shiva Rudraraju          - University of Wisconsin-Madison  "
