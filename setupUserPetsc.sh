@@ -17,7 +17,7 @@ SRC=`dirname $0` # location of source directory
 #Provide paths below for external libraries, compiler options and flags,
 # and optimization flag
 
-#Paths for external libraries
+#Paths for required external libraries
 dealiiPetscRealDir="/home/vikramg/DFT-FE-softwares/dealiiDevCustomized/install_gcc8.2.0_openmpi4.0.6_real_cpu"
 dealiiPetscComplexDir="/home/vikramg/DFT-FE-softwares/dealiiDevCustomized/install_gcc8.2.0_openmpi4.0.6_complex_cpu"
 alglibDir="/home/vikramg/DFT-FE-softwares/alglibGCC/cpp/src"
@@ -27,10 +27,20 @@ xmlIncludeDir="/usr/include/libxml2"
 xmlLibDir="/usr/lib64"
 ELPA_PATH="/home/vikramg/DFT-FE-softwares/elpa/elpa2021.05.002_gcc8.2.0_openmpi4.0.6_install"
 
+#Paths for optional external libraries
+NCCL_PATH=""
+
+
+#Toggle GPU compilation
+withGPU=OFF
+
+#Option to link to NCCL library (Only for GPU compilation)
+withNCCL=OFF
 
 #Compiler options and flags
 cxx_compiler=mpicxx
 cxx_flagsRelease="-O2 -fPIC -fopenmp"
+cuda_flags="" #only applicable for withGPU=ON
 
 #ON is recommended for MD simulations with hard pseudopotentials
 withHigherQuadPSP=OFF
@@ -39,7 +49,7 @@ withHigherQuadPSP=OFF
 build_type=Release
 
 testing=OFF
-minimal_compile=OFF
+minimal_compile=ON
 ###########################################################################
 #Usually, no changes are needed below this line
 #
@@ -59,8 +69,8 @@ function cmake_real() {
 	-DALGLIB_DIR=$alglibDir -DLIBXC_DIR=$libxcDir \
 	-DSPGLIB_DIR=$spglibDir -DXML_LIB_DIR=$xmlLibDir \
 	-DXML_INCLUDE_DIR=$xmlIncludeDir \
-	-DCMAKE_PREFIX_PATH="$ELPA_PATH" \
-	-DWITH_COMPLEX=OFF -DWITH_GPU=$withGPU \
+	-DWITH_NCCL=$withNCCL -DCMAKE_PREFIX_PATH="$ELPA_PATH;$NCCL_PATH"\
+	-DWITH_COMPLEX=OFF -DWITH_GPU=$withGPU -DCMAKE_CUDA_FLAGS="$cuda_flags"\
 	-DWITH_TESTING=$testing -DMINIMAL_COMPILE=$minimal_compile \
   -DHIGHERQUAD_PSP=$withHigherQuadPSP\
 	  $1
