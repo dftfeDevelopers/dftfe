@@ -227,10 +227,13 @@ namespace dftfe
 
         void InitialiseFromRestartNHCFile( std::vector<double> &, std::vector<double> & , std::vector<double> &   );  
 
-        void writeTotalDisplacementFile(std::vector<dealii::Tensor<1, 3, double>>) ;                                      
+        void writeTotalDisplacementFile(std::vector<dealii::Tensor<1, 3, double>>) ;  
+
+        double NoseHoverExtendedLegrangian(std::vector<double>  , std::vector<double>  , std::vector<double> , double, double, double  );                                    
         
 
 
+    
     };
 }
 #endif

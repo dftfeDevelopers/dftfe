@@ -65,9 +65,9 @@ namespace dftfe
         std::vector<std::vector<double>> atomTypesMasses;
         dftUtils::readFile(2, atomTypesMasses, dftParameters::atomicMassesFile);
         std::vector<std::vector<double>> atomLocations;
-        atomLocations = dftPtr->getAtomLocationsfromdftptr(); 
+         dftPtr->getAtomLocationsfromdftptr(atomLocations); 
         std::set<unsigned int>   atomTypes;
-        atomTypes = dftPtr->getAtomTypesfromdftptr();     
+         dftPtr->getAtomTypesfromdftptr(atomTypes);     
         AssertThrow(atomTypes.size() == atomTypesMasses.size(),
                 ExcMessage("DFT-FE Error: check ATOM MASSES FILE"));
 
@@ -424,7 +424,8 @@ namespace dftfe
         TemperatureFromVelocities = 2.0/3.0/double(numberGlobalCharges-1)*KineticEnergyVector[0]/(kB); 
         std::vector<double> ThermostatMass(2,0.0);
         std::vector<double> Thermostatvelocity(2,0.0);
-        std::vector<double> Thermostatposition(2,0.0);      
+        std::vector<double> Thermostatposition(2,0.0);  
+        std::vector<double> NoseHoverExtendedLegrangianvector(numberofSteps,0.0);    
         nhctimeconstant = thermostatTimeConstant*timeStep;  
         if(restartFlag == 0)
         {
@@ -463,7 +464,9 @@ namespace dftfe
             TotalEnergyVector[TimeIndex-startingTimeStep]    = KineticEnergyVector[TimeIndex-startingTimeStep] +
                                InternalEnergyVector[TimeIndex-startingTimeStep] -
                                EntropicEnergyVector[TimeIndex-startingTimeStep]; 
-            TemperatureFromVelocities = 2.0/3.0/double(numberGlobalCharges-1)*KineticEnergy/(kB);                              
+            TemperatureFromVelocities = 2.0/3.0/double(numberGlobalCharges-1)*KineticEnergy/(kB);  
+            NoseHoverExtendedLegrangianvector[TimeIndex-startingTimeStep] = NoseHoverExtendedLegrangian(Thermostatvelocity,Thermostatposition,ThermostatMass,
+                                                KineticEnergyVector[TimeIndex-startingTimeStep],TotalEnergyVector[TimeIndex-startingTimeStep],TemperatureFromVelocities);                            
 
             //Based on verbose print required MD details...
             MPI_Barrier(MPI_COMM_WORLD);
@@ -484,6 +487,8 @@ namespace dftfe
               << std::endl;
               pcout << " Total Energy in Ha at timeIndex " << TimeIndex << " "
               << TotalEnergyVector[TimeIndex-startingTimeStep] << std::endl;
+              pcout << "Nose Hover Extended Legrangian  in Ha at timeIndex " << TimeIndex << " "
+              << NoseHoverExtendedLegrangianvector[TimeIndex-startingTimeStep] << std::endl;              
               writeRestartFile(velocity,force,KineticEnergyVector,InternalEnergyVector,TotalEnergyVector,TimeIndex);
               writeRestartNHCfile(Thermostatvelocity,Thermostatposition, ThermostatMass );
             }
@@ -538,7 +543,7 @@ namespace dftfe
 
         if (dftParameters::verbosity >= 1)
           { std::vector<std::vector<double>> atomLocations;
-            atomLocations = dftPtr->getAtomLocationsfromdftptr();  
+             dftPtr->getAtomLocationsfromdftptr(atomLocations);  
             pcout << "Updated Positions of atoms time step " << std::endl;
             for (int iCharge = 0; iCharge < numberGlobalCharges; ++iCharge)
               {
@@ -558,7 +563,7 @@ namespace dftfe
           pcout << "Time taken for updateAtomPositionsAndMoveMesh: "
                 << update_time << std::endl;
         dftPtr->solve(true, false, false, false); 
-        forceOnAtoms = dftPtr->getForceonAtomsfromdftptr();
+         dftPtr->getForceonAtomsfromdftptr(forceOnAtoms);
          
         //Call Force
         totalKE = 0.0;
@@ -718,7 +723,7 @@ namespace dftfe
         //Initialise Position
       if (dftParameters::verbosity >= 1)
         { std::vector<std::vector<double>> atomLocations;
-           atomLocations = dftPtr->getAtomLocationsfromdftptr();  
+            dftPtr->getAtomLocationsfromdftptr(atomLocations);  
            pcout << "Atom Locations from Restart " << std::endl;
            for (int iCharge = 0; iCharge < numberGlobalCharges; ++iCharge)
              {
@@ -762,7 +767,7 @@ namespace dftfe
       IE[0] = IE0[0][0];
       TE[0] = TE0[0][0];
       dftPtr->solve(true, false, false, false); 
-      force = dftPtr->getForceonAtomsfromdftptr();
+      dftPtr->getForceonAtomsfromdftptr(force);
 
 
     }                                                        
@@ -818,6 +823,19 @@ namespace dftfe
        dftUtils::writeDataIntoFile(fileDisplacementData, "Displacement.chk");  
 
     }
+    template <unsigned int FEOrder, unsigned int FEOrderElectro>
+    double
+    molecularDynamicsClass<FEOrder, FEOrderElectro>:: NoseHoverExtendedLegrangian(std::vector<double> thermovelocity ,
+     std::vector<double> thermoposition   , std::vector<double> thermomass , double PE, double KE, double T)
+  {
+    double Hnose = 0.0;
+    Hnose = (0.5*thermomass[0]*thermovelocity[0]*thermovelocity[0]+ 0.5*thermomass[1]*thermovelocity[1]*thermovelocity[1]
+           + 3*numberGlobalCharges*T*kB*thermoposition[0] +kB*T*thermoposition[1] )/haToeV + KE + PE;
+    return(Hnose);
+  
+  }
+
+
 
 #include "mdClass.inst.cc"
 }//nsmespace dftfe

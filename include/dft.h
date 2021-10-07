@@ -310,14 +310,14 @@ namespace dftfe
     void
     writeDomainAndAtomCoordinates();
     
-    std::vector<std::vector<double>>
-    getAtomLocationsfromdftptr();
+    void
+    getAtomLocationsfromdftptr(std::vector<std::vector<double>> &);
 
-    std::set<unsigned int>           
-    getAtomTypesfromdftptr();
+    void           
+    getAtomTypesfromdftptr(std::set<unsigned int> &);
 
-    std::vector<double>           
-    getForceonAtomsfromdftptr();   
+    void           
+    getForceonAtomsfromdftptr(std::vector<double> &);   
 
   private:
     /**

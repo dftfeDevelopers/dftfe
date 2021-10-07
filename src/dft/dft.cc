@@ -4215,24 +4215,24 @@ namespace dftfe
   }
 
 template <unsigned int FEOrder, unsigned int FEOrderElectro>
-std::vector<std::vector<double>>
-dftClass<FEOrder, FEOrderElectro>::getAtomLocationsfromdftptr()
+void
+dftClass<FEOrder, FEOrderElectro>::getAtomLocationsfromdftptr(std::vector<std::vector<double>> & atomSites)
 {
-  return(atomLocations);
+  atomSites = atomLocations;
 } 
 
 template <unsigned int FEOrder, unsigned int FEOrderElectro>
-std::set<unsigned int> 
-dftClass<FEOrder, FEOrderElectro>::getAtomTypesfromdftptr()
+void
+dftClass<FEOrder, FEOrderElectro>::getAtomTypesfromdftptr(std::set<unsigned int> & atoms)
 {
-  return(atomTypes);
+ atoms = atomTypes;
 } 
 
 template <unsigned int FEOrder, unsigned int FEOrderElectro>
-std::vector<double>
-dftClass<FEOrder, FEOrderElectro>::getForceonAtomsfromdftptr()
+void
+dftClass<FEOrder, FEOrderElectro>::getForceonAtomsfromdftptr(std::vector<double> & atomforces)
 {
-  return(forcePtr->getAtomsForces());
+  atomforces = (forcePtr->getAtomsForces());
 } 
 
 #include "dft.inst.cc"

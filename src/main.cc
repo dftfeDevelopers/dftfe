@@ -65,7 +65,9 @@ run_problem(const MPI_Comm &    mpi_comm_replica,
               dftfe::molecularDynamicsClass<n1,n2> *d_mdClassPtr;             
               d_mdClassPtr = 
               new dftfe::molecularDynamicsClass<n1,n2>(&problemFE, mpi_comm_replica);
-              d_mdClassPtr->runMD();}
+              d_mdClassPtr->runMD();
+              delete d_mdClassPtr;
+              }
     break;
     case 2:
               {dftfe::dftClass<n1, n2> problemFE(mpi_comm_replica,
