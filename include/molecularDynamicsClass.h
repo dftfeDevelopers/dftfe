@@ -229,7 +229,7 @@ namespace dftfe
 
         void writeTotalDisplacementFile(std::vector<dealii::Tensor<1, 3, double>>) ;  
 
-        double NoseHoverExtendedLegrangian(std::vector<double>  , std::vector<double>  , std::vector<double> , double, double, double  );                                    
+        double NoseHoverExtendedLagrangian(std::vector<double>  , std::vector<double>  , std::vector<double> , double, double, double  );                                    
         
 
 

@@ -425,7 +425,7 @@ namespace dftfe
         std::vector<double> ThermostatMass(2,0.0);
         std::vector<double> Thermostatvelocity(2,0.0);
         std::vector<double> Thermostatposition(2,0.0);  
-        std::vector<double> NoseHoverExtendedLegrangianvector(numberofSteps,0.0);    
+        std::vector<double> NoseHoverExtendedLagrangianvector(numberofSteps,0.0);    
         nhctimeconstant = thermostatTimeConstant*timeStep;  
         if(restartFlag == 0)
         {
@@ -465,7 +465,7 @@ namespace dftfe
                                InternalEnergyVector[TimeIndex-startingTimeStep] -
                                EntropicEnergyVector[TimeIndex-startingTimeStep]; 
             TemperatureFromVelocities = 2.0/3.0/double(numberGlobalCharges-1)*KineticEnergy/(kB);  
-            NoseHoverExtendedLegrangianvector[TimeIndex-startingTimeStep] = NoseHoverExtendedLegrangian(Thermostatvelocity,Thermostatposition,ThermostatMass,
+            NoseHoverExtendedLagrangianvector[TimeIndex-startingTimeStep] = NoseHoverExtendedLagrangian(Thermostatvelocity,Thermostatposition,ThermostatMass,
                                                 KineticEnergyVector[TimeIndex-startingTimeStep],TotalEnergyVector[TimeIndex-startingTimeStep],TemperatureFromVelocities);                            
 
             //Based on verbose print required MD details...
@@ -487,8 +487,8 @@ namespace dftfe
               << std::endl;
               pcout << " Total Energy in Ha at timeIndex " << TimeIndex << " "
               << TotalEnergyVector[TimeIndex-startingTimeStep] << std::endl;
-              pcout << "Nose Hover Extended Legrangian  in Ha at timeIndex " << TimeIndex << " "
-              << NoseHoverExtendedLegrangianvector[TimeIndex-startingTimeStep] << std::endl;              
+              pcout << "Nose Hover Extended Lagrangian  in Ha at timeIndex " << TimeIndex << " "
+              << NoseHoverExtendedLagrangianvector[TimeIndex-startingTimeStep] << std::endl;              
               writeRestartFile(velocity,force,KineticEnergyVector,InternalEnergyVector,TotalEnergyVector,TimeIndex);
               writeRestartNHCfile(Thermostatvelocity,Thermostatposition, ThermostatMass );
             }
@@ -825,7 +825,7 @@ namespace dftfe
     }
     template <unsigned int FEOrder, unsigned int FEOrderElectro>
     double
-    molecularDynamicsClass<FEOrder, FEOrderElectro>:: NoseHoverExtendedLegrangian(std::vector<double> thermovelocity ,
+    molecularDynamicsClass<FEOrder, FEOrderElectro>:: NoseHoverExtendedLagrangian(std::vector<double> thermovelocity ,
      std::vector<double> thermoposition   , std::vector<double> thermomass , double PE, double KE, double T)
   {
     double Hnose = 0.0;
