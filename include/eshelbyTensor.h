@@ -164,6 +164,18 @@ namespace dftfe
       const unsigned int               numBlockedEigenvectors,
       const std::vector<unsigned int> &nonlocalAtomsCompactSupportList);
 
+    /// Nonlocal pseudopotential force contribution (for complex case)
+    Tensor<1, 3, VectorizedArray<double>>
+    getFnl(const dealii::AlignedVector<
+             dealii::AlignedVector<Tensor<1, 2, VectorizedArray<double>>>>
+             &zetaDeltaV,
+           const dealii::AlignedVector<
+             Tensor<1, 3, Tensor<1, 2, VectorizedArray<double>>>>
+             &projectorKetTimesPsiTimesVTimesPartOccContractionGradPsi,
+           const std::vector<bool> &        isAtomInCell,
+           const std::vector<unsigned int> &nonlocalPseudoWfcsAccum);
+
+
     /// Nonlocal pseudopotential force contribution (for real case)
     Tensor<1, 3, VectorizedArray<double>>
     getFnl(const dealii::AlignedVector<
@@ -180,6 +192,19 @@ namespace dftfe
       const dealii::AlignedVector<Tensor<1, 3, VectorizedArray<double>>>
         &projectorKetTimesPsiTimesVTimesPartOccContractionGradPsi,
       const unsigned int startingId);
+
+    /// Nonlocal pseudopotential force contribution (for complex case)
+    Tensor<1, 3, VectorizedArray<double>>
+    getFnlAtom(
+      const dealii::AlignedVector<Tensor<1, 2, VectorizedArray<double>>>
+        &zetaDeltaV,
+      const dealii::AlignedVector<
+        Tensor<1, 3, Tensor<1, 2, VectorizedArray<double>>>>
+        &projectorKetTimesPsiTimesVTimesPartOccContractionGradPsi,
+      const dealii::AlignedVector<Tensor<1, 2, VectorizedArray<double>>>
+        &projectorKetTimesPsiTimesVTimesPartOccContractionPsi,
+      const Tensor<1, 3, VectorizedArray<double>> kcoord,
+      const unsigned int                          startingId);
 
     /// Nonlocal pseudopotential force contribution (for complex case)
     Tensor<1, 3, VectorizedArray<double>>

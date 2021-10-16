@@ -367,6 +367,69 @@ namespace dftfe
 
     Tensor<1, 3, VectorizedArray<double>>
     getFnl(const dealii::AlignedVector<
+             dealii::AlignedVector<Tensor<1, 2, VectorizedArray<double>>>>
+             &zetaDeltaV,
+           const dealii::AlignedVector<
+             Tensor<1, 3, Tensor<1, 2, VectorizedArray<double>>>>
+             &projectorKetTimesPsiTimesVTimesPartOccContractionGradPsi,
+           const std::vector<bool> &        isAtomInCell,
+           const std::vector<unsigned int> &nonlocalPseudoWfcsAccum)
+    {
+      Tensor<1, 3, VectorizedArray<double>> zeroTensor;
+      for (unsigned int idim = 0; idim < 3; idim++)
+        zeroTensor[idim] = make_vectorized_array(0.0);
+
+      Tensor<1, 3, VectorizedArray<double>> Fnl  = zeroTensor;
+      VectorizedArray<double>               four = make_vectorized_array(4.0);
+
+
+      for (unsigned int iAtomNonLocal = 0; iAtomNonLocal < zetaDeltaV.size();
+           ++iAtomNonLocal)
+        {
+          if (!isAtomInCell[iAtomNonLocal])
+            continue;
+
+          const int numberPseudoWaveFunctions =
+            zetaDeltaV[iAtomNonLocal].size();
+          const dealii::AlignedVector<Tensor<1, 2, VectorizedArray<double>>>
+            &zetaDeltaVAtom = zetaDeltaV[iAtomNonLocal];
+
+          Tensor<1, 3, VectorizedArray<double>> tempF = zeroTensor;
+          for (unsigned int iPseudoWave = 0;
+               iPseudoWave < numberPseudoWaveFunctions;
+               ++iPseudoWave)
+            {
+              Tensor<1, 3, VectorizedArray<double>>
+                pKetPsiContractionGradPsiReal;
+              Tensor<1, 3, VectorizedArray<double>>
+                pKetPsiContractionGradPsiImag;
+              for (unsigned int idim = 0; idim < 3; ++idim)
+                {
+                  pKetPsiContractionGradPsiReal[idim] =
+                    projectorKetTimesPsiTimesVTimesPartOccContractionGradPsi
+                      [nonlocalPseudoWfcsAccum[iAtomNonLocal] + iPseudoWave]
+                      [idim][0];
+                  pKetPsiContractionGradPsiImag[idim] =
+                    projectorKetTimesPsiTimesVTimesPartOccContractionGradPsi
+                      [nonlocalPseudoWfcsAccum[iAtomNonLocal] + iPseudoWave]
+                      [idim][1];
+                }
+              const VectorizedArray<double> zdvR =
+                zetaDeltaV[iAtomNonLocal][iPseudoWave][0];
+              const VectorizedArray<double> zdvI =
+                zetaDeltaV[iAtomNonLocal][iPseudoWave][1];
+
+              tempF -= (pKetPsiContractionGradPsiReal * zdvR -
+                        pKetPsiContractionGradPsiImag * zdvI);
+            }
+          Fnl += four * tempF;
+        }
+      return Fnl;
+    }
+
+
+    Tensor<1, 3, VectorizedArray<double>>
+    getFnl(const dealii::AlignedVector<
              dealii::AlignedVector<VectorizedArray<double>>> &zetaDeltaV,
            const dealii::AlignedVector<Tensor<1, 3, VectorizedArray<double>>>
              &projectorKetTimesPsiTimesVTimesPartOccContractionGradPsi,
@@ -430,14 +493,65 @@ namespace dftfe
       return F;
     }
 
-    Tensor<1, 3, VectorizedArray<double>>
-    getFPSPLocal(const VectorizedArray<double>                rho,
-                 const Tensor<1, 3, VectorizedArray<double>> &gradPseudoVLoc,
-                 const Tensor<1, 3, VectorizedArray<double>> &gradPhiExt)
 
+    Tensor<1, 3, VectorizedArray<double>>
+    getFnlAtom(
+      const dealii::AlignedVector<Tensor<1, 2, VectorizedArray<double>>>
+        &zetaDeltaV,
+      const dealii::AlignedVector<
+        Tensor<1, 3, Tensor<1, 2, VectorizedArray<double>>>>
+        &projectorKetTimesPsiTimesVTimesPartOccContractionGradPsi,
+      const dealii::AlignedVector<Tensor<1, 2, VectorizedArray<double>>>
+        &projectorKetTimesPsiTimesVTimesPartOccContractionPsi,
+      const Tensor<1, 3, VectorizedArray<double>> kcoord,
+      const unsigned int                          startingId)
     {
-      return rho * (gradPseudoVLoc - gradPhiExt);
+      Tensor<1, 3, VectorizedArray<double>> zeroTensor;
+      for (unsigned int idim = 0; idim < 3; idim++)
+        zeroTensor[idim] = make_vectorized_array(0.0);
+
+      Tensor<1, 3, VectorizedArray<double>> F    = zeroTensor;
+      VectorizedArray<double>               four = make_vectorized_array(4.0);
+
+
+      const unsigned int numberPseudoWaveFunctions = zetaDeltaV.size();
+      for (unsigned int iPseudoWave = 0;
+           iPseudoWave < numberPseudoWaveFunctions;
+           ++iPseudoWave)
+        {
+          Tensor<1, 3, VectorizedArray<double>> pKetPsiContractionGradPsiReal;
+          Tensor<1, 3, VectorizedArray<double>> pKetPsiContractionGradPsiImag;
+          for (unsigned int idim = 0; idim < 3; ++idim)
+            {
+              pKetPsiContractionGradPsiReal[idim] =
+                projectorKetTimesPsiTimesVTimesPartOccContractionGradPsi
+                  [startingId + iPseudoWave][idim][0];
+              pKetPsiContractionGradPsiImag[idim] =
+                projectorKetTimesPsiTimesVTimesPartOccContractionGradPsi
+                  [startingId + iPseudoWave][idim][1];
+            }
+
+          const VectorizedArray<double> pKetPsiContractionPsiReal =
+            projectorKetTimesPsiTimesVTimesPartOccContractionPsi[startingId +
+                                                                 iPseudoWave]
+                                                                [0];
+          const VectorizedArray<double> pKetPsiContractionPsiImag =
+            projectorKetTimesPsiTimesVTimesPartOccContractionPsi[startingId +
+                                                                 iPseudoWave]
+                                                                [1];
+          const VectorizedArray<double> zdvR = zetaDeltaV[iPseudoWave][0];
+          const VectorizedArray<double> zdvI = zetaDeltaV[iPseudoWave][1];
+
+          F -= four * ((pKetPsiContractionGradPsiReal * zdvR -
+                        pKetPsiContractionGradPsiImag * zdvI) +
+                       (pKetPsiContractionPsiReal * zdvI +
+                        pKetPsiContractionPsiImag * zdvR) *
+                         kcoord);
+        }
+
+      return F;
     }
+
 
     Tensor<1, 3, VectorizedArray<double>>
     getFnlAtom(
@@ -513,6 +627,16 @@ namespace dftfe
         }
 
       return F;
+    }
+
+
+    Tensor<1, 3, VectorizedArray<double>>
+    getFPSPLocal(const VectorizedArray<double>                rho,
+                 const Tensor<1, 3, VectorizedArray<double>> &gradPseudoVLoc,
+                 const Tensor<1, 3, VectorizedArray<double>> &gradPhiExt)
+
+    {
+      return rho * (gradPseudoVLoc - gradPhiExt);
     }
 
     Tensor<1, 3, VectorizedArray<double>>

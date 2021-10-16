@@ -735,8 +735,8 @@ namespace dftfe
 
     d_elpaScala.processGridELPASetup(d_numEigenValues,
                                      d_numEigenValuesRR,
-				     interBandGroupComm,
-				     interpoolcomm);
+                                     interBandGroupComm,
+                                     interpoolcomm);
 
     MPI_Barrier(MPI_COMM_WORLD);
     computingTimerStandard.leave_subsection("Atomic system initialization");
