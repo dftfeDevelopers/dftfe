@@ -846,8 +846,7 @@ namespace dftfe
       const unsigned int                           numberWaveFunctions,
       std::vector<std::vector<dataTypes::number>> &projectorKetTimesPsiTimesV,
       const unsigned int                           kPointIndex,
-      const std::vector<double> &                  partialOccupancies,
-      const bool                                   oldRoute = false);
+      const std::vector<double> &                  partialOccupancies);
 
     /// Parallel distributed vector field which stores the configurational force
     /// for each fem node corresponding to linear shape function generator (see

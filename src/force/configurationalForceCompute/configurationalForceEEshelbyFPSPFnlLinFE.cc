@@ -775,7 +775,6 @@ forceClass<FEOrder, FEOrderElectro>::
                                 for (unsigned int q = 0; q < numQuadPointsNLP;
                                      ++q)
                                   {
-                                    // FIXME
                                     const unsigned int id =
                                       ikPoint * numQuadPointsNLP *
                                         currentBlockSize +
