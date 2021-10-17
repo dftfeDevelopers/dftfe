@@ -86,20 +86,6 @@ forceClass<FEOrder, FEOrderElectro>::
     forceEvalNLP(matrixFreeData,
                  d_forceDofHandlerIndex,
                  dftPtr->d_nlpspQuadratureId);
-#ifdef USE_COMPLEX
-  FEEvaluation<3,
-               1,
-               C_num1DQuad<C_rhoNodalPolyOrder<FEOrder, FEOrderElectro>()>(),
-               3>
-    forceEvalKPoints(matrixFreeData,
-                     d_forceDofHandlerIndex,
-                     dftPtr->d_densityQuadratureId);
-  FEEvaluation<3, 1, C_num1DQuadNLPSP<FEOrder>() * C_numCopies1DQuadNLPSP(), 3>
-    forceEvalKPointsNLP(matrixFreeData,
-                        d_forceDofHandlerIndex,
-                        dftPtr->d_nlpspQuadratureId);
-#endif
-
 
 #ifdef USE_COMPLEX
   FEEvaluation<3,
@@ -150,15 +136,15 @@ forceClass<FEOrder, FEOrderElectro>::
   zeroTensor1[1] = make_vectorized_array(0.0);
   Tensor<1, 2, Tensor<1, 3, VectorizedArray<double>>> zeroTensor2;
   Tensor<1, 3, VectorizedArray<double>>               zeroTensor3;
-  Tensor<1, 3, Tensor<1, 2, VectorizedArray<double>>> zeroTensor3Complex;
+  Tensor<1, 2, Tensor<1, 3, VectorizedArray<double>>> zeroTensor3Complex;
   Tensor<2, 3, VectorizedArray<double>>               zeroTensor4;
   for (unsigned int idim = 0; idim < 3; idim++)
     {
       zeroTensor2[0][idim]        = make_vectorized_array(0.0);
       zeroTensor2[1][idim]        = make_vectorized_array(0.0);
       zeroTensor3[idim]           = make_vectorized_array(0.0);
-      zeroTensor3Complex[idim][0] = make_vectorized_array(0.0);
-      zeroTensor3Complex[idim][1] = make_vectorized_array(0.0);
+      zeroTensor3Complex[0][idim] = make_vectorized_array(0.0);
+      zeroTensor3Complex[1][idim] = make_vectorized_array(0.0);
     }
   for (unsigned int idim = 0; idim < 3; idim++)
     {
@@ -516,11 +502,11 @@ forceClass<FEOrder, FEOrderElectro>::
         projectorKetTimesPsiTimesVTimesPartOcc(numKPoints);
 #ifdef USE_COMPLEX
       dealii::AlignedVector<dealii::AlignedVector<
-        Tensor<1, 3, Tensor<1, 2, VectorizedArray<double>>>>>
+        Tensor<1, 2, Tensor<1, 3, VectorizedArray<double>>>>>
         projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuads(
           numKPoints * numMacroCells * numQuadPointsNLP,
           dealii::AlignedVector<
-            Tensor<1, 3, Tensor<1, 2, VectorizedArray<double>>>>(
+            Tensor<1, 2, Tensor<1, 3, VectorizedArray<double>>>>(
             numPseudo, zeroTensor3Complex));
 
       dealii::AlignedVector<
@@ -699,9 +685,6 @@ forceClass<FEOrder, FEOrderElectro>::
                        ++cell)
                     {
                       forceEval.reinit(cell);
-#ifdef USE_COMPLEX
-                      forceEvalKPoints.reinit(cell);
-#endif
 
                       psiEval.reinit(cell);
 
@@ -847,8 +830,8 @@ forceClass<FEOrder, FEOrderElectro>::
 
                                   dealii::AlignedVector<Tensor<
                                     1,
-                                    3,
-                                    Tensor<1, 2, VectorizedArray<double>>>>
+                                    2,
+                                    Tensor<1, 3, VectorizedArray<double>>>>
                                     &tempContractPketPsiWithGradPsi =
                                       projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuads
                                         [kPoint *
@@ -906,34 +889,25 @@ forceClass<FEOrder, FEOrderElectro>::
                                                               currentBlockSize +
                                                             iEigenVec][1];
 
-                                              Tensor<1,
-                                                     3,
-                                                     VectorizedArray<double>>
-                                                gradPsiReal;
-                                              Tensor<1,
-                                                     3,
-                                                     VectorizedArray<double>>
-                                                gradPsiImag;
+                                              const Tensor<
+                                                1,
+                                                3,
+                                                VectorizedArray<double>>
+                                                &gradPsiReal = gradPsiQuadsNLP
+                                                  [kPoint * numQuadPointsNLP *
+                                                     currentBlockSize +
+                                                   q * currentBlockSize +
+                                                   iEigenVec][0];
+                                              const Tensor<
+                                                1,
+                                                3,
+                                                VectorizedArray<double>>
+                                                &gradPsiImag = gradPsiQuadsNLP
+                                                  [kPoint * numQuadPointsNLP *
+                                                     currentBlockSize +
+                                                   q * currentBlockSize +
+                                                   iEigenVec][1];
 
-                                              for (unsigned int idim = 0;
-                                                   idim < 3;
-                                                   idim++)
-                                                {
-                                                  gradPsiReal[idim] =
-                                                    gradPsiQuadsNLP
-                                                      [kPoint *
-                                                         numQuadPointsNLP *
-                                                         currentBlockSize +
-                                                       q * currentBlockSize +
-                                                       iEigenVec][0][idim];
-                                                  gradPsiImag[idim] =
-                                                    gradPsiQuadsNLP
-                                                      [kPoint *
-                                                         numQuadPointsNLP *
-                                                         currentBlockSize +
-                                                       q * currentBlockSize +
-                                                       iEigenVec][1][idim];
-                                                }
 
                                               const VectorizedArray<double>
                                                 pketPsiReal =
@@ -950,23 +924,15 @@ forceClass<FEOrder, FEOrderElectro>::
                                                             iEigenVec]
                                                       .imag());
 
-                                              for (unsigned int idim = 0;
-                                                   idim < 3;
-                                                   idim++)
-                                                {
-                                                  tempContractPketPsiWithGradPsi
-                                                    [startingId + ipsp][idim]
-                                                    [0] += gradPsiReal[idim] *
-                                                             pketPsiReal +
-                                                           gradPsiImag[idim] *
-                                                             pketPsiImag;
-                                                  tempContractPketPsiWithGradPsi
-                                                    [startingId + ipsp][idim]
-                                                    [1] += gradPsiReal[idim] *
-                                                             pketPsiImag -
-                                                           gradPsiImag[idim] *
-                                                             pketPsiReal;
-                                                }
+
+                                              tempContractPketPsiWithGradPsi
+                                                [startingId + ipsp][0] +=
+                                                gradPsiReal * pketPsiReal +
+                                                gradPsiImag * pketPsiImag;
+                                              tempContractPketPsiWithGradPsi
+                                                [startingId + ipsp][1] +=
+                                                gradPsiReal * pketPsiImag -
+                                                gradPsiImag * pketPsiReal;
 
                                               tempContractPketPsiWithPsi
                                                 [startingId + ipsp][0] +=
@@ -994,38 +960,13 @@ forceClass<FEOrder, FEOrderElectro>::
                                     }         // non trivial non local atom ids
                                 }             // nlp quad loop
                             }                 // k point loop
-                        }
+                        }                     // is pseudopotential check
 
-
-                      if (isPseudopotential)
-                        {
-                          // compute FnlGammaAtoms  (contibution due to
-                          // Gamma(Rj))
-#ifdef USE_COMPLEX
-                          /*
-                          FnlGammaAtomsElementalContribution(
-                            forceContributionFnlGammaAtoms,
-                            forceEval,
-                            forceEvalNLP,
-                            cell,
-                            ZetaDeltaVQuads,
-                            projectorKetTimesPsiTimesVTimesPartOcc,
-                            psiQuadsNLP,
-                            gradPsiQuadsNLP,
-                            blockedEigenValues,
-                            macroIdToNonlocalAtomsSetMap[cell]);
-                          */
-#else
-
-#endif
-                        } // is pseudopotential check
 
                       for (unsigned int q = 0; q < numQuadPoints; ++q)
                         {
-                          Tensor<2, 3, VectorizedArray<double>> E = zeroTensor4;
-
 #ifdef USE_COMPLEX
-                          Tensor<2, 3, VectorizedArray<double>> EKPoints =
+                          Tensor<2, 3, VectorizedArray<double>> E =
                             spinPolarizedFactorVect *
                             eshelbyTensor::
                               getELocWfcEshelbyTensorPeriodicKPoints(
@@ -1039,79 +980,27 @@ forceClass<FEOrder, FEOrderElectro>::
                                 dftPtr->fermiEnergy,
                                 dftParameters::TVal);
 #else
-                        E += spinPolarizedFactorVect *
-                             eshelbyTensor::getELocWfcEshelbyTensorNonPeriodic(
-                               psiQuads.begin() + q * currentBlockSize,
-                               gradPsiQuads.begin() + q * currentBlockSize,
-                               blockedEigenValues[0],
-                               blockedPartialOccupancies[0]);
+                        Tensor<2, 3, VectorizedArray<double>> E =
+                          spinPolarizedFactorVect *
+                          eshelbyTensor::getELocWfcEshelbyTensorNonPeriodic(
+                            psiQuads.begin() + q * currentBlockSize,
+                            gradPsiQuads.begin() + q * currentBlockSize,
+                            blockedEigenValues[0],
+                            blockedPartialOccupancies[0]);
 #endif
                           forceEval.submit_gradient(E, q);
-#ifdef USE_COMPLEX
-                          forceEvalKPoints.submit_gradient(EKPoints, q);
-#endif
                         } // quad point loop
-
-                      if (isPseudopotential)
-                        for (unsigned int q = 0; q < numQuadPointsNLP; ++q)
-                          {
-#ifdef USE_COMPLEX
-                            /*
-                            Tensor<1, 3, VectorizedArray<double>> FKPoints =
-                              spinPolarizedFactorVect *
-                              eshelbyTensor::getFnl(
-                                ZetaDeltaVQuads[cell * numQuadPointsNLP + q],
-                                projectorKetTimesPsiTimesVTimesPartOcc,
-                                gradPsiQuadsNLP.begin() +
-                                  q * currentBlockSize * numKPoints,
-                                dftPtr->d_kPointWeights,
-                                currentBlockSize,
-                                macroIdToNonlocalAtomsSetMap[cell]);
-                            forceEvalKPointsNLP.submit_value(FKPoints, q);
-                            */
-#else
-
-#endif
-                          } // nonlocal psp quad points loop
 
 
                       forceEval.integrate(false, true);
 #ifdef USE_COMPLEX
-                      forceEvalKPoints.integrate(false, true);
-#endif
-                      /*
-                      if (isPseudopotential)
-                        {
-#ifdef USE_COMPLEX
-                          forceEvalKPoints.integrate(false, true);
-                          forceEvalKPointsNLP.integrate(true, false);
-#endif
-                        }
-                      else
-                        {
-#ifdef USE_COMPLEX
-                          forceEvalKPoints.integrate(false, true);
-#endif
-                        }
-                        */
-
                       forceEval.distribute_local_to_global(
-                        d_configForceVectorLinFE); // also takes care of
-                                                   // constraints
-#ifdef USE_COMPLEX
-                      forceEvalKPoints.distribute_local_to_global(
                         d_configForceVectorLinFEKPoints);
+#else
+                    forceEval.distribute_local_to_global(
+                      d_configForceVectorLinFE); // also takes care of
+                                                 // constraints
 #endif
-
-                      /*
-                      if (isPseudopotential)
-                        {
-#ifdef USE_COMPLEX
-                          forceEvalKPointsNLP.distribute_local_to_global(
-                            d_configForceVectorLinFEKPoints);
-#endif
-                        }
-                      */
                     } // macro cell loop
                 }     // band parallelization loop
             }         // wavefunction block loop
@@ -1186,9 +1075,6 @@ forceClass<FEOrder, FEOrderElectro>::
         for (unsigned int cell = 0; cell < matrixFreeData.n_macro_cells();
              ++cell)
           {
-#ifdef USE_COMPLEX
-            forceEvalKPointsNLP.reinit(cell);
-#endif
             forceEvalNLP.reinit(cell);
 
             const unsigned int numNonLocalAtomsCurrentProc =
@@ -1264,13 +1150,13 @@ forceClass<FEOrder, FEOrderElectro>::
                         isAtomInCell,
                         nonlocalPseudoWfcsAccum);
 
-                    forceEvalKPointsNLP.submit_value(F, q);
+                    forceEvalNLP.submit_value(F, q);
                   } // nonlocal psp quad points loop
 
 
-                forceEvalKPointsNLP.integrate(true, false);
+                forceEvalNLP.integrate(true, false);
 
-                forceEvalKPointsNLP.distribute_local_to_global(
+                forceEvalNLP.distribute_local_to_global(
                   d_configForceVectorLinFEKPoints);
               } // k point loop
 #else

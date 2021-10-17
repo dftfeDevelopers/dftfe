@@ -170,7 +170,7 @@ namespace dftfe
              dealii::AlignedVector<Tensor<1, 2, VectorizedArray<double>>>>
              &zetaDeltaV,
            const dealii::AlignedVector<
-             Tensor<1, 3, Tensor<1, 2, VectorizedArray<double>>>>
+             Tensor<1, 2, Tensor<1, 3, VectorizedArray<double>>>>
              &projectorKetTimesPsiTimesVTimesPartOccContractionGradPsi,
            const std::vector<bool> &        isAtomInCell,
            const std::vector<unsigned int> &nonlocalPseudoWfcsAccum);
@@ -199,7 +199,7 @@ namespace dftfe
       const dealii::AlignedVector<Tensor<1, 2, VectorizedArray<double>>>
         &zetaDeltaV,
       const dealii::AlignedVector<
-        Tensor<1, 3, Tensor<1, 2, VectorizedArray<double>>>>
+        Tensor<1, 2, Tensor<1, 3, VectorizedArray<double>>>>
         &projectorKetTimesPsiTimesVTimesPartOccContractionGradPsi,
       const dealii::AlignedVector<Tensor<1, 2, VectorizedArray<double>>>
         &projectorKetTimesPsiTimesVTimesPartOccContractionPsi,

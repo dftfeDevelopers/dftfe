@@ -370,7 +370,7 @@ namespace dftfe
              dealii::AlignedVector<Tensor<1, 2, VectorizedArray<double>>>>
              &zetaDeltaV,
            const dealii::AlignedVector<
-             Tensor<1, 3, Tensor<1, 2, VectorizedArray<double>>>>
+             Tensor<1, 2, Tensor<1, 3, VectorizedArray<double>>>>
              &projectorKetTimesPsiTimesVTimesPartOccContractionGradPsi,
            const std::vector<bool> &        isAtomInCell,
            const std::vector<unsigned int> &nonlocalPseudoWfcsAccum)
@@ -399,21 +399,15 @@ namespace dftfe
                iPseudoWave < numberPseudoWaveFunctions;
                ++iPseudoWave)
             {
-              Tensor<1, 3, VectorizedArray<double>>
-                pKetPsiContractionGradPsiReal;
-              Tensor<1, 3, VectorizedArray<double>>
-                pKetPsiContractionGradPsiImag;
-              for (unsigned int idim = 0; idim < 3; ++idim)
-                {
-                  pKetPsiContractionGradPsiReal[idim] =
-                    projectorKetTimesPsiTimesVTimesPartOccContractionGradPsi
-                      [nonlocalPseudoWfcsAccum[iAtomNonLocal] + iPseudoWave]
-                      [idim][0];
-                  pKetPsiContractionGradPsiImag[idim] =
-                    projectorKetTimesPsiTimesVTimesPartOccContractionGradPsi
-                      [nonlocalPseudoWfcsAccum[iAtomNonLocal] + iPseudoWave]
-                      [idim][1];
-                }
+              const Tensor<1, 3, VectorizedArray<double>>
+                &pKetPsiContractionGradPsiReal =
+                  projectorKetTimesPsiTimesVTimesPartOccContractionGradPsi
+                    [nonlocalPseudoWfcsAccum[iAtomNonLocal] + iPseudoWave][0];
+              const Tensor<1, 3, VectorizedArray<double>>
+                &pKetPsiContractionGradPsiImag =
+                  projectorKetTimesPsiTimesVTimesPartOccContractionGradPsi
+                    [nonlocalPseudoWfcsAccum[iAtomNonLocal] + iPseudoWave][1];
+
               const VectorizedArray<double> zdvR =
                 zetaDeltaV[iAtomNonLocal][iPseudoWave][0];
               const VectorizedArray<double> zdvI =
@@ -499,7 +493,7 @@ namespace dftfe
       const dealii::AlignedVector<Tensor<1, 2, VectorizedArray<double>>>
         &zetaDeltaV,
       const dealii::AlignedVector<
-        Tensor<1, 3, Tensor<1, 2, VectorizedArray<double>>>>
+        Tensor<1, 2, Tensor<1, 3, VectorizedArray<double>>>>
         &projectorKetTimesPsiTimesVTimesPartOccContractionGradPsi,
       const dealii::AlignedVector<Tensor<1, 2, VectorizedArray<double>>>
         &projectorKetTimesPsiTimesVTimesPartOccContractionPsi,
@@ -519,17 +513,14 @@ namespace dftfe
            iPseudoWave < numberPseudoWaveFunctions;
            ++iPseudoWave)
         {
-          Tensor<1, 3, VectorizedArray<double>> pKetPsiContractionGradPsiReal;
-          Tensor<1, 3, VectorizedArray<double>> pKetPsiContractionGradPsiImag;
-          for (unsigned int idim = 0; idim < 3; ++idim)
-            {
-              pKetPsiContractionGradPsiReal[idim] =
-                projectorKetTimesPsiTimesVTimesPartOccContractionGradPsi
-                  [startingId + iPseudoWave][idim][0];
-              pKetPsiContractionGradPsiImag[idim] =
-                projectorKetTimesPsiTimesVTimesPartOccContractionGradPsi
-                  [startingId + iPseudoWave][idim][1];
-            }
+          const Tensor<1, 3, VectorizedArray<double>>
+            &pKetPsiContractionGradPsiReal =
+              projectorKetTimesPsiTimesVTimesPartOccContractionGradPsi
+                [startingId + iPseudoWave][0];
+          const Tensor<1, 3, VectorizedArray<double>>
+            &pKetPsiContractionGradPsiImag =
+              projectorKetTimesPsiTimesVTimesPartOccContractionGradPsi
+                [startingId + iPseudoWave][1];
 
           const VectorizedArray<double> pKetPsiContractionPsiReal =
             projectorKetTimesPsiTimesVTimesPartOccContractionPsi[startingId +

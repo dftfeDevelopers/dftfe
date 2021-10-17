@@ -36,7 +36,7 @@ forceClass<FEOrder, FEOrderElectro>::FnlGammaAtomsElementalContribution(
     dealii::AlignedVector<Tensor<1, 2, VectorizedArray<double>>>>>
     &zetaDeltaVQuads,
   const dealii::AlignedVector<
-    dealii::AlignedVector<Tensor<1, 3, Tensor<1, 2, VectorizedArray<double>>>>>
+    dealii::AlignedVector<Tensor<1, 2, Tensor<1, 3, VectorizedArray<double>>>>>
     &projectorKetTimesPsiTimesVTimesPartOccContractionGradPsi,
   const dealii::AlignedVector<
     dealii::AlignedVector<Tensor<1, 2, VectorizedArray<double>>>>
