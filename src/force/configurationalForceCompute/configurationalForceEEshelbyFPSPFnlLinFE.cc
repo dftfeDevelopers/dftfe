@@ -239,7 +239,7 @@ forceClass<FEOrder, FEOrderElectro>::
   const unsigned int numPhysicalCells = matrixFreeData.n_physical_cells();
 
 
-#if defined(DFTFE_WITH_GPU) && !defined(USE_COMPLEX)
+#if defined(DFTFE_WITH_GPU)
   AssertThrow(
     numMacroCells == numPhysicalCells,
     ExcMessage(
@@ -490,13 +490,22 @@ forceClass<FEOrder, FEOrderElectro>::
        spinIndex < (1 + dftParameters::spinPolarized);
        ++spinIndex)
     {
-#if defined(DFTFE_WITH_GPU) && !defined(USE_COMPLEX)
-      std::vector<double>
+#if defined(DFTFE_WITH_GPU)
+      std::vector<dataTypes::number>
         projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuadsFlattened(
-          nonTrivialNonLocalIdsAllCells.size() * numQuadPointsNLP * 3, 0.0);
-      std::vector<double> elocWfcEshelbyTensorQuadValuesH(numPhysicalCells *
-                                                            numQuadPoints * 6,
-                                                          0.0);
+          numKPoints * nonTrivialNonLocalIdsAllCells.size() * numQuadPointsNLP *
+            3,
+          dataTypes::number(0.0));
+
+#  ifdef USE_COMPLEX
+      std::vector<dataTypes::number>
+        projectorKetTimesPsiTimesVTimesPartOccContractionPsiQuadsFlattened(
+          numKPoints * nonTrivialNonLocalIdsAllCells.size() * numQuadPointsNLP,
+          dataTypes::number(0.0));
+#  endif
+
+      std::vector<double> elocWfcEshelbyTensorQuadValuesH(
+        numKPoints * numPhysicalCells * numQuadPoints * 6, 0.0);
 #endif
       std::vector<std::vector<std::vector<dataTypes::number>>>
         projectorKetTimesPsiTimesVTimesPartOcc(numKPoints);
@@ -525,32 +534,47 @@ forceClass<FEOrder, FEOrderElectro>::
             numPseudo, zeroTensor3));
 #endif
 
-#if defined(DFTFE_WITH_GPU) && !defined(USE_COMPLEX)
+#if defined(DFTFE_WITH_GPU)
       if (dftParameters::useGPU)
         {
           MPI_Barrier(MPI_COMM_WORLD);
           double gpu_time = MPI_Wtime();
 
-          forceCUDA::gpuPortedForceKernelsAllH(
-            kohnShamDFTEigenOperator,
-            dftPtr->d_eigenVectorsFlattenedCUDA.begin() +
-              spinIndex * localVectorSize * numEigenVectors,
-            &dftPtr->eigenValues[0][spinIndex * numEigenVectors],
-            &partialOccupancies[0][spinIndex * numEigenVectors],
-            &nonTrivialIdToElemIdMap[0],
-            &projecterKetTimesFlattenedVectorLocalIds[0],
-            numEigenVectors,
-            numPhysicalCells,
-            numQuadPoints,
-            numQuadPointsNLP,
-            dftPtr->matrix_free_data.get_dofs_per_cell(
-              dftPtr->d_densityDofHandlerIndex),
-            nonTrivialNonLocalIdsAllCells.size(),
-            &elocWfcEshelbyTensorQuadValuesH[0],
-            &projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuadsFlattened
-              [0],
-            dftPtr->interBandGroupComm,
-            isPseudopotential);
+          for (unsigned int kPoint = 0; kPoint < numKPoints; ++kPoint)
+            {
+              forceCUDA::gpuPortedForceKernelsAllH(
+                kohnShamDFTEigenOperator,
+                dftPtr->d_eigenVectorsFlattenedCUDA.begin() +
+                  spinIndex * localVectorSize * numEigenVectors,
+                &dftPtr->eigenValues[kPoint][spinIndex * numEigenVectors],
+                &partialOccupancies[kPoint][spinIndex * numEigenVectors],
+#  ifdef USE_COMPLEX
+                dftPtr->d_kPointCoordinates[kPoint * 3 + 0],
+                dftPtr->d_kPointCoordinates[kPoint * 3 + 1],
+                dftPtr->d_kPointCoordinates[kPoint * 3 + 2],
+#  endif
+                &nonTrivialIdToElemIdMap[0],
+                &projecterKetTimesFlattenedVectorLocalIds[0],
+                numEigenVectors,
+                numPhysicalCells,
+                numQuadPoints,
+                numQuadPointsNLP,
+                dftPtr->matrix_free_data.get_dofs_per_cell(
+                  dftPtr->d_densityDofHandlerIndex),
+                nonTrivialNonLocalIdsAllCells.size(),
+                &elocWfcEshelbyTensorQuadValuesH[kPoint * numPhysicalCells *
+                                                 numQuadPoints * 6],
+                &projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuadsFlattened
+                  [kPoint * nonTrivialNonLocalIdsAllCells.size() *
+                   numQuadPointsNLP * 3],
+#  ifdef USE_COMPLEX
+                &projectorKetTimesPsiTimesVTimesPartOccContractionPsiQuadsFlattened
+                  [kPoint * nonTrivialNonLocalIdsAllCells.size() *
+                   numQuadPointsNLP],
+#  endif
+                dftPtr->interBandGroupComm,
+                isPseudopotential);
+            }
 
           MPI_Barrier(MPI_COMM_WORLD);
           gpu_time = MPI_Wtime() - gpu_time;
@@ -1005,68 +1029,152 @@ forceClass<FEOrder, FEOrderElectro>::
             }         // wavefunction block loop
         }
 
-#if defined(DFTFE_WITH_GPU) && !defined(USE_COMPLEX)
+#if defined(DFTFE_WITH_GPU)
       if (dftParameters::useGPU)
         {
           for (unsigned int cell = 0; cell < matrixFreeData.n_macro_cells();
                ++cell)
             {
               forceEval.reinit(cell);
-
-              for (unsigned int q = 0; q < numQuadPoints; ++q)
+              for (unsigned int kPoint = 0; kPoint < numKPoints; ++kPoint)
                 {
-                  Tensor<2, 3, VectorizedArray<double>> E;
-                  const unsigned int                    physicalCellId =
-                    macroCellIdToNormalCellIdMap[cell];
-                  const unsigned int id = physicalCellId * numQuadPoints + q;
-                  E[0][0]               = make_vectorized_array(
-                    elocWfcEshelbyTensorQuadValuesH[id * 6 + 0]);
-                  E[1][0] = make_vectorized_array(
-                    elocWfcEshelbyTensorQuadValuesH[id * 6 + 1]);
-                  E[1][1] = make_vectorized_array(
-                    elocWfcEshelbyTensorQuadValuesH[id * 6 + 2]);
-                  E[2][0] = make_vectorized_array(
-                    elocWfcEshelbyTensorQuadValuesH[id * 6 + 3]);
-                  E[2][1] = make_vectorized_array(
-                    elocWfcEshelbyTensorQuadValuesH[id * 6 + 4]);
-                  E[2][2] = make_vectorized_array(
-                    elocWfcEshelbyTensorQuadValuesH[id * 6 + 5]);
-                  E[0][1] = E[1][0];
-                  E[0][2] = E[2][0];
-                  E[1][2] = E[2][1];
-                  forceEval.submit_gradient(spinPolarizedFactorVect * E, q);
+                  for (unsigned int q = 0; q < numQuadPoints; ++q)
+                    {
+                      Tensor<2, 3, VectorizedArray<double>> E;
+                      const unsigned int                    physicalCellId =
+                        macroCellIdToNormalCellIdMap[cell];
+                      const unsigned int id =
+                        kPoint * numPhysicalCells * numQuadPoints * 6 +
+                        physicalCellId * numQuadPoints * 6 + q * 6;
+                      E[0][0] = make_vectorized_array(
+                        elocWfcEshelbyTensorQuadValuesH[id + 0]);
+                      E[1][0] = make_vectorized_array(
+                        elocWfcEshelbyTensorQuadValuesH[id + 1]);
+                      E[1][1] = make_vectorized_array(
+                        elocWfcEshelbyTensorQuadValuesH[id + 2]);
+                      E[2][0] = make_vectorized_array(
+                        elocWfcEshelbyTensorQuadValuesH[id + 3]);
+                      E[2][1] = make_vectorized_array(
+                        elocWfcEshelbyTensorQuadValuesH[id + 4]);
+                      E[2][2] = make_vectorized_array(
+                        elocWfcEshelbyTensorQuadValuesH[id + 5]);
+                      E[0][1] = E[1][0];
+                      E[0][2] = E[2][0];
+                      E[1][2] = E[2][1];
+                      forceEval.submit_gradient(
+                        make_vectorized_array(dftPtr->d_kPointWeights[kPoint]) *
+                          spinPolarizedFactorVect * E,
+                        q);
 
-                } // quad point loop
-              forceEval.integrate(false, true);
-              forceEval.distribute_local_to_global(d_configForceVectorLinFE);
+                    } // quad point loop
+                  forceEval.integrate(false, true);
+#  ifdef USE_COMPLEX
+                  forceEval.distribute_local_to_global(
+                    d_configForceVectorLinFEKPoints);
+#  else
+                  forceEval.distribute_local_to_global(
+                    d_configForceVectorLinFE);
+#  endif
+                }
             }
 
           if (isPseudopotential)
-            for (unsigned int i = 0; i < nonTrivialNonLocalIdsAllCells.size();
-                 ++i)
-              {
-                const unsigned int cell =
-                  normalCellIdToMacroCellIdMap[nonTrivialIdToElemIdMap[i]];
-                const unsigned int id = nonTrivialIdToAllPseudoWfcIdMap[i];
-                for (unsigned int q = 0; q < numQuadPointsNLP; ++q)
-                  {
-                    projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuads
-                      [cell * numQuadPointsNLP + q][id]
-                      [0] = make_vectorized_array(
-                        projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuadsFlattened
-                          [i * numQuadPointsNLP * 3 + 3 * q + 0]);
-                    projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuads
-                      [cell * numQuadPointsNLP + q][id]
-                      [1] = make_vectorized_array(
-                        projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuadsFlattened
-                          [i * numQuadPointsNLP * 3 + 3 * q + 1]);
-                    projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuads
-                      [cell * numQuadPointsNLP + q][id]
-                      [2] = make_vectorized_array(
-                        projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuadsFlattened
-                          [i * numQuadPointsNLP * 3 + 3 * q + 2]);
-                  }
-              }
+            {
+#  ifdef USE_COMPLEX
+              for (unsigned int kPoint = 0; kPoint < numKPoints; ++kPoint)
+                {
+                  for (unsigned int i = 0;
+                       i < nonTrivialNonLocalIdsAllCells.size();
+                       ++i)
+                    {
+                      const unsigned int cell = normalCellIdToMacroCellIdMap
+                        [nonTrivialIdToElemIdMap[i]];
+                      const unsigned int id =
+                        nonTrivialIdToAllPseudoWfcIdMap[i];
+
+                      for (unsigned int q = 0; q < numQuadPointsNLP; ++q)
+                        {
+                          const unsigned int flattenedId =
+                            kPoint * nonTrivialNonLocalIdsAllCells.size() *
+                              numQuadPointsNLP * 3 +
+                            i * numQuadPointsNLP * 3 + 3 * q;
+                          for (unsigned int idim = 0; idim < 3; ++idim)
+                            {
+                              projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuads
+                                [kPoint * matrixFreeData.n_macro_cells() *
+                                   numQuadPointsNLP +
+                                 cell * numQuadPointsNLP + q][id][0]
+                                [idim] = make_vectorized_array(
+                                  projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuadsFlattened
+                                    [flattenedId + idim]
+                                      .real());
+                              projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuads
+                                [kPoint * matrixFreeData.n_macro_cells() *
+                                   numQuadPointsNLP +
+                                 cell * numQuadPointsNLP + q][id][1]
+                                [idim] = make_vectorized_array(
+                                  projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuadsFlattened
+                                    [flattenedId + idim]
+                                      .imag());
+                            }
+                        }
+                      for (unsigned int q = 0; q < numQuadPointsNLP; ++q)
+                        {
+                          const unsigned int flattenedId =
+                            kPoint * nonTrivialNonLocalIdsAllCells.size() *
+                              numQuadPointsNLP +
+                            i * numQuadPointsNLP + q;
+
+                          projectorKetTimesPsiTimesVTimesPartOccContractionPsiQuads
+                            [kPoint * matrixFreeData.n_macro_cells() *
+                               numQuadPointsNLP +
+                             cell * numQuadPointsNLP + q][id]
+                            [0] = make_vectorized_array(
+                              projectorKetTimesPsiTimesVTimesPartOccContractionPsiQuadsFlattened
+                                [flattenedId]
+                                  .real());
+                          projectorKetTimesPsiTimesVTimesPartOccContractionPsiQuads
+                            [kPoint * matrixFreeData.n_macro_cells() *
+                               numQuadPointsNLP +
+                             cell * numQuadPointsNLP + q][id]
+                            [1] = make_vectorized_array(
+                              projectorKetTimesPsiTimesVTimesPartOccContractionPsiQuadsFlattened
+                                [flattenedId]
+                                  .imag());
+                        }
+                    }
+                }
+#  else
+              for (unsigned int i = 0; i < nonTrivialNonLocalIdsAllCells.size();
+                   ++i)
+                {
+                  const unsigned int cell =
+                    normalCellIdToMacroCellIdMap[nonTrivialIdToElemIdMap[i]];
+                  const unsigned int id = nonTrivialIdToAllPseudoWfcIdMap[i];
+
+                  for (unsigned int q = 0; q < numQuadPointsNLP; ++q)
+                    {
+                      const unsigned int flattenedId =
+                        i * numQuadPointsNLP * 3 + 3 * q;
+                      projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuads
+                        [cell * numQuadPointsNLP + q][id]
+                        [0] = make_vectorized_array(
+                          projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuadsFlattened
+                            [flattenedId + 0]);
+                      projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuads
+                        [cell * numQuadPointsNLP + q][id]
+                        [1] = make_vectorized_array(
+                          projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuadsFlattened
+                            [flattenedId + 1]);
+                      projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuads
+                        [cell * numQuadPointsNLP + q][id]
+                        [2] = make_vectorized_array(
+                          projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuadsFlattened
+                            [flattenedId + 2]);
+                    }
+                }
+#  endif
+            }
         }
 #endif
 
