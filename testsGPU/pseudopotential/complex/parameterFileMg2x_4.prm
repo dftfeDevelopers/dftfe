@@ -6,7 +6,7 @@ subsection GPU
   set USE GPU=true
   set AUTO GPU BLOCK SIZES=false
   set USE GPUDIRECT MPI ALL REDUCE = true
-  set USE ELPA GPU KERNEL=true
+  set USE ELPA GPU KERNEL=false
 end
 
 subsection Boundary conditions
