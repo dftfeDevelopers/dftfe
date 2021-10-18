@@ -577,8 +577,7 @@ namespace dftfe
                   reinterpret_cast<const dataTypes::numberGPU *>(
                     &scalarCoeffBeta),
                   reinterpret_cast<dataTypes::numberGPU *>(
-                    thrust::raw_pointer_cast(
-                      &shapeFunctionGradientValuesYInvertedDevice[0])),
+                    thrust::raw_pointer_cast(&gradPsiQuadsYFlatD[0])),
                   BVec,
                   strideC,
                   currentBlockSize);
