@@ -571,9 +571,7 @@ namespace dftfe
                   strideA,
                   reinterpret_cast<const dataTypes::numberGPU *>(
                     thrust::raw_pointer_cast(
-                      &(operatorMatrix
-                          .getShapeFunctionGradientValuesYInverted())
-                        [startingId * numQuads * numNodesPerElement])),
+                      &shapeFunctionGradientValuesYInvertedDevice[0])),
                   numNodesPerElement,
                   strideB,
                   reinterpret_cast<const dataTypes::numberGPU *>(

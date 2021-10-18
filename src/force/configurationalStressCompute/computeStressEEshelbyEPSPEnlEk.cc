@@ -562,7 +562,7 @@ forceClass<FEOrder, FEOrderElectro>::computeStressEEshelbyEPSPEnlEk(
               forceCUDA::gpuPortedForceKernelsAllH(
                 kohnShamDFTEigenOperator,
                 dftPtr->d_eigenVectorsFlattenedCUDA.begin() +
-                  spinIndex * localVectorSize * numEigenVectors,
+                  ((1 + dftParameters::spinPolarized) * kPoint + spinIndex) * localVectorSize * numEigenVectors,
                 &dftPtr->eigenValues[kPoint][spinIndex * numEigenVectors],
                 &partialOccupancies[kPoint][spinIndex * numEigenVectors],
 #  ifdef USE_COMPLEX
