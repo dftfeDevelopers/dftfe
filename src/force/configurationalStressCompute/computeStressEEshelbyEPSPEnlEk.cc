@@ -523,7 +523,7 @@ forceClass<FEOrder, FEOrderElectro>::computeStressEEshelbyEPSPEnlEk(
 #  endif
 
       std::vector<double> elocWfcEshelbyTensorQuadValuesH(
-        numKPoints * numPhysicalCells * numQuadPoints * 6, 0.0);
+        numKPoints * numPhysicalCells * numQuadPoints * 9, 0.0);
 #endif
 
 #ifdef USE_COMPLEX
@@ -559,6 +559,7 @@ forceClass<FEOrder, FEOrderElectro>::computeStressEEshelbyEPSPEnlEk(
 
           for (unsigned int kPoint = 0; kPoint < numKPoints; ++kPoint)
             {
+              kohnShamDFTEigenOperator.reinitkPointSpinIndex(kPoint, 0);
               forceCUDA::gpuPortedForceKernelsAllH(
                 kohnShamDFTEigenOperator,
                 dftPtr->d_eigenVectorsFlattenedCUDA.begin() +
@@ -580,7 +581,7 @@ forceClass<FEOrder, FEOrderElectro>::computeStressEEshelbyEPSPEnlEk(
                   dftPtr->d_densityDofHandlerIndex),
                 nonTrivialNonLocalIdsAllCells.size(),
                 &elocWfcEshelbyTensorQuadValuesH[kPoint * numPhysicalCells *
-                                                 numQuadPoints * 6],
+                                                 numQuadPoints * 9],
                 &projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuadsFlattened
                   [kPoint * nonTrivialNonLocalIdsAllCells.size() *
                    numQuadPointsNLP * 3],
@@ -590,7 +591,9 @@ forceClass<FEOrder, FEOrderElectro>::computeStressEEshelbyEPSPEnlEk(
                    numQuadPointsNLP],
 #  endif
                 dftPtr->interBandGroupComm,
-                isPseudopotential);
+                isPseudopotential,
+                false,
+                true);
             }
 
           MPI_Barrier(MPI_COMM_WORLD);
@@ -1072,33 +1075,36 @@ forceClass<FEOrder, FEOrderElectro>::computeStressEEshelbyEPSPEnlEk(
             {
               forceEval.reinit(cell);
 
-              Tensor<2, 3, VectorizedArray<double>> EKPointsQuadSum =
-                zeroTensor4;
               for (unsigned int kPoint = 0; kPoint < numKPoints; ++kPoint)
                 {
+              Tensor<2, 3, VectorizedArray<double>> EKPointsQuadSum =
+                zeroTensor4;                  
                   for (unsigned int q = 0; q < numQuadPoints; ++q)
                     {
                       Tensor<2, 3, VectorizedArray<double>> E;
                       const unsigned int                    physicalCellId =
                         macroCellIdToNormalCellIdMap[cell];
                       const unsigned int id =
-                        kPoint * numPhysicalCells * numQuadPoints * 6 +
-                        physicalCellId * numQuadPoints * 6 + q * 6;
+                        kPoint * numPhysicalCells * numQuadPoints * 9 +
+                        physicalCellId * numQuadPoints * 9 + q * 9;
                       E[0][0] = make_vectorized_array(
                         elocWfcEshelbyTensorQuadValuesH[id + 0]);
+                      E[0][1] = make_vectorized_array(
+                        elocWfcEshelbyTensorQuadValuesH[id + 1]);      
+                      E[0][2] = make_vectorized_array(
+                        elocWfcEshelbyTensorQuadValuesH[id + 2]);                       
                       E[1][0] = make_vectorized_array(
-                        elocWfcEshelbyTensorQuadValuesH[id + 1]);
-                      E[1][1] = make_vectorized_array(
-                        elocWfcEshelbyTensorQuadValuesH[id + 2]);
-                      E[2][0] = make_vectorized_array(
                         elocWfcEshelbyTensorQuadValuesH[id + 3]);
-                      E[2][1] = make_vectorized_array(
+                      E[1][1] = make_vectorized_array(
                         elocWfcEshelbyTensorQuadValuesH[id + 4]);
+                      E[1][2] = make_vectorized_array(
+                        elocWfcEshelbyTensorQuadValuesH[id + 5]);                      
+                      E[2][0] = make_vectorized_array(
+                        elocWfcEshelbyTensorQuadValuesH[id + 6]);
+                      E[2][1] = make_vectorized_array(
+                        elocWfcEshelbyTensorQuadValuesH[id + 7]);
                       E[2][2] = make_vectorized_array(
-                        elocWfcEshelbyTensorQuadValuesH[id + 5]);
-                      E[0][1] = E[1][0];
-                      E[0][2] = E[2][0];
-                      E[1][2] = E[2][1];
+                        elocWfcEshelbyTensorQuadValuesH[id + 8]);
 
                       EKPointsQuadSum += E * forceEval.JxW(q);
                     } // quad point loop

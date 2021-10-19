@@ -505,7 +505,7 @@ forceClass<FEOrder, FEOrderElectro>::
 #  endif
 
       std::vector<double> elocWfcEshelbyTensorQuadValuesH(
-        numKPoints * numPhysicalCells * numQuadPoints * 6, 0.0);
+        numKPoints * numPhysicalCells * numQuadPoints * 9, 0.0);
 #endif
       std::vector<std::vector<std::vector<dataTypes::number>>>
         projectorKetTimesPsiTimesVTimesPartOcc(numKPoints);
@@ -542,6 +542,8 @@ forceClass<FEOrder, FEOrderElectro>::
 
           for (unsigned int kPoint = 0; kPoint < numKPoints; ++kPoint)
             {
+              kohnShamDFTEigenOperator.reinitkPointSpinIndex(kPoint, 0);
+
               forceCUDA::gpuPortedForceKernelsAllH(
                 kohnShamDFTEigenOperator,
                 dftPtr->d_eigenVectorsFlattenedCUDA.begin() +
@@ -563,7 +565,7 @@ forceClass<FEOrder, FEOrderElectro>::
                   dftPtr->d_densityDofHandlerIndex),
                 nonTrivialNonLocalIdsAllCells.size(),
                 &elocWfcEshelbyTensorQuadValuesH[kPoint * numPhysicalCells *
-                                                 numQuadPoints * 6],
+                                                 numQuadPoints * 9],
                 &projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuadsFlattened
                   [kPoint * nonTrivialNonLocalIdsAllCells.size() *
                    numQuadPointsNLP * 3],
@@ -573,7 +575,9 @@ forceClass<FEOrder, FEOrderElectro>::
                    numQuadPointsNLP],
 #  endif
                 dftPtr->interBandGroupComm,
-                isPseudopotential);
+                isPseudopotential,
+                dftParameters::floatingNuclearCharges,
+                false);
             }
 
           MPI_Barrier(MPI_COMM_WORLD);
@@ -1044,23 +1048,26 @@ forceClass<FEOrder, FEOrderElectro>::
                       const unsigned int                    physicalCellId =
                         macroCellIdToNormalCellIdMap[cell];
                       const unsigned int id =
-                        kPoint * numPhysicalCells * numQuadPoints * 6 +
-                        physicalCellId * numQuadPoints * 6 + q * 6;
+                        kPoint * numPhysicalCells * numQuadPoints * 9 +
+                        physicalCellId * numQuadPoints * 9 + q * 9;
                       E[0][0] = make_vectorized_array(
                         elocWfcEshelbyTensorQuadValuesH[id + 0]);
+                      E[0][1] = make_vectorized_array(
+                        elocWfcEshelbyTensorQuadValuesH[id + 1]);      
+                      E[0][2] = make_vectorized_array(
+                        elocWfcEshelbyTensorQuadValuesH[id + 2]);                       
                       E[1][0] = make_vectorized_array(
-                        elocWfcEshelbyTensorQuadValuesH[id + 1]);
-                      E[1][1] = make_vectorized_array(
-                        elocWfcEshelbyTensorQuadValuesH[id + 2]);
-                      E[2][0] = make_vectorized_array(
                         elocWfcEshelbyTensorQuadValuesH[id + 3]);
-                      E[2][1] = make_vectorized_array(
+                      E[1][1] = make_vectorized_array(
                         elocWfcEshelbyTensorQuadValuesH[id + 4]);
+                      E[1][2] = make_vectorized_array(
+                        elocWfcEshelbyTensorQuadValuesH[id + 5]);                      
+                      E[2][0] = make_vectorized_array(
+                        elocWfcEshelbyTensorQuadValuesH[id + 6]);
+                      E[2][1] = make_vectorized_array(
+                        elocWfcEshelbyTensorQuadValuesH[id + 7]);
                       E[2][2] = make_vectorized_array(
-                        elocWfcEshelbyTensorQuadValuesH[id + 5]);
-                      E[0][1] = E[1][0];
-                      E[0][2] = E[2][0];
-                      E[1][2] = E[2][1];
+                        elocWfcEshelbyTensorQuadValuesH[id + 8]);
                       forceEval.submit_gradient(
                         make_vectorized_array(dftPtr->d_kPointWeights[kPoint]) *
                           spinPolarizedFactorVect * E,

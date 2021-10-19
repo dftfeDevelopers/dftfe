@@ -107,8 +107,8 @@ namespace dftfe
             const unsigned int blockIndex = index / contiguousBlockSize;
             const unsigned int intraBlockIndex =
               index - blockIndex * contiguousBlockSize;
-            const unsigned int blockIndex2  = blockIndex / 6;
-            const unsigned int eshelbyIndex = blockIndex - 6 * blockIndex2;
+            const unsigned int blockIndex2  = blockIndex / 9;
+            const unsigned int eshelbyIndex = blockIndex - 9 * blockIndex2;
             const unsigned int cellIndex    = blockIndex2 / numQuads;
             const unsigned int quadId = blockIndex2 - cellIndex * numQuads;
             const unsigned int tempIndex =
@@ -130,15 +130,21 @@ namespace dftfe
               eshelbyTensor[index] =
                 -2.0 * partOcc * gradPsiX * gradPsiX + identityFactor;
             else if (eshelbyIndex == 1)
-              eshelbyTensor[index] = -2.0 * partOcc * gradPsiY * gradPsiX;
+              eshelbyTensor[index] = -2.0 * partOcc * gradPsiX * gradPsiY;   
             else if (eshelbyIndex == 2)
+              eshelbyTensor[index] = -2.0 * partOcc * gradPsiX * gradPsiZ;              
+            else if (eshelbyIndex == 3)
+              eshelbyTensor[index] = -2.0 * partOcc * gradPsiY * gradPsiX;
+            else if (eshelbyIndex == 4)
               eshelbyTensor[index] =
                 -2.0 * partOcc * gradPsiY * gradPsiY + identityFactor;
-            else if (eshelbyIndex == 3)
-              eshelbyTensor[index] = -2.0 * partOcc * gradPsiZ * gradPsiX;
-            else if (eshelbyIndex == 4)
-              eshelbyTensor[index] = -2.0 * partOcc * gradPsiZ * gradPsiY;
             else if (eshelbyIndex == 5)
+              eshelbyTensor[index] = -2.0 * partOcc * gradPsiY * gradPsiZ;                
+            else if (eshelbyIndex == 6)
+              eshelbyTensor[index] = -2.0 * partOcc * gradPsiZ * gradPsiX;
+            else if (eshelbyIndex == 7)
+              eshelbyTensor[index] = -2.0 * partOcc * gradPsiZ * gradPsiY;
+            else if (eshelbyIndex == 8)
               eshelbyTensor[index] =
                 -2.0 * partOcc * gradPsiZ * gradPsiZ + identityFactor;
           }
@@ -159,7 +165,8 @@ namespace dftfe
         const double           kcoordx,
         const double           kcoordy,
         const double           kcoordz,
-        double *               eshelbyTensor)
+        double *               eshelbyTensor,
+        const bool             addEk)
       {
         const unsigned int globalThreadId =
           blockIdx.x * blockDim.x + threadIdx.x;
@@ -172,8 +179,8 @@ namespace dftfe
             const unsigned int blockIndex = index / contiguousBlockSize;
             const unsigned int intraBlockIndex =
               index - blockIndex * contiguousBlockSize;
-            const unsigned int blockIndex2  = blockIndex / 6;
-            const unsigned int eshelbyIndex = blockIndex - 6 * blockIndex2;
+            const unsigned int blockIndex2  = blockIndex / 9;
+            const unsigned int eshelbyIndex = blockIndex - 9 * blockIndex2;
             const unsigned int cellIndex    = blockIndex2 / numQuads;
             const unsigned int quadId = blockIndex2 - cellIndex * numQuads;
             const unsigned int tempIndex =
@@ -203,34 +210,108 @@ namespace dftfe
                          (kcoordx * kcoordx + kcoordy * kcoordy +
                           kcoordz * kcoordz - 2.0 * eigenValue) *
                            cuCmul(psiConj, psi).x);
-
+            if (addEk)
+            {
             if (eshelbyIndex == 0)
               eshelbyTensor[index] =
                 -2.0 * partOcc * cuCmul(gradPsiXConj, gradPsiX).x +
-                2.0 * partOcc * cuCmul(psiConj, gradPsiX).y * kcoordx +
-                identityFactor;
+                -2.0 * partOcc * cuCmul(psiConj, gradPsiX).y * kcoordx 
+                -2.0 * partOcc * cuCmul(psiConj, gradPsiX).y * kcoordx
+                -2.0 * partOcc * cuCmul(psiConj, psi).x * kcoordx*kcoordx
+                + identityFactor;
             else if (eshelbyIndex == 1)
               eshelbyTensor[index] =
-                -2.0 * partOcc * cuCmul(gradPsiYConj, gradPsiX).x +
-                2.0 * partOcc * cuCmul(psiConj, gradPsiY).y * kcoordx;
+                -2.0 * partOcc * cuCmul(gradPsiXConj, gradPsiY).x +
+                -2.0 * partOcc * cuCmul(psiConj, gradPsiX).y * kcoordy
+                -2.0 * partOcc * cuCmul(psiConj, gradPsiY).y * kcoordx
+                -2.0 * partOcc * cuCmul(psiConj, psi).x * kcoordx*kcoordy;  
             else if (eshelbyIndex == 2)
               eshelbyTensor[index] =
-                -2.0 * partOcc * cuCmul(gradPsiYConj, gradPsiY).x +
-                2.0 * partOcc * cuCmul(psiConj, gradPsiY).y * kcoordy +
-                identityFactor;
+                -2.0 * partOcc * cuCmul(gradPsiXConj, gradPsiZ).x +
+                -2.0 * partOcc * cuCmul(psiConj, gradPsiX).y * kcoordz
+                -2.0 * partOcc * cuCmul(psiConj, gradPsiZ).y * kcoordx
+                -2.0 * partOcc * cuCmul(psiConj, psi).x * kcoordx*kcoordz;                
             else if (eshelbyIndex == 3)
               eshelbyTensor[index] =
-                -2.0 * partOcc * cuCmul(gradPsiZConj, gradPsiX).x +
-                2.0 * partOcc * cuCmul(psiConj, gradPsiZ).y * kcoordx;
+                -2.0 * partOcc * cuCmul(gradPsiYConj, gradPsiX).x +
+                -2.0 * partOcc * cuCmul(psiConj, gradPsiY).y * kcoordx
+                -2.0 * partOcc * cuCmul(psiConj, gradPsiX).y * kcoordy
+                -2.0 * partOcc * cuCmul(psiConj, psi).x * kcoordy*kcoordx;
             else if (eshelbyIndex == 4)
               eshelbyTensor[index] =
-                -2.0 * partOcc * cuCmul(gradPsiZConj, gradPsiY).x +
-                2.0 * partOcc * cuCmul(psiConj, gradPsiZ).y * kcoordy;
+                -2.0 * partOcc * cuCmul(gradPsiYConj, gradPsiY).x +
+                -2.0 * partOcc * cuCmul(psiConj, gradPsiY).y * kcoordy 
+                -2.0 * partOcc * cuCmul(psiConj, gradPsiY).y * kcoordy
+                -2.0 * partOcc * cuCmul(psiConj, psi).x * kcoordy*kcoordy
+                + identityFactor;
             else if (eshelbyIndex == 5)
               eshelbyTensor[index] =
+                -2.0 * partOcc * cuCmul(gradPsiYConj, gradPsiZ).x 
+                -2.0 * partOcc * cuCmul(psiConj, gradPsiY).y * kcoordz
+                -2.0 * partOcc * cuCmul(psiConj, gradPsiZ).y * kcoordy
+                -2.0 * partOcc * cuCmul(psiConj, psi).x * kcoordy*kcoordz;                
+            else if (eshelbyIndex == 6)
+              eshelbyTensor[index] =
+                -2.0 * partOcc * cuCmul(gradPsiZConj, gradPsiX).x +
+                -2.0 * partOcc * cuCmul(psiConj, gradPsiZ).y * kcoordx
+                -2.0 * partOcc * cuCmul(psiConj, gradPsiX).y * kcoordz
+                -2.0 * partOcc * cuCmul(psiConj, psi).x * kcoordz*kcoordx;
+            else if (eshelbyIndex == 7)
+              eshelbyTensor[index] =
+                -2.0 * partOcc * cuCmul(gradPsiZConj, gradPsiY).x 
+                -2.0 * partOcc * cuCmul(psiConj, gradPsiZ).y * kcoordy
+                -2.0 * partOcc * cuCmul(psiConj, gradPsiY).y * kcoordz
+                -2.0 * partOcc * cuCmul(psiConj, psi).x * kcoordz*kcoordy;
+            else if (eshelbyIndex == 8)
+              eshelbyTensor[index] =
                 -2.0 * partOcc * cuCmul(gradPsiZConj, gradPsiZ).x +
-                2.0 * partOcc * cuCmul(psiConj, gradPsiZ).y * kcoordz +
-                identityFactor;
+                -2.0 * partOcc * cuCmul(psiConj, gradPsiZ).y * kcoordz
+                -2.0 * partOcc * cuCmul(psiConj, gradPsiZ).y * kcoordz
+                -2.0 * partOcc * cuCmul(psiConj, psi).x * kcoordz*kcoordz
+                + identityFactor;              
+            }
+            else
+            {
+            if (eshelbyIndex == 0)
+              eshelbyTensor[index] =
+                -2.0 * partOcc * cuCmul(gradPsiXConj, gradPsiX).x 
+                -2.0 * partOcc * cuCmul(psiConj, gradPsiX).y * kcoordx 
+                +identityFactor;
+            else if (eshelbyIndex == 1)
+              eshelbyTensor[index] =
+                -2.0 * partOcc * cuCmul(gradPsiXConj, gradPsiY).x 
+                -2.0 * partOcc * cuCmul(psiConj, gradPsiX).y * kcoordy;  
+            else if (eshelbyIndex == 2)
+              eshelbyTensor[index] =
+                -2.0 * partOcc * cuCmul(gradPsiXConj, gradPsiZ).x 
+                -2.0 * partOcc * cuCmul(psiConj, gradPsiX).y * kcoordz;                
+            else if (eshelbyIndex == 3)
+              eshelbyTensor[index] =
+                -2.0 * partOcc * cuCmul(gradPsiYConj, gradPsiX).x 
+                -2.0 * partOcc * cuCmul(psiConj, gradPsiY).y * kcoordx;
+            else if (eshelbyIndex == 4)
+              eshelbyTensor[index] =
+                -2.0 * partOcc * cuCmul(gradPsiYConj, gradPsiY).x 
+                -2.0 * partOcc * cuCmul(psiConj, gradPsiY).y * kcoordy 
+                +identityFactor;
+            else if (eshelbyIndex == 5)
+              eshelbyTensor[index] =
+                -2.0 * partOcc * cuCmul(gradPsiYConj, gradPsiZ).x 
+                -2.0 * partOcc * cuCmul(psiConj, gradPsiY).y * kcoordz;                
+            else if (eshelbyIndex == 6)
+              eshelbyTensor[index] =
+                -2.0 * partOcc * cuCmul(gradPsiZConj, gradPsiX).x 
+                -2.0 * partOcc * cuCmul(psiConj, gradPsiZ).y * kcoordx;
+            else if (eshelbyIndex == 7)
+              eshelbyTensor[index] =
+                -2.0 * partOcc * cuCmul(gradPsiZConj, gradPsiY).x 
+                -2.0 * partOcc * cuCmul(psiConj, gradPsiZ).y * kcoordy;
+            else if (eshelbyIndex == 8)
+              eshelbyTensor[index] =
+                -2.0 * partOcc * cuCmul(gradPsiZConj, gradPsiZ).x 
+                -2.0 * partOcc * cuCmul(psiConj, gradPsiZ).y * kcoordz 
+                +identityFactor;
+            }
           }
       }
 
@@ -360,7 +441,7 @@ namespace dftfe
       }
 
       void
-      interpolatePsiComputeELocWfcEshelbyTensorNonPeriodicD(
+      interpolatePsiComputeELocWfcEshelbyTensorD(
         operatorDFTCUDAClass &                   operatorMatrix,
         distributedGPUVec<dataTypes::numberGPU> &Xb,
         const unsigned int                       BVec,
@@ -386,7 +467,10 @@ namespace dftfe
 #endif
         thrust::device_vector<dataTypes::numberThrustGPU> &gradPsiQuadsNLPFlatD,
         thrust::device_vector<double> &eshelbyTensorContributionsD,
-        thrust::device_vector<double> &eshelbyTensorQuadValuesD)
+        thrust::device_vector<double> &eshelbyTensorQuadValuesD,
+        const bool      isPsp,
+        const bool isFloatingChargeForces,
+        const bool addEk)
       {
         thrust::device_vector<dataTypes::numberThrustGPU>
           &cellWaveFunctionMatrix = operatorMatrix.getCellWaveFunctionMatrix();
@@ -478,6 +562,8 @@ namespace dftfe
                 int strideB = 0;
                 int strideC = BVec * numQuads;
 
+                if (!isFloatingChargeForces)
+                {
                 dftfe::cublasXgemmStridedBatched(
                   operatorMatrix.getCublasHandle(),
                   CUBLAS_OP_N,
@@ -619,6 +705,62 @@ namespace dftfe
                   strideC,
                   currentBlockSize);
 
+
+                computeELocWfcEshelbyTensorContributions<<<
+                  (BVec + 255) / 256 * currentBlockSize * numQuads * 9,
+                  256>>>(BVec,
+                         currentBlockSize * numQuads * 9,
+                         numQuads,
+                         reinterpret_cast<const dataTypes::numberGPU *>(
+                           thrust::raw_pointer_cast(&psiQuadsFlatD[0])),
+                         reinterpret_cast<const dataTypes::numberGPU *>(
+                           thrust::raw_pointer_cast(&gradPsiQuadsXFlatD[0])),
+                         reinterpret_cast<const dataTypes::numberGPU *>(
+                           thrust::raw_pointer_cast(&gradPsiQuadsYFlatD[0])),
+                         reinterpret_cast<const dataTypes::numberGPU *>(
+                           thrust::raw_pointer_cast(&gradPsiQuadsZFlatD[0])),
+                         thrust::raw_pointer_cast(&eigenValuesD[0]),
+                         thrust::raw_pointer_cast(&partialOccupanciesD[0]),
+#ifdef USE_COMPLEX
+                         kcoordx,
+                         kcoordy,
+                         kcoordz,
+#endif
+                         thrust::raw_pointer_cast(
+                           &eshelbyTensorContributionsD[0])
+#ifdef USE_COMPLEX
+                         ,
+                         addEk
+#endif                         
+                           );
+
+                const double scalarCoeffAlphaEshelby = 1.0;
+                const double scalarCoeffBetaEshelby  = 1.0;
+
+
+
+                cublasDgemm(
+                  operatorMatrix.getCublasHandle(),
+                  CUBLAS_OP_N,
+                  CUBLAS_OP_N,
+                  1,
+                  currentBlockSize * numQuads * 9,
+                  BVec,
+                  &scalarCoeffAlphaEshelby,
+                  thrust::raw_pointer_cast(&onesVecD[0]),
+                  1,
+                  thrust::raw_pointer_cast(&eshelbyTensorContributionsD[0]),
+                  BVec,
+                  &scalarCoeffBetaEshelby,
+                  thrust::raw_pointer_cast(
+                    &eshelbyTensorQuadValuesD[startingId * numQuads * 9]),
+                  1);
+
+                }
+
+                if (isPsp)
+                {
+
 #ifdef USE_COMPLEX
                 const int strideCNLP = BVec * numQuadsNLP;
                 const int strideBNLP = 0;
@@ -646,7 +788,8 @@ namespace dftfe
                   reinterpret_cast<const dataTypes::numberGPU *>(
                     &scalarCoeffBeta),
                   reinterpret_cast<dataTypes::numberGPU *>(
-                    thrust::raw_pointer_cast(&psiQuadsNLPD[0])),
+                    thrust::raw_pointer_cast(&psiQuadsNLPD[startingId * numQuadsNLP *
+                                            BVec])),
                   BVec,
                   strideCNLP,
                   currentBlockSize);
@@ -716,51 +859,7 @@ namespace dftfe
                   BVec,
                   strideCNLPGrad,
                   currentBlockSize);
-
-                computeELocWfcEshelbyTensorContributions<<<
-                  (BVec + 255) / 256 * currentBlockSize * numQuads * 6,
-                  256>>>(BVec,
-                         currentBlockSize * numQuads * 6,
-                         numQuads,
-                         reinterpret_cast<const dataTypes::numberGPU *>(
-                           thrust::raw_pointer_cast(&psiQuadsFlatD[0])),
-                         reinterpret_cast<const dataTypes::numberGPU *>(
-                           thrust::raw_pointer_cast(&gradPsiQuadsXFlatD[0])),
-                         reinterpret_cast<const dataTypes::numberGPU *>(
-                           thrust::raw_pointer_cast(&gradPsiQuadsYFlatD[0])),
-                         reinterpret_cast<const dataTypes::numberGPU *>(
-                           thrust::raw_pointer_cast(&gradPsiQuadsZFlatD[0])),
-                         thrust::raw_pointer_cast(&eigenValuesD[0]),
-                         thrust::raw_pointer_cast(&partialOccupanciesD[0]),
-#ifdef USE_COMPLEX
-                         kcoordx,
-                         kcoordy,
-                         kcoordz,
-#endif
-                         thrust::raw_pointer_cast(
-                           &eshelbyTensorContributionsD[0]));
-
-                const double scalarCoeffAlphaEshelby = 1.0;
-                const double scalarCoeffBetaEshelby  = 1.0;
-
-
-
-                cublasDgemm(
-                  operatorMatrix.getCublasHandle(),
-                  CUBLAS_OP_N,
-                  CUBLAS_OP_N,
-                  1,
-                  currentBlockSize * numQuads * 6,
-                  BVec,
-                  &scalarCoeffAlphaEshelby,
-                  thrust::raw_pointer_cast(&onesVecD[0]),
-                  1,
-                  thrust::raw_pointer_cast(&eshelbyTensorContributionsD[0]),
-                  BVec,
-                  &scalarCoeffBetaEshelby,
-                  thrust::raw_pointer_cast(
-                    &eshelbyTensorQuadValuesD[startingId * numQuads * 6]),
-                  1);
+                }
               }
           }
       }
@@ -988,7 +1087,9 @@ namespace dftfe
                            projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuadsFlattenedHPinnedTemp,
         const unsigned int cellsBlockSize,
         const unsigned int innerBlockSizeEnlp,
-        const bool         isPsp)
+        const bool         isPsp,
+        const bool isFloatingChargeForces,
+        const bool         addEk)
       {
         int this_process;
         MPI_Comm_rank(MPI_COMM_WORLD, &this_process);
@@ -1008,7 +1109,7 @@ namespace dftfe
         // MPI_Barrier(MPI_COMM_WORLD);
         // double kernel1_time = MPI_Wtime();
 
-        interpolatePsiComputeELocWfcEshelbyTensorNonPeriodicD(
+        interpolatePsiComputeELocWfcEshelbyTensorD(
           operatorMatrix,
           cudaFlattenedArrayBlock,
           numPsi,
@@ -1034,7 +1135,10 @@ namespace dftfe
 #endif
           gradPsiQuadsNLPFlatD,
           eshelbyTensorContributionsD,
-          eshelbyTensorQuadValuesD);
+          eshelbyTensorQuadValuesD,
+          isPsp,
+          isFloatingChargeForces,
+          addEk);
 
         // cudaDeviceSynchronize();
         // MPI_Barrier(MPI_COMM_WORLD);
@@ -1042,7 +1146,7 @@ namespace dftfe
 
         // if (this_process==0 && dftParameters::verbosity>=5)
         //	 std::cout<<"Time for
-        // interpolatePsiComputeELocWfcEshelbyTensorNonPeriodicD inside blocked
+        // interpolatePsiComputeELocWfcEshelbyTensorD inside blocked
         // loop: "<<kernel1_time<<std::endl;
 
         if (isPsp)
@@ -1135,7 +1239,9 @@ namespace dftfe
         *projectorKetTimesPsiTimesVTimesPartOccContractionPsiQuadsFlattenedH,
 #endif
       const MPI_Comm &interBandGroupComm,
-      const bool      isPsp)
+      const bool      isPsp,
+      const bool isFloatingChargeForces,
+      const bool      addEk)
     {
       // band group parallelization data structures
       const unsigned int numberBandGroups =
@@ -1176,7 +1282,7 @@ namespace dftfe
       thrust::device_vector<double> eigenValuesD(blockSize, 0.0);
       thrust::device_vector<double> partialOccupanciesD(blockSize, 0.0);
       thrust::device_vector<double> elocWfcEshelbyTensorQuadValuesD(
-        numCells * numQuads * 6, 0.0);
+        numCells * numQuads * 9, 0.0);
 
       thrust::device_vector<double> onesVecD(blockSize, 1.0);
       thrust::device_vector<dataTypes::numberThrustGPU> onesVecDNLP(
@@ -1202,7 +1308,7 @@ namespace dftfe
         dataTypes::numberThrustGPU(0.0));
 
       thrust::device_vector<double> eshelbyTensorContributionsD(
-        cellsBlockSize * numQuads * blockSize * 6, 0.0);
+        cellsBlockSize * numQuads * blockSize * 9, 0.0);
 
       const unsigned int innerBlockSizeEnlp =
         std::min((unsigned int)10, totalNonTrivialPseudoWfcs);
@@ -1342,7 +1448,9 @@ namespace dftfe
                 projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuadsFlattenedHPinnedTemp,
                 cellsBlockSize,
                 innerBlockSizeEnlp,
-                isPsp);
+                isPsp,
+                isFloatingChargeForces,
+                addEk);
 
               // cudaDeviceSynchronize();
               // MPI_Barrier(MPI_COMM_WORLD);
@@ -1356,7 +1464,7 @@ namespace dftfe
 
       cudaMemcpy(eshelbyTensorQuadValuesH,
                  thrust::raw_pointer_cast(&elocWfcEshelbyTensorQuadValuesD[0]),
-                 numCells * numQuads * 6 * sizeof(double),
+                 numCells * numQuads * 9 * sizeof(double),
                  cudaMemcpyDeviceToHost);
 
       if (totalNonTrivialPseudoWfcs > 0)
