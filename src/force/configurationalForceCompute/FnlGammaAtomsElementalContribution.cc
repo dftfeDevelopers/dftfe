@@ -16,7 +16,6 @@
 //
 // @author Sambit Das
 //
-#ifdef USE_COMPLEX
 //(locally used function) compute Fnl contibution due to Gamma(Rj) for given set
 // of cells
 template <unsigned int FEOrder, unsigned int FEOrderElectro>
@@ -29,119 +28,28 @@ forceClass<FEOrder, FEOrderElectro>::FnlGammaAtomsElementalContribution(
                3> &                            forceEval,
   FEEvaluation<3, 1, C_num1DQuadNLPSP<FEOrder>() * C_numCopies1DQuadNLPSP(), 3>
     &                forceEvalNLP,
+  const unsigned int numberMacroCells,
   const unsigned int cell,
-  const dealii::AlignedVector<dealii::AlignedVector<dealii::AlignedVector<
-    dealii::AlignedVector<Tensor<1, 2, VectorizedArray<double>>>>>>
+#ifdef USE_COMPLEX
+  const unsigned int kpointIndex,
+  const dealii::AlignedVector<dealii::AlignedVector<
+    dealii::AlignedVector<Tensor<1, 2, VectorizedArray<double>>>>>
     &zetaDeltaVQuads,
-  const std::vector<std::vector<std::vector<std::complex<double>>>>
-    &projectorKetTimesPsiTimesVTimesPartOcc,
-  const dealii::AlignedVector<Tensor<1, 2, VectorizedArray<double>>> &psiQuads,
   const dealii::AlignedVector<
-    Tensor<1, 2, Tensor<1, 3, VectorizedArray<double>>>> &gradPsiQuads,
-  const std::vector<std::vector<double>> &                eigenValues,
-  const std::vector<unsigned int> &nonlocalAtomsCompactSupportList)
-{
-  const unsigned int numberGlobalAtoms = dftPtr->atomLocations.size();
-  const unsigned int numKPoints        = dftPtr->d_kPointWeights.size();
-  const unsigned int numSubCells =
-    dftPtr->matrix_free_data.n_components_filled(cell);
-  const unsigned int numQuadPoints = forceEvalNLP.n_q_points;
-  const unsigned int numEigenVectors =
-    gradPsiQuads.size() / numQuadPoints / numKPoints;
-
-  const unsigned int numNonLocalAtomsCurrentProcess =
-    dftPtr->d_nonLocalAtomIdsInCurrentProcess.size();
-
-  for (int iAtom = 0; iAtom < numNonLocalAtomsCurrentProcess; ++iAtom)
-    {
-      //
-      // get the global charge Id of the current nonlocal atom
-      //
-      const int nonLocalAtomId =
-        dftPtr->d_nonLocalAtomIdsInCurrentProcess[iAtom];
-      const int globalChargeIdNonLocalAtom =
-        dftPtr->d_nonLocalAtomGlobalChargeIds[nonLocalAtomId];
-      std::vector<std::vector<std::vector<std::complex<double>>>> temp2(
-        numKPoints);
-      for (unsigned int ikPoint = 0; ikPoint < numKPoints; ++ikPoint)
-        {
-          temp2[ikPoint].resize(1);
-          temp2[ikPoint][0] =
-            projectorKetTimesPsiTimesVTimesPartOcc[ikPoint][iAtom];
-        }
-
-      // if map entry corresponding to current nonlocal atom id is empty,
-      // initialize it to zero
-      if (forceContributionFnlGammaAtoms.find(globalChargeIdNonLocalAtom) ==
-          forceContributionFnlGammaAtoms.end())
-        forceContributionFnlGammaAtoms[globalChargeIdNonLocalAtom] =
-          std::vector<double>(3, 0.0);
-
-      bool isCellInCompactSupport = false;
-      for (unsigned int i = 0; i < nonlocalAtomsCompactSupportList.size(); i++)
-        if (nonlocalAtomsCompactSupportList[i] == iAtom)
-          {
-            isCellInCompactSupport = true;
-            break;
-          }
-
-      if (isCellInCompactSupport)
-        {
-          for (unsigned int q = 0; q < numQuadPoints; ++q)
-            {
-              dealii::AlignedVector<dealii::AlignedVector<
-                dealii::AlignedVector<Tensor<1, 2, VectorizedArray<double>>>>>
-                temp1(1);
-              temp1[0] = zetaDeltaVQuads[cell * numQuadPoints + q][iAtom];
-
-              const Tensor<1, 3, VectorizedArray<double>> F =
-                -eshelbyTensor::getFnlAtom(temp1,
-                                           temp2,
-                                           psiQuads.begin() +
-                                             q * numEigenVectors * numKPoints,
-                                           gradPsiQuads.begin() +
-                                             q * numEigenVectors * numKPoints,
-                                           dftPtr->d_kPointWeights,
-                                           dftPtr->d_kPointCoordinates,
-                                           numEigenVectors);
-
-
-              forceEvalNLP.submit_value(F, q);
-            }
-
-
-          const Tensor<1, 3, VectorizedArray<double>>
-            forceContributionFnlGammaiAtomCells =
-              forceEvalNLP.integrate_value();
-
-          for (unsigned int iSubCell = 0; iSubCell < numSubCells; ++iSubCell)
-            for (unsigned int idim = 0; idim < 3; idim++)
-              forceContributionFnlGammaAtoms[globalChargeIdNonLocalAtom]
-                                            [idim] +=
-                forceContributionFnlGammaiAtomCells[idim][iSubCell];
-        }
-    } // iAtom loop
-}
-
+    dealii::AlignedVector<Tensor<1, 2, Tensor<1, 3, VectorizedArray<double>>>>>
+    &projectorKetTimesPsiTimesVTimesPartOccContractionGradPsi,
+  const dealii::AlignedVector<
+    dealii::AlignedVector<Tensor<1, 2, VectorizedArray<double>>>>
+    &projectorKetTimesPsiTimesVTimesPartOccContractionPsi,
+  const Tensor<1, 3, VectorizedArray<double>> kcoord,
 #else
-
-template <unsigned int FEOrder, unsigned int FEOrderElectro>
-void
-forceClass<FEOrder, FEOrderElectro>::FnlGammaAtomsElementalContribution(
-  std::map<unsigned int, std::vector<double>> &forceContributionFnlGammaAtoms,
-  FEEvaluation<3,
-               1,
-               C_num1DQuad<C_rhoNodalPolyOrder<FEOrder, FEOrderElectro>()>(),
-               3> &                            forceEval,
-  FEEvaluation<3, 1, C_num1DQuadNLPSP<FEOrder>() * C_numCopies1DQuadNLPSP(), 3>
-    &                forceEvalNLP,
-  const unsigned int cell,
   const dealii::AlignedVector<
     dealii::AlignedVector<dealii::AlignedVector<VectorizedArray<double>>>>
     &zetaDeltaVQuads,
   const dealii::AlignedVector<
     dealii::AlignedVector<Tensor<1, 3, VectorizedArray<double>>>>
     &projectorKetTimesPsiTimesVTimesPartOccContractionGradPsi,
+#endif
   const std::vector<bool> &        isAtomInCell,
   const std::vector<unsigned int> &nonlocalPseudoWfcsAccum)
 {
@@ -179,6 +87,25 @@ forceClass<FEOrder, FEOrderElectro>::FnlGammaAtomsElementalContribution(
 
           for (unsigned int q = 0; q < numQuadPoints; ++q)
             {
+#ifdef USE_COMPLEX
+              const dealii::AlignedVector<
+                Tensor<1, 2, VectorizedArray<double>>> &temp1 =
+                zetaDeltaVQuads[kpointIndex * numberMacroCells * numQuadPoints +
+                                cell * numQuadPoints + q][iAtom];
+
+              const Tensor<1, 3, VectorizedArray<double>> F =
+                -make_vectorized_array(dftPtr->d_kPointWeights[kpointIndex]) *
+                eshelbyTensor::getFnlAtom(
+                  temp1,
+                  projectorKetTimesPsiTimesVTimesPartOccContractionGradPsi
+                    [kpointIndex * numberMacroCells * numQuadPoints +
+                     cell * numQuadPoints + q],
+                  projectorKetTimesPsiTimesVTimesPartOccContractionPsi
+                    [kpointIndex * numberMacroCells * numQuadPoints +
+                     cell * numQuadPoints + q],
+                  kcoord,
+                  startingPseudoWfcId);
+#else
               const dealii::AlignedVector<VectorizedArray<double>> &temp1 =
                 zetaDeltaVQuads[cell * numQuadPoints + q][iAtom];
 
@@ -188,6 +115,7 @@ forceClass<FEOrder, FEOrderElectro>::FnlGammaAtomsElementalContribution(
                   projectorKetTimesPsiTimesVTimesPartOccContractionGradPsi
                     [cell * numQuadPoints + q],
                   startingPseudoWfcId);
+#endif
 
 
               forceEvalNLP.submit_value(F, q);
@@ -206,7 +134,6 @@ forceClass<FEOrder, FEOrderElectro>::FnlGammaAtomsElementalContribution(
         }
     } // iAtom loop
 }
-#endif
 
 //(locally used function) accumulate and distribute Fnl contibution due to
 // Gamma(Rj)

@@ -1,6 +1,6 @@
 #!/bin/bash
 #SBATCH --qos=regular
-#SBATCH --time=00:35:00
+#SBATCH --time=00:45:00
 #SBATCH --nodes=1
 #SBATCH --ntasks=6
 #SBATCH --cpus-per-task=10
@@ -28,3 +28,5 @@ srun ./dftfe parameterFileMg2x_2.prm > outputMg2x_2
 srun ./dftfe parameterFileMg2x_3.prm > outputMg2x_3
 
 srun ./dftfe parameterFileMg2x_4.prm > outputMg2x_4
+
+srun ./dftfe parameterFileMg2x_5.prm > outputMg2x_5
