@@ -42,7 +42,7 @@ subsection Geometry
   set NATOMS=31
   set NATOM TYPES=1
   set ATOMIC COORDINATES FILE      = coordinatesMg2x.inp
-  set DOMAIN VECTORS FILE = domainVectorsMg2x.inp
+  set DOMAIN VECTORS FILE = domainVectorsMg2x_2.inp
   subsection Optimization
     set ION FORCE                 = true
     set CELL STRESS               = true
