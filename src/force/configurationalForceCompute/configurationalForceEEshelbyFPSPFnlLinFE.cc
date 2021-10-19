@@ -547,7 +547,8 @@ forceClass<FEOrder, FEOrderElectro>::
               forceCUDA::gpuPortedForceKernelsAllH(
                 kohnShamDFTEigenOperator,
                 dftPtr->d_eigenVectorsFlattenedCUDA.begin() +
-                  ((1 + dftParameters::spinPolarized) * kPoint + spinIndex) * localVectorSize * numEigenVectors,
+                  ((1 + dftParameters::spinPolarized) * kPoint + spinIndex) *
+                    localVectorSize * numEigenVectors,
                 &dftPtr->eigenValues[kPoint][spinIndex * numEigenVectors],
                 &partialOccupancies[kPoint][spinIndex * numEigenVectors],
 #  ifdef USE_COMPLEX
@@ -1053,15 +1054,15 @@ forceClass<FEOrder, FEOrderElectro>::
                       E[0][0] = make_vectorized_array(
                         elocWfcEshelbyTensorQuadValuesH[id + 0]);
                       E[0][1] = make_vectorized_array(
-                        elocWfcEshelbyTensorQuadValuesH[id + 1]);      
+                        elocWfcEshelbyTensorQuadValuesH[id + 1]);
                       E[0][2] = make_vectorized_array(
-                        elocWfcEshelbyTensorQuadValuesH[id + 2]);                       
+                        elocWfcEshelbyTensorQuadValuesH[id + 2]);
                       E[1][0] = make_vectorized_array(
                         elocWfcEshelbyTensorQuadValuesH[id + 3]);
                       E[1][1] = make_vectorized_array(
                         elocWfcEshelbyTensorQuadValuesH[id + 4]);
                       E[1][2] = make_vectorized_array(
-                        elocWfcEshelbyTensorQuadValuesH[id + 5]);                      
+                        elocWfcEshelbyTensorQuadValuesH[id + 5]);
                       E[2][0] = make_vectorized_array(
                         elocWfcEshelbyTensorQuadValuesH[id + 6]);
                       E[2][1] = make_vectorized_array(

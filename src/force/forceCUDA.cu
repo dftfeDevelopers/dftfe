@@ -130,16 +130,16 @@ namespace dftfe
               eshelbyTensor[index] =
                 -2.0 * partOcc * gradPsiX * gradPsiX + identityFactor;
             else if (eshelbyIndex == 1)
-              eshelbyTensor[index] = -2.0 * partOcc * gradPsiX * gradPsiY;   
+              eshelbyTensor[index] = -2.0 * partOcc * gradPsiX * gradPsiY;
             else if (eshelbyIndex == 2)
-              eshelbyTensor[index] = -2.0 * partOcc * gradPsiX * gradPsiZ;              
+              eshelbyTensor[index] = -2.0 * partOcc * gradPsiX * gradPsiZ;
             else if (eshelbyIndex == 3)
               eshelbyTensor[index] = -2.0 * partOcc * gradPsiY * gradPsiX;
             else if (eshelbyIndex == 4)
               eshelbyTensor[index] =
                 -2.0 * partOcc * gradPsiY * gradPsiY + identityFactor;
             else if (eshelbyIndex == 5)
-              eshelbyTensor[index] = -2.0 * partOcc * gradPsiY * gradPsiZ;                
+              eshelbyTensor[index] = -2.0 * partOcc * gradPsiY * gradPsiZ;
             else if (eshelbyIndex == 6)
               eshelbyTensor[index] = -2.0 * partOcc * gradPsiZ * gradPsiX;
             else if (eshelbyIndex == 7)
@@ -211,107 +211,107 @@ namespace dftfe
                           kcoordz * kcoordz - 2.0 * eigenValue) *
                            cuCmul(psiConj, psi).x);
             if (addEk)
-            {
-            if (eshelbyIndex == 0)
-              eshelbyTensor[index] =
-                -2.0 * partOcc * cuCmul(gradPsiXConj, gradPsiX).x +
-                -2.0 * partOcc * cuCmul(psiConj, gradPsiX).y * kcoordx 
-                -2.0 * partOcc * cuCmul(psiConj, gradPsiX).y * kcoordx
-                -2.0 * partOcc * cuCmul(psiConj, psi).x * kcoordx*kcoordx
-                + identityFactor;
-            else if (eshelbyIndex == 1)
-              eshelbyTensor[index] =
-                -2.0 * partOcc * cuCmul(gradPsiXConj, gradPsiY).x +
-                -2.0 * partOcc * cuCmul(psiConj, gradPsiX).y * kcoordy
-                -2.0 * partOcc * cuCmul(psiConj, gradPsiY).y * kcoordx
-                -2.0 * partOcc * cuCmul(psiConj, psi).x * kcoordx*kcoordy;  
-            else if (eshelbyIndex == 2)
-              eshelbyTensor[index] =
-                -2.0 * partOcc * cuCmul(gradPsiXConj, gradPsiZ).x +
-                -2.0 * partOcc * cuCmul(psiConj, gradPsiX).y * kcoordz
-                -2.0 * partOcc * cuCmul(psiConj, gradPsiZ).y * kcoordx
-                -2.0 * partOcc * cuCmul(psiConj, psi).x * kcoordx*kcoordz;                
-            else if (eshelbyIndex == 3)
-              eshelbyTensor[index] =
-                -2.0 * partOcc * cuCmul(gradPsiYConj, gradPsiX).x +
-                -2.0 * partOcc * cuCmul(psiConj, gradPsiY).y * kcoordx
-                -2.0 * partOcc * cuCmul(psiConj, gradPsiX).y * kcoordy
-                -2.0 * partOcc * cuCmul(psiConj, psi).x * kcoordy*kcoordx;
-            else if (eshelbyIndex == 4)
-              eshelbyTensor[index] =
-                -2.0 * partOcc * cuCmul(gradPsiYConj, gradPsiY).x +
-                -2.0 * partOcc * cuCmul(psiConj, gradPsiY).y * kcoordy 
-                -2.0 * partOcc * cuCmul(psiConj, gradPsiY).y * kcoordy
-                -2.0 * partOcc * cuCmul(psiConj, psi).x * kcoordy*kcoordy
-                + identityFactor;
-            else if (eshelbyIndex == 5)
-              eshelbyTensor[index] =
-                -2.0 * partOcc * cuCmul(gradPsiYConj, gradPsiZ).x 
-                -2.0 * partOcc * cuCmul(psiConj, gradPsiY).y * kcoordz
-                -2.0 * partOcc * cuCmul(psiConj, gradPsiZ).y * kcoordy
-                -2.0 * partOcc * cuCmul(psiConj, psi).x * kcoordy*kcoordz;                
-            else if (eshelbyIndex == 6)
-              eshelbyTensor[index] =
-                -2.0 * partOcc * cuCmul(gradPsiZConj, gradPsiX).x +
-                -2.0 * partOcc * cuCmul(psiConj, gradPsiZ).y * kcoordx
-                -2.0 * partOcc * cuCmul(psiConj, gradPsiX).y * kcoordz
-                -2.0 * partOcc * cuCmul(psiConj, psi).x * kcoordz*kcoordx;
-            else if (eshelbyIndex == 7)
-              eshelbyTensor[index] =
-                -2.0 * partOcc * cuCmul(gradPsiZConj, gradPsiY).x 
-                -2.0 * partOcc * cuCmul(psiConj, gradPsiZ).y * kcoordy
-                -2.0 * partOcc * cuCmul(psiConj, gradPsiY).y * kcoordz
-                -2.0 * partOcc * cuCmul(psiConj, psi).x * kcoordz*kcoordy;
-            else if (eshelbyIndex == 8)
-              eshelbyTensor[index] =
-                -2.0 * partOcc * cuCmul(gradPsiZConj, gradPsiZ).x +
-                -2.0 * partOcc * cuCmul(psiConj, gradPsiZ).y * kcoordz
-                -2.0 * partOcc * cuCmul(psiConj, gradPsiZ).y * kcoordz
-                -2.0 * partOcc * cuCmul(psiConj, psi).x * kcoordz*kcoordz
-                + identityFactor;              
-            }
+              {
+                if (eshelbyIndex == 0)
+                  eshelbyTensor[index] =
+                    -2.0 * partOcc * cuCmul(gradPsiXConj, gradPsiX).x +
+                    -2.0 * partOcc * cuCmul(psiConj, gradPsiX).y * kcoordx -
+                    2.0 * partOcc * cuCmul(psiConj, gradPsiX).y * kcoordx -
+                    2.0 * partOcc * cuCmul(psiConj, psi).x * kcoordx * kcoordx +
+                    identityFactor;
+                else if (eshelbyIndex == 1)
+                  eshelbyTensor[index] =
+                    -2.0 * partOcc * cuCmul(gradPsiXConj, gradPsiY).x +
+                    -2.0 * partOcc * cuCmul(psiConj, gradPsiX).y * kcoordy -
+                    2.0 * partOcc * cuCmul(psiConj, gradPsiY).y * kcoordx -
+                    2.0 * partOcc * cuCmul(psiConj, psi).x * kcoordx * kcoordy;
+                else if (eshelbyIndex == 2)
+                  eshelbyTensor[index] =
+                    -2.0 * partOcc * cuCmul(gradPsiXConj, gradPsiZ).x +
+                    -2.0 * partOcc * cuCmul(psiConj, gradPsiX).y * kcoordz -
+                    2.0 * partOcc * cuCmul(psiConj, gradPsiZ).y * kcoordx -
+                    2.0 * partOcc * cuCmul(psiConj, psi).x * kcoordx * kcoordz;
+                else if (eshelbyIndex == 3)
+                  eshelbyTensor[index] =
+                    -2.0 * partOcc * cuCmul(gradPsiYConj, gradPsiX).x +
+                    -2.0 * partOcc * cuCmul(psiConj, gradPsiY).y * kcoordx -
+                    2.0 * partOcc * cuCmul(psiConj, gradPsiX).y * kcoordy -
+                    2.0 * partOcc * cuCmul(psiConj, psi).x * kcoordy * kcoordx;
+                else if (eshelbyIndex == 4)
+                  eshelbyTensor[index] =
+                    -2.0 * partOcc * cuCmul(gradPsiYConj, gradPsiY).x +
+                    -2.0 * partOcc * cuCmul(psiConj, gradPsiY).y * kcoordy -
+                    2.0 * partOcc * cuCmul(psiConj, gradPsiY).y * kcoordy -
+                    2.0 * partOcc * cuCmul(psiConj, psi).x * kcoordy * kcoordy +
+                    identityFactor;
+                else if (eshelbyIndex == 5)
+                  eshelbyTensor[index] =
+                    -2.0 * partOcc * cuCmul(gradPsiYConj, gradPsiZ).x -
+                    2.0 * partOcc * cuCmul(psiConj, gradPsiY).y * kcoordz -
+                    2.0 * partOcc * cuCmul(psiConj, gradPsiZ).y * kcoordy -
+                    2.0 * partOcc * cuCmul(psiConj, psi).x * kcoordy * kcoordz;
+                else if (eshelbyIndex == 6)
+                  eshelbyTensor[index] =
+                    -2.0 * partOcc * cuCmul(gradPsiZConj, gradPsiX).x +
+                    -2.0 * partOcc * cuCmul(psiConj, gradPsiZ).y * kcoordx -
+                    2.0 * partOcc * cuCmul(psiConj, gradPsiX).y * kcoordz -
+                    2.0 * partOcc * cuCmul(psiConj, psi).x * kcoordz * kcoordx;
+                else if (eshelbyIndex == 7)
+                  eshelbyTensor[index] =
+                    -2.0 * partOcc * cuCmul(gradPsiZConj, gradPsiY).x -
+                    2.0 * partOcc * cuCmul(psiConj, gradPsiZ).y * kcoordy -
+                    2.0 * partOcc * cuCmul(psiConj, gradPsiY).y * kcoordz -
+                    2.0 * partOcc * cuCmul(psiConj, psi).x * kcoordz * kcoordy;
+                else if (eshelbyIndex == 8)
+                  eshelbyTensor[index] =
+                    -2.0 * partOcc * cuCmul(gradPsiZConj, gradPsiZ).x +
+                    -2.0 * partOcc * cuCmul(psiConj, gradPsiZ).y * kcoordz -
+                    2.0 * partOcc * cuCmul(psiConj, gradPsiZ).y * kcoordz -
+                    2.0 * partOcc * cuCmul(psiConj, psi).x * kcoordz * kcoordz +
+                    identityFactor;
+              }
             else
-            {
-            if (eshelbyIndex == 0)
-              eshelbyTensor[index] =
-                -2.0 * partOcc * cuCmul(gradPsiXConj, gradPsiX).x 
-                -2.0 * partOcc * cuCmul(psiConj, gradPsiX).y * kcoordx 
-                +identityFactor;
-            else if (eshelbyIndex == 1)
-              eshelbyTensor[index] =
-                -2.0 * partOcc * cuCmul(gradPsiXConj, gradPsiY).x 
-                -2.0 * partOcc * cuCmul(psiConj, gradPsiX).y * kcoordy;  
-            else if (eshelbyIndex == 2)
-              eshelbyTensor[index] =
-                -2.0 * partOcc * cuCmul(gradPsiXConj, gradPsiZ).x 
-                -2.0 * partOcc * cuCmul(psiConj, gradPsiX).y * kcoordz;                
-            else if (eshelbyIndex == 3)
-              eshelbyTensor[index] =
-                -2.0 * partOcc * cuCmul(gradPsiYConj, gradPsiX).x 
-                -2.0 * partOcc * cuCmul(psiConj, gradPsiY).y * kcoordx;
-            else if (eshelbyIndex == 4)
-              eshelbyTensor[index] =
-                -2.0 * partOcc * cuCmul(gradPsiYConj, gradPsiY).x 
-                -2.0 * partOcc * cuCmul(psiConj, gradPsiY).y * kcoordy 
-                +identityFactor;
-            else if (eshelbyIndex == 5)
-              eshelbyTensor[index] =
-                -2.0 * partOcc * cuCmul(gradPsiYConj, gradPsiZ).x 
-                -2.0 * partOcc * cuCmul(psiConj, gradPsiY).y * kcoordz;                
-            else if (eshelbyIndex == 6)
-              eshelbyTensor[index] =
-                -2.0 * partOcc * cuCmul(gradPsiZConj, gradPsiX).x 
-                -2.0 * partOcc * cuCmul(psiConj, gradPsiZ).y * kcoordx;
-            else if (eshelbyIndex == 7)
-              eshelbyTensor[index] =
-                -2.0 * partOcc * cuCmul(gradPsiZConj, gradPsiY).x 
-                -2.0 * partOcc * cuCmul(psiConj, gradPsiZ).y * kcoordy;
-            else if (eshelbyIndex == 8)
-              eshelbyTensor[index] =
-                -2.0 * partOcc * cuCmul(gradPsiZConj, gradPsiZ).x 
-                -2.0 * partOcc * cuCmul(psiConj, gradPsiZ).y * kcoordz 
-                +identityFactor;
-            }
+              {
+                if (eshelbyIndex == 0)
+                  eshelbyTensor[index] =
+                    -2.0 * partOcc * cuCmul(gradPsiXConj, gradPsiX).x -
+                    2.0 * partOcc * cuCmul(psiConj, gradPsiX).y * kcoordx +
+                    identityFactor;
+                else if (eshelbyIndex == 1)
+                  eshelbyTensor[index] =
+                    -2.0 * partOcc * cuCmul(gradPsiXConj, gradPsiY).x -
+                    2.0 * partOcc * cuCmul(psiConj, gradPsiX).y * kcoordy;
+                else if (eshelbyIndex == 2)
+                  eshelbyTensor[index] =
+                    -2.0 * partOcc * cuCmul(gradPsiXConj, gradPsiZ).x -
+                    2.0 * partOcc * cuCmul(psiConj, gradPsiX).y * kcoordz;
+                else if (eshelbyIndex == 3)
+                  eshelbyTensor[index] =
+                    -2.0 * partOcc * cuCmul(gradPsiYConj, gradPsiX).x -
+                    2.0 * partOcc * cuCmul(psiConj, gradPsiY).y * kcoordx;
+                else if (eshelbyIndex == 4)
+                  eshelbyTensor[index] =
+                    -2.0 * partOcc * cuCmul(gradPsiYConj, gradPsiY).x -
+                    2.0 * partOcc * cuCmul(psiConj, gradPsiY).y * kcoordy +
+                    identityFactor;
+                else if (eshelbyIndex == 5)
+                  eshelbyTensor[index] =
+                    -2.0 * partOcc * cuCmul(gradPsiYConj, gradPsiZ).x -
+                    2.0 * partOcc * cuCmul(psiConj, gradPsiY).y * kcoordz;
+                else if (eshelbyIndex == 6)
+                  eshelbyTensor[index] =
+                    -2.0 * partOcc * cuCmul(gradPsiZConj, gradPsiX).x -
+                    2.0 * partOcc * cuCmul(psiConj, gradPsiZ).y * kcoordx;
+                else if (eshelbyIndex == 7)
+                  eshelbyTensor[index] =
+                    -2.0 * partOcc * cuCmul(gradPsiZConj, gradPsiY).x -
+                    2.0 * partOcc * cuCmul(psiConj, gradPsiZ).y * kcoordy;
+                else if (eshelbyIndex == 8)
+                  eshelbyTensor[index] =
+                    -2.0 * partOcc * cuCmul(gradPsiZConj, gradPsiZ).x -
+                    2.0 * partOcc * cuCmul(psiConj, gradPsiZ).y * kcoordz +
+                    identityFactor;
+              }
           }
       }
 
@@ -468,9 +468,9 @@ namespace dftfe
         thrust::device_vector<dataTypes::numberThrustGPU> &gradPsiQuadsNLPFlatD,
         thrust::device_vector<double> &eshelbyTensorContributionsD,
         thrust::device_vector<double> &eshelbyTensorQuadValuesD,
-        const bool      isPsp,
-        const bool isFloatingChargeForces,
-        const bool addEk)
+        const bool                     isPsp,
+        const bool                     isFloatingChargeForces,
+        const bool                     addEk)
       {
         thrust::device_vector<dataTypes::numberThrustGPU>
           &cellWaveFunctionMatrix = operatorMatrix.getCellWaveFunctionMatrix();
@@ -563,303 +563,307 @@ namespace dftfe
                 int strideC = BVec * numQuads;
 
                 if (!isFloatingChargeForces)
-                {
-                dftfe::cublasXgemmStridedBatched(
-                  operatorMatrix.getCublasHandle(),
-                  CUBLAS_OP_N,
-                  CUBLAS_OP_N,
-                  BVec,
-                  numQuads,
-                  numNodesPerElement,
-                  reinterpret_cast<const dataTypes::numberGPU *>(
-                    &scalarCoeffAlpha),
-                  reinterpret_cast<const dataTypes::numberGPU *>(
-                    thrust::raw_pointer_cast(
-                      &cellWaveFunctionMatrix[startingId * numNodesPerElement *
-                                              BVec])),
-                  BVec,
-                  strideA,
-                  reinterpret_cast<const dataTypes::numberGPU *>(
-                    thrust::raw_pointer_cast(
-                      &shapeFunctionValuesReferenceD[0])),
-                  numNodesPerElement,
-                  strideB,
-                  reinterpret_cast<const dataTypes::numberGPU *>(
-                    &scalarCoeffBeta),
-                  reinterpret_cast<dataTypes::numberGPU *>(
-                    thrust::raw_pointer_cast(&psiQuadsFlatD[0])),
-                  BVec,
-                  strideC,
-                  currentBlockSize);
+                  {
+                    dftfe::cublasXgemmStridedBatched(
+                      operatorMatrix.getCublasHandle(),
+                      CUBLAS_OP_N,
+                      CUBLAS_OP_N,
+                      BVec,
+                      numQuads,
+                      numNodesPerElement,
+                      reinterpret_cast<const dataTypes::numberGPU *>(
+                        &scalarCoeffAlpha),
+                      reinterpret_cast<const dataTypes::numberGPU *>(
+                        thrust::raw_pointer_cast(
+                          &cellWaveFunctionMatrix[startingId *
+                                                  numNodesPerElement * BVec])),
+                      BVec,
+                      strideA,
+                      reinterpret_cast<const dataTypes::numberGPU *>(
+                        thrust::raw_pointer_cast(
+                          &shapeFunctionValuesReferenceD[0])),
+                      numNodesPerElement,
+                      strideB,
+                      reinterpret_cast<const dataTypes::numberGPU *>(
+                        &scalarCoeffBeta),
+                      reinterpret_cast<dataTypes::numberGPU *>(
+                        thrust::raw_pointer_cast(&psiQuadsFlatD[0])),
+                      BVec,
+                      strideC,
+                      currentBlockSize);
 
-                strideB = numNodesPerElement * numQuads;
+                    strideB = numNodesPerElement * numQuads;
 
-                copyDoubleToNumber(
-                  thrust::raw_pointer_cast(
-                    &(operatorMatrix.getShapeFunctionGradientValuesXInverted())
-                      [startingId * numQuads * numNodesPerElement]),
-                  currentBlockSize * numQuads * numNodesPerElement,
-                  reinterpret_cast<dataTypes::numberGPU *>(
-                    thrust::raw_pointer_cast(
-                      &shapeFunctionGradientValuesXInvertedDevice[0])));
+                    copyDoubleToNumber(
+                      thrust::raw_pointer_cast(
+                        &(operatorMatrix
+                            .getShapeFunctionGradientValuesXInverted())
+                          [startingId * numQuads * numNodesPerElement]),
+                      currentBlockSize * numQuads * numNodesPerElement,
+                      reinterpret_cast<dataTypes::numberGPU *>(
+                        thrust::raw_pointer_cast(
+                          &shapeFunctionGradientValuesXInvertedDevice[0])));
 
-                dftfe::cublasXgemmStridedBatched(
-                  operatorMatrix.getCublasHandle(),
-                  CUBLAS_OP_N,
-                  CUBLAS_OP_N,
-                  BVec,
-                  numQuads,
-                  numNodesPerElement,
-                  reinterpret_cast<const dataTypes::numberGPU *>(
-                    &scalarCoeffAlpha),
-                  reinterpret_cast<const dataTypes::numberGPU *>(
-                    thrust::raw_pointer_cast(
-                      &cellWaveFunctionMatrix[startingId * numNodesPerElement *
-                                              BVec])),
-                  BVec,
-                  strideA,
-                  reinterpret_cast<const dataTypes::numberGPU *>(
-                    thrust::raw_pointer_cast(
-                      &shapeFunctionGradientValuesXInvertedDevice[0])),
-                  numNodesPerElement,
-                  strideB,
-                  reinterpret_cast<const dataTypes::numberGPU *>(
-                    &scalarCoeffBeta),
-                  reinterpret_cast<dataTypes::numberGPU *>(
-                    thrust::raw_pointer_cast(&gradPsiQuadsXFlatD[0])),
-                  BVec,
-                  strideC,
-                  currentBlockSize);
+                    dftfe::cublasXgemmStridedBatched(
+                      operatorMatrix.getCublasHandle(),
+                      CUBLAS_OP_N,
+                      CUBLAS_OP_N,
+                      BVec,
+                      numQuads,
+                      numNodesPerElement,
+                      reinterpret_cast<const dataTypes::numberGPU *>(
+                        &scalarCoeffAlpha),
+                      reinterpret_cast<const dataTypes::numberGPU *>(
+                        thrust::raw_pointer_cast(
+                          &cellWaveFunctionMatrix[startingId *
+                                                  numNodesPerElement * BVec])),
+                      BVec,
+                      strideA,
+                      reinterpret_cast<const dataTypes::numberGPU *>(
+                        thrust::raw_pointer_cast(
+                          &shapeFunctionGradientValuesXInvertedDevice[0])),
+                      numNodesPerElement,
+                      strideB,
+                      reinterpret_cast<const dataTypes::numberGPU *>(
+                        &scalarCoeffBeta),
+                      reinterpret_cast<dataTypes::numberGPU *>(
+                        thrust::raw_pointer_cast(&gradPsiQuadsXFlatD[0])),
+                      BVec,
+                      strideC,
+                      currentBlockSize);
 
-                copyDoubleToNumber(
-                  thrust::raw_pointer_cast(
-                    &(operatorMatrix.getShapeFunctionGradientValuesYInverted())
-                      [startingId * numQuads * numNodesPerElement]),
-                  currentBlockSize * numQuads * numNodesPerElement,
-                  reinterpret_cast<dataTypes::numberGPU *>(
-                    thrust::raw_pointer_cast(
-                      &shapeFunctionGradientValuesYInvertedDevice[0])));
+                    copyDoubleToNumber(
+                      thrust::raw_pointer_cast(
+                        &(operatorMatrix
+                            .getShapeFunctionGradientValuesYInverted())
+                          [startingId * numQuads * numNodesPerElement]),
+                      currentBlockSize * numQuads * numNodesPerElement,
+                      reinterpret_cast<dataTypes::numberGPU *>(
+                        thrust::raw_pointer_cast(
+                          &shapeFunctionGradientValuesYInvertedDevice[0])));
 
-                dftfe::cublasXgemmStridedBatched(
-                  operatorMatrix.getCublasHandle(),
-                  CUBLAS_OP_N,
-                  CUBLAS_OP_N,
-                  BVec,
-                  numQuads,
-                  numNodesPerElement,
-                  reinterpret_cast<const dataTypes::numberGPU *>(
-                    &scalarCoeffAlpha),
-                  reinterpret_cast<const dataTypes::numberGPU *>(
-                    thrust::raw_pointer_cast(
-                      &cellWaveFunctionMatrix[startingId * numNodesPerElement *
-                                              BVec])),
-                  BVec,
-                  strideA,
-                  reinterpret_cast<const dataTypes::numberGPU *>(
-                    thrust::raw_pointer_cast(
-                      &shapeFunctionGradientValuesYInvertedDevice[0])),
-                  numNodesPerElement,
-                  strideB,
-                  reinterpret_cast<const dataTypes::numberGPU *>(
-                    &scalarCoeffBeta),
-                  reinterpret_cast<dataTypes::numberGPU *>(
-                    thrust::raw_pointer_cast(&gradPsiQuadsYFlatD[0])),
-                  BVec,
-                  strideC,
-                  currentBlockSize);
+                    dftfe::cublasXgemmStridedBatched(
+                      operatorMatrix.getCublasHandle(),
+                      CUBLAS_OP_N,
+                      CUBLAS_OP_N,
+                      BVec,
+                      numQuads,
+                      numNodesPerElement,
+                      reinterpret_cast<const dataTypes::numberGPU *>(
+                        &scalarCoeffAlpha),
+                      reinterpret_cast<const dataTypes::numberGPU *>(
+                        thrust::raw_pointer_cast(
+                          &cellWaveFunctionMatrix[startingId *
+                                                  numNodesPerElement * BVec])),
+                      BVec,
+                      strideA,
+                      reinterpret_cast<const dataTypes::numberGPU *>(
+                        thrust::raw_pointer_cast(
+                          &shapeFunctionGradientValuesYInvertedDevice[0])),
+                      numNodesPerElement,
+                      strideB,
+                      reinterpret_cast<const dataTypes::numberGPU *>(
+                        &scalarCoeffBeta),
+                      reinterpret_cast<dataTypes::numberGPU *>(
+                        thrust::raw_pointer_cast(&gradPsiQuadsYFlatD[0])),
+                      BVec,
+                      strideC,
+                      currentBlockSize);
 
-                copyDoubleToNumber(
-                  thrust::raw_pointer_cast(
-                    &(operatorMatrix.getShapeFunctionGradientValuesZInverted())
-                      [startingId * numQuads * numNodesPerElement]),
-                  currentBlockSize * numQuads * numNodesPerElement,
-                  reinterpret_cast<dataTypes::numberGPU *>(
-                    thrust::raw_pointer_cast(
-                      &shapeFunctionGradientValuesZInvertedDevice[0])));
+                    copyDoubleToNumber(
+                      thrust::raw_pointer_cast(
+                        &(operatorMatrix
+                            .getShapeFunctionGradientValuesZInverted())
+                          [startingId * numQuads * numNodesPerElement]),
+                      currentBlockSize * numQuads * numNodesPerElement,
+                      reinterpret_cast<dataTypes::numberGPU *>(
+                        thrust::raw_pointer_cast(
+                          &shapeFunctionGradientValuesZInvertedDevice[0])));
 
-                dftfe::cublasXgemmStridedBatched(
-                  operatorMatrix.getCublasHandle(),
-                  CUBLAS_OP_N,
-                  CUBLAS_OP_N,
-                  BVec,
-                  numQuads,
-                  numNodesPerElement,
-                  reinterpret_cast<const dataTypes::numberGPU *>(
-                    &scalarCoeffAlpha),
-                  reinterpret_cast<const dataTypes::numberGPU *>(
-                    thrust::raw_pointer_cast(
-                      &cellWaveFunctionMatrix[startingId * numNodesPerElement *
-                                              BVec])),
-                  BVec,
-                  strideA,
-                  reinterpret_cast<const dataTypes::numberGPU *>(
-                    thrust::raw_pointer_cast(
-                      &shapeFunctionGradientValuesZInvertedDevice[0])),
-                  numNodesPerElement,
-                  strideB,
-                  reinterpret_cast<const dataTypes::numberGPU *>(
-                    &scalarCoeffBeta),
-                  reinterpret_cast<dataTypes::numberGPU *>(
-                    thrust::raw_pointer_cast(&gradPsiQuadsZFlatD[0])),
-                  BVec,
-                  strideC,
-                  currentBlockSize);
+                    dftfe::cublasXgemmStridedBatched(
+                      operatorMatrix.getCublasHandle(),
+                      CUBLAS_OP_N,
+                      CUBLAS_OP_N,
+                      BVec,
+                      numQuads,
+                      numNodesPerElement,
+                      reinterpret_cast<const dataTypes::numberGPU *>(
+                        &scalarCoeffAlpha),
+                      reinterpret_cast<const dataTypes::numberGPU *>(
+                        thrust::raw_pointer_cast(
+                          &cellWaveFunctionMatrix[startingId *
+                                                  numNodesPerElement * BVec])),
+                      BVec,
+                      strideA,
+                      reinterpret_cast<const dataTypes::numberGPU *>(
+                        thrust::raw_pointer_cast(
+                          &shapeFunctionGradientValuesZInvertedDevice[0])),
+                      numNodesPerElement,
+                      strideB,
+                      reinterpret_cast<const dataTypes::numberGPU *>(
+                        &scalarCoeffBeta),
+                      reinterpret_cast<dataTypes::numberGPU *>(
+                        thrust::raw_pointer_cast(&gradPsiQuadsZFlatD[0])),
+                      BVec,
+                      strideC,
+                      currentBlockSize);
 
 
-                computeELocWfcEshelbyTensorContributions<<<
-                  (BVec + 255) / 256 * currentBlockSize * numQuads * 9,
-                  256>>>(BVec,
-                         currentBlockSize * numQuads * 9,
-                         numQuads,
-                         reinterpret_cast<const dataTypes::numberGPU *>(
-                           thrust::raw_pointer_cast(&psiQuadsFlatD[0])),
-                         reinterpret_cast<const dataTypes::numberGPU *>(
-                           thrust::raw_pointer_cast(&gradPsiQuadsXFlatD[0])),
-                         reinterpret_cast<const dataTypes::numberGPU *>(
-                           thrust::raw_pointer_cast(&gradPsiQuadsYFlatD[0])),
-                         reinterpret_cast<const dataTypes::numberGPU *>(
-                           thrust::raw_pointer_cast(&gradPsiQuadsZFlatD[0])),
-                         thrust::raw_pointer_cast(&eigenValuesD[0]),
-                         thrust::raw_pointer_cast(&partialOccupanciesD[0]),
+                    computeELocWfcEshelbyTensorContributions<<<
+                      (BVec + 255) / 256 * currentBlockSize * numQuads * 9,
+                      256>>>(
+                      BVec,
+                      currentBlockSize * numQuads * 9,
+                      numQuads,
+                      reinterpret_cast<const dataTypes::numberGPU *>(
+                        thrust::raw_pointer_cast(&psiQuadsFlatD[0])),
+                      reinterpret_cast<const dataTypes::numberGPU *>(
+                        thrust::raw_pointer_cast(&gradPsiQuadsXFlatD[0])),
+                      reinterpret_cast<const dataTypes::numberGPU *>(
+                        thrust::raw_pointer_cast(&gradPsiQuadsYFlatD[0])),
+                      reinterpret_cast<const dataTypes::numberGPU *>(
+                        thrust::raw_pointer_cast(&gradPsiQuadsZFlatD[0])),
+                      thrust::raw_pointer_cast(&eigenValuesD[0]),
+                      thrust::raw_pointer_cast(&partialOccupanciesD[0]),
 #ifdef USE_COMPLEX
-                         kcoordx,
-                         kcoordy,
-                         kcoordz,
+                      kcoordx,
+                      kcoordy,
+                      kcoordz,
 #endif
-                         thrust::raw_pointer_cast(
-                           &eshelbyTensorContributionsD[0])
+                      thrust::raw_pointer_cast(&eshelbyTensorContributionsD[0])
 #ifdef USE_COMPLEX
-                         ,
-                         addEk
-#endif                         
-                           );
+                        ,
+                      addEk
+#endif
+                    );
 
-                const double scalarCoeffAlphaEshelby = 1.0;
-                const double scalarCoeffBetaEshelby  = 1.0;
+                    const double scalarCoeffAlphaEshelby = 1.0;
+                    const double scalarCoeffBetaEshelby  = 1.0;
 
 
 
-                cublasDgemm(
-                  operatorMatrix.getCublasHandle(),
-                  CUBLAS_OP_N,
-                  CUBLAS_OP_N,
-                  1,
-                  currentBlockSize * numQuads * 9,
-                  BVec,
-                  &scalarCoeffAlphaEshelby,
-                  thrust::raw_pointer_cast(&onesVecD[0]),
-                  1,
-                  thrust::raw_pointer_cast(&eshelbyTensorContributionsD[0]),
-                  BVec,
-                  &scalarCoeffBetaEshelby,
-                  thrust::raw_pointer_cast(
-                    &eshelbyTensorQuadValuesD[startingId * numQuads * 9]),
-                  1);
-
-                }
+                    cublasDgemm(
+                      operatorMatrix.getCublasHandle(),
+                      CUBLAS_OP_N,
+                      CUBLAS_OP_N,
+                      1,
+                      currentBlockSize * numQuads * 9,
+                      BVec,
+                      &scalarCoeffAlphaEshelby,
+                      thrust::raw_pointer_cast(&onesVecD[0]),
+                      1,
+                      thrust::raw_pointer_cast(&eshelbyTensorContributionsD[0]),
+                      BVec,
+                      &scalarCoeffBetaEshelby,
+                      thrust::raw_pointer_cast(
+                        &eshelbyTensorQuadValuesD[startingId * numQuads * 9]),
+                      1);
+                  }
 
                 if (isPsp)
-                {
-
+                  {
 #ifdef USE_COMPLEX
-                const int strideCNLP = BVec * numQuadsNLP;
-                const int strideBNLP = 0;
+                    const int strideCNLP = BVec * numQuadsNLP;
+                    const int strideBNLP = 0;
 
-                dftfe::cublasXgemmStridedBatched(
-                  operatorMatrix.getCublasHandle(),
-                  CUBLAS_OP_N,
-                  CUBLAS_OP_N,
-                  BVec,
-                  numQuadsNLP,
-                  numNodesPerElement,
-                  reinterpret_cast<const dataTypes::numberGPU *>(
-                    &scalarCoeffAlpha),
-                  reinterpret_cast<const dataTypes::numberGPU *>(
-                    thrust::raw_pointer_cast(
-                      &cellWaveFunctionMatrix[startingId * numNodesPerElement *
-                                              BVec])),
-                  BVec,
-                  strideA,
-                  reinterpret_cast<const dataTypes::numberGPU *>(
-                    thrust::raw_pointer_cast(
-                      &(shapeFunctionValuesNLPReferenceD[0]))),
-                  numNodesPerElement,
-                  strideBNLP,
-                  reinterpret_cast<const dataTypes::numberGPU *>(
-                    &scalarCoeffBeta),
-                  reinterpret_cast<dataTypes::numberGPU *>(
-                    thrust::raw_pointer_cast(&psiQuadsNLPD[startingId * numQuadsNLP *
-                                            BVec])),
-                  BVec,
-                  strideCNLP,
-                  currentBlockSize);
+                    dftfe::cublasXgemmStridedBatched(
+                      operatorMatrix.getCublasHandle(),
+                      CUBLAS_OP_N,
+                      CUBLAS_OP_N,
+                      BVec,
+                      numQuadsNLP,
+                      numNodesPerElement,
+                      reinterpret_cast<const dataTypes::numberGPU *>(
+                        &scalarCoeffAlpha),
+                      reinterpret_cast<const dataTypes::numberGPU *>(
+                        thrust::raw_pointer_cast(
+                          &cellWaveFunctionMatrix[startingId *
+                                                  numNodesPerElement * BVec])),
+                      BVec,
+                      strideA,
+                      reinterpret_cast<const dataTypes::numberGPU *>(
+                        thrust::raw_pointer_cast(
+                          &(shapeFunctionValuesNLPReferenceD[0]))),
+                      numNodesPerElement,
+                      strideBNLP,
+                      reinterpret_cast<const dataTypes::numberGPU *>(
+                        &scalarCoeffBeta),
+                      reinterpret_cast<dataTypes::numberGPU *>(
+                        thrust::raw_pointer_cast(
+                          &psiQuadsNLPD[startingId * numQuadsNLP * BVec])),
+                      BVec,
+                      strideCNLP,
+                      currentBlockSize);
 #endif
 
-                // shapeGradRef^T*invJacobian^T
-                cublasDgemmStridedBatched(
-                  operatorMatrix.getCublasHandle(),
-                  CUBLAS_OP_N,
-                  CUBLAS_OP_N,
-                  numNodesPerElement,
-                  3,
-                  3,
-                  &scalarCoeffAlphaReal,
-                  thrust::raw_pointer_cast(
-                    &shapeFunctionGradientValuesNLPReferenceD[0]),
-                  numNodesPerElement,
-                  numNodesPerElement * 3,
-                  thrust::raw_pointer_cast(
-                    &(operatorMatrix
-                        .getInverseJacobiansNLP())[startingId * numQuadsNLP *
-                                                   3 * 3]),
-                  3,
-                  3 * 3,
-                  &scalarCoeffBetaReal,
-                  thrust::raw_pointer_cast(&shapeFunctionGradientValuesNLPD[0]),
-                  numNodesPerElement,
-                  numNodesPerElement * 3,
-                  currentBlockSize * numQuadsNLP);
+                    // shapeGradRef^T*invJacobian^T
+                    cublasDgemmStridedBatched(
+                      operatorMatrix.getCublasHandle(),
+                      CUBLAS_OP_N,
+                      CUBLAS_OP_N,
+                      numNodesPerElement,
+                      3,
+                      3,
+                      &scalarCoeffAlphaReal,
+                      thrust::raw_pointer_cast(
+                        &shapeFunctionGradientValuesNLPReferenceD[0]),
+                      numNodesPerElement,
+                      numNodesPerElement * 3,
+                      thrust::raw_pointer_cast(
+                        &(operatorMatrix
+                            .getInverseJacobiansNLP())[startingId *
+                                                       numQuadsNLP * 3 * 3]),
+                      3,
+                      3 * 3,
+                      &scalarCoeffBetaReal,
+                      thrust::raw_pointer_cast(
+                        &shapeFunctionGradientValuesNLPD[0]),
+                      numNodesPerElement,
+                      numNodesPerElement * 3,
+                      currentBlockSize * numQuadsNLP);
 
-                copyDoubleToNumber(
-                  thrust::raw_pointer_cast(&shapeFunctionGradientValuesNLPD[0]),
-                  currentBlockSize * numQuadsNLP * numNodesPerElement * 3,
-                  reinterpret_cast<dataTypes::numberGPU *>(
-                    thrust::raw_pointer_cast(
-                      &shapeFunctionGradientValuesNLPDCopy[0])));
+                    copyDoubleToNumber(
+                      thrust::raw_pointer_cast(
+                        &shapeFunctionGradientValuesNLPD[0]),
+                      currentBlockSize * numQuadsNLP * numNodesPerElement * 3,
+                      reinterpret_cast<dataTypes::numberGPU *>(
+                        thrust::raw_pointer_cast(
+                          &shapeFunctionGradientValuesNLPDCopy[0])));
 
-                const int strideCNLPGrad = BVec * 3 * numQuadsNLP;
-                const int strideBNLPGrad = numNodesPerElement * 3 * numQuadsNLP;
+                    const int strideCNLPGrad = BVec * 3 * numQuadsNLP;
+                    const int strideBNLPGrad =
+                      numNodesPerElement * 3 * numQuadsNLP;
 
-                dftfe::cublasXgemmStridedBatched(
-                  operatorMatrix.getCublasHandle(),
-                  CUBLAS_OP_N,
-                  CUBLAS_OP_N,
-                  BVec,
-                  3 * numQuadsNLP,
-                  numNodesPerElement,
-                  reinterpret_cast<const dataTypes::numberGPU *>(
-                    &scalarCoeffAlpha),
-                  reinterpret_cast<const dataTypes::numberGPU *>(
-                    thrust::raw_pointer_cast(
-                      &cellWaveFunctionMatrix[startingId * numNodesPerElement *
-                                              BVec])),
-                  BVec,
-                  strideA,
-                  reinterpret_cast<const dataTypes::numberGPU *>(
-                    thrust::raw_pointer_cast(
-                      &shapeFunctionGradientValuesNLPDCopy[0])),
-                  numNodesPerElement,
-                  strideBNLPGrad,
-                  reinterpret_cast<const dataTypes::numberGPU *>(
-                    &scalarCoeffBeta),
-                  reinterpret_cast<dataTypes::numberGPU *>(
-                    thrust::raw_pointer_cast(
-                      &gradPsiQuadsNLPFlatD[startingId * numQuadsNLP * 3 *
-                                            BVec])),
-                  BVec,
-                  strideCNLPGrad,
-                  currentBlockSize);
-                }
+                    dftfe::cublasXgemmStridedBatched(
+                      operatorMatrix.getCublasHandle(),
+                      CUBLAS_OP_N,
+                      CUBLAS_OP_N,
+                      BVec,
+                      3 * numQuadsNLP,
+                      numNodesPerElement,
+                      reinterpret_cast<const dataTypes::numberGPU *>(
+                        &scalarCoeffAlpha),
+                      reinterpret_cast<const dataTypes::numberGPU *>(
+                        thrust::raw_pointer_cast(
+                          &cellWaveFunctionMatrix[startingId *
+                                                  numNodesPerElement * BVec])),
+                      BVec,
+                      strideA,
+                      reinterpret_cast<const dataTypes::numberGPU *>(
+                        thrust::raw_pointer_cast(
+                          &shapeFunctionGradientValuesNLPDCopy[0])),
+                      numNodesPerElement,
+                      strideBNLPGrad,
+                      reinterpret_cast<const dataTypes::numberGPU *>(
+                        &scalarCoeffBeta),
+                      reinterpret_cast<dataTypes::numberGPU *>(
+                        thrust::raw_pointer_cast(
+                          &gradPsiQuadsNLPFlatD[startingId * numQuadsNLP * 3 *
+                                                BVec])),
+                      BVec,
+                      strideCNLPGrad,
+                      currentBlockSize);
+                  }
               }
           }
       }
@@ -1088,7 +1092,7 @@ namespace dftfe
         const unsigned int cellsBlockSize,
         const unsigned int innerBlockSizeEnlp,
         const bool         isPsp,
-        const bool isFloatingChargeForces,
+        const bool         isFloatingChargeForces,
         const bool         addEk)
       {
         int this_process;
@@ -1109,36 +1113,35 @@ namespace dftfe
         // MPI_Barrier(MPI_COMM_WORLD);
         // double kernel1_time = MPI_Wtime();
 
-        interpolatePsiComputeELocWfcEshelbyTensorD(
-          operatorMatrix,
-          cudaFlattenedArrayBlock,
-          numPsi,
-          numCells,
-          numQuads,
-          numQuadsNLP,
-          numNodesPerElement,
-          eigenValuesD,
-          partialOccupanciesD,
+        interpolatePsiComputeELocWfcEshelbyTensorD(operatorMatrix,
+                                                   cudaFlattenedArrayBlock,
+                                                   numPsi,
+                                                   numCells,
+                                                   numQuads,
+                                                   numQuadsNLP,
+                                                   numNodesPerElement,
+                                                   eigenValuesD,
+                                                   partialOccupanciesD,
 #ifdef USE_COMPLEX
-          kcoordx,
-          kcoordy,
-          kcoordz,
+                                                   kcoordx,
+                                                   kcoordy,
+                                                   kcoordz,
 #endif
-          onesVecD,
-          cellsBlockSize,
-          psiQuadsFlatD,
-          gradPsiQuadsXFlatD,
-          gradPsiQuadsYFlatD,
-          gradPsiQuadsZFlatD,
+                                                   onesVecD,
+                                                   cellsBlockSize,
+                                                   psiQuadsFlatD,
+                                                   gradPsiQuadsXFlatD,
+                                                   gradPsiQuadsYFlatD,
+                                                   gradPsiQuadsZFlatD,
 #ifdef USE_COMPLEX
-          psiQuadsNLPD,
+                                                   psiQuadsNLPD,
 #endif
-          gradPsiQuadsNLPFlatD,
-          eshelbyTensorContributionsD,
-          eshelbyTensorQuadValuesD,
-          isPsp,
-          isFloatingChargeForces,
-          addEk);
+                                                   gradPsiQuadsNLPFlatD,
+                                                   eshelbyTensorContributionsD,
+                                                   eshelbyTensorQuadValuesD,
+                                                   isPsp,
+                                                   isFloatingChargeForces,
+                                                   addEk);
 
         // cudaDeviceSynchronize();
         // MPI_Barrier(MPI_COMM_WORLD);
@@ -1240,7 +1243,7 @@ namespace dftfe
 #endif
       const MPI_Comm &interBandGroupComm,
       const bool      isPsp,
-      const bool isFloatingChargeForces,
+      const bool      isFloatingChargeForces,
       const bool      addEk)
     {
       // band group parallelization data structures

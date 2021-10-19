@@ -54,7 +54,7 @@ namespace dftfe
 #    endif
       const MPI_Comm &interBandGroupComm,
       const bool      isPsp,
-      const bool isFloatingChargeForces,
+      const bool      isFloatingChargeForces,
       const bool      addEk);
   } // namespace forceCUDA
 } // namespace dftfe
