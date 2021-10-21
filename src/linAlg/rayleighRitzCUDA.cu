@@ -257,19 +257,6 @@ namespace dftfe
         elpaScala.getProcessGridDftfeScalaWrapper();
 
       //
-      // compute overlap matrix
-      //
-      dftfe::ScaLAPACKMatrix<dataTypes::number> overlapMatPar(N,
-                                                              processGrid,
-                                                              rowsBlockSize);
-
-      if (processGrid->is_process_active())
-        std::fill(&overlapMatPar.local_el(0, 0),
-                  &overlapMatPar.local_el(0, 0) +
-                    overlapMatPar.local_m() * overlapMatPar.local_n(),
-                  dataTypes::number(0.0));
-
-      //
       // SConj=X^{T}*XConj.
       //
 
@@ -282,6 +269,19 @@ namespace dftfe
           else
             computing_timer.enter_subsection("SConj=X^{T}XConj, RR GEP step");
         }
+
+      //
+      // compute overlap matrix
+      //
+      dftfe::ScaLAPACKMatrix<dataTypes::number> overlapMatPar(N,
+                                                              processGrid,
+                                                              rowsBlockSize);
+
+      if (processGrid->is_process_active())
+        std::fill(&overlapMatPar.local_el(0, 0),
+                  &overlapMatPar.local_el(0, 0) +
+                    overlapMatPar.local_m() * overlapMatPar.local_n(),
+                  dataTypes::number(0.0));
 
       if (dftParameters::useMixedPrecCGS_O && useMixedPrecOverall)
         {
@@ -351,7 +351,7 @@ namespace dftfe
       //
       if (dftParameters::gpuFineGrainedTimings)
         computing_timer.enter_subsection(
-          "Cholesky and triangular matrix invert");
+          "Cholesky and triangular matrix invert, RR GEP step");
 
 
       dftfe::LAPACKSupport::Property overlapMatPropertyPostCholesky;
@@ -425,8 +425,15 @@ namespace dftfe
 
       if (dftParameters::gpuFineGrainedTimings)
         computing_timer.leave_subsection(
-          "Cholesky and triangular matrix invert");
+          "Cholesky and triangular matrix invert, RR GEP step");
 
+
+      if (dftParameters::gpuFineGrainedTimings)
+        {
+          cudaDeviceSynchronize();
+          computing_timer.enter_subsection(
+            "HConjProj= X^{T}*HConj*XConj, RR GEP step");
+        }
 
 
       //
@@ -440,13 +447,6 @@ namespace dftfe
                   &projHamPar.local_el(0, 0) +
                     projHamPar.local_m() * projHamPar.local_n(),
                   dataTypes::number(0.0));
-
-      if (dftParameters::gpuFineGrainedTimings)
-        {
-          cudaDeviceSynchronize();
-          computing_timer.enter_subsection(
-            "HConjProj= X^{T}*HConj*XConj, RR GEP step");
-        }
 
       if (dftParameters::overlapComputeCommunOrthoRR)
         operatorMatrix.XtHXOverlapComputeCommun(X,
@@ -477,6 +477,9 @@ namespace dftfe
           computing_timer.leave_subsection(
             "HConjProj= X^{T}*HConj*XConj, RR GEP step");
         }
+
+      if (dftParameters::gpuFineGrainedTimings)
+        computing_timer.enter_subsection("Compute Lconj^{-1}*HConjProj*(Lconj^{-1})^C, RR GEP step");
 
       // Construct the full HConjProj matrix
       dftfe::ScaLAPACKMatrix<dataTypes::number> projHamParConjTrans(
@@ -516,7 +519,8 @@ namespace dftfe
       LMatPar.mmult(projHamParCopy, projHamPar);
       projHamParCopy.zmCmult(projHamPar, LMatPar);
 
-
+      if (dftParameters::gpuFineGrainedTimings)
+        computing_timer.leave_subsection("Compute Lconj^{-1}*HConjProj*(Lconj^{-1})^C, RR GEP step");
       //
       // compute standard eigendecomposition HSConjProj: {QConjPrime,D}
       // HSConjProj=QConjPrime*D*QConjPrime^{C} QConj={Lc^{-1}}^{C}*QConjPrime
@@ -525,7 +529,7 @@ namespace dftfe
       if (dftParameters::useELPA)
         {
           if (dftParameters::gpuFineGrainedTimings)
-            computing_timer.enter_subsection("ELPA eigen decomp, RR step");
+            computing_timer.enter_subsection("ELPA eigen decomp, RR GEP step");
           dftfe::ScaLAPACKMatrix<dataTypes::number> eigenVectors(N,
                                                                  processGrid,
                                                                  rowsBlockSize);
@@ -557,16 +561,16 @@ namespace dftfe
           eigenVectors.copy_to(projHamPar);
 
           if (dftParameters::gpuFineGrainedTimings)
-            computing_timer.leave_subsection("ELPA eigen decomp, RR step");
+            computing_timer.leave_subsection("ELPA eigen decomp, RR GEP step");
         }
       else
         {
           if (dftParameters::gpuFineGrainedTimings)
-            computing_timer.enter_subsection("ScaLAPACK eigen decomp, RR step");
+            computing_timer.enter_subsection("ScaLAPACK eigen decomp, RR GEP step");
           eigenValues = projHamPar.eigenpairs_hermitian_by_index_MRRR(
             std::make_pair(0, N - 1), true);
           if (dftParameters::gpuFineGrainedTimings)
-            computing_timer.leave_subsection("ScaLAPACK eigen decomp, RR step");
+            computing_timer.leave_subsection("ScaLAPACK eigen decomp, RR GEP step");
         }
 
       linearAlgebraOperations::internal::broadcastAcrossInterCommScaLAPACKMat(
@@ -590,10 +594,10 @@ namespace dftfe
           if (!(dftParameters::useMixedPrecSubspaceRotRR &&
                 useMixedPrecOverall))
             computing_timer.enter_subsection(
-              "X^{T}={QConjPrime}^{C}*LConj^{-1}*X^{T}, RR step");
+              "X^{T}={QConjPrime}^{C}*LConj^{-1}*X^{T}, RR GEP step");
           else
             computing_timer.enter_subsection(
-              "X^{T}={QConjPrime}^{C}*LConj^{-1}*X^{T} mixed prec, RR step");
+              "X^{T}={QConjPrime}^{C}*LConj^{-1}*X^{T} mixed prec, RR GEP step");
         }
 
       projHamParCopy.copy_conjugate_transposed(projHamPar);
@@ -628,10 +632,10 @@ namespace dftfe
           if (!(dftParameters::useMixedPrecSubspaceRotRR &&
                 useMixedPrecOverall))
             computing_timer.leave_subsection(
-              "X^{T}={QConjPrime}^{C}*LConj^{-1}*X^{T}, RR step");
+              "X^{T}={QConjPrime}^{C}*LConj^{-1}*X^{T}, RR GEP step");
           else
             computing_timer.leave_subsection(
-              "X^{T}={QConjPrime}^{C}*LConj^{-1}*X^{T} mixed prec, RR step");
+              "X^{T}={QConjPrime}^{C}*LConj^{-1}*X^{T} mixed prec, RR GEP step");
         }
     }
 
@@ -671,6 +675,19 @@ namespace dftfe
       std::shared_ptr<const dftfe::ProcessGrid> processGrid =
         elpaScala.getProcessGridDftfeScalaWrapper();
 
+      //
+      // SConj=X^{T}*XConj
+      //
+      if (dftParameters::gpuFineGrainedTimings)
+        {
+          cudaDeviceSynchronize();
+          if (dftParameters::useMixedPrecCGS_O && useMixedPrecOverall)
+            computing_timer.enter_subsection(
+              "SConj=X^{T}XConj Mixed Prec, RR GEP step");
+          else
+            computing_timer.enter_subsection("SConj=X^{T}XConj, RR GEP step");
+        }
+
 
       //
       // compute overlap matrix
@@ -684,18 +701,6 @@ namespace dftfe
                   &overlapMatPar.local_el(0, 0) +
                     overlapMatPar.local_m() * overlapMatPar.local_n(),
                   dataTypes::number(0.0));
-      //
-      // SConj=X^{T}*XConj
-      //
-      if (dftParameters::gpuFineGrainedTimings)
-        {
-          cudaDeviceSynchronize();
-          if (dftParameters::useMixedPrecCGS_O && useMixedPrecOverall)
-            computing_timer.enter_subsection(
-              "SConj=X^{T}XConj Mixed Prec, RR GEP step");
-          else
-            computing_timer.enter_subsection("SConj=X^{T}XConj, RR GEP step");
-        }
 
       if (dftParameters::useMixedPrecCGS_O && useMixedPrecOverall)
         {
@@ -763,7 +768,7 @@ namespace dftfe
       // Sc=Lc*L^{T}
       if (dftParameters::gpuFineGrainedTimings)
         computing_timer.enter_subsection(
-          "Cholesky and triangular matrix invert");
+          "Cholesky and triangular matrix invert, RR GEP step");
 
       dftfe::LAPACKSupport::Property overlapMatPropertyPostCholesky;
       if (dftParameters::useELPA)
@@ -835,9 +840,21 @@ namespace dftfe
       LMatPar.invert();
       if (dftParameters::gpuFineGrainedTimings)
         computing_timer.leave_subsection(
-          "Cholesky and triangular matrix invert");
+          "Cholesky and triangular matrix invert, RR GEP step");
 
 
+
+      if (dftParameters::gpuFineGrainedTimings)
+        {
+          cudaDeviceSynchronize();
+          if (dftParameters::useMixedPrecXTHXSpectrumSplit &&
+              useMixedPrecOverall)
+            computing_timer.enter_subsection(
+              "HConjProj=X^{T}*HConj*XConj Mixed Prec, RR GEP step");
+          else
+            computing_timer.enter_subsection(
+              "HConjProj=X^{T}*HConj*XConj, RR GEP step");
+        }
 
       //
       // compute projected Hamiltonian HConjProj=X^{T}*HConj*XConj
@@ -851,17 +868,6 @@ namespace dftfe
                     projHamPar.local_m() * projHamPar.local_n(),
                   dataTypes::number(0.0));
 
-      if (dftParameters::gpuFineGrainedTimings)
-        {
-          cudaDeviceSynchronize();
-          if (dftParameters::useMixedPrecXTHXSpectrumSplit &&
-              useMixedPrecOverall)
-            computing_timer.enter_subsection(
-              "HConjProj=X^{T}*HConj*XConj Mixed Prec, RR GEP step");
-          else
-            computing_timer.enter_subsection(
-              "HConjProj=X^{T}*HConj*XConj, RR GEP step");
-        }
       if (useMixedPrecOverall && dftParameters::useMixedPrecXTHXSpectrumSplit)
         {
           operatorMatrix.XtHXMixedPrecOverlapComputeCommun(
@@ -917,6 +923,9 @@ namespace dftfe
               "HConjProj=X^{T}*HConj*XConj, RR GEP step");
         }
 
+      if (dftParameters::gpuFineGrainedTimings)
+        computing_timer.enter_subsection("Compute Lconj^{-1}*HConjProj*(Lconj^{-1})^C, RR GEP step");
+
       // Construct the full HConjProj matrix
       dftfe::ScaLAPACKMatrix<dataTypes::number> projHamParConjTrans(
         N, processGrid, rowsBlockSize);
@@ -961,7 +970,8 @@ namespace dftfe
       LMatPar.mmult(projHamParCopy, projHamPar);
       projHamParCopy.zmCmult(projHamPar, LMatPar);
 
-
+      if (dftParameters::gpuFineGrainedTimings)
+        computing_timer.leave_subsection("Compute Lconj^{-1}*HConjProj*(Lconj^{-1})^C, RR GEP step");
       //
       // compute standard eigendecomposition HSConjProj: {QConjPrime,D}
       // HSConjProj=QConjPrime*D*QConjPrime^{C} QConj={Lc^{-1}}^{C}*QConjPrime
@@ -1062,19 +1072,19 @@ namespace dftfe
          interBandGroupComm);
        */
 
-      //
-      // rotate the basis in the subspace
-      // Xfr^{T}={QfrConjPrime}^{C}*LConj^{-1}*X^{T}
-      //
-      projHamParCopy.copy_conjugate_transposed(projHamPar);
-      projHamParCopy.mmult(projHamPar, LMatPar);
-
       if (dftParameters::gpuFineGrainedTimings)
         {
           cudaDeviceSynchronize();
           computing_timer.enter_subsection(
             "Xfr^{T}={QfrConjPrime}^{C}*LConj^{-1}*X^{T}, RR GEP step");
         }
+
+      //
+      // rotate the basis in the subspace
+      // Xfr^{T}={QfrConjPrime}^{C}*LConj^{-1}*X^{T}
+      //
+      projHamParCopy.copy_conjugate_transposed(projHamPar);
+      projHamParCopy.mmult(projHamPar, LMatPar);
 
       subspaceRotationSpectrumSplitScalapack(X,
                                              XFrac,
