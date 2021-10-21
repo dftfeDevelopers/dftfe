@@ -829,7 +829,8 @@ namespace dftfe
       operatorMatrix.XtHX(X, numberWaveFunctions, processGrid, projHamPar);
       computing_timer.leave_subsection("Compute ProjHam, RR step");
 
-      computing_timer.enter_subsection("Compute HSConjProj= Lconj^{-1}*HConjProj*(Lconj^{-1})^C, RR step");
+      computing_timer.enter_subsection(
+        "Compute HSConjProj= Lconj^{-1}*HConjProj*(Lconj^{-1})^C, RR step");
 
       // Construct the full HConjProj matrix
       dftfe::ScaLAPACKMatrix<T> projHamParConjTrans(numberWaveFunctions,
@@ -868,7 +869,8 @@ namespace dftfe
       LMatPar.mmult(projHamParCopy, projHamPar);
       projHamParCopy.zmCmult(projHamPar, LMatPar);
 
-      computing_timer.leave_subsection("Compute HSConjProj= Lconj^{-1}*HConjProj*(Lconj^{-1})^C, RR step");
+      computing_timer.leave_subsection(
+        "Compute HSConjProj= Lconj^{-1}*HConjProj*(Lconj^{-1})^C, RR step");
       //
       // compute standard eigendecomposition HSConjProj: {QConjPrime,D}
       // HSConjProj=QConjPrime*D*QConjPrime^{C} QConj={Lc^{-1}}^{C}*QConjPrime
@@ -1321,8 +1323,7 @@ namespace dftfe
 
 
 
-      if (dftParameters::useMixedPrecXTHXSpectrumSplit &&
-          useMixedPrec)
+      if (dftParameters::useMixedPrecXTHXSpectrumSplit && useMixedPrec)
         computing_timer.enter_subsection(
           "HConjProj=X^{T}*HConj*XConj Mixed Prec, RR GEP step");
       else
@@ -1351,15 +1352,15 @@ namespace dftfe
         }
 
 
-      if (dftParameters::useMixedPrecXTHXSpectrumSplit &&
-          useMixedPrec)
+      if (dftParameters::useMixedPrecXTHXSpectrumSplit && useMixedPrec)
         computing_timer.leave_subsection(
           "HConjProj=X^{T}*HConj*XConj Mixed Prec, RR GEP step");
       else
         computing_timer.leave_subsection(
           "HConjProj=X^{T}*HConj*XConj, RR GEP step");
 
-      computing_timer.enter_subsection("Compute Lconj^{-1}*HConjProj*(Lconj^{-1})^C, RR GEP step");
+      computing_timer.enter_subsection(
+        "Compute Lconj^{-1}*HConjProj*(Lconj^{-1})^C, RR GEP step");
 
       // Construct the full HConjProj matrix
       dftfe::ScaLAPACKMatrix<T> projHamParConjTrans(numberWaveFunctions,
@@ -1402,7 +1403,8 @@ namespace dftfe
       LMatPar.mmult(projHamParCopy, projHamPar);
       projHamParCopy.zmCmult(projHamPar, LMatPar);
 
-      computing_timer.leave_subsection("Compute Lconj^{-1}*HConjProj*(Lconj^{-1})^C, RR GEP step");
+      computing_timer.leave_subsection(
+        "Compute Lconj^{-1}*HConjProj*(Lconj^{-1})^C, RR GEP step");
       //
       // compute standard eigendecomposition HSConjProj: {QConjPrime,D}
       // HSConjProj=QConjPrime*D*QConjPrime^{C} QConj={Lc^{-1}}^{C}*QConjPrime

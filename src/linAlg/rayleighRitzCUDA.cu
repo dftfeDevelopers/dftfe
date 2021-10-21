@@ -479,7 +479,8 @@ namespace dftfe
         }
 
       if (dftParameters::gpuFineGrainedTimings)
-        computing_timer.enter_subsection("Compute Lconj^{-1}*HConjProj*(Lconj^{-1})^C, RR GEP step");
+        computing_timer.enter_subsection(
+          "Compute Lconj^{-1}*HConjProj*(Lconj^{-1})^C, RR GEP step");
 
       // Construct the full HConjProj matrix
       dftfe::ScaLAPACKMatrix<dataTypes::number> projHamParConjTrans(
@@ -520,7 +521,8 @@ namespace dftfe
       projHamParCopy.zmCmult(projHamPar, LMatPar);
 
       if (dftParameters::gpuFineGrainedTimings)
-        computing_timer.leave_subsection("Compute Lconj^{-1}*HConjProj*(Lconj^{-1})^C, RR GEP step");
+        computing_timer.leave_subsection(
+          "Compute Lconj^{-1}*HConjProj*(Lconj^{-1})^C, RR GEP step");
       //
       // compute standard eigendecomposition HSConjProj: {QConjPrime,D}
       // HSConjProj=QConjPrime*D*QConjPrime^{C} QConj={Lc^{-1}}^{C}*QConjPrime
@@ -566,11 +568,13 @@ namespace dftfe
       else
         {
           if (dftParameters::gpuFineGrainedTimings)
-            computing_timer.enter_subsection("ScaLAPACK eigen decomp, RR GEP step");
+            computing_timer.enter_subsection(
+              "ScaLAPACK eigen decomp, RR GEP step");
           eigenValues = projHamPar.eigenpairs_hermitian_by_index_MRRR(
             std::make_pair(0, N - 1), true);
           if (dftParameters::gpuFineGrainedTimings)
-            computing_timer.leave_subsection("ScaLAPACK eigen decomp, RR GEP step");
+            computing_timer.leave_subsection(
+              "ScaLAPACK eigen decomp, RR GEP step");
         }
 
       linearAlgebraOperations::internal::broadcastAcrossInterCommScaLAPACKMat(
@@ -924,7 +928,8 @@ namespace dftfe
         }
 
       if (dftParameters::gpuFineGrainedTimings)
-        computing_timer.enter_subsection("Compute Lconj^{-1}*HConjProj*(Lconj^{-1})^C, RR GEP step");
+        computing_timer.enter_subsection(
+          "Compute Lconj^{-1}*HConjProj*(Lconj^{-1})^C, RR GEP step");
 
       // Construct the full HConjProj matrix
       dftfe::ScaLAPACKMatrix<dataTypes::number> projHamParConjTrans(
@@ -971,7 +976,8 @@ namespace dftfe
       projHamParCopy.zmCmult(projHamPar, LMatPar);
 
       if (dftParameters::gpuFineGrainedTimings)
-        computing_timer.leave_subsection("Compute Lconj^{-1}*HConjProj*(Lconj^{-1})^C, RR GEP step");
+        computing_timer.leave_subsection(
+          "Compute Lconj^{-1}*HConjProj*(Lconj^{-1})^C, RR GEP step");
       //
       // compute standard eigendecomposition HSConjProj: {QConjPrime,D}
       // HSConjProj=QConjPrime*D*QConjPrime^{C} QConj={Lc^{-1}}^{C}*QConjPrime
