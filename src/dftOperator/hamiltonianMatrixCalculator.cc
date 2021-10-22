@@ -352,7 +352,6 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::computeHamiltonianMatrix(
                     d_blockiNodeIndex[numberEntriesEachBlock * blockCount];
                   tempValue = (numberDofsPerElement * iNode) -
                               (0.5 * iNode * iNode + 0.5 * iNode) - tempValue1;
-#pragma omp parallel for
                   for (jNode =
                          d_blockjNodeIndex[numberEntriesEachBlock * blockCount];
                        jNode < numberDofsPerElement;
@@ -403,7 +402,6 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::computeHamiltonianMatrix(
                   startIndexINode = iNode + 1;
 
 
-#pragma omp parallel for
                   for (iNode = startIndexINode;
                        iNode < d_blockiNodeIndex[numberEntriesEachBlock *
                                                    (blockCount + 1) -
@@ -467,7 +465,6 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::computeHamiltonianMatrix(
                                             1];
                   tempValue = (numberDofsPerElement * iNode) -
                               (0.5 * iNode * iNode + 0.5 * iNode) - tempValue1;
-#pragma omp parallel for
                   for (jNode = iNode;
                        jNode <= d_blockjNodeIndex[numberEntriesEachBlock *
                                                     (blockCount + 1) -
@@ -578,7 +575,6 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::computeHamiltonianMatrix(
               iNode     = d_blockiNodeIndexNoSym[numberEntriesEachBlockNoSym *
                                              blockCount];
               tempValue = (numberDofsPerElement * iNode) - tempValue1;
-#  pragma omp parallel for
               for (jNode = d_blockjNodeIndexNoSym[numberEntriesEachBlockNoSym *
                                                   blockCount];
                    jNode < numberDofsPerElement;
@@ -613,7 +609,6 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::computeHamiltonianMatrix(
 
               startIndexINode = iNode + 1;
 
-#  pragma omp parallel for
               for (iNode = startIndexINode;
                    iNode < d_blockiNodeIndexNoSym[numberEntriesEachBlockNoSym *
                                                     (blockCount + 1) -
@@ -661,7 +656,6 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::computeHamiltonianMatrix(
                                                (blockCount + 1) -
                                              1];
               tempValue = (numberDofsPerElement * iNode) - tempValue1;
-#  pragma omp parallel for
               for (jNode = 0;
                    jNode <= d_blockjNodeIndexNoSym[numberEntriesEachBlockNoSym *
                                                      (blockCount + 1) -
@@ -781,7 +775,7 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::computeHamiltonianMatrix(
               if (dftParameters::isPseudopotential ||
                   dftParameters::smearedNuclearCharges)
                 {
-                  unsigned int count = 0;
+                  count = 0;
                   for (unsigned int iNode = 0; iNode < numberDofsPerElement;
                        ++iNode)
                     for (unsigned int jNode = iNode;
