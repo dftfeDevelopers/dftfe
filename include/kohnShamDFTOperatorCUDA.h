@@ -387,9 +387,6 @@ namespace dftfe
     void
     reinit(const unsigned int wavefunBlockSize, bool flag);
 
-    void
-    reinitNoRemesh(const unsigned int wavefunBlockSize);
-
     /**
      * @brief Computes diagonal mass matrix
      *
