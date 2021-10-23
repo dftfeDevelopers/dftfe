@@ -162,7 +162,7 @@ namespace dftfe
     initNoRemesh(const bool updateImagesAndKPointsAndVselfBins = true,
                  const bool checkSmearedChargeWidthsForOverlap = true,
                  const bool useSingleAtomSolutionOverride      = false,
-                 const bool isMeshDeformed=false);
+                 const bool isMeshDeformed                     = false);
 
     /**
      * @brief Selects between only electronic field relaxation or combined electronic and geometry relaxation

@@ -1285,19 +1285,19 @@ namespace dftfe
                                     d_kPointWeights.size(),
                                   true);
 
-    double             init_ksoperator;
+    double init_ksoperator;
     MPI_Barrier(MPI_COMM_WORLD);
-    init_ksoperator = MPI_Wtime(); 
+    init_ksoperator = MPI_Wtime();
 
     if (isMeshDeformed)
-       initializeKohnShamDFTOperator();
+      initializeKohnShamDFTOperator();
     else
-       reInitializeKohnShamDFTOperator();
+      reInitializeKohnShamDFTOperator();
 
     init_ksoperator = MPI_Wtime() - init_ksoperator;
     if (dftParameters::verbosity >= 2)
       pcout << "Time taken for kohnShamDFTOperator class reinitialization: "
-            << init_ksoperator << std::endl;   
+            << init_ksoperator << std::endl;
 
     computingTimerStandard.leave_subsection("KSDFT problem initialization");
   }
@@ -1816,7 +1816,7 @@ namespace dftfe
     if (dftParameters::useGPU)
       {
         d_kohnShamDFTOperatorCUDAPtr->reinit(
-          std::min(dftParameters::chebyWfcBlockSize, d_numEigenValues),true);
+          std::min(dftParameters::chebyWfcBlockSize, d_numEigenValues), true);
       }
 #endif
   }

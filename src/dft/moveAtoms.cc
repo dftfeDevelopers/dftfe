@@ -684,14 +684,14 @@ dftClass<FEOrder, FEOrderElectro>::updateAtomPositionsAndMoveMesh(
                                  (!dftParameters::reproducible_output &&
                                   maxCurrentDispAtom > 0.2) ||
                                    useSingleAtomSolutionsOverride,
-                                   true);
+                                 true);
                   else
                     initNoRemesh(false,
                                  true,
                                  (!dftParameters::reproducible_output &&
                                   maxCurrentDispAtom > 0.2) ||
                                    useSingleAtomSolutionsOverride,
-                                   true);
+                                 true);
                   if (!dftParameters::reproducible_output)
                     pcout << "...Reinitialization end" << std::endl;
 
