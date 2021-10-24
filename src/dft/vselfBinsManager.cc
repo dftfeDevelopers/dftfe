@@ -759,6 +759,10 @@ namespace dftfe
     for (unsigned int idim = 0; idim < 3; idim++)
       inhomogBoundaryVecVselfDerR[idim].reinit(inhomogBoundaryVec);
 
+    d_constraintsOnlyHangingInfo.initialize(inhomogBoundaryVec.get_partitioner(),
+                                     onlyHangingNodeConstraints);
+
+
     double radiusAtomBallReduced = radiusAtomBallAdaptive;
 
     // d_inhomoIdsColoredVecFlattened.clear();
@@ -1527,7 +1531,7 @@ namespace dftfe
         //d_vselfBinConstraintMatrices[4 * iBin].reinit(locally_relevant_dofs);
 
         inhomogBoundaryVec.update_ghost_values();
-        onlyHangingNodeConstraints.distribute(inhomogBoundaryVec);
+        d_constraintsOnlyHangingInfo.distribute(inhomogBoundaryVec);
         inhomogBoundaryVec.update_ghost_values();        
         for (auto index : locally_relevant_dofs)
           {
@@ -1575,7 +1579,7 @@ namespace dftfe
             for (unsigned int idim = 0; idim < 3; idim++)
               {
                 inhomogBoundaryVecVselfDerR[idim].update_ghost_values();
-                onlyHangingNodeConstraints.distribute(inhomogBoundaryVecVselfDerR[idim]);
+                d_constraintsOnlyHangingInfo.distribute(inhomogBoundaryVecVselfDerR[idim]);
                 inhomogBoundaryVecVselfDerR[idim].update_ghost_values();
                 for (auto index : locally_relevant_dofs)
                   {
