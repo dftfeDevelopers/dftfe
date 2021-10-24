@@ -4,10 +4,13 @@ branches:
   only:
     - publicGithubDevelop
 
+addons:
+  apt:
+    packages:
+      - doxygen
+
 script:
-  - wget https://www.doxygen.nl/files/doxygen-1.9.2.linux.bin.tar.gz --no-check-certificate
-  - tar -zxvf doxygen-1.9.2.linux.bin.tar.gz
-  - ./doxygen-1.9.2/bin/doxygen Doxyfile
+  - doxygen Doxyfile
 
 deploy:
   provider: pages
