@@ -5,7 +5,7 @@ branches:
     - publicGithubDevelop
 
 script:
-  - wget https://sourceforge.net/projects/doxygen/files/rel-1.8.13/doxygen-1.8.13.linux.bin.tar.gz/download
+  - wget https://sourceforge.net/projects/doxygen/files/rel-1.9.2/doxygen-1.9.2.linux.bin.tar.gz/download
   - tar -zxvf download
   - ./doxygen-1.8.13/bin/doxygen Doxyfile
 
