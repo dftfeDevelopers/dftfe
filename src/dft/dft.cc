@@ -204,7 +204,7 @@ namespace dftfe
     //delete d_mdPtr;
     //delete d_mdClassPtr;
     
-#ifdef DFTFE_WITH_ELPA
+
     if (dftParameters::useELPA)
       d_elpaScala.elpaDeallocateHandles(d_numEigenValues, d_numEigenValuesRR);
 

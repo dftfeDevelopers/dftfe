@@ -12,9 +12,7 @@
 #include <cmath>
 #include <molecularDynamicsClass.h>
 
-#ifdef DFTFE_WITH_GPU
-#  include <vectorUtilitiesCUDA.h>
-#endif
+
 
 namespace dftfe
 {
