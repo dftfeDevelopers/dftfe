@@ -46,20 +46,6 @@ dftClass<FEOrder, FEOrderElectro>::getLocalProcDofIndicesImag() const
   return localProc_dof_indicesImag;
 }
 
-template <unsigned int FEOrder, unsigned int FEOrderElectro>
-const dealii::AffineConstraints<double> &
-dftClass<FEOrder, FEOrderElectro>::getConstraintMatrixEigen() const
-{
-  return constraintsNoneEigen;
-}
-
-template <unsigned int FEOrder, unsigned int FEOrderElectro>
-const dftUtils::constraintMatrixInfo &
-dftClass<FEOrder, FEOrderElectro>::getConstraintMatrixEigenDataInfo() const
-{
-  return constraintsNoneEigenDataInfo;
-}
-
 
 template <unsigned int FEOrder, unsigned int FEOrderElectro>
 const MatrixFree<3, double> &

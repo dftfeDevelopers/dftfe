@@ -4,10 +4,13 @@ branches:
   only:
     - publicGithubDevelop
 
+addons:
+  apt:
+    packages:
+      - doxygen
+
 script:
-  - wget https://sourceforge.net/projects/doxygen/files/rel-1.8.13/doxygen-1.8.13.linux.bin.tar.gz/download
-  - tar -zxvf download
-  - ./doxygen-1.8.13/bin/doxygen Doxyfile
+  - doxygen Doxyfile
 
 deploy:
   provider: pages

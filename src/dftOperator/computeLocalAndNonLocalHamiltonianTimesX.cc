@@ -161,7 +161,7 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::
                          &alpha,
                          &cellSrcWaveFunctionMatrix[indexVal],
                          &numberWaveFunctions,
-                         &dftPtr->d_nonLocalProjectorElementMatrices
+                         &dftPtr->d_nonLocalProjectorElementMatricesConjugate
                             [atomId][nonZeroElementMatrixId][0],
                          &d_numberNodesPerElement,
                          &beta,

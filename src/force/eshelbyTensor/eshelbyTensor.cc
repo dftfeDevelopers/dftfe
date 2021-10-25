@@ -283,18 +283,14 @@ namespace dftfe
 
 
     Tensor<1, 3, VectorizedArray<double>>
-    getFnl(
-      const dealii::AlignedVector<dealii::AlignedVector<
-        dealii::AlignedVector<Tensor<1, 2, VectorizedArray<double>>>>>
-        &zetaDeltaV,
-      const std::vector<std::vector<std::vector<std::complex<double>>>>
-        &projectorKetTimesPsiTimesVTimesPartOcc,
-      dealii::AlignedVector<
-        Tensor<1, 2, Tensor<1, 3, VectorizedArray<double>>>>::const_iterator
-                                       gradPsiBegin,
-      const std::vector<double> &      kPointWeights,
-      const unsigned int               numBlockedEigenvectors,
-      const std::vector<unsigned int> &nonlocalAtomsCompactSupportList)
+    getFnl(const dealii::AlignedVector<
+             dealii::AlignedVector<Tensor<1, 2, VectorizedArray<double>>>>
+             &zetaDeltaV,
+           const dealii::AlignedVector<
+             Tensor<1, 2, Tensor<1, 3, VectorizedArray<double>>>>
+             &projectorKetTimesPsiTimesVTimesPartOccContractionGradPsi,
+           const std::vector<bool> &        isAtomInCell,
+           const std::vector<unsigned int> &nonlocalPseudoWfcsAccum)
     {
       Tensor<1, 3, VectorizedArray<double>> zeroTensor;
       for (unsigned int idim = 0; idim < 3; idim++)
@@ -303,67 +299,45 @@ namespace dftfe
       Tensor<1, 3, VectorizedArray<double>> Fnl  = zeroTensor;
       VectorizedArray<double>               four = make_vectorized_array(4.0);
 
+
       for (unsigned int iAtomNonLocal = 0; iAtomNonLocal < zetaDeltaV.size();
            ++iAtomNonLocal)
         {
-          bool isCellInCompactSupport = false;
-          for (unsigned int i = 0; i < nonlocalAtomsCompactSupportList.size();
-               i++)
-            if (nonlocalAtomsCompactSupportList[i] == iAtomNonLocal)
-              {
-                isCellInCompactSupport = true;
-                break;
-              }
-
-          if (!isCellInCompactSupport)
+          if (!isAtomInCell[iAtomNonLocal])
             continue;
 
           const int numberPseudoWaveFunctions =
             zetaDeltaV[iAtomNonLocal].size();
-          const int numKPoints = kPointWeights.size();
+          const dealii::AlignedVector<Tensor<1, 2, VectorizedArray<double>>>
+            &zetaDeltaVAtom = zetaDeltaV[iAtomNonLocal];
 
-          dealii::AlignedVector<
-            Tensor<1, 2, Tensor<1, 3, VectorizedArray<double>>>>::const_iterator
-            it1 = gradPsiBegin;
-          for (unsigned int ik = 0; ik < numKPoints; ++ik)
+          Tensor<1, 3, VectorizedArray<double>> tempF = zeroTensor;
+          for (unsigned int iPseudoWave = 0;
+               iPseudoWave < numberPseudoWaveFunctions;
+               ++iPseudoWave)
             {
-              Tensor<1, 3, VectorizedArray<double>> tempF = zeroTensor;
-              VectorizedArray<double>               fnk =
-                make_vectorized_array(kPointWeights[ik]);
-              for (unsigned int eigenIndex = 0;
-                   eigenIndex < numBlockedEigenvectors;
-                   ++it1, ++eigenIndex)
-                {
-                  const Tensor<1, 2, Tensor<1, 3, VectorizedArray<double>>>
-                    &gradPsi = *it1;
-                  for (unsigned int iPseudoWave = 0;
-                       iPseudoWave < numberPseudoWaveFunctions;
-                       ++iPseudoWave)
-                    {
-                      VectorizedArray<double> CReal = make_vectorized_array(
-                        projectorKetTimesPsiTimesVTimesPartOcc
-                          [ik][iAtomNonLocal]
-                          [numberPseudoWaveFunctions * eigenIndex + iPseudoWave]
-                            .real());
-                      VectorizedArray<double> CImag = make_vectorized_array(
-                        projectorKetTimesPsiTimesVTimesPartOcc
-                          [ik][iAtomNonLocal]
-                          [numberPseudoWaveFunctions * eigenIndex + iPseudoWave]
-                            .imag());
-                      VectorizedArray<double> zdvR =
-                        zetaDeltaV[iAtomNonLocal][iPseudoWave][ik][0];
-                      VectorizedArray<double> zdvI =
-                        zetaDeltaV[iAtomNonLocal][iPseudoWave][ik][1];
-                      tempF -=
-                        ((gradPsi[0] * zdvR + gradPsi[1] * zdvI) * CReal -
-                         (gradPsi[0] * zdvI - gradPsi[1] * zdvR) * CImag);
-                    }
-                }
-              Fnl += four * fnk * tempF;
+              const Tensor<1, 3, VectorizedArray<double>>
+                &pKetPsiContractionGradPsiReal =
+                  projectorKetTimesPsiTimesVTimesPartOccContractionGradPsi
+                    [nonlocalPseudoWfcsAccum[iAtomNonLocal] + iPseudoWave][0];
+              const Tensor<1, 3, VectorizedArray<double>>
+                &pKetPsiContractionGradPsiImag =
+                  projectorKetTimesPsiTimesVTimesPartOccContractionGradPsi
+                    [nonlocalPseudoWfcsAccum[iAtomNonLocal] + iPseudoWave][1];
+
+              const VectorizedArray<double> zdvR =
+                zetaDeltaV[iAtomNonLocal][iPseudoWave][0];
+              const VectorizedArray<double> zdvI =
+                zetaDeltaV[iAtomNonLocal][iPseudoWave][1];
+
+              tempF -= (pKetPsiContractionGradPsiReal * zdvR -
+                        pKetPsiContractionGradPsiImag * zdvI);
             }
+          Fnl += four * tempF;
         }
       return Fnl;
     }
+
 
     Tensor<1, 3, VectorizedArray<double>>
     getFnl(const dealii::AlignedVector<
@@ -430,6 +404,63 @@ namespace dftfe
       return F;
     }
 
+
+    Tensor<1, 3, VectorizedArray<double>>
+    getFnlAtom(
+      const dealii::AlignedVector<Tensor<1, 2, VectorizedArray<double>>>
+        &zetaDeltaV,
+      const dealii::AlignedVector<
+        Tensor<1, 2, Tensor<1, 3, VectorizedArray<double>>>>
+        &projectorKetTimesPsiTimesVTimesPartOccContractionGradPsi,
+      const dealii::AlignedVector<Tensor<1, 2, VectorizedArray<double>>>
+        &projectorKetTimesPsiTimesVTimesPartOccContractionPsi,
+      const Tensor<1, 3, VectorizedArray<double>> kcoord,
+      const unsigned int                          startingId)
+    {
+      Tensor<1, 3, VectorizedArray<double>> zeroTensor;
+      for (unsigned int idim = 0; idim < 3; idim++)
+        zeroTensor[idim] = make_vectorized_array(0.0);
+
+      Tensor<1, 3, VectorizedArray<double>> F    = zeroTensor;
+      VectorizedArray<double>               four = make_vectorized_array(4.0);
+
+
+      const unsigned int numberPseudoWaveFunctions = zetaDeltaV.size();
+      for (unsigned int iPseudoWave = 0;
+           iPseudoWave < numberPseudoWaveFunctions;
+           ++iPseudoWave)
+        {
+          const Tensor<1, 3, VectorizedArray<double>>
+            &pKetPsiContractionGradPsiReal =
+              projectorKetTimesPsiTimesVTimesPartOccContractionGradPsi
+                [startingId + iPseudoWave][0];
+          const Tensor<1, 3, VectorizedArray<double>>
+            &pKetPsiContractionGradPsiImag =
+              projectorKetTimesPsiTimesVTimesPartOccContractionGradPsi
+                [startingId + iPseudoWave][1];
+
+          const VectorizedArray<double> pKetPsiContractionPsiReal =
+            projectorKetTimesPsiTimesVTimesPartOccContractionPsi[startingId +
+                                                                 iPseudoWave]
+                                                                [0];
+          const VectorizedArray<double> pKetPsiContractionPsiImag =
+            projectorKetTimesPsiTimesVTimesPartOccContractionPsi[startingId +
+                                                                 iPseudoWave]
+                                                                [1];
+          const VectorizedArray<double> zdvR = zetaDeltaV[iPseudoWave][0];
+          const VectorizedArray<double> zdvI = zetaDeltaV[iPseudoWave][1];
+
+          F -= four * ((pKetPsiContractionGradPsiReal * zdvR -
+                        pKetPsiContractionGradPsiImag * zdvI) +
+                       (pKetPsiContractionPsiReal * zdvI +
+                        pKetPsiContractionPsiImag * zdvR) *
+                         kcoord);
+        }
+
+      return F;
+    }
+
+
     Tensor<1, 3, VectorizedArray<double>>
     getFPSPLocal(const VectorizedArray<double>                rho,
                  const Tensor<1, 3, VectorizedArray<double>> &gradPseudoVLoc,
@@ -437,82 +468,6 @@ namespace dftfe
 
     {
       return rho * (gradPseudoVLoc - gradPhiExt);
-    }
-
-    Tensor<1, 3, VectorizedArray<double>>
-    getFnlAtom(
-      const dealii::AlignedVector<dealii::AlignedVector<
-        dealii::AlignedVector<Tensor<1, 2, VectorizedArray<double>>>>>
-        &zetaDeltaV,
-      const std::vector<std::vector<std::vector<std::complex<double>>>>
-        &projectorKetTimesPsiTimesVTimesPartOcc,
-      dealii::AlignedVector<
-        Tensor<1, 2, VectorizedArray<double>>>::const_iterator psiBegin,
-      dealii::AlignedVector<
-        Tensor<1, 2, Tensor<1, 3, VectorizedArray<double>>>>::const_iterator
-                                 gradPsiBegin,
-      const std::vector<double> &kPointWeights,
-      const std::vector<double> &kPointCoordinates,
-      const unsigned int         numBlockedEigenvectors)
-    {
-      Tensor<1, 3, VectorizedArray<double>> F;
-      dealii::AlignedVector<
-        Tensor<1, 2, VectorizedArray<double>>>::const_iterator it1 = psiBegin;
-      dealii::AlignedVector<
-        Tensor<1, 2, Tensor<1, 3, VectorizedArray<double>>>>::const_iterator
-                                            it2  = gradPsiBegin;
-      VectorizedArray<double>               four = make_vectorized_array(4.0);
-      const int                             numKPoints = kPointWeights.size();
-      Tensor<1, 3, VectorizedArray<double>> kcoord;
-      for (unsigned int ik = 0; ik < numKPoints; ++ik)
-        {
-          kcoord[0] = make_vectorized_array(kPointCoordinates[ik * 3 + 0]);
-          kcoord[1] = make_vectorized_array(kPointCoordinates[ik * 3 + 1]);
-          kcoord[2] = make_vectorized_array(kPointCoordinates[ik * 3 + 2]);
-          for (unsigned int eigenIndex = 0; eigenIndex < numBlockedEigenvectors;
-               ++it1, ++it2, ++eigenIndex)
-            {
-              const Tensor<1, 2, VectorizedArray<double>> &psi = *it1;
-              const Tensor<1, 2, Tensor<1, 3, VectorizedArray<double>>>
-                &                     gradPsi = *it2;
-              VectorizedArray<double> fnk =
-                make_vectorized_array(kPointWeights[ik]);
-              for (unsigned int iAtomNonLocal = 0;
-                   iAtomNonLocal < zetaDeltaV.size();
-                   ++iAtomNonLocal)
-                {
-                  const int numberPseudoWaveFunctions =
-                    zetaDeltaV[iAtomNonLocal].size();
-                  for (unsigned int iPseudoWave = 0;
-                       iPseudoWave < numberPseudoWaveFunctions;
-                       ++iPseudoWave)
-                    {
-                      VectorizedArray<double> CReal = make_vectorized_array(
-                        projectorKetTimesPsiTimesVTimesPartOcc
-                          [ik][iAtomNonLocal]
-                          [numberPseudoWaveFunctions * eigenIndex + iPseudoWave]
-                            .real());
-                      VectorizedArray<double> CImag = make_vectorized_array(
-                        projectorKetTimesPsiTimesVTimesPartOcc
-                          [ik][iAtomNonLocal]
-                          [numberPseudoWaveFunctions * eigenIndex + iPseudoWave]
-                            .imag());
-                      VectorizedArray<double> zdvR =
-                        zetaDeltaV[iAtomNonLocal][iPseudoWave][ik][0];
-                      VectorizedArray<double> zdvI =
-                        zetaDeltaV[iAtomNonLocal][iPseudoWave][ik][1];
-                      F -= four * fnk *
-                           (((gradPsi[0] * zdvR + gradPsi[1] * zdvI) * CReal -
-                             (gradPsi[0] * zdvI - gradPsi[1] * zdvR) * CImag) +
-                            ((-psi[1] * zdvR + psi[0] * zdvI) * CReal +
-                             (psi[0] * zdvR + psi[1] * zdvI) * CImag) *
-                              kcoord);
-                    }
-                }
-            }
-        }
-
-      return F;
     }
 
     Tensor<1, 3, VectorizedArray<double>>
@@ -590,169 +545,78 @@ namespace dftfe
     // for complex mode
     Tensor<2, 3, VectorizedArray<double>>
     getEnlStress(
-      const dealii::AlignedVector<dealii::AlignedVector<dealii::AlignedVector<
-        Tensor<1, 2, Tensor<1, 3, VectorizedArray<double>>>>>>
+      const Tensor<1, 3, VectorizedArray<double>> kcoord,
+      const dealii::AlignedVector<dealii::AlignedVector<
+        Tensor<1, 2, Tensor<1, 3, VectorizedArray<double>>>>>
         &zetalmDeltaVlProductDistImageAtoms,
-      const std::vector<std::vector<std::vector<std::complex<double>>>>
-        &projectorKetTimesPsiTimesVTimesPartOcc,
-      dealii::AlignedVector<
-        Tensor<1, 2, VectorizedArray<double>>>::const_iterator psiBegin,
-      dealii::AlignedVector<
-        Tensor<1, 2, Tensor<1, 3, VectorizedArray<double>>>>::const_iterator
-                                       gradPsiBegin,
-      const std::vector<double> &      kPointWeights,
-      const std::vector<double> &      kPointCoordinates,
-      const std::vector<unsigned int> &nonlocalAtomsCompactSupportList,
-      const unsigned int               numBlockedEigenvectors)
-    {
-      Tensor<2, 3, VectorizedArray<double>> E;
-      VectorizedArray<double>               four = make_vectorized_array(4.0);
-
-      for (unsigned int iAtomNonLocal = 0;
-           iAtomNonLocal < zetalmDeltaVlProductDistImageAtoms.size();
-           ++iAtomNonLocal)
-        {
-          bool isCellInCompactSupport = false;
-          for (unsigned int i = 0; i < nonlocalAtomsCompactSupportList.size();
-               i++)
-            if (nonlocalAtomsCompactSupportList[i] == iAtomNonLocal)
-              {
-                isCellInCompactSupport = true;
-                break;
-              }
-
-          if (!isCellInCompactSupport)
-            continue;
-
-          const int numberPseudoWaveFunctions =
-            zetalmDeltaVlProductDistImageAtoms[iAtomNonLocal].size();
-          const int numKPoints = kPointWeights.size();
-
-          dealii::AlignedVector<
-            Tensor<1, 2, VectorizedArray<double>>>::const_iterator it1 =
-            psiBegin;
-          dealii::AlignedVector<
-            Tensor<1, 2, Tensor<1, 3, VectorizedArray<double>>>>::const_iterator
-                                                it2 = gradPsiBegin;
-          Tensor<1, 3, VectorizedArray<double>> kPointCoord;
-          for (unsigned int ik = 0; ik < numKPoints; ++ik)
-            {
-              kPointCoord[0] =
-                make_vectorized_array(kPointCoordinates[ik * 3 + 0]);
-              kPointCoord[1] =
-                make_vectorized_array(kPointCoordinates[ik * 3 + 1]);
-              kPointCoord[2] =
-                make_vectorized_array(kPointCoordinates[ik * 3 + 2]);
-              VectorizedArray<double> fnk =
-                make_vectorized_array(kPointWeights[ik]);
-              for (unsigned int eigenIndex = 0;
-                   eigenIndex < numBlockedEigenvectors;
-                   ++it1, ++it2, ++eigenIndex)
-                {
-                  const Tensor<1, 2, VectorizedArray<double>> &psi = *it1;
-                  const Tensor<1, 2, Tensor<1, 3, VectorizedArray<double>>>
-                    &gradPsi = *it2;
-                  for (unsigned int iPseudoWave = 0;
-                       iPseudoWave < numberPseudoWaveFunctions;
-                       ++iPseudoWave)
-                    {
-                      VectorizedArray<double> CReal = make_vectorized_array(
-                        projectorKetTimesPsiTimesVTimesPartOcc
-                          [ik][iAtomNonLocal]
-                          [numberPseudoWaveFunctions * eigenIndex + iPseudoWave]
-                            .real());
-                      VectorizedArray<double> CImag = make_vectorized_array(
-                        projectorKetTimesPsiTimesVTimesPartOcc
-                          [ik][iAtomNonLocal]
-                          [numberPseudoWaveFunctions * eigenIndex + iPseudoWave]
-                            .imag());
-                      Tensor<1, 3, VectorizedArray<double>> zdvR =
-                        zetalmDeltaVlProductDistImageAtoms[iAtomNonLocal]
-                                                          [iPseudoWave][ik][0];
-                      Tensor<1, 3, VectorizedArray<double>> zdvI =
-                        zetalmDeltaVlProductDistImageAtoms[iAtomNonLocal]
-                                                          [iPseudoWave][ik][1];
-                      E -= four * fnk *
-                           ((outer_product(gradPsi[0], zdvR) +
-                             outer_product(gradPsi[1], zdvI)) *
-                              CReal -
-                            (outer_product(gradPsi[0], zdvI) -
-                             outer_product(gradPsi[1], zdvR)) *
-                              CImag +
-                            outer_product(
-                              ((-psi[1] * zdvR + psi[0] * zdvI) * CReal +
-                               (psi[0] * zdvR + psi[1] * zdvI) * CImag),
-                              kPointCoord));
-                    }
-                }
-            }
-        }
-      return E;
-    }
-
-    // for real mode
-    Tensor<2, 3, VectorizedArray<double>>
-    getEnlStress(
       const dealii::AlignedVector<
-        dealii::AlignedVector<Tensor<1, 3, VectorizedArray<double>>>>
-        &zetalmDeltaVlProductDistImageAtoms,
-      const std::vector<std::vector<std::vector<double>>>
-        &projectorKetTimesPsiTimesVTimesPartOcc,
-      dealii::AlignedVector<VectorizedArray<double>>::const_iterator psiBegin,
-      dealii::AlignedVector<
-        Tensor<1, 3, VectorizedArray<double>>>::const_iterator gradPsiBegin,
-      const std::vector<unsigned int> &nonlocalAtomsCompactSupportList,
-      const unsigned int               numBlockedEigenvectors)
+        Tensor<1, 2, Tensor<1, 3, VectorizedArray<double>>>>
+        &projectorKetTimesPsiTimesVTimesPartOccContractionGradPsi,
+      const dealii::AlignedVector<Tensor<1, 2, VectorizedArray<double>>>
+        &projectorKetTimesPsiTimesVTimesPartOccContractionPsi,
+      const std::vector<bool> &        isAtomInCell,
+      const std::vector<unsigned int> &nonlocalPseudoWfcsAccum)
     {
-      Tensor<2, 3, VectorizedArray<double>> E;
+      Tensor<2, 3, VectorizedArray<double>> zeroTensor;
       VectorizedArray<double>               four = make_vectorized_array(4.0);
+
+      for (unsigned int idim = 0; idim < 3; idim++)
+        for (unsigned int jdim = 0; jdim < 3; jdim++)
+          zeroTensor[idim][jdim] = make_vectorized_array(0.0);
+
+      Tensor<2, 3, VectorizedArray<double>> E = zeroTensor;
 
       for (unsigned int iAtomNonLocal = 0;
            iAtomNonLocal < zetalmDeltaVlProductDistImageAtoms.size();
            ++iAtomNonLocal)
         {
-          bool isCellInCompactSupport = false;
-          for (unsigned int i = 0; i < nonlocalAtomsCompactSupportList.size();
-               i++)
-            if (nonlocalAtomsCompactSupportList[i] == iAtomNonLocal)
-              {
-                isCellInCompactSupport = true;
-                break;
-              }
-
-          if (!isCellInCompactSupport)
+          if (!isAtomInCell[iAtomNonLocal])
             continue;
 
           const int numberPseudoWaveFunctions =
             zetalmDeltaVlProductDistImageAtoms[iAtomNonLocal].size();
+          const dealii::AlignedVector<
+            Tensor<1, 2, Tensor<1, 3, VectorizedArray<double>>>>
+            &zetalmDeltaVlProductDistAtom =
+              zetalmDeltaVlProductDistImageAtoms[iAtomNonLocal];
 
-          dealii::AlignedVector<VectorizedArray<double>>::const_iterator it1 =
-            psiBegin;
-          dealii::AlignedVector<
-            Tensor<1, 3, VectorizedArray<double>>>::const_iterator it2 =
-            gradPsiBegin;
-          for (unsigned int eigenIndex = 0; eigenIndex < numBlockedEigenvectors;
-               ++it1, ++it2, ++eigenIndex)
+          Tensor<2, 3, VectorizedArray<double>> tempE = zeroTensor;
+          for (unsigned int iPseudoWave = 0;
+               iPseudoWave < numberPseudoWaveFunctions;
+               ++iPseudoWave)
             {
-              const VectorizedArray<double> &              psi     = *it1;
-              const Tensor<1, 3, VectorizedArray<double>> &gradPsi = *it2;
-              for (unsigned int iPseudoWave = 0;
-                   iPseudoWave < numberPseudoWaveFunctions;
-                   ++iPseudoWave)
-                {
-                  VectorizedArray<double> CReal = make_vectorized_array(
-                    projectorKetTimesPsiTimesVTimesPartOcc
-                      [0][iAtomNonLocal]
-                      [numberPseudoWaveFunctions * eigenIndex + iPseudoWave]);
-                  Tensor<1, 3, VectorizedArray<double>> zdvR =
-                    zetalmDeltaVlProductDistImageAtoms[iAtomNonLocal]
-                                                      [iPseudoWave];
-                  E -= four * outer_product(gradPsi, zdvR) * CReal;
-                }
+              const Tensor<1, 3, VectorizedArray<double>>
+                &pKetPsiContractionGradPsiReal =
+                  projectorKetTimesPsiTimesVTimesPartOccContractionGradPsi
+                    [nonlocalPseudoWfcsAccum[iAtomNonLocal] + iPseudoWave][0];
+              const Tensor<1, 3, VectorizedArray<double>>
+                &pKetPsiContractionGradPsiImag =
+                  projectorKetTimesPsiTimesVTimesPartOccContractionGradPsi
+                    [nonlocalPseudoWfcsAccum[iAtomNonLocal] + iPseudoWave][1];
+
+              const VectorizedArray<double> pKetPsiContractionPsiReal =
+                projectorKetTimesPsiTimesVTimesPartOccContractionPsi
+                  [nonlocalPseudoWfcsAccum[iAtomNonLocal] + iPseudoWave][0];
+              const VectorizedArray<double> pKetPsiContractionPsiImag =
+                projectorKetTimesPsiTimesVTimesPartOccContractionPsi
+                  [nonlocalPseudoWfcsAccum[iAtomNonLocal] + iPseudoWave][1];
+              const Tensor<1, 3, VectorizedArray<double>> &zdvR =
+                zetalmDeltaVlProductDistAtom[iPseudoWave][0];
+              const Tensor<1, 3, VectorizedArray<double>> &zdvI =
+                zetalmDeltaVlProductDistAtom[iPseudoWave][1];
+
+
+              tempE += (outer_product(pKetPsiContractionGradPsiReal, zdvR) -
+                        outer_product(pKetPsiContractionGradPsiImag, zdvI) +
+                        outer_product(pKetPsiContractionPsiReal * zdvI +
+                                        pKetPsiContractionPsiImag * zdvR,
+                                      kcoord));
             }
+          E -= four * tempE;
         }
       return E;
     }
+
 
     // for real mode
     Tensor<2, 3, VectorizedArray<double>>

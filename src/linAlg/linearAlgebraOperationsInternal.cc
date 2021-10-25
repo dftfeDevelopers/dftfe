@@ -32,10 +32,11 @@ namespace dftfe
   {
     namespace internal
     {
-#ifdef DFTFE_WITH_ELPA
       void
       setupELPAHandle(
         const MPI_Comm &mpi_communicator,
+        const MPI_Comm &mpi_communicator_interband,
+        const MPI_Comm &mpi_communicator_interpool,
         MPI_Comm &      processGridCommunicatorActive,
         const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
         const unsigned int                               na,
@@ -73,7 +74,14 @@ namespace dftfe
         // processGridCommunicatorActive will be MPI_COMM_NULL.
         // MPI_Comm processGridCommunicatorActive;
         ierr = dealii::Utilities::MPI::create_group(
-          mpi_communicator, active_group, 50, &processGridCommunicatorActive);
+          mpi_communicator,
+          active_group,
+          50 +
+            dealii::Utilities::MPI::this_mpi_process(
+              mpi_communicator_interband) +
+            dealii::Utilities::MPI::this_mpi_process(
+              mpi_communicator_interpool),
+          &processGridCommunicatorActive);
         AssertThrowMPI(ierr);
 
         ierr = MPI_Group_free(&all_group);
@@ -161,6 +169,12 @@ namespace dftfe
                                  "real_kernel",
                                  ELPA_2STAGE_REAL_NVIDIA_GPU,
                                  &error);
+
+                elpa_set_integer(elpaHandle,
+                                 "complex_kernel",
+                                 ELPA_2STAGE_COMPLEX_NVIDIA_GPU,
+                                 &error);
+
                 AssertThrow(error == ELPA_OK,
                             dealii::ExcMessage("DFT-FE Error: ELPA Error."));
               }
@@ -170,18 +184,18 @@ namespace dftfe
               // AssertThrow(error==ELPA_OK,
               //   dealii::ExcMessage("DFT-FE Error: ELPA Error."));
 
-#  ifdef DEBUG
+#ifdef DEBUG
             elpa_set_integer(elpaHandle, "debug", 1, &error);
             AssertThrow(error == ELPA_OK,
                         dealii::ExcMessage("DFT-FE Error: ELPA Error."));
-#  endif
+#endif
           }
 
         // d_elpaAutoTuneHandle = elpa_autotune_setup(d_elpaHandle,
         // ELPA_AUTOTUNE_FAST, ELPA_AUTOTUNE_DOMAIN_REAL, &error);   // create
         // autotune object
       }
-#endif
+
       void
       createProcessGridSquareMatrix(
         const MPI_Comm &                           mpi_communicator,
@@ -201,14 +215,12 @@ namespace dftfe
             std::min((unsigned int)std::floor(std::sqrt(numberProcs)),
                      dftParameters::scalapackParalProcs);
 
-#ifdef DFTFE_WITH_ELPA
         rowProcs =
           ((dftParameters::scalapackParalProcs == 0 || useOnlyThumbRule) &&
            dftParameters::useELPA) ?
             std::min((unsigned int)std::floor(std::sqrt(numberProcs)),
                      (unsigned int)std::floor(rowProcs * 3.0)) :
             rowProcs;
-#endif
         if (!dftParameters::reproducible_output)
           rowProcs =
             std::min(rowProcs,

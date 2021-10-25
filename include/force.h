@@ -598,57 +598,45 @@ namespace dftfe
         &                  forceContributionLocalGammaAtoms,
       std::vector<double> &accumForcesVector);
 
+
+    void
+    FnlGammaAtomsElementalContribution(
+      std::map<unsigned int, std::vector<double>>
+        &forceContributionFnlGammaAtoms,
+      FEEvaluation<
+        3,
+        1,
+        C_num1DQuad<C_rhoNodalPolyOrder<FEOrder, FEOrderElectro>()>(),
+        3> &             forceEval,
+      FEEvaluation<3,
+                   1,
+                   C_num1DQuadNLPSP<FEOrder>() * C_numCopies1DQuadNLPSP(),
+                   3> &  forceEvalNLP,
+      const unsigned int numberMacroCells,
+      const unsigned int cell,
 #ifdef USE_COMPLEX
-    void
-    FnlGammaAtomsElementalContribution(
-      std::map<unsigned int, std::vector<double>>
-        &forceContributionFnlGammaAtoms,
-      FEEvaluation<
-        3,
-        1,
-        C_num1DQuad<C_rhoNodalPolyOrder<FEOrder, FEOrderElectro>()>(),
-        3> &             forceEval,
-      FEEvaluation<3,
-                   1,
-                   C_num1DQuadNLPSP<FEOrder>() * C_numCopies1DQuadNLPSP(),
-                   3> &  forceEvalNLP,
-      const unsigned int cell,
-      const dealii::AlignedVector<dealii::AlignedVector<dealii::AlignedVector<
-        dealii::AlignedVector<Tensor<1, 2, VectorizedArray<double>>>>>>
+      const unsigned int kpointIndex,
+      const dealii::AlignedVector<dealii::AlignedVector<
+        dealii::AlignedVector<Tensor<1, 2, VectorizedArray<double>>>>>
         &zetaDeltaVQuads,
-      const std::vector<std::vector<std::vector<std::complex<double>>>>
-        &projectorKetTimesPsiTimesVTimesPartOcc,
-      const dealii::AlignedVector<Tensor<1, 2, VectorizedArray<double>>>
-        &psiQuads,
+      const dealii::AlignedVector<dealii::AlignedVector<
+        Tensor<1, 2, Tensor<1, 3, VectorizedArray<double>>>>>
+        &projectorKetTimesPsiTimesVTimesPartOccContractionGradPsi,
       const dealii::AlignedVector<
-        Tensor<1, 2, Tensor<1, 3, VectorizedArray<double>>>> &gradPsiQuads,
-      const std::vector<std::vector<double>> &                eigenValues,
-      const std::vector<unsigned int> &nonlocalAtomsCompactSupportList);
+        dealii::AlignedVector<Tensor<1, 2, VectorizedArray<double>>>>
+        &projectorKetTimesPsiTimesVTimesPartOccContractionPsi,
+      const Tensor<1, 3, VectorizedArray<double>> kcoord,
 #else
-    void
-    FnlGammaAtomsElementalContribution(
-      std::map<unsigned int, std::vector<double>>
-        &forceContributionFnlGammaAtoms,
-      FEEvaluation<
-        3,
-        1,
-        C_num1DQuad<C_rhoNodalPolyOrder<FEOrder, FEOrderElectro>()>(),
-        3> &             forceEval,
-      FEEvaluation<3,
-                   1,
-                   C_num1DQuadNLPSP<FEOrder>() * C_numCopies1DQuadNLPSP(),
-                   3> &  forceEvalNLP,
-      const unsigned int cell,
       const dealii::AlignedVector<
         dealii::AlignedVector<dealii::AlignedVector<VectorizedArray<double>>>>
         &zetaDeltaVQuads,
       const dealii::AlignedVector<
         dealii::AlignedVector<Tensor<1, 3, VectorizedArray<double>>>>
-        &projectorKetTimesPsiTimesVTimesPartOccContractionPsi,
+        &projectorKetTimesPsiTimesVTimesPartOccContractionGradPsi,
+#endif
       const std::vector<bool> &        isAtomInCell,
       const std::vector<unsigned int> &nonlocalPseudoWfcsAccum);
 
-#endif
 
     void
     distributeForceContributionFnlGammaAtoms(
@@ -858,8 +846,7 @@ namespace dftfe
       const unsigned int                           numberWaveFunctions,
       std::vector<std::vector<dataTypes::number>> &projectorKetTimesPsiTimesV,
       const unsigned int                           kPointIndex,
-      const std::vector<double> &                  partialOccupancies,
-      const bool                                   oldRoute = false);
+      const std::vector<double> &                  partialOccupancies);
 
     /// Parallel distributed vector field which stores the configurational force
     /// for each fem node corresponding to linear shape function generator (see

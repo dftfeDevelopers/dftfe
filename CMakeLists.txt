@@ -39,6 +39,7 @@ SET(TARGET_SRC
   ./src/linAlg/elpaScalaManager.cc
   ./src/linAlg/scalapackWrapper.cc
   ./src/linAlg/process_grid.cc
+  ./src/linAlg/distributedMulticomponentVec.cc
   ./src/solvers/dealiiLinearSolver.cc
   ./src/solvers/dealiiLinearSolverProblem.cc
   #./src/md/molecularDynamics.cc
@@ -65,16 +66,13 @@ SET(CUDA_SRC
   ./src/dft/densityCalculatorCUDA.cu
   ./src/dftOperator/operatorCUDA.cu
   ./src/dftOperator/kohnShamDFTOperatorCUDA.cu
-  ./src/dftOperator/kohnShamDFTOperatorCUDAKernels.cu
   ./src/dft/solveVselfInBinsCUDA.cu
   ./src/solvers/eigenSolvers/chebyshevOrthogonalizedSubspaceIterationSolverCUDA.cu
-  ./src/linAlg/linearAlgebraOperationsInternalCUDA.cu
   ./src/linAlg/linearAlgebraOperationsCUDA.cu
   ./src/linAlg/pseudoGSCUDA.cu
   ./src/linAlg/rayleighRitzCUDA.cu
   ./src/force/forceCUDA.cu
   ./utils/constraintMatrixInfoCUDA.cu
-  ./utils/vectorTools/vectorUtilitiesCUDA.cu
   )
 
 IF (WITH_GPU)
@@ -328,7 +326,6 @@ ENDIF (DEFINED SPGLIB_DIR)
 #
 # ELPA. Pass path to -DCMAKE_PREFIX_PATH
 #
-ADD_DEFINITIONS(-DDFTFE_WITH_ELPA)
 find_package(ELPA 2020 REQUIRED)
 MESSAGE(STATUS "Will Link With ELPA")
 target_link_libraries(${TARGETLIB} ELPA::ELPA)

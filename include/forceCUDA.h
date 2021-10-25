@@ -19,118 +19,43 @@
 #  ifndef forceCUDA_H_
 #    define forceCUDA_H_
 
-#    include <headers.h>
-#    include <operatorCUDA.h>
-#    include <vectorUtilitiesCUDA.h>
+#    include "headers.h"
+#    include "operatorCUDA.h"
 
 namespace dftfe
 {
   namespace forceCUDA
   {
     void
-    interpolatePsiComputeELocWfcEshelbyTensorNonPeriodicD(
-      operatorDFTCUDAClass &               operatorMatrix,
-      distributedGPUVec<double> &          Xb,
-      const unsigned int                   BVec,
-      const unsigned int                   numCells,
-      const unsigned int                   numQuads,
-      const unsigned int                   numQuadsNLP,
-      const unsigned int                   numNodesPerElement,
-      const thrust::device_vector<double> &eigenValuesD,
-      const thrust::device_vector<double> &partialOccupanciesD,
-      const thrust::device_vector<double> &onesVecD,
-      const unsigned int                   cellsBlockSize,
-      thrust::device_vector<double> &      psiQuadsFlatD,
-      thrust::device_vector<double> &      gradPsiQuadsXFlatD,
-      thrust::device_vector<double> &      gradPsiQuadsYFlatD,
-      thrust::device_vector<double> &      gradPsiQuadsZFlatD,
-      thrust::device_vector<double> &      gradPsiQuadsNLPFlatD,
-      thrust::device_vector<double> &      eshelbyTensorContributionsD,
-      thrust::device_vector<double> &      eshelbyTensorQuadValuesD);
-
-
-    void
-    nlpPsiContractionD(
-      operatorDFTCUDAClass &               operatorMatrix,
-      const thrust::device_vector<double> &gradPsiQuadsXNLPD,
-      const thrust::device_vector<double> &gradPsiQuadsYNLPD,
-      const thrust::device_vector<double> &gradPsiQuadsZNLPD,
-      const thrust::device_vector<double> &partialOccupanciesD,
-      const thrust::device_vector<double> &onesVecD,
-      const double *                       projectorKetTimesVectorParFlattenedD,
-      const thrust::device_vector<unsigned int> &nonTrivialIdToElemIdMapD,
-      const thrust::device_vector<unsigned int>
-        &                            projecterKetTimesFlattenedVectorLocalIdsD,
-      const unsigned int             numCells,
-      const unsigned int             numQuadsNLP,
-      const unsigned int             numPsi,
-      const unsigned int             totalNonTrivialPseudoWfcs,
-      const unsigned int             innerBlockSizeEnlp,
-      thrust::device_vector<double> &nlpContractionContributionD,
-      thrust::device_vector<double> &
-        projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuadsFlattenedDBlock,
-      double *
-        projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuadsFlattenedH,
-      double *
-        projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuadsFlattenedHPinnedTemp);
-
-    void
-    gpuPortedForceKernelsAllD(
-      operatorDFTCUDAClass &                     operatorMatrix,
-      distributedGPUVec<double> &                cudaFlattenedArrayBlock,
-      distributedGPUVec<double> &                projectorKetTimesVectorD,
-      const double *                             X,
-      const thrust::device_vector<double> &      eigenValuesD,
-      const thrust::device_vector<double> &      partialOccupanciesD,
-      const thrust::device_vector<double> &      onesVecD,
-      const thrust::device_vector<unsigned int> &nonTrivialIdToElemIdMapD,
-      const thrust::device_vector<unsigned int>
-        &                            projecterKetTimesFlattenedVectorLocalIdsD,
-      const unsigned int             startingVecId,
-      const unsigned int             N,
-      const unsigned int             numPsi,
-      const unsigned int             numCells,
-      const unsigned int             numQuads,
-      const unsigned int             numQuadsNLP,
-      const unsigned int             numNodesPerElement,
-      const unsigned int             totalNonTrivialPseudoWfcs,
-      thrust::device_vector<double> &psiQuadsFlatD,
-      thrust::device_vector<double> &gradPsiQuadsXFlatD,
-      thrust::device_vector<double> &gradPsiQuadsYFlatD,
-      thrust::device_vector<double> &gradPsiQuadsZFlatD,
-      thrust::device_vector<double> &gradPsiQuadsNLPFlatD,
-      thrust::device_vector<double> &eshelbyTensorContributionsD,
-      thrust::device_vector<double> &eshelbyTensorQuadValuesD,
-      thrust::device_vector<double> &nlpContractionContributionD,
-      thrust::device_vector<double> &
-        projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuadsFlattenedDBlock,
-      double *
-        projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuadsFlattenedH,
-      double *
-                         projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuadsFlattenedHPinnedTemp,
-      const unsigned int cellsBlockSize,
-      const unsigned int innerBlockSizeEnlp,
-      const bool         isPsp);
-
-    void
     gpuPortedForceKernelsAllH(
-      operatorDFTCUDAClass &operatorMatrix,
-      const double *        X,
-      const double *        eigenValuesH,
-      const double *        partialOccupanciesH,
-      const unsigned int *  nonTrivialIdToElemIdMapH,
-      const unsigned int *  projecterKetTimesFlattenedVectorLocalIdsH,
-      const unsigned int    N,
-      const unsigned int    numCells,
-      const unsigned int    numQuads,
-      const unsigned int    numQuadsNLP,
-      const unsigned int    numNodesPerElement,
-      const unsigned int    totalNonTrivialPseudoWfcs,
-      double *              eshelbyTensorQuadValuesH,
-      double *
-                      projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuadsFlattenedH,
+      operatorDFTCUDAClass &      operatorMatrix,
+      const dataTypes::numberGPU *X,
+      const double *              eigenValuesH,
+      const double *              partialOccupanciesH,
+#    ifdef USE_COMPLEX
+      const double kcoordx,
+      const double kcoordy,
+      const double kcoordz,
+#    endif
+      const unsigned int *nonTrivialIdToElemIdMapH,
+      const unsigned int *projecterKetTimesFlattenedVectorLocalIdsH,
+      const unsigned int  N,
+      const unsigned int  numCells,
+      const unsigned int  numQuads,
+      const unsigned int  numQuadsNLP,
+      const unsigned int  numNodesPerElement,
+      const unsigned int  totalNonTrivialPseudoWfcs,
+      double *            eshelbyTensorQuadValuesH,
+      dataTypes::number *
+        projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuadsFlattenedH,
+#    ifdef USE_COMPLEX
+      dataTypes::number
+        *projectorKetTimesPsiTimesVTimesPartOccContractionPsiQuadsFlattenedH,
+#    endif
       const MPI_Comm &interBandGroupComm,
-      const bool      isPsp);
+      const bool      isPsp,
+      const bool      isFloatingChargeForces,
+      const bool      addEk);
   } // namespace forceCUDA
 } // namespace dftfe
 #  endif

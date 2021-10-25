@@ -20,6 +20,7 @@
 #    define gpuDirectCCLWrapper_h
 
 #    include <mpi.h>
+#    include <cuComplex.h>
 
 namespace dftfe
 {
@@ -53,6 +54,24 @@ namespace dftfe
                               int           size,
                               cudaStream_t &stream);
 
+
+    int
+    gpuDirectAllReduceWrapper(const cuDoubleComplex *send,
+                              cuDoubleComplex *      recv,
+                              int                    size,
+                              double *               tempReal,
+                              double *               tempImag,
+                              cudaStream_t &         stream);
+
+    int
+    gpuDirectAllReduceWrapper(const cuFloatComplex *send,
+                              cuFloatComplex *      recv,
+                              int                   size,
+                              float *               tempReal,
+                              float *               tempImag,
+                              cudaStream_t &        stream);
+
+
     int
     gpuDirectAllReduceMixedPrecGroupWrapper(const double *send1,
                                             const float * send2,
@@ -61,6 +80,79 @@ namespace dftfe
                                             int           size1,
                                             int           size2,
                                             cudaStream_t &stream);
+
+    int
+    gpuDirectAllReduceMixedPrecGroupWrapper(const cuDoubleComplex *send1,
+                                            const cuFloatComplex * send2,
+                                            cuDoubleComplex *      recv1,
+                                            cuFloatComplex *       recv2,
+                                            int                    size1,
+                                            int                    size2,
+                                            double *               tempReal1,
+                                            float *                tempReal2,
+                                            double *               tempImag1,
+                                            float *                tempImag2,
+                                            cudaStream_t &         stream);
+
+
+
+    inline void
+    gpuDirectAllReduceWrapper(const cuFloatComplex *send,
+                              cuFloatComplex *      recv,
+                              int                   size,
+                              cudaStream_t &        stream)
+    {}
+
+
+    inline void
+    gpuDirectAllReduceWrapper(const cuDoubleComplex *send,
+                              cuDoubleComplex *      recv,
+                              int                    size,
+                              cudaStream_t &         stream)
+    {}
+
+    inline void
+    gpuDirectAllReduceMixedPrecGroupWrapper(const cuDoubleComplex *send1,
+                                            const cuFloatComplex * send2,
+                                            cuDoubleComplex *      recv1,
+                                            cuFloatComplex *       recv2,
+                                            int                    size1,
+                                            int                    size2,
+                                            cudaStream_t &         stream)
+    {}
+
+
+    inline void
+    gpuDirectAllReduceWrapper(const double *send,
+                              double *      recv,
+                              int           size,
+                              double *      tempReal,
+                              double *      tempImag,
+                              cudaStream_t &stream)
+    {}
+
+    inline void
+    gpuDirectAllReduceWrapper(const float * send,
+                              float *       recv,
+                              int           size,
+                              float *       tempReal,
+                              float *       tempImag,
+                              cudaStream_t &stream)
+    {}
+
+    inline void
+    gpuDirectAllReduceMixedPrecGroupWrapper(const double *send1,
+                                            const float * send2,
+                                            double *      recv1,
+                                            float *       recv2,
+                                            int           size1,
+                                            int           size2,
+                                            double *      tempReal1,
+                                            float *       tempReal2,
+                                            double *      tempImag1,
+                                            float *       tempImag2,
+                                            cudaStream_t &stream)
+    {}
 
   private:
     int  myRank;

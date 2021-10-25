@@ -20,17 +20,17 @@
 #    define chebyshevOrthogonalizedSubspaceIterationSolverCUDA_h
 
 
-#    include "dftParameters.h"
 #    include "gpuDirectCCLWrapper.h"
 #    include "headers.h"
 #    include "operatorCUDA.h"
+#    include "elpaScalaManager.h"
 
 namespace dftfe
 {
   /**
    * @brief Concrete class implementing Chebyshev filtered orthogonalized subspace
    * iteration solver.
-   * @author Phani Motamarri
+   * @author Sambit Das, Phani Motamarri
    */
   class chebyshevOrthogonalizedSubspaceIterationSolverCUDA
   {
@@ -49,73 +49,41 @@ namespace dftfe
       double          upperBoundUnWantedSpectrum);
 
 
-    /**
-     * @brief Destructor.
-     */
-    ~chebyshevOrthogonalizedSubspaceIterationSolverCUDA();
-
 
     /**
      * @brief Solve a generalized eigen problem.
      */
     double
-    solve(operatorDFTCUDAClass &     operatorMatrix,
-          double *                   eigenVectorsFlattenedCUDA,
-          double *                   eigenVectorsRotFracDensityFlattenedCUDA,
-          const unsigned int         flattenedSize,
-          distributedCPUVec<double> &tempEigenVec,
-          const unsigned int         totalNumberWaveFunctions,
-          std::vector<double> &      eigenValues,
-          std::vector<double> &      residuals,
-          GPUCCLWrapper &            gpucclMpiCommDomain,
-          const MPI_Comm &           interBandGroupComm,
-          dftfe::ScaLAPACKMatrix<double> &                 projHamPar,
-          dftfe::ScaLAPACKMatrix<double> &                 overlapMatPar,
-          const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
-          const bool                                       isFirstFilteringCall,
-          const bool                                       computeResidual,
-          const bool useMixedPrecOverall = false,
-          const bool isFirstScf          = false,
-          const bool isElpaStep1         = false,
-          const bool isElpaStep2         = false);
+    solve(operatorDFTCUDAClass &operatorMatrix,
+          elpaScalaManager &    elpaScala,
+          dataTypes::numberGPU *eigenVectorsFlattenedCUDA,
+          dataTypes::numberGPU *eigenVectorsRotFracDensityFlattenedCUDA,
+          const unsigned int    flattenedSize,
+          const unsigned int    totalNumberWaveFunctions,
+          std::vector<double> & eigenValues,
+          std::vector<double> & residuals,
+          GPUCCLWrapper &       gpucclMpiCommDomain,
+          const MPI_Comm &      interBandGroupComm,
+          const bool            isFirstFilteringCall,
+          const bool            computeResidual,
+          const bool            useMixedPrecOverall = false,
+          const bool            isFirstScf          = false);
+
 
     /**
      * @brief Used for XL-BOMD.
      */
     void
-    onlyRR(operatorDFTCUDAClass &     operatorMatrix,
-           double *                   eigenVectorsFlattenedCUDA,
-           double *                   eigenVectorsRotFracDensityFlattenedCUDA,
-           const unsigned int         flattenedSize,
-           distributedCPUVec<double> &tempEigenVec,
-           const unsigned int         totalNumberWaveFunctions,
-           std::vector<double> &      eigenValues,
-           GPUCCLWrapper &            gpucclMpiCommDomain,
-           const MPI_Comm &           interBandGroupComm,
-           dftfe::ScaLAPACKMatrix<double> &                 projHamPar,
-           dftfe::ScaLAPACKMatrix<double> &                 overlapMatPar,
-           const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
-           const bool useMixedPrecOverall = false,
-           const bool isElpaStep1         = false,
-           const bool isElpaStep2         = false);
-
-    /**
-     * @brief Used for XL-BOMD.
-     */
-    void
-    solveNoRR(operatorDFTCUDAClass &          operatorMatrix,
-              double *                        eigenVectorsFlattenedCUDA,
-              const unsigned int              flattenedSize,
-              distributedCPUVec<double> &     tempEigenVec,
-              const unsigned int              totalNumberWaveFunctions,
-              std::vector<double> &           eigenValues,
-              GPUCCLWrapper &                 gpucclMpiCommDomain,
-              const MPI_Comm &                interBandGroupComm,
-              dftfe::ScaLAPACKMatrix<double> &projHamPar,
-              dftfe::ScaLAPACKMatrix<double> &overlapMatPar,
-              const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
-              const unsigned int                               numberPasses,
-              const bool useMixedPrecOverall);
+    solveNoRR(operatorDFTCUDAClass &operatorMatrix,
+              elpaScalaManager &    elpaScala,
+              dataTypes::numberGPU *eigenVectorsFlattenedCUDA,
+              const unsigned int    flattenedSize,
+              const unsigned int    totalNumberWaveFunctions,
+              std::vector<double> & eigenValues,
+              GPUCCLWrapper &       gpucclMpiCommDomain,
+              const MPI_Comm &      interBandGroupComm,
+              const unsigned int    numberPasses,
+              const bool            useMixedPrecOverall);
 
 
     /**
@@ -145,20 +113,15 @@ namespace dftfe
     //
     // temporary parallel vectors needed for Chebyshev filtering
     //
-    // distributedGPUVec<double>
-    void *d_YArrayPtr;
+    distributedGPUVec<dataTypes::numberGPU> d_YArray;
 
-    // distributedGPUVec<float>
-    void *d_cudaFlattenedFloatArrayBlockPtr;
+    distributedGPUVec<dataTypes::numberFP32GPU> d_cudaFlattenedFloatArrayBlock;
 
-    // distributedGPUVec<double>
-    void *d_cudaFlattenedArrayBlock2Ptr;
+    distributedGPUVec<dataTypes::numberGPU> d_cudaFlattenedArrayBlock2;
 
-    // distributedGPUVec<double>
-    void *d_YArray2Ptr;
+    distributedGPUVec<dataTypes::numberGPU> d_YArray2;
 
-    // distributedGPUVec<double>
-    void *d_projectorKetTimesVector2Ptr;
+    distributedGPUVec<dataTypes::numberGPU> d_projectorKetTimesVector2;
 
     bool d_isTemporaryParallelVectorsCreated;
 

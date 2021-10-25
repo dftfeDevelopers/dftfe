@@ -67,12 +67,10 @@
 #  include <linearAlgebraOperationsCUDA.h>
 #endif
 
-#ifdef DFTFE_WITH_ELPA
 extern "C"
 {
-#  include <elpa.hh>
+#include <elpa.hh>
 }
-#endif
 
 
 namespace dftfe
@@ -173,7 +171,6 @@ namespace dftfe
 
 
     d_isRestartGroundStateCalcFromChk = false;
-#ifdef DFTFE_WITH_ELPA
     int error;
 
     if (elpa_init(ELPA_API_VERSION) != ELPA_OK)
@@ -183,7 +180,6 @@ namespace dftfe
           "Error: ELPA API version not supported. Use API version 20181113.");
         exit(1);
       }
-#endif
 
 #if defined(DFTFE_WITH_GPU)
     d_gpucclMpiCommDomainPtr = new GPUCCLWrapper;
@@ -205,10 +201,15 @@ namespace dftfe
     delete forcePtr;
     delete geoOptIonPtr;
     delete geoOptCellPtr;
+<<<<<<< HEAD
     //delete d_mdPtr;
     //delete d_mdClassPtr;
     
 #ifdef DFTFE_WITH_ELPA
+=======
+    delete d_mdPtr;
+
+>>>>>>> afc1dc0c5ebaeada3463c9ca6a8ea762e1bfa4df
     if (dftParameters::useELPA)
       d_elpaScala.elpaDeallocateHandles(d_numEigenValues, d_numEigenValuesRR);
 
@@ -216,7 +217,6 @@ namespace dftfe
     elpa_uninit(&error);
     AssertThrow(error == ELPA_OK,
                 dealii::ExcMessage("DFT-FE Error: elpa error."));
-#endif
 
 #if defined(DFTFE_WITH_GPU)
     delete d_gpucclMpiCommDomainPtr;
@@ -744,8 +744,10 @@ namespace dftfe
           << "Atleast one atom has pseudopotential with nonlinear core correction"
           << std::endl;
 
-    d_elpaScala.processGridOptionalELPASetup(d_numEigenValues,
-                                             d_numEigenValuesRR);
+    d_elpaScala.processGridELPASetup(d_numEigenValues,
+                                     d_numEigenValuesRR,
+                                     interBandGroupComm,
+                                     interpoolcomm);
 
     MPI_Barrier(MPI_COMM_WORLD);
     computingTimerStandard.leave_subsection("Atomic system initialization");
@@ -1720,9 +1722,6 @@ namespace dftfe
         if (initializeCublas)
           {
             kohnShamDFTEigenOperatorCUDA.createCublasHandle();
-
-            kohnShamDFTEigenOperatorCUDA.processGridSetup(d_numEigenValues,
-                                                          d_numEigenValuesRR);
           }
 
         AssertThrow(
@@ -1987,32 +1986,34 @@ namespace dftfe
           if (dftParameters::verbosity >= 4)
             dftUtils::printCurrentMemoryUsage(mpi_communicator,
                                               "Hamiltonian Matrix computed");
-#ifdef DFTFE_WITH_GPU
-          if (dftParameters::useGPU)
-            kohnShamEigenSpaceOnlyRRCompute(0,
-                                            kPoint,
-                                            kohnShamDFTEigenOperatorCUDA,
-                                            d_elpaScala,
-                                            d_subspaceIterationSolverCUDA,
-                                            true,
-                                            true);
-          else
-            kohnShamEigenSpaceOnlyRRCompute(0,
-                                            kPoint,
-                                            kohnShamDFTEigenOperator,
-                                            d_elpaScala,
-                                            d_subspaceIterationSolver,
-                                            true,
-                                            true);
-#else
-          kohnShamEigenSpaceOnlyRRCompute(0,
-                                          kPoint,
-                                          kohnShamDFTEigenOperator,
-                                          d_elpaScala,
-                                          d_subspaceIterationSolver,
-                                          true,
-                                          true);
-#endif
+          /*
+         #ifdef DFTFE_WITH_GPU
+                   if (dftParameters::useGPU)
+                     kohnShamEigenSpaceOnlyRRCompute(0,
+                                                     kPoint,
+                                                     kohnShamDFTEigenOperatorCUDA,
+                                                     d_elpaScala,
+                                                     d_subspaceIterationSolverCUDA,
+                                                     true,
+                                                     true);
+                   else
+                     kohnShamEigenSpaceOnlyRRCompute(0,
+                                                     kPoint,
+                                                     kohnShamDFTEigenOperator,
+                                                     d_elpaScala,
+                                                     d_subspaceIterationSolver,
+                                                     true,
+                                                     true);
+         #else
+                   kohnShamEigenSpaceOnlyRRCompute(0,
+                                                   kPoint,
+                                                   kohnShamDFTEigenOperator,
+                                                   d_elpaScala,
+                                                   d_subspaceIterationSolver,
+                                                   true,
+                                                   true);
+         #endif
+         */
         }
 
       //
@@ -3009,9 +3010,9 @@ namespace dftfe
               }
           }
         computing_timer.enter_subsection("compute rho");
-#ifdef USE_COMPLEX
         if (dftParameters::useSymm)
           {
+#ifdef USE_COMPLEX
             symmetryPtr->computeLocalrhoOut();
             symmetryPtr->computeAndSymmetrize_rhoOut();
 
@@ -3042,40 +3043,33 @@ namespace dftfe
               d_rhoOutValuesLpspQuad,
               d_gradRhoOutValuesLpspQuad,
               true);
+#endif
           }
         else
-          compute_rhoOut(kohnShamDFTEigenOperator,
-                         (scfIter <
-                            dftParameters::spectrumSplitStartingScfIter ||
-                          scfConverged) ?
-                           false :
-                           true,
-                         scfConverged ||
-                           (scfIter == (dftParameters::numSCFIterations - 1)) ||
-                           solveLinearizedKS);
+          {
+#ifdef DFTFE_WITH_GPU
+            compute_rhoOut(
+              kohnShamDFTEigenOperatorCUDA,
+              kohnShamDFTEigenOperator,
+              (scfIter < dftParameters::spectrumSplitStartingScfIter ||
+               scfConverged) ?
+                false :
+                true,
+              scfConverged ||
+                (scfIter == (dftParameters::numSCFIterations - 1)) ||
+                solveLinearizedKS);
 #else
-
-#  ifdef DFTFE_WITH_GPU
-        compute_rhoOut(kohnShamDFTEigenOperatorCUDA,
-                       kohnShamDFTEigenOperator,
-                       (scfIter < dftParameters::spectrumSplitStartingScfIter ||
-                        scfConverged) ?
-                         false :
-                         true,
-                       scfConverged ||
-                         (scfIter == (dftParameters::numSCFIterations - 1)) ||
-                         solveLinearizedKS);
-#  else
-        compute_rhoOut(kohnShamDFTEigenOperator,
-                       (scfIter < dftParameters::spectrumSplitStartingScfIter ||
-                        scfConverged) ?
-                         false :
-                         true,
-                       scfConverged ||
-                         (scfIter == (dftParameters::numSCFIterations - 1)) ||
-                         solveLinearizedKS);
-#  endif
+            compute_rhoOut(
+              kohnShamDFTEigenOperator,
+              (scfIter < dftParameters::spectrumSplitStartingScfIter ||
+               scfConverged) ?
+                false :
+                true,
+              scfConverged ||
+                (scfIter == (dftParameters::numSCFIterations - 1)) ||
+                solveLinearizedKS);
 #endif
+          }
         computing_timer.leave_subsection("compute rho");
 
         //
@@ -3548,10 +3542,11 @@ namespace dftfe
            kPoint < (1 + dftParameters::spinPolarized) * d_kPointWeights.size();
            ++kPoint)
         {
-          vectorToolsCUDA::copyCUDAVecToHostVec(
+          cudaUtils::copyCUDAVecToHostVec(
             d_eigenVectorsFlattenedCUDA.begin() +
               kPoint * d_eigenVectorsFlattenedSTL[0].size(),
-            &d_eigenVectorsFlattenedSTL[kPoint][0],
+            reinterpret_cast<dataTypes::numberGPU *>(
+              &d_eigenVectorsFlattenedSTL[kPoint][0]),
             d_eigenVectorsFlattenedSTL[kPoint].size());
         }
 #endif

@@ -21,16 +21,16 @@
 
 #    include <headers.h>
 #    include <operatorCUDA.h>
-#    include <vectorUtilitiesCUDA.h>
 
 namespace dftfe
 {
   namespace CUDA
   {
+    template <typename NumberType>
     void
     computeRhoFromPSI(
-      const double *                                 X,
-      const double *                                 XFrac,
+      const NumberType *                             X,
+      const NumberType *                             XFrac,
       const unsigned int                             totalNumWaveFunctions,
       const unsigned int                             Nfr,
       const unsigned int                             numLocalDofs,

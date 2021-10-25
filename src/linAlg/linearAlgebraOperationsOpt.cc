@@ -677,6 +677,11 @@ namespace dftfe
       std::shared_ptr<const dftfe::ProcessGrid> processGrid =
         elpaScala.getProcessGridDftfeScalaWrapper();
 
+      if (dftParameters::useMixedPrecCGS_O && useMixedPrec)
+        computing_timer.enter_subsection(
+          "SConj=X^{T}XConj Mixed Prec, RR GEP step");
+      else
+        computing_timer.enter_subsection("SConj=X^{T}XConj, RR GEP step");
       //
       // compute overlap matrix
       //
@@ -693,7 +698,6 @@ namespace dftfe
       // SConj=X^{T}*XConj.
       if (!(dftParameters::useMixedPrecCGS_O && useMixedPrec))
         {
-          computing_timer.enter_subsection("Compute overlap matrix");
           internal::fillParallelOverlapMatrix(&X[0],
                                               X.size(),
                                               numberWaveFunctions,
@@ -701,11 +705,9 @@ namespace dftfe
                                               interBandGroupComm,
                                               mpi_communicator,
                                               overlapMatPar);
-          computing_timer.leave_subsection("Compute overlap matrix");
         }
       else
         {
-          computing_timer.enter_subsection("Compute overlap matrix mixed prec");
           if (std::is_same<T, std::complex<double>>::value)
             internal::fillParallelOverlapMatrixMixedPrec<T,
                                                          std::complex<float>>(
@@ -725,17 +727,18 @@ namespace dftfe
               interBandGroupComm,
               mpi_communicator,
               overlapMatPar);
-          computing_timer.leave_subsection("Compute overlap matrix mixed prec");
         }
 
-        // SConj=LConj*L^{T}
-#if (defined DFTFE_WITH_ELPA)
-      computing_timer.enter_subsection("Cholesky and triangular matrix invert");
-#else
-      computing_timer.enter_subsection("Cholesky and triangular matrix invert");
-#endif
+      if (dftParameters::useMixedPrecCGS_O && useMixedPrec)
+        computing_timer.leave_subsection(
+          "SConj=X^{T}XConj Mixed Prec, RR GEP step");
+      else
+        computing_timer.leave_subsection("SConj=X^{T}XConj, RR GEP step");
 
-#if (defined DFTFE_WITH_ELPA)
+      // SConj=LConj*L^{T}
+      computing_timer.enter_subsection("Cholesky and triangular matrix invert");
+
+
       dftfe::LAPACKSupport::Property overlapMatPropertyPostCholesky;
       if (dftParameters::useELPA)
         {
@@ -774,12 +777,7 @@ namespace dftfe
 
           overlapMatPropertyPostCholesky = overlapMatPar.get_property();
         }
-#else
-      overlapMatPar.compute_cholesky_factorization();
 
-      dftfe::LAPACKSupport::Property overlapMatPropertyPostCholesky =
-        overlapMatPar.get_property();
-#endif
       AssertThrow(
         overlapMatPropertyPostCholesky ==
           dftfe::LAPACKSupport::Property::lower_triangular,
@@ -811,13 +809,10 @@ namespace dftfe
       // compute LConj^{-1}
       LMatPar.invert();
 
-#if (defined DFTFE_WITH_ELPA)
       computing_timer.leave_subsection("Cholesky and triangular matrix invert");
-#else
-      computing_timer.leave_subsection("Cholesky and triangular matrix invert");
-#endif
 
 
+      computing_timer.enter_subsection("Compute ProjHam, RR step");
       //
       // compute projected Hamiltonian conjugate HConjProj= X^{T}*HConj*XConj
       //
@@ -830,9 +825,12 @@ namespace dftfe
                     projHamPar.local_m() * projHamPar.local_n(),
                   T(0.0));
 
-      computing_timer.enter_subsection("Compute ProjHam, RR step");
+
       operatorMatrix.XtHX(X, numberWaveFunctions, processGrid, projHamPar);
       computing_timer.leave_subsection("Compute ProjHam, RR step");
+
+      computing_timer.enter_subsection(
+        "Compute HSConjProj= Lconj^{-1}*HConjProj*(Lconj^{-1})^C, RR step");
 
       // Construct the full HConjProj matrix
       dftfe::ScaLAPACKMatrix<T> projHamParConjTrans(numberWaveFunctions,
@@ -871,13 +869,13 @@ namespace dftfe
       LMatPar.mmult(projHamParCopy, projHamPar);
       projHamParCopy.zmCmult(projHamPar, LMatPar);
 
-
+      computing_timer.leave_subsection(
+        "Compute HSConjProj= Lconj^{-1}*HConjProj*(Lconj^{-1})^C, RR step");
       //
       // compute standard eigendecomposition HSConjProj: {QConjPrime,D}
       // HSConjProj=QConjPrime*D*QConjPrime^{C} QConj={Lc^{-1}}^{C}*QConjPrime
       const unsigned int numberEigenValues = numberWaveFunctions;
       eigenValues.resize(numberEigenValues);
-#if (defined DFTFE_WITH_ELPA)
       if (dftParameters::useELPA)
         {
           computing_timer.enter_subsection("ELPA eigen decomp, RR step");
@@ -923,12 +921,6 @@ namespace dftfe
             std::make_pair(0, numberWaveFunctions - 1), true);
           computing_timer.leave_subsection("ScaLAPACK eigen decomp, RR step");
         }
-#else
-      computing_timer.enter_subsection("ScaLAPACK eigen decomp, RR step");
-      eigenValues = projHamPar.eigenpairs_hermitian_by_index_MRRR(
-        std::make_pair(0, numberWaveFunctions - 1), true);
-      computing_timer.leave_subsection("ScaLAPACK eigen decomp, RR step");
-#endif
 
       computing_timer.enter_subsection(
         "Broadcast eigvec and eigenvalues across band groups, RR step");
@@ -1053,7 +1045,6 @@ namespace dftfe
       //
       const unsigned int numberEigenValues = numberWaveFunctions;
       eigenValues.resize(numberEigenValues);
-#if (defined DFTFE_WITH_ELPA)
       if (dftParameters::useELPA)
         {
           computing_timer.enter_subsection("ELPA eigen decomp, RR step");
@@ -1128,12 +1119,7 @@ namespace dftfe
             std::make_pair(0, numberWaveFunctions - 1), true);
           computing_timer.leave_subsection("ScaLAPACK eigen decomp, RR step");
         }
-#else
-      computing_timer.enter_subsection("ScaLAPACK eigen decomp, RR step");
-      eigenValues = projHamPar.eigenpairs_hermitian_by_index_MRRR(
-        std::make_pair(0, numberWaveFunctions - 1), true);
-      computing_timer.leave_subsection("ScaLAPACK eigen decomp, RR step");
-#endif
+
 
       computing_timer.enter_subsection(
         "Broadcast eigvec and eigenvalues across band groups, RR step");
@@ -1203,6 +1189,11 @@ namespace dftfe
       std::shared_ptr<const dftfe::ProcessGrid> processGrid =
         elpaScala.getProcessGridDftfeScalaWrapper();
 
+      if (dftParameters::useMixedPrecCGS_O && useMixedPrec)
+        computing_timer.enter_subsection(
+          "SConj=X^{T}XConj Mixed Prec, RR GEP step");
+      else
+        computing_timer.enter_subsection("SConj=X^{T}XConj, RR GEP step");
       //
       // compute overlap matrix
       //
@@ -1219,7 +1210,6 @@ namespace dftfe
       // SConj=X^{T}*XConj
       if (!(dftParameters::useMixedPrecCGS_O && useMixedPrec))
         {
-          computing_timer.enter_subsection("Compute overlap matrix");
           internal::fillParallelOverlapMatrix(&X[0],
                                               X.size(),
                                               numberWaveFunctions,
@@ -1227,11 +1217,9 @@ namespace dftfe
                                               interBandGroupComm,
                                               mpiComm,
                                               overlapMatPar);
-          computing_timer.leave_subsection("Compute overlap matrix");
         }
       else
         {
-          computing_timer.enter_subsection("Compute overlap matrix mixed prec");
           if (std::is_same<T, std::complex<double>>::value)
             internal::fillParallelOverlapMatrixMixedPrec<T,
                                                          std::complex<float>>(
@@ -1251,16 +1239,17 @@ namespace dftfe
               interBandGroupComm,
               mpiComm,
               overlapMatPar);
-          computing_timer.leave_subsection("Compute overlap matrix mixed prec");
         }
 
-        // Sc=Lc*L^{T}
-#if (defined DFTFE_WITH_ELPA)
+
+      if (dftParameters::useMixedPrecCGS_O && useMixedPrec)
+        computing_timer.leave_subsection(
+          "SConj=X^{T}XConj Mixed Prec, RR GEP step");
+      else
+        computing_timer.leave_subsection("SConj=X^{T}XConj, RR GEP step");
+      // Sc=Lc*L^{T}
       computing_timer.enter_subsection("Cholesky and triangular matrix invert");
-#else
-      computing_timer.enter_subsection("Cholesky and triangular matrix invert");
-#endif
-#if (defined DFTFE_WITH_ELPA)
+
       dftfe::LAPACKSupport::Property overlapMatPropertyPostCholesky;
       if (dftParameters::useELPA)
         {
@@ -1299,12 +1288,7 @@ namespace dftfe
 
           overlapMatPropertyPostCholesky = overlapMatPar.get_property();
         }
-#else
-      overlapMatPar.compute_cholesky_factorization();
 
-      dftfe::LAPACKSupport::Property overlapMatPropertyPostCholesky =
-        overlapMatPar.get_property();
-#endif
       AssertThrow(
         overlapMatPropertyPostCholesky ==
           dftfe::LAPACKSupport::Property::lower_triangular,
@@ -1335,13 +1319,16 @@ namespace dftfe
 
       // compute LConj^{-1}
       LMatPar.invert();
-#if (defined DFTFE_WITH_ELPA)
       computing_timer.leave_subsection("Cholesky and triangular matrix invert");
-#else
-      computing_timer.leave_subsection("Cholesky and triangular matrix invert");
-#endif
 
 
+
+      if (dftParameters::useMixedPrecXTHXSpectrumSplit && useMixedPrec)
+        computing_timer.enter_subsection(
+          "HConjProj=X^{T}*HConj*XConj Mixed Prec, RR GEP step");
+      else
+        computing_timer.enter_subsection(
+          "HConjProj=X^{T}*HConj*XConj, RR GEP step");
       //
       // compute projected Hamiltonian HConjProj=X^{T}*HConj*XConj
       //
@@ -1356,17 +1343,24 @@ namespace dftfe
 
       if (useMixedPrec && dftParameters::useMixedPrecXTHXSpectrumSplit)
         {
-          computing_timer.enter_subsection("Blocked XtHX Mixed Prec, RR step");
           operatorMatrix.XtHXMixedPrec(
             X, numberWaveFunctions, numberCoreStates, processGrid, projHamPar);
-          computing_timer.leave_subsection("Blocked XtHX Mixed Prec, RR step");
         }
       else
         {
-          computing_timer.enter_subsection("Blocked XtHX, RR step");
           operatorMatrix.XtHX(X, numberWaveFunctions, processGrid, projHamPar);
-          computing_timer.leave_subsection("Blocked XtHX, RR step");
         }
+
+
+      if (dftParameters::useMixedPrecXTHXSpectrumSplit && useMixedPrec)
+        computing_timer.leave_subsection(
+          "HConjProj=X^{T}*HConj*XConj Mixed Prec, RR GEP step");
+      else
+        computing_timer.leave_subsection(
+          "HConjProj=X^{T}*HConj*XConj, RR GEP step");
+
+      computing_timer.enter_subsection(
+        "Compute Lconj^{-1}*HConjProj*(Lconj^{-1})^C, RR GEP step");
 
       // Construct the full HConjProj matrix
       dftfe::ScaLAPACKMatrix<T> projHamParConjTrans(numberWaveFunctions,
@@ -1382,14 +1376,11 @@ namespace dftfe
 
 
       projHamParConjTrans.copy_conjugate_transposed(projHamPar);
-#if (defined DFTFE_WITH_ELPA)
       if (dftParameters::useELPA)
         projHamPar.add(projHamParConjTrans, T(-1.0), T(-1.0));
       else
         projHamPar.add(projHamParConjTrans, T(1.0), T(1.0));
-#else
-      projHamPar.add(projHamParConjTrans, T(1.0), T(1.0));
-#endif
+
 
       if (processGrid->is_process_active())
         for (unsigned int i = 0; i < projHamPar.local_n(); ++i)
@@ -1412,7 +1403,8 @@ namespace dftfe
       LMatPar.mmult(projHamParCopy, projHamPar);
       projHamParCopy.zmCmult(projHamPar, LMatPar);
 
-
+      computing_timer.leave_subsection(
+        "Compute Lconj^{-1}*HConjProj*(Lconj^{-1})^C, RR GEP step");
       //
       // compute standard eigendecomposition HSConjProj: {QConjPrime,D}
       // HSConjProj=QConjPrime*D*QConjPrime^{C} QConj={Lc^{-1}}^{C}*QConjPrime
@@ -1420,7 +1412,6 @@ namespace dftfe
       const unsigned int numValenceStates =
         numberWaveFunctions - numberCoreStates;
       eigenValues.resize(numValenceStates);
-#if (defined DFTFE_WITH_ELPA)
       if (dftParameters::useELPA)
         {
           computing_timer.enter_subsection("ELPA eigen decomp, RR step");
@@ -1501,12 +1492,7 @@ namespace dftfe
             std::make_pair(numberCoreStates, numberWaveFunctions - 1), true);
           computing_timer.leave_subsection("ScaLAPACK eigen decomp, RR step");
         }
-#else
-      computing_timer.enter_subsection("ScaLAPACK eigen decomp, RR step");
-      eigenValues = projHamPar.eigenpairs_hermitian_by_index_MRRR(
-        std::make_pair(numberCoreStates, numberWaveFunctions - 1), true);
-      computing_timer.leave_subsection("ScaLAPACK eigen decomp, RR step");
-#endif
+
 
       computing_timer.enter_subsection(
         "Broadcast eigvec and eigenvalues across band groups, RR step");
@@ -1659,7 +1645,6 @@ namespace dftfe
         numberWaveFunctions - numberCoreStates;
       eigenValues.resize(numValenceStates);
       // compute eigendecomposition of ProjHam HConjProj= Qc*D*Qc^{C}
-#if (defined DFTFE_WITH_ELPA)
       if (dftParameters::useELPA)
         {
           computing_timer.enter_subsection("ELPA eigen decomp, RR step");
@@ -1770,12 +1755,7 @@ namespace dftfe
             std::make_pair(numberCoreStates, numberWaveFunctions - 1), true);
           computing_timer.leave_subsection("ScaLAPACK eigen decomp, RR step");
         }
-#else
-      computing_timer.enter_subsection("ScaLAPACK eigen decomp, RR step");
-      eigenValues = projHamPar.eigenpairs_hermitian_by_index_MRRR(
-        std::make_pair(numberCoreStates, numberWaveFunctions - 1), true);
-      computing_timer.leave_subsection("ScaLAPACK eigen decomp, RR step");
-#endif
+
 
       computing_timer.enter_subsection(
         "Broadcast eigvec and eigenvalues across band groups, RR step");
@@ -1819,33 +1799,33 @@ namespace dftfe
       computing_timer.leave_subsection("Blocked subspace rotation, RR step");
     }
 
-#ifdef DFTFE_WITH_ELPA
+    template <typename NumberType>
     void
     elpaDiagonalization(
       elpaScalaManager &                               elpaScala,
       const unsigned int                               numberWaveFunctions,
       const MPI_Comm &                                 mpiComm,
       std::vector<double> &                            eigenValues,
-      dftfe::ScaLAPACKMatrix<double> &                 projHamPar,
+      dftfe::ScaLAPACKMatrix<NumberType> &             projHamPar,
       const std::shared_ptr<const dftfe::ProcessGrid> &processGrid)
     {
       const unsigned int rowsBlockSize = elpaScala.getScalapackBlockSize();
 
-      dftfe::ScaLAPACKMatrix<double> eigenVectors(numberWaveFunctions,
-                                                  processGrid,
-                                                  rowsBlockSize);
+      dftfe::ScaLAPACKMatrix<NumberType> eigenVectors(numberWaveFunctions,
+                                                      processGrid,
+                                                      rowsBlockSize);
 
       if (processGrid->is_process_active())
         std::fill(&eigenVectors.local_el(0, 0),
                   &eigenVectors.local_el(0, 0) +
                     eigenVectors.local_m() * eigenVectors.local_n(),
-                  0.0);
+                  NumberType(0.0));
 
       // For ELPA eigendecomposition the full matrix is required unlike
       // ScaLAPACK which can work with only the lower triangular part
-      dftfe::ScaLAPACKMatrix<double> projHamParTrans(numberWaveFunctions,
-                                                     processGrid,
-                                                     rowsBlockSize);
+      dftfe::ScaLAPACKMatrix<NumberType> projHamParTrans(numberWaveFunctions,
+                                                         processGrid,
+                                                         rowsBlockSize);
 
       if (processGrid->is_process_active())
         std::fill(&projHamParTrans.local_el(0, 0),
@@ -1889,15 +1869,15 @@ namespace dftfe
       eigenVectors.copy_to(projHamPar);
     }
 
-
+    template <typename NumberType>
     void
     elpaDiagonalizationGEP(
       elpaScalaManager &                               elpaScala,
       const unsigned int                               numberWaveFunctions,
       const MPI_Comm &                                 mpiComm,
       std::vector<double> &                            eigenValues,
-      dftfe::ScaLAPACKMatrix<double> &                 projHamPar,
-      dftfe::ScaLAPACKMatrix<double> &                 overlapMatPar,
+      dftfe::ScaLAPACKMatrix<NumberType> &             projHamPar,
+      dftfe::ScaLAPACKMatrix<NumberType> &             overlapMatPar,
       const std::shared_ptr<const dftfe::ProcessGrid> &processGrid)
     {
       const unsigned int rowsBlockSize = elpaScala.getScalapackBlockSize();
@@ -2071,6 +2051,7 @@ namespace dftfe
     }
 
 
+    template <typename NumberType>
     void
     elpaPartialDiagonalization(
       elpaScalaManager &                               elpaScala,
@@ -2078,7 +2059,7 @@ namespace dftfe
       const unsigned int                               Noc,
       const MPI_Comm &                                 mpiComm,
       std::vector<double> &                            eigenValues,
-      dftfe::ScaLAPACKMatrix<double> &                 projHamPar,
+      dftfe::ScaLAPACKMatrix<NumberType> &             projHamPar,
       const std::shared_ptr<const dftfe::ProcessGrid> &processGrid)
     {
       //
@@ -2186,6 +2167,7 @@ namespace dftfe
     }
 
 
+    template <typename NumberType>
     void
     elpaPartialDiagonalizationGEP(
       elpaScalaManager &                               elpaScala,
@@ -2193,8 +2175,8 @@ namespace dftfe
       const unsigned int                               Noc,
       const MPI_Comm &                                 mpiComm,
       std::vector<double> &                            eigenValues,
-      dftfe::ScaLAPACKMatrix<double> &                 projHamPar,
-      dftfe::ScaLAPACKMatrix<double> &                 overlapMatPar,
+      dftfe::ScaLAPACKMatrix<NumberType> &             projHamPar,
+      dftfe::ScaLAPACKMatrix<NumberType> &             overlapMatPar,
       const std::shared_ptr<const dftfe::ProcessGrid> &processGrid)
     {
       const unsigned int rowsBlockSize = elpaScala.getScalapackBlockSize();
@@ -2403,7 +2385,6 @@ namespace dftfe
 
       overlapMatPar.copy_transposed(LMatPar);
     }
-#endif
 
 
     template <typename T>
@@ -3133,6 +3114,7 @@ namespace dftfe
                              const MPI_Comm &                mpiComm,
                              const MPI_Comm &                interBandGroupComm,
                              std::vector<double> &           residualNorm);
+
   } // namespace linearAlgebraOperations
 
 } // namespace dftfe

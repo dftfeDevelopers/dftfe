@@ -33,7 +33,7 @@
 #  include <chebyshevOrthogonalizedSubspaceIterationSolverCUDA.h>
 #  include <constraintMatrixInfoCUDA.h>
 #  include <kohnShamDFTOperatorCUDA.h>
-#  include <vectorUtilitiesCUDA.h>
+#  include "cudaHelpers.h"
 
 #  include "gpuDirectCCLWrapper.h"
 #endif
@@ -257,22 +257,6 @@ namespace dftfe
      */
     const std::vector<dealii::types::global_dof_index> &
     getLocalProcDofIndicesImag() const;
-
-    /**
-     *@brief Get dealii constraint matrix involving periodic constraints and hanging node constraints in periodic
-     *case else only hanging node constraints in non-periodic case
-     */
-    const dealii::AffineConstraints<double> &
-    getConstraintMatrixEigen() const;
-
-    /**
-     *@brief Get overloaded constraint matrix information involving periodic constraints and hanging node constraints in periodic
-     *case else only hanging node constraints in non-periodic case (data stored
-     *in STL format)
-     */
-    const dftUtils::constraintMatrixInfo &
-    getConstraintMatrixEigenDataInfo() const;
-
 
     /**
      *@brief Get matrix free data object
@@ -1169,13 +1153,6 @@ namespace dftfe
      */
     dftUtils::constraintMatrixInfo constraintsNoneEigenDataInfo;
 
-    /**
-     *object which is used to store dealii constraint matrix information
-     *using STL vectors. The relevant dealii constraint matrix
-     *has hanging node constraints and periodic constraints(for periodic
-     *problems) used in eigen solve
-     */
-    dftUtils::constraintMatrixInfo constraintsNoneEigenDataInfoPrev;
 
     /**
      *object which is used to store dealii constraint matrix information
@@ -1222,8 +1199,10 @@ namespace dftfe
 
     /// cuda eigenvectors
 #ifdef DFTFE_WITH_GPU
-    vectorToolsCUDA::cudaThrustVector d_eigenVectorsFlattenedCUDA;
-    vectorToolsCUDA::cudaThrustVector d_eigenVectorsRotFracFlattenedCUDA;
+    cudaUtils::Vector<dataTypes::numberGPU, dftfe::MemorySpace::GPU>
+      d_eigenVectorsFlattenedCUDA;
+    cudaUtils::Vector<dataTypes::numberGPU, dftfe::MemorySpace::GPU>
+      d_eigenVectorsRotFracFlattenedCUDA;
 #endif
 
     /// parallel message stream
@@ -1369,8 +1348,7 @@ namespace dftfe
     std::map<std::pair<unsigned int, unsigned int>, unsigned int>
       d_projectorIdsNumberingMapCurrentProcess;
 #ifdef USE_COMPLEX
-    std::vector<std::vector<std::vector<std::vector<std::complex<double>>>>>
-      d_nonLocalProjectorElementMatrices,
+    std::vector<std::vector<std::vector<std::complex<double>>>>
       d_nonLocalProjectorElementMatricesConjugate,
       d_nonLocalProjectorElementMatricesTranspose;
 
@@ -1386,7 +1364,6 @@ namespace dftfe
       d_projectorKetTimesVectorParFlattened;
 #else
     std::vector<std::vector<std::vector<double>>>
-      d_nonLocalProjectorElementMatrices,
       d_nonLocalProjectorElementMatricesConjugate,
       d_nonLocalProjectorElementMatricesTranspose;
 
@@ -1526,7 +1503,6 @@ namespace dftfe
     std::vector<double> d_upperBoundUnwantedSpectrumValues;
 
     distributedCPUVec<double> d_tempEigenVec;
-    distributedCPUVec<double> d_tempEigenVecPrev;
 
     bool d_isRestartGroundStateCalcFromChk;
 
@@ -1590,31 +1566,6 @@ namespace dftfe
       const bool           isFirstScf                              = false);
 #endif
 
-
-#ifdef DFTFE_WITH_GPU
-    void
-    kohnShamEigenSpaceOnlyRRCompute(
-      const unsigned int s,
-      const unsigned int kPointIndex,
-      kohnShamDFTOperatorCUDAClass<FEOrder, FEOrderElectro>
-        &               kohnShamDFTEigenOperator,
-      elpaScalaManager &elpaScala,
-      chebyshevOrthogonalizedSubspaceIterationSolverCUDA
-        &        subspaceIterationSolverCUDA,
-      const bool isSpectrumSplit = false,
-      const bool useMixedPrec    = false);
-#endif
-
-    void
-    kohnShamEigenSpaceOnlyRRCompute(
-      const unsigned int s,
-      const unsigned int kPointIndex,
-      kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>
-        &                                             kohnShamDFTEigenOperator,
-      elpaScalaManager &                              elpaScala,
-      chebyshevOrthogonalizedSubspaceIterationSolver &subspaceIterationSolver,
-      const bool                                      isSpectrumSplit = false,
-      const bool                                      useMixedPrec    = false);
 
     void
     kohnShamEigenSpaceComputeNSCF(

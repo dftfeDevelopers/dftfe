@@ -160,7 +160,7 @@ forceClass<FEOrder, FEOrderElectro>::computeNonLocalProjectorKetTimesPsiTimesV(
               int nonZeroElementMatrixId =
                 dftPtr->d_sparsityPattern[atomId][iElem];
 #ifdef USE_COMPLEX
-              char                 transA = 'C';
+              char                 transA = 'N';
               char                 transB = 'N';
               std::complex<double> alpha  = 1.0;
               std::complex<double> beta   = 1.0;
@@ -170,8 +170,10 @@ forceClass<FEOrder, FEOrderElectro>::computeNonLocalProjectorKetTimesPsiTimesV(
                      &numberWaveFunctions,
                      &numberNodesPerElement,
                      &alpha,
-                     &dftPtr->d_nonLocalProjectorElementMatrices
-                        [atomId][nonZeroElementMatrixId][kPointIndex][0],
+                     &dftPtr->d_nonLocalProjectorElementMatricesConjugate
+                        [atomId][nonZeroElementMatrixId]
+                        [kPointIndex * numberNodesPerElement *
+                         numberPseudoWaveFunctions],
                      &numberNodesPerElement,
                      &inputVectors[0],
                      &numberNodesPerElement,
@@ -189,7 +191,7 @@ forceClass<FEOrder, FEOrderElectro>::computeNonLocalProjectorKetTimesPsiTimesV(
                      &numberWaveFunctions,
                      &numberNodesPerElement,
                      &alpha,
-                     &dftPtr->d_nonLocalProjectorElementMatrices
+                     &dftPtr->d_nonLocalProjectorElementMatricesConjugate
                         [atomId][nonZeroElementMatrixId][0],
                      &numberNodesPerElement,
                      &inputVectors[0],

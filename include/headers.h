@@ -82,6 +82,15 @@
 #  include <deal.II/base/smartpointer.h>
 #  include <deal.II/base/types.h>
 
+#  if defined(DFTFE_WITH_GPU)
+#    include <cuComplex.h>
+#    include <thrust/device_vector.h>
+#    include <thrust/complex.h>
+#  endif
+
+#  include "dftfeDataTypes.h"
+#  include "distributedMulticomponentVec.h"
+
 // Include generic C++ headers
 #  include <fstream>
 #  include <iostream>
@@ -96,86 +105,16 @@ namespace dftfe
     dealii::LinearAlgebra::distributed::Vector<elem_type,
                                                dealii::MemorySpace::Host>;
 #ifdef DFTFE_WITH_GPU
-  template <typename elem_type>
+  // template <typename elem_type>
+  // using distributedGPUVec =
+  //  dealii::LinearAlgebra::distributed::Vector<elem_type,
+  //                                             dealii::MemorySpace::CUDA>;
+
+  template <typename NumberType>
   using distributedGPUVec =
-    dealii::LinearAlgebra::distributed::Vector<elem_type,
-                                               dealii::MemorySpace::CUDA>;
+    dftfe::DistributedMulticomponentVec<NumberType, dftfe::MemorySpace::GPU>;
+
 #endif
-
-  namespace dataTypes
-  {
-#ifdef USE_COMPLEX
-    typedef std::complex<double> number;
-    typedef std::complex<float>  numberLowPrec;
-#else
-    typedef double number;
-    typedef float  numberLowPrec;
-#endif
-
-    inline MPI_Datatype
-    mpi_type_id(const int *)
-    {
-      return MPI_INT;
-    }
-
-    inline MPI_Datatype
-    mpi_type_id(const long int *)
-    {
-      return MPI_LONG;
-    }
-
-    inline MPI_Datatype
-    mpi_type_id(const unsigned int *)
-    {
-      return MPI_UNSIGNED;
-    }
-
-    inline MPI_Datatype
-    mpi_type_id(const unsigned long int *)
-    {
-      return MPI_UNSIGNED_LONG;
-    }
-
-    inline MPI_Datatype
-    mpi_type_id(const unsigned long long int *)
-    {
-      return MPI_UNSIGNED_LONG_LONG;
-    }
-
-
-    inline MPI_Datatype
-    mpi_type_id(const float *)
-    {
-      return MPI_FLOAT;
-    }
-
-
-    inline MPI_Datatype
-    mpi_type_id(const double *)
-    {
-      return MPI_DOUBLE;
-    }
-
-    inline MPI_Datatype
-    mpi_type_id(const long double *)
-    {
-      return MPI_LONG_DOUBLE;
-    }
-
-    inline MPI_Datatype
-    mpi_type_id(const std::complex<float> *)
-    {
-      return MPI_COMPLEX;
-    }
-
-    inline MPI_Datatype
-    mpi_type_id(const std::complex<double> *)
-    {
-      return MPI_DOUBLE_COMPLEX;
-    }
-  } // namespace dataTypes
-
-
 } // namespace dftfe
 
 #endif

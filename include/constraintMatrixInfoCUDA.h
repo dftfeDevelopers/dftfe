@@ -84,9 +84,10 @@ namespace dftfe
        *
        * @param blockSize number of components for a given node
        */
+      template <typename NumberType>
       void
-      distribute(distributedGPUVec<double> &fieldVector,
-                 const unsigned int         blockSize) const;
+      distribute(distributedGPUVec<NumberType> &fieldVector,
+                 const unsigned int             blockSize) const;
 
       /**
        * @brief transfers the contributions of slave nodes to master nodes using the constraint equation
@@ -102,6 +103,53 @@ namespace dftfe
       distribute_slave_to_master(distributedGPUVec<double> &fieldVector,
                                  const unsigned int         blockSize) const;
 
+      inline void
+      distribute_slave_to_master(
+        distributedGPUVec<cuDoubleComplex> &fieldVector,
+        const unsigned int                  blockSize) const
+      {}
+
+      /**
+       * @brief transfers the contributions of slave nodes to master nodes using the constraint equation
+       * slave nodes are the nodes which are to the right of the constraint
+       * equation and master nodes are the nodes which are left of the
+       * constraint equation.
+       *
+       * @param fieldVector parallel dealii vector which is the result of matrix-vector product(vmult) withot taking
+       * care of constraints
+       * @param blockSize number of components for a given node
+       */
+      void
+      distribute_slave_to_master(
+        distributedGPUVec<cuDoubleComplex> &fieldVector,
+        double *                            tempReal,
+        double *                            tempImag,
+        const unsigned int                  blockSize) const;
+
+      inline void
+      distribute_slave_to_master(distributedGPUVec<double> &fieldVector,
+                                 double *                   tempReal,
+                                 double *                   tempImag,
+                                 const unsigned int         blockSize) const
+      {}
+
+
+      /**
+       * @brief transfers the contributions of slave nodes to master nodes using the constraint equation
+       * slave nodes are the nodes which are to the right of the constraint
+       * equation and master nodes are the nodes which are left of the
+       * constraint equation.
+       *
+       * @param fieldVector parallel dealii vector which is the result of matrix-vector product(vmult) withot taking
+       * care of constraints
+       * @param blockSize number of components for a given node
+       */
+      void
+      distribute_slave_to_master(distributedGPUVec<cuFloatComplex> &fieldVector,
+                                 float *                            tempReal,
+                                 float *                            tempImag,
+                                 const unsigned int blockSize) const;
+
 
       /**
        * @brief sets field values at constrained nodes to be zero
@@ -109,9 +157,10 @@ namespace dftfe
        * @param fieldVector parallel dealii vector with fields stored in a flattened format
        * @param blockSize number of field components for a given node
        */
+      template <typename NumberType>
       void
-      set_zero(distributedGPUVec<double> &fieldVector,
-               const unsigned int         blockSize) const;
+      set_zero(distributedGPUVec<NumberType> &fieldVector,
+               const unsigned int             blockSize) const;
 
       /**
        * clear data members
@@ -153,7 +202,6 @@ namespace dftfe
 
       unsigned int d_numConstrainedDofs;
     };
-
   } // namespace dftUtils
 
 } // namespace dftfe
