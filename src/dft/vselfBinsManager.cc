@@ -759,8 +759,8 @@ namespace dftfe
     for (unsigned int idim = 0; idim < 3; idim++)
       inhomogBoundaryVecVselfDerR[idim].reinit(inhomogBoundaryVec);
 
-    d_constraintsOnlyHangingInfo.initialize(inhomogBoundaryVec.get_partitioner(),
-                                     onlyHangingNodeConstraints);
+    d_constraintsOnlyHangingInfo.initialize(
+      inhomogBoundaryVec.get_partitioner(), onlyHangingNodeConstraints);
 
 
     double radiusAtomBallReduced = radiusAtomBallAdaptive;
@@ -1434,9 +1434,11 @@ namespace dftfe
         std::map<dealii::types::global_dof_index, dealii::Point<3>>
           &dofClosestChargeLocationMap = d_dofClosestChargeLocationMap[iBin];
 
-        const std::map<dealii::types::global_dof_index, int> & closestAtomMapCurrentBin=d_closestAtomBin[iBin];
+        const std::map<dealii::types::global_dof_index, int>
+          &closestAtomMapCurrentBin = d_closestAtomBin[iBin];
 
-        const std::map<dealii::types::global_dof_index, int> & boundaryFlagMapCurrentBin=d_boundaryFlag[iBin];
+        const std::map<dealii::types::global_dof_index, int>
+          &boundaryFlagMapCurrentBin = d_boundaryFlag[iBin];
 
         dealii::DoFHandler<3>::active_cell_iterator cell =
                                                       dofHandler.begin_active(),
@@ -1506,7 +1508,7 @@ namespace dftfe
 
                             if (!vselfPerturbationUpdateForStress)
                               {
-                                //d_vselfBinField[iBin][globalNodeId] =
+                                // d_vselfBinField[iBin][globalNodeId] =
                                 //  newPotentialValue;
 
                                 for (unsigned int idim = 0; idim < 3; idim++)
@@ -1528,110 +1530,133 @@ namespace dftfe
         //
         // create constraint matrix for current bin
         //
-        //d_vselfBinConstraintMatrices[4 * iBin].reinit(locally_relevant_dofs);
 
-        inhomogBoundaryVec.update_ghost_values();
-        d_constraintsOnlyHangingInfo.distribute(inhomogBoundaryVec);
-        inhomogBoundaryVec.update_ghost_values();        
-        for (auto index : locally_relevant_dofs)
+        const bool hasHangingNodes =
+          dofHandler.get_triangulation().has_hanging_nodes();
+
+        //if (!hasHangingNodes)
+        //std::cout<<"uniform mesh"<<std::endl;
+        if (hasHangingNodes)
           {
-            /*
-            if (!onlyHangingNodeConstraints.is_constrained(index) &&
-                std::abs(inhomogBoundaryVec[index]) > 1e-10)
+            d_vselfBinConstraintMatrices[4 * iBin].reinit(
+              locally_relevant_dofs);
+
+            inhomogBoundaryVec.update_ghost_values();
+            for (auto index : locally_relevant_dofs)
               {
-                d_vselfBinConstraintMatrices[4 * iBin].add_line(index);
-                d_vselfBinConstraintMatrices[4 * iBin].set_inhomogeneity(
-                  index, inhomogBoundaryVec[index]);
-              }
-            */
-            if (d_vselfBinConstraintMatrices[4 * iBin].is_constrained(index))
-            //if (!onlyHangingNodeConstraints.is_constrained(index) &&
-            //    std::abs(inhomogBoundaryVec[index]) > 1e-10)
-             {
-               if (std::abs(d_vselfBinConstraintMatrices[4 * iBin].get_inhomogeneity(
-                  index))>1e-10)
-                  d_vselfBinConstraintMatrices[4 * iBin].set_inhomogeneity(
-                  index, inhomogBoundaryVec[index]);
-            }            
-          }
-
-        /*
-        d_vselfBinConstraintMatrices[4 * iBin].merge(
-          onlyHangingNodeConstraints,
-          dealii::AffineConstraints<
-            double>::MergeConflictBehavior::left_object_wins);
-        d_vselfBinConstraintMatrices[4 * iBin].close();
-        d_vselfBinConstraintMatrices[4 * iBin].merge(
-          constraintMatrix,
-          dealii::AffineConstraints<
-            double>::MergeConflictBehavior::left_object_wins);
-        d_vselfBinConstraintMatrices[4 * iBin].close();
-        */
-        d_vselfBinConstraintMatrices[4 * iBin].close();        
-        constraintsVector.push_back(&(d_vselfBinConstraintMatrices[4 * iBin]));
-
-        if (!vselfPerturbationUpdateForStress)
-          {
-            //for (unsigned int idim = 0; idim < 3; idim++)
-            //  d_vselfBinConstraintMatrices[4 * iBin + idim + 1].reinit(
-            //    locally_relevant_dofs);
-
-            for (unsigned int idim = 0; idim < 3; idim++)
-              {
-                inhomogBoundaryVecVselfDerR[idim].update_ghost_values();
-                d_constraintsOnlyHangingInfo.distribute(inhomogBoundaryVecVselfDerR[idim]);
-                inhomogBoundaryVecVselfDerR[idim].update_ghost_values();
-                for (auto index : locally_relevant_dofs)
+                if (!onlyHangingNodeConstraints.is_constrained(index) &&
+                    std::abs(inhomogBoundaryVec[index]) > 1e-10)
                   {
-                    /*
-                    if (!onlyHangingNodeConstraints.is_constrained(index) &&
-                        std::abs(inhomogBoundaryVecVselfDerR[idim][index]) >
-                          1e-10)
-                      {
-                        d_vselfBinConstraintMatrices[4 * iBin + idim + 1]
-                          .add_line(index);
-                        d_vselfBinConstraintMatrices[4 * iBin + idim + 1]
-                          .set_inhomogeneity(
-                            index, inhomogBoundaryVecVselfDerR[idim][index]);
-                      }
-                    */
-
-                    //if (!onlyHangingNodeConstraints.is_constrained(index) &&
-                    //    std::abs(inhomogBoundaryVecVselfDerR[idim][index]) >
-                    //     1e-10)
-                    if (d_vselfBinConstraintMatrices[4 * iBin + idim + 1].is_constrained(index))
-                      {
-                        if (std::abs(d_vselfBinConstraintMatrices[4 * iBin+idim+1].get_inhomogeneity(
-                           index))>1e-10)
-                        d_vselfBinConstraintMatrices[4 * iBin + idim + 1]
-                          .set_inhomogeneity(
-                            index, inhomogBoundaryVecVselfDerR[idim][index]);
-                      }                    
+                    d_vselfBinConstraintMatrices[4 * iBin].add_line(index);
+                    d_vselfBinConstraintMatrices[4 * iBin].set_inhomogeneity(
+                      index, inhomogBoundaryVec[index]);
                   }
+              }
 
+            d_vselfBinConstraintMatrices[4 * iBin].merge(
+              onlyHangingNodeConstraints,
+              dealii::AffineConstraints<
+                double>::MergeConflictBehavior::left_object_wins);
+            d_vselfBinConstraintMatrices[4 * iBin].close();
+            d_vselfBinConstraintMatrices[4 * iBin].merge(
+              constraintMatrix,
+              dealii::AffineConstraints<
+                double>::MergeConflictBehavior::left_object_wins);
+            d_vselfBinConstraintMatrices[4 * iBin].close();
+            constraintsVector.push_back(
+              &(d_vselfBinConstraintMatrices[4 * iBin]));
 
-                /*
-                d_vselfBinConstraintMatrices[4 * iBin + idim + 1].merge(
-                  onlyHangingNodeConstraints,
-                  dealii::AffineConstraints<
-                    double>::MergeConflictBehavior::left_object_wins);
-                d_vselfBinConstraintMatrices[4 * iBin + idim + 1].close();
-                d_vselfBinConstraintMatrices[4 * iBin + idim + 1].merge(
-                  constraintMatrix,
-                  dealii::AffineConstraints<
-                    double>::MergeConflictBehavior::left_object_wins);
-                d_vselfBinConstraintMatrices[4 * iBin + idim + 1].close();
-                */
-                d_vselfBinConstraintMatrices[4 * iBin + idim + 1].close();
-                constraintsVector.push_back(
-                  &(d_vselfBinConstraintMatrices[4 * iBin + idim + 1]));
+            if (!vselfPerturbationUpdateForStress)
+              {
+                for (unsigned int idim = 0; idim < 3; idim++)
+                  d_vselfBinConstraintMatrices[4 * iBin + idim + 1].reinit(
+                    locally_relevant_dofs);
+
+                for (unsigned int idim = 0; idim < 3; idim++)
+                  {
+                    inhomogBoundaryVecVselfDerR[idim].update_ghost_values();
+                    for (auto index : locally_relevant_dofs)
+                      {
+                        if (!onlyHangingNodeConstraints.is_constrained(index) &&
+                            std::abs(inhomogBoundaryVecVselfDerR[idim][index]) >
+                              1e-10)
+                          {
+                            d_vselfBinConstraintMatrices[4 * iBin + idim + 1]
+                              .add_line(index);
+                            d_vselfBinConstraintMatrices[4 * iBin + idim + 1]
+                              .set_inhomogeneity(
+                                index,
+                                inhomogBoundaryVecVselfDerR[idim][index]);
+                          }
+                      }
+
+                    d_vselfBinConstraintMatrices[4 * iBin + idim + 1].merge(
+                      onlyHangingNodeConstraints,
+                      dealii::AffineConstraints<
+                        double>::MergeConflictBehavior::left_object_wins);
+                    d_vselfBinConstraintMatrices[4 * iBin + idim + 1].close();
+                    d_vselfBinConstraintMatrices[4 * iBin + idim + 1].merge(
+                      constraintMatrix,
+                      dealii::AffineConstraints<
+                        double>::MergeConflictBehavior::left_object_wins);
+                    d_vselfBinConstraintMatrices[4 * iBin + idim + 1].close();
+                    constraintsVector.push_back(
+                      &(d_vselfBinConstraintMatrices[4 * iBin + idim + 1]));
+                  }
+              }
+            else
+              {
+                for (unsigned int idim = 0; idim < 3; idim++)
+                  constraintsVector.push_back(
+                    &(d_vselfBinConstraintMatrices[4 * iBin + idim + 1]));
               }
           }
         else
           {
-            for (unsigned int idim = 0; idim < 3; idim++)
-              constraintsVector.push_back(
-                &(d_vselfBinConstraintMatrices[4 * iBin + idim + 1]));
+            inhomogBoundaryVec.update_ghost_values();
+            d_constraintsOnlyHangingInfo.distribute(inhomogBoundaryVec);
+            inhomogBoundaryVec.update_ghost_values();
+            for (auto index : locally_relevant_dofs)
+              {
+                if (std::abs(
+                      d_vselfBinConstraintMatrices[4 * iBin].get_inhomogeneity(
+                        index)) > 1e-10)
+                  d_vselfBinConstraintMatrices[4 * iBin].set_inhomogeneity(
+                    index, inhomogBoundaryVec[index]);
+              }
+
+            constraintsVector.push_back(
+              &(d_vselfBinConstraintMatrices[4 * iBin]));
+
+            if (!vselfPerturbationUpdateForStress)
+              {
+                for (unsigned int idim = 0; idim < 3; idim++)
+                  {
+                    inhomogBoundaryVecVselfDerR[idim].update_ghost_values();
+                    d_constraintsOnlyHangingInfo.distribute(
+                      inhomogBoundaryVecVselfDerR[idim]);
+                    inhomogBoundaryVecVselfDerR[idim].update_ghost_values();
+                    for (auto index : locally_relevant_dofs)
+                      {
+                        if (std::abs(
+                              d_vselfBinConstraintMatrices[4 * iBin + idim + 1]
+                                .get_inhomogeneity(index)) > 1e-10)
+                          d_vselfBinConstraintMatrices[4 * iBin + idim + 1]
+                            .set_inhomogeneity(
+                              index, inhomogBoundaryVecVselfDerR[idim][index]);
+                      }
+
+
+                    constraintsVector.push_back(
+                      &(d_vselfBinConstraintMatrices[4 * iBin + idim + 1]));
+                  }
+              }
+            else
+              {
+                for (unsigned int idim = 0; idim < 3; idim++)
+                  constraintsVector.push_back(
+                    &(d_vselfBinConstraintMatrices[4 * iBin + idim + 1]));
+              }
           }
       } // bin loop
   }
