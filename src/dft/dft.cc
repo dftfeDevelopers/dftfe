@@ -201,15 +201,10 @@ namespace dftfe
     delete forcePtr;
     delete geoOptIonPtr;
     delete geoOptCellPtr;
-<<<<<<< HEAD
     //delete d_mdPtr;
     //delete d_mdClassPtr;
     
 #ifdef DFTFE_WITH_ELPA
-=======
-    delete d_mdPtr;
-
->>>>>>> afc1dc0c5ebaeada3463c9ca6a8ea762e1bfa4df
     if (dftParameters::useELPA)
       d_elpaScala.elpaDeallocateHandles(d_numEigenValues, d_numEigenValuesRR);
 
