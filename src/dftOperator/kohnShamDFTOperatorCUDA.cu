@@ -1249,42 +1249,44 @@ namespace dftfe
           d_nonLocalPseudoPotentialConstants;
         d_cellNodeIdMapNonLocalToLocalDevice = d_cellNodeIdMapNonLocalToLocal;
 
-
-        h_d_A = (dataTypes::numberGPU **)malloc(d_totalNonlocalElems *
-                                                sizeof(dataTypes::numberGPU *));
-        h_d_B = (dataTypes::numberGPU **)malloc(d_totalNonlocalElems *
-                                                sizeof(dataTypes::numberGPU *));
-        h_d_C = (dataTypes::numberGPU **)malloc(d_totalNonlocalElems *
-                                                sizeof(dataTypes::numberGPU *));
-
-        for (unsigned int i = 0; i < d_totalNonlocalElems; i++)
+        if (!d_isMallocCalled)
           {
-            h_d_A[i] =
-              reinterpret_cast<dataTypes::numberGPU *>(thrust::raw_pointer_cast(
-                &d_cellWaveFunctionMatrix[d_nonlocalElemIdToLocalElemIdMap[i] *
-                                          numberWaveFunctions *
-                                          d_numberNodesPerElement]));
-            h_d_C[i] =
-              reinterpret_cast<dataTypes::numberGPU *>(thrust::raw_pointer_cast(
-                &d_projectorKetTimesVectorAllCellsDevice
-                  [i * numberWaveFunctions * d_maxSingleAtomPseudoWfc]));
+            h_d_A = (dataTypes::numberGPU **)malloc(
+              d_totalNonlocalElems * sizeof(dataTypes::numberGPU *));
+            h_d_B = (dataTypes::numberGPU **)malloc(
+              d_totalNonlocalElems * sizeof(dataTypes::numberGPU *));
+            h_d_C = (dataTypes::numberGPU **)malloc(
+              d_totalNonlocalElems * sizeof(dataTypes::numberGPU *));
+
+            for (unsigned int i = 0; i < d_totalNonlocalElems; i++)
+              {
+                h_d_A[i] = reinterpret_cast<dataTypes::numberGPU *>(
+                  thrust::raw_pointer_cast(
+                    &d_cellWaveFunctionMatrix
+                      [d_nonlocalElemIdToLocalElemIdMap[i] *
+                       numberWaveFunctions * d_numberNodesPerElement]));
+                h_d_C[i] = reinterpret_cast<dataTypes::numberGPU *>(
+                  thrust::raw_pointer_cast(
+                    &d_projectorKetTimesVectorAllCellsDevice
+                      [i * numberWaveFunctions * d_maxSingleAtomPseudoWfc]));
+              }
+
+            cudaMalloc((void **)&d_A,
+                       d_totalNonlocalElems * sizeof(dataTypes::numberGPU *));
+            cudaMalloc((void **)&d_B,
+                       d_totalNonlocalElems * sizeof(dataTypes::numberGPU *));
+            cudaMalloc((void **)&d_C,
+                       d_totalNonlocalElems * sizeof(dataTypes::numberGPU *));
+
+            cudaMemcpy(d_A,
+                       h_d_A,
+                       d_totalNonlocalElems * sizeof(dataTypes::number *),
+                       cudaMemcpyHostToDevice);
+            cudaMemcpy(d_C,
+                       h_d_C,
+                       d_totalNonlocalElems * sizeof(dataTypes::number *),
+                       cudaMemcpyHostToDevice);
           }
-
-        cudaMalloc((void **)&d_A,
-                   d_totalNonlocalElems * sizeof(dataTypes::numberGPU *));
-        cudaMalloc((void **)&d_B,
-                   d_totalNonlocalElems * sizeof(dataTypes::numberGPU *));
-        cudaMalloc((void **)&d_C,
-                   d_totalNonlocalElems * sizeof(dataTypes::numberGPU *));
-
-        cudaMemcpy(d_A,
-                   h_d_A,
-                   d_totalNonlocalElems * sizeof(dataTypes::number *),
-                   cudaMemcpyHostToDevice);
-        cudaMemcpy(d_C,
-                   h_d_C,
-                   d_totalNonlocalElems * sizeof(dataTypes::number *),
-                   cudaMemcpyHostToDevice);
 
         d_isMallocCalled = true;
       }
