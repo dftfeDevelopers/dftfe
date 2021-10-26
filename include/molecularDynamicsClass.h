@@ -229,6 +229,23 @@ namespace dftfe
 
         void writeTotalDisplacementFile(std::vector<dealii::Tensor<1, 3, double>>) ;  
 
+        /**
+
+    * @brief  NoseHoverExtendedLagrangian
+
+     * @param[in] thermovelocity Velocity of each, updated at each TimeStep
+     * @param[in] thermoposition Position of each thermostat , updated at each TimeStep
+     * @param[in] thermomass Stores the mass of each thermostat.
+     * @param[in] PE  Free energy of system at current Timestep
+     * @param[in] KE  Kinetic ENergy of nuclei at current Timestep
+     * @param[in] Temperature  temperature at current Timestep
+     * 
+     * @param[out] Hnose Nose Hamiltonian at each timestep
+     *    
+     *  
+     *     
+     */    
+        
         double NoseHoverExtendedLagrangian(std::vector<double>  , std::vector<double>  , std::vector<double> , double, double, double  );                                    
         
 
