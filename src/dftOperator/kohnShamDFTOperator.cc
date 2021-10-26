@@ -122,6 +122,13 @@ namespace dftfe
 
   template <unsigned int FEOrder, unsigned int FEOrderElectro>
   void
+  kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::resetExtPotHamFlag()
+  {
+    d_isStiffnessMatrixExternalPotCorrComputed = false;
+  }
+
+  template <unsigned int FEOrder, unsigned int FEOrderElectro>
+  void
   kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::reinit(
     const unsigned int                    numberWaveFunctions,
     distributedCPUVec<dataTypes::number> &flattenedArray,

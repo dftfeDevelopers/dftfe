@@ -840,6 +840,13 @@ namespace dftfe
     computing_timer.leave_subsection("kohnShamDFTOperatorCUDAClass setup");
   }
 
+  template <unsigned int FEOrder, unsigned int FEOrderElectro>
+  void
+  kohnShamDFTOperatorCUDAClass<FEOrder, FEOrderElectro>::resetExtPotHamFlag()
+  {
+    d_isStiffnessMatrixExternalPotCorrComputed = false;
+  }
+
 
   template <unsigned int FEOrder, unsigned int FEOrderElectro>
   void

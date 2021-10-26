@@ -1812,9 +1812,14 @@ namespace dftfe
   void
   dftClass<FEOrder, FEOrderElectro>::reInitializeKohnShamDFTOperator()
   {
+    if (!dftParameters::useGPU)
+      d_kohnShamDFTOperatorPtr->resetExtPotHamFlag();
+
 #ifdef DFTFE_WITH_GPU
     if (dftParameters::useGPU)
       {
+        d_kohnShamDFTOperatorCUDAPtr->resetExtPotHamFlag();
+
         d_kohnShamDFTOperatorCUDAPtr->reinit(
           std::min(dftParameters::chebyWfcBlockSize, d_numEigenValues), true);
       }
