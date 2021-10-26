@@ -2348,7 +2348,10 @@ forceClass<FEOrder, FEOrderElectro>::
     matrixFreeDataElectro.get_dof_handler(phiTotDofHandlerIndexElectro)
       .get_fe(),
     matrixFreeDataElectro.get_quadrature(lpspQuadratureIdElectro),
-    update_values | update_gradients | update_quadrature_points);
+    dftParameters::floatingNuclearCharges &&
+        dftParameters::smearedNuclearCharges ?
+      (update_values | update_quadrature_points) :
+      (update_values | update_gradients | update_quadrature_points));
 
   QIterated<3 - 1> faceQuadrature(QGauss<1>(C_num1DQuadLPSP<FEOrderElectro>()),
                                   C_numCopies1DQuadLPSP());
