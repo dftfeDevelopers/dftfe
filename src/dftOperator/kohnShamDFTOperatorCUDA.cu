@@ -1062,22 +1062,27 @@ namespace dftfe
         d_cellHamMatrixTimesWaveMatrixNonLocalDevice.resize(
           d_totalNonlocalElems * numberWaveFunctions * d_numberNodesPerElement,
           dataTypes::numberThrustGPU(0.0));
+        d_cellHamiltonianMatrixNonLocalFlattenedConjugate.clear();
         d_cellHamiltonianMatrixNonLocalFlattenedConjugate.resize(
           dftPtr->d_kPointWeights.size() * d_totalNonlocalElems *
             d_numberNodesPerElement * d_maxSingleAtomPseudoWfc,
           dataTypes::number(0.0));
+        d_cellHamiltonianMatrixNonLocalFlattenedTranspose.clear();
         d_cellHamiltonianMatrixNonLocalFlattenedTranspose.resize(
           dftPtr->d_kPointWeights.size() * d_totalNonlocalElems *
             d_numberNodesPerElement * d_maxSingleAtomPseudoWfc,
           dataTypes::number(0.0));
+        d_nonLocalPseudoPotentialConstants.clear();
         d_nonLocalPseudoPotentialConstants.resize(d_totalPseudoWfcNonLocal,
                                                   0.0);
+        d_flattenedArrayCellLocalProcIndexIdFlattenedMapNonLocal.clear();
         d_flattenedArrayCellLocalProcIndexIdFlattenedMapNonLocal.resize(
           d_totalNonlocalElems * d_numberNodesPerElement, 0);
         d_projectorKetTimesVectorAllCellsDevice.resize(
           d_totalNonlocalElems * numberWaveFunctions * d_maxSingleAtomPseudoWfc,
           dataTypes::numberThrustGPU(0.0));
 
+        d_projectorIdsParallelNumberingMap.clear();
         d_projectorIdsParallelNumberingMap.resize(d_totalPseudoWfcNonLocal, 0);
         d_projectorKetTimesVectorParFlattenedDevice.resize(
           numberWaveFunctions * d_totalPseudoWfcNonLocal, 0.0);
