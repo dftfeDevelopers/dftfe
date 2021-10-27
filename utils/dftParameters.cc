@@ -1581,6 +1581,13 @@ namespace dftfe
           ExcMessage(
             "DFT-FE Error: This is a SPIN UNPOLARIZED calculation. Can't have CONSTRAINT MAGNETIZATION ON."));
 
+      if (dftParameters::spinPolarized == 1 &&
+          !dftParameters::constraintMagnetization)
+        AssertThrow(
+          std::abs(std::abs(dftParameters::start_magnetization) - 0.5) > 1e-6,
+          ExcMessage(
+            "DFT-FE Error: START MAGNETIZATION =+-0.5 only applicable in case of CONSTRAINT MAGNETIZATION set to ON."));
+
       if (dftParameters::verbosity >= 1 &&
           Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0)
         if (dftParameters::constraintMagnetization)
