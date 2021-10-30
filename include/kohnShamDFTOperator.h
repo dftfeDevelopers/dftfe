@@ -251,6 +251,10 @@ node is stored
     reinitkPointSpinIndex(const unsigned int kPointIndex,
                           const unsigned int spinIndex);
 
+
+    void
+    resetExtPotHamFlag();
+
     //
     // initialize eigen class
     //
