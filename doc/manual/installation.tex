@@ -83,7 +83,7 @@ If the machine of interest has NVIDIA GPUs and CUDA library, ELPA can take advan
 -fPIC -mcpu=power9 -mvsx -maltivec" CFLAGS="-O2
 -fPIC -mcpu=power9 -mvsx -maltivec"
 --enable-nvidia-gpu
---with-GPU-compute-capability="sm_70"
+--with-NVIDIA-GPU-compute-capability="sm_70"
 --with-cuda-path="$OLCF_CUDA_ROOT"
 --with-cuda-sdk-path="$OLCF_CUDA_ROOT"
 --prefix=elpa_install_path
@@ -148,9 +148,9 @@ $ make install
 -DDEAL_II_WITH_MPI=ON -DDEAL_II_WITH_64BIT_INDICES=ON
 -DDEAL_II_WITH_P4EST=ON -DP4EST_DIR=p4est_install_dir_path
 -DDEAL_II_WITH_LAPACK=ON
--DLAPACK_DIR=lapack_dir_path 
+-DLAPACK_DIR=lapack_dir_paths (both BLAS and LAPACK directory paths)
 -DLAPACK_FOUND=true
--DLAPACK_LIBRARIES=lapack_lib_path
+-DLAPACK_LIBRARIES=lapack_lib_paths (both BLAS and LAPACK library paths)
 -DDEAL_II_WITH_SCALAPACK=ON
 -DSCALAPACK_DIR=scalapack_dir_path (only required if linking to netlib ScaLAPACK)
 -DSCALAPACK_LIBRARIES=scalapack_lib_path
