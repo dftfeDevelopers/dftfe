@@ -39,13 +39,13 @@ function bdie () {
 }
 
 if test -z "$CFLAGS" -a -z "$P4EST_CFLAGS_FAST" ; then
-        export CFLAGS_FAST="-O2 -qopenmp"
+        export CFLAGS_FAST="-O2 -fopenmp"
 else
         export CFLAGS_FAST="$CFLAGS $P4EST_CFLAGS_FAST"
 fi
 echo "CFLAGS_FAST: $CFLAGS_FAST"
 if test -z "$CFLAGS" -a -z "$P4EST_CFLAGS_DEBUG" ; then
-        export CFLAGS_DEBUG="-O0 -g -qopenmp"
+        export CFLAGS_DEBUG="-O0 -g -fopenmp"
 else
         export CFLAGS_DEBUG="$CFLAGS $P4EST_CFLAGS_DEBUG"
 fi
@@ -109,7 +109,7 @@ echo "Build FAST version in $BUILD_FAST"
 mkdir -p "$BUILD_FAST"
 cd "$BUILD_FAST"
 "$SRCDIR/configure" --enable-mpi --enable-shared \
-        --disable-vtk-binary --without-blas --enable-openmp=-qopenmp\
+        --disable-vtk-binary --without-blas --enable-openmp=-fopenmp\
         --prefix="$INSTALL_FAST" CFLAGS="$CFLAGS_FAST" \
         CPPFLAGS="-DSC_LOG_PRIORITY=SC_LP_ESSENTIAL" \
         "$@" > config.output || bdie "Error in configure"
@@ -123,7 +123,7 @@ echo "Build DEBUG version in $BUILD_DEBUG"
 mkdir -p "$BUILD_DEBUG"
 cd "$BUILD_DEBUG"
 "$SRCDIR/configure" --enable-debug --enable-mpi --enable-shared \
-        --disable-vtk-binary --without-blas --enable-openmp=-qopenmp\
+        --disable-vtk-binary --without-blas --enable-openmp=-fopenmp\
         --prefix="$INSTALL_DEBUG" CFLAGS="$CFLAGS_DEBUG" \
         CPPFLAGS="-DSC_LOG_PRIORITY=SC_LP_ESSENTIAL" \
         "$@" > config.output || bdie "Error in configure"
