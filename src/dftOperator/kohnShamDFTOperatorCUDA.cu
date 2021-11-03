@@ -840,6 +840,13 @@ namespace dftfe
     computing_timer.leave_subsection("kohnShamDFTOperatorCUDAClass setup");
   }
 
+  template <unsigned int FEOrder, unsigned int FEOrderElectro>
+  void
+  kohnShamDFTOperatorCUDAClass<FEOrder, FEOrderElectro>::resetExtPotHamFlag()
+  {
+    d_isStiffnessMatrixExternalPotCorrComputed = false;
+  }
+
 
   template <unsigned int FEOrder, unsigned int FEOrderElectro>
   void
@@ -1055,22 +1062,27 @@ namespace dftfe
         d_cellHamMatrixTimesWaveMatrixNonLocalDevice.resize(
           d_totalNonlocalElems * numberWaveFunctions * d_numberNodesPerElement,
           dataTypes::numberThrustGPU(0.0));
+        d_cellHamiltonianMatrixNonLocalFlattenedConjugate.clear();
         d_cellHamiltonianMatrixNonLocalFlattenedConjugate.resize(
           dftPtr->d_kPointWeights.size() * d_totalNonlocalElems *
             d_numberNodesPerElement * d_maxSingleAtomPseudoWfc,
           dataTypes::number(0.0));
+        d_cellHamiltonianMatrixNonLocalFlattenedTranspose.clear();
         d_cellHamiltonianMatrixNonLocalFlattenedTranspose.resize(
           dftPtr->d_kPointWeights.size() * d_totalNonlocalElems *
             d_numberNodesPerElement * d_maxSingleAtomPseudoWfc,
           dataTypes::number(0.0));
+        d_nonLocalPseudoPotentialConstants.clear();
         d_nonLocalPseudoPotentialConstants.resize(d_totalPseudoWfcNonLocal,
                                                   0.0);
+        d_flattenedArrayCellLocalProcIndexIdFlattenedMapNonLocal.clear();
         d_flattenedArrayCellLocalProcIndexIdFlattenedMapNonLocal.resize(
           d_totalNonlocalElems * d_numberNodesPerElement, 0);
         d_projectorKetTimesVectorAllCellsDevice.resize(
           d_totalNonlocalElems * numberWaveFunctions * d_maxSingleAtomPseudoWfc,
           dataTypes::numberThrustGPU(0.0));
 
+        d_projectorIdsParallelNumberingMap.clear();
         d_projectorIdsParallelNumberingMap.resize(d_totalPseudoWfcNonLocal, 0);
         d_projectorKetTimesVectorParFlattenedDevice.resize(
           numberWaveFunctions * d_totalPseudoWfcNonLocal, 0.0);
@@ -1249,7 +1261,15 @@ namespace dftfe
           d_nonLocalPseudoPotentialConstants;
         d_cellNodeIdMapNonLocalToLocalDevice = d_cellNodeIdMapNonLocalToLocal;
 
-
+        if (d_isMallocCalled)
+          {
+            free(h_d_A);
+            free(h_d_B);
+            free(h_d_C);
+            CUDACHECK(cudaFree(d_A));
+            CUDACHECK(cudaFree(d_B));
+            CUDACHECK(cudaFree(d_C));
+          }
         h_d_A = (dataTypes::numberGPU **)malloc(d_totalNonlocalElems *
                                                 sizeof(dataTypes::numberGPU *));
         h_d_B = (dataTypes::numberGPU **)malloc(d_totalNonlocalElems *
@@ -1294,112 +1314,6 @@ namespace dftfe
       pcout << "free mem after reinit allocations: " << free_t
             << ", total mem: " << total_t << std::endl;
   }
-
-  template <unsigned int FEOrder, unsigned int FEOrderElectro>
-  void
-  kohnShamDFTOperatorCUDAClass<FEOrder, FEOrderElectro>::reinitNoRemesh(
-    const unsigned int numberWaveFunctions)
-  {
-    if (dftParameters::isPseudopotential)
-      {
-        d_cellHamiltonianMatrixNonLocalFlattenedConjugate.resize(
-          dftPtr->d_kPointWeights.size() * d_totalNonlocalElems *
-            d_numberNodesPerElement * d_maxSingleAtomPseudoWfc,
-          dataTypes::number(0.0));
-        d_cellHamiltonianMatrixNonLocalFlattenedTranspose.resize(
-          dftPtr->d_kPointWeights.size() * d_totalNonlocalElems *
-            d_numberNodesPerElement * d_maxSingleAtomPseudoWfc,
-          dataTypes::number(0.0));
-        d_nonLocalPseudoPotentialConstants.resize(d_totalPseudoWfcNonLocal,
-                                                  0.0);
-
-        unsigned int countElem = 0;
-        d_numberCellsNonLocalAtoms.resize(d_totalNonlocalAtomsCurrentProc);
-        for (unsigned int iAtom = 0; iAtom < d_totalNonlocalAtomsCurrentProc;
-             ++iAtom)
-          {
-            const unsigned int atomId =
-              dftPtr->d_nonLocalAtomIdsInCurrentProcess[iAtom];
-            const unsigned int numberPseudoWaveFunctions =
-              dftPtr->d_numberPseudoAtomicWaveFunctions[atomId];
-
-
-            for (unsigned int ipseudowfc = 0;
-                 ipseudowfc < numberPseudoWaveFunctions;
-                 ++ipseudowfc)
-              {
-                const unsigned int id =
-                  dftPtr->d_projectorKetTimesVectorPar[0]
-                    .get_partitioner()
-                    ->global_to_local(
-                      dftPtr->d_projectorIdsNumberingMapCurrentProcess
-                        [std::make_pair(atomId, ipseudowfc)]);
-
-                d_nonLocalPseudoPotentialConstants[id] =
-                  dftPtr
-                    ->d_nonLocalPseudoPotentialConstants[atomId][ipseudowfc];
-              }
-
-            for (unsigned int iElemComp = 0;
-                 iElemComp <
-                 dftPtr->d_elementIteratorsInAtomCompactSupport[atomId].size();
-                 ++iElemComp)
-              {
-                for (unsigned int ikpoint = 0;
-                     ikpoint < dftPtr->d_kPointWeights.size();
-                     ikpoint++)
-                  for (unsigned int iNode = 0; iNode < d_numberNodesPerElement;
-                       ++iNode)
-                    {
-                      for (unsigned int iPseudoWave = 0;
-                           iPseudoWave < numberPseudoWaveFunctions;
-                           ++iPseudoWave)
-                        {
-                          d_cellHamiltonianMatrixNonLocalFlattenedConjugate
-                            [ikpoint * d_totalNonlocalElems *
-                               d_numberNodesPerElement *
-                               d_maxSingleAtomPseudoWfc +
-                             countElem * d_maxSingleAtomPseudoWfc *
-                               d_numberNodesPerElement +
-                             d_numberNodesPerElement * iPseudoWave + iNode] =
-                              dftPtr
-                                ->d_nonLocalProjectorElementMatricesConjugate
-                                  [atomId][iElemComp]
-                                  [ikpoint * d_numberNodesPerElement *
-                                     numberPseudoWaveFunctions +
-                                   d_numberNodesPerElement * iPseudoWave +
-                                   iNode];
-
-                          d_cellHamiltonianMatrixNonLocalFlattenedTranspose
-                            [ikpoint * d_totalNonlocalElems *
-                               d_numberNodesPerElement *
-                               d_maxSingleAtomPseudoWfc +
-                             countElem * d_numberNodesPerElement *
-                               d_maxSingleAtomPseudoWfc +
-                             d_maxSingleAtomPseudoWfc * iNode + iPseudoWave] =
-                              dftPtr
-                                ->d_nonLocalProjectorElementMatricesTranspose
-                                  [atomId][iElemComp]
-                                  [ikpoint * d_numberNodesPerElement *
-                                     numberPseudoWaveFunctions +
-                                   numberPseudoWaveFunctions * iNode +
-                                   iPseudoWave];
-                        }
-                    }
-
-                countElem++;
-              }
-          }
-
-        d_cellHamiltonianMatrixNonLocalFlattenedConjugateDevice =
-          d_cellHamiltonianMatrixNonLocalFlattenedConjugate;
-        d_cellHamiltonianMatrixNonLocalFlattenedTransposeDevice =
-          d_cellHamiltonianMatrixNonLocalFlattenedTranspose;
-        d_nonLocalPseudoPotentialConstantsDevice =
-          d_nonLocalPseudoPotentialConstants;
-      }
-  }
-
 
   //
   // compute mass Vector

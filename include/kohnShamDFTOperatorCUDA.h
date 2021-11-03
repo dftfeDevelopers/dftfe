@@ -362,6 +362,10 @@ namespace dftfe
     reinitkPointSpinIndex(const unsigned int kPointIndex,
                           const unsigned int spinIndex);
 
+
+    void
+    resetExtPotHamFlag();
+
     //
     // initialize eigen class
     //
@@ -386,9 +390,6 @@ namespace dftfe
 
     void
     reinit(const unsigned int wavefunBlockSize, bool flag);
-
-    void
-    reinitNoRemesh(const unsigned int wavefunBlockSize);
 
     /**
      * @brief Computes diagonal mass matrix

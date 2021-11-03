@@ -16,7 +16,7 @@
 //
 
 #include <headers.h>
-
+#include "constraintMatrixInfo.h"
 #if defined(DFTFE_WITH_GPU)
 #  include <operatorCUDA.h>
 #endif
@@ -283,6 +283,8 @@ namespace dftfe
     /// storage for input atomLocations argument in createAtomBins function
     std::vector<std::vector<double>> d_atomLocations;
 
+    /// storage for optimized constraints handling object
+    dftUtils::constraintMatrixInfo d_constraintsOnlyHangingInfo;
 
     /// vector of constraint matrices for vself bins
     std::vector<dealii::AffineConstraints<double>> d_vselfBinConstraintMatrices;

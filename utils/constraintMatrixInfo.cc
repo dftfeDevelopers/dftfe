@@ -91,18 +91,33 @@ namespace dftfe
           if (constraintMatrixData.is_constrained(*it))
             {
               const dealii::types::global_dof_index lineDof = *it;
+              const std::vector<
+                std::pair<dealii::types::global_dof_index, double>> *rowData =
+                constraintMatrixData.get_constraint_entries(lineDof);
+
+              bool isConstraintRhsExpandingOutOfIndexSet = false;
+              for (unsigned int j = 0; j < rowData->size(); ++j)
+                {
+                  if (!(partitioner->is_ghost_entry((*rowData)[j].first) ||
+                        partitioner->in_local_range((*rowData)[j].first)))
+                    {
+                      isConstraintRhsExpandingOutOfIndexSet = true;
+                      break;
+                    }
+                }
+
+              if (isConstraintRhsExpandingOutOfIndexSet)
+                continue;
+
               d_rowIdsLocal.push_back(partitioner->global_to_local(lineDof));
               d_rowIdsGlobal.push_back(lineDof);
               d_inhomogenities.push_back(
                 constraintMatrixData.get_inhomogeneity(lineDof));
-              const std::vector<
-                std::pair<dealii::types::global_dof_index, double>> *rowData =
-                constraintMatrixData.get_constraint_entries(lineDof);
               d_rowSizes.push_back(rowData->size());
               for (unsigned int j = 0; j < rowData->size(); ++j)
                 {
-                  Assert((*rowData)[j].first < partitioner->size(),
-                         dealii::ExcMessage("Index out of bounds"));
+                  // Assert((*rowData)[j].first < partitioner->size(),
+                  //       dealii::ExcMessage("Index out of bounds"));
                   d_columnIdsGlobal.push_back((*rowData)[j].first);
                   d_columnIdsLocal.push_back(
                     partitioner->global_to_local((*rowData)[j].first));
@@ -119,18 +134,34 @@ namespace dftfe
           if (constraintMatrixData.is_constrained(*it))
             {
               const dealii::types::global_dof_index lineDof = *it;
+
+              const std::vector<
+                std::pair<dealii::types::global_dof_index, double>> *rowData =
+                constraintMatrixData.get_constraint_entries(lineDof);
+
+              bool isConstraintRhsExpandingOutOfIndexSet = false;
+              for (unsigned int j = 0; j < rowData->size(); ++j)
+                {
+                  if (!(partitioner->is_ghost_entry((*rowData)[j].first) ||
+                        partitioner->in_local_range((*rowData)[j].first)))
+                    {
+                      isConstraintRhsExpandingOutOfIndexSet = true;
+                      break;
+                    }
+                }
+
+              if (isConstraintRhsExpandingOutOfIndexSet)
+                continue;
+
               d_rowIdsLocal.push_back(partitioner->global_to_local(lineDof));
               d_rowIdsGlobal.push_back(lineDof);
               d_inhomogenities.push_back(
                 constraintMatrixData.get_inhomogeneity(lineDof));
-              const std::vector<
-                std::pair<dealii::types::global_dof_index, double>> *rowData =
-                constraintMatrixData.get_constraint_entries(lineDof);
               d_rowSizes.push_back(rowData->size());
               for (unsigned int j = 0; j < rowData->size(); ++j)
                 {
-                  Assert((*rowData)[j].first < partitioner->size(),
-                         dealii::ExcMessage("Index out of bounds"));
+                  // Assert((*rowData)[j].first < partitioner->size(),
+                  //       dealii::ExcMessage("Index out of bounds"));
                   d_columnIdsGlobal.push_back((*rowData)[j].first);
                   d_columnIdsLocal.push_back(
                     partitioner->global_to_local((*rowData)[j].first));

@@ -170,7 +170,8 @@ namespace dftfe
     void
     initNoRemesh(const bool updateImagesAndKPointsAndVselfBins = true,
                  const bool checkSmearedChargeWidthsForOverlap = true,
-                 const bool useSingleAtomSolutionOverride      = false);
+                 const bool useSingleAtomSolutionOverride      = false,
+                 const bool isMeshDeformed                     = false);
 
 
 
