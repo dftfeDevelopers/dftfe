@@ -56,7 +56,7 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::computeHamiltonianMatrix(
       const unsigned int numberNodesPerElementSquare =
         d_numberNodesPerElement * d_numberNodesPerElement;
       const unsigned int sizeNiNj =
-        (d_numberNodesPerElement * (d_numberNodesPerElement + 1))/ 2;
+        (d_numberNodesPerElement * (d_numberNodesPerElement + 1)) / 2;
       const unsigned int fullSizeNiNj =
         d_numberNodesPerElement * d_numberNodesPerElement;
       unsigned int numBlocks              = (FEOrder + 1);
@@ -112,8 +112,9 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::computeHamiltonianMatrix(
                   iNode =
                     d_blockiNodeIndex[numberEntriesEachBlock * blockCount];
 
-		  tempValue = (numberDofsPerElement * iNode) - (iNode*(iNode+1))/2 - tempValue1;
-                 
+                  tempValue = (numberDofsPerElement * iNode) -
+                              (iNode * (iNode + 1)) / 2 - tempValue1;
+
 
                   for (jNode =
                          d_blockjNodeIndex[numberEntriesEachBlock * blockCount];
@@ -144,9 +145,10 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::computeHamiltonianMatrix(
                                                       q_point +
                                                     iNode];
 
-                     
-		      tempValue = (numberDofsPerElement * iNode) - (iNode*(iNode+1))/2 - tempValue1;
-		      
+
+                      tempValue = (numberDofsPerElement * iNode) -
+                                  (iNode * (iNode + 1)) / 2 - tempValue1;
+
                       for (jNode = iNode; jNode < numberDofsPerElement; ++jNode)
                         {
                           double shapeJ =
@@ -162,12 +164,13 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::computeHamiltonianMatrix(
                         } // jNode
                     }     // iNode
 
-                  iNode     = d_blockiNodeIndex[numberEntriesEachBlock *
+                  iNode = d_blockiNodeIndex[numberEntriesEachBlock *
                                               (blockCount + 1) -
                                             1];
-          
-		  tempValue = (numberDofsPerElement * iNode) - (iNode*(iNode+1))/2 - tempValue1;
-		  
+
+                  tempValue = (numberDofsPerElement * iNode) -
+                              (iNode * (iNode + 1)) / 2 - tempValue1;
+
                   for (jNode = iNode;
                        jNode <= d_blockjNodeIndex[numberEntriesEachBlock *
                                                     (blockCount + 1) -
@@ -248,7 +251,7 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::computeHamiltonianMatrix(
       std::vector<double> NiNj_currentBlock(numberEntriesEachBlock *
                                               numberQuadraturePoints,
                                             0.0);
-      unsigned int iNode, jNode, tempValue, tempValue1, startIndexINode;
+      unsigned int        iNode, jNode, tempValue, tempValue1, startIndexINode;
       while (blockCount < numBlocks)
         {
           tempValue1 = numberEntriesEachBlock * blockCount;
@@ -256,9 +259,10 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::computeHamiltonianMatrix(
                ++q_point)
             {
               iNode = d_blockiNodeIndex[numberEntriesEachBlock * blockCount];
-              
-	      tempValue = (numberDofsPerElement * iNode) - (iNode*(iNode+1))/2 - tempValue1;
-	      
+
+              tempValue = (numberDofsPerElement * iNode) -
+                          (iNode * (iNode + 1)) / 2 - tempValue1;
+
               for (jNode =
                      d_blockjNodeIndex[numberEntriesEachBlock * blockCount];
                    jNode < numberDofsPerElement;
@@ -282,8 +286,9 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::computeHamiltonianMatrix(
                   double shapeI =
                     d_shapeFunctionData[numberDofsPerElement * q_point + iNode];
 
-                  
-		  tempValue = (numberDofsPerElement * iNode) - (iNode*(iNode+1))/2 - tempValue1;
+
+                  tempValue = (numberDofsPerElement * iNode) -
+                              (iNode * (iNode + 1)) / 2 - tempValue1;
 
                   for (jNode = iNode; jNode < numberDofsPerElement; ++jNode)
                     {
@@ -299,8 +304,9 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::computeHamiltonianMatrix(
               iNode =
                 d_blockiNodeIndex[numberEntriesEachBlock * (blockCount + 1) -
                                   1];
-	      tempValue = (numberDofsPerElement * iNode) - (iNode*(iNode+1))/2 - tempValue1;
-	      
+              tempValue = (numberDofsPerElement * iNode) -
+                          (iNode * (iNode + 1)) / 2 - tempValue1;
+
               for (jNode = iNode;
                    jNode <=
                    d_blockjNodeIndex[numberEntriesEachBlock * (blockCount + 1) -
@@ -353,9 +359,10 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::computeHamiltonianMatrix(
                 {
                   iNode =
                     d_blockiNodeIndex[numberEntriesEachBlock * blockCount];
-                 
-		  tempValue = (numberDofsPerElement * iNode) - (iNode*(iNode+1))/2 - tempValue1;
-		  
+
+                  tempValue = (numberDofsPerElement * iNode) -
+                              (iNode * (iNode + 1)) / 2 - tempValue1;
+
                   for (jNode =
                          d_blockjNodeIndex[numberEntriesEachBlock * blockCount];
                        jNode < numberDofsPerElement;
@@ -428,7 +435,8 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::computeHamiltonianMatrix(
                         d_shapeFunctionData[numberDofsPerElement * q_point +
                                             iNode];
 
-		      tempValue = (numberDofsPerElement * iNode) - (iNode*(iNode+1))/2 - tempValue1;
+                      tempValue = (numberDofsPerElement * iNode) -
+                                  (iNode * (iNode + 1)) / 2 - tempValue1;
 
                       for (jNode = iNode; jNode < numberDofsPerElement; ++jNode)
                         {
@@ -462,12 +470,13 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::computeHamiltonianMatrix(
                         } // jnode
                     }     // iNode
 
-                  iNode     = d_blockiNodeIndex[numberEntriesEachBlock *
+                  iNode = d_blockiNodeIndex[numberEntriesEachBlock *
                                               (blockCount + 1) -
                                             1];
-              
-		  tempValue = (numberDofsPerElement * iNode) - (iNode*(iNode+1))/2 - tempValue1;
-		  
+
+                  tempValue = (numberDofsPerElement * iNode) -
+                              (iNode * (iNode + 1)) / 2 - tempValue1;
+
                   for (jNode = iNode;
                        jNode <= d_blockjNodeIndex[numberEntriesEachBlock *
                                                     (blockCount + 1) -

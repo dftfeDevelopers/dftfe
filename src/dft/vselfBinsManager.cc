@@ -1534,8 +1534,8 @@ namespace dftfe
         const bool hasHangingNodes =
           dofHandler.get_triangulation().has_hanging_nodes();
 
-        //if (!hasHangingNodes)
-        //std::cout<<"uniform mesh"<<std::endl;
+        // if (!hasHangingNodes)
+        // std::cout<<"uniform mesh"<<std::endl;
         if (hasHangingNodes)
           {
             d_vselfBinConstraintMatrices[4 * iBin].reinit(
