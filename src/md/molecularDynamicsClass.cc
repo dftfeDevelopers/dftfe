@@ -495,6 +495,72 @@ namespace dftfe
         }
 
     }
+/*
+    template <unsigned int FEOrder, unsigned int FEOrderElectro>
+    void
+    molecularDynamicsClass<FEOrder, FEOrderElectro>::mdNVTsvrThermostat(std::vector<double> &KineticEnergyVector ,
+                                                           std::vector<double> &InternalEnergyVector ,
+                                                            std::vector<double> &EntropicEnergyVector , 
+                                                            std::vector<double> &TotalEnergyVector ,
+                                                            std::vector<dealii::Tensor<1, 3, double>> &displacements ,
+                                                            std::vector<double> &velocity ,
+                                                            std::vector<double> &force, 
+                                                            std::vector<double> atomMass  )
+    {
+      
+      pcout << "---------------mdNVTsvrThermostat() called ------------------ " <<  std::endl;
+        double KineticEnergy;
+        double TemperatureFromVelocities;
+        for(TimeIndex=startingTimeStep+1; TimeIndex< startingTimeStep+numberofSteps;TimeIndex++)
+        {       
+            double step_time;
+
+            MPI_Barrier(MPI_COMM_WORLD);
+            step_time = MPI_Wtime();   
+
+            velocityVerlet(velocity, displacements,atomMass,KineticEnergy, force);
+            //MPI_Barrier(MPI_COMM_WORLD);
+
+            svr(velocity,KineticEnergy,);
+            TemperatureFromVelocities = 2.0/3.0/double(numberGlobalCharges-1)*KineticEnergy/(kB);
+
+            MPI_Barrier(MPI_COMM_WORLD);   
+            KineticEnergyVector[TimeIndex-startingTimeStep]  = KineticEnergy / haToeV;
+            InternalEnergyVector[TimeIndex-startingTimeStep] = dftPtr->GroundStateEnergyvalue;
+            EntropicEnergyVector[TimeIndex-startingTimeStep] = dftPtr->EntropicEnergyvalue;
+            TotalEnergyVector[TimeIndex-startingTimeStep]    = KineticEnergyVector[TimeIndex-startingTimeStep] +
+                               InternalEnergyVector[TimeIndex-startingTimeStep] -
+                               EntropicEnergyVector[TimeIndex-startingTimeStep]; 
+            TemperatureFromVelocities = 2.0/3.0/double(numberGlobalCharges-1)*KineticEnergy/(kB);                              
+
+            //Based on verbose print required MD details...
+            MPI_Barrier(MPI_COMM_WORLD);
+            step_time = MPI_Wtime() - step_time;
+            if (dftParameters::verbosity >= 1)
+            { 
+              pcout << "---------------MD STEP: "<<TimeIndex<<" ------------------ " <<  std::endl;
+              pcout << "Time taken for md step: " << step_time << std::endl;
+               pcout << " Temperature from velocities: " << TimeIndex << " "
+              << TemperatureFromVelocities << std::endl;
+              pcout << " Kinetic Energy in Ha at timeIndex " << TimeIndex << " "
+              << KineticEnergyVector[TimeIndex-startingTimeStep] << std::endl;
+              pcout << " Internal Energy in Ha at timeIndex " << TimeIndex<< " "
+              << InternalEnergyVector[TimeIndex-startingTimeStep]
+              << std::endl;
+              pcout << " Entropic Energy in Ha at timeIndex " << TimeIndex << " "
+              << EntropicEnergyVector[TimeIndex-startingTimeStep]
+              << std::endl;
+              pcout << " Total Energy in Ha at timeIndex " << TimeIndex << " "
+              << TotalEnergyVector[TimeIndex-startingTimeStep] << std::endl;
+              writeRestartFile(velocity,force,KineticEnergyVector,InternalEnergyVector,TotalEnergyVector,TimeIndex);
+            }
+
+
+        }
+
+    }
+
+*/
 
     
     template <unsigned int FEOrder, unsigned int FEOrderElectro>
@@ -651,6 +717,24 @@ namespace dftfe
       
     }
 
+/*    
+    template <unsigned int FEOrder, unsigned int FEOrderElectro>
+    void    
+    molecularDynamicsClass<FEOrder, FEOrderElectro>::svr(std::vector<double> &v,double &KE, double KEref)
+    {
+        double alphasq;
+        unsigned int Nf = 3*(numberGlobalCharges-1);
+        double R1, Rsum;
+        boost::mt19937               rng;
+        boost::normal_distribution<> gaussianDist(0.0, 1.0);
+        boost::variate_generator<boost::mt19937 &, boost::normal_distribution<>>
+                  generator(rng, gaussianDist);
+
+
+    }    
+    
+    
+*/    
     
     
     template <unsigned int FEOrder, unsigned int FEOrderElectro>
@@ -832,6 +916,10 @@ namespace dftfe
     return(Hnose);
   
   }
+
+
+
+
 
 
 

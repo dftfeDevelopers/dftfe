@@ -133,7 +133,7 @@ namespace dftfe
 
     /**
 
-    @brief mdNVTrescaleThermostat Performs a Canonical Ensemble MD calculation. The inital temperature is set by runMD().
+    @brief mdNVTrescaleThermostat Performs a Constant Kinetic Energy Ensemble MD calculation. The inital temperature is set by runMD().
      * Thermostat type is RESCALE. Controls the timeloop. At timestep which is multiple of Thermostat time constatn, the veloctites are rescaled
      *such that the temperature is set to inital temperature .      
      *
@@ -165,6 +165,36 @@ namespace dftfe
 
     /**
 
+    @brief mdNVTsvrThermostat Performs a Canonical Ensemble MD calculation. The inital temperature is set by runMD().
+     * Thermostat type is SVR. Controls the timeloop.      
+     *
+     * @param[in] KineticEnergyVector Stores KineticEnergy at each TimeStep
+     * @param[in] InternalEnergyVector Stores InternalEnergy at each TimeStep
+     * @param[in] EntropicEnergyVector Stores PotentialEnergy at each TimeStep
+     * @param[in] TotalEnergyVector Stores TotalEnergy at each TimeStep
+     * @param[in] displacements Stores the displacment of each Charge, updated at each TimeStep
+     * @param[in] velocity Stores the velocity of each Charge, updated at each TimeStep
+     * @param[in] force Stores the -ve of force on each charge, updated at each TimeStep
+     * @param[in] massAtoms Stores the mass of each Charge.
+
+     * @param[out] displacements Stores the displacment of each Charge, updated at each TimeStep
+     * @param[out] velocity Stores the velocity of each Charge, updated at each TimeStep
+     * @param[out] force Stores the -ve of force on each charge, updated at each TimeStep
+     * @param[out] massAtoms Stores the mass of each Charge.     * 
+     *  
+     *     
+     */ 
+        void mdNVTsvrThermostat(std::vector<double> & ,
+                                            std::vector<double> &,
+                                            std::vector<double> & , 
+                                            std::vector<double> & ,
+                                            std::vector<dealii::Tensor<1, 3, double>> & ,
+                                            std::vector<double> & ,
+                                            std::vector<double> & , 
+                                                std::vector<double>  );
+
+
+    /**
     * @brief RescaleVelocities controls the velocity at timestep t. The scaling of     
     * velocities depends on ratio of T at that timestep and inital Temperature.
 
@@ -199,6 +229,20 @@ namespace dftfe
      */                   
         void NoseHoverChains(std::vector<double> & , std::vector<double> & ,
          std::vector<double> & , std::vector<double> , double , double  ) ; 
+
+    /**
+
+    * @brief 
+
+     * @param[in] velocity Stores the velocity of each Charge, updated at each TimeStep
+     * @param[in] KinetricEnergyreference Target value of Kinetic Enegy from Temperature
+     * @param[out] KineticEnergy rescaled Kinetic Energy from svr thermostat   
+     *  
+     *     
+     */                   
+        void svr(std::vector<double> & , double &, double ) ; 
+
+
 
     /**
 
