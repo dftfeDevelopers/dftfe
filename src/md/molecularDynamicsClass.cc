@@ -2,6 +2,7 @@
 #include <boost/math/distributions/normal.hpp>
 #include <boost/random.hpp>
 #include <boost/random/normal_distribution.hpp>
+#include <boost/random/gamma_distribution.hpp>
 
 #include <dft.h>
 #include <dftParameters.h>
@@ -271,6 +272,10 @@ namespace dftfe
                     mdNVTnosehoverchainsThermostat(KineticEnergyVector,InternalEnergyVector,EntropicEnergyVector,TotalEnergyVector, displacements, velocity, force,massAtoms );
                   
                 }
+        else if( thermostatType == "CSVR")
+                {
+                  mdNVTsvrThermostat(KineticEnergyVector,InternalEnergyVector,EntropicEnergyVector,TotalEnergyVector, displacements, velocity, force,massAtoms ); 
+                }        
 
         pcout << "MD run completed" << std::endl;    
     
@@ -495,7 +500,7 @@ namespace dftfe
         }
 
     }
-/*
+
     template <unsigned int FEOrder, unsigned int FEOrderElectro>
     void
     molecularDynamicsClass<FEOrder, FEOrderElectro>::mdNVTsvrThermostat(std::vector<double> &KineticEnergyVector ,
@@ -511,6 +516,8 @@ namespace dftfe
       pcout << "---------------mdNVTsvrThermostat() called ------------------ " <<  std::endl;
         double KineticEnergy;
         double TemperatureFromVelocities;
+        double KEref = 3.0/2.0*double(numberGlobalCharges-1)*kB*startingTemperature;
+        
         for(TimeIndex=startingTimeStep+1; TimeIndex< startingTimeStep+numberofSteps;TimeIndex++)
         {       
             double step_time;
@@ -521,7 +528,7 @@ namespace dftfe
             velocityVerlet(velocity, displacements,atomMass,KineticEnergy, force);
             //MPI_Barrier(MPI_COMM_WORLD);
 
-            svr(velocity,KineticEnergy,);
+            svr(velocity,KineticEnergy,KEref);
             TemperatureFromVelocities = 2.0/3.0/double(numberGlobalCharges-1)*KineticEnergy/(kB);
 
             MPI_Barrier(MPI_COMM_WORLD);   
@@ -560,7 +567,7 @@ namespace dftfe
 
     }
 
-*/
+
 
     
     template <unsigned int FEOrder, unsigned int FEOrderElectro>
@@ -717,7 +724,7 @@ namespace dftfe
       
     }
 
-/*    
+    
     template <unsigned int FEOrder, unsigned int FEOrderElectro>
     void    
     molecularDynamicsClass<FEOrder, FEOrderElectro>::svr(std::vector<double> &v,double &KE, double KEref)
@@ -725,16 +732,52 @@ namespace dftfe
         double alphasq;
         unsigned int Nf = 3*(numberGlobalCharges-1);
         double R1, Rsum;
-        boost::mt19937               rng;
-        boost::normal_distribution<> gaussianDist(0.0, 1.0);
-        boost::variate_generator<boost::mt19937 &, boost::normal_distribution<>>
+        R1 = 0.0;
+        Rsum = 0.0;
+        if (this_mpi_process == 0)
+        {
+          boost::mt19937               rng;
+          boost::normal_distribution<> gaussianDist(0.0, 1.0);
+          boost::variate_generator<boost::mt19937 &, boost::normal_distribution<>>
                   generator(rng, gaussianDist);
 
-
+          R1 = generator();         
+          if((Nf-1)%2 == 0)
+            {
+              boost::gamma_distribution<> my_gamma((Nf-1)/2,1);
+              boost::variate_generator<boost::mt19937 &, boost::gamma_distribution<>>
+                  generator_gamma(rng, my_gamma);              
+              Rsum = generator_gamma();
+            }
+          else
+            {
+              Rsum = generator();
+              boost::gamma_distribution<> my_gamma((Nf-2)/2,1);
+              boost::variate_generator<boost::mt19937 &, boost::gamma_distribution<>>
+                  generator_gamma(rng, my_gamma);               
+              Rsum += generator_gamma();
+            }   
+      //Transfer data to all mpi procs    
+        }
+        R1 = dealii::Utilities::MPI::sum(R1, mpi_communicator);
+        Rsum = dealii::Utilities::MPI::sum(Rsum, mpi_communicator);
+        alphasq = 0.0;
+        alphasq = alphasq+ std::exp(-1/thermostatTimeConstant);
+        alphasq = alphasq+ (KEref/Nf/KE)*(1-std::exp(-1/thermostatTimeConstant))*(R1*R1 + Rsum);
+        alphasq = alphasq + 2*std::exp(-1/2/thermostatTimeConstant)*std::sqrt(KEref/Nf/KE*(1-std::exp(-1/thermostatTimeConstant))*R1);
+            
+        KE      = alphasq*KE;
+        double alpha = std::sqrt(alphasq);
+        for(int iCharge=0; iCharge<numberGlobalCharges; iCharge++)
+        {
+          v[3*iCharge+0] = alpha*v[3*iCharge+0];
+          v[3*iCharge+1] = alpha*v[3*iCharge+1];
+          v[3*iCharge+2] = alpha*v[3*iCharge+2];
+        }
     }    
     
     
-*/    
+    
     
     
     template <unsigned int FEOrder, unsigned int FEOrderElectro>
