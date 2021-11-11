@@ -470,14 +470,17 @@ namespace dftfe
               l0 << mesh[j0] << " ";
               for (int j = 0; j < l0_vec.size(); ++j)
                 {
-                  l0 << std::fixed << std::setprecision(14) << l0_vec[j][i]
-                     << " ";
+                  if (i == 0)
+                    l0 << std::fixed << std::setprecision(14) << l0_vec[j][1]
+                       << " ";
+
+                  else
+                    l0 << std::fixed << std::setprecision(14) << l0_vec[j][i]
+                       << " ";
                 }
               l0 << std::endl;
               j0 += 1;
             }
-          for (int j = 0; j < l0_vec.size(); ++j)
-            l0_vec[j][0] = l0_vec[j][1];
         }
 
       if (l1_vec.size() > 0)
