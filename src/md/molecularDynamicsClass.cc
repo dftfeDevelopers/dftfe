@@ -324,9 +324,9 @@ namespace dftfe
                 for (int iCharge = 0; iCharge < numberGlobalCharges; ++iCharge)
                   {
                     pcout << "Charge Id: " << iCharge << " "
-                      << v[3*iCharge+0] << " "
-                      << v[3*iCharge+1] << " "
-                      << v[3*iCharge+2] << std::endl;
+                      << velocity[3*iCharge+0] << " "
+                      << velocity[3*iCharge+1] << " "
+                      << velocity[3*iCharge+2] << std::endl;
                   }         
           
               }             
@@ -401,9 +401,9 @@ namespace dftfe
                 for (int iCharge = 0; iCharge < numberGlobalCharges; ++iCharge)
                   {
                     pcout << "Charge Id: " << iCharge << " "
-                      << v[3*iCharge+0] << " "
-                      << v[3*iCharge+1] << " "
-                      << v[3*iCharge+2] << std::endl;
+                      << velocity[3*iCharge+0] << " "
+                      << velocity[3*iCharge+1] << " "
+                      << velocity[3*iCharge+2] << std::endl;
                   }         
           
               }             
@@ -504,9 +504,9 @@ namespace dftfe
                 for (int iCharge = 0; iCharge < numberGlobalCharges; ++iCharge)
                   {
                     pcout << "Charge Id: " << iCharge << " "
-                      << v[3*iCharge+0] << " "
-                      << v[3*iCharge+1] << " "
-                      << v[3*iCharge+2] << std::endl;
+                      << velocity[3*iCharge+0] << " "
+                      << velocity[3*iCharge+1] << " "
+                      << velocity[3*iCharge+2] << std::endl;
                   }         
           
               }             
@@ -585,9 +585,9 @@ namespace dftfe
                 for (int iCharge = 0; iCharge < numberGlobalCharges; ++iCharge)
                   {
                     pcout << "Charge Id: " << iCharge << " "
-                      << v[3*iCharge+0] << " "
-                      << v[3*iCharge+1] << " "
-                      << v[3*iCharge+2] << std::endl;
+                      << velocity[3*iCharge+0] << " "
+                      << velocity[3*iCharge+1] << " "
+                      << velocity[3*iCharge+2] << std::endl;
                   }         
           
               }            
