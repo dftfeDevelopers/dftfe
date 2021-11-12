@@ -929,8 +929,8 @@ namespace dftfe
       KE[0] = KE0[0][0];
       IE[0] = IE0[0][0];
       TE[0] = TE0[0][0];
-      //dftPtr->solve(true, false, false, false); 
-      //dftPtr->getForceonAtomsfromdftptr(force);
+      dftPtr->solve(true, false, false, false); 
+      dftPtr->getForceonAtomsfromdftptr(force);
 
 
     }                                                        
