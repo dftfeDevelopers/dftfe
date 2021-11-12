@@ -693,20 +693,20 @@ namespace dftfe
       double L = 3*(numberGlobalCharges-1);
       /* Start Chain 1*/
       G2 = (Q[0]*v_e[0]*v_e[0] - kB*Temperature)/Q[1]; 
-      pcout << "v_e[0]:"<<v_e[0]<<std::endl;
+      //pcout << "v_e[0]:"<<v_e[0]<<std::endl;
       v_e[1]=v_e[1]+G2*timeStep/4;
-      pcout << "v_e[1]:"<<v_e[1]<<std::endl;
+      //pcout << "v_e[1]:"<<v_e[1]<<std::endl;
       v_e[0]=v_e[0]*std::exp(-v_e[1]*timeStep/8);
-      pcout << "v_e[0]*std::exp(-v_e[1]*timeStep/8):"<<v_e[0]<<std::endl;
+      //pcout << "v_e[0]*std::exp(-v_e[1]*timeStep/8):"<<v_e[0]<<std::endl;
       G1 = (2*KE-L*kB*Temperature)/Q[0];
       v_e[0] = v_e[0]+G1*timeStep/4;
-      pcout << "v_e[0]+G1*timeStep/4:"<<v_e[0]<<std::endl;
+      //pcout << "v_e[0]+G1*timeStep/4:"<<v_e[0]<<std::endl;
       v_e[0]= v_e[0]*std::exp(-v_e[1]*timeStep/8);
-      pcout << "v_e[0]*std::exp(-v_e[1]*timeStep/8):"<<v_e[0]<<std::endl;
+      //pcout << "v_e[0]*std::exp(-v_e[1]*timeStep/8):"<<v_e[0]<<std::endl;
       e[0] = e[0] + v_e[0]*timeStep/2;
       e[1] = e[1] + v_e[1]*timeStep/2;
       s = std::exp(-v_e[0]*timeStep/2);
-      pcout << "G2"<<G2<<" v_e1"<<v_e[1]<<"Temp"<<Temperature<<"Q[1] "<<Q[1]<<"v_e[0] "<<v_e[0]<<"G1 "<<G1<< "Exponent: "<<std::exp(1)<< std::endl;
+      //pcout << "G2"<<G2<<" v_e1"<<v_e[1]<<"Temp"<<Temperature<<"Q[1] "<<Q[1]<<"v_e[0] "<<v_e[0]<<"G1 "<<G1<< "Exponent: "<<std::exp(1)<< std::endl;
       for(int iCharge = 0; iCharge < numberGlobalCharges; iCharge++)
         {
         v[3*iCharge+0] = s*v[3*iCharge+0];
