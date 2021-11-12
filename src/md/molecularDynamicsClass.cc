@@ -472,7 +472,7 @@ namespace dftfe
             double step_time;
             MPI_Barrier(MPI_COMM_WORLD);
             step_time = MPI_Wtime();   
-            NoseHoverChains(velocity, Thermostatvelocity,Thermostatposition, ThermostatMass,KineticEnergyVector[TimeIndex-1]*haToeV,startingTemperature);
+            NoseHoverChains(velocity, Thermostatvelocity,Thermostatposition, ThermostatMass,KineticEnergyVector[TimeIndex-1-startingTimeStep]*haToeV,startingTemperature);
             velocityVerlet(velocity, displacements,atomMass,KineticEnergy, force);
           //  TemperatureFromVelocities = 2.0/3.0/double(numberGlobalCharges-1)*KineticEnergy/(kB); 
             NoseHoverChains(velocity, Thermostatvelocity,Thermostatposition, ThermostatMass,KineticEnergy,startingTemperature);          
