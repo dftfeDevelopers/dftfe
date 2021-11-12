@@ -166,8 +166,9 @@ namespace dftfe
           
           }
           TemperatureFromVelocities = 2.0/3.0/double(numberGlobalCharges-1)*KineticEnergy/(kB);  
-          pcout << "Temperature computed from Velocities: "
-              << TemperatureFromVelocities << std::endl;       
+         /* pcout << "Temperature computed from Velocities: "
+              << TemperatureFromVelocities << std::endl;   
+              */    
 
           // Correcting velocity to match init Temperature
         double gamma = sqrt( startingTemperature / TemperatureFromVelocities);
@@ -928,8 +929,8 @@ namespace dftfe
       KE[0] = KE0[0][0];
       IE[0] = IE0[0][0];
       TE[0] = TE0[0][0];
-      dftPtr->solve(true, false, false, false); 
-      dftPtr->getForceonAtomsfromdftptr(force);
+      //dftPtr->solve(true, false, false, false); 
+      //dftPtr->getForceonAtomsfromdftptr(force);
 
 
     }                                                        
