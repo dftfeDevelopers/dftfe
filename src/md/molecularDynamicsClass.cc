@@ -319,6 +319,18 @@ namespace dftfe
             MPI_Barrier(MPI_COMM_WORLD);
             step_time = MPI_Wtime() - step_time;
             if (dftParameters::verbosity >= 1)
+              {
+                pcout << "Velocity of atoms " << std::endl;
+                for (int iCharge = 0; iCharge < numberGlobalCharges; ++iCharge)
+                  {
+                    pcout << "Charge Id: " << iCharge << " "
+                      << v[3*iCharge+0] << " "
+                      << v[3*iCharge+1] << " "
+                      << v[3*iCharge+2] << std::endl;
+                  }         
+          
+              }             
+            if (dftParameters::verbosity >= 1)
             { 
               pcout << "---------------MD STEP: "<<TimeIndex<<" ------------------ " <<  std::endl;
               pcout << "Time taken for md step: " << step_time << std::endl;
@@ -383,6 +395,18 @@ namespace dftfe
             //Based on verbose print required MD details...
             MPI_Barrier(MPI_COMM_WORLD);
             step_time = MPI_Wtime() - step_time;
+            if (dftParameters::verbosity >= 1)
+              {
+                pcout << "Velocity of atoms " << std::endl;
+                for (int iCharge = 0; iCharge < numberGlobalCharges; ++iCharge)
+                  {
+                    pcout << "Charge Id: " << iCharge << " "
+                      << v[3*iCharge+0] << " "
+                      << v[3*iCharge+1] << " "
+                      << v[3*iCharge+2] << std::endl;
+                  }         
+          
+              }             
             if (dftParameters::verbosity >= 1)
             { 
               pcout << "---------------MD STEP: "<<TimeIndex<<" ------------------ " <<  std::endl;
@@ -475,6 +499,18 @@ namespace dftfe
             MPI_Barrier(MPI_COMM_WORLD);
             step_time = MPI_Wtime() - step_time;
             if (dftParameters::verbosity >= 1)
+              {
+                pcout << "Velocity of atoms " << std::endl;
+                for (int iCharge = 0; iCharge < numberGlobalCharges; ++iCharge)
+                  {
+                    pcout << "Charge Id: " << iCharge << " "
+                      << v[3*iCharge+0] << " "
+                      << v[3*iCharge+1] << " "
+                      << v[3*iCharge+2] << std::endl;
+                  }         
+          
+              }             
+            if (dftParameters::verbosity >= 1)
             { 
               pcout << "---------------MD STEP: "<<TimeIndex<<" ------------------ " <<  std::endl;
               pcout << "Time taken for md step: " << step_time << std::endl;
@@ -543,6 +579,18 @@ namespace dftfe
             //Based on verbose print required MD details...
             MPI_Barrier(MPI_COMM_WORLD);
             step_time = MPI_Wtime() - step_time;
+            if (dftParameters::verbosity >= 1)
+              {
+                pcout << "Velocity of atoms " << std::endl;
+                for (int iCharge = 0; iCharge < numberGlobalCharges; ++iCharge)
+                  {
+                    pcout << "Charge Id: " << iCharge << " "
+                      << v[3*iCharge+0] << " "
+                      << v[3*iCharge+1] << " "
+                      << v[3*iCharge+2] << std::endl;
+                  }         
+          
+              }            
             if (dftParameters::verbosity >= 1)
             { 
               pcout << "---------------MD STEP: "<<TimeIndex<<" ------------------ " <<  std::endl;
@@ -647,18 +695,7 @@ namespace dftfe
                 totalKE += 0.5*atomMass[i]*(v[3*i+0]*v[3*i+0]+v[3*i+1]*v[3*i+1] + v[3*i+2]*v[3*i+2]);
             }
         //Save KE
-        if (dftParameters::verbosity >= 1)
-          {
-            pcout << "Velocity of atoms " << std::endl;
-            for (int iCharge = 0; iCharge < numberGlobalCharges; ++iCharge)
-              {
-                pcout << "Charge Id: " << iCharge << " "
-                      << v[3*iCharge+0] << " "
-                      << v[3*iCharge+1] << " "
-                      << v[3*iCharge+2] << std::endl;
-              }         
-          
-          }      
+      
       
       
         KE = totalKE;
