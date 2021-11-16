@@ -43,9 +43,13 @@ dftClass<FEOrder, FEOrderElectro>::initLocalPseudoPotential(
   //
   std::map<unsigned int, alglib::spline1dinterpolant>      pseudoSpline;
   std::map<unsigned int, std::vector<std::vector<double>>> pseudoPotentialData;
-  std::map<unsigned int, double>                           outerMostPointPseudo;
-
-  double maxPspTail = 0.0;
+  std::map<unsigned int, double>                           outerMostDataPoint;
+  // FIXME: the truncation tolerance can potentially be loosened
+  // further for production runs where more accurate meshes are used
+  const double truncationTol =
+    dftParameters::reproducible_output ? 1.0e-8 : 1.0e-7;
+  const double maxAllowedTail = 8.0001;
+  double       maxTail        = 0.0;
   if (dftParameters::isPseudopotential)
     {
       //
@@ -69,10 +73,20 @@ dftClass<FEOrder, FEOrderElectro>::initLocalPseudoPotential(
           dftUtils::readFile(2, pseudoPotentialData[*it], pseudoFile);
           unsigned int        numRows = pseudoPotentialData[*it].size() - 1;
           std::vector<double> xData(numRows), yData(numRows);
+
+          unsigned int maxRowId = 0;
           for (unsigned int irow = 0; irow < numRows; ++irow)
             {
               xData[irow] = pseudoPotentialData[*it][irow][0];
               yData[irow] = pseudoPotentialData[*it][irow][1];
+
+              if (irow > 0 && xData[irow] < maxAllowedTail)
+                {
+                  if (std::abs(yData[irow] -
+                               (-((double)d_atomTypeAtributes[*it]) /
+                                xData[irow])) > truncationTol)
+                    maxRowId = irow;
+                }
             }
 
           // interpolate pseudopotentials
@@ -95,24 +109,23 @@ dftClass<FEOrder, FEOrderElectro>::initLocalPseudoPotential(
                              bound_type_r,
                              slopeR,
                              pseudoSpline[*it]);
-          outerMostPointPseudo[*it] = xData[numRows - 1];
+          outerMostDataPoint[*it] = xData[maxRowId];
 
-          if (outerMostPointPseudo[*it] > maxPspTail)
-            maxPspTail = outerMostPointPseudo[*it];
+          if (outerMostDataPoint[*it] > maxTail)
+            maxTail = outerMostDataPoint[*it];
         }
-
-      if (maxPspTail < d_pspTail)
-        d_pspTail = maxPspTail;
-
-      if (dftParameters::verbosity >= 2)
-        pcout << " d_pspTail adjusted to " << d_pspTail << std::endl;
     }
   else
-    d_pspTail =
-      8.0; // to be used for smeared charge potential in case of all-electron
+    {
+      maxTail = maxAllowedTail;
+      for (std::set<unsigned int>::iterator it = atomTypes.begin();
+           it != atomTypes.end();
+           it++)
+        outerMostDataPoint[*it] = maxAllowedTail;
+    }
 
   const double cutOffForPsp =
-    std::max(vselfBinManager.getStoredAdaptiveBallRadius() + 6.0, d_pspTail);
+    std::max(vselfBinManager.getStoredAdaptiveBallRadius() + 6.0, maxTail);
 
   //
   // Initialize pseudopotential
@@ -377,7 +390,7 @@ dftClass<FEOrder, FEOrderElectro>::initLocalPseudoPotential(
                     std::sqrt(diffx * diffx + diffy * diffy + diffz * diffz);
                   distanceToAtomInv = 1.0 / distanceToAtom;
 
-                  if (distanceToAtom <= d_pspTail)
+                  if (distanceToAtom <= maxTail)
                     {
                       if (iAtom < numberGlobalCharges)
                         {
@@ -391,15 +404,22 @@ dftClass<FEOrder, FEOrderElectro>::initLocalPseudoPotential(
                             atomLocations[d_imageIds[iImageCharge]][0]);
                         }
 
-                      if (dftParameters::isPseudopotential)
+                      if (distanceToAtom <= outerMostDataPoint[atomicNumber])
                         {
-                          value =
-                            alglib::spline1dcalc(pseudoSpline[atomicNumber],
-                                                 distanceToAtom);
+                          if (dftParameters::isPseudopotential)
+                            {
+                              value =
+                                alglib::spline1dcalc(pseudoSpline[atomicNumber],
+                                                     distanceToAtom);
+                            }
+                          else
+                            {
+                              value = -atomCharge * distanceToAtomInv;
+                            }
                         }
                       else
                         {
-                          value = -atomCharge / distanceToAtom;
+                          value = -atomCharge * distanceToAtomInv;
                         }
                     }
                   else
@@ -495,15 +515,16 @@ dftClass<FEOrder, FEOrderElectro>::initLocalPseudoPotential(
                   NeighborType::not_neighbors)
                 continue;
 
-              bool     isPseudoDataInCell = false;
-              Point<3> quadPoint;
-              double   value, distanceToAtom;
+              bool         isPseudoDataInCell = false;
+              Point<3>     quadPoint;
+              double       value, distanceToAtom;
+              const double cutoff = outerMostDataPoint[atomicNumber];
               // loop over quad points
               for (unsigned int q = 0; q < n_q_points; ++q)
                 {
                   const Point<3> &quadPoint = fe_values.quadrature_point(q);
                   distanceToAtom            = quadPoint.distance(atom);
-                  if (distanceToAtom <= d_pspTail)
+                  if (distanceToAtom <= cutoff)
                     {
                       if (dftParameters::isPseudopotential)
                         {
