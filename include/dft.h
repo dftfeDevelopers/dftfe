@@ -881,7 +881,13 @@ namespace dftfe
      * stores required data for Kohn-Sham problem
      */
     unsigned int numElectrons, numElectronsUp, numElectronsDown, numLevels;
-    std::set<unsigned int>           atomTypes;
+    std::set<unsigned int> atomTypes;
+
+    /// FIXME: eventually it should be a map of atomic number to struct-
+    /// {valence number, mesh input etc}
+    std::map<unsigned int, unsigned int> d_atomTypeAtributes;
+
+    /// FIXME: remove atom type atributes from atomLocations
     std::vector<std::vector<double>> atomLocations, atomLocationsFractional,
       d_reciprocalLatticeVectors, d_domainBoundingVectors,
       d_atomLocationsInitial;
