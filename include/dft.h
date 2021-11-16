@@ -1271,7 +1271,6 @@ namespace dftfe
     // storage of densities for xl-bomd
     std::deque<distributedCPUVec<double>> d_groundStateDensityHistory;
 
-    double                                        d_pspTail = 8.0;
     std::map<dealii::CellId, std::vector<double>> d_pseudoVLoc;
 
     /// Internal data:: map for cell id to Vpseudo local of individual atoms.
