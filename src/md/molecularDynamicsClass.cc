@@ -11,6 +11,7 @@
 #include <force.h>
 #include <vector>
 #include <cmath>
+#include <ctime>
 #include <molecularDynamicsClass.h>
 
 
@@ -774,36 +775,48 @@ namespace dftfe
         Rsum = 0.0;
         if (this_mpi_process == 0)
         {
-          boost::mt19937               rng;
+          std::time_t now = std::time(0);
+          boost::random::mt19937 gen{static_cast<std::uint32_t>(now)};
           boost::normal_distribution<> gaussianDist(0.0, 1.0);
-          boost::variate_generator<boost::mt19937 &, boost::normal_distribution<>>
-                  generator(rng, gaussianDist);
+          boost::variate_generator<boost::mt19937 & , boost::normal_distribution<>>
+                  generator(gen, gaussianDist);
 
-          R1 = generator();         
+          R1 = generator();   
+          /*    
           if((Nf-1)%2 == 0)
             {
               boost::gamma_distribution<> my_gamma((Nf-1)/2,1);
               boost::variate_generator<boost::mt19937 &, boost::gamma_distribution<>>
-                  generator_gamma(rng, my_gamma);              
+                  generator_gamma(gen, my_gamma);              
               Rsum = generator_gamma();
             }
           else
             {
               Rsum = generator();
+              Rsum = Rsum*Rsum;
               boost::gamma_distribution<> my_gamma((Nf-2)/2,1);
               boost::variate_generator<boost::mt19937 &, boost::gamma_distribution<>>
-                  generator_gamma(rng, my_gamma);               
+                  generator_gamma(gen, my_gamma);               
               Rsum += generator_gamma();
-            }   
+            }  
+             */
+           double temp;
+           for (int dof = 1; dof < Nf; dof++)
+           {
+             temp = generator();
+             Rsum = Rsum + temp*temp;
+           } 
+           Rsum = R1*R1 + Rsum;
+           
       //Transfer data to all mpi procs    
         }
         R1 = dealii::Utilities::MPI::sum(R1, mpi_communicator);
         Rsum = dealii::Utilities::MPI::sum(Rsum, mpi_communicator);
         alphasq = 0.0;
-        alphasq = alphasq+ std::exp(-1/thermostatTimeConstant);
-        alphasq = alphasq+ (KEref/Nf/KE)*(1-std::exp(-1/thermostatTimeConstant))*(R1*R1 + Rsum);
-        alphasq = alphasq + 2*std::exp(-1/2/thermostatTimeConstant)*std::sqrt(KEref/Nf/KE*(1-std::exp(-1/thermostatTimeConstant))*R1);
-            
+        alphasq = alphasq+ std::exp(-1/double(thermostatTimeConstant));
+        alphasq = alphasq+ (KEref/Nf/KE)*(1-std::exp(-1/double(thermostatTimeConstant)))*(R1*R1 + Rsum);
+        alphasq = alphasq + 2*std::exp(-1/2/double(thermostatTimeConstant))*std::sqrt(KEref/Nf/KE*(1-std::exp(-1/double(thermostatTimeConstant))))*R1;
+        pcout<<"*** R1: "<<R1<<" Rsum : "<<Rsum<<" alphasq "<<alphasq<<"exp ()"<<std::exp(-1/double(thermostatTimeConstant))<<" timeconstant "<<thermostatTimeConstant<< std::endl;    
         KE      = alphasq*KE;
         double alpha = std::sqrt(alphasq);
         for(int iCharge=0; iCharge<numberGlobalCharges; iCharge++)
