@@ -13,7 +13,7 @@
 #include <cmath>
 #include <ctime>
 #include <molecularDynamicsClass.h>
-
+#include <fstream>
 
 
 namespace dftfe
@@ -986,9 +986,9 @@ namespace dftfe
    }                                                         
     template <unsigned int FEOrder, unsigned int FEOrderElectro>
     void    
-    molecularDynamicsClass<FEOrder, FEOrderElectro>::writeTotalDisplacementFile( std::vector<dealii::Tensor<1, 3, double>> r)
+    molecularDynamicsClass<FEOrder, FEOrderElectro>::writeTotalDisplacementFile(std::vector<dealii::Tensor<1, 3, double>> r)
     {
-      std::vector<std::vector<double>>fileDisplacementData(numberGlobalCharges,std::vector<double>(3,0.0)); 
+      std::vector<std::vector<double>>fileDisplacementData; 
       dftUtils::readFile(3, fileDisplacementData, "Displacement.chk");
       for(int iCharge = 0; iCharge <numberGlobalCharges; iCharge++)
         {
@@ -996,7 +996,27 @@ namespace dftfe
             fileDisplacementData[iCharge][1] = fileDisplacementData[iCharge][1]+ r[iCharge][1];
             fileDisplacementData[iCharge][2] = fileDisplacementData[iCharge][2]+ r[iCharge][2];
         } 
-       dftUtils::writeDataIntoFile(fileDisplacementData, "Displacement.chk");  
+       dftUtils::writeDataIntoFile(fileDisplacementData, "Displacement.chk"); 
+
+      if(this_mpi_process == 0)
+      { 
+        std::ofstream outfile;
+        outfile.open("TotalDisplacement.chk", std::ios_base::app);
+        std::vector<std::vector<double>> atomLocations;
+        dftPtr->getAtomLocationsfromdftptr(atomLocations); 
+        for(int iCharge = 0; iCharge <numberGlobalCharges; iCharge++)
+          {
+            outfile<<atomLocations[iCharge][0]<<"  "<<atomLocations[iCharge][1]<< std::setprecision(20)<<"  "<<fileDisplacementData[iCharge][0]<<"  "<<fileDisplacementData[iCharge][1]<<"  "<<fileDisplacementData[iCharge][2]<<std::endl;
+           /* temp[0][0] = atomLocations[iCharge][0];
+            temp[0][1] = atomLocations[iCharge][1];
+            temp[0][2] = fileDisplacementData[iCharge][0];
+            temp[0][3] = fileDisplacementData[iCharge][1];
+            temp[0][4] = fileDisplacementData[iCharge][2];*/
+            
+          }
+          outfile.close();
+      } 
+
 
     }
     template <unsigned int FEOrder, unsigned int FEOrderElectro>
