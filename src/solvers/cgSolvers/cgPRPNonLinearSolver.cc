@@ -350,7 +350,7 @@ namespace dftfe
   //
   // Update solution x -> x + \alpha direction.
   //
-  void
+  bool
   cgPRPNonLinearSolver::updateSolution(const double               alpha,
                                        const std::vector<double> &direction,
                                        nonlinearSolverProblem &   problem)
@@ -367,15 +367,22 @@ namespace dftfe
     for (std::vector<double>::size_type i = 0; i < solutionSize; ++i)
       incrementVector[i] = alpha * direction[i];
 
-
+    int isIncrementBoundExceeded = 0;
     for (std::vector<double>::size_type i = 0; i < solutionSize; ++i)
       {
-        AssertThrow(
-          std::abs(incrementVector[i]) < d_maxSolutionIncrementLinf,
-          dealii::ExcMessage(std::string(
-            "DFT-FE Error: stopping CG iterations as maximum increment criteria exceeded. Please restart CGPRP solver from scratch after rechecking your starting geometry. Such situtations can also happen if the SCF iterations for the current ground-state did not converge.")));
+        if (std::abs(incrementVector[i]) > d_maxSolutionIncrementLinf)
+          isIncrementBoundExceeded = 1;
       }
 
+    MPI_Bcast(&(isIncrementBoundExceeded), 1, MPI_INT, 0, MPI_COMM_WORLD);
+
+    if (isIncrementBoundExceeded == 0)
+      {
+        pcout
+          << "Warning: maximum increment bound exceeded in line search update. Such situtations can also happen if the SCF iterations for the current ground-state did not converge."
+          << std::endl;
+        return false;
+      }
 
     //
     // call solver problem update
@@ -383,6 +390,7 @@ namespace dftfe
     problem.update(incrementVector, true, d_useSingleAtomSolutionsInitialGuess);
 
     d_useSingleAtomSolutionsInitialGuess = false;
+    return true;
   }
 
   //
@@ -474,9 +482,17 @@ namespace dftfe
         //
         // update unknowns removing earlier update
         //
-        updateSolution(d_lineSearchDampingParameter,
-                       d_conjugateDirection,
-                       problem);
+        d_isCGRestartDueToLargeIncrement = !(updateSolution(
+          d_lineSearchDampingParameter, d_conjugateDirection, problem));
+        if (d_isCGRestartDueToLargeIncrement)
+          {
+            if (debugLevel >= 1)
+              pcout
+                << " Secant line-search failed as maximum increment bound is exceeded. CG PRP will be restarted "
+                << std::endl;
+
+            return LINESEARCH_FAILED;
+          }
       }
 
     //
@@ -553,7 +569,7 @@ namespace dftfe
             if (condition1 <= 1e-08 && condition2 <= 1e-08)
               {
                 if (debugLevel >= 1)
-                  pcout << "Satisfied Wolfe condition: " << std::endl;
+                  pcout << "Satisfied Wolfe condition " << std::endl;
 
                 isSuccess = 1;
               }
@@ -565,7 +581,13 @@ namespace dftfe
             MPI_Bcast(&(isSuccess), 1, MPI_INT, 0, MPI_COMM_WORLD);
 
             if (isSuccess == 1)
-              return SUCCESS;
+              {
+                if (debugLevel >= 1)
+                  pcout << " Secant line-search iterations completed "
+                        << std::endl;
+
+                return SUCCESS;
+              }
           }
 
         //
@@ -588,13 +610,34 @@ namespace dftfe
         //
         if (iter == 0)
           {
-            updateSolution(alphaNew - d_lineSearchDampingParameter,
-                           d_conjugateDirection,
-                           problem);
+            d_isCGRestartDueToLargeIncrement =
+              !(updateSolution(alphaNew - d_lineSearchDampingParameter,
+                               d_conjugateDirection,
+                               problem));
+
+            if (d_isCGRestartDueToLargeIncrement)
+              {
+                if (debugLevel >= 1)
+                  pcout
+                    << " Secant line-search failed as maximum increment bound is exceeded. CG PRP will be restarted "
+                    << std::endl;
+
+                return LINESEARCH_FAILED;
+              }
           }
         else
           {
-            updateSolution(alphaNew, d_conjugateDirection, problem);
+            d_isCGRestartDueToLargeIncrement =
+              !(updateSolution(alphaNew, d_conjugateDirection, problem));
+            if (d_isCGRestartDueToLargeIncrement)
+              {
+                if (debugLevel >= 1)
+                  pcout
+                    << " Secant line-search failed as maximum increment bound is exceeded. CG PRP will be restarted "
+                    << std::endl;
+
+                return LINESEARCH_FAILED;
+              }
           }
 
         //
@@ -605,8 +648,7 @@ namespace dftfe
       }
 
     if (debugLevel >= 1)
-      pcout << "Maximum number of line-search iterations reached: "
-            << std::endl;
+      pcout << "Maximum number of line-search iterations reached " << std::endl;
 
     //
     //
