@@ -376,7 +376,7 @@ namespace dftfe
 
     MPI_Bcast(&(isIncrementBoundExceeded), 1, MPI_INT, 0, MPI_COMM_WORLD);
 
-    if (isIncrementBoundExceeded == 0)
+    if (isIncrementBoundExceeded == 1)
       {
         pcout
           << "Warning: maximum increment bound exceeded in line search update. Such situtations can also happen if the SCF iterations for the current ground-state did not converge."
