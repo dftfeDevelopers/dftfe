@@ -893,16 +893,16 @@ namespace dftfe
 
     dftPtr->writeDomainAndAtomCoordinates(); 
     if(time > 1)
-    pcout << "#RESTART NOTE: Positions:-" << " Positions of TimeStep:"<<time<<" present in file atomsFracCoordCurrent.chk"<< std::endl
-          <<" Positions of TimeStep: "<<time-1<<"present in file atomsFracCoordCurrent.chk.old #"<< std::endl;
+    pcout << "#RESTART NOTE: Positions:-" << " Positions of TimeStep: "<<time<<" present in file atomsFracCoordCurrent.chk"<< std::endl
+          <<" Positions of TimeStep: "<<time-1<<" present in file atomsFracCoordCurrent.chk.old #"<< std::endl;
     dftUtils::writeDataIntoFile(fileVelocityData, "velocity.chk");
     if(time > 1)
-    pcout << "#RESTART NOTE: Velocity:-" << " Velocity of TimeStep:"<<time<<" present in file velocity.chk"<< std::endl
-          <<" Velocity of TimeStep: "<<time-1<<"present in file velocity.chk.old #"<< std::endl;    
+    pcout << "#RESTART NOTE: Velocity:-" << " Velocity of TimeStep: "<<time<<" present in file velocity.chk"<< std::endl
+          <<" Velocity of TimeStep: "<<time-1<<" present in file velocity.chk.old #"<< std::endl;    
     dftUtils::writeDataIntoFile(fileForceData, "force.chk"); 
     if(time > 1)
-    pcout << "#RESTART NOTE: Force:-" << " Force of TimeStep:"<<time<<" present in file force.chk"<< std::endl
-          <<" Velocity of TimeStep: "<<time-1<<"present in file force.chk.old #"<< std::endl;     
+    pcout << "#RESTART NOTE: Force:-" << " Force of TimeStep: "<<time<<" present in file force.chk"<< std::endl
+          <<" Velocity of TimeStep: "<<time-1<<" present in file force.chk.old #"<< std::endl;     
     MPI_Barrier(MPI_COMM_WORLD);
     dftUtils::writeDataIntoFile(timeIndexData, "time.chk"); //old time == new time then restart files were successfully saved
     pcout << "#RESTART NOTE: restart files for TimeStep: "<<time<<" successfully created #"<< std::endl;     
