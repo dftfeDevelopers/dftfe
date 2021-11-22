@@ -3,7 +3,7 @@
 #include <boost/random.hpp>
 #include <boost/random/normal_distribution.hpp>
 #include <boost/random/gamma_distribution.hpp>
-
+#include <headers.h>
 #include <dft.h>
 #include <dftParameters.h>
 #include <dftUtils.h>
@@ -14,8 +14,10 @@
 #include <ctime>
 #include <molecularDynamicsClass.h>
 #include <fstream>
-
-
+#include <iomanip>
+#include <iostream>
+#include <sstream>
+#include <sys/stat.h>
 namespace dftfe
 {
 
@@ -102,7 +104,6 @@ namespace dftfe
         double velocityDistribution;            
         restartFlag = ((dftParameters::chkType == 1 || dftParameters::chkType == 3) &&
        dftParameters::restartMdFromChk) ?        1 :        0; // 1; //0;//1;
-       velocityFlag = dftParameters::velocityFlag;
       if (restartFlag == 0 )
       { 
         double KineticEnergy=0.0 , TemperatureFromVelocities = 0.0;
@@ -184,7 +185,8 @@ namespace dftfe
           {
             velocity[i] = gamma * velocity[i];
           }
-
+          std::string tempFolder = "mdRestart";
+          mkdir(tempFolder.c_str(), ACCESSPERMS);
       }
       else
       {
@@ -765,7 +767,7 @@ namespace dftfe
       e[0] = e[0] + v_e[0]*timeStep/2;
       e[1] = e[1] + v_e[1]*timeStep/2;
       s = std::exp(-v_e[0]*timeStep/2);
-      //pcout << "G2"<<G2<<" v_e1"<<v_e[1]<<"Temp"<<Temperature<<"Q[1] "<<Q[1]<<"v_e[0] "<<v_e[0]<<"G1 "<<G1<< "Exponent: "<<std::exp(1)<< std::endl;
+      //pcout << "G2"<<G2<<" v_e1"<<v_e[1]<<"//"<<Temperature<<"Q[1] "<<Q[1]<<"v_e[0] "<<v_e[0]<<"G1 "<<G1<< "Exponent: "<<std::exp(1)<< std::endl;
       for(int iCharge = 0; iCharge < numberGlobalCharges; iCharge++)
         {
         v[3*iCharge+0] = s*v[3*iCharge+0];
@@ -869,14 +871,19 @@ namespace dftfe
     std::vector<std::vector<double>> TEData(1, std::vector<double>(1, 0.0));
 
     
-    timeIndexData[0][0] = double(time);  
-    dftUtils::writeDataIntoFile(timeIndexData, "time.chk");  
+    timeIndexData[0][0] = double(time);
+    std::string tempfolder = "mdRestart";  
+    std::string newFolder3 = tempfolder + "/" + "time.chk";
+    dftUtils::writeDataIntoFile(timeIndexData, newFolder3);  
     KEData[0][0]    = KineticEnergyVector[time-startingTimeStep];
     IEData[0][0] = InternalEnergyVector[time - startingTimeStep];
-    TEData[0][0] = TotalEnergyVector[time - startingTimeStep];  
-    dftUtils::writeDataIntoFile(KEData, "KineticEnergy.chk");
-    dftUtils::writeDataIntoFile(IEData, "InternalEnergy.chk");
-    dftUtils::writeDataIntoFile(TEData, "TotalEnergy.chk");                                        
+    TEData[0][0] = TotalEnergyVector[time - startingTimeStep];
+    std::string newFolder4 = tempfolder + "/" + "KineticEnergy.chk";  
+    dftUtils::writeDataIntoFile(KEData, newFolder4);
+    std::string newFolder5 = tempfolder + "/" + "InternalEnergy.chk";
+    dftUtils::writeDataIntoFile(IEData, newFolder5);
+    std::string newFolder6 = tempfolder + "/" + "TotalEnergy.chk";
+    dftUtils::writeDataIntoFile(TEData, newFolder6);                                        
 
     for (int iCharge = 0; iCharge < numberGlobalCharges; ++iCharge)
       {
@@ -895,16 +902,19 @@ namespace dftfe
     if(time > 1)
     pcout << "#RESTART NOTE: Positions:-" << " Positions of TimeStep: "<<time<<" present in file atomsFracCoordCurrent.chk"<< std::endl
           <<" Positions of TimeStep: "<<time-1<<" present in file atomsFracCoordCurrent.chk.old #"<< std::endl;
-    dftUtils::writeDataIntoFile(fileVelocityData, "velocity.chk");
+    std::string newFolder1 = tempfolder + "/" + "velocity.chk";      
+    dftUtils::writeDataIntoFile(fileVelocityData, newFolder1);
     if(time > 1)
     pcout << "#RESTART NOTE: Velocity:-" << " Velocity of TimeStep: "<<time<<" present in file velocity.chk"<< std::endl
-          <<" Velocity of TimeStep: "<<time-1<<" present in file velocity.chk.old #"<< std::endl;    
-    dftUtils::writeDataIntoFile(fileForceData, "force.chk"); 
+          <<" Velocity of TimeStep: "<<time-1<<" present in file velocity.chk.old #"<< std::endl; 
+    std::string newFolder2 = tempfolder + "/" + "force.chk";         
+    dftUtils::writeDataIntoFile(fileForceData, newFolder2); 
     if(time > 1)
     pcout << "#RESTART NOTE: Force:-" << " Force of TimeStep: "<<time<<" present in file force.chk"<< std::endl
           <<" Velocity of TimeStep: "<<time-1<<" present in file force.chk.old #"<< std::endl;     
     MPI_Barrier(MPI_COMM_WORLD);
-    dftUtils::writeDataIntoFile(timeIndexData, "time.chk"); //old time == new time then restart files were successfully saved
+    //std::string newFolder3 = tempfolder + "/" + "time.chk";
+    dftUtils::writeDataIntoFile(timeIndexData, newFolder3); //old time == new time then restart files were successfully saved
     pcout << "#RESTART NOTE: restart files for TimeStep: "<<time<<" successfully created #"<< std::endl;     
 
 
@@ -930,22 +940,25 @@ namespace dftfe
              }         
           
          }
+         std::string tempfolder = "mdRestart";
         std::vector<std::vector<double>> t1, KE0, IE0, TE0;
-
-        dftUtils::readFile(1, t1, "time.chk");        
+        std::string newFolder3 = tempfolder + "/" + "time.chk";
+        dftUtils::readFile(1, t1, newFolder3);        
         startingTimeStep = t1[0][0];
-        std::string fileName1 = (dftParameters::VelocityRestartFile==""?"velocity.chk":dftParameters::VelocityRestartFile); 
+        std::string fileName1 = (dftParameters::VelocityRestartFile=="" ? "velocity.chk":dftParameters::VelocityRestartFile); 
+        std::string newFolder1 = tempfolder + "/" + fileName1;
         std::vector<std::vector<double>> fileVelData;
-        dftUtils::readFile(3, fileVelData, fileName1);
+        dftUtils::readFile(3, fileVelData, newFolder1);
         for (int iCharge = 0; iCharge < numberGlobalCharges; ++iCharge)
           {
             velocity[3 * iCharge + 0] = fileVelData[iCharge][0];
             velocity[3 * iCharge + 1] = fileVelData[iCharge][1];
             velocity[3 * iCharge + 2] = fileVelData[iCharge][2];
           }   
-        std::string fileName2 = (dftParameters::ForceRestartFile==""?"force.chk":dftParameters::ForceRestartFile); 
+        std::string fileName2 = (dftParameters::ForceRestartFile=="" ? "force.chk":dftParameters::ForceRestartFile); 
+        std::string newFolder2 = tempfolder + "/" + fileName2;
         std::vector<std::vector<double>> fileForceData;
-        dftUtils::readFile(3, fileForceData, fileName2);
+        dftUtils::readFile(3, fileForceData, newFolder2);
         for (int iCharge = 0; iCharge < numberGlobalCharges; ++iCharge)
           {
             force[3 * iCharge + 0] = fileForceData[iCharge][0];
@@ -953,10 +966,12 @@ namespace dftfe
             force[3 * iCharge + 2] = fileForceData[iCharge][2];
           }                
 
-      
-      dftUtils::readFile(1, KE0, "KineticEnergy.chk");
-      dftUtils::readFile(1, IE0, "InternalEnergy.chk");
-      dftUtils::readFile(1, TE0, "TotalEnergy.chk");
+      std::string newFolder4 = tempfolder + "/" + "KineticEnergy.chk";
+      dftUtils::readFile(1, KE0, newFolder4);
+      std::string newFolder5 = tempfolder + "/" + "KineticEnergy.chk";
+      dftUtils::readFile(1, IE0, newFolder5);
+      std::string newFolder6 = tempfolder + "/" + "KineticEnergy.chk";
+      dftUtils::readFile(1, TE0, newFolder6);
       KE[0] = KE0[0][0];
       IE[0] = IE0[0][0];
       TE[0] = TE0[0][0];
@@ -976,8 +991,10 @@ namespace dftfe
 
   {
     std::vector<std::vector<double>> NHCData;
-    std::string fileName = (dftParameters::NHCRestartFile==""?"NHCThermostat.chk":dftParameters::NHCRestartFile);
-    dftUtils::readFile(3, NHCData, fileName);
+    std::string tempfolder = "mdRestart";
+    std::string fileName = (dftParameters::NHCRestartFile=="" ? "NHCThermostat.chk":dftParameters::NHCRestartFile);
+    std::string newFolder = tempfolder + "/" + fileName;
+    dftUtils::readFile(3, NHCData, newFolder);
     Q[0] = NHCData[0][0];
     Q[1] = NHCData[1][0];
     e[0] = NHCData[0][1];
@@ -1002,7 +1019,9 @@ namespace dftfe
     fileNHCData[1][0] = Q[1] ;
     fileNHCData[1][1] =  e[1];
     fileNHCData[1][2] =  v_e[1];    
-    dftUtils::writeDataIntoFile(fileNHCData, "NHCThermostat.chk");        
+    std::string tempfolder = "mdRestart"; 
+    std::string newFolder = std::string(tempfolder + "/" + "NHCThermostat.chk");    
+    dftUtils::writeDataIntoFile(fileNHCData, newFolder);        
 
 
    }                                                         

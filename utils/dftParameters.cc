@@ -158,7 +158,7 @@ namespace dftfe
     std::string  VelocityRestartFile                              = "";
     std::string  ForceRestartFile                                   = ""; 
     std::string  NHCRestartFile                                   = ""; 
-    bool  velocityFlag                                      = false;
+
 
     //New paramter for selecting mode and NEB parameters
     unsigned int TotalImages                                    = 1;
@@ -1087,7 +1087,7 @@ namespace dftfe
          "NOSE HOVER THERMOSTAT RESTART FILE",
           "",
           Patterns::Anything(),
-          "[Standard] Specify the (-ve)Forces on Atoms for Restart from TimeStep"); 
+          "[Standard] Specify the file name to restart NHC thermostat"); 
 
 
         prm.declare_entry("TIME STEP",
@@ -1452,8 +1452,6 @@ namespace dftfe
           prm.get_double("STARTING TEMPERATURE");
         dftParameters::thermostatTimeConstantBOMD =
           prm.get_double("THERMOSTAT TIME CONSTANT");
-        dftParameters::velocityFlag =
-          prm.get_bool("VELOCITY INITISLIZATION FROM FILE");
 
 
         dftParameters::tempControllerTypeBOMD =
