@@ -67,6 +67,7 @@ namespace dftfe
     
     
         unsigned int restartFlag;
+        bool velocityFlag;
         unsigned int numberGlobalCharges;
         unsigned int numberofAtomTypes;    
         double timeStep;

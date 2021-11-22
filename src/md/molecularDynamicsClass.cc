@@ -100,9 +100,13 @@ namespace dftfe
         double velocityDistribution;            
         restartFlag = ((dftParameters::chkType == 1 || dftParameters::chkType == 3) &&
        dftParameters::restartMdFromChk) ?        1 :        0; // 1; //0;//1;
-      if (restartFlag == 0)
-      {  //--------------------Starting Initialization ----------------------------------------------//
+       velocityFlag = dftParameters::velocityFlag;
+      if (restartFlag == 0 )
+      { 
         double KineticEnergy=0.0 , TemperatureFromVelocities = 0.0;
+        if(velocityFlag == false)
+        { //--------------------Starting Initialization ----------------------------------------------//
+        
         double Px=0.0, Py=0.0 , Pz = 0.0;
         //Initialise Velocity
         if (this_mpi_process == 0)
@@ -179,8 +183,23 @@ namespace dftfe
             velocity[i] = gamma * velocity[i];
           }
 
+      }
+      else if(velocityFlag ==true)
+      {
+         std::vector<std::vector<double>> t1;
+         dftUtils::readFile(1, t1, "time.inp");
+         startingTimeStep = t1[0][0];
+        std::vector<std::vector<double>> fileVelData;
+        dftUtils::readFile(3, fileVelData, "velocity.inp");
+        for (int iCharge = 0; iCharge < numberGlobalCharges; ++iCharge)
+          {
+            velocity[3 * iCharge + 0] = fileVelData[iCharge][0];
+            velocity[3 * iCharge + 1] = fileVelData[iCharge][1];
+            velocity[3 * iCharge + 2] = fileVelData[iCharge][2];
+          }            
 
-          KineticEnergy = 0.0;
+      }
+        KineticEnergy = 0.0;
           for (int iCharge = 0; iCharge < numberGlobalCharges; ++iCharge)
           {
             KineticEnergy +=

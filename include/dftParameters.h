@@ -123,6 +123,7 @@ namespace dftfe
     extern std::string  PositionRestartFile;
     extern std::string  VelocityRestartFile;
     extern std::string  ForceRestartFile; 
+    extern bool velocityFlag;
     extern unsigned int TotalImages;
     extern unsigned int  solvermode;
     //extern double       startingTempBOMDNVE;

@@ -158,6 +158,7 @@ namespace dftfe
     std::string  PositionRestartFile                             =" ";
     std::string  VelocityRestartFile                              = " ";
     std::string  ForceRestartFile                                   = " "; 
+    bool  velocityFlag                                      = false;
 
     //New paramter for selecting mode and NEB parameters
     unsigned int TotalImages                                    = 1;
@@ -1062,7 +1063,11 @@ namespace dftfe
           "100",
           Patterns::Double(0.0),
           "[Developer] Time constant of thermostat wrt MD timestep. ");  
-
+        prm.declare_entry(
+          "VELOCITY INITISLIZATION FROM FILE",
+          "false",
+          Patterns::Bool(),
+          "[Developer] Check whether to initialise the velocities from velocity.inp file or using the boltzmann distribution ");
           
 
           
@@ -1459,6 +1464,10 @@ namespace dftfe
           prm.get_double("STARTING TEMPERATURE");
         dftParameters::thermostatTimeConstantBOMD =
           prm.get_double("THERMOSTAT TIME CONSTANT");
+        dftParameters::velocityFlag =
+          prm.get_bool("VELOCITY INITISLIZATION FROM FILE");
+
+
         dftParameters::tempControllerTypeBOMD =
           prm.get("TEMP CONTROLLER TYPE"); 
 
