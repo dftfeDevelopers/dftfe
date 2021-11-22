@@ -153,11 +153,11 @@ namespace dftfe
     //New Paramters for moleculardyynamics class
     double startingTempBOMD                                     = 300;
     double thermostatTimeConstantBOMD                            = 100;
+    int StartingTimeStep                                       = 0;
     std::string  tempControllerTypeBOMD                         ="";
-    bool         UserRestart                                    = false;
-    std::string  PositionRestartFile                             =" ";
-    std::string  VelocityRestartFile                              = " ";
-    std::string  ForceRestartFile                                   = " "; 
+    std::string  VelocityRestartFile                              = "";
+    std::string  ForceRestartFile                                   = ""; 
+    std::string  NHCRestartFile                                   = ""; 
     bool  velocityFlag                                      = false;
 
     //New paramter for selecting mode and NEB parameters
@@ -1063,48 +1063,31 @@ namespace dftfe
           "100",
           Patterns::Double(0.0),
           "[Developer] Time constant of thermostat wrt MD timestep. ");  
-        prm.declare_entry(
-          "VELOCITY INITISLIZATION FROM FILE",
-          "false",
-          Patterns::Bool(),
-          "[Developer] Check whether to initialise the velocities from velocity.inp file or using the boltzmann distribution ");
-          
-
-          
-
+       
         prm.declare_entry(
           "TEMP CONTROLLER TYPE",
           "NO_CONTROL",
           Patterns::Selection("NO_CONTROL|RESCALE|NOSE_HOVER_CHAINS|CSVR"),
           "[Standard] Method of controlling temperature in the MD run. NO_CONTROL is the default option.");
-
-        prm.declare_entry(
-          "POSITION RESTART FILE",
-          "atomsFracCoordCurrent.chk",
-          Patterns::Anything(),
-          "[Standard] Specify the Cordinates of Atoms for Restart from TimeStep");   
+  
 
         prm.declare_entry(
           "VELOCITY RESTART FILE",
-          "velocity.chk",
+          "",
           Patterns::Anything(),
           "[Standard] Specify the Velocity of Atoms for Restart from TimeStep"); 
 
         prm.declare_entry(
           "FORCE RESTART FILE",
-          "force.chk",
+          "",
           Patterns::Anything(),
-          "[Standard] Specify the (-ve)Forces on Atoms for Restart from TimeStep");           
+          "[Standard] Specify the (-ve)Forces on Atoms for Restart from TimeStep");       
 
         prm.declare_entry(
-          "User Restart",
-          "false",
-          Patterns::Bool(),
-          "[Standard] If True the restart files are given by user else the default restart file are used for MD");
-
-  
-
-   
+         "NOSE HOVER THERMOSTAT RESTART FILE",
+          "",
+          Patterns::Anything(),
+          "[Standard] Specify the (-ve)Forces on Atoms for Restart from TimeStep"); 
 
 
         prm.declare_entry("TIME STEP",
@@ -1116,6 +1099,11 @@ namespace dftfe
                           "1000",
                           Patterns::Integer(0, 200000),
                           "[Standard] Number of time steps.");
+
+        prm.declare_entry("STARTING TIME STEP",
+                          "0",
+                          Patterns::Integer(0, 200000),
+                          "[Standard] Starting Time Step");
 
         prm.declare_entry(
           "DIRAC DELTA KERNEL SCALING CONSTANT XL BOMD",
@@ -1459,7 +1447,7 @@ namespace dftfe
         dftParameters::numberStepsBOMD = prm.get_integer("NUMBER OF STEPS");
         dftParameters::startingTempBOMDNVE =
           prm.get_double("STARTING TEMP NVE");
-        
+        dftParameters::StartingTimeStep = prm.get_integer("STARTING TIME STEP");
         dftParameters::startingTempBOMD =
           prm.get_double("STARTING TEMPERATURE");
         dftParameters::thermostatTimeConstantBOMD =
@@ -1471,11 +1459,6 @@ namespace dftfe
         dftParameters::tempControllerTypeBOMD =
           prm.get("TEMP CONTROLLER TYPE"); 
 
-        dftParameters::UserRestart =
-          prm.get_bool("User Restart");
-
-        dftParameters::PositionRestartFile =
-          prm.get("POSITION RESTART FILE");  
 
         dftParameters::VelocityRestartFile =
           prm.get("VELOCITY RESTART FILE"); 
@@ -1483,6 +1466,8 @@ namespace dftfe
         dftParameters::ForceRestartFile =
           prm.get("FORCE RESTART FILE"); 
 
+        dftParameters::NHCRestartFile = 
+          prm.get("NOSE HOVER THERMOSTAT RESTART FILE");
 
         dftParameters::diracDeltaKernelScalingConstant =
           prm.get_double("DIRAC DELTA KERNEL SCALING CONSTANT XL BOMD");

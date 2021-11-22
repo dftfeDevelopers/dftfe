@@ -31,7 +31,7 @@ namespace dftfe
     , this_mpi_process(Utilities::MPI::this_mpi_process(mpi_comm_replica))
     , pcout(std::cout, (Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0))
       {
-        startingTimeStep        = 0;
+        startingTimeStep        = dftParameters::StartingTimeStep;
         TimeIndex               = 0;
         timeStep                =
                 dftParameters::timeStepBOMD*0.09822694541304546435; // Conversion factor from femteseconds:
@@ -47,6 +47,8 @@ namespace dftfe
                 dftParameters::tempControllerTypeBOMD;
         numberGlobalCharges      = 
                 dftParameters::natoms; 
+        startingTimeStep        =
+                dftParameters::StartingTimeStep;        
         pcout << "----------------------Starting Initialization of BOMD-------------------------" << std::endl;        
         pcout << "Starting Temperature from Input "
               << startingTemperature << std::endl; 
@@ -104,7 +106,7 @@ namespace dftfe
       if (restartFlag == 0 )
       { 
         double KineticEnergy=0.0 , TemperatureFromVelocities = 0.0;
-        if(velocityFlag == false)
+        if(dftParameters::VelocityRestartFile=="")
         { //--------------------Starting Initialization ----------------------------------------------//
         
         double Px=0.0, Py=0.0 , Pz = 0.0;
@@ -184,13 +186,11 @@ namespace dftfe
           }
 
       }
-      else if(velocityFlag ==true)
+      else
       {
-         std::vector<std::vector<double>> t1;
-         dftUtils::readFile(1, t1, "time.inp");
-         startingTimeStep = t1[0][0];
+
         std::vector<std::vector<double>> fileVelData;
-        dftUtils::readFile(3, fileVelData, "velocity.inp");
+        dftUtils::readFile(3, fileVelData, dftParameters::VelocityRestartFile);
         for (int iCharge = 0; iCharge < numberGlobalCharges; ++iCharge)
           {
             velocity[3 * iCharge + 0] = fileVelData[iCharge][0];
@@ -265,13 +265,13 @@ namespace dftfe
           InitialiseFromRestartFile(velocity, force, KineticEnergyVector , InternalEnergyVector , TotalEnergyVector);
           
         }
-        else if(time1 != time2 && dftParameters::UserRestart == 1)
+        else if(time1 != time2 && !(dftParameters::VelocityRestartFile=="") )
         {
           pcout<<"---Reading Inputs from Restart File Specified by user---" <<std::endl;
           InitialiseFromRestartFile(velocity, force, KineticEnergyVector , InternalEnergyVector , TotalEnergyVector);
           
         }
-        else if(time1 != time2 && dftParameters::UserRestart == 0)
+        else if(time1 != time2 && (dftParameters::VelocityRestartFile=="")  )
         {
           pcout<<"---Kindly specify the restart files in the input parameter file --- "<<std::endl;
           AssertThrow(time1 == time2,
@@ -475,7 +475,7 @@ namespace dftfe
         std::vector<double> Thermostatposition(2,0.0);  
         std::vector<double> NoseHoverExtendedLagrangianvector(numberofSteps,0.0);    
         nhctimeconstant = thermostatTimeConstant*timeStep;  
-        if(restartFlag == 0)
+        if(restartFlag == 0 && dftParameters::NHCRestartFile=="")
         {
           ThermostatMass[0] = 3*(numberGlobalCharges-1)*kB*startingTemperature*(nhctimeconstant*nhctimeconstant);
           ThermostatMass[1] = kB*startingTemperature*(nhctimeconstant*nhctimeconstant);
@@ -548,9 +548,10 @@ namespace dftfe
               pcout << " Total Energy in Ha at timeIndex " << TimeIndex << " "
               << TotalEnergyVector[TimeIndex-startingTimeStep] << std::endl;
               pcout << "Nose Hover Extended Lagrangian  in Ha at timeIndex " << TimeIndex << " "
-              << NoseHoverExtendedLagrangianvector[TimeIndex-startingTimeStep] << std::endl;              
+              << NoseHoverExtendedLagrangianvector[TimeIndex-startingTimeStep] << std::endl;   
+              writeRestartNHCfile(Thermostatvelocity,Thermostatposition, ThermostatMass );                         
               writeRestartFile(velocity,force,KineticEnergyVector,InternalEnergyVector,TotalEnergyVector,TimeIndex);
-              writeRestartNHCfile(Thermostatvelocity,Thermostatposition, ThermostatMass );
+
             }
 
 
@@ -930,12 +931,10 @@ namespace dftfe
           
          }
         std::vector<std::vector<double>> t1, KE0, IE0, TE0;
-        std::string s1 = dftParameters::PositionRestartFile;
-        AssertThrow(s1.compare("atomsFracCoordCurrent.chk")==0 ,
-           ExcMessage("DFT-FE Error: Position Restart file not atomsFracCoordCurrent.chk"));
+
         dftUtils::readFile(1, t1, "time.chk");        
         startingTimeStep = t1[0][0];
-        std::string fileName1 = dftParameters::VelocityRestartFile; 
+        std::string fileName1 = (dftParameters::VelocityRestartFile==""?"velocity.chk":dftParameters::VelocityRestartFile); 
         std::vector<std::vector<double>> fileVelData;
         dftUtils::readFile(3, fileVelData, fileName1);
         for (int iCharge = 0; iCharge < numberGlobalCharges; ++iCharge)
@@ -944,7 +943,7 @@ namespace dftfe
             velocity[3 * iCharge + 1] = fileVelData[iCharge][1];
             velocity[3 * iCharge + 2] = fileVelData[iCharge][2];
           }   
-        std::string fileName2 = dftParameters::ForceRestartFile; 
+        std::string fileName2 = (dftParameters::ForceRestartFile==""?"force.chk":dftParameters::ForceRestartFile); 
         std::vector<std::vector<double>> fileForceData;
         dftUtils::readFile(3, fileForceData, fileName2);
         for (int iCharge = 0; iCharge < numberGlobalCharges; ++iCharge)
@@ -961,8 +960,11 @@ namespace dftfe
       KE[0] = KE0[0][0];
       IE[0] = IE0[0][0];
       TE[0] = TE0[0][0];
-      dftPtr->solve(true, false, false, false); 
-      dftPtr->getForceonAtomsfromdftptr(force);
+      if(dftParameters::ForceRestartFile =="")
+      {
+        dftPtr->solve(true, false, false, false); 
+        dftPtr->getForceonAtomsfromdftptr(force);
+      }
 
 
     }                                                        
@@ -974,7 +976,8 @@ namespace dftfe
 
   {
     std::vector<std::vector<double>> NHCData;
-    dftUtils::readFile(3, NHCData, "NHCThermostat.chk");
+    std::string fileName = (dftParameters::NHCRestartFile==""?"NHCThermostat.chk":dftParameters::NHCRestartFile);
+    dftUtils::readFile(3, NHCData, fileName);
     Q[0] = NHCData[0][0];
     Q[1] = NHCData[1][0];
     e[0] = NHCData[0][1];

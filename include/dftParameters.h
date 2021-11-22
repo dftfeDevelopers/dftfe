@@ -119,10 +119,9 @@ namespace dftfe
     extern double       chebyshevFilterPolyDegreeFirstScfScalingFactor;
     extern double       timeStepBOMD;
     extern unsigned int numberStepsBOMD;
-    extern bool         UserRestart;
-    extern std::string  PositionRestartFile;
     extern std::string  VelocityRestartFile;
     extern std::string  ForceRestartFile; 
+    extern std::string  NHCRestartFile;
     extern bool velocityFlag;
     extern unsigned int TotalImages;
     extern unsigned int  solvermode;
@@ -155,6 +154,7 @@ namespace dftfe
     extern bool         gpuMemOptMode;
     //New Paramters for moleculardyynamics class
     extern double startingTempBOMD;
+    extern int StartingTimeStep; 
     extern double thermostatTimeConstantBOMD;
     extern std::string  tempControllerTypeBOMD;    
 
