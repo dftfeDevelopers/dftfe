@@ -233,15 +233,15 @@ namespace dftfe
        
        
         pcout << "---------------MD "<<startingTimeStep<<"th STEP------------------ " <<  std::endl; 
-        pcout << " Temperature from Velocities"
+        pcout << " Temperature from Velocities at timeIndex "<<startingTimeStep
               << TemperatureFromVelocities  << std::endl;
-        pcout << " Kinetic Energy in Ha at timeIndex 0 "
+        pcout << " Kinetic Energy in Ha at timeIndex  "<<startingTimeStep
               << KineticEnergyVector[0] << std::endl;
-        pcout << " Internal Energy in Ha at timeIndex 0 "
+        pcout << " Internal Energy in Ha at timeIndex  "<<startingTimeStep
               << InternalEnergyVector[0] << std::endl;
-        pcout << " Entropic Energy in Ha at timeIndex 0 "
+        pcout << " Entropic Energy in Ha at timeIndex  "<<startingTimeStep
               << EntropicEnergyVector[0] << std::endl;
-        pcout << " Total Energy in Ha at timeIndex 0 "
+        pcout << " Total Energy in Ha at timeIndex  "<<startingTimeStep
               << TotalEnergyVector[0]  << std::endl;
               
 
