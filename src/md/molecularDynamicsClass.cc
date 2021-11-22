@@ -232,7 +232,7 @@ namespace dftfe
           }            
        
        
-        pcout << "---------------MD 0th STEP------------------ " <<  std::endl; 
+        pcout << "---------------MD "<<startingTimeStep<<"th STEP------------------ " <<  std::endl; 
         pcout << " Temperature from Velocities"
               << TemperatureFromVelocities  << std::endl;
         pcout << " Kinetic Energy in Ha at timeIndex 0 "
