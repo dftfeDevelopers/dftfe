@@ -112,6 +112,11 @@ run_problem(const MPI_Comm &    mpi_comm_replica,
                 dftfe::dftClass<n1, n2> problemFE(mpi_comm_replica,
                                     interpoolcomm,
                                     interBandGroupComm, elpaScala);
+                if (dftfe::dftParameters::restartMdFromChk == true)
+                {
+                  
+                }
+
                  setup_dftfe<n1,n2> (elpaScala, problemFE,numberEigenValues,numEigenValuesRR,
                               mpi_comm_replica,interpoolcomm,interBandGroupComm);
 
