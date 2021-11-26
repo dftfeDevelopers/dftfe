@@ -140,7 +140,8 @@ namespace dftfe
      */
     dftClass(const MPI_Comm &mpi_comm_replica,
              const MPI_Comm &interpoolcomm,
-             const MPI_Comm &interBandGroupComm);
+             const MPI_Comm &interBandGroupComm,
+              elpaScalaManager*  _d_elpaScala);
 
     /**
      * @brief dftClass destructor
@@ -1120,7 +1121,7 @@ namespace dftfe
     molecularDynamics<FEOrder, FEOrderElectro> *d_mdPtr;
     //molecularDynamicsClass<FEOrder, FEOrderElectro> *d_mdClassPtr;
 
-    elpaScalaManager d_elpaScala;
+    elpaScalaManager *d_elpaScala;
 
     poissonSolverProblem<FEOrder, FEOrderElectro> d_phiTotalSolverProblem;
 

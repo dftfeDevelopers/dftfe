@@ -44,47 +44,104 @@
 
 using namespace dealii;
 
+template <int n1, int n2>
+void
+setup_dftfe(dftfe::elpaScalaManager*  elpa_Scala, 
+            dftfe::dftClass<n1, n2> & problemFE, 
+            unsigned int & numberEigenValues,
+            unsigned int & numEigenValuesRR,
+            const MPI_Comm &    mpi_comm_replica,
+            const MPI_Comm &    interpoolcomm,
+            const MPI_Comm &    interBandGroupComm,
+            bool flag = true )
+{
+    problemFE.d_numEigenValues = numberEigenValues;    
+    problemFE.set();
+    problemFE.init();
+    numberEigenValues = problemFE.d_numEigenValues;
+    numEigenValuesRR = problemFE.d_numEigenValuesRR;
+    if (flag == true)
+    {          
+      
+      std::cout<<"No. of Eigenvalue: "<<numberEigenValues<<" RR: "<<numEigenValuesRR<<std::endl;
+      elpa_Scala->processGridELPASetup(numberEigenValues,
+                                     numEigenValuesRR,
+                                     interBandGroupComm,
+                                     interpoolcomm);
+
+                                     
+                                    
+
+    }
+}
+
+
+
 // The central DFT-FE run invocation:
 template <int n1, int n2>
 void
 run_problem(const MPI_Comm &    mpi_comm_replica,
             const MPI_Comm &    interpoolcomm,
             const MPI_Comm &    interBandGroupComm,
-            const unsigned int &numberEigenValues)
+            const unsigned int & numberEigenValuesInput)
 {
  
+  dealii::ConditionalOStream pcout(
+      std::cout,
+      (dealii::Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0)); 
+  dftfe::elpaScalaManager *elpaScala;
+  elpaScala = new dftfe::elpaScalaManager(mpi_comm_replica); 
+  int error;
+  if (elpa_init(ELPA_API_VERSION) != ELPA_OK)
+      {
+        fprintf(
+          stderr,
+          "Error: ELPA API version not supported. Use API version 20181113.");
+        exit(1);
+      }
+  unsigned int numberEigenValues = numberEigenValuesInput;  
+  unsigned int numEigenValuesRR ;   
+  
+  
+  
+  
   switch(dftfe::dftParameters::solvermode)
   {
     case 1:
-             { dftfe::dftClass<n1, n2> problemFE(mpi_comm_replica,
+             { 
+                dftfe::dftClass<n1, n2> problemFE(mpi_comm_replica,
                                     interpoolcomm,
-                                    interBandGroupComm);
-              problemFE.d_numEigenValues = numberEigenValues;
-              problemFE.set();
-              problemFE.init(); 
-              dftfe::molecularDynamicsClass<n1,n2> *d_mdClassPtr;             
-              d_mdClassPtr = 
-              new dftfe::molecularDynamicsClass<n1,n2>(&problemFE, mpi_comm_replica);
-              d_mdClassPtr->runMD();
-              delete d_mdClassPtr;
+                                    interBandGroupComm, elpaScala);
+                 setup_dftfe<n1,n2> (elpaScala, problemFE,numberEigenValues,numEigenValuesRR,
+                              mpi_comm_replica,interpoolcomm,interBandGroupComm);
+
+                dftfe::molecularDynamicsClass<n1,n2> *d_mdClassPtr;             
+                d_mdClassPtr = 
+                new dftfe::molecularDynamicsClass<n1,n2>(&problemFE, mpi_comm_replica);
+                d_mdClassPtr->runMD();
+                delete d_mdClassPtr;
               }
     break;
     case 2:
-              {dftfe::dftClass<n1, n2> problemFE(mpi_comm_replica,
-                                    interpoolcomm,
-                                    interBandGroupComm);
-              problemFE.d_numEigenValues = numberEigenValues;}
+              {
+
+              
+              }
     break;
     default:
-            { dftfe::dftClass<n1, n2> problemFE(mpi_comm_replica,
+            { 
+              dftfe::dftClass<n1, n2> problemFE(mpi_comm_replica,
                                     interpoolcomm,
-                                    interBandGroupComm);
-              problemFE.d_numEigenValues = numberEigenValues;                  
-              problemFE.set();
-              problemFE.init();
-              problemFE.run();}
+                                    interBandGroupComm,elpaScala);
+                 setup_dftfe<n1,n2> (elpaScala, problemFE,numberEigenValues,numEigenValuesRR,
+                              mpi_comm_replica,interpoolcomm,interBandGroupComm);
+              problemFE.run();
+              }
   }
- 
+    elpaScala->elpaDeallocateHandles(numberEigenValues, numEigenValuesRR);
+    elpa_uninit(&error);
+    AssertThrow(error == ELPA_OK,
+                dealii::ExcMessage("DFT-FE Error: elpa error."));
 
 }
 

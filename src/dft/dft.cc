@@ -110,7 +110,8 @@ namespace dftfe
   dftClass<FEOrder, FEOrderElectro>::dftClass(
     const MPI_Comm &mpi_comm_replica,
     const MPI_Comm &_interpoolcomm,
-    const MPI_Comm &_interBandGroupComm)
+    const MPI_Comm &_interBandGroupComm,
+    elpaScalaManager*  _d_elpaScala)
     : FE(FE_Q<3>(QGaussLobatto<1>(FEOrder + 1)), 1)
     ,
 #ifdef USE_COMPLEX
@@ -133,7 +134,7 @@ namespace dftfe
     , d_gaussianMovePar(mpi_comm_replica)
     , d_vselfBinsManager(mpi_comm_replica)
     , pcout(std::cout, (Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0))
-    , d_elpaScala(mpi_comm_replica)
+    //, d_elpaScala(mpi_comm_replica)
     , d_kohnShamDFTOperatorsInitialized(false)
     , computing_timer(mpi_comm_replica,
                       pcout,
@@ -155,6 +156,7 @@ namespace dftfe
 #endif
     , d_phiTotalSolverProblem(mpi_comm_replica)
   {
+    d_elpaScala = _d_elpaScala;
     forcePtr = new forceClass<FEOrder, FEOrderElectro>(this, mpi_comm_replica);
     symmetryPtr = new symmetryClass<FEOrder, FEOrderElectro>(this,
                                                              mpi_comm_replica,
@@ -171,8 +173,8 @@ namespace dftfe
 
 
     d_isRestartGroundStateCalcFromChk = false;
+    /*    
     int error;
-
     if (elpa_init(ELPA_API_VERSION) != ELPA_OK)
       {
         fprintf(
@@ -180,6 +182,7 @@ namespace dftfe
           "Error: ELPA API version not supported. Use API version 20181113.");
         exit(1);
       }
+    */  
 
 #if defined(DFTFE_WITH_GPU)
     d_gpucclMpiCommDomainPtr = new GPUCCLWrapper;
@@ -204,7 +207,7 @@ namespace dftfe
     //delete d_mdPtr;
     //delete d_mdClassPtr;
     
-
+  /*
     if (dftParameters::useELPA)
       d_elpaScala.elpaDeallocateHandles(d_numEigenValues, d_numEigenValuesRR);
 
@@ -212,7 +215,7 @@ namespace dftfe
     elpa_uninit(&error);
     AssertThrow(error == ELPA_OK,
                 dealii::ExcMessage("DFT-FE Error: elpa error."));
-
+    */
 #if defined(DFTFE_WITH_GPU)
     delete d_gpucclMpiCommDomainPtr;
 #endif
@@ -738,12 +741,12 @@ namespace dftfe
         pcout
           << "Atleast one atom has pseudopotential with nonlinear core correction"
           << std::endl;
-
+    /*
     d_elpaScala.processGridELPASetup(d_numEigenValues,
                                      d_numEigenValuesRR,
                                      interBandGroupComm,
                                      interpoolcomm);
-
+    */
     MPI_Barrier(MPI_COMM_WORLD);
     computingTimerStandard.leave_subsection("Atomic system initialization");
   }
@@ -1998,7 +2001,7 @@ namespace dftfe
                      kohnShamEigenSpaceOnlyRRCompute(0,
                                                      kPoint,
                                                      kohnShamDFTEigenOperatorCUDA,
-                                                     d_elpaScala,
+                                                     *d_elpaScala,
                                                      d_subspaceIterationSolverCUDA,
                                                      true,
                                                      true);
@@ -2006,7 +2009,7 @@ namespace dftfe
                      kohnShamEigenSpaceOnlyRRCompute(0,
                                                      kPoint,
                                                      kohnShamDFTEigenOperator,
-                                                     d_elpaScala,
+                                                     *d_elpaScala,
                                                      d_subspaceIterationSolver,
                                                      true,
                                                      true);
@@ -2014,7 +2017,7 @@ namespace dftfe
                    kohnShamEigenSpaceOnlyRRCompute(0,
                                                    kPoint,
                                                    kohnShamDFTEigenOperator,
-                                                   d_elpaScala,
+                                                   *d_elpaScala,
                                                    d_subspaceIterationSolver,
                                                    true,
                                                    true);
@@ -2518,7 +2521,7 @@ namespace dftfe
                             s,
                             kPoint,
                             kohnShamDFTEigenOperatorCUDA,
-                            d_elpaScala,
+                            *d_elpaScala,
                             d_subspaceIterationSolverCUDA,
                             residualNormWaveFunctionsAllkPointsSpins[s][kPoint],
                             (scfIter == 0 ||
@@ -2539,7 +2542,7 @@ namespace dftfe
                             s,
                             kPoint,
                             kohnShamDFTEigenOperator,
-                            d_elpaScala,
+                            *d_elpaScala,
                             d_subspaceIterationSolver,
                             residualNormWaveFunctionsAllkPointsSpins[s][kPoint],
                             (scfIter == 0 ||
@@ -2658,7 +2661,7 @@ namespace dftfe
                                 s,
                                 kPoint,
                                 kohnShamDFTEigenOperatorCUDA,
-                                d_elpaScala,
+                                *d_elpaScala,
                                 d_subspaceIterationSolverCUDA,
                                 residualNormWaveFunctionsAllkPointsSpins
                                   [s][kPoint],
@@ -2676,7 +2679,7 @@ namespace dftfe
                                 s,
                                 kPoint,
                                 kohnShamDFTEigenOperator,
-                                d_elpaScala,
+                                *d_elpaScala,
                                 d_subspaceIterationSolver,
                                 residualNormWaveFunctionsAllkPointsSpins
                                   [s][kPoint],
@@ -2841,7 +2844,7 @@ namespace dftfe
                         0,
                         kPoint,
                         kohnShamDFTEigenOperatorCUDA,
-                        d_elpaScala,
+                        *d_elpaScala,
                         d_subspaceIterationSolverCUDA,
                         residualNormWaveFunctionsAllkPoints[kPoint],
                         (scfIter == 0 ||
@@ -2862,7 +2865,7 @@ namespace dftfe
                         0,
                         kPoint,
                         kohnShamDFTEigenOperator,
-                        d_elpaScala,
+                        *d_elpaScala,
                         d_subspaceIterationSolver,
                         residualNormWaveFunctionsAllkPoints[kPoint],
                         (scfIter == 0 ||
@@ -2956,7 +2959,7 @@ namespace dftfe
                             0,
                             kPoint,
                             kohnShamDFTEigenOperatorCUDA,
-                            d_elpaScala,
+                            *d_elpaScala,
                             d_subspaceIterationSolverCUDA,
                             residualNormWaveFunctionsAllkPoints[kPoint],
                             true,
@@ -2974,7 +2977,7 @@ namespace dftfe
                             0,
                             kPoint,
                             kohnShamDFTEigenOperator,
-                            d_elpaScala,
+                            *d_elpaScala,
                             d_subspaceIterationSolver,
                             residualNormWaveFunctionsAllkPoints[kPoint],
                             true,
