@@ -1203,7 +1203,7 @@ namespace dftfe
         chkType        = prm.get_integer("CHK TYPE");
         restartFromChk = prm.get_bool("RESTART FROM CHK") && chkType != 0;
         restartSpinFromNoSpin = prm.get_bool("RESTART SP FROM NO SP");
-        restartMdFromChk = prm.get_bool("RESTART MD FROM CHK") && chkType != 0;
+        restartMdFromChk = prm.get_bool("RESTART MD FROM CHK"); //&& chkType != 0;
       }
       prm.leave_subsection();
 

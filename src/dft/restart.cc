@@ -570,3 +570,144 @@ dftClass<FEOrder, FEOrderElectro>::writeDomainAndAtomCoordinates()
                                   "atomsGaussianDispCoord.chk");
     }
 }
+
+template <unsigned int FEOrder, unsigned int FEOrderElectro>
+void
+dftClass<FEOrder, FEOrderElectro>::MDwriteDomainAndAtomCoordinates(std::string Path)
+{
+  dftUtils::writeDataIntoFile(d_domainBoundingVectors,
+                              Path + "domainBoundingVectorsCurrent.chk");
+
+  std::vector<std::vector<double>> atomLocationsFractionalCurrent;
+  if (dftParameters::periodicX || dftParameters::periodicY ||
+      dftParameters::periodicZ)
+    {
+      atomLocationsFractionalCurrent = atomLocationsFractional;
+      const int                        numberGlobalAtoms = atomLocations.size();
+      std::vector<double>              latticeVectorsFlattened(9, 0.0);
+      std::vector<std::vector<double>> atomFractionalCoordinates;
+      for (unsigned int idim = 0; idim < 3; idim++)
+        for (unsigned int jdim = 0; jdim < 3; jdim++)
+          latticeVectorsFlattened[3 * idim + jdim] =
+            d_domainBoundingVectors[idim][jdim];
+      Point<3> corner;
+      for (unsigned int idim = 0; idim < 3; idim++)
+        {
+          corner[idim] = 0;
+          for (unsigned int jdim = 0; jdim < 3; jdim++)
+            corner[idim] -= d_domainBoundingVectors[jdim][idim] / 2.0;
+        }
+
+      std::vector<bool> periodicBc(3, false);
+      periodicBc[0] = dftParameters::periodicX;
+      periodicBc[1] = dftParameters::periodicY;
+      periodicBc[2] = dftParameters::periodicZ;
+
+      if (!dftParameters::floatingNuclearCharges)
+        {
+          for (unsigned int iAtom = 0; iAtom < numberGlobalAtoms; iAtom++)
+            {
+              Point<3> atomCoor;
+              int      atomId = iAtom;
+              atomCoor[0]     = d_atomLocationsAutoMesh[iAtom][0];
+              atomCoor[1]     = d_atomLocationsAutoMesh[iAtom][1];
+              atomCoor[2]     = d_atomLocationsAutoMesh[iAtom][2];
+
+              std::vector<double> newFracCoord =
+                internal::wrapAtomsAcrossPeriodicBc(atomCoor,
+                                                    corner,
+                                                    latticeVectorsFlattened,
+                                                    periodicBc);
+              // for synchrozination
+              MPI_Bcast(&(newFracCoord[0]), 3, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+
+              atomLocationsFractional[iAtom][2] = newFracCoord[0];
+              atomLocationsFractional[iAtom][3] = newFracCoord[1];
+              atomLocationsFractional[iAtom][4] = newFracCoord[2];
+            }
+        }
+      else
+        {
+          for (unsigned int iAtom = 0; iAtom < numberGlobalAtoms; iAtom++)
+            {
+              Point<3> atomCoor;
+              int      atomId = iAtom;
+              atomCoor[0]     = atomLocations[iAtom][2];
+              atomCoor[1]     = atomLocations[iAtom][3];
+              atomCoor[2]     = atomLocations[iAtom][4];
+
+              std::vector<double> newFracCoord =
+                internal::wrapAtomsAcrossPeriodicBc(atomCoor,
+                                                    corner,
+                                                    latticeVectorsFlattened,
+                                                    periodicBc);
+              // for synchrozination
+              MPI_Bcast(&(newFracCoord[0]), 3, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+
+              atomLocationsFractionalCurrent[iAtom][2] = newFracCoord[0];
+              atomLocationsFractionalCurrent[iAtom][3] = newFracCoord[1];
+              atomLocationsFractionalCurrent[iAtom][4] = newFracCoord[2];
+            }
+        }
+    }
+
+  std::vector<std::vector<double>> atomLocationsAutoMesh = atomLocations;
+  if (!dftParameters::floatingNuclearCharges)
+    for (unsigned int iAtom = 0; iAtom < d_atomLocationsAutoMesh.size();
+         iAtom++)
+      {
+        atomLocationsAutoMesh[iAtom][2] = d_atomLocationsAutoMesh[iAtom][0];
+        atomLocationsAutoMesh[iAtom][3] = d_atomLocationsAutoMesh[iAtom][1];
+        atomLocationsAutoMesh[iAtom][4] = d_atomLocationsAutoMesh[iAtom][2];
+      }
+#ifdef USE_COMPLEX
+  if (!dftParameters::floatingNuclearCharges)
+    dftUtils::writeDataIntoFile(atomLocationsFractional,
+                                Path +"atomsFracCoordAutomesh.chk");
+
+  dftUtils::writeDataIntoFile(atomLocationsFractionalCurrent,
+                              Path +"atomsFracCoordCurrent.chk");
+#else
+  if (dftParameters::periodicX || dftParameters::periodicY ||
+      dftParameters::periodicZ)
+    {
+      if (!dftParameters::floatingNuclearCharges)
+        dftUtils::writeDataIntoFile(atomLocationsFractional,
+                                    Path +"atomsFracCoordAutomesh.chk");
+
+      dftUtils::writeDataIntoFile(atomLocationsFractionalCurrent,
+                                  Path +"atomsFracCoordCurrent.chk");
+    }
+  else
+    {
+      if (!dftParameters::floatingNuclearCharges)
+        dftUtils::writeDataIntoFile(atomLocationsAutoMesh,
+                                    Path +"atomsCartCoordAutomesh.chk");
+
+      dftUtils::writeDataIntoFile(atomLocations, Path +"atomsCartCoordCurrent.chk");
+    }
+#endif
+
+  if (!dftParameters::floatingNuclearCharges)
+    {
+      if (dftParameters::periodicX || dftParameters::periodicY ||
+          dftParameters::periodicZ)
+        {
+          atomLocationsFractional = atomLocationsFractionalCurrent;
+        }
+
+      //
+      // write Gaussian atomic displacements
+      //
+      std::vector<std::vector<double>> atomsDisplacementsGaussian(
+        d_atomLocationsAutoMesh.size(), std::vector<double>(3, 0.0));
+      for (int i = 0; i < atomsDisplacementsGaussian.size(); ++i)
+        for (int j = 0; j < 3; ++j)
+          atomsDisplacementsGaussian[i][j] =
+            d_gaussianMovementAtomsNetDisplacements[i][j];
+
+      dftUtils::writeDataIntoFile(atomsDisplacementsGaussian,
+                                  Path +"atomsGaussianDispCoord.chk");
+    }
+}
+

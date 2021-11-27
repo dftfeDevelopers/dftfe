@@ -102,10 +102,14 @@ namespace dftfe
         std::vector<double> TotalEnergyVector(numberofSteps, 0.0);   
         double totMass = 0.0; 
         double velocityDistribution;            
-        restartFlag = ((dftParameters::chkType == 1 || dftParameters::chkType == 3) &&
-       dftParameters::restartMdFromChk) ?        1 :        0; // 1; //0;//1;
+      /*  restartFlag = ((dftParameters::chkType == 1 || dftParameters::chkType == 3) &&
+       dftParameters::restartMdFromChk) ?        1 :        0; // 1; //0;//1;*/
+       restartFlag = dftParameters::restartMdFromChk ? 1: 0;
+       pcout<<"REstartFlag: "<<restartFlag<<std::endl;
       if (restartFlag == 0 )
       { 
+        std::string tempfolder = "mdRestart";
+        mkdir(tempfolder.c_str(), ACCESSPERMS);        
         double KineticEnergy=0.0 , TemperatureFromVelocities = 0.0;
         if(dftParameters::VelocityRestartFile=="")
         { //--------------------Starting Initialization ----------------------------------------------//
@@ -185,8 +189,7 @@ namespace dftfe
           {
             velocity[i] = gamma * velocity[i];
           }
-          std::string tempFolder = "mdRestart";
-          mkdir(tempFolder.c_str(), ACCESSPERMS);
+
       }
       else
       {
@@ -254,31 +257,9 @@ namespace dftfe
 
       else if(restartFlag == 1)
       {
-       std::vector<std::vector<double>> t1,t2;
-        int time1, time2;
 
-        dftUtils::readFile(1, t1, "time.chk");
-        dftUtils::readFile(1, t2, "time.chk.old");
-        time1 = t1[0][0];
-        time2 = t2[0][0];        
-        if(time1 == time2)
-        {
-          pcout<<"---Reading Inputs from Restart File---" <<std::endl;
           InitialiseFromRestartFile(velocity, force, KineticEnergyVector , InternalEnergyVector , TotalEnergyVector);
-          
-        }
-        else if(time1 != time2 && !(dftParameters::VelocityRestartFile=="") )
-        {
-          pcout<<"---Reading Inputs from Restart File Specified by user---" <<std::endl;
-          InitialiseFromRestartFile(velocity, force, KineticEnergyVector , InternalEnergyVector , TotalEnergyVector);
-          
-        }
-        else if(time1 != time2 && (dftParameters::VelocityRestartFile=="")  )
-        {
-          pcout<<"---Kindly specify the restart files in the input parameter file --- "<<std::endl;
-          AssertThrow(time1 == time2,
-           ExcMessage("DFT-FE Error: Restart Files are corrupted"));           
-        }
+     
       }  
 
 //--------------------Choosing Ensemble ----------------------------------------------//
@@ -447,6 +428,7 @@ namespace dftfe
               pcout << " Total Energy in Ha at timeIndex " << TimeIndex << " "
               << TotalEnergyVector[TimeIndex-startingTimeStep] << std::endl;
               writeRestartFile(velocity,force,KineticEnergyVector,InternalEnergyVector,TotalEnergyVector,TimeIndex);
+              writeTotalDisplacementFile(displacements,TimeIndex);
             }
 
 
@@ -553,7 +535,7 @@ namespace dftfe
               << NoseHoverExtendedLagrangianvector[TimeIndex-startingTimeStep] << std::endl;   
               writeRestartNHCfile(Thermostatvelocity,Thermostatposition, ThermostatMass );                         
               writeRestartFile(velocity,force,KineticEnergyVector,InternalEnergyVector,TotalEnergyVector,TimeIndex);
-
+              writeTotalDisplacementFile(displacements,TimeIndex);
             }
 
 
@@ -632,6 +614,7 @@ namespace dftfe
               pcout << " Total Energy in Ha at timeIndex " << TimeIndex << " "
               << TotalEnergyVector[TimeIndex-startingTimeStep] << std::endl;
               writeRestartFile(velocity,force,KineticEnergyVector,InternalEnergyVector,TotalEnergyVector,TimeIndex);
+              writeTotalDisplacementFile(displacements,TimeIndex);
             }
 
 
@@ -701,7 +684,7 @@ namespace dftfe
         MPI_Barrier(MPI_COMM_WORLD);
 
         update_time = MPI_Wtime() - update_time;
-        writeTotalDisplacementFile(r);
+        
         if (dftParameters::verbosity >= 1)
           pcout << "Time taken for updateAtomPositionsAndMoveMesh: "
                 << update_time << std::endl;
@@ -872,8 +855,11 @@ namespace dftfe
 
     
     timeIndexData[0][0] = double(time);
-    std::string tempfolder = "mdRestart";  
-    std::string newFolder3 = tempfolder + "/" + "time.chk";
+    std::string Folder = "mdRestart/Step";
+    std::string tempfolder = Folder +  std::to_string(time);
+    mkdir(tempfolder.c_str(), ACCESSPERMS); 
+    Folder = "mdRestart";
+    std::string newFolder3 = Folder + "/" + "time.chk";
     dftUtils::writeDataIntoFile(timeIndexData, newFolder3);  
     KEData[0][0]    = KineticEnergyVector[time-startingTimeStep];
     IEData[0][0] = InternalEnergyVector[time - startingTimeStep];
@@ -897,8 +883,8 @@ namespace dftfe
         fileVelocityData[iCharge][1] = velocity[3 * iCharge + 1];
         fileVelocityData[iCharge][2] = velocity[3 * iCharge + 2];
       }      
-
-    dftPtr->writeDomainAndAtomCoordinates(); 
+    std::string cordFolder = tempfolder + "/";
+    dftPtr->MDwriteDomainAndAtomCoordinates(cordFolder); 
     if(time > 1)
     pcout << "#RESTART NOTE: Positions:-" << " Positions of TimeStep: "<<time<<" present in file atomsFracCoordCurrent.chk"<< std::endl
           <<" Positions of TimeStep: "<<time-1<<" present in file atomsFracCoordCurrent.chk.old #"<< std::endl;
@@ -940,11 +926,10 @@ namespace dftfe
              }         
           
          }
-         std::string tempfolder = "mdRestart";
+          std::string Folder = "mdRestart";
+          
         std::vector<std::vector<double>> t1, KE0, IE0, TE0;
-        std::string newFolder3 = tempfolder + "/" + "time.chk";
-        dftUtils::readFile(1, t1, newFolder3);        
-        startingTimeStep = t1[0][0];
+        std::string tempfolder = Folder + "/Step" + std::to_string(startingTimeStep);
         std::string fileName1 = (dftParameters::VelocityRestartFile=="" ? "velocity.chk":dftParameters::VelocityRestartFile); 
         std::string newFolder1 = tempfolder + "/" + fileName1;
         std::vector<std::vector<double>> fileVelData;
@@ -975,12 +960,24 @@ namespace dftfe
       KE[0] = KE0[0][0];
       IE[0] = IE0[0][0];
       TE[0] = TE0[0][0];
+      /*
       if(dftParameters::ForceRestartFile =="")
       {
         dftPtr->solve(true, false, false, false); 
         dftPtr->getForceonAtomsfromdftptr(force);
       }
+      */
+      
+      if(this_mpi_process == 0)
+      {
+        std::string oldFolder1 = "./mdRestart/Step";
+                  oldFolder1 = oldFolder1 + std::to_string(startingTimeStep) + "/TotalDisplacement.chk";
+        std::string oldFolder2 = "./mdRestart/Step";
+                  oldFolder2 = oldFolder2 + std::to_string(startingTimeStep) + "/Displacement.chk";                  
 
+        dftUtils::copyFile(oldFolder1,".");
+        dftUtils::copyFile(oldFolder2,".");
+      }
 
     }                                                        
 
@@ -1027,7 +1024,7 @@ namespace dftfe
    }                                                         
     template <unsigned int FEOrder, unsigned int FEOrderElectro>
     void    
-    molecularDynamicsClass<FEOrder, FEOrderElectro>::writeTotalDisplacementFile(std::vector<dealii::Tensor<1, 3, double>> r)
+    molecularDynamicsClass<FEOrder, FEOrderElectro>::writeTotalDisplacementFile(std::vector<dealii::Tensor<1, 3, double>> r, int time)
     {
       std::vector<std::vector<double>>fileDisplacementData; 
       dftUtils::readFile(3, fileDisplacementData, "Displacement.chk");
@@ -1057,7 +1054,17 @@ namespace dftfe
           }
           outfile.close();
       } 
-
+     if(this_mpi_process == 0) 
+     {
+        std::string oldpath = "TotalDisplacement.chk";
+        std::string newpath = "./mdRestart/Step";
+                 newpath = newpath + std::to_string(time) + "/."; 
+        dftUtils::copyFile(oldpath,newpath); 
+        std::string oldpath2 = "Displacement.chk";
+        std::string newpath2 = "./mdRestart/Step";
+                 newpath2 = newpath2 + std::to_string(time) + "/."; 
+        dftUtils::copyFile(oldpath2,newpath2);  
+     }          
 
     }
     template <unsigned int FEOrder, unsigned int FEOrderElectro>

@@ -22,6 +22,7 @@
 #include <fstream>
 #include <iostream>
 #include <sstream>
+#include <filesystem>
 
 namespace dftfe
 {
@@ -196,6 +197,22 @@ namespace dftfe
         }
     }
 
+    void
+    copyFile(const std::string &pathold, const std::string &pathnew)
+    {
+      //std::filesystem::copy_file(pathold,pathnew);
+      int error = system(("cp -f " + pathold + " " + pathnew).c_str());
+      if(error != 0)
+        std::cout<<"Copy failed"<<std::endl;
+
+      // If the above call failed, e.g. because there is no command-line
+      // available, try with internal functions.
+
+    }    
+
+    
+    
+    
     void
     verifyCheckpointFileExists(const std::string &filename)
     {

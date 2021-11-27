@@ -295,6 +295,9 @@ namespace dftfe
      */
     void
     writeDomainAndAtomCoordinates();
+
+    void
+    MDwriteDomainAndAtomCoordinates(std::string Path);
     
     void
     getAtomLocationsfromdftptr(std::vector<std::vector<double>> &);

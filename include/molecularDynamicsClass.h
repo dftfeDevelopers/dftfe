@@ -32,7 +32,8 @@ namespace dftfe
         const double bohrToAng           = 0.529177210903;
         const double AngTobohr           = 1.0 / bohrToAng;
         const double kB                  = 8.617333262e-05; // eV/K **3.166811429e-6**;
-
+        
+        unsigned int startingTimeStep;
     /**
      * @brief runMD: Assign atom mass to charge. Create vectors for displacement, velocity, force. 
      * Create KE vector, TE vector, PE vector. Initialise velocities from Boltsmann distribution. 
@@ -71,7 +72,6 @@ namespace dftfe
         unsigned int numberGlobalCharges;
         unsigned int numberofAtomTypes;    
         double timeStep;
-        unsigned int startingTimeStep;
         unsigned int TimeIndex;
         unsigned int numberofSteps;
         double startingTemperature;
@@ -272,7 +272,7 @@ namespace dftfe
 
         void InitialiseFromRestartNHCFile( std::vector<double> &, std::vector<double> & , std::vector<double> &   );  
 
-        void writeTotalDisplacementFile(std::vector<dealii::Tensor<1, 3, double>>) ;  
+        void writeTotalDisplacementFile(std::vector<dealii::Tensor<1, 3, double>> , int ) ;  
 
         /**
 

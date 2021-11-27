@@ -28,7 +28,7 @@
 #include <cudaHelpers.h>
 #include <dftParameters.h>
 #include <dftUtils.h>
-
+#include <fileReaders.h>
 #include "constants.h"
 #include "dft.h"
 #include "molecularDynamicsClass.h"
@@ -41,6 +41,8 @@
 #include <fstream>
 #include <iostream>
 #include <list>
+#include <sstream>
+#include <sys/stat.h>
 
 using namespace dealii;
 
@@ -63,7 +65,6 @@ setup_dftfe(dftfe::elpaScalaManager*  elpa_Scala,
     if (flag == true)
     {          
       
-      std::cout<<"No. of Eigenvalue: "<<numberEigenValues<<" RR: "<<numEigenValuesRR<<std::endl;
       elpa_Scala->processGridELPASetup(numberEigenValues,
                                      numEigenValuesRR,
                                      interBandGroupComm,
@@ -112,19 +113,47 @@ run_problem(const MPI_Comm &    mpi_comm_replica,
                 dftfe::dftClass<n1, n2> problemFE(mpi_comm_replica,
                                     interpoolcomm,
                                     interBandGroupComm, elpaScala);
-                if (dftfe::dftParameters::restartMdFromChk == true)
+                std::vector<std::vector<double>> t1;
+                int time1;                                    
+
+                if (dftfe::dftParameters::restartMdFromChk)
                 {
+                  pcout<<" MD is in Restart Mode"<<std::endl;
+ 
+                  dftfe::dftUtils::readFile(1, t1, "mdRestart/time.chk");
+                  time1 = t1[0][0];
+                  std::string tempfolder = "mdRestart/Step";
+                  bool flag = false;
+                  std::string path2 = tempfolder + std::to_string(time1);
+                  pcout<<"Looking for files of TimeStep "<<time1<<" at: "<<path2<<std::endl;
+                  while(!flag && time1 > 1)
+                  {
+                    std::string path = tempfolder + std::to_string(time1);
+                    std::string file1 = path + "/atomsFracCoordCurrent.chk";
+                    std::string file2 = path + "/velocity.chk";
+                    std::ifstream       readFile1(file1.c_str());
+                    std::ifstream       readFile2(file2.c_str());
+                    pcout<<" Restart folders:"<<(!readFile1.fail() && !readFile2.fail())<<std::endl;
+                    if (!readFile1.fail() && !readFile2.fail())
+                    {
+                      flag = true;
+                      dftfe::dftParameters::coordinatesFile=file1;
+                      pcout<<" Restart files are found in: "<<path<<std::endl;
+                    }
+                  else
+                    pcout<< "----Error opening restart files present in: "<<path<< std::endl<<"Switching to time: "<<--time1
+                          <<" ----"<<std::endl;                  
                   
+                  }
+
                 }
 
                  setup_dftfe<n1,n2> (elpaScala, problemFE,numberEigenValues,numEigenValuesRR,
                               mpi_comm_replica,interpoolcomm,interBandGroupComm);
+                dftfe::molecularDynamicsClass<n1,n2> mdClass(&problemFE, mpi_comm_replica); 
+                mdClass.startingTimeStep = time1;          
+                mdClass.runMD();
 
-                dftfe::molecularDynamicsClass<n1,n2> *d_mdClassPtr;             
-                d_mdClassPtr = 
-                new dftfe::molecularDynamicsClass<n1,n2>(&problemFE, mpi_comm_replica);
-                d_mdClassPtr->runMD();
-                delete d_mdClassPtr;
               }
     break;
     case 2:

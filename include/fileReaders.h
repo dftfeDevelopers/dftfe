@@ -74,6 +74,12 @@ namespace dftfe
     moveFile(const std::string &old_name, const std::string &new_name);
 
     /**
+     * @brief copy file.
+     */
+    void
+    copyFile(const std::string &pathold, const std::string &pathnew);    
+
+    /**
      * @brief Verify if checkpoint file exists.
      */
     void
