@@ -1467,7 +1467,7 @@ namespace dftfe
       }
     else
       {
-        initNoRemesh(false, true, false, true);
+        initNoRemesh(true, true, false, true);
       }
   }
 
