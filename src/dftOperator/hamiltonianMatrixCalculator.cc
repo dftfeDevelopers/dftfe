@@ -731,15 +731,10 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::computeHamiltonianMatrix(
       // compute cell-level stiffness matrix by going over dealii macrocells
       // which allows efficient integration of cell-level stiffness matrix
       // integrals using dealii vectorized arrays
-      unsigned int iElem = 0;
-      for (unsigned int iMacroCell = 0; iMacroCell < numberMacroCells;
-           ++iMacroCell)
+  
+      for(unsigned int iElem = 0; iElem < totalLocallyOwnedCells; ++iElem)
         {
-          const unsigned int n_sub_cells =
-            dftPtr->matrix_free_data.n_components_filled(iMacroCell);
-
-          for (unsigned int iSubCell = 0; iSubCell < n_sub_cells; ++iSubCell)
-            {
+         
               // FIXME: Use functions like mkl_malloc for 64 byte memory
               // alignment.
               d_cellHamiltonianMatrix[kpointSpinIndex][iElem].resize(
@@ -763,12 +758,7 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::computeHamiltonianMatrix(
                                 kSquareTimesHalf *
                                   d_NiNjIntegral[sizeNiNj * iElem + count]);
 
-                      // d_cellHamiltonianMatrix
-                      //[kpointSpinIndex][iElem]
-                      //[numberDofsPerElement * iNode + jNode]
-                      //  .imag(elementHamiltonianMatrixImag
-                      //          [totalLocallyOwnedCells * count + iElem]);
-
+                 
 #else
                       d_cellHamiltonianMatrix
                         [kpointSpinIndex][iElem]
@@ -827,11 +817,7 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::computeHamiltonianMatrix(
                                              [numberDofsPerElement * jNode +
                                               iNode];
 
-              // std::conj(
-              // d_cellHamiltonianMatrix[kpointSpinIndex][iElem]
-              //                       [numberDofsPerElement * jNode +
-              //                        iNode]);
-
+             
               count = 0;
               for (unsigned int iNode = 0; iNode < numberDofsPerElement;
                    ++iNode)
@@ -859,18 +845,14 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::computeHamiltonianMatrix(
                                               iNode];
 #endif
 
-              iElem += 1;
-            }
-
-
-
-        } // macrocell loop
+      
+        } // cell loop
     }
   computingTimerStandard.leave_subsection(
     "Elemental Hamiltonian matrix computation on CPU");
 }
 
-
+//This piece of code needs to be changed later when required as this is still in macrocell subcell mode
 template <unsigned int FEOrder, unsigned int FEOrderElectro>
 void
 kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::computeKineticMatrix()
