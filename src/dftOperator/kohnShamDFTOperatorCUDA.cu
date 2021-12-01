@@ -1502,7 +1502,7 @@ namespace dftfe
 
               d_vEffJxW[iElemCount * numberQuadraturePoints + q] =
                 d_vEff[iElemCount * numberQuadraturePoints + q] *
-                d_cellJxWValues(iElemCount * numberQuadraturePoints + q);
+                d_cellJxWValues[iElemCount * numberQuadraturePoints + q];
             }
 
           iElemCount++;
@@ -1605,7 +1605,7 @@ namespace dftfe
           for (unsigned int q = 0; q < numberQuadraturePoints; ++q)
             {
               const double jxw =
-                d_cellJxWValues(iElemCount * numberQuadraturePoints + q);
+                d_cellJxWValues[iElemCount * numberQuadraturePoints + q];
               const double gradRhoX = gradDensityValue[3 * q + 0];
               const double gradRhoY = gradDensityValue[3 * q + 1];
               const double gradRhoZ = gradDensityValue[3 * q + 2];
@@ -1632,7 +1632,7 @@ namespace dftfe
 
               d_vEffJxW[iElemCount * numberQuadraturePoints + q] =
                 d_vEff[iElemCount * numberQuadraturePoints + q] *
-                d_cellJxWValues(iElemCount * numberQuadraturePoints + q);
+                d_cellJxWValues[iElemCount * numberQuadraturePoints + q];
             }
 
           iElemCount++;
@@ -1715,7 +1715,7 @@ namespace dftfe
 
               d_vEffJxW[iElemCount * numberQuadraturePoints + q] =
                 d_vEff[iElemCount * numberQuadraturePoints + q] *
-                d_cellJxWValues(iElemCount * numberQuadraturePoints + q);
+                d_cellJxWValues[iElemCount * numberQuadraturePoints + q];
             }
 
           iElemCount++;
@@ -1836,7 +1836,7 @@ namespace dftfe
           for (unsigned int q = 0; q < numberQuadraturePoints; ++q)
             {
               const double jxw =
-                d_cellJxWValues(iElemCount * numberQuadraturePoints + q);
+                d_cellJxWValues[iElemCount * numberQuadraturePoints + q];
               const double gradRhoX =
                 gradDensityValue[6 * q + 0 + 3 * spinIndex];
               const double gradRhoY =
@@ -1876,7 +1876,7 @@ namespace dftfe
 
               d_vEffJxW[iElemCount * numberQuadraturePoints + q] =
                 d_vEff[iElemCount * numberQuadraturePoints + q] *
-                d_cellJxWValues(iElemCount * numberQuadraturePoints + q);
+                d_cellJxWValues[iElemCount * numberQuadraturePoints + q];
             }
 
           iElemCount++;
