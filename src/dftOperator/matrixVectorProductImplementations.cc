@@ -122,6 +122,9 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::
 						   numberWaveFunctions,
                                                    0.0);
 
+  const unsigned int totalLocallyOwnedCells =
+    dftPtr->matrix_free_data.n_physical_cells();
+
   unsigned int iElem = 0;
   for (unsigned int iCell = 0; iCell < totalLocallyOwnedCells;
        ++iCell)

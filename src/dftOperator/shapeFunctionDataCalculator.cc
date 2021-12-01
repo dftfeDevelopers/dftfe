@@ -114,15 +114,14 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::
 
 
 
-  typename dealii::DoFHandler<3>::active_cell_iterator cellPtr = dftPtr->matrix_free_data.get_dof_handler(d_densityDofHandlerIndex).begin_active(),
-    endcellPtr = dftPtr->matrix_free_data.get_dof_handler(d_densityDofHandlerIndex).end();
+  typename dealii::DoFHandler<3>::active_cell_iterator cellPtr = dftPtr->matrix_free_data.get_dof_handler(dftPtr->d_densityDofHandlerIndex).begin_active(),
+    endcellPtr = dftPtr->matrix_free_data.get_dof_handler(dftPtr->d_densityDofHandlerIndex).end();
   
   //
   // compute cell-level shapefunctiongradientintegral generator by going over
   // dealii macrocells which allows efficient integration of cell-level matrix
   // integrals using dealii vectorized arrays
   unsigned int iElemCount = 0;
-  //for (int iMacroCell = 0; iMacroCell < numberMacroCells; ++iMacroCell)
   for (; cellPtr != endcellPtr; ++cellPtr)
     {
       //unsigned int n_sub_cells =

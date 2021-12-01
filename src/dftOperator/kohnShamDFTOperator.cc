@@ -1751,7 +1751,7 @@ namespace dftfe
     std::vector<double> sigmaValue(3 * numberQuadraturePoints);
 
 
-    typename dealii::DoFHandler<3>::active_cell_iterator cellPtr dftPtr->dofHandler
+    typename dealii::DoFHandler<3>::active_cell_iterator cellPtr = dftPtr->dofHandler
                                                         .begin_active(),
                                                endcellPtr = dftPtr->dofHandler.end();
 
