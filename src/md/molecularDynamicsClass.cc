@@ -33,6 +33,9 @@ namespace dftfe
     , this_mpi_process(Utilities::MPI::this_mpi_process(mpi_comm_replica))
     , pcout(std::cout, (Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0))
       {
+        
+        MPI_Barrier(MPI_COMM_WORLD);
+        d_MDstartWallTime = MPI_Wtime();
         startingTimeStep        = dftParameters::StartingTimeStep;
         TimeIndex               = 0;
         timeStep                =
@@ -304,7 +307,7 @@ namespace dftfe
         double TemperatureFromVelocities;
         for(TimeIndex=startingTimeStep+1; TimeIndex < startingTimeStep+numberofSteps;TimeIndex++)
         {       
-            double step_time;
+            double step_time,curr_time;
             MPI_Barrier(MPI_COMM_WORLD);
             step_time = MPI_Wtime();   
 
@@ -350,9 +353,15 @@ namespace dftfe
               << std::endl;
               pcout << " Total Energy in Ha at timeIndex " << TimeIndex << " "
               << TotalEnergyVector[TimeIndex-startingTimeStep] << std::endl;
-              writeRestartFile(velocity,force,KineticEnergyVector,InternalEnergyVector,TotalEnergyVector,TimeIndex);
+             
             }
+            writeRestartFile(velocity,force,KineticEnergyVector,InternalEnergyVector,TotalEnergyVector,TimeIndex);
+            writeTotalDisplacementFile(displacements,TimeIndex);
 
+            MPI_Barrier(MPI_COMM_WORLD);
+            curr_time = MPI_Wtime() - d_MDstartWallTime;
+            AssertThrow(std::fabs(MaxWallTime -(curr_time + 1.05*step_time) ) > 0.00001,
+             ExcMessage("DFT-FE Exit: Max Wall Time exceeded User Limit"));
 
         }
 
@@ -375,7 +384,7 @@ namespace dftfe
         double TemperatureFromVelocities;
         for(TimeIndex=startingTimeStep+1; TimeIndex< startingTimeStep+numberofSteps;TimeIndex++)
         {       
-            double step_time;
+            double step_time,curr_time;
             MPI_Barrier(MPI_COMM_WORLD);
             step_time = MPI_Wtime();   
 
@@ -427,10 +436,15 @@ namespace dftfe
               << std::endl;
               pcout << " Total Energy in Ha at timeIndex " << TimeIndex << " "
               << TotalEnergyVector[TimeIndex-startingTimeStep] << std::endl;
-              writeRestartFile(velocity,force,KineticEnergyVector,InternalEnergyVector,TotalEnergyVector,TimeIndex);
-              writeTotalDisplacementFile(displacements,TimeIndex);
-            }
 
+            }
+            writeRestartFile(velocity,force,KineticEnergyVector,InternalEnergyVector,TotalEnergyVector,TimeIndex);
+            writeTotalDisplacementFile(displacements,TimeIndex);
+
+            MPI_Barrier(MPI_COMM_WORLD);
+            curr_time = MPI_Wtime() - d_MDstartWallTime;
+            AssertThrow(std::fabs(MaxWallTime -(curr_time + 1.05*step_time) ) > 0.00001,
+             ExcMessage("DFT-FE Exit: Max Wall Time exceeded User Limit"));
 
         }
 
@@ -473,7 +487,7 @@ namespace dftfe
         
          for(TimeIndex=startingTimeStep+1; TimeIndex < startingTimeStep+numberofSteps;TimeIndex++)
         {       
-            double step_time;
+            double step_time,curr_time;
             MPI_Barrier(MPI_COMM_WORLD);
             step_time = MPI_Wtime();   
             NoseHoverChains(velocity, Thermostatvelocity,Thermostatposition, ThermostatMass,KineticEnergyVector[TimeIndex-1-startingTimeStep]*haToeV,startingTemperature);
@@ -501,8 +515,7 @@ namespace dftfe
                                                 KineticEnergyVector[TimeIndex-startingTimeStep],TotalEnergyVector[TimeIndex-startingTimeStep],TemperatureFromVelocities);                            
 
             //Based on verbose print required MD details...
-            MPI_Barrier(MPI_COMM_WORLD);
-            step_time = MPI_Wtime() - step_time;
+
             if (dftParameters::verbosity >= 1)
               {
                 pcout << "Velocity of atoms " << std::endl;
@@ -515,6 +528,8 @@ namespace dftfe
                   }         
           
               }             
+            MPI_Barrier(MPI_COMM_WORLD);
+            step_time = MPI_Wtime() - step_time;              
             if (dftParameters::verbosity >= 1)
             { 
               pcout << "---------------MD STEP: "<<TimeIndex<<" ------------------ " <<  std::endl;
@@ -533,11 +548,17 @@ namespace dftfe
               << TotalEnergyVector[TimeIndex-startingTimeStep] << std::endl;
               pcout << "Nose Hover Extended Lagrangian  in Ha at timeIndex " << TimeIndex << " "
               << NoseHoverExtendedLagrangianvector[TimeIndex-startingTimeStep] << std::endl;   
-              writeRestartNHCfile(Thermostatvelocity,Thermostatposition, ThermostatMass );                         
-              writeRestartFile(velocity,force,KineticEnergyVector,InternalEnergyVector,TotalEnergyVector,TimeIndex);
-              writeTotalDisplacementFile(displacements,TimeIndex);
-            }
 
+
+            }
+            writeRestartNHCfile(Thermostatvelocity,Thermostatposition, ThermostatMass );                         
+            writeRestartFile(velocity,force,KineticEnergyVector,InternalEnergyVector,TotalEnergyVector,TimeIndex);
+            writeTotalDisplacementFile(displacements,TimeIndex);
+
+            MPI_Barrier(MPI_COMM_WORLD);
+            curr_time = MPI_Wtime() - d_MDstartWallTime;
+            AssertThrow(std::fabs(MaxWallTime -(curr_time + 1.05*step_time) ) > 0.00001,
+             ExcMessage("DFT-FE Exit: Max Wall Time exceeded User Limit"));      // Determine Exit sequence ..
 
         }
 
@@ -562,7 +583,7 @@ namespace dftfe
         
         for(TimeIndex=startingTimeStep+1; TimeIndex< startingTimeStep+numberofSteps;TimeIndex++)
         {       
-            double step_time;
+            double step_time,curr_time;
 
             MPI_Barrier(MPI_COMM_WORLD);
             step_time = MPI_Wtime();   
@@ -613,10 +634,16 @@ namespace dftfe
               << std::endl;
               pcout << " Total Energy in Ha at timeIndex " << TimeIndex << " "
               << TotalEnergyVector[TimeIndex-startingTimeStep] << std::endl;
-              writeRestartFile(velocity,force,KineticEnergyVector,InternalEnergyVector,TotalEnergyVector,TimeIndex);
-              writeTotalDisplacementFile(displacements,TimeIndex);
-            }
 
+            }
+                         
+            writeRestartFile(velocity,force,KineticEnergyVector,InternalEnergyVector,TotalEnergyVector,TimeIndex);
+            writeTotalDisplacementFile(displacements,TimeIndex);
+
+            MPI_Barrier(MPI_COMM_WORLD);
+            curr_time = MPI_Wtime() - d_MDstartWallTime;
+            AssertThrow(std::fabs(MaxWallTime -(curr_time + 1.05*step_time) ) > 0.00001,
+             ExcMessage("DFT-FE Exit: Max Wall Time exceeded User Limit")); 
 
         }
 
