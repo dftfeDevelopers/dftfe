@@ -46,6 +46,7 @@ namespace dftfe
     , d_kPointIndex(0)
     , d_numberNodesPerElement(_dftPtr->matrix_free_data.get_dofs_per_cell(
         dftPtr->d_densityDofHandlerIndex))
+    , d_numberCellsLocallyOwned(_dftPtr->matrix_free_data.n_physical_cells())
     , d_numberMacroCells(_dftPtr->matrix_free_data.n_macro_cells())
     , d_isStiffnessMatrixExternalPotCorrComputed(false)
     , mpi_communicator(mpi_comm_replica)
@@ -199,45 +200,41 @@ namespace dftfe
     distributedCPUVec<dataTypes::number> &src,
     std::vector<dataTypes::number> &      cellWaveFunctionMatrix)
   {
-    unsigned int numberCells = dftPtr->matrix_free_data.n_physical_cells();
+   
     cellWaveFunctionMatrix.resize(numberCells * d_numberNodesPerElement *
                                     numberWaveFunctions,
                                   0.0);
-    unsigned int       iElem = 0;
+
     const unsigned int inc   = 1;
-    for (unsigned int iMacroCell = 0; iMacroCell < d_numberMacroCells;
-         ++iMacroCell)
+    for(unsigned int iElem = 0; iElem < d_numberCellsLocallyOwned; ++iElem)
       {
-        for (unsigned int iCell = 0; iCell < d_macroCellSubCellMap[iMacroCell];
-             ++iCell)
-          {
-            for (unsigned int iNode = 0; iNode < d_numberNodesPerElement;
-                 ++iNode)
-              {
-                dealii::types::global_dof_index localNodeId =
-                  d_flattenedArrayMacroCellLocalProcIndexIdMap[iElem][iNode];
+	for (unsigned int iNode = 0; iNode < d_numberNodesPerElement;
+	     ++iNode)
+	  {
+	    dealii::types::global_dof_index localNodeId =
+	      d_flattenedArrayCellLocalProcIndexIdMap[iElem][iNode];
 #ifdef USE_COMPLEX
-                zcopy_(&numberWaveFunctions,
-                       src.begin() + localNodeId,
-                       &inc,
-                       &cellWaveFunctionMatrix[d_numberNodesPerElement *
-                                                 numberWaveFunctions * iElem +
-                                               numberWaveFunctions * iNode],
-                       &inc);
+	    zcopy_(&numberWaveFunctions,
+		   src.begin() + localNodeId,
+		   &inc,
+		   &cellWaveFunctionMatrix[d_numberNodesPerElement *
+					   numberWaveFunctions * iElem +
+					   numberWaveFunctions * iNode],
+		   &inc);
 
 #else
-                dcopy_(&numberWaveFunctions,
-                       src.begin() + localNodeId,
-                       &inc,
-                       &cellWaveFunctionMatrix[d_numberNodesPerElement *
-                                                 numberWaveFunctions * iElem +
-                                               numberWaveFunctions * iNode],
-                       &inc);
+	    dcopy_(&numberWaveFunctions,
+		   src.begin() + localNodeId,
+		   &inc,
+		   &cellWaveFunctionMatrix[d_numberNodesPerElement *
+					   numberWaveFunctions * iElem +
+					   numberWaveFunctions * iNode],
+		   &inc);
 #endif
-              }
-            ++iElem;
-          }
+	  }
+           
       }
+      
   }
 
 
@@ -251,47 +248,42 @@ namespace dftfe
       distributedCPUVec<dataTypes::number> &glbArray)
 
   {
-    unsigned int       iElem = 0;
+
     const unsigned int inc   = 1;
-    for (unsigned int iMacroCell = 0; iMacroCell < d_numberMacroCells;
-         ++iMacroCell)
+    for(unsigned int iElem = 0; iElem < d_numberCellsLocallyOwned; ++iElem)
       {
-        for (unsigned int iCell = 0; iCell < d_macroCellSubCellMap[iMacroCell];
-             ++iCell)
-          {
-            for (unsigned int iNode = 0; iNode < d_numberNodesPerElement;
-                 ++iNode)
-              {
-                if (d_nodesPerCellClassificationMap[iNode] == 0)
-                  {
-                    dealii::types::global_dof_index localNodeId =
-                      d_flattenedArrayMacroCellLocalProcIndexIdMap[iElem]
-                                                                  [iNode];
+	for (unsigned int iNode = 0; iNode < d_numberNodesPerElement;
+	     ++iNode)
+	  {
+	    if (d_nodesPerCellClassificationMap[iNode] == 0)
+	      {
+		dealii::types::global_dof_index localNodeId =
+		  d_flattenedArrayCellLocalProcIndexIdMap[iElem]
+		  [iNode];
 #ifdef USE_COMPLEX
-                    zcopy_(
-                      &numberWaveFunctions,
-                      &cellWaveFunctionMatrix[d_numberNodesPerElement *
-                                                numberWaveFunctions * iElem +
-                                              numberWaveFunctions * iNode],
-                      &inc,
-                      glbArray.begin() + localNodeId,
-                      &inc);
+		zcopy_(
+		       &numberWaveFunctions,
+		       &cellWaveFunctionMatrix[d_numberNodesPerElement *
+					       numberWaveFunctions * iElem +
+					       numberWaveFunctions * iNode],
+		       &inc,
+		       glbArray.begin() + localNodeId,
+		       &inc);
 #else
-                    dcopy_(
-                      &numberWaveFunctions,
-                      &cellWaveFunctionMatrix[d_numberNodesPerElement *
-                                                numberWaveFunctions * iElem +
-                                              numberWaveFunctions * iNode],
-                      &inc,
-                      glbArray.begin() + localNodeId,
-                      &inc);
+		dcopy_(
+		       &numberWaveFunctions,
+		       &cellWaveFunctionMatrix[d_numberNodesPerElement *
+					       numberWaveFunctions * iElem +
+					       numberWaveFunctions * iNode],
+		       &inc,
+		       glbArray.begin() + localNodeId,
+		       &inc);
 #endif
-                  }
-              }
-            ++iElem;
-          }
+	      }
+	  }
       }
   }
+  
 
 
   // Y = a*X + Y
@@ -324,31 +316,25 @@ namespace dftfe
     unsigned int iElem = 0;
     unsigned int productNumNodesWaveFunctions =
       d_numberNodesPerElement * numberWaveFunctions;
-    for (unsigned int iMacroCell = 0; iMacroCell < d_numberMacroCells;
-         ++iMacroCell)
+    for(unsigned int iElem = 0; iElem < d_numberCellsLocallyOwned; ++iElem)
       {
-        for (unsigned int iCell = 0; iCell < d_macroCellSubCellMap[iMacroCell];
-             ++iCell)
-          {
-            unsigned int indexTemp = productNumNodesWaveFunctions * iElem;
-            for (unsigned int iNode = 0; iNode < d_numberNodesPerElement;
-                 ++iNode)
-              {
-                if (d_nodesPerCellClassificationMap[iNode] == 0)
-                  {
-                    unsigned int indexVal =
-                      indexTemp + numberWaveFunctions * iNode;
-                    for (unsigned int iWave = 0; iWave < numberWaveFunctions;
-                         ++iWave)
-                      {
-                        cellYWaveFunctionMatrix[indexVal + iWave] =
-                          scalarB * cellYWaveFunctionMatrix[indexVal + iWave] +
-                          scalarA * cellXWaveFunctionMatrix[indexVal + iWave];
-                      }
-                  }
-              }
-            ++iElem;
-          }
+	unsigned int indexTemp = productNumNodesWaveFunctions * iElem;
+	for (unsigned int iNode = 0; iNode < d_numberNodesPerElement;
+	     ++iNode)
+	  {
+	    if (d_nodesPerCellClassificationMap[iNode] == 0)
+	      {
+		unsigned int indexVal =
+		  indexTemp + numberWaveFunctions * iNode;
+		for (unsigned int iWave = 0; iWave < numberWaveFunctions;
+		     ++iWave)
+		  {
+		    cellYWaveFunctionMatrix[indexVal + iWave] =
+		      scalarB * cellYWaveFunctionMatrix[indexVal + iWave] +
+		      scalarA * cellXWaveFunctionMatrix[indexVal + iWave];
+		  }
+	      }
+	  }
       }
   }
 
@@ -516,12 +502,8 @@ namespace dftfe
                                                endcellPtr = dftPtr->dofHandler.end();
   
     unsigned int iElemCount = 0;
-    //for (unsigned int cell = 0; cell < n_cells; ++cell)
     for (; cellPtr != endcellPtr; ++cellPtr)
       {
-	// const unsigned int n_sub_cells =
-	//dftPtr->matrix_free_data.n_components_filled(cell);
-	// for (unsigned int v = 0; v < n_sub_cells; ++v)
 	if(cellPtr->is_locally_owned())
           {
             //cellPtr = dftPtr->matrix_free_data.get_cell_iterator(cell, v);
@@ -962,9 +944,6 @@ namespace dftfe
     const double scalarB,
     distributedCPUVec<double> &dst,
     std::vector<double> &cellDstWaveFunctionMatrix)
-
-
-
   {
     const unsigned int numberDofs = src.local_size() / numberWaveFunctions;
     const unsigned int inc = 1;
@@ -983,43 +962,46 @@ namespace dftfe
           }
       }
 
-    unsigned int iElem = 0;
     unsigned int productNumNodesWaveFunctions =
       d_numberNodesPerElement * numberWaveFunctions;
     std::vector<dealii::types::global_dof_index> cell_dof_indicesGlobal(
       d_numberNodesPerElement);
-    for (unsigned int iMacroCell = 0; iMacroCell < d_numberMacroCells;
-         ++iMacroCell)
+
+    typename dealii::DoFHandler<3>::active_cell_iterator cellPtr = dftPtr->matrix_free_data.get_dof_handler(dftPtr->d_densityDofHandlerIndex).begin_active(),
+    endcellPtr = dftPtr->matrix_free_data.get_dof_handler(dftPtr->d_densityDofHandlerIndex).end();
+
+    unsigned int iElem = 0;
+    for (; cellPtr != endcellPtr; ++cellPtr)
       {
-        for (unsigned int iCell = 0; iCell < d_macroCellSubCellMap[iMacroCell];
-             ++iCell)
-          {
-            unsigned int indexTemp = productNumNodesWaveFunctions * iElem;
-            dftPtr->matrix_free_data.get_cell_iterator(iMacroCell, iCell)
-              ->get_dof_indices(cell_dof_indicesGlobal);
-            for (unsigned int iNode = 0; iNode < d_numberNodesPerElement;
-                 ++iNode)
-              {
-                if (d_nodesPerCellClassificationMap[iNode] == 0)
-                  {
-                    dealii::types::global_dof_index localDoFId =
-                      dftPtr->matrix_free_data.get_vector_partitioner()
-                        ->global_to_local(cell_dof_indicesGlobal[iNode]);
-                    const double scalingCoeff =
-                      d_invSqrtMassVector.local_element(localDoFId);
-                    unsigned int indexVal =
-                      indexTemp + numberWaveFunctions * iNode;
-                    for (unsigned int iWave = 0; iWave < numberWaveFunctions;
-                         ++iWave)
-                      {
-                        cellSrcWaveFunctionMatrix[indexVal + iWave] *=
-                          scalingCoeff;
-                      }
-                  }
-              }
-            ++iElem;
-          }
+	if (cellPtr->is_locally_owned())
+	  {
+	    unsigned int indexTemp = productNumNodesWaveFunctions * iElem;
+	   
+	     cellPtr->get_dof_indices(cell_dof_indicesGlobal);
+	    for (unsigned int iNode = 0; iNode < d_numberNodesPerElement;
+		 ++iNode)
+	      {
+		if (d_nodesPerCellClassificationMap[iNode] == 0)
+		  {
+		    dealii::types::global_dof_index localDoFId =
+		      dftPtr->matrix_free_data.get_vector_partitioner()
+		      ->global_to_local(cell_dof_indicesGlobal[iNode]);
+		    const double scalingCoeff =
+		      d_invSqrtMassVector.local_element(localDoFId);
+		    unsigned int indexVal =
+		      indexTemp + numberWaveFunctions * iNode;
+		    for (unsigned int iWave = 0; iWave < numberWaveFunctions;
+			 ++iWave)
+		      {
+			cellSrcWaveFunctionMatrix[indexVal + iWave] *=
+			  scalingCoeff;
+		      }
+		  }
+	      }
+	    iElem++;
+	  }
       }
+  
 
     if (scaleFlag)
       {
@@ -1080,40 +1062,41 @@ namespace dftfe
           }
       }
 
+    cellPtr = dftPtr->matrix_free_data.get_dof_handler(dftPtr->d_densityDofHandlerIndex).begin_active();
+    endcellPtr = dftPtr->matrix_free_data.get_dof_handler(dftPtr->d_densityDofHandlerIndex).end();
+    
     iElem = 0;
-    for (unsigned int iMacroCell = 0; iMacroCell < d_numberMacroCells;
-         ++iMacroCell)
+    for (; cellPtr != endcellPtr; ++cellPtr)
       {
-        for (unsigned int iCell = 0; iCell < d_macroCellSubCellMap[iMacroCell];
-             ++iCell)
-          {
-            dftPtr->matrix_free_data.get_cell_iterator(iMacroCell, iCell)
-              ->get_dof_indices(cell_dof_indicesGlobal);
-            unsigned int indexTemp = productNumNodesWaveFunctions * iElem;
-            for (unsigned int iNode = 0; iNode < d_numberNodesPerElement;
-                 ++iNode)
-              {
-                if (d_nodesPerCellClassificationMap[iNode] == 0)
-                  {
-                    dealii::types::global_dof_index localDoFId =
-                      dftPtr->matrix_free_data.get_vector_partitioner()
-                        ->global_to_local(cell_dof_indicesGlobal[iNode]);
-                    const double scalingCoeff =
-                      d_sqrtMassVector.local_element(localDoFId);
-                    unsigned int indexVal =
-                      indexTemp + numberWaveFunctions * iNode;
-                    for (unsigned int iWave = 0; iWave < numberWaveFunctions;
-                         ++iWave)
-                      {
-                        unsigned int indexVal =
-                          indexTemp + numberWaveFunctions * iNode;
-                        cellSrcWaveFunctionMatrix[indexVal + iWave] *=
-                          scalingCoeff;
-                      }
-                  }
-              }
-            ++iElem;
-          }
+	if (cellPtr->is_locally_owned())
+	  {
+	    cellPtr->get_dof_indices(cell_dof_indicesGlobal);
+	    unsigned int indexTemp = productNumNodesWaveFunctions * iElem;
+	    for (unsigned int iNode = 0; iNode < d_numberNodesPerElement;
+		 ++iNode)
+	      {
+		if (d_nodesPerCellClassificationMap[iNode] == 0)
+		  {
+		    dealii::types::global_dof_index localDoFId =
+		      dftPtr->matrix_free_data.get_vector_partitioner()
+		      ->global_to_local(cell_dof_indicesGlobal[iNode]);
+		    const double scalingCoeff =
+		      d_sqrtMassVector.local_element(localDoFId);
+		    unsigned int indexVal =
+		      indexTemp + numberWaveFunctions * iNode;
+		    for (unsigned int iWave = 0; iWave < numberWaveFunctions;
+			 ++iWave)
+		      {
+			unsigned int indexVal =
+			  indexTemp + numberWaveFunctions * iNode;
+			cellSrcWaveFunctionMatrix[indexVal + iWave] *=
+			  scalingCoeff;
+		      }
+		  }
+	      }
+	    iElem++;
+	  }
+         
       }
 
     //

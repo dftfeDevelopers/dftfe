@@ -70,32 +70,31 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::
   unsigned int indexTemp1 = d_numberNodesPerElement * numberWaveFunctions;
   std::vector<dealii::types::global_dof_index> cell_dof_indicesGlobal(
     d_numberNodesPerElement);
-  for (unsigned int iMacroCell = 0; iMacroCell < d_numberMacroCells;
-       ++iMacroCell)
+  
+ 
+  for (unsigned int iElem = 0; iElem < d_numberCellsLocallyOwned;
+       ++iElem)
     {
-      for (unsigned int iCell = 0; iCell < d_macroCellSubCellMap[iMacroCell];
-           ++iCell)
-        {
-          unsigned int indexTemp2 = indexTemp1 * iElem;
-          for (unsigned int iNode = 0; iNode < d_numberNodesPerElement; ++iNode)
-            {
-              if (d_nodesPerCellClassificationMap[iNode] == 1)
-                {
-                  unsigned int indexVal =
-                    indexTemp2 + numberWaveFunctions * iNode;
-                  dealii::types::global_dof_index localNodeId =
-                    d_flattenedArrayMacroCellLocalProcIndexIdMap[iElem][iNode];
+      unsigned int indexTemp2 = indexTemp1 * iElem;
+      for (unsigned int iNode = 0; iNode < d_numberNodesPerElement; ++iNode)
+	{
+	  if (d_nodesPerCellClassificationMap[iNode] == 1)
+	    {
+	      unsigned int indexVal =
+		indexTemp2 + numberWaveFunctions * iNode;
+	      dealii::types::global_dof_index localNodeId =
+		d_flattenedArrayCellLocalProcIndexIdMap[iElem][iNode];
 
-                  dcopy_(&numberWaveFunctions,
-                         src.begin() + localNodeId,
-                         &inc,
-                         &cellSrcWaveFunctionMatrix[indexVal],
-                         &inc);
-                }
-            }
-          ++iElem;
-        } // subcell loop
-    }     // macrocell loop
+	      dcopy_(&numberWaveFunctions,
+		     src.begin() + localNodeId,
+		     &inc,
+		     &cellSrcWaveFunctionMatrix[indexVal],
+		     &inc);
+	    }
+	}
+      ++iElem;
+    } // cell loop
+  
 
   //
   // start nonlocal HX
@@ -138,10 +137,8 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::
             {
               iElem++;
 
-              const unsigned int macroCellId =
-                d_normalCellIdToMacroCellIdMap[iElem];
-              const unsigned int indexVal =
-                d_numberNodesPerElement * numberWaveFunctions * macroCellId;
+	      const unsigned int indexVal =
+                d_numberNodesPerElement * numberWaveFunctions * iElem;
               for (unsigned int iAtom = 0;
                    iAtom < dftPtr->d_nonLocalAtomIdsInElement[iElem].size();
                    ++iAtom)
@@ -267,8 +264,8 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::
       if (cell->is_locally_owned())
         {
           iElem++;
-          unsigned int macroCellId = d_normalCellIdToMacroCellIdMap[iElem];
-          unsigned int indexTemp2  = indexTemp1 * macroCellId;
+      
+          unsigned int indexTemp2  = indexTemp1 * iElem;
 
           dgemm_(&transA,
                  &transB,
@@ -278,11 +275,11 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::
                  &scalarCoeffAlpha1,
                  &cellSrcWaveFunctionMatrix[indexTemp2],
                  &numberWaveFunctions,
-                 &d_cellHamiltonianMatrix[kpointSpinIndex][macroCellId][0],
+                 &d_cellHamiltonianMatrix[kpointSpinIndex][iElem][0],
                  &d_numberNodesPerElement,
                  &scalarCoeffBeta,
                  &cellHamMatrixTimesWaveMatrix
-                   [0], //&cellDstWaveFunctionMatrix[indexTemp2],
+                   [0], 
                  &numberWaveFunctions);
 
 
@@ -327,14 +324,12 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::
                   dealii::types::global_dof_index localNodeId =
                     d_flattenedArrayCellLocalProcIndexIdMap[iElem][iNode];
 
-                  // unsigned int indexVal =
-                  // indexTemp2+numberWaveFunctions*iNode;
-
+              
                   daxpy_(&numberWaveFunctions,
                          &alpha1,
                          &cellHamMatrixTimesWaveMatrix
                            [numberWaveFunctions *
-                            iNode], //&cellDstWaveFunctionMatrix[indexVal],
+                            iNode], 
                          &inc1,
                          dst.begin() + localNodeId,
                          &inc1);
