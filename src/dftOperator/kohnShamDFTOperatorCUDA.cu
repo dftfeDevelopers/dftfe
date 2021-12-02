@@ -1457,7 +1457,6 @@ namespace dftfe
 
     const Quadrature<3> &quadrature_formula =
       dftPtr->matrix_free_data.get_quadrature(dftPtr->d_densityQuadratureId);
-    FEValues<3> fe_values(dftPtr->FE, quadrature_formula, update_JxW_values);
     const unsigned int numberQuadraturePoints = quadrature_formula.size();
 
     d_vEff.resize(totalLocallyOwnedCells * numberQuadraturePoints, 0.0);
@@ -1473,8 +1472,6 @@ namespace dftfe
     for (; cellPtr != endcPtr; ++cellPtr)
       if (cellPtr->is_locally_owned())
         {
-          fe_values.reinit(cellPtr);
-
           std::vector<double> densityValue =
             (*rhoValues).find(cellPtr->id())->second;
 
@@ -1505,7 +1502,7 @@ namespace dftfe
 
               d_vEffJxW[iElemCount * numberQuadraturePoints + q] =
                 d_vEff[iElemCount * numberQuadraturePoints + q] *
-                fe_values.JxW(q);
+                d_cellJxWValues[iElemCount * numberQuadraturePoints + q];
             }
 
           iElemCount++;
@@ -1536,7 +1533,6 @@ namespace dftfe
 
     const Quadrature<3> &quadrature_formula =
       dftPtr->matrix_free_data.get_quadrature(dftPtr->d_densityQuadratureId);
-    FEValues<3> fe_values(dftPtr->FE, quadrature_formula, update_JxW_values);
     const unsigned int numberQuadraturePoints = quadrature_formula.size();
 
 
@@ -1561,8 +1557,6 @@ namespace dftfe
     for (; cellPtr != endcPtr; ++cellPtr)
       if (cellPtr->is_locally_owned())
         {
-          fe_values.reinit(cellPtr);
-
           std::vector<double> densityValue =
             (*rhoValues).find(cellPtr->id())->second;
           std::vector<double> gradDensityValue =
@@ -1610,7 +1604,8 @@ namespace dftfe
 
           for (unsigned int q = 0; q < numberQuadraturePoints; ++q)
             {
-              const double jxw      = fe_values.JxW(q);
+              const double jxw =
+                d_cellJxWValues[iElemCount * numberQuadraturePoints + q];
               const double gradRhoX = gradDensityValue[3 * q + 0];
               const double gradRhoY = gradDensityValue[3 * q + 1];
               const double gradRhoZ = gradDensityValue[3 * q + 2];
@@ -1637,7 +1632,7 @@ namespace dftfe
 
               d_vEffJxW[iElemCount * numberQuadraturePoints + q] =
                 d_vEff[iElemCount * numberQuadraturePoints + q] *
-                fe_values.JxW(q);
+                d_cellJxWValues[iElemCount * numberQuadraturePoints + q];
             }
 
           iElemCount++;
@@ -1672,7 +1667,6 @@ namespace dftfe
 
     const Quadrature<3> &quadrature_formula =
       dftPtr->matrix_free_data.get_quadrature(dftPtr->d_densityQuadratureId);
-    FEValues<3> fe_values(dftPtr->FE, quadrature_formula, update_JxW_values);
     const unsigned int numberQuadraturePoints = quadrature_formula.size();
 
     d_vEff.resize(totalLocallyOwnedCells * numberQuadraturePoints, 0.0);
@@ -1688,8 +1682,6 @@ namespace dftfe
     for (; cellPtr != endcPtr; ++cellPtr)
       if (cellPtr->is_locally_owned())
         {
-          fe_values.reinit(cellPtr);
-
           std::vector<double> densityValue =
             (*rhoValues).find(cellPtr->id())->second;
           const std::vector<double> &tempPhi =
@@ -1723,7 +1715,7 @@ namespace dftfe
 
               d_vEffJxW[iElemCount * numberQuadraturePoints + q] =
                 d_vEff[iElemCount * numberQuadraturePoints + q] *
-                fe_values.JxW(q);
+                d_cellJxWValues[iElemCount * numberQuadraturePoints + q];
             }
 
           iElemCount++;
@@ -1758,7 +1750,6 @@ namespace dftfe
 
     const Quadrature<3> &quadrature_formula =
       dftPtr->matrix_free_data.get_quadrature(dftPtr->d_densityQuadratureId);
-    FEValues<3> fe_values(dftPtr->FE, quadrature_formula, update_JxW_values);
     const unsigned int numberQuadraturePoints = quadrature_formula.size();
 
     d_vEff.resize(totalLocallyOwnedCells * numberQuadraturePoints, 0.0);
@@ -1782,8 +1773,6 @@ namespace dftfe
     for (; cellPtr != endcPtr; ++cellPtr)
       if (cellPtr->is_locally_owned())
         {
-          fe_values.reinit(cellPtr);
-
           std::vector<double> densityValue =
             (*rhoValues).find(cellPtr->id())->second;
           std::vector<double> gradDensityValue =
@@ -1846,7 +1835,8 @@ namespace dftfe
 
           for (unsigned int q = 0; q < numberQuadraturePoints; ++q)
             {
-              const double jxw = fe_values.JxW(q);
+              const double jxw =
+                d_cellJxWValues[iElemCount * numberQuadraturePoints + q];
               const double gradRhoX =
                 gradDensityValue[6 * q + 0 + 3 * spinIndex];
               const double gradRhoY =
@@ -1886,7 +1876,7 @@ namespace dftfe
 
               d_vEffJxW[iElemCount * numberQuadraturePoints + q] =
                 d_vEff[iElemCount * numberQuadraturePoints + q] *
-                fe_values.JxW(q);
+                d_cellJxWValues[iElemCount * numberQuadraturePoints + q];
             }
 
           iElemCount++;
