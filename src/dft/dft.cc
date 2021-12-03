@@ -339,6 +339,8 @@ namespace dftfe
              it++)
           {
             atomTypes.insert((unsigned int)((*it)[0]));
+            d_atomTypeAtributes[(unsigned int)((*it)[0])] =
+              (unsigned int)((*it)[1]);
 
             if (!dftParameters::isPseudopotential)
               AssertThrow(
@@ -384,6 +386,8 @@ namespace dftfe
              it++)
           {
             atomTypes.insert((unsigned int)((*it)[0]));
+            d_atomTypeAtributes[(unsigned int)((*it)[0])] =
+              (unsigned int)((*it)[1]);
 
             if (!dftParameters::isPseudopotential)
               AssertThrow(
@@ -1472,7 +1476,7 @@ namespace dftfe
       }
     else
       {
-        initNoRemesh(false, true, false, true);
+        initNoRemesh(true, true, false, true);
       }
   }
 

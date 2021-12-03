@@ -160,8 +160,10 @@ namespace dftfe
      * @param direction Direction vector.
      * @param problem nonlinearSolverProblem object.
      *
+     * @return bool true if valid update and false if increment bound exceeded
+     *
      */
-    void
+    bool
     updateSolution(const double               alpha,
                    const std::vector<double> &direction,
                    nonlinearSolverProblem &   problem);
