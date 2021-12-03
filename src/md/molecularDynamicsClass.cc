@@ -53,7 +53,9 @@ namespace dftfe
         numberGlobalCharges      = 
                 dftParameters::natoms; 
         startingTimeStep        =
-                dftParameters::StartingTimeStep;        
+                dftParameters::StartingTimeStep;  
+        d_MaxWallTime           =
+                dftParameters::MaxWallTime;              
         pcout << "----------------------Starting Initialization of BOMD-------------------------" << std::endl;        
         pcout << "Starting Temperature from Input "
               << startingTemperature << std::endl; 
@@ -360,8 +362,9 @@ namespace dftfe
 
             MPI_Barrier(MPI_COMM_WORLD);
             curr_time = MPI_Wtime() - d_MDstartWallTime;
-            AssertThrow(std::fabs(MaxWallTime -(curr_time + 1.05*step_time) ) > 0.00001,
-             ExcMessage("DFT-FE Exit: Max Wall Time exceeded User Limit"));
+            pcout<<"*****Time Completed till NOW: "<<curr_time<<std::endl;
+            AssertThrow((d_MaxWallTime -(curr_time + 1.05*step_time) ) > 1.0,
+            ExcMessage("DFT-FE Exit: Max Wall Time exceeded User Limit"));
 
         }
 
@@ -443,7 +446,8 @@ namespace dftfe
 
             MPI_Barrier(MPI_COMM_WORLD);
             curr_time = MPI_Wtime() - d_MDstartWallTime;
-            AssertThrow(std::fabs(MaxWallTime -(curr_time + 1.05*step_time) ) > 0.00001,
+            pcout<<"*****Time Completed till NOW: "<<curr_time<<std::endl;
+            AssertThrow((d_MaxWallTime -(curr_time + 1.05*step_time) ) > 1.0,
              ExcMessage("DFT-FE Exit: Max Wall Time exceeded User Limit"));
 
         }
@@ -557,7 +561,8 @@ namespace dftfe
 
             MPI_Barrier(MPI_COMM_WORLD);
             curr_time = MPI_Wtime() - d_MDstartWallTime;
-            AssertThrow(std::fabs(MaxWallTime -(curr_time + 1.05*step_time) ) > 0.00001,
+            pcout<<"*****Time Completed till NOW: "<<curr_time<<std::endl;
+            AssertThrow((d_MaxWallTime -(curr_time + 1.05*step_time) ) > 1.0,
              ExcMessage("DFT-FE Exit: Max Wall Time exceeded User Limit"));      // Determine Exit sequence ..
 
         }
@@ -642,7 +647,8 @@ namespace dftfe
 
             MPI_Barrier(MPI_COMM_WORLD);
             curr_time = MPI_Wtime() - d_MDstartWallTime;
-            AssertThrow(std::fabs(MaxWallTime -(curr_time + 1.05*step_time) ) > 0.00001,
+            pcout<<"*****Time Completed till NOW: "<<curr_time<<std::endl;
+            AssertThrow((d_MaxWallTime -(curr_time + 1.05*step_time) ) > 1.0,
              ExcMessage("DFT-FE Exit: Max Wall Time exceeded User Limit")); 
 
         }
@@ -994,6 +1000,8 @@ namespace dftfe
         dftPtr->getForceonAtomsfromdftptr(force);
       }
       */
+        dftPtr->solve(true, false, false, false); 
+        dftPtr->getForceonAtomsfromdftptr(force);     
       
       if(this_mpi_process == 0)
       {

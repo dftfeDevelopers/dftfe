@@ -78,7 +78,7 @@ namespace dftfe
         int thermostatTimeConstant;
         std::string thermostatType;
         double d_MDstartWallTime;
-        double MaxWallTime;
+        double d_MaxWallTime;
     /**
      * @brief mdNVE Performs a Ccanonical Ensemble MD calculation. The inital temperature is set by runMD().
      * Temperature is NOT_CONTROLLED. Controls the timeloop.
