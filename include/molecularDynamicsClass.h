@@ -270,7 +270,7 @@ namespace dftfe
 
         void InitialiseFromRestartFile( std::vector<double> &, std::vector<double> & , std::vector<double> & , std::vector<double> & , std::vector<double> &  );   
 
-       void writeRestartNHCfile(std::vector<double> , std::vector<double> , std::vector<double> );   
+       void writeRestartNHCfile(std::vector<double> , std::vector<double> , std::vector<double>, int  );   
 
         void InitialiseFromRestartNHCFile( std::vector<double> &, std::vector<double> & , std::vector<double> &   );  
 

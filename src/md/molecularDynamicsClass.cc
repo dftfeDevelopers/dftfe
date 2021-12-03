@@ -110,7 +110,7 @@ namespace dftfe
       /*  restartFlag = ((dftParameters::chkType == 1 || dftParameters::chkType == 3) &&
        dftParameters::restartMdFromChk) ?        1 :        0; // 1; //0;//1;*/
        restartFlag = dftParameters::restartMdFromChk ? 1: 0;
-       pcout<<"REstartFlag: "<<restartFlag<<std::endl;
+       pcout<<"RestartFlag: "<<restartFlag<<std::endl;
       if (restartFlag == 0 )
       { 
         std::string tempfolder = "mdRestart";
@@ -243,7 +243,7 @@ namespace dftfe
        
        
         pcout << "---------------MD "<<startingTimeStep<<"th STEP------------------ " <<  std::endl; 
-        pcout << " Temperature from Velocities at timeIndex "<<startingTimeStep
+        pcout << " Temperature from velocities: "<<startingTimeStep
               << TemperatureFromVelocities  << std::endl;
         pcout << " Kinetic Energy in Ha at timeIndex  "<<startingTimeStep
               << KineticEnergyVector[0] << std::endl;
@@ -251,7 +251,7 @@ namespace dftfe
               << InternalEnergyVector[0] << std::endl;
         pcout << " Entropic Energy in Ha at timeIndex  "<<startingTimeStep
               << EntropicEnergyVector[0] << std::endl;
-        pcout << " Total Energy in Ha at timeIndex  "<<startingTimeStep
+        pcout <<  " Total Energy in Ha at timeIndex "<<startingTimeStep
               << TotalEnergyVector[0]  << std::endl;
               
 
@@ -262,8 +262,9 @@ namespace dftfe
 
       else if(restartFlag == 1)
       {
-
+          
           InitialiseFromRestartFile(velocity, force, KineticEnergyVector , InternalEnergyVector , TotalEnergyVector);
+          
      
       }  
 
@@ -555,13 +556,14 @@ namespace dftfe
 
 
             }
-            writeRestartNHCfile(Thermostatvelocity,Thermostatposition, ThermostatMass );                         
+                                     
             writeRestartFile(velocity,force,KineticEnergyVector,InternalEnergyVector,TotalEnergyVector,TimeIndex);
+            writeRestartNHCfile(Thermostatvelocity,Thermostatposition, ThermostatMass,TimeIndex );
             writeTotalDisplacementFile(displacements,TimeIndex);
 
             MPI_Barrier(MPI_COMM_WORLD);
             curr_time = MPI_Wtime() - d_MDstartWallTime;
-            pcout<<"*****Time Completed till NOW: "<<curr_time<<std::endl;
+          //  pcout<<"*****Time Completed till NOW: "<<curr_time<<std::endl;
             AssertThrow((d_MaxWallTime -(curr_time + 1.05*step_time) ) > 1.0,
              ExcMessage("DFT-FE Exit: Max Wall Time exceeded User Limit"));      // Determine Exit sequence ..
 
@@ -1013,6 +1015,7 @@ namespace dftfe
         dftUtils::copyFile(oldFolder1,".");
         dftUtils::copyFile(oldFolder2,".");
       }
+      MPI_Barrier(MPI_COMM_WORLD);
 
     }                                                        
 
@@ -1024,7 +1027,15 @@ namespace dftfe
   {
     std::vector<std::vector<double>> NHCData;
     std::string tempfolder = "mdRestart";
-    std::string fileName = (dftParameters::NHCRestartFile=="" ? "NHCThermostat.chk":dftParameters::NHCRestartFile);
+      if(this_mpi_process == 0)
+      {
+        std::string oldFolder1 = "./mdRestart/Step";
+        oldFolder1 = oldFolder1 + std::to_string(startingTimeStep) + "/NHCThermostat.chk";                
+        dftUtils::copyFile(oldFolder1,"./mdRestart/.");
+
+      }
+    MPI_Barrier(MPI_COMM_WORLD);
+    std::string fileName = "NHCThermostat.chk";
     std::string newFolder = tempfolder + "/" + fileName;
     dftUtils::readFile(3, NHCData, newFolder);
     Q[0] = NHCData[0][0];
@@ -1041,7 +1052,7 @@ namespace dftfe
    template <unsigned int FEOrder, unsigned int FEOrderElectro>
    void
     molecularDynamicsClass<FEOrder, FEOrderElectro>:: writeRestartNHCfile(std::vector<double> v_e ,
-                                                            std::vector<double> e, std::vector<double> Q )
+                                                            std::vector<double> e, std::vector<double> Q, int time )
 
    {
     std::vector<std::vector<double>> fileNHCData(2,std::vector<double>(3,0.0)); 
@@ -1051,10 +1062,19 @@ namespace dftfe
     fileNHCData[1][0] = Q[1] ;
     fileNHCData[1][1] =  e[1];
     fileNHCData[1][2] =  v_e[1];    
-    std::string tempfolder = "mdRestart"; 
+    std::string tempfolder = "./mdRestart"; 
     std::string newFolder = std::string(tempfolder + "/" + "NHCThermostat.chk");    
-    dftUtils::writeDataIntoFile(fileNHCData, newFolder);        
+    dftUtils::writeDataIntoFile(fileNHCData, newFolder); 
+     if(this_mpi_process == 0) 
+     {
+        std::string oldpath = newFolder;
+        std::string newpath = "./mdRestart/Step";
+                 newpath = newpath + std::to_string(time) + "/."; 
+        dftUtils::copyFile(oldpath,newpath); 
+        
 
+     }            
+    MPI_Barrier(MPI_COMM_WORLD);
 
    }                                                         
     template <unsigned int FEOrder, unsigned int FEOrderElectro>
@@ -1088,7 +1108,9 @@ namespace dftfe
             
           }
           outfile.close();
+
       } 
+      MPI_Barrier(MPI_COMM_WORLD);
      if(this_mpi_process == 0) 
      {
         std::string oldpath = "TotalDisplacement.chk";
@@ -1099,7 +1121,8 @@ namespace dftfe
         std::string newpath2 = "./mdRestart/Step";
                  newpath2 = newpath2 + std::to_string(time) + "/."; 
         dftUtils::copyFile(oldpath2,newpath2);  
-     }          
+     }
+     MPI_Barrier(MPI_COMM_WORLD);          
 
     }
     template <unsigned int FEOrder, unsigned int FEOrderElectro>

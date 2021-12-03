@@ -131,10 +131,19 @@ run_problem(const MPI_Comm &    mpi_comm_replica,
                     std::string path = tempfolder + std::to_string(time1);
                     std::string file1 = path + "/atomsFracCoordCurrent.chk";
                     std::string file2 = path + "/velocity.chk";
+                    std::string file3 = path + "/NHCThermostat.chk";
                     std::ifstream       readFile1(file1.c_str());
                     std::ifstream       readFile2(file2.c_str());
+                    std::ifstream       readFile3(file3.c_str());
                     pcout<<" Restart folders:"<<(!readFile1.fail() && !readFile2.fail())<<std::endl;
-                    if (!readFile1.fail() && !readFile2.fail())
+                    bool NHCflag = true;
+                    if(dftfe:: dftParameters::tempControllerTypeBOMD =="NOSE_HOVER_CHAINS")
+                    { 
+                      NHCflag = false;
+                      if(!readFile3.fail())
+                        NHCflag = true;
+                    }
+                    if (!readFile1.fail() && !readFile2.fail() && NHCflag )
                     {
                       flag = true;
                       dftfe::dftParameters::coordinatesFile=file1;

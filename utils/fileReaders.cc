@@ -22,7 +22,7 @@
 #include <fstream>
 #include <iostream>
 #include <sstream>
-#include <filesystem>
+#include <sys/stat.h>
 
 namespace dftfe
 {
@@ -203,7 +203,9 @@ namespace dftfe
       //std::filesystem::copy_file(pathold,pathnew);
       int error = system(("cp -f " + pathold + " " + pathnew).c_str());
       if(error != 0)
-        std::cout<<"Copy failed"<<std::endl;
+        std::cout<<"Copy failed: "<<"From: "<<pathold<<"  To: "<<pathnew<<std::endl;
+      else
+        std::cout<<"*Successful copy: "<<"From: "<<pathold<<"  To: "<<pathnew<<std::endl;  
 
       // If the above call failed, e.g. because there is no command-line
       // available, try with internal functions.
