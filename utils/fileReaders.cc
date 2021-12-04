@@ -203,7 +203,13 @@ namespace dftfe
       //std::filesystem::copy_file(pathold,pathnew);
       int error = system(("cp -f " + pathold + " " + pathnew).c_str());
       if(error != 0)
-        std::cout<<"Copy failed: "<<error<<" From: "<<pathold<<"  To: "<<pathnew<<std::endl;
+      {  std::cout<<"Copy failed: "<<error<<" From: "<<pathold<<"  To: "<<pathnew<<std::endl;
+              /*  AssertThrow(error == 0,
+                      dealii::ExcMessage(
+                        std::string("Unable to Copy files: ") + pathold +
+                        " -> " + pathnew + ". The error code is " +
+                        dealii::Utilities::to_string(error) + ".")); */
+        }  
       else
         std::cout<<"*Successful copy: "<<"From: "<<pathold<<"  To: "<<pathnew<<std::endl;  
 

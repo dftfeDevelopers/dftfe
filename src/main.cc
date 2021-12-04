@@ -59,7 +59,7 @@ setup_dftfe(dftfe::elpaScalaManager*  elpa_Scala,
 {
     problemFE.d_numEigenValues = numberEigenValues;    
     problemFE.set();
-    problemFE.init();
+    
     numberEigenValues = problemFE.d_numEigenValues;
     numEigenValuesRR = problemFE.d_numEigenValuesRR;
     if (flag == true)
@@ -68,12 +68,13 @@ setup_dftfe(dftfe::elpaScalaManager*  elpa_Scala,
       elpa_Scala->processGridELPASetup(numberEigenValues,
                                      numEigenValuesRR,
                                      interBandGroupComm,
-                                     interpoolcomm);
-
-                                     
+                                     interpoolcomm);                                    
                                     
 
     }
+  problemFE.init();
+
+
 }
 
 
