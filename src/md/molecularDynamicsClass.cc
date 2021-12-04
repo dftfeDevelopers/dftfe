@@ -36,7 +36,6 @@ namespace dftfe
         
         MPI_Barrier(MPI_COMM_WORLD);
         d_MDstartWallTime = MPI_Wtime();
-        startingTimeStep        = dftParameters::StartingTimeStep;
         TimeIndex               = 0;
         timeStep                =
                 dftParameters::timeStepBOMD*0.09822694541304546435; // Conversion factor from femteseconds:
@@ -262,7 +261,52 @@ namespace dftfe
 
       else if(restartFlag == 1)
       {
+          if(this_mpi_process == 0)
+          {   int error;
+               std::string file1 = "TotalDisplacement.chk";
+              std::ifstream       readFile1(file1.c_str());
+              if(!readFile1.fail())
+              {
+                error = remove(file1.c_str());
+                AssertThrow(error == 0,
+                          dealii::ExcMessage(std::string(
+                            "Unable to remove file: " + file1 +
+                            ", although it seems to exist. " +
+                            "The error code is " +
+                            dealii::Utilities::to_string(error) + ".")));  
+              } 
+              pcout<<"Removed File: "<<file1<<std::endl;                       
+               std::string file2 = "Displacement.chk";
+              std::ifstream       readFile2(file2.c_str());
+              if(!readFile2.fail())
+              {
+                error = remove(file2.c_str());
+                AssertThrow(error == 0,
+                          dealii::ExcMessage(std::string(
+                            "Unable to remove file: " + file2 +
+                            ", although it seems to exist. " +
+                            "The error code is " +
+                            dealii::Utilities::to_string(error) + ".")));  
+              }  
+              pcout<<"Removed File: "<<file2<<std::endl;                      
+               std::string file3 = "/mdRestart/NHCThermostat.chk";
+              std::ifstream       readFile3(file3.c_str());
+              if(!readFile3.fail() && thermostatType =="NOSE_HOVER_CHAINS")
+              {
+                error = remove(file3.c_str());
+                AssertThrow(error == 0,
+                          dealii::ExcMessage(std::string(
+                            "Unable to remove file: " + file3 +
+                            ", although it seems to exist. " +
+                            "The error code is " +
+                            dealii::Utilities::to_string(error) + ".")));  
+              }                        
+              pcout<<"Removed File: "<<file3<<std::endl;
+
           
+          }
+
+          MPI_Barrier(MPI_COMM_WORLD);
           InitialiseFromRestartFile(velocity, force, KineticEnergyVector , InternalEnergyVector , TotalEnergyVector);
           
      
