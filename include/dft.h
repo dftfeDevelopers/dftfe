@@ -295,16 +295,28 @@ namespace dftfe
      */
     void
     writeDomainAndAtomCoordinates();
-
+     /**
+     * @brief writes the current domain bounding vectors and atom coordinates to files, which are required for
+     * MD restart
+     */
     void
     MDwriteDomainAndAtomCoordinates(std::string Path);
-    
+     /**
+     * @brief writes the current domain bounding vectors and atom coordinates to files, which are required for
+     * MD restart
+     */    
     void
     getAtomLocations(std::vector<std::vector<double>> &atomSites);
-
+     /**
+     * @brief writes the current domain bounding vectors and atom coordinates to files, which are required for
+     * MD restart
+     */
     void           
     getAtomTypes(std::set<unsigned int> &atoms);
-
+     /**
+     * @brief writes the current domain bounding vectors and atom coordinates to files, which are required for
+     * MD restart
+     */
     void           
     getForceonAtoms(std::vector<double> &atomforces);   
 

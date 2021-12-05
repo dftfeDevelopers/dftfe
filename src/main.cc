@@ -55,14 +55,14 @@ setup_dftfe(dftfe::elpaScalaManager*  elpa_Scala,
             const MPI_Comm &    mpi_comm_replica,
             const MPI_Comm &    interpoolcomm,
             const MPI_Comm &    interBandGroupComm,
-            bool flag = true )
+            bool setupELPAProcessGrid = true )
 {
     problemFE.d_numEigenValues = numberEigenValues;    
     problemFE.set();
     
     numberEigenValues = problemFE.d_numEigenValues;
     numEigenValuesRR = problemFE.d_numEigenValuesRR;
-    if (flag == true)
+    if (setupELPAProcessGrid == true)
     {          
       
       elpa_Scala->processGridELPASetup(numberEigenValues,

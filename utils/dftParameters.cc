@@ -1066,7 +1066,7 @@ namespace dftfe
           "[Developer] Time constant of thermostat wrt MD timestep. ");  
        
         prm.declare_entry(
-          "TEMP CONTROLLER TYPE",
+          "TEMPERATURE CONTROLLER TYPE",
           "NO_CONTROL",
           Patterns::Selection("NO_CONTROL|RESCALE|NOSE_HOVER_CHAINS|CSVR"),
           "[Standard] Method of controlling temperature in the MD run. NO_CONTROL is the default option.");
