@@ -157,11 +157,11 @@ run_problem(const MPI_Comm &    mpi_comm_replica,
                   }
 
                 }
-                 dftfe::dftParameters::StartingTimeStep = time1 ;
+                
                  setup_dftfe<n1,n2> (elpaScala, problemFE,numberEigenValues,numEigenValuesRR,
                               mpi_comm_replica,interpoolcomm,interBandGroupComm);
-                dftfe::molecularDynamicsClass<n1,n2> mdClass(&problemFE, mpi_comm_replica); 
-                //mdClass.startingTimeStep = time1;          
+                dftfe::molecularDynamicsClass<n1,n2> mdClass(&problemFE, mpi_comm_replica,time1); 
+          
                 mdClass.runMD();
 
               }

@@ -25,7 +25,8 @@ namespace dftfe
     
      */
         molecularDynamicsClass(dftClass<FEOrder, FEOrderElectro> *_dftPtr,
-                      const MPI_Comm &                   mpi_comm_replica);
+                      const MPI_Comm &                   mpi_comm_replica,
+                      int                                  StartTime);
 
         const double haPerBohrToeVPerAng = 27.211386245988 / 0.529177210903;
         const double haToeV              = 27.211386245988;
@@ -266,17 +267,14 @@ namespace dftfe
 
         /**
 
-    * @brief  NoseHoverExtendedLagrangian
+    * @brief  writeRestartFile: Writing files at each timestep to mdRestart
 
-     * @param[in] thermovelocity Velocity of each, updated at each TimeStep
-     * @param[in] thermoposition Position of each thermostat , updated at each TimeStep
-     * @param[in] thermomass Stores the mass of each thermostat.
+     * @param[in] velocity Velocity updated from restart
+     * @param[in] force Force data at each timeStep
      * @param[in] PE  Free energy of system at current Timestep
      * @param[in] KE  Kinetic ENergy of nuclei at current Timestep
-     * @param[in] Temperature  temperature at current Timestep
-     * 
-     * @param[out] Hnose Nose Hamiltonian at each timestep
-     *    
+     * @param[in] TE  temperature at current Timestep
+     * @param[in] time Current TimeStep   
      *  
      *     
      */  
@@ -286,16 +284,15 @@ namespace dftfe
 
         /**
 
-    * @brief  NoseHoverExtendedLagrangian
+    * @brief  InitialiseFromRestartFile : Initialise atomcordinates, velocity and force at restart
 
-     * @param[in] thermovelocity Velocity of each, updated at each TimeStep
-     * @param[in] thermoposition Position of each thermostat , updated at each TimeStep
-     * @param[in] thermomass Stores the mass of each thermostat.
+     * @param[in] velocity Velocity updated from restart
+     * @param[in] force Force updated from dft->Solve
      * @param[in] PE  Free energy of system at current Timestep
      * @param[in] KE  Kinetic ENergy of nuclei at current Timestep
-     * @param[in] Temperature  temperature at current Timestep
+     * @param[in] TE  temperature at current Timestep
      * 
-     * @param[out] Hnose Nose Hamiltonian at each timestep
+
      *    
      *  
      *     
@@ -304,17 +301,12 @@ namespace dftfe
 
         /**
 
-    * @brief  NoseHoverExtendedLagrangian
+    * @brief  NoseHoverExtendedLagrangian Writes the NHC parameters at each timeStep
 
      * @param[in] thermovelocity Velocity of each, updated at each TimeStep
      * @param[in] thermoposition Position of each thermostat , updated at each TimeStep
      * @param[in] thermomass Stores the mass of each thermostat.
-     * @param[in] PE  Free energy of system at current Timestep
-     * @param[in] KE  Kinetic ENergy of nuclei at current Timestep
-     * @param[in] Temperature  temperature at current Timestep
-     * 
-     * @param[out] Hnose Nose Hamiltonian at each timestep
-     *    
+     * @param[in] time Current TimeStep   
      *  
      *     
      */  
@@ -322,16 +314,11 @@ namespace dftfe
 
         /**
 
-    * @brief  NoseHoverExtendedLagrangian
+    * @brief  InitialiseFromRestartNHCFile: Reads the NHC parameters during restart
 
      * @param[in] thermovelocity Velocity of each, updated at each TimeStep
      * @param[in] thermoposition Position of each thermostat , updated at each TimeStep
      * @param[in] thermomass Stores the mass of each thermostat.
-     * @param[in] PE  Free energy of system at current Timestep
-     * @param[in] KE  Kinetic ENergy of nuclei at current Timestep
-     * @param[in] Temperature  temperature at current Timestep
-     * 
-     * @param[out] Hnose Nose Hamiltonian at each timestep
      *    
      *  
      *     
@@ -340,16 +327,11 @@ namespace dftfe
 
         /**
 
-    * @brief  NoseHoverExtendedLagrangian
+    * @brief  writeTotalDisplacementFile: Updates Displacement.chk and appends TotalDisplacement.chk
 
-     * @param[in] thermovelocity Velocity of each, updated at each TimeStep
-     * @param[in] thermoposition Position of each thermostat , updated at each TimeStep
-     * @param[in] thermomass Stores the mass of each thermostat.
-     * @param[in] PE  Free energy of system at current Timestep
-     * @param[in] KE  Kinetic ENergy of nuclei at current Timestep
-     * @param[in] Temperature  temperature at current Timestep
-     * 
-     * @param[out] Hnose Nose Hamiltonian at each timestep
+     * @param[in] r Displacemnt of each atom, updated at each TimeStep
+     * @param[in] time  each TimeStep
+
      *    
      *  
      *     
@@ -358,7 +340,7 @@ namespace dftfe
 
         /**
 
-    * @brief  NoseHoverExtendedLagrangian
+    * @brief  NoseHoverExtendedLagrangian: Computes the Nose-Hover Hamiltonian when using NHC thermostat
 
      * @param[in] thermovelocity Velocity of each, updated at each TimeStep
      * @param[in] thermoposition Position of each thermostat , updated at each TimeStep

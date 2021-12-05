@@ -153,7 +153,6 @@ namespace dftfe
     extern bool         gpuMemOptMode;
     //New Paramters for moleculardyynamics class
     extern double startingTempBOMD;
-    extern int StartingTimeStep; 
     extern double MaxWallTime;
     extern double thermostatTimeConstantBOMD;
     extern std::string  tempControllerTypeBOMD;    

@@ -153,7 +153,6 @@ namespace dftfe
     //New Paramters for moleculardyynamics class
     double startingTempBOMD                                     = 300;
     double thermostatTimeConstantBOMD                            = 100;
-    int StartingTimeStep                                       = 0;
     double MaxWallTime                                          = 2592000.0;
     std::string  tempControllerTypeBOMD                         ="";
     std::string  VelocityRestartFile                              = "";
@@ -1101,10 +1100,7 @@ namespace dftfe
                           Patterns::Integer(0, 200000),
                           "[Standard] Number of time steps.");
 
-        prm.declare_entry("STARTING TIME STEP",
-                          "0",
-                          Patterns::Integer(0, 200000),
-                          "[Standard] Starting Time Step");
+
         prm.declare_entry("MAX WALL TIME",
                           "2592000.0",
                           Patterns::Double(0.0),
@@ -1452,7 +1448,7 @@ namespace dftfe
         dftParameters::numberStepsBOMD = prm.get_integer("NUMBER OF STEPS");
         dftParameters::startingTempBOMDNVE =
           prm.get_double("STARTING TEMP NVE");
-        dftParameters::StartingTimeStep = prm.get_integer("STARTING TIME STEP");
+
         dftParameters::startingTempBOMD =
           prm.get_double("STARTING TEMPERATURE");
         dftParameters::thermostatTimeConstantBOMD =

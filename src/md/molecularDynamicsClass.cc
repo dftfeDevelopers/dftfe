@@ -26,7 +26,7 @@ namespace dftfe
 
     template <unsigned int FEOrder, unsigned int FEOrderElectro>
     molecularDynamicsClass<FEOrder, FEOrderElectro>::molecularDynamicsClass(dftClass<FEOrder, FEOrderElectro> *_dftPtr,
-    const MPI_Comm &                   mpi_comm_replica)
+    const MPI_Comm &                   mpi_comm_replica, int StartTime)
     : dftPtr(_dftPtr)
     , d_mpi_communicator(mpi_comm_replica)
        , d_this_mpi_process(Utilities::MPI::this_mpi_process(mpi_comm_replica))
@@ -51,7 +51,7 @@ namespace dftfe
         d_numberGlobalCharges      = 
                 dftParameters::natoms; 
         d_startingTimeStep        =
-                dftParameters::StartingTimeStep;  
+                StartTime;  
         d_MaxWallTime           =
                 dftParameters::MaxWallTime;              
         pcout << "----------------------Starting Initialization of BOMD-------------------------" << std::endl;        

@@ -302,21 +302,24 @@ namespace dftfe
     void
     MDwriteDomainAndAtomCoordinates(std::string Path);
      /**
-     * @brief writes the current domain bounding vectors and atom coordinates to files, which are required for
-     * MD restart
+     * @brief Gets the current atom Locations from dftPtr
+     *  @param[in] atomSites vector that saves atomLocations data member of dft Class
+     *  @param[out] atomSites vector that saves atomLocations data member of dft Class
      */    
     void
     getAtomLocations(std::vector<std::vector<double>> &atomSites);
      /**
-     * @brief writes the current domain bounding vectors and atom coordinates to files, which are required for
-     * MD restart
-     */
+     * @brief Gets the current atom Locations from dftPtr
+     *  @param[in] atoms vector that saves atomtypes data member of dft Class
+     *  @param[out] atoms vector that saves atomtypes data member of dft Class
+     */ 
     void           
     getAtomTypes(std::set<unsigned int> &atoms);
      /**
-     * @brief writes the current domain bounding vectors and atom coordinates to files, which are required for
-     * MD restart
-     */
+     * @brief Gets the current atom Locations from dftPtr
+     *  @param[in] atomforces vector that returns -ve of atom Forces from dft Class
+     *  @param[out] atomforces vector that returns -ve of atom Forces from dft Class
+     */ 
     void           
     getForceonAtoms(std::vector<double> &atomforces);   
 
