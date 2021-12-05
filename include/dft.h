@@ -300,13 +300,13 @@ namespace dftfe
     MDwriteDomainAndAtomCoordinates(std::string Path);
     
     void
-    getAtomLocationsfromdftptr(std::vector<std::vector<double>> &);
+    getAtomLocations(std::vector<std::vector<double>> &atomSites);
 
     void           
-    getAtomTypesfromdftptr(std::set<unsigned int> &);
+    getAtomTypes(std::set<unsigned int> &atoms);
 
     void           
-    getForceonAtomsfromdftptr(std::vector<double> &);   
+    getForceonAtoms(std::vector<double> &atomforces);   
 
   private:
     /**

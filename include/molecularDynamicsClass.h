@@ -33,7 +33,7 @@ namespace dftfe
         const double AngTobohr           = 1.0 / bohrToAng;
         const double kB                  = 8.617333262e-05; // eV/K **3.166811429e-6**;
         
-        unsigned int startingTimeStep;
+         int d_startingTimeStep;
     /**
      * @brief runMD: Assign atom mass to charge. Create vectors for displacement, velocity, force. 
      * Create KE vector, TE vector, PE vector. Initialise velocities from Boltsmann distribution. 
@@ -59,24 +59,21 @@ namespace dftfe
         dftClass<FEOrder, FEOrderElectro> *dftPtr;
 
     // parallel communication objects
-        const MPI_Comm     mpi_communicator;
-        const unsigned int n_mpi_processes;
-        const unsigned int this_mpi_process;
+        const MPI_Comm     d_mpi_communicator;
+        const unsigned int d_this_mpi_process;
 
     // conditional stream object
         dealii::ConditionalOStream pcout;
     
     
-        unsigned int restartFlag;
-        bool velocityFlag;
-        unsigned int numberGlobalCharges;
-        unsigned int numberofAtomTypes;    
-        double timeStep;
-        unsigned int TimeIndex;
-        unsigned int numberofSteps;
-        double startingTemperature;
-        int thermostatTimeConstant;
-        std::string thermostatType;
+        unsigned int d_restartFlag;
+        unsigned int d_numberGlobalCharges;   
+        double d_TimeStep;
+        unsigned int d_TimeIndex;
+        unsigned int d_numberofSteps;
+        double d_startingTemperature;
+        int d_ThermostatTimeConstant;
+        std::string d_ThermostatType;
         double d_MDstartWallTime;
         double d_MaxWallTime;
     /**
@@ -91,19 +88,19 @@ namespace dftfe
      * @param[in] displacements Stores the displacment of each Charge, updated at each TimeStep
      * @param[in] velocity Stores the velocity of each Charge, updated at each TimeStep
      * @param[in] force Stores the -ve of force on each charge, updated at each TimeStep
-     * @param[in] massAtoms Stores the mass of each Charge.
+     * @param[in] atomMass Stores the mass of each Charge.
 
      * @param[out] displacements Stores the displacment of each Charge, updated at each TimeStep
      * @param[out] velocity Stores the velocity of each Charge, updated at each TimeStep
      * @param[out] force Stores the -ve of force on each charge, updated at each TimeStep
-     * @param[out] massAtoms Stores the mass of each Charge.     * 
+     * @param[out] atomMass Stores the mass of each Charge.     * 
      *  
      *     
      */    
-        void mdNVE(std::vector<double> & , std::vector<double> & ,
-                std::vector<double> &, std::vector<double> & ,
-                std::vector<dealii::Tensor<1, 3, double>> & ,std::vector<double> & ,
-                std::vector<double> &, std::vector<double> );
+        void mdNVE(std::vector<double> &KineticEnergyVector , std::vector<double>  &InternalEnergyVector,
+                std::vector<double> &EntropicEnergyVector, std::vector<double> &TotalEnergyVector ,
+                std::vector<dealii::Tensor<1, 3, double>> &displacements ,std::vector<double> &velocity ,
+                std::vector<double> &force, std::vector<double> atomMass );
     /**
 
     @brief mdNVTnosehoverchainsThermostat Performs a Canonical Ensemble MD calculation. The inital temperature is set by runMD().
@@ -125,14 +122,14 @@ namespace dftfe
      *  
      *     
      */               
-        void mdNVTnosehoverchainsThermostat(std::vector<double> & ,
-                                            std::vector<double> &,
-                                            std::vector<double> & , 
-                                            std::vector<double> & ,
-                                            std::vector<dealii::Tensor<1, 3, double>> & ,
-                                            std::vector<double> & ,
-                                            std::vector<double> & , 
-                                                std::vector<double>  );
+        void mdNVTnosehoverchainsThermostat(std::vector<double> &KineticEnergyVector ,
+                                            std::vector<double> &InternalEnergyVector,
+                                            std::vector<double> &EntropicEnergyVector , 
+                                            std::vector<double> &TotalEnergyVector ,
+                                            std::vector<dealii::Tensor<1, 3, double>> &displacements ,
+                                            std::vector<double> &velocity ,
+                                            std::vector<double>  &force , 
+                                                std::vector<double> atomMass );
 
     /**
 
@@ -156,14 +153,14 @@ namespace dftfe
      *  
      *     
      */ 
-        void mdNVTrescaleThermostat(std::vector<double> & ,
-                                            std::vector<double> &,
-                                            std::vector<double> & , 
-                                            std::vector<double> & ,
-                                            std::vector<dealii::Tensor<1, 3, double>> & ,
-                                            std::vector<double> & ,
-                                            std::vector<double> & , 
-                                                std::vector<double>  );
+        void mdNVTrescaleThermostat(std::vector<double> &KineticEnergyVector ,
+                                            std::vector<double> &InternalEnergyVector,
+                                            std::vector<double> &EntropicEnergyVector , 
+                                            std::vector<double> &TotalEnergyVector ,
+                                            std::vector<dealii::Tensor<1, 3, double>>  &displacements ,
+                                            std::vector<double> &velocity ,
+                                            std::vector<double> &force , 
+                                                std::vector<double> atomMass );
 
 
     /**
@@ -187,23 +184,23 @@ namespace dftfe
      *  
      *     
      */ 
-        void mdNVTsvrThermostat(std::vector<double> & ,
-                                            std::vector<double> &,
-                                            std::vector<double> & , 
-                                            std::vector<double> & ,
-                                            std::vector<dealii::Tensor<1, 3, double>> & ,
-                                            std::vector<double> & ,
-                                            std::vector<double> & , 
-                                                std::vector<double>  );
+        void mdNVTsvrThermostat(std::vector<double> &KineticEnergyVector ,
+                                            std::vector<double>  &InternalEnergyVector,
+                                            std::vector<double> &EntropicEnergyVector , 
+                                            std::vector<double> &TotalEnergyVector ,
+                                            std::vector<dealii::Tensor<1, 3, double>> &displacements ,
+                                            std::vector<double> &velocity ,
+                                            std::vector<double> &force , 
+                                                std::vector<double> atomMass  );
 
 
     /**
     * @brief RescaleVelocities controls the velocity at timestep t. The scaling of     
     * velocities depends on ratio of T at that timestep and inital Temperature.
 
-     * @param[in] velocity Stores the velocity of each Charge, updated at each TimeStep
-     * @param[in] force Stores the -ve of force on each charge, updated at each TimeStep
-     * @param[in] massAtoms Stores the mass of each Charge.
+     * @param[in] v Stores the velocity of each Charge, updated at each TimeStep
+     * @param[in] KE Kinetic Energy at current timestp in eV
+     * @param[in] M Stores the mass of each Charge.
      * @param[in] Temperature  temperature at current Timestep
      * 
      * @param[out] KE Kinetic Energy at current timestp in eV
@@ -212,8 +209,8 @@ namespace dftfe
      *  
      *     
      */ 
-        void RescaleVelocities(std::vector<double> & ,double & ,
-                         std::vector<double> , double ); 
+        void RescaleVelocities(std::vector<double> &v ,double &KE ,
+                         std::vector<double> M , double Temperature ); 
 
         
     /**
@@ -230,20 +227,20 @@ namespace dftfe
      *  
      *     
      */                   
-        void NoseHoverChains(std::vector<double> & , std::vector<double> & ,
-         std::vector<double> & , std::vector<double> , double , double  ) ; 
+        void NoseHoverChains(std::vector<double> &v , std::vector<double> &v_e ,
+         std::vector<double> &e , std::vector<double> Q , double KE , double Temperature) ; 
 
     /**
 
     * @brief 
 
-     * @param[in] velocity Stores the velocity of each Charge, updated at each TimeStep
-     * @param[in] KinetricEnergyreference Target value of Kinetic Enegy from Temperature
-     * @param[out] KineticEnergy rescaled Kinetic Energy from svr thermostat   
+     * @param[in] v Stores the velocity of each Charge, updated at each TimeStep
+     * @param[in] KEref Target value of Kinetic Enegy from Temperature
+     * @param[out] KE rescaled Kinetic Energy from svr thermostat   
      *  
      *     
      */                   
-        void svr(std::vector<double> & , double &, double ) ; 
+        void svr(std::vector<double> &v , double &KE, double KEref ) ; 
 
 
 
@@ -251,30 +248,113 @@ namespace dftfe
 
     * @brief velocityVerlet
 
-     * @param[in] velocity Stores the velocity of each Charge, updated at each TimeStep
-     * @param[in] force Stores the -ve of force on each charge, updated at each TimeStep
-     * @param[in] massAtoms Stores the mass of each Charge.
+     * @param[in] v Stores the velocity of each Charge, updated at each TimeStep
+     * @param[in] forceOnAtoms Stores the -ve of force on each charge, updated at each TimeStep
+     * @param[in] atomMass Stores the mass of each Charge.
      * @param[in] Temperature  temperature at current Timestep
      * 
      * @param[out] KE Kinetic Energy at current timestp in eV
+     * @param[out] forceonAtoms Updated -ve forces on each charge.
+     * @param[out] r Updated displacement
+     * @param[out] v Updated velocity of each atom
      *    
      *  
      *     
      */ 
-        void velocityVerlet(std::vector<double> &, std::vector<dealii::Tensor<1, 3, double>> &, 
-                        std::vector<double> , double & , std::vector<double> & );
+        void velocityVerlet(std::vector<double> &v, std::vector<dealii::Tensor<1, 3, double>> &r, 
+                        std::vector<double> atomMass , double &KE , std::vector<double> &forceOnAtoms );
 
+        /**
+
+    * @brief  NoseHoverExtendedLagrangian
+
+     * @param[in] thermovelocity Velocity of each, updated at each TimeStep
+     * @param[in] thermoposition Position of each thermostat , updated at each TimeStep
+     * @param[in] thermomass Stores the mass of each thermostat.
+     * @param[in] PE  Free energy of system at current Timestep
+     * @param[in] KE  Kinetic ENergy of nuclei at current Timestep
+     * @param[in] Temperature  temperature at current Timestep
+     * 
+     * @param[out] Hnose Nose Hamiltonian at each timestep
+     *    
+     *  
+     *     
+     */  
        
-       void writeRestartFile(std::vector<double> , std::vector<double> , std::vector<double> ,
-                              std::vector<double> , std::vector<double>, int );   
+       void writeRestartFile(std::vector<double> velocity , std::vector<double> force  , std::vector<double> KineticEnergyVector,
+                              std::vector<double> InternalEnergyVector, std::vector<double> TotalEnergyVector, int time );   
 
-        void InitialiseFromRestartFile( std::vector<double> &, std::vector<double> & , std::vector<double> & , std::vector<double> & , std::vector<double> &  );   
+        /**
 
-       void writeRestartNHCfile(std::vector<double> , std::vector<double> , std::vector<double>, int  );   
+    * @brief  NoseHoverExtendedLagrangian
 
-        void InitialiseFromRestartNHCFile( std::vector<double> &, std::vector<double> & , std::vector<double> &   );  
+     * @param[in] thermovelocity Velocity of each, updated at each TimeStep
+     * @param[in] thermoposition Position of each thermostat , updated at each TimeStep
+     * @param[in] thermomass Stores the mass of each thermostat.
+     * @param[in] PE  Free energy of system at current Timestep
+     * @param[in] KE  Kinetic ENergy of nuclei at current Timestep
+     * @param[in] Temperature  temperature at current Timestep
+     * 
+     * @param[out] Hnose Nose Hamiltonian at each timestep
+     *    
+     *  
+     *     
+     */  
+        void InitialiseFromRestartFile( std::vector<double> &velocity, std::vector<double> &force , std::vector<double> &KE , std::vector<double> &IE , std::vector<double> &TE  );   
 
-        void writeTotalDisplacementFile(std::vector<dealii::Tensor<1, 3, double>> , int ) ;  
+        /**
+
+    * @brief  NoseHoverExtendedLagrangian
+
+     * @param[in] thermovelocity Velocity of each, updated at each TimeStep
+     * @param[in] thermoposition Position of each thermostat , updated at each TimeStep
+     * @param[in] thermomass Stores the mass of each thermostat.
+     * @param[in] PE  Free energy of system at current Timestep
+     * @param[in] KE  Kinetic ENergy of nuclei at current Timestep
+     * @param[in] Temperature  temperature at current Timestep
+     * 
+     * @param[out] Hnose Nose Hamiltonian at each timestep
+     *    
+     *  
+     *     
+     */  
+       void writeRestartNHCfile(std::vector<double> v_e, std::vector<double> e , std::vector<double> Q, int time  );   
+
+        /**
+
+    * @brief  NoseHoverExtendedLagrangian
+
+     * @param[in] thermovelocity Velocity of each, updated at each TimeStep
+     * @param[in] thermoposition Position of each thermostat , updated at each TimeStep
+     * @param[in] thermomass Stores the mass of each thermostat.
+     * @param[in] PE  Free energy of system at current Timestep
+     * @param[in] KE  Kinetic ENergy of nuclei at current Timestep
+     * @param[in] Temperature  temperature at current Timestep
+     * 
+     * @param[out] Hnose Nose Hamiltonian at each timestep
+     *    
+     *  
+     *     
+     */  
+        void InitialiseFromRestartNHCFile( std::vector<double> &v_e, std::vector<double> &e , std::vector<double> &Q   );  
+
+        /**
+
+    * @brief  NoseHoverExtendedLagrangian
+
+     * @param[in] thermovelocity Velocity of each, updated at each TimeStep
+     * @param[in] thermoposition Position of each thermostat , updated at each TimeStep
+     * @param[in] thermomass Stores the mass of each thermostat.
+     * @param[in] PE  Free energy of system at current Timestep
+     * @param[in] KE  Kinetic ENergy of nuclei at current Timestep
+     * @param[in] Temperature  temperature at current Timestep
+     * 
+     * @param[out] Hnose Nose Hamiltonian at each timestep
+     *    
+     *  
+     *     
+     */  
+        void writeTotalDisplacementFile(std::vector<dealii::Tensor<1, 3, double>> r , int time ) ;  
 
         /**
 
@@ -293,7 +373,7 @@ namespace dftfe
      *     
      */    
         
-        double NoseHoverExtendedLagrangian(std::vector<double>  , std::vector<double>  , std::vector<double> , double, double, double  );                                    
+        double NoseHoverExtendedLagrangian(std::vector<double> thermovelocity  , std::vector<double> thermoposition  , std::vector<double> thermomass , double PE, double KE, double  T );                                    
         
 
 
