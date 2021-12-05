@@ -305,7 +305,7 @@ namespace dftfe
           
           }
 
-          MPI_Barrier(MPI_COMM_WORLD);
+          MPI_Barrier(d_mpi_communicator);
           InitialiseFromRestartFile(velocity, force, KineticEnergyVector , InternalEnergyVector , TotalEnergyVector);
           
      
@@ -354,11 +354,11 @@ namespace dftfe
         for(d_TimeIndex=d_startingTimeStep+1; d_TimeIndex < d_startingTimeStep+d_numberofSteps;d_TimeIndex++)
         {       
             double step_time,curr_time;
-            MPI_Barrier(MPI_COMM_WORLD);
+            MPI_Barrier(d_mpi_communicator);
             step_time = MPI_Wtime();   
 
             velocityVerlet(velocity, displacements,atomMass,KineticEnergy, force );
-            MPI_Barrier(MPI_COMM_WORLD);
+            MPI_Barrier(d_mpi_communicator);
    
             KineticEnergyVector[d_TimeIndex-d_startingTimeStep]  = KineticEnergy / haToeV;
             InternalEnergyVector[d_TimeIndex-d_startingTimeStep] = dftPtr->GroundStateEnergyvalue;
@@ -369,7 +369,7 @@ namespace dftfe
             TemperatureFromVelocities = 2.0/3.0/double(d_numberGlobalCharges-1)*KineticEnergy/(kB);                              
 
             //Based on verbose print required MD details...
-            MPI_Barrier(MPI_COMM_WORLD);
+            MPI_Barrier(d_mpi_communicator);
             step_time = MPI_Wtime() - step_time;
             if (dftParameters::verbosity >= 1)
               {
@@ -404,7 +404,7 @@ namespace dftfe
             writeRestartFile(velocity,force,KineticEnergyVector,InternalEnergyVector,TotalEnergyVector,d_TimeIndex);
             writeTotalDisplacementFile(displacements,d_TimeIndex);
 
-            MPI_Barrier(MPI_COMM_WORLD);
+            MPI_Barrier(d_mpi_communicator);
             curr_time = MPI_Wtime() - d_MDstartWallTime;
             pcout<<"*****Time Completed till NOW: "<<curr_time<<std::endl;
             AssertThrow((d_MaxWallTime -(curr_time + 1.05*step_time) ) > 1.0,
@@ -432,18 +432,18 @@ namespace dftfe
         for(d_TimeIndex=d_startingTimeStep+1; d_TimeIndex< d_startingTimeStep+d_numberofSteps;d_TimeIndex++)
         {       
             double step_time,curr_time;
-            MPI_Barrier(MPI_COMM_WORLD);
+            MPI_Barrier(d_mpi_communicator);
             step_time = MPI_Wtime();   
 
             velocityVerlet(velocity, displacements,atomMass,KineticEnergy, force);
-            //MPI_Barrier(MPI_COMM_WORLD);
+            //MPI_Barrier(d_mpi_communicator);
             TemperatureFromVelocities = 2.0/3.0/double(d_numberGlobalCharges-1)*KineticEnergy/(kB);
             if(d_TimeIndex%d_ThermostatTimeConstant==0)
             {
               RescaleVelocities(velocity,KineticEnergy,atomMass,TemperatureFromVelocities );
             }
 
-            MPI_Barrier(MPI_COMM_WORLD);   
+            MPI_Barrier(d_mpi_communicator);   
             KineticEnergyVector[d_TimeIndex-d_startingTimeStep]  = KineticEnergy / haToeV;
             InternalEnergyVector[d_TimeIndex-d_startingTimeStep] = dftPtr->GroundStateEnergyvalue;
             EntropicEnergyVector[d_TimeIndex-d_startingTimeStep] = dftPtr->EntropicEnergyvalue;
@@ -453,7 +453,7 @@ namespace dftfe
             TemperatureFromVelocities = 2.0/3.0/double(d_numberGlobalCharges-1)*KineticEnergy/(kB);                              
 
             //Based on verbose print required MD details...
-            MPI_Barrier(MPI_COMM_WORLD);
+            MPI_Barrier(d_mpi_communicator);
             step_time = MPI_Wtime() - step_time;
             if (dftParameters::verbosity >= 1)
               {
@@ -488,7 +488,7 @@ namespace dftfe
             writeRestartFile(velocity,force,KineticEnergyVector,InternalEnergyVector,TotalEnergyVector,d_TimeIndex);
             writeTotalDisplacementFile(displacements,d_TimeIndex);
 
-            MPI_Barrier(MPI_COMM_WORLD);
+            MPI_Barrier(d_mpi_communicator);
             curr_time = MPI_Wtime() - d_MDstartWallTime;
             pcout<<"*****Time Completed till NOW: "<<curr_time<<std::endl;
             AssertThrow((d_MaxWallTime -(curr_time + 1.05*step_time) ) > 1.0,
@@ -536,7 +536,7 @@ namespace dftfe
          for(d_TimeIndex=d_startingTimeStep+1; d_TimeIndex < d_startingTimeStep+d_numberofSteps;d_TimeIndex++)
         {       
             double step_time,curr_time;
-            MPI_Barrier(MPI_COMM_WORLD);
+            MPI_Barrier(d_mpi_communicator);
             step_time = MPI_Wtime();   
             NoseHoverChains(velocity, Thermostatvelocity,Thermostatposition, ThermostatMass, KineticEnergyVector[d_TimeIndex - 1 - d_startingTimeStep]*haToeV, d_startingTemperature);
             velocityVerlet(velocity, displacements,atomMass,KineticEnergy, force);
@@ -551,7 +551,7 @@ namespace dftfe
               }
 
 
-            MPI_Barrier(MPI_COMM_WORLD);   
+            MPI_Barrier(d_mpi_communicator);   
             KineticEnergyVector[d_TimeIndex-d_startingTimeStep]  = KineticEnergy / haToeV;
             InternalEnergyVector[d_TimeIndex-d_startingTimeStep] = dftPtr->GroundStateEnergyvalue;
             EntropicEnergyVector[d_TimeIndex-d_startingTimeStep] = dftPtr->EntropicEnergyvalue;
@@ -576,7 +576,7 @@ namespace dftfe
                   }         
           
               }             
-            MPI_Barrier(MPI_COMM_WORLD);
+            MPI_Barrier(d_mpi_communicator);
             step_time = MPI_Wtime() - step_time;              
             if (dftParameters::verbosity >= 1)
             { 
@@ -604,7 +604,7 @@ namespace dftfe
             writeRestartNHCfile(Thermostatvelocity,Thermostatposition, ThermostatMass,d_TimeIndex );
             writeTotalDisplacementFile(displacements,d_TimeIndex);
 
-            MPI_Barrier(MPI_COMM_WORLD);
+            MPI_Barrier(d_mpi_communicator);
             curr_time = MPI_Wtime() - d_MDstartWallTime;
           //  pcout<<"*****Time Completed till NOW: "<<curr_time<<std::endl;
             AssertThrow((d_MaxWallTime -(curr_time + 1.05*step_time) ) > 1.0,
@@ -635,16 +635,16 @@ namespace dftfe
         {       
             double step_time,curr_time;
 
-            MPI_Barrier(MPI_COMM_WORLD);
+            MPI_Barrier(d_mpi_communicator);
             step_time = MPI_Wtime();   
 
             velocityVerlet(velocity, displacements,atomMass,KineticEnergy, force);
-            //MPI_Barrier(MPI_COMM_WORLD);
+            //MPI_Barrier(d_mpi_communicator);
 
             svr(velocity,KineticEnergy,KEref);
             TemperatureFromVelocities = 2.0/3.0/double(d_numberGlobalCharges-1)*KineticEnergy/(kB);
 
-            MPI_Barrier(MPI_COMM_WORLD);   
+            MPI_Barrier(d_mpi_communicator);   
             KineticEnergyVector[d_TimeIndex-d_startingTimeStep]  = KineticEnergy / haToeV;
             InternalEnergyVector[d_TimeIndex-d_startingTimeStep] = dftPtr->GroundStateEnergyvalue;
             EntropicEnergyVector[d_TimeIndex-d_startingTimeStep] = dftPtr->EntropicEnergyvalue;
@@ -654,7 +654,7 @@ namespace dftfe
             TemperatureFromVelocities = 2.0/3.0/double(d_numberGlobalCharges-1)*KineticEnergy/(kB);                              
 
             //Based on verbose print required MD details...
-            MPI_Barrier(MPI_COMM_WORLD);
+            MPI_Barrier(d_mpi_communicator);
             step_time = MPI_Wtime() - step_time;
             if (dftParameters::verbosity >= 1)
               {
@@ -690,7 +690,7 @@ namespace dftfe
             writeRestartFile(velocity,force,KineticEnergyVector,InternalEnergyVector,TotalEnergyVector,d_TimeIndex);
             writeTotalDisplacementFile(displacements,d_TimeIndex);
 
-            MPI_Barrier(MPI_COMM_WORLD);
+            MPI_Barrier(d_mpi_communicator);
             curr_time = MPI_Wtime() - d_MDstartWallTime;
             pcout<<"*****Time Completed till NOW: "<<curr_time<<std::endl;
             AssertThrow((d_MaxWallTime -(curr_time + 1.05*step_time) ) > 1.0,
@@ -730,7 +730,7 @@ namespace dftfe
                 v[3*i+2] = v[3*i+2] - forceOnAtoms[3*i+2]/atomMass[i]*dt_2* haPerBohrToeVPerAng;
             }
         double update_time;
-        MPI_Barrier(MPI_COMM_WORLD);
+        MPI_Barrier(d_mpi_communicator);
         update_time = MPI_Wtime();
         dftPtr->updateAtomPositionsAndMoveMesh(
           r,
@@ -750,7 +750,7 @@ namespace dftfe
           
           }          
         
-        MPI_Barrier(MPI_COMM_WORLD);
+        MPI_Barrier(d_mpi_communicator);
 
         update_time = MPI_Wtime() - update_time;
         
@@ -967,7 +967,7 @@ namespace dftfe
     if(time > 1)
     pcout << "#RESTART NOTE: Force:-" << " Force of TimeStep: "<<time<<" present in file force.chk"<< std::endl
           <<" Velocity of TimeStep: "<<time-1<<" present in file force.chk.old #"<< std::endl;     
-    MPI_Barrier(MPI_COMM_WORLD);
+    MPI_Barrier(d_mpi_communicator);
     //std::string newFolder3 = tempfolder + "/" + "time.chk";
     dftUtils::writeDataIntoFile(timeIndexData, newFolder3); //old time == new time then restart files were successfully saved
     pcout << "#RESTART NOTE: restart files for TimeStep: "<<time<<" successfully created #"<< std::endl;     
@@ -1049,7 +1049,7 @@ namespace dftfe
         dftUtils::copyFile(oldFolder1,".");
         dftUtils::copyFile(oldFolder2,".");
       }
-      MPI_Barrier(MPI_COMM_WORLD);
+      MPI_Barrier(d_mpi_communicator);
 
     }                                                        
 
@@ -1068,7 +1068,7 @@ namespace dftfe
         dftUtils::copyFile(oldFolder1,"./mdRestart/.");
 
       }
-    MPI_Barrier(MPI_COMM_WORLD);
+    MPI_Barrier(d_mpi_communicator);
     std::string fileName = "NHCThermostat.chk";
     std::string newFolder = tempfolder + "/" + fileName;
     dftUtils::readFile(3, NHCData, newFolder);
@@ -1108,7 +1108,7 @@ namespace dftfe
         
 
      }            
-    MPI_Barrier(MPI_COMM_WORLD);
+    MPI_Barrier(d_mpi_communicator);
 
    }                                                         
     template <unsigned int FEOrder, unsigned int FEOrderElectro>
@@ -1144,7 +1144,7 @@ namespace dftfe
           outfile.close();
 
       } 
-      MPI_Barrier(MPI_COMM_WORLD);
+      MPI_Barrier(d_mpi_communicator);
      if(d_this_mpi_process == 0) 
      {
         std::string oldpath = "TotalDisplacement.chk";
@@ -1156,7 +1156,7 @@ namespace dftfe
                  newpath2 = newpath2 + std::to_string(time) + "/."; 
         dftUtils::copyFile(oldpath2,newpath2);  
      }
-     MPI_Barrier(MPI_COMM_WORLD);          
+     MPI_Barrier(d_mpi_communicator);          
 
     }
     template <unsigned int FEOrder, unsigned int FEOrderElectro>
