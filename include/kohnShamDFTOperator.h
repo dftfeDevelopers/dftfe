@@ -489,6 +489,7 @@ node is stored
     /// storage for  matrix-free cell data
     const unsigned int        d_numberNodesPerElement;
     const unsigned int        d_numberMacroCells;
+    const unsigned int        d_numberCellsLocallyOwned;
     std::vector<unsigned int> d_macroCellSubCellMap;
     std::vector<unsigned int> d_nodesPerCellClassificationMap;
     std::vector<unsigned int> d_globalArrayClassificationMap;

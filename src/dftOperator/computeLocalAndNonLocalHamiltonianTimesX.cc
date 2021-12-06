@@ -66,7 +66,6 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::
                scalarCoeffAlpha = 1.0;
   const unsigned int inc        = 1;
 
-  unsigned int iElem      = 0;
   unsigned int indexTemp1 = d_numberNodesPerElement * numberWaveFunctions;
   std::vector<dealii::types::global_dof_index> cell_dof_indicesGlobal(
     d_numberNodesPerElement);
@@ -92,7 +91,6 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::
 		     &inc);
 	    }
 	}
-      ++iElem;
     } // cell loop
   
 
@@ -248,7 +246,8 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::
   typename DoFHandler<3>::active_cell_iterator cell = dftPtr->dofHandler
                                                         .begin_active(),
                                                endc = dftPtr->dofHandler.end();
-  iElem                                             = -1;
+  
+  int iElem = -1;
   // blas required settings
   const char          transA1 = 'N';
   const char          transB1 = 'N';

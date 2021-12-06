@@ -201,7 +201,7 @@ namespace dftfe
     std::vector<dataTypes::number> &      cellWaveFunctionMatrix)
   {
    
-    cellWaveFunctionMatrix.resize(numberCells * d_numberNodesPerElement *
+    cellWaveFunctionMatrix.resize(d_numberCellsLocallyOwned * d_numberNodesPerElement *
                                     numberWaveFunctions,
                                   0.0);
 
