@@ -114,9 +114,14 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::
 
 
 
-  typename dealii::DoFHandler<3>::active_cell_iterator cellPtr = dftPtr->matrix_free_data.get_dof_handler(dftPtr->d_densityDofHandlerIndex).begin_active(),
-    endcellPtr = dftPtr->matrix_free_data.get_dof_handler(dftPtr->d_densityDofHandlerIndex).end();
-  
+  typename dealii::DoFHandler<3>::active_cell_iterator
+    cellPtr =
+      dftPtr->matrix_free_data.get_dof_handler(dftPtr->d_densityDofHandlerIndex)
+        .begin_active(),
+    endcellPtr =
+      dftPtr->matrix_free_data.get_dof_handler(dftPtr->d_densityDofHandlerIndex)
+        .end();
+
   //
   // compute cell-level shapefunctiongradientintegral generator by going over
   // dealii macrocells which allows efficient integration of cell-level matrix
@@ -124,14 +129,8 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::
   unsigned int iElemCount = 0;
   for (; cellPtr != endcellPtr; ++cellPtr)
     {
-      //unsigned int n_sub_cells =
-      //dftPtr->matrix_free_data.n_components_filled(iMacroCell);
-
-      //for (unsigned int iCell = 0; iCell < n_sub_cells; ++iCell)
-      if(cellPtr->is_locally_owned())
+      if (cellPtr->is_locally_owned())
         {
-          //cellPtr = dftPtr->matrix_free_data.get_cell_iterator(
-	  //iMacroCell, iCell, dftPtr->d_densityDofHandlerIndex);
           fe_values_quadplusone.reinit(cellPtr);
 
 #ifdef USE_COMPLEX
@@ -385,7 +384,7 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::
 
           iElemCount++;
 
-        } // if cell locally owned condition 
+        } // if cell locally owned condition
 
     } // cell iter loop
 

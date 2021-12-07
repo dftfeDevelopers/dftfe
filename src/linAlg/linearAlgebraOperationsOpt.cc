@@ -418,7 +418,7 @@ namespace dftfe
       //
       // YArray = YArray + alpha2*XArray and YArray = alpha1*YArray
       //
-  
+
       //
       // Do surface nodes recursive iteration for dealii vectors
       //
@@ -434,11 +434,11 @@ namespace dftfe
                       YArray.local_element(iDof * numberWaveFunctions + iWave) +
                     alpha1 * alpha2 *
                       XArray.local_element(iDof * numberWaveFunctions + iWave);
-		}
+                }
             }
-	}
+        }
 
-    
+
       //
       // Do recursive iteration only for interior cell nodes using cell-level
       // loop
@@ -459,7 +459,7 @@ namespace dftfe
           //
           // multiply XArray with alpha2
           // and XArray = XArray - c*alpha1*YArray
-        
+
 
           //
           // Do surface nodes recursive iteration for dealii vectors
@@ -483,7 +483,7 @@ namespace dftfe
                 }
             }
 
-	  //
+          //
           // call HX
           //
           bool   scaleFlag = true;

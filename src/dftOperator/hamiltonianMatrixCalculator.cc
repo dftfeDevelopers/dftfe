@@ -731,128 +731,121 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::computeHamiltonianMatrix(
       // compute cell-level stiffness matrix by going over dealii macrocells
       // which allows efficient integration of cell-level stiffness matrix
       // integrals using dealii vectorized arrays
-  
-      for(unsigned int iElem = 0; iElem < totalLocallyOwnedCells; ++iElem)
+
+      for (unsigned int iElem = 0; iElem < totalLocallyOwnedCells; ++iElem)
         {
-         
-              // FIXME: Use functions like mkl_malloc for 64 byte memory
-              // alignment.
-              d_cellHamiltonianMatrix[kpointSpinIndex][iElem].resize(
-                numberDofsPerElement * numberDofsPerElement, 0.0);
-              unsigned int count = 0;
-              for (unsigned int iNode = 0; iNode < numberDofsPerElement;
-                   ++iNode)
+          // FIXME: Use functions like mkl_malloc for 64 byte memory
+          // alignment.
+          d_cellHamiltonianMatrix[kpointSpinIndex][iElem].resize(
+            numberDofsPerElement * numberDofsPerElement, 0.0);
+          unsigned int count = 0;
+          for (unsigned int iNode = 0; iNode < numberDofsPerElement; ++iNode)
+            {
+              for (unsigned int jNode = iNode; jNode < numberDofsPerElement;
+                   ++jNode)
                 {
-                  for (unsigned int jNode = iNode; jNode < numberDofsPerElement;
-                       ++jNode)
-                    {
 #ifdef USE_COMPLEX
-                      d_cellHamiltonianMatrix
-                        [kpointSpinIndex][iElem]
-                        [numberDofsPerElement * iNode + jNode]
-                          .real(cellHamiltonianMatrix[totalLocallyOwnedCells *
-                                                        count +
-                                                      iElem] +
-                                0.5 * d_cellShapeFunctionGradientIntegral
-                                        [sizeNiNj * iElem + count] +
-                                kSquareTimesHalf *
-                                  d_NiNjIntegral[sizeNiNj * iElem + count]);
+                  d_cellHamiltonianMatrix
+                    [kpointSpinIndex][iElem]
+                    [numberDofsPerElement * iNode + jNode]
+                      .real(
+                        cellHamiltonianMatrix[totalLocallyOwnedCells * count +
+                                              iElem] +
+                        0.5 *
+                          d_cellShapeFunctionGradientIntegral[sizeNiNj * iElem +
+                                                              count] +
+                        kSquareTimesHalf *
+                          d_NiNjIntegral[sizeNiNj * iElem + count]);
 
-                 
-#else
-                      d_cellHamiltonianMatrix
-                        [kpointSpinIndex][iElem]
-                        [numberDofsPerElement * iNode + jNode] =
-                          cellHamiltonianMatrix[totalLocallyOwnedCells * count +
-                                                iElem] +
-                          0.5 * d_cellShapeFunctionGradientIntegral[sizeNiNj *
-                                                                      iElem +
-                                                                    count];
-
-#endif
-                      count += 1;
-                    }
-                }
-
-              if (dftParameters::isPseudopotential ||
-                  dftParameters::smearedNuclearCharges)
-                {
-                  count = 0;
-                  for (unsigned int iNode = 0; iNode < numberDofsPerElement;
-                       ++iNode)
-                    for (unsigned int jNode = iNode;
-                         jNode < numberDofsPerElement;
-                         ++jNode)
-                      {
-#ifdef USE_COMPLEX
-                        d_cellHamiltonianMatrix[kpointSpinIndex][iElem]
-                                               [numberDofsPerElement * iNode +
-                                                jNode] +=
-                          dataTypes::number(
-                            d_cellHamiltonianMatrixExternalPotCorr
-                              [totalLocallyOwnedCells * count + iElem],
-                            0.0);
 
 #else
-                        d_cellHamiltonianMatrix[kpointSpinIndex][iElem]
-                                               [numberDofsPerElement * iNode +
-                                                jNode] +=
-                          d_cellHamiltonianMatrixExternalPotCorr
-                            [totalLocallyOwnedCells * count + iElem];
-
-
-#endif
-                        count += 1;
-                      }
-                }
-
-#ifdef USE_COMPLEX
-              for (unsigned int iNode = 0; iNode < numberDofsPerElement;
-                   ++iNode)
-                for (unsigned int jNode = 0; jNode < iNode; ++jNode)
                   d_cellHamiltonianMatrix
                     [kpointSpinIndex][iElem]
                     [numberDofsPerElement * iNode + jNode] =
-                      d_cellHamiltonianMatrix[kpointSpinIndex][iElem]
-                                             [numberDofsPerElement * jNode +
-                                              iNode];
+                      cellHamiltonianMatrix[totalLocallyOwnedCells * count +
+                                            iElem] +
+                      0.5 *
+                        d_cellShapeFunctionGradientIntegral[sizeNiNj * iElem +
+                                                            count];
 
-             
+#endif
+                  count += 1;
+                }
+            }
+
+          if (dftParameters::isPseudopotential ||
+              dftParameters::smearedNuclearCharges)
+            {
               count = 0;
               for (unsigned int iNode = 0; iNode < numberDofsPerElement;
                    ++iNode)
-                {
-                  for (unsigned int jNode = 0; jNode < numberDofsPerElement;
-                       ++jNode)
-                    {
-                      d_cellHamiltonianMatrix
-                        [kpointSpinIndex][iElem]
-                        [numberDofsPerElement * iNode + jNode]
-                          .imag(elementHamiltonianMatrixImag
-                                  [totalLocallyOwnedCells * count + iElem]);
-                      count += 1;
-                    }
-                }
+                for (unsigned int jNode = iNode; jNode < numberDofsPerElement;
+                     ++jNode)
+                  {
+#ifdef USE_COMPLEX
+                    d_cellHamiltonianMatrix[kpointSpinIndex][iElem]
+                                           [numberDofsPerElement * iNode +
+                                            jNode] +=
+                      dataTypes::number(
+                        d_cellHamiltonianMatrixExternalPotCorr
+                          [totalLocallyOwnedCells * count + iElem],
+                        0.0);
+
 #else
-              for (unsigned int iNode = 0; iNode < numberDofsPerElement;
-                   ++iNode)
-                for (unsigned int jNode = 0; jNode < iNode; ++jNode)
-                  d_cellHamiltonianMatrix
-                    [kpointSpinIndex][iElem]
-                    [numberDofsPerElement * iNode + jNode] =
-                      d_cellHamiltonianMatrix[kpointSpinIndex][iElem]
-                                             [numberDofsPerElement * jNode +
-                                              iNode];
+                    d_cellHamiltonianMatrix[kpointSpinIndex][iElem]
+                                           [numberDofsPerElement * iNode +
+                                            jNode] +=
+                      d_cellHamiltonianMatrixExternalPotCorr
+                        [totalLocallyOwnedCells * count + iElem];
+
+
+#endif
+                    count += 1;
+                  }
+            }
+
+#ifdef USE_COMPLEX
+          for (unsigned int iNode = 0; iNode < numberDofsPerElement; ++iNode)
+            for (unsigned int jNode = 0; jNode < iNode; ++jNode)
+              d_cellHamiltonianMatrix
+                [kpointSpinIndex][iElem][numberDofsPerElement * iNode + jNode] =
+                  d_cellHamiltonianMatrix[kpointSpinIndex][iElem]
+                                         [numberDofsPerElement * jNode + iNode];
+
+
+          count = 0;
+          for (unsigned int iNode = 0; iNode < numberDofsPerElement; ++iNode)
+            {
+              for (unsigned int jNode = 0; jNode < numberDofsPerElement;
+                   ++jNode)
+                {
+                  d_cellHamiltonianMatrix[kpointSpinIndex][iElem]
+                                         [numberDofsPerElement * iNode + jNode]
+                                           .imag(
+                                             elementHamiltonianMatrixImag
+                                               [totalLocallyOwnedCells * count +
+                                                iElem]);
+                  count += 1;
+                }
+            }
+#else
+          for (unsigned int iNode = 0; iNode < numberDofsPerElement; ++iNode)
+            for (unsigned int jNode = 0; jNode < iNode; ++jNode)
+              d_cellHamiltonianMatrix
+                [kpointSpinIndex][iElem][numberDofsPerElement * iNode + jNode] =
+                  d_cellHamiltonianMatrix[kpointSpinIndex][iElem]
+                                         [numberDofsPerElement * jNode + iNode];
 #endif
 
-      
+
         } // cell loop
     }
   computingTimerStandard.leave_subsection(
     "Elemental Hamiltonian matrix computation on CPU");
 }
 
-//This piece of code needs to be changed later when required as this is still in macrocell subcell mode
+// This piece of code needs to be changed later when required as this is still
+// in macrocell subcell mode
 template <unsigned int FEOrder, unsigned int FEOrderElectro>
 void
 kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::computeKineticMatrix()

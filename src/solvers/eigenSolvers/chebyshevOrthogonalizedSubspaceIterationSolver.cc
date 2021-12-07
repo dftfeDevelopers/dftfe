@@ -177,7 +177,7 @@ namespace dftfe
 
     computingTimerStandard.enter_subsection("Chebyshev filtering on CPU");
 
-  
+
     if (dftParameters::verbosity >= 4)
       dftUtils::printCurrentMemoryUsage(operatorMatrix.getMPICommunicator(),
                                         "Before starting chebyshev filtering");
