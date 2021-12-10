@@ -84,8 +84,8 @@ template <int n1, int n2>
 void
 run_problem(const MPI_Comm &    mpi_comm_replica,
             const MPI_Comm &    interpoolcomm,
-            const MPI_Comm &    interBandGroupComm,
-            const unsigned int & numberEigenValuesInput)
+            const MPI_Comm &    interBandGroupComm
+            )
 {
  
   dealii::ConditionalOStream pcout(
@@ -101,7 +101,7 @@ run_problem(const MPI_Comm &    mpi_comm_replica,
           "Error: ELPA API version not supported. Use API version 20181113.");
         exit(1);
       }
-  unsigned int numberEigenValues = numberEigenValuesInput;  
+  unsigned int numberEigenValues =  dftfe::dftParameters::numberEigenValues;  
   unsigned int numEigenValuesRR ;   
   
   
@@ -197,8 +197,7 @@ run_problem(const MPI_Comm &    mpi_comm_replica,
 //
 typedef void (*run_fn)(const MPI_Comm &    mpi_comm_replica,
                        const MPI_Comm &    interpoolcomm,
-                       const MPI_Comm &    interBandGroupComm,
-                       const unsigned int &numberEigenValues);
+                       const MPI_Comm &    interBandGroupComm);
 
 static run_fn order_list[] = {
 #ifdef DFTFE_MINIMAL_COMPILE
@@ -359,8 +358,7 @@ main(int argc, char *argv[])
   run_fn run = order_list[listIndex - 1];
   run(bandGroupsPool.get_intrapool_comm(),
       kPointPool.get_interpool_comm(),
-      bandGroupsPool.get_interpool_comm(),
-      dftfe::dftParameters::numberEigenValues);
+      bandGroupsPool.get_interpool_comm());
 
   const double end = MPI_Wtime();
   if (dftfe::dftParameters::verbosity >= 1 &&

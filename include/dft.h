@@ -300,7 +300,7 @@ namespace dftfe
      * MD restart
      */
     void
-    MDwriteDomainAndAtomCoordinates(std::string Path);
+    MDwriteDomainAndAtomCoordinates(const std::string Path);
      /**
      * @brief Gets the current atom Locations from dftPtr
      *  @param[in] atomSites vector that saves atomLocations data member of dft Class

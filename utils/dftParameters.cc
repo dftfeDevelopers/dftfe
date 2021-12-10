@@ -1457,7 +1457,7 @@ namespace dftfe
 
 
         dftParameters::tempControllerTypeBOMD =
-          prm.get("TEMP CONTROLLER TYPE"); 
+          prm.get("TEMPERATURE CONTROLLER TYPE"); 
 
 
         dftParameters::VelocityRestartFile =

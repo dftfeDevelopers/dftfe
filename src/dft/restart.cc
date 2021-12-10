@@ -573,7 +573,7 @@ dftClass<FEOrder, FEOrderElectro>::writeDomainAndAtomCoordinates()
 
 template <unsigned int FEOrder, unsigned int FEOrderElectro>
 void
-dftClass<FEOrder, FEOrderElectro>::MDwriteDomainAndAtomCoordinates(std::string Path)
+dftClass<FEOrder, FEOrderElectro>::MDwriteDomainAndAtomCoordinates(const std::string Path)
 {
   dftUtils::writeDataIntoFile(d_domainBoundingVectors,
                               Path + "domainBoundingVectorsCurrent.chk");
