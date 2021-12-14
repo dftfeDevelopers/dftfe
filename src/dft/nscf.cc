@@ -87,7 +87,7 @@ dftClass<FEOrder, FEOrderElectro>::initnscf(
   //
   double norm;
   char   buffer[100];
-  norm = sqrt(mixing_anderson());
+  norm = mixing_anderson();
   //
   if (dftParameters::verbosity >= 1)
     pcout << "Anderson mixing: L2 norm of electron-density difference: " << norm

@@ -67,8 +67,8 @@ namespace dftfe
 
     template <typename NumberType>
     void
-    copyHostVecToCUDAVec(const NumberType *               cudaVecSrc,
-                         NumberType *                     cudaVectorDst,
+    copyCUDAVecToCUDAVec(const NumberType *               cudaVecSrc,
+                         NumberType *                     cudaVecDst,
                          const dataTypes::local_size_type size);
 
     template <typename NumberType>

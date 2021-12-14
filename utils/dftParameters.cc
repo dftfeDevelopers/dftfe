@@ -811,7 +811,7 @@ namespace dftfe
             "STARTING NORM LARGE DAMPING",
             "2.0",
             Patterns::Double(0.0, 10.0),
-            "[Standard] L2 norm electron density difference below which damping parameter is set to SCF parameters::LOW RANK JACINV PRECOND::MIXING PARAMETER, which is otherwise set to SCF parameters::MIXING PARAMETER.");
+            "[Standard] L2 norm electron density difference below which damping parameter is set to SCF parameters::LOW RANK JACINV PRECOND::MIXING PARAMETER, which is otherwise set to 0.1.");
 
           prm.declare_entry("MIXING PARAMETER",
                             "0.5",
