@@ -798,7 +798,7 @@ namespace dftfe
           "[Advanced] Boolean parameter specifying whether to compute the total energy at the end of every SCF. Setting it to false can lead to some computational time savings. Default value is false but is internally set to true if VERBOSITY==5");
 
 
-        prm.enter_subsection("LOW RANK JACINV");
+        prm.enter_subsection("LOW RANK JACINV PRECOND");
         {
           prm.declare_entry(
             "METHOD SUB TYPE",
@@ -811,7 +811,7 @@ namespace dftfe
             "STARTING NORM LARGE DAMPING",
             "2.0",
             Patterns::Double(0.0, 10.0),
-            "[Standard] L2 norm electron density difference below which LOW_RANK_APPROX_JACINV is enabled with a large damping constant (>=0.5), set to SCF parameters::LOW RANK JACINV::MIXING PARAMETER, which is otherwise set to SCF parameters::MIXING PARAMETER.");
+            "[Standard] L2 norm electron density difference below which damping parameter is set to SCF parameters::LOW RANK JACINV PRECOND::MIXING PARAMETER, which is otherwise set to SCF parameters::MIXING PARAMETER.");
 
           prm.declare_entry("MIXING PARAMETER",
                             "0.5",
@@ -1344,7 +1344,7 @@ namespace dftfe
         dftParameters::computeEnergyEverySCF =
           prm.get_bool("COMPUTE ENERGY EACH ITER");
 
-        prm.enter_subsection("LOW RANK JACINV");
+        prm.enter_subsection("LOW RANK JACINV PRECOND");
         {
           dftParameters::mixingParameterLRJI =
             prm.get_double("MIXING PARAMETER");

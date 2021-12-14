@@ -317,7 +317,7 @@ namespace dftfe
 
 
     template void
-    copyCUDAVecToCUDAVec(const double *                   hostVec,
+    copyHostVecToCUDAVec(const double *                   hostVec,
                          double *                         cudaVector,
                          const dataTypes::local_size_type size);
 
