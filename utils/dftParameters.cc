@@ -151,6 +151,16 @@ namespace dftfe
     std::string  xcFamilyType                                   = "";
     bool         gpuMemOptMode                                  = false;
 
+    /** parameters for LRJI preconditioner **/
+    double       startingNormLRJILargeDamping      = 2.0;
+    double       mixingParameterLRJI               = 0.5;
+    double       adaptiveRankRelTolLRJI            = 0.3;
+    std::string  methodSubTypeLRJI                 = "";
+    double       factorAdapAccumClearLRJI          = 1.5;
+    double       absPoissonSolverToleranceLRJI     = 1.0e-6;
+    bool         singlePrecLRJI                    = false;
+    /*****************************************/
+
     void
     declare_parameters(ParameterHandler &prm)
     {
@@ -765,7 +775,7 @@ namespace dftfe
         prm.declare_entry(
           "MIXING METHOD",
           "ANDERSON",
-          Patterns::Selection("BROYDEN|ANDERSON|ANDERSON_WITH_KERKER"),
+          Patterns::Selection("BROYDEN|ANDERSON|ANDERSON_WITH_KERKER|LOW_RANK_APPROX_JACINV"),
           "[Standard] Method for density mixing. ANDERSON is the default option.");
 
 
@@ -786,6 +796,53 @@ namespace dftfe
           "false",
           Patterns::Bool(),
           "[Advanced] Boolean parameter specifying whether to compute the total energy at the end of every SCF. Setting it to false can lead to some computational time savings. Default value is false but is internally set to true if VERBOSITY==5");
+
+
+        prm.enter_subsection("LOW RANK JACINV");
+        {
+          prm.declare_entry(
+            "METHOD SUB TYPE",
+            "ADAPTIVE",
+            Patterns::Selection(
+              "ADAPTIVE|ACCUMULATED_ADAPTIVE"),
+            "[Standard] Method subtype for LOW_RANK_APPROX_JACINV.");
+
+          prm.declare_entry(
+            "STARTING NORM LARGE DAMPING",
+            "2.0",
+            Patterns::Double(0.0, 10.0),
+            "[Standard] L2 norm electron density difference below which LOW_RANK_APPROX_JACINV is enabled with a large damping constant (>=0.5), set to SCF parameters::LOW RANK JACINV::MIXING PARAMETER, which is otherwise set to SCF parameters::MIXING PARAMETER.");
+
+          prm.declare_entry("MIXING PARAMETER",
+                            "0.5",
+                            Patterns::Double(0.0, 1.0),
+                            "[Standard] Mixing parameter.");
+
+          prm.declare_entry(
+            "ADAPTIVE RANK REL TOL",
+            "3.0e-1",
+            Patterns::Double(0.0, 1.0),
+            "[Standard] For METHOD SUB TYPE=ADAPTIVE or METHOD SUB TYPE=ADAPTIVE_ACCUMULATED.");
+
+          prm.declare_entry(
+            "ADAPTIVE RANK REL TOL REACCUM FACTOR",
+            "1.5",
+            Patterns::Double(0.0, 100.0),
+            "[Standard] For METHOD SUB TYPE=ADAPTIVE_ACCUMULATED.");
+
+          prm.declare_entry(
+            "POISSON SOLVER ABS TOL",
+            "1e-6",
+            Patterns::Double(0.0),
+            "[Standard] Absolute poisson solver tolerance for electrostatic potential response computation.");
+
+          prm.declare_entry(
+            "USE SINGLE PREC DENSITY RESPONSE",
+            "false",
+            Patterns::Bool(),
+            "[Standard] Turns on single precision optimization in density response computation.");
+        }
+        prm.leave_subsection();
 
         prm.enter_subsection("Eigen-solver parameters");
         {
@@ -1287,6 +1344,24 @@ namespace dftfe
         dftParameters::computeEnergyEverySCF =
           prm.get_bool("COMPUTE ENERGY EACH ITER");
 
+        prm.enter_subsection("LOW RANK JACINV");
+        {
+          dftParameters::mixingParameterLRJI =
+            prm.get_double("MIXING PARAMETER");
+          dftParameters::methodSubTypeLRJI =
+            prm.get("METHOD SUB TYPE");
+          dftParameters::startingNormLRJILargeDamping =
+            prm.get_double("STARTING NORM LARGE DAMPING");
+          dftParameters::adaptiveRankRelTolLRJI =
+            prm.get_double("ADAPTIVE RANK REL TOL");
+          dftParameters::factorAdapAccumClearLRJI =
+            prm.get_double("ADAPTIVE RANK REL TOL REACCUM FACTOR");
+          dftParameters::absPoissonSolverToleranceLRJI =
+            prm.get_double("POISSON SOLVER ABS TOL");
+          dftParameters::singlePrecLRJI =
+            prm.get_bool("USE SINGLE PREC DENSITY RESPONSE");
+        }
+        prm.leave_subsection();
 
         prm.enter_subsection("Eigen-solver parameters");
         {

@@ -138,6 +138,20 @@ namespace dftfe
                         const double kb,
                         const double T);
 
+    /** @brief Calculates the derivative of the partial occupancy of the atomic orbital
+     * with respect to (x=eigenvalue-fermiEnergy) using Fermi-Dirac smearing.
+     *
+     *  @param  eigenValue
+     *  @param  fermiEnergy
+     *  @param  kb Boltzmann constant
+     *  @param  T smearing temperature
+     *  @return double The partial occupancy derivative of the orbital
+     */
+    double
+    getPartialOccupancyDer(const double eigenValue,
+                           const double fermiEnergy,
+                           const double kb,
+                           const double T);
 
     /** @brief Calculates cross product of two vectors
      *

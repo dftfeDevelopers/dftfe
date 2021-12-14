@@ -147,6 +147,18 @@ namespace dftfe
     extern std::string  xcFamilyType;
     extern bool         gpuMemOptMode;
 
+    /** parameters for LRJI preconditioner **/
+
+    extern double       startingNormLRJILargeDamping;
+    extern double       mixingParameterLRJI;
+    extern std::string  methodSubTypeLRJI;
+    extern double       adaptiveRankRelTolLRJI;
+    extern double       factorAdapAccumClearLRJI;
+    extern double       absPoissonSolverToleranceLRJI;
+    extern bool         singlePrecLRJI;
+    
+    /*****************************************/
+
     /**
      * Declare parameters.
      */

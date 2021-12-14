@@ -64,6 +64,13 @@ namespace dftfe
                                 const NumberTypeReal *           imagArr,
                                 NumberTypeComplex *              complexArr);
 
+
+    template <typename NumberType>
+    void
+    copyHostVecToCUDAVec(const NumberType *               cudaVecSrc,
+                         NumberType *                     cudaVectorDst,
+                         const dataTypes::local_size_type size);
+
     template <typename NumberType>
     void
     copyHostVecToCUDAVec(const NumberType *               hostVec,

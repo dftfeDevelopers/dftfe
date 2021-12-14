@@ -276,5 +276,5 @@ dftClass<FEOrder, FEOrderElectro>::rhofieldl2Norm(
         }
     }
 
-  return Utilities::MPI::sum(normValue, mpi_communicator);
+  return std::sqrt(Utilities::MPI::sum(normValue, mpi_communicator));
 }

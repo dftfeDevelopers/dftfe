@@ -126,6 +126,18 @@ namespace dftfe
 
     template <typename NumberType>
     void
+    copyCUDAVecToCUDAVec(const NumberType *               cudaVecSrc,
+                         NumberType *                     cudaVecDst,
+                         const dataTypes::local_size_type size)
+    {
+      CUDACHECK(cudaMemcpy(cudaVecDst,
+                           cudaVecSrc,
+                           size * sizeof(NumberType),
+                           cudaMemcpyDeviceToDevice));
+    }
+
+    template <typename NumberType>
+    void
     copyHostVecToCUDAVec(const NumberType *               hostVec,
                          NumberType *                     cudaVector,
                          const dataTypes::local_size_type size)
@@ -284,7 +296,28 @@ namespace dftfe
                                 cuFloatComplex *                 complexArr);
 
     template void
-    copyHostVecToCUDAVec(const double *                   hostVec,
+    copyCUDAVecToCUDAVec(const double *                   cudaVecSrc,
+                         double *                         cudaVecDst,
+                         const dataTypes::local_size_type size);
+
+    template void
+    copyCUDAVecToCUDAVec(const float *                    cudaVecSrc,
+                         float *                          cudaVecDst,
+                         const dataTypes::local_size_type size);
+
+    template void
+    copyCUDAVecToCUDAVec(const cuDoubleComplex *          cudaVecSrc,
+                         cuDoubleComplex *                cudaVecDst,
+                         const dataTypes::local_size_type size);
+
+    template void
+    copyCUDAVecToCUDAVec(const cuFloatComplex *           cudaVecSrc,
+                         cuFloatComplex *                 cudaVecDst,
+                         const dataTypes::local_size_type size);
+
+
+    template void
+    copyCUDAVecToCUDAVec(const double *                   hostVec,
                          double *                         cudaVector,
                          const dataTypes::local_size_type size);
 
