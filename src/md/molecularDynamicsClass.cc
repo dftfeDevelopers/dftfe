@@ -715,9 +715,11 @@ namespace dftfe
         KE = 0.0;
         double dt = d_TimeStep;
         double dt_2 = dt/2;
-              
+   
         for(i=0; i < d_numberGlobalCharges; i++)
-            {   
+        {          
+               if(d_this_mpi_process == 0)  
+                {   
                 /*Computing New position as taylor expansion about r(t) O(dt^3) */
                 r[i][0] = ( dt*v[3*i+0] - dt*dt_2*forceOnAtoms[3*i+0]/atomMass[i]* haPerBohrToeVPerAng)* AngTobohr; //New position of x cordinate
                 r[i][1] = ( dt*v[3*i+1] - dt*dt_2*forceOnAtoms[3*i+1]/atomMass[i]* haPerBohrToeVPerAng)* AngTobohr; // New Position of Y cordinate
@@ -728,7 +730,16 @@ namespace dftfe
                 v[3*i+0] = v[3*i+0] - forceOnAtoms[3*i+0]/atomMass[i]*dt_2* haPerBohrToeVPerAng;
                 v[3*i+1] = v[3*i+1] - forceOnAtoms[3*i+1]/atomMass[i]*dt_2* haPerBohrToeVPerAng;
                 v[3*i+2] = v[3*i+2] - forceOnAtoms[3*i+2]/atomMass[i]*dt_2* haPerBohrToeVPerAng;
-            }
+
+                }
+
+                MPI_Bcast(
+                &(r[i][0]), 3, MPI_DOUBLE, 0, d_mpi_communicator);
+                MPI_Bcast(
+                &(v[3*i]), 3, MPI_DOUBLE, 0, d_mpi_communicator);
+
+        }
+            
         double update_time;
         MPI_Barrier(d_mpi_communicator);
         update_time = MPI_Wtime();
@@ -765,9 +776,15 @@ namespace dftfe
         /* Second half of velocty verlet */
         for(i=0; i < d_numberGlobalCharges; i++)
             {
-                v[3*i+0] = v[3*i+0] - forceOnAtoms[3*i+0]/atomMass[i]*dt_2* haPerBohrToeVPerAng;
-                v[3*i+1] = v[3*i+1] - forceOnAtoms[3*i+1]/atomMass[i]*dt_2* haPerBohrToeVPerAng;
-                v[3*i+2] = v[3*i+2] - forceOnAtoms[3*i+2]/atomMass[i]*dt_2* haPerBohrToeVPerAng;
+                if(d_this_mpi_process == 0)
+                {
+                  v[3*i+0] = v[3*i+0] - forceOnAtoms[3*i+0]/atomMass[i]*dt_2* haPerBohrToeVPerAng;
+                  v[3*i+1] = v[3*i+1] - forceOnAtoms[3*i+1]/atomMass[i]*dt_2* haPerBohrToeVPerAng;
+                  v[3*i+2] = v[3*i+2] - forceOnAtoms[3*i+2]/atomMass[i]*dt_2* haPerBohrToeVPerAng;
+                }
+                MPI_Bcast(
+                &(v[3*i]), 3, MPI_DOUBLE, 0, d_mpi_communicator);                
+
                 totalKE += 0.5*atomMass[i]*(v[3*i+0]*v[3*i+0]+v[3*i+1]*v[3*i+1] + v[3*i+2]*v[3*i+2]);
             }
         //Save KE
