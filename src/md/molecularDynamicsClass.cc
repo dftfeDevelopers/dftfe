@@ -743,6 +743,7 @@ namespace dftfe
         double update_time;
         MPI_Barrier(d_mpi_communicator);
         update_time = MPI_Wtime();
+
         dftPtr->updateAtomPositionsAndMoveMesh(
           r,
           dftParameters::maxJacobianRatioFactorForMD,false);
@@ -750,13 +751,23 @@ namespace dftfe
         if (dftParameters::verbosity >= 1)
           { std::vector<std::vector<double>> atomLocations;
              dftPtr->getAtomLocations(atomLocations);  
-            pcout << "Updated Positions of atoms time step " << std::endl;
+            pcout << "Displacement  " << std::endl;
             for (int iCharge = 0; iCharge < d_numberGlobalCharges; ++iCharge)
               {
-                pcout << "Charge Id: " << iCharge << " "
-                      << atomLocations[iCharge][2] << " "
-                      << atomLocations[iCharge][3] << " "
-                      << atomLocations[iCharge][4] << std::endl;
+                    if(atomLocations[iCharge][0] == 3)
+                      {
+                                        pcout << "***Charge Id: " << iCharge << " "
+                      << r[iCharge][2] << " "
+                      << r[iCharge][3] << " "
+                      << r[iCharge][4] << std::endl;
+                      }
+                      else
+                      {
+                                        pcout << "Charge Id: " << iCharge << " "
+                      << r[iCharge][2] << " "
+                      << r[iCharge][3] << " "
+                      << r[iCharge][4] << std::endl;
+                      }
               }         
           
           }          
