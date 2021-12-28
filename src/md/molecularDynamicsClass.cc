@@ -756,7 +756,7 @@ namespace dftfe
               {
                     if(atomLocations[iCharge][0] == 3)
                       {
-                                        pcout << "***Charge Id: " << iCharge << " "
+                                        pcout << "###Charge Id: " << iCharge << " "
                       << r[iCharge][2] << " "
                       << r[iCharge][3] << " "
                       << r[iCharge][4] << std::endl;
