@@ -7,14 +7,15 @@ on:
     branches: [ publicGithubDevelop ]
 
 jobs:
-  run: |
-    git config --global init.defaultBranch publicGithubDevelop
   build-documentation:
     runs-on: ubuntu-latest
 
     steps:
     - uses: actions/checkout@v2
-    
+    - name: config
+      run: |
+        git config --global init.defaultBranch publicGithubDevelop  
+  
     # Build the HTML documentation
     - name: Doxygen Action
       uses: mattnotmitt/doxygen-action@v1.1.0
