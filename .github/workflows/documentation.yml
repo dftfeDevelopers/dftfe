@@ -7,7 +7,7 @@ on:
     branches: [ publicGithubDevelop ]
 
 jobs:
-  run:
+  run: |
     git config --global init.defaultBranch publicGithubDevelop
   build-documentation:
     runs-on: ubuntu-latest
