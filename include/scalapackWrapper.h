@@ -529,6 +529,47 @@ namespace dftfe
     invert();
 
     /**
+     * Scale the columns of the distributed matrix by the scalars provided in the array @p factors.
+     *
+     * The array @p factors must have as many entries as the matrix columns.
+     *
+     * Copies of @p factors have to be available on all processes of the underlying MPI communicator.
+     */
+    void
+    scale_columns(const std::vector<NumberType> &factors);
+
+    /**
+     * Scale the rows of the distributed matrix by the scalars provided in the array @p factors.
+     *
+     * The array @p factors must have as many entries as the matrix rows.
+     *
+     * Copies of @p factors have to be available on all processes of the underlying MPI communicator.
+     */
+    void
+    scale_rows(const std::vector<NumberType> &factors);
+
+
+    /**
+     * Scale the columns of the distributed matrix by the scalars provided in the array @p factors.
+     *
+     * The array @p factors must have as many entries as the matrix columns.
+     *
+     * Copies of @p factors have to be available on all processes of the underlying MPI communicator.
+     */
+    void
+    scale_columns_realfactors(const std::vector<double> &factors);
+
+    /**
+     * Scale the rows of the distributed matrix by the scalars provided in the array @p factors.
+     *
+     * The array @p factors must have as many entries as the matrix rows.
+     *
+     * Copies of @p factors have to be available on all processes of the underlying MPI communicator.
+     */
+    void
+    scale_rows_realfactors(const std::vector<double> &factors);
+
+    /**
      * Computing selected eigenvalues and, optionally, the eigenvectors of the
      * real hermitian matrix $\mathbf{A} \in \mathbb{R}^{M \times M}$.
      *

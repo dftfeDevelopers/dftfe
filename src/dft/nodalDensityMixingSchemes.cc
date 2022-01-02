@@ -20,7 +20,7 @@
 
 template <unsigned int FEOrder, unsigned int FEOrderElectro>
 double
-dftClass<FEOrder, FEOrderElectro>::nodalDensity_mixing_simple(
+dftClass<FEOrder, FEOrderElectro>::nodalDensity_mixing_simple_kerker(
   kerkerSolverProblem<C_rhoNodalPolyOrder<FEOrder, FEOrderElectro>()>
     &                 kerkerPreconditionedResidualSolverProblem,
   dealiiLinearSolver &dealiiCGSolver)
@@ -173,13 +173,13 @@ dftClass<FEOrder, FEOrderElectro>::nodalDensity_mixing_simple(
     *gradRhoInValues,
     dftParameters::xcFamilyType == "GGA");
 
-  return normValue;
+  return std::sqrt(normValue);
 }
 
 // implement nodal anderson mixing scheme with Kerker
 template <unsigned int FEOrder, unsigned int FEOrderElectro>
 double
-dftClass<FEOrder, FEOrderElectro>::nodalDensity_mixing_anderson(
+dftClass<FEOrder, FEOrderElectro>::nodalDensity_mixing_anderson_kerker(
   kerkerSolverProblem<C_rhoNodalPolyOrder<FEOrder, FEOrderElectro>()>
     &                 kerkerPreconditionedResidualSolverProblem,
   dealiiLinearSolver &dealiiCGSolver)
@@ -438,5 +438,5 @@ dftClass<FEOrder, FEOrderElectro>::nodalDensity_mixing_anderson(
     dftParameters::xcFamilyType == "GGA");
 
 
-  return normValue;
+  return std::sqrt(normValue);
 }

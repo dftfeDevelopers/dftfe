@@ -152,13 +152,13 @@ namespace dftfe
     bool         gpuMemOptMode                                  = false;
 
     /** parameters for LRJI preconditioner **/
-    double       startingNormLRJILargeDamping      = 2.0;
-    double       mixingParameterLRJI               = 0.5;
-    double       adaptiveRankRelTolLRJI            = 0.3;
-    std::string  methodSubTypeLRJI                 = "";
-    double       factorAdapAccumClearLRJI          = 1.5;
-    double       absPoissonSolverToleranceLRJI     = 1.0e-6;
-    bool         singlePrecLRJI                    = false;
+    double      startingNormLRJILargeDamping  = 2.0;
+    double      mixingParameterLRJI           = 0.5;
+    double      adaptiveRankRelTolLRJI        = 0.3;
+    std::string methodSubTypeLRJI             = "";
+    double      factorAdapAccumClearLRJI      = 1.5;
+    double      absPoissonSolverToleranceLRJI = 1.0e-6;
+    bool        singlePrecLRJI                = false;
     /*****************************************/
 
     void
@@ -775,7 +775,8 @@ namespace dftfe
         prm.declare_entry(
           "MIXING METHOD",
           "ANDERSON",
-          Patterns::Selection("BROYDEN|ANDERSON|ANDERSON_WITH_KERKER|LOW_RANK_APPROX_JACINV"),
+          Patterns::Selection(
+            "BROYDEN|ANDERSON|ANDERSON_WITH_KERKER|LOW_RANK_APPROX_JACINV"),
           "[Standard] Method for density mixing. ANDERSON is the default option.");
 
 
@@ -803,8 +804,7 @@ namespace dftfe
           prm.declare_entry(
             "METHOD SUB TYPE",
             "ADAPTIVE",
-            Patterns::Selection(
-              "ADAPTIVE|ACCUMULATED_ADAPTIVE"),
+            Patterns::Selection("ADAPTIVE|ACCUMULATED_ADAPTIVE"),
             "[Standard] Method subtype for LOW_RANK_APPROX_JACINV.");
 
           prm.declare_entry(
@@ -1348,8 +1348,7 @@ namespace dftfe
         {
           dftParameters::mixingParameterLRJI =
             prm.get_double("MIXING PARAMETER");
-          dftParameters::methodSubTypeLRJI =
-            prm.get("METHOD SUB TYPE");
+          dftParameters::methodSubTypeLRJI = prm.get("METHOD SUB TYPE");
           dftParameters::startingNormLRJILargeDamping =
             prm.get_double("STARTING NORM LARGE DAMPING");
           dftParameters::adaptiveRankRelTolLRJI =

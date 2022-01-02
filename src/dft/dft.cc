@@ -1851,208 +1851,6 @@ namespace dftfe
       }
   }
 
-  //
-  // dft solve
-  //
-  template <unsigned int FEOrder, unsigned int FEOrderElectro>
-  void
-  dftClass<FEOrder, FEOrderElectro>::computeDensityPerturbation()
-  {
-    kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>
-      &kohnShamDFTEigenOperator = *d_kohnShamDFTOperatorPtr;
-#ifdef DFTFE_WITH_GPU
-    kohnShamDFTOperatorCUDAClass<FEOrder, FEOrderElectro>
-      &kohnShamDFTEigenOperatorCUDA = *d_kohnShamDFTOperatorCUDAPtr;
-#endif
-
-    const Quadrature<3> &quadrature =
-      matrix_free_data.get_quadrature(d_densityQuadratureId);
-
-    std::vector<std::vector<dataTypes::number>> eigenVectorsFlattenedSTLTemp =
-      d_eigenVectorsFlattenedSTL;
-
-    // set up linear solver
-    dealiiLinearSolver dealiiCGSolver(mpi_communicator, dealiiLinearSolver::CG);
-
-
-    computingTimerStandard.enter_subsection("Density perturbation computation");
-    computing_timer.enter_subsection("Density perturbation computation");
-
-    // Reuses smeared charge rhs integrals, diagonalA and mean value constraints
-    d_phiTotalSolverProblem.reinit(
-      d_matrixFreeDataPRefined,
-      d_phiTotRhoIn,
-      *d_constraintsVectorElectro[d_phiTotDofHandlerIndexElectro],
-      d_phiTotDofHandlerIndexElectro,
-      d_densityQuadratureIdElectro,
-      d_phiTotAXQuadratureIdElectro,
-      d_atomNodeIdToChargeMap,
-      d_bQuadValuesAllAtoms,
-      d_smearedChargeQuadratureIdElectro,
-      *rhoInValues,
-      false,
-      false,
-      dftParameters::smearedNuclearCharges,
-      true,
-      false,
-      0,
-      false,
-      true);
-
-    dealiiCGSolver.solve(d_phiTotalSolverProblem,
-                         dftParameters::absLinearSolverTolerance,
-                         dftParameters::maxLinearSolverIterations,
-                         dftParameters::verbosity);
-
-    // check integral phi equals 0
-    /*
-    if(dftParameters::periodicX && dftParameters::periodicY &&
-    dftParameters::periodicZ && !dftParameters::pinnedNodeForPBC)
-    {
-      if (dftParameters::verbosity>=2)
-        pcout<<"Value of integPhiIn:
-    "<<totalCharge(d_dofHandlerPRefined,d_phiTotRhoIn)<<std::endl;
-    }
-    */
-
-    std::map<dealii::CellId, std::vector<double>> dummy;
-    interpolateElectroNodalDataToQuadratureDataGeneral(
-      d_matrixFreeDataPRefined,
-      d_phiTotDofHandlerIndexElectro,
-      d_densityQuadratureIdElectro,
-      d_phiTotRhoIn,
-      d_phiInValues,
-      dummy);
-
-    {
-      if (dftParameters::xcFamilyType == "LDA")
-        {
-          computing_timer.enter_subsection("VEff Computation");
-#ifdef DFTFE_WITH_GPU
-          if (dftParameters::useGPU)
-            kohnShamDFTEigenOperatorCUDA.computeVEff(rhoInValues,
-                                                     d_phiInValues,
-                                                     d_pseudoVLoc,
-                                                     d_rhoCore,
-                                                     d_lpspQuadratureId);
-#endif
-          if (!dftParameters::useGPU)
-            kohnShamDFTEigenOperator.computeVEff(rhoInValues,
-                                                 d_phiInValues,
-                                                 d_pseudoVLoc,
-                                                 d_rhoCore,
-                                                 d_lpspQuadratureId);
-          computing_timer.leave_subsection("VEff Computation");
-        }
-      else if (dftParameters::xcFamilyType == "GGA")
-        {
-          computing_timer.enter_subsection("VEff Computation");
-#ifdef DFTFE_WITH_GPU
-          if (dftParameters::useGPU)
-            kohnShamDFTEigenOperatorCUDA.computeVEff(rhoInValues,
-                                                     gradRhoInValues,
-                                                     d_phiInValues,
-                                                     d_pseudoVLoc,
-                                                     d_rhoCore,
-                                                     d_gradRhoCore,
-                                                     d_lpspQuadratureId);
-#endif
-          if (!dftParameters::useGPU)
-            kohnShamDFTEigenOperator.computeVEff(rhoInValues,
-                                                 gradRhoInValues,
-                                                 d_phiInValues,
-                                                 d_pseudoVLoc,
-                                                 d_rhoCore,
-                                                 d_gradRhoCore,
-                                                 d_lpspQuadratureId);
-          computing_timer.leave_subsection("VEff Computation");
-        }
-
-      for (unsigned int kPoint = 0; kPoint < d_kPointWeights.size(); ++kPoint)
-        {
-#ifdef DFTFE_WITH_GPU
-          if (dftParameters::useGPU)
-            kohnShamDFTEigenOperatorCUDA.reinitkPointSpinIndex(kPoint, 0);
-#endif
-          if (!dftParameters::useGPU)
-            kohnShamDFTEigenOperator.reinitkPointSpinIndex(kPoint, 0);
-
-          computing_timer.enter_subsection("Hamiltonian Matrix Computation");
-#ifdef DFTFE_WITH_GPU
-          if (dftParameters::useGPU)
-            kohnShamDFTEigenOperatorCUDA.computeHamiltonianMatrix(kPoint, 0);
-#endif
-          if (!dftParameters::useGPU)
-            kohnShamDFTEigenOperator.computeHamiltonianMatrix(kPoint, 0);
-          computing_timer.leave_subsection("Hamiltonian Matrix Computation");
-
-          if (dftParameters::verbosity >= 4)
-            dftUtils::printCurrentMemoryUsage(mpi_communicator,
-                                              "Hamiltonian Matrix computed");
-          /*
-         #ifdef DFTFE_WITH_GPU
-                   if (dftParameters::useGPU)
-                     kohnShamEigenSpaceOnlyRRCompute(0,
-                                                     kPoint,
-                                                     kohnShamDFTEigenOperatorCUDA,
-                                                     d_elpaScala,
-                                                     d_subspaceIterationSolverCUDA,
-                                                     true,
-                                                     true);
-                   else
-                     kohnShamEigenSpaceOnlyRRCompute(0,
-                                                     kPoint,
-                                                     kohnShamDFTEigenOperator,
-                                                     d_elpaScala,
-                                                     d_subspaceIterationSolver,
-                                                     true,
-                                                     true);
-         #else
-                   kohnShamEigenSpaceOnlyRRCompute(0,
-                                                   kPoint,
-                                                   kohnShamDFTEigenOperator,
-                                                   d_elpaScala,
-                                                   d_subspaceIterationSolver,
-                                                   true,
-                                                   true);
-         #endif
-         */
-        }
-
-      //
-      // fermi energy
-      //
-      if (dftParameters::constraintMagnetization)
-        compute_fermienergy_constraintMagnetization(eigenValues);
-      else
-        compute_fermienergy(eigenValues, numElectrons);
-
-
-      if (dftParameters::verbosity >= 1)
-        {
-          pcout << "Fermi Energy computed: " << fermiEnergy << std::endl;
-        }
-    }
-    computing_timer.enter_subsection("compute rho");
-
-
-#ifdef DFTFE_WITH_GPU
-    compute_rhoOut(kohnShamDFTEigenOperatorCUDA,
-                   kohnShamDFTEigenOperator,
-                   true,
-                   true);
-#else
-    compute_rhoOut(kohnShamDFTEigenOperator, true, true);
-#endif
-    computing_timer.leave_subsection("compute rho");
-
-
-    computing_timer.leave_subsection("Density perturbation computation");
-    computingTimerStandard.leave_subsection("Density perturbation computation");
-
-    d_eigenVectorsFlattenedSTL = eigenVectorsFlattenedSTLTemp;
-  }
-
 
   //
   // dft solve
@@ -2245,16 +2043,16 @@ namespace dftfe
               {
                 if (dftParameters::spinPolarized == 1)
                   {
-                    norm = sqrt(mixing_simple_spinPolarized());
+                    norm = mixing_simple_spinPolarized();
                   }
                 else
                   {
                     if (dftParameters::mixingMethod == "ANDERSON_WITH_KERKER")
-                      norm = sqrt(nodalDensity_mixing_simple(
+                      norm = nodalDensity_mixing_simple_kerker(
                         kerkerPreconditionedResidualSolverProblem,
-                        dealiiCGSolver));
+                        dealiiCGSolver);
                     else
-                      norm = sqrt(mixing_simple());
+                      norm = mixing_simple();
                   }
 
                 if (dftParameters::verbosity >= 1)
@@ -2267,9 +2065,9 @@ namespace dftfe
                 if (dftParameters::spinPolarized == 1)
                   {
                     if (dftParameters::mixingMethod == "ANDERSON")
-                      norm = sqrt(mixing_anderson_spinPolarized());
+                      norm = mixing_anderson_spinPolarized();
                     else if (dftParameters::mixingMethod == "BROYDEN")
-                      norm = sqrt(mixing_broyden_spinPolarized());
+                      norm = mixing_broyden_spinPolarized();
                     else if (dftParameters::mixingMethod ==
                              "ANDERSON_WITH_KERKER")
                       AssertThrow(
@@ -2280,14 +2078,14 @@ namespace dftfe
                 else
                   {
                     if (dftParameters::mixingMethod == "ANDERSON")
-                      norm = sqrt(mixing_anderson());
+                      norm = mixing_anderson();
                     else if (dftParameters::mixingMethod == "BROYDEN")
-                      norm = sqrt(mixing_broyden());
+                      norm = mixing_broyden();
                     else if (dftParameters::mixingMethod ==
                              "ANDERSON_WITH_KERKER")
-                      norm = sqrt(nodalDensity_mixing_anderson(
+                      norm = nodalDensity_mixing_anderson_kerker(
                         kerkerPreconditionedResidualSolverProblem,
-                        dealiiCGSolver));
+                        dealiiCGSolver);
                   }
 
                 if (dftParameters::verbosity >= 1)

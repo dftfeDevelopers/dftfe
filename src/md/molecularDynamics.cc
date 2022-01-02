@@ -1188,12 +1188,12 @@ namespace dftfe
 
                     const double deltalambda =
                       dftParameters::xlbomdKernelRankUpdateFDParameter *
-                      std::sqrt(dftPtr->rhofieldl2Norm(
-                                  dftPtr->d_matrixFreeDataPRefined,
-                                  approxDensityContainer.back(),
-                                  dftPtr->d_densityDofHandlerIndexElectro,
-                                  dftPtr->d_densityQuadratureIdElectro) /
-                                dftPtr->d_domainVolume);
+                      dftPtr->rhofieldl2Norm(
+                        dftPtr->d_matrixFreeDataPRefined,
+                        approxDensityContainer.back(),
+                        dftPtr->d_densityDofHandlerIndexElectro,
+                        dftPtr->d_densityQuadratureIdElectro) /
+                      dftPtr->d_domainVolume;
 
                     if (dftParameters::verbosity >= 1)
                       pcout << "deltalambda: " << deltalambda << std::endl;
@@ -1209,201 +1209,6 @@ namespace dftfe
                          irank < dftParameters::kernelUpdateRankXLBOMD;
                          irank++)
                       {
-                        vcontainer[irank].reinit(rhoErrorVec);
-                        internalmd::recursiveKernelApply(ucontainer,
-                                                         vcontainer,
-                                                         k0,
-                                                         rhoErrorVec,
-                                                         irank,
-                                                         vcontainer[irank]);
-
-                        compvec = 0;
-                        for (int jrank = 0; jrank < irank; jrank++)
-                          {
-                            const double tTvj =
-                              vcontainer[irank] * vcontainer[jrank];
-                            compvec.add(tTvj, vcontainer[jrank]);
-                          }
-                        vcontainer[irank] -= compvec;
-
-                        vcontainer[irank] *= 1.0 / vcontainer[irank].l2_norm();
-
-                        if (dftParameters::verbosity >= 1)
-                          pcout << " Vector norm of v:  "
-                                << vcontainer[irank].l2_norm()
-                                << ", for rank: " << irank + 1 << std::endl;
-
-                        peturbedApproxDensity = approxDensityContainer.back();
-                        peturbedApproxDensity.add(deltalambda,
-                                                  vcontainer[irank]);
-
-                        peturbedApproxDensity.update_ghost_values();
-
-                        // normalize peturbedApproxDensity
-                        charge =
-                          dftPtr->totalCharge(dftPtr->d_matrixFreeDataPRefined,
-                                              peturbedApproxDensity);
-
-
-                        if (dftParameters::verbosity >= 1)
-                          pcout
-                            << "Total Charge before Normalizing peturbedApproxDensity:  "
-                            << charge << std::endl;
-
-                        if (dftParameters::useAtomicRhoXLBOMD)
-                          peturbedApproxDensity.add(-charge /
-                                                    dftPtr->d_domainVolume);
-                        else
-                          peturbedApproxDensity *=
-                            ((double)dftPtr->numElectrons) / charge;
-
-                        peturbedApproxDensity.update_ghost_values();
-                        dftPtr->interpolateRhoNodalDataToQuadratureDataGeneral(
-                          dftPtr->d_matrixFreeDataPRefined,
-                          dftPtr->d_densityDofHandlerIndexElectro,
-                          dftPtr->d_densityQuadratureIdElectro,
-                          peturbedApproxDensity,
-                          *(dftPtr->rhoInValues),
-                          *(dftPtr->gradRhoInValues),
-                          *(dftPtr->gradRhoInValues),
-                          dftParameters::xcFamilyType == "GGA");
-
-                        if (dftParameters::useAtomicRhoXLBOMD)
-                          dftPtr->addAtomicRhoQuadValuesGradients(
-                            *(dftPtr->rhoInValues),
-                            *(dftPtr->gradRhoInValues),
-                            dftParameters::xcFamilyType == "GGA");
-
-                        dftPtr->normalizeRhoInQuadValues();
-
-                        if (dftParameters::verbosity >= 1)
-                          pcout
-                            << "----------Start density perturbation solve with approx density= n+lamda*v1-------------"
-                            << std::endl;
-
-
-                        if (dftParameters::
-                              useDensityMatrixPerturbationRankUpdates)
-                          dftPtr->computeDensityPerturbation();
-                        else
-                          dftPtr->solve(false, false, true, false);
-
-                        if (dftParameters::verbosity >= 1)
-                          pcout
-                            << "----------End density perturbation solve with approx density= n+lamda*v1-------------"
-                            << std::endl;
-
-                        temp1Vec.reinit(shadowKSRhoMin);
-                        if (dftParameters::useAtomicRhoXLBOMD)
-                          {
-                            dftPtr->l2ProjectionQuadDensityMinusAtomicDensity(
-                              dftPtr->d_matrixFreeDataPRefined,
-                              dftPtr->d_constraintsRhoNodal,
-                              dftPtr->d_densityDofHandlerIndexElectro,
-                              dftPtr->d_densityQuadratureIdElectro,
-                              *(dftPtr->rhoOutValues),
-                              temp1Vec);
-                          }
-                        else
-                          temp1Vec = dftPtr->d_rhoOutNodalValues;
-
-                        peturbedApproxDensity = approxDensityContainer.back();
-                        peturbedApproxDensity.add(-deltalambda,
-                                                  vcontainer[irank]);
-
-                        peturbedApproxDensity.update_ghost_values();
-
-                        // normalize peturbedApproxDensity
-                        charge =
-                          dftPtr->totalCharge(dftPtr->d_matrixFreeDataPRefined,
-                                              peturbedApproxDensity);
-
-
-                        if (dftParameters::verbosity >= 1)
-                          pcout
-                            << "Total Charge before Normalizing peturbedApproxDensity:  "
-                            << charge << std::endl;
-
-                        if (dftParameters::useAtomicRhoXLBOMD)
-                          peturbedApproxDensity.add(-charge /
-                                                    dftPtr->d_domainVolume);
-                        else
-                          peturbedApproxDensity *=
-                            ((double)dftPtr->numElectrons) / charge;
-
-                        peturbedApproxDensity.update_ghost_values();
-                        dftPtr->interpolateRhoNodalDataToQuadratureDataGeneral(
-                          dftPtr->d_matrixFreeDataPRefined,
-                          dftPtr->d_densityDofHandlerIndexElectro,
-                          dftPtr->d_densityQuadratureIdElectro,
-                          peturbedApproxDensity,
-                          *(dftPtr->rhoInValues),
-                          *(dftPtr->gradRhoInValues),
-                          *(dftPtr->gradRhoInValues),
-                          dftParameters::xcFamilyType == "GGA");
-
-                        if (dftParameters::useAtomicRhoXLBOMD)
-                          dftPtr->addAtomicRhoQuadValuesGradients(
-                            *(dftPtr->rhoInValues),
-                            *(dftPtr->gradRhoInValues),
-                            dftParameters::xcFamilyType == "GGA");
-
-
-                        dftPtr->normalizeRhoInQuadValues();
-
-                        if (dftParameters::verbosity >= 1)
-                          pcout
-                            << "----------Start density perturbation solve with approx density= n-lamda*v1-------------"
-                            << std::endl;
-
-
-                        if (dftParameters::
-                              useDensityMatrixPerturbationRankUpdates)
-                          dftPtr->computeDensityPerturbation();
-                        else
-                          dftPtr->solve(false, false, true, false);
-
-                        if (dftParameters::verbosity >= 1)
-                          pcout
-                            << "----------End density perturbation solve with approx density= n-lamda*v1-------------"
-                            << std::endl;
-
-                        temp2Vec.reinit(shadowKSRhoMin);
-                        if (dftParameters::useAtomicRhoXLBOMD)
-                          {
-                            dftPtr->l2ProjectionQuadDensityMinusAtomicDensity(
-                              dftPtr->d_matrixFreeDataPRefined,
-                              dftPtr->d_constraintsRhoNodal,
-                              dftPtr->d_densityDofHandlerIndexElectro,
-                              dftPtr->d_densityQuadratureIdElectro,
-                              *(dftPtr->rhoOutValues),
-                              temp2Vec);
-                          }
-                        else
-                          temp2Vec = dftPtr->d_rhoOutNodalValues;
-
-                        ucontainer[irank].reinit(shadowKSRhoMin);
-                        ucontainer[irank] = 0;
-                        for (unsigned int i = 0; i < local_size; i++)
-                          ucontainer[irank].local_element(i) =
-                            (temp1Vec.local_element(i) -
-                             temp2Vec.local_element(i)) /
-                            (2.0 * deltalambda);
-
-                        if (dftParameters::verbosity >= 1)
-                          pcout
-                            << " Vector norm of response (delta rho_min[n+delta_lambda*v1]/ delta_lambda):  "
-                            << ucontainer[irank].l2_norm()
-                            << " for kernel rank: " << irank + 1 << std::endl;
-
-                        internalmd::recursiveJApply(ucontainer,
-                                                    vcontainer,
-                                                    k0kernelconstant,
-                                                    vcontainer[irank],
-                                                    irank,
-                                                    jv);
-
-                        ucontainer[irank] -= jv;
                       }
 
                     internalmd::recursiveKernelApply(ucontainer,
@@ -1416,13 +1221,12 @@ namespace dftfe
                     dftParameters::chebyshevFilterTolXLBOMD = temp1p;
                   }
 
-                rmsErrorRho =
-                  std::sqrt(dftPtr->rhofieldl2Norm(
-                              dftPtr->d_matrixFreeDataPRefined,
-                              rhoErrorVec,
-                              dftPtr->d_densityDofHandlerIndexElectro,
-                              dftPtr->d_densityQuadratureIdElectro) /
-                            dftPtr->d_domainVolume);
+                rmsErrorRho = dftPtr->rhofieldl2Norm(
+                                dftPtr->d_matrixFreeDataPRefined,
+                                rhoErrorVec,
+                                dftPtr->d_densityDofHandlerIndexElectro,
+                                dftPtr->d_densityQuadratureIdElectro) /
+                              dftPtr->d_domainVolume;
                 rmsErrorGradRho = std::sqrt(
                   dftPtr->fieldGradl2Norm(dftPtr->d_matrixFreeDataPRefined,
                                           rhoErrorVec) /

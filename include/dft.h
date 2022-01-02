@@ -185,13 +185,6 @@ namespace dftfe
           const bool restartGroundStateCalcFromChk = false);
 
 
-    /**
-     * @brief Kohn-Sham ground-state solve using SCF iteration
-     */
-    void
-    computeDensityPerturbation();
-
-
     void
     initializeKohnShamDFTOperator(const bool initializeCublas = true);
 
@@ -754,12 +747,12 @@ namespace dftfe
     double
     mixing_broyden_spinPolarized();
     double
-    nodalDensity_mixing_simple(
+    nodalDensity_mixing_simple_kerker(
       kerkerSolverProblem<C_rhoNodalPolyOrder<FEOrder, FEOrderElectro>()>
         &                 solverProblem,
       dealiiLinearSolver &dealiiLinearSolver);
     double
-    nodalDensity_mixing_anderson(
+    nodalDensity_mixing_anderson_kerker(
       kerkerSolverProblem<C_rhoNodalPolyOrder<FEOrder, FEOrderElectro>()>
         &                 solverProblem,
       dealiiLinearSolver &dealiiLinearSolver);

@@ -149,14 +149,14 @@ namespace dftfe
 
     /** parameters for LRJI preconditioner **/
 
-    extern double       startingNormLRJILargeDamping;
-    extern double       mixingParameterLRJI;
-    extern std::string  methodSubTypeLRJI;
-    extern double       adaptiveRankRelTolLRJI;
-    extern double       factorAdapAccumClearLRJI;
-    extern double       absPoissonSolverToleranceLRJI;
-    extern bool         singlePrecLRJI;
-    
+    extern double      startingNormLRJILargeDamping;
+    extern double      mixingParameterLRJI;
+    extern std::string methodSubTypeLRJI;
+    extern double      adaptiveRankRelTolLRJI;
+    extern double      factorAdapAccumClearLRJI;
+    extern double      absPoissonSolverToleranceLRJI;
+    extern bool        singlePrecLRJI;
+
     /*****************************************/
 
     /**
