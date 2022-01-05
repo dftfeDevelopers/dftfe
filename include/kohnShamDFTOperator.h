@@ -72,7 +72,8 @@ namespace dftfe
        const unsigned int                    numberComponents,
        const bool                            scaleFlag,
        const double                          scalar,
-       distributedCPUVec<dataTypes::number> &dst);
+       distributedCPUVec<dataTypes::number> &dst,
+       const bool onlyHPrimePartForFirstOrderDensityMatResponse = false);
 
 
     /**
@@ -140,7 +141,8 @@ node is stored
     XtHX(const std::vector<dataTypes::number> &           X,
          const unsigned int                               numberComponents,
          const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
-         dftfe::ScaLAPACKMatrix<dataTypes::number> &      projHamPar);
+         dftfe::ScaLAPACKMatrix<dataTypes::number> &      projHamPar,
+         const bool onlyHPrimePartForFirstOrderDensityMatResponse = false);
 
 
     /**
@@ -241,6 +243,34 @@ node is stored
       const std::map<dealii::CellId, std::vector<double>> &gradRhoCoreValues,
       const unsigned int externalPotCorrQuadratureId);
 
+    /**
+     * @brief Computes directional derivative of effective potential for gradient density type exchange-correlation functionals
+     *
+     */
+    void
+    computeVEffPrime(
+      const std::map<dealii::CellId, std::vector<double>> &rhoValues,
+      const std::map<dealii::CellId, std::vector<double>> &rhoPrimeValues,
+      const std::map<dealii::CellId, std::vector<double>> &gradRhoValues,
+      const std::map<dealii::CellId, std::vector<double>> &gradRhoPrimeValues,
+      const std::map<dealii::CellId, std::vector<double>> &phiPrimeValues,
+      const std::map<dealii::CellId, std::vector<double>> &rhoCoreValues,
+      const std::map<dealii::CellId, std::vector<double>> &gradRhoCoreValues);
+
+    /**
+     * @brief Computes directional derivative of effective potential for gradient spin-density type exchange-correlation functionals
+     *
+     */
+    void
+    computeVEffPrimeSpinPolarized(
+      const std::map<dealii::CellId, std::vector<double>> &rhoValues,
+      const std::map<dealii::CellId, std::vector<double>> &rhoPrimeValues,
+      const std::map<dealii::CellId, std::vector<double>> &gradRhoValues,
+      const std::map<dealii::CellId, std::vector<double>> &gradRhoPrimeValues,
+      const std::map<dealii::CellId, std::vector<double>> &phiPrimeValues,
+      const unsigned int                                   spinIndex,
+      const std::map<dealii::CellId, std::vector<double>> &rhoCoreValues,
+      const std::map<dealii::CellId, std::vector<double>> &gradRhoCoreValues);
 
     /**
      * @brief sets the data member to appropriate kPoint and spin Index
@@ -351,8 +381,10 @@ node is stored
 
     /// compute element Hamiltonian matrix
     void
-    computeHamiltonianMatrix(const unsigned int kPointIndex,
-                             const unsigned int spinIndex);
+    computeHamiltonianMatrix(
+      const unsigned int kPointIndex,
+      const unsigned int spinIndex,
+      const bool         onlyHPrimePartForFirstOrderDensityMatResponse = false);
     void
     computeKineticMatrix();
 

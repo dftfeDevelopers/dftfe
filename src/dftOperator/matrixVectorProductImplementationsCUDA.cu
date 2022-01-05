@@ -27,9 +27,11 @@
 template <unsigned int FEOrder, unsigned int FEOrderElectro>
 void
 kohnShamDFTOperatorCUDAClass<FEOrder, FEOrderElectro>::
-  computeLocalHamiltonianTimesX(const dataTypes::numberGPU *src,
-                                const unsigned int          numberWaveFunctions,
-                                dataTypes::numberGPU *      dst)
+  computeLocalHamiltonianTimesX(
+    const dataTypes::numberGPU *src,
+    const unsigned int          numberWaveFunctions,
+    dataTypes::numberGPU *      dst,
+    const bool                  onlyHPrimePartForFirstOrderDensityMatResponse)
 {
   const unsigned int kpointSpinIndex =
     (1 + dftParameters::spinPolarized) * d_kPointIndex + d_spinIndex;
@@ -85,7 +87,8 @@ kohnShamDFTOperatorCUDAClass<FEOrder, FEOrderElectro>::
 
 
   if (!(dftParameters::isPseudopotential &&
-        dftPtr->d_nonLocalAtomGlobalChargeIds.size() > 0))
+        dftPtr->d_nonLocalAtomGlobalChargeIds.size() > 0) ||
+      onlyHPrimePartForFirstOrderDensityMatResponse)
     {
       if (std::is_same<dataTypes::number, std::complex<double>>::value)
         {

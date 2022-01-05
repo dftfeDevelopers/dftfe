@@ -159,6 +159,7 @@ namespace dftfe
     double      factorAdapAccumClearLRJI      = 1.5;
     double      absPoissonSolverToleranceLRJI = 1.0e-6;
     bool        singlePrecLRJI                = false;
+    bool        estimateJacCondNoFinalSCFIter = false;
     /*****************************************/
 
     void
@@ -776,7 +777,7 @@ namespace dftfe
           "MIXING METHOD",
           "ANDERSON",
           Patterns::Selection(
-            "BROYDEN|ANDERSON|ANDERSON_WITH_KERKER|LOW_RANK_APPROX_JACINV"),
+            "BROYDEN|ANDERSON|ANDERSON_WITH_KERKER|LOW_RANK_JACINV_PRECOND"),
           "[Standard] Method for density mixing. ANDERSON is the default option.");
 
 
@@ -805,42 +806,47 @@ namespace dftfe
             "METHOD SUB TYPE",
             "ADAPTIVE",
             Patterns::Selection("ADAPTIVE|ACCUMULATED_ADAPTIVE"),
-            "[Standard] Method subtype for LOW_RANK_APPROX_JACINV.");
+            "[Advanced] Method subtype for LOW_RANK_JACINV_PRECOND.");
 
           prm.declare_entry(
             "STARTING NORM LARGE DAMPING",
             "2.0",
             Patterns::Double(0.0, 10.0),
-            "[Standard] L2 norm electron density difference below which damping parameter is set to SCF parameters::LOW RANK JACINV PRECOND::MIXING PARAMETER, which is otherwise set to 0.1.");
+            "[Advanced] L2 norm electron density difference below which damping parameter is set to SCF parameters::LOW RANK JACINV PRECOND::MIXING PARAMETER, which is otherwise set to 0.1.");
 
           prm.declare_entry("MIXING PARAMETER",
                             "0.5",
                             Patterns::Double(0.0, 1.0),
                             "[Standard] Mixing parameter.");
 
-          prm.declare_entry(
-            "ADAPTIVE RANK REL TOL",
-            "3.0e-1",
-            Patterns::Double(0.0, 1.0),
-            "[Standard] For METHOD SUB TYPE=ADAPTIVE or METHOD SUB TYPE=ADAPTIVE_ACCUMULATED.");
+          prm.declare_entry("ADAPTIVE RANK REL TOL",
+                            "3.0e-1",
+                            Patterns::Double(0.0, 1.0),
+                            "[Standard] Tolerance criteria for rank updates.");
 
           prm.declare_entry(
             "ADAPTIVE RANK REL TOL REACCUM FACTOR",
             "1.5",
             Patterns::Double(0.0, 100.0),
-            "[Standard] For METHOD SUB TYPE=ADAPTIVE_ACCUMULATED.");
+            "[Advanced] For METHOD SUB TYPE=ACCUMULATED_ADAPTIVE.");
 
           prm.declare_entry(
             "POISSON SOLVER ABS TOL",
             "1e-6",
             Patterns::Double(0.0),
-            "[Standard] Absolute poisson solver tolerance for electrostatic potential response computation.");
+            "[Advanced] Absolute poisson solver tolerance for electrostatic potential response computation.");
 
           prm.declare_entry(
             "USE SINGLE PREC DENSITY RESPONSE",
             "false",
             Patterns::Bool(),
-            "[Standard] Turns on single precision optimization in density response computation.");
+            "[Advanced] Turns on single precision optimization in density response computation.");
+
+          prm.declare_entry(
+            "ESTIMATE JAC CONDITION NO",
+            "false",
+            Patterns::Bool(),
+            "[Advanced] Estimate condition number of the Jacobian at the final SCF iteration step using a low rank approximation with ADAPTIVE RANK REL TOL=1.0e-5.");
         }
         prm.leave_subsection();
 
@@ -1359,6 +1365,8 @@ namespace dftfe
             prm.get_double("POISSON SOLVER ABS TOL");
           dftParameters::singlePrecLRJI =
             prm.get_bool("USE SINGLE PREC DENSITY RESPONSE");
+          dftParameters::estimateJacCondNoFinalSCFIter =
+            prm.get_bool("ESTIMATE JAC COND NO");
         }
         prm.leave_subsection();
 

@@ -456,7 +456,6 @@ namespace dftfe
       cublasHandle_t &                             handle,
       const bool                                   useMixedPrecOverall = false);
 
-
     void
     rayleighRitzGEP(
       operatorDFTCUDAClass &                       operatorMatrix,
@@ -495,6 +494,25 @@ namespace dftfe
       cublasHandle_t &                             handle,
       const bool                                   useMixedPrecOverall = false);
 
+
+    void
+    densityMatrixEigenBasisFirstOrderResponse(
+      operatorDFTCUDAClass &                       operatorMatrix,
+      dataTypes::numberGPU *                       X,
+      distributedGPUVec<dataTypes::numberGPU> &    Xb,
+      distributedGPUVec<dataTypes::numberFP32GPU> &floatXb,
+      distributedGPUVec<dataTypes::numberGPU> &    HXb,
+      distributedGPUVec<dataTypes::numberGPU> &    projectorKetTimesVector,
+      const unsigned int                           M,
+      const unsigned int                           N,
+      const MPI_Comm &                             mpiCommDomain,
+      GPUCCLWrapper &                              gpucclMpiCommDomain,
+      const MPI_Comm &                             interBandGroupComm,
+      const std::vector<double> &                  eigenValues,
+      const double                                 fermiEnergy,
+      std::vector<double> &                        densityMatDerFermiEnergy,
+      dftfe::elpaScalaManager &                    elpaScala,
+      cublasHandle_t &                             handle);
 
     /** @brief Calculates an estimate of lower and upper bounds of a matrix using
      *  k-step Lanczos method.

@@ -132,7 +132,8 @@ namespace dftfe
        const unsigned int                    numberComponents,
        const bool                            scaleFlag,
        const double                          scalar,
-       distributedCPUVec<dataTypes::number> &Y) = 0;
+       distributedCPUVec<dataTypes::number> &Y,
+       const bool onlyHPrimePartForFirstOrderDensityMatResponse = false) = 0;
 
 
     virtual void
@@ -170,7 +171,8 @@ namespace dftfe
     XtHX(const std::vector<dataTypes::number> &           X,
          const unsigned int                               numberComponents,
          const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
-         dftfe::ScaLAPACKMatrix<dataTypes::number> &      projHamPar) = 0;
+         dftfe::ScaLAPACKMatrix<dataTypes::number> &      projHamPar,
+         const bool onlyHPrimePartForFirstOrderDensityMatResponse = false) = 0;
 
 
     /**

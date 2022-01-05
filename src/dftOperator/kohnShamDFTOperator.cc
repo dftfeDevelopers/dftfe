@@ -699,7 +699,8 @@ namespace dftfe
     const unsigned int                       numberWaveFunctions,
     const bool                               scaleFlag,
     const double                             scalar,
-    distributedCPUVec<std::complex<double>> &dst)
+    distributedCPUVec<std::complex<double>> &dst,
+    const bool onlyHPrimePartForFirstOrderDensityMatResponse)
 
 
   {
@@ -748,7 +749,8 @@ namespace dftfe
     // required if its a pseudopotential calculation and number of nonlocal
     // atoms are greater than zero H^{nloc}*M^{-1/2}*X
     if (dftParameters::isPseudopotential &&
-        dftPtr->d_nonLocalAtomGlobalChargeIds.size() > 0)
+        dftPtr->d_nonLocalAtomGlobalChargeIds.size() > 0 &&
+        !onlyHPrimePartForFirstOrderDensityMatResponse)
       {
         computeNonLocalHamiltonianTimesX(src, numberWaveFunctions, dst);
       }
@@ -804,7 +806,6 @@ namespace dftfe
     const double                             scalarB,
     distributedCPUVec<std::complex<double>> &dst,
     std::vector<std::complex<double>> &      cellDstWaveFunctionMatrix)
-
   {
     AssertThrow(false, dftUtils::ExcNotImplementedYet());
   }
@@ -817,9 +818,8 @@ namespace dftfe
     const unsigned int numberWaveFunctions,
     const bool scaleFlag,
     const double scalar,
-    distributedCPUVec<double> &dst)
-
-
+    distributedCPUVec<double> &dst,
+    const bool onlyHPrimePartForFirstOrderDensityMatResponse)
   {
     const unsigned int numberDofs = src.local_size() / numberWaveFunctions;
     const unsigned int inc = 1;
@@ -865,7 +865,8 @@ namespace dftfe
     // required if its a pseudopotential calculation and number of nonlocal
     // atoms are greater than zero H^{nloc}*M^{-1/2}*X
     if (dftParameters::isPseudopotential &&
-        dftPtr->d_nonLocalAtomGlobalChargeIds.size() > 0)
+        dftPtr->d_nonLocalAtomGlobalChargeIds.size() > 0 &&
+        !onlyHPrimePartForFirstOrderDensityMatResponse)
       {
         computeNonLocalHamiltonianTimesX(src, numberWaveFunctions, dst, scalar);
       }
@@ -1194,7 +1195,8 @@ namespace dftfe
     const std::vector<dataTypes::number> &           X,
     const unsigned int                               numberWaveFunctions,
     const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
-    dftfe::ScaLAPACKMatrix<dataTypes::number> &      projHamPar)
+    dftfe::ScaLAPACKMatrix<dataTypes::number> &      projHamPar,
+    const bool onlyHPrimePartForFirstOrderDensityMatResponse)
   {
     //
     // Get access to number of locally owned nodes on the current processor
@@ -1280,7 +1282,12 @@ namespace dftfe
             const bool   scaleFlag = false;
             const double scalar    = 1.0;
 
-            HX(XBlock, B, scaleFlag, scalar, HXBlock);
+            HX(XBlock,
+               B,
+               scaleFlag,
+               scalar,
+               HXBlock,
+               onlyHPrimePartForFirstOrderDensityMatResponse);
 
             MPI_Barrier(getMPICommunicator());
 
@@ -1928,5 +1935,976 @@ namespace dftfe
       }
   }
 
+  template <unsigned int FEOrder, unsigned int FEOrderElectro>
+  void
+  kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::computeVEffPrime(
+    const std::map<dealii::CellId, std::vector<double>> &rhoValues,
+    const std::map<dealii::CellId, std::vector<double>> &rhoPrimeValues,
+    const std::map<dealii::CellId, std::vector<double>> &gradRhoValues,
+    const std::map<dealii::CellId, std::vector<double>> &gradRhoPrimeValues,
+    const std::map<dealii::CellId, std::vector<double>> &phiPrimeValues,
+    const std::map<dealii::CellId, std::vector<double>> &rhoCoreValues,
+    const std::map<dealii::CellId, std::vector<double>> &gradRhoCoreValues)
+  {
+    const unsigned int totalLocallyOwnedCells =
+      dftPtr->matrix_free_data.n_physical_cells();
+    const Quadrature<3> &quadrature_formula =
+      dftPtr->matrix_free_data.get_quadrature(dftPtr->d_densityQuadratureId);
+    FEValues<3>        fe_values(dftPtr->FE,
+                          quadrature_formula,
+                          update_JxW_values | update_inverse_jacobians |
+                            update_jacobians);
+    const unsigned int numberQuadraturePoints = quadrature_formula.size();
+
+    d_vEffJxW.resize(totalLocallyOwnedCells * numberQuadraturePoints, 0.0);
+    d_invJacderExcWithSigmaTimesGradRhoJxW.resize(totalLocallyOwnedCells *
+                                                    numberQuadraturePoints * 3,
+                                                  0.0);
+
+    std::vector<double> sigmaValue(numberQuadraturePoints);
+    std::vector<double> derExchEnergyWithSigmaVal(numberQuadraturePoints);
+    std::vector<double> derCorrEnergyWithSigmaVal(numberQuadraturePoints);
+    std::vector<double> der2ExchEnergyWithSigmaVal(numberQuadraturePoints);
+    std::vector<double> der2CorrEnergyWithSigmaVal(numberQuadraturePoints);
+    std::vector<double> der2ExchEnergyWithDensitySigmaVal(
+      numberQuadraturePoints);
+    std::vector<double> der2CorrEnergyWithDensitySigmaVal(
+      numberQuadraturePoints);
+    std::vector<double> derExchEnergyWithDensityVal(numberQuadraturePoints);
+    std::vector<double> derCorrEnergyWithDensityVal(numberQuadraturePoints);
+    std::vector<double> der2ExchEnergyWithDensityVal(numberQuadraturePoints);
+    std::vector<double> der2CorrEnergyWithDensityVal(numberQuadraturePoints);
+
+    typename dealii::DoFHandler<3>::active_cell_iterator
+      cellPtr = dftPtr->matrix_free_data
+                  .get_dof_handler(dftPtr->d_densityDofHandlerIndex)
+                  .begin_active(),
+      endcellPtr = dftPtr->matrix_free_data
+                     .get_dof_handler(dftPtr->d_densityDofHandlerIndex)
+                     .end();
+
+    //
+    // loop over cell block
+    //
+    unsigned int iElemCount = 0;
+    for (; cellPtr != endcellPtr; ++cellPtr)
+      {
+        if (cellPtr->is_locally_owned())
+          {
+            fe_values.reinit(cellPtr);
+
+            const std::vector<DerivativeForm<1, 3, 3>> &inverseJacobians =
+              fe_values.get_inverse_jacobians();
+
+            std::vector<double> densityValue =
+              (rhoValues).find(cellPtr->id())->second;
+            std::vector<double> gradDensityValue =
+              (gradRhoValues).find(cellPtr->id())->second;
+
+            std::vector<double> densityPrimeValue =
+              (rhoPrimeValues).find(cellPtr->id())->second;
+            std::vector<double> gradDensityPrimeValue =
+              (gradRhoPrimeValues).find(cellPtr->id())->second;
+
+            const std::vector<double> &tempPhiPrime =
+              phiPrimeValues.find(cellPtr->id())->second;
+
+            if (dftParameters::nonLinearCoreCorrection)
+              {
+                const std::vector<double> &temp2 =
+                  rhoCoreValues.find(cellPtr->id())->second;
+                const std::vector<double> &temp3 =
+                  gradRhoCoreValues.find(cellPtr->id())->second;
+                for (unsigned int q = 0; q < numberQuadraturePoints; ++q)
+                  {
+                    densityValue[q] += temp2[q];
+                    gradDensityValue[3 * q + 0] += temp3[3 * q + 0];
+                    gradDensityValue[3 * q + 1] += temp3[3 * q + 1];
+                    gradDensityValue[3 * q + 2] += temp3[3 * q + 2];
+                  }
+              }
+
+            for (unsigned int q = 0; q < numberQuadraturePoints; ++q)
+              {
+                const double gradRhoX = gradDensityValue[3 * q + 0];
+                const double gradRhoY = gradDensityValue[3 * q + 1];
+                const double gradRhoZ = gradDensityValue[3 * q + 2];
+                sigmaValue[q] = gradRhoX * gradRhoX + gradRhoY * gradRhoY +
+                                gradRhoZ * gradRhoZ;
+              }
+
+            xc_gga_vxc(&(dftPtr->funcX),
+                       numberQuadraturePoints,
+                       &densityValue[0],
+                       &sigmaValue[0],
+                       &derExchEnergyWithDensityVal[0],
+                       &derExchEnergyWithSigmaVal[0]);
+            xc_gga_vxc(&(dftPtr->funcC),
+                       numberQuadraturePoints,
+                       &densityValue[0],
+                       &sigmaValue[0],
+                       &derCorrEnergyWithDensityVal[0],
+                       &derCorrEnergyWithSigmaVal[0]);
+
+            xc_gga_fxc(&(dftPtr->funcX),
+                       numberQuadraturePoints,
+                       &densityValue[0],
+                       &sigmaValue[0],
+                       &der2ExchEnergyWithDensityVal[0],
+                       &der2ExchEnergyWithDensitySigmaVal[0],
+                       &der2ExchEnergyWithSigmaVal[0]);
+            xc_gga_fxc(&(dftPtr->funcC),
+                       numberQuadraturePoints,
+                       &densityValue[0],
+                       &sigmaValue[0],
+                       &der2CorrEnergyWithDensityVal[0],
+                       &der2CorrEnergyWithDensitySigmaVal[0],
+                       &der2CorrEnergyWithSigmaVal[0]);
+
+
+            for (unsigned int q = 0; q < numberQuadraturePoints; ++q)
+              {
+                const double gradRhoX = gradDensityValue[3 * q + 0];
+                const double gradRhoY = gradDensityValue[3 * q + 1];
+                const double gradRhoZ = gradDensityValue[3 * q + 2];
+
+                const double gradRhoPrimeX = gradDensityPrimeValue[3 * q + 0];
+                const double gradRhoPrimeY = gradDensityPrimeValue[3 * q + 1];
+                const double gradRhoPrimeZ = gradDensityPrimeValue[3 * q + 2];
+
+                const double gradRhoDotGradRhoPrime = gradRhoX * gradRhoPrimeX +
+                                                      gradRhoY * gradRhoPrimeY +
+                                                      gradRhoZ * gradRhoPrimeZ;
+
+                // 2.0*del2{exc}/del{sigma}{rho}*\dot{gradrho^{\prime},gradrho}
+                const double sigmaDensityMixedDerTerm =
+                  2.0 *
+                  (der2ExchEnergyWithDensitySigmaVal[q] +
+                   der2CorrEnergyWithDensitySigmaVal[q]) *
+                  gradRhoDotGradRhoPrime;
+
+
+                d_vEffJxW[totalLocallyOwnedCells * q + iElemCount] =
+                  (tempPhiPrime[q] +
+                   (der2ExchEnergyWithDensityVal[q] +
+                    der2CorrEnergyWithDensityVal[q]) *
+                     densityPrimeValue[q] +
+                   sigmaDensityMixedDerTerm) *
+                  fe_values.JxW(q);
+              }
+
+
+            for (unsigned int q = 0; q < numberQuadraturePoints; ++q)
+              {
+                const double jxw      = fe_values.JxW(q);
+                const double gradRhoX = gradDensityValue[3 * q + 0];
+                const double gradRhoY = gradDensityValue[3 * q + 1];
+                const double gradRhoZ = gradDensityValue[3 * q + 2];
+
+                const double gradRhoPrimeX = gradDensityPrimeValue[3 * q + 0];
+                const double gradRhoPrimeY = gradDensityPrimeValue[3 * q + 1];
+                const double gradRhoPrimeZ = gradDensityPrimeValue[3 * q + 2];
+
+                const double gradRhoDotGradRhoPrime = gradRhoX * gradRhoPrimeX +
+                                                      gradRhoY * gradRhoPrimeY +
+                                                      gradRhoZ * gradRhoPrimeZ;
+
+                const double term1 =
+                  derExchEnergyWithSigmaVal[q] + derCorrEnergyWithSigmaVal[q];
+                const double term2 =
+                  der2ExchEnergyWithSigmaVal[q] + der2CorrEnergyWithSigmaVal[q];
+                const double term3 = der2ExchEnergyWithDensitySigmaVal[q] +
+                                     der2CorrEnergyWithDensitySigmaVal[q];
+
+                std::vector<double> tempvec(3, 0.0);
+
+                tempvec[0] = (term1 * gradRhoPrimeX +
+                              2.0 * term2 * gradRhoDotGradRhoPrime * gradRhoX +
+                              term3 * densityPrimeValue[q] * gradRhoX) *
+                             jxw;
+                tempvec[1] = (term1 * gradRhoPrimeY +
+                              2.0 * term2 * gradRhoDotGradRhoPrime * gradRhoY +
+                              term3 * densityPrimeValue[q] * gradRhoY) *
+                             jxw;
+                tempvec[2] = (term1 * gradRhoPrimeZ +
+                              2.0 * term2 * gradRhoDotGradRhoPrime * gradRhoZ +
+                              term3 * densityPrimeValue[q] * gradRhoZ) *
+                             jxw;
+
+                d_invJacderExcWithSigmaTimesGradRhoJxW[totalLocallyOwnedCells *
+                                                         3 * q +
+                                                       iElemCount] =
+                  (inverseJacobians[q][0][0] * tempvec[0] +
+                   inverseJacobians[q][0][1] * tempvec[1] +
+                   inverseJacobians[q][0][2] * tempvec[2]);
+
+                d_invJacderExcWithSigmaTimesGradRhoJxW[totalLocallyOwnedCells *
+                                                         (3 * q + 1) +
+                                                       iElemCount] =
+                  (inverseJacobians[q][1][0] * tempvec[0] +
+                   inverseJacobians[q][1][1] * tempvec[1] +
+                   inverseJacobians[q][1][2] * tempvec[2]);
+
+                d_invJacderExcWithSigmaTimesGradRhoJxW[totalLocallyOwnedCells *
+                                                         (3 * q + 2) +
+                                                       iElemCount] =
+                  (inverseJacobians[q][2][0] * tempvec[0] +
+                   inverseJacobians[q][2][1] * tempvec[1] +
+                   inverseJacobians[q][2][2] * tempvec[2]);
+              }
+            iElemCount++;
+          } // if cellPtr->is_locally_owned() loop
+
+      } // cell loop
+  }
+
+  // Fourth order stencil finite difference stencil used
+  template <unsigned int FEOrder, unsigned int FEOrderElectro>
+  void
+  kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::
+    computeVEffPrimeSpinPolarized(
+      const std::map<dealii::CellId, std::vector<double>> &rhoValues,
+      const std::map<dealii::CellId, std::vector<double>> &rhoPrimeValues,
+      const std::map<dealii::CellId, std::vector<double>> &gradRhoValues,
+      const std::map<dealii::CellId, std::vector<double>> &gradRhoPrimeValues,
+      const std::map<dealii::CellId, std::vector<double>> &phiPrimeValues,
+      const unsigned int                                   spinIndex,
+      const std::map<dealii::CellId, std::vector<double>> &rhoCoreValues,
+      const std::map<dealii::CellId, std::vector<double>> &gradRhoCoreValues)
+  {
+    const unsigned int totalLocallyOwnedCells =
+      dftPtr->matrix_free_data.n_physical_cells();
+    const Quadrature<3> &quadrature_formula =
+      dftPtr->matrix_free_data.get_quadrature(dftPtr->d_densityQuadratureId);
+    FEValues<3>        fe_values(dftPtr->FE,
+                          quadrature_formula,
+                          update_JxW_values | update_inverse_jacobians |
+                            update_jacobians);
+    const unsigned int numberQuadraturePoints = quadrature_formula.size();
+
+    d_vEffJxW.resize(totalLocallyOwnedCells * numberQuadraturePoints, 0.0);
+    d_invJacderExcWithSigmaTimesGradRhoJxW.resize(totalLocallyOwnedCells *
+                                                    numberQuadraturePoints * 3,
+                                                  0.0);
+
+    std::vector<double> derExchEnergyWithDensityVal(2 * numberQuadraturePoints);
+    std::vector<double> derCorrEnergyWithDensityVal(2 * numberQuadraturePoints);
+    std::vector<double> derExchEnergyWithSigma(3 * numberQuadraturePoints);
+    std::vector<double> derCorrEnergyWithSigma(3 * numberQuadraturePoints);
+    std::vector<double> sigmaValue(3 * numberQuadraturePoints);
+
+    typename dealii::DoFHandler<3>::active_cell_iterator
+      cellPtr = dftPtr->matrix_free_data
+                  .get_dof_handler(dftPtr->d_densityDofHandlerIndex)
+                  .begin_active(),
+      endcellPtr = dftPtr->matrix_free_data
+                     .get_dof_handler(dftPtr->d_densityDofHandlerIndex)
+                     .end();
+    const double lambda = 1e-2;
+
+    //
+    // loop over cell block
+    //
+    unsigned int iElemCount = 0;
+    for (; cellPtr != endcellPtr; ++cellPtr)
+      {
+        if (cellPtr->is_locally_owned())
+          {
+            fe_values.reinit(cellPtr);
+
+            const std::vector<DerivativeForm<1, 3, 3>> &inverseJacobians =
+              fe_values.get_inverse_jacobians();
+
+
+            std::vector<double> densityValue =
+              (rhoValues).find(cellPtr->id())->second;
+            std::vector<double> gradDensityValue =
+              (gradRhoValues).find(cellPtr->id())->second;
+
+
+            if (dftParameters::nonLinearCoreCorrection)
+              {
+                const std::vector<double> &temp2 =
+                  rhoCoreValues.find(cellPtr->id())->second;
+
+                const std::vector<double> &temp3 =
+                  gradRhoCoreValues.find(cellPtr->id())->second;
+
+                for (unsigned int q = 0; q < numberQuadraturePoints; ++q)
+                  {
+                    densityValue[2 * q] += temp2[q] / 2.0;
+                    densityValue[2 * q + 1] += temp2[q] / 2.0;
+                    gradDensityValue[6 * q + 0] += temp3[3 * q + 0] / 2.0;
+                    gradDensityValue[6 * q + 1] += temp3[3 * q + 1] / 2.0;
+                    gradDensityValue[6 * q + 2] += temp3[3 * q + 2] / 2.0;
+                    gradDensityValue[6 * q + 3] += temp3[3 * q + 0] / 2.0;
+                    gradDensityValue[6 * q + 4] += temp3[3 * q + 1] / 2.0;
+                    gradDensityValue[6 * q + 5] += temp3[3 * q + 2] / 2.0;
+                  }
+              }
+
+
+            const std::vector<double> &dirperturb1 =
+              rhoPrimeValues.find(cellPtr->id())->second;
+
+            const std::vector<double> &dirperturb2 =
+              gradRhoPrimeValues.find(cellPtr->id())->second;
+
+            for (unsigned int q = 0; q < numberQuadraturePoints; ++q)
+              {
+                densityValue[2 * q] += 2.0 * lambda * dirperturb1[2 * q];
+                densityValue[2 * q + 1] +=
+                  2.0 * lambda * dirperturb1[2 * q + 1];
+                gradDensityValue[6 * q + 0] +=
+                  2.0 * lambda * dirperturb2[6 * q + 0];
+                gradDensityValue[6 * q + 1] +=
+                  2.0 * lambda * dirperturb2[6 * q + 1];
+                gradDensityValue[6 * q + 2] +=
+                  2.0 * lambda * dirperturb2[6 * q + 2];
+                gradDensityValue[6 * q + 3] +=
+                  2.0 * lambda * dirperturb2[6 * q + 3];
+                gradDensityValue[6 * q + 4] +=
+                  2.0 * lambda * dirperturb2[6 * q + 4];
+                gradDensityValue[6 * q + 5] +=
+                  2.0 * lambda * dirperturb2[6 * q + 5];
+              }
+
+
+            for (unsigned int q = 0; q < numberQuadraturePoints; ++q)
+              {
+                const double gradRhoX1 = gradDensityValue[6 * q + 0];
+                const double gradRhoY1 = gradDensityValue[6 * q + 1];
+                const double gradRhoZ1 = gradDensityValue[6 * q + 2];
+                const double gradRhoX2 = gradDensityValue[6 * q + 3];
+                const double gradRhoY2 = gradDensityValue[6 * q + 4];
+                const double gradRhoZ2 = gradDensityValue[6 * q + 5];
+
+                sigmaValue[3 * q + 0] = gradRhoX1 * gradRhoX1 +
+                                        gradRhoY1 * gradRhoY1 +
+                                        gradRhoZ1 * gradRhoZ1;
+                sigmaValue[3 * q + 1] = gradRhoX1 * gradRhoX2 +
+                                        gradRhoY1 * gradRhoY2 +
+                                        gradRhoZ1 * gradRhoZ2;
+                sigmaValue[3 * q + 2] = gradRhoX2 * gradRhoX2 +
+                                        gradRhoY2 * gradRhoY2 +
+                                        gradRhoZ2 * gradRhoZ2;
+              }
+
+            xc_gga_vxc(&(dftPtr->funcX),
+                       numberQuadraturePoints,
+                       &densityValue[0],
+                       &sigmaValue[0],
+                       &derExchEnergyWithDensityVal[0],
+                       &derExchEnergyWithSigma[0]);
+
+            xc_gga_vxc(&(dftPtr->funcC),
+                       numberQuadraturePoints,
+                       &densityValue[0],
+                       &sigmaValue[0],
+                       &derCorrEnergyWithDensityVal[0],
+                       &derCorrEnergyWithSigma[0]);
+
+
+            for (unsigned int q = 0; q < numberQuadraturePoints; ++q)
+              {
+                d_vEffJxW[totalLocallyOwnedCells * q + iElemCount] =
+                  -(derExchEnergyWithDensityVal[2 * q + spinIndex] +
+                    derCorrEnergyWithDensityVal[2 * q + spinIndex]) *
+                  fe_values.JxW(q);
+              }
+
+            for (unsigned int q = 0; q < numberQuadraturePoints; ++q)
+              {
+                const double jxw = fe_values.JxW(q);
+                const double gradRhoX =
+                  gradDensityValue[6 * q + 0 + 3 * spinIndex];
+                const double gradRhoY =
+                  gradDensityValue[6 * q + 1 + 3 * spinIndex];
+                const double gradRhoZ =
+                  gradDensityValue[6 * q + 2 + 3 * spinIndex];
+                const double gradRhoOtherX =
+                  gradDensityValue[6 * q + 0 + 3 * (1 - spinIndex)];
+                const double gradRhoOtherY =
+                  gradDensityValue[6 * q + 1 + 3 * (1 - spinIndex)];
+                const double gradRhoOtherZ =
+                  gradDensityValue[6 * q + 2 + 3 * (1 - spinIndex)];
+                const double term =
+                  derExchEnergyWithSigma[3 * q + 2 * spinIndex] +
+                  derCorrEnergyWithSigma[3 * q + 2 * spinIndex];
+                const double termOff = derExchEnergyWithSigma[3 * q + 1] +
+                                       derCorrEnergyWithSigma[3 * q + 1];
+
+                d_invJacderExcWithSigmaTimesGradRhoJxW[totalLocallyOwnedCells *
+                                                         3 * q +
+                                                       iElemCount] =
+                  -2.0 *
+                  (inverseJacobians[q][0][0] *
+                     (term * gradRhoX + 0.5 * termOff * gradRhoOtherX) +
+                   inverseJacobians[q][0][1] *
+                     (term * gradRhoY + 0.5 * termOff * gradRhoOtherY) +
+                   inverseJacobians[q][0][2] *
+                     (term * gradRhoZ + 0.5 * termOff * gradRhoOtherZ)) *
+                  jxw;
+
+                d_invJacderExcWithSigmaTimesGradRhoJxW[totalLocallyOwnedCells *
+                                                         (3 * q + 1) +
+                                                       iElemCount] =
+                  -2.0 *
+                  (inverseJacobians[q][1][0] *
+                     (term * gradRhoX + 0.5 * termOff * gradRhoOtherX) +
+                   inverseJacobians[q][1][1] *
+                     (term * gradRhoY + 0.5 * termOff * gradRhoOtherY) +
+                   inverseJacobians[q][1][2] *
+                     (term * gradRhoZ + 0.5 * termOff * gradRhoOtherZ)) *
+                  jxw;
+
+                d_invJacderExcWithSigmaTimesGradRhoJxW[totalLocallyOwnedCells *
+                                                         (3 * q + 2) +
+                                                       iElemCount] =
+                  -2.0 *
+                  (inverseJacobians[q][2][0] *
+                     (term * gradRhoX + 0.5 * termOff * gradRhoOtherX) +
+                   inverseJacobians[q][2][1] *
+                     (term * gradRhoY + 0.5 * termOff * gradRhoOtherY) +
+                   inverseJacobians[q][2][2] *
+                     (term * gradRhoZ + 0.5 * termOff * gradRhoOtherZ)) *
+                  jxw;
+              }
+            iElemCount++;
+          } // if cellPtr->is_locally_owned() loop
+
+      } // cell loop
+
+    cellPtr =
+      dftPtr->matrix_free_data.get_dof_handler(dftPtr->d_densityDofHandlerIndex)
+        .begin_active();
+    iElemCount = 0;
+    for (; cellPtr != endcellPtr; ++cellPtr)
+      {
+        if (cellPtr->is_locally_owned())
+          {
+            fe_values.reinit(cellPtr);
+
+            const std::vector<DerivativeForm<1, 3, 3>> &inverseJacobians =
+              fe_values.get_inverse_jacobians();
+
+
+            std::vector<double> densityValue =
+              (rhoValues).find(cellPtr->id())->second;
+            std::vector<double> gradDensityValue =
+              (gradRhoValues).find(cellPtr->id())->second;
+            const std::vector<double> &tempPhiPrime =
+              phiPrimeValues.find(cellPtr->id())->second;
+
+            if (dftParameters::nonLinearCoreCorrection)
+              {
+                const std::vector<double> &temp2 =
+                  rhoCoreValues.find(cellPtr->id())->second;
+
+                const std::vector<double> &temp3 =
+                  gradRhoCoreValues.find(cellPtr->id())->second;
+
+                for (unsigned int q = 0; q < numberQuadraturePoints; ++q)
+                  {
+                    densityValue[2 * q] += temp2[q] / 2.0;
+                    densityValue[2 * q + 1] += temp2[q] / 2.0;
+                    gradDensityValue[6 * q + 0] += temp3[3 * q + 0] / 2.0;
+                    gradDensityValue[6 * q + 1] += temp3[3 * q + 1] / 2.0;
+                    gradDensityValue[6 * q + 2] += temp3[3 * q + 2] / 2.0;
+                    gradDensityValue[6 * q + 3] += temp3[3 * q + 0] / 2.0;
+                    gradDensityValue[6 * q + 4] += temp3[3 * q + 1] / 2.0;
+                    gradDensityValue[6 * q + 5] += temp3[3 * q + 2] / 2.0;
+                  }
+              }
+
+
+            const std::vector<double> &dirperturb1 =
+              rhoPrimeValues.find(cellPtr->id())->second;
+
+            const std::vector<double> &dirperturb2 =
+              gradRhoPrimeValues.find(cellPtr->id())->second;
+
+            for (unsigned int q = 0; q < numberQuadraturePoints; ++q)
+              {
+                densityValue[2 * q] += lambda * dirperturb1[2 * q];
+                densityValue[2 * q + 1] += lambda * dirperturb1[2 * q + 1];
+                gradDensityValue[6 * q + 0] += lambda * dirperturb2[6 * q + 0];
+                gradDensityValue[6 * q + 1] += lambda * dirperturb2[6 * q + 1];
+                gradDensityValue[6 * q + 2] += lambda * dirperturb2[6 * q + 2];
+                gradDensityValue[6 * q + 3] += lambda * dirperturb2[6 * q + 3];
+                gradDensityValue[6 * q + 4] += lambda * dirperturb2[6 * q + 4];
+                gradDensityValue[6 * q + 5] += lambda * dirperturb2[6 * q + 5];
+              }
+
+
+            for (unsigned int q = 0; q < numberQuadraturePoints; ++q)
+              {
+                const double gradRhoX1 = gradDensityValue[6 * q + 0];
+                const double gradRhoY1 = gradDensityValue[6 * q + 1];
+                const double gradRhoZ1 = gradDensityValue[6 * q + 2];
+                const double gradRhoX2 = gradDensityValue[6 * q + 3];
+                const double gradRhoY2 = gradDensityValue[6 * q + 4];
+                const double gradRhoZ2 = gradDensityValue[6 * q + 5];
+
+                sigmaValue[3 * q + 0] = gradRhoX1 * gradRhoX1 +
+                                        gradRhoY1 * gradRhoY1 +
+                                        gradRhoZ1 * gradRhoZ1;
+                sigmaValue[3 * q + 1] = gradRhoX1 * gradRhoX2 +
+                                        gradRhoY1 * gradRhoY2 +
+                                        gradRhoZ1 * gradRhoZ2;
+                sigmaValue[3 * q + 2] = gradRhoX2 * gradRhoX2 +
+                                        gradRhoY2 * gradRhoY2 +
+                                        gradRhoZ2 * gradRhoZ2;
+              }
+
+            xc_gga_vxc(&(dftPtr->funcX),
+                       numberQuadraturePoints,
+                       &densityValue[0],
+                       &sigmaValue[0],
+                       &derExchEnergyWithDensityVal[0],
+                       &derExchEnergyWithSigma[0]);
+
+            xc_gga_vxc(&(dftPtr->funcC),
+                       numberQuadraturePoints,
+                       &densityValue[0],
+                       &sigmaValue[0],
+                       &derCorrEnergyWithDensityVal[0],
+                       &derCorrEnergyWithSigma[0]);
+
+
+            for (unsigned int q = 0; q < numberQuadraturePoints; ++q)
+              {
+                d_vEffJxW[totalLocallyOwnedCells * q + iElemCount] +=
+                  8.0 *
+                  (derExchEnergyWithDensityVal[2 * q + spinIndex] +
+                   derCorrEnergyWithDensityVal[2 * q + spinIndex]) *
+                  fe_values.JxW(q);
+              }
+
+            for (unsigned int q = 0; q < numberQuadraturePoints; ++q)
+              {
+                const double jxw = fe_values.JxW(q);
+                const double gradRhoX =
+                  gradDensityValue[6 * q + 0 + 3 * spinIndex];
+                const double gradRhoY =
+                  gradDensityValue[6 * q + 1 + 3 * spinIndex];
+                const double gradRhoZ =
+                  gradDensityValue[6 * q + 2 + 3 * spinIndex];
+                const double gradRhoOtherX =
+                  gradDensityValue[6 * q + 0 + 3 * (1 - spinIndex)];
+                const double gradRhoOtherY =
+                  gradDensityValue[6 * q + 1 + 3 * (1 - spinIndex)];
+                const double gradRhoOtherZ =
+                  gradDensityValue[6 * q + 2 + 3 * (1 - spinIndex)];
+                const double term =
+                  derExchEnergyWithSigma[3 * q + 2 * spinIndex] +
+                  derCorrEnergyWithSigma[3 * q + 2 * spinIndex];
+                const double termOff = derExchEnergyWithSigma[3 * q + 1] +
+                                       derCorrEnergyWithSigma[3 * q + 1];
+
+                d_invJacderExcWithSigmaTimesGradRhoJxW[totalLocallyOwnedCells *
+                                                         3 * q +
+                                                       iElemCount] +=
+                  8.0 * 2.0 *
+                  (inverseJacobians[q][0][0] *
+                     (term * gradRhoX + 0.5 * termOff * gradRhoOtherX) +
+                   inverseJacobians[q][0][1] *
+                     (term * gradRhoY + 0.5 * termOff * gradRhoOtherY) +
+                   inverseJacobians[q][0][2] *
+                     (term * gradRhoZ + 0.5 * termOff * gradRhoOtherZ)) *
+                  jxw;
+
+                d_invJacderExcWithSigmaTimesGradRhoJxW[totalLocallyOwnedCells *
+                                                         (3 * q + 1) +
+                                                       iElemCount] +=
+                  8.0 * 2.0 *
+                  (inverseJacobians[q][1][0] *
+                     (term * gradRhoX + 0.5 * termOff * gradRhoOtherX) +
+                   inverseJacobians[q][1][1] *
+                     (term * gradRhoY + 0.5 * termOff * gradRhoOtherY) +
+                   inverseJacobians[q][1][2] *
+                     (term * gradRhoZ + 0.5 * termOff * gradRhoOtherZ)) *
+                  jxw;
+
+                d_invJacderExcWithSigmaTimesGradRhoJxW[totalLocallyOwnedCells *
+                                                         (3 * q + 2) +
+                                                       iElemCount] +=
+                  8.0 * 2.0 *
+                  (inverseJacobians[q][2][0] *
+                     (term * gradRhoX + 0.5 * termOff * gradRhoOtherX) +
+                   inverseJacobians[q][2][1] *
+                     (term * gradRhoY + 0.5 * termOff * gradRhoOtherY) +
+                   inverseJacobians[q][2][2] *
+                     (term * gradRhoZ + 0.5 * termOff * gradRhoOtherZ)) *
+                  jxw;
+              }
+            iElemCount++;
+          } // if cellPtr->is_locally_owned() loop
+
+      } // cell loop
+
+
+    cellPtr =
+      dftPtr->matrix_free_data.get_dof_handler(dftPtr->d_densityDofHandlerIndex)
+        .begin_active();
+    iElemCount = 0;
+    for (; cellPtr != endcellPtr; ++cellPtr)
+      {
+        if (cellPtr->is_locally_owned())
+          {
+            fe_values.reinit(cellPtr);
+
+            const std::vector<DerivativeForm<1, 3, 3>> &inverseJacobians =
+              fe_values.get_inverse_jacobians();
+
+
+            std::vector<double> densityValue =
+              (rhoValues).find(cellPtr->id())->second;
+            std::vector<double> gradDensityValue =
+              (gradRhoValues).find(cellPtr->id())->second;
+
+
+            if (dftParameters::nonLinearCoreCorrection)
+              {
+                const std::vector<double> &temp2 =
+                  rhoCoreValues.find(cellPtr->id())->second;
+
+                const std::vector<double> &temp3 =
+                  gradRhoCoreValues.find(cellPtr->id())->second;
+
+                for (unsigned int q = 0; q < numberQuadraturePoints; ++q)
+                  {
+                    densityValue[2 * q] += temp2[q] / 2.0;
+                    densityValue[2 * q + 1] += temp2[q] / 2.0;
+                    gradDensityValue[6 * q + 0] += temp3[3 * q + 0] / 2.0;
+                    gradDensityValue[6 * q + 1] += temp3[3 * q + 1] / 2.0;
+                    gradDensityValue[6 * q + 2] += temp3[3 * q + 2] / 2.0;
+                    gradDensityValue[6 * q + 3] += temp3[3 * q + 0] / 2.0;
+                    gradDensityValue[6 * q + 4] += temp3[3 * q + 1] / 2.0;
+                    gradDensityValue[6 * q + 5] += temp3[3 * q + 2] / 2.0;
+                  }
+              }
+
+
+            const std::vector<double> &dirperturb1 =
+              rhoPrimeValues.find(cellPtr->id())->second;
+
+            const std::vector<double> &dirperturb2 =
+              gradRhoPrimeValues.find(cellPtr->id())->second;
+
+            for (unsigned int q = 0; q < numberQuadraturePoints; ++q)
+              {
+                densityValue[2 * q] -= 2.0 * lambda * dirperturb1[2 * q];
+                densityValue[2 * q + 1] -=
+                  2.0 * lambda * dirperturb1[2 * q + 1];
+                gradDensityValue[6 * q + 0] -=
+                  2.0 * lambda * dirperturb2[6 * q + 0];
+                gradDensityValue[6 * q + 1] -=
+                  2.0 * lambda * dirperturb2[6 * q + 1];
+                gradDensityValue[6 * q + 2] -=
+                  2.0 * lambda * dirperturb2[6 * q + 2];
+                gradDensityValue[6 * q + 3] -=
+                  2.0 * lambda * dirperturb2[6 * q + 3];
+                gradDensityValue[6 * q + 4] -=
+                  2.0 * lambda * dirperturb2[6 * q + 4];
+                gradDensityValue[6 * q + 5] -=
+                  2.0 * lambda * dirperturb2[6 * q + 5];
+              }
+
+
+            for (unsigned int q = 0; q < numberQuadraturePoints; ++q)
+              {
+                const double gradRhoX1 = gradDensityValue[6 * q + 0];
+                const double gradRhoY1 = gradDensityValue[6 * q + 1];
+                const double gradRhoZ1 = gradDensityValue[6 * q + 2];
+                const double gradRhoX2 = gradDensityValue[6 * q + 3];
+                const double gradRhoY2 = gradDensityValue[6 * q + 4];
+                const double gradRhoZ2 = gradDensityValue[6 * q + 5];
+
+                sigmaValue[3 * q + 0] = gradRhoX1 * gradRhoX1 +
+                                        gradRhoY1 * gradRhoY1 +
+                                        gradRhoZ1 * gradRhoZ1;
+                sigmaValue[3 * q + 1] = gradRhoX1 * gradRhoX2 +
+                                        gradRhoY1 * gradRhoY2 +
+                                        gradRhoZ1 * gradRhoZ2;
+                sigmaValue[3 * q + 2] = gradRhoX2 * gradRhoX2 +
+                                        gradRhoY2 * gradRhoY2 +
+                                        gradRhoZ2 * gradRhoZ2;
+              }
+
+            xc_gga_vxc(&(dftPtr->funcX),
+                       numberQuadraturePoints,
+                       &densityValue[0],
+                       &sigmaValue[0],
+                       &derExchEnergyWithDensityVal[0],
+                       &derExchEnergyWithSigma[0]);
+
+            xc_gga_vxc(&(dftPtr->funcC),
+                       numberQuadraturePoints,
+                       &densityValue[0],
+                       &sigmaValue[0],
+                       &derCorrEnergyWithDensityVal[0],
+                       &derCorrEnergyWithSigma[0]);
+
+
+            for (unsigned int q = 0; q < numberQuadraturePoints; ++q)
+              {
+                d_vEffJxW[totalLocallyOwnedCells * q + iElemCount] +=
+                  (derExchEnergyWithDensityVal[2 * q + spinIndex] +
+                   derCorrEnergyWithDensityVal[2 * q + spinIndex]) *
+                  fe_values.JxW(q);
+              }
+
+            for (unsigned int q = 0; q < numberQuadraturePoints; ++q)
+              {
+                const double jxw = fe_values.JxW(q);
+                const double gradRhoX =
+                  gradDensityValue[6 * q + 0 + 3 * spinIndex];
+                const double gradRhoY =
+                  gradDensityValue[6 * q + 1 + 3 * spinIndex];
+                const double gradRhoZ =
+                  gradDensityValue[6 * q + 2 + 3 * spinIndex];
+                const double gradRhoOtherX =
+                  gradDensityValue[6 * q + 0 + 3 * (1 - spinIndex)];
+                const double gradRhoOtherY =
+                  gradDensityValue[6 * q + 1 + 3 * (1 - spinIndex)];
+                const double gradRhoOtherZ =
+                  gradDensityValue[6 * q + 2 + 3 * (1 - spinIndex)];
+                const double term =
+                  derExchEnergyWithSigma[3 * q + 2 * spinIndex] +
+                  derCorrEnergyWithSigma[3 * q + 2 * spinIndex];
+                const double termOff = derExchEnergyWithSigma[3 * q + 1] +
+                                       derCorrEnergyWithSigma[3 * q + 1];
+
+                d_invJacderExcWithSigmaTimesGradRhoJxW[totalLocallyOwnedCells *
+                                                         3 * q +
+                                                       iElemCount] +=
+                  2.0 *
+                  (inverseJacobians[q][0][0] *
+                     (term * gradRhoX + 0.5 * termOff * gradRhoOtherX) +
+                   inverseJacobians[q][0][1] *
+                     (term * gradRhoY + 0.5 * termOff * gradRhoOtherY) +
+                   inverseJacobians[q][0][2] *
+                     (term * gradRhoZ + 0.5 * termOff * gradRhoOtherZ)) *
+                  jxw;
+
+                d_invJacderExcWithSigmaTimesGradRhoJxW[totalLocallyOwnedCells *
+                                                         (3 * q + 1) +
+                                                       iElemCount] +=
+                  2.0 *
+                  (inverseJacobians[q][1][0] *
+                     (term * gradRhoX + 0.5 * termOff * gradRhoOtherX) +
+                   inverseJacobians[q][1][1] *
+                     (term * gradRhoY + 0.5 * termOff * gradRhoOtherY) +
+                   inverseJacobians[q][1][2] *
+                     (term * gradRhoZ + 0.5 * termOff * gradRhoOtherZ)) *
+                  jxw;
+
+                d_invJacderExcWithSigmaTimesGradRhoJxW[totalLocallyOwnedCells *
+                                                         (3 * q + 2) +
+                                                       iElemCount] +=
+                  2.0 *
+                  (inverseJacobians[q][2][0] *
+                     (term * gradRhoX + 0.5 * termOff * gradRhoOtherX) +
+                   inverseJacobians[q][2][1] *
+                     (term * gradRhoY + 0.5 * termOff * gradRhoOtherY) +
+                   inverseJacobians[q][2][2] *
+                     (term * gradRhoZ + 0.5 * termOff * gradRhoOtherZ)) *
+                  jxw;
+              }
+            iElemCount++;
+          } // if cellPtr->is_locally_owned() loop
+
+      } // cell loop
+
+
+    cellPtr =
+      dftPtr->matrix_free_data.get_dof_handler(dftPtr->d_densityDofHandlerIndex)
+        .begin_active();
+    iElemCount = 0;
+    for (; cellPtr != endcellPtr; ++cellPtr)
+      {
+        if (cellPtr->is_locally_owned())
+          {
+            fe_values.reinit(cellPtr);
+
+            const std::vector<DerivativeForm<1, 3, 3>> &inverseJacobians =
+              fe_values.get_inverse_jacobians();
+
+
+            std::vector<double> densityValue =
+              (rhoValues).find(cellPtr->id())->second;
+            std::vector<double> gradDensityValue =
+              (gradRhoValues).find(cellPtr->id())->second;
+            const std::vector<double> &tempPhiPrime =
+              phiPrimeValues.find(cellPtr->id())->second;
+
+            if (dftParameters::nonLinearCoreCorrection)
+              {
+                const std::vector<double> &temp2 =
+                  rhoCoreValues.find(cellPtr->id())->second;
+
+                const std::vector<double> &temp3 =
+                  gradRhoCoreValues.find(cellPtr->id())->second;
+
+                for (unsigned int q = 0; q < numberQuadraturePoints; ++q)
+                  {
+                    densityValue[2 * q] += temp2[q] / 2.0;
+                    densityValue[2 * q + 1] += temp2[q] / 2.0;
+                    gradDensityValue[6 * q + 0] += temp3[3 * q + 0] / 2.0;
+                    gradDensityValue[6 * q + 1] += temp3[3 * q + 1] / 2.0;
+                    gradDensityValue[6 * q + 2] += temp3[3 * q + 2] / 2.0;
+                    gradDensityValue[6 * q + 3] += temp3[3 * q + 0] / 2.0;
+                    gradDensityValue[6 * q + 4] += temp3[3 * q + 1] / 2.0;
+                    gradDensityValue[6 * q + 5] += temp3[3 * q + 2] / 2.0;
+                  }
+              }
+
+
+            const std::vector<double> &dirperturb1 =
+              rhoPrimeValues.find(cellPtr->id())->second;
+
+            const std::vector<double> &dirperturb2 =
+              gradRhoPrimeValues.find(cellPtr->id())->second;
+
+            for (unsigned int q = 0; q < numberQuadraturePoints; ++q)
+              {
+                densityValue[2 * q] -= lambda * dirperturb1[2 * q];
+                densityValue[2 * q + 1] -= lambda * dirperturb1[2 * q + 1];
+                gradDensityValue[6 * q + 0] -= lambda * dirperturb2[6 * q + 0];
+                gradDensityValue[6 * q + 1] -= lambda * dirperturb2[6 * q + 1];
+                gradDensityValue[6 * q + 2] -= lambda * dirperturb2[6 * q + 2];
+                gradDensityValue[6 * q + 3] -= lambda * dirperturb2[6 * q + 3];
+                gradDensityValue[6 * q + 4] -= lambda * dirperturb2[6 * q + 4];
+                gradDensityValue[6 * q + 5] -= lambda * dirperturb2[6 * q + 5];
+              }
+
+
+            for (unsigned int q = 0; q < numberQuadraturePoints; ++q)
+              {
+                const double gradRhoX1 = gradDensityValue[6 * q + 0];
+                const double gradRhoY1 = gradDensityValue[6 * q + 1];
+                const double gradRhoZ1 = gradDensityValue[6 * q + 2];
+                const double gradRhoX2 = gradDensityValue[6 * q + 3];
+                const double gradRhoY2 = gradDensityValue[6 * q + 4];
+                const double gradRhoZ2 = gradDensityValue[6 * q + 5];
+
+                sigmaValue[3 * q + 0] = gradRhoX1 * gradRhoX1 +
+                                        gradRhoY1 * gradRhoY1 +
+                                        gradRhoZ1 * gradRhoZ1;
+                sigmaValue[3 * q + 1] = gradRhoX1 * gradRhoX2 +
+                                        gradRhoY1 * gradRhoY2 +
+                                        gradRhoZ1 * gradRhoZ2;
+                sigmaValue[3 * q + 2] = gradRhoX2 * gradRhoX2 +
+                                        gradRhoY2 * gradRhoY2 +
+                                        gradRhoZ2 * gradRhoZ2;
+              }
+
+            xc_gga_vxc(&(dftPtr->funcX),
+                       numberQuadraturePoints,
+                       &densityValue[0],
+                       &sigmaValue[0],
+                       &derExchEnergyWithDensityVal[0],
+                       &derExchEnergyWithSigma[0]);
+
+            xc_gga_vxc(&(dftPtr->funcC),
+                       numberQuadraturePoints,
+                       &densityValue[0],
+                       &sigmaValue[0],
+                       &derCorrEnergyWithDensityVal[0],
+                       &derCorrEnergyWithSigma[0]);
+
+
+            for (unsigned int q = 0; q < numberQuadraturePoints; ++q)
+              {
+                d_vEffJxW[totalLocallyOwnedCells * q + iElemCount] -=
+                  8.0 *
+                  (derExchEnergyWithDensityVal[2 * q + spinIndex] +
+                   derCorrEnergyWithDensityVal[2 * q + spinIndex]) *
+                  fe_values.JxW(q);
+
+                d_vEffJxW[totalLocallyOwnedCells * q + iElemCount] *=
+                  1.0 / 12.0 / lambda;
+                d_vEffJxW[totalLocallyOwnedCells * q + iElemCount] +=
+                  tempPhiPrime[q] * fe_values.JxW(q);
+              }
+
+            for (unsigned int q = 0; q < numberQuadraturePoints; ++q)
+              {
+                const double jxw = fe_values.JxW(q);
+                const double gradRhoX =
+                  gradDensityValue[6 * q + 0 + 3 * spinIndex];
+                const double gradRhoY =
+                  gradDensityValue[6 * q + 1 + 3 * spinIndex];
+                const double gradRhoZ =
+                  gradDensityValue[6 * q + 2 + 3 * spinIndex];
+                const double gradRhoOtherX =
+                  gradDensityValue[6 * q + 0 + 3 * (1 - spinIndex)];
+                const double gradRhoOtherY =
+                  gradDensityValue[6 * q + 1 + 3 * (1 - spinIndex)];
+                const double gradRhoOtherZ =
+                  gradDensityValue[6 * q + 2 + 3 * (1 - spinIndex)];
+                const double term =
+                  derExchEnergyWithSigma[3 * q + 2 * spinIndex] +
+                  derCorrEnergyWithSigma[3 * q + 2 * spinIndex];
+                const double termOff = derExchEnergyWithSigma[3 * q + 1] +
+                                       derCorrEnergyWithSigma[3 * q + 1];
+
+                d_invJacderExcWithSigmaTimesGradRhoJxW[totalLocallyOwnedCells *
+                                                         3 * q +
+                                                       iElemCount] -=
+                  8.0 * 2.0 *
+                  (inverseJacobians[q][0][0] *
+                     (term * gradRhoX + 0.5 * termOff * gradRhoOtherX) +
+                   inverseJacobians[q][0][1] *
+                     (term * gradRhoY + 0.5 * termOff * gradRhoOtherY) +
+                   inverseJacobians[q][0][2] *
+                     (term * gradRhoZ + 0.5 * termOff * gradRhoOtherZ)) *
+                  jxw;
+
+                d_invJacderExcWithSigmaTimesGradRhoJxW[totalLocallyOwnedCells *
+                                                         (3 * q + 1) +
+                                                       iElemCount] -=
+                  8.0 * 2.0 *
+                  (inverseJacobians[q][1][0] *
+                     (term * gradRhoX + 0.5 * termOff * gradRhoOtherX) +
+                   inverseJacobians[q][1][1] *
+                     (term * gradRhoY + 0.5 * termOff * gradRhoOtherY) +
+                   inverseJacobians[q][1][2] *
+                     (term * gradRhoZ + 0.5 * termOff * gradRhoOtherZ)) *
+                  jxw;
+
+                d_invJacderExcWithSigmaTimesGradRhoJxW[totalLocallyOwnedCells *
+                                                         (3 * q + 2) +
+                                                       iElemCount] -=
+                  8.0 * 2.0 *
+                  (inverseJacobians[q][2][0] *
+                     (term * gradRhoX + 0.5 * termOff * gradRhoOtherX) +
+                   inverseJacobians[q][2][1] *
+                     (term * gradRhoY + 0.5 * termOff * gradRhoOtherY) +
+                   inverseJacobians[q][2][2] *
+                     (term * gradRhoZ + 0.5 * termOff * gradRhoOtherZ)) *
+                  jxw;
+
+                d_invJacderExcWithSigmaTimesGradRhoJxW[totalLocallyOwnedCells *
+                                                         3 * q +
+                                                       iElemCount] *=
+                  1.0 / 12.0 / lambda;
+
+                d_invJacderExcWithSigmaTimesGradRhoJxW[totalLocallyOwnedCells *
+                                                         (3 * q + 1) +
+                                                       iElemCount] *=
+                  1.0 / 12.0 / lambda;
+
+                d_invJacderExcWithSigmaTimesGradRhoJxW[totalLocallyOwnedCells *
+                                                         (3 * q + 2) +
+                                                       iElemCount] *=
+                  1.0 / 12.0 / lambda;
+              }
+            iElemCount++;
+          } // if cellPtr->is_locally_owned() loop
+
+      } // cell loop
+  }
 #include "inst.cc"
 } // namespace dftfe

@@ -146,7 +146,8 @@ namespace dftfe
        const bool                               scaleFlag,
        const double                             scalar,
        distributedGPUVec<dataTypes::numberGPU> &dst,
-       const bool                               doUnscalingX = true);
+       const bool                               doUnscalingX    = true,
+       const bool onlyHPrimePartForFirstOrderDensityMatResponse = false);
 
     void
     HX(distributedGPUVec<dataTypes::numberGPU> &    src,
@@ -158,7 +159,8 @@ namespace dftfe
        const double                                 scalar,
        distributedGPUVec<dataTypes::numberGPU> &    dst,
        const bool                                   doUnscalingX     = true,
-       const bool                                   singlePrecCommun = false);
+       const bool                                   singlePrecCommun = false,
+       const bool onlyHPrimePartForFirstOrderDensityMatResponse      = false);
 
     void
     HXCheby(distributedGPUVec<dataTypes::numberGPU> &    X,
@@ -199,7 +201,8 @@ namespace dftfe
          cublasHandle_t &                         handle,
          const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
          dftfe::ScaLAPACKMatrix<dataTypes::number> &      projHamPar,
-         GPUCCLWrapper &                                  gpucclMpiCommDomain);
+         GPUCCLWrapper &                                  gpucclMpiCommDomain,
+         const bool onlyHPrimePartForFirstOrderDensityMatResponse = false);
 
     /**
      * @brief Compute projection of the operator into a subspace spanned by a given basis.
@@ -229,7 +232,8 @@ namespace dftfe
       cublasHandle_t &                                 handle,
       const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
       dftfe::ScaLAPACKMatrix<dataTypes::number> &      projHamPar,
-      GPUCCLWrapper &                                  gpucclMpiCommDomain);
+      GPUCCLWrapper &                                  gpucclMpiCommDomain,
+      const bool onlyHPrimePartForFirstOrderDensityMatResponse = false);
 
 
     /**
@@ -353,6 +357,16 @@ namespace dftfe
       const unsigned int externalPotCorrQuadratureId);
 
 
+    void
+    computeVEffPrime(
+      const std::map<dealii::CellId, std::vector<double>> &rhoValues,
+      const std::map<dealii::CellId, std::vector<double>> &rhoPrimeValues,
+      const std::map<dealii::CellId, std::vector<double>> &gradRhoValues,
+      const std::map<dealii::CellId, std::vector<double>> &gradRhoPrimeValues,
+      const std::map<dealii::CellId, std::vector<double>> &phiPrimeValues,
+      const std::map<dealii::CellId, std::vector<double>> &rhoCoreValues,
+      const std::map<dealii::CellId, std::vector<double>> &gradRhoCoreValues);
+
     /**
      * @brief sets the data member to appropriate kPoint Index
      *
@@ -413,8 +427,10 @@ namespace dftfe
 
 
     void
-    computeHamiltonianMatrix(const unsigned int kPointIndex,
-                             const unsigned int spinIndex);
+    computeHamiltonianMatrix(
+      const unsigned int kPointIndex,
+      const unsigned int spinIndex,
+      const bool         onlyHPrimePartForFirstOrderDensityMatResponse = false);
 
 
     /**
@@ -528,9 +544,11 @@ namespace dftfe
      * @param dst Vector containing matrix times given multi-vectors product
      */
     void
-    computeLocalHamiltonianTimesX(const dataTypes::numberGPU *src,
-                                  const unsigned int    numberWaveFunctions,
-                                  dataTypes::numberGPU *dst);
+    computeLocalHamiltonianTimesX(
+      const dataTypes::numberGPU *src,
+      const unsigned int          numberWaveFunctions,
+      dataTypes::numberGPU *      dst,
+      bool onlyHPrimePartForFirstOrderDensityMatResponse = false);
 
     /**
      * @brief implementation of non-local Hamiltonian matrix-vector product

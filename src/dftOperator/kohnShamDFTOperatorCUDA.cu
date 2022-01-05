@@ -1939,6 +1939,208 @@ namespace dftfe
 
   template <unsigned int FEOrder, unsigned int FEOrderElectro>
   void
+  kohnShamDFTOperatorCUDAClass<FEOrder, FEOrderElectro>::computeVEffPrime(
+    const std::map<dealii::CellId, std::vector<double>> &rhoValues,
+    const std::map<dealii::CellId, std::vector<double>> &rhoPrimeValues,
+    const std::map<dealii::CellId, std::vector<double>> &gradRhoValues,
+    const std::map<dealii::CellId, std::vector<double>> &gradRhoPrimeValues,
+    const std::map<dealii::CellId, std::vector<double>> &phiPrimeValues,
+    const std::map<dealii::CellId, std::vector<double>> &rhoCoreValues,
+    const std::map<dealii::CellId, std::vector<double>> &gradRhoCoreValues)
+  {
+    const unsigned int n_cells = dftPtr->matrix_free_data.n_macro_cells();
+    const unsigned int totalLocallyOwnedCells =
+      dftPtr->matrix_free_data.n_physical_cells();
+
+    const Quadrature<3> &quadrature_formula =
+      dftPtr->matrix_free_data.get_quadrature(dftPtr->d_densityQuadratureId);
+    FEValues<3> fe_values(dftPtr->FE, quadrature_formula, update_JxW_values);
+    const unsigned int numberQuadraturePoints = quadrature_formula.size();
+
+
+    d_vEff.resize(totalLocallyOwnedCells * numberQuadraturePoints, 0.0);
+    d_vEffJxW.resize(totalLocallyOwnedCells * numberQuadraturePoints, 0.0);
+    d_derExcWithSigmaTimesGradRhoJxW.resize(totalLocallyOwnedCells *
+                                              numberQuadraturePoints * 3,
+                                            0.0);
+
+    typename dealii::DoFHandler<3>::active_cell_iterator cellPtr =
+      dftPtr->matrix_free_data.get_dof_handler().begin_active();
+    typename dealii::DoFHandler<3>::active_cell_iterator endcPtr =
+      dftPtr->matrix_free_data.get_dof_handler().end();
+    unsigned int iElemCount = 0;
+
+    std::vector<double> sigmaValue(numberQuadraturePoints);
+    std::vector<double> derExchEnergyWithSigmaVal(numberQuadraturePoints);
+    std::vector<double> derCorrEnergyWithSigmaVal(numberQuadraturePoints);
+    std::vector<double> der2ExchEnergyWithSigmaVal(numberQuadraturePoints);
+    std::vector<double> der2CorrEnergyWithSigmaVal(numberQuadraturePoints);
+    std::vector<double> der2ExchEnergyWithDensitySigmaVal(
+      numberQuadraturePoints);
+    std::vector<double> der2CorrEnergyWithDensitySigmaVal(
+      numberQuadraturePoints);
+    std::vector<double> derExchEnergyWithDensityVal(numberQuadraturePoints);
+    std::vector<double> derCorrEnergyWithDensityVal(numberQuadraturePoints);
+    std::vector<double> der2ExchEnergyWithDensityVal(numberQuadraturePoints);
+    std::vector<double> der2CorrEnergyWithDensityVal(numberQuadraturePoints);
+
+    for (; cellPtr != endcPtr; ++cellPtr)
+      if (cellPtr->is_locally_owned())
+        {
+          fe_values.reinit(cellPtr);
+
+          std::vector<double> densityValue =
+            (rhoValues).find(cellPtr->id())->second;
+          std::vector<double> gradDensityValue =
+            (gradRhoValues).find(cellPtr->id())->second;
+
+          std::vector<double> densityPrimeValue =
+            (rhoPrimeValues).find(cellPtr->id())->second;
+          std::vector<double> gradDensityPrimeValue =
+            (gradRhoPrimeValues).find(cellPtr->id())->second;
+
+          if (dftParameters::nonLinearCoreCorrection)
+            {
+              const std::vector<double> &temp2 =
+                rhoCoreValues.find(cellPtr->id())->second;
+              const std::vector<double> &temp3 =
+                gradRhoCoreValues.find(cellPtr->id())->second;
+              for (unsigned int q = 0; q < numberQuadraturePoints; ++q)
+                {
+                  densityValue[q] += temp2[q];
+                  gradDensityValue[3 * q + 0] += temp3[3 * q + 0];
+                  gradDensityValue[3 * q + 1] += temp3[3 * q + 1];
+                  gradDensityValue[3 * q + 2] += temp3[3 * q + 2];
+                }
+            }
+
+          const std::vector<double> &tempPhiPrime =
+            phiPrimeValues.find(cellPtr->id())->second;
+
+          for (unsigned int q = 0; q < numberQuadraturePoints; ++q)
+            {
+              const double gradRhoX = gradDensityValue[3 * q + 0];
+              const double gradRhoY = gradDensityValue[3 * q + 1];
+              const double gradRhoZ = gradDensityValue[3 * q + 2];
+              sigmaValue[q] =
+                gradRhoX * gradRhoX + gradRhoY * gradRhoY + gradRhoZ * gradRhoZ;
+            }
+
+          xc_gga_vxc(&(dftPtr->funcX),
+                     numberQuadraturePoints,
+                     &densityValue[0],
+                     &sigmaValue[0],
+                     &derExchEnergyWithDensityVal[0],
+                     &derExchEnergyWithSigmaVal[0]);
+          xc_gga_vxc(&(dftPtr->funcC),
+                     numberQuadraturePoints,
+                     &densityValue[0],
+                     &sigmaValue[0],
+                     &derCorrEnergyWithDensityVal[0],
+                     &derCorrEnergyWithSigmaVal[0]);
+
+          xc_gga_fxc(&(dftPtr->funcX),
+                     numberQuadraturePoints,
+                     &densityValue[0],
+                     &sigmaValue[0],
+                     &der2ExchEnergyWithDensityVal[0],
+                     &der2ExchEnergyWithDensitySigmaVal[0],
+                     &der2ExchEnergyWithSigmaVal[0]);
+          xc_gga_fxc(&(dftPtr->funcC),
+                     numberQuadraturePoints,
+                     &densityValue[0],
+                     &sigmaValue[0],
+                     &der2CorrEnergyWithDensityVal[0],
+                     &der2CorrEnergyWithDensitySigmaVal[0],
+                     &der2CorrEnergyWithSigmaVal[0]);
+
+          for (unsigned int q = 0; q < numberQuadraturePoints; ++q)
+            {
+              const double jxw      = fe_values.JxW(q);
+              const double gradRhoX = gradDensityValue[3 * q + 0];
+              const double gradRhoY = gradDensityValue[3 * q + 1];
+              const double gradRhoZ = gradDensityValue[3 * q + 2];
+
+              const double gradRhoPrimeX = gradDensityPrimeValue[3 * q + 0];
+              const double gradRhoPrimeY = gradDensityPrimeValue[3 * q + 1];
+              const double gradRhoPrimeZ = gradDensityPrimeValue[3 * q + 2];
+
+              const double gradRhoDotGradRhoPrime = gradRhoX * gradRhoPrimeX +
+                                                    gradRhoY * gradRhoPrimeY +
+                                                    gradRhoZ * gradRhoPrimeZ;
+
+              const double term1 =
+                derExchEnergyWithSigmaVal[q] + derCorrEnergyWithSigmaVal[q];
+              const double term2 =
+                der2ExchEnergyWithSigmaVal[q] + der2CorrEnergyWithSigmaVal[q];
+              const double term3 = der2ExchEnergyWithDensitySigmaVal[q] +
+                                   der2CorrEnergyWithDensitySigmaVal[q];
+              d_derExcWithSigmaTimesGradRhoJxW[iElemCount *
+                                                 numberQuadraturePoints * 3 +
+                                               3 * q] =
+                (term1 * gradRhoPrimeX +
+                 2.0 * term2 * gradRhoDotGradRhoPrime * gradRhoX +
+                 term3 * densityPrimeValue[q] * gradRhoX) *
+                jxw;
+              d_derExcWithSigmaTimesGradRhoJxW[iElemCount *
+                                                 numberQuadraturePoints * 3 +
+                                               3 * q + 1] =
+                (term1 * gradRhoPrimeY +
+                 2.0 * term2 * gradRhoDotGradRhoPrime * gradRhoY +
+                 term3 * densityPrimeValue[q] * gradRhoY) *
+                jxw;
+              d_derExcWithSigmaTimesGradRhoJxW[iElemCount *
+                                                 numberQuadraturePoints * 3 +
+                                               3 * q + 2] =
+                (term1 * gradRhoPrimeZ +
+                 2.0 * term2 * gradRhoDotGradRhoPrime * gradRhoZ +
+                 term3 * densityPrimeValue[q] * gradRhoZ) *
+                jxw;
+            }
+
+          for (unsigned int q = 0; q < numberQuadraturePoints; ++q)
+            {
+              const double gradRhoX = gradDensityValue[3 * q + 0];
+              const double gradRhoY = gradDensityValue[3 * q + 1];
+              const double gradRhoZ = gradDensityValue[3 * q + 2];
+
+              const double gradRhoPrimeX = gradDensityPrimeValue[3 * q + 0];
+              const double gradRhoPrimeY = gradDensityPrimeValue[3 * q + 1];
+              const double gradRhoPrimeZ = gradDensityPrimeValue[3 * q + 2];
+
+              const double gradRhoDotGradRhoPrime = gradRhoX * gradRhoPrimeX +
+                                                    gradRhoY * gradRhoPrimeY +
+                                                    gradRhoZ * gradRhoPrimeZ;
+
+              // 2.0*del2{exc}/del{sigma}{rho}*\dot{gradrho^{\prime},gradrho}
+              const double sigmaDensityMixedDerTerm =
+                2.0 *
+                (der2ExchEnergyWithDensitySigmaVal[q] +
+                 der2CorrEnergyWithDensitySigmaVal[q]) *
+                gradRhoDotGradRhoPrime;
+
+              d_vEff[iElemCount * numberQuadraturePoints + q] =
+                tempPhiPrime[q] +
+                (der2ExchEnergyWithDensityVal[q] +
+                 der2CorrEnergyWithDensityVal[q]) *
+                  densityPrimeValue[q] +
+                sigmaDensityMixedDerTerm;
+
+              d_vEffJxW[iElemCount * numberQuadraturePoints + q] =
+                d_vEff[iElemCount * numberQuadraturePoints + q] *
+                fe_values.JxW(q);
+            }
+
+          iElemCount++;
+        }
+
+    d_vEffJxWDevice                        = d_vEffJxW;
+    d_derExcWithSigmaTimesGradRhoJxWDevice = d_derExcWithSigmaTimesGradRhoJxW;
+  }
+
+
+  template <unsigned int FEOrder, unsigned int FEOrderElectro>
+  void
   kohnShamDFTOperatorCUDAClass<FEOrder, FEOrderElectro>::HX(
     distributedGPUVec<dataTypes::numberGPU> &    src,
     distributedGPUVec<dataTypes::numberFP32GPU> &tempFloatArray,
@@ -1949,7 +2151,8 @@ namespace dftfe
     const double                                 scalar,
     distributedGPUVec<dataTypes::numberGPU> &    dst,
     const bool                                   doUnscalingSrc,
-    const bool                                   singlePrecCommun)
+    const bool                                   singlePrecCommun,
+    const bool onlyHPrimePartForFirstOrderDensityMatResponse)
   {
     const unsigned int n_ghosts =
       dftPtr->matrix_free_data
@@ -2004,13 +2207,16 @@ namespace dftfe
       }
     getOverloadedConstraintMatrix()->distribute(src, numberWaveFunctions);
 
-    computeLocalHamiltonianTimesX(src.begin(),
-                                  numberWaveFunctions,
-                                  dst.begin());
+    computeLocalHamiltonianTimesX(
+      src.begin(),
+      numberWaveFunctions,
+      dst.begin(),
+      onlyHPrimePartForFirstOrderDensityMatResponse);
 
     // H^{nloc}*M^{-1/2}*X
     if (dftParameters::isPseudopotential &&
-        dftPtr->d_nonLocalAtomGlobalChargeIds.size() > 0)
+        (dftPtr->d_nonLocalAtomGlobalChargeIds.size() > 0) &&
+        !onlyHPrimePartForFirstOrderDensityMatResponse)
       {
         computeNonLocalHamiltonianTimesX(src.begin(),
                                          projectorKetTimesVector,
@@ -2092,7 +2298,8 @@ namespace dftfe
     const bool                               scaleFlag,
     const double                             scalar,
     distributedGPUVec<dataTypes::numberGPU> &dst,
-    const bool                               doUnscalingSrc)
+    const bool                               doUnscalingSrc,
+    const bool onlyHPrimePartForFirstOrderDensityMatResponse)
   {
     const unsigned int n_ghosts =
       dftPtr->matrix_free_data
@@ -2129,13 +2336,16 @@ namespace dftfe
     src.updateGhostValues();
     getOverloadedConstraintMatrix()->distribute(src, numberWaveFunctions);
 
-    computeLocalHamiltonianTimesX(src.begin(),
-                                  numberWaveFunctions,
-                                  dst.begin());
+    computeLocalHamiltonianTimesX(
+      src.begin(),
+      numberWaveFunctions,
+      dst.begin(),
+      onlyHPrimePartForFirstOrderDensityMatResponse);
 
     // H^{nloc}*M^{-1/2}*X
     if (dftParameters::isPseudopotential &&
-        dftPtr->d_nonLocalAtomGlobalChargeIds.size() > 0)
+        (dftPtr->d_nonLocalAtomGlobalChargeIds.size() > 0) &&
+        !onlyHPrimePartForFirstOrderDensityMatResponse)
       {
         computeNonLocalHamiltonianTimesX(src.begin(),
                                          projectorKetTimesVector,
@@ -2322,7 +2532,8 @@ namespace dftfe
     cublasHandle_t &                                 handle,
     const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
     dftfe::ScaLAPACKMatrix<dataTypes::number> &      projHamPar,
-    GPUCCLWrapper &                                  gpucclMpiCommDomain)
+    GPUCCLWrapper &                                  gpucclMpiCommDomain,
+    const bool onlyHPrimePartForFirstOrderDensityMatResponse)
   {
     std::map<unsigned int, unsigned int> globalToLocalColumnIdMap;
     std::map<unsigned int, unsigned int> globalToLocalRowIdMap;
@@ -2386,7 +2597,8 @@ namespace dftfe
                    scaleFlag,
                    scalar,
                    HXBlock,
-                   false);
+                   false,
+                   onlyHPrimePartForFirstOrderDensityMatResponse);
 
                 stridedCopyFromBlockKernel<<<(chebyBlockSize + 255) / 256 * M,
                                              256>>>(
@@ -2485,7 +2697,8 @@ namespace dftfe
       cublasHandle_t &                                 handle,
       const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
       dftfe::ScaLAPACKMatrix<dataTypes::number> &      projHamPar,
-      GPUCCLWrapper &                                  gpucclMpiCommDomain)
+      GPUCCLWrapper &                                  gpucclMpiCommDomain,
+      const bool onlyHPrimePartForFirstOrderDensityMatResponse)
   {
     /////////////PSEUDO CODE for the implementation below for Overlapping
     /// compute and communication/////////////////
@@ -2625,7 +2838,8 @@ namespace dftfe
                        scaleFlag,
                        scalar,
                        HXBlock,
-                       false);
+                       false,
+                       onlyHPrimePartForFirstOrderDensityMatResponse);
 
                     stridedCopyFromBlockKernel<<<
                       (chebyBlockSize + 255) / 256 * M,
@@ -2701,7 +2915,8 @@ namespace dftfe
                        scaleFlag,
                        scalar,
                        HXBlock,
-                       false);
+                       false,
+                       onlyHPrimePartForFirstOrderDensityMatResponse);
 
                     stridedCopyFromBlockKernel<<<
                       (chebyBlockSize + 255) / 256 * M,

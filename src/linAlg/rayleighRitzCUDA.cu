@@ -20,6 +20,7 @@
 #include "dftUtils.h"
 #include "linearAlgebraOperationsCUDA.h"
 #include "linearAlgebraOperationsInternal.h"
+#include "constants.h"
 
 namespace dftfe
 {
@@ -1161,6 +1162,244 @@ namespace dftfe
         }
     }
 
+
+    void
+    densityMatrixEigenBasisFirstOrderResponse(
+      operatorDFTCUDAClass &                       operatorMatrix,
+      dataTypes::numberGPU *                       X,
+      distributedGPUVec<dataTypes::numberGPU> &    Xb,
+      distributedGPUVec<dataTypes::numberFP32GPU> &floatXb,
+      distributedGPUVec<dataTypes::numberGPU> &    HXb,
+      distributedGPUVec<dataTypes::numberGPU> &    projectorKetTimesVector,
+      const unsigned int                           M,
+      const unsigned int                           N,
+      const MPI_Comm &                             mpiCommDomain,
+      GPUCCLWrapper &                              gpucclMpiCommDomain,
+      const MPI_Comm &                             interBandGroupComm,
+      const std::vector<double> &                  eigenValues,
+      const double                                 fermiEnergy,
+      std::vector<double> &                        densityMatDerFermiEnergy,
+      dftfe::elpaScalaManager &                    elpaScala,
+      cublasHandle_t &                             handle)
+    {
+      dealii::ConditionalOStream pcout(
+        std::cout,
+        (dealii::Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0));
+
+      dealii::TimerOutput computing_timer(mpiCommDomain,
+                                          pcout,
+                                          dftParameters::reproducible_output ||
+                                              dftParameters::verbosity < 4 ?
+                                            dealii::TimerOutput::never :
+                                            dealii::TimerOutput::summary,
+                                          dealii::TimerOutput::wall_times);
+
+
+      const unsigned int rowsBlockSize = elpaScala.getScalapackBlockSize();
+      std::shared_ptr<const dftfe::ProcessGrid> processGrid =
+        elpaScala.getProcessGridDftfeScalaWrapper();
+
+      dftfe::ScaLAPACKMatrix<dataTypes::number> projHamPrimePar(N,
+                                                                processGrid,
+                                                                rowsBlockSize);
+
+      if (dftParameters::gpuFineGrainedTimings)
+        {
+          cudaDeviceSynchronize();
+          computing_timer.enter_subsection("Blocked XtHX, DMFOR step");
+        }
+
+      if (processGrid->is_process_active())
+        std::fill(&projHamPrimePar.local_el(0, 0),
+                  &projHamPrimePar.local_el(0, 0) +
+                    projHamPrimePar.local_m() * projHamPrimePar.local_n(),
+                  dataTypes::number(0.0));
+
+      if (dftParameters::overlapComputeCommunOrthoRR)
+        operatorMatrix.XtHXOverlapComputeCommun(X,
+                                                Xb,
+                                                HXb,
+                                                projectorKetTimesVector,
+                                                M,
+                                                N,
+                                                handle,
+                                                processGrid,
+                                                projHamPrimePar,
+                                                gpucclMpiCommDomain,
+                                                true);
+      else
+        operatorMatrix.XtHX(X,
+                            Xb,
+                            HXb,
+                            projectorKetTimesVector,
+                            M,
+                            N,
+                            handle,
+                            processGrid,
+                            projHamPrimePar,
+                            gpucclMpiCommDomain,
+                            true);
+
+      if (dftParameters::gpuFineGrainedTimings)
+        {
+          cudaDeviceSynchronize();
+          computing_timer.leave_subsection("Blocked XtHX, DMFOR step");
+        }
+
+      if (dftParameters::gpuFineGrainedTimings)
+        {
+          cudaDeviceSynchronize();
+          computing_timer.enter_subsection(
+            "Recursive fermi operator expansion operations, DMFOR step");
+        }
+
+      const int    m    = 10;
+      const double beta = 1.0 / C_kb / dftParameters::TVal;
+      const double c    = std::pow(2.0, -2.0 - m) * beta;
+
+      std::vector<double> H0 = eigenValues;
+      std::vector<double> X0(N, 0.0);
+      for (unsigned int i = 0; i < N; ++i)
+        {
+          X0[i] = 0.5 - c * (H0[i] - fermiEnergy);
+        }
+
+      dftfe::ScaLAPACKMatrix<dataTypes::number> densityMatPrimePar(
+        N, processGrid, rowsBlockSize);
+      densityMatPrimePar.add(projHamPrimePar,
+                             dataTypes::number(0.0),
+                             dataTypes::number(-c)); //-c*HPrime
+
+      dftfe::ScaLAPACKMatrix<dataTypes::number> X1Temp(N,
+                                                       processGrid,
+                                                       rowsBlockSize);
+      dftfe::ScaLAPACKMatrix<dataTypes::number> X1Tempb(N,
+                                                        processGrid,
+                                                        rowsBlockSize);
+      dftfe::ScaLAPACKMatrix<dataTypes::number> X1Tempc(N,
+                                                        processGrid,
+                                                        rowsBlockSize);
+
+      std::vector<double> Y0Temp(N, 0.0);
+
+      for (unsigned int i = 0; i < m; ++i)
+        {
+          // step1
+          X1Temp.add(densityMatPrimePar,
+                     dataTypes::number(0.0),
+                     dataTypes::number(1.0)); // copy
+          X1Tempb.add(densityMatPrimePar,
+                      dataTypes::number(0.0),
+                      dataTypes::number(1.0)); // copy
+          X1Temp.scale_rows_realfactors(X0);
+          X1Tempb.scale_columns_realfactors(X0);
+          X1Temp.add(X1Tempb, dataTypes::number(1.0), dataTypes::number(1.0));
+
+          // step2 and 3
+          for (unsigned int j = 0; j < N; ++j)
+            {
+              Y0Temp[j] = 1.0 / (2.0 * X0[j] * (X0[j] - 1.0) + 1.0);
+              X0[j]     = Y0Temp[j] * X0[j] * X0[j];
+            }
+
+          // step4
+          X1Tempc.add(X1Temp,
+                      dataTypes::number(0.0),
+                      dataTypes::number(1.0)); // copy
+          X1Temp.scale_rows_realfactors(Y0Temp);
+          X1Tempc.scale_columns_realfactors(X0);
+          X1Tempc.scale_rows_realfactors(Y0Temp);
+          X1Temp.add(X1Tempc, dataTypes::number(1.0), dataTypes::number(-2.0));
+          X1Tempb.add(densityMatPrimePar,
+                      dataTypes::number(0.0),
+                      dataTypes::number(1.0)); // copy
+          X1Tempb.scale_columns_realfactors(X0);
+          X1Tempb.scale_rows_realfactors(Y0Temp);
+          densityMatPrimePar.add(X1Temp,
+                                 dataTypes::number(0.0),
+                                 dataTypes::number(1.0));
+          densityMatPrimePar.add(X1Tempb,
+                                 dataTypes::number(1.0),
+                                 dataTypes::number(2.0));
+        }
+
+      std::vector<double> Pmu0(N, 0.0);
+      double              sum = 0.0;
+      for (unsigned int i = 0; i < N; ++i)
+        {
+          Pmu0[i] = beta * X0[i] * (1.0 - X0[i]);
+          sum += Pmu0[i];
+        }
+      densityMatDerFermiEnergy = Pmu0;
+
+
+      if (dftParameters::gpuFineGrainedTimings)
+        {
+          cudaDeviceSynchronize();
+          computing_timer.leave_subsection(
+            "Recursive fermi operator expansion operations, DMFOR step");
+        }
+
+      //
+      // subspace transformation Y^{T} = DMP^T*X^{T}, implemented as
+      // Y^{T}=DMPc^{C}*X^{T} with X^{T} stored in the column major format
+      //
+      if (dftParameters::gpuFineGrainedTimings)
+        {
+          cudaDeviceSynchronize();
+          computing_timer.enter_subsection(
+            "Blocked subspace transformation, DMFOR step");
+        }
+
+      // For subspace transformation the full matrix is required
+      dftfe::ScaLAPACKMatrix<dataTypes::number> densityMatPrimeParConjTrans(
+        N, processGrid, rowsBlockSize);
+
+      if (processGrid->is_process_active())
+        std::fill(&densityMatPrimeParConjTrans.local_el(0, 0),
+                  &densityMatPrimeParConjTrans.local_el(0, 0) +
+                    densityMatPrimeParConjTrans.local_m() *
+                      densityMatPrimeParConjTrans.local_n(),
+                  dataTypes::number(0.0));
+
+
+      densityMatPrimeParConjTrans.copy_conjugate_transposed(densityMatPrimePar);
+      densityMatPrimePar.add(densityMatPrimeParConjTrans,
+                             dataTypes::number(1.0),
+                             dataTypes::number(1.0));
+
+      if (processGrid->is_process_active())
+        for (unsigned int i = 0; i < densityMatPrimePar.local_n(); ++i)
+          {
+            const unsigned int glob_i = densityMatPrimePar.global_column(i);
+            for (unsigned int j = 0; j < densityMatPrimePar.local_m(); ++j)
+              {
+                const unsigned int glob_j = densityMatPrimePar.global_row(j);
+                if (glob_i == glob_j)
+                  densityMatPrimePar.local_el(j, i) *= dataTypes::number(0.5);
+              }
+          }
+
+      densityMatPrimeParConjTrans.copy_conjugate_transposed(densityMatPrimePar);
+
+      subspaceRotationScalapack(X,
+                                M,
+                                N,
+                                handle,
+                                processGrid,
+                                mpiCommDomain,
+                                gpucclMpiCommDomain,
+                                interBandGroupComm,
+                                densityMatPrimeParConjTrans,
+                                false);
+
+      if (dftParameters::gpuFineGrainedTimings)
+        {
+          cudaDeviceSynchronize();
+          computing_timer.leave_subsection(
+            "Blocked subspace transformation, DMFOR step");
+        }
+    }
 
   } // namespace linearAlgebraOperationsCUDA
 } // namespace dftfe

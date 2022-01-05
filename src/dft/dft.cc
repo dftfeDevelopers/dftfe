@@ -101,6 +101,9 @@ namespace dftfe
 #include "psiInitialGuess.cc"
 #include "publicMethods.cc"
 #include "restart.cc"
+#include "lowrankApproxScfJacobianInv.cc"
+#include "lowrankApproxScfJacobianInvSpinPolarized.cc"
+#include "computeOutputDensityDirectionalDerivative.cc"
 
   //
   // dft constructor

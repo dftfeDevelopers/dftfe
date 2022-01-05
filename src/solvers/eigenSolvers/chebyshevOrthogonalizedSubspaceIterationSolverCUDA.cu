@@ -1069,4 +1069,110 @@ namespace dftfe
                              eigenVectorsFlattenedCUDA,
                              operatorMatrix.getInvSqrtMassVec());
   }
+
+
+  //
+  //
+  //
+  void
+  chebyshevOrthogonalizedSubspaceIterationSolverCUDA::
+    densityMatrixEigenBasisFirstOrderResponse(
+      operatorDFTCUDAClass &     operatorMatrix,
+      dataTypes::numberGPU *     eigenVectorsFlattenedCUDA,
+      const unsigned int         flattenedSize,
+      const unsigned int         totalNumberWaveFunctions,
+      const std::vector<double> &eigenValues,
+      const double               fermiEnergy,
+      std::vector<double> &      densityMatDerFermiEnergy,
+      GPUCCLWrapper &            gpucclMpiCommDomain,
+      const MPI_Comm &           interBandGroupComm,
+      dftfe::elpaScalaManager &  elpaScala)
+  {
+    dealii::TimerOutput computingTimerStandard(
+      operatorMatrix.getMPICommunicator(),
+      pcout,
+      dftParameters::reproducible_output || dftParameters::verbosity < 2 ?
+        dealii::TimerOutput::never :
+        dealii::TimerOutput::every_call,
+      dealii::TimerOutput::wall_times);
+
+    cudaDeviceSynchronize();
+    computingTimerStandard.enter_subsection(
+      "Density matrix first order response on GPU");
+
+    cublasHandle_t &cublasHandle = operatorMatrix.getCublasHandle();
+
+    //
+    // allocate memory for full flattened array on device and fill it up
+    //
+    const unsigned int localVectorSize =
+      flattenedSize / totalNumberWaveFunctions;
+
+
+    const unsigned int vectorsBlockSize =
+      std::min(dftParameters::chebyWfcBlockSize, totalNumberWaveFunctions);
+
+    distributedGPUVec<dataTypes::numberGPU> &cudaFlattenedArrayBlock =
+      operatorMatrix.getParallelChebyBlockVectorDevice();
+
+    distributedGPUVec<dataTypes::numberGPU> &projectorKetTimesVector =
+      operatorMatrix.getParallelProjectorKetTimesBlockVectorDevice();
+
+    if (!d_isTemporaryParallelVectorsCreated)
+      {
+        d_YArray.reinit(cudaFlattenedArrayBlock);
+
+        d_cudaFlattenedFloatArrayBlock.reinit(
+          operatorMatrix.getMatrixFreeData()->get_vector_partitioner(),
+          vectorsBlockSize);
+      }
+
+    //
+    // scale the eigenVectors (initial guess of single atom wavefunctions or
+    // previous guess) to convert into Lowden Orthonormalized FE basis
+    // multiply by M^{1/2}
+    scaleCUDAKernel<<<(totalNumberWaveFunctions + 255) / 256 * localVectorSize,
+                      256>>>(totalNumberWaveFunctions,
+                             localVectorSize,
+                             eigenVectorsFlattenedCUDA,
+                             operatorMatrix.getSqrtMassVec());
+
+
+    linearAlgebraOperationsCUDA::densityMatrixEigenBasisFirstOrderResponse(
+      operatorMatrix,
+      eigenVectorsFlattenedCUDA,
+      cudaFlattenedArrayBlock,
+      d_cudaFlattenedFloatArrayBlock,
+      d_YArray,
+      projectorKetTimesVector,
+      localVectorSize,
+      totalNumberWaveFunctions,
+      operatorMatrix.getMPICommunicator(),
+      gpucclMpiCommDomain,
+      interBandGroupComm,
+      eigenValues,
+      fermiEnergy,
+      densityMatDerFermiEnergy,
+      elpaScala,
+      cublasHandle);
+
+
+
+    //
+    // scale the eigenVectors with M^{-1/2} to represent the wavefunctions in
+    // the usual FE basis
+    //
+    scaleCUDAKernel<<<(totalNumberWaveFunctions + 255) / 256 * localVectorSize,
+                      256>>>(totalNumberWaveFunctions,
+                             localVectorSize,
+                             eigenVectorsFlattenedCUDA,
+                             operatorMatrix.getInvSqrtMassVec());
+
+    cudaDeviceSynchronize();
+    computingTimerStandard.leave_subsection(
+      "Density matrix first order response on GPU");
+
+    return;
+  }
+
 } // namespace dftfe

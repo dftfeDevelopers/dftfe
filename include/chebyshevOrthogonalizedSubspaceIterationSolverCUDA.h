@@ -87,6 +87,23 @@ namespace dftfe
 
 
     /**
+     * @brief Used for LRJI preconditioner, also required for XL-BOMD
+     */
+    void
+    densityMatrixEigenBasisFirstOrderResponse(
+      operatorDFTCUDAClass &     operatorMatrix,
+      dataTypes::numberGPU *     eigenVectorsFlattenedCUDA,
+      const unsigned int         flattenedSize,
+      const unsigned int         totalNumberWaveFunctions,
+      const std::vector<double> &eigenValues,
+      const double               fermiEnergy,
+      std::vector<double> &      densityMatDerFermiEnergy,
+      GPUCCLWrapper &            gpucclMpiCommDomain,
+      const MPI_Comm &           interBandGroupComm,
+      dftfe::elpaScalaManager &  elpaScala);
+
+
+    /**
      * @brief reinit spectrum bounds
      */
     void

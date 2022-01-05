@@ -156,6 +156,7 @@ namespace dftfe
     extern double      factorAdapAccumClearLRJI;
     extern double      absPoissonSolverToleranceLRJI;
     extern bool        singlePrecLRJI;
+    extern bool        estimateJacCondNoFinalSCFIter;
 
     /*****************************************/
 
