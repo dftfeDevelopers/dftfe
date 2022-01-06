@@ -77,6 +77,8 @@ namespace dftfe
         std::string d_ThermostatType;
         double d_MDstartWallTime;
         double d_MaxWallTime;
+        std::vector<std::vector<double>> d_atomFractionalunwrapped;
+        std::vector<double> d_domainLength;
     /**
      * @brief mdNVE Performs a Ccanonical Ensemble MD calculation. The inital temperature is set by runMD().
      * Temperature is NOT_CONTROLLED. Controls the timeloop.

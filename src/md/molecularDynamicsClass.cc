@@ -53,10 +53,29 @@ namespace dftfe
         d_startingTimeStep        =
                 StartTime;  
         d_MaxWallTime           =
-                dftParameters::MaxWallTime;              
+                dftParameters::MaxWallTime; 
         pcout << "----------------------Starting Initialization of BOMD-------------------------" << std::endl;        
         pcout << "Starting Temperature from Input "
-              << d_startingTemperature << std::endl; 
+              << d_startingTemperature << std::endl;                 
+        std::vector<std::vector<double>> temp_domainBoundingVectors;            
+        dftUtils::readFile(3,temp_domainBoundingVectors,dftParameters::domainBoundingVectorsFile) ;
+     
+        for(int i = 0; i < 3; i++)
+        {
+          double temp = temp_domainBoundingVectors[i][0]*temp_domainBoundingVectors[i][0] +
+                        temp_domainBoundingVectors[i][1]*temp_domainBoundingVectors[i][1] +
+                        temp_domainBoundingVectors[i][2]*temp_domainBoundingVectors[i][2] ;
+          d_domainLength.push_back( pow(temp,0.5));
+        }
+        pcout<<"--$ Domain Length$ --"<<std::endl;
+        pcout<<"Lx:= "<<d_domainLength[0]<<" Ly:="<<d_domainLength[1]<<" Lz:="<<d_domainLength[2]<<std::endl;
+
+
+        
+       
+
+       
+       
        } 
 
         
@@ -114,6 +133,12 @@ namespace dftfe
         std::string tempfolder = "mdRestart";
         mkdir(tempfolder.c_str(), ACCESSPERMS);        
         double KineticEnergy=0.0 , TemperatureFromVelocities = 0.0;
+       
+        dftUtils::readFile(5, d_atomFractionalunwrapped, dftParameters::coordinatesFile);
+        
+
+
+
         if(dftParameters::VelocityRestartFile=="")
         { //--------------------Starting Initialization ----------------------------------------------//
         
@@ -307,7 +332,9 @@ namespace dftfe
 
           MPI_Barrier(d_mpi_communicator);
           InitialiseFromRestartFile(velocity, force, KineticEnergyVector , InternalEnergyVector , TotalEnergyVector);
-          
+         pcout<<"-- Starting Unwrapped Coordinates: --"<<std::endl;
+         for(int iCharge = 0; iCharge< d_numberGlobalCharges; iCharge++)
+          pcout<<d_atomFractionalunwrapped[iCharge][0]<<" "<<d_atomFractionalunwrapped[iCharge][1]<<" "<<d_atomFractionalunwrapped[iCharge][2]<<" "<<d_atomFractionalunwrapped[iCharge][3]<<" "<<d_atomFractionalunwrapped[iCharge][4]<<std::endl; 
      
       }  
 
@@ -749,7 +776,8 @@ namespace dftfe
           dftParameters::maxJacobianRatioFactorForMD,false);
 
         if (dftParameters::verbosity >= 1)
-          { std::vector<std::vector<double>> atomLocations;
+          { 
+            std::vector<std::vector<double>> atomLocations;
              dftPtr->getAtomLocations(atomLocations);  
             pcout << "Displacement  " << std::endl;
             for (int iCharge = 0; iCharge < d_numberGlobalCharges; ++iCharge)
@@ -757,21 +785,48 @@ namespace dftfe
                     if(atomLocations[iCharge][0] == 3)
                       {
                                         pcout << "###Charge Id: " << iCharge << " "
-                      << r[iCharge][2] << " "
-                      << r[iCharge][3] << " "
-                      << r[iCharge][4] << std::endl;
+                      << r[iCharge][0] << " "
+                      << r[iCharge][1] << " "
+                      << r[iCharge][2] << std::endl;
                       }
                       else
                       {
                                         pcout << "Charge Id: " << iCharge << " "
-                      << r[iCharge][2] << " "
-                      << r[iCharge][3] << " "
-                      << r[iCharge][4] << std::endl;
+                      << r[iCharge][0] << " "
+                      << r[iCharge][1] << " "
+                      << r[iCharge][2] << std::endl;
                       }
               }         
           
           }          
-        
+        for(int iCharge = 0; iCharge <d_numberGlobalCharges; iCharge++)
+          {
+            d_atomFractionalunwrapped[iCharge][2] = d_atomFractionalunwrapped[iCharge][2]+ r[iCharge][0]/d_domainLength[0];
+            d_atomFractionalunwrapped[iCharge][3] = d_atomFractionalunwrapped[iCharge][3]+ r[iCharge][1]/d_domainLength[0];
+            d_atomFractionalunwrapped[iCharge][4] = d_atomFractionalunwrapped[iCharge][4]+ r[iCharge][2]/d_domainLength[0];
+          } 
+
+            pcout<<"---- Updated Unwrapped Coordinates: -----"<<std::endl;
+            for (int iCharge = 0; iCharge < d_numberGlobalCharges; ++iCharge)
+              {
+                    if(d_atomFractionalunwrapped[iCharge][0] == 3)
+                      {
+                        pcout << "$$$ Charge No. " << iCharge << " "
+                      << d_atomFractionalunwrapped[iCharge][2] << " "
+                      << d_atomFractionalunwrapped[iCharge][3] << " "
+                      << d_atomFractionalunwrapped[iCharge][4] << std::endl;
+                      }
+                      else
+                      {
+                        pcout << "Charge No. " << iCharge << " "
+                      << d_atomFractionalunwrapped[iCharge][2] << " "
+                      << d_atomFractionalunwrapped[iCharge][3] << " "
+                      << d_atomFractionalunwrapped[iCharge][4] << std::endl;
+                      }
+              }         
+          
+                   
+
         MPI_Barrier(d_mpi_communicator);
 
         update_time = MPI_Wtime() - update_time;
@@ -780,8 +835,7 @@ namespace dftfe
           pcout << "Time taken for updateAtomPositionsAndMoveMesh: "
                 << update_time << std::endl;
         dftPtr->solve(true, false, false, false); 
-         dftPtr->getForceonAtoms(forceOnAtoms);
-         
+        dftPtr->getForceonAtoms(forceOnAtoms);         
         //Call Force
         totalKE = 0.0;
         /* Second half of velocty verlet */
@@ -999,6 +1053,8 @@ namespace dftfe
     //std::string newFolder3 = tempfolder + "/" + "time.chk";
     dftUtils::writeDataIntoFile(timeIndexData, newFolder3); //old time == new time then restart files were successfully saved
     pcout << "#RESTART NOTE: restart files for TimeStep: "<<time<<" successfully created #"<< std::endl;     
+    std::string newFolder0 = tempfolder + "/" + "UnwrappedFractionalCoordinates.chk";
+    dftUtils::writeDataIntoFile(d_atomFractionalunwrapped, newFolder0);
 
 
    }                                                                    
@@ -1027,6 +1083,8 @@ namespace dftfe
           
         std::vector<std::vector<double>> t1, KE0, IE0, TE0;
         std::string tempfolder = Folder + "/Step" + std::to_string(d_startingTimeStep);
+        std::string newFolder0 = tempfolder + "/" + "UnwrappedFractionalCoordinates.chk";
+        dftUtils::readFile(5, d_atomFractionalunwrapped, newFolder0);
         std::string fileName1 = (dftParameters::VelocityRestartFile=="" ? "velocity.chk":dftParameters::VelocityRestartFile); 
         std::string newFolder1 = tempfolder + "/" + fileName1;
         std::vector<std::vector<double>> fileVelData;
@@ -1161,7 +1219,7 @@ namespace dftfe
         dftPtr->getAtomLocations(atomLocations); 
         for(int iCharge = 0; iCharge <d_numberGlobalCharges; iCharge++)
           {
-            outfile<<atomLocations[iCharge][0]<<"  "<<atomLocations[iCharge][1]<< std::setprecision(20)<<"  "<<fileDisplacementData[iCharge][0]<<"  "<<fileDisplacementData[iCharge][1]<<"  "<<fileDisplacementData[iCharge][2]<<std::endl;
+            outfile<<atomLocations[iCharge][0]<<"  "<<atomLocations[iCharge][1]<< std::setprecision(16)<<"  "<<fileDisplacementData[iCharge][0]<<"  "<<fileDisplacementData[iCharge][1]<<"  "<<fileDisplacementData[iCharge][2]<<std::endl;
            /* temp[0][0] = atomLocations[iCharge][0];
             temp[0][1] = atomLocations[iCharge][1];
             temp[0][2] = fileDisplacementData[iCharge][0];
@@ -1171,8 +1229,12 @@ namespace dftfe
           }
           outfile.close();
 
+    
+       
+    
+    
       } 
-      MPI_Barrier(d_mpi_communicator);
+     MPI_Barrier(d_mpi_communicator);
      if(d_this_mpi_process == 0) 
      {
         std::string oldpath = "TotalDisplacement.chk";
