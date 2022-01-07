@@ -298,26 +298,20 @@ namespace dftfe
           isEvaluateGradRho ? (cellsBlockSize * numQuadPoints * BVec) : 1,
           zero);
 
-              cudaUtils::Vector<NumberType, dftfe::MemorySpace::Host> rhoHost;
-              cudaUtils::Vector<NumberType, dftfe::MemorySpace::Host>
-                gradRhoHostX;
-              cudaUtils::Vector<NumberType, dftfe::MemorySpace::Host>
-                gradRhoHostY;
-              cudaUtils::Vector<NumberType, dftfe::MemorySpace::Host>
-                gradRhoHostZ;
+      cudaUtils::Vector<NumberType, dftfe::MemorySpace::Host> rhoHost;
+      cudaUtils::Vector<NumberType, dftfe::MemorySpace::Host> gradRhoHostX;
+      cudaUtils::Vector<NumberType, dftfe::MemorySpace::Host> gradRhoHostY;
+      cudaUtils::Vector<NumberType, dftfe::MemorySpace::Host> gradRhoHostZ;
 
-              rhoHost.resize(totalLocallyOwnedCells * numQuadPoints, zero);
+      rhoHost.resize(totalLocallyOwnedCells * numQuadPoints, zero);
 
-              if (isEvaluateGradRho)
-                {
-                  gradRhoHostX.resize(totalLocallyOwnedCells * numQuadPoints,
-                                      zero);
+      if (isEvaluateGradRho)
+        {
+          gradRhoHostX.resize(totalLocallyOwnedCells * numQuadPoints, zero);
 
-                  gradRhoHostY.resize(totalLocallyOwnedCells * numQuadPoints,
-                                      zero);
-                  gradRhoHostZ.resize(totalLocallyOwnedCells * numQuadPoints,
-                                      zero);
-                }
+          gradRhoHostY.resize(totalLocallyOwnedCells * numQuadPoints, zero);
+          gradRhoHostZ.resize(totalLocallyOwnedCells * numQuadPoints, zero);
+        }
 
 
       NumberType *shapeFunctionValuesInvertedDevice;
