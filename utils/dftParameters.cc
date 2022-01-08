@@ -1366,7 +1366,7 @@ namespace dftfe
           dftParameters::singlePrecLRJI =
             prm.get_bool("USE SINGLE PREC DENSITY RESPONSE");
           dftParameters::estimateJacCondNoFinalSCFIter =
-            prm.get_bool("ESTIMATE JAC COND NO");
+            prm.get_bool("ESTIMATE JAC CONDITION NO");
         }
         prm.leave_subsection();
 
