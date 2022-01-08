@@ -251,7 +251,7 @@ dftClass<FEOrder, FEOrderElectro>::lowrankApproxScfJacobianInvSpinPolarized(
                                    dftParameters::factorAdapAccumClearLRJI) ||
           relativeApproxError > d_relativeErrorJacInvApproxPrevScf)
         {
-          if (dftParameters::verbosity >= 1)
+          if (dftParameters::verbosity >= 4)
             pcout
               << " Clearing accumulation as relative tolerance metric exceeded "
               << ", relative tolerance current scf: " << relativeApproxError
@@ -430,7 +430,7 @@ dftClass<FEOrder, FEOrderElectro>::lowrankApproxScfJacobianInvSpinPolarized(
               residualRhoSpin1,
               k0);
 
-          if (dftParameters::verbosity >= 1)
+          if (dftParameters::verbosity >= 4)
             pcout << " Relative approx error:  " << relativeApproxError
                   << " for kernel rank: " << d_rankCurrent << std::endl;
 
