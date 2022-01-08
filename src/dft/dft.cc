@@ -21,6 +21,7 @@
 #include <chebyshevOrthogonalizedSubspaceIterationSolver.h>
 #include <dealiiLinearSolver.h>
 #include <densityCalculatorCPU.h>
+#include <densityFirstOrderResponseCalculator.h>
 #include <dft.h>
 #include <dftParameters.h>
 #include <dftUtils.h>

@@ -145,14 +145,27 @@ dftClass<FEOrder, FEOrderElectro>::computeOutputDensityDirectionalDerivative(
           computing_timer.enter_subsection("VEffPrime Computation");
 #ifdef DFTFE_WITH_GPU
           if (dftParameters::useGPU)
-            kohnShamDFTEigenOperatorCUDA.computeVEffPrime(
-              *rhoInValues,
-              rhoPrimeValues,
-              *gradRhoInValues,
-              gradRhoPrimeValues,
-              electrostaticPotPrimeValues,
-              d_rhoCore,
-              d_gradRhoCore);
+            {
+              if (dftParameters::spinPolarized == 1)
+                kohnShamDFTEigenOperatorCUDA.computeVEffPrimeSpinPolarized(
+                  *rhoInValuesSpinPolarized,
+                  rhoPrimeValuesSpinPolarized,
+                  *gradRhoInValuesSpinPolarized,
+                  gradRhoPrimeValuesSpinPolarized,
+                  electrostaticPotPrimeValues,
+                  s,
+                  d_rhoCore,
+                  d_gradRhoCore);
+              else
+                kohnShamDFTEigenOperatorCUDA.computeVEffPrime(
+                  *rhoInValues,
+                  rhoPrimeValues,
+                  *gradRhoInValues,
+                  gradRhoPrimeValues,
+                  electrostaticPotPrimeValues,
+                  d_rhoCore,
+                  d_gradRhoCore);
+            }
 #endif
           if (!dftParameters::useGPU)
             {
@@ -348,74 +361,74 @@ dftClass<FEOrder, FEOrderElectro>::
     }
 
 
-  // compute first order density response at nodal locations of 2p DoFHandler
-  // nodes in each cell
-  /*
+    // compute first order density response at nodal locations of 2p DoFHandler
+    // nodes in each cell
 #ifdef DFTFE_WITH_GPU
-if (dftParameters::useGPU)
-  computeRhoFirstOrderResponseGPU(
-    d_eigenVectorsFlattenedCUDA.begin(),
-    d_eigenVectorsDensityMatrixPrimeFlattenedCUDA.begin(),
-    d_densityMatDerFermiEnergy,
-    d_numEigenValues,
-    d_eigenVectorsFlattenedSTL[0].size() / d_numEigenValues,
-    kohnShamDFTEigenOperatorGPU,
-    d_eigenDofHandlerIndex,
-    dofHandler,
-    matrix_free_data.n_physical_cells(),
-    matrix_free_data.get_dofs_per_cell(),
-    quadrature_formula.size(),
-    d_kPointWeights,
-    rhoResponseHamPRefinedNodalData,
-    rhoResponseFermiEnergyPRefinedNodalData,
-    interpoolcomm,
-    interBandGroupComm);
+  if (dftParameters::useGPU)
+    computeRhoFirstOrderResponseGPU(
+      d_eigenVectorsFlattenedCUDA.begin(),
+      d_eigenVectorsDensityMatrixPrimeFlattenedCUDA.begin(),
+      d_densityMatDerFermiEnergy,
+      d_numEigenValues,
+      d_eigenVectorsFlattenedSTL[0].size() / d_numEigenValues,
+      kohnShamDFTEigenOperatorGPU,
+      d_eigenDofHandlerIndex,
+      dofHandler,
+      matrix_free_data.n_physical_cells(),
+      matrix_free_data.get_dofs_per_cell(),
+      quadrature_formula.size(),
+      d_kPointWeights,
+      rhoResponseHamPRefinedNodalData,
+      rhoResponseFermiEnergyPRefinedNodalData,
+      rhoResponseHamPRefinedNodalDataSpinPolarized,
+      rhoResponseFermiEnergyPRefinedNodalDataSpinPolarized,
+      interpoolcomm,
+      interBandGroupComm);
 #endif
-if (!dftParameters::useGPU)
-  {
-    if (dftParameters::singlePrecLowRankJacInverse)
-      computeRhoFirstOrderResponseCPUMixedPrec<dataTypes::number,
-                                               dataTypes::numberLowPrec>(
-        d_eigenVectorsFlattenedSTL,
-        d_eigenVectorsDensityMatrixPrimeSTL,
-        d_densityMatDerFermiEnergy,
-        d_numEigenValues,
-        d_eigenVectorsFlattenedSTL[0].size() / d_numEigenValues,
-        kohnShamDFTEigenOperatorCPU,
-        d_eigenDofHandlerIndex,
-        dofHandler,
-        matrix_free_data.n_physical_cells(),
-        matrix_free_data.get_dofs_per_cell(),
-        quadrature_formula.size(),
-        d_kPointWeights,
-        rhoResponseHamPRefinedNodalData,
-        rhoResponseFermiEnergyPRefinedNodalData,
-        rhoResponseHamPRefinedNodalDataSpinPolarized,
-        rhoResponseFermiEnergyPRefinedNodalDataSpinPolarized,
-        interpoolcomm,
-        interBandGroupComm);
-    else
-      computeRhoFirstOrderResponseCPU(
-        d_eigenVectorsFlattenedSTL,
-        d_eigenVectorsDensityMatrixPrimeSTL,
-        d_densityMatDerFermiEnergy,
-        d_numEigenValues,
-        d_eigenVectorsFlattenedSTL[0].size() / d_numEigenValues,
-        kohnShamDFTEigenOperatorCPU,
-        d_eigenDofHandlerIndex,
-        dofHandler,
-        matrix_free_data.n_physical_cells(),
-        matrix_free_data.get_dofs_per_cell(),
-        quadrature_formula.size(),
-        d_kPointWeights,
-        rhoResponseHamPRefinedNodalData,
-        rhoResponseFermiEnergyPRefinedNodalData,
-        rhoResponseHamPRefinedNodalDataSpinPolarized,
-        rhoResponseFermiEnergyPRefinedNodalDataSpinPolarized,
-        interpoolcomm,
-        interBandGroupComm);
-  }
-*/
+  if (!dftParameters::useGPU)
+    {
+      if (dftParameters::singlePrecLRJI)
+        computeRhoFirstOrderResponseCPUMixedPrec<dataTypes::number,
+                                                 dataTypes::numberFP32>(
+          d_eigenVectorsFlattenedSTL,
+          d_eigenVectorsDensityMatrixPrimeSTL,
+          d_densityMatDerFermiEnergy,
+          d_numEigenValues,
+          d_eigenVectorsFlattenedSTL[0].size() / d_numEigenValues,
+          kohnShamDFTEigenOperatorCPU,
+          d_eigenDofHandlerIndex,
+          dofHandler,
+          matrix_free_data.n_physical_cells(),
+          matrix_free_data.get_dofs_per_cell(),
+          quadrature_formula.size(),
+          d_kPointWeights,
+          rhoResponseHamPRefinedNodalData,
+          rhoResponseFermiEnergyPRefinedNodalData,
+          rhoResponseHamPRefinedNodalDataSpinPolarized,
+          rhoResponseFermiEnergyPRefinedNodalDataSpinPolarized,
+          interpoolcomm,
+          interBandGroupComm);
+      else
+        computeRhoFirstOrderResponseCPU(
+          d_eigenVectorsFlattenedSTL,
+          d_eigenVectorsDensityMatrixPrimeSTL,
+          d_densityMatDerFermiEnergy,
+          d_numEigenValues,
+          d_eigenVectorsFlattenedSTL[0].size() / d_numEigenValues,
+          kohnShamDFTEigenOperatorCPU,
+          d_eigenDofHandlerIndex,
+          dofHandler,
+          matrix_free_data.n_physical_cells(),
+          matrix_free_data.get_dofs_per_cell(),
+          quadrature_formula.size(),
+          d_kPointWeights,
+          rhoResponseHamPRefinedNodalData,
+          rhoResponseFermiEnergyPRefinedNodalData,
+          rhoResponseHamPRefinedNodalDataSpinPolarized,
+          rhoResponseFermiEnergyPRefinedNodalDataSpinPolarized,
+          interpoolcomm,
+          interBandGroupComm);
+    }
 
   // copy Lobatto quadrature data to fill in 2p DoFHandler nodal data
   DoFHandler<3>::active_cell_iterator cellP =

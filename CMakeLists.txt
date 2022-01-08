@@ -13,6 +13,7 @@ SET(TARGET_SRC
   ./src/dft/vselfBinsManager.cc
   ./src/dft/energyCalculator.cc
   ./src/dft/densityCalculatorCPU.cc
+  ./src/dft/densityFirstOrderResponseCalculatorCPU.cc
   ./src/poisson/poissonSolverProblem.cc
   ./src/helmholtz/kerkerSolverProblem.cc
   ./src/dftOperator/kohnShamDFTOperator.cc
@@ -63,6 +64,7 @@ SET(CUDA_SRC
   ./src/gpuBase/cudaHelpers.cu
   ./src/gpuBase/gpuDirectCCLWrapper.cu  
   ./src/dft/densityCalculatorCUDA.cu
+  ./src/dft/densityFirstOrderResponseCalculatorCUDA.cu
   ./src/dftOperator/operatorCUDA.cu
   ./src/dftOperator/kohnShamDFTOperatorCUDA.cu
   ./src/dft/solveVselfInBinsCUDA.cu

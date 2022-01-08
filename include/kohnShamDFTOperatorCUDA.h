@@ -357,6 +357,10 @@ namespace dftfe
       const unsigned int externalPotCorrQuadratureId);
 
 
+    /**
+     * @brief Computes directional derivative of effective potential for gradient density type exchange-correlation functionals
+     *
+     */
     void
     computeVEffPrime(
       const std::map<dealii::CellId, std::vector<double>> &rhoValues,
@@ -364,6 +368,21 @@ namespace dftfe
       const std::map<dealii::CellId, std::vector<double>> &gradRhoValues,
       const std::map<dealii::CellId, std::vector<double>> &gradRhoPrimeValues,
       const std::map<dealii::CellId, std::vector<double>> &phiPrimeValues,
+      const std::map<dealii::CellId, std::vector<double>> &rhoCoreValues,
+      const std::map<dealii::CellId, std::vector<double>> &gradRhoCoreValues);
+
+    /**
+     * @brief Computes directional derivative of effective potential for gradient spin-density type exchange-correlation functionals
+     *
+     */
+    void
+    computeVEffPrimeSpinPolarized(
+      const std::map<dealii::CellId, std::vector<double>> &rhoValues,
+      const std::map<dealii::CellId, std::vector<double>> &rhoPrimeValues,
+      const std::map<dealii::CellId, std::vector<double>> &gradRhoValues,
+      const std::map<dealii::CellId, std::vector<double>> &gradRhoPrimeValues,
+      const std::map<dealii::CellId, std::vector<double>> &phiPrimeValues,
+      const unsigned int                                   spinIndex,
       const std::map<dealii::CellId, std::vector<double>> &rhoCoreValues,
       const std::map<dealii::CellId, std::vector<double>> &gradRhoCoreValues);
 
