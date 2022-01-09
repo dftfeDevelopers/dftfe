@@ -692,6 +692,10 @@ namespace dftfe
     eigenValues.resize(d_kPointWeights.size());
     eigenValuesRRSplit.resize(d_kPointWeights.size());
 
+    if (dftParameters::mixingMethod == "LOW_RANK_JACINV_PRECOND")
+      d_densityMatDerFermiEnergy.resize((dftParameters::spinPolarized + 1) *
+                                        d_kPointWeights.size());
+
     a0.clear();
     bLow.clear();
 
@@ -2019,8 +2023,10 @@ namespace dftfe
     //
     // Begin SCF iteration
     //
-    unsigned int scfIter = 0;
-    double       norm    = 1.0;
+    unsigned int scfIter               = 0;
+    double       norm                  = 1.0;
+    d_rankCurrent                      = 0;
+    d_relativeErrorJacInvApproxPrevScf = 100.0;
     // CAUTION: Choosing a looser tolerance might lead to failed tests
     const double adaptiveChebysevFilterPassesTol =
       dftParameters::chebyshevTolerance;
@@ -2047,7 +2053,11 @@ namespace dftfe
               {
                 if (dftParameters::spinPolarized == 1)
                   {
-                    norm = mixing_simple_spinPolarized();
+                    if (dftParameters::mixingMethod ==
+                        "LOW_RANK_JACINV_PRECOND")
+                      norm = lowrankApproxScfJacobianInvSpinPolarized(scfIter);
+                    else
+                      norm = mixing_simple_spinPolarized();
                   }
                 else
                   {
@@ -2055,14 +2065,26 @@ namespace dftfe
                       norm = nodalDensity_mixing_simple_kerker(
                         kerkerPreconditionedResidualSolverProblem,
                         dealiiCGSolver);
+                    else if (dftParameters::mixingMethod ==
+                             "LOW_RANK_JACINV_PRECOND")
+                      norm = lowrankApproxScfJacobianInv(scfIter);
                     else
                       norm = mixing_simple();
                   }
 
                 if (dftParameters::verbosity >= 1)
-                  pcout
-                    << "Simple mixing, L2 norm of electron-density difference: "
-                    << norm << std::endl;
+                  {
+                    if (dftParameters::mixingMethod ==
+                        "LOW_RANK_JACINV_PRECOND")
+                      pcout
+                        << dftParameters::mixingMethod
+                        << " mixing, L2 norm of electron-density difference: "
+                        << norm << std::endl;
+                    else
+                      pcout
+                        << "Simple mixing, L2 norm of electron-density difference: "
+                        << norm << std::endl;
+                  }
               }
             else
               {
@@ -2072,6 +2094,9 @@ namespace dftfe
                       norm = mixing_anderson_spinPolarized();
                     else if (dftParameters::mixingMethod == "BROYDEN")
                       norm = mixing_broyden_spinPolarized();
+                    else if (dftParameters::mixingMethod ==
+                             "LOW_RANK_JACINV_PRECOND")
+                      norm = lowrankApproxScfJacobianInvSpinPolarized(scfIter);
                     else if (dftParameters::mixingMethod ==
                              "ANDERSON_WITH_KERKER")
                       AssertThrow(
@@ -2090,6 +2115,9 @@ namespace dftfe
                       norm = nodalDensity_mixing_anderson_kerker(
                         kerkerPreconditionedResidualSolverProblem,
                         dealiiCGSolver);
+                    else if (dftParameters::mixingMethod ==
+                             "LOW_RANK_JACINV_PRECOND")
+                      norm = lowrankApproxScfJacobianInv(scfIter);
                   }
 
                 if (dftParameters::verbosity >= 1)
