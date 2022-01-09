@@ -784,6 +784,14 @@ namespace dftfe
   template <unsigned int FEOrder, unsigned int FEOrderElectro>
   distributedGPUVec<dataTypes::numberGPU> &
   kohnShamDFTOperatorCUDAClass<FEOrder, FEOrderElectro>::
+    getParallelChebyBlockVector2Device()
+  {
+    return d_parallelChebyBlockVector2Device;
+  }
+
+  template <unsigned int FEOrder, unsigned int FEOrderElectro>
+  distributedGPUVec<dataTypes::numberGPU> &
+  kohnShamDFTOperatorCUDAClass<FEOrder, FEOrderElectro>::
     getParallelProjectorKetTimesBlockVectorDevice()
   {
     return d_parallelProjectorKetTimesBlockVectorDevice;
@@ -881,6 +889,10 @@ namespace dftfe
       dftPtr->matrix_free_data.get_vector_partitioner(
         dftPtr->d_densityDofHandlerIndex),
       BVec);
+
+    if (dftParameters::mixingMethod == "LOW_RANK_JACINV_PRECOND")
+      d_parallelChebyBlockVector2Device.reinit(
+        d_parallelChebyBlockVectorDevice);
 
     if (std::is_same<dataTypes::number, std::complex<double>>::value)
       {

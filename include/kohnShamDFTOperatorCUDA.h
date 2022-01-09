@@ -114,6 +114,9 @@ namespace dftfe
     getParallelChebyBlockVectorDevice();
 
     distributedGPUVec<dataTypes::numberGPU> &
+    getParallelChebyBlockVector2Device();
+
+    distributedGPUVec<dataTypes::numberGPU> &
     getParallelProjectorKetTimesBlockVectorDevice();
 
     thrust::device_vector<unsigned int> &

@@ -125,6 +125,9 @@ namespace dftfe
     getParallelChebyBlockVectorDevice() = 0;
 
     virtual distributedGPUVec<dataTypes::numberGPU> &
+    getParallelChebyBlockVector2Device() = 0;
+
+    virtual distributedGPUVec<dataTypes::numberGPU> &
     getParallelProjectorKetTimesBlockVectorDevice() = 0;
 
     virtual thrust::device_vector<unsigned int> &
@@ -413,6 +416,8 @@ namespace dftfe
     thrust::device_vector<dataTypes::numberThrustGPU> d_cellWaveFunctionMatrix;
 
     distributedGPUVec<dataTypes::numberGPU> d_parallelChebyBlockVectorDevice;
+
+    distributedGPUVec<dataTypes::numberGPU> d_parallelChebyBlockVector2Device;
 
     distributedGPUVec<dataTypes::numberGPU>
       d_parallelProjectorKetTimesBlockVectorDevice;

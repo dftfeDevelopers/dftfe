@@ -118,22 +118,17 @@ namespace internalLowrankJacInv
 
     dftfe::linearAlgebraOperations::inverse(&mMat[0], rank);
 
-    // FIXME: separete k0x vector is not required, use the y vector
-    distributedCPUVec<double> k0xSpin0;
-    distributedCPUVec<double> k0xSpin1;
-    k0xSpin0.reinit(xSpin0);
-    k0xSpin1.reinit(xSpin0);
     for (unsigned int idof = 0; idof < xSpin0.local_size(); idof++)
       {
-        k0xSpin0.local_element(idof) = xSpin0.local_element(idof) * k0;
-        k0xSpin1.local_element(idof) = xSpin1.local_element(idof) * k0;
+        ySpin0.local_element(idof) = xSpin0.local_element(idof) * k0;
+        ySpin1.local_element(idof) = xSpin1.local_element(idof) * k0;
       }
 
     std::vector<double> innerProducts(rank, 0.0);
     for (unsigned int i = 0; i < rank; i++)
       {
         innerProducts[i] =
-          fvcontainerSpin0[i] * k0xSpin0 + fvcontainerSpin1[i] * k0xSpin1;
+          fvcontainerSpin0[i] * ySpin0 + fvcontainerSpin1[i] * ySpin1;
       }
 
     ySpin0 = 0;

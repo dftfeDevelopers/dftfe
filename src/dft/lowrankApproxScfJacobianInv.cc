@@ -80,15 +80,12 @@ namespace internalLowrankJacInv
 
     dftfe::linearAlgebraOperations::inverse(&mMat[0], rank);
 
-    // FIXME: separete k0x vector is not required, use the y vector
-    distributedCPUVec<double> k0x;
-    k0x.reinit(x);
     for (unsigned int idof = 0; idof < x.local_size(); idof++)
-      k0x.local_element(idof) = x.local_element(idof) * k0;
+      y.local_element(idof) = x.local_element(idof) * k0;
 
     std::vector<double> innerProducts(rank, 0.0);
     for (unsigned int i = 0; i < rank; i++)
-      innerProducts[i] = fvcontainer[i] * k0x;
+      innerProducts[i] = fvcontainer[i] * y;
 
     y = 0;
 
