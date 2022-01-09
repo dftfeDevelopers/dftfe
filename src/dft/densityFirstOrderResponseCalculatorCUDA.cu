@@ -50,12 +50,11 @@ namespace dftfe
         }
     }
 
-    template <typename NumberType>
     __global__ void
     copyGlobalToCellCUDAKernel(const unsigned int contiguousBlockSize,
                                const unsigned int numContiguousBlocks,
-                               const NumberType * copyFromVec,
-                               NumberType *       copyToVec,
+                               const double *     copyFromVec,
+                               double *           copyToVec,
                                const dealii::types::global_dof_index
                                  *copyFromVecStartingContiguousBlockIds)
     {
@@ -75,6 +74,81 @@ namespace dftfe
         }
     }
 
+    __global__ void
+    copyGlobalToCellCUDAKernel(const unsigned int contiguousBlockSize,
+                               const unsigned int numContiguousBlocks,
+                               const double *     copyFromVec,
+                               float *            copyToVec,
+                               const dealii::types::global_dof_index
+                                 *copyFromVecStartingContiguousBlockIds)
+    {
+      const unsigned int globalThreadId = blockIdx.x * blockDim.x + threadIdx.x;
+      const unsigned int numberEntries =
+        numContiguousBlocks * contiguousBlockSize;
+
+      for (unsigned int index = globalThreadId; index < numberEntries;
+           index += blockDim.x * gridDim.x)
+        {
+          unsigned int blockIndex = index / contiguousBlockSize;
+          unsigned int intraBlockIndex =
+            index - blockIndex * contiguousBlockSize;
+          copyToVec[index] =
+            copyFromVec[copyFromVecStartingContiguousBlockIds[blockIndex] +
+                        intraBlockIndex];
+        }
+    }
+
+    __global__ void
+    copyGlobalToCellCUDAKernel(const unsigned int     contiguousBlockSize,
+                               const unsigned int     numContiguousBlocks,
+                               const cuDoubleComplex *copyFromVec,
+                               cuDoubleComplex *      copyToVec,
+                               const dealii::types::global_dof_index
+                                 *copyFromVecStartingContiguousBlockIds)
+    {
+      const unsigned int globalThreadId = blockIdx.x * blockDim.x + threadIdx.x;
+      const unsigned int numberEntries =
+        numContiguousBlocks * contiguousBlockSize;
+
+      for (unsigned int index = globalThreadId; index < numberEntries;
+           index += blockDim.x * gridDim.x)
+        {
+          unsigned int blockIndex = index / contiguousBlockSize;
+          unsigned int intraBlockIndex =
+            index - blockIndex * contiguousBlockSize;
+          copyToVec[index] =
+            copyFromVec[copyFromVecStartingContiguousBlockIds[blockIndex] +
+                        intraBlockIndex];
+        }
+    }
+
+    __global__ void
+    copyGlobalToCellCUDAKernel(const unsigned int     contiguousBlockSize,
+                               const unsigned int     numContiguousBlocks,
+                               const cuDoubleComplex *copyFromVec,
+                               cuFloatComplex *       copyToVec,
+                               const dealii::types::global_dof_index
+                                 *copyFromVecStartingContiguousBlockIds)
+    {
+      const unsigned int globalThreadId = blockIdx.x * blockDim.x + threadIdx.x;
+      const unsigned int numberEntries =
+        numContiguousBlocks * contiguousBlockSize;
+
+      for (unsigned int index = globalThreadId; index < numberEntries;
+           index += blockDim.x * gridDim.x)
+        {
+          unsigned int blockIndex = index / contiguousBlockSize;
+          unsigned int intraBlockIndex =
+            index - blockIndex * contiguousBlockSize;
+          copyToVec[index] = make_cuFloatComplex(
+            copyFromVec[copyFromVecStartingContiguousBlockIds[blockIndex] +
+                        intraBlockIndex]
+              .x,
+            copyFromVec[copyFromVecStartingContiguousBlockIds[blockIndex] +
+                        intraBlockIndex]
+              .y);
+        }
+    }
 
     __global__ void
     copyCUDAKernel(const unsigned int size,
@@ -100,6 +174,30 @@ namespace dftfe
         }
     }
 
+    __global__ void
+    copyCUDAKernel(const unsigned int size,
+                   const double *     copyFromVec,
+                   float *            copyToVec)
+    {
+      for (unsigned int index = blockIdx.x * blockDim.x + threadIdx.x;
+           index < size;
+           index += blockDim.x * gridDim.x)
+        copyToVec[index] = copyFromVec[index];
+    }
+
+    __global__ void
+    copyCUDAKernel(const unsigned int size,
+                   const double *     copyFromVec,
+                   cuFloatComplex *   copyToVec)
+    {
+      for (unsigned int index = blockIdx.x * blockDim.x + threadIdx.x;
+           index < size;
+           index += blockDim.x * gridDim.x)
+        {
+          copyToVec[index] = make_cuFloatComplex(copyFromVec[index], 0.0);
+        }
+    }
+
     void
     copyDoubleToNumber(const double *     copyFromVec,
                        const unsigned int size,
@@ -116,6 +214,22 @@ namespace dftfe
       copyCUDAKernel<<<(size + 255) / 256, 256>>>(size, copyFromVec, copyToVec);
     }
 
+
+    void
+    copyDoubleToNumber(const double *     copyFromVec,
+                       const unsigned int size,
+                       float *            copyToVec)
+    {
+      copyCUDAKernel<<<(size + 255) / 256, 256>>>(size, copyFromVec, copyToVec);
+    }
+
+    void
+    copyDoubleToNumber(const double *     copyFromVec,
+                       const unsigned int size,
+                       cuFloatComplex *   copyToVec)
+    {
+      copyCUDAKernel<<<(size + 255) / 256, 256>>>(size, copyFromVec, copyToVec);
+    }
 
     __global__ void
     computeRhoResponseFromInterpolatedValues(const unsigned int numberEntries,
@@ -152,9 +266,45 @@ namespace dftfe
             make_cuDoubleComplex(psi.x * psi.x + psi.y * psi.y, 0.0);
         }
     }
+
+    __global__ void
+    computeRhoResponseFromInterpolatedValues(const unsigned int numberEntries,
+                                             float *            XQuads,
+                                             float *            XPrimeQuads)
+    {
+      const unsigned int globalThreadId = blockIdx.x * blockDim.x + threadIdx.x;
+
+      for (unsigned int index = globalThreadId; index < numberEntries;
+           index += blockDim.x * gridDim.x)
+        {
+          const float psi      = XQuads[index];
+          const float psiPrime = XPrimeQuads[index];
+          XPrimeQuads[index]   = psi * psiPrime;
+          XQuads[index]        = psi * psi;
+        }
+    }
+
+    __global__ void
+    computeRhoResponseFromInterpolatedValues(const unsigned int numberEntries,
+                                             cuFloatComplex *   XQuads,
+                                             cuFloatComplex *   XPrimeQuads)
+    {
+      const unsigned int globalThreadId = blockIdx.x * blockDim.x + threadIdx.x;
+
+      for (unsigned int index = globalThreadId; index < numberEntries;
+           index += blockDim.x * gridDim.x)
+        {
+          const cuFloatComplex psi      = XQuads[index];
+          const cuFloatComplex psiPrime = XPrimeQuads[index];
+          XPrimeQuads[index] =
+            make_cuFloatComplex(psi.x * psiPrime.x + psi.y * psiPrime.y, 0.0);
+          XQuads[index] =
+            make_cuFloatComplex(psi.x * psi.x + psi.y * psi.y, 0.0);
+        }
+    }
   } // namespace
 
-  template <typename NumberType>
+  template <typename NumberType, typename NumberTypeLowPrec>
   void
   computeRhoFirstOrderResponseGPU(
     const NumberType *                             X,
@@ -201,32 +351,34 @@ namespace dftfe
     const double spinPolarizedFactor =
       (dftParameters::spinPolarized == 1) ? 1.0 : 2.0;
 
-    const NumberType zero = cudaUtils::makeNumberFromReal<NumberType>(0.0);
-    const NumberType one  = cudaUtils::makeNumberFromReal<NumberType>(1.0);
-    const NumberType scalarCoeffAlphaRho =
-      cudaUtils::makeNumberFromReal<NumberType>(1.0);
-    const NumberType scalarCoeffBetaRho =
-      cudaUtils::makeNumberFromReal<NumberType>(1.0);
+    const NumberTypeLowPrec zero =
+      cudaUtils::makeNumberFromReal<NumberTypeLowPrec>(0.0);
+    const NumberTypeLowPrec one =
+      cudaUtils::makeNumberFromReal<NumberTypeLowPrec>(1.0);
+    const NumberTypeLowPrec scalarCoeffAlphaRho =
+      cudaUtils::makeNumberFromReal<NumberTypeLowPrec>(1.0);
+    const NumberTypeLowPrec scalarCoeffBetaRho =
+      cudaUtils::makeNumberFromReal<NumberTypeLowPrec>(1.0);
 
     const unsigned int cellsBlockSize = 50;
     const unsigned int numCellBlocks  = totalLocallyOwnedCells / cellsBlockSize;
     const unsigned int remCellBlockSize =
       totalLocallyOwnedCells - numCellBlocks * cellsBlockSize;
 
-    cudaUtils::Vector<NumberType, dftfe::MemorySpace::GPU>
+    cudaUtils::Vector<NumberTypeLowPrec, dftfe::MemorySpace::GPU>
       rhoResponseContributionHamDevice(totalLocallyOwnedCells * numQuadPoints,
                                        zero);
 
-    cudaUtils::Vector<NumberType, dftfe::MemorySpace::GPU>
+    cudaUtils::Vector<NumberTypeLowPrec, dftfe::MemorySpace::GPU>
       rhoResponseContributionFermiEnergyDevice(totalLocallyOwnedCells *
                                                  numQuadPoints,
                                                zero);
 
-    cudaUtils::Vector<NumberType, dftfe::MemorySpace::Host>
+    cudaUtils::Vector<NumberTypeLowPrec, dftfe::MemorySpace::Host>
       rhoResponseContributionHamHost(totalLocallyOwnedCells * numQuadPoints,
                                      zero);
 
-    cudaUtils::Vector<NumberType, dftfe::MemorySpace::Host>
+    cudaUtils::Vector<NumberTypeLowPrec, dftfe::MemorySpace::Host>
       rhoResponseContributionFermiEnergyHost(totalLocallyOwnedCells *
                                                numQuadPoints,
                                              zero);
@@ -241,17 +393,17 @@ namespace dftfe
     std::vector<double> rhoResponseValuesSpinPolarizedFermiEnergyFlattenedHost(
       totalLocallyOwnedCells * numQuadPoints * 2, 0.0);
 
-    cudaUtils::Vector<NumberType, dftfe::MemorySpace::GPU> XQuadsDevice(
+    cudaUtils::Vector<NumberTypeLowPrec, dftfe::MemorySpace::GPU> XQuadsDevice(
       cellsBlockSize * numQuadPoints * BVec, zero);
 
-    cudaUtils::Vector<NumberType, dftfe::MemorySpace::GPU> XPrimeQuadsDevice(
-      cellsBlockSize * numQuadPoints * BVec, zero);
-    cudaUtils::Vector<NumberType, dftfe::MemorySpace::GPU> onesVecDevice(BVec,
-                                                                         one);
+    cudaUtils::Vector<NumberTypeLowPrec, dftfe::MemorySpace::GPU>
+                                                                  XPrimeQuadsDevice(cellsBlockSize * numQuadPoints * BVec, zero);
+    cudaUtils::Vector<NumberTypeLowPrec, dftfe::MemorySpace::GPU> onesVecDevice(
+      BVec, one);
 
-    cudaUtils::Vector<NumberType, dftfe::MemorySpace::Host>
+    cudaUtils::Vector<NumberTypeLowPrec, dftfe::MemorySpace::Host>
       densityMatDerFermiEnergyVec(BVec, zero);
-    cudaUtils::Vector<NumberType, dftfe::MemorySpace::GPU>
+    cudaUtils::Vector<NumberTypeLowPrec, dftfe::MemorySpace::GPU>
       densityMatDerFermiEnergyVecDevice(BVec, zero);
 
     distributedGPUVec<NumberType> &cudaFlattenedArrayXBlock =
@@ -263,18 +415,21 @@ namespace dftfe
     const unsigned int numGhosts =
       cudaFlattenedArrayXBlock.ghostFlattenedSize();
 
-    NumberType *cellWaveFunctionMatrix = reinterpret_cast<NumberType *>(
-      thrust::raw_pointer_cast(&operatorMatrix.getCellWaveFunctionMatrix()[0]));
+    // NumberType *cellWaveFunctionMatrix = reinterpret_cast<NumberType *>(
+    //  thrust::raw_pointer_cast(&operatorMatrix.getCellWaveFunctionMatrix()[0]));
 
-    NumberType *shapeFunctionValuesInvertedDevice;
+    cudaUtils::Vector<NumberTypeLowPrec, dftfe::MemorySpace::GPU>
+      cellWaveFunctionMatrix(cellsBlockSize * numLocalDofs, zero);
 
-    CUDACHECK(
-      cudaMalloc((void **)&shapeFunctionValuesInvertedDevice,
-                 numNodesPerElement * numQuadPoints * sizeof(NumberType)));
-    CUDACHECK(
-      cudaMemset(shapeFunctionValuesInvertedDevice,
-                 0,
-                 numNodesPerElement * numQuadPoints * sizeof(NumberType)));
+    NumberTypeLowPrec *shapeFunctionValuesInvertedDevice;
+
+    CUDACHECK(cudaMalloc((void **)&shapeFunctionValuesInvertedDevice,
+                         numNodesPerElement * numQuadPoints *
+                           sizeof(NumberTypeLowPrec)));
+    CUDACHECK(cudaMemset(shapeFunctionValuesInvertedDevice,
+                         0,
+                         numNodesPerElement * numQuadPoints *
+                           sizeof(NumberTypeLowPrec)));
 
     copyDoubleToNumber(thrust::raw_pointer_cast(
                          &(operatorMatrix.getShapeFunctionValuesInverted(
@@ -303,7 +458,7 @@ namespace dftfe
                          ++iEigenVec)
                       {
                         *(densityMatDerFermiEnergyVec.begin() + iEigenVec) =
-                          cudaUtils::makeNumberFromReal<NumberType>(
+                          cudaUtils::makeNumberFromReal<NumberTypeLowPrec>(
                             densityMatDerFermiEnergy
                               [(dftParameters::spinPolarized + 1) * kPoint +
                                spinIndex][jvec + iEigenVec]);
@@ -369,17 +524,18 @@ namespace dftfe
                               BVec,
                               currentCellsBlockSize * numNodesPerElement,
                               cudaFlattenedArrayXBlock.begin(),
-                              thrust::raw_pointer_cast(
-                                &cellWaveFunctionMatrix[0]),
+                              cellWaveFunctionMatrix.begin(),
                               thrust::raw_pointer_cast(
                                 &(operatorMatrix
                                     .getFlattenedArrayCellLocalProcIndexIdMap()
                                       [startingCellId * numNodesPerElement])));
 
-                            NumberType scalarCoeffAlpha =
-                              cudaUtils::makeNumberFromReal<NumberType>(1.0);
-                            NumberType scalarCoeffBeta =
-                              cudaUtils::makeNumberFromReal<NumberType>(0.0);
+                            NumberTypeLowPrec scalarCoeffAlpha =
+                              cudaUtils::makeNumberFromReal<NumberTypeLowPrec>(
+                                1.0);
+                            NumberTypeLowPrec scalarCoeffBeta =
+                              cudaUtils::makeNumberFromReal<NumberTypeLowPrec>(
+                                0.0);
                             int strideA = BVec * numNodesPerElement;
                             int strideB = 0;
                             int strideC = BVec * numQuadPoints;
@@ -393,8 +549,7 @@ namespace dftfe
                               numQuadPoints,
                               numNodesPerElement,
                               &scalarCoeffAlpha,
-                              thrust::raw_pointer_cast(
-                                &cellWaveFunctionMatrix[0]),
+                              cellWaveFunctionMatrix.begin(),
                               BVec,
                               strideA,
                               shapeFunctionValuesInvertedDevice,
@@ -413,8 +568,7 @@ namespace dftfe
                               BVec,
                               currentCellsBlockSize * numNodesPerElement,
                               cudaFlattenedArrayXPrimeBlock.begin(),
-                              thrust::raw_pointer_cast(
-                                &cellWaveFunctionMatrix[0]),
+                              cellWaveFunctionMatrix.begin(),
                               thrust::raw_pointer_cast(
                                 &(operatorMatrix
                                     .getFlattenedArrayCellLocalProcIndexIdMap()
@@ -429,8 +583,7 @@ namespace dftfe
                               numQuadPoints,
                               numNodesPerElement,
                               &scalarCoeffAlpha,
-                              thrust::raw_pointer_cast(
-                                &cellWaveFunctionMatrix[0]),
+                              cellWaveFunctionMatrix.begin(),
                               BVec,
                               strideA,
                               shapeFunctionValuesInvertedDevice,
@@ -658,7 +811,31 @@ namespace dftfe
   }
 
   template void
-  computeRhoFirstOrderResponseGPU(
+  computeRhoFirstOrderResponseGPU<dataTypes::numberGPU, dataTypes::numberGPU>(
+    const dataTypes::numberGPU *                   X,
+    const dataTypes::numberGPU *                   XPrime,
+    const std::vector<std::vector<double>> &       densityMatDerFermiEnergy,
+    const unsigned int                             totalNumWaveFunctions,
+    const unsigned int                             numLocalDofs,
+    operatorDFTCUDAClass &                         operatorMatrix,
+    const unsigned int                             matrixFreeDofhandlerIndex,
+    const dealii::DoFHandler<3> &                  dofHandler,
+    const unsigned int                             totalLocallyOwnedCells,
+    const unsigned int                             numNodesPerElement,
+    const unsigned int                             numQuadPoints,
+    const std::vector<double> &                    kPointWeights,
+    std::map<dealii::CellId, std::vector<double>> &rhoResponseValuesHam,
+    std::map<dealii::CellId, std::vector<double>> &rhoResponseValuesFermiEnergy,
+    std::map<dealii::CellId, std::vector<double>>
+      &rhoResponseValuesHamSpinPolarized,
+    std::map<dealii::CellId, std::vector<double>>
+      &             rhoResponseValuesFermiEnergySpinPolarized,
+    const MPI_Comm &interpoolcomm,
+    const MPI_Comm &interBandGroupComm);
+
+  template void
+  computeRhoFirstOrderResponseGPU<dataTypes::numberGPU,
+                                  dataTypes::numberFP32GPU>(
     const dataTypes::numberGPU *                   X,
     const dataTypes::numberGPU *                   XPrime,
     const std::vector<std::vector<double>> &       densityMatDerFermiEnergy,

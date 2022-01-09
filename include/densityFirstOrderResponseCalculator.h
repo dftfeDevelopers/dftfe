@@ -29,11 +29,11 @@
 
 namespace dftfe
 {
-  template <typename T>
+  template <typename NumberType>
   void
   computeRhoFirstOrderResponseCPU(
-    const std::vector<std::vector<T>> &            X,
-    const std::vector<std::vector<T>> &            XPrime,
+    const std::vector<std::vector<NumberType>> &   X,
+    const std::vector<std::vector<NumberType>> &   XPrime,
     const std::vector<std::vector<double>> &       densityMatDerFermiEnergy,
     const unsigned int                             totalNumWaveFunctions,
     const unsigned int                             numLocalDofs,
@@ -53,11 +53,11 @@ namespace dftfe
     const MPI_Comm &interpoolcomm,
     const MPI_Comm &interBandGroupComm);
 
-  template <typename T, typename TLowPrec>
+  template <typename NumberType, typename NumberTypeLowPrec>
   void
   computeRhoFirstOrderResponseCPUMixedPrec(
-    const std::vector<std::vector<T>> &            X,
-    const std::vector<std::vector<T>> &            XPrime,
+    const std::vector<std::vector<NumberType>> &   X,
+    const std::vector<std::vector<NumberType>> &   XPrime,
     const std::vector<std::vector<double>> &       densityMatDerFermiEnergy,
     const unsigned int                             totalNumWaveFunctions,
     const unsigned int                             numLocalDofs,
@@ -79,7 +79,7 @@ namespace dftfe
 
 
 #if defined(DFTFE_WITH_GPU)
-  template <typename NumberType>
+  template <typename NumberType, typename NumberTypeLowPrec>
   void
   computeRhoFirstOrderResponseGPU(
     const NumberType *                             X,

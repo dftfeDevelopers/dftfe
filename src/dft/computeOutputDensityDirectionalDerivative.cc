@@ -205,7 +205,7 @@ dftClass<FEOrder, FEOrderElectro>::computeOutputDensityDirectionalDerivative(
                 kohnShamDFTEigenOperator.reinitkPointSpinIndex(kPoint, s);
 
               computing_timer.enter_subsection(
-                "Hamiltonian Matrix Computation");
+                "Hamiltonian matrix prime computation");
 #ifdef DFTFE_WITH_GPU
               if (dftParameters::useGPU)
                 kohnShamDFTEigenOperatorCUDA.computeHamiltonianMatrix(kPoint,
@@ -218,7 +218,7 @@ dftClass<FEOrder, FEOrderElectro>::computeOutputDensityDirectionalDerivative(
                                                                   true);
 
               computing_timer.leave_subsection(
-                "Hamiltonian Matrix Computation");
+                "Hamiltonian matrix prime Computation");
             }
 
 #ifdef DFTFE_WITH_GPU
@@ -365,25 +365,50 @@ dftClass<FEOrder, FEOrderElectro>::
     // nodes in each cell
 #ifdef DFTFE_WITH_GPU
   if (dftParameters::useGPU)
-    computeRhoFirstOrderResponseGPU(
-      d_eigenVectorsFlattenedCUDA.begin(),
-      d_eigenVectorsDensityMatrixPrimeFlattenedCUDA.begin(),
-      d_densityMatDerFermiEnergy,
-      d_numEigenValues,
-      d_eigenVectorsFlattenedSTL[0].size() / d_numEigenValues,
-      kohnShamDFTEigenOperatorGPU,
-      d_eigenDofHandlerIndex,
-      dofHandler,
-      matrix_free_data.n_physical_cells(),
-      matrix_free_data.get_dofs_per_cell(),
-      quadrature_formula.size(),
-      d_kPointWeights,
-      rhoResponseHamPRefinedNodalData,
-      rhoResponseFermiEnergyPRefinedNodalData,
-      rhoResponseHamPRefinedNodalDataSpinPolarized,
-      rhoResponseFermiEnergyPRefinedNodalDataSpinPolarized,
-      interpoolcomm,
-      interBandGroupComm);
+    {
+      if (dftParameters::singlePrecLRJI)
+        computeRhoFirstOrderResponseGPU<dataTypes::numberGPU,
+                                        dataTypes::numberFP32GPU>(
+          d_eigenVectorsFlattenedCUDA.begin(),
+          d_eigenVectorsDensityMatrixPrimeFlattenedCUDA.begin(),
+          d_densityMatDerFermiEnergy,
+          d_numEigenValues,
+          d_eigenVectorsFlattenedSTL[0].size() / d_numEigenValues,
+          kohnShamDFTEigenOperatorGPU,
+          d_eigenDofHandlerIndex,
+          dofHandler,
+          matrix_free_data.n_physical_cells(),
+          matrix_free_data.get_dofs_per_cell(),
+          quadrature_formula.size(),
+          d_kPointWeights,
+          rhoResponseHamPRefinedNodalData,
+          rhoResponseFermiEnergyPRefinedNodalData,
+          rhoResponseHamPRefinedNodalDataSpinPolarized,
+          rhoResponseFermiEnergyPRefinedNodalDataSpinPolarized,
+          interpoolcomm,
+          interBandGroupComm);
+      else
+        computeRhoFirstOrderResponseGPU<dataTypes::numberGPU,
+                                        dataTypes::numberGPU>(
+          d_eigenVectorsFlattenedCUDA.begin(),
+          d_eigenVectorsDensityMatrixPrimeFlattenedCUDA.begin(),
+          d_densityMatDerFermiEnergy,
+          d_numEigenValues,
+          d_eigenVectorsFlattenedSTL[0].size() / d_numEigenValues,
+          kohnShamDFTEigenOperatorGPU,
+          d_eigenDofHandlerIndex,
+          dofHandler,
+          matrix_free_data.n_physical_cells(),
+          matrix_free_data.get_dofs_per_cell(),
+          quadrature_formula.size(),
+          d_kPointWeights,
+          rhoResponseHamPRefinedNodalData,
+          rhoResponseFermiEnergyPRefinedNodalData,
+          rhoResponseHamPRefinedNodalDataSpinPolarized,
+          rhoResponseFermiEnergyPRefinedNodalDataSpinPolarized,
+          interpoolcomm,
+          interBandGroupComm);
+    }
 #endif
   if (!dftParameters::useGPU)
     {

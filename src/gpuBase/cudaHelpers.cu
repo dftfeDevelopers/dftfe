@@ -270,6 +270,12 @@ namespace dftfe
     template class Vector<cuDoubleComplex, dftfe::MemorySpace::Host>;
     template class Vector<double, dftfe::MemorySpace::GPU>;
     template class Vector<cuDoubleComplex, dftfe::MemorySpace::GPU>;
+    template class Vector<float, dftfe::MemorySpace::Host>;
+    template class Vector<cuFloatComplex, dftfe::MemorySpace::Host>;
+    template class Vector<float, dftfe::MemorySpace::GPU>;
+    template class Vector<cuFloatComplex, dftfe::MemorySpace::GPU>;
+
+
 
     template void
     copyComplexArrToRealArrsGPU(const dataTypes::local_size_type size,
