@@ -257,7 +257,7 @@ namespace dftfe
     distributedGPUVec<NumberType> &cudaFlattenedArrayXBlock =
       operatorMatrix.getParallelChebyBlockVectorDevice();
 
-    distributedGPUVec<NumberType> cudaFlattenedArrayXPrimeBlock;
+    distributedGPUVec<NumberType> &cudaFlattenedArrayXPrimeBlock;
     operatorMatrix.getParallelChebyBlockVector2Device();
 
     const unsigned int numGhosts =
