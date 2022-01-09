@@ -445,7 +445,8 @@ dftClass<FEOrder, FEOrderElectro>::lowrankApproxScfJacobianInv(
       d_rankCurrent++;
       rankAddedInThisScf++;
 
-      if (dftParameters::methodSubTypeLRJI == "ACCUMULATED_ADAPTIVE")
+      if (dftParameters::methodSubTypeLRJI == "ADAPTIVE" ||
+          dftParameters::methodSubTypeLRJI == "ACCUMULATED_ADAPTIVE")
         {
           const double relativeApproxError =
             internalLowrankJacInv::relativeErrorEstimate(d_fvcontainerVals,
