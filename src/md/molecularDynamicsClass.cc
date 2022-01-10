@@ -409,7 +409,23 @@ namespace dftfe
                       << velocity[3*iCharge+2] << std::endl;
                   }         
           
-              }             
+              }   
+                    //Printing COM velocity
+                    double COM = 0.0;
+                    double vx = 0.0;
+                    double vy = 0.0;
+                    double vz = 0.0;
+                    for(int iCharge = 0; iCharge <d_numberGlobalCharges; iCharge++ )
+                    {
+                      vx += atomMass[iCharge]*velocity[3*iCharge+0];
+                      vy += atomMass[iCharge]*velocity[3*iCharge+1];
+                      vz += atomMass[iCharge]*velocity[3*iCharge+2];
+                      COM += atomMass[iCharge];
+                    }
+                    vx /=COM;
+                    vy /=COM;
+                    vz /=COM;
+                    pcout<<" The Center of Mass Velocity from NVE: "<<vx<<" "<<vy<<" "<<vz<<std::endl;                        
             if (dftParameters::verbosity >= 1)
             { 
               pcout << "---------------MD STEP: "<<d_TimeIndex<<" ------------------ " <<  std::endl;
@@ -493,7 +509,24 @@ namespace dftfe
                       << velocity[3*iCharge+2] << std::endl;
                   }         
           
-              }             
+              }  
+                    //Printing COM velocity
+                    double COM = 0.0;
+                    double vx = 0.0;
+                    double vy = 0.0;
+                    double vz = 0.0;
+                    for(int iCharge = 0; iCharge <d_numberGlobalCharges; iCharge++ )
+                    {
+                      vx += atomMass[iCharge]*velocity[3*iCharge+0];
+                      vy += atomMass[iCharge]*velocity[3*iCharge+1];
+                      vz += atomMass[iCharge]*velocity[3*iCharge+2];
+                      COM += atomMass[iCharge];
+                    }
+                    vx /=COM;
+                    vy /=COM;
+                    vz /=COM;
+                    pcout<<" The Center of Mass Velocity from Rescale Thermostat: "<<vx<<" "<<vy<<" "<<vz<<std::endl;                
+
             if (dftParameters::verbosity >= 1)
             { 
               pcout << "---------------MD STEP: "<<d_TimeIndex<<" ------------------ " <<  std::endl;
@@ -603,8 +636,28 @@ namespace dftfe
                   }         
           
               }             
+                    //Printing COM velocity
+                    double COM = 0.0;
+                    double vx = 0.0;
+                    double vy = 0.0;
+                    double vz = 0.0;
+                    for(int iCharge = 0; iCharge <d_numberGlobalCharges; iCharge++ )
+                    {
+                      vx += atomMass[iCharge]*velocity[3*iCharge+0];
+                      vy += atomMass[iCharge]*velocity[3*iCharge+1];
+                      vz += atomMass[iCharge]*velocity[3*iCharge+2];
+                      COM += atomMass[iCharge];
+                    }
+                    vx /=COM;
+                    vy /=COM;
+                    vz /=COM;
+                    pcout<<" The Center of Mass Velocity from NHC: "<<vx<<" "<<vy<<" "<<vz<<std::endl;  
+
+
             MPI_Barrier(d_mpi_communicator);
-            step_time = MPI_Wtime() - step_time;              
+            step_time = MPI_Wtime() - step_time; 
+
+
             if (dftParameters::verbosity >= 1)
             { 
               pcout << "---------------MD STEP: "<<d_TimeIndex<<" ------------------ " <<  std::endl;
@@ -694,7 +747,23 @@ namespace dftfe
                       << velocity[3*iCharge+2] << std::endl;
                   }         
           
-              }            
+              }  
+                    //Printing COM velocity
+                    double COM = 0.0;
+                    double vx = 0.0;
+                    double vy = 0.0;
+                    double vz = 0.0;
+                    for(int iCharge = 0; iCharge <d_numberGlobalCharges; iCharge++ )
+                    {
+                      vx += atomMass[iCharge]*velocity[3*iCharge+0];
+                      vy += atomMass[iCharge]*velocity[3*iCharge+1];
+                      vz += atomMass[iCharge]*velocity[3*iCharge+2];
+                      COM += atomMass[iCharge];
+                    }
+                    vx /=COM;
+                    vy /=COM;
+                    vz /=COM;
+                    pcout<<" The Center of Mass Velocity from CSVR: "<<vx<<" "<<vy<<" "<<vz<<std::endl;                          
             if (dftParameters::verbosity >= 1)
             { 
               pcout << "---------------MD STEP: "<<d_TimeIndex<<" ------------------ " <<  std::endl;
@@ -853,7 +922,23 @@ namespace dftfe
                 totalKE += 0.5*atomMass[i]*(v[3*i+0]*v[3*i+0]+v[3*i+1]*v[3*i+1] + v[3*i+2]*v[3*i+2]);
             }
         //Save KE
-      
+        
+       //Printing COM velocity
+        double COM = 0.0;
+        double vx = 0.0;
+        double vy = 0.0;
+        double vz = 0.0;
+        for(int iCharge = 0; iCharge <d_numberGlobalCharges; iCharge++ )
+        {
+          vx += atomMass[iCharge]*v[3*iCharge+0];
+          vy += atomMass[iCharge]*v[3*iCharge+1];
+          vz += atomMass[iCharge]*v[3*iCharge+2];
+          COM += atomMass[iCharge];
+        }
+        vx /=COM;
+        vy /=COM;
+        vz /=COM;
+        pcout<<" The Center of Mass Velocity from Velocity Verlet: "<<vx<<" "<<vy<<" "<<vz<<std::endl;
       
       
         KE = totalKE;
