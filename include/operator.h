@@ -189,11 +189,13 @@ namespace dftfe
      * of the operation into the given subspace
      */
     virtual void
-    XtHXMixedPrec(const std::vector<dataTypes::number> &X,
-                  const unsigned int                    totalNumberComponents,
-                  const unsigned int                    singlePrecComponents,
-                  const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
-                  dftfe::ScaLAPACKMatrix<dataTypes::number> &projHamPar) = 0;
+    XtHXMixedPrec(
+      const std::vector<dataTypes::number> &           X,
+      const unsigned int                               totalNumberComponents,
+      const unsigned int                               singlePrecComponents,
+      const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
+      dftfe::ScaLAPACKMatrix<dataTypes::number> &      projHamPar,
+      const bool onlyHPrimePartForFirstOrderDensityMatResponse = false) = 0;
 
 
     void

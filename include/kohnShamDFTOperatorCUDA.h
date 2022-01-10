@@ -274,7 +274,8 @@ namespace dftfe
       cublasHandle_t &                                 handle,
       const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
       dftfe::ScaLAPACKMatrix<dataTypes::number> &      projHamPar,
-      GPUCCLWrapper &                                  gpucclMpiCommDomain);
+      GPUCCLWrapper &                                  gpucclMpiCommDomain,
+      const bool onlyHPrimePartForFirstOrderDensityMatResponse = false);
 #endif
 
 

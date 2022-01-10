@@ -1215,7 +1215,23 @@ namespace dftfe
                     projHamPrimePar.local_m() * projHamPrimePar.local_n(),
                   dataTypes::number(0.0));
 
-      if (dftParameters::overlapComputeCommunOrthoRR)
+      if (dftParameters::singlePrecLRJI &&
+          dftParameters::overlapComputeCommunOrthoRR)
+        operatorMatrix.XtHXMixedPrecOverlapComputeCommun(
+          X,
+          Xb,
+          floatXb,
+          HXb,
+          projectorKetTimesVector,
+          M,
+          N,
+          N,
+          handle,
+          processGrid,
+          projHamPrimePar,
+          gpucclMpiCommDomain,
+          true);
+      else if (dftParameters::overlapComputeCommunOrthoRR)
         operatorMatrix.XtHXOverlapComputeCommun(X,
                                                 Xb,
                                                 HXb,
@@ -1382,16 +1398,28 @@ namespace dftfe
 
       densityMatPrimeParConjTrans.copy_conjugate_transposed(densityMatPrimePar);
 
-      subspaceRotationScalapack(X,
-                                M,
-                                N,
-                                handle,
-                                processGrid,
-                                mpiCommDomain,
-                                gpucclMpiCommDomain,
-                                interBandGroupComm,
-                                densityMatPrimeParConjTrans,
-                                false);
+      if (dftParameters::singlePrecLRJI)
+        subspaceRotationRRMixedPrecScalapack(X,
+                                             M,
+                                             N,
+                                             handle,
+                                             processGrid,
+                                             mpiCommDomain,
+                                             gpucclMpiCommDomain,
+                                             interBandGroupComm,
+                                             densityMatPrimeParConjTrans,
+                                             false);
+      else
+        subspaceRotationScalapack(X,
+                                  M,
+                                  N,
+                                  handle,
+                                  processGrid,
+                                  mpiCommDomain,
+                                  gpucclMpiCommDomain,
+                                  interBandGroupComm,
+                                  densityMatPrimeParConjTrans,
+                                  false);
 
       if (dftParameters::gpuFineGrainedTimings)
         {

@@ -159,11 +159,13 @@ node is stored
      * of the operation into the given subspace
      */
     void
-    XtHXMixedPrec(const std::vector<dataTypes::number> &           X,
-                  const unsigned int                               N,
-                  const unsigned int                               Ncore,
-                  const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
-                  dftfe::ScaLAPACKMatrix<dataTypes::number> &      projHamPar);
+    XtHXMixedPrec(
+      const std::vector<dataTypes::number> &           X,
+      const unsigned int                               N,
+      const unsigned int                               Ncore,
+      const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
+      dftfe::ScaLAPACKMatrix<dataTypes::number> &      projHamPar,
+      const bool onlyHPrimePartForFirstOrderDensityMatResponse = false);
 
 
     /**

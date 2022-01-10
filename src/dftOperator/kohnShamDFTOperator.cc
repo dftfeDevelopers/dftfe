@@ -1369,7 +1369,8 @@ namespace dftfe
     const unsigned int                               N,
     const unsigned int                               Ncore,
     const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
-    dftfe::ScaLAPACKMatrix<dataTypes::number> &      projHamPar)
+    dftfe::ScaLAPACKMatrix<dataTypes::number> &      projHamPar,
+    const bool onlyHPrimePartForFirstOrderDensityMatResponse)
   {
     //
     // Get access to number of locally owned nodes on the current processor
@@ -1457,7 +1458,12 @@ namespace dftfe
             const bool   scaleFlag = false;
             const double scalar    = 1.0;
 
-            HX(XBlock, B, scaleFlag, scalar, HXBlock);
+            HX(XBlock,
+               B,
+               scaleFlag,
+               scalar,
+               HXBlock,
+               onlyHPrimePartForFirstOrderDensityMatResponse);
 
             MPI_Barrier(getMPICommunicator());
 

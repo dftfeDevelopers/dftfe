@@ -3751,7 +3751,8 @@ namespace dftfe
       cublasHandle_t &                                 handle,
       const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
       dftfe::ScaLAPACKMatrix<dataTypes::number> &      projHamPar,
-      GPUCCLWrapper &                                  gpucclMpiCommDomain)
+      GPUCCLWrapper &                                  gpucclMpiCommDomain,
+      const bool onlyHPrimePartForFirstOrderDensityMatResponse)
   {
     std::map<unsigned int, unsigned int> globalToLocalColumnIdMap;
     std::map<unsigned int, unsigned int> globalToLocalRowIdMap;
@@ -3894,7 +3895,8 @@ namespace dftfe
                          scaleFlag,
                          scalar,
                          HXBlock,
-                         false);
+                         false,
+                         onlyHPrimePartForFirstOrderDensityMatResponse);
                     else
                       HX(XBlock,
                          tempFloatBlock,
@@ -3905,7 +3907,8 @@ namespace dftfe
                          scalar,
                          HXBlock,
                          false,
-                         true);
+                         true,
+                         onlyHPrimePartForFirstOrderDensityMatResponse);
 
                     if (jvec + B > Noc)
                       stridedCopyFromBlockKernel<dataTypes::numberGPU>
@@ -4026,7 +4029,8 @@ namespace dftfe
                          scaleFlag,
                          scalar,
                          HXBlock,
-                         false);
+                         false,
+                         onlyHPrimePartForFirstOrderDensityMatResponse);
                     else
                       HX(XBlock,
                          tempFloatBlock,
@@ -4037,7 +4041,8 @@ namespace dftfe
                          scalar,
                          HXBlock,
                          false,
-                         true);
+                         true,
+                         onlyHPrimePartForFirstOrderDensityMatResponse);
 
                     if (jvecNew + B > Noc)
                       stridedCopyFromBlockKernel<<<
