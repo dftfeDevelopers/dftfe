@@ -467,6 +467,9 @@ namespace dftfe
              (std::is_same<NumberType, cuDoubleComplex>::value ||
               std::is_same<NumberType, cuFloatComplex>::value))
       {
+    if (d_locallyOwnedDofsSize>0)
+    {
+	      
         CUDACHECK(
           cudaMalloc((void **)&d_vecData,
                      (d_locallyOwnedSize + d_ghostSize) * sizeof(NumberType)));
@@ -474,7 +477,7 @@ namespace dftfe
           cudaMemset(d_vecData,
                      0,
                      (d_locallyOwnedSize + d_ghostSize) * sizeof(NumberType)));
-
+    }
         if (std::is_same<NumberType, cuDoubleComplex>::value)
           {
             d_dealiiVecTempDataReal =
@@ -539,6 +542,9 @@ namespace dftfe
   void
   DistributedMulticomponentVec<NumberType, MemorySpace>::setZero()
   {
+     if (d_locallyOwnedDofsSize>0)
+    {
+
     if (std::is_same<MemorySpace, dftfe::MemorySpace::Host>::value)
       {
         std::memset(this->begin(), 0, d_locallyOwnedSize * sizeof(NumberType));
@@ -551,6 +557,7 @@ namespace dftfe
                              d_locallyOwnedSize * sizeof(NumberType)));
 #endif
       }
+    }
     this->zeroOutGhosts();
   }
 
@@ -680,6 +687,7 @@ namespace dftfe
       {
         if (std::is_same<NumberType, cuDoubleComplex>::value)
           {
+            if (d_locallyOwnedDofsSize>0)
             cudaUtils::copyComplexArrToRealArrsGPU(
               d_locallyOwnedSize,
               d_vecData,
@@ -703,7 +711,7 @@ namespace dftfe
                d_dealiiVecTempDataImag)
               ->update_ghost_values();
 
-
+if (d_ghostSize>0)
             cudaUtils::copyRealArrsToComplexArrGPU(
               d_ghostSize,
               ((dealii::LinearAlgebra::distributed::
@@ -720,6 +728,7 @@ namespace dftfe
           }
         else if (std::is_same<NumberType, cuFloatComplex>::value)
           {
+		  if (d_locallyOwnedDofsSize>0)
             cudaUtils::copyComplexArrToRealArrsGPU(
               d_locallyOwnedSize,
               d_vecData,
@@ -742,7 +751,7 @@ namespace dftfe
                d_dealiiVecTempDataImag)
               ->update_ghost_values();
 
-
+if (d_ghostSize>0)
             cudaUtils::copyRealArrsToComplexArrGPU(
               d_ghostSize,
               ((dealii::LinearAlgebra::distributed::
@@ -795,6 +804,7 @@ namespace dftfe
       {
         if (std::is_same<NumberType, cuDoubleComplex>::value)
           {
+		  if (d_locallyOwnedDofsSize>0)
             cudaUtils::copyComplexArrToRealArrsGPU(
               d_locallyOwnedSize,
               d_vecData,
@@ -819,6 +829,7 @@ namespace dftfe
           }
         else if (std::is_same<NumberType, cuFloatComplex>::value)
           {
+		  if (d_locallyOwnedDofsSize>0)
             cudaUtils::copyComplexArrToRealArrsGPU(
               d_locallyOwnedSize,
               d_vecData,
@@ -890,6 +901,8 @@ namespace dftfe
                d_dealiiVecTempDataImag)
               ->update_ghost_values_finish();
 
+
+	    if (d_ghostSize>0)
             cudaUtils::copyRealArrsToComplexArrGPU(
               d_ghostSize,
               ((dealii::LinearAlgebra::distributed::
@@ -916,7 +929,8 @@ namespace dftfe
                d_dealiiVecTempDataImag)
               ->update_ghost_values_finish();
 
-            cudaUtils::copyRealArrsToComplexArrGPU(
+            if (d_ghostSize>0)
+	    cudaUtils::copyRealArrsToComplexArrGPU(
               d_ghostSize,
               ((dealii::LinearAlgebra::distributed::
                   Vector<float, dealii::MemorySpace::CUDA> *)
@@ -968,6 +982,7 @@ namespace dftfe
       {
         if (std::is_same<NumberType, cuDoubleComplex>::value)
           {
+            if ((d_locallyOwnedSize + d_ghostSize)>0)		  
             cudaUtils::copyComplexArrToRealArrsGPU(
               (d_locallyOwnedSize + d_ghostSize),
               d_vecData,
@@ -990,6 +1005,7 @@ namespace dftfe
                d_dealiiVecTempDataImag)
               ->compress(dealii::VectorOperation::add);
 
+	                if (d_locallyOwnedSize>0)
             cudaUtils::copyRealArrsToComplexArrGPU(
               d_locallyOwnedSize,
               ((dealii::LinearAlgebra::distributed::
@@ -1004,6 +1020,7 @@ namespace dftfe
           }
         else if (std::is_same<NumberType, cuFloatComplex>::value)
           {
+		             if ((d_locallyOwnedSize + d_ghostSize)>0)
             cudaUtils::copyComplexArrToRealArrsGPU(
               (d_locallyOwnedSize + d_ghostSize),
               d_vecData,
@@ -1026,6 +1043,7 @@ namespace dftfe
                d_dealiiVecTempDataImag)
               ->compress(dealii::VectorOperation::add);
 
+	                if (d_locallyOwnedSize>0)
             cudaUtils::copyRealArrsToComplexArrGPU(
               d_locallyOwnedSize,
               ((dealii::LinearAlgebra::distributed::
@@ -1075,6 +1093,7 @@ namespace dftfe
       {
         if (std::is_same<NumberType, cuDoubleComplex>::value)
           {
+		              if ((d_locallyOwnedSize + d_ghostSize)>0)
             cudaUtils::copyComplexArrToRealArrsGPU(
               (d_locallyOwnedSize + d_ghostSize),
               d_vecData,
@@ -1099,6 +1118,7 @@ namespace dftfe
           }
         else if (std::is_same<NumberType, cuFloatComplex>::value)
           {
+		              if ((d_locallyOwnedSize + d_ghostSize)>0)
             cudaUtils::copyComplexArrToRealArrsGPU(
               (d_locallyOwnedSize + d_ghostSize),
               d_vecData,
@@ -1168,6 +1188,7 @@ namespace dftfe
                d_dealiiVecTempDataImag)
               ->compress_finish(dealii::VectorOperation::add);
 
+	                if (d_locallyOwnedSize>0)
             cudaUtils::copyRealArrsToComplexArrGPU(
               d_locallyOwnedSize,
               ((dealii::LinearAlgebra::distributed::
@@ -1192,6 +1213,7 @@ namespace dftfe
                d_dealiiVecTempDataImag)
               ->compress_finish(dealii::VectorOperation::add);
 
+	                            if (d_locallyOwnedSize>0)
             cudaUtils::copyRealArrsToComplexArrGPU(
               d_locallyOwnedSize,
               ((dealii::LinearAlgebra::distributed::
@@ -1216,7 +1238,9 @@ namespace dftfe
   template <typename NumberType, typename MemorySpace>
   void
   DistributedMulticomponentVec<NumberType, MemorySpace>::zeroOutGhosts()
-  {
+  { 
+    if (d_ghostSize>0)
+    {
     if (std::is_same<NumberType, double>::value ||
         std::is_same<NumberType, float>::value ||
         std::is_same<NumberType, std::complex<double>>::value ||
@@ -1274,6 +1298,7 @@ namespace dftfe
       {
         AssertThrow(false, dftUtils::ExcNotImplementedYet());
       }
+    }
   }
 
 
