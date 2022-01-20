@@ -245,6 +245,12 @@ namespace dftfe
  
           
         dftPtr->solve(true, false, false, false);
+        dftPtr->getForceonAtoms(force);
+        double dt = d_TimeStep; 
+        for(int iCharge = 0; iCharge < d_numberGlobalCharges; iCharge++)
+        {
+          displacements[iCharge][0] = ( dt*velocity[3*iCharge+0] - dt*dt/2*force[3*iCharge+0]/massAtoms[iCharge]* haPerBohrToeVPerAng)* AngTobohr;
+        }
         KineticEnergyVector[0]  = KineticEnergy / haToeV;
         InternalEnergyVector[0] = dftPtr->GroundStateEnergyvalue;
         EntropicEnergyVector[0] = dftPtr->EntropicEnergyvalue;
@@ -331,7 +337,7 @@ namespace dftfe
           }
 
           MPI_Barrier(d_mpi_communicator);
-          InitialiseFromRestartFile(velocity, force, KineticEnergyVector , InternalEnergyVector , TotalEnergyVector);
+          InitialiseFromRestartFile(displacements, velocity, force, KineticEnergyVector , InternalEnergyVector , TotalEnergyVector);
          pcout<<"-- Starting Unwrapped Coordinates: --"<<std::endl;
          for(int iCharge = 0; iCharge< d_numberGlobalCharges; iCharge++)
           pcout<<d_atomFractionalunwrapped[iCharge][0]<<" "<<d_atomFractionalunwrapped[iCharge][1]<<" "<<d_atomFractionalunwrapped[iCharge][2]<<" "<<d_atomFractionalunwrapped[iCharge][3]<<" "<<d_atomFractionalunwrapped[iCharge][4]<<std::endl; 
@@ -384,7 +390,14 @@ namespace dftfe
             MPI_Barrier(d_mpi_communicator);
             step_time = MPI_Wtime();   
 
-            velocityVerlet(velocity, displacements,atomMass,KineticEnergy, force );
+            if(dftParameters::usevelocityverlet == true)
+            {
+              velocityVerlet(velocity, displacements,atomMass,KineticEnergy, force);
+            }
+            else
+            {
+              simpleVerlet(displacements,atomMass,KineticEnergy,force,velocity);
+            }
             MPI_Barrier(d_mpi_communicator);
    
             KineticEnergyVector[d_TimeIndex-d_startingTimeStep]  = KineticEnergy / haToeV;
@@ -444,7 +457,7 @@ namespace dftfe
               << TotalEnergyVector[d_TimeIndex-d_startingTimeStep] << std::endl;
              
             }
-            writeRestartFile(velocity,force,KineticEnergyVector,InternalEnergyVector,TotalEnergyVector,d_TimeIndex);
+            writeRestartFile(displacements,velocity,force,KineticEnergyVector,InternalEnergyVector,TotalEnergyVector,d_TimeIndex);
             writeTotalDisplacementFile(displacements,d_TimeIndex);
 
             MPI_Barrier(d_mpi_communicator);
@@ -478,7 +491,14 @@ namespace dftfe
             MPI_Barrier(d_mpi_communicator);
             step_time = MPI_Wtime();   
 
-            velocityVerlet(velocity, displacements,atomMass,KineticEnergy, force);
+            if(dftParameters::usevelocityverlet == true)
+            {
+              velocityVerlet(velocity, displacements,atomMass,KineticEnergy, force);
+            }
+            else
+            {
+              simpleVerlet(displacements,atomMass,KineticEnergy,force,velocity);
+            }
             //MPI_Barrier(d_mpi_communicator);
             TemperatureFromVelocities = 2.0/3.0/double(d_numberGlobalCharges-1)*KineticEnergy/(kB);
             if(d_TimeIndex%d_ThermostatTimeConstant==0)
@@ -545,7 +565,7 @@ namespace dftfe
               << TotalEnergyVector[d_TimeIndex-d_startingTimeStep] << std::endl;
 
             }
-            writeRestartFile(velocity,force,KineticEnergyVector,InternalEnergyVector,TotalEnergyVector,d_TimeIndex);
+            writeRestartFile(displacements,velocity,force,KineticEnergyVector,InternalEnergyVector,TotalEnergyVector,d_TimeIndex);
             writeTotalDisplacementFile(displacements,d_TimeIndex);
 
             MPI_Barrier(d_mpi_communicator);
@@ -599,7 +619,15 @@ namespace dftfe
             MPI_Barrier(d_mpi_communicator);
             step_time = MPI_Wtime();   
             NoseHoverChains(velocity, Thermostatvelocity,Thermostatposition, ThermostatMass, KineticEnergyVector[d_TimeIndex - 1 - d_startingTimeStep]*haToeV, d_startingTemperature);
-            velocityVerlet(velocity, displacements,atomMass,KineticEnergy, force);
+            if(dftParameters::usevelocityverlet == true)
+            {
+              velocityVerlet(velocity, displacements,atomMass,KineticEnergy, force);
+            }
+            else
+            {
+              simpleVerlet(displacements,atomMass,KineticEnergy,force,velocity);
+            }
+            MPI_Barrier(d_mpi_communicator);
           //  TemperatureFromVelocities = 2.0/3.0/double(d_numberGlobalCharges-1)*KineticEnergy/(kB); 
             NoseHoverChains(velocity, Thermostatvelocity,Thermostatposition, ThermostatMass,KineticEnergy,d_startingTemperature);          
             KineticEnergy = 0.0;
@@ -680,7 +708,7 @@ namespace dftfe
 
             }
                                      
-            writeRestartFile(velocity,force,KineticEnergyVector,InternalEnergyVector,TotalEnergyVector,d_TimeIndex);
+            writeRestartFile(displacements,velocity,force,KineticEnergyVector,InternalEnergyVector,TotalEnergyVector,d_TimeIndex);
             writeRestartNHCfile(Thermostatvelocity,Thermostatposition, ThermostatMass,d_TimeIndex );
             writeTotalDisplacementFile(displacements,d_TimeIndex);
 
@@ -718,8 +746,15 @@ namespace dftfe
             MPI_Barrier(d_mpi_communicator);
             step_time = MPI_Wtime();   
 
-            velocityVerlet(velocity, displacements,atomMass,KineticEnergy, force);
-            //MPI_Barrier(d_mpi_communicator);
+            if(dftParameters::usevelocityverlet == true)
+            {
+              velocityVerlet(velocity, displacements,atomMass,KineticEnergy, force);
+            }
+            else
+            {
+              simpleVerlet(displacements,atomMass,KineticEnergy,force,velocity);
+            }
+            MPI_Barrier(d_mpi_communicator);
 
             svr(velocity,KineticEnergy,KEref);
             TemperatureFromVelocities = 2.0/3.0/double(d_numberGlobalCharges-1)*KineticEnergy/(kB);
@@ -783,7 +818,7 @@ namespace dftfe
 
             }
                          
-            writeRestartFile(velocity,force,KineticEnergyVector,InternalEnergyVector,TotalEnergyVector,d_TimeIndex);
+            writeRestartFile(displacements,velocity,force,KineticEnergyVector,InternalEnergyVector,TotalEnergyVector,d_TimeIndex);
             writeTotalDisplacementFile(displacements,d_TimeIndex);
 
             MPI_Barrier(d_mpi_communicator);
@@ -811,33 +846,64 @@ namespace dftfe
         KE = 0.0;
         double dt = d_TimeStep;
         double dt_2 = dt/2;
-   
-        for(i=0; i < d_numberGlobalCharges; i++)
-        {          
-               if(d_this_mpi_process == 0)  
-                {   
+        double COMM = 0.0;
+        double COMx = 0.0;
+        double COMy = 0.0;
+        double COMz = 0.0;
+        if(d_this_mpi_process == 0) 
+        {
+          for(i=0; i < d_numberGlobalCharges; i++)
+          {          
+                
+                  
                 /*Computing New position as taylor expansion about r(t) O(dt^3) */
                 r[i][0] = ( dt*v[3*i+0] - dt*dt_2*forceOnAtoms[3*i+0]/atomMass[i]* haPerBohrToeVPerAng)* AngTobohr; //New position of x cordinate
                 r[i][1] = ( dt*v[3*i+1] - dt*dt_2*forceOnAtoms[3*i+1]/atomMass[i]* haPerBohrToeVPerAng)* AngTobohr; // New Position of Y cordinate
                 r[i][2] = ( dt*v[3*i+2] - dt*dt_2*forceOnAtoms[3*i+2]/atomMass[i]* haPerBohrToeVPerAng)* AngTobohr; // New POsition of Z cordinate
-
+                COMM +=atomMass[i];
+                COMx += atomMass[i]*r[i][0];
+                COMy += atomMass[i]*r[i][1];
+                COMz += atomMass[i]*r[i][2];
 
                 /* Computing velocity from v(t) to v(t+dt/2) */
                 v[3*i+0] = v[3*i+0] - forceOnAtoms[3*i+0]/atomMass[i]*dt_2* haPerBohrToeVPerAng;
                 v[3*i+1] = v[3*i+1] - forceOnAtoms[3*i+1]/atomMass[i]*dt_2* haPerBohrToeVPerAng;
                 v[3*i+2] = v[3*i+2] - forceOnAtoms[3*i+2]/atomMass[i]*dt_2* haPerBohrToeVPerAng;
 
-                }
-
+                
+/*
                 MPI_Bcast(
                 &(r[i][0]), 3, MPI_DOUBLE, 0, d_mpi_communicator);
                 MPI_Bcast(
-                &(v[3*i]), 3, MPI_DOUBLE, 0, d_mpi_communicator);
+                &(v[3*i]), 3, MPI_DOUBLE, 0, d_mpi_communicator); */
 
-        }
+          }
+          COMx /=COMM;
+          COMy /=COMM;
+          COMz /=COMM;
+        
+        } 
+        MPI_Barrier(d_mpi_communicator);  
+        for(i = 0;  i < d_numberGlobalCharges; i++)
+        {
+          if(d_this_mpi_process == 0)
+          {
+            r[i][0] -=COMx;
+            r[i][1] -= COMy;
+            r[i][2] -= COMz;
+          }
+        
+          MPI_Bcast(
+                &(r[i][0]), 3, MPI_DOUBLE, 0, d_mpi_communicator);
+          MPI_Bcast(
+                &(v[3*i]), 3, MPI_DOUBLE, 0, d_mpi_communicator);        
+        
+        
+        }  
+
             
         double update_time;
-        MPI_Barrier(d_mpi_communicator);
+        
         update_time = MPI_Wtime();
 
         dftPtr->updateAtomPositionsAndMoveMesh(
@@ -907,21 +973,154 @@ namespace dftfe
         dftPtr->getForceonAtoms(forceOnAtoms);         
         //Call Force
         totalKE = 0.0;
-        /* Second half of velocty verlet */
-        for(i=0; i < d_numberGlobalCharges; i++)
-            {
-                if(d_this_mpi_process == 0)
-                {
-                  v[3*i+0] = v[3*i+0] - forceOnAtoms[3*i+0]/atomMass[i]*dt_2* haPerBohrToeVPerAng;
-                  v[3*i+1] = v[3*i+1] - forceOnAtoms[3*i+1]/atomMass[i]*dt_2* haPerBohrToeVPerAng;
-                  v[3*i+2] = v[3*i+2] - forceOnAtoms[3*i+2]/atomMass[i]*dt_2* haPerBohrToeVPerAng;
-                }
-                MPI_Bcast(
-                &(v[3*i]), 3, MPI_DOUBLE, 0, d_mpi_communicator);                
+        
+       //Printing COM velocity
+        double COM = 0.0;
+        double vx = 0.0;
+        double vy = 0.0;
+        double vz = 0.0;
+        COMx = 0.0;
+        COMy = 0.0;
+        COMz = 0.0;
+        for(int iCharge = 0; iCharge <d_numberGlobalCharges; iCharge++ )
+        {
+          vx += atomMass[iCharge]*v[3*iCharge+0];
+          vy += atomMass[iCharge]*v[3*iCharge+1];
+          vz += atomMass[iCharge]*v[3*iCharge+2];
+          COM += atomMass[iCharge];
+          COMx +=atomMass[iCharge]*r[iCharge][0];
+          COMy +=atomMass[iCharge]*r[iCharge][1];
+          COMz += atomMass[iCharge]*r[iCharge][2]; 
+          totalKE += 0.5*atomMass[i]*(v[3*iCharge+0]*v[3*iCharge+0]+v[3*iCharge+1]*v[3*iCharge+1] + v[3*iCharge+2]*v[3*iCharge+2]);
+        }
+        vx /=COM;
+        vy /=COM;
+        vz /=COM;
+        COMx /= COM;
+        COMy /= COM;
+        COMz /= COM;
+        pcout<<" The Center of Mass Velocity from Velocity Verlet: "<<vx<<" "<<vy<<" "<<vz<<std::endl;
+        pcout<<" The Center of Mass Position from Velocity Verlet: "<<COMx<<" "<<COMy<<" "<<COMz<<std::endl;
+      
+      
+        KE = totalKE;
 
-                totalKE += 0.5*atomMass[i]*(v[3*i+0]*v[3*i+0]+v[3*i+1]*v[3*i+1] + v[3*i+2]*v[3*i+2]);
-            }
-        //Save KE
+    }  
+    
+    
+    template <unsigned int FEOrder, unsigned int FEOrderElectro>
+    void    
+    molecularDynamicsClass<FEOrder, FEOrderElectro>::simpleVerlet(std::vector<dealii::Tensor<1, 3, double>>  &disp_0, 
+                        std::vector<double> atomMass , double &KE , std::vector<double> &forceOnAtoms, std::vector<double> &v ) 
+    {
+
+        double totalKE=0.0;
+        KE = 0.0;
+        double dt = d_TimeStep;
+        std::vector<dealii::Tensor<1, 3, double>> disp(d_numberGlobalCharges);
+        double COMM = 0.0;
+        double dx = 0.0;
+        double dy = 0.0;
+        double dz = 0.0; 
+   
+        for(int i=0; i < d_numberGlobalCharges; i++)
+        {          
+               if(d_this_mpi_process == 0)  
+                {   
+                /*Computing New displacement with  O(dt^4) */
+                disp[i][0] = ( disp_0[i][0]*bohrToAng - dt*dt*forceOnAtoms[3*i+0]/atomMass[i]* haPerBohrToeVPerAng)* AngTobohr; //New position of x cordinate
+                disp[i][1] = ( disp_0[i][1]*bohrToAng  - dt*dt*forceOnAtoms[3*i+1]/atomMass[i]* haPerBohrToeVPerAng)* AngTobohr; // New Position of Y cordinate
+                disp[i][2] = ( disp_0[i][2]*bohrToAng  - dt*dt*forceOnAtoms[3*i+2]/atomMass[i]* haPerBohrToeVPerAng)* AngTobohr; // New Position of Z cordinate
+
+
+                /* Computing velocity from v(t) to v(t+dt) */
+                v[3*i+0] = (disp[i][0] + disp_0[i][0])*bohrToAng/(2*dt);
+                v[3*i+1] = (disp[i][0] + disp_0[i][0])*bohrToAng/(2*dt);
+                v[3*i+2] = (disp[i][0] + disp_0[i][0])*bohrToAng/(2*dt);
+
+
+
+                }
+
+                MPI_Bcast(
+                &(disp[i][0]), 3, MPI_DOUBLE, 0, d_mpi_communicator);
+                MPI_Bcast(
+                &(v[3*i]), 3, MPI_DOUBLE, 0, d_mpi_communicator);
+                MPI_Bcast(
+                &(disp_0[i][0]), 3, MPI_DOUBLE, 0, d_mpi_communicator);                
+
+        }
+            
+        double update_time;
+        MPI_Barrier(d_mpi_communicator);
+        update_time = MPI_Wtime();
+
+        dftPtr->updateAtomPositionsAndMoveMesh(
+          disp,
+          dftParameters::maxJacobianRatioFactorForMD,false);
+
+        if (dftParameters::verbosity >= 1)
+          { 
+            std::vector<std::vector<double>> atomLocations;
+             dftPtr->getAtomLocations(atomLocations);  
+            pcout << "Displacement  " << std::endl;
+            for (int iCharge = 0; iCharge < d_numberGlobalCharges; ++iCharge)
+              {
+                    if(atomLocations[iCharge][0] == 3)
+                      {
+                                        pcout << "###Charge Id: " << iCharge << " "
+                      << disp[iCharge][0] << " "
+                      << disp[iCharge][1] << " "
+                      << disp[iCharge][2] << std::endl;
+                      }
+                      else
+                      {
+                                        pcout << "Charge Id: " << iCharge << " "
+                      << disp[iCharge][0] << " "
+                      << disp[iCharge][1] << " "
+                      << disp[iCharge][2] << std::endl;
+                      }
+              }         
+          
+          }          
+        for(int iCharge = 0; iCharge <d_numberGlobalCharges; iCharge++)
+          {
+            d_atomFractionalunwrapped[iCharge][2] = d_atomFractionalunwrapped[iCharge][2]+ disp[iCharge][0]/d_domainLength[0];
+            d_atomFractionalunwrapped[iCharge][3] = d_atomFractionalunwrapped[iCharge][3]+ disp[iCharge][1]/d_domainLength[0];
+            d_atomFractionalunwrapped[iCharge][4] = d_atomFractionalunwrapped[iCharge][4]+ disp[iCharge][2]/d_domainLength[0];
+          } 
+
+            pcout<<"---- Updated Unwrapped Coordinates: -----"<<std::endl;
+            for (int iCharge = 0; iCharge < d_numberGlobalCharges; ++iCharge)
+              {
+                    if(d_atomFractionalunwrapped[iCharge][0] == 3)
+                      {
+                        pcout << "$$$ Charge No. " << iCharge << " "
+                      << d_atomFractionalunwrapped[iCharge][2] << " "
+                      << d_atomFractionalunwrapped[iCharge][3] << " "
+                      << d_atomFractionalunwrapped[iCharge][4] << std::endl;
+                      }
+                      else
+                      {
+                        pcout << "Charge No. " << iCharge << " "
+                      << d_atomFractionalunwrapped[iCharge][2] << " "
+                      << d_atomFractionalunwrapped[iCharge][3] << " "
+                      << d_atomFractionalunwrapped[iCharge][4] << std::endl;
+                      }
+              }         
+          
+                   
+
+        MPI_Barrier(d_mpi_communicator);
+
+        update_time = MPI_Wtime() - update_time;
+        
+        if (dftParameters::verbosity >= 1)
+          pcout << "Time taken for updateAtomPositionsAndMoveMesh: "
+                << update_time << std::endl;
+        dftPtr->solve(true, false, false, false); 
+        dftPtr->getForceonAtoms(forceOnAtoms);         
+
         
        //Printing COM velocity
         double COM = 0.0;
@@ -934,16 +1133,26 @@ namespace dftfe
           vy += atomMass[iCharge]*v[3*iCharge+1];
           vz += atomMass[iCharge]*v[3*iCharge+2];
           COM += atomMass[iCharge];
+          totalKE += 0.5*atomMass[iCharge]*(v[3*iCharge+0]*v[3*iCharge+0]+v[3*iCharge+1]*v[3*iCharge+1] + v[3*iCharge+2]*v[3*iCharge+2]);
+          disp_0[iCharge][0] = disp[iCharge][0];
+          disp_0[iCharge][1] = disp[iCharge][1];
+          disp_0[iCharge][2] = disp[iCharge][2];        
+        
+        
         }
         vx /=COM;
         vy /=COM;
         vz /=COM;
-        pcout<<" The Center of Mass Velocity from Velocity Verlet: "<<vx<<" "<<vy<<" "<<vz<<std::endl;
+        pcout<<" The Center of Mass Velocity from Simple Verlet: "<<vx<<" "<<vy<<" "<<vz<<std::endl;  
+        KE = totalKE;  
       
-      
-        KE = totalKE;
 
-    }  
+
+    }                         
+    
+    
+    
+    
     template <unsigned int FEOrder, unsigned int FEOrderElectro>
     void    
     molecularDynamicsClass<FEOrder, FEOrderElectro>::RescaleVelocities(std::vector<double> &v,double &KE,
@@ -1074,14 +1283,15 @@ namespace dftfe
     
     template <unsigned int FEOrder, unsigned int FEOrderElectro>
     void
-    molecularDynamicsClass<FEOrder, FEOrderElectro>::writeRestartFile(std::vector<double> velocity , std::vector<double> force , std::vector<double> KineticEnergyVector ,
+    molecularDynamicsClass<FEOrder, FEOrderElectro>::writeRestartFile(std::vector<dealii::Tensor<1, 3, double>> &disp, std::vector<double> velocity , std::vector<double> force , std::vector<double> KineticEnergyVector ,
                                                                       std::vector<double> InternalEnergyVector , std::vector<double> TotalEnergyVector, int time )
 
    {
      //Writes the restart files for velocities and positions
     std::vector<std::vector<double>> fileForceData(d_numberGlobalCharges,
                                                   std::vector<double>(3,0.0));
-
+    std::vector<std::vector<double>> fileDispData(d_numberGlobalCharges,
+                                                  std::vector<double>(3,0.0));
     std::vector<std::vector<double>> fileVelocityData(d_numberGlobalCharges,
                                                   std::vector<double>(3,0.0)); 
     std::vector<std::vector<double>> timeIndexData(1, std::vector<double>(1, 0));
@@ -1115,6 +1325,12 @@ namespace dftfe
       }  
     for (int iCharge = 0; iCharge < d_numberGlobalCharges; ++iCharge)
       {
+        fileDispData[iCharge][0] = disp[iCharge][0];
+        fileDispData[iCharge][1] = disp[iCharge][1];
+        fileDispData[iCharge][2] = disp[iCharge][2];
+      }      
+    for (int iCharge = 0; iCharge < d_numberGlobalCharges; ++iCharge)
+      {
         fileVelocityData[iCharge][0] = velocity[3 * iCharge + 0];
         fileVelocityData[iCharge][1] = velocity[3 * iCharge + 1];
         fileVelocityData[iCharge][2] = velocity[3 * iCharge + 2];
@@ -1133,8 +1349,16 @@ namespace dftfe
     dftUtils::writeDataIntoFile(fileForceData, newFolder2); 
     if(time > 1)
     pcout << "#RESTART NOTE: Force:-" << " Force of TimeStep: "<<time<<" present in file force.chk"<< std::endl
-          <<" Velocity of TimeStep: "<<time-1<<" present in file force.chk.old #"<< std::endl;     
+          <<" Forces of TimeStep: "<<time-1<<" present in file force.chk.old #"<< std::endl;     
+    std::string newFolder22 = tempfolder + "/" + "StepDisplacement.chk";         
+    dftUtils::writeDataIntoFile(fileDispData, newFolder22); 
+    if(time > 1)
+    pcout << "#RESTART NOTE: Step Displacement:-" << " Step Displacements of TimeStep: "<<time<<" present in file StepDisplacement.chk"<< std::endl
+          <<" Step Displacements of TimeStep: "<<time-1<<" present in file StepDisplacement.chk.old #"<< std::endl;     
     MPI_Barrier(d_mpi_communicator);
+
+    MPI_Barrier(d_mpi_communicator);
+
     //std::string newFolder3 = tempfolder + "/" + "time.chk";
     dftUtils::writeDataIntoFile(timeIndexData, newFolder3); //old time == new time then restart files were successfully saved
     pcout << "#RESTART NOTE: restart files for TimeStep: "<<time<<" successfully created #"<< std::endl;     
@@ -1147,7 +1371,7 @@ namespace dftfe
     
     template <unsigned int FEOrder, unsigned int FEOrderElectro>
     void
-    molecularDynamicsClass<FEOrder, FEOrderElectro>::InitialiseFromRestartFile(std::vector<double> &velocity ,
+    molecularDynamicsClass<FEOrder, FEOrderElectro>::InitialiseFromRestartFile(std::vector<dealii::Tensor<1, 3, double>> &disp,std::vector<double> &velocity ,
                                                             std::vector<double> &force, std::vector<double> &KE, std::vector<double> &IE, std::vector<double> &TE  )
     {
         //Initialise Position
@@ -1180,6 +1404,7 @@ namespace dftfe
             velocity[3 * iCharge + 1] = fileVelData[iCharge][1];
             velocity[3 * iCharge + 2] = fileVelData[iCharge][2];
           }   
+          /*
         std::string fileName2 = (dftParameters::ForceRestartFile=="" ? "force.chk":dftParameters::ForceRestartFile); 
         std::string newFolder2 = tempfolder + "/" + fileName2;
         std::vector<std::vector<double>> fileForceData;
@@ -1189,7 +1414,18 @@ namespace dftfe
             force[3 * iCharge + 0] = fileForceData[iCharge][0];
             force[3 * iCharge + 1] = fileForceData[iCharge][1];
             force[3 * iCharge + 2] = fileForceData[iCharge][2];
-          }                
+          }   */             
+        std::string fileName2 = "StepDisplacement.chk"; 
+        std::string newFolder2 = tempfolder + "/" + fileName2;
+        std::vector<std::vector<double>> fileDispData;
+        dftUtils::readFile(3, fileDispData, newFolder2);
+        for (int iCharge = 0; iCharge < d_numberGlobalCharges; ++iCharge)
+          {
+            disp[iCharge][0] = fileDispData[iCharge][0];
+            disp[iCharge][1] = fileDispData[iCharge][1];
+            disp[iCharge][2] = fileDispData[iCharge][2];
+          }  
+
 
       std::string newFolder4 = tempfolder + "/" + "KineticEnergy.chk";
       dftUtils::readFile(1, KE0, newFolder4);
@@ -1200,13 +1436,8 @@ namespace dftfe
       KE[0] = KE0[0][0];
       IE[0] = IE0[0][0];
       TE[0] = TE0[0][0];
-      /*
-      if(dftParameters::ForceRestartFile =="")
-      {
-        dftPtr->solve(true, false, false, false); 
-        dftPtr->getForceonAtomsfromdftptr(force);
-      }
-      */
+ 
+
         dftPtr->solve(true, false, false, false); 
         dftPtr->getForceonAtoms(force);     
       

@@ -269,6 +269,30 @@ namespace dftfe
 
         /**
 
+    * @brief simpleVerlet
+
+     * @param[in] disp_0 Stores the positions at (t-dt)
+     * @param[in] forceOnAtoms Stores the -ve of force on each charge, updated at each TimeStep
+     * @param[in] atomMass Stores the mass of each Charge.
+     * @param[in] Temperature  temperature at current Timestep
+     * 
+     * @param[out] KE Kinetic Energy at current timestp in eV
+     * @param[out] forceonAtoms Updated -ve forces on each charge.
+     * @param[out] disp Updated displacement for (t+dt)
+     * @param[out] v Updated velocity of each atom
+     *    
+     *  
+     *     
+     */ 
+        void simpleVerlet(std::vector<dealii::Tensor<1, 3, double>> &disp_0, 
+                        std::vector<double> atomMass , double &KE , std::vector<double> &forceOnAtoms, std::vector<double> &v );
+
+        /**
+
+
+
+
+
     * @brief  writeRestartFile: Writing files at each timestep to mdRestart
 
      * @param[in] velocity Velocity updated from restart
@@ -281,13 +305,14 @@ namespace dftfe
      *     
      */  
        
-       void writeRestartFile(std::vector<double> velocity , std::vector<double> force  , std::vector<double> KineticEnergyVector,
+       void writeRestartFile(std::vector<dealii::Tensor<1, 3, double>> &disp,std::vector<double> velocity , std::vector<double> force  , std::vector<double> KineticEnergyVector,
                               std::vector<double> InternalEnergyVector, std::vector<double> TotalEnergyVector, int time );   
 
         /**
 
     * @brief  InitialiseFromRestartFile : Initialise atomcordinates, velocity and force at restart
 
+     * @param[in] disp Displacements of previous timestep from restart
      * @param[in] velocity Velocity updated from restart
      * @param[in] force Force updated from dft->Solve
      * @param[in] PE  Free energy of system at current Timestep
@@ -299,7 +324,7 @@ namespace dftfe
      *  
      *     
      */  
-        void InitialiseFromRestartFile( std::vector<double> &velocity, std::vector<double> &force , std::vector<double> &KE , std::vector<double> &IE , std::vector<double> &TE  );   
+        void InitialiseFromRestartFile(std::vector<dealii::Tensor<1, 3, double>> &disp, std::vector<double> &velocity, std::vector<double> &force , std::vector<double> &KE , std::vector<double> &IE , std::vector<double> &TE  );   
 
         /**
 
@@ -325,7 +350,7 @@ namespace dftfe
      *  
      *     
      */  
-        void InitialiseFromRestartNHCFile( std::vector<double> &v_e, std::vector<double> &e , std::vector<double> &Q   );  
+        void InitialiseFromRestartNHCFile(std::vector<double> &v_e, std::vector<double> &e , std::vector<double> &Q   );  
 
         /**
 

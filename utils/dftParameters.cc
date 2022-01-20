@@ -154,6 +154,7 @@ namespace dftfe
     double startingTempBOMD                                     = 300;
     double thermostatTimeConstantBOMD                            = 100;
     double MaxWallTime                                          = 2592000.0;
+    bool usevelocityverlet                                      = true;
     std::string  tempControllerTypeBOMD                         ="";
     std::string  VelocityRestartFile                              = "";
     std::string  ForceRestartFile                                   = ""; 
@@ -1104,7 +1105,11 @@ namespace dftfe
         prm.declare_entry("MAX WALL TIME",
                           "2592000.0",
                           Patterns::Double(0.0),
-                          "[Standard] Maximum Wall Time in seconds");                          
+                          "[Standard] Maximum Wall Time in seconds"); 
+        prm.declare_entry("USE VELOCITY VERLET INTEGRATOR",
+                           "true",
+                           Patterns::Bool(),
+                           "[Standard] Integrator selection");                                           
 
         prm.declare_entry(
           "DIRAC DELTA KERNEL SCALING CONSTANT XL BOMD",
@@ -1453,7 +1458,8 @@ namespace dftfe
           prm.get_double("STARTING TEMPERATURE");
         dftParameters::thermostatTimeConstantBOMD =
           prm.get_double("THERMOSTAT TIME CONSTANT");
-        dftParameters::MaxWallTime  = prm.get_double("MAX WALL TIME");  
+        dftParameters::MaxWallTime  = prm.get_double("MAX WALL TIME"); 
+        dftParameters::usevelocityverlet = prm.get_bool("USE VELOCITY VERLET INTEGRATOR"); 
 
 
         dftParameters::tempControllerTypeBOMD =
