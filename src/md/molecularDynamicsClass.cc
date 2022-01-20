@@ -390,14 +390,10 @@ namespace dftfe
             MPI_Barrier(d_mpi_communicator);
             step_time = MPI_Wtime();   
 
-            if(dftParameters::usevelocityverlet == true)
-            {
-              velocityVerlet(velocity, displacements,atomMass,KineticEnergy, force);
-            }
-            else
-            {
-              simpleVerlet(displacements,atomMass,KineticEnergy,force,velocity);
-            }
+
+            velocityVerlet(velocity, displacements,atomMass,KineticEnergy, force);
+
+
             MPI_Barrier(d_mpi_communicator);
    
             KineticEnergyVector[d_TimeIndex-d_startingTimeStep]  = KineticEnergy / haToeV;
@@ -491,15 +487,11 @@ namespace dftfe
             MPI_Barrier(d_mpi_communicator);
             step_time = MPI_Wtime();   
 
-            if(dftParameters::usevelocityverlet == true)
-            {
-              velocityVerlet(velocity, displacements,atomMass,KineticEnergy, force);
-            }
-            else
-            {
-              simpleVerlet(displacements,atomMass,KineticEnergy,force,velocity);
-            }
-            //MPI_Barrier(d_mpi_communicator);
+
+            velocityVerlet(velocity, displacements,atomMass,KineticEnergy, force);
+
+
+            MPI_Barrier(d_mpi_communicator);
             TemperatureFromVelocities = 2.0/3.0/double(d_numberGlobalCharges-1)*KineticEnergy/(kB);
             if(d_TimeIndex%d_ThermostatTimeConstant==0)
             {
@@ -619,16 +611,11 @@ namespace dftfe
             MPI_Barrier(d_mpi_communicator);
             step_time = MPI_Wtime();   
             NoseHoverChains(velocity, Thermostatvelocity,Thermostatposition, ThermostatMass, KineticEnergyVector[d_TimeIndex - 1 - d_startingTimeStep]*haToeV, d_startingTemperature);
-            if(dftParameters::usevelocityverlet == true)
-            {
-              velocityVerlet(velocity, displacements,atomMass,KineticEnergy, force);
-            }
-            else
-            {
-              simpleVerlet(displacements,atomMass,KineticEnergy,force,velocity);
-            }
+
+            velocityVerlet(velocity, displacements,atomMass,KineticEnergy, force);
+
             MPI_Barrier(d_mpi_communicator);
-          //  TemperatureFromVelocities = 2.0/3.0/double(d_numberGlobalCharges-1)*KineticEnergy/(kB); 
+          
             NoseHoverChains(velocity, Thermostatvelocity,Thermostatposition, ThermostatMass,KineticEnergy,d_startingTemperature);          
             KineticEnergy = 0.0;
             for(int iCharge=0; iCharge < d_numberGlobalCharges; iCharge++)
@@ -746,14 +733,10 @@ namespace dftfe
             MPI_Barrier(d_mpi_communicator);
             step_time = MPI_Wtime();   
 
-            if(dftParameters::usevelocityverlet == true)
-            {
-              velocityVerlet(velocity, displacements,atomMass,KineticEnergy, force);
-            }
-            else
-            {
-              simpleVerlet(displacements,atomMass,KineticEnergy,force,velocity);
-            }
+
+            velocityVerlet(velocity, displacements,atomMass,KineticEnergy, force);
+
+
             MPI_Barrier(d_mpi_communicator);
 
             svr(velocity,KineticEnergy,KEref);
@@ -850,57 +833,56 @@ namespace dftfe
         double COMx = 0.0;
         double COMy = 0.0;
         double COMz = 0.0;
-        if(d_this_mpi_process == 0) 
-        {
-          for(i=0; i < d_numberGlobalCharges; i++)
-          {          
-                
-                  
-                /*Computing New position as taylor expansion about r(t) O(dt^3) */
-                r[i][0] = ( dt*v[3*i+0] - dt*dt_2*forceOnAtoms[3*i+0]/atomMass[i]* haPerBohrToeVPerAng)* AngTobohr; //New position of x cordinate
-                r[i][1] = ( dt*v[3*i+1] - dt*dt_2*forceOnAtoms[3*i+1]/atomMass[i]* haPerBohrToeVPerAng)* AngTobohr; // New Position of Y cordinate
-                r[i][2] = ( dt*v[3*i+2] - dt*dt_2*forceOnAtoms[3*i+2]/atomMass[i]* haPerBohrToeVPerAng)* AngTobohr; // New POsition of Z cordinate
-                COMM +=atomMass[i];
-                COMx += atomMass[i]*r[i][0];
-                COMy += atomMass[i]*r[i][1];
-                COMz += atomMass[i]*r[i][2];
+
+        for(i=0; i < d_numberGlobalCharges; i++)
+        {          
+
+               if(d_this_mpi_process == 0)  
+                {   
+
+                  /*Computing New position as taylor expansion about r(t) O(dt^3) */
+                  r[i][0] = ( dt*v[3*i+0] - dt*dt_2*forceOnAtoms[3*i+0]/atomMass[i]* haPerBohrToeVPerAng)* AngTobohr; //New position of x cordinate
+                  r[i][1] = ( dt*v[3*i+1] - dt*dt_2*forceOnAtoms[3*i+1]/atomMass[i]* haPerBohrToeVPerAng)* AngTobohr; // New Position of Y cordinate
+                  r[i][2] = ( dt*v[3*i+2] - dt*dt_2*forceOnAtoms[3*i+2]/atomMass[i]* haPerBohrToeVPerAng)* AngTobohr; // New POsition of Z cordinate
+
+
 
                 /* Computing velocity from v(t) to v(t+dt/2) */
+
                 v[3*i+0] = v[3*i+0] - forceOnAtoms[3*i+0]/atomMass[i]*dt_2* haPerBohrToeVPerAng;
                 v[3*i+1] = v[3*i+1] - forceOnAtoms[3*i+1]/atomMass[i]*dt_2* haPerBohrToeVPerAng;
                 v[3*i+2] = v[3*i+2] - forceOnAtoms[3*i+2]/atomMass[i]*dt_2* haPerBohrToeVPerAng;
 
-                
-/*
+
+                }
+
+
                 MPI_Bcast(
                 &(r[i][0]), 3, MPI_DOUBLE, 0, d_mpi_communicator);
                 MPI_Bcast(
-                &(v[3*i]), 3, MPI_DOUBLE, 0, d_mpi_communicator); */
+                &(v[3*i]), 3, MPI_DOUBLE, 0, d_mpi_communicator);
+                COMM += atomMass[i];
+                COMx += atomMass[i]*r[i][0];
+                COMy += atomMass[i]*r[i][1];
+                COMz += atomMass[i]*r[i][2];
 
-          }
-          COMx /=COMM;
-          COMy /=COMM;
-          COMz /=COMM;
-        
-        } 
-        MPI_Barrier(d_mpi_communicator);  
-        for(i = 0;  i < d_numberGlobalCharges; i++)
-        {
-          if(d_this_mpi_process == 0)
-          {
-            r[i][0] -=COMx;
-            r[i][1] -= COMy;
-            r[i][2] -= COMz;
-          }
-        
-          MPI_Bcast(
-                &(r[i][0]), 3, MPI_DOUBLE, 0, d_mpi_communicator);
-          MPI_Bcast(
-                &(v[3*i]), 3, MPI_DOUBLE, 0, d_mpi_communicator);        
-        
-        
-        }  
+        }
+        COMx /=COMM;
+        COMy /=COMM;
+        COMz /=COMM;
+        for(i=0; i < d_numberGlobalCharges; i++)
+        {          
 
+               if(d_this_mpi_process == 0)  
+                {  
+                  r[i][0] -=COMx;
+                  r[i][1] -=COMy;
+                  r[i][2] -=COMz;
+                }
+                MPI_Bcast(
+                &(r[i][0]), 3, MPI_DOUBLE, 0, d_mpi_communicator);        
+
+        }        
             
         double update_time;
         
@@ -973,7 +955,21 @@ namespace dftfe
         dftPtr->getForceonAtoms(forceOnAtoms);         
         //Call Force
         totalKE = 0.0;
-        
+        /* Second half of velocty verlet */
+        for(i=0; i < d_numberGlobalCharges; i++)
+         {
+            if(d_this_mpi_process == 0)
+              {
+                  v[3*i+0] = v[3*i+0] - forceOnAtoms[3*i+0]/atomMass[i]*dt_2* haPerBohrToeVPerAng;
+                  v[3*i+1] = v[3*i+1] - forceOnAtoms[3*i+1]/atomMass[i]*dt_2* haPerBohrToeVPerAng;
+                  v[3*i+2] = v[3*i+2] - forceOnAtoms[3*i+2]/atomMass[i]*dt_2* haPerBohrToeVPerAng;
+
+              }
+                MPI_Bcast(
+                &(v[3*i]), 3, MPI_DOUBLE, 0, d_mpi_communicator);              
+                totalKE += 0.5*atomMass[i]*(v[3*i+0]*v[3*i+0]+v[3*i+1]*v[3*i+1] + v[3*i+2]*v[3*i+2]);
+
+            }        
        //Printing COM velocity
         double COM = 0.0;
         double vx = 0.0;
@@ -991,7 +987,7 @@ namespace dftfe
           COMx +=atomMass[iCharge]*r[iCharge][0];
           COMy +=atomMass[iCharge]*r[iCharge][1];
           COMz += atomMass[iCharge]*r[iCharge][2]; 
-          totalKE += 0.5*atomMass[i]*(v[3*iCharge+0]*v[3*iCharge+0]+v[3*iCharge+1]*v[3*iCharge+1] + v[3*iCharge+2]*v[3*iCharge+2]);
+          //totalKE += 0.5*atomMass[i]*(v[3*iCharge+0]*v[3*iCharge+0]+v[3*iCharge+1]*v[3*iCharge+1] + v[3*iCharge+2]*v[3*iCharge+2]);
         }
         vx /=COM;
         vy /=COM;
@@ -1000,9 +996,7 @@ namespace dftfe
         COMy /= COM;
         COMz /= COM;
         pcout<<" The Center of Mass Velocity from Velocity Verlet: "<<vx<<" "<<vy<<" "<<vz<<std::endl;
-        pcout<<" The Center of Mass Position from Velocity Verlet: "<<COMx<<" "<<COMy<<" "<<COMz<<std::endl;
-      
-      
+        pcout<<" The Center of Mass Position from Velocity Verlet: "<<COMx<<" "<<COMy<<" "<<COMz<<std::endl;     
         KE = totalKE;
 
     }  
