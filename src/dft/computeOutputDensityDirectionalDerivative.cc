@@ -218,7 +218,7 @@ dftClass<FEOrder, FEOrderElectro>::computeOutputDensityDirectionalDerivative(
                                                                   true);
 
               computing_timer.leave_subsection(
-                "Hamiltonian matrix prime Computation");
+                "Hamiltonian matrix prime computation");
             }
 
 #ifdef DFTFE_WITH_GPU

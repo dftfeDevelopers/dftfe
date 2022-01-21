@@ -419,7 +419,7 @@ namespace dftfe
     //  thrust::raw_pointer_cast(&operatorMatrix.getCellWaveFunctionMatrix()[0]));
 
     cudaUtils::Vector<NumberTypeLowPrec, dftfe::MemorySpace::GPU>
-      cellWaveFunctionMatrix(cellsBlockSize * numLocalDofs*BVec, zero);
+      cellWaveFunctionMatrix(cellsBlockSize *numNodesPerElement*BVec, zero);
 
     NumberTypeLowPrec *shapeFunctionValuesInvertedDevice;
 
