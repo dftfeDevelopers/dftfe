@@ -173,7 +173,7 @@ dftClass<FEOrder, FEOrderElectro>::nodalDensity_mixing_simple_kerker(
     *gradRhoInValues,
     dftParameters::xcFamilyType == "GGA");
 
-  return std::sqrt(normValue);
+  return normValue;
 }
 
 // implement nodal anderson mixing scheme with Kerker
@@ -438,5 +438,5 @@ dftClass<FEOrder, FEOrderElectro>::nodalDensity_mixing_anderson_kerker(
     dftParameters::xcFamilyType == "GGA");
 
 
-  return std::sqrt(normValue);
+  return normValue;
 }
