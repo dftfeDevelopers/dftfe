@@ -854,8 +854,10 @@ namespace dftfe
     double totalNuclearElectrostaticEnergy =
       dealii::Utilities::MPI::sum(nuclearElectrostaticEnergy, mpi_communicator);
 
-
-
+    if(dftParameters::dispersioncorrectiontype!=0)
+    {
+      totalEnergy += d_energyDispersion;
+    }
     //
     // total energy
     //
@@ -2035,6 +2037,11 @@ namespace dftfe
       dealii::Utilities::MPI::sum(electrostaticEnergyTotPot, mpi_communicator);
     double totalNuclearElectrostaticEnergy =
       dealii::Utilities::MPI::sum(nuclearElectrostaticEnergy, mpi_communicator);
+
+    if(dftParameters::dispersioncorrectiontype!=0)
+    {
+      totalEnergy += d_energyDispersion;
+    }
 
     //
     // total energy

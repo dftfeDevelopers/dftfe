@@ -122,8 +122,20 @@ forceClass<FEOrder, FEOrderElectro>::computeStress(
   d_stressKPoints = Utilities::MPI::sum(d_stressKPoints, dftPtr->interpoolcomm);
   d_stress += d_stressKPoints;
 
+  if(dftParameters::dispersioncorrectiontype!=0)
+  {
+    for (unsigned int irow = 0; irow < 3; irow++)
+    {
+      for (unsigned int icol = 0; icol < 3; icol++)
+      {
+        d_stress[irow][icol] += d_stressDispersion[irow][icol];
+      }
+    }
+  }
   // Scale by inverse of domain volume
   d_stress = d_stress * (1.0 / dftPtr->d_domainVolume);
+
+
 }
 
 
