@@ -30,6 +30,8 @@ namespace dftfe
    */
   class energyCalculator
   {
+  private:
+    double d_energyDispersion;
   public:
     /**
      * @brief Constructor

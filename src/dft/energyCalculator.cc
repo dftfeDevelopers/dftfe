@@ -355,6 +355,7 @@ namespace dftfe
     , interBandGroupComm(interbandgroup_comm)
     , pcout(std::cout,
             (dealii::Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0))
+    , d_energyDispersion(0.0)
   {}
 
   // compute energies

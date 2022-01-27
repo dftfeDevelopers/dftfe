@@ -892,6 +892,11 @@ namespace dftfe
     /// Storage for configurational stress tensor
     Tensor<2, 3, double> d_stress;
 
+
+    /// Storage for dispersion corrections for force and stress
+    std::vector<double> d_forceDispersion;
+    Tensor<2, 3, double> d_stressDispersion;
+    
     /* Part of the stress tensor which is summed over k points.
      * It is a temporary data structure required for stress evaluation
      * (d_stress) when parallization over k points is on.
