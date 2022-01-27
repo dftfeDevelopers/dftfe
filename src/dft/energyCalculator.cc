@@ -34,6 +34,7 @@ namespace dftfe
                 const double                      totalexchangeEnergy,
                 const double                      totalcorrelationEnergy,
                 const double                      totalElectrostaticEnergy,
+                const double                      dispersionEnergy,
                 const double                      totalEnergy,
                 const unsigned int                numberAtoms,
                 const dealii::ConditionalOStream &pcout,
@@ -120,6 +121,15 @@ namespace dftfe
               pcout << bufferEnergy;
             }
 
+          if (dftParameters::dispersioncorrectiontype!=0)
+          {
+            sprintf(bufferEnergy,
+                  "%-52s:%25.16e\n",
+                  "Dispersion energy",
+                  dispersionEnergy);
+          }
+            
+          pcout << bufferEnergy;
           sprintf(bufferEnergy,
                   "%-52s:%25.16e\n",
                   "Total internal energy",
@@ -880,6 +890,7 @@ namespace dftfe
                               totalexchangeEnergy,
                               totalcorrelationEnergy,
                               allElectronElectrostaticEnergy,
+                              d_energyDispersion,
                               totalEnergy,
                               numberGlobalAtoms,
                               pcout,
@@ -2065,6 +2076,7 @@ namespace dftfe
                               totalexchangeEnergy,
                               totalcorrelationEnergy,
                               allElectronElectrostaticEnergy,
+                              d_energyDispersion,
                               totalEnergy,
                               numberGlobalAtoms,
                               pcout,
