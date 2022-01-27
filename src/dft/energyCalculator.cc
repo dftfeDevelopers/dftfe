@@ -2170,4 +2170,8 @@ namespace dftfe
 
     return temperature * entropy;
   }
+  void energyCalculator::setDispersionEnergy(double dispEnergy)
+  {
+    d_energyDispersion=dispEnergy;
+  }
 } // namespace dftfe

@@ -323,6 +323,9 @@ namespace dftfe
                           const bool   isConstraintMagnetization,
                           const double temperature) const;
 
+
+    void setDispersionEnergy(double dispEnergy);
+
   private:
     const MPI_Comm mpi_communicator;
     const MPI_Comm interpoolcomm;

@@ -71,6 +71,8 @@ extern "C"
 #include <elpa.hh>
 }
 
+#include <dftd3.h>
+#include <dftd4.h>
 
 namespace dftfe
 {
@@ -101,6 +103,7 @@ namespace dftfe
 #include "psiInitialGuess.cc"
 #include "publicMethods.cc"
 #include "restart.cc"
+#include "dftd.cc"
 
   //
   // dft constructor
@@ -3148,6 +3151,7 @@ namespace dftfe
 
             const Quadrature<3> &quadrature =
               matrix_free_data.get_quadrature(d_densityQuadratureId);
+            energyCalc.setDispersionEnergy(computeDispersionCorrection());
             const double totalEnergy =
               dftParameters::spinPolarized == 0 ?
                 energyCalc.computeEnergy(
@@ -3387,6 +3391,7 @@ namespace dftfe
     if (!(dftParameters::isBOMD && dftParameters::isXLBOMD &&
           solveLinearizedKS))
       {
+        energyCalc.setDispersionEnergy(computeDispersionCorrection());
         const double totalEnergy =
           dftParameters::spinPolarized == 0 ?
             energyCalc.computeEnergy(d_dofHandlerPRefined,
