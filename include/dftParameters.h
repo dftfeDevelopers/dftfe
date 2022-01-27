@@ -147,6 +147,15 @@ namespace dftfe
     extern std::string  xcFamilyType;
     extern bool         gpuMemOptMode;
 
+    extern unsigned int dispersioncorrectiontype;
+    extern unsigned int d3dampingtype;
+    extern bool         d3ATM;
+    extern bool         d4MBD;
+    extern std::string  dampingParameterFilename;
+    extern double       d3cutoff2;
+    extern double       d3cutoff3;
+    extern double       d3cutoffCN;
+
     /**
      * Declare parameters.
      */
