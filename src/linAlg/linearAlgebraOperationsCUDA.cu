@@ -724,7 +724,7 @@ namespace dftfe
       fVector.reinit(operatorMatrix.getParallelVecSingleComponent());
 
       vVector = dataTypes::number(0.0), fVector = dataTypes::number(0.0);
-      // std::srand(this_mpi_process);
+      std::srand(this_mpi_process);
       const unsigned int local_size = vVector.local_size();
 
       for (unsigned int i = 0; i < local_size; i++)

@@ -402,6 +402,7 @@ dftClass<FEOrder, FEOrderElectro>::readPSIRadialValues()
 
   boost::math::normal normDist;
   bool                pp = false;
+  std::srand(this_mpi_process);
   for (unsigned int dof = 0; dof < numberDofs; dof++)
     {
       const dealii::types::global_dof_index dofID = locallyOwnedDOFs[dof];
