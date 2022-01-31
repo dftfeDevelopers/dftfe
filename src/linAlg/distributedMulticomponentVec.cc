@@ -467,7 +467,7 @@ namespace dftfe
              (std::is_same<NumberType, cuDoubleComplex>::value ||
               std::is_same<NumberType, cuFloatComplex>::value))
       {
-        if (d_locallyOwnedDofsSize > 0)
+        if ((d_locallyOwnedSize + d_ghostSize) > 0)
           {
             CUDACHECK(cudaMalloc((void **)&d_vecData,
                                  (d_locallyOwnedSize + d_ghostSize) *
