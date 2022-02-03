@@ -820,9 +820,9 @@ namespace dftfe
                             "[Standard] Mixing parameter.");
 
           prm.declare_entry("ADAPTIVE RANK REL TOL",
-                            "3.0e-1",
+                            "0.3",
                             Patterns::Double(0.0, 1.0),
-                            "[Standard] Tolerance criteria for rank updates.");
+                            "[Standard] Tolerance criteria for rank updates. 0.4 is a more efficient choice when using ACCUMULATED_ADAPTIVE method.");
 
           prm.declare_entry(
             "ADAPTIVE RANK REL TOL REACCUM FACTOR",
