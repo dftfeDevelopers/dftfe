@@ -809,8 +809,8 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::computeHamiltonianMatrix(
                 }
             }
 
-          if (dftParameters::isPseudopotential ||
-              dftParameters::smearedNuclearCharges &&
+          if ((dftParameters::isPseudopotential ||
+              dftParameters::smearedNuclearCharges) &&
                 !onlyHPrimePartForFirstOrderDensityMatResponse)
             {
               count = 0;
