@@ -229,8 +229,8 @@ dftClass<FEOrder, FEOrderElectro>::lowrankApproxScfJacobianInvSpinPolarized(
   double             charge;
   const unsigned int local_size = residualRho.local_size();
 
-  const unsigned int maxRankCurrentSCF = 30;
-  const unsigned int maxRankAccum      = 30;
+  const unsigned int maxRankCurrentSCF = dftParameters::methodSubTypeLRJI == "ACCUMULATED_ADAPTIVE"?15:20;
+  const unsigned int maxRankAccum      = 20;
 
   if (d_rankCurrent >= 1 &&
       dftParameters::methodSubTypeLRJI == "ACCUMULATED_ADAPTIVE")
@@ -273,7 +273,9 @@ dftClass<FEOrder, FEOrderElectro>::lowrankApproxScfJacobianInvSpinPolarized(
 
   unsigned int       rankAddedInThisScf = 0;
   const unsigned int maxRankThisScf     = (scfIter < 2) ? 5 : maxRankCurrentSCF;
-  while (rankAddedInThisScf < maxRankThisScf)
+  while (((rankAddedInThisScf < maxRankThisScf) && d_rankCurrent < maxRankAccum)
+         || ((normValue < dftParameters::selfConsistentSolverTolerance) &&
+              (dftParameters::estimateJacCondNoFinalSCFIter)))
     {
       if (rankAddedInThisScf == 0)
         {

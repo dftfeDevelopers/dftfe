@@ -156,7 +156,7 @@ namespace dftfe
     double      mixingParameterLRJI           = 0.5;
     double      adaptiveRankRelTolLRJI        = 0.3;
     std::string methodSubTypeLRJI             = "";
-    double      factorAdapAccumClearLRJI      = 1.5;
+    double      factorAdapAccumClearLRJI      = 2.0;
     double      absPoissonSolverToleranceLRJI = 1.0e-6;
     bool        singlePrecLRJI                = false;
     bool        estimateJacCondNoFinalSCFIter = false;
@@ -820,13 +820,13 @@ namespace dftfe
                             "[Standard] Mixing parameter.");
 
           prm.declare_entry("ADAPTIVE RANK REL TOL",
-                            "3.0e-1",
+                            "0.3",
                             Patterns::Double(0.0, 1.0),
-                            "[Standard] Tolerance criteria for rank updates.");
+                            "[Standard] Tolerance criteria for rank updates. 0.4 is a more efficient choice when using ACCUMULATED_ADAPTIVE method.");
 
           prm.declare_entry(
             "ADAPTIVE RANK REL TOL REACCUM FACTOR",
-            "1.5",
+            "2.0",
             Patterns::Double(0.0, 100.0),
             "[Advanced] For METHOD SUB TYPE=ACCUMULATED_ADAPTIVE.");
 
