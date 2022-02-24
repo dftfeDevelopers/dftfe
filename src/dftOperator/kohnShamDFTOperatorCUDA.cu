@@ -2572,7 +2572,7 @@ namespace dftfe
 
             for (unsigned int q = 0; q < numberQuadraturePoints; ++q)
               {
-                d_vEffJxW[iElemCount * numberQuadraturePoints + q] +=
+                d_vEffJxW[iElemCount * numberQuadraturePoints + q] -=
                   8.0 *
                   (derExchEnergyWithDensityVal[2 * q + spinIndex] +
                    derCorrEnergyWithDensityVal[2 * q + spinIndex]) *
@@ -2603,15 +2603,15 @@ namespace dftfe
 
                 d_derExcWithSigmaTimesGradRhoJxW[iElemCount *
                                                    numberQuadraturePoints * 3 +
-                                                 3 * q] +=
+                                                 3 * q] -=
                   8.0 * (term * gradRhoX + 0.5 * termOff * gradRhoOtherX) * jxw;
                 d_derExcWithSigmaTimesGradRhoJxW[iElemCount *
                                                    numberQuadraturePoints * 3 +
-                                                 3 * q + 1] +=
+                                                 3 * q + 1] -=
                   8.0 * (term * gradRhoY + 0.5 * termOff * gradRhoOtherY) * jxw;
                 d_derExcWithSigmaTimesGradRhoJxW[iElemCount *
                                                    numberQuadraturePoints * 3 +
-                                                 3 * q + 2] +=
+                                                 3 * q + 2] -=
                   8.0 * (term * gradRhoZ + 0.5 * termOff * gradRhoOtherZ) * jxw;
               }
             iElemCount++;
