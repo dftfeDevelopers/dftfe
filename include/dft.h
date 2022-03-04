@@ -190,7 +190,7 @@ namespace dftfe
     /**
      * @brief Kohn-Sham ground-state solve using SCF iteration
      */
-    double GroundStateEnergyvalue, EntropicEnergyvalue;
+    //double GroundStateEnergyvalue, EntropicEnergyvalue;
     void
     solve(const bool computeForces                 = true,
           const bool computeStress                 = true,
@@ -218,11 +218,11 @@ namespace dftfe
     finalizeKohnShamDFTOperator();
 
 
-    void
-    getInternalEnergy(double & GroundStateEnergyvalue);
+    double
+    getInternalEnergy();
 
-    void
-    getEntropicEnergy(double & EntropicEnergyvalue);
+    double
+    getEntropicEnergy();
 
     /**
      * @brief Number of Kohn-Sham eigen values to be computed

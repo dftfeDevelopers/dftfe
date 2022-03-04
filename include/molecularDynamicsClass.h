@@ -271,6 +271,7 @@ namespace dftfe
 
     * @brief simpleVerlet
 
+        Not active.
      * @param[in] disp_0 Stores the positions at (t-dt)
      * @param[in] forceOnAtoms Stores the -ve of force on each charge, updated at each TimeStep
      * @param[in] atomMass Stores the mass of each Charge.

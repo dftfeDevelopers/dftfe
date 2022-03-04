@@ -4244,18 +4244,18 @@ dftClass<FEOrder, FEOrderElectro>::getForceonAtoms(std::vector<double> & atomfor
 } 
 
   template <unsigned int FEOrder, unsigned int FEOrderElectro>
-  void
-  dftClass<FEOrder, FEOrderElectro>::getInternalEnergy(double & GroundStateEnergyvalue)
+  double
+  dftClass<FEOrder, FEOrderElectro>::getInternalEnergy()
   {
-      GroundStateEnergyvalue = d_groundStateEnergy;
+      return d_groundStateEnergy;
       
 
   }
   template <unsigned int FEOrder, unsigned int FEOrderElectro>
-  void
-  dftClass<FEOrder, FEOrderElectro>::getEntropicEnergy(double & EntropicEnergyvalue)
+  double
+  dftClass<FEOrder, FEOrderElectro>::getEntropicEnergy()
   {
-      EntropicEnergyvalue    = d_entropicEnergy;
+      return d_entropicEnergy;
     
   }  
 
