@@ -382,7 +382,7 @@ namespace dftfe
 
         
       
-        double KineticEnergy;
+        double KineticEnergy, GroundStateEnergyvalue,EntropicEnergyvalue ;
         double TemperatureFromVelocities;
         for(d_TimeIndex=d_startingTimeStep+1; d_TimeIndex < d_startingTimeStep+d_numberofSteps;d_TimeIndex++)
         {       
@@ -395,10 +395,11 @@ namespace dftfe
 
 
             MPI_Barrier(d_mpi_communicator);
-   
+            dftPtr->getInternalEnergy(GroundStateEnergyvalue);
+            dftPtr->getEntropicEnergy(EntropicEnergyvalue);
             KineticEnergyVector[d_TimeIndex-d_startingTimeStep]  = KineticEnergy / haToeV;
-            InternalEnergyVector[d_TimeIndex-d_startingTimeStep] = dftPtr->GroundStateEnergyvalue;
-            EntropicEnergyVector[d_TimeIndex-d_startingTimeStep] = dftPtr->EntropicEnergyvalue;
+            InternalEnergyVector[d_TimeIndex-d_startingTimeStep] = GroundStateEnergyvalue;
+            EntropicEnergyVector[d_TimeIndex-d_startingTimeStep] = EntropicEnergyvalue;
             TotalEnergyVector[d_TimeIndex-d_startingTimeStep]    = KineticEnergyVector[d_TimeIndex-d_startingTimeStep] +
                                InternalEnergyVector[d_TimeIndex-d_startingTimeStep] -
                                EntropicEnergyVector[d_TimeIndex-d_startingTimeStep]; 
@@ -479,7 +480,7 @@ namespace dftfe
     {
       
       pcout << "---------------mdNVTrescaleThermostat() called ------------------ " <<  std::endl;
-        double KineticEnergy;
+        double KineticEnergy,EntropicEnergyvalue,GroundStateEnergyvalue;
         double TemperatureFromVelocities;
         for(d_TimeIndex=d_startingTimeStep+1; d_TimeIndex< d_startingTimeStep+d_numberofSteps;d_TimeIndex++)
         {       
@@ -498,10 +499,12 @@ namespace dftfe
               RescaleVelocities(velocity,KineticEnergy,atomMass,TemperatureFromVelocities );
             }
 
-            MPI_Barrier(d_mpi_communicator);   
+            MPI_Barrier(d_mpi_communicator);
+            dftPtr->getInternalEnergy(GroundStateEnergyvalue);
+            dftPtr->getEntropicEnergy(EntropicEnergyvalue);               
             KineticEnergyVector[d_TimeIndex-d_startingTimeStep]  = KineticEnergy / haToeV;
-            InternalEnergyVector[d_TimeIndex-d_startingTimeStep] = dftPtr->GroundStateEnergyvalue;
-            EntropicEnergyVector[d_TimeIndex-d_startingTimeStep] = dftPtr->EntropicEnergyvalue;
+            InternalEnergyVector[d_TimeIndex-d_startingTimeStep] = GroundStateEnergyvalue;
+            EntropicEnergyVector[d_TimeIndex-d_startingTimeStep] = EntropicEnergyvalue;
             TotalEnergyVector[d_TimeIndex-d_startingTimeStep]    = KineticEnergyVector[d_TimeIndex-d_startingTimeStep] +
                                InternalEnergyVector[d_TimeIndex-d_startingTimeStep] -
                                EntropicEnergyVector[d_TimeIndex-d_startingTimeStep]; 
@@ -584,7 +587,7 @@ namespace dftfe
 
       pcout << "--------------mdNVTnosehoverchainsThermostat() called ------------------ " <<  std::endl;  
       
-        double KineticEnergy;
+        double KineticEnergy,GroundStateEnergyvalue,EntropicEnergyvalue;
         double TemperatureFromVelocities;
         double nhctimeconstant;
         TemperatureFromVelocities = 2.0/3.0/double(d_numberGlobalCharges-1)*KineticEnergyVector[0]/(kB); 
@@ -626,10 +629,12 @@ namespace dftfe
               }
 
 
-            MPI_Barrier(d_mpi_communicator);   
+            MPI_Barrier(d_mpi_communicator); 
+            dftPtr->getInternalEnergy(GroundStateEnergyvalue);
+            dftPtr->getEntropicEnergy(EntropicEnergyvalue);              
             KineticEnergyVector[d_TimeIndex-d_startingTimeStep]  = KineticEnergy / haToeV;
-            InternalEnergyVector[d_TimeIndex-d_startingTimeStep] = dftPtr->GroundStateEnergyvalue;
-            EntropicEnergyVector[d_TimeIndex-d_startingTimeStep] = dftPtr->EntropicEnergyvalue;
+            InternalEnergyVector[d_TimeIndex-d_startingTimeStep] = GroundStateEnergyvalue;
+            EntropicEnergyVector[d_TimeIndex-d_startingTimeStep] = EntropicEnergyvalue;
             TotalEnergyVector[d_TimeIndex-d_startingTimeStep]    = KineticEnergyVector[d_TimeIndex-d_startingTimeStep] +
                                InternalEnergyVector[d_TimeIndex-d_startingTimeStep] -
                                EntropicEnergyVector[d_TimeIndex-d_startingTimeStep]; 
@@ -899,7 +904,7 @@ namespace dftfe
             pcout << "Displacement  " << std::endl;
             for (int iCharge = 0; iCharge < d_numberGlobalCharges; ++iCharge)
               {
-                    if(atomLocations[iCharge][0] == 3)
+                    if(atomLocations[iCharge][0] == dftParameters::MDTrack)
                       {
                                         pcout << "###Charge Id: " << iCharge << " "
                       << r[iCharge][0] << " "
@@ -926,7 +931,7 @@ namespace dftfe
             pcout<<"---- Updated Unwrapped Coordinates: -----"<<std::endl;
             for (int iCharge = 0; iCharge < d_numberGlobalCharges; ++iCharge)
               {
-                    if(d_atomFractionalunwrapped[iCharge][0] == 3)
+                    if(d_atomFractionalunwrapped[iCharge][0] == dftParameters::MDTrack)
                       {
                         pcout << "$$$ Charge No. " << iCharge << " "
                       << d_atomFractionalunwrapped[iCharge][2] << " "

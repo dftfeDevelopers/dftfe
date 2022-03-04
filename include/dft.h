@@ -217,6 +217,13 @@ namespace dftfe
     void
     finalizeKohnShamDFTOperator();
 
+
+    void
+    getInternalEnergy(double & GroundStateEnergyvalue);
+
+    void
+    getEntropicEnergy(double & EntropicEnergyvalue);
+
     /**
      * @brief Number of Kohn-Sham eigen values to be computed
      */

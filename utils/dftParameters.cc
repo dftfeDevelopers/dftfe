@@ -159,6 +159,7 @@ namespace dftfe
     std::string  VelocityRestartFile                              = "";
     std::string  ForceRestartFile                                   = ""; 
     std::string  NHCRestartFile                                   = ""; 
+    int MDTrack                                                   =0;
 
 
     //New paramter for selecting mode and NEB parameters
@@ -1100,7 +1101,10 @@ namespace dftfe
                           "1000",
                           Patterns::Integer(0, 200000),
                           "[Standard] Number of time steps.");
-
+        prm.declare_entry("TRACKING ATOMIC NO",
+                          "0",
+                          Patterns::Integer(0, 200000),
+                          "[Standard] The atom Number to track.");
 
         prm.declare_entry("MAX WALL TIME",
                           "2592000.0",
@@ -1451,6 +1455,7 @@ namespace dftfe
           prm.get_double("CHEBY TOL XL BOMD RANK UPDATES FD");
         dftParameters::timeStepBOMD    = prm.get_double("TIME STEP");
         dftParameters::numberStepsBOMD = prm.get_integer("NUMBER OF STEPS");
+        dftParameters::MDTrack = prm.get_integer("TRACKING ATOMIC NO");        
         dftParameters::startingTempBOMDNVE =
           prm.get_double("STARTING TEMP NVE");
 

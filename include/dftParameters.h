@@ -157,7 +157,7 @@ namespace dftfe
     extern double thermostatTimeConstantBOMD;
     extern std::string  tempControllerTypeBOMD;   
     extern bool     usevelocityverlet; 
-
+    extern int MDTrack;
     /**
      * Declare parameters.
      */

@@ -3733,8 +3733,8 @@ namespace dftfe
         writeBands();
       }
 #endif
-      GroundStateEnergyvalue = d_groundStateEnergy;
-      EntropicEnergyvalue    = d_entropicEnergy;
+      //GroundStateEnergyvalue = d_groundStateEnergy;
+      //EntropicEnergyvalue    = d_entropicEnergy;
       
 
 
@@ -4242,6 +4242,23 @@ dftClass<FEOrder, FEOrderElectro>::getForceonAtoms(std::vector<double> & atomfor
 {
   atomforces = (forcePtr->getAtomsForces());
 } 
+
+  template <unsigned int FEOrder, unsigned int FEOrderElectro>
+  void
+  dftClass<FEOrder, FEOrderElectro>::getInternalEnergy(double & GroundStateEnergyvalue)
+  {
+      GroundStateEnergyvalue = d_groundStateEnergy;
+      
+
+  }
+  template <unsigned int FEOrder, unsigned int FEOrderElectro>
+  void
+  dftClass<FEOrder, FEOrderElectro>::getEntropicEnergy(double & EntropicEnergyvalue)
+  {
+      EntropicEnergyvalue    = d_entropicEnergy;
+    
+  }  
+
 
 #include "dft.inst.cc"
 } // namespace dftfe
