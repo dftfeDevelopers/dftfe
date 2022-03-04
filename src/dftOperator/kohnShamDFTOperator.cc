@@ -46,7 +46,7 @@ namespace dftfe
     , d_kPointIndex(0)
     , d_numberNodesPerElement(_dftPtr->matrix_free_data.get_dofs_per_cell(
         dftPtr->d_densityDofHandlerIndex))
-    , d_numberMacroCells(_dftPtr->matrix_free_data.n_macro_cells())
+    , d_numberCellsLocallyOwned(_dftPtr->matrix_free_data.n_physical_cells())
     , d_isStiffnessMatrixExternalPotCorrComputed(false)
     , mpi_communicator(mpi_comm_replica)
     , n_mpi_processes(Utilities::MPI::n_mpi_processes(mpi_comm_replica))
@@ -77,17 +77,6 @@ namespace dftfe
     d_sqrtMassVector.reinit(d_invSqrtMassVector);
 
 
-    //
-    // create macro cell map to subcells
-    //
-    d_macroCellSubCellMap.resize(d_numberMacroCells);
-    for (unsigned int iMacroCell = 0; iMacroCell < d_numberMacroCells;
-         ++iMacroCell)
-      {
-        const unsigned int n_sub_cells =
-          dftPtr->matrix_free_data.n_components_filled(iMacroCell);
-        d_macroCellSubCellMap[iMacroCell] = n_sub_cells;
-      }
 
     //
     // compute mass vector
@@ -199,43 +188,36 @@ namespace dftfe
     distributedCPUVec<dataTypes::number> &src,
     std::vector<dataTypes::number> &      cellWaveFunctionMatrix)
   {
-    unsigned int numberCells = dftPtr->matrix_free_data.n_physical_cells();
-    cellWaveFunctionMatrix.resize(numberCells * d_numberNodesPerElement *
+    cellWaveFunctionMatrix.resize(d_numberCellsLocallyOwned *
+                                    d_numberNodesPerElement *
                                     numberWaveFunctions,
                                   0.0);
-    unsigned int       iElem = 0;
-    const unsigned int inc   = 1;
-    for (unsigned int iMacroCell = 0; iMacroCell < d_numberMacroCells;
-         ++iMacroCell)
+
+    const unsigned int inc = 1;
+    for (unsigned int iElem = 0; iElem < d_numberCellsLocallyOwned; ++iElem)
       {
-        for (unsigned int iCell = 0; iCell < d_macroCellSubCellMap[iMacroCell];
-             ++iCell)
+        for (unsigned int iNode = 0; iNode < d_numberNodesPerElement; ++iNode)
           {
-            for (unsigned int iNode = 0; iNode < d_numberNodesPerElement;
-                 ++iNode)
-              {
-                dealii::types::global_dof_index localNodeId =
-                  d_flattenedArrayMacroCellLocalProcIndexIdMap[iElem][iNode];
+            dealii::types::global_dof_index localNodeId =
+              d_flattenedArrayCellLocalProcIndexIdMap[iElem][iNode];
 #ifdef USE_COMPLEX
-                zcopy_(&numberWaveFunctions,
-                       src.begin() + localNodeId,
-                       &inc,
-                       &cellWaveFunctionMatrix[d_numberNodesPerElement *
-                                                 numberWaveFunctions * iElem +
-                                               numberWaveFunctions * iNode],
-                       &inc);
+            zcopy_(&numberWaveFunctions,
+                   src.begin() + localNodeId,
+                   &inc,
+                   &cellWaveFunctionMatrix[d_numberNodesPerElement *
+                                             numberWaveFunctions * iElem +
+                                           numberWaveFunctions * iNode],
+                   &inc);
 
 #else
-                dcopy_(&numberWaveFunctions,
-                       src.begin() + localNodeId,
-                       &inc,
-                       &cellWaveFunctionMatrix[d_numberNodesPerElement *
-                                                 numberWaveFunctions * iElem +
-                                               numberWaveFunctions * iNode],
-                       &inc);
+            dcopy_(&numberWaveFunctions,
+                   src.begin() + localNodeId,
+                   &inc,
+                   &cellWaveFunctionMatrix[d_numberNodesPerElement *
+                                             numberWaveFunctions * iElem +
+                                           numberWaveFunctions * iNode],
+                   &inc);
 #endif
-              }
-            ++iElem;
           }
       }
   }
@@ -251,47 +233,37 @@ namespace dftfe
       distributedCPUVec<dataTypes::number> &glbArray)
 
   {
-    unsigned int       iElem = 0;
-    const unsigned int inc   = 1;
-    for (unsigned int iMacroCell = 0; iMacroCell < d_numberMacroCells;
-         ++iMacroCell)
+    const unsigned int inc = 1;
+    for (unsigned int iElem = 0; iElem < d_numberCellsLocallyOwned; ++iElem)
       {
-        for (unsigned int iCell = 0; iCell < d_macroCellSubCellMap[iMacroCell];
-             ++iCell)
+        for (unsigned int iNode = 0; iNode < d_numberNodesPerElement; ++iNode)
           {
-            for (unsigned int iNode = 0; iNode < d_numberNodesPerElement;
-                 ++iNode)
+            if (d_nodesPerCellClassificationMap[iNode] == 0)
               {
-                if (d_nodesPerCellClassificationMap[iNode] == 0)
-                  {
-                    dealii::types::global_dof_index localNodeId =
-                      d_flattenedArrayMacroCellLocalProcIndexIdMap[iElem]
-                                                                  [iNode];
+                dealii::types::global_dof_index localNodeId =
+                  d_flattenedArrayCellLocalProcIndexIdMap[iElem][iNode];
 #ifdef USE_COMPLEX
-                    zcopy_(
-                      &numberWaveFunctions,
-                      &cellWaveFunctionMatrix[d_numberNodesPerElement *
-                                                numberWaveFunctions * iElem +
-                                              numberWaveFunctions * iNode],
-                      &inc,
-                      glbArray.begin() + localNodeId,
-                      &inc);
+                zcopy_(&numberWaveFunctions,
+                       &cellWaveFunctionMatrix[d_numberNodesPerElement *
+                                                 numberWaveFunctions * iElem +
+                                               numberWaveFunctions * iNode],
+                       &inc,
+                       glbArray.begin() + localNodeId,
+                       &inc);
 #else
-                    dcopy_(
-                      &numberWaveFunctions,
-                      &cellWaveFunctionMatrix[d_numberNodesPerElement *
-                                                numberWaveFunctions * iElem +
-                                              numberWaveFunctions * iNode],
-                      &inc,
-                      glbArray.begin() + localNodeId,
-                      &inc);
+                dcopy_(&numberWaveFunctions,
+                       &cellWaveFunctionMatrix[d_numberNodesPerElement *
+                                                 numberWaveFunctions * iElem +
+                                               numberWaveFunctions * iNode],
+                       &inc,
+                       glbArray.begin() + localNodeId,
+                       &inc);
 #endif
-                  }
               }
-            ++iElem;
           }
       }
   }
+
 
 
   // Y = a*X + Y
@@ -324,30 +296,22 @@ namespace dftfe
     unsigned int iElem = 0;
     unsigned int productNumNodesWaveFunctions =
       d_numberNodesPerElement * numberWaveFunctions;
-    for (unsigned int iMacroCell = 0; iMacroCell < d_numberMacroCells;
-         ++iMacroCell)
+    for (unsigned int iElem = 0; iElem < d_numberCellsLocallyOwned; ++iElem)
       {
-        for (unsigned int iCell = 0; iCell < d_macroCellSubCellMap[iMacroCell];
-             ++iCell)
+        unsigned int indexTemp = productNumNodesWaveFunctions * iElem;
+        for (unsigned int iNode = 0; iNode < d_numberNodesPerElement; ++iNode)
           {
-            unsigned int indexTemp = productNumNodesWaveFunctions * iElem;
-            for (unsigned int iNode = 0; iNode < d_numberNodesPerElement;
-                 ++iNode)
+            if (d_nodesPerCellClassificationMap[iNode] == 0)
               {
-                if (d_nodesPerCellClassificationMap[iNode] == 0)
+                unsigned int indexVal = indexTemp + numberWaveFunctions * iNode;
+                for (unsigned int iWave = 0; iWave < numberWaveFunctions;
+                     ++iWave)
                   {
-                    unsigned int indexVal =
-                      indexTemp + numberWaveFunctions * iNode;
-                    for (unsigned int iWave = 0; iWave < numberWaveFunctions;
-                         ++iWave)
-                      {
-                        cellYWaveFunctionMatrix[indexVal + iWave] =
-                          scalarB * cellYWaveFunctionMatrix[indexVal + iWave] +
-                          scalarA * cellXWaveFunctionMatrix[indexVal + iWave];
-                      }
+                    cellYWaveFunctionMatrix[indexVal + iWave] =
+                      scalarB * cellYWaveFunctionMatrix[indexVal + iWave] +
+                      scalarA * cellXWaveFunctionMatrix[indexVal + iWave];
                   }
               }
-            ++iElem;
           }
       }
   }
@@ -493,7 +457,6 @@ namespace dftfe
     const std::map<dealii::CellId, std::vector<double>> &rhoCoreValues,
     const unsigned int externalPotCorrQuadratureId)
   {
-    const unsigned int n_cells = dftPtr->matrix_free_data.n_macro_cells();
     const unsigned int totalLocallyOwnedCells =
       dftPtr->matrix_free_data.n_physical_cells();
     const Quadrature<3> &quadrature_formula =
@@ -503,7 +466,6 @@ namespace dftfe
 
 
     d_vEffJxW.resize(totalLocallyOwnedCells * numberQuadraturePoints, 0.0);
-    typename dealii::DoFHandler<3>::active_cell_iterator cellPtr;
 
     // allocate storage for exchange potential
     std::vector<double> exchangePotentialVal(numberQuadraturePoints);
@@ -512,14 +474,16 @@ namespace dftfe
     //
     // loop over cell block
     //
+    typename DoFHandler<3>::active_cell_iterator cellPtr = dftPtr->dofHandler
+                                                             .begin_active(),
+                                                 endcellPtr =
+                                                   dftPtr->dofHandler.end();
+
     unsigned int iElemCount = 0;
-    for (unsigned int cell = 0; cell < n_cells; ++cell)
+    for (; cellPtr != endcellPtr; ++cellPtr)
       {
-        const unsigned int n_sub_cells =
-          dftPtr->matrix_free_data.n_components_filled(cell);
-        for (unsigned int v = 0; v < n_sub_cells; ++v)
+        if (cellPtr->is_locally_owned())
           {
-            cellPtr = dftPtr->matrix_free_data.get_cell_iterator(cell, v);
             fe_values.reinit(cellPtr);
 
             std::vector<double> densityValue =
@@ -577,7 +541,6 @@ namespace dftfe
     const std::map<dealii::CellId, std::vector<double>> &gradRhoCoreValues,
     const unsigned int externalPotCorrQuadratureId)
   {
-    const unsigned int n_cells = dftPtr->matrix_free_data.n_macro_cells();
     const unsigned int totalLocallyOwnedCells =
       dftPtr->matrix_free_data.n_physical_cells();
     const Quadrature<3> &quadrature_formula =
@@ -600,20 +563,22 @@ namespace dftfe
     std::vector<double> derExchEnergyWithDensityVal(numberQuadraturePoints);
     std::vector<double> derCorrEnergyWithDensityVal(numberQuadraturePoints);
 
-    typename dealii::DoFHandler<3>::active_cell_iterator cellPtr;
+    typename dealii::DoFHandler<3>::active_cell_iterator
+      cellPtr = dftPtr->matrix_free_data
+                  .get_dof_handler(dftPtr->d_densityDofHandlerIndex)
+                  .begin_active(),
+      endcellPtr = dftPtr->matrix_free_data
+                     .get_dof_handler(dftPtr->d_densityDofHandlerIndex)
+                     .end();
 
     //
     // loop over cell block
     //
     unsigned int iElemCount = 0;
-    for (unsigned int cell = 0; cell < n_cells; ++cell)
+    for (; cellPtr != endcellPtr; ++cellPtr)
       {
-        const unsigned int n_sub_cells =
-          dftPtr->matrix_free_data.n_components_filled(cell);
-
-        for (unsigned int v = 0; v < n_sub_cells; ++v)
+        if (cellPtr->is_locally_owned())
           {
-            cellPtr = dftPtr->matrix_free_data.get_cell_iterator(cell, v);
             fe_values.reinit(cellPtr);
 
             const std::vector<DerivativeForm<1, 3, 3>> &inverseJacobians =
@@ -713,7 +678,7 @@ namespace dftfe
                   term * jxw;
               }
             iElemCount++;
-          } // subcell loop
+          } // if cellPtr->is_locally_owned() loop
 
       } // cell loop
 
@@ -953,9 +918,6 @@ namespace dftfe
     const double scalarB,
     distributedCPUVec<double> &dst,
     std::vector<double> &cellDstWaveFunctionMatrix)
-
-
-
   {
     const unsigned int numberDofs = src.local_size() / numberWaveFunctions;
     const unsigned int inc = 1;
@@ -974,20 +936,27 @@ namespace dftfe
           }
       }
 
-    unsigned int iElem = 0;
     unsigned int productNumNodesWaveFunctions =
       d_numberNodesPerElement * numberWaveFunctions;
     std::vector<dealii::types::global_dof_index> cell_dof_indicesGlobal(
       d_numberNodesPerElement);
-    for (unsigned int iMacroCell = 0; iMacroCell < d_numberMacroCells;
-         ++iMacroCell)
+
+    typename dealii::DoFHandler<3>::active_cell_iterator
+      cellPtr = dftPtr->matrix_free_data
+                  .get_dof_handler(dftPtr->d_densityDofHandlerIndex)
+                  .begin_active(),
+      endcellPtr = dftPtr->matrix_free_data
+                     .get_dof_handler(dftPtr->d_densityDofHandlerIndex)
+                     .end();
+
+    unsigned int iElem = 0;
+    for (; cellPtr != endcellPtr; ++cellPtr)
       {
-        for (unsigned int iCell = 0; iCell < d_macroCellSubCellMap[iMacroCell];
-             ++iCell)
+        if (cellPtr->is_locally_owned())
           {
             unsigned int indexTemp = productNumNodesWaveFunctions * iElem;
-            dftPtr->matrix_free_data.get_cell_iterator(iMacroCell, iCell)
-              ->get_dof_indices(cell_dof_indicesGlobal);
+
+            cellPtr->get_dof_indices(cell_dof_indicesGlobal);
             for (unsigned int iNode = 0; iNode < d_numberNodesPerElement;
                  ++iNode)
               {
@@ -1008,9 +977,10 @@ namespace dftfe
                       }
                   }
               }
-            ++iElem;
+            iElem++;
           }
       }
+
 
     if (scaleFlag)
       {
@@ -1071,15 +1041,19 @@ namespace dftfe
           }
       }
 
+    cellPtr =
+      dftPtr->matrix_free_data.get_dof_handler(dftPtr->d_densityDofHandlerIndex)
+        .begin_active();
+    endcellPtr =
+      dftPtr->matrix_free_data.get_dof_handler(dftPtr->d_densityDofHandlerIndex)
+        .end();
+
     iElem = 0;
-    for (unsigned int iMacroCell = 0; iMacroCell < d_numberMacroCells;
-         ++iMacroCell)
+    for (; cellPtr != endcellPtr; ++cellPtr)
       {
-        for (unsigned int iCell = 0; iCell < d_macroCellSubCellMap[iMacroCell];
-             ++iCell)
+        if (cellPtr->is_locally_owned())
           {
-            dftPtr->matrix_free_data.get_cell_iterator(iMacroCell, iCell)
-              ->get_dof_indices(cell_dof_indicesGlobal);
+            cellPtr->get_dof_indices(cell_dof_indicesGlobal);
             unsigned int indexTemp = productNumNodesWaveFunctions * iElem;
             for (unsigned int iNode = 0; iNode < d_numberNodesPerElement;
                  ++iNode)
@@ -1103,7 +1077,7 @@ namespace dftfe
                       }
                   }
               }
-            ++iElem;
+            iElem++;
           }
       }
 
@@ -1619,7 +1593,6 @@ namespace dftfe
     const unsigned int externalPotCorrQuadratureId)
 
   {
-    const unsigned int n_cells = dftPtr->matrix_free_data.n_macro_cells();
     const unsigned int totalLocallyOwnedCells =
       dftPtr->matrix_free_data.n_physical_cells();
 
@@ -1629,23 +1602,29 @@ namespace dftfe
     const int   numberQuadraturePoints = quadrature_formula.size();
 
     d_vEffJxW.resize(totalLocallyOwnedCells * numberQuadraturePoints, 0.0);
-    typename dealii::DoFHandler<3>::active_cell_iterator cellPtr;
+
 
     // allocate storage for exchange potential
     std::vector<double> exchangePotentialVal(2 * numberQuadraturePoints);
     std::vector<double> corrPotentialVal(2 * numberQuadraturePoints);
 
+    typename dealii::DoFHandler<3>::active_cell_iterator
+      cellPtr = dftPtr->matrix_free_data
+                  .get_dof_handler(dftPtr->d_densityDofHandlerIndex)
+                  .begin_active(),
+      endcellPtr = dftPtr->matrix_free_data
+                     .get_dof_handler(dftPtr->d_densityDofHandlerIndex)
+                     .end();
+
+
     //
     // loop over cell block
     //
     unsigned int iElemCount = 0;
-    for (unsigned int cell = 0; cell < n_cells; ++cell)
+    for (; cellPtr != endcellPtr; ++cellPtr)
       {
-        const unsigned int n_sub_cells =
-          dftPtr->matrix_free_data.n_components_filled(cell);
-        for (unsigned int v = 0; v < n_sub_cells; ++v)
+        if (cellPtr->is_locally_owned())
           {
-            cellPtr = dftPtr->matrix_free_data.get_cell_iterator(cell, v);
             fe_values.reinit(cellPtr);
 
             std::vector<double> densityValue =
@@ -1709,7 +1688,6 @@ namespace dftfe
     const std::map<dealii::CellId, std::vector<double>> &gradRhoCoreValues,
     const unsigned int externalPotCorrQuadratureId)
   {
-    const unsigned int n_cells = dftPtr->matrix_free_data.n_macro_cells();
     const unsigned int totalLocallyOwnedCells =
       dftPtr->matrix_free_data.n_physical_cells();
 
@@ -1735,20 +1713,22 @@ namespace dftfe
     std::vector<double> sigmaValue(3 * numberQuadraturePoints);
 
 
-    typename dealii::DoFHandler<3>::active_cell_iterator cellPtr;
+    typename dealii::DoFHandler<3>::active_cell_iterator
+      cellPtr = dftPtr->matrix_free_data
+                  .get_dof_handler(dftPtr->d_densityDofHandlerIndex)
+                  .begin_active(),
+      endcellPtr = dftPtr->matrix_free_data
+                     .get_dof_handler(dftPtr->d_densityDofHandlerIndex)
+                     .end();
 
     //
     // loop over cell block
     //
     unsigned int iElemCount = 0;
-    for (unsigned int cell = 0; cell < n_cells; ++cell)
+    for (; cellPtr != endcellPtr; ++cellPtr)
       {
-        const unsigned int n_sub_cells =
-          dftPtr->matrix_free_data.n_components_filled(cell);
-
-        for (unsigned int v = 0; v < n_sub_cells; ++v)
+        if (cellPtr->is_locally_owned())
           {
-            cellPtr = dftPtr->matrix_free_data.get_cell_iterator(cell, v);
             fe_values.reinit(cellPtr);
 
             const std::vector<DerivativeForm<1, 3, 3>> &inverseJacobians =
@@ -1905,8 +1885,7 @@ namespace dftfe
     const unsigned int externalPotCorrQuadratureId)
   {
     d_externalPotCorrQuadratureId = externalPotCorrQuadratureId;
-    const unsigned int n_cells    = dftPtr->matrix_free_data.n_macro_cells();
-    const int          numberQuadraturePoints =
+    const int numberQuadraturePoints =
       dftPtr->matrix_free_data.get_quadrature(externalPotCorrQuadratureId)
         .size();
 
@@ -1920,15 +1899,22 @@ namespace dftfe
                                       numberQuadraturePoints,
                                     0.0);
 
-    typename dealii::DoFHandler<3>::active_cell_iterator cellPtr;
-    unsigned int                                         iElem = 0;
-    for (unsigned int cell = 0; cell < n_cells; ++cell)
+
+
+    typename dealii::DoFHandler<3>::active_cell_iterator
+      cellPtr = dftPtr->matrix_free_data
+                  .get_dof_handler(dftPtr->d_densityDofHandlerIndex)
+                  .begin_active(),
+      endcellPtr = dftPtr->matrix_free_data
+                     .get_dof_handler(dftPtr->d_densityDofHandlerIndex)
+                     .end();
+
+
+    unsigned int iElem = 0;
+    for (; cellPtr != endcellPtr; ++cellPtr)
       {
-        const unsigned int n_sub_cells =
-          dftPtr->matrix_free_data.n_components_filled(cell);
-        for (unsigned int v = 0; v < n_sub_cells; ++v)
+        if (cellPtr->is_locally_owned())
           {
-            cellPtr = dftPtr->matrix_free_data.get_cell_iterator(cell, v);
             feValues.reinit(cellPtr);
             const std::vector<double> &temp =
               externalPotCorrValues.find(cellPtr->id())->second;

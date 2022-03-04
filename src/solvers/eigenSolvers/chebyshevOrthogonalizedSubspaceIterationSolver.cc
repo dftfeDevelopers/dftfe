@@ -177,12 +177,6 @@ namespace dftfe
 
     computingTimerStandard.enter_subsection("Chebyshev filtering on CPU");
 
-    //
-    // Set the constraints to zero
-    //
-    // operatorMatrix.getOverloadedConstraintMatrix()->set_zero(eigenVectorsFlattened,
-    //	                                                    totalNumberWaveFunctions);
-
 
     if (dftParameters::verbosity >= 4)
       dftUtils::printCurrentMemoryUsage(operatorMatrix.getMPICommunicator(),
