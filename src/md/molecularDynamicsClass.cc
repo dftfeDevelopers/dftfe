@@ -147,8 +147,7 @@ namespace dftfe
 
 
         dftUtils::writeDataIntoFile(fileDisplacementData, "Displacement.chk");
-        if(dftParameters::VelocityRestartFile=="")
-        { //--------------------Starting Initialization ----------------------------------------------//
+ //--------------------Starting Initialization ----------------------------------------------//
         
         double Px=0.0, Py=0.0 , Pz = 0.0;
         //Initialise Velocity
@@ -226,20 +225,7 @@ namespace dftfe
             velocity[i] = gamma * velocity[i];
           }
 
-      }
-      else
-      {
 
-        std::vector<std::vector<double>> fileVelData;
-        dftUtils::readFile(3, fileVelData, dftParameters::VelocityRestartFile);
-        for (int iCharge = 0; iCharge < d_numberGlobalCharges; ++iCharge)
-          {
-            velocity[3 * iCharge + 0] = fileVelData[iCharge][0];
-            velocity[3 * iCharge + 1] = fileVelData[iCharge][1];
-            velocity[3 * iCharge + 2] = fileVelData[iCharge][2];
-          }            
-
-      }
         KineticEnergy = 0.0;
           for (int iCharge = 0; iCharge < d_numberGlobalCharges; ++iCharge)
           {
@@ -451,7 +437,7 @@ namespace dftfe
                     vx /=COM;
                     vy /=COM;
                     vz /=COM;
-                    pcout<<" The Center of Mass Velocity from NVE: "<<vx<<" "<<vy<<" "<<vz<<std::endl;                        
+                    //pcout<<" The Center of Mass Velocity from NVE: "<<vx<<" "<<vy<<" "<<vz<<std::endl;                        
             if (dftParameters::verbosity >= 1 || dftParameters::reproducible_output)
             { 
               pcout << "---------------MD STEP: "<<d_TimeIndex<<" ------------------ " <<  std::endl;
@@ -556,7 +542,7 @@ namespace dftfe
                     vx /=COM;
                     vy /=COM;
                     vz /=COM;
-                    pcout<<" The Center of Mass Velocity from Rescale Thermostat: "<<vx<<" "<<vy<<" "<<vz<<std::endl;                
+                    //pcout<<" The Center of Mass Velocity from Rescale Thermostat: "<<vx<<" "<<vy<<" "<<vz<<std::endl;                
 
             if (dftParameters::verbosity >= 1 || dftParameters::reproducible_output)
             { 
@@ -687,7 +673,7 @@ namespace dftfe
                     vx /=COM;
                     vy /=COM;
                     vz /=COM;
-                    pcout<<" The Center of Mass Velocity from NHC: "<<vx<<" "<<vy<<" "<<vz<<std::endl;  
+                    //pcout<<" The Center of Mass Velocity from NHC: "<<vx<<" "<<vy<<" "<<vz<<std::endl;  
 
 
             MPI_Barrier(d_mpi_communicator);
@@ -804,7 +790,7 @@ namespace dftfe
                     vx /=COM;
                     vy /=COM;
                     vz /=COM;
-                    pcout<<" The Center of Mass Velocity from CSVR: "<<vx<<" "<<vy<<" "<<vz<<std::endl;                          
+                    //pcout<<" The Center of Mass Velocity from CSVR: "<<vx<<" "<<vy<<" "<<vz<<std::endl;                          
             if (dftParameters::verbosity >= 1 || dftParameters::reproducible_output)
             { 
               pcout << "---------------MD STEP: "<<d_TimeIndex<<" ------------------ " <<  std::endl;
@@ -1020,8 +1006,8 @@ namespace dftfe
         COMx /= COM;
         COMy /= COM;
         COMz /= COM;
-        pcout<<" The Center of Mass Velocity from Velocity Verlet: "<<vx<<" "<<vy<<" "<<vz<<std::endl;
-        pcout<<" The Center of Mass Position from Velocity Verlet: "<<COMx<<" "<<COMy<<" "<<COMz<<std::endl;     
+        //pcout<<" The Center of Mass Velocity from Velocity Verlet: "<<vx<<" "<<vy<<" "<<vz<<std::endl;
+        //pcout<<" The Center of Mass Position from Velocity Verlet: "<<COMx<<" "<<COMy<<" "<<COMz<<std::endl;     
         KE = totalKE;
 
     }  
@@ -1285,7 +1271,7 @@ namespace dftfe
         alphasq = alphasq+ std::exp(-1/double(d_ThermostatTimeConstant));
         alphasq = alphasq+ (KEref/Nf/KE)*(1-std::exp(-1/double(d_ThermostatTimeConstant)))*(R1*R1 + Rsum);
         alphasq = alphasq + 2*std::exp(-1/2/double(d_ThermostatTimeConstant))*std::sqrt(KEref/Nf/KE*(1-std::exp(-1/double(d_ThermostatTimeConstant))))*R1;
-        pcout<<"*** R1: "<<R1<<" Rsum : "<<Rsum<<" alphasq "<<alphasq<<"exp ()"<<std::exp(-1/double(d_ThermostatTimeConstant))<<" timeconstant "<<d_ThermostatTimeConstant<< std::endl;    
+        //pcout<<"*** R1: "<<R1<<" Rsum : "<<Rsum<<" alphasq "<<alphasq<<"exp ()"<<std::exp(-1/double(d_ThermostatTimeConstant))<<" timeconstant "<<d_ThermostatTimeConstant<< std::endl;    
         KE      = alphasq*KE;
         double alpha = std::sqrt(alphasq);
         for(int iCharge=0; iCharge<d_numberGlobalCharges; iCharge++)
@@ -1414,7 +1400,7 @@ namespace dftfe
         std::string tempfolder = Folder + "/Step" + std::to_string(d_startingTimeStep);
         std::string newFolder0 = tempfolder + "/" + "UnwrappedFractionalCoordinates.chk";
         dftUtils::readFile(5, d_atomFractionalunwrapped, newFolder0);
-        std::string fileName1 = (dftParameters::VelocityRestartFile=="" ? "velocity.chk":dftParameters::VelocityRestartFile); 
+        std::string fileName1 = "velocity.chk";  
         std::string newFolder1 = tempfolder + "/" + fileName1;
         std::vector<std::vector<double>> fileVelData;
         dftUtils::readFile(3, fileVelData, newFolder1);
@@ -1505,79 +1491,81 @@ namespace dftfe
                                                             std::vector<double> e, std::vector<double> Q, int time )
 
    {
-    std::vector<std::vector<double>> fileNHCData(2,std::vector<double>(3,0.0)); 
-    fileNHCData[0][0] = Q[0] ;
-    fileNHCData[0][1] = e[0] ;
-    fileNHCData[0][2] = v_e[0] ;
-    fileNHCData[1][0] = Q[1] ;
-    fileNHCData[1][1] =  e[1];
-    fileNHCData[1][2] =  v_e[1];    
-    std::string tempfolder = "./mdRestart"; 
-    std::string newFolder = std::string(tempfolder + "/" + "NHCThermostat.chk");    
-    dftUtils::writeDataIntoFile(fileNHCData, newFolder); 
-     if(d_this_mpi_process == 0) 
-     {
-        std::string oldpath = newFolder;
-        std::string newpath = "./mdRestart/Step";
+    if(dftParameters::reproducible_output==false)
+    { 
+      std::vector<std::vector<double>> fileNHCData(2,std::vector<double>(3,0.0)); 
+      fileNHCData[0][0] = Q[0] ;
+      fileNHCData[0][1] = e[0] ;
+      fileNHCData[0][2] = v_e[0] ;
+      fileNHCData[1][0] = Q[1] ;
+      fileNHCData[1][1] =  e[1];
+      fileNHCData[1][2] =  v_e[1];    
+      std::string tempfolder = "./mdRestart"; 
+      std::string newFolder = std::string(tempfolder + "/" + "NHCThermostat.chk");    
+      dftUtils::writeDataIntoFile(fileNHCData, newFolder); 
+      if(d_this_mpi_process == 0) 
+        {
+          std::string oldpath = newFolder;
+          std::string newpath = "./mdRestart/Step";
                  newpath = newpath + std::to_string(time) + "/."; 
-        dftUtils::copyFile(oldpath,newpath); 
+          dftUtils::copyFile(oldpath,newpath); 
         
 
-     }            
-    MPI_Barrier(d_mpi_communicator);
+        }            
+      MPI_Barrier(d_mpi_communicator);
+    }  
 
    }                                                         
     template <unsigned int FEOrder, unsigned int FEOrderElectro>
     void    
     molecularDynamicsClass<FEOrder, FEOrderElectro>::writeTotalDisplacementFile(std::vector<dealii::Tensor<1, 3, double>> r, int time)
     {
-      std::vector<std::vector<double>>fileDisplacementData; 
-      dftUtils::readFile(3, fileDisplacementData, "Displacement.chk");
-      for(int iCharge = 0; iCharge <d_numberGlobalCharges; iCharge++)
-        {
+      if(dftParameters::reproducible_output==false)
+      {
+        std::vector<std::vector<double>>fileDisplacementData; 
+        dftUtils::readFile(3, fileDisplacementData, "Displacement.chk");
+        for(int iCharge = 0; iCharge <d_numberGlobalCharges; iCharge++)
+          {
             fileDisplacementData[iCharge][0] = fileDisplacementData[iCharge][0]+ r[iCharge][0];
             fileDisplacementData[iCharge][1] = fileDisplacementData[iCharge][1]+ r[iCharge][1];
             fileDisplacementData[iCharge][2] = fileDisplacementData[iCharge][2]+ r[iCharge][2];
-        } 
-       dftUtils::writeDataIntoFile(fileDisplacementData, "Displacement.chk"); 
+          } 
+        dftUtils::writeDataIntoFile(fileDisplacementData, "Displacement.chk"); 
 
-      if(d_this_mpi_process == 0)
-      { 
-        std::ofstream outfile;
-        outfile.open("TotalDisplacement.chk", std::ios_base::app);
-        std::vector<std::vector<double>> atomLocations;
-        dftPtr->getAtomLocations(atomLocations); 
-        for(int iCharge = 0; iCharge <d_numberGlobalCharges; iCharge++)
-          {
-            outfile<<atomLocations[iCharge][0]<<"  "<<atomLocations[iCharge][1]<< std::setprecision(16)<<"  "<<fileDisplacementData[iCharge][0]<<"  "<<fileDisplacementData[iCharge][1]<<"  "<<fileDisplacementData[iCharge][2]<<std::endl;
-           /* temp[0][0] = atomLocations[iCharge][0];
+        if(d_this_mpi_process == 0)
+        { 
+          std::ofstream outfile;
+          outfile.open("TotalDisplacement.chk", std::ios_base::app);
+          std::vector<std::vector<double>> atomLocations;
+          dftPtr->getAtomLocations(atomLocations); 
+          for(int iCharge = 0; iCharge <d_numberGlobalCharges; iCharge++)
+            {
+              outfile<<atomLocations[iCharge][0]<<"  "<<atomLocations[iCharge][1]<< std::setprecision(16)<<"  "<<fileDisplacementData[iCharge][0]<<"  "<<fileDisplacementData[iCharge][1]<<"  "<<fileDisplacementData[iCharge][2]<<std::endl;
+            /* temp[0][0] = atomLocations[iCharge][0];
             temp[0][1] = atomLocations[iCharge][1];
             temp[0][2] = fileDisplacementData[iCharge][0];
             temp[0][3] = fileDisplacementData[iCharge][1];
             temp[0][4] = fileDisplacementData[iCharge][2];*/
             
-          }
-          outfile.close();
-
-    
-       
+            }
+          outfile.close();    
     
     
-      } 
-     MPI_Barrier(d_mpi_communicator);
-     if(d_this_mpi_process == 0) 
-     {
-        std::string oldpath = "TotalDisplacement.chk";
-        std::string newpath = "./mdRestart/Step";
+        } 
+        MPI_Barrier(d_mpi_communicator);
+        if(d_this_mpi_process == 0) 
+          {
+            std::string oldpath = "TotalDisplacement.chk";
+            std::string newpath = "./mdRestart/Step";
                  newpath = newpath + std::to_string(time) + "/."; 
-        dftUtils::copyFile(oldpath,newpath); 
-        std::string oldpath2 = "Displacement.chk";
-        std::string newpath2 = "./mdRestart/Step";
+            dftUtils::copyFile(oldpath,newpath); 
+            std::string oldpath2 = "Displacement.chk";
+            std::string newpath2 = "./mdRestart/Step";
                  newpath2 = newpath2 + std::to_string(time) + "/."; 
-        dftUtils::copyFile(oldpath2,newpath2);  
-     }
-     MPI_Barrier(d_mpi_communicator);          
-
+            dftUtils::copyFile(oldpath2,newpath2);  
+          }
+        MPI_Barrier(d_mpi_communicator);          
+      }
     }
     template <unsigned int FEOrder, unsigned int FEOrderElectro>
     double

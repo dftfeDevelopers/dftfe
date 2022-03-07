@@ -1071,19 +1071,7 @@ namespace dftfe
           "NO_CONTROL",
           Patterns::Selection("NO_CONTROL|RESCALE|NOSE_HOVER_CHAINS|CSVR"),
           "[Standard] Method of controlling temperature in the MD run. NO_CONTROL is the default option.");
-  
-
-        prm.declare_entry(
-          "VELOCITY RESTART FILE",
-          "",
-          Patterns::Anything(),
-          "[Standard] Specify the Velocity of Atoms for Restart from TimeStep"); 
-
-        prm.declare_entry(
-          "FORCE RESTART FILE",
-          "",
-          Patterns::Anything(),
-          "[Standard] Specify the (-ve)Forces on Atoms for Restart from TimeStep");       
+    
 
         prm.declare_entry(
          "NOSE HOVER THERMOSTAT RESTART FILE",
@@ -1469,14 +1457,7 @@ namespace dftfe
 
         dftParameters::tempControllerTypeBOMD =
           prm.get("TEMPERATURE CONTROLLER TYPE"); 
-
-
-        dftParameters::VelocityRestartFile =
-          prm.get("VELOCITY RESTART FILE"); 
-
-        dftParameters::ForceRestartFile =
-          prm.get("FORCE RESTART FILE"); 
-
+          
         dftParameters::NHCRestartFile = 
           prm.get("NOSE HOVER THERMOSTAT RESTART FILE");
 

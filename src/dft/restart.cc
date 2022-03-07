@@ -652,6 +652,7 @@ dftClass<FEOrder, FEOrderElectro>::MDwriteDomainAndAtomCoordinates(const std::st
     }
 
   std::vector<std::vector<double>> atomLocationsAutoMesh = atomLocations;
+  /*
   if (!dftParameters::floatingNuclearCharges)
     for (unsigned int iAtom = 0; iAtom < d_atomLocationsAutoMesh.size();
          iAtom++)
@@ -660,34 +661,39 @@ dftClass<FEOrder, FEOrderElectro>::MDwriteDomainAndAtomCoordinates(const std::st
         atomLocationsAutoMesh[iAtom][3] = d_atomLocationsAutoMesh[iAtom][1];
         atomLocationsAutoMesh[iAtom][4] = d_atomLocationsAutoMesh[iAtom][2];
       }
+  */    
 #ifdef USE_COMPLEX
+  /*
   if (!dftParameters::floatingNuclearCharges)
     dftUtils::writeDataIntoFile(atomLocationsFractional,
                                 Path +"atomsFracCoordAutomesh.chk");
-
+  */
   dftUtils::writeDataIntoFile(atomLocationsFractionalCurrent,
                               Path +"atomsFracCoordCurrent.chk");
 #else
   if (dftParameters::periodicX || dftParameters::periodicY ||
       dftParameters::periodicZ)
     {
+      /*
       if (!dftParameters::floatingNuclearCharges)
         dftUtils::writeDataIntoFile(atomLocationsFractional,
                                     Path +"atomsFracCoordAutomesh.chk");
-
+      */
       dftUtils::writeDataIntoFile(atomLocationsFractionalCurrent,
                                   Path +"atomsFracCoordCurrent.chk");
     }
   else
     {
+      /*
       if (!dftParameters::floatingNuclearCharges)
         dftUtils::writeDataIntoFile(atomLocationsAutoMesh,
                                     Path +"atomsCartCoordAutomesh.chk");
+      */                              
 
       dftUtils::writeDataIntoFile(atomLocations, Path +"atomsCartCoordCurrent.chk");
     }
 #endif
-
+  /*
   if (!dftParameters::floatingNuclearCharges)
     {
       if (dftParameters::periodicX || dftParameters::periodicY ||
@@ -709,5 +715,6 @@ dftClass<FEOrder, FEOrderElectro>::MDwriteDomainAndAtomCoordinates(const std::st
       dftUtils::writeDataIntoFile(atomsDisplacementsGaussian,
                                   Path +"atomsGaussianDispCoord.chk");
     }
+  */  
 }
 
