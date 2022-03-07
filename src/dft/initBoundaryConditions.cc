@@ -283,13 +283,15 @@ dftClass<FEOrder, FEOrderElectro>::initBoundaryConditions(
           << init_pref << std::endl;
 
   if (!meshOnlyDeformed)
+  {  
     createMasterChargeIdToImageIdMaps(d_pspCutOff,
                                       d_imageIds,
                                       d_imagePositions,
                                       d_globalChargeIdToImageIdMap);
 
-  createMasterChargeIdToImageIdMaps(d_nlPSPCutOff,
+    createMasterChargeIdToImageIdMaps(d_nlPSPCutOff,
                                     d_imageIdsTrunc,
                                     d_imagePositionsTrunc,
                                     d_globalChargeIdToImageIdMapTrunc);
+  }
 }
