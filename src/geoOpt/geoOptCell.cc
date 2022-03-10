@@ -198,6 +198,7 @@ namespace dftfe
       tol * 2.0; // Dummy parameter for CGPRP, the actual stopping criteria are
                  // the Wolfe conditions and maxLineSearchIter
     const double       lineSearchDampingParameter = 0.5;
+    const double       maxUpdateInAnyComponent = 0.2;
     const unsigned int maxLineSearchIter =
       dftParameters::maxLineSearchIterCGPRP;
     const unsigned int debugLevel =
@@ -212,7 +213,8 @@ namespace dftfe
                                   mpi_communicator,
                                   lineSearchTol,
                                   maxLineSearchIter,
-                                  lineSearchDampingParameter);
+                                  lineSearchDampingParameter,
+                                  maxUpdateInAnyComponent);
 
     if (dftParameters::chkType >= 1 && dftParameters::restartFromChk)
       pcout

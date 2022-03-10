@@ -1519,7 +1519,7 @@ namespace dftfe
             << "=========================================================================================================="
             << std::endl;
           std::cout
-            << "			Welcome to the Open Source program DFT-FE version	1.1-pre		        "
+            << "			Welcome to the Open Source program DFT-FE version	1.1.0-pre		        "
             << std::endl;
           std::cout
             << "This is a C++ code for materials modeling from first principles using Kohn-Sham density functional theory."
