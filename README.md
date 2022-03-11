@@ -101,13 +101,13 @@ Installation instructions
 -------------------------
 
 The steps to install the necessary dependencies and DFT-FE itself are described
-in the *Installation* section of the DFT-FE manual (compile doc/manual/manual.tex or download the development version manual [here](https://github.com/dftfeDevelopers/dftfe/blob/manual/manual-develop.pdf)). 
+in the *Installation* section of the DFT-FE manual (compile doc/manual/manual.tex or download the release version manual [here](https://github.com/dftfeDevelopers/dftfe/blob/manual/manual-current-release.pdf)). 
 
 
 Running DFT-FE
 --------------
 
-Instructions on how to run DFT-FE including demo examples can also be found in the *Running DFT-FE* section of the manual (compile doc/manual/manual.tex or download the development version manual [here](https://github.com/dftfeDevelopers/dftfe/blob/manual/manual-develop.pdf)). 
+Instructions on how to run DFT-FE including demo examples can also be found in the *Running DFT-FE* section of the manual (compile doc/manual/manual.tex or download the release version manual [here](https://github.com/dftfeDevelopers/dftfe/blob/manual/manual-current-release.pdf)). 
 
 
 Contributing to DFT-FE
