@@ -24,19 +24,22 @@ Directory structure of DFT-FE
         - meshMovementAffineTransform.cc (Class to update triangulation under affine transformation)
    - dft/
       - dft.cc (This class is the primary interface location of all other parts of the DFT-FE code for all steps involved in obtaining the Kohn-Sham DFT ground-state solution.)
-      - vselfBinsManager.cc (Categorizes atoms into bins for efficient solution of nuclear electrostatic self-potential)
-      - energyCalculator.cc (Calculates the ksdft problem total energy and its components)
+      - vselfBinsManager.cc (This class categorizes atoms into bins for efficient solution of nuclear electrostatic self-potential)
+      - energyCalculator.cc (This class calculates the ksdft problem total energy and its components)
       - all other files part of dft.cc
    - dftOperator/
       - operator.cc (abstract discrete FE operator base class)
       - kohnShamDFTOperatorClass.cc (Implementation class for building the Kohn-Sham DFT discrete operator and the action of the discrete operator on a single vector or multiple vectors)
-      - all other files part of kohnShamDFTOperatorClass.cc
+      - operatorCUDA.cu (abstract discrete FE operator base class)
+      - kohnShamDFTOperatorClassCUDA.cu (Implementation class for building the Kohn-Sham DFT discrete operator and the action of the discrete operator on a single vector or multiple vectors)
+      - all other files part of kohnShamDFTOperatorClass.cc and kohnShamDFTOperatorClassCUDA.cu and 
    - linAlg/
       - linearAlgebraOperations.cc (Contains linear algebra functions used in the implementation of an eigen solver)
       - linearAlgebraOperationsOpt.cc (part of linearAlgebraOperations.cc)
       - linearAlgebraOperationsInternal.cc (Contains internal functions used in linearAlgebraOperations)
       - pseudoGS.cc (part of linearAlgebraOperations.cc)
    - poisson/poissonSolverProblem.cc (poisson solver problem class)
+   - helmholtz/kerkerSolverProblem.cc (Helmholtz solver problem class for Kerker preconditioner)
    - force/
       - force.cc (class for computing configurational forces required for geometry optimization)
       - all other files part of force.cc
