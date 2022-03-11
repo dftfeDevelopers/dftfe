@@ -29,15 +29,22 @@ Directory structure of DFT-FE
       - all other files part of dft.cc
    - dftOperator/
       - operator.cc (abstract discrete FE operator base class)
-      - kohnShamDFTOperatorClass.cc (Implementation class for building the Kohn-Sham DFT discrete operator and the action of the discrete operator on a single vector or multiple vectors)
-      - operatorCUDA.cu (abstract discrete FE operator base class)
-      - kohnShamDFTOperatorClassCUDA.cu (Implementation class for building the Kohn-Sham DFT discrete operator and the action of the discrete operator on a single vector or multiple vectors)
+      - kohnShamDFTOperator.cc (Implementation class for building the Kohn-Sham DFT discrete operator and the action of the discrete operator on a single vector or multiple vectors)
+      - operatorCUDA.cu (abstract discrete FE operator base class on GPUs)
+      - kohnShamDFTOperatorCUDA.cu (Implementation class for building the Kohn-Sham DFT discrete operator and the action of the discrete operator on a single vector or multiple vectors on GPUs)
       - all other files part of kohnShamDFTOperatorClass.cc and kohnShamDFTOperatorClassCUDA.cu and 
    - linAlg/
       - linearAlgebraOperations.cc (Contains linear algebra functions used in the implementation of an eigen solver)
       - linearAlgebraOperationsOpt.cc (part of linearAlgebraOperations.cc)
+      - linearAlgebraOperationsCUDA.cu (Contains linear algebra functions used in the implementation of an eigen solver on GPUs)
       - linearAlgebraOperationsInternal.cc (Contains internal functions used in linearAlgebraOperations)
       - pseudoGS.cc (part of linearAlgebraOperations.cc)
+      - pseudoGSCUDA.cu (part of linearAlgebraOperationsCUDA.cu)
+      - rayleighRitzCUDA.cu (part of linearAlgebraOperationsCUDA.cu)
+      - scalapackWrapper.cc (interface class for ScaLAPACK usage)
+      - process_grid.cc (interface class for ScaLAPACK block cyclic format)
+      - elpaScalaManager.cc (interface class for ELPA usage building upon ScaLAPACK)
+      - distributedMulticomponentVec.cc (distributed multicomponent vector class real and complex datatypes on both GPUs and CPUs)
    - poisson/poissonSolverProblem.cc (poisson solver problem class)
    - helmholtz/kerkerSolverProblem.cc (Helmholtz solver problem class for Kerker preconditioner)
    - force/
@@ -48,7 +55,9 @@ Directory structure of DFT-FE
       - getOptCell.cc (problem class for cell stress relaxation solver)
    - solvers/
       - cgSolvers/cgPRPNonLinearSolver.cc (Polak-Ribiere-Polyak Conjugate Gradient non-linear solver)
+      - cgSolvers/cg_descent.cc (CGDESCENT Conjugate Gradient non-linear solver)
       - eigenSolvers/chebyshevOrthogonalizedSubspaceIterationSolver.cc (Chebyshev filtered orthogonalized subspace iteration solver)
+      - eigenSolvers/chebyshevOrthogonalizedSubspaceIterationSolverCUDA.cu (Chebyshev filtered orthogonalized subspace iteration solver on GPUs)
       - dealiiLinearSolver.cc (class containing interface to dealii Linear solver infrastructure)
       - linearSolver.cc (abstract base class for linearSolver)
       - eigenSolver.cc (abstract base class for eigensolver)
@@ -57,11 +66,17 @@ Directory structure of DFT-FE
    - symmetry/
       - symmetrizeRho.cc (class for density symmetrization based on irreducible Brillouin zone calculation)
       - initGroupSymmetry.cc (part of symmetrizeRho.cc)
-
+   - gpuBase/
+      - cudaHelpers.cu (helper class for GPU vector handling and memory transfers)
+      - gpuDirectCCLWrapper.cu (class for handling GPU-direct MPI_Allreduce communication for various datatypes)
+   - md/
+      - molecularDynamics.cc (class for NVE molecular dynamics)
+      
  - utils/ (Folder containing commonly used utily functions in DFT-FE)
    - xmlTodftfeParser.cc (converts pseudopotential file from xml format to dftfe format)
    - pseudoConverter.cc (wrapper to convert pseudopotential file from upf to dftfe format)
    - constraintMatrixInfo.cc (Overloads functions associated with dealii's constraintMatrix class)
+   - constraintMatrixInfoCUDA.cu (Overloads functions associated with dealii's constraintMatrix class for operations on GPUs)
    - fileReaders.cc (Contains commonly used I/O file utils functions)
    - dftUtils.cc (Contains repeatedly used small functions in the KSDFT calculations)
    - dftParameters.cc (Infrastructure to parse input parameters from the input parameter file)
@@ -73,6 +88,8 @@ Directory structure of DFT-FE
  - include/ (contains all the include files containing class and namespace declarations)
  - data/ (contains single atom wavefunctions and density data required for initial guess for all-electron calculations)
  - tests/ (contains unit tests and regression tests used during code development, and to ensure accuracy and reproducibility of the code)
+ - testsGPU/ (contains integration tests on GPUs used during code development, and to ensure accuracy and reproducibility of the code)
+ - indentationStandard/ (contains scripts for automatic code indendation based on clang format)
  - demo/ (contains demo examples- see doc/manual/manual.pdf for details)
  - helpers/ (for developers)
  - doc/ (folder for documentation. it contains the manual)
