@@ -11,6 +11,72 @@ same framework, and incorporates scalable and efficient solvers for the solution
 that has to do with finite elements, geometries, meshes, etc., and, through deal.II on p4est for parallel adaptive mesh handling.
 
 
+Directory structure of DFT-FE
+-----------------------------
+ - src/ (Folder containing all the source files of DFT-FE)
+   - triangulation/
+      - triangulationManager/
+        - triangulationManager.cc (This class generates and stores adaptive finite element meshes for real-space DFT problem).
+        - all other files part of triangulationManager.cc
+      - meshMovement/
+        - meshMovement.cc (Base class to move triangulation vertices)
+        - meshMovementGaussian.cc (Class to move triangulation nodes using Gaussian functions attached to FE nodes)
+        - meshMovementAffineTransform.cc (Class to update triangulation under affine transformation)
+   - dft/
+      - dft.cc (This class is the primary interface location of all other parts of the DFT-FE code for all steps involved in obtaining the Kohn-Sham DFT ground-state solution.)
+      - vselfBinsManager.cc (Categorizes atoms into bins for efficient solution of nuclear electrostatic self-potential)
+      - energyCalculator.cc (Calculates the ksdft problem total energy and its components)
+      - all other files part of dft.cc
+   - dftOperator/
+      - operator.cc (abstract discrete FE operator base class)
+      - kohnShamDFTOperatorClass.cc (Implementation class for building the Kohn-Sham DFT discrete operator and the action of the discrete operator on a single vector or multiple vectors)
+      - all other files part of kohnShamDFTOperatorClass.cc
+   - linAlg/
+      - linearAlgebraOperations.cc (Contains linear algebra functions used in the implementation of an eigen solver)
+      - linearAlgebraOperationsOpt.cc (part of linearAlgebraOperations.cc)
+      - linearAlgebraOperationsInternal.cc (Contains internal functions used in linearAlgebraOperations)
+      - pseudoGS.cc (part of linearAlgebraOperations.cc)
+   - poisson/poissonSolverProblem.cc (poisson solver problem class)
+   - force/
+      - force.cc (class for computing configurational forces required for geometry optimization)
+      - all other files part of force.cc
+   - geoOpt/
+      - geoOptIon.cc (problem class for atomic force relaxation solver)
+      - getOptCell.cc (problem class for cell stress relaxation solver)
+   - solvers/
+      - cgSolvers/cgPRPNonLinearSolver.cc (Polak-Ribiere-Polyak Conjugate Gradient non-linear solver)
+      - eigenSolvers/chebyshevOrthogonalizedSubspaceIterationSolver.cc (Chebyshev filtered orthogonalized subspace iteration solver)
+      - dealiiLinearSolver.cc (class containing interface to dealii Linear solver infrastructure)
+      - linearSolver.cc (abstract base class for linearSolver)
+      - eigenSolver.cc (abstract base class for eigensolver)
+      - nonlinearSolverProblem.cc (abstract base class nonlinear solver problem to be solved by the nonlinear solver)
+      - nonLinearSolver.cc (abstract base class for nonlinear solver)  
+   - symmetry/
+      - symmetrizeRho.cc (class for density symmetrization based on irreducible Brillouin zone calculation)
+      - initGroupSymmetry.cc (part of symmetrizeRho.cc)
+
+ - utils/ (Folder containing commonly used utily functions in DFT-FE)
+   - xmlTodftfeParser.cc (converts pseudopotential file from xml format to dftfe format)
+   - pseudoConverter.cc (wrapper to convert pseudopotential file from upf to dftfe format)
+   - constraintMatrixInfo.cc (Overloads functions associated with dealii's constraintMatrix class)
+   - fileReaders.cc (Contains commonly used I/O file utils functions)
+   - dftUtils.cc (Contains repeatedly used small functions in the KSDFT calculations)
+   - dftParameters.cc (Infrastructure to parse input parameters from the input parameter file)
+   - vectorTools/
+     - vectorUtilities.cc (Contains generic utils functions related to custom partitioned flattened dealii vector)
+     - interpolateFieldsFromPreviousMesh.cc (class to interpolate solutions fields from one finite element mesh to another) 
+
+ - pseudoConvertors/upfToxml.cc (converts pseudopotential file from upf to xml format)
+ - include/ (contains all the include files containing class and namespace declarations)
+ - data/ (contains single atom wavefunctions and density data required for initial guess for all-electron calculations)
+ - tests/ (contains unit tests and regression tests used during code development, and to ensure accuracy and reproducibility of the code)
+ - demo/ (contains demo examples- see doc/manual/manual.pdf for details)
+ - helpers/ (for developers)
+ - doc/ (folder for documentation. it contains the manual)
+ - setup.sh (required for compilation of DFT-FE- see doc/manual/manual.pdf for details)
+ - Doxyfile (used for generating doxygen documentation)
+
+
 Installation instructions
 -------------------------
 
