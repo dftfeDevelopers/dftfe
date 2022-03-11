@@ -25,14 +25,18 @@ Directory structure of DFT-FE
    - dft/
       - dft.cc (This class is the primary interface location of all other parts of the DFT-FE code for all steps involved in obtaining the Kohn-Sham DFT ground-state solution.)
       - vselfBinsManager.cc (This class categorizes atoms into bins for efficient solution of nuclear electrostatic self-potential)
+      - solveVselfInBins.cc (part of vselfBinsManager.cc for CPU operations)
+      - solveVselfInBinsCUDA.cu (part of vselfBinsManager.cc for GPU operations)
       - energyCalculator.cc (This class calculates the ksdft problem total energy and its components)
+      - densityCalculatorCPU.cc (Class for electron-density computation from wavefunctions)
+      - densityCalculatorCPU.cc (Class for electron-density computation from wavefunctions on GPUs)
       - all other files part of dft.cc
    - dftOperator/
       - operator.cc (abstract discrete FE operator base class)
       - kohnShamDFTOperator.cc (Implementation class for building the Kohn-Sham DFT discrete operator and the action of the discrete operator on a single vector or multiple vectors)
       - operatorCUDA.cu (abstract discrete FE operator base class on GPUs)
       - kohnShamDFTOperatorCUDA.cu (Implementation class for building the Kohn-Sham DFT discrete operator and the action of the discrete operator on a single vector or multiple vectors on GPUs)
-      - all other files part of kohnShamDFTOperatorClass.cc and kohnShamDFTOperatorClassCUDA.cu and 
+      - all other files part of kohnShamDFTOperator.cc and kohnShamDFTOperatorCUDA.cu and 
    - linAlg/
       - linearAlgebraOperations.cc (Contains linear algebra functions used in the implementation of an eigen solver)
       - linearAlgebraOperationsOpt.cc (part of linearAlgebraOperations.cc)
@@ -93,7 +97,7 @@ Directory structure of DFT-FE
  - demo/ (contains demo examples- see doc/manual/manual.pdf for details)
  - helpers/ (for developers)
  - doc/ (folder for documentation. it contains the manual)
- - setup.sh (required for compilation of DFT-FE- see doc/manual/manual.pdf for details)
+ - setupUser.sh, setupUserPetsc.sh, setupDevelopPetsc.sh (required for compilation of DFT-FE- see release version manual [here](https://github.com/dftfeDevelopers/dftfe/blob/manual/manual-current-release.pdf)) for details)
  - Doxyfile (used for generating doxygen documentation)
 
 
