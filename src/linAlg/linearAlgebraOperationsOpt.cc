@@ -418,15 +418,11 @@ namespace dftfe
       //
       // YArray = YArray + alpha2*XArray and YArray = alpha1*YArray
       //
-      // YArray.add(alpha2,XArray);
-      // YArray *= alpha1;
-
 
       //
       // Do surface nodes recursive iteration for dealii vectors
       //
       const unsigned int numberDofs = YArray.local_size() / numberWaveFunctions;
-      unsigned int       countInterior = 0;
       for (unsigned int iDof = 0; iDof < numberDofs; ++iDof)
         {
           if (globalArrayClassificationMap[iDof] == 1)
@@ -438,32 +434,15 @@ namespace dftfe
                       YArray.local_element(iDof * numberWaveFunctions + iWave) +
                     alpha1 * alpha2 *
                       XArray.local_element(iDof * numberWaveFunctions + iWave);
-                  // YArray.local_element(iDof*numberWaveFunctions+iWave) *=
-                  // alpha1;
                 }
             }
-          // else
-          //{
-          // countInterior+=1;
-          //}
         }
 
-      // std::cout<<"Interior Nodes: "<<countInterior<<std::endl;
 
       //
       // Do recursive iteration only for interior cell nodes using cell-level
       // loop
       // Y = a*X + Y
-      /*operatorMatrix.axpy(alpha2,
-              numberWaveFunctions,
-              cellXWaveFunctionMatrix,
-              cellYWaveFunctionMatrix);
-
-      //scale a vector with a scalar
-      operatorMatrix.scale(alpha1,
-               numberWaveFunctions,
-               cellYWaveFunctionMatrix);*/
-
       operatorMatrix.axpby(alpha1 * alpha2,
                            alpha1,
                            numberWaveFunctions,
@@ -479,11 +458,8 @@ namespace dftfe
 
           //
           // multiply XArray with alpha2
-          //
-          // XArray *= alpha2;
+          // and XArray = XArray - c*alpha1*YArray
 
-          // XArray = XArray - c*alpha1*YArray
-          // XArray.add(-c*alpha1,YArray);
 
           //
           // Do surface nodes recursive iteration for dealii vectors
@@ -506,17 +482,6 @@ namespace dftfe
                     }
                 }
             }
-
-          // Do recursive iteration only for interior cell nodes using
-          // cell-level loop
-
-          // X = a*Y + X
-          /*operatorMatrix.axpby(-c*alpha1,
-                   alpha2,
-                   numberWaveFunctions,
-                   cellYWaveFunctionMatrix,
-                   cellXWaveFunctionMatrix);*/
-
 
           //
           // call HX
@@ -2906,7 +2871,7 @@ namespace dftfe
       fVector.reinit(vect);
 
       vVector = T(0.0), fVector = T(0.0);
-      // std::srand(this_mpi_process);
+      std::srand(this_mpi_process);
       const unsigned int local_size = vVector.local_size();
 
       for (unsigned int i = 0; i < local_size; i++)

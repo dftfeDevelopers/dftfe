@@ -467,14 +467,16 @@ namespace dftfe
              (std::is_same<NumberType, cuDoubleComplex>::value ||
               std::is_same<NumberType, cuFloatComplex>::value))
       {
-        CUDACHECK(
-          cudaMalloc((void **)&d_vecData,
-                     (d_locallyOwnedSize + d_ghostSize) * sizeof(NumberType)));
-        CUDACHECK(
-          cudaMemset(d_vecData,
-                     0,
-                     (d_locallyOwnedSize + d_ghostSize) * sizeof(NumberType)));
-
+        if ((d_locallyOwnedSize + d_ghostSize) > 0)
+          {
+            CUDACHECK(cudaMalloc((void **)&d_vecData,
+                                 (d_locallyOwnedSize + d_ghostSize) *
+                                   sizeof(NumberType)));
+            CUDACHECK(cudaMemset(d_vecData,
+                                 0,
+                                 (d_locallyOwnedSize + d_ghostSize) *
+                                   sizeof(NumberType)));
+          }
         if (std::is_same<NumberType, cuDoubleComplex>::value)
           {
             d_dealiiVecTempDataReal =
@@ -539,17 +541,22 @@ namespace dftfe
   void
   DistributedMulticomponentVec<NumberType, MemorySpace>::setZero()
   {
-    if (std::is_same<MemorySpace, dftfe::MemorySpace::Host>::value)
+    if (d_locallyOwnedDofsSize > 0)
       {
-        std::memset(this->begin(), 0, d_locallyOwnedSize * sizeof(NumberType));
-      }
-    else if (std::is_same<MemorySpace, dftfe::MemorySpace::GPU>::value)
-      {
+        if (std::is_same<MemorySpace, dftfe::MemorySpace::Host>::value)
+          {
+            std::memset(this->begin(),
+                        0,
+                        d_locallyOwnedSize * sizeof(NumberType));
+          }
+        else if (std::is_same<MemorySpace, dftfe::MemorySpace::GPU>::value)
+          {
 #if defined(DFTFE_WITH_GPU)
-        CUDACHECK(cudaMemset(this->begin(),
-                             0,
-                             d_locallyOwnedSize * sizeof(NumberType)));
+            CUDACHECK(cudaMemset(this->begin(),
+                                 0,
+                                 d_locallyOwnedSize * sizeof(NumberType)));
 #endif
+          }
       }
     this->zeroOutGhosts();
   }
@@ -680,17 +687,18 @@ namespace dftfe
       {
         if (std::is_same<NumberType, cuDoubleComplex>::value)
           {
-            cudaUtils::copyComplexArrToRealArrsGPU(
-              d_locallyOwnedSize,
-              d_vecData,
-              ((dealii::LinearAlgebra::distributed::
-                  Vector<double, dealii::MemorySpace::CUDA> *)
-                 d_dealiiVecTempDataReal)
-                ->begin(),
-              ((dealii::LinearAlgebra::distributed::
-                  Vector<double, dealii::MemorySpace::CUDA> *)
-                 d_dealiiVecTempDataImag)
-                ->begin());
+            if (d_locallyOwnedDofsSize > 0)
+              cudaUtils::copyComplexArrToRealArrsGPU(
+                d_locallyOwnedSize,
+                d_vecData,
+                ((dealii::LinearAlgebra::distributed::
+                    Vector<double, dealii::MemorySpace::CUDA> *)
+                   d_dealiiVecTempDataReal)
+                  ->begin(),
+                ((dealii::LinearAlgebra::distributed::
+                    Vector<double, dealii::MemorySpace::CUDA> *)
+                   d_dealiiVecTempDataImag)
+                  ->begin());
 
 
             ((dealii::LinearAlgebra::distributed::
@@ -703,34 +711,35 @@ namespace dftfe
                d_dealiiVecTempDataImag)
               ->update_ghost_values();
 
-
-            cudaUtils::copyRealArrsToComplexArrGPU(
-              d_ghostSize,
-              ((dealii::LinearAlgebra::distributed::
-                  Vector<double, dealii::MemorySpace::CUDA> *)
-                 d_dealiiVecTempDataReal)
-                  ->begin() +
-                d_locallyOwnedSize,
-              ((dealii::LinearAlgebra::distributed::
-                  Vector<double, dealii::MemorySpace::CUDA> *)
-                 d_dealiiVecTempDataImag)
-                  ->begin() +
-                d_locallyOwnedSize,
-              d_vecData + d_locallyOwnedSize);
+            if (d_ghostSize > 0)
+              cudaUtils::copyRealArrsToComplexArrGPU(
+                d_ghostSize,
+                ((dealii::LinearAlgebra::distributed::
+                    Vector<double, dealii::MemorySpace::CUDA> *)
+                   d_dealiiVecTempDataReal)
+                    ->begin() +
+                  d_locallyOwnedSize,
+                ((dealii::LinearAlgebra::distributed::
+                    Vector<double, dealii::MemorySpace::CUDA> *)
+                   d_dealiiVecTempDataImag)
+                    ->begin() +
+                  d_locallyOwnedSize,
+                d_vecData + d_locallyOwnedSize);
           }
         else if (std::is_same<NumberType, cuFloatComplex>::value)
           {
-            cudaUtils::copyComplexArrToRealArrsGPU(
-              d_locallyOwnedSize,
-              d_vecData,
-              ((dealii::LinearAlgebra::distributed::
-                  Vector<float, dealii::MemorySpace::CUDA> *)
-                 d_dealiiVecTempDataReal)
-                ->begin(),
-              ((dealii::LinearAlgebra::distributed::
-                  Vector<float, dealii::MemorySpace::CUDA> *)
-                 d_dealiiVecTempDataImag)
-                ->begin());
+            if (d_locallyOwnedDofsSize > 0)
+              cudaUtils::copyComplexArrToRealArrsGPU(
+                d_locallyOwnedSize,
+                d_vecData,
+                ((dealii::LinearAlgebra::distributed::
+                    Vector<float, dealii::MemorySpace::CUDA> *)
+                   d_dealiiVecTempDataReal)
+                  ->begin(),
+                ((dealii::LinearAlgebra::distributed::
+                    Vector<float, dealii::MemorySpace::CUDA> *)
+                   d_dealiiVecTempDataImag)
+                  ->begin());
 
             ((dealii::LinearAlgebra::distributed::
                 Vector<float, dealii::MemorySpace::CUDA> *)
@@ -742,20 +751,20 @@ namespace dftfe
                d_dealiiVecTempDataImag)
               ->update_ghost_values();
 
-
-            cudaUtils::copyRealArrsToComplexArrGPU(
-              d_ghostSize,
-              ((dealii::LinearAlgebra::distributed::
-                  Vector<float, dealii::MemorySpace::CUDA> *)
-                 d_dealiiVecTempDataReal)
-                  ->begin() +
-                d_locallyOwnedSize,
-              ((dealii::LinearAlgebra::distributed::
-                  Vector<float, dealii::MemorySpace::CUDA> *)
-                 d_dealiiVecTempDataImag)
-                  ->begin() +
-                d_locallyOwnedSize,
-              d_vecData + d_locallyOwnedSize);
+            if (d_ghostSize > 0)
+              cudaUtils::copyRealArrsToComplexArrGPU(
+                d_ghostSize,
+                ((dealii::LinearAlgebra::distributed::
+                    Vector<float, dealii::MemorySpace::CUDA> *)
+                   d_dealiiVecTempDataReal)
+                    ->begin() +
+                  d_locallyOwnedSize,
+                ((dealii::LinearAlgebra::distributed::
+                    Vector<float, dealii::MemorySpace::CUDA> *)
+                   d_dealiiVecTempDataImag)
+                    ->begin() +
+                  d_locallyOwnedSize,
+                d_vecData + d_locallyOwnedSize);
           }
       }
 #endif
@@ -795,17 +804,18 @@ namespace dftfe
       {
         if (std::is_same<NumberType, cuDoubleComplex>::value)
           {
-            cudaUtils::copyComplexArrToRealArrsGPU(
-              d_locallyOwnedSize,
-              d_vecData,
-              ((dealii::LinearAlgebra::distributed::
-                  Vector<double, dealii::MemorySpace::CUDA> *)
-                 d_dealiiVecTempDataReal)
-                ->begin(),
-              ((dealii::LinearAlgebra::distributed::
-                  Vector<double, dealii::MemorySpace::CUDA> *)
-                 d_dealiiVecTempDataImag)
-                ->begin());
+            if (d_locallyOwnedDofsSize > 0)
+              cudaUtils::copyComplexArrToRealArrsGPU(
+                d_locallyOwnedSize,
+                d_vecData,
+                ((dealii::LinearAlgebra::distributed::
+                    Vector<double, dealii::MemorySpace::CUDA> *)
+                   d_dealiiVecTempDataReal)
+                  ->begin(),
+                ((dealii::LinearAlgebra::distributed::
+                    Vector<double, dealii::MemorySpace::CUDA> *)
+                   d_dealiiVecTempDataImag)
+                  ->begin());
 
             ((dealii::LinearAlgebra::distributed::
                 Vector<double, dealii::MemorySpace::CUDA> *)
@@ -819,17 +829,18 @@ namespace dftfe
           }
         else if (std::is_same<NumberType, cuFloatComplex>::value)
           {
-            cudaUtils::copyComplexArrToRealArrsGPU(
-              d_locallyOwnedSize,
-              d_vecData,
-              ((dealii::LinearAlgebra::distributed::
-                  Vector<float, dealii::MemorySpace::CUDA> *)
-                 d_dealiiVecTempDataReal)
-                ->begin(),
-              ((dealii::LinearAlgebra::distributed::
-                  Vector<float, dealii::MemorySpace::CUDA> *)
-                 d_dealiiVecTempDataImag)
-                ->begin());
+            if (d_locallyOwnedDofsSize > 0)
+              cudaUtils::copyComplexArrToRealArrsGPU(
+                d_locallyOwnedSize,
+                d_vecData,
+                ((dealii::LinearAlgebra::distributed::
+                    Vector<float, dealii::MemorySpace::CUDA> *)
+                   d_dealiiVecTempDataReal)
+                  ->begin(),
+                ((dealii::LinearAlgebra::distributed::
+                    Vector<float, dealii::MemorySpace::CUDA> *)
+                   d_dealiiVecTempDataImag)
+                  ->begin());
 
             ((dealii::LinearAlgebra::distributed::
                 Vector<float, dealii::MemorySpace::CUDA> *)
@@ -890,19 +901,21 @@ namespace dftfe
                d_dealiiVecTempDataImag)
               ->update_ghost_values_finish();
 
-            cudaUtils::copyRealArrsToComplexArrGPU(
-              d_ghostSize,
-              ((dealii::LinearAlgebra::distributed::
-                  Vector<double, dealii::MemorySpace::CUDA> *)
-                 d_dealiiVecTempDataReal)
-                  ->begin() +
-                d_locallyOwnedSize,
-              ((dealii::LinearAlgebra::distributed::
-                  Vector<double, dealii::MemorySpace::CUDA> *)
-                 d_dealiiVecTempDataImag)
-                  ->begin() +
-                d_locallyOwnedSize,
-              d_vecData + d_locallyOwnedSize);
+
+            if (d_ghostSize > 0)
+              cudaUtils::copyRealArrsToComplexArrGPU(
+                d_ghostSize,
+                ((dealii::LinearAlgebra::distributed::
+                    Vector<double, dealii::MemorySpace::CUDA> *)
+                   d_dealiiVecTempDataReal)
+                    ->begin() +
+                  d_locallyOwnedSize,
+                ((dealii::LinearAlgebra::distributed::
+                    Vector<double, dealii::MemorySpace::CUDA> *)
+                   d_dealiiVecTempDataImag)
+                    ->begin() +
+                  d_locallyOwnedSize,
+                d_vecData + d_locallyOwnedSize);
           }
         else if (std::is_same<NumberType, cuFloatComplex>::value)
           {
@@ -916,19 +929,20 @@ namespace dftfe
                d_dealiiVecTempDataImag)
               ->update_ghost_values_finish();
 
-            cudaUtils::copyRealArrsToComplexArrGPU(
-              d_ghostSize,
-              ((dealii::LinearAlgebra::distributed::
-                  Vector<float, dealii::MemorySpace::CUDA> *)
-                 d_dealiiVecTempDataReal)
-                  ->begin() +
-                d_locallyOwnedSize,
-              ((dealii::LinearAlgebra::distributed::
-                  Vector<float, dealii::MemorySpace::CUDA> *)
-                 d_dealiiVecTempDataImag)
-                  ->begin() +
-                d_locallyOwnedSize,
-              d_vecData + d_locallyOwnedSize);
+            if (d_ghostSize > 0)
+              cudaUtils::copyRealArrsToComplexArrGPU(
+                d_ghostSize,
+                ((dealii::LinearAlgebra::distributed::
+                    Vector<float, dealii::MemorySpace::CUDA> *)
+                   d_dealiiVecTempDataReal)
+                    ->begin() +
+                  d_locallyOwnedSize,
+                ((dealii::LinearAlgebra::distributed::
+                    Vector<float, dealii::MemorySpace::CUDA> *)
+                   d_dealiiVecTempDataImag)
+                    ->begin() +
+                  d_locallyOwnedSize,
+                d_vecData + d_locallyOwnedSize);
           }
       }
 #endif
@@ -968,17 +982,18 @@ namespace dftfe
       {
         if (std::is_same<NumberType, cuDoubleComplex>::value)
           {
-            cudaUtils::copyComplexArrToRealArrsGPU(
-              (d_locallyOwnedSize + d_ghostSize),
-              d_vecData,
-              ((dealii::LinearAlgebra::distributed::
-                  Vector<double, dealii::MemorySpace::CUDA> *)
-                 d_dealiiVecTempDataReal)
-                ->begin(),
-              ((dealii::LinearAlgebra::distributed::
-                  Vector<double, dealii::MemorySpace::CUDA> *)
-                 d_dealiiVecTempDataImag)
-                ->begin());
+            if ((d_locallyOwnedSize + d_ghostSize) > 0)
+              cudaUtils::copyComplexArrToRealArrsGPU(
+                (d_locallyOwnedSize + d_ghostSize),
+                d_vecData,
+                ((dealii::LinearAlgebra::distributed::
+                    Vector<double, dealii::MemorySpace::CUDA> *)
+                   d_dealiiVecTempDataReal)
+                  ->begin(),
+                ((dealii::LinearAlgebra::distributed::
+                    Vector<double, dealii::MemorySpace::CUDA> *)
+                   d_dealiiVecTempDataImag)
+                  ->begin());
 
             ((dealii::LinearAlgebra::distributed::
                 Vector<double, dealii::MemorySpace::CUDA> *)
@@ -990,31 +1005,33 @@ namespace dftfe
                d_dealiiVecTempDataImag)
               ->compress(dealii::VectorOperation::add);
 
-            cudaUtils::copyRealArrsToComplexArrGPU(
-              d_locallyOwnedSize,
-              ((dealii::LinearAlgebra::distributed::
-                  Vector<double, dealii::MemorySpace::CUDA> *)
-                 d_dealiiVecTempDataReal)
-                ->begin(),
-              ((dealii::LinearAlgebra::distributed::
-                  Vector<double, dealii::MemorySpace::CUDA> *)
-                 d_dealiiVecTempDataImag)
-                ->begin(),
-              d_vecData);
+            if (d_locallyOwnedSize > 0)
+              cudaUtils::copyRealArrsToComplexArrGPU(
+                d_locallyOwnedSize,
+                ((dealii::LinearAlgebra::distributed::
+                    Vector<double, dealii::MemorySpace::CUDA> *)
+                   d_dealiiVecTempDataReal)
+                  ->begin(),
+                ((dealii::LinearAlgebra::distributed::
+                    Vector<double, dealii::MemorySpace::CUDA> *)
+                   d_dealiiVecTempDataImag)
+                  ->begin(),
+                d_vecData);
           }
         else if (std::is_same<NumberType, cuFloatComplex>::value)
           {
-            cudaUtils::copyComplexArrToRealArrsGPU(
-              (d_locallyOwnedSize + d_ghostSize),
-              d_vecData,
-              ((dealii::LinearAlgebra::distributed::
-                  Vector<float, dealii::MemorySpace::CUDA> *)
-                 d_dealiiVecTempDataReal)
-                ->begin(),
-              ((dealii::LinearAlgebra::distributed::
-                  Vector<float, dealii::MemorySpace::CUDA> *)
-                 d_dealiiVecTempDataImag)
-                ->begin());
+            if ((d_locallyOwnedSize + d_ghostSize) > 0)
+              cudaUtils::copyComplexArrToRealArrsGPU(
+                (d_locallyOwnedSize + d_ghostSize),
+                d_vecData,
+                ((dealii::LinearAlgebra::distributed::
+                    Vector<float, dealii::MemorySpace::CUDA> *)
+                   d_dealiiVecTempDataReal)
+                  ->begin(),
+                ((dealii::LinearAlgebra::distributed::
+                    Vector<float, dealii::MemorySpace::CUDA> *)
+                   d_dealiiVecTempDataImag)
+                  ->begin());
 
             ((dealii::LinearAlgebra::distributed::
                 Vector<float, dealii::MemorySpace::CUDA> *)
@@ -1026,17 +1043,18 @@ namespace dftfe
                d_dealiiVecTempDataImag)
               ->compress(dealii::VectorOperation::add);
 
-            cudaUtils::copyRealArrsToComplexArrGPU(
-              d_locallyOwnedSize,
-              ((dealii::LinearAlgebra::distributed::
-                  Vector<float, dealii::MemorySpace::CUDA> *)
-                 d_dealiiVecTempDataReal)
-                ->begin(),
-              ((dealii::LinearAlgebra::distributed::
-                  Vector<float, dealii::MemorySpace::CUDA> *)
-                 d_dealiiVecTempDataImag)
-                ->begin(),
-              d_vecData);
+            if (d_locallyOwnedSize > 0)
+              cudaUtils::copyRealArrsToComplexArrGPU(
+                d_locallyOwnedSize,
+                ((dealii::LinearAlgebra::distributed::
+                    Vector<float, dealii::MemorySpace::CUDA> *)
+                   d_dealiiVecTempDataReal)
+                  ->begin(),
+                ((dealii::LinearAlgebra::distributed::
+                    Vector<float, dealii::MemorySpace::CUDA> *)
+                   d_dealiiVecTempDataImag)
+                  ->begin(),
+                d_vecData);
           }
       }
 #endif
@@ -1075,17 +1093,18 @@ namespace dftfe
       {
         if (std::is_same<NumberType, cuDoubleComplex>::value)
           {
-            cudaUtils::copyComplexArrToRealArrsGPU(
-              (d_locallyOwnedSize + d_ghostSize),
-              d_vecData,
-              ((dealii::LinearAlgebra::distributed::
-                  Vector<double, dealii::MemorySpace::CUDA> *)
-                 d_dealiiVecTempDataReal)
-                ->begin(),
-              ((dealii::LinearAlgebra::distributed::
-                  Vector<double, dealii::MemorySpace::CUDA> *)
-                 d_dealiiVecTempDataImag)
-                ->begin());
+            if ((d_locallyOwnedSize + d_ghostSize) > 0)
+              cudaUtils::copyComplexArrToRealArrsGPU(
+                (d_locallyOwnedSize + d_ghostSize),
+                d_vecData,
+                ((dealii::LinearAlgebra::distributed::
+                    Vector<double, dealii::MemorySpace::CUDA> *)
+                   d_dealiiVecTempDataReal)
+                  ->begin(),
+                ((dealii::LinearAlgebra::distributed::
+                    Vector<double, dealii::MemorySpace::CUDA> *)
+                   d_dealiiVecTempDataImag)
+                  ->begin());
 
             ((dealii::LinearAlgebra::distributed::
                 Vector<double, dealii::MemorySpace::CUDA> *)
@@ -1099,17 +1118,18 @@ namespace dftfe
           }
         else if (std::is_same<NumberType, cuFloatComplex>::value)
           {
-            cudaUtils::copyComplexArrToRealArrsGPU(
-              (d_locallyOwnedSize + d_ghostSize),
-              d_vecData,
-              ((dealii::LinearAlgebra::distributed::
-                  Vector<float, dealii::MemorySpace::CUDA> *)
-                 d_dealiiVecTempDataReal)
-                ->begin(),
-              ((dealii::LinearAlgebra::distributed::
-                  Vector<float, dealii::MemorySpace::CUDA> *)
-                 d_dealiiVecTempDataImag)
-                ->begin());
+            if ((d_locallyOwnedSize + d_ghostSize) > 0)
+              cudaUtils::copyComplexArrToRealArrsGPU(
+                (d_locallyOwnedSize + d_ghostSize),
+                d_vecData,
+                ((dealii::LinearAlgebra::distributed::
+                    Vector<float, dealii::MemorySpace::CUDA> *)
+                   d_dealiiVecTempDataReal)
+                  ->begin(),
+                ((dealii::LinearAlgebra::distributed::
+                    Vector<float, dealii::MemorySpace::CUDA> *)
+                   d_dealiiVecTempDataImag)
+                  ->begin());
 
             ((dealii::LinearAlgebra::distributed::
                 Vector<float, dealii::MemorySpace::CUDA> *)
@@ -1168,17 +1188,18 @@ namespace dftfe
                d_dealiiVecTempDataImag)
               ->compress_finish(dealii::VectorOperation::add);
 
-            cudaUtils::copyRealArrsToComplexArrGPU(
-              d_locallyOwnedSize,
-              ((dealii::LinearAlgebra::distributed::
-                  Vector<double, dealii::MemorySpace::CUDA> *)
-                 d_dealiiVecTempDataReal)
-                ->begin(),
-              ((dealii::LinearAlgebra::distributed::
-                  Vector<double, dealii::MemorySpace::CUDA> *)
-                 d_dealiiVecTempDataImag)
-                ->begin(),
-              d_vecData);
+            if (d_locallyOwnedSize > 0)
+              cudaUtils::copyRealArrsToComplexArrGPU(
+                d_locallyOwnedSize,
+                ((dealii::LinearAlgebra::distributed::
+                    Vector<double, dealii::MemorySpace::CUDA> *)
+                   d_dealiiVecTempDataReal)
+                  ->begin(),
+                ((dealii::LinearAlgebra::distributed::
+                    Vector<double, dealii::MemorySpace::CUDA> *)
+                   d_dealiiVecTempDataImag)
+                  ->begin(),
+                d_vecData);
           }
         else if (std::is_same<NumberType, cuFloatComplex>::value)
           {
@@ -1192,17 +1213,18 @@ namespace dftfe
                d_dealiiVecTempDataImag)
               ->compress_finish(dealii::VectorOperation::add);
 
-            cudaUtils::copyRealArrsToComplexArrGPU(
-              d_locallyOwnedSize,
-              ((dealii::LinearAlgebra::distributed::
-                  Vector<float, dealii::MemorySpace::CUDA> *)
-                 d_dealiiVecTempDataReal)
-                ->begin(),
-              ((dealii::LinearAlgebra::distributed::
-                  Vector<float, dealii::MemorySpace::CUDA> *)
-                 d_dealiiVecTempDataImag)
-                ->begin(),
-              d_vecData);
+            if (d_locallyOwnedSize > 0)
+              cudaUtils::copyRealArrsToComplexArrGPU(
+                d_locallyOwnedSize,
+                ((dealii::LinearAlgebra::distributed::
+                    Vector<float, dealii::MemorySpace::CUDA> *)
+                   d_dealiiVecTempDataReal)
+                  ->begin(),
+                ((dealii::LinearAlgebra::distributed::
+                    Vector<float, dealii::MemorySpace::CUDA> *)
+                   d_dealiiVecTempDataImag)
+                  ->begin(),
+                d_vecData);
           }
       }
 #endif
@@ -1217,62 +1239,67 @@ namespace dftfe
   void
   DistributedMulticomponentVec<NumberType, MemorySpace>::zeroOutGhosts()
   {
-    if (std::is_same<NumberType, double>::value ||
-        std::is_same<NumberType, float>::value ||
-        std::is_same<NumberType, std::complex<double>>::value ||
-        std::is_same<NumberType, std::complex<float>>::value)
+    if (d_ghostSize > 0)
       {
-        if (std::is_same<MemorySpace, dftfe::MemorySpace::Host>::value)
-          ((dealii::LinearAlgebra::distributed::
-              Vector<NumberType, dealii::MemorySpace::Host> *)d_dealiiVecData)
-            ->zero_out_ghosts();
+        if (std::is_same<NumberType, double>::value ||
+            std::is_same<NumberType, float>::value ||
+            std::is_same<NumberType, std::complex<double>>::value ||
+            std::is_same<NumberType, std::complex<float>>::value)
+          {
+            if (std::is_same<MemorySpace, dftfe::MemorySpace::Host>::value)
+              ((dealii::LinearAlgebra::distributed::
+                  Vector<NumberType, dealii::MemorySpace::Host> *)
+                 d_dealiiVecData)
+                ->zero_out_ghosts();
+            else
+              {
+#if defined(DFTFE_WITH_GPU)
+                ((dealii::LinearAlgebra::distributed::
+                    Vector<NumberType, dealii::MemorySpace::CUDA> *)
+                   d_dealiiVecData)
+                  ->zero_out_ghosts();
+#endif
+              }
+          }
+#if defined(DFTFE_WITH_GPU)
+        else if (std::is_same<MemorySpace, dftfe::MemorySpace::GPU>::value &&
+                 (std::is_same<NumberType, cuDoubleComplex>::value ||
+                  std::is_same<NumberType, cuFloatComplex>::value))
+          {
+            CUDACHECK(cudaMemset(this->begin() + d_locallyOwnedSize,
+                                 0,
+                                 d_ghostSize * sizeof(NumberType)));
+
+            if (std::is_same<NumberType, cuDoubleComplex>::value)
+              {
+                ((dealii::LinearAlgebra::distributed::
+                    Vector<double, dealii::MemorySpace::CUDA> *)
+                   d_dealiiVecTempDataReal)
+                  ->zero_out_ghosts();
+
+                ((dealii::LinearAlgebra::distributed::
+                    Vector<double, dealii::MemorySpace::CUDA> *)
+                   d_dealiiVecTempDataImag)
+                  ->zero_out_ghosts();
+              }
+            else if (std::is_same<NumberType, cuFloatComplex>::value)
+              {
+                ((dealii::LinearAlgebra::distributed::
+                    Vector<float, dealii::MemorySpace::CUDA> *)
+                   d_dealiiVecTempDataReal)
+                  ->zero_out_ghosts();
+
+                ((dealii::LinearAlgebra::distributed::
+                    Vector<float, dealii::MemorySpace::CUDA> *)
+                   d_dealiiVecTempDataImag)
+                  ->zero_out_ghosts();
+              }
+          }
+#endif
         else
           {
-#if defined(DFTFE_WITH_GPU)
-            ((dealii::LinearAlgebra::distributed::
-                Vector<NumberType, dealii::MemorySpace::CUDA> *)d_dealiiVecData)
-              ->zero_out_ghosts();
-#endif
+            AssertThrow(false, dftUtils::ExcNotImplementedYet());
           }
-      }
-#if defined(DFTFE_WITH_GPU)
-    else if (std::is_same<MemorySpace, dftfe::MemorySpace::GPU>::value &&
-             (std::is_same<NumberType, cuDoubleComplex>::value ||
-              std::is_same<NumberType, cuFloatComplex>::value))
-      {
-        CUDACHECK(cudaMemset(this->begin() + d_locallyOwnedSize,
-                             0,
-                             d_ghostSize * sizeof(NumberType)));
-
-        if (std::is_same<NumberType, cuDoubleComplex>::value)
-          {
-            ((dealii::LinearAlgebra::distributed::
-                Vector<double, dealii::MemorySpace::CUDA> *)
-               d_dealiiVecTempDataReal)
-              ->zero_out_ghosts();
-
-            ((dealii::LinearAlgebra::distributed::
-                Vector<double, dealii::MemorySpace::CUDA> *)
-               d_dealiiVecTempDataImag)
-              ->zero_out_ghosts();
-          }
-        else if (std::is_same<NumberType, cuFloatComplex>::value)
-          {
-            ((dealii::LinearAlgebra::distributed::
-                Vector<float, dealii::MemorySpace::CUDA> *)
-               d_dealiiVecTempDataReal)
-              ->zero_out_ghosts();
-
-            ((dealii::LinearAlgebra::distributed::
-                Vector<float, dealii::MemorySpace::CUDA> *)
-               d_dealiiVecTempDataImag)
-              ->zero_out_ghosts();
-          }
-      }
-#endif
-    else
-      {
-        AssertThrow(false, dftUtils::ExcNotImplementedYet());
       }
   }
 

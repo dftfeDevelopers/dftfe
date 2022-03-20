@@ -298,6 +298,22 @@ namespace dftfe
           isEvaluateGradRho ? (cellsBlockSize * numQuadPoints * BVec) : 1,
           zero);
 
+      cudaUtils::Vector<NumberType, dftfe::MemorySpace::Host> rhoHost;
+      cudaUtils::Vector<NumberType, dftfe::MemorySpace::Host> gradRhoHostX;
+      cudaUtils::Vector<NumberType, dftfe::MemorySpace::Host> gradRhoHostY;
+      cudaUtils::Vector<NumberType, dftfe::MemorySpace::Host> gradRhoHostZ;
+
+      rhoHost.resize(totalLocallyOwnedCells * numQuadPoints, zero);
+
+      if (isEvaluateGradRho)
+        {
+          gradRhoHostX.resize(totalLocallyOwnedCells * numQuadPoints, zero);
+
+          gradRhoHostY.resize(totalLocallyOwnedCells * numQuadPoints, zero);
+          gradRhoHostZ.resize(totalLocallyOwnedCells * numQuadPoints, zero);
+        }
+
+
       NumberType *shapeFunctionValuesInvertedDevice;
 
       CUDACHECK(
@@ -364,35 +380,10 @@ namespace dftfe
         reinterpret_cast<NumberType *>(thrust::raw_pointer_cast(
           &operatorMatrix.getCellWaveFunctionMatrix()[0]));
 
-      // set density to zero
       typename dealii::DoFHandler<3>::active_cell_iterator cell =
         dofHandler.begin_active();
       typename dealii::DoFHandler<3>::active_cell_iterator endc =
         dofHandler.end();
-      for (; cell != endc; ++cell)
-        if (cell->is_locally_owned())
-          {
-            const dealii::CellId cellid = cell->id();
-
-            std::fill((*rhoValues)[cellid].begin(),
-                      (*rhoValues)[cellid].end(),
-                      0.0);
-            if (isEvaluateGradRho)
-              std::fill((*gradRhoValues)[cellid].begin(),
-                        (*gradRhoValues)[cellid].end(),
-                        0.0);
-
-            if (dftParameters::spinPolarized == 1)
-              {
-                std::fill((*rhoValuesSpinPolarized)[cellid].begin(),
-                          (*rhoValuesSpinPolarized)[cellid].end(),
-                          0.0);
-                if (isEvaluateGradRho)
-                  std::fill((*gradRhoValuesSpinPolarized)[cellid].begin(),
-                            (*gradRhoValuesSpinPolarized)[cellid].end(),
-                            0.0);
-              }
-          }
 
       std::vector<double> rhoValuesFlattened(totalLocallyOwnedCells *
                                                numQuadPoints,
@@ -1063,15 +1054,6 @@ namespace dftfe
 
 
               // do cuda memcopy to host
-              cudaUtils::Vector<NumberType, dftfe::MemorySpace::Host> rhoHost;
-              cudaUtils::Vector<NumberType, dftfe::MemorySpace::Host>
-                gradRhoHostX;
-              cudaUtils::Vector<NumberType, dftfe::MemorySpace::Host>
-                gradRhoHostY;
-              cudaUtils::Vector<NumberType, dftfe::MemorySpace::Host>
-                gradRhoHostZ;
-
-              rhoHost.resize(totalLocallyOwnedCells * numQuadPoints, zero);
               cudaUtils::copyCUDAVecToHostVec(rhoDevice.begin(),
                                               rhoHost.begin(),
                                               totalLocallyOwnedCells *
@@ -1079,22 +1061,16 @@ namespace dftfe
 
               if (isEvaluateGradRho)
                 {
-                  gradRhoHostX.resize(totalLocallyOwnedCells * numQuadPoints,
-                                      zero);
                   cudaUtils::copyCUDAVecToHostVec(gradRhoDeviceX.begin(),
                                                   gradRhoHostX.begin(),
                                                   totalLocallyOwnedCells *
                                                     numQuadPoints);
 
-                  gradRhoHostY.resize(totalLocallyOwnedCells * numQuadPoints,
-                                      zero);
                   cudaUtils::copyCUDAVecToHostVec(gradRhoDeviceY.begin(),
                                                   gradRhoHostY.begin(),
                                                   totalLocallyOwnedCells *
                                                     numQuadPoints);
 
-                  gradRhoHostZ.resize(totalLocallyOwnedCells * numQuadPoints,
-                                      zero);
                   cudaUtils::copyCUDAVecToHostVec(gradRhoDeviceZ.begin(),
                                                   gradRhoHostZ.begin(),
                                                   totalLocallyOwnedCells *
