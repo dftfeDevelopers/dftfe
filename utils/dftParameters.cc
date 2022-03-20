@@ -164,7 +164,7 @@ namespace dftfe
 
     //New paramter for selecting mode and NEB parameters
     unsigned int TotalImages                                    = 1;
-    unsigned int  solvermode                                     =0;
+    std::string  solvermode                                     ="";
 
 
     void
@@ -733,8 +733,8 @@ namespace dftfe
 
         prm.declare_entry(
           "DFT-FE SOLVER MODE",
-          "0",
-          Patterns::Integer(0,2),
+          "GS",
+          Patterns::Selection("GS|MD|NEB"),
           "[Standard] DFT-FE SOLVER MODE: If 2: nebClass is triggered. If 1: thenn MD Class is triggered. If 0: DFT");         
         
         
@@ -1336,7 +1336,7 @@ namespace dftfe
         dftParameters::pspCutoffImageCharges =
           prm.get_double("PSP CUTOFF IMAGE CHARGES");
         dftParameters::TotalImages= prm.get_integer("NUMBER OF IMAGES");
-        dftParameters::solvermode = prm.get_integer("DFT-FE SOLVER MODE");
+        dftParameters::solvermode = prm.get("DFT-FE SOLVER MODE");
 
       }
       prm.leave_subsection();

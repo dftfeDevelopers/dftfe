@@ -44,7 +44,7 @@ subsection Molecular Dynamics
     set BOMD                            = true
     set ATOMIC MASSES FILE              = @SOURCE_DIR@/Mass.inp
     set STARTING TEMPERATURE            = 1400
-    set TEMPERATURE CONTROLLER TYPE            = NO_CONTROL 
+    set TEMPERATURE CONTROLLER TYPE     = NO_CONTROL 
     set TIME STEP                       = 1
     set NUMBER OF STEPS                 = 7
     set THERMOSTAT TIME CONSTANT        = 10

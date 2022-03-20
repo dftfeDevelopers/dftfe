@@ -107,9 +107,8 @@ run_problem(const MPI_Comm &    mpi_comm_replica,
   
   
   
-  switch(dftfe::dftParameters::solvermode)
-  {
-    case 1:
+
+    if(dftfe::dftParameters::solvermode=="MD")
              { 
                 dftfe::dftClass<n1, n2> problemFE(mpi_comm_replica,
                                     interpoolcomm,
@@ -165,14 +164,14 @@ run_problem(const MPI_Comm &    mpi_comm_replica,
                 mdClass.runMD();
 
               }
-    break;
-    case 2:
+
+    else if(dftfe::dftParameters::solvermode=="NEB")
               {
 
               
               }
-    break;
-    default:
+
+        else
             { 
               dftfe::dftClass<n1, n2> problemFE(mpi_comm_replica,
                                     interpoolcomm,
@@ -181,7 +180,7 @@ run_problem(const MPI_Comm &    mpi_comm_replica,
                               mpi_comm_replica,interpoolcomm,interBandGroupComm);
               problemFE.run();
               }
-  }
+  
     elpaScala->elpaDeallocateHandles(numberEigenValues, numEigenValuesRR);
     elpa_uninit(&error);
     AssertThrow(error == ELPA_OK,

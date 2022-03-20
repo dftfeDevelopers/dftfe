@@ -121,7 +121,7 @@ namespace dftfe
     extern unsigned int numberStepsBOMD;
     extern std::string  NHCRestartFile;
     extern unsigned int TotalImages;
-    extern unsigned int  solvermode;
+    extern std::string  solvermode;
     //extern double       startingTempBOMDNVE;
     extern double       gaussianConstantForce;
     extern double       gaussianOrderForce;

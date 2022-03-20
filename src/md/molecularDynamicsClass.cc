@@ -842,17 +842,16 @@ namespace dftfe
         double COMx = 0.0;
         double COMy = 0.0;
         double COMz = 0.0;
-
-        for(i=0; i < d_numberGlobalCharges; i++)
-        {          
-
-               if(d_this_mpi_process == 0)  
-                {   
+        std::vector<double> rloc(3*d_numberGlobalCharges,0.0);
+        if(d_this_mpi_process == 0)
+        {
+          for(i=0; i < d_numberGlobalCharges; i++)
+            {          
 
                   /*Computing New position as taylor expansion about r(t) O(dt^3) */
-                  r[i][0] = ( dt*v[3*i+0] - dt*dt_2*forceOnAtoms[3*i+0]/atomMass[i]* haPerBohrToeVPerAng)* AngTobohr; //New position of x cordinate
-                  r[i][1] = ( dt*v[3*i+1] - dt*dt_2*forceOnAtoms[3*i+1]/atomMass[i]* haPerBohrToeVPerAng)* AngTobohr; // New Position of Y cordinate
-                  r[i][2] = ( dt*v[3*i+2] - dt*dt_2*forceOnAtoms[3*i+2]/atomMass[i]* haPerBohrToeVPerAng)* AngTobohr; // New POsition of Z cordinate
+                  rloc[3*i+0] = ( dt*v[3*i+0] - dt*dt_2*forceOnAtoms[3*i+0]/atomMass[i]* haPerBohrToeVPerAng)* AngTobohr; //New position of x cordinate
+                  rloc[3*i+1] = ( dt*v[3*i+1] - dt*dt_2*forceOnAtoms[3*i+1]/atomMass[i]* haPerBohrToeVPerAng)* AngTobohr; // New Position of Y cordinate
+                  rloc[3*i+2] = ( dt*v[3*i+2] - dt*dt_2*forceOnAtoms[3*i+2]/atomMass[i]* haPerBohrToeVPerAng)* AngTobohr; // New POsition of Z cordinate
 
 
 
@@ -863,36 +862,48 @@ namespace dftfe
                 v[3*i+2] = v[3*i+2] - forceOnAtoms[3*i+2]/atomMass[i]*dt_2* haPerBohrToeVPerAng;
 
 
-                }
 
-
-                MPI_Bcast(
-                &(r[i][0]), 3, MPI_DOUBLE, 0, d_mpi_communicator);
-                MPI_Bcast(
-                &(v[3*i]), 3, MPI_DOUBLE, 0, d_mpi_communicator);
                 COMM += atomMass[i];
                 COMx += atomMass[i]*r[i][0];
                 COMy += atomMass[i]*r[i][1];
                 COMz += atomMass[i]*r[i][2];
 
-        }
+            }
+            
+
+       
         COMx /=COMM;
         COMy /=COMM;
         COMz /=COMM;
-        for(i=0; i < d_numberGlobalCharges; i++)
-        {          
+      }  
+      MPI_Bcast(
+          &(v[0]), 3*d_numberGlobalCharges, MPI_DOUBLE, 0, d_mpi_communicator);         
+        if(d_this_mpi_process == 0)
+        {
+          for(i=0; i < d_numberGlobalCharges; i++)
+            {          
 
-               if(d_this_mpi_process == 0)  
-                {  
-                  r[i][0] -=COMx;
-                  r[i][1] -=COMy;
-                  r[i][2] -=COMz;
-                }
-                MPI_Bcast(
-                &(r[i][0]), 3, MPI_DOUBLE, 0, d_mpi_communicator);        
 
-        }        
-            
+                  rloc[3*i+0] -=COMx;
+                  rloc[3*i+1] -=COMy;
+                  rloc[3*i+2] -=COMz;
+
+        
+
+            } 
+        }            
+        MPI_Bcast(
+          &(rloc[0]), 3*d_numberGlobalCharges, MPI_DOUBLE, 0, d_mpi_communicator);   
+    for (unsigned int i = 0; i < d_numberGlobalCharges; ++i)
+      {
+        for (unsigned int j = 0; j < 3; ++j)
+          {
+
+                r[i][j] = rloc[i*3+j];
+          
+          }
+      }          
+
         double update_time;
         
         update_time = MPI_Wtime();
@@ -967,20 +978,23 @@ namespace dftfe
         //Call Force
         totalKE = 0.0;
         /* Second half of velocty verlet */
-        for(i=0; i < d_numberGlobalCharges; i++)
-         {
-            if(d_this_mpi_process == 0)
-              {
+        if(d_this_mpi_process == 0)
+        {
+          for(i=0; i < d_numberGlobalCharges; i++)
+            {
+
                   v[3*i+0] = v[3*i+0] - forceOnAtoms[3*i+0]/atomMass[i]*dt_2* haPerBohrToeVPerAng;
                   v[3*i+1] = v[3*i+1] - forceOnAtoms[3*i+1]/atomMass[i]*dt_2* haPerBohrToeVPerAng;
                   v[3*i+2] = v[3*i+2] - forceOnAtoms[3*i+2]/atomMass[i]*dt_2* haPerBohrToeVPerAng;
 
-              }
-                MPI_Bcast(
-                &(v[3*i]), 3, MPI_DOUBLE, 0, d_mpi_communicator);              
+              
+             
                 totalKE += 0.5*atomMass[i]*(v[3*i+0]*v[3*i+0]+v[3*i+1]*v[3*i+1] + v[3*i+2]*v[3*i+2]);
 
-            }        
+            } 
+        }     
+        MPI_Bcast(
+           &(v[0]), 3*d_numberGlobalCharges, MPI_DOUBLE, 0, d_mpi_communicator);                   
        //Printing COM velocity
         double COM = 0.0;
         double vx = 0.0;
