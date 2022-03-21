@@ -1056,13 +1056,13 @@ namespace dftfe
           "STARTING TEMPERATURE",
           "300.0",
           Patterns::Double(0.0),
-          "[Developer] Starting temperature in K for MD simulation.");
+          "[Standard] Starting temperature in K for MD simulation.");
 
         prm.declare_entry(
           "THERMOSTAT TIME CONSTANT",
           "100",
           Patterns::Double(0.0),
-          "[Developer] Time constant of thermostat wrt MD timestep. ");  
+          "[Standard] Ratio of Time constant of thermostat and MD timestep. ");  
        
         prm.declare_entry(
           "TEMPERATURE CONTROLLER TYPE",

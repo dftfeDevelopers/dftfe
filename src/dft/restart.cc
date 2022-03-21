@@ -629,12 +629,7 @@ dftClass<FEOrder, FEOrderElectro>::MDwriteDomainAndAtomCoordinates(const std::st
     }
 
   std::vector<std::vector<double>> atomLocationsAutoMesh = atomLocations;
-   
-#ifdef USE_COMPLEX
 
-  dftUtils::writeDataIntoFile(atomLocationsFractionalCurrent,
-                              Path +"atomsFracCoordCurrent.chk");
-#else
   if (dftParameters::periodicX || dftParameters::periodicY ||
       dftParameters::periodicZ)
     {
@@ -648,7 +643,7 @@ dftClass<FEOrder, FEOrderElectro>::MDwriteDomainAndAtomCoordinates(const std::st
 
       dftUtils::writeDataIntoFile(atomLocations, Path +"atomsCartCoordCurrent.chk");
     }
-#endif
+
  
 }
 

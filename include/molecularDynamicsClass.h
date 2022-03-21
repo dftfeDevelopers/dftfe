@@ -22,10 +22,15 @@ namespace dftfe
      * used to access friend class dft.cc
      *  @param[in] mpi_comm_replica  mpi_communicator for domain decomposition
      * parallelization
-    
+     *  @param[in] interpoolcomm  mpi_communicator for parallelization over k
+     * points
+     *  @param[in] interBandGroupComm  mpi_communicator for parallelization over
+     * bands    
      */
         molecularDynamicsClass(dftClass<FEOrder, FEOrderElectro> *_dftPtr,
-                      const MPI_Comm &                   mpi_comm_replica);
+                              const MPI_Comm &mpi_comm_replica,
+                              const MPI_Comm &interpoolcomm,
+                              const MPI_Comm &interBandGroupComm);
 
         const double haPerBohrToeVPerAng = 27.211386245988/0.529177210903;
         const double haToeV              = 27.211386245988;
@@ -60,6 +65,8 @@ namespace dftfe
 
     // parallel communication objects
         const MPI_Comm     d_mpi_communicator;
+        const MPI_Comm     d_interpoolcomm;
+        const MPI_Comm      d_interBandGroupComm;
         const unsigned int d_this_mpi_process;
 
     // conditional stream object
