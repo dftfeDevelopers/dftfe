@@ -313,22 +313,22 @@ namespace dftfe
      *  @param[in] atomSites vector that saves atomLocations data member of dft Class
      *  @param[out] atomSites vector that saves atomLocations data member of dft Class
      */    
-    void
-    getAtomLocations(std::vector<std::vector<double>> &atomSites);
+    std::vector<std::vector<double>>
+    getAtomLocations();
      /**
      * @brief Gets the current atom Locations from dftPtr
      *  @param[in] atoms vector that saves atomtypes data member of dft Class
      *  @param[out] atoms vector that saves atomtypes data member of dft Class
      */ 
-    void           
-    getAtomTypes(std::set<unsigned int> &atoms);
+    std::set<unsigned int>          
+    getAtomTypes();
      /**
      * @brief Gets the current atom Locations from dftPtr
      *  @param[in] atomforces vector that returns -ve of atom Forces from dft Class
      *  @param[out] atomforces vector that returns -ve of atom Forces from dft Class
      */ 
-    void           
-    getForceonAtoms(std::vector<double> &atomforces);   
+    std::vector<double>           
+    getForceonAtoms();   
 
   private:
     /**

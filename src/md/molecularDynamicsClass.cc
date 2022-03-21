@@ -94,9 +94,9 @@ namespace dftfe
         std::vector<std::vector<double>> atomTypesMasses;
         dftUtils::readFile(2, atomTypesMasses, dftParameters::atomicMassesFile);
         std::vector<std::vector<double>> atomLocations;
-         dftPtr->getAtomLocations(atomLocations); 
+         atomLocations= dftPtr->getAtomLocations(); 
         std::set<unsigned int>   atomTypes;
-         dftPtr->getAtomTypes(atomTypes);     
+        atomTypes= dftPtr->getAtomTypes();     
         AssertThrow(atomTypes.size() == atomTypesMasses.size(),
                 ExcMessage("DFT-FE Error: check ATOM MASSES FILE"));
 
@@ -160,7 +160,7 @@ namespace dftfe
                
                     pcout << "Initialising Velocities of species no: "<<jatomtype<<" mass in amu: "<<Mass
                           <<"Velocity Deviation"<<velocityDistribution<<std::endl;                    
-                    boost::mt19937               rng;
+                    boost::mt19937               rng{0};
                     boost::normal_distribution<> gaussianDist(0.0, velocityDistribution);
                     boost::variate_generator<boost::mt19937 &, boost::normal_distribution<>>
                             generator(rng, gaussianDist);
@@ -239,7 +239,7 @@ namespace dftfe
  
           
         dftPtr->solve(true, false, false, false);
-        dftPtr->getForceonAtoms(force);
+        force=dftPtr->getForceonAtoms();
         double dt = d_TimeStep; 
         for(int iCharge = 0; iCharge < d_numberGlobalCharges; iCharge++)
         {
@@ -378,7 +378,7 @@ namespace dftfe
                                                             std::vector<dealii::Tensor<1, 3, double>> &displacements ,
                                                             std::vector<double> &velocity ,
                                                             std::vector<double> &force, 
-                                                            std::vector<double> atomMass  )
+                                                            const std::vector<double> &atomMass  )
     {
       pcout << "---------------MDNVE() called ------------------ " <<  std::endl;
 
@@ -478,7 +478,7 @@ namespace dftfe
                                                             std::vector<dealii::Tensor<1, 3, double>> &displacements ,
                                                             std::vector<double> &velocity ,
                                                             std::vector<double> &force, 
-                                                            std::vector<double> atomMass  )
+                                                            const std::vector<double> &atomMass  )
     {
       
       pcout << "---------------mdNVTrescaleThermostat() called ------------------ " <<  std::endl;
@@ -583,7 +583,7 @@ namespace dftfe
                                                             std::vector<dealii::Tensor<1, 3, double>> &displacements ,
                                                             std::vector<double> &velocity ,
                                                             std::vector<double> &force, 
-                                                            std::vector<double> atomMass  )
+                                                            const std::vector<double> &atomMass  )
     {
 
 
@@ -725,7 +725,7 @@ namespace dftfe
                                                             std::vector<dealii::Tensor<1, 3, double>> &displacements ,
                                                             std::vector<double> &velocity ,
                                                             std::vector<double> &force, 
-                                                            std::vector<double> atomMass  )
+                                                           const std::vector<double> & atomMass  )
     {
       
       pcout << "---------------mdNVTsvrThermostat() called ------------------ " <<  std::endl;
@@ -828,9 +828,10 @@ namespace dftfe
     
     template <unsigned int FEOrder, unsigned int FEOrderElectro>
     void    
-    molecularDynamicsClass<FEOrder, FEOrderElectro>::velocityVerlet(std::vector<double> &v , std::vector<dealii::Tensor<1, 3, double>> &r, 
-                                                                    std::vector<double> atomMass, double &KE, std::vector<double> &forceOnAtoms
-                                                                     )
+    molecularDynamicsClass<FEOrder, FEOrderElectro>::velocityVerlet(std::vector<double> &v , 
+                                                                    std::vector<dealii::Tensor<1, 3, double>> &r, 
+                                                                    const std::vector<double> &atomMass, double &KE, 
+                                                                    std::vector<double> &forceOnAtoms )
     {    
         
         int i;
@@ -915,7 +916,7 @@ namespace dftfe
         if (dftParameters::verbosity >= 1)
           { 
             std::vector<std::vector<double>> atomLocations;
-             dftPtr->getAtomLocations(atomLocations);  
+            atomLocations= dftPtr->getAtomLocations();  
             pcout << "Displacement  " << std::endl;
             for (int iCharge = 0; iCharge < d_numberGlobalCharges; ++iCharge)
               {
@@ -974,7 +975,7 @@ namespace dftfe
           pcout << "Time taken for updateAtomPositionsAndMoveMesh: "
                 << update_time << std::endl;
         dftPtr->solve(true, false, false, false); 
-        dftPtr->getForceonAtoms(forceOnAtoms);         
+        forceOnAtoms=dftPtr->getForceonAtoms();         
         //Call Force
         totalKE = 0.0;
         /* Second half of velocty verlet */
@@ -1027,155 +1028,12 @@ namespace dftfe
     }  
     
     
-    template <unsigned int FEOrder, unsigned int FEOrderElectro>
-    void    
-    molecularDynamicsClass<FEOrder, FEOrderElectro>::simpleVerlet(std::vector<dealii::Tensor<1, 3, double>>  &disp_0, 
-                        std::vector<double> atomMass , double &KE , std::vector<double> &forceOnAtoms, std::vector<double> &v ) 
-    {
-      /*
-        double totalKE=0.0;
-        KE = 0.0;
-        double dt = d_TimeStep;
-        std::vector<dealii::Tensor<1, 3, double>> disp(d_numberGlobalCharges);
-        double COMM = 0.0;
-        double dx = 0.0;
-        double dy = 0.0;
-        double dz = 0.0; 
-   
-        for(int i=0; i < d_numberGlobalCharges; i++)
-        {          
-               if(d_this_mpi_process == 0)  
-                {   
-                //Computing New displacement with  O(dt^4) 
-                disp[i][0] = ( disp_0[i][0]*bohrToAng - dt*dt*forceOnAtoms[3*i+0]/atomMass[i]* haPerBohrToeVPerAng)* AngTobohr; //New position of x cordinate
-                disp[i][1] = ( disp_0[i][1]*bohrToAng  - dt*dt*forceOnAtoms[3*i+1]/atomMass[i]* haPerBohrToeVPerAng)* AngTobohr; // New Position of Y cordinate
-                disp[i][2] = ( disp_0[i][2]*bohrToAng  - dt*dt*forceOnAtoms[3*i+2]/atomMass[i]* haPerBohrToeVPerAng)* AngTobohr; // New Position of Z cordinate
 
-
-                // Computing velocity from v(t) to v(t+dt) 
-                v[3*i+0] = (disp[i][0] + disp_0[i][0])*bohrToAng/(2*dt);
-                v[3*i+1] = (disp[i][0] + disp_0[i][0])*bohrToAng/(2*dt);
-                v[3*i+2] = (disp[i][0] + disp_0[i][0])*bohrToAng/(2*dt);
-
-
-
-                }
-
-                MPI_Bcast(
-                &(disp[i][0]), 3, MPI_DOUBLE, 0, d_mpi_communicator);
-                MPI_Bcast(
-                &(v[3*i]), 3, MPI_DOUBLE, 0, d_mpi_communicator);
-                MPI_Bcast(
-                &(disp_0[i][0]), 3, MPI_DOUBLE, 0, d_mpi_communicator);                
-
-        }
-            
-        double update_time;
-        MPI_Barrier(d_mpi_communicator);
-        update_time = MPI_Wtime();
-
-        dftPtr->updateAtomPositionsAndMoveMesh(
-          disp,
-          dftParameters::maxJacobianRatioFactorForMD,false);
-
-        if (dftParameters::verbosity >= 1)
-          { 
-            std::vector<std::vector<double>> atomLocations;
-             dftPtr->getAtomLocations(atomLocations);  
-            pcout << "Displacement  " << std::endl;
-            for (int iCharge = 0; iCharge < d_numberGlobalCharges; ++iCharge)
-              {
-                    if(atomLocations[iCharge][0] == 3)
-                      {
-                                        pcout << "###Charge Id: " << iCharge << " "
-                      << disp[iCharge][0] << " "
-                      << disp[iCharge][1] << " "
-                      << disp[iCharge][2] << std::endl;
-                      }
-                      else
-                      {
-                                        pcout << "Charge Id: " << iCharge << " "
-                      << disp[iCharge][0] << " "
-                      << disp[iCharge][1] << " "
-                      << disp[iCharge][2] << std::endl;
-                      }
-              }         
-          
-          }          
-        for(int iCharge = 0; iCharge <d_numberGlobalCharges; iCharge++)
-          {
-            d_atomFractionalunwrapped[iCharge][2] = d_atomFractionalunwrapped[iCharge][2]+ disp[iCharge][0]/d_domainLength[0];
-            d_atomFractionalunwrapped[iCharge][3] = d_atomFractionalunwrapped[iCharge][3]+ disp[iCharge][1]/d_domainLength[0];
-            d_atomFractionalunwrapped[iCharge][4] = d_atomFractionalunwrapped[iCharge][4]+ disp[iCharge][2]/d_domainLength[0];
-          } 
-
-            pcout<<"---- Updated Unwrapped Coordinates: -----"<<std::endl;
-            for (int iCharge = 0; iCharge < d_numberGlobalCharges; ++iCharge)
-              {
-                    if(d_atomFractionalunwrapped[iCharge][0] == 3)
-                      {
-                        pcout << "$$$ Charge No. " << iCharge << " "
-                      << d_atomFractionalunwrapped[iCharge][2] << " "
-                      << d_atomFractionalunwrapped[iCharge][3] << " "
-                      << d_atomFractionalunwrapped[iCharge][4] << std::endl;
-                      }
-                      else
-                      {
-                        pcout << "Charge No. " << iCharge << " "
-                      << d_atomFractionalunwrapped[iCharge][2] << " "
-                      << d_atomFractionalunwrapped[iCharge][3] << " "
-                      << d_atomFractionalunwrapped[iCharge][4] << std::endl;
-                      }
-              }         
-          
-                   
-
-        MPI_Barrier(d_mpi_communicator);
-
-        update_time = MPI_Wtime() - update_time;
-        
-        if (dftParameters::verbosity >= 1)
-          pcout << "Time taken for updateAtomPositionsAndMoveMesh: "
-                << update_time << std::endl;
-        dftPtr->solve(true, false, false, false); 
-        dftPtr->getForceonAtoms(forceOnAtoms);         
-
-        
-       //Printing COM velocity
-        double COM = 0.0;
-        double vx = 0.0;
-        double vy = 0.0;
-        double vz = 0.0;
-        for(int iCharge = 0; iCharge <d_numberGlobalCharges; iCharge++ )
-        {
-          vx += atomMass[iCharge]*v[3*iCharge+0];
-          vy += atomMass[iCharge]*v[3*iCharge+1];
-          vz += atomMass[iCharge]*v[3*iCharge+2];
-          COM += atomMass[iCharge];
-          totalKE += 0.5*atomMass[iCharge]*(v[3*iCharge+0]*v[3*iCharge+0]+v[3*iCharge+1]*v[3*iCharge+1] + v[3*iCharge+2]*v[3*iCharge+2]);
-          disp_0[iCharge][0] = disp[iCharge][0];
-          disp_0[iCharge][1] = disp[iCharge][1];
-          disp_0[iCharge][2] = disp[iCharge][2];        
-        
-        
-        }
-        vx /=COM;
-        vy /=COM;
-        vz /=COM;
-        pcout<<" The Center of Mass Velocity from Simple Verlet: "<<vx<<" "<<vy<<" "<<vz<<std::endl;  
-        KE = totalKE;  
-      */
-
-
-    }                         
-    
-    
-    
     
     template <unsigned int FEOrder, unsigned int FEOrderElectro>
     void    
     molecularDynamicsClass<FEOrder, FEOrderElectro>::RescaleVelocities(std::vector<double> &v,double &KE,
-                                                                        std::vector<double> M, double Temperature)
+                                                                        const std::vector<double> &M, double Temperature)
     {
       pcout << "Rescale Thermostat: Before rescaling temperature= "<<Temperature<<" K" <<  std::endl;
       AssertThrow(std::fabs(Temperature - 0.0) > 0.00001,
@@ -1302,8 +1160,9 @@ namespace dftfe
     
     template <unsigned int FEOrder, unsigned int FEOrderElectro>
     void
-    molecularDynamicsClass<FEOrder, FEOrderElectro>::writeRestartFile(std::vector<dealii::Tensor<1, 3, double>> &disp, std::vector<double> velocity , std::vector<double> force , std::vector<double> KineticEnergyVector ,
-                                                                      std::vector<double> InternalEnergyVector , std::vector<double> TotalEnergyVector, int time )
+    molecularDynamicsClass<FEOrder, FEOrderElectro>::writeRestartFile(const std::vector<dealii::Tensor<1, 3, double>> &disp, 
+    const std::vector<double> &velocity , const std::vector<double> &force , const std::vector<double> &KineticEnergyVector ,
+    const std::vector<double> &InternalEnergyVector , const std::vector<double> &TotalEnergyVector, int time )
 
    {
      if(dftParameters::reproducible_output==false)
@@ -1397,7 +1256,7 @@ namespace dftfe
         //Initialise Position
       if (dftParameters::verbosity >= 1)
         { std::vector<std::vector<double>> atomLocations;
-            dftPtr->getAtomLocations(atomLocations);  
+          atomLocations= dftPtr->getAtomLocations();  
            pcout << "Atom Locations from Restart " << std::endl;
            for (int iCharge = 0; iCharge < d_numberGlobalCharges; ++iCharge)
              {
@@ -1449,7 +1308,7 @@ namespace dftfe
  
 
         dftPtr->solve(true, false, false, false); 
-        dftPtr->getForceonAtoms(force);     
+        force= dftPtr->getForceonAtoms();     
       
       if(d_this_mpi_process == 0)
       {
@@ -1501,8 +1360,8 @@ namespace dftfe
 
    template <unsigned int FEOrder, unsigned int FEOrderElectro>
    void
-    molecularDynamicsClass<FEOrder, FEOrderElectro>:: writeRestartNHCfile(std::vector<double> v_e ,
-                                                            std::vector<double> e, std::vector<double> Q, int time )
+    molecularDynamicsClass<FEOrder, FEOrderElectro>:: writeRestartNHCfile(const std::vector<double> &v_e ,
+                                                            const std::vector<double> &e, const std::vector<double> &Q, int time )
 
    {
     if(dftParameters::reproducible_output==false)
@@ -1532,7 +1391,7 @@ namespace dftfe
    }                                                         
     template <unsigned int FEOrder, unsigned int FEOrderElectro>
     void    
-    molecularDynamicsClass<FEOrder, FEOrderElectro>::writeTotalDisplacementFile(std::vector<dealii::Tensor<1, 3, double>> r, int time)
+    molecularDynamicsClass<FEOrder, FEOrderElectro>::writeTotalDisplacementFile(const std::vector<dealii::Tensor<1, 3, double>> &r, int time)
     {
       if(dftParameters::reproducible_output==false)
       {
@@ -1551,7 +1410,7 @@ namespace dftfe
           std::ofstream outfile;
           outfile.open("TotalDisplacement.chk", std::ios_base::app);
           std::vector<std::vector<double>> atomLocations;
-          dftPtr->getAtomLocations(atomLocations); 
+          atomLocations = dftPtr->getAtomLocations(); 
           for(int iCharge = 0; iCharge <d_numberGlobalCharges; iCharge++)
             {
               outfile<<atomLocations[iCharge][0]<<"  "<<atomLocations[iCharge][1]<< std::setprecision(16)<<"  "<<fileDisplacementData[iCharge][0]<<"  "<<fileDisplacementData[iCharge][1]<<"  "<<fileDisplacementData[iCharge][2]<<std::endl;
@@ -1583,8 +1442,8 @@ namespace dftfe
     }
     template <unsigned int FEOrder, unsigned int FEOrderElectro>
     double
-    molecularDynamicsClass<FEOrder, FEOrderElectro>:: NoseHoverExtendedLagrangian(std::vector<double> thermovelocity ,
-     std::vector<double> thermoposition   , std::vector<double> thermomass , double PE, double KE, double T)
+    molecularDynamicsClass<FEOrder, FEOrderElectro>:: NoseHoverExtendedLagrangian(const std::vector<double> &thermovelocity ,
+     const std::vector<double> &thermoposition   , const std::vector<double> &thermomass , double PE, double KE, double T)
   {
     double Hnose = 0.0;
     Hnose = (0.5*thermomass[0]*thermovelocity[0]*thermovelocity[0]+ 0.5*thermomass[1]*thermovelocity[1]*thermovelocity[1]
