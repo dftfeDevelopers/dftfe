@@ -119,7 +119,6 @@ namespace dftfe
     extern double       chebyshevFilterPolyDegreeFirstScfScalingFactor;
     extern double       timeStepBOMD;
     extern unsigned int numberStepsBOMD;
-    extern std::string  NHCRestartFile;
     extern unsigned int TotalImages;
     extern std::string  solvermode;
     //extern double       startingTempBOMDNVE;
@@ -154,7 +153,6 @@ namespace dftfe
     extern double MaxWallTime;
     extern double thermostatTimeConstantBOMD;
     extern std::string  tempControllerTypeBOMD;   
-    extern bool     usevelocityverlet; 
     extern int MDTrack;
     /**
      * Declare parameters.

@@ -154,11 +154,7 @@ namespace dftfe
     double startingTempBOMD                                     = 300;
     double thermostatTimeConstantBOMD                            = 100;
     double MaxWallTime                                          = 2592000.0;
-    bool usevelocityverlet                                      = true;
     std::string  tempControllerTypeBOMD                         ="";
-    std::string  VelocityRestartFile                              = "";
-    std::string  ForceRestartFile                                   = ""; 
-    std::string  NHCRestartFile                                   = ""; 
     int MDTrack                                                   =0;
 
 
@@ -187,7 +183,7 @@ namespace dftfe
           "DFT-FE SOLVER MODE",
           "GS",
           Patterns::Selection("GS|MD|NEB"),
-          "[Standard] DFT-FE SOLVER MODE: If 2: nebClass is triggered. If 1: thenn MD Class is triggered. If 0: DFT");
+          "[Standard] DFT-FE SOLVER MODE: If GS: performs GroundState calculations, ionic and cell relaxation. If MD: performs Molecular Dynamics Simulation. If NEB: performs a NEB calculation");
 
 
       prm.declare_entry(
@@ -1099,11 +1095,7 @@ namespace dftfe
         prm.declare_entry("MAX WALL TIME",
                           "2592000.0",
                           Patterns::Double(0.0),
-                          "[Standard] Maximum Wall Time in seconds"); 
-        prm.declare_entry("USE VELOCITY VERLET INTEGRATOR",
-                           "true",
-                           Patterns::Bool(),
-                           "[Standard] Integrator selection");                                           
+                          "[Standard] Maximum Wall Time in seconds");                                          
 
         prm.declare_entry(
           "DIRAC DELTA KERNEL SCALING CONSTANT XL BOMD",
@@ -1455,14 +1447,11 @@ namespace dftfe
         dftParameters::thermostatTimeConstantBOMD =
           prm.get_double("THERMOSTAT TIME CONSTANT");
         dftParameters::MaxWallTime  = prm.get_double("MAX WALL TIME"); 
-        dftParameters::usevelocityverlet = prm.get_bool("USE VELOCITY VERLET INTEGRATOR"); 
+
 
 
         dftParameters::tempControllerTypeBOMD =
-          prm.get("TEMPERATURE CONTROLLER TYPE"); 
-          
-        dftParameters::NHCRestartFile = 
-          prm.get("NOSE HOVER THERMOSTAT RESTART FILE");
+          prm.get("TEMPERATURE CONTROLLER TYPE");          
 
         dftParameters::diracDeltaKernelScalingConstant =
           prm.get_double("DIRAC DELTA KERNEL SCALING CONSTANT XL BOMD");

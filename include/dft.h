@@ -299,33 +299,33 @@ namespace dftfe
     /**
      * @brief writes the current domain bounding vectors and atom coordinates to files, which are required for
      * geometry relaxation restart
+
      */
     void
     writeDomainAndAtomCoordinates();
      /**
      * @brief writes the current domain bounding vectors and atom coordinates to files, which are required for
      * MD restart
+     * @param[in] Path The folder path to store the atom coordinates required during restart.
      */
     void
     MDwriteDomainAndAtomCoordinates(const std::string Path);
      /**
      * @brief Gets the current atom Locations from dftPtr
-     *  @param[in] atomSites vector that saves atomLocations data member of dft Class
-     *  @param[out] atomSites vector that saves atomLocations data member of dft Class
+     *  \return atomSites vector that saves atomLocations data member of dft Class
      */    
     std::vector<std::vector<double>>
     getAtomLocations();
      /**
      * @brief Gets the current atom Locations from dftPtr
-     *  @param[in] atoms vector that saves atomtypes data member of dft Class
-     *  @param[out] atoms vector that saves atomtypes data member of dft Class
+
+     *  \return atoms vector that saves atomtypes data member of dft Class
      */ 
     std::set<unsigned int>          
     getAtomTypes();
      /**
      * @brief Gets the current atom Locations from dftPtr
-     *  @param[in] atomforces vector that returns -ve of atom Forces from dft Class
-     *  @param[out] atomforces vector that returns -ve of atom Forces from dft Class
+     *  \return atomforces vector that returns -ve of atom Forces from dft Class
      */ 
     std::vector<double>           
     getForceonAtoms();   

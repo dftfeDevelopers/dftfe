@@ -598,7 +598,7 @@ namespace dftfe
         std::vector<double> Thermostatposition(2,0.0);  
         std::vector<double> NoseHoverExtendedLagrangianvector(d_numberofSteps,0.0);    
         nhctimeconstant = d_ThermostatTimeConstant*d_TimeStep;  
-        if(d_restartFlag == 0 && dftParameters::NHCRestartFile=="")
+        if(d_restartFlag == 0)
         {
           ThermostatMass[0] = 3*(d_numberGlobalCharges-1)*kB*d_startingTemperature*(nhctimeconstant*nhctimeconstant);
           ThermostatMass[1] = kB*d_startingTemperature*(nhctimeconstant*nhctimeconstant);

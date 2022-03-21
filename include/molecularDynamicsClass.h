@@ -246,31 +246,8 @@ namespace dftfe
                         const std::vector<double> &atomMass , double &KE , std::vector<double> &forceOnAtoms );
 
     
-    /**
-    * @brief simpleVerlet
-        Not active.
-     * @param[in] disp_0 Stores the positions at (t-dt)
-     * @param[in] forceOnAtoms Stores the -ve of force on each charge, updated at each TimeStep
-     * @param[in] atomMass Stores the mass of each Charge.
-     * @param[in] Temperature  temperature at current Timestep
-     * 
-     * @param[out] KE Kinetic Energy at current timestp in eV
-     * @param[out] forceonAtoms Updated -ve forces on each charge.
-     * @param[out] disp Updated displacement for (t+dt)
-     * @param[out] v Updated velocity of each atom
-     *    
-     *  
-     *     
-     */ 
-        void simpleVerlet(std::vector<dealii::Tensor<1, 3, double>> &disp_0, 
-                        std::vector<double> atomMass , double &KE , std::vector<double> &forceOnAtoms, std::vector<double> &v );
 
     /**
-
-
-
-
-
     * @brief  writeRestartFile: Writing files at each timestep to mdRestart
 
      * @param[in] velocity Velocity updated from restart
