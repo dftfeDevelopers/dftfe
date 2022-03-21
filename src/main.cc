@@ -112,55 +112,11 @@ run_problem(const MPI_Comm &    mpi_comm_replica,
              { 
                 dftfe::dftClass<n1, n2> problemFE(mpi_comm_replica,
                                     interpoolcomm,
-                                    interBandGroupComm, elpaScala);
-                std::vector<std::vector<double>> t1;
-                int time1;                                    
+                                    interBandGroupComm, elpaScala);           
 
-                if (dftfe::dftParameters::restartMdFromChk)
-                {
-                  pcout<<" MD is in Restart Mode"<<std::endl;
- 
-                  dftfe::dftUtils::readFile(1, t1, "mdRestart/time.chk");
-                  time1 = t1[0][0];
-                  std::string tempfolder = "mdRestart/Step";
-                  bool flag = false;
-                  std::string path2 = tempfolder + std::to_string(time1);
-                  pcout<<"Looking for files of TimeStep "<<time1<<" at: "<<path2<<std::endl;
-                  while(!flag && time1 > 1)
-                  {
-                    std::string path = tempfolder + std::to_string(time1);
-                    std::string file1 = path + "/atomsFracCoordCurrent.chk";
-                    std::string file2 = path + "/velocity.chk";
-                    std::string file3 = path + "/NHCThermostat.chk";
-                    std::ifstream       readFile1(file1.c_str());
-                    std::ifstream       readFile2(file2.c_str());
-                    std::ifstream       readFile3(file3.c_str());
-                    pcout<<" Restart folders:"<<(!readFile1.fail() && !readFile2.fail())<<std::endl;
-                    bool NHCflag = true;
-                    if(dftfe:: dftParameters::tempControllerTypeBOMD =="NOSE_HOVER_CHAINS")
-                    { 
-                      NHCflag = false;
-                      if(!readFile3.fail())
-                        NHCflag = true;
-                    }
-                    if (!readFile1.fail() && !readFile2.fail() && NHCflag )
-                    {
-                      flag = true;
-                      dftfe::dftParameters::coordinatesFile=file1;
-                      pcout<<" Restart files are found in: "<<path<<std::endl;
-                    }
-                  else
-                    pcout<< "----Error opening restart files present in: "<<path<< std::endl<<"Switching to time: "<<--time1
-                          <<" ----"<<std::endl;                  
-                  
-                  }
-
-                }
-                
+                dftfe::molecularDynamicsClass<n1,n2> mdClass(&problemFE, mpi_comm_replica);                 
                  setup_dftfe<n1,n2> (elpaScala, problemFE,numberEigenValues,numEigenValuesRR,
-                              mpi_comm_replica,interpoolcomm,interBandGroupComm);
-                dftfe::molecularDynamicsClass<n1,n2> mdClass(&problemFE, mpi_comm_replica,time1); 
-          
+                              mpi_comm_replica,interpoolcomm,interBandGroupComm);         
                 mdClass.runMD();
 
               }

@@ -3733,8 +3733,7 @@ namespace dftfe
         writeBands();
       }
 #endif
-      //GroundStateEnergyvalue = d_groundStateEnergy;
-      //EntropicEnergyvalue    = d_entropicEnergy;
+
       
 
 

@@ -26,7 +26,7 @@ namespace dftfe
 
     template <unsigned int FEOrder, unsigned int FEOrderElectro>
     molecularDynamicsClass<FEOrder, FEOrderElectro>::molecularDynamicsClass(dftClass<FEOrder, FEOrderElectro> *_dftPtr,
-    const MPI_Comm &                   mpi_comm_replica, int StartTime)
+    const MPI_Comm &                   mpi_comm_replica)
     : dftPtr(_dftPtr)
     , d_mpi_communicator(mpi_comm_replica)
        , d_this_mpi_process(Utilities::MPI::this_mpi_process(mpi_comm_replica))
@@ -36,6 +36,7 @@ namespace dftfe
         MPI_Barrier(d_mpi_communicator);
         d_MDstartWallTime = MPI_Wtime();
         d_TimeIndex               = 0;
+        d_startingTimeStep        = checkRestart();
         d_TimeStep                =
                 dftParameters::timeStepBOMD*0.09822694541304546435; // Conversion factor from femteseconds:
                               // 0.09822694541304546435 based on NIST constants
@@ -50,8 +51,7 @@ namespace dftfe
                 dftParameters::tempControllerTypeBOMD;
         d_numberGlobalCharges      = 
                 dftParameters::natoms; 
-        d_startingTimeStep        =
-                StartTime;  
+          
         d_MaxWallTime           =
                 dftParameters::MaxWallTime; 
         pcout << "----------------------Starting Initialization of BOMD-------------------------" << std::endl;        
@@ -1592,7 +1592,57 @@ namespace dftfe
     return(Hnose);
   
   }
+    template <unsigned int FEOrder, unsigned int FEOrderElectro>
+    int
+    molecularDynamicsClass<FEOrder, FEOrderElectro>:: checkRestart()
+    {
+                int time1=0;                                    
 
+                if (dftfe::dftParameters::restartMdFromChk)
+                {
+                  std::vector<std::vector<double>> t1;
+                  pcout<<" MD is in Restart Mode"<<std::endl;
+ 
+                  dftfe::dftUtils::readFile(1, t1, "mdRestart/time.chk");
+                  time1 = t1[0][0];
+                  std::string tempfolder = "mdRestart/Step";
+                  bool flag = false;
+                  std::string path2 = tempfolder + std::to_string(time1);
+                  pcout<<"Looking for files of TimeStep "<<time1<<" at: "<<path2<<std::endl;
+                  while(!flag && time1 > 1)
+                  {
+                    std::string path = tempfolder + std::to_string(time1);
+                    std::string file1 = path + "/atomsFracCoordCurrent.chk";
+                    std::string file2 = path + "/velocity.chk";
+                    std::string file3 = path + "/NHCThermostat.chk";
+                    std::ifstream       readFile1(file1.c_str());
+                    std::ifstream       readFile2(file2.c_str());
+                    std::ifstream       readFile3(file3.c_str());
+                    pcout<<" Restart folders:"<<(!readFile1.fail() && !readFile2.fail())<<std::endl;
+                    bool NHCflag = true;
+                    if(dftfe:: dftParameters::tempControllerTypeBOMD =="NOSE_HOVER_CHAINS")
+                    { 
+                      NHCflag = false;
+                      if(!readFile3.fail())
+                        NHCflag = true;
+                    }
+                    if (!readFile1.fail() && !readFile2.fail() && NHCflag )
+                    {
+                      flag = true;
+                      dftfe::dftParameters::coordinatesFile=file1;
+                      pcout<<" Restart files are found in: "<<path<<std::endl;
+                    }
+
+                  else
+                    pcout<< "----Error opening restart files present in: "<<path<< std::endl<<"Switching to time: "<<--time1
+                          <<" ----"<<std::endl;                  
+                  
+                  }
+
+                }
+                return(time1);
+
+    }
 
 
 

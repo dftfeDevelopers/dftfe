@@ -25,10 +25,9 @@ namespace dftfe
     
      */
         molecularDynamicsClass(dftClass<FEOrder, FEOrderElectro> *_dftPtr,
-                      const MPI_Comm &                   mpi_comm_replica,
-                      int                                  StartTime);
+                      const MPI_Comm &                   mpi_comm_replica);
 
-        const double haPerBohrToeVPerAng = 27.211386245988 / 0.529177210903;
+        const double haPerBohrToeVPerAng = 27.211386245988/0.529177210903;
         const double haToeV              = 27.211386245988;
         const double bohrToAng           = 0.529177210903;
         const double AngTobohr           = 1.0 / bohrToAng;
@@ -366,7 +365,7 @@ namespace dftfe
      */  
         void writeTotalDisplacementFile(std::vector<dealii::Tensor<1, 3, double>> r , int time ) ;  
 
-        /**
+    /**
 
     * @brief  NoseHoverExtendedLagrangian: Computes the Nose-Hover Hamiltonian when using NHC thermostat
 
@@ -377,16 +376,21 @@ namespace dftfe
      * @param[in] KE  Kinetic ENergy of nuclei at current Timestep
      * @param[in] Temperature  temperature at current Timestep
      * 
-     * @param[out] Hnose Nose Hamiltonian at each timestep
+     * @return Hnose Nose Hamiltonian at each timestep
      *    
      *  
      *     
      */    
         
         double NoseHoverExtendedLagrangian(std::vector<double> thermovelocity  , std::vector<double> thermoposition  , std::vector<double> thermomass , double PE, double KE, double  T );                                    
-        
-
-
+    /**        
+    * @brief  checkRestart: Identifies the folder containing the restart file, sets the path of coordinates file and restursn the starting timestep    * 
+     * @return StartingTimeStep the timestep to restart the MD from.
+     *    
+     *  
+     *     
+     */
+        int checkRestart();
     
     };
 }

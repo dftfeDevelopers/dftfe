@@ -183,6 +183,12 @@ namespace dftfe
         Patterns::Bool(),
         "[Advanced] Compute electrostatic energy on a h refined mesh after each ground-state solve. Default: false.");
 
+        prm.declare_entry(
+          "DFT-FE SOLVER MODE",
+          "GS",
+          Patterns::Selection("GS|MD|NEB"),
+          "[Standard] DFT-FE SOLVER MODE: If 2: nebClass is triggered. If 1: thenn MD Class is triggered. If 0: DFT");
+
 
       prm.declare_entry(
         "VERBOSITY",
@@ -731,11 +737,7 @@ namespace dftfe
           Patterns::Integer(1, 50),
           "[Standard] NUMBER OF IMAGES:Default option is 1. When NEB is triggered this controls the total number of images along the MEP including the end points");          
 
-        prm.declare_entry(
-          "DFT-FE SOLVER MODE",
-          "GS",
-          Patterns::Selection("GS|MD|NEB"),
-          "[Standard] DFT-FE SOLVER MODE: If 2: nebClass is triggered. If 1: thenn MD Class is triggered. If 0: DFT");         
+         
         
         
         prm.declare_entry(
@@ -1151,6 +1153,7 @@ namespace dftfe
     {
       dftParameters::verbosity           = prm.get_integer("VERBOSITY");
       dftParameters::reproducible_output = prm.get_bool("REPRODUCIBLE OUTPUT");
+      dftParameters::solvermode = prm.get("DFT-FE SOLVER MODE");
       dftParameters::electrostaticsHRefinement =
         prm.get_bool("H REFINED ELECTROSTATICS");
 
@@ -1336,7 +1339,7 @@ namespace dftfe
         dftParameters::pspCutoffImageCharges =
           prm.get_double("PSP CUTOFF IMAGE CHARGES");
         dftParameters::TotalImages= prm.get_integer("NUMBER OF IMAGES");
-        dftParameters::solvermode = prm.get("DFT-FE SOLVER MODE");
+        
 
       }
       prm.leave_subsection();
