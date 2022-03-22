@@ -1,6 +1,10 @@
-This directory contains the DFT-FE code developed and maintained by the Computational Materials Physics Group, Department of Mechanical Engineering, University of Michigan Ann Arbor [http://www-personal.umich.edu/~vikramg/] and the MATRIX lab, Department of Computational and Data Sciences, Indian Institute of Science, Bangalore [https://sites.google.com/view/matrix-lab].
+This directory contains the DFT-FE code developed and maintained by 
+the Computational Materials Physics Group, Department of Mechanical 
+Engineering, University of Michigan Ann Arbor [http://www-personal.umich.edu/~vikramg/] 
+and the MATRIX lab, Department of Computational and Data Sciences, 
+Indian Institute of Science, Bangalore [https://sites.google.com/view/matrix-lab].
 
-Copyright (c) 2017-2021 The Regents of the University of Michigan and DFT-FE authors.
+Copyright (c) 2017-2022 The Regents of the University of Michigan and DFT-FE authors.
 DFT-FE authors term refers to the people listed in the file AUTHORS at the top
 level of the DFT-FE distribution.
 
