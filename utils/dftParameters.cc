@@ -1070,14 +1070,6 @@ namespace dftfe
           Patterns::Selection("NO_CONTROL|RESCALE|NOSE_HOVER_CHAINS|CSVR"),
           "[Standard] Method of controlling temperature in the MD run. NO_CONTROL is the default option.");
     
-
-        prm.declare_entry(
-         "NOSE HOVER THERMOSTAT RESTART FILE",
-          "",
-          Patterns::Anything(),
-          "[Standard] Specify the file name to restart NHC thermostat"); 
-
-
         prm.declare_entry("TIME STEP",
                           "0.5",
                           Patterns::Double(0.0),

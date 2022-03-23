@@ -392,7 +392,7 @@ namespace dftfe
                                                             std::vector<double> &force, 
                                                             const std::vector<double> &atomMass  )
     {
-      pcout << "---------------MDNVE() called ------------------ " <<  std::endl;
+      pcout << "---------------MDNVE() called------------------ " <<  std::endl;
 
         
       
@@ -406,9 +406,6 @@ namespace dftfe
             MPI_Barrier(d_interpoolcomm);
             step_time = MPI_Wtime();   
             velocityVerlet(velocity, displacements,atomMass,KineticEnergy, force);
-            MPI_Barrier(d_mpi_communicator);
-            MPI_Barrier(d_interBandGroupComm);
-            MPI_Barrier(d_interpoolcomm);
             GroundStateEnergyvalue=dftPtr->getInternalEnergy();
             EntropicEnergyvalue=dftPtr->getEntropicEnergy();
             KineticEnergyVector[d_TimeIndex-d_startingTimeStep]  = KineticEnergy / haToeV;
@@ -510,10 +507,6 @@ namespace dftfe
 
 
             velocityVerlet(velocity, displacements,atomMass,KineticEnergy, force);
-
-           MPI_Barrier(d_mpi_communicator);
-           MPI_Barrier(d_interBandGroupComm);
-           MPI_Barrier(d_interpoolcomm);
             TemperatureFromVelocities = 2.0/3.0/double(d_numberGlobalCharges-1)*KineticEnergy/(kB);
             if(d_TimeIndex%d_ThermostatTimeConstant==0)
             {
@@ -646,9 +639,9 @@ namespace dftfe
 
             velocityVerlet(velocity, displacements,atomMass,KineticEnergy, force);
 
-          MPI_Barrier(d_mpi_communicator);
-          MPI_Barrier(d_interBandGroupComm);
-          MPI_Barrier(d_interpoolcomm);
+            MPI_Barrier(d_mpi_communicator);
+            MPI_Barrier(d_interBandGroupComm);
+            MPI_Barrier(d_interpoolcomm);
           
             NoseHoverChains(velocity, Thermostatvelocity,Thermostatposition, ThermostatMass,KineticEnergy,d_startingTemperature);          
             KineticEnergy = 0.0;
@@ -660,9 +653,6 @@ namespace dftfe
               }
 
 
-            MPI_Barrier(d_mpi_communicator);
-            MPI_Barrier(d_interBandGroupComm);
-            MPI_Barrier(d_interpoolcomm);
             GroundStateEnergyvalue=dftPtr->getInternalEnergy();
             EntropicEnergyvalue=dftPtr->getEntropicEnergy();              
             KineticEnergyVector[d_TimeIndex-d_startingTimeStep]  = KineticEnergy / haToeV;
@@ -787,10 +777,6 @@ namespace dftfe
 
             svr(velocity,KineticEnergy,KEref);
             TemperatureFromVelocities = 2.0/3.0/double(d_numberGlobalCharges-1)*KineticEnergy/(kB);
-
-            MPI_Barrier(d_mpi_communicator);
-            MPI_Barrier(d_interBandGroupComm);
-            MPI_Barrier(d_interpoolcomm);
             GroundStateEnergyvalue=dftPtr->getInternalEnergy();
             EntropicEnergyvalue=dftPtr->getEntropicEnergy();              
             KineticEnergyVector[d_TimeIndex-d_startingTimeStep]  = KineticEnergy / haToeV;

@@ -43,17 +43,7 @@ namespace dftfe
      * @brief runMD: Assign atom mass to charge. Create vectors for displacement, velocity, force. 
      * Create KE vector, TE vector, PE vector. Initialise velocities from Boltsmann distribution. 
      * Set Center of Mass velocities to be 0. Call the resepective ensemble based on input file
-     * 
-     *
-     * @param[out] KineticEnergyVector Stores KineticEnergy at each TimeStep
-     * @param[out] InternalEnergyVector Stores InternalEnergy at each TimeStep
-     * @param[out] EntropicEnergyVector Stores PotentialEnergy at each TimeStep
-     * @param[out] TotalEnergyVector Stores TotalEnergy at each TimeStep
-     * @param[out] displacements Stores the displacment of each Charge, updated at each TimeStep
-     * @param[out] velocity Stores the velocity of each Charge, updated at each TimeStep
-     * @param[out] force Stores the -ve of force on each charge, updated at each TimeStep
-     * @param[out] massAtoms Stores the mass of each Charge.
-     *  
+     *   
      *     
      */
         void runMD();
