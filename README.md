@@ -4,12 +4,7 @@ DFT-FE : Density Functional Theory With Finite-Elements
 
 About
 -----
-
-DFT-FE is a C++ code for materials modeling from first principles using Kohn-Sham density functional theory, developed by the [Computational Materials Physics Group](http://www-personal.umich.edu/~vikramg) at the University of Michigan, Ann Arbor and the [MATRIX lab](http://cds.iisc.ac.in/faculty/phanim/) at the Indian Institute of Science, Bangalore.
-It is based on adaptive finite-element discretization that handles all-electron and pseudopotential calculations in the 
-same framework, and incorporates scalable and efficient solvers for the solution of the Kohn-Sham equations. Importantly, DFT-FE can handle general geometries and boundary conditions, including periodic, semi-periodic and non-periodic systems. DFT-FE code builds on top of the deal.II library for everything 
-that has to do with finite elements, geometries, meshes, etc., and, through deal.II on p4est for parallel adaptive mesh handling.
-
+DFT-FE is a C++ code for materials modeling from first principles using Kohn-Sham density functional theory. The origins of DFT-FE were in the  [Computational Materials Physics Group](http://www-personal.umich.edu/~vikramg) at the University of Michigan, Ann Arbor. The current development efforts span across the [Computational Materials Physics Group](http://www-personal.umich.edu/~vikramg) (Prof. Vikram Gavini, Dr. Sambit Das) at the University of Michigan and the [MATRIX lab](http://cds.iisc.ac.in/faculty/phanim/) (Prof. Phani Motamarri) at the Indian Institute of Science. DFT-FE is based on an adaptive finite-element discretization that handles pseudopotential and all-electron calculations in the same framework, and incorporates scalable and efficient solvers for the solution of the Kohn-Sham equations. Importantly, DFT-FE can handle periodic, semi-periodic and non-periodic boundary conditions and general geometries and further, DFT-FE can be run on massively parallel many-core CPU and hybrid CPU-GPU architectures (tested up to ~200,000 cores on many-core CPUs and ~24,000 GPUs on hybrid CPU-GPU architectures). Furthermore, DFT-FE is capable of fast and accurate large-scale pseudopotential DFT calculations, reaching 50,000-100,000 electrons. DFT-FE code builds on top of the deal.II library for everything that has to do with finite elements, geometries, meshes, etc., and, through deal.II on p4est for parallel adaptive mesh handling
 
 Installation instructions
 -------------------------
@@ -48,17 +43,18 @@ More information
     - Vikram Gavini: vikramg@umich.edu 
 
  - The following people have significantly contributed either in the past or current and advanced DFT-FE's goals: (All the underlying lists are in alphabetical order based on last name)
+   - Mentors/Development leads
+      - Dr. Sambit Das (University of Michigan Ann Arbor, USA)
+      - Prof. Vikram Gavini (University of Michigan Ann Arbor, USA
+      - Prof. Phani Motamarri (Indian Institute of Science, India)
+
    - Principal developers  
        - Dr. Sambit Das (University of Michigan Ann Arbor, USA)
        - Prof. Phani Motamarri (Indian Institute of Science, India)
     
    - Principal developers emeriti
-       - Dr. Krishnendu Ghosh (University of Michigan Ann Arbor, USA)
        - Prof. Shiva Rudraraju  (University of Wisconsin Madison, USA)
 
-   - Mentor
-       - Prof. Vikram Gavini (University of Michigan Ann Arbor, USA)
-         
  - A complete list of the many authors that have contributed to DFT-FE can be found at [authors](https://github.com/dftfeDevelopers/dftfe/blob/publicGithubDevelop/authors).    
 
 License
