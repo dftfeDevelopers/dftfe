@@ -1462,8 +1462,6 @@ namespace dftfe
                     << std::endl;
           std::cout << " Vikram Gavini (Mentor)   - University of Michigan, USA"
                     << std::endl;
-          std::cout << " Krishnendu Ghosh         - Intel Corporation, USA"
-                    << std::endl;
           std::cout
             << " Phani Motamarri          - Indian Institute of Science, India"
             << std::endl;
