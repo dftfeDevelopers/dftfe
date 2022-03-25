@@ -6,19 +6,19 @@ About
 -----
 DFT-FE is a C++ code for materials modeling from first principles using Kohn-Sham density functional theory. The origins of DFT-FE were in the  [Computational Materials Physics Group](http://www-personal.umich.edu/~vikramg) at the University of Michigan, Ann Arbor, with Vikram Gavini, Professor of Mechanical Engineering and Materials Science & Engineering, as the principal investigator broadly overseeing the effort. The current development efforts span across the [Computational Materials Physics Group](http://www-personal.umich.edu/~vikramg) (Prof. Vikram Gavini, Dr. Sambit Das) at the University of Michigan and the [MATRIX lab](http://cds.iisc.ac.in/faculty/phanim/) (Prof. Phani Motamarri) at the Indian Institute of Science.
 
-DFT-FE is based on an adaptive finite-element discretization that handles pseudopotential and all-electron calculations in the same framework, and incorporates scalable and efficient solvers for the solution of the Kohn-Sham equations. Importantly, DFT-FE can handle periodic, semi-periodic and non-periodic boundary conditions and general geometries and further, DFT-FE can be run on massively parallel many-core CPU and hybrid CPU-GPU architectures (tested up to ~200,000 cores on many-core CPUs and ~24,000 GPUs on hybrid CPU-GPU architectures). Furthermore, DFT-FE is capable of fast and accurate large-scale pseudopotential DFT calculations, reaching 50,000-100,000 electrons. DFT-FE code builds on top of the deal.II library for everything that has to do with finite elements, geometries, meshes, etc., and, through deal.II on p4est for parallel adaptive mesh handling
+DFT-FE is based on an adaptive finite-element discretization that handles pseudopotential and all-electron calculations in the same framework, and incorporates scalable and efficient solvers for the solution of the Kohn-Sham equations. Importantly, DFT-FE can handle periodic, semi-periodic and non-periodic boundary conditions and general geometries. DFT-FE can be run on massively parallel many-core CPU and hybrid CPU-GPU architectures (tested up to ~200,000 cores on many-core CPUs and ~24,000 GPUs on hybrid CPU-GPU architectures). DFT-FE is capable of fast and accurate large-scale pseudopotential DFT calculations, reaching 50,000-100,000 electrons. 
 
 Installation instructions
 -------------------------
 
-The steps to install the necessary dependencies and DFT-FE itself are described
-in the *Installation* section of the DFT-FE manual (compile doc/manual/manual.tex or download the development version manual [here](https://github.com/dftfeDevelopers/dftfe/blob/manual/manual-develop.pdf)). 
+DFT-FE code builds on top of the deal.II library for everything that has to do with finite elements, geometries, meshes, etc., and, through deal.II on p4est for parallel adaptive mesh handling.
+The steps to install the necessary dependencies and DFT-FE itself are described in the *Installation* section of the DFT-FE manual (compile doc/manual/manual.tex or download the development version manual [here](https://github.com/dftfeDevelopers/dftfe/blob/manual/manual-develop.pdf)). 
 
 
 Running DFT-FE
 --------------
 
-Instructions on how to run DFT-FE including demo examples can also be found in the *Running DFT-FE* section of the manual (compile doc/manual/manual.tex or download the development version manual [here](https://github.com/dftfeDevelopers/dftfe/blob/manual/manual-develop.pdf)). 
+Instructions on how to run DFT-FE including demo examples can also be found in the *Running DFT-FE* section of the manual (compile doc/manual/manual.tex or download the development version manual [here](https://github.com/dftfeDevelopers/dftfe/blob/manual/manual-develop.pdf)). Beyond the demo examples in the manual, we also refer to our [benchmarks repository](https://github.com/dftfeDevelopers/dftfe-benchmarks) which contains several accuracy and performance benchmarks to cover most of the capabilities of the DFT-FE code.
 
 
 Contributing to DFT-FE
