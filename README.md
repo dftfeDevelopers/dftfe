@@ -54,10 +54,6 @@ More information
        - Dr. Sambit Das (University of Michigan Ann Arbor, USA)
        - Prof. Phani Motamarri (Indian Institute of Science, India)
     
-   - Principal developers emeriti
-       - Dr. Krishnendu Ghosh (Intel Corporation, USA)
-       - Prof. Shiva Rudraraju (University of Wisconsin Madison, USA)
-
  - A complete list of the many authors that have contributed to DFT-FE can be found at [authors](authors).    
 
 License
