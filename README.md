@@ -55,7 +55,7 @@ More information
    - Principal developers emeriti
        - Prof. Shiva Rudraraju  (University of Wisconsin Madison, USA)
 
- - A complete list of the many authors that have contributed to DFT-FE can be found at [authors](https://github.com/dftfeDevelopers/dftfe/blob/publicGithubDevelop/authors).    
+ - A complete list of the many authors that have contributed to DFT-FE can be found at [authors](authors).    
 
 License
 -------
