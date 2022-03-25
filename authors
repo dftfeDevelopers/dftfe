@@ -1,4 +1,7 @@
-The origins of DFT-FE were in the  [Computational Materials Physics Group](http://www-personal.umich.edu/~vikramg) at the University of Michigan, Ann Arbor. The current development efforts span across the [Computational Materials Physics Group](http://www-personal.umich.edu/~vikramg) (Prof. Vikram Gavini, Dr. Sambit Das) at the University of Michigan and the [MATRIX lab](http://cds.iisc.ac.in/faculty/phanim/) (Prof. Phani Motamarri) at the Indian Institute of Science.
+The origins of DFT-FE were in the  [Computational Materials Physics Group](http://www-personal.umich.edu/~vikramg) 
+at the University of Michigan, Ann Arbor. The current development efforts span across the 
+[Computational Materials Physics Group](http://www-personal.umich.edu/~vikramg) (Prof. Vikram Gavini, Dr. Sambit Das) 
+at the University of Michigan and the [MATRIX lab](http://cds.iisc.ac.in/faculty/phanim/) (Prof. Phani Motamarri) at the Indian Institute of Science.
 
 'DFT-FE authors' is an all encompassing list of contributors to the DFT-FE code. 
 
@@ -8,8 +11,9 @@ significant contributions to core functionalities and code architecture
 in the past who are no longer active principal developers, are listed under
 principal developers emeriti. Finally, all contributors who have contributed to 
 major parts of the DFT-FE code or sent important fixes and enhancements are 
-listed under contributors. All the underlying lists are in alphabetical order
-based on the last name. 
+listed under contributors. 
+
+*All the underlying lists are in alphabetical order based on the last name.*
 
    Mentors/Development leads
    =========================
