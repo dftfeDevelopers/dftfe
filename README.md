@@ -45,7 +45,7 @@ More information
  - The following people have significantly contributed either in the past or current and advanced DFT-FE's goals: (All the underlying lists are in alphabetical order based on last name)
    - Mentors/Development leads
       - Dr. Sambit Das (University of Michigan Ann Arbor, USA)
-      - Prof. Vikram Gavini (University of Michigan Ann Arbor, USA
+      - Prof. Vikram Gavini (University of Michigan Ann Arbor, USA)
       - Prof. Phani Motamarri (Indian Institute of Science, India)
 
    - Principal developers  
