@@ -1,18 +1,24 @@
-DFT-FE is hosted by the Computational Materials Physics group at University 
-of Michigan (http://www-personal.umich.edu/~vikramg/), with Vikram Gavini, 
-Professor of Mechanical Engineering and Materials Science & Engineering,
-as the principal investigator broadly overseeing the effort.
+The origins of DFT-FE were in the  [Computational Materials Physics Group](http://www-personal.umich.edu/~vikramg)
+at the University of Michigan, Ann Arbor, with Vikram Gavini, Professor of Mechanical Engineering and 
+Materials Science & Engineering, as the principal investigator broadly overseeing the effort. The current
+development efforts span across the [Computational Materials Physics Group](http://www-personal.umich.edu/~vikramg) 
+(Prof. Vikram Gavini, Dr. Sambit Das) at the University of Michigan and the [MATRIX lab](http://cds.iisc.ac.in/faculty/phanim/) (Prof. Phani Motamarri)
+at the Indian Institute of Science.
+
 'DFT-FE authors' is an all encompassing list of contributors to the DFT-FE code. 
 
-The code is maintained by a group of principal developers, who manage the 
-architecture of the code and the core functionalities. Developers with
-significant contributions to core functionalities and code architecture
-in the past who are no longer active principal developers, are listed under
-principal developers emeriti. A subset of the principal developers and 
-mentors are administrators. Finally, all contributors who have contributed to 
-major parts of the DFT-FE code or sent important fixes and enhancements are 
-listed under contributors. All the underlying lists are in alphabetical order
-based on the last name. 
+DFT-FE code is currently maintained by a group of development leads/mentors and  principal developers, 
+who manage the architecture of the code and the core functionalities. Developers with significant contributions
+to core functionalities and code architecture in the past who are no longer active principal developers, 
+are listed under principal developers emeriti. Finally, all contributors who have contributed to major parts
+of the DFT-FE code or sent important fixes and enhancements are listed under contributors. All the underlying 
+lists are in alphabetical order based on the last name.
+
+   Mentors/Development leads
+   =========================
+   Sambit Das         - University of Michigan, USA
+   Vikram Gavini      - University of Michigan, USA
+   Phani Motamarri    - Indian Institute of Science, India
  
 Copyright (c) 2017-2022 The Regents of the University of Michigan
 
@@ -23,28 +29,14 @@ Copyright (c) 2017-2022 The Regents of the University of Michigan
     Principal developers emeriti
     =============================
     Krishnendu Ghosh   - University of Michigan, USA
-    Shiva Rudraraju    - University of Michigan, USA
     Phani Motamarri    - University of Michigan, USA
+    Shiva Rudraraju    - University of Michigan, USA
 
     Contributors
     ============
     Sambit Das         - University of Michigan, USA
     Shukan Parekh      - University of Michigan, USA
     Vishal Subramanian - University of Michigan, USA
-
-    Administrators
-    ==============
-    Sambit Das         - University of Michigan, USA
-    Vikram Gavini      - University of Michigan, USA
-
-    Documentation
-    =============
-    Sambit Das         - University of Michigan, USA
-    Vikram Gavini      - University of Michigan, USA
-
-    Mentors
-    =======
-    Vikram Gavini      - University of Michigan, USA
 
 
 Authors affiliated to other institutions
@@ -56,16 +48,9 @@ Authors affiliated to other institutions
     Contributors
     ============
     Denis Davydov      - University of Erlangen-Nuremberg, Germany
-    Krishnendu Ghosh   - Intel Corporation, USA
+    Krishnendu Ghosh   - Intel Corporation, USA    
+    Nikhil Kodali      - Indian Institute of Science, India
     Phani Motamarri    - Indian Institute of Science, India
+    Kartick Ramakrishnan - Indian Institute of Science, India
     David M. Rogers    - Oak Ridge National Laboratory, USA
 
-    Administrators
-    ==============
-    Phani Motamarri    - Indian Institute of Science, India
-
-    Documentation
-    =============
-    Phani Motamarri    - Indian Institute of Science, India    
-    David M. Rogers    - Oak Ridge National Laboratory, USA
-    Shiva Rudraraju    - University of Wisconsin Madison, USA
