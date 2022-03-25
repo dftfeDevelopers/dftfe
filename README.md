@@ -18,7 +18,7 @@ The steps to install the necessary dependencies and DFT-FE itself are described 
 Running DFT-FE
 --------------
 
-Instructions on how to run DFT-FE including demo examples can also be found in the *Running DFT-FE* section of the manual (compile doc/manual/manual.tex or download the development version manual [here](https://github.com/dftfeDevelopers/dftfe/blob/manual/manual-develop.pdf)). Beyond the demo examples in the manual, we also refer to our [benchmarks repository](https://github.com/dftfeDevelopers/dftfe-benchmarks) which contains several accuracy and performance benchmarks to cover most of the capabilities of the DFT-FE code.
+Instructions on how to run DFT-FE including demo examples can also be found in the *Running DFT-FE* section of the manual (compile doc/manual/manual.tex or download the development version manual [here](https://github.com/dftfeDevelopers/dftfe/blob/manual/manual-develop.pdf)). Beyond the demo examples in the manual, we also refer to our [benchmarks repository](https://github.com/dftfeDevelopers/dftfe-benchmarks) which contains several accuracy and performance benchmarks on a range of system sizes.
 
 
 Contributing to DFT-FE
