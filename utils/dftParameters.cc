@@ -1455,20 +1455,15 @@ namespace dftfe
             << "=========================================================================================================="
             << std::endl;
           std::cout
-            << " DFT-FE Principal developers and Mentors (alphabetically) :									"
+            << " DFT-FE Mentors and Development leads (alphabetically) :									"
             << std::endl;
           std::cout << "														" << std::endl;
           std::cout << " Sambit Das               - University of Michigan, USA"
                     << std::endl;
-          std::cout << " Vikram Gavini (Mentor)   - University of Michigan, USA"
-                    << std::endl;
-          std::cout << " Krishnendu Ghosh         - Intel Corporation, USA"
+          std::cout << " Vikram Gavini            - University of Michigan, USA"
                     << std::endl;
           std::cout
             << " Phani Motamarri          - Indian Institute of Science, India"
-            << std::endl;
-          std::cout
-            << " Shiva Rudraraju          - University of Wisconsin-Madison  "
             << std::endl;
           std::cout
             << " (A complete list of the many authors that have contributed to DFT-FE can be found in the authors file)"
