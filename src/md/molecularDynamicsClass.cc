@@ -1505,7 +1505,7 @@ namespace dftfe
   {
     double Hnose = 0.0;
     Hnose = (0.5*thermomass[0]*thermovelocity[0]*thermovelocity[0]+ 0.5*thermomass[1]*thermovelocity[1]*thermovelocity[1]
-           + 3*d_numberGlobalCharges*T*kB*thermoposition[0] +kB*T*thermoposition[1] )/haToeV + KE + PE;
+           + 3*(d_numberGlobalCharges-1)*T*kB*thermoposition[0] +kB*T*thermoposition[1] )/haToeV + KE + PE;
     return(Hnose);
   
   }
