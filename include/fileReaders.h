@@ -77,7 +77,7 @@ namespace dftfe
      * @brief copy file.
      */
     void
-    copyFile(const std::string &pathold, const std::string &pathnew);    
+    copyFile(const std::string &pathold, const std::string &pathnew);
 
     /**
      * @brief Verify if checkpoint file exists.

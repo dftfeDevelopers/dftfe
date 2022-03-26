@@ -573,7 +573,8 @@ dftClass<FEOrder, FEOrderElectro>::writeDomainAndAtomCoordinates()
 
 template <unsigned int FEOrder, unsigned int FEOrderElectro>
 void
-dftClass<FEOrder, FEOrderElectro>::MDwriteDomainAndAtomCoordinates(const std::string Path)
+dftClass<FEOrder, FEOrderElectro>::MDwriteDomainAndAtomCoordinates(
+  const std::string Path)
 {
   dftUtils::writeDataIntoFile(d_domainBoundingVectors,
                               Path + "domainBoundingVectorsCurrent.chk");
@@ -603,29 +604,28 @@ dftClass<FEOrder, FEOrderElectro>::MDwriteDomainAndAtomCoordinates(const std::st
       periodicBc[1] = dftParameters::periodicY;
       periodicBc[2] = dftParameters::periodicZ;
 
- 
 
-          for (unsigned int iAtom = 0; iAtom < numberGlobalAtoms; iAtom++)
-            {
-              Point<3> atomCoor;
-              int      atomId = iAtom;
-              atomCoor[0]     = atomLocations[iAtom][2];
-              atomCoor[1]     = atomLocations[iAtom][3];
-              atomCoor[2]     = atomLocations[iAtom][4];
 
-              std::vector<double> newFracCoord =
-                internal::wrapAtomsAcrossPeriodicBc(atomCoor,
-                                                    corner,
-                                                    latticeVectorsFlattened,
-                                                    periodicBc);
-              // for synchrozination
-              MPI_Bcast(&(newFracCoord[0]), 3, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+      for (unsigned int iAtom = 0; iAtom < numberGlobalAtoms; iAtom++)
+        {
+          Point<3> atomCoor;
+          int      atomId = iAtom;
+          atomCoor[0]     = atomLocations[iAtom][2];
+          atomCoor[1]     = atomLocations[iAtom][3];
+          atomCoor[2]     = atomLocations[iAtom][4];
 
-              atomLocationsFractionalCurrent[iAtom][2] = newFracCoord[0];
-              atomLocationsFractionalCurrent[iAtom][3] = newFracCoord[1];
-              atomLocationsFractionalCurrent[iAtom][4] = newFracCoord[2];
-            }
-        
+          std::vector<double> newFracCoord =
+            internal::wrapAtomsAcrossPeriodicBc(atomCoor,
+                                                corner,
+                                                latticeVectorsFlattened,
+                                                periodicBc);
+          // for synchrozination
+          MPI_Bcast(&(newFracCoord[0]), 3, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+
+          atomLocationsFractionalCurrent[iAtom][2] = newFracCoord[0];
+          atomLocationsFractionalCurrent[iAtom][3] = newFracCoord[1];
+          atomLocationsFractionalCurrent[iAtom][4] = newFracCoord[2];
+        }
     }
 
   std::vector<std::vector<double>> atomLocationsAutoMesh = atomLocations;
@@ -633,17 +633,12 @@ dftClass<FEOrder, FEOrderElectro>::MDwriteDomainAndAtomCoordinates(const std::st
   if (dftParameters::periodicX || dftParameters::periodicY ||
       dftParameters::periodicZ)
     {
-
       dftUtils::writeDataIntoFile(atomLocationsFractionalCurrent,
-                                  Path +"atomsFracCoordCurrent.chk");
+                                  Path + "atomsFracCoordCurrent.chk");
     }
   else
     {
-                          
-
-      dftUtils::writeDataIntoFile(atomLocations, Path +"atomsCartCoordCurrent.chk");
+      dftUtils::writeDataIntoFile(atomLocations,
+                                  Path + "atomsCartCoordCurrent.chk");
     }
-
- 
 }
-

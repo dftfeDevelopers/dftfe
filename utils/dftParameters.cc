@@ -150,17 +150,17 @@ namespace dftfe
     bool         useELPAGPUKernel                               = false;
     std::string  xcFamilyType                                   = "";
     bool         gpuMemOptMode                                  = false;
-    //New Paramters for moleculardyynamics class
-    double startingTempBOMD                                     = 300;
-    double thermostatTimeConstantBOMD                            = 100;
-    double MaxWallTime                                          = 2592000.0;
-    std::string  tempControllerTypeBOMD                         ="";
-    int MDTrack                                                   =0;
+    // New Paramters for moleculardyynamics class
+    double      startingTempBOMD           = 300;
+    double      thermostatTimeConstantBOMD = 100;
+    double      MaxWallTime                = 2592000.0;
+    std::string tempControllerTypeBOMD     = "";
+    int         MDTrack                    = 0;
 
 
-    //New paramter for selecting mode and NEB parameters
-    unsigned int TotalImages                                    = 1;
-    std::string  solvermode                                     ="";
+    // New paramter for selecting mode and NEB parameters
+    unsigned int TotalImages = 1;
+    std::string  solvermode  = "";
 
 
     void
@@ -179,11 +179,11 @@ namespace dftfe
         Patterns::Bool(),
         "[Advanced] Compute electrostatic energy on a h refined mesh after each ground-state solve. Default: false.");
 
-        prm.declare_entry(
-          "DFT-FE SOLVER MODE",
-          "GS",
-          Patterns::Selection("GS|MD|NEB"),
-          "[Standard] DFT-FE SOLVER MODE: If GS: performs GroundState calculations, ionic and cell relaxation. If MD: performs Molecular Dynamics Simulation. If NEB: performs a NEB calculation");
+      prm.declare_entry(
+        "DFT-FE SOLVER MODE",
+        "GS",
+        Patterns::Selection("GS|MD|NEB"),
+        "[Standard] DFT-FE SOLVER MODE: If GS: performs GroundState calculations, ionic and cell relaxation. If MD: performs Molecular Dynamics Simulation. If NEB: performs a NEB calculation");
 
 
       prm.declare_entry(
@@ -731,11 +731,10 @@ namespace dftfe
           "NUMBER OF IMAGES",
           "1",
           Patterns::Integer(1, 50),
-          "[Standard] NUMBER OF IMAGES:Default option is 1. When NEB is triggered this controls the total number of images along the MEP including the end points");          
+          "[Standard] NUMBER OF IMAGES:Default option is 1. When NEB is triggered this controls the total number of images along the MEP including the end points");
 
-         
-        
-        
+
+
         prm.declare_entry(
           "START MAGNETIZATION",
           "0.0",
@@ -1051,7 +1050,7 @@ namespace dftfe
           "300.0",
           Patterns::Double(0.0),
           "[Developer] Starting temperature in K for NVE simulation.");
-        
+
         prm.declare_entry(
           "STARTING TEMPERATURE",
           "300.0",
@@ -1062,14 +1061,14 @@ namespace dftfe
           "THERMOSTAT TIME CONSTANT",
           "100",
           Patterns::Double(0.0),
-          "[Standard] Ratio of Time constant of thermostat and MD timestep. ");  
-       
+          "[Standard] Ratio of Time constant of thermostat and MD timestep. ");
+
         prm.declare_entry(
           "TEMPERATURE CONTROLLER TYPE",
           "NO_CONTROL",
           Patterns::Selection("NO_CONTROL|RESCALE|NOSE_HOVER_CHAINS|CSVR"),
           "[Standard] Method of controlling temperature in the MD run. NO_CONTROL is the default option.");
-    
+
         prm.declare_entry("TIME STEP",
                           "0.5",
                           Patterns::Double(0.0),
@@ -1087,7 +1086,7 @@ namespace dftfe
         prm.declare_entry("MAX WALL TIME",
                           "2592000.0",
                           Patterns::Double(0.0),
-                          "[Standard] Maximum Wall Time in seconds");                                          
+                          "[Standard] Maximum Wall Time in seconds");
 
         prm.declare_entry(
           "DIRAC DELTA KERNEL SCALING CONSTANT XL BOMD",
@@ -1137,7 +1136,7 @@ namespace dftfe
     {
       dftParameters::verbosity           = prm.get_integer("VERBOSITY");
       dftParameters::reproducible_output = prm.get_bool("REPRODUCIBLE OUTPUT");
-      dftParameters::solvermode = prm.get("DFT-FE SOLVER MODE");
+      dftParameters::solvermode          = prm.get("DFT-FE SOLVER MODE");
       dftParameters::electrostaticsHRefinement =
         prm.get_bool("H REFINED ELECTROSTATICS");
 
@@ -1188,7 +1187,8 @@ namespace dftfe
         chkType        = prm.get_integer("CHK TYPE");
         restartFromChk = prm.get_bool("RESTART FROM CHK") && chkType != 0;
         restartSpinFromNoSpin = prm.get_bool("RESTART SP FROM NO SP");
-        restartMdFromChk = prm.get_bool("RESTART MD FROM CHK"); //&& chkType != 0;
+        restartMdFromChk =
+          prm.get_bool("RESTART MD FROM CHK"); //&& chkType != 0;
       }
       prm.leave_subsection();
 
@@ -1322,9 +1322,7 @@ namespace dftfe
           prm.get_double("START MAGNETIZATION");
         dftParameters::pspCutoffImageCharges =
           prm.get_double("PSP CUTOFF IMAGE CHARGES");
-        dftParameters::TotalImages= prm.get_integer("NUMBER OF IMAGES");
-        
-
+        dftParameters::TotalImages = prm.get_integer("NUMBER OF IMAGES");
       }
       prm.leave_subsection();
 
@@ -1430,7 +1428,7 @@ namespace dftfe
           prm.get_double("CHEBY TOL XL BOMD RANK UPDATES FD");
         dftParameters::timeStepBOMD    = prm.get_double("TIME STEP");
         dftParameters::numberStepsBOMD = prm.get_integer("NUMBER OF STEPS");
-        dftParameters::MDTrack = prm.get_integer("TRACKING ATOMIC NO");        
+        dftParameters::MDTrack         = prm.get_integer("TRACKING ATOMIC NO");
         dftParameters::startingTempBOMDNVE =
           prm.get_double("STARTING TEMP NVE");
 
@@ -1438,12 +1436,12 @@ namespace dftfe
           prm.get_double("STARTING TEMPERATURE");
         dftParameters::thermostatTimeConstantBOMD =
           prm.get_double("THERMOSTAT TIME CONSTANT");
-        dftParameters::MaxWallTime  = prm.get_double("MAX WALL TIME"); 
+        dftParameters::MaxWallTime = prm.get_double("MAX WALL TIME");
 
 
 
         dftParameters::tempControllerTypeBOMD =
-          prm.get("TEMPERATURE CONTROLLER TYPE");          
+          prm.get("TEMPERATURE CONTROLLER TYPE");
 
         dftParameters::diracDeltaKernelScalingConstant =
           prm.get_double("DIRAC DELTA KERNEL SCALING CONSTANT XL BOMD");

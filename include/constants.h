@@ -48,7 +48,7 @@ namespace dftfe
   constexpr unsigned int
   C_numCopies1DQuadSmearedCharge()
   {
-    return 2; //can be changed from 2 to 3
+    return 2; // can be changed from 2 to 3
   }
 
   /// 1d quad rule smeared nuclear charge

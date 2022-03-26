@@ -200,27 +200,28 @@ namespace dftfe
     void
     copyFile(const std::string &pathold, const std::string &pathnew)
     {
-      //std::filesystem::copy_file(pathold,pathnew);
+      // std::filesystem::copy_file(pathold,pathnew);
       int error = system(("cp -f " + pathold + " " + pathnew).c_str());
-      if(error != 0)
-      {  std::cout<<"Copy failed: "<<error<<" From: "<<pathold<<"  To: "<<pathnew<<std::endl;
-              /*  AssertThrow(error == 0,
-                      dealii::ExcMessage(
-                        std::string("Unable to Copy files: ") + pathold +
-                        " -> " + pathnew + ". The error code is " +
-                        dealii::Utilities::to_string(error) + ".")); */
-        }  
+      if (error != 0)
+        {
+          std::cout << "Copy failed: " << error << " From: " << pathold
+                    << "  To: " << pathnew << std::endl;
+          /*  AssertThrow(error == 0,
+                  dealii::ExcMessage(
+                    std::string("Unable to Copy files: ") + pathold +
+                    " -> " + pathnew + ". The error code is " +
+                    dealii::Utilities::to_string(error) + ".")); */
+        }
       else
-        std::cout<<"*Successful copy: "<<"From: "<<pathold<<"  To: "<<pathnew<<std::endl;  
+        std::cout << "*Successful copy: "
+                  << "From: " << pathold << "  To: " << pathnew << std::endl;
 
       // If the above call failed, e.g. because there is no command-line
       // available, try with internal functions.
+    }
 
-    }    
 
-    
-    
-    
+
     void
     verifyCheckpointFileExists(const std::string &filename)
     {

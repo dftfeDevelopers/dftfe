@@ -108,10 +108,10 @@ namespace dftfe
   //
   template <unsigned int FEOrder, unsigned int FEOrderElectro>
   dftClass<FEOrder, FEOrderElectro>::dftClass(
-    const MPI_Comm &mpi_comm_replica,
-    const MPI_Comm &_interpoolcomm,
-    const MPI_Comm &_interBandGroupComm,
-    elpaScalaManager*  _d_elpaScala)
+    const MPI_Comm &  mpi_comm_replica,
+    const MPI_Comm &  _interpoolcomm,
+    const MPI_Comm &  _interBandGroupComm,
+    elpaScalaManager *_d_elpaScala)
     : FE(FE_Q<3>(QGaussLobatto<1>(FEOrder + 1)), 1)
     ,
 #ifdef USE_COMPLEX
@@ -166,14 +166,15 @@ namespace dftfe
 
     geoOptCellPtr =
       new geoOptCell<FEOrder, FEOrderElectro>(this, mpi_comm_replica);
-    //d_mdPtr =
-     // new molecularDynamics<FEOrder, FEOrderElectro>(this, mpi_comm_replica);
-   // d_mdClassPtr = 
-    // new molecularDynamicsClass<FEOrder, FEOrderElectro>(this, mpi_comm_replica);
+    // d_mdPtr =
+    // new molecularDynamics<FEOrder, FEOrderElectro>(this, mpi_comm_replica);
+    // d_mdClassPtr =
+    // new molecularDynamicsClass<FEOrder, FEOrderElectro>(this,
+    // mpi_comm_replica);
 
 
     d_isRestartGroundStateCalcFromChk = false;
-    /*    
+    /*
     int error;
     if (elpa_init(ELPA_API_VERSION) != ELPA_OK)
       {
@@ -182,7 +183,7 @@ namespace dftfe
           "Error: ELPA API version not supported. Use API version 20181113.");
         exit(1);
       }
-    */  
+    */
 
 #if defined(DFTFE_WITH_GPU)
     d_gpucclMpiCommDomainPtr = new GPUCCLWrapper;
@@ -204,18 +205,18 @@ namespace dftfe
     delete forcePtr;
     delete geoOptIonPtr;
     delete geoOptCellPtr;
-    //delete d_mdPtr;
-    //delete d_mdClassPtr;
-    
-  /*
-    if (dftParameters::useELPA)
-      d_elpaScala.elpaDeallocateHandles(d_numEigenValues, d_numEigenValuesRR);
+    // delete d_mdPtr;
+    // delete d_mdClassPtr;
 
-    int error;
-    elpa_uninit(&error);
-    AssertThrow(error == ELPA_OK,
-                dealii::ExcMessage("DFT-FE Error: elpa error."));
-    */
+    /*
+      if (dftParameters::useELPA)
+        d_elpaScala.elpaDeallocateHandles(d_numEigenValues, d_numEigenValuesRR);
+
+      int error;
+      elpa_uninit(&error);
+      AssertThrow(error == ELPA_OK,
+                  dealii::ExcMessage("DFT-FE Error: elpa error."));
+      */
 #if defined(DFTFE_WITH_GPU)
     delete d_gpucclMpiCommDomainPtr;
 #endif
@@ -1593,7 +1594,7 @@ namespace dftfe
     /*if (dftParameters::isBOMD)
       {
        // d_mdPtr->run();
-        d_mdClassPtr->runMD();  
+        d_mdClassPtr->runMD();
       }*/
     else
       {
@@ -2073,8 +2074,7 @@ namespace dftfe
     const bool computeForces,
     const bool computeStress,
     const bool solveLinearizedKS,
-    const bool isRestartGroundStateCalcFromChk
-  )   
+    const bool isRestartGroundStateCalcFromChk)
   {
     kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>
       &kohnShamDFTEigenOperator = *d_kohnShamDFTOperatorPtr;
@@ -3733,11 +3733,6 @@ namespace dftfe
         writeBands();
       }
 #endif
-
-      
-
-
-
   }
 
   template <unsigned int FEOrder, unsigned int FEOrderElectro>
@@ -4221,42 +4216,39 @@ namespace dftfe
     //
   }
 
-template <unsigned int FEOrder, unsigned int FEOrderElectro>
-std::vector<std::vector<double>>
-dftClass<FEOrder, FEOrderElectro>::getAtomLocations()
-{
-  return atomLocations;
-} 
+  template <unsigned int FEOrder, unsigned int FEOrderElectro>
+  std::vector<std::vector<double>>
+  dftClass<FEOrder, FEOrderElectro>::getAtomLocations()
+  {
+    return atomLocations;
+  }
 
-template <unsigned int FEOrder, unsigned int FEOrderElectro>
-std::set<unsigned int>
-dftClass<FEOrder, FEOrderElectro>::getAtomTypes()
-{
- return atomTypes;
-} 
+  template <unsigned int FEOrder, unsigned int FEOrderElectro>
+  std::set<unsigned int>
+  dftClass<FEOrder, FEOrderElectro>::getAtomTypes()
+  {
+    return atomTypes;
+  }
 
-template <unsigned int FEOrder, unsigned int FEOrderElectro>
-std::vector<double>
-dftClass<FEOrder, FEOrderElectro>::getForceonAtoms()
-{
-  return(forcePtr->getAtomsForces());
-} 
+  template <unsigned int FEOrder, unsigned int FEOrderElectro>
+  std::vector<double>
+  dftClass<FEOrder, FEOrderElectro>::getForceonAtoms()
+  {
+    return (forcePtr->getAtomsForces());
+  }
 
   template <unsigned int FEOrder, unsigned int FEOrderElectro>
   double
   dftClass<FEOrder, FEOrderElectro>::getInternalEnergy()
   {
-      return d_groundStateEnergy;
-      
-
+    return d_groundStateEnergy;
   }
   template <unsigned int FEOrder, unsigned int FEOrderElectro>
   double
   dftClass<FEOrder, FEOrderElectro>::getEntropicEnergy()
   {
-      return d_entropicEnergy;
-    
-  }  
+    return d_entropicEnergy;
+  }
 
 
 #include "dft.inst.cc"

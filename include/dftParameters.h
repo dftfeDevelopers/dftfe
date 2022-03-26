@@ -121,7 +121,7 @@ namespace dftfe
     extern unsigned int numberStepsBOMD;
     extern unsigned int TotalImages;
     extern std::string  solvermode;
-    //extern double       startingTempBOMDNVE;
+    // extern double       startingTempBOMDNVE;
     extern double       gaussianConstantForce;
     extern double       gaussianOrderForce;
     extern double       gaussianOrderMoveMeshToAtoms;
@@ -148,12 +148,12 @@ namespace dftfe
     extern bool         useELPAGPUKernel;
     extern std::string  xcFamilyType;
     extern bool         gpuMemOptMode;
-    //New Paramters for moleculardyynamics class
-    extern double startingTempBOMD;
-    extern double MaxWallTime;
-    extern double thermostatTimeConstantBOMD;
-    extern std::string  tempControllerTypeBOMD;   
-    extern int MDTrack;
+    // New Paramters for moleculardyynamics class
+    extern double      startingTempBOMD;
+    extern double      MaxWallTime;
+    extern double      thermostatTimeConstantBOMD;
+    extern std::string tempControllerTypeBOMD;
+    extern int         MDTrack;
     /**
      * Declare parameters.
      */
