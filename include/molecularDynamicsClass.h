@@ -213,9 +213,9 @@ namespace dftfe
      *
      *
      */
-    void
+    double
     RescaleVelocities(std::vector<double> &      v,
-                      double &                   KE,
+                      double                    KE,
                       const std::vector<double> &M,
                       double                     Temperature);
 
@@ -255,8 +255,8 @@ namespace dftfe
      *
      *
      */
-    void
-    svr(std::vector<double> &v, double &KE, double KEref);
+    double
+    svr(std::vector<double> &v, double KE, double KEref);
 
 
 
@@ -268,7 +268,7 @@ namespace dftfe
      * @param[in] atomMass Stores the mass of each Charge.
 
      *
-     * @param[out] KE Kinetic Energy at current timestp in eV
+     * @param[return] KE Kinetic Energy at current timestp in eV
      * @param[out] forceonAtoms Updated -ve forces on each charge.
      * @param[out] r Updated displacement
      * @param[out] v Updated velocity of each atom
@@ -276,11 +276,11 @@ namespace dftfe
      *
      *
      */
-    void
+    double
     velocityVerlet(std::vector<double> &                      v,
                    std::vector<dealii::Tensor<1, 3, double>> &r,
                    const std::vector<double> &                atomMass,
-                   double &                                   KE,
+                   double                                    KE,
                    std::vector<double> &                      forceOnAtoms);
 
 
@@ -337,7 +337,7 @@ namespace dftfe
 
  * @param[in] thermovelocity Velocity of each, updated at each TimeStep
  * @param[in] thermoposition Position of each thermostat , updated at each
-TimeStep
+      TimeStep
  * @param[in] thermomass Stores the mass of each thermostat.
  * @param[in] time Current TimeStep
  *
@@ -353,10 +353,10 @@ TimeStep
 
 * @brief  InitialiseFromRestartNHCFile: Reads the NHC parameters during restart
 
- * @param[in] thermovelocity Velocity of each, updated at each TimeStep
- * @param[in] thermoposition Position of each thermostat , updated at each
-TimeStep
- * @param[in] thermomass Stores the mass of each thermostat.
+ * @param[out] thermovelocity Velocity of each, updated at each TimeStep
+ * @param[out] thermoposition Position of each thermostat , updated at each
+                TimeStep
+ * @param[out] thermomass Stores the mass of each thermostat.
  *
  *
  *
