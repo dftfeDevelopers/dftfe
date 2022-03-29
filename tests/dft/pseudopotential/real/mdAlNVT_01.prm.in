@@ -26,6 +26,7 @@ subsection DFT functional parameters
   set EXCHANGE CORRELATION TYPE   = 4
   set PSEUDOPOTENTIAL CALCULATION = true  
   set PSEUDOPOTENTIAL FILE NAMES LIST = @SOURCE_DIR@/aluminumMD_pseudo.inp
+  set PSEUDO TESTS FLAG               = true
 end
 
 subsection SCF parameters
