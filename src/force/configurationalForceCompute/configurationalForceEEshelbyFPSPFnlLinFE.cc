@@ -575,6 +575,7 @@ forceClass<FEOrder, FEOrderElectro>::
                   [kPoint * nonTrivialNonLocalIdsAllCells.size() *
                    numQuadPointsNLP],
 #  endif
+		d_mpiCommParent,
                 dftPtr->interBandGroupComm,
                 isPseudopotential,
                 dftParameters::floatingNuclearCharges,
