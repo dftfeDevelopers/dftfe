@@ -1,6 +1,6 @@
 // ---------------------------------------------------------------------
 //
-// Copyright (c) 2017-2018 The Regents of the University of Michigan and DFT-FE
+// Copyright (c) 2017-2022 The Regents of the University of Michigan and DFT-FE
 // authors.
 //
 // This file is part of the DFT-FE code.
@@ -719,7 +719,7 @@ namespace dftfe
           "EXCHANGE CORRELATION TYPE",
           "1",
           Patterns::Integer(1, 5),
-          "[Standard] Parameter specifying the type of exchange-correlation to be used: 1(LDA: Perdew Zunger Ceperley Alder correlation with Slater Exchange[PRB. 23, 5048 (1981)]), 2(LDA: Perdew-Wang 92 functional with Slater Exchange [PRB. 45, 13244 (1992)]), 3(LDA: Vosko, Wilk \\& Nusair with Slater Exchange[Can. J. Phys. 58, 1200 (1980)]), 4(GGA: Perdew-Burke-Ernzerhof functional [PRL. 77, 3865 (1996)], 5(RPBE: B. Hammer, L. B. Hansen, and J. K. NÃ¸rskov, Phys. Rev. B 59, 7413 (1999)).");
+          "[Standard] Parameter specifying the type of exchange-correlation to be used: 1(LDA: Perdew Zunger Ceperley Alder correlation with Slater Exchange[PRB. 23, 5048 (1981)]), 2(LDA: Perdew-Wang 92 functional with Slater Exchange [PRB. 45, 13244 (1992)]), 3(LDA: Vosko, Wilk \\& Nusair with Slater Exchange[Can. J. Phys. 58, 1200 (1980)]), 4(GGA: Perdew-Burke-Ernzerhof functional [PRL. 77, 3865 (1996)], 5(RPBE: B. Hammer, L. B. Hansen, and J. K. Nørskov, Phys. Rev. B 59, 7413 (1999)).");
 
         prm.declare_entry(
           "SPIN POLARIZATION",
@@ -1524,20 +1524,15 @@ namespace dftfe
             << "=========================================================================================================="
             << std::endl;
           std::cout
-            << " DFT-FE Principal developers and Mentors (alphabetically) :									"
+            << " DFT-FE Mentors and Development leads (alphabetically) :									"
             << std::endl;
           std::cout << "														" << std::endl;
           std::cout << " Sambit Das               - University of Michigan, USA"
                     << std::endl;
-          std::cout << " Vikram Gavini (Mentor)   - University of Michigan, USA"
-                    << std::endl;
-          std::cout << " Krishnendu Ghosh         - Intel Corporation, USA"
+          std::cout << " Vikram Gavini            - University of Michigan, USA"
                     << std::endl;
           std::cout
             << " Phani Motamarri          - Indian Institute of Science, India"
-            << std::endl;
-          std::cout
-            << " Shiva Rudraraju          - University of Wisconsin-Madison  "
             << std::endl;
           std::cout
             << " (A complete list of the many authors that have contributed to DFT-FE can be found in the authors file)"
@@ -1546,7 +1541,7 @@ namespace dftfe
             << "=========================================================================================================="
             << std::endl;
           std::cout
-            << " 	     Copyright (c) 2017-2021 The Regents of the University of Michigan and DFT-FE authors         "
+            << " 	     Copyright (c) 2017-2022 The Regents of the University of Michigan and DFT-FE authors         "
             << std::endl;
           std::cout
             << " 			DFT-FE is published under [LGPL v2.1 or newer] 				"
