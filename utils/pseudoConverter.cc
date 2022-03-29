@@ -102,6 +102,7 @@ namespace dftfe
 
                   unsigned int nlccFlag = 0;
                   errorFlag = upfToxml(newPath, xmlFileName, nlccFlag);
+                  nlccSum+=nlccFlag;
                 }
               else
                 {
