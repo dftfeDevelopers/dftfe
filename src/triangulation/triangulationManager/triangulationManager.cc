@@ -38,26 +38,28 @@ namespace dftfe
   // constructor
   //
   triangulationManager::triangulationManager(
-    const MPI_Comm &   mpi_comm_replica,
+    const MPI_Comm &   mpi_comm_parent,
+    const MPI_Comm &   mpi_comm_domain,
     const MPI_Comm &   interpoolcomm,
     const MPI_Comm &   interbandgroup_comm,
     const unsigned int FEOrder)
-    : d_parallelTriangulationUnmoved(mpi_comm_replica)
-    , d_parallelTriangulationUnmovedPrevious(mpi_comm_replica)
-    , d_parallelTriangulationMoved(mpi_comm_replica)
-    , d_triangulationElectrostaticsRho(mpi_comm_replica)
-    , d_triangulationElectrostaticsDisp(mpi_comm_replica)
-    , d_triangulationElectrostaticsForce(mpi_comm_replica)
-    , mpi_communicator(mpi_comm_replica)
+    : d_parallelTriangulationUnmoved(mpi_comm_domain)
+    , d_parallelTriangulationUnmovedPrevious(mpi_comm_domain)
+    , d_parallelTriangulationMoved(mpi_comm_domain)
+    , d_triangulationElectrostaticsRho(mpi_comm_domain)
+    , d_triangulationElectrostaticsDisp(mpi_comm_domain)
+    , d_triangulationElectrostaticsForce(mpi_comm_domain)
+    , d_mpiCommParent(mpi_comm_parent)
+    , mpi_communicator(mpi_comm_domain)
     , interpoolcomm(interpoolcomm)
     , interBandGroupComm(interbandgroup_comm)
     , d_serialTriangulationUnmoved(MPI_COMM_SELF)
     , d_serialTriangulationUnmovedPrevious(MPI_COMM_SELF)
     , d_serialTriangulationElectrostatics(MPI_COMM_SELF)
     , d_FEOrder(FEOrder)
-    , this_mpi_process(Utilities::MPI::this_mpi_process(mpi_comm_replica))
-    , n_mpi_processes(Utilities::MPI::n_mpi_processes(mpi_comm_replica))
-    , pcout(std::cout, (Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0))
+    , this_mpi_process(Utilities::MPI::this_mpi_process(mpi_comm_domain))
+    , n_mpi_processes(Utilities::MPI::n_mpi_processes(mpi_comm_domain))
+    , pcout(std::cout, (Utilities::MPI::this_mpi_process(d_mpiCommParent) == 0))
     , computing_timer(pcout, TimerOutput::never, TimerOutput::wall_times)
   {}
 

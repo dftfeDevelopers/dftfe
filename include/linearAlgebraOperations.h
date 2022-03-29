@@ -492,9 +492,10 @@ namespace dftfe
      *  @param[in,out]  X Given subspace as flattened array of multi-vectors.
      *  In-place update of the given subspace
      *  @param[in] numberComponents Number of multiple-fields
+     *  @param[in] mpiCommParent parent communicator
      *  @param[in] interBandGroupComm interpool communicator for parallelization
      * over band groups
-     *  @param[in] mpiComm global communicator
+     *  @param[in] mpiComm domain decomposition communicator
      *
      *  @return flag indicating success/failure. 1 for failure, 0 for success
      */
@@ -503,8 +504,9 @@ namespace dftfe
     pseudoGramSchmidtOrthogonalization(elpaScalaManager & elpaScala,
                                        std::vector<T> &   X,
                                        const unsigned int numberComponents,
+                                       const MPI_Comm &   mpiCommParent,
                                        const MPI_Comm &   interBandGroupComm,
-                                       const MPI_Comm &   mpiComm,
+                                       const MPI_Comm &   mpiCommDomain,
                                        const bool         useMixedPrec);
 
 
@@ -515,9 +517,10 @@ namespace dftfe
      *  @param[in,out]  X Given subspace as flattened array of multi-vectors.
      *  In-place rotated subspace
      *  @param[in] numberComponents Number of vectors
+     *  @param[in] mpiCommDomain parent communicator 
      *  @param[in] interBandGroupComm interpool communicator for parallelization
      * over band groups
-     *  @param[in] mpiComm domain decomposition communicator
+     *  @param[in] mpiCommDomain domain decomposition communicator
      *  @param[out] eigenValues of the Projected Hamiltonian
      */
     template <typename T>
@@ -526,8 +529,9 @@ namespace dftfe
                     elpaScalaManager &   elpaScala,
                     std::vector<T> &     X,
                     const unsigned int   numberComponents,
+                    const MPI_Comm &     mpiCommParent,
                     const MPI_Comm &     interBandGroupComm,
-                    const MPI_Comm &     mpiComm,
+                    const MPI_Comm &     mpiCommDomain,
                     std::vector<double> &eigenValues,
                     const bool           useMixedPrec);
 
@@ -539,9 +543,10 @@ namespace dftfe
      *  @param[in,out]  X Given subspace as flattened array of multi-vectors.
      *  In-place rotated subspace
      *  @param[in] numberComponents Number of vectors
+     *  @param[in] mpiCommParent parent mpi communicator  
      *  @param[in] interBandGroupComm interpool communicator for parallelization
      * over band groups
-     *  @param[in] mpiComm domain decomposition communicator
+     *  @param[in] mpiCommDomain domain decomposition communicator
      *  @param[out] eigenValues of the Projected Hamiltonian
      */
     template <typename T>
@@ -550,8 +555,9 @@ namespace dftfe
                  elpaScalaManager &   elpaScala,
                  std::vector<T> &     X,
                  const unsigned int   numberComponents,
+                 const MPI_Comm &     mpiCommParent,                 
                  const MPI_Comm &     interBandGroupComm,
-                 const MPI_Comm &     mpiComm,
+                 const MPI_Comm &     mpiCommDomain,
                  std::vector<double> &eigenValues,
                  const bool           doCommAfterBandParal = true);
 
@@ -564,9 +570,10 @@ namespace dftfe
      *  @param[in] numberComponents Number of vectors
      *  @param[in] numberCoreStates Number of core states to be used for
      * spectrum splitting
+     *  @param[in] mpiCommParent parent mpi communicator 
      *  @param[in] interBandGroupComm interpool communicator for parallelization
      * over band groups
-     *  @param[in] mpiComm domain decomposition communicator
+     *  @param[in] mpiCommDomain domain decomposition communicator
      *  @param[out] eigenValues of the Projected Hamiltonian
      */
     template <typename T>
@@ -577,8 +584,9 @@ namespace dftfe
                                        std::vector<T> &     Y,
                                        const unsigned int   numberComponents,
                                        const unsigned int   numberCoreStates,
+                                       const MPI_Comm &     mpiCommParent,       
                                        const MPI_Comm &     interBandGroupComm,
-                                       const MPI_Comm &     mpiComm,
+                                       const MPI_Comm &     mpiCommDomain,
                                        const bool           useMixedPrec,
                                        std::vector<double> &eigenValues);
 
@@ -592,9 +600,10 @@ namespace dftfe
      *  @param[in] numberComponents Number of vectors
      *  @param[in] numberCoreStates Number of core states to be used for
      * spectrum splitting
+     *  @param[in] mpiCommParent parent mpi communicator 
      *  @param[in] interBandGroupComm interpool communicator for parallelization
      * over band groups
-     *  @param[in] mpiComm domain decomposition communicator
+     *  @param[in] mpiCommDomain domain decomposition communicator
      *  @param[out] eigenValues of the Projected Hamiltonian
      */
     template <typename T>
@@ -605,8 +614,9 @@ namespace dftfe
                                     std::vector<T> &      Y,
                                     const unsigned int    numberComponents,
                                     const unsigned int    numberCoreStates,
+                                    const MPI_Comm &      mpiCommParent,               
                                     const MPI_Comm &      interBandGroupComm,
-                                    const MPI_Comm &      mpiComm,
+                                    const MPI_Comm &      mpiCommDomain,
                                     const bool            useMixedPrec,
                                     std::vector<double> & eigenValues);
 
@@ -616,7 +626,8 @@ namespace dftfe
      *  @param[in] operatorMatrix An object which has access to the given matrix
      *  @param[in]  X Given subspace as STL vector of dealii vectors
      *  @param[in]  eigenValues eigenValues of the operator
-     *  @param[in]  mpiComm domain decomposition communicator
+     *  @param[in]  mpiCommParent parent mpi communicator 
+     *  @param[in]  mpiCommDomain domain decomposition communicator
      *  @param[out] residualNorms of the eigen Value problem
      */
     template <typename T>
@@ -624,7 +635,8 @@ namespace dftfe
     computeEigenResidualNorm(operatorDFTClass &         operatorMatrix,
                              std::vector<T> &           X,
                              const std::vector<double> &eigenValues,
-                             const MPI_Comm &           mpiComm,
+                             const MPI_Comm &           mpiCommParent,                 
+                             const MPI_Comm &           mpiCommDomain,
                              const MPI_Comm &           interBandGroupComm,
                              std::vector<double> &      residualNorm);
 

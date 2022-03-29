@@ -575,7 +575,8 @@ namespace dftfe
   template <unsigned int FEOrder, unsigned int FEOrderElectro>
   kohnShamDFTOperatorCUDAClass<FEOrder, FEOrderElectro>::
     kohnShamDFTOperatorCUDAClass(dftClass<FEOrder, FEOrderElectro> *_dftPtr,
-                                 const MPI_Comm &mpi_comm_replica)
+                                 const MPI_Comm &mpi_comm_parent,
+                                 const MPI_Comm &mpi_comm_domain)
     : dftPtr(_dftPtr)
     , d_kPointIndex(0)
     , d_numberNodesPerElement(_dftPtr->matrix_free_data.get_dofs_per_cell())
@@ -586,15 +587,16 @@ namespace dftfe
           .size())
     , d_isStiffnessMatrixExternalPotCorrComputed(false)
     , d_isMallocCalled(false)
-    , mpi_communicator(mpi_comm_replica)
-    , n_mpi_processes(Utilities::MPI::n_mpi_processes(mpi_comm_replica))
-    , this_mpi_process(Utilities::MPI::this_mpi_process(mpi_comm_replica))
-    , pcout(std::cout, (Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0))
-    , computing_timer(mpi_comm_replica,
+    , d_mpiCommParent(mpi_comm_parent)
+    , mpi_communicator(mpi_comm_domain)
+    , n_mpi_processes(Utilities::MPI::n_mpi_processes(mpi_comm_domain))
+    , this_mpi_process(Utilities::MPI::this_mpi_process(mpi_comm_domain))
+    , pcout(std::cout, (Utilities::MPI::this_mpi_process(mpi_comm_parent) == 0))
+    , computing_timer(mpi_comm_domain,
                       pcout,
                       TimerOutput::never,
                       TimerOutput::wall_times)
-    , operatorDFTCUDAClass(mpi_comm_replica,
+    , operatorDFTCUDAClass(mpi_comm_domain,
                            _dftPtr->getMatrixFreeData(),
                            _dftPtr->constraintsNoneDataInfo,
                            _dftPtr->d_constraintsNoneDataInfoCUDA)

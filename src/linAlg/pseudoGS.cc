@@ -31,6 +31,7 @@ namespace dftfe
     pseudoGramSchmidtOrthogonalization(elpaScalaManager & elpaScala,
                                        std::vector<T> &   X,
                                        const unsigned int numberVectors,
+                                       const MPI_Comm &   mpiCommParent,
                                        const MPI_Comm &   interBandGroupComm,
                                        const MPI_Comm &   mpiComm,
                                        const bool         useMixedPrec)
@@ -40,7 +41,7 @@ namespace dftfe
 
       dealii::ConditionalOStream pcout(
         std::cout,
-        (dealii::Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0));
+        (dealii::Utilities::MPI::this_mpi_process(mpiCommParent) == 0));
       dealii::TimerOutput computing_timer(mpiComm,
                                           pcout,
                                           dftParameters::reproducible_output ||

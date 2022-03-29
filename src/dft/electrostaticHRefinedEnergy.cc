@@ -392,7 +392,7 @@ dftClass<FEOrder, FEOrderElectro>::computeElectrostaticEnergyHRefined(
   // with atoms belonging to a given bin
 
   vselfBinsManager<FEOrder, FEOrderElectro> vselfBinsManagerHRefined(
-    mpi_communicator);
+    d_mpiCommParent,mpi_communicator);
   vselfBinsManagerHRefined.createAtomBins(
     matrixFreeConstraintsInputVector,
     onlyHangingNodeConstraints,
@@ -513,7 +513,7 @@ dftClass<FEOrder, FEOrderElectro>::computeElectrostaticEnergyHRefined(
   matrixFreeDataHRefined.initialize_dof_vector(phiTotRhoOutHRefined,
                                                phiTotDofHandlerIndexHRefined);
 
-  dealiiLinearSolver dealiiCGSolver(mpi_communicator, dealiiLinearSolver::CG);
+  dealiiLinearSolver dealiiCGSolver(d_mpiCommParent,mpi_communicator, dealiiLinearSolver::CG);
   poissonSolverProblem<FEOrder, FEOrderElectro> phiTotalSolverProblem(
     mpi_communicator);
 
@@ -562,7 +562,8 @@ dftClass<FEOrder, FEOrderElectro>::computeElectrostaticEnergyHRefined(
                              pseudoVLocHRefined,
                              pseudoVLocAtomsHRefined);
 
-  energyCalculator energyCalcHRefined(mpi_communicator,
+  energyCalculator energyCalcHRefined(d_mpiCommParent,
+                                      mpi_communicator,
                                       interpoolcomm,
                                       interBandGroupComm);
 

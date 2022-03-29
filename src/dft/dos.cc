@@ -27,7 +27,8 @@ loadSingleAtomPSIFiles(
   std::map<unsigned int,
            std::map<unsigned int,
                     std::map<unsigned int, alglib::spline1dinterpolant *>>>
-    &radValues)
+    &radValues,
+  const MPI_Comm &  mpiCommParent)
 {
   if (radValues[Z][n].count(l) > 0)
     {
@@ -86,7 +87,7 @@ loadSingleAtomPSIFiles(
       unsigned int truncRowId          = 0;
       if (!dftParameters::reproducible_output)
         {
-          if (Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0)
+          if (Utilities::MPI::this_mpi_process(mpiCommParent) == 0)
             std::cout << "reading data from file: " << psiFile << std::endl;
         }
 
@@ -216,7 +217,7 @@ dftClass<FEOrder, FEOrderElectro>::compute_tdos(
         }
     }
 
-  if (dealii::Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0)
+  if (dealii::Utilities::MPI::this_mpi_process(d_mpiCommParent) == 0)
     {
       std::ofstream outFile(dosFileName.c_str());
       outFile.setf(std::ios_base::fixed);
@@ -573,7 +574,7 @@ dftClass<FEOrder, FEOrderElectro>::compute_ldos(
     }
 
   double checkSum = 0;
-  if (dealii::Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0)
+  if (dealii::Utilities::MPI::this_mpi_process(d_mpiCommParent) == 0)
     {
       std::ofstream outFile(ldosFileName.c_str());
       outFile.setf(std::ios_base::fixed);
@@ -785,7 +786,7 @@ dftClass<FEOrder, FEOrderElectro>::compute_pdos(
               // load PSI files
               //
               loadSingleAtomPSIFiles(
-                Z, n, l, fileReadFlag, wfcInitTruncation, radValues);
+                Z, n, l, fileReadFlag, wfcInitTruncation, radValues,d_mpiCommParent);
 
               if (fileReadFlag > 0)
                 {
@@ -1130,7 +1131,7 @@ dftClass<FEOrder, FEOrderElectro>::compute_pdos(
     }
 
 
-  if (dealii::Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0)
+  if (dealii::Utilities::MPI::this_mpi_process(d_mpiCommParent) == 0)
     {
       std::string tempFolder = "pdosOutputFolder";
       mkdir(tempFolder.c_str(), ACCESSPERMS);

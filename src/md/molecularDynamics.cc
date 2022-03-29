@@ -158,12 +158,14 @@ namespace dftfe
   template <unsigned int FEOrder, unsigned int FEOrderElectro>
   molecularDynamics<FEOrder, FEOrderElectro>::molecularDynamics(
     dftClass<FEOrder, FEOrderElectro> *_dftPtr,
-    const MPI_Comm &                   mpi_comm_replica)
+    const MPI_Comm &                   mpi_comm_parent,
+    const MPI_Comm &                   mpi_comm_domain)
     : dftPtr(_dftPtr)
-    , mpi_communicator(mpi_comm_replica)
-    , n_mpi_processes(Utilities::MPI::n_mpi_processes(mpi_comm_replica))
-    , this_mpi_process(Utilities::MPI::this_mpi_process(mpi_comm_replica))
-    , pcout(std::cout, (Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0))
+    , d_mpiCommParent(mpi_comm_parent)
+    , mpi_communicator(mpi_comm_domain)
+    , n_mpi_processes(Utilities::MPI::n_mpi_processes(mpi_comm_domain))
+    , this_mpi_process(Utilities::MPI::this_mpi_process(mpi_comm_domain))
+    , pcout(std::cout, (Utilities::MPI::this_mpi_process(mpi_comm_parent) == 0))
   {}
 
 
@@ -630,7 +632,7 @@ namespace dftfe
          ++timeIndex)
       {
         double step_time;
-        MPI_Barrier(MPI_COMM_WORLD);
+        MPI_Barrier(d_mpiCommParent);
         step_time = MPI_Wtime();
 
         //
@@ -700,7 +702,7 @@ namespace dftfe
           }
 
         double update_time;
-        MPI_Barrier(MPI_COMM_WORLD);
+        MPI_Barrier(d_mpiCommParent);
         update_time = MPI_Wtime();
         //
         // first move the mesh to current positions
@@ -724,7 +726,7 @@ namespace dftfe
               }
           }
 
-        MPI_Barrier(MPI_COMM_WORLD);
+        MPI_Barrier(d_mpiCommParent);
 
         update_time = MPI_Wtime() - update_time;
         if (dftParameters::verbosity >= 1)
@@ -734,12 +736,12 @@ namespace dftfe
 
 
         double atomicrho_time;
-        MPI_Barrier(MPI_COMM_WORLD);
+        MPI_Barrier(d_mpiCommParent);
         atomicrho_time = MPI_Wtime();
 
         dftPtr->initAtomicRho();
 
-        MPI_Barrier(MPI_COMM_WORLD);
+        MPI_Barrier(d_mpiCommParent);
 
         atomicrho_time = MPI_Wtime() - atomicrho_time;
         if (dftParameters::verbosity >= 1)
@@ -844,7 +846,7 @@ namespace dftfe
               {
                 isXlBOMDStep = true;
                 double xlbomdpre_time;
-                MPI_Barrier(MPI_COMM_WORLD);
+                MPI_Barrier(d_mpiCommParent);
                 xlbomdpre_time = MPI_Wtime();
 
                 approxDensityNext.reinit(approxDensityContainer.back());
@@ -1014,14 +1016,14 @@ namespace dftfe
 
                 dftPtr->normalizeRhoInQuadValues();
 
-                MPI_Barrier(MPI_COMM_WORLD);
+                MPI_Barrier(d_mpiCommParent);
                 xlbomdpre_time = MPI_Wtime() - xlbomdpre_time;
                 if (dftParameters::verbosity >= 1)
                   pcout << "Time taken for xlbomd preinitializations: "
                         << xlbomdpre_time << std::endl;
 
                 double shadowsolve_time;
-                MPI_Barrier(MPI_COMM_WORLD);
+                MPI_Barrier(d_mpiCommParent);
                 shadowsolve_time = MPI_Wtime();
 
                 if (dftParameters::verbosity >= 1)
@@ -1152,14 +1154,14 @@ namespace dftfe
                 shadowPotentialInternalEnergy = dftPtr->d_shadowPotentialEnergy;
                 entropicEnergyShadowPotential = dftPtr->d_entropicEnergy;
 
-                MPI_Barrier(MPI_COMM_WORLD);
+                MPI_Barrier(d_mpiCommParent);
                 shadowsolve_time = MPI_Wtime() - shadowsolve_time;
                 if (dftParameters::verbosity >= 1)
                   pcout << "Time taken for xlbomd shadow potential solve: "
                         << shadowsolve_time << std::endl;
 
                 double xlbomdpost_time;
-                MPI_Barrier(MPI_COMM_WORLD);
+                MPI_Barrier(d_mpiCommParent);
                 xlbomdpost_time = MPI_Wtime();
 
                 if (dftParameters::useAtomicRhoXLBOMD)
@@ -1427,7 +1429,7 @@ namespace dftfe
                   dftPtr->fieldGradl2Norm(dftPtr->d_matrixFreeDataPRefined,
                                           rhoErrorVec) /
                   dftPtr->d_domainVolume);
-                MPI_Barrier(MPI_COMM_WORLD);
+                MPI_Barrier(d_mpiCommParent);
                 xlbomdpost_time = MPI_Wtime() - xlbomdpost_time;
                 if (dftParameters::verbosity >= 1)
                   pcout << "Time taken for xlbomd post solve operations: "
@@ -1512,7 +1514,7 @@ namespace dftfe
           }
 
         double bomdpost_time;
-        MPI_Barrier(MPI_COMM_WORLD);
+        MPI_Barrier(d_mpiCommParent);
         bomdpost_time = MPI_Wtime();
 
         //
@@ -1681,21 +1683,21 @@ namespace dftfe
                 data6[i][0] = rmsErrorGradRhoVector[i - startingTimeStep];
               }
           }
-        MPI_Barrier(MPI_COMM_WORLD);
-        dftUtils::writeDataIntoFile(data1, "KeEngMd");
+        MPI_Barrier(d_mpiCommParent);
+        dftUtils::writeDataIntoFile(data1, "KeEngMd",d_mpiCommParent);
 
 
-        dftUtils::writeDataIntoFile(data2, "IntEngMd");
+        dftUtils::writeDataIntoFile(data2, "IntEngMd",d_mpiCommParent);
 
 
-        dftUtils::writeDataIntoFile(data3, "EntEngMd");
+        dftUtils::writeDataIntoFile(data3, "EntEngMd",d_mpiCommParent);
 
-        dftUtils::writeDataIntoFile(data4, "TotEngMd");
+        dftUtils::writeDataIntoFile(data4, "TotEngMd",d_mpiCommParent);
 
         if (dftParameters::isXLBOMD)
           {
-            dftUtils::writeDataIntoFile(data5, "RMSErrorRhoMd");
-            dftUtils::writeDataIntoFile(data6, "RMSErrorGradRhoMd");
+            dftUtils::writeDataIntoFile(data5, "RMSErrorRhoMd",d_mpiCommParent);
+            dftUtils::writeDataIntoFile(data6, "RMSErrorGradRhoMd",d_mpiCommParent);
           }
 
         /// write velocity and acceleration data
@@ -1723,26 +1725,26 @@ namespace dftfe
             fileVelData[iCharge][1] = velocity[3 * iCharge + 1];
             fileVelData[iCharge][2] = velocity[3 * iCharge + 2];
           }
-        dftUtils::writeDataIntoFile(fileAccData, "acceleration.chk");
-        dftUtils::writeDataIntoFile(fileVelData, "velocity.chk");
+        dftUtils::writeDataIntoFile(fileAccData, "acceleration.chk",d_mpiCommParent);
+        dftUtils::writeDataIntoFile(fileVelData, "velocity.chk",d_mpiCommParent);
 
         fileTemperatureData[0][0] = temperatureFromVelocities;
-        dftUtils::writeDataIntoFile(fileTemperatureData, "temperature.chk");
+        dftUtils::writeDataIntoFile(fileTemperatureData, "temperature.chk",d_mpiCommParent);
 
         timeIndexData[0][0] = timeIndex;
-        dftUtils::writeDataIntoFile(timeIndexData, "time.chk");
+        dftUtils::writeDataIntoFile(timeIndexData, "time.chk",d_mpiCommParent);
 
         if (dftParameters::chkType >= 1)
           dftPtr->writeDomainAndAtomCoordinates();
 
 
-        MPI_Barrier(MPI_COMM_WORLD);
+        MPI_Barrier(d_mpiCommParent);
         bomdpost_time = MPI_Wtime() - bomdpost_time;
         if (dftParameters::verbosity >= 1)
           pcout << "Time taken for bomd post solve operations: "
                 << bomdpost_time << std::endl;
 
-        MPI_Barrier(MPI_COMM_WORLD);
+        MPI_Barrier(d_mpiCommParent);
         step_time = MPI_Wtime() - step_time;
         if (dftParameters::verbosity >= 1)
           pcout << "Time taken for md step: " << step_time << std::endl;

@@ -418,30 +418,6 @@ void dftClass<FEOrder, FEOrderElectro>::
 
 
 
-template <unsigned int FEOrder, unsigned int FEOrderElectro>
-void
-dftClass<FEOrder, FEOrderElectro>::interpolateFieldsFromPrevToCurrentMesh(
-  std::vector<distributedCPUVec<double> *> fieldsPrevious,
-  std::vector<distributedCPUVec<double> *> fieldsCurrent,
-  const dealii::FESystem<3> &              FEPrev,
-  const dealii::FESystem<3> &              FECurrent,
-  const dealii::AffineConstraints<double> &constraintsCurrent)
-
-{
-  vectorTools::interpolateFieldsFromPreviousMesh interpolateFromPrev(
-    mpi_communicator);
-  interpolateFromPrev.interpolate(d_mesh.getSerialMeshUnmovedPrevious(),
-                                  d_mesh.getParallelMeshUnmovedPrevious(),
-                                  d_mesh.getParallelMeshUnmoved(),
-                                  FEPrev,
-                                  FECurrent,
-                                  fieldsPrevious,
-                                  fieldsCurrent,
-                                  &constraintsCurrent);
-
-  for (unsigned int i = 0; i < fieldsCurrent.size(); ++i)
-    fieldsCurrent[i]->update_ghost_values();
-}
 
 //
 // compute field l2 norm

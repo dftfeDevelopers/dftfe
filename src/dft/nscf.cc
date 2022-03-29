@@ -79,7 +79,7 @@ dftClass<FEOrder, FEOrderElectro>::initnscf(
   pcout << " check 0.3: " << std::endl;
   readPSI();
   //
-  // MPI_Barrier(MPI_COMM_WORLD) ;
+  // MPI_Barrier(d_mpiCommParent) ;
   pcout << " check 0.4 " << std::endl;
   //
   // -------------------------------------------------------------------------
@@ -178,7 +178,7 @@ dftClass<FEOrder, FEOrderElectro>::nscf(
       computing_timer.enter_subsection("nscf: Hamiltonian Matrix Computation");
       kohnShamDFTEigenOperator.computeHamiltonianMatrix(kPoint, 0);
       computing_timer.leave_subsection("nscf: Hamiltonian Matrix Computation");
-      // MPI_Barrier(MPI_COMM_WORLD);
+      // MPI_Barrier(d_mpiCommParent);
       //
       computing_timer.enter_subsection("nscf: kohnShamEigenSpaceCompute");
       while (maxRes > adaptiveChebysevFilterPassesTol)

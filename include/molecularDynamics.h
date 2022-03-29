@@ -34,7 +34,8 @@ namespace dftfe
   {
   public:
     molecularDynamics(dftClass<FEOrder, FEOrderElectro> *_dftPtr,
-                      const MPI_Comm &                   mpi_comm_replica);
+                      const MPI_Comm &                   mpi_comm_parent,
+                      const MPI_Comm &                   mpi_comm_domain);
 
 
     void
@@ -49,6 +50,7 @@ namespace dftfe
     dftClass<FEOrder, FEOrderElectro> *dftPtr;
 
     /// parallel communication objects
+    const MPI_Comm     d_mpiCommParent;
     const MPI_Comm     mpi_communicator;
     const unsigned int n_mpi_processes;
     const unsigned int this_mpi_process;

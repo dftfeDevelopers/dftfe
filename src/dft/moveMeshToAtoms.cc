@@ -81,7 +81,7 @@ void dftClass<FEOrder, FEOrderElectro>::moveMeshToAtoms(
   bool                 moveSubdivided)
 {
   dealii::ConditionalOStream pcout_movemesh(
-    std::cout, (dealii::Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0));
+    std::cout, (dealii::Utilities::MPI::this_mpi_process(d_mpiCommParent) == 0));
   dealii::TimerOutput timer_movemesh(mpi_communicator,
                                      pcout_movemesh,
                                      dftParameters::reproducible_output ||
@@ -90,7 +90,7 @@ void dftClass<FEOrder, FEOrderElectro>::moveMeshToAtoms(
                                        dealii::TimerOutput::summary,
                                      dealii::TimerOutput::wall_times);
 
-  meshMovementGaussianClass gaussianMove(mpi_communicator);
+  meshMovementGaussianClass gaussianMove(d_mpiCommParent,mpi_communicator);
   gaussianMove.init(triangulationMove,
                     triangulationSerial,
                     d_domainBoundingVectors);

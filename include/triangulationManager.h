@@ -47,11 +47,13 @@ namespace dftfe
   public:
     /** @brief Constructor.
      *
-     * @param mpi_comm_replica mpi_communicator of the current pool
+     * @param mpi_comm_parent parent mpi communicator
+     * @param mpi_comm_domain domain decomposition mpi communicator
      * @param interpool_comm mpi interpool communicator over k points
      * @param interBandGroupComm mpi interpool communicator over band groups
      */
-    triangulationManager(const MPI_Comm &   mpi_comm_replica,
+    triangulationManager(const MPI_Comm &   mpi_comm_parent,
+                         const MPI_Comm &   mpi_comm_domain,
                          const MPI_Comm &   interpoolcomm,
                          const MPI_Comm &   interBandGroupComm,
                          const unsigned int FEOrder);
@@ -434,6 +436,7 @@ namespace dftfe
     //
     // parallel objects
     //
+    const MPI_Comm             d_mpiCommParent;
     const MPI_Comm             mpi_communicator;
     const MPI_Comm             interpoolcomm;
     const MPI_Comm             interBandGroupComm;

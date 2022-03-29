@@ -23,14 +23,16 @@
 namespace dftfe
 {
   // constructor
-  dealiiLinearSolver::dealiiLinearSolver(const MPI_Comm & mpi_comm,
+  dealiiLinearSolver::dealiiLinearSolver(const MPI_Comm & mpi_comm_parent,
+                                         const MPI_Comm & mpi_comm_domain,
                                          const solverType type)
-    : mpi_communicator(mpi_comm)
+    : d_mpiCommParent(mpi_comm_parent)
+    , mpi_communicator(mpi_comm_domain)
     , d_type(type)
-    , n_mpi_processes(dealii::Utilities::MPI::n_mpi_processes(mpi_comm))
-    , this_mpi_process(dealii::Utilities::MPI::this_mpi_process(mpi_comm))
+    , n_mpi_processes(dealii::Utilities::MPI::n_mpi_processes(mpi_comm_domain))
+    , this_mpi_process(dealii::Utilities::MPI::this_mpi_process(mpi_comm_domain))
     , pcout(std::cout,
-            (dealii::Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0))
+            (dealii::Utilities::MPI::this_mpi_process(mpi_comm_parent) == 0))
   {}
 
 

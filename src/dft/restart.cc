@@ -78,7 +78,7 @@ dftClass<FEOrder, FEOrderElectro>::saveTriaInfoAndRhoData()
   // write size of current mixing history into an additional .txt file
   const std::string extraInfoFileName = "rhoDataExtraInfo.chk";
   if (std::ifstream(extraInfoFileName) &&
-      Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0)
+      Utilities::MPI::this_mpi_process(d_mpiCommParent) == 0)
     dftUtils::moveFile(extraInfoFileName, extraInfoFileName + ".old");
   std::ofstream extraInfoFile(extraInfoFileName);
   if (extraInfoFile.is_open())
@@ -436,7 +436,8 @@ void
 dftClass<FEOrder, FEOrderElectro>::writeDomainAndAtomCoordinates()
 {
   dftUtils::writeDataIntoFile(d_domainBoundingVectors,
-                              "domainBoundingVectorsCurrent.chk");
+                              "domainBoundingVectorsCurrent.chk",
+                              d_mpiCommParent);
 
   std::vector<std::vector<double>> atomLocationsFractionalCurrent;
   if (dftParameters::periodicX || dftParameters::periodicY ||
@@ -479,7 +480,7 @@ dftClass<FEOrder, FEOrderElectro>::writeDomainAndAtomCoordinates()
                                                     latticeVectorsFlattened,
                                                     periodicBc);
               // for synchrozination
-              MPI_Bcast(&(newFracCoord[0]), 3, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+              MPI_Bcast(&(newFracCoord[0]), 3, MPI_DOUBLE, 0, d_mpiCommParent);
 
               atomLocationsFractional[iAtom][2] = newFracCoord[0];
               atomLocationsFractional[iAtom][3] = newFracCoord[1];
@@ -502,7 +503,7 @@ dftClass<FEOrder, FEOrderElectro>::writeDomainAndAtomCoordinates()
                                                     latticeVectorsFlattened,
                                                     periodicBc);
               // for synchrozination
-              MPI_Bcast(&(newFracCoord[0]), 3, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+              MPI_Bcast(&(newFracCoord[0]), 3, MPI_DOUBLE, 0, d_mpiCommParent);
 
               atomLocationsFractionalCurrent[iAtom][2] = newFracCoord[0];
               atomLocationsFractionalCurrent[iAtom][3] = newFracCoord[1];
@@ -523,28 +524,35 @@ dftClass<FEOrder, FEOrderElectro>::writeDomainAndAtomCoordinates()
 #ifdef USE_COMPLEX
   if (!dftParameters::floatingNuclearCharges)
     dftUtils::writeDataIntoFile(atomLocationsFractional,
-                                "atomsFracCoordAutomesh.chk");
+                                "atomsFracCoordAutomesh.chk",
+                                d_mpiCommParent);
 
   dftUtils::writeDataIntoFile(atomLocationsFractionalCurrent,
-                              "atomsFracCoordCurrent.chk");
+                              "atomsFracCoordCurrent.chk",
+                              d_mpiCommParent);
 #else
   if (dftParameters::periodicX || dftParameters::periodicY ||
       dftParameters::periodicZ)
     {
       if (!dftParameters::floatingNuclearCharges)
         dftUtils::writeDataIntoFile(atomLocationsFractional,
-                                    "atomsFracCoordAutomesh.chk");
+                                    "atomsFracCoordAutomesh.chk",
+                                    d_mpiCommParent);
 
       dftUtils::writeDataIntoFile(atomLocationsFractionalCurrent,
-                                  "atomsFracCoordCurrent.chk");
+                                  "atomsFracCoordCurrent.chk",
+                                  d_mpiCommParent);
     }
   else
     {
       if (!dftParameters::floatingNuclearCharges)
         dftUtils::writeDataIntoFile(atomLocationsAutoMesh,
-                                    "atomsCartCoordAutomesh.chk");
+                                    "atomsCartCoordAutomesh.chk",
+                                    d_mpiCommParent);
 
-      dftUtils::writeDataIntoFile(atomLocations, "atomsCartCoordCurrent.chk");
+      dftUtils::writeDataIntoFile(atomLocations, 
+                                  "atomsCartCoordCurrent.chk",
+                                  d_mpiCommParent);
     }
 #endif
 
@@ -567,7 +575,8 @@ dftClass<FEOrder, FEOrderElectro>::writeDomainAndAtomCoordinates()
             d_gaussianMovementAtomsNetDisplacements[i][j];
 
       dftUtils::writeDataIntoFile(atomsDisplacementsGaussian,
-                                  "atomsGaussianDispCoord.chk");
+                                  "atomsGaussianDispCoord.chk",
+                                  d_mpiCommParent);
     }
 }
 
@@ -577,7 +586,8 @@ dftClass<FEOrder, FEOrderElectro>::MDwriteDomainAndAtomCoordinates(
   const std::string Path)
 {
   dftUtils::writeDataIntoFile(d_domainBoundingVectors,
-                              Path + "domainBoundingVectorsCurrent.chk");
+                              Path + "domainBoundingVectorsCurrent.chk",
+                              d_mpiCommParent);
 
   std::vector<std::vector<double>> atomLocationsFractionalCurrent;
   if (dftParameters::periodicX || dftParameters::periodicY ||
@@ -620,7 +630,7 @@ dftClass<FEOrder, FEOrderElectro>::MDwriteDomainAndAtomCoordinates(
                                                 latticeVectorsFlattened,
                                                 periodicBc);
           // for synchrozination
-          MPI_Bcast(&(newFracCoord[0]), 3, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+          MPI_Bcast(&(newFracCoord[0]), 3, MPI_DOUBLE, 0, d_mpiCommParent);
 
           atomLocationsFractionalCurrent[iAtom][2] = newFracCoord[0];
           atomLocationsFractionalCurrent[iAtom][3] = newFracCoord[1];
@@ -634,11 +644,13 @@ dftClass<FEOrder, FEOrderElectro>::MDwriteDomainAndAtomCoordinates(
       dftParameters::periodicZ)
     {
       dftUtils::writeDataIntoFile(atomLocationsFractionalCurrent,
-                                  Path + "atomsFracCoordCurrent.chk");
+                                  Path + "atomsFracCoordCurrent.chk",
+                                  d_mpiCommParent);
     }
   else
     {
       dftUtils::writeDataIntoFile(atomLocations,
-                                  Path + "atomsCartCoordCurrent.chk");
+                                  Path + "atomsCartCoordCurrent.chk",
+                                  d_mpiCommParent);
     }
 }

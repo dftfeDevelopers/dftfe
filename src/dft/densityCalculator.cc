@@ -104,14 +104,15 @@ namespace dftfe
     std::map<dealii::CellId, std::vector<double>> *_rhoValuesSpinPolarized,
     std::map<dealii::CellId, std::vector<double>> *_gradRhoValuesSpinPolarized,
     const bool                                     isEvaluateGradRho,
+    const MPI_Comm &                               mpiCommParent,
     const MPI_Comm &                               interpoolcomm,
     const MPI_Comm &                               interBandGroupComm,
     const bool                                     isConsiderSpectrumSplitting,
     const bool                                     lobattoNodesFlag)
   {
     int this_process;
-    MPI_Comm_rank(MPI_COMM_WORLD, &this_process);
-    MPI_Barrier(MPI_COMM_WORLD);
+    MPI_Comm_rank(mpiCommParent, &this_process);
+    MPI_Barrier(mpiCommParent);
     double cpu_time = MPI_Wtime();
 
 #ifdef USE_COMPLEX
@@ -1187,7 +1188,7 @@ namespace dftfe
                isEvaluateGradRho,
                interpoolcomm);
 
-    MPI_Barrier(MPI_COMM_WORLD);
+    MPI_Barrier(mpiCommParent);
     cpu_time = MPI_Wtime() - cpu_time;
 
     if (this_process == 0 && dftParameters::verbosity >= 2)

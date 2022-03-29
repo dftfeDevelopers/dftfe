@@ -63,11 +63,11 @@ forceClass<FEOrder, FEOrderElectro>::
     const bool                       shadowPotentialForce)
 {
   int this_process;
-  MPI_Comm_rank(MPI_COMM_WORLD, &this_process);
-  MPI_Barrier(MPI_COMM_WORLD);
+  MPI_Comm_rank(d_mpiCommParent, &this_process);
+  MPI_Barrier(d_mpiCommParent);
   double forcetotal_time = MPI_Wtime();
 
-  MPI_Barrier(MPI_COMM_WORLD);
+  MPI_Barrier(d_mpiCommParent);
   double init_time = MPI_Wtime();
 
   const unsigned int numberGlobalAtoms = dftPtr->atomLocations.size();
@@ -483,7 +483,7 @@ forceClass<FEOrder, FEOrderElectro>::
             }
         }
 
-  MPI_Barrier(MPI_COMM_WORLD);
+  MPI_Barrier(d_mpiCommParent);
   init_time = MPI_Wtime() - init_time;
 
   for (unsigned int spinIndex = 0;
@@ -537,7 +537,7 @@ forceClass<FEOrder, FEOrderElectro>::
 #if defined(DFTFE_WITH_GPU)
       if (dftParameters::useGPU)
         {
-          MPI_Barrier(MPI_COMM_WORLD);
+          MPI_Barrier(d_mpiCommParent);
           double gpu_time = MPI_Wtime();
 
           for (unsigned int kPoint = 0; kPoint < numKPoints; ++kPoint)
@@ -581,7 +581,7 @@ forceClass<FEOrder, FEOrderElectro>::
                 false);
             }
 
-          MPI_Barrier(MPI_COMM_WORLD);
+          MPI_Barrier(d_mpiCommParent);
           gpu_time = MPI_Wtime() - gpu_time;
 
           if (this_process == 0 && dftParameters::verbosity >= 4)
@@ -1327,7 +1327,7 @@ forceClass<FEOrder, FEOrderElectro>::
     }
 
 
-  MPI_Barrier(MPI_COMM_WORLD);
+  MPI_Barrier(d_mpiCommParent);
   double enowfc_time = MPI_Wtime();
 
   /////////// Compute contribution independent of wavefunctions
@@ -2237,7 +2237,7 @@ forceClass<FEOrder, FEOrderElectro>::
         shadowPotentialForce);
     }
 
-  MPI_Barrier(MPI_COMM_WORLD);
+  MPI_Barrier(d_mpiCommParent);
   enowfc_time = MPI_Wtime() - enowfc_time;
 
   forcetotal_time = MPI_Wtime() - forcetotal_time;

@@ -29,6 +29,7 @@ namespace dftfe
                                        dataTypes::numberGPU *X,
                                        const unsigned int    M,
                                        const unsigned int    N,
+                                       const MPI_Comm &      mpiCommParent,
                                        const MPI_Comm &      mpiCommDomain,
                                        GPUCCLWrapper & gpucclMpiCommDomain,
                                        const MPI_Comm &interBandGroupComm,
@@ -37,7 +38,7 @@ namespace dftfe
     {
       dealii::ConditionalOStream pcout(
         std::cout,
-        (dealii::Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0));
+        (dealii::Utilities::MPI::this_mpi_process(mpiCommParent) == 0));
 
       dealii::TimerOutput computing_timer(mpiCommDomain,
                                           pcout,

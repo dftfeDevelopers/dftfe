@@ -38,11 +38,13 @@ namespace dftfe
     /**
      * @brief Constructor.
      *
-     * @param mpi_comm domain decomposition mpi communicator
+     * @param mpi_comm_parent parent mpi communicator
+     * @param mpi_comm_domain domain decomposition mpi communicator
      * @param lowerBoundWantedSpectrum Lower Bound of the Wanted Spectrum.
      * @param lowerBoundUnWantedSpectrum Lower Bound of the UnWanted Spectrum.
      */
     chebyshevOrthogonalizedSubspaceIterationSolverCUDA(
+      const MPI_Comm &mpi_comm_parent,
       const MPI_Comm &mpi_comm_domain,
       double          lowerBoundWantedSpectrum,
       double          lowerBoundUnWantedSpectrum,
@@ -95,6 +97,7 @@ namespace dftfe
                          double upperBoundUnWantedSpectrum);
 
   private:
+    const MPI_Comm     d_mpiCommParent;
     //
     // stores lower bound of wanted spectrum
     //

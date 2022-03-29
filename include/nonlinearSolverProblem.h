@@ -113,6 +113,13 @@ namespace dftfe
      */
     virtual void
     save() = 0;
+
+    /**
+     * @brief get MPI communicator.
+     *
+     */
+    virtual const MPI_Comm &
+    getMPICommunicator() = 0;
   };
 
 } // namespace dftfe

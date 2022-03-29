@@ -60,7 +60,7 @@ dftClass<FEOrder, FEOrderElectro>::computeTraceXtHX(
   //
   // set up poisson solver
   //
-  dealiiLinearSolver dealiiCGSolver(mpi_communicator, dealiiLinearSolver::CG);
+  dealiiLinearSolver dealiiCGSolver(d_mpiCommParent,mpi_communicator, dealiiLinearSolver::CG);
   poissonSolverProblem<FEOrder, FEOrderElectro> phiTotalSolverProblem(
     mpi_communicator);
 
@@ -125,7 +125,7 @@ dftClass<FEOrder, FEOrderElectro>::computeTraceXtHX(
   // create kohnShamDFTOperatorClass object
   //
   kohnShamDFTOperatorClass<FEOrder, FEOrderElectro> kohnShamDFTEigenOperator(
-    this, mpi_communicator);
+    this, d_mpiCommParent,mpi_communicator);
   kohnShamDFTEigenOperator.init();
 
   //
@@ -208,7 +208,7 @@ dftClass<FEOrder, FEOrderElectro>::computeTraceXtKX(
   // create kohnShamDFTOperatorClass object
   //
   kohnShamDFTOperatorClass<FEOrder, FEOrderElectro> kohnShamDFTEigenOperator(
-    this, mpi_communicator);
+    this, d_mpiCommParent,mpi_communicator);
   kohnShamDFTEigenOperator.init();
 
   //
@@ -282,7 +282,7 @@ dftClass<FEOrder, FEOrderElectro>::solveNoSCF()
   // create kohnShamDFTOperatorClass object
   //
   kohnShamDFTOperatorClass<FEOrder, FEOrderElectro> kohnShamDFTEigenOperator(
-    this, mpi_communicator);
+    this, d_mpiCommParent,mpi_communicator);
   kohnShamDFTEigenOperator.init();
 
   for (unsigned int spinType = 0; spinType < (1 + dftParameters::spinPolarized);
@@ -322,6 +322,7 @@ dftClass<FEOrder, FEOrderElectro>::solveNoSCF()
                                            kPointIndex +
                                          spinType],
               d_numEigenValues,
+              d_mpiCommParent,
               interBandGroupComm,
               mpi_communicator,
               false);
@@ -366,6 +367,7 @@ dftClass<FEOrder, FEOrderElectro>::solveNoSCF()
     rhoOutValuesSpinPolarized,
     gradRhoOutValuesSpinPolarized,
     dftParameters::xcFamilyType == "GGA",
+    d_mpiCommParent,
     interpoolcomm,
     interBandGroupComm,
     false,

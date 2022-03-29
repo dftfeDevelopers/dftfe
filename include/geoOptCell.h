@@ -37,7 +37,7 @@ namespace dftfe
     /** @brief Constructor.
      *
      *  @param _dftPtr pointer to dftClass
-     *  @param mpi_comm_replica mpi_communicator of the current pool
+     *  @param mpi_comm_parent parent mpi_communicator
      */
     geoOptCell(dftClass<FEOrder, FEOrderElectro> *_dftPtr,
                const MPI_Comm &                   mpi_comm_replica);
@@ -103,6 +103,9 @@ namespace dftfe
      */
     void
     save();
+
+    const MPI_Comm &
+    getMPICommunicator();
 
     /// Not implemented
     void

@@ -130,14 +130,16 @@ namespace dftfe
     /**
      * @brief dftClass constructor
      *
-     *  @param[in] mpi_comm_replica  mpi_communicator for domain decomposition
+     *  @param[in] mpi_comm_parent parent communicator 
+     *  @param[in] mpi_comm_domain  mpi_communicator for domain decomposition
      * parallelization
      *  @param[in] interpoolcomm  mpi_communicator for parallelization over k
      * points
      *  @param[in] interBandGroupComm  mpi_communicator for parallelization over
      * bands
      */
-    dftClass(const MPI_Comm &  mpi_comm_replica,
+    dftClass(const MPI_Comm &  mpiCommParent,
+             const MPI_Comm &  mpi_comm_domain,
              const MPI_Comm &  interpoolcomm,
              const MPI_Comm &  interBandGroupComm,
              elpaScalaManager *_d_elpaScala);
@@ -338,14 +340,6 @@ namespace dftfe
     void
     initImageChargesUpdateKPoints(bool flag = true);
 
-
-    void
-    interpolateFieldsFromPrevToCurrentMesh(
-      std::vector<distributedCPUVec<double> *> fieldsPrevious,
-      std::vector<distributedCPUVec<double> *> fieldsCurrent,
-      const dealii::FESystem<3> &              FEPrev,
-      const dealii::FESystem<3> &              FECurrent,
-      const dealii::AffineConstraints<double> &constraintsCurrent);
 
     /**
      *@brief project ground state electron density from previous mesh into
@@ -1132,6 +1126,7 @@ namespace dftfe
 #if defined(DFTFE_WITH_GPU)
     GPUCCLWrapper *d_gpucclMpiCommDomainPtr;
 #endif
+    const MPI_Comm     d_mpiCommParent;
     const MPI_Comm     interpoolcomm;
     const MPI_Comm     interBandGroupComm;
     const unsigned int n_mpi_processes;

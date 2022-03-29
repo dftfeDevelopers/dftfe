@@ -325,7 +325,8 @@ namespace dftfe
     // boundary conditions later
     //
     meshGenUtils::markPeriodicFacesNonOrthogonal(parallelTriangulation,
-                                                 d_domainBoundingVectors);
+                                                 d_domainBoundingVectors,
+                                                 d_mpiCommParent);
 
     if (dftParameters::verbosity >= 4)
       pcout << std::endl

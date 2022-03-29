@@ -137,6 +137,7 @@ namespace dftfe
     void
     writeDataVTUParallelLowestPoolId(const dealii::DoFHandler<3> &dofHandler,
                                      const dealii::DataOut<3> &   dataOut,
+                                     const MPI_Comm &             mpiCommParent,
                                      const MPI_Comm &             domainComm,
                                      const MPI_Comm &             kPointComm,
                                      const MPI_Comm &             bandGroupComm,
@@ -176,7 +177,7 @@ namespace dftfe
         }
 
 
-      if (dealii::Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0)
+      if (dealii::Utilities::MPI::this_mpi_process(mpiCommParent) == 0)
         {
           std::vector<std::string> filenames;
           for (unsigned int i = 0; i < n_mpi_processes; ++i)

@@ -52,7 +52,7 @@ setup_dftfe(dftfe::elpaScalaManager *elpa_Scala,
             dftfe::dftClass<n1, n2> &problemFE,
             unsigned int &           numberEigenValues,
             unsigned int &           numEigenValuesRR,
-            const MPI_Comm &         mpi_comm_replica,
+            const MPI_Comm &         mpi_comm_domain,
             const MPI_Comm &         interpoolcomm,
             const MPI_Comm &         interBandGroupComm,
             bool                     setupELPAProcessGrid = true)
@@ -77,14 +77,15 @@ setup_dftfe(dftfe::elpaScalaManager *elpa_Scala,
 // The central DFT-FE run invocation:
 template <int n1, int n2>
 void
-run_problem(const MPI_Comm &mpi_comm_replica,
+run_problem(const MPI_Comm &mpi_comm_parent,
+            const MPI_Comm &mpi_comm_domain,
             const MPI_Comm &interpoolcomm,
             const MPI_Comm &interBandGroupComm)
 {
   dealii::ConditionalOStream pcout(
-    std::cout, (dealii::Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0));
+    std::cout, (dealii::Utilities::MPI::this_mpi_process(mpi_comm_parent) == 0));
   dftfe::elpaScalaManager *elpaScala;
-  elpaScala = new dftfe::elpaScalaManager(mpi_comm_replica);
+  elpaScala = new dftfe::elpaScalaManager(mpi_comm_domain);
   int error;
   if (elpa_init(ELPA_API_VERSION) != ELPA_OK)
     {
@@ -100,20 +101,22 @@ run_problem(const MPI_Comm &mpi_comm_replica,
 
   if (dftfe::dftParameters::solvermode == "MD")
     {
-      dftfe::dftClass<n1, n2> problemFE(mpi_comm_replica,
+      dftfe::dftClass<n1, n2> problemFE(mpi_comm_parent,
+                                        mpi_comm_domain,
                                         interpoolcomm,
                                         interBandGroupComm,
                                         elpaScala);
 
       dftfe::molecularDynamicsClass<n1, n2> mdClass(&problemFE,
-                                                    mpi_comm_replica,
+                                                    mpi_comm_parent,
+                                                    mpi_comm_domain,
                                                     interpoolcomm,
                                                     interBandGroupComm);
       setup_dftfe<n1, n2>(elpaScala,
                           problemFE,
                           numberEigenValues,
                           numEigenValuesRR,
-                          mpi_comm_replica,
+                          mpi_comm_domain,
                           interpoolcomm,
                           interBandGroupComm);
       mdClass.runMD();
@@ -124,7 +127,8 @@ run_problem(const MPI_Comm &mpi_comm_replica,
 
   else
     {
-      dftfe::dftClass<n1, n2> problemFE(mpi_comm_replica,
+      dftfe::dftClass<n1, n2> problemFE(mpi_comm_parent,
+                                        mpi_comm_domain,
                                         interpoolcomm,
                                         interBandGroupComm,
                                         elpaScala);
@@ -132,7 +136,7 @@ run_problem(const MPI_Comm &mpi_comm_replica,
                           problemFE,
                           numberEigenValues,
                           numEigenValuesRR,
-                          mpi_comm_replica,
+                          mpi_comm_domain,
                           interpoolcomm,
                           interBandGroupComm);
       problemFE.run();
@@ -150,7 +154,8 @@ run_problem(const MPI_Comm &mpi_comm_replica,
 //
 //  Also note element 0 is order 1.
 //
-typedef void (*run_fn)(const MPI_Comm &mpi_comm_replica,
+typedef void (*run_fn)(const MPI_Comm &mpi_comm_parent,
+                       const MPI_Comm &mpi_comm_domain,
                        const MPI_Comm &interpoolcomm,
                        const MPI_Comm &interBandGroupComm);
 
@@ -201,7 +206,7 @@ main(int argc, char *argv[])
   dftfe::dftParameters::declare_parameters(prm);
   const std::string parameter_file = argv[1];
   prm.parse_input(parameter_file);
-  dftfe::dftParameters::parse_parameters(prm);
+  dftfe::dftParameters::parse_parameters(prm,MPI_COMM_WORLD);
 
   deallog.depth_console(0);
 
@@ -311,7 +316,8 @@ main(int argc, char *argv[])
 #endif
 
   run_fn run = order_list[listIndex - 1];
-  run(bandGroupsPool.get_intrapool_comm(),
+  run(MPI_COMM_WORLD,
+      bandGroupsPool.get_intrapool_comm(),
       kPointPool.get_interpool_comm(),
       bandGroupsPool.get_interpool_comm());
 

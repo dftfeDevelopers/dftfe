@@ -47,7 +47,8 @@ namespace dftfe
      * symmetryClass constructor
      */
     symmetryClass(dftClass<FEOrder, FEOrderElectro> *_dftPtr,
-                  const MPI_Comm &                   mpi_comm_replica,
+                  const MPI_Comm &                   mpi_comm_parent,
+                  const MPI_Comm &                   mpi_comm_domain,
                   const MPI_Comm &                   _interpoolcomm);
     /**
      * Main driver routine to generate and communicate mapping tables
@@ -93,7 +94,7 @@ namespace dftfe
     /**
      * parallel objects
      */
-    const MPI_Comm             mpi_communicator, interpoolcomm;
+    const MPI_Comm             d_mpiCommParent,mpi_communicator, interpoolcomm;
     const unsigned int         n_mpi_processes;
     const unsigned int         this_mpi_process;
     dealii::ConditionalOStream pcout;

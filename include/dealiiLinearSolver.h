@@ -40,10 +40,11 @@ namespace dftfe
     /**
      * @brief Constructor
      *
-     * @param mpi_comm mpi communicator
+     * @param mpi_comm_parent parent mpi communicato
+     * @param mpi_comm_domain domain mpi communicator
      * @param type enum specifying the choice of the dealii linear solver
      */
-    dealiiLinearSolver(const MPI_Comm &mpi_comm, const solverType type);
+    dealiiLinearSolver(const MPI_Comm &mpi_comm_parent,const MPI_Comm &mpi_comm_domain, const solverType type);
 
     /**
      * @brief Solve linear system, A*x=Rhs
@@ -70,6 +71,7 @@ namespace dftfe
     /// define some temporary vectors
     distributedCPUVec<double> gvec, dvec, hvec;
 
+    const MPI_Comm             d_mpiCommParent;
     const MPI_Comm             mpi_communicator;
     const unsigned int         n_mpi_processes;
     const unsigned int         this_mpi_process;

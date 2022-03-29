@@ -206,6 +206,7 @@ namespace dftfe
   //
   chebyshevOrthogonalizedSubspaceIterationSolverCUDA::
     chebyshevOrthogonalizedSubspaceIterationSolverCUDA(
+      const MPI_Comm &mpi_comm_parent,
       const MPI_Comm &mpi_comm_domain,
       double          lowerBoundWantedSpectrum,
       double          lowerBoundUnWantedSpectrum,
@@ -214,8 +215,9 @@ namespace dftfe
     , d_lowerBoundUnWantedSpectrum(lowerBoundUnWantedSpectrum)
     , d_upperBoundUnWantedSpectrum(upperBoundUnWantedSpectrum)
     , d_isTemporaryParallelVectorsCreated(false)
+    , d_mpiCommParent(mpi_comm_parent)
     , pcout(std::cout,
-            (dealii::Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0))
+            (dealii::Utilities::MPI::this_mpi_process(mpi_comm_parent) == 0))
     , computing_timer(mpi_comm_domain,
                       pcout,
                       dftParameters::reproducible_output ||
@@ -668,6 +670,7 @@ namespace dftfe
           localVectorSize,
           totalNumberWaveFunctions,
           totalNumberWaveFunctions - eigenValues.size(),
+          d_mpiCommParent,
           operatorMatrix.getMPICommunicator(),
           gpucclMpiCommDomain,
           interBandGroupComm,
@@ -689,6 +692,7 @@ namespace dftfe
           totalNumberWaveFunctions,
           operatorMatrix.getMPICommunicator(),
           gpucclMpiCommDomain,
+          d_mpiCommParent,
           interBandGroupComm,
           eigenValues,
           cublasHandle,

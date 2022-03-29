@@ -23,14 +23,16 @@ namespace dftfe
   template <unsigned int FEOrder, unsigned int FEOrderElectro>
   molecularDynamicsClass<FEOrder, FEOrderElectro>::molecularDynamicsClass(
     dftClass<FEOrder, FEOrderElectro> *_dftPtr,
-    const MPI_Comm &                   mpi_comm_replica,
+    const MPI_Comm &                   mpi_comm_parent,
+    const MPI_Comm &                   mpi_comm_domain,
     const MPI_Comm &                   interpoolcomm,
     const MPI_Comm &                   interBandGroupComm)
     : dftPtr(_dftPtr)
-    , d_mpi_communicator(mpi_comm_replica)
+    , d_mpiCommParent(mpi_comm_parent)    
+    , d_mpi_communicator(mpi_comm_domain)
     , d_interpoolcomm(interpoolcomm)
     , d_interBandGroupComm(interBandGroupComm)
-    , d_this_mpi_process(Utilities::MPI::this_mpi_process(mpi_comm_replica))
+    , d_this_mpi_process(Utilities::MPI::this_mpi_process(mpi_comm_domain))
     , pcout(std::cout,
             (Utilities::MPI::this_mpi_process(d_mpi_communicator) == 0 &&
              Utilities::MPI::this_mpi_process(d_interpoolcomm) == 0 &&
@@ -148,7 +150,7 @@ namespace dftfe
           }
 
 
-        dftUtils::writeDataIntoFile(fileDisplacementData, "Displacement.chk");
+        dftUtils::writeDataIntoFile(fileDisplacementData, "Displacement.chk",d_mpiCommParent);
         //--------------------Starting Initialization
         //----------------------------------------------//
 
@@ -1476,16 +1478,16 @@ namespace dftfe
         mkdir(tempfolder.c_str(), ACCESSPERMS);
         Folder                 = "mdRestart";
         std::string newFolder3 = Folder + "/" + "time.chk";
-        dftUtils::writeDataIntoFile(timeIndexData, newFolder3);
+        dftUtils::writeDataIntoFile(timeIndexData, newFolder3,d_mpiCommParent);
         KEData[0][0] = KineticEnergyVector[time - d_startingTimeStep];
         IEData[0][0] = InternalEnergyVector[time - d_startingTimeStep];
         TEData[0][0] = TotalEnergyVector[time - d_startingTimeStep];
         std::string newFolder4 = tempfolder + "/" + "KineticEnergy.chk";
-        dftUtils::writeDataIntoFile(KEData, newFolder4);
+        dftUtils::writeDataIntoFile(KEData, newFolder4,d_mpiCommParent);
         std::string newFolder5 = tempfolder + "/" + "InternalEnergy.chk";
-        dftUtils::writeDataIntoFile(IEData, newFolder5);
+        dftUtils::writeDataIntoFile(IEData, newFolder5,d_mpiCommParent);
         std::string newFolder6 = tempfolder + "/" + "TotalEnergy.chk";
-        dftUtils::writeDataIntoFile(TEData, newFolder6);
+        dftUtils::writeDataIntoFile(TEData, newFolder6,d_mpiCommParent);
 
         for (int iCharge = 0; iCharge < d_numberGlobalCharges; ++iCharge)
           {
@@ -1515,7 +1517,7 @@ namespace dftfe
                 << " present in file atomsFracCoordCurrent.chk.old #"
                 << std::endl;
         std::string newFolder1 = tempfolder + "/" + "velocity.chk";
-        dftUtils::writeDataIntoFile(fileVelocityData, newFolder1);
+        dftUtils::writeDataIntoFile(fileVelocityData, newFolder1,d_mpiCommParent);
         if (time > 1)
           pcout << "#RESTART NOTE: Velocity:-"
                 << " Velocity of TimeStep: " << time
@@ -1523,7 +1525,7 @@ namespace dftfe
                 << " Velocity of TimeStep: " << time - 1
                 << " present in file velocity.chk.old #" << std::endl;
         std::string newFolder2 = tempfolder + "/" + "force.chk";
-        dftUtils::writeDataIntoFile(fileForceData, newFolder2);
+        dftUtils::writeDataIntoFile(fileForceData, newFolder2,d_mpiCommParent);
         if (time > 1)
           pcout << "#RESTART NOTE: Force:-"
                 << " Force of TimeStep: " << time
@@ -1531,7 +1533,7 @@ namespace dftfe
                 << " Forces of TimeStep: " << time - 1
                 << " present in file force.chk.old #" << std::endl;
         std::string newFolder22 = tempfolder + "/" + "StepDisplacement.chk";
-        dftUtils::writeDataIntoFile(fileDispData, newFolder22);
+        dftUtils::writeDataIntoFile(fileDispData, newFolder22,d_mpiCommParent);
         if (time > 1)
           pcout << "#RESTART NOTE: Step Displacement:-"
                 << " Step Displacements of TimeStep: " << time
@@ -1545,13 +1547,13 @@ namespace dftfe
 
         // std::string newFolder3 = tempfolder + "/" + "time.chk";
         dftUtils::writeDataIntoFile(
-          timeIndexData, newFolder3); // old time == new time then restart files
+          timeIndexData, newFolder3,d_mpiCommParent); // old time == new time then restart files
                                       // were successfully saved
         pcout << "#RESTART NOTE: restart files for TimeStep: " << time
               << " successfully created #" << std::endl;
         std::string newFolder0 =
           tempfolder + "/" + "UnwrappedFractionalCoordinates.chk";
-        dftUtils::writeDataIntoFile(d_atomFractionalunwrapped, newFolder0);
+        dftUtils::writeDataIntoFile(d_atomFractionalunwrapped, newFolder0,d_mpiCommParent);
       }
   }
 
@@ -1707,7 +1709,7 @@ namespace dftfe
         std::string tempfolder = "./mdRestart";
         std::string newFolder =
           std::string(tempfolder + "/" + "NHCThermostat.chk");
-        dftUtils::writeDataIntoFile(fileNHCData, newFolder);
+        dftUtils::writeDataIntoFile(fileNHCData, newFolder,d_mpiCommParent);
         if (Utilities::MPI::this_mpi_process(d_mpi_communicator) == 0 &&
             Utilities::MPI::this_mpi_process(d_interpoolcomm) == 0 &&
             Utilities::MPI::this_mpi_process(d_interBandGroupComm) == 0)
@@ -1741,7 +1743,7 @@ namespace dftfe
             fileDisplacementData[iCharge][2] =
               fileDisplacementData[iCharge][2] + r[iCharge][2];
           }
-        dftUtils::writeDataIntoFile(fileDisplacementData, "Displacement.chk");
+        dftUtils::writeDataIntoFile(fileDisplacementData, "Displacement.chk",d_mpiCommParent);
 
         if (Utilities::MPI::this_mpi_process(d_mpi_communicator) == 0 &&
             Utilities::MPI::this_mpi_process(d_interpoolcomm) == 0 &&

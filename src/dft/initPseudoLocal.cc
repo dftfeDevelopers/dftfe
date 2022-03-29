@@ -147,7 +147,7 @@ dftClass<FEOrder, FEOrderElectro>::initLocalPseudoPotential(
   phiExt = 0;
 
   double init_1;
-  MPI_Barrier(MPI_COMM_WORLD);
+  MPI_Barrier(d_mpiCommParent);
   init_1 = MPI_Wtime();
 
   const std::shared_ptr<const dealii::Utilities::MPI::Partitioner>
@@ -301,13 +301,13 @@ dftClass<FEOrder, FEOrderElectro>::initLocalPseudoPotential(
   phiExt.update_ghost_values();
   // pcout<<"L2 Norm Value of phiext: "<<phiExt.l2_norm()<<std::endl;
 
-  MPI_Barrier(MPI_COMM_WORLD);
+  MPI_Barrier(d_mpiCommParent);
   init_1 = MPI_Wtime() - init_1;
   if (dftParameters::verbosity >= 4)
     pcout << "initLocalPSP: Time taken for init1: " << init_1 << std::endl;
 
   double init_2;
-  MPI_Barrier(MPI_COMM_WORLD);
+  MPI_Barrier(d_mpiCommParent);
   init_2 = MPI_Wtime();
 
   FEEvaluation<3,
@@ -450,13 +450,13 @@ dftClass<FEOrder, FEOrderElectro>::initLocalPseudoPotential(
         }     // subcell loop
     }         // cell loop
 
-  MPI_Barrier(MPI_COMM_WORLD);
+  MPI_Barrier(d_mpiCommParent);
   init_2 = MPI_Wtime() - init_2;
   if (dftParameters::verbosity >= 4)
     pcout << "initLocalPSP: Time taken for init2: " << init_2 << std::endl;
 
   double init_3;
-  MPI_Barrier(MPI_COMM_WORLD);
+  MPI_Barrier(d_mpiCommParent);
   init_3 = MPI_Wtime();
 
   std::vector<double>                          pseudoVLocAtom(n_q_points);
@@ -555,7 +555,7 @@ dftClass<FEOrder, FEOrderElectro>::initLocalPseudoPotential(
         }     // cell locally owned check
     }         // cell loop
 
-  MPI_Barrier(MPI_COMM_WORLD);
+  MPI_Barrier(d_mpiCommParent);
   init_3 = MPI_Wtime() - init_3;
   if (dftParameters::verbosity >= 4)
     pcout << "initLocalPSP: Time taken for init3: " << init_3 << std::endl;

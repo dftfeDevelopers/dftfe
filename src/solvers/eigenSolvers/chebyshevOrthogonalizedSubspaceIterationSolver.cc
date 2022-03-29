@@ -61,16 +61,18 @@ namespace dftfe
   //
   chebyshevOrthogonalizedSubspaceIterationSolver::
     chebyshevOrthogonalizedSubspaceIterationSolver(
-      const MPI_Comm &mpi_comm,
+      const MPI_Comm &mpi_comm_parent,
+      const MPI_Comm &mpi_comm_domain,
       double          lowerBoundWantedSpectrum,
       double          lowerBoundUnWantedSpectrum,
       double          upperBoundUnWantedSpectrum)
     : d_lowerBoundWantedSpectrum(lowerBoundWantedSpectrum)
     , d_lowerBoundUnWantedSpectrum(lowerBoundUnWantedSpectrum)
     , d_upperBoundUnWantedSpectrum(upperBoundUnWantedSpectrum)
+    , d_mpiCommParent(mpi_comm_parent)
     , pcout(std::cout,
-            (dealii::Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0))
-    , computing_timer(mpi_comm,
+            (dealii::Utilities::MPI::this_mpi_process(mpi_comm_parent) == 0))
+    , computing_timer(mpi_comm_domain,
                       pcout,
                       dftParameters::reproducible_output ||
                           dftParameters::verbosity < 4 ?
@@ -445,6 +447,7 @@ namespace dftfe
               eigenVectorsRotFracDensityFlattened,
               totalNumberWaveFunctions,
               totalNumberWaveFunctions - eigenValues.size(),
+              d_mpiCommParent,
               interBandGroupComm,
               operatorMatrix.getMPICommunicator(),
               useMixedPrec,
@@ -457,6 +460,7 @@ namespace dftfe
               elpaScala,
               eigenVectorsFlattened,
               totalNumberWaveFunctions,
+              d_mpiCommParent,
               interBandGroupComm,
               operatorMatrix.getMPICommunicator(),
               eigenValues,
@@ -471,6 +475,7 @@ namespace dftfe
               operatorMatrix,
               eigenVectorsRotFracDensityFlattened,
               eigenValues,
+              d_mpiCommParent,
               operatorMatrix.getMPICommunicator(),
               interBandGroupComm,
               residualNorms);
@@ -481,6 +486,7 @@ namespace dftfe
               operatorMatrix,
               eigenVectorsFlattened,
               eigenValues,
+              d_mpiCommParent,
               operatorMatrix.getMPICommunicator(),
               interBandGroupComm,
               residualNorms);
@@ -510,6 +516,7 @@ namespace dftfe
               eigenVectorsRotFracDensityFlattened,
               totalNumberWaveFunctions,
               totalNumberWaveFunctions - eigenValues.size(),
+              d_mpiCommParent,
               interBandGroupComm,
               operatorMatrix.getMPICommunicator(),
               useMixedPrec,
@@ -522,6 +529,7 @@ namespace dftfe
               elpaScala,
               eigenVectorsFlattened,
               totalNumberWaveFunctions,
+              d_mpiCommParent,
               interBandGroupComm,
               operatorMatrix.getMPICommunicator(),
               eigenValues,
@@ -547,6 +555,7 @@ namespace dftfe
                   operatorMatrix,
                   eigenVectorsRotFracDensityFlattened,
                   eigenValues,
+                  d_mpiCommParent,
                   operatorMatrix.getMPICommunicator(),
                   interBandGroupComm,
                   residualNorms);
@@ -556,6 +565,7 @@ namespace dftfe
                 operatorMatrix,
                 eigenVectorsFlattened,
                 eigenValues,
+                d_mpiCommParent,
                 operatorMatrix.getMPICommunicator(),
                 interBandGroupComm,
                 residualNorms);

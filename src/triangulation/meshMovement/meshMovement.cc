@@ -88,12 +88,14 @@ namespace dftfe
   //
   // constructor
   //
-  meshMovementClass::meshMovementClass(const MPI_Comm &mpi_comm_replica)
+  meshMovementClass::meshMovementClass(
+  const MPI_Comm &mpi_comm_parent,
+  const MPI_Comm &mpi_comm_domain)
     : FEMoveMesh(FE_Q<3>(QGaussLobatto<1>(2)), 3)
-    , // linear shape function
-    mpi_communicator(mpi_comm_replica)
-    , this_mpi_process(Utilities::MPI::this_mpi_process(mpi_comm_replica))
-    , pcout(std::cout, (Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0))
+    , d_mpiCommParent(mpi_comm_parent) 
+    , mpi_communicator(mpi_comm_domain)
+    , this_mpi_process(Utilities::MPI::this_mpi_process(mpi_comm_domain))
+    , pcout(std::cout, (Utilities::MPI::this_mpi_process(mpi_comm_parent) == 0))
   {}
 
   void meshMovementClass::init(
@@ -191,6 +193,7 @@ namespace dftfe
         vectorTools::createParallelConstraintMatrixFromSerial(
           serialTriangulation,
           d_dofHandlerMoveMesh,
+          d_mpiCommParent,
           mpi_communicator,
           domainBoundingVectors,
           d_constraintsMoveMesh,
@@ -634,7 +637,7 @@ namespace dftfe
                       mpi_communicator);
         // important in case of k point parallelization
         MPI_Bcast(
-          &(closestTriaVertexLocation[0]), 3, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+          &(closestTriaVertexLocation[0]), 3, MPI_DOUBLE, 0, d_mpiCommParent);
 
         // floating point error correction
         // if

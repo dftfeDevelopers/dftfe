@@ -164,19 +164,19 @@ namespace dftfe
      * Parse parameters.
      */
     void
-    parse_parameters(dealii::ParameterHandler &prm);
+    parse_parameters(dealii::ParameterHandler &prm,const MPI_Comm & mpi_comm_parent);
 
     /**
      * Check and print parameters
      */
     void
-    check_print_parameters(const dealii::ParameterHandler &prm);
+    check_print_parameters(const dealii::ParameterHandler &prm,const MPI_Comm & mpi_comm_parent);
 
     /**
      * Set automated choices for parameters
      */
     void
-    setAutoParameters();
+    setAutoParameters(const MPI_Comm & mpi_comm_parent);
 
     /**
      * set family type exchange correlation functional

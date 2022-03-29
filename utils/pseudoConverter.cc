@@ -50,11 +50,11 @@ namespace dftfe
 
 
     int
-    convert(std::string &fileName)
+    convert(std::string &fileName,const MPI_Comm & mpi_comm_parent)
     {
       dealii::ConditionalOStream pcout(
         std::cout,
-        (dealii::Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0));
+        (dealii::Utilities::MPI::this_mpi_process(mpi_comm_parent) == 0));
 
       xmlTodftfeParser xmlParse;
 

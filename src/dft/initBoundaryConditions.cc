@@ -30,7 +30,7 @@ dftClass<FEOrder, FEOrderElectro>::initBoundaryConditions(
   TimerOutput::Scope scope(computing_timer, "moved setup");
 
   double init_dofhandlerobjs;
-  MPI_Barrier(MPI_COMM_WORLD);
+  MPI_Barrier(d_mpiCommParent);
   init_dofhandlerobjs = MPI_Wtime();
   //
   // initialize FE objects again
@@ -142,7 +142,7 @@ dftClass<FEOrder, FEOrderElectro>::initBoundaryConditions(
                                        dofHandlerEigen,
                                        d_supportPointsEigen);
 
-  MPI_Barrier(MPI_COMM_WORLD);
+  MPI_Barrier(d_mpiCommParent);
   init_dofhandlerobjs = MPI_Wtime() - init_dofhandlerobjs;
   if (dftParameters::verbosity >= 4)
     pcout
@@ -157,7 +157,7 @@ dftClass<FEOrder, FEOrderElectro>::initBoundaryConditions(
   //
   typename MatrixFree<3>::AdditionalData additional_data;
   // comment this if using deal ii version 9
-  // additional_data.mpi_communicator = MPI_COMM_WORLD;
+  // additional_data.mpi_communicator = d_mpiCommParent;
   additional_data.tasks_parallel_scheme =
     MatrixFree<3>::AdditionalData::partition_partition;
   if (dftParameters::isCellStress)
@@ -220,7 +220,7 @@ dftClass<FEOrder, FEOrderElectro>::initBoundaryConditions(
   d_lpspQuadratureId    = 3;
 
   double init_force;
-  MPI_Barrier(MPI_COMM_WORLD);
+  MPI_Barrier(d_mpiCommParent);
   init_force = MPI_Wtime();
   //
   //
@@ -237,7 +237,7 @@ dftClass<FEOrder, FEOrderElectro>::initBoundaryConditions(
     dftUtils::printCurrentMemoryUsage(mpi_communicator,
                                       "Called force init moved");
 
-  MPI_Barrier(MPI_COMM_WORLD);
+  MPI_Barrier(d_mpiCommParent);
   init_force = MPI_Wtime() - init_force;
   if (dftParameters::verbosity >= 4)
     pcout << "initBoundaryConditions: Time taken for force init moved: "
@@ -245,7 +245,7 @@ dftClass<FEOrder, FEOrderElectro>::initBoundaryConditions(
 
 
   double init_mf;
-  MPI_Barrier(MPI_COMM_WORLD);
+  MPI_Barrier(d_mpiCommParent);
   init_mf = MPI_Wtime();
 
   matrix_free_data.reinit(dofHandlerVector,
@@ -253,7 +253,7 @@ dftClass<FEOrder, FEOrderElectro>::initBoundaryConditions(
                           quadratureVector,
                           additional_data);
 
-  MPI_Barrier(MPI_COMM_WORLD);
+  MPI_Barrier(d_mpiCommParent);
   init_mf = MPI_Wtime() - init_mf;
   if (dftParameters::verbosity >= 4)
     pcout << "initBoundaryConditions: Time taken for matrix free reinit: "
@@ -267,7 +267,7 @@ dftClass<FEOrder, FEOrderElectro>::initBoundaryConditions(
   d_domainVolume = computeVolume(dofHandler);
 
   double init_pref;
-  MPI_Barrier(MPI_COMM_WORLD);
+  MPI_Barrier(d_mpiCommParent);
   init_pref = MPI_Wtime();
   //
   // init 2p matrix-free objects using appropriate constraint matrix and
@@ -276,7 +276,7 @@ dftClass<FEOrder, FEOrderElectro>::initBoundaryConditions(
   initpRefinedObjects(meshOnlyDeformed, vselfPerturbationUpdateForStress);
 
 
-  MPI_Barrier(MPI_COMM_WORLD);
+  MPI_Barrier(d_mpiCommParent);
   init_pref = MPI_Wtime() - init_pref;
   if (dftParameters::verbosity >= 4)
     pcout << "initBoundaryConditions: Time taken for initpRefinedObjects: "

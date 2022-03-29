@@ -20,7 +20,8 @@ namespace dftfe
      *
      *  @param[in] dftClass<FEOrder, FEOrderElectro> *_dftPtr dftclass pointer
      * used to access friend class dft.cc
-     *  @param[in] mpi_comm_replica  mpi_communicator for domain decomposition
+     *  @param[in] mpi_comm_parent parent mpi communicator
+     *  @param[in] mpi_comm_domain  mpi_communicator for domain decomposition
      * parallelization
      *  @param[in] interpoolcomm  mpi_communicator for parallelization over k
      * points
@@ -28,7 +29,8 @@ namespace dftfe
      * bands
      */
     molecularDynamicsClass(dftClass<FEOrder, FEOrderElectro> *_dftPtr,
-                           const MPI_Comm &                   mpi_comm_replica,
+                           const MPI_Comm &                   mpi_comm_parent,
+                           const MPI_Comm &                   mpi_comm_domain,
                            const MPI_Comm &                   interpoolcomm,
                            const MPI_Comm &interBandGroupComm);
 
@@ -56,6 +58,7 @@ namespace dftfe
     dftClass<FEOrder, FEOrderElectro> *dftPtr;
 
     // parallel communication objects
+    const MPI_Comm     d_mpiCommParent;
     const MPI_Comm     d_mpi_communicator;
     const MPI_Comm     d_interpoolcomm;
     const MPI_Comm     d_interBandGroupComm;

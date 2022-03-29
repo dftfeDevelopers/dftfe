@@ -132,10 +132,11 @@ namespace dftfe
 
     inline void markPeriodicFacesNonOrthogonal(
       Triangulation<3, 3> &             triangulation,
-      std::vector<std::vector<double>> &latticeVectors)
+      std::vector<std::vector<double>> &latticeVectors,
+      const MPI_Comm &  mpiCommParent)
     {
       dealii::ConditionalOStream pcout(
-        std::cout, (Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0));
+        std::cout, (Utilities::MPI::this_mpi_process(mpiCommParent) == 0));
       std::vector<std::vector<double>> periodicFaceNormals;
       std::vector<Tensor<1, 3>>        offsetVectors;
       // bool periodicX = dftParameters::periodicX, periodicY =

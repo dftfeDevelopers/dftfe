@@ -234,7 +234,7 @@ kohnShamDFTOperatorCUDAClass<FEOrder, FEOrderElectro>::
     dftPtr->matrix_free_data.n_physical_cells();
 
   cudaDeviceSynchronize();
-  MPI_Barrier(MPI_COMM_WORLD);
+  MPI_Barrier(d_mpiCommParent);
   double gpu_time = MPI_Wtime();
 
   QGauss<3>    quadraturePlusOne(FEOrder + 1);
@@ -254,7 +254,7 @@ kohnShamDFTOperatorCUDAClass<FEOrder, FEOrderElectro>::
     d_cellShapeFunctionGradientIntegralFlattenedDevice);
 
   cudaDeviceSynchronize();
-  MPI_Barrier(MPI_COMM_WORLD);
+  MPI_Barrier(d_mpiCommParent);
   gpu_time = MPI_Wtime() - gpu_time;
 
   if (this_mpi_process == 0 && dftParameters::verbosity >= 2)
@@ -265,7 +265,7 @@ kohnShamDFTOperatorCUDAClass<FEOrder, FEOrderElectro>::
   if (FEOrderElectro != FEOrder)
     {
       cudaDeviceSynchronize();
-      MPI_Barrier(MPI_COMM_WORLD);
+      MPI_Barrier(d_mpiCommParent);
       gpu_time = MPI_Wtime();
 
       QGauss<3> quadratureElectroPlusOne(FEOrderElectro + 1);
@@ -286,7 +286,7 @@ kohnShamDFTOperatorCUDAClass<FEOrder, FEOrderElectro>::
         d_cellShapeFunctionGradientIntegralFlattenedDeviceElectro);
 
       cudaDeviceSynchronize();
-      MPI_Barrier(MPI_COMM_WORLD);
+      MPI_Barrier(d_mpiCommParent);
       gpu_time = MPI_Wtime() - gpu_time;
 
       if (this_mpi_process == 0 && dftParameters::verbosity >= 2)

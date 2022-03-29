@@ -24,6 +24,7 @@
 #define fileReaders_H_
 #include <string>
 #include <vector>
+#include <mpi.h>
 
 namespace dftfe
 {
@@ -53,10 +54,12 @@ namespace dftfe
      *
      * @param[in] data input double data in [rows][columns] format
      * @param[in] fileName
+     * @param[in] mpi_comm_parent parent communicator
      */
     void
     writeDataIntoFile(const std::vector<std::vector<double>> &data,
-                      const std::string &                     fileName);
+                      const std::string &                     fileName,
+                      const MPI_Comm & mpi_comm_parent);
 
     /**
      * @brief Read from file containing only integer data in columns.

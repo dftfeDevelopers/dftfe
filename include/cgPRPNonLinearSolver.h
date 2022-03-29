@@ -50,7 +50,7 @@ namespace dftfe
     cgPRPNonLinearSolver(const double       tolerance,
                          const unsigned int maxNumberIterations,
                          const unsigned int debugLevel,
-                         const MPI_Comm &   mpi_comm_replica,
+                         const MPI_Comm &   mpi_comm_parent,
                          const double       lineSearchTolerance       = 1.0e-6,
                          const unsigned int lineSearchMaxIterations   = 10,
                          const double       lineSeachDampingParameter = 1.0,

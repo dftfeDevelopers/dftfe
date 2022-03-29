@@ -68,6 +68,7 @@ namespace dftfe
     initUnmoved(const Triangulation<3, 3> &             triangulation,
                 const Triangulation<3, 3> &             serialTriangulation,
                 const std::vector<std::vector<double>> &domainBoundingVectors,
+                const MPI_Comm &                        mpi_comm_parent,
                 const MPI_Comm &                        mpi_comm,
                 DoFHandler<3> &                         dofHandlerForce,
                 FESystem<3> &                           FEForce,
@@ -154,6 +155,7 @@ namespace dftfe
           vectorTools::createParallelConstraintMatrixFromSerial(
             serialTriangulation,
             dofHandlerForce,
+            mpi_comm_parent,
             mpi_comm,
             domainBoundingVectors,
             constraintsForce,
@@ -168,14 +170,15 @@ namespace dftfe
   template <unsigned int FEOrder, unsigned int FEOrderElectro>
   forceClass<FEOrder, FEOrderElectro>::forceClass(
     dftClass<FEOrder, FEOrderElectro> *_dftPtr,
-    const MPI_Comm &                   mpi_comm_replica)
+    const MPI_Comm &                   mpi_comm_parent,
+    const MPI_Comm &                   mpi_comm_domain)
     : dftPtr(_dftPtr)
     , FEForce(FE_Q<3>(QGaussLobatto<1>(2)), 3)
-    , // linear shape function
-    mpi_communicator(mpi_comm_replica)
-    , n_mpi_processes(Utilities::MPI::n_mpi_processes(mpi_comm_replica))
-    , this_mpi_process(Utilities::MPI::this_mpi_process(mpi_comm_replica))
-    , pcout(std::cout, (Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0))
+    , d_mpiCommParent(mpi_comm_parent)
+    , mpi_communicator(mpi_comm_domain)
+    , n_mpi_processes(Utilities::MPI::n_mpi_processes(mpi_comm_domain))
+    , this_mpi_process(Utilities::MPI::this_mpi_process(mpi_comm_domain))
+    , pcout(std::cout, (Utilities::MPI::this_mpi_process(mpi_comm_parent) == 0))
   {}
 
   //
@@ -193,6 +196,7 @@ namespace dftfe
       internalForce::initUnmoved(triangulation,
                                  serialTriangulation,
                                  domainBoundingVectors,
+                                 d_mpiCommParent,
                                  mpi_communicator,
                                  d_dofHandlerForceElectro,
                                  FEForce,
@@ -203,6 +207,7 @@ namespace dftfe
       internalForce::initUnmoved(triangulation,
                                  serialTriangulation,
                                  domainBoundingVectors,
+                                 d_mpiCommParent,
                                  mpi_communicator,
                                  d_dofHandlerForce,
                                  FEForce,
@@ -357,7 +362,7 @@ namespace dftfe
                                           phiRhoMinusApproxRho,
                                           shadowPotentialForce);
 
-    MPI_Barrier(MPI_COMM_WORLD);
+    MPI_Barrier(d_mpiCommParent);
     double gaussian_time = MPI_Wtime();
 
     if (dftParameters::floatingNuclearCharges)
@@ -365,7 +370,7 @@ namespace dftfe
     else
       computeAtomsForcesGaussianGenerator(d_allowGaussianOverlapOnAtoms);
 
-    MPI_Barrier(MPI_COMM_WORLD);
+    MPI_Barrier(d_mpiCommParent);
     gaussian_time = MPI_Wtime() - gaussian_time;
 
     if (this_mpi_process == 0 && dftParameters::verbosity >= 4)
@@ -528,7 +533,7 @@ namespace dftfe
     // configurational force contribution from nuclear self energy. This is
     // handled separately as it involves
     // a surface integral over the vself ball surface
-    MPI_Barrier(MPI_COMM_WORLD);
+    MPI_Barrier(d_mpiCommParent);
     double vselfforce_time = MPI_Wtime();
 
     if (dealii::Utilities::MPI::this_mpi_process(dftPtr->interBandGroupComm) ==
@@ -541,7 +546,7 @@ namespace dftfe
 
     configForceLinFEFinalize();
 
-    MPI_Barrier(MPI_COMM_WORLD);
+    MPI_Barrier(d_mpiCommParent);
     vselfforce_time = MPI_Wtime() - vselfforce_time;
 
     if (this_mpi_process == 0 && dftParameters::verbosity >= 4)

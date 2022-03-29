@@ -35,9 +35,11 @@ namespace dftfe
   public:
     /** @brief Constructor
      *
-     *  @param[in] mpi_comm_replica mpi communicator for domain decomposition
+     * @param[in] mpi_comm_parent parent mpi communicator
+     *  @param[in] mpi_comm_domain mpi communicator for domain decomposition
      */
-    meshMovementClass(const MPI_Comm &mpi_comm_replica);
+    meshMovementClass(const MPI_Comm &mpi_comm_parent,
+                     const MPI_Comm &mpi_comm_domain);
 
     virtual ~meshMovementClass()
     {}
@@ -125,6 +127,7 @@ namespace dftfe
     std::vector<std::vector<double>> d_domainBoundingVectors;
 
     // parallel objects
+    MPI_Comm                   d_mpiCommParent;
     MPI_Comm                   mpi_communicator;
     const unsigned int         this_mpi_process;
     dealii::ConditionalOStream pcout;
