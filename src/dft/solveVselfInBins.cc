@@ -1396,6 +1396,7 @@ namespace dftfe
                                   localSize,
                                   ghostSize,
                                   numberPoissonSolves,
+				  d_mpiCommParent,
                                   mpi_communicator,
                                   &vselfBinsFieldsFlattened[0],
                                   FEOrderElectro != FEOrder ? true : false);
