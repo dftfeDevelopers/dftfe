@@ -472,8 +472,9 @@ namespace dftfe
         MPI_Barrier(d_mpi_communicator);
         MPI_Barrier(d_interBandGroupComm);
         MPI_Barrier(d_interpoolcomm);
-        step_time = MPI_Wtime();
-        KineticEnergy= velocityVerlet(velocity, displacements, atomMass, KineticEnergy, force);
+        step_time     = MPI_Wtime();
+        KineticEnergy = velocityVerlet(
+          velocity, displacements, atomMass, KineticEnergy, force);
         GroundStateEnergyvalue = dftPtr->getInternalEnergy();
         EntropicEnergyvalue    = dftPtr->getEntropicEnergy();
         KineticEnergyVector[d_TimeIndex - d_startingTimeStep] =
@@ -522,11 +523,11 @@ namespace dftfe
         vz /= COM;
         // pcout<<" The Center of Mass Velocity from NVE: "<<vx<<" "<<vy<<"
         // "<<vz<<std::endl;
-        if (dftParameters::verbosity >= 1 )
+        if (dftParameters::verbosity >= 1)
           {
             pcout << "---------------MD STEP: " << d_TimeIndex
                   << " ------------------ " << std::endl;
-            if(!dftParameters::reproducible_output)        
+            if (!dftParameters::reproducible_output)
               pcout << "Time taken for md step: " << step_time << std::endl;
             pcout << " Temperature from velocities: " << d_TimeIndex << " "
                   << TemperatureFromVelocities << std::endl;
@@ -558,8 +559,8 @@ namespace dftfe
         MPI_Barrier(d_interBandGroupComm);
         MPI_Barrier(d_interpoolcomm);
         curr_time = MPI_Wtime() - d_MDstartWallTime;
-        if(!dftParameters::reproducible_output)        
-           pcout << "*****Time Completed till NOW: " << curr_time << std::endl;
+        if (!dftParameters::reproducible_output)
+          pcout << "*****Time Completed till NOW: " << curr_time << std::endl;
         AssertThrow((d_MaxWallTime - (curr_time + 1.05 * step_time)) > 1.0,
                     ExcMessage(
                       "DFT-FE Exit: Max Wall Time exceeded User Limit"));
@@ -594,15 +595,16 @@ namespace dftfe
         step_time = MPI_Wtime();
 
 
-        KineticEnergy = velocityVerlet(velocity, displacements, atomMass, KineticEnergy, force);
+        KineticEnergy = velocityVerlet(
+          velocity, displacements, atomMass, KineticEnergy, force);
         TemperatureFromVelocities =
           2.0 / 3.0 / double(d_numberGlobalCharges - 1) * KineticEnergy / (kB);
         if (d_TimeIndex % d_ThermostatTimeConstant == 0)
           {
-            KineticEnergy=RescaleVelocities(velocity,
-                              KineticEnergy,
-                              atomMass,
-                              TemperatureFromVelocities);
+            KineticEnergy = RescaleVelocities(velocity,
+                                              KineticEnergy,
+                                              atomMass,
+                                              TemperatureFromVelocities);
           }
 
         MPI_Barrier(d_mpi_communicator);
@@ -661,7 +663,7 @@ namespace dftfe
           {
             pcout << "---------------MD STEP: " << d_TimeIndex
                   << " ------------------ " << std::endl;
-            if(!dftParameters::reproducible_output)        
+            if (!dftParameters::reproducible_output)
               pcout << "Time taken for md step: " << step_time << std::endl;
             pcout << " Temperature from velocities: " << d_TimeIndex << " "
                   << TemperatureFromVelocities << std::endl;
@@ -693,7 +695,7 @@ namespace dftfe
         MPI_Barrier(d_interBandGroupComm);
         MPI_Barrier(d_interpoolcomm);
         curr_time = MPI_Wtime() - d_MDstartWallTime;
-        if(!dftParameters::reproducible_output)
+        if (!dftParameters::reproducible_output)
           pcout << "*****Time Completed till NOW: " << curr_time << std::endl;
         AssertThrow((d_MaxWallTime - (curr_time + 1.05 * step_time)) > 1.0,
                     ExcMessage(
@@ -763,7 +765,8 @@ namespace dftfe
           KineticEnergyVector[d_TimeIndex - 1 - d_startingTimeStep] * haToeV,
           d_startingTemperature);
 
-        KineticEnergy = velocityVerlet(velocity, displacements, atomMass, KineticEnergy, force);
+        KineticEnergy = velocityVerlet(
+          velocity, displacements, atomMass, KineticEnergy, force);
 
         MPI_Barrier(d_mpi_communicator);
         MPI_Barrier(d_interBandGroupComm);
@@ -851,7 +854,7 @@ namespace dftfe
           {
             pcout << "---------------MD STEP: " << d_TimeIndex
                   << " ------------------ " << std::endl;
-            if(!dftParameters::reproducible_output)        
+            if (!dftParameters::reproducible_output)
               pcout << "Time taken for md step: " << step_time << std::endl;
             pcout << " Temperature from velocities: " << d_TimeIndex << " "
                   << TemperatureFromVelocities << std::endl;
@@ -934,7 +937,8 @@ namespace dftfe
         step_time = MPI_Wtime();
 
 
-        KineticEnergy = velocityVerlet(velocity, displacements, atomMass, KineticEnergy, force);
+        KineticEnergy = velocityVerlet(
+          velocity, displacements, atomMass, KineticEnergy, force);
 
 
         MPI_Barrier(d_mpi_communicator);
@@ -996,7 +1000,7 @@ namespace dftfe
           {
             pcout << "---------------MD STEP: " << d_TimeIndex
                   << " ------------------ " << std::endl;
-            if(!dftParameters::reproducible_output)        
+            if (!dftParameters::reproducible_output)
               pcout << "Time taken for md step: " << step_time << std::endl;
             pcout << " Temperature from velocities: " << d_TimeIndex << " "
                   << TemperatureFromVelocities << std::endl;
@@ -1029,7 +1033,7 @@ namespace dftfe
         MPI_Barrier(d_interBandGroupComm);
         MPI_Barrier(d_interpoolcomm);
         curr_time = MPI_Wtime() - d_MDstartWallTime;
-        if(!dftParameters::reproducible_output)
+        if (!dftParameters::reproducible_output)
           pcout << "*****Time Completed till NOW: " << curr_time << std::endl;
         AssertThrow((d_MaxWallTime - (curr_time + 1.05 * step_time)) > 1.0,
                     ExcMessage(
@@ -1045,7 +1049,7 @@ namespace dftfe
     std::vector<double> &                      v,
     std::vector<dealii::Tensor<1, 3, double>> &r,
     const std::vector<double> &                atomMass,
-    double                                    KE,
+    double                                     KE,
     std::vector<double> &                      forceOnAtoms)
   {
     int    i;
@@ -1288,7 +1292,7 @@ namespace dftfe
   double
   molecularDynamicsClass<FEOrder, FEOrderElectro>::RescaleVelocities(
     std::vector<double> &      v,
-    double                    KE,
+    double                     KE,
     const std::vector<double> &M,
     double                     Temperature)
   {
@@ -1312,7 +1316,7 @@ namespace dftfe
                v[3 * iCharge + 1] * v[3 * iCharge + 1] +
                v[3 * iCharge + 2] * v[3 * iCharge + 2]);
       }
-    return KE;  
+    return KE;
   }
 
   template <unsigned int FEOrder, unsigned int FEOrderElectro>
@@ -1365,7 +1369,7 @@ namespace dftfe
   template <unsigned int FEOrder, unsigned int FEOrderElectro>
   double
   molecularDynamicsClass<FEOrder, FEOrderElectro>::svr(std::vector<double> &v,
-                                                       double             KE,
+                                                       double               KE,
                                                        double KEref)
   {
     double       alphasq;
@@ -1437,7 +1441,7 @@ namespace dftfe
         v[3 * iCharge + 1] = alpha * v[3 * iCharge + 1];
         v[3 * iCharge + 2] = alpha * v[3 * iCharge + 2];
       }
-    return KE;  
+    return KE;
   }
 
 
