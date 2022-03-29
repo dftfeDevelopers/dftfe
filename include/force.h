@@ -56,7 +56,7 @@ namespace dftfe
      *
      *  @param _dftPtr pointer to dftClass
      *  @param mpi_comm_parent parent mpi_communicator
-     *  @param mpi_comm_domain domain decomposition mpi_communicator 
+     *  @param mpi_comm_domain domain decomposition mpi_communicator
      */
     forceClass(dftClass<FEOrder, FEOrderElectro> *_dftPtr,
                const MPI_Comm &                   mpi_comm_parent,

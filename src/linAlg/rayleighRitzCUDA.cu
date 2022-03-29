@@ -658,7 +658,7 @@ namespace dftfe
       const unsigned int                           M,
       const unsigned int                           N,
       const unsigned int                           Noc,
-      const MPI_Comm &                             mpiCommParent,     
+      const MPI_Comm &                             mpiCommParent,
       const MPI_Comm &                             mpiCommDomain,
       GPUCCLWrapper &                              gpucclMpiCommDomain,
       const MPI_Comm &                             interBandGroupComm,

@@ -44,7 +44,9 @@ namespace dftfe
      * @param mpi_comm_domain domain mpi communicator
      * @param type enum specifying the choice of the dealii linear solver
      */
-    dealiiLinearSolver(const MPI_Comm &mpi_comm_parent,const MPI_Comm &mpi_comm_domain, const solverType type);
+    dealiiLinearSolver(const MPI_Comm & mpi_comm_parent,
+                       const MPI_Comm & mpi_comm_domain,
+                       const solverType type);
 
     /**
      * @brief Solve linear system, A*x=Rhs

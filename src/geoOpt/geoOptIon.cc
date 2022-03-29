@@ -379,8 +379,11 @@ namespace dftfe
               }
           }
 
-        MPI_Bcast(
-          &(globalAtomsDisplacements[i][0]), 3, MPI_DOUBLE, 0, mpi_communicator);
+        MPI_Bcast(&(globalAtomsDisplacements[i][0]),
+                  3,
+                  MPI_DOUBLE,
+                  0,
+                  mpi_communicator);
       }
 
     if (dftParameters::verbosity >= 1)

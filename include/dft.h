@@ -130,7 +130,7 @@ namespace dftfe
     /**
      * @brief dftClass constructor
      *
-     *  @param[in] mpi_comm_parent parent communicator 
+     *  @param[in] mpi_comm_parent parent communicator
      *  @param[in] mpi_comm_domain  mpi_communicator for domain decomposition
      * parallelization
      *  @param[in] interpoolcomm  mpi_communicator for parallelization over k

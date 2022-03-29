@@ -59,7 +59,7 @@ namespace dftfe
     void
     writeDataIntoFile(const std::vector<std::vector<double>> &data,
                       const std::string &                     fileName,
-                      const MPI_Comm & mpi_comm_parent);
+                      const MPI_Comm &                        mpi_comm_parent);
 
     /**
      * @brief Read from file containing only integer data in columns.

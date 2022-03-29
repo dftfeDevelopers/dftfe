@@ -1560,7 +1560,7 @@ namespace dftfe
                                     std::vector<T> &      Y,
                                     const unsigned int    numberWaveFunctions,
                                     const unsigned int    numberCoreStates,
-                                    const MPI_Comm &     mpiCommParent,
+                                    const MPI_Comm &      mpiCommParent,
                                     const MPI_Comm &      interBandGroupComm,
                                     const MPI_Comm &      mpi_communicator,
                                     const bool            useMixedPrec,
@@ -2663,8 +2663,7 @@ namespace dftfe
 
 
       dealii::ConditionalOStream pcout(
-        std::cout,
-        (dealii::Utilities::MPI::this_mpi_process(mpiComm) == 0));
+        std::cout, (dealii::Utilities::MPI::this_mpi_process(mpiComm) == 0));
 
       dealii::TimerOutput computing_timer(mpiComm,
                                           pcout,
@@ -3076,7 +3075,7 @@ namespace dftfe
                                        std::vector<dataTypes::number> &Y,
                                        const unsigned int   numberWaveFunctions,
                                        const unsigned int   numberCoreStates,
-                                       const MPI_Comm & mpiCommParent,
+                                       const MPI_Comm &     mpiCommParent,
                                        const MPI_Comm &     interBandGroupComm,
                                        const MPI_Comm &     mpiCommDomain,
                                        const bool           useMixedPrec,

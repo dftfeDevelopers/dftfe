@@ -33,7 +33,8 @@ namespace dftfe
     : d_mpiCommParent(mpi_comm_parent)
     , mpi_communicator(mpi_comm_domain)
     , n_mpi_processes(dealii::Utilities::MPI::n_mpi_processes(mpi_comm_domain))
-    , this_mpi_process(dealii::Utilities::MPI::this_mpi_process(mpi_comm_domain))
+    , this_mpi_process(
+        dealii::Utilities::MPI::this_mpi_process(mpi_comm_domain))
     , pcout(std::cout,
             (dealii::Utilities::MPI::this_mpi_process(mpi_comm_parent) == 0))
   {}

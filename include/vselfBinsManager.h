@@ -343,7 +343,7 @@ namespace dftfe
     /// and reused for subsequent calls
     double d_storedAdaptiveBallRadius;
 
-    const MPI_Comm    d_mpiCommParent;
+    const MPI_Comm             d_mpiCommParent;
     const MPI_Comm             mpi_communicator;
     const unsigned int         n_mpi_processes;
     const unsigned int         this_mpi_process;

@@ -94,7 +94,7 @@ namespace dftfe
     /**
      * parallel objects
      */
-    const MPI_Comm             d_mpiCommParent,mpi_communicator, interpoolcomm;
+    const MPI_Comm             d_mpiCommParent, mpi_communicator, interpoolcomm;
     const unsigned int         n_mpi_processes;
     const unsigned int         this_mpi_process;
     dealii::ConditionalOStream pcout;

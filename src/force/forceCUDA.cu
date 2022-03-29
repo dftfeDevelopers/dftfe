@@ -1095,8 +1095,8 @@ namespace dftfe
         const bool         isFloatingChargeForces,
         const bool         addEk)
       {
-        //int this_process;
-        //MPI_Comm_rank(d_mpiCommParent, &this_process);
+        // int this_process;
+        // MPI_Comm_rank(d_mpiCommParent, &this_process);
 
         const unsigned int M = operatorMatrix.getMatrixFreeData()
                                  ->get_vector_partitioner()
@@ -1241,7 +1241,7 @@ namespace dftfe
       dataTypes::number
         *projectorKetTimesPsiTimesVTimesPartOccContractionPsiQuadsFlattenedH,
 #endif
-      const MPI_Comm &mpiCommParent,  
+      const MPI_Comm &mpiCommParent,
       const MPI_Comm &interBandGroupComm,
       const bool      isPsp,
       const bool      isFloatingChargeForces,

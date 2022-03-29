@@ -406,7 +406,9 @@ namespace dftfe
       }
 
     // set up poisson solver
-    dealiiLinearSolver dealiiCGSolver(d_mpiCommParent,mpi_communicator, dealiiLinearSolver::CG);
+    dealiiLinearSolver dealiiCGSolver(d_mpiCommParent,
+                                      mpi_communicator,
+                                      dealiiLinearSolver::CG);
     poissonSolverProblem<FEOrder, FEOrderElectro> vselfSolverProblem(
       mpi_communicator);
 
@@ -1396,7 +1398,7 @@ namespace dftfe
                                   localSize,
                                   ghostSize,
                                   numberPoissonSolves,
-				  d_mpiCommParent,
+                                  d_mpiCommParent,
                                   mpi_communicator,
                                   &vselfBinsFieldsFlattened[0],
                                   FEOrderElectro != FEOrder ? true : false);

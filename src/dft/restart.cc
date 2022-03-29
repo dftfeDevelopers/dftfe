@@ -550,7 +550,7 @@ dftClass<FEOrder, FEOrderElectro>::writeDomainAndAtomCoordinates()
                                     "atomsCartCoordAutomesh.chk",
                                     d_mpiCommParent);
 
-      dftUtils::writeDataIntoFile(atomLocations, 
+      dftUtils::writeDataIntoFile(atomLocations,
                                   "atomsCartCoordCurrent.chk",
                                   d_mpiCommParent);
     }

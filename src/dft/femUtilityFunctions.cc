@@ -418,7 +418,6 @@ void dftClass<FEOrder, FEOrderElectro>::
 
 
 
-
 //
 // compute field l2 norm
 //

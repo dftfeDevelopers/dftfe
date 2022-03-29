@@ -236,7 +236,8 @@ namespace dftfe
           {
             dealii::ConditionalOStream pcout(
               std::cout,
-              (dealii::Utilities::MPI::this_mpi_process(mpi_communicator) == 0));
+              (dealii::Utilities::MPI::this_mpi_process(mpi_communicator) ==
+               0));
             pcout << "Scalapack Matrix created, row procs: " << rowProcs
                   << std::endl;
           }
@@ -271,7 +272,8 @@ namespace dftfe
           {
             dealii::ConditionalOStream pcout(
               std::cout,
-              (dealii::Utilities::MPI::this_mpi_process(mpi_communicator) == 0));
+              (dealii::Utilities::MPI::this_mpi_process(mpi_communicator) ==
+               0));
             pcout << "Scalapack Matrix created, row procs x column procs: "
                   << rowProcs << " x " << columnProcs << std::endl;
           }

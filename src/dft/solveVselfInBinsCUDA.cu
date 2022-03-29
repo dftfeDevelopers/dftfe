@@ -510,7 +510,7 @@ namespace dftfe
                dftParameters::verbosity,
                dftParameters::maxLinearSolverIterations,
                dftParameters::absLinearSolverTolerance,
-	       mpiCommParent,
+               mpiCommParent,
                mpiCommDomain,
                xD);
 
@@ -537,7 +537,7 @@ namespace dftfe
              const unsigned int         debugLevel,
              const unsigned int         maxIter,
              const double               absTol,
-	     const MPI_Comm &           mpiCommParent,
+             const MPI_Comm &           mpiCommParent,
              const MPI_Comm &           mpiCommDomain,
              distributedGPUVec<double> &x)
     {
@@ -695,8 +695,12 @@ namespace dftfe
                  cudaMemcpyDeviceToHost);
 
 
-      MPI_Allreduce(
-        MPI_IN_PLACE, &delta_newH[0], numberBins, MPI_DOUBLE, MPI_SUM, mpiCommDomain);
+      MPI_Allreduce(MPI_IN_PLACE,
+                    &delta_newH[0],
+                    numberBins,
+                    MPI_DOUBLE,
+                    MPI_SUM,
+                    mpiCommDomain);
 
       cudaMemcpy(thrust::raw_pointer_cast(&delta_newD[0]),
                  &delta_newH[0],

@@ -50,7 +50,7 @@ namespace dftfe
 
   public:
     kohnShamDFTOperatorClass(dftClass<FEOrder, FEOrderElectro> *_dftPtr,
-                             const MPI_Comm &mpi_comm_parent,
+                             const MPI_Comm &                   mpi_comm_parent,
                              const MPI_Comm &mpi_comm_domain);
 
     /**

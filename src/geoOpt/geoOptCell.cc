@@ -399,8 +399,11 @@ namespace dftfe
       }
 
     // for synchronization
-    MPI_Bcast(
-      &(bcastSolution[0]), bcastSolution.size(), MPI_DOUBLE, 0, mpi_communicator);
+    MPI_Bcast(&(bcastSolution[0]),
+              bcastSolution.size(),
+              MPI_DOUBLE,
+              0,
+              mpi_communicator);
 
     Tensor<2, 3, double> strainEpsilonNew = d_strainEpsilon;
 

@@ -50,7 +50,7 @@ namespace dftfe
 
 
     int
-    convert(std::string &fileName,const MPI_Comm & mpi_comm_parent)
+    convert(std::string &fileName, const MPI_Comm &mpi_comm_parent)
     {
       dealii::ConditionalOStream pcout(
         std::cout,

@@ -27,8 +27,8 @@ loadSingleAtomPSIFiles(
   std::map<unsigned int,
            std::map<unsigned int,
                     std::map<unsigned int, alglib::spline1dinterpolant *>>>
-    &radValues,
-  const MPI_Comm &  mpiCommParent)
+    &             radValues,
+  const MPI_Comm &mpiCommParent)
 {
   if (radValues[Z][n].count(l) > 0)
     {
@@ -785,8 +785,13 @@ dftClass<FEOrder, FEOrderElectro>::compute_pdos(
               //
               // load PSI files
               //
-              loadSingleAtomPSIFiles(
-                Z, n, l, fileReadFlag, wfcInitTruncation, radValues,d_mpiCommParent);
+              loadSingleAtomPSIFiles(Z,
+                                     n,
+                                     l,
+                                     fileReadFlag,
+                                     wfcInitTruncation,
+                                     radValues,
+                                     d_mpiCommParent);
 
               if (fileReadFlag > 0)
                 {

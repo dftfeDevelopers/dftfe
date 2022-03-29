@@ -1132,7 +1132,7 @@ namespace dftfe
     }
 
     void
-    parse_parameters(ParameterHandler &prm, const MPI_Comm & mpi_comm_parent)
+    parse_parameters(ParameterHandler &prm, const MPI_Comm &mpi_comm_parent)
     {
       dftParameters::verbosity           = prm.get_integer("VERBOSITY");
       dftParameters::reproducible_output = prm.get_bool("REPRODUCIBLE OUTPUT");
@@ -1486,7 +1486,7 @@ namespace dftfe
         }
 
       //
-      check_print_parameters(prm,mpi_comm_parent);
+      check_print_parameters(prm, mpi_comm_parent);
       setAutoParameters(mpi_comm_parent);
       setXCFamilyType();
     }
@@ -1495,7 +1495,7 @@ namespace dftfe
 
     void
     check_print_parameters(const dealii::ParameterHandler &prm,
-                           const MPI_Comm & mpi_comm_parent)
+                           const MPI_Comm &                mpi_comm_parent)
     {
       if (dftParameters::verbosity >= 1 &&
           Utilities::MPI::this_mpi_process(mpi_comm_parent) == 0)
@@ -1685,7 +1685,7 @@ namespace dftfe
 
 
     void
-    setAutoParameters(const MPI_Comm & mpi_comm_parent)
+    setAutoParameters(const MPI_Comm &mpi_comm_parent)
     {
       //
       // Automated choice of mesh related parameters

@@ -61,7 +61,7 @@ namespace dftfe
              const unsigned int         debugLevel,
              const unsigned int         maxIter,
              const double               absTol,
-	     const MPI_Comm &           mpiCommParent,
+             const MPI_Comm &           mpiCommParent,
              const MPI_Comm &           mpiCommDomain,
              distributedGPUVec<double> &x);
   } // namespace poissonCUDA

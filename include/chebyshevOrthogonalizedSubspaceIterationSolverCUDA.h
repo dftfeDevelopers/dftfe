@@ -97,7 +97,7 @@ namespace dftfe
                          double upperBoundUnWantedSpectrum);
 
   private:
-    const MPI_Comm     d_mpiCommParent;
+    const MPI_Comm d_mpiCommParent;
     //
     // stores lower bound of wanted spectrum
     //

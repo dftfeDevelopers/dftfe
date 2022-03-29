@@ -591,7 +591,7 @@ forceClass<FEOrder, FEOrderElectro>::computeStressEEshelbyEPSPEnlEk(
                   [kPoint * nonTrivialNonLocalIdsAllCells.size() *
                    numQuadPointsNLP],
 #  endif
-		d_mpiCommParent,
+                d_mpiCommParent,
                 dftPtr->interBandGroupComm,
                 isPseudopotential,
                 false,

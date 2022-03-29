@@ -37,7 +37,7 @@ namespace dftfe
     /** @brief Constructor.
      *
      *  @param _dftPtr pointer to dftClass
-     *  @param mpi_comm_parent parent mpi_communicator 
+     *  @param mpi_comm_parent parent mpi_communicator
      */
     geoOptIon(dftClass<FEOrder, FEOrderElectro> *_dftPtr,
               const MPI_Comm &                   mpi_comm_parent);

@@ -133,7 +133,7 @@ namespace dftfe
     inline void markPeriodicFacesNonOrthogonal(
       Triangulation<3, 3> &             triangulation,
       std::vector<std::vector<double>> &latticeVectors,
-      const MPI_Comm &  mpiCommParent)
+      const MPI_Comm &                  mpiCommParent)
     {
       dealii::ConditionalOStream pcout(
         std::cout, (Utilities::MPI::this_mpi_process(mpiCommParent) == 0));

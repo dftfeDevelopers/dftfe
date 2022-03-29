@@ -130,10 +130,14 @@ namespace dftfe
     , numElectrons(0)
     , numLevels(0)
     , d_autoMesh(1)
-    , d_mesh(mpi_comm_parent,mpi_comm_domain, _interpoolcomm, _interBandGroupComm, FEOrder)
-    , d_affineTransformMesh(mpi_comm_parent,mpi_comm_domain)
-    , d_gaussianMovePar(mpi_comm_parent,mpi_comm_domain)
-    , d_vselfBinsManager(mpi_comm_parent,mpi_comm_domain)
+    , d_mesh(mpi_comm_parent,
+             mpi_comm_domain,
+             _interpoolcomm,
+             _interBandGroupComm,
+             FEOrder)
+    , d_affineTransformMesh(mpi_comm_parent, mpi_comm_domain)
+    , d_gaussianMovePar(mpi_comm_parent, mpi_comm_domain)
+    , d_vselfBinsManager(mpi_comm_parent, mpi_comm_domain)
     , pcout(std::cout, (Utilities::MPI::this_mpi_process(mpi_comm_parent) == 0))
     //, d_elpaScala(mpi_comm_replica)
     , d_kohnShamDFTOperatorsInitialized(false)
@@ -151,14 +155,20 @@ namespace dftfe
                                TimerOutput::never :
                                TimerOutput::every_call_and_summary,
                              TimerOutput::wall_times)
-    , d_subspaceIterationSolver(mpi_comm_parent,mpi_comm_domain, 0.0, 0.0, 0.0)
+    , d_subspaceIterationSolver(mpi_comm_parent, mpi_comm_domain, 0.0, 0.0, 0.0)
 #ifdef DFTFE_WITH_GPU
-    , d_subspaceIterationSolverCUDA(mpi_comm_parent,mpi_comm_domain, 0.0, 0.0, 0.0)
+    , d_subspaceIterationSolverCUDA(mpi_comm_parent,
+                                    mpi_comm_domain,
+                                    0.0,
+                                    0.0,
+                                    0.0)
 #endif
     , d_phiTotalSolverProblem(mpi_comm_domain)
   {
     d_elpaScala = _d_elpaScala;
-    forcePtr = new forceClass<FEOrder, FEOrderElectro>(this, mpi_comm_parent,mpi_comm_domain);
+    forcePtr    = new forceClass<FEOrder, FEOrderElectro>(this,
+                                                       mpi_comm_parent,
+                                                       mpi_comm_domain);
     symmetryPtr = new symmetryClass<FEOrder, FEOrderElectro>(this,
                                                              mpi_comm_parent,
                                                              mpi_comm_domain,
@@ -736,7 +746,8 @@ namespace dftfe
     int nlccFlag = 0;
     if (Utilities::MPI::this_mpi_process(d_mpiCommParent) == 0 &&
         dftParameters::isPseudopotential == true)
-      nlccFlag = pseudoUtils::convert(dftParameters::pseudoPotentialFile,d_mpiCommParent);
+      nlccFlag = pseudoUtils::convert(dftParameters::pseudoPotentialFile,
+                                      d_mpiCommParent);
 
     nlccFlag = Utilities::MPI::sum(nlccFlag, d_mpiCommParent);
 
@@ -1718,7 +1729,7 @@ namespace dftfe
 #ifdef DFTFE_WITH_GPU
     d_kohnShamDFTOperatorCUDAPtr =
       new kohnShamDFTOperatorCUDAClass<FEOrder, FEOrderElectro>(
-        this, d_mpiCommParent,mpi_communicator);
+        this, d_mpiCommParent, mpi_communicator);
 #endif
 
     kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>
@@ -1886,7 +1897,9 @@ namespace dftfe
       d_eigenVectorsFlattenedSTL;
 
     // set up linear solver
-    dealiiLinearSolver dealiiCGSolver(d_mpiCommParent,mpi_communicator, dealiiLinearSolver::CG);
+    dealiiLinearSolver dealiiCGSolver(d_mpiCommParent,
+                                      mpi_communicator,
+                                      dealiiLinearSolver::CG);
 
 
     computingTimerStandard.enter_subsection("Density perturbation computation");
@@ -2096,14 +2109,17 @@ namespace dftfe
                                 interBandGroupComm);
 
     // set up linear solver
-    dealiiLinearSolver dealiiCGSolver(d_mpiCommParent,mpi_communicator, dealiiLinearSolver::CG);
+    dealiiLinearSolver dealiiCGSolver(d_mpiCommParent,
+                                      mpi_communicator,
+                                      dealiiLinearSolver::CG);
 
     //
     // set up solver functions for Helmholtz to be used only when Kerker mixing
     // is on use higher polynomial order dofHandler
     //
     kerkerSolverProblem<C_rhoNodalPolyOrder<FEOrder, FEOrderElectro>()>
-      kerkerPreconditionedResidualSolverProblem(d_mpiCommParent,mpi_communicator);
+      kerkerPreconditionedResidualSolverProblem(d_mpiCommParent,
+                                                mpi_communicator);
     if (dftParameters::mixingMethod == "ANDERSON_WITH_KERKER")
       kerkerPreconditionedResidualSolverProblem.init(
         d_matrixFreeDataPRefined,

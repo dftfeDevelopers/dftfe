@@ -82,9 +82,10 @@ run_problem(const MPI_Comm &mpi_comm_parent,
             const MPI_Comm &interpoolcomm,
             const MPI_Comm &interBandGroupComm)
 {
-  dealii::ConditionalOStream pcout(
-    std::cout, (dealii::Utilities::MPI::this_mpi_process(mpi_comm_parent) == 0));
-  dftfe::elpaScalaManager *elpaScala;
+  dealii::ConditionalOStream pcout(std::cout,
+                                   (dealii::Utilities::MPI::this_mpi_process(
+                                      mpi_comm_parent) == 0));
+  dftfe::elpaScalaManager *  elpaScala;
   elpaScala = new dftfe::elpaScalaManager(mpi_comm_domain);
   int error;
   if (elpa_init(ELPA_API_VERSION) != ELPA_OK)
@@ -206,7 +207,7 @@ main(int argc, char *argv[])
   dftfe::dftParameters::declare_parameters(prm);
   const std::string parameter_file = argv[1];
   prm.parse_input(parameter_file);
-  dftfe::dftParameters::parse_parameters(prm,MPI_COMM_WORLD);
+  dftfe::dftParameters::parse_parameters(prm, MPI_COMM_WORLD);
 
   deallog.depth_console(0);
 

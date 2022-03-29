@@ -231,7 +231,7 @@ namespace dftfe
       data.push_back(
         std::vector<double>(1, d_functionalValueAfterAlphUpdateChk));
 
-    dftUtils::writeDataIntoFile(data, checkpointFileName,mpi_communicator);
+    dftUtils::writeDataIntoFile(data, checkpointFileName, mpi_communicator);
   }
 
   //

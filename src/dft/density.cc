@@ -176,7 +176,7 @@ dftClass<FEOrder, FEOrderElectro>::compute_rhoOut(
           rhoOutValuesSpinPolarized,
           gradRhoOutValuesSpinPolarized,
           dftParameters::xcFamilyType == "GGA",
-	  d_mpiCommParent,
+          d_mpiCommParent,
           interpoolcomm,
           interBandGroupComm,
           isConsiderSpectrumSplitting &&
@@ -204,7 +204,7 @@ dftClass<FEOrder, FEOrderElectro>::compute_rhoOut(
           rhoOutValuesSpinPolarized,
           gradRhoOutValuesSpinPolarized,
           dftParameters::xcFamilyType == "GGA",
-	  d_mpiCommParent,
+          d_mpiCommParent,
           interpoolcomm,
           interBandGroupComm,
           isConsiderSpectrumSplitting && d_numEigenValues != d_numEigenValuesRR,

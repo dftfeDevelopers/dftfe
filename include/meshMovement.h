@@ -39,7 +39,7 @@ namespace dftfe
      *  @param[in] mpi_comm_domain mpi communicator for domain decomposition
      */
     meshMovementClass(const MPI_Comm &mpi_comm_parent,
-                     const MPI_Comm &mpi_comm_domain);
+                      const MPI_Comm &mpi_comm_domain);
 
     virtual ~meshMovementClass()
     {}

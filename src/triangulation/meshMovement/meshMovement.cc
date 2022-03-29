@@ -88,11 +88,10 @@ namespace dftfe
   //
   // constructor
   //
-  meshMovementClass::meshMovementClass(
-  const MPI_Comm &mpi_comm_parent,
-  const MPI_Comm &mpi_comm_domain)
+  meshMovementClass::meshMovementClass(const MPI_Comm &mpi_comm_parent,
+                                       const MPI_Comm &mpi_comm_domain)
     : FEMoveMesh(FE_Q<3>(QGaussLobatto<1>(2)), 3)
-    , d_mpiCommParent(mpi_comm_parent) 
+    , d_mpiCommParent(mpi_comm_parent)
     , mpi_communicator(mpi_comm_domain)
     , this_mpi_process(Utilities::MPI::this_mpi_process(mpi_comm_domain))
     , pcout(std::cout, (Utilities::MPI::this_mpi_process(mpi_comm_parent) == 0))

@@ -1684,20 +1684,24 @@ namespace dftfe
               }
           }
         MPI_Barrier(d_mpiCommParent);
-        dftUtils::writeDataIntoFile(data1, "KeEngMd",d_mpiCommParent);
+        dftUtils::writeDataIntoFile(data1, "KeEngMd", d_mpiCommParent);
 
 
-        dftUtils::writeDataIntoFile(data2, "IntEngMd",d_mpiCommParent);
+        dftUtils::writeDataIntoFile(data2, "IntEngMd", d_mpiCommParent);
 
 
-        dftUtils::writeDataIntoFile(data3, "EntEngMd",d_mpiCommParent);
+        dftUtils::writeDataIntoFile(data3, "EntEngMd", d_mpiCommParent);
 
-        dftUtils::writeDataIntoFile(data4, "TotEngMd",d_mpiCommParent);
+        dftUtils::writeDataIntoFile(data4, "TotEngMd", d_mpiCommParent);
 
         if (dftParameters::isXLBOMD)
           {
-            dftUtils::writeDataIntoFile(data5, "RMSErrorRhoMd",d_mpiCommParent);
-            dftUtils::writeDataIntoFile(data6, "RMSErrorGradRhoMd",d_mpiCommParent);
+            dftUtils::writeDataIntoFile(data5,
+                                        "RMSErrorRhoMd",
+                                        d_mpiCommParent);
+            dftUtils::writeDataIntoFile(data6,
+                                        "RMSErrorGradRhoMd",
+                                        d_mpiCommParent);
           }
 
         /// write velocity and acceleration data
@@ -1725,14 +1729,20 @@ namespace dftfe
             fileVelData[iCharge][1] = velocity[3 * iCharge + 1];
             fileVelData[iCharge][2] = velocity[3 * iCharge + 2];
           }
-        dftUtils::writeDataIntoFile(fileAccData, "acceleration.chk",d_mpiCommParent);
-        dftUtils::writeDataIntoFile(fileVelData, "velocity.chk",d_mpiCommParent);
+        dftUtils::writeDataIntoFile(fileAccData,
+                                    "acceleration.chk",
+                                    d_mpiCommParent);
+        dftUtils::writeDataIntoFile(fileVelData,
+                                    "velocity.chk",
+                                    d_mpiCommParent);
 
         fileTemperatureData[0][0] = temperatureFromVelocities;
-        dftUtils::writeDataIntoFile(fileTemperatureData, "temperature.chk",d_mpiCommParent);
+        dftUtils::writeDataIntoFile(fileTemperatureData,
+                                    "temperature.chk",
+                                    d_mpiCommParent);
 
         timeIndexData[0][0] = timeIndex;
-        dftUtils::writeDataIntoFile(timeIndexData, "time.chk",d_mpiCommParent);
+        dftUtils::writeDataIntoFile(timeIndexData, "time.chk", d_mpiCommParent);
 
         if (dftParameters::chkType >= 1)
           dftPtr->writeDomainAndAtomCoordinates();
