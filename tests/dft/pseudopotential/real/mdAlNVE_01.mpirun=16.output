@@ -68,7 +68,7 @@ RestartFlag: 0
 Initialising Velocities of species no: 0 mass in amu: 2.698153900000000149e+01Velocity Deviation6.686781056205393092e-02
 
 Starting SCF iterations....
-SCF iterations converged to the specified tolerance after: 40 iterations.
+SCF iterations converged to the specified tolerance after: 47 iterations.
 
 Energy computations (Hartree) 
 -------------------
@@ -76,45 +76,42 @@ Energy computations (Hartree)
 
 Absolute values of ion forces (Hartree/Bohr)
 --------------------------------------------------------------------------------------------
-AtomId    0:  0.000001,0.000011,0.000008
-AtomId    1:  0.000001,0.000013,0.000007
-AtomId    2:  0.000000,0.000010,0.000011
-AtomId    3:  0.000001,0.000009,0.000012
-AtomId    4:  0.000000,0.000008,0.000008
-AtomId    5:  0.000001,0.000009,0.000007
-AtomId    6:  0.000000,0.000009,0.000011
-AtomId    7:  0.000001,0.000009,0.000012
-AtomId    8:  0.000000,0.000009,0.000006
-AtomId    9:  0.000002,0.000009,0.000008
-AtomId   10:  0.000000,0.000010,0.000010
-AtomId   11:  0.000000,0.000009,0.000012
-AtomId   12:  0.000001,0.000013,0.000008
-AtomId   13:  0.000000,0.000015,0.000009
-AtomId   14:  0.000000,0.000010,0.000011
-AtomId   15:  0.000000,0.000010,0.000013
-AtomId   16:  0.000003,0.000011,0.000008
-AtomId   17:  0.000000,0.000010,0.000008
-AtomId   18:  0.000001,0.000010,0.000013
-AtomId   19:  0.000000,0.000008,0.000011
-AtomId   20:  0.000000,0.000006,0.000007
-AtomId   21:  0.000001,0.000009,0.000007
-AtomId   22:  0.000001,0.000009,0.000012
-AtomId   23:  0.000000,0.000008,0.000010
-AtomId   24:  0.000000,0.000008,0.000007
-AtomId   25:  0.000001,0.000009,0.000007
-AtomId   26:  0.000000,0.000010,0.000011
-AtomId   27:  0.000000,0.000009,0.000012
-AtomId   28:  0.000001,0.000011,0.000008
-AtomId   29:  0.000001,0.000013,0.000008
-AtomId   30:  0.000000,0.000011,0.000012
-AtomId   31:  0.000000,0.000009,0.000013
+AtomId    0:  0.000000,0.000000,0.000001
+AtomId    1:  0.000000,0.000003,0.000001
+AtomId    2:  0.000000,0.000001,0.000000
+AtomId    3:  0.000000,0.000000,0.000002
+AtomId    4:  0.000000,0.000000,0.000000
+AtomId    5:  0.000000,0.000001,0.000001
+AtomId    6:  0.000000,0.000001,0.000001
+AtomId    7:  0.000000,0.000000,0.000002
+AtomId    8:  0.000000,0.000000,0.000001
+AtomId    9:  0.000000,0.000002,0.000001
+AtomId   10:  0.000000,0.000001,0.000001
+AtomId   11:  0.000000,0.000000,0.000001
+AtomId   12:  0.000000,0.000000,0.000001
+AtomId   13:  0.000000,0.000001,0.000000
+AtomId   14:  0.000000,0.000000,0.000000
+AtomId   15:  0.000000,0.000001,0.000001
+AtomId   16:  0.000001,0.000001,0.000001
+AtomId   17:  0.000000,0.000002,0.000001
+AtomId   18:  0.000000,0.000001,0.000001
+AtomId   19:  0.000000,0.000000,0.000002
+AtomId   20:  0.000000,0.000000,0.000001
+AtomId   21:  0.000000,0.000001,0.000001
+AtomId   22:  0.000000,0.000002,0.000001
+AtomId   23:  0.000000,0.000000,0.000001
+AtomId   24:  0.000000,0.000000,0.000001
+AtomId   25:  0.000000,0.000002,0.000001
+AtomId   26:  0.000000,0.000002,0.000001
+AtomId   27:  0.000000,0.000000,0.000000
+AtomId   28:  0.000000,0.000000,0.000000
+AtomId   29:  0.000000,0.000001,0.000000
+AtomId   30:  0.000000,0.000001,0.000001
+AtomId   31:  0.000000,0.000000,0.000000
 --------------------------------------------------------------------------------------------
 ---------------MD 0th STEP------------------ 
- Temperature from velocities: 01400.000000
- Kinetic Energy in Ha at timeIndex  00.206159
- Internal Energy in Ha at timeIndex  0-73.514986
- Entropic Energy in Ha at timeIndex  00.037483
- Total Energy in Ha at timeIndex 0-73.346309
+ Temperature from velocities: 1400.00
+ Total Energy in Ha at timeIndex -73.34631
 ---------------MDNVE() called------------------ 
 
 Finite element mesh information
@@ -131,42 +128,9 @@ Reading initial guess for electron-density.....
 Pseudopotential initalization....
 
 Reading data for core electron-density to be used in nonlinear core-correction.....
----- Updated Unwrapped Coordinates: -----
-Charge No. 0 -0.000616 0.001122 0.001190
-Charge No. 1 0.250894 0.249819 -0.000087
-Charge No. 2 -0.000373 0.249990 0.250014
-Charge No. 3 0.250632 -0.000497 0.250357
-Charge No. 4 0.001409 -0.001095 0.499506
-Charge No. 5 0.249624 0.250280 0.501270
-Charge No. 6 -0.000605 0.250665 0.750419
-Charge No. 7 0.250690 0.001223 0.749832
-Charge No. 8 0.000311 0.500626 -0.000659
-Charge No. 9 0.249896 0.750213 -0.000345
-Charge No. 10 0.000907 0.749908 0.248919
-Charge No. 11 0.250537 0.498528 0.249657
-Charge No. 12 0.000534 0.500951 0.498817
-Charge No. 13 0.249875 0.751457 0.500524
-Charge No. 14 0.000631 0.750580 0.748792
-Charge No. 15 0.250182 0.499008 0.750807
-Charge No. 16 0.500593 -0.000043 -0.001447
-Charge No. 17 0.749970 0.250182 0.000958
-Charge No. 18 0.499199 0.249877 0.250687
-Charge No. 19 0.750851 0.000821 0.250049
-Charge No. 20 0.499975 0.001053 0.500766
-Charge No. 21 0.751040 0.248889 0.500695
-Charge No. 22 0.498628 0.248548 0.750679
-Charge No. 23 0.748592 -0.001111 0.750800
-Charge No. 24 0.500590 0.499744 0.001568
-Charge No. 25 0.750664 0.751003 0.000443
-Charge No. 26 0.499621 0.749705 0.250201
-Charge No. 27 0.749614 0.499927 0.249354
-Charge No. 28 0.498389 0.498987 0.498828
-Charge No. 29 0.749307 0.749579 0.499540
-Charge No. 30 0.498989 0.749759 0.748776
-Charge No. 31 0.749446 0.500300 0.749092
 
 Starting SCF iterations....
-SCF iterations converged to the specified tolerance after: 10 iterations.
+SCF iterations converged to the specified tolerance after: 12 iterations.
 
 Energy computations (Hartree) 
 -------------------
@@ -174,47 +138,42 @@ Energy computations (Hartree)
 
 Absolute values of ion forces (Hartree/Bohr)
 --------------------------------------------------------------------------------------------
-AtomId    0:  0.000705,0.000473,0.001082
-AtomId    1:  0.000430,0.000147,0.000101
-AtomId    2:  0.000518,0.000445,0.000124
-AtomId    3:  0.000259,0.000564,0.000072
-AtomId    4:  0.000756,0.000596,0.000215
-AtomId    5:  0.000051,0.000323,0.000790
-AtomId    6:  0.000404,0.000769,0.000020
-AtomId    7:  0.000688,0.000745,0.000354
-AtomId    8:  0.000292,0.000415,0.000607
-AtomId    9:  0.000137,0.000123,0.000191
-AtomId   10:  0.000352,0.000113,0.000582
-AtomId   11:  0.000671,0.000881,0.000233
-AtomId   12:  0.000189,0.000230,0.000312
-AtomId   13:  0.000072,0.001095,0.000414
-AtomId   14:  0.000025,0.000022,0.000686
-AtomId   15:  0.000069,0.000426,0.000525
-AtomId   16:  0.000108,0.000108,0.000965
-AtomId   17:  0.000240,0.000222,0.000643
-AtomId   18:  0.000550,0.000422,0.000147
-AtomId   19:  0.000812,0.000591,0.000084
-AtomId   20:  0.000005,0.000549,0.000358
-AtomId   21:  0.000779,0.000526,0.000456
-AtomId   22:  0.000893,0.001007,0.000063
-AtomId   23:  0.000848,0.000780,0.000453
-AtomId   24:  0.000242,0.000185,0.001249
-AtomId   25:  0.000452,0.000819,0.000218
-AtomId   26:  0.000531,0.000249,0.000020
-AtomId   27:  0.000469,0.000005,0.000431
-AtomId   28:  0.000786,0.000245,0.000556
-AtomId   29:  0.000157,0.000458,0.000185
-AtomId   30:  0.000502,0.000003,0.000662
-AtomId   31:  0.000268,0.000050,0.000746
+AtomId    0:  0.000711,0.000470,0.001078
+AtomId    1:  0.000426,0.000143,0.000102
+AtomId    2:  0.000525,0.000439,0.000124
+AtomId    3:  0.000257,0.000566,0.000073
+AtomId    4:  0.000748,0.000600,0.000211
+AtomId    5:  0.000048,0.000328,0.000791
+AtomId    6:  0.000412,0.000771,0.000020
+AtomId    7:  0.000683,0.000741,0.000354
+AtomId    8:  0.000284,0.000419,0.000607
+AtomId    9:  0.000133,0.000128,0.000188
+AtomId   10:  0.000344,0.000106,0.000582
+AtomId   11:  0.000665,0.000878,0.000232
+AtomId   12:  0.000195,0.000235,0.000313
+AtomId   13:  0.000075,0.001089,0.000416
+AtomId   14:  0.000018,0.000019,0.000685
+AtomId   15:  0.000067,0.000421,0.000524
+AtomId   16:  0.000115,0.000112,0.000965
+AtomId   17:  0.000243,0.000228,0.000641
+AtomId   18:  0.000543,0.000425,0.000147
+AtomId   19:  0.000813,0.000586,0.000083
+AtomId   20:  0.000003,0.000545,0.000358
+AtomId   21:  0.000782,0.000522,0.000458
+AtomId   22:  0.000885,0.001001,0.000062
+AtomId   23:  0.000843,0.000783,0.000452
+AtomId   24:  0.000251,0.000181,0.001246
+AtomId   25:  0.000456,0.000814,0.000217
+AtomId   26:  0.000523,0.000252,0.000020
+AtomId   27:  0.000463,0.000009,0.000432
+AtomId   28:  0.000780,0.000241,0.000552
+AtomId   29:  0.000154,0.000462,0.000185
+AtomId   30:  0.000496,0.000010,0.000662
+AtomId   31:  0.000270,0.000047,0.000745
 --------------------------------------------------------------------------------------------
----------------MD STEP: 1 ------------------ 
-Time taken for md step: 13.182373
- Temperature from velocities: 1 1398.161412
- Kinetic Energy in Ha at timeIndex 1 0.205889
- Internal Energy in Ha at timeIndex 1 -73.514500
- Entropic Energy in Ha at timeIndex 1 0.037429
- Total Energy in Ha at timeIndex 1 -73.346041
-*****Time Completed till NOW: 50.811196
+---------------MD 1th STEP------------------ 
+ Temperature from velocities: 1398.16
+ Total Energy in Ha at timeIndex -73.34604
 
 Finite element mesh information
 -------------------------------------------------
@@ -230,90 +189,52 @@ Reading initial guess for electron-density.....
 Pseudopotential initalization....
 
 Reading data for core electron-density to be used in nonlinear core-correction.....
----- Updated Unwrapped Coordinates: -----
-Charge No. 0 -0.001230 0.002243 0.002378
-Charge No. 1 0.251787 0.249639 -0.000175
-Charge No. 2 -0.000745 0.249982 0.250028
-Charge No. 3 0.251264 -0.000993 0.250713
-Charge No. 4 0.002817 -0.002189 0.499013
-Charge No. 5 0.249249 0.250560 0.502539
-Charge No. 6 -0.001209 0.251328 0.750838
-Charge No. 7 0.251378 0.002445 0.749664
-Charge No. 8 0.000622 0.501252 -0.001317
-Charge No. 9 0.249793 0.750427 -0.000690
-Charge No. 10 0.001813 0.749817 0.247839
-Charge No. 11 0.251073 0.497058 0.249314
-Charge No. 12 0.001069 0.501902 0.497635
-Charge No. 13 0.249749 0.752912 0.501048
-Charge No. 14 0.001262 0.751161 0.747585
-Charge No. 15 0.250363 0.498016 0.751614
-Charge No. 16 0.501186 -0.000087 -0.002892
-Charge No. 17 0.749940 0.250363 0.001914
-Charge No. 18 0.498400 0.249753 0.251374
-Charge No. 19 0.751701 0.001640 0.250098
-Charge No. 20 0.499950 0.002106 0.501530
-Charge No. 21 0.752078 0.247780 0.501389
-Charge No. 22 0.497259 0.247098 0.751359
-Charge No. 23 0.747186 -0.002219 0.751598
-Charge No. 24 0.501180 0.499489 0.003134
-Charge No. 25 0.751327 0.752004 0.000886
-Charge No. 26 0.499244 0.749410 0.250401
-Charge No. 27 0.749228 0.499853 0.248710
-Charge No. 28 0.496780 0.497974 0.497657
-Charge No. 29 0.748615 0.749158 0.499079
-Charge No. 30 0.497980 0.749518 0.747553
-Charge No. 31 0.748892 0.500600 0.748185
 
 Starting SCF iterations....
-SCF iterations converged to the specified tolerance after: 10 iterations.
+SCF iterations converged to the specified tolerance after: 12 iterations.
 
 Energy computations (Hartree) 
 -------------------
-             Total energy:         -73.51348154
+             Total energy:         -73.51348148
 
 Absolute values of ion forces (Hartree/Bohr)
 --------------------------------------------------------------------------------------------
-AtomId    0:  0.001421,0.000924,0.002149
-AtomId    1:  0.000846,0.000273,0.000220
-AtomId    2:  0.001051,0.000898,0.000270
-AtomId    3:  0.000533,0.001130,0.000137
-AtomId    4:  0.001487,0.001237,0.000361
-AtomId    5:  0.000106,0.000661,0.001580
-AtomId    6:  0.000843,0.001542,0.000073
-AtomId    7:  0.001401,0.001557,0.000691
-AtomId    8:  0.000580,0.000813,0.001226
-AtomId    9:  0.000257,0.000243,0.000384
-AtomId   10:  0.000683,0.000187,0.001132
-AtomId   11:  0.001351,0.001738,0.000412
-AtomId   12:  0.000385,0.000452,0.000600
-AtomId   13:  0.000185,0.002161,0.000829
-AtomId   14:  0.000053,0.000046,0.001360
-AtomId   15:  0.000087,0.000827,0.001021
-AtomId   16:  0.000263,0.000206,0.001950
-AtomId   17:  0.000505,0.000476,0.001277
-AtomId   18:  0.001123,0.000851,0.000294
-AtomId   19:  0.001630,0.001173,0.000190
-AtomId   20:  0.000010,0.001096,0.000712
-AtomId   21:  0.001550,0.001014,0.000919
-AtomId   22:  0.001804,0.002057,0.000138
-AtomId   23:  0.001659,0.001547,0.000926
-AtomId   24:  0.000531,0.000348,0.002496
-AtomId   25:  0.000877,0.001624,0.000371
-AtomId   26:  0.001040,0.000456,0.000044
-AtomId   27:  0.000929,0.000004,0.000880
-AtomId   28:  0.001564,0.000535,0.001124
-AtomId   29:  0.000293,0.000925,0.000358
-AtomId   30:  0.000985,0.000041,0.001302
-AtomId   31:  0.000536,0.000089,0.001478
+AtomId    0:  0.001428,0.000920,0.002145
+AtomId    1:  0.000843,0.000269,0.000222
+AtomId    2:  0.001057,0.000889,0.000271
+AtomId    3:  0.000531,0.001133,0.000136
+AtomId    4:  0.001480,0.001243,0.000357
+AtomId    5:  0.000103,0.000667,0.001582
+AtomId    6:  0.000849,0.001544,0.000072
+AtomId    7:  0.001396,0.001553,0.000692
+AtomId    8:  0.000571,0.000817,0.001225
+AtomId    9:  0.000253,0.000248,0.000380
+AtomId   10:  0.000674,0.000178,0.001132
+AtomId   11:  0.001343,0.001735,0.000410
+AtomId   12:  0.000390,0.000457,0.000602
+AtomId   13:  0.000189,0.002155,0.000832
+AtomId   14:  0.000047,0.000044,0.001359
+AtomId   15:  0.000086,0.000822,0.001019
+AtomId   16:  0.000270,0.000209,0.001952
+AtomId   17:  0.000508,0.000483,0.001275
+AtomId   18:  0.001116,0.000854,0.000294
+AtomId   19:  0.001632,0.001167,0.000189
+AtomId   20:  0.000017,0.001092,0.000713
+AtomId   21:  0.001552,0.001011,0.000920
+AtomId   22:  0.001797,0.002051,0.000138
+AtomId   23:  0.001654,0.001551,0.000926
+AtomId   24:  0.000541,0.000345,0.002492
+AtomId   25:  0.000882,0.001618,0.000371
+AtomId   26:  0.001031,0.000460,0.000043
+AtomId   27:  0.000922,0.000009,0.000882
+AtomId   28:  0.001559,0.000532,0.001120
+AtomId   29:  0.000288,0.000929,0.000358
+AtomId   30:  0.000980,0.000047,0.001303
+AtomId   31:  0.000537,0.000085,0.001475
 --------------------------------------------------------------------------------------------
----------------MD STEP: 2 ------------------ 
-Time taken for md step: 12.788516
- Temperature from velocities: 2 1392.651536
- Kinetic Energy in Ha at timeIndex 2 0.205077
- Internal Energy in Ha at timeIndex 2 -73.513482
- Entropic Energy in Ha at timeIndex 2 0.037267
- Total Energy in Ha at timeIndex 2 -73.345672
-*****Time Completed till NOW: 63.599728
+---------------MD 2th STEP------------------ 
+ Temperature from velocities: 1392.66
+ Total Energy in Ha at timeIndex -73.34567
 
 Finite element mesh information
 -------------------------------------------------
@@ -329,385 +250,50 @@ Reading initial guess for electron-density.....
 Pseudopotential initalization....
 
 Reading data for core electron-density to be used in nonlinear core-correction.....
----- Updated Unwrapped Coordinates: -----
-Charge No. 0 -0.001841 0.003362 0.003560
-Charge No. 1 0.252677 0.249460 -0.000261
-Charge No. 2 -0.001114 0.249975 0.250043
-Charge No. 3 0.251895 -0.001486 0.251070
-Charge No. 4 0.004221 -0.003280 0.498520
-Charge No. 5 0.248873 0.250838 0.503803
-Charge No. 6 -0.001812 0.251987 0.751257
-Charge No. 7 0.252063 0.003663 0.749498
-Charge No. 8 0.000931 0.501875 -0.001972
-Charge No. 9 0.249688 0.750641 -0.001036
-Charge No. 10 0.002718 0.749724 0.246762
-Charge No. 11 0.251605 0.495593 0.248972
-Charge No. 12 0.001604 0.502852 0.496453
-Charge No. 13 0.249625 0.754362 0.501569
-Charge No. 14 0.001893 0.751741 0.746382
-Charge No. 15 0.250545 0.497027 0.752418
-Charge No. 16 0.501778 -0.000129 -0.004333
-Charge No. 17 0.749909 0.250543 0.002868
-Charge No. 18 0.497603 0.249627 0.252060
-Charge No. 19 0.752546 0.002456 0.250147
-Charge No. 20 0.499925 0.003155 0.502293
-Charge No. 21 0.753113 0.246673 0.502080
-Charge No. 22 0.495893 0.245653 0.752038
-Charge No. 23 0.745784 -0.003324 0.752395
-Charge No. 24 0.501768 0.499234 0.004693
-Charge No. 25 0.751988 0.753001 0.001328
-Charge No. 26 0.498869 0.749116 0.250602
-Charge No. 27 0.748845 0.499780 0.248067
-Charge No. 28 0.495175 0.496963 0.496488
-Charge No. 29 0.747923 0.748740 0.498617
-Charge No. 30 0.496972 0.749277 0.746334
-Charge No. 31 0.748337 0.500901 0.747282
 
 Starting SCF iterations....
-SCF iterations converged to the specified tolerance after: 10 iterations.
+SCF iterations converged to the specified tolerance after: 12 iterations.
 
 Energy computations (Hartree) 
 -------------------
-             Total energy:         -73.51233461
+             Total energy:         -73.51233450
 
 Absolute values of ion forces (Hartree/Bohr)
 --------------------------------------------------------------------------------------------
-AtomId    0:  0.002145,0.001362,0.003210
-AtomId    1:  0.001257,0.000379,0.000361
-AtomId    2:  0.001592,0.001358,0.000440
-AtomId    3:  0.000820,0.001697,0.000186
-AtomId    4:  0.002216,0.001930,0.000451
-AtomId    5:  0.000172,0.001012,0.002370
-AtomId    6:  0.001298,0.002315,0.000150
-AtomId    7:  0.002161,0.002449,0.001015
-AtomId    8:  0.000872,0.001189,0.001845
-AtomId    9:  0.000363,0.000357,0.000577
-AtomId   10:  0.000999,0.000222,0.001650
-AtomId   11:  0.002045,0.002580,0.000540
-AtomId   12:  0.000575,0.000666,0.000874
-AtomId   13:  0.000342,0.003211,0.001249
-AtomId   14:  0.000098,0.000076,0.002027
-AtomId   15:  0.000058,0.001211,0.001489
-AtomId   16:  0.000470,0.000284,0.002975
-AtomId   17:  0.000788,0.000752,0.001906
-AtomId   18:  0.001723,0.001292,0.000442
-AtomId   19:  0.002457,0.001748,0.000322
-AtomId   20:  0.000032,0.001644,0.001071
-AtomId   21:  0.002306,0.001471,0.001379
-AtomId   22:  0.002758,0.003173,0.000233
-AtomId   23:  0.002459,0.002301,0.001439
-AtomId   24:  0.000861,0.000497,0.003747
-AtomId   25:  0.001275,0.002419,0.000472
-AtomId   26:  0.001531,0.000627,0.000072
-AtomId   27:  0.001385,0.000004,0.001352
-AtomId   28:  0.002354,0.000878,0.001717
-AtomId   29:  0.000413,0.001396,0.000515
-AtomId   30:  0.001462,0.000096,0.001927
-AtomId   31:  0.000798,0.000116,0.002191
+AtomId    0:  0.002153,0.001358,0.003203
+AtomId    1:  0.001252,0.000375,0.000362
+AtomId    2:  0.001599,0.001349,0.000441
+AtomId    3:  0.000817,0.001698,0.000185
+AtomId    4:  0.002208,0.001936,0.000445
+AtomId    5:  0.000168,0.001018,0.002372
+AtomId    6:  0.001306,0.002315,0.000149
+AtomId    7:  0.002152,0.002444,0.001017
+AtomId    8:  0.000862,0.001193,0.001843
+AtomId    9:  0.000357,0.000362,0.000572
+AtomId   10:  0.000986,0.000212,0.001649
+AtomId   11:  0.002034,0.002577,0.000537
+AtomId   12:  0.000580,0.000672,0.000878
+AtomId   13:  0.000348,0.003205,0.001254
+AtomId   14:  0.000091,0.000076,0.002027
+AtomId   15:  0.000057,0.001205,0.001486
+AtomId   16:  0.000479,0.000286,0.002975
+AtomId   17:  0.000792,0.000760,0.001904
+AtomId   18:  0.001714,0.001294,0.000442
+AtomId   19:  0.002459,0.001742,0.000321
+AtomId   20:  0.000040,0.001641,0.001071
+AtomId   21:  0.002308,0.001468,0.001381
+AtomId   22:  0.002749,0.003165,0.000233
+AtomId   23:  0.002450,0.002306,0.001438
+AtomId   24:  0.000873,0.000495,0.003742
+AtomId   25:  0.001282,0.002412,0.000471
+AtomId   26:  0.001519,0.000630,0.000070
+AtomId   27:  0.001375,0.000001,0.001355
+AtomId   28:  0.002348,0.000874,0.001711
+AtomId   29:  0.000407,0.001399,0.000514
+AtomId   30:  0.001456,0.000104,0.001929
+AtomId   31:  0.000799,0.000113,0.002188
 --------------------------------------------------------------------------------------------
----------------MD STEP: 3 ------------------ 
-Time taken for md step: 12.780289
- Temperature from velocities: 3 1383.498532
- Kinetic Energy in Ha at timeIndex 3 0.203729
- Internal Energy in Ha at timeIndex 3 -73.512335
- Entropic Energy in Ha at timeIndex 3 0.037000
- Total Energy in Ha at timeIndex 3 -73.345605
-*****Time Completed till NOW: 76.380035
-
-Finite element mesh information
--------------------------------------------------
-FE interpolating polynomial order for Kohn-Sham eigenvalue problem: 3
-FE interpolating polynomial order for electrostatics solve: 3
-FE interpolating polynomial order for nodal electron density computation: 5
-number of elements: 1728
-number of degrees of freedom for the Kohn-Sham eigenvalue problem : 50653
--------------------------------------------------
-
-Reading initial guess for electron-density.....
-
-Pseudopotential initalization....
-
-Reading data for core electron-density to be used in nonlinear core-correction.....
----- Updated Unwrapped Coordinates: -----
-Charge No. 0 -0.002447 0.004478 0.004736
-Charge No. 1 0.253565 0.249281 -0.000347
-Charge No. 2 -0.001480 0.249972 0.250059
-Charge No. 3 0.252524 -0.001975 0.251428
-Charge No. 4 0.005621 -0.004367 0.498029
-Charge No. 5 0.248497 0.251114 0.505063
-Charge No. 6 -0.002411 0.252641 0.751677
-Charge No. 7 0.252742 0.004875 0.749335
-Charge No. 8 0.001238 0.502496 -0.002623
-Charge No. 9 0.249583 0.750856 -0.001383
-Charge No. 10 0.003620 0.749632 0.245688
-Charge No. 11 0.252133 0.494133 0.248631
-Charge No. 12 0.002141 0.503801 0.495274
-Charge No. 13 0.249501 0.755804 0.502088
-Charge No. 14 0.002524 0.752321 0.745183
-Charge No. 15 0.250726 0.496040 0.753218
-Charge No. 16 0.502369 -0.000171 -0.005766
-Charge No. 17 0.749876 0.250722 0.003817
-Charge No. 18 0.496810 0.249498 0.252745
-Charge No. 19 0.753386 0.003269 0.250197
-Charge No. 20 0.499899 0.004201 0.503054
-Charge No. 21 0.754142 0.245569 0.502769
-Charge No. 22 0.494534 0.244215 0.752716
-Charge No. 23 0.744388 -0.004424 0.753188
-Charge No. 24 0.502355 0.498980 0.006244
-Charge No. 25 0.752647 0.753993 0.001768
-Charge No. 26 0.498498 0.748824 0.250803
-Charge No. 27 0.748465 0.499707 0.247427
-Charge No. 28 0.493575 0.495954 0.495324
-Charge No. 29 0.747232 0.748325 0.498155
-Charge No. 30 0.495968 0.749036 0.745119
-Charge No. 31 0.747779 0.501201 0.746383
-
-Starting SCF iterations....
-SCF iterations converged to the specified tolerance after: 10 iterations.
-
-Energy computations (Hartree) 
--------------------
-             Total energy:         -73.51088533
-
-Absolute values of ion forces (Hartree/Bohr)
---------------------------------------------------------------------------------------------
-AtomId    0:  0.002882,0.001786,0.004260
-AtomId    1:  0.001665,0.000463,0.000529
-AtomId    2:  0.002145,0.001823,0.000635
-AtomId    3:  0.001116,0.002264,0.000215
-AtomId    4:  0.002949,0.002678,0.000486
-AtomId    5:  0.000248,0.001374,0.003165
-AtomId    6:  0.001768,0.003082,0.000254
-AtomId    7:  0.002974,0.003420,0.001330
-AtomId    8:  0.001167,0.001544,0.002459
-AtomId    9:  0.000451,0.000464,0.000769
-AtomId   10:  0.001299,0.000214,0.002133
-AtomId   11:  0.002748,0.003407,0.000616
-AtomId   12:  0.000752,0.000877,0.001139
-AtomId   13:  0.000549,0.004250,0.001681
-AtomId   14:  0.000167,0.000119,0.002692
-AtomId   15:  0.000012,0.001583,0.001929
-AtomId   16:  0.000736,0.000339,0.004047
-AtomId   17:  0.001086,0.001045,0.002532
-AtomId   18:  0.002348,0.001747,0.000589
-AtomId   19:  0.003293,0.002317,0.000483
-AtomId   20:  0.000059,0.002194,0.001445
-AtomId   21:  0.003047,0.001901,0.001835
-AtomId   22:  0.003757,0.004360,0.000349
-AtomId   23:  0.003254,0.003036,0.001996
-AtomId   24:  0.001231,0.000634,0.005001
-AtomId   25:  0.001644,0.003205,0.000525
-AtomId   26:  0.001998,0.000766,0.000100
-AtomId   27:  0.001837,0.000018,0.001853
-AtomId   28:  0.003148,0.001266,0.002326
-AtomId   29:  0.000520,0.001869,0.000653
-AtomId   30:  0.001935,0.000166,0.002539
-AtomId   31:  0.001048,0.000132,0.002887
---------------------------------------------------------------------------------------------
----------------MD STEP: 4 ------------------ 
-Time taken for md step: 12.731064
- Temperature from velocities: 4 1370.717322
- Kinetic Energy in Ha at timeIndex 4 0.201847
- Internal Energy in Ha at timeIndex 4 -73.510885
- Entropic Energy in Ha at timeIndex 4 0.036629
- Total Energy in Ha at timeIndex 4 -73.345667
-*****Time Completed till NOW: 89.111116
-
-Finite element mesh information
--------------------------------------------------
-FE interpolating polynomial order for Kohn-Sham eigenvalue problem: 3
-FE interpolating polynomial order for electrostatics solve: 3
-FE interpolating polynomial order for nodal electron density computation: 5
-number of elements: 1728
-number of degrees of freedom for the Kohn-Sham eigenvalue problem : 50653
--------------------------------------------------
-
-Reading initial guess for electron-density.....
-
-Pseudopotential initalization....
-
-Reading data for core electron-density to be used in nonlinear core-correction.....
----- Updated Unwrapped Coordinates: -----
-Charge No. 0 -0.003046 0.005590 0.005902
-Charge No. 1 0.254450 0.249103 -0.000432
-Charge No. 2 -0.001841 0.249973 0.250077
-Charge No. 3 0.253150 -0.002459 0.251786
-Charge No. 4 0.007013 -0.005448 0.497539
-Charge No. 5 0.248120 0.251387 0.506315
-Charge No. 6 -0.003006 0.253288 0.752097
-Charge No. 7 0.253416 0.006080 0.749174
-Charge No. 8 0.001543 0.503113 -0.003269
-Charge No. 9 0.249476 0.751072 -0.001732
-Charge No. 10 0.004520 0.749539 0.244620
-Charge No. 11 0.252655 0.492681 0.248291
-Charge No. 12 0.002680 0.504747 0.494098
-Charge No. 13 0.249378 0.757237 0.502603
-Charge No. 14 0.003154 0.752901 0.743990
-Charge No. 15 0.250908 0.495057 0.754014
-Charge No. 16 0.502958 -0.000213 -0.007191
-Charge No. 17 0.749840 0.250898 0.004761
-Charge No. 18 0.496023 0.249365 0.253429
-Charge No. 19 0.754219 0.004076 0.250249
-Charge No. 20 0.499874 0.005242 0.503812
-Charge No. 21 0.755164 0.244470 0.503453
-Charge No. 22 0.493183 0.242786 0.753394
-Charge No. 23 0.742999 -0.005518 0.753977
-Charge No. 24 0.502938 0.498728 0.007784
-Charge No. 25 0.753301 0.754977 0.002208
-Charge No. 26 0.498131 0.748533 0.251004
-Charge No. 27 0.748089 0.499634 0.246792
-Charge No. 28 0.491982 0.494948 0.494164
-Charge No. 29 0.746542 0.747914 0.497691
-Charge No. 30 0.494969 0.748796 0.743909
-Charge No. 31 0.747220 0.501502 0.745491
-
-Starting SCF iterations....
-SCF iterations converged to the specified tolerance after: 11 iterations.
-
-Energy computations (Hartree) 
--------------------
-             Total energy:         -73.50900549
-
-Absolute values of ion forces (Hartree/Bohr)
---------------------------------------------------------------------------------------------
-AtomId    0:  0.003647,0.002195,0.005293
-AtomId    1:  0.002057,0.000518,0.000732
-AtomId    2:  0.002724,0.002284,0.000852
-AtomId    3:  0.001404,0.002824,0.000213
-AtomId    4:  0.003682,0.003489,0.000467
-AtomId    5:  0.000326,0.001748,0.003965
-AtomId    6:  0.002253,0.003838,0.000378
-AtomId    7:  0.003833,0.004475,0.001647
-AtomId    8:  0.001447,0.001882,0.003060
-AtomId    9:  0.000499,0.000569,0.000948
-AtomId   10:  0.001560,0.000157,0.002578
-AtomId   11:  0.003442,0.004224,0.000634
-AtomId   12:  0.000923,0.001084,0.001400
-AtomId   13:  0.000822,0.005274,0.002134
-AtomId   14:  0.000253,0.000179,0.003355
-AtomId   15:  0.000130,0.001945,0.002334
-AtomId   16:  0.001084,0.000362,0.005180
-AtomId   17:  0.001413,0.001357,0.003158
-AtomId   18:  0.002982,0.002221,0.000742
-AtomId   19:  0.004155,0.002880,0.000670
-AtomId   20:  0.000104,0.002745,0.001840
-AtomId   21:  0.003776,0.002304,0.002280
-AtomId   22:  0.004803,0.005627,0.000485
-AtomId   23:  0.004040,0.003749,0.002606
-AtomId   24:  0.001661,0.000764,0.006244
-AtomId   25:  0.002008,0.003973,0.000537
-AtomId   26:  0.002417,0.000877,0.000120
-AtomId   27:  0.002263,0.000034,0.002386
-AtomId   28:  0.003945,0.001701,0.002949
-AtomId   29:  0.000599,0.002340,0.000770
-AtomId   30:  0.002389,0.000249,0.003142
-AtomId   31:  0.001296,0.000133,0.003557
---------------------------------------------------------------------------------------------
----------------MD STEP: 5 ------------------ 
-Time taken for md step: 13.083191
- Temperature from velocities: 5 1354.338996
- Kinetic Energy in Ha at timeIndex 5 0.199436
- Internal Energy in Ha at timeIndex 5 -73.509005
- Entropic Energy in Ha at timeIndex 5 0.036163
- Total Energy in Ha at timeIndex 5 -73.345733
-*****Time Completed till NOW: 102.194325
-
-Finite element mesh information
--------------------------------------------------
-FE interpolating polynomial order for Kohn-Sham eigenvalue problem: 3
-FE interpolating polynomial order for electrostatics solve: 3
-FE interpolating polynomial order for nodal electron density computation: 5
-number of elements: 1728
-number of degrees of freedom for the Kohn-Sham eigenvalue problem : 50653
--------------------------------------------------
-
-Reading initial guess for electron-density.....
-
-Pseudopotential initalization....
-
-Reading data for core electron-density to be used in nonlinear core-correction.....
----- Updated Unwrapped Coordinates: -----
-Charge No. 0 -0.003638 0.006697 0.007055
-Charge No. 1 0.255329 0.248927 -0.000515
-Charge No. 2 -0.002196 0.249978 0.250096
-Charge No. 3 0.253773 -0.002937 0.252144
-Charge No. 4 0.008397 -0.006521 0.497049
-Charge No. 5 0.247742 0.251655 0.507558
-Charge No. 6 -0.003596 0.253927 0.752518
-Charge No. 7 0.254080 0.007274 0.749017
-Charge No. 8 0.001844 0.503726 -0.003907
-Charge No. 9 0.249369 0.751290 -0.002084
-Charge No. 10 0.005416 0.749445 0.243557
-Charge No. 11 0.253169 0.491238 0.247953
-Charge No. 12 0.003220 0.505691 0.492925
-Charge No. 13 0.249257 0.758658 0.503113
-Charge No. 14 0.003784 0.753481 0.742805
-Charge No. 15 0.251089 0.494079 0.754805
-Charge No. 16 0.503545 -0.000253 -0.008604
-Charge No. 17 0.749801 0.251071 0.005697
-Charge No. 18 0.495242 0.249227 0.254111
-Charge No. 19 0.755042 0.004877 0.250301
-Charge No. 20 0.499849 0.006277 0.504565
-Charge No. 21 0.756178 0.243376 0.504133
-Charge No. 22 0.491843 0.241371 0.754070
-Charge No. 23 0.741619 -0.006602 0.754760
-Charge No. 24 0.503518 0.498478 0.009310
-Charge No. 25 0.753951 0.755952 0.002646
-Charge No. 26 0.497769 0.748244 0.251205
-Charge No. 27 0.747719 0.499560 0.246162
-Charge No. 28 0.490398 0.493945 0.493012
-Charge No. 29 0.745854 0.747509 0.497225
-Charge No. 30 0.493975 0.748556 0.742707
-Charge No. 31 0.746657 0.501804 0.744608
-
-Starting SCF iterations....
-SCF iterations converged to the specified tolerance after: 11 iterations.
-
-Energy computations (Hartree) 
--------------------
-             Total energy:         -73.50668603
-
-Absolute values of ion forces (Hartree/Bohr)
---------------------------------------------------------------------------------------------
-AtomId    0:  0.004416,0.002597,0.006322
-AtomId    1:  0.002460,0.000552,0.000971
-AtomId    2:  0.003307,0.002746,0.001093
-AtomId    3:  0.001703,0.003382,0.000185
-AtomId    4:  0.004450,0.004363,0.000409
-AtomId    5:  0.000426,0.002129,0.004766
-AtomId    6:  0.002730,0.004582,0.000519
-AtomId    7:  0.004775,0.005623,0.001954
-AtomId    8:  0.001740,0.002199,0.003646
-AtomId    9:  0.000540,0.000663,0.001122
-AtomId   10:  0.001812,0.000059,0.002985
-AtomId   11:  0.004154,0.005028,0.000608
-AtomId   12:  0.001068,0.001286,0.001657
-AtomId   13:  0.001142,0.006296,0.002600
-AtomId   14:  0.000378,0.000254,0.004017
-AtomId   15:  0.000279,0.002300,0.002713
-AtomId   16:  0.001494,0.000354,0.006382
-AtomId   17:  0.001743,0.001673,0.003785
-AtomId   18:  0.003644,0.002716,0.000895
-AtomId   19:  0.005018,0.003439,0.000890
-AtomId   20:  0.000144,0.003293,0.002257
-AtomId   21:  0.004474,0.002682,0.002710
-AtomId   22:  0.005927,0.006995,0.000650
-AtomId   23:  0.004860,0.004439,0.003283
-AtomId   24:  0.002121,0.000882,0.007490
-AtomId   25:  0.002332,0.004733,0.000514
-AtomId   26:  0.002816,0.000961,0.000140
-AtomId   27:  0.002697,0.000056,0.002950
-AtomId   28:  0.004764,0.002179,0.003596
-AtomId   29:  0.000679,0.002808,0.000864
-AtomId   30:  0.002846,0.000328,0.003732
-AtomId   31:  0.001525,0.000119,0.004203
---------------------------------------------------------------------------------------------
----------------MD STEP: 6 ------------------ 
-Time taken for md step: 13.033135
- Temperature from velocities: 6 1334.395614
- Kinetic Energy in Ha at timeIndex 6 0.196499
- Internal Energy in Ha at timeIndex 6 -73.506686
- Entropic Energy in Ha at timeIndex 6 0.035609
- Total Energy in Ha at timeIndex 6 -73.345796
-*****Time Completed till NOW: 115.227477
+---------------MD 3th STEP------------------ 
+ Temperature from velocities: 1383.52
+ Total Energy in Ha at timeIndex -73.34560
 MD run completed
