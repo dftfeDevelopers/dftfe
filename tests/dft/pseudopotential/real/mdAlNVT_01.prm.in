@@ -31,7 +31,7 @@ end
 
 subsection SCF parameters
   set TEMPERATURE                      = 1400
-  set TOLERANCE                        = 5e-5
+  set TOLERANCE                        = 1e-5
   set MIXING METHOD                     =ANDERSON_WITH_KERKER
   set STARTING WFC=ATOMIC
   subsection Eigen-solver parameters
@@ -46,13 +46,10 @@ subsection Molecular Dynamics
     set STARTING TEMPERATURE            = 1400
     set TEMPERATURE CONTROLLER TYPE            = CSVR 
     set TIME STEP                       = 1
-    set NUMBER OF STEPS                 = 7
+    set NUMBER OF STEPS                 = 4
     set THERMOSTAT TIME CONSTANT        = 10
 end 
 
-subsection GPU
-    set USE GPU                         = true
-end  
 
 subsection Checkpointing and Restart
   set RESTART MD FROM CHK               = false
