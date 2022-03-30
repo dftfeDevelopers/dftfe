@@ -25,7 +25,7 @@
 #ifdef DFTFE_WITH_GPU
 #  include <kohnShamDFTOperatorCUDA.h>
 #endif
-
+#include <dftd.h>
 
 using namespace dealii;
 
@@ -129,6 +129,7 @@ namespace dftfe
       kohnShamDFTOperatorCUDAClass<FEOrder, FEOrderElectro>
         &kohnShamDFTEigenOperator,
 #endif
+      const dispersionCorrection &            dispersionCorr,
       const unsigned int               eigenDofHandlerIndex,
       const unsigned int               smearedChargeQuadratureId,
       const unsigned int               lpspQuadratureIdElectro,
@@ -205,6 +206,7 @@ namespace dftfe
       kohnShamDFTOperatorCUDAClass<FEOrder, FEOrderElectro>
         &kohnShamDFTEigenOperator,
 #endif
+      const dispersionCorrection &     dispersionCorr,
       const unsigned int               eigenDofHandlerIndex,
       const unsigned int               smearedChargeQuadratureId,
       const unsigned int               lpspQuadratureIdElectro,
@@ -893,9 +895,6 @@ namespace dftfe
     Tensor<2, 3, double> d_stress;
 
 
-    /// Storage for dispersion corrections for force and stress
-    std::vector<double> d_forceDispersion;
-    Tensor<2, 3, double> d_stressDispersion;
     
     /* Part of the stress tensor which is summed over k points.
      * It is a temporary data structure required for stress evaluation

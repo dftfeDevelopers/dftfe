@@ -25,6 +25,7 @@
 #include <dftParameters.h>
 #include <dftUtils.h>
 #include <energyCalculator.h>
+#include <dftd.h>
 #include <fileReaders.h>
 #include <force.h>
 #include <geoOptCell.h>
@@ -71,8 +72,6 @@ extern "C"
 #include <elpa.hh>
 }
 
-#include <dftd3.h>
-#include <dftd4.h>
 
 namespace dftfe
 {
@@ -103,7 +102,6 @@ namespace dftfe
 #include "psiInitialGuess.cc"
 #include "publicMethods.cc"
 #include "restart.cc"
-#include "dftd.cc"
 
   //
   // dft constructor
@@ -2083,6 +2081,11 @@ namespace dftfe
                                 interpoolcomm,
                                 interBandGroupComm);
 
+    dispersionCorrection dispersionCorr(mpi_communicator,
+                                interpoolcomm,
+                                interBandGroupComm,
+                                atomLocations.size());
+
     // set up linear solver
     dealiiLinearSolver dealiiCGSolver(mpi_communicator, dealiiLinearSolver::CG);
 
@@ -3151,7 +3154,8 @@ namespace dftfe
 
             const Quadrature<3> &quadrature =
               matrix_free_data.get_quadrature(d_densityQuadratureId);
-            energyCalc.setDispersionEnergy(computeDispersionCorrection());
+//            energyCalc.setDispersionEnergy(computeDispersionCorrection());
+            dispersionCorr.computeDispresionCorrection(atomLocations, d_domainBoundingVectors);
             const double totalEnergy =
               dftParameters::spinPolarized == 0 ?
                 energyCalc.computeEnergy(
@@ -3168,6 +3172,7 @@ namespace dftfe
                   fermiEnergy,
                   funcX,
                   funcC,
+                  dispersionCorr,
                   d_phiInValues,
                   d_phiTotRhoOut,
                   *rhoInValues,
@@ -3206,6 +3211,7 @@ namespace dftfe
                   fermiEnergyDown,
                   funcX,
                   funcC,
+                  dispersionCorr,
                   d_phiInValues,
                   d_phiTotRhoOut,
                   *rhoInValues,
@@ -3391,7 +3397,8 @@ namespace dftfe
     if (!(dftParameters::isBOMD && dftParameters::isXLBOMD &&
           solveLinearizedKS))
       {
-        energyCalc.setDispersionEnergy(computeDispersionCorrection());
+//        energyCalc.setDispersionEnergy(computeDispersionCorrection());
+        dispersionCorr.computeDispresionCorrection(atomLocations, d_domainBoundingVectors);
         const double totalEnergy =
           dftParameters::spinPolarized == 0 ?
             energyCalc.computeEnergy(d_dofHandlerPRefined,
@@ -3407,6 +3414,7 @@ namespace dftfe
                                      fermiEnergy,
                                      funcX,
                                      funcC,
+                                     dispersionCorr,
                                      d_phiInValues,
                                      d_phiTotRhoOut,
                                      *rhoInValues,
@@ -3445,6 +3453,7 @@ namespace dftfe
               fermiEnergyDown,
               funcX,
               funcC,
+              dispersionCorr,
               d_phiInValues,
               d_phiTotRhoOut,
               *rhoInValues,
@@ -3584,6 +3593,7 @@ namespace dftfe
 #ifdef DFTFE_WITH_GPU
                                            kohnShamDFTEigenOperatorCUDA,
 #endif
+                                           dispersionCorr,
                                            d_eigenDofHandlerIndex,
                                            d_smearedChargeQuadratureIdElectro,
                                            d_lpspQuadratureIdElectro,
@@ -3615,6 +3625,7 @@ namespace dftfe
 #ifdef DFTFE_WITH_GPU
                                            kohnShamDFTEigenOperatorCUDA,
 #endif
+                                           dispersionCorr,
                                            d_eigenDofHandlerIndex,
                                            d_smearedChargeQuadratureIdElectro,
                                            d_lpspQuadratureIdElectro,
@@ -3674,6 +3685,7 @@ namespace dftfe
 #ifdef DFTFE_WITH_GPU
                                     kohnShamDFTEigenOperatorCUDA,
 #endif
+                                    dispersionCorr,
                                     d_eigenDofHandlerIndex,
                                     d_smearedChargeQuadratureIdElectro,
                                     d_lpspQuadratureIdElectro,

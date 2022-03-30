@@ -874,12 +874,6 @@ namespace dftfe
     void
     applyPeriodicBCHigherOrderNodes();
 
-    /**
-     *@brief Computes the dftd dispersion corrections for energy force and stress
-     */
-    double
-    computeDispersionCorrection();
-
 
     /// objects for various exchange-correlations (from libxc package)
     xc_func_type funcX, funcC;

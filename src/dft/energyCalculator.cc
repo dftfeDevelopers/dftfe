@@ -121,7 +121,7 @@ namespace dftfe
               pcout << bufferEnergy;
             }
 
-          if (dftParameters::dispersioncorrectiontype!=0)
+          if (dftParameters::dc_dispersioncorrectiontype!=0)
           {
             sprintf(bufferEnergy,
                   "%-52s:%25.16e\n",
@@ -365,7 +365,6 @@ namespace dftfe
     , interBandGroupComm(interbandgroup_comm)
     , pcout(std::cout,
             (dealii::Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0))
-    , d_energyDispersion(0.0)
   {}
 
   // compute energies
@@ -382,6 +381,7 @@ namespace dftfe
     const double                            fermiEnergy,
     const xc_func_type &                    funcX,
     const xc_func_type &                    funcC,
+    const dispersionCorrection &            dispersionCorr,
     const std::map<dealii::CellId, std::vector<double>> &phiTotRhoInValues,
     const distributedCPUVec<double> &                    phiTotRhoOut,
     const std::map<dealii::CellId, std::vector<double>> &rhoInValues,
@@ -864,8 +864,11 @@ namespace dftfe
     double totalNuclearElectrostaticEnergy =
       dealii::Utilities::MPI::sum(nuclearElectrostaticEnergy, mpi_communicator);
 
-    if(dftParameters::dispersioncorrectiontype!=0)
+
+    double d_energyDispersion=0;
+    if(dftParameters::dc_dispersioncorrectiontype!=0)
     {
+      d_energyDispersion=dispersionCorr.getEnergyCorrection();
       totalEnergy += d_energyDispersion;
     }
     //
@@ -1375,6 +1378,7 @@ namespace dftfe
     const double                            fermiEnergyDown,
     const xc_func_type &                    funcX,
     const xc_func_type &                    funcC,
+    const dispersionCorrection &            dispersionCorr,
     const std::map<dealii::CellId, std::vector<double>> &phiTotRhoInValues,
     const distributedCPUVec<double> &                    phiTotRhoOut,
     const std::map<dealii::CellId, std::vector<double>> &rhoInValues,
@@ -2049,8 +2053,10 @@ namespace dftfe
     double totalNuclearElectrostaticEnergy =
       dealii::Utilities::MPI::sum(nuclearElectrostaticEnergy, mpi_communicator);
 
-    if(dftParameters::dispersioncorrectiontype!=0)
+    double d_energyDispersion=0;
+    if(dftParameters::dc_dispersioncorrectiontype!=0)
     {
+      d_energyDispersion=dispersionCorr.getEnergyCorrection();
       totalEnergy += d_energyDispersion;
     }
 
@@ -2188,9 +2194,5 @@ namespace dftfe
     entropy = dealii::Utilities::MPI::sum(entropy, interpoolcomm);
 
     return temperature * entropy;
-  }
-  void energyCalculator::setDispersionEnergy(double dispEnergy)
-  {
-    d_energyDispersion=dispEnergy;
   }
 } // namespace dftfe

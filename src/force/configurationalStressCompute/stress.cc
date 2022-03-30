@@ -25,6 +25,7 @@ forceClass<FEOrder, FEOrderElectro>::computeStress(
   kohnShamDFTOperatorCUDAClass<FEOrder, FEOrderElectro>
     &kohnShamDFTEigenOperator,
 #endif
+  const dispersionCorrection &            dispersionCorr,
   const unsigned int               eigenDofHandlerIndex,
   const unsigned int               smearedChargeQuadratureId,
   const unsigned int               lpspQuadratureIdElectro,
@@ -122,13 +123,13 @@ forceClass<FEOrder, FEOrderElectro>::computeStress(
   d_stressKPoints = Utilities::MPI::sum(d_stressKPoints, dftPtr->interpoolcomm);
   d_stress += d_stressKPoints;
 
-  if(dftParameters::dispersioncorrectiontype!=0)
+  if(dftParameters::dc_dispersioncorrectiontype!=0)
   {
     for (unsigned int irow = 0; irow < 3; irow++)
     {
       for (unsigned int icol = 0; icol < 3; icol++)
       {
-        d_stress[irow][icol] += d_stressDispersion[irow][icol];
+        d_stress[irow][icol] += dispersionCorr.getStressCorrection(irow,icol);
       }
     }
   }
