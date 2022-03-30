@@ -301,28 +301,32 @@ namespace dftfe
               }
           }
 
-        if (dftParameters::verbosity >= 0 && !dftParameters::reproducible_output)
+        if (dftParameters::verbosity >= 0 &&
+            !dftParameters::reproducible_output)
           {
             pcout << "---------------MD " << d_startingTimeStep
                   << "th STEP------------------ " << std::endl;
-            pcout << " Temperature from velocities: " <<TemperatureFromVelocities << std::endl;
+            pcout << " Temperature from velocities: "
+                  << TemperatureFromVelocities << std::endl;
             pcout << " Kinetic Energy in Ha at timeIndex  "
                   << d_startingTimeStep << KineticEnergyVector[0] << std::endl;
             pcout << " Internal Energy in Ha at timeIndex  "
                   << d_startingTimeStep << InternalEnergyVector[0] << std::endl;
             pcout << " Entropic Energy in Ha at timeIndex  "
                   << d_startingTimeStep << EntropicEnergyVector[0] << std::endl;
-            pcout << " Total Energy in Ha at timeIndex " <<TotalEnergyVector[0] << std::endl;
+            pcout << " Total Energy in Ha at timeIndex " << TotalEnergyVector[0]
+                  << std::endl;
           }
-        else if(dftParameters::verbosity >= 0 && dftParameters::reproducible_output ) 
+        else if (dftParameters::verbosity >= 0 &&
+                 dftParameters::reproducible_output)
           {
             pcout << "---------------MD " << d_startingTimeStep
                   << "th STEP------------------ " << std::endl;
             pcout << " Temperature from velocities: " << std::setprecision(2)
                   << TemperatureFromVelocities << std::endl;
-            pcout << " Total Energy in Ha at timeIndex " <<std::setprecision(5)
-                  << TotalEnergyVector[0] << std::endl;            
-          } 
+            pcout << " Total Energy in Ha at timeIndex " << std::setprecision(5)
+                  << TotalEnergyVector[0] << std::endl;
+          }
 
         MPI_Barrier(d_mpi_communicator);
         MPI_Barrier(d_interBandGroupComm);
@@ -528,20 +532,12 @@ namespace dftfe
         vz /= COM;
         // pcout<<" The Center of Mass Velocity from NVE: "<<vx<<" "<<vy<<"
         // "<<vz<<std::endl;
-<<<<<<< HEAD
-        if (dftParameters::verbosity >= 0 && !dftParameters::reproducible_output)
-          {
-            pcout << "---------------MD STEP: " << d_TimeIndex
-                  << " ------------------ " << std::endl;     
-            pcout << "Time taken for md step: " << step_time << std::endl;
-=======
-        if (dftParameters::verbosity >= 1)
+        if (dftParameters::verbosity >= 0 &&
+            !dftParameters::reproducible_output)
           {
             pcout << "---------------MD STEP: " << d_TimeIndex
                   << " ------------------ " << std::endl;
-            if (!dftParameters::reproducible_output)
-              pcout << "Time taken for md step: " << step_time << std::endl;
->>>>>>> 19e807581d8cdd011d08ecd93433dec293b296ee
+            pcout << "Time taken for md step: " << step_time << std::endl;
             pcout << " Temperature from velocities: " << d_TimeIndex << " "
                   << TemperatureFromVelocities << std::endl;
             pcout << " Kinetic Energy in Ha at timeIndex " << d_TimeIndex << " "
@@ -559,15 +555,17 @@ namespace dftfe
                   << TotalEnergyVector[d_TimeIndex - d_startingTimeStep]
                   << std::endl;
           }
-        else if(dftParameters::verbosity >= 0 && dftParameters::reproducible_output ) 
+        else if (dftParameters::verbosity >= 0 &&
+                 dftParameters::reproducible_output)
           {
             pcout << "---------------MD " << d_TimeIndex
                   << "th STEP------------------ " << std::endl;
             pcout << " Temperature from velocities: " << std::setprecision(2)
                   << TemperatureFromVelocities << std::endl;
-            pcout << " Total Energy in Ha at timeIndex " <<std::setprecision(5)
-                  << TotalEnergyVector[d_TimeIndex - d_startingTimeStep] << std::endl;            
-          }           
+            pcout << " Total Energy in Ha at timeIndex " << std::setprecision(5)
+                  << TotalEnergyVector[d_TimeIndex - d_startingTimeStep]
+                  << std::endl;
+          }
         writeRestartFile(displacements,
                          velocity,
                          force,
@@ -681,17 +679,12 @@ namespace dftfe
         // pcout<<" The Center of Mass Velocity from Rescale Thermostat:
         // "<<vx<<" "<<vy<<" "<<vz<<std::endl;
 
-        if (dftParameters::verbosity >= 0 && !dftParameters::reproducible_output)
+        if (dftParameters::verbosity >= 0 &&
+            !dftParameters::reproducible_output)
           {
             pcout << "---------------MD STEP: " << d_TimeIndex
-<<<<<<< HEAD
-                  << " ------------------ " << std::endl;      
-            pcout << "Time taken for md step: " << step_time << std::endl;
-=======
                   << " ------------------ " << std::endl;
-            if (!dftParameters::reproducible_output)
-              pcout << "Time taken for md step: " << step_time << std::endl;
->>>>>>> 19e807581d8cdd011d08ecd93433dec293b296ee
+            pcout << "Time taken for md step: " << step_time << std::endl;
             pcout << " Temperature from velocities: " << d_TimeIndex << " "
                   << TemperatureFromVelocities << std::endl;
             pcout << " Kinetic Energy in Ha at timeIndex " << d_TimeIndex << " "
@@ -709,15 +702,17 @@ namespace dftfe
                   << TotalEnergyVector[d_TimeIndex - d_startingTimeStep]
                   << std::endl;
           }
-        else if(dftParameters::verbosity >= 0 && dftParameters::reproducible_output ) 
+        else if (dftParameters::verbosity >= 0 &&
+                 dftParameters::reproducible_output)
           {
             pcout << "---------------MD " << d_TimeIndex
                   << "th STEP------------------ " << std::endl;
             pcout << " Temperature from velocities: " << std::setprecision(2)
                   << TemperatureFromVelocities << std::endl;
-            pcout << " Total Energy in Ha at timeIndex " <<std::setprecision(5)
-                  << TotalEnergyVector[d_TimeIndex - d_startingTimeStep] << std::endl;            
-          }           
+            pcout << " Total Energy in Ha at timeIndex " << std::setprecision(5)
+                  << TotalEnergyVector[d_TimeIndex - d_startingTimeStep]
+                  << std::endl;
+          }
         writeRestartFile(displacements,
                          velocity,
                          force,
@@ -886,17 +881,12 @@ namespace dftfe
         step_time = MPI_Wtime() - step_time;
 
 
-        if (dftParameters::verbosity >= 0 && !dftParameters::reproducible_output )
+        if (dftParameters::verbosity >= 0 &&
+            !dftParameters::reproducible_output)
           {
             pcout << "---------------MD STEP: " << d_TimeIndex
-<<<<<<< HEAD
-                  << " ------------------ " << std::endl;       
-            pcout << "Time taken for md step: " << step_time << std::endl;
-=======
                   << " ------------------ " << std::endl;
-            if (!dftParameters::reproducible_output)
-              pcout << "Time taken for md step: " << step_time << std::endl;
->>>>>>> 19e807581d8cdd011d08ecd93433dec293b296ee
+            pcout << "Time taken for md step: " << step_time << std::endl;
             pcout << " Temperature from velocities: " << d_TimeIndex << " "
                   << TemperatureFromVelocities << std::endl;
             pcout << " Kinetic Energy in Ha at timeIndex " << d_TimeIndex << " "
@@ -919,15 +909,17 @@ namespace dftfe
                                                        d_startingTimeStep]
                   << std::endl;
           }
-        else if(dftParameters::verbosity >= 0 && dftParameters::reproducible_output ) 
+        else if (dftParameters::verbosity >= 0 &&
+                 dftParameters::reproducible_output)
           {
             pcout << "---------------MD " << d_TimeIndex
                   << "th STEP------------------ " << std::endl;
             pcout << " Temperature from velocities: " << std::setprecision(2)
                   << TemperatureFromVelocities << std::endl;
-            pcout << " Total Energy in Ha at timeIndex " <<std::setprecision(5)
-                  << TotalEnergyVector[d_TimeIndex - d_startingTimeStep] << std::endl;            
-          } 
+            pcout << " Total Energy in Ha at timeIndex " << std::setprecision(5)
+                  << TotalEnergyVector[d_TimeIndex - d_startingTimeStep]
+                  << std::endl;
+          }
         writeRestartFile(displacements,
                          velocity,
                          force,
@@ -1045,17 +1037,12 @@ namespace dftfe
         vz /= COM;
         // pcout<<" The Center of Mass Velocity from CSVR: "<<vx<<" "<<vy<<"
         // "<<vz<<std::endl;
-        if (dftParameters::verbosity >= 0 && !dftParameters::reproducible_output )
+        if (dftParameters::verbosity >= 0 &&
+            !dftParameters::reproducible_output)
           {
             pcout << "---------------MD STEP: " << d_TimeIndex
-<<<<<<< HEAD
-                  << " ------------------ " << std::endl;       
-            pcout << "Time taken for md step: " << step_time << std::endl;
-=======
                   << " ------------------ " << std::endl;
-            if (!dftParameters::reproducible_output)
-              pcout << "Time taken for md step: " << step_time << std::endl;
->>>>>>> 19e807581d8cdd011d08ecd93433dec293b296ee
+            pcout << "Time taken for md step: " << step_time << std::endl;
             pcout << " Temperature from velocities: " << d_TimeIndex << " "
                   << TemperatureFromVelocities << std::endl;
             pcout << " Kinetic Energy in Ha at timeIndex " << d_TimeIndex << " "
@@ -1073,15 +1060,17 @@ namespace dftfe
                   << TotalEnergyVector[d_TimeIndex - d_startingTimeStep]
                   << std::endl;
           }
-        else if(dftParameters::verbosity >= 0 && dftParameters::reproducible_output ) 
+        else if (dftParameters::verbosity >= 0 &&
+                 dftParameters::reproducible_output)
           {
             pcout << "---------------MD " << d_TimeIndex
                   << "th STEP------------------ " << std::endl;
             pcout << " Temperature from velocities: " << std::setprecision(2)
                   << TemperatureFromVelocities << std::endl;
-            pcout << " Total Energy in Ha at timeIndex " <<std::setprecision(5)
-                  << TotalEnergyVector[d_TimeIndex - d_startingTimeStep] << std::endl;            
-          } 
+            pcout << " Total Energy in Ha at timeIndex " << std::setprecision(5)
+                  << TotalEnergyVector[d_TimeIndex - d_startingTimeStep]
+                  << std::endl;
+          }
         writeRestartFile(displacements,
                          velocity,
                          force,
@@ -1444,7 +1433,9 @@ namespace dftfe
         Utilities::MPI::this_mpi_process(d_interBandGroupComm) == 0)
       {
         std::time_t                  now = std::time(0);
-        boost::random::mt19937       gen{dftParameters::reproducible_output ? 0 : static_cast<std::uint32_t>(now)};
+        boost::random::mt19937       gen{dftParameters::reproducible_output ?
+                                     0 :
+                                     static_cast<std::uint32_t>(now)};
         boost::normal_distribution<> gaussianDist(0.0, 1.0);
         boost::variate_generator<boost::mt19937 &, boost::normal_distribution<>>
           generator(gen, gaussianDist);
