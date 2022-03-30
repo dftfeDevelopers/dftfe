@@ -151,14 +151,14 @@ namespace dftfe
     std::string  xcFamilyType                                   = "";
     bool         gpuMemOptMode                                  = false;
 
-    unsigned int dispersioncorrectiontype                       = 0;
-    unsigned int d3dampingtype                                  = 2;
-    bool         d3ATM                                          = false;
-    bool         d4MBD                                          = false;
-    std::string  dampingParameterFilename                       = "";
-    double       d3cutoff2                                      = 94.8683298050514;
-    double       d3cutoff3                                      = 40.0;
-    double       d3cutoffCN                                     = 40.0;
+    unsigned int dc_dispersioncorrectiontype                       = 0;
+    unsigned int dc_d3dampingtype                                  = 2;
+    bool         dc_d3ATM                                          = false;
+    bool         dc_d4MBD                                          = false;
+    std::string  dc_dampingParameterFilename                       = "";
+    double       dc_d3cutoff2                                      = 94.8683298050514;
+    double       dc_d3cutoff3                                      = 40.0;
+    double       dc_d3cutoffCN                                     = 40.0;
 
     void
     declare_parameters(ParameterHandler &prm)
@@ -735,7 +735,7 @@ namespace dftfe
           "DISPERSION CORRECTION TYPE",
           "0",
           Patterns::Integer(0, 2),
-          "[Standard] The dispersion correction type to be included post scf convergence: 0 for none, 1 for DFT-D3, 2 for DFT-D4.");
+          "[Standard] The dispersion correction type to be included post scf convergence: 0 for none, 1 for DFT-D3[JCP 132, 154104 (2010)][JCC 32, 1456 (2011)], 2 for DFT-D4 [JCP 147, 034112 (2017)][JCP 150, 154122 (2019)][PCCP 22, 8499-8512 (2020)].");
         prm.declare_entry(
           "D3 DAMPING TYPE",
           "3",
@@ -760,17 +760,17 @@ namespace dftfe
           "TWO BODY CUTOFF",
           "94.8683298050514",
           Patterns::Double(0.0),
-          "[Advanced] Cutoff for computing 2 body interactions terms in D3 correction");
+          "[Advanced] Cutoff in a.u. for computing 2 body interactions terms in D3 correction");
         prm.declare_entry(
           "THREE BODY CUTOFF",
           "40.0",
           Patterns::Double(0.0),
-          "[Advanced] Cutoff for computing 3 body interactions terms in D3 correction");
+          "[Advanced] Cutoff in a.u. for computing 3 body interactions terms in D3 correction");
         prm.declare_entry(
           "CN CUTOFF",
           "40.0",
           Patterns::Double(0.0),
-          "[Advanced] Cutoff for computing coordination number in D3 correction");
+          "[Advanced] Cutoff in a.u. for computing coordination number in D3 correction");
         }
         prm.leave_subsection();
       }
@@ -1322,21 +1322,21 @@ namespace dftfe
           prm.get_double("PSP CUTOFF IMAGE CHARGES");
         prm.enter_subsection("Dispersion Correction");
         {
-          dftParameters::dispersioncorrectiontype =
+          dftParameters::dc_dispersioncorrectiontype =
             prm.get_integer("DISPERSION CORRECTION TYPE");
-          dftParameters::d3dampingtype =
+          dftParameters::dc_d3dampingtype =
             prm.get_integer("D3 DAMPING TYPE");
-          dftParameters::d3ATM =
+          dftParameters::dc_d3ATM =
             prm.get_bool("D3 ATM");
-          dftParameters::d4MBD =
+          dftParameters::dc_d4MBD =
             prm.get_bool("D4 MBD");
-          dftParameters::dampingParameterFilename = 
+          dftParameters::dc_dampingParameterFilename = 
             prm.get("DAMPING PARAMETERS FILE");
-        dftParameters::d3cutoff2 =
+        dftParameters::dc_d3cutoff2 =
           prm.get_double("TWO BODY CUTOFF");
-        dftParameters::d3cutoff3 =
+        dftParameters::dc_d3cutoff3 =
           prm.get_double("THREE BODY CUTOFF");
-        dftParameters::d3cutoffCN =
+        dftParameters::dc_d3cutoffCN =
           prm.get_double("CN CUTOFF");
 
         }
