@@ -26,6 +26,7 @@ namespace dftfe
   /**
    * @brief Calculates dispersion correction to energy, force and stress
    *
+   * @author Nikhil Kodali
    */
   class dispersionCorrection
   {
@@ -37,8 +38,7 @@ namespace dftfe
      */
     dispersionCorrection(const MPI_Comm &mpi_comm,
                      const MPI_Comm &interpool_comm,
-                     const MPI_Comm &interBandGroupComm,
-                     const int n_atoms);
+                     const MPI_Comm &interBandGroupComm);
 
     /**
      * Wrapper function for various dispersion corrections to energy, force and stress.
@@ -62,13 +62,13 @@ namespace dftfe
     getStressCorrection(int dim1, int dim2) const;
 
     private:
-    int natoms;
+    int d_natoms;
     double d_energyDispersion;
     std::vector<double> d_forceDispersion;
     std::array<double,9> d_stressDispersion;
-    std::vector<double> atomCoordinates;
-    std::vector<int> atomicNumbers;
-    std::array<double,9> latticeVectors;
+    std::vector<double> d_atomCoordinates;
+    std::vector<int> d_atomicNumbers;
+    std::array<double,9> d_latticeVectors;
 
 
     const MPI_Comm mpi_communicator;

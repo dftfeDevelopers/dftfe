@@ -568,8 +568,7 @@ dftClass<FEOrder, FEOrderElectro>::computeElectrostaticEnergyHRefined(
 
   dispersionCorrection dispersionCorrHRefined(mpi_communicator,
                               interpoolcomm,
-                              interBandGroupComm,
-                              atomLocations.size());
+                              interBandGroupComm);
 
 
   const double totalEnergy =

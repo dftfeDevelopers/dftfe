@@ -2083,8 +2083,7 @@ namespace dftfe
 
     dispersionCorrection dispersionCorr(mpi_communicator,
                                 interpoolcomm,
-                                interBandGroupComm,
-                                atomLocations.size());
+                                interBandGroupComm);
 
     // set up linear solver
     dealiiLinearSolver dealiiCGSolver(mpi_communicator, dealiiLinearSolver::CG);
@@ -3153,8 +3152,7 @@ namespace dftfe
             computing_timer.leave_subsection("phiTot solve");
 
             const Quadrature<3> &quadrature =
-              matrix_free_data.get_quadrature(d_densityQuadratureId);
-//            energyCalc.setDispersionEnergy(computeDispersionCorrection());
+              matrix_free_data.get_quadrature(d_densityQuadratureId);              
             dispersionCorr.computeDispresionCorrection(atomLocations, d_domainBoundingVectors);
             const double totalEnergy =
               dftParameters::spinPolarized == 0 ?
@@ -3396,8 +3394,7 @@ namespace dftfe
     //
     if (!(dftParameters::isBOMD && dftParameters::isXLBOMD &&
           solveLinearizedKS))
-      {
-//        energyCalc.setDispersionEnergy(computeDispersionCorrection());
+      {        
         dispersionCorr.computeDispresionCorrection(atomLocations, d_domainBoundingVectors);
         const double totalEnergy =
           dftParameters::spinPolarized == 0 ?

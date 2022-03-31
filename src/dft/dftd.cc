@@ -30,26 +30,31 @@ namespace dftfe
       const std::vector<std::vector<double>>  &d_domainBoundingVectors
     )
     {
+      d_natoms=atomLocations.size();
       d_energyDispersion=0.0;
+      d_forceDispersion.resize(3*d_natoms);
+      d_atomCoordinates.resize(3*d_natoms);
+      d_atomicNumbers.resize(d_natoms);
+
       std::fill(d_forceDispersion.begin(), d_forceDispersion.end(), 0.0);
       std::fill(d_stressDispersion.begin(), d_stressDispersion.end(), 0.0);
-      for (unsigned int i = 0; i < natoms ; ++i )
+      for (unsigned int i = 0; i < d_natoms ; ++i )
       {
-        atomicNumbers[i] = atomLocations[i][0];
+        d_atomicNumbers[i] = atomLocations[i][0];
       }
 
-      for (unsigned int irow = 0 ; irow < natoms; ++irow)
+      for (unsigned int irow = 0 ; irow < d_natoms; ++irow)
       {
         for (unsigned int icol = 0 ; icol < 3 ; ++icol)
         {
-          atomCoordinates[irow*3+icol] = atomLocations[irow][2+icol];
+          d_atomCoordinates[irow*3+icol] = atomLocations[irow][2+icol];
         }
       }
       for (unsigned int irow = 0 ; irow < 3; ++irow)
       {
         for (unsigned int icol = 0 ; icol < 3 ; ++icol)
         {
-          latticeVectors[irow*3+icol] = d_domainBoundingVectors[irow][icol];
+          d_latticeVectors[irow*3+icol] = d_domainBoundingVectors[irow][icol];
         }
       }
     }
@@ -99,7 +104,7 @@ namespace dftfe
             dftd3_model disp = NULL;
             dftd3_param param = NULL;
             
-            mol = dftd3_new_structure(error, natoms, atomicNumbers.data(), atomCoordinates.data(), latticeVectors.data(), periodic);
+            mol = dftd3_new_structure(error, d_natoms, d_atomicNumbers.data(), d_atomCoordinates.data(), d_latticeVectors.data(), periodic);
             AssertThrow(dftd3_check_error(error)==0,dealii::ExcMessage(std::string ("Failure in DFTD Module ")));
             
             disp = dftd3_new_d3_model(error, mol);
@@ -186,7 +191,7 @@ namespace dftfe
             dftd4_model disp = NULL;
             dftd4_param param = NULL;
             
-            mol = dftd4_new_structure(error, natoms, atomicNumbers.data(), atomCoordinates.data(), NULL, latticeVectors.data(), periodic);
+            mol = dftd4_new_structure(error, d_natoms, d_atomicNumbers.data(), d_atomCoordinates.data(), NULL, d_latticeVectors.data(), periodic);
             AssertThrow(dftd4_check_error(error)==0,dealii::ExcMessage(std::string ("Failure in DFTD Module ")));
             
             disp = dftd4_new_d4_model(error, mol);
@@ -217,7 +222,7 @@ namespace dftfe
           default:
           break;
         }
-        for (unsigned int irow = 0 ; irow < natoms; ++irow)
+        for (unsigned int irow = 0 ; irow < d_natoms; ++irow)
         {
           for (unsigned int icol = 0 ; icol < 3 ; ++icol)
           {
@@ -253,33 +258,26 @@ namespace dftfe
 
   dispersionCorrection::dispersionCorrection(const MPI_Comm &mpi_comm,
                                     const MPI_Comm &interpool_comm,
-                                    const MPI_Comm &interbandgroup_comm,
-                                    const int n_atoms)
+                                    const MPI_Comm &interbandgroup_comm)
     : mpi_communicator(mpi_comm)
     , interpoolcomm(interpool_comm)
     , interBandGroupComm(interbandgroup_comm)
-    , natoms(n_atoms)
-  {
-    d_energyDispersion=0.0;
-    d_forceDispersion.resize(3*natoms,0);
-    atomCoordinates.resize(3*natoms);
-    atomicNumbers.resize(natoms);
-  }
+  {}
 
 
   /**
     * Wrapper function for various dispersion corrections to energy, force and stress.
     *
     * @param atomLocations 
-    * @param latticeVectors 
+    * @param d_latticeVectors 
     */
   void
   dispersionCorrection::computeDispresionCorrection(
     const std::vector<std::vector<double>>  &atomLocations,
-    const std::vector<std::vector<double>>  &latticeVectors
+    const std::vector<std::vector<double>>  &d_latticeVectors
   ) 
   {
-      initDispersionCorrection(atomLocations,latticeVectors);
+      initDispersionCorrection(atomLocations,d_latticeVectors);
 
       if (dftParameters::dc_dispersioncorrectiontype==1||dftParameters::dc_dispersioncorrectiontype==2)
         computeDFTDCorrection();
