@@ -16,8 +16,12 @@
 //
 
 #include <headers.h>
+#ifdef DFTFE_WITH_DFTD3
 #include <dftd3.h>
+#endif
+#ifdef DFTFE_WITH_DFTD4
 #include <dftd4.h>
+#endif
 
 #ifndef dispersionCorrection_H_
 #  define dispersionCorrection_H_

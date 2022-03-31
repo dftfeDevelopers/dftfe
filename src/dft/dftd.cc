@@ -99,6 +99,7 @@ namespace dftfe
         {
           case 1:
           {
+#ifdef DFTFE_WITH_DFTD3
             dftd3_error error = dftd3_new_error();
             dftd3_structure mol = NULL;
             dftd3_model disp = NULL;
@@ -183,9 +184,13 @@ namespace dftfe
             dftd3_delete_model(&disp);
             dftd3_delete_param(&param);
             break;
+#else
+            AssertThrow(false,dealii::ExcMessage(std::string ("DFTFE has not been compiled with s-dftd3")));
+#endif
           }
           case 2:
           {
+#ifdef DFTFE_WITH_DFTD4
             dftd4_error error = dftd4_new_error();
             dftd4_structure mol = NULL;
             dftd4_model disp = NULL;
@@ -218,6 +223,9 @@ namespace dftfe
             dftd4_delete_model(&disp);
             dftd4_delete_param(&param);
             break;
+#else
+            AssertThrow(false,dealii::ExcMessage(std::string ("DFTFE has not been compiled with dftd4")));
+#endif
           }
           default:
           break;

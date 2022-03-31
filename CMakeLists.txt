@@ -326,16 +326,25 @@ ENDIF (DEFINED SPGLIB_DIR)
 #
 # DFTD3. Pass path to -DCMAKE_PREFIX_PATH
 #
-find_package(DFTD3 REQUIRED PUBLIC)
-MESSAGE(STATUS "Will Link With DFTD3 ${S-DFTD3}")
-target_link_libraries(${TARGETLIB} DFTD3)
+find_package(DFTD3)
+IF (DFTD3_FOUND)
+  MESSAGE(STATUS "Will Link With DFTD3 ${S-DFTD3}")
+  ADD_DEFINITIONS(-DDFTFE_WITH_DFTD3)
+  target_link_libraries(${TARGETLIB} DFTD3)
+ENDIF()
+
 
 #
 # DFTD4. Pass path to -DCMAKE_PREFIX_PATH
 #
-find_package(DFTD4 REQUIRED PUBLIC)
+find_package(DFTD4)
 MESSAGE(STATUS "Will Link With DFTD4 ${DFTD4}")
-target_link_libraries(${TARGETLIB} DFTD4)
+IF (DFTD4_FOUND)
+  MESSAGE(STATUS "Will Link With DFTD4 ${DFTD4}")
+  ADD_DEFINITIONS(-DDFTFE_WITH_DFTD4)
+  target_link_libraries(${TARGETLIB} DFTD4)
+ENDIF()   
+
 
 
 
