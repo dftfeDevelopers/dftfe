@@ -1,3 +1,22 @@
+// ---------------------------------------------------------------------
+//
+// Copyright (c) 2017-2022 The Regents of the University of Michigan and DFT-FE
+// authors.
+//
+// This file is part of the DFT-FE code.
+//
+// The DFT-FE code is free software; you can use it, redistribute
+// it, and/or modify it under the terms of the GNU Lesser General
+// Public License as published by the Free Software Foundation; either
+// version 2.1 of the License, or (at your option) any later version.
+// The full text of the license can be found in the file LICENSE at
+// the top level of the DFT-FE distribution.
+//
+// ---------------------------------------------------------------------
+//
+// @author Kartick Ramakrishnan
+//
+
 #ifndef molecularDynamicsClass_H_
 #define molecularDynamicsClass_H_
 #include "constants.h"
@@ -208,9 +227,9 @@ namespace dftfe
 
      * @param[in] M Stores the mass of each Charge.
      * @param[in] Temperature  temperature at current Timestep
-     * @param[out] v Stores the velocity of each Charge, updated at each
-   TimeStep     *
-     * @param[out] KE Kinetic Energy at current timestp in eV
+     * @param[out] v Stores the velocity of each Charge, updated at each Timestep
+     *
+     * @param[return] KE Kinetic Energy at current timestp in eV
 
    *
      *
@@ -218,7 +237,6 @@ namespace dftfe
      */
     double
     RescaleVelocities(std::vector<double> &      v,
-                      double                     KE,
                       const std::vector<double> &M,
                       double                     Temperature);
 
@@ -283,7 +301,6 @@ namespace dftfe
     velocityVerlet(std::vector<double> &                      v,
                    std::vector<dealii::Tensor<1, 3, double>> &r,
                    const std::vector<double> &                atomMass,
-                   double                                     KE,
                    std::vector<double> &                      forceOnAtoms);
 
 
@@ -350,7 +367,7 @@ namespace dftfe
     writeRestartNHCfile(const std::vector<double> &v_e,
                         const std::vector<double> &e,
                         const std::vector<double> &Q,
-                        int                        time);
+                        const int                 time);
 
     /**
 
@@ -365,9 +382,9 @@ namespace dftfe
  *
  */
     void
-    InitialiseFromRestartNHCFile(std::vector<double> &v_e,
-                                 std::vector<double> &e,
-                                 std::vector<double> &Q);
+    InitialiseFromRestartNHCFile( std::vector<double> &v_e,
+                                  std::vector<double> &e,
+                                  std::vector<double> &Q);
 
     /**
 

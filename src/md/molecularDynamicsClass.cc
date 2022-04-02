@@ -1,3 +1,24 @@
+// ---------------------------------------------------------------------
+//
+// Copyright (c) 2017-2022 The Regents of the University of Michigan and DFT-FE
+// authors.
+//
+// This file is part of the DFT-FE code.
+//
+// The DFT-FE code is free software; you can use it, redistribute
+// it, and/or modify it under the terms of the GNU Lesser General
+// Public License as published by the Free Software Foundation; either
+// version 2.1 of the License, or (at your option) any later version.
+// The full text of the license can be found in the file LICENSE at
+// the top level of the DFT-FE distribution.
+//
+// ---------------------------------------------------------------------
+//
+// @author Kartick Ramakrishnan
+//
+
+
+
 #include <boost/generator_iterator.hpp>
 #include <boost/math/distributions/normal.hpp>
 #include <boost/random.hpp>
@@ -308,8 +329,8 @@ namespace dftfe
         if (dftParameters::verbosity >= 0 &&
             !dftParameters::reproducible_output)
           {
-            pcout << "---------------MD " << d_startingTimeStep
-                  << "th STEP------------------ " << std::endl;
+            pcout << "---------------MD STEP" << d_startingTimeStep
+                  << "------------------ " << std::endl;
             pcout << " Temperature from velocities: "
                   << TemperatureFromVelocities << std::endl;
             pcout << " Kinetic Energy in Ha at timeIndex  "
@@ -324,8 +345,8 @@ namespace dftfe
         else if (dftParameters::verbosity >= 0 &&
                  dftParameters::reproducible_output)
           {
-            pcout << "---------------MD " << d_startingTimeStep
-                  << "th STEP------------------ " << std::endl;
+            pcout << "---------------MD STEP " << d_startingTimeStep
+                  << " ------------------ " << std::endl;
             pcout << " Temperature from velocities: " << std::setprecision(2)
                   << TemperatureFromVelocities << std::endl;
             pcout << " Total Energy in Ha at timeIndex " << std::setprecision(5)
@@ -487,7 +508,7 @@ namespace dftfe
         MPI_Barrier(d_interpoolcomm);
         step_time     = MPI_Wtime();
         KineticEnergy = velocityVerlet(
-          velocity, displacements, atomMass, KineticEnergy, force);
+          velocity, displacements, atomMass, force);
         GroundStateEnergyvalue = dftPtr->getInternalEnergy();
         EntropicEnergyvalue    = dftPtr->getEntropicEnergy();
         KineticEnergyVector[d_TimeIndex - d_startingTimeStep] =
@@ -562,8 +583,8 @@ namespace dftfe
         else if (dftParameters::verbosity >= 0 &&
                  dftParameters::reproducible_output)
           {
-            pcout << "---------------MD " << d_TimeIndex
-                  << "th STEP------------------ " << std::endl;
+            pcout << "---------------MD STEP " << d_TimeIndex
+                  << " ------------------ " << std::endl;
             pcout << " Temperature from velocities: " << std::setprecision(2)
                   << TemperatureFromVelocities << std::endl;
             pcout << " Total Energy in Ha at timeIndex " << std::setprecision(5)
@@ -620,13 +641,12 @@ namespace dftfe
 
 
         KineticEnergy = velocityVerlet(
-          velocity, displacements, atomMass, KineticEnergy, force);
+          velocity, displacements, atomMass, force);
         TemperatureFromVelocities =
           2.0 / 3.0 / double(d_numberGlobalCharges - 1) * KineticEnergy / (kB);
         if (d_TimeIndex % d_ThermostatTimeConstant == 0)
           {
             KineticEnergy = RescaleVelocities(velocity,
-                                              KineticEnergy,
                                               atomMass,
                                               TemperatureFromVelocities);
           }
@@ -709,8 +729,8 @@ namespace dftfe
         else if (dftParameters::verbosity >= 0 &&
                  dftParameters::reproducible_output)
           {
-            pcout << "---------------MD " << d_TimeIndex
-                  << "th STEP------------------ " << std::endl;
+            pcout << "---------------MD STEP " << d_TimeIndex
+                  << " ------------------ " << std::endl;
             pcout << " Temperature from velocities: " << std::setprecision(2)
                   << TemperatureFromVelocities << std::endl;
             pcout << " Total Energy in Ha at timeIndex " << std::setprecision(5)
@@ -801,7 +821,7 @@ namespace dftfe
           d_startingTemperature);
 
         KineticEnergy = velocityVerlet(
-          velocity, displacements, atomMass, KineticEnergy, force);
+          velocity, displacements, atomMass,  force);
 
         MPI_Barrier(d_mpi_communicator);
         MPI_Barrier(d_interBandGroupComm);
@@ -916,8 +936,8 @@ namespace dftfe
         else if (dftParameters::verbosity >= 0 &&
                  dftParameters::reproducible_output)
           {
-            pcout << "---------------MD " << d_TimeIndex
-                  << "th STEP------------------ " << std::endl;
+            pcout << "---------------MD STEP " << d_TimeIndex
+                  << " ------------------ " << std::endl;
             pcout << " Temperature from velocities: " << std::setprecision(2)
                   << TemperatureFromVelocities << std::endl;
             pcout << " Total Energy in Ha at timeIndex " << std::setprecision(5)
@@ -983,7 +1003,7 @@ namespace dftfe
 
 
         KineticEnergy = velocityVerlet(
-          velocity, displacements, atomMass, KineticEnergy, force);
+          velocity, displacements, atomMass,  force);
 
 
         MPI_Barrier(d_mpi_communicator);
@@ -1067,8 +1087,8 @@ namespace dftfe
         else if (dftParameters::verbosity >= 0 &&
                  dftParameters::reproducible_output)
           {
-            pcout << "---------------MD " << d_TimeIndex
-                  << "th STEP------------------ " << std::endl;
+            pcout << "---------------MD STEP " << d_TimeIndex
+                  << " ------------------ " << std::endl;
             pcout << " Temperature from velocities: " << std::setprecision(2)
                   << TemperatureFromVelocities << std::endl;
             pcout << " Total Energy in Ha at timeIndex " << std::setprecision(5)
@@ -1104,12 +1124,11 @@ namespace dftfe
     std::vector<double> &                      v,
     std::vector<dealii::Tensor<1, 3, double>> &r,
     const std::vector<double> &                atomMass,
-    double                                     KE,
     std::vector<double> &                      forceOnAtoms)
   {
     int    i;
     double totalKE;
-    KE                       = 0.0;
+    double KE                       = 0.0;
     double              dt   = d_TimeStep;
     double              dt_2 = dt / 2;
     double              COMM = 0.0;
@@ -1347,7 +1366,6 @@ namespace dftfe
   double
   molecularDynamicsClass<FEOrder, FEOrderElectro>::RescaleVelocities(
     std::vector<double> &      v,
-    double                     KE,
     const std::vector<double> &M,
     double                     Temperature)
   {
@@ -1357,7 +1375,7 @@ namespace dftfe
       std::fabs(Temperature - 0.0) > 0.00001,
       ExcMessage(
         "DFT-FE Error: Temperature reached O K")); // Determine Exit sequence ..
-    KE = 0.0;
+    double KE = 0.0;
     for (int iCharge = 0; iCharge < d_numberGlobalCharges; iCharge++)
       {
         v[3 * iCharge + 0] =
@@ -1716,9 +1734,9 @@ namespace dftfe
   template <unsigned int FEOrder, unsigned int FEOrderElectro>
   void
   molecularDynamicsClass<FEOrder, FEOrderElectro>::InitialiseFromRestartNHCFile(
-    std::vector<double> &v_e,
-    std::vector<double> &e,
-    std::vector<double> &Q)
+     std::vector<double> &v_e,
+     std::vector<double> &e,
+     std::vector<double> &Q)
 
   {
     if (dftParameters::reproducible_output == false)
@@ -1759,7 +1777,7 @@ namespace dftfe
     const std::vector<double> &v_e,
     const std::vector<double> &e,
     const std::vector<double> &Q,
-    int                        time)
+    const int                time)
 
   {
     if (dftParameters::reproducible_output == false)
