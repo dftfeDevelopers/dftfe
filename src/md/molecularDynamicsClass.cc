@@ -504,7 +504,7 @@ namespace dftfe
         MPI_Barrier(d_interpoolcomm);
         step_time     = MPI_Wtime();
         KineticEnergy = velocityVerlet(
-          velocity, displacements, atomMass, KineticEnergy, force);
+          velocity, displacements, atomMass, force);
         GroundStateEnergyvalue = dftPtr->getInternalEnergy();
         EntropicEnergyvalue    = dftPtr->getEntropicEnergy();
         KineticEnergyVector[d_TimeIndex - d_startingTimeStep] =
@@ -637,7 +637,7 @@ namespace dftfe
 
 
         KineticEnergy = velocityVerlet(
-          velocity, displacements, atomMass, KineticEnergy, force);
+          velocity, displacements, atomMass, force);
         TemperatureFromVelocities =
           2.0 / 3.0 / double(d_numberGlobalCharges - 1) * KineticEnergy / (kB);
         if (d_TimeIndex % d_ThermostatTimeConstant == 0)
@@ -817,7 +817,7 @@ namespace dftfe
           d_startingTemperature);
 
         KineticEnergy = velocityVerlet(
-          velocity, displacements, atomMass, KineticEnergy, force);
+          velocity, displacements, atomMass,  force);
 
         MPI_Barrier(d_mpi_communicator);
         MPI_Barrier(d_interBandGroupComm);
@@ -999,7 +999,7 @@ namespace dftfe
 
 
         KineticEnergy = velocityVerlet(
-          velocity, displacements, atomMass, KineticEnergy, force);
+          velocity, displacements, atomMass,  force);
 
 
         MPI_Barrier(d_mpi_communicator);
@@ -1120,12 +1120,11 @@ namespace dftfe
     std::vector<double> &                      v,
     std::vector<dealii::Tensor<1, 3, double>> &r,
     const std::vector<double> &                atomMass,
-    double                                     KE,
     std::vector<double> &                      forceOnAtoms)
   {
     int    i;
     double totalKE;
-    KE                       = 0.0;
+    double KE                       = 0.0;
     double              dt   = d_TimeStep;
     double              dt_2 = dt / 2;
     double              COMM = 0.0;

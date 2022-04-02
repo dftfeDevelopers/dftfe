@@ -298,7 +298,6 @@ namespace dftfe
     velocityVerlet(std::vector<double> &                      v,
                    std::vector<dealii::Tensor<1, 3, double>> &r,
                    const std::vector<double> &                atomMass,
-                   double                                     KE,
                    std::vector<double> &                      forceOnAtoms);
 
 
