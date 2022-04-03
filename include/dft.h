@@ -51,7 +51,7 @@
 #include <triangulationManager.h>
 #include <vselfBinsManager.h>
 #include <xc.h>
-#include "molecularDynamicsClass.h"
+#include "dftBase.h"
 #ifdef USE_PETSC
 #  include <petsc.h>
 
@@ -93,9 +93,6 @@ namespace dftfe
   template <unsigned int T1, unsigned int T2>
   class molecularDynamics;
 
-  // template <unsigned int T1, unsigned int T2>
-  // class molecularDynamicsClass;
-
 #endif /* DOXYGEN_SHOULD_SKIP_THIS */
 
   /**
@@ -106,7 +103,7 @@ namespace dftfe
    * @author Shiva Rudraraju, Phani Motamarri, Sambit Das
    */
   template <unsigned int FEOrder, unsigned int FEOrderElectro>
-  class dftClass
+  class dftClass : public dftBase
   {
     friend class kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>;
 
@@ -122,9 +119,7 @@ namespace dftfe
 
     friend class symmetryClass<FEOrder, FEOrderElectro>;
 
-    friend class molecularDynamics<FEOrder, FEOrderElectro>;
-
-    // friend class molecularDynamicsClass<FEOrder, FEOrderElectro>;
+    // friend class molecularDynamics<FEOrder, FEOrderElectro>;
 
   public:
     /**
@@ -164,7 +159,7 @@ namespace dftfe
      * @brief Does KSDFT problem pre-processing steps including mesh generation calls.
      */
     void
-    init(const unsigned int usePreviousGroundStateFields = 0);
+    init();
 
     /**
      * @brief Does KSDFT problem pre-processing steps but without remeshing.
@@ -219,10 +214,13 @@ namespace dftfe
 
 
     double
-    getInternalEnergy();
+    getInternalEnergy() const;
 
     double
-    getEntropicEnergy();
+    getEntropicEnergy() const;
+
+    double
+    getFreeEnergy() const;
 
     /**
      * @brief Number of Kohn-Sham eigen values to be computed
@@ -303,34 +301,42 @@ namespace dftfe
      */
     void
     writeDomainAndAtomCoordinates();
+
     /**
-     * @brief writes the current domain bounding vectors and atom coordinates to files, which are required for
-     * MD restart
+     * @brief writes the current domain bounding vectors and atom coordinates to files for
+     * structural optimization and dynamics restarts.simplified version for
+     * floating charges case
      * @param[in] Path The folder path to store the atom coordinates required
      * during restart.
      */
     void
-    MDwriteDomainAndAtomCoordinates(const std::string Path);
+    writeDomainAndAtomCoordinatesFloatingCharges(const std::string Path) const;
+
     /**
-     * @brief Gets the current atom Locations from dftPtr
-     *  \return atomSites vector that saves atomLocations data member of dft
-     * Class
+     * @brief Gets the current atom Locations in cartesian form
+     * (origin at center of domain) from dftClass
      */
     std::vector<std::vector<double>>
-    getAtomLocations();
-    /**
-    * @brief Gets the current atom Locations from dftPtr
+    getAtomLocationsCart() const;
 
-    *  \return atoms vector that saves atomtypes data member of dft Class
-    */
-    std::set<unsigned int>
-    getAtomTypes();
     /**
-     * @brief Gets the current atom Locations from dftPtr
-     *  \return atomforces vector that returns -ve of atom Forces from dft Class
+     * @brief Gets the current atom Locations in fractional form
+     * from dftClass (only applicable for periodic and semi-periodic BCs)
+     */
+    std::vector<std::vector<double>>
+    getAtomLocationsFrac() const;
+
+    /**
+     * @brief Gets the current atom types from dftClass
+     */
+    std::set<unsigned int>
+    getAtomTypes() const;
+
+    /**
+     * @brief Gets the current atomic forces from dftClass
      */
     std::vector<double>
-    getForceonAtoms();
+    getForceonAtoms() const;
 
   private:
     /**

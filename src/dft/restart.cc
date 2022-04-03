@@ -582,8 +582,8 @@ dftClass<FEOrder, FEOrderElectro>::writeDomainAndAtomCoordinates()
 
 template <unsigned int FEOrder, unsigned int FEOrderElectro>
 void
-dftClass<FEOrder, FEOrderElectro>::MDwriteDomainAndAtomCoordinates(
-  const std::string Path)
+dftClass<FEOrder, FEOrderElectro>::writeDomainAndAtomCoordinatesFloatingCharges(
+  const std::string Path) const
 {
   dftUtils::writeDataIntoFile(d_domainBoundingVectors,
                               Path + "domainBoundingVectorsCurrent.chk",
@@ -638,7 +638,6 @@ dftClass<FEOrder, FEOrderElectro>::MDwriteDomainAndAtomCoordinates(
         }
     }
 
-  std::vector<std::vector<double>> atomLocationsAutoMesh = atomLocations;
 
   if (dftParameters::periodicX || dftParameters::periodicY ||
       dftParameters::periodicZ)

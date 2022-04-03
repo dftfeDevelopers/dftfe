@@ -975,8 +975,7 @@ namespace dftfe
   // dft init
   template <unsigned int FEOrder, unsigned int FEOrderElectro>
   void
-  dftClass<FEOrder, FEOrderElectro>::init(
-    const unsigned int usePreviousGroundStateFields)
+  dftClass<FEOrder, FEOrderElectro>::init()
   {
     computingTimerStandard.enter_subsection("KSDFT problem initialization");
 
@@ -4240,38 +4239,52 @@ namespace dftfe
 
   template <unsigned int FEOrder, unsigned int FEOrderElectro>
   std::vector<std::vector<double>>
-  dftClass<FEOrder, FEOrderElectro>::getAtomLocations()
+  dftClass<FEOrder, FEOrderElectro>::getAtomLocationsCart() const
   {
     return atomLocations;
   }
 
   template <unsigned int FEOrder, unsigned int FEOrderElectro>
+  std::vector<std::vector<double>>
+  dftClass<FEOrder, FEOrderElectro>::getAtomLocationsFrac() const
+  {
+    return atomLocationsFractional;
+  }
+
+  template <unsigned int FEOrder, unsigned int FEOrderElectro>
   std::set<unsigned int>
-  dftClass<FEOrder, FEOrderElectro>::getAtomTypes()
+  dftClass<FEOrder, FEOrderElectro>::getAtomTypes() const
   {
     return atomTypes;
   }
 
   template <unsigned int FEOrder, unsigned int FEOrderElectro>
   std::vector<double>
-  dftClass<FEOrder, FEOrderElectro>::getForceonAtoms()
+  dftClass<FEOrder, FEOrderElectro>::getForceonAtoms() const
   {
     return (forcePtr->getAtomsForces());
   }
 
   template <unsigned int FEOrder, unsigned int FEOrderElectro>
   double
-  dftClass<FEOrder, FEOrderElectro>::getInternalEnergy()
+  dftClass<FEOrder, FEOrderElectro>::getInternalEnergy() const
   {
     return d_groundStateEnergy;
   }
+
   template <unsigned int FEOrder, unsigned int FEOrderElectro>
   double
-  dftClass<FEOrder, FEOrderElectro>::getEntropicEnergy()
+  dftClass<FEOrder, FEOrderElectro>::getEntropicEnergy() const
   {
     return d_entropicEnergy;
   }
 
+  template <unsigned int FEOrder, unsigned int FEOrderElectro>
+  double
+  dftClass<FEOrder, FEOrderElectro>::getFreeEnergy() const
+  {
+    return d_freeEnergy;
+  }
 
 #include "dft.inst.cc"
 } // namespace dftfe

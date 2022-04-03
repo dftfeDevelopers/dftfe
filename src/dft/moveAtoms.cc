@@ -448,14 +448,7 @@ dftClass<FEOrder, FEOrderElectro>::updateAtomPositionsAndMoveMesh(
               << "Auto remeshing and reinitialization of dft problem for new atom coordinates"
               << std::endl;
 
-          if (maxDispAtom < 0.2 && dftParameters::isPseudopotential)
-            {
-              init(dftParameters::reuseWfcGeoOpt && maxDispAtom < 0.1 ?
-                     2 :
-                     (dftParameters::reuseDensityGeoOpt ? 1 : 0));
-            }
-          else
-            init(0);
+          init();
 
           // for (unsigned int iAtom=0;iAtom <numberGlobalAtoms; iAtom++)
           // d_dispClosestTriaVerticesToAtoms[iAtom]= 0.0;
@@ -557,7 +550,7 @@ dftClass<FEOrder, FEOrderElectro>::updateAtomPositionsAndMoveMesh(
                   << "Auto remeshing and reinitialization of dft problem for new atom coordinates as max net displacement magnitude: "
                   << maxDispAtom << " is greater than: " << break1 << " Bohr..."
                   << std::endl;
-              init(0);
+              init();
 
               d_autoMesh = 1;
               MPI_Bcast(&(d_autoMesh), 1, MPI_INT, 0, d_mpiCommParent);
@@ -657,7 +650,7 @@ dftClass<FEOrder, FEOrderElectro>::updateAtomPositionsAndMoveMesh(
                           atomLocationsFractional[iAtom][4] = newFracCoord[2];
                         }
                     }
-                  init(0);
+                  init();
 
                   if (!dftParameters::reproducible_output)
                     pcout << "...Reinitialization end" << std::endl;
