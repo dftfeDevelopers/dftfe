@@ -142,8 +142,8 @@ run_problem(const MPI_Comm &mpi_comm_parent,
                           interBandGroupComm);
       problemFE.run();
     }
-
-  elpaScala->elpaDeallocateHandles(numberEigenValues, numEigenValuesRR);
+   if (dftfe::dftParameters::useELPA)
+    elpaScala->elpaDeallocateHandles(numberEigenValues, numEigenValuesRR);
   elpa_uninit(&error);
   AssertThrow(error == ELPA_OK,
               dealii::ExcMessage("DFT-FE Error: elpa error."));
