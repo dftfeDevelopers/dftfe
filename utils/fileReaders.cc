@@ -22,6 +22,7 @@
 #include <fstream>
 #include <iostream>
 #include <sstream>
+#include <sys/stat.h>
 
 namespace dftfe
 {
@@ -197,6 +198,31 @@ namespace dftfe
     }
 
     void
+    copyFile(const std::string &pathold, const std::string &pathnew)
+    {
+      // std::filesystem::copy_file(pathold,pathnew);
+      int error = system(("cp -f " + pathold + " " + pathnew).c_str());
+      if (error != 0)
+        {
+          std::cout << "Copy failed: " << error << " From: " << pathold
+                    << "  To: " << pathnew << std::endl;
+          /*  AssertThrow(error == 0,
+                  dealii::ExcMessage(
+                    std::string("Unable to Copy files: ") + pathold +
+                    " -> " + pathnew + ". The error code is " +
+                    dealii::Utilities::to_string(error) + ".")); */
+        }
+      else
+        std::cout << "*Successful copy: "
+                  << "From: " << pathold << "  To: " << pathnew << std::endl;
+
+      // If the above call failed, e.g. because there is no command-line
+      // available, try with internal functions.
+    }
+
+
+
+    void
     verifyCheckpointFileExists(const std::string &filename)
     {
       std::ifstream in(filename);
@@ -229,7 +255,7 @@ namespace dftfe
                 {
                   for (unsigned int icol = 0; icol < data[irow].size(); ++icol)
                     {
-                      outFile << std::setprecision(14) << data[irow][icol];
+                      outFile << std::setprecision(16) << data[irow][icol];
                       if (icol < data[irow].size() - 1)
                         outFile << " ";
                     }

@@ -37,7 +37,8 @@
 #include <linearAlgebraOperationsInternal.h>
 #include <meshMovementAffineTransform.h>
 #include <meshMovementGaussian.h>
-#include <molecularDynamics.h>
+//#include <molecularDynamics.h>
+#include "molecularDynamicsClass.h"
 #include <poissonSolverProblem.h>
 #include <pseudoConverter.h>
 #include <pseudoUtils.h>
@@ -108,9 +109,10 @@ namespace dftfe
   //
   template <unsigned int FEOrder, unsigned int FEOrderElectro>
   dftClass<FEOrder, FEOrderElectro>::dftClass(
-    const MPI_Comm &mpi_comm_replica,
-    const MPI_Comm &_interpoolcomm,
-    const MPI_Comm &_interBandGroupComm)
+    const MPI_Comm &  mpi_comm_replica,
+    const MPI_Comm &  _interpoolcomm,
+    const MPI_Comm &  _interBandGroupComm,
+    elpaScalaManager *_d_elpaScala)
     : FE(FE_Q<3>(QGaussLobatto<1>(FEOrder + 1)), 1)
     ,
 #ifdef USE_COMPLEX
@@ -133,7 +135,7 @@ namespace dftfe
     , d_gaussianMovePar(mpi_comm_replica)
     , d_vselfBinsManager(mpi_comm_replica)
     , pcout(std::cout, (Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0))
-    , d_elpaScala(mpi_comm_replica)
+    //, d_elpaScala(mpi_comm_replica)
     , d_kohnShamDFTOperatorsInitialized(false)
     , computing_timer(mpi_comm_replica,
                       pcout,
@@ -155,6 +157,7 @@ namespace dftfe
 #endif
     , d_phiTotalSolverProblem(mpi_comm_replica)
   {
+    d_elpaScala = _d_elpaScala;
     forcePtr = new forceClass<FEOrder, FEOrderElectro>(this, mpi_comm_replica);
     symmetryPtr = new symmetryClass<FEOrder, FEOrderElectro>(this,
                                                              mpi_comm_replica,
@@ -164,12 +167,16 @@ namespace dftfe
 
     geoOptCellPtr =
       new geoOptCell<FEOrder, FEOrderElectro>(this, mpi_comm_replica);
-    d_mdPtr =
-      new molecularDynamics<FEOrder, FEOrderElectro>(this, mpi_comm_replica);
+    // d_mdPtr =
+    // new molecularDynamics<FEOrder, FEOrderElectro>(this, mpi_comm_replica);
+    // d_mdClassPtr =
+    // new molecularDynamicsClass<FEOrder, FEOrderElectro>(this,
+    // mpi_comm_replica);
+
 
     d_isRestartGroundStateCalcFromChk = false;
+    /*
     int error;
-
     if (elpa_init(ELPA_API_VERSION) != ELPA_OK)
       {
         fprintf(
@@ -177,6 +184,7 @@ namespace dftfe
           "Error: ELPA API version not supported. Use API version 20181113.");
         exit(1);
       }
+    */
 
 #if defined(DFTFE_WITH_GPU)
     d_gpucclMpiCommDomainPtr = new GPUCCLWrapper;
@@ -198,16 +206,18 @@ namespace dftfe
     delete forcePtr;
     delete geoOptIonPtr;
     delete geoOptCellPtr;
-    delete d_mdPtr;
+    // delete d_mdPtr;
+    // delete d_mdClassPtr;
 
-    if (dftParameters::useELPA)
-      d_elpaScala.elpaDeallocateHandles(d_numEigenValues, d_numEigenValuesRR);
+    /*
+      if (dftParameters::useELPA)
+        d_elpaScala.elpaDeallocateHandles(d_numEigenValues, d_numEigenValuesRR);
 
-    int error;
-    elpa_uninit(&error);
-    AssertThrow(error == ELPA_OK,
-                dealii::ExcMessage("DFT-FE Error: elpa error."));
-
+      int error;
+      elpa_uninit(&error);
+      AssertThrow(error == ELPA_OK,
+                  dealii::ExcMessage("DFT-FE Error: elpa error."));
+      */
 #if defined(DFTFE_WITH_GPU)
     delete d_gpucclMpiCommDomainPtr;
 #endif
@@ -737,12 +747,12 @@ namespace dftfe
         pcout
           << "Atleast one atom has pseudopotential with nonlinear core correction"
           << std::endl;
-
+    /*
     d_elpaScala.processGridELPASetup(d_numEigenValues,
                                      d_numEigenValuesRR,
                                      interBandGroupComm,
                                      interpoolcomm);
-
+    */
     MPI_Barrier(MPI_COMM_WORLD);
     computingTimerStandard.leave_subsection("Atomic system initialization");
   }
@@ -1582,10 +1592,11 @@ namespace dftfe
     if (dftParameters::meshAdaption)
       aposterioriMeshGenerate();
 
-    if (dftParameters::isBOMD)
+    /*if (dftParameters::isBOMD)
       {
-        d_mdPtr->run();
-      }
+       // d_mdPtr->run();
+        d_mdClassPtr->runMD();
+      }*/
     else
       {
         if (!(dftParameters::chkType == 1 && dftParameters::restartFromChk &&
@@ -1996,7 +2007,7 @@ namespace dftfe
                      kohnShamEigenSpaceOnlyRRCompute(0,
                                                      kPoint,
                                                      kohnShamDFTEigenOperatorCUDA,
-                                                     d_elpaScala,
+                                                     *d_elpaScala,
                                                      d_subspaceIterationSolverCUDA,
                                                      true,
                                                      true);
@@ -2004,7 +2015,7 @@ namespace dftfe
                      kohnShamEigenSpaceOnlyRRCompute(0,
                                                      kPoint,
                                                      kohnShamDFTEigenOperator,
-                                                     d_elpaScala,
+                                                     *d_elpaScala,
                                                      d_subspaceIterationSolver,
                                                      true,
                                                      true);
@@ -2012,7 +2023,7 @@ namespace dftfe
                    kohnShamEigenSpaceOnlyRRCompute(0,
                                                    kPoint,
                                                    kohnShamDFTEigenOperator,
-                                                   d_elpaScala,
+                                                   *d_elpaScala,
                                                    d_subspaceIterationSolver,
                                                    true,
                                                    true);
@@ -2519,7 +2530,7 @@ namespace dftfe
                             s,
                             kPoint,
                             kohnShamDFTEigenOperatorCUDA,
-                            d_elpaScala,
+                            *d_elpaScala,
                             d_subspaceIterationSolverCUDA,
                             residualNormWaveFunctionsAllkPointsSpins[s][kPoint],
                             (scfIter == 0 ||
@@ -2540,7 +2551,7 @@ namespace dftfe
                             s,
                             kPoint,
                             kohnShamDFTEigenOperator,
-                            d_elpaScala,
+                            *d_elpaScala,
                             d_subspaceIterationSolver,
                             residualNormWaveFunctionsAllkPointsSpins[s][kPoint],
                             (scfIter == 0 ||
@@ -2659,7 +2670,7 @@ namespace dftfe
                                 s,
                                 kPoint,
                                 kohnShamDFTEigenOperatorCUDA,
-                                d_elpaScala,
+                                *d_elpaScala,
                                 d_subspaceIterationSolverCUDA,
                                 residualNormWaveFunctionsAllkPointsSpins
                                   [s][kPoint],
@@ -2677,7 +2688,7 @@ namespace dftfe
                                 s,
                                 kPoint,
                                 kohnShamDFTEigenOperator,
-                                d_elpaScala,
+                                *d_elpaScala,
                                 d_subspaceIterationSolver,
                                 residualNormWaveFunctionsAllkPointsSpins
                                   [s][kPoint],
@@ -2842,7 +2853,7 @@ namespace dftfe
                         0,
                         kPoint,
                         kohnShamDFTEigenOperatorCUDA,
-                        d_elpaScala,
+                        *d_elpaScala,
                         d_subspaceIterationSolverCUDA,
                         residualNormWaveFunctionsAllkPoints[kPoint],
                         (scfIter == 0 ||
@@ -2863,7 +2874,7 @@ namespace dftfe
                         0,
                         kPoint,
                         kohnShamDFTEigenOperator,
-                        d_elpaScala,
+                        *d_elpaScala,
                         d_subspaceIterationSolver,
                         residualNormWaveFunctionsAllkPoints[kPoint],
                         (scfIter == 0 ||
@@ -2957,7 +2968,7 @@ namespace dftfe
                             0,
                             kPoint,
                             kohnShamDFTEigenOperatorCUDA,
-                            d_elpaScala,
+                            *d_elpaScala,
                             d_subspaceIterationSolverCUDA,
                             residualNormWaveFunctionsAllkPoints[kPoint],
                             true,
@@ -2975,7 +2986,7 @@ namespace dftfe
                             0,
                             kPoint,
                             kohnShamDFTEigenOperator,
-                            d_elpaScala,
+                            *d_elpaScala,
                             d_subspaceIterationSolver,
                             residualNormWaveFunctionsAllkPoints[kPoint],
                             true,
@@ -4218,6 +4229,41 @@ namespace dftfe
     MPI_Barrier(MPI_COMM_WORLD);
     //
   }
+
+  template <unsigned int FEOrder, unsigned int FEOrderElectro>
+  std::vector<std::vector<double>>
+  dftClass<FEOrder, FEOrderElectro>::getAtomLocations()
+  {
+    return atomLocations;
+  }
+
+  template <unsigned int FEOrder, unsigned int FEOrderElectro>
+  std::set<unsigned int>
+  dftClass<FEOrder, FEOrderElectro>::getAtomTypes()
+  {
+    return atomTypes;
+  }
+
+  template <unsigned int FEOrder, unsigned int FEOrderElectro>
+  std::vector<double>
+  dftClass<FEOrder, FEOrderElectro>::getForceonAtoms()
+  {
+    return (forcePtr->getAtomsForces());
+  }
+
+  template <unsigned int FEOrder, unsigned int FEOrderElectro>
+  double
+  dftClass<FEOrder, FEOrderElectro>::getInternalEnergy()
+  {
+    return d_groundStateEnergy;
+  }
+  template <unsigned int FEOrder, unsigned int FEOrderElectro>
+  double
+  dftClass<FEOrder, FEOrderElectro>::getEntropicEnergy()
+  {
+    return d_entropicEnergy;
+  }
+
 
 #include "dft.inst.cc"
 } // namespace dftfe

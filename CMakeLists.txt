@@ -42,7 +42,8 @@ SET(TARGET_SRC
   ./src/linAlg/distributedMulticomponentVec.cc
   ./src/solvers/dealiiLinearSolver.cc
   ./src/solvers/dealiiLinearSolverProblem.cc
-  ./src/md/molecularDynamics.cc
+  #./src/md/molecularDynamics.cc
+  ./src/md/molecularDynamicsClass.cc
   ./utils/fileReaders.cc
   ./utils/dftParameters.cc
   ./utils/constraintMatrixInfo.cc
