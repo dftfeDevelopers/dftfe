@@ -25,11 +25,9 @@
 #include <boost/random/normal_distribution.hpp>
 #include <boost/random/gamma_distribution.hpp>
 #include <headers.h>
-#include <dft.h>
 #include <dftParameters.h>
 #include <dftUtils.h>
 #include <fileReaders.h>
-#include <force.h>
 #include <vector>
 #include <cmath>
 #include <ctime>
@@ -41,13 +39,12 @@
 #include <sys/stat.h>
 namespace dftfe
 {
-  template <unsigned int FEOrder, unsigned int FEOrderElectro>
-  molecularDynamicsClass<FEOrder, FEOrderElectro>::molecularDynamicsClass(
-    dftClass<FEOrder, FEOrderElectro> *_dftPtr,
-    const MPI_Comm &                   mpi_comm_parent,
-    const MPI_Comm &                   mpi_comm_domain,
-    const MPI_Comm &                   interpoolcomm,
-    const MPI_Comm &                   interBandGroupComm)
+  molecularDynamicsClass::molecularDynamicsClass(
+    dftBase *       _dftPtr,
+    const MPI_Comm &mpi_comm_parent,
+    const MPI_Comm &mpi_comm_domain,
+    const MPI_Comm &interpoolcomm,
+    const MPI_Comm &interBandGroupComm)
     : dftPtr(_dftPtr)
     , d_mpiCommParent(mpi_comm_parent)
     , d_mpi_communicator(mpi_comm_domain)
@@ -104,9 +101,9 @@ namespace dftfe
   }
 
 
-  template <unsigned int FEOrder, unsigned int FEOrderElectro>
+
   void
-  molecularDynamicsClass<FEOrder, FEOrderElectro>::runMD()
+  molecularDynamicsClass::runMD()
   {
     std::vector<double> massAtoms(d_numberGlobalCharges);
     //
@@ -115,7 +112,7 @@ namespace dftfe
     std::vector<std::vector<double>> atomTypesMasses;
     dftUtils::readFile(2, atomTypesMasses, dftParameters::atomicMassesFile);
     std::vector<std::vector<double>> atomLocations;
-    atomLocations = dftPtr->getAtomLocations();
+    atomLocations = dftPtr->getAtomLocationsCart();
     std::set<unsigned int> atomTypes;
     atomTypes = dftPtr->getAtomTypes();
     AssertThrow(atomTypes.size() == atomTypesMasses.size(),
@@ -480,9 +477,9 @@ namespace dftfe
     pcout << "MD run completed" << std::endl;
   }
 
-  template <unsigned int FEOrder, unsigned int FEOrderElectro>
+
   void
-  molecularDynamicsClass<FEOrder, FEOrderElectro>::mdNVE(
+  molecularDynamicsClass::mdNVE(
     std::vector<double> &                      KineticEnergyVector,
     std::vector<double> &                      InternalEnergyVector,
     std::vector<double> &                      EntropicEnergyVector,
@@ -506,9 +503,9 @@ namespace dftfe
         MPI_Barrier(d_mpi_communicator);
         MPI_Barrier(d_interBandGroupComm);
         MPI_Barrier(d_interpoolcomm);
-        step_time     = MPI_Wtime();
-        KineticEnergy = velocityVerlet(
-          velocity, displacements, atomMass, force);
+        step_time = MPI_Wtime();
+        KineticEnergy =
+          velocityVerlet(velocity, displacements, atomMass, force);
         GroundStateEnergyvalue = dftPtr->getInternalEnergy();
         EntropicEnergyvalue    = dftPtr->getEntropicEnergy();
         KineticEnergyVector[d_TimeIndex - d_startingTimeStep] =
@@ -612,9 +609,9 @@ namespace dftfe
       }
   }
 
-  template <unsigned int FEOrder, unsigned int FEOrderElectro>
+
   void
-  molecularDynamicsClass<FEOrder, FEOrderElectro>::mdNVTrescaleThermostat(
+  molecularDynamicsClass::mdNVTrescaleThermostat(
     std::vector<double> &                      KineticEnergyVector,
     std::vector<double> &                      InternalEnergyVector,
     std::vector<double> &                      EntropicEnergyVector,
@@ -640,15 +637,14 @@ namespace dftfe
         step_time = MPI_Wtime();
 
 
-        KineticEnergy = velocityVerlet(
-          velocity, displacements, atomMass, force);
+        KineticEnergy =
+          velocityVerlet(velocity, displacements, atomMass, force);
         TemperatureFromVelocities =
           2.0 / 3.0 / double(d_numberGlobalCharges - 1) * KineticEnergy / (kB);
         if (d_TimeIndex % d_ThermostatTimeConstant == 0)
           {
-            KineticEnergy = RescaleVelocities(velocity,
-                                              atomMass,
-                                              TemperatureFromVelocities);
+            KineticEnergy =
+              RescaleVelocities(velocity, atomMass, TemperatureFromVelocities);
           }
 
         MPI_Barrier(d_mpi_communicator);
@@ -757,18 +753,17 @@ namespace dftfe
                       "DFT-FE Exit: Max Wall Time exceeded User Limit"));
       }
   }
-  template <unsigned int FEOrder, unsigned int FEOrderElectro>
+
   void
-  molecularDynamicsClass<FEOrder, FEOrderElectro>::
-    mdNVTnosehoverchainsThermostat(
-      std::vector<double> &                      KineticEnergyVector,
-      std::vector<double> &                      InternalEnergyVector,
-      std::vector<double> &                      EntropicEnergyVector,
-      std::vector<double> &                      TotalEnergyVector,
-      std::vector<dealii::Tensor<1, 3, double>> &displacements,
-      std::vector<double> &                      velocity,
-      std::vector<double> &                      force,
-      const std::vector<double> &                atomMass)
+  molecularDynamicsClass::mdNVTnosehoverchainsThermostat(
+    std::vector<double> &                      KineticEnergyVector,
+    std::vector<double> &                      InternalEnergyVector,
+    std::vector<double> &                      EntropicEnergyVector,
+    std::vector<double> &                      TotalEnergyVector,
+    std::vector<dealii::Tensor<1, 3, double>> &displacements,
+    std::vector<double> &                      velocity,
+    std::vector<double> &                      force,
+    const std::vector<double> &                atomMass)
   {
     pcout
       << "--------------mdNVTnosehoverchainsThermostat() called ------------------ "
@@ -820,8 +815,8 @@ namespace dftfe
           KineticEnergyVector[d_TimeIndex - 1 - d_startingTimeStep] * haToeV,
           d_startingTemperature);
 
-        KineticEnergy = velocityVerlet(
-          velocity, displacements, atomMass,  force);
+        KineticEnergy =
+          velocityVerlet(velocity, displacements, atomMass, force);
 
         MPI_Barrier(d_mpi_communicator);
         MPI_Barrier(d_interBandGroupComm);
@@ -971,9 +966,9 @@ namespace dftfe
       }
   }
 
-  template <unsigned int FEOrder, unsigned int FEOrderElectro>
+
   void
-  molecularDynamicsClass<FEOrder, FEOrderElectro>::mdNVTsvrThermostat(
+  molecularDynamicsClass::mdNVTsvrThermostat(
     std::vector<double> &                      KineticEnergyVector,
     std::vector<double> &                      InternalEnergyVector,
     std::vector<double> &                      EntropicEnergyVector,
@@ -1002,8 +997,8 @@ namespace dftfe
         step_time = MPI_Wtime();
 
 
-        KineticEnergy = velocityVerlet(
-          velocity, displacements, atomMass,  force);
+        KineticEnergy =
+          velocityVerlet(velocity, displacements, atomMass, force);
 
 
         MPI_Barrier(d_mpi_communicator);
@@ -1118,17 +1113,16 @@ namespace dftfe
 
 
 
-  template <unsigned int FEOrder, unsigned int FEOrderElectro>
   double
-  molecularDynamicsClass<FEOrder, FEOrderElectro>::velocityVerlet(
+  molecularDynamicsClass::velocityVerlet(
     std::vector<double> &                      v,
     std::vector<dealii::Tensor<1, 3, double>> &r,
     const std::vector<double> &                atomMass,
     std::vector<double> &                      forceOnAtoms)
   {
-    int    i;
-    double totalKE;
-    double KE                       = 0.0;
+    int                 i;
+    double              totalKE;
+    double              KE   = 0.0;
     double              dt   = d_TimeStep;
     double              dt_2 = dt / 2;
     double              COMM = 0.0;
@@ -1229,7 +1223,7 @@ namespace dftfe
     if (dftParameters::verbosity >= 1)
       {
         std::vector<std::vector<double>> atomLocations;
-        atomLocations = dftPtr->getAtomLocations();
+        atomLocations = dftPtr->getAtomLocationsCart();
         pcout << "Displacement  " << std::endl;
         for (int iCharge = 0; iCharge < d_numberGlobalCharges; ++iCharge)
           {
@@ -1362,12 +1356,10 @@ namespace dftfe
 
 
 
-  template <unsigned int FEOrder, unsigned int FEOrderElectro>
   double
-  molecularDynamicsClass<FEOrder, FEOrderElectro>::RescaleVelocities(
-    std::vector<double> &      v,
-    const std::vector<double> &M,
-    double                     Temperature)
+  molecularDynamicsClass::RescaleVelocities(std::vector<double> &      v,
+                                            const std::vector<double> &M,
+                                            double Temperature)
   {
     pcout << "Rescale Thermostat: Before rescaling temperature= " << Temperature
           << " K" << std::endl;
@@ -1392,15 +1384,14 @@ namespace dftfe
     return KE;
   }
 
-  template <unsigned int FEOrder, unsigned int FEOrderElectro>
+
   void
-  molecularDynamicsClass<FEOrder, FEOrderElectro>::NoseHoverChains(
-    std::vector<double> &v,
-    std::vector<double> &v_e,
-    std::vector<double> &e,
-    std::vector<double>  Q,
-    double               KE,
-    double               Temperature)
+  molecularDynamicsClass::NoseHoverChains(std::vector<double> &v,
+                                          std::vector<double> &v_e,
+                                          std::vector<double> &e,
+                                          std::vector<double>  Q,
+                                          double               KE,
+                                          double               Temperature)
   {
     double G1, G2, s;
     double L = 3 * (d_numberGlobalCharges - 1);
@@ -1439,11 +1430,9 @@ namespace dftfe
   }
 
 
-  template <unsigned int FEOrder, unsigned int FEOrderElectro>
+
   double
-  molecularDynamicsClass<FEOrder, FEOrderElectro>::svr(std::vector<double> &v,
-                                                       double               KE,
-                                                       double KEref)
+  molecularDynamicsClass::svr(std::vector<double> &v, double KE, double KEref)
   {
     double       alphasq;
     unsigned int Nf = 3 * (d_numberGlobalCharges - 1);
@@ -1521,9 +1510,8 @@ namespace dftfe
 
 
 
-  template <unsigned int FEOrder, unsigned int FEOrderElectro>
   void
-  molecularDynamicsClass<FEOrder, FEOrderElectro>::writeRestartFile(
+  molecularDynamicsClass::writeRestartFile(
     const std::vector<dealii::Tensor<1, 3, double>> &disp,
     const std::vector<double> &                      velocity,
     const std::vector<double> &                      force,
@@ -1587,7 +1575,7 @@ namespace dftfe
             fileVelocityData[iCharge][2] = velocity[3 * iCharge + 2];
           }
         std::string cordFolder = tempfolder + "/";
-        dftPtr->MDwriteDomainAndAtomCoordinates(cordFolder);
+        dftPtr->writeDomainAndAtomCoordinatesFloatingCharges(cordFolder);
         if (time > 1)
           pcout << "#RESTART NOTE: Positions:-"
                 << " Positions of TimeStep: " << time
@@ -1643,21 +1631,20 @@ namespace dftfe
   }
 
 
-  template <unsigned int FEOrder, unsigned int FEOrderElectro>
-  void
-    molecularDynamicsClass<FEOrder, FEOrderElectro>::InitialiseFromRestartFile(
-      std::vector<dealii::Tensor<1, 3, double>> &disp,
-      std::vector<double> &                      velocity,
-      std::vector<double> &                      force,
-      std::vector<double> &                      KE,
-      std::vector<double> &                      IE,
-      std::vector<double> &                      TE)
+
+  void molecularDynamicsClass::InitialiseFromRestartFile(
+    std::vector<dealii::Tensor<1, 3, double>> &disp,
+    std::vector<double> &                      velocity,
+    std::vector<double> &                      force,
+    std::vector<double> &                      KE,
+    std::vector<double> &                      IE,
+    std::vector<double> &                      TE)
   {
     // Initialise Position
     if (dftParameters::verbosity >= 1)
       {
         std::vector<std::vector<double>> atomLocations;
-        atomLocations = dftPtr->getAtomLocations();
+        atomLocations = dftPtr->getAtomLocationsCart();
         pcout << "Atom Locations from Restart " << std::endl;
         for (int iCharge = 0; iCharge < d_numberGlobalCharges; ++iCharge)
           {
@@ -1731,12 +1718,11 @@ namespace dftfe
     MPI_Barrier(d_interpoolcomm);
   }
 
-  template <unsigned int FEOrder, unsigned int FEOrderElectro>
+
   void
-  molecularDynamicsClass<FEOrder, FEOrderElectro>::InitialiseFromRestartNHCFile(
-     std::vector<double> &v_e,
-     std::vector<double> &e,
-     std::vector<double> &Q)
+  molecularDynamicsClass::InitialiseFromRestartNHCFile(std::vector<double> &v_e,
+                                                       std::vector<double> &e,
+                                                       std::vector<double> &Q)
 
   {
     if (dftParameters::reproducible_output == false)
@@ -1771,13 +1757,12 @@ namespace dftfe
   }
 
 
-  template <unsigned int FEOrder, unsigned int FEOrderElectro>
+
   void
-  molecularDynamicsClass<FEOrder, FEOrderElectro>::writeRestartNHCfile(
-    const std::vector<double> &v_e,
-    const std::vector<double> &e,
-    const std::vector<double> &Q,
-    const int                time)
+  molecularDynamicsClass::writeRestartNHCfile(const std::vector<double> &v_e,
+                                              const std::vector<double> &e,
+                                              const std::vector<double> &Q,
+                                              const int                  time)
 
   {
     if (dftParameters::reproducible_output == false)
@@ -1809,9 +1794,9 @@ namespace dftfe
         MPI_Barrier(d_interpoolcomm);
       }
   }
-  template <unsigned int FEOrder, unsigned int FEOrderElectro>
+
   void
-  molecularDynamicsClass<FEOrder, FEOrderElectro>::writeTotalDisplacementFile(
+  molecularDynamicsClass::writeTotalDisplacementFile(
     const std::vector<dealii::Tensor<1, 3, double>> &r,
     int                                              time)
   {
@@ -1839,7 +1824,7 @@ namespace dftfe
             std::ofstream outfile;
             outfile.open("TotalDisplacement.chk", std::ios_base::app);
             std::vector<std::vector<double>> atomLocations;
-            atomLocations = dftPtr->getAtomLocations();
+            atomLocations = dftPtr->getAtomLocationsCart();
             for (int iCharge = 0; iCharge < d_numberGlobalCharges; iCharge++)
               {
                 outfile << atomLocations[iCharge][0] << "  "
@@ -1876,9 +1861,9 @@ namespace dftfe
         MPI_Barrier(d_interpoolcomm);
       }
   }
-  template <unsigned int FEOrder, unsigned int FEOrderElectro>
+
   double
-  molecularDynamicsClass<FEOrder, FEOrderElectro>::NoseHoverExtendedLagrangian(
+  molecularDynamicsClass::NoseHoverExtendedLagrangian(
     const std::vector<double> &thermovelocity,
     const std::vector<double> &thermoposition,
     const std::vector<double> &thermomass,
@@ -1895,9 +1880,9 @@ namespace dftfe
             KE + PE;
     return (Hnose);
   }
-  template <unsigned int FEOrder, unsigned int FEOrderElectro>
+
   int
-  molecularDynamicsClass<FEOrder, FEOrderElectro>::checkRestart()
+  molecularDynamicsClass::checkRestart()
   {
     int time1 = 0;
 
@@ -1947,8 +1932,4 @@ namespace dftfe
       }
     return (time1);
   }
-
-
-
-#include "mdClass.inst.cc"
 } // namespace dftfe
