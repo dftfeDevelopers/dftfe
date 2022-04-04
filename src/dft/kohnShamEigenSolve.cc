@@ -317,7 +317,7 @@ dftClass<FEOrder, FEOrderElectro>::solveNoSCF()
         {
           const unsigned int flag =
             linearAlgebraOperations::pseudoGramSchmidtOrthogonalization(
-              d_elpaScala,
+              *d_elpaScala,
               d_eigenVectorsFlattenedSTL[(1 + dftParameters::spinPolarized) *
                                            kPointIndex +
                                          spinType],
@@ -795,7 +795,7 @@ dftClass<FEOrder, FEOrderElectro>::kohnShamEigenSpaceComputeNSCF(
 
   subspaceIterationSolver.solve(
     kohnShamDFTEigenOperator,
-    d_elpaScala,
+    *d_elpaScala,
     d_eigenVectorsFlattenedSTL[(1 + dftParameters::spinPolarized) *
                                  kPointIndex +
                                spinType],

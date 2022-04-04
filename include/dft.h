@@ -51,11 +51,14 @@
 #include <triangulationManager.h>
 #include <vselfBinsManager.h>
 #include <xc.h>
+#include "molecularDynamicsClass.h"
 #ifdef USE_PETSC
 #  include <petsc.h>
 
 #  include <slepceps.h>
 #endif
+
+
 
 namespace dftfe
 {
@@ -90,6 +93,9 @@ namespace dftfe
   template <unsigned int T1, unsigned int T2>
   class molecularDynamics;
 
+  // template <unsigned int T1, unsigned int T2>
+  // class molecularDynamicsClass;
+
 #endif /* DOXYGEN_SHOULD_SKIP_THIS */
 
   /**
@@ -118,6 +124,8 @@ namespace dftfe
 
     friend class molecularDynamics<FEOrder, FEOrderElectro>;
 
+    // friend class molecularDynamicsClass<FEOrder, FEOrderElectro>;
+
   public:
     /**
      * @brief dftClass constructor
@@ -129,9 +137,10 @@ namespace dftfe
      *  @param[in] interBandGroupComm  mpi_communicator for parallelization over
      * bands
      */
-    dftClass(const MPI_Comm &mpi_comm_replica,
-             const MPI_Comm &interpoolcomm,
-             const MPI_Comm &interBandGroupComm);
+    dftClass(const MPI_Comm &  mpi_comm_replica,
+             const MPI_Comm &  interpoolcomm,
+             const MPI_Comm &  interBandGroupComm,
+             elpaScalaManager *_d_elpaScala);
 
     /**
      * @brief dftClass destructor
@@ -164,6 +173,8 @@ namespace dftfe
                  const bool useSingleAtomSolutionOverride      = false,
                  const bool isMeshDeformed                     = false);
 
+
+
     /**
      * @brief Selects between only electronic field relaxation or combined electronic and geometry relaxation
      */
@@ -178,6 +189,7 @@ namespace dftfe
     /**
      * @brief Kohn-Sham ground-state solve using SCF iteration
      */
+    // double GroundStateEnergyvalue, EntropicEnergyvalue;
     void
     solve(const bool computeForces                 = true,
           const bool computeStress                 = true,
@@ -202,6 +214,13 @@ namespace dftfe
 
     void
     finalizeKohnShamDFTOperator();
+
+
+    double
+    getInternalEnergy();
+
+    double
+    getEntropicEnergy();
 
     /**
      * @brief Number of Kohn-Sham eigen values to be computed
@@ -278,10 +297,38 @@ namespace dftfe
     /**
      * @brief writes the current domain bounding vectors and atom coordinates to files, which are required for
      * geometry relaxation restart
+
      */
     void
     writeDomainAndAtomCoordinates();
+    /**
+     * @brief writes the current domain bounding vectors and atom coordinates to files, which are required for
+     * MD restart
+     * @param[in] Path The folder path to store the atom coordinates required
+     * during restart.
+     */
+    void
+    MDwriteDomainAndAtomCoordinates(const std::string Path);
+    /**
+     * @brief Gets the current atom Locations from dftPtr
+     *  \return atomSites vector that saves atomLocations data member of dft
+     * Class
+     */
+    std::vector<std::vector<double>>
+    getAtomLocations();
+    /**
+    * @brief Gets the current atom Locations from dftPtr
 
+    *  \return atoms vector that saves atomtypes data member of dft Class
+    */
+    std::set<unsigned int>
+    getAtomTypes();
+    /**
+     * @brief Gets the current atom Locations from dftPtr
+     *  \return atomforces vector that returns -ve of atom Forces from dft Class
+     */
+    std::vector<double>
+    getForceonAtoms();
 
   private:
     /**
@@ -1103,8 +1150,9 @@ namespace dftfe
     geoOptIon<FEOrder, FEOrderElectro> *        geoOptIonPtr;
     geoOptCell<FEOrder, FEOrderElectro> *       geoOptCellPtr;
     molecularDynamics<FEOrder, FEOrderElectro> *d_mdPtr;
+    // molecularDynamicsClass<FEOrder, FEOrderElectro> *d_mdClassPtr;
 
-    elpaScalaManager d_elpaScala;
+    elpaScalaManager *d_elpaScala;
 
     poissonSolverProblem<FEOrder, FEOrderElectro> d_phiTotalSolverProblem;
 
