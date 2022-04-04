@@ -400,6 +400,13 @@ IF (WITH_TESTING)
   # default 600sec is not enough for some tests, increase:
   SET (TEST_TIME_LIMIT 3600)
   #
+  IF (NOT DFTD3_FOUND AND NOT DFTD4_FOUND)
+    SET (TEST_PICKUP_REGEX "^([^d].+|d[^3-4].*)")
+  ELSEIF (NOT DFTD3_FOUND)
+    SET (TEST_PICKUP_REGEX "^([^d].+|d[^3].*)")
+  ELSEIF (NOT DFTD4_FOUND)
+    SET (TEST_PICKUP_REGEX "^([^d].+|d[^4].*)")
+  ENDIF()
   IF (WITH_COMPLEX)
      ADD_SUBDIRECTORY(tests/dft/pseudopotential/complex)
      ADD_SUBDIRECTORY(tests/dft/allElectron/complex)
