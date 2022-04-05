@@ -2066,7 +2066,8 @@ namespace dftfe
                                 interpoolcomm,
                                 interBandGroupComm);
 
-    dispersionCorrection dispersionCorr(mpi_communicator,
+    dispersionCorrection dispersionCorr(d_mpiCommParent,
+                                mpi_communicator,
                                 interpoolcomm,
                                 interBandGroupComm);
 

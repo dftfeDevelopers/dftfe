@@ -40,7 +40,8 @@ namespace dftfe
      * @brief Constructor
      *
      */
-    dispersionCorrection(const MPI_Comm &mpi_comm,
+    dispersionCorrection(const MPI_Comm &mpi_comm_parent,
+                     const MPI_Comm &mpi_comm_domain,
                      const MPI_Comm &interpool_comm,
                      const MPI_Comm &interBandGroupComm);
 
@@ -75,7 +76,8 @@ namespace dftfe
     std::array<double,9> d_latticeVectors;
 
 
-    const MPI_Comm mpi_communicator;
+    const MPI_Comm mpi_communicator_global;
+    const MPI_Comm mpi_communicator_domain;
     const MPI_Comm interpoolcomm;
     const MPI_Comm interBandGroupComm;
 

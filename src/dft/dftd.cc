@@ -64,7 +64,7 @@ namespace dftfe
     void
     dispersionCorrection::computeDFTDCorrection()
     {
-      if (dealii::Utilities::MPI::this_mpi_process(mpi_communicator) == 0 && dealii::Utilities::MPI::this_mpi_process(interpoolcomm) == 0 && dealii::Utilities::MPI::this_mpi_process(interBandGroupComm) ==0)
+      if (dealii::Utilities::MPI::this_mpi_process(mpi_communicator_global) == 0 )
       {
 
         bool periodic[3];
@@ -245,17 +245,11 @@ namespace dftfe
           }
         }
       }
-      d_energyDispersion = dealii::Utilities::MPI::broadcast(mpi_communicator, d_energyDispersion, 0);
-      d_energyDispersion = dealii::Utilities::MPI::broadcast(interBandGroupComm, d_energyDispersion, 0);
-      d_energyDispersion = dealii::Utilities::MPI::broadcast(interpoolcomm, d_energyDispersion, 0);
+      d_energyDispersion = dealii::Utilities::MPI::broadcast(mpi_communicator_global, d_energyDispersion, 0);
 
-      d_forceDispersion = dealii::Utilities::MPI::broadcast(mpi_communicator, d_forceDispersion, 0);
-      d_forceDispersion = dealii::Utilities::MPI::broadcast(interBandGroupComm, d_forceDispersion, 0);
-      d_forceDispersion = dealii::Utilities::MPI::broadcast(interpoolcomm, d_forceDispersion, 0);
+      d_forceDispersion = dealii::Utilities::MPI::broadcast(mpi_communicator_global, d_forceDispersion, 0);
 
-      d_stressDispersion = dealii::Utilities::MPI::broadcast(mpi_communicator, d_stressDispersion, 0);
-      d_stressDispersion = dealii::Utilities::MPI::broadcast(interBandGroupComm, d_stressDispersion, 0);
-      d_stressDispersion = dealii::Utilities::MPI::broadcast(interpoolcomm, d_stressDispersion, 0);
+      d_stressDispersion = dealii::Utilities::MPI::broadcast(mpi_communicator_global, d_stressDispersion, 0);
 
     }
 
@@ -264,10 +258,12 @@ namespace dftfe
 
 
 
-  dispersionCorrection::dispersionCorrection(const MPI_Comm &mpi_comm,
+  dispersionCorrection::dispersionCorrection(const MPI_Comm &mpi_comm_parent,
+                                    const MPI_Comm &mpi_comm_domain,
                                     const MPI_Comm &interpool_comm,
                                     const MPI_Comm &interbandgroup_comm)
-    : mpi_communicator(mpi_comm)
+    : mpi_communicator_global(mpi_comm_parent)
+    , mpi_communicator_domain(mpi_comm_domain)
     , interpoolcomm(interpool_comm)
     , interBandGroupComm(interbandgroup_comm)
   {}
