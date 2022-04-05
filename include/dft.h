@@ -119,8 +119,6 @@ namespace dftfe
 
     friend class symmetryClass<FEOrder, FEOrderElectro>;
 
-    // friend class molecularDynamics<FEOrder, FEOrderElectro>;
-
   public:
     /**
      * @brief dftClass constructor

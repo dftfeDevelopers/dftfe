@@ -35,7 +35,6 @@
 #include <linearAlgebraOperationsInternal.h>
 #include <meshMovementAffineTransform.h>
 #include <meshMovementGaussian.h>
-//#include <molecularDynamics.h>
 #include "molecularDynamicsClass.h"
 #include <poissonSolverProblem.h>
 #include <pseudoConverter.h>
@@ -178,24 +177,9 @@ namespace dftfe
 
     geoOptCellPtr =
       new geoOptCell<FEOrder, FEOrderElectro>(this, mpi_comm_parent);
-    // d_mdPtr =
-    // new molecularDynamics<FEOrder, FEOrderElectro>(this, mpi_comm_replica);
-    // d_mdClassPtr =
-    // new molecularDynamicsClass<FEOrder, FEOrderElectro>(this,
-    // mpi_comm_replica);
 
 
     d_isRestartGroundStateCalcFromChk = false;
-    /*
-    int error;
-    if (elpa_init(ELPA_API_VERSION) != ELPA_OK)
-      {
-        fprintf(
-          stderr,
-          "Error: ELPA API version not supported. Use API version 20181113.");
-        exit(1);
-      }
-    */
 
 #if defined(DFTFE_WITH_GPU)
     d_gpucclMpiCommDomainPtr = new GPUCCLWrapper;
@@ -217,18 +201,6 @@ namespace dftfe
     delete forcePtr;
     delete geoOptIonPtr;
     delete geoOptCellPtr;
-    // delete d_mdPtr;
-    // delete d_mdClassPtr;
-
-    /*
-      if (dftParameters::useELPA)
-        d_elpaScala.elpaDeallocateHandles(d_numEigenValues, d_numEigenValuesRR);
-
-      int error;
-      elpa_uninit(&error);
-      AssertThrow(error == ELPA_OK,
-                  dealii::ExcMessage("DFT-FE Error: elpa error."));
-      */
 #if defined(DFTFE_WITH_GPU)
     delete d_gpucclMpiCommDomainPtr;
 #endif
@@ -759,12 +731,6 @@ namespace dftfe
         pcout
           << "Atleast one atom has pseudopotential with nonlinear core correction"
           << std::endl;
-    /*
-    d_elpaScala.processGridELPASetup(d_numEigenValues,
-                                     d_numEigenValuesRR,
-                                     interBandGroupComm,
-                                     interpoolcomm);
-    */
     MPI_Barrier(d_mpiCommParent);
     computingTimerStandard.leave_subsection("Atomic system initialization");
   }
@@ -1603,84 +1569,76 @@ namespace dftfe
     if (dftParameters::meshAdaption)
       aposterioriMeshGenerate();
 
-    /*if (dftParameters::isBOMD)
+    if (!(dftParameters::chkType == 1 && dftParameters::restartFromChk &&
+          dftParameters::ionOptSolver == "CGPRP"))
       {
-       // d_mdPtr->run();
-        d_mdClassPtr->runMD();
-      }*/
-    else
-      {
-        if (!(dftParameters::chkType == 1 && dftParameters::restartFromChk &&
-              dftParameters::ionOptSolver == "CGPRP"))
-          {
-            solve(true, true, false, d_isRestartGroundStateCalcFromChk);
-          }
+        solve(true, true, false, d_isRestartGroundStateCalcFromChk);
+      }
 
-        d_isRestartGroundStateCalcFromChk = false;
-        if (dftParameters::isIonOpt && !dftParameters::isCellOpt)
+    d_isRestartGroundStateCalcFromChk = false;
+    if (dftParameters::isIonOpt && !dftParameters::isCellOpt)
+      {
+        d_atomLocationsInitial = atomLocations;
+        d_freeEnergyInitial    = d_freeEnergy;
+
+        geoOptIonPtr->init();
+        geoOptIonPtr->run();
+      }
+    else if (!dftParameters::isIonOpt && dftParameters::isCellOpt)
+      {
+        d_atomLocationsInitial = atomLocations;
+        d_freeEnergyInitial    = d_freeEnergy;
+
+        geoOptCellPtr->init();
+        geoOptCellPtr->run();
+      }
+    else if (dftParameters::isIonOpt && dftParameters::isCellOpt)
+      {
+        // staggered ion and cell relaxation
+
+        int ionGeoUpdates  = 100;
+        int cellGeoUpdates = 100;
+        int cycle          = 0;
+        while (ionGeoUpdates > 0 && cellGeoUpdates > 0)
           {
+            if (dftParameters::verbosity >= 1)
+              pcout
+                << std::endl
+                << "----------Staggered ionic and cell relaxation cycle no: "
+                << cycle << " start---------" << std::endl;
+
+            // relax ionic forces. Current forces are assumed
+            // to be already computed
             d_atomLocationsInitial = atomLocations;
             d_freeEnergyInitial    = d_freeEnergy;
-
             geoOptIonPtr->init();
-            geoOptIonPtr->run();
-          }
-        else if (!dftParameters::isIonOpt && dftParameters::isCellOpt)
-          {
-            d_atomLocationsInitial = atomLocations;
-            d_freeEnergyInitial    = d_freeEnergy;
+            ionGeoUpdates = geoOptIonPtr->run();
 
+            // redo trivial solve to compute current stress
+            // as stress is not computed during ionic relaxation
+            // for efficiency gains
+            initBoundaryConditions(false);
+            noRemeshRhoDataInit();
+            solve(false, true);
+
+            // relax cell stress
             geoOptCellPtr->init();
-            geoOptCellPtr->run();
-          }
-        else if (dftParameters::isIonOpt && dftParameters::isCellOpt)
-          {
-            // staggered ion and cell relaxation
-
-            int ionGeoUpdates  = 100;
-            int cellGeoUpdates = 100;
-            int cycle          = 0;
-            while (ionGeoUpdates > 0 && cellGeoUpdates > 0)
-              {
-                if (dftParameters::verbosity >= 1)
-                  pcout
-                    << std::endl
-                    << "----------Staggered ionic and cell relaxation cycle no: "
-                    << cycle << " start---------" << std::endl;
-
-                // relax ionic forces. Current forces are assumed
-                // to be already computed
-                d_atomLocationsInitial = atomLocations;
-                d_freeEnergyInitial    = d_freeEnergy;
-                geoOptIonPtr->init();
-                ionGeoUpdates = geoOptIonPtr->run();
-
-                // redo trivial solve to compute current stress
-                // as stress is not computed during ionic relaxation
-                // for efficiency gains
-                initBoundaryConditions(false);
-                noRemeshRhoDataInit();
-                solve(false, true);
-
-                // relax cell stress
-                geoOptCellPtr->init();
-                cellGeoUpdates = geoOptCellPtr->run();
-
-                if (dftParameters::verbosity >= 1)
-                  pcout
-                    << std::endl
-                    << "----------Staggered ionic and cell relaxation cycle no: "
-                    << cycle << " end-----------" << std::endl;
-
-                cycle++;
-              }
+            cellGeoUpdates = geoOptCellPtr->run();
 
             if (dftParameters::verbosity >= 1)
               pcout
                 << std::endl
-                << "--------- Staggered ionic and cell relaxation cycle completed in "
-                << cycle << " cycles-------" << std::endl;
+                << "----------Staggered ionic and cell relaxation cycle no: "
+                << cycle << " end-----------" << std::endl;
+
+            cycle++;
           }
+
+        if (dftParameters::verbosity >= 1)
+          pcout
+            << std::endl
+            << "--------- Staggered ionic and cell relaxation cycle completed in "
+            << cycle << " cycles-------" << std::endl;
       }
 
     if (dftParameters::writeDosFile)
