@@ -55,10 +55,12 @@ namespace dftfe
     /** @brief Constructor.
      *
      *  @param _dftPtr pointer to dftClass
-     *  @param mpi_comm_replica mpi_communicator of the current pool
+     *  @param mpi_comm_parent parent mpi_communicator
+     *  @param mpi_comm_domain domain decomposition mpi_communicator
      */
     forceClass(dftClass<FEOrder, FEOrderElectro> *_dftPtr,
-               const MPI_Comm &                   mpi_comm_replica);
+               const MPI_Comm &                   mpi_comm_parent,
+               const MPI_Comm &                   mpi_comm_domain);
 
     /** @brief initializes data structures inside forceClass assuming unmoved triangulation.
      *
@@ -1062,7 +1064,10 @@ namespace dftfe
     // std::map<dealii::CellId,std::set<unsigned int>>
     // d_cellIdToNonlocalAtomIdsLocalCompactSupportMap;
 
-    /// mpi_communicator in the current pool
+    /// domain decomposition mpi_communicator
+    const MPI_Comm d_mpiCommParent;
+
+    /// domain decomposition mpi_communicator
     const MPI_Comm mpi_communicator;
 
     /// number of mpi processes in the current pool

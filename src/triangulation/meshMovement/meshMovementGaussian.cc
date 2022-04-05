@@ -24,8 +24,9 @@
 namespace dftfe
 {
   meshMovementGaussianClass::meshMovementGaussianClass(
-    const MPI_Comm &mpi_comm_replica)
-    : meshMovementClass(mpi_comm_replica)
+    const MPI_Comm &mpi_comm_parent,
+    const MPI_Comm &mpi_comm_domain)
+    : meshMovementClass(mpi_comm_parent, mpi_comm_domain)
   {}
 
   std::pair<bool, double>

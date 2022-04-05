@@ -35,11 +35,13 @@ namespace dftfe
     /**
      * @brief Constructor
      *
-     * @param mpi_comm mpi communicator of domain decomposition
+     * @param mpi_comm_parent parent mpi communicator
+     * @param mpi_comm_domain mpi communicator of domain decomposition
      * @param interpool_comm mpi interpool communicator over k points
      * @param interBandGroupComm mpi interpool communicator over band groups
      */
-    energyCalculator(const MPI_Comm &mpi_comm,
+    energyCalculator(const MPI_Comm &mpi_comm_parent,
+                     const MPI_Comm &mpi_comm_domain,
                      const MPI_Comm &interpool_comm,
                      const MPI_Comm &interBandGroupComm);
 
@@ -327,6 +329,7 @@ namespace dftfe
 
 
   private:
+    const MPI_Comm d_mpiCommParent;
     const MPI_Comm mpi_communicator;
     const MPI_Comm interpoolcomm;
     const MPI_Comm interBandGroupComm;

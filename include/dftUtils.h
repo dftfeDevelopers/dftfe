@@ -166,7 +166,8 @@ namespace dftfe
     /** @brief Writes to vtu file only from the lowest pool id
      *
      *  @param  dataOut  DataOut class object
-     *  @param  intralpoolcomm mpi communicator of domain decomposition inside each pool
+     *  @param  mpiCommParent parent mpi communicator
+     *  @param  mpiCommDomain mpi communicator of domain decomposition inside each pool
      *  @param  interpoolcomm  mpi communicator across k point pools
      *  @param  interBandGroupComm  mpi communicator across band groups
      *  @param  fileName
@@ -174,7 +175,8 @@ namespace dftfe
     void
     writeDataVTUParallelLowestPoolId(const dealii::DoFHandler<3> &dofHandler,
                                      const dealii::DataOut<3> &   dataOut,
-                                     const MPI_Comm &             intrapoolcomm,
+                                     const MPI_Comm &             mpiCommParent,
+                                     const MPI_Comm &             mpiCommDomain,
                                      const MPI_Comm &             interpoolcomm,
                                      const MPI_Comm &   interBandGroupComm,
                                      const std::string &folderName,

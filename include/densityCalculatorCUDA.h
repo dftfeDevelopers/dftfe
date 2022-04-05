@@ -50,6 +50,7 @@ namespace dftfe
       std::map<dealii::CellId, std::vector<double>> *rhoValuesSpinPolarized,
       std::map<dealii::CellId, std::vector<double>> *gradRhoValuesSpinPolarized,
       const bool                                     isEvaluateGradRho,
+      const MPI_Comm &                               mpiCommParent,
       const MPI_Comm &                               interpoolcomm,
       const MPI_Comm &                               interBandGroupComm,
       const bool                                     spectrumSplit,

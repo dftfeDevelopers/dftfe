@@ -734,5 +734,5 @@ forceClass<FEOrder, FEOrderElectro>::printAtomsForces()
     }
 
   if (!dftParameters::reproducible_output)
-    dftUtils::writeDataIntoFile(forceData, "forces.txt");
+    dftUtils::writeDataIntoFile(forceData, "forces.txt", d_mpiCommParent);
 }

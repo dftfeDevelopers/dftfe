@@ -30,14 +30,12 @@
 #include <force.h>
 #include <geoOptCell.h>
 #include <geoOptIon.h>
-#include <interpolateFieldsFromPreviousMesh.h>
 #include <kohnShamDFTOperator.h>
 #include <linalg.h>
 #include <linearAlgebraOperations.h>
 #include <linearAlgebraOperationsInternal.h>
 #include <meshMovementAffineTransform.h>
 #include <meshMovementGaussian.h>
-//#include <molecularDynamics.h>
 #include "molecularDynamicsClass.h"
 #include <poissonSolverProblem.h>
 #include <pseudoConverter.h>
@@ -109,7 +107,8 @@ namespace dftfe
   //
   template <unsigned int FEOrder, unsigned int FEOrderElectro>
   dftClass<FEOrder, FEOrderElectro>::dftClass(
-    const MPI_Comm &  mpi_comm_replica,
+    const MPI_Comm &  mpi_comm_parent,
+    const MPI_Comm &  mpi_comm_domain,
     const MPI_Comm &  _interpoolcomm,
     const MPI_Comm &  _interBandGroupComm,
     elpaScalaManager *_d_elpaScala)
@@ -122,74 +121,71 @@ namespace dftfe
     FEEigen(FE_Q<3>(QGaussLobatto<1>(FEOrder + 1)), 1)
     ,
 #endif
-    mpi_communicator(mpi_comm_replica)
+    mpi_communicator(mpi_comm_domain)
+    , d_mpiCommParent(mpi_comm_parent)
     , interpoolcomm(_interpoolcomm)
     , interBandGroupComm(_interBandGroupComm)
-    , n_mpi_processes(Utilities::MPI::n_mpi_processes(mpi_comm_replica))
-    , this_mpi_process(Utilities::MPI::this_mpi_process(mpi_comm_replica))
+    , n_mpi_processes(Utilities::MPI::n_mpi_processes(mpi_comm_domain))
+    , this_mpi_process(Utilities::MPI::this_mpi_process(mpi_comm_domain))
     , numElectrons(0)
     , numLevels(0)
     , d_autoMesh(1)
-    , d_mesh(mpi_comm_replica, _interpoolcomm, _interBandGroupComm, FEOrder)
-    , d_affineTransformMesh(mpi_comm_replica)
-    , d_gaussianMovePar(mpi_comm_replica)
-    , d_vselfBinsManager(mpi_comm_replica)
-    , pcout(std::cout, (Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0))
+    , d_mesh(mpi_comm_parent,
+             mpi_comm_domain,
+             _interpoolcomm,
+             _interBandGroupComm,
+             FEOrder)
+    , d_affineTransformMesh(mpi_comm_parent, mpi_comm_domain)
+    , d_gaussianMovePar(mpi_comm_parent, mpi_comm_domain)
+    , d_vselfBinsManager(mpi_comm_parent, mpi_comm_domain)
+    , pcout(std::cout, (Utilities::MPI::this_mpi_process(mpi_comm_parent) == 0))
     //, d_elpaScala(mpi_comm_replica)
     , d_kohnShamDFTOperatorsInitialized(false)
-    , computing_timer(mpi_comm_replica,
+    , computing_timer(mpi_comm_domain,
                       pcout,
                       dftParameters::reproducible_output ||
                           dftParameters::verbosity < 4 ?
                         TimerOutput::never :
                         TimerOutput::summary,
                       TimerOutput::wall_times)
-    , computingTimerStandard(mpi_comm_replica,
+    , computingTimerStandard(mpi_comm_domain,
                              pcout,
                              dftParameters::reproducible_output ||
                                  dftParameters::verbosity < 1 ?
                                TimerOutput::never :
                                TimerOutput::every_call_and_summary,
                              TimerOutput::wall_times)
-    , d_subspaceIterationSolver(mpi_comm_replica, 0.0, 0.0, 0.0)
+    , d_subspaceIterationSolver(mpi_comm_parent, mpi_comm_domain, 0.0, 0.0, 0.0)
 #ifdef DFTFE_WITH_GPU
-    , d_subspaceIterationSolverCUDA(mpi_comm_replica, 0.0, 0.0, 0.0)
+    , d_subspaceIterationSolverCUDA(mpi_comm_parent,
+                                    mpi_comm_domain,
+                                    0.0,
+                                    0.0,
+                                    0.0)
 #endif
-    , d_phiTotalSolverProblem(mpi_comm_replica)
+    , d_phiTotalSolverProblem(mpi_comm_domain)
   {
     d_elpaScala = _d_elpaScala;
-    forcePtr = new forceClass<FEOrder, FEOrderElectro>(this, mpi_comm_replica);
+    forcePtr    = new forceClass<FEOrder, FEOrderElectro>(this,
+                                                       mpi_comm_parent,
+                                                       mpi_comm_domain);
     symmetryPtr = new symmetryClass<FEOrder, FEOrderElectro>(this,
-                                                             mpi_comm_replica,
+                                                             mpi_comm_parent,
+                                                             mpi_comm_domain,
                                                              _interpoolcomm);
     geoOptIonPtr =
-      new geoOptIon<FEOrder, FEOrderElectro>(this, mpi_comm_replica);
+      new geoOptIon<FEOrder, FEOrderElectro>(this, mpi_comm_parent);
 
     geoOptCellPtr =
-      new geoOptCell<FEOrder, FEOrderElectro>(this, mpi_comm_replica);
-    // d_mdPtr =
-    // new molecularDynamics<FEOrder, FEOrderElectro>(this, mpi_comm_replica);
-    // d_mdClassPtr =
-    // new molecularDynamicsClass<FEOrder, FEOrderElectro>(this,
-    // mpi_comm_replica);
+      new geoOptCell<FEOrder, FEOrderElectro>(this, mpi_comm_parent);
 
 
     d_isRestartGroundStateCalcFromChk = false;
-    /*
-    int error;
-    if (elpa_init(ELPA_API_VERSION) != ELPA_OK)
-      {
-        fprintf(
-          stderr,
-          "Error: ELPA API version not supported. Use API version 20181113.");
-        exit(1);
-      }
-    */
 
 #if defined(DFTFE_WITH_GPU)
     d_gpucclMpiCommDomainPtr = new GPUCCLWrapper;
     if (dftParameters::useGPUDirectAllReduce)
-      d_gpucclMpiCommDomainPtr->init(mpi_comm_replica);
+      d_gpucclMpiCommDomainPtr->init(mpi_comm_domain);
 #endif
     d_pspCutOff =
       dftParameters::reproducible_output ?
@@ -206,18 +202,6 @@ namespace dftfe
     delete forcePtr;
     delete geoOptIonPtr;
     delete geoOptCellPtr;
-    // delete d_mdPtr;
-    // delete d_mdClassPtr;
-
-    /*
-      if (dftParameters::useELPA)
-        d_elpaScala.elpaDeallocateHandles(d_numEigenValues, d_numEigenValuesRR);
-
-      int error;
-      elpa_uninit(&error);
-      AssertThrow(error == ELPA_OK,
-                  dealii::ExcMessage("DFT-FE Error: elpa error."));
-      */
 #if defined(DFTFE_WITH_GPU)
     delete d_gpucclMpiCommDomainPtr;
 #endif
@@ -733,11 +717,12 @@ namespace dftfe
       }
 
     int nlccFlag = 0;
-    if (Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0 &&
+    if (Utilities::MPI::this_mpi_process(d_mpiCommParent) == 0 &&
         dftParameters::isPseudopotential == true)
-      nlccFlag = pseudoUtils::convert(dftParameters::pseudoPotentialFile);
+      nlccFlag = pseudoUtils::convert(dftParameters::pseudoPotentialFile,
+                                      d_mpiCommParent);
 
-    nlccFlag = Utilities::MPI::sum(nlccFlag, MPI_COMM_WORLD);
+    nlccFlag = Utilities::MPI::sum(nlccFlag, d_mpiCommParent);
 
     if (nlccFlag > 0 && dftParameters::isPseudopotential == true)
       dftParameters::nonLinearCoreCorrection = true;
@@ -747,13 +732,7 @@ namespace dftfe
         pcout
           << "Atleast one atom has pseudopotential with nonlinear core correction"
           << std::endl;
-    /*
-    d_elpaScala.processGridELPASetup(d_numEigenValues,
-                                     d_numEigenValuesRR,
-                                     interBandGroupComm,
-                                     interpoolcomm);
-    */
-    MPI_Barrier(MPI_COMM_WORLD);
+    MPI_Barrier(d_mpiCommParent);
     computingTimerStandard.leave_subsection("Atomic system initialization");
   }
 
@@ -771,13 +750,13 @@ namespace dftfe
           matrix_free_data.get_quadrature(d_densityQuadratureId);
 
         double init_core;
-        MPI_Barrier(MPI_COMM_WORLD);
+        MPI_Barrier(d_mpiCommParent);
         init_core = MPI_Wtime();
 
         if (dftParameters::nonLinearCoreCorrection == true)
           initCoreRho();
 
-        MPI_Barrier(MPI_COMM_WORLD);
+        MPI_Barrier(d_mpiCommParent);
         init_core = MPI_Wtime() - init_core;
         if (dftParameters::verbosity >= 2)
           pcout
@@ -788,12 +767,12 @@ namespace dftfe
         if (updateNonlocalSparsity)
           {
             double init_nonlocal1;
-            MPI_Barrier(MPI_COMM_WORLD);
+            MPI_Barrier(d_mpiCommParent);
             init_nonlocal1 = MPI_Wtime();
 
             computeSparseStructureNonLocalProjectors_OV();
 
-            MPI_Barrier(MPI_COMM_WORLD);
+            MPI_Barrier(d_mpiCommParent);
             init_nonlocal1 = MPI_Wtime() - init_nonlocal1;
             if (dftParameters::verbosity >= 2)
               pcout
@@ -802,7 +781,7 @@ namespace dftfe
           }
 
         double init_nonlocal2;
-        MPI_Barrier(MPI_COMM_WORLD);
+        MPI_Barrier(d_mpiCommParent);
         init_nonlocal2 = MPI_Wtime();
 
 
@@ -810,7 +789,7 @@ namespace dftfe
 
         // forcePtr->initPseudoData();
 
-        MPI_Barrier(MPI_COMM_WORLD);
+        MPI_Barrier(d_mpiCommParent);
         init_nonlocal2 = MPI_Wtime() - init_nonlocal2;
         if (dftParameters::verbosity >= 2)
           pcout << "initPseudoPotentialAll: Time taken for non local psp init: "
@@ -963,8 +942,7 @@ namespace dftfe
   // dft init
   template <unsigned int FEOrder, unsigned int FEOrderElectro>
   void
-  dftClass<FEOrder, FEOrderElectro>::init(
-    const unsigned int usePreviousGroundStateFields)
+  dftClass<FEOrder, FEOrderElectro>::init()
   {
     computingTimerStandard.enter_subsection("KSDFT problem initialization");
 
@@ -1190,7 +1168,7 @@ namespace dftfe
     // solutions
     //
     double init_bc;
-    MPI_Barrier(MPI_COMM_WORLD);
+    MPI_Barrier(d_mpiCommParent);
     init_bc = MPI_Wtime();
 
 
@@ -1199,7 +1177,7 @@ namespace dftfe
     const bool updateOnlyBinsBc = !updateImagesAndKPointsAndVselfBins;
     initBoundaryConditions(updateOnlyBinsBc);
 
-    MPI_Barrier(MPI_COMM_WORLD);
+    MPI_Barrier(d_mpiCommParent);
     init_bc = MPI_Wtime() - init_bc;
     if (dftParameters::verbosity >= 2)
       pcout
@@ -1207,7 +1185,7 @@ namespace dftfe
         << init_bc << std::endl;
 
     double init_rho;
-    MPI_Barrier(MPI_COMM_WORLD);
+    MPI_Barrier(d_mpiCommParent);
     init_rho = MPI_Wtime();
 
     if (useSingleAtomSolutionOverride)
@@ -1273,7 +1251,7 @@ namespace dftfe
           }
       }
 
-    MPI_Barrier(MPI_COMM_WORLD);
+    MPI_Barrier(d_mpiCommParent);
     init_rho = MPI_Wtime() - init_rho;
     if (dftParameters::verbosity >= 2)
       pcout << "updateAtomPositionsAndMoveMesh: Time taken for initRho: "
@@ -1283,13 +1261,13 @@ namespace dftfe
     // reinitialize pseudopotential related data structures
     //
     double init_pseudo;
-    MPI_Barrier(MPI_COMM_WORLD);
+    MPI_Barrier(d_mpiCommParent);
     init_pseudo = MPI_Wtime();
 
     initPseudoPotentialAll(dftParameters::floatingNuclearCharges ? true :
                                                                    false);
 
-    MPI_Barrier(MPI_COMM_WORLD);
+    MPI_Barrier(d_mpiCommParent);
     init_pseudo = MPI_Wtime() - init_pseudo;
     if (dftParameters::verbosity >= 2)
       pcout << "Time taken for initPseudoPotentialAll: " << init_pseudo
@@ -1301,7 +1279,7 @@ namespace dftfe
                                   true);
 
     double init_ksoperator;
-    MPI_Barrier(MPI_COMM_WORLD);
+    MPI_Barrier(d_mpiCommParent);
     init_ksoperator = MPI_Wtime();
 
     if (isMeshDeformed)
@@ -1461,7 +1439,7 @@ namespace dftfe
         // solutions
         //
         double init_bc;
-        MPI_Barrier(MPI_COMM_WORLD);
+        MPI_Barrier(d_mpiCommParent);
         init_bc = MPI_Wtime();
 
 
@@ -1469,7 +1447,7 @@ namespace dftfe
         // second true option signals update is only for vself perturbation
         initBoundaryConditions(true, true);
 
-        MPI_Barrier(MPI_COMM_WORLD);
+        MPI_Barrier(d_mpiCommParent);
         init_bc = MPI_Wtime() - init_bc;
         if (dftParameters::verbosity >= 2)
           pcout
@@ -1592,84 +1570,76 @@ namespace dftfe
     if (dftParameters::meshAdaption)
       aposterioriMeshGenerate();
 
-    /*if (dftParameters::isBOMD)
+    if (!(dftParameters::chkType == 1 && dftParameters::restartFromChk &&
+          dftParameters::ionOptSolver == "CGPRP"))
       {
-       // d_mdPtr->run();
-        d_mdClassPtr->runMD();
-      }*/
-    else
-      {
-        if (!(dftParameters::chkType == 1 && dftParameters::restartFromChk &&
-              dftParameters::ionOptSolver == "CGPRP"))
-          {
-            solve(true, true, false, d_isRestartGroundStateCalcFromChk);
-          }
+        solve(true, true, false, d_isRestartGroundStateCalcFromChk);
+      }
 
-        d_isRestartGroundStateCalcFromChk = false;
-        if (dftParameters::isIonOpt && !dftParameters::isCellOpt)
+    d_isRestartGroundStateCalcFromChk = false;
+    if (dftParameters::isIonOpt && !dftParameters::isCellOpt)
+      {
+        d_atomLocationsInitial = atomLocations;
+        d_freeEnergyInitial    = d_freeEnergy;
+
+        geoOptIonPtr->init();
+        geoOptIonPtr->run();
+      }
+    else if (!dftParameters::isIonOpt && dftParameters::isCellOpt)
+      {
+        d_atomLocationsInitial = atomLocations;
+        d_freeEnergyInitial    = d_freeEnergy;
+
+        geoOptCellPtr->init();
+        geoOptCellPtr->run();
+      }
+    else if (dftParameters::isIonOpt && dftParameters::isCellOpt)
+      {
+        // staggered ion and cell relaxation
+
+        int ionGeoUpdates  = 100;
+        int cellGeoUpdates = 100;
+        int cycle          = 0;
+        while (ionGeoUpdates > 0 && cellGeoUpdates > 0)
           {
+            if (dftParameters::verbosity >= 1)
+              pcout
+                << std::endl
+                << "----------Staggered ionic and cell relaxation cycle no: "
+                << cycle << " start---------" << std::endl;
+
+            // relax ionic forces. Current forces are assumed
+            // to be already computed
             d_atomLocationsInitial = atomLocations;
             d_freeEnergyInitial    = d_freeEnergy;
-
             geoOptIonPtr->init();
-            geoOptIonPtr->run();
-          }
-        else if (!dftParameters::isIonOpt && dftParameters::isCellOpt)
-          {
-            d_atomLocationsInitial = atomLocations;
-            d_freeEnergyInitial    = d_freeEnergy;
+            ionGeoUpdates = geoOptIonPtr->run();
 
+            // redo trivial solve to compute current stress
+            // as stress is not computed during ionic relaxation
+            // for efficiency gains
+            initBoundaryConditions(false);
+            noRemeshRhoDataInit();
+            solve(false, true);
+
+            // relax cell stress
             geoOptCellPtr->init();
-            geoOptCellPtr->run();
-          }
-        else if (dftParameters::isIonOpt && dftParameters::isCellOpt)
-          {
-            // staggered ion and cell relaxation
-
-            int ionGeoUpdates  = 100;
-            int cellGeoUpdates = 100;
-            int cycle          = 0;
-            while (ionGeoUpdates > 0 && cellGeoUpdates > 0)
-              {
-                if (dftParameters::verbosity >= 1)
-                  pcout
-                    << std::endl
-                    << "----------Staggered ionic and cell relaxation cycle no: "
-                    << cycle << " start---------" << std::endl;
-
-                // relax ionic forces. Current forces are assumed
-                // to be already computed
-                d_atomLocationsInitial = atomLocations;
-                d_freeEnergyInitial    = d_freeEnergy;
-                geoOptIonPtr->init();
-                ionGeoUpdates = geoOptIonPtr->run();
-
-                // redo trivial solve to compute current stress
-                // as stress is not computed during ionic relaxation
-                // for efficiency gains
-                initBoundaryConditions(false);
-                noRemeshRhoDataInit();
-                solve(false, true);
-
-                // relax cell stress
-                geoOptCellPtr->init();
-                cellGeoUpdates = geoOptCellPtr->run();
-
-                if (dftParameters::verbosity >= 1)
-                  pcout
-                    << std::endl
-                    << "----------Staggered ionic and cell relaxation cycle no: "
-                    << cycle << " end-----------" << std::endl;
-
-                cycle++;
-              }
+            cellGeoUpdates = geoOptCellPtr->run();
 
             if (dftParameters::verbosity >= 1)
               pcout
                 << std::endl
-                << "--------- Staggered ionic and cell relaxation cycle completed in "
-                << cycle << " cycles-------" << std::endl;
+                << "----------Staggered ionic and cell relaxation cycle no: "
+                << cycle << " end-----------" << std::endl;
+
+            cycle++;
           }
+
+        if (dftParameters::verbosity >= 1)
+          pcout
+            << std::endl
+            << "--------- Staggered ionic and cell relaxation cycle completed in "
+            << cycle << " cycles-------" << std::endl;
       }
 
     if (dftParameters::writeDosFile)
@@ -1703,7 +1673,7 @@ namespace dftfe
   {
     TimerOutput::Scope scope(computing_timer, "kohnShamDFTOperator init");
     double             init_ksoperator;
-    MPI_Barrier(MPI_COMM_WORLD);
+    MPI_Barrier(d_mpiCommParent);
     init_ksoperator = MPI_Wtime();
 
     if (d_kohnShamDFTOperatorsInitialized)
@@ -1711,12 +1681,13 @@ namespace dftfe
 
     d_kohnShamDFTOperatorPtr =
       new kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>(this,
+                                                            d_mpiCommParent,
                                                             mpi_communicator);
 
 #ifdef DFTFE_WITH_GPU
     d_kohnShamDFTOperatorCUDAPtr =
       new kohnShamDFTOperatorCUDAClass<FEOrder, FEOrderElectro>(
-        this, mpi_communicator);
+        this, d_mpiCommParent, mpi_communicator);
 #endif
 
     kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>
@@ -1813,7 +1784,7 @@ namespace dftfe
 
     d_kohnShamDFTOperatorsInitialized = true;
 
-    MPI_Barrier(MPI_COMM_WORLD);
+    MPI_Barrier(d_mpiCommParent);
     init_ksoperator = MPI_Wtime() - init_ksoperator;
     if (dftParameters::verbosity >= 2)
       pcout << "init: Time taken for kohnShamDFTOperator class initialization: "
@@ -1884,7 +1855,9 @@ namespace dftfe
       d_eigenVectorsFlattenedSTL;
 
     // set up linear solver
-    dealiiLinearSolver dealiiCGSolver(mpi_communicator, dealiiLinearSolver::CG);
+    dealiiLinearSolver dealiiCGSolver(d_mpiCommParent,
+                                      mpi_communicator,
+                                      dealiiLinearSolver::CG);
 
 
     computingTimerStandard.enter_subsection("Density perturbation computation");
@@ -2088,7 +2061,8 @@ namespace dftfe
       matrix_free_data.get_quadrature(d_densityQuadratureId);
 
     // computingTimerStandard.enter_subsection("Total scf solve");
-    energyCalculator energyCalc(mpi_communicator,
+    energyCalculator energyCalc(d_mpiCommParent,
+                                mpi_communicator,
                                 interpoolcomm,
                                 interBandGroupComm);
 
@@ -2097,14 +2071,17 @@ namespace dftfe
                                 interBandGroupComm);
 
     // set up linear solver
-    dealiiLinearSolver dealiiCGSolver(mpi_communicator, dealiiLinearSolver::CG);
+    dealiiLinearSolver dealiiCGSolver(d_mpiCommParent,
+                                      mpi_communicator,
+                                      dealiiLinearSolver::CG);
 
     //
     // set up solver functions for Helmholtz to be used only when Kerker mixing
     // is on use higher polynomial order dofHandler
     //
     kerkerSolverProblem<C_rhoNodalPolyOrder<FEOrder, FEOrderElectro>()>
-      kerkerPreconditionedResidualSolverProblem(mpi_communicator);
+      kerkerPreconditionedResidualSolverProblem(d_mpiCommParent,
+                                                mpi_communicator);
     if (dftParameters::mixingMethod == "ANDERSON_WITH_KERKER")
       kerkerPreconditionedResidualSolverProblem.init(
         d_matrixFreeDataPRefined,
@@ -2245,7 +2222,7 @@ namespace dftfe
     while ((norm > dftParameters::selfConsistentSolverTolerance) &&
            (scfIter < dftParameters::numSCFIterations))
       {
-        dealii::Timer local_timer(MPI_COMM_WORLD, true);
+        dealii::Timer local_timer(d_mpiCommParent, true);
         if (dftParameters::verbosity >= 1)
           pcout
             << "************************Begin Self-Consistent-Field Iteration: "
@@ -4034,6 +4011,7 @@ namespace dftfe
 
     dftUtils::writeDataVTUParallelLowestPoolId(dofHandlerEigen,
                                                data_outEigen,
+                                               d_mpiCommParent,
                                                mpi_communicator,
                                                interpoolcomm,
                                                interBandGroupComm,
@@ -4139,6 +4117,7 @@ namespace dftfe
 
     dftUtils::writeDataVTUParallelLowestPoolId(d_dofHandlerRhoNodal,
                                                dataOutRho,
+                                               d_mpiCommParent,
                                                mpi_communicator,
                                                interpoolcomm,
                                                interBandGroupComm,
@@ -4194,7 +4173,7 @@ namespace dftfe
                 0,
                 interpoolcomm);
     //
-    if (Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0)
+    if (Utilities::MPI::this_mpi_process(d_mpiCommParent) == 0)
       {
         FILE *pFile;
         pFile = fopen("bands.out", "w");
@@ -4226,44 +4205,58 @@ namespace dftfe
               }
           }
       }
-    MPI_Barrier(MPI_COMM_WORLD);
+    MPI_Barrier(d_mpiCommParent);
     //
   }
 
   template <unsigned int FEOrder, unsigned int FEOrderElectro>
   std::vector<std::vector<double>>
-  dftClass<FEOrder, FEOrderElectro>::getAtomLocations()
+  dftClass<FEOrder, FEOrderElectro>::getAtomLocationsCart() const
   {
     return atomLocations;
   }
 
   template <unsigned int FEOrder, unsigned int FEOrderElectro>
+  std::vector<std::vector<double>>
+  dftClass<FEOrder, FEOrderElectro>::getAtomLocationsFrac() const
+  {
+    return atomLocationsFractional;
+  }
+
+  template <unsigned int FEOrder, unsigned int FEOrderElectro>
   std::set<unsigned int>
-  dftClass<FEOrder, FEOrderElectro>::getAtomTypes()
+  dftClass<FEOrder, FEOrderElectro>::getAtomTypes() const
   {
     return atomTypes;
   }
 
   template <unsigned int FEOrder, unsigned int FEOrderElectro>
   std::vector<double>
-  dftClass<FEOrder, FEOrderElectro>::getForceonAtoms()
+  dftClass<FEOrder, FEOrderElectro>::getForceonAtoms() const
   {
     return (forcePtr->getAtomsForces());
   }
 
   template <unsigned int FEOrder, unsigned int FEOrderElectro>
   double
-  dftClass<FEOrder, FEOrderElectro>::getInternalEnergy()
+  dftClass<FEOrder, FEOrderElectro>::getInternalEnergy() const
   {
     return d_groundStateEnergy;
   }
+
   template <unsigned int FEOrder, unsigned int FEOrderElectro>
   double
-  dftClass<FEOrder, FEOrderElectro>::getEntropicEnergy()
+  dftClass<FEOrder, FEOrderElectro>::getEntropicEnergy() const
   {
     return d_entropicEnergy;
   }
 
+  template <unsigned int FEOrder, unsigned int FEOrderElectro>
+  double
+  dftClass<FEOrder, FEOrderElectro>::getFreeEnergy() const
+  {
+    return d_freeEnergy;
+  }
 
 #include "dft.inst.cc"
 } // namespace dftfe

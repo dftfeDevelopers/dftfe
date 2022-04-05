@@ -38,15 +38,17 @@ namespace dftfe
   template <unsigned int FEOrder, unsigned int FEOrderElectro>
   symmetryClass<FEOrder, FEOrderElectro>::symmetryClass(
     dftClass<FEOrder, FEOrderElectro> *_dftPtr,
-    const MPI_Comm &                   mpi_comm_replica,
+    const MPI_Comm &                   mpi_comm_parent,
+    const MPI_Comm &                   mpi_comm_domain,
     const MPI_Comm &                   _interpoolcomm)
     : dftPtr(_dftPtr)
     , FE(QGaussLobatto<1>(FEOrder + 1))
-    , mpi_communicator(mpi_comm_replica)
+    , d_mpiCommParent(mpi_comm_parent)
+    , mpi_communicator(mpi_comm_domain)
     , interpoolcomm(_interpoolcomm)
-    , n_mpi_processes(Utilities::MPI::n_mpi_processes(mpi_comm_replica))
-    , this_mpi_process(Utilities::MPI::this_mpi_process(mpi_comm_replica))
-    , pcout(std::cout, (Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0))
+    , n_mpi_processes(Utilities::MPI::n_mpi_processes(mpi_comm_domain))
+    , this_mpi_process(Utilities::MPI::this_mpi_process(mpi_comm_domain))
+    , pcout(std::cout, (Utilities::MPI::this_mpi_process(mpi_comm_parent) == 0))
     , computing_timer(pcout, TimerOutput::never, TimerOutput::wall_times)
   {}
   //================================================================================================================================================

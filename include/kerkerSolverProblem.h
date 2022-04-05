@@ -35,7 +35,8 @@ namespace dftfe
   {
   public:
     /// Constructor
-    kerkerSolverProblem(const MPI_Comm &mpi_comm);
+    kerkerSolverProblem(const MPI_Comm &mpi_comm_parent,
+                        const MPI_Comm &mpi_comm_domain);
 
 
 
@@ -174,6 +175,7 @@ namespace dftfe
     const dealii::AffineConstraints<double> *d_constraintMatrixPRefinedPtr;
     const dealii::MatrixFree<3, double> *    d_matrixFreeDataPRefinedPtr;
 
+    const MPI_Comm             d_mpiCommParent;
     const MPI_Comm             mpi_communicator;
     const unsigned int         n_mpi_processes;
     const unsigned int         this_mpi_process;

@@ -31,15 +31,16 @@ namespace dftfe
     createParallelConstraintMatrixFromSerial(
       const dealii::Triangulation<3, 3> &     serTria,
       const dealii::DoFHandler<3> &           dofHandlerPar,
-      const MPI_Comm &                        mpi_comm,
+      const MPI_Comm &                        mpi_comm_parent,
+      const MPI_Comm &                        mpi_comm_domain,
       const std::vector<std::vector<double>> &domainBoundingVectors,
       dealii::AffineConstraints<double> &     periodicHangingConstraints,
       dealii::AffineConstraints<double> &     onlyHangingConstraints)
     {
       dealii::ConditionalOStream pcout(
         std::cout,
-        (dealii::Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0));
-      dealii::TimerOutput computing_timer(mpi_comm,
+        (dealii::Utilities::MPI::this_mpi_process(mpi_comm_parent) == 0));
+      dealii::TimerOutput computing_timer(mpi_comm_domain,
                                           pcout,
                                           dftParameters::reproducible_output ||
                                               dftParameters::verbosity < 4 ?
@@ -103,12 +104,12 @@ namespace dftfe
                     numGlobalDofs,
                     DEAL_II_DOF_INDEX_MPI_TYPE,
                     MPI_SUM,
-                    mpi_comm);
+                    mpi_comm_domain);
 
       dofHandlerSer.renumber_dofs(newDofNumbers);
 
       if (dftParameters::verbosity >= 4)
-        dftUtils::printCurrentMemoryUsage(mpi_comm,
+        dftUtils::printCurrentMemoryUsage(mpi_comm_domain,
                                           "Renumbered serial dofHandler");
 
       dealii::AffineConstraints<double> constraintsHangingSer;
@@ -120,7 +121,7 @@ namespace dftfe
         constraintsHangingSer);
       if (dftParameters::verbosity >= 4)
         dftUtils::printCurrentMemoryUsage(
-          mpi_comm, "Created hanging node constraints serial");
+          mpi_comm_domain, "Created hanging node constraints serial");
 
       dealii::AffineConstraints<double> constraintsPeriodicHangingSer;
       constraintsPeriodicHangingSer.merge(
@@ -174,7 +175,7 @@ namespace dftfe
 
       if (dftParameters::verbosity >= 4)
         dftUtils::printCurrentMemoryUsage(
-          mpi_comm, "Created periodic constraints serial");
+          mpi_comm_domain, "Created periodic constraints serial");
 
       periodicHangingConstraints.clear();
       periodicHangingConstraints.reinit(locally_relevant_dofs_par);

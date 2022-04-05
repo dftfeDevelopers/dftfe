@@ -34,13 +34,13 @@ namespace dftfe
   template <unsigned int FEOrder, unsigned int FEOrderElectro>
   geoOptCell<FEOrder, FEOrderElectro>::geoOptCell(
     dftClass<FEOrder, FEOrderElectro> *_dftPtr,
-    const MPI_Comm &                   mpi_comm_replica)
+    const MPI_Comm &                   mpi_comm_parent)
     : dftPtr(_dftPtr)
-    , mpi_communicator(mpi_comm_replica)
-    , n_mpi_processes(Utilities::MPI::n_mpi_processes(mpi_comm_replica))
-    , this_mpi_process(Utilities::MPI::this_mpi_process(mpi_comm_replica))
+    , mpi_communicator(mpi_comm_parent)
+    , n_mpi_processes(Utilities::MPI::n_mpi_processes(mpi_comm_parent))
+    , this_mpi_process(Utilities::MPI::this_mpi_process(mpi_comm_parent))
     , pcout(std::cout,
-            (Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0 &&
+            (Utilities::MPI::this_mpi_process(mpi_comm_parent) == 0 &&
              !dftParameters::reproducible_output))
   {}
 
@@ -202,7 +202,7 @@ namespace dftfe
     const unsigned int maxLineSearchIter =
       dftParameters::maxLineSearchIterCGPRP;
     const unsigned int debugLevel =
-      Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0 ?
+      Utilities::MPI::this_mpi_process(mpi_communicator) == 0 ?
         dftParameters::verbosity :
         0;
 
@@ -399,8 +399,11 @@ namespace dftfe
       }
 
     // for synchronization
-    MPI_Bcast(
-      &(bcastSolution[0]), bcastSolution.size(), MPI_DOUBLE, 0, MPI_COMM_WORLD);
+    MPI_Bcast(&(bcastSolution[0]),
+              bcastSolution.size(),
+              MPI_DOUBLE,
+              0,
+              mpi_communicator);
 
     Tensor<2, 3, double> strainEpsilonNew = d_strainEpsilon;
 
@@ -466,6 +469,13 @@ namespace dftfe
   geoOptCell<FEOrder, FEOrderElectro>::save()
   {
     dftPtr->writeDomainAndAtomCoordinates();
+  }
+
+  template <unsigned int FEOrder, unsigned int FEOrderElectro>
+  const MPI_Comm &
+  geoOptCell<FEOrder, FEOrderElectro>::getMPICommunicator()
+  {
+    return mpi_communicator;
   }
 
   template <unsigned int FEOrder, unsigned int FEOrderElectro>

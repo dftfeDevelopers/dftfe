@@ -148,6 +148,7 @@ void dftClass<FEOrder, FEOrderElectro>::createpRefinedDofHandler(
       vectorTools::createParallelConstraintMatrixFromSerial(
         d_mesh.getSerialMeshUnmoved(),
         d_dofHandlerPRefined,
+        d_mpiCommParent,
         mpi_communicator,
         d_domainBoundingVectors,
         d_constraintsPRefined,
@@ -156,6 +157,7 @@ void dftClass<FEOrder, FEOrderElectro>::createpRefinedDofHandler(
       vectorTools::createParallelConstraintMatrixFromSerial(
         d_mesh.getSerialMeshUnmoved(),
         d_dofHandlerRhoNodal,
+        d_mpiCommParent,
         mpi_communicator,
         d_domainBoundingVectors,
         d_constraintsRhoNodal,
@@ -247,7 +249,7 @@ dftClass<FEOrder, FEOrderElectro>::initpRefinedObjects(
   d_binsStartDofHandlerIndexElectro = d_constraintsVectorElectro.size();
 
   double init_bins;
-  MPI_Barrier(MPI_COMM_WORLD);
+  MPI_Barrier(d_mpiCommParent);
   init_bins = MPI_Wtime();
   //
   // Dirichlet BC constraints on the boundary of fictitious ball
@@ -287,7 +289,7 @@ dftClass<FEOrder, FEOrderElectro>::initpRefinedObjects(
       computing_timer.leave_subsection("Create atom bins");
     }
 
-  MPI_Barrier(MPI_COMM_WORLD);
+  MPI_Barrier(d_mpiCommParent);
   init_bins = MPI_Wtime() - init_bins;
   if (dftParameters::verbosity >= 4)
     pcout

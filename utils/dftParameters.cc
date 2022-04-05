@@ -1185,7 +1185,7 @@ namespace dftfe
     }
 
     void
-    parse_parameters(ParameterHandler &prm)
+    parse_parameters(ParameterHandler &prm, const MPI_Comm &mpi_comm_parent)
     {
       dftParameters::verbosity           = prm.get_integer("VERBOSITY");
       dftParameters::reproducible_output = prm.get_bool("REPRODUCIBLE OUTPUT");
@@ -1560,18 +1560,19 @@ namespace dftfe
         }
 
       //
-      check_print_parameters(prm);
-      setAutoParameters();
+      check_print_parameters(prm, mpi_comm_parent);
+      setAutoParameters(mpi_comm_parent);
       setXCFamilyType();
     }
 
 
 
     void
-    check_print_parameters(const dealii::ParameterHandler &prm)
+    check_print_parameters(const dealii::ParameterHandler &prm,
+                           const MPI_Comm &                mpi_comm_parent)
     {
       if (dftParameters::verbosity >= 1 &&
-          Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0)
+          Utilities::MPI::this_mpi_process(mpi_comm_parent) == 0)
         {
           std::cout
             << "=========================================================================================================="
@@ -1630,13 +1631,13 @@ namespace dftfe
 
       const bool printParametersToFile = false;
       if (printParametersToFile &&
-          Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0)
+          Utilities::MPI::this_mpi_process(mpi_comm_parent) == 0)
         {
           prm.print_parameters(std::cout, ParameterHandler::OutputStyle::LaTeX);
           exit(0);
         }
 
-      if (Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0 &&
+      if (Utilities::MPI::this_mpi_process(mpi_comm_parent) == 0 &&
           dftParameters::verbosity >= 1)
         {
           prm.print_parameters(std::cout, ParameterHandler::ShortText);
@@ -1727,7 +1728,7 @@ namespace dftfe
             "DFT-FE Error: START MAGNETIZATION =+-0.5 only applicable in case of CONSTRAINT MAGNETIZATION set to ON."));
 
       if (dftParameters::verbosity >= 1 &&
-          Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0)
+          Utilities::MPI::this_mpi_process(mpi_comm_parent) == 0)
         if (dftParameters::constraintMagnetization)
           std::cout
             << " WARNING: CONSTRAINT MAGNETIZATION is ON. A fixed occupation will be used no matter what temperature is provided at input"
@@ -1758,7 +1759,7 @@ namespace dftfe
 
 
     void
-    setAutoParameters()
+    setAutoParameters(const MPI_Comm &mpi_comm_parent)
     {
       //
       // Automated choice of mesh related parameters
@@ -1830,7 +1831,7 @@ namespace dftfe
           dftParameters::orthogType == "Auto")
         {
           if (dftParameters::verbosity >= 1 &&
-              Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0)
+              Utilities::MPI::this_mpi_process(mpi_comm_parent) == 0)
             std::cout
               << "Setting ORTHOGONALIZATION TYPE=CGS for pseudopotential calculations "
               << std::endl;
@@ -1841,7 +1842,7 @@ namespace dftfe
         {
 #ifdef USE_PETSC;
           if (dftParameters::verbosity >= 1 &&
-              Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0)
+              Utilities::MPI::this_mpi_process(mpi_comm_parent) == 0)
             std::cout
               << "Setting ORTHOGONALIZATION TYPE=GS for all-electron calculations as DFT-FE is linked to dealii with Petsc and Slepc"
               << std::endl;
@@ -1849,7 +1850,7 @@ namespace dftfe
           dftParameters::orthogType = "GS";
 #else
           if (dftParameters::verbosity >= 1 &&
-              Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0)
+              Utilities::MPI::this_mpi_process(mpi_comm_parent) == 0)
             std::cout
               << "Setting ORTHOGONALIZATION TYPE=CGS for all-electron calculations as DFT-FE is not linked to dealii with Petsc and Slepc "
               << std::endl;
@@ -1870,7 +1871,7 @@ namespace dftfe
                dftParameters::orthogType == "Auto" && dftParameters::useGPU)
         {
           if (dftParameters::verbosity >= 1 &&
-              Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0)
+              Utilities::MPI::this_mpi_process(mpi_comm_parent) == 0)
             std::cout
               << "Setting ORTHOGONALIZATION TYPE=CGS for all-electron calculations on GPUs "
               << std::endl;

@@ -226,6 +226,7 @@ namespace dftfe
       std::map<dealii::CellId, std::vector<double>> *rhoValuesSpinPolarized,
       std::map<dealii::CellId, std::vector<double>> *gradRhoValuesSpinPolarized,
       const bool                                     isEvaluateGradRho,
+      const MPI_Comm &                               mpiCommParent,
       const MPI_Comm &                               interpoolcomm,
       const MPI_Comm &                               interBandGroupComm,
       const bool                                     spectrumSplit,
@@ -235,9 +236,9 @@ namespace dftfe
         AssertThrow(!isEvaluateGradRho, dftUtils::ExcNotImplementedYet());
 
       int this_process;
-      MPI_Comm_rank(MPI_COMM_WORLD, &this_process);
+      MPI_Comm_rank(mpiCommParent, &this_process);
       cudaDeviceSynchronize();
-      MPI_Barrier(MPI_COMM_WORLD);
+      MPI_Barrier(mpiCommParent);
       double             gpu_time   = MPI_Wtime();
       const unsigned int numKPoints = kPointWeights.size();
 
@@ -1292,7 +1293,7 @@ namespace dftfe
         }
 
       cudaDeviceSynchronize();
-      MPI_Barrier(MPI_COMM_WORLD);
+      MPI_Barrier(mpiCommParent);
       gpu_time = MPI_Wtime() - gpu_time;
 
       if (this_process == 0 && dftParameters::verbosity >= 2)
@@ -1322,6 +1323,7 @@ namespace dftfe
       std::map<dealii::CellId, std::vector<double>> *rhoValuesSpinPolarized,
       std::map<dealii::CellId, std::vector<double>> *gradRhoValuesSpinPolarized,
       const bool                                     isEvaluateGradRho,
+      const MPI_Comm &                               mpiCommParent,
       const MPI_Comm &                               interpoolcomm,
       const MPI_Comm &                               interBandGroupComm,
       const bool                                     spectrumSplit,

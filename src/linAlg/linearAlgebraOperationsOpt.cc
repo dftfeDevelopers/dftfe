@@ -621,6 +621,7 @@ namespace dftfe
                     elpaScalaManager &   elpaScala,
                     std::vector<T> &     X,
                     const unsigned int   numberWaveFunctions,
+                    const MPI_Comm &     mpiCommParent,
                     const MPI_Comm &     interBandGroupComm,
                     const MPI_Comm &     mpi_communicator,
                     std::vector<double> &eigenValues,
@@ -628,7 +629,7 @@ namespace dftfe
     {
       dealii::ConditionalOStream pcout(
         std::cout,
-        (dealii::Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0));
+        (dealii::Utilities::MPI::this_mpi_process(mpiCommParent) == 0));
 
       dealii::TimerOutput computing_timer(mpi_communicator,
                                           pcout,
@@ -967,6 +968,7 @@ namespace dftfe
                  elpaScalaManager &   elpaScala,
                  std::vector<T> &     X,
                  const unsigned int   numberWaveFunctions,
+                 const MPI_Comm &     mpiCommParent,
                  const MPI_Comm &     interBandGroupComm,
                  const MPI_Comm &     mpi_communicator,
                  std::vector<double> &eigenValues,
@@ -975,7 +977,7 @@ namespace dftfe
     {
       dealii::ConditionalOStream pcout(
         std::cout,
-        (dealii::Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0));
+        (dealii::Utilities::MPI::this_mpi_process(mpiCommParent) == 0));
 
       dealii::TimerOutput computing_timer(mpi_communicator,
                                           pcout,
@@ -1133,6 +1135,7 @@ namespace dftfe
                                        std::vector<T> &     Y,
                                        const unsigned int   numberWaveFunctions,
                                        const unsigned int   numberCoreStates,
+                                       const MPI_Comm &     mpiCommParent,
                                        const MPI_Comm &     interBandGroupComm,
                                        const MPI_Comm &     mpiComm,
                                        const bool           useMixedPrec,
@@ -1140,7 +1143,7 @@ namespace dftfe
     {
       dealii::ConditionalOStream pcout(
         std::cout,
-        (dealii::Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0));
+        (dealii::Utilities::MPI::this_mpi_process(mpiCommParent) == 0));
 
       dealii::TimerOutput computing_timer(mpiComm,
                                           pcout,
@@ -1557,6 +1560,7 @@ namespace dftfe
                                     std::vector<T> &      Y,
                                     const unsigned int    numberWaveFunctions,
                                     const unsigned int    numberCoreStates,
+                                    const MPI_Comm &      mpiCommParent,
                                     const MPI_Comm &      interBandGroupComm,
                                     const MPI_Comm &      mpi_communicator,
                                     const bool            useMixedPrec,
@@ -1565,7 +1569,7 @@ namespace dftfe
     {
       dealii::ConditionalOStream pcout(
         std::cout,
-        (dealii::Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0));
+        (dealii::Utilities::MPI::this_mpi_process(mpiCommParent) == 0));
 
       dealii::TimerOutput computing_timer(mpi_communicator,
                                           pcout,
@@ -2357,7 +2361,8 @@ namespace dftfe
     computeEigenResidualNorm(operatorDFTClass &         operatorMatrix,
                              std::vector<T> &           X,
                              const std::vector<double> &eigenValues,
-                             const MPI_Comm &           mpiComm,
+                             const MPI_Comm &           mpiCommParent,
+                             const MPI_Comm &           mpiCommDomain,
                              const MPI_Comm &           interBandGroupComm,
                              std::vector<double> &      residualNorm)
 
@@ -2414,7 +2419,7 @@ namespace dftfe
                   XBlock.local_element(iNode * B + iWave) =
                     X[iNode * totalNumberVectors + jvec + iWave];
 
-              MPI_Barrier(mpiComm);
+              MPI_Barrier(mpiCommDomain);
               // evaluate H times XBlock and store in HXBlock
               HXBlock                = T(0.);
               const bool   scaleFlag = false;
@@ -2436,7 +2441,7 @@ namespace dftfe
 
 
       dealii::Utilities::MPI::sum(residualNormSquare,
-                                  mpiComm,
+                                  mpiCommDomain,
                                   residualNormSquare);
 
       dealii::Utilities::MPI::sum(residualNormSquare,
@@ -2445,20 +2450,20 @@ namespace dftfe
 
       if (dftParameters::verbosity >= 4)
         {
-          if (dealii::Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0)
+          if (dealii::Utilities::MPI::this_mpi_process(mpiCommParent) == 0)
             std::cout << "L-2 Norm of residue   :" << std::endl;
         }
       for (unsigned int iWave = 0; iWave < totalNumberVectors; ++iWave)
         residualNorm[iWave] = sqrt(residualNormSquare[iWave]);
 
       if (dftParameters::verbosity >= 4 &&
-          dealii::Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0)
+          dealii::Utilities::MPI::this_mpi_process(mpiCommParent) == 0)
         for (unsigned int iWave = 0; iWave < totalNumberVectors; ++iWave)
           std::cout << "eigen vector " << iWave << ": " << residualNorm[iWave]
                     << std::endl;
 
       if (dftParameters::verbosity >= 4)
-        if (dealii::Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0)
+        if (dealii::Utilities::MPI::this_mpi_process(mpiCommParent) == 0)
           std::cout << std::endl;
     }
 
@@ -2658,8 +2663,7 @@ namespace dftfe
 
 
       dealii::ConditionalOStream pcout(
-        std::cout,
-        (dealii::Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0));
+        std::cout, (dealii::Utilities::MPI::this_mpi_process(mpiComm) == 0));
 
       dealii::TimerOutput computing_timer(mpiComm,
                                           pcout,
@@ -3024,6 +3028,7 @@ namespace dftfe
                                        std::vector<dataTypes::number> &,
                                        const unsigned int,
                                        const MPI_Comm &,
+                                       const MPI_Comm &,
                                        const MPI_Comm &mpiComm,
                                        const bool      useMixedPrec);
 
@@ -3034,6 +3039,7 @@ namespace dftfe
                  const unsigned int numberWaveFunctions,
                  const MPI_Comm &,
                  const MPI_Comm &,
+                 const MPI_Comm &,
                  std::vector<double> &eigenValues,
                  const bool           doCommAfterBandParal);
 
@@ -3042,6 +3048,7 @@ namespace dftfe
                     elpaScalaManager &elpaScala,
                     std::vector<dataTypes::number> &,
                     const unsigned int numberWaveFunctions,
+                    const MPI_Comm &,
                     const MPI_Comm &,
                     const MPI_Comm &,
                     std::vector<double> &eigenValues,
@@ -3057,6 +3064,7 @@ namespace dftfe
                                     const unsigned int numberCoreStates,
                                     const MPI_Comm &,
                                     const MPI_Comm &,
+                                    const MPI_Comm &,
                                     const bool           useMixedPrec,
                                     std::vector<double> &eigenValues);
 
@@ -3067,8 +3075,9 @@ namespace dftfe
                                        std::vector<dataTypes::number> &Y,
                                        const unsigned int   numberWaveFunctions,
                                        const unsigned int   numberCoreStates,
+                                       const MPI_Comm &     mpiCommParent,
                                        const MPI_Comm &     interBandGroupComm,
-                                       const MPI_Comm &     mpiComm,
+                                       const MPI_Comm &     mpiCommDomain,
                                        const bool           useMixedPrec,
                                        std::vector<double> &eigenValues);
 
@@ -3076,7 +3085,8 @@ namespace dftfe
     computeEigenResidualNorm(operatorDFTClass &              operatorMatrix,
                              std::vector<dataTypes::number> &X,
                              const std::vector<double> &     eigenValues,
-                             const MPI_Comm &                mpiComm,
+                             const MPI_Comm &                mpiCommParent,
+                             const MPI_Comm &                mpiCommDomain,
                              const MPI_Comm &                interBandGroupComm,
                              std::vector<double> &           residualNorm);
 

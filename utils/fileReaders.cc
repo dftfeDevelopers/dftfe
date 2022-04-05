@@ -241,9 +241,10 @@ namespace dftfe
 
     void
     writeDataIntoFile(const std::vector<std::vector<double>> &data,
-                      const std::string &                     fileName)
+                      const std::string &                     fileName,
+                      const MPI_Comm &                        mpi_comm_parent)
     {
-      if (dealii::Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0)
+      if (dealii::Utilities::MPI::this_mpi_process(mpi_comm_parent) == 0)
         {
           if (std::ifstream(fileName))
             moveFile(fileName, fileName + ".old");

@@ -475,12 +475,15 @@ namespace dftfe
   // constructor
   template <unsigned int FEOrder, unsigned int FEOrderElectro>
   vselfBinsManager<FEOrder, FEOrderElectro>::vselfBinsManager(
-    const MPI_Comm &mpi_comm)
-    : mpi_communicator(mpi_comm)
-    , n_mpi_processes(dealii::Utilities::MPI::n_mpi_processes(mpi_comm))
-    , this_mpi_process(dealii::Utilities::MPI::this_mpi_process(mpi_comm))
+    const MPI_Comm &mpi_comm_parent,
+    const MPI_Comm &mpi_comm_domain)
+    : mpi_communicator(mpi_comm_domain)
+    , d_mpiCommParent(mpi_comm_parent)
+    , n_mpi_processes(dealii::Utilities::MPI::n_mpi_processes(mpi_comm_domain))
+    , this_mpi_process(
+        dealii::Utilities::MPI::this_mpi_process(mpi_comm_domain))
     , pcout(std::cout,
-            (dealii::Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0))
+            (dealii::Utilities::MPI::this_mpi_process(mpi_comm_parent) == 0))
     , d_storedAdaptiveBallRadius(0)
   {}
 
@@ -500,7 +503,7 @@ namespace dftfe
   {
     dealii::ConditionalOStream pcout(std::cout,
                                      (dealii::Utilities::MPI::this_mpi_process(
-                                        MPI_COMM_WORLD) == 0));
+                                        d_mpiCommParent) == 0));
     dealii::TimerOutput        computing_timer(mpi_communicator,
                                         pcout,
                                         dftParameters::reproducible_output ||

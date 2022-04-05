@@ -22,14 +22,11 @@
 #include "constants.h"
 #include "headers.h"
 #include <vector>
-#include "dft.h"
+#include "dftBase.h"
 
 namespace dftfe
 {
   using namespace dealii;
-  template <unsigned int FEOrder, unsigned int FEOrderElectro>
-  class dftClass;
-  template <unsigned int FEOrder, unsigned int FEOrderElectro>
   class molecularDynamicsClass
   {
   public:
@@ -37,18 +34,19 @@ namespace dftfe
      * @brief molecularDynamicsClass constructor: copy data from dftparameters to the memebrs of molecularDynamicsClass
      *
      *
-     *  @param[in] dftClass<FEOrder, FEOrderElectro> *_dftPtr dftclass pointer
-     * used to access friend class dft.cc
-     *  @param[in] mpi_comm_replica  mpi_communicator for domain decomposition
+     *  @param[in] dftBase *_dftBasePtr pointer to base class of dftClass
+     *  @param[in] mpi_comm_parent parent mpi communicator
+     *  @param[in] mpi_comm_domain  mpi_communicator for domain decomposition
      * parallelization
      *  @param[in] interpoolcomm  mpi_communicator for parallelization over k
      * points
      *  @param[in] interBandGroupComm  mpi_communicator for parallelization over
      * bands
      */
-    molecularDynamicsClass(dftClass<FEOrder, FEOrderElectro> *_dftPtr,
-                           const MPI_Comm &                   mpi_comm_replica,
-                           const MPI_Comm &                   interpoolcomm,
+    molecularDynamicsClass(dftBase *       _dftPtr,
+                           const MPI_Comm &mpi_comm_parent,
+                           const MPI_Comm &mpi_comm_domain,
+                           const MPI_Comm &interpoolcomm,
                            const MPI_Comm &interBandGroupComm);
 
     const double haPerBohrToeVPerAng = 27.211386245988 / 0.529177210903;
@@ -72,9 +70,10 @@ namespace dftfe
 
   private:
     // pointer to dft class
-    dftClass<FEOrder, FEOrderElectro> *dftPtr;
+    dftBase *dftPtr;
 
     // parallel communication objects
+    const MPI_Comm     d_mpiCommParent;
     const MPI_Comm     d_mpi_communicator;
     const MPI_Comm     d_interpoolcomm;
     const MPI_Comm     d_interBandGroupComm;
@@ -224,7 +223,8 @@ namespace dftfe
 
      * @param[in] M Stores the mass of each Charge.
      * @param[in] Temperature  temperature at current Timestep
-     * @param[out] v Stores the velocity of each Charge, updated at each Timestep
+     * @param[out] v Stores the velocity of each Charge, updated at each
+   Timestep
      *
      * @param[return] KE Kinetic Energy at current timestp in eV
 
@@ -364,7 +364,7 @@ namespace dftfe
     writeRestartNHCfile(const std::vector<double> &v_e,
                         const std::vector<double> &e,
                         const std::vector<double> &Q,
-                        const int                 time);
+                        const int                  time);
 
     /**
 
@@ -379,9 +379,9 @@ namespace dftfe
  *
  */
     void
-    InitialiseFromRestartNHCFile( std::vector<double> &v_e,
-                                  std::vector<double> &e,
-                                  std::vector<double> &Q);
+    InitialiseFromRestartNHCFile(std::vector<double> &v_e,
+                                 std::vector<double> &e,
+                                 std::vector<double> &Q);
 
     /**
 
