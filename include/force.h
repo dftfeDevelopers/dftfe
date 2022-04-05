@@ -131,7 +131,7 @@ namespace dftfe
       kohnShamDFTOperatorCUDAClass<FEOrder, FEOrderElectro>
         &kohnShamDFTEigenOperator,
 #endif
-      const dispersionCorrection &            dispersionCorr,
+      const dispersionCorrection &     dispersionCorr,
       const unsigned int               eigenDofHandlerIndex,
       const unsigned int               smearedChargeQuadratureId,
       const unsigned int               lpspQuadratureIdElectro,
@@ -897,7 +897,7 @@ namespace dftfe
     Tensor<2, 3, double> d_stress;
 
 
-    
+
     /* Part of the stress tensor which is summed over k points.
      * It is a temporary data structure required for stress evaluation
      * (d_stress) when parallization over k points is on.

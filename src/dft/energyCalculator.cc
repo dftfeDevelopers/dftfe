@@ -121,14 +121,14 @@ namespace dftfe
               pcout << bufferEnergy;
             }
 
-          if (dftParameters::dc_dispersioncorrectiontype!=0)
-          {
-            sprintf(bufferEnergy,
-                  "%-52s:%25.16e\n",
-                  "Dispersion energy",
-                  dispersionEnergy);
-          }
-            
+          if (dftParameters::dc_dispersioncorrectiontype != 0)
+            {
+              sprintf(bufferEnergy,
+                      "%-52s:%25.16e\n",
+                      "Dispersion energy",
+                      dispersionEnergy);
+            }
+
           pcout << bufferEnergy;
           sprintf(bufferEnergy,
                   "%-52s:%25.16e\n",
@@ -867,12 +867,12 @@ namespace dftfe
       dealii::Utilities::MPI::sum(nuclearElectrostaticEnergy, mpi_communicator);
 
 
-    double d_energyDispersion=0;
-    if(dftParameters::dc_dispersioncorrectiontype!=0)
-    {
-      d_energyDispersion=dispersionCorr.getEnergyCorrection();
-      totalEnergy += d_energyDispersion;
-    }
+    double d_energyDispersion = 0;
+    if (dftParameters::dc_dispersioncorrectiontype != 0)
+      {
+        d_energyDispersion = dispersionCorr.getEnergyCorrection();
+        totalEnergy += d_energyDispersion;
+      }
     //
     // total energy
     //
@@ -2055,12 +2055,12 @@ namespace dftfe
     double totalNuclearElectrostaticEnergy =
       dealii::Utilities::MPI::sum(nuclearElectrostaticEnergy, mpi_communicator);
 
-    double d_energyDispersion=0;
-    if(dftParameters::dc_dispersioncorrectiontype!=0)
-    {
-      d_energyDispersion=dispersionCorr.getEnergyCorrection();
-      totalEnergy += d_energyDispersion;
-    }
+    double d_energyDispersion = 0;
+    if (dftParameters::dc_dispersioncorrectiontype != 0)
+      {
+        d_energyDispersion = dispersionCorr.getEnergyCorrection();
+        totalEnergy += d_energyDispersion;
+      }
 
     //
     // total energy
