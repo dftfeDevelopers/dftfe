@@ -45,7 +45,8 @@ namespace dftfe
     createParallelConstraintMatrixFromSerial(
       const dealii::Triangulation<3, 3> &     serTria,
       const dealii::DoFHandler<3> &           dofHandlerPar,
-      const MPI_Comm &                        mpi_comm,
+      const MPI_Comm &                        mpi_comm_parent,
+      const MPI_Comm &                        mpi_comm_domain,
       const std::vector<std::vector<double>> &domainBoundingVectors,
       dealii::AffineConstraints<double> &     periodicHangingConstraints,
       dealii::AffineConstraints<double> &     onlyHangingConstraints);

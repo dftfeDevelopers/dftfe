@@ -406,7 +406,9 @@ namespace dftfe
       }
 
     // set up poisson solver
-    dealiiLinearSolver dealiiCGSolver(mpi_communicator, dealiiLinearSolver::CG);
+    dealiiLinearSolver dealiiCGSolver(d_mpiCommParent,
+                                      mpi_communicator,
+                                      dealiiLinearSolver::CG);
     poissonSolverProblem<FEOrder, FEOrderElectro> vselfSolverProblem(
       mpi_communicator);
 
@@ -436,7 +438,7 @@ namespace dftfe
     for (unsigned int iBin = 0; iBin < numberBins; ++iBin)
       {
         double init_time;
-        MPI_Barrier(MPI_COMM_WORLD);
+        MPI_Barrier(d_mpiCommParent);
         init_time = MPI_Wtime();
 
 
@@ -562,7 +564,7 @@ namespace dftfe
             d_vselfBinConstraintMatrices[4 * iBin].set_zero(vselfBinScratch);
           }
 
-        MPI_Barrier(MPI_COMM_WORLD);
+        MPI_Barrier(d_mpiCommParent);
         init_time = MPI_Wtime() - init_time;
         if (dftParameters::verbosity >= 4)
           pcout
@@ -570,7 +572,7 @@ namespace dftfe
             << init_time << std::endl;
 
         double vselfinit_time;
-        MPI_Barrier(MPI_COMM_WORLD);
+        MPI_Barrier(d_mpiCommParent);
         vselfinit_time = MPI_Wtime();
 
         //
@@ -618,7 +620,7 @@ namespace dftfe
                                     false,
                                     true);
 
-        MPI_Barrier(MPI_COMM_WORLD);
+        MPI_Barrier(d_mpiCommParent);
         vselfinit_time = MPI_Wtime() - vselfinit_time;
         if (dftParameters::verbosity >= 4)
           pcout << " Time taken for vself solver problem init for current bin: "
@@ -632,7 +634,7 @@ namespace dftfe
         if (useSmearedCharges && !isVselfPerturbationSolve)
           for (unsigned int idim = 0; idim < 3; idim++)
             {
-              MPI_Barrier(MPI_COMM_WORLD);
+              MPI_Barrier(d_mpiCommParent);
               vselfinit_time = MPI_Wtime();
               //
               // call the poisson solver to compute vSelf in current bin
@@ -659,7 +661,7 @@ namespace dftfe
                 true);
 
 
-              MPI_Barrier(MPI_COMM_WORLD);
+              MPI_Barrier(d_mpiCommParent);
               vselfinit_time = MPI_Wtime() - vselfinit_time;
               if (dftParameters::verbosity >= 4)
                 pcout
@@ -680,7 +682,7 @@ namespace dftfe
             if (useSmearedCharges)
               {
                 double selfenergy_time;
-                MPI_Barrier(MPI_COMM_WORLD);
+                MPI_Barrier(d_mpiCommParent);
                 selfenergy_time = MPI_Wtime();
 
                 dealii::FEEvaluation<3, -1> fe_eval_sc(
@@ -760,7 +762,7 @@ namespace dftfe
 
                 localVselfs[0][0] += vselfTimesSmearedChargesIntegralBin;
 
-                MPI_Barrier(MPI_COMM_WORLD);
+                MPI_Barrier(d_mpiCommParent);
                 selfenergy_time = MPI_Wtime() - selfenergy_time;
                 if (dftParameters::verbosity >= 4)
                   pcout << " Time taken for vself self energy for current bin: "
@@ -937,7 +939,7 @@ namespace dftfe
     std::vector<std::map<dealii::CellId, std::vector<double>>> bQuadValuesBins(
       numberBins);
 
-    MPI_Barrier(MPI_COMM_WORLD);
+    MPI_Barrier(d_mpiCommParent);
     double time = MPI_Wtime();
 
     if (isVselfPerturbationSolve)
@@ -962,7 +964,7 @@ namespace dftfe
     for (unsigned int iBin = 0; iBin < numberBins; ++iBin)
       {
         double smeared_init_time;
-        MPI_Barrier(MPI_COMM_WORLD);
+        MPI_Barrier(d_mpiCommParent);
         smeared_init_time = MPI_Wtime();
 
         std::set<int> &    atomsInBinSet       = d_bins[iBin];
@@ -1041,7 +1043,7 @@ namespace dftfe
                                 bCellNonTrivialAtomImageIdsBins[iBin],
                                 smearedChargeScaling);
 
-        MPI_Barrier(MPI_COMM_WORLD);
+        MPI_Barrier(d_mpiCommParent);
         smeared_init_time = MPI_Wtime() - smeared_init_time;
         if (dftParameters::verbosity >= 4)
           pcout
@@ -1374,14 +1376,14 @@ namespace dftfe
               }
           }
 
-    MPI_Barrier(MPI_COMM_WORLD);
+    MPI_Barrier(d_mpiCommParent);
     time = MPI_Wtime() - time;
     if (dftParameters::verbosity >= 4 && this_mpi_process == 0)
       std::cout
         << "Solve vself in bins: time for smeared charge initialization, compute rhs and diagonal: "
         << time << std::endl;
 
-    MPI_Barrier(MPI_COMM_WORLD);
+    MPI_Barrier(d_mpiCommParent);
     time = MPI_Wtime();
     //
     // GPU poisson solve
@@ -1396,18 +1398,19 @@ namespace dftfe
                                   localSize,
                                   ghostSize,
                                   numberPoissonSolves,
+                                  d_mpiCommParent,
                                   mpi_communicator,
                                   &vselfBinsFieldsFlattened[0],
                                   FEOrderElectro != FEOrder ? true : false);
 
-    MPI_Barrier(MPI_COMM_WORLD);
+    MPI_Barrier(d_mpiCommParent);
     time = MPI_Wtime() - time;
     if (dftParameters::verbosity >= 4 && this_mpi_process == 0)
       std::cout
         << "Solve vself in bins: time for poissonCUDA::solveVselfInBins : "
         << time << std::endl;
 
-    MPI_Barrier(MPI_COMM_WORLD);
+    MPI_Barrier(d_mpiCommParent);
     time = MPI_Wtime();
 
     for (unsigned int iBin = 0; iBin < numberBins; ++iBin)
@@ -1464,7 +1467,7 @@ namespace dftfe
             if (useSmearedCharges)
               {
                 double selfenergy_time;
-                MPI_Barrier(MPI_COMM_WORLD);
+                MPI_Barrier(d_mpiCommParent);
                 selfenergy_time = MPI_Wtime();
 
                 dealii::FEEvaluation<3, -1> fe_eval_sc(
@@ -1550,7 +1553,7 @@ namespace dftfe
 
                 localVselfs[0][0] += vselfTimesSmearedChargesIntegralBin;
 
-                MPI_Barrier(MPI_COMM_WORLD);
+                MPI_Barrier(d_mpiCommParent);
                 selfenergy_time = MPI_Wtime() - selfenergy_time;
                 if (dftParameters::verbosity >= 4)
                   pcout << " Time taken for vself self energy for current bin: "
@@ -1598,7 +1601,7 @@ namespace dftfe
 
       } // bin loop
 
-    MPI_Barrier(MPI_COMM_WORLD);
+    MPI_Barrier(d_mpiCommParent);
     time = MPI_Wtime() - time;
     if (dftParameters::verbosity >= 4 && this_mpi_process == 0)
       std::cout << "Solve vself in bins: time for updating d_vselfFieldBins : "

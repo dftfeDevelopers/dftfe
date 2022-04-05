@@ -220,6 +220,7 @@ void dftClass<FEOrder, FEOrderElectro>::initUnmovedTriangulation(
       vectorTools::createParallelConstraintMatrixFromSerial(
         d_mesh.getSerialMeshUnmoved(),
         dofHandler,
+        d_mpiCommParent,
         mpi_communicator,
         d_domainBoundingVectors,
         constraintsNone,
@@ -228,6 +229,7 @@ void dftClass<FEOrder, FEOrderElectro>::initUnmovedTriangulation(
       vectorTools::createParallelConstraintMatrixFromSerial(
         d_mesh.getSerialMeshUnmoved(),
         dofHandlerEigen,
+        d_mpiCommParent,
         mpi_communicator,
         d_domainBoundingVectors,
         constraintsNoneEigen,
@@ -236,6 +238,7 @@ void dftClass<FEOrder, FEOrderElectro>::initUnmovedTriangulation(
       vectorTools::createParallelConstraintMatrixFromSerial(
         d_mesh.getSerialMeshUnmoved(),
         dofHandler,
+        d_mpiCommParent,
         mpi_communicator,
         d_domainBoundingVectors,
         constraintsNone,

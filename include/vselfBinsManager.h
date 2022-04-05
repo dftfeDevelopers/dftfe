@@ -39,9 +39,11 @@ namespace dftfe
     /**
      * @brief Constructor
      *
-     * @param mpi_comm mpi communicator
+     * @param mpi_comm_parent parent mpi communicator
+     * @param mpi_comm_domain domain decomposition mpi communicator
      */
-    vselfBinsManager(const MPI_Comm &mpi_comm);
+    vselfBinsManager(const MPI_Comm &mpi_comm_parent,
+                     const MPI_Comm &mpi_comm_domain);
 
 
     /**
@@ -341,6 +343,7 @@ namespace dftfe
     /// and reused for subsequent calls
     double d_storedAdaptiveBallRadius;
 
+    const MPI_Comm             d_mpiCommParent;
     const MPI_Comm             mpi_communicator;
     const unsigned int         n_mpi_processes;
     const unsigned int         this_mpi_process;

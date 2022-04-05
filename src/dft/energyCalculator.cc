@@ -347,14 +347,16 @@ namespace dftfe
 
   } // namespace internal
 
-  energyCalculator::energyCalculator(const MPI_Comm &mpi_comm,
+  energyCalculator::energyCalculator(const MPI_Comm &mpi_comm_parent,
+                                     const MPI_Comm &mpi_comm_domain,
                                      const MPI_Comm &interpool_comm,
                                      const MPI_Comm &interbandgroup_comm)
-    : mpi_communicator(mpi_comm)
+    : d_mpiCommParent(mpi_comm_parent)
+    , mpi_communicator(mpi_comm_domain)
     , interpoolcomm(interpool_comm)
     , interBandGroupComm(interbandgroup_comm)
     , pcout(std::cout,
-            (dealii::Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0))
+            (dealii::Utilities::MPI::this_mpi_process(mpi_comm_parent) == 0))
   {}
 
   // compute energies

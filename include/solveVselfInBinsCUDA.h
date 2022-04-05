@@ -39,7 +39,8 @@ namespace dftfe
       const unsigned int                       localSize,
       const unsigned int                       ghostSize,
       const unsigned int                       numberBins,
-      const MPI_Comm &                         mpiComm,
+      const MPI_Comm &                         mpiCommParent,
+      const MPI_Comm &                         mpiCommDomain,
       double *                                 xH,
       const bool isElectroFEOrderDifferentFromFEOrder = false);
 
@@ -60,7 +61,8 @@ namespace dftfe
              const unsigned int         debugLevel,
              const unsigned int         maxIter,
              const double               absTol,
-             const MPI_Comm &           mpiComm,
+             const MPI_Comm &           mpiCommParent,
+             const MPI_Comm &           mpiCommDomain,
              distributedGPUVec<double> &x);
   } // namespace poissonCUDA
 } // namespace dftfe
