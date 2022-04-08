@@ -52,9 +52,6 @@ setup_dftfe(dftfe::elpaScalaManager *elpa_Scala,
             dftfe::dftClass<n1, n2> &problemFE,
             unsigned int &           numberEigenValues,
             unsigned int &           numEigenValuesRR,
-            const MPI_Comm &         mpi_comm_domain,
-            const MPI_Comm &         interpoolcomm,
-            const MPI_Comm &         interBandGroupComm,
             bool                     setupELPAProcessGrid = true)
 {
   problemFE.d_numEigenValues = numberEigenValues;
@@ -64,10 +61,11 @@ setup_dftfe(dftfe::elpaScalaManager *elpa_Scala,
   numEigenValuesRR  = problemFE.d_numEigenValuesRR;
   if (setupELPAProcessGrid == true)
     {
+      elpa_Scala->elpaAllocateHandles(numberEigenValues,
+                                       numEigenValuesRR);
+
       elpa_Scala->processGridELPASetup(numberEigenValues,
-                                       numEigenValuesRR,
-                                       interBandGroupComm,
-                                       interpoolcomm);
+                                       numEigenValuesRR);
     }
   problemFE.init();
 }
@@ -113,10 +111,7 @@ run_problem(const MPI_Comm &mpi_comm_parent,
       setup_dftfe<n1, n2>(elpaScala,
                           problemFE,
                           numberEigenValues,
-                          numEigenValuesRR,
-                          mpi_comm_domain,
-                          interpoolcomm,
-                          interBandGroupComm);
+                          numEigenValuesRR);
       mdClass.runMD();
     }
 
@@ -133,10 +128,7 @@ run_problem(const MPI_Comm &mpi_comm_parent,
       setup_dftfe<n1, n2>(elpaScala,
                           problemFE,
                           numberEigenValues,
-                          numEigenValuesRR,
-                          mpi_comm_domain,
-                          interpoolcomm,
-                          interBandGroupComm);
+                          numEigenValuesRR);
       problemFE.run();
     }
   if (dftfe::dftParameters::useELPA)

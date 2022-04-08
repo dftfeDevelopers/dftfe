@@ -60,10 +60,26 @@ namespace dftfe
 
 
   void
+  elpaScalaManager::elpaAllocateHandles(const unsigned int na,
+                                         const unsigned int nev)
+  {
+
+    int error;
+    d_elpaHandle = elpa_allocate(&error);
+    AssertThrow(error == ELPA_OK,
+                    dealii::ExcMessage("DFT-FE Error: ELPA Error."));
+
+    if (na != nev)
+      {
+        d_elpaHandlePartialEigenVec = elpa_allocate(&error);        
+        AssertThrow(error == ELPA_OK,
+                    dealii::ExcMessage("DFT-FE Error: elpa error."));
+      }
+  }
+
+  void
   elpaScalaManager::processGridELPASetup(const unsigned int na,
-                                         const unsigned int nev,
-                                         const MPI_Comm &   mpi_comm_interband,
-                                         const MPI_Comm &   mpi_comm_interpool)
+                                         const unsigned int nev)
   {
     linearAlgebraOperations::internal::createProcessGridSquareMatrix(
       getMPICommunicator(), na, d_processGridDftfeWrapper);
@@ -74,10 +90,8 @@ namespace dftfe
                (na + d_processGridDftfeWrapper->get_process_grid_rows() - 1) /
                  d_processGridDftfeWrapper->get_process_grid_rows());
     if (dftParameters::useELPA)
-      linearAlgebraOperations::internal::setupELPAHandle(
+      linearAlgebraOperations::internal::setupELPAParameters(
         getMPICommunicator(),
-        mpi_comm_interband,
-        mpi_comm_interpool,
         d_processGridCommunicatorActive,
         d_processGridDftfeWrapper,
         na,
@@ -88,10 +102,8 @@ namespace dftfe
     if (nev != na)
       {
         if (dftParameters::useELPA)
-          linearAlgebraOperations::internal::setupELPAHandle(
+          linearAlgebraOperations::internal::setupELPAParameters(
             getMPICommunicator(),
-            mpi_comm_interband,
-            mpi_comm_interpool,
             d_processGridCommunicatorActivePartial,
             d_processGridDftfeWrapper,
             na,
