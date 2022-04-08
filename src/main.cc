@@ -109,10 +109,7 @@ run_problem(const MPI_Comm &mpi_comm_parent,
                                         elpaScala);
 
       dftfe::molecularDynamicsClass mdClass(&problemFE,
-                                            mpi_comm_parent,
-                                            mpi_comm_domain,
-                                            interpoolcomm,
-                                            interBandGroupComm);
+                                            mpi_comm_parent);
       setup_dftfe<n1, n2>(elpaScala,
                           problemFE,
                           numberEigenValues,
