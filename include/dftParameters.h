@@ -62,7 +62,7 @@ namespace dftfe
     extern bool   autoAdaptBaseMeshSize;
     extern double meshSizeInnerBall, meshSizeOuterBall;
     extern double chebyshevTolerance, topfrac, kerkerParameter;
-    extern std::string mixingMethod, ionOptSolver;
+    extern std::string mixingMethod, ionOptSolver, cellOptSolver;
 
 
     extern bool isIonOpt, isCellOpt, isIonForce, isCellStress, isBOMD, isXLBOMD;

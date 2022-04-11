@@ -18,6 +18,7 @@
 //
 
 #include <cgPRPNonLinearSolver.h>
+#include <BFGSNonLinearSolver.h>
 #include <dft.h>
 #include <dftParameters.h>
 #include <dftUtils.h>
@@ -216,6 +217,8 @@ namespace dftfe
                                   lineSearchDampingParameter,
                                   maxUpdateInAnyComponent);
 
+    BFGSNonLinearSolver bfgsSolver(tol, maxIter, debugLevel, mpi_communicator);
+
     if (dftParameters::chkType >= 1 && dftParameters::restartFromChk)
       pcout
         << " Re starting Cell stress relaxation using nonlinear CG solver... "
@@ -239,14 +242,18 @@ namespace dftfe
       {
         nonLinearSolver::ReturnValueType cgReturn = nonLinearSolver::FAILURE;
 
-        if (dftParameters::chkType >= 1 && dftParameters::restartFromChk)
+        if (dftParameters::chkType >= 1 && dftParameters::restartFromChk &&
+            dftParameters::cellOptSolver == "CGPRP")
           cgReturn =
             cgSolver.solve(*this, std::string("cellRelaxCG.chk"), true);
-        else if (dftParameters::chkType >= 1 && !dftParameters::restartFromChk)
+        else if (dftParameters::chkType >= 1 &&
+                 !dftParameters::restartFromChk &&
+                 dftParameters::cellOptSolver == "CGPRP")
           cgReturn = cgSolver.solve(*this, std::string("cellRelaxCG.chk"));
-        else
+        else if (dftParameters::cellOptSolver == "CGPRP")
           cgReturn = cgSolver.solve(*this);
-
+        else
+          cgReturn = bfgsSolver.solve(*this);
         if (cgReturn == nonLinearSolver::SUCCESS)
           {
             pcout
@@ -382,7 +389,11 @@ namespace dftfe
     std::vector<double> &      s,
     const std::vector<double> &gradient) const
   {
-    AssertThrow(false, dftUtils::ExcNotImplementedYet());
+    s.resize(getNumberUnknowns() * getNumberUnknowns(), 0.0);
+    for (auto i = 0; i < getNumberUnknowns(); ++i)
+      {
+        s[i + i * getNumberUnknowns()] = 1.0;
+      }
   }
 
   template <unsigned int FEOrder, unsigned int FEOrderElectro>

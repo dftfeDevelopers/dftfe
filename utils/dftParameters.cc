@@ -46,6 +46,7 @@ namespace dftfe
     double      chebyshevFilterTolXLBOMDRankUpdates = 1e-07;
     std::string mixingMethod                        = "";
     std::string ionOptSolver                        = "";
+    std::string cellOptSolver                       = "";
 
     bool isPseudopotential = false, periodicX = false, periodicY = false,
          periodicZ = false, useSymm = false, timeReversal = false,
@@ -405,8 +406,14 @@ namespace dftfe
           prm.declare_entry(
             "ION OPT SOLVER",
             "CGPRP",
-            Patterns::Selection("CGDESCENT|LBFGS|CGPRP"),
+            Patterns::Selection("CGDESCENT|LBFGS|CGPRP|BFGS"),
             "[Standard] Method for Ion relaxation solver. CGPRP (Nonlinear conjugate gradient with Secant and Polak-Ribiere approach) is the default");
+
+          prm.declare_entry(
+            "CELL OPT SOLVER",
+            "CGPRP",
+            Patterns::Selection("BFGS|CGPRP"),
+            "[Standard] Method for Cell relaxation solver. CGPRP (Nonlinear conjugate gradient with Secant and Polak-Ribiere approach) is the default");
 
           prm.declare_entry(
             "MAX LINE SEARCH ITER",
@@ -1257,8 +1264,9 @@ namespace dftfe
 
         prm.enter_subsection("Optimization");
         {
-          dftParameters::isIonOpt     = prm.get_bool("ION OPT");
-          dftParameters::ionOptSolver = prm.get("ION OPT SOLVER");
+          dftParameters::isIonOpt      = prm.get_bool("ION OPT");
+          dftParameters::ionOptSolver  = prm.get("ION OPT SOLVER");
+          dftParameters::cellOptSolver = prm.get("CELL OPT SOLVER");
           dftParameters::maxLineSearchIterCGPRP =
             prm.get_integer("MAX LINE SEARCH ITER");
           dftParameters::nonSelfConsistentForce =

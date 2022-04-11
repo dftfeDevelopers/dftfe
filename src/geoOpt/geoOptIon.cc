@@ -18,6 +18,7 @@
 //
 
 #include <cgPRPNonLinearSolver.h>
+#include <BFGSNonLinearSolver.h>
 #include <cg_descent_wrapper.h>
 #include <dft.h>
 #include <dftParameters.h>
@@ -136,6 +137,7 @@ namespace dftfe
                                   maxLineSearchIter,
                                   lineSearchDampingParameter,
                                   maxDisplacmentInAnyComponent);
+    BFGSNonLinearSolver  bfgsSolver(tol, maxIter, debugLevel, mpi_communicator);
 
     CGDescent cg_descent(tol, maxIter);
 
@@ -185,6 +187,10 @@ namespace dftfe
               memory = 0;
             cg_descent.set_memory(memory);
             cgSuccess = cg_descent.run(*this);
+          }
+        else if (dftParameters::ionOptSolver == "BFGS")
+          {
+            cgReturn = bfgsSolver.solve(*this);
           }
         else
           {
@@ -350,7 +356,11 @@ namespace dftfe
     std::vector<double> &      s,
     const std::vector<double> &gradient) const
   {
-    AssertThrow(false, dftUtils::ExcNotImplementedYet());
+    s.resize(getNumberUnknowns() * getNumberUnknowns(), 0.0);
+    for (auto i = 0; i < getNumberUnknowns(); ++i)
+      {
+        s[i + i * getNumberUnknowns()] = 1.0;
+      }
   }
 
   template <unsigned int FEOrder, unsigned int FEOrderElectro>
