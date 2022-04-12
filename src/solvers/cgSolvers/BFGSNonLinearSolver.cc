@@ -14,7 +14,7 @@
 //
 // ---------------------------------------------------------------------
 //
-// @author Sambit Das and Phani Motamarri
+// @author Nikhil Kodali
 
 #include <BFGSNonLinearSolver.h>
 #include <fileReaders.h>
@@ -43,6 +43,9 @@ namespace dftfe
   {
     d_isBFGSRestartDueToSmallRadius      = false;
     d_useSingleAtomSolutionsInitialGuess = false;
+    d_trustRadiusInitial                 = trustRadius_initial;
+    d_trustRadiusMax                     = trustRadius_maximum;
+    d_trustRadiusMin                     = trustRadius_minimum;
   }
 
   //
@@ -163,6 +166,7 @@ namespace dftfe
     for (auto i = 0; i < d_numberUnknowns; ++i)
       {
         d_deltaX[i] = eigenVector[i] / eigenVector[d_numberUnknowns];
+        d_deltaX[i] = d_deltaX[i] >= d_trustRadius ? d_trustRadius:d_deltaX[i];
       }
   }
 
@@ -264,7 +268,7 @@ namespace dftfe
     double dxnorm = dnrm2_(&d_numberUnknowns, d_deltaX.data(), &one);
     double dgnorm = dnrm2_(&d_numberUnknowns, delta_g.data(), &one);
     double znorm  = dnrm2_(&d_numberUnknowns, dgmHdx.data(), &one);
-    if (ztdx / (znorm * dxnorm) < 0.1)
+    if (ztdx / (znorm * dxnorm) < -0.1)
       {
         double factor = 1.0 / ztdx;
         dsyr_(&uplo,
@@ -467,6 +471,7 @@ namespace dftfe
     //
     if (!restart)
       {
+        d_trustRadius=d_trustRadiusInitial;
         //
         // compute initial values of problem and problem gradient
         //

@@ -174,6 +174,9 @@ namespace dftfe
     /// storage for inf norm of gradient
     double d_gradMax;
 
+    /// storage for trust region parameters
+    double d_trustRadiusInitial, d_trustRadiusMax, d_trustRadiusMin, d_trustRadius;
+
 
     /**
      * Storage for vector of flags (0 or 1) with size equal to the size of the
