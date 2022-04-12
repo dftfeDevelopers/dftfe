@@ -50,11 +50,10 @@ namespace dftfe
 
 
     int
-    convert(std::string &fileName, const MPI_Comm &mpi_comm_parent)
+    convert(const std::string &fileName,
+            const std::string &dftfeScratchFolderName)
     {
-      dealii::ConditionalOStream pcout(
-        std::cout,
-        (dealii::Utilities::MPI::this_mpi_process(mpi_comm_parent) == 0));
+      dealii::ConditionalOStream pcout(std::cout);
 
       xmlTodftfeParser xmlParse;
 
@@ -72,9 +71,8 @@ namespace dftfe
 
       while (input_file >> z >> toParse)
         {
-          std::string tempFolder = "temp";
-          mkdir(tempFolder.c_str(), ACCESSPERMS);
-          std::string newFolder = tempFolder + "/" + "z" + z;
+          mkdir(dftfeScratchFolderName.c_str(), ACCESSPERMS);
+          std::string newFolder = dftfeScratchFolderName + "/" + "z" + z;
           mkdir(newFolder.c_str(), ACCESSPERMS);
           AssertThrow(
             isupf(toParse),

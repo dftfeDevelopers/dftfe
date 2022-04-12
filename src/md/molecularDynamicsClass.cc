@@ -45,8 +45,7 @@ namespace dftfe
     : dftPtr(_dftPtr)
     , d_mpiCommParent(mpi_comm_parent)
     , d_this_mpi_process(Utilities::MPI::this_mpi_process(mpi_comm_parent))
-    , pcout(std::cout,
-            (Utilities::MPI::this_mpi_process(mpi_comm_parent) == 0))
+    , pcout(std::cout, (Utilities::MPI::this_mpi_process(mpi_comm_parent) == 0))
   {
     MPI_Barrier(d_mpiCommParent);
     d_MDstartWallTime  = MPI_Wtime();
@@ -1471,16 +1470,16 @@ namespace dftfe
         mkdir(tempfolder.c_str(), ACCESSPERMS);
         Folder                 = "mdRestart";
         std::string newFolder3 = Folder + "/" + "time.chk";
-        dftUtils::writeDataIntoFile(timeIndexData, newFolder3,d_mpiCommParent);
+        dftUtils::writeDataIntoFile(timeIndexData, newFolder3, d_mpiCommParent);
         KEData[0][0] = KineticEnergyVector[time - d_startingTimeStep];
         IEData[0][0] = InternalEnergyVector[time - d_startingTimeStep];
         TEData[0][0] = TotalEnergyVector[time - d_startingTimeStep];
         std::string newFolder4 = tempfolder + "/" + "KineticEnergy.chk";
-        dftUtils::writeDataIntoFile(KEData, newFolder4,d_mpiCommParent);
+        dftUtils::writeDataIntoFile(KEData, newFolder4, d_mpiCommParent);
         std::string newFolder5 = tempfolder + "/" + "InternalEnergy.chk";
-        dftUtils::writeDataIntoFile(IEData, newFolder5,d_mpiCommParent);
+        dftUtils::writeDataIntoFile(IEData, newFolder5, d_mpiCommParent);
         std::string newFolder6 = tempfolder + "/" + "TotalEnergy.chk";
-        dftUtils::writeDataIntoFile(TEData, newFolder6,d_mpiCommParent);
+        dftUtils::writeDataIntoFile(TEData, newFolder6, d_mpiCommParent);
 
         for (int iCharge = 0; iCharge < d_numberGlobalCharges; ++iCharge)
           {
@@ -1520,7 +1519,7 @@ namespace dftfe
                 << " Velocity of TimeStep: " << time - 1
                 << " present in file velocity.chk.old #" << std::endl;
         std::string newFolder2 = tempfolder + "/" + "force.chk";
-        dftUtils::writeDataIntoFile(fileForceData, newFolder2,d_mpiCommParent);
+        dftUtils::writeDataIntoFile(fileForceData, newFolder2, d_mpiCommParent);
         if (time > 1)
           pcout << "#RESTART NOTE: Force:-"
                 << " Force of TimeStep: " << time
@@ -1528,7 +1527,7 @@ namespace dftfe
                 << " Forces of TimeStep: " << time - 1
                 << " present in file force.chk.old #" << std::endl;
         std::string newFolder22 = tempfolder + "/" + "StepDisplacement.chk";
-        dftUtils::writeDataIntoFile(fileDispData, newFolder22,d_mpiCommParent);
+        dftUtils::writeDataIntoFile(fileDispData, newFolder22, d_mpiCommParent);
         if (time > 1)
           pcout << "#RESTART NOTE: Step Displacement:-"
                 << " Step Displacements of TimeStep: " << time
@@ -1695,7 +1694,7 @@ namespace dftfe
         std::string tempfolder = "./mdRestart";
         std::string newFolder =
           std::string(tempfolder + "/" + "NHCThermostat.chk");
-        dftUtils::writeDataIntoFile(fileNHCData, newFolder,d_mpiCommParent);
+        dftUtils::writeDataIntoFile(fileNHCData, newFolder, d_mpiCommParent);
         if (Utilities::MPI::this_mpi_process(d_mpiCommParent) == 0)
           {
             std::string oldpath = newFolder;

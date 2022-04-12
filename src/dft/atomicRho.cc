@@ -51,7 +51,10 @@ dftClass<FEOrder, FEOrderElectro>::initAtomicRho()
       char densityFile[256];
       if (dftParameters::isPseudopotential)
         {
-          sprintf(densityFile, "temp/z%u/density.inp", *it);
+          strcpy(densityFile,
+                 (d_dftfeScratchFolderName + "/z" + std::to_string(*it) +
+                  "/density.inp")
+                   .c_str());
         }
       else
         {

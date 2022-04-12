@@ -59,6 +59,9 @@
 #include <iostream>
 #include <limits>
 #include <sstream>
+#include <chrono>
+#include <sys/time.h>
+#include <ctime>
 
 #ifdef DFTFE_WITH_GPU
 #  include <densityCalculatorCUDA.h>
@@ -106,11 +109,10 @@ namespace dftfe
   //
   template <unsigned int FEOrder, unsigned int FEOrderElectro>
   dftClass<FEOrder, FEOrderElectro>::dftClass(
-    const MPI_Comm &  mpi_comm_parent,
-    const MPI_Comm &  mpi_comm_domain,
-    const MPI_Comm &  _interpoolcomm,
-    const MPI_Comm &  _interBandGroupComm,
-    elpaScalaManager *_d_elpaScala)
+    const MPI_Comm &mpi_comm_parent,
+    const MPI_Comm &mpi_comm_domain,
+    const MPI_Comm &_interpoolcomm,
+    const MPI_Comm &_interBandGroupComm)
     : FE(FE_Q<3>(QGaussLobatto<1>(FEOrder + 1)), 1)
     ,
 #ifdef USE_COMPLEX
@@ -137,8 +139,9 @@ namespace dftfe
     , d_affineTransformMesh(mpi_comm_parent, mpi_comm_domain)
     , d_gaussianMovePar(mpi_comm_parent, mpi_comm_domain)
     , d_vselfBinsManager(mpi_comm_parent, mpi_comm_domain)
-    , pcout(std::cout, (Utilities::MPI::this_mpi_process(mpi_comm_parent) == 0))
-    //, d_elpaScala(mpi_comm_replica)
+    , pcout(std::cout,
+            (Utilities::MPI::this_mpi_process(mpi_comm_parent) == 0) &&
+              dftParameters::verbosity >= 0)
     , d_kohnShamDFTOperatorsInitialized(false)
     , computing_timer(mpi_comm_domain,
                       pcout,
@@ -164,7 +167,16 @@ namespace dftfe
 #endif
     , d_phiTotalSolverProblem(mpi_comm_domain)
   {
-    d_elpaScala = _d_elpaScala;
+    d_elpaScala = new dftfe::elpaScalaManager(mpi_comm_domain);
+    int error;
+    if (elpa_init(ELPA_API_VERSION) != ELPA_OK)
+      {
+        fprintf(
+          stderr,
+          "Error: ELPA API version not supported. Use API version 20181113.");
+        exit(1);
+      }
+
     forcePtr    = new forceClass<FEOrder, FEOrderElectro>(this,
                                                        mpi_comm_parent,
                                                        mpi_comm_domain);
@@ -190,6 +202,27 @@ namespace dftfe
       dftParameters::reproducible_output ?
         30.0 :
         (std::max(dftParameters::pspCutoffImageCharges, d_pspCutOffTrunc));
+
+    if (Utilities::MPI::this_mpi_process(d_mpiCommParent) == 0)
+      {
+        d_dftfeScratchFolderName =
+          "dftfeScratch" +
+          std::to_string(Utilities::MPI::this_mpi_process(MPI_COMM_WORLD)) +
+          "t'" +
+          std::to_string(std::chrono::duration_cast<std::chrono::milliseconds>(
+                           std::chrono::system_clock::now().time_since_epoch())
+                           .count());
+      }
+
+    int line_size = d_dftfeScratchFolderName.size();
+    MPI_Bcast(&line_size, 1, MPI_INT, 0, d_mpiCommParent);
+    if (Utilities::MPI::this_mpi_process(d_mpiCommParent) != 0)
+      d_dftfeScratchFolderName.resize(line_size);
+    MPI_Bcast(const_cast<char *>(d_dftfeScratchFolderName.data()),
+              line_size,
+              MPI_CHAR,
+              0,
+              d_mpiCommParent);
   }
 
   template <unsigned int FEOrder, unsigned int FEOrderElectro>
@@ -204,6 +237,15 @@ namespace dftfe
 #if defined(DFTFE_WITH_GPU)
     delete d_gpucclMpiCommDomainPtr;
 #endif
+    if (!dftParameters::keepScratchFolder)
+      rmdir(d_dftfeScratchFolderName.c_str());
+
+    int error;
+    d_elpaScala->elpaDeallocateHandles();
+    elpa_uninit(&error);
+    AssertThrow(error == ELPA_OK,
+                dealii::ExcMessage("DFT-FE Error: elpa error."));
+    delete d_elpaScala;
   }
 
   namespace internaldft
@@ -291,6 +333,9 @@ namespace dftfe
     if (dftParameters::verbosity >= 4)
       dftUtils::printCurrentMemoryUsage(mpi_communicator,
                                         "Entered call to set");
+
+    d_numEigenValues = dftfe::dftParameters::numberEigenValues;
+
     //
     // read coordinates
     //
@@ -719,7 +764,7 @@ namespace dftfe
     if (Utilities::MPI::this_mpi_process(d_mpiCommParent) == 0 &&
         dftParameters::isPseudopotential == true)
       nlccFlag = pseudoUtils::convert(dftParameters::pseudoPotentialFile,
-                                      d_mpiCommParent);
+                                      d_dftfeScratchFolderName);
 
     nlccFlag = Utilities::MPI::sum(nlccFlag, d_mpiCommParent);
 
@@ -731,6 +776,9 @@ namespace dftfe
         pcout
           << "Atleast one atom has pseudopotential with nonlinear core correction"
           << std::endl;
+
+    d_elpaScala->processGridELPASetup(d_numEigenValues, d_numEigenValuesRR);
+
     MPI_Barrier(d_mpiCommParent);
     computingTimerStandard.leave_subsection("Atomic system initialization");
   }

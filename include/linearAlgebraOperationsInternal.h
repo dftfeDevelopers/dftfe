@@ -42,7 +42,7 @@ namespace dftfe
        *
        */
       void
-      setupELPAParameters(
+      setupELPAHandleParameters(
         const MPI_Comm &mpi_communicator,
         MPI_Comm &      processGridCommunicatorActive,
         const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,

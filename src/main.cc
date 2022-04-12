@@ -48,25 +48,9 @@ using namespace dealii;
 
 template <int n1, int n2>
 void
-setup_dftfe(dftfe::elpaScalaManager *elpa_Scala,
-            dftfe::dftClass<n1, n2> &problemFE,
-            unsigned int &           numberEigenValues,
-            unsigned int &           numEigenValuesRR,
-            bool                     setupELPAProcessGrid = true)
+setup_dftfe(dftfe::dftClass<n1, n2> &problemFE)
 {
-  problemFE.d_numEigenValues = numberEigenValues;
   problemFE.set();
-
-  numberEigenValues = problemFE.d_numEigenValues;
-  numEigenValuesRR  = problemFE.d_numEigenValuesRR;
-  if (setupELPAProcessGrid == true)
-    {
-      elpa_Scala->elpaAllocateHandles(numberEigenValues,
-                                       numEigenValuesRR);
-
-      elpa_Scala->processGridELPASetup(numberEigenValues,
-                                       numEigenValuesRR);
-    }
   problemFE.init();
 }
 
@@ -80,38 +64,15 @@ run_problem(const MPI_Comm &mpi_comm_parent,
             const MPI_Comm &interpoolcomm,
             const MPI_Comm &interBandGroupComm)
 {
-  dealii::ConditionalOStream pcout(std::cout,
-                                   (dealii::Utilities::MPI::this_mpi_process(
-                                      mpi_comm_parent) == 0));
-  dftfe::elpaScalaManager *  elpaScala;
-  elpaScala = new dftfe::elpaScalaManager(mpi_comm_domain);
-  int error;
-  if (elpa_init(ELPA_API_VERSION) != ELPA_OK)
-    {
-      fprintf(
-        stderr,
-        "Error: ELPA API version not supported. Use API version 20181113.");
-      exit(1);
-    }
-  unsigned int numberEigenValues = dftfe::dftParameters::numberEigenValues;
-  unsigned int numEigenValuesRR;
-
-
-
   if (dftfe::dftParameters::solvermode == "MD")
     {
       dftfe::dftClass<n1, n2> problemFE(mpi_comm_parent,
                                         mpi_comm_domain,
                                         interpoolcomm,
-                                        interBandGroupComm,
-                                        elpaScala);
+                                        interBandGroupComm);
 
-      dftfe::molecularDynamicsClass mdClass(&problemFE,
-                                            mpi_comm_parent);
-      setup_dftfe<n1, n2>(elpaScala,
-                          problemFE,
-                          numberEigenValues,
-                          numEigenValuesRR);
+      dftfe::molecularDynamicsClass mdClass(&problemFE, mpi_comm_parent);
+      setup_dftfe<n1, n2>(problemFE);
       mdClass.runMD();
     }
 
@@ -123,19 +84,10 @@ run_problem(const MPI_Comm &mpi_comm_parent,
       dftfe::dftClass<n1, n2> problemFE(mpi_comm_parent,
                                         mpi_comm_domain,
                                         interpoolcomm,
-                                        interBandGroupComm,
-                                        elpaScala);
-      setup_dftfe<n1, n2>(elpaScala,
-                          problemFE,
-                          numberEigenValues,
-                          numEigenValuesRR);
+                                        interBandGroupComm);
+      setup_dftfe<n1, n2>(problemFE);
       problemFE.run();
     }
-  if (dftfe::dftParameters::useELPA)
-    elpaScala->elpaDeallocateHandles(numberEigenValues, numEigenValuesRR);
-  elpa_uninit(&error);
-  AssertThrow(error == ELPA_OK,
-              dealii::ExcMessage("DFT-FE Error: elpa error."));
 }
 
 // Dynamically access dftClass<n> objects by order.

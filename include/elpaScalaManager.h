@@ -82,14 +82,13 @@ namespace dftfe
     getProcessGridDftfeScalaWrapper() const;
 
     void
-    processGridELPASetup(const unsigned int na,
-                         const unsigned int nev);
+    processGridELPASetup(const unsigned int na, const unsigned int nev);
 
     void
-    elpaAllocateHandles(const unsigned int na, const unsigned int nev);
+    elpaAllocateHandles();
 
     void
-    elpaDeallocateHandles(const unsigned int na, const unsigned int nev);
+    elpaDeallocateHandles();
 
     elpa_t &
     getElpaHandle();

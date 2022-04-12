@@ -33,7 +33,7 @@ namespace dftfe
     namespace internal
     {
       void
-      setupELPAParameters(
+      setupELPAHandleParameters(
         const MPI_Comm &mpi_communicator,
         MPI_Comm &      processGridCommunicatorActive,
         const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
@@ -43,7 +43,15 @@ namespace dftfe
         elpa_t &                                         elpaHandle)
       {
         int error;
-        
+
+        if (processGrid->is_process_active())
+          {
+            int error;
+            elpaHandle = elpa_allocate(&error);
+            AssertThrow(error == ELPA_OK,
+                        dealii::ExcMessage("DFT-FE Error: ELPA Error."));
+          }
+
         // Get the group of processes in mpi_communicator
         int       ierr = 0;
         MPI_Group all_group;
@@ -68,10 +76,7 @@ namespace dftfe
         // processGridCommunicatorActive will be MPI_COMM_NULL.
         // MPI_Comm processGridCommunicatorActive;
         ierr = dealii::Utilities::MPI::create_group(
-          mpi_communicator,
-          active_group,
-          50,
-          &processGridCommunicatorActive);
+          mpi_communicator, active_group, 50, &processGridCommunicatorActive);
         AssertThrowMPI(ierr);
 
         ierr = MPI_Group_free(&all_group);

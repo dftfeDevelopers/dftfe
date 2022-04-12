@@ -60,16 +60,12 @@ dftClass<FEOrder, FEOrderElectro>::initLocalPseudoPotential(
            it++)
         {
           char pseudoFile[256];
-          // if (dftParameters::pseudoProjector==2)
-          // sprintf(pseudoFile,
-          // "%s/data/electronicStructure/pseudoPotential/z%u/oncv/pseudoAtomData/locPot.dat",
-          // DFT_PATH,*it);
-          sprintf(pseudoFile, "temp/z%u/locPot.dat", *it);
-          // else
-          // sprintf(pseudoFile,
-          // "%s/data/electronicStructure/pseudoPotential/z%u/pseudoAtomData/locPot.dat",
-          // DFT_PATH,*it); pcout<<"Reading Local Pseudo-potential data from: "
-          // <<pseudoFile<<std::endl;
+
+          strcpy(pseudoFile,
+                 (d_dftfeScratchFolderName + "/z" + std::to_string(*it) +
+                  "/locPot.dat")
+                   .c_str());
+
           dftUtils::readFile(2, pseudoPotentialData[*it], pseudoFile);
           unsigned int        numRows = pseudoPotentialData[*it].size() - 1;
           std::vector<double> xData(numRows), yData(numRows);

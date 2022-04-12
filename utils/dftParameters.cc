@@ -73,7 +73,8 @@ namespace dftfe
     double       toleranceKinetic       = 1e-03;
     unsigned int cellConstraintType = 12; // all cell components to be relaxed
 
-    unsigned int verbosity                 = 0;
+    int          verbosity                 = 0;
+    bool         keepScratchFolder         = false;
     unsigned int chkType                   = 0;
     bool         restartSpinFromNoSpin     = false;
     bool         restartFromChk            = false;
@@ -189,8 +190,14 @@ namespace dftfe
       prm.declare_entry(
         "VERBOSITY",
         "1",
-        Patterns::Integer(0, 5),
-        "[Standard] Parameter to control verbosity of terminal output. Ranges from 1 for low, 2 for medium (prints some more additional information), 3 for high (prints eigenvalues and fractional occupancies at the end of each self-consistent field iteration), and 4 for very high, which is only meant for code development purposes. VERBOSITY=0 is only used for unit testing and shouldn't be used by standard users.");
+        Patterns::Integer(-1, 5),
+        "[Standard] Parameter to control verbosity of terminal output. Ranges from 1 for low, 2 for medium (prints some more additional information), 3 for high (prints eigenvalues and fractional occupancies at the end of each self-consistent field iteration), and 4 for very high, which is only meant for code development purposes. VERBOSITY=0 is only used for unit testing and shouldn't be used by standard users. VERBOSITY=-1 ensures no outout is printed, which is useful when DFT-FE is used as a calculator inside a larger workflow where multiple parallel DFT-FE jobs might be running, for example when using ASE or generating training data for ML workflows.");
+
+      prm.declare_entry(
+        "KEEP SCRATCH FOLDER",
+        "false",
+        Patterns::Bool(),
+        "[Advanced] If set to true this option does not delete the dftfeScratch folder when the dftfe object is destroyed. This is useful for debugging and code development. Default: false.");
 
       prm.enter_subsection("GPU");
       {
@@ -1136,6 +1143,7 @@ namespace dftfe
     {
       dftParameters::verbosity           = prm.get_integer("VERBOSITY");
       dftParameters::reproducible_output = prm.get_bool("REPRODUCIBLE OUTPUT");
+      dftParameters::keepScratchFolder   = prm.get_bool("KEEP SCRATCH FOLDER");
       dftParameters::solvermode          = prm.get("DFT-FE SOLVER MODE");
       dftParameters::electrostaticsHRefinement =
         prm.get_bool("H REFINED ELECTROSTATICS");
