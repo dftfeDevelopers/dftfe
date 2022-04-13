@@ -50,7 +50,7 @@ namespace dftfe
                         const unsigned int debugLevel,
                         const MPI_Comm &   mpi_comm_parent,
                         const double       trustRadius_maximum = 0.8,
-                        const unsigned int trustRadius_initial = 0.5,
+                        const double       trustRadius_initial = 0.5,
                         const double       trustRadius_minimum = 1.0e-3);
 
     /**
@@ -144,14 +144,16 @@ namespace dftfe
     // void
     // load(const std::string &checkpointFileName);
 
-    /// storage for the gradient of the nonlinear problem in the current bfgs
-    /// step
-    std::vector<double> d_gradient;
+    /// storage for the value and gradient of the nonlinear problem in the
+    /// current bfgs step
+    std::vector<double> d_gradient, d_value;
 
-    /// storage for the gradient of the nonlinear problem evaluated at the end
-    /// of the current bfgs step
-    std::vector<double> d_gradientNew;
+    /// storage for the value and gradient of the nonlinear problem evaluated at
+    /// the end of the current bfgs step
+    std::vector<double> d_gradientNew, d_valueNew;
 
+    /// Storage for the predicted decrease
+    double d_predDec;
     /// storage for the update vector computed in the current bfgs step
     std::vector<double> d_deltaX;
 
@@ -175,9 +177,11 @@ namespace dftfe
     double d_gradMax;
 
     /// storage for trust region parameters
-    double d_trustRadiusInitial, d_trustRadiusMax, d_trustRadiusMin, d_trustRadius;
+    double d_trustRadiusInitial, d_trustRadiusMax, d_trustRadiusMin,
+      d_trustRadius;
 
-
+    /// boolean parameter for step accepteance
+    bool d_stepAccepted;
     /**
      * Storage for vector of flags (0 or 1) with size equal to the size of the
      * solution vector of the nonlinear problem. If the flag value is 1 for an
