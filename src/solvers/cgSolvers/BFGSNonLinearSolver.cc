@@ -310,7 +310,7 @@ namespace dftfe
     double dxnorm = dnrm2_(&d_numberUnknowns, d_deltaX.data(), &one);
     double dgnorm = dnrm2_(&d_numberUnknowns, delta_g.data(), &one);
     double znorm  = dnrm2_(&d_numberUnknowns, dgmHdx.data(), &one);
-    /*if (ztdx / (znorm * dxnorm) < -0.1)
+    if (ztdx / (znorm * dxnorm) < -0.1)
       {
         pcout << "DEBUG Step SR1 " << std::endl;
         double factor = 1.0 / ztdx;
@@ -321,27 +321,27 @@ namespace dftfe
               &one,
               d_hessian.data(),
               &d_numberUnknowns);
-      }*/
-    // else if (dgtdx / (dgnorm * dxnorm) > 0.1)
-    //  {
-    pcout << "DEBUG Step BFGS " << std::endl;
-    double factor = 1.0 / dgtdx;
-    dsyr_(&uplo,
-          &d_numberUnknowns,
-          &factor,
-          delta_g.data(),
-          &one,
-          d_hessian.data(),
-          &d_numberUnknowns);
-    factor = -1.0 / dxtHdx;
-    dsyr_(&uplo,
-          &d_numberUnknowns,
-          &factor,
-          Hdx.data(),
-          &one,
-          d_hessian.data(),
-          &d_numberUnknowns);
-    /*  }
+      }
+    else if (dgtdx / (dgnorm * dxnorm) > 0.1)
+      {
+        pcout << "DEBUG Step BFGS " << std::endl;
+        double factor = 1.0 / dgtdx;
+        dsyr_(&uplo,
+              &d_numberUnknowns,
+              &factor,
+              delta_g.data(),
+              &one,
+              d_hessian.data(),
+              &d_numberUnknowns);
+        factor = -1.0 / dxtHdx;
+        dsyr_(&uplo,
+              &d_numberUnknowns,
+              &factor,
+              Hdx.data(),
+              &one,
+              d_hessian.data(),
+              &d_numberUnknowns);
+      }
     else
       {
         pcout << "DEBUG Step PSB " << std::endl;
@@ -363,7 +363,7 @@ namespace dftfe
               &one,
               d_hessian.data(),
               &d_numberUnknowns);
-      }*/
+      }
   }
 
   //
@@ -514,6 +514,8 @@ namespace dftfe
     //
     // initialize delta new and direction
     //
+    bool                stepUpdated = false;
+    std::vector<double> d_rejectedSum(d_numberUnknowns, 0.0);
     if (!restart)
       {
         d_trustRadius  = 0.5;
@@ -553,8 +555,29 @@ namespace dftfe
 
     for (d_iter = 0; d_iter < d_maxNumberIterations; ++d_iter)
       {
+        if (d_isBFGSRestartDueToSmallRadius)
+          {
+            pcout << "DEBUG reset history" << std::endl;
+            initializeHessian(problem);
+            d_trustRadius                   = 0.5;
+            d_isBFGSRestartDueToSmallRadius = false;
+            d_stepAccepted=true;
+            stepUpdated=true;
+          }
+        else
+          {
+            d_stepAccepted = d_valueNew[0] <= d_value[0];
+            if (d_stepAccepted)
+              {
+                d_value[0] = d_valueNew[0];
+                d_gradient = d_gradientNew;
+                updateHessian();
+              }
+          }
+
         if (d_stepAccepted)
           {
+            std::fill(d_rejectedSum.begin(), d_rejectedSum.end(), 0.0);
             if (d_debugLevel >= 2)
               for (unsigned int i = 0; i < d_gradient.size(); ++i)
                 pcout << "d_gradient: " << d_gradient[i] << std::endl;
@@ -584,81 +607,99 @@ namespace dftfe
             //
             pcout << "DEBUG Start Compute step " << std::endl;
             computeStep();
+            stepUpdated = true;
           }
         else
           {
             for (auto i = 0; i < d_numberUnknowns; ++i)
               {
-                d_deltaX[i] =
-                  d_deltaX[i] >= d_trustRadius ? d_trustRadius : d_deltaX[i];
-                d_deltaX[i] =
-                  d_deltaX[i] <= -d_trustRadius ? -d_trustRadius : d_deltaX[i];
+                d_rejectedSum[i] += d_deltaX[i];
               }
+            pcout << "DEBUG Start rejected step update check " << d_trustRadius
+                  << std::endl;
+            for (auto i = 0; i < d_numberUnknowns; ++i)
+              {
+                stepUpdated = stepUpdated || d_rejectedSum[i] > d_trustRadius ||
+                              d_rejectedSum[i] < -d_trustRadius;
+              }
+            if (stepUpdated)
+              {
+                for (auto i = 0; i < d_numberUnknowns; ++i)
+                  {
+                    double temp;
+                    temp = d_rejectedSum[i] > d_trustRadius ? d_trustRadius :
+                                                              d_rejectedSum[i];
+                    temp = d_rejectedSum[i] < -d_trustRadius ? -d_trustRadius :
+                                                               d_rejectedSum[i];
+                    d_deltaX[i] = temp - d_rejectedSum[i];
+                  }
+              }
+            pcout << "DEBUG End rejected step update check " << stepUpdated
+                  << std::endl;
           }
         for (unsigned int i = 0; i < d_deltaX.size(); ++i)
           pcout << "step: " << d_deltaX[i] << std::endl;
         pcout << "DEBUG End Compute step " << std::endl;
-        updateSolution(d_deltaX, problem);
-        pcout << "DEBUG End update step " << std::endl;
-        //
-        // evaluate gradient
-        //
-        problem.gradient(d_gradientNew);
-        problem.value(d_valueNew);
-
-        //
-        // check for convergence
-        //
-        unsigned int isBreak = 0;
-
-        d_gradMax = 0.0;
-        for (unsigned int i = 0; i < d_numberUnknowns; ++i)
+        if (stepUpdated)
           {
-            if (std::abs(d_gradientNew[i]) > d_gradMax)
-              d_gradMax = std::abs(d_gradientNew[i]);
+            updateSolution(d_deltaX, problem);
+            pcout << "DEBUG End update step " << std::endl;
+            //
+            // evaluate gradient
+            //
+            problem.gradient(d_gradientNew);
+            problem.value(d_valueNew);
+
+            //
+            // check for convergence
+            //
+            unsigned int isBreak = 0;
+
+            d_gradMax = 0.0;
+            for (unsigned int i = 0; i < d_numberUnknowns; ++i)
+              {
+                if (std::abs(d_gradientNew[i]) > d_gradMax)
+                  d_gradMax = std::abs(d_gradientNew[i]);
+              }
+
+            if (d_gradMax < d_tolerance)
+              isBreak = 1;
+            MPI_Bcast(&(isSuccess), 1, MPI_INT, 0, mpi_communicator);
+            if (isBreak == 1)
+              break;
+
+            //
+            // update trust radius and hessian
+            //
+            double modelAcc  = (d_valueNew[0] - d_value[0]) / d_predDec;
+            double maxDeltaX = 0;
+
+            for (unsigned int i = 0; i < d_numberUnknowns; ++i)
+              {
+                if (std::abs(d_deltaX[i]) > maxDeltaX)
+                  maxDeltaX = std::abs(d_deltaX[i]);
+              }
+            if (modelAcc > 0.75 && maxDeltaX > 0.8 * d_trustRadius)
+              {
+                d_trustRadius = 2 * d_trustRadius > d_trustRadiusMax ?
+                                  d_trustRadiusMax :
+                                  2 * d_trustRadius;
+              }
+            else if (modelAcc < 0.25)
+              {
+                d_trustRadius *= 0.25;
+                if (d_trustRadius < d_trustRadiusMin)
+                  {
+                    d_isBFGSRestartDueToSmallRadius = true;
+                  }
+              }
           }
-
-        if (d_gradMax < d_tolerance)
-          isBreak = 1;
-        MPI_Bcast(&(isSuccess), 1, MPI_INT, 0, mpi_communicator);
-        if (isBreak == 1)
-          break;
-
-
-        //
-        // update hessian
-        //
-        double modelAcc = (d_valueNew[0] - d_value[0]) / d_predDec;
-        if (modelAcc > 0.75)
-          {
-            d_trustRadius = 2 * d_trustRadius > d_trustRadiusMax ?
-                              d_trustRadiusMax :
-                              2 * d_trustRadius;
-          }
-        else if (modelAcc < 0.25)
+        else
           {
             d_trustRadius *= 0.25;
             if (d_trustRadius < d_trustRadiusMin)
               {
                 d_isBFGSRestartDueToSmallRadius = true;
-              }
-          }
-
-        if (d_isBFGSRestartDueToSmallRadius)
-          {
-            pcout << "DEBUG reset history" << std::endl;
-            initializeHessian(problem);
-            d_trustRadius                   = 0.5;
-            d_isBFGSRestartDueToSmallRadius = false;
-          }
-        else
-          {
-            d_stepAccepted = d_valueNew <= d_value;
-            if (d_stepAccepted)
-              {
-                d_value[0] = d_valueNew[0];
-                d_gradient = d_gradientNew;
-                updateHessian();
               }
           }
       }
