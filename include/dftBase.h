@@ -31,6 +31,12 @@ namespace dftfe
   class dftBase
   {
   public:
+    /**
+     * @brief This is required to correctly delete the derived class object
+     * through the base class ptr
+     */
+    virtual ~dftBase(){};
+
     virtual void
     set() = 0;
 
