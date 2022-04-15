@@ -143,6 +143,16 @@ main(int argc, char *argv[])
   Utilities::MPI::MPI_InitFinalize mpi_initialization(argc, argv);
   const double                     start = MPI_Wtime();
 
+  int error;
+  if (elpa_init(ELPA_API_VERSION) != ELPA_OK)
+    {
+      fprintf(
+        stderr,
+        "Error: ELPA API version not supported. Use API version 20181113.");
+      exit(1);
+    }
+
+
   //
   ParameterHandler prm;
   dftfe::dftParameters::declare_parameters(prm);
@@ -262,6 +272,11 @@ main(int argc, char *argv[])
       bandGroupsPool.get_intrapool_comm(),
       kPointPool.get_interpool_comm(),
       bandGroupsPool.get_interpool_comm());
+
+  elpa_uninit(&error);
+  AssertThrow(error == ELPA_OK,
+              dealii::ExcMessage("DFT-FE Error: elpa error."));
+
 
   const double end = MPI_Wtime();
   if (dftfe::dftParameters::verbosity >= 1 &&

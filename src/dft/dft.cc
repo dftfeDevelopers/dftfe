@@ -168,14 +168,6 @@ namespace dftfe
     , d_phiTotalSolverProblem(mpi_comm_domain)
   {
     d_elpaScala = new dftfe::elpaScalaManager(mpi_comm_domain);
-    int error;
-    if (elpa_init(ELPA_API_VERSION) != ELPA_OK)
-      {
-        fprintf(
-          stderr,
-          "Error: ELPA API version not supported. Use API version 20181113.");
-        exit(1);
-      }
 
     forcePtr    = new forceClass<FEOrder, FEOrderElectro>(this,
                                                        mpi_comm_parent,
@@ -243,11 +235,7 @@ namespace dftfe
         system(command.c_str());
       }
 
-    int error;
     d_elpaScala->elpaDeallocateHandles();
-    elpa_uninit(&error);
-    AssertThrow(error == ELPA_OK,
-                dealii::ExcMessage("DFT-FE Error: elpa error."));
     delete d_elpaScala;
   }
 
