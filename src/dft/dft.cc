@@ -238,7 +238,10 @@ namespace dftfe
     delete d_gpucclMpiCommDomainPtr;
 #endif
     if (!dftParameters::keepScratchFolder)
-      rmdir(d_dftfeScratchFolderName.c_str());
+      {
+        std::string command = "rm -rf " + d_dftfeScratchFolderName;
+        system(command.c_str());
+      }
 
     int error;
     d_elpaScala->elpaDeallocateHandles();
