@@ -167,10 +167,15 @@ namespace dftfe
     for (auto i = 0; i < d_numberUnknowns; ++i)
       {
         d_deltaX[i] = eigenVector[i] / eigenVector[d_numberUnknowns];
-        d_deltaX[i] =
-          d_deltaX[i] >= d_trustRadius ? d_trustRadius : d_deltaX[i];
-        d_deltaX[i] =
-          d_deltaX[i] <= -d_trustRadius ? -d_trustRadius : d_deltaX[i];
+      }
+    double normdx = computeL2Norm(d_deltaX);
+    pcout << "DEBUG L2 dx init " << normdx << std::endl;
+    if (normdx >= d_trustRadius)
+      {
+        for (auto i = 0; i < d_numberUnknowns; ++i)
+          {
+            d_deltaX[i] *= d_trustRadius / normdx;
+          }
       }
     const double       one_d = 1.0;
     const unsigned int uone  = 1;
@@ -373,7 +378,8 @@ namespace dftfe
   BFGSNonLinearSolver::computeStep()
   {
     computeLambda();
-    pcout << "DEBUG Lambda " << d_lambda << " " << d_predDec << std::endl;
+    pcout << "DEBUG Lambda " << d_lambda << " " << d_predDec << " "
+          << computeL2Norm(d_deltaX) << std::endl;
     /*std::vector<double> HpLambdaS(d_numberUnknowns * d_numberUnknowns, 0.0);
 
     for (auto col = 0; col < d_numberUnknowns; ++col)
@@ -424,7 +430,7 @@ namespace dftfe
   // Compute residual L2-norm.
   //
   double
-  BFGSNonLinearSolver::computeResidualL2Norm() const
+  BFGSNonLinearSolver::computeL2Norm(std::vector<double> vec) const
   {
     // initialize norm
     //
@@ -435,9 +441,9 @@ namespace dftfe
     //
     for (unsigned int i = 0; i < d_numberUnknowns; ++i)
       {
-        const double factor   = d_unknownCountFlag[i];
-        const double gradient = d_gradient[i];
-        norm += factor * gradient * gradient;
+        const double factor = d_unknownCountFlag[i];
+        const double val    = vec[i];
+        norm += factor * val * val;
       }
 
 
@@ -561,17 +567,22 @@ namespace dftfe
             initializeHessian(problem);
             d_trustRadius                   = 0.5;
             d_isBFGSRestartDueToSmallRadius = false;
-            d_stepAccepted=true;
-            stepUpdated=true;
+            if (!d_stepAccepted)
+              {
+                updateSolution(d_rejectedSum, problem);
+                problem.gradient(d_gradient);
+                problem.value(d_value);
+              }
+            d_stepAccepted = true;
           }
-        else
+        else if (d_iter != 0)
           {
             d_stepAccepted = d_valueNew[0] <= d_value[0];
             if (d_stepAccepted)
               {
+                updateHessian();
                 d_value[0] = d_valueNew[0];
                 d_gradient = d_gradientNew;
-                updateHessian();
               }
           }
 
@@ -586,7 +597,7 @@ namespace dftfe
             //
             // compute L2-norm of the residual (gradient)
             //
-            const double residualNorm = computeResidualL2Norm();
+            const double residualNorm = computeL2Norm(d_gradient);
 
 
             if (d_debugLevel >= 2)
@@ -611,27 +622,23 @@ namespace dftfe
           }
         else
           {
-            for (auto i = 0; i < d_numberUnknowns; ++i)
-              {
-                d_rejectedSum[i] += d_deltaX[i];
-              }
-            pcout << "DEBUG Start rejected step update check " << d_trustRadius
-                  << std::endl;
-            for (auto i = 0; i < d_numberUnknowns; ++i)
-              {
-                stepUpdated = stepUpdated || d_rejectedSum[i] > d_trustRadius ||
-                              d_rejectedSum[i] < -d_trustRadius;
-              }
             if (stepUpdated)
               {
                 for (auto i = 0; i < d_numberUnknowns; ++i)
                   {
-                    double temp;
-                    temp = d_rejectedSum[i] > d_trustRadius ? d_trustRadius :
-                                                              d_rejectedSum[i];
-                    temp = d_rejectedSum[i] < -d_trustRadius ? -d_trustRadius :
-                                                               d_rejectedSum[i];
-                    d_deltaX[i] = temp - d_rejectedSum[i];
+                    d_rejectedSum[i] -= d_deltaX[i];
+                  }
+              }
+            pcout << "DEBUG Start rejected step update check " << d_trustRadius
+                  << std::endl;
+            double stepnorm = computeL2Norm(d_rejectedSum);
+            stepUpdated     = stepnorm > d_trustRadius;
+            if (stepUpdated)
+              {
+                for (auto i = 0; i < d_numberUnknowns; ++i)
+                  {
+                    d_deltaX[i] = -d_rejectedSum[i] * d_trustRadius / stepnorm +
+                                  d_rejectedSum[i];
                   }
               }
             pcout << "DEBUG End rejected step update check " << stepUpdated

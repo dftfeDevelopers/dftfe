@@ -100,12 +100,12 @@ namespace dftfe
     computeStep();
 
     /**
-     * @brief Compute residual L2-norm.
+     * @brief Compute L2-norm.
      *
-     * @return Value of the residual L2-norm.
+     * @return Value of the L2-norm.
      */
     double
-    computeResidualL2Norm() const;
+    computeL2Norm(std::vector<double> vec) const;
 
     /**
      * @brief Compute the total number of unknowns in all
