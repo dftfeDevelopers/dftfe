@@ -208,7 +208,7 @@ namespace dftfe
         d_dftfeScratchFolderName =
           "dftfeScratch" +
           std::to_string(Utilities::MPI::this_mpi_process(MPI_COMM_WORLD)) +
-          "t'" +
+          "t" +
           std::to_string(std::chrono::duration_cast<std::chrono::milliseconds>(
                            std::chrono::system_clock::now().time_since_epoch())
                            .count());
