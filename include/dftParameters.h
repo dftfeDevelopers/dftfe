@@ -70,7 +70,9 @@ namespace dftfe
     extern double       forceRelaxTol, stressRelaxTol, toleranceKinetic;
     extern unsigned int cellConstraintType;
 
-    extern unsigned int verbosity, chkType;
+    extern int          verbosity;
+    extern bool         keepScratchFolder;
+    extern unsigned int chkType;
     extern bool         restartSpinFromNoSpin;
     extern bool         restartFromChk;
     extern bool         restartMdFromChk;

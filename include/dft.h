@@ -90,8 +90,6 @@ namespace dftfe
   class geoOptIon;
   template <unsigned int T1, unsigned int T2>
   class geoOptCell;
-  template <unsigned int T1, unsigned int T2>
-  class molecularDynamics;
 
 #endif /* DOXYGEN_SHOULD_SKIP_THIS */
 
@@ -131,11 +129,10 @@ namespace dftfe
      *  @param[in] interBandGroupComm  mpi_communicator for parallelization over
      * bands
      */
-    dftClass(const MPI_Comm &  mpiCommParent,
-             const MPI_Comm &  mpi_comm_domain,
-             const MPI_Comm &  interpoolcomm,
-             const MPI_Comm &  interBandGroupComm,
-             elpaScalaManager *_d_elpaScala);
+    dftClass(const MPI_Comm &mpiCommParent,
+             const MPI_Comm &mpi_comm_domain,
+             const MPI_Comm &interpoolcomm,
+             const MPI_Comm &interBandGroupComm);
 
     /**
      * @brief dftClass destructor
@@ -1144,12 +1141,10 @@ namespace dftfe
       localProc_dof_indicesImag;
     std::vector<bool> selectedDofsHanging;
 
-    forceClass<FEOrder, FEOrderElectro> *       forcePtr;
-    symmetryClass<FEOrder, FEOrderElectro> *    symmetryPtr;
-    geoOptIon<FEOrder, FEOrderElectro> *        geoOptIonPtr;
-    geoOptCell<FEOrder, FEOrderElectro> *       geoOptCellPtr;
-    molecularDynamics<FEOrder, FEOrderElectro> *d_mdPtr;
-    // molecularDynamicsClass<FEOrder, FEOrderElectro> *d_mdClassPtr;
+    forceClass<FEOrder, FEOrderElectro> *   forcePtr;
+    symmetryClass<FEOrder, FEOrderElectro> *symmetryPtr;
+    geoOptIon<FEOrder, FEOrderElectro> *    geoOptIonPtr;
+    geoOptCell<FEOrder, FEOrderElectro> *   geoOptCellPtr;
 
     elpaScalaManager *d_elpaScala;
 
@@ -1162,6 +1157,8 @@ namespace dftfe
     kohnShamDFTOperatorCUDAClass<FEOrder, FEOrderElectro>
       *d_kohnShamDFTOperatorCUDAPtr;
 #endif
+
+    std::string d_dftfeScratchFolderName;
 
     /**
      * chebyshev subspace iteration solver objects

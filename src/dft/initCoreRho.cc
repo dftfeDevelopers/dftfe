@@ -56,7 +56,10 @@ dftClass<FEOrder, FEOrderElectro>::initCoreRho()
       char coreDensityFile[256];
       if (dftParameters::isPseudopotential)
         {
-          sprintf(coreDensityFile, "temp/z%u/coreDensity.inp", *it);
+          strcpy(coreDensityFile,
+                 (d_dftfeScratchFolderName + "/z" + std::to_string(*it) +
+                  "/coreDensity.inp")
+                   .c_str());
         }
 
       unsigned int fileReadFlag =

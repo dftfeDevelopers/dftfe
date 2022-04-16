@@ -38,14 +38,12 @@ namespace dftfe
      */
     namespace internal
     {
-      /** @brief setup ELPA handle.
+      /** @brief setup ELPA parameters.
        *
        */
       void
-      setupELPAHandle(
+      setupELPAHandleParameters(
         const MPI_Comm &mpi_communicator,
-        const MPI_Comm &mpi_comm_interband,
-        const MPI_Comm &mpi_comm_interpool,
         MPI_Comm &      processGridCommunicatorActive,
         const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
         const unsigned int                               na,

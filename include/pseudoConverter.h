@@ -40,7 +40,7 @@ namespace dftfe
   namespace pseudoUtils
   {
     int
-    convert(std::string &file, const MPI_Comm &mpi_comm_parent);
+    convert(const std::string &file, const std::string &dftfeScratchFolderName);
   }
 } // namespace dftfe
 #endif

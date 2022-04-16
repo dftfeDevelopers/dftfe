@@ -733,6 +733,6 @@ forceClass<FEOrder, FEOrderElectro>::printAtomsForces()
             << sumForce[1] << " " << sumForce[2] << std::endl;
     }
 
-  if (!dftParameters::reproducible_output)
+  if (dftParameters::verbosity >= 1 && !dftParameters::reproducible_output)
     dftUtils::writeDataIntoFile(forceData, "forces.txt", d_mpiCommParent);
 }
