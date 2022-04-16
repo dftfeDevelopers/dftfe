@@ -51,7 +51,7 @@ namespace dftfe
                         const MPI_Comm &   mpi_comm_parent,
                         const double       trustRadius_maximum = 0.8,
                         const double       trustRadius_initial = 0.5,
-                        const double       trustRadius_minimum = 1.0e-3);
+                        const double       trustRadius_minimum = 1.0e-4);
 
     /**
      * @brief Destructor.
@@ -107,6 +107,9 @@ namespace dftfe
     double
     computeL2Norm(std::vector<double> vec) const;
 
+    double
+    computeLInfNorm(std::vector<double> vec) const;
+
     /**
      * @brief Compute the total number of unknowns in all
      * processors.
@@ -155,7 +158,7 @@ namespace dftfe
     /// Storage for the predicted decrease
     double d_predDec;
     /// storage for the update vector computed in the current bfgs step
-    std::vector<double> d_deltaX;
+    std::vector<double> d_deltaX, d_deltaXNew;
 
     /// storage for number of unknowns to be solved for in the nonlinear problem
     unsigned int d_numberUnknowns;
