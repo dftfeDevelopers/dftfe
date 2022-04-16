@@ -170,25 +170,25 @@ namespace dftfe
               d_hessian.data(),
               &d_numberUnknowns);
       }
-     else if (dgtdx / (dgnorm * dxnorm) > 0.1)
-     {
-    pcout << "DEBUG Step BFGS " << std::endl;
-    double factor = 1.0 / dgtdx;
-    dsyr_(&uplo,
-          &d_numberUnknowns,
-          &factor,
-          delta_g.data(),
-          &one,
-          d_hessian.data(),
-          &d_numberUnknowns);
-    factor = -1.0 / dxtHdx;
-    dsyr_(&uplo,
-          &d_numberUnknowns,
-          &factor,
-          Hdx.data(),
-          &one,
-          d_hessian.data(),
-          &d_numberUnknowns);
+    else if (dgtdx / (dgnorm * dxnorm) > 0.1)
+      {
+        pcout << "DEBUG Step BFGS " << std::endl;
+        double factor = 1.0 / dgtdx;
+        dsyr_(&uplo,
+              &d_numberUnknowns,
+              &factor,
+              delta_g.data(),
+              &one,
+              d_hessian.data(),
+              &d_numberUnknowns);
+        factor = -1.0 / dxtHdx;
+        dsyr_(&uplo,
+              &d_numberUnknowns,
+              &factor,
+              Hdx.data(),
+              &one,
+              d_hessian.data(),
+              &d_numberUnknowns);
       }
     else
       {
@@ -334,46 +334,6 @@ namespace dftfe
             d_deltaXNew[i] *= d_trustRadius / normdx;
           }
       }
-    const double       one_d = 1.0;
-    const unsigned int uone  = 1;
-
-    std::vector<double> Hdx(d_numberUnknowns, 0.0);
-    dsymv_(&uplo,
-           &d_numberUnknowns,
-           &one_d,
-           d_hessian.data(),
-           &d_numberUnknowns,
-           d_deltaXNew.data(),
-           &uone,
-           &one_d,
-           Hdx.data(),
-           &uone);
-
-    double dxtHdx =
-      ddot_(&d_numberUnknowns, d_deltaXNew.data(), &uone, Hdx.data(), &uone);
-
-    std::vector<double> Sdx(d_numberUnknowns, 0.0);
-    dsymv_(&uplo,
-           &d_numberUnknowns,
-           &one_d,
-           d_Srfo.data(),
-           &d_numberUnknowns,
-           d_deltaXNew.data(),
-           &uone,
-           &one_d,
-           Sdx.data(),
-           &uone);
-
-    double dxtSdx =
-      ddot_(&d_numberUnknowns, d_deltaXNew.data(), &uone, Sdx.data(), &uone);
-
-    double gtdx = ddot_(
-      &d_numberUnknowns, d_deltaXNew.data(), &uone, d_gradient.data(), &uone);
-
-    d_predDec = (gtdx + 0.5 * dxtHdx) / (1 + dxtSdx);
-    pcout << "DEBUG Lambda " << d_lambda << " " << d_predDec << " "
-          << computeLInfNorm(d_deltaX) << " " << computeLInfNorm(d_deltaXNew)
-          << std::endl;
     /*std::vector<double> HpLambdaS(d_numberUnknowns * d_numberUnknowns, 0.0);
 
     for (auto col = 0; col < d_numberUnknowns; ++col)
@@ -418,7 +378,51 @@ namespace dftfe
     std::vector<int>().swap(ipiv);*/
   }
 
+  void
+  BFGSNonLinearSolver::computepredDec()
+  {
+    const char         uplo  = 'U';
+    const double       one_d = 1.0;
+    const unsigned int one   = 1;
 
+    std::vector<double> Hdx(d_numberUnknowns, 0.0);
+    dsymv_(&uplo,
+           &d_numberUnknowns,
+           &one_d,
+           d_hessian.data(),
+           &d_numberUnknowns,
+           d_deltaXNew.data(),
+           &one,
+           &one_d,
+           Hdx.data(),
+           &one);
+
+    double dxtHdx =
+      ddot_(&d_numberUnknowns, d_deltaXNew.data(), &one, Hdx.data(), &one);
+
+    std::vector<double> Sdx(d_numberUnknowns, 0.0);
+    dsymv_(&uplo,
+           &d_numberUnknowns,
+           &one_d,
+           d_Srfo.data(),
+           &d_numberUnknowns,
+           d_deltaXNew.data(),
+           &one,
+           &one_d,
+           Sdx.data(),
+           &one);
+
+    double dxtSdx =
+      ddot_(&d_numberUnknowns, d_deltaXNew.data(), &one, Sdx.data(), &one);
+
+    double gtdx = ddot_(
+      &d_numberUnknowns, d_deltaXNew.data(), &one, d_gradient.data(), &one);
+
+    d_predDec = (gtdx + 0.5 * dxtHdx) / (1 + dxtSdx);
+    pcout << "DEBUG Lambda " << d_lambda << " " << d_predDec << " "
+          << computeLInfNorm(d_deltaX) << " " << computeLInfNorm(d_deltaXNew)
+          << " " << gtdx << " " << dxtHdx << std::endl;
+  }
 
   //
   // Compute residual L2-norm.
@@ -628,9 +632,22 @@ namespace dftfe
               {
                 updateVector[i] = d_deltaXNew[i] - d_deltaX[i];
               }
+            const unsigned int one   = 1;
+            double             gtdxs = ddot_(&d_numberUnknowns,
+                                 d_deltaXNew.data(),
+                                 &one,
+                                 d_gradient.data(),
+                                 &one);
+            double             gtdxf = ddot_(&d_numberUnknowns,
+                                 updateVector.data(),
+                                 &one,
+                                 d_gradientNew.data(),
+                                 &one);
+            pcout << "DEBUG descent check " << gtdxs << " "
+                  << " " << gtdxf << std::endl;
           }
         updateSolution(updateVector, problem);
-        pcout << "DEBUG End update step " << std::endl;
+        pcout << "DEBUG End update step "<< std::endl;
         //
         // evaluate gradient
         //
@@ -656,10 +673,11 @@ namespace dftfe
         d_stepAccepted = d_valueNew[0] <= d_value[0];
         if (d_stepAccepted)
           {
-            pcout<<"DEBUG step accepted "<<d_valueNew[0] - d_value[0]<<" "<<d_predDec<<" "<<(d_valueNew[0] - d_value[0]) / d_predDec<<std::endl;
             d_deltaX = d_deltaXNew;
-            updateHessian();
-
+            computepredDec();
+            pcout << "DEBUG step accepted " << d_valueNew[0] - d_value[0] << " "
+                  << d_predDec << " "
+                  << (d_valueNew[0] - d_value[0]) / d_predDec << std::endl;
             double modelAcc   = (d_valueNew[0] - d_value[0]) / d_predDec;
             double normDeltaX = computeLInfNorm(d_deltaX);
             if (modelAcc > 0.75 && normDeltaX > 0.8 * d_trustRadius)
@@ -676,12 +694,14 @@ namespace dftfe
                     d_isBFGSRestartDueToSmallRadius = true;
                   }
               }
+            updateHessian();
             d_value[0] = d_valueNew[0];
             d_gradient = d_gradientNew;
           }
         else
           {
-            pcout<<"DEBUG step rejected "<<d_valueNew[0] - d_value[0]<<std::endl;
+            pcout << "DEBUG step rejected " << d_valueNew[0] - d_value[0]
+                  << std::endl;
             d_deltaX          = d_deltaXNew;
             double normDeltaX = computeLInfNorm(d_deltaXNew);
             d_trustRadius *= 0.25;

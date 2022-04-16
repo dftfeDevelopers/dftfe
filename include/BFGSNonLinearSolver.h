@@ -51,7 +51,7 @@ namespace dftfe
                         const MPI_Comm &   mpi_comm_parent,
                         const double       trustRadius_maximum = 0.8,
                         const double       trustRadius_initial = 0.5,
-                        const double       trustRadius_minimum = 1.0e-4);
+                        const double       trustRadius_minimum = 1.0e-6);
 
     /**
      * @brief Destructor.
@@ -98,7 +98,8 @@ namespace dftfe
      */
     void
     computeStep();
-
+    void
+    computepredDec();
     /**
      * @brief Compute L2-norm.
      *
