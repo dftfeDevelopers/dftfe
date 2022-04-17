@@ -356,6 +356,7 @@ namespace dftfe
     std::vector<double> &      s,
     const std::vector<double> &gradient) const
   {
+    s.clear();
     s.resize(getNumberUnknowns() * getNumberUnknowns(), 0.0);
     for (auto i = 0; i < getNumberUnknowns(); ++i)
       {

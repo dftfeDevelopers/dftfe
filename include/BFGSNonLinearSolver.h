@@ -51,7 +51,7 @@ namespace dftfe
                         const MPI_Comm &   mpi_comm_parent,
                         const double       trustRadius_maximum = 0.8,
                         const double       trustRadius_initial = 0.5,
-                        const double       trustRadius_minimum = 1.0e-6);
+                        const double       trustRadius_minimum = 1.0e-4);
 
     /**
      * @brief Destructor.
@@ -87,6 +87,8 @@ namespace dftfe
      */
     void
     updateHessian();
+    void
+    scaleHessian();
 
     /**
      * @brief Compute Lambda.
@@ -178,7 +180,7 @@ namespace dftfe
     double d_lambda;
 
     /// storage for inf norm of gradient
-    double d_gradMax;
+    double d_gradMax, d_normDelaXnew;
 
     /// storage for trust region parameters
     double d_trustRadiusInitial, d_trustRadiusMax, d_trustRadiusMin,
