@@ -99,9 +99,15 @@ namespace dftfe
      * @brief Compute Step.
      */
     void
+    checkWolfe();
+    void
+    computeRFOStep();
+    void
     computeStep();
     void
     computepredDec();
+    void
+    computeTrustRadius();
     /**
      * @brief Compute L2-norm.
      *
@@ -161,7 +167,7 @@ namespace dftfe
     /// Storage for the predicted decrease
     double d_predDec;
     /// storage for the update vector computed in the current bfgs step
-    std::vector<double> d_deltaX, d_deltaXNew;
+    std::vector<double> d_deltaX, d_deltaXNew, d_updateVector;
 
     /// storage for number of unknowns to be solved for in the nonlinear problem
     unsigned int d_numberUnknowns;
@@ -180,14 +186,15 @@ namespace dftfe
     double d_lambda;
 
     /// storage for inf norm of gradient
-    double d_gradMax, d_normDelaXnew;
+    double d_gradMax, d_normDeltaXnew;
 
     /// storage for trust region parameters
     double d_trustRadiusInitial, d_trustRadiusMax, d_trustRadiusMin,
       d_trustRadius;
 
     /// boolean parameter for step accepteance
-    bool d_stepAccepted;
+    bool d_stepAccepted, d_wolfeCurvature, d_wolfeSufficientDec,
+      d_wolfeSatisfied;
     /**
      * Storage for vector of flags (0 or 1) with size equal to the size of the
      * solution vector of the nonlinear problem. If the flag value is 1 for an

@@ -59,11 +59,6 @@ namespace dftfe
     return;
   }
 
-  // Computes the lowest eigenvalue of the augmented hessian.
-  void
-  BFGSNonLinearSolver::computeLambda()
-  {}
-
   //
   // initialize hessian
   //
@@ -157,73 +152,35 @@ namespace dftfe
     double dxnorm = dnrm2_(&d_numberUnknowns, d_deltaXNew.data(), &one);
     double dgnorm = dnrm2_(&d_numberUnknowns, delta_g.data(), &one);
     double znorm  = dnrm2_(&d_numberUnknowns, dgmHdx.data(), &one);
-    /*if (ztdx / (znorm * dxnorm) < -0.1)
+    double theta  = dgtdx >= 0.2 * dxtHdx ? 1 : 0.8 * dxtHdx / (dxtHdx - dgtdx);
+    pcout << "DEBUG Step BFGS theta " << theta << std::endl;
+    if (theta != 1)
       {
-        pcout << "DEBUG Step SR1 " << std::endl;
-        double factor = 1.0 / ztdx;
-        dsyr_(&uplo,
-              &d_numberUnknowns,
-              &factor,
-              dgmHdx.data(),
-              &one,
-              d_hessian.data(),
-              &d_numberUnknowns);
+        pcout << "DEBUG BFGS Damped " << std::endl;
       }
-    else if (dgtdx / (dgnorm * dxnorm) > 0.1)
-      {*/
-        pcout << "DEBUG Step BFGS " << std::endl;
-        double theta =
-          dgtdx >= 0.2 * dxtHdx ? 1 : 0.8 * dxtHdx / (dxtHdx - dgtdx);
-        if (theta != 1)
-          {
-            pcout << "DEBUG BFGS Damped" << std::endl;
-          }
-        std::vector<double> r(d_numberUnknowns, 0.0);
-        for (auto i = 0; i < d_numberUnknowns; ++i)
-          {
-            r[i] = theta * delta_g[i] + (1.0 - theta) * Hdx[i];
-          }
-        double rtdx =
-          ddot_(&d_numberUnknowns, d_deltaXNew.data(), &one, r.data(), &one);
-        double factor = 1.0 / rtdx;
-        dsyr_(&uplo,
-              &d_numberUnknowns,
-              &factor,
-              r.data(),
-              &one,
-              d_hessian.data(),
-              &d_numberUnknowns);
-        factor = -1.0 / dxtHdx;
-        dsyr_(&uplo,
-              &d_numberUnknowns,
-              &factor,
-              Hdx.data(),
-              &one,
-              d_hessian.data(),
-              &d_numberUnknowns);
-    /*  }
-    else
+    std::vector<double> r(d_numberUnknowns, 0.0);
+    for (auto i = 0; i < d_numberUnknowns; ++i)
       {
-        pcout << "DEBUG Step PSB " << std::endl;
-        double factor = 1.0 / dgtdx;
-        dsyr2_(&uplo,
-               &d_numberUnknowns,
-               &factor,
-               d_deltaXNew.data(),
-               &one,
-               dgmHdx.data(),
-               &one,
-               d_hessian.data(),
-               &d_numberUnknowns);
-        factor = -ztdx / (dxnorm * dxnorm);
-        dsyr_(&uplo,
-              &d_numberUnknowns,
-              &factor,
-              d_deltaXNew.data(),
-              &one,
-              d_hessian.data(),
-              &d_numberUnknowns);
-      }*/
+        r[i] = theta * delta_g[i] + (1.0 - theta) * Hdx[i];
+      }
+    double rtdx =
+      ddot_(&d_numberUnknowns, d_deltaXNew.data(), &one, r.data(), &one);
+    double factor = 1.0 / rtdx;
+    dsyr_(&uplo,
+          &d_numberUnknowns,
+          &factor,
+          r.data(),
+          &one,
+          d_hessian.data(),
+          &d_numberUnknowns);
+    factor = -1.0 / dxtHdx;
+    dsyr_(&uplo,
+          &d_numberUnknowns,
+          &factor,
+          Hdx.data(),
+          &one,
+          d_hessian.data(),
+          &d_numberUnknowns);
   }
 
   void
@@ -253,7 +210,7 @@ namespace dftfe
   // Compute step
   //
   void
-  BFGSNonLinearSolver::computeStep()
+  BFGSNonLinearSolver::computeRFOStep()
   {
     std::vector<double> augmentedHessian((d_numberUnknowns + 1) *
                                            (d_numberUnknowns + 1),
@@ -279,36 +236,6 @@ namespace dftfe
           d_gradient[i];
       }
     augmentedSrfo[(d_numberUnknowns + 2) * d_numberUnknowns] = 1.0;
-    /*    int                 info;
-        std::vector<double> eigenValues(d_numberUnknowns + 1, 0.0);
-        const unsigned int  dimensionMatrix = d_numberUnknowns + 1;
-        const unsigned int  lwork           = 1 + 6 * dimensionMatrix +
-                                   2 * dimensionMatrix * dimensionMatrix,
-                           liwork = 3 + 5 * dimensionMatrix;
-        std::vector<int>    iwork(liwork, 0);
-        const char          jobz = 'N', uplo = 'U';
-        std::vector<double> work(lwork);
-
-        dsyevd_(&jobz,
-                &uplo,
-                &dimensionMatrix,
-                augmentedHessian.data(),
-                &dimensionMatrix,
-                eigenValues.data(),
-                &work[0],
-                &lwork,
-                &iwork[0],
-                &liwork,
-                &info);
-
-        //
-        // free up memory associated with work
-        //
-        work.clear();
-        iwork.clear();
-        std::vector<double>().swap(work);
-        std::vector<int>().swap(iwork);
-    */
     int                 info;
     const int           one = 1;
     std::vector<double> eigenValues(1, 0.0);
@@ -349,8 +276,6 @@ namespace dftfe
     //
     // free up memory associated with work
     //
-    pcout << "DEBUG lambda info " << info << " " << work[0] << " "
-          << d_trustRadius << std::endl;
     work.clear();
     iwork.clear();
     std::vector<double>().swap(work);
@@ -360,57 +285,93 @@ namespace dftfe
       {
         d_deltaXNew[i] = eigenVector[i] / eigenVector[d_numberUnknowns];
       }
-    d_normDelaXnew = computeLInfNorm(d_deltaXNew);
-    pcout << "DEBUG L2 dx init " << d_normDelaXnew << std::endl;
-    //if (d_normDelaXnew > d_trustRadius)
-    //  {
+    d_normDeltaXnew = computeLInfNorm(d_deltaXNew);
+    pcout << "DEBUG LInf dx init " << d_normDeltaXnew << std::endl;
+  }
+
+  void
+  BFGSNonLinearSolver::computeStep()
+  {
+    for (auto i = 0; i < d_numberUnknowns; ++i)
+      {
+        d_deltaXNew[i] *= d_trustRadius / d_normDeltaXnew;
+      }
+    pcout << "DEBUG LInf dx scaled " << computeLInfNorm(d_deltaXNew)
+          << std::endl;
+    if (d_stepAccepted)
+      {
+        d_updateVector = d_deltaXNew;
+      }
+    else
+      {
         for (auto i = 0; i < d_numberUnknowns; ++i)
           {
-            d_deltaXNew[i] *= d_trustRadius / d_normDelaXnew;
+            d_updateVector[i] = d_deltaXNew[i] - d_deltaX[i];
           }
-     // }
-    /*std::vector<double> HpLambdaS(d_numberUnknowns * d_numberUnknowns, 0.0);
+      }
+  }
+  void
+  BFGSNonLinearSolver::checkWolfe()
+  {
+    const unsigned int one  = 1;
+    double             gtdx = ddot_(
+      &d_numberUnknowns, d_deltaXNew.data(), &one, d_gradient.data(), &one);
+    double gntdx = ddot_(
+      &d_numberUnknowns, d_deltaXNew.data(), &one, d_gradientNew.data(), &one);
 
-    for (auto col = 0; col < d_numberUnknowns; ++col)
+    d_wolfeSufficientDec = (d_valueNew[0] - d_value[0]) < 0.01 * gtdx;
+    d_wolfeCurvature     = gntdx > 0.5 * gtdx;
+    d_wolfeSatisfied     = d_wolfeSufficientDec && d_wolfeCurvature;
+    pcout << "DEBUG WOLFE " << d_wolfeCurvature << " " << d_wolfeSufficientDec
+          << " " << d_wolfeSatisfied << " " << std::endl;
+  }
+  void
+  BFGSNonLinearSolver::computeTrustRadius()
+  {
+    if (d_iter == 0 || d_isBFGSRestartDueToSmallRadius)
       {
-        for (auto row = 0; row < d_numberUnknowns; ++row)
+        d_trustRadius =
+          d_trustRadius < d_normDeltaXnew ? d_trustRadius : d_normDeltaXnew;
+      }
+    else if (d_stepAccepted)
+      {
+        double ampfactor =
+          d_wolfeSufficientDec && d_normDeltaXnew >= d_trustRadius ? 1.5 : 1.1;
+        if (d_wolfeSatisfied)
           {
-            HpLambdaS[col + (d_numberUnknowns)*row] =
-              -d_hessian[col + (d_numberUnknowns)*row] +
-              d_lambda * d_Srfo[col + (d_numberUnknowns)*row];
+            d_trustRadius = 2 * ampfactor * d_trustRadius < d_trustRadiusMax ?
+                              2 * ampfactor * d_trustRadius :
+                              d_trustRadiusMax;
+            d_trustRadius =
+              d_trustRadius < d_normDeltaXnew ? d_trustRadius : d_normDeltaXnew;
+          }
+        else
+          {
+            d_trustRadius = ampfactor * d_trustRadius < d_normDeltaXnew ?
+                              ampfactor * d_trustRadius :
+                              d_normDeltaXnew;
+            d_trustRadius = d_trustRadius < d_trustRadiusMax ? d_trustRadius :
+                                                               d_trustRadiusMax;
+            if (d_trustRadius < d_trustRadiusMin)
+              {
+                d_isBFGSRestartDueToSmallRadius = true;
+              }
+          }
+      }
+    else
+      {
+        d_trustRadius *= 0.25;
+        while (d_trustRadius > d_normDeltaXnew)
+          {
+            d_trustRadius *= 0.25;
+          }
+        if (d_trustRadius < d_trustRadiusMin)
+          {
+            d_isBFGSRestartDueToSmallRadius = true;
           }
       }
 
-
-    int                 info;
-    const int           lwork = d_numberUnknowns;
-    const char          uplo  = 'U';
-    const int           one   = 1;
-    std::vector<double> work(d_numberUnknowns, 0.0);
-    std::vector<int>    ipiv(d_numberUnknowns, 0);
-    d_deltaX = d_gradient;
-    pcout << "DEBUG Start Linear Solve step " << this_mpi_process << " "
-          << lwork << " " << d_deltaX.size() << " " << HpLambdaS.size()
-          << std::endl;
-    dsysv_(&uplo,
-           &lwork,
-           &one,
-           HpLambdaS.data(),
-           &lwork,
-           ipiv.data(),
-           d_deltaX.data(),
-           &lwork,
-           work.data(),
-           &lwork,
-           &info);
-    pcout << "DEBUG end Linear Solve step " << this_mpi_process << " " << info
-          << " " << d_deltaX.size() << std::endl;*/
-    // AssertThrow(false, dealii::ExcMessage(std::string(
-    //                    "terminate")));
-    /*work.clear();
-    ipiv.clear();
-    std::vector<double>().swap(work);
-    std::vector<int>().swap(ipiv);*/
+    pcout << "DEBUG Trust Radius " << d_trustRadius << std::endl;
   }
 
   void
@@ -454,9 +415,6 @@ namespace dftfe
       &d_numberUnknowns, d_deltaXNew.data(), &one, d_gradient.data(), &one);
 
     d_predDec = (gtdx + 0.5 * dxtHdx) / (1 + dxtSdx);
-    pcout << "DEBUG Lambda " << d_lambda << " " << d_predDec << " "
-          << computeLInfNorm(d_deltaX) << " " << computeLInfNorm(d_deltaXNew)
-          << " " << gtdx << " " << dxtHdx << std::endl;
   }
 
   //
@@ -567,6 +525,7 @@ namespace dftfe
     //
     // allocate space for step, gradient and new gradient.
     //
+    d_updateVector.resize(d_numberUnknowns);
     d_deltaX.resize(d_numberUnknowns);
     d_deltaXNew.resize(d_numberUnknowns);
     d_gradient.resize(d_numberUnknowns);
@@ -577,10 +536,8 @@ namespace dftfe
     //
     if (!restart)
       {
-        d_trustRadius  = 0.5;
+        d_trustRadius  = d_trustRadiusInitial;
         d_stepAccepted = true;
-        pcout << "DEBUG trust radius " << d_trustRadiusInitial << " "
-              << d_trustRadius << std::endl;
         //
         // compute initial values of problem and problem gradient
         //
@@ -620,7 +577,7 @@ namespace dftfe
           {
             pcout << "DEBUG reset history" << std::endl;
             initializeHessian(problem);
-            d_trustRadius = 0.5;
+            d_trustRadius = d_trustRadiusInitial;
           }
 
         if (d_debugLevel >= 2)
@@ -634,50 +591,17 @@ namespace dftfe
         const double residualNorm = computeL2Norm(d_gradient);
 
 
-        if (d_debugLevel >= 2)
-          pcout << "BFGS Step no. | residual norm "
-                   "| residual norm avg"
-                << std::endl;
-        else if (d_debugLevel >= 1)
-          pcout << "BFGS Step no. " << d_iter + 1 << std::endl;
-        //
-        // output at the begining of the iteration
-        //
-        if (d_debugLevel >= 2)
-          pcout << d_iter + 1 << " " << residualNorm << " "
-                << residualNorm / d_numberUnknowns << " " << std::endl;
-
-        //
         // Compute the update step
         //
         pcout << "DEBUG Start Compute step " << std::endl;
+        computeRFOStep();
+        computeTrustRadius();
         computeStep();
+
         for (unsigned int i = 0; i < d_deltaXNew.size(); ++i)
           pcout << "step: " << d_deltaXNew[i] << std::endl;
         pcout << "DEBUG End Compute step " << std::endl;
-        std::vector<double> updateVector(d_numberUnknowns, 0.0);
-        if (d_stepAccepted)
-          {
-            updateVector = d_deltaXNew;
-          }
-        else
-          {
-            for (auto i = 0; i < d_numberUnknowns; ++i)
-              {
-                updateVector[i] = d_deltaXNew[i] - d_deltaX[i];
-              }
-          }
-        const unsigned int one   = 1;
-        double             gtdxs = ddot_(
-          &d_numberUnknowns, d_deltaXNew.data(), &one, d_gradient.data(), &one);
-        double gtdxf = ddot_(&d_numberUnknowns,
-                             updateVector.data(),
-                             &one,
-                             d_gradientNew.data(),
-                             &one);
-        pcout << "DEBUG descent check " << gtdxs << " "
-              << " " << gtdxf << std::endl;
-        updateSolution(updateVector, problem);
+        updateSolution(d_updateVector, problem);
         pcout << "DEBUG End update step " << std::endl;
         //
         // evaluate gradient
@@ -709,56 +633,9 @@ namespace dftfe
         d_stepAccepted = d_valueNew[0] <= d_value[0];
         if (d_stepAccepted)
           {
-            double gtdx  = ddot_(&d_numberUnknowns,
-                                d_deltaXNew.data(),
-                                &one,
-                                d_gradient.data(),
-                                &one);
-            double gntdx = ddot_(&d_numberUnknowns,
-                                 d_deltaXNew.data(),
-                                 &one,
-                                 d_gradientNew.data(),
-                                 &one);
-
-            bool wolfeSufficientDec =
-              (d_valueNew[0] - d_value[0]) < 0.1 * gtdx;
-            bool wolfeCurvature = gntdx > 0.5 * gtdx;
-            bool wolfeSatisfied = wolfeSufficientDec && wolfeCurvature;
-            computepredDec();
-            /*pcout << "DEBUG step accepted " << d_valueNew[0] - d_value[0] << "
-            "
-                  << d_predDec << " "
-                  << (d_valueNew[0] - d_value[0]) / d_predDec << std::endl;
-            double modelAcc   = (d_valueNew[0] - d_value[0]) / d_predDec;*/
-            pcout << "DEBUG WOLFE " << wolfeCurvature << " "
-                  << wolfeSufficientDec << " " << wolfeSatisfied << " "
-                  << d_valueNew[0] - d_value[0] << std::endl;
-            // if (modelAcc > 0.75 && normDeltaX > 0.8 * d_trustRadius)
-            double ampfactor =
-              wolfeSufficientDec && d_normDelaXnew >= d_trustRadius ? 1.5 :
-                                                                      1.0;
-            if (wolfeSatisfied)
-              {
-                d_trustRadius =
-                  2 * ampfactor * d_trustRadius > d_trustRadiusMax ?
-                    d_trustRadiusMax :
-                    2 * ampfactor * d_trustRadius;
-              }
-            // else if (modelAcc < 0.25)
-            else
-              {
-                d_trustRadius = ampfactor * d_trustRadius < d_normDelaXnew ?
-                                  ampfactor * d_trustRadius :
-                                  d_normDelaXnew;
-                d_trustRadius = d_trustRadius < d_trustRadiusMax ?
-                                  d_trustRadius :
-                                  d_trustRadiusMax;
-                // d_trustRadius *= 0.25;
-                if (d_trustRadius < d_trustRadiusMin)
-                  {
-                    d_isBFGSRestartDueToSmallRadius = true;
-                  }
-              }
+            pcout << "DEBUG step accepted " << d_valueNew[0] - d_value[0]
+                  << std::endl;
+            checkWolfe();
             updateHessian();
             d_deltaX   = d_deltaXNew;
             d_value[0] = d_valueNew[0];
@@ -769,15 +646,6 @@ namespace dftfe
             pcout << "DEBUG step rejected " << d_valueNew[0] - d_value[0]
                   << std::endl;
             d_deltaX = d_deltaXNew;
-            d_trustRadius *= 0.5;
-            while (d_trustRadius > d_normDelaXnew)
-              {
-                d_trustRadius *= 0.5;
-              }
-            if (d_trustRadius < d_trustRadiusMin)
-              {
-                d_isBFGSRestartDueToSmallRadius = true;
-              }
           }
       }
 
