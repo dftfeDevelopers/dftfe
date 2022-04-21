@@ -536,7 +536,7 @@ namespace dftfe
              const unsigned int         numberBins,
              const unsigned int         totalLocallyOwnedCells,
              const unsigned int         numberNodesPerElement,
-             const int         debugLevel,
+             const int                  debugLevel,
              const unsigned int         maxIter,
              const double               absTol,
              const MPI_Comm &           mpiCommParent,

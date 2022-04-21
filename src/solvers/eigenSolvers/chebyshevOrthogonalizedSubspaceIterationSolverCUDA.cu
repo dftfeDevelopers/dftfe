@@ -343,7 +343,7 @@ namespace dftfe
             d_YArray,
             projectorKetTimesVector,
             vectorsBlockSize,
-	    d_dftParams);
+            d_dftParams);
 
         if (d_dftParams.gpuFineGrainedTimings)
           {
@@ -375,7 +375,7 @@ namespace dftfe
             d_YArray,
             projectorKetTimesVector,
             vectorsBlockSize,
-	    d_dftParams);
+            d_dftParams);
 
         if (d_dftParams.gpuFineGrainedTimings)
           {
