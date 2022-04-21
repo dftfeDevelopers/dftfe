@@ -17,7 +17,7 @@
 // @author Sambit Das
 //
 
-#include <dftParameters.h>
+
 #include <dftUtils.h>
 #include <linearAlgebraOperations.h>
 #include <linearAlgebraOperationsInternal.h>
@@ -40,7 +40,8 @@ namespace dftfe
         const unsigned int                               na,
         const unsigned int                               nev,
         const unsigned int                               blockSize,
-        elpa_t &                                         elpaHandle)
+        elpa_t &                                         elpaHandle,
+        const dftParameters &                            dftParams)
       {
         int error;
 
@@ -154,7 +155,7 @@ namespace dftfe
             AssertThrow(error == ELPA_OK,
                         dealii::ExcMessage("DFT-FE Error: ELPA Error."));
 
-            if (dftParameters::useELPAGPUKernel)
+            if (dftParams.useELPAGPUKernel)
               {
                 elpa_set_integer(elpaHandle, "nvidia-gpu", 1, &error);
                 AssertThrow(error == ELPA_OK,
@@ -196,6 +197,7 @@ namespace dftfe
         const MPI_Comm &                           mpi_communicator,
         const unsigned                             size,
         std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
+        const dftParameters &                      dftParams,
         const bool                                 useOnlyThumbRule)
       {
         const unsigned int numberProcs =
@@ -204,19 +206,18 @@ namespace dftfe
         // Rule of thumb from
         // http://netlib.org/scalapack/slug/node106.html#SECTION04511000000000000000
         unsigned int rowProcs =
-          (dftParameters::scalapackParalProcs == 0 || useOnlyThumbRule) ?
+          (dftParams.scalapackParalProcs == 0 || useOnlyThumbRule) ?
             std::min(std::floor(std::sqrt(numberProcs)),
                      std::ceil((double)size / (double)(1000))) :
             std::min((unsigned int)std::floor(std::sqrt(numberProcs)),
-                     dftParameters::scalapackParalProcs);
+                     dftParams.scalapackParalProcs);
 
-        rowProcs =
-          ((dftParameters::scalapackParalProcs == 0 || useOnlyThumbRule) &&
-           dftParameters::useELPA) ?
-            std::min((unsigned int)std::floor(std::sqrt(numberProcs)),
-                     (unsigned int)std::floor(rowProcs * 3.0)) :
-            rowProcs;
-        if (!dftParameters::reproducible_output)
+        rowProcs = ((dftParams.scalapackParalProcs == 0 || useOnlyThumbRule) &&
+                    dftParams.useELPA) ?
+                     std::min((unsigned int)std::floor(std::sqrt(numberProcs)),
+                              (unsigned int)std::floor(rowProcs * 3.0)) :
+                     rowProcs;
+        if (!dftParams.reproducible_output)
           rowProcs =
             std::min(rowProcs,
                      (unsigned int)std::ceil((double)size / (double)(100)));
@@ -227,7 +228,7 @@ namespace dftfe
                      (unsigned int)std::ceil((double)size / (double)(10)));
 
 
-        if (dftParameters::verbosity >= 4)
+        if (dftParams.verbosity >= 4)
           {
             dealii::ConditionalOStream pcout(
               std::cout,
@@ -249,7 +250,8 @@ namespace dftfe
         const MPI_Comm &                           mpi_communicator,
         const unsigned                             sizeRows,
         const unsigned                             sizeColumns,
-        std::shared_ptr<const dftfe::ProcessGrid> &processGrid)
+        std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
+        const dftParameters &                      dftParams)
       {
         const unsigned int numberProcs =
           dealii::Utilities::MPI::n_mpi_processes(mpi_communicator);
@@ -263,7 +265,7 @@ namespace dftfe
           std::min(std::floor(std::sqrt(numberProcs)),
                    std::ceil((double)sizeColumns / (double)(1000)));
 
-        if (dftParameters::verbosity >= 4)
+        if (dftParams.verbosity >= 4)
           {
             dealii::ConditionalOStream pcout(
               std::cout,
@@ -367,7 +369,8 @@ namespace dftfe
         const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
         const MPI_Comm &                                 interBandGroupComm,
         const MPI_Comm &                                 mpiComm,
-        dftfe::ScaLAPACKMatrix<T> &                      overlapMatPar)
+        dftfe::ScaLAPACKMatrix<T> &                      overlapMatPar,
+        const dftParameters &                            dftParams)
       {
         const unsigned int numLocalDofs = subspaceVectorsArrayLocalSize / N;
 
@@ -409,8 +412,7 @@ namespace dftfe
          * XTrunc^{T}*XcBlock result
          */
         const unsigned int vectorsBlockSize =
-          std::min(dftParameters::wfcBlockSize,
-                   bandGroupLowHighPlusOneIndices[1]);
+          std::min(dftParams.wfcBlockSize, bandGroupLowHighPlusOneIndices[1]);
 
         std::vector<T>        overlapMatrixBlock(N * vectorsBlockSize, T(0.0));
         std::vector<TLowPrec> overlapMatrixBlockLowPrec(N * vectorsBlockSize,
@@ -557,7 +559,8 @@ namespace dftfe
         const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
         const MPI_Comm &                                 interBandGroupComm,
         const MPI_Comm &                                 mpiComm,
-        dftfe::ScaLAPACKMatrix<T> &                      overlapMatPar)
+        dftfe::ScaLAPACKMatrix<T> &                      overlapMatPar,
+        const dftParameters &                            dftParams)
       {
         const unsigned int numLocalDofs = subspaceVectorsArrayLocalSize / N;
 
@@ -599,8 +602,7 @@ namespace dftfe
          * XTrunc^{T}*XcBlock result
          */
         const unsigned int vectorsBlockSize =
-          std::min(dftParameters::wfcBlockSize,
-                   bandGroupLowHighPlusOneIndices[1]);
+          std::min(dftParams.wfcBlockSize, bandGroupLowHighPlusOneIndices[1]);
 
         std::vector<T> overlapMatrixBlock(N * vectorsBlockSize, 0.0);
 
@@ -695,6 +697,7 @@ namespace dftfe
         const MPI_Comm &                                 interBandGroupComm,
         const MPI_Comm &                                 mpiComm,
         const dftfe::ScaLAPACKMatrix<T> &                rotationMatPar,
+        const dftParameters &                            dftParams,
         const bool                                       rotationMatTranspose,
         const bool                                       isRotationMatLowerTria,
         const bool                                       doCommAfterBandParal)
@@ -746,15 +749,14 @@ namespace dftfe
          * for each {dof_block}.
          */
         const unsigned int vectorsBlockSize =
-          std::min(dftParameters::wfcBlockSize,
-                   bandGroupLowHighPlusOneIndices[1]);
+          std::min(dftParams.wfcBlockSize, bandGroupLowHighPlusOneIndices[1]);
         const unsigned int dofsBlockSize =
-          std::min(maxNumLocalDofs, dftParameters::subspaceRotDofsBlockSize);
+          std::min(maxNumLocalDofs, dftParams.subspaceRotDofsBlockSize);
 
         std::vector<T> rotationMatBlock(vectorsBlockSize * N, 0.0);
         std::vector<T> rotatedVectorsMatBlock(N * dofsBlockSize, 0.0);
 
-        if (dftParameters::verbosity >= 4)
+        if (dftParams.verbosity >= 4)
           dftUtils::printCurrentMemoryUsage(mpiComm,
                                             "Inside Blocked susbpace rotation");
         int startIndexBandParal = N;
@@ -885,12 +887,11 @@ namespace dftfe
 
         if (numberBandGroups > 1 && doCommAfterBandParal)
           {
-            if (!dftParameters::bandParalOpt)
+            if (!dftParams.bandParalOpt)
               {
                 MPI_Barrier(interBandGroupComm);
                 const unsigned int blockSize =
-                  dftParameters::mpiAllReduceMessageBlockSizeMB * 1e+6 /
-                  sizeof(T);
+                  dftParams.mpiAllReduceMessageBlockSizeMB * 1e+6 / sizeof(T);
 
                 for (unsigned int i = 0; i < N * numLocalDofs; i += blockSize)
                   {
@@ -983,6 +984,7 @@ namespace dftfe
         const MPI_Comm &                                 interBandGroupComm,
         const MPI_Comm &                                 mpiComm,
         const dftfe::ScaLAPACKMatrix<T> &                QMat,
+        const dftParameters &                            dftParams,
         const bool                                       QMatTranspose)
       {
         const unsigned int numLocalDofs = subspaceVectorsArrayLocalSize / N;
@@ -1006,16 +1008,15 @@ namespace dftfe
 
 
         const unsigned int vectorsBlockSize =
-          std::min(dftParameters::wfcBlockSize,
-                   bandGroupLowHighPlusOneIndices[1]);
+          std::min(dftParams.wfcBlockSize, bandGroupLowHighPlusOneIndices[1]);
         const unsigned int dofsBlockSize =
-          std::min(maxNumLocalDofs, dftParameters::subspaceRotDofsBlockSize);
+          std::min(maxNumLocalDofs, dftParams.subspaceRotDofsBlockSize);
 
         std::vector<T> rotationMatBlock(vectorsBlockSize * N, T(0.0));
         std::vector<T> rotatedVectorsMatBlock(numberTopVectors * dofsBlockSize,
                                               T(0.0));
 
-        if (dftParameters::verbosity >= 4)
+        if (dftParams.verbosity >= 4)
           dftUtils::printCurrentMemoryUsage(mpiComm,
                                             "Inside Blocked susbpace rotation");
 
@@ -1139,7 +1140,7 @@ namespace dftfe
         if (numberBandGroups > 1)
           {
             const unsigned int blockSize =
-              dftParameters::mpiAllReduceMessageBlockSizeMB * 1e+6 / sizeof(T);
+              dftParams.mpiAllReduceMessageBlockSizeMB * 1e+6 / sizeof(T);
             MPI_Barrier(interBandGroupComm);
             for (unsigned int i = 0; i < numberTopVectors * numLocalDofs;
                  i += blockSize)
@@ -1169,6 +1170,7 @@ namespace dftfe
         const MPI_Comm &                                 interBandGroupComm,
         const MPI_Comm &                                 mpiComm,
         const dftfe::ScaLAPACKMatrix<T> &                QMat,
+        const dftParameters &                            dftParams,
         const bool                                       QMatTranspose)
       {
         const unsigned int numLocalDofs = subspaceVectorsArrayLocalSize / N;
@@ -1192,10 +1194,9 @@ namespace dftfe
 
 
         const unsigned int vectorsBlockSize =
-          std::min(dftParameters::wfcBlockSize,
-                   bandGroupLowHighPlusOneIndices[1]);
+          std::min(dftParams.wfcBlockSize, bandGroupLowHighPlusOneIndices[1]);
         const unsigned int dofsBlockSize =
-          std::min(maxNumLocalDofs, dftParameters::subspaceRotDofsBlockSize);
+          std::min(maxNumLocalDofs, dftParams.subspaceRotDofsBlockSize);
 
         const unsigned int Ncore = N - numberTopVectors;
         std::vector<T>     rotationMatTopCompBlock(vectorsBlockSize *
@@ -1210,7 +1211,7 @@ namespace dftfe
           vectorsBlockSize * dofsBlockSize, TLowPrec(0.0));
 
         std::vector<TLowPrec> XSinglePrec(X, X + subspaceVectorsArrayLocalSize);
-        if (dftParameters::verbosity >= 4)
+        if (dftParams.verbosity >= 4)
           dftUtils::printCurrentMemoryUsage(mpiComm,
                                             "Inside Blocked susbpace rotation");
 
@@ -1388,7 +1389,7 @@ namespace dftfe
         if (numberBandGroups > 1)
           {
             const unsigned int blockSize =
-              dftParameters::mpiAllReduceMessageBlockSizeMB * 1e+6 / sizeof(T);
+              dftParams.mpiAllReduceMessageBlockSizeMB * 1e+6 / sizeof(T);
             MPI_Barrier(interBandGroupComm);
             for (unsigned int i = 0; i < numberTopVectors * numLocalDofs;
                  i += blockSize)
@@ -1416,6 +1417,7 @@ namespace dftfe
         const MPI_Comm &                                 interBandGroupComm,
         const MPI_Comm &                                 mpiComm,
         const dftfe::ScaLAPACKMatrix<T> &                rotationMatPar,
+        const dftParameters &                            dftParams,
         const bool                                       rotationMatTranspose,
         const bool                                       doCommAfterBandParal)
       {
@@ -1466,10 +1468,9 @@ namespace dftfe
          * for each {dof_block}.
          */
         const unsigned int vectorsBlockSize =
-          std::min(dftParameters::wfcBlockSize,
-                   bandGroupLowHighPlusOneIndices[1]);
+          std::min(dftParams.wfcBlockSize, bandGroupLowHighPlusOneIndices[1]);
         const unsigned int dofsBlockSize =
-          std::min(maxNumLocalDofs, dftParameters::subspaceRotDofsBlockSize);
+          std::min(maxNumLocalDofs, dftParams.subspaceRotDofsBlockSize);
 
         std::vector<TLowPrec> rotationMatBlock(vectorsBlockSize * N,
                                                TLowPrec(0.0));
@@ -1481,7 +1482,7 @@ namespace dftfe
           subspaceVectorsArray,
           subspaceVectorsArray + subspaceVectorsArrayLocalSize);
         std::vector<T> diagValuesBlock(vectorsBlockSize, T(0.0));
-        if (dftParameters::verbosity >= 4)
+        if (dftParams.verbosity >= 4)
           dftUtils::printCurrentMemoryUsage(mpiComm,
                                             "Inside Blocked susbpace rotation");
 
@@ -1659,12 +1660,11 @@ namespace dftfe
 
         if (numberBandGroups > 1 && doCommAfterBandParal)
           {
-            if (!dftParameters::bandParalOpt)
+            if (!dftParams.bandParalOpt)
               {
                 MPI_Barrier(interBandGroupComm);
                 const unsigned int blockSize =
-                  dftParameters::mpiAllReduceMessageBlockSizeMB * 1e+6 /
-                  sizeof(T);
+                  dftParams.mpiAllReduceMessageBlockSizeMB * 1e+6 / sizeof(T);
 
                 for (unsigned int i = 0; i < N * numLocalDofs; i += blockSize)
                   {
@@ -1754,6 +1754,7 @@ namespace dftfe
         const MPI_Comm &                                 interBandGroupComm,
         const MPI_Comm &                                 mpiComm,
         const dftfe::ScaLAPACKMatrix<T> &                rotationMatPar,
+        const dftParameters &                            dftParams,
         const bool                                       rotationMatTranspose,
         const bool                                       doCommAfterBandParal)
       {
@@ -1804,10 +1805,9 @@ namespace dftfe
          * for each {dof_block}.
          */
         const unsigned int vectorsBlockSize =
-          std::min(dftParameters::wfcBlockSize,
-                   bandGroupLowHighPlusOneIndices[1]);
+          std::min(dftParams.wfcBlockSize, bandGroupLowHighPlusOneIndices[1]);
         const unsigned int dofsBlockSize =
-          std::min(maxNumLocalDofs, dftParameters::subspaceRotDofsBlockSize);
+          std::min(maxNumLocalDofs, dftParams.subspaceRotDofsBlockSize);
 
         std::vector<TLowPrec> rotationMatBlock(vectorsBlockSize * N,
                                                TLowPrec(0.0));
@@ -1819,7 +1819,7 @@ namespace dftfe
           subspaceVectorsArray,
           subspaceVectorsArray + subspaceVectorsArrayLocalSize);
         std::vector<T> diagValuesBlock(vectorsBlockSize, T(0.0));
-        if (dftParameters::verbosity >= 4)
+        if (dftParams.verbosity >= 4)
           dftUtils::printCurrentMemoryUsage(mpiComm,
                                             "Inside Blocked susbpace rotation");
 
@@ -1997,12 +1997,11 @@ namespace dftfe
 
         if (numberBandGroups > 1 && doCommAfterBandParal)
           {
-            if (!dftParameters::bandParalOpt)
+            if (!dftParams.bandParalOpt)
               {
                 MPI_Barrier(interBandGroupComm);
                 const unsigned int blockSize =
-                  dftParameters::mpiAllReduceMessageBlockSizeMB * 1e+6 /
-                  sizeof(T);
+                  dftParams.mpiAllReduceMessageBlockSizeMB * 1e+6 / sizeof(T);
 
                 for (unsigned int i = 0; i < N * numLocalDofs; i += blockSize)
                   {
@@ -2104,7 +2103,8 @@ namespace dftfe
         const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
         const MPI_Comm &                                 interBandGroupComm,
         const MPI_Comm &                                 mpiComm,
-        dftfe::ScaLAPACKMatrix<double> &                 overlapMatPar);
+        dftfe::ScaLAPACKMatrix<double> &                 overlapMatPar,
+        const dftParameters &                            dftParams);
 
       template void
       fillParallelOverlapMatrix(
@@ -2114,7 +2114,8 @@ namespace dftfe
         const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
         const MPI_Comm &                                 interBandGroupComm,
         const MPI_Comm &                                 mpiComm,
-        dftfe::ScaLAPACKMatrix<std::complex<double>> &   overlapMatPar);
+        dftfe::ScaLAPACKMatrix<std::complex<double>> &   overlapMatPar,
+        const dftParameters &                            dftParams);
 
 
       template void
@@ -2125,7 +2126,8 @@ namespace dftfe
         const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
         const MPI_Comm &                                 interBandGroupComm,
         const MPI_Comm &                                 mpiComm,
-        dftfe::ScaLAPACKMatrix<double> &                 overlapMatPar);
+        dftfe::ScaLAPACKMatrix<double> &                 overlapMatPar,
+        const dftParameters &                            dftParams);
 
       template void
       fillParallelOverlapMatrixMixedPrec<std::complex<double>,
@@ -2136,7 +2138,8 @@ namespace dftfe
         const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
         const MPI_Comm &                                 interBandGroupComm,
         const MPI_Comm &                                 mpiComm,
-        dftfe::ScaLAPACKMatrix<std::complex<double>> &   overlapMatPar);
+        dftfe::ScaLAPACKMatrix<std::complex<double>> &   overlapMatPar,
+        const dftParameters &                            dftParams);
 
       template void
       subspaceRotation(
@@ -2147,6 +2150,7 @@ namespace dftfe
         const MPI_Comm &                                 interBandGroupComm,
         const MPI_Comm &                                 mpiComm,
         const dftfe::ScaLAPACKMatrix<double> &           rotationMatPar,
+        const dftParameters &                            dftParams,
         const bool                                       rotationMatTranpose,
         const bool                                       isRotationMatLowerTria,
         const bool                                       doCommAfterBandParal);
@@ -2160,6 +2164,7 @@ namespace dftfe
         const MPI_Comm &                                    interBandGroupComm,
         const MPI_Comm &                                    mpiComm,
         const dftfe::ScaLAPACKMatrix<std::complex<double>> &rotationMatPar,
+        const dftParameters &                               dftParams,
         const bool                                          rotationMatTranpose,
         const bool isRotationMatLowerTria,
         const bool doCommAfterBandParal);
@@ -2200,6 +2205,7 @@ namespace dftfe
         const MPI_Comm &                                 interBandGroupComm,
         const MPI_Comm &                                 mpiComm,
         const dftfe::ScaLAPACKMatrix<double> &           QMat,
+        const dftParameters &                            dftParams,
         const bool                                       QMatTranspose);
 
       template void
@@ -2213,6 +2219,7 @@ namespace dftfe
         const MPI_Comm &                                    interBandGroupComm,
         const MPI_Comm &                                    mpiComm,
         const dftfe::ScaLAPACKMatrix<std::complex<double>> &QMat,
+        const dftParameters &                               dftParams,
         const bool                                          QMatTranspose);
 
 
@@ -2227,6 +2234,7 @@ namespace dftfe
         const MPI_Comm &                                 interBandGroupComm,
         const MPI_Comm &                                 mpiComm,
         const dftfe::ScaLAPACKMatrix<double> &           QMat,
+        const dftParameters &                            dftParams,
         const bool                                       QMatTranspose);
 
       template void
@@ -2241,6 +2249,7 @@ namespace dftfe
         const MPI_Comm &                                    interBandGroupComm,
         const MPI_Comm &                                    mpiComm,
         const dftfe::ScaLAPACKMatrix<std::complex<double>> &QMat,
+        const dftParameters &                               dftParams,
         const bool                                          QMatTranspose);
 
       template void
@@ -2252,6 +2261,7 @@ namespace dftfe
         const MPI_Comm &                                 interBandGroupComm,
         const MPI_Comm &                                 mpiComm,
         const dftfe::ScaLAPACKMatrix<double> &           rotationMatPar,
+        const dftParameters &                            dftParams,
         const bool                                       rotationMatTranspose,
         const bool                                       doCommAfterBandParal);
 
@@ -2264,6 +2274,7 @@ namespace dftfe
         const MPI_Comm &                                    interBandGroupComm,
         const MPI_Comm &                                    mpiComm,
         const dftfe::ScaLAPACKMatrix<std::complex<double>> &rotationMatPar,
+        const dftParameters &                               dftParams,
         const bool rotationMatTranspose,
         const bool doCommAfterBandParal);
 
@@ -2276,6 +2287,7 @@ namespace dftfe
         const MPI_Comm &                                 interBandGroupComm,
         const MPI_Comm &                                 mpiComm,
         const dftfe::ScaLAPACKMatrix<double> &           rotationMatPar,
+        const dftParameters &                            dftParams,
         const bool                                       rotationMatTranspose,
         const bool                                       doCommAfterBandParal);
 
@@ -2288,6 +2300,7 @@ namespace dftfe
         const MPI_Comm &                                    interBandGroupComm,
         const MPI_Comm &                                    mpiComm,
         const dftfe::ScaLAPACKMatrix<std::complex<double>> &rotationMatPar,
+        const dftParameters &                               dftParams,
         const bool rotationMatTranspose,
         const bool doCommAfterBandParal);
 

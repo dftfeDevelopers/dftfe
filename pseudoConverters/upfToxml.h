@@ -53,6 +53,7 @@ namespace dftfe
     int
     upfToxml(const std::string &inputFile,
              const std::string &outputFile,
+             const int          verbosity,
              unsigned int &     nlccFlag);
   } // namespace pseudoUtils
 } // namespace dftfe

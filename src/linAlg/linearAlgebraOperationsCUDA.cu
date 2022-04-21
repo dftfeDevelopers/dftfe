@@ -17,7 +17,6 @@
 
 
 #include <cudaHelpers.h>
-#include <dftParameters.h>
 #include <dftUtils.h>
 #include <linearAlgebraOperationsCUDA.h>
 #include <linearAlgebraOperationsInternal.h>
@@ -703,14 +702,15 @@ namespace dftfe
       distributedGPUVec<dataTypes::numberGPU> &Xb,
       distributedGPUVec<dataTypes::numberGPU> &Yb,
       distributedGPUVec<dataTypes::numberGPU> &projectorKetTimesVector,
-      const unsigned int                       blockSize)
+      const unsigned int                       blockSize,
+      const dftParameters &                    dftParams)
     {
       const unsigned int this_mpi_process =
         dealii::Utilities::MPI::this_mpi_process(
           operatorMatrix.getMPICommunicator());
 
       const unsigned int lanczosIterations =
-        dftParameters::reproducible_output ? 40 : 20;
+        dftParams.reproducible_output ? 40 : 20;
       double beta;
 
 
@@ -871,7 +871,7 @@ namespace dftfe
       std::sort(eigenValuesT.begin(), eigenValuesT.end());
       //
       const double fvectorNorm = fVector.l2_norm();
-      if (dftParameters::verbosity >= 5 && this_mpi_process == 0)
+      if (dftParams.verbosity >= 5 && this_mpi_process == 0)
         {
           std::cout << "bUp1: " << eigenValuesT[lanczosIterations - 1]
                     << ", fvector norm: " << fvectorNorm << std::endl;
@@ -879,10 +879,9 @@ namespace dftfe
         }
 
       double lowerBound = std::floor(eigenValuesT[0]);
-      double upperBound =
-        std::ceil(eigenValuesT[lanczosIterations - 1] +
-                  (dftParameters::reproducible_output ? fvectorNorm :
-                                                        fvectorNorm / 10.0));
+      double upperBound = std::ceil(
+        eigenValuesT[lanczosIterations - 1] +
+        (dftParams.reproducible_output ? fvectorNorm : fvectorNorm / 10.0));
       return (std::make_pair(lowerBound, upperBound));
     }
 
@@ -901,7 +900,8 @@ namespace dftfe
       const double                                 a,
       const double                                 b,
       const double                                 a0,
-      const bool                                   mixedPrecOverall)
+      const bool                                   mixedPrecOverall,
+      const dftParameters &                        dftParams)
     {
       double e, c, sigma, sigma1, sigma2, gamma, gpu_time;
       e                                  = (b - a) / 2.0;
@@ -1000,7 +1000,7 @@ namespace dftfe
                                      numberVectors,
                                      XArray,
                                      mixedPrecOverall &&
-                                       dftParameters::useMixedPrecCheby);
+                                       dftParams.useMixedPrecCheby);
             }
           else if (degree == m)
             {
@@ -1058,7 +1058,7 @@ namespace dftfe
                                      numberVectors,
                                      XArray,
                                      mixedPrecOverall &&
-                                       dftParameters::useMixedPrecCheby);
+                                       dftParams.useMixedPrecCheby);
             }
 
           XArray.swap(YArray);
@@ -1096,7 +1096,8 @@ namespace dftfe
       const double                                 a,
       const double                                 b,
       const double                                 a0,
-      const bool                                   mixedPrecOverall)
+      const bool                                   mixedPrecOverall,
+      const dftParameters &                        dftParams)
     {
       double e, c, sigma, sigma1, sigma2, gamma, gpu_time;
       e                                  = (b - a) / 2.0;
@@ -1240,7 +1241,7 @@ namespace dftfe
                                      numberVectors,
                                      XArray1,
                                      mixedPrecOverall &&
-                                       dftParameters::useMixedPrecCheby);
+                                       dftParams.useMixedPrecCheby);
 
               daxpbyCUDAKernel<<<min((totalVectorSize + 255) / 256, 30000),
                                  256>>>(totalVectorSize,
@@ -1276,7 +1277,7 @@ namespace dftfe
                                      numberVectors,
                                      XArray2,
                                      mixedPrecOverall &&
-                                       dftParameters::useMixedPrecCheby);
+                                       dftParams.useMixedPrecCheby);
               overlap = false;
             }
           else if (degree == m)
@@ -1426,7 +1427,7 @@ namespace dftfe
                 }
 
               // unsigned int id2=nvtxRangeStartA("ghost1");
-              if (mixedPrecOverall && dftParameters::useMixedPrecCheby)
+              if (mixedPrecOverall && dftParams.useMixedPrecCheby)
                 {
                   convDoubleArrToFloatArr<<<(numberVectors + 255) / 256 *
                                               localVectorSize,
@@ -1448,11 +1449,11 @@ namespace dftfe
                                        numberVectors,
                                        XArray2,
                                        mixedPrecOverall &&
-                                         dftParameters::useMixedPrecCheby,
+                                         dftParams.useMixedPrecCheby,
                                        false,
                                        true);
 
-              if (mixedPrecOverall && dftParameters::useMixedPrecCheby)
+              if (mixedPrecOverall && dftParams.useMixedPrecCheby)
                 {
                   tempFloatArray.updateGhostValuesFinish();
                   if (n_ghosts != 0)
@@ -1474,7 +1475,7 @@ namespace dftfe
               // unsigned int id1=nvtxRangeStartA("compress2");
               if (overlap)
                 {
-                  if (mixedPrecOverall && dftParameters::useMixedPrecCheby)
+                  if (mixedPrecOverall && dftParams.useMixedPrecCheby)
                     {
                       convDoubleArrToFloatArr<<<(numberVectors + 255) / 256 *
                                                   totalSize,
@@ -1496,13 +1497,13 @@ namespace dftfe
                                      numberVectors,
                                      XArray1,
                                      mixedPrecOverall &&
-                                       dftParameters::useMixedPrecCheby,
+                                       dftParams.useMixedPrecCheby,
                                      true,
                                      false);
 
               if (overlap)
                 {
-                  if (mixedPrecOverall && dftParameters::useMixedPrecCheby)
+                  if (mixedPrecOverall && dftParams.useMixedPrecCheby)
                     {
                       tempFloatArray.compressAddFinish();
 
@@ -1545,7 +1546,7 @@ namespace dftfe
               projectorKetTimesVector1.updateGhostValues();
 
               // unsigned int id3=nvtxRangeStartA("ghost2");
-              if (mixedPrecOverall && dftParameters::useMixedPrecCheby)
+              if (mixedPrecOverall && dftParams.useMixedPrecCheby)
                 {
                   convDoubleArrToFloatArr<<<(numberVectors + 255) / 256 *
                                               localVectorSize,
@@ -1566,11 +1567,11 @@ namespace dftfe
                                      numberVectors,
                                      XArray1,
                                      mixedPrecOverall &&
-                                       dftParameters::useMixedPrecCheby,
+                                       dftParams.useMixedPrecCheby,
                                      false,
                                      true);
 
-              if (mixedPrecOverall && dftParameters::useMixedPrecCheby)
+              if (mixedPrecOverall && dftParams.useMixedPrecCheby)
                 {
                   tempFloatArray.updateGhostValuesFinish();
                   if (n_ghosts != 0)
@@ -1590,7 +1591,7 @@ namespace dftfe
               projectorKetTimesVector2.setZero();
 
               // unsigned int id4=nvtxRangeStartA("compress1");
-              if (mixedPrecOverall && dftParameters::useMixedPrecCheby)
+              if (mixedPrecOverall && dftParams.useMixedPrecCheby)
                 {
                   convDoubleArrToFloatArr<<<(numberVectors + 255) / 256 *
                                               totalSize,
@@ -1610,11 +1611,11 @@ namespace dftfe
                                      numberVectors,
                                      XArray2,
                                      mixedPrecOverall &&
-                                       dftParameters::useMixedPrecCheby,
+                                       dftParams.useMixedPrecCheby,
                                      true,
                                      false);
 
-              if (mixedPrecOverall && dftParameters::useMixedPrecCheby)
+              if (mixedPrecOverall && dftParams.useMixedPrecCheby)
                 {
                   tempFloatArray.compressAddFinish();
 
@@ -1650,11 +1651,11 @@ namespace dftfe
                                          numberVectors,
                                          XArray2,
                                          mixedPrecOverall &&
-                                           dftParameters::useMixedPrecCheby,
+                                           dftParams.useMixedPrecCheby,
                                          false,
                                          true);
                   YArray2.zeroOutGhosts();
-                  if (mixedPrecOverall && dftParameters::useMixedPrecCheby)
+                  if (mixedPrecOverall && dftParams.useMixedPrecCheby)
                     {
                       convDoubleArrToFloatArr<<<(numberVectors + 255) / 256 *
                                                   totalSize,
@@ -1724,6 +1725,7 @@ namespace dftfe
       const MPI_Comm &                                 mpiCommDomain,
       GPUCCLWrapper &                                  gpucclMpiCommDomain,
       const dftfe::ScaLAPACKMatrix<dataTypes::number> &rotationMatPar,
+      const dftParameters &                            dftParams,
       const bool                                       rotationMatTranspose)
     {
       const unsigned int maxNumLocalDofs =
@@ -1738,13 +1740,13 @@ namespace dftfe
         globalToLocalColumnIdMap);
 
       const unsigned int vectorsBlockSize =
-        std::min(dftParameters::wfcBlockSize, Nfr);
+        std::min(dftParams.wfcBlockSize, Nfr);
       const unsigned int dofsBlockSize =
-        std::min(maxNumLocalDofs, dftParameters::subspaceRotDofsBlockSize);
+        std::min(maxNumLocalDofs, dftParams.subspaceRotDofsBlockSize);
 
       dataTypes::number *rotationMatBlockHost;
 
-      if (dftParameters::allowFullCPUMemSubspaceRot)
+      if (dftParams.allowFullCPUMemSubspaceRot)
         {
           CUDACHECK(cudaMallocHost((void **)&rotationMatBlockHost,
                                    N * Nfr * sizeof(dataTypes::number)));
@@ -1817,7 +1819,7 @@ namespace dftfe
               const dataTypes::number scalarCoeffAlpha = dataTypes::number(1.0);
               const dataTypes::number scalarCoeffBeta  = dataTypes::number(0.0);
 
-              if (dftParameters::allowFullCPUMemSubspaceRot)
+              if (dftParams.allowFullCPUMemSubspaceRot)
                 {
                   if (idof == 0)
                     {
@@ -1919,9 +1921,9 @@ namespace dftfe
                 }
 
 
-              if (dftParameters::allowFullCPUMemSubspaceRot)
+              if (dftParams.allowFullCPUMemSubspaceRot)
                 {
-                  if (dftParameters::useGPUDirectAllReduce)
+                  if (dftParams.useGPUDirectAllReduce)
                     {
                       CUDACHECK(cudaMemcpyAsync(
                         reinterpret_cast<dataTypes::numberGPU *>(
@@ -1991,7 +1993,7 @@ namespace dftfe
                 }
               else
                 {
-                  if (dftParameters::useGPUDirectAllReduce)
+                  if (dftParams.useGPUDirectAllReduce)
                     {
                       CUDACHECK(cudaMemcpyAsync(
                         reinterpret_cast<dataTypes::numberGPU *>(
@@ -2042,7 +2044,7 @@ namespace dftfe
                     }
                 }
 
-              if (dftParameters::useGPUDirectAllReduce)
+              if (dftParams.useGPUDirectAllReduce)
                 {
                   // check for completion of compute of previous block in
                   // compute stream before proceeding to rewriting
@@ -2137,6 +2139,7 @@ namespace dftfe
       GPUCCLWrapper &                                  gpucclMpiCommDomain,
       const MPI_Comm &                                 interBandGroupComm,
       const dftfe::ScaLAPACKMatrix<dataTypes::number> &rotationMatPar,
+      const dftParameters &                            dftParams,
       const bool                                       rotationMatTranspose,
       const bool                                       isRotationMatLowerTria)
     {
@@ -2160,14 +2163,13 @@ namespace dftfe
       dftUtils::createBandParallelizationIndices(
         interBandGroupComm, N, bandGroupLowHighPlusOneIndices);
 
-      const unsigned int vectorsBlockSize =
-        std::min(dftParameters::wfcBlockSize, N);
+      const unsigned int vectorsBlockSize = std::min(dftParams.wfcBlockSize, N);
       const unsigned int dofsBlockSize =
-        std::min(maxNumLocalDofs, dftParameters::subspaceRotDofsBlockSize);
+        std::min(maxNumLocalDofs, dftParams.subspaceRotDofsBlockSize);
 
       dataTypes::number *rotationMatBlockHost;
 
-      if (dftParameters::allowFullCPUMemSubspaceRot)
+      if (dftParams.allowFullCPUMemSubspaceRot)
         {
           CUDACHECK(cudaMallocHost((void **)&rotationMatBlockHost,
                                    N * N * sizeof(dataTypes::number)));
@@ -2249,7 +2251,7 @@ namespace dftfe
                   const dataTypes::number scalarCoeffBeta =
                     dataTypes::number(0.0);
 
-                  if (dftParameters::allowFullCPUMemSubspaceRot)
+                  if (dftParams.allowFullCPUMemSubspaceRot)
                     {
                       if (idof == 0)
                         {
@@ -2354,9 +2356,9 @@ namespace dftfe
                         }
                     }
 
-                  if (dftParameters::allowFullCPUMemSubspaceRot)
+                  if (dftParams.allowFullCPUMemSubspaceRot)
                     {
-                      if (dftParameters::useGPUDirectAllReduce)
+                      if (dftParams.useGPUDirectAllReduce)
                         {
                           CUDACHECK(cudaMemcpyAsync(
                             reinterpret_cast<dataTypes::numberGPU *>(
@@ -2427,7 +2429,7 @@ namespace dftfe
                     }
                   else
                     {
-                      if (dftParameters::useGPUDirectAllReduce)
+                      if (dftParams.useGPUDirectAllReduce)
                         {
                           CUDACHECK(cudaMemcpyAsync(
                             reinterpret_cast<dataTypes::numberGPU *>(
@@ -2483,7 +2485,7 @@ namespace dftfe
                         }
                     }
 
-                  if (dftParameters::useGPUDirectAllReduce)
+                  if (dftParams.useGPUDirectAllReduce)
                     {
                       // check for completion of compute of previous block in
                       // compute stream before proceeding to rewriting
@@ -2577,6 +2579,7 @@ namespace dftfe
       GPUCCLWrapper &                                  gpucclMpiCommDomain,
       const MPI_Comm &                                 interBandGroupComm,
       const dftfe::ScaLAPACKMatrix<dataTypes::number> &rotationMatPar,
+      const dftParameters &                            dftParams,
       const bool                                       rotationMatTranspose)
     {
       const unsigned int maxNumLocalDofs =
@@ -2610,10 +2613,9 @@ namespace dftfe
           thrust::raw_pointer_cast(&XSP[0])));
 
 
-      const unsigned int vectorsBlockSize =
-        std::min(dftParameters::wfcBlockSize, N);
+      const unsigned int vectorsBlockSize = std::min(dftParams.wfcBlockSize, N);
       const unsigned int dofsBlockSize =
-        std::min(maxNumLocalDofs, dftParameters::subspaceRotDofsBlockSize);
+        std::min(maxNumLocalDofs, dftParams.subspaceRotDofsBlockSize);
 
       dataTypes::numberFP32 *rotationMatBlockHostSP;
       CUDACHECK(
@@ -2819,7 +2821,7 @@ namespace dftfe
                         }
                 }
 
-              if (dftParameters::useGPUDirectAllReduce)
+              if (dftParams.useGPUDirectAllReduce)
                 {
                   cudaMemcpyAsync(
                     reinterpret_cast<dataTypes::numberFP32GPU *>(
@@ -2868,7 +2870,7 @@ namespace dftfe
                              cudaMemcpyHostToDevice);
                 }
 
-              if (dftParameters::useGPUDirectAllReduce)
+              if (dftParams.useGPUDirectAllReduce)
                 {
                   // check for completion of compute of previous block in
                   // compute stream before proceeding to rewriting
@@ -2975,6 +2977,7 @@ namespace dftfe
       GPUCCLWrapper &                                  gpucclMpiCommDomain,
       const MPI_Comm &                                 interBandGroupComm,
       const dftfe::ScaLAPACKMatrix<dataTypes::number> &rotationMatPar,
+      const dftParameters &                            dftParams,
       const bool                                       rotationMatTranspose)
     {
       const unsigned int maxNumLocalDofs =
@@ -3008,10 +3011,9 @@ namespace dftfe
       dftUtils::createBandParallelizationIndices(
         interBandGroupComm, N, bandGroupLowHighPlusOneIndices);
 
-      const unsigned int vectorsBlockSize =
-        std::min(dftParameters::wfcBlockSize, N);
+      const unsigned int vectorsBlockSize = std::min(dftParams.wfcBlockSize, N);
       const unsigned int dofsBlockSize =
-        std::min(maxNumLocalDofs, dftParameters::subspaceRotDofsBlockSize);
+        std::min(maxNumLocalDofs, dftParams.subspaceRotDofsBlockSize);
 
       dataTypes::numberFP32 *rotationMatBlockHostSP;
       CUDACHECK(
@@ -3218,7 +3220,7 @@ namespace dftfe
                 }
 
 
-              if (dftParameters::useGPUDirectAllReduce)
+              if (dftParams.useGPUDirectAllReduce)
                 {
                   cudaMemcpyAsync(
                     reinterpret_cast<dataTypes::numberFP32GPU *>(
@@ -3267,7 +3269,7 @@ namespace dftfe
                              cudaMemcpyHostToDevice);
                 }
 
-              if (dftParameters::useGPUDirectAllReduce)
+              if (dftParams.useGPUDirectAllReduce)
                 {
                   // check for completion of compute of previous block in
                   // compute stream before proceeding to rewriting
@@ -3374,7 +3376,8 @@ namespace dftfe
       GPUCCLWrapper &                                  gpucclMpiCommDomain,
       const MPI_Comm &                                 interBandGroupComm,
       const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
-      dftfe::ScaLAPACKMatrix<dataTypes::number> &      overlapMatPar)
+      dftfe::ScaLAPACKMatrix<dataTypes::number> &      overlapMatPar,
+      const dftParameters &                            dftParams)
     {
       // get global to local index maps for Scalapack matrix
       std::map<unsigned int, unsigned int> globalToLocalColumnIdMap;
@@ -3394,8 +3397,7 @@ namespace dftfe
       dftUtils::createBandParallelizationIndices(
         interBandGroupComm, N, bandGroupLowHighPlusOneIndices);
 
-      const unsigned int vectorsBlockSize =
-        std::min(dftParameters::wfcBlockSize, N);
+      const unsigned int vectorsBlockSize = std::min(dftParams.wfcBlockSize, N);
 
       thrust::device_vector<dataTypes::numberThrustGPU> overlapMatrixBlock(
         N * vectorsBlockSize, dataTypes::numberThrustGPU(0.0));
@@ -3462,7 +3464,7 @@ namespace dftfe
                 D);
 
 
-              if (dftParameters::useGPUDirectAllReduce)
+              if (dftParams.useGPUDirectAllReduce)
                 {
                   if (std::is_same<dataTypes::number,
                                    std::complex<double>>::value)
@@ -3494,7 +3496,7 @@ namespace dftfe
 
               // Sum local XTrunc^{T}*XcBlock across domain decomposition
               // processors
-              if (!dftParameters::useGPUDirectAllReduce)
+              if (!dftParams.useGPUDirectAllReduce)
                 MPI_Allreduce(MPI_IN_PLACE,
                               overlapMatrixBlockHost,
                               D * B,
@@ -3579,7 +3581,8 @@ namespace dftfe
       GPUCCLWrapper &                                  gpucclMpiCommDomain,
       const MPI_Comm &                                 interBandGroupComm,
       const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
-      dftfe::ScaLAPACKMatrix<dataTypes::number> &      overlapMatPar)
+      dftfe::ScaLAPACKMatrix<dataTypes::number> &      overlapMatPar,
+      const dftParameters &                            dftParams)
     {
       // get global to local index maps for Scalapack matrix
       std::map<unsigned int, unsigned int> globalToLocalColumnIdMap;
@@ -3599,9 +3602,8 @@ namespace dftfe
       dftUtils::createBandParallelizationIndices(
         interBandGroupComm, N, bandGroupLowHighPlusOneIndices);
 
-      const unsigned int vectorsBlockSize =
-        std::min(dftParameters::wfcBlockSize, N);
-      const unsigned int numberBlocks = N / vectorsBlockSize;
+      const unsigned int vectorsBlockSize = std::min(dftParams.wfcBlockSize, N);
+      const unsigned int numberBlocks     = N / vectorsBlockSize;
 
       // create separate CUDA streams for data movement and computation
       cudaStream_t streamCompute, streamDataMove;
@@ -3745,7 +3747,7 @@ namespace dftfe
                                             streamCompute));
                 }
 
-              if (dftParameters::useGPUDirectAllReduce)
+              if (dftParams.useGPUDirectAllReduce)
                 {
                   // Sum local XTrunc^{T}*XcBlock across domain decomposition
                   // processors
@@ -3790,7 +3792,7 @@ namespace dftfe
                 {
                   // Sum local XTrunc^{T}*XcBlock across domain decomposition
                   // processors
-                  if (!dftParameters::useGPUDirectAllReduce)
+                  if (!dftParams.useGPUDirectAllReduce)
                     MPI_Allreduce(MPI_IN_PLACE,
                                   overlapMatrixBlockHost,
                                   D * B,
@@ -3864,7 +3866,8 @@ namespace dftfe
       GPUCCLWrapper &                                  gpucclMpiCommDomain,
       const MPI_Comm &                                 interBandGroupComm,
       const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
-      dftfe::ScaLAPACKMatrix<dataTypes::number> &      overlapMatPar)
+      dftfe::ScaLAPACKMatrix<dataTypes::number> &      overlapMatPar,
+      const dftParameters &                            dftParams)
     {
       // get global to local index maps for Scalapack matrix
       std::map<unsigned int, unsigned int> globalToLocalColumnIdMap;
@@ -3884,8 +3887,7 @@ namespace dftfe
       dftUtils::createBandParallelizationIndices(
         interBandGroupComm, N, bandGroupLowHighPlusOneIndices);
 
-      const unsigned int vectorsBlockSize =
-        std::min(dftParameters::wfcBlockSize, N);
+      const unsigned int vectorsBlockSize = std::min(dftParams.wfcBlockSize, N);
 
 
       thrust::device_vector<dataTypes::numberFP32ThrustGPU>
@@ -4012,7 +4014,7 @@ namespace dftfe
                     DRem);
                 }
 
-              if (dftParameters::useGPUDirectAllReduce)
+              if (dftParams.useGPUDirectAllReduce)
                 {
                   if (std::is_same<dataTypes::number,
                                    std::complex<double>>::value)
@@ -4061,7 +4063,7 @@ namespace dftfe
                          DRem * B * sizeof(dataTypes::numberFP32GPU),
                          cudaMemcpyDeviceToHost);
 
-              if (!dftParameters::useGPUDirectAllReduce)
+              if (!dftParams.useGPUDirectAllReduce)
                 {
                   // Sum local XTrunc^{T}*XcBlock for double precision across
                   // domain decomposition processors
@@ -4173,7 +4175,8 @@ namespace dftfe
       GPUCCLWrapper &                                  gpucclMpiCommDomain,
       const MPI_Comm &                                 interBandGroupComm,
       const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
-      dftfe::ScaLAPACKMatrix<dataTypes::number> &      overlapMatPar)
+      dftfe::ScaLAPACKMatrix<dataTypes::number> &      overlapMatPar,
+      const dftParameters &                            dftParams)
     {
       // get global to local index maps for Scalapack matrix
       std::map<unsigned int, unsigned int> globalToLocalColumnIdMap;
@@ -4193,9 +4196,8 @@ namespace dftfe
       dftUtils::createBandParallelizationIndices(
         interBandGroupComm, N, bandGroupLowHighPlusOneIndices);
 
-      const unsigned int vectorsBlockSize =
-        std::min(dftParameters::wfcBlockSize, N);
-      const unsigned int numberBlocks = N / vectorsBlockSize;
+      const unsigned int vectorsBlockSize = std::min(dftParams.wfcBlockSize, N);
+      const unsigned int numberBlocks     = N / vectorsBlockSize;
 
       // create separate CUDA streams for GPU->CPU copy and computation
       cudaStream_t streamCompute, streamDataMove;
@@ -4442,7 +4444,7 @@ namespace dftfe
                                             streamCompute));
                 }
 
-              if (dftParameters::useGPUDirectAllReduce)
+              if (dftParams.useGPUDirectAllReduce)
                 {
                   if (std::is_same<dataTypes::number,
                                    std::complex<double>>::value)
@@ -4505,7 +4507,7 @@ namespace dftfe
                 {
                   const unsigned int DRem = D - B;
 
-                  if (!dftParameters::useGPUDirectAllReduce)
+                  if (!dftParams.useGPUDirectAllReduce)
                     {
                       // Sum local XTrunc^{T}*XcBlock for double precision
                       // across domain decomposition processors
@@ -4613,6 +4615,7 @@ namespace dftfe
       const MPI_Comm &                         interBandGroupComm,
       cublasHandle_t &                         handle,
       std::vector<double> &                    residualNorm,
+      const dftParameters &                    dftParams,
       const bool                               useBandParal)
     {
       // band group parallelization data structures
@@ -4625,7 +4628,7 @@ namespace dftfe
         interBandGroupComm, N, bandGroupLowHighPlusOneIndices);
 
 
-      const unsigned int vectorsBlockSize = dftParameters::wfcBlockSize;
+      const unsigned int            vectorsBlockSize = dftParams.wfcBlockSize;
       thrust::device_vector<double> residualNormSquareDevice(N, 0.0);
       thrust::device_vector<dataTypes::numberThrustGPU> HXBlockFull(
         vectorsBlockSize * M, dataTypes::numberThrustGPU(0.0));
@@ -4656,7 +4659,7 @@ namespace dftfe
               !useBandParal)
             {
               const unsigned int chebyBlockSize =
-                std::min(dftParameters::chebyWfcBlockSize, N);
+                std::min(dftParams.chebyWfcBlockSize, N);
 
               for (unsigned int k = jvec; k < jvec + B; k += chebyBlockSize)
                 {

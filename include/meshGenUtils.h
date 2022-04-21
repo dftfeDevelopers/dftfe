@@ -21,6 +21,7 @@
 #define meshGenUtils_H_
 
 #include <headers.h>
+#include "dftParameters.h"
 
 namespace dftfe
 {
@@ -133,7 +134,8 @@ namespace dftfe
     inline void markPeriodicFacesNonOrthogonal(
       Triangulation<3, 3> &             triangulation,
       std::vector<std::vector<double>> &latticeVectors,
-      const MPI_Comm &                  mpiCommParent)
+      const MPI_Comm &                  mpiCommParent,
+      const dftParameters &             dftParams)
     {
       dealii::ConditionalOStream pcout(
         std::cout, (Utilities::MPI::this_mpi_process(mpiCommParent) == 0));
@@ -149,7 +151,7 @@ namespace dftfe
       // are alligned along spatial x,y,z directions
       computeOffsetVectors(latticeVectors, offsetVectors);
 
-      if (dftParameters::verbosity >= 4)
+      if (dftParams.verbosity >= 4)
         {
           pcout << "Periodic Face Normals 1: " << periodicFaceNormals[0][0]
                 << " " << periodicFaceNormals[0][1] << " "
@@ -176,9 +178,9 @@ namespace dftfe
       // py=dftParameters::periodicX, pz=dftParameters::periodicX;
       //
       cell = triangulation.begin_active(), endc = triangulation.end();
-      const std::array<int, 3> periodic = {dftParameters::periodicX,
-                                           dftParameters::periodicY,
-                                           dftParameters::periodicZ};
+      const std::array<int, 3> periodic = {dftParams.periodicX,
+                                           dftParams.periodicY,
+                                           dftParams.periodicZ};
       for (; cell != endc; ++cell)
         {
           for (unsigned int f = 0; f < GeometryInfo<3>::faces_per_cell; ++f)
@@ -248,7 +250,7 @@ namespace dftfe
         }
       triangulation.add_periodicity(periodicity_vector);
 
-      if (dftParameters::verbosity >= 4)
+      if (dftParams.verbosity >= 4)
         pcout << "Periodic Facepairs size: " << periodicity_vector.size()
               << std::endl;
       /*

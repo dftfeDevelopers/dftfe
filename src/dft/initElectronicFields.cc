@@ -25,12 +25,12 @@ dftClass<FEOrder, FEOrderElectro>::initElectronicFields()
   TimerOutput::Scope scope(computing_timer, "init electronic fields");
 
   // reading data from pseudopotential files and fitting splines
-  if (dftParameters::isPseudopotential)
+  if (d_dftParamsPtr->isPseudopotential)
     initNonLocalPseudoPotential_OV();
   // else
   // initNonLocalPseudoPotential();
 
-  if (dftParameters::verbosity >= 4)
+  if (d_dftParamsPtr->verbosity >= 4)
     dftUtils::printCurrentMemoryUsage(mpi_communicator,
                                       "Call to initNonLocalPseudoPotential");
 
@@ -49,7 +49,7 @@ dftClass<FEOrder, FEOrderElectro>::initElectronicFields()
   d_rhoInSpin1NodalValues.reinit(d_rhoInNodalValues);
   // d_atomicRho.reinit(d_rhoInNodalValues);
 
-  if (dftParameters::isIonOpt || dftParameters::isCellOpt)
+  if (d_dftParamsPtr->isIonOpt || d_dftParamsPtr->isCellOpt)
     {
       initAtomicRho();
     }
@@ -70,12 +70,12 @@ dftClass<FEOrder, FEOrderElectro>::initElectronicFields()
                                      constraintsNone);
 
 #ifdef DFTFE_WITH_GPU
-  if (dftParameters::useGPU)
+  if (d_dftParamsPtr->useGPU)
     d_constraintsNoneDataInfoCUDA.initialize(
       matrix_free_data.get_vector_partitioner(), constraintsNone);
 #endif
 
-  if (dftParameters::verbosity >= 4)
+  if (d_dftParamsPtr->verbosity >= 4)
     dftUtils::printCurrentMemoryUsage(
       mpi_communicator, "Overloaded constraint matrices initialized");
 
@@ -83,7 +83,7 @@ dftClass<FEOrder, FEOrderElectro>::initElectronicFields()
   // initialize density and PSI/ interpolate from previous ground state solution
   //
   for (unsigned int kPoint = 0;
-       kPoint < (1 + dftParameters::spinPolarized) * d_kPointWeights.size();
+       kPoint < (1 + d_dftParamsPtr->spinPolarized) * d_kPointWeights.size();
        ++kPoint)
     {
       d_eigenVectorsFlattenedSTL[kPoint].resize(
@@ -103,42 +103,43 @@ dftClass<FEOrder, FEOrderElectro>::initElectronicFields()
   pcout << std::endl
         << "Setting initial guess for wavefunctions...." << std::endl;
 
-  if (dftParameters::verbosity >= 4)
+  if (d_dftParamsPtr->verbosity >= 4)
     dftUtils::printCurrentMemoryUsage(
       mpi_communicator,
       "Created flattened array eigenvectors before update ghost values");
 
   readPSI();
 
-  if (dftParameters::verbosity >= 4)
+  if (d_dftParamsPtr->verbosity >= 4)
     dftUtils::printCurrentMemoryUsage(mpi_communicator,
                                       "Created flattened array eigenvectors");
 
-  // if(!(dftParameters::chkType==2 && dftParameters::restartFromChk))
+  // if(!(d_dftParamsPtr->chkType==2 && d_dftParamsPtr->restartFromChk))
   //{
   initRho();
   // d_rhoOutNodalValues.reinit(d_rhoInNodalValues);
   //}
 
-  if (dftParameters::verbosity >= 4)
+  if (d_dftParamsPtr->verbosity >= 4)
     dftUtils::printCurrentMemoryUsage(mpi_communicator, "initRho called");
 
 #ifdef DFTFE_WITH_GPU
-  if (dftParameters::useGPU)
+  if (d_dftParamsPtr->useGPU)
     {
       d_eigenVectorsFlattenedCUDA.resize(d_eigenVectorsFlattenedSTL[0].size() *
-                                         (1 + dftParameters::spinPolarized) *
+                                         (1 + d_dftParamsPtr->spinPolarized) *
                                          d_kPointWeights.size());
 
       if (d_numEigenValuesRR != d_numEigenValues)
         d_eigenVectorsRotFracFlattenedCUDA.resize(
           d_eigenVectorsRotFracDensityFlattenedSTL[0].size() *
-          (1 + dftParameters::spinPolarized) * d_kPointWeights.size());
+          (1 + d_dftParamsPtr->spinPolarized) * d_kPointWeights.size());
       else
         d_eigenVectorsRotFracFlattenedCUDA.resize(1);
 
       for (unsigned int kPoint = 0;
-           kPoint < (1 + dftParameters::spinPolarized) * d_kPointWeights.size();
+           kPoint <
+           (1 + d_dftParamsPtr->spinPolarized) * d_kPointWeights.size();
            ++kPoint)
         {
           cudaUtils::copyHostVecToCUDAVec(
@@ -151,8 +152,8 @@ dftClass<FEOrder, FEOrderElectro>::initElectronicFields()
     }
 #endif
 
-  if (dftParameters::verbosity >= 2)
-    if (dftParameters::spinPolarized == 1)
+  if (d_dftParamsPtr->verbosity >= 2)
+    if (d_dftParamsPtr->spinPolarized == 1)
       pcout << std::endl
             << "net magnetization: "
             << totalMagnetization(rhoInValuesSpinPolarized) << std::endl;

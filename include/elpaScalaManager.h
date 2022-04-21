@@ -22,6 +22,7 @@
 
 #include "headers.h"
 #include "process_grid.h"
+#include "dftParameters.h"
 
 #include <vector>
 extern "C"
@@ -82,13 +83,11 @@ namespace dftfe
     getProcessGridDftfeScalaWrapper() const;
 
     void
-    processGridELPASetup(const unsigned int na, const unsigned int nev);
-
+    processGridELPASetup(const unsigned int   na,
+                         const unsigned int   nev,
+                         const dftParameters &dftParams);
     void
-    elpaAllocateHandles();
-
-    void
-    elpaDeallocateHandles();
+    elpaDeallocateHandles(const dftParameters &dftParams);
 
     elpa_t &
     getElpaHandle();

@@ -49,7 +49,7 @@ dftClass<FEOrder, FEOrderElectro>::initAtomicRho()
        it++)
     {
       char densityFile[256];
-      if (dftParameters::isPseudopotential)
+      if (d_dftParamsPtr->isPseudopotential)
         {
           strcpy(densityFile,
                  (d_dftfeScratchFolderName + "/z" + std::to_string(*it) +
@@ -151,7 +151,7 @@ dftClass<FEOrder, FEOrderElectro>::initAtomicRho()
 
           std::vector<double> &hessianRhoAtomsQuadValues =
             d_hessianRhoAtomsValues[cell->id()];
-          if (dftParameters::xcFamilyType == "GGA")
+          if (d_dftParamsPtr->xcFamilyType == "GGA")
             hessianRhoAtomsQuadValues.resize(n_q_points * 9, 0.0);
 
           std::vector<double>               rhoAtom(n_q_points, 0.0);
@@ -179,10 +179,10 @@ dftClass<FEOrder, FEOrderElectro>::initAtomicRho()
                   Tensor<1, 3, double> diff = quadPoint - atom;
                   double distanceToAtom     = quadPoint.distance(atom);
 
-                  if (dftParameters::floatingNuclearCharges &&
+                  if (d_dftParamsPtr->floatingNuclearCharges &&
                       distanceToAtom < 1.0e-4)
                     {
-                      if (dftParameters::verbosity >= 4)
+                      if (d_dftParamsPtr->verbosity >= 4)
                         std::cout
                           << "Atom close to quad point, iatom: " << iAtom
                           << std::endl;
@@ -221,7 +221,7 @@ dftClass<FEOrder, FEOrderElectro>::initAtomicRho()
                   gradRhoAtomsQuadValues[3 * q + 1] += gradRhoAtom[q][1];
                   gradRhoAtomsQuadValues[3 * q + 2] += gradRhoAtom[q][2];
 
-                  if (dftParameters::xcFamilyType == "GGA")
+                  if (d_dftParamsPtr->xcFamilyType == "GGA")
                     {
                       for (unsigned int iDim = 0; iDim < 3; ++iDim)
                         {
@@ -256,7 +256,7 @@ dftClass<FEOrder, FEOrderElectro>::initAtomicRho()
 
                   std::vector<double> &hessianRhoAtomCell =
                     d_hessianRhoAtomsValuesSeparate[iAtom][cell->id()];
-                  if (dftParameters::xcFamilyType == "GGA")
+                  if (d_dftParamsPtr->xcFamilyType == "GGA")
                     hessianRhoAtomCell.resize(n_q_points * 9, 0.0);
 
                   for (unsigned int q = 0; q < n_q_points; ++q)
@@ -265,7 +265,7 @@ dftClass<FEOrder, FEOrderElectro>::initAtomicRho()
                       gradRhoAtomCell[3 * q + 1] = gradRhoAtom[q][1];
                       gradRhoAtomCell[3 * q + 2] = gradRhoAtom[q][2];
 
-                      if (dftParameters::xcFamilyType == "GGA")
+                      if (d_dftParamsPtr->xcFamilyType == "GGA")
                         {
                           for (unsigned int iDim = 0; iDim < 3; ++iDim)
                             {
@@ -302,7 +302,7 @@ dftClass<FEOrder, FEOrderElectro>::initAtomicRho()
                   Tensor<1, 3, double> diff = quadPoint - imageAtom;
                   double distanceToAtom     = quadPoint.distance(imageAtom);
 
-                  if (dftParameters::floatingNuclearCharges &&
+                  if (d_dftParamsPtr->floatingNuclearCharges &&
                       distanceToAtom < 1.0e-4)
                     {
                       distanceToAtom = 1.0e-4;
@@ -340,7 +340,7 @@ dftClass<FEOrder, FEOrderElectro>::initAtomicRho()
                   gradRhoAtomsQuadValues[3 * q + 1] += gradRhoAtom[q][1];
                   gradRhoAtomsQuadValues[3 * q + 2] += gradRhoAtom[q][2];
 
-                  if (dftParameters::xcFamilyType == "GGA")
+                  if (d_dftParamsPtr->xcFamilyType == "GGA")
                     {
                       for (unsigned int iDim = 0; iDim < 3; ++iDim)
                         {
@@ -376,7 +376,7 @@ dftClass<FEOrder, FEOrderElectro>::initAtomicRho()
                   std::vector<double> &hessianRhoAtomCell =
                     d_hessianRhoAtomsValuesSeparate[numberGlobalCharges +
                                                     iImageCharge][cell->id()];
-                  if (dftParameters::xcFamilyType == "GGA")
+                  if (d_dftParamsPtr->xcFamilyType == "GGA")
                     hessianRhoAtomCell.resize(n_q_points * 9);
 
                   for (unsigned int q = 0; q < n_q_points; ++q)
@@ -385,7 +385,7 @@ dftClass<FEOrder, FEOrderElectro>::initAtomicRho()
                       gradRhoAtomCell[3 * q + 1] = gradRhoAtom[q][1];
                       gradRhoAtomCell[3 * q + 2] = gradRhoAtom[q][2];
 
-                      if (dftParameters::xcFamilyType == "GGA")
+                      if (d_dftParamsPtr->xcFamilyType == "GGA")
                         {
                           for (unsigned int iDim = 0; iDim < 3; ++iDim)
                             {
@@ -419,7 +419,7 @@ dftClass<FEOrder, FEOrderElectro>::normalizeAtomicRhoQuadValues()
   const double charge  = totalCharge(dofHandler, &d_rhoAtomsValues);
   const double scaling = ((double)numElectrons) / charge;
 
-  if (dftParameters::verbosity >= 2)
+  if (d_dftParamsPtr->verbosity >= 2)
     pcout
       << "Total charge rho single atomic before normalizing to number of electrons: "
       << charge << std::endl;
@@ -450,7 +450,7 @@ dftClass<FEOrder, FEOrderElectro>::normalizeAtomicRhoQuadValues()
       for (unsigned int i = 0; i < (it2->second).size(); ++i)
         (it2->second)[i] *= scaling;
 
-  if (dftParameters::xcFamilyType == "GGA")
+  if (d_dftParamsPtr->xcFamilyType == "GGA")
     {
       for (auto it1 = d_hessianRhoAtomsValues.begin();
            it1 != d_hessianRhoAtomsValues.end();
@@ -468,7 +468,7 @@ dftClass<FEOrder, FEOrderElectro>::normalizeAtomicRhoQuadValues()
 
   double chargeAfterScaling = totalCharge(dofHandler, &d_rhoAtomsValues);
 
-  if (dftParameters::verbosity >= 2)
+  if (d_dftParamsPtr->verbosity >= 2)
     pcout << "Total charge rho single atomic after normalizing: "
           << chargeAfterScaling << std::endl;
 }

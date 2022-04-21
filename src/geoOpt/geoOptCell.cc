@@ -19,7 +19,6 @@
 
 #include <cgPRPNonLinearSolver.h>
 #include <dft.h>
-#include <dftParameters.h>
 #include <dftUtils.h>
 #include <fileReaders.h>
 #include <force.h>
@@ -41,7 +40,7 @@ namespace dftfe
     , this_mpi_process(Utilities::MPI::this_mpi_process(mpi_comm_parent))
     , pcout(std::cout,
             (Utilities::MPI::this_mpi_process(mpi_comm_parent) == 0 &&
-             !dftParameters::reproducible_output))
+             !_dftPtr->getParametersObject().reproducible_output))
   {}
 
   //
@@ -59,71 +58,71 @@ namespace dftfe
     d_relaxationFlags.clear();
     d_relaxationFlags.resize(6, 0);
 
-    if (dftParameters::cellConstraintType ==
+    if (dftPtr->getParametersObject().cellConstraintType ==
         1) //(isotropic shape fixed isotropic volume optimization)
       {
         d_relaxationFlags[0] = 1; //(epsilon_11+epsilon22+epsilon_33)/3
       }
-    else if (dftParameters::cellConstraintType ==
+    else if (dftPtr->getParametersObject().cellConstraintType ==
              2) //(volume fixed shape optimization)
       {
         d_relaxationFlags[1] = 1; // epsilon_12
         d_relaxationFlags[2] = 1; // epsilon_13
         d_relaxationFlags[4] = 1; // epsilon_23
       }
-    else if (dftParameters::cellConstraintType ==
+    else if (dftPtr->getParametersObject().cellConstraintType ==
              3) // (relax only cell component v1_x)
       {
         d_relaxationFlags[0] = 1; // epsilon_11
       }
-    else if (dftParameters::cellConstraintType ==
+    else if (dftPtr->getParametersObject().cellConstraintType ==
              4) // (relax only cell component v2_y)
       {
         d_relaxationFlags[3] = 1; // epsilon_22
       }
-    else if (dftParameters::cellConstraintType ==
+    else if (dftPtr->getParametersObject().cellConstraintType ==
              5) // (relax only cell component v3_z)
       {
         d_relaxationFlags[5] = 1; // epsilon_33
       }
-    else if (dftParameters::cellConstraintType ==
+    else if (dftPtr->getParametersObject().cellConstraintType ==
              6) // (relax only cell components v2_y and v3_z)
       {
         d_relaxationFlags[3] = 1; // epsilon_22
         d_relaxationFlags[5] = 1; // epsilon_33
       }
-    else if (dftParameters::cellConstraintType ==
+    else if (dftPtr->getParametersObject().cellConstraintType ==
              7) // (relax only cell components v1_x and v3_z)
       {
         d_relaxationFlags[0] = 1; // epsilon_11
         d_relaxationFlags[5] = 1; // epsilon_33
       }
-    else if (dftParameters::cellConstraintType ==
+    else if (dftPtr->getParametersObject().cellConstraintType ==
              8) // (relax only cell components v1_x and v2_y)
       {
         d_relaxationFlags[0] = 1; // epsilon_11
         d_relaxationFlags[3] = 1; // epsilon_22
       }
-    else if (dftParameters::cellConstraintType ==
+    else if (dftPtr->getParametersObject().cellConstraintType ==
              9) //(relax v1_x, v2_y and v3_z)
       {
         d_relaxationFlags[0] = 1; // epsilon_11
         d_relaxationFlags[3] = 1; // epsilon_22
         d_relaxationFlags[5] = 1; // epsilon_33
       }
-    else if (dftParameters::cellConstraintType ==
+    else if (dftPtr->getParametersObject().cellConstraintType ==
              10) //(2D only x and y components relaxed)
       {
         d_relaxationFlags[0] = 1; // epsilon_11
         d_relaxationFlags[1] = 1; // epsilon_12
         d_relaxationFlags[3] = 1; // epsilon_22
       }
-    else if (dftParameters::cellConstraintType ==
+    else if (dftPtr->getParametersObject().cellConstraintType ==
              11) //(2D only x and y shape components- inplane area fixed)
       {
         d_relaxationFlags[1] = 1; // epsilon_12
       }
-    else if (dftParameters::cellConstraintType ==
+    else if (dftPtr->getParametersObject().cellConstraintType ==
              12) // (all cell components relaxed)
       {
         // all six epsilon components
@@ -134,7 +133,7 @@ namespace dftfe
         d_relaxationFlags[4] = 1;
         d_relaxationFlags[5] = 1;
       }
-    else if (dftParameters::cellConstraintType ==
+    else if (dftPtr->getParametersObject().cellConstraintType ==
              13) //(automatically decides constraints based on boundary
                  // conditions)
       {
@@ -145,21 +144,21 @@ namespace dftfe
         d_relaxationFlags[4] = 1;
         d_relaxationFlags[5] = 1;
 
-        if (!dftParameters::periodicX)
+        if (!dftPtr->getParametersObject().periodicX)
           {
             d_relaxationFlags[0] = 0; // epsilon_11
             d_relaxationFlags[1] = 0; // epsilon_12
             d_relaxationFlags[2] = 0; // epsilon_13
           }
 
-        if (!dftParameters::periodicY)
+        if (!dftPtr->getParametersObject().periodicY)
           {
             d_relaxationFlags[1] = 0; // epsilon_12
             d_relaxationFlags[3] = 0; // epsilon_22
             d_relaxationFlags[4] = 0; // epsilon_23
           }
 
-        if (!dftParameters::periodicZ)
+        if (!dftPtr->getParametersObject().periodicZ)
           {
             d_relaxationFlags[2] = 0; // epsilon_13
             d_relaxationFlags[4] = 0; // epsilon_23
@@ -174,7 +173,7 @@ namespace dftfe
             "The given value for CELL CONSTRAINT TYPE doesn't match with any available options (1-13)."));
       }
 
-    if (dftParameters::verbosity >= 2)
+    if (dftPtr->getParametersObject().verbosity >= 2)
       {
         pcout << " --------------Cell relaxation flags----------------"
               << std::endl;
@@ -192,7 +191,7 @@ namespace dftfe
   int
   geoOptCell<FEOrder, FEOrderElectro>::run()
   {
-    const double       tol     = dftParameters::stressRelaxTol;
+    const double       tol     = dftPtr->getParametersObject().stressRelaxTol;
     const unsigned int maxIter = 300;
     const double       lineSearchTol =
       tol * 2.0; // Dummy parameter for CGPRP, the actual stopping criteria are
@@ -200,10 +199,10 @@ namespace dftfe
     const double       lineSearchDampingParameter = 0.5;
     const double       maxUpdateInAnyComponent    = 0.2;
     const unsigned int maxLineSearchIter =
-      dftParameters::maxLineSearchIterCGPRP;
+      dftPtr->getParametersObject().maxLineSearchIterCGPRP;
     const unsigned int debugLevel =
       Utilities::MPI::this_mpi_process(mpi_communicator) == 0 ?
-        dftParameters::verbosity :
+        dftPtr->getParametersObject().verbosity :
         0;
 
     d_totalUpdateCalls = 0;
@@ -216,14 +215,15 @@ namespace dftfe
                                   lineSearchDampingParameter,
                                   maxUpdateInAnyComponent);
 
-    if (dftParameters::chkType >= 1 && dftParameters::restartFromChk)
+    if (dftPtr->getParametersObject().chkType >= 1 &&
+        dftPtr->getParametersObject().restartFromChk)
       pcout
         << " Re starting Cell stress relaxation using nonlinear CG solver... "
         << std::endl;
     else
       pcout << " Starting Cell stress relaxation using nonlinear CG solver... "
             << std::endl;
-    if (dftParameters::verbosity >= 2)
+    if (dftPtr->getParametersObject().verbosity >= 2)
       {
         pcout << "   ---Non-linear CG Parameters--------------  " << std::endl;
         pcout << "      stopping tol: " << tol << std::endl;
@@ -239,10 +239,12 @@ namespace dftfe
       {
         nonLinearSolver::ReturnValueType cgReturn = nonLinearSolver::FAILURE;
 
-        if (dftParameters::chkType >= 1 && dftParameters::restartFromChk)
+        if (dftPtr->getParametersObject().chkType >= 1 &&
+            dftPtr->getParametersObject().restartFromChk)
           cgReturn =
             cgSolver.solve(*this, std::string("cellRelaxCG.chk"), true);
-        else if (dftParameters::chkType >= 1 && !dftParameters::restartFromChk)
+        else if (dftPtr->getParametersObject().chkType >= 1 &&
+                 !dftPtr->getParametersObject().restartFromChk)
           cgReturn = cgSolver.solve(*this, std::string("cellRelaxCG.chk"));
         else
           cgReturn = cgSolver.solve(*this);
@@ -251,7 +253,7 @@ namespace dftfe
           {
             pcout
               << " ...Cell stress relaxation completed as maximum stress magnitude is less than STRESS TOL: "
-              << dftParameters::stressRelaxTol
+              << dftPtr->getParametersObject().stressRelaxTol
               << ", total number of cell geometry updates: "
               << d_totalUpdateCalls << std::endl;
 
@@ -275,8 +277,9 @@ namespace dftfe
               << "-----------------------------------------------------------------------------------------"
               << std::endl;
 
-            if (dftParameters::periodicX || dftParameters::periodicY ||
-                dftParameters::periodicZ)
+            if (dftPtr->getParametersObject().periodicX ||
+                dftPtr->getParametersObject().periodicY ||
+                dftPtr->getParametersObject().periodicZ)
               {
                 pcout
                   << "------------------Fractional coordinates of atoms--------------------"
@@ -367,7 +370,7 @@ namespace dftfe
     if (d_relaxationFlags[5] == 1)
       gradient.push_back(tempGradient[2][2]);
 
-    if (dftParameters::cellConstraintType ==
+    if (dftPtr->getParametersObject().cellConstraintType ==
         1) // isotropic (shape fixed isotropic volume optimization)
       {
         gradient[0] =
@@ -443,7 +446,7 @@ namespace dftfe
       }
 
 
-    if (dftParameters::cellConstraintType ==
+    if (dftPtr->getParametersObject().cellConstraintType ==
         1) // isotropic (shape fixed isotropic volume optimization)
       {
         strainEpsilonNew[1][1] = strainEpsilonNew[0][0];

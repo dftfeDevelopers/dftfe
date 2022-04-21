@@ -74,7 +74,8 @@ namespace dftfe
         const double                            fermiEnergy_,
         const double                            fermiEnergyUp_,
         const double                            fermiEnergyDown_,
-        const double                            tVal);
+        const double                            tVal,
+        const bool                              constraintMagnetization);
 
     /// Local part of the Eshelby tensor for non-periodic case
     Tensor<2, 3, VectorizedArray<double>>
@@ -91,7 +92,8 @@ namespace dftfe
       const double               fermiEnergy_,
       const double               fermiEnergyUp_,
       const double               fermiEnergyDown_,
-      const double               tVal);
+      const double               tVal,
+      const bool                 constraintMagnetization);
 
     /// exchange-correlation and psp part of the ELoc Eshelby tensor
     Tensor<2, 3, VectorizedArray<double>>
@@ -221,7 +223,8 @@ namespace dftfe
       const double                            fermiEnergy_,
       const double                            fermiEnergyUp_,
       const double                            fermiEnergyDown_,
-      const double                            tVal);
+      const double                            tVal,
+      const bool                              constraintMagnetization);
 
     /// Nonlocal pseudopotential Eshelby tensor (used only for stress
     /// computation), multiple k point and complex mode

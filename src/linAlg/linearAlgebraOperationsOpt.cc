@@ -23,7 +23,6 @@
  *
  */
 
-#include <dftParameters.h>
 #include <dftUtils.h>
 #include <linearAlgebraOperations.h>
 #include <linearAlgebraOperationsInternal.h>
@@ -625,7 +624,8 @@ namespace dftfe
                     const MPI_Comm &     interBandGroupComm,
                     const MPI_Comm &     mpi_communicator,
                     std::vector<double> &eigenValues,
-                    const bool           useMixedPrec)
+                    const bool           useMixedPrec,
+                    const dftParameters &dftParams)
     {
       dealii::ConditionalOStream pcout(
         std::cout,
@@ -633,8 +633,8 @@ namespace dftfe
 
       dealii::TimerOutput computing_timer(mpi_communicator,
                                           pcout,
-                                          dftParameters::reproducible_output ||
-                                              dftParameters::verbosity < 4 ?
+                                          dftParams.reproducible_output ||
+                                              dftParams.verbosity < 4 ?
                                             dealii::TimerOutput::never :
                                             dealii::TimerOutput::summary,
                                           dealii::TimerOutput::wall_times);
@@ -643,7 +643,7 @@ namespace dftfe
       std::shared_ptr<const dftfe::ProcessGrid> processGrid =
         elpaScala.getProcessGridDftfeScalaWrapper();
 
-      if (dftParameters::useMixedPrecCGS_O && useMixedPrec)
+      if (dftParams.useMixedPrecCGS_O && useMixedPrec)
         computing_timer.enter_subsection(
           "SConj=X^{T}XConj Mixed Prec, RR GEP step");
       else
@@ -662,7 +662,7 @@ namespace dftfe
                   T(0.0));
 
       // SConj=X^{T}*XConj.
-      if (!(dftParameters::useMixedPrecCGS_O && useMixedPrec))
+      if (!(dftParams.useMixedPrecCGS_O && useMixedPrec))
         {
           internal::fillParallelOverlapMatrix(&X[0],
                                               X.size(),
@@ -670,7 +670,8 @@ namespace dftfe
                                               processGrid,
                                               interBandGroupComm,
                                               mpi_communicator,
-                                              overlapMatPar);
+                                              overlapMatPar,
+                                              dftParams);
         }
       else
         {
@@ -683,7 +684,8 @@ namespace dftfe
               processGrid,
               interBandGroupComm,
               mpi_communicator,
-              overlapMatPar);
+              overlapMatPar,
+              dftParams);
           else
             internal::fillParallelOverlapMatrixMixedPrec<T, float>(
               &X[0],
@@ -692,10 +694,11 @@ namespace dftfe
               processGrid,
               interBandGroupComm,
               mpi_communicator,
-              overlapMatPar);
+              overlapMatPar,
+              dftParams);
         }
 
-      if (dftParameters::useMixedPrecCGS_O && useMixedPrec)
+      if (dftParams.useMixedPrecCGS_O && useMixedPrec)
         computing_timer.leave_subsection(
           "SConj=X^{T}XConj Mixed Prec, RR GEP step");
       else
@@ -706,7 +709,7 @@ namespace dftfe
 
 
       dftfe::LAPACKSupport::Property overlapMatPropertyPostCholesky;
-      if (dftParameters::useELPA)
+      if (dftParams.useELPA)
         {
           // For ELPA cholesky only the upper triangular part of the hermitian
           // matrix is required
@@ -842,7 +845,7 @@ namespace dftfe
       // HSConjProj=QConjPrime*D*QConjPrime^{C} QConj={Lc^{-1}}^{C}*QConjPrime
       const unsigned int numberEigenValues = numberWaveFunctions;
       eigenValues.resize(numberEigenValues);
-      if (dftParameters::useELPA)
+      if (dftParams.useELPA)
         {
           computing_timer.enter_subsection("ELPA eigen decomp, RR step");
           dftfe::ScaLAPACKMatrix<T> eigenVectors(numberWaveFunctions,
@@ -908,7 +911,7 @@ namespace dftfe
       // rotate the basis in the subspace
       // X^{T}={QConjPrime}^{C}*LConj^{-1}*X^{T}, stored in the column major
       // format In the above we use Q^{T}={QConjPrime}^{C}*LConj^{-1}
-      if (!(dftParameters::useMixedPrecSubspaceRotRR && useMixedPrec))
+      if (!(dftParams.useMixedPrecSubspaceRotRR && useMixedPrec))
         computing_timer.enter_subsection(
           "X^{T}={QConjPrime}^{C}*LConj^{-1}*X^{T}, RR step");
       else
@@ -918,7 +921,7 @@ namespace dftfe
       projHamParCopy.copy_conjugate_transposed(projHamPar);
       projHamParCopy.mmult(projHamPar, LMatPar);
 
-      if (!(dftParameters::useMixedPrecSubspaceRotRR && useMixedPrec))
+      if (!(dftParams.useMixedPrecSubspaceRotRR && useMixedPrec))
         internal::subspaceRotation(&X[0],
                                    X.size(),
                                    numberWaveFunctions,
@@ -926,6 +929,7 @@ namespace dftfe
                                    interBandGroupComm,
                                    mpi_communicator,
                                    projHamPar,
+                                   dftParams,
                                    false,
                                    false,
                                    false);
@@ -940,6 +944,7 @@ namespace dftfe
               interBandGroupComm,
               mpi_communicator,
               projHamPar,
+              dftParams,
               false,
               false);
           else
@@ -950,11 +955,12 @@ namespace dftfe
                                                           interBandGroupComm,
                                                           mpi_communicator,
                                                           projHamPar,
+                                                          dftParams,
                                                           false,
                                                           false);
         }
 
-      if (!(dftParameters::useMixedPrecSubspaceRotRR && useMixedPrec))
+      if (!(dftParams.useMixedPrecSubspaceRotRR && useMixedPrec))
         computing_timer.leave_subsection(
           "X^{T}={QConjPrime}^{C}*LConj^{-1}*X^{T}, RR step");
       else
@@ -972,6 +978,7 @@ namespace dftfe
                  const MPI_Comm &     interBandGroupComm,
                  const MPI_Comm &     mpi_communicator,
                  std::vector<double> &eigenValues,
+                 const dftParameters &dftParams,
                  const bool           doCommAfterBandParal)
 
     {
@@ -981,8 +988,8 @@ namespace dftfe
 
       dealii::TimerOutput computing_timer(mpi_communicator,
                                           pcout,
-                                          dftParameters::reproducible_output ||
-                                              dftParameters::verbosity < 4 ?
+                                          dftParams.reproducible_output ||
+                                              dftParams.verbosity < 4 ?
                                             dealii::TimerOutput::never :
                                             dealii::TimerOutput::summary,
                                           dealii::TimerOutput::wall_times);
@@ -1012,7 +1019,7 @@ namespace dftfe
       //
       const unsigned int numberEigenValues = numberWaveFunctions;
       eigenValues.resize(numberEigenValues);
-      if (dftParameters::useELPA)
+      if (dftParams.useELPA)
         {
           computing_timer.enter_subsection("ELPA eigen decomp, RR step");
           dftfe::ScaLAPACKMatrix<T> eigenVectors(numberWaveFunctions,
@@ -1120,6 +1127,7 @@ namespace dftfe
                                  interBandGroupComm,
                                  mpi_communicator,
                                  projHamParCopy,
+                                 dftParams,
                                  false,
                                  false,
                                  doCommAfterBandParal);
@@ -1139,7 +1147,8 @@ namespace dftfe
                                        const MPI_Comm &     interBandGroupComm,
                                        const MPI_Comm &     mpiComm,
                                        const bool           useMixedPrec,
-                                       std::vector<double> &eigenValues)
+                                       std::vector<double> &eigenValues,
+                                       const dftParameters &dftParams)
     {
       dealii::ConditionalOStream pcout(
         std::cout,
@@ -1147,8 +1156,8 @@ namespace dftfe
 
       dealii::TimerOutput computing_timer(mpiComm,
                                           pcout,
-                                          dftParameters::reproducible_output ||
-                                              dftParameters::verbosity < 4 ?
+                                          dftParams.reproducible_output ||
+                                              dftParams.verbosity < 4 ?
                                             dealii::TimerOutput::never :
                                             dealii::TimerOutput::summary,
                                           dealii::TimerOutput::wall_times);
@@ -1157,7 +1166,7 @@ namespace dftfe
       std::shared_ptr<const dftfe::ProcessGrid> processGrid =
         elpaScala.getProcessGridDftfeScalaWrapper();
 
-      if (dftParameters::useMixedPrecCGS_O && useMixedPrec)
+      if (dftParams.useMixedPrecCGS_O && useMixedPrec)
         computing_timer.enter_subsection(
           "SConj=X^{T}XConj Mixed Prec, RR GEP step");
       else
@@ -1176,7 +1185,7 @@ namespace dftfe
                   T(0.0));
 
       // SConj=X^{T}*XConj
-      if (!(dftParameters::useMixedPrecCGS_O && useMixedPrec))
+      if (!(dftParams.useMixedPrecCGS_O && useMixedPrec))
         {
           internal::fillParallelOverlapMatrix(&X[0],
                                               X.size(),
@@ -1184,7 +1193,8 @@ namespace dftfe
                                               processGrid,
                                               interBandGroupComm,
                                               mpiComm,
-                                              overlapMatPar);
+                                              overlapMatPar,
+                                              dftParams);
         }
       else
         {
@@ -1197,7 +1207,8 @@ namespace dftfe
               processGrid,
               interBandGroupComm,
               mpiComm,
-              overlapMatPar);
+              overlapMatPar,
+              dftParams);
           else
             internal::fillParallelOverlapMatrixMixedPrec<T, float>(
               &X[0],
@@ -1206,11 +1217,12 @@ namespace dftfe
               processGrid,
               interBandGroupComm,
               mpiComm,
-              overlapMatPar);
+              overlapMatPar,
+              dftParams);
         }
 
 
-      if (dftParameters::useMixedPrecCGS_O && useMixedPrec)
+      if (dftParams.useMixedPrecCGS_O && useMixedPrec)
         computing_timer.leave_subsection(
           "SConj=X^{T}XConj Mixed Prec, RR GEP step");
       else
@@ -1219,7 +1231,7 @@ namespace dftfe
       computing_timer.enter_subsection("Cholesky and triangular matrix invert");
 
       dftfe::LAPACKSupport::Property overlapMatPropertyPostCholesky;
-      if (dftParameters::useELPA)
+      if (dftParams.useELPA)
         {
           // For ELPA cholesky only the upper triangular part of the hermitian
           // matrix is required
@@ -1291,7 +1303,7 @@ namespace dftfe
 
 
 
-      if (dftParameters::useMixedPrecXTHXSpectrumSplit && useMixedPrec)
+      if (dftParams.useMixedPrecXTHXSpectrumSplit && useMixedPrec)
         computing_timer.enter_subsection(
           "HConjProj=X^{T}*HConj*XConj Mixed Prec, RR GEP step");
       else
@@ -1309,7 +1321,7 @@ namespace dftfe
                     projHamPar.local_m() * projHamPar.local_n(),
                   T(0.0));
 
-      if (useMixedPrec && dftParameters::useMixedPrecXTHXSpectrumSplit)
+      if (useMixedPrec && dftParams.useMixedPrecXTHXSpectrumSplit)
         {
           operatorMatrix.XtHXMixedPrec(
             X, numberWaveFunctions, numberCoreStates, processGrid, projHamPar);
@@ -1320,7 +1332,7 @@ namespace dftfe
         }
 
 
-      if (dftParameters::useMixedPrecXTHXSpectrumSplit && useMixedPrec)
+      if (dftParams.useMixedPrecXTHXSpectrumSplit && useMixedPrec)
         computing_timer.leave_subsection(
           "HConjProj=X^{T}*HConj*XConj Mixed Prec, RR GEP step");
       else
@@ -1344,7 +1356,7 @@ namespace dftfe
 
 
       projHamParConjTrans.copy_conjugate_transposed(projHamPar);
-      if (dftParameters::useELPA)
+      if (dftParams.useELPA)
         projHamPar.add(projHamParConjTrans, T(-1.0), T(-1.0));
       else
         projHamPar.add(projHamParConjTrans, T(1.0), T(1.0));
@@ -1380,7 +1392,7 @@ namespace dftfe
       const unsigned int numValenceStates =
         numberWaveFunctions - numberCoreStates;
       eigenValues.resize(numValenceStates);
-      if (dftParameters::useELPA)
+      if (dftParams.useELPA)
         {
           computing_timer.enter_subsection("ELPA eigen decomp, RR step");
           std::vector<double>       allEigenValues(numberWaveFunctions, 0.0);
@@ -1499,13 +1511,14 @@ namespace dftfe
                                               interBandGroupComm,
                                               mpiComm,
                                               projHamPar,
+                                              dftParams,
                                               false);
 
       computing_timer.leave_subsection(
         "Xfr^{T}={QfrConjPrime}^{C}*LConj^{-1}*X^{T}, RR step");
 
       // X^{T}=LConj^{-1}*X^{T}
-      if (!(dftParameters::useMixedPrecCGS_SR && useMixedPrec))
+      if (!(dftParams.useMixedPrecCGS_SR && useMixedPrec))
         {
           computing_timer.enter_subsection("X^{T}=Lconj^{-1}*X^{T}, RR step");
           internal::subspaceRotation(&X[0],
@@ -1515,6 +1528,7 @@ namespace dftfe
                                      interBandGroupComm,
                                      mpiComm,
                                      LMatPar,
+                                     dftParams,
                                      false,
                                      true,
                                      false);
@@ -1533,6 +1547,7 @@ namespace dftfe
               interBandGroupComm,
               mpiComm,
               LMatPar,
+              dftParams,
               false,
               false);
           else
@@ -1544,6 +1559,7 @@ namespace dftfe
               interBandGroupComm,
               mpiComm,
               LMatPar,
+              dftParams,
               false,
               false);
           computing_timer.leave_subsection(
@@ -1564,7 +1580,8 @@ namespace dftfe
                                     const MPI_Comm &      interBandGroupComm,
                                     const MPI_Comm &      mpi_communicator,
                                     const bool            useMixedPrec,
-                                    std::vector<double> & eigenValues)
+                                    std::vector<double> & eigenValues,
+                                    const dftParameters & dftParams)
 
     {
       dealii::ConditionalOStream pcout(
@@ -1573,8 +1590,8 @@ namespace dftfe
 
       dealii::TimerOutput computing_timer(mpi_communicator,
                                           pcout,
-                                          dftParameters::reproducible_output ||
-                                              dftParameters::verbosity < 4 ?
+                                          dftParams.reproducible_output ||
+                                              dftParams.verbosity < 4 ?
                                             dealii::TimerOutput::never :
                                             dealii::TimerOutput::summary,
                                           dealii::TimerOutput::wall_times);
@@ -1595,7 +1612,7 @@ namespace dftfe
                     projHamPar.local_m() * projHamPar.local_n(),
                   T(0.0));
 
-      if (useMixedPrec && dftParameters::useMixedPrecXTHXSpectrumSplit)
+      if (useMixedPrec && dftParams.useMixedPrecXTHXSpectrumSplit)
         {
           computing_timer.enter_subsection("Blocked XtHX Mixed Prec, RR step");
           operatorMatrix.XtHXMixedPrec(
@@ -1614,7 +1631,7 @@ namespace dftfe
         numberWaveFunctions - numberCoreStates;
       eigenValues.resize(numValenceStates);
       // compute eigendecomposition of ProjHam HConjProj= Qc*D*Qc^{C}
-      if (dftParameters::useELPA)
+      if (dftParams.useELPA)
         {
           computing_timer.enter_subsection("ELPA eigen decomp, RR step");
           std::vector<double>       allEigenValues(numberWaveFunctions, 0.0);
@@ -1763,6 +1780,7 @@ namespace dftfe
                                               interBandGroupComm,
                                               mpi_communicator,
                                               projHamParCopy,
+                                              dftParams,
                                               false);
 
       computing_timer.leave_subsection("Blocked subspace rotation, RR step");
@@ -2364,7 +2382,8 @@ namespace dftfe
                              const MPI_Comm &           mpiCommParent,
                              const MPI_Comm &           mpiCommDomain,
                              const MPI_Comm &           interBandGroupComm,
-                             std::vector<double> &      residualNorm)
+                             std::vector<double> &      residualNorm,
+                             const dftParameters &      dftParams)
 
     {
       //
@@ -2392,8 +2411,7 @@ namespace dftfe
       // The blocked approach avoids additional full
       // wavefunction matrix memory
       const unsigned int vectorsBlockSize =
-        std::min(dftParameters::wfcBlockSize,
-                 bandGroupLowHighPlusOneIndices[1]);
+        std::min(dftParams.wfcBlockSize, bandGroupLowHighPlusOneIndices[1]);
 
       for (unsigned int jvec = 0; jvec < totalNumberVectors;
            jvec += vectorsBlockSize)
@@ -2448,7 +2466,7 @@ namespace dftfe
                                   interBandGroupComm,
                                   residualNormSquare);
 
-      if (dftParameters::verbosity >= 4)
+      if (dftParams.verbosity >= 4)
         {
           if (dealii::Utilities::MPI::this_mpi_process(mpiCommParent) == 0)
             std::cout << "L-2 Norm of residue   :" << std::endl;
@@ -2456,13 +2474,13 @@ namespace dftfe
       for (unsigned int iWave = 0; iWave < totalNumberVectors; ++iWave)
         residualNorm[iWave] = sqrt(residualNormSquare[iWave]);
 
-      if (dftParameters::verbosity >= 4 &&
+      if (dftParams.verbosity >= 4 &&
           dealii::Utilities::MPI::this_mpi_process(mpiCommParent) == 0)
         for (unsigned int iWave = 0; iWave < totalNumberVectors; ++iWave)
           std::cout << "eigen vector " << iWave << ": " << residualNorm[iWave]
                     << std::endl;
 
-      if (dftParameters::verbosity >= 4)
+      if (dftParams.verbosity >= 4)
         if (dealii::Utilities::MPI::this_mpi_process(mpiCommParent) == 0)
           std::cout << std::endl;
     }
@@ -2471,7 +2489,8 @@ namespace dftfe
     unsigned int
     lowdenOrthogonalization(std::vector<std::complex<double>> &X,
                             const unsigned int                 numberVectors,
-                            const MPI_Comm &                   mpiComm)
+                            const MPI_Comm &                   mpiComm,
+                            const dftParameters &              dftParams)
     {
       const unsigned int localVectorSize = X.size() / numberVectors;
       std::vector<std::complex<double>> overlapMatrix(numberVectors *
@@ -2655,7 +2674,8 @@ namespace dftfe
     unsigned int
     lowdenOrthogonalization(std::vector<double> &X,
                             const unsigned int numberVectors,
-                            const MPI_Comm &mpiComm)
+                            const MPI_Comm &mpiComm,
+                            const dftParameters &dftParams)
     {
       const unsigned int localVectorSize = X.size() / numberVectors;
 
@@ -2667,8 +2687,8 @@ namespace dftfe
 
       dealii::TimerOutput computing_timer(mpiComm,
                                           pcout,
-                                          dftParameters::reproducible_output ||
-                                              dftParameters::verbosity < 4 ?
+                                          dftParams.reproducible_output ||
+                                              dftParams.verbosity < 4 ?
                                             dealii::TimerOutput::never :
                                             dealii::TimerOutput::summary,
                                           dealii::TimerOutput::wall_times);
@@ -2854,14 +2874,15 @@ namespace dftfe
     template <typename T>
     std::pair<double, double>
     lanczosLowerUpperBoundEigenSpectrum(operatorDFTClass &operatorMatrix,
-                                        const distributedCPUVec<T> &vect)
+                                        const distributedCPUVec<T> &vect,
+                                        const dftParameters &       dftParams)
     {
       const unsigned int this_mpi_process =
         dealii::Utilities::MPI::this_mpi_process(
           operatorMatrix.getMPICommunicator());
 
       const unsigned int lanczosIterations =
-        dftParameters::reproducible_output ? 40 : 20;
+        dftParams.reproducible_output ? 40 : 20;
       double beta;
 
 
@@ -2976,7 +2997,7 @@ namespace dftfe
       std::sort(eigenValuesT.begin(), eigenValuesT.end());
       //
       const double fvectorNorm = fVector.l2_norm();
-      if (dftParameters::verbosity >= 5 && this_mpi_process == 0)
+      if (dftParams.verbosity >= 5 && this_mpi_process == 0)
         {
           std::cout << "bUp1: " << eigenValuesT[lanczosIterations - 1]
                     << ", fvector norm: " << fvectorNorm << std::endl;
@@ -2984,10 +3005,9 @@ namespace dftfe
         }
 
       double lowerBound = std::floor(eigenValuesT[0]);
-      double upperBound =
-        std::ceil(eigenValuesT[lanczosIterations - 1] +
-                  (dftParameters::reproducible_output ? fvectorNorm :
-                                                        fvectorNorm / 10.0));
+      double upperBound = std::ceil(
+        eigenValuesT[lanczosIterations - 1] +
+        (dftParams.reproducible_output ? fvectorNorm : fvectorNorm / 10.0));
       return (std::make_pair(lowerBound, upperBound));
     }
 
@@ -2995,7 +3015,8 @@ namespace dftfe
     template std::pair<double, double>
     lanczosLowerUpperBoundEigenSpectrum(
       operatorDFTClass &,
-      const distributedCPUVec<dataTypes::number> &);
+      const distributedCPUVec<dataTypes::number> &,
+      const dftParameters &dftParams);
 
 
     template void
@@ -3029,8 +3050,9 @@ namespace dftfe
                                        const unsigned int,
                                        const MPI_Comm &,
                                        const MPI_Comm &,
-                                       const MPI_Comm &mpiComm,
-                                       const bool      useMixedPrec);
+                                       const MPI_Comm &     mpiComm,
+                                       const bool           useMixedPrec,
+                                       const dftParameters &dftParams);
 
     template void
     rayleighRitz(operatorDFTClass &operatorMatrix,
@@ -3041,6 +3063,7 @@ namespace dftfe
                  const MPI_Comm &,
                  const MPI_Comm &,
                  std::vector<double> &eigenValues,
+                 const dftParameters &dftParams,
                  const bool           doCommAfterBandParal);
 
     template void
@@ -3052,7 +3075,8 @@ namespace dftfe
                     const MPI_Comm &,
                     const MPI_Comm &,
                     std::vector<double> &eigenValues,
-                    const bool           useMixedPrec);
+                    const bool           useMixedPrec,
+                    const dftParameters &dftParams);
 
 
     template void
@@ -3066,7 +3090,8 @@ namespace dftfe
                                     const MPI_Comm &,
                                     const MPI_Comm &,
                                     const bool           useMixedPrec,
-                                    std::vector<double> &eigenValues);
+                                    std::vector<double> &eigenValues,
+                                    const dftParameters &dftParams);
 
     template void
     rayleighRitzGEPSpectrumSplitDirect(operatorDFTClass &operatorMatrix,
@@ -3079,7 +3104,8 @@ namespace dftfe
                                        const MPI_Comm &     interBandGroupComm,
                                        const MPI_Comm &     mpiCommDomain,
                                        const bool           useMixedPrec,
-                                       std::vector<double> &eigenValues);
+                                       std::vector<double> &eigenValues,
+                                       const dftParameters &dftParams);
 
     template void
     computeEigenResidualNorm(operatorDFTClass &              operatorMatrix,
@@ -3088,7 +3114,8 @@ namespace dftfe
                              const MPI_Comm &                mpiCommParent,
                              const MPI_Comm &                mpiCommDomain,
                              const MPI_Comm &                interBandGroupComm,
-                             std::vector<double> &           residualNorm);
+                             std::vector<double> &           residualNorm,
+                             const dftParameters &           dftParams);
 
   } // namespace linearAlgebraOperations
 

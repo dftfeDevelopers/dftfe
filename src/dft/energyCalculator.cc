@@ -20,7 +20,6 @@
 
 // source file for energy computations
 #include <constants.h>
-#include <dftParameters.h>
 #include <dftUtils.h>
 #include <energyCalculator.h>
 
@@ -39,7 +38,8 @@ namespace dftfe
                 const dealii::ConditionalOStream &pcout,
                 const bool                        reproducibleOutput,
                 const bool                        isPseudo,
-                const unsigned int                verbosity)
+                const unsigned int                verbosity,
+                const dftParameters &             dftParams)
     {
       if (reproducibleOutput)
         {
@@ -60,9 +60,8 @@ namespace dftfe
 
           pcout << std::endl << "Energy computations (Hartree) " << std::endl;
           pcout << "-------------------" << std::endl;
-          if (dftParameters::useMixedPrecCGS_O ||
-              dftParameters::useMixedPrecCGS_SR ||
-              dftParameters::useMixedPrecCheby)
+          if (dftParams.useMixedPrecCGS_O || dftParams.useMixedPrecCGS_SR ||
+              dftParams.useMixedPrecCheby)
             pcout << std::setw(25) << "Total energy"
                   << ": " << std::fixed << std::setprecision(6) << std::setw(20)
                   << totalEnergyTrunc << std::endl;
@@ -146,7 +145,8 @@ namespace dftfe
                     const dealii::ConditionalOStream &      scout,
                     const MPI_Comm &                        interpoolcomm,
                     const unsigned int                      lowerBoundKindex,
-                    const unsigned int                      verbosity)
+                    const unsigned int                      verbosity,
+                    const dftParameters &                   dftParams)
     {
       double       bandEnergyLocal = 0.0;
       unsigned int numEigenValues = eigenValues[0].size() / (1 + spinPolarized);
@@ -197,7 +197,7 @@ namespace dftfe
                               C_kb,
                               TVal);
 
-                          if (dftParameters::constraintMagnetization)
+                          if (dftParams.constraintMagnetization)
                             {
                               partialOccupancy = 1.0, partialOccupancy2 = 1.0;
                               if (eigenValues[kPoint][i + numEigenValues] >
@@ -347,14 +347,16 @@ namespace dftfe
 
   } // namespace internal
 
-  energyCalculator::energyCalculator(const MPI_Comm &mpi_comm_parent,
-                                     const MPI_Comm &mpi_comm_domain,
-                                     const MPI_Comm &interpool_comm,
-                                     const MPI_Comm &interbandgroup_comm)
+  energyCalculator::energyCalculator(const MPI_Comm &     mpi_comm_parent,
+                                     const MPI_Comm &     mpi_comm_domain,
+                                     const MPI_Comm &     interpool_comm,
+                                     const MPI_Comm &     interbandgroup_comm,
+                                     const dftParameters &dftParams)
     : d_mpiCommParent(mpi_comm_parent)
     , mpi_communicator(mpi_comm_domain)
     , interpoolcomm(interpool_comm)
     , interBandGroupComm(interbandgroup_comm)
+    , d_dftParams(dftParams)
     , pcout(std::cout,
             (dealii::Utilities::MPI::this_mpi_process(mpi_comm_parent) == 0))
   {}
@@ -430,7 +432,7 @@ namespace dftfe
           num_quad_points_electronic == rhoOutValues.begin()->second.size(),
           dealii::ExcMessage(
             "DFT-FE Error: mismatch in quadrature data in energyCalculator::computeEnergy."));
-        if (dftParameters::xcFamilyType == "GGA")
+        if (d_dftParams.xcFamilyType == "GGA")
           AssertThrow(
             num_quad_points_electronic * 3 ==
               gradRhoOutValues.begin()->second.size(),
@@ -456,7 +458,7 @@ namespace dftfe
             "DFT-FE Error: mismatch in quadrature data in energyCalculator::computeEnergy."));
       }
 
-    const double TVal = dftParameters::TVal;
+    const double TVal = d_dftParams.TVal;
     // std::vector<double> cellPhiTotRhoIn(num_quad_points_electronic);
     std::vector<double> cellPhiTotRhoOut(num_quad_points_electrostatic);
 
@@ -470,12 +472,13 @@ namespace dftfe
                                 fermiEnergy,
                                 fermiEnergy,
                                 fermiEnergy,
-                                dftParameters::TVal,
-                                dftParameters::spinPolarized,
+                                d_dftParams.TVal,
+                                d_dftParams.spinPolarized,
                                 scout,
                                 interpoolcomm,
                                 lowerBoundKindex,
-                                (dftParameters::verbosity + scfConverged)),
+                                (d_dftParams.verbosity + scfConverged),
+                                d_dftParams),
       interpoolcomm);
 
     double excCorrPotentialTimesRho = 0.0, electrostaticPotentialTimesRho = 0.0,
@@ -499,7 +502,7 @@ namespace dftfe
 
           feValuesElectronicLpsp.reinit(cellElectronic);
 
-          if (dftParameters::xcFamilyType == "GGA")
+          if (d_dftParams.xcFamilyType == "GGA")
             {
               // Get exc
               std::vector<double> densityValueInXC(num_quad_points_electronic),
@@ -519,7 +522,7 @@ namespace dftfe
               std::vector<double> gradXCRhoInDotgradRhoOut(
                 num_quad_points_electronic);
 
-              if (dftParameters::nonLinearCoreCorrection == true)
+              if (d_dftParams.nonLinearCoreCorrection == true)
                 {
                   for (unsigned int q_point = 0;
                        q_point < num_quad_points_electronic;
@@ -696,7 +699,7 @@ namespace dftfe
                 num_quad_points_electronic),
                 corrPotentialVal(num_quad_points_electronic);
 
-              if (dftParameters::nonLinearCoreCorrection == true)
+              if (d_dftParams.nonLinearCoreCorrection == true)
                 {
                   for (unsigned int q_point = 0;
                        q_point < num_quad_points_electronic;
@@ -770,7 +773,7 @@ namespace dftfe
                 }
             }
 
-          if (dftParameters::isPseudopotential || smearedNuclearCharges)
+          if (d_dftParams.isPseudopotential || smearedNuclearCharges)
             {
               const std::vector<double> &tempRho =
                 rhoOutValuesLpsp.find(cellElectronic->id())->second;
@@ -808,7 +811,7 @@ namespace dftfe
                 feValuesElectrostatic.JxW(q_point);
             }
 
-          if (dftParameters::isPseudopotential || smearedNuclearCharges)
+          if (d_dftParams.isPseudopotential || smearedNuclearCharges)
             {
               const std::vector<double> &tempRho =
                 rhoOutValuesElectrostaticLpsp.find(cellElectrostatic->id())
@@ -882,9 +885,10 @@ namespace dftfe
                               totalEnergy,
                               numberGlobalAtoms,
                               pcout,
-                              dftParameters::reproducible_output,
-                              dftParameters::isPseudopotential,
-                              dftParameters::verbosity);
+                              d_dftParams.reproducible_output,
+                              d_dftParams.isPseudopotential,
+                              d_dftParams.verbosity,
+                              d_dftParams);
       }
 
     return totalEnergy;
@@ -954,7 +958,7 @@ namespace dftfe
           num_quad_points_density == rhoInValues.begin()->second.size(),
           dealii::ExcMessage(
             "DFT-FE Error: mismatch in quadrature data in energyCalculator::computeEnergy."));
-        if (dftParameters::xcFamilyType == "GGA")
+        if (d_dftParams.xcFamilyType == "GGA")
           AssertThrow(
             num_quad_points_density * 3 ==
               gradRhoInValues.begin()->second.size(),
@@ -963,7 +967,7 @@ namespace dftfe
       }
 
 
-    const double TVal = dftParameters::TVal;
+    const double TVal = d_dftParams.TVal;
 
     std::vector<double> cellPhiTotRhoIn(num_quad_points_density);
 
@@ -977,12 +981,13 @@ namespace dftfe
                                 fermiEnergy,
                                 fermiEnergy,
                                 fermiEnergy,
-                                dftParameters::TVal,
-                                dftParameters::spinPolarized,
+                                d_dftParams.TVal,
+                                d_dftParams.spinPolarized,
                                 scout,
                                 interpoolcomm,
                                 lowerBoundKindex,
-                                (dftParameters::verbosity + 1)),
+                                (d_dftParams.verbosity + 1),
+                                d_dftParams),
       interpoolcomm);
 
     double excCorrPotentialTimesRhoIn       = 0.0,
@@ -1003,7 +1008,7 @@ namespace dftfe
         {
           feValuesElectronic.reinit(cellElectronic);
 
-          if (dftParameters::xcFamilyType == "GGA")
+          if (d_dftParams.xcFamilyType == "GGA")
             {
               // Get exc
               std::vector<double> densityValueIn(num_quad_points_density);
@@ -1022,7 +1027,7 @@ namespace dftfe
               std::vector<double> gradXCDensityDotGradDensity(
                 num_quad_points_density);
 
-              if (dftParameters::nonLinearCoreCorrection == true)
+              if (d_dftParams.nonLinearCoreCorrection == true)
                 {
                   for (unsigned int q_point = 0;
                        q_point < num_quad_points_density;
@@ -1135,7 +1140,7 @@ namespace dftfe
                      VxcGrad) *
                     feValuesElectronic.JxW(q_point);
 
-                  if (dftParameters::nonLinearCoreCorrection)
+                  if (d_dftParams.nonLinearCoreCorrection)
                     {
                       exchangeEnergy +=
                         (exchangeEnergyDensity[q_point]) *
@@ -1181,7 +1186,7 @@ namespace dftfe
               std::vector<double> exchangePotentialVal(num_quad_points_density),
                 corrPotentialVal(num_quad_points_density);
 
-              if (dftParameters::nonLinearCoreCorrection == true)
+              if (d_dftParams.nonLinearCoreCorrection == true)
                 {
                   for (unsigned int q_point = 0;
                        q_point < num_quad_points_density;
@@ -1231,7 +1236,7 @@ namespace dftfe
                     (rhoInValues.find(cellElectronic->id())->second[q_point]) *
                     feValuesElectronic.JxW(q_point);
 
-                  if (dftParameters::nonLinearCoreCorrection)
+                  if (d_dftParams.nonLinearCoreCorrection)
                     {
                       exchangeEnergy +=
                         (exchangeEnergyVal[q_point]) *
@@ -1429,7 +1434,7 @@ namespace dftfe
           num_quad_points_electronic == rhoOutValues.begin()->second.size(),
           dealii::ExcMessage(
             "DFT-FE Error: mismatch in quadrature data in energyCalculator::computeEnergy."));
-        if (dftParameters::xcFamilyType == "GGA")
+        if (d_dftParams.xcFamilyType == "GGA")
           AssertThrow(
             num_quad_points_electronic * 3 ==
               gradRhoOutValues.begin()->second.size(),
@@ -1467,12 +1472,13 @@ namespace dftfe
                                 fermiEnergy,
                                 fermiEnergyUp,
                                 fermiEnergyDown,
-                                dftParameters::TVal,
-                                dftParameters::spinPolarized,
+                                d_dftParams.TVal,
+                                d_dftParams.spinPolarized,
                                 scout,
                                 interpoolcomm,
                                 lowerBoundKindex,
-                                (dftParameters::verbosity + scfConverged)),
+                                (d_dftParams.verbosity + scfConverged),
+                                d_dftParams),
       interpoolcomm);
 
     double excCorrPotentialTimesRho = 0.0, electrostaticPotentialTimesRho = 0.0,
@@ -1497,7 +1503,7 @@ namespace dftfe
 
           feValuesElectronicLpsp.reinit(cellElectronic);
 
-          if (dftParameters::xcFamilyType == "GGA")
+          if (d_dftParams.xcFamilyType == "GGA")
             {
               // Get exc
               std::vector<double> densityValueInXC(2 *
@@ -1519,7 +1525,7 @@ namespace dftfe
               std::vector<double> gradXCRhoInDotgradRhoOut(
                 3 * num_quad_points_electronic);
 
-              if (dftParameters::nonLinearCoreCorrection == true)
+              if (d_dftParams.nonLinearCoreCorrection == true)
                 {
                   const std::vector<double> &tempRhoCore =
                     rhoCoreValues.find(cellElectronic->id())->second;
@@ -1850,7 +1856,7 @@ namespace dftfe
                 2 * num_quad_points_electronic),
                 corrPotentialVal(2 * num_quad_points_electronic);
 
-              if (dftParameters::nonLinearCoreCorrection == true)
+              if (d_dftParams.nonLinearCoreCorrection == true)
                 {
                   const std::vector<double> &tempRhoCore =
                     rhoCoreValues.find(cellElectronic->id())->second;
@@ -1953,7 +1959,7 @@ namespace dftfe
                 }
             }
 
-          if (dftParameters::isPseudopotential || smearedNuclearCharges)
+          if (d_dftParams.isPseudopotential || smearedNuclearCharges)
             {
               const std::vector<double> &tempRho =
                 rhoOutValuesLpsp.find(cellElectronic->id())->second;
@@ -1989,7 +1995,7 @@ namespace dftfe
                 feValuesElectrostatic.JxW(q_point);
             }
 
-          if (dftParameters::isPseudopotential || smearedNuclearCharges)
+          if (d_dftParams.isPseudopotential || smearedNuclearCharges)
             {
               const std::vector<double> &tempRho =
                 rhoOutValuesElectrostaticLpsp.find(cellElectrostatic->id())
@@ -2062,9 +2068,10 @@ namespace dftfe
                               totalEnergy,
                               numberGlobalAtoms,
                               pcout,
-                              dftParameters::reproducible_output,
-                              dftParameters::isPseudopotential,
-                              dftParameters::verbosity);
+                              d_dftParams.reproducible_output,
+                              d_dftParams.isPseudopotential,
+                              d_dftParams.verbosity,
+                              d_dftParams);
       }
 
     return totalEnergy;
@@ -2099,7 +2106,7 @@ namespace dftfe
                 C_kb,
                 temperature);
 
-              if (dftParameters::constraintMagnetization)
+              if (d_dftParams.constraintMagnetization)
                 {
                   partOccSpin0 = 1.0, partOccSpin1 = 1.0;
                   if (eigenValues[kPoint][i + numEigenValues] > fermiEnergyDown)

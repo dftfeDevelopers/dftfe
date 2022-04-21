@@ -25,6 +25,7 @@
 #    include "scalapackWrapper.h"
 #    include "elpaScalaManager.h"
 #    include "gpuDirectCCLWrapper.h"
+#    include "dftParameters.h"
 
 namespace dftfe
 {
@@ -310,7 +311,8 @@ namespace dftfe
       GPUCCLWrapper &                                  gpucclMpiCommDomain,
       const MPI_Comm &                                 interBandGroupComm,
       const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
-      dftfe::ScaLAPACKMatrix<dataTypes::number> &      overlapMatPar);
+      dftfe::ScaLAPACKMatrix<dataTypes::number> &      overlapMatPar,
+      const dftParameters &                            dftParams);
 
 
 
@@ -328,7 +330,8 @@ namespace dftfe
       GPUCCLWrapper &                                  gpucclMpiCommDomain,
       const MPI_Comm &                                 interBandGroupComm,
       const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
-      dftfe::ScaLAPACKMatrix<dataTypes::number> &      overlapMatPar);
+      dftfe::ScaLAPACKMatrix<dataTypes::number> &      overlapMatPar,
+      const dftParameters &                            dftParams);
 
 
 
@@ -346,7 +349,8 @@ namespace dftfe
       GPUCCLWrapper &                                  gpucclMpiCommDomain,
       const MPI_Comm &                                 interBandGroupComm,
       const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
-      dftfe::ScaLAPACKMatrix<dataTypes::number> &      overlapMatPar);
+      dftfe::ScaLAPACKMatrix<dataTypes::number> &      overlapMatPar,
+      const dftParameters &                            dftParams);
 
 
 
@@ -364,7 +368,8 @@ namespace dftfe
       GPUCCLWrapper &                                  gpucclMpiCommDomain,
       const MPI_Comm &                                 interBandGroupComm,
       const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
-      dftfe::ScaLAPACKMatrix<dataTypes::number> &      overlapMatPar);
+      dftfe::ScaLAPACKMatrix<dataTypes::number> &      overlapMatPar,
+      const dftParameters &                            dftParams);
 
 
 
@@ -377,9 +382,10 @@ namespace dftfe
                                        const unsigned int    N,
                                        const MPI_Comm &      mpiCommParent,
                                        const MPI_Comm &      mpiCommDomain,
-                                       GPUCCLWrapper & gpucclMpiCommDomain,
-                                       const MPI_Comm &interBandGroupComm,
-                                       cublasHandle_t &handle,
+                                       GPUCCLWrapper &      gpucclMpiCommDomain,
+                                       const MPI_Comm &     interBandGroupComm,
+                                       cublasHandle_t &     handle,
+                                       const dftParameters &dftParams,
                                        const bool useMixedPrecOverall = false);
 
     void
@@ -393,6 +399,7 @@ namespace dftfe
       GPUCCLWrapper &                                  gpucclMpiCommDomain,
       const MPI_Comm &                                 interBandGroupComm,
       const dftfe::ScaLAPACKMatrix<dataTypes::number> &rotationMatPar,
+      const dftParameters &                            dftParams,
       const bool rotationMatTranspose   = false,
       const bool isRotationMatLowerTria = false);
 
@@ -409,6 +416,7 @@ namespace dftfe
       const MPI_Comm &                                 mpiCommDomain,
       GPUCCLWrapper &                                  gpucclMpiCommDomain,
       const dftfe::ScaLAPACKMatrix<dataTypes::number> &rotationMatPar,
+      const dftParameters &                            dftParams,
       const bool rotationMatTranspose = false);
 
     void
@@ -422,6 +430,7 @@ namespace dftfe
       GPUCCLWrapper &                                  gpucclMpiCommDomain,
       const MPI_Comm &                                 interBandGroupComm,
       const dftfe::ScaLAPACKMatrix<dataTypes::number> &rotationMatPar,
+      const dftParameters &                            dftParams,
       const bool rotationMatTranspose = false);
 
 
@@ -436,6 +445,7 @@ namespace dftfe
       GPUCCLWrapper &                                  gpucclMpiCommDomain,
       const MPI_Comm &                                 interBandGroupComm,
       const dftfe::ScaLAPACKMatrix<dataTypes::number> &rotationMatPar,
+      const dftParameters &                            dftParams,
       const bool rotationMatTranspose = false);
 
 
@@ -456,6 +466,7 @@ namespace dftfe
       const MPI_Comm &                             interBandGroupComm,
       std::vector<double> &                        eigenValues,
       cublasHandle_t &                             handle,
+      const dftParameters &                        dftParams,
       const bool                                   useMixedPrecOverall = false);
 
 
@@ -476,6 +487,7 @@ namespace dftfe
       const MPI_Comm &                             interBandGroupComm,
       std::vector<double> &                        eigenValues,
       cublasHandle_t &                             handle,
+      const dftParameters &                        dftParams,
       const bool                                   useMixedPrecOverall = false);
 
     void
@@ -497,6 +509,7 @@ namespace dftfe
       const MPI_Comm &                             interBandGroupComm,
       std::vector<double> &                        eigenValues,
       cublasHandle_t &                             handle,
+      const dftParameters &                        dftParams,
       const bool                                   useMixedPrecOverall = false);
 
 
@@ -513,7 +526,8 @@ namespace dftfe
       distributedGPUVec<dataTypes::numberGPU> &Xb,
       distributedGPUVec<dataTypes::numberGPU> &Yb,
       distributedGPUVec<dataTypes::numberGPU> &projectorKetTimesVector,
-      const unsigned int                       blockSize);
+      const unsigned int                       blockSize,
+      const dftParameters &                    dftParams);
 
 
     /** @brief Apply Chebyshev filter to a given subspace
@@ -541,7 +555,8 @@ namespace dftfe
       const double                                 a,
       const double                                 b,
       const double                                 a0,
-      const bool                                   mixedPrecOverall);
+      const bool                                   mixedPrecOverall,
+      const dftParameters &                        dftParams);
 
 
     void
@@ -560,7 +575,8 @@ namespace dftfe
       const double                                 a,
       const double                                 b,
       const double                                 a0,
-      const bool                                   mixedPrecOverall);
+      const bool                                   mixedPrecOverall,
+      const dftParameters &                        dftParams);
 
     void
     computeEigenResidualNorm(
@@ -576,6 +592,7 @@ namespace dftfe
       const MPI_Comm &                         interBandGroupComm,
       cublasHandle_t &                         handle,
       std::vector<double> &                    residualNorm,
+      const dftParameters &                    dftParams,
       const bool                               useBandParal = false);
   } // namespace linearAlgebraOperationsCUDA
 } // namespace dftfe

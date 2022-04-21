@@ -18,7 +18,6 @@
 //
 // @author Phani Motamarri, Sambit Das
 //
-#include <dftParameters.h>
 #include <operatorCUDA.h>
 #include <linearAlgebraOperationsInternal.h>
 

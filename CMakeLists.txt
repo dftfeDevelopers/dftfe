@@ -47,7 +47,6 @@ SET(TARGET_SRC
   ./utils/dftParameters.cc
   ./utils/constraintMatrixInfo.cc
   ./utils/dftUtils.cc
-  ./utils/vectorTools/interpolateFieldsFromPreviousMesh.cc
   ./utils/vectorTools/vectorUtilities.cc
   ./utils/pseudoConverter.cc
   ./pseudoConverters/upfToxml.cc

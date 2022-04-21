@@ -60,19 +60,20 @@ namespace dftfe
 
 
   void
-  elpaScalaManager::processGridELPASetup(const unsigned int na,
-                                         const unsigned int nev)
+  elpaScalaManager::processGridELPASetup(const unsigned int   na,
+                                         const unsigned int   nev,
+                                         const dftParameters &dftParams)
   {
     linearAlgebraOperations::internal::createProcessGridSquareMatrix(
-      getMPICommunicator(), na, d_processGridDftfeWrapper);
+      getMPICommunicator(), na, d_processGridDftfeWrapper, dftParams);
 
 
     d_scalapackBlockSize =
-      std::min(dftParameters::scalapackBlockSize,
+      std::min(dftParams.scalapackBlockSize,
                (na + d_processGridDftfeWrapper->get_process_grid_rows() - 1) /
                  d_processGridDftfeWrapper->get_process_grid_rows());
 
-    if (dftParameters::useELPA)
+    if (dftParams.useELPA)
       {
         linearAlgebraOperations::internal::setupELPAHandleParameters(
           getMPICommunicator(),
@@ -81,7 +82,8 @@ namespace dftfe
           na,
           na,
           d_scalapackBlockSize,
-          d_elpaHandle);
+          d_elpaHandle,
+          dftParams);
 
         if (nev != na)
           {
@@ -92,7 +94,8 @@ namespace dftfe
               na,
               nev,
               d_scalapackBlockSize,
-              d_elpaHandlePartialEigenVec);
+              d_elpaHandlePartialEigenVec,
+              dftParams);
           }
       }
 
@@ -100,9 +103,9 @@ namespace dftfe
   }
 
   void
-  elpaScalaManager::elpaDeallocateHandles()
+  elpaScalaManager::elpaDeallocateHandles(const dftParameters &dftParams)
   {
-    if (dftParameters::useELPA)
+    if (dftParams.useELPA)
       {
         int error;
         if (d_processGridCommunicatorActive != MPI_COMM_NULL)
