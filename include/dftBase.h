@@ -20,6 +20,7 @@
 
 #include <vector>
 #include <deal.II/base/tensor_function.h>
+#include "dftParameters.h"
 
 namespace dftfe
 {
@@ -93,6 +94,13 @@ namespace dftfe
      */
     virtual std::vector<double>
     getForceonAtoms() const = 0;
+
+
+    /**
+     * @brief Get reference to dftParameters object
+     */
+    virtual dftParameters &
+    getParametersObject() const = 0;
 
     /**
      * @brief writes the current domain bounding vectors and atom coordinates to files, which are required for

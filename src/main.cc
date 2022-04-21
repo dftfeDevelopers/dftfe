@@ -59,24 +59,26 @@ setup_dftfe(dftfe::dftClass<n1, n2> &problemFE)
 // The central DFT-FE run invocation:
 template <int n1, int n2>
 void
-run_problem(const MPI_Comm &mpi_comm_parent,
-            const MPI_Comm &mpi_comm_domain,
-            const MPI_Comm &interpoolcomm,
-            const MPI_Comm &interBandGroupComm)
+run_problem(const MPI_Comm &      mpi_comm_parent,
+            const MPI_Comm &      mpi_comm_domain,
+            const MPI_Comm &      interpoolcomm,
+            const MPI_Comm &      interBandGroupComm,
+            dftfe::dftParameters &dftParams)
 {
-  if (dftfe::dftParameters::solvermode == "MD")
+  if (dftParams.solvermode == "MD")
     {
       dftfe::dftClass<n1, n2> problemFE(mpi_comm_parent,
                                         mpi_comm_domain,
                                         interpoolcomm,
-                                        interBandGroupComm);
+                                        interBandGroupComm,
+                                        dftParams);
 
       dftfe::molecularDynamicsClass mdClass(&problemFE, mpi_comm_parent);
       setup_dftfe<n1, n2>(problemFE);
       mdClass.runMD();
     }
 
-  else if (dftfe::dftParameters::solvermode == "NEB")
+  else if (dftParams.solvermode == "NEB")
     {}
 
   else
@@ -84,7 +86,8 @@ run_problem(const MPI_Comm &mpi_comm_parent,
       dftfe::dftClass<n1, n2> problemFE(mpi_comm_parent,
                                         mpi_comm_domain,
                                         interpoolcomm,
-                                        interBandGroupComm);
+                                        interBandGroupComm,
+                                        dftParams);
       setup_dftfe<n1, n2>(problemFE);
       problemFE.run();
     }
@@ -96,10 +99,11 @@ run_problem(const MPI_Comm &mpi_comm_parent,
 //
 //  Also note element 0 is order 1.
 //
-typedef void (*run_fn)(const MPI_Comm &mpi_comm_parent,
-                       const MPI_Comm &mpi_comm_domain,
-                       const MPI_Comm &interpoolcomm,
-                       const MPI_Comm &interBandGroupComm);
+typedef void (*run_fn)(const MPI_Comm &      mpi_comm_parent,
+                       const MPI_Comm &      mpi_comm_domain,
+                       const MPI_Comm &      interpoolcomm,
+                       const MPI_Comm &      interBandGroupComm,
+                       dftfe::dftParameters &dftParams);
 
 static run_fn order_list[] = {
 #ifdef DFTFE_MINIMAL_COMPILE
@@ -154,21 +158,22 @@ main(int argc, char *argv[])
 
 
   //
-  ParameterHandler prm;
-  dftfe::dftParameters::declare_parameters(prm);
-  const std::string parameter_file = argv[1];
-  prm.parse_input(parameter_file);
-  dftfe::dftParameters::parse_parameters(prm, MPI_COMM_WORLD);
+  dftfe::dftParameters dftParams;
+  const std::string    parameter_file = argv[1];
+  dftParams.parse_parameters(parameter_file, MPI_COMM_WORLD);
 
   deallog.depth_console(0);
 
-  dftfe::dftUtils::Pool kPointPool(MPI_COMM_WORLD, dftfe::dftParameters::npool);
+  dftfe::dftUtils::Pool kPointPool(MPI_COMM_WORLD,
+                                   dftParams.npool,
+                                   dftParams.verbosity);
   dftfe::dftUtils::Pool bandGroupsPool(kPointPool.get_intrapool_comm(),
-                                       dftfe::dftParameters::nbandGrps);
+                                       dftParams.nbandGrps,
+                                       dftParams.verbosity);
 
   std::srand(dealii::Utilities::MPI::this_mpi_process(
     bandGroupsPool.get_intrapool_comm()));
-  if (dftfe::dftParameters::verbosity >= 1)
+  if (dftParams.verbosity >= 1)
     {
       dealii::ConditionalOStream pcout(
         std::cout,
@@ -195,7 +200,7 @@ main(int argc, char *argv[])
     }
 
 #ifdef DFTFE_WITH_GPU
-  if (dftfe::dftParameters::useGPU)
+  if (dftParams.useGPU)
     {
       dftfe::cudaUtils::setupGPU();
     }
@@ -204,9 +209,8 @@ main(int argc, char *argv[])
   // set stdout precision
   std::cout << std::scientific << std::setprecision(18);
 
-  int order = dftfe::dftParameters::finiteElementPolynomialOrder;
-  int orderElectro =
-    dftfe::dftParameters::finiteElementPolynomialOrderElectrostatics;
+  int order        = dftParams.finiteElementPolynomialOrder;
+  int orderElectro = dftParams.finiteElementPolynomialOrderElectrostatics;
 
 #ifdef DFTFE_MINIMAL_COMPILE
   if (order < 2 || order > 7)
@@ -271,7 +275,8 @@ main(int argc, char *argv[])
   run(MPI_COMM_WORLD,
       bandGroupsPool.get_intrapool_comm(),
       kPointPool.get_interpool_comm(),
-      bandGroupsPool.get_interpool_comm());
+      bandGroupsPool.get_interpool_comm(),
+      dftParams);
 
   elpa_uninit(&error);
   AssertThrow(error == ELPA_OK,
@@ -279,7 +284,7 @@ main(int argc, char *argv[])
 
 
   const double end = MPI_Wtime();
-  if (dftfe::dftParameters::verbosity >= 1 &&
+  if (dftParams.verbosity >= 1 &&
       dealii::Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0)
     {
       std::cout

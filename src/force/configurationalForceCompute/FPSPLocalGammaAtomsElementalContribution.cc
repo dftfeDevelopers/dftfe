@@ -103,7 +103,7 @@ forceClass<FEOrder, FEOrderElectro>::FPSPLocalGammaAtomsElementalContribution(
           atomLocation[0] = dftPtr->atomLocations[iAtom][2];
           atomLocation[1] = dftPtr->atomLocations[iAtom][3];
           atomLocation[2] = dftPtr->atomLocations[iAtom][4];
-          if (dftParameters::isPseudopotential)
+          if (d_dftParams.isPseudopotential)
             atomCharge = dftPtr->atomLocations[iAtom][1];
           else
             atomCharge = dftPtr->atomLocations[iAtom][0];
@@ -191,8 +191,8 @@ forceClass<FEOrder, FEOrderElectro>::FPSPLocalGammaAtomsElementalContribution(
                       feValues.reinit(subCellPtr);
                       isCellOutsideVselfBall = false;
 
-                      if (dftParameters::floatingNuclearCharges &&
-                          dftParameters::smearedNuclearCharges)
+                      if (d_dftParams.floatingNuclearCharges &&
+                          d_dftParams.smearedNuclearCharges)
                         {
                           std::vector<double> vselfDerRQuadsSubCell(
                             numQuadPoints);
@@ -208,8 +208,8 @@ forceClass<FEOrder, FEOrderElectro>::FPSPLocalGammaAtomsElementalContribution(
                                   vselfDerRQuadsSubCell[q];
                             }
                         }
-                      else if (!dftParameters::floatingNuclearCharges &&
-                               dftParameters::smearedNuclearCharges)
+                      else if (!d_dftParams.floatingNuclearCharges &&
+                               d_dftParams.smearedNuclearCharges)
                         {
                           for (unsigned int q = 0; q < numQuadPoints; ++q)
                             {

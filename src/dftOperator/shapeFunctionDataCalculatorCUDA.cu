@@ -257,7 +257,7 @@ kohnShamDFTOperatorCUDAClass<FEOrder, FEOrderElectro>::
   MPI_Barrier(d_mpiCommParent);
   gpu_time = MPI_Wtime() - gpu_time;
 
-  if (this_mpi_process == 0 && dftParameters::verbosity >= 2)
+  if (this_mpi_process == 0 && dftPtr->d_dftParamsPtr->verbosity >= 2)
     std::cout
       << "Time for shapeFuncCUDA::computeShapeGradNINJIntegral for FEOrder: "
       << gpu_time << std::endl;
@@ -289,7 +289,7 @@ kohnShamDFTOperatorCUDAClass<FEOrder, FEOrderElectro>::
       MPI_Barrier(d_mpiCommParent);
       gpu_time = MPI_Wtime() - gpu_time;
 
-      if (this_mpi_process == 0 && dftParameters::verbosity >= 2)
+      if (this_mpi_process == 0 && dftPtr->d_dftParamsPtr->verbosity >= 2)
         std::cout
           << "Time for shapeFuncCUDA::computeShapeGradNINJIntegral for FEOrderElectro: "
           << gpu_time << std::endl;

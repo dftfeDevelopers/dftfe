@@ -108,7 +108,7 @@ void forceClass<FEOrder, FEOrderElectro>::addEPSPStressContribution(
           atomLocation[0] = dftPtr->atomLocations[iAtom][2];
           atomLocation[1] = dftPtr->atomLocations[iAtom][3];
           atomLocation[2] = dftPtr->atomLocations[iAtom][4];
-          if (dftParameters::isPseudopotential)
+          if (d_dftParams.isPseudopotential)
             atomCharge = dftPtr->atomLocations[iAtom][1];
           else
             atomCharge = dftPtr->atomLocations[iAtom][0];

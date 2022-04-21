@@ -34,7 +34,7 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::
     const double                                   scalar)
 {
   const unsigned int kpointSpinIndex =
-    (1 + dftParameters::spinPolarized) * d_kPointIndex + d_spinIndex;
+    (1 + dftPtr->d_dftParamsPtr->spinPolarized) * d_kPointIndex + d_spinIndex;
   //
   // element level matrix-vector multiplications
   //
@@ -103,7 +103,7 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::
                                 const double               scalar)
 {
   const unsigned int kpointSpinIndex =
-    (1 + dftParameters::spinPolarized) * d_kPointIndex + d_spinIndex;
+    (1 + dftPtr->d_dftParamsPtr->spinPolarized) * d_kPointIndex + d_spinIndex;
   //
   // element level matrix-vector multiplications
   //
@@ -180,7 +180,7 @@ kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::
 
 {
   const unsigned int kpointSpinIndex =
-    (1 + dftParameters::spinPolarized) * d_kPointIndex + d_spinIndex;
+    (1 + dftPtr->d_dftParamsPtr->spinPolarized) * d_kPointIndex + d_spinIndex;
   //
   // element level matrix-vector multiplications
   //

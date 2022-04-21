@@ -67,7 +67,7 @@ dftClass<FEOrder, FEOrderElectro>::initRho()
        it++)
     {
       char densityFile[256];
-      if (dftParameters::isPseudopotential)
+      if (d_dftParamsPtr->isPseudopotential)
         {
           strcpy(densityFile,
                  (d_dftfeScratchFolderName + "/z" + std::to_string(*it) +
@@ -97,7 +97,7 @@ dftClass<FEOrder, FEOrderElectro>::initRho()
             maxRowId = irow;
         }
 
-      if (dftParameters::isPseudopotential)
+      if (d_dftParamsPtr->isPseudopotential)
         yData[0] = yData[1];
 
       // interpolate rho
@@ -132,19 +132,19 @@ dftClass<FEOrder, FEOrderElectro>::initRho()
 
   rhoInVals.push_back(std::map<dealii::CellId, std::vector<double>>());
   rhoInValues = &(rhoInVals.back());
-  if (dftParameters::spinPolarized == 1)
+  if (d_dftParamsPtr->spinPolarized == 1)
     {
       rhoInValsSpinPolarized.push_back(
         std::map<dealii::CellId, std::vector<double>>());
       rhoInValuesSpinPolarized = &(rhoInValsSpinPolarized.back());
     }
 
-  if (dftParameters::xcFamilyType == "GGA")
+  if (d_dftParamsPtr->xcFamilyType == "GGA")
     {
       gradRhoInVals.push_back(std::map<dealii::CellId, std::vector<double>>());
       gradRhoInValues = &(gradRhoInVals.back());
       //
-      if (dftParameters::spinPolarized == 1)
+      if (d_dftParamsPtr->spinPolarized == 1)
         {
           gradRhoInValsSpinPolarized.push_back(
             std::map<dealii::CellId, std::vector<double>>());
@@ -155,12 +155,12 @@ dftClass<FEOrder, FEOrderElectro>::initRho()
   // Initialize electron density table storage for rhoOut only for Anderson with
   // Kerker for other mixing schemes it is done in density.cc as we need to do
   // this initialization every SCF
-  if (dftParameters::mixingMethod == "ANDERSON_WITH_KERKER")
+  if (d_dftParamsPtr->mixingMethod == "ANDERSON_WITH_KERKER")
     {
       rhoOutVals.push_back(std::map<dealii::CellId, std::vector<double>>());
       rhoOutValues = &(rhoOutVals.back());
 
-      if (dftParameters::xcFamilyType == "GGA")
+      if (d_dftParamsPtr->xcFamilyType == "GGA")
         {
           gradRhoOutVals.push_back(
             std::map<dealii::CellId, std::vector<double>>());
@@ -176,7 +176,7 @@ dftClass<FEOrder, FEOrderElectro>::initRho()
   const int numberImageCharges  = d_imageIdsTrunc.size();
   const int numberGlobalCharges = atomLocations.size();
 
-  if (dftParameters::mixingMethod == "ANDERSON_WITH_KERKER")
+  if (d_dftParamsPtr->mixingMethod == "ANDERSON_WITH_KERKER")
     {
       const IndexSet &locallyOwnedSet =
         d_dofHandlerRhoNodal.locally_owned_dofs();
@@ -290,7 +290,7 @@ dftClass<FEOrder, FEOrderElectro>::initRho()
       // push the rhoIn to deque storing the history of nodal values
       d_rhoInNodalVals.push_back(d_rhoInNodalValues);
 
-      if (dftParameters::verbosity >= 3)
+      if (d_dftParamsPtr->verbosity >= 3)
         {
           pcout << "Total Charge before Normalizing nodal Rho:  " << charge
                 << std::endl;
@@ -307,7 +307,7 @@ dftClass<FEOrder, FEOrderElectro>::initRho()
         *rhoInValues,
         *gradRhoInValues,
         *gradRhoInValues,
-        dftParameters::xcFamilyType == "GGA");
+        d_dftParamsPtr->xcFamilyType == "GGA");
       normalizeRhoInQuadValues();
     }
   else
@@ -325,7 +325,7 @@ dftClass<FEOrder, FEOrderElectro>::initRho()
               double *rhoInValuesPtr     = &((*rhoInValues)[cell->id()][0]);
 
               double *rhoInValuesSpinPolarizedPtr;
-              if (dftParameters::spinPolarized == 1)
+              if (d_dftParamsPtr->spinPolarized == 1)
                 {
                   (*rhoInValuesSpinPolarized)[cell->id()] =
                     std::vector<double>(2 * n_q_points);
@@ -381,13 +381,13 @@ dftClass<FEOrder, FEOrderElectro>::initRho()
                     }
 
                   rhoInValuesPtr[q] = std::abs(rhoValueAtQuadPt);
-                  if (dftParameters::spinPolarized == 1)
+                  if (d_dftParamsPtr->spinPolarized == 1)
                     {
                       rhoInValuesSpinPolarizedPtr[2 * q + 1] =
-                        (0.5 + dftParameters::start_magnetization) *
+                        (0.5 + d_dftParamsPtr->start_magnetization) *
                         (std::abs(rhoValueAtQuadPt));
                       rhoInValuesSpinPolarizedPtr[2 * q] =
-                        (0.5 - dftParameters::start_magnetization) *
+                        (0.5 - d_dftParamsPtr->start_magnetization) *
                         (std::abs(rhoValueAtQuadPt));
                     }
                 }
@@ -396,7 +396,7 @@ dftClass<FEOrder, FEOrderElectro>::initRho()
 
 
       // loop over elements
-      if (dftParameters::xcFamilyType == "GGA")
+      if (d_dftParamsPtr->xcFamilyType == "GGA")
         {
           //
           cell = dofHandler.begin_active();
@@ -412,7 +412,7 @@ dftClass<FEOrder, FEOrderElectro>::initRho()
                     &((*gradRhoInValues)[cell->id()][0]);
 
                   double *gradRhoInValuesSpinPolarizedPtr;
-                  if (dftParameters::spinPolarized == 1)
+                  if (d_dftParamsPtr->spinPolarized == 1)
                     {
                       (*gradRhoInValuesSpinPolarized)[cell->id()] =
                         std::vector<double>(6 * n_q_points, 0.0);
@@ -433,7 +433,7 @@ dftClass<FEOrder, FEOrderElectro>::initRho()
                                         atomLocations[n][4]);
                           double   distanceToAtom = quadPoint.distance(atom);
 
-                          if (dftParameters::floatingNuclearCharges &&
+                          if (d_dftParamsPtr->floatingNuclearCharges &&
                               distanceToAtom < 1.0e-3)
                             continue;
 
@@ -476,7 +476,7 @@ dftClass<FEOrder, FEOrderElectro>::initRho()
                             d_imagePositionsTrunc[iImageCharge][2]);
                           double distanceToAtom = quadPoint.distance(imageAtom);
 
-                          if (dftParameters::floatingNuclearCharges &&
+                          if (d_dftParamsPtr->floatingNuclearCharges &&
                               distanceToAtom < 1.0e-3)
                             continue;
 
@@ -535,25 +535,25 @@ dftClass<FEOrder, FEOrderElectro>::initRho()
                         signRho * gradRhoYValueAtQuadPt;
                       gradRhoInValuesPtr[3 * q + 2] =
                         signRho * gradRhoZValueAtQuadPt;
-                      if (dftParameters::spinPolarized == 1)
+                      if (d_dftParamsPtr->spinPolarized == 1)
                         {
                           gradRhoInValuesSpinPolarizedPtr[6 * q + 0] =
-                            (0.5 - dftParameters::start_magnetization) *
+                            (0.5 - d_dftParamsPtr->start_magnetization) *
                             signRho * gradRhoXValueAtQuadPt;
                           gradRhoInValuesSpinPolarizedPtr[6 * q + 1] =
-                            (0.5 - dftParameters::start_magnetization) *
+                            (0.5 - d_dftParamsPtr->start_magnetization) *
                             signRho * gradRhoYValueAtQuadPt;
                           gradRhoInValuesSpinPolarizedPtr[6 * q + 2] =
-                            (0.5 - dftParameters::start_magnetization) *
+                            (0.5 - d_dftParamsPtr->start_magnetization) *
                             signRho * gradRhoZValueAtQuadPt;
                           gradRhoInValuesSpinPolarizedPtr[6 * q + 3] =
-                            (0.5 + dftParameters::start_magnetization) *
+                            (0.5 + d_dftParamsPtr->start_magnetization) *
                             signRho * gradRhoXValueAtQuadPt;
                           gradRhoInValuesSpinPolarizedPtr[6 * q + 4] =
-                            (0.5 + dftParameters::start_magnetization) *
+                            (0.5 + d_dftParamsPtr->start_magnetization) *
                             signRho * gradRhoYValueAtQuadPt;
                           gradRhoInValuesSpinPolarizedPtr[6 * q + 5] =
-                            (0.5 + dftParameters::start_magnetization) *
+                            (0.5 + d_dftParamsPtr->start_magnetization) *
                             signRho * gradRhoZValueAtQuadPt;
                         }
                     }
@@ -590,19 +590,19 @@ dftClass<FEOrder, FEOrderElectro>::computeRhoInitialGuessFromPSI(
 
   rhoInVals.push_back(std::map<dealii::CellId, std::vector<double>>());
   rhoInValues = &(rhoInVals.back());
-  if (dftParameters::spinPolarized == 1)
+  if (d_dftParamsPtr->spinPolarized == 1)
     {
       rhoInValsSpinPolarized.push_back(
         std::map<dealii::CellId, std::vector<double>>());
       rhoInValuesSpinPolarized = &(rhoInValsSpinPolarized.back());
     }
 
-  if (dftParameters::xcFamilyType == "GGA")
+  if (d_dftParamsPtr->xcFamilyType == "GGA")
     {
       gradRhoInVals.push_back(std::map<dealii::CellId, std::vector<double>>());
       gradRhoInValues = &(gradRhoInVals.back());
       //
-      if (dftParameters::spinPolarized == 1)
+      if (d_dftParamsPtr->spinPolarized == 1)
         {
           gradRhoInValsSpinPolarized.push_back(
             std::map<dealii::CellId, std::vector<double>>());
@@ -630,7 +630,7 @@ dftClass<FEOrder, FEOrderElectro>::computeRhoInitialGuessFromPSI(
         (*rhoInValues)[cell->id()] = std::vector<double>(num_quad_points);
         std::fill(rhoTemp.begin(), rhoTemp.end(), 0.0);
         std::fill(rhoIn.begin(), rhoIn.end(), 0.0);
-        if (dftParameters::spinPolarized == 1)
+        if (d_dftParamsPtr->spinPolarized == 1)
           {
             (*rhoInValuesSpinPolarized)[cell->id()] =
               std::vector<double>(2 * num_quad_points);
@@ -653,12 +653,12 @@ dftClass<FEOrder, FEOrderElectro>::computeRhoInitialGuessFromPSI(
 
 
 
-        if (dftParameters::xcFamilyType == "GGA") // GGA
+        if (d_dftParamsPtr->xcFamilyType == "GGA") // GGA
           {
             (*gradRhoInValues)[cell->id()] =
               std::vector<double>(3 * num_quad_points);
             std::fill(gradRhoTemp.begin(), gradRhoTemp.end(), 0.0);
-            if (dftParameters::spinPolarized == 1)
+            if (d_dftParamsPtr->spinPolarized == 1)
               {
                 (*gradRhoInValuesSpinPolarized)[cell->id()] =
                   std::vector<double>(6 * num_quad_points);
@@ -686,23 +686,23 @@ dftClass<FEOrder, FEOrderElectro>::computeRhoInitialGuessFromPSI(
                 for (unsigned int i = 0; i < d_numEigenValues; ++i)
                   {
                     fe_values.get_function_values(
-                      eigenVectors[(1 + dftParameters::spinPolarized) * kPoint]
+                      eigenVectors[(1 + d_dftParamsPtr->spinPolarized) * kPoint]
                                   [i],
                       tempPsi);
-                    if (dftParameters::spinPolarized == 1)
+                    if (d_dftParamsPtr->spinPolarized == 1)
                       fe_values.get_function_values(
-                        eigenVectors[(1 + dftParameters::spinPolarized) *
+                        eigenVectors[(1 + d_dftParamsPtr->spinPolarized) *
                                        kPoint +
                                      1][i],
                         tempPsi2);
                     //
                     fe_values.get_function_gradients(
-                      eigenVectors[(1 + dftParameters::spinPolarized) * kPoint]
+                      eigenVectors[(1 + d_dftParamsPtr->spinPolarized) * kPoint]
                                   [i],
                       tempGradPsi);
-                    if (dftParameters::spinPolarized == 1)
+                    if (d_dftParamsPtr->spinPolarized == 1)
                       fe_values.get_function_gradients(
-                        eigenVectors[(1 + dftParameters::spinPolarized) *
+                        eigenVectors[(1 + d_dftParamsPtr->spinPolarized) *
                                        kPoint +
                                      1][i],
                         tempGradPsi2);
@@ -711,23 +711,24 @@ dftClass<FEOrder, FEOrderElectro>::computeRhoInitialGuessFromPSI(
                          ++q_point)
                       {
                         double factor = (eigenValues[kPoint][i] - fermiEnergy) /
-                                        (C_kb * dftParameters::TVal);
+                                        (C_kb * d_dftParamsPtr->TVal);
                         double partialOccupancy =
                           (factor >= 0) ?
                             std::exp(-factor) / (1.0 + std::exp(-factor)) :
                             1.0 / (1.0 + std::exp(factor));
                         //
-                        factor = (eigenValues[kPoint]
-                                             [i + dftParameters::spinPolarized *
-                                                    d_numEigenValues] -
-                                  fermiEnergy) /
-                                 (C_kb * dftParameters::TVal);
+                        factor =
+                          (eigenValues[kPoint]
+                                      [i + d_dftParamsPtr->spinPolarized *
+                                             d_numEigenValues] -
+                           fermiEnergy) /
+                          (C_kb * d_dftParamsPtr->TVal);
                         double partialOccupancy2 =
                           (factor >= 0) ?
                             std::exp(-factor) / (1.0 + std::exp(-factor)) :
                             1.0 / (1.0 + std::exp(factor));
 #ifdef USE_COMPLEX
-                        if (dftParameters::spinPolarized == 1)
+                        if (d_dftParamsPtr->spinPolarized == 1)
                           {
                             rhoTempSpinPolarized[2 * q_point] +=
                               partialOccupancy * d_kPointWeights[kPoint] *
@@ -807,7 +808,7 @@ dftClass<FEOrder, FEOrderElectro>::computeRhoInitialGuessFromPSI(
                                  tempGradPsi[q_point][1][2]);
                           }
 #else
-                        if (dftParameters::spinPolarized == 1)
+                        if (d_dftParamsPtr->spinPolarized == 1)
                           {
                             rhoTempSpinPolarized[2 * q_point] +=
                               partialOccupancy * tempPsi[q_point] *
@@ -870,7 +871,7 @@ dftClass<FEOrder, FEOrderElectro>::computeRhoInitialGuessFromPSI(
                           MPI_DOUBLE,
                           MPI_SUM,
                           interpoolcomm);
-            if (dftParameters::spinPolarized == 1)
+            if (d_dftParamsPtr->spinPolarized == 1)
               {
                 MPI_Allreduce(&rhoTempSpinPolarized[0],
                               &rhoInSpinPolarized[0],
@@ -891,7 +892,7 @@ dftClass<FEOrder, FEOrderElectro>::computeRhoInitialGuessFromPSI(
 
             for (unsigned int q_point = 0; q_point < num_quad_points; ++q_point)
               {
-                if (dftParameters::spinPolarized == 1)
+                if (d_dftParamsPtr->spinPolarized == 1)
                   {
                     (*rhoInValuesSpinPolarized)[cell->id()][2 * q_point] =
                       rhoInSpinPolarized[2 * q_point];
@@ -948,12 +949,12 @@ dftClass<FEOrder, FEOrderElectro>::computeRhoInitialGuessFromPSI(
                 for (unsigned int i = 0; i < d_numEigenValues; ++i)
                   {
                     fe_values.get_function_values(
-                      eigenVectors[(1 + dftParameters::spinPolarized) * kPoint]
+                      eigenVectors[(1 + d_dftParamsPtr->spinPolarized) * kPoint]
                                   [i],
                       tempPsi);
-                    if (dftParameters::spinPolarized == 1)
+                    if (d_dftParamsPtr->spinPolarized == 1)
                       fe_values.get_function_values(
-                        eigenVectors[(1 + dftParameters::spinPolarized) *
+                        eigenVectors[(1 + d_dftParamsPtr->spinPolarized) *
                                        kPoint +
                                      1][i],
                         tempPsi2);
@@ -962,23 +963,24 @@ dftClass<FEOrder, FEOrderElectro>::computeRhoInitialGuessFromPSI(
                          ++q_point)
                       {
                         double factor = (eigenValues[kPoint][i] - fermiEnergy) /
-                                        (C_kb * dftParameters::TVal);
+                                        (C_kb * d_dftParamsPtr->TVal);
                         double partialOccupancy =
                           (factor >= 0) ?
                             std::exp(-factor) / (1.0 + std::exp(-factor)) :
                             1.0 / (1.0 + std::exp(factor));
                         //
-                        factor = (eigenValues[kPoint]
-                                             [i + dftParameters::spinPolarized *
-                                                    d_numEigenValues] -
-                                  fermiEnergy) /
-                                 (C_kb * dftParameters::TVal);
+                        factor =
+                          (eigenValues[kPoint]
+                                      [i + d_dftParamsPtr->spinPolarized *
+                                             d_numEigenValues] -
+                           fermiEnergy) /
+                          (C_kb * d_dftParamsPtr->TVal);
                         double partialOccupancy2 =
                           (factor >= 0) ?
                             std::exp(-factor) / (1.0 + std::exp(-factor)) :
                             1.0 / (1.0 + std::exp(factor));
 #ifdef USE_COMPLEX
-                        if (dftParameters::spinPolarized == 1)
+                        if (d_dftParamsPtr->spinPolarized == 1)
                           {
                             rhoTempSpinPolarized[2 * q_point] +=
                               partialOccupancy * d_kPointWeights[kPoint] *
@@ -995,7 +997,7 @@ dftClass<FEOrder, FEOrderElectro>::computeRhoInitialGuessFromPSI(
                             (tempPsi[q_point](0) * tempPsi[q_point](0) +
                              tempPsi[q_point](1) * tempPsi[q_point](1));
 #else
-                        if (dftParameters::spinPolarized == 1)
+                        if (d_dftParamsPtr->spinPolarized == 1)
                           {
                             rhoTempSpinPolarized[2 * q_point] +=
                               partialOccupancy * tempPsi[q_point] *
@@ -1021,7 +1023,7 @@ dftClass<FEOrder, FEOrderElectro>::computeRhoInitialGuessFromPSI(
                           MPI_DOUBLE,
                           MPI_SUM,
                           interpoolcomm);
-            if (dftParameters::spinPolarized == 1)
+            if (d_dftParamsPtr->spinPolarized == 1)
               MPI_Allreduce(&rhoTempSpinPolarized[0],
                             &rhoInSpinPolarized[0],
                             2 * numPoint,
@@ -1031,7 +1033,7 @@ dftClass<FEOrder, FEOrderElectro>::computeRhoInitialGuessFromPSI(
             //
             for (unsigned int q_point = 0; q_point < num_quad_points; ++q_point)
               {
-                if (dftParameters::spinPolarized == 1)
+                if (d_dftParamsPtr->spinPolarized == 1)
                   {
                     (*rhoInValuesSpinPolarized)[cell->id()][2 * q_point] =
                       rhoInSpinPolarized[2 * q_point];
@@ -1085,7 +1087,7 @@ dftClass<FEOrder, FEOrderElectro>::computeNodalRhoFromQuadData()
   d_rhoNodalField.update_ghost_values();
 
 
-  if (dftParameters::spinPolarized == 1)
+  if (d_dftParamsPtr->spinPolarized == 1)
     {
       matrix_free_data.initialize_dof_vector(d_rhoNodalFieldSpin0,
                                              d_densityDofHandlerIndex);
@@ -1154,7 +1156,7 @@ dftClass<FEOrder, FEOrderElectro>::normalizeRhoInQuadValues()
   const double charge  = totalCharge(d_dofHandlerRhoNodal, rhoInValues);
   const double scaling = ((double)numElectrons) / charge;
 
-  if (dftParameters::verbosity >= 2)
+  if (d_dftParamsPtr->verbosity >= 2)
     pcout << "initial total charge before normalizing to number of electrons: "
           << charge << std::endl;
 
@@ -1169,14 +1171,14 @@ dftClass<FEOrder, FEOrderElectro>::normalizeRhoInQuadValues()
             {
               (*rhoInValues)[cell->id()][q] *= scaling;
 
-              if (dftParameters::xcFamilyType == "GGA")
+              if (d_dftParamsPtr->xcFamilyType == "GGA")
                 for (unsigned int idim = 0; idim < 3; ++idim)
                   (*gradRhoInValues)[cell->id()][3 * q + idim] *= scaling;
-              if (dftParameters::spinPolarized == 1)
+              if (d_dftParamsPtr->spinPolarized == 1)
                 {
                   (*rhoInValuesSpinPolarized)[cell->id()][2 * q + 1] *= scaling;
                   (*rhoInValuesSpinPolarized)[cell->id()][2 * q] *= scaling;
-                  if (dftParameters::xcFamilyType == "GGA")
+                  if (d_dftParamsPtr->xcFamilyType == "GGA")
                     for (unsigned int idim = 0; idim < 3; ++idim)
                       {
                         (*gradRhoInValuesSpinPolarized)[cell->id()]
@@ -1192,7 +1194,7 @@ dftClass<FEOrder, FEOrderElectro>::normalizeRhoInQuadValues()
     }
   double chargeAfterScaling = totalCharge(d_dofHandlerRhoNodal, rhoInValues);
 
-  if (dftParameters::verbosity >= 1)
+  if (d_dftParamsPtr->verbosity >= 1)
     pcout << "Initial total charge: " << chargeAfterScaling << std::endl;
 }
 
@@ -1210,7 +1212,7 @@ dftClass<FEOrder, FEOrderElectro>::normalizeRhoOutQuadValues()
   const double charge  = totalCharge(d_dofHandlerRhoNodal, rhoOutValues);
   const double scaling = ((double)numElectrons) / charge;
 
-  if (dftParameters::verbosity >= 2)
+  if (d_dftParamsPtr->verbosity >= 2)
     pcout << "Total charge out before normalizing to number of electrons: "
           << charge << std::endl;
 
@@ -1225,15 +1227,15 @@ dftClass<FEOrder, FEOrderElectro>::normalizeRhoOutQuadValues()
             {
               (*rhoOutValues)[cell->id()][q] *= scaling;
 
-              if (dftParameters::xcFamilyType == "GGA")
+              if (d_dftParamsPtr->xcFamilyType == "GGA")
                 for (unsigned int idim = 0; idim < 3; ++idim)
                   (*gradRhoOutValues)[cell->id()][3 * q + idim] *= scaling;
-              if (dftParameters::spinPolarized == 1)
+              if (d_dftParamsPtr->spinPolarized == 1)
                 {
                   (*rhoOutValuesSpinPolarized)[cell->id()][2 * q + 1] *=
                     scaling;
                   (*rhoOutValuesSpinPolarized)[cell->id()][2 * q] *= scaling;
-                  if (dftParameters::xcFamilyType == "GGA")
+                  if (d_dftParamsPtr->xcFamilyType == "GGA")
                     for (unsigned int idim = 0; idim < 3; ++idim)
                       {
                         (*gradRhoOutValuesSpinPolarized)[cell->id()]
@@ -1249,7 +1251,7 @@ dftClass<FEOrder, FEOrderElectro>::normalizeRhoOutQuadValues()
     }
   double chargeAfterScaling = totalCharge(d_dofHandlerRhoNodal, rhoOutValues);
 
-  if (dftParameters::verbosity >= 1)
+  if (d_dftParamsPtr->verbosity >= 1)
     pcout << "Total charge out after scaling: " << chargeAfterScaling
           << std::endl;
 }

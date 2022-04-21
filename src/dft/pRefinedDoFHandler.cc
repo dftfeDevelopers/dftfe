@@ -70,9 +70,9 @@ void dftClass<FEOrder, FEOrderElectro>::createpRefinedDofHandler(
   std::vector<dealii::GridTools::PeriodicFacePair<
     typename dealii::DoFHandler<3>::cell_iterator>>
                                     periodicity_vector2;
-  const std::array<unsigned int, 3> periodic = {dftParameters::periodicX,
-                                                dftParameters::periodicY,
-                                                dftParameters::periodicZ};
+  const std::array<unsigned int, 3> periodic = {d_dftParamsPtr->periodicX,
+                                                d_dftParamsPtr->periodicY,
+                                                d_dftParamsPtr->periodicZ};
 
   std::vector<int> periodicDirectionVector;
   for (unsigned int d = 0; d < 3; ++d)
@@ -143,7 +143,7 @@ void dftClass<FEOrder, FEOrderElectro>::createpRefinedDofHandler(
 
   d_constraintsRhoNodal.close();
 
-  if (dftParameters::createConstraintsFromSerialDofhandler)
+  if (d_dftParamsPtr->createConstraintsFromSerialDofhandler)
     {
       vectorTools::createParallelConstraintMatrixFromSerial(
         d_mesh.getSerialMeshUnmoved(),
@@ -152,7 +152,11 @@ void dftClass<FEOrder, FEOrderElectro>::createpRefinedDofHandler(
         mpi_communicator,
         d_domainBoundingVectors,
         d_constraintsPRefined,
-        d_constraintsPRefinedOnlyHanging);
+        d_constraintsPRefinedOnlyHanging,
+        d_dftParamsPtr->verbosity,
+        d_dftParamsPtr->periodicX,
+        d_dftParamsPtr->periodicY,
+        d_dftParamsPtr->periodicZ);
 
       vectorTools::createParallelConstraintMatrixFromSerial(
         d_mesh.getSerialMeshUnmoved(),
@@ -161,7 +165,11 @@ void dftClass<FEOrder, FEOrderElectro>::createpRefinedDofHandler(
         mpi_communicator,
         d_domainBoundingVectors,
         d_constraintsRhoNodal,
-        d_constraintsRhoNodalOnlyHanging);
+        d_constraintsRhoNodalOnlyHanging,
+        d_dftParamsPtr->verbosity,
+        d_dftParamsPtr->periodicX,
+        d_dftParamsPtr->periodicY,
+        d_dftParamsPtr->periodicZ);
     }
 }
 
@@ -184,7 +192,7 @@ dftClass<FEOrder, FEOrderElectro>::initpRefinedObjects(
   typename dealii::MatrixFree<3>::AdditionalData additional_data;
   additional_data.tasks_parallel_scheme =
     dealii::MatrixFree<3>::AdditionalData::partition_partition;
-  if (dftParameters::isCellStress)
+  if (d_dftParamsPtr->isCellStress)
     additional_data.mapping_update_flags = update_values | update_gradients |
                                            update_JxW_values |
                                            update_quadrature_points;
@@ -229,7 +237,7 @@ dftClass<FEOrder, FEOrderElectro>::initpRefinedObjects(
   d_constraintsForTotalPotentialElectro.clear();
   d_constraintsForTotalPotentialElectro.reinit(d_locallyRelevantDofsPRefined);
 
-  if (dftParameters::pinnedNodeForPBC)
+  if (d_dftParamsPtr->pinnedNodeForPBC)
     locatePeriodicPinnedNodes(d_dofHandlerPRefined,
                               d_constraintsPRefined,
                               d_constraintsForTotalPotentialElectro);
@@ -281,7 +289,7 @@ dftClass<FEOrder, FEOrderElectro>::initpRefinedObjects(
                                         d_imagePositionsTrunc,
                                         d_imageIdsTrunc,
                                         d_imageChargesTrunc,
-                                        dftParameters::radiusAtomBall);
+                                        d_dftParamsPtr->radiusAtomBall);
 
       d_netFloatingDispSinceLastBinsUpdate.clear();
       d_netFloatingDispSinceLastBinsUpdate.resize(atomLocations.size() * 3,
@@ -291,7 +299,7 @@ dftClass<FEOrder, FEOrderElectro>::initpRefinedObjects(
 
   MPI_Barrier(d_mpiCommParent);
   init_bins = MPI_Wtime() - init_bins;
-  if (dftParameters::verbosity >= 4)
+  if (d_dftParamsPtr->verbosity >= 4)
     pcout
       << "updateAtomPositionsAndMoveMesh: initBoundaryConditions: Time taken for bins update: "
       << init_bins << std::endl;
@@ -299,7 +307,7 @@ dftClass<FEOrder, FEOrderElectro>::initpRefinedObjects(
   d_constraintsVectorElectro.push_back(&d_constraintsPRefinedOnlyHanging);
   d_phiExtDofHandlerIndexElectro = d_constraintsVectorElectro.size() - 1;
 
-  if (dftParameters::constraintsParallelCheck)
+  if (d_dftParamsPtr->constraintsParallelCheck)
     {
       IndexSet locally_active_dofs_debug;
       DoFTools::extract_locally_active_dofs(d_dofHandlerPRefined,
@@ -338,11 +346,11 @@ dftClass<FEOrder, FEOrderElectro>::initpRefinedObjects(
     QGauss<1>(C_num1DQuad<C_rhoNodalPolyOrder<FEOrder, FEOrderElectro>()>()));
   quadratureVector.push_back(QIterated<1>(QGauss<1>(C_num1DQuadLPSP<FEOrder>()),
                                           C_numCopies1DQuadLPSP()));
-  if (dftParameters::isCellStress)
+  if (d_dftParamsPtr->isCellStress)
     quadratureVector.push_back(
       QIterated<1>(QGauss<1>(C_num1DQuadSmearedChargeStress()),
                    C_numCopies1DQuadSmearedChargeStress()));
-  else if (dftParameters::meshSizeOuterBall > 2.2)
+  else if (d_dftParamsPtr->meshSizeOuterBall > 2.2)
     quadratureVector.push_back(
       QIterated<1>(QGauss<1>(C_num1DQuadSmearedChargeHigh()),
                    C_numCopies1DQuadSmearedChargeHigh()));
@@ -366,7 +374,7 @@ dftClass<FEOrder, FEOrderElectro>::initpRefinedObjects(
   //
   // locate atom core nodes
   //
-  if (!dftParameters::floatingNuclearCharges)
+  if (!d_dftParamsPtr->floatingNuclearCharges)
     locateAtomCoreNodes(d_dofHandlerPRefined, d_atomNodeIdToChargeMap);
 
   //

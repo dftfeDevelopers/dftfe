@@ -40,7 +40,11 @@ namespace dftfe
   namespace pseudoUtils
   {
     int
-    convert(const std::string &file, const std::string &dftfeScratchFolderName);
+    convert(const std::string &file,
+            const std::string &dftfeScratchFolderName,
+            const int          verbosity,
+            const unsigned     natomTypes,
+            const bool         pseudoTestsFlag);
   }
 } // namespace dftfe
 #endif

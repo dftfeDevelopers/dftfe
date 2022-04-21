@@ -674,7 +674,7 @@ dftClass<FEOrder, FEOrderElectro>::initNonLocalPseudoPotential_OV()
 
       unsigned int atomicNumber = *it;
 
-      if (dftParameters::verbosity >= 2)
+      if (d_dftParamsPtr->verbosity >= 2)
         pcout << "Reading data from file: " << pseudoAtomDataFile << std::endl;
 
       //
@@ -713,7 +713,7 @@ dftClass<FEOrder, FEOrderElectro>::initNonLocalPseudoPotential_OV()
       //
       readPseudoDataFileNames.ignore();
 
-      if (dftParameters::verbosity >= 2)
+      if (d_dftParamsPtr->verbosity >= 2)
         pcout << "Number of projectors for atom with Z: " << atomicNumber
               << " is " << numberAtomicWaveFunctions << std::endl;
 
@@ -785,7 +785,7 @@ dftClass<FEOrder, FEOrderElectro>::initNonLocalPseudoPotential_OV()
 
           radAndAngularFunctionId[0] += cumulativeSplineId;
 
-          if (dftParameters::verbosity >= 2)
+          if (d_dftParamsPtr->verbosity >= 2)
             {
               pcout << "Radial and Angular Functions Ids: "
                     << radAndAngularFunctionId[0] << " "
@@ -795,7 +795,7 @@ dftClass<FEOrder, FEOrderElectro>::initNonLocalPseudoPotential_OV()
             }
         }
 
-      if (dftParameters::verbosity >= 2)
+      if (d_dftParamsPtr->verbosity >= 2)
         pcout << " splineFunctionIds.size() " << splineFunctionIds.size()
               << std::endl;
 
@@ -991,7 +991,7 @@ dftClass<FEOrder, FEOrderElectro>::initNonLocalPseudoPotential_OV()
   d_nonLocalAtomGlobalChargeIds = nonLocalAtomGlobalChargeIds;
   int numberNonLocalAtoms       = d_nonLocalAtomGlobalChargeIds.size();
 
-  if (dftParameters::verbosity >= 2)
+  if (d_dftParamsPtr->verbosity >= 2)
     pcout << "Number of Nonlocal Atoms: "
           << d_nonLocalAtomGlobalChargeIds.size() << std::endl;
 
@@ -1048,7 +1048,7 @@ dftClass<FEOrder, FEOrderElectro>::initNonLocalPseudoPotential_OV()
           // d_nonLocalPseudoPotentialConstants[iAtom][iPseudoWave]
           // = 1.0/d_nonLocalPseudoPotentialConstants[iAtom][iPseudoWave];
 #ifdef DEBUG
-          if (dftParameters::verbosity >= 4)
+          if (d_dftParamsPtr->verbosity >= 4)
             pcout << "The value of 1/nlpConst corresponding to atom and lCount "
                   << iAtom << ' ' << iPseudoWave << " is "
                   << d_nonLocalPseudoPotentialConstants[iAtom][iPseudoWave]
@@ -1299,7 +1299,7 @@ dftClass<FEOrder, FEOrderElectro>::computeSparseStructureNonLocalProjectors_OV()
         }
       cumulativeSplineId += numberPseudoWaveFunctions;
 #ifdef DEBUG
-      if (dftParameters::verbosity >= 4)
+      if (d_dftParamsPtr->verbosity >= 4)
         pcout << "No.of non zero elements in the compact support of atom "
               << iAtom << " is "
               << d_elementIteratorsInAtomCompactSupport[iAtom].size()

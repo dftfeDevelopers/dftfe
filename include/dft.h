@@ -132,7 +132,8 @@ namespace dftfe
     dftClass(const MPI_Comm &mpiCommParent,
              const MPI_Comm &mpi_comm_domain,
              const MPI_Comm &interpoolcomm,
-             const MPI_Comm &interBandGroupComm);
+             const MPI_Comm &interBandGroupComm,
+             dftParameters & dftParams);
 
     /**
      * @brief dftClass destructor
@@ -332,6 +333,12 @@ namespace dftfe
      */
     std::vector<double>
     getForceonAtoms() const;
+
+    /**
+     * @brief Get reference to dftParameters object
+     */
+    dftParameters &
+    getParametersObject() const;
 
   private:
     /**
@@ -1481,6 +1488,9 @@ namespace dftfe
         &kohnShamDFTEigenOperatorCUDA
 #endif
     );
+
+    /// dftParameters object
+    dftParameters *d_dftParamsPtr;
 
     /// kPoint cartesian coordinates
     std::vector<double> d_kPointCoordinates;

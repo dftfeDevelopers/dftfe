@@ -17,13 +17,14 @@
 
 #ifndef force_H_
 #define force_H_
-#include <vselfBinsManager.h>
+#include "vselfBinsManager.h"
+#include "dftParameters.h"
 
 #include "constants.h"
 #include "headers.h"
 #include "meshMovementGaussian.h"
 #ifdef DFTFE_WITH_GPU
-#  include <kohnShamDFTOperatorCUDA.h>
+#  include "kohnShamDFTOperatorCUDA.h"
 #endif
 
 
@@ -60,7 +61,8 @@ namespace dftfe
      */
     forceClass(dftClass<FEOrder, FEOrderElectro> *_dftPtr,
                const MPI_Comm &                   mpi_comm_parent,
-               const MPI_Comm &                   mpi_comm_domain);
+               const MPI_Comm &                   mpi_comm_domain,
+               const dftParameters &              dftParams);
 
     /** @brief initializes data structures inside forceClass assuming unmoved triangulation.
      *
@@ -1065,6 +1067,8 @@ namespace dftfe
 
     /// domain decomposition mpi_communicator
     const MPI_Comm mpi_communicator;
+
+    const dftParameters &d_dftParams;
 
     /// number of mpi processes in the current pool
     const unsigned int n_mpi_processes;

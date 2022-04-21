@@ -25,7 +25,6 @@
 #include <boost/random/normal_distribution.hpp>
 #include <boost/random/gamma_distribution.hpp>
 #include <headers.h>
-#include <dftParameters.h>
 #include <dftUtils.h>
 #include <fileReaders.h>
 #include <vector>
@@ -52,17 +51,18 @@ namespace dftfe
     d_TimeIndex        = 0;
     d_startingTimeStep = checkRestart();
     d_TimeStep =
-      dftParameters::timeStepBOMD *
+      dftPtr->getParametersObject().timeStepBOMD *
       0.09822694541304546435; // Conversion factor from femteseconds:
                               // 0.09822694541304546435 based on NIST constants
-    d_numberofSteps = dftParameters::numberStepsBOMD;
+    d_numberofSteps = dftPtr->getParametersObject().numberStepsBOMD;
 
-    d_startingTemperature    = dftParameters::startingTempBOMD;
-    d_ThermostatTimeConstant = dftParameters::thermostatTimeConstantBOMD;
-    d_ThermostatType         = dftParameters::tempControllerTypeBOMD;
-    d_numberGlobalCharges    = dftParameters::natoms;
+    d_startingTemperature = dftPtr->getParametersObject().startingTempBOMD;
+    d_ThermostatTimeConstant =
+      dftPtr->getParametersObject().thermostatTimeConstantBOMD;
+    d_ThermostatType = dftPtr->getParametersObject().tempControllerTypeBOMD;
+    d_numberGlobalCharges = dftPtr->getParametersObject().natoms;
 
-    d_MaxWallTime = dftParameters::MaxWallTime;
+    d_MaxWallTime = dftPtr->getParametersObject().MaxWallTime;
     pcout
       << "----------------------Starting Initialization of BOMD-------------------------"
       << std::endl;
@@ -71,7 +71,7 @@ namespace dftfe
     std::vector<std::vector<double>> temp_domainBoundingVectors;
     dftUtils::readFile(3,
                        temp_domainBoundingVectors,
-                       dftParameters::domainBoundingVectorsFile);
+                       dftPtr->getParametersObject().domainBoundingVectorsFile);
 
     for (int i = 0; i < 3; i++)
       {
@@ -81,7 +81,7 @@ namespace dftfe
           temp_domainBoundingVectors[i][2] * temp_domainBoundingVectors[i][2];
         d_domainLength.push_back(pow(temp, 0.5));
       }
-    if (dftParameters::verbosity > 1)
+    if (dftPtr->getParametersObject().verbosity > 1)
       {
         pcout << "--$ Domain Length$ --" << std::endl;
         pcout << "Lx:= " << d_domainLength[0] << " Ly:=" << d_domainLength[1]
@@ -99,7 +99,9 @@ namespace dftfe
     // read atomic masses in amu
     //
     std::vector<std::vector<double>> atomTypesMasses;
-    dftUtils::readFile(2, atomTypesMasses, dftParameters::atomicMassesFile);
+    dftUtils::readFile(2,
+                       atomTypesMasses,
+                       dftPtr->getParametersObject().atomicMassesFile);
     std::vector<std::vector<double>> atomLocations;
     atomLocations = dftPtr->getAtomLocationsCart();
     std::set<unsigned int> atomTypes;
@@ -134,10 +136,12 @@ namespace dftfe
     std::vector<double> TotalEnergyVector(d_numberofSteps, 0.0);
     double              totMass = 0.0;
     double              velocityDistribution;
-    /*  d_restartFlag = ((dftParameters::chkType == 1 || dftParameters::chkType
-     == 3) && dftParameters::restartMdFromChk) ?        1 :        0; // 1;
+    /*  d_restartFlag = ((dftPtr->getParametersObject().chkType == 1 ||
+     dftPtr->getParametersObject().chkType
+     == 3) && dftPtr->getParametersObject().restartMdFromChk) ?        1 : 0; //
+     1;
      //0;//1;*/
-    d_restartFlag = dftParameters::restartMdFromChk ? 1 : 0;
+    d_restartFlag = dftPtr->getParametersObject().restartMdFromChk ? 1 : 0;
     pcout << "RestartFlag: " << d_restartFlag << std::endl;
     if (d_restartFlag == 0)
       {
@@ -148,7 +152,7 @@ namespace dftfe
 
         dftUtils::readFile(5,
                            d_atomFractionalunwrapped,
-                           dftParameters::coordinatesFile);
+                           dftPtr->getParametersObject().coordinatesFile);
         std::vector<std::vector<double>> fileDisplacementData;
         std::vector<double>              initDisp(0.0, 3);
         for (int iCharge = 0; iCharge < d_numberGlobalCharges; iCharge++)
@@ -296,7 +300,7 @@ namespace dftfe
         TotalEnergyVector[0]    = KineticEnergyVector[0] +
                                InternalEnergyVector[0] -
                                EntropicEnergyVector[0];
-        if (dftParameters::verbosity >= 1)
+        if (dftPtr->getParametersObject().verbosity >= 1)
           {
             pcout << "Velocity of atoms " << std::endl;
             for (int iCharge = 0; iCharge < d_numberGlobalCharges; ++iCharge)
@@ -308,8 +312,8 @@ namespace dftfe
               }
           }
 
-        if (dftParameters::verbosity >= 0 &&
-            !dftParameters::reproducible_output)
+        if (dftPtr->getParametersObject().verbosity >= 0 &&
+            !dftPtr->getParametersObject().reproducible_output)
           {
             pcout << "---------------MD STEP" << d_startingTimeStep
                   << "------------------ " << std::endl;
@@ -324,8 +328,8 @@ namespace dftfe
             pcout << " Total Energy in Ha at timeIndex " << TotalEnergyVector[0]
                   << std::endl;
           }
-        else if (dftParameters::verbosity >= 0 &&
-                 dftParameters::reproducible_output)
+        else if (dftPtr->getParametersObject().verbosity >= 0 &&
+                 dftPtr->getParametersObject().reproducible_output)
           {
             pcout << "---------------MD STEP " << d_startingTimeStep
                   << " ------------------ " << std::endl;
@@ -394,7 +398,8 @@ namespace dftfe
                                   KineticEnergyVector,
                                   InternalEnergyVector,
                                   TotalEnergyVector);
-        if (dftParameters::verbosity > 1 && !dftParameters::reproducible_output)
+        if (dftPtr->getParametersObject().verbosity > 1 &&
+            !dftPtr->getParametersObject().reproducible_output)
           {
             pcout << "-- Starting Unwrapped Coordinates: --" << std::endl;
             for (int iCharge = 0; iCharge < d_numberGlobalCharges; iCharge++)
@@ -501,7 +506,7 @@ namespace dftfe
         // Based on verbose print required MD details...
         MPI_Barrier(d_mpiCommParent);
         step_time = MPI_Wtime() - step_time;
-        if (dftParameters::verbosity >= 1)
+        if (dftPtr->getParametersObject().verbosity >= 1)
           {
             pcout << "Velocity of atoms " << std::endl;
             for (int iCharge = 0; iCharge < d_numberGlobalCharges; ++iCharge)
@@ -529,8 +534,8 @@ namespace dftfe
         vz /= COM;
         // pcout<<" The Center of Mass Velocity from NVE: "<<vx<<" "<<vy<<"
         // "<<vz<<std::endl;
-        if (dftParameters::verbosity >= 0 &&
-            !dftParameters::reproducible_output)
+        if (dftPtr->getParametersObject().verbosity >= 0 &&
+            !dftPtr->getParametersObject().reproducible_output)
           {
             pcout << "---------------MD STEP: " << d_TimeIndex
                   << " ------------------ " << std::endl;
@@ -552,8 +557,8 @@ namespace dftfe
                   << TotalEnergyVector[d_TimeIndex - d_startingTimeStep]
                   << std::endl;
           }
-        else if (dftParameters::verbosity >= 0 &&
-                 dftParameters::reproducible_output)
+        else if (dftPtr->getParametersObject().verbosity >= 0 &&
+                 dftPtr->getParametersObject().reproducible_output)
           {
             pcout << "---------------MD STEP " << d_TimeIndex
                   << " ------------------ " << std::endl;
@@ -574,7 +579,7 @@ namespace dftfe
 
         MPI_Barrier(d_mpiCommParent);
         curr_time = MPI_Wtime() - d_MDstartWallTime;
-        if (!dftParameters::reproducible_output)
+        if (!dftPtr->getParametersObject().reproducible_output)
           pcout << "*****Time Completed till NOW: " << curr_time << std::endl;
         AssertThrow((d_MaxWallTime - (curr_time + 1.05 * step_time)) > 1.0,
                     ExcMessage(
@@ -637,7 +642,7 @@ namespace dftfe
         // Based on verbose print required MD details...
         MPI_Barrier(d_mpiCommParent);
         step_time = MPI_Wtime() - step_time;
-        if (dftParameters::verbosity >= 1)
+        if (dftPtr->getParametersObject().verbosity >= 1)
           {
             pcout << "Velocity of atoms " << std::endl;
             for (int iCharge = 0; iCharge < d_numberGlobalCharges; ++iCharge)
@@ -666,8 +671,8 @@ namespace dftfe
         // pcout<<" The Center of Mass Velocity from Rescale Thermostat:
         // "<<vx<<" "<<vy<<" "<<vz<<std::endl;
 
-        if (dftParameters::verbosity >= 0 &&
-            !dftParameters::reproducible_output)
+        if (dftPtr->getParametersObject().verbosity >= 0 &&
+            !dftPtr->getParametersObject().reproducible_output)
           {
             pcout << "---------------MD STEP: " << d_TimeIndex
                   << " ------------------ " << std::endl;
@@ -689,8 +694,8 @@ namespace dftfe
                   << TotalEnergyVector[d_TimeIndex - d_startingTimeStep]
                   << std::endl;
           }
-        else if (dftParameters::verbosity >= 0 &&
-                 dftParameters::reproducible_output)
+        else if (dftPtr->getParametersObject().verbosity >= 0 &&
+                 dftPtr->getParametersObject().reproducible_output)
           {
             pcout << "---------------MD STEP " << d_TimeIndex
                   << " ------------------ " << std::endl;
@@ -711,7 +716,7 @@ namespace dftfe
 
         MPI_Barrier(d_mpiCommParent);
         curr_time = MPI_Wtime() - d_MDstartWallTime;
-        if (!dftParameters::reproducible_output)
+        if (!dftPtr->getParametersObject().reproducible_output)
           pcout << "*****Time Completed till NOW: " << curr_time << std::endl;
         AssertThrow((d_MaxWallTime - (curr_time + 1.05 * step_time)) > 1.0,
                     ExcMessage(
@@ -825,7 +830,7 @@ namespace dftfe
 
         // Based on verbose print required MD details...
 
-        if (dftParameters::verbosity >= 1)
+        if (dftPtr->getParametersObject().verbosity >= 1)
           {
             pcout << "Velocity of atoms " << std::endl;
             for (int iCharge = 0; iCharge < d_numberGlobalCharges; ++iCharge)
@@ -859,8 +864,8 @@ namespace dftfe
         step_time = MPI_Wtime() - step_time;
 
 
-        if (dftParameters::verbosity >= 0 &&
-            !dftParameters::reproducible_output)
+        if (dftPtr->getParametersObject().verbosity >= 0 &&
+            !dftPtr->getParametersObject().reproducible_output)
           {
             pcout << "---------------MD STEP: " << d_TimeIndex
                   << " ------------------ " << std::endl;
@@ -887,8 +892,8 @@ namespace dftfe
                                                        d_startingTimeStep]
                   << std::endl;
           }
-        else if (dftParameters::verbosity >= 0 &&
-                 dftParameters::reproducible_output)
+        else if (dftPtr->getParametersObject().verbosity >= 0 &&
+                 dftPtr->getParametersObject().reproducible_output)
           {
             pcout << "---------------MD STEP " << d_TimeIndex
                   << " ------------------ " << std::endl;
@@ -979,7 +984,7 @@ namespace dftfe
         // Based on verbose print required MD details...
         MPI_Barrier(d_mpiCommParent);
         step_time = MPI_Wtime() - step_time;
-        if (dftParameters::verbosity >= 1)
+        if (dftPtr->getParametersObject().verbosity >= 1)
           {
             pcout << "Velocity of atoms " << std::endl;
             for (int iCharge = 0; iCharge < d_numberGlobalCharges; ++iCharge)
@@ -1007,8 +1012,8 @@ namespace dftfe
         vz /= COM;
         // pcout<<" The Center of Mass Velocity from CSVR: "<<vx<<" "<<vy<<"
         // "<<vz<<std::endl;
-        if (dftParameters::verbosity >= 0 &&
-            !dftParameters::reproducible_output)
+        if (dftPtr->getParametersObject().verbosity >= 0 &&
+            !dftPtr->getParametersObject().reproducible_output)
           {
             pcout << "---------------MD STEP: " << d_TimeIndex
                   << " ------------------ " << std::endl;
@@ -1030,8 +1035,8 @@ namespace dftfe
                   << TotalEnergyVector[d_TimeIndex - d_startingTimeStep]
                   << std::endl;
           }
-        else if (dftParameters::verbosity >= 0 &&
-                 dftParameters::reproducible_output)
+        else if (dftPtr->getParametersObject().verbosity >= 0 &&
+                 dftPtr->getParametersObject().reproducible_output)
           {
             pcout << "---------------MD STEP " << d_TimeIndex
                   << " ------------------ " << std::endl;
@@ -1052,7 +1057,7 @@ namespace dftfe
 
         MPI_Barrier(d_mpiCommParent);
         curr_time = MPI_Wtime() - d_MDstartWallTime;
-        if (!dftParameters::reproducible_output)
+        if (!dftPtr->getParametersObject().reproducible_output)
           pcout << "*****Time Completed till NOW: " << curr_time << std::endl;
         AssertThrow((d_MaxWallTime - (curr_time + 1.05 * step_time)) > 1.0,
                     ExcMessage(
@@ -1153,16 +1158,17 @@ namespace dftfe
     update_time = MPI_Wtime();
 
     dftPtr->updateAtomPositionsAndMoveMesh(
-      r, dftParameters::maxJacobianRatioFactorForMD, false);
+      r, dftPtr->getParametersObject().maxJacobianRatioFactorForMD, false);
 
-    if (dftParameters::verbosity >= 1)
+    if (dftPtr->getParametersObject().verbosity >= 1)
       {
         std::vector<std::vector<double>> atomLocations;
         atomLocations = dftPtr->getAtomLocationsCart();
         pcout << "Displacement  " << std::endl;
         for (int iCharge = 0; iCharge < d_numberGlobalCharges; ++iCharge)
           {
-            if (atomLocations[iCharge][0] == dftParameters::MDTrack)
+            if (atomLocations[iCharge][0] ==
+                dftPtr->getParametersObject().MDTrack)
               {
                 pcout << "###Charge Id: " << iCharge << " " << r[iCharge][0]
                       << " " << r[iCharge][1] << " " << r[iCharge][2]
@@ -1187,12 +1193,14 @@ namespace dftfe
           d_atomFractionalunwrapped[iCharge][4] +
           r[iCharge][2] / d_domainLength[0];
       }
-    if (dftParameters::verbosity > 1 && !dftParameters::reproducible_output)
+    if (dftPtr->getParametersObject().verbosity > 1 &&
+        !dftPtr->getParametersObject().reproducible_output)
       {
         pcout << "---- Updated Unwrapped Coordinates: -----" << std::endl;
         for (int iCharge = 0; iCharge < d_numberGlobalCharges; ++iCharge)
           {
-            if (d_atomFractionalunwrapped[iCharge][0] == dftParameters::MDTrack)
+            if (d_atomFractionalunwrapped[iCharge][0] ==
+                dftPtr->getParametersObject().MDTrack)
               {
                 pcout << "$$$ Charge No. " << iCharge << " "
                       << d_atomFractionalunwrapped[iCharge][2] << " "
@@ -1215,7 +1223,7 @@ namespace dftfe
 
     update_time = MPI_Wtime() - update_time;
 
-    if (dftParameters::verbosity >= 1)
+    if (dftPtr->getParametersObject().verbosity >= 1)
       pcout << "Time taken for updateAtomPositionsAndMoveMesh: " << update_time
             << std::endl;
     dftPtr->solve(true, false, false, false);
@@ -1368,10 +1376,11 @@ namespace dftfe
     Rsum = 0.0;
     if (Utilities::MPI::this_mpi_process(d_mpiCommParent) == 0)
       {
-        std::time_t                  now = std::time(0);
-        boost::random::mt19937       gen{dftParameters::reproducible_output ?
-                                     0 :
-                                     static_cast<std::uint32_t>(now)};
+        std::time_t            now = std::time(0);
+        boost::random::mt19937 gen{
+          dftPtr->getParametersObject().reproducible_output ?
+            0 :
+            static_cast<std::uint32_t>(now)};
         boost::normal_distribution<> gaussianDist(0.0, 1.0);
         boost::variate_generator<boost::mt19937 &, boost::normal_distribution<>>
           generator(gen, gaussianDist);
@@ -1446,7 +1455,7 @@ namespace dftfe
     int                                              time)
 
   {
-    if (dftParameters::reproducible_output == false)
+    if (dftPtr->getParametersObject().reproducible_output == false)
       {
         // Writes the restart files for velocities and positions
         std::vector<std::vector<double>> fileForceData(
@@ -1564,7 +1573,7 @@ namespace dftfe
     std::vector<double> &                      TE)
   {
     // Initialise Position
-    if (dftParameters::verbosity >= 1)
+    if (dftPtr->getParametersObject().verbosity >= 1)
       {
         std::vector<std::vector<double>> atomLocations;
         atomLocations = dftPtr->getAtomLocationsCart();
@@ -1644,7 +1653,7 @@ namespace dftfe
                                                        std::vector<double> &Q)
 
   {
-    if (dftParameters::reproducible_output == false)
+    if (dftPtr->getParametersObject().reproducible_output == false)
       {
         std::vector<std::vector<double>> NHCData;
         std::string                      tempfolder = "mdRestart";
@@ -1680,7 +1689,7 @@ namespace dftfe
                                               const int                  time)
 
   {
-    if (dftParameters::reproducible_output == false)
+    if (dftPtr->getParametersObject().reproducible_output == false)
       {
         std::vector<std::vector<double>> fileNHCData(2,
                                                      std::vector<double>(3,
@@ -1711,7 +1720,7 @@ namespace dftfe
     const std::vector<dealii::Tensor<1, 3, double>> &r,
     int                                              time)
   {
-    if (dftParameters::reproducible_output == false)
+    if (dftPtr->getParametersObject().reproducible_output == false)
       {
         std::vector<std::vector<double>> fileDisplacementData;
         dftUtils::readFile(3, fileDisplacementData, "Displacement.chk");
@@ -1789,7 +1798,7 @@ namespace dftfe
   {
     int time1 = 0;
 
-    if (dftfe::dftParameters::restartMdFromChk)
+    if (dftPtr->getParametersObject().restartMdFromChk)
       {
         std::vector<std::vector<double>> t1;
         pcout << " MD is in Restart Mode" << std::endl;
@@ -1813,7 +1822,7 @@ namespace dftfe
             pcout << " Restart folders:"
                   << (!readFile1.fail() && !readFile2.fail()) << std::endl;
             bool NHCflag = true;
-            if (dftfe::dftParameters::tempControllerTypeBOMD ==
+            if (dftPtr->getParametersObject().tempControllerTypeBOMD ==
                 "NOSE_HOVER_CHAINS")
               {
                 NHCflag = false;
@@ -1822,8 +1831,8 @@ namespace dftfe
               }
             if (!readFile1.fail() && !readFile2.fail() && NHCflag)
               {
-                flag                                  = true;
-                dftfe::dftParameters::coordinatesFile = file1;
+                flag                                          = true;
+                dftPtr->getParametersObject().coordinatesFile = file1;
                 pcout << " Restart files are found in: " << path << std::endl;
               }
 

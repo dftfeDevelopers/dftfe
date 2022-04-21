@@ -55,7 +55,7 @@ forceClass<FEOrder, FEOrderElectro>::computeConfigurationalForceEselfLinFE(
   std::vector<unsigned int> baseIndexDofsVec(forceBaseIndicesPerCell * 3);
   Tensor<1, 3, double>      baseIndexForceVec;
 
-  if (!dftParameters::floatingNuclearCharges)
+  if (!d_dftParams.floatingNuclearCharges)
     {
       for (unsigned int ibase = 0; ibase < forceBaseIndicesPerCell; ++ibase)
         {
@@ -121,7 +121,7 @@ forceClass<FEOrder, FEOrderElectro>::computeConfigurationalForceEselfLinFE(
   //
   // Add configurational force due to smeared charges
   //
-  if (dftParameters::smearedNuclearCharges)
+  if (d_dftParams.smearedNuclearCharges)
     {
       const std::map<int, std::set<int>> &atomIdsBins =
         vselfBinsManagerElectro.getAtomIdsBins();
@@ -237,11 +237,11 @@ forceClass<FEOrder, FEOrderElectro>::computeConfigurationalForceEselfLinFE(
                   Tensor<1, 3, VectorizedArray<double>> F = zeroTensor;
                   F = gradVselfSmearedChargeQuads[q] * smearedbQuads[q];
 
-                  if (!dftParameters::floatingNuclearCharges)
+                  if (!d_dftParams.floatingNuclearCharges)
                     forceEvalSmearedCharge.submit_value(F, q);
                 } // quadloop
 
-              if (!dftParameters::floatingNuclearCharges)
+              if (!d_dftParams.floatingNuclearCharges)
                 {
                   forceEvalSmearedCharge.integrate(true, false);
                   forceEvalSmearedCharge.distribute_local_to_global(
@@ -261,7 +261,7 @@ forceClass<FEOrder, FEOrderElectro>::computeConfigurationalForceEselfLinFE(
                 smearedbQuads);
             } // macrocell loop
 
-          if (dftParameters::floatingNuclearCharges)
+          if (d_dftParams.floatingNuclearCharges)
             {
               accumulateForceContributionGammaAtomsFloating(
                 forceContributionSmearedChargesGammaAtoms,
@@ -286,7 +286,7 @@ forceClass<FEOrder, FEOrderElectro>::computeConfigurationalForceEselfLinFE(
   // Hartree/Bohr)
   //
 
-  if (!dftParameters::floatingNuclearCharges)
+  if (!d_dftParams.floatingNuclearCharges)
     {
       QGauss<3 - 1> faceQuadrature(
         C_num1DQuad<C_rhoNodalPolyOrder<FEOrder, FEOrderElectro>()>());
@@ -347,7 +347,7 @@ forceClass<FEOrder, FEOrderElectro>::computeConfigurationalForceEselfLinFE(
                   closestAtomLocation[0] = atomLocations[closestAtomId][2];
                   closestAtomLocation[1] = atomLocations[closestAtomId][3];
                   closestAtomLocation[2] = atomLocations[closestAtomId][4];
-                  if (dftParameters::isPseudopotential)
+                  if (d_dftParams.isPseudopotential)
                     closestAtomCharge = atomLocations[closestAtomId][1];
                   else
                     closestAtomCharge = atomLocations[closestAtomId][0];

@@ -151,6 +151,7 @@ namespace dftfe
     int
     upfToxml(const std::string &inputFileName,
              const std::string &outputFileName,
+             const int          verbosity,
              unsigned int &     nlccFlag)
     {
       dealii::ConditionalOStream pcout(
@@ -159,7 +160,7 @@ namespace dftfe
 
       std::ofstream xmlFile(outputFileName.c_str());
       std::ifstream upfFile(inputFileName.c_str());
-      if (dftParameters::verbosity >= 2)
+      if (verbosity >= 2)
         pcout << "Converting upf pseudopotential file to xml format"
               << std::endl;
 

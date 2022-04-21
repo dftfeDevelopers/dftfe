@@ -131,7 +131,7 @@ template <unsigned int FEOrder, unsigned int FEOrderElectro>
 void
 forceClass<FEOrder, FEOrderElectro>::printStress()
 {
-  if (!dftParameters::reproducible_output)
+  if (!d_dftParams.reproducible_output)
     {
       pcout << std::endl;
       pcout << "Cell stress (Hartree/Bohr^3)" << std::endl;

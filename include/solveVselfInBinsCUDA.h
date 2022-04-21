@@ -22,6 +22,7 @@
 #    include <constraintMatrixInfoCUDA.h>
 #    include <headers.h>
 #    include <operatorCUDA.h>
+#    include "dftParameters.h"
 
 namespace dftfe
 {
@@ -42,6 +43,9 @@ namespace dftfe
       const MPI_Comm &                         mpiCommParent,
       const MPI_Comm &                         mpiCommDomain,
       double *                                 xH,
+      const int                                verbosity,
+      const unsigned int                       maxLinearSolverIterations,
+      const double                             absLinearSolverTolerance,
       const bool isElectroFEOrderDifferentFromFEOrder = false);
 
     void
@@ -58,7 +62,7 @@ namespace dftfe
              const unsigned int         numberBins,
              const unsigned int         totalLocallyOwnedCells,
              const unsigned int         numberNodesPerElement,
-             const unsigned int         debugLevel,
+             const int                  debugLevel,
              const unsigned int         maxIter,
              const double               absTol,
              const MPI_Comm &           mpiCommParent,

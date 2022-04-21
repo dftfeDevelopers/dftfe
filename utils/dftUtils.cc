@@ -31,7 +31,6 @@
  *
  */
 
-#include <dftParameters.h>
 #include <dftUtils.h>
 
 #include <fstream>
@@ -224,7 +223,9 @@ namespace dftfe
       bandGroupLowHighPlusOneIndices[2 * numberBandGroups - 1] = numBands;
     }
 
-    Pool::Pool(const MPI_Comm &mpi_communicator, const unsigned int npool)
+    Pool::Pool(const MPI_Comm &   mpi_communicator,
+               const unsigned int npool,
+               const int          verbosity)
     {
       const unsigned int n_mpi_processes =
         dealii::Utilities::MPI::n_mpi_processes(mpi_communicator);
@@ -237,7 +238,7 @@ namespace dftfe
         dealii::Utilities::MPI::this_mpi_process(mpi_communicator);
 
       // FIXME: any and all terminal output should be optional
-      if (taskId == 0 && dftParameters::verbosity > 4)
+      if (taskId == 0 && verbosity > 4)
         {
           std::cout << "Number of pools: " << npool << std::endl;
           std::cout << "Pool size: " << poolSize << std::endl;
@@ -256,7 +257,7 @@ namespace dftfe
         {
           if (taskId == i)
             {
-              if (dftParameters::verbosity > 4)
+              if (verbosity > 4)
                 std::cout
                   << " My global id is " << taskId << " , pool id is "
                   << dealii::Utilities::MPI::this_mpi_process(interpoolcomm)

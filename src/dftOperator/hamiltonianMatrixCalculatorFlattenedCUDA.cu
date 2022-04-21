@@ -414,12 +414,13 @@ kohnShamDFTOperatorCUDAClass<FEOrder, FEOrderElectro>::computeHamiltonianMatrix(
   dealii::TimerOutput computingTimerStandard(
     this->getMPICommunicator(),
     pcout,
-    dftParameters::reproducible_output || dftParameters::verbosity < 2 ?
+    dftPtr->d_dftParamsPtr->reproducible_output ||
+        dftPtr->d_dftParamsPtr->verbosity < 2 ?
       dealii::TimerOutput::never :
       dealii::TimerOutput::every_call,
     dealii::TimerOutput::wall_times);
 
-  if (dftParameters::gpuFineGrainedTimings)
+  if (dftPtr->d_dftParamsPtr->gpuFineGrainedTimings)
     {
       cudaDeviceSynchronize();
       computingTimerStandard.enter_subsection(
@@ -427,7 +428,7 @@ kohnShamDFTOperatorCUDAClass<FEOrder, FEOrderElectro>::computeHamiltonianMatrix(
     }
 
   const unsigned int kpointSpinIndex =
-    (1 + dftParameters::spinPolarized) * kPointIndex + spinIndex;
+    (1 + dftPtr->d_dftParamsPtr->spinPolarized) * kPointIndex + spinIndex;
 
   const double kPointCoordX = dftPtr->d_kPointCoordinates[3 * kPointIndex + 0];
   const double kPointCoordY = dftPtr->d_kPointCoordinates[3 * kPointIndex + 1];
@@ -437,8 +438,8 @@ kohnShamDFTOperatorCUDAClass<FEOrder, FEOrderElectro>::computeHamiltonianMatrix(
     0.5 * (kPointCoordX * kPointCoordX + kPointCoordY * kPointCoordY +
            kPointCoordZ * kPointCoordZ);
 
-  if ((dftParameters::isPseudopotential ||
-       dftParameters::smearedNuclearCharges) &&
+  if ((dftPtr->d_dftParamsPtr->isPseudopotential ||
+       dftPtr->d_dftParamsPtr->smearedNuclearCharges) &&
       !d_isStiffnessMatrixExternalPotCorrComputed)
     {
       hamMatrixExtPotCorr<<<(d_numLocallyOwnedCells * d_numberNodesPerElement *
@@ -458,7 +459,7 @@ kohnShamDFTOperatorCUDAClass<FEOrder, FEOrderElectro>::computeHamiltonianMatrix(
       d_isStiffnessMatrixExternalPotCorrComputed = true;
     }
 
-  if (dftParameters::xcFamilyType == "GGA")
+  if (dftPtr->d_dftParamsPtr->xcFamilyType == "GGA")
     {
       hamMatrixKernelGGAMemOpt<<<(d_numLocallyOwnedCells *
                                     d_numberNodesPerElement *
@@ -493,8 +494,8 @@ kohnShamDFTOperatorCUDAClass<FEOrder, FEOrderElectro>::computeHamiltonianMatrix(
         kPointCoordY,
         kPointCoordZ,
         kSquareTimesHalf,
-        dftParameters::isPseudopotential ||
-          dftParameters::smearedNuclearCharges);
+        dftPtr->d_dftParamsPtr->isPseudopotential ||
+          dftPtr->d_dftParamsPtr->smearedNuclearCharges);
     }
   else
     hamMatrixKernelLDA<<<(d_numLocallyOwnedCells * d_numberNodesPerElement *
@@ -525,9 +526,10 @@ kohnShamDFTOperatorCUDAClass<FEOrder, FEOrderElectro>::computeHamiltonianMatrix(
       kPointCoordY,
       kPointCoordZ,
       kSquareTimesHalf,
-      dftParameters::isPseudopotential || dftParameters::smearedNuclearCharges);
+      dftPtr->d_dftParamsPtr->isPseudopotential ||
+        dftPtr->d_dftParamsPtr->smearedNuclearCharges);
 
-  if (dftParameters::gpuFineGrainedTimings)
+  if (dftPtr->d_dftParamsPtr->gpuFineGrainedTimings)
     {
       cudaDeviceSynchronize();
       computingTimerStandard.leave_subsection(

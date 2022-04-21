@@ -164,7 +164,7 @@ dftClass<FEOrder, FEOrderElectro>::readkPointData()
   sprintf(kPointRuleFile,
           "%s/data/kPointList/%s",
           DFT_PATH,
-          dftParameters::kPointDataFile.c_str());
+          d_dftParamsPtr->kPointDataFile.c_str());
   dftUtils::readFile(numberColumnskPointDataFile, kPointData, kPointRuleFile);
   d_kPointCoordinates.clear();
   d_kPointWeights.clear();
@@ -173,12 +173,12 @@ dftClass<FEOrder, FEOrderElectro>::readkPointData()
   d_kPointWeights.resize(maxkPoints, 0.0);
   kPointReducedCoordinates = d_kPointCoordinates;
   //
-  const std::array<unsigned int, 3> periodic = {dftParameters::periodicX,
-                                                dftParameters::periodicY,
-                                                dftParameters::periodicZ};
+  const std::array<unsigned int, 3> periodic = {d_dftParamsPtr->periodicX,
+                                                d_dftParamsPtr->periodicY,
+                                                d_dftParamsPtr->periodicZ};
   d_reciprocalLatticeVectors =
     internaldft::getReciprocalLatticeVectors(d_domainBoundingVectors, periodic);
-  if (dftParameters::verbosity >= 1)
+  if (d_dftParamsPtr->verbosity >= 1)
     {
       pcout
         << "-----------Reciprocal vectors along which the MP grid is to be generated-------------"
@@ -215,7 +215,7 @@ dftClass<FEOrder, FEOrderElectro>::readkPointData()
     }
   //
   AssertThrow(
-    maxkPoints >= dftParameters::npool,
+    maxkPoints >= d_dftParamsPtr->npool,
     ExcMessage(
       "Number of k-points should be higher than or equal to number of pools"));
   const unsigned int this_mpi_pool(
@@ -238,8 +238,8 @@ dftClass<FEOrder, FEOrderElectro>::readkPointData()
   d_kPointCoordinates.clear();
   kPointReducedCoordinates.clear();
   d_kPointWeights.clear();
-  maxkPoints              = maxkPointsGlobal / dftParameters::npool;
-  const unsigned int rest = maxkPointsGlobal % dftParameters::npool;
+  maxkPoints              = maxkPointsGlobal / d_dftParamsPtr->npool;
+  const unsigned int rest = maxkPointsGlobal % d_dftParamsPtr->npool;
   if (this_mpi_pool < rest)
     maxkPoints = maxkPoints + 1;
   //
@@ -249,17 +249,17 @@ dftClass<FEOrder, FEOrderElectro>::readkPointData()
   kPointReducedCoordinates.resize(3 * maxkPoints, 0.0);
   d_kPointWeights.resize(maxkPoints, 0.0);
   //
-  std::vector<int> sendSizekPoints1(dftParameters::npool, 0),
-    mpiOffsetskPoints1(dftParameters::npool, 0);
-  std::vector<int> sendSizekPoints2(dftParameters::npool, 0),
-    mpiOffsetskPoints2(dftParameters::npool, 0);
+  std::vector<int> sendSizekPoints1(d_dftParamsPtr->npool, 0),
+    mpiOffsetskPoints1(d_dftParamsPtr->npool, 0);
+  std::vector<int> sendSizekPoints2(d_dftParamsPtr->npool, 0),
+    mpiOffsetskPoints2(d_dftParamsPtr->npool, 0);
   if (this_mpi_pool == 0)
     {
       //
-      for (unsigned int i = 0; i < dftParameters::npool; ++i)
+      for (unsigned int i = 0; i < d_dftParamsPtr->npool; ++i)
         {
-          sendSizekPoints1[i] = 3 * (maxkPointsGlobal / dftParameters::npool);
-          sendSizekPoints2[i] = (maxkPointsGlobal / dftParameters::npool);
+          sendSizekPoints1[i] = 3 * (maxkPointsGlobal / d_dftParamsPtr->npool);
+          sendSizekPoints2[i] = (maxkPointsGlobal / d_dftParamsPtr->npool);
           if (i < rest)
             {
               sendSizekPoints1[i] = sendSizekPoints1[i] + 3;
@@ -317,9 +317,9 @@ template <unsigned int FEOrder, unsigned int FEOrderElectro>
 void
 dftClass<FEOrder, FEOrderElectro>::recomputeKPointCoordinates()
 {
-  const std::array<unsigned int, 3> periodic = {dftParameters::periodicX,
-                                                dftParameters::periodicY,
-                                                dftParameters::periodicZ};
+  const std::array<unsigned int, 3> periodic = {d_dftParamsPtr->periodicX,
+                                                d_dftParamsPtr->periodicY,
+                                                d_dftParamsPtr->periodicZ};
   d_reciprocalLatticeVectors =
     internaldft::getReciprocalLatticeVectors(d_domainBoundingVectors, periodic);
   for (unsigned int i = 0; i < d_kPointWeights.size(); ++i)
@@ -340,13 +340,13 @@ template <unsigned int FEOrder, unsigned int FEOrderElectro>
 void
 dftClass<FEOrder, FEOrderElectro>::generateMPGrid()
 {
-  unsigned int nkx = dftParameters::nkx;
-  unsigned int nky = dftParameters::nky;
-  unsigned int nkz = dftParameters::nkz;
+  unsigned int nkx = d_dftParamsPtr->nkx;
+  unsigned int nky = d_dftParamsPtr->nky;
+  unsigned int nkz = d_dftParamsPtr->nkz;
   //
-  unsigned int offsetFlagX = dftParameters::offsetFlagX;
-  unsigned int offsetFlagY = dftParameters::offsetFlagY;
-  unsigned int offsetFlagZ = dftParameters::offsetFlagZ;
+  unsigned int offsetFlagX = d_dftParamsPtr->offsetFlagX;
+  unsigned int offsetFlagY = d_dftParamsPtr->offsetFlagY;
+  unsigned int offsetFlagZ = d_dftParamsPtr->offsetFlagZ;
   //
   double dkx = 0.0;
   double dky = 0.0;
@@ -362,11 +362,11 @@ dftClass<FEOrder, FEOrderElectro>::generateMPGrid()
   del[1] = 1.0 / double(nky);
   del[2] = 1.0 / double(nkz);
   //
-  if (dftParameters::offsetFlagX == 1)
+  if (d_dftParamsPtr->offsetFlagX == 1)
     dkx = 0.5 * del[0];
-  if (dftParameters::offsetFlagY == 1)
+  if (d_dftParamsPtr->offsetFlagY == 1)
     dky = 0.5 * del[1];
-  if (dftParameters::offsetFlagZ == 1)
+  if (d_dftParamsPtr->offsetFlagZ == 1)
     dkz = 0.5 * del[2];
   //
   if (nkx == 1)
@@ -397,12 +397,12 @@ dftClass<FEOrder, FEOrderElectro>::generateMPGrid()
       d_kPointWeights[i] = 1.0 / maxkPoints;
     }
   //
-  const std::array<unsigned int, 3> periodic = {dftParameters::periodicX,
-                                                dftParameters::periodicY,
-                                                dftParameters::periodicZ};
+  const std::array<unsigned int, 3> periodic = {d_dftParamsPtr->periodicX,
+                                                d_dftParamsPtr->periodicY,
+                                                d_dftParamsPtr->periodicZ};
   d_reciprocalLatticeVectors =
     internaldft::getReciprocalLatticeVectors(d_domainBoundingVectors, periodic);
-  if (dftParameters::verbosity >= 1)
+  if (d_dftParamsPtr->verbosity >= 1)
     {
       pcout
         << "-----------Reciprocal vectors along which the MP grid is to be generated-------------"
@@ -415,7 +415,7 @@ dftClass<FEOrder, FEOrderElectro>::generateMPGrid()
   //=============================================================================================================================================
   //			                                         Create irreducible BZ
   //=============================================================================================================================================
-  if (dftParameters::useSymm || dftParameters::timeReversal)
+  if (d_dftParamsPtr->useSymm || d_dftParamsPtr->timeReversal)
     {
       //
       const int                        numberColumnsSymmDataFile = 3;
@@ -425,7 +425,7 @@ dftClass<FEOrder, FEOrderElectro>::generateMPGrid()
       const int                                     max_size = 500;
       int                                           rotation[max_size][3][3];
       //
-      if (dftParameters::useSymm)
+      if (d_dftParamsPtr->useSymm)
         {
           const int num_atom = atomLocationsFractional.size();
           double    lattice[3][3], position[num_atom][3];
@@ -450,7 +450,7 @@ dftClass<FEOrder, FEOrderElectro>::generateMPGrid()
                 position[i][j] = atomLocationsFractional[i][j + 2];
             }
           //
-          if (!dftParameters::reproducible_output)
+          if (!d_dftParamsPtr->reproducible_output)
             pcout << " getting space group symmetries from spg " << std::endl;
           symmetryPtr->numSymm = spg_get_symmetry(rotation,
                                                   (symmetryPtr->translation),
@@ -460,8 +460,8 @@ dftClass<FEOrder, FEOrderElectro>::generateMPGrid()
                                                   types,
                                                   num_atom,
                                                   1e-5);
-          if (!dftParameters::reproducible_output &&
-              dftParameters::verbosity > 3)
+          if (!d_dftParamsPtr->reproducible_output &&
+              d_dftParamsPtr->verbosity > 3)
             {
               pcout << " number of symmetries allowed for the lattice "
                     << symmetryPtr->numSymm << std::endl;
@@ -497,12 +497,12 @@ dftClass<FEOrder, FEOrderElectro>::generateMPGrid()
                 }
               symmetryPtr->translation[0][j] = 0.0;
             }
-          if (!dftParameters::reproducible_output &&
-              dftParameters::verbosity > 3)
+          if (!d_dftParamsPtr->reproducible_output &&
+              d_dftParamsPtr->verbosity > 3)
             pcout << " Only time reversal symmetry to be used " << std::endl;
         }
       //
-      if (dftParameters::timeReversal)
+      if (d_dftParamsPtr->timeReversal)
         {
           for (unsigned int iSymm = symmetryPtr->numSymm;
                iSymm < 2 * symmetryPtr->numSymm;
@@ -534,7 +534,7 @@ dftClass<FEOrder, FEOrderElectro>::generateMPGrid()
                 {
                   symmMatTemp[i][j][k]  = double(rotation[i][j][k]);
                   symmMatTemp2[i][j][k] = double(rotation[i][j][k]);
-                  if (dftParameters::timeReversal &&
+                  if (d_dftParamsPtr->timeReversal &&
                       i >= symmetryPtr->numSymm / 2)
                     symmMatTemp2[i][j][k] = -double(rotation[i][j][k]);
                 }
@@ -667,14 +667,14 @@ dftClass<FEOrder, FEOrderElectro>::generateMPGrid()
                   symmetryPtr->numSymmUnderGroup[i] += 1;
                 }
             }
-          if (dftParameters::verbosity > 3)
+          if (d_dftParamsPtr->verbosity > 3)
             pcout << " kpoint " << i << " numSymmUnderGroup "
                   << symmetryPtr->numSymmUnderGroup[i] << std::endl;
         }
       //
-      if (!dftParameters::reproducible_output)
+      if (!d_dftParamsPtr->reproducible_output)
         {
-          if (dftParameters::verbosity > 3)
+          if (d_dftParamsPtr->verbosity > 3)
             {
               pcout << " " << usedSymm << " symmetries used to reduce BZ "
                     << std::endl;
@@ -683,7 +683,7 @@ dftClass<FEOrder, FEOrderElectro>::generateMPGrid()
                 {
                   for (unsigned int ipol = 0; ipol < 3; ++ipol)
                     {
-                      if (dftParameters::verbosity >= 2)
+                      if (d_dftParamsPtr->verbosity >= 2)
                         pcout << symmetryPtr->symmMat[iSymm][ipol][0] << "  "
                               << symmetryPtr->symmMat[iSymm][ipol][1] << "  "
                               << symmetryPtr->symmMat[iSymm][ipol][2]
@@ -719,7 +719,7 @@ dftClass<FEOrder, FEOrderElectro>::generateMPGrid()
   //			Scatter the irreducible k-points across pools
   //=============================================================================================================================================
   AssertThrow(
-    maxkPoints >= dftParameters::npool,
+    maxkPoints >= d_dftParamsPtr->npool,
     ExcMessage(
       "Number of k-points should be higher than or equal to number of pools"));
   const unsigned int this_mpi_pool(
@@ -742,8 +742,8 @@ dftClass<FEOrder, FEOrderElectro>::generateMPGrid()
   d_kPointCoordinates.clear();
   kPointReducedCoordinates.clear();
   d_kPointWeights.clear();
-  maxkPoints              = maxkPointsGlobal / dftParameters::npool;
-  const unsigned int rest = maxkPointsGlobal % dftParameters::npool;
+  maxkPoints              = maxkPointsGlobal / d_dftParamsPtr->npool;
+  const unsigned int rest = maxkPointsGlobal % d_dftParamsPtr->npool;
   if (this_mpi_pool < rest)
     maxkPoints = maxkPoints + 1;
   //
@@ -751,17 +751,17 @@ dftClass<FEOrder, FEOrderElectro>::generateMPGrid()
   kPointReducedCoordinates.resize(3 * maxkPoints, 0.0);
   d_kPointWeights.resize(maxkPoints, 0.0);
   //
-  std::vector<int> sendSizekPoints1(dftParameters::npool, 0),
-    mpiOffsetskPoints1(dftParameters::npool, 0);
-  std::vector<int> sendSizekPoints2(dftParameters::npool, 0),
-    mpiOffsetskPoints2(dftParameters::npool, 0);
+  std::vector<int> sendSizekPoints1(d_dftParamsPtr->npool, 0),
+    mpiOffsetskPoints1(d_dftParamsPtr->npool, 0);
+  std::vector<int> sendSizekPoints2(d_dftParamsPtr->npool, 0),
+    mpiOffsetskPoints2(d_dftParamsPtr->npool, 0);
   if (this_mpi_pool == 0)
     {
       //
-      for (unsigned int i = 0; i < dftParameters::npool; ++i)
+      for (unsigned int i = 0; i < d_dftParamsPtr->npool; ++i)
         {
-          sendSizekPoints1[i] = 3 * (maxkPointsGlobal / dftParameters::npool);
-          sendSizekPoints2[i] = maxkPointsGlobal / dftParameters::npool;
+          sendSizekPoints1[i] = 3 * (maxkPointsGlobal / d_dftParamsPtr->npool);
+          sendSizekPoints2[i] = maxkPointsGlobal / d_dftParamsPtr->npool;
           if (i < rest)
             {
               sendSizekPoints1[i] = sendSizekPoints1[i] + 3;
@@ -777,9 +777,9 @@ dftClass<FEOrder, FEOrderElectro>::generateMPGrid()
         }
     }
   //
-  std::vector<int> arrayOfOne(dftParameters::npool, 1),
-    arrayOffsetOne(dftParameters::npool, 1);
-  for (unsigned int ipool = 0; ipool < dftParameters::npool; ++ipool)
+  std::vector<int> arrayOfOne(d_dftParamsPtr->npool, 1),
+    arrayOffsetOne(d_dftParamsPtr->npool, 1);
+  for (unsigned int ipool = 0; ipool < d_dftParamsPtr->npool; ++ipool)
     arrayOffsetOne[ipool] = ipool;
   //
   MPI_Scatterv(&(mpiOffsetskPoints2[0]),

@@ -17,6 +17,7 @@
 #ifndef triangulationManager_H_
 #define triangulationManager_H_
 #include "headers.h"
+#include "dftParameters.h"
 
 
 namespace dftfe
@@ -52,11 +53,12 @@ namespace dftfe
      * @param interpool_comm mpi interpool communicator over k points
      * @param interBandGroupComm mpi interpool communicator over band groups
      */
-    triangulationManager(const MPI_Comm &   mpi_comm_parent,
-                         const MPI_Comm &   mpi_comm_domain,
-                         const MPI_Comm &   interpoolcomm,
-                         const MPI_Comm &   interBandGroupComm,
-                         const unsigned int FEOrder);
+    triangulationManager(const MPI_Comm &     mpi_comm_parent,
+                         const MPI_Comm &     mpi_comm_domain,
+                         const MPI_Comm &     interpoolcomm,
+                         const MPI_Comm &     interBandGroupComm,
+                         const unsigned int   FEOrder,
+                         const dftParameters &dftParams);
 
 
     /**
@@ -432,6 +434,8 @@ namespace dftfe
     /// FEOrder to be used for checking parallel consistency of periodic+hanging
     /// node constraints
     const unsigned int d_FEOrder;
+
+    const dftParameters &d_dftParams;
 
     //
     // parallel objects

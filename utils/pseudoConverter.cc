@@ -51,7 +51,10 @@ namespace dftfe
 
     int
     convert(const std::string &fileName,
-            const std::string &dftfeScratchFolderName)
+            const std::string &dftfeScratchFolderName,
+            const int          verbosity,
+            const unsigned int natomTypes,
+            const bool         pseudoTestsFlag)
     {
       dealii::ConditionalOStream pcout(std::cout);
 
@@ -87,7 +90,7 @@ namespace dftfe
               // toParse.find(".upf"));
               std::string xmlFileName = newFolder + "/" + "z" + z + ".xml";
               int         errorFlag;
-              if (dftParameters::pseudoTestsFlag)
+              if (pseudoTestsFlag)
                 {
                   std::string dftPath = DFT_PATH;
 #ifdef USE_COMPLEX
@@ -99,16 +102,18 @@ namespace dftfe
 #endif
 
                   unsigned int nlccFlag = 0;
-                  errorFlag = upfToxml(newPath, xmlFileName, nlccFlag);
+                  errorFlag =
+                    upfToxml(newPath, xmlFileName, verbosity, nlccFlag);
                   nlccSum += nlccFlag;
                 }
               else
                 {
                   unsigned int nlccFlag = 0;
-                  errorFlag = upfToxml(toParse, xmlFileName, nlccFlag);
+                  errorFlag =
+                    upfToxml(toParse, xmlFileName, verbosity, nlccFlag);
                   nlccSum += nlccFlag;
 
-                  if (dftParameters::verbosity >= 1)
+                  if (verbosity >= 1)
                     {
                       if (nlccFlag > 0)
                         pcout << " Reading Pseudopotential File: " << toParse
@@ -140,7 +145,7 @@ namespace dftfe
 
 
       AssertThrow(
-        atomTypes.size() == dftParameters::natomTypes,
+        atomTypes.size() == natomTypes,
         dealii::ExcMessage(
           "Number of atom types in your pseudopotential file does not match with that given in the parameter file"));
 

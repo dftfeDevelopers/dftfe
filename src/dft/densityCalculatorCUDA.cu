@@ -20,7 +20,6 @@
 // source file for electron density related computations
 #include <constants.h>
 #include <densityCalculatorCUDA.h>
-#include <dftParameters.h>
 #include <dftUtils.h>
 #include <vectorUtilities.h>
 #include <cuComplex.h>
@@ -229,6 +228,7 @@ namespace dftfe
       const MPI_Comm &                               mpiCommParent,
       const MPI_Comm &                               interpoolcomm,
       const MPI_Comm &                               interBandGroupComm,
+      const dftParameters &                          dftParams,
       const bool                                     spectrumSplit,
       const bool                                     use2pPlusOneGLQuad)
     {
@@ -254,10 +254,10 @@ namespace dftfe
         bandGroupLowHighPlusOneIndices);
 
       const unsigned int BVec =
-        std::min(dftParameters::chebyWfcBlockSize, totalNumWaveFunctions);
+        std::min(dftParams.chebyWfcBlockSize, totalNumWaveFunctions);
 
       const double spinPolarizedFactor =
-        (dftParameters::spinPolarized == 1) ? 1.0 : 2.0;
+        (dftParams.spinPolarized == 1) ? 1.0 : 2.0;
 
       const NumberType zero = cudaUtils::makeNumberFromReal<NumberType>(0.0);
       const NumberType scalarCoeffAlphaRho =
@@ -398,7 +398,7 @@ namespace dftfe
         totalLocallyOwnedCells * numQuadPoints * 6, 0.0);
 
       for (unsigned int spinIndex = 0;
-           spinIndex < (1 + dftParameters::spinPolarized);
+           spinIndex < (1 + dftParams.spinPolarized);
            ++spinIndex)
         {
           for (unsigned int kPoint = 0; kPoint < kPointWeights.size(); ++kPoint)
@@ -429,7 +429,7 @@ namespace dftfe
                         }
                       else
                         {
-                          if (dftParameters::constraintMagnetization)
+                          if (dftParams.constraintMagnetization)
                             {
                               const double fermiEnergyConstraintMag =
                                 spinIndex == 0 ? fermiEnergyUp :
@@ -466,7 +466,7 @@ namespace dftfe
                                                     jvec + iEigenVec],
                                         fermiEnergy,
                                         C_kb,
-                                        dftParameters::TVal) *
+                                        dftParams.TVal) *
                                       kPointWeights[kPoint] *
                                       spinPolarizedFactor);
                                 }
@@ -480,17 +480,16 @@ namespace dftfe
                             partialOccupVecDevice.size());
                         }
 
-                      stridedCopyToBlockKernel<<<(BVec + 255) / 256 *
-                                                   numLocalDofs,
-                                                 256>>>(
-                        BVec,
-                        X + numLocalDofs * totalNumWaveFunctions *
-                              ((dftParameters::spinPolarized + 1) * kPoint +
-                               spinIndex),
-                        numLocalDofs,
-                        totalNumWaveFunctions,
-                        cudaFlattenedArrayBlock.begin(),
-                        jvec);
+                      stridedCopyToBlockKernel<<<
+                        (BVec + 255) / 256 * numLocalDofs,
+                        256>>>(BVec,
+                               X + numLocalDofs * totalNumWaveFunctions *
+                                     ((dftParams.spinPolarized + 1) * kPoint +
+                                      spinIndex),
+                               numLocalDofs,
+                               totalNumWaveFunctions,
+                               cudaFlattenedArrayBlock.begin(),
+                               jvec);
 
 
                       cudaFlattenedArrayBlock.updateGhostValues();
@@ -745,7 +744,7 @@ namespace dftfe
                       (jvec + totalNumWaveFunctions - Nfr + BVec) >
                         bandGroupLowHighPlusOneIndices[2 * bandGroupTaskId])
                     {
-                      if (dftParameters::constraintMagnetization)
+                      if (dftParams.constraintMagnetization)
                         {
                           const double fermiEnergyConstraintMag =
                             spinIndex == 0 ? fermiEnergyUp : fermiEnergyDown;
@@ -783,7 +782,7 @@ namespace dftfe
                                                  jvec + iEigenVec],
                                      fermiEnergy,
                                      C_kb,
-                                     dftParameters::TVal) -
+                                     dftParams.TVal) -
                                    1.0) *
                                   kPointWeights[kPoint] * spinPolarizedFactor);
                             }
@@ -800,7 +799,7 @@ namespace dftfe
                                                  256>>>(
                         BVec,
                         XFrac + numLocalDofs * Nfr *
-                                  ((dftParameters::spinPolarized + 1) * kPoint +
+                                  ((dftParams.spinPolarized + 1) * kPoint +
                                    spinIndex),
                         numLocalDofs,
                         Nfr,
@@ -1106,7 +1105,7 @@ namespace dftfe
                                                         icell * numQuadPoints +
                                                         iquad));
                     }
-              if (dftParameters::spinPolarized == 1)
+              if (dftParams.spinPolarized == 1)
                 {
                   for (int icell = 0; icell < totalLocallyOwnedCells; icell++)
                     for (unsigned int iquad = 0; iquad < numQuadPoints; ++iquad)
@@ -1160,7 +1159,7 @@ namespace dftfe
 
 
 
-          if (dftParameters::spinPolarized == 1)
+          if (dftParams.spinPolarized == 1)
             {
               dealii::Utilities::MPI::sum(rhoValuesSpinPolarizedFlattened,
                                           interpoolcomm,
@@ -1186,7 +1185,7 @@ namespace dftfe
                                         gradRhoValuesFlattened);
 
 
-          if (dftParameters::spinPolarized == 1)
+          if (dftParams.spinPolarized == 1)
             {
               dealii::Utilities::MPI::sum(rhoValuesSpinPolarizedFlattened,
                                           interBandGroupComm,
@@ -1215,15 +1214,15 @@ namespace dftfe
               isEvaluateGradRho ? (*gradRhoValues)[cellid] : dummy;
 
             std::vector<double> &tempRhoQuadsSP =
-              (dftParameters::spinPolarized == 1) ?
+              (dftParams.spinPolarized == 1) ?
                 (*rhoValuesSpinPolarized)[cellid] :
                 dummy;
             std::vector<double> &tempGradRhoQuadsSP =
-              ((dftParameters::spinPolarized == 1) && isEvaluateGradRho) ?
+              ((dftParams.spinPolarized == 1) && isEvaluateGradRho) ?
                 (*gradRhoValuesSpinPolarized)[cellid] :
                 dummy;
 
-            if (dftParameters::spinPolarized == 1)
+            if (dftParams.spinPolarized == 1)
               {
                 for (unsigned int q = 0; q < numQuadPoints; ++q)
                   {
@@ -1296,7 +1295,7 @@ namespace dftfe
       MPI_Barrier(mpiCommParent);
       gpu_time = MPI_Wtime() - gpu_time;
 
-      if (this_process == 0 && dftParameters::verbosity >= 2)
+      if (this_process == 0 && dftParams.verbosity >= 2)
         std::cout << "Time for compute rho on GPU: " << gpu_time << std::endl;
     }
 
@@ -1326,6 +1325,7 @@ namespace dftfe
       const MPI_Comm &                               mpiCommParent,
       const MPI_Comm &                               interpoolcomm,
       const MPI_Comm &                               interBandGroupComm,
+      const dftParameters &                          dftParams,
       const bool                                     spectrumSplit,
       const bool                                     use2pPlusOneGLQuad);
   } // namespace CUDA

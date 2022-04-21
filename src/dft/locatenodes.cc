@@ -28,7 +28,7 @@ dftClass<FEOrder, FEOrderElectro>::locateAtomCoreNodes(
   atomNodeIdToChargeValueMap.clear();
   const unsigned int vertices_per_cell = GeometryInfo<3>::vertices_per_cell;
 
-  const bool isPseudopotential = dftParameters::isPseudopotential;
+  const bool isPseudopotential = d_dftParamsPtr->isPseudopotential;
 
   DoFHandler<3>::active_cell_iterator cell = _dofHandler.begin_active(),
                                       endc = _dofHandler.end();
@@ -68,7 +68,7 @@ dftClass<FEOrder, FEOrderElectro>::locateAtomCoreNodes(
 #ifdef DEBUG
                   if (isPseudopotential)
                     {
-                      if (dftParameters::verbosity >= 4)
+                      if (d_dftParamsPtr->verbosity >= 4)
                         {
                           std::cout
                             << "atom core with valence charge "
@@ -81,7 +81,7 @@ dftClass<FEOrder, FEOrderElectro>::locateAtomCoreNodes(
                     }
                   else
                     {
-                      if (dftParameters::verbosity >= 4)
+                      if (d_dftParamsPtr->verbosity >= 4)
                         {
                           std::cout
                             << "atom core with charge " << atomLocations[*it][0]
@@ -104,14 +104,14 @@ dftClass<FEOrder, FEOrderElectro>::locateAtomCoreNodes(
                           std::pair<dealii::types::global_dof_index, double>(
                             nodeID, atomLocations[*it][0]));
 #ifdef DEBUG
-                      if (dftParameters::verbosity >= 4)
+                      if (d_dftParamsPtr->verbosity >= 4)
                         std::cout << " and added \n";
 #endif
                     }
                   else
                     {
 #ifdef DEBUG
-                      if (dftParameters::verbosity >= 4)
+                      if (d_dftParamsPtr->verbosity >= 4)
                         std::cout << " but skipped \n";
 #endif
                     }
@@ -138,8 +138,8 @@ dftClass<FEOrder, FEOrderElectro>::locatePeriodicPinnedNodes(
 {
   // pin a node away from all atoms in case of full PBC for total electrostatic
   // potential solve
-  if (!(dftParameters::periodicX && dftParameters::periodicY &&
-        dftParameters::periodicZ))
+  if (!(d_dftParamsPtr->periodicX && d_dftParamsPtr->periodicY &&
+        d_dftParamsPtr->periodicZ))
     return;
 
   TimerOutput::Scope scope(computing_timer, "locate periodic pinned node");
@@ -232,7 +232,7 @@ dftClass<FEOrder, FEOrderElectro>::locatePeriodicPinnedNodes(
   if (Utilities::MPI::this_mpi_process(mpi_communicator) == maxTaskId)
     {
 #ifdef DEBUG
-      if (dftParameters::verbosity >= 4)
+      if (d_dftParamsPtr->verbosity >= 4)
         std::cout << "Found Node locally on processor Id: "
                   << Utilities::MPI::this_mpi_process(mpi_communicator)
                   << std::endl;
@@ -300,7 +300,7 @@ dftClass<FEOrder, FEOrderElectro>::locatePeriodicPinnedNodes(
                                          pinnedLocations[*it][2]);
                 if (feNodeGlobalCoord.distance(pinnedNodeCoord) < 1.0e-5)
                   {
-                    if (dftParameters::verbosity >= 4)
+                    if (d_dftParamsPtr->verbosity >= 4)
                       std::cout << "Pinned core with nodal coordinates ("
                                 << pinnedLocations[*it][0] << " "
                                 << pinnedLocations[*it][1] << " "
