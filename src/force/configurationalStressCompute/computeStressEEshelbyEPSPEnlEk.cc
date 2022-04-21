@@ -593,7 +593,8 @@ forceClass<FEOrder, FEOrderElectro>::computeStressEEshelbyEPSPEnlEk(
                 dftPtr->interBandGroupComm,
                 isPseudopotential,
                 false,
-                true);
+                true,
+		d_dftParams);
             }
 
           MPI_Barrier(d_mpiCommParent);

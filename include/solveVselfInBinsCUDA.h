@@ -22,7 +22,6 @@
 #    include <constraintMatrixInfoCUDA.h>
 #    include <headers.h>
 #    include <operatorCUDA.h>
-#    include "dftParameters.h"
 
 namespace dftfe
 {

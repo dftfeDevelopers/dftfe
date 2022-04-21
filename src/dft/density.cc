@@ -607,6 +607,7 @@ dftClass<FEOrder, FEOrderElectro>::computeRhoNodalFromPSI(
       d_mpiCommParent,
       interpoolcomm,
       interBandGroupComm,
+      *d_dftParamsPtr,
       isConsiderSpectrumSplitting && d_numEigenValues != d_numEigenValuesRR,
       true);
 

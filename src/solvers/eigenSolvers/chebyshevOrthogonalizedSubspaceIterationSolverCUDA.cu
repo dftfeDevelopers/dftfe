@@ -342,7 +342,8 @@ namespace dftfe
             cudaFlattenedArrayBlock,
             d_YArray,
             projectorKetTimesVector,
-            vectorsBlockSize);
+            vectorsBlockSize,
+	    d_dftParams);
 
         if (d_dftParams.gpuFineGrainedTimings)
           {
@@ -373,7 +374,8 @@ namespace dftfe
             cudaFlattenedArrayBlock,
             d_YArray,
             projectorKetTimesVector,
-            vectorsBlockSize);
+            vectorsBlockSize,
+	    d_dftParams);
 
         if (d_dftParams.gpuFineGrainedTimings)
           {
