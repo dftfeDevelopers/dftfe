@@ -218,6 +218,13 @@ namespace dftfe
     double
     getFreeEnergy() const;
 
+    distributedCPUVec<double>
+    getRhoNodalOut() const;
+
+    
+    void
+    resetRhoNodalIn(distributedCPUVec<double> &OutDensity)  ; 
+
     /**
      * @brief Number of Kohn-Sham eigen values to be computed
      */

@@ -1228,6 +1228,7 @@ namespace dftfe
             << std::endl;
     dftPtr->solve(true, false, false, false);
     forceOnAtoms = dftPtr->getForceonAtoms();
+    DensityExtrapolation(d_TimeIndex-d_startingTimeStep);
     // Call Force
     totalKE = 0.0;
     /* Second half of velocty verlet */
@@ -1844,4 +1845,44 @@ namespace dftfe
       }
     return (time1);
   }
+  void
+  molecularDynamicsClass::DensityExtrapolation(int TimeStep)
+  {
+    distributedCPUVec<double> OutDensity;
+    
+    if(TimeStep == 0)
+      d_extrapDensity_2= dftPtr->getRhoNodalOut() ;
+    else if(TimeStep == 1)
+      d_extrapDensity_1 = dftPtr->getRhoNodalOut() ;
+    else
+      d_extrapDensity_0 = dftPtr->getRhoNodalOut() ;
+
+
+    if(TimeStep >= 2)
+    {
+      double A,B,C;
+      //Compute Extrapolated Density
+      //for loop
+      d_OutDensity.clear();
+        for(int i = 0; i < ; i++)
+        {
+          C = d_extrapDensity_0[i];
+          B = 0.5*(3*d_extrapDensity_0[i] + d_extrapDensity_2[i] - 4*d_extrapDensity_1[i]);
+          A = 0.5*(d_extrapDensity_2[i] - 2*d_extrapDensity_1[i] + d_extrapDensity_0[i]);
+          d_OutDensity.push_back(A+B+C);
+          if(d_OutDensity[i] < 0)
+            d_OutDensity[i] = 0.0;
+
+        }
+      //Changing the Densities
+      d_extrapDensity_2 = d_extrapDensity_1;
+      d_extrapDensity_1 = d_extrapDensity_0;
+      //Send OutDensity
+      dftPtr->resetRhoNodalIn(d_OutDensity);
+      
+    }
+
+
+  }
+
 } // namespace dftfe

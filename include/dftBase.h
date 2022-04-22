@@ -69,6 +69,13 @@ namespace dftfe
     virtual double
     getFreeEnergy() const = 0;
 
+    virtual distributedCPUVec<double>
+    getRhoNodalOut() const;
+
+    
+    virtual void
+    resetRhoNodalIn(distributedCPUVec<double> &OutDensity)  ;     
+
     /**
      * @brief Gets the current atom Locations in cartesian form
      * (origin at center of domain) from dftClass

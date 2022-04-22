@@ -82,6 +82,9 @@ namespace dftfe
     double                           d_MaxWallTime;
     std::vector<std::vector<double>> d_atomFractionalunwrapped;
     std::vector<double>              d_domainLength;
+    distributedCPUVec<double> d_extrapDensity_2 , d_extrapDensity_1, d_extrapDensity_0,d_OutDensity;
+
+
     /**
      * @brief mdNVE Performs a Ccanonical Ensemble MD calculation. The inital temperature is set by runMD().
      * Temperature is NOT_CONTROLLED. Controls the timeloop.
@@ -420,6 +423,17 @@ namespace dftfe
      */
     int
     checkRestart();
+
+    /**
+     * @brief  DensityExtrapolation Identifies the folder containing the restart file, sets the path of coordinates file and restursn the starting timestep    *
+     * 
+     *
+     *
+     *
+     */
+    void
+    DensityExtrapolation(int TimeStep);    
+
   };
 } // namespace dftfe
 #endif
