@@ -1863,21 +1863,22 @@ namespace dftfe
       double A,B,C;
       //Compute Extrapolated Density
       //for loop
-      d_OutDensity.clear();
-        for(int i = 0; i < ; i++)
+      d_OutDensity.reinit(d_extrapDensity_0);
+        for(int i = 0; i < d_extrapDensity_0.local_size() ; i++)
         {
-          C = d_extrapDensity_0[i];
-          B = 0.5*(3*d_extrapDensity_0[i] + d_extrapDensity_2[i] - 4*d_extrapDensity_1[i]);
-          A = 0.5*(d_extrapDensity_2[i] - 2*d_extrapDensity_1[i] + d_extrapDensity_0[i]);
-          d_OutDensity.push_back(A+B+C);
-          if(d_OutDensity[i] < 0)
-            d_OutDensity[i] = 0.0;
+          C = d_extrapDensity_0.local_element(i);
+          B = 0.5*(3*d_extrapDensity_0.local_element(i) + d_extrapDensity_2.local_element(i) - 4*d_extrapDensity_1.local_element(i));
+          A = 0.5*(d_extrapDensity_2.local_element(i) - 2*d_extrapDensity_1.local_element(i) + d_extrapDensity_0.local_element(i));
+          d_OutDensity.local_element(i) = A+B+C;
+          if(d_OutDensity.local_element(i) < 0)
+            d_OutDensity.local_element(i) = 0.0;
 
         }
       //Changing the Densities
       d_extrapDensity_2 = d_extrapDensity_1;
       d_extrapDensity_1 = d_extrapDensity_0;
       //Send OutDensity
+      d_OutDensity.update_ghost_values();
       dftPtr->resetRhoNodalIn(d_OutDensity);
       
     }
