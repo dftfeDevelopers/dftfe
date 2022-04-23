@@ -70,11 +70,11 @@ namespace dftfe
     getFreeEnergy() const = 0;
 
     virtual distributedCPUVec<double>
-    getRhoNodalOut() const;
+    getRhoNodalOut() const = 0;
 
     
     virtual void
-    resetRhoNodalIn(distributedCPUVec<double> &OutDensity)  ;     
+    resetRhoNodalIn(distributedCPUVec<double> &OutDensity)  = 0  ;     
 
     /**
      * @brief Gets the current atom Locations in cartesian form

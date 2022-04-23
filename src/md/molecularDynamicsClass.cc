@@ -272,6 +272,9 @@ namespace dftfe
 
         dftPtr->solve(true, false, false, false);
         force     = dftPtr->getForceonAtoms();
+        if (dftPtr->getParametersObject().reuseDensityGeoOpt == 3 &&
+                dftPtr->getParametersObject().spinPolarized != 1)
+          DensityExtrapolation(0);
         double dt = d_TimeStep;
         for (int iCharge = 0; iCharge < d_numberGlobalCharges; iCharge++)
           {
@@ -1228,7 +1231,9 @@ namespace dftfe
             << std::endl;
     dftPtr->solve(true, false, false, false);
     forceOnAtoms = dftPtr->getForceonAtoms();
-    DensityExtrapolation(d_TimeIndex-d_startingTimeStep);
+if (dftPtr->getParametersObject().reuseDensityGeoOpt == 3 &&
+                dftPtr->getParametersObject().spinPolarized != 1)
+      DensityExtrapolation(d_TimeIndex-d_startingTimeStep);
     // Call Force
     totalKE = 0.0;
     /* Second half of velocty verlet */
@@ -1631,7 +1636,9 @@ namespace dftfe
 
     dftPtr->solve(true, false, false, false);
     force = dftPtr->getForceonAtoms();
-
+      if (dftPtr->getParametersObject().reuseDensityGeoOpt == 3 &&
+                dftPtr->getParametersObject().spinPolarized != 1)
+          DensityExtrapolation(0);
     if (Utilities::MPI::this_mpi_process(d_mpiCommParent) == 0)
       {
         std::string oldFolder1 = "./mdRestart/Step";
@@ -1863,6 +1870,7 @@ namespace dftfe
       double A,B,C;
       //Compute Extrapolated Density
       //for loop
+      pcout<<"Using Extrapolated Density for init"<<std::endl;
       d_OutDensity.reinit(d_extrapDensity_0);
         for(int i = 0; i < d_extrapDensity_0.local_size() ; i++)
         {
@@ -1872,7 +1880,7 @@ namespace dftfe
           d_OutDensity.local_element(i) = A+B+C;
           if(d_OutDensity.local_element(i) < 0)
             d_OutDensity.local_element(i) = 0.0;
-
+          //pcout<<"Current Denisty New Density at "<<i<<" "<<d_extrapDensity_0.local_element(i)<<" -> "<<d_OutDensity.local_element(i)<<std::endl;
         }
       //Changing the Densities
       d_extrapDensity_2 = d_extrapDensity_1;
