@@ -313,10 +313,7 @@ namespace dftfe
 
     // Relative to initial free energy supressed in case of CGPRP
     // as that would not work in case of restarted CGPRP
-    functionValue.push_back(dftPtr->d_freeEnergy -
-                            ((dftParameters::ionOptSolver == "CGPRP") ?
-                               0.0 :
-                               dftPtr->d_freeEnergyInitial));
+    functionValue.push_back(dftPtr->d_groundStateEnergy);
   }
 
   template <unsigned int FEOrder, unsigned int FEOrderElectro>
