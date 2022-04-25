@@ -1298,7 +1298,7 @@ namespace dftfe
                 d_rhoInNodalValues.update_ghost_values();
               }
           
-            if (d_dftParamsPtr->reuseDensityGeoOpt == 3 &&
+            else if (d_dftParamsPtr->reuseDensityGeoOpt == 3 &&
                 d_dftParamsPtr->spinPolarized != 1)
               {
                 
@@ -1323,8 +1323,38 @@ namespace dftfe
                                         d_rhoInNodalValues);
 
                 d_rhoInNodalValues.update_ghost_values();                
-              }  
-          
+              }            
+              else if (d_dftParamsPtr->reuseDensityGeoOpt == 4 &&
+                d_dftParamsPtr->spinPolarized != 1)
+              {
+                initAtomicRho();
+                interpolateRhoNodalDataToQuadratureDataGeneral(
+                  d_matrixFreeDataPRefined,
+                  d_densityDofHandlerIndexElectro,
+                  d_densityQuadratureIdElectro,
+                  d_rhoOutNodalValuesSplit,
+                  *(rhoInValues),
+                  *(gradRhoInValues),
+                  *(gradRhoInValues),
+                  d_dftParamsPtr->xcFamilyType == "GGA");
+
+                addAtomicRhoQuadValuesGradients(*(rhoInValues),
+                                                *(gradRhoInValues),
+                                                d_dftParamsPtr->xcFamilyType ==
+                                                  "GGA");
+
+                normalizeRhoInQuadValues();
+
+                l2ProjectionQuadToNodal(d_matrixFreeDataPRefined,
+                                        d_constraintsRhoNodal,
+                                        d_densityDofHandlerIndexElectro,
+                                        d_densityQuadratureIdElectro,
+                                        *rhoInValues,
+                                        d_rhoInNodalValues);
+
+                d_rhoInNodalValues.update_ghost_values();
+              }
+
           }
         else
           {
@@ -4352,10 +4382,36 @@ namespace dftfe
   }  
 
   template <unsigned int FEOrder, unsigned int FEOrderElectro>
+  distributedCPUVec<double>
+  dftClass<FEOrder, FEOrderElectro>::getRhoNodalSplitOut() const
+  {
+    return d_rhoOutNodalValuesSplit;
+  } 
+
+  template <unsigned int FEOrder, unsigned int FEOrderElectro>
+  double
+  dftClass<FEOrder, FEOrderElectro>::getTotalChargeforRhoSplit() 
+  {
+    double temp =  (-totalCharge(d_matrixFreeDataPRefined,
+                               d_rhoOutNodalValuesSplit) /
+                  d_domainVolume);
+    return(temp);              
+  }
+
+
+
+  template <unsigned int FEOrder, unsigned int FEOrderElectro>
   void
   dftClass<FEOrder, FEOrderElectro>::resetRhoNodalIn(distributedCPUVec<double> &OutDensity) 
   {
     d_rhoOutNodalValues = OutDensity;
+  }  
+
+  template <unsigned int FEOrder, unsigned int FEOrderElectro>
+  void
+  dftClass<FEOrder, FEOrderElectro>::resetRhoNodalSplitIn(distributedCPUVec<double> &OutDensity) 
+  {
+    d_rhoOutNodalValuesSplit = OutDensity;
   }    
 
 #include "dft.inst.cc"

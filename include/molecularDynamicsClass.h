@@ -82,7 +82,7 @@ namespace dftfe
     double                           d_MaxWallTime;
     std::vector<std::vector<double>> d_atomFractionalunwrapped;
     std::vector<double>              d_domainLength;
-    distributedCPUVec<double> d_extrapDensity_2 , d_extrapDensity_1, d_extrapDensity_0,d_OutDensity;
+    distributedCPUVec<double> d_extrapDensity_tmin2 , d_extrapDensity_tmin1, d_extrapDensity_t0,d_extrapDensity_tp1;
 
 
     /**
@@ -433,6 +433,16 @@ namespace dftfe
      */
     void
     DensityExtrapolation(int TimeStep);    
+
+    /**
+     * @brief  DensityExtrapolation Identifies the folder containing the restart file, sets the path of coordinates file and restursn the starting timestep    *
+     * 
+     *
+     *
+     *
+     */
+    void
+    DensitySplitExtrapolation(int TimeStep);  
 
   };
 } // namespace dftfe

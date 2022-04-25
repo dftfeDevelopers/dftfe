@@ -221,9 +221,17 @@ namespace dftfe
     distributedCPUVec<double>
     getRhoNodalOut() const;
 
+    distributedCPUVec<double>
+    getRhoNodalSplitOut() const ;
+
+    double
+    getTotalChargeforRhoSplit() ;
     
     void
     resetRhoNodalIn(distributedCPUVec<double> &OutDensity)  ; 
+
+    virtual void
+    resetRhoNodalSplitIn(distributedCPUVec<double> &OutDensity)   ;     
 
     /**
      * @brief Number of Kohn-Sham eigen values to be computed

@@ -275,6 +275,9 @@ namespace dftfe
         if (dftPtr->getParametersObject().reuseDensityGeoOpt == 3 &&
                 dftPtr->getParametersObject().spinPolarized != 1)
           DensityExtrapolation(0);
+        else if(dftPtr->getParametersObject().reuseDensityGeoOpt == 4 &&
+                dftPtr->getParametersObject().spinPolarized != 1)
+          DensitySplitExtrapolation(0);  
         double dt = d_TimeStep;
         for (int iCharge = 0; iCharge < d_numberGlobalCharges; iCharge++)
           {
@@ -1231,9 +1234,12 @@ namespace dftfe
             << std::endl;
     dftPtr->solve(true, false, false, false);
     forceOnAtoms = dftPtr->getForceonAtoms();
-if (dftPtr->getParametersObject().reuseDensityGeoOpt == 3 &&
+    if (dftPtr->getParametersObject().reuseDensityGeoOpt == 3 &&
                 dftPtr->getParametersObject().spinPolarized != 1)
       DensityExtrapolation(d_TimeIndex-d_startingTimeStep);
+    else if(dftPtr->getParametersObject().reuseDensityGeoOpt == 4 &&
+                dftPtr->getParametersObject().spinPolarized != 1)
+          DensitySplitExtrapolation(d_TimeIndex-d_startingTimeStep); 
     // Call Force
     totalKE = 0.0;
     /* Second half of velocty verlet */
@@ -1639,6 +1645,9 @@ if (dftPtr->getParametersObject().reuseDensityGeoOpt == 3 &&
       if (dftPtr->getParametersObject().reuseDensityGeoOpt == 3 &&
                 dftPtr->getParametersObject().spinPolarized != 1)
           DensityExtrapolation(0);
+      else if(dftPtr->getParametersObject().reuseDensityGeoOpt == 4 &&
+                dftPtr->getParametersObject().spinPolarized != 1)
+          DensitySplitExtrapolation(0);     
     if (Utilities::MPI::this_mpi_process(d_mpiCommParent) == 0)
       {
         std::string oldFolder1 = "./mdRestart/Step";
@@ -1855,14 +1864,14 @@ if (dftPtr->getParametersObject().reuseDensityGeoOpt == 3 &&
   void
   molecularDynamicsClass::DensityExtrapolation(int TimeStep)
   {
-    distributedCPUVec<double> OutDensity;
+
     
     if(TimeStep == 0)
-      d_extrapDensity_2= dftPtr->getRhoNodalOut() ;
+      d_extrapDensity_tmin2= dftPtr->getRhoNodalOut() ;
     else if(TimeStep == 1)
-      d_extrapDensity_1 = dftPtr->getRhoNodalOut() ;
+      d_extrapDensity_tmin1 = dftPtr->getRhoNodalOut() ;
     else
-      d_extrapDensity_0 = dftPtr->getRhoNodalOut() ;
+      d_extrapDensity_t0 = dftPtr->getRhoNodalOut() ;
 
 
     if(TimeStep >= 2)
@@ -1871,27 +1880,76 @@ if (dftPtr->getParametersObject().reuseDensityGeoOpt == 3 &&
       //Compute Extrapolated Density
       //for loop
       pcout<<"Using Extrapolated Density for init"<<std::endl;
-      d_OutDensity.reinit(d_extrapDensity_0);
-        for(int i = 0; i < d_extrapDensity_0.local_size() ; i++)
+      d_extrapDensity_tp1.reinit(d_extrapDensity_t0);
+        for(int i = 0; i < d_extrapDensity_t0.local_size() ; i++)
         {
-          C = d_extrapDensity_0.local_element(i);
-          B = 0.5*(3*d_extrapDensity_0.local_element(i) + d_extrapDensity_2.local_element(i) - 4*d_extrapDensity_1.local_element(i));
-          A = 0.5*(d_extrapDensity_2.local_element(i) - 2*d_extrapDensity_1.local_element(i) + d_extrapDensity_0.local_element(i));
-          d_OutDensity.local_element(i) = A+B+C;
-          if(d_OutDensity.local_element(i) < 0)
-            d_OutDensity.local_element(i) = 0.0;
+          C = d_extrapDensity_t0.local_element(i);
+          B = 0.5*(3*d_extrapDensity_t0.local_element(i) + d_extrapDensity_tmin2.local_element(i) - 4*d_extrapDensity_tmin1.local_element(i));
+          A = 0.5*(d_extrapDensity_tmin2.local_element(i) - 2*d_extrapDensity_tmin1.local_element(i) + d_extrapDensity_t0.local_element(i));
+          d_extrapDensity_tp1.local_element(i) = A+B+C;
+          if(d_extrapDensity_tp1.local_element(i) < 0)
+            d_extrapDensity_tp1.local_element(i) = 0.0;
           //pcout<<"Current Denisty New Density at "<<i<<" "<<d_extrapDensity_0.local_element(i)<<" -> "<<d_OutDensity.local_element(i)<<std::endl;
         }
       //Changing the Densities
-      d_extrapDensity_2 = d_extrapDensity_1;
-      d_extrapDensity_1 = d_extrapDensity_0;
+      d_extrapDensity_tmin2 = d_extrapDensity_tmin1;
+      d_extrapDensity_tmin1 = d_extrapDensity_t0;
       //Send OutDensity
-      d_OutDensity.update_ghost_values();
-      dftPtr->resetRhoNodalIn(d_OutDensity);
+      d_extrapDensity_tp1.update_ghost_values();
+      dftPtr->resetRhoNodalIn(d_extrapDensity_tp1);
       
     }
 
 
   }
+  void
+  molecularDynamicsClass::DensitySplitExtrapolation(int TimeStep)
+  {
+
+    
+    if(TimeStep == 0)
+    {  
+      d_extrapDensity_tmin2= dftPtr->getRhoNodalSplitOut() ;
+      d_extrapDensity_tmin2.add(dftPtr->getTotalChargeforRhoSplit());
+    }
+    else if(TimeStep == 1)
+    {  
+      d_extrapDensity_tmin1 = dftPtr->getRhoNodalSplitOut() ;
+      d_extrapDensity_tmin1.add(dftPtr->getTotalChargeforRhoSplit());
+    }
+    else
+    {
+        d_extrapDensity_t0 = dftPtr->getRhoNodalSplitOut() ;
+        d_extrapDensity_t0.add(dftPtr->getTotalChargeforRhoSplit());
+    }
+
+    if(TimeStep >= 2)
+    {
+      double A,B,C;
+      //Compute Extrapolated Density
+      //for loop
+      pcout<<"Using Extrapolated Density for init"<<std::endl;
+      d_extrapDensity_tp1.reinit(d_extrapDensity_t0);
+        for(int i = 0; i < d_extrapDensity_t0.local_size() ; i++)
+        {
+          C = d_extrapDensity_t0.local_element(i);
+          B = 0.5*(3*d_extrapDensity_t0.local_element(i) + d_extrapDensity_tmin2.local_element(i) - 4*d_extrapDensity_tmin1.local_element(i));
+          A = 0.5*(d_extrapDensity_tmin2.local_element(i) - 2*d_extrapDensity_tmin1.local_element(i) + d_extrapDensity_t0.local_element(i));
+          d_extrapDensity_tp1.local_element(i) = A+B+C;
+          if(d_extrapDensity_tp1.local_element(i) < 0)
+            d_extrapDensity_tp1.local_element(i) = 0.0;
+          //pcout<<"Current Denisty New Density at "<<i<<" "<<d_extrapDensity_0.local_element(i)<<" -> "<<d_OutDensity.local_element(i)<<std::endl;
+        }
+      //Changing the Densities
+      d_extrapDensity_tmin2 = d_extrapDensity_tmin1;
+      d_extrapDensity_tmin1 = d_extrapDensity_t0;
+      //Send OutDensity
+      d_extrapDensity_tp1.update_ghost_values();
+      dftPtr->resetRhoNodalSplitIn(d_extrapDensity_tp1);
+      
+    }
+
+
+  }  
 
 } // namespace dftfe
