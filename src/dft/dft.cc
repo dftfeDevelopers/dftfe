@@ -4289,6 +4289,13 @@ namespace dftfe
   }
 
   template <unsigned int FEOrder, unsigned int FEOrderElectro>
+  Tensor<2, 3, double>
+  dftClass<FEOrder, FEOrderElectro>::getCellStress() const
+  {
+    return (forcePtr->getStress());
+  }
+
+  template <unsigned int FEOrder, unsigned int FEOrderElectro>
   dftParameters &
   dftClass<FEOrder, FEOrderElectro>::getParametersObject() const
   {

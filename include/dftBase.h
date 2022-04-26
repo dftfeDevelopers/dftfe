@@ -53,6 +53,15 @@ namespace dftfe
       const double maxJacobianRatioFactor         = 1.25,
       const bool   useSingleAtomSolutionsOverride = false) = 0;
 
+    /**
+     *@brief Deforms the domain by the given deformation gradient and reinitializes the
+     * dftClass datastructures.
+     */
+    virtual void
+    deformDomain(const dealii::Tensor<2, 3, double> &deformationGradient,
+                 const bool vselfPerturbationUpdateForStress = false,
+                 const bool print                            = true) = 0;
+
 
     virtual void
     solve(const bool computeForces                   = true,
@@ -90,11 +99,17 @@ namespace dftfe
     getAtomTypes() const = 0;
 
     /**
-     * @brief Gets the current atomic forces from dftClass
+     * @brief Gets the current atomic forces (configurational forces) from dftClass
      */
     virtual std::vector<double>
     getForceonAtoms() const = 0;
 
+
+    /**
+     * @brief Gets the current cell stress from dftClass
+     */
+    virtual dealii::Tensor<2, 3, double>
+    getCellStress() const = 0;
 
     /**
      * @brief Get reference to dftParameters object

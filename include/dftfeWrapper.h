@@ -71,7 +71,8 @@ namespace dftfe
 
 
     /**
-     * @brief Get physical forces on atoms
+     * @brief Get negative of gradient of DFT free energy with respect to ionic positions
+     *
      *  @return std::vector<double> flattened array of forces with dimension index being
      *  the fastest index i.e atom1forcex atom1forcey atom1forcz atom2forcex ...
      */
@@ -79,13 +80,34 @@ namespace dftfe
     getForcesAtoms();
 
     /**
+     * @brief Get negative of gradient of DFT free energy with respect to affine strain components
+     *
+     * @return std::vector<double> flattened array of size 9 with indices
+     *  in the order array[i*3+j]=\frac{\partial E}{\partial \epsilon_{ij}}
+     */
+    std::vector<double>
+    getCellStress();
+
+    /**
      * @brief update atom positions and reinitialize all related  datastructures
-     *  @param[in] std::vector<double> flattened array of displacements
+     *
+     * @param[in] std::vector<double> flattened array of displacements
      *  with dimension index being the fastest index
      *  i.e atom1dispx atom1dispy atom1dispz atom2dispx ...
      */
     void
     updateAtomPositions(const std::vector<double> atomsDisplacements);
+
+
+    /**
+     *@brief Deforms the domain by the given affine deformation gradient and
+     * reinitializes the underlying datastructures.
+     *
+     *@param[in] std::vector<double> deformation gradient array of size 9 with
+     *indices in the order array[i*3+j]=\frac{\partial x_i}{\partial X_j}
+     */
+    void
+    deformDomain(const std::vector<double> deformationGradient);
 
     /**
      * @brief Gets the current atom Locations in cartesian form

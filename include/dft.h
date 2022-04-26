@@ -335,6 +335,12 @@ namespace dftfe
     getForceonAtoms() const;
 
     /**
+     * @brief Gets the current cell stress from dftClass
+     */
+    Tensor<2, 3, double>
+    getCellStress() const;
+
+    /**
      * @brief Get reference to dftParameters object
      */
     dftParameters &

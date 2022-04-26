@@ -326,19 +326,46 @@ namespace dftfe
     return ionicForces;
   }
 
+  std::vector<double>
+  dftfeWrapper::getCellStress()
+  {
+    std::vector<double>          cellStress(9, 0.0);
+    dealii::Tensor<2, 3, double> cellStressTensor =
+      d_dftfeBasePtr->getCellStress();
+
+    for (unsigned int i = 0; i < 3; ++i)
+      for (unsigned int j = 0; j < 3; ++j)
+        cellStress[3 * i + j] = -cellStressTensor[i][j];
+    return cellStress;
+  }
+
   void
   dftfeWrapper::updateAtomPositions(
     const std::vector<double> atomsDisplacements)
   {
-    AssertThrow(atomsDisplacements.size() * 3 ==
-                  d_dftfeBasePtr->getAtomLocationsCart().size(),
-                dealii::ExcMessage(
-                  "Incorrect size of atomsDisplacements vector."));
+    AssertThrow(
+      atomsDisplacements.size() * 3 ==
+        d_dftfeBasePtr->getAtomLocationsCart().size(),
+      dealii::ExcMessage(
+        "DFT-FE error: Incorrect size of atomsDisplacements vector."));
     std::vector<Tensor<1, 3, double>> dispVec(atomsDisplacements.size() / 3);
     for (unsigned int i = 0; i < dispVec.size(); ++i)
       for (unsigned int j = 0; j < 3; ++j)
         dispVec[i][j] = atomsDisplacements[3 * i + j];
     d_dftfeBasePtr->updateAtomPositionsAndMoveMesh(dispVec);
+  }
+
+  void
+  dftfeWrapper::deformDomain(const std::vector<double> deformationGradient)
+  {
+    AssertThrow(deformationGradient.size() == 9,
+                dealii::ExcMessage(
+                  "DFT-FE error: Incorrect size of deformationGradient."));
+    dealii::Tensor<2, 3, double> defGradTensor;
+    for (unsigned int i = 0; i < 3; ++i)
+      for (unsigned int j = 0; j < 3; ++j)
+        defGradTensor[i][j] = deformationGradient[3 * i + j];
+    d_dftfeBasePtr->deformDomain(defGradTensor);
   }
 
   std::vector<double>
