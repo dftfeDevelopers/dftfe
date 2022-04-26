@@ -55,10 +55,10 @@ namespace dftfe
 
 
     virtual void
-    solve(const bool computeForces,
-          const bool computeStress,
-          const bool solveLinearizedKS,
-          const bool isRestartGroundStateCalcFromChk) = 0;
+    solve(const bool computeForces                   = true,
+          const bool computeStress                   = true,
+          const bool solveLinearizedKS               = false,
+          const bool isRestartGroundStateCalcFromChk = false) = 0;
 
     virtual double
     getInternalEnergy() const = 0;
