@@ -1910,17 +1910,17 @@ namespace dftfe
     if(TimeStep == 0)
     {  
       d_extrapDensity_tmin2= dftPtr->getRhoNodalSplitOut() ;
-      d_extrapDensity_tmin2.add(dftPtr->getTotalChargeforRhoSplit());
+      //d_extrapDensity_tmin2.add(dftPtr->getTotalChargeforRhoSplit());
     }
     else if(TimeStep == 1)
     {  
       d_extrapDensity_tmin1 = dftPtr->getRhoNodalSplitOut() ;
-      d_extrapDensity_tmin1.add(dftPtr->getTotalChargeforRhoSplit());
+      //d_extrapDensity_tmin1.add(dftPtr->getTotalChargeforRhoSplit());
     }
     else
     {
         d_extrapDensity_t0 = dftPtr->getRhoNodalSplitOut() ;
-        d_extrapDensity_t0.add(dftPtr->getTotalChargeforRhoSplit());
+        //d_extrapDensity_t0.add(dftPtr->getTotalChargeforRhoSplit());
     }
 
     if(TimeStep >= 2)
@@ -1936,9 +1936,7 @@ namespace dftfe
           B = 0.5*(3*d_extrapDensity_t0.local_element(i) + d_extrapDensity_tmin2.local_element(i) - 4*d_extrapDensity_tmin1.local_element(i));
           A = 0.5*(d_extrapDensity_tmin2.local_element(i) - 2*d_extrapDensity_tmin1.local_element(i) + d_extrapDensity_t0.local_element(i));
           d_extrapDensity_tp1.local_element(i) = A+B+C;
-          if(d_extrapDensity_tp1.local_element(i) < 0)
-            d_extrapDensity_tp1.local_element(i) = 0.0;
-          //pcout<<"Current Denisty New Density at "<<i<<" "<<d_extrapDensity_0.local_element(i)<<" -> "<<d_OutDensity.local_element(i)<<std::endl;
+          pcout<<"Current Denisty New Density at "<<i<<" "<<d_extrapDensity_t0.local_element(i)<<" -> "<< d_extrapDensity_tp1.local_element(i)<<std::endl;
         }
       //Changing the Densities
       d_extrapDensity_tmin2 = d_extrapDensity_tmin1;

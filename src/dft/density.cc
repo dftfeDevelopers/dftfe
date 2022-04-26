@@ -244,7 +244,7 @@ dftClass<FEOrder, FEOrderElectro>::compute_rhoOut(
 
       if (isGroundState)
         {
-          if (d_dftParamsPtr->isBOMD)
+          if (d_dftParamsPtr->isBOMD && d_dftParamsPtr->reuseDensityGeoOpt !=4)
             normalizeRhoOutQuadValues();
 
 #ifdef DFTFE_WITH_GPU
