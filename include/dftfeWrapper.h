@@ -90,7 +90,8 @@ namespace dftfe
     /**
      * @brief update atom positions and reinitialize all related  datastructures
      *
-     * @param[in] std::vector<double> vector of displacements for each atom
+     * @param[in] std::vector<std::vector<double>> vector of displacements for
+     * each atom
      */
     void
     updateAtomPositions(
