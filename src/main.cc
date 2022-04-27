@@ -18,22 +18,11 @@
 //
 
 //
-// deal.II header
-//
-#include <deal.II/base/data_out_base.h>
-
-//
 // dft header
 //
-#include <cudaHelpers.h>
-#include <dftParameters.h>
-#include <dftUtils.h>
-#include <fileReaders.h>
-#include "constants.h"
-#include "dft.h"
+#include "dftfeWrapper.h"
+#include "runParameters.h"
 #include "molecularDynamicsClass.h"
-
-
 
 //
 // C++ headers
@@ -44,248 +33,116 @@
 #include <sstream>
 #include <sys/stat.h>
 
-using namespace dealii;
 
-template <int n1, int n2>
-void
-setup_dftfe(dftfe::dftClass<n1, n2> &problemFE)
-{
-  problemFE.set();
-  problemFE.init();
-}
-
-
-
-// The central DFT-FE run invocation:
-template <int n1, int n2>
-void
-run_problem(const MPI_Comm &      mpi_comm_parent,
-            const MPI_Comm &      mpi_comm_domain,
-            const MPI_Comm &      interpoolcomm,
-            const MPI_Comm &      interBandGroupComm,
-            dftfe::dftParameters &dftParams)
-{
-  if (dftParams.solvermode == "MD")
-    {
-      dftfe::dftClass<n1, n2> problemFE(mpi_comm_parent,
-                                        mpi_comm_domain,
-                                        interpoolcomm,
-                                        interBandGroupComm,
-                                        dftParams);
-
-      dftfe::molecularDynamicsClass mdClass(&problemFE, mpi_comm_parent);
-      setup_dftfe<n1, n2>(problemFE);
-      mdClass.runMD();
-    }
-
-  else if (dftParams.solvermode == "NEB")
-    {}
-
-  else
-    {
-      dftfe::dftClass<n1, n2> problemFE(mpi_comm_parent,
-                                        mpi_comm_domain,
-                                        interpoolcomm,
-                                        interBandGroupComm,
-                                        dftParams);
-      setup_dftfe<n1, n2>(problemFE);
-      problemFE.run();
-    }
-}
-
-// Dynamically access dftClass<n> objects by order.
-//  Note that we can't store a list of classes because the types differ,
-//  but we can store a list of functions that use them in an n-independent way.
-//
-//  Also note element 0 is order 1.
-//
-typedef void (*run_fn)(const MPI_Comm &      mpi_comm_parent,
-                       const MPI_Comm &      mpi_comm_domain,
-                       const MPI_Comm &      interpoolcomm,
-                       const MPI_Comm &      interBandGroupComm,
-                       dftfe::dftParameters &dftParams);
-
-static run_fn order_list[] = {
-#ifdef DFTFE_MINIMAL_COMPILE
-  run_problem<2, 2>,
-  run_problem<3, 3>,
-  run_problem<4, 4>,
-  run_problem<5, 5>,
-  run_problem<6, 6>,
-  run_problem<6, 7>,
-  run_problem<6, 8>,
-  run_problem<6, 9>,
-  run_problem<7, 7>
-#else
-  run_problem<1, 1>,  run_problem<1, 2>,  run_problem<2, 2>,
-  run_problem<2, 3>,  run_problem<2, 4>,  run_problem<3, 3>,
-  run_problem<3, 4>,  run_problem<3, 5>,  run_problem<3, 6>,
-  run_problem<4, 4>,  run_problem<4, 5>,  run_problem<4, 6>,
-  run_problem<4, 7>,  run_problem<4, 8>,  run_problem<5, 5>,
-  run_problem<5, 6>,  run_problem<5, 7>,  run_problem<5, 8>,
-  run_problem<5, 9>,  run_problem<5, 10>, run_problem<6, 6>,
-  run_problem<6, 7>,  run_problem<6, 8>,  run_problem<6, 9>,
-  run_problem<6, 10>, run_problem<6, 11>, run_problem<6, 12>,
-  run_problem<7, 7>,  run_problem<7, 8>,  run_problem<7, 9>,
-  run_problem<7, 10>, run_problem<7, 11>, run_problem<7, 12>,
-  run_problem<7, 13>, run_problem<7, 14>, run_problem<8, 8>,
-  run_problem<8, 9>,  run_problem<8, 10>, run_problem<8, 11>,
-  run_problem<8, 12>, run_problem<8, 13>, run_problem<8, 14>,
-  run_problem<8, 15>, run_problem<8, 16>
-#endif
-};
 
 int
 main(int argc, char *argv[])
 {
   // deal.II tests expect parameter file as a first (!) argument
   AssertThrow(argc > 1,
-              ExcMessage("Usage:\n"
-                         "mpirun -np nProcs executable parameterfile.prm\n"
-                         "\n"));
-  //
-  Utilities::MPI::MPI_InitFinalize mpi_initialization(argc, argv);
-  const double                     start = MPI_Wtime();
-
-  int error;
-  if (elpa_init(ELPA_API_VERSION) != ELPA_OK)
-    {
-      fprintf(
-        stderr,
-        "Error: ELPA API version not supported. Use API version 20181113.");
-      exit(1);
-    }
-
+              dealii::ExcMessage(
+                "Usage:\n"
+                "mpirun -np nProcs executable parameterfile.prm\n"
+                "\n"));
 
   //
-  dftfe::dftParameters dftParams;
-  const std::string    parameter_file = argv[1];
-  dftParams.parse_parameters(parameter_file, MPI_COMM_WORLD);
+  MPI_Init(&argc, &argv);
+  const double start = MPI_Wtime();
+  int          world_rank;
+  MPI_Comm_rank(MPI_COMM_WORLD, &world_rank);
 
-  deallog.depth_console(0);
+  const std::string parameter_file = argv[1];
 
-  dftfe::dftUtils::Pool kPointPool(MPI_COMM_WORLD,
-                                   dftParams.npool,
-                                   dftParams.verbosity);
-  dftfe::dftUtils::Pool bandGroupsPool(kPointPool.get_intrapool_comm(),
-                                       dftParams.nbandGrps,
-                                       dftParams.verbosity);
+  dftfe::runParameters runParams;
+  runParams.parse_parameters(parameter_file);
 
-  std::srand(dealii::Utilities::MPI::this_mpi_process(
-    bandGroupsPool.get_intrapool_comm()));
-  if (dftParams.verbosity >= 1)
+  if (runParams.verbosity >= 1 && world_rank == 0)
     {
-      dealii::ConditionalOStream pcout(
-        std::cout,
-        (dealii::Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0));
-      pcout
-        << "=================================MPI Parallelization========================================="
+      std::cout
+        << "=========================================================================================================="
         << std::endl;
-      pcout << "Total number of MPI tasks: "
-            << Utilities::MPI::n_mpi_processes(MPI_COMM_WORLD) << std::endl;
-      pcout << "k-point parallelization processor groups: "
-            << Utilities::MPI::n_mpi_processes(kPointPool.get_interpool_comm())
-            << std::endl;
-      pcout << "Band parallelization processor groups: "
-            << Utilities::MPI::n_mpi_processes(
-                 bandGroupsPool.get_interpool_comm())
-            << std::endl;
-      pcout << "Number of MPI tasks for finite-element domain decomposition: "
-            << Utilities::MPI::n_mpi_processes(
-                 bandGroupsPool.get_intrapool_comm())
-            << std::endl;
-      pcout
-        << "============================================================================================"
+      std::cout
+        << "=========================================================================================================="
+        << std::endl;
+      std::cout
+        << "			Welcome to the Open Source program DFT-FE version	1.1.0-pre		        "
+        << std::endl;
+      std::cout
+        << "This is a C++ code for materials modeling from first principles using Kohn-Sham density functional theory."
+        << std::endl;
+      std::cout
+        << "This is a real-space code for periodic, semi-periodic and non-periodic pseudopotential"
+        << std::endl;
+      std::cout
+        << "and all-electron calculations, and is based on adaptive finite-element discretization."
+        << std::endl;
+      std::cout
+        << "For further details, and citing, please refer to our website: https://sites.google.com/umich.edu/dftfe"
+        << std::endl;
+      std::cout
+        << "=========================================================================================================="
+        << std::endl;
+      std::cout
+        << " DFT-FE Mentors and Development leads (alphabetically) :									"
+        << std::endl;
+      std::cout << "														" << std::endl;
+      std::cout << " Sambit Das               - University of Michigan, USA"
+                << std::endl;
+      std::cout << " Vikram Gavini            - University of Michigan, USA"
+                << std::endl;
+      std::cout
+        << " Phani Motamarri          - Indian Institute of Science, India"
+        << std::endl;
+      std::cout
+        << " (A complete list of the many authors that have contributed to DFT-FE can be found in the authors file)"
+        << std::endl;
+      std::cout
+        << "=========================================================================================================="
+        << std::endl;
+      std::cout
+        << " 	     Copyright (c) 2017-2022 The Regents of the University of Michigan and DFT-FE authors         "
+        << std::endl;
+      std::cout
+        << " 			DFT-FE is published under [LGPL v2.1 or newer] 				"
+        << std::endl;
+      std::cout
+        << "=========================================================================================================="
+        << std::endl;
+      std::cout
+        << "=========================================================================================================="
         << std::endl;
     }
 
-#ifdef DFTFE_WITH_GPU
-  if (dftParams.useGPU)
+  dftfe::dftfeWrapper::globalHandlesInitialize();
+
+
+  if (runParams.solvermode == "MD")
     {
-      dftfe::cudaUtils::setupGPU();
-    }
-#endif
+      dftfe::dftfeWrapper dftfeWrapped(parameter_file,
+                                       MPI_COMM_WORLD,
+                                       true,
+                                       true);
 
-  // set stdout precision
-  std::cout << std::scientific << std::setprecision(18);
-
-  int order        = dftParams.finiteElementPolynomialOrder;
-  int orderElectro = dftParams.finiteElementPolynomialOrderElectrostatics;
-
-#ifdef DFTFE_MINIMAL_COMPILE
-  if (order < 2 || order > 7)
-    {
-      std::cout << "Invalid DFT-FE order " << order << std::endl;
-      return -1;
+      dftfe::molecularDynamicsClass mdClass(dftfeWrapped, MPI_COMM_WORLD);
+      mdClass.runMD();
     }
 
-  if (order > 5 && order < 7)
-    {
-      if (orderElectro < order || orderElectro > (order + 3))
-        {
-          std::cout << "Invalid DFT-FE order electrostatics " << orderElectro
-                    << std::endl;
-          return -1;
-        }
-    }
+  else if (runParams.solvermode == "NEB")
+    {}
+
   else
     {
-      if (orderElectro != order)
-        {
-          std::cout << "Invalid DFT-FE order electrostatics " << orderElectro
-                    << std::endl;
-          return -1;
-        }
+      dftfe::dftfeWrapper dftfeWrapped(parameter_file,
+                                       MPI_COMM_WORLD,
+                                       true,
+                                       true);
+      dftfeWrapped.run();
     }
 
-  int listIndex = 0;
-  for (int i = 2; i <= order; i++)
-    {
-      int maxElectroOrder = (i < order) ? (i + 3) : orderElectro;
-      if (i != 6)
-        maxElectroOrder = i;
-      for (int j = i; j <= maxElectroOrder; j++)
-        listIndex++;
-    }
-#else
-  if (order < 1 || order > 8)
-    {
-      std::cout << "Invalid DFT-FE order " << order << std::endl;
-      return -1;
-    }
-
-  if (orderElectro < order || orderElectro > order * 2)
-    {
-      std::cout << "Invalid DFT-FE order electrostatics " << orderElectro
-                << std::endl;
-      return -1;
-    }
-
-
-  int listIndex = 0;
-  for (int i = 1; i <= order; i++)
-    {
-      int maxElectroOrder = (i < order) ? 2 * i : orderElectro;
-      for (int j = i; j <= maxElectroOrder; j++)
-        listIndex++;
-    }
-#endif
-
-  run_fn run = order_list[listIndex - 1];
-  run(MPI_COMM_WORLD,
-      bandGroupsPool.get_intrapool_comm(),
-      kPointPool.get_interpool_comm(),
-      bandGroupsPool.get_interpool_comm(),
-      dftParams);
-
-  elpa_uninit(&error);
-  AssertThrow(error == ELPA_OK,
-              dealii::ExcMessage("DFT-FE Error: elpa error."));
-
+  dftfe::dftfeWrapper::globalHandlesFinalize();
 
   const double end = MPI_Wtime();
-  if (dftParams.verbosity >= 1 &&
-      dealii::Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0)
+  if (runParams.verbosity >= 1 && world_rank == 0)
     {
       std::cout
         << "============================================================================================="
@@ -297,5 +154,6 @@ main(int argc, char *argv[])
         << "============================================================================================="
         << std::endl;
     }
+  MPI_Finalize();
   return 0;
 }

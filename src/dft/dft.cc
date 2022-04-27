@@ -4275,6 +4275,14 @@ namespace dftfe
   }
 
   template <unsigned int FEOrder, unsigned int FEOrderElectro>
+  std::vector<std::vector<double>>
+  dftClass<FEOrder, FEOrderElectro>::getCell() const
+  {
+    return d_domainBoundingVectors;
+  }
+
+
+  template <unsigned int FEOrder, unsigned int FEOrderElectro>
   std::set<unsigned int>
   dftClass<FEOrder, FEOrderElectro>::getAtomTypes() const
   {
@@ -4286,6 +4294,13 @@ namespace dftfe
   dftClass<FEOrder, FEOrderElectro>::getForceonAtoms() const
   {
     return (forcePtr->getAtomsForces());
+  }
+
+  template <unsigned int FEOrder, unsigned int FEOrderElectro>
+  Tensor<2, 3, double>
+  dftClass<FEOrder, FEOrderElectro>::getCellStress() const
+  {
+    return (forcePtr->getStress());
   }
 
   template <unsigned int FEOrder, unsigned int FEOrderElectro>

@@ -323,6 +323,15 @@ namespace dftfe
     getAtomLocationsFrac() const;
 
     /**
+     * @brief Gets the current cell lattice vectors
+     *
+     *  @return std::vector<std::vector<double>> 3 \times 3 matrix,lattice[i][j]
+     *  corresponds to jth component of ith lattice vector
+     */
+    std::vector<std::vector<double>>
+    getCell() const;
+
+    /**
      * @brief Gets the current atom types from dftClass
      */
     std::set<unsigned int>
@@ -333,6 +342,12 @@ namespace dftfe
      */
     std::vector<double>
     getForceonAtoms() const;
+
+    /**
+     * @brief Gets the current cell stress from dftClass
+     */
+    Tensor<2, 3, double>
+    getCellStress() const;
 
     /**
      * @brief Get reference to dftParameters object
