@@ -34,9 +34,17 @@ namespace dftfe
   class dftfeWrapper
   {
   public:
+    /**
+     * @brief must be called only once at start of program from all processors
+     * after calling MPI_Init
+     */
     static void
     globalHandlesInitialize();
 
+    /**
+     * @brief must be called only once at end of program from all processors
+     * but before calling MPI_Finalize
+     */
     static void
     globalHandlesFinalize();
 
@@ -64,14 +72,15 @@ namespace dftfe
 
     /**
      * @brief solve ground-state and return DFT free energy which is sum of internal
-     * energy and negative of electronic entropic energy
+     * energy and negative of electronic entropic energy (in Hartree units)
      */
     double
     computeDFTFreeEnergy();
 
 
     /**
-     * @brief Get negative of gradient of DFT free energy with respect to ionic positions
+     * @brief Get ionic forces: negative of gradient of DFT free energy with
+     * respect to ionic positions (in Hartree/Bohr units)
      *
      *  @return std::vector<std::vector<double>> vector of forces on each atom
      */
@@ -79,7 +88,9 @@ namespace dftfe
     getForcesAtoms() const;
 
     /**
-     * @brief Get negative of gradient of DFT free energy with respect to affine strain components
+     * @brief Get cell stress: negative of gradient of DFT free energy
+     * with respect to affine strain components scaled by volume
+     * (Hartree/Bohr^3) units
      *
      * @return std::vector<std::vector<double> > 3 \times 3 matrix given by
      *  sigma[i][j]=\frac{1}{\Omega}\frac{\partial E}{\partial \epsilon_{ij}}
@@ -88,10 +99,10 @@ namespace dftfe
     getCellStress() const;
 
     /**
-     * @brief update atom positions and reinitialize all related  datastructures
+     * @brief update atom positions and reinitialize all related  data-structures
      *
      * @param[in] std::vector<std::vector<double>> vector of displacements for
-     * each atom
+     * each atom (in Bohr units)
      */
     void
     updateAtomPositions(
@@ -100,7 +111,7 @@ namespace dftfe
 
     /**
      *@brief Deforms the domain by the given affine deformation gradient and
-     * reinitializes the underlying datastructures.
+     * reinitializes the underlying data-structures.
      *
      *@param[in] std::vector<std::vector<double>> deformation gradient
      * matrix given by F[i][j]=\frac{\partial x_i}{\partial X_j}
@@ -109,7 +120,7 @@ namespace dftfe
     deformDomain(const std::vector<std::vector<double>> deformationGradient);
 
     /**
-     * @brief Gets the current atom Locations in cartesian form
+     * @brief Gets the current atom Locations in cartesian form (in Bohr units)
      * (origin at center of domain)
      *
      *  @return std::vector<std::vector<double>> array of coords for each atom
@@ -134,7 +145,7 @@ namespace dftfe
      * @brief Gets the current cell lattice vectors
      *
      *  @return std::vector<std::vector<double>> 3 \times 3 matrix,lattice[i][j] corresponds to jth component of
-     *  ith lattice vector
+     *  ith lattice vector (in Bohr units)
      */
     std::vector<std::vector<double>>
     getCell() const;
