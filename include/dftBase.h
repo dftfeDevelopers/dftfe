@@ -92,6 +92,16 @@ namespace dftfe
     virtual std::vector<std::vector<double>>
     getAtomLocationsFrac() const = 0;
 
+
+    /**
+     * @brief Gets the current cell lattice vectors
+     *
+     *  @return std::vector<std::vector<double>> 3 \times 3 matrix,lattice[i][j]
+     *  corresponds to jth component of ith lattice vector
+     */
+    virtual std::vector<std::vector<double>>
+    getCell() const = 0;
+
     /**
      * @brief Gets the current atom types from dftClass
      */

@@ -4275,6 +4275,14 @@ namespace dftfe
   }
 
   template <unsigned int FEOrder, unsigned int FEOrderElectro>
+  std::vector<std::vector<double>>
+  dftClass<FEOrder, FEOrderElectro>::getCell() const
+  {
+    return d_domainBoundingVectors;
+  }
+
+
+  template <unsigned int FEOrder, unsigned int FEOrderElectro>
   std::set<unsigned int>
   dftClass<FEOrder, FEOrderElectro>::getAtomTypes() const
   {

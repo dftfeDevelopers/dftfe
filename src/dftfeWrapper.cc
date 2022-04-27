@@ -317,81 +317,127 @@ namespace dftfe
     return d_dftfeBasePtr->getFreeEnergy();
   }
 
-  std::vector<double>
-  dftfeWrapper::getForcesAtoms()
+  std::vector<std::vector<double>>
+  dftfeWrapper::getForcesAtoms() const
   {
-    std::vector<double> ionicForces = d_dftfeBasePtr->getForceonAtoms();
+    std::vector<std::vector<double>> ionicForces(
+      d_dftfeBasePtr->getForceonAtoms().size() / 3,
+      std::vector<double>(3, 0.0));
+
+    std::vector<double> ionicForcesVec = d_dftfeBasePtr->getForceonAtoms();
     for (unsigned int i = 0; i < ionicForces.size(); ++i)
-      ionicForces[i] = -ionicForces[i];
+      for (unsigned int j = 0; j < 3; ++j)
+        ionicForces[i][j] = -ionicForcesVec[3 * i + j];
     return ionicForces;
   }
 
-  std::vector<double>
-  dftfeWrapper::getCellStress()
+  std::vector<std::vector<double>>
+  dftfeWrapper::getCellStress() const
   {
-    std::vector<double>          cellStress(9, 0.0);
-    dealii::Tensor<2, 3, double> cellStressTensor =
+    std::vector<std::vector<double>> cellStress(3, std::vector<double>(3, 0.0));
+    dealii::Tensor<2, 3, double>     cellStressTensor =
       d_dftfeBasePtr->getCellStress();
 
     for (unsigned int i = 0; i < 3; ++i)
       for (unsigned int j = 0; j < 3; ++j)
-        cellStress[3 * i + j] = -cellStressTensor[i][j];
+        cellStress[i][j] = -cellStressTensor[i][j];
     return cellStress;
   }
 
   void
   dftfeWrapper::updateAtomPositions(
-    const std::vector<double> atomsDisplacements)
+    const std::vector<std::vector<double>> atomsDisplacements)
   {
     AssertThrow(
       atomsDisplacements.size() * 3 ==
         d_dftfeBasePtr->getAtomLocationsCart().size(),
       dealii::ExcMessage(
         "DFT-FE error: Incorrect size of atomsDisplacements vector."));
-    std::vector<Tensor<1, 3, double>> dispVec(atomsDisplacements.size() / 3);
+    std::vector<Tensor<1, 3, double>> dispVec(atomsDisplacements.size());
     for (unsigned int i = 0; i < dispVec.size(); ++i)
       for (unsigned int j = 0; j < 3; ++j)
-        dispVec[i][j] = atomsDisplacements[3 * i + j];
+        dispVec[i][j] = atomsDisplacements[i][j];
     d_dftfeBasePtr->updateAtomPositionsAndMoveMesh(dispVec);
   }
 
   void
-  dftfeWrapper::deformDomain(const std::vector<double> deformationGradient)
+  dftfeWrapper::deformDomain(
+    const std::vector<std::vector<double>> deformationGradient)
   {
-    AssertThrow(deformationGradient.size() == 9,
-                dealii::ExcMessage(
-                  "DFT-FE error: Incorrect size of deformationGradient."));
     dealii::Tensor<2, 3, double> defGradTensor;
     for (unsigned int i = 0; i < 3; ++i)
       for (unsigned int j = 0; j < 3; ++j)
-        defGradTensor[i][j] = deformationGradient[3 * i + j];
+        defGradTensor[i][j] = deformationGradient[i][j];
     d_dftfeBasePtr->deformDomain(defGradTensor);
   }
 
-  std::vector<double>
-  dftfeWrapper::getAtomLocationsCart()
+  std::vector<std::vector<double>>
+  dftfeWrapper::getAtomLocationsCart() const
   {
     std::vector<std::vector<double>> temp =
       d_dftfeBasePtr->getAtomLocationsCart();
-    std::vector<double> atomLocationsCart(
-      d_dftfeBasePtr->getAtomLocationsCart().size() * 3.0, 0.0);
+    std::vector<std::vector<double>> atomLocationsCart(
+      d_dftfeBasePtr->getAtomLocationsCart().size(),
+      std::vector<double>(3, 0.0));
     for (unsigned int i = 0; i < atomLocationsCart.size(); ++i)
       for (unsigned int j = 0; j < 3; ++j)
-        atomLocationsCart[i * 3 + j] = temp[i][j + 2];
+        atomLocationsCart[i][j] = temp[i][j + 2];
     return atomLocationsCart;
   }
 
-  std::vector<double>
-  dftfeWrapper::getAtomLocationsFrac()
+  std::vector<std::vector<double>>
+  dftfeWrapper::getAtomLocationsFrac() const
   {
     std::vector<std::vector<double>> temp =
       d_dftfeBasePtr->getAtomLocationsFrac();
-    std::vector<double> atomLocationsFrac(
-      d_dftfeBasePtr->getAtomLocationsFrac().size() * 3.0, 0.0);
+    std::vector<std::vector<double>> atomLocationsFrac(
+      d_dftfeBasePtr->getAtomLocationsFrac().size(),
+      std::vector<double>(3, 0.0));
     for (unsigned int i = 0; i < atomLocationsFrac.size(); ++i)
       for (unsigned int j = 0; j < 3; ++j)
-        atomLocationsFrac[i * 3 + j] = temp[i][j + 2];
+        atomLocationsFrac[i][j] = temp[i][j + 2];
     return atomLocationsFrac;
+  }
+
+  std::vector<std::vector<double>>
+  dftfeWrapper::getCell() const
+  {
+    return d_dftfeBasePtr->getCell();
+  }
+
+  std::vector<bool>
+  dftfeWrapper::getPBC() const
+  {
+    std::vector<bool> pbc(3, false);
+    pbc[0] = d_dftfeParamsPtr->periodicX;
+    pbc[1] = d_dftfeParamsPtr->periodicX;
+    pbc[2] = d_dftfeParamsPtr->periodicX;
+    return pbc;
+  }
+
+  std::vector<int>
+  dftfeWrapper::getAtomicNumbers() const
+  {
+    std::vector<std::vector<double>> temp =
+      d_dftfeBasePtr->getAtomLocationsCart();
+    std::vector<int> atomicNumbers(
+      d_dftfeBasePtr->getAtomLocationsCart().size(), 0);
+    for (unsigned int i = 0; i < atomicNumbers.size(); ++i)
+      atomicNumbers[i] = temp[i][0];
+    return atomicNumbers;
+  }
+
+
+  std::vector<int>
+  dftfeWrapper::getValenceElectronNumbers() const
+  {
+    std::vector<std::vector<double>> temp =
+      d_dftfeBasePtr->getAtomLocationsCart();
+    std::vector<int> valenceNumbers(
+      d_dftfeBasePtr->getAtomLocationsCart().size(), 0);
+    for (unsigned int i = 0; i < valenceNumbers.size(); ++i)
+      valenceNumbers[i] = temp[i][1];
+    return valenceNumbers;
   }
 
   dftBase *

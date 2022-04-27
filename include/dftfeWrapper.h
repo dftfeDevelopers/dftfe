@@ -73,52 +73,48 @@ namespace dftfe
     /**
      * @brief Get negative of gradient of DFT free energy with respect to ionic positions
      *
-     *  @return std::vector<double> flattened array of forces with dimension index being
-     *  the fastest index i.e atom1forcex atom1forcey atom1forcz atom2forcex ...
+     *  @return std::vector<std::vector<double>> vector of forces on each atom
      */
-    std::vector<double>
-    getForcesAtoms();
+    std::vector<std::vector<double>>
+    getForcesAtoms() const;
 
     /**
      * @brief Get negative of gradient of DFT free energy with respect to affine strain components
      *
-     * @return std::vector<double> flattened array of size 9 with indices
-     *  in the order array[i*3+j]=\frac{\partial E}{\partial \epsilon_{ij}}
+     * @return std::vector<std::vector<double> > 3 \times 3 matrix given by
+     *  sigma[i][j]=\frac{1}{\Omega}\frac{\partial E}{\partial \epsilon_{ij}}
      */
-    std::vector<double>
-    getCellStress();
+    std::vector<std::vector<double>>
+    getCellStress() const;
 
     /**
      * @brief update atom positions and reinitialize all related  datastructures
      *
-     * @param[in] std::vector<double> flattened array of displacements
-     *  with dimension index being the fastest index
-     *  i.e atom1dispx atom1dispy atom1dispz atom2dispx ...
+     * @param[in] std::vector<double> vector of displacements for each atom
      */
     void
-    updateAtomPositions(const std::vector<double> atomsDisplacements);
+    updateAtomPositions(
+      const std::vector<std::vector<double>> atomsDisplacements);
 
 
     /**
      *@brief Deforms the domain by the given affine deformation gradient and
      * reinitializes the underlying datastructures.
      *
-     *@param[in] std::vector<double> deformation gradient array of size 9 with
-     *indices in the order array[i*3+j]=\frac{\partial x_i}{\partial X_j}
+     *@param[in] std::vector<std::vector<double>> deformation gradient
+     * matrix given by F[i][j]=\frac{\partial x_i}{\partial X_j}
      */
     void
-    deformDomain(const std::vector<double> deformationGradient);
+    deformDomain(const std::vector<std::vector<double>> deformationGradient);
 
     /**
      * @brief Gets the current atom Locations in cartesian form
      * (origin at center of domain)
      *
-     *  @return std::vector<double> flattened array of coords with dimension index being
-     *  the fastest index i.e atom1coordx atom1coordy atom1coordz atom2coordx
-     * ...
+     *  @return std::vector<std::vector<double>> array of coords for each atom
      */
-    std::vector<double>
-    getAtomLocationsCart();
+    std::vector<std::vector<double>>
+    getAtomLocationsCart() const;
 
     /**
      * @brief Gets the current atom Locations in fractional form
@@ -126,12 +122,47 @@ namespace dftfe
      * CAUTION: during relaxation and MD fractional coordinates may have negaive
      * values
      *
-     *  @return std::vector<double> flattened array of coords with dimension index being
-     *  the fastest index i.e atom1coordx atom1coordy atom1coordz atom2coordx
-     * ...
+     *  @return std::vector<std::vector<double>> array of coords for each atom
      */
-    std::vector<double>
-    getAtomLocationsFrac();
+    std::vector<std::vector<double>>
+    getAtomLocationsFrac() const;
+
+
+
+    /**
+     * @brief Gets the current cell lattice vectors
+     *
+     *  @return std::vector<std::vector<double>> 3 \times 3 matrix,lattice[i][j] corresponds to jth component of
+     *  ith lattice vector
+     */
+    std::vector<std::vector<double>>
+    getCell() const;
+
+
+    /**
+     * @brief Gets the boundary conditions for each lattice vector direction
+     *
+     *  @return std::vector<bool> false denotes non-periodic BC and true denotes periodic BC
+     */
+    std::vector<bool>
+    getPBC() const;
+
+    /**
+     * @brief Gets the atomic numbers vector
+     *
+     *  @return std::vector<double> array of atomic number for each atom
+     */
+    std::vector<int>
+    getAtomicNumbers() const;
+
+
+    /**
+     * @brief Gets the number of valence electrons for each atom
+     *
+     *  @return std::vector<double> array of number of valence for each atom
+     */
+    std::vector<int>
+    getValenceElectronNumbers() const;
 
 
     dftBase *
