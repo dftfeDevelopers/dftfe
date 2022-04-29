@@ -271,7 +271,6 @@ namespace dftfe
           2.0 / 3.0 / double(d_numberGlobalCharges - 1) * KineticEnergy / (kB);
 
 
-<<<<<<< HEAD
         dftPtr->solve(true, false, false, false);
         force     = dftPtr->getForceonAtoms();
         if (dftPtr->getParametersObject().reuseDensityMD == 1 &&
@@ -280,10 +279,6 @@ namespace dftfe
         else if(dftPtr->getParametersObject().reuseDensityMD == 2 &&
                 dftPtr->getParametersObject().spinPolarized != 1)
           DensitySplitExtrapolation(0);  
-=======
-        d_dftPtr->solve(true, false, false, false);
-        force     = d_dftPtr->getForceonAtoms();
->>>>>>> 3bba397eb0700f2039c0a4658ab49805b212564c
         double dt = d_TimeStep;
         for (int iCharge = 0; iCharge < d_numberGlobalCharges; iCharge++)
           {
@@ -1238,7 +1233,6 @@ namespace dftfe
     if (d_dftPtr->getParametersObject().verbosity >= 1)
       pcout << "Time taken for updateAtomPositionsAndMoveMesh: " << update_time
             << std::endl;
-<<<<<<< HEAD
     dftPtr->solve(true, false, false, false);
     forceOnAtoms = dftPtr->getForceonAtoms();
     if (dftPtr->getParametersObject().reuseDensityMD == 1 &&
@@ -1247,10 +1241,6 @@ namespace dftfe
     else if(dftPtr->getParametersObject().reuseDensityMD == 2 &&
                 dftPtr->getParametersObject().spinPolarized != 1)
           DensitySplitExtrapolation(d_TimeIndex-d_startingTimeStep); 
-=======
-    d_dftPtr->solve(true, false, false, false);
-    forceOnAtoms = d_dftPtr->getForceonAtoms();
->>>>>>> 3bba397eb0700f2039c0a4658ab49805b212564c
     // Call Force
     totalKE = 0.0;
     /* Second half of velocty verlet */
@@ -1651,7 +1641,6 @@ namespace dftfe
     TE[0] = TE0[0][0];
 
 
-<<<<<<< HEAD
     dftPtr->solve(true, false, false, false);
     force = dftPtr->getForceonAtoms();
       if (dftPtr->getParametersObject().reuseDensityMD == 1 &&
@@ -1660,11 +1649,6 @@ namespace dftfe
       else if(dftPtr->getParametersObject().reuseDensityMD == 2 &&
                 dftPtr->getParametersObject().spinPolarized != 1)
           DensitySplitExtrapolation(0);     
-=======
-    d_dftPtr->solve(true, false, false, false);
-    force = d_dftPtr->getForceonAtoms();
-
->>>>>>> 3bba397eb0700f2039c0a4658ab49805b212564c
     if (Utilities::MPI::this_mpi_process(d_mpiCommParent) == 0)
       {
         std::string oldFolder1 = "./mdRestart/Step";
