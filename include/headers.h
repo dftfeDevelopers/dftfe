@@ -25,7 +25,6 @@
 #  include <deal.II/base/conditional_ostream.h>
 #  include <deal.II/base/function.h>
 #  include <deal.II/base/logstream.h>
-#  include <deal.II/base/parameter_handler.h>
 #  include <deal.II/base/point.h>
 #  include <deal.II/base/quadrature.h>
 #  include <deal.II/base/quadrature_point_data.h>
