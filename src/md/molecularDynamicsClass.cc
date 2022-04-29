@@ -272,10 +272,10 @@ namespace dftfe
 
         dftPtr->solve(true, false, false, false);
         force     = dftPtr->getForceonAtoms();
-        if (dftPtr->getParametersObject().reuseDensityGeoOpt == 3 &&
+        if (dftPtr->getParametersObject().reuseDensityMD == 1 &&
                 dftPtr->getParametersObject().spinPolarized != 1)
           DensityExtrapolation(0);
-        else if(dftPtr->getParametersObject().reuseDensityGeoOpt == 4 &&
+        else if(dftPtr->getParametersObject().reuseDensityMD == 2 &&
                 dftPtr->getParametersObject().spinPolarized != 1)
           DensitySplitExtrapolation(0);  
         double dt = d_TimeStep;
@@ -1234,10 +1234,10 @@ namespace dftfe
             << std::endl;
     dftPtr->solve(true, false, false, false);
     forceOnAtoms = dftPtr->getForceonAtoms();
-    if (dftPtr->getParametersObject().reuseDensityGeoOpt == 3 &&
+    if (dftPtr->getParametersObject().reuseDensityMD == 1 &&
                 dftPtr->getParametersObject().spinPolarized != 1)
       DensityExtrapolation(d_TimeIndex-d_startingTimeStep);
-    else if(dftPtr->getParametersObject().reuseDensityGeoOpt == 4 &&
+    else if(dftPtr->getParametersObject().reuseDensityMD == 2 &&
                 dftPtr->getParametersObject().spinPolarized != 1)
           DensitySplitExtrapolation(d_TimeIndex-d_startingTimeStep); 
     // Call Force
@@ -1642,10 +1642,10 @@ namespace dftfe
 
     dftPtr->solve(true, false, false, false);
     force = dftPtr->getForceonAtoms();
-      if (dftPtr->getParametersObject().reuseDensityGeoOpt == 3 &&
+      if (dftPtr->getParametersObject().reuseDensityMD == 1 &&
                 dftPtr->getParametersObject().spinPolarized != 1)
           DensityExtrapolation(0);
-      else if(dftPtr->getParametersObject().reuseDensityGeoOpt == 4 &&
+      else if(dftPtr->getParametersObject().reuseDensityMD == 2 &&
                 dftPtr->getParametersObject().spinPolarized != 1)
           DensitySplitExtrapolation(0);     
     if (Utilities::MPI::this_mpi_process(d_mpiCommParent) == 0)

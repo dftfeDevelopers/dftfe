@@ -1298,9 +1298,13 @@ namespace dftfe
                 d_rhoInNodalValues.update_ghost_values();
               }
           
-            else if (d_dftParamsPtr->reuseDensityGeoOpt == 3 &&
-                d_dftParamsPtr->spinPolarized != 1)
-              {
+
+
+          }
+        
+        else if (d_dftParamsPtr->reuseDensityMD == 1 &&
+                d_dftParamsPtr->spinPolarized != 1 && d_dftParamsPtr->isBOMD)
+            {
                 
 
                 interpolateRhoNodalDataToQuadratureDataGeneral(
@@ -1323,10 +1327,10 @@ namespace dftfe
                                         d_rhoInNodalValues);
 
                 d_rhoInNodalValues.update_ghost_values();                
-              }            
-              else if (d_dftParamsPtr->reuseDensityGeoOpt == 4 &&
-                d_dftParamsPtr->spinPolarized != 1)
-              {
+            }            
+        else if (d_dftParamsPtr->reuseDensityMD == 2 &&
+                d_dftParamsPtr->spinPolarized != 1 &&  d_dftParamsPtr->isBOMD)
+            {
                 initAtomicRho();
                 interpolateRhoNodalDataToQuadratureDataGeneral(
                   d_matrixFreeDataPRefined,
@@ -1353,9 +1357,7 @@ namespace dftfe
                                         d_rhoInNodalValues);
 
                 d_rhoInNodalValues.update_ghost_values();
-              }
-
-          }
+            }        
         else
           {
             initRho();

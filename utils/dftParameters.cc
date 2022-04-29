@@ -321,7 +321,7 @@ namespace dftfe
           prm.declare_entry(
             "REUSE DENSITY",
             "0",
-            Patterns::Integer(0, 4),
+            Patterns::Integer(0, 2),
             "[Standard] Parameter controlling the reuse of ground-state density during geometry optimization. The options are 0 (reinitialize density based on superposition of atomic densities), 1 (reuse ground-state density of previous relaxation step), and 2 (subtract superposition of atomic densities from the previous step's ground-state density and add superposition of atomic densities from the new atomic positions. Option 2 is not enabled for spin-polarized case. Default setting is 0.");
         }
         prm.leave_subsection();
@@ -886,6 +886,12 @@ namespace dftfe
           Patterns::Bool(),
           "[Standard] Perform Born-Oppenheimer NVE molecular dynamics. Input parameters for molecular dynamics have to be modified directly in the code in the file md/molecularDynamics.cc.");
 
+          prm.declare_entry(
+            "EXTRAPOLATE DENSITY",
+            "0",
+            Patterns::Integer(0, 2),
+            "[Standard] Parameter controlling the reuse of ground-state density during geometry optimization. The options are 0 default setting, 1 (second order extrapolation of density), and 2 (extrapolation of split density and the atomic densities are added) Option 2 is not enabled for spin-polarized case. Default setting is 0.");
+
         prm.declare_entry(
           "XL BOMD",
           "false",
@@ -1123,6 +1129,7 @@ namespace dftfe
     autoGPUBlockSizes                              = true;
     maxJacobianRatioFactorForMD                    = 1.5;
     chebyshevFilterTolXLBOMD                       = 1e-8;
+    reuseDensityMD                                  =0;
     timeStepBOMD                                   = 0.5;
     numberStepsBOMD                                = 1000;
     gaussianConstantForce                          = 0.75;
@@ -1407,6 +1414,7 @@ namespace dftfe
     prm.enter_subsection("Molecular Dynamics");
     {
       atomicMassesFile            = prm.get("ATOMIC MASSES FILE");
+       reuseDensityMD            = prm.get_integer("EXTRAPOLATE DENSITY");                             
       isBOMD                      = prm.get_bool("BOMD");
       maxJacobianRatioFactorForMD = prm.get_double("MAX JACOBIAN RATIO FACTOR");
       isXLBOMD                    = prm.get_bool("XL BOMD");

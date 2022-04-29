@@ -116,6 +116,7 @@ namespace dftfe
     double       chebyshevFilterTolXLBOMD;
     double       chebyshevFilterTolXLBOMDRankUpdates;
     double       chebyshevFilterPolyDegreeFirstScfScalingFactor;
+    int          reuseDensityMD;
     double       timeStepBOMD;
     unsigned int numberStepsBOMD;
     unsigned int TotalImages;
