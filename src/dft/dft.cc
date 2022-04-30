@@ -238,7 +238,8 @@ namespace dftfe
 #if defined(DFTFE_WITH_GPU)
     delete d_gpucclMpiCommDomainPtr;
 #endif
-    if (!d_dftParamsPtr->keepScratchFolder)
+    if (!d_dftParamsPtr->keepScratchFolder &&
+        Utilities::MPI::this_mpi_process(d_mpiCommParent) == 0)
       {
         std::string command = "rm -rf " + d_dftfeScratchFolderName;
         system(command.c_str());
