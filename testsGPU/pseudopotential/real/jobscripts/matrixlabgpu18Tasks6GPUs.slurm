@@ -16,9 +16,9 @@ module load cuda11gcc9.2
 module load mkl/2021.2.0 ​
 
 ​
-srun -n 18 --mpi=pmi2 /home/kartickr/dft_fe_development/MDNVT/build_DensityExtrap/release/real/dftfe Input_MD_0.prm > Output_MD_0
-srun -n 18 --mpi=pmi2 /home/kartickr/dft_fe_development/MDNVT/build_DensityExtrap/release/real/dftfe Input_MD_1.prm > Output_MD_1
-srun -n 18 --mpi=pmi2 /home/kartickr/dft_fe_development/MDNVT/build_DensityExtrap/release/real/dftfe Input_MD_2.prm > Output_MD_2
+srun -n 18 --mpi=pmi2 /home/kartickr/dft_fe_development/MDNVT/build_DensityExtrap/release/real/dftfe Input_MD_0.prm > output_MD_0
+srun -n 18 --mpi=pmi2 /home/kartickr/dft_fe_development/MDNVT/build_DensityExtrap/release/real/dftfe Input_MD_1.prm > output_MD_1
+srun -n 18 --mpi=pmi2 /home/kartickr/dft_fe_development/MDNVT/build_DensityExtrap/release/real/dftfe Input_MD_2.prm > output_MD_2
 srun -n 18 --mpi=pmi2 /home/kartickr/dft_fe_development/MDNVT/build_DensityExtrap/release/real/dftfe parameterFileMg2x_1.prm > outputMg2x_1
 srun -n 18 --mpi=pmi2 /home/kartickr/dft_fe_development/MDNVT/build_DensityExtrap/release/real/dftfe parameterFileMg2x_1_spingpu.prm > outputMg2x_1_spin_gpu
 srun -n 18 --mpi=pmi2 /home/kartickr/dft_fe_development/MDNVT/build_DensityExtrap/release/real/dftfe parameterFileMg2x_2.prm > outputMg2x_2
