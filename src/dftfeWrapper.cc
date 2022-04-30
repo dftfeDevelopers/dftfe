@@ -169,9 +169,14 @@ namespace dftfe
                        const bool        printParams,
                        const bool        setGPUToMPITaskBindingInternally)
   {
+    AssertThrow(
+      mpi_comm_parent != MPI_COMM_NULL,
+      dealii::ExcMessage(
+        "DFT-FE Error: dftfeWrapper cannot be used on MPI_COMM_NULL."));
     clear();
 
-    d_dftfeParamsPtr = new dftfe::dftParameters;
+    d_mpi_comm_parent = mpi_comm_parent;
+    d_dftfeParamsPtr  = new dftfe::dftParameters;
     d_dftfeParamsPtr->parse_parameters(parameter_file,
                                        mpi_comm_parent,
                                        printParams);
@@ -298,6 +303,10 @@ namespace dftfe
   void
   dftfeWrapper::clear()
   {
+    AssertThrow(
+      d_mpi_comm_parent != MPI_COMM_NULL,
+      dealii::ExcMessage(
+        "DFT-FE Error: dftfeWrapper cannot be used on MPI_COMM_NULL."));
     if (d_dftfeBasePtr != nullptr)
       delete d_dftfeBasePtr;
     if (d_dftfeParamsPtr != nullptr)
@@ -307,12 +316,20 @@ namespace dftfe
   void
   dftfeWrapper::run()
   {
+    AssertThrow(
+      d_mpi_comm_parent != MPI_COMM_NULL,
+      dealii::ExcMessage(
+        "DFT-FE Error: dftfeWrapper cannot be used on MPI_COMM_NULL."));
     d_dftfeBasePtr->run();
   }
 
   double
   dftfeWrapper::computeDFTFreeEnergy()
   {
+    AssertThrow(
+      d_mpi_comm_parent != MPI_COMM_NULL,
+      dealii::ExcMessage(
+        "DFT-FE Error: dftfeWrapper cannot be used on MPI_COMM_NULL."));
     d_dftfeBasePtr->solve(true, true, false);
     return d_dftfeBasePtr->getFreeEnergy();
   }
@@ -320,6 +337,10 @@ namespace dftfe
   std::vector<std::vector<double>>
   dftfeWrapper::getForcesAtoms() const
   {
+    AssertThrow(
+      d_mpi_comm_parent != MPI_COMM_NULL,
+      dealii::ExcMessage(
+        "DFT-FE Error: dftfeWrapper cannot be used on MPI_COMM_NULL."));
     std::vector<std::vector<double>> ionicForces(
       d_dftfeBasePtr->getForceonAtoms().size() / 3,
       std::vector<double>(3, 0.0));
@@ -334,6 +355,10 @@ namespace dftfe
   std::vector<std::vector<double>>
   dftfeWrapper::getCellStress() const
   {
+    AssertThrow(
+      d_mpi_comm_parent != MPI_COMM_NULL,
+      dealii::ExcMessage(
+        "DFT-FE Error: dftfeWrapper cannot be used on MPI_COMM_NULL."));
     std::vector<std::vector<double>> cellStress(3, std::vector<double>(3, 0.0));
     dealii::Tensor<2, 3, double>     cellStressTensor =
       d_dftfeBasePtr->getCellStress();
@@ -349,7 +374,11 @@ namespace dftfe
     const std::vector<std::vector<double>> atomsDisplacements)
   {
     AssertThrow(
-      atomsDisplacements.size() * 3 ==
+      d_mpi_comm_parent != MPI_COMM_NULL,
+      dealii::ExcMessage(
+        "DFT-FE Error: dftfeWrapper cannot be used on MPI_COMM_NULL."));
+    AssertThrow(
+      atomsDisplacements.size() ==
         d_dftfeBasePtr->getAtomLocationsCart().size(),
       dealii::ExcMessage(
         "DFT-FE error: Incorrect size of atomsDisplacements vector."));
@@ -364,6 +393,10 @@ namespace dftfe
   dftfeWrapper::deformDomain(
     const std::vector<std::vector<double>> deformationGradient)
   {
+    AssertThrow(
+      d_mpi_comm_parent != MPI_COMM_NULL,
+      dealii::ExcMessage(
+        "DFT-FE Error: dftfeWrapper cannot be used on MPI_COMM_NULL."));
     dealii::Tensor<2, 3, double> defGradTensor;
     for (unsigned int i = 0; i < 3; ++i)
       for (unsigned int j = 0; j < 3; ++j)
@@ -374,6 +407,10 @@ namespace dftfe
   std::vector<std::vector<double>>
   dftfeWrapper::getAtomLocationsCart() const
   {
+    AssertThrow(
+      d_mpi_comm_parent != MPI_COMM_NULL,
+      dealii::ExcMessage(
+        "DFT-FE Error: dftfeWrapper cannot be used on MPI_COMM_NULL."));
     std::vector<std::vector<double>> temp =
       d_dftfeBasePtr->getAtomLocationsCart();
     std::vector<std::vector<double>> atomLocationsCart(
@@ -388,6 +425,10 @@ namespace dftfe
   std::vector<std::vector<double>>
   dftfeWrapper::getAtomLocationsFrac() const
   {
+    AssertThrow(
+      d_mpi_comm_parent != MPI_COMM_NULL,
+      dealii::ExcMessage(
+        "DFT-FE Error: dftfeWrapper cannot be used on MPI_COMM_NULL."));
     std::vector<std::vector<double>> temp =
       d_dftfeBasePtr->getAtomLocationsFrac();
     std::vector<std::vector<double>> atomLocationsFrac(
@@ -402,22 +443,34 @@ namespace dftfe
   std::vector<std::vector<double>>
   dftfeWrapper::getCell() const
   {
+    AssertThrow(
+      d_mpi_comm_parent != MPI_COMM_NULL,
+      dealii::ExcMessage(
+        "DFT-FE Error: dftfeWrapper cannot be used on MPI_COMM_NULL."));
     return d_dftfeBasePtr->getCell();
   }
 
   std::vector<bool>
   dftfeWrapper::getPBC() const
   {
+    AssertThrow(
+      d_mpi_comm_parent != MPI_COMM_NULL,
+      dealii::ExcMessage(
+        "DFT-FE Error: dftfeWrapper cannot be used on MPI_COMM_NULL."));
     std::vector<bool> pbc(3, false);
     pbc[0] = d_dftfeParamsPtr->periodicX;
-    pbc[1] = d_dftfeParamsPtr->periodicX;
-    pbc[2] = d_dftfeParamsPtr->periodicX;
+    pbc[1] = d_dftfeParamsPtr->periodicY;
+    pbc[2] = d_dftfeParamsPtr->periodicZ;
     return pbc;
   }
 
   std::vector<int>
   dftfeWrapper::getAtomicNumbers() const
   {
+    AssertThrow(
+      d_mpi_comm_parent != MPI_COMM_NULL,
+      dealii::ExcMessage(
+        "DFT-FE Error: dftfeWrapper cannot be used on MPI_COMM_NULL."));
     std::vector<std::vector<double>> temp =
       d_dftfeBasePtr->getAtomLocationsCart();
     std::vector<int> atomicNumbers(
@@ -431,6 +484,10 @@ namespace dftfe
   std::vector<int>
   dftfeWrapper::getValenceElectronNumbers() const
   {
+    AssertThrow(
+      d_mpi_comm_parent != MPI_COMM_NULL,
+      dealii::ExcMessage(
+        "DFT-FE Error: dftfeWrapper cannot be used on MPI_COMM_NULL."));
     std::vector<std::vector<double>> temp =
       d_dftfeBasePtr->getAtomLocationsCart();
     std::vector<int> valenceNumbers(
@@ -443,6 +500,10 @@ namespace dftfe
   dftBase *
   dftfeWrapper::getDftfeBasePtr()
   {
+    AssertThrow(
+      d_mpi_comm_parent != MPI_COMM_NULL,
+      dealii::ExcMessage(
+        "DFT-FE Error: dftfeWrapper cannot be used on MPI_COMM_NULL."));
     return d_dftfeBasePtr;
   }
 
