@@ -181,6 +181,7 @@ namespace dftfe
     getDftfeBasePtr();
 
   private:
+    MPI_Comm       d_mpi_comm_parent;
     dftBase *      d_dftfeBasePtr;
     dftParameters *d_dftfeParamsPtr;
   };

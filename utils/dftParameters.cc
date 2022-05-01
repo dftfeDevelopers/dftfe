@@ -886,6 +886,12 @@ namespace dftfe
           Patterns::Bool(),
           "[Standard] Perform Born-Oppenheimer NVE molecular dynamics. Input parameters for molecular dynamics have to be modified directly in the code in the file md/molecularDynamics.cc.");
 
+          prm.declare_entry(
+            "EXTRAPOLATE DENSITY",
+            "0",
+            Patterns::Integer(0, 2),
+            "[Standard] Parameter controlling the reuse of ground-state density during molecular dynamics. The options are 0 default setting where superposition of atomic densities is the initial rho, 1 (second order extrapolation of density), and 2 (extrapolation of split density and the atomic densities are added) Option 2 is not enabled for spin-polarized case. Default setting is 0.");
+
         prm.declare_entry(
           "XL BOMD",
           "false",
@@ -1123,6 +1129,7 @@ namespace dftfe
     autoGPUBlockSizes                              = true;
     maxJacobianRatioFactorForMD                    = 1.5;
     chebyshevFilterTolXLBOMD                       = 1e-8;
+    reuseDensityMD                                  =0;
     timeStepBOMD                                   = 0.5;
     numberStepsBOMD                                = 1000;
     gaussianConstantForce                          = 0.75;
@@ -1408,6 +1415,7 @@ namespace dftfe
     prm.enter_subsection("Molecular Dynamics");
     {
       atomicMassesFile            = prm.get("ATOMIC MASSES FILE");
+       reuseDensityMD            = prm.get_integer("EXTRAPOLATE DENSITY");                             
       isBOMD                      = prm.get_bool("BOMD");
       maxJacobianRatioFactorForMD = prm.get_double("MAX JACOBIAN RATIO FACTOR");
       isXLBOMD                    = prm.get_bool("XL BOMD");
@@ -1536,6 +1544,11 @@ namespace dftfe
         false,
         ExcMessage(
           "DFT-FE Error: Implementation of this feature is not completed yet."));
+    if (spinPolarized == 1 && (reuseDensityMD >= 1 || reuseDensityGeoOpt ==2))
+      AssertThrow(
+        false,
+        ExcMessage(
+          "DFT-FE Error: Implementation of this feature is not completed yet."));          
 
     AssertThrow(!coordinatesFile.empty(),
                 ExcMessage("DFT-FE Error: ATOMIC COORDINATES FILE not given."));
