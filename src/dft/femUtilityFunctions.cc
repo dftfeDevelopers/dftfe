@@ -500,6 +500,4 @@ dftClass<FEOrder, FEOrderElectro>::l2ProjectionQuadToNodal(
     funcRho,
     nodalField);
   constraintMatrix.set_zero(nodalField);
-
-
 }

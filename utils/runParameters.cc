@@ -879,11 +879,11 @@ namespace dftfe
           "",
           Patterns::Anything(),
           "[Standard] Input atomic masses file name. File format: atomicNumber1 atomicMass1 (row1), atomicNumber2 atomicMass2 (row2) and so on. Units: a.m.u.");
-          prm.declare_entry(
-            "EXTRAPOLATE DENSITY",
-            "0",
-            Patterns::Integer(0, 2),
-            "[Standard] Parameter controlling the reuse of ground-state density during molecular dynamics. The options are 0 default setting where superposition of atomic densities is the initial rho, 1 (second order extrapolation of density), and 2 (extrapolation of split density and the atomic densities are added) Option 2 is not enabled for spin-polarized case. Default setting is 0.");
+        prm.declare_entry(
+          "EXTRAPOLATE DENSITY",
+          "0",
+          Patterns::Integer(0, 2),
+          "[Standard] Parameter controlling the reuse of ground-state density during molecular dynamics. The options are 0 default setting where superposition of atomic densities is the initial rho, 1 (second order extrapolation of density), and 2 (extrapolation of split density and the atomic densities are added) Option 2 is not enabled for spin-polarized case. Default setting is 0.");
 
 
 
