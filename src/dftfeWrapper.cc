@@ -169,148 +169,147 @@ namespace dftfe
                        const bool        printParams,
                        const bool        setGPUToMPITaskBindingInternally)
   {
-    AssertThrow(
-      mpi_comm_parent != MPI_COMM_NULL,
-      dealii::ExcMessage(
-        "DFT-FE Error: dftfeWrapper cannot be used on MPI_COMM_NULL."));
     clear();
-
     d_mpi_comm_parent = mpi_comm_parent;
-    d_dftfeParamsPtr  = new dftfe::dftParameters;
-    d_dftfeParamsPtr->parse_parameters(parameter_file,
-                                       mpi_comm_parent,
-                                       printParams);
+    if (mpi_comm_parent != MPI_COMM_NULL)
+      {
+        d_dftfeParamsPtr = new dftfe::dftParameters;
+        d_dftfeParamsPtr->parse_parameters(parameter_file,
+                                           mpi_comm_parent,
+                                           printParams);
 
 #ifdef DFTFE_WITH_GPU
-    if (d_dftfeParamsPtr->useGPU && setGPUToMPITaskBindingInternally)
-      dftfe::cudaUtils::setupGPU();
+        if (d_dftfeParamsPtr->useGPU && setGPUToMPITaskBindingInternally)
+          dftfe::cudaUtils::setupGPU();
 #endif
 
-    dftfe::dftUtils::Pool kPointPool(mpi_comm_parent,
-                                     d_dftfeParamsPtr->npool,
-                                     d_dftfeParamsPtr->verbosity);
-    dftfe::dftUtils::Pool bandGroupsPool(kPointPool.get_intrapool_comm(),
-                                         d_dftfeParamsPtr->nbandGrps,
+        dftfe::dftUtils::Pool kPointPool(mpi_comm_parent,
+                                         d_dftfeParamsPtr->npool,
                                          d_dftfeParamsPtr->verbosity);
+        dftfe::dftUtils::Pool bandGroupsPool(kPointPool.get_intrapool_comm(),
+                                             d_dftfeParamsPtr->nbandGrps,
+                                             d_dftfeParamsPtr->verbosity);
 
-    std::srand(dealii::Utilities::MPI::this_mpi_process(
-      bandGroupsPool.get_intrapool_comm()));
+        std::srand(dealii::Utilities::MPI::this_mpi_process(
+          bandGroupsPool.get_intrapool_comm()));
 
-    if (d_dftfeParamsPtr->verbosity >= 1)
-      {
-        dealii::ConditionalOStream pcout(
-          std::cout,
-          (dealii::Utilities::MPI::this_mpi_process(mpi_comm_parent) == 0));
-        pcout
-          << "=================================MPI Parallelization========================================="
-          << std::endl;
-        pcout << "Total number of MPI tasks: "
-              << Utilities::MPI::n_mpi_processes(mpi_comm_parent) << std::endl;
-        pcout << "k-point parallelization processor groups: "
-              << Utilities::MPI::n_mpi_processes(
-                   kPointPool.get_interpool_comm())
+        if (d_dftfeParamsPtr->verbosity >= 1)
+          {
+            dealii::ConditionalOStream pcout(
+              std::cout,
+              (dealii::Utilities::MPI::this_mpi_process(mpi_comm_parent) == 0));
+            pcout
+              << "=================================MPI Parallelization========================================="
               << std::endl;
-        pcout << "Band parallelization processor groups: "
-              << Utilities::MPI::n_mpi_processes(
-                   bandGroupsPool.get_interpool_comm())
-              << std::endl;
-        pcout << "Number of MPI tasks for finite-element domain decomposition: "
+            pcout << "Total number of MPI tasks: "
+                  << Utilities::MPI::n_mpi_processes(mpi_comm_parent)
+                  << std::endl;
+            pcout << "k-point parallelization processor groups: "
+                  << Utilities::MPI::n_mpi_processes(
+                       kPointPool.get_interpool_comm())
+                  << std::endl;
+            pcout << "Band parallelization processor groups: "
+                  << Utilities::MPI::n_mpi_processes(
+                       bandGroupsPool.get_interpool_comm())
+                  << std::endl;
+            pcout
+              << "Number of MPI tasks for finite-element domain decomposition: "
               << Utilities::MPI::n_mpi_processes(
                    bandGroupsPool.get_intrapool_comm())
               << std::endl;
-        pcout
-          << "============================================================================================"
-          << std::endl;
-      }
+            pcout
+              << "============================================================================================"
+              << std::endl;
+          }
 
 
-    // set stdout precision
-    std::cout << std::scientific << std::setprecision(18);
+        // set stdout precision
+        std::cout << std::scientific << std::setprecision(18);
 
-    int order = d_dftfeParamsPtr->finiteElementPolynomialOrder;
-    int orderElectro =
-      d_dftfeParamsPtr->finiteElementPolynomialOrderElectrostatics;
+        int order = d_dftfeParamsPtr->finiteElementPolynomialOrder;
+        int orderElectro =
+          d_dftfeParamsPtr->finiteElementPolynomialOrderElectrostatics;
 
 #ifdef DFTFE_MINIMAL_COMPILE
-    if (order < 2 || order > 7)
-      {
-        std::cout << "Invalid DFT-FE order " << order << std::endl;
-        exit(1);
-      }
-
-    if (order > 5 && order < 7)
-      {
-        if (orderElectro < order || orderElectro > (order + 3))
+        if (order < 2 || order > 7)
           {
-            std::cout << "Invalid DFT-FE order electrostatics " << orderElectro
-                      << std::endl;
+            std::cout << "Invalid DFT-FE order " << order << std::endl;
             exit(1);
           }
-      }
-    else
-      {
-        if (orderElectro != order)
-          {
-            std::cout << "Invalid DFT-FE order electrostatics " << orderElectro
-                      << std::endl;
-            exit(1);
-          }
-      }
 
-    int listIndex = 0;
-    for (int i = 2; i <= order; i++)
-      {
-        int maxElectroOrder = (i < order) ? (i + 3) : orderElectro;
-        if (i != 6)
-          maxElectroOrder = i;
-        for (int j = i; j <= maxElectroOrder; j++)
-          listIndex++;
-      }
+        if (order > 5 && order < 7)
+          {
+            if (orderElectro < order || orderElectro > (order + 3))
+              {
+                std::cout << "Invalid DFT-FE order electrostatics "
+                          << orderElectro << std::endl;
+                exit(1);
+              }
+          }
+        else
+          {
+            if (orderElectro != order)
+              {
+                std::cout << "Invalid DFT-FE order electrostatics "
+                          << orderElectro << std::endl;
+                exit(1);
+              }
+          }
+
+        int listIndex = 0;
+        for (int i = 2; i <= order; i++)
+          {
+            int maxElectroOrder = (i < order) ? (i + 3) : orderElectro;
+            if (i != 6)
+              maxElectroOrder = i;
+            for (int j = i; j <= maxElectroOrder; j++)
+              listIndex++;
+          }
 #else
-    if (order < 1 || order > 8)
-      {
-        std::cout << "Invalid DFT-FE order " << order << std::endl;
-        exit(1);
-      }
+        if (order < 1 || order > 8)
+          {
+            std::cout << "Invalid DFT-FE order " << order << std::endl;
+            exit(1);
+          }
 
-    if (orderElectro < order || orderElectro > order * 2)
-      {
-        std::cout << "Invalid DFT-FE order electrostatics " << orderElectro
-                  << std::endl;
-        exit(1);
-      }
+        if (orderElectro < order || orderElectro > order * 2)
+          {
+            std::cout << "Invalid DFT-FE order electrostatics " << orderElectro
+                      << std::endl;
+            exit(1);
+          }
 
 
-    int listIndex = 0;
-    for (int i = 1; i <= order; i++)
-      {
-        int maxElectroOrder = (i < order) ? 2 * i : orderElectro;
-        for (int j = i; j <= maxElectroOrder; j++)
-          listIndex++;
-      }
+        int listIndex = 0;
+        for (int i = 1; i <= order; i++)
+          {
+            int maxElectroOrder = (i < order) ? 2 * i : orderElectro;
+            for (int j = i; j <= maxElectroOrder; j++)
+              listIndex++;
+          }
 #endif
-    create_fn create = order_list[listIndex - 1];
-    create(mpi_comm_parent,
-           bandGroupsPool.get_intrapool_comm(),
-           kPointPool.get_interpool_comm(),
-           bandGroupsPool.get_interpool_comm(),
-           *d_dftfeParamsPtr,
-           &d_dftfeBasePtr);
-    d_dftfeBasePtr->set();
-    d_dftfeBasePtr->init();
+        create_fn create = order_list[listIndex - 1];
+        create(mpi_comm_parent,
+               bandGroupsPool.get_intrapool_comm(),
+               kPointPool.get_interpool_comm(),
+               bandGroupsPool.get_interpool_comm(),
+               *d_dftfeParamsPtr,
+               &d_dftfeBasePtr);
+        d_dftfeBasePtr->set();
+        d_dftfeBasePtr->init();
+      }
   }
 
   void
   dftfeWrapper::clear()
   {
-    AssertThrow(
-      d_mpi_comm_parent != MPI_COMM_NULL,
-      dealii::ExcMessage(
-        "DFT-FE Error: dftfeWrapper cannot be used on MPI_COMM_NULL."));
-    if (d_dftfeBasePtr != nullptr)
-      delete d_dftfeBasePtr;
-    if (d_dftfeParamsPtr != nullptr)
-      delete d_dftfeParamsPtr;
+    if (d_mpi_comm_parent != MPI_COMM_NULL)
+      {
+        if (d_dftfeBasePtr != nullptr)
+          delete d_dftfeBasePtr;
+        if (d_dftfeParamsPtr != nullptr)
+          delete d_dftfeParamsPtr;
+      }
   }
 
   void

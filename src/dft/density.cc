@@ -244,7 +244,7 @@ dftClass<FEOrder, FEOrderElectro>::compute_rhoOut(
 
       if (isGroundState)
         {
-          if (d_dftParamsPtr->isBOMD && d_dftParamsPtr->reuseDensityMD !=2)
+          if (d_dftParamsPtr->isBOMD && d_dftParamsPtr->reuseDensityMD != 2)
             normalizeRhoOutQuadValues();
 
 #ifdef DFTFE_WITH_GPU
@@ -318,7 +318,9 @@ dftClass<FEOrder, FEOrderElectro>::compute_rhoOut(
 
   popOutRhoInRhoOutVals();
 
-  if (isGroundState && (d_dftParamsPtr->isIonOpt ||(d_dftParamsPtr->isBOMD && d_dftParamsPtr->reuseDensityMD==2)) &&
+  if (isGroundState &&
+      (d_dftParamsPtr->isIonOpt ||
+       (d_dftParamsPtr->isBOMD && d_dftParamsPtr->reuseDensityMD == 2)) &&
       d_dftParamsPtr->spinPolarized != 1)
     {
       d_rhoOutNodalValuesSplit = d_rhoOutNodalValues;
