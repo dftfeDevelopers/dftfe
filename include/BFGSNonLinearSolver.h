@@ -208,7 +208,7 @@ namespace dftfe
 
     /// flag which restarts bfgs if increment to the solution vector
     /// is too small
-    bool d_isBFGSRestartDueToSmallRadius;
+    bool d_isBFGSRestartDueToSmallRadius, d_hessianScaled;
 
     ///
     bool d_useSingleAtomSolutionsInitialGuess;

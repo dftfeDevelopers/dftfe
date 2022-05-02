@@ -55,6 +55,8 @@ namespace dftfe
     d_strainEpsilon = 0;
     for (unsigned int i = 0; i < 3; ++i)
       d_strainEpsilon[i][i] = 1.0;
+    
+    d_domainVolumeInitial = dftPtr -> d_domainVolume;
 
     // strain tensor is a symmetric second order with six independent components
     d_relaxationFlags.clear();
@@ -217,7 +219,7 @@ namespace dftfe
                                   lineSearchDampingParameter,
                                   maxUpdateInAnyComponent);
 
-    BFGSNonLinearSolver bfgsSolver(tol, maxIter, debugLevel, mpi_communicator);
+    BFGSNonLinearSolver bfgsSolver(tol, maxIter, debugLevel, mpi_communicator,0.5,0.02,1e-6);
 
     if (dftParameters::chkType >= 1 && dftParameters::restartFromChk)
       pcout
@@ -351,7 +353,7 @@ namespace dftfe
   {
     // AssertThrow(false,dftUtils::ExcNotImplementedYet());
     functionValue.clear();
-    functionValue.push_back(dftPtr->d_freeEnergy / dftPtr->d_domainVolume);
+    functionValue.push_back(dftPtr->d_groundStateEnergy);
   }
 
   template <unsigned int FEOrder, unsigned int FEOrderElectro>
@@ -359,7 +361,7 @@ namespace dftfe
   geoOptCell<FEOrder, FEOrderElectro>::gradient(std::vector<double> &gradient)
   {
     gradient.clear();
-    const Tensor<2, 3, double> tempGradient = dftPtr->forcePtr->getStress();
+    const Tensor<2, 3, double> tempGradient = (dftPtr->d_domainVolume/d_domainVolumeInitial) * (dftPtr->forcePtr->getStress() * invert(d_strainEpsilon));
 
     if (d_relaxationFlags[0] == 1)
       gradient.push_back(tempGradient[0][0]);
