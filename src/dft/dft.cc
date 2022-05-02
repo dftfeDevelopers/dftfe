@@ -2181,7 +2181,8 @@ namespace dftfe
     dispersionCorrection dispersionCorr(d_mpiCommParent,
                                         mpi_communicator,
                                         interpoolcomm,
-                                        interBandGroupComm);
+                                        interBandGroupComm,
+                                        *d_dftParamsPtr);
 
     // set up linear solver
     dealiiLinearSolver dealiiCGSolver(d_mpiCommParent,

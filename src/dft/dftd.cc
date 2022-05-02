@@ -15,7 +15,6 @@
 // ---------------------------------------------------------------------
 //
 
-#include <dftParameters.h>
 #include <fileReaders.h>
 #include <dftd.h>
 
@@ -67,16 +66,16 @@ namespace dftfe
     if (dealii::Utilities::MPI::this_mpi_process(mpi_communicator_global) == 0)
       {
         bool periodic[3];
-        periodic[0] = dftParameters::periodicX;
-        periodic[1] = dftParameters::periodicY;
-        periodic[2] = dftParameters::periodicZ;
+        periodic[0] = d_dftParams.periodicX;
+        periodic[1] = d_dftParams.periodicY;
+        periodic[2] = d_dftParams.periodicZ;
         std::string functional;
         bool        customParameters =
-          !(dftParameters::dc_dampingParameterFilename == "");
+          !(d_dftParams.dc_dampingParameterFilename == "");
         std::vector<std::vector<double>> parameterList;
         if (!customParameters)
           {
-            switch (dftParameters::xc_id)
+            switch (d_dftParams.xc_id)
               {
                 case 1:
                 case 2:
@@ -87,18 +86,18 @@ namespace dftfe
                       "DFTD3/4 have not been parametrized for this functional")));
                   break;
                 case 4:
-                  if (dftParameters::dc_dispersioncorrectiontype == 1)
+                  if (d_dftParams.dc_dispersioncorrectiontype == 1)
                     AssertThrow(
-                      dftParameters::dc_d3dampingtype != 4,
+                      d_dftParams.dc_d3dampingtype != 4,
                       dealii::ExcMessage(std::string(
                         "The OP damping functions has not been parametrized for this functional")));
                   functional = "pbe";
                   break;
                 case 5:
-                  if (dftParameters::dc_dispersioncorrectiontype == 1)
+                  if (d_dftParams.dc_dispersioncorrectiontype == 1)
                     AssertThrow(
-                      dftParameters::dc_d3dampingtype == 0 ||
-                        dftParameters::dc_d3dampingtype == 1,
+                      d_dftParams.dc_d3dampingtype == 0 ||
+                        d_dftParams.dc_d3dampingtype == 1,
                       dealii::ExcMessage(std::string(
                         "The OP, BJM and ZEROM damping functions have not been parametrized for this functional")));
                   functional = "rpbe";
@@ -107,7 +106,7 @@ namespace dftfe
                   break;
               }
           }
-        switch (dftParameters::dc_dispersioncorrectiontype)
+        switch (d_dftParams.dc_dispersioncorrectiontype)
           {
             case 1:
               {
@@ -134,29 +133,28 @@ namespace dftfe
 
                 dftd3_set_model_realspace_cutoff(error,
                                                  disp,
-                                                 dftParameters::dc_d3cutoff2,
-                                                 dftParameters::dc_d3cutoff3,
-                                                 dftParameters::dc_d3cutoffCN);
+                                                 d_dftParams.dc_d3cutoff2,
+                                                 d_dftParams.dc_d3cutoff3,
+                                                 d_dftParams.dc_d3cutoffCN);
                 AssertThrow(dftd3_check_error(error) == 0,
                             dealii::ExcMessage(
                               std::string("Failure in DFTD Module ")));
 
-                switch (dftParameters::dc_d3dampingtype)
+                switch (d_dftParams.dc_d3dampingtype)
                   {
                     case 0:
                       if (!customParameters)
                         {
-                          param =
-                            dftd3_load_zero_damping(error,
-                                                    &functional[0],
-                                                    dftParameters::dc_d3ATM);
+                          param = dftd3_load_zero_damping(error,
+                                                          &functional[0],
+                                                          d_dftParams.dc_d3ATM);
                         }
                       else
                         {
                           dftUtils::readFile(
                             6,
                             parameterList,
-                            dftParameters::dc_dampingParameterFilename);
+                            d_dftParams.dc_dampingParameterFilename);
                           param = dftd3_new_zero_damping(error,
                                                          parameterList[0][0],
                                                          parameterList[0][1],
@@ -169,15 +167,17 @@ namespace dftfe
                     case 1:
                       if (!customParameters)
                         {
-                          param = dftd3_load_rational_damping(
-                            error, &functional[0], dftParameters::dc_d3ATM);
+                          param =
+                            dftd3_load_rational_damping(error,
+                                                        &functional[0],
+                                                        d_dftParams.dc_d3ATM);
                         }
                       else
                         {
                           dftUtils::readFile(
                             6,
                             parameterList,
-                            dftParameters::dc_dampingParameterFilename);
+                            d_dftParams.dc_dampingParameterFilename);
                           param =
                             dftd3_new_rational_damping(error,
                                                        parameterList[0][0],
@@ -194,14 +194,14 @@ namespace dftfe
                           param =
                             dftd3_load_mzero_damping(error,
                                                      &functional[0],
-                                                     dftParameters::dc_d3ATM);
+                                                     d_dftParams.dc_d3ATM);
                         }
                       else
                         {
                           dftUtils::readFile(
                             7,
                             parameterList,
-                            dftParameters::dc_dampingParameterFilename);
+                            d_dftParams.dc_dampingParameterFilename);
                           param = dftd3_new_mzero_damping(error,
                                                           parameterList[0][0],
                                                           parameterList[0][1],
@@ -215,15 +215,17 @@ namespace dftfe
                     case 3:
                       if (!customParameters)
                         {
-                          param = dftd3_load_mrational_damping(
-                            error, &functional[0], dftParameters::dc_d3ATM);
+                          param =
+                            dftd3_load_mrational_damping(error,
+                                                         &functional[0],
+                                                         d_dftParams.dc_d3ATM);
                         }
                       else
                         {
                           dftUtils::readFile(
                             6,
                             parameterList,
-                            dftParameters::dc_dampingParameterFilename);
+                            d_dftParams.dc_dampingParameterFilename);
                           param =
                             dftd3_new_mrational_damping(error,
                                                         parameterList[0][0],
@@ -238,14 +240,14 @@ namespace dftfe
                       if (!customParameters)
                         {
                           param = dftd3_load_optimizedpower_damping(
-                            error, &functional[0], dftParameters::dc_d3ATM);
+                            error, &functional[0], d_dftParams.dc_d3ATM);
                         }
                       else
                         {
                           dftUtils::readFile(
                             7,
                             parameterList,
-                            dftParameters::dc_dampingParameterFilename);
+                            d_dftParams.dc_dampingParameterFilename);
                           param = dftd3_new_optimizedpower_damping(
                             error,
                             parameterList[0][0],
@@ -312,17 +314,15 @@ namespace dftfe
 
                 if (!customParameters)
                   {
-                    param =
-                      dftd4_load_rational_damping(error,
-                                                  &functional[0],
-                                                  dftParameters::dc_d4MBD);
+                    param = dftd4_load_rational_damping(error,
+                                                        &functional[0],
+                                                        d_dftParams.dc_d4MBD);
                   }
                 else
                   {
-                    dftUtils::readFile(
-                      6,
-                      parameterList,
-                      dftParameters::dc_dampingParameterFilename);
+                    dftUtils::readFile(6,
+                                       parameterList,
+                                       d_dftParams.dc_dampingParameterFilename);
                     param = dftd4_new_rational_damping(error,
                                                        parameterList[0][0],
                                                        parameterList[0][1],
@@ -402,14 +402,16 @@ namespace dftfe
 
 
   dispersionCorrection::dispersionCorrection(
-    const MPI_Comm &mpi_comm_parent,
-    const MPI_Comm &mpi_comm_domain,
-    const MPI_Comm &interpool_comm,
-    const MPI_Comm &interbandgroup_comm)
+    const MPI_Comm &     mpi_comm_parent,
+    const MPI_Comm &     mpi_comm_domain,
+    const MPI_Comm &     interpool_comm,
+    const MPI_Comm &     interbandgroup_comm,
+    const dftParameters &dftParams)
     : mpi_communicator_global(mpi_comm_parent)
     , mpi_communicator_domain(mpi_comm_domain)
     , interpoolcomm(interpool_comm)
     , interBandGroupComm(interbandgroup_comm)
+    , d_dftParams(dftParams)
   {}
 
 
@@ -427,8 +429,8 @@ namespace dftfe
   {
     initDispersionCorrection(atomLocations, d_latticeVectors);
 
-    if (dftParameters::dc_dispersioncorrectiontype == 1 ||
-        dftParameters::dc_dispersioncorrectiontype == 2)
+    if (d_dftParams.dc_dispersioncorrectiontype == 1 ||
+        d_dftParams.dc_dispersioncorrectiontype == 2)
       computeDFTDCorrection();
   }
 

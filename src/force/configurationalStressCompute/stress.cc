@@ -123,7 +123,7 @@ forceClass<FEOrder, FEOrderElectro>::computeStress(
   d_stressKPoints = Utilities::MPI::sum(d_stressKPoints, dftPtr->interpoolcomm);
   d_stress += d_stressKPoints;
 
-  if (dftParameters::dc_dispersioncorrectiontype != 0)
+  if (d_dftParams.dc_dispersioncorrectiontype != 0)
     {
       for (unsigned int irow = 0; irow < 3; irow++)
         {

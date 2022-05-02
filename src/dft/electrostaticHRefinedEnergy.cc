@@ -573,7 +573,8 @@ dftClass<FEOrder, FEOrderElectro>::computeElectrostaticEnergyHRefined(
   dispersionCorrection dispersionCorrHRefined(d_mpiCommParent,
                                               mpi_communicator,
                                               interpoolcomm,
-                                              interBandGroupComm);
+                                              interBandGroupComm,
+                                              *d_dftParamsPtr);
 
 
   const double totalEnergy =

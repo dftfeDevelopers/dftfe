@@ -16,6 +16,7 @@
 //
 
 #include <headers.h>
+#include "dftParameters.h"
 #ifdef DFTFE_WITH_DFTD3
 #  include <dftd3.h>
 #endif
@@ -39,10 +40,11 @@ namespace dftfe
      * @brief Constructor
      *
      */
-    dispersionCorrection(const MPI_Comm &mpi_comm_parent,
-                         const MPI_Comm &mpi_comm_domain,
-                         const MPI_Comm &interpool_comm,
-                         const MPI_Comm &interBandGroupComm);
+    dispersionCorrection(const MPI_Comm &     mpi_comm_parent,
+                         const MPI_Comm &     mpi_comm_domain,
+                         const MPI_Comm &     interpool_comm,
+                         const MPI_Comm &     interBandGroupComm,
+                         const dftParameters &dftParams);
 
     /**
      * Wrapper function for various dispersion corrections to energy, force and
@@ -75,11 +77,11 @@ namespace dftfe
     std::array<double, 9> d_latticeVectors;
 
 
-    const MPI_Comm mpi_communicator_global;
-    const MPI_Comm mpi_communicator_domain;
-    const MPI_Comm interpoolcomm;
-    const MPI_Comm interBandGroupComm;
-
+    const MPI_Comm       mpi_communicator_global;
+    const MPI_Comm       mpi_communicator_domain;
+    const MPI_Comm       interpoolcomm;
+    const MPI_Comm       interBandGroupComm;
+    const dftParameters &d_dftParams;
 
     // initialize the variables needed for dispersion correction calculations
     void

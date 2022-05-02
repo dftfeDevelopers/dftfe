@@ -120,7 +120,7 @@ namespace dftfe
               pcout << bufferEnergy;
             }
 
-          if (dftParameters::dc_dispersioncorrectiontype != 0)
+          if (dftParams.dc_dispersioncorrectiontype != 0)
             {
               sprintf(bufferEnergy,
                       "%-52s:%25.16e\n",
@@ -871,7 +871,7 @@ namespace dftfe
 
 
     double d_energyDispersion = 0;
-    if (dftParameters::dc_dispersioncorrectiontype != 0)
+    if (d_dftParams.dc_dispersioncorrectiontype != 0)
       {
         d_energyDispersion = dispersionCorr.getEnergyCorrection();
         totalEnergy += d_energyDispersion;
@@ -2062,7 +2062,7 @@ namespace dftfe
       dealii::Utilities::MPI::sum(nuclearElectrostaticEnergy, mpi_communicator);
 
     double d_energyDispersion = 0;
-    if (dftParameters::dc_dispersioncorrectiontype != 0)
+    if (d_dftParams.dc_dispersioncorrectiontype != 0)
       {
         d_energyDispersion = dispersionCorr.getEnergyCorrection();
         totalEnergy += d_energyDispersion;

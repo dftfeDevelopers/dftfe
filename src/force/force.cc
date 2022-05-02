@@ -383,9 +383,9 @@ namespace dftfe
     MPI_Barrier(d_mpiCommParent);
     gaussian_time = MPI_Wtime() - gaussian_time;
 
-    if (dftParameters::dc_dispersioncorrectiontype != 0)
+    if (d_dftParams.dc_dispersioncorrectiontype != 0)
       {
-        for (unsigned int iAtom = 0; iAtom < dftParameters::natoms; iAtom++)
+        for (unsigned int iAtom = 0; iAtom < d_dftParams.natoms; iAtom++)
           {
             for (unsigned int idim = 0; idim < 3; idim++)
               {
@@ -396,7 +396,6 @@ namespace dftfe
       }
 
 
-    if (this_mpi_process == 0 && dftParameters::verbosity >= 4)
     if (this_mpi_process == 0 && d_dftParams.verbosity >= 4)
       std::cout
         << "Time for contraction of nodal foces with gaussian generator: "

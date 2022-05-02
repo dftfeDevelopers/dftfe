@@ -1213,6 +1213,15 @@ namespace dftfe
     // New paramter for selecting mode and NEB parameters
     TotalImages = 1;
     solvermode  = "";
+
+    unsigned int dc_dispersioncorrectiontype = 0;
+    unsigned int dc_d3dampingtype            = 2;
+    bool         dc_d3ATM                    = false;
+    bool         dc_d4MBD                    = false;
+    std::string  dc_dampingParameterFilename = "";
+    double       dc_d3cutoff2                = 94.8683298050514;
+    double       dc_d3cutoff3                = 40.0;
+    double       dc_d3cutoffCN               = 40.0;
   }
 
 
@@ -1373,6 +1382,19 @@ namespace dftfe
 
     prm.enter_subsection("DFT functional parameters");
     {
+      prm.enter_subsection("Dispersion Correction");
+      {
+        dc_dispersioncorrectiontype =
+          prm.get_integer("DISPERSION CORRECTION TYPE");
+        dc_d3dampingtype            = prm.get_integer("D3 DAMPING TYPE");
+        dc_d3ATM                    = prm.get_bool("D3 ATM");
+        dc_d4MBD                    = prm.get_bool("D4 MBD");
+        dc_dampingParameterFilename = prm.get("DAMPING PARAMETERS FILE");
+        dc_d3cutoff2                = prm.get_double("TWO BODY CUTOFF");
+        dc_d3cutoff3                = prm.get_double("THREE BODY CUTOFF");
+        dc_d3cutoffCN               = prm.get_double("CN CUTOFF");
+      }
+      prm.leave_subsection();
       isPseudopotential     = prm.get_bool("PSEUDOPOTENTIAL CALCULATION");
       pseudoTestsFlag       = prm.get_bool("PSEUDO TESTS FLAG");
       pseudoPotentialFile   = prm.get("PSEUDOPOTENTIAL FILE NAMES LIST");
@@ -1400,32 +1422,6 @@ namespace dftfe
 
       prm.enter_subsection("Eigen-solver parameters");
       {
-        dftParameters::isPseudopotential =
-          prm.get_bool("PSEUDOPOTENTIAL CALCULATION");
-        dftParameters::pseudoTestsFlag = prm.get_bool("PSEUDO TESTS FLAG");
-        dftParameters::pseudoPotentialFile =
-          prm.get("PSEUDOPOTENTIAL FILE NAMES LIST");
-        dftParameters::xc_id = prm.get_integer("EXCHANGE CORRELATION TYPE");
-        dftParameters::spinPolarized = prm.get_integer("SPIN POLARIZATION");
-        dftParameters::start_magnetization =
-          prm.get_double("START MAGNETIZATION");
-        dftParameters::pspCutoffImageCharges =
-          prm.get_double("PSP CUTOFF IMAGE CHARGES");
-        prm.enter_subsection("Dispersion Correction");
-        {
-          dftParameters::dc_dispersioncorrectiontype =
-            prm.get_integer("DISPERSION CORRECTION TYPE");
-          dftParameters::dc_d3dampingtype = prm.get_integer("D3 DAMPING TYPE");
-          dftParameters::dc_d3ATM         = prm.get_bool("D3 ATM");
-          dftParameters::dc_d4MBD         = prm.get_bool("D4 MBD");
-          dftParameters::dc_dampingParameterFilename =
-            prm.get("DAMPING PARAMETERS FILE");
-          dftParameters::dc_d3cutoff2  = prm.get_double("TWO BODY CUTOFF");
-          dftParameters::dc_d3cutoff3  = prm.get_double("THREE BODY CUTOFF");
-          dftParameters::dc_d3cutoffCN = prm.get_double("CN CUTOFF");
-        }
-        prm.leave_subsection();
-        dftParameters::TotalImages = prm.get_integer("NUMBER OF IMAGES");
         numberEigenValues =
           prm.get_integer("NUMBER OF KOHN-SHAM WAVEFUNCTIONS");
         numCoreWfcRR = prm.get_integer("SPECTRUM SPLIT CORE EIGENSTATES");
