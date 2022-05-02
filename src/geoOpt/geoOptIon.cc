@@ -353,11 +353,110 @@ namespace dftfe
     std::vector<double> &      s,
     const std::vector<double> &gradient) const
   {
+    const int numberGlobalAtoms = dftPtr->atomLocations.size();
+    double    rCutNNList        = 1.0;
+    std::vector<std::vector<double>> NNdistances(numberGlobalAtoms);
+    bool                             allAtomsHaveNN = false;
+    while (!allAtomsHaveNN)
+      {
+        for (int i = 0; i < numberGlobalAtoms; ++i)
+          {
+            for (int j = i + 1; j < numberGlobalAtoms; ++j)
+              {
+                double rij = 0;
+                for (int k = 2; k < 5; ++k)
+                  {
+                    rij += (dftPtr->atomLocations[i][k] -
+                            dftPtr->atomLocations[j][k]) *
+                           (dftPtr->atomLocations[i][k] -
+                            dftPtr->atomLocations[j][k]);
+                  }
+                rij = std::sqrt(rij);
+                if (rij <= rCutNNList)
+                  {
+                    NNdistances[i].push_back(rij);
+                    NNdistances[j].push_back(rij);
+                  }
+              }
+          }
+        allAtomsHaveNN = true;
+        for (int i = 0; i < numberGlobalAtoms; ++i)
+          {
+            if (NNdistances[i].size() == 0)
+              {
+                allAtomsHaveNN = false;
+                rCutNNList *= (1.0 + std::sqrt(5.0)) / 2.0;
+              }
+          }
+      }
+    double rNN = 0;
+    for (int i = 0; i < numberGlobalAtoms; ++i)
+      {
+        double rijMin = NNdistances[i][0];
+        for (int j = 1; j < NNdistances[i].size(); ++j)
+          {
+            rijMin = rijMin < NNdistances[i][j] ? rijMin : NNdistances[i][j];
+          }
+        rNN = rNN > rijMin ? rNN : rijMin;
+      }
+    double rCut = 2 * rNN;
+
+    std::vector<double> L(numberGlobalAtoms * numberGlobalAtoms, 0.0);
+    for (int i = 0; i < numberGlobalAtoms; ++i)
+      {
+        for (int j = i + 1; j < numberGlobalAtoms; ++j)
+          {
+            double rij = 0;
+            for (int k = 2; k < 5; ++k)
+              {
+                rij +=
+                  (dftPtr->atomLocations[i][k] - dftPtr->atomLocations[j][k]) *
+                  (dftPtr->atomLocations[i][k] - dftPtr->atomLocations[j][k]);
+              }
+            rij = std::sqrt(rij);
+            if (rij < rCut)
+              {
+                L[i * numberGlobalAtoms + j] =
+                  -std::exp(-3.0 * (rij / rNN - 1));
+                L[j * numberGlobalAtoms + i] = L[i * numberGlobalAtoms + j];
+              }
+          }
+      }
+    for (int i = 0; i < numberGlobalAtoms; ++i)
+      {
+        for (int j = 0; j < numberGlobalAtoms; ++j)
+          {
+            if (i != j)
+              {
+                L[i * numberGlobalAtoms + i] -= L[i * numberGlobalAtoms + j];
+              }
+          }
+      }
     s.clear();
     s.resize(getNumberUnknowns() * getNumberUnknowns(), 0.0);
-    for (auto i = 0; i < getNumberUnknowns(); ++i)
+    int icount = 0;
+    for (auto i = 0; i < numberGlobalAtoms; ++i)
       {
-        s[i + i * getNumberUnknowns()] = 1.0;
+        for (auto k = 0; k < 3; ++k)
+          {
+            if (d_relaxationFlags[i * 3 + k] == 1)
+              {
+                int jcount = 0;
+                for (auto j = 0; j < numberGlobalAtoms; ++j)
+                  {
+                    for (auto l = 0; l < 3; ++l)
+                      {
+                        if (d_relaxationFlags[j * 3 + l] == 1)
+                          {
+                            s[icount * getNumberUnknowns() + jcount] =
+                              k==l ? L[i * numberGlobalAtoms + j]:0.0;
+                            ++jcount;
+                          }
+                      }
+                  }
+                ++icount;
+              }
+          }
       }
   }
 

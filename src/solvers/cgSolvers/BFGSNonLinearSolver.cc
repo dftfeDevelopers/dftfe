@@ -201,31 +201,31 @@ namespace dftfe
               d_hessian.data(),
               &d_numberUnknowns);
       }
-     /* }
-    else
-      {
-        if (d_stepAccepted)
-      {
-        pcout << "DEBUG Step PSB " << std::endl;
-        double factor = 1.0 / dxnorm*dxnorm;
-        dsyr2_(&uplo,
-               &d_numberUnknowns,
-               &factor,
-               d_deltaXNew.data(),
-               &one,
-               dgmHdx.data(),
-               &one,
-               d_hessian.data(),
-               &d_numberUnknowns);
-        factor = -ztdx / (dxnorm * dxnorm*dxnorm * dxnorm);
-        dsyr_(&uplo,
+    /* }
+   else
+     {
+       if (d_stepAccepted)
+     {
+       pcout << "DEBUG Step PSB " << std::endl;
+       double factor = 1.0 / dxnorm*dxnorm;
+       dsyr2_(&uplo,
               &d_numberUnknowns,
               &factor,
               d_deltaXNew.data(),
               &one,
+              dgmHdx.data(),
+              &one,
               d_hessian.data(),
               &d_numberUnknowns);
-      }}*/
+       factor = -ztdx / (dxnorm * dxnorm*dxnorm * dxnorm);
+       dsyr_(&uplo,
+             &d_numberUnknowns,
+             &factor,
+             d_deltaXNew.data(),
+             &one,
+             d_hessian.data(),
+             &d_numberUnknowns);
+     }}*/
   }
 
   void
@@ -239,20 +239,36 @@ namespace dftfe
       }
 
     const unsigned int one = 1;
+    const char         uplo  = 'U';
+    const double       one_d = 1.0;
+    // z=dg-Hdx, y=dg, s=dx
 
-    double dgtdx =
-      ddot_(&d_numberUnknowns, d_deltaXNew.data(), &one, delta_g.data(), &one);
-    double dgtdg = ddot_(&d_numberUnknowns, delta_g.data(), &one, delta_g.data(), &one);
-    if (dgtdx>0.0){
-    d_hessian.clear();
-    d_hessian.resize(d_numberUnknowns * d_numberUnknowns, 0.0);
-    for (auto i = 0; i < d_hessian.size(); ++i)
+    std::vector<double> Hdx(d_numberUnknowns, 0.0);
+    dsymv_(&uplo,
+           &d_numberUnknowns,
+           &one_d,
+           d_hessian.data(),
+           &d_numberUnknowns,
+           d_deltaXNew.data(),
+           &one,
+           &one_d,
+           Hdx.data(),
+           &one);
+
+    double dgtHdx =
+      ddot_(&d_numberUnknowns, Hdx.data(), &one, delta_g.data(), &one);
+    double dgtdg =
+      ddot_(&d_numberUnknowns, delta_g.data(), &one, delta_g.data(), &one);
+    if (dgtHdx > 0.0)
       {
-        d_hessian[i] *= dgtdg / dgtdx;
+        d_hessian.clear();
+        d_hessian.resize(d_numberUnknowns * d_numberUnknowns, 0.0);
+        for (auto i = 0; i < d_hessian.size(); ++i)
+          {
+            d_hessian[i] *= dgtdg / dgtHdx;
+          }
+        d_hessianScaled = true;
       }
-   d_hessianScaled=true;
-   }
-
   }
 
   //
@@ -678,7 +694,7 @@ namespace dftfe
       return SUCCESS;
 
 
-    
+
     for (d_iter = 0; d_iter < d_maxNumberIterations; ++d_iter)
       {
         /* if (d_isBFGSRestartDueToSmallRadius)
@@ -717,7 +733,7 @@ namespace dftfe
         //
         problem.gradient(d_gradientNew);
         problem.value(d_valueNew);
-       // check for convergence
+        // check for convergence
         //
         unsigned int isBreak = 0;
 
@@ -734,10 +750,12 @@ namespace dftfe
         //
         checkWolfe();
         d_stepAccepted = d_wolfeSufficientDec;
-        if ((d_iter == 0||d_isBFGSRestartDueToSmallRadius||!d_hessianScaled)&&d_stepAccepted)
+        if ((d_iter == 0 || d_isBFGSRestartDueToSmallRadius ||
+             !d_hessianScaled) &&
+            d_stepAccepted)
           {
             scaleHessian();
-            d_trustRadius=d_trustRadiusInitial;
+            d_trustRadius                   = d_trustRadiusInitial;
             d_isBFGSRestartDueToSmallRadius = false;
           }
         updateHessian();
@@ -789,4 +807,3 @@ namespace dftfe
     return returnValue;
   }
 } // namespace dftfe
-

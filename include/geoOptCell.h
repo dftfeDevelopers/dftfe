@@ -133,7 +133,7 @@ namespace dftfe
 
     /// total number of calls to update()
     unsigned int d_totalUpdateCalls;
-    double d_domainVolumeInitial;
+    double       d_domainVolumeInitial;
     /// current strain tensor applied on the domain
     Tensor<2, 3, double> d_strainEpsilon;
 
